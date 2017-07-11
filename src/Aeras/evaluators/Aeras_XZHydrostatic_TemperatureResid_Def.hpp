@@ -26,7 +26,7 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
   temperature     (p.get<std::string> ("QP Temperature"),                 dl->node_scalar_level),
   temperatureGrad (p.get<std::string> ("Gradient QP Temperature"),        dl->qp_gradient_level),
   temperatureDot  (p.get<std::string> ("QP Time Derivative Temperature"), dl->node_scalar_level),
-  temperatureSrc  (p.get<std::string> ("Temperature Source"),             dl->qp_scalar_level),
+  //temperatureSrc  (p.get<std::string> ("Temperature Source"),             dl->qp_scalar_level),
   velocity        (p.get<std::string> ("Velocity"),                       dl->node_vector_level),
   omega           (p.get<std::string> ("Omega"),                          dl->node_scalar_level),
   etadotdT        (p.get<std::string> ("EtaDotdT"),                       dl->qp_scalar_level),
@@ -52,7 +52,7 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
   this->addDependentField(temperature);
   this->addDependentField(temperatureGrad);
   this->addDependentField(temperatureDot);
-  this->addDependentField(temperatureSrc);
+  //this->addDependentField(temperatureSrc);
   this->addDependentField(velocity);
   this->addDependentField(omega);
   this->addDependentField(etadotdT);
@@ -81,7 +81,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(temperature,    fm);
   this->utils.setFieldData(temperatureGrad,fm);
   this->utils.setFieldData(temperatureDot, fm);
-  this->utils.setFieldData(temperatureSrc, fm);
+  //this->utils.setFieldData(temperatureSrc, fm);
   this->utils.setFieldData(velocity,       fm);
   this->utils.setFieldData(omega,          fm);
   this->utils.setFieldData(etadotdT,       fm);
@@ -97,24 +97,21 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_TemperatureResid<EvalT, Traits>::
-operator() (const XZHydrostatic_TemperatureResid_Tag& tag, const int& cell) const{
-  for (int node=0; node < numNodes; ++node) {
-    for (int level=0; level < numLevels; ++level) {
-      Residual(cell,node,level)   =  temperatureSrc(cell,node,level)                             *wBF(cell,node,node)
-                                  -  omega(cell,node,level)                                      *wBF(cell,node,node)
-                                  +  etadotdT(cell,node,level)                                   *wBF(cell,node,node)
-                                  +  temperatureDot(cell,node,level)                             *wBF(cell,node,node);
+operator() (const int cell, const int node, const int level) const{
+      ScalarT wBF1 = wBF(cell,node,node);
+      Residual(cell,node,level)   =  //temperatureSrc(cell,node,level)*wBF1       
+                                  -  omega(cell,node,level)*wBF1    
+                                  +  etadotdT(cell,node,level)*wBF1
+                                  +  temperatureDot(cell,node,level)*wBF1;
 
+      ScalarT temp=0;
       for (int qp=0; qp < numQPs; ++qp) {
+      ScalarT wBF2=wBF(cell,node,qp);
         for (int dim=0; dim < numDims; ++dim) {
-          Residual(cell,node,level) += velocity(cell,qp,level,dim)*temperatureGrad(cell,qp,level,dim)*wBF(cell,node,qp);
+          temp += velocity(cell,qp,level,dim)*temperatureGrad(cell,qp,level,dim)*wBF2;
         }
       }
-    }
-//     for (int level = 0; level < 2; ++level){
-//     	Residual(cell,node,level) += (viscosity/Prandtl)*temperatureGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
-// 	}
-  }
+      Residual(cell,node,level) += temp;
 }
 
 template<typename EvalT, typename Traits>
@@ -180,7 +177,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int qp=0; qp < numQPs; ++qp) {
           int node = qp;
           for (int level=0; level < numLevels; ++level) {
-            Residual(cell,node,level)   += temperatureSrc(cell,qp,level)                             *wBF(cell,node,qp)
+            Residual(cell,node,level)   += //temperatureSrc(cell,qp,level)                             *wBF(cell,node,qp)
                                         -  omega(cell,qp,level)                                      *wBF(cell,node,qp)
                                         +  etadotdT(cell,qp,level)                                   *wBF(cell,node,qp)
                                         +  temperatureDot(cell,qp,level)                             *wBF(cell,node,qp);
@@ -223,9 +220,13 @@ evaluateFields(typename Traits::EvalData workset)
 #else
   if ( !obtainLaplaceOp ) {
     if( !pureAdvection ) {
-      Kokkos::parallel_for(XZHydrostatic_TemperatureResid_Policy(0,workset.numCells),*this);
+       XZHydrostatic_TemperatureResid_Policy range(
+                {{0,0,0}}, {{(int)workset.numCells,(int)numNodes,(int)numLevels}}, 
+                {XZHydrostatic_TemperatureResid_TileSize});
+        Kokkos::Experimental::md_parallel_for(range,*this);
     }
-
+ }
+#if 0
     else {
       Kokkos::parallel_for(XZHydrostatic_TemperatureResid_pureAdvection_Policy(0,workset.numCells),*this);
     }
@@ -234,6 +235,7 @@ evaluateFields(typename Traits::EvalData workset)
   else {
     Kokkos::parallel_for(XZHydrostatic_TemperatureResid_Laplace_Policy(0,workset.numCells),*this);
   }
+#endif
 
 #endif
 }

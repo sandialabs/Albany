@@ -8,6 +8,7 @@
 #include "Albany_ModelFactory.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
+#include "Albany_Utils.hpp"
 #include <sstream>
 
 //uncomment the following to write stuff out to matrix market to debug
@@ -115,6 +116,8 @@ Aeras::HVDecorator::HVDecorator(
   // 3. Remove the structural nonzeros, numerical zeros, from the Laplace
   // operator.
   laplace_ = getOnlyNonzeros(laplace);
+
+  xtildeT = Teuchos::rcp(new Tpetra_Vector(mass->getRowMap())); 
 
 //OG In case of a parallel run by some reason laplace.mm file contains indices
 //out of range with non-trivial entries. I haven't debugged this yet. AB suggested to
@@ -402,15 +405,21 @@ Aeras::HVDecorator::evalModelImpl(
         NULL, f_derivT, dummy_derivT, dummy_derivT, dummy_derivT);
   } else {
     if (Teuchos::nonnull(fT_out) && !f_already_computed) {
+      PUSH_RANGE("computeGlobalResidualT",0);
       app->computeGlobalResidualT(
           curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
           sacado_param_vec, *fT_out);
+      POP_RANGE;
     }
   }
 
-  Teuchos::RCP<Tpetra_Vector> xtildeT = Teuchos::rcp(new Tpetra_Vector(xT->getMap())); 
   //compute xtildeT 
+  PUSH_RANGE("compute xtildeT",1);
+  Teuchos::RCP<Teuchos::Time> evalTime =
+  Teuchos::TimeMonitor::getNewTimer("Albany: Aeras::HVDecorator: xtildeT");
+  Teuchos::TimeMonitor evalTimer(*evalTime); //start timer
   applyLinvML(xT, xtildeT); 
+  POP_RANGE;
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   //writing to MatrixMarket for debug
@@ -422,12 +431,15 @@ Aeras::HVDecorator::evalModelImpl(
   mm_counter++; 
 #endif  
 
+  PUSH_RANGE("Update fT_out with xtildeT",2);
   if(Teuchos::nonnull(inArgsT.get_x_dot()) && Teuchos::nonnull(fT_out)){
 #ifdef OUTPUT_TO_SCREEN
 	  std::cout <<"in the if-statement for the update" <<std::endl;
 #endif
 	  fT_out->update(1.0, *xtildeT, 1.0);
   }
+  evalTimer.~TimeMonitor();
+  POP_RANGE;
 
   // Response functions
   for (int j = 0; j < outArgsT.Ng(); ++j) {

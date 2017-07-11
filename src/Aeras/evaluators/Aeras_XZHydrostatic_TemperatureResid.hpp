@@ -51,7 +51,7 @@ private:
   PHX::MDField<ScalarT,Cell,Node,Level>     temperature;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> temperatureGrad;
   PHX::MDField<ScalarT,Cell,Node,Level>     temperatureDot;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     temperatureSrc;
+  //PHX::MDField<ScalarT,Cell,QuadPoint,Level>     temperatureSrc;
   PHX::MDField<ScalarT,Cell,Node,Level,Dim> velocity;
   PHX::MDField<ScalarT,Cell,Node,Level>     omega;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>     etadotdT;
@@ -76,17 +76,34 @@ private:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
 
   struct XZHydrostatic_TemperatureResid_Tag{};
   struct XZHydrostatic_TemperatureResid_pureAdvection_Tag{};
   struct XZHydrostatic_TemperatureResid_Laplace_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_TemperatureResid_Tag> XZHydrostatic_TemperatureResid_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_TemperatureResid_Tag> XZHydrostatic_TemperatureResid_pureAdvection_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_TemperatureResid_Tag> XZHydrostatic_TemperatureResid_Laplace_Policy;
 
+  using XZHydrostatic_TemperatureResid_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>, 
+        Kokkos::IndexType<int> >;
+
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA) 
+  typename XZHydrostatic_TemperatureResid_Policy::tile_type 
+    XZHydrostatic_TemperatureResid_TileSize{{256,1,1}};
+#else
+  typename XZHydrostatic_TemperatureResid_Policy::tile_type 
+    XZHydrostatic_TemperatureResid_TileSize{};
+#endif
+
   KOKKOS_INLINE_FUNCTION
-  void operator() (const XZHydrostatic_TemperatureResid_Tag& tag, const int& i) const;
+  void operator() (const int cell, const int node, const int level) const;
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const XZHydrostatic_TemperatureResid_pureAdvection_Tag& tag, const int& i) const;

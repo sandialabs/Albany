@@ -27,7 +27,7 @@
 #include "Aeras_VorticityLevels.hpp"
 #include "Aeras_DOFDInterpolationLevels.hpp"
 #include "Aeras_DOFGradInterpolationLevels.hpp"
-#include "Aeras_Atmosphere_Moisture.hpp"
+//#include "Aeras_Atmosphere_Moisture.hpp"
 #include "Aeras_XZHydrostatic_Density.hpp"
 #include "Aeras_XZHydrostatic_EtaDotPi.hpp"
 #include "Aeras_XZHydrostatic_GeoPotential.hpp"
@@ -549,7 +549,7 @@ Aeras::HydrostaticProblem::constructEvaluators(
     p->set<std::string>("QP Temperature",                 dof_names_levels[1]);
     p->set<std::string>("Gradient QP Temperature",        dof_names_levels_gradient[1]);
     p->set<std::string>("QP Time Derivative Temperature", dof_names_levels_dot[1]);
-    p->set<std::string>("Temperature Source",             dof_names_levels_src[1]);
+    //p->set<std::string>("Temperature Source",             dof_names_levels_src[1]);
     p->set<std::string>("Velocity",                       "Velocity");
     p->set<std::string>("Omega",                          "Omega");
     p->set<std::string>("EtaDotdT",                       "EtaDotdT");
@@ -833,7 +833,7 @@ Aeras::HydrostaticProblem::constructEvaluators(
   }
  
 
-  { // Hydrostatic Atmosphere Moisture Resid
+  /*{ // Hydrostatic Atmosphere Moisture Resid
     RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic_Atmosphere_Moisture"));
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
@@ -856,7 +856,7 @@ Aeras::HydrostaticProblem::constructEvaluators(
 
     ev = rcp(new Aeras::Atmosphere_Moisture<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-  }
+  }*/
 
   for (int t=0; t<numTracers; ++t) {
     RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic Tracer Resid"));

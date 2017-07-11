@@ -25,6 +25,7 @@ DOFDivInterpolationLevels(Teuchos::ParameterList& p,
   intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
   cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
   div_val_qp (p.get<std::string>   ("Divergence Variable Name"), dl->qp_scalar_level),
+  numCells   (dl->node_scalar             ->dimension(0)),
   numNodes   (dl->node_scalar             ->dimension(1)),
   numDims    (dl->node_qp_gradient        ->dimension(3)),
   numQPs     (dl->node_qp_scalar          ->dimension(2)),
@@ -68,9 +69,13 @@ postRegistrationSetup(typename Traits::SetupData d,
   cubature->getCubature(refPoints, refWeights);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 
+  if ( !originalDiv ) {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  vcontra = Kokkos::createDynRankView(val_node.get_view(), "XXX", numNodes, 2);
+    vcontra = Kokkos::createDynRankView(val_node.get_view(), "XXX", numNodes, 2);
+#else
+    vcontra = Kokkos::createDynRankView(val_node.get_view(), "vcontra", numCells, numNodes, numLevels, 2);
 #endif
+  }
 }
 
 //**********************************************************************
@@ -79,15 +84,11 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void DOFDivInterpolationLevels<EvalT, Traits>::
-operator() (const DOFDivInterpolationLevels_originalDiv_Tag& tag, const int& cell) const{
-  for (int qp=0; qp < numQPs; ++qp) {
-    for (int level=0; level < numLevels; ++level) {
-      div_val_qp(cell,qp,level) = 0;
-      for (int node= 0 ; node < numNodes; ++node) {
-        for (int dim=0; dim<numDims; dim++) {
-          div_val_qp(cell,qp,level) += val_node(cell,node,level,dim) * GradBF(cell,node,qp,dim);
-        }
-      }
+operator() (const DOFDivInterpolationLevels_originalDiv_Tag& tag, const int cell, const int qp, const int level) const{
+  div_val_qp(cell,qp,level) = 0;
+  for (int node= 0 ; node < numNodes; ++node) {
+    for (int dim=0; dim<numDims; dim++) {
+      div_val_qp(cell,qp,level) += val_node(cell,node,level,dim) * GradBF(cell,node,qp,dim);
     }
   }
 }
@@ -95,30 +96,27 @@ operator() (const DOFDivInterpolationLevels_originalDiv_Tag& tag, const int& cel
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void DOFDivInterpolationLevels<EvalT, Traits>::
-operator() (const DOFDivInterpolationLevels_Tag& tag, const int& cell) const{
-  for (std::size_t node=0; node < numNodes; ++node) {
-    const MeshScalarT jinv00 = jacobian_inv(cell, node, 0, 0);
-    const MeshScalarT jinv01 = jacobian_inv(cell, node, 0, 1);
-    const MeshScalarT jinv10 = jacobian_inv(cell, node, 1, 0);
-    const MeshScalarT jinv11 = jacobian_inv(cell, node, 1, 1);
-    const MeshScalarT det_j  = jacobian_det(cell, node);
+operator() (const DOFDivInterpolationLevels_vcontra_Tag& tag, const int cell, const int node, const int level) const{
+  const MeshScalarT jinv00 = jacobian_inv(cell, node, 0, 0);
+  const MeshScalarT jinv01 = jacobian_inv(cell, node, 0, 1);
+  const MeshScalarT jinv10 = jacobian_inv(cell, node, 1, 0);
+  const MeshScalarT jinv11 = jacobian_inv(cell, node, 1, 1);
+  const MeshScalarT det_j  = jacobian_det(cell, node);
 
-    for (int level=0; level < numLevels; ++level) {
-      vcontra(cell, node, level, 0) = det_j*(jinv00*val_node(cell, node, level, 0) + jinv01*val_node(cell, node, level, 1) );
-      vcontra(cell, node, level, 1) = det_j*(jinv10*val_node(cell, node, level, 0) + jinv11*val_node(cell, node, level, 1) );
-    }
-  }
+  vcontra(cell, node, level, 0) = det_j*(jinv00*val_node(cell, node, level, 0) + jinv01*val_node(cell, node, level, 1) );
+  vcontra(cell, node, level, 1) = det_j*(jinv10*val_node(cell, node, level, 0) + jinv11*val_node(cell, node, level, 1) );
+}
 
-  for (int qp=0; qp < numQPs; ++qp) {
-    for (int level=0; level < numLevels; ++level) {
-      div_val_qp(cell, qp, level) = 0;
-      for (int node=0; node < numNodes; ++node) {
-        div_val_qp(cell, qp, level) += vcontra(cell, node, level, 0)*grad_at_cub_points(node, qp, 0)
-                                    +  vcontra(cell, node, level, 1)*grad_at_cub_points(node, qp, 1);
-      }
-      div_val_qp(cell, qp, level) /= jacobian_det(cell, qp);
-    }
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void DOFDivInterpolationLevels<EvalT, Traits>::
+operator() (const DOFDivInterpolationLevels_Tag& tag, const int cell, const int qp, const int level) const{
+  div_val_qp(cell, qp, level) = 0;
+  for (int node=0; node < numNodes; ++node) {
+    div_val_qp(cell, qp, level) += vcontra(cell, node, level, 0)*grad_at_cub_points(node, qp, 0)
+                                +  vcontra(cell, node, level, 1)*grad_at_cub_points(node, qp, 1);
   }
+  div_val_qp(cell, qp, level) /= jacobian_det(cell, qp);
 }
 
 #endif
@@ -173,12 +171,20 @@ evaluateFields(typename Traits::EvalData workset)
 
 #else
   if ( originalDiv ) {
-    Kokkos::parallel_for(DOFDivInterpolationLevels_originalDiv_Policy(0,workset.numCells),*this);
+    Kokkos::Experimental::md_parallel_for(DOFDivInterpolationLevels_originalDiv_Policy(
+      {{0,0,0}},{{(int)workset.numCells,(int)numQPs,(int)numLevels}},
+      {DOFDivInterpolationLevels_originalDiv_TileSize}),*this);
     cudaCheckError();
   }
   else {
-    vcontra = createDynRankView(div_val_qp.get_view(), "vcontra", workset.numCells, numNodes, numLevels, 2);
-    Kokkos::parallel_for(DOFDivInterpolationLevels_Policy(0,workset.numCells),*this);
+    Kokkos::Experimental::md_parallel_for(DOFDivInterpolationLevels_vcontra_Policy(
+      {{0,0,0}},{{(int)workset.numCells,(int)numNodes,(int)numLevels}},
+      {DOFDivInterpolationLevels_vcontra_TileSize}),*this);
+    cudaCheckError();
+
+    Kokkos::Experimental::md_parallel_for(DOFDivInterpolationLevels_Policy(
+      {{0,0,0}},{{(int)workset.numCells,(int)numQPs,(int)numLevels}},
+      {DOFDivInterpolationLevels_TileSize}),*this);
     cudaCheckError();
   }
 

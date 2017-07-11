@@ -26,6 +26,7 @@
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_NodalDOFManager.hpp"
 #include "Albany_AbstractMeshStruct.hpp"
+#include "Kokkos_Vector.hpp"
 
 namespace AAdapt { namespace rc { class Manager; } }
 
@@ -154,6 +155,9 @@ class AbstractDiscretization {
     //! Get map from (Ws, El, Local Node, Eq) -> unkLID
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
       getWsElNodeEqID() const = 0;
+
+    virtual const Kokkos::vector<Kokkos::View<LO***, PHX::Device>>&
+      getWsElNodeEqIDKokkos() const = 0;
 
     //! Get map from (Ws, El, Local Node) -> unkGID
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&

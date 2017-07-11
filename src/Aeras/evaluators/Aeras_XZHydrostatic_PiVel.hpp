@@ -51,13 +51,29 @@ private:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
 
   struct XZHydrostatic_PiVel_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_PiVel_Tag> XZHydrostatic_PiVel_Policy;
+  using XZHydrostatic_PiVel_Policy = Kokkos::Experimental::MDRangePolicy<
+    Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>, 
+    Kokkos::IndexType<int>, XZHydrostatic_PiVel_Tag>;
+
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename XZHydrostatic_PiVel_Policy::tile_type 
+    XZHydrostatic_PiVel_TileSize{{256,1,1}};
+#else
+  typename XZHydrostatic_PiVel_Policy::tile_type 
+    XZHydrostatic_PiVel_TileSize{};
+#endif
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const XZHydrostatic_PiVel_Tag& tag, const int& i) const;
+  void operator() (const XZHydrostatic_PiVel_Tag &tag, const int cell, const int node, const int level) const;
 
 #endif
 };

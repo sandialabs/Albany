@@ -168,6 +168,7 @@ namespace Albany {
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type& getWsElNodeEqID() const;
+    const Kokkos::vector<Kokkos::View<LO***, PHX::Device>>& getWsElNodeEqIDKokkos() const;
 
     //! Get map from (Ws, Local Node) -> NodeGID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& getWsElNodeID() const;
@@ -448,6 +449,7 @@ namespace Albany {
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type wsElNodeEqID;
+    Kokkos::vector<Kokkos::View<LO***, PHX::Device>> wsElNodeEqID_kokkos;
 
     //! Connectivity array [workset, element, local-node] => GID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;

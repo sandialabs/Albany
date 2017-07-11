@@ -70,18 +70,34 @@ private:
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
-typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
 
-struct Vorticity_Orig_Tag{};
-struct Vorticity_Tag{};
+  using VorticityLevels_Policy = Kokkos::Experimental::MDRangePolicy<
+    Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>, 
+    Kokkos::IndexType<int>>;
 
-typedef Kokkos::RangePolicy<ExecutionSpace, Vorticity_Orig_Tag> Vorticity_Orig_Policy;
-KOKKOS_INLINE_FUNCTION
-void operator() (const Vorticity_Orig_Tag& tag, const int& i) const;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename VorticityLevels_Policy::tile_type 
+    VorticityLevels_TileSize{};
+#else
+  typename VorticityLevels_Policy::tile_type 
+    VorticityLevels_TileSize{};
+#endif
 
-typedef Kokkos::RangePolicy<ExecutionSpace, Vorticity_Tag> Vorticity_Policy;
-KOKKOS_INLINE_FUNCTION
-void operator() (const Vorticity_Tag& tag, const int& i) const;
+#if ORIGINALVORT
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const int cell, const int qp, const int level) const;
+#else
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const int cell, const int level, const int qp) const;
+#endif
+
 #endif
 
 };

@@ -65,19 +65,41 @@ private:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
 
   struct SurfaceHeight_Tag{};
   struct SurfaceHeight_MOUNTAIN_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, SurfaceHeight_Tag> SurfaceHeight_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, SurfaceHeight_MOUNTAIN_Tag> SurfaceHeight_MOUNTAIN_Policy;
-  
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const SurfaceHeight_Tag& tag, const int& i) const;
+  using SurfaceHeight_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, SurfaceHeight_Tag>;
+
+  using SurfaceHeight_MOUNTAIN_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, SurfaceHeight_MOUNTAIN_Tag>;
+
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename SurfaceHeight_Policy::tile_type 
+    SurfaceHeight_TileSize{{256,1}};
+  typename SurfaceHeight_MOUNTAIN_Policy::tile_type 
+    SurfaceHeight_MOUNTAIN_TileSize{{256,1}};
+#else
+  typename SurfaceHeight_Policy::tile_type 
+    SurfaceHeight_TileSize{};
+  typename SurfaceHeight_MOUNTAIN_Policy::tile_type 
+    SurfaceHeight_MOUNTAIN_TileSize{};
+#endif
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const SurfaceHeight_MOUNTAIN_Tag& tag, const int& i) const;
+  void operator() (const SurfaceHeight_Tag& tag, const int cell, const int qp) const;
 
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const SurfaceHeight_MOUNTAIN_Tag& tag, const int cell, const int qp) const;
 
 #endif
  

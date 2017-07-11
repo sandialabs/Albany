@@ -1151,7 +1151,9 @@ computeGlobalResidualImplT(
   const Teuchos::RCP<Tpetra_Import> importerT = solMgrT->get_importerT();
 
   // Scatter x and xdot to the overlapped distrbution
+  PUSH_RANGE("scatterXT",1);
   solMgrT->scatterXT(*xT, xdotT.get(), xdotdotT.get());
+  POP_RANGE;
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -1178,8 +1180,10 @@ computeGlobalResidualImplT(
 #endif
 
   // Zero out overlapped residual - Tpetra
+  PUSH_RANGE("Zero Out Residual",2);
   overlapped_fT->putScalar(0.0);
   fT->putScalar(0.0);
+  POP_RANGE;
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
@@ -1196,6 +1200,7 @@ computeGlobalResidualImplT(
   {
     if (Teuchos::nonnull(rc_mgr)) rc_mgr->init_x_if_not(xT->getMap());
 
+    PUSH_RANGE("Load Workset",5);
     PHAL::Workset workset;
 
     if (!paramLib->isParameter("Time"))
@@ -1207,17 +1212,25 @@ computeGlobalResidualImplT(
 
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
+      POP_RANGE;
 
       // FillType template argument used to specialize Sacado
+      PUSH_RANGE("evaluateFields",3);
+      RCP<Teuchos::Time> evalTime =
+      Teuchos::TimeMonitor::getNewTimer("Albany: evaluateFields<Residual>");
+      Teuchos::TimeMonitor evalTimer(*evalTime); //start timer
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+      evalTimer.~TimeMonitor();
+      POP_RANGE;
       if (nfm!=Teuchos::null)
          deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     }
-  // workset.wsElNodeEqID_kokkos =Kokkos:: View<int****, PHX::Device ("wsElNodeEqID_kokkos",workset. wsElNodeEqID.size(), workset. wsElNodeEqID[0].size(), workset. wsElNodeEqID[0][0].size());
   }
 
   // Assemble the residual into a non-overlapping vector
+  PUSH_RANGE("Assemble Residual",4);
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+  POP_RANGE;
 
   //Allocate scaleVec_
   if (scaleVec_ == Teuchos::null && scale != 1.0) {
@@ -1246,7 +1259,6 @@ computeGlobalResidualImplT(
 #endif
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
-
   if (dfm!=Teuchos::null) {
     PHAL::Workset workset;
 
@@ -1280,7 +1292,8 @@ computeGlobalResidualImplT(
 
   //scale residual by scaleVec_ if scaleBCdofs is on 
   if (scaleBCdofs == true) 
-    fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0); 
+    fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
+
 }
 
 #if defined(ALBANY_EPETRA)

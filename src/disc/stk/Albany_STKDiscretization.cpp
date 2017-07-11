@@ -258,6 +258,12 @@ Albany::STKDiscretization::getWsElNodeEqID() const
   return wsElNodeEqID;
 }
 
+const Kokkos::vector<Kokkos::View<LO***, PHX::Device>>&
+Albany::STKDiscretization::getWsElNodeEqIDKokkos() const
+{
+  return wsElNodeEqID_kokkos;
+}
+
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
 Albany::STKDiscretization::getWsElNodeID() const
 {
@@ -1618,7 +1624,6 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeEqID[b].resize(buck.size());
-    //wsElNodeEqID_kokkos[b].resize(buck.size());
     wsElNodeID[b].resize(buck.size());
     coords[b].resize(buck.size());
 
@@ -1794,9 +1799,20 @@ void Albany::STKDiscretization::computeWorksetInfo()
 */
     }
   }
-//Kopy workset to the Kokkos data
- //wsElNodeEqID_kokkos=Kokkos::View<int****, PHX::Device>("wsElNodeEqID_kokkos",numBuckets,wsElNodeEqID[0].size(),wsElNodeEqID[0][0].size(), neq);
 
+  // Copy workset data to Kokkos Views
+  // Note: Does not support variable nodes per element
+  wsElNodeEqID_kokkos.resize(numBuckets);
+  for (int b = 0; b < numBuckets; b++) {
+    const int buckSize = wsElNodeEqID[b].size();
+    const int nodes_per_element = wsElNodeEqID[b][0].size();
+
+    wsElNodeEqID_kokkos[b] = Kokkos::View<LO***, PHX::Device>("wsElNodeEqID_kokkos", buckSize, nodes_per_element, neq);
+    for (int i = 0; i < buckSize; i++)
+      for (int j = 0; j < nodes_per_element; j++)
+        for (int eq = 0; eq < neq; eq++)
+          wsElNodeEqID_kokkos[b](i, j, eq) = wsElNodeEqID[b][i][j][eq];
+  }
 
  for (int d=0; d<stkMeshStruct->numDim; d++) {
   if (stkMeshStruct->PBCStruct.periodic[d]) {

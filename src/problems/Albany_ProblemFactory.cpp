@@ -85,6 +85,7 @@
 
 #ifdef ALBANY_AERAS
 #include "Aeras/problems/Aeras_ShallowWaterProblem.hpp"
+#include "Aeras/problems/Aeras_ShallowWaterProblemNoAD.hpp"
 #include "Aeras/problems/Aeras_XZScalarAdvectionProblem.hpp"
 #include "Aeras/problems/Aeras_XScalarAdvectionProblem.hpp"
 #include "Aeras/problems/Aeras_XZHydrostaticProblem.hpp"
@@ -390,6 +391,9 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Aeras Shallow Water 3D" ) {
     strategy = rcp(new Aeras::ShallowWaterProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "Aeras Shallow Water No AD 3D" ) {
+    strategy = rcp(new Aeras::ShallowWaterProblemNoAD(problemParams, paramLib, 3));
   }
   else if (method == "Aeras XZ Scalar Advection" ) {
     strategy = rcp(new Aeras::XZScalarAdvectionProblem(problemParams, paramLib, 2));

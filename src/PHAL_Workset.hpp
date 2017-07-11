@@ -169,7 +169,7 @@ struct Workset {
   bool transpose_dist_param_deriv;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > local_Vp;
 
-  Kokkos::View<int***, PHX::Device> wsElNodeEqID_kokkos;
+  Kokkos::View<LO***, PHX::Device> wsElNodeEqID_kokkos;
   std::vector<PHX::index_size_type> Jacobian_deriv_dims;
   std::vector<PHX::index_size_type> Tangent_deriv_dims;
 

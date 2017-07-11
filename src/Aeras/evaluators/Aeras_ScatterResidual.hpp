@@ -85,14 +85,30 @@ public:
   Kokkos::View<int***, PHX::Device> Index;
   Kokkos::View<ST*, PHX::Device> fT_nonconstView;
 
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
+
   struct ScatterResid_Tag{};
 
-  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using ScatterResid_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>>;
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterResid_Tag> ScatterResid_Policy;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename ScatterResid_Policy::tile_type 
+    ScatterResid_TileSize{{256,1}};
+#else
+  typename ScatterResid_Policy::tile_type 
+    ScatterResid_TileSize{};
+#endif
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterResid_Tag& tag, const int& i) const;
+  void operator() (const int cell, const int node) const;
 
 private:
   typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;

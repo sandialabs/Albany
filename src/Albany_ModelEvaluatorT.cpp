@@ -11,7 +11,7 @@
 #include "Teuchos_ScalarTraits.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Tpetra_ConfigDefs.hpp"
-
+#include "Albany_Utils.hpp"
 
 //IK, 4/24/15: adding option to write the mass matrix to matrix market file, which is needed
 //for some applications.  Uncomment the following line to turn on.
@@ -721,9 +721,11 @@ Albany::ModelEvaluatorT::evalModelImpl(
         NULL, f_derivT, dummy_derivT, dummy_derivT, dummy_derivT);
   } else {
     if (Teuchos::nonnull(fT_out) && !f_already_computed) {
+      PUSH_RANGE("computeGlobalResidualT",0);
       app->computeGlobalResidualT(
           curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
           sacado_param_vec, *fT_out);
+      POP_RANGE;
     }
   }
 
