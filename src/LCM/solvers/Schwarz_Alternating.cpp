@@ -642,11 +642,6 @@ SchwarzLoop() const
         ams.exoOutput = output_interval_ > 0 ?
             (num_iter_ + 1) % output_interval_ == 0 : false;
 
-        // Propagate previous solution if this is not the first step
-        //if (stop > 0) {
-        //  in_args.set_x(solutions_[subdomain]);
-        //}
-
         // Solve for each subdomain
         Thyra::ResponseOnlyModelEvaluatorBase<ST> &
         solver = *(solvers_[subdomain]);
@@ -658,8 +653,6 @@ SchwarzLoop() const
         out_args = solver.createOutArgs();
 
         solver.evalModel(in_args, out_args);
-
-        //solutions_[subdomain] = in_args.get_x();
 
         // After solve, get info to check convergence
         Teuchos::RCP<SolutionSniffer>
