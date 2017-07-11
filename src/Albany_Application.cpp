@@ -97,6 +97,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
     params_(params), 
     requires_sdbcs_(false), 
     requires_orig_dbcs_(false),
+    no_dir_bcs_(false),
     loca_sdbcs_valid_nonlin_solver_(true) 
 {
 #if defined(ALBANY_EPETRA)
@@ -120,6 +121,7 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
     phxGraphVisDetail(0),
     stateGraphVisDetail(0),
     requires_sdbcs_(false), 
+    no_dir_bcs_(false),
     loca_sdbcs_valid_nonlin_solver_(true), 
     requires_orig_dbcs_(false)
 {
@@ -292,6 +294,12 @@ void Albany::Application::initialSetUp(
     Teuchos::ParameterList &
     piro_params = params->sublist("Piro");
 
+    bool const 
+    have_dbcs = params->isSublist("Dirichlet BCs"); 
+
+    if (have_dbcs == false) 
+      no_dir_bcs_ = true;   
+ 
     bool const
     have_tempus = piro_params.isSublist("Tempus");
 
@@ -689,7 +697,7 @@ void Albany::Application::buildProblem()
         "Error in Albany::Application: you are using a Nonlinear Solver other than 'Line Search Based' with SDBCs, which is not supported!  Please re-run with Nonlinear Solver = Line Search Based.\n"); 
   }
 
-  if ((requires_sdbcs_ == true) && (problem->useSDBCs() == false)) 
+  if ((requires_sdbcs_ == true) && (problem->useSDBCs() == false) && (no_dir_bcs_ == false)) 
   {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,

@@ -1066,6 +1066,8 @@ namespace Albany {
 #endif //ALBANY_LCM
 
   protected:
+
+    bool no_dir_bcs_; 
  
     bool loca_sdbcs_valid_nonlin_solver_; 
  
