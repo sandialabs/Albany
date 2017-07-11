@@ -62,6 +62,9 @@ SchwarzAlternating(
   solvers_.resize(num_subdomains_);
   convergence_ops_.resize(num_subdomains_);
   stk_mesh_structs_.resize(num_subdomains_);
+  model_evaluators_.resize(num_subdomains_);
+  sub_inargs_.resize(num_subdomains_);
+  sub_outargs_.resize(num_subdomains_);
 
   // Initialization
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
@@ -154,6 +157,21 @@ SchwarzAlternating(
     ams = stk_disc.getSTKMeshStruct();
 
     stk_mesh_structs_[subdomain] = ams;
+
+    model_evaluators_[subdomain] = solver_factory.returnModelT();
+
+    auto
+    me = model_evaluators_[subdomain];
+
+    auto &
+    sia = sub_inargs_[subdomain];
+
+    sia = me->createInArgs();
+
+    auto &
+    soa = sub_outargs_[subdomain];
+
+    soa = me->createOutArgs();
   }
 
   //
@@ -409,11 +427,6 @@ createInArgsImpl() const
   ias.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_beta, true);
   ias.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_W_x_dot_dot_coeff, true);
 
-  sub_inargs_.resize(num_subdomains_);
-  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
-    sub_inargs_[subdomain] = solvers_[subdomain]->createInArgs();
-  }
-
   return ias;
 }
 
@@ -438,11 +451,6 @@ createOutArgsImpl() const
           Thyra::ModelEvaluatorBase::DERIV_LINEARITY_UNKNOWN,
           Thyra::ModelEvaluatorBase::DERIV_RANK_FULL,
           true));
-
-  sub_outargs_.resize(num_subdomains_);
-  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
-    sub_outargs_[subdomain] = solvers_[subdomain]->createOutArgs();
-  }
 
   return oas;
 }
@@ -634,20 +642,20 @@ SchwarzLoop() const
         ams.exoOutput = output_interval_ > 0 ?
             (num_iter_ + 1) % output_interval_ == 0 : false;
 
-        // Solve for each subdomain
-        Thyra::ResponseOnlyModelEvaluatorBase<ST> &
-        solver = *(solvers_[subdomain]);
-
-        Thyra::ModelEvaluatorBase::InArgs<ST> &
-        in_args = sub_inargs_[subdomain];
-
         // Propagate previous solution if this is not the first step
         //if (stop > 0) {
         //  in_args.set_x(solutions_[subdomain]);
         //}
 
-        Thyra::ModelEvaluatorBase::OutArgs<ST> &
-        out_args = sub_outargs_[subdomain];
+        // Solve for each subdomain
+        Thyra::ResponseOnlyModelEvaluatorBase<ST> &
+        solver = *(solvers_[subdomain]);
+
+        Thyra::ModelEvaluatorBase::InArgs<ST>
+        in_args = solver.createInArgs();
+
+        Thyra::ModelEvaluatorBase::OutArgs<ST>
+        out_args = solver.createOutArgs();
 
         solver.evalModel(in_args, out_args);
 

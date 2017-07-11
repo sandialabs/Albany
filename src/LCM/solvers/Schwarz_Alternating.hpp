@@ -210,6 +210,9 @@ private:
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST>>
   sub_outargs_;
+
+  mutable Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
+  model_evaluators_;
 };
 
 } // namespace LCM
