@@ -92,6 +92,9 @@ runPostSolve(NOX::Solver::Generic const & solver)
   NOX::Abstract::Vector const &
   y = solver.getSolutionGroup().getX();
 
+  // Save solution
+  last_soln_ = y.clone();
+
   norm_final_ = y.norm();
 
   NOX::Abstract::Vector const &
@@ -157,6 +160,16 @@ SolutionSniffer::
 getDifferenceNorm()
 {
   return norm_diff_;
+}
+
+//
+//
+//
+Teuchos::RCP<NOX::Abstract::Vector>
+SolutionSniffer::
+getLastSoln()
+{
+  return last_soln_;
 }
 
 } // namespace LCM
