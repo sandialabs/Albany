@@ -645,6 +645,12 @@ SchwarzLoop() const
         Thyra::ModelEvaluatorBase::OutArgs<ST>
         out_args = solver.createOutArgs();
 
+        auto &
+        me = dynamic_cast<Albany::ModelEvaluatorT &>
+             (*model_evaluators_[subdomain]);
+
+        me.getNominalValues().set_t(current_time);
+
         // Use previous solution as initial condition for next step
         if (stop > 0) {
           Teuchos::RCP<NOX::Thyra::Vector>
@@ -653,10 +659,6 @@ SchwarzLoop() const
 
           Teuchos::RCP<Thyra::VectorBase<ST>>
           x = ntv->getThyraRCPVector();
-
-          auto &
-          me = dynamic_cast<Albany::ModelEvaluatorT &>
-               (*model_evaluators_[subdomain]);
 
           me.getNominalValues().set_x(x);
         }
@@ -674,9 +676,7 @@ SchwarzLoop() const
       }
 
       norm_init_ = minitensor::norm(norms_init);
-
       norm_final_ = minitensor::norm(norms_final);
-
       norm_diff_ = minitensor::norm(norms_diff);
 
       updateConvergenceCriterion();
