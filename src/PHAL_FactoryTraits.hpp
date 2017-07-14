@@ -23,6 +23,7 @@
 #include "LCM/evaluators/Time.hpp"
 #if defined(HAVE_STK)
 #include "LCM/evaluators/bc/SchwarzBC.hpp"
+#include "LCM/evaluators/bc/StrongSchwarzBC.hpp"
 #endif // HAVE_STK
 #endif // ALBANY_LCM
 
@@ -81,7 +82,8 @@ namespace PHAL {
     static const int id_strong_dbc                     = 11; // Only for LCM probs
     static const int id_timedep_sdbc                   = 12; // Only for LCM probs
     static const int id_schwarz_bc                     = 13; // Only for LCM probs
-    static const int id_pd_neigh_fit_bc                = 14; // Only for LCM-Peridigm coupling
+    static const int id_strong_schwarz_bc              = 14; // Only for LCM probs
+    static const int id_pd_neigh_fit_bc                = 15; // Only for LCM-Peridigm coupling
 
     typedef Sacado::mpl::vector<
         PHAL::Dirichlet<_,Traits>,                //  0
@@ -107,7 +109,8 @@ namespace PHAL {
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
         ,
         LCM::SchwarzBC<_, Traits>,                 // 13
-        LCM::PDNeighborFitBC<_, Traits>           //  14
+        LCM::StrongSchwarzBC<_, Traits>,           // 14
+        LCM::PDNeighborFitBC<_, Traits>            // 15
 #endif
         > EvaluatorTypes;
 };

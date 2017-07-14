@@ -677,6 +677,54 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
   }
 
   ///
+  /// Strong Schwarz BC specific
+  ///
+  for (auto i = 0; i < nodeSetIDs.size(); ++i) {
+    string ss = traits_type::constructStrongDBCName(nodeSetIDs[i], "Schwarz");
+
+    if (BCparams.isSublist(ss)) {
+      // grab the sublist
+      ParameterList& sub_list = BCparams.sublist(ss);
+
+      if (sub_list.get<string>("BC Function") == "Schwarz") {
+        RCP<ParameterList> p = rcp(new ParameterList);
+
+        p->set<int>("Type", traits_type::typeSw);
+
+        p->set<string>(
+            "Coupled Application", sub_list.get<string>("Coupled Application"));
+
+        p->set<string>("Coupled Block", sub_list.get<string>("Coupled Block"));
+
+        // Get the application from the main parameters list above
+        // and pass it to the Schwarz BC evaluator.
+        Teuchos::RCP<Albany::Application> const& application =
+            params->get<Teuchos::RCP<Albany::Application>>("Application");
+
+        p->set<Teuchos::RCP<Albany::Application>>("Application", application);
+
+        // Fill up ParameterList with things DirichletBase wants
+        p->set<RCP<DataLayout>>("Data Layout", dummy);
+        p->set<string>("Dirichlet Name", ss);
+        p->set<RealType>("Dirichlet Value", 0.0);
+        p->set<string>("Node Set ID", nodeSetIDs[i]);
+        p->set<int>("Equation Offset", 0);
+        for (std::size_t j = 0; j < bcNames.size(); j++) {
+          offsets_[i].push_back(j);
+        }
+        // if set to zero, the cubature degree of the side
+        // will be set to that of the element
+        p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0));
+        p->set<RCP<ParamLib>>("Parameter Library", paramLib);
+
+        evaluators_to_build[evaluatorsToBuildName(ss)] = p;
+
+        bcs->push_back(ss);
+      }
+    }
+  }
+
+  ///
   /// Kfield BC specific
   ///
   for (std::size_t i = 0; i < nodeSetIDs.size(); i++) {

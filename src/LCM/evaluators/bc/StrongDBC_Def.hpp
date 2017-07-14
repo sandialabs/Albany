@@ -47,10 +47,10 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   std::vector<std::vector<int>> const &
   ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-  for (size_t node = 0; node < ns_nodes.size(); node++) {
+  for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
 
     int const
-    dof = ns_nodes[node][this->offset];
+    dof = ns_nodes[ns_node][this->offset];
 
     f_view[dof] = 0.0;
     x_view[dof] = this->value;
@@ -104,7 +104,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   std::vector<std::vector<int>> const &
   ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-  bool
+  bool const
   fill_residual = f != Teuchos::null;
 
   Teuchos::ArrayRCP<ST>
@@ -125,43 +125,43 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::Array<LO>
   indices;
 
-  for (size_t node = 0; node < ns_nodes.size(); node++) {
+  for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
 
-      int const
-      dof = ns_nodes[node][this->offset];
+    int const
+    dof = ns_nodes[ns_node][this->offset];
 
-      if (fill_residual == true) {
-        f_view[dof] = 0.0;
-        x_view[dof] = this->value.val();
-      }
+    if (fill_residual == true) {
+      f_view[dof] = 0.0;
+      x_view[dof] = this->value.val();
+    }
 
-      size_t const
-      num_rows = J->getNodeNumRows();
+    size_t const
+    num_rows = J->getNodeNumRows();
 
-      for (size_t row = 0; row < num_rows; ++row) {
+    for (size_t row = 0; row < num_rows; ++row) {
 
-        size_t
-        num_cols = J->getNumEntriesInLocalRow(row);
+      size_t
+      num_cols = J->getNumEntriesInLocalRow(row);
 
-        entries.resize(num_cols);
-        indices.resize(num_cols);
+      entries.resize(num_cols);
+      indices.resize(num_cols);
 
-        index[0] = dof;
-        entry[0] = 0.0;
+      index[0] = dof;
+      entry[0] = 0.0;
 
-        J->getLocalRowCopy(row, indices(), entries(), num_cols);
+      J->getLocalRowCopy(row, indices(), entries(), num_cols);
 
-        if (row == dof) {
-          // Set entries other than the diagonal to zero
-          for (size_t col = 0; col < num_cols; ++col) {
-            if (col != dof) entries[col] = 0.0;
-          }
-          J->replaceLocalValues(dof, indices(), entries());
-        } else {
-          J->replaceLocalValues(row, index(), entry());
+      if (row == dof) {
+        // Set entries other than the diagonal to zero
+        for (size_t col = 0; col < num_cols; ++col) {
+          if (col != dof) entries[col] = 0.0;
         }
-
+        J->replaceLocalValues(dof, indices(), entries());
+      } else {
+        J->replaceLocalValues(row, index(), entry());
       }
+
+    }
 
   }
   return;
