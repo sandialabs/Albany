@@ -48,9 +48,9 @@ private:
   void evaluateFieldsCell (typename Traits::EvalData d, ScalarT mu, ScalarT lambda, ScalarT power);
 
   // Coefficients for computing beta (if not given)
-  PHX::MDField<ScalarT,Dim> muParam;              // Coulomb friction coefficient
-  PHX::MDField<ScalarT,Dim> lambdaParam;          // Bed bumps avg length divided by bed bumps avg slope (for REGULARIZED_COULOMB only)
-  PHX::MDField<ScalarT,Dim> powerParam;           // Exponent (for POWER_LAW and REGULARIZED COULOMB only)
+  PHX::MDField<const ScalarT,Dim> muParam;              // Coulomb friction coefficient
+  PHX::MDField<const ScalarT,Dim> lambdaParam;          // Bed bumps avg length divided by bed bumps avg slope (for REGULARIZED_COULOMB only)
+  PHX::MDField<const ScalarT,Dim> powerParam;           // Exponent (for POWER_LAW and REGULARIZED COULOMB only)
 
   ScalarT printedMu;
   ScalarT printedLambda;
@@ -60,11 +60,11 @@ private:
   double A;               // Constant value for the flowFactorA field (for REGULARIZED_COULOMB only)
 
   // Input:
-  PHX::MDField<ParamScalarT>  beta_given_field;
-  PHX::MDField<IceScalarT>    u_norm;
-  PHX::MDField<HydroScalarT>  N;
-  PHX::MDField<ParamScalarT>  lambdaField;
-  PHX::MDField<MeshScalarT>   coordVec;
+  PHX::MDField<const ParamScalarT>  beta_given_field;
+  PHX::MDField<const IceScalarT>    u_norm;
+  PHX::MDField<const HydroScalarT>  N;
+  PHX::MDField<const ParamScalarT>  lambdaField;
+  PHX::MDField<const MeshScalarT>   coordVec;
 
   // Output:
   PHX::MDField<ScalarT>       beta;

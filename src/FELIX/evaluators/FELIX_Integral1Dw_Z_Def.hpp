@@ -24,14 +24,14 @@ template<typename EvalT, typename Traits>
 Integral1Dw_ZBase<EvalT, Traits>::
 Integral1Dw_ZBase(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl) :
-			basal_melt_rate		(p.get<std::string>("Basal Melt Rate Variable Name"), dl->node_scalar),
-			thickness			(p.get<std::string>("Thickness Variable Name"), dl->node_scalar),
-			int1Dw_z			(p.get<std::string>("Integral1D w_z Variable Name"), dl->node_scalar)
+  basal_melt_rate (p.get<std::string>("Basal Melt Rate Variable Name"), dl->node_scalar),
+  thickness       (p.get<std::string>("Thickness Variable Name"), dl->node_scalar),
+  int1Dw_z        (p.get<std::string>("Integral1D w_z Variable Name"), dl->node_scalar)
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-  this->addDependentField(basal_melt_rate.fieldTag());
-  this->addDependentField(thickness.fieldTag());
+  this->addDependentField(basal_melt_rate);
+  this->addDependentField(thickness);
 
   this->addEvaluatedField(int1Dw_z);
   cell_topo = p.get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
@@ -44,13 +44,13 @@ Integral1Dw_ZBase(const Teuchos::ParameterList& p,
   StokesThermoCoupled = p.get<bool>("Stokes and Thermo coupled");
   if(StokesThermoCoupled)
   {
-  	offset = 2; // it identifies the right variable to consider (in this case w_z)
-  	neq = 4;	// Stokes FO + w_z + Enthalpy
+    offset = 2; // it identifies the right variable to consider (in this case w_z)
+    neq = 4;  // Stokes FO + w_z + Enthalpy
   }
-  else	//(just Enthalpy + w_z)
+  else  //(just Enthalpy + w_z)
   {
-  	offset = 1;
-  	neq = 2;
+    offset = 1;
+    neq = 2;
   }
 
   this->setName("Integral1Dw_Z"+PHX::typeAsString<EvalT>());
@@ -83,7 +83,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     Kokkos::deep_copy(this->int1Dw_z.get_view(), ScalarT(0.0));
 
-  	const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
     const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
@@ -94,39 +94,39 @@ evaluateFields(typename Traits::EvalData workset)
 
     for ( std::size_t cell = 0; cell < workset.numCells; ++cell )
     {
-    	const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
+      const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
 
-    	for (std::size_t node = 0; node < this->numNodes; ++node)
-    	{
-    		LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[node]);
-    		layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
+      for (std::size_t node = 0; node < this->numNodes; ++node)
+      {
+        LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[node]);
+        layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
 
-    		if(ilayer==0)
-    			basalCellsMap[baseId]= std::make_pair(cell,node);
+        if(ilayer==0)
+          basalCellsMap[baseId]= std::make_pair(cell,node);
 
-    		double int1D = 0;
+        double int1D = 0;
 
-    		for (int il = 0; il < ilayer; ++il)
-    		{
-    			LO inode0 = layeredMeshNumbering.getId(baseId, il);
-    			LO inode1 = layeredMeshNumbering.getId(baseId, il+1);
-    			int1D += 0.5 * ( xT_constView[solDOFManager.getLocalDOF(inode0, this->offset)] + xT_constView[solDOFManager.getLocalDOF(inode1, this->offset)] ) * layers_ratio[il];
-    		}
+        for (int il = 0; il < ilayer; ++il)
+        {
+          LO inode0 = layeredMeshNumbering.getId(baseId, il);
+          LO inode1 = layeredMeshNumbering.getId(baseId, il+1);
+          int1D += 0.5 * ( xT_constView[solDOFManager.getLocalDOF(inode0, this->offset)] + xT_constView[solDOFManager.getLocalDOF(inode1, this->offset)] ) * layers_ratio[il];
+        }
 
-    		this->int1Dw_z(cell,node) = int1D * this->thickness(cell,node);
-    	}
+        this->int1Dw_z(cell,node) = int1D * this->thickness(cell,node);
+      }
     }
 
     for ( std::size_t cell = 0; cell < workset.numCells; ++cell )
     {
-    	const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
+      const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
 
-    	for (std::size_t node = 0; node < this->numNodes; ++node)
-    	{
-    		LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[node]);
-    		layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
+      for (std::size_t node = 0; node < this->numNodes; ++node)
+      {
+        LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[node]);
+        layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
         this->int1Dw_z(cell,node) += this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second);
-    	}
+      }
     }
 }
 
@@ -145,9 +145,9 @@ evaluateFields(typename Traits::EvalData workset)
     Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
     Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
-  	Kokkos::deep_copy(this->int1Dw_z.get_view(), ScalarT(0.0));
+    Kokkos::deep_copy(this->int1Dw_z.get_view(), ScalarT(0.0));
 
-  	const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
     const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
@@ -160,58 +160,58 @@ evaluateFields(typename Traits::EvalData workset)
 
     for ( std::size_t cell = 0; cell < workset.numCells; ++cell )
     {
-    	const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
+      const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
 
-    	for (std::size_t node = 0; node < this->numNodes; ++node)
-    	{
-    		LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[node]);
-    		layeredMeshNumbering.getIndices(lnodeId, baseId, ilevel);
+      for (std::size_t node = 0; node < this->numNodes; ++node)
+      {
+        LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[node]);
+        layeredMeshNumbering.getIndices(lnodeId, baseId, ilevel);
 
-    		if(ilevel==0)
-    			basalCellsMap[baseId]= std::make_pair(cell,node);
+        if(ilevel==0)
+          basalCellsMap[baseId]= std::make_pair(cell,node);
 
-    		double int1D = 0;
+        double int1D = 0;
 
-    		for (int il = 0; il < ilevel; ++il)
-    		{
-    			LO inode0 = layeredMeshNumbering.getId(baseId, il);
-    			LO inode1 = layeredMeshNumbering.getId(baseId, il+1);
-    			int1D += 0.5 * ( xT_constView[solDOFManager.getLocalDOF(inode0, this->offset)] + xT_constView[solDOFManager.getLocalDOF(inode1, this->offset)] ) * layers_ratio[il];
-    		}
+        for (int il = 0; il < ilevel; ++il)
+        {
+          LO inode0 = layeredMeshNumbering.getId(baseId, il);
+          LO inode1 = layeredMeshNumbering.getId(baseId, il+1);
+          int1D += 0.5 * ( xT_constView[solDOFManager.getLocalDOF(inode0, this->offset)] + xT_constView[solDOFManager.getLocalDOF(inode1, this->offset)] ) * layers_ratio[il];
+        }
 
-    		this->int1Dw_z(cell,node) = FadType(this->int1Dw_z(cell,node).size(), int1D);
-    	}
+        this->int1Dw_z(cell,node) = FadType(this->int1Dw_z(cell,node).size(), int1D);
+      }
     }
 
     for ( std::size_t cell = 0; cell < workset.numCells; ++cell )
     {
-    	const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
+      const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
 
-    	for (std::size_t node = 0; node < this->numNodes; ++node)
-    	{
-    		LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[node]);
-    		layeredMeshNumbering.getIndices(lnodeId, baseId, ilevel);
+      for (std::size_t node = 0; node < this->numNodes; ++node)
+      {
+        LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[node]);
+        layeredMeshNumbering.getIndices(lnodeId, baseId, ilevel);
 
 
-    		// TODO implement the derivative for the extra term mb
-    		for (std::size_t node_curr = 0; node_curr < this->numNodes; ++node_curr)
-        	{
-        		LO lnodeId_curr = nodeID[node_curr];
-        	    layeredMeshNumbering.getIndices(lnodeId_curr, baseId_curr, ilevel_curr);
-        	    if (baseId_curr == baseId)
-        	    {
-        	    	int idx = this->neq * node_curr + this->offset;
-        	    	//int idx = this->offset * this->numNodes + node_curr;
+        // TODO implement the derivative for the extra term mb
+        for (std::size_t node_curr = 0; node_curr < this->numNodes; ++node_curr)
+          {
+            LO lnodeId_curr = nodeID[node_curr];
+              layeredMeshNumbering.getIndices(lnodeId_curr, baseId_curr, ilevel_curr);
+              if (baseId_curr == baseId)
+              {
+                int idx = this->neq * node_curr + this->offset;
+                //int idx = this->offset * this->numNodes + node_curr;
 
-        	    	if(ilevel_curr == ilevel - 1)
-        	    		this->int1Dw_z(cell,node).fastAccessDx(idx) = 0.5 * layers_ratio[ilevel_curr] * workset.j_coeff;
+                if(ilevel_curr == ilevel - 1)
+                  this->int1Dw_z(cell,node).fastAccessDx(idx) = 0.5 * layers_ratio[ilevel_curr] * workset.j_coeff;
 
-        	    	if( ((ilevel_curr == ilevel)||(ilevel_curr == ilevel - 1))&&(ilevel_curr > 0) )
-        	    		this->int1Dw_z(cell,node).fastAccessDx(idx) += 0.5 * layers_ratio[ilevel_curr - 1] * workset.j_coeff;
-        	    }
-        	}
+                if( ((ilevel_curr == ilevel)||(ilevel_curr == ilevel - 1))&&(ilevel_curr > 0) )
+                  this->int1Dw_z(cell,node).fastAccessDx(idx) += 0.5 * layers_ratio[ilevel_curr - 1] * workset.j_coeff;
+              }
+          }
 
-    		this->int1Dw_z(cell,node) *= this->thickness(cell,node);
+        this->int1Dw_z(cell,node) *= this->thickness(cell,node);
         //FadType mb = (lnodeId == baseId) ? this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second)  :
             //                 Albany::ADValue(this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second)) ;
 
@@ -220,7 +220,7 @@ evaluateFields(typename Traits::EvalData workset)
           else
             this->int1Dw_z(cell,node) += Albany::ADValue(this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second));
 
-    	}
+      }
     }
 }
 

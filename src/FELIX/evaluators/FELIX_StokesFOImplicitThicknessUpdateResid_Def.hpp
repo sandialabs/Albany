@@ -21,27 +21,25 @@ namespace FELIX {
 template<typename EvalT, typename Traits>
 StokesFOImplicitThicknessUpdateResid<EvalT, Traits>::
 StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl_full,
-              const Teuchos::RCP<Albany::Layouts>& dl_ice) :
-  wBF      (p.get<std::string> ("Weighted BF Name"), dl_full->node_qp_scalar),
-  gradBF  (p.get<std::string> ("Gradient BF Name"),dl_full->node_qp_gradient),
-  dH    (p.get<std::string> ("Thickness Increment Variable Name"), dl_full->node_scalar),
-  InputResidual    (p.get<std::string> ("Input Residual Name"), dl_ice->node_vector),
-  Residual (p.get<std::string> ("Residual Name"), dl_full->node_vector)
+                                     const Teuchos::RCP<Albany::Layouts>& dl_full,
+                                     const Teuchos::RCP<Albany::Layouts>& dl_ice) :
+  wBF           (p.get<std::string> ("Weighted BF Name"), dl_full->node_qp_scalar),
+  gradBF        (p.get<std::string> ("Gradient BF Name"),dl_full->node_qp_gradient),
+  dH            (p.get<std::string> ("Thickness Increment Variable Name"), dl_full->node_scalar),
+  InputResidual (p.get<std::string> ("Input Residual Name"), dl_ice->node_vector),
+  Residual      (p.get<std::string> ("Residual Name"), dl_full->node_vector)
 {
-
-  Teuchos::ParameterList* p_list =
-      p.get<Teuchos::ParameterList*>("Physical Parameter List");
+  Teuchos::ParameterList* p_list = p.get<Teuchos::ParameterList*>("Physical Parameter List");
 
   g = p_list->get<double>("Gravity Acceleration");
   rho = p_list->get<double>("Ice Density");
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-  this->addDependentField(dH.fieldTag());
-  this->addDependentField(wBF.fieldTag());
-  this->addDependentField(gradBF.fieldTag());
-  this->addDependentField(InputResidual.fieldTag());
+  this->addDependentField(dH);
+  this->addDependentField(wBF);
+  this->addDependentField(gradBF);
+  this->addDependentField(InputResidual);
   this->addEvaluatedField(Residual);
 
 
@@ -82,7 +80,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void StokesFOImplicitThicknessUpdateResid<EvalT, Traits>::
-operator() (const StokesFOImplicitThicknessUpdateResid_Tag& tag, const int& cell) const 
+operator() (const StokesFOImplicitThicknessUpdateResid_Tag& tag, const int& cell) const
 {
   double rho_g=rho*g;
 

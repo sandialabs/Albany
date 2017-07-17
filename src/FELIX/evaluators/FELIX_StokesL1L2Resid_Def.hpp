@@ -23,21 +23,21 @@ StokesL1L2Resid(const Teuchos::ParameterList& p,
   UDot       (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_vector),
   force      (p.get<std::string> ("Body Force Name"), dl->qp_vector),
   muFELIX    (p.get<std::string> ("FELIX Viscosity QP Variable Name"), dl->qp_scalar),
-  epsilonXX  (p.get<std::string> ("FELIX EpsilonXX QP Variable Name"), dl->qp_scalar), 
-  epsilonYY  (p.get<std::string> ("FELIX EpsilonYY QP Variable Name"), dl->qp_scalar), 
-  epsilonXY  (p.get<std::string> ("FELIX EpsilonXY QP Variable Name"), dl->qp_scalar), 
+  epsilonXX  (p.get<std::string> ("FELIX EpsilonXX QP Variable Name"), dl->qp_scalar),
+  epsilonYY  (p.get<std::string> ("FELIX EpsilonYY QP Variable Name"), dl->qp_scalar),
+  epsilonXY  (p.get<std::string> ("FELIX EpsilonXY QP Variable Name"), dl->qp_scalar),
   Residual   (p.get<std::string> ("Residual Name"), dl->node_vector)
 {
-  this->addDependentField(U.fieldTag());
-  this->addDependentField(Ugrad.fieldTag());
-  this->addDependentField(force.fieldTag());
-  //this->addDependentField(UDot.fieldTag());
-  this->addDependentField(wBF.fieldTag());
-  this->addDependentField(wGradBF.fieldTag());
-  this->addDependentField(muFELIX.fieldTag());
-  this->addDependentField(epsilonXX.fieldTag());
-  this->addDependentField(epsilonYY.fieldTag());
-  this->addDependentField(epsilonXY.fieldTag());
+  this->addDependentField(U);
+  this->addDependentField(Ugrad);
+  this->addDependentField(force);
+  //this->addDependentField(UDot);
+  this->addDependentField(wBF);
+  this->addDependentField(wGradBF);
+  this->addDependentField(muFELIX);
+  this->addDependentField(epsilonXX);
+  this->addDependentField(epsilonYY);
+  this->addDependentField(epsilonXY);
 
   this->addEvaluatedField(Residual);
 
@@ -57,13 +57,13 @@ StokesL1L2Resid(const Teuchos::ParameterList& p,
 //*out << " in FELIX Stokes L1L2 residual! " << endl;
 //*out << " vecDim = " << vecDim << endl;
 //*out << " numDims = " << numDims << endl;
-//*out << " numQPs = " << numQPs << endl; 
-//*out << " numNodes = " << numNodes << endl; 
+//*out << " numQPs = " << numQPs << endl;
+//*out << " numNodes = " << numNodes << endl;
 
 
 if (vecDim != 2)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-				  std::endl << "Error in FELIX::StokesL1L2Resid constructor:  " <<
-				  "Invalid Parameter vecDim.  Problem implemented for 2 dofs per node only (u and v). " << std::endl);}
+          std::endl << "Error in FELIX::StokesL1L2Resid constructor:  " <<
+          "Invalid Parameter vecDim.  Problem implemented for 2 dofs per node only (u and v). " << std::endl);}
 
 }
 
@@ -96,15 +96,15 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node=0; node < numNodes; ++node) {
             for (std::size_t i=0; i<vecDim; i++)  Residual(cell,node,i)=0.0;
         for (std::size_t qp=0; qp < numQPs; ++qp) {
-           Residual(cell,node,0) += 2.0*muFELIX(cell,qp)*((2.0*epsilonXX(cell,qp) + epsilonYY(cell,qp))*wGradBF(cell,node,qp,0) + 
-                                    epsilonXY(cell,qp)*wGradBF(cell,node,qp,1)) + 
+           Residual(cell,node,0) += 2.0*muFELIX(cell,qp)*((2.0*epsilonXX(cell,qp) + epsilonYY(cell,qp))*wGradBF(cell,node,qp,0) +
+                                    epsilonXY(cell,qp)*wGradBF(cell,node,qp,1)) +
                                     force(cell,qp,0)*wBF(cell,node,qp);
            Residual(cell,node,1) += 2.0*muFELIX(cell,qp)*(epsilonXY(cell,qp)*wGradBF(cell,node,qp,0) +
-                                      (epsilonXX(cell,qp) + 2.0*epsilonYY(cell,qp))*wGradBF(cell,node,qp,1)) 
-                                  + force(cell,qp,1)*wBF(cell,node,qp); 
+                                      (epsilonXX(cell,qp) + 2.0*epsilonYY(cell,qp))*wGradBF(cell,node,qp,1))
+                                  + force(cell,qp,1)*wBF(cell,node,qp);
               }
-      }     
-    }  
+      }
+    }
 }
 
 //**********************************************************************

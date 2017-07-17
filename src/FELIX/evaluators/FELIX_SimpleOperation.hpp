@@ -58,7 +58,7 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ScalarT> field_in;
+  PHX::MDField<const ScalarT> field_in;
 
   // Output:
   PHX::MDField<ScalarT> field_out;

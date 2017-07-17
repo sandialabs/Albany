@@ -24,19 +24,19 @@ namespace FELIX
 
     Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-    velocity  	= PHX::MDField<const Type,Cell,Side,QuadPoint,VecDim>(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
-    beta 	  	= PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl_basal->qp_scalar);
-    BF        	= PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
-    GradBF    	= PHX::MDField<const RealType,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Name"), dl_basal->node_qp_gradient);
-    w_measure 	= PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint> (p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
+    velocity    = PHX::MDField<const Type,Cell,Side,QuadPoint,VecDim>(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
+    beta        = PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl_basal->qp_scalar);
+    BF          = PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
+    GradBF      = PHX::MDField<const RealType,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Name"), dl_basal->node_qp_gradient);
+    w_measure   = PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint> (p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
 
     haveSUPG = p.isParameter("FELIX Enthalpy Stabilization") ? (p.get<Teuchos::ParameterList*>("FELIX Enthalpy Stabilization")->get<std::string>("Type") == "SUPG") : false;
 
-    this->addDependentField(velocity.fieldTag());
-    this->addDependentField(beta.fieldTag());
-    this->addDependentField(BF.fieldTag());
-    this->addDependentField(GradBF.fieldTag());
-    this->addDependentField(w_measure.fieldTag());
+    this->addDependentField(velocity);
+    this->addDependentField(beta);
+    this->addDependentField(BF);
+    this->addDependentField(GradBF);
+    this->addDependentField(w_measure);
 
     this->addEvaluatedField(basalFricHeat);
     this->setName("Basal Friction Heat");

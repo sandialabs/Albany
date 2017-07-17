@@ -16,8 +16,8 @@ namespace FELIX
   template<typename EvalT, typename Traits, typename Type>
   HydrostaticPressure<EvalT,Traits,Type>::
   HydrostaticPressure(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
-  s        	   (p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar),
-  z      		   (p.get<std::string> ("Coordinate Vector Variable Name"),dl->vertices_vector),
+  s            (p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar),
+  z            (p.get<std::string> ("Coordinate Vector Variable Name"),dl->vertices_vector),
   pressure       (p.get<std::string> ("Hydrostatic Pressure Variable Name"), dl->node_scalar)
   {
     std::vector<PHX::Device::size_type> dims;
@@ -25,8 +25,8 @@ namespace FELIX
 
     numNodes = dims[1];
 
-    this->addDependentField(s.fieldTag());
-    this->addDependentField(z.fieldTag());
+    this->addDependentField(s);
+    this->addDependentField(z);
 
     this->addEvaluatedField(pressure);
     this->setName("Hydrostatic Pressure");

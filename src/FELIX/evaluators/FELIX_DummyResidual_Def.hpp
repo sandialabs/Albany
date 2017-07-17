@@ -19,7 +19,7 @@ DummyResidual<EvalT, Traits>::DummyResidual (const Teuchos::ParameterList& p,
   solution (p.get<std::string> ("Solution Variable Name"), dl->node_scalar),
   residual (p.get<std::string> ("Residual Variable Name"),dl->node_scalar)
 {
-  this->addDependentField(solution.fieldTag());
+  this->addDependentField(solution);
   this->addEvaluatedField(residual);
 
   this->setName("DummyResidual"+PHX::typeAsString<EvalT>());
@@ -39,12 +39,9 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 void DummyResidual<EvalT, Traits>::evaluateFields (typename Traits::EvalData /*workset*/)
 {
-  // If initial guess is random, we still want to avoid a non-zero residual, which
-  // would force one iteration of non-linear solver.
-  if (std::is_same<EvalT,PHAL::AlbanyTraits::Residual>::value)
-    residual.deep_copy(0.0);
-  else
-    residual.deep_copy(solution);
+  // Note: if solution!=0 (for EvalT=Residual), then this will trigger
+  //       one iteration of the (non)linear solver.
+  residual.deep_copy(solution);
 }
 
 } // Namespace FELIX

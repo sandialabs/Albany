@@ -44,8 +44,8 @@ ResponseBoundarySquaredL2Norm(Teuchos::ParameterList& p, const Teuchos::RCP<Alba
   numSideDims   = dl_side->node_gradient->dimension(3);
   numSideQPs = dl_side->qp_scalar->dimension(2);
 
-  this->addDependentField(w_side_measure.fieldTag());
-  this->addDependentField(solution.fieldTag());
+  this->addDependentField(w_side_measure);
+  this->addDependentField(solution);
 
   this->setName("Response Boundary Squared L2 Norm" + PHX::typeAsString<EvalT>());
 

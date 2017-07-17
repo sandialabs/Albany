@@ -42,7 +42,7 @@ public:
 
 private:
   // Input:
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> H;

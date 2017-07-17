@@ -37,16 +37,16 @@ namespace FELIX
 
     haveSUPG = p.isParameter("FELIX Enthalpy Stabilization") ? (p.get<Teuchos::ParameterList*>("FELIX Enthalpy Stabilization")->get<std::string>("Type") == "SUPG") : false;
 
-    this->addDependentField(BF.fieldTag());
-    this->addDependentField(w_measure.fieldTag());
-    this->addDependentField(geoFlux.fieldTag());
-    this->addDependentField(velocity.fieldTag());
-    this->addDependentField(beta.fieldTag());
-    this->addDependentField(basal_dTdz.fieldTag());
-    this->addDependentField(enthalpy.fieldTag());
-    this->addDependentField(enthalpyHs.fieldTag());
-    this->addDependentField(diffEnth.fieldTag());
-    this->addDependentField(homotopy.fieldTag());
+    this->addDependentField(BF);
+    this->addDependentField(w_measure);
+    this->addDependentField(geoFlux);
+    this->addDependentField(velocity);
+    this->addDependentField(beta);
+    this->addDependentField(basal_dTdz);
+    this->addDependentField(enthalpy);
+    this->addDependentField(enthalpyHs);
+    this->addDependentField(diffEnth);
+    this->addDependentField(homotopy);
 
     this->addEvaluatedField(enthalpyBasalResid);
     this->setName("Enthalpy Basal Residual");
@@ -54,12 +54,12 @@ namespace FELIX
     if (haveSUPG)
     {
       enthalpyBasalResidSUPG  = decltype(enthalpyBasalResidSUPG)(p.get<std::string> ("Enthalpy Basal Residual SUPG Variable Name"), dl->node_scalar);
-      GradBF    		 = decltype(GradBF)(p.get<std::string> ("Gradient BF Side Name"), dl_basal->node_qp_gradient);
-      verticalVel		 = decltype(verticalVel)(p.get<std::string>("Vertical Velocity Side QP Variable Name"), dl_basal->qp_scalar);
+      GradBF         = decltype(GradBF)(p.get<std::string> ("Gradient BF Side Name"), dl_basal->node_qp_gradient);
+      verticalVel    = decltype(verticalVel)(p.get<std::string>("Vertical Velocity Side QP Variable Name"), dl_basal->qp_scalar);
 
-      this->addDependentField(velocity.fieldTag());
-      this->addDependentField(verticalVel.fieldTag());
-      this->addDependentField(GradBF.fieldTag());
+      this->addDependentField(velocity);
+      this->addDependentField(verticalVel);
+      this->addDependentField(GradBF);
 
       this->addEvaluatedField(enthalpyBasalResidSUPG);
       this->setName("Enthalpy Basal Residual SUPG");

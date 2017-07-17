@@ -44,7 +44,7 @@ ProlongateVectorBase(const Teuchos::ParameterList& p,
                                 "Error! Field layout not supported.\n");
   }
 
-  this->addDependentField(v_in.fieldTag());
+  this->addDependentField(v_in);
   this->addEvaluatedField(v_out);
 
   dims_in.resize(v_in.fieldTag().dataLayout().rank());
@@ -54,10 +54,10 @@ ProlongateVectorBase(const Teuchos::ParameterList& p,
     dims_in[i] = v_in.fieldTag().dataLayout().dimension(i);
     dims_out[i] = v_out.fieldTag().dataLayout().dimension(i);
     TEUCHOS_TEST_FOR_EXCEPTION (dims_in[i]!=dims_out[i], std::logic_error,
-                              "Error! The number of Cell/Nodes/QuadPoints must be the same for both in/out vectors.\n");
+                                "Error! The number of Cell/Nodes/QuadPoints must be the same for both in/out vectors.\n");
   }
   TEUCHOS_TEST_FOR_EXCEPTION (dims_in.back()>dims_out.back(), std::logic_error,
-                            "Error! The input vector dimension is larger than the output (this is not a prolongation).\n");
+                              "Error! The input vector dimension is larger than the output (this is not a prolongation).\n");
 
   pad_value = p.isParameter("Pad Value") ? p.get<double>("Pad Value") : 0.;
   pad_back = p.isParameter("Pad Back") ? p.get<bool>("Pad Back") : true;

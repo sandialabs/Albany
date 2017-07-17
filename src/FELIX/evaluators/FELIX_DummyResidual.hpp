@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #ifndef FELIX_DUMMY_RESIDUAL_HPP
-#define FELIX_DUMMY_RESIDUAL_HPP 1
+#define FELIX_DUMMY_RESIDUAL_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -35,10 +35,10 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ScalarT,Cell,Node>     solution;
+  PHX::MDField<const ScalarT,Cell,Node> solution;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node>     residual;
+  PHX::MDField<ScalarT,Cell,Node>       residual;
 };
 
 } // Namespace FELIX

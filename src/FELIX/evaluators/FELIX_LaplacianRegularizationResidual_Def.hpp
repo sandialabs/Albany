@@ -38,15 +38,15 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   // Get Dimensions
   numCells  = dl->node_scalar->dimension(0);
   numNodes  = dl->node_scalar->dimension(1);
- 
+
   numQPs = dl->qp_scalar->dimension(1);
   cellDim  = cellType->getDimension();
 
-  this->addDependentField(forcing.fieldTag());
-  this->addDependentField(field.fieldTag());
-  this->addDependentField(gradField.fieldTag());
-  this->addDependentField(gradBF.fieldTag());
-  this->addDependentField(w_measure.fieldTag());
+  this->addDependentField(forcing);
+  this->addDependentField(field);
+  this->addDependentField(gradField);
+  this->addDependentField(gradBF);
+  this->addDependentField(w_measure);
 
 
   this->addEvaluatedField(residual);

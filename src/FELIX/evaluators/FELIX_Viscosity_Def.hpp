@@ -48,9 +48,9 @@ Viscosity(const Teuchos::ParameterList& p,
 
   coordVec = decltype(coordVec)(
            p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
-  this->addDependentField(coordVec.fieldTag());
-  this->addDependentField(VGrad.fieldTag());
-  this->addDependentField(homotopyParam.fieldTag());
+  this->addDependentField(coordVec);
+  this->addDependentField(VGrad);
+  this->addDependentField(homotopyParam);
 
   this->addEvaluatedField(mu);
 

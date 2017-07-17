@@ -31,9 +31,9 @@ CismSurfaceGradFO(const Teuchos::ParameterList& p,
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-  this->addDependentField(dsdx_node.fieldTag());
-  this->addDependentField(dsdy_node.fieldTag());
-  this->addDependentField(BF.fieldTag());
+  this->addDependentField(dsdx_node);
+  this->addDependentField(dsdy_node);
+  this->addDependentField(BF);
   this->addEvaluatedField(gradS_qp);
 
   this->setName("CismSurfaceGradFO"+PHX::typeAsString<EvalT>());

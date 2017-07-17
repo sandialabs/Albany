@@ -10,8 +10,10 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Layouts.hpp"
 
+#include <algorithm>
+
 //uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+//#define OUTPUT_TO_SCREEN
 
 namespace FELIX
 {
@@ -34,8 +36,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   Teuchos::ParameterList& beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
   zero_on_floating = beta_list.get<bool> ("Zero Beta On Floating Ice", false);
 
-
   std::string betaType = (beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "Given Field");
+  std::transform(betaType.begin(), betaType.end(),betaType.begin(), ::toupper);
 
   if (IsStokes)
   {
@@ -57,28 +59,28 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(beta);
 
-  if (betaType == "Given Constant")
+  if (betaType == "GIVEN CONSTANT")
   {
-#ifdef OUTPUT_TO_SCREEN
-    *output << "Given constant and uniform beta, value loaded from xml input file.\n";
-#endif
     beta_type = GIVEN_CONSTANT;
     beta_given_val = beta_list.get<double>("Constant Given Beta Value");
+#ifdef OUTPUT_TO_SCREEN
+    *output << "Given constant and uniform beta, value = " << beta_given_val << " (loaded from xml input file).\n";
+#endif
   }
-  else if ((betaType == "Given Field")|| (betaType == "Exponent Of Given Field") || (betaType == "Galerkin Projection Of Exponent Of Given Field"))
+  else if ((betaType == "GIVEN FIELD")|| (betaType == "EXPONENT OF GIVEN FIELD") || (betaType == "GALERKIN PROJECTION OF EXPONENT OF GIVEN FIELD"))
   {
 #ifdef OUTPUT_TO_SCREEN
     *output << "Given constant beta field, loaded from mesh or file.\n";
 #endif
-    if (betaType == "Given Field")
+    if (betaType == "GIVEN FIELD")
       beta_type = GIVEN_FIELD;
-    else if (betaType == "Galerkin Projection Of Exponent Of Given Field")
+    else if (betaType == "GALERKIN PROJECTION OF EXPONENT OF GIVEN FIELD")
       beta_type = GAL_PROJ_EXP_GIVEN_FIELD;
     else
       beta_type = EXP_GIVEN_FIELD;
 
     if(beta_type == GAL_PROJ_EXP_GIVEN_FIELD) {
-      beta_given_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->node_scalar);
+      beta_given_field = PHX::MDField<const ParamScalarT>(beta_list.get<std::string> ("Beta Given Variable Name"), dl->node_scalar);
       this->addDependentField (beta_given_field);
       BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
       this->addDependentField (BF);
@@ -88,7 +90,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       this->addDependentField (beta_given_field);
     }
   }
-  else if (betaType == "Power Law")
+  else if (betaType == "POWER LAW")
   {
     beta_type = POWER_LAW;
 
@@ -121,7 +123,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       this->addDependentField (lambdaParam);
     }
   }
-  else if (betaType == "Regularized Coulomb")
+  else if (betaType == "REGULARIZED COULOMB")
   {
     beta_type = REGULARIZED_COULOMB;
 
@@ -165,7 +167,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     else
     {
       lambdaParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
-      this->addDependentField (lambdaParam.fieldTag());
+      this->addDependentField (lambdaParam);
     }
   }
   else
@@ -368,7 +370,7 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
     if(zero_on_floating)
     {
       for (int qp=0; qp<numQPs; ++qp) {
-        double isGrounded = rho_i*thickness_field(cell,side,qp) > -rho_w*bed_topo_field(cell,side,qp);
+        ParamScalarT isGrounded = rho_i*thickness_field(cell,side,qp) > -rho_w*bed_topo_field(cell,side,qp);
         beta(cell,side,qp) *=  isGrounded;
       }
     }

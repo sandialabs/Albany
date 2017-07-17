@@ -11,6 +11,8 @@
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Albany_Layouts.hpp"
 
+#include <algorithm>
+
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
@@ -20,8 +22,8 @@ namespace FELIX
 template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes>
 BasalFrictionCoefficientNode<EvalT, Traits, IsHydrology, IsStokes>::
 BasalFrictionCoefficientNode (const Teuchos::ParameterList& p,
-                          const Teuchos::RCP<Albany::Layouts>& dl) :
-  beta        (p.get<std::string> ("Basal Friction Coefficient Variable Name"), dl->node_scalar)
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  beta (p.get<std::string> ("Basal Friction Coefficient Variable Name"), dl->node_scalar)
 {
 #ifdef OUTPUT_TO_SCREEN
   Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -35,6 +37,7 @@ BasalFrictionCoefficientNode (const Teuchos::ParameterList& p,
   Teuchos::ParameterList& beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
 
   std::string betaType = (beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "Given Field");
+  std::transform(betaType.begin(), betaType.end(),betaType.begin(), ::toupper);
 
   if (IsStokes)
   {
@@ -54,7 +57,7 @@ BasalFrictionCoefficientNode (const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(beta);
 
-  if (betaType == "Given Constant")
+  if (betaType == "GIVEN CONSTANT")
   {
 #ifdef OUTPUT_TO_SCREEN
     *output << "Given constant and uniform beta, value loaded from xml input file.\n";
@@ -62,7 +65,7 @@ BasalFrictionCoefficientNode (const Teuchos::ParameterList& p,
     beta_type = GIVEN_CONSTANT;
     beta_given_val = beta_list.get<double>("Constant Given Beta Value");
   }
-  else if ((betaType == "Given Field")|| (betaType == "Exponent of Given Field"))
+  else if ((betaType == "GIVEN FIELD")|| (betaType == "EXPONENT OF GIVEN FIELD"))
   {
 #ifdef OUTPUT_TO_SCREEN
     *output << "Given constant beta field, loaded from mesh or file.\n";
@@ -74,9 +77,9 @@ BasalFrictionCoefficientNode (const Teuchos::ParameterList& p,
 
     beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->node_scalar);
 
-    this->addDependentField (beta_given_field.fieldTag());
+    this->addDependentField (beta_given_field);
   }
-  else if (betaType == "Power Law")
+  else if (betaType == "POWER LAW")
   {
     beta_type = POWER_LAW;
 
@@ -87,29 +90,29 @@ BasalFrictionCoefficientNode (const Teuchos::ParameterList& p,
             << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
-    N              = PHX::MDField<HydroScalarT>(p.get<std::string> ("Effective Pressure Variable Name"), dl->node_scalar);
-    u_norm         = PHX::MDField<IceScalarT>(p.get<std::string> ("Sliding Velocity Variable Name"), dl->node_scalar);
-    muParam        = PHX::MDField<ScalarT,Dim>("Coulomb Friction Coefficient", dl->shared_param);
-    powerParam     = PHX::MDField<ScalarT,Dim>("Power Exponent", dl->shared_param);
+    N              = PHX::MDField<const HydroScalarT>(p.get<std::string> ("Effective Pressure Variable Name"), dl->node_scalar);
+    u_norm         = PHX::MDField<const IceScalarT>(p.get<std::string> ("Sliding Velocity Variable Name"), dl->node_scalar);
+    muParam        = PHX::MDField<const ScalarT,Dim>("Coulomb Friction Coefficient", dl->shared_param);
+    powerParam     = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
 
-    this->addDependentField (muParam.fieldTag());
-    this->addDependentField (powerParam.fieldTag());
-    this->addDependentField (u_norm.fieldTag());
-    this->addDependentField (N.fieldTag());
+    this->addDependentField (muParam);
+    this->addDependentField (powerParam);
+    this->addDependentField (u_norm);
+    this->addDependentField (N);
 
     distributedLambda = beta_list.get<bool>("Distributed Bed Roughness",false);
     if (distributedLambda)
     {
       lambdaField = PHX::MDField<ParamScalarT>(p.get<std::string> ("Bed Roughness Variable Name"), dl->node_scalar);
-      this->addDependentField (lambdaField.fieldTag());
+      this->addDependentField (lambdaField);
     }
     else
     {
       lambdaParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
-      this->addDependentField (lambdaParam.fieldTag());
+      this->addDependentField (lambdaParam);
     }
   }
-  else if (betaType == "Regularized Coulomb")
+  else if (betaType == "REGULARIZED COULOMB")
   {
     beta_type = REGULARIZED_COULOMB;
 
@@ -139,21 +142,21 @@ BasalFrictionCoefficientNode (const Teuchos::ParameterList& p,
     muParam        = PHX::MDField<ScalarT,Dim>("Coulomb Friction Coefficient", dl->shared_param);
     powerParam     = PHX::MDField<ScalarT,Dim>("Power Exponent", dl->shared_param);
 
-    this->addDependentField (muParam.fieldTag());
-    this->addDependentField (powerParam.fieldTag());
-    this->addDependentField (N.fieldTag());
-    this->addDependentField (u_norm.fieldTag());
+    this->addDependentField (muParam);
+    this->addDependentField (powerParam);
+    this->addDependentField (N);
+    this->addDependentField (u_norm);
 
     distributedLambda = beta_list.get<bool>("Distributed Bed Roughness",false);
     if (distributedLambda)
     {
       lambdaField = PHX::MDField<ParamScalarT>(p.get<std::string> ("Bed Roughness Variable Name"), dl->node_scalar);
-      this->addDependentField (lambdaField.fieldTag());
+      this->addDependentField (lambdaField);
     }
     else
     {
       lambdaParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
-      this->addDependentField (lambdaParam.fieldTag());
+      this->addDependentField (lambdaParam);
     }
   }
   else

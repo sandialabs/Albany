@@ -17,7 +17,7 @@ AnalyticIceGeometry<EvalT, Traits>::AnalyticIceGeometry (const Teuchos::Paramete
   H         (p.get<std::string> ("Ice Thickness QP Variable Name"), dl->qp_scalar),
   z_s       (p.get<std::string> ("Surface Height QP Variable Name"), dl->qp_scalar)
 {
-  this->addDependentField(coordVec.fieldTag());
+  this->addDependentField(coordVec);
 
   this->addEvaluatedField(z_s);
   this->addEvaluatedField(H);

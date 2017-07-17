@@ -35,7 +35,7 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ParamScalarT,Cell,Node>   smb;
+  PHX::MDField<const ParamScalarT,Cell,Node>   smb;
 
   // Output:
   PHX::MDField<ParamScalarT,Cell,Node>  omega;

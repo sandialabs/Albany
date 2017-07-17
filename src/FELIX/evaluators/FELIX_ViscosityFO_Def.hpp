@@ -68,7 +68,6 @@ ViscosityFO(const Teuchos::ParameterList& p,
   if(useStiffeningFactor)
     stiffeningFactor = decltype(stiffeningFactor)(p.get<std::string> ("Stiffening Factor QP Name"), dl->qp_scalar);
 
-
   A = visc_list->get("Glen's Law A", 1.0);
   n = visc_list->get("Glen's Law n", 3.0);
 
@@ -105,8 +104,8 @@ ViscosityFO(const Teuchos::ParameterList& p,
     *out << "Glen's law viscosity!" << std::endl;
 #endif
     if (useStereographicMap) {
-      this->addDependentField(U.fieldTag());
-      this->addDependentField(coordVec.fieldTag());
+      this->addDependentField(U);
+      this->addDependentField(coordVec);
     }
 
     if (flowRateType == "Uniform")
@@ -119,7 +118,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
     else if (flowRateType == "From File")
     {
       flowRate_type = FROMFILE;
-      this->addDependentField(flowFactorA.fieldTag());
+      this->addDependentField(flowFactorA);
 #ifdef OUTPUT_TO_SCREEN
       *out << "Flow Rate read in from file (exodus or ascii)." << std::endl;
 #endif
@@ -127,7 +126,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
     else if (flowRateType == "From CISM")
     {
       flowRate_type = FROMCISM;
-      this->addDependentField(flowFactorA.fieldTag());
+      this->addDependentField(flowFactorA);
 #ifdef OUTPUT_TO_SCREEN
       *out << "Flow Rate passed in from CISM." << std::endl;
 #endif
@@ -135,7 +134,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
     else if (flowRateType == "Temperature Based")
     {
       flowRate_type = TEMPERATUREBASED;
-      this->addDependentField(temperature.fieldTag());
+      this->addDependentField(temperature);
 #ifdef OUTPUT_TO_SCREEN
       *out << "Flow Rate computed using temperature field." << std::endl;
 #endif
@@ -149,11 +148,11 @@ ViscosityFO(const Teuchos::ParameterList& p,
 #endif
   }
 
-  this->addDependentField(Ugrad.fieldTag());
-  this->addDependentField(homotopyParam.fieldTag());
-  if (visc_type == EXPTRIG) this->addDependentField(coordVec.fieldTag());
+  this->addDependentField(Ugrad);
+  this->addDependentField(homotopyParam);
+  if (visc_type == EXPTRIG) this->addDependentField(coordVec);
   if(useStiffeningFactor)
-    this->addDependentField(stiffeningFactor.fieldTag());
+    this->addDependentField(stiffeningFactor);
   this->addEvaluatedField(mu);
 
   if (extractStrainRateSq)
@@ -270,24 +269,24 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
       }
       else
       {
-      for (int qp=0; qp < numQPs; ++qp)
-      {
-        MeshScalarT x = coordVec(cell,qp,0)-x_0;
-        MeshScalarT y = coordVec(cell,qp,1)-y_0;
-        MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
-        MeshScalarT invh_x = x/2.0/R2;
-        MeshScalarT invh_y = y/2.0/R2;
+        for (int qp=0; qp < numQPs; ++qp)
+        {
+          MeshScalarT x = coordVec(cell,qp,0)-x_0;
+          MeshScalarT y = coordVec(cell,qp,1)-y_0;
+          MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+          MeshScalarT invh_x = x/2.0/R2;
+          MeshScalarT invh_y = y/2.0/R2;
 
-        VelT eps00 = Ugrad(cell,qp,0,0)/h-invh_y*U(cell,qp,1); //epsilon_xx
-        VelT eps01 = (Ugrad(cell,qp,0,1)/h+invh_x*U(cell,qp,0)+Ugrad(cell,qp,1,0)/h+invh_y*U(cell,qp,1))/2.0; //epsilon_xy
-        VelT eps02 = Ugrad(cell,qp,0,2)/2.0; //epsilon_xz
-        VelT eps11 = Ugrad(cell,qp,1,1)/h-invh_x*U(cell,qp,0); //epsilon_yy
-        VelT eps12 = Ugrad(cell,qp,1,2)/2.0; //epsilon_yz
+          VelT eps00 = Ugrad(cell,qp,0,0)/h-invh_y*U(cell,qp,1); //epsilon_xx
+          VelT eps01 = (Ugrad(cell,qp,0,1)/h+invh_x*U(cell,qp,0)+Ugrad(cell,qp,1,0)/h+invh_y*U(cell,qp,1))/2.0; //epsilon_xy
+          VelT eps02 = Ugrad(cell,qp,0,2)/2.0; //epsilon_xz
+          VelT eps11 = Ugrad(cell,qp,1,1)/h-invh_x*U(cell,qp,0); //epsilon_yy
+          VelT eps12 = Ugrad(cell,qp,1,2)/2.0; //epsilon_yz
 
-        epsilonEqpSq = eps00*eps00 + eps11*eps11 + eps00*eps11 + eps01*eps01 + eps02*eps02 + eps12*eps12;
-        epsilonEqpSq += ff; //add regularization "fudge factor"
-        mu(cell,qp) = flowFactorVec*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law
-      }
+          epsilonEqpSq = eps00*eps00 + eps11*eps11 + eps00*eps11 + eps01*eps01 + eps02*eps02 + eps12*eps12;
+          epsilonEqpSq += ff; //add regularization "fudge factor"
+          mu(cell,qp) = flowFactorVec*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law
+        }
       }
     }
     else

@@ -16,7 +16,7 @@ namespace FELIX
   template<typename EvalT, typename Traits>
   Dissipation<EvalT,Traits>::
   Dissipation(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
-  mu        	(p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
+  mu          (p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
   epsilonSq   (p.get<std::string> ("EpsilonSq QP Variable Name"), dl->qp_scalar),
   diss        (p.get<std::string> ("Dissipation QP Variable Name"), dl->qp_scalar)
   {
@@ -25,8 +25,8 @@ namespace FELIX
 
     numQPs = dims[2];
 
-    this->addDependentField(mu.fieldTag());
-    this->addDependentField(epsilonSq.fieldTag());
+    this->addDependentField(mu);
+    this->addDependentField(epsilonSq);
 
     this->addEvaluatedField(diss);
     this->setName("Dissipation");

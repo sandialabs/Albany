@@ -16,7 +16,7 @@
 namespace FELIX {
 
 
- 
+
 //**********************************************************************
 template<typename EvalT, typename Traits>
 UpdateZCoordinateMovingTop<EvalT, Traits>::
@@ -30,11 +30,11 @@ UpdateZCoordinateMovingTop(const Teuchos::ParameterList& p,
 {
   this->addEvaluatedField(coordVecOut);
 
-  this->addDependentField(coordVecIn.fieldTag());
-  this->addDependentField(H0.fieldTag());
-  this->addDependentField(dH.fieldTag());
+  this->addDependentField(coordVecIn);
+  this->addDependentField(H0);
+  this->addDependentField(dH);
 
-  this->addDependentField(topSurface.fieldTag());
+  this->addDependentField(topSurface);
 
   minH = p.isParameter("Minimum Thickness") ? p.get<double>("Minimum Thickness") : 1e-4;
   std::vector<PHX::DataLayout::size_type> dims;
@@ -114,11 +114,11 @@ UpdateZCoordinateMovingBed(const Teuchos::ParameterList& p,
 {
   this->addEvaluatedField(coordVecOut);
 
-  this->addDependentField(coordVecIn.fieldTag());
+  this->addDependentField(coordVecIn);
 
-  this->addDependentField(H.fieldTag());
+  this->addDependentField(H);
 
-  this->addDependentField(topSurface.fieldTag());
+  this->addDependentField(topSurface);
 
   minH = p.isParameter("Minimum Thickness") ? p.get<double>("Minimum Thickness") : 1e-4;
   std::vector<PHX::DataLayout::size_type> dims;

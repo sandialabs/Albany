@@ -28,7 +28,7 @@ SimpleOperationBase (const Teuchos::ParameterList& p,
   field_in  = PHX::MDField<ScalarT> (fieldInName,  layout);
   field_out = PHX::MDField<ScalarT> (fieldOutName, layout);
 
-  this->addDependentField(field_in.fieldTag());
+  this->addDependentField(field_in);
   this->addEvaluatedField(field_out);
 
   this->setName("SimpleOperationBase"+PHX::typeAsString<EvalT>());
@@ -49,7 +49,7 @@ template<typename EvalT, typename Traits, typename ScalarT, typename UnaryOperat
 void SimpleOperationBase<EvalT, Traits, ScalarT, UnaryOperation>::
 evaluateFields (typename Traits::EvalData workset)
 {
-  PHAL::MDFieldIterator<ScalarT> in(field_in);
+  PHAL::MDFieldIterator<const ScalarT> in(field_in);
   PHAL::MDFieldIterator<ScalarT> out(field_out);
   for (; !in.done(); ++in, ++out)
     *out = this->op(*in);

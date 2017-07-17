@@ -17,11 +17,11 @@ namespace FELIX
   Temperature<EvalT,Traits,Type>::
   Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
   meltingTemp    (p.get<std::string> ("Melting Temperature Variable Name"), dl->node_scalar),
-  enthalpyHs	   (p.get<std::string> ("Enthalpy Hs Variable Name"), dl->node_scalar),
-  enthalpy	   (p.get<std::string> ("Enthalpy Variable Name"), dl->node_scalar),
+  enthalpyHs     (p.get<std::string> ("Enthalpy Hs Variable Name"), dl->node_scalar),
+  enthalpy     (p.get<std::string> ("Enthalpy Variable Name"), dl->node_scalar),
   thickness     (p.get<std::string> ("Thickness Variable Name"), dl->node_scalar),
-  temperature	   (p.get<std::string> ("Temperature Variable Name"), dl->node_scalar),
-  diffEnth  	   (p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar)
+  temperature    (p.get<std::string> ("Temperature Variable Name"), dl->node_scalar),
+  diffEnth       (p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar)
   {
 
     Teuchos::RCP<shards::CellTopology> cellType;
@@ -54,10 +54,10 @@ namespace FELIX
         sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
     }
 
-    this->addDependentField(meltingTemp.fieldTag());
-    this->addDependentField(enthalpyHs.fieldTag());
-    this->addDependentField(enthalpy.fieldTag());
-    this->addDependentField(thickness.fieldTag());
+    this->addDependentField(meltingTemp);
+    this->addDependentField(enthalpyHs);
+    this->addDependentField(enthalpy);
+    this->addDependentField(thickness);
 
     this->addEvaluatedField(temperature);
     this->addEvaluatedField(diffEnth);
@@ -66,9 +66,9 @@ namespace FELIX
 
     // Setting parameters
     Teuchos::ParameterList& physics = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
-    rho_i 	= physics.get<double>("Ice Density", 916.0);
-    c_i 	= physics.get<double>("Heat capacity of ice", 2009.0);
-    T0 		= physics.get<double>("Reference Temperature", 240.0);
+    rho_i   = physics.get<double>("Ice Density", 916.0);
+    c_i   = physics.get<double>("Heat capacity of ice", 2009.0);
+    T0    = physics.get<double>("Reference Temperature", 240.0);
   }
 
   template<typename EvalT, typename Traits, typename Type>
