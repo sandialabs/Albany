@@ -1314,14 +1314,10 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
  //FIXME, 6/25: This line was causing link error.  Need to figure out why. 
  // workset.auxDataPtrT = stateMgr.getAuxDataT();
 
- 
-//  workset.wsElNodeEqID_kokkos =
-  Kokkos:: View<int***, PHX::Device> wsElNodeEqID_kokkos ("wsElNodeEqID_kokkos",workset.numCells, wsElNodeEqID[ws][0].size(), wsElNodeEqID[ws][0][0].size());
-   workset.wsElNodeEqID_kokkos=wsElNodeEqID_kokkos;
-   for (int i=0; i< workset.numCells; i++) 
-      for (int j=0; j< wsElNodeEqID[ws][0].size(); j++)
-          for (int k=0; k<wsElNodeEqID[ws][0][0].size();k++)
-              workset.wsElNodeEqID_kokkos(i,j,k)=workset.wsElNodeEqID[i][j][k]; 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  // Kokkos views
+  workset.wsElNodeEqID_kokkos = disc->getWsElNodeEqIDKokkos(ws);
+#endif
 }
 
 #endif // ALBANY_APPLICATION_HPP

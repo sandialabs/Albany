@@ -119,6 +119,11 @@ class AbstractDiscretization {
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
       getWsElNodeEqID() const = 0;
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+    virtual const Kokkos::View<LO***, PHX::Device>
+      getWsElNodeEqIDKokkos(const int ws) const = 0;
+#endif
+
     //! Get map from (Ws, El, Local Node) -> unkGID
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
       getWsElNodeID() const = 0;
