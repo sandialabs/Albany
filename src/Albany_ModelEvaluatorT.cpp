@@ -662,7 +662,7 @@ Albany::ModelEvaluatorT::evalModelImpl(
       (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT))
           ? inArgsT.get_t()
           : 0.0;
-#endif ALBANY_LCM
+#endif // ALBANY_LCM
 
   for (int l = 0; l < inArgsT.Np(); ++l) {
     const Teuchos::RCP<const Thyra::VectorBase<ST>> p = inArgsT.get_p(l);
