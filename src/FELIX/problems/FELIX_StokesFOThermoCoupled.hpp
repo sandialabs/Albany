@@ -159,10 +159,10 @@ namespace FELIX
 
 
     bool  sliding;
-    
+
     bool needsDiss, needsBasFric;
     bool isGeoFluxConst;
-        
+
     std::string basalSideName;
     std::string surfaceSideName;
 
@@ -1285,6 +1285,7 @@ if (basalSideName!="INVALID")
     p->set<std::string>("Field Gradient Name", "Beta Gradient");
     p->set<std::string>("Gradient BF Side Name", "Grad BF "+basalSideName);
     p->set<std::string>("Weighted Measure Side Name", "Weighted Measure "+basalSideName);
+    p->set<std::string>("Tangents Side Name", "Tangents "+basalSideName);
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<double>("Mass Coefficient", params->sublist("FELIX L2 Projected Boundary Laplacian").get<double>("Mass Coefficient",1.0));
     p->set<double>("Laplacian Coefficient", params->sublist("FELIX L2 Projected Boundary Laplacian").get<double>("Laplacian Coefficient",1.0));
@@ -2207,6 +2208,9 @@ if (basalSideName!="INVALID")
     paramList->set<std::string>("Weighted Measure Basal Name","Weighted Measure " + basalSideName);
     paramList->set<std::string>("Weighted Measure 2D Name","Weighted Measure " + basalSideName);
     paramList->set<std::string>("Weighted Measure Surface Name","Weighted Measure " + surfaceSideName);
+    paramList->set<std::string>("Metric Basal Name","Metric " + basalSideName);
+    paramList->set<std::string>("Metric 2D Name","Metric " + basalSideName);
+    paramList->set<std::string>("Metric Surface Name","Metric " + surfaceSideName);
     paramList->set<std::string>("Inverse Metric Basal Name","Inv Metric " + basalSideName);
     paramList->set<std::string>("Basal Side Name", basalSideName);
     paramList->set<std::string>("Surface Side Name", surfaceSideName);
