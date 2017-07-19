@@ -46,9 +46,20 @@ SaveStateField(const Teuchos::ParameterList& p)
 {
   fieldName =  p.get<std::string>("Field Name");
   stateName =  p.get<std::string>("State Name");
-  field = decltype(field)(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("State Field Layout") );
 
-  nodalState = p.isParameter("Nodal State") ? p.get<bool>("Nodal State") : false;
+  Teuchos::RCP<PHX::DataLayout> layout = p.get<Teuchos::RCP<PHX::DataLayout> >("State Field Layout");
+  field = decltype(field)(fieldName, layout );
+
+  if (layout->name(0) != "Cell" && layout->name(0) != "Node")
+  {
+    worksetState = true;
+    nodalState = false;
+  }
+  else
+  {
+    worksetState = false;
+    nodalState = p.isParameter("Nodal State") ? p.get<bool>("Nodal State") : false;
+  }
 
   Teuchos::RCP<PHX::DataLayout> dummy = Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
   savestate_operation = Teuchos::rcp(new PHX::Tag<ScalarT> (fieldName, dummy));
@@ -83,6 +94,8 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (this->nodalState)
     saveNodeState(workset);
+  else if (this->worksetState)
+    saveWorksetState(workset);
   else
     saveElemState(workset);
 }
@@ -138,6 +151,39 @@ saveElemState(typename Traits::EvalData workset)
   default:
     TEUCHOS_TEST_FOR_EXCEPT_MSG(size<1||size>5,
                         "Unexpected Array dimensions in SaveStateField: " << size);
+  }
+}
+
+template<typename Traits>
+void SaveStateField<PHAL::AlbanyTraits::Residual, Traits>::
+saveWorksetState(typename Traits::EvalData workset)
+{
+  // Get shards Array (from STK) for this state
+  // Need to check if we can just copy full size -- can assume same ordering?
+  Albany::StateArray::const_iterator it;
+  it = workset.stateArrayPtr->find(stateName);
+
+  TEUCHOS_TEST_FOR_EXCEPTION((it == workset.stateArrayPtr->end()), std::logic_error,
+         std::endl << "Error: cannot locate " << stateName << " in PHAL_SaveStateField_Def" << std::endl);
+
+  Albany::MDArray sta = it->second;
+  std::vector<PHX::DataLayout::size_type> dims;
+  sta.dimensions(dims);
+  int size = dims.size();
+
+  switch (size) {
+  case 1:
+    for (int cell = 0; cell < dims[0]; ++cell)
+    sta(cell) = field(cell);
+    break;
+  case 2:
+    for (int cell = 0; cell < dims[0]; ++cell)
+      for (int qp = 0; qp < dims[1]; ++qp)
+        sta(cell, qp) = field(cell,qp);;
+    break;
+  default:
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(size<1||size>5,
+                        "Unexpected (workset) Array dimensions in SaveStateField: " << size);
   }
 }
 
