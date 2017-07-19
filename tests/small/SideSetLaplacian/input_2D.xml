@@ -1,0 +1,152 @@
+<ParameterList>
+  <ParameterList name="Debug Output">
+    <!--Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/-->
+    <Parameter name="Write Solution to MatrixMarket" type="bool" value="false"/>
+  </ParameterList>
+
+  <ParameterList name="Problem">
+    <Parameter name="Phalanx Graph Visualization Detail" type="int"    value="0"/>
+    <Parameter name="Solution Method"                    type="string" value="Steady"/>
+    <Parameter name="Name"                               type="string" value="Side Laplacian 3D"/>
+    <Parameter name="Solve As Side Set Equation"         type="bool"   value="false"/>
+    <Parameter name="Side Set Name"                      type="string" value="bottom"/>
+
+    <ParameterList name="Response Functions">
+      <Parameter name="Number of Response Vectors" type="int" value="1"/>
+      <ParameterList name="Response Vector 0">
+        <Parameter name="Name"              type="string" value="Squared L2 Difference Source ST Target PST"/>
+        <Parameter name="Field Rank"        type="string" value="Scalar"/>
+        <Parameter name="Source Field Name" type="string" value="u"/>
+        <Parameter name="Target Field Name" type="string" value="ZERO"/>
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="Dirichlet BCs">
+      <Parameter name="DBC on NS NodeSet0 for DOF U" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet1 for DOF U" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet2 for DOF U" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet3 for DOF U" type="double" value="0.0"/>
+    </ParameterList>
+  </ParameterList> <!-- Problem -->
+
+  <ParameterList name="Discretization">
+    <Parameter name="Method"                  type="string" value="STK2D"/>
+    <Parameter name="Cubature Degree"         type="int"    value="2"/>
+    <Parameter name="Exodus Output File Name" type="string" value="side_laplacian_2d.exo"/>
+    <Parameter name="1D Elements"             type="int"    value="2"/>
+    <Parameter name="2D Elements"             type="int"    value="2"/>
+    <Parameter name="Cell Topology"           type="string" value="Quad"/>
+  </ParameterList> <!--Discretization -->
+
+  <ParameterList name="Piro">
+
+    <ParameterList name="NOX">
+      <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
+
+      <ParameterList name="Solver Options">
+        <Parameter name="Status Test Check Type" type="string" value="Minimal"/>
+      </ParameterList>
+
+      <ParameterList name="Status Tests">
+        <Parameter name="Test Type"             type="string" value="Combo"/>
+        <Parameter name="Combo Type"            type="string" value="OR"/>
+        <Parameter name="Number of Tests"       type="int"    value="2"/>
+        <ParameterList name="Test 0">
+          <Parameter name="Test Type"           type="string" value="NormF"/>
+          <Parameter name="Norm Type"           type="string" value="Two Norm"/>
+          <Parameter name="Scale Type"          type="string" value="Unscaled"/>
+          <Parameter name="Tolerance"           type="double" value="1e-5"/>
+        </ParameterList>
+        <ParameterList name="Test 1">
+          <Parameter name="Test Type"           type="string" value="MaxIters"/>
+          <Parameter name="Maximum Iterations"  type="int" value="50"/>
+        </ParameterList>
+      </ParameterList> <!-- Status Tests -->
+
+      <ParameterList name="Direction">
+        <Parameter name="Method" type="string" value="Newton"/>
+
+        <ParameterList name="Newton">
+          <Parameter name="Forcing Term Method"     type="string" value="Constant"/>
+          <Parameter name="Rescue Bad Newton Solve" type="bool"   value="1"/>
+
+          <ParameterList name="Linear Solver">
+            <Parameter name="Write Linear System" type="bool" value="false"/>
+          </ParameterList>
+
+          <ParameterList name="Stratimikos Linear Solver">
+            <ParameterList name="NOX Stratimikos Options">
+            </ParameterList>
+
+            <ParameterList name="Stratimikos">
+              <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
+              <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+
+              <ParameterList name="Linear Solver Types">
+                <ParameterList name="AztecOO">
+                  <ParameterList name="Forward Solve">
+                    <ParameterList name="AztecOO Settings">
+                      <Parameter name="Aztec Solver"            type="string" value="GMRES"/>
+                      <Parameter name="Convergence Test"        type="string" value="r0"/>
+                      <Parameter name="Size of Krylov Subspace" type="int" value="200"/>
+                      <Parameter name="Output Frequency"        type="int" value="20"/>
+                    </ParameterList>
+                    <Parameter name="Max Iterations"  type="int" value="200"/>
+                    <Parameter name="Tolerance"       type="double" value="1e-6"/>
+                  </ParameterList>
+                </ParameterList>
+              </ParameterList> <!-- Linear Solver Types -->
+
+              <ParameterList name="Preconditioner Types">
+                <ParameterList name="Ifpack">
+                  <Parameter name="Overlap" type="int" value="0"/>
+                  <Parameter name="Prec Type" type="string" value="ILU"/>
+                  <ParameterList name="Ifpack Settings">
+                    <Parameter name="fact: level-of-fill" type="int" value="0"/>
+                  </ParameterList>
+                </ParameterList>
+                <ParameterList name="ML">
+                  <Parameter name="Base Method Defaults" type="string" value="none"/>
+                  <ParameterList name="ML Settings">
+                    <Parameter name="default values" type="string" value="SA"/>
+                    <Parameter name="smoother: type" type="string" value="ML symmetric Gauss-Seidel"/>
+                    <Parameter name="smoother: pre or post" type="string" value="both"/>
+                    <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
+                  </ParameterList>
+                </ParameterList>
+              </ParameterList> <!-- Preconditioner Types -->
+
+            </ParameterList>
+          </ParameterList>  <!-- Stratimikos Linear Solver -->
+        </ParameterList> <!-- Newton -->
+      </ParameterList> <!-- Direction -->
+
+      <ParameterList name="Line Search">
+        <ParameterList name="Full Step">
+          <Parameter name="Full Step" type="double" value="1"/>
+        </ParameterList>
+        <Parameter name="Method" type="string" value="Full Step"/>
+        <Parameter name="Method" type="string" value="Backtrack"/>
+      </ParameterList>
+
+      <ParameterList name="Printing">
+        <Parameter name="Output Precision" type="int" value="3"/>
+        <Parameter name="Output Processor" type="int" value="0"/>
+        <ParameterList name="Output Information">
+          <Parameter name="Error" type="bool" value="1"/>
+          <Parameter name="Warning" type="bool" value="1"/>
+          <Parameter name="Outer Iteration" type="bool" value="1"/>
+          <Parameter name="Parameters" type="bool" value="0"/>
+          <Parameter name="Details" type="bool" value="0"/>
+          <Parameter name="Linear Solver Details" type="bool" value="0"/>
+          <Parameter name="Stepper Iteration" type="bool" value="1"/>
+          <Parameter name="Stepper Details" type="bool" value="1"/>
+          <Parameter name="Stepper Parameters" type="bool" value="1"/>
+        </ParameterList>
+      </ParameterList>
+
+    </ParameterList>  <!-- NOX -->
+
+  </ParameterList>    <!-- Piro -->
+
+</ParameterList>
