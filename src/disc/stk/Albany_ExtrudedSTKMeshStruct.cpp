@@ -703,7 +703,7 @@ void Albany::ExtrudedSTKMeshStruct::buildCellSideNodeNumerationMap (const std::s
   std::vector<stk::mesh::Entity> cells2D;
   stk::mesh::get_selected_entities(selector, basalMeshStruct->bulkData->buckets(stk::topology::ELEM_RANK), cells2D);
 
-  // If the mesh is already partitioned...
+  // If the mesh is already partitioned, this can happen...
   if (cells2D.size()==0)
     return;
 
@@ -897,7 +897,10 @@ void Albany::ExtrudedSTKMeshStruct::interpolateBasalLayeredFields (const std::ve
           h0 = (fieldLayersCoords[il1] - meshLayerCoord) / (fieldLayersCoords[il1] - fieldLayersCoords[il0]);
         }
 
-        // Extracting 3d pointer and stuffing the right data in them
+        // Extracting 3d pointer and stuffing the right data in it
+        // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be interpolated, so the user does not have to
+        //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
+        //       the SetupFieldData method, which adds all the fields to the stk mesh.
         switch (node_fields_ranks[ifield])
         {
           case 1:
@@ -1006,6 +1009,10 @@ void Albany::ExtrudedSTKMeshStruct::interpolateBasalLayeredFields (const std::ve
           h0 = (fieldLayersCoords[il1] - meshLayerCoord) / (fieldLayersCoords[il1] - fieldLayersCoords[il0]);
         }
 
+        // Extracting 3d pointer and stuffing the right data in it
+        // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be interpolated, so the user does not have to
+        //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
+        //       the SetupFieldData method, which adds all the fields to the stk mesh.
         switch (cell_fields_ranks[ifield])
         {
           case 1:
@@ -1102,8 +1109,10 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
         SFT* field2d = metaData2d.get_field<SFT>(stk::topology::NODE_RANK, node_fields_names[ifield]);
         SFT* field3d = metaData->get_field<SFT> (stk::topology::NODE_RANK, node_fields_names[ifield]);
 
+        // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be extruded, so the user does not have to
+        //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
+        //       the SetupFieldData method, which adds all the fields to the stk mesh.
         TEUCHOS_TEST_FOR_EXCEPTION (field2d==0, std::runtime_error, "Error! Cannot extrude field '" << node_fields_names[ifield] << "' since it is not present in the 2d mesh.\n");
-
         TEUCHOS_TEST_FOR_EXCEPTION (field3d==0, std::runtime_error, "Error! Cannot extrude field '" << node_fields_names[ifield] << "' since it is not present in the 3d mesh. Perhaps you forgot to specify it in the section 'Required Fields Info' of the extruded mesh?\n");
 
         for (int inode=0; inode<numNodes2d; ++inode)
@@ -1131,6 +1140,9 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
         VFT* field2d = metaData2d.get_field<VFT>(stk::topology::NODE_RANK, node_fields_names[ifield]);
         VFT* field3d = metaData->get_field<VFT> (stk::topology::NODE_RANK, node_fields_names[ifield]);
 
+        // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be extruded, so the user does not have to
+        //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
+        //       the SetupFieldData method, which adds all the fields to the stk mesh.
         TEUCHOS_TEST_FOR_EXCEPTION (field2d==0, std::runtime_error, "Error! Cannot extrude field '" << node_fields_names[ifield] << "' since it is not present in the 2d mesh.\n");
         TEUCHOS_TEST_FOR_EXCEPTION (field3d==0, std::runtime_error, "Error! Cannot extrude field '" << node_fields_names[ifield] << "' since it is not present in the 3d mesh. Perhaps you forgot to specify it in the section 'Required Fields Info' of the extruded mesh?\n");
 
@@ -1161,6 +1173,9 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
         TFT* field2d = metaData2d.get_field<TFT>(stk::topology::NODE_RANK, node_fields_names[ifield]);
         TFT* field3d = metaData->get_field<TFT> (stk::topology::NODE_RANK, node_fields_names[ifield]);
 
+        // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be extruded, so the user does not have to
+        //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
+        //       the SetupFieldData method, which adds all the fields to the stk mesh.
         TEUCHOS_TEST_FOR_EXCEPTION (field2d==0, std::runtime_error, "Error! Cannot extrude field '" << node_fields_names[ifield] << "' since it is not present in the 2d mesh.\n");
         TEUCHOS_TEST_FOR_EXCEPTION (field3d==0, std::runtime_error, "Error! Cannot extrude field '" << node_fields_names[ifield] << "' since it is not present in the 3d mesh. Perhaps you forgot to specify it in the section 'Required Fields Info' of the extruded mesh?\n");
 
@@ -1202,6 +1217,9 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
         SFT* field2d = metaData2d.get_field<SFT>(stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
         SFT* field3d = metaData->get_field<SFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
 
+        // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be extruded, so the user does not have to
+        //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
+        //       the SetupFieldData method, which adds all the fields to the stk mesh.
         TEUCHOS_TEST_FOR_EXCEPTION (field2d==0, std::runtime_error, "Error! Cannot extrude field '" << cell_fields_names[ifield] << "' since it is not present in the 2d mesh.\n");
         TEUCHOS_TEST_FOR_EXCEPTION (field3d==0, std::runtime_error, "Error! Cannot extrude field '" << cell_fields_names[ifield] << "' since it is not present in the 3d mesh. Perhaps you forgot to specify it in the section 'Required Fields Info' of the extruded mesh?\n");
 
@@ -1245,6 +1263,9 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
         VFT* field2d = metaData2d.get_field<VFT>(stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
         VFT* field3d = metaData->get_field<VFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
 
+        // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be extruded, so the user does not have to
+        //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
+        //       the SetupFieldData method, which adds all the fields to the stk mesh.
         TEUCHOS_TEST_FOR_EXCEPTION (field2d==0, std::runtime_error, "Error! Cannot extrude field '" << cell_fields_names[ifield] << "' since it is not present in the 2d mesh.\n");
         TEUCHOS_TEST_FOR_EXCEPTION (field3d==0, std::runtime_error, "Error! Cannot extrude field '" << cell_fields_names[ifield] << "' since it is not present in the 3d mesh. Perhaps you forgot to specify it in the section 'Required Fields Info' of the extruded mesh?\n");
 
@@ -1290,6 +1311,9 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
         TFT* field2d = metaData2d.get_field<TFT>(stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
         TFT* field3d = metaData->get_field<TFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
 
+        // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be extruded, so the user does not have to
+        //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
+        //       the SetupFieldData method, which adds all the fields to the stk mesh.
         TEUCHOS_TEST_FOR_EXCEPTION (field2d==0, std::runtime_error, "Error! Cannot extrude field '" << cell_fields_names[ifield] << "' since it is not present in the 2d mesh.\n");
         TEUCHOS_TEST_FOR_EXCEPTION (field3d==0, std::runtime_error, "Error! Cannot extrude field '" << cell_fields_names[ifield] << "' since it is not present in the 3d mesh. Perhaps you forgot to specify it in the section 'Required Fields Info' of the extruded mesh?\n");
 
