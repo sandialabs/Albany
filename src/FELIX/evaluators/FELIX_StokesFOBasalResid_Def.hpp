@@ -42,7 +42,6 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
   int numSides = dims[1];
   numSideNodes = dims[2];
   numSideQPs   = dims[3];
-  sideDim      = dims[4]-1; //gradient is in physical space
   numCellNodes = basalResid.fieldTag().dataLayout().dimension(1);
 
   dl->node_vector->dimensions(dims);
@@ -61,6 +60,7 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
   sideNodes.resize(numSides);
+  sideDim = cellType->getDimension()-1;
   for (int side=0; side<numSides; ++side)
   {
     // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
@@ -128,7 +128,6 @@ void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::evaluateFields (typename Tr
     {
       for (int dim=0; dim<vecDimFO; ++dim)
       {
-        basalResid(cell,sideNodes[side][node],dim) = 0.;
         for (int qp=0; qp<numSideQPs; ++qp)
         {
           basalResid(cell,sideNodes[side][node],dim) += (ff + beta(cell,side,qp)*u(cell,side,qp,dim))*BF(cell,side,node,qp)*w_measure(cell,side,qp);
