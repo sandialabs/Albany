@@ -139,9 +139,10 @@ Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int nu
   qp_gradient   = rcp(new MDALayout<Cell,Side,QuadPoint,Dim>(worksetSize,numSides,numQPts,numSideDim));
   cell_gradient = rcp(new MDALayout<Cell,Side,Dim>(worksetSize,numSides,numSideDim));
 
-  node_tensor = rcp(new MDALayout<Cell,Side,Node,Dim,Dim>(worksetSize,numSides,numNodes,numSideDim,numSideDim));
-  qp_tensor   = rcp(new MDALayout<Cell,Side,QuadPoint,Dim,Dim>(worksetSize,numSides,numQPts,numSideDim,numSideDim));
-  cell_tensor = rcp(new MDALayout<Cell,Side,Dim,Dim>(worksetSize,numSides,numSideDim,numSideDim));
+  node_tensor     = rcp(new MDALayout<Cell,Side,Node,Dim,Dim>(worksetSize,numSides,numNodes,numSideDim,numSideDim));
+  qp_tensor       = rcp(new MDALayout<Cell,Side,QuadPoint,Dim,Dim>(worksetSize,numSides,numQPts,numSideDim,numSideDim));
+  cell_tensor     = rcp(new MDALayout<Cell,Side,Dim,Dim>(worksetSize,numSides,numSideDim,numSideDim));
+  qp_tensor_cd_sd = rcp(new MDALayout<Cell,Side,QuadPoint,Dim,Dim>(worksetSize,numSides,numQPts,numSideDim+1,numSideDim));
 
   node_vecgradient = rcp(new MDALayout<Cell,Side,Node,Dim,Dim>(worksetSize,numSides,numNodes,vecDim,numSideDim));
   qp_vecgradient   = rcp(new MDALayout<Cell,Side,QuadPoint,Dim,Dim>(worksetSize,numSides,numQPts,vecDim,numSideDim));
