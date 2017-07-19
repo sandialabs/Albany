@@ -35,6 +35,9 @@ HydrologyResidualPotentialEqn (const Teuchos::ParameterList& p,
     numDims  = dl->qp_gradient->dimension(3);
 
     sideSetName = p.get<std::string>("Side Set Name");
+
+    metric = PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>("Metric Name",dl->qp_tensor);
+    this->addDependentField(metric);
   }
   else
   {
@@ -46,15 +49,15 @@ HydrologyResidualPotentialEqn (const Teuchos::ParameterList& p,
     numDims  = dl->qp_gradient->dimension(2);
   }
 
-  this->addDependentField(BF.fieldTag());
-  this->addDependentField(GradBF.fieldTag());
-  this->addDependentField(w_measure.fieldTag());
-  this->addDependentField(q.fieldTag());
-  this->addDependentField(N.fieldTag());
-  this->addDependentField(h.fieldTag());
-  this->addDependentField(m.fieldTag());
-  this->addDependentField(omega.fieldTag());
-  this->addDependentField(u_b.fieldTag());
+  this->addDependentField(BF);
+  this->addDependentField(GradBF);
+  this->addDependentField(w_measure);
+  this->addDependentField(q);
+  this->addDependentField(N);
+  this->addDependentField(h);
+  this->addDependentField(m);
+  this->addDependentField(omega);
+  this->addDependentField(u_b);
 
   this->addEvaluatedField(residual);
 
@@ -100,6 +103,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(omega,fm);
   this->utils.setFieldData(u_b,fm);
 
+  if (IsStokesCoupling)
+    this->utils.setFieldData(metric,fm);
+
   this->utils.setFieldData(residual,fm);
 }
 
@@ -138,9 +144,12 @@ evaluateFields (typename Traits::EvalData workset)
 
           res_qp *= BF(cell,side,node,qp);
 
-          for (int dim=0; dim<numDims; ++dim)
+          for (int idim=0; idim<numDims; ++idim)
           {
-            res_qp += q(cell,side,qp,dim) * GradBF(cell,side,node,qp,dim);
+            for (int jdim=0; jdim<numDims; ++jdim)
+            {
+              res_qp += q(cell,side,qp,idim) * metric(cell,side,qp,idim,jdim) * GradBF(cell,side,node,qp,jdim);
+            }
           }
 
           res_node += res_qp * w_measure(cell,side,qp);

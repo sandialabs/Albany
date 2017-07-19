@@ -24,29 +24,31 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   alphaSMB = plist->get<double>("SMB Coefficient", 0.0);
   asinh_scaling = plist->get<double>("Asinh Scaling", 10.0);
 
-  const std::string& flux_div_name              = paramList->get<std::string>("Flux Divergence Side QP Variable Name");
-  const std::string& smb_name                   = paramList->get<std::string>("SMB Side QP Variable Name");
-  const std::string& smbRMS_name                = paramList->get<std::string>("SMB RMS Side QP Variable Name");
-  const std::string& thickness_name             = paramList->get<std::string>("Thickness Side QP Variable Name");
-  const std::string& grad_thickness_name        = paramList->get<std::string>("Thickness Gradient Name");
-  const std::string& obs_thickness_name         = paramList->get<std::string>("Observed Thickness Side QP Variable Name");
-  const std::string& thicknessRMS_name          = paramList->get<std::string>("Thickness RMS Side QP Variable Name");
-  const std::string& w_measure_2d_name          = paramList->get<std::string>("Weighted Measure 2D Name");
-
   basalSideName = paramList->get<std::string> ("Basal Side Name");
+
+  const std::string& flux_div_name       = paramList->get<std::string>("Flux Divergence Side QP Variable Name");
+  const std::string& smb_name            = paramList->get<std::string>("SMB Side QP Variable Name");
+  const std::string& smbRMS_name         = paramList->get<std::string>("SMB RMS Side QP Variable Name");
+  const std::string& thickness_name      = paramList->get<std::string>("Thickness Side QP Variable Name");
+  const std::string& grad_thickness_name = paramList->get<std::string>("Thickness Gradient Name");
+  const std::string& obs_thickness_name  = paramList->get<std::string>("Observed Thickness Side QP Variable Name");
+  const std::string& thicknessRMS_name   = paramList->get<std::string>("Thickness RMS Side QP Variable Name");
+  const std::string& w_measure_2d_name   = paramList->get<std::string>("Weighted Measure 2D Name");
+  const std::string& metric_2d_name      = paramList->get<std::string>("Metric 2D Name");
+
   TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(basalSideName)==dl->side_layouts.end(), std::runtime_error,
                               "Error! Basal side data layout not found.\n");
 
   Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-  flux_div        = decltype(flux_div)(flux_div_name, dl_basal->qp_scalar);
-  SMB             = decltype(SMB)(smb_name, dl_basal->qp_scalar);
-  SMBRMS          = decltype(SMBRMS)(smbRMS_name, dl_basal->qp_scalar);
-  thickness       = decltype(thickness)(thickness_name, dl_basal->qp_scalar);
-  grad_thickness  = decltype(grad_thickness)(grad_thickness_name, dl_basal->qp_gradient);
-  obs_thickness   = decltype(obs_thickness)(obs_thickness_name, dl_basal->qp_scalar);
-  thicknessRMS    = decltype(thicknessRMS)(thicknessRMS_name, dl_basal->qp_scalar);
-  w_measure_2d    = decltype(w_measure_2d)(w_measure_2d_name, dl_basal->qp_scalar);
+  flux_div       = decltype(flux_div)(flux_div_name, dl_basal->qp_scalar);
+  SMB            = decltype(SMB)(smb_name, dl_basal->qp_scalar);
+  SMBRMS         = decltype(SMBRMS)(smbRMS_name, dl_basal->qp_scalar);
+  thickness      = decltype(thickness)(thickness_name, dl_basal->qp_scalar);
+  grad_thickness = decltype(grad_thickness)(grad_thickness_name, dl_basal->qp_gradient);
+  obs_thickness  = decltype(obs_thickness)(obs_thickness_name, dl_basal->qp_scalar);
+  thicknessRMS   = decltype(thicknessRMS)(thicknessRMS_name, dl_basal->qp_scalar);
+  w_measure_2d   = decltype(w_measure_2d)(w_measure_2d_name, dl_basal->qp_scalar);
 
   cell_topo = paramList->get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
@@ -58,14 +60,20 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   numBasalQPs  = dl_basal->qp_scalar->dimension(2);
 
   // add dependent fields
-  this->addDependentField(flux_div.fieldTag());
-  this->addDependentField(SMB.fieldTag());
-  this->addDependentField(SMBRMS.fieldTag());
-  this->addDependentField(thickness.fieldTag());
-  this->addDependentField(grad_thickness.fieldTag());
-  this->addDependentField(obs_thickness.fieldTag());
-  this->addDependentField(thicknessRMS.fieldTag());
-  this->addDependentField(w_measure_2d.fieldTag());
+  this->addDependentField(flux_div);
+  this->addDependentField(SMB);
+  this->addDependentField(SMBRMS);
+  this->addDependentField(thickness);
+  this->addDependentField(grad_thickness);
+  this->addDependentField(obs_thickness);
+  this->addDependentField(thicknessRMS);
+  this->addDependentField(w_measure_2d);
+
+  if (alpha!=0 || alphaH!=0)
+  {
+    metric_2d      = decltype(metric_2d)(metric_2d_name, dl_basal->qp_tensor);
+    this->addDependentField(metric_2d);
+  }
 
   this->setName("Response Surface Mass Balance Mismatch" + PHX::typeAsString<EvalT>());
 
@@ -98,6 +106,7 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::postRegistrationSetup(typename T
   this->utils.setFieldData(obs_thickness, fm);
   this->utils.setFieldData(thicknessRMS, fm);
   this->utils.setFieldData(w_measure_2d, fm);
+  this->utils.setFieldData(metric_2d, fm);
 
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postRegistrationSetup(d, fm);
 }
@@ -157,7 +166,8 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits::
         {
           ScalarT sum=0;
           for (int idim=0; idim<2; ++idim)
-            sum += grad_thickness(cell,side,qp,idim)*grad_thickness(cell,side,qp,idim);
+            for (int jdim=0; jdim<2; ++jdim)
+              sum += grad_thickness(cell,side,qp,idim)*metric_2d(cell,side,qp,idim,jdim)*grad_thickness(cell,side,qp,jdim);
           tr += sum * w_measure_2d(cell,side,qp);;
           tH += (pow((obs_thickness(cell,side,qp)-thickness(cell,side,qp))/thicknessRMS(cell,side,qp),2)) * w_measure_2d(cell,side,qp);
         }

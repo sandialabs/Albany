@@ -55,6 +55,9 @@ private:
   PHX::MDField<const ParamScalarT>  omega;
   PHX::MDField<const uScalarT>      u_b;
 
+  // Input only needed if equation is on a sideset
+  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>   metric;
+
   // Output:
   PHX::MDField<ScalarT>       residual;
 
