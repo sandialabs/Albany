@@ -164,82 +164,80 @@ operator() (const FELIX_3D_Tag& tag, const int& cell) const{
   }
 
   if(useStereographicMap) {
-          double R = stereographicMapList->get<double>("Earth Radius", 6371);
-          double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
-          double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
-          double R2 = std::pow(R,2);
-          for (int qp=0; qp < numQPs; ++qp) {
-            //evaluate non-linear viscosity, given by Glen's law, at quadrature points
-            ScalarT mu = muFELIX(cell,qp);
-            MeshScalarT x = coordVec(cell,qp,0)-x_0;
-            MeshScalarT y = coordVec(cell,qp,1)-y_0;
-            MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
-            MeshScalarT h2 = h*h;
-            MeshScalarT invh_x = x/2.0/R2;
-            MeshScalarT invh_y = y/2.0/R2;
+    double R = stereographicMapList->get<double>("Earth Radius", 6371);
+    double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+    double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+    double R2 = std::pow(R,2);
+    for (int qp=0; qp < numQPs; ++qp) {
+      //evaluate non-linear viscosity, given by Glen's law, at quadrature points
+      ScalarT mu = muFELIX(cell,qp);
+      MeshScalarT x = coordVec(cell,qp,0)-x_0;
+      MeshScalarT y = coordVec(cell,qp,1)-y_0;
+      MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+      MeshScalarT h2 = h*h;
+      MeshScalarT invh_x = x/2.0/R2;
+      MeshScalarT invh_y = y/2.0/R2;
 
-            ScalarT strs00 = 2*mu*(Ugrad(cell,qp,0,0)/h-invh_y*U(cell,qp,1)); //epsilon_xx
-            ScalarT strs01 = mu*(Ugrad(cell,qp,0,1)/h+invh_x*U(cell,qp,0)+Ugrad(cell,qp,1,0)/h+invh_y*U(cell,qp,1)); //epsilon_xy
-            ScalarT strs02 = mu*Ugrad(cell,qp,0,2); //epsilon_xz
-            ScalarT strs11 = 2*mu*(Ugrad(cell,qp,1,1)/h-invh_x*U(cell,qp,0)); //epsilon_yy
-            ScalarT strs12 = mu*Ugrad(cell,qp,1,2); //epsilon_yz
+      ScalarT strs00 = 2*mu*(Ugrad(cell,qp,0,0)/h-invh_y*U(cell,qp,1)); //epsilon_xx
+      ScalarT strs01 = mu*(Ugrad(cell,qp,0,1)/h+invh_x*U(cell,qp,0)+Ugrad(cell,qp,1,0)/h+invh_y*U(cell,qp,1)); //epsilon_xy
+      ScalarT strs02 = mu*Ugrad(cell,qp,0,2); //epsilon_xz
+      ScalarT strs11 = 2*mu*(Ugrad(cell,qp,1,1)/h-invh_x*U(cell,qp,0)); //epsilon_yy
+      ScalarT strs12 = mu*Ugrad(cell,qp,1,2); //epsilon_yz
 
-            for (int node=0; node < numNodes; ++node) {
-              ScalarT epsb00 = wGradBF(cell,node,qp,0)/h; //epsilon_xx
-              ScalarT epsb01 = (wGradBF(cell,node,qp,1)/h+invh_x*wBF(cell,node,qp))/2.0; //epsilon_xy
-              ScalarT epsb02 = wGradBF(cell,node,qp,2)/2.0; //epsilon_xz
-              ScalarT epsb11 = -invh_x*wBF(cell,node,qp); //epsilon_yy
-              ScalarT epsb12 = 0;
-              Residual(cell,node,0) +=  strs00*epsb00*h2 +
-                                        strs11 * epsb11*h2 +
-                                        2*strs01*epsb01*h2 +
-                                        2*strs02*epsb02*h2 +
-                                        2*strs12 * epsb12*h2 +
-                                        (strs00+strs11)*(epsb00+epsb11)*h2;
+      for (int node=0; node < numNodes; ++node) {
+        ScalarT epsb00 = wGradBF(cell,node,qp,0)/h; //epsilon_xx
+        ScalarT epsb01 = (wGradBF(cell,node,qp,1)/h+invh_x*wBF(cell,node,qp))/2.0; //epsilon_xy
+        ScalarT epsb02 = wGradBF(cell,node,qp,2)/2.0; //epsilon_xz
+        ScalarT epsb11 = -invh_x*wBF(cell,node,qp); //epsilon_yy
+        ScalarT epsb12 = 0;
+        Residual(cell,node,0) +=  strs00*epsb00*h2 +
+                                  strs11 * epsb11*h2 +
+                                  2*strs01*epsb01*h2 +
+                                  2*strs02*epsb02*h2 +
+                                  2*strs12 * epsb12*h2 +
+                                  (strs00+strs11)*(epsb00+epsb11)*h2;
 
-              epsb00 = -invh_y*wBF(cell,node,qp); //epsilon_xx
-              epsb01 = (wGradBF(cell,node,qp,0)/h+invh_y*wBF(cell,node,qp))/2.0; //epsilon_xy
-              epsb02 = 0;
-              epsb11 = wGradBF(cell,node,qp,1)/h; //epsilon_yy
-              epsb12 = wGradBF(cell,node,qp,2)/2.0; //epsilon_yz
+        epsb00 = -invh_y*wBF(cell,node,qp); //epsilon_xx
+        epsb01 = (wGradBF(cell,node,qp,0)/h+invh_y*wBF(cell,node,qp))/2.0; //epsilon_xy
+        epsb02 = 0;
+        epsb11 = wGradBF(cell,node,qp,1)/h; //epsilon_yy
+        epsb12 = wGradBF(cell,node,qp,2)/2.0; //epsilon_yz
 
-              Residual(cell,node,1) +=  strs00*epsb00*h2 +
-                                        strs11 * epsb11*h2 +
-                                        2*strs01*epsb01*h2 +
-                                        2*strs02*epsb02*h2 +
-                                        2*strs12 * epsb12*h2 +
-                                        (strs00+strs11)*(epsb00+epsb11)*h2;
-            }
-          }
-        }
-        else {
-           for (int qp=0; qp < numQPs; ++qp) {
-            ScalarT mu = muFELIX(cell,qp);
-            ScalarT strs00 = 2.0*mu*(2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1));
-            ScalarT strs11 = 2.0*mu*(2.0*Ugrad(cell,qp,1,1) + Ugrad(cell,qp,0,0));
-            ScalarT strs01 = mu*(Ugrad(cell,qp,1,0)+ Ugrad(cell,qp,0,1));
-            ScalarT strs02 = mu*Ugrad(cell,qp,0,2);
-            ScalarT strs12 = mu*Ugrad(cell,qp,1,2);
-            for (int node=0; node < numNodes; ++node) {
-                 Residual(cell,node,0) += strs00*wGradBF(cell,node,qp,0) +
-                                          strs01*wGradBF(cell,node,qp,1) +
-                                          strs02*wGradBF(cell,node,qp,2);
-                 Residual(cell,node,1) += strs01*wGradBF(cell,node,qp,0) +
-                                          strs11*wGradBF(cell,node,qp,1) +
-                                          strs12*wGradBF(cell,node,qp,2);
-            }
-          }
-        }
+        Residual(cell,node,1) +=  strs00*epsb00*h2 +
+                                  strs11 * epsb11*h2 +
+                                  2*strs01*epsb01*h2 +
+                                  2*strs02*epsb02*h2 +
+                                  2*strs12 * epsb12*h2 +
+                                  (strs00+strs11)*(epsb00+epsb11)*h2;
+      }
+    }
+  } else {
+    for (int qp=0; qp < numQPs; ++qp) {
+      ScalarT mu = muFELIX(cell,qp);
+      ScalarT strs00 = 2.0*mu*(2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1));
+      ScalarT strs11 = 2.0*mu*(2.0*Ugrad(cell,qp,1,1) + Ugrad(cell,qp,0,0));
+      ScalarT strs01 = mu*(Ugrad(cell,qp,1,0)+ Ugrad(cell,qp,0,1));
+      ScalarT strs02 = mu*Ugrad(cell,qp,0,2);
+      ScalarT strs12 = mu*Ugrad(cell,qp,1,2);
+      for (int node=0; node < numNodes; ++node) {
+           Residual(cell,node,0) += strs00*wGradBF(cell,node,qp,0) +
+                                    strs01*wGradBF(cell,node,qp,1) +
+                                    strs02*wGradBF(cell,node,qp,2);
+           Residual(cell,node,1) += strs01*wGradBF(cell,node,qp,0) +
+                                    strs11*wGradBF(cell,node,qp,1) +
+                                    strs12*wGradBF(cell,node,qp,2);
+      }
+    }
+  }
 
-        for (int qp=0; qp < numQPs; ++qp) {
-          ScalarT frc0 = force(cell,qp,0);
-          ScalarT frc1 = force(cell,qp,1);
-          for (int node=0; node < numNodes; ++node) {
-               Residual(cell,node,0) += frc0*wBF(cell,node,qp);
-               Residual(cell,node,1) += frc1*wBF(cell,node,qp);
-          }
-        }
-
+  for (int qp=0; qp < numQPs; ++qp) {
+    ScalarT frc0 = force(cell,qp,0);
+    ScalarT frc1 = force(cell,qp,1);
+    for (int node=0; node < numNodes; ++node) {
+         Residual(cell,node,0) += frc0*wBF(cell,node,qp);
+         Residual(cell,node,1) += frc1*wBF(cell,node,qp);
+    }
+  }
 }
 
 template<typename EvalT, typename Traits>
@@ -363,7 +361,7 @@ operator() (const POISSON_2D_Tag& tag, const int& cell) const{
    }
 }
 
-
+// TODO: this functor class is never used. Should we remove it?
 template <typename ScalarType, class DeviceType, class MDFieldType1, class MDFieldType2, class MDFieldType3, class MDFieldType4, class MDFieldType5, class MDFieldType6, class MDFieldType7 >
 class StokesFOResid_3D_FELIX  {
  MDFieldType1 Residual_;
