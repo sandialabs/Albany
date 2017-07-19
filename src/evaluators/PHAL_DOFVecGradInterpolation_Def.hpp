@@ -57,26 +57,25 @@ namespace PHAL {
   template<typename EvalT, typename Traits, typename ScalarT>
   KOKKOS_INLINE_FUNCTION
   void DOFVecGradInterpolationBase<EvalT, Traits, ScalarT>::
-  operator() (const DOFVecGradInterpolationBase_Residual_Tag& tag, const int& cell) const {
+  operator() (const DOFVecGradInterpolationBase_Residual_Tag& tag, const int& cell) const
+  {
+    for (int qp=0; qp < numQPs; ++qp)
+      for (int i=0; i<vecDim; i++)
+        for (int dim=0; dim<numDims; dim++)
+             grad_val_qp(cell,qp,i,dim)=0.0;
 
-
-  for (int qp=0; qp < numQPs; ++qp)
-    for (int i=0; i<vecDim; i++)
-      for (int dim=0; dim<numDims; dim++)
-           grad_val_qp(cell,qp,i,dim)=0.0;
-
-   for (int qp=0; qp < numQPs; ++qp) {
-          for (int i=0; i<vecDim; i++) {
-            for (int dim=0; dim<numDims; dim++) {
-              // For node==0, overwrite. Then += for 1 to numNodes.
-              grad_val_qp(cell,qp,i,dim) = val_node(cell, 0, i) * GradBF(cell, 0, qp, dim);
-              for (int node= 1 ; node < numNodes; ++node) {
-                grad_val_qp(cell,qp,i,dim) += val_node(cell, node, i) * GradBF(cell, node, qp, dim);
-            }
+    for (int qp=0; qp < numQPs; ++qp) {
+      for (int i=0; i<vecDim; i++) {
+        for (int dim=0; dim<numDims; dim++) {
+          // For node==0, overwrite. Then += for 1 to numNodes.
+          grad_val_qp(cell,qp,i,dim) = val_node(cell, 0, i) * GradBF(cell, 0, qp, dim);
+          for (int node= 1 ; node < numNodes; ++node) {
+            grad_val_qp(cell,qp,i,dim) += val_node(cell, node, i) * GradBF(cell, node, qp, dim);
           }
         }
       }
- }
+    }
+  }
 #endif
 
 // *********************************************************************************
