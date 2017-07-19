@@ -46,7 +46,6 @@ bool ProblemFactory::hasProblem (const std::string& problemName)
       problemName == "FELIX Stokes First Order 3D" ||
       problemName == "FELIX Stokes FO 3D" ||
       problemName == "FELIX Coupled FO H 3D" ||
-      problemName == "FELIX Coupled FO Hydrology 3D" ||
       problemName == "FELIX Stokes L1L2 2D" ||
       problemName == "FELIX Hydrology 2D" ||
       problemName == "FELIX Enthalpy 3D" ||
@@ -87,13 +86,6 @@ ProblemFactory::create() const
     problem = rcp(new FELIX::StokesFOThickness(problemParams, paramLib, 3));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** FELIX Coupled FO H requires Epetra, recompile with -DENABLE_ALBANY_EPETRA_EXE ****\n");
-#endif
-  }
-  else if (method == "FELIX Coupled FO Hydrology 3D" ) {
-#ifdef ALBANY_EPETRA
-    problem = rcp(new FELIX::StokesFOHydrology(problemParams, paramLib, 3));
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** FELIX Coupled FO Hydrology requires Epetra, recompile with -DENABLE_ALBANY_EPETRA_EXE ****\n");
 #endif
   }
   else if (method == "FELIX Stokes L1L2 2D") {
