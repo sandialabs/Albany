@@ -10,6 +10,7 @@
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
+
 template<typename EvalT, typename Traits>
 ComputeBasisFunctions<EvalT, Traits>::
 ComputeBasisFunctions(const Teuchos::ParameterList& p,
@@ -94,7 +95,6 @@ evaluateFields(typename Traits::EvalData workset)
   //int containerSize = workset.numCells;
     */
 
-
   typedef typename Intrepid2::CellTools<PHX::Device>   ICT;
   typedef Intrepid2::FunctionSpaceTools<PHX::Device>   IFST;
 
@@ -102,13 +102,15 @@ evaluateFields(typename Traits::EvalData workset)
   ICT::setJacobianInv (jacobian_inv, jacobian);
   ICT::setJacobianDet (jacobian_det.get_view(), jacobian);
 
-  bool isJacobianDetNegative = 
+  bool isJacobianDetNegative =
     IFST::computeCellMeasure (weighted_measure.get_view(), jacobian_det.get_view(), refWeights);
   IFST::HGRADtransformVALUE(BF.get_view(), val_at_cub_points);
   IFST::multiplyMeasure    (wBF.get_view(), weighted_measure.get_view(), BF.get_view());
   IFST::HGRADtransformGRAD (GradBF.get_view(), jacobian_inv, grad_at_cub_points);
   IFST::multiplyMeasure    (wGradBF.get_view(), weighted_measure.get_view(), GradBF.get_view());
+
+  (void)isJacobianDetNegative;
 }
 
 //**********************************************************************
-}
+} // namespace PHAL
