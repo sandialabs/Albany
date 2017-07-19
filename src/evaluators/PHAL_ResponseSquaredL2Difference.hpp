@@ -31,7 +31,8 @@ public:
 
 private:
 
-  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::ScalarT     ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
 
   int getLayout (const Teuchos::RCP<Albany::Layouts>& dl, const std::string& rank, Teuchos::RCP<PHX::DataLayout>& layout);
 
@@ -46,7 +47,7 @@ private:
   PHX::MDField<const SourceScalarT>             sourceField;
   PHX::MDField<const TargetScalarT>             targetField;
 
-  PHX::MDField<const RealType,Cell,QuadPoint>   w_measure;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint>   w_measure;
 };
 
 // Some shortcut names

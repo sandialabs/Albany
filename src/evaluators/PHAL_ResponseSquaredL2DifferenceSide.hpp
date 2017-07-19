@@ -32,7 +32,8 @@ public:
 
 private:
 
-  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::ScalarT     ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
 
   int getLayout (const Teuchos::RCP<Albany::Layouts>& dl, const std::string& rank, Teuchos::RCP<PHX::DataLayout>& layout);
 
@@ -50,8 +51,8 @@ private:
   PHX::MDField<const SourceScalarT>                         sourceField;
   PHX::MDField<const TargetScalarT>                         targetField;
 
-  PHX::MDField<const RealType,Cell,Side,QuadPoint,Dim,Dim>  metric;
-  PHX::MDField<const RealType,Cell,Side,QuadPoint>          w_measure;
+  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  metric;
+  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>          w_measure;
 };
 
 //-- SourceScalarT = ScalarT
