@@ -52,6 +52,9 @@ namespace Albany {
     const AbstractSTKFieldContainer::VectorFieldType* getCoordinatesField() const { return fieldContainer->getCoordinatesField(); }
     AbstractSTKFieldContainer::VectorFieldType* getCoordinatesField(){ return fieldContainer->getCoordinatesField(); }
 
+    const AbstractSTKFieldContainer::VectorFieldType* getCoordinatesField3d() const { return fieldContainer->getCoordinatesField3d(); }
+    AbstractSTKFieldContainer::VectorFieldType* getCoordinatesField3d(){ return fieldContainer->getCoordinatesField3d(); }
+
     int numDim;
     int neq;
     bool interleavedOrdering;

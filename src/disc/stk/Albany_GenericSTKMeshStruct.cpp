@@ -546,6 +546,29 @@ void Albany::GenericSTKMeshStruct::computeAddlConnectivity()
 
 }
 
+void Albany::GenericSTKMeshStruct::setDefaultCoordinates3d ()
+{
+  // If the mesh is already a 3d mesh, coordinates_field==coordinates_field3d
+  if (this->numDim==3) return;
+
+  // We make coordinates_field3d store the same coordinates as coordinates_field,
+  // padding the vector of coordinates with zeros
+
+  std::vector<stk::mesh::Entity> nodes;
+  stk::mesh::get_entities(*bulkData,stk::topology::NODE_RANK,nodes);
+  double* values;
+  double* values3d;
+  for (auto node : nodes)
+  {
+    values3d = stk::mesh::field_data(*this->getCoordinatesField3d(), node);
+    values   = stk::mesh::field_data(*this->getCoordinatesField(), node);
+
+    for (int iDim=0; iDim<numDim; ++iDim)
+      values3d[iDim] = values[iDim];
+    for (int iDim=numDim; iDim<3; ++iDim)
+      values3d[iDim] = 0.0;
+  }
+}
 
 void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Teuchos_Comm>& commT){
 
@@ -851,6 +874,13 @@ void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::
 #ifdef ALBANY_SEACAS
       stk::io::set_field_role(*side_nodes_ids, Ioss::Field::TRANSIENT);
 #endif
+
+      // If requested, we ignore the side maps already stored in the imported side mesh (if any)
+      // This can be useful for side mesh of an extruded mesh, in the case it was constructed
+      // as side mesh of an extruded mesh with a different ordering and/or different number
+      // of layers. Notice that if that's the case, it probalby is impossible to build a new
+      // set of maps, since there is no way to correctly map the side nodes to the cell nodes.
+      this->sideSetMeshStructs[ss_name]->ignore_side_maps = params_ss->get<bool>("Ignore Side Maps", false);
     }
   }
 }
@@ -1181,6 +1211,8 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     Teuchos::ParameterList& fparams = req_fields_info->sublist(ss.str());
 
     fname = fparams.get<std::string>("Field Name");
+    ftype = fparams.get<std::string>("Field Type","INVALID");
+    checkFieldIsInMesh(fname, ftype);
     missing.erase(fname);
 
     fusage = fparams.get<std::string>("Field Usage", "Input");
@@ -1202,14 +1234,12 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
 
     if (forigin=="Mesh")
     {
-      *out << "  - Skipping field '" << fname << "' since it's listed as present in the mesh. Make sure this is true, since we can't check!\n";
+      *out << "  - Skipping field '" << fname << "' since it's listed as present in the mesh.\n";
       continue;
     }
     else
       TEUCHOS_TEST_FOR_EXCEPTION (forigin!="File", Teuchos::Exceptions::InvalidParameter,
                                   "Error! 'Field Origin' for field '" << fname << "' must be one of 'File' or 'Mesh'.\n");
-
-    ftype = fparams.get<std::string>("Field Type","INVALID");
 
     // Depending on the input field type, we need to use different pointers/importers/vectors
     if (ftype == "Node Scalar")
@@ -1580,7 +1610,9 @@ void Albany::GenericSTKMeshStruct::readLayeredScalarFileSerial (const std::strin
     {
       Teuchos::ArrayRCP<ST> nonConstView = mvec->getVectorNonConst(il)->get1dViewNonConst();
       for (GO i = 0; i < numNodes; i++)
+      {
         ifile >> nonConstView[i];
+      }
     }
     ifile.close();
   }
@@ -1637,6 +1669,41 @@ void Albany::GenericSTKMeshStruct::readLayeredVectorFileSerial (const std::strin
   Teuchos::broadcast(*comm,0,1,&numVectors);
   if (comm->getRank() != 0)
     mvec = Teuchos::rcp(new Tpetra_MultiVector(map,numVectors));
+}
+
+void Albany::GenericSTKMeshStruct::checkFieldIsInMesh (const std::string& fname, const std::string& ftype) const
+{
+  stk::topology::rank_t entity_rank;
+  if (ftype.find("Node")==std::string::npos)
+    entity_rank = stk::topology::ELEM_RANK;
+  else
+    entity_rank = stk::topology::NODE_RANK;
+
+  int dim = 1;
+  if (ftype.find("Vector")!=std::string::npos)
+    ++dim;
+  if (ftype.find("Layered")!=std::string::npos)
+    ++dim;
+
+  typedef AbstractSTKFieldContainer::ScalarFieldType  SFT;
+  typedef AbstractSTKFieldContainer::VectorFieldType  VFT;
+  typedef AbstractSTKFieldContainer::TensorFieldType  TFT;
+  bool missing = true;
+  switch (dim)
+  {
+    case 1:
+      missing = (metaData->get_field<SFT> (entity_rank, fname)==0);
+      break;
+    case 2:
+      missing = (metaData->get_field<VFT> (entity_rank, fname)==0);
+      break;
+    case 3:
+      missing = (metaData->get_field<TFT> (entity_rank, fname)==0);
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION (missing, std::runtime_error, "Error! The field '" << fname << "' was not found in the mesh. Possible reasons include:\n"
+                                                        << "   1) it is not of type '" << ftype << "'\n"
+                                                        << "   2) you did not register it in the state manager (which forwards it to the mesh)\n");
 }
 
 void

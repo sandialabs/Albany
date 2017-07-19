@@ -313,7 +313,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get<int>("Workset Size",DEFAULT_WORKSET_SIZE);
-  
+
   //Get Cubature Rule
   const std::string cub_rule_string = params->get("Cubature Rule", "GAUSS");
   Intrepid2::EPolyType cub_rule;
@@ -438,6 +438,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
   bulkData->modification_end();
 
   this->loadRequiredInputFields (req,commT);
+  this->setDefaultCoordinates3d();
 
   // Refine the mesh before starting the simulation if indicated
   uniformRefineMesh(commT);

@@ -120,8 +120,10 @@ void SideSetSTKMeshStruct::setFieldAndBulkData (
   const stk::mesh::BulkData& inputBulkData = *parentMeshStruct->bulkData;
 
   typedef AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
-  const VectorFieldType& parent_coordinates_field = *parentMeshStruct->getCoordinatesField();
-  VectorFieldType&       coordinates_field        = *fieldContainer->getCoordinatesField();
+  const VectorFieldType& parent_coordinates_field   = *parentMeshStruct->getCoordinatesField();
+  const VectorFieldType& parent_coordinates_field3d = *parentMeshStruct->getCoordinatesField3d();
+  VectorFieldType&       coordinates_field          = *fieldContainer->getCoordinatesField();
+  VectorFieldType&       coordinates_field3d        = *fieldContainer->getCoordinatesField3d();
 
   // Now we can extract the entities
   std::vector<stk::mesh::Entity> sides, nodes;
@@ -142,10 +144,16 @@ void SideSetSTKMeshStruct::setFieldAndBulkData (
     nodeId = inputBulkData.identifier(nodes[inode]);
     node = bulkData->declare_entity(stk::topology::NODE_RANK, nodeId, singlePartVec);
 
+    // Setting the coordinates_field
     double* coord = stk::mesh::field_data(coordinates_field, node);
     double const* p_coord = stk::mesh::field_data(parent_coordinates_field, nodes[inode]);
-
     for (int idim=0; idim<metaData->spatial_dimension(); ++idim)
+      coord[idim] = p_coord[idim];
+
+    // Setting the coordinates_field3d (since this is a side mesh, for sure numDim<3)
+    coord = stk::mesh::field_data(coordinates_field3d, node);
+    p_coord = stk::mesh::field_data(parent_coordinates_field3d, nodes[inode]);
+    for (int idim=0; idim<3; ++idim)
       coord[idim] = p_coord[idim];
 
     // Checking for shared node

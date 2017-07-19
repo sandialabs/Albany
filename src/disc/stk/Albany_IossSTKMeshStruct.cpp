@@ -317,6 +317,12 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
       //stk::io::process_mesh_bulk_data(region, *bulkData);
       mesh_data->populate_bulk_data();
 
+      if (this->numDim!=3)
+      {
+        // Try to load 3d coordinates (if present in the input file)
+        loadOrSetCoordinates3d();
+      }
+
       //bulkData = &mesh_data->bulk_data();
 
       // Read solution from exodus file.
@@ -357,6 +363,12 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
   { // running in Serial or Parallel read from Nemspread files
     bulkData->modification_begin();
     mesh_data->populate_bulk_data();
+    if (this->numDim!=3)
+    {
+      // Try to load 3d coordinates (if present in the input file)
+      loadOrSetCoordinates3d();
+    }
+
     if (!usePamgen)
     {
       // Read solution from exodus file.
@@ -461,7 +473,6 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 //      TODO, when compiler allows, replace following with this for performance: missing.emplace_back(fields[i],fields[i]->name());
         missing.push_back(stk::io::MeshField(fields[i],fields[i]->name()));
     }
-
   }
 
   // If this is a boundary mesh, the side_map/side_node_map may already be present, so we check
@@ -516,6 +527,37 @@ Albany::IossSTKMeshStruct::getSolutionFieldHistoryStamp(int step) const
   const Ioss::Region &  inputRegion = *(mesh_data->get_input_io_region());
   return inputRegion.get_state_time(index);
 }
+
+void
+Albany::IossSTKMeshStruct::loadOrSetCoordinates3d()
+{
+  const std::string coords3d_name = "coordinates3d";
+
+  Teuchos::RCP<Ioss::Region> region = mesh_data->get_input_io_region();
+  const Ioss::NodeBlockContainer& node_blocks = region->get_node_blocks();
+  Ioss::NodeBlock *nb = node_blocks[0];
+
+  if (nb->field_exists(coords3d_name))
+  {
+    // The field "coordinates3d" exists in the input mesh
+    // (which must then come from a previous Albany run), so load it.
+    std::vector<stk::mesh::Entity> nodes;
+    stk::mesh::get_entities(*bulkData,stk::topology::NODE_RANK,nodes);
+
+    stk::io::field_data_from_ioss(*bulkData, this->getCoordinatesField3d(), nodes, nb, coords3d_name);
+  }
+  else
+  {
+    // The input mesh does not store the 'coordinates3d' field
+    // (perhaps the mesh does not come from a previous Albany run).
+    // Hence, we initialize coordinates3d with coordinates,
+    // and we fill 'extra' dimensions with 0's. Hopefully, this is ok.
+
+    // Use GenericSTKMeshStruct functionality
+    this->setDefaultCoordinates3d();
+  }
+}
+
 
 void
 Albany::IossSTKMeshStruct::loadSolutionFieldHistory(int step)
