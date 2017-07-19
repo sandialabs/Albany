@@ -88,12 +88,13 @@
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>
+
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>
       <ParameterList name="Predictor">
-  <Parameter  name="Method" type="string" value="Constant"/>
+        <Parameter  name="Method" type="string" value="Constant"/>
       </ParameterList>
       <ParameterList name="Stepper">
   <Parameter  name="Initial Value" type="double" value="0.0"/>

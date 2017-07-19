@@ -15,6 +15,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis2km_ascii.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis2km_ascii.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis2km.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis2km.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_populate_meshes.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_populate_meshes.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled.xml
@@ -50,16 +52,18 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_wedge_pumi.xml
 
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-#3. Tests 
+#3. Tests
 #  First Test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km_test.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis20km_test.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km_testT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis20km_testT.xml COPYONLY)
-if (ALBANY_EPETRA) 
+if (ALBANY_EPETRA)
+add_test(${testName}_GisPopulateMeshes ${Albany.exe} input_fo_gis_populate_meshes.xml)
 add_test(${testName}_Gis20km ${Albany.exe} input_fo_gis20km_test.xml)
 add_test(${testName}_GisUnstructured ${Albany.exe} input_fo_gis_unstruct.xml)
-if (ALBANY_MESH_DEPENDS_ON_SOLUTION) 
+set_tests_properties(${testName}_GisUnstructured PROPERTIES DEPENDS ${testName}_GisPopulateMeshes)
+if (ALBANY_MESH_DEPENDS_ON_SOLUTION)
   add_test(${testName}_GisCoupledThicknessShapeOpt ${Albany.exe} input_fo_gis_coupled_shape_opt.xml)
 else()
   add_test(${testName}_GisCoupledThickness ${Albany.exe} input_fo_gis_coupled.xml)
@@ -77,9 +81,9 @@ set_tests_properties(${testName}_GisSensSMBwrtBetaRestart  PROPERTIES DEPENDS ${
     add_test(${testName}_GisAdjointSensitivityThickness ${Albany.exe} input_fo_gis_adjoint_sensitivity_thickness.xml)
     add_test(${testName}_GisAdjointSensitivityTwoParameters ${Albany.exe} input_fo_gis_analysis_two_params.xml)
   endif()
-set_tests_properties(${testName}_GisRestartUnstructured  PROPERTIES DEPENDS ${testName}_GisUnstructured) 
-set_tests_properties(${testName}_Gis20km  PROPERTIES LABELS CUDA_TEST) 
-endif() 
+set_tests_properties(${testName}_GisRestartUnstructured  PROPERTIES DEPENDS ${testName}_GisUnstructured)
+set_tests_properties(${testName}_Gis20km  PROPERTIES LABELS CUDA_TEST)
+endif()
 if(ALBANY_IFPACK2)
 add_test(${testName}_Gis20km_Tpetra ${AlbanyT.exe} input_fo_gis20km_testT.xml)
 endif(ALBANY_IFPACK2)
