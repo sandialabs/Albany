@@ -40,11 +40,11 @@ private:
   std::vector<PHX::Device::size_type> dims;
 
   bool target_zero;
+  TargetScalarT target_zero_val;
   RealType scaling;
 
   PHX::MDField<const SourceScalarT>             sourceField;
   PHX::MDField<const TargetScalarT>             targetField;
-  PHX::MDField<TargetScalarT>                   targetFieldEval;
 
   PHX::MDField<const RealType,Cell,QuadPoint>   w_measure;
 };

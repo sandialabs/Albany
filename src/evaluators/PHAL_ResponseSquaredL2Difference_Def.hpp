@@ -31,16 +31,15 @@ ResponseSquaredL2DifferenceBase(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   layout->dimensions(dims);
 
   sourceField = decltype(sourceField)(fname,layout);
-  targetField = decltype(targetField)(target_fname,layout);
   w_measure   = decltype(w_measure)("Weights",dl->qp_scalar);
   scaling     = plist->get("Scaling",1.0);
 
   this->addDependentField(sourceField);
   if (target_fname=="ZERO") {
     target_zero = true;
-    targetFieldEval = decltype(targetFieldEval)(target_fname,layout);
-    this->addEvaluatedField(targetFieldEval);
+    target_zero_val = TargetScalarT(0.0);
   } else {
+    targetField = decltype(targetField)(target_fname,layout);
     this->addDependentField(targetField);
   }
   this->addDependentField(w_measure);
@@ -68,12 +67,10 @@ void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetS
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(sourceField,fm);
-  this->utils.setFieldData(targetField,fm);
   this->utils.setFieldData(w_measure,fm);
 
-  if (target_zero) {
-    this->utils.setFieldData(targetFieldEval,fm);
-    PHAL::set(targetFieldEval, 0.0);
+  if (!target_zero) {
+    this->utils.setFieldData(targetField,fm);
   }
 
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postRegistrationSetup(d, fm);
@@ -106,16 +103,16 @@ void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetS
       switch (fieldDim)
       {
         case 0:
-          sq += std::pow(sourceField(cell,qp)-targetField(cell,qp),2);
+          sq += std::pow(sourceField(cell,qp)-(target_zero ? target_zero_val : targetField(cell,qp)),2);
           break;
         case 1:
           for (int j=0; j<dims[2]; ++j)
-            sq += std::pow(sourceField(cell,qp,j)-targetField(cell,qp,j),2);
+            sq += std::pow(sourceField(cell,qp,j)-(target_zero ? target_zero_val : targetField(cell,qp,j)),2);
           break;
         case 2:
           for (int j=0; j<dims[2]; ++j)
             for (int k=0; k<dims[3]; ++k)
-              sq += std::pow(sourceField(cell,qp,j,k)-targetField(cell,qp,j,k),2);
+              sq += std::pow(sourceField(cell,qp,j,k)-(target_zero ? target_zero_val : targetField(cell,qp,j,k)),2);
           break;
       }
       sum += sq * w_measure(cell,qp);

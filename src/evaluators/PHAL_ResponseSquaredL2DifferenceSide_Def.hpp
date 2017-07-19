@@ -37,6 +37,11 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
   fieldDim = getLayout(dl_side,rank,layout);
   layout->dimensions(dims);
 
+  if (fieldDim>1)
+  {
+    metric = decltype(metric)("Metric " + sideSetName, dl_side->qp_tensor);
+  }
+
   sourceField = decltype(sourceField)(fname,layout);
   w_measure   = decltype(w_measure)("Weighted Measure " + sideSetName, dl_side->qp_scalar);
   scaling     = plist->get("Scaling",1.0);
@@ -44,8 +49,7 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
   this->addDependentField(sourceField);
   if (target_fname=="ZERO") {
     target_zero = true;
-    targetFieldEval = decltype(targetFieldEval)(target_fname,layout);
-    this->addEvaluatedField(targetFieldEval);
+    target_zero_val = TargetScalarT(0.0);
   } else {
     targetField = decltype(targetField)(target_fname,layout);
     this->addDependentField(targetField);
@@ -77,10 +81,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(sourceField,fm);
   this->utils.setFieldData(w_measure,fm);
 
-  if (target_zero) {
-    this->utils.setFieldData(targetFieldEval,fm);
-    PHAL::set(targetFieldEval, 0.0);
-  } else {
+  if (!target_zero) {
     this->utils.setFieldData(targetField,fm);
   }
 
@@ -109,6 +110,13 @@ evaluateFields(typename Traits::EvalData workset)
   // Zero out local response
   PHAL::set(this->local_response_eval, 0.0);
 
+  std::vector<ScalarT> diff_1;
+  std::vector<std::vector<ScalarT>> diff_2;
+  if (fieldDim==1)
+    diff_1.resize(dims[3]);
+  else if (fieldDim==2)
+    diff_2.resize(dims[3],std::vector<ScalarT>(dims[3]));
+
   if (workset.sideSets->find(sideSetName) != workset.sideSets->end())
   {
     const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
@@ -126,16 +134,28 @@ evaluateFields(typename Traits::EvalData workset)
         switch (fieldDim)
         {
           case 0:
-            sq += std::pow(sourceField(cell,side,qp)-targetField(cell,side,qp),2);
+            sq += std::pow(sourceField(cell,side,qp)-(target_zero ? target_zero_val : targetField(cell,side,qp)),2);
             break;
           case 1:
-            for (int j=0; j<dims[3]; ++j)
-              sq += std::pow(sourceField(cell,side,qp,j)-targetField(cell,side,qp,j),2);
+            // Precompute differentce and access fields only n times (not n^2)
+            for (int i=0; i<dims[3]; ++i)
+              diff_1[i] = sourceField(cell,side,qp,i) - (target_zero ? target_zero_val : targetField(cell,side,qp,i));
+
+            for (int i=0; i<dims[3]; ++i)
+              for (int j=0; j<dims[3]; ++j)
+                sq += diff_1[i]*metric(cell,side,qp,i,j)*diff_1[j];
             break;
           case 2:
-            for (int j=0; j<dims[3]; ++j)
-              for (int k=0; k<dims[4]; ++k)
-                sq += std::pow(sourceField(cell,side,qp,j,k)-targetField(cell,side,qp,j,k),2);
+            // Precompute differentce and access fields only n^2 times (not n^4)
+            for (int i=0; i<dims[3]; ++i)
+              for (int j=0; j<dims[3]; ++j)
+                diff_2[i][j] = sourceField(cell,side,qp,i,j) - (target_zero ? target_zero_val : targetField(cell,side,qp,i,j));
+
+            for (int i=0; i<dims[3]; ++i)
+              for (int j=0; j<dims[3]; ++j)
+                for (int k=0; k<dims[3]; ++k)
+                  for (int l=0; l<dims[3]; ++l)
+                    sq += metric(cell,side,qp,k,i)*diff_2[i][j] * metric(cell,side,qp,j,l)*diff_2[l][k];
             break;
         }
         sum += sq * w_measure(cell,side,qp);
