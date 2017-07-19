@@ -85,6 +85,13 @@ Decorator::getWsElNodeEqID() const
   return discretization->getWsElNodeEqID();
 }
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+const Kokkos::View<LO***, PHX::Device> Decorator::getWsElNodeEqIDKokkos(const int ws) const
+{
+  return discretization->getWsElNodeEqIDKokkos(ws);
+}
+#endif
+
 Teuchos::ArrayRCP<double> &Decorator::getCoordinates() const
 {
   return discretization->getCoordinates();
