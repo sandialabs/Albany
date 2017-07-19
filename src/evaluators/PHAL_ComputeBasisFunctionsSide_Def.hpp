@@ -19,28 +19,30 @@ ComputeBasisFunctionsSide<EvalT, Traits>::
 ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
                            const Teuchos::RCP<Albany::Layouts>& dl_side) :
   sideCoordVec  (p.get<std::string> ("Side Coordinate Vector Name"), dl_side->vertices_vector ),
+  tangents      (p.get<std::string> ("Tangents Name"), dl_side->qp_tensor_cd_sd ),
   metric        (p.get<std::string> ("Metric Name"), dl_side->qp_tensor ),
-  inv_metric    (p.get<std::string> ("Inverse Metric Name"), dl_side->qp_tensor ),
   w_measure     (p.get<std::string> ("Weighted Measure Name"), dl_side->qp_scalar ),
+  inv_metric    (p.get<std::string> ("Inverse Metric Name"), dl_side->qp_tensor ),
   metric_det    (p.get<std::string> ("Metric Determinant Name"), dl_side->qp_scalar ),
   BF            (p.get<std::string> ("BF Name"), dl_side->node_qp_scalar),
   GradBF        (p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient)
 {
-  this->addDependentField(sideCoordVec.fieldTag());
-  this->addEvaluatedField(w_measure);
+  this->addDependentField(sideCoordVec);
+  this->addEvaluatedField(tangents);
   this->addEvaluatedField(metric);
   this->addEvaluatedField(metric_det);
+  this->addEvaluatedField(w_measure);
   this->addEvaluatedField(inv_metric);
   this->addEvaluatedField(BF);
   this->addEvaluatedField(GradBF);
 
-  compute_side_normals = p.isParameter("Side Normals Name");
-  if(compute_side_normals) {
-    side_normals = decltype(side_normals)(p.get<std::string> ("Side Normals Name"), dl_side->qp_gradient);
+  compute_normals = p.isParameter("Side Normals Name");
+  if(compute_normals) {
+    normals = decltype(normals)(p.get<std::string> ("Side Normals Name"), dl_side->qp_gradient);
     Teuchos::RCP<Albany::Layouts> dl = p.get<Teuchos::RCP<Albany::Layouts>>("Layout Name");
     coordVec = decltype(coordVec)(p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector );
     numNodes = dl->node_gradient->dimension(1);
-    this->addEvaluatedField(side_normals);
+    this->addEvaluatedField(normals);
     this->addEvaluatedField(coordVec);
   }
 
@@ -80,19 +82,18 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(sideCoordVec,fm);
-  this->utils.setFieldData(w_measure,fm);
+  this->utils.setFieldData(tangents,fm);
   this->utils.setFieldData(metric,fm);
   this->utils.setFieldData(metric_det,fm);
+  this->utils.setFieldData(w_measure,fm);
   this->utils.setFieldData(inv_metric,fm);
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(GradBF,fm);
 
-  if(compute_side_normals) {
-    this->utils.setFieldData(side_normals,fm);
+  if(compute_normals) {
+    this->utils.setFieldData(normals,fm);
     this->utils.setFieldData(coordVec, fm);
   }
-
-  tangents = Kokkos::createDynRankView(metric_det.get_view(), "XXX", numSideDims,numCellDims,numSideQPs);
 
   // Allocate Temporary Kokkos Views
   cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numSideQPs,numSideDims);
@@ -158,10 +159,10 @@ evaluateFields(typename Traits::EvalData workset)
       {
         for (int qp=0; qp<numSideQPs; ++qp)
         {
-          tangents(itan,icoor,qp) = 0.;
+          tangents(cell,side,qp,icoor,itan) = 0.;
           for (int node=0; node<numSideNodes; ++node)
           {
-            tangents(itan,icoor,qp) += sideCoordVec(cell,side,node,icoor) * grad_at_cub_points(node,qp,itan);
+            tangents(cell,side,qp,icoor,itan) += sideCoordVec(cell,side,node,icoor) * grad_at_cub_points(node,qp,itan);
           }
         }
       }
@@ -175,7 +176,7 @@ evaluateFields(typename Traits::EvalData workset)
         metric(cell,side,qp,idim,idim) = 0.;
         for (int coor=0; coor<numCellDims; ++coor)
         {
-          metric(cell,side,qp,idim,idim) += tangents(idim,coor,qp)*tangents(idim,coor,qp); // g = J'*J
+          metric(cell,side,qp,idim,idim) += tangents(cell,side,qp,coor,idim)*tangents(cell,side,qp,coor,idim); // g = J'*J
         }
 
         // Extra-diagonal
@@ -184,7 +185,7 @@ evaluateFields(typename Traits::EvalData workset)
            metric(cell,side,qp,idim,jdim) = 0.;
           for (int coor=0; coor<numCellDims; ++coor)
           {
-             metric(cell,side,qp,idim,jdim) += tangents(idim,coor,qp)*tangents(jdim,coor,qp); // g = J'*J
+             metric(cell,side,qp,idim,jdim) += tangents(cell,side,qp,coor,idim)*tangents(cell,side,qp,coor,jdim); // g = J'*J
           }
            metric(cell,side,qp,jdim,idim) =  metric(cell,side,qp,idim,jdim);
         }
@@ -224,13 +225,13 @@ evaluateFields(typename Traits::EvalData workset)
         {
           GradBF(cell,side,node,qp,ider)=0;
           for(int jder=0; jder< numSideDims; ++jder)
-            GradBF(cell,side,node,qp,ider) +=  inv_metric(cell,side,qp,ider,jder)*grad_at_cub_points(node,qp,jder);
+            GradBF(cell,side,node,qp,ider) += inv_metric(cell,side,qp,ider,jder)*grad_at_cub_points(node,qp,jder);
         }
       }
     }
   }
 
-  if(compute_side_normals){
+  if(compute_normals){
     for (int side = 0; side < numSides; ++side)
     {
       int numCells_ =  numCellsOnSide[side];
@@ -270,7 +271,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int icoor=0; icoor<numCellDims; ++icoor)
         for (int qp=0; qp<numSideQPs; ++qp)
           for (std::size_t iCell=0; iCell < numCells_; ++iCell)
-            side_normals(cellVec(iCell),side,qp, icoor) = normals(iCell,qp,icoor);
+            normals(cellVec(iCell),side,qp, icoor) = normals(iCell,qp,icoor);
     }
   }
 }

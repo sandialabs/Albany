@@ -477,6 +477,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructComputeBasisFunctions
 
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
     p->set<std::string>("Weighted Measure Name",     "Weighted Measure "+sideSetName);
+    p->set<std::string>("Tangents Name",             "Tangents "+sideSetName);
     p->set<std::string>("Metric Determinant Name",   "Metric Determinant "+sideSetName);
     p->set<std::string>("BF Name",                   "BF "+sideSetName);
     p->set<std::string>("Gradient BF Name",          "Grad BF "+sideSetName);
