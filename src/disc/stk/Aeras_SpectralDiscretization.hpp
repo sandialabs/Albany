@@ -363,8 +363,7 @@ namespace Aeras
     //! Get sideSet discretizations map
     const SideSetDiscretizationsType& getSideSetDiscretizations () const
     {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Functionality not supported by Aeras discretization.\n");
-      static SideSetDiscretizationsType sideSetDiscretizations;
+      //warning: returning empty structure (feature not supported with this discretization)
       return sideSetDiscretizations;
     }
 
@@ -794,6 +793,9 @@ namespace Aeras
 
     //! list of all overlap nodes, saved for getting coordinates for mesh motion
     std::vector< stk::mesh::Entity > overlapnodes ;
+
+    //! sideSetDisretization (never used)
+    std::map<std::string,Teuchos::RCP<Albany::AbstractDiscretization> > sideSetDiscretizations;
 
     //! Number of elements on this processor
     int numOwnedNodes;
