@@ -128,9 +128,9 @@ void FELIX::L2ProjectedBoundaryLaplacianResidual<EvalT, Traits>::evaluateFields(
         for (int qp=0; qp<numBasalQPs; ++qp) {
           for (int icoor=0; icoor<sideDim; ++icoor) {
             ScalarT gradField_i(0.0), gradBF_i(0.0);
-            for (int idim=0; idim<sideDim; ++idim) {
-              gradField_i += side_tangents(cell,side,qp,icoor,idim)*gradField(cell,side,qp,idim);
-              gradBF_i    += side_tangents(cell,side,qp,icoor,idim)*gradBF(cell,side,inode,qp,idim);
+            for (int itan=0; itan<sideDim; ++itan) {
+              gradField_i += side_tangents(cell,side,qp,icoor,itan)*gradField(cell,side,qp,itan);
+              gradBF_i    += side_tangents(cell,side,qp,icoor,itan)*gradBF(cell,side,inode,qp,itan);
             }
 
             t -= laplacian_coeff * gradField_i*gradBF_i * w_side_measure(cell,side,qp);
