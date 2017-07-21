@@ -1290,7 +1290,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     missing_list.erase(missing_list.size()-1);
 
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-                                "Error! The following requirements were not find in the discretization list:" << missing_list << ".\n");
+                                "Error! The following requirements were not found in the discretization list:" << missing_list << ".\n");
   }
 }
 
@@ -1699,11 +1699,29 @@ void Albany::GenericSTKMeshStruct::checkFieldIsInMesh (const std::string& fname,
       break;
     case 3:
       missing = (metaData->get_field<TFT> (entity_rank, fname)==0);
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Invalid field dimension.\n");
   }
 
-  TEUCHOS_TEST_FOR_EXCEPTION (missing, std::runtime_error, "Error! The field '" << fname << "' was not found in the mesh. Possible reasons include:\n"
-                                                        << "   1) it is not of type '" << ftype << "'\n"
-                                                        << "   2) you did not register it in the state manager (which forwards it to the mesh)\n");
+  if (missing)
+  {
+    bool isFieldInMesh = false;
+    auto fl = metaData->get_fields();
+    auto f = fl.begin();
+    for (; f != fl.end(); ++f)
+    {
+      isFieldInMesh = (fname == (*f)->name());
+      if(isFieldInMesh) break;
+    }
+    if(isFieldInMesh) {
+       TEUCHOS_TEST_FOR_EXCEPTION (missing, std::runtime_error, "Error! The field '" << fname << "' in the mesh has different rank or dimensions than the ones specified\n"
+                                                        << " Rank required: " << entity_rank << ", rank of field in mesh: " << (*f)->entity_rank() << "\n"  
+                                                        << " Dimension required: " << dim << ", dimension of field in mesh: " << (*f)->field_array_rank()+1 << "\n");
+    }
+    else 
+      TEUCHOS_TEST_FOR_EXCEPTION (missing, std::runtime_error, "Error! The field '" << fname << "' was not found in the mesh.\n"
+                                                       << "  Probably it was not registered it in the state manager (which forwards it to the mesh)\n");
+  }
 }
 
 void
