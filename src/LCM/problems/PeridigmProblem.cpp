@@ -42,7 +42,7 @@ PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
 
   // "Sphere Volume" is a required field for peridynamic simulations that read an Exodus sphere mesh
-  requirements.push_back("Sphere Volume");
+  // requirements.push_back("Sphere Volume");
 
   // The following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
   // written by IK, Feb. 2012
