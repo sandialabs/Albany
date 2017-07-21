@@ -22,11 +22,13 @@ FluxDiv (const Teuchos::ParameterList& p,
   const std::string& div_averaged_velocity_name = p.get<std::string>("Averaged Velocity Side QP Divergence Name");
   const std::string& thickness_name             = p.get<std::string>("Thickness Side QP Variable Name");
   const std::string& grad_thickness_name        = p.get<std::string>("Thickness Gradient Name");
+  const std::string& side_tangents_name         = p.get<std::string>("Side Tangents Name");
 
   averaged_velocity     = decltype(averaged_velocity)(averaged_velocity_name, dl_basal->qp_vector);
   div_averaged_velocity = decltype(div_averaged_velocity)(div_averaged_velocity_name, dl_basal->qp_scalar);
   thickness             = decltype(thickness)(thickness_name, dl_basal->qp_scalar);
   grad_thickness        = decltype(grad_thickness)(grad_thickness_name, dl_basal->qp_gradient);
+  side_tangents         = decltype(side_tangents)(side_tangents_name, dl_basal->qp_tensor_cd_sd);
 
   flux_div              = decltype(flux_div)(fieldName, dl_basal->qp_scalar);
 
@@ -43,6 +45,7 @@ FluxDiv (const Teuchos::ParameterList& p,
   this->addDependentField(div_averaged_velocity);
   this->addDependentField(thickness);
   this->addDependentField(grad_thickness);
+  this->addDependentField(side_tangents);
 
   this->addEvaluatedField(flux_div);
 
@@ -57,6 +60,7 @@ void FELIX::FluxDiv<EvalT, Traits>::postRegistrationSetup(typename Traits::Setup
   this->utils.setFieldData(div_averaged_velocity, fm);
   this->utils.setFieldData(thickness, fm);
   this->utils.setFieldData(grad_thickness, fm);
+  this->utils.setFieldData(side_tangents, fm);
   this->utils.setFieldData(flux_div, fm);
 }
 
@@ -79,9 +83,16 @@ void FELIX::FluxDiv<EvalT, Traits>::evaluateFields(typename Traits::EvalData wor
       ScalarT t = 0;
       for (int qp=0; qp<numSideQPs; ++qp)
       {
+        ScalarT grad_thickness_tmp[2] = {0.0, 0.0};
+        for (std::size_t dim = 0; dim < numSideDims; ++dim)
+        {
+          grad_thickness_tmp[0] += side_tangents(cell,side,qp,0,dim)*grad_thickness(cell,side,qp,dim);
+          grad_thickness_tmp[1] += side_tangents(cell,side,qp,1,dim)*grad_thickness(cell,side,qp,dim);
+        }
+
         ScalarT divHV = div_averaged_velocity(cell, side, qp)* thickness(cell, side, qp);
-          for (std::size_t dim = 0; dim < numSideDims; ++dim)
-            divHV += grad_thickness(cell, side, qp, dim)*averaged_velocity(cell, side, qp, dim);
+        for (std::size_t dim = 0; dim < numSideDims; ++dim)
+          divHV += grad_thickness_tmp[dim]*averaged_velocity(cell, side, qp, dim);
         flux_div(cell, side, qp) = divHV;
       }
     }
