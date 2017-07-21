@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "PHAL_DOFDivInterpolationSide.hpp"
-#include "PHAL_DOFDivInterpolationSide_Def.hpp"
+#include "FELIX_DOFDivInterpolationSide.hpp"
+#include "FELIX_DOFDivInterpolationSide_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(PHAL::DOFDivInterpolationSideBase)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(FELIX::DOFDivInterpolationSideBase)

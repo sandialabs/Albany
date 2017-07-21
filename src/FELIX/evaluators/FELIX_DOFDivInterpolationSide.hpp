@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef PHAL_DOF_DIV_INTERPOLATION_SIDE_HPP
-#define PHAL_DOF_DIV_INTERPOLATION_SIDE_HPP 1
+#ifndef FELIX_DOF_DIV_INTERPOLATION_SIDE_HPP
+#define FELIX_DOF_DIV_INTERPOLATION_SIDE_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -14,12 +14,7 @@
 
 #include "Albany_Layouts.hpp"
 
-namespace PHAL {
-/** \brief Finite Element InterpolationSide Evaluator
-
-    This evaluator interpolates nodal DOF values to quad points.
-
-*/
+namespace FELIX {
 
 template<typename EvalT, typename Traits, typename ScalarT>
 class DOFDivInterpolationSideBase : public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -44,8 +39,9 @@ private:
   // Input:
   //! Values at nodes
   PHX::MDField<const ScalarT,Cell,Side,Node, Dim> val_node;
-  //! Basis Functions
+  //! Basis Functions and side tangents
   PHX::MDField<const MeshScalarT,Cell,Side,Node,QuadPoint,Dim> gradBF;
+  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  tangents;
 
   // Output:
   //! Values at quadrature points
@@ -66,6 +62,6 @@ using DOFDivInterpolationSideMesh = DOFDivInterpolationSideBase<EvalT,Traits,typ
 template<typename EvalT, typename Traits>
 using DOFDivInterpolationSideParam = DOFDivInterpolationSideBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
-} // Namespace PHAL
+} // Namespace FELIX
 
-#endif // PHAL_DOF_DIV_INTERPOLATION_SIDE_HPP
+#endif // FELIX_DOF_DIV_INTERPOLATION_SIDE_HPP

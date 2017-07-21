@@ -9,7 +9,7 @@
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
-namespace PHAL {
+namespace FELIX {
 
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -19,10 +19,12 @@ DOFDivInterpolationSideBase(const Teuchos::ParameterList& p,
   sideSetName (p.get<std::string> ("Side Set Name")),
   val_node    (p.get<std::string> ("Variable Name"), dl_side->node_vector),
   gradBF      (p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient),
+  tangents    (p.get<std::string> ("Tangents Name"), dl_side->qp_tensor_cd_sd),
   val_qp      (p.get<std::string> ("Divergence Variable Name"), dl_side->qp_scalar )
 {
-  this->addDependentField(val_node.fieldTag());
-  this->addDependentField(gradBF.fieldTag());
+  this->addDependentField(val_node);
+  this->addDependentField(gradBF);
+  this->addDependentField(tangents);
   this->addEvaluatedField(val_qp);
 
   this->setName("DOFDivInterpolationSideBase" );
@@ -40,6 +42,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(val_node,fm);
   this->utils.setFieldData(gradBF,fm);
+  this->utils.setFieldData(tangents,fm);
   this->utils.setFieldData(val_qp,fm);
 }
 
@@ -65,11 +68,16 @@ evaluateFields(typename Traits::EvalData workset)
       {
         for (int node=0; node<numSideNodes; ++node)
         {
-          val_qp(cell,side,qp) += val_node(cell,side,node,dim) * gradBF(cell,side,node,qp,dim);
+          MeshScalarT gradBF_non_intrinsic = 0.0;
+          for (int itan=0; itan<numDims; ++itan)
+          {
+            gradBF_non_intrinsic += tangents(cell,side,qp,dim,itan)*gradBF(cell,side,node,qp,itan);
+          }
+          val_qp(cell,side,qp) += val_node(cell,side,node,dim) * gradBF_non_intrinsic;
         }
       }
     }
   }
 }
 
-} // Namespace PHAL
+} // Namespace FELIX

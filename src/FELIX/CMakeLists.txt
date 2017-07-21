@@ -14,6 +14,7 @@
        evaluators/FELIX_BasalMeltRate.cpp
        evaluators/FELIX_DirichletEnthalpySurface.cpp
        evaluators/FELIX_Dissipation.cpp
+       evaluators/FELIX_DOFDivInterpolationSide.cpp
        evaluators/FELIX_DummyResidual.cpp
        evaluators/FELIX_EffectivePressure.cpp
        evaluators/FELIX_EnthalpyResid.cpp
@@ -117,6 +118,8 @@ ENDIF()
        evaluators/FELIX_DirichletEnthalpySurface_Def.hpp
        evaluators/FELIX_Dissipation.hpp
        evaluators/FELIX_Dissipation_Def.hpp
+       evaluators/FELIX_DOFDivInterpolationSide.hpp
+       evaluators/FELIX_DOFDivInterpolationSide_Def.hpp
        evaluators/FELIX_DummyResidual.hpp
        evaluators/FELIX_DummyResidual_Def.hpp
        evaluators/FELIX_EffectivePressure.hpp
