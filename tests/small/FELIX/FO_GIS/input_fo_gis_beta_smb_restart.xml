@@ -10,7 +10,7 @@
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
     <Parameter name="Extruded Column Coupled in 2D Response" type="bool" value="true"/>
     <Parameter name="Required Fields"         type="Array(string)" value="{temperature, ice_thickness, surface_height}"/>
-    <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction, surface_height,
+    <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction, ice_thickness, surface_height,
                                                                            observed_ice_thickness, observed_ice_thickness_RMS,
                                                                            surface_mass_balance, surface_mass_balance_RMS}"/>
     <Parameter name="Required Surface Fields" type="Array(string)" value="{observed_surface_velocity,observed_surface_velocity_RMS}"/>
@@ -115,7 +115,7 @@
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <Parameter name="Restart Index" type="int" value="1"/>
         <ParameterList name="Required Fields Info">
-          <Parameter name="Number Of Fields" type="int" value="6"/>
+          <Parameter name="Number Of Fields" type="int" value="7"/>
           <ParameterList name="Field 0">
             <Parameter name="Field Name"   type="string" value="surface_height"/>
             <Parameter name="Field Type"   type="string" value="Node Scalar"/>
@@ -143,6 +143,11 @@
           </ParameterList>
           <ParameterList name="Field 5">
             <Parameter name="Field Name"   type="string" value="surface_mass_balance_RMS"/>
+            <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+            <Parameter name="Field Origin" type="string" value="Mesh"/>
+          </ParameterList>
+          <ParameterList name="Field 6">
+            <Parameter name="Field Name"   type="string" value="ice_thickness"/>
             <Parameter name="Field Type"   type="string" value="Node Scalar"/>
             <Parameter name="Field Origin" type="string" value="Mesh"/>
           </ParameterList>
