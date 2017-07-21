@@ -34,7 +34,7 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   const std::string& obs_thickness_name  = paramList->get<std::string>("Observed Thickness Side QP Variable Name");
   const std::string& thicknessRMS_name   = paramList->get<std::string>("Thickness RMS Side QP Variable Name");
   const std::string& w_measure_2d_name   = paramList->get<std::string>("Weighted Measure 2D Name");
-  const std::string& metric_2d_name      = paramList->get<std::string>("Metric 2D Name");
+  const std::string& tangents_name       = paramList->get<std::string>("Basal Side Tangents Name");
 
   TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(basalSideName)==dl->side_layouts.end(), std::runtime_error,
                               "Error! Basal side data layout not found.\n");
@@ -49,6 +49,7 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   obs_thickness  = decltype(obs_thickness)(obs_thickness_name, dl_basal->qp_scalar);
   thicknessRMS   = decltype(thicknessRMS)(thicknessRMS_name, dl_basal->qp_scalar);
   w_measure_2d   = decltype(w_measure_2d)(w_measure_2d_name, dl_basal->qp_scalar);
+  tangents       = decltype(tangents)(tangents_name, dl_basal->qp_tensor_cd_sd);
 
   cell_topo = paramList->get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
@@ -68,12 +69,7 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   this->addDependentField(obs_thickness);
   this->addDependentField(thicknessRMS);
   this->addDependentField(w_measure_2d);
-
-  if (alpha!=0 || alphaH!=0)
-  {
-    metric_2d      = decltype(metric_2d)(metric_2d_name, dl_basal->qp_tensor);
-    this->addDependentField(metric_2d);
-  }
+  this->addDependentField(tangents);
 
   this->setName("Response Surface Mass Balance Mismatch" + PHX::typeAsString<EvalT>());
 
@@ -106,7 +102,7 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::postRegistrationSetup(typename T
   this->utils.setFieldData(obs_thickness, fm);
   this->utils.setFieldData(thicknessRMS, fm);
   this->utils.setFieldData(w_measure_2d, fm);
-  this->utils.setFieldData(metric_2d, fm);
+  this->utils.setFieldData(tangents, fm);
 
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postRegistrationSetup(d, fm);
 }
@@ -165,9 +161,13 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits::
         for (int qp=0; qp<numBasalQPs; ++qp)
         {
           ScalarT sum=0;
+          ScalarT grad_thickness_tmp[2] = {0.0, 0.0};
           for (int idim=0; idim<2; ++idim)
-            for (int jdim=0; jdim<2; ++jdim)
-              sum += grad_thickness(cell,side,qp,idim)*metric_2d(cell,side,qp,idim,jdim)*grad_thickness(cell,side,qp,jdim);
+            for (int itan=0; itan<2; ++itan)
+              grad_thickness_tmp[idim] += tangents(cell,side,qp,idim,itan) * grad_thickness(cell,side,qp,itan);
+
+          for (int idim=0; idim<2; ++idim)
+            sum += grad_thickness_tmp[idim] * grad_thickness_tmp[idim];
           tr += sum * w_measure_2d(cell,side,qp);;
           tH += (pow((obs_thickness(cell,side,qp)-thickness(cell,side,qp))/thicknessRMS(cell,side,qp),2)) * w_measure_2d(cell,side,qp);
         }

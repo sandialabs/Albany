@@ -55,7 +55,7 @@ namespace FELIX {
     PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         thicknessRMS;
     PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint,Dim>     grad_thickness;
     PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>          w_measure_2d;
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  metric_2d;
+    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  tangents;
 
     ScalarT p_resp, p_reg, resp, reg, p_misH, misH;
     double scaling, alpha, alphaH, alphaSMB, asinh_scaling;
