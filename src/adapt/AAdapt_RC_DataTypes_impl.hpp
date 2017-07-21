@@ -87,11 +87,14 @@ namespace rc {
 
 /*! aadapt_rc_apply_to_all_eval_types(macro) applies a macro to every evaluation
  *  type PHAL::AlbanyTraits defines.
+ *
+ * Note that we do not need to ETI PHAL::AlbanyTraits::Residual, as it is already a specialization in
+ * AAdapt_RC_Manager.cpp (Indeed - doing so will cause an error) GAH
+ * If this changes - need "macro(PHAL::AlbanyTraits::Residual)                   \"
  */
 #ifdef ALBANY_SG
 # ifdef ALBANY_ENSEMBLE
 #define aadapt_rc_apply_to_all_eval_types(macro)        \
-  macro(PHAL::AlbanyTraits::Residual)                   \
   macro(PHAL::AlbanyTraits::Jacobian)                   \
   macro(PHAL::AlbanyTraits::Tangent)                    \
   macro(PHAL::AlbanyTraits::DistParamDeriv)             \
@@ -103,7 +106,6 @@ namespace rc {
   macro(PHAL::AlbanyTraits::MPTangent)
 # else
 #define aadapt_rc_apply_to_all_eval_types(macro)        \
-  macro(PHAL::AlbanyTraits::Residual)                   \
   macro(PHAL::AlbanyTraits::Jacobian)                   \
   macro(PHAL::AlbanyTraits::Tangent)                    \
   macro(PHAL::AlbanyTraits::DistParamDeriv)             \
@@ -114,7 +116,6 @@ namespace rc {
 #else
 # ifdef ALBANY_ENSEMBLE
 #define aadapt_rc_apply_to_all_eval_types(macro)        \
-  macro(PHAL::AlbanyTraits::Residual)                   \
   macro(PHAL::AlbanyTraits::Jacobian)                   \
   macro(PHAL::AlbanyTraits::Tangent)                    \
   macro(PHAL::AlbanyTraits::DistParamDeriv)             \
@@ -123,7 +124,6 @@ namespace rc {
   macro(PHAL::AlbanyTraits::MPTangent)
 # else
 #define aadapt_rc_apply_to_all_eval_types(macro)        \
-  macro(PHAL::AlbanyTraits::Residual)                   \
   macro(PHAL::AlbanyTraits::Jacobian)                   \
   macro(PHAL::AlbanyTraits::Tangent)                    \
   macro(PHAL::AlbanyTraits::DistParamDeriv)

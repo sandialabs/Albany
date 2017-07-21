@@ -1,9 +1,10 @@
 #!/usr/bin/python
 
 import cPickle as pickle
-import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 from matplotlib import rcParams
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import numpy as np
 
 
@@ -30,10 +31,12 @@ def plot_data_stress(domain = None, filename = None, truncate_legend = False):
     if truncate_legend is True:
         string_legend.extend(['...', 'Block ' + str(sorted(list(domain.blocks))[-1])])
 
-    # plt.rc('text', usetex=True)
-    plt.rc('font', family = 'serif', size = 22)
+    # rcParams['text.usetex'] = True
+    rcParams['font.family'] = 'serif'
+    rcParams['font.size'] = 22
 
-    fig = plt.figure()
+    fig = Figure()
+    canvas = FigureCanvas(fig)
 
     for dim_i in range(num_dims):
 
@@ -57,26 +60,24 @@ def plot_data_stress(domain = None, filename = None, truncate_legend = False):
                     [int(block.variables['Cauchy_Stress'][key_step][(dim_i, dim_j)]*1e8)/1e8 for key_step in times],
                     linestyle = ':')
 
-            plt.xlabel('Logarithmic Strain $\epsilon_{'+ str(dim_i + 1) + str(dim_j + 1) +'}$')
-            plt.ylabel('Cauchy Stress $\sigma_{'+ str(dim_i + 1) + str(dim_j + 1) +'}$ (MPa)')
+            ax.set_xlabel('Logarithmic Strain $\epsilon_{'+ str(dim_i + 1) + str(dim_j + 1) +'}$')
+            ax.set_ylabel('Cauchy Stress $\sigma_{'+ str(dim_i + 1) + str(dim_j + 1) +'}$ (MPa)')
 
             # ax.xaxis.set_major_formatter(mtick.FormatStrFormatter('%.1e'))
-            plt.locator_params(axis='x',nbins=4)
+            ax.locator_params(axis='x',nbins=4)
 
-            legend = plt.legend(
+            legend = ax.legend(
                 string_legend,
                 bbox_to_anchor = (1.05, 1), 
                 loc = 2, 
                 borderaxespad = 0.,
-                fontsize = 15,
-                ncol = np.max([1, int(len(string_legend) / 15.)]))
+                fontsize = 15)#,
+                # ncol = np.max([1, int(len(string_legend) / 15.)]))
 
-            plt.savefig(
+            canvas.print_figure(
                 'stress_strain_'+ str(dim_i + 1) + str(dim_j + 1) +'.pdf',
-                additional_artists = [legend],
-                bbox_inches='tight')
-
-    plt.close(fig)
+                bbox_extra_artists = [legend],
+                bbox_inches = 'tight')
 
 # end def plot_data_stress(domain):
 
@@ -94,7 +95,7 @@ if __name__ == '__main__':
     try:
         truncate_legend = sys.argv[2]
     except:
-        truncate_legend = False
+        truncate_legend = True
         pass
 
     plot_data_stress(

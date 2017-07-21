@@ -124,8 +124,8 @@ Aggregator::parse(const Teuchos::ParameterList& aggregatorParams)
 void 
 Aggregator_DistParamBased::
 SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
-                   const std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > valueMap,
-                   const std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > derivMap)
+                   const std::map<std::string, std::vector<Teuchos::RCP<const Tpetra_Vector>>> valueMap,
+                   const std::map<std::string, std::vector<Teuchos::RCP<Tpetra_MultiVector>>> derivMap)
 //**********************************************************************
 {
   outApp = subProblems[0].app;
@@ -134,7 +134,7 @@ SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
   int numVars = aggregatedValuesNames.size();
   valuesT.resize(numVars);
 
-  std::map<std::string, Teuchos::RCP<const Tpetra_Vector> >::const_iterator git;
+  std::map<std::string, std::vector<Teuchos::RCP<const Tpetra_Vector>>>::const_iterator git;
   for(int ir=0; ir<numVars; ir++){
     git = valueMap.find(aggregatedValuesNames[ir]);
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -149,7 +149,7 @@ SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
   numVars = aggregatedDerivativesNames.size();
   derivativesT.resize(numVars);
 
-  std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> >::const_iterator gpit;
+  std::map<std::string, std::vector<Teuchos::RCP<Tpetra_MultiVector>>>::const_iterator gpit;
   for(int ir=0; ir<numVars; ir++){
     gpit = derivMap.find(aggregatedDerivativesNames[ir]);
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -165,8 +165,8 @@ SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
 void 
 Aggregator_DistParamBased::
 SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
-                  const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > valueMap,
-                  const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > derivMap)
+                  const std::map<std::string, std::vector<Teuchos::RCP<const Epetra_Vector>>> valueMap,
+                  const std::map<std::string, std::vector<Teuchos::RCP<Epetra_MultiVector>>> derivMap)
 //**********************************************************************
 {
 
@@ -176,7 +176,7 @@ SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
   int numVars = aggregatedValuesNames.size();
   values.resize(numVars);
 
-  std::map<std::string, Teuchos::RCP<const Epetra_Vector> >::const_iterator git;
+  std::map<std::string, std::vector<Teuchos::RCP<const Epetra_Vector>>>::const_iterator git;
   for(int ir=0; ir<numVars; ir++){
     git = valueMap.find(aggregatedValuesNames[ir]);
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -191,7 +191,7 @@ SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
   numVars = aggregatedDerivativesNames.size();
   derivatives.resize(numVars);
 
-  std::map<std::string, Teuchos::RCP<Epetra_MultiVector> >::const_iterator gpit;
+  std::map<std::string, std::vector<Teuchos::RCP<Epetra_MultiVector>>>::const_iterator gpit;
   for(int ir=0; ir<numVars; ir++){
     gpit = derivMap.find(aggregatedDerivativesNames[ir]);
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -843,6 +843,40 @@ void Aggregator_Extremum<C>::Evaluate()
     }
   }
 }
+
+//**********************************************************************
+double
+Aggregator_DistParamBased::
+sum(std::vector<Teuchos::RCP<const Tpetra_Vector>> valVector, int index)
+//**********************************************************************
+{
+  double retVal = 0.0;
+  for(auto vec : valVector ) retVal += vec->get1dView()[index]; 
+  return retVal;
+}
+
+//**********************************************************************
+std::vector<double>
+Aggregator_DistParamBased::
+sum(std::vector<Teuchos::RCP<const Tpetra_Vector>> valVector)
+//**********************************************************************
+{
+  std::vector<double> retVal;
+  if( valVector.size() == 0 ) return retVal;
+
+  int length = valVector[0]->getLocalLength();
+  retVal.resize(length,0.0);
+
+  for(auto vec : valVector ){
+    Teuchos::ArrayRCP<const double> valView = vec->get1dView();
+    for(int i=0; i<length; i++){
+      retVal[i] += valView[i];
+    }
+  }
+  return retVal;
+}
+
+
 //**********************************************************************
 template <typename C>
 void Aggregator_DistExtremum<C>::EvaluateT()
@@ -854,13 +888,12 @@ void Aggregator_DistExtremum<C>::EvaluateT()
   int numValues = valuesT.size();
   if(numValues > 0){
     SubValueT& value = valuesT[0];
-    Teuchos::ArrayRCP<const double> valView = value.value->get1dView(); 
-    double extremum = valView[0];
+    double extremum = sum(value.value, /*index=*/ 0);
     for(int i=0; i<numValues; i++){
       SubValueT& value = valuesT[i];
-      Teuchos::ArrayRCP<const double> valView = value.value->get1dView(); 
-      if( compare(valView[0],extremum) ){
-        extremum = valView[0];
+      double myVal = sum(value.value, /*index=*/ 0);
+      if( compare(myVal,extremum) ){
+        extremum = myVal;
         extremum_index = i;
       }
 
@@ -868,7 +901,7 @@ void Aggregator_DistExtremum<C>::EvaluateT()
         if( comm->getRank()==0 ){
           std::cout << "************************************************************************" << std::endl;
           std::cout << "  DistExtremum Aggregator: Input variable " << i << std::endl;
-          std::cout << "   " << value.name << " = " << valView[0] << std::endl;
+          std::cout << "   " << value.name << " = " << myVal << std::endl;
           std::cout << "************************************************************************" << std::endl;
         }
       }
@@ -903,15 +936,53 @@ void Aggregator_DistExtremum<C>::EvaluateT()
 
       SubDerivativeT& derivative = derivativesT[extremum_index];
 
-      Teuchos::ArrayRCP<const double> srcView = derivative.value->getData(0); 
-
-      int nLocalVals = derivT.getLocalLength();
-      for(int lid=0; lid<nLocalVals; lid++)
-        derDest[lid] += srcView[lid];
+     
+      for( auto deriv : derivative.value ){
+        Teuchos::ArrayRCP<const double> srcView = deriv->getData(0); 
+        int nLocalVals = derivT.getLocalLength();
+        for(int lid=0; lid<nLocalVals; lid++)
+          derDest[lid] += srcView[lid];
+      }
     }
   }
 
 }
+
+//**********************************************************************
+double
+Aggregator_DistParamBased::
+sum(std::vector<Teuchos::RCP<const Epetra_Vector>> valVector, int index)
+//**********************************************************************
+{
+  double retVal = 0.0;
+  for(auto vec : valVector ){
+    double* valView; vec->ExtractView(&valView);
+    retVal += valView[index];
+  }
+  return retVal;
+}
+
+//**********************************************************************
+std::vector<double>
+Aggregator_DistParamBased::
+sum(std::vector<Teuchos::RCP<const Epetra_Vector>> valVector)
+//**********************************************************************
+{
+  std::vector<double> retVal;
+  if( valVector.size() == 0 ) return retVal;
+
+  int length = valVector[0]->MyLength();
+  retVal.resize(length,0.0);
+
+  for(auto vec : valVector ){
+    double* valView; vec->ExtractView(&valView);
+    for(int i=0; i<length; i++){
+      retVal[i] += valView[i];
+    }
+  }
+  return retVal;
+}
+
 //**********************************************************************
 template <typename C>
 void Aggregator_DistExtremum<C>::Evaluate()
@@ -924,13 +995,12 @@ void Aggregator_DistExtremum<C>::Evaluate()
   int numValues = values.size();
   if(numValues > 0){
     SubValue& value = values[0];
-    double* valView; value.value->ExtractView(&valView);
-    double extremum = valView[0];
+    double extremum = sum(value.value, /*index=*/ 0);
     for(int i=0; i<numValues; i++){
       SubValue& value = values[i];
-      double* valView; value.value->ExtractView(&valView);
-      if( compare(valView[0],extremum) ){
-        extremum = valView[0];
+      double myVal = sum(value.value, /*index=*/ 0);
+      if( compare(myVal,extremum) ){
+        extremum = myVal;
         extremum_index = i;
       }
 
@@ -938,7 +1008,7 @@ void Aggregator_DistExtremum<C>::Evaluate()
         if( comm->getRank()==0 ){
           std::cout << "************************************************************************" << std::endl;
           std::cout << "  DistExtremum Aggregator: Input variable " << i << std::endl;
-          std::cout << "   " << value.name << " = " << valView[0] << std::endl;
+          std::cout << "   " << value.name << " = " << myVal << std::endl;
           std::cout << "************************************************************************" << std::endl;
         }
       }
@@ -973,11 +1043,13 @@ void Aggregator_DistExtremum<C>::Evaluate()
 
       SubDerivative& derivative = derivatives[extremum_index];
 
-      double* srcView; (*derivative.value)(0)->ExtractView(&srcView);
-
-      int nLocalVals = deriv.MyLength();
-      for(int lid=0; lid<nLocalVals; lid++)
-        derDest[lid] += srcView[lid];
+      for( auto der : derivative.value ){
+        double* srcView; (*der)(0)->ExtractView(&srcView);
+  
+        int nLocalVals = deriv.MyLength();
+        for(int lid=0; lid<nLocalVals; lid++)
+          derDest[lid] += srcView[lid];
+      }
     }
   }
 }
@@ -993,11 +1065,11 @@ Aggregator_Homogenized::EvaluateT()
   for(int i=0; i<nValues; i++){
     SubValueT& value = valuesT[i];
 
-    Teuchos::ArrayRCP<const double> valView = value.value->get1dView();
-    int voigtLength = value.value->getLocalLength();
+    std::vector<double> vals = sum(value.value);
+    int voigtLength = vals.size();
     double rowProd = 0.0;
     for( int j=0; j<voigtLength; j++){
-      rowProd += valView[j]*m_assumedState[j];
+      rowProd += vals[j]*m_assumedState[j];
     }
     localValue += rowProd*m_assumedState[i];
   }
@@ -1007,10 +1079,10 @@ Aggregator_Homogenized::EvaluateT()
     std::cout << "  Homogenized Constants " << std::endl;
     for(int i=0; i<nValues; i++){
       SubValueT& value = valuesT[i];
-      Teuchos::ArrayRCP<const double> valView = value.value->get1dView();
-      int voigtLength = value.value->getLocalLength();
+      std::vector<double> vals = sum(value.value);
+      int voigtLength = vals.size();
       for( int j=0; j<voigtLength; j++){
-        std::cout << " " << valView[j];
+        std::cout << " " << vals[j];
       }
       std::cout << std::endl;
     }
@@ -1050,21 +1122,27 @@ Aggregator_Homogenized::EvaluateT()
 
 
   int voigtSize = derivativesT.size();
-  std::vector< Teuchos::ArrayRCP<const double> > C(voigtSize*voigtSize);
+  int numBlocks = derivativesT[0].value.size();
+  std::vector< Teuchos::ArrayRCP<const double> > C(voigtSize*voigtSize*numBlocks);
 
   for(int i=0; i<voigtSize; i++){
     SubDerivativeT& derivative = derivativesT[i];
     for( int j=0; j<voigtSize; j++)
-      C[i*voigtSize+j] = derivative.value->getData(j);
+      for( int k=0; k<numBlocks; k++)
+      C[(i*voigtSize+j)*numBlocks+k] = derivative.value[k]->getData(j);
   }
 
   for(int lid=0; lid<nLocalVals; lid++){
     double scalarProd = 0.0;
     for(int i=0; i<voigtSize; i++){
       double rowProd = 0.0;
-      for( int j=0; j<voigtSize; j++)
-        rowProd += C[i*voigtSize+j][lid]*m_assumedState[j];
-  
+      for( int j=0; j<voigtSize; j++){
+        double blockSum = 0.0;
+        for( int k=0; k<numBlocks; k++){
+          blockSum += C[(i*voigtSize+j)*numBlocks+k][lid];
+        }
+        rowProd += blockSum*m_assumedState[j];
+      }
       scalarProd += rowProd*m_assumedState[i];
     }
     derDest[lid] += scalarProd/m_initialValue*scaleValueAggregated;
@@ -1090,11 +1168,11 @@ Aggregator_Homogenized::Evaluate()
   for(int i=0; i<nValues; i++){
     SubValue& value = values[i];
 
-    double* valView; value.value->ExtractView(&valView);
-    int voigtLength = value.value->MyLength();
+    std::vector<double> vals = sum(value.value);
+    int voigtLength = vals.size();
     double rowProd = 0.0;
     for( int j=0; j<voigtLength; j++){
-      rowProd += valView[j]*m_assumedState[j];
+      rowProd += vals[j]*m_assumedState[j];
     }
     localValue += rowProd*m_assumedState[i];
   }
@@ -1104,10 +1182,10 @@ Aggregator_Homogenized::Evaluate()
     std::cout << "  Homogenized Constants " << std::endl;
     for(int i=0; i<nValues; i++){
       SubValue& value = values[i];
-      double* valView; value.value->ExtractView(&valView);
-      int voigtLength = value.value->MyLength();
+      std::vector<double> vals = sum(value.value);
+      int voigtLength = vals.size();
       for( int j=0; j<voigtLength; j++){
-        std::cout << " " << valView[j];
+        std::cout << " " << vals[j];
       }
       std::cout << std::endl;
     }
@@ -1147,21 +1225,29 @@ Aggregator_Homogenized::Evaluate()
 
 
   int voigtSize = derivatives.size();
-  std::vector<double*> C(voigtSize*voigtSize);
+  int numBlocks = derivatives[0].value.size();
+  std::vector<double*> C(voigtSize*voigtSize*numBlocks);
 
   for(int i=0; i<voigtSize; i++){
     SubDerivative& derivative = derivatives[i];
-    for( int j=0; j<voigtSize; j++)
-      (*derivative.value)(j)->ExtractView(&(C[i*voigtSize+j]));
+    for( int j=0; j<voigtSize; j++){
+      for( int k=0; k<numBlocks; k++){
+        (*derivative.value[k])(j)->ExtractView(&(C[(i*voigtSize+j)*numBlocks+k]));
+      }
+    }
   }
 
   for(int lid=0; lid<nLocalVals; lid++){
     double scalarProd = 0.0;
     for(int i=0; i<voigtSize; i++){
       double rowProd = 0.0;
-      for( int j=0; j<voigtSize; j++)
-        rowProd += C[i*voigtSize+j][lid]*m_assumedState[j];
-  
+      for( int j=0; j<voigtSize; j++){
+        double blockSum = 0.0;
+        for( int k=0; k<numBlocks; k++){
+          blockSum += C[(i*voigtSize+j)*numBlocks+k][lid];
+        }
+        rowProd += blockSum*m_assumedState[j];
+      }
       scalarProd += rowProd*m_assumedState[i];
     }
     derDest[lid] += scalarProd/m_initialValue*scaleValueAggregated;
@@ -1185,23 +1271,23 @@ Aggregator_DistScaled::Evaluate()
   if(normalize.size() == 0){
     normalize.resize(nValues);
     for(int i=0; i<nValues; i++){
-      double* valView; values[i].value->ExtractView(&valView);
-      normalize[i] = (valView[0] != 0.0) ? 1.0/fabs(valView[0]) : 1.0;
+      double val = sum(values[i].value,/*index=*/0);
+      normalize[i] = (val != 0.0) ? 1.0/fabs(val) : 1.0;
     }
   }
 
   for(int i=0; i<values.size(); i++){
     SubValue& value = values[i];
 
-    double* valView; value.value->ExtractView(&valView);
-    *valueAggregated += valView[0]*normalize[i]*weights[i];
+    double val = sum(value.value,/*index=*/0);
+    *valueAggregated += val*normalize[i]*weights[i];
 
     if( comm != Teuchos::null ){
       if( comm->getRank()==0 ){
         std::cout << "************************************************************************" << std::endl;
         std::cout << "  DistScaled Aggregator: Input variable " << i << std::endl;
-        std::cout << "   " << value.name << " = " << valView[0] << std::endl;
-        std::cout << "   " << value.name << " (scaled) = " << valView[0]*normalize[i] << std::endl;
+        std::cout << "   " << value.name << " = " << val << std::endl;
+        std::cout << "   " << value.name << " (scaled) = " << val*normalize[i] << std::endl;
         std::cout << "   Weight = " << weights[i] << std::endl;
         std::cout << "************************************************************************" << std::endl;
       }
@@ -1234,10 +1320,12 @@ Aggregator_DistScaled::Evaluate()
     for(int i=0; i<derivatives.size(); i++){
       SubDerivative& derivative = derivatives[i];
 
-      double* srcView; (*derivative.value)(0)->ExtractView(&srcView);
-  
-      for(int lid=0; lid<nLocalVals; lid++)
-        derDest[lid] += srcView[lid]*normalize[i]*weights[i]*scaleValueAggregated;
+      for( auto der : derivative.value ){
+        double* srcView; (*der)(0)->ExtractView(&srcView);
+    
+        for(int lid=0; lid<nLocalVals; lid++)
+          derDest[lid] += srcView[lid]*normalize[i]*weights[i]*scaleValueAggregated;
+      }
     }
   }
 }
@@ -1252,23 +1340,23 @@ Aggregator_DistScaled::EvaluateT()
   if(normalize.size() == 0){
     normalize.resize(nValues);
     for(int i=0; i<nValues; i++){
-      Teuchos::ArrayRCP<const double> valView = valuesT[i].value->get1dView(); 
-      normalize[i] = (valView[0] != 0.0) ? 1.0/fabs(valView[0]) : 1.0;
+      double val = sum(valuesT[i].value,/*index=*/0);
+      normalize[i] = (val != 0.0) ? 1.0/fabs(val) : 1.0;
     }
   }
 
   for(int i=0; i<valuesT.size(); i++){
     SubValueT& value = valuesT[i];
 
-    Teuchos::ArrayRCP<const double> valView = value.value->get1dView(); 
-    *valueAggregated += valView[0]*normalize[i]*weights[i];
+    double val = sum(value.value,/*index=*/0);
+    *valueAggregated += val*normalize[i]*weights[i];
 
     if( comm != Teuchos::null ){
       if( comm->getRank()==0 ){
         std::cout << "************************************************************************" << std::endl;
         std::cout << "  DistScaled Aggregator: Input variable " << i << std::endl;
-        std::cout << "   " << value.name << " = " << valView[0] << std::endl;
-        std::cout << "   " << value.name << " (scaled) = " << valView[0]*normalize[i] << std::endl;
+        std::cout << "   " << value.name << " = " << val << std::endl;
+        std::cout << "   " << value.name << " (scaled) = " << val*normalize[i] << std::endl;
         std::cout << "   Weight = " << weights[i] << std::endl;
         std::cout << "************************************************************************" << std::endl;
       }
@@ -1302,10 +1390,12 @@ Aggregator_DistScaled::EvaluateT()
     for(int i=0; i<derivativesT.size(); i++){
       SubDerivativeT& derivative = derivativesT[i];
 
-      Teuchos::ArrayRCP<const double> srcView = derivative.value->getData(0); 
+      for( auto der : derivative.value ){
+        Teuchos::ArrayRCP<const double> srcView = der->getData(0); 
 
-      for(int lid=0; lid<nLocalVals; lid++) {
-        derDest[lid] += srcView[lid]*normalize[i]*weights[i]*scaleValueAggregated;
+        for(int lid=0; lid<nLocalVals; lid++) {
+          derDest[lid] += srcView[lid]*normalize[i]*weights[i]*scaleValueAggregated;
+        }
       }
     }
   } 

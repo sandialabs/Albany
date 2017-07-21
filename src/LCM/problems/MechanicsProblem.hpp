@@ -57,6 +57,14 @@ class MechanicsProblem : public Albany::AbstractProblem {
   spatialDimension() const {
     return num_dims_;
   }
+  
+  ///
+  /// Get boolean telling code if SDBCs are utilized  
+  ///
+  virtual bool
+  useSDBCs() const {
+    return use_sdbcs_; 
+  }
 
   ///
   /// Build the PDE instantiations, boundary conditions, initial solution
@@ -180,6 +188,10 @@ class MechanicsProblem : public Albany::AbstractProblem {
   /// Boundary conditions on source term
   ///
   bool have_source_;
+
+  ///
+  ///Boolean marking whether SDBCs are used 
+  bool use_sdbcs_; 
 
   // Type of thermal source that is in effect
   SOURCE_TYPE thermal_source_;

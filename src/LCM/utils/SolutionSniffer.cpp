@@ -4,10 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "../utils/SolutionSniffer.hpp"
-
 #include "NOX_Abstract_Group.H"
 #include "NOX_Solver_Generic.H"
+#include "SolutionSniffer.hpp"
+#include "Teuchos_VerboseObject.hpp"
+
+//#define DEBUG
 
 namespace LCM {
 
@@ -68,6 +70,15 @@ runPreSolve(NOX::Solver::Generic const & solver)
 
   soln_init_ = x.clone(NOX::DeepCopy);
 
+#if defined(DEBUG)
+  Teuchos::FancyOStream &
+  fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
+
+  fos << "\n*** NOX: Initial solution ***\n";
+  x.print(fos);
+  fos << "\n*** NOX: Initial solution ***\n";
+#endif //DEBUG
+
   return;
 }
 
@@ -80,6 +91,9 @@ runPostSolve(NOX::Solver::Generic const & solver)
 {
   NOX::Abstract::Vector const &
   y = solver.getSolutionGroup().getX();
+
+  // Save solution
+  last_soln_ = y.clone();
 
   norm_final_ = y.norm();
 
@@ -95,6 +109,15 @@ runPostSolve(NOX::Solver::Generic const & solver)
   dx.update(1.0, y, -1.0, x, 0.0);
 
   norm_diff_ = dx.norm();
+
+#if defined(DEBUG)
+  Teuchos::FancyOStream &
+  fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
+
+  fos << "\n*** NOX: Final solution ***\n";
+  y.print(fos);
+  fos << "\n*** NOX: Final solution ***\n";
+#endif
 
   return;
 }
@@ -137,6 +160,16 @@ SolutionSniffer::
 getDifferenceNorm()
 {
   return norm_diff_;
+}
+
+//
+//
+//
+Teuchos::RCP<NOX::Abstract::Vector>
+SolutionSniffer::
+getLastSoln()
+{
+  return last_soln_;
 }
 
 } // namespace LCM

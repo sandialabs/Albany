@@ -37,6 +37,9 @@ public:
 
   virtual 
   int spatialDimension() const { return num_dims_; }
+    
+  virtual 
+  bool useSDBCs() const {return false; }
 
   virtual
   void buildProblem(

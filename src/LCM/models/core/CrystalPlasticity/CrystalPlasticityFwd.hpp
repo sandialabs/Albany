@@ -50,7 +50,8 @@ enum class ResidualType
 {
   UNDEFINED = 0, 
   SLIP = 1, 
-  SLIP_HARDNESS = 2
+  SLIP_HARDNESS = 2,
+  CONSTRAINED_SLIP_HARDNESS = 3
 };
 
 enum class PredictorSlip

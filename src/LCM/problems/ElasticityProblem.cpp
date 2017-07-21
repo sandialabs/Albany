@@ -16,6 +16,7 @@ ElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   Albany::AbstractProblem(params_, paramLib_, numDim_),
   haveSource(false),
   numDim(numDim_),
+  use_sdbcs_(false), 
   rc_mgr(rc_mgr_)
 {
   std::string& method = params->get("Name", "Elasticity ");
@@ -108,6 +109,7 @@ Albany::ElasticityProblem::constructDirichletEvaluators(
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                        this->params, this->paramLib);
+  use_sdbcs_ = dirUtils.useSDBCs(); 
   offsets_ = dirUtils.getOffsets(); 
 }
 

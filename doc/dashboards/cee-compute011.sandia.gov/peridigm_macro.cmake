@@ -6,19 +6,18 @@ macro(do_peridigm)
   set_property (GLOBAL PROPERTY Label Peridigm)
 
   set (CONFIGURE_OPTIONS
-    "-DCMAKE_FIND_PREFIX_PATH:PATH=/projects/albany"
+    "-DTRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstall/lib/cmake/Trilinos"
+    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_INSTALL_DIRECTORY}/PeridigmInstall"
     "-DCMAKE_BUILD_TYPE:STRING=Release"
     "-DENABLE_INSTALL:BOOL=ON"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_INSTALL_DIRECTORY}/PeridigmInstall"
-    "-DTRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstall"
-    "-DCMAKE_C_COMPILER:STRING=mpicc"
-    "-DCMAKE_CXX_COMPILER:STRING=mpicxx"
-    "-DBOOST_ROOT=${BOOST_ROOT}"
     "-DUSE_DAKOTA:BOOL=OFF"
     "-DUSE_PV:BOOL=OFF"
-    "-DUSE_PALS:BOOL=OFF"
-    "-DCMAKE_CXX_FLAGS:STRING='-O2 -std=c++11 -Wall -pedantic -Wno-long-long -ftrapv -Wno-deprecated'"
-    "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF")
+    "-DBOOST_ROOT=${BOOST_ROOT}"
+    "-DCMAKE_C_COMPILER:STRING=mpicc"
+    "-DCMAKE_CXX_COMPILER:STRING=mpicxx"
+    "-DCMAKE_CXX_FLAGS:STRING='-O3 -std=c++11 -march=native'"
+    "-DCMAKE_CXX_LINK_FLAGS:STRING='-L${PREFIX_DIR}/lib -lhdf5_hl -lnetcdf -lboost_timer -lboost_chrono -Wl,-rpath,${PREFIX_DIR}/lib:${MKL_PATH}:${INTEL_DIR}/lib/intel64'"
+    )
 
 # Clean up build area
   IF (CLEAN_BUILD)
@@ -86,5 +85,9 @@ macro(do_peridigm)
   endif (BUILD_PERIDIGM)
 
   message ("After configuring and building, BUILD_PERIDIGM = ${BUILD_PERIDIGM}")
+
+# Copy the targets file where it should go
+  configure_file(${CTEST_BINARY_DIRECTORY}/PeridigmBuild/peridigm-targets.cmake
+                 ${CTEST_INSTALL_DIRECTORY}/PeridigmInstall/lib/Peridigm/cmake/peridigm-targets.cmake COPYONLY)
 
 endmacro(do_peridigm)

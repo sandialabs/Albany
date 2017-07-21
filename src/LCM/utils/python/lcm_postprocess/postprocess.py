@@ -19,6 +19,7 @@ from lcm_postprocess.plot_data_run import plot_data_run
 from lcm_postprocess.plot_inverse_pole_figure import plot_inverse_pole_figure
 from lcm_postprocess.plot_data_stress import plot_data_stress
 from lcm_postprocess.write_file_data import write_file_data
+import os
 
 
 #
@@ -37,6 +38,9 @@ def postprocess(
     print ''
 
 
+    domain = None
+    run = None
+
     #
     # Set i/o units 
     #
@@ -49,6 +53,7 @@ def postprocess(
     #
     # Create the simulation time step structure
     #
+    exist_file_log = True
     with Timer() as timer:
 
         if verbosity > 0:
@@ -58,12 +63,13 @@ def postprocess(
 
             run = read_file_log(name_file_base + '_Log.out')
 
+            if verbosity > 0:
+                timer.print_time()
+
         except IOError:
 
-            print '    No log file found.'
-
-        if verbosity > 0:
-            timer.print_time()
+            exist_file_log = False
+            print '    **No log file found.**\n'
 
 
 
@@ -89,8 +95,15 @@ def postprocess(
         if verbosity > 0:
             print 'Retrieving material data...'
 
+        if os.path.isfile(name_file_base + '_Material.xml'):
+            name_file_material = name_file_base + '_Material.xml'
+        elif os.path.isfile(name_file_base + '_Material.yaml'):
+            name_file_material = name_file_base + '_Material.yaml'
+        else:
+            raise Exception('Material file not found.')
+
         read_file_input_material(
-            name_file_base + '_Material.xml', 
+            name_file = name_file_material, 
             domain = domain,
             names_variable = ['orientations'])
 
@@ -140,13 +153,19 @@ def postprocess(
             #
             # Plot the convergence data
             #
-            if verbosity > 0:
-                print 'Plotting convergence data...'
+            if exist_file_log == True:
 
-            plot_data_run(run = run)
+                if verbosity > 0:
+                    print 'Plotting convergence data...'
 
-            if verbosity > 0:
-                timer.print_time()
+                plot_data_run(run = run)
+
+                if verbosity > 0:
+                    timer.print_time()
+
+            else:
+
+                print '**No log file found - not plotting run data.**\n'
 
             #
             # Plot the inverse pole figures
@@ -167,7 +186,7 @@ def postprocess(
             if verbosity > 0:
                 print 'Plotting stress-strain data...'
 
-            plot_data_stress(domain = domain)
+            plot_data_stress(domain = domain, truncate_legend = True)
 
             if verbosity > 0:
                 timer.print_time()
@@ -186,9 +205,11 @@ def postprocess(
             pickle.dump(domain, file_pickling, pickle.HIGHEST_PROTOCOL)
             file_pickling.close()
 
-            file_pickling = open(name_file_base + '_Run.pickle', 'wb')
-            pickle.dump(run, file_pickling, pickle.HIGHEST_PROTOCOL)
-            file_pickling.close()
+            if exist_file_log == True:
+
+                file_pickling = open(name_file_base + '_Run.pickle', 'wb')
+                pickle.dump(run, file_pickling, pickle.HIGHEST_PROTOCOL)
+                file_pickling.close()
 
             if verbosity > 0:
                 timer.print_time()

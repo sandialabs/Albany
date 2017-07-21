@@ -117,13 +117,12 @@ evaluateFields(typename Traits::EvalData workset)
 
   ScalarT internalEnergy=0.0;
 
-  int numCells = dims[0];
   int numQPs   = dims[1];
   int numDims  = dims[2];
   int numNodes = topo.dimension(1);
 
   if( size == 3 ){
-    for(int cell=0; cell<numCells; cell++){
+    for(int cell=0; cell<workset.numCells; cell++){
       for(int qp=0; qp<numQPs; qp++){
         ScalarT dE = 0.0;
         ScalarT topoVal = 0.0;
@@ -139,7 +138,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else
   if( size == 4 ){
-    for(int cell=0; cell<numCells; cell++){
+    for(int cell=0; cell<workset.numCells; cell++){
       for(int qp=0; qp<numQPs; qp++){
         ScalarT dE = 0.0;
         ScalarT topoVal = 0.0;
@@ -156,7 +155,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else
   if( size == 5 ){
-    for(int cell=0; cell<numCells; cell++){
+    for(int cell=0; cell<workset.numCells; cell++){
       for(int qp=0; qp<numQPs; qp++){
         ScalarT dE = 0.0;
         ScalarT topoVal = 0.0;

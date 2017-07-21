@@ -118,6 +118,7 @@ CrystalPlasticityKernel(
   residual_type_ = preader.getResidualType();
 	step_type_ = preader.getStepType();
 	minimizer_ = preader.getMinimizer();
+	rol_minimizer_ = preader.getRolMinimizer();
   predictor_slip_ = preader.getPredictorSlip();
 
   verbosity_ = preader.getVerbosity();
@@ -909,6 +910,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   integratorFactory = CP::IntegratorFactory<EvalT, CP::MAX_DIM, CP::MAX_SLIP>(
     allocator,
     minimizer_,
+    rol_minimizer_,
     step_type_,
     nox_status_test_,
     element_slip_systems,

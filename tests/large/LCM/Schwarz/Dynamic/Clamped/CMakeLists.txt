@@ -20,7 +20,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 if (ALBANY_TEMPUS)
 if (ALBANY_IFPACK2) 
-add_test(Dynamic_${testName}_NewmarkBeta_Tempus ${AlbanyT.exe} clamped-stk.yaml)
+add_test(Dynamic_${testName}_NewmarkImplicitAForm_Tempus ${AlbanyT.exe} clamped-stk.yaml)
 endif()
 endif()
 

@@ -10,56 +10,112 @@
     and owns the derivative of the objective wrt the topology.  
     -->
     <ParameterList name="Objective Aggregator">
-      <Parameter name="Objective Name" type="string" value="F" />
-      <Parameter name="dFdTopology Name" type="string" value="dFdRho" />
-      <Parameter name="Objectives" type="Array(string)" value="{R0}"/>
-      <Parameter name="Objective Derivatives" type="Array(string)" value="{dR0dRho}"/>
+      <Parameter name="Output Value Name" type="string" value="F" />
+      <Parameter name="Output Derivative Name" type="string" value="dFdRho" />
+      <Parameter name="Values" type="Array(string)" value="{R0}"/>
+      <Parameter name="Derivatives" type="Array(string)" value="{dR0dRho}"/>
       <Parameter name="Weighting" type="string" value="Uniform"/>
+      <!--Parameter name="Spatial Filter" type="int" value="0" /-->
     </ParameterList>
 
+    <ParameterList name="Spatial Filters">
+      <Parameter name="Number of Filters" type="int" value="1" />
+      <ParameterList name="Filter 0">
+        <Parameter name="Filter Radius" type="double" value="0.075" />
+        <Parameter name="Iterations" type="int" value="2" />
+      </ParameterList>
+    </ParameterList>
 
     <ParameterList name="Topological Optimization">
       <Parameter name="Package" type="string" value="OC" />
       <Parameter name="Stabilization Parameter" type="double" value="0.5" />
-      <Parameter name="Move Limiter" type="double" value="0.2" />
+      <Parameter name="Move Limiter" type="double" value="1.0" />
       <ParameterList name="Convergence Tests">
-        <Parameter name="Maximum Iterations" type="int" value="3" />
+        <Parameter name="Maximum Iterations" type="int" value="2" />
         <Parameter name="Combo Type" type="string" value="OR"/>
         <Parameter name="Relative Topology Change" type="double" value="5e-3" />
-        <Parameter name="Relative Objective Change" type="double" value="5e-3" />
+        <Parameter name="Relative Objective Change" type="double" value="1e-4" />
       </ParameterList>
-      <Parameter name="Volume Enforcement Maximum Iterations" type="int" value="120" />
-      <Parameter name="Volume Enforcement Convergence Tolerance" type="double" value="1e-6" />
-      <Parameter name="Minimum Density" type="double" value="0.05" />
-      <Parameter name="Objective Name" type="string" value="F" />
-      <Parameter name="Volume Multiplier Initial Guess" type="double" value="1e5" />
-      <Parameter name="Volume Fraction Constraint" type="double" value="0.5" />
-      <Parameter name="dFdTopology Name" type="string" value="dFdRho" />
+      <ParameterList name="Measure Enforcement">
+        <Parameter name="Measure" type="string" value="Volume" />
+        <Parameter name="Maximum Iterations" type="int" value="120" />
+        <Parameter name="Convergence Tolerance" type="double" value="1e-6" />
+        <Parameter name="Target" type="double" value="0.5" />
+      </ParameterList>
+      <Parameter name="Objective" type="string" value="Aggregator" />
+      <Parameter name="Constraint" type="string" value="Measure" />
     </ParameterList>
-    
 
-    <ParameterList name="Topology">
+    <ParameterList name="Topologies">
       <!-- 
-          This block defines the topology that all physics problems and responses 
-          are computed from.  There is only one topology.  This block is available
-          to the responses and is added to each physics parameter list by the ATO_Solver.
+          This block defines the topologies that all physics problems and responses 
+          are computed from.  This block is available to the responses and is added 
+          to each physics parameter list by the ATO_Solver.
       -->
-      <Parameter name="Centering" type="string" value="Element" />
-      <Parameter name="Topology Name" type="string" value="Rho" />
-      <Parameter name="Entity Type" type="string" value="State Variable" />
-      <Parameter name="Penalization" type="string" value="SIMP" />
-      <Parameter name="Update Algorithm" type="string" value="OC" />
-      <Parameter name="Initial Value" type="double" value="0.5" />
-      <ParameterList name="SIMP">
-        <Parameter name="Penalization Parameter" type="double" value="3.0" />
+      <Parameter name="Number of Topologies" type="int" value="1" />
+      <ParameterList name="Topology 0">
+        <Parameter name="Topology Name" type="string" value="Rho" />
+        <Parameter name="Entity Type" type="string" value="Distributed Parameter" />
+        <Parameter name="Bounds" type="Array(double)" value="{1e-12,1.0}" />
+        <Parameter name="Initial Value" type="double" value="0.5" />
+        <ParameterList name="Functions">
+          <Parameter name="Number of Functions" type="int" value="2" />
+          <ParameterList name="Function 0">
+            <Parameter name="Function Type" type="string" value="SIMP" />
+            <Parameter name="Minimum" type="double" value="0.001" />
+            <Parameter name="Penalization Parameter" type="double" value="3.0" />
+          </ParameterList>
+          <ParameterList name="Function 1">
+            <Parameter name="Function Type" type="string" value="SIMP" />
+            <Parameter name="Minimum" type="double" value="0.0" />
+            <Parameter name="Penalization Parameter" type="double" value="1.0" />
+          </ParameterList>
+        </ParameterList>
+        <Parameter name="Spatial Filter" type="int" value="0" />
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="Configuration">
+      <ParameterList name="Element Blocks">
+        <Parameter name="Number of Element Blocks" type="int" value="3"/>
+        <ParameterList name="Element Block 0">
+          <Parameter name="Name" type="string" value="block_1"/>
+          <ParameterList name="Material">
+            <Parameter name="Elastic Modulus" type="double" value="1e9"/>
+            <Parameter name="Poissons Ratio" type="double" value="0.33"/>
+          </ParameterList>
+        </ParameterList>
+        <ParameterList name="Element Block 1">
+          <Parameter name="Name" type="string" value="block_2"/>
+          <ParameterList name="Material">
+            <Parameter name="Elastic Modulus" type="double" value="1e9"/>
+            <Parameter name="Poissons Ratio" type="double" value="0.33"/>
+          </ParameterList>
+        </ParameterList>
+        <ParameterList name="Element Block 2">
+          <Parameter name="Name" type="string" value="block_3"/>
+          <ParameterList name="Material">
+            <Parameter name="Elastic Modulus" type="double" value="1e9"/>
+            <Parameter name="Poissons Ratio" type="double" value="0.33"/>
+          </ParameterList>
+        </ParameterList>
+      </ParameterList>
+
+      <ParameterList name="Linear Measures">
+        <Parameter name="Number of Linear Measures" type="int" value="1"/>
+        <ParameterList name="Linear Measure 0">
+          <Parameter name="Linear Measure Name" type="string" value="Volume"/>
+          <Parameter name="Linear Measure Type" type="string" value="Volume"/>
+          <ParameterList name="Volume">
+            <Parameter name="Topology Index" type="int" value="0"/>
+            <Parameter name="Function Index" type="int" value="1"/>
+          </ParameterList>
+        </ParameterList>
       </ParameterList>
     </ParameterList>
 
     <ParameterList name="Physics Problem 0">    
       <Parameter name="Name" type="string" value="LinearElasticity 3D" />
-      <!--
-      <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
-      -->
   
       <ParameterList name="Dirichlet BCs">
         <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
@@ -67,12 +123,18 @@
         <Parameter name="DBC on NS nodelist_1 for DOF Z" type="double" value="0.0"/>
       </ParameterList> <!-- end Dirichlet BCs -->
       <ParameterList name="Neumann BCs">
-        <Parameter name="NBC on SS surface_1 for DOF sig_y set dudn" type="Array(double)" value="{4.5}"/>
+        <Parameter name="NBC on SS surface_1 for DOF sig_y set dudn" type="Array(double)" value="{4.5e4}"/>
       </ParameterList>
 
-
-      <Parameter name="Elastic Modulus" type="double" value="1e9"/>
-      <Parameter name="Poissons Ratio" type="double" value="0.33"/>
+      <ParameterList name="Apply Topology Weight Functions">
+        <Parameter name="Number of Fields" type="int" value="1"/>
+        <ParameterList name="Field 0">
+          <Parameter name="Name" type="string" value="Stress"/>
+          <Parameter name="Layout" type="string" value="QP Tensor"/>
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+        </ParameterList>
+      </ParameterList>
 
       <!--
           This response provides an objective function and the derivative of the 
@@ -81,13 +143,15 @@
           You can define as many of these as you like.
       -->
       <ParameterList name="Response Functions">
-        <Parameter name="Number" type="int" value="1"/>
-        <Parameter name="Response 0" type="string" value="Stiffness Objective" />
-        <ParameterList name="ResponseParams 0">
+        <Parameter name="Number of Response Vectors" type="int" value="1"/>
+        <ParameterList name="Response Vector 0">
+          <Parameter name="Name" type="string" value="Internal Energy Objective" />
           <Parameter name="Gradient Field Name" type="string" value="Strain" />
           <Parameter name="Gradient Field Layout" type="string" value="QP Tensor" />
           <Parameter name="Work Conjugate Name" type="string" value="Stress" />
           <Parameter name="Work Conjugate Layout" type="string" value="QP Tensor" />
+          <Parameter name="Topology Index" type="int" value="0" />
+          <Parameter name="Function Index" type="int" value="0" />
           <Parameter name="Response Name" type="string" value="R0" />
           <Parameter name="Response Derivative Name" type="string" value="dR0dRho" />
         </ParameterList>
@@ -99,10 +163,12 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name" type="string" value="mitchell3D.gen"/>
-    <Parameter name="Exodus Output File Name" type="string" value="mitchell3D.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="mitchell3D_oc_dp.exo"/>
+    <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
   </ParameterList>
 
   <ParameterList name="Piro">
+    <Parameter name="Sensitivity Method" type="string" value="Adjoint"/>
     <ParameterList name="LOCA">
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>
@@ -124,11 +190,17 @@
           <Parameter name="Test Type" type="string" value="NormF"/>
           <Parameter name="Norm Type" type="string" value="Two Norm"/>
           <Parameter name="Scale Type" type="string" value="Scaled"/>
-          <Parameter name="Tolerance" type="double" value="1e-10"/>
+          <Parameter name="Tolerance" type="double" value="1e-8"/>
         </ParameterList>
         <ParameterList name="Test 1">
           <Parameter name="Test Type" type="string" value="MaxIters"/>
           <Parameter name="Maximum Iterations" type="int" value="10"/>
+        </ParameterList>
+        <ParameterList name="Test 2">
+          <Parameter name="Test Type" type="string" value="NormUpdate"/>
+          <Parameter name="Norm Type" type="string" value="Two Norm"/>
+          <Parameter name="Scale Type" type="string" value="Scaled"/>
+          <Parameter name="Tolerance" type="double" value="1e-8"/>
         </ParameterList>
       </ParameterList>
       <ParameterList name="Direction">
@@ -148,9 +220,9 @@
                       <Parameter name="Aztec Solver" type="string" value="GMRES"/>
                       <Parameter name="Convergence Test" type="string" value="r0"/>
                       <Parameter name="Size of Krylov Subspace" type="int" value="200"/>
-                      <Parameter name="Output Frequency" type="int" value="10"/>
+                      <Parameter name="Output Frequency" type="int" value="100"/>
                     </ParameterList>
-                    <Parameter name="Max Iterations" type="int" value="200"/>
+                    <Parameter name="Max Iterations" type="int" value="250"/>
                     <Parameter name="Tolerance" type="double" value="1e-10"/>
                   </ParameterList>
                 </ParameterList>

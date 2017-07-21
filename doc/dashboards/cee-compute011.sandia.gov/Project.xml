@@ -7,10 +7,6 @@
   </SubProject>
   <SubProject name="Albany32Bit">
   </SubProject>
-  <SubProject name="Albany64Bit">
-  </SubProject>
   <SubProject name="Albany64BitClang">
-  </SubProject>
-  <SubProject name="AlbanyFunctorDev">
   </SubProject>
 </Project>

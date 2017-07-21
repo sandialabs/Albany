@@ -180,14 +180,13 @@ evaluateFields(typename Traits::EvalData workset)
 
   std::vector<int> dims;
   field.dimensions(dims);
-  int numCells = dims[0];
   int numQPs   = dims[1];
   int numDims  = 0;
   if(tensorRank > 0) numDims = dims[2];
 
   int numNodes = topo.dimension(1);
 
-  for(int cell=0; cell<numCells; cell++){
+  for(int cell=0; cell<workset.numCells; cell++){
     for(int qp=0; qp<numQPs; qp++){
       ScalarT topoVal = 0.0;
       for(int node=0; node<numNodes; node++)

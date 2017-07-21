@@ -64,6 +64,9 @@ namespace Albany {
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
 
+    //! Get boolean telling code if SDBCs are utilized  
+    virtual bool useSDBCs() const {return use_sdbcs_; }
+
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void buildProblem(
       Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>  meshSpecs,
@@ -117,6 +120,10 @@ namespace Albany {
 
 
   protected:
+
+    ///
+    ///Boolean marking whether SDBCs are used 
+    bool use_sdbcs_; 
 
     //! Boundary conditions on source term
     bool haveSource;

@@ -287,7 +287,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   ScalarT pNorm=0.0;
 
-  int numCells = dims[0];
   int numQPs   = dims[1];
   int numDims  = dims[2];
   int numNodes = topo.dimension(1);
@@ -296,7 +295,7 @@ evaluateFields(typename Traits::EvalData workset)
   effStress = (*workset.stateArrayPtr)["Effective Stress"];
 
   if( size == 3 ){
-    for(int cell=0; cell<numCells; cell++){
+    for(int cell=0; cell<workset.numCells; cell++){
       for(int qp=0; qp<numQPs; qp++){
         ScalarT topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
@@ -313,7 +312,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else
   if( size == 4 && numDims == 2 ){
-    for(int cell=0; cell<numCells; cell++){
+    for(int cell=0; cell<workset.numCells; cell++){
       ScalarT responseAve(0.0);
       RealType el_weight = 0.0;
       for(int qp=0; qp<numQPs; qp++){
@@ -334,7 +333,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else
   if( size == 4 && numDims == 3 ){
-    for(int cell=0; cell<numCells; cell++){
+    for(int cell=0; cell<workset.numCells; cell++){
       ScalarT responseAve(0.0);
       RealType el_weight = 0.0;
       for(int qp=0; qp<numQPs; qp++){

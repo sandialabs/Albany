@@ -30,6 +30,8 @@ class MechanicsProblem : public Albany::AbstractProblem {
 
     int spatialDimension() const { return num_dims; }
 
+    bool useSDBCs() const {return false; }
+
     void buildProblem(
         ArrayRCP<RCP<Albany::MeshSpecsStruct> > mesh_specs,
         Albany::StateManager& state_mgr);

@@ -64,8 +64,8 @@ ANONYMOUS:
           Output Time List: ''
           Output Index List: ''
       Tempus Stepper:
-        Stepper Type: 'Newmark Beta'
-        Newmark Beta Parameters:
+        Stepper Type: 'Newmark Implicit a-Form'
+        Newmark Parameters:
           Beta: 0.25
           Gamma: 0.50
         Solver Name: Demo Solver

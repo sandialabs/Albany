@@ -302,6 +302,9 @@ namespace Aeras
     //! Get map from (Ws, El, Local Node) -> NodeLID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
     getWsElNodeEqID() const;
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+    const Kokkos::View<LO***, PHX::Device> getWsElNodeEqIDKokkos(const int ws) const { return wsElNodeEqID_kokkos[ws]; };
+#endif
 
     //! Get map from (Ws, Local Node) -> NodeGID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
@@ -765,6 +768,9 @@ namespace Aeras
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type wsElNodeEqID;
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+    std::vector<Kokkos::View<LO***, PHX::Device>> wsElNodeEqID_kokkos;
+#endif
 
     //! Connectivity array [workset, element, local-node] => GID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;

@@ -228,6 +228,15 @@ namespace Albany {
                                      const Teuchos::RCP<const Tpetra_Vector>& xT,
                                      const Teuchos::Array<ParamVec>& p,
                                      const Teuchos::RCP<Tpetra_Vector>& fT);
+    
+#if defined(ALBANY_LCM) 
+     void computeGlobalResidualSDBCsImplT(const double current_time,
+                                                const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+                                                const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
+                                                const Teuchos::RCP<const Tpetra_Vector>& xT,
+                                                const Teuchos::Array<ParamVec>& p,
+                                                const Teuchos::RCP<Tpetra_Vector>& fT);
+#endif
 
   public:
 
@@ -1057,7 +1066,15 @@ namespace Albany {
 #endif //ALBANY_LCM
 
   protected:
-   
+
+    bool no_dir_bcs_; 
+ 
+    bool loca_sdbcs_valid_nonlin_solver_; 
+ 
+    bool requires_sdbcs_;  
+    
+    bool requires_orig_dbcs_;  
+ 
 #if defined(ALBANY_EPETRA)
     //! Communicator
     Teuchos::RCP<const Epetra_Comm> comm;
@@ -1297,14 +1314,10 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
  //FIXME, 6/25: This line was causing link error.  Need to figure out why. 
  // workset.auxDataPtrT = stateMgr.getAuxDataT();
 
- 
-//  workset.wsElNodeEqID_kokkos =
-  Kokkos:: View<int***, PHX::Device> wsElNodeEqID_kokkos ("wsElNodeEqID_kokkos",workset.numCells, wsElNodeEqID[ws][0].size(), wsElNodeEqID[ws][0][0].size());
-   workset.wsElNodeEqID_kokkos=wsElNodeEqID_kokkos;
-   for (int i=0; i< workset.numCells; i++) 
-      for (int j=0; j< wsElNodeEqID[ws][0].size(); j++)
-          for (int k=0; k<wsElNodeEqID[ws][0][0].size();k++)
-              workset.wsElNodeEqID_kokkos(i,j,k)=workset.wsElNodeEqID[i][j][k]; 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  // Kokkos views
+  workset.wsElNodeEqID_kokkos = disc->getWsElNodeEqIDKokkos(ws);
+#endif
 }
 
 #endif // ALBANY_APPLICATION_HPP

@@ -45,7 +45,10 @@ ENDIF()
 ENDIF()
 add_test(Aeras_${testName}_explicitHV_nu8e15_novort_BackwardEuler ${AlbanyT.exe} input_explicitHV_BE_nu8e15_novort_T.xml)
 
+if (ALBANY_EPETRA)
 add_test(Aeras_${testName}_explicitHV_nu8e15_novort_RungeKutta4 ${AlbanyT.exe} input_explicitHV_RK4_nu8e15_novort_T.xml)
+endif() 
+
 add_test(Aeras_${testName}_noAD_RungeKutta4 ${AlbanyT.exe} input_RK4_noAD_T.xml)
 
 add_test(Aeras_${testName}_implicitHV_nu8e15_vort_BackwardEuler ${AlbanyT.exe} input_implicitHV_BE_nu8e15_vort_T.xml)

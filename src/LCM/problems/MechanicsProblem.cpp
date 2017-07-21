@@ -68,6 +68,7 @@ Albany::MechanicsProblem::MechanicsProblem(
       have_peridynamics_(false),
       have_topmod_adaptation_(false),
       have_sizefield_adaptation_(false),
+      use_sdbcs_(false), 
       rc_mgr_(rc_mgr) {
   std::string& method = params->get("Name", "Mechanics ");
   *out << "Problem Name = " << method << '\n';
@@ -75,10 +76,11 @@ Albany::MechanicsProblem::MechanicsProblem(
   std::string& sol_method = params->get("Solution Method", "Steady");
   *out << "Solution Method = " << sol_method << '\n';
 
-  if (sol_method == "Transient Tempus")
+  if (sol_method == "Transient Tempus") {
     dynamic_tempus_ = true;
-  else
+  } else {
     dynamic_tempus_ = false;
+  }
 
   // Are any source functions specified?
   have_source_ = params->isSublist("Source Functions");
@@ -310,6 +312,7 @@ Albany::MechanicsProblem::constructDirichletEvaluators(
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(
       meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
+  use_sdbcs_ = dirUtils.useSDBCs(); 
   offsets_ = dirUtils.getOffsets();
 }
 //------------------------------------------------------------------------------

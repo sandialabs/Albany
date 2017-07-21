@@ -24,7 +24,7 @@ class CrystalPlasticityKernel: public ParallelKernel<EvalT, Traits>
 public:
 
   using ScalarT = typename EvalT::ScalarT;
-	using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   using BaseKernel = ParallelKernel<EvalT, Traits>;
   using ScalarField = typename BaseKernel::ScalarField;
@@ -205,6 +205,10 @@ private:
   /// Minisolver Minimizer
   minitensor::Minimizer<ValueT, CP::NLS_DIM>
   minimizer_;
+
+  /// ROL Minimizer
+  ROL::MiniTensor_Minimizer<ValueT, CP::NLS_DIM>
+  rol_minimizer_;
 
   ///
   /// Output options 

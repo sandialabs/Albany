@@ -28,7 +28,8 @@ LoadSideSetStateField (const Teuchos::ParameterList& p)
 
   this->addEvaluatedField (field);
 
-  this->setName ("Load Side Set Field " + fieldName + " from Side Set State " + stateName);
+  this->setName ("Load Side Set Field " + fieldName + " from Side Set State " + stateName 
+    + PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************

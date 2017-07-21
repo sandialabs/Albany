@@ -125,6 +125,8 @@ namespace CP
         Dissipation<NumDimT, NumSlipT, EvalT>,
         typename EvalT::ScalarT, NumSlipT>;
 
+
+
     //! Default implementation of value.
     template<typename T, minitensor::Index N = minitensor::DYNAMIC>
     T
@@ -180,7 +182,7 @@ namespace CP
   class ResidualSlipHardnessNLS:
       public minitensor::Function_Base<
       ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>,
-      typename EvalT::ScalarT, NumSlipT>
+      typename EvalT::ScalarT, CP::NlsDim<NumSlipT>::value>
   {
     using ScalarT = typename EvalT::ScalarT;
 
@@ -202,7 +204,7 @@ namespace CP
 
     using Base = minitensor::Function_Base<
         ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>,
-        typename EvalT::ScalarT, NumSlipT>;
+        typename EvalT::ScalarT, CP::NlsDim<NumSlipT>::value>;
 
     //! Default implementation of value.
     template<typename T, minitensor::Index N = minitensor::DYNAMIC>
@@ -258,18 +260,16 @@ namespace CP
   class ResidualSlipHardnessFN:
     public minitensor::Function_Base<
       ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>,
-      typename EvalT::ScalarT, NumSlipT>,
-    ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>
+      typename EvalT::ScalarT, CP::NlsDim<NumSlipT>::value>
   {
-    using ScalarT = typename EvalT::ScalarT;
-
   public:
 
     using Base = minitensor::Function_Base<
         ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>,
-        typename EvalT::ScalarT, NumSlipT>;
+         typename EvalT::ScalarT, CP::NlsDim<NumSlipT>::value>;
 
-    //! Constructor.
+    using ScalarT = typename EvalT::ScalarT;
+
     ResidualSlipHardnessFN(
         minitensor::Tensor4<ScalarT, NumDimT> const & C,
         std::vector<SlipSystem<NumDimT>> const & slip_systems,
@@ -278,31 +278,58 @@ namespace CP
         minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
         minitensor::Vector<RealType, NumSlipT> const & slip_n,
         minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-        RealType dt) : ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>(C, slip_systems, slip_families, Fp_n, state_hardening_n, slip_n, F_np1, dt)
-    {}
+        RealType dt);
 
-    //!
+    static constexpr char const * const
+    NAME{"Crystal Plasticity Function"};
+
     template<typename T, minitensor::Index N = minitensor::DYNAMIC>
     T
-    value(minitensor::Vector<T, N> const & x) {
-      minitensor::Vector<T, N> grad = ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(x);
-      T function_value = 0.5 * minitensor::dot<T, N>(grad, grad);
-      return function_value;
-    }
+    value(minitensor::Vector<T, N> const & x);
 
-    //! Default implementation of hessian.
     template<typename T, minitensor::Index N = minitensor::DYNAMIC>
     minitensor::Vector<T, N>
     gradient(minitensor::Vector<T, N> const & x) {
       return Base::gradient(*this, x);
     }
 
-    //! Default implementation of hessian.
     template<typename T, minitensor::Index N = minitensor::DYNAMIC>
     minitensor::Tensor<T, N>
     hessian(minitensor::Vector<T, N> const & x) {
       return Base::hessian(*this, x);
     }
+
+  private:
+
+    RealType
+    num_dim_;
+
+    RealType
+    num_slip_;
+
+    minitensor::Tensor4<ScalarT, NumDimT> const &
+    C_;
+
+    std::vector<SlipSystem<NumDimT>> const &
+    slip_systems_;
+
+    std::vector<SlipFamily<NumDimT, NumSlipT>> const &
+    slip_families_;
+
+    minitensor::Tensor<RealType, NumDimT> const &
+    Fp_n_;
+
+    minitensor::Vector<RealType, NumSlipT> const &
+    state_hardening_n_;
+
+    minitensor::Vector<RealType, NumSlipT> const &
+    slip_n_;
+
+    minitensor::Tensor<ScalarT, NumDimT> const &
+    F_np1_;
+
+    RealType
+    dt_;
   };
 
 }

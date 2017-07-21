@@ -319,6 +319,7 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
         return Teuchos::rcp(new Albany::AsciiSTKMeshStruct(disc_params, comm));
     } else if (method == "Ascii2D") {
         return Teuchos::rcp(new Albany::AsciiSTKMesh2D(disc_params, comm));
+#ifdef ALBANY_SEACAS  // Fails to compile without SEACAS
     } else if (method == "Hacky Ascii2D") {
         //FixME very hacky! needed for printing 2d mesh
         Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
@@ -334,6 +335,7 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
         const std::string& output_filename = disc_params->get("Exodus Output File Name", "ice_mesh.2d.exo");
         size_t idx = mesh_data->create_output_mesh(output_filename, stk::io::WRITE_RESULTS);
         mesh_data->process_output_request(idx, 0.0);
+#endif // ALBANY_SEACAS
     } else if (method == "Gmsh") {
         return Teuchos::rcp(new Albany::GmshSTKMeshStruct(disc_params, comm));
     }

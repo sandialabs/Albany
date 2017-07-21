@@ -135,7 +135,7 @@ private:
   apps_;
 
   Teuchos::Array<Teuchos::RCP<SolutionSniffer>>
-  convergence_ops_;
+  solution_sniffers_;
 
   Teuchos::Array<Teuchos::RCP<Albany::AbstractSTKMeshStruct>>
   stk_mesh_structs_;
@@ -156,14 +156,26 @@ private:
   int
   max_iters_{0};
 
-  int
-  output_interval_{1};
-
   ST
   rel_tol_{0.0};
 
   ST
   abs_tol_{0.0};
+
+  int
+  maximum_steps_{0};
+
+  ST
+  initial_time_{0.0};
+
+  ST
+  final_time_{0.0};
+
+  ST
+  initial_time_step_{0.0};
+
+  int
+  output_interval_{1};
 
   mutable bool
   failed_{false};
@@ -194,6 +206,15 @@ private:
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST>>
   sub_outargs_;
+
+  mutable Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
+  model_evaluators_;
+
+  mutable Teuchos::Array<Teuchos::RCP<NOX::Abstract::Vector>>
+  solutions_;
+
+  Teuchos::Array<Teuchos::ParameterList>
+  nox_params_;
 };
 
 } // namespace LCM

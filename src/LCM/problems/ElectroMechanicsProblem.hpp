@@ -58,6 +58,14 @@ public:
   {
     return num_dims_;
   }
+  
+  ///
+  /// Get boolean telling code if SDBCs are utilized  
+  ///
+  virtual bool
+  useSDBCs() const {
+    return false; 
+  }
 
   ///
   /// Build the PDE instantiations, boundary conditions, initial solution

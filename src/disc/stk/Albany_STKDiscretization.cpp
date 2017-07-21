@@ -1747,7 +1747,6 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeEqID[b].resize(buck.size());
-    //wsElNodeEqID_kokkos[b].resize(buck.size());
     wsElNodeID[b].resize(buck.size());
     coords[b].resize(buck.size());
 
@@ -1923,9 +1922,34 @@ void Albany::STKDiscretization::computeWorksetInfo()
 */
     }
   }
-//Kopy workset to the Kokkos data
- //wsElNodeEqID_kokkos=Kokkos::View<int****, PHX::Device>("wsElNodeEqID_kokkos",numBuckets,wsElNodeEqID[0].size(),wsElNodeEqID[0][0].size(), neq);
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  // Copy workset data to Kokkos Views
+  // Note: Allocates the max number of nodes across all elements in each bucket
+  wsElNodeEqID_kokkos.resize(numBuckets);
+  for (int b = 0; b < numBuckets; b++) {
+    const int buckSize = wsElNodeEqID[b].size();
+
+    // Find max_nodes
+    int max_nodes = 0;
+    for (int i = 0; i < buckSize; i++) {
+      const int nodes_per_element = wsElNodeEqID[b][i].size();
+      if (nodes_per_element > max_nodes) {
+        max_nodes = nodes_per_element;
+      }
+    }
+
+    wsElNodeEqID_kokkos[b] = Kokkos::View<LO***, PHX::Device>("wsElNodeEqID_kokkos", buckSize, max_nodes, neq);
+    for (int i = 0; i < buckSize; i++) {
+      const int nodes_per_element = wsElNodeEqID[b][i].size();
+      for (int j = 0; j < nodes_per_element; j++) {
+        for (int eq = 0; eq < neq; eq++) {
+          wsElNodeEqID_kokkos[b](i, j, eq) = wsElNodeEqID[b][i][j][eq];
+        }
+      }
+    }
+  }
+#endif
 
  for (int d=0; d<stkMeshStruct->numDim; d++) {
   if (stkMeshStruct->PBCStruct.periodic[d]) {

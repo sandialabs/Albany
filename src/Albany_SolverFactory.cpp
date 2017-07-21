@@ -6,7 +6,6 @@
 
 // IK, 9/12/14: Epetra ifdef'ed out!
 // No epetra if setting ALBANY_EPETRA_EXE off.
-
 #include "Albany_SolverFactory.hpp"
 #if defined(ALBANY_EPETRA)
 #include "Albany_ObserverFactory.hpp"

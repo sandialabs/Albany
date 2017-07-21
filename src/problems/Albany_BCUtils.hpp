@@ -55,6 +55,10 @@ struct DirichletTraits {
     typeSw = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_schwarz_bc
   };
   enum {
+    typeSsw =
+        PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_strong_schwarz_bc
+  };
+  enum {
     typePd =
         PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_pd_neigh_fit_bc
   };
@@ -178,6 +182,8 @@ class BCUtils {
     return offsets_;
   }
 
+  bool useSDBCs() const { return use_sdbcs_; }
+
   //! Specific implementation for Dirichlet BC Evaluator below
 
   Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>
@@ -251,7 +257,8 @@ class BCUtils {
       std::string& allBC, Teuchos::RCP<PHX::DataLayout>& dummy);
 
  protected:
-  Teuchos::Array<Teuchos::Array<int>> offsets_;
+   Teuchos::Array<Teuchos::Array<int>> offsets_;
+   bool use_sdbcs_{false};
 };
 
 //! Specific implementation for Dirichlet BC Evaluator

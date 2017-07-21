@@ -3,6 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+//#define DEBUG
 
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
@@ -60,7 +61,12 @@
 #include "AztecOO_ConditionNumber.h"
 #endif
 
+#if defined(ALBANY_LCM)
+#include "SolutionSniffer.hpp"
+#endif // ALBANY_LCM
+
 //#define WRITE_TO_MATRIX_MARKET
+//#define DEBUG_OUTPUT
 
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
@@ -73,6 +79,7 @@ using Teuchos::rcpFromRef;
 int countJac; //counter which counts instances of Jacobian (for debug output)
 int countRes; //counter which counts instances of residual (for debug output)
 int countScale;
+double previous_time; 
 
 extern bool TpetraBuild;
 
@@ -87,7 +94,11 @@ Application(const RCP<const Teuchos_Comm>& comm_,
     morphFromInit(true), perturbBetaForDirichlets(0.0),
     phxGraphVisDetail(0),
     stateGraphVisDetail(0),
-    params_(params)
+    params_(params), 
+    requires_sdbcs_(false), 
+    requires_orig_dbcs_(false),
+    no_dir_bcs_(false),
+    loca_sdbcs_valid_nonlin_solver_(true) 
 {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
@@ -97,6 +108,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   buildProblem();
   createDiscretization();
   finalSetUp(params, initial_guess);
+  previous_time = 0.0; 
 }
 
 Albany::Application::
@@ -107,11 +119,16 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
     shapeParamsHaveBeenReset(false),
     morphFromInit(true), perturbBetaForDirichlets(0.0),
     phxGraphVisDetail(0),
-    stateGraphVisDetail(0)
+    stateGraphVisDetail(0),
+    requires_sdbcs_(false), 
+    no_dir_bcs_(false),
+    loca_sdbcs_valid_nonlin_solver_(true), 
+    requires_orig_dbcs_(false)
 {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
 #endif
+  previous_time = 0.0; 
 }
 
 namespace {
@@ -236,6 +253,24 @@ void Albany::Application::initialSetUp(
   }
   else if (solutionMethod == "Continuation") {
     solMethod = Continuation;
+    bool const
+    have_piro = params->isSublist("Piro");
+
+    ALBANY_ASSERT(have_piro == true);
+
+    Teuchos::ParameterList &
+    piro_params = params->sublist("Piro");
+
+    bool const
+    have_nox = piro_params.isSublist("NOX");
+      
+    if (have_nox) {
+      Teuchos::ParameterList 
+      nox_params = piro_params.sublist("NOX");
+      std::string nonlinear_solver = nox_params.get<std::string>("Nonlinear Solver");
+      if (nonlinear_solver != "Line Search Based") 
+        loca_sdbcs_valid_nonlin_solver_ = false;
+    }
   }
   else if (solutionMethod == "Transient") {
     solMethod = Transient;
@@ -249,6 +284,112 @@ void Albany::Application::initialSetUp(
   else if (solutionMethod == "Transient Tempus" || "Transient Tempus No Piro") {
 #ifdef ALBANY_TEMPUS
     solMethod = TransientTempus;
+
+    // Add NOX pre-post-operator for debugging.
+    bool const
+    have_piro = params->isSublist("Piro");
+
+    ALBANY_ASSERT(have_piro == true);
+
+    Teuchos::ParameterList &
+    piro_params = params->sublist("Piro");
+
+    bool const 
+    have_dbcs = params->isSublist("Dirichlet BCs"); 
+
+    if (have_dbcs == false) 
+      no_dir_bcs_ = true;   
+ 
+    bool const
+    have_tempus = piro_params.isSublist("Tempus");
+
+    ALBANY_ASSERT(have_tempus == true);
+
+    Teuchos::ParameterList &
+    tempus_params = piro_params.sublist("Tempus");
+
+    bool const
+    have_tempus_stepper = tempus_params.isSublist("Tempus Stepper");
+
+    ALBANY_ASSERT(have_tempus_stepper == true);
+
+    Teuchos::ParameterList &
+    tempus_stepper_params = tempus_params.sublist("Tempus Stepper");
+
+    std::string stepper_type = tempus_stepper_params.get<std::string>("Stepper Type");
+    
+    Teuchos::ParameterList nox_params;
+
+    if ((stepper_type == "Newmark Implicit d-Form") || 
+        (stepper_type == "Newmark Implicit a-Form")) 
+    {
+
+      bool const
+      have_solver_name = tempus_stepper_params.isType<std::string>("Solver Name");
+
+      ALBANY_ASSERT(have_solver_name == true);
+
+      std::string const
+      solver_name = tempus_stepper_params.get<std::string>("Solver Name");
+ 
+      Teuchos::ParameterList &
+      solver_name_params = tempus_stepper_params.sublist(solver_name);
+
+      bool const
+      have_nox = solver_name_params.isSublist("NOX");
+
+      ALBANY_ASSERT(have_nox == true);
+
+      nox_params = solver_name_params.sublist("NOX");
+
+      std::string nonlinear_solver = nox_params.get<std::string>("Nonlinear Solver");
+ 
+      //Set flag marking that we are running with Tempus + d-Form Newmark + SDBCs.
+      if (stepper_type == "Newmark Implicit d-Form") {
+        requires_sdbcs_ = true;
+        if (nonlinear_solver != "Line Search Based") {
+          TEUCHOS_TEST_FOR_EXCEPTION(
+              true,
+              std::logic_error,
+              "Newmark Implicit d-Form Stepper Type will not work correctly with 'Nonlinear Solver' = " 
+               << nonlinear_solver << "!  The valid Nonlinear Solver for this scheme is 'Line Search Based'."); 
+        }
+      }
+      if (stepper_type == "Newmark Implicit a-Form") {
+        requires_orig_dbcs_ = true; 
+      }
+    }
+    else if (stepper_type == "Newmark Explicit a-Form") {
+      requires_orig_dbcs_ = true; 
+    }
+
+#if defined(DEBUG)
+      bool const
+      have_solver_opts = nox_params.isSublist("Solver Options");
+
+      ALBANY_ASSERT(have_solver_opts == true);
+
+      Teuchos::ParameterList &
+      solver_opts = nox_params.sublist("Solver Options");
+
+      std::string const
+      ppo_str{"User Defined Pre/Post Operator"};
+
+      bool const
+      have_ppo = solver_opts.isParameter(ppo_str);
+
+      Teuchos::RCP<NOX::Abstract::PrePostOperator>
+      ppo{Teuchos::null};
+
+      if (have_ppo == true) {
+        ppo = solver_opts.get<decltype(ppo)>(ppo_str);
+      } else {
+        ppo = Teuchos::rcp(new LCM::SolutionSniffer);
+        solver_opts.set(ppo_str, ppo);
+        ALBANY_ASSERT(solver_opts.isParameter(ppo_str) == true);
+      }
+#endif // DEBUG
+
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
@@ -417,7 +558,7 @@ void Albany::Application::initialSetUp(
           true,
           Teuchos::Exceptions::InvalidParameter,
           std::endl << "Error in Albany::Application: " <<
-          "Scale BC dofs does not work for QCAD Poisson or Schrodiner problems. " << std::endl);
+          "Scale BC dofs does not work for QCAD Poisson or Schrodinger problems. " << std::endl);
     }
   }
 
@@ -470,11 +611,8 @@ void Albany::Application::initialSetUp(
         std::endl << "Error in Albany::Application constructor:  " <<
         "Invalid Parameter Compute Jacobian Condition Number.  Acceptable values are -1, 0, 1, 2, ... " << std::endl);
   }
-  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0
-      || computeJacCondNum != 0)
-    countJac = 0; //initiate counter that counts instances of Jacobian matrix to 0
-  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
-    countRes = 0; //initiate counter that counts instances of Jacobian matrix to 0
+  countJac = 0; //initiate counter that counts instances of Jacobian matrix to 0
+  countRes = 0; //initiate counter that counts instances of residual vector to 0
 
   //FIXME: call setScaleBCDofs only on first step rather than at every Newton step.
   //It's called every step now b/c calling it once did not work for Schwarz problems.
@@ -550,6 +688,29 @@ void Albany::Application::buildProblem()
 #endif //ALBANY_LCM
 
   problem->buildProblem(meshSpecs, stateMgr);
+
+  if ((problem->useSDBCs() == true) && (loca_sdbcs_valid_nonlin_solver_ == false))
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::logic_error,
+        "Error in Albany::Application: you are using a Nonlinear Solver other than 'Line Search Based' with SDBCs, which is not supported!  Please re-run with Nonlinear Solver = Line Search Based.\n"); 
+  }
+
+  if ((requires_sdbcs_ == true) && (problem->useSDBCs() == false) && (no_dir_bcs_ == false)) 
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::logic_error,
+        "Error in Albany::Application: you are using a solver that requires SDBCs yet you are not using SDBCs!\n"); 
+  }
+  if ((requires_orig_dbcs_ == true) && (problem->useSDBCs() == true)) 
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::logic_error,
+        "Error in Albany::Application: you are using a solver that with SDBCs that does not work correctly with them!\n"); 
+  }
 
   neq = problem->numEquations();
   spatial_dimension = problem->spatialDimension();
@@ -1324,6 +1485,11 @@ computeGlobalResidualImplT(
     for (int ws = 0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
 
+#ifdef DEBUG_OUTPUT 
+      *out << "IKT countRes = " << countRes << ", computeGlobalResid workset.xT = \n "; 
+      (workset.xT)->describe(*out, Teuchos::VERB_EXTREME); 
+#endif
+
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(
           workset);
@@ -1525,13 +1691,26 @@ computeGlobalResidualT(
 {
   // Create non-owning RCPs to Tpetra objects
   // to be passed to the implementation
-  this->computeGlobalResidualImplT(
-      current_time,
-      Teuchos::rcp(xdotT, false),
-      Teuchos::rcp(xdotdotT, false),
-      Teuchos::rcpFromRef(xT),
-      p,
-      Teuchos::rcpFromRef(fT));
+  if (problem->useSDBCs() == false) {
+    this->computeGlobalResidualImplT(
+        current_time,
+        Teuchos::rcp(xdotT, false),
+        Teuchos::rcp(xdotdotT, false),
+        Teuchos::rcpFromRef(xT),
+        p,
+        Teuchos::rcpFromRef(fT));
+  }
+#ifdef ALBANY_LCM
+  else { 
+    this->computeGlobalResidualSDBCsImplT( 
+        current_time,
+        Teuchos::rcp(xdotT, false),
+        Teuchos::rcp(xdotdotT, false),
+        Teuchos::rcpFromRef(xT),
+        p,
+        Teuchos::rcpFromRef(fT));
+  }
+#endif
 
   //Debut output
   if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
@@ -1682,6 +1861,11 @@ computeGlobalJacobianImplT(const double alpha,
       loadBasicWorksetInfoT(workset,
           paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
     }
+   
+#ifdef DEBUG_OUTPUT 
+    *out << "IKT countJac = " << countJac << ", computeGlobalJacobian workset.xT = \n"; 
+    (workset.xT)->describe(*out, Teuchos::VERB_EXTREME); 
+#endif
 
     workset.fT = overlapped_fT;
     workset.JacT = overlapped_jacT;
@@ -5765,4 +5949,313 @@ setCoupledAppBlockNodeset(
   coupled_app_index_block_nodeset_names_map_.insert(app_index_block_names);
 }
 
+
+void
+Albany::Application::
+computeGlobalResidualSDBCsImplT(
+    double const current_time,
+    Teuchos::RCP<Tpetra_Vector const> const & xdotT,
+    Teuchos::RCP<Tpetra_Vector const> const & xdotdotT,
+    Teuchos::RCP<Tpetra_Vector const> const & xT,
+    Teuchos::Array<ParamVec> const & p,
+    Teuchos::RCP<Tpetra_Vector> const & fT)
+{
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
+  postRegSetup("Residual");
+
+  if (scale != 1.0) {
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+        std::logic_error, "Scaling cannot be used with computeGlobalResidualTempusSDBCsImplT routine!  "
+        << "Please re-run without scaling.");
+  } 
+ 
+  bool begin_time_step = false; 
+
+  // Load connectivity map and coordinates
+  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type const &
+  wsElNodeEqID = disc->getWsElNodeEqID();
+
+  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type const &
+  coords = disc->getCoords();
+
+  WorksetArray<std::string>::type const &
+  wsEBNames = disc->getWsEBNames();
+
+  WorksetArray<int>::type const &
+  wsPhysIndex = disc->getWsPhysIndex();
+
+  int const
+  numWorksets = wsElNodeEqID.size();
+
+  Teuchos::RCP<Tpetra_Vector> const
+  overlapped_fT = solMgrT->get_overlapped_fT();
+
+  Teuchos::RCP<Tpetra_Export>
+  const exporterT = solMgrT->get_exporterT();
+
+  Teuchos::RCP<Tpetra_Import> const
+  importerT = solMgrT->get_importerT();
+
+  // Scatter x and xdot to the overlapped distrbution
+  solMgrT->scatterXT(*xT, xdotT.get(), xdotdotT.get());
+
+  // Scatter distributed parameters
+  distParamLib->scatter();
+
+  // Set parameters
+  for (int i = 0; i < p.size(); i++) {
+    for (unsigned int j = 0; j < p[i].size(); j++) {
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
+    }
+  }
+
+#if defined(ALBANY_LCM)
+  // Store pointers to solution and time derivatives.
+  // Needed for Schwarz coupling.
+  if (xT != Teuchos::null) x_ = Teuchos::rcp(new Tpetra_Vector(*xT));
+  else x_ = Teuchos::null;
+  if (xdotT != Teuchos::null) xdot_ = Teuchos::rcp(new Tpetra_Vector(*xdotT));
+  else xdot_ = Teuchos::null; 
+  if (xdotdotT != Teuchos::null) xdotdot_ = Teuchos::rcp(new Tpetra_Vector(*xdotdotT));
+  else xdotdot_ = Teuchos::null; 
+#endif
+
+  // Mesh motion needs to occur here on the global mesh befor
+  // it is potentially carved into worksets.
+#ifdef ALBANY_CUTR
+  static int first=true;
+  if (shapeParamsHaveBeenReset) {
+    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
+
+    *out << " Calling moveMesh with params: " << std::setprecision(8);
+    for (unsigned int i=0; i<shapeParams.size(); i++) {
+      *out << shapeParams[i] << "  ";
+    }
+    *out << std::endl;
+    meshMover->moveMesh(shapeParams, morphFromInit);
+    coords = disc->getCoords();
+    shapeParamsHaveBeenReset = false;
+  }
+#endif
+
+  // Zero out overlapped residual - Tpetra
+  overlapped_fT->putScalar(0.0);
+  fT->putScalar(0.0);
+
+#ifdef ALBANY_PERIDIGM
+#if defined(ALBANY_EPETRA)
+  const Teuchos::RCP<LCM::PeridigmManager>&
+  peridigmManager = LCM::PeridigmManager::self();
+  if (Teuchos::nonnull(peridigmManager)) {
+    peridigmManager->setCurrentTimeAndDisplacement(current_time, xT);
+    peridigmManager->evaluateInternalForce();
+  }
+#endif
+#endif
+
+  // Set data in Workset struct, and perform fill via field manager
+  {
+    if (Teuchos::nonnull(rc_mgr)) rc_mgr->init_x_if_not(xT->getMap());
+
+    PHAL::Workset workset;
+    double this_time; 
+    if (!paramLib->isParameter("Time")) {
+      loadBasicWorksetInfoT(workset, current_time);
+      this_time = current_time; 
+    }
+    else {
+      loadBasicWorksetInfoT(workset,
+          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
+      this_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"); 
+    }
+ 
+#ifdef DEBUG_OUTPUT 
+    *out << "IKT previous_time, this_time = " << previous_time << ", " << this_time << "\n"; 
+#endif
+    //Check if previous_time is same as current time.  If not, we are at the start 
+    //of a new time step, so we set boolean parameter to true. 
+    if (previous_time != this_time) begin_time_step = true;  
+
+    workset.fT = overlapped_fT;
+
+    for (int ws = 0; ws < numWorksets; ws++) {
+      loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
+     
+#ifdef DEBUG_OUTPUT 
+      *out << "IKT countRes = " << countRes << ", computeGlobalResid workset.xT = \n "; 
+      (workset.xT)->describe(*out, Teuchos::VERB_EXTREME); 
+#endif
+
+      // FillType template argument used to specialize Sacado
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(
+          workset);
+      if (nfm != Teuchos::null) {
+#ifdef ALBANY_PERIDIGM
+	// DJL this is a hack to avoid running a block with sphere elements
+	// through a Neumann field manager that was constructed for a non-sphere
+	// element topology.  The root cause is that Albany currently supports only
+	// a single Neumann field manager.  The history on that is murky.
+	// The single field manager is created for a specific element topology,
+	// and it fails if applied to worksets with a different element topology.
+	// The Peridigm use case is a discretization that contains blocks with
+	// sphere elements and blocks with standard FEM solid elements, and we
+	// want to apply Neumann BC to the standard solid elements.
+	if (workset.sideSets->size() != 0) {
+	  deref_nfm(nfm, wsPhysIndex, ws)
+              ->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+	}
+#else
+        deref_nfm(nfm, wsPhysIndex, ws)
+            ->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+#endif
+      }
+    }
+    previous_time = current_time; 
+    // workset.wsElNodeEqID_kokkos =Kokkos:: View<int****,
+    // PHX::Device ("wsElNodeEqID_kokkos",workset. wsElNodeEqID.size(),
+    // workset. wsElNodeEqID[0].size(), workset. wsElNodeEqID[0][0].size());
+  }
+
+  // Assemble the residual into a non-overlapping vector
+  fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+
+#ifdef ALBANY_LCM
+  // Push the assembled residual values back into the overlap vector
+  overlapped_fT->doImport(*fT, *importerT, Tpetra::INSERT);
+  // Write the residual to the discretization, which will later (optionally)
+  // be written to the output file
+  disc->setResidualFieldT(*overlapped_fT);
+#endif
+
+  // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
+  Teuchos::RCP<Tpetra_Vector> xT_post_SDBCs; 
+  if (dfm != Teuchos::null) {
+    PHAL::Workset
+    workset;
+
+    workset.fT = fT;
+
+    loadWorksetNodesetInfo(workset);
+
+    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
+
+    if (paramLib->isParameter("Time")) {
+      workset.current_time =
+        paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    }
+    else {
+      workset.current_time = current_time;
+    }
+
+
+    workset.distParamLib = distParamLib;
+    workset.disc = disc;
+
+#if defined(ALBANY_LCM)
+    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
+
+    // FillType template argument used to specialize Sacado
+    dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+    xT_post_SDBCs = Teuchos::rcp(new Tpetra_Vector(*workset.xT)); 
+  }
+
+  if (begin_time_step == true) {
+  //if (countRes == 0) {
+    // Zero out overlapped residual - Tpetra
+    overlapped_fT->putScalar(0.0);
+    fT->putScalar(0.0);
+    PHAL::Workset workset;
+
+    if (!paramLib->isParameter("Time")) {
+      loadBasicWorksetInfoT(workset, current_time);
+    }
+    else {
+      loadBasicWorksetInfoT(workset,
+          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
+    }
+
+    workset.fT = overlapped_fT;
+
+    for (int ws = 0; ws < numWorksets; ws++) {
+      loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
+      workset.xT = xT_post_SDBCs;  
+   
+#ifdef DEBUG_OUTPUT 
+      *out << "IKT countRes = " << countRes << ", computeGlobalResid workset.xT = \n "; 
+      (workset.xT)->describe(*out, Teuchos::VERB_EXTREME); 
+#endif
+
+      // FillType template argument used to specialize Sacado
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(
+          workset);
+      if (nfm != Teuchos::null) {
+#ifdef ALBANY_PERIDIGM
+	// DJL this is a hack to avoid running a block with sphere elements
+	// through a Neumann field manager that was constructed for a non-sphere
+	// element topology.  The root cause is that Albany currently supports only
+	// a single Neumann field manager.  The history on that is murky.
+	// The single field manager is created for a specific element topology,
+	// and it fails if applied to worksets with a different element topology.
+	// The Peridigm use case is a discretization that contains blocks with
+	// sphere elements and blocks with standard FEM solid elements, and we
+	// want to apply Neumann BC to the standard solid elements.
+	if (workset.sideSets->size() != 0) {
+	  deref_nfm(nfm, wsPhysIndex, ws)
+              ->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+	}
+#else
+        deref_nfm(nfm, wsPhysIndex, ws)
+            ->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+#endif
+      }
+    }
+    // workset.wsElNodeEqID_kokkos =Kokkos:: View<int****,
+    // PHX::Device ("wsElNodeEqID_kokkos",workset. wsElNodeEqID.size(),
+    // workset. wsElNodeEqID[0].size(), workset. wsElNodeEqID[0][0].size());
+
+    // Assemble the residual into a non-overlapping vector
+    fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+
+#ifdef ALBANY_LCM
+    // Push the assembled residual values back into the overlap vector
+    overlapped_fT->doImport(*fT, *importerT, Tpetra::INSERT);
+    // Write the residual to the discretization, which will later (optionally)
+    // be written to the output file
+    disc->setResidualFieldT(*overlapped_fT);
+#endif
+    if (dfm != Teuchos::null) {
+
+      PHAL::Workset workset;
+
+      workset.fT = fT;
+
+      loadWorksetNodesetInfo(workset);
+
+      dfm_set(workset, xT_post_SDBCs, xdotT, xdotdotT, rc_mgr);
+
+      if (paramLib->isParameter("Time")) {
+        workset.current_time =
+          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+      }
+      else {
+        workset.current_time = current_time;
+      }
+
+      workset.distParamLib = distParamLib;
+      workset.disc = disc;
+
+#if defined(ALBANY_LCM)
+      // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
+      workset.apps_ = apps_;
+      workset.current_app_ = Teuchos::rcp(this, false);
+#endif
+
+      // FillType template argument used to specialize Sacado
+      dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+    }
+  }
+}
 #endif // ALBANY_LCM

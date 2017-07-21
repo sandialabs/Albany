@@ -52,7 +52,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::Array<LO> colT;
   const int neq = workset.wsElNodeEqID[0][0].size();
   int numDim = 0;
-  if (this->tensorRank==2) numDim = this->valTensor[0].dimension(2);
+  if (this->tensorRank==2) numDim = this->valTensor.dimension(2);
   double diagonal_value = 1;
 
   const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
@@ -109,7 +109,7 @@ evaluateFields(typename Traits::EvalData workset)
           typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](elem_LID,node) :
                     this->tensorRank == 1 ? this->valVec(elem_LID,node,eq) :
-                    this->valTensor[0](elem_LID,node, eq/numDim, eq%numDim));
+                    this->valTensor(elem_LID,node, eq/numDim, eq%numDim));
           const LO rowT = nodeID[node][this->offset + eq];
           if (loadResid)
             fT->sumIntoLocalValue(rowT, valptr.val());
@@ -272,7 +272,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::Array<LO> colT, index;
   colT.resize(nunk), index.resize(nunk);
   int numDim = 0;
-  if (this->tensorRank==2) numDim = this->valTensor[0].dimension(2);
+  if (this->tensorRank==2) numDim = this->valTensor.dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
@@ -291,7 +291,7 @@ evaluateFields(typename Traits::EvalData workset)
           typename PHAL::Ref<ScalarT const>::type
             valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                       this->tensorRank == 1 ? this->valVec(cell,node,eq) :
-                      this->valTensor[0](cell,node, eq/numDim, eq%numDim));
+                      this->valTensor(cell,node, eq/numDim, eq%numDim));
           const LO rowT = nodeID[node][this->offset + eq];
           if (loadResid)
             fT->sumIntoLocalValue(rowT, valptr.val());

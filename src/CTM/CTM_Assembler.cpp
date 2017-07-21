@@ -89,16 +89,10 @@ void Assembler::load_ws_bucket(PHAL::Workset& workset, const int ws) {
   workset.stateArrayPtr =
     &(state_mgr->getStateArray(Albany::StateManager::ELEM, ws));
 
-  // kokkos views
-  Kokkos::View<int***, PHX::Device> wsElNodeEqID_kokkos(
-      "wsElNodeEqID_kokkos",
-      workset.numCells, wsElNodeEqID[ws][0].size(),
-      wsElNodeEqID[ws][0][0].size());
-  workset.wsElNodeEqID_kokkos = wsElNodeEqID_kokkos;
-  for (int i = 0; i < workset.numCells; ++i)
-  for (int j = 0; j < wsElNodeEqID[ws][0].size(); ++j)
-  for (int k = 0; k < wsElNodeEqID[ws][0][0].size(); ++k)
-    workset.wsElNodeEqID_kokkos(i, j, k) = workset.wsElNodeEqID[i][j][k];
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  // Kokkos views
+  workset.wsElNodeEqID_kokkos = disc->getWsElNodeEqIDKokkos(ws);
+#endif
 }
 
 void Assembler::load_ws_basic(

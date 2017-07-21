@@ -306,7 +306,7 @@ class ObjIterLinear(ObjLocal):
 
 
 # Populate a ttk.Treeview object for viewing data
-def populate_tree(tree, parent, dic):
+def _populate_tree(tree, parent, dic):
 
     import xml.etree.ElementTree as et
     import numpy as np
@@ -384,7 +384,7 @@ def populate_tree(tree, parent, dic):
 
 
 # View simulation data as a ttk.Treeview object
-def view_tree(dict_data = None, obj_data = None, filename = None):
+def _view_tree(dict_data = None, obj_data = None, filename = None):
 
     import Tkinter as tk
     import ttk
@@ -419,7 +419,7 @@ def view_tree(dict_data = None, obj_data = None, filename = None):
     tree = ttk.Treeview(tree_frame, columns=('Values'))
     tree.column('Values', width=100, anchor='center')
     tree.heading('Values', text='Values')
-    populate_tree(tree, '', dict_data)
+    _populate_tree(tree, '', dict_data)
     tree.pack(fill=tk.BOTH, expand=1)
 
     # Limit windows minimum dimensions

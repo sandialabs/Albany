@@ -5,14 +5,8 @@ from scipy import linalg
 import sys
 import string
 
-if __name__ == "__main__":
 
-    if len(sys.argv) != 2:
-        print "\nUsage:  RandomRotation.py <num_blocks>\n"
-        sys.exit(1)
-
-
-    number_blocks = int(sys.argv[1])
+def create_rotations_random(num_blocks = 1):
 
     # Exporting data to file
     output = open('rotation_matrices.txt','w')
@@ -24,7 +18,7 @@ if __name__ == "__main__":
     # Checking distribution of sphere point picking algorithm
     output_check = open('axial_vectors.txt','w')
 
-    for i in range(number_blocks):
+    for i in range(num_blocks):
 
         # Create uniform distribution
         # Please refer to sphere point picking algorithms
@@ -73,8 +67,10 @@ if __name__ == "__main__":
     output.close()
     output_check.close()
 
-    print "\nWrote", number_blocks, "rotation matrices to rotation_matrices.txt\n"
-    print "\nWrote", number_blocks, "axial vectors to axial_vector.txt\n" 
+    print "\nWrote", num_blocks, "rotation matrices to rotation_matrices.txt\n"
+    print "\nWrote", num_blocks, "axial vectors to axial_vector.txt\n" 
+
+    return True
 
 # Rotation matrix for each block in a genesis file.
 # Format is:  R11 R12 R13 R21 R22 R23 R31 R32 R33
@@ -85,3 +81,13 @@ if __name__ == "__main__":
 # print numpy.linalg.det(rotation)
 # print numpy.dot(numpy.transpose(rotation),rotation)
 
+if __name__ == "__main__":
+
+    if len(sys.argv) != 2:
+        print "\nUsage: create_rotations_random <num_blocks>\n"
+        sys.exit(1)
+
+
+    num_blocks = int(sys.argv[1])
+
+    success = create_rotations_random(num_blocks)

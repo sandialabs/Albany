@@ -125,8 +125,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
 
   if(m_excludeBlock) return;
-
-  if( elementBlockName != workset.EBName ) return;
+  if(elementBlockName != workset.EBName) return;
 
   int nTopos = topologies->size();
 
@@ -145,15 +144,14 @@ evaluateFields(typename Traits::EvalData workset)
 
   double internalEnergy=0.0;
 
-  int numCells = dims[0];
   int numQPs   = dims[1];
   int numDims  = dims[2];
   int numNodes = topo[0].dimension(1);
 
   double response;
   Teuchos::Array<double> dResponse(nTopos);
-  
-  for(int cell=0; cell<numCells; cell++){
+
+  for(int cell=0; cell<workset.numCells; cell++){
 
     for(int itopo=0; itopo<nTopos; itopo++)
       for(int node=0; node<numNodes; node++) 

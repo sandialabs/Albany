@@ -28,6 +28,7 @@ plName(const std::string& name) {
   return name.substr(pos + sizeof(decorator) - 1);
 }
 
+
 // DBCs do not depend on each other. However, BCs are not always compatible at
 // corners, and so order of evaluation can matter. Establish an order here. The
 // order is the order the BC is listed in the XML input file.
@@ -159,6 +160,8 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
   using PHX::DataLayout;
   using PHX::MDALayout;
   using PHAL::AlbanyTraits;
+
+  use_sdbcs_ = false; 
 
   if (!haveBCSpecified(
           params)) {  // If the BC sublist is not in the input file,
@@ -313,6 +316,8 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
   using PHX::MDALayout;
   using PHAL::AlbanyTraits;
   using std::string;
+  
+  use_sdbcs_ = false; 
 
   ParameterList BCparams = params->sublist(traits_type::bcParamsPl);
   BCparams.validateParameters(
@@ -473,13 +478,15 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
           traits_type::constructTimeDepStrongDBCName(nodeSetIDs[i], bcNames[j]);
 
       if (BCparams.isSublist(ss)) {
+
+        use_sdbcs_ = true; 
         // grab the sublist
         ParameterList& sub_list = BCparams.sublist(ss);
 
         RCP<ParameterList> p = rcp(new ParameterList);
 
         p->set<int>("Type", traits_type::typeTs);
-
+        
         // Extract the time values into a vector
         p->set<Teuchos::Array<RealType>>(
             "Time Values",
@@ -649,7 +656,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
           traits_type::constructStrongDBCName(nodeSetIDs[i], bcNames[j]);
       if (BCparams.isParameter(ss)) {
         RCP<ParameterList> p = rcp(new ParameterList);
-
+        use_sdbcs_ = true; 
         p->set<int>("Type", traits_type::typeSt);
         p->set<RCP<DataLayout>>("Data Layout", dummy);
         p->set<string>("Dirichlet Name", ss);
@@ -671,6 +678,54 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
   ///
   for (auto i = 0; i < nodeSetIDs.size(); ++i) {
     string ss = traits_type::constructBCName(nodeSetIDs[i], "Schwarz");
+
+    if (BCparams.isSublist(ss)) {
+      // grab the sublist
+      ParameterList& sub_list = BCparams.sublist(ss);
+
+      if (sub_list.get<string>("BC Function") == "Schwarz") {
+        RCP<ParameterList> p = rcp(new ParameterList);
+
+        p->set<int>("Type", traits_type::typeSw);
+
+        p->set<string>(
+            "Coupled Application", sub_list.get<string>("Coupled Application"));
+
+        p->set<string>("Coupled Block", sub_list.get<string>("Coupled Block"));
+
+        // Get the application from the main parameters list above
+        // and pass it to the Schwarz BC evaluator.
+        Teuchos::RCP<Albany::Application> const& application =
+            params->get<Teuchos::RCP<Albany::Application>>("Application");
+
+        p->set<Teuchos::RCP<Albany::Application>>("Application", application);
+
+        // Fill up ParameterList with things DirichletBase wants
+        p->set<RCP<DataLayout>>("Data Layout", dummy);
+        p->set<string>("Dirichlet Name", ss);
+        p->set<RealType>("Dirichlet Value", 0.0);
+        p->set<string>("Node Set ID", nodeSetIDs[i]);
+        p->set<int>("Equation Offset", 0);
+        for (std::size_t j = 0; j < bcNames.size(); j++) {
+          offsets_[i].push_back(j);
+        }
+        // if set to zero, the cubature degree of the side
+        // will be set to that of the element
+        p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0));
+        p->set<RCP<ParamLib>>("Parameter Library", paramLib);
+
+        evaluators_to_build[evaluatorsToBuildName(ss)] = p;
+
+        bcs->push_back(ss);
+      }
+    }
+  }
+
+  ///
+  /// Strong Schwarz BC specific
+  ///
+  for (auto i = 0; i < nodeSetIDs.size(); ++i) {
+    string ss = traits_type::constructStrongDBCName(nodeSetIDs[i], "Schwarz");
 
     if (BCparams.isSublist(ss)) {
       // grab the sublist

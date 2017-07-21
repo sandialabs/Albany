@@ -72,14 +72,13 @@ evaluateFields(typename Traits::EvalData workset)
 
   Albany::MDArray topo = (*workset.stateArrayPtr)[this->topoName];
 
-  int numCells = dims[0];
   int numQPs   = dims[1];
   int numDims  = 0.0;
   if( size > 2 ) numDims = dims[2];
   int numNodes = topo.dimension(1);
 
   if( size == 2 ){
-    for(int cell=0; cell<numCells; cell++){
+    for(int cell=0; cell<workset.numCells; cell++){
       for(int qp=0; qp<numQPs; qp++){
         double topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
@@ -90,7 +89,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else
   if( size == 3 ){
-    for(int cell=0; cell<numCells; cell++){
+    for(int cell=0; cell<workset.numCells; cell++){
       for(int qp=0; qp<numQPs; qp++){
         double topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
@@ -102,7 +101,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else
   if( size == 4 ){
-    for(int cell=0; cell<numCells; cell++){
+    for(int cell=0; cell<workset.numCells; cell++){
       for(int qp=0; qp<numQPs; qp++){
         double topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
@@ -115,7 +114,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else
   if( size == 5 ){
-    for(int cell=0; cell<numCells; cell++){
+    for(int cell=0; cell<workset.numCells; cell++){
       for(int qp=0; qp<numQPs; qp++){
         double topoVal = 0.0;
         for(int node=0; node<numNodes; node++)

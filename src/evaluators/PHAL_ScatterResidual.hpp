@@ -19,6 +19,10 @@
 #include "Epetra_Vector.h"
 #endif
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#include "Kokkos_Vector.hpp"
+#endif
+
 namespace PHAL {
 /** \brief Scatters result from the residual fields into the
     global (epetra) data structurs.  This includes the
@@ -36,7 +40,6 @@ class ScatterResidualBase
     public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
-
   ScatterResidualBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 
@@ -45,21 +48,25 @@ public:
 
   virtual void evaluateFields(typename Traits::EvalData d)=0;
 
-  //Kokkos::View<int***, PHX::Device> Index;
-
 protected:
-
   typedef typename EvalT::ScalarT ScalarT;
   Teuchos::RCP<PHX::FieldTag> scatter_operation;
   std::vector< PHX::MDField<ScalarT const,Cell,Node> > val;
   PHX::MDField<ScalarT const,Cell,Node,Dim>  valVec;
-  //typedef Kokkos::View < ScalarT***, Kokkos::LayoutRight, PHX::Device > temp_view_type;
-  std::vector< PHX::MDField<ScalarT const,Cell,Node,Dim,Dim> > valTensor;
+  PHX::MDField<ScalarT const,Cell,Node,Dim,Dim> valTensor;
   std::size_t numNodes;
   std::size_t numFieldsBase; // Number of fields gathered in this call
   std::size_t offset; // Offset of first DOF being gathered when numFields<neq
 
   unsigned short int tensorRank;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+protected:
+  Kokkos::View<LO***, PHX::Device> ElNodeEqID_kokkos;
+  Kokkos::View<ST*, PHX::Device> fT_kokkos;
+  Kokkos::vector<Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device> val_kokkos;
+
+#endif
 };
 
 template<typename EvalT, typename Traits> class ScatterResidual;
@@ -85,15 +92,11 @@ public:
     ScatterResidual<EvalT, Traits>::evaluateFields(d);
   }
 
-  //Kokkos::View<int***, PHX::Device> Index;
-
 protected:
 
   typedef typename EvalT::ScalarT ScalarT;
   Teuchos::RCP<std::map<std::string, int> > extruded_params_levels;
 };
-
-
 
 // **************************************************************
 // **************************************************************
@@ -117,30 +120,31 @@ protected:
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
 
-//Kokkos
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
-  Kokkos::View<int***, PHX::Device> Index;
-  Kokkos::View<ST*, PHX::Device> f_nonconstView;
-
-  struct ScatterRank0_Tag{};
-  struct ScatterRank1_Tag{};
-  struct ScatterRank2_Tag{};
-
-  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-
-  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterRank0_Tag> ScatterRank0_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterRank1_Tag> ScatterRank1_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterRank2_Tag> ScatterRank2_Policy;
+  struct PHAL_ScatterResRank0_Tag{};
+  struct PHAL_ScatterResRank1_Tag{};
+  struct PHAL_ScatterResRank2_Tag{};
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterRank0_Tag& tag, const int& i) const;
-
+  void operator() (const PHAL_ScatterResRank0_Tag&, const int& cell) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterRank1_Tag& tag, const int& i) const;
-
+  void operator() (const PHAL_ScatterResRank1_Tag&, const int& cell) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterRank2_Tag& tag, const int& i) const;
+  void operator() (const PHAL_ScatterResRank2_Tag&, const int& cell) const;
+
+private:
+  int numDims;
+
+  typedef ScatterResidualBase<PHAL::AlbanyTraits::Residual, Traits> Base;
+  using Base::ElNodeEqID_kokkos;
+  using Base::fT_kokkos;
+  using Base::val_kokkos;
+
+  typedef typename PHX::Device::execution_space ExecutionSpace;
+  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterResRank0_Tag> PHAL_ScatterResRank0_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterResRank1_Tag> PHAL_ScatterResRank1_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterResRank2_Tag> PHAL_ScatterResRank2_Policy;
 
 #endif
 };
@@ -159,54 +163,60 @@ protected:
   const std::size_t numFields;
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-  //typedef Kokkos::View < ScalarT***, Kokkos::LayoutRight, PHX::Device > temp_view_type;
 
-//Kokkos
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
-  Kokkos::View<int***, PHX::Device> Index;
-  Kokkos::View<ST*, PHX::Device> f_nonconstView;
-  bool loadResid;
-  //LO *colT;
-  int neq, nunk, numDim;
-
-  typedef typename Tpetra_CrsMatrix::local_matrix_type  LocalMatrixType;
-  LocalMatrixType jacobian;
-
-  struct ScatterRank0_is_adjoint_Tag{};
-  struct ScatterRank0_no_adjoint_Tag{};
-  struct ScatterRank1_is_adjoint_Tag{};
-  struct ScatterRank1_no_adjoint_Tag{};
-  struct ScatterRank2_is_adjoint_Tag{};
-  struct ScatterRank2_no_adjoint_Tag{};
-
-
-  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-
-  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterRank0_is_adjoint_Tag> ScatterRank0_is_adjoint_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterRank0_no_adjoint_Tag> ScatterRank0_no_adjoint_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterRank1_is_adjoint_Tag> ScatterRank1_is_adjoint_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterRank1_no_adjoint_Tag> ScatterRank1_no_adjoint_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterRank2_is_adjoint_Tag> ScatterRank2_is_adjoint_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterRank2_no_adjoint_Tag> ScatterRank2_no_adjoint_Policy;
+  struct PHAL_ScatterResRank0_Tag{};
+  struct PHAL_ScatterJacRank0_Adjoint_Tag{};
+  struct PHAL_ScatterJacRank0_Tag{};
+  struct PHAL_ScatterResRank1_Tag{};
+  struct PHAL_ScatterJacRank1_Adjoint_Tag{};
+  struct PHAL_ScatterJacRank1_Tag{};
+  struct PHAL_ScatterResRank2_Tag{};
+  struct PHAL_ScatterJacRank2_Adjoint_Tag{};
+  struct PHAL_ScatterJacRank2_Tag{};
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterRank0_is_adjoint_Tag& tag, const int& i) const;
+  void operator() (const PHAL_ScatterResRank0_Tag&, const int& cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const PHAL_ScatterJacRank0_Adjoint_Tag&, const int& cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const PHAL_ScatterJacRank0_Tag&, const int& cell) const;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterRank0_no_adjoint_Tag& tag, const int& i) const;
+  void operator() (const PHAL_ScatterResRank1_Tag&, const int& cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const PHAL_ScatterJacRank1_Adjoint_Tag&, const int& cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const PHAL_ScatterJacRank1_Tag&, const int& cell) const;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterRank1_is_adjoint_Tag& tag, const int& i) const;
-
+  void operator() (const PHAL_ScatterResRank2_Tag&, const int& cell) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterRank1_no_adjoint_Tag& tag, const int& i) const;
-
+  void operator() (const PHAL_ScatterJacRank2_Adjoint_Tag&, const int& cell) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterRank2_is_adjoint_Tag& tag, const int& i) const;
+  void operator() (const PHAL_ScatterJacRank2_Tag&, const int& cell) const;
 
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterRank2_no_adjoint_Tag& tag, const int& i) const;
+private:
+  int neq, nunk, numDims;
+  Tpetra_CrsMatrix::local_matrix_type JacT_kokkos;
+
+  typedef ScatterResidualBase<PHAL::AlbanyTraits::Jacobian, Traits> Base;
+  using Base::ElNodeEqID_kokkos;
+  using Base::fT_kokkos;
+  using Base::val_kokkos;
+
+  typedef typename PHX::Device::execution_space ExecutionSpace;
+  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterResRank0_Tag> PHAL_ScatterResRank0_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterJacRank0_Adjoint_Tag> PHAL_ScatterJacRank0_Adjoint_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterJacRank0_Tag> PHAL_ScatterJacRank0_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterResRank1_Tag> PHAL_ScatterResRank1_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterJacRank1_Adjoint_Tag> PHAL_ScatterJacRank1_Adjoint_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterJacRank1_Tag> PHAL_ScatterJacRank1_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterResRank2_Tag> PHAL_ScatterResRank2_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterJacRank2_Adjoint_Tag> PHAL_ScatterJacRank2_Adjoint_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterJacRank2_Tag> PHAL_ScatterJacRank2_Policy;
+
 #endif
 };
 

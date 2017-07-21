@@ -35,7 +35,7 @@
 #include "Teuchos_RCP.hpp"
 
 // Checks if the previous Kokkos::Cuda kernel has failed
-#if defined(KOKKOS_HAVE_CUDA) && defined(ALBANY_CUDA_ERROR_CHECK)
+#ifdef ALBANY_CUDA_ERROR_CHECK
 #define cudaCheckError() \
   { cudaError(__FILE__, __LINE__); }
 inline void

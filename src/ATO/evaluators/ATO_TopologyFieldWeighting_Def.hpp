@@ -91,7 +91,6 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 
-  numCells = dims[0];
   numQPs   = dims[1];
   numDims  = 0;
   if(dims.size() >= 3 ) 
@@ -100,7 +99,7 @@ evaluateFields(typename Traits::EvalData workset)
   int numNodes = topo.dimension(1);
 
   if( size == 2 ){
-    for(int cell=0; cell<numCells; cell++){
+    for(int cell=0; cell<workset.numCells; cell++){
       for(int qp=0; qp<numQPs; qp++){
         ScalarT topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
@@ -111,7 +110,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else
   if( size == 3 ){
-    for(int cell=0; cell<numCells; cell++){
+    for(int cell=0; cell<workset.numCells; cell++){
       for(int qp=0; qp<numQPs; qp++){
         ScalarT topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
@@ -123,7 +122,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else
   if( size == 4 ){
-    for(int cell=0; cell<numCells; cell++){
+    for(int cell=0; cell<workset.numCells; cell++){
       for(int qp=0; qp<numQPs; qp++){
         ScalarT topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
@@ -136,7 +135,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else
   if( size == 5 ){
-    for(int cell=0; cell<numCells; cell++){
+    for(int cell=0; cell<workset.numCells; cell++){
       for(int qp=0; qp<numQPs; qp++){
         ScalarT topoVal = 0.0;
         for(int node=0; node<numNodes; node++)

@@ -7,7 +7,6 @@
 #include "Albany_SolverFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "MiniTensor.h"
-#include "Teuchos_FancyOStream.hpp"
 #include "Schwarz_Alternating.hpp"
 
 namespace LCM {
@@ -33,6 +32,10 @@ SchwarzAlternating(
   max_iters_ = alt_system_params.get<int>("Maximum Iterations", 1024);
   rel_tol_ = alt_system_params.get<ST>("Relative Tolerance", 1.0e-08);
   abs_tol_ = alt_system_params.get<ST>("Absolute Tolerance", 1.0e-08);
+  maximum_steps_ = alt_system_params.get<int>("Maximum Steps", 0);
+  initial_time_ = alt_system_params.get<ST>("Initial Time", 0.0);
+  final_time_ = alt_system_params.get<ST>("Final Time", 0.0);
+  initial_time_step_ = alt_system_params.get<ST>("Initial Time Step", 0.0);
   output_interval_ = alt_system_params.get<int>("Exodus Write Interval", 1);
 
   //number of models
@@ -57,8 +60,13 @@ SchwarzAlternating(
   // Arrays to cache useful info for each subdomain for later use
   apps_.resize(num_subdomains_);
   solvers_.resize(num_subdomains_);
-  convergence_ops_.resize(num_subdomains_);
+  solution_sniffers_.resize(num_subdomains_);
   stk_mesh_structs_.resize(num_subdomains_);
+  model_evaluators_.resize(num_subdomains_);
+  sub_inargs_.resize(num_subdomains_);
+  sub_outargs_.resize(num_subdomains_);
+  nox_params_.resize(num_subdomains_);
+  solutions_.resize(num_subdomains_);
 
   // Initialization
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
@@ -96,6 +104,8 @@ SchwarzAlternating(
     Teuchos::ParameterList &
     nox_params = piro_params.sublist("NOX");
 
+    nox_params_[subdomain] = nox_params;
+
     bool const
     have_solver_opts = nox_params.isSublist("Solver Options");
 
@@ -125,10 +135,10 @@ SchwarzAlternating(
     throw_on_fail{true};
 
     Teuchos::RCP<SolutionSniffer>
-    convergence_op = Teuchos::rcp_dynamic_cast<SolutionSniffer>
+    solution_sniffer = Teuchos::rcp_dynamic_cast<SolutionSniffer>
     (ppo, throw_on_fail);
 
-    convergence_ops_[subdomain] = convergence_op;
+    solution_sniffers_[subdomain] = solution_sniffer;
 
     Teuchos::RCP<Albany::Application>
     app{Teuchos::null};
@@ -151,6 +161,10 @@ SchwarzAlternating(
     ams = stk_disc.getSTKMeshStruct();
 
     stk_mesh_structs_[subdomain] = ams;
+
+    model_evaluators_[subdomain] = solver_factory.returnModelT();
+
+    solutions_[subdomain] = Teuchos::null;
   }
 
   //
@@ -406,11 +420,6 @@ createInArgsImpl() const
   ias.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_beta, true);
   ias.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_W_x_dot_dot_coeff, true);
 
-  sub_inargs_.resize(num_subdomains_);
-  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
-    sub_inargs_[subdomain] = solvers_[subdomain]->createInArgs();
-  }
-
   return ias;
 }
 
@@ -435,11 +444,6 @@ createOutArgsImpl() const
           Thyra::ModelEvaluatorBase::DERIV_LINEARITY_UNKNOWN,
           Thyra::ModelEvaluatorBase::DERIV_RANK_FULL,
           true));
-
-  sub_outargs_.resize(num_subdomains_);
-  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
-    sub_outargs_[subdomain] = solvers_[subdomain]->createOutArgs();
-  }
 
   return oas;
 }
@@ -593,102 +597,144 @@ SchwarzLoop() const
   fos << " subdomains\n";
   fos << std::scientific << std::setprecision(17);
 
-  do {
+  ST
+  time_step{initial_time_step_};
 
-    for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+  int
+  stop{0};
 
-      fos << delim << '\n';
-      fos << "Schwarz iteration  :" << num_iter_ << '\n';
-      fos << "Subdomain          :" << subdomain << '\n';
-      fos << delim << '\n';
+  ST
+  current_time{initial_time_};
 
-      // Output handling
-      Albany::AbstractSTKMeshStruct &
-      ams = *stk_mesh_structs_[subdomain];
-
-      ams.exoOutputInterval = 1;
-
-      ams.exoOutput = output_interval_ > 0 ?
-          (num_iter_ + 1) % output_interval_ == 0 : false;
-
-      // Solve for each subdomain
-      Thyra::ResponseOnlyModelEvaluatorBase<ST> &
-      solver = *(solvers_[subdomain]);
-
-      Thyra::ModelEvaluatorBase::InArgs<ST> &
-      in_args = sub_inargs_[subdomain];
-
-      Thyra::ModelEvaluatorBase::OutArgs<ST> &
-      out_args = sub_outargs_[subdomain];
-
-      solver.evalModel(in_args, out_args);
-
-      // After solve, get info to check convergence
-      Teuchos::RCP<SolutionSniffer>
-      convergence_op = convergence_ops_[subdomain];
-
-      norms_init(subdomain) = convergence_op->getInitialNorm();
-      norms_final(subdomain) = convergence_op->getFinalNorm();
-      norms_diff(subdomain) = convergence_op->getDifferenceNorm();
-    }
-
-    norm_init_ = minitensor::norm(norms_init);
-
-    norm_final_ = minitensor::norm(norms_final);
-
-    norm_diff_ = minitensor::norm(norms_diff);
-
-    updateConvergenceCriterion();
+  // Continuation loop
+  while (stop <= maximum_steps_ && current_time <= final_time_) {
 
     fos << delim << '\n';
-    fos << "Schwarz iteration         :" << num_iter_ << '\n';
+    fos << "Time stop          :" << stop << '\n';
+    fos << "Time               :" << current_time << '\n';
+    fos << "Time step          :" << time_step << '\n';
+    fos << delim << '\n';
 
-    std::string const
-    line(72, '-');
+    num_iter_ = 0;
 
-    fos << line << '\n';
+    do {
 
-    fos << centered("Sub", 4);
-    fos << centered("Initial norm", 24);
-    fos << centered("Final norm", 24);
-    fos << centered("Difference norm", 24);
-    fos << '\n';
+      for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
-    fos << centered("dom", 4);
-    fos << centered("||X0||", 24);
-    fos << centered("||Xf||", 24);
-    fos << centered("||Xf-X0||", 24);
-    fos << '\n';
+        fos << delim << '\n';
+        fos << "Schwarz iteration  :" << num_iter_ << '\n';
+        fos << "Subdomain          :" << subdomain << '\n';
+        fos << delim << '\n';
 
-    fos << line << '\n';
+        // Output handling
+        Albany::AbstractSTKMeshStruct &
+        ams = *stk_mesh_structs_[subdomain];
 
-    for (auto m = 0; m < num_subdomains_; ++m) {
-      fos << std::setw(4) << m;
-      fos << std::setw(24) << norms_init(m);
-      fos << std::setw(24) << norms_final(m);
-      fos << std::setw(24) << norms_diff(m);
+        ams.exoOutputInterval = 1;
+
+        ams.exoOutput = output_interval_ > 0 ?
+            (num_iter_ + 1) % output_interval_ == 0 : false;
+
+        // Solve for each subdomain
+        Thyra::ResponseOnlyModelEvaluatorBase<ST> &
+        solver = *(solvers_[subdomain]);
+
+        Thyra::ModelEvaluatorBase::InArgs<ST>
+        in_args = solver.createInArgs();
+
+        Thyra::ModelEvaluatorBase::OutArgs<ST>
+        out_args = solver.createOutArgs();
+
+        auto &
+        me = dynamic_cast<Albany::ModelEvaluatorT &>
+             (*model_evaluators_[subdomain]);
+
+        me.getNominalValues().set_t(current_time);
+
+        // Use previous solution as initial condition for next step
+        if (stop > 0) {
+          Teuchos::RCP<NOX::Thyra::Vector>
+          ntv = Teuchos::rcp_dynamic_cast<NOX::Thyra::Vector>
+                (solutions_[subdomain]);
+
+          Teuchos::RCP<Thyra::VectorBase<ST>>
+          x = ntv->getThyraRCPVector();
+
+          me.getNominalValues().set_x(x);
+        }
+
+        solver.evalModel(in_args, out_args);
+
+        // After solve, save solution and get info to check convergence
+        Teuchos::RCP<SolutionSniffer>
+        solution_sniffer = solution_sniffers_[subdomain];
+
+        solutions_[subdomain] = solution_sniffer->getLastSoln();
+        norms_init(subdomain) = solution_sniffer->getInitialNorm();
+        norms_final(subdomain) = solution_sniffer->getFinalNorm();
+        norms_diff(subdomain) = solution_sniffer->getDifferenceNorm();
+      }
+
+      norm_init_ = minitensor::norm(norms_init);
+      norm_final_ = minitensor::norm(norms_final);
+      norm_diff_ = minitensor::norm(norms_diff);
+
+      updateConvergenceCriterion();
+
+      fos << delim << '\n';
+      fos << "Schwarz iteration         :" << num_iter_ << '\n';
+
+      std::string const
+      line(72, '-');
+
+      fos << line << '\n';
+
+      fos << centered("Sub", 4);
+      fos << centered("Initial norm", 24);
+      fos << centered("Final norm", 24);
+      fos << centered("Difference norm", 24);
       fos << '\n';
-    }
 
-    fos << line << '\n';
+      fos << centered("dom", 4);
+      fos << centered("||X0||", 24);
+      fos << centered("||Xf||", 24);
+      fos << centered("||Xf-X0||", 24);
+      fos << '\n';
 
-    fos << centered("Norm", 4);
-    fos << std::setw(24) << norm_init_;
-    fos << std::setw(24) << norm_final_;
-    fos << std::setw(24) << norm_diff_;
-    fos << '\n';
+      fos << line << '\n';
 
-    fos << line << '\n';
+      for (auto m = 0; m < num_subdomains_; ++m) {
+        fos << std::setw(4) << m;
+        fos << std::setw(24) << norms_init(m);
+        fos << std::setw(24) << norms_final(m);
+        fos << std::setw(24) << norms_diff(m);
+        fos << '\n';
+      }
 
-    fos << "Absolute error     :" << abs_error_ << '\n';
-    fos << "Absolute tolerance :" << abs_tol_ << '\n';
-    fos << "Relative error     :" << rel_error_ << '\n';
-    fos << "Relative tolerance :" << rel_tol_ << '\n';
-    fos << delim << '\n';
+      fos << line << '\n';
 
-  }  while (continueSolve() == true);
+      fos << centered("Norm", 4);
+      fos << std::setw(24) << norm_init_;
+      fos << std::setw(24) << norm_final_;
+      fos << std::setw(24) << norm_diff_;
+      fos << '\n';
 
-  reportFinals(fos);
+      fos << line << '\n';
+
+      fos << "Absolute error     :" << abs_error_ << '\n';
+      fos << "Absolute tolerance :" << abs_tol_ << '\n';
+      fos << "Relative error     :" << rel_error_ << '\n';
+      fos << "Relative tolerance :" << rel_tol_ << '\n';
+      fos << delim << '\n';
+
+    }  while (continueSolve() == true);
+
+    reportFinals(fos);
+
+    ++stop;
+    current_time += time_step;
+  }
+
 
   return;
 }
