@@ -64,6 +64,7 @@
         <Parameter name="Lower Bound" type="double" value="0.01"/>
         <Parameter name="Upper Bound" type="double" value="4.0"/>
         <Parameter name="Mesh Part" type="string" value="bottom"/>
+        <Parameter name="Extruded" type="bool" value="true"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="FELIX Physical Parameters">

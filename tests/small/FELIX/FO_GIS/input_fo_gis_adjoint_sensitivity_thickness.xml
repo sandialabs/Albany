@@ -45,6 +45,7 @@
         <Parameter name="Name" type="string" value="ice_thickness"/>
         <Parameter name="Lower Bound" type="double" value="0.001"/>
         <Parameter name="Upper Bound" type="double" value="4"/>
+        <Parameter name="Extruded" type="bool" value="true"/>
         <Parameter name="Mesh Part" type="string" value="bottom"/>
       </ParameterList>
     </ParameterList>
