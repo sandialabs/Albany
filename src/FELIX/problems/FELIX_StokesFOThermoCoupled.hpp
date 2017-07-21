@@ -36,6 +36,7 @@
 #include "FELIX_ParamEnum.hpp"
 #include "PHAL_ScatterScalarNodalParameter.hpp"
 
+#include "FELIX_DOFDivInterpolationSide.hpp"
 #include "FELIX_EffectivePressure.hpp"
 #include "FELIX_StokesFOResid.hpp"
 #include "FELIX_StokesFOBasalResid.hpp"
@@ -1116,10 +1117,6 @@ if (basalSideName!="INVALID")
     ev = evalUtils.constructDOFCellToSideEvaluator("Averaged Velocity",basalSideName,"Node Vector",cellType);
     fm0.template registerEvaluator<EvalT> (ev);
 
-    //---- Interpolate surface height on QP on side
-    ev = evalUtils.constructDOFDivInterpolationSideEvaluator("Averaged Velocity", basalSideName);
-    fm0.template registerEvaluator<EvalT>(ev);
-
     //---- Interpolate velocity on QP on side
     ev = evalUtils.constructDOFVecInterpolationSideEvaluator("Averaged Velocity", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
@@ -1228,7 +1225,6 @@ if (basalSideName!="INVALID")
   fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFSideToCellEvaluator("basal_melt_rate",basalSideName,"Node Scalar",cellType,"basal_melt_rate"));
 
   // -------------------------------- FELIX evaluators ------------------------- //
-
 
   // --- FO Stokes Stress --- //
   p = Teuchos::rcp(new Teuchos::ParameterList("Stokes Stress"));
@@ -1614,6 +1610,21 @@ if (basalSideName!="INVALID")
 
   if (basalSideName!="INVALID")
   {
+    // --- 2D divergence of Averaged Velocity ---- //
+    p = Teuchos::rcp(new Teuchos::ParameterList("DOF Div Interpolation Side Averaged Velocity"));
+
+    // Input
+    p->set<std::string>("Variable Name", "Averaged Velocity");
+    p->set<std::string>("Gradient BF Name", "Grad BF "+basalSideName);
+    p->set<std::string>("Tangents Name", "Tangents "+basalSideName);
+    p->set<std::string>("Side Set Name",basalSideName);
+
+    // Output (assumes same Name as input)
+    p->set<std::string>("Divergence Variable Name", "Averaged Velocity Divergence");
+
+    ev = Teuchos::rcp(new FELIX::DOFDivInterpolationSide<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
+    fm0.template registerEvaluator<EvalT>(ev);
+
     //--- FELIX basal friction coefficient gradient ---//
     p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Basal Friction Coefficient Gradient"));
 
@@ -2212,6 +2223,7 @@ if (basalSideName!="INVALID")
     paramList->set<std::string>("Metric 2D Name","Metric " + basalSideName);
     paramList->set<std::string>("Metric Surface Name","Metric " + surfaceSideName);
     paramList->set<std::string>("Inverse Metric Basal Name","Inv Metric " + basalSideName);
+    paramList->set<std::string>("Basal Side Tangents Name","Tangents " + basalSideName);
     paramList->set<std::string>("Basal Side Name", basalSideName);
     paramList->set<std::string>("Surface Side Name", surfaceSideName);
     paramList->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
