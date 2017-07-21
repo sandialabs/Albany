@@ -64,6 +64,8 @@ public:
   //! Each problem must generate it's list of valide parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
+  bool useSDBCs() const { return false; }
+
 private:
 
   //! Private to prohibit copying
