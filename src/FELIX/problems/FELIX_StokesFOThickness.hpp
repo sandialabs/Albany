@@ -35,9 +35,6 @@
 #include "FELIX_EffectivePressure.hpp"
 #include "FELIX_StokesFOResid.hpp"
 #include "FELIX_StokesFOBasalResid.hpp"
-#ifdef CISM_HAS_FELIX
-#include "FELIX_CismSurfaceGradFO.hpp"
-#endif
 #include "FELIX_StokesFOBodyForce.hpp"
 #include "FELIX_ViscosityFO.hpp"
 #include "PHAL_Field2Norm.hpp"
@@ -222,26 +219,6 @@ FELIX::StokesFOThickness::constructEvaluators(
       p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
   }
 
-#ifdef CISM_HAS_FELIX
-  // Surface Gradient-x
-  entity = Albany::StateStruct::NodalDataToElemNode;
-  stateName = "xgrad_surface_height"; //ds/dx which can be passed from CISM (definened at nodes)
-  fieldName = "CISM Surface Height Gradient X";
-  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-  p->set<std::string>("Field Name", fieldName);
-  ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-  fm0.template registerEvaluator<EvalT>(ev);
-
-  // Surface Gradient-y
-  entity = Albany::StateStruct::NodalDataToElemNode;
-  stateName = "ygrad_surface_height"; //ds/dy which can be passed from CISM (defined at nodes)
-  fieldName = "CISM Surface Height Gradient Y";
-  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-  p->set<std::string>("Field Name", fieldName);
-  ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-  fm0.template registerEvaluator<EvalT>(ev);
-#endif
-
   // Ice ice_thickness
   entity = Albany::StateStruct::NodalDataToElemNode;
   stateName = fieldName = "ice_thickness";
@@ -416,7 +393,7 @@ FELIX::StokesFOThickness::constructEvaluators(
   ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
 
-#if defined(CISM_HAS_FELIX) || defined(MPAS_HAS_FELIX)
+#ifdef MPAS_HAS_FELIX
   // Dirichelt field
   entity = Albany::StateStruct::NodalDistParameter;
   // Here is how to register the field for dirichlet condition.
@@ -928,35 +905,11 @@ FELIX::StokesFOThickness::constructEvaluators(
   ev = rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ParamScalarT>(*p,dl_full));
   fm0.template registerEvaluator<EvalT>(ev);
 
-#ifdef CISM_HAS_FELIX
-  //--- FELIX surface gradient from CISM ---//
-  p = rcp(new ParameterList("FELIX Surface Gradient"));
-
-  //Input
-  p->set<std::string>("CISM Surface Height Gradient X Variable Name", "CISM Surface Height Gradient X");
-  p->set<std::string>("CISM Surface Height Gradient Y Variable Name", "CISM Surface Height Gradient X");
-  p->set<std::string>("BF Variable Name", "BF");
-
-  //Output
-  p->set<std::string>("Surface Height Gradient QP Variable Name", "CISM Surface Height Gradient");
-  ev = rcp(new FELIX::CismSurfaceGradFO<EvalT,PHAL::AlbanyTraits>(*p,dl));
-  fm0.template registerEvaluator<EvalT>(ev);
-
-  //Output
-  p->set<std::string>("Surface Gradient QP Varible Name", "FELIX Surface Gradient");
-
-  ev = rcp(new FELIX::CismSurfaceGradFO<EvalT,PHAL::AlbanyTraits>(*p,dl));
-  fm0.template registerEvaluator<EvalT>(ev);
-#endif
-
   //--- Body Force ---//
   p = rcp(new ParameterList("Body Force"));
 
   //Input
   p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
-#ifdef CISM_HAS_FELIX
-  p->set<std::string>("Surface Height Gradient QP Variable Name", "CISM Surface Height Gradient");
-#endif
   p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
   p->set<std::string>("Surface Height Gradient Name", "surface_height Gradient");
   p->set<std::string>("Surface Height Name", "Surface Height");

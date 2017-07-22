@@ -29,9 +29,6 @@
 #include "PHAL_LoadSideSetStateField.hpp"
 #include "PHAL_SaveSideSetStateField.hpp"
 
-#ifdef CISM_HAS_FELIX
-#include "FELIX_CismSurfaceGradFO.hpp"
-#endif
 #include "FELIX_EffectivePressure.hpp"
 #include "FELIX_StokesFOResid.hpp"
 #include "FELIX_StokesFOBasalResid.hpp"
@@ -775,29 +772,11 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   ptr_homotopy->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Viscosity").get<double>(param_name,-1.0));
   fm0.template registerEvaluator<EvalT>(ptr_homotopy);
 
-#ifdef CISM_HAS_FELIX
-  //--- FELIX surface gradient from CISM ---//
-  p = rcp(new ParameterList("FELIX Surface Gradient"));
-
-  //Input
-  p->set<std::string>("CISM Surface Height Gradient X Variable Name", "CISM Surface Height Gradient X");
-  p->set<std::string>("CISM Surface Height Gradient Y Variable Name", "CISM Surface Height Gradient X");
-  p->set<std::string>("BF Variable Name", "BF");
-
-  //Output
-  p->set<std::string>("Surface Height Gradient QP Variable Name", "CISM Surface Height Gradient");
-  ev = rcp(new FELIX::CismSurfaceGradFO<EvalT,PHAL::AlbanyTraits>(*p,dl));
-  fm0.template registerEvaluator<EvalT>(ev);
-#endif
-
   //--- Body Force ---//
   p = rcp(new ParameterList("Body Force"));
 
   //Input
   p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
-#ifdef CISM_HAS_FELIX
-  p->set<std::string>("Surface Height Gradient QP Variable Name", "CISM Surface Height Gradient");
-#endif
   p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
   p->set<std::string>("Surface Height Gradient Name", "surface_height Gradient");
   p->set<std::string>("Surface Height Name", "surface_height");

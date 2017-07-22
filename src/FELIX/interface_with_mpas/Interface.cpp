@@ -112,7 +112,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
         meshStruct->getFieldContainer())->getSolutionField();
 
   ScalarFieldType* surfaceHeightField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "surface_height");
-  ScalarFieldType* thicknessField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "thickness");
+  ScalarFieldType* thicknessField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "ice_thickness");
   ScalarFieldType* bedTopographyField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "bed_topography");
   ScalarFieldType* smbField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "surface_mass_balance");
   VectorFieldType* dirichletField = meshStruct->metaData->get_field <VectorFieldType> (stk::topology::NODE_RANK, "dirichlet_field");
@@ -128,10 +128,11 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     double* coord = stk::mesh::field_data(*meshStruct->getCoordinatesField(), node);
     coord[2] = elevationData[ib] - levelsNormalizedThickness[nLayers - il] * thicknessData[ib];
 
-    double* sHeight = stk::mesh::field_data(*surfaceHeightField, node);
-    sHeight[0] = elevationData[ib];
+
     double* thickness = stk::mesh::field_data(*thicknessField, node);
     thickness[0] = thicknessData[ib];
+    double* sHeight = stk::mesh::field_data(*surfaceHeightField, node);
+    sHeight[0] = elevationData[ib];
     double* bedTopography = stk::mesh::field_data(*bedTopographyField, node);
     bedTopography[0] = bedTopographyData[ib];
     if(smbField != NULL) {
@@ -326,7 +327,9 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
       new Albany::SolverFactory("albany_input.xml", mpiCommT));
   paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
 
-  Teuchos::Array<std::string> arrayRequiredFields(1, "temperature");
+  Teuchos::Array<std::string> arrayRequiredFields(7); 
+  arrayRequiredFields[0]="temperature";  arrayRequiredFields[1]="ice_thickness"; arrayRequiredFields[2]="surface_height"; arrayRequiredFields[3]="bed_topography";
+  arrayRequiredFields[4]="basal_friction";  arrayRequiredFields[5]="surface_mass_balance"; arrayRequiredFields[6]="dirichlet_field";
   paramList->sublist("Problem").set("Required Fields", arrayRequiredFields);
 
   //Physical Parameters
@@ -405,14 +408,49 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   discretizationList.set("Cubature Degree", discretizationList.get("Cubature Degree", 1));  //set 1 if not defined
   discretizationList.set("Interleaved Ordering", discretizationList.get("Interleaved Ordering", true));  //set true if not define
   
-  discretizationList.sublist("Required Fields Info").set<int>("Number Of Fields",1);
+  discretizationList.sublist("Required Fields Info").set<int>("Number Of Fields",7);
   Teuchos::ParameterList& field0 = discretizationList.sublist("Required Fields Info").sublist("Field 0");
+  Teuchos::ParameterList& field1 = discretizationList.sublist("Required Fields Info").sublist("Field 1");
+  Teuchos::ParameterList& field2 = discretizationList.sublist("Required Fields Info").sublist("Field 2");
+  Teuchos::ParameterList& field3 = discretizationList.sublist("Required Fields Info").sublist("Field 3");
+  Teuchos::ParameterList& field4 = discretizationList.sublist("Required Fields Info").sublist("Field 4");
+  Teuchos::ParameterList& field5 = discretizationList.sublist("Required Fields Info").sublist("Field 5");
+  Teuchos::ParameterList& field6 = discretizationList.sublist("Required Fields Info").sublist("Field 6");
 
   //set temperature
   field0.set<std::string>("Field Name", "temperature");
   field0.set<std::string>("Field Type", "Elem Scalar");
   field0.set<std::string>("Field Origin", "Mesh");
 
+  //set ice thickness
+  field1.set<std::string>("Field Name", "ice_thickness");
+  field1.set<std::string>("Field Type", "Node Scalar");
+  field1.set<std::string>("Field Origin", "Mesh");
+
+  //set surface_height
+  field2.set<std::string>("Field Name", "surface_height");
+  field2.set<std::string>("Field Type", "Node Scalar");
+  field2.set<std::string>("Field Origin", "Mesh");
+
+  //set bed topography
+  field3.set<std::string>("Field Name", "bed_topography");
+  field3.set<std::string>("Field Type", "Node Scalar");
+  field3.set<std::string>("Field Origin", "Mesh");
+
+  //set basal friction
+  field4.set<std::string>("Field Name", "basal_friction");
+  field4.set<std::string>("Field Type", "Node Scalar");
+  field4.set<std::string>("Field Origin", "Mesh");
+
+  //set surface mass balance
+  field5.set<std::string>("Field Name", "surface_mass_balance");
+  field5.set<std::string>("Field Type", "Node Scalar");
+  field5.set<std::string>("Field Origin", "Mesh");
+
+  //set dirichlet field
+  field6.set<std::string>("Field Name", "dirichlet_field");
+  field6.set<std::string>("Field Type", "Node Vector");
+  field6.set<std::string>("Field Origin", "Mesh");
 
   discParams = Teuchos::sublist(paramList, "Discretization", true);
 

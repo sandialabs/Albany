@@ -181,6 +181,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
   // Getting the names of the distributed parameters (they won't have to be loaded as states)
   std::map<std::string,bool> is_dist_param;
+  std::map<std::string,bool> is_dist;
   std::map<std::string,std::string> dist_params_name_to_mesh_part;
   std::map<std::string,bool> is_extruded_param;
   if (this->params->isSublist("Distributed Parameters"))
@@ -211,6 +212,17 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     }
   }
 
+  //Dirichlet fields need to be distributed but they are not necessarily parameters. 
+  is_dist = is_dist_param;
+  if (this->params->isSublist("Dirichlet BCs")) {
+    Teuchos::ParameterList dirichlet_list = this->params->sublist("Dirichlet BCs");
+    for(auto it = dirichlet_list.begin(); it !=dirichlet_list.end(); ++it) {
+      std::string pname = dirichlet_list.name(it);
+      if(dirichlet_list.isParameter(pname) && dirichlet_list.isType<std::string>(pname)) //need to check, because pname could be the name sublist
+        is_dist[dirichlet_list.get<std::string>(pname)]=true;        
+    }
+  }
+
   if (discParams->isSublist("Required Fields Info")){
     Teuchos::ParameterList& req_fields_info = discParams->sublist("Required Fields Info");
     int num_fields = req_fields_info.get<int>("Number Of Fields",0);
@@ -230,6 +242,9 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
       fieldType  = thisFieldList.get<std::string>("Field Type");
 
+      is_dist_param.insert(std::pair<std::string,bool>(stateName, false)); //gets inserted only if not there.
+      is_dist.insert(std::pair<std::string,bool>(stateName, false)); //gets inserted only if not there.
+
       meshPart = is_dist_param[stateName] ? dist_params_name_to_mesh_part[stateName] : "";
 
       if(fieldType == "Elem Scalar") {
@@ -238,17 +253,17 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
         nodal_state = false;
       }
       else if(fieldType == "Node Scalar") {
-        entity = is_dist_param[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
+        entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
         p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, meshPart);
         nodal_state = true;
       }
       else if(fieldType == "Elem Vector") {
         entity = Albany::StateStruct::ElemData;
-        p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName, true, &entity, meshPart);
+        p = stateMgr.registerStateVariable(stateName, dl->cell_vector, elementBlockName, true, &entity, meshPart);
         nodal_state = false;
       }
       else if(fieldType == "Node Vector") {
-        entity = is_dist_param[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
+        entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
         p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName, true, &entity, meshPart);
         nodal_state = true;
       }
@@ -298,26 +313,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-#ifdef CISM_HAS_FELIX
-    // Surface Gradient-x
-    entity = Albany::StateStruct::NodalDataToElemNode;
-    stateName = "xgrad_surface_height"; //ds/dx which can be passed from CISM (definened at nodes)
-    fieldName = "CISM Surface Height Gradient X";
-    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-    p->set<std::string>("Field Name", fieldName);
-    ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    // Surface Gradient-y
-    entity = Albany::StateStruct::NodalDataToElemNode;
-    stateName = "ygrad_surface_height"; //ds/dy which can be passed from CISM (defined at nodes)
-    fieldName = "CISM Surface Height Gradient Y";
-    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-    p->set<std::string>("Field Name", fieldName);
-    ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-#endif
-
     // Ice thickness
     stateName = fieldName = "ice_thickness";
     if(is_dist_param[stateName])
@@ -348,16 +343,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
       ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
-
-#if defined(CISM_HAS_FELIX) || defined(MPAS_HAS_FELIX)
-    // Dirichelt field
-    entity = Albany::StateStruct::NodalDistParameter;
-    // Here is how to register the field for dirichlet condition.
-    stateName = "dirichlet_field";
-    p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName, true, &entity, "");
-    ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-#endif
   }
 
   if (discParams->isSublist("Side Set Discretizations"))
@@ -1468,8 +1453,8 @@ if (basalSideName!="INVALID")
   p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Surface Gradient"));
 
   //Input
-  p->set<std::string>("CISM Surface Height Gradient X Variable Name", "CISM Surface Height Gradient X");
-  p->set<std::string>("CISM Surface Height Gradient Y Variable Name", "CISM Surface Height Gradient Y");
+  p->set<std::string>("CISM Surface Height Gradient X Variable Name", "xgrad_surface_height");
+  p->set<std::string>("CISM Surface Height Gradient Y Variable Name", "ygrad_surface_height");
   p->set<std::string>("BF Variable Name", "BF");
 
   //Output

@@ -41,9 +41,6 @@
 #include "FELIX_StokesFOResid.hpp"
 #include "FELIX_StokesFOBasalResid.hpp"
 #include "FELIX_L2ProjectedBoundaryLaplacianResidual.hpp"
-#ifdef CISM_HAS_FELIX
-#include "FELIX_CismSurfaceGradFO.hpp"
-#endif
 
 // Include for Enthalpy
 #include "FELIX_EnthalpyResid.hpp"
@@ -447,26 +444,6 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
       p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
   }
 
-#ifdef CISM_HAS_FELIX
-  // Surface Gradient-x
-  entity = Albany::StateStruct::NodalDataToElemNode;
-  stateName = "xgrad_surface_height"; //ds/dx which can be passed from CISM (definened at nodes)
-  fieldName = "CISM Surface Height Gradient X";
-  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-  p->set<std::string>("Field Name", fieldName);
-  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-  fm0.template registerEvaluator<EvalT>(ev);
-
-  // Surface Gradient-y
-  entity = Albany::StateStruct::NodalDataToElemNode;
-  stateName = "ygrad_surface_height"; //ds/dy which can be passed from CISM (defined at nodes)
-  fieldName = "CISM Surface Height Gradient Y";
-  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-  p->set<std::string>("Field Name", fieldName);
-  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-  fm0.template registerEvaluator<EvalT>(ev);
-#endif
-
   // Ice thickness
   bool isThicknessAParameter = false; // Determining whether thickness is a distributed parameter
   stateName = "thickness";
@@ -820,7 +797,7 @@ if (basalSideName!="INVALID")
   ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
 
-#if defined(CISM_HAS_FELIX) || defined(MPAS_HAS_FELIX)
+#ifdef MPAS_HAS_FELIX
   // Dirichelt field
   entity = Albany::StateStruct::NodalDistParameter;
   // Here is how to register the field for dirichlet condition.
@@ -1556,29 +1533,11 @@ if (basalSideName!="INVALID")
     }
   }
 
-#ifdef CISM_HAS_FELIX
-  //--- FELIX surface gradient from CISM ---//
-  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Surface Gradient"));
-
-  //Input
-  p->set<std::string>("CISM Surface Height Gradient X Variable Name", "CISM Surface Height Gradient X");
-  p->set<std::string>("CISM Surface Height Gradient Y Variable Name", "CISM Surface Height Gradient Y");
-  p->set<std::string>("BF Variable Name", "BF");
-
-  //Output
-  p->set<std::string>("Surface Height Gradient QP Variable Name", "CISM Surface Height Gradient");
-  ev = Teuchos::rcp(new FELIX::CismSurfaceGradFO<EvalT,PHAL::AlbanyTraits>(*p,dl));
-  fm0.template registerEvaluator<EvalT>(ev);
-#endif
-
   //--- Body Force ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("Body Force"));
 
   //Input
   p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
-#ifdef CISM_HAS_FELIX
-  p->set<std::string>("Surface Height Gradient QP Variable Name", "CISM Surface Height Gradient");
-#endif
   p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
   p->set<std::string>("Surface Height Gradient Name", "Surface Height Gradient");
   p->set<std::string>("Surface Height Name", "Surface Height");
