@@ -929,7 +929,7 @@ void Albany::GenericSTKMeshStruct::finalizeSideSetMeshStructs (
 
 void Albany::GenericSTKMeshStruct::buildCellSideNodeNumerationMap (const std::string& sideSetName,
                                                                    std::map<GO,GO>& sideMap,
-                                                                   std::map<GO,std::vector<GO>>& sideNodeMap)
+                                                                   std::map<GO,std::vector<int>>& sideNodeMap)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (sideSetMeshStructs.find(sideSetName)==sideSetMeshStructs.end(), Teuchos::Exceptions::InvalidParameter,
                               "Error in 'buildSideNodeToSideSetCellNodeMap': side set " << sideSetName << " does not have a mesh.\n");
