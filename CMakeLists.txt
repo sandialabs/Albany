@@ -1351,6 +1351,9 @@ IF ((EXISTS "${Trilinos_INCLUDE_DIRS}/Teuchos_YamlParameterListHelpers.hpp")
 ENDIF()
 IF (NOT ALBANY_YAML)
   MESSAGE("-- Looking for YAML in Teuchos: NOT found.")
+  IF (ENABLE_LCM)
+    MESSAGE(FATAL_ERROR "Trilinos was not built with YAML enabled - it is required for LCM.")
+  ENDIF()
 ENDIF()
 
 # Check for the presence of MiniTensor for LCM, SCOREC, and ATO builds.
