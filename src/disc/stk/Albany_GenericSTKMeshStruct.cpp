@@ -957,8 +957,8 @@ void Albany::GenericSTKMeshStruct::buildCellSideNodeNumerationMap (const std::st
 
   const stk::topology::rank_t SIDE_RANK = metaData->side_rank();
   const int num_nodes = side_mesh->bulkData->num_nodes(cells2D[0]);
-  GO* cell3D_id;
-  GO* side_nodes_ids;
+  int* cell3D_id;
+  int* side_nodes_ids;
   GO cell2D_GID, side3D_GID;
   int side_lid;
   int num_sides;
