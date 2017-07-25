@@ -1679,6 +1679,7 @@ computeGlobalResidual(const double current_time,
 }
 #endif
 
+#ifndef ALBANY_LCM 
 void
 Albany::Application::
 computeGlobalResidualT(
@@ -1691,26 +1692,13 @@ computeGlobalResidualT(
 {
   // Create non-owning RCPs to Tpetra objects
   // to be passed to the implementation
-  if (problem->useSDBCs() == false) {
-    this->computeGlobalResidualImplT(
-        current_time,
-        Teuchos::rcp(xdotT, false),
-        Teuchos::rcp(xdotdotT, false),
-        Teuchos::rcpFromRef(xT),
-        p,
-        Teuchos::rcpFromRef(fT));
-  }
-#ifdef ALBANY_LCM
-  else { 
-    this->computeGlobalResidualSDBCsImplT( 
-        current_time,
-        Teuchos::rcp(xdotT, false),
-        Teuchos::rcp(xdotdotT, false),
-        Teuchos::rcpFromRef(xT),
-        p,
-        Teuchos::rcpFromRef(fT));
-  }
-#endif
+  this->computeGlobalResidualImplT(
+      current_time,
+      Teuchos::rcp(xdotT, false),
+      Teuchos::rcp(xdotdotT, false),
+      Teuchos::rcpFromRef(xT),
+      p,
+      Teuchos::rcpFromRef(fT));
 
   //Debut output
   if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
@@ -1744,6 +1732,71 @@ computeGlobalResidualT(
     countRes++;  //increment residual counter
   }
 }
+#else
+void
+Albany::Application::
+computeGlobalResidualT(
+    const double current_time,
+    const Tpetra_Vector* xdotT,
+    const Tpetra_Vector* xdotdotT,
+    const Tpetra_Vector& xT,
+    const Teuchos::Array<ParamVec>& p,
+    Tpetra_Vector& fT)
+{
+  // Create non-owning RCPs to Tpetra objects
+  // to be passed to the implementation
+  if (problem->useSDBCs() == false) {
+    this->computeGlobalResidualImplT(
+        current_time,
+        Teuchos::rcp(xdotT, false),
+        Teuchos::rcp(xdotdotT, false),
+        Teuchos::rcpFromRef(xT),
+        p,
+        Teuchos::rcpFromRef(fT));
+  }
+  else { 
+    this->computeGlobalResidualSDBCsImplT( 
+        current_time,
+        Teuchos::rcp(xdotT, false),
+        Teuchos::rcp(xdotdotT, false),
+        Teuchos::rcpFromRef(xT),
+        p,
+        Teuchos::rcpFromRef(fT));
+  }
+
+  //Debut output
+  if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
+    char name[100];  //create string for file name
+    if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
+      sprintf(name, "rhs%i.mm", countRes);
+      Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(fT));
+    }
+    else {
+      if (countRes == writeToMatrixMarketRes) { //write residual only at requested count#
+        sprintf(name, "rhs%i.mm", countRes);
+        Tpetra_MatrixMarket_Writer::writeDenseFile(
+            name,
+            Teuchos::rcpFromRef(fT));
+      }
+    }
+  }
+  if (writeToCoutRes != 0) { //If requesting writing of residual to cout...
+    if (writeToCoutRes == -1) { //cout residual time it arises
+      std::cout << "Global Residual #" << countRes << ": " << std::endl;
+      fT.describe(*out, Teuchos::VERB_EXTREME);
+    }
+    else {
+      if (countRes == writeToCoutRes) { //cout residual only at requested count#
+        std::cout << "Global Residual #" << countRes << ": " << std::endl;
+        fT.describe(*out, Teuchos::VERB_EXTREME);
+      }
+    }
+  }
+  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0) {
+    countRes++;  //increment residual counter
+  }
+}
+#endif
 
 #if defined(ALBANY_EPETRA)
 double
