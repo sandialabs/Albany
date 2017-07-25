@@ -1436,6 +1436,8 @@ Albany::DirichletTraits::getValidBCParameters(
         Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "twist");
     std::string ww =
         Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "Schwarz");
+    std::string sw =
+        Albany::DirichletTraits::constructStrongDBCName(nodeSetIDs[i], "Schwarz");
     std::string uu =
         Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "CoordFunc");
     std::string pd =
@@ -1443,6 +1445,7 @@ Albany::DirichletTraits::getValidBCParameters(
     validPL->sublist(ss, false, "");
     validPL->sublist(tt, false, "");
     validPL->sublist(ww, false, "");
+    validPL->sublist(sw, false, "");
     validPL->sublist(uu, false, "");
     validPL->sublist(pd, false, "");
   }
