@@ -26,15 +26,16 @@
 // This is set in the toplevel CMakeLists.txt file
 //#define ALBANY_CHECK_FPE
 
-#if defined(ALBANY_CHECK_FPE)
-#include <math.h>
-//#include <Accelerate/Accelerate.h>
+#if defined(ALBANY_CHECK_FPE) || defined(ALBANY_STRONG_FPE_CHECK) || defined(ALBANY_FLUSH_DENORMALS)
 #include <xmmintrin.h>
 #endif
-//#define ALBANY_FLUSH_DENORMALS
+
+#if defined(ALBANY_CHECK_FPE) || defined(ALBANY_STRONG_FPE_CHECK)
+#include <cmath>
+#endif
+
 #if defined(ALBANY_FLUSH_DENORMALS)
 #include <pmmintrin.h>
-#include <xmmintrin.h>
 #endif
 
 #include "Albany_DataTypes.hpp"
