@@ -215,6 +215,19 @@ private:
 
   Teuchos::Array<Teuchos::ParameterList>
   nox_params_;
+
+  // Used if solving with loca or tempus
+  mutable std::vector<bool>
+  is_loca_;
+
+  mutable std::vector<bool>
+  is_tempus_;
+
+  mutable std::vector<ST>
+  step_start_;
+
+  mutable std::vector<ST>
+  step_stop_;
 };
 
 } // namespace LCM
