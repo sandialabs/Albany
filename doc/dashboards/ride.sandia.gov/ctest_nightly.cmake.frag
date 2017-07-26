@@ -166,7 +166,7 @@ if (BUILD_TRILINOS)
     "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     #
     "-DCMAKE_CXX_COMPILER:FILEPATH=${NVCC_WRAPPER}"
-    "-DCMAKE_CXX_FLAGS:STRING=-fopenmp -mcpu=power8 -lgfortran" 
+    "-DCMAKE_CXX_FLAGS:STRING=-fopenmp -mcpu=power8 -lgfortran -arch=sm_60" 
     "-DCMAKE_C_FLAGS:STRING=-fopenmp -mcpu=power8 -lgfortran" 
     "-DCMAKE_Fortran_FLAGS:STRING=-lgfortran -fopenmp -mcpu=power8"
     "-DCMAKE_EXE_LINKER_FLAGS=-fopenmp -mcpu=power8 -ldl -lgfortran"
