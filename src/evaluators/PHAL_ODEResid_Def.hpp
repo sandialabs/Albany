@@ -22,11 +22,11 @@ ODEResid<EvalT, Traits>::ODEResid(Teuchos::ParameterList& p) :
   Yoderesid( p.get<std::string>("Y Residual Name"), 
 	    p.get< Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
 {
-  this->addDependentField(X);
-  this->addDependentField(X_dot);
+  this->addDependentField(X.fieldTag());
+  this->addDependentField(X_dot.fieldTag());
   this->addEvaluatedField(Xoderesid);
-  this->addDependentField(Y);
-  this->addDependentField(Y_dot);
+  this->addDependentField(Y.fieldTag());
+  this->addDependentField(Y_dot.fieldTag());
   this->addEvaluatedField(Yoderesid);
   
   std::string n = "ODEResid Provider: " + Xoderesid.fieldTag().name();

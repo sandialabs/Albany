@@ -43,7 +43,7 @@ namespace QCAD {
     //@{
 
       CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
-				const Teuchos::RCP<const Epetra_Comm>& comm, 
+				const Teuchos::RCP<const Epetra_Comm>& comm,
 				const Teuchos::RCP<const Epetra_Vector>& initial_guess);
     //@}
 
@@ -69,7 +69,7 @@ namespace QCAD {
     EpetraExt::ModelEvaluator::InArgs createInArgs() const;
     EpetraExt::ModelEvaluator::OutArgs createOutArgs() const;
 
-    void evalModel( const InArgs& inArgs, const OutArgs& outArgs ) const;    
+    void evalModel( const InArgs& inArgs, const OutArgs& outArgs ) const;
 
     Teuchos::RCP<Albany::Application> getPoissonApp() const;
     Teuchos::RCP<Albany::Application> getSchrodingerApp() const;
@@ -94,7 +94,7 @@ namespace QCAD {
 				Teuchos::RCP<const Epetra_Vector>& poisson_part,
 				Teuchos::RCP<const Epetra_MultiVector>& schrodinger_part,
 				Teuchos::RCP<const Epetra_Vector>& eigenvalue_part) const;
-    
+
 
   private:
     Teuchos::RCP<const Teuchos::ParameterList> getValidAppParameters() const;

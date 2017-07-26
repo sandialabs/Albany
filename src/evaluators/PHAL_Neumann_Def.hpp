@@ -39,7 +39,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   // The input.xml argument for the above string
   inputConditions = p.get< std::string >("Neumann Input Conditions");
- 
+
   // The DOF offsets are contained in the Equation Offset array. The length of this array are the
   // number of DOFs we will set each call
   numDOFsSet = offset.size();
@@ -211,8 +211,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
         beta_type = POWERLAW_SCALAR_FIELD;
       else if (betaName == "Exponent Of Scalar Field Times Thickness")
         beta_type = EXP_SCALAR_FIELD_THK;
-      else if (betaName == "FELIX XZ MMS") 
-        beta_type = FELIX_XZ_MMS; 
+      else if (betaName == "FELIX XZ MMS")
+        beta_type = FELIX_XZ_MMS;
       else TEUCHOS_TEST_FOR_EXCEPTION(true,Teuchos::Exceptions::InvalidParameter,
         std::endl << "The BetaXY name: \"" << betaName << "\" is not a valid name" << std::endl);
 
@@ -270,7 +270,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
       //The following is for backward compatibility: the lateral BC used to have 5 inputs, now really it has 1. 
       for (int i = numInputs; i < 5; i++) 
         robin_vals[i] = 0.0;
-        
+
       //The following should really go to 1 but above backward compatibility line keeps this at length 5.
       for(int i = 0; i < 5; i++) {
         std::stringstream ss; ss << name << "[" << i << "]";
@@ -405,7 +405,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   // Allocate Temporary Views
   physPointsCell_buffer = Kokkos::createDynRankView(coordVec.get_view(), "physPointsCell", numCells*numNodes*cellDims);
   temporary_buffer = Kokkos::createDynRankView(coordVec.get_view(),"temporary_buffer", numCells*maxNumQpSide*cellDims*cellDims);
-  
+
   cubPointsSide_buffer = Kokkos::DynRankView<RealType, PHX::Device>("cubPointsSide", maxNumQpSide*maxSideDim);
   refPointsSide_buffer = Kokkos::DynRankView<RealType, PHX::Device>("refPointsSide", maxNumQpSide*cellDims);
   cubWeightsSide_buffer = Kokkos::DynRankView<RealType, PHX::Device>("cubWeightsSide", maxNumQpSide);
@@ -446,7 +446,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
          "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
   // neumann data type is always ScalarT, but the deriv dimentsion
-  // actually needed depends on BC type. For many it just needs 
+  // actually needed depends on BC type. For many it just needs
   // deriv dimentsions from MeshScalarT (cloned from coordVec).
   // "data" is same as neumann -- always ScalarT but not always
   // with full deriv dimension of a ScalarT variable.
@@ -606,7 +606,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     trans_basis_refPointsSide = Kokkos::createViewWithType<DynRankViewMeshScalarT>(trans_basis_refPointsSide_buffer, trans_basis_refPointsSide_buffer.data(), numCells_, numNodes, numQPsSide);
     weighted_trans_basis_refPointsSide = Kokkos::createViewWithType<DynRankViewMeshScalarT>(weighted_trans_basis_refPointsSide_buffer, weighted_trans_basis_refPointsSide_buffer.data(), numCells_, numNodes, numQPsSide);
     physPointsCell =Kokkos::createViewWithType<DynRankViewMeshScalarT>(physPointsCell_buffer, physPointsCell_buffer.data(), numCells_, numNodes, cellDims);
-    
+
 
     cubatureSide[side]->getCubature(cubPointsSide, cubWeightsSide);
 
@@ -1118,7 +1118,7 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
   }
   if (beta_type == SCALAR_FIELD) {//basal (robin) condition indepenent of space
       betaXY = 1.0;
-    
+
       if(useStereographicMap)
       {
         double R = stereographicMapList->get<double>("Earth Radius", 6371);
@@ -1545,7 +1545,7 @@ operator()(const Neumann_Tag& tag, const int& cell) const
   int lcol;
   const int neq = Index.dimension(2);
   const int nunk = neq*this->numNodes;
-  
+
 
   for (std::size_t node = 0; node < this->numNodes; ++node)
     for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
@@ -1580,7 +1580,7 @@ operator()(const Neumann_Tag& tag, const int& cell) const
         } // column nodes
       } // has fast access
     }
-          
+
  }
 #endif
 // **********************************************************************
@@ -1656,7 +1656,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 /*#else
-  
+
   fT = workset.fT;
   //fT_nonconstView = fT->get1dViewNonConst();
   if (this->fT != Teuchos::null) 
@@ -1668,10 +1668,10 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Fill in "neumann" array
   this->evaluateNeumannContribution(workset);
- 
+
  //  if ( !JacT->isFillActive())
 //    JacT->resumeFill();
- 
+
    jacobian=JacT->getLocalMatrix();
 
    Index=workset.wsElNodeEqID_kokkos;
@@ -1705,7 +1705,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
   Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
-  
+
   // Fill the local "neumann" array with cell contributions
 
   this->evaluateNeumannContribution(workset);
@@ -1989,8 +1989,8 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
-#endif 
-#ifdef ALBANY_ENSEMBLE 
+#endif
+#ifdef ALBANY_ENSEMBLE
 
 // **********************************************************************
 // Specialization: Multi-point Residual

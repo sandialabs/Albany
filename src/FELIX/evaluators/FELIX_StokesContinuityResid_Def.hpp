@@ -17,12 +17,12 @@ template<typename EvalT, typename Traits>
 StokesContinuityResid<EvalT, Traits>::
 StokesContinuityResid(const Teuchos::ParameterList& p,
                       const Teuchos::RCP<Albany::Layouts>& dl) :
-  wBF       (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar), 
+  wBF       (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
   VGrad     (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_tensor),
   CResidual (p.get<std::string> ("Residual Name"), dl->node_scalar),
   havePSPG(p.get<bool>("Have PSPG"))
 {
-  this->addDependentField(wBF);  
+  this->addDependentField(wBF);
   this->addDependentField(VGrad);
   if (havePSPG) {
     wGradBF = decltype(wGradBF)(
@@ -35,7 +35,7 @@ StokesContinuityResid(const Teuchos::ParameterList& p,
     this->addDependentField(TauM);
     this->addDependentField(Rm);
   }
-   
+
   this->addEvaluatedField(CResidual);
 
   std::vector<PHX::DataLayout::size_type> dims;
@@ -57,7 +57,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(VGrad,fm);
   if (havePSPG) {
-    this->utils.setFieldData(wGradBF,fm); 
+    this->utils.setFieldData(wGradBF,fm);
     this->utils.setFieldData(TauM,fm);
     this->utils.setFieldData(Rm,fm);
   }
@@ -145,7 +145,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-  FST::integrate(CResidual.get_view(), divergence, wBF.get_view(),  
+  FST::integrate(CResidual.get_view(), divergence, wBF.get_view(),
                           false); // "false" overwrites
 
   contractDataFieldScalar<ScalarT>(CResidual, divergence, wBF,false); // "false" overwrites
@@ -154,13 +154,13 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (havePSPG) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {          
-	for (std::size_t qp=0; qp < numQPs; ++qp) {               
-	  for (std::size_t j=0; j < numDims; ++j) { 
-	    CResidual(cell,node) += 
-	      TauM(cell,qp)*Rm(cell,qp,j)*wGradBF(cell,node,qp,j);
-	  }  
-	}    
+      for (std::size_t node=0; node < numNodes; ++node) {
+  for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (std::size_t j=0; j < numDims; ++j) {
+      CResidual(cell,node) +=
+        TauM(cell,qp)*Rm(cell,qp,j)*wGradBF(cell,node,qp,j);
+    }
+  }
       }
     }
   }

@@ -161,6 +161,10 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
     this->addNodeSetsFromSideSets ();
   }
 
+  // If requested, mark all parts as io parts
+  if (params->get<bool>("Set All Parts IO", false))
+    this->setAllPartsIO();
+
   // Initialize the (possible) other side set meshes
   this->initializeSideSetMeshStructs(comm);
 }
@@ -335,8 +339,11 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   typedef AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
 
   // Fields required for extrusion
-  ScalarFieldType* surface_height_field = metaData2D.get_field<ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
-  ScalarFieldType* thickness_field = metaData2D.get_field<ScalarFieldType>(stk::topology::NODE_RANK, "thickness");
+  std::string thickness_name = params->get<std::string>("Thickness Field Name","thickness");
+  std::string surface_height_name = params->get<std::string>("Surface Height Field Name","surface_height");
+
+  ScalarFieldType* surface_height_field = metaData2D.get_field<ScalarFieldType>(stk::topology::NODE_RANK, surface_height_name);
+  ScalarFieldType* thickness_field = metaData2D.get_field<ScalarFieldType>(stk::topology::NODE_RANK, thickness_name);
   AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
   VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
   stk::mesh::FieldBase const* coordinates_field2d = metaData2D.coordinate_field();
@@ -696,7 +703,7 @@ void Albany::ExtrudedSTKMeshStruct::buildCellSideNodeNumerationMap (const std::s
   std::vector<stk::mesh::Entity> cells2D;
   stk::mesh::get_selected_entities(selector, basalMeshStruct->bulkData->buckets(stk::topology::ELEM_RANK), cells2D);
 
-  // If the mesh is already partitioned...
+  // If the mesh is already partitioned, this can happen...
   if (cells2D.size()==0)
     return;
 
@@ -846,12 +853,14 @@ void Albany::ExtrudedSTKMeshStruct::interpolateBasalLayeredFields (const std::ve
         case 1:
         {
           VFT* field2d = metaData2d.get_field<VFT>(stk::topology::NODE_RANK, node_fields_names[ifield]);
+          TEUCHOS_TEST_FOR_EXCEPTION (field2d==0, std::runtime_error, "Error! Cannot interpolate layered field '" << node_fields_names[ifield] << "' since it is not present in the 2d mesh.\n");
           values2d = stk::mesh::field_data(*field2d,node2d);
           break;
         }
         case 2:
         {
           TFT* field2d = metaData2d.get_field<TFT>(stk::topology::NODE_RANK, node_fields_names[ifield]);
+          TEUCHOS_TEST_FOR_EXCEPTION (field2d==0, std::runtime_error, "Error! Cannot interpolate layered field '" << node_fields_names[ifield] << "' since it is not present in the 2d mesh.\n");
           numScalars = stk::mesh::field_scalars_per_entity(*field2d,node2d);
           values2d = stk::mesh::field_data(*field2d,node2d);
           break;
@@ -888,12 +897,16 @@ void Albany::ExtrudedSTKMeshStruct::interpolateBasalLayeredFields (const std::ve
           h0 = (fieldLayersCoords[il1] - meshLayerCoord) / (fieldLayersCoords[il1] - fieldLayersCoords[il0]);
         }
 
-        // Extracting 3d pointer and stuffing the right data in them
+        // Extracting 3d pointer and stuffing the right data in it
+        // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be interpolated, so the user does not have to
+        //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
+        //       the SetupFieldData method, which adds all the fields to the stk mesh.
         switch (node_fields_ranks[ifield])
         {
           case 1:
           {
             SFT* field3d = metaData->get_field<SFT> (stk::topology::NODE_RANK, node_fields_names[ifield]);
+            TEUCHOS_TEST_FOR_EXCEPTION (field3d==0, std::runtime_error, "Error! Cannot interpolate layered field '" << node_fields_names[ifield] << "' since it is not present in the 3d mesh. Perhaps you forgot to specify it in the section 'Required Fields Info' of the extruded mesh?\n");
             values3d = stk::mesh::field_data(*field3d,node3d);
             values3d[0] = h0*values2d[il0]+(1-h0)*values2d[il1];
             break;
@@ -901,6 +914,7 @@ void Albany::ExtrudedSTKMeshStruct::interpolateBasalLayeredFields (const std::ve
           case 2:
           {
             VFT* field3d = metaData->get_field<VFT> (stk::topology::NODE_RANK, node_fields_names[ifield]);
+            TEUCHOS_TEST_FOR_EXCEPTION (field3d==0, std::runtime_error, "Error! Cannot interpolate layered field '" << node_fields_names[ifield] << "' since it is not present in the 3d mesh. Perhaps you forgot to specify it in the section 'Required Fields Info' of the extruded mesh?\n");
             values3d = stk::mesh::field_data(*field3d,node3d);
             for (int j=0; j<numScalars/numFieldLayers; ++j)
               values3d[j] = h0*values2d[j*numFieldLayers+il0]+(1-h0)*values2d[j*numFieldLayers+il1];
@@ -939,12 +953,14 @@ void Albany::ExtrudedSTKMeshStruct::interpolateBasalLayeredFields (const std::ve
         case 1:
         {
           VFT* field2d = metaData2d.get_field<VFT>(stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+          TEUCHOS_TEST_FOR_EXCEPTION (field2d==0, std::runtime_error, "Error! Cannot interpolate layered field '" << cell_fields_names[ifield] << "' since it is not present in the 2d mesh.\n");
           values2d = stk::mesh::field_data(*field2d,cell2d);
           break;
         }
         case 2:
         {
           TFT* field2d = metaData2d.get_field<TFT>(stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+          TEUCHOS_TEST_FOR_EXCEPTION (field2d==0, std::runtime_error, "Error! Cannot interpolate layered field '" << cell_fields_names[ifield] << "' since it is not present in the 2d mesh.\n");
           numScalars = stk::mesh::field_scalars_per_entity(*field2d,cell2d);
           values2d = stk::mesh::field_data(*field2d,cell2d);
           break;
@@ -993,28 +1009,37 @@ void Albany::ExtrudedSTKMeshStruct::interpolateBasalLayeredFields (const std::ve
           h0 = (fieldLayersCoords[il1] - meshLayerCoord) / (fieldLayersCoords[il1] - fieldLayersCoords[il0]);
         }
 
-        for (auto& cell3d : cells3d)
+        // Extracting 3d pointer and stuffing the right data in it
+        // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be interpolated, so the user does not have to
+        //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
+        //       the SetupFieldData method, which adds all the fields to the stk mesh.
+        switch (cell_fields_ranks[ifield])
         {
-          switch (cell_fields_ranks[ifield])
+          case 1:
           {
-            case 1:
+            SFT* field3d = metaData->get_field<SFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+            TEUCHOS_TEST_FOR_EXCEPTION (field3d==0, std::runtime_error, "Error! Cannot interpolate layered field '" << cell_fields_names[ifield] << "' since it is not present in the 3d mesh. Perhaps you forgot to specify it in the section 'Required Fields Info' of the extruded mesh?\n");
+            for (auto& cell3d : cells3d)
             {
-              SFT* field3d = metaData->get_field<SFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
               values3d = stk::mesh::field_data(*field3d,cell3d);
               values3d[0] = h0*values2d[il0]+(1-h0)*values2d[il1];
-              break;
             }
-            case 2:
+            break;
+          }
+          case 2:
+          {
+            VFT* field3d = metaData->get_field<VFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+            TEUCHOS_TEST_FOR_EXCEPTION (field3d==0, std::runtime_error, "Error! Cannot interpolate layered field '" << cell_fields_names[ifield] << "' since it is not present in the 3d mesh. Perhaps you forgot to specify it in the section 'Required Fields Info' of the extruded mesh?\n");
+            for (auto& cell3d : cells3d)
             {
-              VFT* field3d = metaData->get_field<VFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
               values3d = stk::mesh::field_data(*field3d,cell3d);
               for (int j=0; j<numScalars; ++j)
                 values3d[j] = h0*values2d[j*numFieldLayers+il0]+(1-h0)*values2d[j*numFieldLayers+il1];
-              break;
             }
-            default:
-              TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid/unsupported field rank.\n");
+            break;
           }
+          default:
+            TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid/unsupported field rank.\n");
         }
       }
     }
@@ -1084,6 +1109,12 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
         SFT* field2d = metaData2d.get_field<SFT>(stk::topology::NODE_RANK, node_fields_names[ifield]);
         SFT* field3d = metaData->get_field<SFT> (stk::topology::NODE_RANK, node_fields_names[ifield]);
 
+        // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be extruded, so the user does not have to
+        //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
+        //       the SetupFieldData method, which adds all the fields to the stk mesh.
+        TEUCHOS_TEST_FOR_EXCEPTION (field2d==0, std::runtime_error, "Error! Cannot extrude field '" << node_fields_names[ifield] << "' since it is not present in the 2d mesh.\n");
+        TEUCHOS_TEST_FOR_EXCEPTION (field3d==0, std::runtime_error, "Error! Cannot extrude field '" << node_fields_names[ifield] << "' since it is not present in the 3d mesh. Perhaps you forgot to specify it in the section 'Required Fields Info' of the extruded mesh?\n");
+
         for (int inode=0; inode<numNodes2d; ++inode)
         {
           const stk::mesh::Entity& node2d = nodes2d[inode];
@@ -1108,6 +1139,13 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
 
         VFT* field2d = metaData2d.get_field<VFT>(stk::topology::NODE_RANK, node_fields_names[ifield]);
         VFT* field3d = metaData->get_field<VFT> (stk::topology::NODE_RANK, node_fields_names[ifield]);
+
+        // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be extruded, so the user does not have to
+        //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
+        //       the SetupFieldData method, which adds all the fields to the stk mesh.
+        TEUCHOS_TEST_FOR_EXCEPTION (field2d==0, std::runtime_error, "Error! Cannot extrude field '" << node_fields_names[ifield] << "' since it is not present in the 2d mesh.\n");
+        TEUCHOS_TEST_FOR_EXCEPTION (field3d==0, std::runtime_error, "Error! Cannot extrude field '" << node_fields_names[ifield] << "' since it is not present in the 3d mesh. Perhaps you forgot to specify it in the section 'Required Fields Info' of the extruded mesh?\n");
+
         for (int inode=0; inode<numNodes2d; ++inode)
         {
           const stk::mesh::Entity& node2d = nodes2d[inode];
@@ -1134,6 +1172,13 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
 
         TFT* field2d = metaData2d.get_field<TFT>(stk::topology::NODE_RANK, node_fields_names[ifield]);
         TFT* field3d = metaData->get_field<TFT> (stk::topology::NODE_RANK, node_fields_names[ifield]);
+
+        // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be extruded, so the user does not have to
+        //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
+        //       the SetupFieldData method, which adds all the fields to the stk mesh.
+        TEUCHOS_TEST_FOR_EXCEPTION (field2d==0, std::runtime_error, "Error! Cannot extrude field '" << node_fields_names[ifield] << "' since it is not present in the 2d mesh.\n");
+        TEUCHOS_TEST_FOR_EXCEPTION (field3d==0, std::runtime_error, "Error! Cannot extrude field '" << node_fields_names[ifield] << "' since it is not present in the 3d mesh. Perhaps you forgot to specify it in the section 'Required Fields Info' of the extruded mesh?\n");
+
         for (int inode=0; inode<numNodes2d; ++inode)
         {
           const stk::mesh::Entity& node2d = nodes2d[inode];
@@ -1171,6 +1216,13 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
 
         SFT* field2d = metaData2d.get_field<SFT>(stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
         SFT* field3d = metaData->get_field<SFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+
+        // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be extruded, so the user does not have to
+        //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
+        //       the SetupFieldData method, which adds all the fields to the stk mesh.
+        TEUCHOS_TEST_FOR_EXCEPTION (field2d==0, std::runtime_error, "Error! Cannot extrude field '" << cell_fields_names[ifield] << "' since it is not present in the 2d mesh.\n");
+        TEUCHOS_TEST_FOR_EXCEPTION (field3d==0, std::runtime_error, "Error! Cannot extrude field '" << cell_fields_names[ifield] << "' since it is not present in the 3d mesh. Perhaps you forgot to specify it in the section 'Required Fields Info' of the extruded mesh?\n");
+
         for (int icell=0; icell<numCells2d; ++icell)
         {
           const stk::mesh::Entity& cell2d = cells2d[icell];
@@ -1210,6 +1262,13 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
 
         VFT* field2d = metaData2d.get_field<VFT>(stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
         VFT* field3d = metaData->get_field<VFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+
+        // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be extruded, so the user does not have to
+        //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
+        //       the SetupFieldData method, which adds all the fields to the stk mesh.
+        TEUCHOS_TEST_FOR_EXCEPTION (field2d==0, std::runtime_error, "Error! Cannot extrude field '" << cell_fields_names[ifield] << "' since it is not present in the 2d mesh.\n");
+        TEUCHOS_TEST_FOR_EXCEPTION (field3d==0, std::runtime_error, "Error! Cannot extrude field '" << cell_fields_names[ifield] << "' since it is not present in the 3d mesh. Perhaps you forgot to specify it in the section 'Required Fields Info' of the extruded mesh?\n");
+
         for (int icell=0; icell<numCells2d; ++icell)
         {
           const stk::mesh::Entity& cell2d = cells2d[icell];
@@ -1251,6 +1310,13 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
 
         TFT* field2d = metaData2d.get_field<TFT>(stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
         TFT* field3d = metaData->get_field<TFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+
+        // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be extruded, so the user does not have to
+        //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
+        //       the SetupFieldData method, which adds all the fields to the stk mesh.
+        TEUCHOS_TEST_FOR_EXCEPTION (field2d==0, std::runtime_error, "Error! Cannot extrude field '" << cell_fields_names[ifield] << "' since it is not present in the 2d mesh.\n");
+        TEUCHOS_TEST_FOR_EXCEPTION (field3d==0, std::runtime_error, "Error! Cannot extrude field '" << cell_fields_names[ifield] << "' since it is not present in the 3d mesh. Perhaps you forgot to specify it in the section 'Required Fields Info' of the extruded mesh?\n");
+
         for (int icell=0; icell<numCells2d; ++icell)
         {
           const stk::mesh::Entity& cell2d = cells2d[icell];
@@ -1305,20 +1371,13 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::ExtrudedSTKMeshStruct::getVal
   validPL->set<Teuchos::Array<int> >("Basal Elem Layered Fields Ranks", Teuchos::Array<int>(), "List of basal node layered fields to be interpolated");
   validPL->set<std::string>("GMSH 2D Output File Name", "", "File Name for GMSH 2D Basal Mesh Export");
   validPL->set<std::string>("Exodus Input File Name", "", "File Name For Exodus Mesh Input");
-  validPL->set<std::string>("Surface Height File Name", "surface_height.ascii", "Name of the file containing the surface height data");
-  validPL->set<std::string>("Thickness File Name", "thickness.ascii", "Name of the file containing the thickness data");
-  validPL->set<std::string>("BedTopography File Name", "bed_topography.ascii", "Name of the file containing the bed topography data");
-  validPL->set<std::string>("Surface Velocity File Name", "surface_velocity.ascii", "Name of the file containing the surface velocity data");
-  validPL->set<std::string>("Surface Velocity RMS File Name", "velocity_RMS.ascii", "Name of the file containing the surface velocity RMS data");
-  validPL->set<std::string>("Basal Friction File Name", "basal_friction.ascii", "Name of the file containing the basal friction data");
-  validPL->set<std::string>("Temperature File Name", "temperature.ascii", "Name of the file containing the temperature data");
   validPL->set<std::string>("Element Shape", "Hexahedron", "Shape of the Element: Tetrahedron, Wedge, Hexahedron");
   validPL->set<int>("NumLayers", 10, "Number of vertical Layers of the extruded mesh. In a vertical column, the mesh will have numLayers+1 nodes");
   validPL->set<bool>("Use Glimmer Spacing", false, "When true, the layer spacing is computed according to Glimmer formula (layers are denser close to the bedrock)");
   validPL->set<bool>("Columnwise Ordering", false, "True for Columnwise ordering, false for Layerwise ordering");
 
-  validPL->set<double>("Constant Surface Height",1.0,"Uniform surface height");
-  validPL->set<double>("Constant Thickness",1.0,"Uniform thickness");
+  validPL->set<std::string>("Thickness Field Name","thickness","Name of the 'thickness' field to use for extrusion");
+  validPL->set<std::string>("Surface Height Field Name","surface_height","Name of the 'surface_height' field to use for extrusion");
 
   return validPL;
 }

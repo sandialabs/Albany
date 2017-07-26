@@ -33,11 +33,11 @@ AdvDiffResid(const Teuchos::ParameterList& p) :
 
 
 
-  this->addDependentField(U);
-  this->addDependentField(UGrad);
-  this->addDependentField(UDot);
-  this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
+  this->addDependentField(U.fieldTag());
+  this->addDependentField(UGrad.fieldTag());
+  this->addDependentField(UDot.fieldTag());
+  this->addDependentField(wBF.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
 
   this->addEvaluatedField(Residual);
 

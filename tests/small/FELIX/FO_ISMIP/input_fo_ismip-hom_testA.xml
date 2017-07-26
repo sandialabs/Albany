@@ -49,6 +49,14 @@
     <Parameter name="FELIX L" type="double" value="5.0"/>
     <Parameter name="Method" type="string" value="STK3D"/>
     <Parameter name="Exodus Output File Name" type="string" value="felix_stokes_fo_ismip-hom_testA_out.exo"/>
+    <ParameterList name="Required Fields Info">
+     <Parameter name="Number Of Fields" type="int" value="1"/>
+      <ParameterList name="Field 0">
+        <Parameter name="Field Name"    type="string" value="surface_height"/>
+        <Parameter name="Field Type"    type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin"  type="string" value="Mesh"/>
+      </ParameterList>
+    </ParameterList>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="3"/>

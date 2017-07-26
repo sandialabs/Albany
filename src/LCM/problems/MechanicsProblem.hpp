@@ -654,6 +654,13 @@ Albany::MechanicsProblem::constructEvaluators(
   // Temporary variable used numerous times below
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits>> ev;
 
+  // Have to register Lattice_Orientation in the mesh before the discretization is built
+  if (std::find(this->requirements.begin(), this->requirements.end(),"Lattice_Orientation")!=this->requirements.end())
+  {
+    auto entity = Albany::StateStruct::ElemData;
+    stateMgr.registerStateVariable("Lattice_Orientation",dl_->cell_tensor,meshSpecs.ebName,false,&entity);
+  }
+
   // Define Field Names
   // generate the field name map to deal with outputing surface element info
   LCM::FieldNameMap field_name_map(surface_element);

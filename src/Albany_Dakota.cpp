@@ -101,6 +101,9 @@ int Albany_Dakota(int argc, char *argv[])
     RCP<ParameterList> piroParams =
       rcp(&(appParams2.sublist("Piro")),false);
     // ALBANY_ENSEMBLE_SIZE set in Cmake -- defaults=32
+#ifndef ENABLE_ENSEMBLE
+    int ALBANY_ENSEMBLE_SIZE = 32; 
+#endif
     int block_size = mpParams->get("Block Size", ALBANY_ENSEMBLE_SIZE);
     TEUCHOS_TEST_FOR_EXCEPTION((block_size != ALBANY_ENSEMBLE_SIZE) ,
       std::logic_error,

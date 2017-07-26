@@ -52,6 +52,14 @@
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
     <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis20km_in.exo"/>
     <Parameter name="Exodus Output File Name" type="string" value="gis20km_out.exo"/>
+    <ParameterList name="Required Fields Info">
+      <Parameter name="Number Of Fields" type="int" value="1"/>
+      <ParameterList name="Field 0">
+        <Parameter name="Field Name"   type="string" value="surface_height"/>
+        <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin" type="string" value="Mesh"/>
+      </ParameterList>
+    </ParameterList>
     <ParameterList name="Side Set Discretizations">
       <Parameter name="Side Sets" type="Array(string)" value="{basal}"/>
       <ParameterList name="basal">
@@ -62,7 +70,8 @@
         <ParameterList name="Required Fields Info">
           <Parameter name="Number Of Fields" type="int" value="1"/>
           <ParameterList name="Field 0">
-            <Parameter name="Field Name" type="string" value="surface_height"/>
+            <Parameter name="Field Name"   type="string" value="surface_height"/>
+            <Parameter name="Field Type"   type="string" value="Node Scalar"/>
             <Parameter name="Field Origin" type="string" value="Mesh"/>
           </ParameterList>
         </ParameterList>

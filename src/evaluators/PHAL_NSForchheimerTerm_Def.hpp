@@ -33,11 +33,11 @@ NSForchheimerTerm(const Teuchos::ParameterList& p) :
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  this->addDependentField(V);
-  this->addDependentField(rho);
-  this->addDependentField(phi);
-  this->addDependentField(K);
-  this->addDependentField(F);
+  this->addDependentField(V.fieldTag());
+  this->addDependentField(rho.fieldTag());
+  this->addDependentField(phi.fieldTag());
+  this->addDependentField(K.fieldTag());
+  this->addDependentField(F.fieldTag());
 
   this->addEvaluatedField(ForchTerm);
 

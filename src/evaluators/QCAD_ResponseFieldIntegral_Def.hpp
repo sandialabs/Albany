@@ -40,11 +40,11 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
     materialDB = Teuchos::null;
     length_unit_in_m = 1.0e-6; //default length unit = microns (backward compat)
   }
-       
+
   //! number of quad points per cell
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
   numQPs = scalar_dl->dimension(1);
-  
+
   //! obtain number of dimensions
   Teuchos::RCP<PHX::DataLayout> vector_dl = dl->qp_vector;
   std::vector<PHX::DataLayout::size_type> dims;
@@ -82,7 +82,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
     else break;
   }
   bReturnImagPart = plist->get<bool>("Return Imaginary Part",false);
-  
+
   std::string integrandLinLengthUnit; // linear length unit of integrand (e.g. "cm" for integrand in cm^-3)
   integrandLinLengthUnit = plist->get<std::string>("Integrand Length Unit","cm");
   bPositiveOnly = plist->get<bool>("Positive Return Only",false);
@@ -95,7 +95,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   else if( integrandLinLengthUnit == "nm" ) integrand_length_unit_in_m = 1e-9;
   else if( integrandLinLengthUnit == "mesh" ) integrand_length_unit_in_m = length_unit_in_m;
   else integrand_length_unit_in_m = length_unit_in_m;  // assume same unit as mesh (e.g. if unit string is blank)
-  
+
   double X0 = length_unit_in_m / integrand_length_unit_in_m; // length scaling to get to integrand's lenght unit
 
   if (numDims == 1)       scaling = X0; 
@@ -123,7 +123,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
 
   //TODO: make name unique? Is this needed for anything?
   this->setName(fieldName+" Response Field Integral" );
-  
+
   using PHX::MDALayout;
 
   // Setup scatter evaluator
@@ -282,7 +282,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   if (bPositiveOnly && this->global_response_eval(0) < 1e-6) {
     this->global_response_eval(0) = 1e+100;
   }
-  
+
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
 }
@@ -321,7 +321,7 @@ QCAD::ResponseFieldIntegral<EvalT,Traits>::getValidResponseParameters() const
 
 
   validPL->set<std::string>("Description", "", "Description of this response used by post processors");
-  
+
   return validPL;
 }
 

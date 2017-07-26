@@ -20,8 +20,8 @@ DOFTensorInterpolationBase(const Teuchos::ParameterList& p,
   BF          (p.get<std::string>  ("BF Name"),  dl->node_qp_scalar),
   val_qp      (p.get<std::string>  ("Variable Name"), dl->qp_tensor)
 {
-  this->addDependentField(val_node);
-  this->addDependentField(BF);
+  this->addDependentField(val_node.fieldTag());
+  this->addDependentField(BF.fieldTag());
   this->addEvaluatedField(val_qp);
 
   this->setName("DOFTensorInterpolationBase"+PHX::typeAsString<EvalT>());
@@ -75,8 +75,8 @@ DOFTensorInterpolationBase(const Teuchos::ParameterList& p,
   BF          (p.get<std::string>  ("BF Name"),  dl->node_qp_scalar),
   val_qp      (p.get<std::string>  ("Variable Name"), dl->qp_tensor)
 {
-  this->addDependentField(val_node);
-  this->addDependentField(BF);
+  this->addDependentField(val_node.fieldTag());
+  this->addDependentField(BF.fieldTag());
   this->addEvaluatedField(val_qp);
 
   this->setName("DOFTensorInterpolationBase"+PHX::typeAsString<PHAL::AlbanyTraits::Jacobian>());
@@ -146,8 +146,8 @@ DOFTensorInterpolationBase(const Teuchos::ParameterList& p,
   BF          (p.get<std::string>  ("BF Name"),  dl->node_qp_scalar),
   val_qp      (p.get<std::string>  ("Variable Name"), dl->qp_tensor)
 {
-  this->addDependentField(val_node);
-  this->addDependentField(BF);
+  this->addDependentField(val_node.fieldTag());
+  this->addDependentField(BF.fieldTag());
   this->addEvaluatedField(val_qp);
 
   this->setName("DOFTensorInterpolationBase"+PHX::typeAsString<PHAL::AlbanyTraits::SGJacobian>());
@@ -210,8 +210,8 @@ DOFTensorInterpolationBase(const Teuchos::ParameterList& p,
   BF          (p.get<std::string>  ("BF Name"),  dl->node_qp_scalar),
   val_qp      (p.get<std::string>  ("Variable Name"), dl->qp_tensor)
 {
-  this->addDependentField(val_node);
-  this->addDependentField(BF);
+  this->addDependentField(val_node.fieldTag());
+  this->addDependentField(BF.fieldTag());
   this->addEvaluatedField(val_qp);
 
   this->setName("DOFTensorInterpolationBase"+PHX::typeAsString<PHAL::AlbanyTraits::MPJacobian>());

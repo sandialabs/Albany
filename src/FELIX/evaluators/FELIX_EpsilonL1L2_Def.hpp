@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
-#include "Sacado_ParameterRegistration.hpp" 
+#include "Sacado_ParameterRegistration.hpp"
 
 
 namespace FELIX {
@@ -18,16 +18,16 @@ EpsilonL1L2<EvalT, Traits>::
 EpsilonL1L2(const Teuchos::ParameterList& p,
             const Teuchos::RCP<Albany::Layouts>& dl) :
   Ugrad     (p.get<std::string> ("Gradient QP Variable Name"),dl->qp_vecgradient ),
-  epsilonXX (p.get<std::string> ("FELIX EpsilonXX QP Variable Name"), dl->qp_scalar ), 
-  epsilonYY (p.get<std::string> ("FELIX EpsilonYY QP Variable Name"), dl->qp_scalar ), 
-  epsilonXY (p.get<std::string> ("FELIX EpsilonXY QP Variable Name"), dl->qp_scalar ), 
-  epsilonB  (p.get<std::string> ("FELIX EpsilonB QP Variable Name"),  dl->qp_scalar ) 
+  epsilonXX (p.get<std::string> ("FELIX EpsilonXX QP Variable Name"), dl->qp_scalar ),
+  epsilonYY (p.get<std::string> ("FELIX EpsilonYY QP Variable Name"), dl->qp_scalar ),
+  epsilonXY (p.get<std::string> ("FELIX EpsilonXY QP Variable Name"), dl->qp_scalar ),
+  epsilonB  (p.get<std::string> ("FELIX EpsilonB QP Variable Name"),  dl->qp_scalar )
 {
-  Teuchos::ParameterList* visc_list = 
+  Teuchos::ParameterList* visc_list =
    p.get<Teuchos::ParameterList*>("Parameter List");
-  
+
   this->addDependentField(Ugrad);
-  
+
   this->addEvaluatedField(epsilonXX);
   this->addEvaluatedField(epsilonYY);
   this->addEvaluatedField(epsilonXY);
@@ -38,11 +38,11 @@ EpsilonL1L2(const Teuchos::ParameterList& p,
   numQPs  = dims[1];
   numDims = dims[2];
 
-  Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >("Parameter Library"); 
-  
-   this->registerSacadoParameter("Glen's Law Homotopy Parameter", paramLib);  
+  Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >("Parameter Library");
+
+   this->registerSacadoParameter("Glen's Law Homotopy Parameter", paramLib);
   this->setName("EpsilonL1L2"+PHX::typeAsString<EvalT>());
- 
+
 }
 
 //**********************************************************************
@@ -52,15 +52,15 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(Ugrad,fm);
-  this->utils.setFieldData(epsilonXX,fm); 
-  this->utils.setFieldData(epsilonYY,fm); 
-  this->utils.setFieldData(epsilonXY,fm); 
-  this->utils.setFieldData(epsilonB,fm); 
+  this->utils.setFieldData(epsilonXX,fm);
+  this->utils.setFieldData(epsilonYY,fm);
+  this->utils.setFieldData(epsilonXY,fm);
+  this->utils.setFieldData(epsilonB,fm);
 }
 
 //**********************************************************************
 template<typename EvalT,typename Traits>
-typename EpsilonL1L2<EvalT,Traits>::ScalarT& 
+typename EpsilonL1L2<EvalT,Traits>::ScalarT&
 EpsilonL1L2<EvalT,Traits>::getValue(const std::string &n)
 {
   return homotopyParam;
@@ -74,11 +74,11 @@ evaluateFields(typename Traits::EvalData workset)
 {
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
-       epsilonXX(cell,qp) = Ugrad(cell,qp,0,0); 
-       epsilonYY(cell,qp) = Ugrad(cell,qp,1,1); 
-       epsilonXY(cell,qp) = 0.5*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); 
-       epsilonB(cell,qp)  = epsilonXX(cell,qp)*epsilonXX(cell,qp) + epsilonYY(cell,qp)*epsilonYY(cell,qp) 
-                          + epsilonXX(cell,qp)*epsilonYY(cell,qp) + epsilonXY(cell,qp)*epsilonXY(cell,qp);   
+       epsilonXX(cell,qp) = Ugrad(cell,qp,0,0);
+       epsilonYY(cell,qp) = Ugrad(cell,qp,1,1);
+       epsilonXY(cell,qp) = 0.5*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0));
+       epsilonB(cell,qp)  = epsilonXX(cell,qp)*epsilonXX(cell,qp) + epsilonYY(cell,qp)*epsilonYY(cell,qp)
+                          + epsilonXX(cell,qp)*epsilonYY(cell,qp) + epsilonXY(cell,qp)*epsilonXY(cell,qp);
     }
   }
 }

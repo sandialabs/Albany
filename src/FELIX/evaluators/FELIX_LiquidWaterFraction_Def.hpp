@@ -16,10 +16,10 @@ namespace FELIX
   template<typename EvalT, typename Traits, typename Type>
   LiquidWaterFraction<EvalT,Traits,Type>::
   LiquidWaterFraction(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
-  enthalpyHs	   (p.get<std::string> ("Enthalpy Hs Variable Name"), dl->node_scalar),
-  enthalpy	   (p.get<std::string> ("Enthalpy Variable Name"), dl->node_scalar),
-  homotopy	   (p.get<std::string> ("Continuation Parameter Name"), dl->shared_param),
-  phi	   	   	   (p.get<std::string> ("Water Content Variable Name"), dl->node_scalar)
+  enthalpyHs (p.get<std::string> ("Enthalpy Hs Variable Name"), dl->node_scalar),
+  enthalpy   (p.get<std::string> ("Enthalpy Variable Name"), dl->node_scalar),
+  homotopy   (p.get<std::string> ("Continuation Parameter Name"), dl->shared_param),
+  phi        (p.get<std::string> ("Water Content Variable Name"), dl->node_scalar)
   {
     // Get Dimensions
     std::vector<PHX::DataLayout::size_type> dims;
@@ -28,7 +28,7 @@ namespace FELIX
 
     this->addDependentField(enthalpyHs);
     this->addDependentField(enthalpy);
-    //	this->addDependentField(homotopy);
+    //  this->addDependentField(homotopy);
 
     this->addEvaluatedField(phi);
     this->setName("Phi");
@@ -58,8 +58,8 @@ namespace FELIX
   evaluateFields(typename Traits::EvalData d)
   {
     const double pow6 = 1e6; //[k^{-2}], k =1000
-    //	ScalarT hom = homotopy(0);
-    //	double pi = atan(1.) * 4.;
+    //  ScalarT hom = homotopy(0);
+    //  double pi = atan(1.) * 4.;
     ScalarT phiNode;
 
     for (std::size_t cell = 0; cell < d.numCells; ++cell)

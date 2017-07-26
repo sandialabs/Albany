@@ -29,11 +29,11 @@ NSTauT(const Teuchos::ParameterList& p) :
                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
   
 {
-  this->addDependentField(V);
-  this->addDependentField(ThermalCond);
-  this->addDependentField(Gc);
-  this->addDependentField(rho);
-  this->addDependentField(Cp);
+  this->addDependentField(V.fieldTag());
+  this->addDependentField(ThermalCond.fieldTag());
+  this->addDependentField(Gc.fieldTag());
+  this->addDependentField(rho.fieldTag());
+  this->addDependentField(Cp.fieldTag());
  
   this->addEvaluatedField(TauT);
 

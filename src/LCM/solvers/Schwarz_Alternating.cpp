@@ -60,8 +60,13 @@ SchwarzAlternating(
   // Arrays to cache useful info for each subdomain for later use
   apps_.resize(num_subdomains_);
   solvers_.resize(num_subdomains_);
-  convergence_ops_.resize(num_subdomains_);
+  solution_sniffers_.resize(num_subdomains_);
   stk_mesh_structs_.resize(num_subdomains_);
+  model_evaluators_.resize(num_subdomains_);
+  sub_inargs_.resize(num_subdomains_);
+  sub_outargs_.resize(num_subdomains_);
+  nox_params_.resize(num_subdomains_);
+  solutions_.resize(num_subdomains_);
 
   // Initialization
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
@@ -99,6 +104,8 @@ SchwarzAlternating(
     Teuchos::ParameterList &
     nox_params = piro_params.sublist("NOX");
 
+    nox_params_[subdomain] = nox_params;
+
     bool const
     have_solver_opts = nox_params.isSublist("Solver Options");
 
@@ -128,10 +135,10 @@ SchwarzAlternating(
     throw_on_fail{true};
 
     Teuchos::RCP<SolutionSniffer>
-    convergence_op = Teuchos::rcp_dynamic_cast<SolutionSniffer>
+    solution_sniffer = Teuchos::rcp_dynamic_cast<SolutionSniffer>
     (ppo, throw_on_fail);
 
-    convergence_ops_[subdomain] = convergence_op;
+    solution_sniffers_[subdomain] = solution_sniffer;
 
     Teuchos::RCP<Albany::Application>
     app{Teuchos::null};
@@ -154,6 +161,10 @@ SchwarzAlternating(
     ams = stk_disc.getSTKMeshStruct();
 
     stk_mesh_structs_[subdomain] = ams;
+
+    model_evaluators_[subdomain] = solver_factory.returnModelT();
+
+    solutions_[subdomain] = Teuchos::null;
   }
 
   //
@@ -409,11 +420,6 @@ createInArgsImpl() const
   ias.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_beta, true);
   ias.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_W_x_dot_dot_coeff, true);
 
-  sub_inargs_.resize(num_subdomains_);
-  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
-    sub_inargs_[subdomain] = solvers_[subdomain]->createInArgs();
-  }
-
   return ias;
 }
 
@@ -438,11 +444,6 @@ createOutArgsImpl() const
           Thyra::ModelEvaluatorBase::DERIV_LINEARITY_UNKNOWN,
           Thyra::ModelEvaluatorBase::DERIV_RANK_FULL,
           true));
-
-  sub_outargs_.resize(num_subdomains_);
-  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
-    sub_outargs_[subdomain] = solvers_[subdomain]->createOutArgs();
-  }
 
   return oas;
 }
@@ -638,34 +639,44 @@ SchwarzLoop() const
         Thyra::ResponseOnlyModelEvaluatorBase<ST> &
         solver = *(solvers_[subdomain]);
 
-        Thyra::ModelEvaluatorBase::InArgs<ST> &
-        in_args = sub_inargs_[subdomain];
+        Thyra::ModelEvaluatorBase::InArgs<ST>
+        in_args = solver.createInArgs();
 
-        // Propagate previous solution if this is not the first step
+        Thyra::ModelEvaluatorBase::OutArgs<ST>
+        out_args = solver.createOutArgs();
+
+        auto &
+        me = dynamic_cast<Albany::ModelEvaluatorT &>
+             (*model_evaluators_[subdomain]);
+
+        me.getNominalValues().set_t(current_time);
+
+        // Use previous solution as initial condition for next step
         if (stop > 0) {
-          in_args.set_x(solutions_[subdomain]);
-        }
+          Teuchos::RCP<NOX::Thyra::Vector>
+          ntv = Teuchos::rcp_dynamic_cast<NOX::Thyra::Vector>
+                (solutions_[subdomain]);
 
-        Thyra::ModelEvaluatorBase::OutArgs<ST> &
-        out_args = sub_outargs_[subdomain];
+          Teuchos::RCP<Thyra::VectorBase<ST>>
+          x = ntv->getThyraRCPVector();
+
+          me.getNominalValues().set_x(x);
+        }
 
         solver.evalModel(in_args, out_args);
 
-        solutions_[subdomain] = in_args.get_x();
-
-        // After solve, get info to check convergence
+        // After solve, save solution and get info to check convergence
         Teuchos::RCP<SolutionSniffer>
-        convergence_op = convergence_ops_[subdomain];
+        solution_sniffer = solution_sniffers_[subdomain];
 
-        norms_init(subdomain) = convergence_op->getInitialNorm();
-        norms_final(subdomain) = convergence_op->getFinalNorm();
-        norms_diff(subdomain) = convergence_op->getDifferenceNorm();
+        solutions_[subdomain] = solution_sniffer->getLastSoln();
+        norms_init(subdomain) = solution_sniffer->getInitialNorm();
+        norms_final(subdomain) = solution_sniffer->getFinalNorm();
+        norms_diff(subdomain) = solution_sniffer->getDifferenceNorm();
       }
 
       norm_init_ = minitensor::norm(norms_init);
-
       norm_final_ = minitensor::norm(norms_final);
-
       norm_diff_ = minitensor::norm(norms_diff);
 
       updateConvergenceCriterion();

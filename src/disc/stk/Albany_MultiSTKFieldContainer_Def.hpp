@@ -18,7 +18,7 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
-#include "Teuchos_VerboseObject.hpp" 
+#include "Teuchos_VerboseObject.hpp"
 
 static const char *sol_tag_name[3] = {
       "Exodus Solution Name",
@@ -235,6 +235,19 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->coordinates_field, Ioss::Field::MESH);
 #endif
+
+  if (numDim_==3)
+  {
+    this->coordinates_field3d = this->coordinates_field;
+  }
+  else
+  {
+    this->coordinates_field3d = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK, "coordinates3d");
+    stk::mesh::put_field(*this->coordinates_field3d , metaData_->universal_part(), 3);
+#ifdef ALBANY_SEACAS
+    stk::io::set_field_role(*this->coordinates_field3d, Ioss::Field::MESH);
+#endif
+  }
 
 #if defined(ALBANY_LCM) && defined(ALBANY_SEACAS)
   // sphere volume is a mesh attribute read from a genesis mesh file containing sphere element (used for peridynamics)
@@ -566,7 +579,7 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveVector(const Epetra_Vector
 //Tpetra version of above
 template<bool Interleaved>
 void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_Vector& solnT,
-    stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) 
+    stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT)
 {
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
@@ -598,14 +611,14 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_V
 
 template<bool Interleaved>
 void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_Vector& solnT,
-    const Tpetra_Vector& soln_dotT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) 
+    const Tpetra_Vector& soln_dotT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT)
 {
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream(); 
-  *out << "IKT WARNING: calling Albany::MultiSTKFieldContainer::saveSolnVectorT with soln_dotT, but " 
-       << "this function has not been extended to write soln_dotT properly to the Exodus file.  Exodus " 
-       << "file will contain only soln, not soln_dot.\n"; 
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "IKT WARNING: calling Albany::MultiSTKFieldContainer::saveSolnVectorT with soln_dotT, but "
+       << "this function has not been extended to write soln_dotT properly to the Exodus file.  Exodus "
+       << "file will contain only soln, not soln_dot.\n";
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
   stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, sel);
@@ -625,7 +638,7 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_V
       }
       else {
         VFT* field = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
-        //IKT, FIXME: saveVectorHelperT should be extended to take in soln_dotT! 
+        //IKT, FIXME: saveVectorHelperT should be extended to take in soln_dotT!
         this->saveVectorHelperT(solnT, field, node_mapT, bucket, offset);
       }
       offset += sol_index[0][k];
@@ -635,16 +648,16 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_V
 
 template<bool Interleaved>
 void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_Vector& solnT,
-    const Tpetra_Vector& soln_dotT, const Tpetra_Vector& soln_dotdotT, 
-    stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) 
+    const Tpetra_Vector& soln_dotT, const Tpetra_Vector& soln_dotdotT,
+    stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT)
 {
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream(); 
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
   *out << "IKT WARNING: calling Albany::MultiSTKFieldContainer::saveSolnVectorT with soln_dotT and "
        << "soln_dotdotT, but this function has not been extended to write soln_dotT "
-       << "and soln_dotdotT properly to the Exodus file.  Exodus " 
-       << "file will contain only soln, not soln_dot and soln_dotdot.\n"; 
+       << "and soln_dotdotT properly to the Exodus file.  Exodus "
+       << "file will contain only soln, not soln_dot and soln_dotdot.\n";
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
   stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, sel);
@@ -664,7 +677,7 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_V
       }
       else {
         VFT* field = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
-        //IKT, FIXME: saveVectorHelperT should be extended to take in soln_dotT and soln_dotdotT! 
+        //IKT, FIXME: saveVectorHelperT should be extended to take in soln_dotT and soln_dotdotT!
         this->saveVectorHelperT(solnT, field, node_mapT, bucket, offset);
       }
       offset += sol_index[0][k];

@@ -87,6 +87,10 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
 
     virtual void addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis) = 0;
 
+    // Coordinates field ALWAYS in 3D
+    const VectorFieldType* getCoordinatesField3d() const { return coordinates_field3d; }
+    VectorFieldType* getCoordinatesField3d(){ return coordinates_field3d; }
+
     const VectorFieldType* getCoordinatesField() const { return coordinates_field; }
     VectorFieldType* getCoordinatesField(){ return coordinates_field; }
     IntScalarFieldType* getProcRankField(){ return proc_rank_field; }
@@ -137,11 +141,11 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     virtual void saveVectorT(const Tpetra_Vector& field_vector, const std::string&  field_name, stk::mesh::Selector& field_selection,
                             const Teuchos::RCP<const Tpetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) = 0;
     virtual void saveSolnVectorT(const Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
-    virtual void saveSolnVectorT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
-                                 stk::mesh::Selector& sel, 
+    virtual void saveSolnVectorT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT,
+                                 stk::mesh::Selector& sel,
                                  const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
-    virtual void saveSolnVectorT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
-                                 const Tpetra_Vector& soln_dotdotT, stk::mesh::Selector& sel, 
+    virtual void saveSolnVectorT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT,
+                                 const Tpetra_Vector& soln_dotdotT, stk::mesh::Selector& sel,
                                  const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
     virtual void saveResVectorT(const Tpetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_map) = 0;
     virtual void saveSolnMultiVector(const Tpetra_MultiVector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
@@ -150,6 +154,9 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
 
   protected:
 
+    // Note: for 3d meshes, coordinates_field3d==coordinates_field (they point to the same field).
+    //       Otherwise, coordinates_field3d stores coordinates in 3d (useful for non-flat 2d meshes)
+    VectorFieldType* coordinates_field3d;
     VectorFieldType* coordinates_field;
     IntScalarFieldType* proc_rank_field;
     IntScalarFieldType* refine_field;

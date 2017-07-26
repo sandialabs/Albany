@@ -18,7 +18,6 @@
 #include "PHAL_DOFCellToSideQP.hpp"
 #include "PHAL_DOFGradInterpolation.hpp"
 #include "PHAL_DOFGradInterpolationSide.hpp"
-#include "PHAL_DOFDivInterpolationSide.hpp"
 #include "PHAL_DOFSideToCell.hpp"
 #include "PHAL_DOFInterpolation.hpp"
 #include "PHAL_DOFInterpolationSide.hpp"
@@ -477,9 +476,11 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructComputeBasisFunctions
 
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
     p->set<std::string>("Weighted Measure Name",     "Weighted Measure "+sideSetName);
+    p->set<std::string>("Tangents Name",             "Tangents "+sideSetName);
     p->set<std::string>("Metric Determinant Name",   "Metric Determinant "+sideSetName);
     p->set<std::string>("BF Name",                   "BF "+sideSetName);
     p->set<std::string>("Gradient BF Name",          "Grad BF "+sideSetName);
+    p->set<std::string>("Metric Name",               "Metric "+sideSetName);
     p->set<std::string>("Inverse Metric Name",       "Inv Metric "+sideSetName);
 
    // p->set<std::string> ("Side Normals Name", "Side Normals");
@@ -538,6 +539,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFCellToSideQPEvalua
     p->set<std::string>("Cell Variable Name", cell_dof_name);
     p->set<std::string>("Data Layout", layout);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set<std::string>("BF Name", "BF "+sideSetName);
     p->set<std::string>("Side Set Name", sideSetName);
 
     // Output
@@ -565,7 +567,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFSideToCellEvaluato
     RCP<ParameterList> p = rcp(new ParameterList("DOF Side To Cell"));
 
     // Input
-    p->set<std::string>("Side Variable Name", cell_dof_name);
+    p->set<std::string>("Side Variable Name", side_dof_name);
     p->set<std::string>("Data Layout", layout);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<std::string>("Side Set Name", sideSetName);
@@ -624,32 +626,6 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFGradInterpolationS
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
     return rcp(new PHAL::DOFGradInterpolationSideBase<EvalT,Traits,ScalarT>(*p,dl->side_layouts.at(sideSetName)));
-}
-
-template<typename EvalT, typename Traits, typename ScalarT>
-Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFDivInterpolationSideEvaluator(
-       const std::string& dof_name,
-       const std::string& sideSetName) const
-{
-    TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
-                                "Error! The layout structure for side set " << sideSetName << " was not found.\n");
-
-    using Teuchos::RCP;
-    using Teuchos::rcp;
-    using Teuchos::ParameterList;
-
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Div Interpolation Side "+dof_name));
-
-    // Input
-    p->set<std::string>("Variable Name", dof_name);
-    p->set<std::string>("Gradient BF Name", "Grad BF "+sideSetName);
-    p->set<std::string> ("Side Set Name",sideSetName);
-
-    // Output (assumes same Name as input)
-    p->set<std::string>("Divergence Variable Name", dof_name+" Divergence");
-
-    return rcp(new PHAL::DOFDivInterpolationSideBase<EvalT,Traits,ScalarT>(*p,dl->side_layouts.at(sideSetName)));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>

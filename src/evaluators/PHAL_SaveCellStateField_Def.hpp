@@ -54,8 +54,8 @@ SaveCellStateField(const Teuchos::ParameterList& p) :
   savestate_operation = Teuchos::rcp(new PHX::Tag<ScalarT>
     (stateName, p.get< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout")));
 
-  this->addDependentField(weights);
-  this->addDependentField(field);
+  this->addDependentField(weights.fieldTag());
+  this->addDependentField(field.fieldTag());
   this->addEvaluatedField(*savestate_operation);
 
   this->setName("Save Field " + fieldName +" to Cell State " + stateName + "Residual");

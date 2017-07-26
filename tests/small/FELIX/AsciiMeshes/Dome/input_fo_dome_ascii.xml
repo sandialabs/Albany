@@ -49,15 +49,21 @@
       <Parameter name="Response 2" type="string" value="Solution Average"/>
     </ParameterList>
   </ParameterList>
+
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ascii"/>
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
     <Parameter name="Exodus Output File Name" type="string" value="dome_ascii_out.exo"/>
     <ParameterList name="Required Fields Info">
-     <Parameter name="Number Of Fields" type="int" value="1"/>
+     <Parameter name="Number Of Fields" type="int" value="2"/>
       <ParameterList name="Field 0">
         <Parameter name="Field Name" type="string" value="flow_factor"/>
         <Parameter name="Field Type" type="string" value="Elem Scalar"/>
+        <Parameter name="Field Origin"  type="string" value="Mesh"/>
+      </ParameterList>
+      <ParameterList name="Field 1">
+        <Parameter name="Field Name" type="string" value="surface_height"/>
+        <Parameter name="Field Type" type="string" value="Node Scalar"/>
         <Parameter name="Field Origin"  type="string" value="Mesh"/>
       </ParameterList>
     </ParameterList>
@@ -71,6 +77,7 @@
       </ParameterList>
     </ParameterList>
   </ParameterList>
+
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
     <Parameter  name="Test Values" type="Array(double)" value="{77.9162527533, 77.9162527533, 0.0}"/>
@@ -81,12 +88,13 @@
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>
+
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>
       <ParameterList name="Predictor">
-  <Parameter  name="Method" type="string" value="Constant"/>
+        <Parameter  name="Method" type="string" value="Constant"/>
       </ParameterList>
       <ParameterList name="Stepper">
   <Parameter  name="Initial Value" type="double" value="0.0"/>

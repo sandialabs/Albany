@@ -31,13 +31,15 @@ L2ProjectedBoundaryLaplacianResidual(Teuchos::ParameterList& p, const Teuchos::R
   const std::string& gradField_name      = p.get<std::string>("Field Gradient Name");
   const std::string& gradBFname          = p.get<std::string>("Gradient BF Side Name");
   const std::string& w_side_measure_name = p.get<std::string>("Weighted Measure Side Name");
-  const std::string& residual_name = p.get<std::string>("L2 Projected Boundary Laplacian Residual Name");
+  const std::string& side_tangents_name  = p.get<std::string>("Tangents Side Name");
+  const std::string& residual_name       = p.get<std::string>("L2 Projected Boundary Laplacian Residual Name");
 
   solution           = decltype(solution)(solution_name, dl->node_scalar);
   field              = decltype(field)(field_name, dl_side->node_scalar);
   gradField          = decltype(gradField)(gradField_name, dl_side->qp_gradient);
   gradBF             = decltype(gradBF)(gradBFname,dl_side->node_qp_gradient),
   w_side_measure     = decltype(w_side_measure)(w_side_measure_name, dl_side->qp_scalar);
+  side_tangents      = decltype(side_tangents)(side_tangents_name, dl_side->qp_tensor_cd_sd);
   bdLaplacian_L2Projection_res = decltype(bdLaplacian_L2Projection_res)(residual_name, dl->node_scalar);
 
   Teuchos::RCP<shards::CellTopology> cellType;
@@ -46,7 +48,7 @@ L2ProjectedBoundaryLaplacianResidual(Teuchos::ParameterList& p, const Teuchos::R
   // Get Dimensions
   numCells  = dl->node_scalar->dimension(0);
   numNodes  = dl->node_scalar->dimension(1);
- 
+
   numSideNodes  = dl_side->node_scalar->dimension(2);
   numBasalQPs = dl_side->qp_scalar->dimension(2);
   int numSides = dl_side->node_scalar->dimension(1);
@@ -57,7 +59,7 @@ L2ProjectedBoundaryLaplacianResidual(Teuchos::ParameterList& p, const Teuchos::R
   this->addDependentField(gradField);
   this->addDependentField(gradBF);
   this->addDependentField(w_side_measure);
-
+  this->addDependentField(side_tangents);
 
   this->addEvaluatedField(bdLaplacian_L2Projection_res);
 
@@ -88,6 +90,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(gradField, fm);
   this->utils.setFieldData(gradBF, fm);
   this->utils.setFieldData(w_side_measure, fm);
+  this->utils.setFieldData(side_tangents, fm);
 
   this->utils.setFieldData(bdLaplacian_L2Projection_res, fm);
 }
@@ -100,11 +103,11 @@ void FELIX::L2ProjectedBoundaryLaplacianResidual<EvalT, Traits>::evaluateFields(
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::logic_error,
                               "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
-  
+
   for (int cell=0; cell<numCells; ++cell)
     for (int inode=0; inode<numNodes; ++inode)
       bdLaplacian_L2Projection_res(cell,inode) = solution(cell,inode);
-    
+
 
   if (workset.sideSets->find(sideName) != workset.sideSets->end())
   {
@@ -122,9 +125,24 @@ void FELIX::L2ProjectedBoundaryLaplacianResidual<EvalT, Traits>::evaluateFields(
 
       for (int inode=0; inode<numSideNodes; ++inode) {
         ScalarT t = 0;
-        for (int qp=0; qp<numBasalQPs; ++qp)
-          for (int idim=0; idim<sideDim; ++idim)
-            t -= laplacian_coeff*gradField(cell,side,qp,idim)*gradBF(cell,side,inode, qp,idim)*w_side_measure(cell,side, qp);
+        for (int qp=0; qp<numBasalQPs; ++qp) {
+          for (int icoor=0; icoor<sideDim; ++icoor) {
+            ScalarT gradField_i(0.0), gradBF_i(0.0);
+            for (int itan=0; itan<sideDim; ++itan) {
+              gradField_i += side_tangents(cell,side,qp,icoor,itan)*gradField(cell,side,qp,itan);
+              gradBF_i    += side_tangents(cell,side,qp,icoor,itan)*gradBF(cell,side,inode,qp,itan);
+            }
+
+            t -= laplacian_coeff * gradField_i*gradBF_i * w_side_measure(cell,side,qp);
+          }
+        }
+        //for (int qp=0; qp<numBasalQPs; ++qp)
+        //  for (int idim=0; idim<sideDim; ++idim)
+        //    for (int jdim=0; jdim<sideDim; ++jdim)
+        //      for (int icoor=0; icoor<sideDim; ++icoor) // Note: if icoor<cellDim, then tangents(...)*tangents(...)=metric
+        //        t -= laplacian_coeff*side_tangents(cell,side,qp,icoor,idim)*gradField(cell,side,qp,idim)
+        //                            *side_tangents(cell,side,qp,icoor,jdim)*gradBF(cell,side,inode, qp,jdim)
+        //                            *w_side_measure(cell,side, qp);
 
         //using trapezoidal rule to get diagonal mass matrix
         t += (solution(cell,sideNodes[side][inode])-mass_coeff*field(cell,side,inode))* trapezoid_weights;

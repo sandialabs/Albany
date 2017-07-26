@@ -52,9 +52,9 @@ ElementSizeFieldBase(Teuchos::ParameterList& p,
   numQPs = vector_dl->dimension(1);
   numDims = vector_dl->dimension(2);
   numVertices = vert_vector_dl->dimension(2);
-  this->addDependentField(qp_weights);
-  this->addDependentField(coordVec);
-  this->addDependentField(coordVec_vertices);
+  this->addDependentField(qp_weights.fieldTag());
+  this->addDependentField(coordVec.fieldTag());
+  this->addDependentField(coordVec_vertices.fieldTag());
 
   //! Register with state manager
   this->pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");

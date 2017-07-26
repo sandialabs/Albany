@@ -45,6 +45,7 @@
 #include "QCAD_CoupledPoissonSchrodinger.hpp"
 #include "QCAD_GenEigensolver.hpp"
 #include "QCAD_Solver.hpp"
+#include "QCADT_Solver.hpp"
 #endif
 #include "QCADT_CoupledPoissonSchrodinger.hpp"
 #endif
@@ -582,10 +583,10 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
         "QCAD Multi-Problem does not work with AlbanyT executable!  "
         "QCAD::Solver class needs to be implemented with Thyra::ModelEvaluator "
         "instead of EpetraExt. \n");
-// IK, 8/26/14: need to implement QCAD::SolverT class that returns
+// IK, 7/25/17: need to finish implementing QCADT::Solver class that returns
 // Thyra::ModelEvaluator instead of EpetraExt one
-// and takes in Tpetra / Teuchos_Comm objects.
-// return rcp(new QCAD::SolverT(appParams, solverComm, initial_guess));
+// and takes in Tpetra objects.
+    //return rcp(new QCADT::Solver(appParams, solverComm, initial_guess));
 #else  /* ALBANY_QCAD */
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
 #endif /* ALBANY_QCAD */

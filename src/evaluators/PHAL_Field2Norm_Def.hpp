@@ -10,12 +10,12 @@
 //uncomment the following line if you want debug output to be printed to screen
 #define OUTPUT_TO_SCREEN
 
-namespace FELIX {
+namespace PHAL {
 
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
-FieldNormBase<EvalT, Traits, ScalarT>::
-FieldNormBase (const Teuchos::ParameterList& p,
+Field2NormBase<EvalT, Traits, ScalarT>::
+Field2NormBase (const Teuchos::ParameterList& p,
                const Teuchos::RCP<Albany::Layouts>& dl)
 {
   std::string fieldName = p.get<std::string> ("Field Name");
@@ -130,23 +130,27 @@ FieldNormBase (const Teuchos::ParameterList& p,
   if (type=="None")
   {
     regularization_type = NONE;
+    regularization = 0.0;
   }
   else if (type=="Given Value")
   {
     regularization_type = GIVEN_VALUE;
     regularization = options.get<double>("Regularization Value");
+    printedReg = -1.0;
   }
   else if (type=="Given Parameter")
   {
     regularization_type = GIVEN_PARAMETER;
     regularizationParam = decltype(regularizationParam)(options.get<std::string>("Regularization Parameter Name"),dl->shared_param);
     this->addDependentField(regularizationParam);
+    printedReg = -1.0;
   }
   else if (type=="Parameter Exponential")
   {
     regularization_type = PARAMETER_EXPONENTIAL;
     regularizationParam = decltype(regularizationParam)(options.get<std::string>("Regularization Parameter Name"),dl->shared_param);
     this->addDependentField(regularizationParam);
+    printedReg = -1.0;
   }
   else
   {
@@ -155,12 +159,12 @@ FieldNormBase (const Teuchos::ParameterList& p,
 
   numDims = dims.size();
 
-  this->setName("FieldNormBase"+PHX::typeAsString<EvalT>());
+  this->setName("Field2NormBase(" + fieldNormName + ")" + PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
-void FieldNormBase<EvalT, Traits, ScalarT>::
+void Field2NormBase<EvalT, Traits, ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -173,30 +177,31 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
-void FieldNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
+void Field2NormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
   if (regularization_type==GIVEN_PARAMETER)
-    regularization = Albany::ScalarConverter<ScalarT>::apply(regularizationParam(0));
+    regularization = Albany::convertScalar<EScalarT,ScalarT>(regularizationParam(0));
   else if (regularization_type==PARAMETER_EXPONENTIAL)
-    regularization = pow(10.0, -10.0*Albany::ScalarConverter<ScalarT>::apply(regularizationParam(0)));
+    regularization = pow(10.0, -10.0*Albany::convertScalar<EScalarT,ScalarT>(regularizationParam(0)));
 
 #ifdef OUTPUT_TO_SCREEN
+  if (regularization_type!=NONE)
+  {
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
-
-    if (regularization_type!=NONE)
-      if (std::fabs(printedReg-regularization)>1e-6*regularization)
-      {
-          *output << "[Field Norm<" << PHX::typeAsString<EvalT>() << ">]] reg = " << regularization << "\n";
-          printedReg = regularization;
-      }
+    if (std::fabs(printedReg-regularization)>1e-6*regularization)
+    {
+        *output << "[Field Norm<" << PHX::typeAsString<EvalT>() << ">]] reg = " << regularization << "\n";
+        printedReg = regularization;
+    }
+  }
 #endif
 
   ScalarT norm;
   switch (numDims)
   {
     case 2:
-      // Cell Vector/Gradient
-      for (int cell(0); cell<dims[0]; ++cell)
+      // <Cell,Vector/Gradient>
+      for (int cell(0); cell<workset.numCells; ++cell)
       {
         norm = 0;
         for (int dim(0); dim<dims[1]; ++dim)
@@ -207,12 +212,12 @@ void FieldNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::Eva
       }
       break;
     case 3:
-      // Cell Node/QuadPoint Vector/Gradient
-      for (int cell(0); cell<dims[0]; ++cell)
+      // <Cell,Node/QuadPoint,Vector/Gradient> or <Cell,Side,Vector/Gradient>
+      for (int cell(0); cell<workset.numCells; ++cell)
       {
-        norm = 0;
         for (int i(0); i<dims[1]; ++i)
         {
+          norm = 0;
           for (int dim(0); dim<dims[2]; ++dim)
           {
             norm += std::pow(field(cell,i,dim),2);
@@ -222,7 +227,7 @@ void FieldNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::Eva
       }
       break;
     case 4:
-      // Cell Side Node/QuadPoint Vector/Gradient
+      // <Cell,Side,Node/QuadPoint,Vector/Gradient>
       {
         const Albany::SideSetList& ssList = *(workset.sideSets);
         Albany::SideSetList::const_iterator it_ss = ssList.find(sideSetName);
@@ -238,9 +243,9 @@ void FieldNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::Eva
           const int cell = iter_s->elem_LID;
           const int side = iter_s->side_local_id;
 
-          norm = 0;
           for (int i(0); i<dims[2]; ++i)
           {
+            norm = 0;
             for (int dim(0); dim<dims[3]; ++dim)
             {
               norm += std::pow(field(cell,side,i,dim),2);
@@ -255,4 +260,4 @@ void FieldNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::Eva
   }
 }
 
-} // Namespace FELIX
+} // namespace PHAL

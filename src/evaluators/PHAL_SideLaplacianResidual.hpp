@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_ELLIPTIC_2D_RESIDUAL_HPP
-#define FELIX_ELLIPTIC_2D_RESIDUAL_HPP 1
+#ifndef PHAL_SIDE_LAPLACIAN_RESIDUAL_HPP
+#define PHAL_SIDE_LAPLACIAN_RESIDUAL_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -13,19 +13,19 @@
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 
-namespace FELIX
+namespace PHAL
 {
 
 template<typename EvalT, typename Traits>
-class Elliptic2DResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
+class SideLaplacianResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
                            public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  Elliptic2DResidual (const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl);
+  SideLaplacianResidual (const Teuchos::ParameterList& p,
+                         const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
@@ -34,18 +34,19 @@ public:
 
 private:
 
-  double getValue(const ScalarT& v);
+  void evaluateFieldsCell (typename Traits::EvalData d);
+  void evaluateFieldsSide (typename Traits::EvalData d);
+
   typedef typename EvalT::MeshScalarT                   MeshScalarT;
 
   // Input:
-  PHX::MDField<const RealType>                                BF;
-  PHX::MDField<const RealType>                                GradBF;
-  PHX::MDField<const RealType>                                w_measure;
-  PHX::MDField<const RealType,Cell,Side,QuadPoint,Dim,Dim>    inv_metric; // Only used in 2D, so we know the layout
+  PHX::MDField<RealType>                                BF;
+  PHX::MDField<RealType>                                GradBF;
+  PHX::MDField<RealType>                                w_measure;
+  PHX::MDField<RealType,Cell,Side,QuadPoint,Dim,Dim>    metric; // Only used in 2D, so we know the layout
 
-  PHX::MDField<const ScalarT>                                 u;
-  PHX::MDField<const ScalarT>                                 grad_u;
-  PHX::MDField<const MeshScalarT>                             coords;
+  PHX::MDField<ScalarT>                                 u;
+  PHX::MDField<ScalarT>                                 grad_u;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node>                       residual; // Always a 3D residual, so we know the layout
@@ -53,6 +54,7 @@ private:
   std::string                     sideSetName;
   std::vector<std::vector<int> >  sideNodes;
 
+  int spaceDim;
   int gradDim;
   int numSideNodes;
   int numSideQPs;
@@ -62,6 +64,6 @@ private:
   bool sideSetEquation;
 };
 
-} // Namespace FELIX
+} // Namespace PHAL
 
-#endif // FELIX_ELLIPTIC_2D_RESIDUAL_HPP
+#endif // PHAL_SIDE_LAPLACIAN_RESIDUAL_HPP

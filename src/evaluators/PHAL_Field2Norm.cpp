@@ -1,12 +1,12 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "PHAL_ResponseSquaredL2ErrorSide.hpp"
-#include "PHAL_ResponseSquaredL2ErrorSide_Def.hpp"
+#include "PHAL_Field2Norm.hpp"
+#include "PHAL_Field2Norm_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(PHAL::ResponseSquaredL2ErrorSideBase)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(PHAL::Field2NormBase)

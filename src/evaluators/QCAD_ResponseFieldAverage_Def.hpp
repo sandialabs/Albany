@@ -49,9 +49,9 @@ ResponseFieldAverage(Teuchos::ParameterList& p,
   field = decltype(field)(fieldName, scalar_dl);
 
   // add dependent fields
-  this->addDependentField(field);
-  this->addDependentField(coordVec);
-  this->addDependentField(weights);
+  this->addDependentField(field.fieldTag());
+  this->addDependentField(coordVec.fieldTag());
+  this->addDependentField(weights.fieldTag());
   opRegion->addDependentFields(this);
 
   this->setName(fieldName+" Response Field Average" );

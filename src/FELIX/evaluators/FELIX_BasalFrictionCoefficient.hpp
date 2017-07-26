@@ -22,12 +22,8 @@ namespace FELIX
 */
 
 template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes>
-class BasalFrictionCoefficient;
-
-// Partial specialization for StokesFO, StokesFOThickness and StokesFOHydrology problems
-template<typename EvalT, typename Traits, bool IsHydrology>
-class BasalFrictionCoefficient<EvalT,Traits,IsHydrology,true> : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                                                public PHX::EvaluatorDerived<EvalT, Traits>
+class BasalFrictionCoefficient : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                 public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
@@ -35,6 +31,7 @@ public:
   typedef typename EvalT::MeshScalarT   MeshScalarT;
   typedef typename EvalT::ParamScalarT  ParamScalarT;
 
+  typedef typename std::conditional<IsStokes,ScalarT,ParamScalarT>::type     IceScalarT;
   typedef typename std::conditional<IsHydrology,ScalarT,ParamScalarT>::type  HydroScalarT;
 
   BasalFrictionCoefficient (const Teuchos::ParameterList& p,
@@ -46,6 +43,9 @@ public:
   void evaluateFields (typename Traits::EvalData d);
 
 private:
+
+  void evaluateFieldsSide (typename Traits::EvalData d, ScalarT mu, ScalarT lambda, ScalarT power);
+  void evaluateFieldsCell (typename Traits::EvalData d, ScalarT mu, ScalarT lambda, ScalarT power);
 
   // Coefficients for computing beta (if not given)
   PHX::MDField<const ScalarT,Dim> muParam;              // Coulomb friction coefficient
@@ -61,19 +61,19 @@ private:
 
   // Input:
   PHX::MDField<const ParamScalarT>      beta_given_field;
-  PHX::MDField<ParamScalarT,Cell,Node>  beta_given_node_field;
-  PHX::MDField<const RealType,Cell,Node,Side,QuadPoint> bF;
-  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>           u_norm;
-  PHX::MDField<const HydroScalarT,Cell,Side,QuadPoint>      N;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>   coordVec;
+  PHX::MDField<const RealType>          BF;
+  PHX::MDField<const IceScalarT>        u_norm;
+  PHX::MDField<const ParamScalarT>      lambdaField;
+  PHX::MDField<const HydroScalarT>      N;
+  PHX::MDField<const MeshScalarT>       coordVec;
 
-  PHX::MDField<const ParamScalarT> bed_topo_field;
-  PHX::MDField<const ParamScalarT> thickness_field;
+  PHX::MDField<const ParamScalarT>      bed_topo_field;
+  PHX::MDField<const ParamScalarT>      thickness_field;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>           beta;
+  PHX::MDField<ScalarT>       beta;
 
-  std::string                         basalSideName;
+  std::string                 basalSideName;  // Only if IsStokes=true
 
   bool use_stereographic_map, zero_on_floating;
 
@@ -86,53 +86,11 @@ private:
   int numNodes;
   int numQPs;
 
+  bool logParameters;
+  bool distributedLambda;
   bool regularize;
 
   enum BETA_TYPE {GIVEN_CONSTANT, GIVEN_FIELD, EXP_GIVEN_FIELD, GAL_PROJ_EXP_GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
-  BETA_TYPE beta_type;
-};
-
-// Partial Specialization for Hydrology only problem
-template<typename EvalT, typename Traits>
-class BasalFrictionCoefficient<EvalT,Traits,true,false> : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                                          public PHX::EvaluatorDerived<EvalT, Traits>
-{
-public:
-
-  typedef typename EvalT::ScalarT       ScalarT;
-  typedef typename EvalT::MeshScalarT   MeshScalarT;
-  typedef typename EvalT::ParamScalarT  ParamScalarT;
-
-  BasalFrictionCoefficient (const Teuchos::ParameterList& p,
-                            const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& vm);
-
-  void evaluateFields (typename Traits::EvalData d);
-
-private:
-
-  double beta_given_val;  // Constant value (for CONSTANT only)
-
-  // Input:
-  PHX::MDField<const ParamScalarT> beta_given_field;
-  PHX::MDField<const RealType,Cell,Node, QuadPoint> bF;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim>  coordVec;
-
-  // Output:
-  PHX::MDField<ParamScalarT,Cell,QuadPoint>     beta;
-
-  bool use_stereographic_map;
-
-  double x_0;
-  double y_0;
-  double R2;
-
-  int numNodes;
-  int numQPs;
-
-  enum BETA_TYPE {GIVEN_CONSTANT, GIVEN_FIELD, EXP_GIVEN_FIELD, GAL_PROJ_EXP_GIVEN_FIELD};
   BETA_TYPE beta_type;
 };
 

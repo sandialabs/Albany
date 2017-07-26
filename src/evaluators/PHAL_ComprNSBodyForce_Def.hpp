@@ -34,7 +34,7 @@ ComprNSBodyForce(const Teuchos::ParameterList& p) :
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
-    this->addDependentField(coordVec);
+    this->addDependentField(coordVec.fieldTag());
   }
 
   this->addEvaluatedField(force);

@@ -50,6 +50,7 @@ private:
   PHX::MDField<const ScalarT,Cell,Side,QuadPoint>              div_averaged_velocity;
   PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         thickness;
   PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint,Dim>     grad_thickness;
+  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  side_tangents;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Side,QuadPoint>              flux_div;

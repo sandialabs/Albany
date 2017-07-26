@@ -7,7 +7,6 @@
 #ifndef FELIX_RESPONSE_SURFACE_VELOCITY_MISMATCH_HPP
 #define FELIX_RESPONSE_SURFACE_VELOCITY_MISMATCH_HPP
 
-//#include "FELIX_MeshRegion.hpp"
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 
 namespace FELIX {
@@ -53,6 +52,9 @@ namespace FELIX {
     PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         stiffening;
     PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>          w_measure_basal;
     PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>          w_measure_surface;
+
+    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  metric_basal;
+    //PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  metric_surface;
 
     ScalarT p_resp, p_reg, resp, reg, p_reg_stiffening,reg_stiffening;
     double scaling, alpha, asinh_scaling, alpha_stiffening;

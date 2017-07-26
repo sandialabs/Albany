@@ -20,7 +20,7 @@ StokesRm(const Teuchos::ParameterList& p,
   V      (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
   force  (p.get<std::string> ("Body Force QP Variable Name"), dl->qp_vector),
   Rm     (p.get<std::string> ("Rm Name"), dl->qp_vector)
- 
+
 {
   coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
@@ -29,7 +29,7 @@ StokesRm(const Teuchos::ParameterList& p,
   this->addDependentField(pGrad);
   this->addDependentField(VGrad);
   this->addDependentField(V);
-  this->addDependentField(force); 
+  this->addDependentField(force);
   this->addEvaluatedField(Rm);
 
   std::vector<PHX::DataLayout::size_type> dims;
@@ -53,7 +53,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(force,fm);
   this->utils.setFieldData(coordVec,fm);
 
-  this->utils.setFieldData(Rm,fm); 
+  this->utils.setFieldData(Rm,fm);
 }
 
 //**********************************************************************
@@ -62,11 +62,11 @@ void StokesRm<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {      
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t i=0; i < numDims; ++i) {
         Rm(cell,qp,i) = 0;
-        Rm(cell,qp,i) += pGrad(cell,qp,i)+force(cell,qp,i); 
-      } 
+        Rm(cell,qp,i) += pGrad(cell,qp,i)+force(cell,qp,i);
+      }
     }
   }
 }

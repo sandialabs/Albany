@@ -17,15 +17,15 @@ namespace FELIX
   template<typename EvalT, typename Traits, typename VelocityType>
   BasalMeltRate<EvalT,Traits,VelocityType>::
   BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl_basal):
-  phi					(p.get<std::string> ("Water Content Side Variable Name"),dl_basal->node_scalar),
-  geoFluxHeat			(p.get<std::string> ("Geothermal Flux Side Variable Name"),dl_basal->node_scalar),
-  velocity			(p.get<std::string> ("Velocity Side Variable Name"),dl_basal->node_vector),
-  beta				(p.get<std::string> ("Basal Friction Coefficient Side Variable Name"),dl_basal->node_scalar),
-  EnthalpyHs			(p.get<std::string> ("Enthalpy Hs Side Variable Name"),dl_basal->node_scalar),
-  Enthalpy			(p.get<std::string> ("Enthalpy Side Variable Name"),dl_basal->node_scalar),
-  basal_dTdz   (p.get<std::string> ("Basal dTdz Variable Name"),dl_basal->node_scalar),
-  basalMeltRate		(p.get<std::string> ("Basal Melt Rate Variable Name"),dl_basal->node_scalar),
-  homotopy			(p.get<std::string> ("Continuation Parameter Name"),dl_basal->shared_param)
+  phi           (p.get<std::string> ("Water Content Side Variable Name"),dl_basal->node_scalar),
+  geoFluxHeat   (p.get<std::string> ("Geothermal Flux Side Variable Name"),dl_basal->node_scalar),
+  velocity      (p.get<std::string> ("Velocity Side Variable Name"),dl_basal->node_vector),
+  beta          (p.get<std::string> ("Basal Friction Coefficient Side Variable Name"),dl_basal->node_scalar),
+  EnthalpyHs    (p.get<std::string> ("Enthalpy Hs Side Variable Name"),dl_basal->node_scalar),
+  Enthalpy      (p.get<std::string> ("Enthalpy Side Variable Name"),dl_basal->node_scalar),
+  basal_dTdz    (p.get<std::string> ("Basal dTdz Variable Name"),dl_basal->node_scalar),
+  basalMeltRate (p.get<std::string> ("Basal Melt Rate Variable Name"),dl_basal->node_scalar),
+  homotopy      (p.get<std::string> ("Continuation Parameter Name"),dl_basal->shared_param)
   {
     this->addDependentField(phi);
     this->addDependentField(geoFluxHeat);

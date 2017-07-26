@@ -77,7 +77,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   //    Several partitioning choices: rcb, rib, hsfc, kway, kway-gemo, linear, random
   //          linear does not require Zoltan or metis
   if (params->get<bool>("Use Serial Mesh", false) && commT->getSize() > 1){
-  //    Option  external  reads the nemesis files, and must be the default 
+  //    Option  external  reads the nemesis files, and must be the default
 #ifdef ALBANY_ZOLTAN
     mesh_data->property_add(Ioss::Property("DECOMPOSITION_METHOD", "rib"));
 #else
@@ -243,6 +243,11 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     this->addNodeSetsFromSideSets ();
   }
 
+  // If requested, mark all parts as io parts
+  if (params->get<bool>("Set All Parts IO", false))
+    this->setAllPartsIO();
+
+  // Initialize the (possible) other side set meshes
   this->initializeSideSetMeshStructs(commT);
 }
 
@@ -312,6 +317,12 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
       //stk::io::process_mesh_bulk_data(region, *bulkData);
       mesh_data->populate_bulk_data();
 
+      if (this->numDim!=3)
+      {
+        // Try to load 3d coordinates (if present in the input file)
+        loadOrSetCoordinates3d();
+      }
+
       //bulkData = &mesh_data->bulk_data();
 
       // Read solution from exodus file.
@@ -352,6 +363,12 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
   { // running in Serial or Parallel read from Nemspread files
     bulkData->modification_begin();
     mesh_data->populate_bulk_data();
+    if (this->numDim!=3)
+    {
+      // Try to load 3d coordinates (if present in the input file)
+      loadOrSetCoordinates3d();
+    }
+
     if (!usePamgen)
     {
       // Read solution from exodus file.
@@ -413,21 +430,25 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
           }
     }
 
-    // Read global mesh variables
+    // Read global mesh variables. Should we emit warnings at all?
     for (auto& it : fieldContainer->getMeshVectorStates())
     {
-      mesh_data->get_global (it.first, it.second, true); // Last variable is abort_if_not_found. Should it be false?
+      bool found = mesh_data->get_global (it.first, it.second, false); // Last variable is abort_if_not_found. We don't want that.
+      if (!found)
+        *out << "  *** WARNING *** Mesh vector state '" << it.first << "' was not found in the mesh database.\n";
     }
     for (auto& it : fieldContainer->getMeshScalarIntegerStates())
     {
-      mesh_data->get_global (it.first, it.second, true); // Last variable is abort_if_not_found. Should it be false?
+      bool found = mesh_data->get_global (it.first, it.second, false); // Last variable is abort_if_not_found. We don't want that.
+      if (!found)
+        *out << "  *** WARNING *** Mesh scalar integer state '" << it.first << "' was not found in the mesh database.\n";
     }
 
     //Read info for layered mehes.
     bool hasLayeredStructure=true;
     std::vector<double> ltr;
     int ordering, stride;
-  
+
     std::string state_name = "layer_thickness_ratio";
     hasLayeredStructure = hasLayeredStructure && mesh_data->get_global (state_name, ltr, false);
     if(hasLayeredStructure) fieldContainer->getMeshVectorStates()[state_name] = ltr;
@@ -452,7 +473,6 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 //      TODO, when compiler allows, replace following with this for performance: missing.emplace_back(fields[i],fields[i]->name());
         missing.push_back(stk::io::MeshField(fields[i],fields[i]->name()));
     }
-
   }
 
   // If this is a boundary mesh, the side_map/side_node_map may already be present, so we check
@@ -507,6 +527,37 @@ Albany::IossSTKMeshStruct::getSolutionFieldHistoryStamp(int step) const
   const Ioss::Region &  inputRegion = *(mesh_data->get_input_io_region());
   return inputRegion.get_state_time(index);
 }
+
+void
+Albany::IossSTKMeshStruct::loadOrSetCoordinates3d()
+{
+  const std::string coords3d_name = "coordinates3d";
+
+  Teuchos::RCP<Ioss::Region> region = mesh_data->get_input_io_region();
+  const Ioss::NodeBlockContainer& node_blocks = region->get_node_blocks();
+  Ioss::NodeBlock *nb = node_blocks[0];
+
+  if (nb->field_exists(coords3d_name))
+  {
+    // The field "coordinates3d" exists in the input mesh
+    // (which must then come from a previous Albany run), so load it.
+    std::vector<stk::mesh::Entity> nodes;
+    stk::mesh::get_entities(*bulkData,stk::topology::NODE_RANK,nodes);
+
+    stk::io::field_data_from_ioss(*bulkData, this->getCoordinatesField3d(), nodes, nb, coords3d_name);
+  }
+  else
+  {
+    // The input mesh does not store the 'coordinates3d' field
+    // (perhaps the mesh does not come from a previous Albany run).
+    // Hence, we initialize coordinates3d with coordinates,
+    // and we fill 'extra' dimensions with 0's. Hopefully, this is ok.
+
+    // Use GenericSTKMeshStruct functionality
+    this->setDefaultCoordinates3d();
+  }
+}
+
 
 void
 Albany::IossSTKMeshStruct::loadSolutionFieldHistory(int step)

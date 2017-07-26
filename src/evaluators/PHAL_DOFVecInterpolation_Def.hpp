@@ -22,8 +22,8 @@ DOFVecInterpolationBase(const Teuchos::ParameterList& p,
   BF          (p.get<std::string>  ("BF Name"),  dl->node_qp_scalar),
   val_qp      (p.get<std::string>  ("Variable Name"), dl->qp_vector)
 {
-  this->addDependentField(val_node);
-  this->addDependentField(BF);
+  this->addDependentField(val_node.fieldTag());
+  this->addDependentField(BF.fieldTag());
   this->addEvaluatedField(val_qp);
 
   this->setName("DOFVecInterpolationBase"+PHX::typeAsString<EvalT>());
@@ -140,8 +140,8 @@ DOFVecInterpolationBase(const Teuchos::ParameterList& p,
   BF          (p.get<std::string>  ("BF Name"),  dl->node_qp_scalar),
   val_qp      (p.get<std::string>  ("Variable Name"), dl->qp_vector)
 {
-  this->addDependentField(val_node);
-  this->addDependentField(BF);
+  this->addDependentField(val_node.fieldTag());
+  this->addDependentField(BF.fieldTag());
   this->addEvaluatedField(val_qp);
 
   this->setName("DOFVecInterpolationBase Jacobian");
@@ -262,8 +262,8 @@ DOFVecInterpolationBase(const Teuchos::ParameterList& p,
   BF          (p.get<std::string>  ("BF Name"),  dl->node_qp_scalar),
   val_qp      (p.get<std::string>  ("Variable Name"), dl->qp_vector)
 {
-  this->addDependentField(val_node);
-  this->addDependentField(BF);
+  this->addDependentField(val_node.fieldTag());
+  this->addDependentField(BF.fieldTag());
   this->addEvaluatedField(val_qp);
 
   this->setName("DOFVecInterpolationBase SGJacobian");
@@ -336,8 +336,8 @@ DOFVecInterpolationBase(const Teuchos::ParameterList& p,
   BF          (p.get<std::string>  ("BF Name"),  dl->node_qp_scalar),
   val_qp      (p.get<std::string>  ("Variable Name"), dl->qp_vector)
 {
-  this->addDependentField(val_node);
-  this->addDependentField(BF);
+  this->addDependentField(val_node.fieldTag());
+  this->addDependentField(BF.fieldTag());
   this->addEvaluatedField(val_qp);
 
   this->setName("DOFVecInterpolationBase MPJacobian");

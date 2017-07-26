@@ -23,6 +23,7 @@ IF(ALBANY_HAVE_STK) # STK is needed for all these
   add_subdirectory(TransientHeat1D)
   add_subdirectory(TransientHeat2D)
   add_subdirectory(HeatEigenvalues)
+  add_subdirectory(SideSetLaplacian) # Not 100% sure this requires STK, but I think so
   IF(ALBANY_SEACAS)
     IF(ALBANY_PAMGEN)
       add_subdirectory(Heat3DPamgen)

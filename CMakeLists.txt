@@ -574,8 +574,8 @@ ELSE()
   SET(ALBANY_PERIDIGM FALSE)
 ENDIF()
 
-# Set optional build of QCAD (Quantum Device Modeling and Design) defaults to ON
-OPTION(ENABLE_QCAD "Flag to turn on QCAD Source code" ON)
+# Set optional build of QCAD (Quantum Device Modeling and Design) defaults to OFF
+OPTION(ENABLE_QCAD "Flag to turn on QCAD Source code" OFF)
 IF (ENABLE_QCAD)
   ADD_DEFINITIONS(-DALBANY_QCAD)
   MESSAGE("-- QCAD      is Enabled, compiling with -DALBANY_QCAD")
@@ -1069,7 +1069,7 @@ ELSE()
 ENDIF()
 
 # optionally disable the use of the Trilinos stokhos package
-OPTION(ENABLE_STOKHOS "Flag to enable / disable the use of Stokhos in Albany" ON)
+OPTION(ENABLE_STOKHOS "Flag to enable / disable the use of Stokhos in Albany" OFF)
 IF (ENABLE_STOKHOS)
   ADD_DEFINITIONS(-DALBANY_STOKHOS)
   MESSAGE("-- Stokhos   is Enabled, compiling with -DALBANY_STOKHOS")
@@ -1351,6 +1351,9 @@ IF ((EXISTS "${Trilinos_INCLUDE_DIRS}/Teuchos_YamlParameterListHelpers.hpp")
 ENDIF()
 IF (NOT ALBANY_YAML)
   MESSAGE("-- Looking for YAML in Teuchos: NOT found.")
+  IF (ENABLE_LCM)
+    MESSAGE(FATAL_ERROR "Trilinos was not built with YAML enabled - it is required for LCM.")
+  ENDIF()
 ENDIF()
 
 # Check for the presence of MiniTensor for LCM, SCOREC, and ATO builds.

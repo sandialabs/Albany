@@ -38,7 +38,7 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   // Get Dimensions
   numCells  = dl->node_scalar->dimension(0);
   numNodes  = dl->node_scalar->dimension(1);
- 
+
   numQPs = dl->qp_scalar->dimension(1);
   cellDim  = cellType->getDimension();
 

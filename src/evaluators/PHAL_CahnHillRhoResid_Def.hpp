@@ -29,16 +29,16 @@ CahnHillRhoResid(const Teuchos::ParameterList& p) :
 
   haveNoise = p.get<bool>("Have Noise");
 
-  this->addDependentField(wBF);
-  this->addDependentField(rhoGrad);
-  this->addDependentField(wGradBF);
-  this->addDependentField(chemTerm);
+  this->addDependentField(wBF.fieldTag());
+  this->addDependentField(rhoGrad.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
+  this->addDependentField(chemTerm.fieldTag());
   this->addEvaluatedField(rhoResidual);
 
   if(haveNoise){
     noiseTerm = decltype(noiseTerm)(p.get<std::string>("Langevin Noise Term"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-    this->addDependentField(noiseTerm);
+    this->addDependentField(noiseTerm.fieldTag());
   }
 
   gamma = p.get<double>("gamma Value");

@@ -41,8 +41,8 @@ SideQuadPointsToSideInterpolationBase (const Teuchos::ParameterList& p,
 
   field_qp.dimensions(dims);
 
-  this->addDependentField (field_qp);
-  this->addDependentField (w_measure);
+  this->addDependentField (field_qp.fieldTag());
+  this->addDependentField (w_measure.fieldTag());
   this->addEvaluatedField (field_side);
 
   this->setName("SideQuadPointsToSideInterpolation"+PHX::typeAsString<EvalT>());

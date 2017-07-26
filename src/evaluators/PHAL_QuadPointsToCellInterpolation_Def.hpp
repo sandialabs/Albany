@@ -24,8 +24,8 @@ QuadPointsToCellInterpolationBase (const Teuchos::ParameterList& p,
   field_qp   = decltype(field_qp)(p.get<std::string> ("Field QP Name"), qp_layout);
   field_cell = decltype(field_cell)(p.get<std::string> ("Field Cell Name"), cell_layout);
 
-  this->addDependentField (field_qp);
-  this->addDependentField (w_measure);
+  this->addDependentField (field_qp.fieldTag());
+  this->addDependentField (w_measure.fieldTag());
   this->addEvaluatedField (field_cell);
 
   this->setName("QuadPointsToCellInterpolation"+PHX::typeAsString<EvalT>());

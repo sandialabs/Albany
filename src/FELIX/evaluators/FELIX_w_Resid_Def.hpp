@@ -18,10 +18,10 @@ namespace FELIX
   w_Resid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
   GradVelocity   (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
   basalMeltRate   (p.get<std::string>("Basal Melt Rate Variable Name"), dl->node_scalar),
-  wBF     	   (p.get<std::string> ("Weighted BF Variable Name"), dl->node_qp_scalar),
-  w_z			   (p.get<std::string> ("w Gradient QP Variable Name"), dl->qp_gradient),
+  wBF          (p.get<std::string> ("Weighted BF Variable Name"), dl->node_qp_scalar),
+  w_z        (p.get<std::string> ("w Gradient QP Variable Name"), dl->qp_gradient),
   w        (p.get<std::string> ("w Variable Name"), dl->node_scalar),
-  Residual 	   (p.get<std::string> ("Residual Variable Name"), dl->node_scalar)
+  Residual     (p.get<std::string> ("Residual Variable Name"), dl->node_scalar)
   {
     Teuchos::RCP<shards::CellTopology> cellType;
     cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");

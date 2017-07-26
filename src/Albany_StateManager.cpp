@@ -362,10 +362,12 @@ Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetNam
                                                    const Teuchos::RCP<PHX::DataLayout> &dl,
                                                    const std::string& ebName,
                                                    const bool outputToExodus,
-                                                   StateStruct::MeshFieldEntity const* fieldEntity)
+                                                   StateStruct::MeshFieldEntity const* fieldEntity,
+                                                   const std::string& meshPartName)
+
 {
   return registerSideSetStateVariable (sideSetName,stateName,fieldName,dl,ebName,
-                                       "",0.0,false,outputToExodus,"",fieldEntity,"");
+                                       "",0.0,false,outputToExodus,"",fieldEntity,meshPartName);
 }
 
 Teuchos::RCP<Teuchos::ParameterList>

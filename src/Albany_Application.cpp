@@ -95,9 +95,10 @@ Application(const RCP<const Teuchos_Comm>& comm_,
     phxGraphVisDetail(0),
     stateGraphVisDetail(0),
     params_(params), 
-    tempus_newmark_sdbcs_(false), 
     requires_sdbcs_(false), 
-    requires_orig_dbcs_(false) 
+    requires_orig_dbcs_(false),
+    no_dir_bcs_(false),
+    loca_sdbcs_valid_nonlin_solver_(true) 
 {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
@@ -119,9 +120,10 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
     morphFromInit(true), perturbBetaForDirichlets(0.0),
     phxGraphVisDetail(0),
     stateGraphVisDetail(0),
-    tempus_newmark_sdbcs_(false), 
     requires_sdbcs_(false), 
-    requires_orig_dbcs_(false) 
+    no_dir_bcs_(false),
+    loca_sdbcs_valid_nonlin_solver_(true), 
+    requires_orig_dbcs_(false)
 {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
@@ -251,6 +253,24 @@ void Albany::Application::initialSetUp(
   }
   else if (solutionMethod == "Continuation") {
     solMethod = Continuation;
+    bool const
+    have_piro = params->isSublist("Piro");
+
+    ALBANY_ASSERT(have_piro == true);
+
+    Teuchos::ParameterList &
+    piro_params = params->sublist("Piro");
+
+    bool const
+    have_nox = piro_params.isSublist("NOX");
+      
+    if (have_nox) {
+      Teuchos::ParameterList 
+      nox_params = piro_params.sublist("NOX");
+      std::string nonlinear_solver = nox_params.get<std::string>("Nonlinear Solver");
+      if (nonlinear_solver != "Line Search Based") 
+        loca_sdbcs_valid_nonlin_solver_ = false;
+    }
   }
   else if (solutionMethod == "Transient") {
     solMethod = Transient;
@@ -274,6 +294,12 @@ void Albany::Application::initialSetUp(
     Teuchos::ParameterList &
     piro_params = params->sublist("Piro");
 
+    bool const 
+    have_dbcs = params->isSublist("Dirichlet BCs"); 
+
+    if (have_dbcs == false) 
+      no_dir_bcs_ = true;   
+ 
     bool const
     have_tempus = piro_params.isSublist("Tempus");
 
@@ -319,17 +345,9 @@ void Albany::Application::initialSetUp(
       std::string nonlinear_solver = nox_params.get<std::string>("Nonlinear Solver");
  
       //Set flag marking that we are running with Tempus + d-Form Newmark + SDBCs.
-      //NOTE: this may need to be extended for other Newmark schemes meant to work with the SDBCs.
-      //This may also need to be extended for LOCA + SDBCs, if misalignment of Jacobian and residual 
-      //is encountered there. 
-      //IKT, 7/3/17, FIXME?  put in logic to check that we are running SDBCs?  That may fit better
-      //elsewhere in the code.
       if (stepper_type == "Newmark Implicit d-Form") {
         requires_sdbcs_ = true;
-        if (nonlinear_solver == "Line Search Based") {
-          tempus_newmark_sdbcs_ = true;
-        }
-        else {
+        if (nonlinear_solver != "Line Search Based") {
           TEUCHOS_TEST_FOR_EXCEPTION(
               true,
               std::logic_error,
@@ -671,7 +689,15 @@ void Albany::Application::buildProblem()
 
   problem->buildProblem(meshSpecs, stateMgr);
 
-  if ((requires_sdbcs_ == true) && (problem->useSDBCs() == false)) 
+  if ((problem->useSDBCs() == true) && (loca_sdbcs_valid_nonlin_solver_ == false))
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::logic_error,
+        "Error in Albany::Application: you are using a Nonlinear Solver other than 'Line Search Based' with SDBCs, which is not supported!  Please re-run with Nonlinear Solver = Line Search Based.\n"); 
+  }
+
+  if ((requires_sdbcs_ == true) && (problem->useSDBCs() == false) && (no_dir_bcs_ == false)) 
   {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
@@ -1653,6 +1679,7 @@ computeGlobalResidual(const double current_time,
 }
 #endif
 
+#ifndef ALBANY_LCM 
 void
 Albany::Application::
 computeGlobalResidualT(
@@ -1665,28 +1692,13 @@ computeGlobalResidualT(
 {
   // Create non-owning RCPs to Tpetra objects
   // to be passed to the implementation
-  // IKT, 6/30/17: modified the following line; 
-  // uncomment to try Tempus + SDBCs.  WIP.
-  if (tempus_newmark_sdbcs_ == false) {
-    this->computeGlobalResidualImplT(
-        current_time,
-        Teuchos::rcp(xdotT, false),
-        Teuchos::rcp(xdotdotT, false),
-        Teuchos::rcpFromRef(xT),
-        p,
-        Teuchos::rcpFromRef(fT));
-  }
-#ifdef ALBANY_LCM
-  else { 
-    this->computeGlobalResidualTempusSDBCsImplT( 
-        current_time,
-        Teuchos::rcp(xdotT, false),
-        Teuchos::rcp(xdotdotT, false),
-        Teuchos::rcpFromRef(xT),
-        p,
-        Teuchos::rcpFromRef(fT));
-  }
-#endif
+  this->computeGlobalResidualImplT(
+      current_time,
+      Teuchos::rcp(xdotT, false),
+      Teuchos::rcp(xdotdotT, false),
+      Teuchos::rcpFromRef(xT),
+      p,
+      Teuchos::rcpFromRef(fT));
 
   //Debut output
   if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
@@ -1720,6 +1732,71 @@ computeGlobalResidualT(
     countRes++;  //increment residual counter
   }
 }
+#else
+void
+Albany::Application::
+computeGlobalResidualT(
+    const double current_time,
+    const Tpetra_Vector* xdotT,
+    const Tpetra_Vector* xdotdotT,
+    const Tpetra_Vector& xT,
+    const Teuchos::Array<ParamVec>& p,
+    Tpetra_Vector& fT)
+{
+  // Create non-owning RCPs to Tpetra objects
+  // to be passed to the implementation
+  if (problem->useSDBCs() == false) {
+    this->computeGlobalResidualImplT(
+        current_time,
+        Teuchos::rcp(xdotT, false),
+        Teuchos::rcp(xdotdotT, false),
+        Teuchos::rcpFromRef(xT),
+        p,
+        Teuchos::rcpFromRef(fT));
+  }
+  else { 
+    this->computeGlobalResidualSDBCsImplT( 
+        current_time,
+        Teuchos::rcp(xdotT, false),
+        Teuchos::rcp(xdotdotT, false),
+        Teuchos::rcpFromRef(xT),
+        p,
+        Teuchos::rcpFromRef(fT));
+  }
+
+  //Debut output
+  if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
+    char name[100];  //create string for file name
+    if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
+      sprintf(name, "rhs%i.mm", countRes);
+      Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(fT));
+    }
+    else {
+      if (countRes == writeToMatrixMarketRes) { //write residual only at requested count#
+        sprintf(name, "rhs%i.mm", countRes);
+        Tpetra_MatrixMarket_Writer::writeDenseFile(
+            name,
+            Teuchos::rcpFromRef(fT));
+      }
+    }
+  }
+  if (writeToCoutRes != 0) { //If requesting writing of residual to cout...
+    if (writeToCoutRes == -1) { //cout residual time it arises
+      std::cout << "Global Residual #" << countRes << ": " << std::endl;
+      fT.describe(*out, Teuchos::VERB_EXTREME);
+    }
+    else {
+      if (countRes == writeToCoutRes) { //cout residual only at requested count#
+        std::cout << "Global Residual #" << countRes << ": " << std::endl;
+        fT.describe(*out, Teuchos::VERB_EXTREME);
+      }
+    }
+  }
+  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0) {
+    countRes++;  //increment residual counter
+  }
+}
+#endif
 
 #if defined(ALBANY_EPETRA)
 double
@@ -5928,7 +6005,7 @@ setCoupledAppBlockNodeset(
 
 void
 Albany::Application::
-computeGlobalResidualTempusSDBCsImplT(
+computeGlobalResidualSDBCsImplT(
     double const current_time,
     Teuchos::RCP<Tpetra_Vector const> const & xdotT,
     Teuchos::RCP<Tpetra_Vector const> const & xdotdotT,
@@ -6034,21 +6111,23 @@ computeGlobalResidualTempusSDBCsImplT(
     if (Teuchos::nonnull(rc_mgr)) rc_mgr->init_x_if_not(xT->getMap());
 
     PHAL::Workset workset;
-
+    double this_time; 
     if (!paramLib->isParameter("Time")) {
       loadBasicWorksetInfoT(workset, current_time);
+      this_time = current_time; 
     }
     else {
       loadBasicWorksetInfoT(workset,
           paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
+      this_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"); 
     }
  
 #ifdef DEBUG_OUTPUT 
-    *out << "IKT previous_time, current_time = " << previous_time << ", " << current_time << "\n"; 
+    *out << "IKT previous_time, this_time = " << previous_time << ", " << this_time << "\n"; 
 #endif
-    //Check if previous_time is same as current_time.  If not, we are at the start 
+    //Check if previous_time is same as current time.  If not, we are at the start 
     //of a new time step, so we set boolean parameter to true. 
-    if (previous_time != current_time) begin_time_step = true;  
+    if (previous_time != this_time) begin_time_step = true;  
 
     workset.fT = overlapped_fT;
 
@@ -6136,8 +6215,8 @@ computeGlobalResidualTempusSDBCsImplT(
     xT_post_SDBCs = Teuchos::rcp(new Tpetra_Vector(*workset.xT)); 
   }
 
-  //if (begin_time_step == true) {
-  if (countRes == 0) {
+  if (begin_time_step == true) {
+  //if (countRes == 0) {
     // Zero out overlapped residual - Tpetra
     overlapped_fT->putScalar(0.0);
     fT->putScalar(0.0);

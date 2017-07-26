@@ -50,8 +50,8 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 #endif
     beta_type = GIVEN_FIELD;
 
-    beta_given = PHX::MDField<const ParamScalarT,Cell,Side,Node>(p.get<std::string> ("Beta Given Variable Name"), dl->node_scalar);
-    GradBF     = PHX::MDField<const MeshScalarT,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Variable Name"), dl->node_qp_gradient);
+    beta_given = PHX::MDField<ParamScalarT,Cell,Side,Node>(beta_list.get<std::string> ("Beta Given Variable Name"), dl->node_scalar);
+    GradBF     = PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Variable Name"), dl->node_qp_gradient);
 
     this->addDependentField (beta_given);
     this->addDependentField (GradBF);
@@ -65,15 +65,15 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 #endif
     beta_type = REGULARIZED_COULOMB;
 
-    N      = PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Effective Pressure QP Name"), dl->qp_scalar);
-    U      = PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Basal Velocity QP Name"), dl->qp_vector);
-    gradN  = PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Effective Pressure Gradient QP Name"), dl->qp_gradient);
-    gradU  = PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim,Dim>(p.get<std::string> ("Basal Velocity Gradient QP Name"), dl->qp_vecgradient);
-    u_norm = PHX::MDField<const ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Sliding Velocity QP Name"), dl->qp_scalar);
+    N      = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Effective Pressure QP Name"), dl->qp_scalar);
+    U      = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Basal Velocity QP Name"), dl->qp_vector);
+    gradN  = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Effective Pressure Gradient QP Name"), dl->qp_gradient);
+    gradU  = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim,Dim>(p.get<std::string> ("Basal Velocity Gradient QP Name"), dl->qp_vecgradient);
+    u_norm = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Sliding Velocity QP Name"), dl->qp_scalar);
 
-    muParam        = PHX::MDField<const ScalarT,Dim>("Coulomb Friction Coefficient", dl->shared_param);
-    lambdaParam    = PHX::MDField<const ScalarT,Dim>("Bed Roughness", dl->shared_param);
-    powerParam     = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
+    muParam        = PHX::MDField<ScalarT,Dim>("Coulomb Friction Coefficient", dl->shared_param);
+    lambdaParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
+    powerParam     = PHX::MDField<ScalarT,Dim>("Power Exponent", dl->shared_param);
 
     this->addDependentField (N);
     this->addDependentField (U);

@@ -1,6 +1,6 @@
 ##*****************************************************************//
 ##    Albany 3.0:  Copyright 2016 Sandia Corporation               //
-#    This Software is released under the BSD license detailed     //
+##    This Software is released under the BSD license detailed     //
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
@@ -28,8 +28,8 @@ SET(SOURCES
   PHAL_Utilities.cpp
   )
 
-#IKT, FIXME: remove OR ALBANY_ATO from following if when 
-#ATO is free of Epetra 
+#IKT, FIXME: remove OR ALBANY_ATO from following if when
+#ATO is free of Epetra
 IF (ALBANY_EPETRA OR ALBANY_ATO)
   SET(SOURCES ${SOURCES} Albany_ObserverFactory.cpp)
   IF(ALBANY_64BIT_INT)
@@ -141,6 +141,7 @@ SET(SOURCES ${SOURCES}
   problems/Albany_ProblemFactory.cpp
   problems/Albany_ProblemUtils.cpp
   problems/Albany_ResponseUtilities.cpp
+  problems/Albany_SideLaplacianProblem.cpp
   problems/Albany_MaterialDatabase.cpp
   )
 SET(PDE_SRCS
@@ -166,6 +167,7 @@ SET(HEADERS ${HEADERS}
   problems/Albany_ProblemUtils.hpp
   problems/Albany_ResponseUtilities.hpp
   problems/Albany_ResponseUtilities_Def.hpp
+  problems/Albany_SideLaplacianProblem.hpp
   problems/Albany_MaterialDatabase.hpp
   )
 SET(PDE_HDRS
@@ -293,7 +295,6 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_DOFInterpolationSide.cpp
   evaluators/PHAL_DOFGradInterpolation.cpp
   evaluators/PHAL_DOFGradInterpolationSide.cpp
-  evaluators/PHAL_DOFDivInterpolationSide.cpp
   evaluators/PHAL_DOFSideToCell.cpp
   evaluators/PHAL_DOFVecGradInterpolation.cpp
   evaluators/PHAL_DOFVecGradInterpolationSide.cpp
@@ -301,6 +302,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_DOFTensorInterpolation.cpp
   evaluators/PHAL_DOFVecInterpolation.cpp
   evaluators/PHAL_DOFVecInterpolationSide.cpp
+  evaluators/PHAL_Field2Norm.cpp
   evaluators/PHAL_GatherAuxData.cpp
   evaluators/PHAL_GatherCoordinateVector.cpp
   evaluators/PHAL_GatherScalarNodalParameter.cpp
@@ -318,6 +320,8 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_NSMaterialProperty.cpp
   evaluators/PHAL_QuadPointsToCellInterpolation.cpp
   evaluators/PHAL_ResponseFieldIntegralT.cpp
+  evaluators/PHAL_ResponseSquaredL2Difference.cpp
+  evaluators/PHAL_ResponseSquaredL2DifferenceSide.cpp
   evaluators/PHAL_ResponseThermalEnergyT.cpp
   evaluators/PHAL_SaveCellStateField.cpp
   evaluators/PHAL_SaveNodalField.cpp
@@ -327,10 +331,9 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_ScatterScalarResponse.cpp
   evaluators/PHAL_SeparableScatterScalarResponseT.cpp
   evaluators/PHAL_SharedParameter.cpp
+  evaluators/PHAL_SideLaplacianResidual.cpp
   evaluators/PHAL_SideQuadPointsToSideInterpolation.cpp
   evaluators/PHAL_Source.cpp
-  evaluators/PHAL_ResponseSquaredL2Error.cpp
-  evaluators/PHAL_ResponseSquaredL2ErrorSide.cpp
   evaluators/PHAL_ThermalConductivity.cpp
   evaluators/QCAD_EvaluatorTools.cpp
   evaluators/QCAD_MathVector.cpp
@@ -410,8 +413,6 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_DOFGradInterpolation_Def.hpp
   evaluators/PHAL_DOFGradInterpolationSide.hpp
   evaluators/PHAL_DOFGradInterpolationSide_Def.hpp
-  evaluators/PHAL_DOFDivInterpolationSide.hpp
-  evaluators/PHAL_DOFDivInterpolationSide_Def.hpp
   evaluators/PHAL_DOFInterpolation.hpp
   evaluators/PHAL_DOFInterpolation_Def.hpp
   evaluators/PHAL_DOFInterpolationSide.hpp
@@ -430,6 +431,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_DOFVecInterpolation_Def.hpp
   evaluators/PHAL_DOFVecInterpolationSide.hpp
   evaluators/PHAL_DOFVecInterpolationSide_Def.hpp
+  evaluators/PHAL_Field2Norm.hpp
+  evaluators/PHAL_Field2Norm_Def.hpp
   evaluators/PHAL_GatherAuxData.hpp
   evaluators/PHAL_GatherAuxData_Def.hpp
   evaluators/PHAL_GatherCoordinateVector.hpp
@@ -464,10 +467,10 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_QuadPointsToCellInterpolation_Def.hpp
   evaluators/PHAL_ResponseFieldIntegralT.hpp
   evaluators/PHAL_ResponseFieldIntegralT_Def.hpp
-  evaluators/PHAL_ResponseSquaredL2Error.hpp
-  evaluators/PHAL_ResponseSquaredL2Error_Def.hpp
-  evaluators/PHAL_ResponseSquaredL2ErrorSide.hpp
-  evaluators/PHAL_ResponseSquaredL2ErrorSide_Def.hpp
+  evaluators/PHAL_ResponseSquaredL2Difference.hpp
+  evaluators/PHAL_ResponseSquaredL2Difference_Def.hpp
+  evaluators/PHAL_ResponseSquaredL2DifferenceSide.hpp
+  evaluators/PHAL_ResponseSquaredL2DifferenceSide_Def.hpp
   evaluators/PHAL_ResponseThermalEnergyT.hpp
   evaluators/PHAL_ResponseThermalEnergyT_Def.hpp
   evaluators/PHAL_SaveCellStateField.hpp
@@ -486,6 +489,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_SeparableScatterScalarResponseT_Def.hpp
   evaluators/PHAL_SharedParameter.hpp
   evaluators/PHAL_SharedParameter_Def.hpp
+  evaluators/PHAL_SideLaplacianResidual.hpp
+  evaluators/PHAL_SideLaplacianResidual_Def.hpp
   evaluators/PHAL_SideQuadPointsToSideInterpolation.hpp
   evaluators/PHAL_SideQuadPointsToSideInterpolation_Def.hpp
   evaluators/PHAL_Source.hpp
@@ -865,22 +870,22 @@ IF (ALBANY_EPETRA)
 ENDIF()
 
 add_executable(AlbanyT Main_SolveT.cpp)
-IF (ALBANY_TEMPUS) 
-  add_executable(AlbanyTempus Main_SolveT_Tempus.cpp) 
-ENDIF() 
+IF (ALBANY_TEMPUS)
+  add_executable(AlbanyTempus Main_SolveT_Tempus.cpp)
+ENDIF()
 
 SET(ALBANY_EXECUTABLES AlbanyT)
 IF (ALBANY_EPETRA)
   SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} Albany )
 ENDIF()
-IF (ALBANY_TEMPUS) 
+IF (ALBANY_TEMPUS)
   SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyTempus )
 ENDIF()
 
-IF (ALBANY_MPMD) 
-  add_executable(AlbanyMPMD Main_SolveT_MPMD.cpp) 
+IF (ALBANY_MPMD)
+  add_executable(AlbanyMPMD Main_SolveT_MPMD.cpp)
   SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMPMD )
-ENDIF() 
+ENDIF()
 
 
 if (ALBANY_STOKHOS AND ALBANY_EPETRA)

@@ -36,13 +36,11 @@
 #include "FELIX_ParamEnum.hpp"
 #include "PHAL_ScatterScalarNodalParameter.hpp"
 
+#include "FELIX_DOFDivInterpolationSide.hpp"
 #include "FELIX_EffectivePressure.hpp"
 #include "FELIX_StokesFOResid.hpp"
 #include "FELIX_StokesFOBasalResid.hpp"
 #include "FELIX_L2ProjectedBoundaryLaplacianResidual.hpp"
-#ifdef CISM_HAS_FELIX
-#include "FELIX_CismSurfaceGradFO.hpp"
-#endif
 
 // Include for Enthalpy
 #include "FELIX_EnthalpyResid.hpp"
@@ -64,7 +62,7 @@
 #include "FELIX_StokesFOBodyForce.hpp"
 #include "FELIX_StokesFOStress.hpp"
 #include "FELIX_ViscosityFO.hpp"
-#include "FELIX_FieldNorm.hpp"
+#include "PHAL_Field2Norm.hpp"
 #include "FELIX_FluxDiv.hpp"
 #include "FELIX_BasalFrictionCoefficient.hpp"
 #include "FELIX_BasalFrictionCoefficientGradient.hpp"
@@ -162,10 +160,10 @@ namespace FELIX
 
 
     bool  sliding;
-    
+
     bool needsDiss, needsBasFric;
     bool isGeoFluxConst;
-        
+
     std::string basalSideName;
     std::string surfaceSideName;
 
@@ -445,26 +443,6 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
     if (it!=req.end())
       p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
   }
-
-#ifdef CISM_HAS_FELIX
-  // Surface Gradient-x
-  entity = Albany::StateStruct::NodalDataToElemNode;
-  stateName = "xgrad_surface_height"; //ds/dx which can be passed from CISM (definened at nodes)
-  fieldName = "CISM Surface Height Gradient X";
-  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-  p->set<std::string>("Field Name", fieldName);
-  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-  fm0.template registerEvaluator<EvalT>(ev);
-
-  // Surface Gradient-y
-  entity = Albany::StateStruct::NodalDataToElemNode;
-  stateName = "ygrad_surface_height"; //ds/dy which can be passed from CISM (defined at nodes)
-  fieldName = "CISM Surface Height Gradient Y";
-  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-  p->set<std::string>("Field Name", fieldName);
-  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-  fm0.template registerEvaluator<EvalT>(ev);
-#endif
 
   // Ice thickness
   bool isThicknessAParameter = false; // Determining whether thickness is a distributed parameter
@@ -819,7 +797,7 @@ if (basalSideName!="INVALID")
   ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
 
-#if defined(CISM_HAS_FELIX) || defined(MPAS_HAS_FELIX)
+#ifdef MPAS_HAS_FELIX
   // Dirichelt field
   entity = Albany::StateStruct::NodalDistParameter;
   // Here is how to register the field for dirichlet condition.
@@ -1119,10 +1097,6 @@ if (basalSideName!="INVALID")
     ev = evalUtils.constructDOFCellToSideEvaluator("Averaged Velocity",basalSideName,"Node Vector",cellType);
     fm0.template registerEvaluator<EvalT> (ev);
 
-    //---- Interpolate surface height on QP on side
-    ev = evalUtils.constructDOFDivInterpolationSideEvaluator("Averaged Velocity", basalSideName);
-    fm0.template registerEvaluator<EvalT>(ev);
-
     //---- Interpolate velocity on QP on side
     ev = evalUtils.constructDOFVecInterpolationSideEvaluator("Averaged Velocity", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
@@ -1232,7 +1206,6 @@ if (basalSideName!="INVALID")
 
   // -------------------------------- FELIX evaluators ------------------------- //
 
-
   // --- FO Stokes Stress --- //
   p = Teuchos::rcp(new Teuchos::ParameterList("Stokes Stress"));
 
@@ -1288,6 +1261,7 @@ if (basalSideName!="INVALID")
     p->set<std::string>("Field Gradient Name", "Beta Gradient");
     p->set<std::string>("Gradient BF Side Name", "Grad BF "+basalSideName);
     p->set<std::string>("Weighted Measure Side Name", "Weighted Measure "+basalSideName);
+    p->set<std::string>("Tangents Side Name", "Tangents "+basalSideName);
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<double>("Mass Coefficient", params->sublist("FELIX L2 Projected Boundary Laplacian").get<double>("Mass Coefficient",1.0));
     p->set<double>("Laplacian Coefficient", params->sublist("FELIX L2 Projected Boundary Laplacian").get<double>("Laplacian Coefficient",1.0));
@@ -1333,7 +1307,7 @@ if (basalSideName!="INVALID")
     // Output
     p->set<std::string>("Field Norm Name","Sliding Velocity");
 
-    ev = Teuchos::rcp(new FELIX::FieldNorm<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
+    ev = Teuchos::rcp(new PHAL::Field2Norm<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
 
     //--- Effective pressure (surrogate) calculation ---//
@@ -1559,29 +1533,11 @@ if (basalSideName!="INVALID")
     }
   }
 
-#ifdef CISM_HAS_FELIX
-  //--- FELIX surface gradient from CISM ---//
-  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Surface Gradient"));
-
-  //Input
-  p->set<std::string>("CISM Surface Height Gradient X Variable Name", "CISM Surface Height Gradient X");
-  p->set<std::string>("CISM Surface Height Gradient Y Variable Name", "CISM Surface Height Gradient Y");
-  p->set<std::string>("BF Variable Name", "BF");
-
-  //Output
-  p->set<std::string>("Surface Height Gradient QP Variable Name", "CISM Surface Height Gradient");
-  ev = Teuchos::rcp(new FELIX::CismSurfaceGradFO<EvalT,PHAL::AlbanyTraits>(*p,dl));
-  fm0.template registerEvaluator<EvalT>(ev);
-#endif
-
   //--- Body Force ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("Body Force"));
 
   //Input
   p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
-#ifdef CISM_HAS_FELIX
-  p->set<std::string>("Surface Height Gradient QP Variable Name", "CISM Surface Height Gradient");
-#endif
   p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
   p->set<std::string>("Surface Height Gradient Name", "Surface Height Gradient");
   p->set<std::string>("Surface Height Name", "Surface Height");
@@ -1616,6 +1572,21 @@ if (basalSideName!="INVALID")
 
   if (basalSideName!="INVALID")
   {
+    // --- 2D divergence of Averaged Velocity ---- //
+    p = Teuchos::rcp(new Teuchos::ParameterList("DOF Div Interpolation Side Averaged Velocity"));
+
+    // Input
+    p->set<std::string>("Variable Name", "Averaged Velocity");
+    p->set<std::string>("Gradient BF Name", "Grad BF "+basalSideName);
+    p->set<std::string>("Tangents Name", "Tangents "+basalSideName);
+    p->set<std::string>("Side Set Name",basalSideName);
+
+    // Output (assumes same Name as input)
+    p->set<std::string>("Divergence Variable Name", "Averaged Velocity Divergence");
+
+    ev = Teuchos::rcp(new FELIX::DOFDivInterpolationSide<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
+    fm0.template registerEvaluator<EvalT>(ev);
+
     //--- FELIX basal friction coefficient gradient ---//
     p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Basal Friction Coefficient Gradient"));
 
@@ -2210,7 +2181,11 @@ if (basalSideName!="INVALID")
     paramList->set<std::string>("Weighted Measure Basal Name","Weighted Measure " + basalSideName);
     paramList->set<std::string>("Weighted Measure 2D Name","Weighted Measure " + basalSideName);
     paramList->set<std::string>("Weighted Measure Surface Name","Weighted Measure " + surfaceSideName);
+    paramList->set<std::string>("Metric Basal Name","Metric " + basalSideName);
+    paramList->set<std::string>("Metric 2D Name","Metric " + basalSideName);
+    paramList->set<std::string>("Metric Surface Name","Metric " + surfaceSideName);
     paramList->set<std::string>("Inverse Metric Basal Name","Inv Metric " + basalSideName);
+    paramList->set<std::string>("Basal Side Tangents Name","Tangents " + basalSideName);
     paramList->set<std::string>("Basal Side Name", basalSideName);
     paramList->set<std::string>("Surface Side Name", surfaceSideName);
     paramList->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));

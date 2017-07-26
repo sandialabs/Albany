@@ -4,10 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_ELLIPTIC_2D_HPP
-#define FELIX_ELLIPTIC_2D_HPP 1
+#ifndef ALBANY_SIDE_LAPLACIAN_HPP
+#define ALBANY_SIDE_LAPLACIAN_HPP 1
 
-#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -20,28 +19,28 @@
 #include "PHAL_Dimension.hpp"
 #include "PHAL_DOFCellToSide.hpp"
 
-#include "FELIX_Elliptic2DResidual.hpp"
+#include "PHAL_SideLaplacianResidual.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
-namespace FELIX
+namespace Albany
 {
 
 /*!
  * \brief  A 2D problem for the subglacial hydrology
  */
-class Elliptic2D : public Albany::AbstractProblem
+class SideLaplacian : public Albany::AbstractProblem
 {
 public:
 
   //! Default constructor
-  Elliptic2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
+  SideLaplacian (const Teuchos::RCP<Teuchos::ParameterList>& params,
              const Teuchos::RCP<ParamLib>& paramLib,
              const int numDimensions);
 
   //! Destructor
-  virtual ~Elliptic2D();
+  virtual ~SideLaplacian();
 
   //! Return number of spatial dimensions
   virtual int spatialDimension () const
@@ -97,14 +96,13 @@ protected:
   Teuchos::ArrayRCP<std::string> dof_names;
   Teuchos::ArrayRCP<std::string> resid_names;
 
-  Teuchos::RCP<shards::CellTopology> cellType;
-  Teuchos::RCP<shards::CellTopology> sideType;
+  Teuchos::RCP<shards::CellTopology>                                cellType;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>                    cellCubature;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>   cellBasis;
 
-  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >  cellCubature;
-  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >  sideCubature;
-
-  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > cellBasis;
-  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > sideBasis;
+  Teuchos::RCP<shards::CellTopology>                                sideType;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>                    sideCubature;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>   sideBasis;
 
   Teuchos::RCP<Albany::Layouts> dl, dl_side;
 
@@ -112,18 +110,17 @@ protected:
 
   std::string cellEBName;
   std::string sideEBName;
-  std::string basalEBName;
 };
 
 // ===================================== IMPLEMENTATION ======================================= //
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-Elliptic2D::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                 const Albany::MeshSpecsStruct& meshSpecs,
-                                 Albany::StateManager& stateMgr,
-                                 Albany::FieldManagerChoice fieldManagerChoice,
-                                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+SideLaplacian::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                                    const Albany::MeshSpecsStruct& meshSpecs,
+                                    Albany::StateManager& stateMgr,
+                                    Albany::FieldManagerChoice fieldManagerChoice,
+                                    const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   if (numDim==2)
   {
@@ -134,18 +131,12 @@ Elliptic2D::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-Elliptic2D::constructEvaluators2D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                   const Albany::MeshSpecsStruct& meshSpecs,
-                                   Albany::StateManager& stateMgr,
-                                   Albany::FieldManagerChoice fieldManagerChoice,
-                                   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+SideLaplacian::constructEvaluators2D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                                      const Albany::MeshSpecsStruct& meshSpecs,
+                                      Albany::StateManager& stateMgr,
+                                      Albany::FieldManagerChoice fieldManagerChoice,
+                                      const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-  using Teuchos::RCP;
-  using Teuchos::rcp;
-  using PHX::DataLayout;
-  using PHX::MDALayout;
-  using PHAL::AlbanyTraits;
-
   int offset = 0;
 
   // Using the utility for the common evaluators
@@ -153,8 +144,8 @@ Elliptic2D::constructEvaluators2D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Service variables for registering state variables and evaluators
   Albany::StateStruct::MeshFieldEntity entity;
-  RCP<PHX::Evaluator<AlbanyTraits> > ev;
-  RCP<Teuchos::ParameterList> p;
+  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
+  Teuchos::RCP<Teuchos::ParameterList> p;
 
   // -------------------- Starting evaluators construction and registration ------------------------ //
 
@@ -167,7 +158,7 @@ Elliptic2D::constructEvaluators2D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = evalUtils.constructGatherCoordinateVectorEvaluator();
   fm0.template registerEvaluator<EvalT> (ev);
 
-  ev = evalUtils.constructScatterResidualEvaluator(false, resid_names, offset, "Scatter Elliptic2D");
+  ev = evalUtils.constructScatterResidualEvaluator(false, resid_names, offset, "Scatter SideLaplacian");
   fm0.template registerEvaluator<EvalT> (ev);
 
   ev = evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cellCubature);
@@ -183,14 +174,14 @@ Elliptic2D::constructEvaluators2D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]);
   fm0.template registerEvaluator<EvalT> (ev);
 
-  // ------- Elliptic2D Residual Elliptic Eqn-------- //
-  p = rcp(new Teuchos::ParameterList("Elliptic2D Residual"));
+  // ------- Side Laplacian Residual -------- //
+  p = Teuchos::rcp(new Teuchos::ParameterList("Side Laplacian Residual"));
 
   //Input
   p->set<std::string> ("Coordinate Vector Variable Name", "Coord Vec");
   p->set<std::string> ("BF Variable Name", "BF");
-  p->set<std::string> ("Weighted BF Variable Name", "wBF");
-  p->set<std::string> ("Weighted Gradient BF Variable Name", "wGrad BF");
+  p->set<std::string> ("Weighted Measure Variable Name", "Weights");
+  p->set<std::string> ("Gradient BF Variable Name", "Grad BF");
   p->set<std::string> ("Solution QP Variable Name", dof_names[0]);
   p->set<std::string> ("Solution Gradient QP Variable Name", dof_names[0] + " Gradient");
   p->set<bool> ("Side Equation", false);
@@ -198,22 +189,22 @@ Elliptic2D::constructEvaluators2D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string> ("Residual Variable Name",resid_names[0]);
 
-  ev = rcp(new FELIX::Elliptic2DResidual<EvalT,AlbanyTraits>(*p,dl));
+  ev = Teuchos::rcp(new PHAL::SideLaplacianResidual<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // ----------------------------------------------------- //
 
-  RCP<Teuchos::ParameterList> paramList = rcp(new Teuchos::ParameterList("Param List"));
+  Teuchos::RCP<Teuchos::ParameterList> paramList = Teuchos::rcp(new Teuchos::ParameterList("Param List"));
   {
      // response
-    RCP<const Albany::MeshSpecsStruct> meshSpecsPtr = Teuchos::rcpFromRef(meshSpecs);
-    paramList->set<RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", meshSpecsPtr);
-    paramList->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecsPtr = Teuchos::rcpFromRef(meshSpecs);
+    paramList->set<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", meshSpecsPtr);
+    paramList->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)
   {
-    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter Elliptic2D", dl->dummy);
+    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter SideLaplacian", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM)
@@ -228,18 +219,12 @@ Elliptic2D::constructEvaluators2D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-Elliptic2D::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                   const Albany::MeshSpecsStruct& meshSpecs,
-                                   Albany::StateManager& stateMgr,
-                                   Albany::FieldManagerChoice fieldManagerChoice,
-                                   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+SideLaplacian::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                                      const Albany::MeshSpecsStruct& meshSpecs,
+                                      Albany::StateManager& stateMgr,
+                                      Albany::FieldManagerChoice fieldManagerChoice,
+                                      const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-  using Teuchos::RCP;
-  using Teuchos::rcp;
-  using PHX::DataLayout;
-  using PHX::MDALayout;
-  using PHAL::AlbanyTraits;
-
   int offset = 0;
 
   // Using the utility for the common evaluators
@@ -247,8 +232,8 @@ Elliptic2D::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Service variables for registering state variables and evaluators
   Albany::StateStruct::MeshFieldEntity entity;
-  RCP<PHX::Evaluator<AlbanyTraits> > ev;
-  RCP<Teuchos::ParameterList> p;
+  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
+  Teuchos::RCP<Teuchos::ParameterList> p;
 
   // -------------------- Starting evaluators construction and registration ------------------------ //
 
@@ -265,7 +250,7 @@ Elliptic2D::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = evalUtils.constructGatherCoordinateVectorEvaluator();
   fm0.template registerEvaluator<EvalT> (ev);
 
-  ev = evalUtils.constructScatterResidualEvaluator(false, resid_names, offset, "Scatter Elliptic2D");
+  ev = evalUtils.constructScatterResidualEvaluator(false, resid_names, offset, "Scatter SideLaplacian");
   fm0.template registerEvaluator<EvalT> (ev);
 
   ev = evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cellCubature);
@@ -286,25 +271,22 @@ Elliptic2D::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   fm0.template registerEvaluator<EvalT> (ev);
 
   // -------- Restriction of Solution to Side Field -------- /
-  p = rcp(new Teuchos::ParameterList("Cell To Side"));
-
-  p->set<std::string>("Cell Variable Name", dof_names[0]);
-  p->set<std::string>("Side Variable Name", dof_names[0]);
-  p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type",cellType);
-  p->set<std::string>("Side Set Name",sideSetName);
-
-  ev = rcp(new PHAL::DOFCellToSide<EvalT,AlbanyTraits>(*p,dl));
+  ev = evalUtils.constructDOFCellToSideEvaluator(dof_names[0],sideSetName,"Node Scalar",cellType);
   fm0.template registerEvaluator<EvalT>(ev);
 
-  // ------- Elliptic2D Residual Elliptic Eqn-------- //
-  p = rcp(new Teuchos::ParameterList("Elliptic2D Residual"));
+  //---- Restrict vertex coordinates from cell-based to cell-side-based
+  ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",sideSetName,"Vertex Vector",cellType,"Coord Vec " + sideSetName);
+  fm0.template registerEvaluator<EvalT> (ev);
+
+  // ------- Side Laplacian Residual -------- //
+  p = Teuchos::rcp(new Teuchos::ParameterList("Side Laplacian Residual"));
 
   //Input
-  p->set<std::string> ("Coordinate Vector Variable Name", "Coord Vec");
+  p->set<std::string> ("Coordinate Vector Variable Name", "Coord Vec " + sideSetName);
   p->set<std::string> ("BF Variable Name", "BF "+sideSetName);
-  p->set<std::string> ("Weighted Measure Variable Name", "Weighted Measure "+sideSetName);
-  p->set<std::string> ("Inverse Metric Name", "Inv Metric "+sideSetName);
-  p->set<std::string> ("Gradient BF Variable Name", "Grad BF "+sideSetName);
+  p->set<std::string> ("Weighted Measure Variable Name", "Weighted Measure " + sideSetName);
+  p->set<std::string> ("Metric Name", "Metric " + sideSetName);
+  p->set<std::string> ("Gradient BF Variable Name", "Grad BF " + sideSetName);
   p->set<std::string> ("Solution Variable Name", dof_names[0]);
   p->set<std::string> ("Solution QP Variable Name", dof_names[0]);
   p->set<std::string> ("Solution Gradient QP Variable Name", dof_names[0] + " Gradient");
@@ -315,22 +297,22 @@ Elliptic2D::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string> ("Residual Variable Name",resid_names[0]);
 
-  ev = rcp(new FELIX::Elliptic2DResidual<EvalT,AlbanyTraits>(*p,dl));
+  ev = Teuchos::rcp(new PHAL::SideLaplacianResidual<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // ----------------------------------------------------- //
 
-  RCP<Teuchos::ParameterList> paramList = rcp(new Teuchos::ParameterList("Param List"));
+  Teuchos::RCP<Teuchos::ParameterList> paramList = Teuchos::rcp(new Teuchos::ParameterList("Param List"));
   {
      // response
-    RCP<const Albany::MeshSpecsStruct> meshSpecsPtr = Teuchos::rcpFromRef(meshSpecs);
-    paramList->set<RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", meshSpecsPtr);
-    paramList->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecsPtr = Teuchos::rcpFromRef(meshSpecs);
+    paramList->set<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", meshSpecsPtr);
+    paramList->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)
   {
-    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter Elliptic2D", dl->dummy);
+    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter SideLaplacian", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM)
@@ -343,6 +325,6 @@ Elliptic2D::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   return Teuchos::null;
 }
 
-} // Namespace FELIX
+} // namespace Albany
 
-#endif // FELIX_ELLIPTIC_2D_HPP
+#endif // ALBANY_SIDE_LAPLACIAN_HPP

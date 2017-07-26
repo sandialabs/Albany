@@ -2590,6 +2590,34 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
     }
   }
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  // Copy workset data to Kokkos Views
+  // Note: Allocates the max number of nodes across all elements in each bucket
+  wsElNodeEqID_kokkos.resize(numBuckets);
+  for (int b = 0; b < numBuckets; b++) {
+    const int buckSize = wsElNodeEqID[b].size();
+
+    // Find max_nodes
+    int max_nodes = 0;
+    for (int i = 0; i < buckSize; i++) {
+      const int nodes_per_element = wsElNodeEqID[b][i].size();
+      if (nodes_per_element > max_nodes) {
+        max_nodes = nodes_per_element;
+      }
+    }
+
+    wsElNodeEqID_kokkos[b] = Kokkos::View<LO***, PHX::Device>("wsElNodeEqID_kokkos", buckSize, max_nodes, neq);
+    for (int i = 0; i < buckSize; i++) {
+      const int nodes_per_element = wsElNodeEqID[b][i].size();
+      for (int j = 0; j < nodes_per_element; j++) {
+        for (int eq = 0; eq < neq; eq++) {
+          wsElNodeEqID_kokkos[b](i, j, eq) = wsElNodeEqID[b][i][j][eq];
+        }
+      }
+    }
+  }
+#endif
+
   //The following is for periodic BCs.  This will only be relevant for the x-z hydrostatic equations.
   for (int d=0; d<stkMeshStruct->numDim; d++)
   {

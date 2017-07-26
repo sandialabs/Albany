@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_FIELD_NORM_HPP
-#define FELIX_FIELD_NORM_HPP 1
+#ifndef PHAL_FIELD_NORM_HPP
+#define PHAL_FIELD_NORM_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -13,7 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 
-namespace FELIX
+namespace PHAL
 {
 
 /** \brief Field Norm Evaluator
@@ -22,12 +22,12 @@ namespace FELIX
 */
 
 template<typename EvalT, typename Traits, typename ScalarT>
-class FieldNormBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+class Field2NormBase : public PHX::EvaluatorWithBaseImpl<Traits>,
                       public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  FieldNormBase (const Teuchos::ParameterList& p,
+  Field2NormBase (const Teuchos::ParameterList& p,
                  const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
@@ -66,14 +66,14 @@ private:
 
 // Some shortcut names
 template<typename EvalT, typename Traits>
-using FieldNorm = FieldNormBase<EvalT,Traits,typename EvalT::ScalarT>;
+using Field2Norm = Field2NormBase<EvalT,Traits,typename EvalT::ScalarT>;
 
 template<typename EvalT, typename Traits>
-using FieldNormMesh = FieldNormBase<EvalT,Traits,typename EvalT::MeshScalarT>;
+using Field2NormMesh = Field2NormBase<EvalT,Traits,typename EvalT::MeshScalarT>;
 
 template<typename EvalT, typename Traits>
-using FieldNormParam = FieldNormBase<EvalT,Traits,typename EvalT::ParamScalarT>;
+using Field2NormParam = Field2NormBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
-} // Namespace FELIX
+} // namespace PHAL
 
-#endif // FELIX_FIELD_NORM_HPP
+#endif // PHAL_FIELD_NORM_HPP

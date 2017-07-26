@@ -27,12 +27,12 @@ ConcentrationResid(const Teuchos::ParameterList& p,
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
-  this->addDependentField(Concentration);
-  if (enableTransient)  this->addDependentField(Concentration_dot);
-  this->addDependentField(ConcentrationGrad);
-  this->addDependentField(PotentialGrad);
+  this->addDependentField(wBF.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
+  this->addDependentField(Concentration.fieldTag());
+  if (enableTransient)  this->addDependentField(Concentration_dot.fieldTag());
+  this->addDependentField(ConcentrationGrad.fieldTag());
+  this->addDependentField(PotentialGrad.fieldTag());
 
   this->addEvaluatedField(ConcentrationResidual);
 

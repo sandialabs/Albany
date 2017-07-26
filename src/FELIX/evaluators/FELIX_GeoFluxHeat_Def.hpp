@@ -45,9 +45,9 @@ namespace FELIX
     if (haveSUPG)
     {
       geoFluxHeatSUPG  = decltype(geoFluxHeatSUPG)(p.get<std::string> ("Geothermal Flux Heat SUPG Variable Name"), dl->node_scalar);
-      GradBF    		 = decltype(GradBF)(p.get<std::string> ("Gradient BF Side Name"), dl_basal->node_qp_gradient);
-      velocity  		 = decltype(velocity)(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
-      verticalVel		 = decltype(verticalVel)(p.get<std::string>("Vertical Velocity Side QP Variable Name"), dl_basal->qp_scalar);
+      GradBF         = decltype(GradBF)(p.get<std::string> ("Gradient BF Side Name"), dl_basal->node_qp_gradient);
+      velocity       = decltype(velocity)(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
+      verticalVel    = decltype(verticalVel)(p.get<std::string>("Vertical Velocity Side QP Variable Name"), dl_basal->qp_scalar);
 
       this->addDependentField(velocity);
       this->addDependentField(verticalVel);
@@ -149,7 +149,7 @@ namespace FELIX
         {
           geoFluxHeat(cell,sideNodes[side][node]) = 0.;
           for (int qp = 0; qp < numSideQPs; ++qp)
-          {	  // we impose a constant flux equal to 0.05 [W m^{-2}]
+          {   // we impose a constant flux equal to 0.05 [W m^{-2}]
             geoFluxHeat(cell,sideNodes[side][node]) += 0.05 * BF(cell,side,node,qp) * w_measure(cell,side,qp);
           }
         }

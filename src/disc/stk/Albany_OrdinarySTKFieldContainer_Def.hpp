@@ -77,6 +77,18 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->coordinates_field, Ioss::Field::MESH);
 #endif
+  if (numDim_==3)
+  {
+    this->coordinates_field3d = this->coordinates_field;
+  }
+  else
+  {
+    this->coordinates_field3d = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK, "coordinates3d");
+    stk::mesh::put_field(*this->coordinates_field3d , metaData_->universal_part(), 3);
+#ifdef ALBANY_SEACAS
+    stk::io::set_field_role(*this->coordinates_field3d, Ioss::Field::MESH);
+#endif
+  }
 
   solution_field.resize(num_time_deriv + 1);
   solution_field_dtk.resize(num_time_deriv + 1);
@@ -377,7 +389,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::saveVectorT(const Tpetra_Ve
 
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_Vector& solnT,
-    stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) 
+    stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT)
 {
 
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
@@ -397,10 +409,10 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetr
 
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_Vector& solnT,
-    const Tpetra_Vector& soln_dotT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) 
+    const Tpetra_Vector& soln_dotT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT)
 {
   //IKT, FIXME? throw exception if num_time_deriv == 0 and we are calling this function?
-  
+
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
@@ -418,11 +430,11 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetr
 
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_Vector& solnT,
-    const Tpetra_Vector& soln_dotT, const Tpetra_Vector& soln_dotdotT, 
-    stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) 
+    const Tpetra_Vector& soln_dotT, const Tpetra_Vector& soln_dotdotT,
+    stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT)
 {
   //IKT, FIXME? throw exception if num_time_deriv < 2 and we are calling this function?
-  
+
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.

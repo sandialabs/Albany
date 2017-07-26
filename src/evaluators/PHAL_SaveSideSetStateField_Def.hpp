@@ -59,7 +59,7 @@ SaveSideSetStateField (const Teuchos::ParameterList& p,
 
   savestate_operation = Teuchos::rcp(new PHX::Tag<ScalarT>(fieldName, dl->dummy));
 
-  this->addDependentField (field);
+  this->addDependentField (field.fieldTag());
   this->addEvaluatedField (*savestate_operation);
 
   if (nodalState)

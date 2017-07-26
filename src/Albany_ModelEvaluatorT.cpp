@@ -654,10 +654,15 @@ Albany::ModelEvaluatorT::evalModelImpl(
   const double beta = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT))
                           ? inArgsT.get_beta()
                           : 1.0;
+
+#if defined (ALBANY_LCM)
+  const double curr_time = inArgsT.get_t();
+#else
   const double curr_time =
       (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT))
           ? inArgsT.get_t()
           : 0.0;
+#endif // ALBANY_LCM
 
   for (int l = 0; l < inArgsT.Np(); ++l) {
     const Teuchos::RCP<const Thyra::VectorBase<ST>> p = inArgsT.get_p(l);
@@ -898,6 +903,10 @@ Albany::ModelEvaluatorT::createInArgsImpl() const {
   result.setModelEvalDescription(this->description());
 
   result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x, true);
+
+#if defined(ALBANY_LCM)
+  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_t, true);
+#endif
 
   if (supports_xdot) {
     result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x_dot, true);

@@ -488,8 +488,12 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     basalParamList.sublist("Required Fields Info").sublist("Field 0").set<std::string>("Field Name",beta_name);
     basalParamList.sublist("Required Fields Info").sublist("Field 0").set<std::string>("Field Type","From Mesh");*/
 
-    Teuchos::Array<std::string> arrayRequiredFields(2);
-    arrayRequiredFields[0]="flow_factor"; arrayRequiredFields[1]="temperature";
+    Teuchos::Array<std::string> arrayRequiredFields(8);
+    arrayRequiredFields[0]="flow_factor"; arrayRequiredFields[1]="temperature"; 
+    arrayRequiredFields[2]="ice_thickness"; arrayRequiredFields[3]="surface_height";
+    arrayRequiredFields[4]="basal_friction"; arrayRequiredFields[5]="dirichlet_field";
+    arrayRequiredFields[6]="xgrad_surface_height"; arrayRequiredFields[7]="ygrad_surface_height";
+
     parameterList->sublist("Problem").set("Required Fields", arrayRequiredFields);
 
     Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (1, 1.0));
@@ -529,9 +533,15 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     }
 
     discParams->set<std::string>("Method", "Cism");
-    discParams->sublist("Required Fields Info").set<int>("Number Of Fields",2);
+    discParams->sublist("Required Fields Info").set<int>("Number Of Fields",8);
     Teuchos::ParameterList& field0 = discParams->sublist("Required Fields Info").sublist("Field 0");
     Teuchos::ParameterList& field1 = discParams->sublist("Required Fields Info").sublist("Field 1");
+    Teuchos::ParameterList& field2 = discParams->sublist("Required Fields Info").sublist("Field 2");
+    Teuchos::ParameterList& field3 = discParams->sublist("Required Fields Info").sublist("Field 3");
+    Teuchos::ParameterList& field4 = discParams->sublist("Required Fields Info").sublist("Field 4");
+    Teuchos::ParameterList& field5 = discParams->sublist("Required Fields Info").sublist("Field 5");
+    Teuchos::ParameterList& field6 = discParams->sublist("Required Fields Info").sublist("Field 6");
+    Teuchos::ParameterList& field7 = discParams->sublist("Required Fields Info").sublist("Field 7");
 
     //set flow_factor
     field0.set<std::string>("Field Name", "flow_factor");
@@ -543,6 +553,35 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     field1.set<std::string>("Field Type", "Elem Scalar");
     field1.set<std::string>("Field Origin", "Mesh");
 
+    //set ice thickness
+    field2.set<std::string>("Field Name", "ice_thickness");
+    field2.set<std::string>("Field Type", "Node Scalar");
+    field2.set<std::string>("Field Origin", "Mesh");
+
+    //set ice surface height
+    field3.set<std::string>("Field Name", "surface_height");
+    field3.set<std::string>("Field Type", "Node Scalar");
+    field3.set<std::string>("Field Origin", "Mesh");
+
+    //set basal_friction
+    field4.set<std::string>("Field Name", "basal_friction");
+    field4.set<std::string>("Field Type", "Node Scalar");
+    field4.set<std::string>("Field Origin", "Mesh");
+
+    //set dirichlet_field 
+    field5.set<std::string>("Field Name", "dirichlet_field");
+    field5.set<std::string>("Field Type", "Node Vector");
+    field5.set<std::string>("Field Origin", "Mesh");
+
+    //set ice xgrad surface height
+    field6.set<std::string>("Field Name", "xgrad_surface_height");
+    field6.set<std::string>("Field Type", "Node Scalar");
+    field6.set<std::string>("Field Origin", "Mesh");
+    
+    //set ice ygrad surface height
+    field7.set<std::string>("Field Name", "ygrad_surface_height");
+    field7.set<std::string>("Field Type", "Node Scalar");
+    field7.set<std::string>("Field Origin", "Mesh");
 
     albanyApp = Teuchos::rcp(new Albany::Application(reducedMpiCommT));
     albanyApp->initialSetUp(parameterList);

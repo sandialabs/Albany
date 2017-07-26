@@ -7,10 +7,6 @@
 # Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cube.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-loca-time-dept-bc-sdbcs.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/cube-loca-time-dept-bc-sdbcs.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-loca-time-dept-bc-dbcs.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/cube-loca-time-dept-bc-dbcs.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/material.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/material.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
@@ -20,5 +16,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.g
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+if (ALBANY_IFPACK2) 
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_test(NAME ${testName} COMMAND "python" "runtest.py")
+endif()

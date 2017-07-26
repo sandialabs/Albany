@@ -26,9 +26,9 @@ NSContinuityResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
   havePSPG(p.get<bool>("Have PSPG"))
 {
-  this->addDependentField(wBF);  
-  this->addDependentField(VGrad);
-  this->addDependentField(rho);
+  this->addDependentField(wBF.fieldTag());  
+  this->addDependentField(VGrad.fieldTag());
+  this->addDependentField(rho.fieldTag());
   if (havePSPG) {
     wGradBF = decltype(wGradBF)(
       p.get<std::string>("Weighted Gradient BF Name"),
@@ -39,9 +39,9 @@ NSContinuityResid(const Teuchos::ParameterList& p) :
     Rm = decltype(Rm)(
       p.get<std::string>("Rm Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
-    this->addDependentField(wGradBF);
-    this->addDependentField(TauM);
-    this->addDependentField(Rm);
+    this->addDependentField(wGradBF.fieldTag());
+    this->addDependentField(TauM.fieldTag());
+    this->addDependentField(Rm.fieldTag());
   }
    
   this->addEvaluatedField(CResidual);

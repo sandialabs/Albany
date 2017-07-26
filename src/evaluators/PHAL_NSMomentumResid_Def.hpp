@@ -38,13 +38,13 @@ NSMomentumResid(const Teuchos::ParameterList& p) :
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  this->addDependentField(wBF);  
-  this->addDependentField(pGrad);
-  this->addDependentField(VGrad);
-  this->addDependentField(wGradBF);
-  this->addDependentField(P);
-  this->addDependentField(Rm);
-  this->addDependentField(mu);
+  this->addDependentField(wBF.fieldTag());  
+  this->addDependentField(pGrad.fieldTag());
+  this->addDependentField(VGrad.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
+  this->addDependentField(P.fieldTag());
+  this->addDependentField(Rm.fieldTag());
+  this->addDependentField(mu.fieldTag());
   if (haveSUPG) {
     V = decltype(V)(
       p.get<std::string>("Velocity QP Variable Name"),
@@ -55,9 +55,9 @@ NSMomentumResid(const Teuchos::ParameterList& p) :
     TauM = decltype(TauM)(
 	p.get<std::string>("Tau M Name"),
 	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    this->addDependentField(V);
-    this->addDependentField(rho);
-    this->addDependentField(TauM);
+    this->addDependentField(V.fieldTag());
+    this->addDependentField(rho.fieldTag());
+    this->addDependentField(TauM.fieldTag());
   }
  
   this->addEvaluatedField(MResidual);

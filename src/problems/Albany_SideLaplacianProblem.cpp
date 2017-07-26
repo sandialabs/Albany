@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "FELIX_Elliptic2D.hpp"
+#include "Albany_SideLaplacianProblem.hpp"
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
@@ -13,16 +13,16 @@
 #include "Albany_ProblemUtils.hpp"
 #include <string>
 
-namespace FELIX
+namespace Albany
 {
 
-Elliptic2D::Elliptic2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
+SideLaplacian::SideLaplacian (const Teuchos::RCP<Teuchos::ParameterList>& params,
                         const Teuchos::RCP<ParamLib>& paramLib,
                         const int numEq) :
-  Albany::AbstractProblem (params, paramLib,numEq)
+  Albany::AbstractProblem (params, paramLib, numEq)
 {
-  numDim = params->get<int>("Dimension");
-  TEUCHOS_TEST_FOR_EXCEPTION (numDim!=2 && numDim!=3,std::logic_error,"Problem supports only 2D and 3D");
+  bool solve_as_ss_eqn = params->get<bool>("Solve As Side Set Equation");
+  numDim = solve_as_ss_eqn ? 3 : 2;
 
   dof_names.resize(1);
   resid_names.resize(1);
@@ -37,13 +37,13 @@ Elliptic2D::Elliptic2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
   }
 }
 
-Elliptic2D::~Elliptic2D()
+SideLaplacian::~SideLaplacian()
 {
   // Nothing to be done here
 }
 
-void Elliptic2D::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-                               Albany::StateManager& stateMgr)
+void SideLaplacian::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+                                  Albany::StateManager& stateMgr)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
 
@@ -52,13 +52,13 @@ void Elliptic2D::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsS
   cellBasis = Albany::getIntrepid2Basis(*cell_top);
   cellType = Teuchos::rcp(new shards::CellTopology (cell_top));
 
-  Intrepid2::DefaultCubatureFactory cubFactory;
+  Intrepid2::DefaultCubatureFactory   cubFactory;
   cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs[0]->cubatureDegree);
 
   cellEBName = meshSpecs[0]->ebName;
 
   const int worksetSize     = meshSpecs[0]->worksetSize;
-  const int numCellSides    = cellType->getFaceCount();
+  const int numCellSides    = cellType->getSideCount();
   const int numCellVertices = cellType->getNodeCount();
   const int numCellNodes    = cellBasis->getCardinality();
   const int numCellQPs      = cellCubature->getNumPoints();
@@ -72,7 +72,8 @@ void Elliptic2D::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsS
   if (numDim==3)
   {
     TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(sideSetName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
-                                  "Error! Either 'Side Set Name' is wrong or something went wrong while building the side mesh specs.\n");
+                                "Error! Either 'Side Set Name' (" << sideSetName << ") is wrong or something went wrong while " <<
+                                "building the side mesh specs. (Did you forget to specify side set discretizations in the input file?)\n");
 
     const Albany::MeshSpecsStruct& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(sideSetName)[0];
 
@@ -89,9 +90,20 @@ void Elliptic2D::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsS
     numSideQPs      = sideCubature->getNumPoints();
 
     dl_side = Teuchos::rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes,
-                                      numSideQPs,numDim-1,numDim,numCellSides));
+                                               numSideQPs,numDim-1,numDim,numCellSides,2));
     dl->side_layouts[sideSetName] = dl_side;
   }
+
+  *out << " Side Laplacian problem:\n"
+       << "   - dimension         : " << numDim          << "\n"
+       << "   - workset size      : " << worksetSize     << "\n"
+       << "   - num cell vertices : " << numCellVertices << "\n"
+       << "   - num cell sides    : " << numCellSides    << "\n"
+       << "   - num cell dofs     : " << numCellNodes    << "\n"
+       << "   - num cell qps      : " << numCellQPs      << "\n"
+       << "   - num side vertices : " << numSideVertices << "\n"
+       << "   - num side dofs     : " << numSideNodes    << "\n"
+       << "   - num side qps      : " << numSideQPs      << "\n";
 
   /* Construct All Phalanx Evaluators */
   fm.resize(1);
@@ -100,15 +112,11 @@ void Elliptic2D::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsS
   // Build evaluators
   buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, Teuchos::null);
 
-  // Build dirichlet evaluator (for 3D case)
-  if (numDim==3)
-  {
-    constructDirichletEvaluators (*meshSpecs[0]);
-  }
+  constructDirichletEvaluators (*meshSpecs[0]);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-Elliptic2D::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+SideLaplacian::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                              const Albany::MeshSpecsStruct& meshSpecs,
                              Albany::StateManager& stateMgr,
                              Albany::FieldManagerChoice fmchoice,
@@ -116,13 +124,13 @@ Elliptic2D::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  Albany::ConstructEvaluatorsOp<Elliptic2D> op(*this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
+  Albany::ConstructEvaluatorsOp<SideLaplacian> op(*this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
 
   return *op.tags;
 }
 
-void Elliptic2D::constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
+void SideLaplacian::constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
   std::vector<std::string> dirichletNames(1,"U");
@@ -132,15 +140,14 @@ void Elliptic2D::constructDirichletEvaluators(const Albany::MeshSpecsStruct& mes
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Elliptic2D::getValidProblemParameters () const
+SideLaplacian::getValidProblemParameters () const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams("ValidElliptic2DProblemParams");
+  Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams("ValidSideLaplacianProblemParams");
 
-  validPL->set<int>("Dimension",1,"");
-  validPL->set<int>("Side Cubature Degree",1,"");
-  validPL->set<std::string>("Side Set Name","","");
+  validPL->set<bool>("Solve As Side Set Equation",true,"If false, solves laplacian on a 2D geometry. If 3, solves laplacian as a sideset equation of a 3D geometry");
+  validPL->set<std::string>("Side Set Name","","The name of the sideset where the side laplacian has to be solved (only for Dimension=3).");
 
   return validPL;
 }
 
-} // Namespace FELIX
+} // namespace Albany

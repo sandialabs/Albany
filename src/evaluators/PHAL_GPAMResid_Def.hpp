@@ -28,11 +28,11 @@ GPAMResid(const Teuchos::ParameterList& p,
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  this->addDependentField(C);
-  this->addDependentField(Cgrad);
-  if (enableTransient) this->addDependentField(CDot);
-  this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
+  this->addDependentField(C.fieldTag());
+  this->addDependentField(Cgrad.fieldTag());
+  if (enableTransient) this->addDependentField(CDot.fieldTag());
+  this->addDependentField(wBF.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
 
   this->addEvaluatedField(Residual);
 

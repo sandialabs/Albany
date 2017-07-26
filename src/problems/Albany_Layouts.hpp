@@ -55,6 +55,8 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> node_tensor;
     //! Data Layout for tensor quantity that lives at quad points
     Teuchos::RCP<PHX::DataLayout> qp_tensor;
+    //! Data Layout for tensor quantity (cellDim x sideDim) that lives at quad points.
+    Teuchos::RCP<PHX::DataLayout> qp_tensor_cd_sd;
     //! Data Layout for tensor quantity that lives on a cell
     Teuchos::RCP<PHX::DataLayout> cell_tensor;
     //! Data Layout for tensor quantity that lives on a face
@@ -124,6 +126,7 @@ namespace Albany {
      * the action is performed.
      */
     Teuchos::RCP<PHX::DataLayout> shared_param;
+    Teuchos::RCP<PHX::DataLayout> shared_param_vec; // same length as other vectors
     Teuchos::RCP<PHX::DataLayout> dummy;
 
     // For backward compatibility, and simplicitiy, we want to check if
@@ -137,6 +140,7 @@ namespace Albany {
 
     std::map<std::string,Teuchos::RCP<Layouts>> side_layouts;
   };
-}
 
-#endif
+} // namespace Albany
+
+#endif // ALBANY_LAYOUTS_HPP

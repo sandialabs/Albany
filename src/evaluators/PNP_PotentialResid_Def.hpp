@@ -23,11 +23,11 @@ PotentialResid(const Teuchos::ParameterList& p,
   PotentialGrad     ("Potential Gradient", dl->qp_gradient),
   PotentialResidual ("Potential Residual",  dl->node_scalar )
 {
-  this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
-  this->addDependentField(Permittivity);
-  this->addDependentField(Concentration);
-  this->addDependentField(PotentialGrad);
+  this->addDependentField(wBF.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
+  this->addDependentField(Permittivity.fieldTag());
+  this->addDependentField(Concentration.fieldTag());
+  this->addDependentField(PotentialGrad.fieldTag());
 
   this->addEvaluatedField(PotentialResidual);
 

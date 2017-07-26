@@ -9,8 +9,11 @@
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
     <Parameter name="Extruded Column Coupled in 2D Response" type="bool" value="true"/>
-    <Parameter name="Required Fields"         type="Array(string)" value="{temperature}"/>
-    <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction}"/>
+    <Parameter name="Required Fields"         type="Array(string)" value="{temperature, ice_thickness, surface_height}"/>
+    <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction, ice_thickness, surface_height,
+                                                                           observed_ice_thickness, observed_ice_thickness_RMS,
+                                                                           surface_mass_balance, surface_mass_balance_RMS}"/>
+    <Parameter name="Required Surface Fields" type="Array(string)" value="{observed_surface_velocity,observed_surface_velocity_RMS}"/>
     <Parameter name="Basal Side Name"         type="string" value="basalside"/>
     <Parameter name="Surface Side Name"       type="string" value="upperside"/>
 
@@ -20,7 +23,7 @@
       <ParameterList name="ResponseParams 0">
         <Parameter name="Regularization Coefficient" type="double" value="1.0"/>
         <Parameter name="Asinh Scaling" type="double" value="10.0"/>
-        <Parameter name="Scaling Coefficient" type="double" value=" 5.8824e-07"/> 
+        <Parameter name="Scaling Coefficient" type="double" value=" 5.8824e-07"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <Parameter name="Field Name" type="string" value="Velocity"/>
       </ParameterList>
@@ -29,7 +32,7 @@
         <Parameter name="Regularization Coefficient" type="double" value="1.0"/>
         <Parameter name="H Coefficient" type="double" value="1.0"/>
         <Parameter name="SMB Coefficient" type="double" value="100.0"/>
-        <Parameter name="Scaling Coefficient" type="double" value=" 5.8824e-7"/> 
+        <Parameter name="Scaling Coefficient" type="double" value=" 5.8824e-7"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <Parameter name="Field Name" type="string" value="Velocity"/>
       </ParameterList>
@@ -85,11 +88,21 @@
     <Parameter name="Exodus Input File Name" type="string" value="gis_beta_smb.exo"/>
     <Parameter name="Restart Index" type="int" value="1"/>
     <ParameterList name="Required Fields Info">
-     <Parameter name="Number Of Fields" type="int" value="1"/>
+     <Parameter name="Number Of Fields" type="int" value="3"/>
       <ParameterList name="Field 0">
-        <Parameter name="Field Name" type="string" value="temperature"/>
-        <Parameter name="Field Type" type="string" value="Node Scalar"/>
-        <Parameter name="Field Origin"  type="string" value="Mesh"/>
+        <Parameter name="Field Name"   type="string" value="temperature"/>
+        <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin" type="string" value="Mesh"/>
+      </ParameterList>
+      <ParameterList name="Field 1">
+        <Parameter name="Field Name"   type="string" value="ice_thickness"/>
+        <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin" type="string" value="Mesh"/>
+      </ParameterList>
+      <ParameterList name="Field 2">
+        <Parameter name="Field Name"   type="string" value="surface_height"/>
+        <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin" type="string" value="Mesh"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="Side Set Discretizations">
@@ -102,9 +115,40 @@
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <Parameter name="Restart Index" type="int" value="1"/>
         <ParameterList name="Required Fields Info">
-          <Parameter name="Number Of Fields" type="int" value="1"/>
+          <Parameter name="Number Of Fields" type="int" value="7"/>
           <ParameterList name="Field 0">
-            <Parameter name="Field Name" type="string" value="basal_friction"/>
+            <Parameter name="Field Name"   type="string" value="surface_height"/>
+            <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+            <Parameter name="Field Origin" type="string" value="Mesh"/>
+          </ParameterList>
+          <ParameterList name="Field 1">
+            <Parameter name="Field Name"   type="string" value="basal_friction"/>
+            <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+            <Parameter name="Field Origin" type="string" value="Mesh"/>
+          </ParameterList>
+          <ParameterList name="Field 2">
+            <Parameter name="Field Name"   type="string" value="observed_ice_thickness"/>
+            <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+            <Parameter name="Field Origin" type="string" value="Mesh"/>
+          </ParameterList>
+          <ParameterList name="Field 3">
+            <Parameter name="Field Name"   type="string" value="observed_ice_thickness_RMS"/>
+            <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+            <Parameter name="Field Origin" type="string" value="Mesh"/>
+          </ParameterList>
+          <ParameterList name="Field 4">
+            <Parameter name="Field Name"   type="string" value="surface_mass_balance"/>
+            <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+            <Parameter name="Field Origin" type="string" value="Mesh"/>
+          </ParameterList>
+          <ParameterList name="Field 5">
+            <Parameter name="Field Name"   type="string" value="surface_mass_balance_RMS"/>
+            <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+            <Parameter name="Field Origin" type="string" value="Mesh"/>
+          </ParameterList>
+          <ParameterList name="Field 6">
+            <Parameter name="Field Name"   type="string" value="ice_thickness"/>
+            <Parameter name="Field Type"   type="string" value="Node Scalar"/>
             <Parameter name="Field Origin" type="string" value="Mesh"/>
           </ParameterList>
         </ParameterList>
@@ -116,6 +160,19 @@
         <Parameter name="Exodus Output File Name" type="string" value="gis_beta_smb_surface_restart.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <Parameter name="Restart Index" type="int" value="1"/>
+        <ParameterList name="Required Fields Info">
+          <Parameter name="Number Of Fields" type="int" value="2"/>
+          <ParameterList name="Field 0">
+            <Parameter name="Field Name"   type="string" value="observed_surface_velocity"/>
+            <Parameter name="Field Type"   type="string" value="Node Vector"/>
+            <Parameter name="Field Origin" type="string" value="Mesh"/>
+          </ParameterList>
+          <ParameterList name="Field 1">
+            <Parameter name="Field Name"   type="string" value="observed_surface_velocity_RMS"/>
+            <Parameter name="Field Type"   type="string" value="Node Vector"/>
+            <Parameter name="Field Origin" type="string" value="Mesh"/>
+          </ParameterList>
+        </ParameterList>
       </ParameterList>
     </ParameterList>
   </ParameterList> <!--Discretization -->

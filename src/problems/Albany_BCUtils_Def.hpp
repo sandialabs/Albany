@@ -56,11 +56,56 @@ imposeOrder(
   for (S2PL::const_iterator it = evname2pl.begin(); it != evname2pl.end();
        ++it) {
     const std::string name = plName(it->first);
-    const S2int::const_iterator order_it = order.find(name);
+    S2int::const_iterator order_it = order.find(name);
     if (order_it == order.end()) {
       // It is not an error to add an evaluator not directly mapped to an XML
       // entry.
-      continue;
+
+      // LB: if the bc is of the form 'DBC off NS...', we ignore the miss,
+      //     since only one evaluator will be build for all the 'DBC off NS...'
+      //     bc specified for a given dof (and therefore, no match can be found here).
+
+      if (name.find("DBC off NS")!=std::string::npos)
+      {
+        bool found_off_ns = false;
+        // We actually have an evaluator for this 'DBC off NS...', but it
+        // probably have more than one NS in its name
+        for (order_it=order.begin(); order_it!=order.end(); ++order_it)
+        {
+          if (order_it->first.find("DBC off NS")!=std::string::npos)
+          {
+            // We found a 'DBC off NS...' bc. Let's check the NS and DOF inside name
+            // are inside this evaluator name
+
+            // Get NS name
+            size_t ns_pos  = name.find("NS ");
+            size_t ns_size = name.find(" ",ns_pos+3);
+            std::string ns_name = name.substr(ns_pos+3,ns_size);
+
+            // Get DOF name
+            size_t dof_pos  = name.find("DOF ");
+            size_t dof_size = name.find(" ",dof_pos+4);
+            std::string dof_name = name.substr(dof_pos+4,dof_size);
+
+            // Check that NS and DOF name are inside this evaluator name
+            if (order_it->first.find(ns_name)!=std::string::npos &&
+                order_it->first.find(dof_name)!=std::string::npos)
+            {
+              found_off_ns = true;
+              break;
+            }
+          }
+        }
+
+        // If we did not find the right DirichletOffNodeSet evaluator, it's really a miss
+        if (!found_off_ns)
+          continue;
+      }
+      else
+      {
+        // It really is a miss
+        continue;
+      }
     }
     const int index = order_it->second;
     found[index] = true;
@@ -677,6 +722,54 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
   }
 
   ///
+  /// Strong Schwarz BC specific
+  ///
+  for (auto i = 0; i < nodeSetIDs.size(); ++i) {
+    string ss = traits_type::constructStrongDBCName(nodeSetIDs[i], "Schwarz");
+
+    if (BCparams.isSublist(ss)) {
+      // grab the sublist
+      ParameterList& sub_list = BCparams.sublist(ss);
+
+      if (sub_list.get<string>("BC Function") == "Schwarz") {
+        RCP<ParameterList> p = rcp(new ParameterList);
+
+        p->set<int>("Type", traits_type::typeSw);
+
+        p->set<string>(
+            "Coupled Application", sub_list.get<string>("Coupled Application"));
+
+        p->set<string>("Coupled Block", sub_list.get<string>("Coupled Block"));
+
+        // Get the application from the main parameters list above
+        // and pass it to the Schwarz BC evaluator.
+        Teuchos::RCP<Albany::Application> const& application =
+            params->get<Teuchos::RCP<Albany::Application>>("Application");
+
+        p->set<Teuchos::RCP<Albany::Application>>("Application", application);
+
+        // Fill up ParameterList with things DirichletBase wants
+        p->set<RCP<DataLayout>>("Data Layout", dummy);
+        p->set<string>("Dirichlet Name", ss);
+        p->set<RealType>("Dirichlet Value", 0.0);
+        p->set<string>("Node Set ID", nodeSetIDs[i]);
+        p->set<int>("Equation Offset", 0);
+        for (std::size_t j = 0; j < bcNames.size(); j++) {
+          offsets_[i].push_back(j);
+        }
+        // if set to zero, the cubature degree of the side
+        // will be set to that of the element
+        p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0));
+        p->set<RCP<ParamLib>>("Parameter Library", paramLib);
+
+        evaluators_to_build[evaluatorsToBuildName(ss)] = p;
+
+        bcs->push_back(ss);
+      }
+    }
+  }
+
+  ///
   /// Kfield BC specific
   ///
   for (std::size_t i = 0; i < nodeSetIDs.size(); i++) {
@@ -734,44 +827,49 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
   ///
   /// SideSet equations case: DBC to handle nodes not on the side set
   ///
-  for (std::size_t j = 0; j < bcNames.size(); ++j) {
-    RCP<std::vector<string>> nodeSets(new std::vector<string>(0));
-    string dir_name = "Off-Side-Set";
+  for (std::size_t j = 0; j < bcNames.size(); ++j)
+  {
+    RCP<std::vector<string> > nodeSets(new std::vector<string>(0));
+    string dir_name = "DBC off NS";
     double* value = NULL;
-    for (auto i = 0; i < nodeSetIDs.size(); ++i) {
-      string ss =
-          traits_type::constructBCNameOffNodeSet(nodeSetIDs[i], bcNames[j]);
+    for (auto i = 0; i < nodeSetIDs.size(); ++i)
+    {
+      string ss = traits_type::constructBCNameOffNodeSet(nodeSetIDs[i], bcNames[j]);
 
-      if (BCparams.isParameter(ss)) {
+      if (BCparams.isParameter(ss))
+      {
         nodeSets->push_back(nodeSetIDs[i]);
-        dir_name += "_" + nodeSetIDs[i];
-        if (value == NULL) {
+        dir_name += " " + nodeSetIDs[i];
+        if (value==NULL)
+        {
           value = new double();
           *value = BCparams.get<double>(ss);
-        } else {
+        }
+        else
+        {
           // The solution is prescribed a unique value off the given side sets.
-          TEUCHOS_TEST_FOR_EXCEPTION(
-              *value != BCparams.get<double>(ss), std::logic_error,
-              "Error! For a given DOF, all Off-Node-Set BC MUST have the same "
-              "value.\n");
+          TEUCHOS_TEST_FOR_EXCEPTION (*value!=BCparams.get<double>(ss), std::logic_error,
+                                      "Error! For a given DOF, all Off-Node-Set BC MUST have the same value.\n");
         }
       }
     }
+    dir_name += " for DOF " + bcNames[j];
 
-    if (nodeSets->size() > 0) {
+    if (nodeSets->size()>0)
+    {
       RCP<ParameterList> p = rcp(new ParameterList());
 
       p->set<int>("Type", traits_type::typeON);
-      p->set<int>("Equation Offset", j);
-      p->set<RCP<ParamLib>>("Parameter Library", paramLib);
+      p->set< int > ("Equation Offset", j);
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
       // Fill up ParameterList with things DirichletBase wants
       p->set<RCP<DataLayout>>("Data Layout", dummy);
-      p->set<string>("Dirichlet Name", dir_name);
+      p->set<string> ("Dirichlet Name", dir_name);
       p->set<RealType>("Dirichlet Value", *value);
-      p->set<RCP<std::vector<string>>>("Node Sets", nodeSets);
-      p->set<RCP<ParamLib>>("Parameter Library", paramLib);
-      p->set<string>("Node Set ID", "");
+      p->set<RCP<std::vector<string> > > ("Node Sets", nodeSets);
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      p->set< string > ("Node Set ID", "");
 
       std::stringstream ess;
       ess << "Evaluator for " << dir_name;
@@ -898,7 +996,7 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
             p->set<double>("Water Density", rho_w);
             p->set<string>("BetaXY", betaName);
             p->set<string>("Beta Field Name", "basal_friction");
-            p->set<string>("thickness Field Name", "thickness");
+            p->set<string>("thickness Field Name", "ice_thickness");
             p->set<string>("BedTopo Field Name", "bed_topography");
             p->set<bool>(
                 "Use GLP",
@@ -921,7 +1019,7 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
             p->set<string>("Beta Field Name", "basal_friction");
             p->set<string>("DOF Name", dof_names[0]);
             p->set<bool>("Vector Field", isVectorField);
-            p->set<string>("thickness Field Name", "thickness");
+            p->set<string>("thickness Field Name", "ice_thickness");
             if (isVectorField)
               p->set<RCP<DataLayout>>("DOF Data Layout", dl->node_vector);
             else
@@ -939,7 +1037,7 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
             p->set<double>("Gravity Acceleration", g);
             p->set<double>("Ice Density", rho);
             p->set<double>("Water Density", rho_w);
-            p->set<string>("thickness Field Name", "thickness");
+            p->set<string>("thickness Field Name", "ice_thickness");
             p->set<string>("Elevation Field Name", "surface_height");
             p->set<string>("DOF Name", dof_names[0]);
             p->set<bool>("Vector Field", isVectorField);
@@ -1166,7 +1264,7 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
   // Build evaluator for thickness
   string NeuGT = "Evaluator for Gather thickness";
   {
-    const string paramName = "thickness";
+    const string paramName = "ice_thickness";
     RCP<ParameterList> p = rcp(new ParameterList());
     p->set<int>("Type", traits_type::typeSF);
 
@@ -1338,6 +1436,8 @@ Albany::DirichletTraits::getValidBCParameters(
         Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "twist");
     std::string ww =
         Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "Schwarz");
+    std::string sw =
+        Albany::DirichletTraits::constructStrongDBCName(nodeSetIDs[i], "Schwarz");
     std::string uu =
         Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "CoordFunc");
     std::string pd =
@@ -1345,6 +1445,7 @@ Albany::DirichletTraits::getValidBCParameters(
     validPL->sublist(ss, false, "");
     validPL->sublist(tt, false, "");
     validPL->sublist(ww, false, "");
+    validPL->sublist(sw, false, "");
     validPL->sublist(uu, false, "");
     validPL->sublist(pd, false, "");
   }

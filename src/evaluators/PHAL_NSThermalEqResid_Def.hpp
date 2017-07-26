@@ -42,34 +42,34 @@ NSThermalEqResid(const Teuchos::ParameterList& p) :
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
-  this->addDependentField(Temperature);
-  this->addDependentField(TGrad);
-  if (enableTransient) this->addDependentField(Tdot);
-  this->addDependentField(ThermalCond);
-  this->addDependentField(rho);
-  this->addDependentField(Cp);
+  this->addDependentField(wBF.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
+  this->addDependentField(Temperature.fieldTag());
+  this->addDependentField(TGrad.fieldTag());
+  if (enableTransient) this->addDependentField(Tdot.fieldTag());
+  this->addDependentField(ThermalCond.fieldTag());
+  this->addDependentField(rho.fieldTag());
+  this->addDependentField(Cp.fieldTag());
   
   if (haveSource) {
     Source = decltype(Source)(
       p.get<std::string>("Source Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    this->addDependentField(Source);
+    this->addDependentField(Source.fieldTag());
   }
 
   if (haveFlow) {
     V = decltype(V)(
       p.get<std::string>("Velocity QP Variable Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
-    this->addDependentField(V);
+    this->addDependentField(V.fieldTag());
   }
 
   if (haveSUPG) {
     TauT = decltype(TauT)(
       p.get<std::string>("Tau T Name"),  
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    this->addDependentField(TauT);
+    this->addDependentField(TauT.fieldTag());
   }
 
   this->addEvaluatedField(TResidual);

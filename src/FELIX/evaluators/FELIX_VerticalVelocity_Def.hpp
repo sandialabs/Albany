@@ -17,9 +17,9 @@ namespace FELIX
   template<typename EvalT, typename Traits, typename VelocityType>
   VerticalVelocity<EvalT,Traits,VelocityType>::
   VerticalVelocity(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
-  thickness				(p.get<std::string> ("Thickness Variable Name"), dl->node_scalar),
-  int1Dw_z 				(p.get<std::string> ("Integral1D w_z Variable Name"),dl->node_scalar),
-  w						(p.get<std::string> ("Vertical Velocity Variable Name"),dl->node_scalar)
+  thickness       (p.get<std::string> ("Thickness Variable Name"), dl->node_scalar),
+  int1Dw_z        (p.get<std::string> ("Integral1D w_z Variable Name"),dl->node_scalar),
+  w           (p.get<std::string> ("Vertical Velocity Variable Name"),dl->node_scalar)
   {
     this->addDependentField(thickness);
     this->addDependentField(int1Dw_z);
@@ -51,4 +51,4 @@ namespace FELIX
         w(cell,node) = thickness(cell,node) * int1Dw_z(cell,node);
   }
 
-}	// end namespace FELIX
+} // end namespace FELIX

@@ -6,7 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "FELIX_Elliptic2DResidual.hpp"
-#include "FELIX_Elliptic2DResidual_Def.hpp"
+#include "FELIX_SimpleOperation.hpp"
+#include "FELIX_SimpleOperation_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::Elliptic2DResidual)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(FELIX::SimpleOperationLog)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(FELIX::SimpleOperationExp)

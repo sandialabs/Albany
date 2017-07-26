@@ -77,7 +77,7 @@ ThicknessResid(const Teuchos::ParameterList& p,
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 #ifdef OUTPUT_TO_SCREEN
 *out << " in FELIX Thickness residual! " << std::endl;
-*out << " numNodes = " << numNodes << std::endl; 
+*out << " numNodes = " << numNodes << std::endl;
 #endif
 }
 
@@ -106,7 +106,7 @@ template<typename EvalT, typename Traits>
 void ThicknessResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST; 
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
   // Initialize residual to 0.0
   Kokkos::deep_copy(Residual.get_view(), ScalarT(0.0));

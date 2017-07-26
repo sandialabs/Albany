@@ -218,12 +218,6 @@ namespace Albany {
       const std::string& dof_names,
       const std::string& sideSetName) const;
 
-    //! Interpolation functions for divergence of quantities defined on a side set
-    Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructDOFDivInterpolationSideEvaluator(
-      const std::string& dof_names,
-      const std::string& sideSetName) const;
-
     //! Function to create parameter list for construction of GatherCoordinateVector
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> >

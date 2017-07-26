@@ -24,7 +24,7 @@ FELIX::Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   has_h_equation = params->sublist("FELIX Hydrology").get<bool>("Use Water Thickness Equation",false);
   std::string sol_method = params->get<std::string>("Solution Method");
-  if (sol_method=="Unsteady")
+  if (sol_method=="Transient")
     unsteady = true;
   else
     unsteady = false;
@@ -136,6 +136,13 @@ void FELIX::Hydrology::constructDirichletEvaluators (const Albany::MeshSpecsStru
 
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
+
+  // Ensure that dfm is initialized
+  Teuchos::ParameterList& hydro = params->sublist("FELIX Hydrology");
+  Teuchos::Array<std::string> ns_names = hydro.get<Teuchos::Array<std::string>>("Zero Porewater Pressure On Node Sets",Teuchos::Array<std::string>());
+  if (ns_names.size()>0 && dfm==Teuchos::null)
+    dfm = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+
 
   // Add the hydrology specific evaluators
   HydrologyDirOp op(*this);

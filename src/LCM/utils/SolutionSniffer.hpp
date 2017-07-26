@@ -53,6 +53,9 @@ public:
   ST
   getDifferenceNorm();
 
+  Teuchos::RCP<NOX::Abstract::Vector>
+  getLastSoln();
+
 private:
 
   Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
@@ -69,6 +72,9 @@ private:
 
   ST
   norm_diff_{0.0};
+
+  Teuchos::RCP<NOX::Abstract::Vector>
+  last_soln_{Teuchos::null};
 };
 
 } // namespace LCM

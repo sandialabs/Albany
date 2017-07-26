@@ -135,14 +135,10 @@ private:
   apps_;
 
   Teuchos::Array<Teuchos::RCP<SolutionSniffer>>
-  convergence_ops_;
+  solution_sniffers_;
 
   Teuchos::Array<Teuchos::RCP<Albany::AbstractSTKMeshStruct>>
   stk_mesh_structs_;
-
-  mutable
-  Teuchos::Array<Teuchos::RCP<Thyra::VectorBase<ST> const>>
-  solutions_;
 
   /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
   Thyra::ModelEvaluatorBase::InArgs<ST>
@@ -210,6 +206,28 @@ private:
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST>>
   sub_outargs_;
+
+  mutable Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
+  model_evaluators_;
+
+  mutable Teuchos::Array<Teuchos::RCP<NOX::Abstract::Vector>>
+  solutions_;
+
+  Teuchos::Array<Teuchos::ParameterList>
+  nox_params_;
+
+  // Used if solving with loca or tempus
+  mutable std::vector<bool>
+  is_loca_;
+
+  mutable std::vector<bool>
+  is_tempus_;
+
+  mutable std::vector<ST>
+  step_start_;
+
+  mutable std::vector<ST>
+  step_stop_;
 };
 
 } // namespace LCM

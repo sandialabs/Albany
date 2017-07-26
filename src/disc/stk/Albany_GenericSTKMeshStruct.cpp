@@ -104,6 +104,7 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
 
   fieldAndBulkDataSet = false;
   side_maps_present = false;
+  ignore_side_maps = false;
 }
 
 Albany::GenericSTKMeshStruct::~GenericSTKMeshStruct() {}
@@ -237,6 +238,28 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   }
 #endif
 
+}
+
+void Albany::GenericSTKMeshStruct::setAllPartsIO()
+{
+  for (auto& it : partVec)
+  {
+    stk::mesh::Part& part = *it.second;
+    if (!stk::io::is_part_io_part(part))
+      stk::io::put_io_part_attribute(part);
+  }
+  for (auto& it : nsPartVec)
+  {
+    stk::mesh::Part& part = *it.second;
+    if (!stk::io::is_part_io_part(part))
+      stk::io::put_io_part_attribute(part);
+  }
+  for (auto& it : ssPartVec)
+  {
+    stk::mesh::Part& part = *it.second;
+    if (!stk::io::is_part_io_part(part))
+      stk::io::put_io_part_attribute(part);
+  }
 }
 
 bool Albany::GenericSTKMeshStruct::buildPerceptEMesh(){
@@ -523,6 +546,29 @@ void Albany::GenericSTKMeshStruct::computeAddlConnectivity()
 
 }
 
+void Albany::GenericSTKMeshStruct::setDefaultCoordinates3d ()
+{
+  // If the mesh is already a 3d mesh, coordinates_field==coordinates_field3d
+  if (this->numDim==3) return;
+
+  // We make coordinates_field3d store the same coordinates as coordinates_field,
+  // padding the vector of coordinates with zeros
+
+  std::vector<stk::mesh::Entity> nodes;
+  stk::mesh::get_entities(*bulkData,stk::topology::NODE_RANK,nodes);
+  double* values;
+  double* values3d;
+  for (auto node : nodes)
+  {
+    values3d = stk::mesh::field_data(*this->getCoordinatesField3d(), node);
+    values   = stk::mesh::field_data(*this->getCoordinatesField(), node);
+
+    for (int iDim=0; iDim<numDim; ++iDim)
+      values3d[iDim] = values[iDim];
+    for (int iDim=numDim; iDim<3; ++iDim)
+      values3d[iDim] = 0.0;
+  }
+}
 
 void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Teuchos_Comm>& commT){
 
@@ -778,6 +824,9 @@ void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::
       Teuchos::RCP<Albany::AbstractMeshStruct> ss_mesh;
       const std::string& ss_name = sideSets[i];
       params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(ss_name)));
+      if (!params_ss->isParameter("Number Of Time Derivatives"))
+        params_ss->set<int>("Number Of Time Derivatives",num_time_deriv);
+
       std::string method = params_ss->get<std::string>("Method");
       if (method=="SideSetSTK")
       {
@@ -825,6 +874,13 @@ void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::
 #ifdef ALBANY_SEACAS
       stk::io::set_field_role(*side_nodes_ids, Ioss::Field::TRANSIENT);
 #endif
+
+      // If requested, we ignore the side maps already stored in the imported side mesh (if any)
+      // This can be useful for side mesh of an extruded mesh, in the case it was constructed
+      // as side mesh of an extruded mesh with a different ordering and/or different number
+      // of layers. Notice that if that's the case, it probalby is impossible to build a new
+      // set of maps, since there is no way to correctly map the side nodes to the cell nodes.
+      this->sideSetMeshStructs[ss_name]->ignore_side_maps = params_ss->get<bool>("Ignore Side Maps", false);
     }
   }
 }
@@ -913,10 +969,15 @@ void Albany::GenericSTKMeshStruct::buildCellSideNodeNumerationMap (const std::st
   std::vector<stk::mesh::EntityId> cell2D_nodes_ids(num_nodes), side3D_nodes_ids(num_nodes);
   const stk::mesh::Entity* side3D_nodes;
   const stk::mesh::Entity* cell2D_nodes;
-  if (side_mesh->side_maps_present)
+  if (side_mesh->side_maps_present && !side_mesh->ignore_side_maps)
   {
     // This mesh was loaded from a file that stored the side maps.
     // Hence, we just read it and stuff the map with it
+    // WARNING: the maps may be not be valid. This can happen if they were built with an
+    //          extruded mesh with N layers, and we are now using this side mesh to build
+    //          an extruded mesh with M!=N layers, or with different ordering (COLUMN/LAYER).
+    //          If this is the case, you must first edit the exodus file and delete the maps
+    //          or set 'Ignore Side Maps' to true in the input file
     for (const auto& cell2D : cells2D)
     {
       // Get the stk field data
@@ -1137,43 +1198,49 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     req_fields_info = &dummyList;
   }
 
-  int num_fields = req_fields_info->get<int>("Number Of Fields",0);
-  // L.B: is this check a good idea?
-  //TEUCHOS_TEST_FOR_EXCEPTION (num_fields!=req.size(), std::logic_error, "Error! The number of required fields in the discretization parameter list (" << num_fields << ") does not match the number of requirements declared in the problem section (" << req.size() << ").\n");
+  std::set<std::string> missing;
+  for (auto rname : req)
+    missing.insert(rname);
 
-  std::string fname, ftype, forigin;
+  std::string fname, fusage, ftype, forigin;
+  int num_fields = req_fields_info->get<int>("Number Of Fields",0);
   for (int ifield=0; ifield<num_fields; ++ifield)
   {
     std::stringstream ss;
     ss << "Field " << ifield;
-    const Teuchos::ParameterList& fparams = req_fields_info->sublist(ss.str());
+    Teuchos::ParameterList& fparams = req_fields_info->sublist(ss.str());
 
     fname = fparams.get<std::string>("Field Name");
-    forigin = "File";
-    if(fparams.isParameter("Field Origin"))
-      forigin = fparams.get<std::string>("Field Origin");
+    ftype = fparams.get<std::string>("Field Type","INVALID");
+    checkFieldIsInMesh(fname, ftype);
+    missing.erase(fname);
 
-    // L.B: again, is this check a good idea?
-    TEUCHOS_TEST_FOR_EXCEPTION (std::find(req.begin(),req.end(),fname)==req.end(), std::logic_error,
-                                "Error! The field '" << fname << "' is not listed in the problem requirements.\n");
+    fusage = fparams.get<std::string>("Field Usage", "Input");
+    if (fusage == "Output")
+    {
+      *out << "  - Skipping field '" << fname << "' since it's listed as output. Make sure there's an evaluator set to save it!\n";
+      continue;
+    }
+    else if (fusage == "Unused")
+    {
+      *out << "  - Skipping field '" << fname << "' since it's listed as unused.\n";
+      continue;
+    }
+    else
+      TEUCHOS_TEST_FOR_EXCEPTION (fusage!="Input" && fusage!="Input-Output", Teuchos::Exceptions::InvalidParameter,
+                                  "Error! 'Field Usage' for field '" << fname << "' must be one of 'Input', 'Output', 'Input-Output' or 'Unused'.\n");
+
+    forigin = fparams.get<std::string>("Field Origin","INVALID");
 
     if (forigin=="Mesh")
     {
-      *out << "  - Skipping field '" << fname << "' since it's listed as already present in the mesh. Make sure this is true, since we can't check!\n";
+      *out << "  - Skipping field '" << fname << "' since it's listed as present in the mesh.\n";
       continue;
     }
-    else if (forigin=="Output")
-    {
-      *out << "  - Skipping field '" << fname << "' since it's listed as output (computed at run time). Make sure there's an evaluator set to save it.\n";
-      continue;
-    }
-    else if (forigin!="File")
-    {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
-                                  "Error! Invalid choice for option 'Field Origin' for field '" << fname << "'.\n");
-    }
+    else
+      TEUCHOS_TEST_FOR_EXCEPTION (forigin!="File", Teuchos::Exceptions::InvalidParameter,
+                                  "Error! 'Field Origin' for field '" << fname << "' must be one of 'File' or 'Mesh'.\n");
 
-    ftype = fparams.get<std::string>("Field Type");
     // Depending on the input field type, we need to use different pointers/importers/vectors
     if (ftype == "Node Scalar")
     {
@@ -1210,9 +1277,20 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     else
     {
       TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
-                                  "Sorry, I haven't yet implemented the case of field that are not (Layered) Scalar nor " <<
-                                  "(Layered) Vector or that is not defined at nodes nor elements.\n");
+                                  "Error! Field '" << fname << "' has type '" << ftype << "'.\n" <<
+                                  "Unfortunately, the only supported field types so fare are 'Node/Elem Scalar/Vector' and 'Node/Elem Layered Scalar/Vector'.\n");
     }
+  }
+
+  if (missing.size()>0)
+  {
+    std::string missing_list;
+    for (auto i : missing)
+      missing_list += " '" + i + "',";
+    missing_list.erase(missing_list.size()-1);
+
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+                                "Error! The following requirements were not found in the discretization list:" << missing_list << ".\n");
   }
 }
 
@@ -1239,7 +1317,50 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
   // The serial Tpetra service multivector
   Teuchos::RCP<Tpetra_MultiVector> serial_req_mvec;
 
-  if (params.isParameter("Field Value"))
+  if (params.isParameter("Random Value"))
+  {
+    Teuchos::Array<std::string> randomize = params.get<Teuchos::Array<std::string> >("Random Value");
+    serial_req_mvec = Teuchos::rcp(new Tpetra_MultiVector(serial_map,randomize.size()));
+
+    *out << "  - Discarding other info about " << field_type << " field " << field_name << " and filling it with random values.\n";
+    if (layered)
+    {
+      *out << "    - Filling layers normalized coordinates linearly in [0,1].\n";
+
+      temp_str = field_name + "_NLC";
+      norm_layers_coords = &fieldContainer->getMeshVectorStates()[temp_str];
+      int size = norm_layers_coords->size();
+      if (size==1)
+        (*norm_layers_coords)[0] = 1.;
+      else
+      {
+        int n_int = size-1;
+        double dx = 1./n_int;
+        (*norm_layers_coords)[0] = 0.;
+        for (int i=0; i<n_int; ++i)
+          (*norm_layers_coords)[i+1] = (*norm_layers_coords)[i]+dx;
+      }
+    }
+
+    serial_req_mvec->randomize();
+
+    // If there are components that were marked to not be randomized,
+    // we look for the parameter 'Field Value' and use the corresponding entry.
+    // If there is no such parameter, we fill the non random entries with zeroes.
+    Teuchos::Array<double> values;
+    if (params.isParameter("Field Value"))
+      values = params.get<Teuchos::Array<double> >("Field Value");
+    else
+      values.resize(randomize.size(),0.);
+
+    for (int iv=0; iv<randomize.size(); ++iv)
+      if (randomize[iv]=="false" || randomize[iv]=="no")
+      {
+        *out << "    - Using constant value " << values[iv] << " for component " << iv << ", which was marked as not random.\n";
+        serial_req_mvec->getVectorNonConst(iv)->putScalar(values[iv]);
+      }
+  }
+  else if (params.isParameter("Field Value"))
   {
     Teuchos::Array<double> values = params.get<Teuchos::Array<double> >("Field Value");
 
@@ -1266,7 +1387,7 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
     }
     else
     {
-      *out << "  - Discarding other info about " << field_type << " field " << field_name << " and filling it with constant value " << values << "\n";
+      *out << "  - Discarding other info about " << field_type << " field '" << field_name << "' and filling it with constant value " << values << "\n";
     }
     // For debug, we allow to fill the field with a given uniform value
     for (int iv(0); iv<serial_req_mvec->getNumVectors(); ++iv)
@@ -1280,7 +1401,7 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
 
     std::string fname = params.get<std::string>("File Name");
 
-    *out << "  - Reading " << field_type << " field " << field_name << " from file '" << fname << "'...";
+    *out << "  - Reading " << field_type << " field '" << field_name << "' from file '" << fname << "'...";
     out->getOStream()->flush();
     // Read the input file and stuff it in the Tpetra multivector
 
@@ -1322,11 +1443,14 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
 
     if (params.isParameter("Scale Factor"))
     {
-      *out << "   - Scaling " << field_type << " field " << field_name << "\n";
-
       Teuchos::Array<double> scale_factors = params.get<Teuchos::Array<double> >("Scale Factor");
       TEUCHOS_TEST_FOR_EXCEPTION (scale_factors.size()!=serial_req_mvec->getNumVectors(), Teuchos::Exceptions::InvalidParameter,
                                   "Error! The given scale factors vector size does not match the field dimension.\n");
+      *out << "   - Scaling " << field_type << " field '" << field_name << "' with scaling factors [" << scale_factors[0];
+      for (int i=1; i<scale_factors.size(); ++i)
+        *out << " " << scale_factors[i];
+      *out << "]\n";
+
       serial_req_mvec->scale (scale_factors);
     }
   }
@@ -1348,29 +1472,22 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
   VFT* vector_field = 0;
   TFT* tensor_field = 0;
 
+  stk::topology::rank_t entity_rank = node ? stk::topology::NODE_RANK : stk::topology::ELEM_RANK;
+
   if (scalar && !layered)
   {
     // Purely scalar field
-    if (node)
-      scalar_field = metaData->get_field<SFT> (stk::topology::NODE_RANK, field_name);
-    else
-      scalar_field = metaData->get_field<SFT> (stk::topology::ELEM_RANK, field_name);
+    scalar_field = metaData->get_field<SFT> (entity_rank, field_name);
   }
   else if ( scalar==layered )
   {
     // Either (non-layered) vector or layered scalar field
-    if (node)
-      vector_field = metaData->get_field<VFT> (stk::topology::NODE_RANK, field_name);
-    else
-      vector_field = metaData->get_field<VFT> (stk::topology::ELEM_RANK, field_name);
+    vector_field = metaData->get_field<VFT> (entity_rank, field_name);
   }
   else
   {
     // Layered vector field
-    if (node)
-      tensor_field = metaData->get_field<TFT> (stk::topology::NODE_RANK, field_name);
-    else
-      tensor_field = metaData->get_field<TFT> (stk::topology::ELEM_RANK, field_name);
+    tensor_field = metaData->get_field<TFT> (entity_rank, field_name);
   }
 
   TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==0 && vector_field==0 && tensor_field==0, std::logic_error,
@@ -1493,7 +1610,9 @@ void Albany::GenericSTKMeshStruct::readLayeredScalarFileSerial (const std::strin
     {
       Teuchos::ArrayRCP<ST> nonConstView = mvec->getVectorNonConst(il)->get1dViewNonConst();
       for (GO i = 0; i < numNodes; i++)
+      {
         ifile >> nonConstView[i];
+      }
     }
     ifile.close();
   }
@@ -1550,6 +1669,59 @@ void Albany::GenericSTKMeshStruct::readLayeredVectorFileSerial (const std::strin
   Teuchos::broadcast(*comm,0,1,&numVectors);
   if (comm->getRank() != 0)
     mvec = Teuchos::rcp(new Tpetra_MultiVector(map,numVectors));
+}
+
+void Albany::GenericSTKMeshStruct::checkFieldIsInMesh (const std::string& fname, const std::string& ftype) const
+{
+  stk::topology::rank_t entity_rank;
+  if (ftype.find("Node")==std::string::npos)
+    entity_rank = stk::topology::ELEM_RANK;
+  else
+    entity_rank = stk::topology::NODE_RANK;
+
+  int dim = 1;
+  if (ftype.find("Vector")!=std::string::npos)
+    ++dim;
+  if (ftype.find("Layered")!=std::string::npos)
+    ++dim;
+
+  typedef AbstractSTKFieldContainer::ScalarFieldType  SFT;
+  typedef AbstractSTKFieldContainer::VectorFieldType  VFT;
+  typedef AbstractSTKFieldContainer::TensorFieldType  TFT;
+  bool missing = true;
+  switch (dim)
+  {
+    case 1:
+      missing = (metaData->get_field<SFT> (entity_rank, fname)==0);
+      break;
+    case 2:
+      missing = (metaData->get_field<VFT> (entity_rank, fname)==0);
+      break;
+    case 3:
+      missing = (metaData->get_field<TFT> (entity_rank, fname)==0);
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Invalid field dimension.\n");
+  }
+
+  if (missing)
+  {
+    bool isFieldInMesh = false;
+    auto fl = metaData->get_fields();
+    auto f = fl.begin();
+    for (; f != fl.end(); ++f)
+    {
+      isFieldInMesh = (fname == (*f)->name());
+      if(isFieldInMesh) break;
+    }
+    if(isFieldInMesh) {
+       TEUCHOS_TEST_FOR_EXCEPTION (missing, std::runtime_error, "Error! The field '" << fname << "' in the mesh has different rank or dimensions than the ones specified\n"
+                                                        << " Rank required: " << entity_rank << ", rank of field in mesh: " << (*f)->entity_rank() << "\n"  
+                                                        << " Dimension required: " << dim << ", dimension of field in mesh: " << (*f)->field_array_rank()+1 << "\n");
+    }
+    else 
+      TEUCHOS_TEST_FOR_EXCEPTION (missing, std::runtime_error, "Error! The field '" << fname << "' was not found in the mesh.\n"
+                                                       << "  Probably it was not registered it in the state manager (which forwards it to the mesh)\n");
+  }
 }
 
 void
@@ -1633,12 +1805,14 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
   validPL->set<bool>("Transfer Solution to Coordinates", false, "Copies the solution vector to the coordinates for output");
 
+  validPL->set<bool>("Set All Parts IO", false, "If true, all parts are marked as io parts");
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
   validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the composite tet 10 basis in Intrepid");
   validPL->set<bool>("Build Node Sets From Side Sets",false,"Flag to build node sets from side sets");
 
   validPL->sublist("Required Fields Info", false, "Info for the creation of the required fields in the STK mesh");
 
+  validPL->set<bool>("Ignore Side Maps", true, "If true, we ignore possible side maps already imported from the exodus file");
   validPL->sublist("Contact", false, "Sublist used to specify contact parameters");
 
   // Uniform percept adaptation of input mesh prior to simulation

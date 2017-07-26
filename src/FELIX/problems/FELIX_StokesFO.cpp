@@ -19,8 +19,8 @@
 FELIX::StokesFO::
 StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
           const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
-             const Teuchos::RCP<ParamLib>& paramLib_,
-             const int numDim_) :
+          const Teuchos::RCP<ParamLib>& paramLib_,
+          const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
   numDim(numDim_),
   discParams(discParams_)
@@ -338,6 +338,7 @@ FELIX::StokesFO::getValidProblemParameters () const
   validPL->set<std::string> ("Surface Side Name", "", "Name of the surface side set");
   validPL->sublist("Stereographic Map", false, "");
   validPL->sublist("FELIX Viscosity", false, "");
+  validPL->sublist("FELIX Effective Pressure Surrogate", false, "Parameters needed to compute the effective pressure surrogate");
   validPL->sublist("FELIX Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");
   validPL->sublist("FELIX L2 Projected Boundary Laplacian", false, "Parameters needed to compute the L2 Projected Boundary Laplacian");
   validPL->sublist("FELIX Surface Gradient", false, "");

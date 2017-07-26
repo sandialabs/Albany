@@ -58,30 +58,30 @@ void StokesContravarientMetricTensor<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-  /** The allocated size of the Field Containers must currently 
-    * match the full workset size of the allocated PHX Fields, 
+  /** The allocated size of the Field Containers must currently
+    * match the full workset size of the allocated PHX Fields,
     * this is the size that is used in the computation. There is
     * wasted effort computing on zeroes for the padding on the
     * final workset. Ideally, these are size numCells.
   //int numCells = workset.numCells;
     */
-  
+
   Intrepid2::CellTools<PHX::Device>::setJacobian(jacobian, refPoints, coordVec.get_view(), *cellType);
   Intrepid2::CellTools<PHX::Device>::setJacobianInv(jacobian_inv, jacobian);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {      
-      for (std::size_t i=0; i < numDims; ++i) {        
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
+      for (std::size_t i=0; i < numDims; ++i) {
         for (std::size_t j=0; j < numDims; ++j) {
           Gc(cell,qp,i,j) = 0.0;
-          for (std::size_t alpha=0; alpha < numDims; ++alpha) {  
-            Gc(cell,qp,i,j) += jacobian_inv(cell,qp,alpha,i)*jacobian_inv(cell,qp,alpha,j); 
+          for (std::size_t alpha=0; alpha < numDims; ++alpha) {
+            Gc(cell,qp,i,j) += jacobian_inv(cell,qp,alpha,i)*jacobian_inv(cell,qp,alpha,j);
           }
-        } 
-      } 
+        }
+      }
     }
   }
-  
+
 }
 
 //**********************************************************************

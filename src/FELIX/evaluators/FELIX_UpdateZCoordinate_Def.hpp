@@ -16,7 +16,7 @@
 namespace FELIX {
 
 
- 
+
 //**********************************************************************
 template<typename EvalT, typename Traits>
 UpdateZCoordinateMovingTop<EvalT, Traits>::

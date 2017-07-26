@@ -87,6 +87,9 @@ namespace Albany {
     //! Re-load balance mesh
     void rebalanceInitialMeshT(const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
 
+    //! Sets all mesh parts as IO parts (will be written to file)
+    void setAllPartsIO();
+
     //! Determine if a percept mesh object is needed
     bool buildEMesh;
     bool buildPerceptEMesh();
@@ -137,11 +140,15 @@ namespace Albany {
                                       std::vector<double>& normalizedLayersCoords,
                                       const Teuchos::RCP<const Teuchos_Comm>& comm) const;
 
+    void checkFieldIsInMesh (const std::string& fname, const std::string& ftype) const;
+
     //! Perform initial adaptation input checking
     void checkInput(std::string option, std::string value, std::string allowed_values);
 
     //! Rebuild the mesh with elem->face->segment->node connectivity for adaptation
     void computeAddlConnectivity();
+
+    void setDefaultCoordinates3d ();
 
     ~GenericSTKMeshStruct();
 
