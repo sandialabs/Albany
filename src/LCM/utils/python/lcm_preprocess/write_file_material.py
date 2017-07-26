@@ -90,12 +90,22 @@ def read_names_block(name_file_exodus):
     file_exodus = exodus(name_file_exodus)
     ids_block = file_exodus.get_elem_blk_ids()
     names_block = file_exodus.get_elem_blk_names()
+    file_exodus.close()
 
     for idx in range(len(ids_block)):
         if (names_block[idx] == ""):
             names_block[idx] = "block_" + str(ids_block[idx])
 
     return names_block
+
+def read_element_type(name_file_exodus):
+
+    file_exodus = exodus(name_file_exodus)
+    ids_block = file_exodus.get_elem_blk_ids()
+    element_block_info = file_exodus.elem_blk_info(ids_block[0])
+    element_type = element_block_info[0]
+    file_exodus.close() 
+    return element_type
 
 def ParseMaterialParametersFile(file_name, mat_params, vars_output):
 
@@ -212,7 +222,7 @@ def WriteBool(name, type, value, file, indent):
     return
 
 
-def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, names_block):
+def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, names_block, element_type):
 
     num_blocks = len(names_block)
     material_names = []
@@ -231,6 +241,8 @@ def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, names_bloc
         WriteParameter("material", "string", material_names[iBlock], mat_file, indent)
         WriteBool("Weighted Volume Average J", "bool", "true", mat_file, indent)
         WriteBool("Volume Average Pressure", "bool", "true", mat_file, indent)
+        if element_type == "TETRA10":
+            WriteBool("Use Composite Tet 10", "bool", "true", mat_file, indent)
         indent = EndParamList(mat_file, indent)
     indent = EndParamList(mat_file, indent)
 
@@ -448,6 +460,8 @@ if __name__ == "__main__":
 
     names_block = read_names_block(name_file_exodus)
 
+    element_type = read_element_type(name_file_exodus)
+
     # List of material parameters that are expected to be in the input file
     # If it's set to None, then it is a required parameter
     mat_params = create_mat_params_default()
@@ -459,6 +473,6 @@ if __name__ == "__main__":
     rotations = ParseRotationMatricesFile(rotations_file_name)
 
     materials_file_name = name_file_exodus.split('.')[0] + '_Material.xml'
-    WriteMaterialsFile(materials_file_name, mat_params, vars_output, rotations, names_block)
+    WriteMaterialsFile(materials_file_name, mat_params, vars_output, rotations, names_block, element_type)
 
     print "\nComplete.\n"
