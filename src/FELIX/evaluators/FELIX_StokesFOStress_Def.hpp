@@ -42,16 +42,13 @@ StokesFOStress(const Teuchos::ParameterList& p,
   this->addDependentField(muFELIX);
   this->addDependentField(coordVec);
 
+  stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
+  useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
+
   if(useStereographicMap)
   {
     U = decltype(U)(p.get<std::string>("Velocity QP Variable Name"), dl->qp_vector);
     this->addDependentField(U);
-  }
-
-  stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
-  useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
-  if(useStereographicMap)
-  {
     coordVec = decltype(coordVec)(p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
     this->addDependentField(coordVec);
   }
