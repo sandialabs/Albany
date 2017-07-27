@@ -48,7 +48,8 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 
-set (NVCC_WRAPPER "$ENV{jenkins_trilinos_dir}/packages/kokkos/config/nvcc_wrapper")
+#set (NVCC_WRAPPER "$ENV{jenkins_trilinos_dir}/packages/kokkos/config/nvcc_wrapper")
+set (NVCC_WRAPPER ${CTEST_SCRIPT_DIRECTORY}/nvcc_wrapper_p100)
 set (CUDA_MANAGED_FORCE_DEVICE_ALLOC 1)
 set( CUDA_LAUNCH_BLOCKING 1)
 
