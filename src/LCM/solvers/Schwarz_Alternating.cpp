@@ -67,6 +67,10 @@ SchwarzAlternating(
   sub_outargs_.resize(num_subdomains_);
   nox_params_.resize(num_subdomains_);
   solutions_.resize(num_subdomains_);
+  have_loca_.resize(num_subdomains_);
+  have_tempus_.resize(num_subdomains_);
+  step_start_.resize(num_subdomains_);
+  step_stop_.resize(num_subdomains_);
 
   // Initialization
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
@@ -95,6 +99,45 @@ SchwarzAlternating(
 
     Teuchos::ParameterList &
     piro_params = params.sublist("Piro");
+
+    bool const
+    have_loca = piro_params.isSublist("LOCA");
+
+    have_loca_[subdomain] = have_loca;
+
+    if (have_loca == true) {
+      Teuchos::ParameterList &
+      loca_params = piro_params.sublist("LOCA");
+
+      Teuchos::ParameterList &
+      stepper_params = loca_params.sublist("Stepper");
+
+      start_stop_params_.emplace_back(stepper_params);
+      start_str_.emplace_back("Min Value");
+      stop_str_.emplace_back("Max Value");
+    }
+
+    bool const
+    have_tempus = piro_params.isSublist("Tempus");
+
+    have_tempus_[subdomain] = have_tempus;
+
+    if (have_tempus == true) {
+      Teuchos::ParameterList &
+      tempus_params = piro_params.sublist("Tempus");
+
+      Teuchos::ParameterList &
+      integrator_params = tempus_params.sublist("Tempus Integrator");
+
+      Teuchos::ParameterList &
+      step_params = integrator_params.sublist("Time Step Control");
+
+      start_stop_params_.emplace_back(step_params);
+      start_str_.emplace_back("Initial Time");
+      stop_str_.emplace_back("Final Time");
+    }
+
+    ALBANY_ASSERT(have_loca == true || have_tempus == true);
 
     bool const
     have_nox = piro_params.isSublist("NOX");
@@ -606,6 +649,9 @@ SchwarzLoop() const
   ST
   current_time{initial_time_};
 
+  ST
+  next_time{current_time + time_step};
+
   // Continuation loop
   while (stop <= maximum_steps_ && current_time <= final_time_) {
 
@@ -650,6 +696,18 @@ SchwarzLoop() const
              (*model_evaluators_[subdomain]);
 
         me.getNominalValues().set_t(current_time);
+
+        Teuchos::ParameterList &
+        start_stop_params = start_stop_params_[subdomain];
+
+        std::string const &
+        start_str = start_str_[subdomain];
+
+        std::string const &
+        stop_str = stop_str_[subdomain];
+
+        start_stop_params.set(start_str, current_time);
+        start_stop_params.set(stop_str, next_time);
 
         // Use previous solution as initial condition for next step
         if (stop > 0) {
