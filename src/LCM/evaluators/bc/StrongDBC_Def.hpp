@@ -154,7 +154,8 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       if (row == dof) {
         // Set entries other than the diagonal to zero
         for (size_t col = 0; col < num_cols; ++col) {
-          if (col != dof) entries[col] = 0.0;
+          auto col_index = indices[col];
+          if (col_index != dof) entries[col] = 0.0;
         }
         J->replaceLocalValues(dof, indices(), entries());
       } else {
