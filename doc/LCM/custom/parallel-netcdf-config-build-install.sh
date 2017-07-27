@@ -1,14 +1,16 @@
 #!/bin/bash
 
 PACKAGE=parallel-netcdf
-VERSION=`printf -- '%s\n' * | grep -oP "$PACKAGE-\K.*(?=\.tar\.bz2)"`
+VERSION=`printf -- '%s\n' * | grep -oP "$PACKAGE-\K.*(?=\.tar\.gz)"`
 NAME=$PACKAGE-$VERSION
 if [ -d "$NAME" ]; then
     rm "$NAME" -rf
 fi
-tar jxf $NAME.tar.bz2
+tar zxf $NAME.tar.gz
 cd $NAME
 PATH=/usr/lib64/openmpi/bin:$PATH
+CC=`which mpicc`
+MPICC=`which mpicc`
 INSTALL_DIR=/usr/local/$NAME
 ./configure --prefix=$INSTALL_DIR \
             --disable-fortran \
