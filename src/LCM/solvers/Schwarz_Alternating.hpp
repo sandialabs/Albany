@@ -7,14 +7,16 @@
 #if !defined(LCM_SchwarzAlternating_hpp)
 #define LCM_SchwarzAlternating_hpp
 
-#include "../utils/SolutionSniffer.hpp"
+#include <functional>
+
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_DataTypes.hpp"
+#include "Albany_MaterialDatabase.hpp"
 #include "Albany_ModelEvaluatorT.hpp"
 #include "NOX_PrePostOperator_Vector.H"
+#include "SolutionSniffer.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
-#include "Albany_MaterialDatabase.hpp"
 
 namespace LCM {
 
@@ -218,16 +220,25 @@ private:
 
   // Used if solving with loca or tempus
   mutable std::vector<bool>
-  is_loca_;
+  have_loca_;
 
   mutable std::vector<bool>
-  is_tempus_;
+  have_tempus_;
 
   mutable std::vector<ST>
   step_start_;
 
   mutable std::vector<ST>
   step_stop_;
+
+  std::vector<std::reference_wrapper<Teuchos::ParameterList>>
+  start_stop_params_;
+
+  std::vector<std::string>
+  start_str_;
+
+  std::vector<std::string>
+  stop_str_;
 };
 
 } // namespace LCM
