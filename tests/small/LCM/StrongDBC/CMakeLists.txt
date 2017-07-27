@@ -13,16 +13,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.g
                ${CMAKE_CURRENT_BINARY_DIR}/cube.g COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube.g
-               ${CMAKE_CURRENT_BINARY_DIR}/finer_cube.g COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube.g.4.0
-               ${CMAKE_CURRENT_BINARY_DIR}/finer_cube.g.4.0 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube.g.4.1
-               ${CMAKE_CURRENT_BINARY_DIR}/finer_cube.g.4.1 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube.g.4.2
-               ${CMAKE_CURRENT_BINARY_DIR}/finer_cube.g.4.2 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube.g.4.3
-               ${CMAKE_CURRENT_BINARY_DIR}/finer_cube.g.4.3 COPYONLY)
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
