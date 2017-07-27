@@ -188,12 +188,12 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
   if(!keptMesh) {
     albanyApp->createDiscretization();
-    albanyApp->finalSetUp(paramList); //, albanyApp->getDiscretization()->getSolutionFieldT());
   } else {
     auto abs_disc = albanyApp->getDiscretization();
     auto stk_disc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(abs_disc);
     stk_disc->updateMesh();
   }
+  albanyApp->finalSetUp(paramList);
 
   bool success = true;
   Teuchos::ArrayRCP<const ST> solution_constView;
