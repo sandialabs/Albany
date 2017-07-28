@@ -45,7 +45,7 @@ getValidInitialConditionParameters(const Teuchos::ArrayRCP<std::string>& wsEBNam
 
 #if defined(ALBANY_EPETRA)
 void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& wsElNodeEqID,
+                       const Teuchos::ArrayRCP<Kokkos::View<LO***, PHX::Device>>& wsElNodeEqID,
                        const Teuchos::ArrayRCP<std::string>& wsEBNames,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
                        const int neq, const int numDim,
@@ -133,12 +133,12 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
       std::vector<double> X(neq);
       std::vector<double> x(neq);
 
-      for(int el = 0; el < wsElNodeEqID[ws].size(); el++) { // loop over elements in workset
+      for(int el = 0; el < wsElNodeEqID[ws].dimension(0); el++) { // loop over elements in workset
 
         for(int i = 0; i < neq; i++)
           X[i] = 0;
 
-        for(int ln = 0; ln < wsElNodeEqID[ws][el].size(); ln++) // loop over node local to the element
+        for(int ln = 0; ln < wsElNodeEqID[ws].dimension(1); ln++) // loop over node local to the element
           for(int i = 0; i < neq; i++)
             X[i] += coords[ws][el][ln][i]; // nodal coords
 
@@ -147,14 +147,12 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
 
         initFunc->compute(&x[0], &X[0]);
 
-        for(int ln = 0; ln < wsElNodeEqID[ws][el].size(); ln++) { // loop over node local to the element
-          Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln]; // local node ids
-
+        for(int ln = 0; ln < wsElNodeEqID[ws].dimension(1); ln++) { // loop over node local to the element
           for(int i = 0; i < neq; i++) {
 
-            (*soln)[lid[i]] += x[i];
-            //             (*soln)[lid[i]] += X[i]; // Test with coord values
-            lumpedMM[lid[i]] += 1.0;
+            (*soln)[wsElNodeEqID[ws](el,ln,i)] += x[i];
+            //             (*soln)[wsElNodeEqID[ws](el,ln,i)] += X[i]; // Test with coord values
+            lumpedMM[wsElNodeEqID[ws](el,ln,i)] += 1.0;
 
           }
 
@@ -179,28 +177,27 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
     int numDOFsPerDim = neq / numDim;
 
     for(int ws = 0; ws < wsElNodeEqID.size(); ws++) {
-      for(int el = 0; el < wsElNodeEqID[ws].size(); el++) {
-        for(int ln = 0; ln < wsElNodeEqID[ws][el].size(); ln++) {
+      for(int el = 0; el < wsElNodeEqID[ws].dimension(0); el++) {
+        for(int ln = 0; ln < wsElNodeEqID[ws].dimension(1); ln++) {
 
           const double* X = coords[ws][el][ln];
-          Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
 
 /*
 numDim = 3; numDOFSsPerDim = 2 (coord soln, tgt soln)
 X[0] = x;
 X[1] = y;
 X[2] = z;
-lid[0] = DOF[0],eq[0] (x eqn)
-lid[1] = DOF[0],eq[1] (y eqn)
-lid[2] = DOF[0],eq[2] (z eqn)
-lid[3] = DOF[1],eq[0] (x eqn)
-lid[4] = DOF[1],eq[1] (y eqn)
-lid[5] = DOF[1],eq[2] (z eqn)
+wsElNodeEqID[ws](el,ln,0) = DOF[0],eq[0] (x eqn)
+wsElNodeEqID[ws](el,ln,1) = DOF[0],eq[1] (y eqn)
+wsElNodeEqID[ws](el,ln,2) = DOF[0],eq[2] (z eqn)
+wsElNodeEqID[ws](el,ln,3) = DOF[1],eq[0] (x eqn)
+wsElNodeEqID[ws](el,ln,4) = DOF[1],eq[1] (y eqn)
+wsElNodeEqID[ws](el,ln,5) = DOF[1],eq[2] (z eqn)
 */
 
           for(int j = 0; j < numDOFsPerDim; j++)
             for(int i = 0; i < numDim; i++)
-              (*soln)[lid[j * numDim + i]] = X[i];
+              (*soln)[wsElNodeEqID[ws](el,ln,j * numDim + i)] = X[i];
 
         }
       }
@@ -222,16 +219,15 @@ lid[5] = DOF[1],eq[2] (z eqn)
     std::vector<double> x(neq);
 
     for(int ws = 0; ws < wsElNodeEqID.size(); ws++) {
-      for(int el = 0; el < wsElNodeEqID[ws].size(); el++) {
-        for(int ln = 0; ln < wsElNodeEqID[ws][el].size(); ln++) {
+      for(int el = 0; el < wsElNodeEqID[ws].dimension(0); el++) {
+        for(int ln = 0; ln < wsElNodeEqID[ws].dimension(1); ln++) {
           const double* X = coords[ws][el][ln];
-          Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
 
-          for(int i = 0; i < neq; i++) x[i] = (*soln)[lid[i]];
+          for(int i = 0; i < neq; i++) x[i] = (*soln)[wsElNodeEqID[ws](el,ln,i)];
 
           initFunc->compute(&x[0], X);
 
-          for(int i = 0; i < neq; i++)(*soln)[lid[i]] = x[i];
+          for(int i = 0; i < neq; i++)(*soln)[wsElNodeEqID[ws](el,ln,i)] = x[i];
         }
       }
     }
@@ -251,16 +247,15 @@ lid[5] = DOF[1],eq[2] (z eqn)
     std::vector<double> x(neq);
 
     for(int ws = 0; ws < wsElNodeEqID.size(); ws++) {
-      for(int el = 0; el < wsElNodeEqID[ws].size(); el++) {
-        for(int ln = 0; ln < wsElNodeEqID[ws][el].size(); ln++) {
+      for(int el = 0; el < wsElNodeEqID[ws].dimension(0); el++) {
+        for(int ln = 0; ln < wsElNodeEqID[ws].dimension(1); ln++) {
           const double* X = coords[ws][el][ln];
-          Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
 
-          for(int i = 0; i < neq; i++) x[i] = (*soln)[lid[i]];
+          for(int i = 0; i < neq; i++) x[i] = (*soln)[wsElNodeEqID[ws](el,ln,i)];
 
           initFunc->compute(&x[0], X);
 
-          for(int i = 0; i < neq; i++)(*soln)[lid[i]] = x[i];
+          for(int i = 0; i < neq; i++)(*soln)[wsElNodeEqID[ws](el,ln,i)] = x[i];
         }
       }
     }
@@ -271,7 +266,7 @@ lid[5] = DOF[1],eq[2] (z eqn)
 #endif
 
 void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& wsElNodeEqID,
+                       const Teuchos::ArrayRCP<Kokkos::View<LO***, PHX::Device>>& wsElNodeEqID,
                        const Teuchos::ArrayRCP<std::string>& wsEBNames,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
                        const int neq, const int numDim,
@@ -359,12 +354,12 @@ void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
 
       std::vector<double> X(neq);
 
-      for (int el=0; el < wsElNodeEqID[ws].size(); el++) { // loop over elements in workset
+      for (int el=0; el < wsElNodeEqID[ws].dimension(0); el++) { // loop over elements in workset
 
         for (int i=0; i<neq; i++) 
             X[i] = 0;
 
-        for (int ln=0; ln < wsElNodeEqID[ws][el].size(); ln++) // loop over node local to the element
+        for (int ln=0; ln < wsElNodeEqID[ws].dimension(1); ln++) // loop over node local to the element
           for (int i=0; i<neq; i++)
             X[i] += coords[ws][el][ln][i]; // nodal coords
 
@@ -373,14 +368,12 @@ void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
 
         initFunc->compute(&x[0], &X[0]);
 
-        for (int ln=0; ln < wsElNodeEqID[ws][el].size(); ln++) { // loop over node local to the element
-          Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln]; // local node ids
-
+        for (int ln=0; ln < wsElNodeEqID[ws].dimension(1); ln++) { // loop over node local to the element
           for (int i=0; i<neq; i++){
 
-             solnT_nonconstView[lid[i]] += x[i];
-//             (*soln)[lid[i]] += X[i]; // Test with coord values
-             lumpedMMT_nonconstView[lid[i]] += 1.0;
+             solnT_nonconstView[wsElNodeEqID[ws](el,ln,i)] += x[i];
+//             (*soln)[wsElNodeEqID[ws](el,ln,i)] += X[i]; // Test with coord values
+             lumpedMMT_nonconstView[wsElNodeEqID[ws](el,ln,i)] += 1.0;
 
           }
 
@@ -403,15 +396,13 @@ void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
     int numDOFsPerDim = neq / numDim;
 
     for(int ws = 0; ws < wsElNodeEqID.size(); ws++) {
-      for(int el = 0; el < wsElNodeEqID[ws].size(); el++) {
-        for(int ln = 0; ln < wsElNodeEqID[ws][el].size(); ln++) {
+      for(int el = 0; el < wsElNodeEqID[ws].dimension(0); el++) {
+        for(int ln = 0; ln < wsElNodeEqID[ws].dimension(1); ln++) {
 
           const double* X = coords[ws][el][ln];
-          Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
-
           for(int j = 0; j < numDOFsPerDim; j++)
             for(int i = 0; i < numDim; i++)
-             solnT_nonconstView[lid[j * numDim + i]] = X[i];
+             solnT_nonconstView[wsElNodeEqID[ws](el,ln,j * numDim + i)] = X[i];
 
         }
       }
@@ -432,13 +423,12 @@ void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
     // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
     std::vector<double> x; x.resize(neq);
     for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
-      for (int el=0; el < wsElNodeEqID[ws].size(); el++) {
-        for (int ln=0; ln < wsElNodeEqID[ws][el].size(); ln++) {
+      for (int el=0; el < wsElNodeEqID[ws].dimension(0); el++) {
+        for (int ln=0; ln < wsElNodeEqID[ws].dimension(1); ln++) {
           const double* X = coords[ws][el][ln];
-          Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
-          for (int i=0; i<neq; i++) x[i] = solnT_nonconstView[lid[i]];
+          for (int i=0; i<neq; i++) x[i] = solnT_nonconstView[wsElNodeEqID[ws](el,ln,i)];
           initFunc->compute(&x[0],X);
-          for (int i=0; i<neq; i++) solnT_nonconstView[lid[i]] = x[i];
+          for (int i=0; i<neq; i++) solnT_nonconstView[wsElNodeEqID[ws](el,ln,i)] = x[i];
     } } }
 
   }
@@ -455,13 +445,12 @@ void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
     // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
     std::vector<double> x; x.resize(neq);
     for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
-      for (int el=0; el < wsElNodeEqID[ws].size(); el++) {
-        for (int ln=0; ln < wsElNodeEqID[ws][el].size(); ln++) {
+      for (int el=0; el < wsElNodeEqID[ws].dimension(0); el++) {
+        for (int ln=0; ln < wsElNodeEqID[ws].dimension(1); ln++) {
           const double* X = coords[ws][el][ln];
-          Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
-          for (int i=0; i<neq; i++) x[i] = solnT_nonconstView[lid[i]];
+          for (int i=0; i<neq; i++) x[i] = solnT_nonconstView[wsElNodeEqID[ws](el,ln,i)];
           initFunc->compute(&x[0],X);
-          for (int i=0; i<neq; i++) solnT_nonconstView[lid[i]] = x[i];
+          for (int i=0; i<neq; i++) solnT_nonconstView[wsElNodeEqID[ws](el,ln,i)] = x[i];
     } } }
 
   }

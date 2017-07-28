@@ -45,10 +45,7 @@ public:
   const SideSetList& getSideSets(const int workset) const;
 
   //! Get map from (Ws, El, Local Node) -> NodeLID
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type& getWsElNodeEqID() const;
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  const Kokkos::View<LO***, PHX::Device> getWsElNodeEqIDKokkos(const int ws) const;
-#endif
+  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type& getWsElNodeEqID() const;
 
   //! Retrieve coodinate vector (num_used_nodes * 3)
   Teuchos::ArrayRCP<double>& getCoordinates() const;

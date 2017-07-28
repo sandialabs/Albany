@@ -76,6 +76,7 @@ template<typename Traits>
 void Gather2DField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
@@ -95,11 +96,9 @@ evaluateFields(typename Traits::EvalData workset)
       const int elem_side = sideSet[iSide].side_local_id;
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
       int numSideNodes = side.topology->node_count;
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[elem_LID];
       for (int i = 0; i < numSideNodes; ++i){
         std::size_t node = side.node[i];
-        const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
-        this->field2D(elem_LID,node) = xT_constView[eqID[this->offset]];
+        this->field2D(elem_LID,node) = xT_constView[nodeID(elem_LID,node,this->offset)];
       }
     }
   }
@@ -122,6 +121,7 @@ template<typename Traits>
 void Gather2DField<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
@@ -154,13 +154,11 @@ evaluateFields(typename Traits::EvalData workset)
       int numSideNodes = side.topology->node_count;
 
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[elem_LID];
 
       for (int i = 0; i < numSideNodes; ++i){
         std::size_t node = side.node[i];
-        const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
         typename PHAL::Ref<ScalarT>::type val = (this->field2D)(elem_LID,node);
-        val = FadType(val.size(), xT_constView[eqID[this->offset]]);
+        val = FadType(val.size(), xT_constView[nodeID(elem_LID,node,this->offset)]);
         val.fastAccessDx(numSideNodes*this->vecDim*this->fieldLevel+this->vecDim*i+this->offset) = workset.j_coeff;
       }
     }
@@ -285,6 +283,7 @@ template<typename Traits>
 void GatherExtruded2DField<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
@@ -298,8 +297,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-    const int neq = nodeID[0].size();
+    const int neq = nodeID.dimension(2);
     const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {

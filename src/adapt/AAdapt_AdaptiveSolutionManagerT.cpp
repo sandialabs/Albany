@@ -112,8 +112,7 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
   resizeMeshDataArrays(mapT, overlapMapT, overlapJacGraphT);
 
   {
-    Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID =
+    Teuchos::ArrayRCP<Kokkos::View<LO***, PHX::Device>> wsElNodeEqID =
         disc_->getWsElNodeEqID();
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords =
         disc_->getCoords();

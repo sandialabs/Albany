@@ -38,7 +38,7 @@ namespace QCAD {
     }
 
     // Set NodeID structure for cell corrsponding to max/min
-    void setNodeID(const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >&) {}
+    void setMaxCell(const int) {}
 
     Teuchos::Array<int> field_components;
   };
@@ -74,15 +74,15 @@ namespace QCAD {
     }
 
     // Set NodeID structure for cell corrsponding to max/min
-    void setNodeID(const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID_) {
-      nodeID = nodeID_;
+    void setMaxCell(const int max_cell_) {
+      max_cell = max_cell_;
     }
 
     Teuchos::Array<int> field_components;
 
   private:
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
+    int max_cell = -1;
     int numNodes;
   };
 
@@ -116,15 +116,15 @@ namespace QCAD {
     }
 
     // Set NodeID structure for cell corrsponding to max/min
-    void setNodeID(const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID_) {
-      nodeID = nodeID_;
+    void setMaxCell(const int max_cell_) {
+      max_cell = max_cell_;
     }
 
     Teuchos::Array<int> field_components;
 
   private:
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
+    int max_cell = -1;
     int numNodes;
   };
 
@@ -159,15 +159,15 @@ namespace QCAD {
     }
 
     // Set NodeID structure for cell corrsponding to max/min
-    void setNodeID(const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID_) {
-      nodeID = nodeID_;
+    void setMaxCell(const int max_cell_) {
+      max_cell = max_cell_;
     }
 
     Teuchos::Array<int> field_components;
 
   private:
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
+    int max_cell = -1;
     int numNodes;
   };
 #endif 
@@ -203,15 +203,15 @@ namespace QCAD {
     }
 
     // Set NodeID structure for cell corrsponding to max/min
-    void setNodeID(const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID_) {
-      nodeID = nodeID_;
+    void setMaxCell(const int max_cell_) {
+      max_cell = max_cell_;
     }
 
     Teuchos::Array<int> field_components;
 
   private:
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
+    int max_cell = -1;
     int numNodes;
   };
 #endif
@@ -249,7 +249,7 @@ namespace QCAD {
     PHX::MDField<const ScalarT> retField;
     PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
     PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > max_nodeID;
+    int max_cell;
     //Teuchos::Array<int> field_components;
 
     bool bOpFieldIsVector, bRetFieldIsVector;

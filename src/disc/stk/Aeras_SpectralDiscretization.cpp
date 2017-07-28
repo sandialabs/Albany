@@ -300,7 +300,7 @@ Aeras::SpectralDiscretization::getOverlapNodeMapT(const std::string& field_name)
   return Teuchos::null;
 }
 
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
+const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
 Aeras::SpectralDiscretization::getWsElNodeEqID() const
 {
   return wsElNodeEqID;
@@ -2463,10 +2463,11 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
   {
 
     stk::mesh::Bucket & buck = *buckets[b];
-    wsElNodeEqID[b].resize(buck.size());
     //wsElNodeID[b].resize(buck.size());
     //coords[b].resize(buck.size());
 
+    // Set size of Kokkos views
+    wsElNodeEqID[b] = Kokkos::View<LO***, PHX::Device>("wsElNodeEqID", buck.size(), nodes_per_element, neq);
 
     {  // nodalDataToElemNode.
 
@@ -2563,7 +2564,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
       Teuchos::ArrayRCP< GO > node_rels = wsElNodeID[b][i];
       // const int nodes_per_element = bulkData.num_nodes(element);
 
-      wsElNodeEqID[b][i].resize(nodes_per_element);
       //wsElNodeID[b][i].resize(nodes_per_element);
       //coords[b][i].resize(nodes_per_element);
 
@@ -2583,40 +2583,11 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
 
         //wsElNodeID[b][i][j] = node_gid;
 
-        wsElNodeEqID[b][i][j].resize(neq);
         for (std::size_t eq = 0; eq < neq; ++eq)
-          wsElNodeEqID[b][i][j][eq] = getOverlapDOF(node_lid,eq);
+          wsElNodeEqID[b](i,j,eq) = getOverlapDOF(node_lid,eq);
       }
     }
   }
-
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  // Copy workset data to Kokkos Views
-  // Note: Allocates the max number of nodes across all elements in each bucket
-  wsElNodeEqID_kokkos.resize(numBuckets);
-  for (int b = 0; b < numBuckets; b++) {
-    const int buckSize = wsElNodeEqID[b].size();
-
-    // Find max_nodes
-    int max_nodes = 0;
-    for (int i = 0; i < buckSize; i++) {
-      const int nodes_per_element = wsElNodeEqID[b][i].size();
-      if (nodes_per_element > max_nodes) {
-        max_nodes = nodes_per_element;
-      }
-    }
-
-    wsElNodeEqID_kokkos[b] = Kokkos::View<LO***, PHX::Device>("wsElNodeEqID_kokkos", buckSize, max_nodes, neq);
-    for (int i = 0; i < buckSize; i++) {
-      const int nodes_per_element = wsElNodeEqID[b][i].size();
-      for (int j = 0; j < nodes_per_element; j++) {
-        for (int eq = 0; eq < neq; eq++) {
-          wsElNodeEqID_kokkos[b](i, j, eq) = wsElNodeEqID[b][i][j][eq];
-        }
-      }
-    }
-  }
-#endif
 
   //The following is for periodic BCs.  This will only be relevant for the x-z hydrostatic equations.
   for (int d=0; d<stkMeshStruct->numDim; d++)

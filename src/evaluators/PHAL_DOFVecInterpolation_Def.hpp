@@ -223,7 +223,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   int num_dof = val_node(0,0,0).size();
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  const int neq = workset.wsElNodeEqID[0][0].size();
+  const int neq = workset.wsElNodeEqID.dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -295,7 +295,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   int num_dof = val_node(0,0,0).size();
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  const int neq = workset.wsElNodeEqID[0][0].size();
+  const int neq = workset.wsElNodeEqID.dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -369,7 +369,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   int num_dof = val_node(0,0,0).size();
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  const int neq = workset.wsElNodeEqID[0][0].size();
+  const int neq = workset.wsElNodeEqID.dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {

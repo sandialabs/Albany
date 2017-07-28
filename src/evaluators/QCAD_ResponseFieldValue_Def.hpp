@@ -48,7 +48,8 @@ postEvaluate(typename Traits::PostEvalData workset)
   overlapped_dgT->putScalar(0.0);
 
   // Extract derivatives for the cell corresponding to nodeID
-  if (nodeID != Teuchos::null) {
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  if (max_cell != -1) {
 
     // Loop over responses
     for (int res = 0; res < this->field_components.size(); res++) {
@@ -56,7 +57,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
       // Loop over nodes in cell
       for (int node_dof=0; node_dof<numNodes; node_dof++) {
-        int neq = nodeID[node_dof].size();
+        int neq = nodeID.dimension(2);
 
         // Loop over equations per node
         for (int eq_dof=0; eq_dof<neq; eq_dof++) {
@@ -65,7 +66,7 @@ postEvaluate(typename Traits::PostEvalData workset)
           int deriv = neq * node_dof + eq_dof;
 
           // local DOF
-          int dof = nodeID[node_dof][eq_dof];
+          int dof = nodeID(max_cell,node_dof,eq_dof);
 
           // Set dg/dx
           overlapped_dgT->replaceLocalValue(dof, res, (this->global_response(this->field_components[res])).dx(deriv));
@@ -114,7 +115,8 @@ postEvaluate(typename Traits::PostEvalData workset)
   overlapped_dg->PutScalar(0.0);
 
   // Extract derivatives for the cell corresponding to nodeID
-  if (nodeID != Teuchos::null) {
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  if (max_cell != -1) {
 
     // Loop over responses
     for (int res = 0; res < this->field_components.size(); res++) {
@@ -122,7 +124,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
       // Loop over nodes in cell
       for (int node_dof=0; node_dof<numNodes; node_dof++) {
-        int neq = nodeID[node_dof].size();
+        int neq = nodeID.dimension(2);
 
         // Loop over equations per node
         for (int eq_dof=0; eq_dof<neq; eq_dof++) {
@@ -131,7 +133,7 @@ postEvaluate(typename Traits::PostEvalData workset)
           int deriv = neq * node_dof + eq_dof;
 
           // local DOF
-          int dof = nodeID[node_dof][eq_dof];
+          int dof = nodeID(max_cell,node_dof,eq_dof);
 
           // Set dg/dx
           overlapped_dg->ReplaceMyValue(dof, res, val.dx(deriv));
@@ -189,7 +191,8 @@ postEvaluate(typename Traits::PostEvalData workset)
   overlapped_dg_sg->init(0.0);
 
   // Extract derivatives for the cell corresponding to nodeID
-  if (nodeID != Teuchos::null) {
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  if (max_cell != -1) {
 
     // Loop over responses
     for (int res = 0; res < this->field_components.size(); res++) {
@@ -197,7 +200,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
       // Loop over nodes in cell
       for (int node_dof=0; node_dof<numNodes; node_dof++) {
-        int neq = nodeID[node_dof].size();
+        int neq = nodeID.dimension(2);
 
         // Loop over equations per node
         for (int eq_dof=0; eq_dof<neq; eq_dof++) {
@@ -206,7 +209,7 @@ postEvaluate(typename Traits::PostEvalData workset)
           int deriv = neq * node_dof + eq_dof;
 
           // local DOF
-          int dof = nodeID[node_dof][eq_dof];
+          int dof = nodeID(max_cell,node_dof,eq_dof);
 
           // Set dg/dx
           for (int block=0; block<dg_sg->size(); block++)
@@ -267,7 +270,8 @@ postEvaluate(typename Traits::PostEvalData workset)
   overlapped_dg_mp->init(0.0);
 
   // Extract derivatives for the cell corresponding to nodeID
-  if (nodeID != Teuchos::null) {
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  if (max_cell != -1) {
 
     // Loop over responses
     for (int res = 0; res < this->field_components.size(); res++) {
@@ -275,7 +279,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
       // Loop over nodes in cell
       for (int node_dof=0; node_dof<numNodes; node_dof++) {
-        int neq = nodeID[node_dof].size();
+        int neq = nodeID.dimension(2);
 
         // Loop over equations per node
         for (int eq_dof=0; eq_dof<neq; eq_dof++) {
@@ -284,7 +288,7 @@ postEvaluate(typename Traits::PostEvalData workset)
           int deriv = neq * node_dof + eq_dof;
 
           // local DOF
-          int dof = nodeID[node_dof][eq_dof];
+          int dof = nodeID(max_cell,node_dof,eq_dof);
 
           // Set dg/dx
           for (int block=0; block<dg_mp->size(); block++)
@@ -474,7 +478,7 @@ evaluateFields(typename Traits::EvalData workset)
     // Check if the currently stored min/max value needs to be updated
     if( (operation == "Maximize" && opVal > this->global_response(1)) ||
         (operation == "Minimize" && opVal < this->global_response(1)) ) {
-      max_nodeID = workset.wsElNodeEqID[cell];
+      max_cell = cell;
 
       // set g[0] = value of return field at the current cell (avg)
       this->global_response_eval(0)=0.0;
@@ -551,9 +555,9 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   // Do global scattering
   if (workset.comm->getRank() == winner)
-    QCAD::FieldValueScatterScalarResponse<EvalT,Traits>::setNodeID(max_nodeID);
+    QCAD::FieldValueScatterScalarResponse<EvalT,Traits>::setMaxCell(max_cell);
   else
-    QCAD::FieldValueScatterScalarResponse<EvalT,Traits>::setNodeID(Teuchos::null);
+    QCAD::FieldValueScatterScalarResponse<EvalT,Traits>::setMaxCell(-1);
 
   QCAD::FieldValueScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
 }

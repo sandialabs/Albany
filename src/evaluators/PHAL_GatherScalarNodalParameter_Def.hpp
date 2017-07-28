@@ -112,6 +112,7 @@ evaluateFields(typename Traits::EvalData workset)
     workset.distParamLib->get(this->param_name)->overlapped_vector();
   Teuchos::ArrayRCP<const ST> pvecT_constView = pvecT->get1dView();
 
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
 
   // Are we differentiating w.r.t. this parameter?
@@ -123,8 +124,6 @@ evaluateFields(typename Traits::EvalData workset)
     const int num_nodes_res = this->numNodes;
     bool trans = workset.transpose_dist_param_deriv;
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> >& resID  = workset.wsElNodeEqID[cell];
-
       for (std::size_t node = 0; node < num_deriv; ++node) {
 
         // Initialize Fad type for parameter value
@@ -145,10 +144,9 @@ evaluateFields(typename Traits::EvalData workset)
           local_Vp.resize(num_nodes_res*workset.numEqs);
           for (std::size_t node = 0; node < num_nodes_res; ++node) {
             // Store Vp entries
-            const Teuchos::ArrayRCP<LO>& eqID = resID[node];
             for (std::size_t eq = 0; eq < workset.numEqs; eq++) {
               local_Vp[node*workset.numEqs+eq].resize(num_cols);
-              const LO id = eqID[eq];
+              const LO id = nodeID(cell,node,eq);
               for (std::size_t col=0; col<num_cols; ++col)
                 local_Vp[node*workset.numEqs+eq][col] = VpT.getData(col)[id];
             }
@@ -244,7 +242,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numLayers = layeredMeshNumbering.numLayers;
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
 
   // If active, intialize data needed for differentiation
   if (is_active) {
@@ -253,8 +251,6 @@ evaluateFields(typename Traits::EvalData workset)
     bool trans = workset.transpose_dist_param_deriv;
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> >& resID  = workset.wsElNodeEqID[cell];
-
       for (std::size_t node = 0; node < num_deriv; ++node) {
 
         LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
@@ -282,10 +278,9 @@ evaluateFields(typename Traits::EvalData workset)
           local_Vp.resize(num_nodes_res*workset.numEqs);
           for (std::size_t node = 0; node < num_nodes_res; ++node) {
             // Store Vp entries
-            const Teuchos::ArrayRCP<LO>& eqID = resID[node];
             for (std::size_t eq = 0; eq < workset.numEqs; eq++) {
               local_Vp[node*workset.numEqs+eq].resize(num_cols);
-              const LO id = eqID[eq];
+              const LO id = nodeID(cell,node,eq);
               for (std::size_t col=0; col<num_cols; ++col)
                 local_Vp[node*workset.numEqs+eq][col] = VpT.getData(col)[id];
             }

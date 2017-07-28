@@ -222,7 +222,7 @@ evaluateFields(typename Traits::EvalData workset)
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   const int num_dof = val_node(0,0).size();
-  const int neq = workset.wsElNodeEqID[0][0].size();
+  const int neq = workset.wsElNodeEqID.dimension(2);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -252,7 +252,7 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
 
  num_dof = val_node(0,0).size();
- neq = workset.wsElNodeEqID[0][0].size();
+ neq = workset.wsElNodeEqID.dimension(2);
 
  Kokkos::parallel_for(DOFGradInterpolationBase_Jacobian_Policy(0,workset.numCells),*this);
 
@@ -316,7 +316,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   const int num_dof = val_node(0,0).size();
-  const int neq = workset.wsElNodeEqID[0][0].size();
+  const int neq = workset.wsElNodeEqID.dimension(2);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -380,7 +380,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   const int num_dof = val_node(0,0).size();
-  const int neq = workset.wsElNodeEqID[0][0].size();
+  const int neq = workset.wsElNodeEqID.dimension(2);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {

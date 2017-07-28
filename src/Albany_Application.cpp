@@ -1384,7 +1384,7 @@ computeGlobalResidualImplT(
   postRegSetup("Residual");
 
   // Load connectivity map and coordinates
-  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type const &
+  WorksetArray<Kokkos::View<LO***, PHX::Device>>::type const &
   wsElNodeEqID = disc->getWsElNodeEqID();
 
   WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type const &
@@ -1514,9 +1514,6 @@ computeGlobalResidualImplT(
 #endif
       }
     }
-    // workset.wsElNodeEqID_kokkos =Kokkos:: View<int****,
-    // PHX::Device ("wsElNodeEqID_kokkos",workset. wsElNodeEqID.size(),
-    // workset. wsElNodeEqID[0].size(), workset. wsElNodeEqID[0][0].size());
   }
 
   // Assemble the residual into a non-overlapping vector
@@ -1834,8 +1831,7 @@ computeGlobalJacobianImplT(const double alpha,
   postRegSetup("Jacobian");
 
   // Load connectivity map and coordinates
-  const WorksetArray<
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type&
+  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
   wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   coords = disc->getCoords();
@@ -2347,8 +2343,7 @@ computeGlobalTangentImplT(
   postRegSetup("Tangent");
 
   // Load connectivity map and coordinates
-  const WorksetArray<
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type&
+  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
   wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   coords = disc->getCoords();
@@ -2814,8 +2809,7 @@ applyGlobalDistParamDerivImplT(const double current_time,
   postRegSetup("Distributed Parameter Derivative");
 
   // Load connectivity map and coordinates
-  const WorksetArray<
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type&
+  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
   wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   coords = disc->getCoords();
@@ -3176,7 +3170,7 @@ computeGlobalSGResidual(
   postRegSetup("SGResidual");
 
   // Load connectivity map and coordinates
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type&
+  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
   wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   coords = disc->getCoords();
@@ -3329,7 +3323,7 @@ computeGlobalSGJacobian(
   postRegSetup("SGJacobian");
 
   // Load connectivity map and coordinates
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type&
+  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
   wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   coords = disc->getCoords();
@@ -3524,7 +3518,7 @@ computeGlobalSGTangent(
   postRegSetup("SGTangent");
 
   // Load connectivity map and coordinates
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type&
+  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
   wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   coords = disc->getCoords();
@@ -3868,7 +3862,7 @@ computeGlobalMPResidual(
   postRegSetup("MPResidual");
 
   // Load connectivity map and coordinates
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type&
+  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
   wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   coords = disc->getCoords();
@@ -4020,7 +4014,7 @@ computeGlobalMPJacobian(
   postRegSetup("MPJacobian");
 
   // Load connectivity map and coordinates
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type&
+  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
   wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   coords = disc->getCoords();
@@ -4209,7 +4203,7 @@ computeGlobalMPTangent(
   postRegSetup("MPTangent");
 
   // Load connectivity map and coordinates
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type&
+  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
   wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   coords = disc->getCoords();
@@ -4627,8 +4621,7 @@ evaluateStateFieldManagerT(
   Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
 
   // Load connectivity map and coordinates
-  const WorksetArray<
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type&
+  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
   wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   coords = disc->getCoords();
@@ -6025,7 +6018,7 @@ computeGlobalResidualSDBCsImplT(
   bool begin_time_step = false; 
 
   // Load connectivity map and coordinates
-  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type const &
+  WorksetArray<Kokkos::View<LO***, PHX::Device>>::type const &
   wsElNodeEqID = disc->getWsElNodeEqID();
 
   WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type const &
@@ -6164,9 +6157,6 @@ computeGlobalResidualSDBCsImplT(
       }
     }
     previous_time = current_time; 
-    // workset.wsElNodeEqID_kokkos =Kokkos:: View<int****,
-    // PHX::Device ("wsElNodeEqID_kokkos",workset. wsElNodeEqID.size(),
-    // workset. wsElNodeEqID[0].size(), workset. wsElNodeEqID[0][0].size());
   }
 
   // Assemble the residual into a non-overlapping vector
@@ -6265,9 +6255,6 @@ computeGlobalResidualSDBCsImplT(
 #endif
       }
     }
-    // workset.wsElNodeEqID_kokkos =Kokkos:: View<int****,
-    // PHX::Device ("wsElNodeEqID_kokkos",workset. wsElNodeEqID.size(),
-    // workset. wsElNodeEqID[0].size(), workset. wsElNodeEqID[0][0].size());
 
     // Assemble the residual into a non-overlapping vector
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);

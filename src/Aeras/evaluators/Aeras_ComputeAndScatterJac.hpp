@@ -98,7 +98,7 @@ public:
   RealType mc;
   int neq;
 
-  Kokkos::View<int***, PHX::Device> Index;
+  Kokkos::View<LO***, PHX::Device> nodeID;
 
   struct ComputeAndScatterJac_buildMass_Tag{};
 

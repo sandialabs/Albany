@@ -913,10 +913,7 @@ ConnectivityArray::ConnectivityArray(
   dimension_ = mesh_specs[0]->numDim;
 
   // Dimensioned: Workset, Cell, Local Node
-  Albany::WorksetArray<
-      Teuchos::ArrayRCP<
-      Teuchos::ArrayRCP<
-      Teuchos::ArrayRCP<int>>>>::type const &
+  Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type const &
   element_connectivity = discretization_ptr_->getWsElNodeEqID();
 
   Teuchos::ArrayRCP<double>
@@ -940,14 +937,14 @@ ConnectivityArray::ConnectivityArray(
 
   // Assume all the elements have the same number of nodes and eqs
   Teuchos::ArrayRCP<int>::size_type
-  nodes_per_element = element_connectivity[0][0].size();
+  nodes_per_element = element_connectivity[0].dimension(1);
 
   // Do some logic so we can get from unknown ID to node ID
-  int const number_equations = element_connectivity[0][0][0].size();
+  int const number_equations = element_connectivity[0].dimension(2);
   int stride = 1;
   if (number_equations > 1) {
-    if (element_connectivity[0][0][0][0] + 1 ==
-        element_connectivity[0][0][0][1]) {
+    if (element_connectivity[0](0,0,0) + 1 ==
+        element_connectivity[0](0,0,1)) {
       // usual interleaved unknowns case
       stride = number_equations;
     }
@@ -985,7 +982,7 @@ ConnectivityArray::ConnectivityArray(
 
     for (Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>::size_type
     cell = 0;
-        cell < element_connectivity[workset].size();
+        cell < element_connectivity[workset].dimension(0);
         ++cell, ++element_number) {
 
       IDList
@@ -998,7 +995,7 @@ ConnectivityArray::ConnectivityArray(
 
         // Get node ID from first unknown ID by dividing by stride
         nodes_element[node] =
-            element_connectivity[workset][cell][node][0] / stride;
+            element_connectivity[workset](cell,node,0) / stride;
 
       }
 

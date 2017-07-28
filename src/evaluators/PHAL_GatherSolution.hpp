@@ -73,7 +73,7 @@ protected:
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT 
 protected:
-  Kokkos::View<LO***, PHX::Device> ElNodeEqID_kokkos;
+  Kokkos::View<LO***, PHX::Device> nodeID;
   Kokkos::View<const ST*, PHX::Device> xT_constView, xdotT_constView, xdotdotT_constView;
 
   typedef Kokkos::vector<Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device> KV;
@@ -149,7 +149,7 @@ private:
   int numDim;
 
   typedef GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits> Base;
-  using Base::ElNodeEqID_kokkos;
+  using Base::nodeID;
   using Base::xT_constView;
   using Base::xdotT_constView;
   using Base::xdotdotT_constView;
@@ -231,7 +231,7 @@ private:
   double j_coeff, n_coeff, m_coeff;
 
   typedef GatherSolutionBase<PHAL::AlbanyTraits::Jacobian, Traits> Base;
-  using Base::ElNodeEqID_kokkos;
+  using Base::nodeID;
   using Base::xT_constView;
   using Base::xdotT_constView;
   using Base::xdotdotT_constView;

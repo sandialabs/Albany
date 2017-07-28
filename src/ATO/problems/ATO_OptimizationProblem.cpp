@@ -86,7 +86,7 @@ ComputeMeasure(std::string measureType, double& measure)
   if(measureType == "Volume"){
     double localm = 0.0;
 
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
+    const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
       wsElNodeEqID = disc->getWsElNodeEqID();
     const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
@@ -96,7 +96,7 @@ ComputeMeasure(std::string measureType, double& measure)
 
       int physIndex = wsPhysIndex[ws];
 
-      int numCells = wsElNodeEqID[ws].size();
+      int numCells = wsElNodeEqID[ws].dimension(0);
       int numQPs = cubatures[physIndex]->getNumPoints();
     
       for(int cell=0; cell<numCells; cell++)
@@ -669,7 +669,7 @@ ATO::OptimizationProblem::InitTopOpt()
   const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
+  const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
     wsElNodeEqID = disc->getWsElNodeEqID();
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
     wsElNodeID = disc->getWsElNodeID();
@@ -691,7 +691,7 @@ ATO::OptimizationProblem::InitTopOpt()
       Albany::MDArray savedWeights = stateArrayRef["Weights"];
 
       int physIndex = wsPhysIndex[ws];
-      int numCells  = wsElNodeEqID[ws].size();
+      int numCells  = wsElNodeEqID[ws].dimension(0);
       int numQPs    = cubatures[physIndex]->getNumPoints();
       weighted_measure[ws] = Kokkos::DynRankView<RealType, PHX::Device>("weighted_measure", numCells,numQPs); //inefficient, reallocating memory. 
       for(int cell=0; cell<numCells; cell++)
@@ -703,8 +703,8 @@ ATO::OptimizationProblem::InitTopOpt()
     for(int ws=0; ws<numWorksets; ws++){
   
       int physIndex = wsPhysIndex[ws];
-      int numCells  = wsElNodeEqID[ws].size();
-      int numNodes  = wsElNodeEqID[ws][0].size();
+      int numCells  = wsElNodeEqID[ws].dimension(0);
+      int numNodes  = wsElNodeEqID[ws].dimension(1);
       int numDims   = cubatures[physIndex]->getDimension();
       int numQPs    = cubatures[physIndex]->getNumPoints();
   

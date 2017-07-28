@@ -70,7 +70,7 @@ std::cout << "Calling ContactConstraints evaluateFields in " << __FILE__ << " li
 
 /*
       Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>> wsElNodeID = workset.wsElNodeID;
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>> &wsElNodeEqID = workset.wsElNodeEqID[elem_LID];
+      Kokkos::View<LO***, PHX::Device> wsElNodeEqID = workset.wsElNodeEqID;
       for (std::size_t node=0; node < num_nodes; ++node) {
         ret = inserted_nodes.insert(wsElNodeID[elem_LID][node]);
         if (ret.second==true) { // this is a as yet unregistered node. add it
@@ -78,7 +78,7 @@ std::cout << "Calling ContactConstraints evaluateFields in " << __FILE__ << " li
                 this->coordVec(elem_LID, node, 1), 0.0 }; // Moertel node is 3 coords
           std::vector<int> list_of_dofgid;
           for (std::size_t eq=0; eq < numFields; eq++) {
-            int global_eq_id = wsElNodeEqID[node][eq];
+            int global_eq_id = wsElNodeEqID(elem_LID, node, eq);
             list_of_dofgid.push_back(global_eq_id);
           }
 */
@@ -131,6 +131,7 @@ std::cout << "Calling ContactConstraints evaluateFields in " << __FILE__ << " li
 
 #if 0  // Here is the assemble code, more or less
 
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
 
   //get nonconst (read and write) view of fT
@@ -138,28 +139,25 @@ std::cout << "Calling ContactConstraints evaluateFields in " << __FILE__ << " li
 
   if (this->tensorRank == 0) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t eq = 0; eq < numFields; eq++)
-          f_nonconstView[nodeID[node][this->offset + eq]] += (this->val[eq])(cell,node);
+          f_nonconstView[nodeID(cell,node,this->offset + eq)] += (this->val[eq])(cell,node);
     }
   } else 
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t eq = 0; eq < numFields; eq++)
-          f_nonconstView[nodeID[node][this->offset + eq]] += (this->valVec[0])(cell,node,eq);
+          f_nonconstView[nodeID(cell,node,this->offset + eq)] += (this->valVec[0])(cell,node,eq);
     }
   } else
   if (this->tensorRank == 2) {
     int numDims = this->valTensor[0].dimension(2);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t i = 0; i < numDims; i++)
           for (std::size_t j = 0; j < numDims; j++)
-            f_nonconstView[nodeID[node][this->offset + i*numDims + j]] += (this->valTensor[0])(cell,node,i,j);
+            f_nonconstView[nodeID(cell,node,this->offset + i*numDims + j)] += (this->valTensor[0])(cell,node,i,j);
   
     }
   }

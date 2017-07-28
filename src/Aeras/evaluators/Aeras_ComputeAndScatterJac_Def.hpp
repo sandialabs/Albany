@@ -101,7 +101,7 @@ operator() (const ComputeAndScatterJac_buildMass_Tag& tag, const int& cell) cons
   for (int node = 0; node < this->numNodes; ++node) {
     int n = 0, eq = 0;
     for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-      LO rowT = Index(cell, node, n);
+      LO rowT = nodeID(cell, node, n);
       RealType val2 = mc * this->wBF(cell, node, node);
       jacobian.sumIntoValues(rowT, &rowT, 1, &val2, false, true);
     }
@@ -110,14 +110,14 @@ operator() (const ComputeAndScatterJac_buildMass_Tag& tag, const int& cell) cons
     for (int level = 0; level < this->numLevels; level++) {
       for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
         for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-          LO rowT = Index(cell, node, n);
+          LO rowT = nodeID(cell, node, n);
           RealType val2 = mc * this->wBF(cell, node, node);
           jacobian.sumIntoValues(rowT, &rowT, 1, &val2, false, true);
         }
       }
 
       for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-        LO rowT = Index(cell, node, n);
+        LO rowT = nodeID(cell, node, n);
         RealType val2 = mc * this->wBF(cell, node, node);
         jacobian.sumIntoValues(rowT, &rowT, 1, &val2, false, true);
       }
@@ -126,7 +126,7 @@ operator() (const ComputeAndScatterJac_buildMass_Tag& tag, const int& cell) cons
     eq += this->numVectorLevelVar+this->numScalarLevelVar;
     for (int level = 0; level < this->numLevels; ++level) {
       for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-        LO rowT = Index(cell, node, n);
+        LO rowT = nodeID(cell, node, n);
         //Minus!
         RealType val2 = mc * this->wBF(cell, node, node);
         jacobian.sumIntoValues(rowT, &rowT, 1, &val2, false, true);
@@ -143,7 +143,7 @@ void ComputeAndScatterJac<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& cell) const{
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
     for (int eq_col=0; eq_col<neq; eq_col++) {
-      colT(cell, neq * node_col + eq_col) =  Index(cell,node_col,eq_col);
+      colT(cell, neq * node_col + eq_col) =  nodeID(cell,node_col,eq_col);
     }
   }
 
@@ -219,10 +219,10 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& c
       //OG Disabling Laplace for surface pressure.
       //rowT is LID in row map for vector x=all variables
       //so rowT here is a row index corresponding to pressure eqn at (node, cell)
-      rowT = eqID[n];
+      rowT = nodeID(cell,node,n);
       //loop over nodes on the same level
       for (unsigned int m=0; m< this->numNodes; m++) {
-        const int col_ = colT[m*neq];//= nodeID[m][n];
+        const int col_ = colT[m*neq];//= nodeID(cell,m,n);
         //at this point we know node, cell, m
         RealType val = 0;
         for (int qp = 0; qp < this->numNodes; qp++) {
@@ -240,17 +240,17 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& c
       //dealing with velocity
       for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
         for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-          LO rowT = Index(cell, node, n);
+          LO rowT = nodeID(cell, node, n);
           for (unsigned int m=0; m< this->numNodes; m++) {
             //filling u values
             if (dim == 0) {
               //filling dependency on u values
-              const int col1_ = Index(cell, m, n);
+              const int col1_ = nodeID(cell, m, n);
               RealType val = this->sqrtHVcoef * KTGRKK[node*2][m*2];
               jacobian.sumIntoValues(rowT, &col1_, 1, &val, false, true);
 
               //filling dependency on v values, so, it is eqn n+1
-              const int col2_ = Index(cell, m, n+1);
+              const int col2_ = nodeID(cell, m, n+1);
               val = this->sqrtHVcoef * KTGRKK[node*2][m*2+1];
               jacobian.sumIntoValues(rowT, &col2_, 1, &val, false, true);
             }
@@ -258,12 +258,12 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& c
             //filling v values
             if (dim == 1) {
               //filling dependencies on u values. The current eqn is n, so, we need to look at n-1 level IDs.
-              const int col1_ = Index(cell, m, n-1);
+              const int col1_ = nodeID(cell, m, n-1);
               RealType val = this->sqrtHVcoef * KTGRKK[node*2+1][m*2];
               jacobian.sumIntoValues(rowT, &col1_, 1, &val, false, true);
 
               //filling dependencies on v values.
-              const int col2_ = Index(cell, m, n);
+              const int col2_ = nodeID(cell, m, n);
               val = this->sqrtHVcoef * KTGRKK[node*2+1][m*2+1];
               jacobian.sumIntoValues(rowT, &col2_, 1, &val, false, true);
             }
@@ -273,11 +273,11 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& c
 
       //dealing with temperature
       for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-        LO rowT = Index(cell, node, n);
+        LO rowT = nodeID(cell, node, n);
 
         //loop over nodes on the same level
         for (unsigned int m=0; m< this->numNodes; m++) {
-          const int col_ = Index(cell, m, n);
+          const int col_ = nodeID(cell, m, n);
           RealType val = 0;
           for (int qp = 0; qp < this->numNodes; qp++) {
             val += this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
@@ -293,11 +293,11 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& c
     for (int level = 0; level < this->numLevels; ++level) {
       //dealing with tracers
       for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-        LO rowT = Index(cell, node, n);
+        LO rowT = nodeID(cell, node, n);
 
         //loop over nodes on the same level
         for (unsigned int m=0; m< this->numNodes; m++) {
-          const int col_ = Index(cell, m, n);
+          const int col_ = nodeID(cell, m, n);
           RealType val = 0;
           for (int qp = 0; qp < this->numNodes; qp++) {
             val += this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
@@ -342,6 +342,7 @@ evaluateFields(typename Traits::EvalData workset)
 //Then the values of these matrices need to be scattered into the global Jacobian.
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector>      fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
@@ -376,14 +377,11 @@ evaluateFields(typename Traits::EvalData workset)
 
   if ( buildMass ) {
     for (int cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-      const int neq = nodeID[0].size();
-
+      const int neq = nodeID.dimension(2);
       for (int node = 0; node < this->numNodes; ++node) {
-        const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-          rowT = eqID[n];
+          rowT = nodeID(cell,node,n);
           RealType val2 = mc * this -> wBF(cell, node, node);
           JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
         }
@@ -391,13 +389,13 @@ evaluateFields(typename Traits::EvalData workset)
         for (int level = 0; level < this->numLevels; level++) {
           for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
             for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-              rowT = eqID[n];
+              rowT = nodeID(cell,node,n);
               RealType val2 = mc * this -> wBF(cell, node, node);
               JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
             }
           }
           for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-            rowT = eqID[n];
+            rowT = nodeID(cell,node,n);
             RealType val2 = mc *  this -> wBF(cell, node, node);
             JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
           }
@@ -405,7 +403,7 @@ evaluateFields(typename Traits::EvalData workset)
         eq += this->numVectorLevelVar+this->numScalarLevelVar;
         for (int level = 0; level < this->numLevels; ++level) {
           for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-            rowT = eqID[n];
+            rowT = nodeID(cell,node,n);
             //Minus!
             RealType val2 = mc * this -> wBF(cell, node, node);
             JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
@@ -427,12 +425,11 @@ evaluateFields(typename Traits::EvalData workset)
     Kokkos::DynRankView<RealType, PHX::Device>  GRKK("KK", numn*3,numn*2); 
     Kokkos::DynRankView<RealType, PHX::Device>  KTGRKK("KK", numn*2,numn*2); 
     for (int cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-      const int neq = nodeID[0].size();
+      const int neq = nodeID.dimension(2);
       colT.resize(neq * this->numNodes);
       for (int node=0; node<this->numNodes; node++){
         for (int eq_col=0; eq_col<neq; eq_col++) {
-          colT[neq * node + eq_col] =  nodeID[node][eq_col];
+          colT[neq * node + eq_col] =  nodeID(cell,node,eq_col);
         }
       }
 
@@ -494,7 +491,6 @@ evaluateFields(typename Traits::EvalData workset)
             KTGRKK(ii,jj) += KK(cc,ii)*GRKK(cc,jj);
 
       for (int node = 0; node < this->numNodes; ++node) {
-        const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
         int n = 0, eq = 0;
         //dealing with surf pressure
         for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
@@ -502,10 +498,10 @@ evaluateFields(typename Traits::EvalData workset)
 	  //OG Disabling Laplace for surface pressure.
 	  //rowT is LID in row map for vector x=all variables
 	  //so rowT here is a row index corresponding to pressure eqn at (node, cell)
-	  rowT = eqID[n];
+	  rowT = nodeID(cell,node,n);
           //loop over nodes on the same level
 	  for (unsigned int m=0; m< this->numNodes; m++) {
-            const int col_ = colT[m*neq];//= nodeID[m][n];
+            const int col_ = colT[m*neq];//= nodeID(cell,m,n);
 	    //at this point we know node, cell, m
             RealType val = 0;
 	    for (int qp = 0; qp < this->numNodes; qp++) {
@@ -523,27 +519,27 @@ evaluateFields(typename Traits::EvalData workset)
           //dealing with velocity
 	  for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
 	    for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-	      rowT = eqID[n];
+	      rowT = nodeID(cell,node,n);
 	      for (unsigned int m=0; m< this->numNodes; m++) {
 	        //filling u values
 	        if (dim == 0) {
 	          //filling dependency on u values
-	          const int col1_ = nodeID[m][n];
+	          const int col1_ = nodeID(cell,m,n);
 	          RealType val = this->sqrtHVcoef * KTGRKK(node*2,m*2);
 	          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col1_,1), Teuchos::arrayView(&val,1));
    	          //filling dependency on v values, so, it is eqn n+1
-	          const int col2_ = nodeID[m][n+1];
+	          const int col2_ = nodeID(cell,m,n+1);
 	          val = this->sqrtHVcoef * KTGRKK(node*2,m*2+1);
 	          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col2_,1), Teuchos::arrayView(&val,1));
 	        }
 	        //filling v values
 	        if (dim == 1) {
 	          //filling dependencies on u values. The current eqn is n, so, we need to look at n-1 level IDs.
-	          const int col1_ = nodeID[m][n-1];
+	          const int col1_ = nodeID(cell,m,n-1);
 	          RealType val = this->sqrtHVcoef * KTGRKK(node*2+1,m*2);
 	          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col1_,1), Teuchos::arrayView(&val,1));
 	          //filling dependencies on v values.
-	          const int col2_ = nodeID[m][n];
+	          const int col2_ = nodeID(cell,m,n);
 	          val = this->sqrtHVcoef * KTGRKK(node*2+1,m*2+1);
 	          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col2_,1), Teuchos::arrayView(&val,1));
 	        }
@@ -552,11 +548,11 @@ evaluateFields(typename Traits::EvalData workset)
 	  }
 	  //dealing with temperature
 	  for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-	    rowT = eqID[n];//the same as nodeID[node][n]
+	    rowT = nodeID(cell,node,n);
 	    //loop over nodes on the same level
 	    for (unsigned int m=0; m< this->numNodes; m++) {
-     	      const int col_ = nodeID[m][n];
-	      //const int row_ = nodeID[node][n];
+     	      const int col_ = nodeID(cell,m,n);
+	      //const int row_ = nodeID(cell,node,n);
 	      //at this point we know node, cell, m
     	      RealType val = 0;
 	      for (int qp = 0; qp < this->numNodes; qp++) {
@@ -573,11 +569,11 @@ evaluateFields(typename Traits::EvalData workset)
         for (int level = 0; level < this->numLevels; ++level) {
           //dealing with tracers
           for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-     	    rowT = eqID[n];//the same as nodeID[node][n]
+     	    rowT = nodeID(cell,node,n);
 	    //loop over nodes on the same level
 	    for (unsigned int m=0; m< this->numNodes; m++) {
-    	      const int col_ = nodeID[m][n];
-	      //const int row_ = nodeID[node][n];
+    	      const int col_ = nodeID(cell,m,n);
+	      //const int row_ = nodeID(cell,node,n);
 	      //at this point we know node, cell, m
     	      RealType val = 0;
 	      for (int qp = 0; qp < this->numNodes; qp++) {
@@ -597,8 +593,8 @@ evaluateFields(typename Traits::EvalData workset)
 #else
   jacobian = workset.JacT->getLocalMatrix();
   mc = workset.m_coeff;
-  neq = workset.wsElNodeEqID[0][0].size();
-  Index = workset.wsElNodeEqID_kokkos;
+  neq = workset.wsElNodeEqID.dimension(2);
+  nodeID = workset.wsElNodeEqID;
 
   bool buildMass = ( ( workset.j_coeff == 0.0 )&&( workset.m_coeff != 0.0 )&&( workset.n_coeff == 0.0 ) );
   if ( buildMass ) {

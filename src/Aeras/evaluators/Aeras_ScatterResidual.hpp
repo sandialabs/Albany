@@ -82,7 +82,7 @@ public:
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
-  Kokkos::View<int***, PHX::Device> Index;
+  Kokkos::View<LO***, PHX::Device> nodeID;
   Kokkos::View<ST*, PHX::Device> fT_nonconstView;
 
   struct ScatterResid_Tag{};
@@ -124,7 +124,7 @@ public:
   bool loadResid;
   int neq, nunk;
 
-  Kokkos::View<int***, PHX::Device> Index;
+  Kokkos::View<LO***, PHX::Device> nodeID;
 
   struct ScatterResid_is_adjoint_Tag{};
   struct ScatterResid_no_adjoint_Tag{};

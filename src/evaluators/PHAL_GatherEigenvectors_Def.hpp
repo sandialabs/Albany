@@ -65,6 +65,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if(nEigenvectors == 0) return;
 
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   if(workset.eigenDataPtr->eigenvectorRe != Teuchos::null) {
     if(workset.eigenDataPtr->eigenvectorIm != Teuchos::null) {
 
@@ -75,10 +76,8 @@ evaluateFields(typename Traits::EvalData workset)
       int numVecsToGather  = std::min(numVecsInWorkset, (int)nEigenvectors);
 
       for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
-
   for(std::size_t node =0; node < this->numNodes; ++node) {
-    int offsetIntoVec = nodeID[node][0]; // neq==1 hardwired
+    int offsetIntoVec = nodeID(cell,node,0); // neq==1 hardwired
 
     for (std::size_t k = 0; k < numVecsToGather; ++k) {
       (this->eigenvector_Re[k])(cell,node) = (*(e_r(k)))[offsetIntoVec];
@@ -95,10 +94,8 @@ evaluateFields(typename Traits::EvalData workset)
       int numVecsToGather  = std::min(numVecsInWorkset, (int)nEigenvectors);
 
       for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
-
   for(std::size_t node =0; node < this->numNodes; ++node) {
-    int offsetIntoVec = nodeID[node][0]; // neq==1 hardwired
+    int offsetIntoVec = nodeID(cell,node,0); // neq==1 hardwired
 
     for (std::size_t k = 0; k < numVecsToGather; ++k) {
       (this->eigenvector_Re[k])(cell,node) = (*(e_r(k)))[offsetIntoVec];

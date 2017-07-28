@@ -79,18 +79,11 @@ WsLIDList &Decorator::getElemGIDws()
   return discretization->getElemGIDws();
 }
 
-const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type &
+const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type &
 Decorator::getWsElNodeEqID() const
 {
   return discretization->getWsElNodeEqID();
 }
-
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-const Kokkos::View<LO***, PHX::Device> Decorator::getWsElNodeEqIDKokkos(const int ws) const
-{
-  return discretization->getWsElNodeEqIDKokkos(ws);
-}
-#endif
 
 Teuchos::ArrayRCP<double> &Decorator::getCoordinates() const
 {

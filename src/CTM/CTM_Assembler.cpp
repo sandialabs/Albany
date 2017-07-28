@@ -77,7 +77,7 @@ void Assembler::load_ws_bucket(PHAL::Workset& workset, const int ws) {
   auto wsEBNames = disc->getWsEBNames();
 
   // populate workset info
-  workset.numCells = wsElNodeEqID[ws].size();
+  workset.numCells = wsElNodeEqID[ws].dimension(0);
   workset.wsElNodeEqID = wsElNodeEqID[ws];
   workset.wsElNodeID = wsElNodeID[ws];
   workset.wsCoords = coords[ws];
@@ -88,11 +88,6 @@ void Assembler::load_ws_bucket(PHAL::Workset& workset, const int ws) {
   workset.sideSets = rcpFromRef(disc->getSideSets(ws));
   workset.stateArrayPtr =
     &(state_mgr->getStateArray(Albany::StateManager::ELEM, ws));
-
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  // Kokkos views
-  workset.wsElNodeEqID_kokkos = disc->getWsElNodeEqIDKokkos(ws);
-#endif
 }
 
 void Assembler::load_ws_basic(

@@ -65,6 +65,7 @@ template<typename EvalT, typename Traits>
 void UpdateZCoordinateMovingTop<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
@@ -81,8 +82,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-    const int neq = nodeID[0].size();
+    const int neq = nodeID.dimension(2);
     const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
@@ -148,6 +148,7 @@ template<typename EvalT, typename Traits>
 void UpdateZCoordinateMovingBed<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
@@ -164,8 +165,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-    const int neq = nodeID[0].size();
+    const int neq = nodeID.dimension(2); 
     const std::size_t num_dof = neq * this->numNodes;
 
 

@@ -68,7 +68,7 @@ class ContactManager {
 				const Teuchos::ArrayRCP<double>& coordArray,
 				const Teuchos::RCP<const Tpetra_Map>& node_map,
 				const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID,
-				const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type& wsElNodeEqID,
+				const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type& wsElNodeEqID,
 				const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& meshSpecs);
 
     //! Destructor
@@ -98,7 +98,7 @@ class ContactManager {
     const Teuchos::ArrayRCP<double>& coordArray;
     const Teuchos::RCP<const Tpetra_Map>& node_map;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type& wsElNodeEqID;
+    const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type& wsElNodeEqID;
     const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& meshSpecs;
 
 

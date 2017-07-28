@@ -195,6 +195,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 #if 0  // Here is the assemble code, more or less
 
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
 
   //get nonconst (read and write) view of fT
@@ -202,28 +203,25 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (this->tensorRank == 0) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t eq = 0; eq < numFields; eq++)
-          f_nonconstView[nodeID[node][this->offset + eq]] += (this->val[eq])(cell,node);
+          f_nonconstView[nodeID(cell,node,this->offset + eq)] += (this->val[eq])(cell,node);
     }
   } else 
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t eq = 0; eq < numFields; eq++)
-          f_nonconstView[nodeID[node][this->offset + eq]] += (this->valVec[0])(cell,node,eq);
+          f_nonconstView[nodeID(cell,node,this->offset + eq)] += (this->valVec[0])(cell,node,eq);
     }
   } else
   if (this->tensorRank == 2) {
     int numDims = this->valTensor[0].dimension(2);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t i = 0; i < numDims; i++)
           for (std::size_t j = 0; j < numDims; j++)
-            f_nonconstView[nodeID[node][this->offset + i*numDims + j]] += (this->valTensor[0])(cell,node,i,j);
+            f_nonconstView[nodeID(cell,node,this->offset + i*numDims + j)] += (this->valTensor[0])(cell,node,i,j);
   
     }
   }
@@ -257,6 +255,7 @@ void MortarContactResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
@@ -266,7 +265,7 @@ evaluateFields(typename Traits::EvalData workset)
   LO rowT;
   Teuchos::Array<LO> colT;
 
-  int neq = workset.wsElNodeEqID[0][0].size();
+  int neq = nodeID.dimension(2);
   int nunk = neq*this->numNodes;
   colT.resize(nunk);
 
@@ -275,12 +274,11 @@ evaluateFields(typename Traits::EvalData workset)
     numDim = this->valTensor[0].dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
     // Local Unks: Loop over nodes in element, Loop over equations per node
 
     for (unsigned int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-        colT[neq * node_col + eq_col] =  nodeID[node_col][eq_col];
+        colT[neq * node_col + eq_col] =  nodeID(cell,node_col,eq_col);
       }
     }
 
@@ -293,7 +291,7 @@ evaluateFields(typename Traits::EvalData workset)
           else
           if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
 
-        rowT = nodeID[node][this->offset + eq];
+        rowT = nodeID(cell,node,this->offset + eq);
         if (loadResid) {
           fT->sumIntoLocalValue(rowT, valptr->val());
         }
@@ -344,6 +342,7 @@ void MortarContactResidual<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
   Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
@@ -355,8 +354,6 @@ evaluateFields(typename Traits::EvalData workset)
     numDim = this->valTensor[0].dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
@@ -365,7 +362,7 @@ evaluateFields(typename Traits::EvalData workset)
           else
           if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
 
-        int row = nodeID[node][this->offset + eq];
+        int row = nodeID(cell,node,this->offset + eq);
 
         if (Teuchos::nonnull(fT))
           fT->sumIntoLocalValue(row, valptr->val());
@@ -450,9 +447,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   else {
 
+    Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID =
-        workset.wsElNodeEqID[cell];
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double>>& local_Vp =
         workset.local_Vp[cell];
       const int num_deriv = local_Vp.size();
@@ -465,7 +461,7 @@ evaluateFields(typename Traits::EvalData workset)
           else
           if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
 
-          const int row = nodeID[node][this->offset + eq];
+          const int row = nodeID(cell,node,this->offset + eq);
           for (int col=0; col<num_cols; col++) {
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i)
@@ -508,6 +504,7 @@ void MortarContactResidual<PHAL::AlbanyTraits::SGResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   ScalarT *valptr;
 
@@ -517,8 +514,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   int nblock = f->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
@@ -529,7 +524,7 @@ evaluateFields(typename Traits::EvalData workset)
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
 
         for (int block=0; block<nblock; block++)
-          (*f)[block][nodeID[node][this->offset + eq]] += valptr->coeff(block);
+          (*f)[block][nodeID(cell,node,this->offset + eq)] += valptr->coeff(block);
       }
     }
   }
@@ -563,6 +558,7 @@ void MortarContactResidual<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix>> Jac =
     workset.sg_Jac;
@@ -580,8 +576,6 @@ evaluateFields(typename Traits::EvalData workset)
     numDim = this->valTensor[0].dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
@@ -591,8 +585,8 @@ evaluateFields(typename Traits::EvalData workset)
         else
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
 
-        row = nodeID[node][this->offset + eq];
-        int neq = nodeID[node].size();
+        row = nodeID(cell,node,this->offset + eq);
+        int neq = nodeID.dimension(2);
 
         if (f != Teuchos::null) {
           for (int block=0; block<nblock; block++)
@@ -610,7 +604,7 @@ evaluateFields(typename Traits::EvalData workset)
               lcol = neq * node_col + eq_col;
 
               // Global column
-              col =  nodeID[node_col][eq_col];
+              col =  nodeID(cell,node_col,eq_col);
 
               // Sum Jacobian
               for (int block=0; block<nblock_jac; block++) {
@@ -658,6 +652,7 @@ void MortarContactResidual<PHAL::AlbanyTraits::SGTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > JV = workset.sg_JV;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > fp = workset.sg_fp;
@@ -680,8 +675,6 @@ evaluateFields(typename Traits::EvalData workset)
     numDim = this->valTensor[0].dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
@@ -690,7 +683,7 @@ evaluateFields(typename Traits::EvalData workset)
         else
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
 
-        int row = nodeID[node][this->offset + eq];
+        int row = nodeID(cell,node,this->offset + eq);
 
         if (f != Teuchos::null)
           for (int block=0; block<nblock; block++)
@@ -740,6 +733,7 @@ void MortarContactResidual<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   ScalarT *valptr;
 
@@ -749,8 +743,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   int nblock = f->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
@@ -760,7 +752,7 @@ evaluateFields(typename Traits::EvalData workset)
         else
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
         for (int block=0; block<nblock; block++)
-          (*f)[block][nodeID[node][this->offset + eq]] += valptr->coeff(block);
+          (*f)[block][nodeID(cell,node,this->offset + eq)] += valptr->coeff(block);
       }
     }
   }
@@ -794,6 +786,7 @@ void MortarContactResidual<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix>> Jac =
     workset.mp_Jac;
@@ -811,8 +804,6 @@ evaluateFields(typename Traits::EvalData workset)
     numDim = this->valTensor[0].dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
@@ -822,8 +813,8 @@ evaluateFields(typename Traits::EvalData workset)
         else
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
 
-        row = nodeID[node][this->offset + eq];
-        int neq = nodeID[node].size();
+        row = nodeID(cell,node,this->offset + eq);
+        int neq = nodeID.dimension(2);
 
         if (f != Teuchos::null) {
           for (int block=0; block<nblock; block++)
@@ -841,7 +832,7 @@ evaluateFields(typename Traits::EvalData workset)
               lcol = neq * node_col + eq_col;
 
               // Global column
-              col =  nodeID[node_col][eq_col];
+              col =  nodeID(cell,node_col,eq_col);
 
               // Sum Jacobian
               for (int block=0; block<nblock_jac; block++) {
@@ -884,6 +875,7 @@ void MortarContactResidual<PHAL::AlbanyTraits::MPTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > JV = workset.mp_JV;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > fp = workset.mp_fp;
@@ -906,8 +898,6 @@ evaluateFields(typename Traits::EvalData workset)
     numDim = this->valTensor[0].dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
@@ -916,7 +906,7 @@ evaluateFields(typename Traits::EvalData workset)
         else
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
 
-        int row = nodeID[node][this->offset + eq];
+        int row = nodeID(cell,node,this->offset + eq);
 
         if (f != Teuchos::null)
           for (int block=0; block<nblock; block++)

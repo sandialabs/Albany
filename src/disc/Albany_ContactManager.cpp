@@ -14,7 +14,7 @@ Albany::ContactManager::ContactManager(const Teuchos::RCP<Teuchos::ParameterList
 	const Teuchos::ArrayRCP<double>& coordArray_,
 	const Teuchos::RCP<const Tpetra_Map>& node_map_,
 	const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID_,
-	const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type& wsElNodeEqID_,
+	const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type& wsElNodeEqID_,
 	const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& meshSpecs_) :
 
 	params(params_), comm(comm_), ssListVec(ssListVec_), coordArray(coordArray_), node_map(node_map_),
@@ -109,7 +109,7 @@ Albany::ContactManager::processSS(const std::vector<Albany::SideStruct>& sideSet
 
     // num overlapped nodes
     int num_nodes = coordArray.size() / 3;
-    std::size_t numFields = wsElNodeEqID[0][0][0].size(); // num equations at each node
+    std::size_t numFields = wsElNodeEqID[0].dimension(2); // num equations at each node
 
     for (std::size_t side=0; side < sideSet.size(); ++side) {
 
@@ -134,7 +134,7 @@ Albany::ContactManager::processSS(const std::vector<Albany::SideStruct>& sideSet
       const bool on_boundary = false; // will eventually want to allow boundaries to be intersected by contact surfaces
       const int  contact_pair_id = 0; // will eventually want to allow multiple pairs
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[workset][elem_LID];
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> >& elNodeEqID = wsElNodeEqID[workset][elem_LID];
+      const Kokkos::View<LO***, PHX::Device> elNodeEqID = wsElNodeEqID[workset];
 
       for (int i = 0; i < numSideNodes; ++i) {
         std::size_t node = subcell_side.node[i];
@@ -162,7 +162,7 @@ Albany::ContactManager::processSS(const std::vector<Albany::SideStruct>& sideSet
 
           std::vector<int> list_of_dofgid;
           for (std::size_t eq=0; eq < numFields; eq++) {
-            int global_eq_id = elNodeEqID[node][eq];
+            int global_eq_id = elNodeEqID(elem_LID,node,eq);
             list_of_dofgid.push_back(global_eq_id);
           }
 
@@ -221,6 +221,7 @@ Albany::ContactManager::processSS(const std::vector<Albany::SideStruct>& sideSet
 
 #if 0  // Here is the assemble code, more or less
 
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
 
   //get nonconst (read and write) view of fT
@@ -228,28 +229,25 @@ Albany::ContactManager::processSS(const std::vector<Albany::SideStruct>& sideSet
 
   if (this->tensorRank == 0) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t eq = 0; eq < numFields; eq++)
-          f_nonconstView[nodeID[node][this->offset + eq]] += (this->val[eq])(cell,node);
+          f_nonconstView[nodeID(cell,node,this->offset + eq)] += (this->val[eq])(cell,node);
     }
   } else 
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t eq = 0; eq < numFields; eq++)
-          f_nonconstView[nodeID[node][this->offset + eq]] += (this->valVec[0])(cell,node,eq);
+          f_nonconstView[nodeID(cell,node,this->offset + eq)] += (this->valVec[0])(cell,node,eq);
     }
   } else
   if (this->tensorRank == 2) {
     int numDims = this->valTensor[0].dimension(2);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t i = 0; i < numDims; i++)
           for (std::size_t j = 0; j < numDims; j++)
-            f_nonconstView[nodeID[node][this->offset + i*numDims + j]] += (this->valTensor[0])(cell,node,i,j);
+            f_nonconstView[nodeID(cell,node,this->offset + i*numDims + j)] += (this->valTensor[0])(cell,node,i,j);
   
     }
   }

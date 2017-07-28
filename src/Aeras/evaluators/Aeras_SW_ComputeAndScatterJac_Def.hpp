@@ -109,6 +109,7 @@ evaluateFields(typename Traits::EvalData workset)
 //
 //Then the values of these matrices need to be scattered into the global Jacobian.
 
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector>      fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
@@ -137,14 +138,12 @@ evaluateFields(typename Traits::EvalData workset)
 
   if ( buildMass ) {
     for (int cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-      const int neq = nodeID[0].size();
+      const int neq = nodeID.dimension(2);
 
       for (int node = 0; node < this->numNodes; ++node) {
-        const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-          rowT = eqID[n];
+          rowT = nodeID(cell,node,n);
           RealType val2 = mc * this -> wBF(cell, node, node);
           JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
         }

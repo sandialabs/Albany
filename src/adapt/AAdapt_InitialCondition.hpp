@@ -18,7 +18,7 @@ namespace AAdapt {
 
 #if defined(ALBANY_EPETRA)
 void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& wsElNodeEqID,
+                       const Teuchos::ArrayRCP<Kokkos::View<LO***, PHX::Device>>& wsElNodeEqID,
                        const Teuchos::ArrayRCP<std::string>& wsEBNames,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
                        const int neq, const int numDim,
@@ -27,7 +27,7 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
 #endif
 
 void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& wsElNodeEqID,
+                       const Teuchos::ArrayRCP<Kokkos::View<LO***, PHX::Device>>& wsElNodeEqID,
                        const Teuchos::ArrayRCP<std::string>& wsEBNames,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
                        const int neq, const int numDim,

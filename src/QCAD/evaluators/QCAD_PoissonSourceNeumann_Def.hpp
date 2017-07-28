@@ -452,16 +452,15 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   // Place it at the appropriate offset into F
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-     fT_nonconstView[nodeID[node][this->offset[dim]]] += this->neumann(cell, node, dim);
+     fT_nonconstView[nodeID(cell,node,this->offset[dim])] += this->neumann(cell, node, dim);
 
     }
   }
@@ -488,6 +487,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
@@ -498,14 +498,12 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::Array<ST> value(1);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-      rowT[0] = nodeID[node][this->offset[dim]];
+      rowT[0] = nodeID(cell,node,this->offset[dim]);
 
-      int neq = nodeID[node].size();
+      int neq = nodeID.dimension(2);
 
       if (fT != Teuchos::null) {
          fT->sumIntoLocalValue(rowT[0], this->neumann(cell, node, dim).val());
@@ -522,7 +520,7 @@ evaluateFields(typename Traits::EvalData workset)
               lcol = neq * node_col + eq_col;
 
             // Global column
-            colT[0] =  nodeID[node_col][eq_col];
+            colT[0] =  nodeID(cell,node_col,eq_col);
             value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);   
             if (workset.is_adjoint) {
               // Sum Jacobian transposed
@@ -561,17 +559,16 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
   Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
   
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        int row = nodeID[node][this->offset[dim]];
+        int row = nodeID(cell,node,this->offset[dim]);
 
         if (fT != Teuchos::null)
           fT->sumIntoLocalValue(row, this->neumann(cell, node, dim).val());
@@ -639,16 +636,15 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   else {
+    Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  =
-        workset.wsElNodeEqID[cell];
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
         workset.local_Vp[cell];
       const int num_deriv = local_Vp.size();
 
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
-          const int row = nodeID[node][this->offset[dim]];
+          const int row = nodeID(cell,node,this->offset[dim]);
           for (int col=0; col<num_cols; col++) {
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i)
@@ -685,20 +681,19 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
 
   int nblock = f->size();
 
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
 
         for (int block=0; block<nblock; block++)
-            (*f)[block][nodeID[node][this->offset[dim]]] += this->neumann(cell, node, dim).coeff(block);
+            (*f)[block][nodeID(cell,node,this->offset[dim])] += this->neumann(cell, node, dim).coeff(block);
 
     }
   }
@@ -726,6 +721,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > Jac =
     workset.sg_Jac;
@@ -740,13 +736,11 @@ evaluateFields(typename Traits::EvalData workset)
   double c; // use double since it goes into CrsMatrix
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        row = nodeID[node][this->offset[dim]];
-        int neq = nodeID[node].size();
+        row = nodeID(cell,node,this->offset[dim]);
+        int neq = nodeID.dimension(2);
 
         if (f != Teuchos::null) {
 
@@ -766,7 +760,7 @@ evaluateFields(typename Traits::EvalData workset)
               lcol = neq * node_col + eq_col;
 
               // Global column
-              col =  nodeID[node_col][eq_col];
+              col =  nodeID(cell,node_col,eq_col);
 
               // Sum Jacobian
               for (int block=0; block<nblock_jac; block++) {
@@ -812,6 +806,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > JV = workset.sg_JV;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > fp = workset.sg_fp;
@@ -829,13 +824,10 @@ evaluateFields(typename Traits::EvalData workset)
                        std::endl);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        int row = nodeID[node][this->offset[dim]];
+        int row = nodeID(cell,node,this->offset[dim]);
 
         if (f != Teuchos::null)
           for (int block=0; block<nblock; block++)
@@ -877,17 +869,16 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
 
   int nblock = f->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
         for (int block=0; block<nblock; block++)
-          (*f)[block][nodeID[node][this->offset[dim]]] += this->neumann(cell, node, dim).coeff(block);
+          (*f)[block][nodeID(cell,node,this->offset[dim])] += this->neumann(cell, node, dim).coeff(block);
 
     }
   }
@@ -915,6 +906,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > Jac =
     workset.mp_Jac;
@@ -929,13 +921,11 @@ evaluateFields(typename Traits::EvalData workset)
   double c; // use double since it goes into CrsMatrix
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        row = nodeID[node][this->offset[dim]];
-        int neq = nodeID[node].size();
+        row = nodeID(cell,node,this->offset[dim]);
+        int neq = nodeID.dimension(2);
 
         if (f != Teuchos::null)
           for (int block=0; block<nblock; block++)
@@ -953,7 +943,7 @@ evaluateFields(typename Traits::EvalData workset)
               lcol = neq * node_col + eq_col;
 
               // Global column
-              col =  nodeID[node_col][eq_col];
+              col =  nodeID(cell,node_col,eq_col);
 
               // Sum Jacobian
               for (int block=0; block<nblock_jac; block++) {
@@ -991,6 +981,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > JV = workset.mp_JV;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > fp = workset.mp_fp;
@@ -1008,12 +999,10 @@ evaluateFields(typename Traits::EvalData workset)
                        std::endl);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        int row = nodeID[node][this->offset[dim]];
+        int row = nodeID(cell,node,this->offset[dim]);
 
         if (f != Teuchos::null)
           for (int block=0; block<nblock; block++)

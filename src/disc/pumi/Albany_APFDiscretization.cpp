@@ -181,7 +181,7 @@ Albany::APFDiscretization::getOverlapNodeMapT() const
 return overlap_node_mapT;
 }
 
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
+const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
 Albany::APFDiscretization::getWsElNodeEqID() const
 {
 return wsElNodeEqID;
@@ -1021,9 +1021,18 @@ void Albany::APFDiscretization::computeWorksetInfo()
   for (int b=0; b < numBuckets; b++) {
 
     std::vector<apf::MeshEntity*>& buck = buckets[b];
-    wsElNodeEqID[b].resize(buck.size());
     wsElNodeID[b].resize(buck.size());
     coords[b].resize(buck.size());
+
+    // Set size of Kokkos views
+    // Note: Assumes nodes_per_element is the same across all elements in a workset
+    {
+      const int buckSize = buck.size();
+      element = buck[0];
+      const int nodes_per_element = apf::countElementNodes(
+          shape,m->getType(element));
+      wsElNodeEqID[b] = Kokkos::View<LO***, PHX::Device>("wsElNodeEqID", buckSize, nodes_per_element, neq);
+    }
 
     // i is the element index within bucket b
 
@@ -1046,7 +1055,6 @@ void Albany::APFDiscretization::computeWorksetInfo()
 
       int nodes_per_element = apf::countElementNodes(
           shape,m->getType(element));
-      wsElNodeEqID[b][i].resize(nodes_per_element);
       wsElNodeID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
 
@@ -1060,42 +1068,13 @@ void Albany::APFDiscretization::computeWorksetInfo()
             "PUMI: node_lid " << node_lid << " out of range\n");
 
         coords[b][i][j] = &coordinates[node_lid * spdim];
-        wsElNodeEqID[b][i][j].resize(neq);
         wsElNodeID[b][i][j] = node_gid;
 
         for (std::size_t eq=0; eq < neq; eq++)
-          wsElNodeEqID[b][i][j][eq] = getDOF(node_lid,eq);
+          wsElNodeEqID[b](i,j,eq) = getDOF(node_lid,eq);
       }
     }
   }
-
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  // Copy workset data to Kokkos Views
-  // Note: Allocates the max number of nodes across all elements in each bucket
-  wsElNodeEqID_kokkos.resize(numBuckets);
-  for (int b = 0; b < numBuckets; b++) {
-    const int buckSize = wsElNodeEqID[b].size();
-
-    // Find max_nodes
-    int max_nodes = 0;
-    for (int i = 0; i < buckSize; i++) {
-      const int nodes_per_element = wsElNodeEqID[b][i].size();
-      if (nodes_per_element > max_nodes) {
-        max_nodes = nodes_per_element;
-      }
-    }
-
-    wsElNodeEqID_kokkos[b] = Kokkos::View<LO***, PHX::Device>("wsElNodeEqID_kokkos", buckSize, max_nodes, neq);
-    for (int i = 0; i < buckSize; i++) {
-      const int nodes_per_element = wsElNodeEqID[b][i].size();
-      for (int j = 0; j < nodes_per_element; j++) {
-        for (int eq = 0; eq < neq; eq++) {
-          wsElNodeEqID_kokkos[b](i, j, eq) = wsElNodeEqID[b][i][j][eq];
-        }
-      }
-    }
-  }
-#endif
 
   // (Re-)allocate storage for element data
   //

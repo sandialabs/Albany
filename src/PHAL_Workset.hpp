@@ -169,13 +169,10 @@ struct Workset {
   bool transpose_dist_param_deriv;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > local_Vp;
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Kokkos::View<LO***, PHX::Device> wsElNodeEqID_kokkos;
-#endif
   std::vector<PHX::index_size_type> Jacobian_deriv_dims;
   std::vector<PHX::index_size_type> Tangent_deriv_dims;
 
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > >  wsElNodeEqID;
+  Kokkos::View<LO***, PHX::Device> wsElNodeEqID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
   Teuchos::ArrayRCP<double>  wsSphereVolume;
@@ -299,11 +296,11 @@ struct Workset {
     os << "\tEB name : " << EBName << std::endl;
     os << "\tnumCells : " << numCells << std::endl;
     os << "\twsElNodeEqID : " << std::endl;
-    for(int i = 0; i < wsElNodeEqID.size(); i++)
-      for(int j = 0; j < wsElNodeEqID[i].size(); j++)
-        for(int k = 0; k < wsElNodeEqID[i][j].size(); k++)
-          os << "\t\twsElNodeEqID[" << i << "][" << j << "][" << k << "] = " <<
-            wsElNodeEqID[i][j][k] << std::endl;
+    for(int i = 0; i < wsElNodeEqID.dimension(0); i++)
+      for(int j = 0; j < wsElNodeEqID.dimension(1); j++)
+        for(int k = 0; k < wsElNodeEqID.dimension(2); k++)
+          os << "\t\twsElNodeEqID(" << i << "," << j << "," << k << ") = " <<
+            wsElNodeEqID(i,j,k) << std::endl;
     os << "\twsCoords : " << std::endl;
     for(int i = 0; i < wsCoords.size(); i++)
       for(int j = 0; j < wsCoords[i].size(); j++)

@@ -92,11 +92,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     const Albany::WsLIDList& getElemGIDws() const { return elemGIDws; };
 
     //! Get map from (Ws, El, Local Node, Eqn) -> dof LID
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
-    getWsElNodeEqID() const;
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-    const Kokkos::View<LO***, PHX::Device> getWsElNodeEqIDKokkos(const int ws) const { return wsElNodeEqID_kokkos[ws]; };
-#endif
+    const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type& getWsElNodeEqID() const;
 
     //! Get map from (Ws, El, Local Node) -> NodeGID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& getWsElNodeID() const;
@@ -472,10 +468,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     std::map<std::string,std::map<GO,std::vector<int> > >               sideNodeNumerationMap;
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type wsElNodeEqID;
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-    std::vector<Kokkos::View<LO***, PHX::Device>> wsElNodeEqID_kokkos;
-#endif
+    Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type wsElNodeEqID;
 
     //! Connectivity array [workset, element, local-node] => GID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;

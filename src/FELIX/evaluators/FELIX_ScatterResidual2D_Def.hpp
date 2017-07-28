@@ -46,11 +46,12 @@ template<typename Traits>
 void ScatterResidual2D<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
   const bool loadResid = Teuchos::nonnull(fT);
   Teuchos::Array<LO> colT;
-  const int neq = workset.wsElNodeEqID[0][0].size();
+  const int neq = nodeID.dimension(2);
   int numDim = 0;
   if (this->tensorRank==2) numDim = this->valTensor.dimension(2);
   double diagonal_value = 1;
@@ -85,7 +86,6 @@ evaluateFields(typename Traits::EvalData workset)
 
       colT.resize(neq*numSideNodes*(numLayers+1));
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[elem_LID];
 
       LO base_id, ilayer;
       for (int i = 0; i < numSideNodes; ++i) {
@@ -110,7 +110,7 @@ evaluateFields(typename Traits::EvalData workset)
           valptr = (this->tensorRank == 0 ? this->val[eq](elem_LID,node) :
                     this->tensorRank == 1 ? this->valVec(elem_LID,node,eq) :
                     this->valTensor(elem_LID,node, eq/numDim, eq%numDim));
-          const LO rowT = nodeID[node][this->offset + eq];
+          const LO rowT = nodeID(elem_LID,node,this->offset + eq);
           if (loadResid)
             fT->sumIntoLocalValue(rowT, valptr.val());
           if (valptr.hasFastAccess()) {
@@ -264,10 +264,11 @@ template<typename Traits>
 void ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
   const bool loadResid = Teuchos::nonnull(fT);
-  const int neq = workset.wsElNodeEqID[0][0].size();
+  const int neq = nodeID.dimension(2);
   unsigned int nunk = this->numNodes*(neq-1);
   Teuchos::Array<LO> colT, index;
   colT.resize(nunk), index.resize(nunk);
@@ -275,12 +276,11 @@ evaluateFields(typename Traits::EvalData workset)
   if (this->tensorRank==2) numDim = this->valTensor.dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
     // Local Unks: Loop over nodes in element, Loop over equations per node
     for (unsigned int node_col(0), i(0); node_col<this->numNodes; node_col++){
       for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
         if(eq_col != offset2DField) {
-          colT[i] = nodeID[node_col][eq_col];
+          colT[i] = nodeID(cell,node_col,eq_col);
           index[i++] = neq * node_col + eq_col;
         }
       }
@@ -292,7 +292,7 @@ evaluateFields(typename Traits::EvalData workset)
             valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                       this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                       this->valTensor(cell,node, eq/numDim, eq%numDim));
-          const LO rowT = nodeID[node][this->offset + eq];
+          const LO rowT = nodeID(cell,node,this->offset + eq);
           if (loadResid)
             fT->sumIntoLocalValue(rowT, valptr.val());
           // Check derivative array is nonzero
@@ -328,7 +328,6 @@ evaluateFields(typename Traits::EvalData workset)
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     Teuchos::ArrayRCP<LO> basalIds(this->numNodes);
     LO base_id, ilayer;
@@ -342,7 +341,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        const LO rowT = nodeID[node][eq];
+        const LO rowT = nodeID(cell,node,eq);
         if(eq != offset2DField) {
           typename PHAL::Ref<ScalarT const>::type valptr = this->valVec(cell,node,eq);
 

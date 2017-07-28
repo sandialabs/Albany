@@ -1276,8 +1276,7 @@ template <typename EvalT>
 void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
                                                 const int& ws)
 {
-
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO>>>>::type&
+  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
         wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>::type&
         wsElNodeID = disc->getWsElNodeID();
@@ -1289,7 +1288,7 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
   const WorksetArray<Teuchos::ArrayRCP<double*>>::type&
         latticeOrientation = disc->getLatticeOrientation();
 
-  workset.numCells = wsElNodeEqID[ws].size();
+  workset.numCells = wsElNodeEqID[ws].dimension(0);
   workset.wsElNodeEqID = wsElNodeEqID[ws];
   workset.wsElNodeID = wsElNodeID[ws];
   workset.wsCoords = coords[ws];
@@ -1314,10 +1313,6 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
  //FIXME, 6/25: This line was causing link error.  Need to figure out why. 
  // workset.auxDataPtrT = stateMgr.getAuxDataT();
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  // Kokkos views
-  workset.wsElNodeEqID_kokkos = disc->getWsElNodeEqIDKokkos(ws);
-#endif
 }
 
 #endif // ALBANY_APPLICATION_HPP

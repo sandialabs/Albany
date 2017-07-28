@@ -62,7 +62,7 @@ protected:
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 protected:
-  Kokkos::View<LO***, PHX::Device> ElNodeEqID_kokkos;
+  Kokkos::View<LO***, PHX::Device> nodeID;
   Kokkos::View<ST*, PHX::Device> fT_kokkos;
   Kokkos::vector<Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device> val_kokkos;
 
@@ -137,7 +137,7 @@ private:
   int numDims;
 
   typedef ScatterResidualBase<PHAL::AlbanyTraits::Residual, Traits> Base;
-  using Base::ElNodeEqID_kokkos;
+  using Base::nodeID;
   using Base::fT_kokkos;
   using Base::val_kokkos;
 
@@ -202,7 +202,7 @@ private:
   Tpetra_CrsMatrix::local_matrix_type JacT_kokkos;
 
   typedef ScatterResidualBase<PHAL::AlbanyTraits::Jacobian, Traits> Base;
-  using Base::ElNodeEqID_kokkos;
+  using Base::nodeID;
   using Base::fT_kokkos;
   using Base::val_kokkos;
 

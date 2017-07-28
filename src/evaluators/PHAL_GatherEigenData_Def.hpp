@@ -88,6 +88,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(workset.eigenDataPtr != Teuchos::null) {
      if((workset.eigenDataPtr->eigenvectorRe != Teuchos::null)) {
+        Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
         std::vector<int> dims;
         eigenvector_Re[0].dimensions(dims);
         if((workset.eigenDataPtr->eigenvectorIm != Teuchos::null))  {
@@ -107,11 +108,9 @@ evaluateFields(typename Traits::EvalData workset)
 
            //Gather real and imaginary eigenvectors from workset Eigendata info structure
            for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
-
        for(std::size_t node =0; node < this->numNodes; ++node) {
                for(std::size_t dof = 0; dof < dims[2]; ++dof) {
-           int offset_eq = nodeID[node][dof];
+           int offset_eq = nodeID(cell,node,dof);
            for (std::size_t k = 0; k < numVecsToGather; ++k) {
              (this->eigenvector_Re[k])(cell,node,dof) = (*(e_r(k)))[offset_eq];
              (this->eigenvector_Im[k])(cell,node,dof) = (*(e_i(k)))[offset_eq];
@@ -133,11 +132,9 @@ evaluateFields(typename Traits::EvalData workset)
 
            //Gather real and imaginary eigenvectors from workset Eigendata info structure
            for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-           const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
-
        for(std::size_t node =0; node < this->numNodes; ++node) {
                for(std::size_t dof = 0; dof < dims[2]; ++dof) {
-           int offset_eq = nodeID[node][dof];
+           int offset_eq = nodeID(cell,node,dof);
 
              for (std::size_t k = 0; k < numVecsToGather; ++k) {
              (this->eigenvector_Re[k])(cell,node,dof) = (*(e_r(k)))[offset_eq];
@@ -204,6 +201,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(workset.eigenDataPtr != Teuchos::null) {
      if(workset.eigenDataPtr->eigenvectorRe != Teuchos::null) {
+        Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
         std::vector<int> dims;
         (this->eigenvector_Re[0]).dimensions(dims);
         if(workset.eigenDataPtr->eigenvectorIm != Teuchos::null) {
@@ -222,10 +220,9 @@ evaluateFields(typename Traits::EvalData workset)
 
            //Gather real and imaginary eigenvectors from workset Eigendata info structure
            for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
       for(std::size_t node =0; node < this->numNodes; ++node) {
                for(std::size_t dof = 0; dof < dims[2]; ++dof) {
-          int offset_eq = nodeID[node][dof];
+          int offset_eq = nodeID(cell,node,dof);
           for (std::size_t k = 0; k < numVecsToGather; ++k) {
                    valptr = &(this->eigenvector_Re[k](cell,node,dof));
                    *valptr = FadType(2, (*(e_r(k)))[offset_eq]);
@@ -248,10 +245,9 @@ evaluateFields(typename Traits::EvalData workset)
 
            //Gather real and imaginary eigenvectors from workset Eigendata info structure
            for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
       for(std::size_t node =0; node < this->numNodes; ++node) {
                for(std::size_t dof = 0; dof < dims[2]; ++dof) {
-          int offset_eq = nodeID[node][dof];
+          int offset_eq = nodeID(cell,node,dof);
           for (std::size_t k = 0; k < numVecsToGather; ++k) {
                    valptr = &(this->eigenvector_Re[k](cell,node,dof));
                    *valptr = FadType(2, (*(e_r(k)))[offset_eq]);

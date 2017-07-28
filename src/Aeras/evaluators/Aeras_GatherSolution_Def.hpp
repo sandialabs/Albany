@@ -162,28 +162,28 @@ operator() (const GatherSolution_Tag& tag, const int &cell) const
  for (int node = 0; node < this->numNodes; ++node) {
    int n = 0, eq = 0;
    for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-     (this->d_val    [j])(cell,node) = xT_constView(wsID_kokkos(cell, node,n));
-     (this->d_val_dot[j])(cell,node) = xdotT_constView(wsID_kokkos(cell, node,n));
+     (this->d_val    [j])(cell,node) = xT_constView(nodeID(cell, node,n));
+     (this->d_val_dot[j])(cell,node) = xdotT_constView(nodeID(cell, node,n));
     }
     eq += this->numNodeVar;
     for (int level = 0; level < this->numLevels; level++) {
       for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
         for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-          (this->d_val    [j])(cell,node,level,dim) = xT_constView   (wsID_kokkos(cell, node,n));
-          (this->d_val_dot[j])(cell,node,level,dim) = xdotT_constView(wsID_kokkos(cell, node,n));
+          (this->d_val    [j])(cell,node,level,dim) = xT_constView   (nodeID(cell, node,n));
+          (this->d_val_dot[j])(cell,node,level,dim) = xdotT_constView(nodeID(cell, node,n));
         }
       }
       for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) 
       {
-        (this->d_val    [j])(cell,node,level) = xT_constView   (wsID_kokkos(cell, node,n));
-        (this->d_val_dot[j])(cell,node,level) = xdotT_constView(wsID_kokkos(cell, node,n));
+        (this->d_val    [j])(cell,node,level) = xT_constView   (nodeID(cell, node,n));
+        (this->d_val_dot[j])(cell,node,level) = xdotT_constView(nodeID(cell, node,n));
       }
     }
     eq += this->numScalarLevelVar + this->numVectorLevelVar;
     for (int level = 0; level < this->numLevels; ++level) {
       for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-        (this->d_val    [j])(cell,node,level) = xT_constView(wsID_kokkos(cell, node,n));
-        (this->d_val_dot[j])(cell,node,level) = xdotT_constView(wsID_kokkos(cell, node,n));
+        (this->d_val    [j])(cell,node,level) = xT_constView(nodeID(cell, node,n));
+        (this->d_val_dot[j])(cell,node,level) = xdotT_constView(nodeID(cell, node,n));
       }
     }
     eq += this->numTracerVar;
@@ -196,42 +196,41 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   //Get const view of xT and xdotT 
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
   Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
 
   for (int cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
     for (int node = 0; node < this->numNodes; ++node) {
-      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-        (this->val    [j])(cell,node) = xT_constView[eqID[n]];
-        (this->val_dot[j])(cell,node) = xdotT_constView[eqID[n]];
+        (this->val    [j])(cell,node) = xT_constView[nodeID(cell,node,n)];
+        (this->val_dot[j])(cell,node) = xdotT_constView[nodeID(cell,node,n)];
       }
       eq += this->numNodeVar;
       for (int level = 0; level < this->numLevels; level++) { 
         for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-            (this->val    [j])(cell,node,level,dim) = xT_constView   [eqID[n]];
-            (this->val_dot[j])(cell,node,level,dim) = xdotT_constView[eqID[n]];
+            (this->val    [j])(cell,node,level,dim) = xT_constView   [nodeID(cell,node,n)];
+            (this->val_dot[j])(cell,node,level,dim) = xdotT_constView[nodeID(cell,node,n)];
           }
         }
         for (int j = eq+this->numVectorLevelVar; 
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-          (this->val    [j])(cell,node,level) = xT_constView   [eqID[n]];
-          (this->val_dot[j])(cell,node,level) = xdotT_constView[eqID[n]];
+          (this->val    [j])(cell,node,level) = xT_constView   [nodeID(cell,node,n)];
+          (this->val_dot[j])(cell,node,level) = xdotT_constView[nodeID(cell,node,n)];
         }
       }
       eq += this->numScalarLevelVar + this->numVectorLevelVar;
       for (int level = 0; level < this->numLevels; ++level) { 
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          (this->val    [j])(cell,node,level) = xT_constView[eqID[n]];
-          (this->val_dot[j])(cell,node,level) = xdotT_constView[eqID[n]];
+          (this->val    [j])(cell,node,level) = xT_constView[nodeID(cell,node,n)];
+          (this->val_dot[j])(cell,node,level) = xdotT_constView[nodeID(cell,node,n)];
         }
       }
       eq += this->numTracerVar;
@@ -239,13 +238,13 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #else
-  wsID_kokkos = workset.wsElNodeEqID_kokkos;
+  nodeID = workset.wsElNodeEqID;
 
   // Tpetra getLocalView is needed to obtain a Kokkos View from a specific device
-  auto xT_2d = xT->template getLocalView<PHX::Device>();
+  auto xT_2d = workset.xT->template getLocalView<PHX::Device>();
   xT_constView = Kokkos::subview(xT_2d, Kokkos::ALL(), 0);
 
-  auto xdotT_2d = xdotT->template getLocalView<PHX::Device>();
+  auto xdotT_2d = workset.xdotT->template getLocalView<PHX::Device>();
   xdotT_constView = Kokkos::subview(xdotT_2d, Kokkos::ALL(), 0);
 
   for (int i =0; i<numFields;i++) {
@@ -289,7 +288,7 @@ gather_solution(const int &cell, const int &node, const int &neq, const int &num
 
   for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
     typename PHAL::Ref<ScalarT>::type valref = d_val[j](cell,node);
-    valref = FadType(num_dof, xT_constView(wsID_kokkos(cell, node,n)));
+    valref = FadType(num_dof, xT_constView(nodeID(cell, node,n)));
     valref.setUpdateValue(!ignore_residual);
     valref.fastAccessDx(firstunk + n) = j_coeff;
   }
@@ -298,14 +297,14 @@ gather_solution(const int &cell, const int &node, const int &neq, const int &num
     for (int j = eq; j < eq+this->numVectorLevelVar; j++) {
       for (int dim = 0; dim < this->numDims; ++dim, ++n) {
         typename PHAL::Ref<ScalarT>::type valref = d_val[j](cell,node,level,dim);
-        valref = FadType(num_dof, xT_constView(wsID_kokkos(cell, node,n)));
+        valref = FadType(num_dof, xT_constView(nodeID(cell, node,n)));
         valref.setUpdateValue(!ignore_residual);
         valref.fastAccessDx(firstunk + n) = j_coeff;
       }
     }
     for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j,++n) {
       typename PHAL::Ref<ScalarT>::type valref = d_val[j](cell,node,level);
-      valref = FadType(num_dof, xT_constView(wsID_kokkos(cell, node,n)));
+      valref = FadType(num_dof, xT_constView(nodeID(cell, node,n)));
       valref.setUpdateValue(!ignore_residual);
       valref.fastAccessDx(firstunk + n) = j_coeff;
     }
@@ -314,7 +313,7 @@ gather_solution(const int &cell, const int &node, const int &neq, const int &num
   for (int level = 0; level < this->numLevels; ++level) {
     for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
       typename PHAL::Ref<ScalarT>::type valref = d_val[j](cell,node,level);
-      valref = FadType(num_dof, xT_constView(wsID_kokkos(cell, node,n)));
+      valref = FadType(num_dof, xT_constView(nodeID(cell, node,n)));
       valref.setUpdateValue(!ignore_residual);
       valref.fastAccessDx(firstunk + n) = j_coeff;
     }
@@ -330,7 +329,7 @@ gather_solution_transientTerms(const int &cell, const int &node, const int &neq,
   int  n = 0, eq = 0;
   for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
     typename PHAL::Ref<ScalarT>::type valref = d_val_dot[j](cell,node);
-    valref = FadType(num_dof, xdotT_constView(wsID_kokkos(cell, node,n)));
+    valref = FadType(num_dof, xdotT_constView(nodeID(cell, node,n)));
     valref.fastAccessDx(firstunk + n) = m_coeff;
   }
   eq += this->numNodeVar;
@@ -338,13 +337,13 @@ gather_solution_transientTerms(const int &cell, const int &node, const int &neq,
     for (int j = eq; j < eq+this->numVectorLevelVar; j++) {
       for (int dim = 0; dim < this->numDims; ++dim, ++n) {
         typename PHAL::Ref<ScalarT>::type valref = d_val_dot[j](cell,node,level,dim);
-        valref = FadType(num_dof, xdotT_constView(wsID_kokkos(cell, node,n)));
+        valref = FadType(num_dof, xdotT_constView(nodeID(cell, node,n)));
         valref.fastAccessDx(firstunk + n) = m_coeff;
       }
     }
     for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; j++,++n) {
       typename PHAL::Ref<ScalarT>::type valref = d_val_dot[j](cell,node,level);
-      valref = FadType(num_dof, xdotT_constView(wsID_kokkos(cell, node,n)));
+      valref = FadType(num_dof, xdotT_constView(nodeID(cell, node,n)));
       valref.fastAccessDx(firstunk + n) = m_coeff;
     }
   }
@@ -352,7 +351,7 @@ gather_solution_transientTerms(const int &cell, const int &node, const int &neq,
   for (int level = 0; level < this->numLevels; ++level) {
     for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
       typename PHAL::Ref<ScalarT>::type valref = d_val_dot[j](cell,node,level);
-      valref = FadType(num_dof, xdotT_constView(wsID_kokkos(cell, node,n)));
+      valref = FadType(num_dof, xdotT_constView(nodeID(cell, node,n)));
       valref.fastAccessDx(firstunk + n) =m_coeff;
     }
   }
@@ -365,7 +364,7 @@ KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const GatherSolution_Tag &tag, const int &cell) const{
 
-  const int neq=wsID_kokkos.dimension(2);
+  const int neq=nodeID.dimension(2);
   const int num_dof = neq * this->numNodes;
 
   for (int node = 0; node < this->numNodes; ++node) {
@@ -380,7 +379,7 @@ KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const GatherSolution_transientTerms_Tag &tag, const int &cell) const{
 
-  const int neq=wsID_kokkos.dimension(2);
+  const int neq=nodeID.dimension(2);
   const int num_dof = neq * this->numNodes;
 
   for (int node = 0; node < this->numNodes; ++node) {
@@ -398,27 +397,26 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   const Teuchos::RCP<const Tpetra_Vector>    xT = workset.xT;
   const Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   //Get const view of xT and xdotT 
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
   Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
 
   for (int cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-    const int neq = nodeID[0].size();
+    const int neq = nodeID.dimension(2);
     const int num_dof = neq * this->numNodes;
 
 
     for (int node = 0; node < this->numNodes; ++node) {
-      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       const int firstunk = neq * node;
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
         typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
-        valptr = FadType(num_dof, xT_constView[eqID[n]]);
+        valptr = FadType(num_dof, xT_constView[nodeID(cell,node,n)]);
         valptr.setUpdateValue(!workset.ignore_residual);
         valptr.fastAccessDx(firstunk + n) = workset.j_coeff;
       }
@@ -427,7 +425,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int j = eq; j < eq+this->numVectorLevelVar; j++) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
             typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
-            valptr = FadType(num_dof, xT_constView[eqID[n]]);
+            valptr = FadType(num_dof, xT_constView[nodeID(cell,node,n)]);
             valptr.setUpdateValue(!workset.ignore_residual);
             valptr.fastAccessDx(firstunk + n) = workset.j_coeff;
           }
@@ -435,7 +433,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int j = eq+this->numVectorLevelVar;
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j,++n) {
           typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
-          valptr = FadType(num_dof, xT_constView[eqID[n]]);
+          valptr = FadType(num_dof, xT_constView[nodeID(cell,node,n)]);
           valptr.setUpdateValue(!workset.ignore_residual);
           valptr.fastAccessDx(firstunk + n) = workset.j_coeff;
         }
@@ -444,7 +442,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int level = 0; level < this->numLevels; ++level) {
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
           typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
-          valptr = FadType(num_dof, xT_constView[eqID[n]]);
+          valptr = FadType(num_dof, xT_constView[nodeID(cell,node,n)]);
           valptr.setUpdateValue(!workset.ignore_residual);
           valptr.fastAccessDx(firstunk + n) = workset.j_coeff;
         }
@@ -455,7 +453,7 @@ evaluateFields(typename Traits::EvalData workset)
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
           typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node);
-          valptr = FadType(num_dof, xdotT_constView[eqID[n]]);
+          valptr = FadType(num_dof, xdotT_constView[nodeID(cell,node,n)]);
           valptr.fastAccessDx(firstunk + n) = workset.m_coeff;
         }
         eq += this->numNodeVar;
@@ -463,14 +461,14 @@ evaluateFields(typename Traits::EvalData workset)
           for (int j = eq; j < eq+this->numVectorLevelVar; j++) {
             for (int dim = 0; dim < this->numDims; ++dim, ++n) {
               typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level,dim);
-              valptr = FadType(num_dof, xdotT_constView[eqID[n]]);
+              valptr = FadType(num_dof, xdotT_constView[nodeID(cell,node,n)]);
               valptr.fastAccessDx(firstunk + n) = workset.m_coeff;
             }
           }
           for (int j = eq+this->numVectorLevelVar;
                    j < eq+this->numVectorLevelVar+this->numScalarLevelVar; j++,++n) {
             typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level);
-            valptr = FadType(num_dof, xdotT_constView[eqID[n]]);
+            valptr = FadType(num_dof, xdotT_constView[nodeID(cell,node,n)]);
             valptr.fastAccessDx(firstunk + n) = workset.m_coeff;
           }
         }
@@ -478,7 +476,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int level = 0; level < this->numLevels; ++level) {
           for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
             typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level);
-            valptr = FadType(num_dof, xdotT_constView[eqID[n]]);
+            valptr = FadType(num_dof, xdotT_constView[nodeID(cell,node,n)]);
             valptr.fastAccessDx(firstunk + n) = workset.m_coeff;
           }
         }
@@ -491,13 +489,13 @@ evaluateFields(typename Traits::EvalData workset)
   ignore_residual=workset.ignore_residual;
   j_coeff=workset.j_coeff;
   m_coeff=workset.m_coeff; 
-  wsID_kokkos=workset.wsElNodeEqID_kokkos;
+  nodeID=workset.wsElNodeEqID;
 
   // Tpetra getLocalView is needed to obtain a Kokkos View from a specific device
-  auto xT_2d = xT->template getLocalView<PHX::Device>();
+  auto xT_2d = workset.xT->template getLocalView<PHX::Device>();
   xT_constView = Kokkos::subview(xT_2d, Kokkos::ALL(), 0);
 
-  auto xdotT_2d = xdotT->template getLocalView<PHX::Device>();
+  auto xdotT_2d = workset.xdotT->template getLocalView<PHX::Device>();
   xdotT_constView = Kokkos::subview(xdotT_2d, Kokkos::ALL(), 0);
 
   for (int i =0; i<numFields;i++)
@@ -535,6 +533,7 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
   Teuchos::RCP<const Tpetra_MultiVector> VxT = workset.VxT;
@@ -550,20 +549,17 @@ evaluateFields(typename Traits::EvalData workset)
   int num_cols_tot = workset.param_offset + workset.num_cols_p;
 
   for (int cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-
     for (int node = 0; node < this->numNodes; ++node) {
-      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; j++, ++n) {
         typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
         if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
-          valptr = TanFadType(num_cols_tot, xT_constView[eqID[n]]);
+          valptr = TanFadType(num_cols_tot, xT_constView[nodeID(cell,node,n)]);
           for (int k=0; k<workset.num_cols_x; k++)
-            valptr.fastAccessDx(k) = workset.j_coeff*VxT->getData(k)[eqID[n]];
+            valptr.fastAccessDx(k) = workset.j_coeff*VxT->getData(k)[nodeID(cell,node,n)];
         }
         else
-          valptr = TanFadType(xT_constView[eqID[n]]);
+          valptr = TanFadType(xT_constView[nodeID(cell,node,n)]);
       }
       eq += this->numNodeVar;
       for (int level = 0; level < this->numLevels; level++) {
@@ -571,24 +567,24 @@ evaluateFields(typename Traits::EvalData workset)
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
             typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
             if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
-              valptr = TanFadType(num_cols_tot, xT_constView[eqID[n]]);
+              valptr = TanFadType(num_cols_tot, xT_constView[nodeID(cell,node,n)]);
               for (int k=0; k<workset.num_cols_x; k++)
-                valptr.fastAccessDx(k) = workset.j_coeff*VxT->getData(k)[eqID[n]];
+                valptr.fastAccessDx(k) = workset.j_coeff*VxT->getData(k)[nodeID(cell,node,n)];
             }
             else
-              valptr = TanFadType(xT_constView[eqID[n]]);
+              valptr = TanFadType(xT_constView[nodeID(cell,node,n)]);
           }
         }
         for (int j = eq+this->numVectorLevelVar;
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; j++, ++n) {
           typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
           if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
-            valptr = TanFadType(num_cols_tot, xT_constView[eqID[n]]);
+            valptr = TanFadType(num_cols_tot, xT_constView[nodeID(cell,node,n)]);
             for (int k=0; k<workset.num_cols_x; k++)
-              valptr.fastAccessDx(k) = workset.j_coeff*VxT->getData(k)[eqID[n]];
+              valptr.fastAccessDx(k) = workset.j_coeff*VxT->getData(k)[nodeID(cell,node,n)];
           }
           else
-            valptr = TanFadType(xT_constView[eqID[n]]);
+            valptr = TanFadType(xT_constView[nodeID(cell,node,n)]);
         }
       }
      eq += this->numVectorLevelVar+this->numScalarLevelVar;
@@ -596,12 +592,12 @@ evaluateFields(typename Traits::EvalData workset)
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
           typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
           if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
-            valptr = TanFadType(num_cols_tot, xT_constView[eqID[n]]);
+            valptr = TanFadType(num_cols_tot, xT_constView[nodeID(cell,node,n)]);
             for (int k=0; k<workset.num_cols_x; k++)
-              valptr.fastAccessDx(k) = workset.j_coeff*VxT->getData(k)[eqID[n]];
+              valptr.fastAccessDx(k) = workset.j_coeff*VxT->getData(k)[nodeID(cell,node,n)];
           }
           else
-            valptr = TanFadType(xT_constView[eqID[n]]);
+            valptr = TanFadType(xT_constView[nodeID(cell,node,n)]);
         }
       }
       eq += this->numTracerVar;
@@ -610,13 +606,13 @@ evaluateFields(typename Traits::EvalData workset)
         for (int j = eq; j < eq+this->numNodeVar; j++, ++n) {
           typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node);
           if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
-            valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[n]]);
+            valptr = TanFadType(num_cols_tot, xdotT_constView[nodeID(cell,node,n)]);
             for (int k=0; k<workset.num_cols_x; k++)
               valptr.fastAccessDx(k) =
-                workset.m_coeff*VxdotT->getData(k)[eqID[n]];
+                workset.m_coeff*VxdotT->getData(k)[nodeID(cell,node,n)];
           }
           else
-            valptr = TanFadType(xdotT_constView[eqID[n]]);
+            valptr = TanFadType(xdotT_constView[nodeID(cell,node,n)]);
         }
         eq += this->numNodeVar;
         for (int level = 0; level < this->numLevels; level++) {
@@ -624,26 +620,26 @@ evaluateFields(typename Traits::EvalData workset)
             for (int dim = 0; dim < this->numDims; ++dim, ++n) {
               typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level,dim);
               if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
-                valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[n]]);
+                valptr = TanFadType(num_cols_tot, xdotT_constView[nodeID(cell,node,n)]);
                 for (int k=0; k<workset.num_cols_x; k++)
                   valptr.fastAccessDx(k) =
-                    workset.m_coeff*VxdotT->getData(k)[eqID[n]];
+                    workset.m_coeff*VxdotT->getData(k)[nodeID(cell,node,n)];
               }
               else
-                valptr = TanFadType(xdotT_constView[eqID[n]]);
+                valptr = TanFadType(xdotT_constView[nodeID(cell,node,n)]);
             }
           }
           for (int j = eq+this->numVectorLevelVar;
                    j < eq+this->numScalarLevelVar+this->numScalarLevelVar; j++,++n) {
             typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level);
             if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
-              valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[n]]);
+              valptr = TanFadType(num_cols_tot, xdotT_constView[nodeID(cell,node,n)]);
               for (int k=0; k<workset.num_cols_x; k++)
                 valptr.fastAccessDx(k) =
-                  workset.m_coeff*VxdotT->getData(k)[eqID[n]];
+                  workset.m_coeff*VxdotT->getData(k)[nodeID(cell,node,n)];
             }
             else
-              valptr = TanFadType(xdotT_constView[eqID[n]]);
+              valptr = TanFadType(xdotT_constView[nodeID(cell,node,n)]);
           }
         }
        eq += this->numVectorLevelVar+this->numScalarLevelVar;
@@ -651,13 +647,13 @@ evaluateFields(typename Traits::EvalData workset)
           for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
             typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level);
             if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
-              valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[n]]);
+              valptr = TanFadType(num_cols_tot, xdotT_constView[nodeID(cell,node,n)]);
               for (int k=0; k<workset.num_cols_x; k++)
                 valptr.fastAccessDx(k) =
-                  workset.m_coeff*VxdotT->getData(k)[eqID[n]];
+                  workset.m_coeff*VxdotT->getData(k)[nodeID(cell,node,n)];
             }
             else
-              valptr = TanFadType(xdotT_constView[eqID[n]]);
+              valptr = TanFadType(xdotT_constView[nodeID(cell,node,n)]);
           }
         }
         eq += this->numTracerVar;
@@ -683,6 +679,7 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<const Stokhos::ProductEpetraVector> x = workset.mp_x;
   Teuchos::RCP<const Stokhos::ProductEpetraVector> xdot = workset.mp_xdot;
 
@@ -692,50 +689,47 @@ evaluateFields(typename Traits::EvalData workset)
 
   int nblock = x->size();
   for (int cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-
     for (int node = 0; node < this->numNodes; ++node) {
-      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-//        (this->val    [j])(cell,node) = xT_constView[eqID[n]];
+//        (this->val    [j])(cell,node) = xT_constView[nodeID(cell,node,n)];
         typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
         valptr.reset(nblock);
         valptr.copyForWrite();
         for (int block=0; block<nblock; block++)
-          valptr.fastAccessCoeff(block) = (*x)[block][nodeID[node][n]];
+          valptr.fastAccessCoeff(block) = (*x)[block][nodeID(cell,node,n)];
       }
       eq += this->numNodeVar;
       for (int level = 0; level < this->numLevels; level++) { 
         for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-//            (this->val    [j])(cell,node,level,dim) = xT_constView   [eqID[n]];
+//            (this->val    [j])(cell,node,level,dim) = xT_constView   [nodeID(cell,node,n)];
             typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
             valptr.reset(nblock);
             valptr.copyForWrite();
             for (int block=0; block<nblock; block++)
-              valptr.fastAccessCoeff(block) = (*x)[block][nodeID[node][n]];
+              valptr.fastAccessCoeff(block) = (*x)[block][nodeID(cell,node,n)];
           }
         }
         for (int j = eq+this->numVectorLevelVar; 
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-//          (this->val    [j])(cell,node,level) = xT_constView   [eqID[n]];
+//          (this->val    [j])(cell,node,level) = xT_constView   [nodeID(cell,node,n)];
           typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
           valptr.reset(nblock);
           valptr.copyForWrite();
           for (int block=0; block<nblock; block++)
-            valptr.fastAccessCoeff(block) = (*x)[block][nodeID[node][n]];
+            valptr.fastAccessCoeff(block) = (*x)[block][nodeID(cell,node,n)];
         }
       }
       eq += this->numScalarLevelVar + this->numVectorLevelVar;
       for (int level = 0; level < this->numLevels; ++level) { 
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-//          (this->val    [j])(cell,node,level) = xT_constView[eqID[n]];
+//          (this->val    [j])(cell,node,level) = xT_constView[nodeID(cell,node,n)];
           typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
           valptr.reset(nblock);
           valptr.copyForWrite();
           for (int block=0; block<nblock; block++)
-            valptr.fastAccessCoeff(block) = (*x)[block][nodeID[node][n]];
+            valptr.fastAccessCoeff(block) = (*x)[block][nodeID(cell,node,n)];
         }
       }
       eq += this->numTracerVar;
@@ -743,44 +737,44 @@ evaluateFields(typename Traits::EvalData workset)
       if (workset.transientTerms) {
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-//        (this->val_dot[j])(cell,node) = xdotT_constView[eqID[n]];
+//        (this->val_dot[j])(cell,node) = xdotT_constView[nodeID(cell,node,n)];
           typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node);
           valptr.reset(nblock);
           valptr.copyForWrite();
           for (int block=0; block<nblock; block++)
-            valptr.fastAccessCoeff(block) = (*xdot)[block][nodeID[node][n]];
+            valptr.fastAccessCoeff(block) = (*xdot)[block][nodeID(cell,node,n)];
         }
         eq += this->numNodeVar;
         for (int level = 0; level < this->numLevels; level++) { 
           for (int j = eq; j < eq+this->numVectorLevelVar; j++) {
             for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-//            (this->val_dot[j])(cell,node,level,dim) = xdotT_constView[eqID[n]];
+//            (this->val_dot[j])(cell,node,level,dim) = xdotT_constView[nodeID(cell,node,n)];
               typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level,dim);
               valptr.reset(nblock);
               valptr.copyForWrite();
               for (int block=0; block<nblock; block++)
-                valptr.fastAccessCoeff(block) = (*xdot)[block][nodeID[node][n]];
+                valptr.fastAccessCoeff(block) = (*xdot)[block][nodeID(cell,node,n)];
             }
           }
           for (int j = eq+this->numVectorLevelVar; 
                    j < eq+this->numVectorLevelVar+this->numScalarLevelVar; j++,++n) {
-//          (this->val_dot[j])(cell,node,level) = xdotT_constView[eqID[n]];
+//          (this->val_dot[j])(cell,node,level) = xdotT_constView[nodeID(cell,node,n)];
             typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level);
             valptr.reset(nblock);
             valptr.copyForWrite();
             for (int block=0; block<nblock; block++)
-              valptr.fastAccessCoeff(block) = (*xdot)[block][nodeID[node][n]];
+              valptr.fastAccessCoeff(block) = (*xdot)[block][nodeID(cell,node,n)];
           }
         }
         eq += this->numVectorLevelVar+this->numScalarLevelVar;
         for (int level = 0; level < this->numLevels; ++level) { 
           for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-//          (this->val_dot[j])(cell,node,level) = xdotT_constView[eqID[n]];
+//          (this->val_dot[j])(cell,node,level) = xdotT_constView[nodeID(cell,node,n)];
             typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level);
             valptr.reset(nblock);
             valptr.copyForWrite();
             for (int block=0; block<nblock; block++)
-              valptr.fastAccessCoeff(block) = (*xdot)[block][nodeID[node][n]];
+              valptr.fastAccessCoeff(block) = (*xdot)[block][nodeID(cell,node,n)];
           }
         }
         eq += this->numTracerVar;
@@ -805,6 +799,7 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   const Teuchos::RCP<const Stokhos::ProductEpetraVector>    x = workset.mp_x;
   const Teuchos::RCP<const Stokhos::ProductEpetraVector> xdot = workset.mp_xdot;
 
@@ -814,66 +809,64 @@ evaluateFields(typename Traits::EvalData workset)
 
   int nblock = x->size();
   for (int cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-    const int neq = nodeID[0].size();
+    const int neq = nodeID.dimension(2);
     const int num_dof = neq * this->numNodes;
     //JF  move above 2 lines into node loop as in PHAL case?
 
     for (int node = 0; node < this->numNodes; ++node) {
-      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       const int firstunk = neq * node;
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
         typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
-//        valptr = FadType(num_dof, xT_constView[eqID[n]]);
+//        valptr = FadType(num_dof, xT_constView[nodeID(cell,node,n)]);
         valptr = MPFadType(num_dof, 0.0);
         valptr.setUpdateValue(!workset.ignore_residual);
         valptr.fastAccessDx(firstunk + n) = workset.j_coeff;
         valptr.val().reset(nblock);
         valptr.val().copyForWrite();
         for (int block=0; block<nblock; block++)
-          valptr.val().fastAccessCoeff(block) = (*x)[block][nodeID[node][n]];
+          valptr.val().fastAccessCoeff(block) = (*x)[block][nodeID(cell,node,n)];
       }
       eq += this->numNodeVar;
       for (int level = 0; level < this->numLevels; level++) { 
         for (int j = eq; j < eq+this->numVectorLevelVar; j++) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
             typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
-//            valptr = FadType(num_dof, xT_constView[eqID[n]]);
+//            valptr = FadType(num_dof, xT_constView[nodeID(cell,node,n)]);
             valptr = MPFadType(num_dof, 0.0);
             valptr.setUpdateValue(!workset.ignore_residual);
             valptr.fastAccessDx(firstunk + n) = workset.j_coeff;
             valptr.val().reset(nblock);
             valptr.val().copyForWrite();
             for (int block=0; block<nblock; block++)
-              valptr.val().fastAccessCoeff(block) = (*x)[block][nodeID[node][n]];
+              valptr.val().fastAccessCoeff(block) = (*x)[block][nodeID(cell,node,n)];
           } 
         }
         for (int j = eq+this->numVectorLevelVar; 
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j,++n) {
           typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
-//          valptr = FadType(num_dof, xT_constView[eqID[n]]);
+//          valptr = FadType(num_dof, xT_constView[nodeID(cell,node,n)]);
           valptr = MPFadType(num_dof, 0.0);
           valptr.setUpdateValue(!workset.ignore_residual);
           valptr.fastAccessDx(firstunk + n) = workset.j_coeff;
           valptr.val().reset(nblock);
           valptr.val().copyForWrite();
           for (int block=0; block<nblock; block++)
-            valptr.val().fastAccessCoeff(block) = (*x)[block][nodeID[node][n]];
+            valptr.val().fastAccessCoeff(block) = (*x)[block][nodeID(cell,node,n)];
         }
       }
       eq += this->numVectorLevelVar+this->numScalarLevelVar;
       for (int level = 0; level < this->numLevels; ++level) { 
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
           typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
-//          valptr = FadType(num_dof, xT_constView[eqID[n]]);
+//          valptr = FadType(num_dof, xT_constView[nodeID(cell,node,n)]);
           valptr = MPFadType(num_dof, 0.0);
           valptr.setUpdateValue(!workset.ignore_residual);
           valptr.fastAccessDx(firstunk + n) = workset.j_coeff;
           valptr.val().reset(nblock);
           valptr.val().copyForWrite();
           for (int block=0; block<nblock; block++)
-            valptr.val().fastAccessCoeff(block) = (*x)[block][nodeID[node][n]];
+            valptr.val().fastAccessCoeff(block) = (*x)[block][nodeID(cell,node,n)];
         }
       }
       eq += this->numTracerVar;
@@ -887,7 +880,7 @@ evaluateFields(typename Traits::EvalData workset)
           valptr.val().reset(nblock);
           valptr.val().copyForWrite();
           for (int block=0; block<nblock; block++)
-            valptr.val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][n]];
+            valptr.val().fastAccessCoeff(block) = (*xdot)[block][nodeID(cell,node,n)];
         }
         eq += this->numNodeVar;
         for (int level = 0; level < this->numLevels; level++) { 
@@ -899,7 +892,7 @@ evaluateFields(typename Traits::EvalData workset)
               valptr.val().reset(nblock);
               valptr.val().copyForWrite();
               for (int block=0; block<nblock; block++)
-                valptr.val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][n]];
+                valptr.val().fastAccessCoeff(block) = (*xdot)[block][nodeID(cell,node,n)];
             }
           }
           for (int j = eq+this->numVectorLevelVar; 
@@ -910,7 +903,7 @@ evaluateFields(typename Traits::EvalData workset)
             valptr.val().reset(nblock);
             valptr.val().copyForWrite();
             for (int block=0; block<nblock; block++)
-              valptr.val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][n]];
+              valptr.val().fastAccessCoeff(block) = (*xdot)[block][nodeID(cell,node,n)];
           }
         }
         eq += this->numVectorLevelVar+this->numScalarLevelVar;
@@ -922,7 +915,7 @@ evaluateFields(typename Traits::EvalData workset)
             valptr.val().reset(nblock);
             valptr.val().copyForWrite();
             for (int block=0; block<nblock; block++)
-              valptr.val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][n]];
+              valptr.val().fastAccessCoeff(block) = (*xdot)[block][nodeID(cell,node,n)];
           }
         }
         eq += this->numTracerVar;

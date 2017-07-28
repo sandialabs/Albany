@@ -109,7 +109,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);
 
   const int num_dof = val_node(0,0).size();
-  const int neq = workset.wsElNodeEqID[0][0].size();
+  const int neq = workset.wsElNodeEqID.dimension(2);
 std::cout << val_node.fieldTag().name() << ", ws " << workset.wsIndex << ":\n";
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -174,7 +174,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);
 
   const int num_dof = val_node(0,0).size();
-  const int neq = workset.wsElNodeEqID[0][0].size();
+  const int neq = workset.wsElNodeEqID.dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -235,7 +235,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);
 
   const int num_dof = val_node(0,0).size();
-  const int neq = workset.wsElNodeEqID[0][0].size();
+  const int neq = workset.wsElNodeEqID.dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {

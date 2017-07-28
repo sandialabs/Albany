@@ -90,6 +90,7 @@ void SeparableScatterScalarResponseT<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Here we scatter the *local* response derivative
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_MultiVector> dgdx = workset.overlapped_dgdxT;
   Teuchos::RCP<Tpetra_MultiVector> dgdxdot = workset.overlapped_dgdxdotT;
   Teuchos::RCP<Tpetra_MultiVector> dg;
@@ -100,8 +101,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Loop over cells in workset
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID =
-      workset.wsElNodeEqID[cell];
 
     // Loop over responses
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
@@ -109,7 +108,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
-	int neq = nodeID[node_dof].size();
+	int neq = nodeID.dimension(2);
 
 	// Loop over equations per node
 	for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
@@ -118,7 +117,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  int deriv = neq * node_dof + eq_dof;
 
 	  // local DOF
-	  int dof = nodeID[node_dof][eq_dof];
+	  int dof = nodeID(cell,node_dof,eq_dof);
 
 	  // Set dg/dx
 	  dg->sumIntoLocalValue(dof, res, val.dx(deriv));
@@ -197,6 +196,7 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "kokkos no impl");
   /*
   // Here we scatter the *local* response derivative
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Epetra_MultiVector> dgdx = workset.overlapped_dgdx;
   Teuchos::RCP<Epetra_MultiVector> dgdxdot = workset.overlapped_dgdxdot;
   Teuchos::RCP<Epetra_MultiVector> dg;
@@ -207,8 +207,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Loop over cells in workset
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID =
-      workset.wsElNodeEqID[cell];
 
     // Loop over responses
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
@@ -216,7 +214,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
-        int neq = nodeID[node_dof].size();
+        int neq = nodeID.dimension(2);
 
         // Loop over equations per node
         for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
@@ -225,7 +223,7 @@ evaluateFields(typename Traits::EvalData workset)
           int deriv = neq * node_dof + eq_dof;
 
           // local DOF
-          int dof = nodeID[node_dof][eq_dof];
+          int dof = nodeID(cell,node_dof,eq_dof);
 
           // Set dg/dx
           dg->SumIntoMyValue(dof, res, val.dx(deriv));
@@ -300,6 +298,7 @@ void SeparableScatterScalarResponseT<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Here we scatter the *local* SG response derivative
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dgdx_sg =
     workset.overlapped_sg_dgdx;
   Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dgdxdot_sg =
@@ -312,8 +311,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Loop over cells in workset
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID =
-      workset.wsElNodeEqID[cell];
 
     // Loop over responses
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
@@ -321,7 +318,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
-	int neq = nodeID[node_dof].size();
+	int neq = nodeID.dimension(2);
 
 	// Loop over equations per node
 	for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
@@ -330,7 +327,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  int deriv = neq * node_dof + eq_dof;
 
 	  // local DOF
-	  int dof = nodeID[node_dof][eq_dof];
+	  int dof = nodeID(cell,node_dof,eq_dof);
 
 	  // Set dg/dx
 	  for (int block=0; block<dg_sg->size(); block++)
@@ -420,6 +417,7 @@ void SeparableScatterScalarResponseT<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Here we scatter the *local* MP response derivative
+  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Stokhos::ProductEpetraMultiVector> dgdx_mp =
     workset.overlapped_mp_dgdx;
   Teuchos::RCP<Stokhos::ProductEpetraMultiVector> dgdxdot_mp =
@@ -432,8 +430,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Loop over cells in workset
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID =
-      workset.wsElNodeEqID[cell];
 
     // Loop over responses
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
@@ -441,7 +437,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
-	int neq = nodeID[node_dof].size();
+	int neq = nodeID.dimension(2);
 
 	// Loop over equations per node
 	for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
@@ -450,7 +446,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  int deriv = neq * node_dof + eq_dof;
 
 	  // local DOF
-	  int dof = nodeID[node_dof][eq_dof];
+	  int dof = nodeID(cell,node_dof,eq_dof)
 
 	  // Set dg/dx
 	  for (int block=0; block<dg_mp->size(); block++)
