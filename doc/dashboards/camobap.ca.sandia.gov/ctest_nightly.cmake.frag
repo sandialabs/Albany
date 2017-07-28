@@ -971,6 +971,7 @@ if (BUILD_CISM_PISCEES)
   #
   # Run CISM-Albany tests
   #
+  set (CTEST_TEST_TIMEOUT 1500)
 
   CTEST_TEST(
     BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany"
