@@ -798,6 +798,11 @@ namespace Albany {
             PHAL::Workset& workset,
             double current_time);
 
+    void loadBasicWorksetInfoSDBCsT(
+            PHAL::Workset& workset,
+            Teuchos::RCP<const Tpetra_Vector> owned_sol,
+            double current_time);
+
     void loadWorksetJacobianInfo(PHAL::Workset& workset,
                 const double& alpha, const double& beta, const double& omega);
 

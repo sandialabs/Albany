@@ -5118,6 +5118,37 @@ void Albany::Application::loadBasicWorksetInfoT(
   workset.accelerationTerms = Teuchos::nonnull(workset.xdotdotT);
 }
 
+void Albany::Application::loadBasicWorksetInfoSDBCsT(
+    PHAL::Workset& workset,
+    Teuchos::RCP<const Tpetra_Vector> owned_sol,
+    double current_time)
+{
+  workset.numEqs = neq;
+  /*
+   workset.xT        = solMgrT->get_overlapped_xT();
+   workset.xdotT     = solMgrT->get_overlapped_xdotT();
+   workset.xdotdotT     = solMgrT->get_overlapped_xdotdotT();
+   */
+  Teuchos::RCP<Tpetra_MultiVector> overlapped_MV = solMgrT
+      ->getOverlappedSolution();
+  Teuchos::RCP<Tpetra_Vector> overlapped_sol = Teuchos::rcp(new Tpetra_Vector(overlapped_MV->getMap()));
+  overlapped_sol->doImport(*owned_sol, *(solMgrT->get_importerT()), Tpetra::INSERT);
+  workset.xT = overlapped_sol;
+  workset.xdotT =
+      (overlapped_MV->getNumVectors() > 1) ?
+          overlapped_MV->getVectorNonConst(1) : Teuchos::null;
+  workset.xdotdotT =
+      (overlapped_MV->getNumVectors() > 2) ?
+          overlapped_MV->getVectorNonConst(2) : Teuchos::null;
+  workset.current_time = current_time;
+  workset.distParamLib = distParamLib;
+  workset.disc = disc;
+  //workset.delta_time = delta_time;
+  workset.transientTerms = Teuchos::nonnull(workset.xdotT);
+  workset.accelerationTerms = Teuchos::nonnull(workset.xdotdotT);
+}
+
+
 void Albany::Application::loadWorksetJacobianInfo(PHAL::Workset& workset,
     const double& alpha, const double& beta, const double& omega)
 {
@@ -6213,10 +6244,10 @@ computeGlobalResidualSDBCsImplT(
     PHAL::Workset workset;
 
     if (!paramLib->isParameter("Time")) {
-      loadBasicWorksetInfoT(workset, current_time);
+      loadBasicWorksetInfoSDBCsT(workset, xT_post_SDBCs, current_time);
     }
     else {
-      loadBasicWorksetInfoT(workset,
+      loadBasicWorksetInfoSDBCsT(workset, xT_post_SDBCs,
           paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
     }
 
@@ -6224,7 +6255,6 @@ computeGlobalResidualSDBCsImplT(
 
     for (int ws = 0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
-      workset.xT = xT_post_SDBCs;  
    
 #ifdef DEBUG_OUTPUT 
       *out << "IKT countRes = " << countRes << ", computeGlobalResid workset.xT = \n "; 
