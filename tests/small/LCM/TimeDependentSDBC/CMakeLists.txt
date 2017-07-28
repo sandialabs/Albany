@@ -8,9 +8,9 @@
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cube.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube_sdbc.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/cube_cube_sdbc.yaml COPYONLY)
+               ${CMAKE_CURRENT_BINARY_DIR}/finer_cube_sdbc.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube_dbc.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/cube_cube_dbc.yaml COPYONLY)
+               ${CMAKE_CURRENT_BINARY_DIR}/finer_cube_dbc.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/material.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/material.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
@@ -27,6 +27,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube.g.4.2
                ${CMAKE_CURRENT_BINARY_DIR}/finer_cube.g.4.2 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube.g.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/finer_cube.g.4.3 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube.g.2.0
+               ${CMAKE_CURRENT_BINARY_DIR}/finer_cube.g.2.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube.g.2.1
+               ${CMAKE_CURRENT_BINARY_DIR}/finer_cube.g.2.1 COPYONLY)
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
