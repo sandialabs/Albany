@@ -18,9 +18,10 @@ ENDIF()
 # 4. Create the test with this name and standard executable
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input2Dunsteady.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input2Dunsteady.xml COPYONLY)
-if (ALBANY_EPETRA) 
-add_test(${testName}_2DUnsteadyInvPressPulse ${Albany.exe} input2Dunsteady.xml)
-endif()
+
+if (ALBANY_IFPACK2)
+add_test(${testName}_2DUnsteadyInvPressPulse ${AlbanyT.exe} input2Dunsteady.xml)
+ENDIF()
 
 # 5. Create the test with this name and standard executable
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input2DunsteadyMMS.xml
