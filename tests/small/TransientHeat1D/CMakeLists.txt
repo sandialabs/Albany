@@ -60,7 +60,7 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
 
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
   if (ALBANY_EPETRA) 
-    add_test(${testName} ${AlbanyAnalysis.exe})
+    add_test(${testName} ${AlbanyAnalysis.exe} inputAnalysis.xml)
   endif()
 endif ()
 
