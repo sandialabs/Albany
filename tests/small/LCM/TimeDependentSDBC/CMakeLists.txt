@@ -13,8 +13,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube_dbc.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/finer_cube_dbc.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/material.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/material.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
-               ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.g
                ${CMAKE_CURRENT_BINARY_DIR}/cube.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube.g
@@ -35,4 +33,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube.g.2.1
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-add_test(NAME ${testName} COMMAND "python" "runtest.py")
+#add_test(NAME ${testName} COMMAND "python" "runtest.py")
+if (ALBANY_IFPACK2)
+add_test(${testName} ${AlbanyT.exe} finer_cube_sdbc.yaml)
+endif ()
+
