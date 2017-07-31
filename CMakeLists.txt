@@ -450,11 +450,44 @@ ELSE()
   SET(ALBANY_DEMO_PDES FALSE)
 ENDIF()
 
+# Check if Trilinos has ROL
+LIST(FIND Trilinos_PACKAGE_LIST ROL ROL_List_ID)
+IF (ROL_List_ID GREATER -1)
+  ADD_DEFINITIONS(-DALBANY_ROL)
+  MESSAGE("-- Looking for ROL in Trilinos: Found, compiling with -DALBANY_ROL")
+    SET(ALBANY_ROL TRUE)
+  ELSE()
+    MESSAGE("-- Looking for ROL in Trilinos: NOT found.")
+    SET(ALBANY_ROL FALSE)
+ENDIF()
+
+# Check for the presence of MiniTensor for LCM, SCOREC, and ATO builds.
+# Lets catch this missing option at Albany configure time and not during the compile.
+#
+SET(ALBANY_MINITENSOR FALSE)
+IF (EXISTS "${Trilinos_INCLUDE_DIRS}/MiniTensor.h")
+    MESSAGE("-- Looking for MiniTensor package in Trilinos: Found ...")
+    SET(ALBANY_MINITENSOR TRUE)
+ENDIF()
+IF (NOT ALBANY_MINITENSOR)
+  IF (ENABLE_LCM OR ENABLE_ATO OR ENABLE_SCOREC)
+    MESSAGE(FATAL_ERROR "Trilinos was not built with MiniTensor enabled - it is required for LCM, SCOREC, and ATO.")
+  ENDIF()
+ENDIF()
+
 # set optional dependency on LCM, defaults to Disabled
 OPTION(ENABLE_LCM "Flag to turn on LCM Mechanics source code" OFF)
 OPTION(ENABLE_LCM_TEST_EXES "Flag to turn on LCM Mechanics test executables" ON)
 SET(LCM_TEST_EXES FALSE)
 IF (ENABLE_LCM)
+  IF (NOT ALBANY_MINITENSOR)
+    MESSAGE(FATAL_ERROR
+        "LCM enabled but MiniTensor not installed from Trilinos (LCM needs MiniTensor)")
+  ENDIF()
+  IF (NOT ALBANY_ROL)
+    MESSAGE(FATAL_ERROR
+        "LCM enabled but ROL not installed from Trilinos (LCM needs ROL)")
+  ENDIF()
   ADD_DEFINITIONS(-DALBANY_LCM)
   MESSAGE("-- LCM       is Enabled, compiling with -DALBANY_LCM")
   SET(ALBANY_LCM TRUE)
@@ -486,17 +519,6 @@ IF (Tempus_List_ID GREATER -1)
 ELSE()
   MESSAGE("-- Looking for Tempus in Trilinos: NOT found.")
   SET(ALBANY_TEMPUS FALSE)
-ENDIF()
-
-# Check if Trilinos has ROL
-LIST(FIND Trilinos_PACKAGE_LIST ROL ROL_List_ID)
-IF (ROL_List_ID GREATER -1)
-  ADD_DEFINITIONS(-DALBANY_ROL)
-  MESSAGE("-- Looking for ROL in Trilinos: Found, compiling with -DALBANY_ROL")
-    SET(ALBANY_ROL TRUE)
-  ELSE()
-    MESSAGE("-- Looking for ROL in Trilinos: NOT found.")
-    SET(ALBANY_ROL FALSE)
 ENDIF()
 
 # set optional dependency on MPMD, defaults to Disabled
@@ -1356,20 +1378,6 @@ IF (NOT ALBANY_YAML)
   MESSAGE("-- Looking for YAML in Teuchos: NOT found.")
   IF (ENABLE_LCM)
     MESSAGE(FATAL_ERROR "Trilinos was not built with YAML enabled - it is required for LCM.")
-  ENDIF()
-ENDIF()
-
-# Check for the presence of MiniTensor for LCM, SCOREC, and ATO builds.
-# Lets catch this missing option at Albany configure time and not during the compile.
-#
-SET(ALBANY_MINITENSOR FALSE)
-IF (EXISTS "${Trilinos_INCLUDE_DIRS}/MiniTensor.h")
-    MESSAGE("-- Looking for MiniTensor package in Trilinos: Found ...")
-    SET(ALBANY_MINITENSOR TRUE)
-ENDIF()
-IF (NOT ALBANY_MINITENSOR)
-  IF (ENABLE_LCM OR ENABLE_ATO OR ENABLE_SCOREC)
-    MESSAGE(FATAL_ERROR "Trilinos was not built with MiniTensor enabled - it is required for LCM, SCOREC, and ATO.")
   ENDIF()
 ENDIF()
 
