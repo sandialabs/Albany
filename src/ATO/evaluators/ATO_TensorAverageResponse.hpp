@@ -124,10 +124,10 @@ namespace ATO
 
     std::string FName;
     static const std::string className;
-    PHX::MDField<ScalarT> field;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
-    PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
-    PHX::MDField<ParamScalarT,Cell,Node> topo;
+    PHX::MDField<const ScalarT> field;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
+    PHX::MDField<const RealType,Cell,Node,QuadPoint> BF;
+    PHX::MDField<const ParamScalarT,Cell,Node> topo;
     Teuchos::RCP<Topology> topology;
     Teuchos::RCP< PHX::Tag<ScalarT> > objective_tag;
 

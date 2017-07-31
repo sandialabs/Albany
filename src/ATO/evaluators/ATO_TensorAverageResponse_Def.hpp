@@ -46,7 +46,7 @@ TensorAverageResponse(Teuchos::ParameterList& p,
     Teuchos::Exceptions::InvalidParameter, std::endl
     << "Error!  TensorAverageResponse requires 'Distributed Parameter' based topology" << std::endl);
 
-  topo = PHX::MDField<ParamScalarT,Cell,Node>(topology->getName(),dl->node_scalar);
+  topo = decltype(topo)(topology->getName(),dl->node_scalar);
 
   std::string field_name = responseParams->get<std::string>("Field Name");
   std::string fieldType = responseParams->get<std::string>("Field Type", "Scalar");

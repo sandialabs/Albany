@@ -58,8 +58,8 @@ namespace ATO {
     std::string elementBlockName;
     static const std::string className;
 
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> qp_weights;
-    PHX::MDField<RealType,Cell,Node,QuadPoint,Dim> GradBF;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint> qp_weights;
+    PHX::MDField<const RealType,Cell,Node,QuadPoint,Dim> GradBF;
 
     Teuchos::RCP< PHX::Tag<ScalarT> > interface_energy_tag;
     Albany::StateManager* pStateMgr;
