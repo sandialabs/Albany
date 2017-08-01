@@ -146,6 +146,7 @@
     <Parameter name="Use Serial Mesh" type="bool" value="true"/>
     <Parameter name="Method" type="string" value="Ioss" />
     <Parameter name="Exodus Output File Name" type="string" value="output/output_ps_integrated_test.exo" />
+    <Parameter name="Number Of Time Derivatives" type="int" value="1"/>
 
     <!-- ADDED AUTOMATICALLY for coupled solver
      <Parameter name="Solution Vector Components" type="Array(string)" value="{Potential, S, Eigenvector0, S, Eigenvector1, S}"/>
@@ -156,8 +157,8 @@
 
 
   <ParameterList name="Regression Results">
-    <Parameter name="Number of Comparisons" type="int" value="0" />
-    <Parameter name="Test Values" type="Array(double)" value="{0.5590147}" />
+    <Parameter name="Number of Comparisons" type="int" value="6" />
+    <Parameter name="Test Values" type="Array(double)" value="{0.193230112078, 0, 0, 0, 0, 0}" />
     <Parameter name="Relative Tolerance" type="double" value="1.0e-5" />
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0" />
   </ParameterList>
