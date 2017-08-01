@@ -8,6 +8,7 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
 
+
 //#define DEBUG
 
 namespace LCM {
@@ -100,6 +101,14 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   Teuchos::RCP<Tpetra_CrsMatrix>
   J = dirichlet_workset.JacT;
+  
+  Teuchos::RCP<const Tpetra_Map>
+  Map = J->getMap(); 
+
+  auto global_length = x->getGlobalLength(); 
+  std::vector<ST> marker(global_length);
+  for (int i=0; i<global_length; i++)
+    marker[i] = 0.0; 
 
   std::vector<std::vector<int>> const &
   ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
@@ -129,6 +138,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
     int const
     dof = ns_nodes[ns_node][this->offset];
+    
+    GO const global_dof = Map->getGlobalElement(dof);  
+    marker[global_dof] += 1.0;  
 
     if (fill_residual == true) {
       f_view[dof] = 0.0;
@@ -164,6 +176,41 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
     }
 
+  }
+  //for (int i=0; i<1; i++) 
+  //  PHAL::reduceAll(*dirichlet_workset.comm, Teuchos::REDUCE_SUM, marker[i]);
+  std::vector<ST> global_marker(global_length);
+  for (int i=0; i<global_length; i++) 
+    global_marker[i] = 0.0; 
+
+  for (int i=0; i<global_length; i++)  
+    Teuchos::reduceAll(*(Map->getComm()), Teuchos::REDUCE_SUM, /*numvals=*/ 1, &marker[i], &global_marker[i]);
+
+
+  auto num_global_cols = J->getGlobalNumCols(); 
+  auto num_global_rows = J->getGlobalNumRows(); 
+  auto procNo = Map->getComm()->getRank();
+
+  //loop over global columns
+  for (auto gcol = 0; gcol < num_global_cols; ++gcol) { 
+    //check if gcol dof is dirichlet dof 
+    ST is_dir_dof = global_marker[gcol];
+    //if gcol is dirichlet dof, zero out all (global) rows corresponding to global column gcol
+    if (is_dir_dof != 0.0) {
+#ifdef DEBUG
+      std::cout << "IKT proc, zeroeing out column = " << procNo << ", " << gcol << std::endl; 
+#endif
+      //loop over global rows
+      for (auto grow = 0; grow < num_global_rows; ++grow) {
+        if (grow != gcol) {
+          Teuchos::Array<GO> gcol_array(1); 
+          gcol_array[0] = gcol; 
+          Teuchos::Array<ST> value(1); 
+          value[0] = 0.0; 
+          J->replaceGlobalValues(grow, gcol_array(), value()); 
+        }
+      }
+    }
   }
   return;
 }
