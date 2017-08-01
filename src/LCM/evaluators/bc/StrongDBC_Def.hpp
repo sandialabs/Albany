@@ -170,15 +170,11 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
           if (col_index != dof) entries[col] = 0.0;
         }
         J->replaceLocalValues(dof, indices(), entries());
-      } else {
-        J->replaceLocalValues(row, index(), entry());
-      }
-
+      } 
     }
 
   }
-  //for (int i=0; i<1; i++) 
-  //  PHAL::reduceAll(*dirichlet_workset.comm, Teuchos::REDUCE_SUM, marker[i]);
+  
   std::vector<ST> global_marker(global_length);
   for (int i=0; i<global_length; i++) 
     global_marker[i] = 0.0; 
