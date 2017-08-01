@@ -17,8 +17,10 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 add_test(Aeras_${testName}_Spectral_np2_RungeKutta4 ${AlbanyT.exe} input_spectralT.xml)
 IF(NOT ALBANY_CHECK_FPE)
-IF(NOT ALBANY_STRONG_FPE_CHECK)  
+IF(NOT ALBANY_STRONG_FPE_CHECK) 
+IF(NOT Kokkos_ENABLE_Cuda) 
 add_test(Aeras_${testName}_Spectral_np4_BackwardEuler ${AlbanyT8.exe} input_spectral_np4_BE_T.xml) 
+ENDIF()
 ENDIF()
 ENDIF()
 
