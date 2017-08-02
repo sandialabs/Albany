@@ -100,9 +100,7 @@ IF(ALBANY_HAVE_STK)
 # QCAD ##################
 
 IF(ALBANY_QCAD AND ALBANY_SEACAS)
-  IF (ALBANY_EPETRA)
-    add_subdirectory(QCAD)
-  ENDIF()
+  add_subdirectory(QCAD)
   add_subdirectory(ThermoElectrostatics2D)
 ENDIF()
 
