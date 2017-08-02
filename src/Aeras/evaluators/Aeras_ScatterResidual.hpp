@@ -57,6 +57,13 @@ protected:
   int numScalarLevelVar;
   int numTracerVar;
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+protected:
+  Kokkos::View<LO***, PHX::Device> nodeID;
+  Kokkos::View<ST*, PHX::Device> fT_kokkos;
+  Kokkos::vector<Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device> val_kokkos;
+
+#endif
 };
 
 template<typename EvalT, typename Traits> class ScatterResidual;
@@ -82,23 +89,21 @@ public:
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
-  Kokkos::View<LO***, PHX::Device> nodeID;
-  Kokkos::View<ST*, PHX::Device> fT_nonconstView;
-
-  struct ScatterResid_Tag{};
-
-  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-
-  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterResid_Tag> ScatterResid_Policy;
+  struct Aeras_ScatterRes_Tag{};
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterResid_Tag& tag, const int& i) const;
+  void operator() (const Aeras_ScatterRes_Tag&, const int& cell) const;
 
 private:
-  typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
-  Kokkos::vector< Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device > val_kokkos;
+  typedef ScatterResidualBase<PHAL::AlbanyTraits::Residual, Traits> Base;
+  using Base::nodeID;
+  using Base::fT_kokkos;
+  using Base::val_kokkos;
 
-  typename Kokkos::vector< Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device >::t_dev d_val;
+  typename Kokkos::vector<Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device>::t_dev d_val_kokkos;
+
+  typedef typename PHX::Device::execution_space ExecutionSpace;
+  typedef Kokkos::RangePolicy<ExecutionSpace, Aeras_ScatterRes_Tag> Aeras_ScatterRes_Policy;
 
 #endif
 };
@@ -117,36 +122,32 @@ public:
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
-  Teuchos::RCP<Tpetra_Vector> fT;
-  Teuchos::RCP<Tpetra_CrsMatrix> JacT;
-  typedef typename Tpetra_CrsMatrix::local_matrix_type  LocalMatrixType;
-  LocalMatrixType jacobian;
-  bool loadResid;
-  int neq, nunk;
-
-  Kokkos::View<LO***, PHX::Device> nodeID;
-
-  struct ScatterResid_is_adjoint_Tag{};
-  struct ScatterResid_no_adjoint_Tag{};
-
-  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-
-  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterResid_is_adjoint_Tag> ScatterResid_is_adjoint_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterResid_no_adjoint_Tag> ScatterResid_no_adjoint_Policy;
+  struct Aeras_ScatterRes_Tag{};
+  struct Aeras_ScatterJac_Adjoint_Tag{};
+  struct Aeras_ScatterJac_Tag{};
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterResid_is_adjoint_Tag& tag, const int& i) const;
-
+  void operator() (const Aeras_ScatterRes_Tag&, const int& cell) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterResid_no_adjoint_Tag& tag, const int& i) const;
+  void operator() (const Aeras_ScatterJac_Adjoint_Tag&, const int& cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Aeras_ScatterJac_Tag&, const int& cell) const;
 
 private:
-  Kokkos::DynRankView<LO, PHX::Device> colT;
+  int neq, nunk;
+  Tpetra_CrsMatrix::local_matrix_type JacT_kokkos;
 
-  typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
-  Kokkos::vector< Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device > val_kokkosjac;
+  typedef ScatterResidualBase<PHAL::AlbanyTraits::Jacobian, Traits> Base;
+  using Base::nodeID;
+  using Base::fT_kokkos;
+  using Base::val_kokkos;
 
-  typename Kokkos::vector< Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device >::t_dev d_val;
+  typename Kokkos::vector<Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device>::t_dev d_val_kokkos;
+
+  typedef typename PHX::Device::execution_space ExecutionSpace;
+  typedef Kokkos::RangePolicy<ExecutionSpace, Aeras_ScatterRes_Tag> Aeras_ScatterRes_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, Aeras_ScatterJac_Adjoint_Tag> Aeras_ScatterJac_Adjoint_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, Aeras_ScatterJac_Tag> Aeras_ScatterJac_Policy;
 
 #endif
 };

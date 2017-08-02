@@ -15,6 +15,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_ps_moscap_1D.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_ps_moscap_1D.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_ps_mosdot_2D.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_ps_mosdot_2D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_ps_integrated_test.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_ps_integrated_test.xml COPYONLY)
 
 # Create tests with this name and standard executable
 #add_test(${testRoot}_moscap_1D ${Albany.exe} input_ps_moscap_1D.xml)
@@ -22,5 +24,5 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_ps_mosdot_2D.xml
 #a problem in get_x_init in the QCAD::CoupledPoissonSchrodinger class that
 #requires further conversion of the QCAD code to Tpetra...
 
-#add_test(${testRoot}_mosdot_2D ${Albany.exe} input_ps_mosdot_2D.xml)
+add_test(${testRoot}_ps_integrated ${Albany8.exe} input_ps_integrated_test.xml)
 

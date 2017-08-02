@@ -1,3 +1,14 @@
+-------------------Priorities (meeting with Erik 7/31/17)----------------------
+1.) Everything ported to Tpetra for Poisson - DONE!
+2.) Schrodinger ported to Tpetra - Irina thinks is done; double check (SaveEigenData)
+3.) Multi-Problem ported to Tpetra - TODO (Irina)
+4.) Write test for Poisson-Schrodinger (Epetra) - TODO (Irina)
+5.) Test CI compilation, move to Albany, write tests (Epetra) - TODO (Erik, Dan)
+6.) Convert 5.) to Tpetra.
+7.) Convert 4.) to Tpetra.
+
+------------------------------------------------------------------------------------
+
 This files summarizes what is / is not being tested in QCAD, and also what is / is not converted to Tpetra/Thyra from Epetra/EpetraExt.
 
 -------------------------------------------------------------

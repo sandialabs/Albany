@@ -56,14 +56,17 @@ endif()
 
 # Create tests with this name and serial executable
 IF(NOT ALBANY_PARALLEL_ONLY)
-  add_test(${testRoot}_test2D_SERIAL ${SerialAlbany.exe} input_stk2D.xml)
+  IF (ALBANY_EPETRA)
+    add_test(${testRoot}_test2D_SERIAL ${SerialAlbany.exe} input_stk2D.xml)
+    add_test(${testRoot}_pmoscap_1D_SERIAL ${SerialAlbany.exe} input_pmoscap_1D.xml)
+  ENDIF()
   if (ALBANY_IFPACK2) 
-  add_test(${testRoot}_test2D_SERIAL_Tpetra ${SerialAlbanyT.exe} input_stk2DT.xml)
-  add_test(${testRoot}_pmoscap_1D_SERIAL ${SerialAlbany.exe} input_pmoscap_1D.xml)
+    add_test(${testRoot}_test2D_SERIAL_Tpetra ${SerialAlbanyT.exe} input_stk2DT.xml)
   endif()
 ENDIF()
 
 # Create tests with this name and standard executable
+IF (ALBANY_EPETRA)
 add_test(${testRoot}_pmoscap ${Albany.exe} input_pmoscap.xml)
 add_test(${testRoot}_pmoscap_polygate ${Albany.exe} input_pmoscap_polygate.xml)
 add_test(${testRoot}_pmoscap_3D ${Albany.exe} input_pmoscap_3D_itrap.xml)
@@ -74,6 +77,7 @@ add_test(${testRoot}_mosdot_2D_tri6 ${Albany.exe} input_mosdot_2D_tri6.xml)
 add_test(${testRoot}_mosdot_2D_qcad ${Albany.exe} input_mosdot_2D_qcad.xml)
 add_test(${testRoot}_mosdot_3D ${Albany.exe} input_mosdot_3D.xml)
 add_test(${testRoot}_mosdot_3D_tet10 ${Albany.exe} input_mosdot_3D_tet10.xml)
+ENDIF()
 
 ## TODO add_test(${testRoot}_pointcharge ${Albany.exe} input_pointcharge_3D.xml)
 ## TODO add_test(${testRoot}_cloudcharge ${Albany.exe} input_cloudcharge_3D.xml)
