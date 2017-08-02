@@ -7,6 +7,7 @@
 #include "Albany_SolverFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "MiniTensor.h"
+#include "Piro_LOCASolver.hpp"
 #include "Schwarz_Alternating.hpp"
 
 namespace LCM {
@@ -64,12 +65,9 @@ SchwarzAlternating(
   model_evaluators_.resize(num_subdomains_);
   sub_inargs_.resize(num_subdomains_);
   sub_outargs_.resize(num_subdomains_);
-  nox_params_.resize(num_subdomains_);
   solutions_.resize(num_subdomains_);
   have_loca_.resize(num_subdomains_);
   have_tempus_.resize(num_subdomains_);
-  step_start_.resize(num_subdomains_);
-  step_stop_.resize(num_subdomains_);
 
   // Initialization
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
@@ -144,8 +142,6 @@ SchwarzAlternating(
 
     Teuchos::ParameterList &
     nox_params = piro_params.sublist("NOX");
-
-    nox_params_[subdomain] = nox_params;
 
     bool const
     have_solver_opts = nox_params.isSublist("Solver Options");
@@ -647,9 +643,6 @@ SchwarzLoop() const
   ST
   current_time{initial_time_};
 
-  ST
-  next_time{current_time + time_step};
-
   // Continuation loop
   while (stop <= maximum_steps_ && current_time <= final_time_) {
 
@@ -658,6 +651,9 @@ SchwarzLoop() const
     fos << "Time               :" << current_time << '\n';
     fos << "Time step          :" << time_step << '\n';
     fos << delim << '\n';
+
+    ST const
+    next_time{current_time + time_step};
 
     num_iter_ = 0;
 
@@ -682,6 +678,16 @@ SchwarzLoop() const
         // Solve for each subdomain
         Thyra::ResponseOnlyModelEvaluatorBase<ST> &
         solver = *(solvers_[subdomain]);
+
+        Piro::LOCASolver<ST> &
+        piro_loca_solver = dynamic_cast<Piro::LOCASolver<ST> &>(solver);
+
+        piro_loca_solver.setMinValue(current_time);
+        piro_loca_solver.setMaxValue(next_time);
+
+        fos << "Start time         :" << piro_loca_solver.getMinValue() << '\n';
+        fos << "Stop time          :" << piro_loca_solver.getMaxValue() << '\n';
+        fos << delim << '\n';
 
         Thyra::ModelEvaluatorBase::InArgs<ST>
         in_args = solver.createInArgs();
@@ -713,7 +719,10 @@ SchwarzLoop() const
         Teuchos::RCP<SolutionSniffer>
         solution_sniffer = solution_sniffers_[subdomain];
 
-        solutions_[subdomain] = solution_sniffer->getLastSoln();
+        Teuchos::RCP<NOX::Abstract::Vector>
+        last_soln = solution_sniffer->getLastSoln()->clone(NOX::DeepCopy);
+
+        solutions_[subdomain] = last_soln;
         norms_init(subdomain) = solution_sniffer->getInitialNorm();
         norms_final(subdomain) = solution_sniffer->getFinalNorm();
         norms_diff(subdomain) = solution_sniffer->getDifferenceNorm();

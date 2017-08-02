@@ -203,20 +203,17 @@ private:
   mutable ST
   norm_diff_{0.0};
 
-  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST>>
+  mutable std::vector<Thyra::ModelEvaluatorBase::InArgs<ST>>
   sub_inargs_;
 
-  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST>>
+  mutable std::vector<Thyra::ModelEvaluatorBase::OutArgs<ST>>
   sub_outargs_;
 
-  mutable Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
+  mutable std::vector<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
   model_evaluators_;
 
-  mutable Teuchos::Array<Teuchos::RCP<NOX::Abstract::Vector>>
+  mutable std::vector<Teuchos::RCP<NOX::Abstract::Vector>>
   solutions_;
-
-  Teuchos::Array<Teuchos::ParameterList>
-  nox_params_;
 
   // Used if solving with loca or tempus
   mutable std::vector<bool>
@@ -224,12 +221,6 @@ private:
 
   mutable std::vector<bool>
   have_tempus_;
-
-  mutable std::vector<ST>
-  step_start_;
-
-  mutable std::vector<ST>
-  step_stop_;
 
   mutable std::vector<std::reference_wrapper<Teuchos::ParameterList>>
   start_stop_params_;
