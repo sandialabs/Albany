@@ -79,7 +79,7 @@ WsLIDList &Decorator::getElemGIDws()
   return discretization->getElemGIDws();
 }
 
-const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type &
+const Decorator::Conn&
 Decorator::getWsElNodeEqID() const
 {
   return discretization->getWsElNodeEqID();

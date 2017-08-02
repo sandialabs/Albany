@@ -255,17 +255,17 @@ void EpetraDataArray::RemoveLastTuple()
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Read-only container.");
 }
 
-void EpetraDataArray::SetTupleValue(vtkIdType i, const ValueType *t)
+void EpetraDataArray::SetTypedTuple(vtkIdType i, const ValueType *t)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Read-only container.");
 }
 
-void EpetraDataArray::InsertTupleValue(vtkIdType i, const ValueType *t)
+void EpetraDataArray::InsertTypedTuple(vtkIdType i, const ValueType *t)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Read-only container.");
 }
 
-vtkIdType EpetraDataArray::InsertNextTupleValue(const ValueType *t)
+vtkIdType EpetraDataArray::InsertNextTypedTuple(const ValueType *t)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Read-only container.");
   return -1;

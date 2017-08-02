@@ -45,7 +45,8 @@ public:
   const SideSetList& getSideSets(const int workset) const override;
 
   //! Get map from (Ws, El, Local Node) -> NodeLID
-  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type& getWsElNodeEqID() const override;
+  using AbstractDiscretization::Conn;
+  const Conn& getWsElNodeEqID() const override;
 
   //! Retrieve coodinate vector (num_used_nodes * 3)
   const Teuchos::ArrayRCP<double>& getCoordinates() const override;
