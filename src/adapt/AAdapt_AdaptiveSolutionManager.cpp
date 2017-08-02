@@ -32,11 +32,9 @@ AAdapt::AdaptiveSolutionManager::AdaptiveSolutionManager(
   setInitialSolution(disc->getSolutionField());
 
   // Load connectivity map and coordinates
-  const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
-        wsElNodeEqID = disc->getWsElNodeEqID();
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
-        coords = disc->getCoords();
-  const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+  const auto& coords = disc->getCoords();
+  const auto& wsEBNames = disc->getWsEBNames();
 
   int numDim = disc->getNumDim();
   int neq = disc->getNumEq();

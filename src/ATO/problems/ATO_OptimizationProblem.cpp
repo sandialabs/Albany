@@ -86,9 +86,8 @@ ComputeMeasure(std::string measureType, double& measure)
   if(measureType == "Volume"){
     double localm = 0.0;
 
-    const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
-      wsElNodeEqID = disc->getWsElNodeEqID();
-    const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
+    const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+    const auto& wsPhysIndex = disc->getWsPhysIndex();
 
     int numWorksets = wsElNodeEqID.size();
 
@@ -666,13 +665,10 @@ ATO::OptimizationProblem::InitTopOpt()
 /******************************************************************************/
 {
 
-  const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
-        coords = disc->getCoords();
-  const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
-    wsElNodeEqID = disc->getWsElNodeEqID();
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
-    wsElNodeID = disc->getWsElNodeID();
+  const auto& wsPhysIndex = disc->getWsPhysIndex();
+  const auto& coords = disc->getCoords();
+  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+  const auto& wsElNodeID = disc->getWsElNodeID();
 
   const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
 

@@ -300,7 +300,9 @@ namespace Aeras
     };
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
-    const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type& getWsElNodeEqID() const;
+    using Albany::AbstractDiscretization::WorksetConn;
+    using Albany::AbstractDiscretization::Conn;
+    const Conn& getWsElNodeEqID() const;
 
     //! Get map from (Ws, Local Node) -> NodeGID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
@@ -763,7 +765,7 @@ namespace Aeras
     std::map< GO, Teuchos::ArrayRCP< GO > > enrichedEdges;
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
-    Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type wsElNodeEqID;
+    Conn wsElNodeEqID;
 
     //! Connectivity array [workset, element, local-node] => GID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;

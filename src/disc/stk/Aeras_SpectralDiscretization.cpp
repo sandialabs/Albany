@@ -300,7 +300,7 @@ Aeras::SpectralDiscretization::getOverlapNodeMapT(const std::string& field_name)
   return Teuchos::null;
 }
 
-const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
+const Aeras::SpectralDiscretization::Conn&
 Aeras::SpectralDiscretization::getWsElNodeEqID() const
 {
   return wsElNodeEqID;
@@ -2467,7 +2467,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
     //coords[b].resize(buck.size());
 
     // Set size of Kokkos views
-    wsElNodeEqID[b] = Kokkos::View<LO***, PHX::Device>("wsElNodeEqID", buck.size(), nodes_per_element, neq);
+    wsElNodeEqID[b] = WorksetConn("wsElNodeEqID", buck.size(), nodes_per_element, neq);
 
     {  // nodalDataToElemNode.
 

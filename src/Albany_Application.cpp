@@ -1384,17 +1384,10 @@ computeGlobalResidualImplT(
   postRegSetup("Residual");
 
   // Load connectivity map and coordinates
-  WorksetArray<Kokkos::View<LO***, PHX::Device>>::type const &
-  wsElNodeEqID = disc->getWsElNodeEqID();
-
-  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type const &
-  coords = disc->getCoords();
-
-  WorksetArray<std::string>::type const &
-  wsEBNames = disc->getWsEBNames();
-
-  WorksetArray<int>::type const &
-  wsPhysIndex = disc->getWsPhysIndex();
+  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+  const auto& coords = disc->getCoords();
+  const auto& wsEBNames = disc->getWsEBNames();
+  const auto& wsPhysIndex = disc->getWsPhysIndex();
 
   int const
   numWorksets = wsElNodeEqID.size();
@@ -1831,12 +1824,10 @@ computeGlobalJacobianImplT(const double alpha,
   postRegSetup("Jacobian");
 
   // Load connectivity map and coordinates
-  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
-  wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
-  coords = disc->getCoords();
-  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
-  const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
+  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+  const auto& coords = disc->getCoords();
+  const auto& wsEBNames = disc->getWsEBNames();
+  const auto& wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
 
@@ -2343,12 +2334,10 @@ computeGlobalTangentImplT(
   postRegSetup("Tangent");
 
   // Load connectivity map and coordinates
-  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
-  wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
-  coords = disc->getCoords();
-  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
-  const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
+  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+  const auto& coords = disc->getCoords();
+  const auto& wsEBNames = disc->getWsEBNames();
+  const auto& wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
 
@@ -2809,12 +2798,10 @@ applyGlobalDistParamDerivImplT(const double current_time,
   postRegSetup("Distributed Parameter Derivative");
 
   // Load connectivity map and coordinates
-  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
-  wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
-  coords = disc->getCoords();
-  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
-  const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
+  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+  const auto& coords = disc->getCoords();
+  const auto& wsEBNames = disc->getWsEBNames();
+  const auto& wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
 
@@ -4621,12 +4608,10 @@ evaluateStateFieldManagerT(
   Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
 
   // Load connectivity map and coordinates
-  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
-  wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
-  coords = disc->getCoords();
-  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
-  const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
+  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+  const auto& coords = disc->getCoords();
+  const auto& wsEBNames = disc->getWsEBNames();
+  const auto& wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
 
@@ -6049,17 +6034,10 @@ computeGlobalResidualSDBCsImplT(
   bool begin_time_step = false; 
 
   // Load connectivity map and coordinates
-  WorksetArray<Kokkos::View<LO***, PHX::Device>>::type const &
-  wsElNodeEqID = disc->getWsElNodeEqID();
-
-  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type const &
-  coords = disc->getCoords();
-
-  WorksetArray<std::string>::type const &
-  wsEBNames = disc->getWsEBNames();
-
-  WorksetArray<int>::type const &
-  wsPhysIndex = disc->getWsPhysIndex();
+  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+  const auto& coords = disc->getCoords();
+  const auto& wsEBNames = disc->getWsEBNames();
+  const auto& wsPhysIndex = disc->getWsPhysIndex();
 
   int const
   numWorksets = wsElNodeEqID.size();

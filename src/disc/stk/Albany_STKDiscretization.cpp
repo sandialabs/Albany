@@ -257,7 +257,7 @@ Albany::STKDiscretization::getOverlapNodeMapT() const
   return overlap_node_mapT;
 }
 
-const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
+const Albany::STKDiscretization::Conn&
 Albany::STKDiscretization::getWsElNodeEqID() const
 {
   return wsElNodeEqID;
@@ -1755,7 +1755,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
       const int buckSize = buck.size();
       stk::mesh::Entity element = buck[0];
       const int nodes_per_element = bulkData.num_nodes(element);
-      wsElNodeEqID[b] = Kokkos::View<LO***, PHX::Device>("wsElNodeEqID", buckSize, nodes_per_element, neq);
+      wsElNodeEqID[b] = WorksetConn("wsElNodeEqID", buckSize, nodes_per_element, neq);
     }
 
     {  //nodalDataToElemNode.
