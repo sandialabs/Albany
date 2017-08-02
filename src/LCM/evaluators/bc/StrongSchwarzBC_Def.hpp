@@ -766,7 +766,8 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         if (row == x_dof) {
           // Set entries other than the diagonal to zero
           for (size_t col = 0; col < num_cols; ++col) {
-            if (col != x_dof) entries[col] = 0.0;
+            auto col_index = indices[col];
+            if (col_index != x_dof) entries[col] = 0.0;
           }
           J->replaceLocalValues(x_dof, indices(), entries());
         } else {
@@ -793,7 +794,8 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         if (row == y_dof) {
           // Set entries other than the diagonal to zero
           for (size_t col = 0; col < num_cols; ++col) {
-            if (col != y_dof) entries[col] = 0.0;
+            auto col_index = indices[col];
+            if (col_index != y_dof) entries[col] = 0.0;
           }
           J->replaceLocalValues(y_dof, indices(), entries());
         } else {
@@ -820,7 +822,8 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         if (row == z_dof) {
           // Set entries other than the diagonal to zero
           for (size_t col = 0; col < num_cols; ++col) {
-            if (col != z_dof) entries[col] = 0.0;
+            auto col_index = indices[col];
+            if (col_index != z_dof) entries[col] = 0.0;
           }
           J->replaceLocalValues(z_dof, indices(), entries());
         } else {
