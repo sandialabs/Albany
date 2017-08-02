@@ -231,13 +231,13 @@ private:
   mutable std::vector<ST>
   step_stop_;
 
-  std::vector<std::reference_wrapper<Teuchos::ParameterList>>
+  mutable std::vector<std::reference_wrapper<Teuchos::ParameterList>>
   start_stop_params_;
 
-  std::vector<std::string>
+  mutable std::vector<std::string>
   start_str_;
 
-  std::vector<std::string>
+  mutable std::vector<std::string>
   stop_str_;
 };
 
