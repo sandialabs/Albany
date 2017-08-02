@@ -115,9 +115,11 @@ class AbstractDiscretization {
     //! Get Side set lists
     virtual const SideSetList& getSideSets(const int ws) const = 0;
 
+    using WorksetConn = Kokkos::View<LO***, Kokkos::LayoutRight, PHX::Device>;
+    using Conn = typename Albany::WorksetArray<WorksetConn>::type;
+
     //! Get map from (Ws, El, Local Node, Eq) -> unkLID
-    virtual const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
-      getWsElNodeEqID() const = 0;
+    virtual const Conn& getWsElNodeEqID() const = 0;
 
     //! Get map from (Ws, El, Local Node) -> unkGID
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&

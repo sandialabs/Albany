@@ -1281,17 +1281,12 @@ template <typename EvalT>
 void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
                                                 const int& ws)
 {
-  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
-        wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>::type&
-        wsElNodeID = disc->getWsElNodeID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
-        coords = disc->getCoords();
-  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
-  const WorksetArray<Teuchos::ArrayRCP<double>>::type&
-        sphereVolume = disc->getSphereVolume();
-  const WorksetArray<Teuchos::ArrayRCP<double*>>::type&
-        latticeOrientation = disc->getLatticeOrientation();
+  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+  const auto& wsElNodeID = disc->getWsElNodeID();
+  const auto& coords = disc->getCoords();
+  const auto& wsEBNames = disc->getWsEBNames();
+  const auto& sphereVolume = disc->getSphereVolume();
+  const auto& latticeOrientation = disc->getLatticeOrientation();
 
   workset.numCells = wsElNodeEqID[ws].dimension(0);
   workset.wsElNodeEqID = wsElNodeEqID[ws];

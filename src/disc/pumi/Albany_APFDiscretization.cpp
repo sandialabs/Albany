@@ -181,7 +181,7 @@ Albany::APFDiscretization::getOverlapNodeMapT() const
 return overlap_node_mapT;
 }
 
-const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type&
+const Albany::APFDiscretization::Conn&
 Albany::APFDiscretization::getWsElNodeEqID() const
 {
 return wsElNodeEqID;
@@ -1031,7 +1031,7 @@ void Albany::APFDiscretization::computeWorksetInfo()
       element = buck[0];
       const int nodes_per_element = apf::countElementNodes(
           shape,m->getType(element));
-      wsElNodeEqID[b] = Kokkos::View<LO***, PHX::Device>("wsElNodeEqID", buckSize, nodes_per_element, neq);
+      wsElNodeEqID[b] = WorksetConn("wsElNodeEqID", buckSize, nodes_per_element, neq);
     }
 
     // i is the element index within bucket b

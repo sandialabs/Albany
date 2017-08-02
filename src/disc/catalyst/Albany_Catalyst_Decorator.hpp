@@ -23,71 +23,70 @@ public:
   ~Decorator();
 
   //! Get DOF map
-  Teuchos::RCP<const Epetra_Map> getMap() const;
+  Teuchos::RCP<const Epetra_Map> getMap() const override;
 
   //! Get overlapped DOF map
-  Teuchos::RCP<const Epetra_Map> getOverlapMap() const;
+  Teuchos::RCP<const Epetra_Map> getOverlapMap() const override;
 
   //! Get Jacobian graph
-  Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const;
+  Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const override;
 
   //! Get overlap Jacobian graph
-  Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const;
+  Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const override;
 
   //! Get Node map
-  Teuchos::RCP<const Epetra_Map> getNodeMap() const;
+  Teuchos::RCP<const Epetra_Map> getNodeMap() const override;
 
   //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
-  const NodeSetList& getNodeSets() const;
-  const NodeSetCoordList& getNodeSetCoords() const;
+  const NodeSetList& getNodeSets() const override;
+  const NodeSetCoordList& getNodeSetCoords() const override;
 
   //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
-  const SideSetList& getSideSets(const int workset) const;
+  const SideSetList& getSideSets(const int workset) const override;
 
   //! Get map from (Ws, El, Local Node) -> NodeLID
-  const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type& getWsElNodeEqID() const;
+  using AbstractDiscretization::Conn;
+  const Conn& getWsElNodeEqID() const override;
 
   //! Retrieve coodinate vector (num_used_nodes * 3)
-  Teuchos::ArrayRCP<double>& getCoordinates() const;
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const;
+  const Teuchos::ArrayRCP<double>& getCoordinates() const override;
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const override;
 
   //! Print the coordinates for debugging
-  void printCoords() const;
+  void printCoords() const override;
 
-  Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const;
+  Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const override;
 
-  Albany::StateArrays& getStateArrays();
+  Albany::StateArrays& getStateArrays() override;
 
   //! Retrieve Vector (length num worksets) of element block names
-  const WorksetArray<std::string>::type&  getWsEBNames() const;
+  const WorksetArray<std::string>::type&  getWsEBNames() const override;
 
   //! Retrieve Vector (length num worksets) of physics set index
-  const WorksetArray<int>::type&  getWsPhysIndex() const;
+  const WorksetArray<int>::type&  getWsPhysIndex() const override;
 
   //! Get connectivity map from elementGID to workset
-  WsLIDList& getElemGIDws();
+  WsLIDList& getElemGIDws() override;
 
-  void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
+  void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false) override;
 
   vtkUnstructuredGridBase* newVtkUnstructuredGrid();
 
-  Teuchos::RCP<Epetra_Vector> getSolutionField() const;
-
-  void setResidualField(const Epetra_Vector& residual);
+  Teuchos::RCP<Epetra_Vector> getSolutionField(bool overlapped=false) const override;
 
   //! Flag if solution has a restart values -- used in Init Cond
-  bool hasRestartSolution() const;
+  bool hasRestartSolution() const override;
 
-  virtual bool supportsMOR() const;
+  virtual bool supportsMOR() const override;
 
   //! If restarting, convenience function to return restart data time
-  double restartDataTime() const;
+  double restartDataTime() const override;
 
   //! Get number of spatial dimensions
-  int getNumDim() const;
+  int getNumDim() const override;
 
   //! Get number of total DOFs per node
-  int getNumEq() const;
+  int getNumEq() const override;
 
 private:
   //! Private to prohibit copying

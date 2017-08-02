@@ -913,8 +913,7 @@ ConnectivityArray::ConnectivityArray(
   dimension_ = mesh_specs[0]->numDim;
 
   // Dimensioned: Workset, Cell, Local Node
-  Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type const &
-  element_connectivity = discretization_ptr_->getWsElNodeEqID();
+  const auto& element_connectivity = discretization_ptr_->getWsElNodeEqID();
 
   Teuchos::ArrayRCP<double>
   coordinates = discretization_ptr_->getCoordinates();

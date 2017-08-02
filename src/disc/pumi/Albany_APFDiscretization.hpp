@@ -92,7 +92,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     const Albany::WsLIDList& getElemGIDws() const { return elemGIDws; };
 
     //! Get map from (Ws, El, Local Node, Eqn) -> dof LID
-    const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type& getWsElNodeEqID() const;
+    using Albany::AbstractDiscretization::WorksetConn;
+    using Albany::AbstractDiscretization::Conn;
+    const Conn& getWsElNodeEqID() const override;
 
     //! Get map from (Ws, El, Local Node) -> NodeGID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& getWsElNodeID() const;
@@ -468,7 +470,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     std::map<std::string,std::map<GO,std::vector<int> > >               sideNodeNumerationMap;
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
-    Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type wsElNodeEqID;
+    Conn wsElNodeEqID;
 
     //! Connectivity array [workset, element, local-node] => GID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;

@@ -54,7 +54,6 @@ SchwarzAlternating(
     app_name_index = std::make_pair(app_name, subdomain);
 
     app_name_index_map->insert(app_name_index);
-
   }
 
   // Arrays to cache useful info for each subdomain for later use
@@ -74,7 +73,6 @@ SchwarzAlternating(
 
   // Initialization
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
-
     // Get parameters for each subdomain
     Albany::SolverFactory
     solver_factory(model_filenames[subdomain], comm);
@@ -693,21 +691,9 @@ SchwarzLoop() const
 
         auto &
         me = dynamic_cast<Albany::ModelEvaluatorT &>
-             (*model_evaluators_[subdomain]);
+        (*model_evaluators_[subdomain]);
 
         me.getNominalValues().set_t(current_time);
-
-        Teuchos::ParameterList &
-        start_stop_params = start_stop_params_[subdomain];
-
-        std::string const &
-        start_str = start_str_[subdomain];
-
-        std::string const &
-        stop_str = stop_str_[subdomain];
-
-        start_stop_params.set(start_str, current_time);
-        start_stop_params.set(stop_str, next_time);
 
         // Use previous solution as initial condition for next step
         if (stop > 0) {

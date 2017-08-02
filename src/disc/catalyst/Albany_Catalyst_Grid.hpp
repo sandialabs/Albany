@@ -55,10 +55,9 @@ private:
 
   int DegreesOfFreedom;
 
-  // Nested ArrayRCPs -- lookup [wsId][wsElLid][elNodeInd][] / DOF = node id
-  typedef Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<
-            Teuchos::ArrayRCP<int> > > > WsElLid2NodeT;
-  WsElLid2NodeT NodeLookup;
+  // lookup [wsId][wsElLid][elNodeInd][0] / neq = global node id
+  using Conn = Albany::AbstractDiscretization::Conn;
+  Conn NodeLookup;
 
   // Map of all elements, global element id -> struct { int ws, int lid }
   const WsLIDList *ElementsWsLid;

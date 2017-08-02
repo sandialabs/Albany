@@ -1,4 +1,8 @@
-find_package(ParaView REQUIRED COMPONENTS vtkPVPythonCatalyst)
+set(ALBANY_CATALYST_DIR "" CACHE PATH "Path to Catalyst build directory")
+find_package(ParaView REQUIRED COMPONENTS vtkPVPythonCatalyst
+    PATHS "${ALBANY_CATALYST_DIR}"
+    NO_DEFAULT_PATH)
+
 include("${PARAVIEW_USE_FILE}")
 
 set(SOURCES

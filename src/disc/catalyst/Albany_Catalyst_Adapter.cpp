@@ -33,7 +33,7 @@ class Adapter::Private
 {
 public:
   // Used by Catalyst to create a dummy grid object:
-  static vtkObjectBase* MakeGrid() { return Grid::New(); }
+  static vtkObjectBase* MakeGrid(void*) { return Grid::New(); }
   Private() { processor->Initialize(); }
   ~Private() { processor->Finalize(); }
   vtkNew<vtkCPProcessor> processor;

@@ -106,17 +106,15 @@ void GridImplementation::GetCellPoints(vtkIdType cellId, vtkIdList *ptIds)
   int ws = -1;
   int lid = -1;
   this->GetWorksetFromCellId(cellId, ws, lid);
-  typedef Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > NodesType;
-  const NodesType &nodes = this->NodeLookup[ws][lid];
-  vtkIdType cellSize = static_cast<vtkIdType>(nodes.size());
+  auto wsLookup = this->NodeLookup[ws];
+  vtkIdType cellSize = static_cast<vtkIdType>(wsLookup.dimension_1());
   ptIds->SetNumberOfIds(cellSize);
 
-  NodesType::const_iterator nodesIter = nodes.begin();
-  vtkIdType *ptIdIter = ptIds->GetPointer(0);
+  vtkIdType* ptIdsPtr = ptIds->GetPointer(0);
+  auto neq = this->DegreesOfFreedom;
 
-  while ((cellSize--) > 0) {
-    *(ptIdIter++) =
-        static_cast<vtkIdType>(*(nodesIter++)[0] / this->DegreesOfFreedom);
+  for (int node = 0; node < cellSize; ++node) {
+    ptIdsPtr[node] = wsLookup(lid, node, 0) / neq;
   }
 
   // For wedge, swap points 0 <--> 1 and 3 <--> 4. All other supported cells
@@ -162,11 +160,10 @@ void GridImplementation::GetPointCells(vtkIdType ptId, vtkIdList *cellIds)
 
   // Search for matching pt ids by iterating through all cells.
   for (ws = 0; ws < this->NodeLookup.size(); ++ws) {
-    const LidLevel &lids(this->NodeLookup[ws]);
-    for (lid = 0; lid < lids.size(); ++lid) {
-      const NodeLevel &nodes(lids[lid]);
-      for (int node = 0; node < nodes.size(); ++node) {
-        if (static_cast<vtkIdType>(nodes[node][0] / this->DegreesOfFreedom)
+    auto& wsLookup = this->NodeLookup[ws];
+    for (lid = 0; lid < wsLookup.dimension_0(); ++lid) {
+      for (int node = 0; node < wsLookup.dimension_1(); ++node) {
+        if (static_cast<vtkIdType>(wsLookup(lid, node, 0) / this->DegreesOfFreedom)
             == ptId) {
           result = std::find_if(haystackBegin, haystackEnd, matcher);
           if (result != haystackEnd)

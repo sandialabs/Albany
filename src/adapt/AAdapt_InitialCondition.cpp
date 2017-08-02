@@ -45,7 +45,7 @@ getValidInitialConditionParameters(const Teuchos::ArrayRCP<std::string>& wsEBNam
 
 #if defined(ALBANY_EPETRA)
 void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
-                       const Teuchos::ArrayRCP<Kokkos::View<LO***, PHX::Device>>& wsElNodeEqID,
+                       const Albany::AbstractDiscretization::Conn& wsElNodeEqID,
                        const Teuchos::ArrayRCP<std::string>& wsEBNames,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
                        const int neq, const int numDim,
@@ -266,7 +266,7 @@ wsElNodeEqID[ws](el,ln,5) = DOF[1],eq[2] (z eqn)
 #endif
 
 void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
-                       const Teuchos::ArrayRCP<Kokkos::View<LO***, PHX::Device>>& wsElNodeEqID,
+                       const Albany::AbstractDiscretization::Conn& wsElNodeEqID,
                        const Teuchos::ArrayRCP<std::string>& wsEBNames,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
                        const int neq, const int numDim,

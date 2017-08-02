@@ -79,13 +79,13 @@ WsLIDList &Decorator::getElemGIDws()
   return discretization->getElemGIDws();
 }
 
-const WorksetArray<Kokkos::View<LO***, PHX::Device>>::type &
+const Decorator::Conn&
 Decorator::getWsElNodeEqID() const
 {
   return discretization->getWsElNodeEqID();
 }
 
-Teuchos::ArrayRCP<double> &Decorator::getCoordinates() const
+const Teuchos::ArrayRCP<double>& Decorator::getCoordinates() const
 {
   return discretization->getCoordinates();
 }
@@ -146,17 +146,9 @@ vtkUnstructuredGridBase *Decorator::newVtkUnstructuredGrid()
   return grid;
 }
 
-Teuchos::RCP<Epetra_Vector> Decorator::getSolutionField() const
+Teuchos::RCP<Epetra_Vector> Decorator::getSolutionField(bool overlapped) const
 {
-  return discretization->getSolutionField();
-}
-
-void Decorator::setResidualField(const Epetra_Vector &residual)
-{
-  Teuchos::RCP<const Tpetra_Vector> residualT =
-       Petra::EpetraVector_To_TpetraVectorConst(residual, discretization->getComm());
-    writeSolutionT(solnT, time, overlapped);
-  discretization->setResidualFieldT(residualT);
+  return discretization->getSolutionField(overlapped);
 }
 
 bool Decorator::hasRestartSolution() const
