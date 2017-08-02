@@ -55,6 +55,12 @@ void TeuchosArrayRCPDataArray<Scalar>::Initialize()
 }
 
 template <typename Scalar>
+void TeuchosArrayRCPDataArray<Scalar>::GetTypedTuple(
+    vtkIdType idx, ValueType *t) const {
+  *t = this->Data[idx];
+}
+
+template <typename Scalar>
 void TeuchosArrayRCPDataArray<Scalar>::GetTuples(vtkIdList *ptIds,
                                                  vtkAbstractArray *output)
 {
@@ -73,7 +79,7 @@ void TeuchosArrayRCPDataArray<Scalar>::GetTuples(vtkIdList *ptIds,
   if (vtkTypedDataArray<Scalar> *ta
       = vtkTypedDataArray<Scalar>::FastDownCast(da)) {
     while (begin != end) {
-      ta->InsertNextTupleValue(
+      ta->InsertNextTypedTuple(
             &this->Data[*(begin++) * this->NumberOfComponents]);
     }
   }
@@ -103,7 +109,7 @@ void TeuchosArrayRCPDataArray<Scalar>::GetTuples(vtkIdType p1, vtkIdType p2,
   if (vtkTypedDataArray<Scalar> *ta
       = vtkTypedDataArray<Scalar>::FastDownCast(da)) {
     while (p1 <= p2)
-      ta->InsertNextTupleValue(&this->Data[p1++ * this->NumberOfComponents]);
+      ta->InsertNextTypedTuple(&this->Data[p1++ * this->NumberOfComponents]);
   }
   else { // otherwise, use the double interface:
     double *tuple = new double[this->NumberOfComponents];
@@ -349,28 +355,6 @@ void TeuchosArrayRCPDataArray<Scalar>::RemoveLastTuple()
 }
 
 template <typename Scalar>
-void TeuchosArrayRCPDataArray<Scalar>::
-SetTupleValue(vtkIdType i, const ValueType *t)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Read-only container.");
-}
-
-template <typename Scalar>
-void TeuchosArrayRCPDataArray<Scalar>::
-InsertTupleValue(vtkIdType i, const ValueType *t)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Read-only container.");
-}
-
-template <typename Scalar>
-vtkIdType TeuchosArrayRCPDataArray<Scalar>::
-InsertNextTupleValue(const ValueType *t)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Read-only container.");
-  return -1;
-}
-
-template <typename Scalar>
 void TeuchosArrayRCPDataArray<Scalar>::SetValue(vtkIdType idx, ValueType value)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Read-only container.");
@@ -386,6 +370,21 @@ vtkIdType TeuchosArrayRCPDataArray<Scalar>::InsertNextValue(ValueType v)
 template <typename Scalar>
 void TeuchosArrayRCPDataArray<Scalar>::InsertValue(vtkIdType idx, ValueType v)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Read-only container.");
+}
+
+template <typename Scalar>
+void TeuchosArrayRCPDataArray<Scalar>::SetTypedTuple(vtkIdType i, const ValueType *t) {
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Read-only container.");
+}
+
+template <typename Scalar>
+void TeuchosArrayRCPDataArray<Scalar>::InsertTypedTuple(vtkIdType i, const ValueType *t) {
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Read-only container.");
+}
+
+template <typename Scalar>
+vtkIdType TeuchosArrayRCPDataArray<Scalar>::InsertNextTypedTuple(const ValueType *t) {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Read-only container.");
 }
 
