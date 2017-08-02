@@ -47,10 +47,16 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials1.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/materials1.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cube0.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0_sdbc.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/cube0_sdbc.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cube1.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1_sdbc.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/cube1_sdbc.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cubes.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cubes.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cubes_sdbc.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/cubes_sdbc.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT_dtk_8proc.py

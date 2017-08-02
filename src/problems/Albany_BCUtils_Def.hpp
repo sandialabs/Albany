@@ -725,16 +725,16 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
   /// Strong Schwarz BC specific
   ///
   for (auto i = 0; i < nodeSetIDs.size(); ++i) {
-    string ss = traits_type::constructStrongDBCName(nodeSetIDs[i], "Schwarz");
+    string ss = traits_type::constructStrongDBCName(nodeSetIDs[i], "StrongSchwarz");
 
     if (BCparams.isSublist(ss)) {
       // grab the sublist
       ParameterList& sub_list = BCparams.sublist(ss);
 
-      if (sub_list.get<string>("BC Function") == "Schwarz") {
+      if (sub_list.get<string>("BC Function") == "StrongSchwarz") {
         RCP<ParameterList> p = rcp(new ParameterList);
 
-        p->set<int>("Type", traits_type::typeSw);
+        p->set<int>("Type", traits_type::typeSsw);
 
         p->set<string>(
             "Coupled Application", sub_list.get<string>("Coupled Application"));
@@ -1437,7 +1437,7 @@ Albany::DirichletTraits::getValidBCParameters(
     std::string ww =
         Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "Schwarz");
     std::string sw =
-        Albany::DirichletTraits::constructStrongDBCName(nodeSetIDs[i], "Schwarz");
+        Albany::DirichletTraits::constructStrongDBCName(nodeSetIDs[i], "StrongSchwarz");
     std::string uu =
         Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "CoordFunc");
     std::string pd =
