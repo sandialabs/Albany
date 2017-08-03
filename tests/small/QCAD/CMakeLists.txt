@@ -10,9 +10,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/default_piro_params.xml
                ${CMAKE_CURRENT_BINARY_DIR}/default_piro_params.xml COPYONLY)
 
 add_subdirectory(Poisson)
+add_subdirectory(Schrodinger)
 
 if (ALBANY_EPETRA)
-add_subdirectory(Schrodinger)
 add_subdirectory(PoissonSchrodinger)
 
 IF (ALBANY_CI)
