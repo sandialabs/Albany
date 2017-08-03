@@ -10,6 +10,7 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/output)
 get_filename_component(subRoot ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 set(testRoot "QCAD_${subRoot}")
 
+IF (ALBANY_EPETRA)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_stk2D.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_stk2D.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pmoscap_1D.xml
@@ -38,6 +39,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pointcharge_3D.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_pointcharge_3D.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_cloudcharge_3D.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_cloudcharge_3D.xml COPYONLY)
+ENDIF()
 
 if (ALBANY_IFPACK2) 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_stk2DT.xml
