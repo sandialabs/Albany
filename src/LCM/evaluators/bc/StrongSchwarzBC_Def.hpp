@@ -707,6 +707,15 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::RCP<Tpetra_CrsMatrix>
   J = dirichlet_workset.JacT;
 
+  
+  Teuchos::RCP<const Tpetra_Map>
+  Map = J->getMap(); 
+
+  auto global_length = x->getGlobalLength(); 
+  std::vector<ST> marker(global_length);
+  for (int i=0; i<global_length; i++)
+    marker[i] = 0.0;
+ 
   std::vector<std::vector<int>> const &
   ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
@@ -749,6 +758,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     fixed_dofs = dirichlet_workset.fixed_dofs_;
 
     if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
+       
+      GO const global_x_dof = Map->getGlobalElement(x_dof);  
+      marker[global_x_dof] += 1.0;  
 
       for (size_t row = 0; row < num_rows; ++row) {
 
@@ -778,6 +790,10 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     }
 
     if (fixed_dofs.find(y_dof) == fixed_dofs.end()) {
+
+      GO const global_y_dof = Map->getGlobalElement(y_dof);  
+      marker[global_y_dof] += 1.0;  
+
       for (size_t row = 0; row < num_rows; ++row) {
 
         size_t
@@ -806,6 +822,10 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     }
 
     if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
+
+      GO const global_z_dof = Map->getGlobalElement(z_dof);  
+      marker[global_z_dof] += 1.0;  
+
       for (size_t row = 0; row < num_rows; ++row) {
 
         size_t
@@ -833,6 +853,39 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       }
     }
   }
+  std::vector<ST> global_marker(global_length);
+  for (int i=0; i<global_length; i++) 
+    global_marker[i] = 0.0; 
+
+  for (int i=0; i<global_length; i++)  
+    Teuchos::reduceAll(*(Map->getComm()), Teuchos::REDUCE_SUM, 1, &marker[i], &global_marker[i]);
+  
+  auto num_global_cols = J->getGlobalNumCols(); 
+  auto num_global_rows = J->getGlobalNumRows(); 
+  auto procNo = Map->getComm()->getRank();
+ 
+   //loop over global columns
+  for (auto gcol = 0; gcol < num_global_cols; ++gcol) {
+    //check if gcol dof is dirichlet dof 
+    ST is_dir_dof = global_marker[gcol];
+    //if gcol is dirichlet dof, zero out all (global) rows corresponding to global column gcol
+    if (is_dir_dof != 0.0) {
+#ifdef DEBUG
+      std::cout << "IKT proc, zeroeing out column = " << procNo << ", " << gcol << std::endl;
+#endif
+      //loop over global rows
+      for (auto grow = 0; grow < num_global_rows; ++grow) {
+        if (grow != gcol) {
+          Teuchos::Array<GO> gcol_array(1);
+          gcol_array[0] = gcol;
+          Teuchos::Array<ST> value(1);
+          value[0] = 0.0;
+          J->replaceGlobalValues(grow, gcol_array(), value());
+        }
+      }
+    }
+  }
+ 
 
   if (fill_residual == true) {
     fillResidual<
