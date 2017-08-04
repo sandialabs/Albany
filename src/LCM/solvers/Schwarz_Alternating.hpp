@@ -226,6 +226,9 @@ private:
   start_stop_params_;
 
   mutable std::vector<std::string>
+  init_str_;
+
+  mutable std::vector<std::string>
   start_str_;
 
   mutable std::vector<std::string>

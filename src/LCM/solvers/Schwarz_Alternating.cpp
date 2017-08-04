@@ -109,6 +109,7 @@ SchwarzAlternating(
       stepper_params = loca_params.sublist("Stepper");
 
       start_stop_params_.emplace_back(stepper_params);
+      init_str_.emplace_back("Initial Value");
       start_str_.emplace_back("Min Value");
       stop_str_.emplace_back("Max Value");
     }
@@ -129,6 +130,7 @@ SchwarzAlternating(
       step_params = integrator_params.sublist("Time Step Control");
 
       start_stop_params_.emplace_back(step_params);
+      init_str_.emplace_back("");
       start_str_.emplace_back("Initial Time");
       stop_str_.emplace_back("Final Time");
     }
@@ -644,7 +646,7 @@ SchwarzLoop() const
   current_time{initial_time_};
 
   // Continuation loop
-  while (stop <= maximum_steps_ && current_time <= final_time_) {
+  while (stop < maximum_steps_ && current_time < final_time_) {
 
     fos << delim << '\n';
     fos << "Time stop          :" << stop << '\n';
@@ -657,6 +659,15 @@ SchwarzLoop() const
 
     num_iter_ = 0;
 
+    // Disble output. Handle it after Schwarz iteration.
+    for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
+      Albany::AbstractSTKMeshStruct &
+      ams = *stk_mesh_structs_[subdomain];
+
+      ams.exoOutput = false;
+    }
+
     do {
 
       for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
@@ -666,15 +677,6 @@ SchwarzLoop() const
         fos << "Subdomain          :" << subdomain << '\n';
         fos << delim << '\n';
 
-        // Output handling
-        Albany::AbstractSTKMeshStruct &
-        ams = *stk_mesh_structs_[subdomain];
-
-        ams.exoOutputInterval = 1;
-
-        ams.exoOutput = output_interval_ > 0 ?
-            (num_iter_ + 1) % output_interval_ == 0 : false;
-
         // Solve for each subdomain
         Thyra::ResponseOnlyModelEvaluatorBase<ST> &
         solver = *(solvers_[subdomain]);
@@ -682,9 +684,23 @@ SchwarzLoop() const
         Piro::LOCASolver<ST> &
         piro_loca_solver = dynamic_cast<Piro::LOCASolver<ST> &>(solver);
 
-        piro_loca_solver.setMinValue(current_time);
-        piro_loca_solver.setMaxValue(next_time);
+        Teuchos::ParameterList &
+        start_stop_params = piro_loca_solver.getStepperParams();
 
+        std::string const &
+        init_str = init_str_[subdomain];
+
+        std::string const &
+        start_str = start_str_[subdomain];
+
+        std::string const &
+        stop_str = stop_str_[subdomain];
+
+        start_stop_params.set(init_str, current_time);
+        start_stop_params.set(start_str, current_time);
+        start_stop_params.set(stop_str, next_time);
+
+        fos << "Initial time       :" << piro_loca_solver.getStartValue() << '\n';
         fos << "Start time         :" << piro_loca_solver.getMinValue() << '\n';
         fos << "Stop time          :" << piro_loca_solver.getMaxValue() << '\n';
         fos << delim << '\n';
@@ -701,31 +717,50 @@ SchwarzLoop() const
 
         me.getNominalValues().set_t(current_time);
 
+        NOX::Solver::Generic &
+        nox_solver = *piro_loca_solver.getSolver();
+
+        Teuchos::RCP<NOX::Abstract::Vector>
+        prev_soln_rcp = stop == 0 ?
+            nox_solver.getPreviousSolutionGroup().getX().clone(NOX::DeepCopy) :
+            solutions_[subdomain];
+
+        NOX::Abstract::Vector &
+        prev_soln = *prev_soln_rcp;
+
         // Use previous solution as initial condition for next step
         if (stop > 0) {
-          Teuchos::RCP<NOX::Thyra::Vector>
-          ntv = Teuchos::rcp_dynamic_cast<NOX::Thyra::Vector>
-                (solutions_[subdomain]);
+          NOX::Abstract::Group &
+          nox_group =
+              const_cast<NOX::Abstract::Group &>(nox_solver.getSolutionGroup());
 
-          Teuchos::RCP<Thyra::VectorBase<ST>>
-          x = ntv->getThyraRCPVector();
-
-          me.getNominalValues().set_x(x);
+          nox_group.setX(prev_soln);
         }
 
         solver.evalModel(in_args, out_args);
 
-        // After solve, save solution and get info to check convergence
         Teuchos::RCP<SolutionSniffer>
         solution_sniffer = solution_sniffers_[subdomain];
 
         Teuchos::RCP<NOX::Abstract::Vector>
-        last_soln = solution_sniffer->getLastSoln()->clone(NOX::DeepCopy);
+        curr_soln_rcp = solution_sniffer->getLastSoln();
 
-        solutions_[subdomain] = last_soln;
-        norms_init(subdomain) = solution_sniffer->getInitialNorm();
-        norms_final(subdomain) = solution_sniffer->getFinalNorm();
-        norms_diff(subdomain) = solution_sniffer->getDifferenceNorm();
+        NOX::Abstract::Vector &
+        curr_soln = *curr_soln_rcp;
+
+        Teuchos::RCP<NOX::Abstract::Vector>
+        soln_diff_rcp = curr_soln.clone(NOX::DeepCopy);
+
+        NOX::Abstract::Vector &
+        soln_diff = *(soln_diff_rcp);
+
+        soln_diff.update(1.0, curr_soln, -1.0, prev_soln, 0.0);
+
+        // After solve, save solution and get info to check convergence
+        solutions_[subdomain] = curr_soln_rcp;
+        norms_init(subdomain) = prev_soln.norm();
+        norms_final(subdomain) = curr_soln.norm();
+        norms_diff(subdomain) = soln_diff.norm();
       }
 
       norm_init_ = minitensor::norm(norms_init);
@@ -783,6 +818,26 @@ SchwarzLoop() const
     }  while (continueSolve() == true);
 
     reportFinals(fos);
+
+    // Print converged solution if at specified interval
+    for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
+      Albany::AbstractSTKMeshStruct &
+      ams = *stk_mesh_structs_[subdomain];
+
+      ams.exoOutputInterval = 1;
+
+      ams.exoOutput = output_interval_ > 0 ?
+          (stop + 1) % output_interval_ == 0 : false;
+
+      Thyra::ResponseOnlyModelEvaluatorBase<ST> &
+      solver = *(solvers_[subdomain]);
+
+      Piro::LOCASolver<ST> &
+      piro_loca_solver = dynamic_cast<Piro::LOCASolver<ST> &>(solver);
+
+      piro_loca_solver.printSolution();
+    }
 
     ++stop;
     current_time += time_step;
