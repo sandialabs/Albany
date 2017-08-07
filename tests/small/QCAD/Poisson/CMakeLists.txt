@@ -10,6 +10,7 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/output)
 get_filename_component(subRoot ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 set(testRoot "QCAD_${subRoot}")
 
+IF (ALBANY_EPETRA)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_stk2D.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_stk2D.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pmoscap_1D.xml
@@ -38,8 +39,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pointcharge_3D.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_pointcharge_3D.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_cloudcharge_3D.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_cloudcharge_3D.xml COPYONLY)
+ENDIF()
 
 if (ALBANY_IFPACK2) 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_gaascap_onescT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_gaascap_onescT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pmoscap_3D_itrapT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_pmoscap_3D_itrapT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_stk2DT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_stk2DT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pmoscapT.xml
@@ -83,6 +89,8 @@ ENDIF()
 ## TODO add_test(${testRoot}_cloudcharge ${Albany.exe} input_cloudcharge_3D.xml)
 
 if (ALBANY_IFPACK2) 
+add_test(${testRoot}_gaascap_onesc_Tpetra ${AlbanyT.exe} input_gaascap_onescT.xml)
+add_test(${testRoot}_pmoscap_3D_Tpetra ${AlbanyT.exe} input_pmoscap_3D_itrapT.xml)
 add_test(${testRoot}_mosdot_3D_Tpetra ${AlbanyT.exe} input_mosdot_3DT.xml)
 add_test(${testRoot}_pmoscap_Tpetra ${AlbanyT.exe} input_pmoscapT.xml)
 add_test(${testRoot}_pmoscap_polygate_Tpetra ${AlbanyT.exe} input_pmoscap_polygateT.xml)

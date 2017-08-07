@@ -50,6 +50,7 @@ IF(ALBANY_HAVE_STK)
     add_subdirectory(ThermoMechanicalContact)
     add_subdirectory(TimeDependentSDBC)
     add_subdirectory(TorsionBC)
+    add_subdirectory(DynamicsTempus)
     # JTO 8/1/2015
     # deactivating HeliumDamage until model robustness issues are resolved  
     # add_subdirectory(HeliumDamage)
