@@ -43,8 +43,8 @@ public:
   Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const override;
 
 #ifdef ALBANY_AERAS 
-    //! Get implicit Tpetra Jacobian graph (for Aeras hyperviscosity)
-    virtual Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const = 0;
+  //! Get implicit Tpetra Jacobian graph (for Aeras hyperviscosity)
+  Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const override;
 #endif
 
   //! Get overlap Jacobian graph
@@ -173,7 +173,7 @@ public:
   //! Flag if solution has a restart values -- used in Init Cond
   bool hasRestartSolution() const override;
 
-  virtual bool supportsMOR() const override;
+  bool supportsMOR() const override;
 
   //! If restarting, convenience function to return restart data time
   double restartDataTime() const override;
@@ -188,7 +188,7 @@ public:
   void setFieldT(const Tpetra_Vector &field_vector, const std::string& field_name, bool overlapped) override;
 
   //! Set the residual field for output - Tpetra version
-  virtual void setResidualFieldT(const Tpetra_Vector& residual) override;
+  void setResidualFieldT(const Tpetra_Vector& residual) override;
 
 #if defined(ALBANY_EPETRA)
   void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false) override;
