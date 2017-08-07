@@ -452,7 +452,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   // Place it at the appropriate offset into F
@@ -487,7 +487,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
@@ -559,7 +559,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
   Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
@@ -636,7 +636,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   else {
-    Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+    auto nodeID = workset.wsElNodeEqID;
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
         workset.local_Vp[cell];
@@ -681,7 +681,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
 
   int nblock = f->size();
@@ -721,7 +721,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > Jac =
     workset.sg_Jac;
@@ -806,7 +806,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > JV = workset.sg_JV;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > fp = workset.sg_fp;
@@ -869,7 +869,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
 
   int nblock = f->size();
@@ -906,7 +906,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > Jac =
     workset.mp_Jac;
@@ -981,7 +981,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(this->responseOnly) return; //short-circuit for "response only" mode
 
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > JV = workset.mp_JV;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > fp = workset.mp_fp;

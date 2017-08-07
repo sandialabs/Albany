@@ -112,7 +112,7 @@ evaluateFields(typename Traits::EvalData workset)
     workset.distParamLib->get(this->param_name)->overlapped_vector();
   Teuchos::ArrayRCP<const ST> pvecT_constView = pvecT->get1dView();
 
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
 
   // Are we differentiating w.r.t. this parameter?
@@ -242,7 +242,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numLayers = layeredMeshNumbering.numLayers;
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
 
   // If active, intialize data needed for differentiation
   if (is_active) {

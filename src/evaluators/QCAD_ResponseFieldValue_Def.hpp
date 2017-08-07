@@ -48,7 +48,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   overlapped_dgT->putScalar(0.0);
 
   // Extract derivatives for the cell corresponding to nodeID
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   if (max_cell != -1) {
 
     // Loop over responses
@@ -115,7 +115,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   overlapped_dg->PutScalar(0.0);
 
   // Extract derivatives for the cell corresponding to nodeID
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   if (max_cell != -1) {
 
     // Loop over responses
@@ -191,7 +191,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   overlapped_dg_sg->init(0.0);
 
   // Extract derivatives for the cell corresponding to nodeID
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   if (max_cell != -1) {
 
     // Loop over responses
@@ -270,7 +270,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   overlapped_dg_mp->init(0.0);
 
   // Extract derivatives for the cell corresponding to nodeID
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   if (max_cell != -1) {
 
     // Loop over responses

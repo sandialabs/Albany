@@ -88,7 +88,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(workset.eigenDataPtr != Teuchos::null) {
      if((workset.eigenDataPtr->eigenvectorRe != Teuchos::null)) {
-        Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+        auto nodeID = workset.wsElNodeEqID;
         std::vector<int> dims;
         eigenvector_Re[0].dimensions(dims);
         if((workset.eigenDataPtr->eigenvectorIm != Teuchos::null))  {
@@ -201,7 +201,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(workset.eigenDataPtr != Teuchos::null) {
      if(workset.eigenDataPtr->eigenvectorRe != Teuchos::null) {
-        Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+        auto nodeID = workset.wsElNodeEqID;
         std::vector<int> dims;
         (this->eigenvector_Re[0]).dimensions(dims);
         if(workset.eigenDataPtr->eigenvectorIm != Teuchos::null) {

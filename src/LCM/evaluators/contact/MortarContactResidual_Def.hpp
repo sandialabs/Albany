@@ -195,7 +195,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 #if 0  // Here is the assemble code, more or less
 
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
 
   //get nonconst (read and write) view of fT
@@ -255,7 +255,7 @@ void MortarContactResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
@@ -342,7 +342,7 @@ void MortarContactResidual<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
   Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
@@ -447,7 +447,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   else {
 
-    Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+    auto nodeID = workset.wsElNodeEqID;
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double>>& local_Vp =
         workset.local_Vp[cell];
@@ -504,7 +504,7 @@ void MortarContactResidual<PHAL::AlbanyTraits::SGResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   ScalarT *valptr;
 
@@ -558,7 +558,7 @@ void MortarContactResidual<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix>> Jac =
     workset.sg_Jac;
@@ -652,7 +652,7 @@ void MortarContactResidual<PHAL::AlbanyTraits::SGTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > JV = workset.sg_JV;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > fp = workset.sg_fp;
@@ -733,7 +733,7 @@ void MortarContactResidual<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   ScalarT *valptr;
 
@@ -786,7 +786,7 @@ void MortarContactResidual<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix>> Jac =
     workset.mp_Jac;
@@ -875,7 +875,7 @@ void MortarContactResidual<PHAL::AlbanyTraits::MPTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > JV = workset.mp_JV;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > fp = workset.mp_fp;

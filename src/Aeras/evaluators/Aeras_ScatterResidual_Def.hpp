@@ -128,7 +128,7 @@ void ScatterResidual<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
 
   //get non-const view of fT 
@@ -372,7 +372,7 @@ void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector>      fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
@@ -573,7 +573,7 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector>       fT = workset.fT;
   Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
   Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
@@ -666,7 +666,7 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Stokhos::ProductEpetraVector> f = workset.mp_f;
   //get non-const view of fT 
 //  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
@@ -729,7 +729,7 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Stokhos::ProductEpetraVector>      f = workset.mp_f;
   Teuchos::RCP<Stokhos::ProductContainer<Epetra_CrsMatrix> > Jac = workset.mp_Jac;
 

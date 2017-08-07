@@ -297,7 +297,7 @@ void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
   Teuchos::RCP<const Tpetra_Vector> xdotdotT = workset.xdotdotT;
@@ -611,7 +611,7 @@ void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
   Teuchos::RCP<const Tpetra_Vector> xdotdotT = workset.xdotdotT;
@@ -795,7 +795,7 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
   Teuchos::RCP<const Tpetra_Vector> xdotdotT = workset.xdotdotT;
@@ -899,7 +899,7 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
   Teuchos::RCP<const Tpetra_Vector> xdotdotT = workset.xdotdotT;
@@ -1009,7 +1009,7 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::SGResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,RealType> > sg_expansion =
     workset.sg_expansion;
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > x =
@@ -1095,7 +1095,7 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,RealType> > sg_expansion =
     workset.sg_expansion;
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > x =
@@ -1188,7 +1188,7 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::SGTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,RealType> > sg_expansion =
     workset.sg_expansion;
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > x =
@@ -1298,7 +1298,7 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > x =
     workset.mp_x;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > xdot =
@@ -1381,7 +1381,7 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > x =
     workset.mp_x;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > xdot =
@@ -1470,7 +1470,7 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::MPTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > x =
     workset.mp_x;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > xdot =

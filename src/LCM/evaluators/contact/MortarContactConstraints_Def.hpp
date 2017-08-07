@@ -70,7 +70,7 @@ std::cout << "Calling ContactConstraints evaluateFields in " << __FILE__ << " li
 
 /*
       Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>> wsElNodeID = workset.wsElNodeID;
-      Kokkos::View<LO***, PHX::Device> wsElNodeEqID = workset.wsElNodeEqID;
+      auto wsElNodeEqID = workset.wsElNodeEqID;
       for (std::size_t node=0; node < num_nodes; ++node) {
         ret = inserted_nodes.insert(wsElNodeID[elem_LID][node]);
         if (ret.second==true) { // this is a as yet unregistered node. add it
@@ -131,7 +131,7 @@ std::cout << "Calling ContactConstraints evaluateFields in " << __FILE__ << " li
 
 #if 0  // Here is the assemble code, more or less
 
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
 
   //get nonconst (read and write) view of fT

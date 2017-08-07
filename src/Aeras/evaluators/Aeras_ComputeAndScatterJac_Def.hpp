@@ -342,7 +342,7 @@ evaluateFields(typename Traits::EvalData workset)
 //Then the values of these matrices need to be scattered into the global Jacobian.
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector>      fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
