@@ -50,7 +50,7 @@ template<typename EvalT, typename Traits>
 void GatherAuxData<EvalT,Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
 #ifdef ALBANY_EPETRA
   if (workset.auxDataPtr != Teuchos::null) { //Epetra case: check if workset.auxDataPtr is null.
     const Epetra_Vector& v = *((*(workset.auxDataPtr))(auxDataIndex));

@@ -95,7 +95,7 @@ void SeparableScatterScalarResponse<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Here we scatter the *local* response derivative
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_MultiVector> dgdxT = workset.overlapped_dgdxT;
   Teuchos::RCP<Tpetra_MultiVector> dgdxdotT = workset.overlapped_dgdxdotT;
   Teuchos::RCP<Tpetra_MultiVector> dgT;
@@ -340,7 +340,7 @@ void SeparableScatterScalarResponse<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Here we scatter the *local* SG response derivative
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dgdx_sg =
     workset.overlapped_sg_dgdx;
   Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> dgdxdot_sg =
@@ -459,7 +459,7 @@ void SeparableScatterScalarResponse<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Here we scatter the *local* MP response derivative
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Stokhos::ProductEpetraMultiVector> dgdx_mp =
     workset.overlapped_mp_dgdx;
   Teuchos::RCP<Stokhos::ProductEpetraMultiVector> dgdxdot_mp =

@@ -65,7 +65,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if(nEigenvectors == 0) return;
 
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   if(workset.eigenDataPtr->eigenvectorRe != Teuchos::null) {
     if(workset.eigenDataPtr->eigenvectorIm != Teuchos::null) {
 

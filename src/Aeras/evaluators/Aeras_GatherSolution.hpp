@@ -114,7 +114,7 @@ public:
 private: 
   const int numFields;
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Kokkos::View<LO***, PHX::Device> nodeID;
+  Albany::AbstractDiscretization::WorksetConn nodeID;
   Kokkos::View<const ST*, PHX::Device> xT_constView, xdotT_constView;
 
   typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
@@ -167,7 +167,7 @@ private:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   bool ignore_residual;
   double j_coeff, m_coeff;
-  Kokkos::View<LO***, PHX::Device> nodeID;
+  Albany::AbstractDiscretization::WorksetConn nodeID;
   Kokkos::View<const ST*, PHX::Device> xT_constView, xdotT_constView;
 
   typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;

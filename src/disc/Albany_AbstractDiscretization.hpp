@@ -65,12 +65,12 @@ class AbstractDiscretization {
 #endif
     //! Get Tpetra Jacobian graph
     virtual Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const = 0;
-   
+
 #ifdef ALBANY_AERAS 
     //! Get implicit Tpetra Jacobian graph (for Aeras hyperviscosity)
     virtual Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const = 0;
 #endif
-    
+
     //! Get Epetra overlap Jacobian graph
 #if defined(ALBANY_EPETRA)
     virtual Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const = 0;
@@ -100,7 +100,7 @@ class AbstractDiscretization {
 
     //! Get overlapped Node map
     virtual Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const = 0;
-    
+
     //! Returns boolean telling code whether explicit scheme is used (needed for Aeras problems only) 
     virtual bool isExplicitScheme() const = 0;
 
@@ -160,13 +160,13 @@ class AbstractDiscretization {
     virtual void printCoords() const = 0;
 
     //! Get sideSet discretizations map
-    virtual const SideSetDiscretizationsType& getSideSetDiscretizations () const = 0;
+    virtual const SideSetDiscretizationsType& getSideSetDiscretizations() const = 0;
 
     //! Get the map side_id->side_set_elem_id
-    virtual const std::map<std::string,std::map<GO,GO>>& getSideToSideSetCellMap () const = 0;
+    virtual const std::map<std::string,std::map<GO,GO>>& getSideToSideSetCellMap() const = 0;
 
     //! Get the map side_node_id->side_set_cell_node_id
-    virtual const std::map<std::string,std::map<GO,std::vector<int> > >& getSideNodeNumerationMap () const = 0;
+    virtual const std::map<std::string,std::map<GO,std::vector<int> > >& getSideNodeNumerationMap() const = 0;
 
     //! Get MeshStruct
     virtual Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const = 0;
@@ -193,7 +193,7 @@ class AbstractDiscretization {
 #endif
     virtual Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(bool overlapped=false) const = 0;
 
-    virtual Teuchos::RCP<Tpetra_MultiVector> getSolutionMV(bool overlapped=false) const = 0;\
+    virtual Teuchos::RCP<Tpetra_MultiVector> getSolutionMV(bool overlapped=false) const = 0;
 
     virtual void getFieldT(Tpetra_Vector &field_vector, const std::string& field_name) const = 0;
 

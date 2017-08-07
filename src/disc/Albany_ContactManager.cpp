@@ -221,7 +221,7 @@ Albany::ContactManager::processSS(const std::vector<Albany::SideStruct>& sideSet
 
 #if 0  // Here is the assemble code, more or less
 
-  Kokkos::View<LO***, PHX::Device> nodeID = workset.wsElNodeEqID;
+  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
 
   //get nonconst (read and write) view of fT

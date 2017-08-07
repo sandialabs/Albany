@@ -98,7 +98,7 @@ public:
   RealType mc;
   int neq;
 
-  Kokkos::View<LO***, PHX::Device> nodeID;
+  Albany::AbstractDiscretization::WorksetConn nodeID;
 
   struct ComputeAndScatterJac_buildMass_Tag{};
 
