@@ -605,7 +605,7 @@ reportFinals(std::ostream & os) const
   os << "Absolute tolerance :" << abs_tol_ << '\n';
   os << "Last relative error:" << rel_error_ << '\n';
   os << "Relative tolerance :" << rel_tol_ << '\n';
-  os << '\n';
+  os << std::endl;
   return;
 }
 
@@ -631,7 +631,7 @@ SchwarzLoop() const
   Teuchos::FancyOStream &
   fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
 
-  fos << delim << '\n';
+  fos << delim << std::endl;
   fos << "Schwarz Alternating Method with " << num_subdomains_;
   fos << " subdomains\n";
   fos << std::scientific << std::setprecision(17);
@@ -648,11 +648,11 @@ SchwarzLoop() const
   // Continuation loop
   while (stop < maximum_steps_ && current_time < final_time_) {
 
-    fos << delim << '\n';
+    fos << delim << std::endl;
     fos << "Time stop          :" << stop << '\n';
     fos << "Time               :" << current_time << '\n';
     fos << "Time step          :" << time_step << '\n';
-    fos << delim << '\n';
+    fos << delim << std::endl;
 
     ST const
     next_time{current_time + time_step};
@@ -670,12 +670,15 @@ SchwarzLoop() const
 
     do {
 
+      bool const
+      is_initial_state = stop == 0 && num_iter_ == 0;
+
       for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
-        fos << delim << '\n';
+        fos << delim << std::endl;
         fos << "Schwarz iteration  :" << num_iter_ << '\n';
         fos << "Subdomain          :" << subdomain << '\n';
-        fos << delim << '\n';
+        fos << delim << std::endl;
 
         // Solve for each subdomain
         Thyra::ResponseOnlyModelEvaluatorBase<ST> &
@@ -696,6 +699,10 @@ SchwarzLoop() const
         std::string const &
         stop_str = stop_str_[subdomain];
 
+        piro_loca_solver.setStartValue(current_time);
+        piro_loca_solver.setMinValue(current_time);
+        piro_loca_solver.setMaxValue(next_time);
+
         start_stop_params.set(init_str, current_time);
         start_stop_params.set(start_str, current_time);
         start_stop_params.set(stop_str, next_time);
@@ -703,7 +710,7 @@ SchwarzLoop() const
         fos << "Initial time       :" << piro_loca_solver.getStartValue() << '\n';
         fos << "Start time         :" << piro_loca_solver.getMinValue() << '\n';
         fos << "Stop time          :" << piro_loca_solver.getMaxValue() << '\n';
-        fos << delim << '\n';
+        fos << delim << std::endl;
 
         Thyra::ModelEvaluatorBase::InArgs<ST>
         in_args = solver.createInArgs();
@@ -721,7 +728,7 @@ SchwarzLoop() const
         nox_solver = *piro_loca_solver.getSolver();
 
         Teuchos::RCP<NOX::Abstract::Vector>
-        prev_soln_rcp = stop == 0 ?
+        prev_soln_rcp = is_initial_state == true ?
             nox_solver.getPreviousSolutionGroup().getX().clone(NOX::DeepCopy) :
             solutions_[subdomain];
 
@@ -729,7 +736,7 @@ SchwarzLoop() const
         prev_soln = *prev_soln_rcp;
 
         // Use previous solution as initial condition for next step
-        if (stop > 0) {
+        if (is_initial_state == false) {
           NOX::Abstract::Group &
           nox_group =
               const_cast<NOX::Abstract::Group &>(nox_solver.getSolutionGroup());
@@ -769,51 +776,51 @@ SchwarzLoop() const
 
       updateConvergenceCriterion();
 
-      fos << delim << '\n';
+      fos << delim << std::endl;
       fos << "Schwarz iteration         :" << num_iter_ << '\n';
 
       std::string const
       line(72, '-');
 
-      fos << line << '\n';
+      fos << line << std::endl;
 
       fos << centered("Sub", 4);
       fos << centered("Initial norm", 24);
       fos << centered("Final norm", 24);
       fos << centered("Difference norm", 24);
-      fos << '\n';
+      fos << std::endl;
 
       fos << centered("dom", 4);
       fos << centered("||X0||", 24);
       fos << centered("||Xf||", 24);
       fos << centered("||Xf-X0||", 24);
-      fos << '\n';
+      fos << std::endl;
 
-      fos << line << '\n';
+      fos << line << std::endl;
 
       for (auto m = 0; m < num_subdomains_; ++m) {
         fos << std::setw(4) << m;
         fos << std::setw(24) << norms_init(m);
         fos << std::setw(24) << norms_final(m);
         fos << std::setw(24) << norms_diff(m);
-        fos << '\n';
+        fos << std::endl;
       }
 
-      fos << line << '\n';
+      fos << line << std::endl;
 
       fos << centered("Norm", 4);
       fos << std::setw(24) << norm_init_;
       fos << std::setw(24) << norm_final_;
       fos << std::setw(24) << norm_diff_;
-      fos << '\n';
+      fos << std::endl;
 
-      fos << line << '\n';
+      fos << line << std::endl;
 
       fos << "Absolute error     :" << abs_error_ << '\n';
       fos << "Absolute tolerance :" << abs_tol_ << '\n';
       fos << "Relative error     :" << rel_error_ << '\n';
       fos << "Relative tolerance :" << rel_tol_ << '\n';
-      fos << delim << '\n';
+      fos << delim << std::endl;
 
     }  while (continueSolve() == true);
 
