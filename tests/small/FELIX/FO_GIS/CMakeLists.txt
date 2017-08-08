@@ -19,6 +19,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_populate_meshes.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_populate_meshes.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstructT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstructT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupled.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled_shape_opt.xml
