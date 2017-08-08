@@ -782,9 +782,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
             if (col_index != x_dof) entries[col] = 0.0;
           }
           J->replaceLocalValues(x_dof, indices(), entries());
-        } else {
-          J->replaceLocalValues(row, index(), entry());
-        }
+        } 
 
       }
     }
@@ -814,9 +812,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
             if (col_index != y_dof) entries[col] = 0.0;
           }
           J->replaceLocalValues(y_dof, indices(), entries());
-        } else {
-          J->replaceLocalValues(row, index(), entry());
-        }
+        } 
 
       }
     }
@@ -846,9 +842,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
             if (col_index != z_dof) entries[col] = 0.0;
           }
           J->replaceLocalValues(z_dof, indices(), entries());
-        } else {
-          J->replaceLocalValues(row, index(), entry());
-        }
+        } 
 
       }
     }
