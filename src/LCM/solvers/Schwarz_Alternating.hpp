@@ -142,10 +142,6 @@ private:
   Teuchos::Array<Teuchos::RCP<Albany::AbstractSTKMeshStruct>>
   stk_mesh_structs_;
 
-  /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
-  Thyra::ModelEvaluatorBase::InArgs<ST>
-  nominal_values_;
-  
   char const *
   failure_message_{"No failure detected"};
 

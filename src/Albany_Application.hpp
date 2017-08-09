@@ -1047,15 +1047,39 @@ namespace Albany {
       return xdotdot_;
     }
 
+    void
+    setAlternatingSchwarz(bool isa = false)
+    {
+      is_alternating_schwarz_ = isa;
+    }
+
+    bool
+    getAlternatingSchwarz() const
+    {
+      return is_alternating_schwarz_;
+    }
+
+    void
+    setDBCTime(double t = 0.0)
+    {
+      dbc_time_ = t;
+    }
+
+    double
+    getDBCTime() const
+    {
+      return dbc_time_;
+    }
+
   private:
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
     apps_;
 
     int
-    app_index_;
+    app_index_{-1};
 
     Teuchos::RCP<std::map<std::string, int>>
-    app_name_index_map_;
+    app_name_index_map_{Teuchos::null};
 
     std::map<int, std::pair<std::string, std::string>>
     coupled_app_index_block_nodeset_names_map_;
@@ -1068,6 +1092,13 @@ namespace Albany {
 
     Teuchos::RCP<Tpetra_Vector const>
     xdotdot_{Teuchos::null};
+
+    bool
+    is_alternating_schwarz_{false};
+
+    double
+    dbc_time_{0.0};
+
 #endif //ALBANY_LCM
 
   protected:

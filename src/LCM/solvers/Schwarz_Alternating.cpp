@@ -185,6 +185,8 @@ SchwarzAlternating(
     Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
     solver = solver_factory.createAndGetAlbanyAppT(app, comm, comm);
 
+    app->setAlternatingSchwarz(true);
+
     solvers_[subdomain] = solver;
 
     apps_[subdomain] = app;
@@ -205,14 +207,6 @@ SchwarzAlternating(
 
     solutions_[subdomain] = Teuchos::null;
   }
-
-  //
-  // Setup nominal values
-  //
-  nominal_values_ = this->createInArgsImpl();
-  nominal_values_.set_x(Teuchos::null);
-  nominal_values_.set_x_dot(Teuchos::null);
-  nominal_values_.set_x_dot_dot(Teuchos::null);
 
   //
   // Parameters
@@ -313,7 +307,7 @@ Thyra::ModelEvaluatorBase::InArgs<ST>
 SchwarzAlternating::
 getNominalValues() const
 {
-  return nominal_values_;
+  return this->createInArgsImpl();
 }
 
 //
@@ -711,6 +705,12 @@ SchwarzLoop() const
         fos << "Start time         :" << piro_loca_solver.getMinValue() << '\n';
         fos << "Stop time          :" << piro_loca_solver.getMaxValue() << '\n';
         fos << delim << std::endl;
+
+        // For time dependent DBCs, set the time to be next time
+        auto &
+        app = *apps_[subdomain];
+
+        app.setDBCTime(next_time);
 
         Thyra::ModelEvaluatorBase::InArgs<ST>
         in_args = solver.createInArgs();
