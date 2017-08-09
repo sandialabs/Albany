@@ -239,7 +239,7 @@
 	          <ParameterList name="Solver Types">
 	            <ParameterList name="Block GMRES">
 	            <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
-	            <Parameter name="Output Frequency" type="int" value="1"/>
+	            <Parameter name="Output Frequency" type="int" value="20"/>
 	            <Parameter name="Output Style" type="int" value="1"/>
 	            <Parameter name="Verbosity" type="int" value="33"/>
 	            <Parameter name="Maximum Iterations" type="int" value="200"/>
@@ -252,13 +252,13 @@
 	      </ParameterList>
               <Parameter name="Preconditioner Type" type="string" value="None"/>
               <ParameterList name="Preconditioner Types">
-                <ParameterList name="Ifpack2">
+                <!--ParameterList name="Ifpack2">
                   <Parameter name="Overlap" type="int" value="0"/>
                   <Parameter name="Prec Type" type="string" value="ILUT"/>
                   <ParameterList name="Ifpack2 Settings">
                     <Parameter name="fact: ilut level-of-fill" type="double" value="1.0"/>
                   </ParameterList>
-                </ParameterList>
+                </ParameterList-->
               </ParameterList>
             </ParameterList>
           </ParameterList>  <!-- Stratimikos Linear Solver -->
