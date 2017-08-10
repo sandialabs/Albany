@@ -9,4 +9,3 @@ module load lcm-mixed
 module load lcm-tpls
 module load lcm-finalize
 
-conflict $env(MODULEPATH)
