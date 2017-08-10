@@ -139,7 +139,8 @@ function(lcm_do_trilinos)
        )
   endif()
   set(EXTRA_REPOS)
-  if (EXISTS "${PACKAGE_DIR}/DataTransferKit")
+  set(SOURCE_DIR "$ENV{LCM_DIR}/Trilinos")
+  if (EXISTS "${SOURCE_DIR}/DataTransferKit")
     set(EXTRA_REPOS ${EXTRA_REPOS} DataTransferKit)
     set(CONFIG_OPTS ${CONFIG_OPTS}
       "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=OFF"
