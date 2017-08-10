@@ -235,6 +235,9 @@
                   </ParameterList>
                 </ParameterList>
 	        <ParameterList name="Belos">
+                  <ParameterList name="VerboseObject">
+                   <Parameter name="Verbosity Level" type="string" value="high"/>
+                  </ParameterList>
 	          <Parameter name="Solver Type" type="string" value="Block GMRES"/>
 	          <ParameterList name="Solver Types">
 	            <ParameterList name="Block GMRES">
