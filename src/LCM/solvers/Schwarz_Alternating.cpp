@@ -10,6 +10,8 @@
 #include "Piro_LOCASolver.hpp"
 #include "Schwarz_Alternating.hpp"
 
+#define DEBUG
+
 namespace LCM {
 
 //
@@ -701,9 +703,15 @@ SchwarzLoop() const
         start_stop_params.set(start_str, current_time);
         start_stop_params.set(stop_str, next_time);
 
+        fos << "*** PIRO accessors/mutators ***\n";
         fos << "Initial time       :" << piro_loca_solver.getStartValue() << '\n';
         fos << "Start time         :" << piro_loca_solver.getMinValue() << '\n';
         fos << "Stop time          :" << piro_loca_solver.getMaxValue() << '\n';
+        fos << delim << std::endl;
+        fos << "*** ParameterList accessors/mutators ***\n";
+        fos << "Initial time       :" << start_stop_params.get<double>(init_str) << '\n';
+        fos << "Start time         :" << start_stop_params.get<double>(start_str) << '\n';
+        fos << "Stop time          :" << start_stop_params.get<double>(stop_str) << '\n';
         fos << delim << std::endl;
 
         // For time dependent DBCs, set the time to be next time
@@ -735,6 +743,12 @@ SchwarzLoop() const
         NOX::Abstract::Vector &
         prev_soln = *prev_soln_rcp;
 
+#if defined(DEBUG)
+        fos << "\n*** NOX: Previous solution ***\n";
+        prev_soln.print(fos);
+        fos << "\n*** NOX: Previous solution ***\n";
+#endif //DEBUG
+
         // Use previous solution as initial condition for next step
         if (is_initial_state == false) {
           NOX::Abstract::Group &
@@ -755,6 +769,12 @@ SchwarzLoop() const
         NOX::Abstract::Vector &
         curr_soln = *curr_soln_rcp;
 
+#if defined(DEBUG)
+        fos << "\n*** NOX: Current solution ***\n";
+        curr_soln.print(fos);
+        fos << "\n*** NOX: Current solution ***\n";
+#endif //DEBUG
+
         Teuchos::RCP<NOX::Abstract::Vector>
         soln_diff_rcp = curr_soln.clone(NOX::DeepCopy);
 
@@ -762,6 +782,12 @@ SchwarzLoop() const
         soln_diff = *(soln_diff_rcp);
 
         soln_diff.update(1.0, curr_soln, -1.0, prev_soln, 0.0);
+
+#if defined(DEBUG)
+        fos << "\n*** NOX: Solution difference ***\n";
+        curr_soln.print(fos);
+        fos << "\n*** NOX: Solution difference ***\n";
+#endif //DEBUG
 
         // After solve, save solution and get info to check convergence
         solutions_[subdomain] = curr_soln_rcp;
