@@ -2,7 +2,7 @@
 
 module-whatis "LCM CUDA config"
 
-if { [is-loaded lcm/fedora] } {
+if { [is-loaded lcm-fedora] } {
   prepend-path            LD_LIBRARY_PATH /usr/local/cuda/lib64
   prepend-path            PATH            /usr/local/cuda/bin
 }

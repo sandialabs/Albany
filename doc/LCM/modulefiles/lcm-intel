@@ -2,11 +2,11 @@
 
 module-whatis "LCM Intel compiler"
 
-if { [is-loaded lcm/sems] } {
+if { [is-loaded lcm-sems] } {
   module load sems-intel/17.0.1
 }
 
-if { [is-loaded lcm/cluster] } {
+if { [is-loaded lcm-cluster] } {
   module load sierra-compiler/intel/17.0.2
 }
 
