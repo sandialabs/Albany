@@ -3,10 +3,9 @@
 #  Environment for compiling and running Albany/LCM.
 #
 
-module load lcm/serial
-module load lcm/clang
-module load lcm/release
-module load lcm/tpls
-module load lcm/finalize
+module load lcm-serial
+module load lcm-clang
+module load lcm-release
+module load lcm-tpls
+module load lcm-finalize
 
-conflict $env(MODULEPATH)

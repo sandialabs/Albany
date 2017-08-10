@@ -9,4 +9,4 @@ if { ![ file exists /etc/fedora-release ] } {
   exit 1
 }
 
-conflict lcm/sems lcm/cluster
+conflict lcm-sems lcm-cluster

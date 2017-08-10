@@ -16,5 +16,5 @@ module load sierra-python/2.7.4
 module load sierra-git/2.6.1
 module load cmake/3.4.3
 
-conflict lcm/fedora lcm/sems
+conflict lcm-fedora lcm-sems
 
