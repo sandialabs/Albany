@@ -93,6 +93,9 @@ public:
 
   bool
   get_failed() const;
+  
+  Teuchos::RCP<Teuchos::FancyOStream>
+  fos_;
 
 private:
 
@@ -119,7 +122,10 @@ private:
 
   /// Schwarz Alternating loop
   void
-  SchwarzLoop() const;
+  SchwarzLoopLOCA() const;
+
+  void
+  SchwarzLoopTempus() const;
 
   void
   updateConvergenceCriterion() const;
