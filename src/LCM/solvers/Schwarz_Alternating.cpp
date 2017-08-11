@@ -8,6 +8,7 @@
 #include "Albany_STKDiscretization.hpp"
 #include "MiniTensor.h"
 #include "Piro_LOCASolver.hpp"
+#include "Piro_TempusSolver.hpp"
 #include "Schwarz_Alternating.hpp"
 
 #define DEBUG
@@ -640,7 +641,80 @@ void
 SchwarzAlternating::
 SchwarzLoopTempus() const
 {
-  ALBANY_ASSERT(have_tempus_ == false, "SchwarzLoopTempus() not fully implemented!");  
+  minitensor::Vector<ST>
+  norms_init(num_subdomains_, minitensor::Filler::ZEROS);
+
+  minitensor::Vector<ST>
+  norms_final(num_subdomains_, minitensor::Filler::ZEROS);
+
+  minitensor::Vector<ST>
+  norms_diff(num_subdomains_, minitensor::Filler::ZEROS);
+
+  std::string const
+  delim(72, '=');
+
+  *fos_ << delim << std::endl;
+  *fos_ << "Schwarz Alternating Method with " << num_subdomains_;
+  *fos_ << " subdomains\n";
+  *fos_ << std::scientific << std::setprecision(17);
+
+  ST
+  time_step{initial_time_step_};
+
+  int
+  stop{0};
+
+  ST
+  current_time{initial_time_};
+
+  // Continuation loop
+  while (stop < maximum_steps_ && current_time < final_time_) {
+
+    *fos_ << delim << std::endl;
+    *fos_ << "Time stop          :" << stop << '\n';
+    *fos_ << "Time               :" << current_time << '\n';
+    *fos_ << "Time step          :" << time_step << '\n';
+    *fos_ << delim << std::endl;
+
+    ST const
+    next_time{current_time + time_step};
+
+    num_iter_ = 0;
+
+    // Disble output. Handle it after Schwarz iteration.
+    for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
+      Albany::AbstractSTKMeshStruct &
+      ams = *stk_mesh_structs_[subdomain];
+
+      ams.exoOutput = false;
+    }
+
+    do {
+    
+      bool const
+      is_initial_state = stop == 0 && num_iter_ == 0;
+
+      for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
+        *fos_ << delim << std::endl;
+        *fos_ << "Schwarz iteration  :" << num_iter_ << '\n';
+        *fos_ << "Subdomain          :" << subdomain << '\n';
+        *fos_ << delim << std::endl;
+
+        // Solve for each subdomain
+        Thyra::ResponseOnlyModelEvaluatorBase<ST> &
+        solver = *(solvers_[subdomain]);
+
+        *fos_ << "IKT creating Piro::TempusSolver...\n"; 
+        Piro::TempusSolver<ST,LO,GO,KokkosNode> &
+        piro_tempus_solver = dynamic_cast<Piro::TempusSolver<ST,LO,GO,KokkosNode> &>(solver);
+        *fos_ << "done! \n"; 
+        ALBANY_ASSERT(have_tempus_ == false, "SchwarzLoopTempus() not fully implemented!");  
+      }
+    }  while (continueSolve() == true);
+  }
+
 }
 
 void
