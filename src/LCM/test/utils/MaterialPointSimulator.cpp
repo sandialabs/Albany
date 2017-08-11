@@ -666,7 +666,7 @@ int main(int ac, char* av[])
     fieldManager.postEvaluate<Residual>(workset);
     compute_time->stop();
 
-    stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(
+    stateFieldManager.getFieldData<Residual>(
         stressField);
 
     // Check the computed stresses
@@ -711,7 +711,7 @@ int main(int ac, char* av[])
     if (check_stability) {
 
       // get current minDet(A)
-      stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(minDetA);
+      stateFieldManager.getFieldData<Residual>(minDetA);
 
       if (istep == 0) {
         mu_0 = minDetA(0,0);
@@ -778,10 +778,10 @@ int main(int ac, char* av[])
           stateFieldManager.evaluateFields<Residual>(workset);
           stateFieldManager.postEvaluate<Residual>(workset);
 
-          stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(
+          stateFieldManager.getFieldData<Residual>(
             minDetA);
 
-          stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim>(
+          stateFieldManager.getFieldData<Residual>(
             direction);
 
           mu_k = minDetA(0,0);
