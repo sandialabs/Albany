@@ -18,7 +18,7 @@ ANONYMOUS:
   Problem:
     Name: Mechanics 3D
     Parameters:
-      Number: 1
+      Number: 0
       Parameter 0: Time
     Solution Method: Transient Tempus
     Phalanx Graph Visualization Detail: 0
@@ -62,7 +62,7 @@ ANONYMOUS:
           Output Time List: ''
           Output Index List: ''
       Tempus Stepper:
-        Stepper Type: 'Newmark Implicit a-Form'
+        Stepper Type: 'Newmark Implicit d-Form'
         Newmark Parameters:
           Beta: 0.25
           Gamma: 0.50
