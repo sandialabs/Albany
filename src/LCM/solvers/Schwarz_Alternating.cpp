@@ -746,15 +746,16 @@ SchwarzLoop() const
 #if defined(DEBUG)
         fos << "\n*** NOX: Previous solution ***\n";
         prev_soln.print(fos);
+        fos << "\n*** NORM: " << prev_soln.norm() << '\n';
         fos << "\n*** NOX: Previous solution ***\n";
 #endif //DEBUG
 
+        NOX::Abstract::Group &
+        nox_group =
+            const_cast<NOX::Abstract::Group &>(nox_solver.getSolutionGroup());
+
         // Use previous solution as initial condition for next step
         if (is_initial_state == false) {
-          NOX::Abstract::Group &
-          nox_group =
-              const_cast<NOX::Abstract::Group &>(nox_solver.getSolutionGroup());
-
           nox_group.setX(prev_soln);
         }
 
@@ -766,12 +767,13 @@ SchwarzLoop() const
         Teuchos::RCP<NOX::Abstract::Vector>
         curr_soln_rcp = solution_sniffer->getLastSoln();
 
-        NOX::Abstract::Vector &
+        NOX::Abstract::Vector const &
         curr_soln = *curr_soln_rcp;
 
 #if defined(DEBUG)
         fos << "\n*** NOX: Current solution ***\n";
         curr_soln.print(fos);
+        fos << "\n*** NORM: " << curr_soln.norm() << '\n';
         fos << "\n*** NOX: Current solution ***\n";
 #endif //DEBUG
 
@@ -785,7 +787,8 @@ SchwarzLoop() const
 
 #if defined(DEBUG)
         fos << "\n*** NOX: Solution difference ***\n";
-        curr_soln.print(fos);
+        soln_diff.print(fos);
+        fos << "\n*** NORM: " << soln_diff.norm() << '\n';
         fos << "\n*** NOX: Solution difference ***\n";
 #endif //DEBUG
 
