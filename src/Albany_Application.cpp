@@ -709,7 +709,7 @@ void Albany::Application::buildProblem()
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
         std::logic_error,
-        "Error in Albany::Application: you are using a solver that with SDBCs that does not work correctly with them!\n"); 
+        "Error in Albany::Application: you are using a solver with SDBCs that does not work correctly with them!\n"); 
   }
 
   neq = problem->numEquations();
