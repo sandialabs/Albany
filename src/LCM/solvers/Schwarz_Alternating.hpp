@@ -212,11 +212,9 @@ private:
   solutions_;
 
   // Used if solving with loca or tempus
-  mutable std::vector<bool>
-  have_loca_;
+  bool have_loca_;
 
-  mutable std::vector<bool>
-  have_tempus_;
+  bool have_tempus_;
 
   mutable std::vector<std::reference_wrapper<Teuchos::ParameterList>>
   start_stop_params_;

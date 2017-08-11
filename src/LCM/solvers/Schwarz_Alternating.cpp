@@ -68,8 +68,8 @@ SchwarzAlternating(
   sub_inargs_.resize(num_subdomains_);
   sub_outargs_.resize(num_subdomains_);
   solutions_.resize(num_subdomains_);
-  have_loca_.resize(num_subdomains_);
-  have_tempus_.resize(num_subdomains_);
+  have_loca_ = false;
+  have_tempus_ = false;
 
   // Initialization
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
@@ -98,12 +98,20 @@ SchwarzAlternating(
     Teuchos::ParameterList &
     piro_params = params.sublist("Piro");
 
-    bool const
-    have_loca = piro_params.isSublist("LOCA");
+    if (subdomain == 0) { 
+      have_loca_ = piro_params.isSublist("LOCA");
+    }
+    else {
+      bool const 
+      have_loca = piro_params.isSublist("LOCA"); 
+      if (have_loca != have_loca_) {
+        TEUCHOS_TEST_FOR_EXCEPTION(true,
+          std::logic_error, "Error in Schwarz::Alternating!  All problems "
+          << "must have same solution method (LOCA or Tempus)!");
+      } 
+    }
 
-    have_loca_[subdomain] = have_loca;
-
-    if (have_loca == true) {
+    if (have_loca_ == true) {
       Teuchos::ParameterList &
       loca_params = piro_params.sublist("LOCA");
 
@@ -116,12 +124,20 @@ SchwarzAlternating(
       stop_str_.emplace_back("Max Value");
     }
 
-    bool const
-    have_tempus = piro_params.isSublist("Tempus");
+    if (subdomain == 0) { 
+      have_tempus_ = piro_params.isSublist("Tempus");
+    }
+    else {
+      bool const 
+      have_tempus = piro_params.isSublist("Tempus"); 
+      if (have_tempus != have_tempus_) {
+        TEUCHOS_TEST_FOR_EXCEPTION(true,
+          std::logic_error, "Error in Schwarz::Alternating!  All problems "
+          << "must have same solution method (LOCA or Tempus)!");
+      } 
+    }
 
-    have_tempus_[subdomain] = have_tempus;
-
-    if (have_tempus == true) {
+    if (have_tempus_ == true) {
       Teuchos::ParameterList &
       tempus_params = piro_params.sublist("Tempus");
 
@@ -137,7 +153,7 @@ SchwarzAlternating(
       stop_str_.emplace_back("Final Time");
     }
 
-    ALBANY_ASSERT(have_loca == true || have_tempus == true);
+    ALBANY_ASSERT(have_loca_ == true || have_tempus_ == true);
 
     bool const
     have_nox = piro_params.isSublist("NOX");
