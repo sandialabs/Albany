@@ -710,6 +710,36 @@ SchwarzLoopTempus() const
         Piro::TempusSolver<ST,LO,GO,KokkosNode> &
         piro_tempus_solver = dynamic_cast<Piro::TempusSolver<ST,LO,GO,KokkosNode> &>(solver);
         *fos_ << "done! \n"; 
+
+        piro_tempus_solver.setStartTime(current_time); 
+        piro_tempus_solver.setFinalTime(next_time); 
+        //piro_tempus_solver.setInitTimeStep(time_step);
+
+        *fos_ << "*** PIRO accessors/mutators ***\n";
+        *fos_ << "Initial time       :" << piro_tempus_solver.getStartTime() << '\n';
+        *fos_ << "Final time         :" << piro_tempus_solver.getFinalTime() << '\n';
+        *fos_ << delim << std::endl;
+
+        // For time dependent DBCs, set the time to be next time
+        auto &
+        app = *apps_[subdomain];
+
+        app.setDBCTime(next_time);
+
+        Thyra::ModelEvaluatorBase::InArgs<ST>
+        in_args = solver.createInArgs();
+
+        Thyra::ModelEvaluatorBase::OutArgs<ST>
+        out_args = solver.createOutArgs();
+
+        auto &
+        me = dynamic_cast<Albany::ModelEvaluatorT &>
+        (*model_evaluators_[subdomain]);
+
+        me.getNominalValues().set_t(current_time);
+
+        //IKT, 8/11/17: the following is a temporary assert to prevent user from 
+        //running SchwarzLoopTempus before it is complete.
         ALBANY_ASSERT(have_tempus_ == false, "SchwarzLoopTempus() not fully implemented!");  
       }
     }  while (continueSolve() == true);
