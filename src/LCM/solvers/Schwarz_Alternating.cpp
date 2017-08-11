@@ -155,47 +155,53 @@ SchwarzAlternating(
 
     ALBANY_ASSERT(have_loca_ == true || have_tempus_ == true);
 
-    bool const
-    have_nox = piro_params.isSublist("NOX");
+    //IKT, 8/11/17: we are only requiring NOX / creating SolutionSniffer
+    //for LOCA, not Tempus.
+    if (have_loca_ == true) {
 
-    ALBANY_ASSERT(have_nox == true);
+      bool const
+      have_nox = piro_params.isSublist("NOX");
 
-    Teuchos::ParameterList &
-    nox_params = piro_params.sublist("NOX");
+      ALBANY_ASSERT(have_nox == true);
 
-    bool const
-    have_solver_opts = nox_params.isSublist("Solver Options");
+      Teuchos::ParameterList &
+      nox_params = piro_params.sublist("NOX");
 
-    ALBANY_ASSERT(have_solver_opts == true);
+      bool const
+      have_solver_opts = nox_params.isSublist("Solver Options");
 
-    Teuchos::ParameterList &
-    solver_opts = nox_params.sublist("Solver Options");
+      ALBANY_ASSERT(have_solver_opts == true);
 
-    std::string const
-    ppo_str{"User Defined Pre/Post Operator"};
+      Teuchos::ParameterList &
+      solver_opts = nox_params.sublist("Solver Options");
 
-    bool const
-    have_ppo = solver_opts.isParameter(ppo_str);
+      std::string const
+      ppo_str{"User Defined Pre/Post Operator"};
 
-    Teuchos::RCP<NOX::Abstract::PrePostOperator>
-    ppo{Teuchos::null};
+      bool const
+      have_ppo = solver_opts.isParameter(ppo_str);
 
-    if (have_ppo == true) {
-      ppo = solver_opts.get<decltype(ppo)>(ppo_str);
-    } else {
-      ppo = Teuchos::rcp(new SolutionSniffer);
-      solver_opts.set(ppo_str, ppo);
-      ALBANY_ASSERT(solver_opts.isParameter(ppo_str) == true);
+      Teuchos::RCP<NOX::Abstract::PrePostOperator>
+      ppo{Teuchos::null};
+
+      if (have_ppo == true) {
+        ppo = solver_opts.get<decltype(ppo)>(ppo_str);
+      } else {
+        ppo = Teuchos::rcp(new SolutionSniffer);
+        solver_opts.set(ppo_str, ppo);
+        ALBANY_ASSERT(solver_opts.isParameter(ppo_str) == true);
+      }
+
+      constexpr bool
+      throw_on_fail{true};
+
+      Teuchos::RCP<SolutionSniffer>
+      solution_sniffer = Teuchos::rcp_dynamic_cast<SolutionSniffer>
+      (ppo, throw_on_fail);
+
+      solution_sniffers_[subdomain] = solution_sniffer;
+
     }
-
-    constexpr bool
-    throw_on_fail{true};
-
-    Teuchos::RCP<SolutionSniffer>
-    solution_sniffer = Teuchos::rcp_dynamic_cast<SolutionSniffer>
-    (ppo, throw_on_fail);
-
-    solution_sniffers_[subdomain] = solution_sniffer;
 
     Teuchos::RCP<Albany::Application>
     app{Teuchos::null};
