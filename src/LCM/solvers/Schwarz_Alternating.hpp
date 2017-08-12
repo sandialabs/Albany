@@ -215,7 +215,10 @@ private:
   model_evaluators_;
 
   mutable std::vector<Teuchos::RCP<NOX::Abstract::Vector>>
-  solutions_;
+  solutions_nox_;
+
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
+  solutions_thyra_;
 
   // Used if solving with loca or tempus
   bool have_loca_;

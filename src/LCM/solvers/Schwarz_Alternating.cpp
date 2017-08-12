@@ -69,7 +69,8 @@ SchwarzAlternating(
   model_evaluators_.resize(num_subdomains_);
   sub_inargs_.resize(num_subdomains_);
   sub_outargs_.resize(num_subdomains_);
-  solutions_.resize(num_subdomains_);
+  solutions_nox_.resize(num_subdomains_);
+  solutions_thyra_.resize(num_subdomains_);
   have_loca_ = false;
   have_tempus_ = false;
 
@@ -231,7 +232,7 @@ SchwarzAlternating(
 
     model_evaluators_[subdomain] = solver_factory.returnModelT();
 
-    solutions_[subdomain] = Teuchos::null;
+    solutions_nox_[subdomain] = Teuchos::null;
   }
 
   //
@@ -738,6 +739,19 @@ SchwarzLoopTempus() const
 
         me.getNominalValues().set_t(current_time);
 
+        const Teuchos::RCP<Tempus::SolutionHistory<ST> > 
+        solution_history = piro_tempus_solver.getSolutionHistory();
+
+        Teuchos::RCP<Tempus::SolutionState<ST>> 
+        current_state = solution_history->getCurrentState();
+
+        // Get values of soln, soln_dot and soln_dotdot from previous step
+        // IKT, 8/11/17: soln_dot and soln_dotdot may not be needed
+        Teuchos::RCP<Thyra::VectorBase<ST>> soln_old = current_state->getX();
+        Teuchos::RCP<Thyra::VectorBase<ST>> soln_dot_old = current_state->getXDot();
+        Teuchos::RCP<Thyra::VectorBase<ST>> soln_dotdot_old = current_state->getXDotDot();
+
+        *fos_ << "Exiting!\n"; 
         //IKT, 8/11/17: the following is a temporary assert to prevent user from 
         //running SchwarzLoopTempus before it is complete.
         ALBANY_ASSERT(have_tempus_ == false, "SchwarzLoopTempus() not fully implemented!");  
@@ -874,7 +888,7 @@ SchwarzLoopLOCA() const
         Teuchos::RCP<NOX::Abstract::Vector>
         prev_soln_rcp = is_initial_state == true ?
             nox_solver.getPreviousSolutionGroup().getX().clone(NOX::DeepCopy) :
-            solutions_[subdomain];
+            solutions_nox_[subdomain];
 
         NOX::Abstract::Vector &
         prev_soln = *prev_soln_rcp;
@@ -929,7 +943,7 @@ SchwarzLoopLOCA() const
 #endif //DEBUG
 
         // After solve, save solution and get info to check convergence
-        solutions_[subdomain] = curr_soln_rcp;
+        solutions_nox_[subdomain] = curr_soln_rcp;
         norms_init(subdomain) = prev_soln.norm();
         norms_final(subdomain) = curr_soln.norm();
         norms_diff(subdomain) = soln_diff.norm();
