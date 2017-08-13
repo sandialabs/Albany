@@ -744,14 +744,20 @@ SchwarzLoopTempus() const
         const Teuchos::RCP<Tempus::SolutionHistory<ST> > 
         solution_history = piro_tempus_solver.getSolutionHistory();
 
-        Teuchos::RCP<Tempus::SolutionState<ST>> 
-        current_state = solution_history->getCurrentState();
+        Teuchos::RCP<Thyra::VectorBase<ST>> 
+        prev_soln_rcp;
 
-        // Get values of soln, soln_dot and soln_dotdot from previous step
-        // IKT, 8/11/17: soln_dot and soln_dotdot may not be needed
-        Teuchos::RCP<Thyra::VectorBase<ST>> soln_old = current_state->getX();
-        Teuchos::RCP<Thyra::VectorBase<ST>> soln_dot_old = current_state->getXDot();
-        Teuchos::RCP<Thyra::VectorBase<ST>> soln_dotdot_old = current_state->getXDotDot();
+        if (is_initial_state == true) {
+ 
+          Teuchos::RCP<Tempus::SolutionState<ST>> 
+          current_state = solution_history->getCurrentState();
+          prev_soln_rcp = Thyra::createMember(me.get_x_space()); 
+          prev_soln_rcp->assign(*current_state->getX());
+ 
+        }
+        else {
+          prev_soln_rcp = solutions_thyra_[subdomain];
+        }
 
         fos << "Exiting!\n";
         //IKT, 8/11/17: the following is a temporary assert to prevent user from 
