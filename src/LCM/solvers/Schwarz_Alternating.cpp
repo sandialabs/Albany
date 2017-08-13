@@ -11,7 +11,7 @@
 #include "Piro_TempusSolver.hpp"
 #include "Schwarz_Alternating.hpp"
 
-#define DEBUG
+//#define DEBUG
 
 namespace LCM {
 
@@ -850,20 +850,20 @@ SchwarzLoopLOCA() const
         std::string const &
         stop_str = stop_str_[subdomain];
 
-        piro_loca_solver.setStartValue(current_time);
-        piro_loca_solver.setMinValue(current_time);
-        piro_loca_solver.setMaxValue(next_time);
+        //piro_loca_solver.setStartValue(current_time);
+        //piro_loca_solver.setMinValue(current_time);
+        //piro_loca_solver.setMaxValue(next_time);
 
         start_stop_params.set(init_str, current_time);
         start_stop_params.set(start_str, current_time);
         start_stop_params.set(stop_str, next_time);
 
-        fos << "*** PIRO accessors/mutators ***\n";
-        fos << "Initial time       :" << piro_loca_solver.getStartValue() << '\n';
-        fos << "Start time         :" << piro_loca_solver.getMinValue() << '\n';
-        fos << "Stop time          :" << piro_loca_solver.getMaxValue() << '\n';
-        fos << delim << std::endl;
-        fos << "*** ParameterList accessors/mutators ***\n";
+        //fos << "*** PIRO accessors/mutators ***\n";
+        //fos << "Initial time       :" << piro_loca_solver.getStartValue() << '\n';
+        //fos << "Start time         :" << piro_loca_solver.getMinValue() << '\n';
+        //fos << "Stop time          :" << piro_loca_solver.getMaxValue() << '\n';
+        //fos << delim << std::endl;
+        //fos << "*** ParameterList accessors/mutators ***\n";
         fos << "Initial time       :" << start_stop_params.get<double>(init_str) << '\n';
         fos << "Start time         :" << start_stop_params.get<double>(start_str) << '\n';
         fos << "Stop time          :" << start_stop_params.get<double>(stop_str) << '\n';
