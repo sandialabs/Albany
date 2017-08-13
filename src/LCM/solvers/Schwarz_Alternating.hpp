@@ -94,9 +94,6 @@ public:
   bool
   get_failed() const;
   
-  Teuchos::RCP<Teuchos::FancyOStream>
-  fos_;
-
 private:
 
   /// Create operator form of dg/dx for distributed responses

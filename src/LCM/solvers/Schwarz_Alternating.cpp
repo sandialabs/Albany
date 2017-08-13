@@ -22,8 +22,7 @@ SchwarzAlternating::
 SchwarzAlternating(
     Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     Teuchos::RCP<Teuchos::Comm<int> const> const & comm,
-    Teuchos::RCP<Tpetra_Vector const> const & initial_guess) :
-    fos_(Teuchos::VerboseObjectBase::getDefaultOStream())
+    Teuchos::RCP<Tpetra_Vector const> const & initial_guess)
 {
   Teuchos::ParameterList &
   alt_system_params = app_params->sublist("Alternating System");
@@ -654,10 +653,13 @@ SchwarzLoopTempus() const
   std::string const
   delim(72, '=');
 
-  *fos_ << delim << std::endl;
-  *fos_ << "Schwarz Alternating Method with " << num_subdomains_;
-  *fos_ << " subdomains\n";
-  *fos_ << std::scientific << std::setprecision(17);
+  auto &
+  fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
+
+  fos << delim << std::endl;
+  fos << "Schwarz Alternating Method with " << num_subdomains_;
+  fos << " subdomains\n";
+  fos << std::scientific << std::setprecision(17);
 
   ST
   time_step{initial_time_step_};
@@ -671,11 +673,11 @@ SchwarzLoopTempus() const
   // Continuation loop
   while (stop < maximum_steps_ && current_time < final_time_) {
 
-    *fos_ << delim << std::endl;
-    *fos_ << "Time stop          :" << stop << '\n';
-    *fos_ << "Time               :" << current_time << '\n';
-    *fos_ << "Time step          :" << time_step << '\n';
-    *fos_ << delim << std::endl;
+    fos << delim << std::endl;
+    fos << "Time stop          :" << stop << '\n';
+    fos << "Time               :" << current_time << '\n';
+    fos << "Time step          :" << time_step << '\n';
+    fos << delim << std::endl;
 
     ST const
     next_time{current_time + time_step};
@@ -698,28 +700,28 @@ SchwarzLoopTempus() const
 
       for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
-        *fos_ << delim << std::endl;
-        *fos_ << "Schwarz iteration  :" << num_iter_ << '\n';
-        *fos_ << "Subdomain          :" << subdomain << '\n';
-        *fos_ << delim << std::endl;
+        fos << delim << std::endl;
+        fos << "Schwarz iteration  :" << num_iter_ << '\n';
+        fos << "Subdomain          :" << subdomain << '\n';
+        fos << delim << std::endl;
 
         // Solve for each subdomain
         Thyra::ResponseOnlyModelEvaluatorBase<ST> &
         solver = *(solvers_[subdomain]);
 
-        *fos_ << "IKT creating Piro::TempusSolver...\n"; 
+        fos << "IKT creating Piro::TempusSolver...\n";
         Piro::TempusSolver<ST,LO,GO,KokkosNode> &
         piro_tempus_solver = dynamic_cast<Piro::TempusSolver<ST,LO,GO,KokkosNode> &>(solver);
-        *fos_ << "done! \n"; 
+        fos << "done! \n";
 
         piro_tempus_solver.setStartTime(current_time); 
         piro_tempus_solver.setFinalTime(next_time); 
         //piro_tempus_solver.setInitTimeStep(time_step);
 
-        *fos_ << "*** PIRO accessors/mutators ***\n";
-        *fos_ << "Initial time       :" << piro_tempus_solver.getStartTime() << '\n';
-        *fos_ << "Final time         :" << piro_tempus_solver.getFinalTime() << '\n';
-        *fos_ << delim << std::endl;
+        fos << "*** PIRO accessors/mutators ***\n";
+        fos << "Initial time       :" << piro_tempus_solver.getStartTime() << '\n';
+        fos << "Final time         :" << piro_tempus_solver.getFinalTime() << '\n';
+        fos << delim << std::endl;
 
         // For time dependent DBCs, set the time to be next time
         auto &
@@ -751,7 +753,7 @@ SchwarzLoopTempus() const
         Teuchos::RCP<Thyra::VectorBase<ST>> soln_dot_old = current_state->getXDot();
         Teuchos::RCP<Thyra::VectorBase<ST>> soln_dotdot_old = current_state->getXDotDot();
 
-        *fos_ << "Exiting!\n"; 
+        fos << "Exiting!\n";
         //IKT, 8/11/17: the following is a temporary assert to prevent user from 
         //running SchwarzLoopTempus before it is complete.
         ALBANY_ASSERT(have_tempus_ == false, "SchwarzLoopTempus() not fully implemented!");  
@@ -777,10 +779,13 @@ SchwarzLoopLOCA() const
   std::string const
   delim(72, '=');
 
-  *fos_ << delim << std::endl;
-  *fos_ << "Schwarz Alternating Method with " << num_subdomains_;
-  *fos_ << " subdomains\n";
-  *fos_ << std::scientific << std::setprecision(17);
+  auto &
+  fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
+
+  fos << delim << std::endl;
+  fos << "Schwarz Alternating Method with " << num_subdomains_;
+  fos << " subdomains\n";
+  fos << std::scientific << std::setprecision(17);
 
   ST
   time_step{initial_time_step_};
@@ -794,11 +799,11 @@ SchwarzLoopLOCA() const
   // Continuation loop
   while (stop < maximum_steps_ && current_time < final_time_) {
 
-    *fos_ << delim << std::endl;
-    *fos_ << "Time stop          :" << stop << '\n';
-    *fos_ << "Time               :" << current_time << '\n';
-    *fos_ << "Time step          :" << time_step << '\n';
-    *fos_ << delim << std::endl;
+    fos << delim << std::endl;
+    fos << "Time stop          :" << stop << '\n';
+    fos << "Time               :" << current_time << '\n';
+    fos << "Time step          :" << time_step << '\n';
+    fos << delim << std::endl;
 
     ST const
     next_time{current_time + time_step};
@@ -821,10 +826,10 @@ SchwarzLoopLOCA() const
 
       for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
-        *fos_ << delim << std::endl;
-        *fos_ << "Schwarz iteration  :" << num_iter_ << '\n';
-        *fos_ << "Subdomain          :" << subdomain << '\n';
-        *fos_ << delim << std::endl;
+        fos << delim << std::endl;
+        fos << "Schwarz iteration  :" << num_iter_ << '\n';
+        fos << "Subdomain          :" << subdomain << '\n';
+        fos << delim << std::endl;
 
         // Solve for each subdomain
         Thyra::ResponseOnlyModelEvaluatorBase<ST> &
@@ -853,16 +858,16 @@ SchwarzLoopLOCA() const
         start_stop_params.set(start_str, current_time);
         start_stop_params.set(stop_str, next_time);
 
-        *fos_ << "*** PIRO accessors/mutators ***\n";
-        *fos_ << "Initial time       :" << piro_loca_solver.getStartValue() << '\n';
-        *fos_ << "Start time         :" << piro_loca_solver.getMinValue() << '\n';
-        *fos_ << "Stop time          :" << piro_loca_solver.getMaxValue() << '\n';
-        *fos_ << delim << std::endl;
-        *fos_ << "*** ParameterList accessors/mutators ***\n";
-        *fos_ << "Initial time       :" << start_stop_params.get<double>(init_str) << '\n';
-        *fos_ << "Start time         :" << start_stop_params.get<double>(start_str) << '\n';
-        *fos_ << "Stop time          :" << start_stop_params.get<double>(stop_str) << '\n';
-        *fos_ << delim << std::endl;
+        fos << "*** PIRO accessors/mutators ***\n";
+        fos << "Initial time       :" << piro_loca_solver.getStartValue() << '\n';
+        fos << "Start time         :" << piro_loca_solver.getMinValue() << '\n';
+        fos << "Stop time          :" << piro_loca_solver.getMaxValue() << '\n';
+        fos << delim << std::endl;
+        fos << "*** ParameterList accessors/mutators ***\n";
+        fos << "Initial time       :" << start_stop_params.get<double>(init_str) << '\n';
+        fos << "Start time         :" << start_stop_params.get<double>(start_str) << '\n';
+        fos << "Stop time          :" << start_stop_params.get<double>(stop_str) << '\n';
+        fos << delim << std::endl;
 
         // For time dependent DBCs, set the time to be next time
         auto &
@@ -894,10 +899,10 @@ SchwarzLoopLOCA() const
         prev_soln = *prev_soln_rcp;
 
 #if defined(DEBUG)
-        *fos_ << "\n*** NOX: Previous solution ***\n";
-        prev_soln.print(*fos_);
-        *fos_ << "\n*** NORM: " << prev_soln.norm() << '\n';
-        *fos_ << "\n*** NOX: Previous solution ***\n";
+        fos << "\n*** NOX: Previous solution ***\n";
+        prev_soln.print(fos);
+        fos << "\n*** NORM: " << prev_soln.norm() << '\n';
+        fos << "\n*** NOX: Previous solution ***\n";
 #endif //DEBUG
 
         NOX::Abstract::Group &
@@ -921,10 +926,10 @@ SchwarzLoopLOCA() const
         curr_soln = *curr_soln_rcp;
 
 #if defined(DEBUG)
-        *fos_ << "\n*** NOX: Current solution ***\n";
-        curr_soln.print(*fos_);
-        *fos_ << "\n*** NORM: " << curr_soln.norm() << '\n';
-        *fos_ << "\n*** NOX: Current solution ***\n";
+        fos << "\n*** NOX: Current solution ***\n";
+        curr_soln.print(fos);
+        fos << "\n*** NORM: " << curr_soln.norm() << '\n';
+        fos << "\n*** NOX: Current solution ***\n";
 #endif //DEBUG
 
         Teuchos::RCP<NOX::Abstract::Vector>
@@ -936,10 +941,10 @@ SchwarzLoopLOCA() const
         soln_diff.update(1.0, curr_soln, -1.0, prev_soln, 0.0);
 
 #if defined(DEBUG)
-        *fos_ << "\n*** NOX: Solution difference ***\n";
-        soln_diff.print(*fos_);
-        *fos_ << "\n*** NORM: " << soln_diff.norm() << '\n';
-        *fos_ << "\n*** NOX: Solution difference ***\n";
+        fos << "\n*** NOX: Solution difference ***\n";
+        soln_diff.print(fos);
+        fos << "\n*** NORM: " << soln_diff.norm() << '\n';
+        fos << "\n*** NOX: Solution difference ***\n";
 #endif //DEBUG
 
         // After solve, save solution and get info to check convergence
@@ -955,55 +960,55 @@ SchwarzLoopLOCA() const
 
       updateConvergenceCriterion();
 
-      *fos_ << delim << std::endl;
-      *fos_ << "Schwarz iteration         :" << num_iter_ << '\n';
+      fos << delim << std::endl;
+      fos << "Schwarz iteration         :" << num_iter_ << '\n';
 
       std::string const
       line(72, '-');
 
-      *fos_ << line << std::endl;
+      fos << line << std::endl;
 
-      *fos_ << centered("Sub", 4);
-      *fos_ << centered("Initial norm", 24);
-      *fos_ << centered("Final norm", 24);
-      *fos_ << centered("Difference norm", 24);
-      *fos_ << std::endl;
+      fos << centered("Sub", 4);
+      fos << centered("Initial norm", 24);
+      fos << centered("Final norm", 24);
+      fos << centered("Difference norm", 24);
+      fos << std::endl;
 
-      *fos_ << centered("dom", 4);
-      *fos_ << centered("||X0||", 24);
-      *fos_ << centered("||Xf||", 24);
-      *fos_ << centered("||Xf-X0||", 24);
-      *fos_ << std::endl;
+      fos << centered("dom", 4);
+      fos << centered("||X0||", 24);
+      fos << centered("||Xf||", 24);
+      fos << centered("||Xf-X0||", 24);
+      fos << std::endl;
 
-      *fos_ << line << std::endl;
+      fos << line << std::endl;
 
       for (auto m = 0; m < num_subdomains_; ++m) {
-        *fos_ << std::setw(4) << m;
-        *fos_ << std::setw(24) << norms_init(m);
-        *fos_ << std::setw(24) << norms_final(m);
-        *fos_ << std::setw(24) << norms_diff(m);
-        *fos_ << std::endl;
+        fos << std::setw(4) << m;
+        fos << std::setw(24) << norms_init(m);
+        fos << std::setw(24) << norms_final(m);
+        fos << std::setw(24) << norms_diff(m);
+        fos << std::endl;
       }
 
-      *fos_ << line << std::endl;
+      fos << line << std::endl;
 
-      *fos_ << centered("Norm", 4);
-      *fos_ << std::setw(24) << norm_init_;
-      *fos_ << std::setw(24) << norm_final_;
-      *fos_ << std::setw(24) << norm_diff_;
-      *fos_ << std::endl;
+      fos << centered("Norm", 4);
+      fos << std::setw(24) << norm_init_;
+      fos << std::setw(24) << norm_final_;
+      fos << std::setw(24) << norm_diff_;
+      fos << std::endl;
 
-      *fos_ << line << std::endl;
+      fos << line << std::endl;
 
-      *fos_ << "Absolute error     :" << abs_error_ << '\n';
-      *fos_ << "Absolute tolerance :" << abs_tol_ << '\n';
-      *fos_ << "Relative error     :" << rel_error_ << '\n';
-      *fos_ << "Relative tolerance :" << rel_tol_ << '\n';
-      *fos_ << delim << std::endl;
+      fos << "Absolute error     :" << abs_error_ << '\n';
+      fos << "Absolute tolerance :" << abs_tol_ << '\n';
+      fos << "Relative error     :" << rel_error_ << '\n';
+      fos << "Relative tolerance :" << rel_tol_ << '\n';
+      fos << delim << std::endl;
 
     }  while (continueSolve() == true);
 
-    reportFinals(*fos_);
+    reportFinals(fos);
 
     // Print converged solution if at specified interval
     for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
