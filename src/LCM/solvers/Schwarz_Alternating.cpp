@@ -669,7 +669,6 @@ SchwarzLoopDynamics() const
   ST
   current_time{initial_time_};
 
-  int interation_no = 0; 
   // Continuation loop
   while (stop < maximum_steps_ && current_time < final_time_) {
 
@@ -876,16 +875,73 @@ SchwarzLoopDynamics() const
       std::string const
       line(72, '-');
 
-      fos << line << std::endl; 
+      fos << line << std::endl;
 
-      fos << "Exiting!\n";
+      fos << centered("Sub", 4);
+      fos << centered("Initial norm", 24);
+      fos << centered("Final norm", 24);
+      fos << centered("Difference norm", 24);
+      fos << std::endl;
+
+      fos << centered("dom", 4);
+      fos << centered("||X0||", 24);
+      fos << centered("||Xf||", 24);
+      fos << centered("||Xf-X0||", 24);
+      fos << std::endl;
+
+      fos << line << std::endl;
+
+      for (auto m = 0; m < num_subdomains_; ++m) {
+        fos << std::setw(4) << m;
+        fos << std::setw(24) << norms_init(m);
+        fos << std::setw(24) << norms_final(m);
+        fos << std::setw(24) << norms_diff(m);
+        fos << std::endl;
+      }
+
+      fos << line << std::endl;
+
+      fos << centered("Norm", 4);
+      fos << std::setw(24) << norm_init_;
+      fos << std::setw(24) << norm_final_;
+      fos << std::setw(24) << norm_diff_;
+      fos << std::endl;
+
+      fos << line << std::endl;
+
+      fos << "Absolute error     :" << abs_error_ << '\n';
+      fos << "Absolute tolerance :" << abs_tol_ << '\n';
+      fos << "Relative error     :" << rel_error_ << '\n';
+      fos << "Relative tolerance :" << rel_tol_ << '\n';
+      fos << delim << std::endl;
+ 
+
       //IKT, 8/11/17: the following is a temporary assert to prevent user from 
       //running SchwarzLoopDynamics before it is complete.
-      ALBANY_ASSERT(have_tempus_ == false, "SchwarzLoopDynamics() not fully implemented!");
-       
+      //fos << "Exiting!\n";
+      //ALBANY_ASSERT(have_tempus_ == false, "SchwarzLoopDynamics() not fully implemented!");
       
     }  while (continueSolve() == true);
+
+    reportFinals(fos);
+
+    //Output converged solution if at specified interval 
+    for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+      Albany::AbstractSTKMeshStruct &
+      ams = *stk_mesh_structs_[subdomain];
+
+      ams.exoOutputInterval = 1;
+    
+      //FIXME, IKT - need to implement!
+
+    }
+
+    ++stop;
+    current_time += time_step;
+
   }
+
+  return; 
 
 }
 
