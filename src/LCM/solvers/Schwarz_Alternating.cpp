@@ -11,7 +11,7 @@
 #include "Piro_TempusSolver.hpp"
 #include "Schwarz_Alternating.hpp"
 
-//#define DEBUG
+#define DEBUG
 
 namespace LCM {
 
@@ -669,6 +669,7 @@ SchwarzLoopDynamics() const
   ST
   current_time{initial_time_};
 
+  int interation_no = 0; 
   // Continuation loop
   while (stop < maximum_steps_ && current_time < final_time_) {
 
@@ -740,10 +741,12 @@ SchwarzLoopDynamics() const
         piro_tempus_solver.setFinalTime(next_time); 
         //piro_tempus_solver.setInitTimeStep(time_step);
 
+#if defined(DEBUG)
         fos << "*** PIRO accessors/mutators ***\n";
         fos << "Initial time       :" << piro_tempus_solver.getStartTime() << '\n';
         fos << "Final time         :" << piro_tempus_solver.getFinalTime() << '\n';
         fos << delim << std::endl;
+#endif //DEBUG
 
         // For time dependent DBCs, set the time to be next time
         auto &
@@ -763,8 +766,11 @@ SchwarzLoopDynamics() const
 
         me.getNominalValues().set_t(current_time);
 
-        const Teuchos::RCP<Tempus::SolutionHistory<ST> > 
-        solution_history = piro_tempus_solver.getSolutionHistory();
+        Teuchos::RCP<Tempus::SolutionHistory<ST> > 
+        solution_history; 
+          
+        Teuchos::RCP<Tempus::SolutionState<ST>> 
+        current_state;
 
         Teuchos::RCP<Thyra::VectorBase<ST>> 
         prev_soln_rcp;
@@ -777,7 +783,7 @@ SchwarzLoopDynamics() const
 
         if (is_initial_state == true) {
  
-          Teuchos::RCP<Tempus::SolutionState<ST>> 
+          solution_history = piro_tempus_solver.getSolutionHistory();
           current_state = solution_history->getCurrentState();
           prev_soln_rcp = Thyra::createMember(me.get_x_space()); 
           prev_soln_dot_rcp = Thyra::createMember(me.get_x_space()); 
@@ -793,13 +799,11 @@ SchwarzLoopDynamics() const
           prev_soln_dotdot_rcp = solutions_dotdot_thyra_[subdomain];
         }
 
-#define DEBUG 
-
 #if defined(DEBUG)
         fos << "\n*** Thyra: Previous solution ***\n";
         prev_soln_rcp->describe(fos, Teuchos::VERB_EXTREME);
         fos << "\n*** NORM: " << Thyra::norm(*prev_soln_rcp) << '\n';
-        fos << "\n*** Thyra::Previous solution ***\n";
+        fos << "\n*** Thyra: Previous solution ***\n";
 #endif //DEBUG
 
         //IKT, FIXME: check with Alejandro if current_time is the correct argument to use 
@@ -808,12 +812,78 @@ SchwarzLoopDynamics() const
                                            prev_soln_dot_rcp, prev_soln_dotdot_rcp);
 
         solver.evalModel(in_args, out_args);  
+        
+        solution_history = piro_tempus_solver.getSolutionHistory();
 
-        fos << "Exiting!\n";
-        //IKT, 8/11/17: the following is a temporary assert to prevent user from 
-        //running SchwarzLoopDynamics before it is complete.
-        ALBANY_ASSERT(have_tempus_ == false, "SchwarzLoopDynamics() not fully implemented!");
-      }
+        current_state = solution_history->getCurrentState();
+
+        Teuchos::RCP<Thyra::VectorBase<ST>> 
+        curr_soln_rcp = Thyra::createMember(me.get_x_space());
+ 
+        curr_soln_rcp->assign(*current_state->getX());
+ 
+        Teuchos::RCP<Thyra::VectorBase<ST>> 
+        curr_soln_dot_rcp = Thyra::createMember(me.get_x_space());
+ 
+        curr_soln_dot_rcp->assign(*current_state->getXDot()); 
+
+        Teuchos::RCP<Thyra::VectorBase<ST>> 
+        curr_soln_dotdot_rcp = Thyra::createMember(me.get_x_space());
+ 
+        curr_soln_dotdot_rcp->assign(*current_state->getXDotDot()); 
+
+#if defined(DEBUG)
+        fos << "\n*** Thyra: Current solution ***\n";
+        curr_soln_rcp->describe(fos, Teuchos::VERB_EXTREME);
+        fos << "\n*** NORM: " << Thyra::norm(*curr_soln_rcp) << '\n';
+        fos << "\n*** Thyra: Current solution ***\n";
+#endif //DEBUG
+
+        Teuchos::RCP<Thyra::VectorBase<ST>>
+        soln_diff_rcp = Thyra::createMember(me.get_x_space());
+
+        Thyra::put_scalar<ST>(0.0, soln_diff_rcp.ptr()); 
+
+        //soln_diff = curr_soln - prev_soln 
+        Thyra::V_VpStV(soln_diff_rcp.ptr(), *curr_soln_rcp, -1.0, *prev_soln_rcp);        
+
+#if defined(DEBUG)
+        fos << "\n*** Thyra: Solution difference ***\n"; 
+        soln_diff_rcp->describe(fos, Teuchos::VERB_EXTREME); 
+        fos << "\n*** NORM: " << Thyra::norm(*soln_diff_rcp) << '\n';
+        fos << "\n*** Thyra: Solution difference ***\n";
+#endif //DEBUG 
+
+        //After solve, save solution and get info to check convergence
+        solutions_thyra_[subdomain] = curr_soln_rcp; 
+        solutions_dot_thyra_[subdomain] = curr_soln_dot_rcp; 
+        solutions_dotdot_thyra_[subdomain] = curr_soln_dotdot_rcp; 
+        norms_init(subdomain) = Thyra::norm(*prev_soln_rcp); 
+        norms_final(subdomain) = Thyra::norm(*curr_soln_rcp); 
+        norms_diff(subdomain) = Thyra::norm(*soln_diff_rcp); 
+
+      } //subdomains loop 
+
+      norm_init_ = minitensor::norm(norms_init);
+      norm_final_ = minitensor::norm(norms_final);
+      norm_diff_ = minitensor::norm(norms_diff);
+
+      updateConvergenceCriterion(); 
+
+      fos << delim << std::endl;
+      fos << "Schwarz iteration         :" << num_iter_ << '\n';
+ 
+      std::string const
+      line(72, '-');
+
+      fos << line << std::endl; 
+
+      fos << "Exiting!\n";
+      //IKT, 8/11/17: the following is a temporary assert to prevent user from 
+      //running SchwarzLoopDynamics before it is complete.
+      ALBANY_ASSERT(have_tempus_ == false, "SchwarzLoopDynamics() not fully implemented!");
+       
+      
     }  while (continueSolve() == true);
   }
 
