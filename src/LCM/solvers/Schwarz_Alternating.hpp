@@ -144,6 +144,9 @@ private:
 
   Teuchos::Array<Teuchos::RCP<Albany::AbstractSTKMeshStruct>>
   stk_mesh_structs_;
+  
+  Teuchos::Array<Teuchos::RCP<Albany::AbstractDiscretization>>
+  discs_;
 
   char const *
   failure_message_{"No failure detected"};

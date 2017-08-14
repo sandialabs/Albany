@@ -65,6 +65,7 @@ SchwarzAlternating(
   solvers_.resize(num_subdomains_);
   solution_sniffers_.resize(num_subdomains_);
   stk_mesh_structs_.resize(num_subdomains_);
+  discs_.resize(num_subdomains_);
   model_evaluators_.resize(num_subdomains_);
   sub_inargs_.resize(num_subdomains_);
   sub_outargs_.resize(num_subdomains_);
@@ -214,6 +215,8 @@ SchwarzAlternating(
     // Get STK mesh structs to control Exodus output interval
     Teuchos::RCP<Albany::AbstractDiscretization>
     disc = app->getDiscretization();
+    
+    discs_[subdomain] = disc; 
 
     Albany::STKDiscretization &
     stk_disc = *static_cast<Albany::STKDiscretization *>(disc.get());
@@ -678,13 +681,36 @@ SchwarzLoopDynamics() const
 
     num_iter_ = 0;
 
-    // Disble output. Handle it after Schwarz iteration.
+    // Output initial configuration. Then disable output.
+    // Handle it after Schwarz iteration.
     for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
       Albany::AbstractSTKMeshStruct &
       ams = *stk_mesh_structs_[subdomain];
 
+      ams.exoOutput = true;
+      ams.exoOutputInterval = 1;
+
+      // Solver for each subdomain
+      Thyra::ResponseOnlyModelEvaluatorBase<ST> &
+      solver = *(solvers_[subdomain]);
+
+      fos << "IKT creating Piro::TempusSolver...\n";
+      Piro::TempusSolver<ST,LO,GO,KokkosNode> &
+      piro_tempus_solver = dynamic_cast<Piro::TempusSolver<ST,LO,GO,KokkosNode> &>(solver);
+      fos << "done! \n";
+
+      //IKT: place holder for writing solution to Exodus file - this may need to be redesigned.
+      //It's not clear if other fields on the mesh will get written to Exodus with this approach (e.g., Cauchy
+      //stresses)
+      Albany::STKDiscretization &
+      stk_disc = *static_cast<Albany::STKDiscretization *>(discs_[subdomain].get());
+      Teuchos::RCP<Tpetra_MultiVector> soln_mv = stk_disc.getSolutionMV();
+      //IKT: is it right that time-stamp is 0? 
+      stk_disc.writeSolutionMV(*soln_mv, 0.0);
+
       ams.exoOutput = false;
+
     }
 
     do {
@@ -753,10 +779,20 @@ SchwarzLoopDynamics() const
           prev_soln_rcp = solutions_thyra_[subdomain];
         }
 
+#define DEBUG 
+
+#if defined(DEBUG)
+        fos << "\n*** Thyra: Previous solution ***\n";
+        prev_soln_rcp->describe(fos, Teuchos::VERB_EXTREME);
+        fos << "\n*** NORM: " << Thyra::norm(*prev_soln_rcp) << '\n';
+        fos << "\n*** Thyra::Previous solution ***\n";
+#endif //DEBUG
+
+
         fos << "Exiting!\n";
         //IKT, 8/11/17: the following is a temporary assert to prevent user from 
-        //running SchwarzLoopTempus before it is complete.
-        ALBANY_ASSERT(have_tempus_ == false, "SchwarzLoopTempus() not fully implemented!");
+        //running SchwarzLoopDynamics before it is complete.
+        ALBANY_ASSERT(have_tempus_ == false, "SchwarzLoopDynamics() not fully implemented!");
       }
     }  while (continueSolve() == true);
   }
