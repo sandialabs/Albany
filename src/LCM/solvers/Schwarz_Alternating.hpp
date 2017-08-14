@@ -219,6 +219,12 @@ private:
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
   solutions_thyra_;
+  
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
+  solutions_dot_thyra_;
+
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
+  solutions_dotdot_thyra_;
 
   // Used if solving with loca or tempus
   bool

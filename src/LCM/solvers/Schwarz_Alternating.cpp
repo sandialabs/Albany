@@ -71,6 +71,8 @@ SchwarzAlternating(
   sub_outargs_.resize(num_subdomains_);
   solutions_nox_.resize(num_subdomains_);
   solutions_thyra_.resize(num_subdomains_);
+  solutions_dot_thyra_.resize(num_subdomains_);
+  solutions_dotdot_thyra_.resize(num_subdomains_);
 
   bool
   have_loca{false};
@@ -766,17 +768,29 @@ SchwarzLoopDynamics() const
 
         Teuchos::RCP<Thyra::VectorBase<ST>> 
         prev_soln_rcp;
+        
+        Teuchos::RCP<Thyra::VectorBase<ST>> 
+        prev_soln_dot_rcp;
+        
+        Teuchos::RCP<Thyra::VectorBase<ST>> 
+        prev_soln_dotdot_rcp;
 
         if (is_initial_state == true) {
  
           Teuchos::RCP<Tempus::SolutionState<ST>> 
           current_state = solution_history->getCurrentState();
           prev_soln_rcp = Thyra::createMember(me.get_x_space()); 
+          prev_soln_dot_rcp = Thyra::createMember(me.get_x_space()); 
+          prev_soln_dotdot_rcp = Thyra::createMember(me.get_x_space()); 
           prev_soln_rcp->assign(*current_state->getX());
+          prev_soln_dot_rcp->assign(*current_state->getXDot());
+          prev_soln_dotdot_rcp->assign(*current_state->getXDotDot());
  
         }
         else {
           prev_soln_rcp = solutions_thyra_[subdomain];
+          prev_soln_dot_rcp = solutions_dot_thyra_[subdomain];
+          prev_soln_dotdot_rcp = solutions_dotdot_thyra_[subdomain];
         }
 
 #define DEBUG 
@@ -788,6 +802,12 @@ SchwarzLoopDynamics() const
         fos << "\n*** Thyra::Previous solution ***\n";
 #endif //DEBUG
 
+        //IKT, FIXME: check with Alejandro if current_time is the correct argument to use 
+        //in the call below.
+        piro_tempus_solver.setInitialState(current_time, prev_soln_rcp, 
+                                           prev_soln_dot_rcp, prev_soln_dotdot_rcp);
+
+        solver.evalModel(in_args, out_args);  
 
         fos << "Exiting!\n";
         //IKT, 8/11/17: the following is a temporary assert to prevent user from 
