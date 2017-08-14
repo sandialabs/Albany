@@ -117,12 +117,12 @@ private:
   Thyra::ModelEvaluatorBase::InArgs<ST>
   createInArgsImpl() const;
 
-  /// Schwarz Alternating loop
+  /// Schwarz Alternating loops
   void
-  SchwarzLoopLOCA() const;
+  SchwarzLoopQuasistatics() const;
 
   void
-  SchwarzLoopTempus() const;
+  SchwarzLoopDynamics() const;
 
   void
   updateConvergenceCriterion() const;
@@ -218,9 +218,11 @@ private:
   solutions_thyra_;
 
   // Used if solving with loca or tempus
-  bool have_loca_;
+  bool
+  have_loca_{false};
 
-  bool have_tempus_;
+  bool
+  have_tempus_{false};
 
   mutable std::vector<std::reference_wrapper<Teuchos::ParameterList>>
   start_stop_params_;

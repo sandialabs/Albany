@@ -70,8 +70,12 @@ SchwarzAlternating(
   sub_outargs_.resize(num_subdomains_);
   solutions_nox_.resize(num_subdomains_);
   solutions_thyra_.resize(num_subdomains_);
-  have_loca_ = false;
-  have_tempus_ = false;
+
+  bool
+  have_loca{false};
+
+  bool
+  have_tempus{false};
 
   // Initialization
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
@@ -100,20 +104,22 @@ SchwarzAlternating(
     Teuchos::ParameterList &
     piro_params = params.sublist("Piro");
 
+    std::string const
+    msg{"All subdomains must have the same solution method (LOCA or Tempus)"};
+
     if (subdomain == 0) { 
-      have_loca_ = piro_params.isSublist("LOCA");
+      have_loca = piro_params.isSublist("LOCA");
+      have_tempus = piro_params.isSublist("Tempus");
+      ALBANY_ASSERT(have_loca != have_tempus, "Must have either LOCA or Tempus");
+      have_loca_ = have_loca;
+      have_tempus_ = have_tempus;
     }
     else {
-      bool const 
-      have_loca = piro_params.isSublist("LOCA"); 
-      if (have_loca != have_loca_) {
-        TEUCHOS_TEST_FOR_EXCEPTION(true,
-          std::logic_error, "Error in Schwarz::Alternating!  All problems "
-          << "must have same solution method (LOCA or Tempus)!");
-      } 
+      ALBANY_ASSERT(have_loca == piro_params.isSublist("LOCA"), msg);
+      ALBANY_ASSERT(have_tempus == piro_params.isSublist("Tempus"), msg);
     }
 
-    if (have_loca_ == true) {
+    if (have_loca == true) {
       Teuchos::ParameterList &
       loca_params = piro_params.sublist("LOCA");
 
@@ -126,20 +132,7 @@ SchwarzAlternating(
       stop_str_.emplace_back("Max Value");
     }
 
-    if (subdomain == 0) { 
-      have_tempus_ = piro_params.isSublist("Tempus");
-    }
-    else {
-      bool const 
-      have_tempus = piro_params.isSublist("Tempus"); 
-      if (have_tempus != have_tempus_) {
-        TEUCHOS_TEST_FOR_EXCEPTION(true,
-          std::logic_error, "Error in Schwarz::Alternating!  All problems "
-          << "must have same solution method (LOCA or Tempus)!");
-      } 
-    }
-
-    if (have_tempus_ == true) {
+    if (have_tempus == true) {
       Teuchos::ParameterList &
       tempus_params = piro_params.sublist("Tempus");
 
@@ -155,11 +148,9 @@ SchwarzAlternating(
       stop_str_.emplace_back("Final Time");
     }
 
-    ALBANY_ASSERT(have_loca_ == true || have_tempus_ == true);
-
     //IKT, 8/11/17: we are only requiring NOX / creating SolutionSniffer
     //for LOCA, not Tempus.
-    if (have_loca_ == true) {
+    if (have_loca == true) {
 
       bool const
       have_nox = piro_params.isSublist("NOX");
@@ -202,7 +193,6 @@ SchwarzAlternating(
       (ppo, throw_on_fail);
 
       solution_sniffers_[subdomain] = solution_sniffer;
-
     }
 
     Teuchos::RCP<Albany::Application>
@@ -517,10 +507,10 @@ evalModelImpl(
     Thyra::ModelEvaluatorBase::OutArgs<ST> const &) const
 {
   if (have_loca_ == true) {
-    SchwarzLoopLOCA();
+    SchwarzLoopQuasistatics();
   }
   if (have_tempus_ == true) {
-    SchwarzLoopTempus();
+    SchwarzLoopDynamics();
   }
   return;
 }
@@ -639,7 +629,7 @@ reportFinals(std::ostream & os) const
 //
 void
 SchwarzAlternating::
-SchwarzLoopTempus() const
+SchwarzLoopDynamics() const
 {
   minitensor::Vector<ST>
   norms_init(num_subdomains_, minitensor::Filler::ZEROS);
@@ -762,7 +752,7 @@ SchwarzLoopTempus() const
         fos << "Exiting!\n";
         //IKT, 8/11/17: the following is a temporary assert to prevent user from 
         //running SchwarzLoopTempus before it is complete.
-        ALBANY_ASSERT(have_tempus_ == false, "SchwarzLoopTempus() not fully implemented!");  
+        ALBANY_ASSERT(have_tempus_ == false, "SchwarzLoopTempus() not fully implemented!");
       }
     }  while (continueSolve() == true);
   }
@@ -771,7 +761,7 @@ SchwarzLoopTempus() const
 
 void
 SchwarzAlternating::
-SchwarzLoopLOCA() const
+SchwarzLoopQuasistatics() const
 {
   minitensor::Vector<ST>
   norms_init(num_subdomains_, minitensor::Filler::ZEROS);
@@ -816,11 +806,23 @@ SchwarzLoopLOCA() const
 
     num_iter_ = 0;
 
-    // Disble output. Handle it after Schwarz iteration.
+    // Output initial configuration. Then disable output.
+    // Handle it after Schwarz iteration.
     for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
       Albany::AbstractSTKMeshStruct &
       ams = *stk_mesh_structs_[subdomain];
+
+      ams.exoOutput = true;
+      ams.exoOutputInterval = 1;
+
+      Thyra::ResponseOnlyModelEvaluatorBase<ST> &
+      solver = *(solvers_[subdomain]);
+
+      Piro::LOCASolver<ST> &
+      piro_loca_solver = dynamic_cast<Piro::LOCASolver<ST> &>(solver);
+
+      piro_loca_solver.printSolution();
 
       ams.exoOutput = false;
     }
@@ -856,23 +858,22 @@ SchwarzLoopLOCA() const
         std::string const &
         stop_str = stop_str_[subdomain];
 
-        //piro_loca_solver.setStartValue(current_time);
-        //piro_loca_solver.setMinValue(current_time);
-        //piro_loca_solver.setMaxValue(next_time);
-
         start_stop_params.set(init_str, current_time);
         start_stop_params.set(start_str, current_time);
         start_stop_params.set(stop_str, next_time);
 
-        //fos << "*** PIRO accessors/mutators ***\n";
-        //fos << "Initial time       :" << piro_loca_solver.getStartValue() << '\n';
-        //fos << "Start time         :" << piro_loca_solver.getMinValue() << '\n';
-        //fos << "Stop time          :" << piro_loca_solver.getMaxValue() << '\n';
-        //fos << delim << std::endl;
-        //fos << "*** ParameterList accessors/mutators ***\n";
-        fos << "Initial time       :" << start_stop_params.get<double>(init_str) << '\n';
-        fos << "Start time         :" << start_stop_params.get<double>(start_str) << '\n';
-        fos << "Stop time          :" << start_stop_params.get<double>(stop_str) << '\n';
+        double const
+        init_time = start_stop_params.get<double>(init_str);
+
+        double const
+        start_time = start_stop_params.get<double>(start_str);
+
+        double const
+        stop_time = start_stop_params.get<double>(stop_str);
+
+        fos << "Initial time       :" << init_time << '\n';
+        fos << "Start time         :" << start_time << '\n';
+        fos << "Stop time          :" << stop_time << '\n';
         fos << delim << std::endl;
 
         // For time dependent DBCs, set the time to be next time
@@ -911,14 +912,7 @@ SchwarzLoopLOCA() const
         fos << "\n*** NOX: Previous solution ***\n";
 #endif //DEBUG
 
-        NOX::Abstract::Group &
-        nox_group =
-            const_cast<NOX::Abstract::Group &>(nox_solver.getSolutionGroup());
-
-        // Use previous solution as initial condition for next step
-        if (is_initial_state == false) {
-          nox_group.setX(prev_soln);
-        }
+        nox_solver.reset(prev_soln);
 
         solver.evalModel(in_args, out_args);
 
@@ -1016,7 +1010,7 @@ SchwarzLoopLOCA() const
 
     reportFinals(fos);
 
-    // Print converged solution if at specified interval
+    // Output converged solution if at specified interval
     for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
       Albany::AbstractSTKMeshStruct &
@@ -1039,7 +1033,6 @@ SchwarzLoopLOCA() const
     ++stop;
     current_time += time_step;
   }
-
 
   return;
 }
