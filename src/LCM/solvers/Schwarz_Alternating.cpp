@@ -113,6 +113,16 @@ SchwarzAlternating(
       ALBANY_ASSERT(have_loca != have_tempus, "Must have either LOCA or Tempus");
       have_loca_ = have_loca;
       have_tempus_ = have_tempus;
+      if (have_loca == true) {
+        init_str_ = "Initial Value";
+        start_str_ = "Min Value";
+        stop_str_ = "Max Value";
+      }
+      if (have_tempus == true) {
+        init_str_ = "";
+        start_str_ = "Initial Time";
+        stop_str_ = "Final Time";
+      }
     }
     else {
       ALBANY_ASSERT(have_loca == piro_params.isSublist("LOCA"), msg);
@@ -127,9 +137,6 @@ SchwarzAlternating(
       stepper_params = loca_params.sublist("Stepper");
 
       start_stop_params_.emplace_back(stepper_params);
-      init_str_.emplace_back("Initial Value");
-      start_str_.emplace_back("Min Value");
-      stop_str_.emplace_back("Max Value");
     }
 
     if (have_tempus == true) {
@@ -143,9 +150,6 @@ SchwarzAlternating(
       step_params = integrator_params.sublist("Time Step Control");
 
       start_stop_params_.emplace_back(step_params);
-      init_str_.emplace_back("");
-      start_str_.emplace_back("Initial Time");
-      stop_str_.emplace_back("Final Time");
     }
 
     //IKT, 8/11/17: we are only requiring NOX / creating SolutionSniffer
@@ -849,27 +853,18 @@ SchwarzLoopQuasistatics() const
         Teuchos::ParameterList &
         start_stop_params = piro_loca_solver.getStepperParams();
 
-        std::string const &
-        init_str = init_str_[subdomain];
-
-        std::string const &
-        start_str = start_str_[subdomain];
-
-        std::string const &
-        stop_str = stop_str_[subdomain];
-
-        start_stop_params.set(init_str, current_time);
-        start_stop_params.set(start_str, current_time);
-        start_stop_params.set(stop_str, next_time);
+        start_stop_params.set(init_str_, current_time);
+        start_stop_params.set(start_str_, current_time);
+        start_stop_params.set(stop_str_, next_time);
 
         double const
-        init_time = start_stop_params.get<double>(init_str);
+        init_time = start_stop_params.get<double>(init_str_);
 
         double const
-        start_time = start_stop_params.get<double>(start_str);
+        start_time = start_stop_params.get<double>(start_str_);
 
         double const
-        stop_time = start_stop_params.get<double>(stop_str);
+        stop_time = start_stop_params.get<double>(stop_str_);
 
         fos << "Initial time       :" << init_time << '\n';
         fos << "Start time         :" << start_time << '\n';

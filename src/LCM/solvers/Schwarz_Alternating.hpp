@@ -227,14 +227,14 @@ private:
   mutable std::vector<std::reference_wrapper<Teuchos::ParameterList>>
   start_stop_params_;
 
-  mutable std::vector<std::string>
-  init_str_;
+  mutable std::string
+  init_str_{""};
 
-  mutable std::vector<std::string>
-  start_str_;
+  mutable std::string
+  start_str_{""};
 
-  mutable std::vector<std::string>
-  stop_str_;
+  mutable std::string
+  stop_str_{""};
 };
 
 } // namespace LCM
