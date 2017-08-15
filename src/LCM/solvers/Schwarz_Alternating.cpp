@@ -11,7 +11,7 @@
 #include "Piro_TempusSolver.hpp"
 #include "Schwarz_Alternating.hpp"
 
-#define DEBUG
+//#define DEBUG
 
 namespace LCM {
 
@@ -978,6 +978,27 @@ SchwarzLoopQuasistatics() const
   ST
   current_time{initial_time_};
 
+  // Output initial configuration. Then disable output.
+  // Handle it after Schwarz iteration.
+  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
+    Albany::AbstractSTKMeshStruct &
+    ams = *stk_mesh_structs_[subdomain];
+
+    ams.exoOutputInterval = 1;
+    ams.exoOutput = true;
+
+    Thyra::ResponseOnlyModelEvaluatorBase<ST> &
+    solver = *(solvers_[subdomain]);
+
+    Piro::LOCASolver<ST> &
+    piro_loca_solver = dynamic_cast<Piro::LOCASolver<ST> &>(solver);
+
+    piro_loca_solver.printSolution();
+
+    ams.exoOutput = false;
+  }
+
   // Continuation loop
   while (stop < maximum_steps_ && current_time < final_time_) {
 
@@ -991,27 +1012,6 @@ SchwarzLoopQuasistatics() const
     next_time{current_time + time_step};
 
     num_iter_ = 0;
-
-    // Output initial configuration. Then disable output.
-    // Handle it after Schwarz iteration.
-    for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
-
-      Albany::AbstractSTKMeshStruct &
-      ams = *stk_mesh_structs_[subdomain];
-
-      ams.exoOutput = true;
-      ams.exoOutputInterval = 1;
-
-      Thyra::ResponseOnlyModelEvaluatorBase<ST> &
-      solver = *(solvers_[subdomain]);
-
-      Piro::LOCASolver<ST> &
-      piro_loca_solver = dynamic_cast<Piro::LOCASolver<ST> &>(solver);
-
-      piro_loca_solver.printSolution();
-
-      ams.exoOutput = false;
-    }
 
     do {
 
@@ -1205,6 +1205,8 @@ SchwarzLoopQuasistatics() const
       piro_loca_solver = dynamic_cast<Piro::LOCASolver<ST> &>(solver);
 
       piro_loca_solver.printSolution();
+
+      ams.exoOutput = false;
     }
 
     ++stop;
