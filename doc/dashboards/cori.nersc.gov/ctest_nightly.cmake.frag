@@ -51,10 +51,8 @@ set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (cism-piscees_REPOSITORY_LOCATION  git@github.com:ACME-Climate/cism-piscees.git)
 
 
-#IKT, 8/27/15: FIXME 
-#Why does CDash script not find BOOST_DIR, NETCDF_DIR from loaded modules? 
-set (BOOST_DIR /usr/common/software/boost/1.61/hsw/gnu) 
-set (NETCDF_DIR /opt/cray/pe/netcdf-hdf5parallel/4.4.0/GNU/5.1) 
+#set (BOOST_DIR /usr/common/software/boost/1.61/hsw/gnu) 
+#set (NETCDF_DIR /opt/cray/pe/netcdf-hdf5parallel/4.4.0/GNU/5.1) 
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -293,18 +291,18 @@ if (BUILD_TRILINOS)
     "-DStratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
     "-DThyra_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
     "-DTrilinos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
-    "-DBoost_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib"
-    "-DBoost_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include"
-    "-DBoostLib_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib"
-    "-DBoostLib_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include"
-    "-DBoostAlbLib_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib"
-    "-DBoostAlbLib_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include"
+    "-DBoost_LIBRARY_DIRS:FILEPATH=$ENV{BOOST_DIR}/lib"
+    "-DBoost_INCLUDE_DIRS:FILEPATH=$ENV{BOOST_DIR}/include"
+    "-DBoostLib_LIBRARY_DIRS:FILEPATH=$ENV{BOOST_DIR}/lib"
+    "-DBoostLib_INCLUDE_DIRS:FILEPATH=$ENV{BOOST_DIR}/include"
+    "-DBoostAlbLib_LIBRARY_DIRS:FILEPATH=$ENV{BOOST_DIR}/lib"
+    "-DBoostAlbLib_INCLUDE_DIRS:FILEPATH=$ENV{BOOST_DIR}/include"
     "-DTPL_ENABLE_Boost:BOOL=ON"
     "-DTPL_ENABLE_BoostLib:BOOL=ON"
     "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
     "-DTPL_ENABLE_Netcdf:BOOL=ON"
-    "-DNetcdf_LIBRARY_DIRS:FILEPATH=${NETCDF_DIR}/lib"
-    "-DTPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include"
+    "-DNetcdf_LIBRARY_DIRS:FILEPATH=$ENV{NETCDF_DIR}/lib"
+    "-DTPL_Netcdf_INCLUDE_DIRS:PATH=$ENV{NETCDF_DIR}/include"
     "-DTrilinos_ENABLE_STKIO:BOOL=ON"
     "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
     "-DTrilinos_ENABLE_SEACASExodus:BOOL=ON"
@@ -524,7 +522,7 @@ if (BUILD_CISM_PISCEES)
     "-DALBANY_FELIX_DYCORE:BOOL=ON"
     "-DALBANY_FELIX_CTEST:BOOL=ON"
     "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/AlbanyFELIXInstall"
-    "-DCISM_NETCDF_DIR={$NETCDF_DIR}" 
+    "-DCISM_NETCDF_DIR=$ENV{NETCDF_DIR}" 
     #
     "-DCMAKE_CXX_COMPILER=CC"
     "-DCMAKE_C_COMPILER=cc"
