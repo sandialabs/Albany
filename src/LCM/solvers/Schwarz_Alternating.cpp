@@ -42,6 +42,15 @@ SchwarzAlternating(
   initial_time_step_ = alt_system_params.get<ST>("Initial Time Step", 0.0);
   output_interval_ = alt_system_params.get<int>("Exodus Write Interval", 1);
 
+  std::string exo_output_type_string = alt_system_params.get<std::string>("Exodus Output Type", "Print Solution");
+
+  if (exo_output_type_string == "Print Solution")
+    exo_output_type_ = PRINT_SOLN;
+  else if (exo_output_type_string == "Write Solution") 
+    exo_output_type_ = WRITE_SOLN; 
+  else 
+    ALBANY_ASSERT(false, "Invalid 'Exodus Output Type'!");
+  
   //number of models
   num_subdomains_ = model_filenames.size();
 
@@ -927,6 +936,7 @@ SchwarzLoopQuasistatics() const
 
   // Output initial configuration. Then disable output.
   // Handle it after Schwarz iteration.
+
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
     Albany::AbstractSTKMeshStruct &
@@ -934,16 +944,32 @@ SchwarzLoopQuasistatics() const
 
     ams.exoOutputInterval = 1;
     ams.exoOutput = true;
+  
+    if (exo_output_type_ == PRINT_SOLN) {
 
-    Thyra::ResponseOnlyModelEvaluatorBase<ST> &
-    solver = *(solvers_[subdomain]);
+      Thyra::ResponseOnlyModelEvaluatorBase<ST> &
+      solver = *(solvers_[subdomain]);
 
-    Piro::LOCASolver<ST> &
-    piro_loca_solver = dynamic_cast<Piro::LOCASolver<ST> &>(solver);
+      Piro::LOCASolver<ST> &
+      piro_loca_solver = dynamic_cast<Piro::LOCASolver<ST> &>(solver);
 
-    piro_loca_solver.printSolution();
+      piro_loca_solver.printSolution();
 
+    }
+
+    else if (exo_output_type_ == WRITE_SOLN) {
+
+      Albany::STKDiscretization &
+      stk_disc = *static_cast<Albany::STKDiscretization *>(discs_[subdomain].get());
+
+      Teuchos::RCP<Tpetra_MultiVector> soln_mv = stk_disc.getSolutionMV();
+
+      stk_disc.writeSolutionMV(*soln_mv, initial_time_);
+
+    }
+    
     ams.exoOutput = false;
+
   }
 
   // Continuation loop
@@ -1144,16 +1170,37 @@ SchwarzLoopQuasistatics() const
 
       ams.exoOutput = output_interval_ > 0 ?
           (stop + 1) % output_interval_ == 0 : false;
+    
+      if (exo_output_type_ == PRINT_SOLN) {
 
-      Thyra::ResponseOnlyModelEvaluatorBase<ST> &
-      solver = *(solvers_[subdomain]);
+        Thyra::ResponseOnlyModelEvaluatorBase<ST> &
+        solver = *(solvers_[subdomain]);
 
-      Piro::LOCASolver<ST> &
-      piro_loca_solver = dynamic_cast<Piro::LOCASolver<ST> &>(solver);
+        Piro::LOCASolver<ST> &
+        piro_loca_solver = dynamic_cast<Piro::LOCASolver<ST> &>(solver);
 
-      piro_loca_solver.printSolution();
+        piro_loca_solver.printSolution();
+      
+      }
+      
+      else if (exo_output_type_ == WRITE_SOLN) {
+
+        //IKT, 8/15/17: I think ams.exoOutput == true logic needs to be 
+        //added for exo_output_type_ == PRINT_SOLN, but maybe I am missing something...
+        if (ams.exoOutput == true) {
+      
+          Albany::STKDiscretization &
+          stk_disc = *static_cast<Albany::STKDiscretization *>(discs_[subdomain].get());
+
+          Teuchos::RCP<Tpetra_MultiVector> soln_mv = stk_disc.getSolutionMV();
+
+          stk_disc.writeSolutionMV(*soln_mv, current_time + time_step);
+
+        }
+      }
 
       ams.exoOutput = false;
+
     }
 
     ++stop;

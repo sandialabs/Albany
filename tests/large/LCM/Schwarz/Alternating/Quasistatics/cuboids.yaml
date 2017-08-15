@@ -10,6 +10,7 @@ ANONYMOUS:
     Final Time: 1.0
     Initial Time Step: 0.1
     Exodus Write Interval: 1
+    Exodus Output Type: Print Solution
   # MODEL DECLARATION, Look in the Problem directory
   Problem:
     # Transient or Steady (Quasi-Static) or Continuation (load steps)

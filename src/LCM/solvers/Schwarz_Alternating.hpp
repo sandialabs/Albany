@@ -178,6 +178,15 @@ private:
   int
   output_interval_{1};
 
+  //IKT: the following boolean is set to true
+  //if the user wishes to use STK's writeSolution
+  //routine rather than NOX's printSolution.  This 
+  //is only a valid option for quasistatics.  writeSolution
+  //may be preferable in some cases b/c there is more control
+  //of the time-stamps in the Exodus output file.
+  enum EXO_OUTPUT {PRINT_SOLN, WRITE_SOLN};
+  EXO_OUTPUT exo_output_type_;
+
   mutable bool
   failed_{false};
 
