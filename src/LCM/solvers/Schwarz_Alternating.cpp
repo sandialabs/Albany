@@ -683,21 +683,16 @@ SchwarzLoopDynamics() const
         Thyra::ResponseOnlyModelEvaluatorBase<ST> &
         solver = *(solvers_[subdomain]);
 
-        fos << "IKT creating Piro::TempusSolver...\n";
         Piro::TempusSolver<ST,LO,GO,KokkosNode> &
         piro_tempus_solver = dynamic_cast<Piro::TempusSolver<ST,LO,GO,KokkosNode> &>(solver);
-        fos << "done! \n";
 
         piro_tempus_solver.setStartTime(current_time); 
         piro_tempus_solver.setFinalTime(next_time); 
         //piro_tempus_solver.setInitTimeStep(time_step);
 
-#if defined(DEBUG)
-        fos << "*** PIRO accessors/mutators ***\n";
         fos << "Initial time       :" << piro_tempus_solver.getStartTime() << '\n';
         fos << "Final time         :" << piro_tempus_solver.getFinalTime() << '\n';
         fos << delim << std::endl;
-#endif //DEBUG
 
         // For time dependent DBCs, set the time to be next time
         auto &
