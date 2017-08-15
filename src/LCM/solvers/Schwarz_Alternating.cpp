@@ -1079,7 +1079,7 @@ SchwarzLoopQuasistatics() const
             nox_solver.getPreviousSolutionGroup().getX().clone(NOX::DeepCopy) :
             solutions_nox_[subdomain];
 
-        NOX::Abstract::Vector &
+        NOX::Abstract::Vector const &
         prev_soln = *prev_soln_rcp;
 
 #if defined(DEBUG)
@@ -1093,11 +1093,11 @@ SchwarzLoopQuasistatics() const
 
         solver.evalModel(in_args, out_args);
 
-        Teuchos::RCP<SolutionSniffer>
-        solution_sniffer = solution_sniffers_[subdomain];
+        auto const &
+        soln_group = piro_loca_solver.getSolver()->getSolutionGroup();
 
         Teuchos::RCP<NOX::Abstract::Vector>
-        curr_soln_rcp = solution_sniffer->getLastSoln();
+        curr_soln_rcp = soln_group.getX().clone(NOX::DeepCopy);
 
         NOX::Abstract::Vector const &
         curr_soln = *curr_soln_rcp;
