@@ -63,7 +63,6 @@ SchwarzAlternating(
   // Arrays to cache useful info for each subdomain for later use
   apps_.resize(num_subdomains_);
   solvers_.resize(num_subdomains_);
-  solution_sniffers_.resize(num_subdomains_);
   stk_mesh_structs_.resize(num_subdomains_);
   discs_.resize(num_subdomains_);
   model_evaluators_.resize(num_subdomains_);
@@ -153,53 +152,6 @@ SchwarzAlternating(
       step_params = integrator_params.sublist("Time Step Control");
 
       start_stop_params_.emplace_back(step_params);
-    }
-
-    //IKT, 8/11/17: we are only requiring NOX / creating SolutionSniffer
-    //for LOCA, not Tempus.
-    if (have_loca == true) {
-
-      bool const
-      have_nox = piro_params.isSublist("NOX");
-
-      ALBANY_ASSERT(have_nox == true);
-
-      Teuchos::ParameterList &
-      nox_params = piro_params.sublist("NOX");
-
-      bool const
-      have_solver_opts = nox_params.isSublist("Solver Options");
-
-      ALBANY_ASSERT(have_solver_opts == true);
-
-      Teuchos::ParameterList &
-      solver_opts = nox_params.sublist("Solver Options");
-
-      std::string const
-      ppo_str{"User Defined Pre/Post Operator"};
-
-      bool const
-      have_ppo = solver_opts.isParameter(ppo_str);
-
-      Teuchos::RCP<NOX::Abstract::PrePostOperator>
-      ppo{Teuchos::null};
-
-      if (have_ppo == true) {
-        ppo = solver_opts.get<decltype(ppo)>(ppo_str);
-      } else {
-        ppo = Teuchos::rcp(new SolutionSniffer);
-        solver_opts.set(ppo_str, ppo);
-        ALBANY_ASSERT(solver_opts.isParameter(ppo_str) == true);
-      }
-
-      constexpr bool
-      throw_on_fail{true};
-
-      Teuchos::RCP<SolutionSniffer>
-      solution_sniffer = Teuchos::rcp_dynamic_cast<SolutionSniffer>
-      (ppo, throw_on_fail);
-
-      solution_sniffers_[subdomain] = solution_sniffer;
     }
 
     Teuchos::RCP<Albany::Application>

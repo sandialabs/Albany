@@ -139,9 +139,6 @@ private:
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   apps_;
 
-  Teuchos::Array<Teuchos::RCP<SolutionSniffer>>
-  solution_sniffers_;
-
   Teuchos::Array<Teuchos::RCP<Albany::AbstractSTKMeshStruct>>
   stk_mesh_structs_;
   
