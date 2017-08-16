@@ -630,6 +630,29 @@ SchwarzLoopDynamics() const
   ST
   current_time{initial_time_};
 
+  // Output initial configuration. Then disable output.
+  // Handle it after Schwarz iteration.
+
+  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
+    Albany::AbstractSTKMeshStruct &
+    ams = *stk_mesh_structs_[subdomain];
+
+    ams.exoOutputInterval = 1;
+    ams.exoOutput = true;
+
+    Albany::STKDiscretization &
+    stk_disc = *static_cast<Albany::STKDiscretization *>(discs_[subdomain].get());
+
+    Teuchos::RCP<Tpetra_MultiVector> soln_mv = stk_disc.getSolutionMV();
+
+    stk_disc.writeSolutionMV(*soln_mv, initial_time_);
+
+    ams.exoOutput = false;
+
+  }
+
+
   // Continuation loop
   while (stop < maximum_steps_ && current_time < final_time_) {
 
@@ -643,38 +666,6 @@ SchwarzLoopDynamics() const
     next_time{current_time + time_step};
 
     num_iter_ = 0;
-
-    // Output initial configuration. Then disable output.
-    // Handle it after Schwarz iteration.
-    for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
-
-      Albany::AbstractSTKMeshStruct &
-      ams = *stk_mesh_structs_[subdomain];
-
-      ams.exoOutput = true;
-      ams.exoOutputInterval = 1;
-
-      // Solver for each subdomain
-      Thyra::ResponseOnlyModelEvaluatorBase<ST> &
-      solver = *(solvers_[subdomain]);
-
-      fos << "IKT creating Piro::TempusSolver...\n";
-      Piro::TempusSolver<ST,LO,GO,KokkosNode> &
-      piro_tempus_solver = dynamic_cast<Piro::TempusSolver<ST,LO,GO,KokkosNode> &>(solver);
-      fos << "done! \n";
-
-      //IKT: place holder for writing solution to Exodus file - this may need to be redesigned.
-      //It's not clear if other fields on the mesh will get written to Exodus with this approach (e.g., Cauchy
-      //stresses)
-      Albany::STKDiscretization &
-      stk_disc = *static_cast<Albany::STKDiscretization *>(discs_[subdomain].get());
-      Teuchos::RCP<Tpetra_MultiVector> soln_mv = stk_disc.getSolutionMV();
-      //IKT: is it right that time-stamp is 0? 
-      stk_disc.writeSolutionMV(*soln_mv, 0.0);
-
-      ams.exoOutput = false;
-
-    }
 
     do {
     
@@ -883,12 +874,27 @@ SchwarzLoopDynamics() const
 
     //Output converged solution if at specified interval 
     for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
       Albany::AbstractSTKMeshStruct &
       ams = *stk_mesh_structs_[subdomain];
 
       ams.exoOutputInterval = 1;
-    
-      //FIXME, IKT - need to implement!
+
+      ams.exoOutput = output_interval_ > 0 ?
+          (stop + 1) % output_interval_ == 0 : false;
+
+      if (ams.exoOutput == true) {
+
+        Albany::STKDiscretization &
+        stk_disc = *static_cast<Albany::STKDiscretization *>(discs_[subdomain].get());
+
+        Teuchos::RCP<Tpetra_MultiVector> soln_mv = stk_disc.getSolutionMV();
+
+        stk_disc.writeSolutionMV(*soln_mv, current_time + time_step);
+
+      }
+
+      ams.exoOutput = false;
 
     }
 
