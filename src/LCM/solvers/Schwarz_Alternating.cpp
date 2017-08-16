@@ -793,12 +793,12 @@ SchwarzLoopDynamics() const
         //soln_diff = curr_soln - prev_soln 
         Thyra::V_VpStV(soln_diff_rcp.ptr(), *curr_soln_rcp, -1.0, *prev_soln_rcp);        
 
-#if defined(DEBUG)
+//#if defined(DEBUG)
         fos << "\n*** Thyra: Solution difference ***\n"; 
         soln_diff_rcp->describe(fos, Teuchos::VERB_EXTREME); 
         fos << "\n*** NORM: " << Thyra::norm(*soln_diff_rcp) << '\n';
         fos << "\n*** Thyra: Solution difference ***\n";
-#endif //DEBUG 
+//#endif //DEBUG 
 
         //After solve, save solution and get info to check convergence
         solutions_thyra_[subdomain] = curr_soln_rcp; 
@@ -890,7 +890,21 @@ SchwarzLoopDynamics() const
 
         Teuchos::RCP<Tpetra_MultiVector> soln_mv = stk_disc.getSolutionMV();
 
-        stk_disc.writeSolutionMV(*soln_mv, current_time + time_step);
+        /*Teuchos::RCP<const Tpetra_Vector> soln = soln_mv->getVector(0); 
+        fos << "\n*** Thyra: soln ***\n"; 
+        soln->describe(fos, Teuchos::VERB_EXTREME); 
+        fos << "\n*** Thyra: soln ***\n";
+        */
+
+        Teuchos::RCP<const Tpetra_Vector> 
+        soln = ConverterT::getConstTpetraVector(solutions_thyra_[subdomain]);
+        Teuchos::RCP<const Tpetra_Vector> 
+        soln_dot = ConverterT::getConstTpetraVector(solutions_dot_thyra_[subdomain]);
+        Teuchos::RCP<const Tpetra_Vector> 
+        soln_dotdot = ConverterT::getConstTpetraVector(solutions_dotdot_thyra_[subdomain]);
+
+        //stk_disc.writeSolutionMV(*soln_mv, current_time + time_step);
+        stk_disc.writeSolutionT(*soln, *soln_dot, *soln_dotdot, current_time + time_step);
 
       }
 
