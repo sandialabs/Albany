@@ -890,21 +890,25 @@ SchwarzLoopDynamics() const
 
         Teuchos::RCP<Tpetra_MultiVector> soln_mv = stk_disc.getSolutionMV();
 
+        //IKT, 8/16/17: Uncomment for debug output.
         /*Teuchos::RCP<const Tpetra_Vector> soln = soln_mv->getVector(0); 
         fos << "\n*** Thyra: soln ***\n"; 
         soln->describe(fos, Teuchos::VERB_EXTREME); 
         fos << "\n*** Thyra: soln ***\n";
         */
 
-        Teuchos::RCP<const Tpetra_Vector> 
+        //IKT, 8/16/17: The following block of code would be another way of writing the solution and its 
+        //time-derivatives to the Exodus file.  However, with this approach other fields living 
+        //on the mesh like the Cauchy stresses would not be written to the file.
+        /*Teuchos::RCP<const Tpetra_Vector> 
         soln = ConverterT::getConstTpetraVector(solutions_thyra_[subdomain]);
         Teuchos::RCP<const Tpetra_Vector> 
         soln_dot = ConverterT::getConstTpetraVector(solutions_dot_thyra_[subdomain]);
         Teuchos::RCP<const Tpetra_Vector> 
         soln_dotdot = ConverterT::getConstTpetraVector(solutions_dotdot_thyra_[subdomain]);
+        stk_disc.writeSolutionT(*soln, *soln_dot, *soln_dotdot, current_time + time_step); */
 
-        //stk_disc.writeSolutionMV(*soln_mv, current_time + time_step);
-        stk_disc.writeSolutionT(*soln, *soln_dot, *soln_dotdot, current_time + time_step);
+        stk_disc.writeSolutionMV(*soln_mv, current_time + time_step);
 
       }
 
