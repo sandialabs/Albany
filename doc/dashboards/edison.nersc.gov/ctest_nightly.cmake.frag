@@ -51,10 +51,8 @@ set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (cism-piscees_REPOSITORY_LOCATION  git@github.com:ACME-Climate/cism-piscees.git)
 
 
-#IKT, 8/27/15: FIXME 
-#Why does CDash script not find BOOST_DIR, NETCDF_DIR from loaded modules? 
-set(BOOST_DIR /usr/common/graphics/boost/1.58.0)
-set(NETCDF_DIR /opt/cray/netcdf-hdf5parallel/4.3.3.1/GNU/5.1)
+#set(BOOST_DIR /usr/common/graphics/boost/1.58.0)
+#set(NETCDF_DIR /opt/cray/netcdf-hdf5parallel/4.3.3.1/GNU/5.1)
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -174,14 +172,14 @@ if (BUILD_TRILINOS)
 
   set (CONFIGURE_OPTIONS
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-    "-DBoost_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include"
-    "-DNetcdf_LIBRARY_DIRS:FILEPATH=${NETCDF_DIR}/lib"
-    "-DTPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include" 
-    "-DBoostLib_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib" 
-    "-DBoostLib_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include" 
+    "-DBoost_INCLUDE_DIRS:FILEPATH=$ENV{BOOST_DIR}/include"
+    "-DNetcdf_LIBRARY_DIRS:FILEPATH=$ENV{NETCDF_DIR}/lib"
+    "-DTPL_Netcdf_INCLUDE_DIRS:PATH=$ENV{NETCDF_DIR}/include" 
+    "-DBoostLib_LIBRARY_DIRS:FILEPATH=$ENV{BOOST_DIR}/lib" 
+    "-DBoostLib_INCLUDE_DIRS:FILEPATH=$ENV{BOOST_DIR}/include" 
     "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
-    "-DBoostAlbLib_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include" 
-    "-DBoostAlbLib_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib" 
+    "-DBoostAlbLib_INCLUDE_DIRS:FILEPATH=$ENV{BOOST_DIR}/include" 
+    "-DBoostAlbLib_LIBRARY_DIRS:FILEPATH=$ENV{BOOST_DIR}/lib" 
     "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     "-D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="
     "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF" 
@@ -209,8 +207,8 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_KokkosCore:BOOL=ON"
     "-DTrilinos_ENABLE_KokkosContainers:BOOL=ON"
     "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
+    "-DTrilinos_ENABLE_Intrepid:BOOL=ON"
     "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
-    "-DIntrepid2_ENABLE_KokkosDynRankView:BOOL=ON"
     "-DTrilinos_ENABLE_MiniTensor:BOOL=ON"
     "-DTrilinos_ENABLE_ML:BOOL=ON"
     "-DTrilinos_ENABLE_MueLu:BOOL=ON"
@@ -228,7 +226,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_STKIO:BOOL=ON"
     "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
     "-DTrilinos_ENABLE_SEACASExodus:BOOL=ON"
-    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
     "-DTrilinos_ENABLE_Teko:BOOL=ON"
     "-DTPL_FIND_SHARED_LIBS:BOOL=OFF"
     "-DBUILD_SHARED_LIBS:BOOL=OFF"
@@ -244,7 +241,7 @@ if (BUILD_TRILINOS)
     "-DKokkos_ENABLE_Pthread:BOOL=OFF"
     #
     "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
-    "-DBoost_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib"
+    "-DBoost_LIBRARY_DIRS:FILEPATH=$ENV{BOOST_DIR}/lib"
     #
     "-DTrilinos_ENABLE_SEACASIoss:BOOL=ON"
     "-D Trilinos_ENABLE_ThreadPool:STRING=ON"
@@ -302,16 +299,17 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Fortran=ON"
     "-DCMAKE_C_FLAGS:STRING=-O3 -DREDUCE_SCATTER_BUG"
     "-DCMAKE_CXX_FLAGS:STRING=-O3 -DREDUCE_SCATTER_BUG -DBOOST_NO_HASH"
+    "-DCMAKE_EXE_LINKER_FLAGS:STRING='-static -Wl,-zmuldefs'"
     "-DTrilinos_ENABLE_SHADOW_WARNINGS=OFF"
     "-DTrilinos_ENABLE_CXX11=ON"
     "-DTPL_ENABLE_Pthread:BOOL=OFF"
     "-DTPL_ENABLE_BinUtils:BOOL=OFF"
     "-DTrilinos_ENABLE_ROL:BOOL=ON"
+    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
     #
     "-DMPI_EXEC:FILEPATH=srun"
     "-DMPI_EXEC_MAX_NUMPROCS:STRING=4"
     "-DMPI_EXEC_NUMPROCS_FLAG:STRING=-n"
-    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
     "-DIntrepid2_ENABLE_KokkosDynRankView:BOOL=ON"
     "-DCMAKE_SKIP_INSTALL_RPATH=TRUE"
   )
@@ -396,19 +394,20 @@ if (BUILD_ALB_FELIX)
     "-DENABLE_DEMO_PDES=OFF" 
     "-DENABLE_SG=OFF" 
     "-DENABLE_ENSEMBLE=OFF"
-    "-DENABLE_MOR=OFF"
+    "-D ENABLE_MOR=OFF"
     "-DENABLE_QCAD=OFF" 
     "-DENABLE_ASCR=OFF" 
     "-DENABLE_LCM:BOOL=OFF"
     "-DENABLE_FELIX:BOOL=ON"
     "-DENABLE_MPAS_INTERFACE=ON"
     "-DENABLE_CISM_INTERFACE=ON"
-    "-DENABLE_GPTL:BOOL=OFF"
+    "-D ENABLE_GPTL:BOOL=OFF"
     "-DAlbany_BUILD_STATIC_EXE:BOOL=ON"
     "-DENABLE_INSTALL:BOOL=ON"
     "-DENABLE_64BIT:BOOL=ON"
     "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/AlbanyFELIXInstall"
     "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
+    "-DCMAKE_EXE_LINKER_FLAGS:STRING='-static -Wl,-zmuldefs'"
     "-DENABLE_FAST_FELIX:BOOL=ON"
     "-DENABLE_STOKHOS:BOOL=ON"
     "-DENABLE_PARAMETERS_DEPEND_ON_SOLUTION:BOOL=ON"
@@ -525,14 +524,14 @@ if (BUILD_CISM_PISCEES)
     "-DALBANY_FELIX_DYCORE:BOOL=ON"
     "-DALBANY_FELIX_CTEST:BOOL=ON"
     "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/AlbanyFELIXInstall"
-    "-DCISM_NETCDF_DIR={$NETCDF_DIR}" 
-    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/cism-pisceesInstall"
+    "-DCISM_NETCDF_DIR=$ENV{NETCDF_DIR}" 
     #
     "-DCMAKE_CXX_COMPILER=CC"
     "-DCMAKE_C_COMPILER=cc"
     "-DCMAKE_Fortran_COMPILER=ftn"
     #
     "-DCMAKE_CXX_FLAGS:STRING='-O2 -static -std=c++11'" 
+    "-DCMAKE_EXE_LINKER_FLAGS:STRING='-static -Wl,-zmuldefs'"
     "-DBUILD_SHARED_LIBS:BOOL=OFF"
     "-DCISM_STATIC_LINKING:BOOL=ON"
     "-DCISM_Fortran_FLAGS='-ffree-line-length-none'" 
