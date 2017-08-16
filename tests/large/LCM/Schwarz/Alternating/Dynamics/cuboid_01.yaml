@@ -32,10 +32,11 @@ ANONYMOUS:
         BC Function: StrongSchwarz
         Coupled Application: cuboid_00.yaml
         Coupled Block: fine
-      Time Dependent SDBC on NS nodelist_6 for DOF Z: 
-        Number of points: 2
-        Time Values: [0.0, 2.0]
-        BC Values: [0.0, 4.0]
+      SDBC on NS nodelist_6 for DOF Z: 0.2
+      #Time Dependent SDBC on NS nodelist_6 for DOF Z: 
+      #  Number of points: 2
+      #  Time Values: [0.0, 2.0]
+      #  BC Values: [0.0, 4.0]
   Discretization:
     Method: Ioss
     Exodus Input File Name: cuboid_01.g
@@ -57,10 +58,9 @@ ANONYMOUS:
           Storage Limit: 2000
         Time Step Control:
           Initial Time: 0.0
-          Final Time: 10.0
           Initial Time Index: 0
           Final Time Index: 1000000
-          Initial Time Step: 0.01
+          Initial Time Step: 0.1
           Maximum Absolute Error: 1.0e-8
           Maximum Relative Error: 1.0e-8
           Integrator Step Type: Constant
