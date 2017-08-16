@@ -42,15 +42,6 @@ SchwarzAlternating(
   initial_time_step_ = alt_system_params.get<ST>("Initial Time Step", 0.0);
   output_interval_ = alt_system_params.get<int>("Exodus Write Interval", 1);
 
-  std::string exo_output_type_string = alt_system_params.get<std::string>("Exodus Output Type", "Print Solution");
-
-  if (exo_output_type_string == "Print Solution")
-    exo_output_type_ = PRINT_SOLN;
-  else if (exo_output_type_string == "Write Solution") 
-    exo_output_type_ = WRITE_SOLN; 
-  else 
-    ALBANY_ASSERT(false, "Invalid 'Exodus Output Type'!");
-  
   //number of models
   num_subdomains_ = model_filenames.size();
 
@@ -595,7 +586,7 @@ reportFinals(std::ostream & os) const
 }
 
 //
-// Schwarz Alternating loop
+// Schwarz Alternating loop, dynamic
 //
 void
 SchwarzAlternating::
@@ -925,6 +916,9 @@ SchwarzLoopDynamics() const
 
 }
 
+//
+// Schwarz Alternating loop, quasistatic
+//
 void
 SchwarzAlternating::
 SchwarzLoopQuasistatics() const
@@ -968,30 +962,18 @@ SchwarzLoopQuasistatics() const
 
     ams.exoOutputInterval = 1;
     ams.exoOutput = true;
+
+    Albany::AbstractDiscretization &
+    abs_disc = *discs_[subdomain];
   
-    if (exo_output_type_ == PRINT_SOLN) {
+    Albany::STKDiscretization &
+    stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
 
-      Thyra::ResponseOnlyModelEvaluatorBase<ST> &
-      solver = *(solvers_[subdomain]);
+    Teuchos::RCP<Tpetra_MultiVector>
+    soln_mv_rcp = stk_disc.getSolutionMV();
 
-      Piro::LOCASolver<ST> &
-      piro_loca_solver = dynamic_cast<Piro::LOCASolver<ST> &>(solver);
+    stk_disc.writeSolutionMV(*soln_mv_rcp, initial_time_);
 
-      piro_loca_solver.printSolution();
-
-    }
-
-    else if (exo_output_type_ == WRITE_SOLN) {
-
-      Albany::STKDiscretization &
-      stk_disc = *static_cast<Albany::STKDiscretization *>(discs_[subdomain].get());
-
-      Teuchos::RCP<Tpetra_MultiVector> soln_mv = stk_disc.getSolutionMV();
-
-      stk_disc.writeSolutionMV(*soln_mv, initial_time_);
-
-    }
-    
     ams.exoOutput = false;
 
   }
@@ -1185,45 +1167,33 @@ SchwarzLoopQuasistatics() const
     reportFinals(fos);
 
     // Output converged solution if at specified interval
-    for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+    bool const
+    do_output = output_interval_ > 0 ?
+        (stop + 1) % output_interval_ == 0 : false;
 
-      Albany::AbstractSTKMeshStruct &
-      ams = *stk_mesh_structs_[subdomain];
+    if (do_output == true) {
 
-      ams.exoOutputInterval = 1;
+      for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
-      ams.exoOutput = output_interval_ > 0 ?
-          (stop + 1) % output_interval_ == 0 : false;
-    
-      if (exo_output_type_ == PRINT_SOLN) {
+        Albany::AbstractSTKMeshStruct &
+        ams = *stk_mesh_structs_[subdomain];
 
-        Thyra::ResponseOnlyModelEvaluatorBase<ST> &
-        solver = *(solvers_[subdomain]);
+        ams.exoOutputInterval = 1;
+        ams.exoOutput = true;
 
-        Piro::LOCASolver<ST> &
-        piro_loca_solver = dynamic_cast<Piro::LOCASolver<ST> &>(solver);
+        Albany::AbstractDiscretization &
+        abs_disc = *discs_[subdomain];
 
-        piro_loca_solver.printSolution();
-      
+        Albany::STKDiscretization &
+        stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
+
+        Teuchos::RCP<Tpetra_MultiVector>
+        soln_mv_rcp = stk_disc.getSolutionMV();
+
+        stk_disc.writeSolutionMV(*soln_mv_rcp, next_time);
+
+        ams.exoOutput = false;
       }
-      
-      else if (exo_output_type_ == WRITE_SOLN) {
-
-        //IKT, 8/15/17: I think ams.exoOutput == true logic needs to be 
-        //added for exo_output_type_ == PRINT_SOLN, but maybe I am missing something...
-        if (ams.exoOutput == true) {
-      
-          Albany::STKDiscretization &
-          stk_disc = *static_cast<Albany::STKDiscretization *>(discs_[subdomain].get());
-
-          Teuchos::RCP<Tpetra_MultiVector> soln_mv = stk_disc.getSolutionMV();
-
-          stk_disc.writeSolutionMV(*soln_mv, current_time + time_step);
-
-        }
-      }
-
-      ams.exoOutput = false;
 
     }
 
