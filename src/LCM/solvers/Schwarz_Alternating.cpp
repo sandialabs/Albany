@@ -734,15 +734,19 @@ SchwarzLoopDynamics() const
           prev_soln_rcp = Thyra::createMember(me.get_x_space()); 
           prev_soln_dot_rcp = Thyra::createMember(me.get_x_space()); 
           prev_soln_dotdot_rcp = Thyra::createMember(me.get_x_space()); 
-          prev_soln_rcp->assign(*current_state->getX());
-          prev_soln_dot_rcp->assign(*current_state->getXDot());
-          prev_soln_dotdot_rcp->assign(*current_state->getXDotDot());
+          prev_soln_rcp->assign(*(me.getNominalValues().get_x()));
+          prev_soln_dot_rcp->assign(*(me.getNominalValues().get_x_dot()));
+          prev_soln_dotdot_rcp->assign(*(me.getNominalValues().get_x_dot_dot()));
  
         }
         else {
           prev_soln_rcp = solutions_thyra_[subdomain];
           prev_soln_dot_rcp = solutions_dot_thyra_[subdomain];
           prev_soln_dotdot_rcp = solutions_dotdot_thyra_[subdomain];
+          //IKT, FIXME: check with Alejandro if current_time is the correct argument to use 
+          //in the call below.
+          piro_tempus_solver.setInitialState(current_time, prev_soln_rcp, 
+                                            prev_soln_dot_rcp, prev_soln_dotdot_rcp);
         }
 
 #if defined(DEBUG)
@@ -752,10 +756,6 @@ SchwarzLoopDynamics() const
         fos << "\n*** Thyra: Previous solution ***\n";
 #endif //DEBUG
 
-        //IKT, FIXME: check with Alejandro if current_time is the correct argument to use 
-        //in the call below.
-        piro_tempus_solver.setInitialState(current_time, prev_soln_rcp, 
-                                           prev_soln_dot_rcp, prev_soln_dotdot_rcp);
 
         solver.evalModel(in_args, out_args);  
         
@@ -793,12 +793,12 @@ SchwarzLoopDynamics() const
         //soln_diff = curr_soln - prev_soln 
         Thyra::V_VpStV(soln_diff_rcp.ptr(), *curr_soln_rcp, -1.0, *prev_soln_rcp);        
 
-//#if defined(DEBUG)
+#if defined(DEBUG)
         fos << "\n*** Thyra: Solution difference ***\n"; 
         soln_diff_rcp->describe(fos, Teuchos::VERB_EXTREME); 
         fos << "\n*** NORM: " << Thyra::norm(*soln_diff_rcp) << '\n';
         fos << "\n*** Thyra: Solution difference ***\n";
-//#endif //DEBUG 
+#endif //DEBUG 
 
         //After solve, save solution and get info to check convergence
         solutions_thyra_[subdomain] = curr_soln_rcp; 
