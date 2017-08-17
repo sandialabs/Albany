@@ -114,6 +114,8 @@ CrystalPlasticityKernel(
     }
   }
 
+  verbosity_ = preader.getVerbosity();
+
 	integration_scheme_ = preader.getIntegrationScheme();
   residual_type_ = preader.getResidualType();
 	step_type_ = preader.getStepType();
@@ -121,7 +123,9 @@ CrystalPlasticityKernel(
 	rol_minimizer_ = preader.getRolMinimizer();
   predictor_slip_ = preader.getPredictorSlip();
 
-  verbosity_ = preader.getVerbosity();
+  if (verbosity_ >= CP::Verbosity::HIGH) {
+    std::cout << "Slip predictor: " << int(predictor_slip_) << std::endl;
+  }
 
   write_data_file_ = p->get<bool>("Write Data File", false);
 
@@ -660,6 +664,9 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
         for (int s(0); s < num_slip_; ++s) {
           slip_np1[s] += dt_ * slip_dot_n[s];
         }
+        if (verbosity_ == CP::Verbosity::DEBUG) {
+          std::cout << slip_np1 <<std::endl;
+        }
       } break;
 
       case CP::PredictorSlip::SOLVE:
@@ -845,6 +852,9 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
           if (verbosity_ == CP::Verbosity::DEBUG) {
             std::cout << portion_L << " " << power_plastic <<std::endl;
           }
+        }
+        if (verbosity_ == CP::Verbosity::DEBUG) {
+          std::cout << slip_np1 <<std::endl;
         }
       } break;
 

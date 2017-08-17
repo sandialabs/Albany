@@ -76,9 +76,6 @@ CP::applySlipIncrement(
   // 
   // calculate plastic velocity gradient
   //
-  minitensor::Tensor<ArgT, NumDimT>
-  exp_L_dt(num_dim);
-
   Lp_np1.fill(minitensor::Filler::ZEROS);
   Lp_np1 = 0. * Lp_np1;
 
@@ -92,10 +89,20 @@ CP::applySlipIncrement(
 
   // update plastic deformation gradient
   // F^{p}_{n+1} = exp(L_{n+1} * delta t) F^{p}_{n}
+  minitensor::Tensor<ArgT, NumDimT> const
   exp_L_dt = minitensor::exp(Lp_np1 * dt);
+
   Fp_np1 = exp_L_dt * Fp_n;
 
   CP::expectFiniteTensor(Fp_np1, "Fp_np1 in applySlipIncrement()");
+
+  if (minitensor::det(Fp_np1) == 0.0)
+  {
+    std::cout << "Singular plastic deformation gradient" << std::endl;
+    std::cout << std::setprecision(4) << Fp_np1 << std::endl;
+    // failed = true;
+    return;
+  }
 }
 
 
