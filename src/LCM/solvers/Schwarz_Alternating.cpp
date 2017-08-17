@@ -119,39 +119,18 @@ SchwarzAlternating(
         init_str_ = "Initial Value";
         start_str_ = "Min Value";
         stop_str_ = "Max Value";
+        step_str_ = "Initial Step Size";
       }
       if (have_tempus == true) {
         init_str_ = "";
         start_str_ = "Initial Time";
         stop_str_ = "Final Time";
+        step_str_ = "Initial Time Step";
       }
     }
     else {
       ALBANY_ASSERT(have_loca == piro_params.isSublist("LOCA"), msg);
       ALBANY_ASSERT(have_tempus == piro_params.isSublist("Tempus"), msg);
-    }
-
-    if (have_loca == true) {
-      Teuchos::ParameterList &
-      loca_params = piro_params.sublist("LOCA");
-
-      Teuchos::ParameterList &
-      stepper_params = loca_params.sublist("Stepper");
-
-      start_stop_params_.emplace_back(stepper_params);
-    }
-
-    if (have_tempus == true) {
-      Teuchos::ParameterList &
-      tempus_params = piro_params.sublist("Tempus");
-
-      Teuchos::ParameterList &
-      integrator_params = tempus_params.sublist("Tempus Integrator");
-
-      Teuchos::ParameterList &
-      step_params = integrator_params.sublist("Time Step Control");
-
-      start_stop_params_.emplace_back(step_params);
     }
 
     Teuchos::RCP<Albany::Application>

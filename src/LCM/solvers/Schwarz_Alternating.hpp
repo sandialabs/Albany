@@ -230,9 +230,6 @@ private:
   bool
   have_tempus_{false};
 
-  mutable std::vector<std::reference_wrapper<Teuchos::ParameterList>>
-  start_stop_params_;
-
   mutable std::string
   init_str_{""};
 
@@ -241,6 +238,9 @@ private:
 
   mutable std::string
   stop_str_{""};
+
+  mutable std::string
+  step_str_{""};
 };
 
 } // namespace LCM
