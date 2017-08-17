@@ -306,6 +306,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_STKIO:BOOL=ON"
     "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
     "-DTrilinos_ENABLE_SEACASExodus:BOOL=ON"
+    "-DTrilinos_ENABLE_SEACASAprepro_lib:BOOL=ON"
     "-DTrilinos_ENABLE_Shards:BOOL=ON"
     "-DTrilinos_ENABLE_SEACASIoss:BOOL=ON"
     "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
