@@ -123,6 +123,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_ROL:BOOL=ON \
       -D Trilinos_ENABLE_Rythmos:BOOL=ON \
       -D Trilinos_ENABLE_SEACAS:BOOL=ON \
+      -D Trilinos_ENABLE_SEACASAprepro_lib:BOOL=ON \
       -D Trilinos_ENABLE_STKClassic:BOOL=OFF \
       -D Trilinos_ENABLE_STKDoc_tests:BOOL=OFF \
       -D Trilinos_ENABLE_STKIO:BOOL=ON \
