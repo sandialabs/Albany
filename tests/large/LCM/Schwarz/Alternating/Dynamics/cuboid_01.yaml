@@ -57,10 +57,8 @@ ANONYMOUS:
           Storage Type: Unlimited
           Storage Limit: 2000
         Time Step Control:
-          Initial Time: 0.0
           Initial Time Index: 0
           Final Time Index: 1000000
-          Initial Time Step: 0.1
           Maximum Absolute Error: 1.0e-8
           Maximum Relative Error: 1.0e-8
           Integrator Step Type: Constant
