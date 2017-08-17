@@ -115,18 +115,6 @@ SchwarzAlternating(
       ALBANY_ASSERT(have_loca != have_tempus, "Must have either LOCA or Tempus");
       have_loca_ = have_loca;
       have_tempus_ = have_tempus;
-      if (have_loca == true) {
-        init_str_ = "Initial Value";
-        start_str_ = "Min Value";
-        stop_str_ = "Max Value";
-        step_str_ = "Initial Step Size";
-      }
-      if (have_tempus == true) {
-        init_str_ = "";
-        start_str_ = "Initial Time";
-        stop_str_ = "Final Time";
-        step_str_ = "Initial Time Step";
-      }
     }
     else {
       ALBANY_ASSERT(have_loca == piro_params.isSublist("LOCA"), msg);
@@ -911,6 +899,18 @@ SchwarzLoopQuasistatics() const
   minitensor::Vector<ST>
   norms_diff(num_subdomains_, minitensor::Filler::ZEROS);
 
+  std::string
+  init_str{"Initial Value"};
+
+  std::string
+  start_str{"Min Value"};
+
+  std::string
+  stop_str{"Max Value"};
+
+  std::string
+  step_str{"Initial Step Size"};
+
   std::string const
   delim(72, '=');
 
@@ -993,18 +993,18 @@ SchwarzLoopQuasistatics() const
         Teuchos::ParameterList &
         start_stop_params = piro_loca_solver.getStepperParams();
 
-        start_stop_params.set(init_str_, current_time);
-        start_stop_params.set(start_str_, current_time);
-        start_stop_params.set(stop_str_, next_time);
+        start_stop_params.set(init_str, current_time);
+        start_stop_params.set(start_str, current_time);
+        start_stop_params.set(stop_str, next_time);
 
         double const
-        init_time = start_stop_params.get<double>(init_str_);
+        init_time = start_stop_params.get<double>(init_str);
 
         double const
-        start_time = start_stop_params.get<double>(start_str_);
+        start_time = start_stop_params.get<double>(start_str);
 
         double const
-        stop_time = start_stop_params.get<double>(stop_str_);
+        stop_time = start_stop_params.get<double>(stop_str);
 
         fos << "Initial time       :" << init_time << '\n';
         fos << "Start time         :" << start_time << '\n';

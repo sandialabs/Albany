@@ -229,18 +229,6 @@ private:
 
   bool
   have_tempus_{false};
-
-  mutable std::string
-  init_str_{""};
-
-  mutable std::string
-  start_str_{""};
-
-  mutable std::string
-  stop_str_{""};
-
-  mutable std::string
-  step_str_{""};
 };
 
 } // namespace LCM
