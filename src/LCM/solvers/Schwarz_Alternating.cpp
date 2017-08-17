@@ -997,6 +997,12 @@ SchwarzLoopQuasistatics() const
         start_stop_params.set(start_str, current_time);
         start_stop_params.set(stop_str, next_time);
 
+        Teuchos::ParameterList &
+        time_step_params = piro_loca_solver.getStepSizeParams();
+
+        time_step_params.set(step_str, time_step);
+        time_step_params.set("Method", "Constant");
+
         double const
         init_time = start_stop_params.get<double>(init_str);
 
@@ -1006,9 +1012,13 @@ SchwarzLoopQuasistatics() const
         double const
         stop_time = start_stop_params.get<double>(stop_str);
 
+        double const
+        step_size = time_step_params.get<double>(step_str);
+
         fos << "Initial time       :" << init_time << '\n';
         fos << "Start time         :" << start_time << '\n';
         fos << "Stop time          :" << stop_time << '\n';
+        fos << "Step size          :" << step_size << '\n';
         fos << delim << std::endl;
 
         // For time dependent DBCs, set the time to be next time
