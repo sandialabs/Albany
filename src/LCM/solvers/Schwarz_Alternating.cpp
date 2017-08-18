@@ -603,6 +603,11 @@ SchwarzLoopDynamics() const
     stk_disc = *static_cast<Albany::STKDiscretization *>(discs_[subdomain].get());
 
     Teuchos::RCP<Tpetra_MultiVector> soln_mv = stk_disc.getSolutionMV();
+       
+    //Populate solutions_thyra_ and its time-derivatives with values of IC from STK discretization. 
+    solutions_thyra_[subdomain] = Thyra::createVector(soln_mv->getVectorNonConst(0)); 
+    solutions_dot_thyra_[subdomain] = Thyra::createVector(soln_mv->getVectorNonConst(1)); 
+    solutions_dotdot_thyra_[subdomain] = Thyra::createVector(soln_mv->getVectorNonConst(2)); 
 
     stk_disc.writeSolutionMV(*soln_mv, initial_time_);
 
@@ -686,56 +691,28 @@ SchwarzLoopDynamics() const
         Teuchos::RCP<Thyra::VectorBase<ST>> 
         prev_soln_dotdot_rcp = Thyra::createMember(me.get_x_space());
 
-        if (is_initial_state == true) {
-          solution_history = piro_tempus_solver.getSolutionHistory();
-          current_state = solution_history->getCurrentState();
-          //set prev_soln_rcp, prev_soln_dot_rcp and prev_soln_dotdot_rcp
-          //by copying nominal values from model evaluator. 
-          Thyra::copy(*(me.getNominalValues().get_x()), prev_soln_rcp.ptr()); 
-          Thyra::copy(*(me.getNominalValues().get_x_dot()), prev_soln_dot_rcp.ptr()); 
-          Thyra::copy(*(me.getNominalValues().get_x_dot_dot()), prev_soln_dotdot_rcp.ptr()); 
-        }
-
-        else {
-          //set prev_soln_rcp, prev_soln_dot_rcp and prev_soln_dotdot_rcp 
-          //by making copy of what is in solutions_thyra_[subdomain], etc.
-          Thyra::copy(*solutions_thyra_[subdomain], prev_soln_rcp.ptr());
-          Thyra::copy(*solutions_dot_thyra_[subdomain], prev_soln_dot_rcp.ptr());
-          Thyra::copy(*solutions_dotdot_thyra_[subdomain], prev_soln_dotdot_rcp.ptr());
-          //IKT, FIXME: check with Alejandro if current_time is the correct argument to use 
-          //in the call below.
-          piro_tempus_solver.setInitialState(current_time, prev_soln_rcp, 
-                                            prev_soln_dot_rcp, prev_soln_dotdot_rcp);
-        }
+        //set prev_soln_rcp, prev_soln_dot_rcp and prev_soln_dotdot_rcp 
+        //by making copy of what is in solutions_thyra_[subdomain], etc.
+        Thyra::copy(*solutions_thyra_[subdomain], prev_soln_rcp.ptr());
+        Thyra::copy(*solutions_dot_thyra_[subdomain], prev_soln_dot_rcp.ptr());
+        Thyra::copy(*solutions_dotdot_thyra_[subdomain], prev_soln_dotdot_rcp.ptr());
+        piro_tempus_solver.setInitialState(current_time, prev_soln_rcp, 
+                                          prev_soln_dot_rcp, prev_soln_dotdot_rcp);
 
         solver.evalModel(in_args, out_args);  
         
 //#if defined(DEBUG)
         Teuchos::RCP<Tpetra_Vector> prev_soln_tpetra;
         fos << "\n*** Thyra: Previous solution ***\n";
-        if (is_initial_state == true) {
-          prev_soln_rcp->describe(fos, Teuchos::VERB_EXTREME);
-          fos << "\n*** NORM: " << Thyra::norm(*prev_soln_rcp) << '\n';
-          if (subdomain == 0) {
-            prev_soln_tpetra = ConverterT::getTpetraVector(prev_soln_rcp); 
-            Albany::writeMatrixMarket(prev_soln_tpetra, "prev_soln_subd0", num_iter_);
-          }
-          else if (subdomain == 1) {
-            prev_soln_tpetra = ConverterT::getTpetraVector(prev_soln_rcp); 
-            Albany::writeMatrixMarket(prev_soln_tpetra, "prev_soln_subd1", num_iter_);
-          }
+        solutions_thyra_[subdomain]->describe(fos, Teuchos::VERB_EXTREME);
+        fos << "\n*** NORM: " << Thyra::norm(*solutions_thyra_[subdomain]) << '\n';
+        if (subdomain == 0) {
+          prev_soln_tpetra = ConverterT::getTpetraVector(solutions_thyra_[0]); 
+          Albany::writeMatrixMarket(prev_soln_tpetra, "prev_soln_subd0", num_iter_);
         }
-        else {
-          solutions_thyra_[subdomain]->describe(fos, Teuchos::VERB_EXTREME);
-          fos << "\n*** NORM: " << Thyra::norm(*solutions_thyra_[subdomain]) << '\n';
-          if (subdomain == 0) {
-            prev_soln_tpetra = ConverterT::getTpetraVector(solutions_thyra_[0]); 
-            Albany::writeMatrixMarket(prev_soln_tpetra, "prev_soln_subd0", num_iter_);
-          }
-          else if (subdomain == 1) {
-            prev_soln_tpetra = ConverterT::getTpetraVector(solutions_thyra_[1]); 
-            Albany::writeMatrixMarket(prev_soln_tpetra, "prev_soln_subd1", num_iter_);
-          }
+        else if (subdomain == 1) {
+          prev_soln_tpetra = ConverterT::getTpetraVector(solutions_thyra_[1]); 
+          Albany::writeMatrixMarket(prev_soln_tpetra, "prev_soln_subd1", num_iter_);
         }
         fos << "\n*** Thyra: Previous solution ***\n";
 //#endif //DEBUG
@@ -779,10 +756,7 @@ SchwarzLoopDynamics() const
 
         //soln_diff = curr_soln - prev_soln
          
-        if (is_initial_state == true) 
-          Thyra::V_VpStV(soln_diff_rcp.ptr(), *curr_soln_rcp, -1.0, *prev_soln_rcp);        
-        else
-          Thyra::V_VpStV(soln_diff_rcp.ptr(), *curr_soln_rcp, -1.0, *solutions_thyra_[subdomain]);        
+        Thyra::V_VpStV(soln_diff_rcp.ptr(), *curr_soln_rcp, -1.0, *solutions_thyra_[subdomain]);        
 
         Teuchos::RCP<Tpetra_Vector> soln_diff_tpetra;
 //#if defined(DEBUG)
@@ -801,13 +775,7 @@ SchwarzLoopDynamics() const
 //#endif //DEBUG 
 
         //After solve, save solution and get info to check convergence
-        solutions_thyra_[subdomain] = curr_soln_rcp; 
-        solutions_dot_thyra_[subdomain] = curr_soln_dot_rcp; 
-        solutions_dotdot_thyra_[subdomain] = curr_soln_dotdot_rcp;
-        if (is_initial_state == true)  
-          norms_init(subdomain) = Thyra::norm(*prev_soln_rcp); 
-        else
-          norms_init(subdomain) = Thyra::norm(*solutions_thyra_[subdomain]); 
+        norms_init(subdomain) = Thyra::norm(*solutions_thyra_[subdomain]); 
         norms_final(subdomain) = Thyra::norm(*curr_soln_rcp); 
         norms_diff(subdomain) = Thyra::norm(*soln_diff_rcp); 
 
@@ -879,13 +847,21 @@ SchwarzLoopDynamics() const
 
       ams.exoOutput = output_interval_ > 0 ?
           (stop + 1) % output_interval_ == 0 : false;
+      
+      Albany::STKDiscretization &
+      stk_disc = *static_cast<Albany::STKDiscretization *>(discs_[subdomain].get());
+
+      Teuchos::RCP<Tpetra_MultiVector> soln_mv = stk_disc.getSolutionMV();
+
+      //Update solutions_thyra_ and its time-derivatives 
+      solutions_thyra_[subdomain] = Thyra::createVector(soln_mv->getVectorNonConst(0)); 
+      solutions_dot_thyra_[subdomain] = Thyra::createVector(soln_mv->getVectorNonConst(1)); 
+      solutions_dotdot_thyra_[subdomain] = Thyra::createVector(soln_mv->getVectorNonConst(2)); 
+
 
       if (ams.exoOutput == true) {
 
-        Albany::STKDiscretization &
-        stk_disc = *static_cast<Albany::STKDiscretization *>(discs_[subdomain].get());
-
-        Teuchos::RCP<Tpetra_MultiVector> soln_mv = stk_disc.getSolutionMV();
+        stk_disc.writeSolutionMV(*soln_mv, current_time + time_step);
 
         //IKT, 8/16/17: Uncomment for debug output.
         /*Teuchos::RCP<const Tpetra_Vector> soln = soln_mv->getVector(0); 
@@ -905,7 +881,6 @@ SchwarzLoopDynamics() const
         soln_dotdot = ConverterT::getConstTpetraVector(solutions_dotdot_thyra_[subdomain]);
         stk_disc.writeSolutionT(*soln, *soln_dot, *soln_dotdot, current_time + time_step); */
 
-        stk_disc.writeSolutionMV(*soln_mv, current_time + time_step);
 
       }
 
