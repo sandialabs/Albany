@@ -364,9 +364,9 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   neumannBcList.set("Cubature Degree", neumannBcList.get("Cubature Degree", cub_degree));
 
   if (neumannStr.find("NBC on SS") == std::string::npos) {
-    Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (5, 0.0));
-    neumannBcList.set("NBC on SS basalside for DOF all set basal", neumannBcList.get("NBC on SS basalside for DOF all set basal", *inputArrayBasal));
-    neumannBcList.set("BetaXY", neumannBcList.get("BetaXY", "Scalar Field"));
+    //Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (5, 0.0));
+    //neumannBcList.set("NBC on SS basalside for DOF all set basal", neumannBcList.get("NBC on SS basalside for DOF all set basal", *inputArrayBasal));
+    //neumannBcList.set("BetaXY", neumannBcList.get("BetaXY", "Scalar Field"));
 
     //Lateral floating ice BCs
     Teuchos::RCP<Teuchos::Array<double> >inputArrayLateral = Teuchos::rcp(new Teuchos::Array<double> (1, rho_ice/rho_seawater));
@@ -375,6 +375,18 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   else {
     std::cout<<"\nWARNING: Using basal and floating Neumann BCs options provided in Albany input file. In order to use boundary conditions provided by MPAS, remove \"Neumann BCs\" sublist from Albany input file.\n"<<std::endl;
   }
+
+  //! temporary fix: basal friction needs to be a distributed parameter
+    paramList->sublist("Problem").sublist("Distributed Parameters").set("Number of Parameter Vectors",1);
+    paramList->sublist("Problem").sublist("Distributed Parameters").sublist("Distributed Parameter 0").set("Name", "basal_friction");
+
+
+    paramList->sublist("Problem").set("Basal Side Name", "basalside");
+    if (!paramList->sublist("Problem").isSublist("FELIX Basal Friction Coefficient")) {
+      paramList->sublist("Problem").sublist("FELIX Basal Friction Coefficient").set("Type","Given Field");
+    } else {
+      std::cout<<"\nWARNING: Using Basal Friction Coefficient provided in Albany input file. In order to use boundary conditions provided by MPAS, remove \"Neumann BCs\" sublist from Albany input file.\n"<<std::endl;
+    }
 
   //Dirichlet BCs
   if(!paramList->sublist("Problem").isSublist("Dirichlet BCs")) {
@@ -453,6 +465,13 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   field6.set<std::string>("Field Origin", "Mesh");
 
   discParams = Teuchos::sublist(paramList, "Discretization", true);
+
+
+  //discParams>setSublist("Side Set Discretizations");
+  Teuchos::RCP<Teuchos::Array<std::string> > sideSetsArray = Teuchos::rcp(new Teuchos::Array<std::string> (1, "basalside"));
+  discParams->sublist("Side Set Discretizations").set("Side Sets", *sideSetsArray);
+  discParams->sublist("Side Set Discretizations").sublist("basalside").set("Method", "SideSetSTK");
+
 
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
   albanyApp = Teuchos::rcp(new Albany::Application(mpiCommT));
