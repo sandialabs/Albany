@@ -448,7 +448,9 @@ Albany::MechanicsProblem::constructNeumannEvaluators(
     components[] = {'x', 'y', 'z'};
 
     while (index < num_dims_) {
-      neumannNames[index] = "sig_" + components[index];
+      std::ostringstream sstream;
+      sstream << "sig_" << components[index];
+      neumannNames[index].assign(sstream.str());
       offsets[index].resize(1);
       offsets[index][0] = index;
       index++;
