@@ -251,13 +251,10 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
 
 #if defined(ALBANY_LCM) && defined(ALBANY_SEACAS)
   // sphere volume is a mesh attribute read from a genesis mesh file containing sphere element (used for peridynamics)
-  bool hasSphereVolumeFieldContainerRequirement = (std::find(req.begin(), req.end(), "Sphere Volume") != req.end());
-  if(hasSphereVolumeFieldContainerRequirement){
-    this->sphereVolume_field = metaData_->template get_field< SVFT >(stk::topology::ELEMENT_RANK, "volume");
-    if(this->sphereVolume_field != 0){
-      buildSphereVolume = true;
-      stk::io::set_field_role(*this->sphereVolume_field, Ioss::Field::ATTRIBUTE);
-    }
+  this->sphereVolume_field = metaData_->template get_field< SVFT >(stk::topology::ELEMENT_RANK, "volume");
+  if(this->sphereVolume_field != 0){
+    buildSphereVolume = true;
+    stk::io::set_field_role(*this->sphereVolume_field, Ioss::Field::ATTRIBUTE);
   }
   // lattice orientation is mesh attributes read from a genesis mesh file use with certain solid mechanics material models
   bool hasLatticeOrientationFieldContainerRequirement = (std::find(req.begin(), req.end(), "Lattice_Orientation") != req.end());
