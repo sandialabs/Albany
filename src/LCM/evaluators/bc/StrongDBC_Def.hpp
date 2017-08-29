@@ -124,10 +124,10 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   entry(1);
 
   Teuchos::Array<ST>
-  entries;
+  entries(0);
 
   Teuchos::Array<LO>
-  indices;
+  indices(0);
 
   for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
     int const
