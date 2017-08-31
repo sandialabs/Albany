@@ -7,8 +7,16 @@
 # Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cuboid_00.g
                ${CMAKE_CURRENT_BINARY_DIR}/cuboid_00.g COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cuboid_00.g.2.0
+               ${CMAKE_CURRENT_BINARY_DIR}/cuboid_00.g.2.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cuboid_00.g.2.1
+               ${CMAKE_CURRENT_BINARY_DIR}/cuboid_00.g.2.1 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cuboid_01.g
                ${CMAKE_CURRENT_BINARY_DIR}/cuboid_01.g COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cuboid_01.g.2.0
+               ${CMAKE_CURRENT_BINARY_DIR}/cuboid_01.g.2.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cuboid_01.g.2.1
+               ${CMAKE_CURRENT_BINARY_DIR}/cuboid_01.g.2.1 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cuboid_00.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cuboid_00.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cuboid_01.yaml
