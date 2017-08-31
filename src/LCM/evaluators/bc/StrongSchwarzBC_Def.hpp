@@ -711,11 +711,23 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::RCP<const Tpetra_Map>
   Map = J->getMap(); 
 
-  auto global_length = x->getGlobalLength(); 
-  std::vector<ST> marker(global_length);
-  for (int i=0; i<global_length; i++)
-    marker[i] = 0.0;
+  auto global_length = x->getGlobalLength();
+
+  auto const 
+  max_global_index = x->getMap()->getMaxAllGlobalIndex(); 
+
+  auto const 
+  min_global_index = x->getMap()->getMinAllGlobalIndex(); 
  
+#if DEBUG
+  Teuchos::FancyOStream &fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  fos << "IKT global_length, max_global_index, min_global_index = " << global_length << ", " << 
+                max_global_index << ", " << min_global_index << std::endl; 
+#endif
+
+ 
+  std::vector<ST> marker(max_global_index+1, 0.0);
+
   std::vector<std::vector<int>> const &
   ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
@@ -847,11 +859,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       }
     }
   }
-  std::vector<ST> global_marker(global_length);
-  for (int i=0; i<global_length; i++) 
-    global_marker[i] = 0.0; 
+  std::vector<ST> global_marker(max_global_index+1, 0.0);
 
-  for (int i=0; i<global_length; i++)  
+  for (int i=0; i<max_global_index+1; i++)  
     Teuchos::reduceAll(*(Map->getComm()), Teuchos::REDUCE_SUM, 1, &marker[i], &global_marker[i]);
   
   auto num_global_cols = J->getGlobalNumCols(); 
@@ -859,7 +869,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   auto procNo = Map->getComm()->getRank();
  
    //loop over global columns
-  for (auto gcol = 0; gcol < num_global_cols; ++gcol) {
+  for (auto gcol = min_global_index; gcol < max_global_index+1; ++gcol) {
     //check if gcol dof is dirichlet dof 
     ST is_dir_dof = global_marker[gcol];
     //if gcol is dirichlet dof, zero out all (global) rows corresponding to global column gcol
@@ -868,7 +878,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       std::cout << "IKT proc, zeroeing out column = " << procNo << ", " << gcol << std::endl;
 #endif
       //loop over global rows
-      for (auto grow = 0; grow < num_global_rows; ++grow) {
+      for (auto grow = min_global_index; grow < max_global_index+1; ++grow) {
         if (grow != gcol) {
           Teuchos::Array<GO> gcol_array(1);
           gcol_array[0] = gcol;

@@ -7,6 +7,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
+#include "Albany_Utils.hpp"
 
 //#define DEBUG
 
@@ -102,8 +103,20 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   auto const
   global_length = x->getGlobalLength();
 
+  auto const 
+  max_global_index = x->getMap()->getMaxAllGlobalIndex(); 
+
+  auto const 
+  min_global_index = x->getMap()->getMinAllGlobalIndex(); 
+ 
+#if DEBUG
+  Teuchos::FancyOStream &fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  fos << "IKT global_length, max_global_index, min_global_index = " << global_length << ", " << 
+                max_global_index << ", " << min_global_index << std::endl; 
+#endif
+
   std::vector<ST>
-  marker(global_length, 0.0);
+  marker(max_global_index+1, 0.0);
 
   std::vector<std::vector<int>> const &
   ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
@@ -124,10 +137,10 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   entry(1);
 
   Teuchos::Array<ST>
-  entries(0);
+  entries;
 
   Teuchos::Array<LO>
-  indices(0);
+  indices;
 
   for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
     int const
@@ -172,22 +185,16 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   }
 
   std::vector<ST>
-  global_marker(global_length, 0.0);
+  global_marker(max_global_index+1, 0.0);
 
-  for (int i = 0; i < global_length; i++) {
+  for (int i = 0; i < max_global_index+1; i++) {
     Teuchos::reduceAll(
         *(jac_map->getComm()), Teuchos::REDUCE_SUM,
         /*numvals=*/1, &marker[i], &global_marker[i]);
   }
 
-  auto const
-  num_global_cols = J->getGlobalNumCols();
-
-  auto const
-  num_global_rows = J->getGlobalNumRows();
-
   // loop over global columns
-  for (auto gcol = 0; gcol < num_global_cols; ++gcol) {
+  for (auto gcol = min_global_index; gcol < max_global_index+1; ++gcol) {
     // check if gcol dof is dirichlet dof
     ST const
     is_dir_dof = global_marker[gcol];
@@ -201,7 +208,7 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
                 << gcol << std::endl;
 #endif
       // loop over global rows
-      for (auto grow = 0; grow < num_global_rows; ++grow) {
+      for (auto grow = min_global_index; grow < max_global_index+1; ++grow) {
         if (grow != gcol) {
           Teuchos::Array<GO>
           gcol_array(1);
