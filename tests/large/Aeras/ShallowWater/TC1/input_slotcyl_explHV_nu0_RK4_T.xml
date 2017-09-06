@@ -75,8 +75,8 @@
                     616482944.649
                     5067199485.45
     }"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
-    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
+    <Parameter  name="Absolute Tolerance" type="double" value="1.0e2"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.423961575,0.0035656993}"/>
   </ParameterList>
