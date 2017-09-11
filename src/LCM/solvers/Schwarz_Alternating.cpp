@@ -599,15 +599,24 @@ SchwarzLoopDynamics() const
     ams.exoOutputInterval = 1;
     ams.exoOutput = true;
 
+    Albany::AbstractDiscretization &
+    abs_disc = *discs_[subdomain];
+
     Albany::STKDiscretization &
-    stk_disc = *static_cast<Albany::STKDiscretization *>(discs_[subdomain].get());
+    stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
 
     Teuchos::RCP<Tpetra_MultiVector> soln_mv = stk_disc.getSolutionMV();
        
-    //Populate solutions_thyra_ and its time-derivatives with values of IC from STK discretization. 
-    solutions_thyra_[subdomain] = Thyra::createVector(soln_mv->getVectorNonConst(0)); 
-    solutions_dot_thyra_[subdomain] = Thyra::createVector(soln_mv->getVectorNonConst(1)); 
-    solutions_dotdot_thyra_[subdomain] = Thyra::createVector(soln_mv->getVectorNonConst(2)); 
+    // Populate solutions_thyra_ and its time-derivatives with values of IC
+    // from STK discretization.
+    solutions_thyra_[subdomain] =
+        Thyra::createVector(soln_mv->getVectorNonConst(0));
+
+    solutions_dot_thyra_[subdomain] =
+        Thyra::createVector(soln_mv->getVectorNonConst(1));
+
+    solutions_dotdot_thyra_[subdomain] =
+        Thyra::createVector(soln_mv->getVectorNonConst(2));
 
     stk_disc.writeSolutionMV(*soln_mv, initial_time_);
 
@@ -646,16 +655,26 @@ SchwarzLoopDynamics() const
         Thyra::ResponseOnlyModelEvaluatorBase<ST> &
         solver = *(solvers_[subdomain]);
 
-        Piro::TempusSolver<ST,LO,GO,KokkosNode> &
-        piro_tempus_solver = dynamic_cast<Piro::TempusSolver<ST,LO,GO,KokkosNode> &>(solver);
+        Piro::TempusSolver<ST, LO, GO, KokkosNode> &
+        piro_tempus_solver =
+            dynamic_cast<Piro::TempusSolver<ST, LO, GO, KokkosNode> &>(solver);
 
         piro_tempus_solver.setStartTime(current_time); 
         piro_tempus_solver.setFinalTime(next_time); 
         piro_tempus_solver.setInitTimeStep(time_step);
 
-        fos << "Initial time       :" << piro_tempus_solver.getStartTime() << '\n';
-        fos << "Final time         :" << piro_tempus_solver.getFinalTime() << '\n';
-        fos << "Time step          :" << piro_tempus_solver.getInitTimeStep() << '\n';
+        double const
+        tempus_start_time = piro_tempus_solver.getStartTime();
+
+        double const
+        tempus_final_time = piro_tempus_solver.getFinalTime();
+
+        double const
+        tempus_time_step = piro_tempus_solver.getInitTimeStep();
+
+        fos << "Initial time       :" << tempus_start_time << '\n';
+        fos << "Final time         :" << tempus_final_time << '\n';
+        fos << "Time step          :" << tempus_time_step << '\n';
         fos << delim << std::endl;
 
         // For time dependent DBCs, set the time to be next time
@@ -693,19 +712,36 @@ SchwarzLoopDynamics() const
 
         //set prev_soln_rcp, prev_soln_dot_rcp and prev_soln_dotdot_rcp 
         //by making copy of what is in solutions_thyra_[subdomain], etc.
-        Thyra::copy(*solutions_thyra_[subdomain], prev_soln_rcp.ptr());
-        Thyra::copy(*solutions_dot_thyra_[subdomain], prev_soln_dot_rcp.ptr());
-        Thyra::copy(*solutions_dotdot_thyra_[subdomain], prev_soln_dotdot_rcp.ptr());
-        piro_tempus_solver.setInitialState(current_time, prev_soln_rcp, 
-                                          prev_soln_dot_rcp, prev_soln_dotdot_rcp);
+        Thyra::VectorBase<ST> &
+        solution_thyra = *solutions_thyra_[subdomain];
+
+        Thyra::VectorBase<ST> &
+        solution_dot_thyra = *solutions_dot_thyra_[subdomain];
+
+        Thyra::VectorBase<ST> &
+        solution_dotdot_thyra = *solutions_dotdot_thyra_[subdomain];
+
+        Thyra::copy(solution_thyra, prev_soln_rcp.ptr());
+
+        Thyra::copy(solution_dot_thyra, prev_soln_dot_rcp.ptr());
+
+        Thyra::copy(solution_dotdot_thyra, prev_soln_dotdot_rcp.ptr());
+
+        piro_tempus_solver.setInitialState(
+            current_time,
+            prev_soln_rcp,
+            prev_soln_dot_rcp,
+            prev_soln_dotdot_rcp);
 
         solver.evalModel(in_args, out_args);  
         
-//#if defined(DEBUG)
-        Teuchos::RCP<Tpetra_Vector> prev_soln_tpetra;
+#if defined(DEBUG)
+        Teuchos::RCP<Tpetra_Vector>
+        prev_soln_tpetra;
+
         fos << "\n*** Thyra: Previous solution ***\n";
         solutions_thyra_[subdomain]->describe(fos, Teuchos::VERB_EXTREME);
-        fos << "\n*** NORM: " << Thyra::norm(*solutions_thyra_[subdomain]) << '\n';
+        fos << "\n*** NORM: " << Thyra::norm(solution_thyra) << '\n';
         if (subdomain == 0) {
           prev_soln_tpetra = ConverterT::getTpetraVector(solutions_thyra_[0]); 
           Albany::writeMatrixMarket(prev_soln_tpetra, "prev_soln_subd0", num_iter_);
@@ -715,7 +751,7 @@ SchwarzLoopDynamics() const
           Albany::writeMatrixMarket(prev_soln_tpetra, "prev_soln_subd1", num_iter_);
         }
         fos << "\n*** Thyra: Previous solution ***\n";
-//#endif //DEBUG
+#endif //DEBUG
         
         solution_history = piro_tempus_solver.getSolutionHistory();
 
@@ -733,12 +769,15 @@ SchwarzLoopDynamics() const
         curr_soln_dotdot_rcp = Thyra::createMember(me.get_x_space());
         Thyra::copy(*current_state->getXDotDot(), curr_soln_dotdot_rcp.ptr());
 
-        Teuchos::RCP<Tpetra_Vector> curr_soln_tpetra;
-//#if defined(DEBUG)
+#if defined(DEBUG)
         fos << "\n*** Thyra: Current solution ***\n";
         curr_soln_rcp->describe(fos, Teuchos::VERB_EXTREME);
         fos << "\n*** NORM: " << Thyra::norm(*curr_soln_rcp) << '\n';
         fos << "\n*** Thyra: Current solution ***\n";
+
+        Teuchos::RCP<Tpetra_Vector>
+        curr_soln_tpetra;
+
         if (subdomain == 0) {
           curr_soln_tpetra = ConverterT::getTpetraVector(curr_soln_rcp); 
           Albany::writeMatrixMarket(curr_soln_tpetra, "curr_soln_subd0", num_iter_);
@@ -747,23 +786,28 @@ SchwarzLoopDynamics() const
           curr_soln_tpetra = ConverterT::getTpetraVector(curr_soln_rcp); 
           Albany::writeMatrixMarket(curr_soln_tpetra, "curr_soln_subd1", num_iter_);
         }
-//#endif //DEBUG
+#endif //DEBUG
 
         Teuchos::RCP<Thyra::VectorBase<ST>>
         soln_diff_rcp = Thyra::createMember(me.get_x_space());
 
         Thyra::put_scalar<ST>(0.0, soln_diff_rcp.ptr()); 
-
-        //soln_diff = curr_soln - prev_soln
          
-        Thyra::V_VpStV(soln_diff_rcp.ptr(), *curr_soln_rcp, -1.0, *solutions_thyra_[subdomain]);        
+        Thyra::V_VpStV(
+            soln_diff_rcp.ptr(),
+            *curr_soln_rcp,
+            -1.0,
+            solution_thyra);
 
-        Teuchos::RCP<Tpetra_Vector> soln_diff_tpetra;
-//#if defined(DEBUG)
+#if defined(DEBUG)
         fos << "\n*** Thyra: Solution difference ***\n"; 
         soln_diff_rcp->describe(fos, Teuchos::VERB_EXTREME); 
         fos << "\n*** NORM: " << Thyra::norm(*soln_diff_rcp) << '\n';
         fos << "\n*** Thyra: Solution difference ***\n";
+
+        Teuchos::RCP<Tpetra_Vector>
+        soln_diff_tpetra;
+
         if (subdomain == 0) {
           soln_diff_tpetra = ConverterT::getTpetraVector(soln_diff_rcp); 
           Albany::writeMatrixMarket(soln_diff_tpetra, "soln_diff_subd0", num_iter_);
@@ -772,10 +816,10 @@ SchwarzLoopDynamics() const
           soln_diff_tpetra = ConverterT::getTpetraVector(soln_diff_rcp); 
           Albany::writeMatrixMarket(soln_diff_tpetra, "soln_diff_subd1", num_iter_);
         }
-//#endif //DEBUG 
+#endif //DEBUG
 
         //After solve, save solution and get info to check convergence
-        norms_init(subdomain) = Thyra::norm(*solutions_thyra_[subdomain]); 
+        norms_init(subdomain) = Thyra::norm(solution_thyra);
         norms_final(subdomain) = Thyra::norm(*curr_soln_rcp); 
         norms_diff(subdomain) = Thyra::norm(*soln_diff_rcp); 
 
@@ -848,53 +892,37 @@ SchwarzLoopDynamics() const
       ams.exoOutput = output_interval_ > 0 ?
           (stop + 1) % output_interval_ == 0 : false;
       
-      Albany::STKDiscretization &
-      stk_disc = *static_cast<Albany::STKDiscretization *>(discs_[subdomain].get());
+      Albany::AbstractDiscretization &
+      abs_disc = *discs_[subdomain];
 
-      Teuchos::RCP<Tpetra_MultiVector> soln_mv = stk_disc.getSolutionMV();
+      Albany::STKDiscretization &
+      stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
+
+      Teuchos::RCP<Tpetra_MultiVector>
+      soln_mv = stk_disc.getSolutionMV();
 
       //Update solutions_thyra_ and its time-derivatives 
-      solutions_thyra_[subdomain] = Thyra::createVector(soln_mv->getVectorNonConst(0)); 
-      solutions_dot_thyra_[subdomain] = Thyra::createVector(soln_mv->getVectorNonConst(1)); 
-      solutions_dotdot_thyra_[subdomain] = Thyra::createVector(soln_mv->getVectorNonConst(2)); 
+      solutions_thyra_[subdomain] =
+          Thyra::createVector(soln_mv->getVectorNonConst(0));
 
+      solutions_dot_thyra_[subdomain] =
+          Thyra::createVector(soln_mv->getVectorNonConst(1));
+
+      solutions_dotdot_thyra_[subdomain] =
+          Thyra::createVector(soln_mv->getVectorNonConst(2));
 
       if (ams.exoOutput == true) {
-
         stk_disc.writeSolutionMV(*soln_mv, current_time + time_step);
-
-        //IKT, 8/16/17: Uncomment for debug output.
-        /*Teuchos::RCP<const Tpetra_Vector> soln = soln_mv->getVector(0); 
-        fos << "\n*** Thyra: soln ***\n"; 
-        soln->describe(fos, Teuchos::VERB_EXTREME); 
-        fos << "\n*** Thyra: soln ***\n";
-        */
-
-        //IKT, 8/16/17: The following block of code would be another way of writing the solution and its 
-        //time-derivatives to the Exodus file.  However, with this approach other fields living 
-        //on the mesh like the Cauchy stresses would not be written to the file.
-        /*Teuchos::RCP<const Tpetra_Vector> 
-        soln = ConverterT::getConstTpetraVector(solutions_thyra_[subdomain]);
-        Teuchos::RCP<const Tpetra_Vector> 
-        soln_dot = ConverterT::getConstTpetraVector(solutions_dot_thyra_[subdomain]);
-        Teuchos::RCP<const Tpetra_Vector> 
-        soln_dotdot = ConverterT::getConstTpetraVector(solutions_dotdot_thyra_[subdomain]);
-        stk_disc.writeSolutionT(*soln, *soln_dot, *soln_dotdot, current_time + time_step); */
-
-
       }
 
       ams.exoOutput = false;
-
     }
 
     ++stop;
     current_time += time_step;
-
   }
 
   return; 
-
 }
 
 //
