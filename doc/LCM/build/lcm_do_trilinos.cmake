@@ -103,7 +103,7 @@ function(lcm_do_trilinos)
       "-DTrilinos_ENABLE_KokkosExample:BOOL=OFF"
       "-DTrilinos_ENABLE_MiniTensor:BOOL=ON"
       "-DTrilinos_ENABLE_ML:BOOL=ON"
-      "-DTrilinos_ENABLE_MueLu:BOOL=OFF"
+      "-DTrilinos_ENABLE_MueLu:BOOL=ON"
       "-DTrilinos_ENABLE_NOX:BOOL=ON"
       "-DTrilinos_ENABLE_OpenMP:BOOL=$ENV{LCM_ENABLE_OPENMP}"
       "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
