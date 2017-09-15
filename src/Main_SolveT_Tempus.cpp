@@ -307,13 +307,12 @@ int main(int argc, char *argv[]) {
           std::endl << "Error!  No Tempus sublist when attempting to run problem with Transient Tempus No Piro " <<
           "Solution Method. " << std::endl);
       }   
-      Teuchos::RCP<Tempus::IntegratorBasic<double> > integrator =
-        Tempus::integratorBasic<double>(tempusPL, model);
-      Teuchos::RCP<Piro::ObserverBase<double> > piro_observer = slvrfctry.returnObserverT(); 
+      auto integrator = Tempus::integratorBasic<double>(tempusPL, model);
+      auto piro_observer = slvrfctry.returnObserverT(); 
       Teuchos::RCP<Tempus::IntegratorObserver<double> > tempus_observer = Teuchos::null;
       if (Teuchos::nonnull(piro_observer)) {
-        const RCP<Tempus::SolutionHistory<double> > solutionHistory = integrator->getSolutionHistory();
-        const Teuchos::RCP<Tempus::TimeStepControl<double> > timeStepControl = integrator->getTimeStepControl();
+        auto solutionHistory = integrator->getSolutionHistory();
+        auto timeStepControl = integrator->getTimeStepControl();
         tempus_observer = Teuchos::rcp(new Piro::ObserverToTempusIntegrationObserverAdapter<double>(solutionHistory, 
                                            timeStepControl, piro_observer));
       }
