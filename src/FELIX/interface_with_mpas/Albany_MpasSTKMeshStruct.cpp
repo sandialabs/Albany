@@ -145,7 +145,8 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                              nsNames, ssNames, worksetSize, partVec[0]->name(),
                              ebNameToIndex, this->interleavedOrdering));
-  //this->initializeSideSetMeshStructs(comm);
+
+  this->initializeSideSetMeshStructs(commT);
 
 
 }
@@ -267,6 +268,8 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                              nsNames, ssNames, worksetSize, partVec[0]->name(),
                              ebNameToIndex, this->interleavedOrdering));
+
+  this->initializeSideSetMeshStructs(commT);
 
 
 }
@@ -464,6 +467,8 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
   //Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
+
+  this->finalizeSideSetMeshStructs(commT, {}, {}, worksetSize);
 }
 
 
@@ -723,6 +728,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
   //Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
+  this->finalizeSideSetMeshStructs(commT, {}, {}, worksetSize);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

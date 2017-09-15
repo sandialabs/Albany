@@ -3,6 +3,9 @@
 module-whatis "LCM TPLs for Trilinos/Albany"
 
 if { [is-loaded lcm-fedora] } {
+  set                     netcdf_root     /usr/local/netcdf
+  set                     netcdf_inc      $netcdf_root/include
+  set                     netcdf_lib      $netcdf_root/lib
   setenv                  BOOST_INC       /usr/include/boost
   setenv                  BOOST_LIB       /usr/lib64
   setenv                  BOOSTLIB_INC    /usr/include/boost
@@ -10,9 +13,6 @@ if { [is-loaded lcm-fedora] } {
   setenv                  MPI_INC         /usr/include/openmpi-x86_64
   setenv                  MPI_LIB         /usr/lib64/openmpi/lib
   setenv                  MPI_BIN         /usr/lib64/openmpi/bin
-  setenv                  NETCDF          /usr/local/netcdf
-  setenv                  NETCDF_INC      /usr/include/openmpi-x86_64
-  setenv                  NETCDF_LIB      /usr/lib64/openmpi/lib
   setenv                  LCM_NETCDF_PARALLEL OFF
   setenv                  YAML_CPP_INC    /usr/include
   setenv                  YAML_CPP_LIB    /usr/lib64
@@ -45,9 +45,6 @@ if { [is-loaded lcm-sems] } {
   setenv                  MPI_INC         $mpi_root/include
   setenv                  MPI_LIB         $mpi_root/lib
   setenv                  MPI_BIN         $mpi_root/bin
-  setenv                  NETCDF          $netcdf_root
-  setenv                  NETCDF_INC      $netcdf_inc
-  setenv                  NETCDF_LIB      $netcdf_lib
   setenv                  LCM_NETCDF_PARALLEL ON
   setenv                  YAML_CPP_INC    $yaml_cpp_inc
   setenv                  YAML_CPP_LIB    $yaml_cpp_lib
@@ -74,12 +71,13 @@ if { [is-loaded lcm-cluster] } {
   setenv                  MPI_INC         $mpi_root/include
   setenv                  MPI_LIB         $mpi_root/lib
   setenv                  MPI_BIN         $mpi_root/bin
-  setenv                  NETCDF          $netcdf_root
-  setenv                  NETCDF_INC      $netcdf_inc
-  setenv                  NETCDF_LIB      $netcdf_lib
   setenv                  LCM_NETCDF_PARALLEL ON
   setenv                  YAML_CPP_INC    $yaml_cpp_inc
   setenv                  YAML_CPP_LIB    $yaml_cpp_lib
 # PATHs for MPI are set by the modules
   prepend-path            LD_LIBRARY_PATH $netcdf_lib
 }
+
+setenv                    NETCDF          $netcdf_root
+setenv                    NETCDF_INC      $netcdf_inc
+setenv                    NETCDF_LIB      $netcdf_lib

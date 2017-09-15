@@ -53,13 +53,13 @@ set (NVCC_WRAPPER ${CTEST_SCRIPT_DIRECTORY}/nvcc_wrapper_p100)
 set (CUDA_MANAGED_FORCE_DEVICE_ALLOC 1)
 set( CUDA_LAUNCH_BLOCKING 1)
 
-set(BOOST_DIR "/home/projects/pwr8-rhel73-lsf/boost/1.60.0/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44")
-set(NETCDF_DIR "/home/projects/pwr8-rhel73-lsf/netcdf/4.4.1/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
-set(PNETCDF_DIR "/home/projects/pwr8-rhel73-lsf/pnetcdf/1.6.1/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
-set(HDF5_DIR "/home/projects/pwr8-rhel73-lsf/hdf5/1.8.17/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
-set(BLAS_DIR "/home/projects/pwr8-rhel73-lsf/openblas/0.2.19/gcc/5.3.0")  
-set(LAPACK_DIR "/home/projects/pwr8-rhel73-lsf/openblas/0.2.19/gcc/5.3.0")
-set(ZLIB_DIR "/home/projects/pwr8-rhel73-lsf/zlib/1.2.8") 
+#set(BOOST_ROOT "/home/projects/pwr8-rhel73-lsf/boost/1.60.0/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44")
+#set(NETCDF_ROOT "/home/projects/pwr8-rhel73-lsf/netcdf/4.4.1/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
+#set(PNETCDF_ROOT "/home/projects/pwr8-rhel73-lsf/pnetcdf/1.6.1/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
+#set(HDF5_ROOT "/home/projects/pwr8-rhel73-lsf/hdf5/1.8.17/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
+#set(BLAS_ROOT "/home/projects/pwr8-rhel73-lsf/openblas/0.2.19/gcc/5.3.0")  
+#set(LAPACKROOT "/home/projects/pwr8-rhel73-lsf/openblas/0.2.19/gcc/5.3.0")
+#set(ZLIB_DIR "/home/projects/pwr8-rhel73-lsf/zlib/1.2.8") 
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -180,19 +180,19 @@ if (BUILD_TRILINOS)
     "-DMPI_EXEC_NUMPROCS_FLAG:STRING=-n"
     #
     "-DTPL_ENABLE_BLAS:BOOL=ON"
-    "-DBLAS_LIBRARY_DIRS:PATH=${BLAS_DIR}/lib"
+    "-DBLAS_LIBRARY_DIRS:PATH=$ENV{BLAS_ROOT}/lib"
     "-DBLAS_LIBRARY_NAMES:STRING=blas"
     #
     "-DTPL_ENABLE_LAPACK:BOOL=ON"
-    "-DLAPACK_LIBRARY_DIRS:PATH=${LAPACK_DIR}/lib"
+    "-DLAPACK_LIBRARY_DIRS:PATH=$ENV{LAPACKROOT}/lib"
     "-DLAPACK_LIBRARY_NAMES:STRING=lapack"
     #
     "-DTPL_ENABLE_Boost:BOOL=ON"
-    "-DBoost_INCLUDE_DIRS:PATH=${BOOST_DIR}/include"
+    "-DBoost_INCLUDE_DIRS:PATH=$ENV{BOOST_ROOT}/include"
     #
     "-DTPL_ENABLE_BoostLib:BOOL=ON"
-    "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_DIR}/include"
-    "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib"
+    "-DBoostLib_INCLUDE_DIRS:PATH=$ENV{BOOST_ROOT}/include"
+    "-DBoostLib_LIBRARY_DIRS:PATH=$ENV{BOOST_ROOT}/lib"
     #
     "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
     "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
@@ -205,6 +205,7 @@ if (BUILD_TRILINOS)
     #
     "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
     "-DKokkos_ENABLE_CXX11:BOOL=ON"
+    "-DKokkos_ENABLE_Cuda_LAMBDA:BOOL=ON"
     "-DKokkos_ENABLE_Cuda_UVM:BOOL=ON"
     "-DKokkos_ENABLE_EXAMPLES:BOOL=OFF"
     "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
@@ -227,16 +228,16 @@ if (BUILD_TRILINOS)
     #
     "-DTPL_ENABLE_Matio:BOOL=OFF"
     "-DTPL_ENABLE_Netcdf:BOOL=ON"
-    "-DTPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include"
-    "-DTPL_Netcdf_LIBRARIES=${NETCDF_DIR}/lib/libnetcdf.a"
+    "-DTPL_Netcdf_INCLUDE_DIRS:PATH=$ENV{NETCDF_ROOT}/include"
+    "-DTPL_Netcdf_LIBRARIES=$ENV{NETCDF_ROOT}/lib/libnetcdf.a"
     "-DTPL_Netcdf_PARALLEL:BOOL=ON"
     "-DTPL_ENABLE_Pnetcdf:STRING=ON"
-    "-DTPL_Pnetcdf_INCLUDE_DIRS:PATH=${PNETCDF_DIR}/include"
-    "-DTPL_Pnetcdf_LIBRARIES=${PNETCDF_DIR}/lib/libpnetcdf.a"
+    "-DTPL_Pnetcdf_INCLUDE_DIRS:PATH=$ENV{PNETCDF_ROOT}/include"
+    "-DTPL_Pnetcdf_LIBRARIES=$ENV{PNETCDF_ROOT}/lib/libpnetcdf.a"
     #
     "-DTPL_ENABLE_HDF5:STRING=ON"
-    "-DTPL_HDF5_INCLUDE_DIRS:PATH=${HDF5_DIR}/include"
-    "-DTPL_HDF5_LIBRARIES=${HDF5_DIR}/lib/libhdf5_hl.a"
+    "-DTPL_HDF5_INCLUDE_DIRS:PATH=$ENV{HDF5_ROOT}/include"
+    "-DTPL_HDF5_LIBRARIES=$ENV{HDF5_ROOT}/lib/libhdf5_hl.a"
     "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz'"
     "-DTPL_ENABLE_X11:BOOL=OFF"
     #
@@ -267,6 +268,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Piro:BOOL=ON"
     "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
     "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
+    "-DTrilinos_ENABLE_SEACASAprepro_lib:BOOL=ON"
     "-DTrilinos_ENABLE_STKClassic:BOOL=OFF"
     "-DTrilinos_ENABLE_STKDoc_tests:BOOL=OFF"
     "-DTrilinos_ENABLE_STKIO:BOOL=ON"
@@ -284,6 +286,10 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
     "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
     "-DIntrepid2_ENABLE_KokkosDynRankView:BOOL=ON"
+    "-DTrilinos_ENABLE_Tempus:BOOL=ON"
+    "-DTempus_ENABLE_TESTS:BOOL=OFF"
+    "-DTempus_ENABLE_EXAMPLES:BOOL=OFF"
+    "-DTempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
   )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")

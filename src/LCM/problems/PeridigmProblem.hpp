@@ -111,7 +111,6 @@ namespace Albany {
 #include "PeridigmPartialStress.hpp"
 #include "PHAL_SaveStateField.hpp"
 
-#include "Density.hpp"
 #include "ElasticModulus.hpp"
 #include "PoissonsRatio.hpp"
 #include "Strain.hpp"
@@ -160,7 +159,7 @@ Albany::PeridigmProblem::constructEvaluators(
 
    Teuchos::ArrayRCP<std::string> dof_name(1), dof_name_dot(1), dof_name_dotdot(1), residual_name(1);
    dof_name[0] = "Displacement";
-   dof_name_dot[0] = Teuchos::null; // Non-null triggers "Enable Transient" in PHAL_GatherSolution
+   dof_name_dot[0] = "Velocity"; // Non-null (Teuchos::null) triggers "Enable Transient" in PHAL_GatherSolution
    dof_name_dotdot[0] = "Acceleration"; // Non-null triggers "Enable Acceleration" in PHAL_GatherSolution
    residual_name[0] = "Residual";
 
@@ -190,7 +189,7 @@ Albany::PeridigmProblem::constructEvaluators(
 
    if(materialModelName == "Peridynamics"){
 
-     *out << "PeridigmProblem::constructEvaluators(), Creating evaluators for peridynamics material." << std::endl;
+     *out << "PeridigmProblem::constructEvaluators(), Creating evaluators for peridynamics material.  Transient support = " << supportsTransient << "." << std::endl;
 
      const int numNodes = 1;
      const int numVertices = numNodes;
@@ -201,11 +200,19 @@ Albany::PeridigmProblem::constructEvaluators(
 				"Data Layout Usage in Peridigm problems assume vecDim = numDim");
      Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dataLayout);
 
+     // Have to register Sphere Volume in the mesh before the discretization is built
+     if (std::find(this->requirements.begin(), this->requirements.end(), "Sphere Volume") != this->requirements.end()) {
+       auto entity = Albany::StateStruct::ElemData;
+       stateMgr.registerStateVariable("Sphere Volume", dataLayout->cell_scalar2, elementBlockName, false, &entity);
+     }
+
      { // Solution vector, which is the nodal displacements
-       if(!supportsTransient)
+       if(!supportsTransient){
 	 fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_name));
-       else
+       }
+       else{
 	 fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherSolutionEvaluator_withAcceleration(true, dof_name, dof_name_dot, dof_name_dotdot));
+       }
      }
 
      { // Gather Coord Vec
@@ -258,23 +265,6 @@ Albany::PeridigmProblem::constructEvaluators(
        fm0.template registerEvaluator<EvalT>(ev);
      }
 
-     { // Density (optional, needed only for dynamics)
-
-       if(supportsTransient){
-	 RCP<ParameterList> p = rcp(new ParameterList);
-
-	 p->set<std::string>("Cell Variable Name", "Density");
-	 p->set< RCP<DataLayout>>("Cell Scalar Data Layout", dataLayout->cell_scalar2);
-
-	 p->set<RCP<ParamLib>>("Parameter Library", paramLib);
-	 Teuchos::ParameterList& paramList = materialDataBase->getElementBlockSublist(elementBlockName, "Density");
-	 p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-	 ev = rcp(new LCM::Density<EvalT,AlbanyTraits>(*p));
-	 fm0.template registerEvaluator<EvalT>(ev);
-       }
-     }
-  
      { // Current Coordinates
        RCP<ParameterList> p = rcp(new ParameterList("Current Coordinates"));
        p->set<std::string>("Reference Coordinates Name", "Coord Vec");
@@ -342,13 +332,18 @@ Albany::PeridigmProblem::constructEvaluators(
        peridigmParameterList = *peridigmParams;
 
        // Input
-       p->set<string>("Density Name", "Density");
        p->set<bool>("Supports Transient", supportsTransient);
        p->set<string>("Reference Coordinates Name", "Coord Vec");
        p->set<string>("Current Coordinates Name", "Current Coordinates");
        p->set<string>("Velocity Name", dof_name_dot[0]);
        p->set<string>("Acceleration Name", dof_name_dotdot[0]);
        p->set<string>("Sphere Volume Name", "Sphere Volume");
+
+       if (materialDataBase->isElementBlockParam(elementBlockName, "Density")) {
+	 RealType density =
+	   materialDataBase->getElementBlockParam<RealType>(elementBlockName, "Density");
+	 p->set<RealType>("Density", density);
+       }
 
        // Output
        p->set<string>("Force Name", "Force");
@@ -481,23 +476,6 @@ Albany::PeridigmProblem::constructEvaluators(
        fm0.template registerEvaluator<EvalT>(ev);
      }
 
-     { // Density (optional, needed only for dynamics)
-
-       if(supportsTransient){
-	 RCP<ParameterList> p = rcp(new ParameterList);
-
-	 p->set<std::string>("Cell Variable Name", "Density");
-	 p->set< RCP<DataLayout>>("Cell Scalar Data Layout", dataLayout->cell_scalar2);
-
-	 p->set<RCP<ParamLib>>("Parameter Library", paramLib);
-	 Teuchos::ParameterList& paramList = materialDataBase->getElementBlockSublist(elementBlockName, "Density");
-	 p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-	 ev = rcp(new LCM::Density<EvalT,AlbanyTraits>(*p));
-	 fm0.template registerEvaluator<EvalT>(ev);
-       }
-     }
-
      { // Deformation Gradient
        RCP<ParameterList> p = rcp(new ParameterList("DefGrad"));
 
@@ -556,13 +534,18 @@ Albany::PeridigmProblem::constructEvaluators(
        p->set<bool>("Disable Transient", true);
        if(supportsTransient){
 	 p->set<bool>("Disable Transient", false);
-	 p->set<std::string>("Density Name", "Density");
 	 p->set< RCP<DataLayout>>("Cell Scalar Data Layout", dataLayout->cell_scalar2);
 	 p->set< RCP<DataLayout>>("Node QP Vector Data Layout", dataLayout->node_qp_vector);
 	 p->set<std::string>("Time Dependent Variable Name", "Acceleration");
 	 p->set<std::string>("xdot Field Name", dof_name_dot[0]);
 	 p->set<std::string>("xdotdot Field Name", dof_name_dotdot[0]);
 	 p->set< RCP<DataLayout>>("QP Vector Data Layout", dataLayout->qp_vector);
+
+	 if (materialDataBase->isElementBlockParam(elementBlockName, "Density")) {
+	   RealType density =
+	     materialDataBase->getElementBlockParam<RealType>(elementBlockName, "Density");
+	   p->set<RealType>("Density", density);
+	 }
        }
 
        //Output
@@ -675,23 +658,6 @@ Albany::PeridigmProblem::constructEvaluators(
         p = stateMgr.registerStateVariable("Time",dataLayout->workset_scalar, dataLayout->dummy, elementBlockName, "scalar", 0.0, true);
         ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
-      }
-
-      { // Density (optional, needed only for dynamics)
-
-	if(supportsTransient){
-	  RCP<ParameterList> p = rcp(new ParameterList);
-
-	  p->set<std::string>("Cell Variable Name", "Density");
-	  p->set< RCP<DataLayout>>("Cell Scalar Data Layout", dataLayout->cell_scalar2);
-
-	  p->set<RCP<ParamLib>>("Parameter Library", paramLib);
-	  Teuchos::ParameterList& paramList = materialDataBase->getElementBlockSublist(elementBlockName, "Density");
-	  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-	  ev = rcp(new LCM::Density<EvalT,AlbanyTraits>(*p));
-	  fm0.template registerEvaluator<EvalT>(ev);
-	}
       }
 
       { // Displacement Resid
@@ -825,23 +791,6 @@ Albany::PeridigmProblem::constructEvaluators(
        p = stateMgr.registerStateVariable("Time",dataLayout->workset_scalar, dataLayout->dummy, elementBlockName, "scalar", 0.0, true);
        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
-     }
-
-     { // Density (optional, needed only for dynamics)
-
-       if(supportsTransient){
-	 RCP<ParameterList> p = rcp(new ParameterList);
-
-	 p->set<std::string>("Cell Variable Name", "Density");
-	 p->set< RCP<DataLayout>>("Cell Scalar Data Layout", dataLayout->cell_scalar2);
-
-	 p->set<RCP<ParamLib>>("Parameter Library", paramLib);
-	 Teuchos::ParameterList& paramList = materialDataBase->getElementBlockSublist(elementBlockName, "Density");
-	 p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-	 ev = rcp(new LCM::Density<EvalT,AlbanyTraits>(*p));
-	 fm0.template registerEvaluator<EvalT>(ev);
-       }
      }
 
      { // Elastic Modulus

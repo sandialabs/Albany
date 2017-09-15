@@ -25,7 +25,7 @@ PeridigmForceBase(Teuchos::ParameterList& p,
   acceleration         (p.get<std::string> ("Acceleration Name"),          dataLayout->node_vector),
   force                (p.get<std::string> ("Force Name"),                 dataLayout->node_vector),
   residual             (p.get<std::string> ("Residual Name"),              dataLayout->node_vector),
-  density              (p.get<std::string> ("Density Name"),               dataLayout->cell_scalar2),
+  density              (0.0),
   sphereVolume         (p.get<std::string> ("Sphere Volume Name"),         dataLayout->node_scalar)
 {
   peridigmParams = p.sublist("Peridigm Parameters", true);
@@ -36,7 +36,7 @@ PeridigmForceBase(Teuchos::ParameterList& p,
   numDims = 3;
 
   if(supportsTransient){
-    this->addDependentField(density);
+    density = p.get<RealType>("Density");
     this->addDependentField(sphereVolume);
     this->addDependentField(velocity);
     this->addDependentField(acceleration);
@@ -83,7 +83,6 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   if(supportsTransient){
-    this->utils.setFieldData(density, fm);
     this->utils.setFieldData(sphereVolume, fm);
     this->utils.setFieldData(velocity, fm);
     this->utils.setFieldData(acceleration, fm);
@@ -117,9 +116,9 @@ evaluateFields(typename Traits::EvalData workset)
   if(albanyIsCreatingMassMatrix){
     if(supportsTransient && albanyIsCreatingMassMatrix){
       for(int cell = 0; cell < workset.numCells; ++cell){
-	this->residual(cell, 0, 0) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 0);
-	this->residual(cell, 0, 1) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 1);
-	this->residual(cell, 0, 2) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 2);
+	this->residual(cell, 0, 0) = -1.0 * density * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 0);
+	this->residual(cell, 0, 1) = -1.0 * density * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 1);
+	this->residual(cell, 0, 2) = -1.0 * density * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 2);
       }
     }
   }

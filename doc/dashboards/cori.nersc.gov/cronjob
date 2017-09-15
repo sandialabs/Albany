@@ -1,2 +1,3 @@
-#the following is run on the cori07 login
+#the following cronjob is run on cori07 login
+
 00 21 * * 1-7 cd /project/projectdirs/piscees/nightlyCoriCDash; bash -l -c "source cori_modules.sh; bash nightly_cron_script_trilinos_cori.sh; bash nightly_cron_script_albany_cori.sh; bash nightly_cron_script_cismAlbany_cori.sh"; chmod -R 0755 /project/projectdirs/piscees/nightlyCoriCDash

@@ -44,7 +44,7 @@ protected:
   bool supportsTransient;
 
   // Input:
-  PHX::MDField<ScalarT,Cell> density;
+  RealType density;
   PHX::MDField<RealType,Cell,Vertex> sphereVolume;
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> referenceCoordinates;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> currentCoordinates;
