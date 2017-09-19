@@ -167,7 +167,7 @@ if (BUILD_TRILINOS)
     "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     #
     "-DCMAKE_CXX_COMPILER:FILEPATH=${NVCC_WRAPPER}"
-    "-DCMAKE_CXX_FLAGS:STRING=-fopenmp -mcpu=power8 -lgfortran -arch=sm_60" 
+    "-DCMAKE_CXX_FLAGS:STRING=-fopenmp -mcpu=power8 -lgfortran -arch=sm_60 --expt-extended-lambda" 
     "-DCMAKE_C_FLAGS:STRING=-fopenmp -mcpu=power8 -lgfortran" 
     "-DCMAKE_Fortran_FLAGS:STRING=-lgfortran -fopenmp -mcpu=power8"
     "-DCMAKE_EXE_LINKER_FLAGS=-fopenmp -mcpu=power8 -ldl -lgfortran"
@@ -225,6 +225,7 @@ if (BUILD_TRILINOS)
     "-DSacado_ENABLE_COMPLEX:BOOL=ON"
     "-DTeuchos_ENABLE_COMPLEX:BOOL=ON"
     "-DTpetra_ENABLE_Kokkos_Refactor:BOOL=ON"
+    "-DKokkos_ENABLE_Cuda_Lambda:BOOL=ON"
     #
     "-DTPL_ENABLE_Matio:BOOL=OFF"
     "-DTPL_ENABLE_Netcdf:BOOL=ON"
