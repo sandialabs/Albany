@@ -198,7 +198,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
     "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
     "-DTrilinos_ENABLE_CXX11:BOOL=ON"
-    "-DTrilinos_CXX11_FLAGS:STRING='-std=c++11 --expt-extended-lambda'"
     "-DTrilinos_ENABLE_EXAMPLES:BOOL=OFF"
     "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
     "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
@@ -294,6 +293,7 @@ if (BUILD_TRILINOS)
     "-DTempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
   )
 
+  #"-DTrilinos_CXX11_FLAGS:STRING='-std=c++11 --expt-extended-lambda'"
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TriBuild)
   endif ()
