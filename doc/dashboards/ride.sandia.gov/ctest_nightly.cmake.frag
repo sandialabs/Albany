@@ -167,7 +167,7 @@ if (BUILD_TRILINOS)
     "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     #
     "-DCMAKE_CXX_COMPILER:FILEPATH=${NVCC_WRAPPER}"
-    "-DCMAKE_CXX_FLAGS:STRING=-fopenmp -mcpu=power8 -lgfortran -arch=sm_60 --expt-extended-lambda" 
+    "-DCMAKE_CXX_FLAGS:STRING=-fopenmp -mcpu=power8 -lgfortran -arch=sm_60"
     "-DCMAKE_C_FLAGS:STRING=-fopenmp -mcpu=power8 -lgfortran" 
     "-DCMAKE_Fortran_FLAGS:STRING=-lgfortran -fopenmp -mcpu=power8"
     "-DCMAKE_EXE_LINKER_FLAGS=-fopenmp -mcpu=power8 -ldl -lgfortran"
@@ -198,6 +198,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
     "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
     "-DTrilinos_ENABLE_CXX11:BOOL=ON"
+    "-DTrilinos_CXX11_FLAGS:STRING='-std=c++11 --expt-extended-lambda'"
     "-DTrilinos_ENABLE_EXAMPLES:BOOL=OFF"
     "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
     "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
