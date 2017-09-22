@@ -104,6 +104,9 @@ int main(int argc, char *argv[]) {
   const RCP<Teuchos::ParameterList> rbgenParams =
     Teuchos::sublist(topLevelParams, "Reduced Basis", /*sublistMustExist =*/ true);
 
+  const RCP<Teuchos::ParameterList> discParams =
+		  Teuchos::sublist(topLevelParams, "Discretization", /*sublistMustExist =*/ true);
+
   typedef Teuchos::Array<std::string> FileNameList;
   FileNameList snapshotFiles;
   {
@@ -124,6 +127,10 @@ int main(int argc, char *argv[]) {
         Teuchos::ParameterList localDiscParams;
         localDiscParams.set("Method", "Ioss");
         localDiscParams.set("Exodus Input File Name", *it);
+        localDiscParams.setParametersNotAlreadySet(*discParams);
+        //std::cout << "LOOKHERE" << std::endl;
+        //localDiscParams.print();
+        //std::cout << "ENDHERE" << std::endl;
         localTopLevelParams->set("Discretization", localDiscParams);
       }
       const RCP<Albany::AbstractDiscretization> disc = Albany::discretizationNew(localTopLevelParams, teuchosComm);
