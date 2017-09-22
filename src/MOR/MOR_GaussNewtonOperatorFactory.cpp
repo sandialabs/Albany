@@ -309,6 +309,21 @@ void GaussNewtonOperatorFactoryBase<Derived>::setPreconditionerIfpack(Epetra_Crs
       PrecType = "ILU";
       List.set("fact: level-of-fill",2);
     }
+    else if (ifpackType.compare("IC0") == 0)
+    {
+      PrecType = "IC";
+      List.set("fact: ict level-of-fill",0.0);
+    }
+    else if (ifpackType.compare("IC1") == 0)
+    {
+      PrecType = "IC";
+      List.set("fact: ict level-of-fill",1.0);
+    }
+    else if (ifpackType.compare("IC2") == 0)
+    {
+      PrecType = "IC";
+      List.set("fact: ict level-of-fill",2.0);
+    }
 
     preconditioner_ifpack_ = Teuchos::rcp(PrecFactory.Create(PrecType,aaa));
     TEUCHOS_ASSERT(preconditioner_ifpack_ != Teuchos::null);
