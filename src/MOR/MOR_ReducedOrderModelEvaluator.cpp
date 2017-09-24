@@ -52,7 +52,7 @@ ReducedOrderModelEvaluator::ReducedOrderModelEvaluator(const RCP<EpetraExt::Mode
   useProjectedSol_ = false;
   usePreconditionerIfpack_ = false;
 
-  const Tuple<std::string, 10> allowedPreconditionerTypes = tuple<std::string>(
+  const Tuple<std::string, 13> allowedPreconditionerTypes = tuple<std::string>(
                                     "None", 
                                     "DiagonalScaling", 
                                     "InverseJacobian", 
@@ -62,7 +62,10 @@ ReducedOrderModelEvaluator::ReducedOrderModelEvaluator(const RCP<EpetraExt::Mode
                                     "Ifpack_SymmetricGaussSeidel", 
                                     "Ifpack_ILU0", 
                                     "Ifpack_ILU1", 
-                                    "Ifpack_ILU2"
+                                    "Ifpack_ILU2",
+                                    "Ifpack_IC0", 
+                                    "Ifpack_IC1", 
+                                    "Ifpack_IC2"
                                     );
   TEUCHOS_TEST_FOR_EXCEPTION(!contains(allowedPreconditionerTypes, preconditionerType), std::out_of_range, preconditionerType + " not in " + allowedPreconditionerTypes.toString());
 
@@ -122,6 +125,27 @@ ReducedOrderModelEvaluator::ReducedOrderModelEvaluator(const RCP<EpetraExt::Mode
     usePreconditionerIfpack_ = true;
     ifpackType_ = "ILU2";
     printf("Preconditioning: Ifpack - ILU 2\n");
+    printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
+  }
+  else if (preconditionerType.compare("Ifpack_IC0") == 0)
+  {
+    usePreconditionerIfpack_ = true;
+    ifpackType_ = "IC0";
+    printf("Preconditioning: Ifpack - IC 0\n");
+    printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
+  }
+  else if (preconditionerType.compare("Ifpack_IC1") == 0)
+  {
+    usePreconditionerIfpack_ = true;
+    ifpackType_ = "IC1";
+    printf("Preconditioning: Ifpack - IC 1\n");
+    printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
+  }
+  else if (preconditionerType.compare("Ifpack_IC2") == 0)
+  {
+    usePreconditionerIfpack_ = true;
+    ifpackType_ = "IC2";
+    printf("Preconditioning: Ifpack - IC 2\n");
     printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
   }
 }
