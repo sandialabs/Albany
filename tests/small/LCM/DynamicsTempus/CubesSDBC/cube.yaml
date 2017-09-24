@@ -15,24 +15,24 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 0
     MaterialDB Filename: 'material.yaml'
     Solution Method: Transient Tempus
-#    Initial Condition: 
-#      Function: Constant
-#      Function Data: [0.0, 0.0, 0.0]
-#    Initial Condition Dot: 
-#      Function: About Z
-#      Function Data: [1.0]
-#    Initial Condition DotDot: 
-#      Function: Radial Z
-#      Function Data: [-1.0]
-#    Initial Condition: 
-#      Function: Constant
-#      Function Data: [0.0, 0.0, 0.0]
-#    Initial Condition Dot: 
-#      Function: Constant
-#      Function Data: [0.0, 0.0, 0.0]
-#    Initial Condition DotDot: 
-#      Function: Constant
-#      Function Data: [0.0, 0.0, 0.0]
+    #Initial Condition: 
+    #  Function: Constant
+    #  Function Data: [0.0, 0.0, 0.0]
+    #Initial Condition Dot: 
+    #  Function: About Z
+    #  Function Data: [1.0]
+    #Initial Condition DotDot: 
+    #  Function: Radial Z
+    #  Function Data: [-1.0]
+    #Initial Condition: 
+    #  Function: Constant
+    #  Function Data: [0.0, 0.0, 0.0]
+    #Initial Condition Dot: 
+    #  Function: Constant
+    #  Function Data: [0.0, 0.0, 0.0]
+    #Initial Condition DotDot: 
+    #  Function: Constant
+    #  Function Data: [0.0, 0.0, 0.0]
     Dirichlet BCs:
       SDBC on NS nodelist_1 for DOF X: 0.0
       SDBC on NS nodelist_3 for DOF Y: 0.0

@@ -37,8 +37,8 @@ ANONYMOUS:
     Number of Dakota Comparisons: 2
     Dakota Test Values: [1.50000000, 2.50000000]
   Piro: 
-#    Jacobian Operator: 'Matrix-Free'
-#    'Matrix-Free Perturbation': 1.00000000e-07
+    #Jacobian Operator: 'Matrix-Free'
+    #'Matrix-Free Perturbation': 1.00000000e-07
     LOCA: 
       Bifurcation: { }
       Constraints: { }
@@ -61,7 +61,7 @@ ANONYMOUS:
               Linear Solver Types: 
                 Belos: 
                   VerboseObject:
-#                    Verbosity Level: medium
+                    #Verbosity Level: medium
                     Verbosity Level: none
                   Solver Type: Block GMRES
                   Solver Types: 

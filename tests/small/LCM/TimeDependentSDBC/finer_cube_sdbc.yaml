@@ -39,8 +39,7 @@ ANONYMOUS:
       Response 3: Solution Min Value
   Regression Results: 
     Number of Comparisons: 4
-    Test Values: [0.000000000000e+00, 1.149197794508e-01, 0.000000000000e+00, -1.552406616483e-01
-]
+    Test Values: [0.000000000000e+00, 1.149197794508e-01, 0.000000000000e+00, -1.552406616483e-01]
     Relative Tolerance: 1.0e-7
   Discretization:
     Method: Ioss

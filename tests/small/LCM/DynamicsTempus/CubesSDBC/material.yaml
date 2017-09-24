@@ -15,9 +15,9 @@ ANONYMOUS:
       Poissons Ratio: 
         Poissons Ratio Type: Constant
         Value: 0.25
-#      Body Force:
-#        Body Force Type: Constant
-#        Value: [0.0, 0.0, 1.0e+03]
+      #Body Force:
+      #  Body Force Type: Constant
+      #  Value: [0.0, 0.0, 1.0e+03]
       Density: 1.0e+03
       Output Cauchy Stress: true
 ...
