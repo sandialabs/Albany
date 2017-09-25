@@ -1111,6 +1111,15 @@ SchwarzLoopQuasistatics() const
 
         solver.evalModel(in_args, out_args);
 
+        NOX::StatusTest::StatusType const
+        status = nox_solver.getStatus();
+
+        if (status == NOX::StatusTest::Failed) {
+          fos << "\nUnable to solve for subdomain " << subdomain << '\n';
+          failed_ = true;
+          break;
+        }
+
         auto const &
         soln_group = piro_loca_solver.getSolver()->getSolutionGroup();
 
@@ -1147,6 +1156,10 @@ SchwarzLoopQuasistatics() const
         norms_init(subdomain) = prev_soln.norm();
         norms_final(subdomain) = curr_soln.norm();
         norms_diff(subdomain) = soln_diff.norm();
+      } // Subdomain loop
+
+      if (failed_ == true) {
+        continue;
       }
 
       norm_init_ = minitensor::norm(norms_init);
