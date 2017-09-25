@@ -175,6 +175,18 @@ private:
   ST
   initial_time_step_{0.0};
 
+  ST
+  min_time_step_{0.0};
+
+  ST
+  max_time_step_{0.0};
+
+  ST
+  reduction_factor_{0.0};
+
+  ST
+  increase_factor_{0.0};
+
   int
   output_interval_{1};
 

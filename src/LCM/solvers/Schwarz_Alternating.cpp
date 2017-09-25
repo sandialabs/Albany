@@ -40,6 +40,14 @@ SchwarzAlternating(
   initial_time_ = alt_system_params.get<ST>("Initial Time", 0.0);
   final_time_ = alt_system_params.get<ST>("Final Time", 0.0);
   initial_time_step_ = alt_system_params.get<ST>("Initial Time Step", 0.0);
+
+  ST const
+  dt = initial_time_step_;
+
+  min_time_step_ = alt_system_params.get<ST>("Minimum Time Step", dt);
+  max_time_step_ = alt_system_params.get<ST>("Maximum Time Step", dt);
+  reduction_factor_ = alt_system_params.get<ST>("Reduction Factor", 1.0);
+  increase_factor_ = alt_system_params.get<ST>("Increase Factor", 1.0);
   output_interval_ = alt_system_params.get<int>("Exodus Write Interval", 1);
 
   //number of models
