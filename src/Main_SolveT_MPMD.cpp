@@ -45,7 +45,6 @@
 
 #include "Albany_DataTypes.hpp"
 
-#include "Phalanx.hpp"
 #include "Phalanx_config.hpp"
 
 #include "Kokkos_Core.hpp"
@@ -279,53 +278,51 @@ void MPMD_App::initialize(vector<Plato::SharedData*> sharedData)
     throw pe;
   }
 
+  for(pugi::xml_node inputNode : node.children("Input")){
+    std::string strType = Plato::Parse::getString(inputNode,"Type");
+    if(strType == "Field") addField(inputNode, sharedData);
+    else
+    if(strType == "Value") addValue(inputNode, sharedData);
+  }
+  for(pugi::xml_node inputNode : node.children("Output")){
+    std::string strType = Plato::Parse::getString(inputNode,"Type");
+    if(strType == "Field") addField(inputNode, sharedData);
+    else
+    if(strType == "Value") addValue(inputNode, sharedData);
+  }
+
   // parse InputFields
   //
-  for(pugi::xml_node inputNode : node.children("InputField")){
-    addField(inputNode, sharedData);
-  }
+//  for(pugi::xml_node inputNode : node.children("InputField")){
+//    addField(inputNode, sharedData);
+//  }
 
   // parse InputValues
   //
-  for(pugi::xml_node inputNode : node.children("OutputValue")){
-    addValue(inputNode, sharedData);
-  }
+//  for(pugi::xml_node inputNode : node.children("OutputValue")){
+//    addValue(inputNode, sharedData);
+//  }
   
   // parse OutputFields
   //
-  for(pugi::xml_node inputNode : node.children("OutputField")){
-    addField(inputNode, sharedData);
-  }
+//  for(pugi::xml_node inputNode : node.children("OutputField")){
+//    addField(inputNode, sharedData);
+//  }
 }
 
 /******************************************************************************/
 bool MPMD_App::addValue(pugi::xml_node& inputNode, vector<Plato::SharedData*>& sharedData)
 /******************************************************************************/
 {
-  string sharedValueName = Plato::Parse::getString(inputNode,"SharedValueName");
+  string argumentName = Plato::Parse::getString(inputNode,"ArgumentName");
 
-  // is the requested SharedValue defined?
-  bool found = false;
-  for(Plato::SharedData* sd : sharedData){
-    std::string name = sd->myName();
-    if(sd->myLayout() == "Value" && name == sharedValueName){
-      found = true; break;
-    }
-  }
-  if(!found){
-    std::stringstream message;
-    message << "Cannot find specified SharedValueName: '" << sharedValueName << "'" << std::endl;
-    Plato::ParsingException pe(message.str());
-    throw pe;
-  }
-
-  // is the requested local field defined?
-  string localValueName = Plato::Parse::getString(inputNode,"LocalValueName");
-  if( isElemNodeState(localValueName) ){
-    m_stateMap[sharedValueName] = localValueName;
+  // map from the argument name to the local data name
+  string localName = Plato::Parse::getString(inputNode,"LocalName");
+  if( isElemNodeState(localName) ){
+    m_stateMap[argumentName] = localName;
   } else {
     std::stringstream message;
-    message << "Cannot find specified LocalValueName: '" << localValueName << "'" << std::endl;
+    message << "Cannot find specified LocalName: '" << localName << "'" << std::endl;
     Plato::ParsingException pe(message.str());
     throw pe;
   }
@@ -335,37 +332,18 @@ bool MPMD_App::addValue(pugi::xml_node& inputNode, vector<Plato::SharedData*>& s
 bool MPMD_App::addField(pugi::xml_node& inputNode, vector<Plato::SharedData*>& sharedData)
 /******************************************************************************/
 {
-  string sharedFieldName = Plato::Parse::getString(inputNode,"SharedFieldName");
+  string argumentName = Plato::Parse::getString(inputNode,"ArgumentName");
 
-  // is the requested SharedField defined?
-  bool found = false;
-  for(Plato::SharedData* sd : sharedData){
-    std::string name = sd->myName();
-    if(sd->myLayout() == "Field" && name == sharedFieldName){
-      found = true; break;
-    }
-  }
-  if(!found){
-    std::stringstream message;
-    message << "Cannot find specified SharedFieldName: '" << sharedFieldName << "'" << std::endl;
-    Plato::ParsingException pe(message.str());
-    throw pe;
-  }
-
-  // is the requested local field defined?
-  string localFieldName = Plato::Parse::getString(inputNode,"LocalFieldName");
-  if( isElemNodeState(localFieldName) ){
-    m_stateMap[sharedFieldName] = localFieldName;
-    Teuchos::RCP<PHX::MDALayout<Cell,Node>> 
-      node_scalar = Teuchos::rcp(new PHX::MDALayout<Cell,Node>(1,1));
-//    m_app->getStateMgr().registerStateVariable(localFieldName, node_scalar, "all",
-//                                               "scalar", 0.0, /*registerOldState=*/ false, /*writeOut=*/ true);
+  // map from the argument name to the local data name
+  string localName = Plato::Parse::getString(inputNode,"LocalName");
+  if( isElemNodeState(localName) ){
+    m_stateMap[argumentName] = localName;
   } else
-  if( isDistParam(localFieldName) ){
-    m_distParamMap[sharedFieldName] = localFieldName;
+  if( isDistParam(localName) ){
+    m_distParamMap[argumentName] = localName;
   } else {
     std::stringstream message;
-    message << "Cannot find specified LocalFieldName: '" << localFieldName << "'" << std::endl;
+    message << "Cannot find specified LocalName: '" << localName << "'" << std::endl;
     Plato::ParsingException pe(message.str());
     throw pe;
   }
