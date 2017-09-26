@@ -3,7 +3,7 @@
 module-whatis "LCM Intel compiler"
 
 if { [is-loaded lcm-sems] } {
-  module load sems-intel/17.0.1
+  module load sierra-devel/intel-17.0.2-openmpi-1.10.2
 }
 
 if { [is-loaded lcm-cluster] } {

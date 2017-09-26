@@ -182,6 +182,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   // Getting the names of the distributed parameters (they won't have to be loaded as states)
   std::map<std::string,bool> is_dist_param;
   std::map<std::string,bool> is_dist;
+  std::map<std::string,bool> save_sensitivities;
   std::map<std::string,std::string> dist_params_name_to_mesh_part;
   std::map<std::string,bool> is_extruded_param;
   if (this->params->isSublist("Distributed Parameters"))
@@ -201,6 +202,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
         is_extruded_param[param_name] = param_list->get<bool>("Extruded",false);
         int extruded_param_level = 0;
         extruded_params_levels->insert(std::make_pair(param_name, extruded_param_level));
+        save_sensitivities[param_name]=param_list->get<bool>("Save Sensitivity",false);
       }
       else
       {
@@ -254,6 +256,8 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
       }
       else if(fieldType == "Node Scalar") {
         entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
+        if(is_dist[stateName] && save_sensitivities[param_name])
+          p = stateMgr.registerStateVariable(stateName + "_sensitivity", dl->node_scalar, elementBlockName, true, &entity, meshPart);
         p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, meshPart);
         nodal_state = true;
       }
