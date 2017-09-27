@@ -51,7 +51,7 @@ SchwarzAlternating(
   output_interval_ = alt_system_params.get<int>("Exodus Write Interval", 1);
 
   // Firewalls
-  ALBANY_ASSERT(min_iters_ > 1);
+  ALBANY_ASSERT(min_iters_ >= 1);
   ALBANY_ASSERT(max_iters_ > 1);
   ALBANY_ASSERT(max_iters_ >= min_iters_);
   ALBANY_ASSERT(rel_tol_ >= 0.0);
@@ -63,7 +63,7 @@ SchwarzAlternating(
   ALBANY_ASSERT(reduction_factor_ <= 1.0);
   ALBANY_ASSERT(reduction_factor_ > 0.0);
   ALBANY_ASSERT(increase_factor_ >= 1.0);
-  ALBANY_ASSERT(output_interval_ > 1);
+  ALBANY_ASSERT(output_interval_ >= 1);
 
   //number of models
   num_subdomains_ = model_filenames.size();
