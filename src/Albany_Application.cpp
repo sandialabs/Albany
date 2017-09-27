@@ -6072,7 +6072,7 @@ computeGlobalResidualSDBCsImplT(
 
   if (scale != 1.0) {
     TEUCHOS_TEST_FOR_EXCEPTION(true,
-        std::logic_error, "Scaling cannot be used with computeGlobalResidualTempusSDBCsImplT routine!  "
+        std::logic_error, "Scaling cannot be used with computeGlobalResidualSDBCsImplT routine!  "
         << "Please re-run without scaling.");
   } 
  
