@@ -7,4 +7,4 @@ setenv BUILD_STRING DEBUG
 
 setenv LCM_FPE_SWITCH ON
 setenv LCM_DENORMAL_SWITCH ON
-setenv LCM_CXX_FLAGS "-msse3"
+setenv LCM_CXX_FLAGS "-msse3 -Wno-terminate"
