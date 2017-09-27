@@ -75,10 +75,8 @@ private:
   bool writeSolution_reduced_;
   bool writePreconditioner_;
 
-  bool useScaling_;
-  bool useInvJac_;
-  bool useProjectedSol_;
-  bool usePreconditionerIfpack_;
+  enum PrecondTypes {none, scaling, invJac, projSoln, ifPack};
+  PrecondTypes PrecondType=none;
   std::string ifpackType_;
 
   // Disallow copy and assignment
