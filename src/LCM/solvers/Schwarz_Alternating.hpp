@@ -224,16 +224,19 @@ private:
   model_evaluators_;
 
   mutable std::vector<Teuchos::RCP<NOX::Abstract::Vector>>
-  solutions_nox_;
+  solns_nox_;
+
+  mutable std::vector<Teuchos::RCP<NOX::Abstract::Vector>>
+  prev_solns_nox_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  solutions_thyra_;
+  solns_thyra_;
   
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  solutions_dot_thyra_;
+  solns_dot_thyra_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  solutions_dotdot_thyra_;
+  solns_dotdot_thyra_;
 
   // Used if solving with loca or tempus
   bool

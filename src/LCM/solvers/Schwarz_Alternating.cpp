@@ -39,7 +39,7 @@ SchwarzAlternating(
   maximum_steps_ = alt_system_params.get<int>("Maximum Steps", 0);
   initial_time_ = alt_system_params.get<ST>("Initial Time", 0.0);
   final_time_ = alt_system_params.get<ST>("Final Time", 0.0);
-  initial_time_step_ = alt_system_params.get<ST>("Initial Time Step", 0.0);
+  initial_time_step_ = alt_system_params.get<ST>("Initial Time Step", 1.0);
 
   ST const
   dt = initial_time_step_;
@@ -49,6 +49,21 @@ SchwarzAlternating(
   reduction_factor_ = alt_system_params.get<ST>("Reduction Factor", 1.0);
   increase_factor_ = alt_system_params.get<ST>("Increase Factor", 1.0);
   output_interval_ = alt_system_params.get<int>("Exodus Write Interval", 1);
+
+  // Firewalls
+  ALBANY_ASSERT(min_iters_ > 1);
+  ALBANY_ASSERT(max_iters_ > 1);
+  ALBANY_ASSERT(max_iters_ >= min_iters_);
+  ALBANY_ASSERT(rel_tol_ >= 0.0);
+  ALBANY_ASSERT(abs_tol_ >= 0.0);
+  ALBANY_ASSERT(maximum_steps_ > 1);
+  ALBANY_ASSERT(final_time_ >= initial_time_);
+  ALBANY_ASSERT(initial_time_step_ > 0.0);
+  ALBANY_ASSERT(max_time_step_ >= min_time_step_);
+  ALBANY_ASSERT(reduction_factor_ <= 1.0);
+  ALBANY_ASSERT(reduction_factor_ > 0.0);
+  ALBANY_ASSERT(increase_factor_ >= 1.0);
+  ALBANY_ASSERT(output_interval_ > 1);
 
   //number of models
   num_subdomains_ = model_filenames.size();
@@ -76,10 +91,10 @@ SchwarzAlternating(
   model_evaluators_.resize(num_subdomains_);
   sub_inargs_.resize(num_subdomains_);
   sub_outargs_.resize(num_subdomains_);
-  solutions_nox_.resize(num_subdomains_);
-  solutions_thyra_.resize(num_subdomains_);
-  solutions_dot_thyra_.resize(num_subdomains_);
-  solutions_dotdot_thyra_.resize(num_subdomains_);
+  solns_nox_.resize(num_subdomains_);
+  solns_thyra_.resize(num_subdomains_);
+  solns_dot_thyra_.resize(num_subdomains_);
+  solns_dotdot_thyra_.resize(num_subdomains_);
 
   bool
   have_loca{false};
@@ -157,7 +172,7 @@ SchwarzAlternating(
 
     model_evaluators_[subdomain] = solver_factory.returnModelT();
 
-    solutions_nox_[subdomain] = Teuchos::null;
+    solns_nox_[subdomain] = Teuchos::null;
   }
 
   //
@@ -615,15 +630,15 @@ SchwarzLoopDynamics() const
 
     Teuchos::RCP<Tpetra_MultiVector> soln_mv = stk_disc.getSolutionMV();
        
-    // Populate solutions_thyra_ and its time-derivatives with values of IC
+    // Populate solns_thyra_ and its time-derivatives with values of IC
     // from STK discretization.
-    solutions_thyra_[subdomain] =
+    solns_thyra_[subdomain] =
         Thyra::createVector(soln_mv->getVectorNonConst(0));
 
-    solutions_dot_thyra_[subdomain] =
+    solns_dot_thyra_[subdomain] =
         Thyra::createVector(soln_mv->getVectorNonConst(1));
 
-    solutions_dotdot_thyra_[subdomain] =
+    solns_dotdot_thyra_[subdomain] =
         Thyra::createVector(soln_mv->getVectorNonConst(2));
 
     stk_disc.writeSolutionMV(*soln_mv, initial_time_);
@@ -719,15 +734,15 @@ SchwarzLoopDynamics() const
         prev_soln_dotdot_rcp = Thyra::createMember(me.get_x_space());
 
         //set prev_soln_rcp, prev_soln_dot_rcp and prev_soln_dotdot_rcp 
-        //by making copy of what is in solutions_thyra_[subdomain], etc.
+        //by making copy of what is in solns_thyra_[subdomain], etc.
         Thyra::VectorBase<ST> &
-        solution_thyra = *solutions_thyra_[subdomain];
+        solution_thyra = *solns_thyra_[subdomain];
 
         Thyra::VectorBase<ST> &
-        solution_dot_thyra = *solutions_dot_thyra_[subdomain];
+        solution_dot_thyra = *solns_dot_thyra_[subdomain];
 
         Thyra::VectorBase<ST> &
-        solution_dotdot_thyra = *solutions_dotdot_thyra_[subdomain];
+        solution_dotdot_thyra = *solns_dotdot_thyra_[subdomain];
 
         Thyra::copy(solution_thyra, prev_soln_rcp.ptr());
 
@@ -748,14 +763,14 @@ SchwarzLoopDynamics() const
         prev_soln_tpetra;
 
         fos << "\n*** Thyra: Previous solution ***\n";
-        solutions_thyra_[subdomain]->describe(fos, Teuchos::VERB_EXTREME);
+        solns_thyra_[subdomain]->describe(fos, Teuchos::VERB_EXTREME);
         fos << "\n*** NORM: " << Thyra::norm(solution_thyra) << '\n';
         if (subdomain == 0) {
-          prev_soln_tpetra = ConverterT::getTpetraVector(solutions_thyra_[0]); 
+          prev_soln_tpetra = ConverterT::getTpetraVector(solns_thyra_[0]);
           Albany::writeMatrixMarket(prev_soln_tpetra, "prev_soln_subd0", num_iter_);
         }
         else if (subdomain == 1) {
-          prev_soln_tpetra = ConverterT::getTpetraVector(solutions_thyra_[1]); 
+          prev_soln_tpetra = ConverterT::getTpetraVector(solns_thyra_[1]);
           Albany::writeMatrixMarket(prev_soln_tpetra, "prev_soln_subd1", num_iter_);
         }
         fos << "\n*** Thyra: Previous solution ***\n";
@@ -909,14 +924,14 @@ SchwarzLoopDynamics() const
       Teuchos::RCP<Tpetra_MultiVector>
       soln_mv = stk_disc.getSolutionMV();
 
-      //Update solutions_thyra_ and its time-derivatives 
-      solutions_thyra_[subdomain] =
+      //Update solns_thyra_ and its time-derivatives
+      solns_thyra_[subdomain] =
           Thyra::createVector(soln_mv->getVectorNonConst(0));
 
-      solutions_dot_thyra_[subdomain] =
+      solns_dot_thyra_[subdomain] =
           Thyra::createVector(soln_mv->getVectorNonConst(1));
 
-      solutions_dotdot_thyra_[subdomain] =
+      solns_dotdot_thyra_[subdomain] =
           Thyra::createVector(soln_mv->getVectorNonConst(2));
 
       if (ams.exoOutput == true) {
@@ -1021,11 +1036,28 @@ SchwarzLoopQuasistatics() const
 
     num_iter_ = 0;
 
+    // Before the Schwarz loop, save the solutions for each subdomain in case
+    // the solve phase fails. Then the load step is reduced and the Schwarz
+    // loop is restarted from scratch.
+    for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
+      bool const
+      is_initial_state = stop == 0 && num_iter_ == 0;
+
+      Teuchos::RCP<NOX::Abstract::Vector>
+      prev_soln_rcp = is_initial_state == true ?
+          Teuchos::null : solns_nox_[subdomain];
+
+      prev_solns_nox_[subdomain] = prev_soln_rcp;
+    }
+
+    // Schwarz loop
     do {
 
       bool const
       is_initial_state = stop == 0 && num_iter_ == 0;
 
+      // Subdomain loop
       for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
         fos << delim << std::endl;
@@ -1095,7 +1127,7 @@ SchwarzLoopQuasistatics() const
         Teuchos::RCP<NOX::Abstract::Vector>
         prev_soln_rcp = is_initial_state == true ?
             nox_solver.getPreviousSolutionGroup().getX().clone(NOX::DeepCopy) :
-            solutions_nox_[subdomain];
+            solns_nox_[subdomain];
 
         NOX::Abstract::Vector const &
         prev_soln = *prev_soln_rcp;
@@ -1115,8 +1147,9 @@ SchwarzLoopQuasistatics() const
         status = nox_solver.getStatus();
 
         if (status == NOX::StatusTest::Failed) {
-          fos << "\nUnable to solve for subdomain " << subdomain << '\n';
+          fos << "\nINFO: Unable to solve for subdomain " << subdomain << '\n';
           failed_ = true;
+          // Break out of the subdomain loop
           break;
         }
 
@@ -1152,14 +1185,17 @@ SchwarzLoopQuasistatics() const
 #endif //DEBUG
 
         // After solve, save solution and get info to check convergence
-        solutions_nox_[subdomain] = curr_soln_rcp;
+        solns_nox_[subdomain] = curr_soln_rcp;
         norms_init(subdomain) = prev_soln.norm();
         norms_final(subdomain) = curr_soln.norm();
         norms_diff(subdomain) = soln_diff.norm();
       } // Subdomain loop
 
       if (failed_ == true) {
-        continue;
+        fos << "\nINFO: Unable to continue " << num_iter_;
+        fos << " Schwarz iteration\n";
+        // Break out of the Schwarz loop.
+        break;
       }
 
       norm_init_ = minitensor::norm(norms_init);
@@ -1214,7 +1250,33 @@ SchwarzLoopQuasistatics() const
       fos << "Relative tolerance :" << rel_tol_ << '\n';
       fos << delim << std::endl;
 
-    }  while (continueSolve() == true);
+    }  while (continueSolve() == true); // Schwarz loop
+
+    // One of the subdomains failed to solve. Reduce step.
+    if (failed_ == true) {
+      failed_ = false;
+
+      ST const
+      reduced_step = std::max(min_time_step_, reduction_factor_ * time_step);
+
+      if (reduced_step < time_step) {
+        fos << "\nINFO: Reducing step from " << time_step << " to ";
+        fos << reduced_step << '\n';
+      } else {
+        fos << "\nINFO: Cannot reduce step. Using " << reduced_step << '\n';
+      }
+
+      time_step = reduced_step;
+
+      // Restore previous solutions
+      for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+        solns_nox_[subdomain] = prev_solns_nox_[subdomain];
+      }
+
+      // Jump to the beginning of the continuation loop without advancing
+      // time to try to use a reduced step.
+      continue;
+    }
 
     reportFinals(fos);
 
@@ -1251,7 +1313,21 @@ SchwarzLoopQuasistatics() const
 
     ++stop;
     current_time += time_step;
-  }
+
+    // Step successful. Try to increase the time step.
+    ST const
+    increased_step = std::min(max_time_step_, increase_factor_ * time_step);
+
+    if (increased_step > time_step) {
+      fos << "\nINFO: Increasing step from " << time_step << " to ";
+      fos << increased_step << '\n';
+    } else {
+      fos << "\nINFO: Cannot increase step. Using " << increased_step << '\n';
+    }
+
+    time_step = increased_step;
+
+  } // Continuation loop
 
   return;
 }
