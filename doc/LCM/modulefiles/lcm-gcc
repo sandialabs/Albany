@@ -18,4 +18,6 @@ if { [is-loaded lcm-cuda] } {
   setenv CXX [exec which g++]
 }
 
+setenv CXXFLAGS -Wno-terminate
+
 setenv FC [exec which gfortran]
