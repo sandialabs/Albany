@@ -18,6 +18,8 @@
 #include "EpetraExt_MultiVectorOut.h"
 
 // Set precLBonly to true if you want to ONLY apply a preconditioner to the left basis (Psi)
+// NOTE: now that the preconditioner is just applied twice to the left basis Psi, this 
+//   behavior is replicated by simply calling the singular version of the perconditioner call.      
 // This is useful as a sanity check of the LSPG method...
 //   if you only apply J_inverse to the left basis, then LSPG should be equivalent
 //   to Galerkin. (To do that, in addition to defining "InverseJacobian" as the
@@ -722,17 +724,31 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 				reducedOpFactory_->applyScaling(*reducedOpFactory_->getLeftBasisCopy());
 			case invJac:
 			{
+                /*
 #if !precLBonly
 				reducedOpFactory_->applyPreconditioner(*reducedOpFactory_->getPremultipliedReducedBasis());
 #endif
 				reducedOpFactory_->applyPreconditioner(*reducedOpFactory_->getLeftBasisCopy());
+                */
+#if precLBonly
+                reducedOpFactory_->applyPreconditioner(*reducedOpFactory_->getLeftBasisCopy());
+#else
+                reducedOpFactory_->applyPreconditionerTwice(*reducedOpFactory_->getLeftBasisCopy());
+#endif
 			}
 			case ifPack:
 			{
+                /*
 #if !precLBonly
 				reducedOpFactory_->applyPreconditionerIfpack(*reducedOpFactory_->getPremultipliedReducedBasis());
 #endif
 				reducedOpFactory_->applyPreconditionerIfpack(*reducedOpFactory_->getLeftBasisCopy());
+                */
+#if precLBonly
+                reducedOpFactory_->applyPreconditionerIfpack(*reducedOpFactory_->getLeftBasisCopy());
+#else
+                reducedOpFactory_->applyPreconditionerIfpackTwice(*reducedOpFactory_->getLeftBasisCopy());
+#endif
 			}
 			}
 
@@ -783,17 +799,21 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 			reducedOpFactory_->applyScaling(*fullOutArgs.get_f());
 		case invJac:
 		{
+            /*
 #if !precLBonly
 			reducedOpFactory_->applyPreconditioner(*fullOutArgs.get_f());
 #endif
+            */
 		}
 		case projSoln:
 			reducedOpFactory_->applyJacobian(*fullOutArgs.get_f());
 		case ifPack:
 		{
+            /*
 #if !precLBonly
 			reducedOpFactory_->applyPreconditionerIfpack(*fullOutArgs.get_f());
 #endif
+            */
 		}
 		}
 		if (PrecondType!=none)

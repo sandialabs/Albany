@@ -44,10 +44,12 @@ public:
   virtual Teuchos::RCP<const Epetra_MultiVector> getPreconditioner() const = 0;
   virtual void setPreconditioner(Epetra_CrsMatrix &jacobian) const = 0;
   virtual void applyPreconditioner(const Epetra_MultiVector &vector) const = 0;
+  virtual void applyPreconditionerTwice(const Epetra_MultiVector &vector) const = 0;
 
   virtual Teuchos::RCP<Ifpack_Preconditioner> getPreconditionerIfpack() const = 0;
   virtual void setPreconditionerIfpack(Epetra_CrsMatrix &jacobian, std::string ifpackType) const = 0;
   virtual void applyPreconditionerIfpack(const Epetra_MultiVector &vector) const = 0;
+  virtual void applyPreconditionerIfpackTwice(const Epetra_MultiVector &vector) const = 0;
 
   virtual Teuchos::RCP<const Epetra_CrsMatrix> getJacobian() const = 0;
   virtual void setJacobian(Epetra_CrsMatrix &jacobian) const = 0;

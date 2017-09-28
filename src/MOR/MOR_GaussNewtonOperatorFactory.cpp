@@ -14,6 +14,11 @@
 #include "Epetra_Vector.h"  //JF
 #include "Amesos.h"  //JF
 
+// Set invJacPrec to true only if you REALLY want to enable preconditioning
+//   with the inverse Jacobian.  It's slow, and only runs in serial, so in
+//   general it's probably best to stay away.
+#define invJacPrec false // ALSO MOR_ReducedOrderModelEvaluator.cpp
+
 namespace MOR {
 
 using ::Teuchos::RCP;
@@ -31,7 +36,8 @@ GaussNewtonOperatorFactoryBase<Derived>::GaussNewtonOperatorFactoryBase(const RC
   //set initial scaling to 1 in case used before computed
   scaling_->PutScalar(1.0);
 
-/*  preconditioner_ = Teuchos::rcp(new Epetra_MultiVector(reducedBasis->Map(), reducedBasis->GlobalLength(), true));
+#if invJacPrec
+  preconditioner_ = Teuchos::rcp(new Epetra_MultiVector(reducedBasis->Map(), reducedBasis->GlobalLength(), true));
   int num_rows = preconditioner_->MyLength();
   int num_vecs = preconditioner_->NumVectors();
   printf("preconditioner has %d rows and %d columns\n",num_rows,num_vecs);
@@ -40,7 +46,8 @@ GaussNewtonOperatorFactoryBase<Derived>::GaussNewtonOperatorFactoryBase(const RC
     preconditioner_->ReplaceMyValue(ind_rows, ind_rows, 1.0);
     //preconditioner_->ReplaceGlobalValue(ind_rows, ind_rows, 1.0);
 
-  leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.premultipliedRightProjector()));*/
+  leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.premultipliedRightProjector()));
+#endif
 }
 
 template <typename Derived>
@@ -263,6 +270,21 @@ void GaussNewtonOperatorFactoryBase<Derived>::applyPreconditioner(const Epetra_M
 }
 
 template <typename Derived>
+void GaussNewtonOperatorFactoryBase<Derived>::applyPreconditionerTwice(const Epetra_MultiVector &vector) const
+{
+  //NOTE:  vector is "const" in the sense that this function does not change what is pointed to,
+  //       but the values of the MultiVector are modified.
+  printf("Applying Preconditioner, TWICE\n");
+  Teuchos::RCP<Epetra_MultiVector> temp = Teuchos::rcp(new Epetra_MultiVector(vector));
+  Teuchos::RCP<Epetra_MultiVector> temp2 = Teuchos::rcp(new Epetra_MultiVector(vector));
+  Teuchos::RCP<Epetra_MultiVector> temp3 = Teuchos::rcp(new Epetra_MultiVector(View, vector, 0, vector.NumVectors()));
+
+  temp2->Multiply('N','N',1.0,*preconditioner_,*temp,0.0);
+  temp3->Multiply('T','N',1.0,*preconditioner_,*temp2,0.0);
+
+}
+
+template <typename Derived>
 RCP<Ifpack_Preconditioner> GaussNewtonOperatorFactoryBase<Derived>::getPreconditionerIfpack() const
 {
   return preconditioner_ifpack_;
@@ -371,6 +393,34 @@ void GaussNewtonOperatorFactoryBase<Derived>::applyPreconditionerIfpack(const Ep
   std::cout << *preconditioner_ifpack_ << std::endl;
 
   preconditioner_ifpack_->ApplyInverse(*temp,*temp2);
+}
+
+template <typename Derived>
+void GaussNewtonOperatorFactoryBase<Derived>::applyPreconditionerIfpackTwice(const Epetra_MultiVector &vector) const
+{
+  //NOTE:  vector is "const" in the sense that this function does not change what is pointed to,
+  //       but the values of the MultiVector are modified.
+  printf("Applying Preconditioner\n");
+  Teuchos::RCP<Epetra_MultiVector> temp = Teuchos::rcp(new Epetra_MultiVector(vector));
+  Teuchos::RCP<Epetra_MultiVector> temp2 = Teuchos::rcp(new Epetra_MultiVector(vector));
+  Teuchos::RCP<Epetra_MultiVector> temp3 = Teuchos::rcp(new Epetra_MultiVector(View, vector, 0, vector.NumVectors()));
+
+  TEUCHOS_ASSERT(preconditioner_ifpack_ != Teuchos::null);
+  TEUCHOS_ASSERT(preconditioner_ifpack_->IsInitialized() == true);
+  TEUCHOS_ASSERT(preconditioner_ifpack_->IsComputed() == true);
+
+  std::cout << preconditioner_ifpack_->NumInitialize() << std::endl;
+  std::cout << preconditioner_ifpack_->NumCompute() << std::endl;
+  std::cout << preconditioner_ifpack_->NumApplyInverse() << std::endl;
+  std::cout << preconditioner_ifpack_ << std::endl;
+  std::cout << *preconditioner_ifpack_ << std::endl;
+
+  preconditioner_ifpack_->ApplyInverse(*temp,*temp2);
+  int err = preconditioner_ifpack_->SetUseTranspose(true);
+  if (err==-1)
+    printf("This Ifpack implementation doesn't support using a transposed preconditioner!\n");
+  TEUCHOS_ASSERT(err == 0);
+  preconditioner_ifpack_->ApplyInverse(*temp2,*temp3);
 }
 
 template <typename Derived>
