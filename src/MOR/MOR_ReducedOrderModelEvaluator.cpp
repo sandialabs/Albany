@@ -625,9 +625,13 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 				switch(PrecondType)
 				{
 				case scaling:
+				{
 					reducedOpFactory_->setScaling(*W_temp);
 					//reducedOpFactory_->getScaling()->Print(std::cout);
+					break;
+				}
 				case invJac:
+				{
 					reducedOpFactory_->setPreconditioner(*W_temp);
 					if (writePreconditioner_)
 					{
@@ -653,7 +657,11 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 						outfile << "];\n";
 						outfile.close();
 					}
+					break;
+				}
 				case projSoln:
+				{
+					std::cout << "setting up projected solution preconditioning" << std::endl;
 					reducedOpFactory_->setJacobian(*W_temp);
 					if (writePreconditioner_)
 					{
@@ -679,7 +687,11 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 						outfile << "];\n";
 						outfile.close();
 					}
+					break;
+				}
 				case ifPack:
+				{
+					std::cout << "setting up Ifpack preconditioning" << std::endl;
 					reducedOpFactory_->setPreconditionerIfpack(*W_temp, ifpackType_);
 					if (writePreconditioner_)
 					{
@@ -693,6 +705,8 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 						outfile << "];\n";
 						outfile.close();
 					}
+					break;
+				}
 				}
 			}
 		}
@@ -720,35 +734,40 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 			switch (PrecondType)
 			{
 			case scaling:
+			{
 				reducedOpFactory_->applyScaling(*reducedOpFactory_->getPremultipliedReducedBasis());
 				reducedOpFactory_->applyScaling(*reducedOpFactory_->getLeftBasisCopy());
+				break;
+			}
 			case invJac:
 			{
-                /*
+				/*
 #if !precLBonly
 				reducedOpFactory_->applyPreconditioner(*reducedOpFactory_->getPremultipliedReducedBasis());
 #endif
 				reducedOpFactory_->applyPreconditioner(*reducedOpFactory_->getLeftBasisCopy());
-                */
+				 */
 #if precLBonly
-                reducedOpFactory_->applyPreconditioner(*reducedOpFactory_->getLeftBasisCopy());
+				reducedOpFactory_->applyPreconditioner(*reducedOpFactory_->getLeftBasisCopy());
 #else
-                reducedOpFactory_->applyPreconditionerTwice(*reducedOpFactory_->getLeftBasisCopy());
+				reducedOpFactory_->applyPreconditionerTwice(*reducedOpFactory_->getLeftBasisCopy());
 #endif
+				break;
 			}
 			case ifPack:
 			{
-                /*
+				/*
 #if !precLBonly
 				reducedOpFactory_->applyPreconditionerIfpack(*reducedOpFactory_->getPremultipliedReducedBasis());
 #endif
 				reducedOpFactory_->applyPreconditionerIfpack(*reducedOpFactory_->getLeftBasisCopy());
-                */
+				 */
 #if precLBonly
-                reducedOpFactory_->applyPreconditionerIfpack(*reducedOpFactory_->getLeftBasisCopy());
+				reducedOpFactory_->applyPreconditionerIfpack(*reducedOpFactory_->getLeftBasisCopy());
 #else
-                reducedOpFactory_->applyPreconditionerIfpackTwice(*reducedOpFactory_->getLeftBasisCopy());
+				reducedOpFactory_->applyPreconditionerIfpackTwice(*reducedOpFactory_->getLeftBasisCopy());
 #endif
+				break;
 			}
 			}
 
@@ -796,25 +815,35 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 		switch(PrecondType)
 		{
 		case scaling:
+		{
 			reducedOpFactory_->applyScaling(*fullOutArgs.get_f());
+			break;
+		}
+		/*
 		case invJac:
 		{
-            /*
+
 #if !precLBonly
 			reducedOpFactory_->applyPreconditioner(*fullOutArgs.get_f());
 #endif
-            */
+			break;
 		}
+		 */
 		case projSoln:
+		{
 			reducedOpFactory_->applyJacobian(*fullOutArgs.get_f());
+			break;
+		}
+		/*
 		case ifPack:
 		{
-            /*
+
 #if !precLBonly
 			reducedOpFactory_->applyPreconditionerIfpack(*fullOutArgs.get_f());
 #endif
-            */
+			break;
 		}
+		 */
 		}
 		if (PrecondType!=none)
 		{
