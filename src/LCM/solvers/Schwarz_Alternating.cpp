@@ -52,13 +52,15 @@ SchwarzAlternating(
 
   // Firewalls
   ALBANY_ASSERT(min_iters_ >= 1);
-  ALBANY_ASSERT(max_iters_ > 1);
+  ALBANY_ASSERT(max_iters_ >= 1);
   ALBANY_ASSERT(max_iters_ >= min_iters_);
   ALBANY_ASSERT(rel_tol_ >= 0.0);
   ALBANY_ASSERT(abs_tol_ >= 0.0);
-  ALBANY_ASSERT(maximum_steps_ > 1);
+  ALBANY_ASSERT(maximum_steps_ >= 1);
   ALBANY_ASSERT(final_time_ >= initial_time_);
   ALBANY_ASSERT(initial_time_step_ > 0.0);
+  ALBANY_ASSERT(max_time_step_ > 0.0);
+  ALBANY_ASSERT(min_time_step_ > 0.0);
   ALBANY_ASSERT(max_time_step_ >= min_time_step_);
   ALBANY_ASSERT(reduction_factor_ <= 1.0);
   ALBANY_ASSERT(reduction_factor_ > 0.0);
@@ -92,6 +94,7 @@ SchwarzAlternating(
   sub_inargs_.resize(num_subdomains_);
   sub_outargs_.resize(num_subdomains_);
   solns_nox_.resize(num_subdomains_);
+  prev_solns_nox_.resize(num_subdomains_);
   solns_thyra_.resize(num_subdomains_);
   solns_dot_thyra_.resize(num_subdomains_);
   solns_dotdot_thyra_.resize(num_subdomains_);
@@ -1044,11 +1047,8 @@ SchwarzLoopQuasistatics() const
       bool const
       is_initial_state = stop == 0 && num_iter_ == 0;
 
-      Teuchos::RCP<NOX::Abstract::Vector>
-      prev_soln_rcp = is_initial_state == true ?
+      prev_solns_nox_[subdomain] = is_initial_state == true ?
           Teuchos::null : solns_nox_[subdomain];
-
-      prev_solns_nox_[subdomain] = prev_soln_rcp;
     }
 
     // Schwarz loop
@@ -1144,7 +1144,7 @@ SchwarzLoopQuasistatics() const
         solver.evalModel(in_args, out_args);
 
         NOX::StatusTest::StatusType const
-        status = nox_solver.getStatus();
+        status = piro_loca_solver.getSolver()->getStatus();
 
         if (status == NOX::StatusTest::Failed) {
           fos << "\nINFO: Unable to solve for subdomain " << subdomain << '\n';
