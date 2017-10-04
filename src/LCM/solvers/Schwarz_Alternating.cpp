@@ -1084,6 +1084,7 @@ SchwarzLoopQuasistatics() const
 
         time_step_params.set(step_str, time_step);
         time_step_params.set("Method", "Constant");
+        time_step_params.set("Failed Step Reduction Factor", 1.0);
 
         double const
         init_time = start_stop_params.get<double>(init_str);
