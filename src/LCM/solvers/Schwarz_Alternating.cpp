@@ -1192,8 +1192,8 @@ SchwarzLoopQuasistatics() const
       } // Subdomain loop
 
       if (failed_ == true) {
-        fos << "\nINFO: Unable to continue " << num_iter_;
-        fos << " Schwarz iteration\n";
+        fos << "INFO: Unable to continue Schwarz iteration " << num_iter_;
+        fos << "\n";
         // Break out of the Schwarz loop.
         break;
       }
@@ -1260,10 +1260,10 @@ SchwarzLoopQuasistatics() const
       reduced_step = std::max(min_time_step_, reduction_factor_ * time_step);
 
       if (reduced_step < time_step) {
-        fos << "\nINFO: Reducing step from " << time_step << " to ";
+        fos << "INFO: Reducing step from " << time_step << " to ";
         fos << reduced_step << '\n';
       } else {
-        fos << "\nINFO: Cannot reduce step. Using " << reduced_step << '\n';
+        fos << "INFO: Cannot reduce step. Using " << reduced_step << '\n';
       }
 
       time_step = reduced_step;
