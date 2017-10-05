@@ -1078,6 +1078,7 @@ SchwarzLoopQuasistatics() const
         start_stop_params.set(init_str, current_time);
         start_stop_params.set(start_str, current_time);
         start_stop_params.set(stop_str, next_time);
+        start_stop_params.set("Max Steps", 1);
 
         Teuchos::ParameterList &
         time_step_params = piro_loca_solver.getStepSizeParams();
