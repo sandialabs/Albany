@@ -73,6 +73,8 @@ class MPMD_App : public Plato::Application
   
     void importData(const std::string & name, const Plato::SharedData& sf);
     void exportData(const std::string & name, Plato::SharedData& sf);
+    void exportDataMap(const Plato::data::layout_t & aDataLayout, 
+                       std::vector<int> & aMyOwnedGlobalIDs);
   
   private:
 
@@ -120,8 +122,6 @@ class MPMD_App : public Plato::Application
 /******************************************************************************/
 
 
-
-//Communicator LocalComm;
 
 /******************************************************************************/
 int main(int argc, char **argv)
@@ -405,7 +405,7 @@ void MPMD_App::finalize()
 void MPMD_App::importData(const std::string& name, const Plato::SharedData& sf)
 /******************************************************************************/
 {
-  if(sf.myLayout() == Plato::data::layout_t::FIELD){
+  if(sf.myLayout() == Plato::data::layout_t::SCALAR_FIELD){
     {
       auto it = m_stateMap.find(name);
       if(it != m_stateMap.end()){
@@ -444,14 +444,9 @@ void MPMD_App::copyFieldIntoState(const std::string& name, const Plato::SharedDa
   Teuchos::ArrayRCP<double> ltopo = m_localVector->get1dViewNonConst(); 
   int numLocalVals = m_localVector->getLocalLength();
 
-  const Plato::SharedField* sfc = dynamic_cast<const Plato::SharedField*>(&sf);
-
-  Teuchos::RCP<const Tpetra_Map> localNodeMap = m_localVector->getMap();
-  for(int lid=0; lid<numLocalVals; lid++){
-    int gid = localNodeMap->getGlobalElement(lid);
-    // why do DataLayer's GIDs start from 1 but Albany's start from 0?
-    sfc->getData(ltopo[lid],gid+1);
-  }
+  std::vector<double> outVector(numLocalVals);
+  sf.getData(outVector);
+  ltopo.assign(outVector.begin(),outVector.end());
 
   m_overlapVector->doImport(*m_localVector, *m_importer, Tpetra::INSERT);
   Teuchos::RCP<Albany::NodeFieldContainer>
@@ -521,18 +516,12 @@ void MPMD_App::copyFieldFromState(const std::string& name, Plato::SharedData& sf
       }
   }
 
-  Plato::SharedField* sfc = dynamic_cast<Plato::SharedField*>(&sf);
-
   m_localVector->putScalar(0.0);
   m_localVector->doExport(*m_overlapVector, *m_exporter, Tpetra::ADD);
   Teuchos::ArrayRCP<double> ltopo = m_localVector->get1dViewNonConst(); 
   int numLocalVals = m_localVector->getLocalLength();
-  auto map = m_localVector->getMap();
-  for(int lid=0; lid<numLocalVals; lid++){
-    int gid = map->getGlobalElement(lid);
-    // why do DataLayer's GIDs start from 1 but Albany's start from 0?
-    sfc->setData(ltopo[lid],gid+1);
-  }
+  std::vector<double> inVector(ltopo.begin(),ltopo.end());
+  sf.setData(inVector);
 
   Teuchos::RCP<Albany::NodeFieldContainer>
     nodeContainer = stateMgr.getNodalDataBase()->getNodeContainer();
@@ -556,13 +545,35 @@ void MPMD_App::copyFieldFromDistParam(const std::string& name, Plato::SharedData
 
 
 
+/******************************************************************************/
+void MPMD_App::exportDataMap(const Plato::data::layout_t & aDataLayout, 
+                             std::vector<int> & aMyOwnedGlobalIDs)
+{
+    aMyOwnedGlobalIDs.clear();
+
+    if(aDataLayout == Plato::data::layout_t::SCALAR_FIELD)
+    {
+      auto map = m_localVector->getMap();
+      int numLocalVals = map->getNodeNumElements();
+      aMyOwnedGlobalIDs.resize(numLocalVals);
+      for(int lid=0; lid<numLocalVals; lid++){
+        aMyOwnedGlobalIDs[lid] = map->getGlobalElement(lid)+1; // Albany's gids start from 0
+      }
+    }
+    else
+    {
+      Plato::ParsingException pe("AlbanyMPMD currently only supports SCALAR_FIELD data layout");
+      throw pe;
+    }
+}
+/******************************************************************************/
 
 
 /******************************************************************************/
 void MPMD_App::exportData(const std::string& name, Plato::SharedData& sf)
 /******************************************************************************/
 {
-  if(sf.myLayout() == Plato::data::layout_t::FIELD){
+  if(sf.myLayout() == Plato::data::layout_t::SCALAR_FIELD){
     {
       auto it = m_stateMap.find(name);
       if(it != m_stateMap.end()){
