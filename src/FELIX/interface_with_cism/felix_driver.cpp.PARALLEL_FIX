@@ -941,6 +941,26 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     Teuchos::RCP<Tpetra_Vector> uvel = Teuchos::rcp(new Tpetra_Vector(node_map, true));
     Teuchos::RCP<Tpetra_Vector> vvel = Teuchos::rcp(new Tpetra_Vector(node_map, true));
 #endif
+    
+    //IKT, 10/6/17: the following is towards fixing Albany github issue #187, having to do 
+    //with the solution passed to the *.nc file not being copied from Albany to CISM 
+    //correctly in parallel for all geometries/decompositions.
+
+    int numGlobalNodes;
+#ifdef CISM_USE_EPETRA
+    numGlobalNodes = node_map->NumGlobalElements();
+#else
+    numGlobalNodes = node_map->getGlobalNumElements();
+#endif
+    std::vector<double> uvel_local_vec(numGlobalNodes, 0.0);
+    std::vector<double> uvel_global_vec_max(numGlobalNodes, 0.0); 
+    std::vector<double> uvel_global_vec_min(numGlobalNodes, 0.0); 
+    std::vector<double> uvel_global_vec(numGlobalNodes, 0.0);
+    std::vector<double> vvel_local_vec(numGlobalNodes, 0.0);
+    std::vector<double> vvel_global_vec_max(numGlobalNodes, 0.0); 
+    std::vector<double> vvel_global_vec_min(numGlobalNodes, 0.0); 
+    std::vector<double> vvel_global_vec(numGlobalNodes, 0.0);
+  
 
 #ifdef CISM_USE_EPETRA 
     if (interleavedOrdering == true) { 
@@ -951,12 +971,14 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
         int vel_global_dof, vel_local_dof; 
         if (modulo == 0) { //u dof 
           vel_global_dof = global_dof/2+1; //add 1 because node_map is 1-based 
+          uvel_local_vec[vel_global_dof] = sol_value; 
           vel_local_dof = node_map->LID(vel_global_dof); //look up local id corresponding to global id in node_map
           //std::cout << "uvel: global_dof = " << global_dof << ", uvel_global_dof = " << vel_global_dof << ", uvel_local_dof = " << vel_local_dof << std::endl; 
           uvel.ReplaceMyValues(1, &sol_value, &vel_local_dof); 
         }
         else { // v dof 
           vel_global_dof = (global_dof-1)/2+1; //add 1 because node_map is 1-based 
+          vvel_local_vec[vel_global_dof] = sol_value; 
           vel_local_dof = node_map->LID(vel_global_dof); //look up local id corresponding to global id in node_map
           vvel.ReplaceMyValues(1, &sol_value, & vel_local_dof); 
         }
@@ -970,27 +992,19 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
         int vel_global_dof, vel_local_dof; 
         if (global_dof < numDofs/2) { //u dof
           vel_global_dof = global_dof+1; //add 1 because node_map is 1-based 
+          uvel_local_vec[vel_global_dof] = sol_value; 
           vel_local_dof = node_map->LID(vel_global_dof); //look up local id corresponding to global id in node_map
           uvel.ReplaceMyValues(1, &sol_value, &vel_local_dof); 
         }
         else { //v dofs 
           vel_global_dof = global_dof-numDofs/2+1; //add 1 because node_map is 1-based
+          vvel_local_vec[vel_global_dof] = sol_value; 
           vel_local_dof = node_map->LID(vel_global_dof); //look up local id corresponding to global id in node_map
           vvel.ReplaceMyValues(1, &sol_value, & vel_local_dof);
         } 
       }
     }
 #else
-    int numGlobalNodes = node_map->getGlobalNumElements();
-    std::vector<double> uvel_local_vec(numGlobalNodes, 0.0);
-    std::vector<double> uvel_global_vec_max(numGlobalNodes, 0.0); 
-    std::vector<double> uvel_global_vec_min(numGlobalNodes, 0.0); 
-    std::vector<double> uvel_global_vec(numGlobalNodes, 0.0);
-    std::vector<double> vvel_local_vec(numGlobalNodes, 0.0);
-    std::vector<double> vvel_global_vec_max(numGlobalNodes, 0.0); 
-    std::vector<double> vvel_global_vec_min(numGlobalNodes, 0.0); 
-    std::vector<double> vvel_global_vec(numGlobalNodes, 0.0);
-  
     if (interleavedOrdering == true) {
       for (int i=0; i<overlapMap->getNodeNumElements(); i++) {
         int global_dof = overlapMap->getGlobalElement(i);
@@ -1011,46 +1025,6 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
           vvel->replaceLocalValue(vel_local_dof, sol_value);
         }
       }
-
-      Teuchos::reduceAll(*mpiCommT, Teuchos::REDUCE_MAX, numGlobalNodes, &uvel_local_vec[0], 
-                          &uvel_global_vec_max[0]);
-      Teuchos::reduceAll(*mpiCommT, Teuchos::REDUCE_MIN, numGlobalNodes, &uvel_local_vec[0], 
-                          &uvel_global_vec_min[0]);
-      Teuchos::reduceAll(*mpiCommT, Teuchos::REDUCE_MAX, numGlobalNodes, &vvel_local_vec[0], 
-                          &vvel_global_vec_max[0]);
-      Teuchos::reduceAll(*mpiCommT, Teuchos::REDUCE_MIN, numGlobalNodes, &vvel_local_vec[0], 
-                          &vvel_global_vec_min[0]);
-
-      if (mpiCommT->getSize() < 17) {
-        for (int i=0; i<numGlobalNodes; i++) {
-          if (uvel_global_vec_min[i] != uvel_global_vec_max[i]) {
-            uvel_global_vec[i] = uvel_global_vec_min[i] + uvel_global_vec_max[i]; 
-          }
-          else {
-            uvel_global_vec[i] = uvel_global_vec_min[i]; 
-          }
-          if (vvel_global_vec_min[i] != vvel_global_vec_max[i]) {
-            vvel_global_vec[i] = vvel_global_vec_min[i] + vvel_global_vec_max[i]; 
-          }
-          else {
-            vvel_global_vec[i] = vvel_global_vec_min[i]; 
-          }
-        }
-      }
-      else {
-        for (int i=0; i<numGlobalNodes; i++) {
-          uvel_global_vec[i] = uvel_global_vec_min[i] + uvel_global_vec_max[i]; 
-          vvel_global_vec[i] = vvel_global_vec_min[i] + vvel_global_vec_max[i]; 
-        }
-      }
-
-      /*if (mpiCommT->getRank() == 0) {
-        for (int i=0; i<numGlobalNodes; i++) {
-          std::cout << "IKT i, uvel_global_vec_max, uvel_global_vec_min, uvel_global_vec = " << i << ", " 
-                    << uvel_global_vec_max[i] << ", " << uvel_global_vec_min[i] << ", "
-                    << uvel_global_vec[i] << std::endl; 
-        }
-      }*/
     }
     else { //note: the case with non-interleaved ordering has not been tested...
       int numDofs = overlapMap->getGlobalNumElements();
@@ -1060,19 +1034,64 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
         int vel_global_dof, vel_local_dof;
         if (global_dof < numDofs/2) { //u dof
           vel_global_dof = global_dof+1; //add 1 because node_map is 1-based 
+          uvel_local_vec[vel_global_dof] = sol_value; 
           vel_local_dof = node_map->getLocalElement(vel_global_dof); //look up local id corresponding to global id in node_map
           uvel->replaceLocalValue(vel_local_dof, sol_value);
         }
         else { //v dofs 
           vel_global_dof = global_dof-numDofs/2+1; //add 1 because node_map is 1-based
+          vvel_local_vec[vel_global_dof] = sol_value; 
           vel_local_dof = node_map->getLocalElement(vel_global_dof); //look up local id corresponding to global id in node_map
           vvel->replaceLocalValue(vel_local_dof, sol_value);
         }
       }
     }
 #endif
- 
 
+    //IKT, 10/6/17: the following code is to fix Albany github issue #187.  Here we are communicating
+    //the value of uvel and vvel to all procs.
+
+    Teuchos::reduceAll(*mpiCommT, Teuchos::REDUCE_MAX, numGlobalNodes, &uvel_local_vec[0], 
+                        &uvel_global_vec_max[0]);
+    Teuchos::reduceAll(*mpiCommT, Teuchos::REDUCE_MIN, numGlobalNodes, &uvel_local_vec[0], 
+                        &uvel_global_vec_min[0]);
+    Teuchos::reduceAll(*mpiCommT, Teuchos::REDUCE_MAX, numGlobalNodes, &vvel_local_vec[0], 
+                        &vvel_global_vec_max[0]);
+    Teuchos::reduceAll(*mpiCommT, Teuchos::REDUCE_MIN, numGlobalNodes, &vvel_local_vec[0], 
+                        &vvel_global_vec_min[0]);
+
+    //IKT, 10/6/17: the following code towards fixing Albany github issue #187 is admittedly not nice and hacky...  
+    if (mpiCommT->getSize() < 17) {
+      for (int i=0; i<numGlobalNodes; i++) {
+        if (uvel_global_vec_min[i] != uvel_global_vec_max[i]) {
+          uvel_global_vec[i] = uvel_global_vec_min[i] + uvel_global_vec_max[i]; 
+        }
+        else {
+          uvel_global_vec[i] = uvel_global_vec_min[i]; 
+        }
+        if (vvel_global_vec_min[i] != vvel_global_vec_max[i]) {
+          vvel_global_vec[i] = vvel_global_vec_min[i] + vvel_global_vec_max[i]; 
+        }
+        else {
+          vvel_global_vec[i] = vvel_global_vec_min[i]; 
+        }
+      }
+    }
+    else {
+      for (int i=0; i<numGlobalNodes; i++) {
+        uvel_global_vec[i] = uvel_global_vec_min[i] + uvel_global_vec_max[i]; 
+        vvel_global_vec[i] = vvel_global_vec_min[i] + vvel_global_vec_max[i]; 
+      }
+    }
+
+    /*if (mpiCommT->getRank() == 0) {
+      for (int i=0; i<numGlobalNodes; i++) {
+        std::cout << "IKT i, uvel_global_vec_max, uvel_global_vec_min, uvel_global_vec = " << i << ", " 
+                  << uvel_global_vec_max[i] << ", " << uvel_global_vec_min[i] << ", "
+                  << uvel_global_vec[i] << std::endl; 
+      }
+    }*/
+ 
 #ifdef WRITE_TO_MATRIX_MARKET
     //For debug: write solution to matrix market file 
 #ifdef CISM_USE_EPETRA
@@ -1087,6 +1106,8 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
      //Copy uvel and vvel into uVel_ptr and vVel_ptr respectively (the arrays passed back to CISM) according to the numbering consistent w/ CISM. 
      counter1 = 0; 
      counter2 = 0;
+//IKT, 10/6/17, FIXME: get rid of uvel_constView, vvel_constView, EPETRA ifdefs and local_nodeID, as these 
+//should not be needed anymore! 
 #ifdef CISM_USE_EPETRA
 #else
      Teuchos::ArrayRCP<const ST> uvel_constView = uvel->get1dView();
@@ -1100,11 +1121,14 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
              if (i >= nhalo-1 & i < ewn-nhalo) {
 #ifdef CISM_USE_EPETRA 
                local_nodeID = node_map->LID(cismToAlbanyNodeNumberMap[counter1]);
+               auto global_nodeID = cismToAlbanyNodeNumberMap[counter1];
                //if (mpiComm->MyPID() == 0) 
                //std::cout << "counter1:" << counter1 << ", cismToAlbanyNodeNumberMap[counter1]: " << cismToAlbanyNodeNumberMap[counter1] << ", local_nodeID: " 
                //<< local_nodeID << ", uvel: " << uvel[local_nodeID] << std::endl; //uvel[local_nodeID] << std::endl;  
-               uVel_ptr[counter2] = uvel[local_nodeID];
-               vVel_ptr[counter2] = vvel[local_nodeID];  
+               //uVel_ptr[counter2] = uvel[local_nodeID];
+               //vVel_ptr[counter2] = vvel[local_nodeID];  
+               uVel_ptr[counter2] = uvel_global_vec[global_nodeID];  
+               vVel_ptr[counter2] = vvel_global_vec[global_nodeID];  
 #else
                local_nodeID = node_map->getLocalElement(cismToAlbanyNodeNumberMap[counter1]);
                auto global_nodeID = cismToAlbanyNodeNumberMap[counter1];
