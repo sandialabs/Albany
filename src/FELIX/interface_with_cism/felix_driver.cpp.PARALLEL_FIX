@@ -952,6 +952,13 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 #else
     numGlobalNodes = node_map->getGlobalNumElements();
 #endif
+
+    //IKT, 10/6/17: ensure size of *vel_local* and *vec_global* std::vecs 
+    //is large enough when reduced comm is used.
+#ifdef REDUCED_COMM
+    numGlobalNodes*=2; 
+#endif
+
     std::vector<double> uvel_local_vec(numGlobalNodes, 0.0);
     std::vector<double> uvel_global_vec_max(numGlobalNodes, 0.0); 
     std::vector<double> uvel_global_vec_min(numGlobalNodes, 0.0); 
@@ -1051,13 +1058,13 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     //IKT, 10/6/17: the following code is to fix Albany github issue #187.  Here we are communicating
     //the value of uvel and vvel to all procs.
 
-    Teuchos::reduceAll(*mpiCommT, Teuchos::REDUCE_MAX, numGlobalNodes, &uvel_local_vec[0], 
+    Teuchos::reduceAll(*reducedMpiCommT, Teuchos::REDUCE_MAX, numGlobalNodes, &uvel_local_vec[0], 
                         &uvel_global_vec_max[0]);
-    Teuchos::reduceAll(*mpiCommT, Teuchos::REDUCE_MIN, numGlobalNodes, &uvel_local_vec[0], 
+    Teuchos::reduceAll(*reducedMpiCommT, Teuchos::REDUCE_MIN, numGlobalNodes, &uvel_local_vec[0], 
                         &uvel_global_vec_min[0]);
-    Teuchos::reduceAll(*mpiCommT, Teuchos::REDUCE_MAX, numGlobalNodes, &vvel_local_vec[0], 
+    Teuchos::reduceAll(*reducedMpiCommT, Teuchos::REDUCE_MAX, numGlobalNodes, &vvel_local_vec[0], 
                         &vvel_global_vec_max[0]);
-    Teuchos::reduceAll(*mpiCommT, Teuchos::REDUCE_MIN, numGlobalNodes, &vvel_local_vec[0], 
+    Teuchos::reduceAll(*reducedMpiCommT, Teuchos::REDUCE_MIN, numGlobalNodes, &vvel_local_vec[0], 
                         &vvel_global_vec_min[0]);
 
     //IKT, 10/6/17: the following code towards fixing Albany github issue #187 is admittedly not nice and hacky...  
