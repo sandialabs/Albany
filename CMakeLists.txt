@@ -622,7 +622,6 @@ ENDIF()
 # defaults to Disabled
 
 OPTION(ENABLE_CISM_INTERFACE "Flag to turn on FELIX Interface to the CISM code" OFF)
-OPTION(ENABLE_CISM_REDUCED_COMM "Flag to turn on reduced communicator for CISM-Albany runs" ON)
 OPTION(ENABLE_CISM_EPETRA "Flag to turn on Epetra for CISM-Albany" OFF)
 OPTION(ENABLE_CISM_CHECK_COMPARISONS "Flag to turn on comparisons checking for CISM-Albany" OFF)
 
@@ -632,10 +631,6 @@ IF (ENABLE_CISM_INTERFACE AND ENABLE_FELIX)
     MESSAGE("---> CISM_CHECK_COMPARISONS is Enabled, compiling with -DCISM_CHECK_COMPARISONS.  Error will be thrown if comparisons fail for CISM-Albany run.")
   ELSE()
     MESSAGE("---> CISM_CHECK_COMPARISONS is Disabled, NOT compiling with -DCISM_CHECK_COMPARISONS.  Error will NOT be thrown if comparisons fail for CISM-Albany run.  Please be cautious when running ctest from CISM!")
-  ENDIF()
-  IF (ENABLE_CISM_REDUCED_COMM)
-    ADD_DEFINITIONS(-DREDUCED_COMM)
-    MESSAGE("---> CISM_REDUCED_COMM     is Enabled, compiling with -DREDUCED_COMM.  CISM-Albany will use reduced communicator.")
   ENDIF()
   IF (ENABLE_ALBANY_EPETRA_EXE)
     IF (ENABLE_CISM_EPETRA)
