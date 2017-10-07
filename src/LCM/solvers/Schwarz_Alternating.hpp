@@ -121,8 +121,10 @@ private:
   void
   SchwarzLoopQuasistatics() const;
 
+#ifdef ALBANY_TEMPUS
   void
   SchwarzLoopDynamics() const;
+#endif
 
   void
   updateConvergenceCriterion() const;

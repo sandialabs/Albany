@@ -8,7 +8,9 @@
 #include "Albany_STKDiscretization.hpp"
 #include "MiniTensor.h"
 #include "Piro_LOCASolver.hpp"
+#ifdef ALBANY_TEMPUS
 #include "Piro_TempusSolver.hpp"
+#endif
 #include "Schwarz_Alternating.hpp"
 
 //#define DEBUG
@@ -138,6 +140,9 @@ SchwarzAlternating(
     if (subdomain == 0) { 
       have_loca = piro_params.isSublist("LOCA");
       have_tempus = piro_params.isSublist("Tempus");
+#ifndef ALBANY_TEMPUS
+      ALBANY_ASSERT(!have_tempus, "Must compile Albany with Tempus to solve using dynamic Schwarz"); 
+#endif
       ALBANY_ASSERT(have_loca != have_tempus, "Must have either LOCA or Tempus");
       have_loca_ = have_loca;
       have_tempus_ = have_tempus;
@@ -463,9 +468,11 @@ evalModelImpl(
   if (have_loca_ == true) {
     SchwarzLoopQuasistatics();
   }
+#ifdef ALBANY_TEMPUS
   if (have_tempus_ == true) {
     SchwarzLoopDynamics();
   }
+#endif
   return;
 }
 
@@ -581,6 +588,7 @@ reportFinals(std::ostream & os) const
 //
 // Schwarz Alternating loop, dynamic
 //
+#ifdef ALBANY_TEMPUS
 void
 SchwarzAlternating::
 SchwarzLoopDynamics() const
@@ -950,7 +958,7 @@ SchwarzLoopDynamics() const
 
   return; 
 }
-
+#endif
 //
 // Schwarz Alternating loop, quasistatic
 //
