@@ -20,7 +20,6 @@
 
 #include <Albany_AbstractDiscretization.hpp>
 #include <Albany_DiscretizationFactory.hpp>
-#include <Albany_SolverFactory.hpp>
 #include <Albany_STKDiscretization.hpp>
 #include <Albany_Utils.hpp>
 #include <MiniTensor_Geometry.h>
