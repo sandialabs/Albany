@@ -3,12 +3,10 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
+//
 // Find connected components in a mesh by using the dual graph
 //
-
-// Define only if Zoltan is enabled
-#if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
-
 #include <iomanip>
 #include <Teuchos_CommandLineProcessor.hpp>
 
@@ -143,13 +141,3 @@ int main(int ac, char* av[])
   return 0;
 
 }
-
-#else // #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
-
-// Zoltan not defined, do nothing
-int main(int ac, char* av[])
-{
-  return 0;
-}
-
-#endif // #if defined (ALBANY_ZOLTAN)

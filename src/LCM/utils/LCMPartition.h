@@ -5,8 +5,6 @@
 //*****************************************************************//
 
 // Define only if Zoltan is enabled
-#if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
-
 #if !defined(LCM_Partition_h)
 #define LCM_Partition_h
 
@@ -20,16 +18,11 @@
 
 #include <zoltan_cpp.h>
 
-#include <Teuchos_RCP.hpp>
-#include <Teuchos_ArrayRCP.hpp>
-#include <Teuchos_ParameterList.hpp>
-
 #include <Albany_AbstractDiscretization.hpp>
 #include <Albany_DiscretizationFactory.hpp>
 #include <Albany_STKDiscretization.hpp>
 #include <Albany_SolverFactory.hpp>
 #include <Albany_Utils.hpp>
-
 #include <MiniTensor_Geometry.h>
 
 namespace LCM {
@@ -1162,5 +1155,3 @@ operator<<(
 } // namespace LCM
 
 #endif // #if !defined(LCM_Partition_h)
-
-#endif // #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)

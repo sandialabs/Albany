@@ -45,7 +45,7 @@
 #include "Albany_Catalyst_Decorator.hpp"
 #endif
 
-#if defined(ALBANY_LCM) && defined(HAVE_STK) && defined(ALBANY_BGL)
+#if defined(ALBANY_LCM) && defined(HAVE_STK)
 #include "Topology_Utils.h"
 #endif // ALBANY_LCM
 
@@ -118,7 +118,7 @@ namespace {
             Teuchos::RCP<Teuchos::ParameterList> const & adapt_params,
             Teuchos::RCP<Albany::AbstractMeshStruct> & mesh_struct
             ) {
-#if defined(HAVE_STK) && defined(ALBANY_BGL) // LCM only uses STK for adaptation here
+#if defined(HAVE_STK) // LCM only uses STK for adaptation here
         // Top mod uses BGL
         bool const
         do_adaptation = adapt_params.is_null() == false;

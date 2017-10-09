@@ -4,10 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-// Define only if Zoltan is enabled
-// Only build if BGL is available
-#if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN) && defined(ALBANY_BGL)
-
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
@@ -4269,5 +4265,3 @@ operator<<(
 }
 
 } // namespace LCM
-
-#endif // #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)

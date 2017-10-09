@@ -575,7 +575,7 @@ IF(ALBANY_HAVE_STK)
 ENDIF(ALBANY_HAVE_STK)
 
 #LCM utils/topology
-IF(ALBANY_HAVE_STK AND ALBANY_BGL)
+IF(ALBANY_HAVE_STK)
   set(topology-sources
     "${LCM_DIR}/utils/topology/BarycentricSubdivision.cpp"
     "${LCM_DIR}/utils/topology/MinimumSurface.cpp"
@@ -727,7 +727,7 @@ IF (LCM_TEST_EXES AND ALBANY_DTK)
   add_executable(DTK_Interp_Volume_to_NS utils/dtk_interp_and_error/interpolation_volume_to_ns.cpp)
 ENDIF()
 
-IF (LCM_TEST_EXES AND ALBANY_BGL) 
+IF (LCM_TEST_EXES) 
   add_executable(BifurcationTest test/utils/BifurcationTest.cpp)
   add_executable(MaterialPointSimulator test/utils/MaterialPointSimulator.cpp)
   add_executable(BoundarySurfaceOutput test/utils/BoundarySurfaceOutput.cpp)
@@ -896,7 +896,7 @@ IF (LCM_TEST_EXES AND ALBANY_DTK)
   target_link_libraries(DTK_Interp_and_Error ${repeat_libs} ${ALL_LIBRARIES})
   target_link_libraries(DTK_Interp_Volume_to_NS ${repeat_libs} ${ALL_LIBRARIES})
 ENDIF()
-IF (LCM_TEST_EXES AND ALBANY_BGL)
+IF (LCM_TEST_EXES)
   set (repeat_libs ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${LCM_UT_LIBS} ${ALBANY_LIBRARIES})
   target_link_libraries(BifurcationTest ${repeat_libs} ${ALL_LIBRARIES})
   target_link_libraries(BoundarySurfaceOutput ${repeat_libs} ${ALL_LIBRARIES})
