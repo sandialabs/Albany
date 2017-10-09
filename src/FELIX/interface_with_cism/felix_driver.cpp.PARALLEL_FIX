@@ -951,14 +951,7 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 #endif
 
     std::vector<double> uvel_local_vec(numGlobalNodes, 0.0);
-    std::vector<double> uvel_global_vec_max(numGlobalNodes, 0.0); 
-    std::vector<double> uvel_global_vec_min(numGlobalNodes, 0.0); 
-    std::vector<double> uvel_global_vec(numGlobalNodes, 0.0);
     std::vector<double> vvel_local_vec(numGlobalNodes, 0.0);
-    std::vector<double> vvel_global_vec_max(numGlobalNodes, 0.0); 
-    std::vector<double> vvel_global_vec_min(numGlobalNodes, 0.0); 
-    std::vector<double> vvel_global_vec(numGlobalNodes, 0.0);
-  
 
     int overlap_map_num_my_elts;
     int global_dof;
@@ -1017,41 +1010,6 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
       }
     }
 
-    //IKT, 10/6/17: the following code is to fix Albany github issue #187.  Here we are communicating
-    //the value of uvel and vvel to all procs.
-
-    Teuchos::reduceAll(*reducedMpiCommT, Teuchos::REDUCE_MAX, numGlobalNodes, &uvel_local_vec[0], 
-                        &uvel_global_vec_max[0]);
-    Teuchos::reduceAll(*reducedMpiCommT, Teuchos::REDUCE_MIN, numGlobalNodes, &uvel_local_vec[0], 
-                        &uvel_global_vec_min[0]);
-    Teuchos::reduceAll(*reducedMpiCommT, Teuchos::REDUCE_MAX, numGlobalNodes, &vvel_local_vec[0], 
-                        &vvel_global_vec_max[0]);
-    Teuchos::reduceAll(*reducedMpiCommT, Teuchos::REDUCE_MIN, numGlobalNodes, &vvel_local_vec[0], 
-                        &vvel_global_vec_min[0]);
-
-    for (int i=0; i<numGlobalNodes; i++) {
-      if (uvel_global_vec_min[i] != uvel_global_vec_max[i]) {
-        uvel_global_vec[i] = uvel_global_vec_min[i] + uvel_global_vec_max[i]; 
-      }
-      else {
-        uvel_global_vec[i] = uvel_global_vec_min[i]; 
-      }
-      if (vvel_global_vec_min[i] != vvel_global_vec_max[i]) {
-        vvel_global_vec[i] = vvel_global_vec_min[i] + vvel_global_vec_max[i]; 
-      }
-      else {
-        vvel_global_vec[i] = vvel_global_vec_min[i]; 
-      }
-    }
-
-    /*if (reducedMpiCommT->getRank() == 0) {
-      for (int i=0; i<numGlobalNodes; i++) {
-        std::cout << "IKT i, uvel_global_vec_max, uvel_global_vec_min, uvel_global_vec = " << i << ", " 
-                  << uvel_global_vec_max[i] << ", " << uvel_global_vec_min[i] << ", "
-                  << uvel_global_vec[i] << std::endl; 
-      }
-    }*/
- 
      //Copy uvel and vvel into uVel_ptr and vVel_ptr respectively (the arrays passed back to CISM) according to the numbering consistent w/ CISM. 
      counter1 = 0; 
      counter2 = 0;
@@ -1061,8 +1019,8 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
            if (j >= nhalo-1 & j < nsn-nhalo) {
              if (i >= nhalo-1 & i < ewn-nhalo) {
                auto global_nodeID = cismToAlbanyNodeNumberMap[counter1];
-               uVel_ptr[counter2] = uvel_global_vec[global_nodeID];  
-               vVel_ptr[counter2] = vvel_global_vec[global_nodeID];  
+               uVel_ptr[counter2] = uvel_local_vec[global_nodeID];  
+               vVel_ptr[counter2] = vvel_local_vec[global_nodeID];  
                counter1++;
             }
             }
