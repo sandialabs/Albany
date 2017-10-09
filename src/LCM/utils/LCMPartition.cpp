@@ -45,7 +45,6 @@ void PrintPartitionInfo(
     int * &export_procs,
     int * &export_to_part)
 {
-
   output_stream << "Changes           : " << changes << '\n';
   output_stream << "Number GID entries: " << num_gid_entries << '\n';
   output_stream << "Number LID entries: " << num_lid_entries << '\n';
@@ -92,6 +91,7 @@ void PrintPartitionInfo(
     output_stream << export_to_part[i] << '\n';
   }
 
+  return;
 }
 
 //
@@ -99,8 +99,10 @@ void PrintPartitionInfo(
 // 1) Find the bounding box of the indexed points.
 // 2) Compute the vector sum of the indexed points.
 //
-boost::tuple<minitensor::Vector<double>, minitensor::Vector<double>,
-    minitensor::Vector<double>>
+boost::tuple<
+  minitensor::Vector<double>,
+  minitensor::Vector<double>,
+  minitensor::Vector<double>>
 bounds_and_sum_subset(
     std::vector<minitensor::Vector<double>> const & points,
     std::set<minitensor::Index> const & indices)
@@ -123,12 +125,7 @@ bounds_and_sum_subset(
   minitensor::Index const
   N = sum.get_dimension();
 
-  for (std::set<minitensor::Index>::const_iterator it = ++indices.begin();
-      it != indices.end();
-      ++it) {
-
-    minitensor::Index const
-    index = *it;
+  for (auto index : indices) {
 
     minitensor::Vector<double> const &
     p = points[index];
@@ -168,12 +165,7 @@ closest_subset(
   minitensor::Index
   index_minimum = first;
 
-  for (std::set<minitensor::Index>::const_iterator it = ++indices.begin();
-      it != indices.end();
-      ++it) {
-
-    minitensor::Index const
-    index = *it;
+  for (auto index : indices) {
 
     minitensor::Vector<double> const &
     p = centers[index].position;
@@ -220,12 +212,7 @@ split_box(
   minitensor::Index const
   N = lower_corner.get_dimension();
 
-  for (std::set<minitensor::Index>::const_iterator it = ++indices.begin();
-      it != indices.end();
-      ++it) {
-
-    minitensor::Index const
-    index = *it;
+  for (auto index : indices) {
 
     minitensor::Vector<double> const &
     p = points[index];
@@ -269,12 +256,7 @@ split_box(
   std::vector<double>
   coordinates;
 
-  for (std::set<minitensor::Index>::const_iterator it = indices.begin();
-      it != indices.end();
-      ++it) {
-
-    minitensor::Index const
-    index = *it;
+  for (auto index : indices) {
 
     minitensor::Vector<double> const &
     p = points[index];
@@ -322,12 +304,7 @@ split_box(
 
   split_limit(largest_dimension) = split_coordinate;
 
-  for (std::set<minitensor::Index>::const_iterator it = indices.begin();
-      it != indices.end();
-      ++it) {
-
-    minitensor::Index const
-    index = *it;
+  for (auto index : indices) {
 
     minitensor::Vector<double> const &
     p = points[index];

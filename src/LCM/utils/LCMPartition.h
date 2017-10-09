@@ -20,8 +20,8 @@
 
 #include <Albany_AbstractDiscretization.hpp>
 #include <Albany_DiscretizationFactory.hpp>
-#include <Albany_STKDiscretization.hpp>
 #include <Albany_SolverFactory.hpp>
+#include <Albany_STKDiscretization.hpp>
 #include <Albany_Utils.hpp>
 #include <MiniTensor_Geometry.h>
 
@@ -85,7 +85,6 @@ struct KDTreeNode;
 /// 24(7) July 2002
 ///
 struct ClusterCenter {
-
   minitensor::Vector<double>
   position;
 
@@ -94,7 +93,6 @@ struct ClusterCenter {
 
   minitensor::Index
   count;
-
 };
 
 ///
@@ -140,7 +138,6 @@ struct KDTreeNode {
 
   minitensor::Index
   closest_center_to_midcell;
-
 };
 
 ///
@@ -154,7 +151,8 @@ template<typename Node>
 class KDTree {
 public:
 
-  KDTree(std::vector<minitensor::Vector<double>> const & points,
+  KDTree(
+      std::vector<minitensor::Vector<double>> const & points,
       minitensor::Index const number_centers);
 
   boost::shared_ptr<Node> &
@@ -167,7 +165,6 @@ private:
 
   boost::shared_ptr<Node>
   root_;
-
 };
 
 ///
@@ -227,11 +224,6 @@ struct OutputVisitor {
 ///
 template<typename Node, typename Center>
 struct FilterVisitor {
-
-  std::vector<minitensor::Vector<double>> & points;
-
-  std::vector<Center> & centers;
-
   FilterVisitor(
       std::vector<minitensor::Vector<double>> & p,
       std::vector<Center> & c);
@@ -244,6 +236,12 @@ struct FilterVisitor {
 
   bool
   post_stop(Node const & node) const;
+
+  std::vector<minitensor::Vector<double>> &
+  points;
+
+  std::vector<Center> &
+  centers;
 };
 
 ///
@@ -539,9 +537,7 @@ public:
   /// geometry of an object.
   ///
   static int
-  GetNumberGeometry(
-      void* data,
-      int* ierr);
+  GetNumberGeometry(void* data, int* ierr);
 
   ///
   /// Zoltan interface query function that returns the number of objects
@@ -554,9 +550,7 @@ public:
   /// \return   int The number of objects that are assigned to the processor.
   ///
   static int
-  GetNumberOfObjects(
-      void* data,
-      int* ierr);
+  GetNumberOfObjects(void* data, int* ierr);
 
   ///
   /// Zoltan interface query function that fills two
@@ -733,14 +727,12 @@ private:
   //
   PARTITION::Scheme
   initializer_scheme_;
-
 };
 
 ///
 /// Dual graph of a connectivity array
 ///
 class DualGraph {
-
 public:
 
   ///
@@ -837,7 +829,6 @@ private:
   //
   ScalarMap
   vertex_weights_;
-
 };
 
 ///
@@ -852,7 +843,6 @@ private:
 /// http://www.cs.sandia.gov/Zoltan/ug_html/ug.html
 ///
 class ZoltanHyperGraph {
-
 public:
 
   ///
@@ -941,9 +931,7 @@ public:
   /// \return   int The number of objects that are assigned to the processor.
   ///
   static int
-  GetNumberOfObjects(
-      void* data,
-      int* ierr);
+  GetNumberOfObjects(void* data, int* ierr);
 
   ///
   /// Zoltan interface query function that fills two
@@ -1109,7 +1097,6 @@ private:
   //
   ScalarMap
   vertex_weights_;
-
 };
 
 ///
