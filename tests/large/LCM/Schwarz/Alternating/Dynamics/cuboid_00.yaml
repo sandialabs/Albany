@@ -83,13 +83,13 @@ ANONYMOUS:
               Output Information:
                 Error: true
                 Warning: true
-                Outer Iteration: true
+                Outer Iteration: false
                 Parameters: true
                 Details: true
                 Linear Solver Details: true
                 Stepper Iteration: true
                 Stepper Details: true
-                Stepper Parameters: true
+                Stepper Parameters: false
             Solver Options:
               Status Test Check Type: Minimal
             Status Tests:
