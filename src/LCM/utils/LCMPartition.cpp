@@ -690,7 +690,7 @@ box_proximity_to_centers(
 template<typename Node, typename Center>
 void
 FilterVisitor<Node, Center>::operator()(Node const & node) const
-    {
+{
   bool const
   node_is_empty = node->count == 0;
 
@@ -1804,7 +1804,7 @@ ConnectivityArray::CreateGrid()
 //
 minitensor::Vector<int>
 ConnectivityArray::PointToIndex(minitensor::Vector<double> const & point) const
-    {
+{
   int const
   i = (point(0) - lower_corner_(0)) / cell_size_(0);
 
@@ -1823,7 +1823,7 @@ ConnectivityArray::PointToIndex(minitensor::Vector<double> const & point) const
 //
 bool
 ConnectivityArray::IsInsideMesh(minitensor::Vector<double> const & point) const
-    {
+{
   int
   i = (point(0) - lower_corner_(0)) / cell_size_(0);
 
@@ -1870,7 +1870,7 @@ ConnectivityArray::IsInsideMesh(minitensor::Vector<double> const & point) const
 bool
 ConnectivityArray::IsInsideMeshByElement(
     minitensor::Vector<double> const & point) const
-    {
+{
 
   // Check bounding box first
   if (in_box(point, lower_corner_, upper_corner_) == false) {
@@ -1937,7 +1937,7 @@ ConnectivityArray::IsInsideMeshByElement(
 //
 minitensor::Index
 ConnectivityArray::GetNumberPartitions(double const length_scale) const
-    {
+{
   double const
   ball_volume = length_scale * length_scale * length_scale;
 
@@ -3307,18 +3307,14 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
     graph_[element].clear();
 
     // Determine the (generalized) faces for each element
-    for (std::vector<std::vector<int>>::size_type
-    i = 0;
-        i < face_connectivity.size();
-        ++i) {
+    for (std::vector<std::vector<int>>::size_type i = 0;
+        i < face_connectivity.size(); ++i) {
 
       std::set<int>
       face_nodes;
 
-      for (std::vector<int>::size_type
-      j = 0;
-          j < face_connectivity[i].size();
-          ++j) {
+      for (std::vector<int>::size_type j = 0;
+          j < face_connectivity[i].size(); ++j) {
         face_nodes.insert(element_nodes[face_connectivity[i][j]]);
       }
 
@@ -3383,10 +3379,7 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
   }
 
   // Build dual graph
-  for (IDList::size_type
-  i = 0;
-      i < internal_faces.size();
-      ++i) {
+  for (IDList::size_type i = 0; i < internal_faces.size(); ++i) {
 
     int const
     faceID = internal_faces[i];
@@ -3396,10 +3389,7 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
 
     ALBANY_EXPECT(elements_face.size() == 2);
 
-    for (IDList::size_type
-    j = 0;
-        j < elements_face.size();
-        ++j) {
+    for (IDList::size_type j = 0; j < elements_face.size(); ++j) {
 
       int const
       element = elements_face[j];
@@ -3490,7 +3480,7 @@ DualGraph::GetVertexWeights() const
 //
 int
 DualGraph::GetConnectedComponents(std::vector<int> & components) const
-    {
+{
   // Create boost graph from edge list
   typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>
   UndirectedGraph;
@@ -3498,18 +3488,25 @@ DualGraph::GetConnectedComponents(std::vector<int> & components) const
   typedef boost::graph_traits<UndirectedGraph>::vertex_descriptor Vertex;
   typedef boost::graph_traits<UndirectedGraph>::edge_descriptor Edge;
 
-  UndirectedGraph graph;
+  UndirectedGraph
+  graph;
 
   // Add vertices
-  std::map<int, Vertex> dual_2_boost;
-  AdjacencyMap dual_graph = GetGraph();
+  std::map<int, Vertex>
+  dual_2_boost;
+
+  AdjacencyMap
+  dual_graph = GetGraph();
 
   for (AdjacencyMap::const_iterator graph_iter = dual_graph.begin();
       graph_iter != dual_graph.end();
       ++graph_iter) {
 
-    Vertex boost_vertex = boost::add_vertex(graph);
-    int dual_vertex = (*graph_iter).first;
+    Vertex
+    boost_vertex = boost::add_vertex(graph);
+
+    int
+    dual_vertex = (*graph_iter).first;
 
     dual_2_boost.insert(std::make_pair(dual_vertex, boost_vertex));
 
@@ -3523,13 +3520,20 @@ DualGraph::GetConnectedComponents(std::vector<int> & components) const
       edges_iter != edge_list.end();
       ++edges_iter) {
 
-    const IDList vertices = (*edges_iter).second;
+    IDList const
+    vertices = (*edges_iter).second;
 
-    int source_vertex = vertices[0];
-    int target_vertex = vertices[1];
+    int
+    source_vertex = vertices[0];
 
-    Vertex source_boost_vertex = dual_2_boost[source_vertex];
-    Vertex target_boost_vertex = dual_2_boost[target_vertex];
+    int
+    target_vertex = vertices[1];
+
+    Vertex
+    source_boost_vertex = dual_2_boost[source_vertex];
+
+    Vertex
+    target_boost_vertex = dual_2_boost[target_vertex];
 
     boost::add_edge(source_boost_vertex, target_boost_vertex, graph);
 
@@ -3550,7 +3554,6 @@ DualGraph::GetConnectedComponents(std::vector<int> & components) const
 void
 DualGraph::Print() const
 {
-
   ScalarMap
   vertex_weights = GetVertexWeights();
 
@@ -3580,8 +3583,11 @@ DualGraph::Print() const
       vw_iter != vertex_weights.end();
       ++vw_iter) {
 
-    int const vertex = (*vw_iter).first;
-    double const weight = (*vw_iter).second;
+    int const
+    vertex = (*vw_iter).first;
+
+    double const
+    weight = (*vw_iter).second;
 
     std::cout << std::setw(8) << vertex;
     std::cout << std::scientific << std::setw(16) << std::setprecision(8);
@@ -3655,8 +3661,7 @@ DualGraph::Print() const
 //
 std::vector<std::vector<int>>
 DualGraph::GetFaceConnectivity(minitensor::ELEMENT::Type const type) const
-    {
-
+{
   std::vector<std::vector<int>>
   face_connectivity;
 
@@ -3863,7 +3868,6 @@ ZoltanHyperGraph::GetVertexWeights() const
 std::vector<ZOLTAN_ID_TYPE>
 ZoltanHyperGraph::GetEdgeIDs() const
 {
-
   std::vector<ZOLTAN_ID_TYPE>
   edges;
 
@@ -3895,7 +3899,6 @@ ZoltanHyperGraph::GetEdgeIDs() const
 std::vector<int>
 ZoltanHyperGraph::GetEdgePointers() const
 {
-
   std::vector<int>
   pointers;
 
@@ -3932,7 +3935,6 @@ ZoltanHyperGraph::GetEdgePointers() const
 std::vector<ZOLTAN_ID_TYPE>
 ZoltanHyperGraph::GetVertexIDs() const
 {
-
   std::vector<ZOLTAN_ID_TYPE>
   vertices;
 
@@ -3955,7 +3957,6 @@ ZoltanHyperGraph::GetVertexIDs() const
 int
 ZoltanHyperGraph::GetNumberOfObjects(void* data, int* ierr)
 {
-
   ZoltanHyperGraph &
   zoltan_hypergraph = *(static_cast<ZoltanHyperGraph*>(data));
 
@@ -3981,7 +3982,6 @@ ZoltanHyperGraph::GetObjectList(
     float* obj_wgts,
     int* ierr)
 {
-
   ZoltanHyperGraph &
   zoltan_hypergraph = *(static_cast<ZoltanHyperGraph*>(data));
 
@@ -4031,7 +4031,6 @@ ZoltanHyperGraph::GetHyperGraphSize(
     int* format,
     int* ierr)
 {
-
   ZoltanHyperGraph &
   zoltan_hypergraph = *(static_cast<ZoltanHyperGraph*>(data));
 
@@ -4063,7 +4062,6 @@ ZoltanHyperGraph::GetHyperGraph(
     ZOLTAN_ID_PTR pin_GID,
     int* ierr)
 {
-
   ZoltanHyperGraph &
   zoltan_hypergraph = *(static_cast<ZoltanHyperGraph*>(data));
 
@@ -4088,31 +4086,22 @@ ZoltanHyperGraph::GetHyperGraph(
   std::vector<int>
   edge_pointers = zoltan_hypergraph.GetEdgePointers();
 
-  for (std::vector<ZOLTAN_ID_TYPE>::size_type
-  i = 0;
-      i < vertex_IDs.size();
-      ++i) {
+  for (std::vector<ZOLTAN_ID_TYPE>::size_type i = 0;
+      i < vertex_IDs.size(); ++i) {
 
     vtxedge_GID[i] = vertex_IDs[i];
-
   }
 
-  for (std::vector<ZOLTAN_ID_TYPE>::size_type
-  i = 0;
-      i < edge_IDs.size();
-      ++i) {
+  for (std::vector<ZOLTAN_ID_TYPE>::size_type i = 0;
+      i < edge_IDs.size(); ++i) {
 
     pin_GID[i] = edge_IDs[i];
-
   }
 
-  for (std::vector<int>::size_type
-  i = 0;
-      i < edge_pointers.size();
-      ++i) {
+  for (std::vector<int>::size_type i = 0;
+      i < edge_pointers.size(); ++i) {
 
     vtxedge_ptr[i] = edge_pointers[i];
-
   }
 
   return;

@@ -287,6 +287,8 @@ int main(int ac, char* av[])
     std::cout << std::scientific << std::setw(16) << std::setprecision(8);
     std::cout << volume / length_scale_cubed << '\n';
   }
+
+#if defined(DEBUG)
   std::cout << "==========================================";
   std::cout << '\n';
 
@@ -319,6 +321,6 @@ int main(int ac, char* av[])
 
   LCM::DualGraph dual_graph(connectivity_array);
   dual_graph.Print();
-
+#endif
   return 0;
 }

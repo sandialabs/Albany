@@ -419,7 +419,7 @@ public:
   PointToIndex(minitensor::Vector<double> const & point) const;
 
   ///
-  /// Determine is a given point is inside the mesh.
+  /// Determine if a given point is inside the mesh.
   ///
   bool
   IsInsideMesh(minitensor::Vector<double> const & point) const;
