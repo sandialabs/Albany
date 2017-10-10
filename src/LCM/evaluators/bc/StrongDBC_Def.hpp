@@ -109,7 +109,7 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   auto const 
   min_global_index = x->getMap()->getMinAllGlobalIndex(); 
  
-#if DEBUG
+#ifdef DEBUG
   Teuchos::FancyOStream &fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
   fos << "IKT global_length, max_global_index, min_global_index = " << global_length << ", " << 
                 max_global_index << ", " << min_global_index << std::endl; 
