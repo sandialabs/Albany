@@ -232,13 +232,23 @@ private:
   prev_solns_nox_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  solns_thyra_;
+  schwarz_ics_;
   
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  solns_dot_thyra_;
+  schwarz_ics_dot_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  solns_dotdot_thyra_;
+  schwarz_ics_dotdot_;
+
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
+  prev_solns_thyra_;
+ 
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
+  prev_solns_dot_thyra_;
+  
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
+  prev_solns_dotdot_thyra_;
+  
 
   // Used if solving with loca or tempus
   bool

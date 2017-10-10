@@ -100,7 +100,7 @@ ANONYMOUS:
                 Test Type: NormF
                 Norm Type: Two Norm
                 Scale Type: Scaled
-                Tolerance: 1.00000000e-08
+                Tolerance: 1.00000000e-07
               Test 1:
                 Test Type: MaxIters
                 Maximum Iterations: 128

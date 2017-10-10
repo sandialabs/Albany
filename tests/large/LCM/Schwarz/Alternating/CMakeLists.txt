@@ -5,5 +5,4 @@
 ##*****************************************************************//
 
 add_subdirectory(Quasistatics)
-#add_subdirectory(Dynamics)
-
+add_subdirectory(Dynamics)

@@ -97,9 +97,12 @@ SchwarzAlternating(
   sub_outargs_.resize(num_subdomains_);
   solns_nox_.resize(num_subdomains_);
   prev_solns_nox_.resize(num_subdomains_);
-  solns_thyra_.resize(num_subdomains_);
-  solns_dot_thyra_.resize(num_subdomains_);
-  solns_dotdot_thyra_.resize(num_subdomains_);
+  schwarz_ics_.resize(num_subdomains_);
+  schwarz_ics_dot_.resize(num_subdomains_);
+  schwarz_ics_dotdot_.resize(num_subdomains_);
+  prev_solns_thyra_.resize(num_subdomains_);
+  prev_solns_dot_thyra_.resize(num_subdomains_);
+  prev_solns_dotdot_thyra_.resize(num_subdomains_);
 
   bool
   have_loca{false};
@@ -641,15 +644,24 @@ SchwarzLoopDynamics() const
 
     Teuchos::RCP<Tpetra_MultiVector> soln_mv = stk_disc.getSolutionMV();
        
-    // Populate solns_thyra_ and its time-derivatives with values of IC
+    // Populate schwarz_ics_ and its time-derivatives with values of IC
     // from STK discretization.
-    solns_thyra_[subdomain] =
+    schwarz_ics_[subdomain] =
         Thyra::createVector(soln_mv->getVectorNonConst(0));
 
-    solns_dot_thyra_[subdomain] =
+    schwarz_ics_dot_[subdomain] =
         Thyra::createVector(soln_mv->getVectorNonConst(1));
 
-    solns_dotdot_thyra_[subdomain] =
+    schwarz_ics_dotdot_[subdomain] =
+        Thyra::createVector(soln_mv->getVectorNonConst(2));
+
+    prev_solns_thyra_[subdomain] =
+        Thyra::createVector(soln_mv->getVectorNonConst(0));
+    
+    prev_solns_dot_thyra_[subdomain] =
+        Thyra::createVector(soln_mv->getVectorNonConst(1));
+
+    prev_solns_dotdot_thyra_[subdomain] =
         Thyra::createVector(soln_mv->getVectorNonConst(2));
 
     stk_disc.writeSolutionMV(*soln_mv, initial_time_);
@@ -736,36 +748,36 @@ SchwarzLoopDynamics() const
         current_state;
 
         Teuchos::RCP<Thyra::VectorBase<ST>> 
-        prev_soln_rcp = Thyra::createMember(me.get_x_space());
+        ic_soln_rcp = Thyra::createMember(me.get_x_space());
         
         Teuchos::RCP<Thyra::VectorBase<ST>> 
-        prev_soln_dot_rcp = Thyra::createMember(me.get_x_space());
+        ic_soln_dot_rcp = Thyra::createMember(me.get_x_space());
         
         Teuchos::RCP<Thyra::VectorBase<ST>> 
-        prev_soln_dotdot_rcp = Thyra::createMember(me.get_x_space());
+        ic_soln_dotdot_rcp = Thyra::createMember(me.get_x_space());
 
-        //set prev_soln_rcp, prev_soln_dot_rcp and prev_soln_dotdot_rcp 
-        //by making copy of what is in solns_thyra_[subdomain], etc.
+        //set ic_soln_rcp, ic_soln_dot_rcp and ic_soln_dotdot_rcp 
+        //by making copy of what is in schwarz_ics_[subdomain], etc.
         Thyra::VectorBase<ST> &
-        solution_thyra = *solns_thyra_[subdomain];
-
-        Thyra::VectorBase<ST> &
-        solution_dot_thyra = *solns_dot_thyra_[subdomain];
+        ic_soln = *schwarz_ics_[subdomain];
 
         Thyra::VectorBase<ST> &
-        solution_dotdot_thyra = *solns_dotdot_thyra_[subdomain];
+        ic_soln_dot = *schwarz_ics_dot_[subdomain];
 
-        Thyra::copy(solution_thyra, prev_soln_rcp.ptr());
+        Thyra::VectorBase<ST> &
+        ic_soln_dotdot = *schwarz_ics_dotdot_[subdomain];
 
-        Thyra::copy(solution_dot_thyra, prev_soln_dot_rcp.ptr());
+        Thyra::copy(ic_soln, ic_soln_rcp.ptr());
 
-        Thyra::copy(solution_dotdot_thyra, prev_soln_dotdot_rcp.ptr());
+        Thyra::copy(ic_soln_dot, ic_soln_dot_rcp.ptr());
+
+        Thyra::copy(ic_soln_dotdot, ic_soln_dotdot_rcp.ptr());
 
         piro_tempus_solver.setInitialState(
             current_time,
-            prev_soln_rcp,
-            prev_soln_dot_rcp,
-            prev_soln_dotdot_rcp);
+            ic_soln_rcp,
+            ic_soln_dot_rcp,
+            ic_soln_dotdot_rcp);
 
         solver.evalModel(in_args, out_args);  
         
@@ -774,10 +786,10 @@ SchwarzLoopDynamics() const
         prev_soln_tpetra;
 
         fos << "\n*** Thyra: Previous solution ***\n";
-        solns_thyra_[subdomain]->describe(fos, Teuchos::VERB_EXTREME);
-        fos << "\n*** NORM: " << Thyra::norm(solution_thyra) << '\n';
+        prev_solns_thyra_[subdomain]->describe(fos, Teuchos::VERB_EXTREME);
+        fos << "\n*** NORM: " << Thyra::norm(*prev_solns_thyra_[subdomain]) << '\n';
         if (subdomain == 0) {
-          prev_soln_tpetra = ConverterT::getTpetraVector(solns_thyra_[0]);
+          prev_soln_tpetra = ConverterT::getTpetraVector(prev_solns_thyra_[0]);
           Albany::writeMatrixMarket(prev_soln_tpetra, "prev_soln_subd0", num_iter_);
         }
         else if (subdomain == 1) {
@@ -794,14 +806,18 @@ SchwarzLoopDynamics() const
         Teuchos::RCP<Thyra::VectorBase<ST>> 
         curr_soln_rcp = Thyra::createMember(me.get_x_space());
         Thyra::copy(*current_state->getX(), curr_soln_rcp.ptr());
+
+        //Currently time-derivatives are not used in convergence criterion but they may be in the future 
+        //for consistency with Alejandro's matlab Schwarz code. When this is read, un-comment the following code, 
+        //as well as code further down involving curr_soln_dot_rcp, etc.
  
-        Teuchos::RCP<Thyra::VectorBase<ST>> 
+        /*Teuchos::RCP<Thyra::VectorBase<ST>> 
         curr_soln_dot_rcp = Thyra::createMember(me.get_x_space());
         Thyra::copy(*current_state->getXDot(), curr_soln_dot_rcp.ptr());
 
         Teuchos::RCP<Thyra::VectorBase<ST>> 
         curr_soln_dotdot_rcp = Thyra::createMember(me.get_x_space());
-        Thyra::copy(*current_state->getXDotDot(), curr_soln_dotdot_rcp.ptr());
+        Thyra::copy(*current_state->getXDotDot(), curr_soln_dotdot_rcp.ptr());*/
 
 #if defined(DEBUG)
         fos << "\n*** Thyra: Current solution ***\n";
@@ -831,7 +847,7 @@ SchwarzLoopDynamics() const
             soln_diff_rcp.ptr(),
             *curr_soln_rcp,
             -1.0,
-            solution_thyra);
+            *prev_solns_thyra_[subdomain]);
 
 #if defined(DEBUG)
         fos << "\n*** Thyra: Solution difference ***\n"; 
@@ -853,9 +869,19 @@ SchwarzLoopDynamics() const
 #endif //DEBUG
 
         //After solve, save solution and get info to check convergence
-        norms_init(subdomain) = Thyra::norm(solution_thyra);
+        norms_init(subdomain) = Thyra::norm(*prev_solns_thyra_[subdomain]);
         norms_final(subdomain) = Thyra::norm(*curr_soln_rcp); 
-        norms_diff(subdomain) = Thyra::norm(*soln_diff_rcp); 
+        norms_diff(subdomain) = Thyra::norm(*soln_diff_rcp);
+ 
+        //Update prev_solns_thyra_. 
+        Thyra::put_scalar(0.0, prev_solns_thyra_[subdomain].ptr());  
+        Thyra::copy(*curr_soln_rcp, prev_solns_thyra_[subdomain].ptr());
+        //Currently time-derivatives are not used in convergence criterion but they may be in the future 
+        //for consistency with Alejandro's matlab Schwarz code. When this is read, un-comment the following code.
+        /*Thyra::put_scalar(0.0, prev_solns_dot_thyra_[subdomain].ptr());  
+        Thyra::copy(*curr_soln_dot_rcp, prev_solns_dot_thyra_[subdomain].ptr());
+        Thyra::put_scalar(0.0, prev_solns_dotdot_thyra_[subdomain].ptr());  
+        Thyra::copy(*curr_soln_dotdot_rcp, prev_solns_dotdot_thyra_[subdomain].ptr());*/
 
       } //subdomains loop 
 
@@ -935,14 +961,14 @@ SchwarzLoopDynamics() const
       Teuchos::RCP<Tpetra_MultiVector>
       soln_mv = stk_disc.getSolutionMV();
 
-      //Update solns_thyra_ and its time-derivatives
-      solns_thyra_[subdomain] =
+      //Update schwarz_ics_ and its time-derivatives
+      schwarz_ics_[subdomain] =
           Thyra::createVector(soln_mv->getVectorNonConst(0));
 
-      solns_dot_thyra_[subdomain] =
+      schwarz_ics_dot_[subdomain] =
           Thyra::createVector(soln_mv->getVectorNonConst(1));
 
-      solns_dotdot_thyra_[subdomain] =
+      schwarz_ics_dotdot_[subdomain] =
           Thyra::createVector(soln_mv->getVectorNonConst(2));
 
       if (ams.exoOutput == true) {
