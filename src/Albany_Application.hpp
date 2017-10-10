@@ -1099,6 +1099,9 @@ namespace Albany {
     double
     dbc_time_{0.0};
 
+    std::vector<double>  
+    prev_times_;   
+
 #endif //ALBANY_LCM
 
   protected:

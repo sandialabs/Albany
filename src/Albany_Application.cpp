@@ -79,7 +79,8 @@ using Teuchos::rcpFromRef;
 int countJac; //counter which counts instances of Jacobian (for debug output)
 int countRes; //counter which counts instances of residual (for debug output)
 int countScale;
-double previous_time; 
+int previous_app;   
+int current_app;  
 
 extern bool TpetraBuild;
 
@@ -108,7 +109,12 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   buildProblem();
   createDiscretization();
   finalSetUp(params, initial_guess);
-  previous_time = 0.0; 
+  auto num_apps = apps_.size();   
+  if (num_apps == 0) num_apps = 1;   
+  prev_times_.resize(num_apps);   
+  for (auto i=0; i<num_apps; ++i) prev_times_[i] = -1.0;    
+  previous_app = 0;   
+  current_app = 0;   
 }
 
 Albany::Application::
@@ -128,7 +134,12 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
 #endif
-  previous_time = 0.0; 
+  auto num_apps = apps_.size();   
+  if (num_apps == 0) num_apps = 1;   
+  prev_times_.resize(num_apps);   
+  for (auto i=0; i<num_apps; ++i) prev_times_[i] = -1.0;    
+  previous_app = 0;   
+  current_app = 0;  
 }
 
 namespace {
@@ -6075,8 +6086,22 @@ computeGlobalResidualSDBCsImplT(
         std::logic_error, "Scaling cannot be used with computeGlobalResidualSDBCsImplT routine!  "
         << "Please re-run without scaling.");
   } 
+
+//#define DEBUG_OUTPUT   
+  
+#ifdef DEBUG_OUTPUT  
+  *out << "IKT prev_times_ size = " << prev_times_.size() << '\n';    
+#endif  
+  int app_no;   
+  if (app_index_ < 0) app_no = 0;   
+  else app_no = app_index_;    
  
   bool begin_time_step = false; 
+
+  current_app = app_index_;   
+#ifdef DEBUG_OUTPUT   
+  *out <<" IKT current_app, previous_app = " << current_app << ", " << previous_app << '\n';   
+#endif  
 
   // Load connectivity map and coordinates
   const auto& wsElNodeEqID = disc->getWsElNodeEqID();
@@ -6170,12 +6195,12 @@ computeGlobalResidualSDBCsImplT(
     }
  
 #ifdef DEBUG_OUTPUT 
-    *out << "IKT previous_time, this_time = " << previous_time << ", " << this_time << "\n"; 
+    *out << "IKT previous_time, this_time = " << prev_times_[app_no] << ", " << this_time << "\n";
 #endif
     //Check if previous_time is same as current time.  If not, we are at the start 
     //of a new time step, so we set boolean parameter to true. 
-    if (previous_time != this_time) begin_time_step = true;  
-
+    if (prev_times_[app_no] != this_time) begin_time_step = true; 
+    
     workset.fT = overlapped_fT;
 
     for (int ws = 0; ws < numWorksets; ws++) {
@@ -6210,7 +6235,10 @@ computeGlobalResidualSDBCsImplT(
 #endif
       }
     }
-    previous_time = current_time; 
+    prev_times_[app_no] = this_time;   
+    if (previous_app != current_app) {  
+      begin_time_step = true;   
+    }  
   }
 
   // Assemble the residual into a non-overlapping vector
@@ -6263,6 +6291,10 @@ computeGlobalResidualSDBCsImplT(
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     xT_post_SDBCs = Teuchos::rcp(new Tpetra_Vector(*workset.xT)); 
   }
+ 
+#ifdef DEBUG_OUTPUT  
+  *out << "IKT begin_time_step? " << begin_time_step << "\n";   
+#endif 
 
   if (begin_time_step == true) {
   //if (countRes == 0) {
@@ -6360,5 +6392,6 @@ computeGlobalResidualSDBCsImplT(
       dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     }
   }
+  previous_app = current_app;
 }
 #endif // ALBANY_LCM
