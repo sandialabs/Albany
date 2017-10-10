@@ -518,6 +518,10 @@ IF (Tempus_List_ID GREATER -1)
   SET(ALBANY_TEMPUS TRUE)
 ELSE()
   MESSAGE("-- Looking for Tempus in Trilinos: NOT found.")
+  IF (ENABLE_LCM) 
+    MESSAGE(FATAL_ERROR
+        "LCM enabled but Tempus not installed from Trilinos (LCM needs Tempus)!  Please recompile Trilinos with Tempus enabled.")
+  ENDIF()
   SET(ALBANY_TEMPUS FALSE)
 ENDIF()
 
