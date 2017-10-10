@@ -30,6 +30,10 @@ for line in open(log_file_name):
   if "Schwarz Alternating Method converged: YES" in line:
     converged = True
 
+for line in open(log_file_name):
+  if "Schwarz Alternating Method converged: NO" in line:
+    converged = False
+
 if converged == False:    
   result = result + 1
 
