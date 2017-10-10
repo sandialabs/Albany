@@ -1889,10 +1889,7 @@ ConnectivityArray::IsInsideMeshByElement(
     std::vector<minitensor::Vector<double>>
     node;
 
-    for (IDList::size_type
-    i = 0;
-        i < node_list.size();
-        ++i) {
+    for (IDList::size_type i = 0; i < node_list.size(); ++i) {
 
       PointMap::const_iterator
       nodes_iter = nodes_.find(node_list[i]);
@@ -2132,7 +2129,6 @@ ConnectivityArray::Partition(
     const PARTITION::Scheme partition_scheme,
     double const length_scale)
 {
-
   std::map<int, int>
   partitions;
 
@@ -2175,7 +2171,6 @@ ConnectivityArray::Partition(
   partitions_ = RenumberPartitions(partitions);
 
   return partitions_;
-
 }
 
 //
@@ -2274,7 +2269,6 @@ ConnectivityArray::PartitionByCenters(
   }
 
   return partitions;
-
 }
 
 //
@@ -2415,7 +2409,6 @@ ConnectivityArray::PartitionHyperGraph(double const length_scale)
       &export_to_part);
 
   return partitions;
-
 }
 
 //
@@ -2525,7 +2518,6 @@ ConnectivityArray::PartitionGeometric(double const length_scale)
   }
 
   return partitions;
-
 }
 
 //
@@ -2657,7 +2649,6 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
     std::cout << '\n';
 
     ++number_iterations;
-
   }
 
   // Partition map.
@@ -2812,7 +2803,6 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
   partitions = PartitionByCenters(center_positions);
 
   return partitions;
-
 }
 
 //
@@ -3004,11 +2994,8 @@ ConnectivityArray::PartitionRandom(double const length_scale)
 // geometry of an object.
 //
 int
-ConnectivityArray::GetNumberGeometry(
-    void* data,
-    int* ierr)
+ConnectivityArray::GetNumberGeometry(void* data, int* ierr)
 {
-
   ConnectivityArray &
   connectivity_array = *(static_cast<ConnectivityArray*>(data));
 
@@ -3139,7 +3126,6 @@ ConnectivityArray::GetGeometry(
     double* geom_vec,
     int* ierr)
 {
-
   ConnectivityArray &
   connectivity_array = *(static_cast<ConnectivityArray*>(data));
 
@@ -3212,7 +3198,6 @@ operator<<(
     }
 
     output_stream << '\n';
-
   }
 
   // Output element volumes as well
@@ -3272,7 +3257,6 @@ DualGraph::DualGraph() :
 //
 DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
 {
-
   const std::vector<std::vector<int>>
   face_connectivity = GetFaceConnectivity(connectivity_array.GetType());
 
@@ -4180,7 +4164,6 @@ operator<<(
     std::ostream & output_stream,
     ZoltanHyperGraph const & zoltan_hypergraph)
 {
-
   output_stream << std::setw(12) << zoltan_hypergraph.GetNumberVertices();
   output_stream << std::setw(12) << zoltan_hypergraph.GetNumberHyperedges();
   output_stream << '\n';
@@ -4191,10 +4174,8 @@ operator<<(
   ScalarMap
   vertex_weights = zoltan_hypergraph.GetVertexWeights();
 
-  for (AdjacencyMap::const_iterator
-  graph_iter = graph.begin();
-      graph_iter != graph.end();
-      ++graph_iter) {
+  for (AdjacencyMap::const_iterator graph_iter = graph.begin();
+      graph_iter != graph.end(); ++graph_iter) {
 
     // Vertex ID
     int const
@@ -4211,10 +4192,8 @@ operator<<(
     const IDList
     hyperedges = (*graph_iter).second;
 
-    for (IDList::const_iterator
-    hyperedges_iter = hyperedges.begin();
-        hyperedges_iter != hyperedges.end();
-        ++hyperedges_iter) {
+    for (IDList::const_iterator hyperedges_iter = hyperedges.begin();
+        hyperedges_iter != hyperedges.end(); ++hyperedges_iter) {
 
       int const
       hyperedge = (*hyperedges_iter);
@@ -4224,7 +4203,6 @@ operator<<(
     }
 
     output_stream << '\n';
-
   }
 
   return output_stream;
