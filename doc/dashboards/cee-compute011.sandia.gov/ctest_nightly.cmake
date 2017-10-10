@@ -114,7 +114,7 @@ set (PREFIX_DIR /projects/albany)
 set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.1)
 set (GCC_MPI_DIR /projects/sierra/linux_rh6/SDK/mpi/openmpi/1.10.2-gcc-5.4.0-RHEL6)
 set (GCC_DIR /projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6)
-set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2017.2.174/compilers_and_libraries/linux)
+set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2017.4.196/compilers_and_libraries/linux)
 
 #set (BOOST_ROOT /projects/albany/nightly)
 set (BOOST_ROOT /projects/albany)
@@ -510,6 +510,11 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DKokkos_ENABLE_Serial:BOOL=ON"
   "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
   "-DKokkos_ENABLE_Pthread:BOOL=OFF"
+  #
+  "-D Trilinos_ENABLE_Tempus:BOOL=ON"
+  "-D Tempus_ENABLE_TESTS:BOOL=OFF"
+  "-D Tempus_ENABLE_EXAMPLES:BOOL=OFF"
+  "-D Tempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
   )
 
 if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
