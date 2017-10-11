@@ -1465,11 +1465,8 @@ ConnectivityArray::GetCentroids() const
 std::pair<minitensor::Vector<double>, minitensor::Vector<double>>
 ConnectivityArray::BoundingBox() const
 {
-  PointMap::const_iterator
-  it = nodes_.begin();
-
   minitensor::Vector<double>
-  min = (*it).second;
+  min = nodes_.begin()->second;
 
   minitensor::Vector<double>
   max = min;
@@ -1477,18 +1474,15 @@ ConnectivityArray::BoundingBox() const
   minitensor::Index const
   N = min.get_dimension();
 
-  ++it;
-
-  for (; it != nodes_.end(); ++it) {
+  for (auto&& id_node : nodes_) {
 
     minitensor::Vector<double> const &
-    node = (*it).second;
+    node = id_node.second;
 
     for (minitensor::Index i = 0; i < N; ++i) {
       min(i) = std::min(min(i), node(i));
       max(i) = std::max(max(i), node(i));
     }
-
   }
 
   return std::make_pair(min, max);
@@ -1629,13 +1623,10 @@ ConnectivityArray::CreateGrid()
   minitensor::Index const
   number_of_elements = connectivity_.size();
 
-  for (AdjacencyMap::const_iterator
-  elements_iter = connectivity_.begin();
-      elements_iter != connectivity_.end();
-      ++elements_iter) {
+  for (auto&& element_conn : connectivity_) {
 
     int const
-    element = (*elements_iter).first;
+    element = element_conn.first;
 
     if ((element + 1) % 10000 == 0) {
       std::cout << "Processing element: " << element + 1;
@@ -1643,14 +1634,12 @@ ConnectivityArray::CreateGrid()
     }
 
     IDList const &
-    node_list = (*elements_iter).second;
+    node_list = element_conn.second;
 
     std::vector<minitensor::Vector<double>>
     element_nodes;
 
-    for (IDList::size_type i = 0;
-        i < nodes_per_element;
-        ++i) {
+    for (IDList::size_type i = 0; i < nodes_per_element; ++i) {
 
       PointMap::const_iterator
       nodes_iter = nodes_.find(node_list[i]);
@@ -1658,7 +1647,6 @@ ConnectivityArray::CreateGrid()
       ALBANY_EXPECT(nodes_iter != nodes_.end());
 
       element_nodes.push_back((*nodes_iter).second);
-
     }
 
     minitensor::Vector<double>
@@ -1667,9 +1655,9 @@ ConnectivityArray::CreateGrid()
     minitensor::Vector<double>
     max;
 
-    boost::tie(min, max) =
-        minitensor::bounding_box<double>(element_nodes.begin(),
-            element_nodes.end());
+    boost::tie(min, max) = minitensor::bounding_box<double>(
+        element_nodes.begin(),
+        element_nodes.end());
 
     minitensor::Vector<double> const
     element_span = max - min;
@@ -1878,16 +1866,13 @@ ConnectivityArray::IsInsideMeshByElement(
   }
 
   // Now check element by element
-  for (AdjacencyMap::const_iterator
-  elements_iter = connectivity_.begin();
-      elements_iter != connectivity_.end();
-      ++elements_iter) {
+  for (auto&& element_nodes : connectivity_) {
 
     IDList const &
-    node_list = (*elements_iter).second;
+    node_list = element_nodes.second;
 
     std::vector<minitensor::Vector<double>>
-    node;
+    nodes;
 
     for (IDList::size_type i = 0; i < node_list.size(); ++i) {
 
@@ -1895,23 +1880,19 @@ ConnectivityArray::IsInsideMeshByElement(
       nodes_iter = nodes_.find(node_list[i]);
 
       ALBANY_EXPECT(nodes_iter != nodes_.end());
-      node.push_back((*nodes_iter).second);
-
+      nodes.push_back((*nodes_iter).second);
     }
 
     switch (type_) {
 
     case minitensor::ELEMENT::TETRAHEDRAL:
-      if (in_tetrahedron(point, node[0], node[1], node[2], node[3]) == true) {
-        return true;
-      }
+      return in_tetrahedron(point, nodes[0], nodes[1], nodes[2], nodes[3]);
       break;
 
     case minitensor::ELEMENT::HEXAHEDRAL:
-      if (in_hexahedron(point, node[0], node[1], node[2], node[3],
-          node[4], node[5], node[6], node[7])) {
-        return true;
-      }
+      return in_hexahedron(
+          point, nodes[0], nodes[1], nodes[2], nodes[3],
+          nodes[4], nodes[5], nodes[6], nodes[7]);
       break;
 
     default:
@@ -1920,7 +1901,6 @@ ConnectivityArray::IsInsideMeshByElement(
       break;
 
     }
-
   }
 
   return false;
