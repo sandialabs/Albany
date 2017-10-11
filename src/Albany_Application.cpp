@@ -110,10 +110,10 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   createDiscretization();
   finalSetUp(params, initial_guess);
 #ifdef ALBANY_LCM
-  auto num_apps = num_apps = apps_.size();
+  int num_apps = num_apps = apps_.size();
   if (num_apps == 0) num_apps = 1;   
   prev_times_.resize(num_apps);   
-  for (auto i=0; i<num_apps; ++i) prev_times_[i] = -1.0;    
+  for (int i=0; i<num_apps; ++i) prev_times_[i] = -1.0;    
   previous_app = 0;   
   current_app = 0;   
 #endif   
@@ -137,10 +137,10 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
 #endif
 #ifdef ALBANY_LCM
-  auto num_apps = apps_.size();   
+  int num_apps = apps_.size();   
   if (num_apps == 0) num_apps = 1;   
   prev_times_.resize(num_apps);   
-  for (auto i=0; i<num_apps; ++i) prev_times_[i] = -1.0;    
+  for (int i=0; i<num_apps; ++i) prev_times_[i] = -1.0;    
   previous_app = 0;   
   current_app = 0; 
 #endif 
