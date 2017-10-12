@@ -7,7 +7,7 @@ ANONYMOUS:
     Absolute Tolerance: 1.0e-15
     Maximum Steps: 100
     Initial Time: 0.0
-    Final Time: 0.001
+    Final Time: 0.002
     Initial Time Step: 1.0e-4
     Exodus Write Interval: 10
   # MODEL DECLARATION, Look in the Problem directory
