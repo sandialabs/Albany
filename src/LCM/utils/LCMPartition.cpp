@@ -1555,22 +1555,11 @@ ConnectivityArray::CreateGrid()
   std::cout << '\n';
   std::cout << "Creating background mesh ..." << '\n';
 
-  //
-  // First determine the maximum dimension of the bounding box.
-  //
-  minitensor::Vector<double>
-  lower_corner;
-
-  minitensor::Vector<double>
-  upper_corner;
-
-  boost::tie(lower_corner, upper_corner) = BoundingBox();
-
   minitensor::Vector<double> const
-  bounding_box_span = upper_corner - lower_corner;
+  bounding_box_span = upper_corner_ - lower_corner_;
 
   minitensor::Index const
-  dimension = lower_corner.get_dimension();
+  dimension = lower_corner_.get_dimension();
 
   double
   maximum_dimension = 0.0;
@@ -1583,10 +1572,10 @@ ConnectivityArray::CreateGrid()
   delta = GetCellSize();
 
   //
-  // Determine number of cells for each dimension.
+  // Determine number of points for each dimension.
   //
   minitensor::Vector<minitensor::Index>
-  cells_per_dimension(dimension);
+  points_per_dim(dimension);
 
   cell_size_.set_dimension(dimension);
 
@@ -1595,23 +1584,22 @@ ConnectivityArray::CreateGrid()
     minitensor::Index const
     number_cells = std::ceil((bounding_box_span(i)) / delta);
 
-    cells_per_dimension(i) = number_cells;
+    points_per_dim(i) = number_cells + 1;
     cell_size_(i) = bounding_box_span(i) / number_cells;
-
   }
 
   //
-  // Set up the cell array.
+  // Set up the grid array.
   // Generalization to N dimensions fails here.
   // This is specific to 3D.
   //
-  cells_.resize(cells_per_dimension(0));
-  for (minitensor::Index i = 0; i < cells_per_dimension(0); ++i) {
-    cells_[i].resize(cells_per_dimension(1));
-    for (minitensor::Index j = 0; j < cells_per_dimension(1); ++j) {
-      cells_[i][j].resize(cells_per_dimension(2));
-      for (minitensor::Index k = 0; k < cells_per_dimension(2); ++k) {
-        cells_[i][j][k] = false;
+  grid_.resize(points_per_dim(0));
+  for (minitensor::Index i = 0; i < points_per_dim(0); ++i) {
+    grid_[i].resize(points_per_dim(1));
+    for (minitensor::Index j = 0; j < points_per_dim(1); ++j) {
+      grid_[i][j].resize(points_per_dim(2));
+      for (minitensor::Index k = 0; k < points_per_dim(2); ++k) {
+        grid_[i][j][k] = false;
       }
     }
   }
@@ -1668,10 +1656,13 @@ ConnectivityArray::CreateGrid()
     // Determine number of divisions on each dimension.
     // One division if voxel is large.
     for (minitensor::Index i = 0; i < dimension; ++i) {
-      divisions(i) =
-          cell_size_(i) > element_span(i) ?
-              1 :
-              2.0 * element_span(i) / cell_size_(i) + 0.5;
+      bool const
+      is_big_voxel = cell_size_(i) > element_span(i);
+
+      double const
+      num_divs = 2.0 * element_span(i) / cell_size_(i) + 0.5;
+
+      divisions(i) = is_big_voxel == true ? 1 : num_divs;
     }
 
     // Generate points inside the element according to
@@ -1703,31 +1694,57 @@ ConnectivityArray::CreateGrid()
     xi(parametric_dimension);
 
     for (minitensor::Index i = 0; i <= divisions(0); ++i) {
-      xi(0) = origin(0) + double(i) / divisions(0) * parametric_size;
+      double const
+      r = origin(0) + double(i) / divisions(0) * parametric_size;
+      ALBANY_ASSERT(lower_limit <= r && r <= 1.0);
+      xi(0) = r;
       for (minitensor::Index j = 0; j <= divisions(1); ++j) {
-        xi(1) = origin(1) + double(j) / divisions(1) * parametric_size;
+        double const
+        s = origin(1) + double(j) / divisions(1) * parametric_size;
+        ALBANY_ASSERT(lower_limit <= s && s <= 1.0);
+        xi(1) = s;
         for (minitensor::Index k = 0; k <= divisions(2); ++k) {
-          xi(2) = origin(2) + double(k) / divisions(2) * parametric_size;
+          double const
+          t = origin(2) + double(k) / divisions(2) * parametric_size;
+          ALBANY_ASSERT(lower_limit <= t && t <= 1.0);
+          xi(2) = t;
+
+          // For simplices, skip if the last parametric coordinate
+          // is negative to avoid extrapolation outside the element.
+          bool const
+          is_triangle = element_type == minitensor::ELEMENT::TRIANGULAR;
+
+          if (is_triangle == true) {
+            double const
+            last = 1.0 - r - s;
+            if (last < 0.0) continue;
+          }
+
+          bool const
+          is_tetra = element_type == minitensor::ELEMENT::TETRAHEDRAL;
+
+          if (is_tetra == true) {
+            double const
+            last = 1.0 - r - s - t;
+            if (last < 0.0) continue;
+          }
+
           minitensor::Vector<double>
           p = interpolate_element(element_type, xi, element_nodes);
-          for (minitensor::Index l = 0; l < dimension; ++l) {
-            p(l) = std::max(p(l), lower_corner(l));
-            p(l) = std::min(p(l), upper_corner(l));
-          }
 
           minitensor::Vector<int>
           index = PointToIndex(p);
 
           for (minitensor::Index l = 0; l < dimension; ++l) {
             ALBANY_EXPECT(index(l) >= 0);
-            ALBANY_EXPECT(index(l) <= int(cells_per_dimension(l)));
+            ALBANY_EXPECT(index(l) <= int(points_per_dim(l)));
 
-            if (index(l) == int(cells_per_dimension(l))) {
+            if (index(l) == int(points_per_dim(l))) {
               --index(l);
             }
           }
 
-          cells_[index(0)][index(1)][index(2)] = true;
+          grid_[index(0)][index(1)][index(2)] = true;
         }
       }
     }
@@ -1739,34 +1756,36 @@ ConnectivityArray::CreateGrid()
   std::vector<minitensor::Vector<double>>
   domain_points;
 
-  std::ofstream ofs("cells.csv");
-  ofs << "X, Y, Z, I" << '\n';
-  minitensor::Vector<double> p(dimension);
+  std::ofstream
+  in_ofs("in.csv");
 
-  for (minitensor::Index i = 0; i < cells_per_dimension(0); ++i) {
-    p(0) = (i + 0.5) * bounding_box_span(0) / cells_per_dimension(0) +
-        lower_corner(0);
-    for (minitensor::Index j = 0; j < cells_per_dimension(1); ++j) {
-      p(1) = (j + 0.5) * bounding_box_span(1) / cells_per_dimension(1) +
-          lower_corner(1);
-      for (minitensor::Index k = 0; k < cells_per_dimension(2); ++k) {
-        p(2) = (k + 0.5) * bounding_box_span(2) / cells_per_dimension(2) +
-            lower_corner(2);
+  std::ofstream
+  out_ofs("out.csv");
 
-        if (cells_[i][j][k] == true) {
+  in_ofs << "X, Y, Z" << '\n';
+  out_ofs << "X, Y, Z" << '\n';
+
+  minitensor::Vector<double>
+  p(dimension);
+
+  for (minitensor::Index i = 0; i < points_per_dim(0); ++i) {
+    p(0) = (i + 0.5) * cell_size_(0) + lower_corner_(0);
+    for (minitensor::Index j = 0; j < points_per_dim(1); ++j) {
+      p(1) = (j + 0.5) * cell_size_(1) + lower_corner_(1);
+      for (minitensor::Index k = 0; k < points_per_dim(2); ++k) {
+        p(2) = (k + 0.5) * cell_size_(2) + lower_corner_(2);
+        if (grid_[i][j][k] == true) {
           domain_points.push_back(p);
+          in_ofs << p << '\n';
+        } else {
+          out_ofs << p << '\n';
         }
-
-        ofs << p << "," << cells_[i][j][k] << '\n';
       }
     }
   }
 
   minitensor::Index const
-  number_generated_points =
-      cells_per_dimension(0) *
-          cells_per_dimension(1) *
-          cells_per_dimension(2);
+  number_generated_points = points_per_dim(0) * points_per_dim(1) * points_per_dim(2);
 
   minitensor::Index const
   number_points_in_domain = domain_points.size();
@@ -1793,14 +1812,25 @@ ConnectivityArray::CreateGrid()
 minitensor::Vector<int>
 ConnectivityArray::PointToIndex(minitensor::Vector<double> const & point) const
 {
-  int const
-  i = (point(0) - lower_corner_(0)) / cell_size_(0);
+  minitensor::Vector<double>
+  p{point};
+
+  minitensor::Index const
+  dimension = point.get_dimension();
+
+  for (minitensor::Index l = 0; l < dimension; ++l) {
+    p(l) = std::max(p(l), lower_corner_(l));
+    p(l) = std::min(p(l), upper_corner_(l));
+  }
 
   int const
-  j = (point(1) - lower_corner_(1)) / cell_size_(1);
+  i = (p(0) - lower_corner_(0)) / cell_size_(0);
 
   int const
-  k = (point(2) - lower_corner_(2)) / cell_size_(2);
+  j = (p(1) - lower_corner_(1)) / cell_size_(1);
+
+  int const
+  k = (p(2) - lower_corner_(2)) / cell_size_(2);
 
   return minitensor::Vector<int>(i, j, k);
 }
@@ -1815,38 +1845,32 @@ ConnectivityArray::IsInsideMesh(minitensor::Vector<double> const & point) const
   int
   i = (point(0) - lower_corner_(0)) / cell_size_(0);
 
+  int const
+  x_size = grid_.size();
+
+  if (i < 0 || i > x_size) return false;
+
   int
   j = (point(1) - lower_corner_(1)) / cell_size_(1);
+
+  int const
+  y_size = grid_[0].size();
+
+  if (j < 0 || j > y_size) return false;
 
   int
   k = (point(2) - lower_corner_(2)) / cell_size_(2);
 
   int const
-  x_size = cells_.size();
+  z_size = grid_[0][0].size();
 
-  int const
-  y_size = cells_[0].size();
-
-  int const
-  z_size = cells_[0][0].size();
-
-  if (i < 0 || i > x_size) {
-    return false;
-  }
-
-  if (j < 0 || j > y_size) {
-    return false;
-  }
-
-  if (k < 0 || k > z_size) {
-    return false;
-  }
+  if (k < 0 || k > z_size) return false;
 
   if (i == x_size) --i;
   if (j == y_size) --j;
   if (k == z_size) --k;
 
-  return cells_[i][j][k];
+  return grid_[i][j][k];
 }
 
 //
@@ -1988,12 +2012,9 @@ RenumberPartitions(std::map<int, int> const & old_partitions)
   std::set<int>
   partitions_set;
 
-  for (std::map<int, int>::const_iterator it = old_partitions.begin();
-      it != old_partitions.end();
-      ++it) {
-
+  for (auto&& element_partition : old_partitions) {
     int const
-    partition = (*it).second;
+    partition = element_partition.second;
 
     partitions_set.insert(partition);
   }
@@ -2010,32 +2031,20 @@ RenumberPartitions(std::map<int, int> const & old_partitions)
   int
   partition_index = 0;
 
-  for (std::set<int>::const_iterator it = partitions_set.begin();
-      it != partitions_set.end();
-      ++it) {
-
-    int const
-    partition = (*it);
-
+  for (auto&& partition : partitions_set) {
     partition_map[partition] = partition_index;
-
     ++partition_index;
-
   }
 
   std::map<int, int>
   new_partitions;
 
-  for (std::map<int, int>::const_iterator it = old_partitions.begin();
-      it != old_partitions.end();
-      ++it) {
+  for (auto&& element_partition : old_partitions) {
+    int const
+    element = element_partition.first;
 
     int const
-    element = (*it).first;
-
-    int const
-    old_partition = (*it).second;
-
+    old_partition = element_partition.second;
     int const
     partition_index = partition_map[old_partition];
 
@@ -2043,7 +2052,6 @@ RenumberPartitions(std::map<int, int> const & old_partitions)
     new_partition = partition_shuffle[partition_index];
 
     new_partitions[element] = new_partition;
-
   }
 
   return new_partitions;
@@ -2060,20 +2068,17 @@ ConnectivityArray::CheckNullVolume() const
   std::vector<minitensor::Index>
   zero_volume;
 
-  for (ScalarMap::const_iterator it = partition_volumes.begin();
-      it != partition_volumes.end();
-      ++it) {
+  for (auto&& partition_volume : partition_volumes) {
 
     minitensor::Index const
-    partition = (*it).first;
+    partition = partition_volume.first;
 
     double const
-    volume = (*it).second;
+    volume = partition_volume.second;
 
     if (volume == 0.0) {
       zero_volume.push_back(partition);
     }
-
   }
 
   minitensor::Index const
@@ -2185,16 +2190,14 @@ ConnectivityArray::PartitionByCenters(
   std::ofstream centroids_ofs("centroids.csv");
 
   centroids_ofs << "X,Y,Z" << '\n';
-  for (AdjacencyMap::const_iterator
-  elements_iter = connectivity_.begin();
-      elements_iter != connectivity_.end();
-      ++elements_iter) {
+
+  for (auto&& element_conn : connectivity_) {
 
     int const &
-    element = (*elements_iter).first;
+    element = element_conn.first;
 
     IDList const &
-    node_list = (*elements_iter).second;
+    node_list = element_conn.second;
 
     std::vector<minitensor::Vector<double>>
     element_nodes;
@@ -2233,11 +2236,8 @@ ConnectivityArray::PartitionByCenters(
     std::cout << "WARNING: The following partitions were not" << '\n';
     std::cout << "assigned any elements (mesh too coarse?):" << '\n';
 
-    for (std::set<minitensor::Index>::const_iterator it = unassigned_partitions
-        .begin();
-        it != unassigned_partitions.end();
-        ++it) {
-      std::cout << (*it) << '\n';
+    for (auto&& unassigned : unassigned_partitions) {
+      std::cout << unassigned << '\n';
     }
 
   }

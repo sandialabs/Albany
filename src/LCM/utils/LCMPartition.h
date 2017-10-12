@@ -692,7 +692,7 @@ private:
   // of whether a point is inside the domain or not.
   //
   std::vector<std::vector<std::vector<bool>>>
-  cells_;
+  grid_;
 
   //
   // Size of background grid cell
