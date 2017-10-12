@@ -1621,6 +1621,7 @@ computeGlobalResidualImplT(
 }
 
 #if defined(ALBANY_EPETRA)
+#if !defined(ALBANY_LCM)
 void
 Albany::Application::
 computeGlobalResidual(const double current_time,
@@ -1687,6 +1688,83 @@ computeGlobalResidual(const double current_time,
   if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
   countRes++;  //increment residual counter
 }
+#else // ALBANY_LCM
+void
+Albany::Application::
+computeGlobalResidual(const double current_time,
+    const Epetra_Vector* xdot,
+    const Epetra_Vector* xdotdot,
+    const Epetra_Vector& x,
+    const Teuchos::Array<ParamVec>& p,
+    Epetra_Vector& f)
+{
+  // Scatter x and xdot to the overlapped distribution
+  solMgr->scatterX(x, xdot, xdotdot);
+
+  //Teuchos::RCP<Epetra_Vector> x_nonconst = Teuchos::rcpFromRef(const_cast<Epetra_Vector &>(x));
+
+  // Create Tpetra copies of Epetra arguments
+  // Names of Tpetra entitied are identified by the suffix T
+  const Teuchos::RCP<const Tpetra_Vector> xT =
+  Petra::EpetraVector_To_TpetraVectorNonConst(x, commT);
+
+  Teuchos::RCP<const Tpetra_Vector> xdotT;
+  if (xdot != NULL && num_time_deriv > 0) {
+    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
+  }
+
+  Teuchos::RCP<const Tpetra_Vector> xdotdotT;
+  if (xdotdot != NULL && num_time_deriv > 1) {
+    xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
+  }
+
+  const Teuchos::RCP<Tpetra_Vector> fT =
+  Petra::EpetraVector_To_TpetraVectorNonConst(f, commT);
+
+  if (problem->useSDBCs() == false) {
+	this->computeGlobalResidualImplT(current_time, xdotT, xdotdotT, xT, p, fT);
+  }
+  else{
+	this->computeGlobalResidualSDBCsImplT(current_time, xdotT, xdotdotT, xT, p, fT);
+  }
+
+
+  // Convert output back from Tpetra to Epetra
+  Petra::TpetraVector_To_EpetraVector(fT, f, comm);
+  Petra::TpetraVector_To_EpetraVector(xT, const_cast<Epetra_Vector &>(x), comm);
+  //std::cout << "Global Resid f\n" << f << std::endl;
+  //std::cout << "Global Soln x\n" << x << std::endl;
+
+  //Debut output
+  if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
+    char name[100];//create string for file name
+    if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
+      sprintf(name, "rhs%i.mm", countRes);
+      EpetraExt::MultiVectorToMatrixMarketFile(name, f);
+    }
+    else {
+      if (countRes == writeToMatrixMarketRes) { //write residual only at requested count#
+        sprintf(name, "rhs%i.mm", countRes);
+        EpetraExt::MultiVectorToMatrixMarketFile(name, f);
+      }
+    }
+  }
+  if (writeToCoutRes != 0) { //If requesting writing of residual to cout...
+    if (writeToCoutRes == -1) { //cout residual time it arises
+      std::cout << "Global Residual #" << countRes << ": " << std::endl;
+      std::cout << f << std::endl;
+    }
+    else {
+      if (countRes == writeToCoutRes) { //cout residual only at requested count#
+        std::cout << "Global Residual #" << countRes << ": " << std::endl;
+        std::cout << f << std::endl;
+      }
+    }
+  }
+  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
+  countRes++;  //increment residual counter
+}
+#endif // ALBANY_LCM
 #endif
 
 #if !defined(ALBANY_LCM)
