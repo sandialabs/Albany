@@ -30,9 +30,7 @@
 #include <Teuchos_GlobalMPISession.hpp>
 #include "Teuchos_CommandLineProcessor.hpp"
 #include "Teuchos_XMLParameterListCoreHelpers.hpp"
-#if defined(ALBANY_YAML)
 #include "Teuchos_YamlParameterListCoreHelpers.hpp"
-#endif  // ALBANY_YAML
 #include <Teuchos_Array.hpp>
 #include <Teuchos_ArrayRCP.hpp>
 #include <Teuchos_CommHelpers.hpp>
@@ -573,19 +571,14 @@ main(int argc, char* argv[]) {
   Teuchos::RCP<Teuchos::ParameterList> plist =
       Teuchos::rcp(new Teuchos::ParameterList());
 
-#if defined(ALBANY_YAML)
   std::string const input_extension = getFileExtension(yaml_input_filename);
-  if (input_extension == "yaml") {
+  if (input_extension == "yaml" || input_extension == "yml") {
     Teuchos::updateParametersFromYamlFile(
         yaml_input_filename, Teuchos::inoutArg(*plist));
   } else {
     Teuchos::updateParametersFromXmlFile(
         yaml_input_filename, Teuchos::inoutArg(*plist));
   }
-#else
-  Teuchos::updateParametersFromXmlFile(
-      yaml_input_filename, Teuchos::inoutArg(*plist));
-#endif  // ALBANY_YAML
 
   std::string field_type = plist->get<std::string>("Field Type", "Node Vector");
 

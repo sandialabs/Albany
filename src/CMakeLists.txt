@@ -124,12 +124,10 @@ SET(HEADERS ${HEADERS}
   utility/math/TensorImpl.hpp
   )
 
-IF(ALBANY_YAML)
-  add_executable(xml2yaml utility/xml2yaml.cpp)
-  add_executable(yaml2xml utility/yaml2xml.cpp)
-  target_link_libraries(xml2yaml teuchosparameterlist)
-  target_link_libraries(yaml2xml teuchosparameterlist)
-ENDIF()
+add_executable(xml2yaml utility/xml2yaml.cpp)
+add_executable(yaml2xml utility/yaml2xml.cpp)
+target_link_libraries(xml2yaml teuchosparameterlist)
+target_link_libraries(yaml2xml teuchosparameterlist)
 
 #problems
 SET(SOURCES ${SOURCES}
