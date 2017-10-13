@@ -329,7 +329,7 @@ split_box(
 //
 template<typename Node>
 boost::shared_ptr<Node>
-BuildKDTree(std::vector<minitensor::Vector<double>> const & points)
+buildKDTree(std::vector<minitensor::Vector<double>> const & points)
 {
 
   //
@@ -352,7 +352,7 @@ BuildKDTree(std::vector<minitensor::Vector<double>> const & points)
   name = "0";
 
   boost::shared_ptr<Node>
-  root = CreateKDTreeNode(name, dummy, points, points_indices);
+  root = createKDTreeNode(name, dummy, points, points_indices);
 
   return root;
 }
@@ -364,7 +364,7 @@ BuildKDTree(std::vector<minitensor::Vector<double>> const & points)
 //
 template<typename Node>
 boost::shared_ptr<Node>
-CreateKDTreeNode(
+createKDTreeNode(
     std::string const & name,
     boost::shared_ptr<Node> parent,
     std::vector<minitensor::Vector<double>> const & points,
@@ -431,10 +431,10 @@ CreateKDTreeNode(
       name_right = name + "1";
 
       node->left =
-          CreateKDTreeNode(name_left, node, points, indices_left);
+          createKDTreeNode(name_left, node, points, indices_left);
 
       node->right =
-          CreateKDTreeNode(name_right, node, points, indices_right);
+          createKDTreeNode(name_right, node, points, indices_right);
     }
     break;
 
@@ -451,7 +451,7 @@ KDTree<Node>::KDTree(
     std::vector<minitensor::Vector<double>> const & points,
     minitensor::Index const number_centers)
 {
-  root_ = BuildKDTree<Node>(points);
+  root_ = buildKDTree<Node>(points);
 
   // Set candidate centers to all
   std::set<minitensor::Index>
@@ -472,7 +472,7 @@ KDTree<Node>::KDTree(
 //
 template<typename Node, typename Visitor>
 void
-VisitTreeNode(Node & node, Visitor const & visitor)
+visitTreeNode(Node & node, Visitor const & visitor)
 {
   if (visitor.pre_stop(node) == true) return;
 
@@ -480,8 +480,8 @@ VisitTreeNode(Node & node, Visitor const & visitor)
 
   if (visitor.post_stop(node) == true) return;
 
-  VisitTreeNode(node->left, visitor);
-  VisitTreeNode(node->right, visitor);
+  visitTreeNode(node->left, visitor);
+  visitTreeNode(node->right, visitor);
 
   return;
 }
@@ -491,9 +491,9 @@ VisitTreeNode(Node & node, Visitor const & visitor)
 //
 template<typename Tree, typename Visitor>
 void
-TraverseTree(Tree & tree, Visitor const & visitor)
+traverseTree(Tree & tree, Visitor const & visitor)
 {
-  VisitTreeNode(tree.get_root(), visitor);
+  visitTreeNode(tree.get_root(), visitor);
   return;
 }
 
@@ -928,9 +928,7 @@ ConnectivityArray::ConnectivityArray(
   number_nodes = coordinates.size() / dimension;
 
   for (Teuchos::ArrayRCP<double>::size_type
-  node = 0;
-      node < number_nodes;
-      ++node) {
+  node = 0; node < number_nodes; ++node) {
 
     minitensor::Vector<double> point(0.0, 0.0, 0.0);
 
@@ -953,17 +951,14 @@ ConnectivityArray::ConnectivityArray(
   for (workset = 0; workset < element_connectivity.size(); ++workset) {
 
     for (Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>::size_type
-    cell = 0;
-        cell < element_connectivity[workset].dimension(0);
+    cell = 0; cell < element_connectivity[workset].dimension(0);
         ++cell, ++element_number) {
 
       IDList
       nodes_element(nodes_per_element);
 
-      for (Teuchos::ArrayRCP<int>::size_type
-      node = 0;
-          node < vertices_per_element;
-          ++node) {
+      for (Teuchos::ArrayRCP<int>::size_type node = 0;
+          node < vertices_per_element; ++node) {
 
         // Get node ID from first unknown ID by dividing by stride
         nodes_element[node] =
@@ -984,7 +979,7 @@ ConnectivityArray::ConnectivityArray(
 // \return Number of nodes on the array
 //
 minitensor::Index
-ConnectivityArray::GetNumberNodes() const
+ConnectivityArray::getNumberNodes() const
 {
   return nodes_.size();
 }
@@ -993,7 +988,7 @@ ConnectivityArray::GetNumberNodes() const
 // \return Number of elements in the array
 //
 minitensor::Index
-ConnectivityArray::GetNumberElements() const
+ConnectivityArray::getNumberElements() const
 {
   return connectivity_.size();
 }
@@ -1002,7 +997,7 @@ ConnectivityArray::GetNumberElements() const
 // \return Space dimension
 //
 minitensor::Index
-ConnectivityArray::GetDimension() const
+ConnectivityArray::getDimension() const
 {
   return dimension_;
 }
@@ -1011,7 +1006,7 @@ ConnectivityArray::GetDimension() const
 // \return K-means tolerance
 //
 double
-ConnectivityArray::GetTolerance() const
+ConnectivityArray::getTolerance() const
 {
   return tolerance_;
 }
@@ -1020,7 +1015,7 @@ ConnectivityArray::GetTolerance() const
 // \return requested cell size for voxelization
 //
 double
-ConnectivityArray::GetCellSize() const
+ConnectivityArray::getCellSize() const
 {
   return requested_cell_size_;
 }
@@ -1029,7 +1024,7 @@ ConnectivityArray::GetCellSize() const
 // \return maximum iterations for K-means
 //
 minitensor::Index
-ConnectivityArray::GetMaximumIterations() const
+ConnectivityArray::getMaximumIterations() const
 {
   return maximum_iterations_;
 }
@@ -1038,7 +1033,7 @@ ConnectivityArray::GetMaximumIterations() const
 // \param K-means tolerance
 //
 void
-ConnectivityArray::SetTolerance(double tolerance)
+ConnectivityArray::setTolerance(double tolerance)
 {
   tolerance_ = tolerance;
 }
@@ -1047,7 +1042,7 @@ ConnectivityArray::SetTolerance(double tolerance)
 // \return requested cell size for voxelization
 //
 void
-ConnectivityArray::SetCellSize(double requested_cell_size)
+ConnectivityArray::setCellSize(double requested_cell_size)
 {
   requested_cell_size_ = requested_cell_size;
 }
@@ -1056,7 +1051,7 @@ ConnectivityArray::SetCellSize(double requested_cell_size)
 // \param maximum itearions for K-means
 //
 void
-ConnectivityArray::SetMaximumIterations(minitensor::Index maximum_iterarions)
+ConnectivityArray::setMaximumIterations(minitensor::Index maximum_iterarions)
 {
   maximum_iterations_ = maximum_iterarions;
 }
@@ -1065,7 +1060,7 @@ ConnectivityArray::SetMaximumIterations(minitensor::Index maximum_iterarions)
 // \param Initializer scheme
 //
 void
-ConnectivityArray::SetInitializerScheme(PARTITION::Scheme initializer_scheme)
+ConnectivityArray::setInitializerScheme(PARTITION::Scheme initializer_scheme)
 {
   initializer_scheme_ = initializer_scheme;
 }
@@ -1074,7 +1069,7 @@ ConnectivityArray::SetInitializerScheme(PARTITION::Scheme initializer_scheme)
 // \return Initializer scheme
 //
 PARTITION::Scheme
-ConnectivityArray::GetInitializerScheme() const
+ConnectivityArray::getInitializerScheme() const
 {
   return initializer_scheme_;
 }
@@ -1084,7 +1079,7 @@ ConnectivityArray::GetInitializerScheme() const
 // (assume same type for all elements)
 //
 minitensor::ELEMENT::Type
-ConnectivityArray::GetType() const
+ConnectivityArray::getType() const
 {
   return type_;
 }
@@ -1093,7 +1088,7 @@ ConnectivityArray::GetType() const
 // \return Node ID and associated point in space
 //
 PointMap
-ConnectivityArray::GetNodeList() const
+ConnectivityArray::getNodeList() const
 {
   return nodes_;
 }
@@ -1102,7 +1097,7 @@ ConnectivityArray::GetNodeList() const
 // \return Element - nodes connectivity
 //
 AdjacencyMap
-ConnectivityArray::GetConnectivity() const
+ConnectivityArray::getConnectivity() const
 {
   return connectivity_;
 }
@@ -1111,7 +1106,7 @@ ConnectivityArray::GetConnectivity() const
 // \return Albany abstract discretization corresponding to array
 //
 Albany::AbstractDiscretization &
-ConnectivityArray::GetDiscretization()
+ConnectivityArray::getDiscretization()
 {
   return (*discretization_ptr_.get());
 }
@@ -1121,12 +1116,12 @@ ConnectivityArray::GetDiscretization()
 // (assume same type for all elements)
 //
 minitensor::Index
-ConnectivityArray::GetNodesPerElement() const
+ConnectivityArray::getNodesPerElement() const
 {
   minitensor::Index
   nodes_per_element;
 
-  switch (GetType()) {
+  switch (getType()) {
 
   default:
     std::cerr << "ERROR: Unknown element type in GetNodesPerElement()";
@@ -1163,7 +1158,7 @@ ConnectivityArray::GetNodesPerElement() const
 // \return Volume for each element
 //
 ScalarMap
-ConnectivityArray::GetVolumes() const
+ConnectivityArray::getVolumes() const
 {
   ScalarMap volumes;
   for (AdjacencyMap::const_iterator
@@ -1236,12 +1231,12 @@ ConnectivityArray::GetVolumes() const
 // \return Total volume of the array
 //
 double
-ConnectivityArray::GetVolume() const
+ConnectivityArray::getVolume() const
 {
   double volume = 0.0;
 
   const ScalarMap
-  volumes = GetVolumes();
+  volumes = getVolumes();
 
   for (ScalarMap::const_iterator
   volumes_iter = volumes.begin();
@@ -1259,7 +1254,7 @@ ConnectivityArray::GetVolume() const
 // \return Partitions when partitioned
 //
 std::map<int, int>
-ConnectivityArray::GetPartitions() const
+ConnectivityArray::getPartitions() const
 {
   return partitions_;
 }
@@ -1268,13 +1263,13 @@ ConnectivityArray::GetPartitions() const
 // \return Volume for each partition when partitioned
 //
 ScalarMap
-ConnectivityArray::GetPartitionVolumes() const
+ConnectivityArray::getPartitionVolumes() const
 {
   std::map<int, int>
-  partitions = GetPartitions();
+  partitions = getPartitions();
 
   ScalarMap
-  volumes = GetVolumes();
+  volumes = getVolumes();
 
   ScalarMap
   partition_volumes;
@@ -1314,16 +1309,16 @@ ConnectivityArray::GetPartitionVolumes() const
 // \return Partition centroids
 //
 std::vector<minitensor::Vector<double>>
-ConnectivityArray::GetPartitionCentroids() const
+ConnectivityArray::getPartitionCentroids() const
 {
   std::map<int, int>
-  partitions = GetPartitions();
+  partitions = getPartitions();
 
   ScalarMap
-  element_volumes = GetVolumes();
+  element_volumes = getVolumes();
 
   ScalarMap
-  partition_volumes = GetPartitionVolumes();
+  partition_volumes = getPartitionVolumes();
 
   minitensor::Index const
   number_partitions = partition_volumes.size();
@@ -1332,13 +1327,13 @@ ConnectivityArray::GetPartitionCentroids() const
   partition_centroids(number_partitions);
 
   for (minitensor::Index i = 0; i < number_partitions; ++i) {
-    partition_centroids[i].set_dimension(GetDimension());
+    partition_centroids[i].set_dimension(getDimension());
     partition_centroids[i].clear();
   }
 
   // Determine number of nodes that define element topology
   minitensor::Index const
-  nodes_per_element = GetNodesPerElement();
+  nodes_per_element = getNodesPerElement();
 
   for (std::map<int, int>::const_iterator partitions_iterator =
       partitions.begin();
@@ -1407,7 +1402,7 @@ ConnectivityArray::GetPartitionCentroids() const
 // \return Centroids for each element
 //
 PointMap
-ConnectivityArray::GetCentroids() const
+ConnectivityArray::getCentroids() const
 {
   PointMap
   centroids;
@@ -1463,7 +1458,7 @@ ConnectivityArray::GetCentroids() const
 /// \return Bounding box for all nodes
 ///
 std::pair<minitensor::Vector<double>, minitensor::Vector<double>>
-ConnectivityArray::BoundingBox() const
+ConnectivityArray::boundingBox() const
 {
   minitensor::Vector<double>
   min = nodes_.begin()->second;
@@ -1550,7 +1545,7 @@ parametric_limits(minitensor::ELEMENT::Type const element_type)
 // \return points inside the domain.
 //
 std::vector<minitensor::Vector<double>>
-ConnectivityArray::CreateGrid()
+ConnectivityArray::createGrid()
 {
   std::cout << '\n';
   std::cout << "Creating background mesh ..." << '\n';
@@ -1569,7 +1564,7 @@ ConnectivityArray::CreateGrid()
   }
 
   double const
-  delta = GetCellSize();
+  delta = getCellSize();
 
   //
   // Determine number of points for each dimension.
@@ -1606,7 +1601,7 @@ ConnectivityArray::CreateGrid()
 
   // Iterate through elements to set array.
   minitensor::Index const
-  nodes_per_element = GetNodesPerElement();
+  nodes_per_element = getNodesPerElement();
 
   minitensor::Index const
   number_of_elements = connectivity_.size();
@@ -1669,7 +1664,7 @@ ConnectivityArray::CreateGrid()
     // the divisions and mark the corresponding voxel
     // as being inside the domain.
     minitensor::ELEMENT::Type
-    element_type = GetType();
+    element_type = getType();
 
     minitensor::Index
     parametric_dimension = 3;
@@ -1733,7 +1728,7 @@ ConnectivityArray::CreateGrid()
           p = interpolate_element(element_type, xi, element_nodes);
 
           minitensor::Vector<int>
-          index = PointToIndex(p);
+          index = pointToIndex(p);
 
           grid_[index(0)][index(1)][index(2)] = true;
         }
@@ -1802,7 +1797,7 @@ ConnectivityArray::CreateGrid()
 // Convert point to index into voxel array
 //
 minitensor::Vector<int>
-ConnectivityArray::PointToIndex(minitensor::Vector<double> const & point) const
+ConnectivityArray::pointToIndex(minitensor::Vector<double> const & point) const
 {
   int const
   i = round((point(0) - lower_corner_(0)) / cell_size_(0));
@@ -1821,10 +1816,10 @@ ConnectivityArray::PointToIndex(minitensor::Vector<double> const & point) const
 // 3D only for now.
 //
 bool
-ConnectivityArray::IsInsideMesh(minitensor::Vector<double> const & point) const
+ConnectivityArray::isInsideMesh(minitensor::Vector<double> const & point) const
 {
   minitensor::Vector<int> const
-  index = PointToIndex(point);
+  index = pointToIndex(point);
 
   int const
   i = index(0);
@@ -1860,7 +1855,7 @@ ConnectivityArray::IsInsideMesh(minitensor::Vector<double> const & point) const
 // be used on a faster method.
 //
 bool
-ConnectivityArray::IsInsideMeshByElement(
+ConnectivityArray::isInsideMeshByElement(
     minitensor::Vector<double> const & point) const
 {
 
@@ -1917,14 +1912,14 @@ ConnectivityArray::IsInsideMeshByElement(
 // of the array divided by the cube of the length scale
 //
 minitensor::Index
-ConnectivityArray::GetNumberPartitions(double const length_scale) const
+ConnectivityArray::getNumberPartitions(double const length_scale) const
 {
   double const
   ball_volume = length_scale * length_scale * length_scale;
 
   minitensor::Index const
   number_partitions =
-      static_cast<minitensor::Index>(round(GetVolume() / ball_volume));
+      static_cast<minitensor::Index>(round(getVolume() / ball_volume));
 
   return number_partitions;
 }
@@ -2040,10 +2035,10 @@ RenumberPartitions(std::map<int, int> const & old_partitions)
 } // anonymous namespace
 
 void
-ConnectivityArray::CheckNullVolume() const
+ConnectivityArray::checkNullVolume() const
 {
   ScalarMap const
-  partition_volumes = GetPartitionVolumes();
+  partition_volumes = getPartitionVolumes();
 
   std::vector<minitensor::Index>
   zero_volume;
@@ -2090,7 +2085,7 @@ ConnectivityArray::CheckNullVolume() const
 // \return Partition number for each element
 //
 std::map<int, int>
-ConnectivityArray::Partition(
+ConnectivityArray::partition(
     const PARTITION::Scheme partition_scheme,
     double const length_scale)
 {
@@ -2100,27 +2095,27 @@ ConnectivityArray::Partition(
   switch (partition_scheme) {
 
   case PARTITION::Scheme::RANDOM:
-    partitions = PartitionRandom(length_scale);
+    partitions = partitionRandom(length_scale);
     break;
 
   case PARTITION::Scheme::HYPERGRAPH:
-    partitions = PartitionHyperGraph(length_scale);
+    partitions = partitionHyperGraph(length_scale);
     break;
 
   case PARTITION::Scheme::GEOMETRIC:
-    partitions = PartitionGeometric(length_scale);
+    partitions = partitionGeometric(length_scale);
     break;
 
   case PARTITION::Scheme::KMEANS:
-    partitions = PartitionKMeans(length_scale);
+    partitions = partitionKMeans(length_scale);
     break;
 
   case PARTITION::Scheme::SEQUENTIAL:
-    partitions = PartitionSequential(length_scale);
+    partitions = partitionSequential(length_scale);
     break;
 
   case PARTITION::Scheme::KDTREE:
-    partitions = PartitionKDTree(length_scale);
+    partitions = partitionKDTree(length_scale);
     break;
 
   default:
@@ -2130,7 +2125,7 @@ ConnectivityArray::Partition(
 
   }
 
-  CheckNullVolume();
+  checkNullVolume();
 
   // Store for use by other methods
   partitions_ = RenumberPartitions(partitions);
@@ -2144,7 +2139,7 @@ ConnectivityArray::Partition(
 // closest center to its centroid
 //
 std::map<int, int>
-ConnectivityArray::PartitionByCenters(
+ConnectivityArray::partitionByCenters(
     std::vector<minitensor::Vector<double>> const & centers)
 {
   minitensor::Index const
@@ -2165,7 +2160,7 @@ ConnectivityArray::PartitionByCenters(
 
   // Determine number of nodes that define element topology
   minitensor::Index const
-  nodes_per_element = GetNodesPerElement();
+  nodes_per_element = getNodesPerElement();
 
   std::ofstream centroids_ofs("centroids.csv");
 
@@ -2238,11 +2233,11 @@ ConnectivityArray::PartitionByCenters(
 // \return Partition number for each element
 //
 std::map<int, int>
-ConnectivityArray::PartitionHyperGraph(double const length_scale)
+ConnectivityArray::partitionHyperGraph(double const length_scale)
 {
   // Zoltan setup
   int const
-  number_partitions = GetNumberPartitions(length_scale);
+  number_partitions = getNumberPartitions(length_scale);
 
   std::stringstream
   ioss;
@@ -2280,19 +2275,19 @@ ConnectivityArray::PartitionHyperGraph(double const length_scale)
 
   // Set up hypergraph
   zoltan.Set_Num_Obj_Fn(
-      LCM::ZoltanHyperGraph::GetNumberOfObjects,
+      LCM::ZoltanHyperGraph::getNumberOfObjects,
       &zoltan_hypergraph);
 
   zoltan.Set_Obj_List_Fn(
-      LCM::ZoltanHyperGraph::GetObjectList,
+      LCM::ZoltanHyperGraph::getObjectList,
       &zoltan_hypergraph);
 
   zoltan.Set_HG_Size_CS_Fn(
-      LCM::ZoltanHyperGraph::GetHyperGraphSize,
+      LCM::ZoltanHyperGraph::getHyperGraphSize,
       &zoltan_hypergraph);
 
   zoltan.Set_HG_CS_Fn(
-      LCM::ZoltanHyperGraph::GetHyperGraph,
+      LCM::ZoltanHyperGraph::getHyperGraph,
       &zoltan_hypergraph);
 
   int changes;
@@ -2335,7 +2330,7 @@ ConnectivityArray::PartitionHyperGraph(double const length_scale)
 
   // Initialize with zeros the partition map for all elements.
   const ScalarMap
-  vertex_weights = zoltan_hypergraph.GetVertexWeights();
+  vertex_weights = zoltan_hypergraph.getVertexWeights();
 
   // Fill up with results from Zoltan, which returns partitions for all
   // elements that belong to a partition > 0
@@ -2378,11 +2373,11 @@ ConnectivityArray::PartitionHyperGraph(double const length_scale)
 // \return Partition number for each element
 //
 std::map<int, int>
-ConnectivityArray::PartitionGeometric(double const length_scale)
+ConnectivityArray::partitionGeometric(double const length_scale)
 {
   // Zoltan setup
   int const
-  number_partitions = GetNumberPartitions(length_scale);
+  number_partitions = getNumberPartitions(length_scale);
 
   std::stringstream
   ioss;
@@ -2415,10 +2410,10 @@ ConnectivityArray::PartitionGeometric(double const length_scale)
   //
 
   // Set up recursive inertial bisection (RIB)
-  zoltan.Set_Num_Obj_Fn(LCM::ConnectivityArray::GetNumberOfObjects, this);
-  zoltan.Set_Obj_List_Fn(LCM::ConnectivityArray::GetObjectList, this);
-  zoltan.Set_Num_Geom_Fn(LCM::ConnectivityArray::GetNumberGeometry, this);
-  zoltan.Set_Geom_Multi_Fn(LCM::ConnectivityArray::GetGeometry, this);
+  zoltan.Set_Num_Obj_Fn(LCM::ConnectivityArray::getNumberOfObjects, this);
+  zoltan.Set_Obj_List_Fn(LCM::ConnectivityArray::getObjectList, this);
+  zoltan.Set_Num_Geom_Fn(LCM::ConnectivityArray::getNumberGeometry, this);
+  zoltan.Set_Geom_Multi_Fn(LCM::ConnectivityArray::getGeometry, this);
 
   int changes;
   int num_gid_entries;
@@ -2459,7 +2454,7 @@ ConnectivityArray::PartitionGeometric(double const length_scale)
   std::map<int, int> partitions;
 
   const ScalarMap
-  element_volumes = GetVolumes();
+  element_volumes = getVolumes();
 
   // Initialize with zeros the partition map for all elements.
   for (ScalarMap::const_iterator
@@ -2487,7 +2482,7 @@ ConnectivityArray::PartitionGeometric(double const length_scale)
 // \return Partition number for each element
 //
 std::map<int, int>
-ConnectivityArray::PartitionKMeans(double const length_scale)
+ConnectivityArray::partitionKMeans(double const length_scale)
 {
   //
   // Create initial centers
@@ -2497,14 +2492,14 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
 
   // Partition with initializer
   PARTITION::Scheme const
-  initializer_scheme = GetInitializerScheme();
+  initializer_scheme = getInitializerScheme();
 
-  Partition(initializer_scheme, length_scale);
+  partition(initializer_scheme, length_scale);
 
   // Compute partition centroids and use those as initial centers
 
   std::vector<minitensor::Vector<double>>
-  centers = GetPartitionCentroids();
+  centers = getPartitionCentroids();
 
   minitensor::Index const
   number_partitions = centers.size();
@@ -2515,13 +2510,13 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
   minitensor::Vector<double>
   upper_corner;
 
-  boost::tie(lower_corner, upper_corner) = BoundingBox();
+  boost::tie(lower_corner, upper_corner) = boundingBox();
 
   lower_corner_ = lower_corner;
   upper_corner_ = upper_corner;
 
   std::vector<minitensor::Vector<double>>
-  domain_points = CreateGrid();
+  domain_points = createGrid();
 
   //
   // K-means iteration
@@ -2529,7 +2524,7 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
   std::cout << "Main K-means Iteration." << '\n';
 
   minitensor::Index const
-  max_iterations = GetMaximumIterations();
+  max_iterations = getMaximumIterations();
 
   minitensor::Index
   number_iterations = 0;
@@ -2538,7 +2533,7 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
   diagonal_distance = norm(upper_corner - lower_corner);
 
   double const
-  tolerance = GetTolerance() * diagonal_distance;
+  tolerance = getTolerance() * diagonal_distance;
 
   double
   step_norm = diagonal_distance;
@@ -2613,7 +2608,7 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
 
   // Partition map.
   std::map<int, int>
-  partitions = PartitionByCenters(centers);
+  partitions = partitionByCenters(centers);
 
   return partitions;
 }
@@ -2625,7 +2620,7 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
 // \return Partition number for each element
 //
 std::map<int, int>
-ConnectivityArray::PartitionKDTree(double const length_scale)
+ConnectivityArray::partitionKDTree(double const length_scale)
 {
   //
   // Create initial centers
@@ -2635,14 +2630,14 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
 
   // Partition with initializer
   PARTITION::Scheme const
-  initializer_scheme = GetInitializerScheme();
+  initializer_scheme = getInitializerScheme();
 
-  Partition(initializer_scheme, length_scale);
+  partition(initializer_scheme, length_scale);
 
   // Compute partition centroids and use those as initial centers
 
   std::vector<minitensor::Vector<double>>
-  center_positions = GetPartitionCentroids();
+  center_positions = getPartitionCentroids();
 
   minitensor::Index const
   number_partitions = center_positions.size();
@@ -2664,21 +2659,19 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
   minitensor::Vector<double>
   upper_corner;
 
-  boost::tie(lower_corner, upper_corner) = BoundingBox();
+  boost::tie(lower_corner, upper_corner) = boundingBox();
 
   lower_corner_ = lower_corner;
   upper_corner_ = upper_corner;
 
   std::vector<minitensor::Vector<double>>
-  domain_points = CreateGrid();
+  domain_points = createGrid();
 
   //
   // Create KDTree
   //
   KDTree<KDTreeNode>
   kdtree(domain_points, number_partitions);
-
-  //TraverseTree(kdtree, OutputVisitor<boost::shared_ptr<KDTreeNode>>());
 
   FilterVisitor<boost::shared_ptr<KDTreeNode>, ClusterCenter>
   filter_visitor(domain_points, centers);
@@ -2687,7 +2680,7 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
   // K-means iteration
   //
   minitensor::Index const
-  max_iterations = GetMaximumIterations();
+  max_iterations = getMaximumIterations();
 
   minitensor::Index
   number_iterations = 0;
@@ -2696,7 +2689,7 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
   diagonal_distance = norm(upper_corner - lower_corner);
 
   double const
-  tolerance = GetTolerance() * GetCellSize();
+  tolerance = getTolerance() * getCellSize();
 
   double
   step_norm = diagonal_distance;
@@ -2719,7 +2712,7 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
       center.count = 0;
     }
 
-    TraverseTree(kdtree, filter_visitor);
+    traverseTree(kdtree, filter_visitor);
 
     // Update centers
     for (minitensor::Index i = 0; i < centers.size(); ++i) {
@@ -2760,7 +2753,7 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
 
   // Partition map.
   std::map<int, int>
-  partitions = PartitionByCenters(center_positions);
+  partitions = partitionByCenters(center_positions);
 
   return partitions;
 }
@@ -2772,10 +2765,10 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
 // \return Partition number for each element
 //
 std::map<int, int>
-ConnectivityArray::PartitionSequential(double const length_scale)
+ConnectivityArray::partitionSequential(double const length_scale)
 {
   int const
-  number_partitions = GetNumberPartitions(length_scale);
+  number_partitions = getNumberPartitions(length_scale);
 
   minitensor::Vector<double>
   lower_corner;
@@ -2783,7 +2776,7 @@ ConnectivityArray::PartitionSequential(double const length_scale)
   minitensor::Vector<double>
   upper_corner;
 
-  boost::tie(lower_corner, upper_corner) = BoundingBox();
+  boost::tie(lower_corner, upper_corner) = boundingBox();
 
   lower_corner_ = lower_corner;
   upper_corner_ = upper_corner;
@@ -2794,14 +2787,14 @@ ConnectivityArray::PartitionSequential(double const length_scale)
 
   // Partition with initializer
   const PARTITION::Scheme
-  initializer_scheme = GetInitializerScheme();
+  initializer_scheme = getInitializerScheme();
 
-  Partition(initializer_scheme, length_scale);
+  partition(initializer_scheme, length_scale);
 
   // Compute partition centroids and use those as initial centers
 
   std::vector<minitensor::Vector<double>>
-  centers = GetPartitionCentroids();
+  centers = getPartitionCentroids();
 
   std::vector<minitensor::Index>
   weights(number_partitions);
@@ -2812,7 +2805,7 @@ ConnectivityArray::PartitionSequential(double const length_scale)
 
   // K-means sequential iteration
   minitensor::Index const
-  number_random_points = GetMaximumIterations() * number_partitions;
+  number_random_points = getMaximumIterations() * number_partitions;
 
   minitensor::Index const
   max_iterations = number_random_points;
@@ -2824,7 +2817,7 @@ ConnectivityArray::PartitionSequential(double const length_scale)
   diagonal_distance = norm(upper_corner - lower_corner);
 
   double const
-  tolerance = GetTolerance() * diagonal_distance;
+  tolerance = getTolerance() * diagonal_distance;
 
   std::vector<double>
   steps(number_partitions);
@@ -2849,7 +2842,7 @@ ConnectivityArray::PartitionSequential(double const length_scale)
 
     while (is_point_in_domain == false) {
       random_point = random_in_box(lower_corner, upper_corner);
-      is_point_in_domain = IsInsideMesh(random_point);
+      is_point_in_domain = isInsideMesh(random_point);
     }
 
     // Determine index to closest generator
@@ -2884,7 +2877,7 @@ ConnectivityArray::PartitionSequential(double const length_scale)
 
   // Partition map.
   std::map<int, int>
-  partitions = PartitionByCenters(centers);
+  partitions = partitionByCenters(centers);
 
   return partitions;
 }
@@ -2897,10 +2890,10 @@ ConnectivityArray::PartitionSequential(double const length_scale)
 // \return Partition number for each element
 //
 std::map<int, int>
-ConnectivityArray::PartitionRandom(double const length_scale)
+ConnectivityArray::partitionRandom(double const length_scale)
 {
   int const
-  number_partitions = GetNumberPartitions(length_scale);
+  number_partitions = getNumberPartitions(length_scale);
 
   minitensor::Vector<double>
   lower_corner;
@@ -2908,7 +2901,7 @@ ConnectivityArray::PartitionRandom(double const length_scale)
   minitensor::Vector<double>
   upper_corner;
 
-  boost::tie(lower_corner, upper_corner) = BoundingBox();
+  boost::tie(lower_corner, upper_corner) = boundingBox();
 
   lower_corner_ = lower_corner;
   upper_corner_ = upper_corner;
@@ -2927,7 +2920,7 @@ ConnectivityArray::PartitionRandom(double const length_scale)
     minitensor::Vector<double>
     p = random_in_box(lower_corner, upper_corner);
 
-    if (IsInsideMesh(p) == true) {
+    if (isInsideMesh(p) == true) {
       centers.push_back(p);
       ++number_generators;
     }
@@ -2936,7 +2929,7 @@ ConnectivityArray::PartitionRandom(double const length_scale)
 
   // Partition map.
   std::map<int, int>
-  partitions = PartitionByCenters(centers);
+  partitions = partitionByCenters(centers);
 
   return partitions;
 }
@@ -2954,14 +2947,14 @@ ConnectivityArray::PartitionRandom(double const length_scale)
 // geometry of an object.
 //
 int
-ConnectivityArray::GetNumberGeometry(void* data, int* ierr)
+ConnectivityArray::getNumberGeometry(void* data, int* ierr)
 {
   ConnectivityArray &
   connectivity_array = *(static_cast<ConnectivityArray*>(data));
 
   *ierr = ZOLTAN_OK;
 
-  int dimension = connectivity_array.GetDimension();
+  int dimension = connectivity_array.getDimension();
 
   return dimension;
 }
@@ -2970,7 +2963,7 @@ ConnectivityArray::GetNumberGeometry(void* data, int* ierr)
 // Zoltan interface, return number of objects
 //
 int
-ConnectivityArray::GetNumberOfObjects(void* data, int* ierr)
+ConnectivityArray::getNumberOfObjects(void* data, int* ierr)
 {
 
   ConnectivityArray &
@@ -2978,7 +2971,7 @@ ConnectivityArray::GetNumberOfObjects(void* data, int* ierr)
 
   *ierr = ZOLTAN_OK;
 
-  int num_objects = connectivity_array.GetConnectivity().size();
+  int num_objects = connectivity_array.getConnectivity().size();
 
   return num_objects;
 }
@@ -2987,7 +2980,7 @@ ConnectivityArray::GetNumberOfObjects(void* data, int* ierr)
 // Zoltan interface, return relevant object properties
 //
 void
-ConnectivityArray::GetObjectList(
+ConnectivityArray::getObjectList(
     void* data,
     int sizeGID,
     int sizeLID,
@@ -3004,7 +2997,7 @@ ConnectivityArray::GetObjectList(
   *ierr = ZOLTAN_OK;
 
   ScalarMap
-  element_volumes = connectivity_array.GetVolumes();
+  element_volumes = connectivity_array.getVolumes();
 
   ZOLTAN_ID_PTR
   global_id_ptr = globalID;
@@ -3075,7 +3068,7 @@ ConnectivityArray::GetObjectList(
 // \param ierr Error code to be set by function.
 //
 void
-ConnectivityArray::GetGeometry(
+ConnectivityArray::getGeometry(
     void* data,
     int sizeGID,
     int sizeLID,
@@ -3092,7 +3085,7 @@ ConnectivityArray::GetGeometry(
   *ierr = ZOLTAN_OK;
 
   PointMap
-  centroids = connectivity_array.GetCentroids();
+  centroids = connectivity_array.getCentroids();
 
   // Transfer the centroid coordinates to the Zoltan array
   int
@@ -3126,17 +3119,17 @@ operator<<(
     std::ostream & output_stream,
     ConnectivityArray const & connectivity_array)
 {
-  output_stream << std::setw(12) << connectivity_array.GetNumberNodes();
-  output_stream << std::setw(12) << connectivity_array.GetNumberElements();
-  output_stream << std::setw(12) << connectivity_array.GetType();
+  output_stream << std::setw(12) << connectivity_array.getNumberNodes();
+  output_stream << std::setw(12) << connectivity_array.getNumberElements();
+  output_stream << std::setw(12) << connectivity_array.getType();
   output_stream << '\n';
 
   // Node list
   const PointMap
-  nodes = connectivity_array.GetNodeList();
+  nodes = connectivity_array.getNodeList();
 
   int const
-  dimension = connectivity_array.GetDimension();
+  dimension = connectivity_array.getDimension();
 
   for (PointMap::const_iterator
   nodes_iter = nodes.begin();
@@ -3162,11 +3155,11 @@ operator<<(
 
   // Output element volumes as well
   const ScalarMap
-  volumes = connectivity_array.GetVolumes();
+  volumes = connectivity_array.getVolumes();
 
   // Element connectivity
   const AdjacencyMap
-  connectivity = connectivity_array.GetConnectivity();
+  connectivity = connectivity_array.getConnectivity();
 
   for (AdjacencyMap::const_iterator
   connectivity_iter = connectivity.begin();
@@ -3218,10 +3211,10 @@ DualGraph::DualGraph() :
 DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
 {
   const std::vector<std::vector<int>>
-  face_connectivity = GetFaceConnectivity(connectivity_array.GetType());
+  face_connectivity = getFaceConnectivity(connectivity_array.getType());
 
   const AdjacencyMap
-  connectivity = connectivity_array.GetConnectivity();
+  connectivity = connectivity_array.getConnectivity();
 
   std::map<std::set<int>, int>
   face_nodes_faceID_map;
@@ -3345,32 +3338,32 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
   }
 
   number_edges_ = internal_faces.size();
-  vertex_weights_ = connectivity_array.GetVolumes();
+  vertex_weights_ = connectivity_array.getVolumes();
 
   return;
 }
 
 int
-DualGraph::GetNumberVertices() const
+DualGraph::getNumberVertices() const
 {
   return graph_.size();
 }
 
 int
-DualGraph::GetNumberEdges() const
+DualGraph::getNumberEdges() const
 {
   return number_edges_;
 }
 
 void
-DualGraph::SetGraph(AdjacencyMap & graph)
+DualGraph::setGraph(AdjacencyMap & graph)
 {
   graph_ = graph;
   return;
 }
 
 AdjacencyMap
-DualGraph::GetGraph() const
+DualGraph::getGraph() const
 {
   return graph_;
 }
@@ -3379,7 +3372,7 @@ DualGraph::GetGraph() const
 // \return Edge list to create boost graph
 //
 AdjacencyMap
-DualGraph::GetEdgeList() const
+DualGraph::getEdgeList() const
 {
   AdjacencyMap edge_list;
 
@@ -3407,14 +3400,14 @@ DualGraph::GetEdgeList() const
 }
 
 void
-DualGraph::SetVertexWeights(ScalarMap & vertex_weights)
+DualGraph::setVertexWeights(ScalarMap & vertex_weights)
 {
   vertex_weights_ = vertex_weights;
   return;
 }
 
 ScalarMap
-DualGraph::GetVertexWeights() const
+DualGraph::getVertexWeights() const
 {
   return vertex_weights_;
 }
@@ -3423,7 +3416,7 @@ DualGraph::GetVertexWeights() const
 // \return Connected components in the dual graph
 //
 int
-DualGraph::GetConnectedComponents(std::vector<int> & components) const
+DualGraph::getConnectedComponents(std::vector<int> & components) const
 {
   // Create boost graph from edge list
   typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>
@@ -3440,7 +3433,7 @@ DualGraph::GetConnectedComponents(std::vector<int> & components) const
   dual_2_boost;
 
   AdjacencyMap
-  dual_graph = GetGraph();
+  dual_graph = getGraph();
 
   for (AdjacencyMap::const_iterator graph_iter = dual_graph.begin();
       graph_iter != dual_graph.end();
@@ -3458,7 +3451,7 @@ DualGraph::GetConnectedComponents(std::vector<int> & components) const
 
   // Add edges
   AdjacencyMap
-  edge_list = GetEdgeList();
+  edge_list = getEdgeList();
 
   for (AdjacencyMap::const_iterator edges_iter = edge_list.begin();
       edges_iter != edge_list.end();
@@ -3483,7 +3476,7 @@ DualGraph::GetConnectedComponents(std::vector<int> & components) const
 
   }
 
-  int const number_vertices = GetNumberVertices();
+  int const number_vertices = getNumberVertices();
   components.resize(number_vertices);
 
   int number_components =
@@ -3496,19 +3489,19 @@ DualGraph::GetConnectedComponents(std::vector<int> & components) const
 // Print graph for debugging
 //
 void
-DualGraph::Print() const
+DualGraph::print() const
 {
   ScalarMap
-  vertex_weights = GetVertexWeights();
+  vertex_weights = getVertexWeights();
 
   AdjacencyMap
-  graph = GetGraph();
+  graph = getGraph();
 
   int const
-  number_vertices = GetNumberVertices();
+  number_vertices = getNumberVertices();
 
   int const
-  number_edges = GetNumberEdges();
+  number_edges = getNumberEdges();
 
   std::cout << '\n';
   std::cout << "Vertex - Edge Format:" << '\n';
@@ -3567,7 +3560,7 @@ DualGraph::Print() const
   std::cout << '\n';
 
   AdjacencyMap
-  edge_list = GetEdgeList();
+  edge_list = getEdgeList();
 
   std::cout << "------------------------------------------------------------";
   std::cout << '\n';
@@ -3604,7 +3597,7 @@ DualGraph::Print() const
 //
 //
 std::vector<std::vector<int>>
-DualGraph::GetFaceConnectivity(minitensor::ELEMENT::Type const type) const
+DualGraph::getFaceConnectivity(minitensor::ELEMENT::Type const type) const
 {
   std::vector<std::vector<int>>
   face_connectivity;
@@ -3754,54 +3747,54 @@ ZoltanHyperGraph::ZoltanHyperGraph() :
 //
 ZoltanHyperGraph::ZoltanHyperGraph(DualGraph const & dual_graph)
 {
-  graph_ = dual_graph.GetGraph();
-  vertex_weights_ = dual_graph.GetVertexWeights();
-  number_vertices_ = dual_graph.GetNumberVertices();
-  number_hyperedges_ = dual_graph.GetNumberEdges();
+  graph_ = dual_graph.getGraph();
+  vertex_weights_ = dual_graph.getVertexWeights();
+  number_vertices_ = dual_graph.getNumberVertices();
+  number_hyperedges_ = dual_graph.getNumberEdges();
   return;
 }
 
 int
-ZoltanHyperGraph::GetNumberVertices() const
+ZoltanHyperGraph::getNumberVertices() const
 {
   return graph_.size();
 }
 
 void
-ZoltanHyperGraph::SetNumberHyperedges(int number_hyperedges)
+ZoltanHyperGraph::setNumberHyperedges(int number_hyperedges)
 {
   number_hyperedges_ = number_hyperedges;
   return;
 }
 
 int
-ZoltanHyperGraph::GetNumberHyperedges() const
+ZoltanHyperGraph::getNumberHyperedges() const
 {
   return number_hyperedges_;
 }
 
 void
-ZoltanHyperGraph::SetGraph(AdjacencyMap & graph)
+ZoltanHyperGraph::setGraph(AdjacencyMap & graph)
 {
   graph_ = graph;
   return;
 }
 
 AdjacencyMap
-ZoltanHyperGraph::GetGraph() const
+ZoltanHyperGraph::getGraph() const
 {
   return graph_;
 }
 
 void
-ZoltanHyperGraph::SetVertexWeights(ScalarMap & vertex_weights)
+ZoltanHyperGraph::setVertexWeights(ScalarMap & vertex_weights)
 {
   vertex_weights_ = vertex_weights;
   return;
 }
 
 ScalarMap
-ZoltanHyperGraph::GetVertexWeights() const
+ZoltanHyperGraph::getVertexWeights() const
 {
   return vertex_weights_;
 }
@@ -3810,7 +3803,7 @@ ZoltanHyperGraph::GetVertexWeights() const
 // minitensor::Vector with edge IDs
 //
 std::vector<ZOLTAN_ID_TYPE>
-ZoltanHyperGraph::GetEdgeIDs() const
+ZoltanHyperGraph::getEdgeIDs() const
 {
   std::vector<ZOLTAN_ID_TYPE>
   edges;
@@ -3841,7 +3834,7 @@ ZoltanHyperGraph::GetEdgeIDs() const
 // minitensor::Vector with edge pointers
 //
 std::vector<int>
-ZoltanHyperGraph::GetEdgePointers() const
+ZoltanHyperGraph::getEdgePointers() const
 {
   std::vector<int>
   pointers;
@@ -3877,7 +3870,7 @@ ZoltanHyperGraph::GetEdgePointers() const
 // Vector with vertex IDs
 //
 std::vector<ZOLTAN_ID_TYPE>
-ZoltanHyperGraph::GetVertexIDs() const
+ZoltanHyperGraph::getVertexIDs() const
 {
   std::vector<ZOLTAN_ID_TYPE>
   vertices;
@@ -3899,7 +3892,7 @@ ZoltanHyperGraph::GetVertexIDs() const
 // Zoltan interface, return number of objects
 //
 int
-ZoltanHyperGraph::GetNumberOfObjects(void* data, int* ierr)
+ZoltanHyperGraph::getNumberOfObjects(void* data, int* ierr)
 {
   ZoltanHyperGraph &
   zoltan_hypergraph = *(static_cast<ZoltanHyperGraph*>(data));
@@ -3907,7 +3900,7 @@ ZoltanHyperGraph::GetNumberOfObjects(void* data, int* ierr)
   *ierr = ZOLTAN_OK;
 
   int
-  num_objects = zoltan_hypergraph.GetGraph().size();
+  num_objects = zoltan_hypergraph.getGraph().size();
 
   return num_objects;
 }
@@ -3916,7 +3909,7 @@ ZoltanHyperGraph::GetNumberOfObjects(void* data, int* ierr)
 // Zoltan interface, return relevant object properties
 //
 void
-ZoltanHyperGraph::GetObjectList(
+ZoltanHyperGraph::getObjectList(
     void* data,
     int sizeGID,
     int sizeLID,
@@ -3932,7 +3925,7 @@ ZoltanHyperGraph::GetObjectList(
   *ierr = ZOLTAN_OK;
 
   ScalarMap
-  vertex_weights = zoltan_hypergraph.GetVertexWeights();
+  vertex_weights = zoltan_hypergraph.getVertexWeights();
 
   ZOLTAN_ID_PTR
   global_id_ptr = globalID;
@@ -3968,7 +3961,7 @@ ZoltanHyperGraph::GetObjectList(
 // Zoltan interface, get size of hypergraph
 //
 void
-ZoltanHyperGraph::GetHyperGraphSize(
+ZoltanHyperGraph::getHyperGraphSize(
     void* data,
     int* num_lists,
     int* num_pins,
@@ -3981,10 +3974,10 @@ ZoltanHyperGraph::GetHyperGraphSize(
   *ierr = ZOLTAN_OK;
 
   // Number of vertices
-  *num_lists = zoltan_hypergraph.GetVertexIDs().size();
+  *num_lists = zoltan_hypergraph.getVertexIDs().size();
 
   // Numbers of pins, i.e. size of list of hyperedges attached to vertices
-  *num_pins = zoltan_hypergraph.GetEdgeIDs().size();
+  *num_pins = zoltan_hypergraph.getEdgeIDs().size();
 
   *format = ZOLTAN_COMPRESSED_VERTEX;
 
@@ -3995,7 +3988,7 @@ ZoltanHyperGraph::GetHyperGraphSize(
 // Zoltan interface, get the hypergraph itself
 //
 void
-ZoltanHyperGraph::GetHyperGraph(
+ZoltanHyperGraph::getHyperGraph(
     void* data,
     int num_gid_entries,
     int num_vtx_edge,
@@ -4013,22 +4006,22 @@ ZoltanHyperGraph::GetHyperGraph(
 
   // Validate
   ALBANY_EXPECT(num_vtx_edge ==
-      static_cast<int>(zoltan_hypergraph.GetVertexIDs().size()));
+      static_cast<int>(zoltan_hypergraph.getVertexIDs().size()));
 
   ALBANY_EXPECT(num_pins ==
-      static_cast<int>(zoltan_hypergraph.GetEdgeIDs().size()));
+      static_cast<int>(zoltan_hypergraph.getEdgeIDs().size()));
 
   ALBANY_EXPECT(format == ZOLTAN_COMPRESSED_VERTEX);
 
   // Copy hypergraph data
   std::vector<ZOLTAN_ID_TYPE>
-  vertex_IDs = zoltan_hypergraph.GetVertexIDs();
+  vertex_IDs = zoltan_hypergraph.getVertexIDs();
 
   std::vector<ZOLTAN_ID_TYPE>
-  edge_IDs = zoltan_hypergraph.GetEdgeIDs();
+  edge_IDs = zoltan_hypergraph.getEdgeIDs();
 
   std::vector<int>
-  edge_pointers = zoltan_hypergraph.GetEdgePointers();
+  edge_pointers = zoltan_hypergraph.getEdgePointers();
 
   for (std::vector<ZOLTAN_ID_TYPE>::size_type i = 0;
       i < vertex_IDs.size(); ++i) {
@@ -4109,9 +4102,9 @@ operator>>(std::istream & input_stream, ZoltanHyperGraph & zoltan_hypergraph)
 
   }
 
-  zoltan_hypergraph.SetGraph(graph);
-  zoltan_hypergraph.SetVertexWeights(vertex_weights);
-  zoltan_hypergraph.SetNumberHyperedges(number_hyperedges);
+  zoltan_hypergraph.setGraph(graph);
+  zoltan_hypergraph.setVertexWeights(vertex_weights);
+  zoltan_hypergraph.setNumberHyperedges(number_hyperedges);
 
   return input_stream;
 }
@@ -4124,15 +4117,15 @@ operator<<(
     std::ostream & output_stream,
     ZoltanHyperGraph const & zoltan_hypergraph)
 {
-  output_stream << std::setw(12) << zoltan_hypergraph.GetNumberVertices();
-  output_stream << std::setw(12) << zoltan_hypergraph.GetNumberHyperedges();
+  output_stream << std::setw(12) << zoltan_hypergraph.getNumberVertices();
+  output_stream << std::setw(12) << zoltan_hypergraph.getNumberHyperedges();
   output_stream << '\n';
 
   AdjacencyMap const &
-  graph = zoltan_hypergraph.GetGraph();
+  graph = zoltan_hypergraph.getGraph();
 
   ScalarMap
-  vertex_weights = zoltan_hypergraph.GetVertexWeights();
+  vertex_weights = zoltan_hypergraph.getVertexWeights();
 
   for (AdjacencyMap::const_iterator graph_iter = graph.begin();
       graph_iter != graph.end(); ++graph_iter) {

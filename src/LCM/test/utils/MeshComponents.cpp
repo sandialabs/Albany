@@ -74,12 +74,12 @@ int main(int ac, char* av[])
   components;
 
   const int
-  number_components = dual_graph.GetConnectedComponents(components);
+  number_components = dual_graph.getConnectedComponents(components);
 
   // Get abstract discretization from connectivity array and convert
   // to stk discretization to use stk-specific methods.
   Albany::AbstractDiscretization &
-  discretization = connectivity_array.GetDiscretization();
+  discretization = connectivity_array.getDiscretization();
 
   Albany::STKDiscretization &
   stk_discretization = static_cast<Albany::STKDiscretization &>(discretization);
@@ -113,7 +113,7 @@ int main(int ac, char* av[])
   stk_discretization.writeSolutionT(*solution_fieldT, 1.0);
 
   const int
-  number_elements = connectivity_array.GetNumberElements();
+  number_elements = connectivity_array.getNumberElements();
 
   std::cout << std::endl;
   std::cout << "==========================================";

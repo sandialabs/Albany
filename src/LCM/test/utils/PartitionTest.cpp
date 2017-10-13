@@ -167,21 +167,21 @@ int main(int ac, char* av[])
   //
   // Set extra parameters
   //
-  connectivity_array.SetTolerance(tolerance);
-  connectivity_array.SetCellSize(requested_cell_size);
-  connectivity_array.SetMaximumIterations(maximum_iterations);
-  connectivity_array.SetInitializerScheme(initializer_scheme);
+  connectivity_array.setTolerance(tolerance);
+  connectivity_array.setCellSize(requested_cell_size);
+  connectivity_array.setMaximumIterations(maximum_iterations);
+  connectivity_array.setInitializerScheme(initializer_scheme);
 
   //
   // Partition mesh
   //
   std::map<int, int> const
-  partitions = connectivity_array.Partition(partition_scheme, length_scale);
+  partitions = connectivity_array.partition(partition_scheme, length_scale);
 
   // Get abstract discretization from connectivity array and convert
   // to stk discretization to use stk-specific methods.
   Albany::AbstractDiscretization &
-  discretization = connectivity_array.GetDiscretization();
+  discretization = connectivity_array.getDiscretization();
 
   Albany::STKDiscretization &
   stk_discretization = static_cast<Albany::STKDiscretization &>(discretization);
@@ -238,13 +238,13 @@ int main(int ac, char* av[])
 
   // Write report
   double const
-  volume = connectivity_array.GetVolume();
+  volume = connectivity_array.getVolume();
 
   double const
   length_scale_cubed = length_scale * length_scale * length_scale;
 
   LCM::ScalarMap const
-  partition_volumes = connectivity_array.GetPartitionVolumes();
+  partition_volumes = connectivity_array.getPartitionVolumes();
 
   unsigned int const
   number_partitions = partition_volumes.size();
