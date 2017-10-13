@@ -1735,15 +1735,6 @@ ConnectivityArray::CreateGrid()
           minitensor::Vector<int>
           index = PointToIndex(p);
 
-          for (minitensor::Index l = 0; l < dimension; ++l) {
-            ALBANY_EXPECT(index(l) >= 0);
-            ALBANY_EXPECT(index(l) <= int(points_per_dim(l)));
-
-            if (index(l) == int(points_per_dim(l))) {
-              --index(l);
-            }
-          }
-
           grid_[index(0)][index(1)][index(2)] = true;
         }
       }
@@ -1769,11 +1760,11 @@ ConnectivityArray::CreateGrid()
   p(dimension);
 
   for (minitensor::Index i = 0; i < points_per_dim(0); ++i) {
-    p(0) = (i + 0.5) * cell_size_(0) + lower_corner_(0);
+    p(0) = i * cell_size_(0) + lower_corner_(0);
     for (minitensor::Index j = 0; j < points_per_dim(1); ++j) {
-      p(1) = (j + 0.5) * cell_size_(1) + lower_corner_(1);
+      p(1) = j * cell_size_(1) + lower_corner_(1);
       for (minitensor::Index k = 0; k < points_per_dim(2); ++k) {
-        p(2) = (k + 0.5) * cell_size_(2) + lower_corner_(2);
+        p(2) = k * cell_size_(2) + lower_corner_(2);
         if (grid_[i][j][k] == true) {
           domain_points.push_back(p);
           in_ofs << p << '\n';
@@ -1785,7 +1776,8 @@ ConnectivityArray::CreateGrid()
   }
 
   minitensor::Index const
-  number_generated_points = points_per_dim(0) * points_per_dim(1) * points_per_dim(2);
+  number_generated_points =
+      points_per_dim(0) * points_per_dim(1) * points_per_dim(2);
 
   minitensor::Index const
   number_points_in_domain = domain_points.size();
@@ -1812,25 +1804,14 @@ ConnectivityArray::CreateGrid()
 minitensor::Vector<int>
 ConnectivityArray::PointToIndex(minitensor::Vector<double> const & point) const
 {
-  minitensor::Vector<double>
-  p{point};
-
-  minitensor::Index const
-  dimension = point.get_dimension();
-
-  for (minitensor::Index l = 0; l < dimension; ++l) {
-    p(l) = std::max(p(l), lower_corner_(l));
-    p(l) = std::min(p(l), upper_corner_(l));
-  }
+  int const
+  i = round((point(0) - lower_corner_(0)) / cell_size_(0));
 
   int const
-  i = (p(0) - lower_corner_(0)) / cell_size_(0);
+  j = round((point(1) - lower_corner_(1)) / cell_size_(1));
 
   int const
-  j = (p(1) - lower_corner_(1)) / cell_size_(1);
-
-  int const
-  k = (p(2) - lower_corner_(2)) / cell_size_(2);
+  k = round((point(2) - lower_corner_(2)) / cell_size_(2));
 
   return minitensor::Vector<int>(i, j, k);
 }
@@ -1842,33 +1823,32 @@ ConnectivityArray::PointToIndex(minitensor::Vector<double> const & point) const
 bool
 ConnectivityArray::IsInsideMesh(minitensor::Vector<double> const & point) const
 {
-  int
-  i = (point(0) - lower_corner_(0)) / cell_size_(0);
+  minitensor::Vector<int> const
+  index = PointToIndex(point);
+
+  int const
+  i = index(0);
 
   int const
   x_size = grid_.size();
 
-  if (i < 0 || i > x_size) return false;
+  if (i < 0 || i >= x_size) return false;
 
-  int
-  j = (point(1) - lower_corner_(1)) / cell_size_(1);
+  int const
+  j = index(1);
 
   int const
   y_size = grid_[0].size();
 
-  if (j < 0 || j > y_size) return false;
+  if (j < 0 || j >= y_size) return false;
 
-  int
-  k = (point(2) - lower_corner_(2)) / cell_size_(2);
+  int const
+  k = index(2);
 
   int const
   z_size = grid_[0][0].size();
 
-  if (k < 0 || k > z_size) return false;
-
-  if (i == x_size) --i;
-  if (j == y_size) --j;
-  if (k == z_size) --k;
+  if (k < 0 || k >= z_size) return false;
 
   return grid_[i][j][k];
 }
