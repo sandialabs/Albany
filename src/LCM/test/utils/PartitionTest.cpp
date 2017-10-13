@@ -57,11 +57,11 @@ int main(int ac, char* av[])
 
   LCM::PARTITION::Scheme const
   scheme_values[] = {
-      LCM::PARTITION::GEOMETRIC,
-      LCM::PARTITION::HYPERGRAPH,
-      LCM::PARTITION::KMEANS,
-      LCM::PARTITION::SEQUENTIAL,
-      LCM::PARTITION::KDTREE};
+      LCM::PARTITION::Scheme::GEOMETRIC,
+      LCM::PARTITION::Scheme::HYPERGRAPH,
+      LCM::PARTITION::Scheme::KMEANS,
+      LCM::PARTITION::Scheme::SEQUENTIAL,
+      LCM::PARTITION::Scheme::KDTREE};
 
   char const *
   scheme_names[] = {
@@ -72,7 +72,7 @@ int main(int ac, char* av[])
       "kdtree"};
 
   LCM::PARTITION::Scheme
-  partition_scheme = LCM::PARTITION::KDTREE;
+  partition_scheme = LCM::PARTITION::Scheme::KDTREE;
 
   command_line_processor.setOption(
       "scheme",
@@ -119,9 +119,9 @@ int main(int ac, char* av[])
 
   LCM::PARTITION::Scheme const
   initializer_values[] = {
-      LCM::PARTITION::RANDOM,
-      LCM::PARTITION::GEOMETRIC,
-      LCM::PARTITION::HYPERGRAPH};
+      LCM::PARTITION::Scheme::RANDOM,
+      LCM::PARTITION::Scheme::GEOMETRIC,
+      LCM::PARTITION::Scheme::HYPERGRAPH};
 
   char const *
   initializer_names[] = {
@@ -130,7 +130,7 @@ int main(int ac, char* av[])
       "hypergraph"};
 
   LCM::PARTITION::Scheme
-  initializer_scheme = LCM::PARTITION::GEOMETRIC;
+  initializer_scheme = LCM::PARTITION::Scheme::GEOMETRIC;
 
   command_line_processor.setOption(
       "initializer",

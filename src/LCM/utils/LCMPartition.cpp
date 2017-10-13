@@ -809,7 +809,7 @@ ConnectivityArray::ConnectivityArray() :
     tolerance_(0.0),
     requested_cell_size_(0.0),
     maximum_iterations_(0),
-    initializer_scheme_(PARTITION::HYPERGRAPH)
+    initializer_scheme_(PARTITION::Scheme::HYPERGRAPH)
 {
   return;
 }
@@ -828,7 +828,7 @@ ConnectivityArray::ConnectivityArray(
     tolerance_(0.0),
     requested_cell_size_(0.0),
     maximum_iterations_(0),
-    initializer_scheme_(PARTITION::HYPERGRAPH)
+    initializer_scheme_(PARTITION::Scheme::HYPERGRAPH)
 {
 
   using Albany::StateStruct;
@@ -2099,27 +2099,27 @@ ConnectivityArray::Partition(
 
   switch (partition_scheme) {
 
-  case PARTITION::RANDOM:
+  case PARTITION::Scheme::RANDOM:
     partitions = PartitionRandom(length_scale);
     break;
 
-  case PARTITION::HYPERGRAPH:
+  case PARTITION::Scheme::HYPERGRAPH:
     partitions = PartitionHyperGraph(length_scale);
     break;
 
-  case PARTITION::GEOMETRIC:
+  case PARTITION::Scheme::GEOMETRIC:
     partitions = PartitionGeometric(length_scale);
     break;
 
-  case PARTITION::KMEANS:
+  case PARTITION::Scheme::KMEANS:
     partitions = PartitionKMeans(length_scale);
     break;
 
-  case PARTITION::SEQUENTIAL:
+  case PARTITION::Scheme::SEQUENTIAL:
     partitions = PartitionSequential(length_scale);
     break;
 
-  case PARTITION::KDTREE:
+  case PARTITION::Scheme::KDTREE:
     partitions = PartitionKDTree(length_scale);
     break;
 

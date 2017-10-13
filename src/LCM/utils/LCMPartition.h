@@ -56,7 +56,7 @@ PointMap;
 ///
 namespace PARTITION {
 
-enum Scheme {
+enum class Scheme {
   UNKNOWN,
   RANDOM,
   GEOMETRIC,
