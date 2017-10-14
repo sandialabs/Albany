@@ -266,6 +266,20 @@ interp_and_calc_error(
             << "must be -1." << std::endl;);
   }
   if ((src_snap_no == -1) && (tgt_snap_no == -1)) {
+    if (tgt_timestep_count < src_timestep_count) {
+      src_timestep_count = tgt_timestep_count; 
+      *out << "Number of snapshots in target mesh file = " << tgt_timestep_count 
+           << " < number of snapshots in source mesh file (= " << src_timestep_count 
+           << ").  Errors will be computed only up to snapshot #" 
+           << tgt_timestep_count << ".\n"; 
+    }
+    if (src_timestep_count < tgt_timestep_count) {
+      tgt_timestep_count = src_timestep_count; 
+      *out << "Number of snapshots in source mesh file = " << src_timestep_count 
+           << " < number of snapshots in target mesh file (= " << tgt_timestep_count 
+           << ").  Errors will be computed only up to snapshot #" 
+           << src_timestep_count << ".\n"; 
+    }
     if (tgt_timestep_count != src_timestep_count) {
       TEUCHOS_TEST_FOR_EXCEPTION(
           true, Teuchos::Exceptions::InvalidParameter,
