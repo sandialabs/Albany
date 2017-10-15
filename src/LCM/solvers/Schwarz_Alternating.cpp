@@ -630,6 +630,7 @@ SchwarzLoopDynamics() const
 
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
+ 
     Albany::AbstractSTKMeshStruct &
     ams = *stk_mesh_structs_[subdomain];
 
@@ -673,7 +674,20 @@ SchwarzLoopDynamics() const
     const Teuchos::RCP<const Tpetra_Vector> prev_solns_tpetra = ConverterT::getConstTpetraVector(prev_solns_thyra_[subdomain]);
     const Teuchos::RCP<const Tpetra_Vector> prev_solns_dot_tpetra = ConverterT::getConstTpetraVector(prev_solns_dot_thyra_[subdomain]);
     const Teuchos::RCP<const Tpetra_Vector> prev_solns_dotdot_tpetra = ConverterT::getConstTpetraVector(prev_solns_dotdot_thyra_[subdomain]);
-    stk_disc.writeSolutionT(*prev_solns_tpetra, *prev_solns_dot_tpetra, *prev_solns_dotdot_tpetra, initial_time_); 
+
+#if defined(DEBUG)
+    if (subdomain == 0) {
+      Tpetra_MatrixMarket_Writer::writeDenseFile("init_soln0.mm", prev_solns_tpetra);
+    }
+    else if (subdomain == 1) {
+      Tpetra_MatrixMarket_Writer::writeDenseFile("init_soln1.mm", prev_solns_tpetra);
+    }
+#endif
+
+    const Teuchos::RCP<const Tpetra_MultiVector> xMV =
+      apps_[subdomain]->getAdaptSolMgrT()->getOverlappedSolution();
+
+    stk_disc.writeSolutionMV(*xMV, initial_time_, true); 
 
     ams.exoOutput = false;
 
