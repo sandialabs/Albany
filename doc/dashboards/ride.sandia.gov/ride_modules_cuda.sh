@@ -8,4 +8,4 @@ module list
 export OMPI_CXX=${jenkins_trilinos_dir}/packages/kokkos/config/nvcc_wrapper
 export CUDA_MANAGED_FORCE_DEVICE_ALLOC=1
 export CUDA_LAUNCH_BLOCKING=1
- 
+export TPETRA_ASSUME_CUDA_AWARE_MPI=TRUE 
