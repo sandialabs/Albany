@@ -163,7 +163,6 @@ template <typename EvalT, typename Traits>
 void
 MechanicsResidual<EvalT, Traits>::evaluateFields(
     typename Traits::EvalData workset) {
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int node = 0; node < num_nodes_; ++node)
       for (int dim = 0; dim < num_dims_; ++dim)
@@ -220,38 +219,6 @@ MechanicsResidual<EvalT, Traits>::evaluateFields(
       }
     }
   }
-#else
-#ifdef ALBANY_TIMER
-  auto start = std::chrono::high_resolution_clock::now();
-#endif
-  if (have_body_force_) {
-    if (workset.transientTerms && enable_dynamics_)
-      Kokkos::parallel_for(
-          residual_haveBodyForce_and_dynamic_Policy(0, workset.numCells),
-          *this);  // call residual_haveBodyForce_and_dynamic kernel
-    else
-      Kokkos::parallel_for(
-          residual_haveBodyForce_Policy(0, workset.numCells),
-          *this);  // residual_haveBodyForce
-  } else {
-    if (workset.transientTerms && enable_dynamics_)
-      Kokkos::parallel_for(
-          residual_have_dynamic_Policy(0, workset.numCells), *this);
-    else
-      Kokkos::parallel_for(residual_Policy(0, workset.numCells), *this);
-  }
-#ifdef ALBANY_TIMER
-  PHX::Device::fence();
-  auto elapsed = std::chrono::high_resolution_clock::now() - start;
-  long long microseconds =
-      std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-  long long millisec =
-      std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-  std::cout << "MechanicsResidual time = " << millisec << "  " << microseconds
-            << std::endl;
-#endif
-
-#endif
 }
 //------------------------------------------------------------------------------
 }

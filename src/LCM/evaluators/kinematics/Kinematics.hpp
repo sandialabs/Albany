@@ -94,57 +94,6 @@ namespace LCM {
     PHX::MDField<const ScalarT,Cell,Vertex,Dim> u_;
     bool check_det(typename Traits::EvalData d, int cell, int pt);
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-   //Kokkos
-
-    public:
-    
-    struct kinematic_Tag{};
-    struct kinematic_weighted_average_Tag{};
-    struct kinematic_needs_strain_Tag{};
-    struct kinematic_weighted_average_needs_strain_Tag{};
-
-    typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-
-    typedef Kokkos::RangePolicy<ExecutionSpace,kinematic_Tag> kinematic_Policy;
-    typedef Kokkos::RangePolicy<ExecutionSpace,kinematic_weighted_average_Tag> kinematic_weighted_average_Policy;
-    typedef Kokkos::RangePolicy<ExecutionSpace,kinematic_needs_strain_Tag> kinematic_needs_strain_Policy;
-    typedef Kokkos::RangePolicy<ExecutionSpace,kinematic_weighted_average_needs_strain_Tag> kinematic_weighted_average_needs_strain_Policy;
-
-    KOKKOS_INLINE_FUNCTION
-    void operator() (const kinematic_Tag& tag, const int& i) const;
-    KOKKOS_INLINE_FUNCTION
-    void operator() (const kinematic_weighted_average_Tag& tag, const int& i) const;
-    KOKKOS_INLINE_FUNCTION
-    void operator() (const kinematic_needs_strain_Tag& tag, const int& i) const;
-    KOKKOS_INLINE_FUNCTION
-    void operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i) const;
-    
-    template <class ArrayT>
-    KOKKOS_INLINE_FUNCTION
-    const ArrayT  transpose(const ArrayT& A, const int cell) const;
-    
-    template <class ArrayT>
-    KOKKOS_INLINE_FUNCTION
-    const ScalarT det(const ArrayT &A, const int cell) const;
-
-    KOKKOS_INLINE_FUNCTION
-    void compute_defgrad(const int cell) const;
-    KOKKOS_INLINE_FUNCTION
-    void compute_weighted_average(const int cell) const;
-    KOKKOS_INLINE_FUNCTION
-    void compute_strain(const int cell) const;
-
-    private:
-
-    typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
-    PHX::MDField<ScalarT,Cell,Dim,Dim> F;
-    std::vector<PHX::index_size_type> ddims_;
-    PHX::MDField<ScalarT,Cell,Dim,Dim> strain;
-    PHX::MDField<ScalarT,Cell,Dim,Dim> gradu;
-    PHX::MDField<ScalarT,Dim,Dim> Itensor;
- 
-#endif
   };
 
 }

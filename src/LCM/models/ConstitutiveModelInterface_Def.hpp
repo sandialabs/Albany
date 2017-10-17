@@ -11,10 +11,8 @@
 #include "AnisotropicDamageModel.hpp"
 #include "AnisotropicHyperelasticDamageModel.hpp"
 #include "ElasticDamageModel.hpp"
-#ifndef KOKKOS_HAVE_CUDA
-#  include "GursonHMRModel.hpp"
-#  include "GursonModel.hpp"
-#endif
+#include "GursonHMRModel.hpp"
+#include "GursonModel.hpp"
 #include "J2FiberModel.hpp"
 #include "J2Model.hpp"
 #include "CreepModel.hpp"
@@ -30,16 +28,12 @@
 #include "ViscoElasticModel.hpp"
 #include "J2HMCModel.hpp"
 #include "LinearPiezoModel.hpp"
-#ifndef KOKKOS_HAVE_CUDA
-#  include "FM_AlbanyInterface.hpp"
-#endif
+#include "FM_AlbanyInterface.hpp"
 #include "HyperelasticDamageModel.hpp"
 #include "CapExplicitModel.hpp"
 #include "CapImplicitModel.hpp"
 #include "DruckerPragerModel.hpp"
-#ifndef KOKKOS_HAVE_CUDA
-#  include "CrystalPlasticityModel.hpp"
-#endif
+#include "CrystalPlasticityModel.hpp"
 #include "TvergaardHutchinsonModel.hpp"
 #include "AnisotropicViscoplasticModel.hpp"
 #include "OrtizPandolfiModel.hpp"
@@ -286,22 +280,18 @@ initializeModel(Teuchos::ParameterList* p,
     model = rcp(new J2Model<EvalT, Traits>(p, dl));
   } else if (model_name == "Newtonian Fluid") {
     model = rcp(new NewtonianFluidModel<EvalT, Traits>(p, dl));
-#ifndef KOKKOS_HAVE_CUDA
   } else if (model_name == "CrystalPlasticity") {
     model = rcp(new CrystalPlasticityModel<EvalT, Traits>(p, dl));
-#endif
   } else if (model_name == "ElasticCrystal") {
     model = rcp(new ElasticCrystalModel<EvalT, Traits>(p, dl));
   } else if (model_name == "ViscoElastic") {
     model = rcp(new ViscoElasticModel<EvalT, Traits>(p, dl));
   } else if (model_name == "AHD") {
     model = rcp(new AnisotropicHyperelasticDamageModel<EvalT, Traits>(p, dl));
-#ifndef KOKKOS_HAVE_CUDA
   } else if (model_name == "Gurson") {
     model = rcp(new GursonModel<EvalT, Traits>(p, dl));
   } else if (model_name == "GursonHMR") {
     model = rcp(new GursonHMRModel<EvalT, Traits>(p, dl));
-#endif
   } else if (model_name == "Mooney Rivlin") {
     model = rcp(new MooneyRivlinModel<EvalT, Traits>(p, dl));
   } else if (model_name == "RIHMR") {
@@ -336,10 +326,8 @@ initializeModel(Teuchos::ParameterList* p,
     model = rcp(new J2HMCModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Linear Piezoelectric") {
     model = rcp(new LinearPiezoModel<EvalT, Traits>(p, dl));
-#ifndef KOKKOS_HAVE_CUDA
   } else if (model_name == "Ferroic") {
     model = rcp(new FerroicDriver<EvalT, Traits>(p, dl));
-#endif
   } else if (model_name == "Ortiz Pandolfi") {
     model = rcp(new OrtizPandolfiModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Elasto Viscoplastic") {

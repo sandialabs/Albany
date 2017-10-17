@@ -183,25 +183,6 @@ namespace LCM {
     void compute_temperature_Linear(const int cell) const;
     KOKKOS_INLINE_FUNCTION
     void compute_temperature_Arrhenius(const int cell) const;
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-    private:
-    typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
-    std::vector<PHX::index_size_type> ddims_;
-    PHX::MDField<ScalarT,Cell,QuadPoint> second;
-    PHX::MDField<MeshScalarT,Cell,Dim> point;
-    RealType dPdT;
-    RealType ref_temp;
-    RealType pre_exp_;
-    RealType exp_param_;
-    int first;
-    ScalarT constant_value;
-    //Using raw pointers for Kokkos functors
-#ifdef ALBANY_STOKHOS
-    Stokhos::KL::ExponentialRandomField<RealType>*  exp_rf_kl;
-#endif
-    Teuchos::Array<ScalarT>* rv_map;
-#endif 
- 
   };
 }
 

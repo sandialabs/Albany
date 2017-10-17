@@ -47,11 +47,6 @@
 #include "utility/VariableMonitor.hpp"
 #include "utility/TimeGuard.hpp"
 
-#ifdef KOKKOS_HAVE_CUDA
-#pragma message "compiling with CUDA support"
-#include <cuda.h>
-#endif
-
 struct KokkosGuard
 {
   KokkosGuard( int ac, char* av[] )
@@ -108,13 +103,6 @@ int main(int ac, char* av[])
   // Parse command line
   Teuchos::CommandLineProcessor::EParseCommandLineReturn parse_return =
       command_line_processor.parse(ac, av);
-
-#ifdef KOKKOS_HAVE_CUDA
-  std::cout << "Using a CUDA memory limit of " << memlimit << "MB" << std::endl;
-  memlimit *= 1024 * 1024; // memory limit in MB;
-  if (cudaSuccess != cudaDeviceSetLimit(cudaLimitMallocHeapSize, memlimit))
-    std::cerr << "WARNING: memory limit could not be set" << std::endl;
-#endif
 
   std::ofstream tout( timing_file.c_str() );
 
@@ -668,28 +656,6 @@ int main(int ac, char* av[])
 
     stateFieldManager.getFieldData<Residual>(
         stressField);
-
-    // Check the computed stresses
-#if 0
-    for (size_type cell = 0; cell < workset_size; ++cell) {
-      for (size_type qp = 0; qp < num_pts; ++qp) {
-        std::cout << "in MPS Stress tensor at cell " << cell
-            << ", quadrature point " << qp << ":" << std::endl;
-        std::cout << "  " << stressField(cell, qp, 0, 0);
-        std::cout << "  " << stressField(cell, qp, 0, 1);
-        std::cout << "  " << stressField(cell, qp, 0, 2) << std::endl;
-        std::cout << "  " << stressField(cell, qp, 1, 0);
-        std::cout << "  " << stressField(cell, qp, 1, 1);
-        std::cout << "  " << stressField(cell, qp, 1, 2) << std::endl;
-        std::cout << "  " << stressField(cell, qp, 2, 0);
-        std::cout << "  " << stressField(cell, qp, 2, 1);
-        std::cout << "  " << stressField(cell, qp, 2, 2) << std::endl;
-
-        std::cout << std::endl;
-
-      }
-    }
-#endif
 
     // Call the state field manager
     //std::cout << "+++ calling the stateFieldManager\n";

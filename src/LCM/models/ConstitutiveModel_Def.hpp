@@ -107,7 +107,6 @@ public:
   KOKKOS_INLINE_FUNCTION
   void operator ()(const int cell) const
   {
-#ifndef PHX_KOKKOS_DEVICE_TYPE_CUDA
     ScalarT volume, pbar, p;
     minitensor::Tensor<ScalarT> sig(num_dims_);
     minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
@@ -139,70 +138,6 @@ public:
         stress(cell, pt, i, i) = sig(i, i);
       }
     }
-#else
-    ScalarT volume, pbar, p;
-    ScalarT sig[3][3];
-    ScalarT I[3][3];
-
-    ScalarT trace_sig=0.0;
-
-    if (num_dims_>3)
-    Kokkos::abort( "Error: ConstitutiveModel::computeVolumeAverage: size of temorary array is smaller then it should be");
-
-    for (int i=0; i<num_dims_; i++) {
-      for (int j=0; j<num_dims_; j++) {
-        I[i][j]=ScalarT(0.0);
-        if (i==j)
-        I[i][j]=ScalarT(1.0);
-      }
-    }
-
-    volume =0.0;
-    pbar = 0.0;
-
-    for (int pt(0); pt < num_pts_; ++pt) {
-
-      for (int i = 0; i < num_dims_; ++i)
-      for (int j = 0; j < num_dims_; ++j)
-      sig[i][j]=stress(cell,pt,i,j);
-
-      trace_sig=0.0;
-
-      for (int i = 0; i < num_dims_; ++i) {
-        trace_sig += sig[i][i];
-
-        pbar += weights_(cell,pt) * (1./num_dims_) * trace_sig;
-        volume += weights_(cell,pt) * j_(cell,pt);
-      }
-    }
-
-    pbar /= volume;
-
-    for (int pt(0); pt < num_pts_; ++pt) {
-
-      for (int i = 0; i < num_dims_; ++i)
-      for (int j = 0; j < num_dims_; ++j)
-      sig[i][j]=stress(cell,pt,i,j);
-
-      trace_sig=0.0;
-
-      for (int i = 0; i < num_dims_; ++i) {
-        trace_sig += sig[i][i];
-
-        p = (1./num_dims_) * trace_sig;
-
-        for (int i = 0; i < num_dims_; ++i)
-        for (int j = 0; j < num_dims_; ++j)
-        sig[i][j]+=(pbar - p)*I[i][j];
-        //sig += (pbar - p)*I;
-
-        for (int i = 0; i < num_dims_; ++i) {
-          stress(cell,pt,i,i) = sig[i][i];
-        }
-      }
-
-    }
-#endif
   }
 };
 
@@ -224,7 +159,6 @@ computeVolumeAverage(
 
   std::string cauchy = (*this->field_name_map_)["Cauchy_Stress"];
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy];
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   minitensor::Tensor<ScalarT> sig(num_dims);
   minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims));
 
@@ -250,14 +184,6 @@ computeVolumeAverage(
       }
     }
   }
-#else
-  Kokkos::parallel_for(workset.numCells,
-      computeVolumeAverageKernel<ScalarT,
-        decltype(stress),
-        decltype(weights_),
-        decltype(j_)>(
-          stress, weights_, j_, num_pts_, num_dims_));
-#endif
 }
 
 } // namespace LCM
