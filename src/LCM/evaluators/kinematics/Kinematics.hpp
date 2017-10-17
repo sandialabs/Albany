@@ -9,92 +9,92 @@
 //#ifndef DEFGRAD_HPP
 //#define DEFGRAD_HPP
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
-#include "Albany_Layouts.hpp"
 #include "AAdapt_RC_Field.hpp"
+#include "Albany_Layouts.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
 namespace LCM {
-  /// \brief Kinematics Evaluator
+/// \brief Kinematics Evaluator
+///
+///  This evaluator computes kinematics quantities i.e.
+///  Deformation Gradient
+///  (optional) Velocity Gradient
+///  (optional) Strain
+///
+template<typename EvalT, typename Traits>
+class Kinematics : public PHX::EvaluatorWithBaseImpl<Traits>,
+                   public PHX::EvaluatorDerived<EvalT, Traits> {
+ public:
   ///
-  ///  This evaluator computes kinematics quantities i.e.
-  ///  Deformation Gradient
-  ///  (optional) Velocity Gradient
-  ///  (optional) Strain
+  /// Constructor
   ///
-  template<typename EvalT, typename Traits>
-  class Kinematics : public PHX::EvaluatorWithBaseImpl<Traits>,
-                     public PHX::EvaluatorDerived<EvalT, Traits>  {
+  Kinematics(
+      Teuchos::ParameterList&              p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
-  public:
+  ///
+  /// Phalanx method to allocate space
+  ///
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-    ///
-    /// Constructor
-    ///
-    Kinematics(Teuchos::ParameterList& p,
-               const Teuchos::RCP<Albany::Layouts>& dl);
+  ///
+  /// Implementation of physics
+  ///
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-    ///
-    /// Phalanx method to allocate space
-    ///
-    void postRegistrationSetup(typename Traits::SetupData d,
-                               PHX::FieldManager<Traits>& vm);
+ private:
+  typedef typename EvalT::ScalarT     ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
 
-    ///
-    /// Implementation of physics
-    ///
-    void evaluateFields(typename Traits::EvalData d);
+  //! Input: displacement gradient
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> grad_u_;
 
-  private:
+  //! Input: integration weights
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint> weights_;
 
-    typedef typename EvalT::ScalarT ScalarT;
-    typedef typename EvalT::MeshScalarT MeshScalarT;
+  //! Output: deformation gradient
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> def_grad_;
 
-    //! Input: displacement gradient
-    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> grad_u_;
+  //! Output: determinant of the deformation gradient
+  PHX::MDField<ScalarT, Cell, QuadPoint> j_;
 
-    //! Input: integration weights
-    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights_;
-  
-    //! Output: deformation gradient
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> def_grad_;
+  //! Output: velocity gradient
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> vel_grad_;
 
-    //! Output: determinant of the deformation gradient
-    PHX::MDField<ScalarT,Cell,QuadPoint> j_;
+  //! Output: strain
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> strain_;
 
-    //! Output: velocity gradient
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> vel_grad_;
+  //! number of integration points
+  int num_pts_;
 
-    //! Output: strain
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain_;
+  //! number of spatial dimensions
+  int num_dims_;
 
-    //! number of integration points
-    int num_pts_;
+  //! flag to compute the weighted average of J
+  bool weighted_average_;
 
-    //! number of spatial dimensions
-    int num_dims_;
+  //! stabilization parameter for the weighted average
+  ScalarT alpha_;
 
-    //! flag to compute the weighted average of J
-    bool weighted_average_;
+  //! flag to compute the velocity Gradient
+  bool needs_vel_grad_;
 
-    //! stabilization parameter for the weighted average
-    ScalarT alpha_;
-  
-    //! flag to compute the velocity Gradient
-    bool needs_vel_grad_;
+  //! flag to compute the strain
+  bool needs_strain_;
 
-    //! flag to compute the strain
-    bool needs_strain_;
-
-    ///! Input, if RCU.
-    AAdapt::rc::Field<2> def_grad_rc_;
-    // For debugging.
-    PHX::MDField<const ScalarT,Cell,Vertex,Dim> u_;
-    bool check_det(typename Traits::EvalData d, int cell, int pt);
-
-  };
-
+  ///! Input, if RCU.
+  AAdapt::rc::Field<2> def_grad_rc_;
+  // For debugging.
+  PHX::MDField<const ScalarT, Cell, Vertex, Dim> u_;
+  bool
+  check_det(typename Traits::EvalData d, int cell, int pt);
+};
 }
 #endif

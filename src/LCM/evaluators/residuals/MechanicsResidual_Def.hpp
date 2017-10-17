@@ -17,16 +17,19 @@
 namespace LCM {
 
 //------------------------------------------------------------------------------
-template <typename EvalT, typename Traits>
+template<typename EvalT, typename Traits>
 MechanicsResidual<EvalT, Traits>::MechanicsResidual(
-    Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
+    Teuchos::ParameterList&              p,
+    const Teuchos::RCP<Albany::Layouts>& dl)
     : stress_(p.get<std::string>("Stress Name"), dl->qp_tensor),
       w_grad_bf_(
-          p.get<std::string>("Weighted Gradient BF Name"), dl->node_qp_vector),
+          p.get<std::string>("Weighted Gradient BF Name"),
+          dl->node_qp_vector),
       w_bf_(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
       residual_(p.get<std::string>("Residual Name"), dl->node_vector),
       have_body_force_(p.isType<bool>("Has Body Force")),
-      density_(p.get<RealType>("Density", 1.0)) {
+      density_(p.get<RealType>("Density", 1.0))
+{
   this->addDependentField(stress_);
   this->addDependentField(w_grad_bf_);
   this->addDependentField(w_bf_);
@@ -55,8 +58,8 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
   std::vector<PHX::DataLayout::size_type> dims;
   w_grad_bf_.fieldTag().dataLayout().dimensions(dims);
   num_nodes_ = dims[1];
-  num_pts_ = dims[2];
-  num_dims_ = dims[3];
+  num_pts_   = dims[2];
+  num_dims_  = dims[3];
 
   Teuchos::RCP<ParamLib> paramLib =
       p.get<Teuchos::RCP<ParamLib>>("Parameter Library");
@@ -65,25 +68,32 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
 }
 
 //------------------------------------------------------------------------------
-template <typename EvalT, typename Traits>
+template<typename EvalT, typename Traits>
 void
 MechanicsResidual<EvalT, Traits>::postRegistrationSetup(
-    typename Traits::SetupData d, PHX::FieldManager<Traits>& fm) {
+    typename Traits::SetupData d,
+    PHX::FieldManager<Traits>& fm)
+{
   this->utils.setFieldData(stress_, fm);
   this->utils.setFieldData(w_grad_bf_, fm);
   this->utils.setFieldData(w_bf_, fm);
   this->utils.setFieldData(residual_, fm);
-  if (have_body_force_) { this->utils.setFieldData(body_force_, fm); }
-  if (enable_dynamics_) { this->utils.setFieldData(acceleration_, fm); }
+  if (have_body_force_) {
+    this->utils.setFieldData(body_force_, fm);
+  }
+  if (enable_dynamics_) {
+    this->utils.setFieldData(acceleration_, fm);
+  }
   if (def_grad_rc_) this->utils.setFieldData(def_grad_rc_(), fm);
 }
 
 // ***************************************************************************
 // Kokkos kernels
 //
-template <typename EvalT, typename Traits>
+template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
-MechanicsResidual<EvalT, Traits>::compute_Stress(const int i) const {
+MechanicsResidual<EvalT, Traits>::compute_Stress(const int i) const
+{
   for (int node = 0; node < num_nodes_; ++node) {
     for (int dim = 0; dim < num_dims_; ++dim) {
       residual_(i, node, dim) = typename EvalT::ScalarT(0.0);
@@ -101,9 +111,10 @@ MechanicsResidual<EvalT, Traits>::compute_Stress(const int i) const {
   }
 }
 
-template <typename EvalT, typename Traits>
+template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
-MechanicsResidual<EvalT, Traits>::compute_BodyForce(const int i) const {
+MechanicsResidual<EvalT, Traits>::compute_BodyForce(const int i) const
+{
   for (int node = 0; node < num_nodes_; ++node) {
     for (int pt = 0; pt < num_pts_; ++pt) {
       for (int dim = 0; dim < num_dims_; ++dim) {
@@ -113,9 +124,10 @@ MechanicsResidual<EvalT, Traits>::compute_BodyForce(const int i) const {
   }
 }
 
-template <typename EvalT, typename Traits>
+template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
-MechanicsResidual<EvalT, Traits>::compute_Acceleration(const int i) const {
+MechanicsResidual<EvalT, Traits>::compute_Acceleration(const int i) const
+{
   for (int node = 0; node < num_nodes_; ++node) {
     for (int pt = 0; pt < num_pts_; ++pt) {
       for (int dim = 0; dim < num_dims_; ++dim) {
@@ -126,43 +138,52 @@ MechanicsResidual<EvalT, Traits>::compute_Acceleration(const int i) const {
   }
 }
 
-template <typename EvalT, typename Traits>
+template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
 MechanicsResidual<EvalT, Traits>::operator()(
-    const residual_Tag& tag, const int& i) const {
+    const residual_Tag& tag,
+    const int&          i) const
+{
   this->compute_Stress(i);
 }
 
-template <typename EvalT, typename Traits>
+template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
 MechanicsResidual<EvalT, Traits>::operator()(
-    const residual_haveBodyForce_Tag& tag, const int& i) const {
+    const residual_haveBodyForce_Tag& tag,
+    const int&                        i) const
+{
   this->compute_Stress(i);
   this->compute_BodyForce(i);
 }
 
-template <typename EvalT, typename Traits>
+template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
 MechanicsResidual<EvalT, Traits>::operator()(
-    const residual_haveBodyForce_and_dynamic_Tag& tag, const int& i) const {
+    const residual_haveBodyForce_and_dynamic_Tag& tag,
+    const int&                                    i) const
+{
   this->compute_Stress(i);
   this->compute_BodyForce(i);
   this->compute_Acceleration(i);
 }
 
-template <typename EvalT, typename Traits>
+template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
 MechanicsResidual<EvalT, Traits>::operator()(
-    const residual_have_dynamic_Tag& tag, const int& i) const {
+    const residual_have_dynamic_Tag& tag,
+    const int&                       i) const
+{
   this->compute_Stress(i);
   this->compute_Acceleration(i);
 }
 
 // ***************************************************************************
-template <typename EvalT, typename Traits>
+template<typename EvalT, typename Traits>
 void
 MechanicsResidual<EvalT, Traits>::evaluateFields(
-    typename Traits::EvalData workset) {
+    typename Traits::EvalData workset)
+{
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int node = 0; node < num_nodes_; ++node)
       for (int dim = 0; dim < num_dims_; ++dim)
@@ -182,13 +203,14 @@ MechanicsResidual<EvalT, Traits>::evaluateFields(
         }
       }
     } else {
-      for (int pt = 0; pt < num_pts_; ++pt)
+      for (int pt = 0; pt < num_pts_; ++pt) {
         for (int node = 0; node < num_nodes_; ++node) {
           for (int i = 0; i < num_dims_; ++i)
             for (int j = 0; j < num_dims_; ++j)
               residual_(cell, node, i) +=
                   stress_(cell, pt, i, j) * w_grad_bf_(cell, node, pt, j);
         }
+      }
     }
   }
 

@@ -7,10 +7,10 @@
 #ifndef DEFGRAD_HPP
 #define DEFGRAD_HPP
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
 #include "Intrepid2_CellTools.hpp"
 #include "Intrepid2_Cubature.hpp"
@@ -23,22 +23,22 @@ namespace LCM {
  */
 
 template<typename EvalT, typename Traits>
-class DefGrad: public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<EvalT, Traits> {
-
-public:
-
+class DefGrad : public PHX::EvaluatorWithBaseImpl<Traits>,
+                public PHX::EvaluatorDerived<EvalT, Traits> {
+ public:
   DefGrad(const Teuchos::ParameterList& p);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
       PHX::FieldManager<Traits>& vm);
 
-  void evaluateFields(typename Traits::EvalData d);
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-private:
-
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+ private:
+  using ScalarT     = typename EvalT::ScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
 
   // Input:
   PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> GradU;
@@ -58,6 +58,5 @@ private:
   //! stabilization parameter for the weighted average
   ScalarT alpha;
 };
-
 }
 #endif
