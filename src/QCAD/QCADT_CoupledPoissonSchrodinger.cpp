@@ -714,6 +714,7 @@ create_DgDx_op_impl(int j) const
   else
     return schrodingerApp->getResponse(j - poissonApp->getNumResponses())->createGradientOp();
 */
+  return Teuchos::null;
 }
 
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
@@ -736,6 +737,7 @@ QCADT::CoupledPoissonSchrodinger::create_DgDx_dot_op_impl(int j) const
   else
     return schrodingerApp->getResponse(j - poissonApp->getNumResponses())->createGradientOp();
 */
+  return Teuchos::null;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>

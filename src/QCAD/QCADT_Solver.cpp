@@ -1477,7 +1477,7 @@ QCADT::Solver::evalCIModel(const InArgs& inArgs,
   
   Teuchos::RCP<AlbanyCI::Solution> soln;
   soln = ciSolver.Solve(ciParams);
-  //*out << std::endl << "Solution:"; soln->print(out); //DEBUG
+  // *out << std::endl << "Solution:"; soln->print(out); //DEBUG
 
   std::vector<double> eigenvalues = soln->getEigenvalues();
   eigenvalueResponses = eigenvalues; // save CI eigenvalues in member variable for responses
@@ -1639,7 +1639,7 @@ QCADT::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	
 	Teuchos::RCP<AlbanyCI::Solution> soln;
 	soln = ciSolver.Solve(ciParams);
-	//*out << std::endl << "Solution:"; soln->print(out); //DEBUG
+	// *out << std::endl << "Solution:"; soln->print(out); //DEBUG
 
 	if(bVerbose) *out << "-----> CI solve finished." << std::endl;
 	
