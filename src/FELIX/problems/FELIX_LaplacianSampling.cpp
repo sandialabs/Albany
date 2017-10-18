@@ -35,6 +35,8 @@ LaplacianSampling( const Teuchos::RCP<Teuchos::ParameterList>& params_,
       this->requirements.push_back(req[i]);
   }
   neq =1;
+
+  sideName   = params->isParameter("Side Name")   ? params->get<std::string>("Side Name")   : "INVALID";
 }
 
 FELIX::LaplacianSampling::
@@ -59,12 +61,31 @@ void FELIX::LaplacianSampling::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Alba
   elementBlockName = meshSpecs[0]->ebName;
 
   const int worksetSize     = meshSpecs[0]->worksetSize;
-  const int numCellSides    = cellType->getFaceCount();
+  const int numCellSides    = cellType->getSideCount();
   const int numCellVertices = cellType->getNodeCount();
   const int numCellNodes    = cellBasis->getCardinality();
   const int numCellQPs      = cellCubature->getNumPoints();
 
   dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim,1));
+
+  if(sideName != "INVALID") {
+    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(sideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
+                                "Error! Either 'Side Name' is wrong or something went wrong while building the side mesh specs.\n");
+    const Albany::MeshSpecsStruct& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(sideName)[0];
+    const CellTopologyData * const side_top = &sideMeshSpecs.ctd;
+    sideBasis = Albany::getIntrepid2Basis(*side_top);
+    sideType = rcp(new shards::CellTopology (side_top));
+    sideCubature = cubFactory.create<PHX::Device, RealType, RealType>(*sideType, sideMeshSpecs.cubatureDegree);
+
+
+    auto numSideVertices = sideType->getNodeCount();
+    auto numSideNodes    = sideBasis->getCardinality();
+    auto numSideQPs      = sideCubature->getNumPoints();
+
+
+    dl_side = rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes, numSideQPs,numDim-1,numDim,numCellSides,1));
+    dl->side_layouts[sideName] = dl_side;
+  }
 
 #ifdef OUTPUT_TO_SCREEN
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
@@ -168,6 +189,7 @@ FELIX::LaplacianSampling::getValidProblemParameters () const
 
   validPL->set<Teuchos::Array<std::string> > ("Required Fields", Teuchos::Array<std::string>(), "");
   validPL->sublist("FELIX Laplacian Regularization", false, "Parameters needed to compute the Laplacian Regularization");
+  validPL->set<std::string> ("Side Name", "", "Name of the lateral side set");
 
   return validPL;
 }
