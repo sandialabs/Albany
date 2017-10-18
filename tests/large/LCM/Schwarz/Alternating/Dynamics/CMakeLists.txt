@@ -6,3 +6,4 @@
 
 add_subdirectory(Cubes)
 add_subdirectory(Clamped)
+add_subdirectory(Torsion)
