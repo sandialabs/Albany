@@ -284,19 +284,6 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   GO maxGlobalVertices2dId = nodes_map->getMaxAllGlobalIndex() + 1;
   GO maxGlobalSides2dId    = sides_map->getMaxAllGlobalIndex() + 1;
 
-  Teuchos::RCP<const Tpetra_Map> one_to_one_nodes_map = Tpetra::createOneToOne(nodes_map);
-  int numMyElements = (comm->getRank() == 0) ? one_to_one_nodes_map->getGlobalNumElements() : 0;
-  Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm));
-  Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(serial_nodes_map, nodes_map));
-
-  Teuchos::RCP<Tpetra_Vector> sHeightVec;
-  Teuchos::RCP<Tpetra_Vector> thickVec;
-  Teuchos::RCP<Tpetra_Vector> bTopographyVec;
-  Teuchos::RCP<Tpetra_Vector> bFrictionVec;
-  Teuchos::RCP<Tpetra_MultiVector> temperatureVecInterp;
-  Teuchos::RCP<Tpetra_MultiVector> sVelocityVec;
-  Teuchos::RCP<Tpetra_MultiVector> velocityRMSVec;
-
   GO elemColumnShift     = (Ordering == COLUMN) ? 1 : maxGlobalElements2dId;
   int lElemColumnShift   = (Ordering == COLUMN) ? 1 : cells2D.size();
   int elemLayerShift     = (Ordering == LAYER)  ? 1 : numLayers;
