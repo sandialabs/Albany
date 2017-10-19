@@ -328,7 +328,7 @@ split_box(
 // \return Boost shared pointer to root node of tree.
 //
 template<typename Node>
-boost::shared_ptr<Node>
+std::shared_ptr<Node>
 buildKDTree(std::vector<minitensor::Vector<double>> const & points)
 {
 
@@ -345,13 +345,13 @@ buildKDTree(std::vector<minitensor::Vector<double>> const & points)
     points_indices.insert(i);
   }
 
-  boost::shared_ptr<Node>
+  std::shared_ptr<Node>
   dummy;
 
   std::string
   name = "0";
 
-  boost::shared_ptr<Node>
+  std::shared_ptr<Node>
   root = createKDTreeNode(name, dummy, points, points_indices);
 
   return root;
@@ -363,10 +363,10 @@ buildKDTree(std::vector<minitensor::Vector<double>> const & points)
 // \return Boost shared pointer to node of tree if created, 0 otherwise.
 //
 template<typename Node>
-boost::shared_ptr<Node>
+std::shared_ptr<Node>
 createKDTreeNode(
     std::string const & name,
-    boost::shared_ptr<Node> parent,
+    std::shared_ptr<Node> parent,
     std::vector<minitensor::Vector<double>> const & points,
     std::set<minitensor::Index> const & points_indices)
 {
@@ -377,7 +377,7 @@ createKDTreeNode(
   //
   // Create and fill in node.
   //
-  boost::shared_ptr<Node>
+  std::shared_ptr<Node>
   node(new Node);
 
   node->name = name;
@@ -1335,16 +1335,13 @@ ConnectivityArray::getPartitionCentroids() const
   minitensor::Index const
   nodes_per_element = getNodesPerElement();
 
-  for (std::map<int, int>::const_iterator partitions_iterator =
-      partitions.begin();
-      partitions_iterator != partitions.end();
-      ++partitions_iterator) {
+  for (auto&& element_partition : partitions) {
 
     int
-    element = (*partitions_iterator).first;
+    element = element_partition.first;
 
     int
-    partition = (*partitions_iterator).second;
+    partition = element_partition.second;
 
     AdjacencyMap::const_iterator
     elements_iterator = connectivity_.find(element);
@@ -2673,7 +2670,7 @@ ConnectivityArray::partitionKDTree(double const length_scale)
   KDTree<KDTreeNode>
   kdtree(domain_points, number_partitions);
 
-  FilterVisitor<boost::shared_ptr<KDTreeNode>, ClusterCenter>
+  FilterVisitor<std::shared_ptr<KDTreeNode>, ClusterCenter>
   filter_visitor(domain_points, centers);
 
   //

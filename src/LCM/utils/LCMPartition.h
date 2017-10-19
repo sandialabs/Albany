@@ -11,10 +11,9 @@
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <memory>
 #include <set>
 #include <vector>
-
-#include <boost/shared_ptr.hpp>
 
 #include <zoltan_cpp.h>
 
@@ -105,14 +104,14 @@ struct KDTreeNode {
   std::string
   name;
 
-  boost::shared_ptr<KDTreeNode>
+  std::shared_ptr<KDTreeNode>
   parent;
 
   // Children
-  boost::shared_ptr<KDTreeNode>
+  std::shared_ptr<KDTreeNode>
   left;
 
-  boost::shared_ptr<KDTreeNode>
+  std::shared_ptr<KDTreeNode>
   right;
 
   // Bounding box of cell
@@ -154,7 +153,7 @@ public:
       std::vector<minitensor::Vector<double>> const & points,
       minitensor::Index const number_centers);
 
-  boost::shared_ptr<Node> &
+  std::shared_ptr<Node> &
   get_root()
   {
     return root_;
@@ -162,7 +161,7 @@ public:
 
 private:
 
-  boost::shared_ptr<Node>
+  std::shared_ptr<Node>
   root_;
 };
 
@@ -172,7 +171,7 @@ private:
 /// \return Boost shared pointer to root node of tree.
 ///
 template<typename Node>
-boost::shared_ptr<Node>
+std::shared_ptr<Node>
 buildKDTree(std::vector<minitensor::Vector<double>> const & points);
 
 ///
@@ -181,10 +180,10 @@ buildKDTree(std::vector<minitensor::Vector<double>> const & points);
 /// \return Boost shared pointer to node of tree if created, 0 otherwise.
 ///
 template<typename Node>
-boost::shared_ptr<Node>
+std::shared_ptr<Node>
 createKDTreeNode(
     std::string const & name,
-    boost::shared_ptr<Node> parent,
+    std::shared_ptr<Node> parent,
     std::vector<minitensor::Vector<double>> const & points,
     std::set<minitensor::Index> const & points_indices);
 
