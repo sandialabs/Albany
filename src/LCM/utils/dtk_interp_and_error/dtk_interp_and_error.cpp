@@ -483,10 +483,14 @@ interp_and_calc_error(
     std::cout << "   proc #: " << comm->getRank() << ", tgt_num_owned_nodes = ";
     std::cout << tgt_num_owned_nodes << std::endl;
 #endif
+      
+    double error_l2_norm_global_vec{0.0};
+    double rel_error_l2_norm_global_vec{0.0};
+    double field_l2_norm_global_vec{0.0};
 
     for (int component = 0; component < neq; component++) {
-      double error_l2_norm_sq{0.0};
 
+      double error_l2_norm_sq{0.0};
       double field_l2_norm_sq{0.0};
 
       for (int n = 0; n < num_tgt_part_nodes; ++n) {
@@ -538,6 +542,9 @@ interp_and_calc_error(
           *comm, Teuchos::REDUCE_SUM, 1, &field_l2_norm_sq,
           &field_l2_norm_global);
 
+      error_l2_norm_global_vec += error_l2_norm_global;
+      field_l2_norm_global_vec += field_l2_norm_global; 
+
       error_l2_norm_global = std::sqrt(error_l2_norm_global);
       field_l2_norm_global = std::sqrt(field_l2_norm_global);
       if (std::abs(field_l2_norm_global) > 1.0e-14) {
@@ -558,6 +565,25 @@ interp_and_calc_error(
       *out << "     -------------------------------------------------------------"
            << "--------------------------" << std::endl;
     }
+      
+    error_l2_norm_global_vec = std::sqrt(error_l2_norm_global_vec); 
+    field_l2_norm_global_vec = std::sqrt(field_l2_norm_global_vec); 
+
+    if (std::abs(field_l2_norm_global_vec) > 1.0e-14) {
+      rel_error_l2_norm_global_vec = error_l2_norm_global_vec / field_l2_norm_global_vec;
+    }
+    else {
+      rel_error_l2_norm_global_vec = 0.0; 
+    }
+      
+    *out << "  Target Snapshot = " << tgt_time_step_indices[index] 
+         << ", Source Snapshot = " << src_time_step_indices[index] << std::endl; 
+    *out << "      All dofs, |e|_2 (abs error): " << error_l2_norm_global_vec << std::endl;
+    *out << "      All dofs, |f|_2 (norm ref soln): " << field_l2_norm_global_vec << std::endl;
+    *out << "      All dofs, |e|_2 / |f|_2 (rel error): "
+         << rel_error_l2_norm_global_vec << std::endl;
+    *out << "     -------------------------------------------------------------"
+         << "--------------------------" << std::endl;
 
     // TARGET MESH WRITE
     // -----------------
