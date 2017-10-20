@@ -7,9 +7,9 @@ ANONYMOUS:
   Target Mesh Snapshot Number: 11
   Target Mesh Output File: target_disp_out.exo
   Number of Iterations: 10
-  Compute Relative Error: false
   Source Field Name: disp
   Target Field Name: disp
+  Scale by Norm of Solution Vector: false
   DataTransferKit: 
     Map Type: Consistent Interpolation
     L2 Projection: 
