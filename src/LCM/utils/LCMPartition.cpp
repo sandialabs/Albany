@@ -524,7 +524,7 @@ template<typename Node>
 bool
 OutputVisitor<Node>::pre_stop(Node const & node) const
 {
-  return node.get() == NULL;
+  return node.get() == nullptr;
 }
 
 //
@@ -617,13 +617,7 @@ box_proximity_to_centers(
   double
   minimum = norm_square(midcell - centers[index_closest].position);
 
-  for (std::set<minitensor::Index>::const_iterator
-  index_iterator = ++index_subset.begin();
-      index_iterator != index_subset.end();
-      ++index_iterator) {
-
-    minitensor::Index const
-    i = *index_iterator;
+  for (auto&& i : index_subset) {
 
     double const
     s = norm_square(midcell - centers[i].position);
@@ -642,13 +636,7 @@ box_proximity_to_centers(
   indices_candidates;
 
   // Determine where the box lies
-  for (std::set<minitensor::Index>::const_iterator
-      index_iterator = index_subset.begin();
-      index_iterator != index_subset.end();
-      ++index_iterator) {
-
-    minitensor::Index const
-    i = *index_iterator;
+  for (auto&& i : index_subset) {
 
     if (i == index_closest) {
       indices_candidates.insert(i);
@@ -830,17 +818,16 @@ ConnectivityArray::ConnectivityArray(
     maximum_iterations_(0),
     initializer_scheme_(PARTITION::Scheme::HYPERGRAPH)
 {
-
   using Albany::StateStruct;
 
   //Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 
-  Teuchos::RCP<Teuchos::ParameterList> params =
-      rcp(new Teuchos::ParameterList("params"));
+  Teuchos::RCP<Teuchos::ParameterList>
+  params = rcp(new Teuchos::ParameterList("params"));
 
   // Create discretization object
-  Teuchos::RCP<Teuchos::ParameterList> disc_params =
-      Teuchos::sublist(params, "Discretization");
+  Teuchos::RCP<Teuchos::ParameterList>
+  disc_params = Teuchos::sublist(params, "Discretization");
 
   //set Method to Exodus and set input file name
   disc_params->set<std::string>("Method", "Exodus");
@@ -852,10 +839,10 @@ ConnectivityArray::ConnectivityArray(
 
 
   Teuchos::RCP<Teuchos_Comm> 
-  communicatorT = Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
+  communicator = Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
   Albany::DiscretizationFactory
-  disc_factory(params, communicatorT);
+  disc_factory(params, communicator);
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>
   mesh_specs = disc_factory.createMeshSpecs();
@@ -869,7 +856,9 @@ ConnectivityArray::ConnectivityArray(
   Teuchos::RCP<Albany::StateInfoStruct>
   state_info = Teuchos::rcp(new Albany::StateInfoStruct());
 
-  StateStruct::FieldDims dims;
+  StateStruct::FieldDims
+  dims;
+
   // State has 1 quad point (i.e. element variable)
   dims.push_back(workset_size);
   dims.push_back(1);
@@ -886,7 +875,8 @@ ConnectivityArray::ConnectivityArray(
   dimension_ = mesh_specs[0]->numDim;
 
   // Dimensioned: Workset, Cell, Local Node
-  const auto& element_connectivity = discretization_ptr_->getWsElNodeEqID();
+  auto const&
+  element_connectivity = discretization_ptr_->getWsElNodeEqID();
 
   Teuchos::ArrayRCP<double>
   coordinates = discretization_ptr_->getCoordinates();
@@ -894,7 +884,7 @@ ConnectivityArray::ConnectivityArray(
   // For higher-order elements, mid-nodes are ignored and only
   // the nodes at the corners of the element are considered
   // to define the topology.
-  const CellTopologyData
+  CellTopologyData const
   cell_topology = mesh_specs[0]->ctd;
 
   minitensor::Index const
@@ -911,9 +901,13 @@ ConnectivityArray::ConnectivityArray(
   Teuchos::ArrayRCP<int>::size_type
   nodes_per_element = element_connectivity[0].dimension(1);
 
-  // Do some logic so we can get from unknown ID to node ID
-  int const number_equations = element_connectivity[0].dimension(2);
-  int stride = 1;
+  // Go from unknown ID to node ID
+  int const
+  number_equations = element_connectivity[0].dimension(2);
+
+  int
+  stride = 1;
+
   if (number_equations > 1) {
     if (element_connectivity[0](0,0,0) + 1 ==
         element_connectivity[0](0,0,1)) {
@@ -927,10 +921,10 @@ ConnectivityArray::ConnectivityArray(
   Teuchos::ArrayRCP<double>::size_type
   number_nodes = coordinates.size() / dimension;
 
-  for (Teuchos::ArrayRCP<double>::size_type
-  node = 0; node < number_nodes; ++node) {
+  for (size_t node = 0; node < number_nodes; ++node) {
 
-    minitensor::Vector<double> point(0.0, 0.0, 0.0);
+    minitensor::Vector<double>
+    point(0.0, 0.0, 0.0);
 
     for (minitensor::Index j = 0; j < dimension; ++j) {
       point(j) = coordinates[node * dimension + j];
@@ -1119,7 +1113,7 @@ minitensor::Index
 ConnectivityArray::getNodesPerElement() const
 {
   minitensor::Index
-  nodes_per_element;
+  nodes_per_element{0};
 
   switch (getType()) {
 
@@ -1160,25 +1154,21 @@ ConnectivityArray::getNodesPerElement() const
 ScalarMap
 ConnectivityArray::getVolumes() const
 {
-  ScalarMap volumes;
-  for (AdjacencyMap::const_iterator
-  elements_iter = connectivity_.begin();
-      elements_iter != connectivity_.end();
-      ++elements_iter) {
+  ScalarMap
+  volumes;
+
+  for (auto&& element_conn : connectivity_) {
 
     int const &
-    element = (*elements_iter).first;
+    element = element_conn.first;
 
     IDList const &
-    node_list = (*elements_iter).second;
+    node_list = element_conn.second;
 
     std::vector<minitensor::Vector<double>>
     points;
 
-    for (IDList::size_type
-    i = 0;
-        i < node_list.size();
-        ++i) {
+    for (IDList::size_type i = 0; i < node_list.size(); ++i) {
 
       PointMap::const_iterator
       nodes_iter = nodes_.find(node_list[i]);
@@ -1233,18 +1223,14 @@ ConnectivityArray::getVolumes() const
 double
 ConnectivityArray::getVolume() const
 {
-  double volume = 0.0;
+  double
+  volume = 0.0;
 
   const ScalarMap
   volumes = getVolumes();
 
-  for (ScalarMap::const_iterator
-  volumes_iter = volumes.begin();
-      volumes_iter != volumes.end();
-      ++volumes_iter) {
-
-    volume += (*volumes_iter).second;
-
+  for (auto&& partition_volume : volumes) {
+    volume += partition_volume.second;
   }
 
   return volume;
@@ -1274,12 +1260,10 @@ ConnectivityArray::getPartitionVolumes() const
   ScalarMap
   partition_volumes;
 
-  for (std::map<int, int>::const_iterator part_iter = partitions.begin();
-      part_iter != partitions.end();
-      ++part_iter) {
+  for (auto&& element_partition : partitions) {
 
-    int element = (*part_iter).first;
-    int partition = (*part_iter).second;
+    int element = element_partition.first;
+    int partition = element_partition.second;
 
     ScalarMap::const_iterator
     volumes_iterator = volumes.find(element);
@@ -1404,26 +1388,20 @@ ConnectivityArray::getCentroids() const
   PointMap
   centroids;
 
-  for (AdjacencyMap::const_iterator
-  elements_iter = connectivity_.begin();
-      elements_iter != connectivity_.end();
-      ++elements_iter) {
+  for (auto&& element_conn : connectivity_) {
 
     // Get an element
     int const &
-    element = (*elements_iter).first;
+    element = element_conn.first;
 
     IDList const &
-    node_list = (*elements_iter).second;
+    node_list = element_conn.second;
 
     std::vector<minitensor::Vector<double>>
     points;
 
     // Collect element nodes
-    for (IDList::size_type
-    i = 0;
-        i < node_list.size();
-        ++i) {
+    for (IDList::size_type i = 0; i < node_list.size(); ++i) {
 
       int const
       node = node_list[i];
@@ -2331,11 +2309,8 @@ ConnectivityArray::partitionHyperGraph(double const length_scale)
 
   // Fill up with results from Zoltan, which returns partitions for all
   // elements that belong to a partition > 0
-  for (ScalarMap::const_iterator
-  weights_iter = vertex_weights.begin();
-      weights_iter != vertex_weights.end();
-      ++weights_iter) {
-    int const vertex = (*weights_iter).first;
+  for (auto&& vertex_weight : vertex_weights) {
+    int const vertex = vertex_weight.first;
     partitions[vertex] = 0;
   }
 
@@ -2454,11 +2429,8 @@ ConnectivityArray::partitionGeometric(double const length_scale)
   element_volumes = getVolumes();
 
   // Initialize with zeros the partition map for all elements.
-  for (ScalarMap::const_iterator
-  volumes_iter = element_volumes.begin();
-      volumes_iter != element_volumes.end();
-      ++volumes_iter) {
-    int const element = (*volumes_iter).first;
+  for (auto&& element_volume : element_volumes) {
+    int const element = element_volume.first;
     partitions[element] = 0;
   }
 
@@ -2987,7 +2959,6 @@ ConnectivityArray::getObjectList(
     float* obj_wgts,
     int* ierr)
 {
-
   ConnectivityArray &
   connectivity_array = *(static_cast<ConnectivityArray*>(data));
 
@@ -3005,13 +2976,9 @@ ConnectivityArray::getObjectList(
   float*
   weight_ptr = obj_wgts;
 
-  for (ScalarMap::const_iterator
-  volumes_iter = element_volumes.begin();
-      volumes_iter != element_volumes.end();
-      ++volumes_iter) {
-
-    int element = (*volumes_iter).first;
-    double volume = (*volumes_iter).second;
+  for (auto&& element_volume : element_volumes) {
+    int element = element_volume.first;
+    double volume = element_volume.second;
 
     // Beware of this evil pointer manipulation
     (*global_id_ptr) = element;
@@ -3088,13 +3055,9 @@ ConnectivityArray::getGeometry(
   int
   index_geom_vec = 0;
 
-  for (PointMap::const_iterator
-  centroids_iter = centroids.begin();
-      centroids_iter != centroids.end();
-      ++centroids_iter) {
-
+  for (auto&& id_centroid : centroids) {
     minitensor::Vector<double> const
-    centroid = (*centroids_iter).second;
+    centroid = id_centroid.second;
 
     for (minitensor::Index i = 0; i < 3; ++i) {
 
@@ -3128,18 +3091,14 @@ operator<<(
   int const
   dimension = connectivity_array.getDimension();
 
-  for (PointMap::const_iterator
-  nodes_iter = nodes.begin();
-      nodes_iter != nodes.end();
-      ++nodes_iter) {
-
+  for (auto&& id_node : nodes) {
     int const
-    node = (*nodes_iter).first;
+    node = id_node.first;
 
     output_stream << std::setw(12) << node;
 
     minitensor::Vector<double> const &
-    point = (*nodes_iter).second;
+    point = id_node.second;
 
     for (int j = 0; j < dimension; ++j) {
       output_stream << std::scientific;
@@ -3158,17 +3117,15 @@ operator<<(
   const AdjacencyMap
   connectivity = connectivity_array.getConnectivity();
 
-  for (AdjacencyMap::const_iterator
-  connectivity_iter = connectivity.begin();
-      connectivity_iter != connectivity.end();
-      ++connectivity_iter) {
+  for (auto&& element_conn : connectivity) {
 
-    int const element = (*connectivity_iter).first;
+    int const
+    element = element_conn.first;
 
     output_stream << std::setw(12) << element;
 
     IDList const &
-    node_list = (*connectivity_iter).second;
+    node_list = element_conn.second;
 
     for (IDList::size_type j = 0; j < node_list.size(); ++j) {
       output_stream << std::setw(12) << node_list[j];
@@ -3225,16 +3182,13 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
   faceID_element_map;
 
   // Go element by element
-  for (AdjacencyMap::const_iterator
-  connectivity_iter = connectivity.begin();
-      connectivity_iter != connectivity.end();
-      ++connectivity_iter) {
+  for (auto&& element_conn : connectivity) {
 
     int const
-    element = (*connectivity_iter).first;
+    element = element_conn.first;
 
     const std::vector<int>
-    element_nodes = (*connectivity_iter).second;
+    element_nodes = element_conn.second;
 
     // All elements go into graph, regardless of number of internal faces
     // attached to them. This clearing will allocate space for all of them.
@@ -3282,16 +3236,13 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
   IDList
   internal_faces;
 
-  for (AdjacencyMap::const_iterator
-  face_element_iter = faceID_element_map.begin();
-      face_element_iter != faceID_element_map.end();
-      ++face_element_iter) {
+  for(auto&& face_elements : faceID_element_map) {
 
     int const
-    faceID = (*face_element_iter).first;
+    faceID = face_elements.first;
 
     int const
-    number_elements_per_face = ((*face_element_iter).second).size();
+    number_elements_per_face = (face_elements.second).size();
 
     switch (number_elements_per_face) {
 
@@ -3373,22 +3324,19 @@ DualGraph::getEdgeList() const
 {
   AdjacencyMap edge_list;
 
-  for (AdjacencyMap::const_iterator graph_iter = graph_.begin();
-      graph_iter != graph_.end();
-      ++graph_iter) {
-    int const vertex = (*graph_iter).first;
-    const IDList edges = (*graph_iter).second;
+  for (auto&& vertex_edges : graph_) {
+    int const
+    vertex = vertex_edges.first;
 
-    for (IDList::const_iterator edges_iter = edges.begin();
-        edges_iter != edges.end();
-        ++edges_iter) {
+    const IDList
+    edges = vertex_edges.second;
 
-      int const edge = (*edges_iter);
+    for (auto&& edge : edges) {
 
-      IDList & vertices = edge_list[edge];
+      IDList &
+      vertices = edge_list[edge];
 
       vertices.push_back(vertex);
-
     }
 
   }
@@ -3432,15 +3380,12 @@ DualGraph::getConnectedComponents(std::vector<int> & components) const
   AdjacencyMap
   dual_graph = getGraph();
 
-  for (AdjacencyMap::const_iterator graph_iter = dual_graph.begin();
-      graph_iter != dual_graph.end();
-      ++graph_iter) {
-
+  for (auto&& dual_vertex_edges : dual_graph) {
     Vertex
     boost_vertex = boost::add_vertex(graph);
 
     int
-    dual_vertex = (*graph_iter).first;
+    dual_vertex = dual_vertex_edges.first;
 
     dual_2_boost.insert(std::make_pair(dual_vertex, boost_vertex));
 
@@ -3450,12 +3395,9 @@ DualGraph::getConnectedComponents(std::vector<int> & components) const
   AdjacencyMap
   edge_list = getEdgeList();
 
-  for (AdjacencyMap::const_iterator edges_iter = edge_list.begin();
-      edges_iter != edge_list.end();
-      ++edges_iter) {
-
+  for (auto&& edge_vertices : edge_list) {
     IDList const
-    vertices = (*edges_iter).second;
+    vertices = edge_vertices.second;
 
     int
     source_vertex = vertices[0];
@@ -3513,15 +3455,12 @@ DualGraph::print() const
   std::cout << "------------------------------------------------------------";
   std::cout << '\n';
 
-  for (ScalarMap::const_iterator vw_iter = vertex_weights.begin();
-      vw_iter != vertex_weights.end();
-      ++vw_iter) {
-
+  for (auto&& vertex_weight : vertex_weights) {
     int const
-    vertex = (*vw_iter).first;
+    vertex = vertex_weight.first;
 
     double const
-    weight = (*vw_iter).second;
+    weight = vertex_weight.second;
 
     std::cout << std::setw(8) << vertex;
     std::cout << std::scientific << std::setw(16) << std::setprecision(8);
@@ -3538,10 +3477,7 @@ DualGraph::print() const
     IDList
     edges = graph[vertex];
 
-    for (IDList::const_iterator edges_iter = edges.begin();
-        edges_iter != edges.end();
-        ++edges_iter) {
-      int const edge = *edges_iter;
+    for (auto&& edge : edges) {
       std::cout << std::setw(8) << edge;
     }
 
@@ -3565,18 +3501,12 @@ DualGraph::print() const
   std::cout << "------------------------------------------------------------";
   std::cout << '\n';
 
-  for (AdjacencyMap::const_iterator edges_iter = edge_list.begin();
-      edges_iter != edge_list.end();
-      ++edges_iter) {
-
-    int const edge = (*edges_iter).first;
+  for (auto&& edge_vertices : edge_list) {
+    int const edge = edge_vertices.first;
     std::cout << std::setw(8) << edge;
-    const IDList vertices = (*edges_iter).second;
+    const IDList vertices = edge_vertices.second;
 
-    for (IDList::const_iterator vertices_iter = vertices.begin();
-        vertices_iter != vertices.end();
-        ++vertices_iter) {
-      int const vertex = (*vertices_iter);
+    for (auto&& vertex : vertices) {
       std::cout << std::setw(8) << vertex;
     }
 
@@ -3805,22 +3735,12 @@ ZoltanHyperGraph::getEdgeIDs() const
   std::vector<ZOLTAN_ID_TYPE>
   edges;
 
-  for (AdjacencyMap::const_iterator
-  graph_iter = graph_.begin();
-      graph_iter != graph_.end();
-      ++graph_iter) {
-
+  for (auto&& vertex_hyperedges : graph_) {
     IDList
-    hyperedges = (*graph_iter).second;
+    hyperedges = vertex_hyperedges.second;
 
-    for (IDList::const_iterator
-    hyperedges_iter = hyperedges.begin();
-        hyperedges_iter != hyperedges.end();
-        ++hyperedges_iter) {
-
-      int const hyperedge = (*hyperedges_iter);
+    for (auto&& hyperedge : hyperedges) {
       edges.push_back(hyperedge);
-
     }
   }
 
@@ -3839,23 +3759,15 @@ ZoltanHyperGraph::getEdgePointers() const
   int
   pointer = 0;
 
-  for (AdjacencyMap::const_iterator
-  graph_iter = graph_.begin();
-      graph_iter != graph_.end();
-      ++graph_iter) {
+  for (auto&& vertex_hyperedges : graph_) {
 
     pointers.push_back(pointer);
 
     IDList
-    hyperedges = (*graph_iter).second;
+    hyperedges = vertex_hyperedges.second;
 
-    for (IDList::const_iterator
-    hyperedges_iter = hyperedges.begin();
-        hyperedges_iter != hyperedges.end();
-        ++hyperedges_iter) {
-
+    for (auto&& hyperedge : hyperedges) {
       ++pointer;
-
     }
 
   }
@@ -3872,12 +3784,9 @@ ZoltanHyperGraph::getVertexIDs() const
   std::vector<ZOLTAN_ID_TYPE>
   vertices;
 
-  for (AdjacencyMap::const_iterator
-  graph_iter = graph_.begin();
-      graph_iter != graph_.end();
-      ++graph_iter) {
+  for (auto&& vertex_hyperedges : graph_) {
 
-    int vertex = (*graph_iter).first;
+    int vertex = vertex_hyperedges.first;
     vertices.push_back(vertex);
 
   }
@@ -3933,18 +3842,15 @@ ZoltanHyperGraph::getObjectList(
   float*
   weight_ptr = obj_wgts;
 
-  for (ScalarMap::const_iterator
-  weights_iter = vertex_weights.begin();
-      weights_iter != vertex_weights.end();
-      ++weights_iter) {
+  for (auto&& vertex_weight : vertex_weights) {
 
-    int vertex = (*weights_iter).first;
-    double vertex_weight = (*weights_iter).second;
+    int vertex = vertex_weight.first;
+    double weight = vertex_weight.second;
 
     // Beware of this evil pointer manipulation
     (*global_id_ptr) = vertex;
     (*local_id_ptr) = vertex;
-    (*weight_ptr) = vertex_weight;
+    (*weight_ptr) = weight;
     global_id_ptr++;
     local_id_ptr++;
     weight_ptr++;
@@ -4124,12 +4030,10 @@ operator<<(
   ScalarMap
   vertex_weights = zoltan_hypergraph.getVertexWeights();
 
-  for (AdjacencyMap::const_iterator graph_iter = graph.begin();
-      graph_iter != graph.end(); ++graph_iter) {
-
+  for (auto&& vertex_hyperedges : graph) {
     // Vertex ID
     int const
-    vertex = (*graph_iter).first;
+    vertex = vertex_hyperedges.first;
 
     double const
     vertex_weight = vertex_weights[vertex];
@@ -4139,15 +4043,10 @@ operator<<(
     output_stream << std::setw(16) << std::setprecision(8);
     output_stream << vertex_weight;
 
-    const IDList
-    hyperedges = (*graph_iter).second;
+    IDList const &
+    hyperedges = vertex_hyperedges.second;
 
-    for (IDList::const_iterator hyperedges_iter = hyperedges.begin();
-        hyperedges_iter != hyperedges.end(); ++hyperedges_iter) {
-
-      int const
-      hyperedge = (*hyperedges_iter);
-
+    for (auto&& hyperedge : hyperedges) {
       output_stream << std::setw(12) << hyperedge;
 
     }
