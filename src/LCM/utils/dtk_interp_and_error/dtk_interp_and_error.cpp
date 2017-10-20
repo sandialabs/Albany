@@ -101,6 +101,15 @@ interp_and_calc_error(
   std::string target_field_name =
       plist->get<std::string>("Target Field Name", "solution");
 
+  //IKT, 10/20/17 - the following tells the code whether to divide by the norm of the reference solution
+  //vector when computing the relative error written to the output file.  If false (default), 
+  //each component will be scaled by the norm of that component only in the reference solution.
+  bool scale_by_norm_soln_vec = false; 
+  if (plist->isParameter("Scale by Norm of Solution Vector")) {
+    scale_by_norm_soln_vec = plist->get<bool>("Scale by Norm of Solution Vector", false);
+  }
+
+
   std::string src_field_name = source_field_name + "_src";
 
   std::string tgt_interp_field_name = target_field_name + "Ref";
@@ -558,6 +567,16 @@ interp_and_calc_error(
         rel_error_l2_norm_global = 0.0; 
       }
 
+      if (scale_by_norm_soln_vec == false) {
+        for (int n = 0; n < num_tgt_part_nodes; ++n) {
+          rel_err_field_data =
+              stk::mesh::field_data(target_rel_error_field, tgt_part_nodes[n]);
+           if (field_l2_norm_global > 1.0e-14) {
+              rel_err_field_data[component] /= field_l2_norm_global; 
+           }
+        }
+      }
+
       *out << "  Target Snapshot = " << tgt_time_step_indices[index] 
            << ", Source Snapshot = " << src_time_step_indices[index] << std::endl; 
       *out << "      Dof = " << component
@@ -589,9 +608,15 @@ interp_and_calc_error(
     *out << "     -------------------------------------------------------------"
          << "--------------------------" << std::endl;
     
-    for (int component = 0; component < neq; component++) {
-       if (field_l2_norm_global_vec > 1.0e-14) {
-         rel_err_field_data[component] /= field_l2_norm_global_vec; 
+    if (scale_by_norm_soln_vec == true) {
+      for (int component = 0; component < neq; component++) {
+        for (int n = 0; n < num_tgt_part_nodes; ++n) {
+          rel_err_field_data =
+              stk::mesh::field_data(target_rel_error_field, tgt_part_nodes[n]);
+           if (field_l2_norm_global_vec > 1.0e-14) {
+             rel_err_field_data[component] /= field_l2_norm_global_vec; 
+           }
+        }
       }
     }
 
