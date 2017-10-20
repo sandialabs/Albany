@@ -276,18 +276,18 @@ interp_and_calc_error(
   }
   if ((src_snap_no == -1) && (tgt_snap_no == -1)) {
     if (tgt_timestep_count < src_timestep_count) {
-      src_timestep_count = tgt_timestep_count; 
       *out << "\n Number of snapshots in target mesh file = " << tgt_timestep_count 
            << " < number of snapshots in source mesh file (= " << src_timestep_count 
            << ").\n  Errors will be computed only up to snapshot #" 
            << tgt_timestep_count << ".\n \n"; 
+      src_timestep_count = tgt_timestep_count; 
     }
     if (src_timestep_count < tgt_timestep_count) {
-      tgt_timestep_count = src_timestep_count; 
       *out << "\n Number of snapshots in source mesh file = " << src_timestep_count 
            << " < number of snapshots in target mesh file (= " << tgt_timestep_count 
            << ").\n  Errors will be computed only up to snapshot #" 
            << src_timestep_count << ".\n \n"; 
+      tgt_timestep_count = src_timestep_count; 
     }
     if (tgt_timestep_count != src_timestep_count) {
       TEUCHOS_TEST_FOR_EXCEPTION(
