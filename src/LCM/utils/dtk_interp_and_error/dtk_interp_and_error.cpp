@@ -512,9 +512,13 @@ interp_and_calc_error(
         abs_err_field_data[component] =
             std::abs(tgt_field_data[component] - gold_value[component]);
 
-        if (std::abs(gold_value[component]) > 1.0e-14) {
+        //IKT, 10/20/17: originally, the relative error was computed in the next line.
+        //This can cause problems and erroneous-looking figures in the case the reference
+        //solution is close to 0.  It makes more sense to divife the absolute error by the 
+        //norm of the reference solution rather than a single-point value (done below). 
+        /*if (std::abs(gold_value[component]) > 1.0e-14) {
           rel_err_field_data[component] /= std::abs(gold_value[component]);
-        }
+        }*/
 
 #ifdef DEBUG_OUTPUT
         *out << "      tgt_field_data, gold_value, abs_err, rel_err: "
@@ -584,6 +588,12 @@ interp_and_calc_error(
          << rel_error_l2_norm_global_vec << std::endl;
     *out << "     -------------------------------------------------------------"
          << "--------------------------" << std::endl;
+    
+    for (int component = 0; component < neq; component++) {
+       if (field_l2_norm_global_vec > 1.0e-14) {
+         rel_err_field_data[component] /= field_l2_norm_global_vec; 
+      }
+    }
 
     // TARGET MESH WRITE
     // -----------------
