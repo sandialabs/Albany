@@ -259,7 +259,7 @@ namespace Albany {
 
      void computeGlobalJacobianT(const double alpha,
                                  const double beta,
-			         const double omega,
+                                 const double omega,
                                  const double current_time,
                                  const Tpetra_Vector* xdotT,
                                  const Tpetra_Vector* xdotdotT,
@@ -280,6 +280,19 @@ namespace Albany {
                                      const Teuchos::Array<ParamVec>& p,
                                      const Teuchos::RCP<Tpetra_Vector>& fT,
                                      const Teuchos::RCP<Tpetra_CrsMatrix>& jacT);
+
+#if defined(ALBANY_LCM) 
+     void computeGlobalJacobianSDBCsImplT(const double alpha,
+                                     const double beta,
+                                     const double omega,
+                                     const double current_time,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xT,
+                                     const Teuchos::Array<ParamVec>& p,
+                                     const Teuchos::RCP<Tpetra_Vector>& fT,
+                                     const Teuchos::RCP<Tpetra_CrsMatrix>& jacT);
+#endif
 
   public:
 
