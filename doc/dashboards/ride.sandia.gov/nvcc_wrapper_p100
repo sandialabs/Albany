@@ -18,7 +18,7 @@ default_arch="sm_60"
 #
 # The default C++ compiler.
 #
-host_compiler=${NVCC_WRAPPER_DEFAULT_COMPILER:-"g++"}
+host_compiler=${NVCC_WRAPPER_DEFAULT_COMPILER:-"mpicxx"}
 #host_compiler="icpc"
 #host_compiler="/usr/local/gcc/4.8.3/bin/g++"
 #host_compiler="/usr/local/gcc/4.9.1/bin/g++"
