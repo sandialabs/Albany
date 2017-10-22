@@ -25,6 +25,7 @@ public:
 
 	virtual bool fullJacobianRequired(bool residualRequested, bool jacobianRequested) const;
 
+	virtual const Epetra_MultiVector &rightProjection(const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const;
 	virtual const Epetra_MultiVector &leftProjection(const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const;
 	virtual const Epetra_MultiVector &leftProjection_ProjectedSol(const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const;
 

@@ -56,6 +56,15 @@ bool GaussNewtonOperatorFactoryBase<Derived>::fullJacobianRequired(bool residual
 }
 
 template <typename Derived>
+const Epetra_MultiVector &GaussNewtonOperatorFactoryBase<Derived>::rightProjection(
+		const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const {
+	//printf("    Computes phi^T*res\n");
+	int err = reduce(*jacobianFactory_.rightProjector(), fullVec, result);
+	TEUCHOS_TEST_FOR_EXCEPT(err != 0);
+	return result;
+}
+
+template <typename Derived>
 const Epetra_MultiVector &GaussNewtonOperatorFactoryBase<Derived>::leftProjection(
 		const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const {
 	//printf("    Computes psi^T*res\n");

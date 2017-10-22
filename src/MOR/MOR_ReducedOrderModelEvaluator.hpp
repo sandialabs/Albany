@@ -6,7 +6,7 @@
 #ifndef MOR_REDUCEDORDERMODELEVALUATOR_HPP
 #define MOR_REDUCEDORDERMODELEVALUATOR_HPP
 
-#include "EpetraExt_ModelEvaluator.h"
+#include "Albany_ModelEvaluator.hpp"
 
 #include "Teuchos_RCP.hpp"
 
@@ -78,6 +78,8 @@ private:
 	enum PrecondTypes {none, scaling, invJac, projSoln, ifPack};
 	PrecondTypes PrecondType=none;
 	std::string ifpackType_;
+
+    mutable double prev_time_;
 
 	// Disallow copy and assignment
 	ReducedOrderModelEvaluator(const ReducedOrderModelEvaluator &);

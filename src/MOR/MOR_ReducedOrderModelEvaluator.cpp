@@ -18,8 +18,9 @@
 #include "EpetraExt_MultiVectorOut.h"
 
 // Set precLBonly to true if you want to ONLY apply a preconditioner to the left basis (Psi)
-// NOTE: now that the preconditioner is just applied twice to the left basis Psi, this 
-//   behavior is replicated by simply calling the singular version of the perconditioner call.      
+// NOTE: if we're using the implementation where the preconditioner is just applied twice to  
+//   the left basis Psi, this behavior can be replicated by simply calling the singular  
+//   version of the perconditioner call.      
 // This is useful as a sanity check of the LSPG method...
 //   if you only apply J_inverse to the left basis, then LSPG should be equivalent
 //   to Galerkin. (To do that, in addition to defining "InverseJacobian" as the
@@ -51,7 +52,8 @@ ReducedOrderModelEvaluator::ReducedOrderModelEvaluator(const RCP<EpetraExt::Mode
 		solutionSpace_(solutionSpace),
 		reducedOpFactory_(reducedOpFactory),
 		x_init_(null),
-		x_dot_init_(null)
+		x_dot_init_(null),
+        prev_time_(-1.0)
 {
 	reset_x_and_x_dot_init();
 
@@ -588,8 +590,15 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 		if (nonnull(fullOutArgs.get_W()))
 			printf("ReducedOrderModelEvaluator::evalModel  run FOM - full Jacobian is nonnull: \n");
 	}
+
 	// (f, W) <- fullOrderModel(x, x_dot, ...)
 	fullOrderModel_->evalModel(fullInArgs, fullOutArgs);
+
+    double this_time = dynamic_cast<Albany::ModelEvaluator &>(*fullOrderModel_).MOR_get_t_init(); // returns -1 if we're NOT using SDBCs
+    if ((prev_time_ != this_time) && (this_time!=-1)){
+        reducedOpFactory_->rightProjection(*fullInArgs.get_x(), const_cast<Epetra_Vector&> (*inArgs.get_x()));
+        prev_time_ = this_time;
+    }
 
 	// (W * basis, W_r) <- W
 	if (fullJacobianRequired) {
@@ -741,32 +750,34 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 			}
 			case invJac:
 			{
-				/*
+				//
 #if !precLBonly
 				reducedOpFactory_->applyPreconditioner(*reducedOpFactory_->getPremultipliedReducedBasis());
 #endif
 				reducedOpFactory_->applyPreconditioner(*reducedOpFactory_->getLeftBasisCopy());
-				 */
+				 /*
 #if precLBonly
 				reducedOpFactory_->applyPreconditioner(*reducedOpFactory_->getLeftBasisCopy());
 #else
 				reducedOpFactory_->applyPreconditionerTwice(*reducedOpFactory_->getLeftBasisCopy());
 #endif
+                */
 				break;
 			}
 			case ifPack:
 			{
-				/*
+				//
 #if !precLBonly
 				reducedOpFactory_->applyPreconditionerIfpack(*reducedOpFactory_->getPremultipliedReducedBasis());
 #endif
 				reducedOpFactory_->applyPreconditionerIfpack(*reducedOpFactory_->getLeftBasisCopy());
-				 */
+                /*
 #if precLBonly
 				reducedOpFactory_->applyPreconditionerIfpack(*reducedOpFactory_->getLeftBasisCopy());
 #else
 				reducedOpFactory_->applyPreconditionerIfpackTwice(*reducedOpFactory_->getLeftBasisCopy());
 #endif
+                */
 				break;
 			}
 			}
@@ -819,7 +830,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 			reducedOpFactory_->applyScaling(*fullOutArgs.get_f());
 			break;
 		}
-		/*
+		//
 		case invJac:
 		{
 
@@ -828,13 +839,13 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 #endif
 			break;
 		}
-		 */
+		 //
 		case projSoln:
 		{
 			reducedOpFactory_->applyJacobian(*fullOutArgs.get_f());
 			break;
 		}
-		/*
+		//
 		case ifPack:
 		{
 
@@ -843,7 +854,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 #endif
 			break;
 		}
-		 */
+		 //
 		}
 		if (PrecondType!=none)
 		{
