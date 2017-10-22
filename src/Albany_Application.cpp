@@ -2169,6 +2169,7 @@ computeGlobalJacobianImplT(const double alpha,
         derivatives_check_);
 }
 
+#if defined(ALBANY_LCM)
 void
 Albany::Application::
 computeGlobalJacobianSDBCsImplT(const double alpha,
@@ -2547,6 +2548,7 @@ computeGlobalJacobianSDBCsImplT(const double alpha,
     checkDerivatives(*this, current_time, xdotT, xdotdotT, xT, p, fT, jacT,
         derivatives_check_);
 }
+#endif
 
 #if defined(ALBANY_EPETRA)
 #if !defined(ALBANY_LCM)
