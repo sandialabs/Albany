@@ -18,6 +18,7 @@
 #include "Albany_GPAMProblem.hpp"
 #include "Albany_LinComprNSProblem.hpp"
 #include "Albany_AdvDiffProblem.hpp"
+#include "Albany_ReactDiffSystem.hpp"
 #include "Albany_ComprNSProblem.hpp"
 #include "Albany_ODEProblem.hpp"
 #include "Albany_PNPProblem.hpp"
@@ -161,6 +162,9 @@ Albany::ProblemFactory::create()
   }
   else if (method == "AdvDiff 2D") {
     strategy = rcp(new Albany::AdvDiffProblem(problemParams, paramLib, 2));
+  }
+  else if ((method == "Reaction-Diffusion System 3D") || (method == "Reaction-Diffusion System")) {
+    strategy = rcp(new Albany::ReactDiffSystem(problemParams, paramLib, 3));
   }
   else if (method == "LinComprNS 2D") {
     strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 2));
