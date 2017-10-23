@@ -19,10 +19,6 @@
 
 #include "Albany_NullSpaceUtils.hpp"
 
-#ifdef ALBANY_CUTR
-#include "CUTR_CubitMeshMover.hpp"
-#endif
-
 namespace Albany {
 
 /*!
@@ -41,24 +37,10 @@ class DiscretizationFactory {
     //! Destructor
     ~DiscretizationFactory() {}
 
-    //! Method to inject cubit dependence.
-#ifdef ALBANY_CUTR
-    void setMeshMover(const Teuchos::RCP<CUTR::CubitMeshMover>& meshMover_);
-#endif
-
-#ifdef ALBANY_CUTR
-    static Teuchos::RCP<Albany::AbstractMeshStruct>
-    createMeshStruct (Teuchos::RCP<Teuchos::ParameterList> disc_params,
-                      Teuchos::RCP<Teuchos::ParameterList> adapt_params,
-                      Teuchos::RCP<const Teuchos_Comm> comm,
-                      Teuchos::RCP<CUTR::CubitMeshMover> mesh_mover = Teuchos::null,
-                      int neq = 0);
-#else
     static Teuchos::RCP<Albany::AbstractMeshStruct>
     createMeshStruct (Teuchos::RCP<Teuchos::ParameterList> disc_params,
                       Teuchos::RCP<Teuchos::ParameterList> adapt_params,
                       Teuchos::RCP<const Teuchos_Comm> comm);
-#endif
 
     Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() {
       return meshStruct;
@@ -149,10 +131,6 @@ class DiscretizationFactory {
 
     //Flag for explicit time-integration scheme, used in Aeras
     bool explicit_scheme;
-
-#ifdef ALBANY_CUTR
-    Teuchos::RCP<CUTR::CubitMeshMover> meshMover;
-#endif
 
     Teuchos::RCP<Albany::AbstractMeshStruct> meshStruct;
 

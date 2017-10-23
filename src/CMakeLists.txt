@@ -605,74 +605,6 @@ IF(ALBANY_HYDRIDE AND (NOT ALBANY_DEMO_PDES))
 ENDIF()
 
 
-SET(MESHMOVER_DIR ${Albany_SOURCE_DIR}/src/MeshMover/src)
-SET(CUTR_SRCS
-  ${MESHMOVER_DIR}/CUTR_CubitMeshMover.cpp
-  ${MESHMOVER_DIR}/MeshMorpher.cpp
-  ${MESHMOVER_DIR}/MeshMorpher_BMS.cpp
-  ${MESHMOVER_DIR}/MeshMorpher_smooth.cpp
-  ${MESHMOVER_DIR}/MeshMorpher_XWR.cpp
-  ${MESHMOVER_DIR}/MoverProblem.cpp
-  ${MESHMOVER_DIR}/STKMeshData.cpp
-  ${MESHMOVER_DIR}/ToyProblem.cpp
-  ${MESHMOVER_DIR}/util/CubitBox.cpp
-  ${MESHMOVER_DIR}/util/CubitMatrix.cpp
-  ${MESHMOVER_DIR}/util/CubitPlane.cpp
-  ${MESHMOVER_DIR}/util/CubitVector.cpp
-  ${MESHMOVER_DIR}/util/GeoNode.cpp
-  ${MESHMOVER_DIR}/util/GeoTet.cpp
-  ${MESHMOVER_DIR}/util/KDDTree.cpp
-  ${MESHMOVER_DIR}/util/KDDTreeNode.cpp
-  ${MESHMOVER_DIR}/util/MemoryBlock.cpp
-  ${MESHMOVER_DIR}/util/MemoryManager.cpp
-  ${MESHMOVER_DIR}/util/MMGfxDebug.cpp
-  ${MESHMOVER_DIR}/util/PriorityQueue.cpp
-  ${MESHMOVER_DIR}/util/SimpleNode.cpp
-  ${MESHMOVER_DIR}/util/TDDelaunay.cpp
-  ${MESHMOVER_DIR}/util/TetFacetorTool.cpp
-  ${MESHMOVER_DIR}/util/ToolData.cpp
-  ${MESHMOVER_DIR}/util/ToolDataUser.cpp
-  )
-
-SET(CUTR_HDRS
-  ${MESHMOVER_DIR}/CUTR_CubitMeshMover.hpp
-  ${MESHMOVER_DIR}/MeshMorpher.hpp
-  ${MESHMOVER_DIR}/MeshMorpher_BMS.hpp
-  ${MESHMOVER_DIR}/MeshMorpher_smooth.hpp
-  ${MESHMOVER_DIR}/MeshMorpher_XWR.hpp
-  ${MESHMOVER_DIR}/MoverProblem.hpp
-  ${MESHMOVER_DIR}/STKMeshData.hpp
-  ${MESHMOVER_DIR}/ToyProblem.hpp
-  ${MESHMOVER_DIR}/util/CubitBox.cpp
-  ${MESHMOVER_DIR}/util/CubitMatrix.cpp
-  ${MESHMOVER_DIR}/util/CubitPlane.cpp
-  ${MESHMOVER_DIR}/util/CubitVector.cpp
-  ${MESHMOVER_DIR}/util/GeoNode.cpp
-  ${MESHMOVER_DIR}/util/GeoTet.cpp
-  ${MESHMOVER_DIR}/util/KDDTree.cpp
-  ${MESHMOVER_DIR}/util/KDDTreeNode.cpp
-  ${MESHMOVER_DIR}/util/MemoryBlock.cpp
-  ${MESHMOVER_DIR}/util/MemoryManager.cpp
-  ${MESHMOVER_DIR}/util/MMGfxDebug.cpp
-  ${MESHMOVER_DIR}/util/PriorityQueue.cpp
-  ${MESHMOVER_DIR}/util/SimpleNode.cpp
-  ${MESHMOVER_DIR}/util/TDDelaunay.cpp
-  ${MESHMOVER_DIR}/util/TetFacetorTool.cpp
-  ${MESHMOVER_DIR}/util/ToolData.cpp
-  ${MESHMOVER_DIR}/util/ToolDataUser.cpp
-  )
-
-if (ALBANY_ENABLE_CUBIT)
-  INCLUDE(${MESHMOVER_DIR}/UseUtil.cmake)
-  set (SOURCES ${SOURCES} ${CUTR_SRCS})
-  set (HEADERS ${HEADERS} ${CUTR_HDRS})
-  include_directories (${MESHMOVER_DIR} ${MESHMOVER_DIR}/../cubit)
-  link_directories (${MESHMOVER_DIR}/../cubit/linux64)
-  set(ALB_CUBIT_LIBS  cubiti19)
-  ADD_DEFINITIONS(-DALBANY_CUTR)
-  MESSAGE("-- CUBIT is Enabled, compiling with -DALBANY_CUTR")
-endif (ALBANY_ENABLE_CUBIT)
-
 if (ALBANY_MOR AND ALBANY_EPETRA)
   include_directories (./MOR)
 
@@ -947,7 +879,6 @@ set(ALL_LIBRARIES
   ${PlatoEngine_LIB}
   ${PlatoEngine_LIB}
   ${ALB_TRILINOS_LIBS}
-  ${ALB_CUBIT_LIBS}
   ${LAME_LIB}
   ${MATH_TOOLKIT_LIB}
   ${NLOPT_LIB}

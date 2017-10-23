@@ -39,11 +39,6 @@ IF(ALBANY_HAVE_STK) # STK is needed for all these
     add_subdirectory(SteadyHeat2DSS)
   ENDIF(ALBANY_SEACAS)
 
-  IF(ALBANY_ENABLE_CUBIT)
-    add_subdirectory(CUTR_Heat1D)
-    add_subdirectory(CUTR_Heat2D)
-    add_subdirectory(CUTR_HeatStruct2D)
-  ENDIF(ALBANY_ENABLE_CUBIT)
 ENDIF(ALBANY_HAVE_STK)
 
 IF(ALBANY_SCOREC)
@@ -74,10 +69,6 @@ IF(ALBANY_DEMO_PDES)
     add_subdirectory(CoupledReactor)
     add_subdirectory(NSReactor)
   endif(ALBANY_ASCR)
-
-  IF(ALBANY_ENABLE_CUBIT)
-    add_subdirectory(HTE3D)
-  ENDIF(ALBANY_ENABLE_CUBIT)
 
 ENDIF(ALBANY_DEMO_PDES)
 
