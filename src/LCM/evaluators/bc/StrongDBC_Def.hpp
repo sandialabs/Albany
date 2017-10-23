@@ -8,8 +8,10 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Albany_Utils.hpp"
+#include <Tpetra_MultiVectorFiller.hpp>
 
-//#define DEBUG
+//#define DAN_DEBUG
+//#define RUN_ITK_CODE
 
 namespace LCM {
 
@@ -59,7 +61,7 @@ StrongDBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
 #endif
   }
 
-#if defined(DEBUG)
+#if defined(DAN_DEBUG)
   Teuchos::FancyOStream &fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
   fos << "\n*** RESIDUAL ***\n";
   f->describe(fos, Teuchos::VERB_EXTREME);
@@ -67,7 +69,7 @@ StrongDBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
   fos << "\n*** SOLUTION ***\n";
   x->describe(fos, Teuchos::VERB_EXTREME);
   fos << "\n*** SOLUTION ***\n";
-#endif  // DEBUG
+#endif  // DAN_DEBUG
   return;
 }
 
@@ -100,6 +102,7 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   Teuchos::RCP<const Tpetra_Map>
   jac_map = J->getMap();
 
+#ifdef RUN_ITK_CODE
   auto const
   global_length = x->getGlobalLength();
 
@@ -109,7 +112,7 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   auto const 
   min_global_index = x->getMap()->getMinAllGlobalIndex(); 
  
-#ifdef DEBUG
+#ifdef DAN_DEBUG
   Teuchos::FancyOStream &fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
   fos << "IKT global_length, max_global_index, min_global_index = " << global_length << ", " << 
                 max_global_index << ", " << min_global_index << std::endl; 
@@ -117,6 +120,7 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
 
   std::vector<ST>
   marker(max_global_index+1, 0.0);
+#endif // RUN_ITK_CODE
 
   std::vector<std::vector<int>> const &
   ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
@@ -130,6 +134,9 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   Teuchos::ArrayRCP<ST>
   x_view = fill_residual == true ? x->get1dViewNonConst() : Teuchos::null;
 
+  Teuchos::Array<GO>
+  global_index(1);
+
   Teuchos::Array<LO>
   index(1);
 
@@ -142,6 +149,7 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   Teuchos::Array<LO>
   indices;
 
+#ifdef RUN_ITK_CODE
   for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
     int const
     dof = ns_nodes[ns_node][this->offset];
@@ -172,6 +180,13 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
       J->getLocalRowCopy(row, indices(), entries(), num_cols);
 
       if (row == dof) {
+#ifdef DAN_DEBUG
+        auto const proc_num = jac_map->getComm()->getRank();
+        auto grow = jac_map->getGlobalElement(row);
+  
+        std::cout << "IKT proc, zeroeing out row = " << proc_num << ", "
+                  << grow << std::endl;
+#endif
         // Set entries other than the diagonal to zero
         for (size_t col = 0; col < num_cols; ++col) {
           auto const
@@ -201,7 +216,7 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
     // if gcol is dirichlet dof, zero out all (global) rows corresponding to
     // global column gcol
     if (is_dir_dof != 0.0) {
-#ifdef DEBUG
+#ifdef DAN_DEBUG
       auto const proc_num = jac_map->getComm()->getRank();
 
       std::cout << "IKT proc, zeroeing out column = " << proc_num << ", "
@@ -224,6 +239,71 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
         }
       }
     }
+  }
+#endif // RUN_ITK_CODE
+
+  using MV = Tpetra::MultiVector<>;
+  using MVF = Tpetra::MultiVectorFiller<MV>;
+
+  MVF is_dbc_filler(jac_map, 1);
+
+  for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
+    int const
+    dof = ns_nodes[ns_node][this->offset];
+    global_index[0] = jac_map->getGlobalElement(dof);
+    entry[0] = 1.0;
+    is_dbc_filler.sumIntoGlobalValues(global_index, 0, entry);
+  }
+  MV is_dbc(jac_map, 1);
+  is_dbc_filler.globalAssemble(is_dbc);
+  auto is_dbc_view = is_dbc.get1dView();
+
+  size_t const
+  num_local_rows = J->getNodeNumRows();
+  for (size_t local_row = 0; local_row < num_local_rows; ++local_row) {
+    size_t
+    num_row_entries = J->getNumEntriesInLocalRow(local_row);
+
+    entries.resize(num_row_entries);
+    indices.resize(num_row_entries);
+
+    J->getLocalRowCopy(local_row, indices(), entries(), num_row_entries);
+
+    auto row_is_dbc = is_dbc_view[local_row] > 0.0;
+
+    if (row_is_dbc && fill_residual == true) {
+    //f_view[local_row] = 0.0;
+    //x_view[local_row] = this->value.val();
+#ifdef DAN_DEBUG
+      auto grow = jac_map->getGlobalElement(local_row);
+      auto const proc_num = jac_map->getComm()->getRank();
+      
+      std::cout << "DAI proc, zeroeing out row = " << proc_num << ", "
+                << grow << std::endl;
+#endif
+    }
+
+    for (size_t row_entry = 0; row_entry < num_row_entries; ++row_entry) {
+      auto const
+      local_col = indices[row_entry];
+      auto is_diagonal_entry = local_col == local_row;
+      if (is_diagonal_entry) continue;
+      auto col_is_dbc = is_dbc_view[local_col] > 0.0;
+      if (row_is_dbc || col_is_dbc) {
+        entries[row_entry] = 0.0;
+      }
+#ifdef DAN_DEBUG
+      if (col_is_dbc) {
+        auto gcol = jac_map->getGlobalElement(local_col);
+        auto const proc_num = jac_map->getComm()->getRank();
+        
+        std::cout << "DAI proc, zeroeing out column = " << proc_num << ", "
+                  << gcol << std::endl;
+      }
+#endif
+    }
+
+  //J->replaceLocalValues(local_row, indices(), entries());
   }
   return;
 }
