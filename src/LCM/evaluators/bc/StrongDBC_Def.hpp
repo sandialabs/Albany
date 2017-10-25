@@ -242,7 +242,7 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   }
 #endif // RUN_ITK_CODE
 
-  using MV = Tpetra::MultiVector<>;
+  using MV = Tpetra_MultiVector;
   using MVF = Tpetra::MultiVectorFiller<MV>;
 
   MVF is_dbc_filler(jac_map, 1);
