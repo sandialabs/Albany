@@ -596,7 +596,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 
     double this_time = dynamic_cast<Albany::ModelEvaluator &>(*fullOrderModel_).MOR_get_t_init(); // returns -1 if we're NOT using SDBCs
     if ((prev_time_ != this_time) && (this_time!=-1)){
-        reducedOpFactory_->rightProjection(*fullInArgs.get_x(), const_cast<Epetra_Vector&> (*inArgs.get_x()));
+        solutionSpace_->reduction(*fullInArgs.get_x(),const_cast<Epetra_Vector&> (*inArgs.get_x()));
         prev_time_ = this_time;
     }
 
