@@ -794,9 +794,12 @@ ENDIF()
 
 IF ( ENABLE_MPMD )
   include_directories (${PlatoEngine_INSTALL_DIR}/include)
-  link_directories (${PlatoEngine_INSTALL_DIR}/lib)
-  link_directories (${LibConfuse_INSTALL_DIR}/lib)
-  set(PlatoEngine_LIB PlatoDataLayer PlatoInterface PlatoAnalyze PlatoParser PlatoExceptions)
+  set(PlatoEngine_LIB 
+      ${PlatoEngine_INSTALL_DIR}/lib/libPlatoDataLayer.a 
+      ${PlatoEngine_INSTALL_DIR}/lib/libPlatoInterface.a 
+      ${PlatoEngine_INSTALL_DIR}/lib/libPlatoAnalyze.a 
+      ${PlatoEngine_INSTALL_DIR}/lib/libPlatoParser.a 
+      ${PlatoEngine_INSTALL_DIR}/lib/libPlatoExceptions.a)
   ADD_DEFINITIONS(-DCODE_MP)
 ELSE()
   set(PlatoEngine_LIB )
