@@ -6,9 +6,7 @@
 
 #include "Albany_MaterialDatabase.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
-#if defined(ALBANY_YAML)
 #include "Teuchos_YamlParameterListHelpers.hpp"
-#endif // ALBANY_YAML
 #include "Teuchos_TestForException.hpp"
 #include "Albany_Utils.hpp"
 
@@ -31,19 +29,14 @@ MaterialDatabase(
     std::cout << input_file << std::endl;
   }
 
-#if defined(ALBANY_YAML)
   auto input_extension = Albany::getFileExtension(input_file);
-  if (input_extension == "yaml") {
+  if (input_extension == "yaml" || input_extension == "yml") {
     Teuchos::updateParametersFromYamlFileAndBroadcast(
         input_file, Teuchos::ptrFromRef(data_), *tcomm);
   } else {
     Teuchos::updateParametersFromXmlFileAndBroadcast(
         input_file, Teuchos::ptrFromRef(data_), *tcomm);
   }
-#else
-  Teuchos::updateParametersFromXmlFileAndBroadcast(
-      input_file, Teuchos::ptrFromRef(data_), *tcomm);
-#endif // ALBANY_YAML
 
   // Check for and set element block and materials sublists
   ALBANY_ASSERT(data_.isSublist("Materials"),

@@ -97,18 +97,21 @@ public:
 protected:
 
   Teuchos::RCP<shards::CellTopology> cellType;
+  Teuchos::RCP<shards::CellTopology> sideType;
 
-  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >  cellCubature;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >  cellCubature, sideCubature;
 
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > cellBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > sideBasis;
 
   int numDim;
-  Teuchos::RCP<Albany::Layouts> dl;
+  Teuchos::RCP<Albany::Layouts> dl, dl_side;
 
   //! Discretization parameters
   Teuchos::RCP<Teuchos::ParameterList> discParams;
 
   std::string elementBlockName;
+  std::string sideName;
 };
 
 } // Namespace FELIX
@@ -182,21 +185,33 @@ FELIX::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   ev = evalUtils.constructComputeBasisFunctionsEvaluator(cellType, cellBasis, cellCubature);
   fm0.template registerEvaluator<EvalT> (ev);
 
+  if(sideName != "INVALID") {
+    //---- Restrict vertex coordinates from cell-based to cell-side-based
+    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",sideName,"Vertex Vector",cellType,"Coord Vec " + sideName);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, sideBasis, sideCubature, sideName);
+    fm0.template registerEvaluator<EvalT> (ev);
+  }
+
   // -------------------------------- FELIX evaluators ------------------------- //
 
   // --- FO Stokes Resid --- //
   {
-  p = Teuchos::rcp(new Teuchos::ParameterList("Laplacian Resid"));
+    p = Teuchos::rcp(new Teuchos::ParameterList("Laplacian Resid"));
 
-  //Input
-  p->set<std::string>("Gradient BF Name", "Grad BF");
-  p->set<std::string>("Field Variable Name", "prior_sample");
-  p->set<std::string>("Field Gradient Variable Name", "prior_sample Gradient");
-  p->set<std::string>("Forcing Field Name", "weighted_normal_sample");
-  p->set<std::string>("Weighted Measure Name", "Weights");
-  p->set<double>("Mass Coefficient", params->sublist("FELIX Laplacian Regularization").get<double>("Mass Coefficient",1.0));
-  p->set<double>("Laplacian Coefficient", params->sublist("FELIX Laplacian Regularization").get<double>("Laplacian Coefficient",1.0));
-  p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
+    //Input
+    p->set<std::string>("Gradient BF Name", "Grad BF");
+    p->set<std::string>("Field Variable Name", "prior_sample");
+    p->set<std::string>("Field Gradient Variable Name", "prior_sample Gradient");
+    p->set<std::string>("Forcing Field Name", "weighted_normal_sample");
+    p->set<std::string>("Weighted Measure Name", "Weights");
+    p->set<double>("Mass Coefficient", params->sublist("FELIX Laplacian Regularization").get<double>("Mass Coefficient",1.0));
+    p->set<double>("Laplacian Coefficient", params->sublist("FELIX Laplacian Regularization").get<double>("Laplacian Coefficient",1.0));
+    p->set<double>("Robin Coefficient", params->sublist("FELIX Laplacian Regularization").get<double>("Robin Coefficient",0.0));
+    p->set<std::string>("Weighted Measure Side Name", "Weighted Measure "+sideName);
+    p->set<std::string>("Side Set Name", sideName);
+    p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
 
     //Output
     p->set<std::string>("Laplacian Residual Name", "Laplacian Residual");

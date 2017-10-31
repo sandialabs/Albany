@@ -3,12 +3,10 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
+//
 // Find connected components in a mesh by using the dual graph
 //
-
-// Define only if Zoltan is enabled
-#if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
-
 #include <iomanip>
 #include <Teuchos_CommandLineProcessor.hpp>
 
@@ -76,12 +74,12 @@ int main(int ac, char* av[])
   components;
 
   const int
-  number_components = dual_graph.GetConnectedComponents(components);
+  number_components = dual_graph.getConnectedComponents(components);
 
   // Get abstract discretization from connectivity array and convert
   // to stk discretization to use stk-specific methods.
   Albany::AbstractDiscretization &
-  discretization = connectivity_array.GetDiscretization();
+  discretization = connectivity_array.getDiscretization();
 
   Albany::STKDiscretization &
   stk_discretization = static_cast<Albany::STKDiscretization &>(discretization);
@@ -115,7 +113,7 @@ int main(int ac, char* av[])
   stk_discretization.writeSolutionT(*solution_fieldT, 1.0);
 
   const int
-  number_elements = connectivity_array.GetNumberElements();
+  number_elements = connectivity_array.getNumberElements();
 
   std::cout << std::endl;
   std::cout << "==========================================";
@@ -143,13 +141,3 @@ int main(int ac, char* av[])
   return 0;
 
 }
-
-#else // #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
-
-// Zoltan not defined, do nothing
-int main(int ac, char* av[])
-{
-  return 0;
-}
-
-#endif // #if defined (ALBANY_ZOLTAN)

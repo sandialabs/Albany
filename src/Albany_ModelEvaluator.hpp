@@ -93,6 +93,9 @@ namespace Albany {
 
     //@}
 
+    //! Return the current time
+    double MOR_get_t_init() const;
+
   protected:
 
     //! Application object

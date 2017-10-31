@@ -34,6 +34,12 @@ bool PetrovGalerkinOperatorFactory::fullJacobianRequired(bool /*residualRequeste
   return jacobianRequested;
 }
 
+const Epetra_MultiVector & PetrovGalerkinOperatorFactory::rightProjection(const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const {
+  const int err = reduce(*projectionBasis_, fullVec, result);
+  TEUCHOS_TEST_FOR_EXCEPT(err != 0);
+  return result;
+}
+
 const Epetra_MultiVector & PetrovGalerkinOperatorFactory::leftProjection(const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const {
   const int err = reduce(*projectionBasis_, fullVec, result);
   TEUCHOS_TEST_FOR_EXCEPT(err != 0);

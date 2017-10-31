@@ -329,7 +329,7 @@ using minitensor::eye;
   // Pull the He concentration
   PHX::MDField<ScalarT, Cell, QuadPoint> he_conc("He Concentration",
       dl->qp_scalar);
-  field_manager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(he_conc);
+  field_manager.getFieldData<Residual>(he_conc);
 
   // Record the expected concentration
   double expected_conc(0.0);
@@ -341,7 +341,7 @@ using minitensor::eye;
   // Pull the total bubble density
   PHX::MDField<ScalarT, Cell, QuadPoint> tot_bub_density("Total Bubble Density",
                                                          dl->qp_scalar);
-  field_manager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(tot_bub_density);
+  field_manager.getFieldData<Residual>(tot_bub_density);
   
   // Record the bubble density
   double expected_density(0.0);
@@ -353,7 +353,7 @@ using minitensor::eye;
   // Pull the bubble volume fraction
   PHX::MDField<ScalarT, Cell, QuadPoint> bub_vol_frac("Bubble Volume Fraction",
                                                       dl->qp_scalar);
-  field_manager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(bub_vol_frac);
+  field_manager.getFieldData<Residual>(bub_vol_frac);
   
   // Record the bubble volume fraction
   double expected_vol_frac(0.0);

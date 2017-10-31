@@ -182,6 +182,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   // Getting the names of the distributed parameters (they won't have to be loaded as states)
   std::map<std::string,bool> is_dist_param;
   std::map<std::string,bool> is_dist;
+  std::map<std::string,bool> save_sensitivities;
   std::map<std::string,std::string> dist_params_name_to_mesh_part;
   std::map<std::string,bool> is_extruded_param;
   if (this->params->isSublist("Distributed Parameters"))
@@ -201,6 +202,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
         is_extruded_param[param_name] = param_list->get<bool>("Extruded",false);
         int extruded_param_level = 0;
         extruded_params_levels->insert(std::make_pair(param_name, extruded_param_level));
+        save_sensitivities[param_name]=param_list->get<bool>("Save Sensitivity",false);
       }
       else
       {
@@ -254,6 +256,8 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
       }
       else if(fieldType == "Node Scalar") {
         entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
+        if(is_dist[stateName] && save_sensitivities[param_name])
+          p = stateMgr.registerStateVariable(stateName + "_sensitivity", dl->node_scalar, elementBlockName, true, &entity, meshPart);
         p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, meshPart);
         nodal_state = true;
       }
@@ -1119,13 +1123,16 @@ if (basalSideName!="INVALID")
 
     //Input
     p->set<std::string>("Solution Variable Name", "L2 Projected Boundary Laplacian");
+    p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
     p->set<std::string>("Field Name", "basal_friction");
     p->set<std::string>("Field Gradient Name", "beta Gradient");
     p->set<std::string>("Gradient BF Side Name", "Grad BF "+basalSideName);
     p->set<std::string>("Weighted Measure Side Name", "Weighted Measure "+basalSideName);
     p->set<std::string>("Tangents Side Name", "Tangents "+basalSideName);
     p->set<std::string>("Side Set Name", basalSideName);
+    p->set<std::string>("Boundary Edges Set Name", params->sublist("FELIX L2 Projected Boundary Laplacian").get<std::string>("Boundary Edges Set Name", "lateralside"));
     p->set<double>("Mass Coefficient", params->sublist("FELIX L2 Projected Boundary Laplacian").get<double>("Mass Coefficient",1.0));
+    p->set<double>("Robin Coefficient", params->sublist("FELIX L2 Projected Boundary Laplacian").get<double>("Robin Coefficient",0.0));
     p->set<double>("Laplacian Coefficient", params->sublist("FELIX L2 Projected Boundary Laplacian").get<double>("Laplacian Coefficient",1.0));
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));

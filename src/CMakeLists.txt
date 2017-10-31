@@ -124,12 +124,10 @@ SET(HEADERS ${HEADERS}
   utility/math/TensorImpl.hpp
   )
 
-IF(ALBANY_YAML)
-  add_executable(xml2yaml utility/xml2yaml.cpp)
-  add_executable(yaml2xml utility/yaml2xml.cpp)
-  target_link_libraries(xml2yaml teuchosparameterlist)
-  target_link_libraries(yaml2xml teuchosparameterlist)
-ENDIF()
+add_executable(xml2yaml utility/xml2yaml.cpp)
+add_executable(yaml2xml utility/yaml2xml.cpp)
+target_link_libraries(xml2yaml teuchosparameterlist)
+target_link_libraries(yaml2xml teuchosparameterlist)
 
 #problems
 SET(SOURCES ${SOURCES}
@@ -146,6 +144,7 @@ SET(SOURCES ${SOURCES}
   )
 SET(PDE_SRCS
   problems/Albany_AdvDiffProblem.cpp
+  problems/Albany_ReactDiffSystem.cpp
   problems/Albany_CahnHillProblem.cpp
   problems/Albany_ComprNSProblem.cpp
   problems/Albany_GPAMProblem.cpp
@@ -172,6 +171,7 @@ SET(HEADERS ${HEADERS}
   )
 SET(PDE_HDRS
   problems/Albany_AdvDiffProblem.hpp
+  problems/Albany_ReactDiffSystem.hpp
   problems/Albany_CahnHillProblem.hpp
   problems/Albany_ComprNSProblem.hpp
   problems/Albany_GPAMProblem.hpp
@@ -359,6 +359,7 @@ ENDIF()
 
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_AdvDiffResid.cpp
+  evaluators/PHAL_ReactDiffSystemResid.cpp
   evaluators/PHAL_CahnHillChemTerm.cpp
   evaluators/PHAL_CahnHillRhoResid.cpp
   evaluators/PHAL_CahnHillWResid.cpp
@@ -530,6 +531,8 @@ ENDIF()
 SET(PDE_HDRS ${PDE_HDRS}
   evaluators/PHAL_AdvDiffResid.hpp
   evaluators/PHAL_AdvDiffResid_Def.hpp
+  evaluators/PHAL_ReactDiffSystemResid.hpp
+  evaluators/PHAL_ReactDiffSystemResid_Def.hpp
   evaluators/PHAL_CahnHillRhoResid.hpp
   evaluators/PHAL_CahnHillRhoResid_Def.hpp
   evaluators/PHAL_CahnHillWResid.hpp
@@ -791,9 +794,12 @@ ENDIF()
 
 IF ( ENABLE_MPMD )
   include_directories (${PlatoEngine_INSTALL_DIR}/include)
-  link_directories (${PlatoEngine_INSTALL_DIR}/lib)
-  link_directories (${LibConfuse_INSTALL_DIR}/lib)
-  set(PlatoEngine_LIB PlatoDataLayer PlatoInterface PlatoAnalyze PlatoParser PlatoExceptions confuse)
+  set(PlatoEngine_LIB 
+      ${PlatoEngine_INSTALL_DIR}/lib/libPlatoDataLayer.a 
+      ${PlatoEngine_INSTALL_DIR}/lib/libPlatoInterface.a 
+      ${PlatoEngine_INSTALL_DIR}/lib/libPlatoAnalyze.a 
+      ${PlatoEngine_INSTALL_DIR}/lib/libPlatoParser.a 
+      ${PlatoEngine_INSTALL_DIR}/lib/libPlatoExceptions.a)
   ADD_DEFINITIONS(-DCODE_MP)
 ELSE()
   set(PlatoEngine_LIB )

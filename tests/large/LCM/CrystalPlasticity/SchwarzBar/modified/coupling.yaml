@@ -2,7 +2,7 @@
 ---
 ANONYMOUS:
   Coupled System: 
-    Model Input Files: [../lower_bar.yaml, ../gauge.yaml, ../upper_bar.yaml]
+    Model Input Files: ['../lower_bar.yaml', '../gauge.yaml', '../upper_bar.yaml']
   Debug Output: 
     Write Solution to MatrixMarket: false
     Write Solution to Standard Output: false

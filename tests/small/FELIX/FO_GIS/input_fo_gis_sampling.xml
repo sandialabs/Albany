@@ -9,7 +9,10 @@
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Name" type="string" value="FELIX Laplacian Sampling"/>
     <Parameter name="Required Fields"         type="Array(string)" value="{weighted_normal_sample}"/>
+    <Parameter name="Side Name"         type="string" value="lateralside"/>
     <ParameterList name="Response Functions">
+      <Parameter name="Number" type="int" value="1"/>
+      <Parameter name="Response 0" type="string" value="Solution Average"/>
     </ParameterList>
 
     <ParameterList name="Dirichlet BCs">
@@ -27,8 +30,9 @@
       <Parameter name="Number of Parameter Vectors" type="int" value="0"/>
     </ParameterList>
     <ParameterList name="FELIX Laplacian Regularization">
-        <Parameter name="Mass Coefficient" type="double" value="7.6697e-06"/> <!-- sqrt(5.8824e-7)* 0.01  -->
-        <Parameter name="Laplacian Coefficient" type="double" value="7.6697e-03"/>  <!-- sqrt(5.8824e-7)* 10.0  -->
+        <Parameter name="Mass Coefficient" type="double" value="0.01"/> <!-- sqrt(5.8824e-7)* 0.01  -->
+        <Parameter name="Laplacian Coefficient" type="double" value="10"/>  <!-- sqrt(5.8824e-7)* 10.0  -->
+        <Parameter name="Robin Coefficient" type="double" value="1"/>  <!-- sqrt(5.8824e-7)* 10.0  -->
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
@@ -37,6 +41,7 @@
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Exodus Output File Name" type="string" value="gis_laplacian_sample.exo"/>
     <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis_unstruct_2d.exo"/>
+    <Parameter name="Use Serial Mesh"            type="bool" value="true"/>
     <ParameterList name="Required Fields Info">
      <Parameter name="Number Of Fields" type="int" value="1"/>
       <ParameterList name="Field 0">
@@ -46,14 +51,23 @@
         <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/basal_friction_log.ascii"/>
       </ParameterList>
     </ParameterList>
+
+    <ParameterList name="Side Set Discretizations">
+      <Parameter name="Side Sets" type="Array(string)" value="{lateralside}"/>
+      <ParameterList name="lateralside">
+        <Parameter name="Method"                     type="string" value="SideSetSTK"/>
+        <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
+        <!--Parameter name="Exodus Output File Name"    type="string" value="gis_analysis_basal.exo"/-->
+        <Parameter name="Cubature Degree"            type="int" value="1"/>
+        <Parameter name="Use Serial Mesh"            type="bool" value="true"/>
+        <!--Parameter name="Exodus Input File Name"     type="string" value="../ExoMeshes/gis_unstruct_2d.exo"/-->
+     </ParameterList>
+   </ParameterList>
+
   </ParameterList> <!--Discretization -->
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="0"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{68.2006020544}"/>
-    <ParameterList name="Sensitivity Comparisons 0">
-      <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{2.14480231821}"/>
-    </ParameterList>
+    <Parameter  name="Number of Comparisons" type="int" value="1"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{139.731563363}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>

@@ -4,10 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-// Define only if Zoltan is enabled
-// Only build if BGL is available
-#if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN) && defined(ALBANY_BGL)
-
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
@@ -49,7 +45,6 @@ void PrintPartitionInfo(
     int * &export_procs,
     int * &export_to_part)
 {
-
   output_stream << "Changes           : " << changes << '\n';
   output_stream << "Number GID entries: " << num_gid_entries << '\n';
   output_stream << "Number LID entries: " << num_lid_entries << '\n';
@@ -96,6 +91,7 @@ void PrintPartitionInfo(
     output_stream << export_to_part[i] << '\n';
   }
 
+  return;
 }
 
 //
@@ -103,8 +99,10 @@ void PrintPartitionInfo(
 // 1) Find the bounding box of the indexed points.
 // 2) Compute the vector sum of the indexed points.
 //
-boost::tuple<minitensor::Vector<double>, minitensor::Vector<double>,
-    minitensor::Vector<double>>
+boost::tuple<
+  minitensor::Vector<double>,
+  minitensor::Vector<double>,
+  minitensor::Vector<double>>
 bounds_and_sum_subset(
     std::vector<minitensor::Vector<double>> const & points,
     std::set<minitensor::Index> const & indices)
@@ -127,12 +125,7 @@ bounds_and_sum_subset(
   minitensor::Index const
   N = sum.get_dimension();
 
-  for (std::set<minitensor::Index>::const_iterator it = ++indices.begin();
-      it != indices.end();
-      ++it) {
-
-    minitensor::Index const
-    index = *it;
+  for (auto index : indices) {
 
     minitensor::Vector<double> const &
     p = points[index];
@@ -172,12 +165,7 @@ closest_subset(
   minitensor::Index
   index_minimum = first;
 
-  for (std::set<minitensor::Index>::const_iterator it = ++indices.begin();
-      it != indices.end();
-      ++it) {
-
-    minitensor::Index const
-    index = *it;
+  for (auto index : indices) {
 
     minitensor::Vector<double> const &
     p = centers[index].position;
@@ -224,12 +212,7 @@ split_box(
   minitensor::Index const
   N = lower_corner.get_dimension();
 
-  for (std::set<minitensor::Index>::const_iterator it = ++indices.begin();
-      it != indices.end();
-      ++it) {
-
-    minitensor::Index const
-    index = *it;
+  for (auto index : indices) {
 
     minitensor::Vector<double> const &
     p = points[index];
@@ -273,12 +256,7 @@ split_box(
   std::vector<double>
   coordinates;
 
-  for (std::set<minitensor::Index>::const_iterator it = indices.begin();
-      it != indices.end();
-      ++it) {
-
-    minitensor::Index const
-    index = *it;
+  for (auto index : indices) {
 
     minitensor::Vector<double> const &
     p = points[index];
@@ -326,12 +304,7 @@ split_box(
 
   split_limit(largest_dimension) = split_coordinate;
 
-  for (std::set<minitensor::Index>::const_iterator it = indices.begin();
-      it != indices.end();
-      ++it) {
-
-    minitensor::Index const
-    index = *it;
+  for (auto index : indices) {
 
     minitensor::Vector<double> const &
     p = points[index];
@@ -355,8 +328,8 @@ split_box(
 // \return Boost shared pointer to root node of tree.
 //
 template<typename Node>
-boost::shared_ptr<Node>
-BuildKDTree(std::vector<minitensor::Vector<double>> const & points)
+std::shared_ptr<Node>
+buildKDTree(std::vector<minitensor::Vector<double>> const & points)
 {
 
   //
@@ -372,14 +345,14 @@ BuildKDTree(std::vector<minitensor::Vector<double>> const & points)
     points_indices.insert(i);
   }
 
-  boost::shared_ptr<Node>
+  std::shared_ptr<Node>
   dummy;
 
   std::string
   name = "0";
 
-  boost::shared_ptr<Node>
-  root = CreateKDTreeNode(name, dummy, points, points_indices);
+  std::shared_ptr<Node>
+  root = createKDTreeNode(name, dummy, points, points_indices);
 
   return root;
 }
@@ -390,10 +363,10 @@ BuildKDTree(std::vector<minitensor::Vector<double>> const & points)
 // \return Boost shared pointer to node of tree if created, 0 otherwise.
 //
 template<typename Node>
-boost::shared_ptr<Node>
-CreateKDTreeNode(
+std::shared_ptr<Node>
+createKDTreeNode(
     std::string const & name,
-    boost::shared_ptr<Node> parent,
+    std::shared_ptr<Node> parent,
     std::vector<minitensor::Vector<double>> const & points,
     std::set<minitensor::Index> const & points_indices)
 {
@@ -404,7 +377,7 @@ CreateKDTreeNode(
   //
   // Create and fill in node.
   //
-  boost::shared_ptr<Node>
+  std::shared_ptr<Node>
   node(new Node);
 
   node->name = name;
@@ -458,10 +431,10 @@ CreateKDTreeNode(
       name_right = name + "1";
 
       node->left =
-          CreateKDTreeNode(name_left, node, points, indices_left);
+          createKDTreeNode(name_left, node, points, indices_left);
 
       node->right =
-          CreateKDTreeNode(name_right, node, points, indices_right);
+          createKDTreeNode(name_right, node, points, indices_right);
     }
     break;
 
@@ -478,7 +451,7 @@ KDTree<Node>::KDTree(
     std::vector<minitensor::Vector<double>> const & points,
     minitensor::Index const number_centers)
 {
-  root_ = BuildKDTree<Node>(points);
+  root_ = buildKDTree<Node>(points);
 
   // Set candidate centers to all
   std::set<minitensor::Index>
@@ -499,7 +472,7 @@ KDTree<Node>::KDTree(
 //
 template<typename Node, typename Visitor>
 void
-VisitTreeNode(Node & node, Visitor const & visitor)
+visitTreeNode(Node & node, Visitor const & visitor)
 {
   if (visitor.pre_stop(node) == true) return;
 
@@ -507,8 +480,8 @@ VisitTreeNode(Node & node, Visitor const & visitor)
 
   if (visitor.post_stop(node) == true) return;
 
-  VisitTreeNode(node->left, visitor);
-  VisitTreeNode(node->right, visitor);
+  visitTreeNode(node->left, visitor);
+  visitTreeNode(node->right, visitor);
 
   return;
 }
@@ -518,9 +491,9 @@ VisitTreeNode(Node & node, Visitor const & visitor)
 //
 template<typename Tree, typename Visitor>
 void
-TraverseTree(Tree & tree, Visitor const & visitor)
+traverseTree(Tree & tree, Visitor const & visitor)
 {
-  VisitTreeNode(tree.get_root(), visitor);
+  visitTreeNode(tree.get_root(), visitor);
   return;
 }
 
@@ -551,7 +524,7 @@ template<typename Node>
 bool
 OutputVisitor<Node>::pre_stop(Node const & node) const
 {
-  return node.get() == NULL;
+  return node.get() == nullptr;
 }
 
 //
@@ -644,13 +617,7 @@ box_proximity_to_centers(
   double
   minimum = norm_square(midcell - centers[index_closest].position);
 
-  for (std::set<minitensor::Index>::const_iterator
-  index_iterator = ++index_subset.begin();
-      index_iterator != index_subset.end();
-      ++index_iterator) {
-
-    minitensor::Index const
-    i = *index_iterator;
+  for (auto&& i : index_subset) {
 
     double const
     s = norm_square(midcell - centers[i].position);
@@ -669,13 +636,7 @@ box_proximity_to_centers(
   indices_candidates;
 
   // Determine where the box lies
-  for (std::set<minitensor::Index>::const_iterator
-      index_iterator = index_subset.begin();
-      index_iterator != index_subset.end();
-      ++index_iterator) {
-
-    minitensor::Index const
-    i = *index_iterator;
+  for (auto&& i : index_subset) {
 
     if (i == index_closest) {
       indices_candidates.insert(i);
@@ -717,7 +678,7 @@ box_proximity_to_centers(
 template<typename Node, typename Center>
 void
 FilterVisitor<Node, Center>::operator()(Node const & node) const
-    {
+{
   bool const
   node_is_empty = node->count == 0;
 
@@ -836,7 +797,7 @@ ConnectivityArray::ConnectivityArray() :
     tolerance_(0.0),
     requested_cell_size_(0.0),
     maximum_iterations_(0),
-    initializer_scheme_(PARTITION::HYPERGRAPH)
+    initializer_scheme_(PARTITION::Scheme::HYPERGRAPH)
 {
   return;
 }
@@ -855,19 +816,18 @@ ConnectivityArray::ConnectivityArray(
     tolerance_(0.0),
     requested_cell_size_(0.0),
     maximum_iterations_(0),
-    initializer_scheme_(PARTITION::HYPERGRAPH)
+    initializer_scheme_(PARTITION::Scheme::HYPERGRAPH)
 {
-
   using Albany::StateStruct;
 
   //Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 
-  Teuchos::RCP<Teuchos::ParameterList> params =
-      rcp(new Teuchos::ParameterList("params"));
+  Teuchos::RCP<Teuchos::ParameterList>
+  params = rcp(new Teuchos::ParameterList("params"));
 
   // Create discretization object
-  Teuchos::RCP<Teuchos::ParameterList> disc_params =
-      Teuchos::sublist(params, "Discretization");
+  Teuchos::RCP<Teuchos::ParameterList>
+  disc_params = Teuchos::sublist(params, "Discretization");
 
   //set Method to Exodus and set input file name
   disc_params->set<std::string>("Method", "Exodus");
@@ -879,10 +839,10 @@ ConnectivityArray::ConnectivityArray(
 
 
   Teuchos::RCP<Teuchos_Comm> 
-  communicatorT = Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
+  communicator = Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
   Albany::DiscretizationFactory
-  disc_factory(params, communicatorT);
+  disc_factory(params, communicator);
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>
   mesh_specs = disc_factory.createMeshSpecs();
@@ -896,7 +856,9 @@ ConnectivityArray::ConnectivityArray(
   Teuchos::RCP<Albany::StateInfoStruct>
   state_info = Teuchos::rcp(new Albany::StateInfoStruct());
 
-  StateStruct::FieldDims dims;
+  StateStruct::FieldDims
+  dims;
+
   // State has 1 quad point (i.e. element variable)
   dims.push_back(workset_size);
   dims.push_back(1);
@@ -913,7 +875,8 @@ ConnectivityArray::ConnectivityArray(
   dimension_ = mesh_specs[0]->numDim;
 
   // Dimensioned: Workset, Cell, Local Node
-  const auto& element_connectivity = discretization_ptr_->getWsElNodeEqID();
+  auto const&
+  element_connectivity = discretization_ptr_->getWsElNodeEqID();
 
   Teuchos::ArrayRCP<double>
   coordinates = discretization_ptr_->getCoordinates();
@@ -921,7 +884,7 @@ ConnectivityArray::ConnectivityArray(
   // For higher-order elements, mid-nodes are ignored and only
   // the nodes at the corners of the element are considered
   // to define the topology.
-  const CellTopologyData
+  CellTopologyData const
   cell_topology = mesh_specs[0]->ctd;
 
   minitensor::Index const
@@ -938,9 +901,13 @@ ConnectivityArray::ConnectivityArray(
   Teuchos::ArrayRCP<int>::size_type
   nodes_per_element = element_connectivity[0].dimension(1);
 
-  // Do some logic so we can get from unknown ID to node ID
-  int const number_equations = element_connectivity[0].dimension(2);
-  int stride = 1;
+  // Go from unknown ID to node ID
+  int const
+  number_equations = element_connectivity[0].dimension(2);
+
+  int
+  stride = 1;
+
   if (number_equations > 1) {
     if (element_connectivity[0](0,0,0) + 1 ==
         element_connectivity[0](0,0,1)) {
@@ -954,12 +921,10 @@ ConnectivityArray::ConnectivityArray(
   Teuchos::ArrayRCP<double>::size_type
   number_nodes = coordinates.size() / dimension;
 
-  for (Teuchos::ArrayRCP<double>::size_type
-  node = 0;
-      node < number_nodes;
-      ++node) {
+  for (size_t node = 0; node < number_nodes; ++node) {
 
-    minitensor::Vector<double> point(0.0, 0.0, 0.0);
+    minitensor::Vector<double>
+    point(0.0, 0.0, 0.0);
 
     for (minitensor::Index j = 0; j < dimension; ++j) {
       point(j) = coordinates[node * dimension + j];
@@ -980,17 +945,14 @@ ConnectivityArray::ConnectivityArray(
   for (workset = 0; workset < element_connectivity.size(); ++workset) {
 
     for (Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>::size_type
-    cell = 0;
-        cell < element_connectivity[workset].dimension(0);
+    cell = 0; cell < element_connectivity[workset].dimension(0);
         ++cell, ++element_number) {
 
       IDList
       nodes_element(nodes_per_element);
 
-      for (Teuchos::ArrayRCP<int>::size_type
-      node = 0;
-          node < vertices_per_element;
-          ++node) {
+      for (Teuchos::ArrayRCP<int>::size_type node = 0;
+          node < vertices_per_element; ++node) {
 
         // Get node ID from first unknown ID by dividing by stride
         nodes_element[node] =
@@ -1011,7 +973,7 @@ ConnectivityArray::ConnectivityArray(
 // \return Number of nodes on the array
 //
 minitensor::Index
-ConnectivityArray::GetNumberNodes() const
+ConnectivityArray::getNumberNodes() const
 {
   return nodes_.size();
 }
@@ -1020,7 +982,7 @@ ConnectivityArray::GetNumberNodes() const
 // \return Number of elements in the array
 //
 minitensor::Index
-ConnectivityArray::GetNumberElements() const
+ConnectivityArray::getNumberElements() const
 {
   return connectivity_.size();
 }
@@ -1029,7 +991,7 @@ ConnectivityArray::GetNumberElements() const
 // \return Space dimension
 //
 minitensor::Index
-ConnectivityArray::GetDimension() const
+ConnectivityArray::getDimension() const
 {
   return dimension_;
 }
@@ -1038,7 +1000,7 @@ ConnectivityArray::GetDimension() const
 // \return K-means tolerance
 //
 double
-ConnectivityArray::GetTolerance() const
+ConnectivityArray::getTolerance() const
 {
   return tolerance_;
 }
@@ -1047,7 +1009,7 @@ ConnectivityArray::GetTolerance() const
 // \return requested cell size for voxelization
 //
 double
-ConnectivityArray::GetCellSize() const
+ConnectivityArray::getCellSize() const
 {
   return requested_cell_size_;
 }
@@ -1056,7 +1018,7 @@ ConnectivityArray::GetCellSize() const
 // \return maximum iterations for K-means
 //
 minitensor::Index
-ConnectivityArray::GetMaximumIterations() const
+ConnectivityArray::getMaximumIterations() const
 {
   return maximum_iterations_;
 }
@@ -1065,7 +1027,7 @@ ConnectivityArray::GetMaximumIterations() const
 // \param K-means tolerance
 //
 void
-ConnectivityArray::SetTolerance(double tolerance)
+ConnectivityArray::setTolerance(double tolerance)
 {
   tolerance_ = tolerance;
 }
@@ -1074,7 +1036,7 @@ ConnectivityArray::SetTolerance(double tolerance)
 // \return requested cell size for voxelization
 //
 void
-ConnectivityArray::SetCellSize(double requested_cell_size)
+ConnectivityArray::setCellSize(double requested_cell_size)
 {
   requested_cell_size_ = requested_cell_size;
 }
@@ -1083,7 +1045,7 @@ ConnectivityArray::SetCellSize(double requested_cell_size)
 // \param maximum itearions for K-means
 //
 void
-ConnectivityArray::SetMaximumIterations(minitensor::Index maximum_iterarions)
+ConnectivityArray::setMaximumIterations(minitensor::Index maximum_iterarions)
 {
   maximum_iterations_ = maximum_iterarions;
 }
@@ -1092,7 +1054,7 @@ ConnectivityArray::SetMaximumIterations(minitensor::Index maximum_iterarions)
 // \param Initializer scheme
 //
 void
-ConnectivityArray::SetInitializerScheme(PARTITION::Scheme initializer_scheme)
+ConnectivityArray::setInitializerScheme(PARTITION::Scheme initializer_scheme)
 {
   initializer_scheme_ = initializer_scheme;
 }
@@ -1101,7 +1063,7 @@ ConnectivityArray::SetInitializerScheme(PARTITION::Scheme initializer_scheme)
 // \return Initializer scheme
 //
 PARTITION::Scheme
-ConnectivityArray::GetInitializerScheme() const
+ConnectivityArray::getInitializerScheme() const
 {
   return initializer_scheme_;
 }
@@ -1111,7 +1073,7 @@ ConnectivityArray::GetInitializerScheme() const
 // (assume same type for all elements)
 //
 minitensor::ELEMENT::Type
-ConnectivityArray::GetType() const
+ConnectivityArray::getType() const
 {
   return type_;
 }
@@ -1120,7 +1082,7 @@ ConnectivityArray::GetType() const
 // \return Node ID and associated point in space
 //
 PointMap
-ConnectivityArray::GetNodeList() const
+ConnectivityArray::getNodeList() const
 {
   return nodes_;
 }
@@ -1129,7 +1091,7 @@ ConnectivityArray::GetNodeList() const
 // \return Element - nodes connectivity
 //
 AdjacencyMap
-ConnectivityArray::GetConnectivity() const
+ConnectivityArray::getConnectivity() const
 {
   return connectivity_;
 }
@@ -1138,7 +1100,7 @@ ConnectivityArray::GetConnectivity() const
 // \return Albany abstract discretization corresponding to array
 //
 Albany::AbstractDiscretization &
-ConnectivityArray::GetDiscretization()
+ConnectivityArray::getDiscretization()
 {
   return (*discretization_ptr_.get());
 }
@@ -1148,12 +1110,12 @@ ConnectivityArray::GetDiscretization()
 // (assume same type for all elements)
 //
 minitensor::Index
-ConnectivityArray::GetNodesPerElement() const
+ConnectivityArray::getNodesPerElement() const
 {
   minitensor::Index
-  nodes_per_element;
+  nodes_per_element{0};
 
-  switch (GetType()) {
+  switch (getType()) {
 
   default:
     std::cerr << "ERROR: Unknown element type in GetNodesPerElement()";
@@ -1190,27 +1152,23 @@ ConnectivityArray::GetNodesPerElement() const
 // \return Volume for each element
 //
 ScalarMap
-ConnectivityArray::GetVolumes() const
+ConnectivityArray::getVolumes() const
 {
-  ScalarMap volumes;
-  for (AdjacencyMap::const_iterator
-  elements_iter = connectivity_.begin();
-      elements_iter != connectivity_.end();
-      ++elements_iter) {
+  ScalarMap
+  volumes;
+
+  for (auto&& element_conn : connectivity_) {
 
     int const &
-    element = (*elements_iter).first;
+    element = element_conn.first;
 
     IDList const &
-    node_list = (*elements_iter).second;
+    node_list = element_conn.second;
 
     std::vector<minitensor::Vector<double>>
     points;
 
-    for (IDList::size_type
-    i = 0;
-        i < node_list.size();
-        ++i) {
+    for (IDList::size_type i = 0; i < node_list.size(); ++i) {
 
       PointMap::const_iterator
       nodes_iter = nodes_.find(node_list[i]);
@@ -1263,20 +1221,16 @@ ConnectivityArray::GetVolumes() const
 // \return Total volume of the array
 //
 double
-ConnectivityArray::GetVolume() const
+ConnectivityArray::getVolume() const
 {
-  double volume = 0.0;
+  double
+  volume = 0.0;
 
   const ScalarMap
-  volumes = GetVolumes();
+  volumes = getVolumes();
 
-  for (ScalarMap::const_iterator
-  volumes_iter = volumes.begin();
-      volumes_iter != volumes.end();
-      ++volumes_iter) {
-
-    volume += (*volumes_iter).second;
-
+  for (auto&& partition_volume : volumes) {
+    volume += partition_volume.second;
   }
 
   return volume;
@@ -1286,7 +1240,7 @@ ConnectivityArray::GetVolume() const
 // \return Partitions when partitioned
 //
 std::map<int, int>
-ConnectivityArray::GetPartitions() const
+ConnectivityArray::getPartitions() const
 {
   return partitions_;
 }
@@ -1295,23 +1249,21 @@ ConnectivityArray::GetPartitions() const
 // \return Volume for each partition when partitioned
 //
 ScalarMap
-ConnectivityArray::GetPartitionVolumes() const
+ConnectivityArray::getPartitionVolumes() const
 {
   std::map<int, int>
-  partitions = GetPartitions();
+  partitions = getPartitions();
 
   ScalarMap
-  volumes = GetVolumes();
+  volumes = getVolumes();
 
   ScalarMap
   partition_volumes;
 
-  for (std::map<int, int>::const_iterator part_iter = partitions.begin();
-      part_iter != partitions.end();
-      ++part_iter) {
+  for (auto&& element_partition : partitions) {
 
-    int element = (*part_iter).first;
-    int partition = (*part_iter).second;
+    int element = element_partition.first;
+    int partition = element_partition.second;
 
     ScalarMap::const_iterator
     volumes_iterator = volumes.find(element);
@@ -1341,16 +1293,16 @@ ConnectivityArray::GetPartitionVolumes() const
 // \return Partition centroids
 //
 std::vector<minitensor::Vector<double>>
-ConnectivityArray::GetPartitionCentroids() const
+ConnectivityArray::getPartitionCentroids() const
 {
   std::map<int, int>
-  partitions = GetPartitions();
+  partitions = getPartitions();
 
   ScalarMap
-  element_volumes = GetVolumes();
+  element_volumes = getVolumes();
 
   ScalarMap
-  partition_volumes = GetPartitionVolumes();
+  partition_volumes = getPartitionVolumes();
 
   minitensor::Index const
   number_partitions = partition_volumes.size();
@@ -1359,24 +1311,21 @@ ConnectivityArray::GetPartitionCentroids() const
   partition_centroids(number_partitions);
 
   for (minitensor::Index i = 0; i < number_partitions; ++i) {
-    partition_centroids[i].set_dimension(GetDimension());
+    partition_centroids[i].set_dimension(getDimension());
     partition_centroids[i].clear();
   }
 
   // Determine number of nodes that define element topology
   minitensor::Index const
-  nodes_per_element = GetNodesPerElement();
+  nodes_per_element = getNodesPerElement();
 
-  for (std::map<int, int>::const_iterator partitions_iterator =
-      partitions.begin();
-      partitions_iterator != partitions.end();
-      ++partitions_iterator) {
+  for (auto&& element_partition : partitions) {
 
     int
-    element = (*partitions_iterator).first;
+    element = element_partition.first;
 
     int
-    partition = (*partitions_iterator).second;
+    partition = element_partition.second;
 
     AdjacencyMap::const_iterator
     elements_iterator = connectivity_.find(element);
@@ -1434,31 +1383,25 @@ ConnectivityArray::GetPartitionCentroids() const
 // \return Centroids for each element
 //
 PointMap
-ConnectivityArray::GetCentroids() const
+ConnectivityArray::getCentroids() const
 {
   PointMap
   centroids;
 
-  for (AdjacencyMap::const_iterator
-  elements_iter = connectivity_.begin();
-      elements_iter != connectivity_.end();
-      ++elements_iter) {
+  for (auto&& element_conn : connectivity_) {
 
     // Get an element
     int const &
-    element = (*elements_iter).first;
+    element = element_conn.first;
 
     IDList const &
-    node_list = (*elements_iter).second;
+    node_list = element_conn.second;
 
     std::vector<minitensor::Vector<double>>
     points;
 
     // Collect element nodes
-    for (IDList::size_type
-    i = 0;
-        i < node_list.size();
-        ++i) {
+    for (IDList::size_type i = 0; i < node_list.size(); ++i) {
 
       int const
       node = node_list[i];
@@ -1490,13 +1433,10 @@ ConnectivityArray::GetCentroids() const
 /// \return Bounding box for all nodes
 ///
 std::pair<minitensor::Vector<double>, minitensor::Vector<double>>
-ConnectivityArray::BoundingBox() const
+ConnectivityArray::boundingBox() const
 {
-  PointMap::const_iterator
-  it = nodes_.begin();
-
   minitensor::Vector<double>
-  min = (*it).second;
+  min = nodes_.begin()->second;
 
   minitensor::Vector<double>
   max = min;
@@ -1504,18 +1444,15 @@ ConnectivityArray::BoundingBox() const
   minitensor::Index const
   N = min.get_dimension();
 
-  ++it;
-
-  for (; it != nodes_.end(); ++it) {
+  for (auto&& id_node : nodes_) {
 
     minitensor::Vector<double> const &
-    node = (*it).second;
+    node = id_node.second;
 
     for (minitensor::Index i = 0; i < N; ++i) {
       min(i) = std::min(min(i), node(i));
       max(i) = std::max(max(i), node(i));
     }
-
   }
 
   return std::make_pair(min, max);
@@ -1583,27 +1520,16 @@ parametric_limits(minitensor::ELEMENT::Type const element_type)
 // \return points inside the domain.
 //
 std::vector<minitensor::Vector<double>>
-ConnectivityArray::CreateGrid()
+ConnectivityArray::createGrid()
 {
   std::cout << '\n';
   std::cout << "Creating background mesh ..." << '\n';
 
-  //
-  // First determine the maximum dimension of the bounding box.
-  //
-  minitensor::Vector<double>
-  lower_corner;
-
-  minitensor::Vector<double>
-  upper_corner;
-
-  boost::tie(lower_corner, upper_corner) = BoundingBox();
-
   minitensor::Vector<double> const
-  bounding_box_span = upper_corner - lower_corner;
+  bounding_box_span = upper_corner_ - lower_corner_;
 
   minitensor::Index const
-  dimension = lower_corner.get_dimension();
+  dimension = lower_corner_.get_dimension();
 
   double
   maximum_dimension = 0.0;
@@ -1613,13 +1539,13 @@ ConnectivityArray::CreateGrid()
   }
 
   double const
-  delta = GetCellSize();
+  delta = getCellSize();
 
   //
-  // Determine number of cells for each dimension.
+  // Determine number of points for each dimension.
   //
   minitensor::Vector<minitensor::Index>
-  cells_per_dimension(dimension);
+  points_per_dim(dimension);
 
   cell_size_.set_dimension(dimension);
 
@@ -1628,41 +1554,37 @@ ConnectivityArray::CreateGrid()
     minitensor::Index const
     number_cells = std::ceil((bounding_box_span(i)) / delta);
 
-    cells_per_dimension(i) = number_cells;
+    points_per_dim(i) = number_cells + 1;
     cell_size_(i) = bounding_box_span(i) / number_cells;
-
   }
 
   //
-  // Set up the cell array.
+  // Set up the grid array.
   // Generalization to N dimensions fails here.
   // This is specific to 3D.
   //
-  cells_.resize(cells_per_dimension(0));
-  for (minitensor::Index i = 0; i < cells_per_dimension(0); ++i) {
-    cells_[i].resize(cells_per_dimension(1));
-    for (minitensor::Index j = 0; j < cells_per_dimension(1); ++j) {
-      cells_[i][j].resize(cells_per_dimension(2));
-      for (minitensor::Index k = 0; k < cells_per_dimension(2); ++k) {
-        cells_[i][j][k] = false;
+  grid_.resize(points_per_dim(0));
+  for (minitensor::Index i = 0; i < points_per_dim(0); ++i) {
+    grid_[i].resize(points_per_dim(1));
+    for (minitensor::Index j = 0; j < points_per_dim(1); ++j) {
+      grid_[i][j].resize(points_per_dim(2));
+      for (minitensor::Index k = 0; k < points_per_dim(2); ++k) {
+        grid_[i][j][k] = false;
       }
     }
   }
 
   // Iterate through elements to set array.
   minitensor::Index const
-  nodes_per_element = GetNodesPerElement();
+  nodes_per_element = getNodesPerElement();
 
   minitensor::Index const
   number_of_elements = connectivity_.size();
 
-  for (AdjacencyMap::const_iterator
-  elements_iter = connectivity_.begin();
-      elements_iter != connectivity_.end();
-      ++elements_iter) {
+  for (auto&& element_conn : connectivity_) {
 
     int const
-    element = (*elements_iter).first;
+    element = element_conn.first;
 
     if ((element + 1) % 10000 == 0) {
       std::cout << "Processing element: " << element + 1;
@@ -1670,14 +1592,12 @@ ConnectivityArray::CreateGrid()
     }
 
     IDList const &
-    node_list = (*elements_iter).second;
+    node_list = element_conn.second;
 
     std::vector<minitensor::Vector<double>>
     element_nodes;
 
-    for (IDList::size_type i = 0;
-        i < nodes_per_element;
-        ++i) {
+    for (IDList::size_type i = 0; i < nodes_per_element; ++i) {
 
       PointMap::const_iterator
       nodes_iter = nodes_.find(node_list[i]);
@@ -1685,7 +1605,6 @@ ConnectivityArray::CreateGrid()
       ALBANY_EXPECT(nodes_iter != nodes_.end());
 
       element_nodes.push_back((*nodes_iter).second);
-
     }
 
     minitensor::Vector<double>
@@ -1694,9 +1613,9 @@ ConnectivityArray::CreateGrid()
     minitensor::Vector<double>
     max;
 
-    boost::tie(min, max) =
-        minitensor::bounding_box<double>(element_nodes.begin(),
-            element_nodes.end());
+    boost::tie(min, max) = minitensor::bounding_box<double>(
+        element_nodes.begin(),
+        element_nodes.end());
 
     minitensor::Vector<double> const
     element_span = max - min;
@@ -1707,17 +1626,20 @@ ConnectivityArray::CreateGrid()
     // Determine number of divisions on each dimension.
     // One division if voxel is large.
     for (minitensor::Index i = 0; i < dimension; ++i) {
-      divisions(i) =
-          cell_size_(i) > element_span(i) ?
-              1 :
-              2.0 * element_span(i) / cell_size_(i) + 0.5;
+      bool const
+      is_big_voxel = cell_size_(i) > element_span(i);
+
+      double const
+      num_divs = 2.0 * element_span(i) / cell_size_(i) + 0.5;
+
+      divisions(i) = is_big_voxel == true ? 1 : num_divs;
     }
 
     // Generate points inside the element according to
     // the divisions and mark the corresponding voxel
     // as being inside the domain.
     minitensor::ELEMENT::Type
-    element_type = GetType();
+    element_type = getType();
 
     minitensor::Index
     parametric_dimension = 3;
@@ -1742,31 +1664,48 @@ ConnectivityArray::CreateGrid()
     xi(parametric_dimension);
 
     for (minitensor::Index i = 0; i <= divisions(0); ++i) {
-      xi(0) = origin(0) + double(i) / divisions(0) * parametric_size;
+      double const
+      r = origin(0) + double(i) / divisions(0) * parametric_size;
+      ALBANY_ASSERT(lower_limit <= r && r <= 1.0);
+      xi(0) = r;
       for (minitensor::Index j = 0; j <= divisions(1); ++j) {
-        xi(1) = origin(1) + double(j) / divisions(1) * parametric_size;
+        double const
+        s = origin(1) + double(j) / divisions(1) * parametric_size;
+        ALBANY_ASSERT(lower_limit <= s && s <= 1.0);
+        xi(1) = s;
         for (minitensor::Index k = 0; k <= divisions(2); ++k) {
-          xi(2) = origin(2) + double(k) / divisions(2) * parametric_size;
+          double const
+          t = origin(2) + double(k) / divisions(2) * parametric_size;
+          ALBANY_ASSERT(lower_limit <= t && t <= 1.0);
+          xi(2) = t;
+
+          // For simplices, skip if the last parametric coordinate
+          // is negative to avoid extrapolation outside the element.
+          bool const
+          is_triangle = element_type == minitensor::ELEMENT::TRIANGULAR;
+
+          if (is_triangle == true) {
+            double const
+            last = 1.0 - r - s;
+            if (last < 0.0) continue;
+          }
+
+          bool const
+          is_tetra = element_type == minitensor::ELEMENT::TETRAHEDRAL;
+
+          if (is_tetra == true) {
+            double const
+            last = 1.0 - r - s - t;
+            if (last < 0.0) continue;
+          }
+
           minitensor::Vector<double>
           p = interpolate_element(element_type, xi, element_nodes);
-          for (minitensor::Index l = 0; l < dimension; ++l) {
-            p(l) = std::max(p(l), lower_corner(l));
-            p(l) = std::min(p(l), upper_corner(l));
-          }
 
           minitensor::Vector<int>
-          index = PointToIndex(p);
+          index = pointToIndex(p);
 
-          for (minitensor::Index l = 0; l < dimension; ++l) {
-            ALBANY_EXPECT(index(l) >= 0);
-            ALBANY_EXPECT(index(l) <= int(cells_per_dimension(l)));
-
-            if (index(l) == int(cells_per_dimension(l))) {
-              --index(l);
-            }
-          }
-
-          cells_[index(0)][index(1)][index(2)] = true;
+          grid_[index(0)][index(1)][index(2)] = true;
         }
       }
     }
@@ -1778,34 +1717,37 @@ ConnectivityArray::CreateGrid()
   std::vector<minitensor::Vector<double>>
   domain_points;
 
-  std::ofstream ofs("cells.csv");
-  ofs << "X, Y, Z, I" << '\n';
-  minitensor::Vector<double> p(dimension);
+  std::ofstream
+  in_ofs("in.csv");
 
-  for (minitensor::Index i = 0; i < cells_per_dimension(0); ++i) {
-    p(0) = (i + 0.5) * bounding_box_span(0) / cells_per_dimension(0) +
-        lower_corner(0);
-    for (minitensor::Index j = 0; j < cells_per_dimension(1); ++j) {
-      p(1) = (j + 0.5) * bounding_box_span(1) / cells_per_dimension(1) +
-          lower_corner(1);
-      for (minitensor::Index k = 0; k < cells_per_dimension(2); ++k) {
-        p(2) = (k + 0.5) * bounding_box_span(2) / cells_per_dimension(2) +
-            lower_corner(2);
+  std::ofstream
+  out_ofs("out.csv");
 
-        if (cells_[i][j][k] == true) {
+  in_ofs << "X, Y, Z" << '\n';
+  out_ofs << "X, Y, Z" << '\n';
+
+  minitensor::Vector<double>
+  p(dimension);
+
+  for (minitensor::Index i = 0; i < points_per_dim(0); ++i) {
+    p(0) = i * cell_size_(0) + lower_corner_(0);
+    for (minitensor::Index j = 0; j < points_per_dim(1); ++j) {
+      p(1) = j * cell_size_(1) + lower_corner_(1);
+      for (minitensor::Index k = 0; k < points_per_dim(2); ++k) {
+        p(2) = k * cell_size_(2) + lower_corner_(2);
+        if (grid_[i][j][k] == true) {
           domain_points.push_back(p);
+          in_ofs << p << '\n';
+        } else {
+          out_ofs << p << '\n';
         }
-
-        ofs << p << "," << cells_[i][j][k] << '\n';
       }
     }
   }
 
   minitensor::Index const
   number_generated_points =
-      cells_per_dimension(0) *
-          cells_per_dimension(1) *
-          cells_per_dimension(2);
+      points_per_dim(0) * points_per_dim(1) * points_per_dim(2);
 
   minitensor::Index const
   number_points_in_domain = domain_points.size();
@@ -1830,16 +1772,16 @@ ConnectivityArray::CreateGrid()
 // Convert point to index into voxel array
 //
 minitensor::Vector<int>
-ConnectivityArray::PointToIndex(minitensor::Vector<double> const & point) const
-    {
+ConnectivityArray::pointToIndex(minitensor::Vector<double> const & point) const
+{
   int const
-  i = (point(0) - lower_corner_(0)) / cell_size_(0);
+  i = round((point(0) - lower_corner_(0)) / cell_size_(0));
 
   int const
-  j = (point(1) - lower_corner_(1)) / cell_size_(1);
+  j = round((point(1) - lower_corner_(1)) / cell_size_(1));
 
   int const
-  k = (point(2) - lower_corner_(2)) / cell_size_(2);
+  k = round((point(2) - lower_corner_(2)) / cell_size_(2));
 
   return minitensor::Vector<int>(i, j, k);
 }
@@ -1849,43 +1791,36 @@ ConnectivityArray::PointToIndex(minitensor::Vector<double> const & point) const
 // 3D only for now.
 //
 bool
-ConnectivityArray::IsInsideMesh(minitensor::Vector<double> const & point) const
-    {
-  int
-  i = (point(0) - lower_corner_(0)) / cell_size_(0);
-
-  int
-  j = (point(1) - lower_corner_(1)) / cell_size_(1);
-
-  int
-  k = (point(2) - lower_corner_(2)) / cell_size_(2);
+ConnectivityArray::isInsideMesh(minitensor::Vector<double> const & point) const
+{
+  minitensor::Vector<int> const
+  index = pointToIndex(point);
 
   int const
-  x_size = cells_.size();
+  i = index(0);
 
   int const
-  y_size = cells_[0].size();
+  x_size = grid_.size();
+
+  if (i < 0 || i >= x_size) return false;
 
   int const
-  z_size = cells_[0][0].size();
+  j = index(1);
 
-  if (i < 0 || i > x_size) {
-    return false;
-  }
+  int const
+  y_size = grid_[0].size();
 
-  if (j < 0 || j > y_size) {
-    return false;
-  }
+  if (j < 0 || j >= y_size) return false;
 
-  if (k < 0 || k > z_size) {
-    return false;
-  }
+  int const
+  k = index(2);
 
-  if (i == x_size) --i;
-  if (j == y_size) --j;
-  if (k == z_size) --k;
+  int const
+  z_size = grid_[0][0].size();
 
-  return cells_[i][j][k];
+  if (k < 0 || k >= z_size) return false;
+
+  return grid_[i][j][k];
 }
 
 //
@@ -1895,9 +1830,9 @@ ConnectivityArray::IsInsideMesh(minitensor::Vector<double> const & point) const
 // be used on a faster method.
 //
 bool
-ConnectivityArray::IsInsideMeshByElement(
+ConnectivityArray::isInsideMeshByElement(
     minitensor::Vector<double> const & point) const
-    {
+{
 
   // Check bounding box first
   if (in_box(point, lower_corner_, upper_corner_) == false) {
@@ -1905,43 +1840,33 @@ ConnectivityArray::IsInsideMeshByElement(
   }
 
   // Now check element by element
-  for (AdjacencyMap::const_iterator
-  elements_iter = connectivity_.begin();
-      elements_iter != connectivity_.end();
-      ++elements_iter) {
+  for (auto&& element_nodes : connectivity_) {
 
     IDList const &
-    node_list = (*elements_iter).second;
+    node_list = element_nodes.second;
 
     std::vector<minitensor::Vector<double>>
-    node;
+    nodes;
 
-    for (IDList::size_type
-    i = 0;
-        i < node_list.size();
-        ++i) {
+    for (IDList::size_type i = 0; i < node_list.size(); ++i) {
 
       PointMap::const_iterator
       nodes_iter = nodes_.find(node_list[i]);
 
       ALBANY_EXPECT(nodes_iter != nodes_.end());
-      node.push_back((*nodes_iter).second);
-
+      nodes.push_back((*nodes_iter).second);
     }
 
     switch (type_) {
 
     case minitensor::ELEMENT::TETRAHEDRAL:
-      if (in_tetrahedron(point, node[0], node[1], node[2], node[3]) == true) {
-        return true;
-      }
+      return in_tetrahedron(point, nodes[0], nodes[1], nodes[2], nodes[3]);
       break;
 
     case minitensor::ELEMENT::HEXAHEDRAL:
-      if (in_hexahedron(point, node[0], node[1], node[2], node[3],
-          node[4], node[5], node[6], node[7])) {
-        return true;
-      }
+      return in_hexahedron(
+          point, nodes[0], nodes[1], nodes[2], nodes[3],
+          nodes[4], nodes[5], nodes[6], nodes[7]);
       break;
 
     default:
@@ -1950,7 +1875,6 @@ ConnectivityArray::IsInsideMeshByElement(
       break;
 
     }
-
   }
 
   return false;
@@ -1963,14 +1887,14 @@ ConnectivityArray::IsInsideMeshByElement(
 // of the array divided by the cube of the length scale
 //
 minitensor::Index
-ConnectivityArray::GetNumberPartitions(double const length_scale) const
-    {
+ConnectivityArray::getNumberPartitions(double const length_scale) const
+{
   double const
   ball_volume = length_scale * length_scale * length_scale;
 
   minitensor::Index const
   number_partitions =
-      static_cast<minitensor::Index>(round(GetVolume() / ball_volume));
+      static_cast<minitensor::Index>(round(getVolume() / ball_volume));
 
   return number_partitions;
 }
@@ -2038,12 +1962,9 @@ RenumberPartitions(std::map<int, int> const & old_partitions)
   std::set<int>
   partitions_set;
 
-  for (std::map<int, int>::const_iterator it = old_partitions.begin();
-      it != old_partitions.end();
-      ++it) {
-
+  for (auto&& element_partition : old_partitions) {
     int const
-    partition = (*it).second;
+    partition = element_partition.second;
 
     partitions_set.insert(partition);
   }
@@ -2060,32 +1981,20 @@ RenumberPartitions(std::map<int, int> const & old_partitions)
   int
   partition_index = 0;
 
-  for (std::set<int>::const_iterator it = partitions_set.begin();
-      it != partitions_set.end();
-      ++it) {
-
-    int const
-    partition = (*it);
-
+  for (auto&& partition : partitions_set) {
     partition_map[partition] = partition_index;
-
     ++partition_index;
-
   }
 
   std::map<int, int>
   new_partitions;
 
-  for (std::map<int, int>::const_iterator it = old_partitions.begin();
-      it != old_partitions.end();
-      ++it) {
+  for (auto&& element_partition : old_partitions) {
+    int const
+    element = element_partition.first;
 
     int const
-    element = (*it).first;
-
-    int const
-    old_partition = (*it).second;
-
+    old_partition = element_partition.second;
     int const
     partition_index = partition_map[old_partition];
 
@@ -2093,7 +2002,6 @@ RenumberPartitions(std::map<int, int> const & old_partitions)
     new_partition = partition_shuffle[partition_index];
 
     new_partitions[element] = new_partition;
-
   }
 
   return new_partitions;
@@ -2102,28 +2010,25 @@ RenumberPartitions(std::map<int, int> const & old_partitions)
 } // anonymous namespace
 
 void
-ConnectivityArray::CheckNullVolume() const
+ConnectivityArray::checkNullVolume() const
 {
   ScalarMap const
-  partition_volumes = GetPartitionVolumes();
+  partition_volumes = getPartitionVolumes();
 
   std::vector<minitensor::Index>
   zero_volume;
 
-  for (ScalarMap::const_iterator it = partition_volumes.begin();
-      it != partition_volumes.end();
-      ++it) {
+  for (auto&& partition_volume : partition_volumes) {
 
     minitensor::Index const
-    partition = (*it).first;
+    partition = partition_volume.first;
 
     double const
-    volume = (*it).second;
+    volume = partition_volume.second;
 
     if (volume == 0.0) {
       zero_volume.push_back(partition);
     }
-
   }
 
   minitensor::Index const
@@ -2155,38 +2060,37 @@ ConnectivityArray::CheckNullVolume() const
 // \return Partition number for each element
 //
 std::map<int, int>
-ConnectivityArray::Partition(
+ConnectivityArray::partition(
     const PARTITION::Scheme partition_scheme,
     double const length_scale)
 {
-
   std::map<int, int>
   partitions;
 
   switch (partition_scheme) {
 
-  case PARTITION::RANDOM:
-    partitions = PartitionRandom(length_scale);
+  case PARTITION::Scheme::RANDOM:
+    partitions = partitionRandom(length_scale);
     break;
 
-  case PARTITION::HYPERGRAPH:
-    partitions = PartitionHyperGraph(length_scale);
+  case PARTITION::Scheme::HYPERGRAPH:
+    partitions = partitionHyperGraph(length_scale);
     break;
 
-  case PARTITION::GEOMETRIC:
-    partitions = PartitionGeometric(length_scale);
+  case PARTITION::Scheme::GEOMETRIC:
+    partitions = partitionGeometric(length_scale);
     break;
 
-  case PARTITION::KMEANS:
-    partitions = PartitionKMeans(length_scale);
+  case PARTITION::Scheme::KMEANS:
+    partitions = partitionKMeans(length_scale);
     break;
 
-  case PARTITION::SEQUENTIAL:
-    partitions = PartitionSequential(length_scale);
+  case PARTITION::Scheme::SEQUENTIAL:
+    partitions = partitionSequential(length_scale);
     break;
 
-  case PARTITION::KDTREE:
-    partitions = PartitionKDTree(length_scale);
+  case PARTITION::Scheme::KDTREE:
+    partitions = partitionKDTree(length_scale);
     break;
 
   default:
@@ -2196,13 +2100,12 @@ ConnectivityArray::Partition(
 
   }
 
-  CheckNullVolume();
+  checkNullVolume();
 
   // Store for use by other methods
   partitions_ = RenumberPartitions(partitions);
 
   return partitions_;
-
 }
 
 //
@@ -2211,7 +2114,7 @@ ConnectivityArray::Partition(
 // closest center to its centroid
 //
 std::map<int, int>
-ConnectivityArray::PartitionByCenters(
+ConnectivityArray::partitionByCenters(
     std::vector<minitensor::Vector<double>> const & centers)
 {
   minitensor::Index const
@@ -2232,21 +2135,19 @@ ConnectivityArray::PartitionByCenters(
 
   // Determine number of nodes that define element topology
   minitensor::Index const
-  nodes_per_element = GetNodesPerElement();
+  nodes_per_element = getNodesPerElement();
 
   std::ofstream centroids_ofs("centroids.csv");
 
   centroids_ofs << "X,Y,Z" << '\n';
-  for (AdjacencyMap::const_iterator
-  elements_iter = connectivity_.begin();
-      elements_iter != connectivity_.end();
-      ++elements_iter) {
+
+  for (auto&& element_conn : connectivity_) {
 
     int const &
-    element = (*elements_iter).first;
+    element = element_conn.first;
 
     IDList const &
-    node_list = (*elements_iter).second;
+    node_list = element_conn.second;
 
     std::vector<minitensor::Vector<double>>
     element_nodes;
@@ -2285,11 +2186,8 @@ ConnectivityArray::PartitionByCenters(
     std::cout << "WARNING: The following partitions were not" << '\n';
     std::cout << "assigned any elements (mesh too coarse?):" << '\n';
 
-    for (std::set<minitensor::Index>::const_iterator it = unassigned_partitions
-        .begin();
-        it != unassigned_partitions.end();
-        ++it) {
-      std::cout << (*it) << '\n';
+    for (auto&& unassigned : unassigned_partitions) {
+      std::cout << unassigned << '\n';
     }
 
   }
@@ -2301,7 +2199,6 @@ ConnectivityArray::PartitionByCenters(
   }
 
   return partitions;
-
 }
 
 //
@@ -2311,11 +2208,11 @@ ConnectivityArray::PartitionByCenters(
 // \return Partition number for each element
 //
 std::map<int, int>
-ConnectivityArray::PartitionHyperGraph(double const length_scale)
+ConnectivityArray::partitionHyperGraph(double const length_scale)
 {
   // Zoltan setup
   int const
-  number_partitions = GetNumberPartitions(length_scale);
+  number_partitions = getNumberPartitions(length_scale);
 
   std::stringstream
   ioss;
@@ -2353,19 +2250,19 @@ ConnectivityArray::PartitionHyperGraph(double const length_scale)
 
   // Set up hypergraph
   zoltan.Set_Num_Obj_Fn(
-      LCM::ZoltanHyperGraph::GetNumberOfObjects,
+      LCM::ZoltanHyperGraph::getNumberOfObjects,
       &zoltan_hypergraph);
 
   zoltan.Set_Obj_List_Fn(
-      LCM::ZoltanHyperGraph::GetObjectList,
+      LCM::ZoltanHyperGraph::getObjectList,
       &zoltan_hypergraph);
 
   zoltan.Set_HG_Size_CS_Fn(
-      LCM::ZoltanHyperGraph::GetHyperGraphSize,
+      LCM::ZoltanHyperGraph::getHyperGraphSize,
       &zoltan_hypergraph);
 
   zoltan.Set_HG_CS_Fn(
-      LCM::ZoltanHyperGraph::GetHyperGraph,
+      LCM::ZoltanHyperGraph::getHyperGraph,
       &zoltan_hypergraph);
 
   int changes;
@@ -2408,15 +2305,12 @@ ConnectivityArray::PartitionHyperGraph(double const length_scale)
 
   // Initialize with zeros the partition map for all elements.
   const ScalarMap
-  vertex_weights = zoltan_hypergraph.GetVertexWeights();
+  vertex_weights = zoltan_hypergraph.getVertexWeights();
 
   // Fill up with results from Zoltan, which returns partitions for all
   // elements that belong to a partition > 0
-  for (ScalarMap::const_iterator
-  weights_iter = vertex_weights.begin();
-      weights_iter != vertex_weights.end();
-      ++weights_iter) {
-    int const vertex = (*weights_iter).first;
+  for (auto&& vertex_weight : vertex_weights) {
+    int const vertex = vertex_weight.first;
     partitions[vertex] = 0;
   }
 
@@ -2442,7 +2336,6 @@ ConnectivityArray::PartitionHyperGraph(double const length_scale)
       &export_to_part);
 
   return partitions;
-
 }
 
 //
@@ -2452,11 +2345,11 @@ ConnectivityArray::PartitionHyperGraph(double const length_scale)
 // \return Partition number for each element
 //
 std::map<int, int>
-ConnectivityArray::PartitionGeometric(double const length_scale)
+ConnectivityArray::partitionGeometric(double const length_scale)
 {
   // Zoltan setup
   int const
-  number_partitions = GetNumberPartitions(length_scale);
+  number_partitions = getNumberPartitions(length_scale);
 
   std::stringstream
   ioss;
@@ -2489,10 +2382,10 @@ ConnectivityArray::PartitionGeometric(double const length_scale)
   //
 
   // Set up recursive inertial bisection (RIB)
-  zoltan.Set_Num_Obj_Fn(LCM::ConnectivityArray::GetNumberOfObjects, this);
-  zoltan.Set_Obj_List_Fn(LCM::ConnectivityArray::GetObjectList, this);
-  zoltan.Set_Num_Geom_Fn(LCM::ConnectivityArray::GetNumberGeometry, this);
-  zoltan.Set_Geom_Multi_Fn(LCM::ConnectivityArray::GetGeometry, this);
+  zoltan.Set_Num_Obj_Fn(LCM::ConnectivityArray::getNumberOfObjects, this);
+  zoltan.Set_Obj_List_Fn(LCM::ConnectivityArray::getObjectList, this);
+  zoltan.Set_Num_Geom_Fn(LCM::ConnectivityArray::getNumberGeometry, this);
+  zoltan.Set_Geom_Multi_Fn(LCM::ConnectivityArray::getGeometry, this);
 
   int changes;
   int num_gid_entries;
@@ -2533,14 +2426,11 @@ ConnectivityArray::PartitionGeometric(double const length_scale)
   std::map<int, int> partitions;
 
   const ScalarMap
-  element_volumes = GetVolumes();
+  element_volumes = getVolumes();
 
   // Initialize with zeros the partition map for all elements.
-  for (ScalarMap::const_iterator
-  volumes_iter = element_volumes.begin();
-      volumes_iter != element_volumes.end();
-      ++volumes_iter) {
-    int const element = (*volumes_iter).first;
+  for (auto&& element_volume : element_volumes) {
+    int const element = element_volume.first;
     partitions[element] = 0;
   }
 
@@ -2552,7 +2442,6 @@ ConnectivityArray::PartitionGeometric(double const length_scale)
   }
 
   return partitions;
-
 }
 
 //
@@ -2562,7 +2451,7 @@ ConnectivityArray::PartitionGeometric(double const length_scale)
 // \return Partition number for each element
 //
 std::map<int, int>
-ConnectivityArray::PartitionKMeans(double const length_scale)
+ConnectivityArray::partitionKMeans(double const length_scale)
 {
   //
   // Create initial centers
@@ -2572,14 +2461,14 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
 
   // Partition with initializer
   PARTITION::Scheme const
-  initializer_scheme = GetInitializerScheme();
+  initializer_scheme = getInitializerScheme();
 
-  Partition(initializer_scheme, length_scale);
+  partition(initializer_scheme, length_scale);
 
   // Compute partition centroids and use those as initial centers
 
   std::vector<minitensor::Vector<double>>
-  centers = GetPartitionCentroids();
+  centers = getPartitionCentroids();
 
   minitensor::Index const
   number_partitions = centers.size();
@@ -2590,13 +2479,13 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
   minitensor::Vector<double>
   upper_corner;
 
-  boost::tie(lower_corner, upper_corner) = BoundingBox();
+  boost::tie(lower_corner, upper_corner) = boundingBox();
 
   lower_corner_ = lower_corner;
   upper_corner_ = upper_corner;
 
   std::vector<minitensor::Vector<double>>
-  domain_points = CreateGrid();
+  domain_points = createGrid();
 
   //
   // K-means iteration
@@ -2604,7 +2493,7 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
   std::cout << "Main K-means Iteration." << '\n';
 
   minitensor::Index const
-  max_iterations = GetMaximumIterations();
+  max_iterations = getMaximumIterations();
 
   minitensor::Index
   number_iterations = 0;
@@ -2613,7 +2502,7 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
   diagonal_distance = norm(upper_corner - lower_corner);
 
   double const
-  tolerance = GetTolerance() * diagonal_distance;
+  tolerance = getTolerance() * diagonal_distance;
 
   double
   step_norm = diagonal_distance;
@@ -2684,12 +2573,11 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
     std::cout << '\n';
 
     ++number_iterations;
-
   }
 
   // Partition map.
   std::map<int, int>
-  partitions = PartitionByCenters(centers);
+  partitions = partitionByCenters(centers);
 
   return partitions;
 }
@@ -2701,7 +2589,7 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
 // \return Partition number for each element
 //
 std::map<int, int>
-ConnectivityArray::PartitionKDTree(double const length_scale)
+ConnectivityArray::partitionKDTree(double const length_scale)
 {
   //
   // Create initial centers
@@ -2711,14 +2599,14 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
 
   // Partition with initializer
   PARTITION::Scheme const
-  initializer_scheme = GetInitializerScheme();
+  initializer_scheme = getInitializerScheme();
 
-  Partition(initializer_scheme, length_scale);
+  partition(initializer_scheme, length_scale);
 
   // Compute partition centroids and use those as initial centers
 
   std::vector<minitensor::Vector<double>>
-  center_positions = GetPartitionCentroids();
+  center_positions = getPartitionCentroids();
 
   minitensor::Index const
   number_partitions = center_positions.size();
@@ -2740,13 +2628,13 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
   minitensor::Vector<double>
   upper_corner;
 
-  boost::tie(lower_corner, upper_corner) = BoundingBox();
+  boost::tie(lower_corner, upper_corner) = boundingBox();
 
   lower_corner_ = lower_corner;
   upper_corner_ = upper_corner;
 
   std::vector<minitensor::Vector<double>>
-  domain_points = CreateGrid();
+  domain_points = createGrid();
 
   //
   // Create KDTree
@@ -2754,16 +2642,14 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
   KDTree<KDTreeNode>
   kdtree(domain_points, number_partitions);
 
-  //TraverseTree(kdtree, OutputVisitor<boost::shared_ptr<KDTreeNode>>());
-
-  FilterVisitor<boost::shared_ptr<KDTreeNode>, ClusterCenter>
+  FilterVisitor<std::shared_ptr<KDTreeNode>, ClusterCenter>
   filter_visitor(domain_points, centers);
 
   //
   // K-means iteration
   //
   minitensor::Index const
-  max_iterations = GetMaximumIterations();
+  max_iterations = getMaximumIterations();
 
   minitensor::Index
   number_iterations = 0;
@@ -2772,7 +2658,7 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
   diagonal_distance = norm(upper_corner - lower_corner);
 
   double const
-  tolerance = GetTolerance() * GetCellSize();
+  tolerance = getTolerance() * getCellSize();
 
   double
   step_norm = diagonal_distance;
@@ -2795,7 +2681,7 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
       center.count = 0;
     }
 
-    TraverseTree(kdtree, filter_visitor);
+    traverseTree(kdtree, filter_visitor);
 
     // Update centers
     for (minitensor::Index i = 0; i < centers.size(); ++i) {
@@ -2836,10 +2722,9 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
 
   // Partition map.
   std::map<int, int>
-  partitions = PartitionByCenters(center_positions);
+  partitions = partitionByCenters(center_positions);
 
   return partitions;
-
 }
 
 //
@@ -2849,10 +2734,10 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
 // \return Partition number for each element
 //
 std::map<int, int>
-ConnectivityArray::PartitionSequential(double const length_scale)
+ConnectivityArray::partitionSequential(double const length_scale)
 {
   int const
-  number_partitions = GetNumberPartitions(length_scale);
+  number_partitions = getNumberPartitions(length_scale);
 
   minitensor::Vector<double>
   lower_corner;
@@ -2860,7 +2745,7 @@ ConnectivityArray::PartitionSequential(double const length_scale)
   minitensor::Vector<double>
   upper_corner;
 
-  boost::tie(lower_corner, upper_corner) = BoundingBox();
+  boost::tie(lower_corner, upper_corner) = boundingBox();
 
   lower_corner_ = lower_corner;
   upper_corner_ = upper_corner;
@@ -2871,14 +2756,14 @@ ConnectivityArray::PartitionSequential(double const length_scale)
 
   // Partition with initializer
   const PARTITION::Scheme
-  initializer_scheme = GetInitializerScheme();
+  initializer_scheme = getInitializerScheme();
 
-  Partition(initializer_scheme, length_scale);
+  partition(initializer_scheme, length_scale);
 
   // Compute partition centroids and use those as initial centers
 
   std::vector<minitensor::Vector<double>>
-  centers = GetPartitionCentroids();
+  centers = getPartitionCentroids();
 
   std::vector<minitensor::Index>
   weights(number_partitions);
@@ -2889,7 +2774,7 @@ ConnectivityArray::PartitionSequential(double const length_scale)
 
   // K-means sequential iteration
   minitensor::Index const
-  number_random_points = GetMaximumIterations() * number_partitions;
+  number_random_points = getMaximumIterations() * number_partitions;
 
   minitensor::Index const
   max_iterations = number_random_points;
@@ -2901,7 +2786,7 @@ ConnectivityArray::PartitionSequential(double const length_scale)
   diagonal_distance = norm(upper_corner - lower_corner);
 
   double const
-  tolerance = GetTolerance() * diagonal_distance;
+  tolerance = getTolerance() * diagonal_distance;
 
   std::vector<double>
   steps(number_partitions);
@@ -2926,7 +2811,7 @@ ConnectivityArray::PartitionSequential(double const length_scale)
 
     while (is_point_in_domain == false) {
       random_point = random_in_box(lower_corner, upper_corner);
-      is_point_in_domain = IsInsideMesh(random_point);
+      is_point_in_domain = isInsideMesh(random_point);
     }
 
     // Determine index to closest generator
@@ -2961,7 +2846,7 @@ ConnectivityArray::PartitionSequential(double const length_scale)
 
   // Partition map.
   std::map<int, int>
-  partitions = PartitionByCenters(centers);
+  partitions = partitionByCenters(centers);
 
   return partitions;
 }
@@ -2974,10 +2859,10 @@ ConnectivityArray::PartitionSequential(double const length_scale)
 // \return Partition number for each element
 //
 std::map<int, int>
-ConnectivityArray::PartitionRandom(double const length_scale)
+ConnectivityArray::partitionRandom(double const length_scale)
 {
   int const
-  number_partitions = GetNumberPartitions(length_scale);
+  number_partitions = getNumberPartitions(length_scale);
 
   minitensor::Vector<double>
   lower_corner;
@@ -2985,7 +2870,7 @@ ConnectivityArray::PartitionRandom(double const length_scale)
   minitensor::Vector<double>
   upper_corner;
 
-  boost::tie(lower_corner, upper_corner) = BoundingBox();
+  boost::tie(lower_corner, upper_corner) = boundingBox();
 
   lower_corner_ = lower_corner;
   upper_corner_ = upper_corner;
@@ -3004,7 +2889,7 @@ ConnectivityArray::PartitionRandom(double const length_scale)
     minitensor::Vector<double>
     p = random_in_box(lower_corner, upper_corner);
 
-    if (IsInsideMesh(p) == true) {
+    if (isInsideMesh(p) == true) {
       centers.push_back(p);
       ++number_generators;
     }
@@ -3013,7 +2898,7 @@ ConnectivityArray::PartitionRandom(double const length_scale)
 
   // Partition map.
   std::map<int, int>
-  partitions = PartitionByCenters(centers);
+  partitions = partitionByCenters(centers);
 
   return partitions;
 }
@@ -3031,17 +2916,14 @@ ConnectivityArray::PartitionRandom(double const length_scale)
 // geometry of an object.
 //
 int
-ConnectivityArray::GetNumberGeometry(
-    void* data,
-    int* ierr)
+ConnectivityArray::getNumberGeometry(void* data, int* ierr)
 {
-
   ConnectivityArray &
   connectivity_array = *(static_cast<ConnectivityArray*>(data));
 
   *ierr = ZOLTAN_OK;
 
-  int dimension = connectivity_array.GetDimension();
+  int dimension = connectivity_array.getDimension();
 
   return dimension;
 }
@@ -3050,7 +2932,7 @@ ConnectivityArray::GetNumberGeometry(
 // Zoltan interface, return number of objects
 //
 int
-ConnectivityArray::GetNumberOfObjects(void* data, int* ierr)
+ConnectivityArray::getNumberOfObjects(void* data, int* ierr)
 {
 
   ConnectivityArray &
@@ -3058,7 +2940,7 @@ ConnectivityArray::GetNumberOfObjects(void* data, int* ierr)
 
   *ierr = ZOLTAN_OK;
 
-  int num_objects = connectivity_array.GetConnectivity().size();
+  int num_objects = connectivity_array.getConnectivity().size();
 
   return num_objects;
 }
@@ -3067,7 +2949,7 @@ ConnectivityArray::GetNumberOfObjects(void* data, int* ierr)
 // Zoltan interface, return relevant object properties
 //
 void
-ConnectivityArray::GetObjectList(
+ConnectivityArray::getObjectList(
     void* data,
     int sizeGID,
     int sizeLID,
@@ -3077,14 +2959,13 @@ ConnectivityArray::GetObjectList(
     float* obj_wgts,
     int* ierr)
 {
-
   ConnectivityArray &
   connectivity_array = *(static_cast<ConnectivityArray*>(data));
 
   *ierr = ZOLTAN_OK;
 
   ScalarMap
-  element_volumes = connectivity_array.GetVolumes();
+  element_volumes = connectivity_array.getVolumes();
 
   ZOLTAN_ID_PTR
   global_id_ptr = globalID;
@@ -3095,13 +2976,9 @@ ConnectivityArray::GetObjectList(
   float*
   weight_ptr = obj_wgts;
 
-  for (ScalarMap::const_iterator
-  volumes_iter = element_volumes.begin();
-      volumes_iter != element_volumes.end();
-      ++volumes_iter) {
-
-    int element = (*volumes_iter).first;
-    double volume = (*volumes_iter).second;
+  for (auto&& element_volume : element_volumes) {
+    int element = element_volume.first;
+    double volume = element_volume.second;
 
     // Beware of this evil pointer manipulation
     (*global_id_ptr) = element;
@@ -3155,7 +3032,7 @@ ConnectivityArray::GetObjectList(
 // \param ierr Error code to be set by function.
 //
 void
-ConnectivityArray::GetGeometry(
+ConnectivityArray::getGeometry(
     void* data,
     int sizeGID,
     int sizeLID,
@@ -3166,26 +3043,21 @@ ConnectivityArray::GetGeometry(
     double* geom_vec,
     int* ierr)
 {
-
   ConnectivityArray &
   connectivity_array = *(static_cast<ConnectivityArray*>(data));
 
   *ierr = ZOLTAN_OK;
 
   PointMap
-  centroids = connectivity_array.GetCentroids();
+  centroids = connectivity_array.getCentroids();
 
   // Transfer the centroid coordinates to the Zoltan array
   int
   index_geom_vec = 0;
 
-  for (PointMap::const_iterator
-  centroids_iter = centroids.begin();
-      centroids_iter != centroids.end();
-      ++centroids_iter) {
-
+  for (auto&& id_centroid : centroids) {
     minitensor::Vector<double> const
-    centroid = (*centroids_iter).second;
+    centroid = id_centroid.second;
 
     for (minitensor::Index i = 0; i < 3; ++i) {
 
@@ -3207,30 +3079,26 @@ operator<<(
     std::ostream & output_stream,
     ConnectivityArray const & connectivity_array)
 {
-  output_stream << std::setw(12) << connectivity_array.GetNumberNodes();
-  output_stream << std::setw(12) << connectivity_array.GetNumberElements();
-  output_stream << std::setw(12) << connectivity_array.GetType();
+  output_stream << std::setw(12) << connectivity_array.getNumberNodes();
+  output_stream << std::setw(12) << connectivity_array.getNumberElements();
+  output_stream << std::setw(12) << connectivity_array.getType();
   output_stream << '\n';
 
   // Node list
   const PointMap
-  nodes = connectivity_array.GetNodeList();
+  nodes = connectivity_array.getNodeList();
 
   int const
-  dimension = connectivity_array.GetDimension();
+  dimension = connectivity_array.getDimension();
 
-  for (PointMap::const_iterator
-  nodes_iter = nodes.begin();
-      nodes_iter != nodes.end();
-      ++nodes_iter) {
-
+  for (auto&& id_node : nodes) {
     int const
-    node = (*nodes_iter).first;
+    node = id_node.first;
 
     output_stream << std::setw(12) << node;
 
     minitensor::Vector<double> const &
-    point = (*nodes_iter).second;
+    point = id_node.second;
 
     for (int j = 0; j < dimension; ++j) {
       output_stream << std::scientific;
@@ -3239,28 +3107,25 @@ operator<<(
     }
 
     output_stream << '\n';
-
   }
 
   // Output element volumes as well
   const ScalarMap
-  volumes = connectivity_array.GetVolumes();
+  volumes = connectivity_array.getVolumes();
 
   // Element connectivity
   const AdjacencyMap
-  connectivity = connectivity_array.GetConnectivity();
+  connectivity = connectivity_array.getConnectivity();
 
-  for (AdjacencyMap::const_iterator
-  connectivity_iter = connectivity.begin();
-      connectivity_iter != connectivity.end();
-      ++connectivity_iter) {
+  for (auto&& element_conn : connectivity) {
 
-    int const element = (*connectivity_iter).first;
+    int const
+    element = element_conn.first;
 
     output_stream << std::setw(12) << element;
 
     IDList const &
-    node_list = (*connectivity_iter).second;
+    node_list = element_conn.second;
 
     for (IDList::size_type j = 0; j < node_list.size(); ++j) {
       output_stream << std::setw(12) << node_list[j];
@@ -3299,12 +3164,11 @@ DualGraph::DualGraph() :
 //
 DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
 {
-
   const std::vector<std::vector<int>>
-  face_connectivity = GetFaceConnectivity(connectivity_array.GetType());
+  face_connectivity = getFaceConnectivity(connectivity_array.getType());
 
   const AdjacencyMap
-  connectivity = connectivity_array.GetConnectivity();
+  connectivity = connectivity_array.getConnectivity();
 
   std::map<std::set<int>, int>
   face_nodes_faceID_map;
@@ -3318,34 +3182,27 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
   faceID_element_map;
 
   // Go element by element
-  for (AdjacencyMap::const_iterator
-  connectivity_iter = connectivity.begin();
-      connectivity_iter != connectivity.end();
-      ++connectivity_iter) {
+  for (auto&& element_conn : connectivity) {
 
     int const
-    element = (*connectivity_iter).first;
+    element = element_conn.first;
 
     const std::vector<int>
-    element_nodes = (*connectivity_iter).second;
+    element_nodes = element_conn.second;
 
     // All elements go into graph, regardless of number of internal faces
     // attached to them. This clearing will allocate space for all of them.
     graph_[element].clear();
 
     // Determine the (generalized) faces for each element
-    for (std::vector<std::vector<int>>::size_type
-    i = 0;
-        i < face_connectivity.size();
-        ++i) {
+    for (std::vector<std::vector<int>>::size_type i = 0;
+        i < face_connectivity.size(); ++i) {
 
       std::set<int>
       face_nodes;
 
-      for (std::vector<int>::size_type
-      j = 0;
-          j < face_connectivity[i].size();
-          ++j) {
+      for (std::vector<int>::size_type j = 0;
+          j < face_connectivity[i].size(); ++j) {
         face_nodes.insert(element_nodes[face_connectivity[i][j]]);
       }
 
@@ -3379,16 +3236,13 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
   IDList
   internal_faces;
 
-  for (AdjacencyMap::const_iterator
-  face_element_iter = faceID_element_map.begin();
-      face_element_iter != faceID_element_map.end();
-      ++face_element_iter) {
+  for(auto&& face_elements : faceID_element_map) {
 
     int const
-    faceID = (*face_element_iter).first;
+    faceID = face_elements.first;
 
     int const
-    number_elements_per_face = ((*face_element_iter).second).size();
+    number_elements_per_face = (face_elements.second).size();
 
     switch (number_elements_per_face) {
 
@@ -3410,10 +3264,7 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
   }
 
   // Build dual graph
-  for (IDList::size_type
-  i = 0;
-      i < internal_faces.size();
-      ++i) {
+  for (IDList::size_type i = 0; i < internal_faces.size(); ++i) {
 
     int const
     faceID = internal_faces[i];
@@ -3423,10 +3274,7 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
 
     ALBANY_EXPECT(elements_face.size() == 2);
 
-    for (IDList::size_type
-    j = 0;
-        j < elements_face.size();
-        ++j) {
+    for (IDList::size_type j = 0; j < elements_face.size(); ++j) {
 
       int const
       element = elements_face[j];
@@ -3438,32 +3286,32 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
   }
 
   number_edges_ = internal_faces.size();
-  vertex_weights_ = connectivity_array.GetVolumes();
+  vertex_weights_ = connectivity_array.getVolumes();
 
   return;
 }
 
 int
-DualGraph::GetNumberVertices() const
+DualGraph::getNumberVertices() const
 {
   return graph_.size();
 }
 
 int
-DualGraph::GetNumberEdges() const
+DualGraph::getNumberEdges() const
 {
   return number_edges_;
 }
 
 void
-DualGraph::SetGraph(AdjacencyMap & graph)
+DualGraph::setGraph(AdjacencyMap & graph)
 {
   graph_ = graph;
   return;
 }
 
 AdjacencyMap
-DualGraph::GetGraph() const
+DualGraph::getGraph() const
 {
   return graph_;
 }
@@ -3472,26 +3320,23 @@ DualGraph::GetGraph() const
 // \return Edge list to create boost graph
 //
 AdjacencyMap
-DualGraph::GetEdgeList() const
+DualGraph::getEdgeList() const
 {
   AdjacencyMap edge_list;
 
-  for (AdjacencyMap::const_iterator graph_iter = graph_.begin();
-      graph_iter != graph_.end();
-      ++graph_iter) {
-    int const vertex = (*graph_iter).first;
-    const IDList edges = (*graph_iter).second;
+  for (auto&& vertex_edges : graph_) {
+    int const
+    vertex = vertex_edges.first;
 
-    for (IDList::const_iterator edges_iter = edges.begin();
-        edges_iter != edges.end();
-        ++edges_iter) {
+    const IDList
+    edges = vertex_edges.second;
 
-      int const edge = (*edges_iter);
+    for (auto&& edge : edges) {
 
-      IDList & vertices = edge_list[edge];
+      IDList &
+      vertices = edge_list[edge];
 
       vertices.push_back(vertex);
-
     }
 
   }
@@ -3500,14 +3345,14 @@ DualGraph::GetEdgeList() const
 }
 
 void
-DualGraph::SetVertexWeights(ScalarMap & vertex_weights)
+DualGraph::setVertexWeights(ScalarMap & vertex_weights)
 {
   vertex_weights_ = vertex_weights;
   return;
 }
 
 ScalarMap
-DualGraph::GetVertexWeights() const
+DualGraph::getVertexWeights() const
 {
   return vertex_weights_;
 }
@@ -3516,8 +3361,8 @@ DualGraph::GetVertexWeights() const
 // \return Connected components in the dual graph
 //
 int
-DualGraph::GetConnectedComponents(std::vector<int> & components) const
-    {
+DualGraph::getConnectedComponents(std::vector<int> & components) const
+{
   // Create boost graph from edge list
   typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>
   UndirectedGraph;
@@ -3525,18 +3370,22 @@ DualGraph::GetConnectedComponents(std::vector<int> & components) const
   typedef boost::graph_traits<UndirectedGraph>::vertex_descriptor Vertex;
   typedef boost::graph_traits<UndirectedGraph>::edge_descriptor Edge;
 
-  UndirectedGraph graph;
+  UndirectedGraph
+  graph;
 
   // Add vertices
-  std::map<int, Vertex> dual_2_boost;
-  AdjacencyMap dual_graph = GetGraph();
+  std::map<int, Vertex>
+  dual_2_boost;
 
-  for (AdjacencyMap::const_iterator graph_iter = dual_graph.begin();
-      graph_iter != dual_graph.end();
-      ++graph_iter) {
+  AdjacencyMap
+  dual_graph = getGraph();
 
-    Vertex boost_vertex = boost::add_vertex(graph);
-    int dual_vertex = (*graph_iter).first;
+  for (auto&& dual_vertex_edges : dual_graph) {
+    Vertex
+    boost_vertex = boost::add_vertex(graph);
+
+    int
+    dual_vertex = dual_vertex_edges.first;
 
     dual_2_boost.insert(std::make_pair(dual_vertex, boost_vertex));
 
@@ -3544,25 +3393,29 @@ DualGraph::GetConnectedComponents(std::vector<int> & components) const
 
   // Add edges
   AdjacencyMap
-  edge_list = GetEdgeList();
+  edge_list = getEdgeList();
 
-  for (AdjacencyMap::const_iterator edges_iter = edge_list.begin();
-      edges_iter != edge_list.end();
-      ++edges_iter) {
+  for (auto&& edge_vertices : edge_list) {
+    IDList const
+    vertices = edge_vertices.second;
 
-    const IDList vertices = (*edges_iter).second;
+    int
+    source_vertex = vertices[0];
 
-    int source_vertex = vertices[0];
-    int target_vertex = vertices[1];
+    int
+    target_vertex = vertices[1];
 
-    Vertex source_boost_vertex = dual_2_boost[source_vertex];
-    Vertex target_boost_vertex = dual_2_boost[target_vertex];
+    Vertex
+    source_boost_vertex = dual_2_boost[source_vertex];
+
+    Vertex
+    target_boost_vertex = dual_2_boost[target_vertex];
 
     boost::add_edge(source_boost_vertex, target_boost_vertex, graph);
 
   }
 
-  int const number_vertices = GetNumberVertices();
+  int const number_vertices = getNumberVertices();
   components.resize(number_vertices);
 
   int number_components =
@@ -3575,20 +3428,19 @@ DualGraph::GetConnectedComponents(std::vector<int> & components) const
 // Print graph for debugging
 //
 void
-DualGraph::Print() const
+DualGraph::print() const
 {
-
   ScalarMap
-  vertex_weights = GetVertexWeights();
+  vertex_weights = getVertexWeights();
 
   AdjacencyMap
-  graph = GetGraph();
+  graph = getGraph();
 
   int const
-  number_vertices = GetNumberVertices();
+  number_vertices = getNumberVertices();
 
   int const
-  number_edges = GetNumberEdges();
+  number_edges = getNumberEdges();
 
   std::cout << '\n';
   std::cout << "Vertex - Edge Format:" << '\n';
@@ -3603,12 +3455,12 @@ DualGraph::Print() const
   std::cout << "------------------------------------------------------------";
   std::cout << '\n';
 
-  for (ScalarMap::const_iterator vw_iter = vertex_weights.begin();
-      vw_iter != vertex_weights.end();
-      ++vw_iter) {
+  for (auto&& vertex_weight : vertex_weights) {
+    int const
+    vertex = vertex_weight.first;
 
-    int const vertex = (*vw_iter).first;
-    double const weight = (*vw_iter).second;
+    double const
+    weight = vertex_weight.second;
 
     std::cout << std::setw(8) << vertex;
     std::cout << std::scientific << std::setw(16) << std::setprecision(8);
@@ -3625,10 +3477,7 @@ DualGraph::Print() const
     IDList
     edges = graph[vertex];
 
-    for (IDList::const_iterator edges_iter = edges.begin();
-        edges_iter != edges.end();
-        ++edges_iter) {
-      int const edge = *edges_iter;
+    for (auto&& edge : edges) {
       std::cout << std::setw(8) << edge;
     }
 
@@ -3644,7 +3493,7 @@ DualGraph::Print() const
   std::cout << '\n';
 
   AdjacencyMap
-  edge_list = GetEdgeList();
+  edge_list = getEdgeList();
 
   std::cout << "------------------------------------------------------------";
   std::cout << '\n';
@@ -3652,18 +3501,12 @@ DualGraph::Print() const
   std::cout << "------------------------------------------------------------";
   std::cout << '\n';
 
-  for (AdjacencyMap::const_iterator edges_iter = edge_list.begin();
-      edges_iter != edge_list.end();
-      ++edges_iter) {
-
-    int const edge = (*edges_iter).first;
+  for (auto&& edge_vertices : edge_list) {
+    int const edge = edge_vertices.first;
     std::cout << std::setw(8) << edge;
-    const IDList vertices = (*edges_iter).second;
+    const IDList vertices = edge_vertices.second;
 
-    for (IDList::const_iterator vertices_iter = vertices.begin();
-        vertices_iter != vertices.end();
-        ++vertices_iter) {
-      int const vertex = (*vertices_iter);
+    for (auto&& vertex : vertices) {
       std::cout << std::setw(8) << vertex;
     }
 
@@ -3681,9 +3524,8 @@ DualGraph::Print() const
 //
 //
 std::vector<std::vector<int>>
-DualGraph::GetFaceConnectivity(minitensor::ELEMENT::Type const type) const
-    {
-
+DualGraph::getFaceConnectivity(minitensor::ELEMENT::Type const type) const
+{
   std::vector<std::vector<int>>
   face_connectivity;
 
@@ -3832,54 +3674,54 @@ ZoltanHyperGraph::ZoltanHyperGraph() :
 //
 ZoltanHyperGraph::ZoltanHyperGraph(DualGraph const & dual_graph)
 {
-  graph_ = dual_graph.GetGraph();
-  vertex_weights_ = dual_graph.GetVertexWeights();
-  number_vertices_ = dual_graph.GetNumberVertices();
-  number_hyperedges_ = dual_graph.GetNumberEdges();
+  graph_ = dual_graph.getGraph();
+  vertex_weights_ = dual_graph.getVertexWeights();
+  number_vertices_ = dual_graph.getNumberVertices();
+  number_hyperedges_ = dual_graph.getNumberEdges();
   return;
 }
 
 int
-ZoltanHyperGraph::GetNumberVertices() const
+ZoltanHyperGraph::getNumberVertices() const
 {
   return graph_.size();
 }
 
 void
-ZoltanHyperGraph::SetNumberHyperedges(int number_hyperedges)
+ZoltanHyperGraph::setNumberHyperedges(int number_hyperedges)
 {
   number_hyperedges_ = number_hyperedges;
   return;
 }
 
 int
-ZoltanHyperGraph::GetNumberHyperedges() const
+ZoltanHyperGraph::getNumberHyperedges() const
 {
   return number_hyperedges_;
 }
 
 void
-ZoltanHyperGraph::SetGraph(AdjacencyMap & graph)
+ZoltanHyperGraph::setGraph(AdjacencyMap & graph)
 {
   graph_ = graph;
   return;
 }
 
 AdjacencyMap
-ZoltanHyperGraph::GetGraph() const
+ZoltanHyperGraph::getGraph() const
 {
   return graph_;
 }
 
 void
-ZoltanHyperGraph::SetVertexWeights(ScalarMap & vertex_weights)
+ZoltanHyperGraph::setVertexWeights(ScalarMap & vertex_weights)
 {
   vertex_weights_ = vertex_weights;
   return;
 }
 
 ScalarMap
-ZoltanHyperGraph::GetVertexWeights() const
+ZoltanHyperGraph::getVertexWeights() const
 {
   return vertex_weights_;
 }
@@ -3888,28 +3730,17 @@ ZoltanHyperGraph::GetVertexWeights() const
 // minitensor::Vector with edge IDs
 //
 std::vector<ZOLTAN_ID_TYPE>
-ZoltanHyperGraph::GetEdgeIDs() const
+ZoltanHyperGraph::getEdgeIDs() const
 {
-
   std::vector<ZOLTAN_ID_TYPE>
   edges;
 
-  for (AdjacencyMap::const_iterator
-  graph_iter = graph_.begin();
-      graph_iter != graph_.end();
-      ++graph_iter) {
-
+  for (auto&& vertex_hyperedges : graph_) {
     IDList
-    hyperedges = (*graph_iter).second;
+    hyperedges = vertex_hyperedges.second;
 
-    for (IDList::const_iterator
-    hyperedges_iter = hyperedges.begin();
-        hyperedges_iter != hyperedges.end();
-        ++hyperedges_iter) {
-
-      int const hyperedge = (*hyperedges_iter);
+    for (auto&& hyperedge : hyperedges) {
       edges.push_back(hyperedge);
-
     }
   }
 
@@ -3920,32 +3751,23 @@ ZoltanHyperGraph::GetEdgeIDs() const
 // minitensor::Vector with edge pointers
 //
 std::vector<int>
-ZoltanHyperGraph::GetEdgePointers() const
+ZoltanHyperGraph::getEdgePointers() const
 {
-
   std::vector<int>
   pointers;
 
   int
   pointer = 0;
 
-  for (AdjacencyMap::const_iterator
-  graph_iter = graph_.begin();
-      graph_iter != graph_.end();
-      ++graph_iter) {
+  for (auto&& vertex_hyperedges : graph_) {
 
     pointers.push_back(pointer);
 
     IDList
-    hyperedges = (*graph_iter).second;
+    hyperedges = vertex_hyperedges.second;
 
-    for (IDList::const_iterator
-    hyperedges_iter = hyperedges.begin();
-        hyperedges_iter != hyperedges.end();
-        ++hyperedges_iter) {
-
+    for (auto&& hyperedge : hyperedges) {
       ++pointer;
-
     }
 
   }
@@ -3957,18 +3779,14 @@ ZoltanHyperGraph::GetEdgePointers() const
 // Vector with vertex IDs
 //
 std::vector<ZOLTAN_ID_TYPE>
-ZoltanHyperGraph::GetVertexIDs() const
+ZoltanHyperGraph::getVertexIDs() const
 {
-
   std::vector<ZOLTAN_ID_TYPE>
   vertices;
 
-  for (AdjacencyMap::const_iterator
-  graph_iter = graph_.begin();
-      graph_iter != graph_.end();
-      ++graph_iter) {
+  for (auto&& vertex_hyperedges : graph_) {
 
-    int vertex = (*graph_iter).first;
+    int vertex = vertex_hyperedges.first;
     vertices.push_back(vertex);
 
   }
@@ -3980,16 +3798,15 @@ ZoltanHyperGraph::GetVertexIDs() const
 // Zoltan interface, return number of objects
 //
 int
-ZoltanHyperGraph::GetNumberOfObjects(void* data, int* ierr)
+ZoltanHyperGraph::getNumberOfObjects(void* data, int* ierr)
 {
-
   ZoltanHyperGraph &
   zoltan_hypergraph = *(static_cast<ZoltanHyperGraph*>(data));
 
   *ierr = ZOLTAN_OK;
 
   int
-  num_objects = zoltan_hypergraph.GetGraph().size();
+  num_objects = zoltan_hypergraph.getGraph().size();
 
   return num_objects;
 }
@@ -3998,7 +3815,7 @@ ZoltanHyperGraph::GetNumberOfObjects(void* data, int* ierr)
 // Zoltan interface, return relevant object properties
 //
 void
-ZoltanHyperGraph::GetObjectList(
+ZoltanHyperGraph::getObjectList(
     void* data,
     int sizeGID,
     int sizeLID,
@@ -4008,14 +3825,13 @@ ZoltanHyperGraph::GetObjectList(
     float* obj_wgts,
     int* ierr)
 {
-
   ZoltanHyperGraph &
   zoltan_hypergraph = *(static_cast<ZoltanHyperGraph*>(data));
 
   *ierr = ZOLTAN_OK;
 
   ScalarMap
-  vertex_weights = zoltan_hypergraph.GetVertexWeights();
+  vertex_weights = zoltan_hypergraph.getVertexWeights();
 
   ZOLTAN_ID_PTR
   global_id_ptr = globalID;
@@ -4026,18 +3842,15 @@ ZoltanHyperGraph::GetObjectList(
   float*
   weight_ptr = obj_wgts;
 
-  for (ScalarMap::const_iterator
-  weights_iter = vertex_weights.begin();
-      weights_iter != vertex_weights.end();
-      ++weights_iter) {
+  for (auto&& vertex_weight : vertex_weights) {
 
-    int vertex = (*weights_iter).first;
-    double vertex_weight = (*weights_iter).second;
+    int vertex = vertex_weight.first;
+    double weight = vertex_weight.second;
 
     // Beware of this evil pointer manipulation
     (*global_id_ptr) = vertex;
     (*local_id_ptr) = vertex;
-    (*weight_ptr) = vertex_weight;
+    (*weight_ptr) = weight;
     global_id_ptr++;
     local_id_ptr++;
     weight_ptr++;
@@ -4051,24 +3864,23 @@ ZoltanHyperGraph::GetObjectList(
 // Zoltan interface, get size of hypergraph
 //
 void
-ZoltanHyperGraph::GetHyperGraphSize(
+ZoltanHyperGraph::getHyperGraphSize(
     void* data,
     int* num_lists,
     int* num_pins,
     int* format,
     int* ierr)
 {
-
   ZoltanHyperGraph &
   zoltan_hypergraph = *(static_cast<ZoltanHyperGraph*>(data));
 
   *ierr = ZOLTAN_OK;
 
   // Number of vertices
-  *num_lists = zoltan_hypergraph.GetVertexIDs().size();
+  *num_lists = zoltan_hypergraph.getVertexIDs().size();
 
   // Numbers of pins, i.e. size of list of hyperedges attached to vertices
-  *num_pins = zoltan_hypergraph.GetEdgeIDs().size();
+  *num_pins = zoltan_hypergraph.getEdgeIDs().size();
 
   *format = ZOLTAN_COMPRESSED_VERTEX;
 
@@ -4079,7 +3891,7 @@ ZoltanHyperGraph::GetHyperGraphSize(
 // Zoltan interface, get the hypergraph itself
 //
 void
-ZoltanHyperGraph::GetHyperGraph(
+ZoltanHyperGraph::getHyperGraph(
     void* data,
     int num_gid_entries,
     int num_vtx_edge,
@@ -4090,7 +3902,6 @@ ZoltanHyperGraph::GetHyperGraph(
     ZOLTAN_ID_PTR pin_GID,
     int* ierr)
 {
-
   ZoltanHyperGraph &
   zoltan_hypergraph = *(static_cast<ZoltanHyperGraph*>(data));
 
@@ -4098,48 +3909,39 @@ ZoltanHyperGraph::GetHyperGraph(
 
   // Validate
   ALBANY_EXPECT(num_vtx_edge ==
-      static_cast<int>(zoltan_hypergraph.GetVertexIDs().size()));
+      static_cast<int>(zoltan_hypergraph.getVertexIDs().size()));
 
   ALBANY_EXPECT(num_pins ==
-      static_cast<int>(zoltan_hypergraph.GetEdgeIDs().size()));
+      static_cast<int>(zoltan_hypergraph.getEdgeIDs().size()));
 
   ALBANY_EXPECT(format == ZOLTAN_COMPRESSED_VERTEX);
 
   // Copy hypergraph data
   std::vector<ZOLTAN_ID_TYPE>
-  vertex_IDs = zoltan_hypergraph.GetVertexIDs();
+  vertex_IDs = zoltan_hypergraph.getVertexIDs();
 
   std::vector<ZOLTAN_ID_TYPE>
-  edge_IDs = zoltan_hypergraph.GetEdgeIDs();
+  edge_IDs = zoltan_hypergraph.getEdgeIDs();
 
   std::vector<int>
-  edge_pointers = zoltan_hypergraph.GetEdgePointers();
+  edge_pointers = zoltan_hypergraph.getEdgePointers();
 
-  for (std::vector<ZOLTAN_ID_TYPE>::size_type
-  i = 0;
-      i < vertex_IDs.size();
-      ++i) {
+  for (std::vector<ZOLTAN_ID_TYPE>::size_type i = 0;
+      i < vertex_IDs.size(); ++i) {
 
     vtxedge_GID[i] = vertex_IDs[i];
-
   }
 
-  for (std::vector<ZOLTAN_ID_TYPE>::size_type
-  i = 0;
-      i < edge_IDs.size();
-      ++i) {
+  for (std::vector<ZOLTAN_ID_TYPE>::size_type i = 0;
+      i < edge_IDs.size(); ++i) {
 
     pin_GID[i] = edge_IDs[i];
-
   }
 
-  for (std::vector<int>::size_type
-  i = 0;
-      i < edge_pointers.size();
-      ++i) {
+  for (std::vector<int>::size_type i = 0;
+      i < edge_pointers.size(); ++i) {
 
     vtxedge_ptr[i] = edge_pointers[i];
-
   }
 
   return;
@@ -4203,9 +4005,9 @@ operator>>(std::istream & input_stream, ZoltanHyperGraph & zoltan_hypergraph)
 
   }
 
-  zoltan_hypergraph.SetGraph(graph);
-  zoltan_hypergraph.SetVertexWeights(vertex_weights);
-  zoltan_hypergraph.SetNumberHyperedges(number_hyperedges);
+  zoltan_hypergraph.setGraph(graph);
+  zoltan_hypergraph.setVertexWeights(vertex_weights);
+  zoltan_hypergraph.setNumberHyperedges(number_hyperedges);
 
   return input_stream;
 }
@@ -4218,25 +4020,20 @@ operator<<(
     std::ostream & output_stream,
     ZoltanHyperGraph const & zoltan_hypergraph)
 {
-
-  output_stream << std::setw(12) << zoltan_hypergraph.GetNumberVertices();
-  output_stream << std::setw(12) << zoltan_hypergraph.GetNumberHyperedges();
+  output_stream << std::setw(12) << zoltan_hypergraph.getNumberVertices();
+  output_stream << std::setw(12) << zoltan_hypergraph.getNumberHyperedges();
   output_stream << '\n';
 
   AdjacencyMap const &
-  graph = zoltan_hypergraph.GetGraph();
+  graph = zoltan_hypergraph.getGraph();
 
   ScalarMap
-  vertex_weights = zoltan_hypergraph.GetVertexWeights();
+  vertex_weights = zoltan_hypergraph.getVertexWeights();
 
-  for (AdjacencyMap::const_iterator
-  graph_iter = graph.begin();
-      graph_iter != graph.end();
-      ++graph_iter) {
-
+  for (auto&& vertex_hyperedges : graph) {
     // Vertex ID
     int const
-    vertex = (*graph_iter).first;
+    vertex = vertex_hyperedges.first;
 
     double const
     vertex_weight = vertex_weights[vertex];
@@ -4246,28 +4043,18 @@ operator<<(
     output_stream << std::setw(16) << std::setprecision(8);
     output_stream << vertex_weight;
 
-    const IDList
-    hyperedges = (*graph_iter).second;
+    IDList const &
+    hyperedges = vertex_hyperedges.second;
 
-    for (IDList::const_iterator
-    hyperedges_iter = hyperedges.begin();
-        hyperedges_iter != hyperedges.end();
-        ++hyperedges_iter) {
-
-      int const
-      hyperedge = (*hyperedges_iter);
-
+    for (auto&& hyperedge : hyperedges) {
       output_stream << std::setw(12) << hyperedge;
 
     }
 
     output_stream << '\n';
-
   }
 
   return output_stream;
 }
 
 } // namespace LCM
-
-#endif // #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)

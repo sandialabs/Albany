@@ -5,11 +5,11 @@ import re
 
 from subprocess import Popen
 
-name = "cuboid"
+name = "cuboid_parallel"
 log_file_name = name + ".log"
 result = 0
 
-print "test 1 - Schwarz Alternating"
+print "test 1 - Schwarz Alternating Parallel"
 
 if os.path.exists(log_file_name):
     os.remove(log_file_name)
@@ -17,7 +17,7 @@ if os.path.exists(log_file_name):
 logfile = open(log_file_name, 'w')
 
 # run Albany
-command = ["./AlbanyT", "cuboids.yaml"]
+command = ["mpirun", "-np", "2", "AlbanyT", "cuboids.yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 
@@ -29,6 +29,10 @@ converged = False
 for line in open(log_file_name):
   if "Schwarz Alternating Method converged: YES" in line:
     converged = True
+
+for line in open(log_file_name):
+  if "Schwarz Alternating Method converged: NO" in line:
+    converged = False
 
 if converged == False:    
   result = result + 1

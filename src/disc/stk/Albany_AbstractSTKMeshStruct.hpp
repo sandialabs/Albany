@@ -90,6 +90,8 @@ namespace Albany {
     //alpha and L are parameters read in from ParameterList for FELIX problems
     double felixAlpha;
     double felixL;
+    //xShift, yShift and zShift are for "Right-shift" transformMesh routine
+    double xShift, yShift, zShift; 
 
     //Points per edge in creating enriched spectral mesh in Aeras::SpectralDiscretization (for Aeras only).
     int points_per_edge;

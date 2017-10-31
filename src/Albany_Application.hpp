@@ -259,7 +259,7 @@ namespace Albany {
 
      void computeGlobalJacobianT(const double alpha,
                                  const double beta,
-			         const double omega,
+                                 const double omega,
                                  const double current_time,
                                  const Tpetra_Vector* xdotT,
                                  const Tpetra_Vector* xdotdotT,
@@ -280,6 +280,19 @@ namespace Albany {
                                      const Teuchos::Array<ParamVec>& p,
                                      const Teuchos::RCP<Tpetra_Vector>& fT,
                                      const Teuchos::RCP<Tpetra_CrsMatrix>& jacT);
+
+#if defined(ALBANY_LCM) 
+     void computeGlobalJacobianSDBCsImplT(const double alpha,
+                                     const double beta,
+                                     const double omega,
+                                     const double current_time,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xT,
+                                     const Teuchos::Array<ParamVec>& p,
+                                     const Teuchos::RCP<Tpetra_Vector>& fT,
+                                     const Teuchos::RCP<Tpetra_CrsMatrix>& jacT);
+#endif
 
   public:
 
@@ -1047,15 +1060,39 @@ namespace Albany {
       return xdotdot_;
     }
 
+    void
+    setAlternatingSchwarz(bool isa = false)
+    {
+      is_alternating_schwarz_ = isa;
+    }
+
+    bool
+    getAlternatingSchwarz() const
+    {
+      return is_alternating_schwarz_;
+    }
+
+    void
+    setDBCTime(double t = 0.0)
+    {
+      dbc_time_ = t;
+    }
+
+    double
+    getDBCTime() const
+    {
+      return dbc_time_;
+    }
+
   private:
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
     apps_;
 
     int
-    app_index_;
+    app_index_{-1};
 
     Teuchos::RCP<std::map<std::string, int>>
-    app_name_index_map_;
+    app_name_index_map_{Teuchos::null};
 
     std::map<int, std::pair<std::string, std::string>>
     coupled_app_index_block_nodeset_names_map_;
@@ -1068,6 +1105,16 @@ namespace Albany {
 
     Teuchos::RCP<Tpetra_Vector const>
     xdotdot_{Teuchos::null};
+
+    bool
+    is_alternating_schwarz_{false};
+
+    double
+    dbc_time_{0.0};
+
+    std::vector<double>  
+    prev_times_;   
+
 #endif //ALBANY_LCM
 
   protected:

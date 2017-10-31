@@ -22,7 +22,7 @@
 {\oldendv\egroup\fboxsep0pt \noindent\colorbox[gray]{0.95}{\usebox0}\par}
 
 \title{Installing and compiling \albany{}/\lcm{} and
-  \trilinos{} on Fedora or SEMS/CEE}
+  \trilinos{} on Fedora, SEMS/CEE, or HPC Sandia clusters}
 
 \author{The \albany{}/\lcm{} team\thanks{Original version by Juli\'an
     R\'imoli}}
@@ -33,15 +33,19 @@
 
 \section{Introduction}
 This document describes the necessary steps to install \albany{}/\lcm{} and
-\trilinos{} on a machine with Fedora Linux or the Linux CEE/SEMS environment. If
-you want a shortcut, obtain the script \verb+install_albany.sh+ (stored in
-\verb+Albany/doc/LCM/install+) and then try
+\trilinos{} on a machine with Fedora Linux, the Linux CEE/SEMS environment, or
+Sandia's HPC systems. If you want a shortcut, obtain the script
+\verb+install_albany.sh+ (stored in \verb+Albany/doc/LCM/install+) and then try
 \begin{verbatim}
 ./install_albany
 \end{verbatim}
 This will install and build \trilinos{} and \albany{} in the current directory.
 If the script does not complete it will tell you why and with help from this
 document you will be able to complete the install.
+
+The Linux CEE/SEMS environment and the HPC clusters already have all the
+libraries mentioned below. Skip to Section \ref{sec:repo} for setting up the
+source code.
 
 \section{Required Packages}
 The following packages should be installed using the {\tt dnf} command
@@ -68,13 +72,11 @@ netcdf-devel
 netcdf-openmpi
 netcdf-openmpi-devel
 netcdf-static
-openmpi
-openmpi-devel
 \end{verbatim}
 
 \begin{verbatim}
-yaml-cpp
-yaml-cpp-devel
+openmpi
+openmpi-devel
 environment-modules
 gcc-c++
 git
@@ -100,6 +102,7 @@ gitk
 \end{verbatim}
 
 \section{Repository Setup with GitHub}
+\label{sec:repo}
 
 In a web browser go to \verb+www.github.com+, create an account and
 set up ssh public keys. If you require push privilges for \albany{},
@@ -316,6 +319,7 @@ In addition, for \trilinos{} an install directory similarly named is
 created at the \lcm{} top-level directory.
 
 \section{Configuring and compiling}
+\label{sec:config-build}
 
 Assuming that we want to compile with a \verb+serial+ thread model
 using the \verb+gcc+ tool chain in \verb+debug+ mode, load the
@@ -405,7 +409,7 @@ helps to avoid coding errors.
 
 The \verb+clang-format+ tool can be used for this. There is a
 \verb+.clang-format+ file in the \verb+Albany/src/LCM+ directory that conforms
-to the C++ Google conding standard. Thus, all that is needed to reformat a
+to the C++ Google coding standard. Thus, all that is needed to reformat a
 source file in place is the command:
 \begin{verbatim}
 clang-format -i [source file name]

@@ -72,9 +72,7 @@
 #include "Thyra_DetachedVectorView.hpp"
 
 #include "Teuchos_XMLParameterListHelpers.hpp"
-#if defined(ALBANY_YAML)
 #include "Teuchos_YamlParameterListHelpers.hpp"
-#endif  // ALBANY_YAML
 #include "Teuchos_TestForException.hpp"
 
 #if defined(ALBANY_EPETRA) && defined(ALBANY_RYTHMOS)
@@ -193,19 +191,17 @@ Albany::SolverFactory::SolverFactory(
   // defaults
   // RCP<ParameterList> input_
   appParams = Teuchos::createParameterList("Albany Parameters");
-#if defined(ALBANY_YAML)
-  std::string const input_extension = getFileExtension(inputFile);
-  if (input_extension == "yaml") {
+
+  std::string const
+  input_extension = getFileExtension(inputFile);
+
+  if (input_extension == "yaml" || input_extension == "yml") {
     Teuchos::updateParametersFromYamlFileAndBroadcast(
         inputFile, appParams.ptr(), *tcomm);
   } else {
     Teuchos::updateParametersFromXmlFileAndBroadcast(
         inputFile, appParams.ptr(), *tcomm);
   }
-#else
-  Teuchos::updateParametersFromXmlFileAndBroadcast(
-      inputFile, appParams.ptr(), *tcomm);
-#endif  // ALBANY_YAML
 
   // do not set default solver parameters for QCAD::Solver or ATO::Solver
   // problems,

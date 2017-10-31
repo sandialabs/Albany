@@ -1,16 +1,16 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Source Mesh Input File: '../Meshes/notched-cylinder-0.exo'
+  Source Mesh Input File: '../Meshes/notched-cylinder-single.exo'
   Source Mesh Snapshot Number: 11
-  Target Mesh Input File: '../Meshes/notched-cylinder-single.exo'
+  Target Mesh Input File: '../Meshes/notched-cylinder-0.exo'
   Target Mesh Snapshot Number: 11
   Target Mesh Output File: target_cauchy_stress_out.exo
   Number of Iterations: 10
-  Compute Relative Error: false
   Source Field Name: proj_nodal_Cauchy_Stress
   Target Field Name: proj_nodal_Cauchy_Stress
   Field Type: Node Tensor
+  Scale by Norm of Solution Vector: false
   DataTransferKit: 
     Map Type: Consistent Interpolation
     L2 Projection: 

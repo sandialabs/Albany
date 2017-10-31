@@ -518,6 +518,10 @@ IF (Tempus_List_ID GREATER -1)
   SET(ALBANY_TEMPUS TRUE)
 ELSE()
   MESSAGE("-- Looking for Tempus in Trilinos: NOT found.")
+  IF (ENABLE_LCM) 
+    MESSAGE(FATAL_ERROR
+        "LCM enabled but Tempus not installed from Trilinos (LCM needs Tempus)!  Please recompile Trilinos with Tempus enabled.")
+  ENDIF()
   SET(ALBANY_TEMPUS FALSE)
 ENDIF()
 
@@ -1351,34 +1355,22 @@ want to useTriKota.")
 ENDIF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
 
 # add a target to generate API documentation with Doxygen
-find_package(Doxygen)
-if(DOXYGEN_FOUND)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/albanyMainPage.doc ${CMAKE_CURRENT_BINARY_DIR}/albanyMainPage.doc)
-add_custom_target(doc
-${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-COMMENT "Generating API documentation with Doxygen" VERBATIM
-)
-endif(DOXYGEN_FOUND)
+IF( NOT DISABLE_DOXYGEN )
+  find_package(Doxygen)
+  if(DOXYGEN_FOUND)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/albanyMainPage.doc ${CMAKE_CURRENT_BINARY_DIR}/albanyMainPage.doc)
+  add_custom_target(doc
+  ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  COMMENT "Generating API documentation with Doxygen" VERBATIM
+  )
+  endif(DOXYGEN_FOUND)
+ENDIF()
 
 # Enable yaml parsing for reading parameters lists
-SET(ALBANY_YAML FALSE)
-IF ((EXISTS "${Trilinos_INCLUDE_DIRS}/Teuchos_YamlParameterListHelpers.hpp")
-     AND (EXISTS "${Trilinos_INCLUDE_DIRS}/TeuchosCore_config.h"))
-  FILE(READ ${Trilinos_INCLUDE_DIRS}/TeuchosCore_config.h TEUCHOS_CONFIG)
-  STRING(REGEX MATCH "\#define HAVE_TEUCHOSCORE_YAML_CPP 1" TEUCHOS_YAML_IS_SET ${TEUCHOS_CONFIG})
-  IF ("#define HAVE_TEUCHOSCORE_YAML_CPP 1" STREQUAL "${TEUCHOS_YAML_IS_SET}")
-    MESSAGE("-- Looking for YAML in Teuchos: Found, compiling with -DALBANY_YAML")
-    SET(ALBANY_YAML TRUE)
-    ADD_DEFINITIONS(-DALBANY_YAML)
-  ENDIF()
-ENDIF()
-IF (NOT ALBANY_YAML)
-  MESSAGE("-- Looking for YAML in Teuchos: NOT found.")
-  IF (ENABLE_LCM)
-    MESSAGE(FATAL_ERROR "Trilinos was not built with YAML enabled - it is required for LCM.")
-  ENDIF()
+IF (ALBANY_LCM)
+  ADD_DEFINITIONS(-DALBANY_YAML)
 ENDIF()
 
 ## End of CMake options to Albany

@@ -79,7 +79,8 @@ using Teuchos::rcpFromRef;
 int countJac; //counter which counts instances of Jacobian (for debug output)
 int countRes; //counter which counts instances of residual (for debug output)
 int countScale;
-double previous_time; 
+int previous_app;   
+int current_app;  
 
 extern bool TpetraBuild;
 
@@ -108,7 +109,14 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   buildProblem();
   createDiscretization();
   finalSetUp(params, initial_guess);
-  previous_time = 0.0; 
+#ifdef ALBANY_LCM
+  int num_apps = num_apps = apps_.size();
+  if (num_apps == 0) num_apps = 1;   
+  prev_times_.resize(num_apps);   
+  for (int i=0; i<num_apps; ++i) prev_times_[i] = -1.0;    
+  previous_app = 0;   
+  current_app = 0;   
+#endif   
 }
 
 Albany::Application::
@@ -128,7 +136,14 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
 #endif
-  previous_time = 0.0; 
+#ifdef ALBANY_LCM
+  int num_apps = apps_.size();   
+  if (num_apps == 0) num_apps = 1;   
+  prev_times_.resize(num_apps);   
+  for (int i=0; i<num_apps; ++i) prev_times_[i] = -1.0;    
+  previous_app = 0;   
+  current_app = 0; 
+#endif 
 }
 
 namespace {
@@ -1423,7 +1438,7 @@ computeGlobalResidualImplT(
   else xdot_ = Teuchos::null; 
   if (xdotdotT != Teuchos::null) xdotdot_ = Teuchos::rcp(new Tpetra_Vector(*xdotdotT));
   else xdotdot_ = Teuchos::null; 
-#endif
+#endif // ALBANY_LCM
 
   // Mesh motion needs to occur here on the global mesh befor
   // it is potentially carved into worksets.
@@ -1542,13 +1557,13 @@ computeGlobalResidualImplT(
   Tpetra_MatrixMarket_Writer::writeDenseFile(nameResScaled, fT);
 #endif
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   // Push the assembled residual values back into the overlap vector
   overlapped_fT->doImport(*fT, *importerT, Tpetra::INSERT);
   // Write the residual to the discretization, which will later (optionally)
   // be written to the output file
   disc->setResidualFieldT(*overlapped_fT);
-#endif
+#endif // ALBANY_LCM
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
 
@@ -1580,14 +1595,19 @@ computeGlobalResidualImplT(
       workset.current_time = current_time;
     }
 
-    workset.distParamLib = distParamLib;
-    workset.disc = disc;
-
 #if defined(ALBANY_LCM)
+    // For DBCs in Schwarz alternating, the time should be set to remain
+    // fixed to the end of a Schwarz step.
+    if (is_alternating_schwarz_ == true) {
+      workset.current_time = dbc_time_;
+    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
-#endif
+#endif // ALBANY_LCM
+
+    workset.distParamLib = distParamLib;
+    workset.disc = disc;
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
@@ -1601,6 +1621,7 @@ computeGlobalResidualImplT(
 }
 
 #if defined(ALBANY_EPETRA)
+#if !defined(ALBANY_LCM)
 void
 Albany::Application::
 computeGlobalResidual(const double current_time,
@@ -1667,9 +1688,84 @@ computeGlobalResidual(const double current_time,
   if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
   countRes++;  //increment residual counter
 }
+#else // ALBANY_LCM
+void
+Albany::Application::
+computeGlobalResidual(const double current_time,
+    const Epetra_Vector* xdot,
+    const Epetra_Vector* xdotdot,
+    const Epetra_Vector& x,
+    const Teuchos::Array<ParamVec>& p,
+    Epetra_Vector& f)
+{
+  // Scatter x and xdot to the overlapped distribution
+  solMgr->scatterX(x, xdot, xdotdot);
+
+  // Create Tpetra copies of Epetra arguments
+  // Names of Tpetra entitied are identified by the suffix T
+  const Teuchos::RCP<const Tpetra_Vector> xT =
+  Petra::EpetraVector_To_TpetraVectorNonConst(x, commT);
+
+  Teuchos::RCP<const Tpetra_Vector> xdotT;
+  if (xdot != NULL && num_time_deriv > 0) {
+    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
+  }
+
+  Teuchos::RCP<const Tpetra_Vector> xdotdotT;
+  if (xdotdot != NULL && num_time_deriv > 1) {
+    xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
+  }
+
+  const Teuchos::RCP<Tpetra_Vector> fT =
+  Petra::EpetraVector_To_TpetraVectorNonConst(f, commT);
+
+  if (problem->useSDBCs() == false) {
+	this->computeGlobalResidualImplT(current_time, xdotT, xdotdotT, xT, p, fT);
+  }
+  else{
+    this->computeGlobalResidualSDBCsImplT(current_time, xdotT, xdotdotT, xT, p, fT);
+  }
+
+
+  // Convert output back from Tpetra to Epetra
+  Petra::TpetraVector_To_EpetraVector(fT, f, comm);
+  Petra::TpetraVector_To_EpetraVector(xT, const_cast<Epetra_Vector &>(x), comm);
+  //std::cout << "Global Soln x\n" << x << std::endl;
+  //std::cout << "Global Resid f\n" << f << std::endl;
+
+  //Debut output
+  if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
+    char name[100];//create string for file name
+    if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
+      sprintf(name, "rhs%i.mm", countRes);
+      EpetraExt::MultiVectorToMatrixMarketFile(name, f);
+    }
+    else {
+      if (countRes == writeToMatrixMarketRes) { //write residual only at requested count#
+        sprintf(name, "rhs%i.mm", countRes);
+        EpetraExt::MultiVectorToMatrixMarketFile(name, f);
+      }
+    }
+  }
+  if (writeToCoutRes != 0) { //If requesting writing of residual to cout...
+    if (writeToCoutRes == -1) { //cout residual time it arises
+      std::cout << "Global Residual #" << countRes << ": " << std::endl;
+      std::cout << f << std::endl;
+    }
+    else {
+      if (countRes == writeToCoutRes) { //cout residual only at requested count#
+        std::cout << "Global Residual #" << countRes << ": " << std::endl;
+        std::cout << f << std::endl;
+      }
+    }
+  }
+  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
+  countRes++;  //increment residual counter
+}
+#endif // ALBANY_LCM
 #endif
 
-#ifndef ALBANY_LCM 
+#if !defined(ALBANY_LCM)
 void
 Albany::Application::
 computeGlobalResidualT(
@@ -1722,7 +1818,7 @@ computeGlobalResidualT(
     countRes++;  //increment residual counter
   }
 }
-#else
+#else // ALBANY_LCM
 void
 Albany::Application::
 computeGlobalResidualT(
@@ -1786,7 +1882,7 @@ computeGlobalResidualT(
     countRes++;  //increment residual counter
   }
 }
-#endif
+#endif // ALBANY_LCM
 
 #if defined(ALBANY_EPETRA)
 double
@@ -2040,10 +2136,15 @@ computeGlobalJacobianImplT(const double alpha,
     workset.disc = disc;
 
 #if defined(ALBANY_LCM)
+    // For DBCs in Schwarz alternating, the time should be set to remain
+    // fixed to the end of a Schwarz step.
+    if (is_alternating_schwarz_ == true) {
+      workset.current_time = dbc_time_;
+    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
-#endif
+#endif // ALBANY_LCM
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
@@ -2068,7 +2169,389 @@ computeGlobalJacobianImplT(const double alpha,
         derivatives_check_);
 }
 
+#if defined(ALBANY_LCM)
+void
+Albany::Application::
+computeGlobalJacobianSDBCsImplT(const double alpha,
+    const double beta,
+    const double omega,
+    const double current_time,
+    const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+    const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
+    const Teuchos::RCP<const Tpetra_Vector>& xT,
+    const Teuchos::Array<ParamVec>& p,
+    const Teuchos::RCP<Tpetra_Vector>& fT,
+    const Teuchos::RCP<Tpetra_CrsMatrix>& jacT)
+{
+  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian");
+
+  postRegSetup("Jacobian");
+
+  if (scale != 1.0) {
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+        std::logic_error, "Scaling cannot be used with computeGlobalResidualTempusSDBCsImplT routine!  "
+        << "Please re-run without scaling.");
+  } 
+
+  //#define DEBUG_OUTPUT   
+  
+#ifdef DEBUG_OUTPUT  
+  *out << "IKT prev_times_ size = " << prev_times_.size() << '\n';    
+#endif  
+  int app_no;   
+  if (app_index_ < 0) app_no = 0;   
+  else app_no = app_index_;    
+ 
+  bool begin_time_step = false; 
+
+  current_app = app_index_;   
+#ifdef DEBUG_OUTPUT   
+  *out <<" IKT current_app, previous_app = " << current_app << ", " << previous_app << '\n';   
+#endif  
+
+  // Load connectivity map and coordinates
+  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+  const auto& coords = disc->getCoords();
+  const auto& wsEBNames = disc->getWsEBNames();
+  const auto& wsPhysIndex = disc->getWsPhysIndex();
+
+  int numWorksets = wsElNodeEqID.size();
+
+  //Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
+  Teuchos::RCP<Tpetra_Vector> overlapped_fT;
+  if (Teuchos::nonnull(fT)) {
+    overlapped_fT = solMgrT->get_overlapped_fT();
+  } else {
+    overlapped_fT = Teuchos::null;
+  }
+  Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT =
+      solMgrT->get_overlapped_jacT();
+  Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
+
+  Teuchos::RCP<Tpetra_Import> const importerT = solMgrT->get_importerT();
+
+  // Scatter x and xdot to the overlapped distribution
+  solMgrT->scatterXT(*xT, xdotT.get(), xdotdotT.get());
+
+  // Scatter distributed parameters
+  distParamLib->scatter();
+
+  // Set parameters
+  for (int i = 0; i < p.size(); i++)
+    for (unsigned int j = 0; j < p[i].size(); j++)
+      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
+
+#ifdef ALBANY_CUTR
+  if (shapeParamsHaveBeenReset) {
+    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
+
+    *out << " Calling moveMesh with params: " << std::setprecision(8);
+    for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
+    *out << std::endl;
+    meshMover->moveMesh(shapeParams, morphFromInit);
+    coords = disc->getCoords();
+    shapeParamsHaveBeenReset = false;
+  }
+#endif
+
+  // Zero out overlapped residual
+  if (Teuchos::nonnull(fT)) {
+    overlapped_fT->putScalar(0.0);
+    fT->putScalar(0.0);
+  }
+
+  // Zero out Jacobian
+  jacT->resumeFill();
+  jacT->setAllToScalar(0.0);
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if ( ! overlapped_jacT->isFillActive())
+  overlapped_jacT->resumeFill();
+#endif
+  overlapped_jacT->setAllToScalar(0.0);
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if (overlapped_jacT->isFillActive()) {
+    // Makes getLocalMatrix() valid.
+    overlapped_jacT->fillComplete();
+  }
+  if ( ! overlapped_jacT->isFillActive())
+  overlapped_jacT->resumeFill();
+
+#endif
+
+  // Set data in Workset struct, and perform fill via field manager
+  {
+    PHAL::Workset workset;
+    double this_time;
+    if (!paramLib->isParameter("Time")) {
+      loadBasicWorksetInfoT(workset, current_time);
+      this_time = current_time;
+    }
+    else {
+      loadBasicWorksetInfoT(workset,
+          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
+      this_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    }
+   
+#ifdef DEBUG_OUTPUT 
+    *out << "IKT countJac = " << countJac << ", computeGlobalJacobian workset.xT = \n"; 
+    (workset.xT)->describe(*out, Teuchos::VERB_EXTREME); 
+    *out << "IKT previous_time, this_time = " << prev_times_[app_no] << ", " << this_time << "\n";
+#endif
+    //Check if previous_time is same as current time.  If not, we are at the start 
+    //of a new time step, so we set boolean parameter to true. 
+    if (prev_times_[app_no] != this_time) begin_time_step = true;
+
+    workset.fT = overlapped_fT;
+    workset.JacT = overlapped_jacT;
+    loadWorksetJacobianInfo(workset, alpha, beta, omega);
+
+    //fill Jacobian derivative dimensions:
+    for (int ps = 0; ps < fm.size(); ps++) {
+      (workset.Jacobian_deriv_dims).push_back(
+          PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+              this,
+              ps,
+              explicit_scheme));
+    }
+
+    for (int ws = 0; ws < numWorksets; ws++) {
+      loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(workset, ws);
+      // FillType template argument used to specialize Sacado
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(
+          workset);
+      if (Teuchos::nonnull(nfm))
+#ifdef ALBANY_PERIDIGM
+    // DJL avoid passing a sphere mesh through a nfm that was
+    // created for non-sphere topology.
+    if (workset.sideSets->size() != 0) {
+      deref_nfm(nfm, wsPhysIndex, ws)
+              ->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+    }
+#else
+        deref_nfm(nfm, wsPhysIndex, ws)
+            ->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+#endif
+    }
+    prev_times_[app_no] = this_time;   
+    if (previous_app != current_app) {  
+      begin_time_step = true;   
+    } 
+  }
+
+  {
+    TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian Export");
+
+    // Assemble global residual
+    if (Teuchos::nonnull(fT))
+      fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+
+    // Assemble global Jacobian
+    jacT->doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
+
+#ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
+    if (Teuchos::nonnull(LCM::PeridigmManager::self())) {
+      LCM::PeridigmManager::self()->copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(jacT);
+    }
+#endif
+#endif
+  } // End timer
+  // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
+  Teuchos::RCP<Tpetra_Vector> xT_post_SDBCs;
+  if (Teuchos::nonnull(dfm)) {
+    PHAL::Workset workset;
+
+    workset.fT = fT;
+    workset.JacT = jacT;
+    workset.m_coeff = alpha;
+    workset.n_coeff = omega;
+    workset.j_coeff = beta;
+
+    if (paramLib->isParameter("Time"))
+      workset.current_time = paramLib
+          ->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    else
+      workset.current_time = current_time;
+
+    if (beta == 0.0 && perturbBetaForDirichlets > 0.0) workset.j_coeff =
+        perturbBetaForDirichlets;
+
+    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
+
+    loadWorksetNodesetInfo(workset);
+
+    workset.distParamLib = distParamLib;
+    workset.disc = disc;
+
+#if defined(ALBANY_LCM)
+    // For DBCs in Schwarz alternating, the time should be set to remain
+    // fixed to the end of a Schwarz step.
+    if (is_alternating_schwarz_ == true) {
+      workset.current_time = dbc_time_;
+    }
+    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif // ALBANY_LCM
+
+    // FillType template argument used to specialize Sacado
+    dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+    xT_post_SDBCs = Teuchos::rcp(new Tpetra_Vector(*workset.xT));
+  }
+  jacT->fillComplete();
+
+  #ifdef DEBUG_OUTPUT  
+  *out << "IKT begin_time_step? " << begin_time_step << "\n";   
+#endif 
+
+  if (begin_time_step == true) {
+  //if (countRes == 0) {
+    // Zero out overlapped residual - Tpetra
+    if (Teuchos::nonnull(fT)) {
+      overlapped_fT->putScalar(0.0);
+      fT->putScalar(0.0);
+    }
+    PHAL::Workset workset;
+
+    // Zero out Jacobian
+  jacT->resumeFill();
+  jacT->setAllToScalar(0.0);
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if ( ! overlapped_jacT->isFillActive())
+  overlapped_jacT->resumeFill();
+#endif
+  overlapped_jacT->setAllToScalar(0.0);
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if (overlapped_jacT->isFillActive()) {
+    // Makes getLocalMatrix() valid.
+    overlapped_jacT->fillComplete();
+  }
+  if ( ! overlapped_jacT->isFillActive())
+  overlapped_jacT->resumeFill();
+
+#endif
+
+    if (!paramLib->isParameter("Time")) {
+      loadBasicWorksetInfoSDBCsT(workset, xT_post_SDBCs, current_time);
+    }
+    else {
+      loadBasicWorksetInfoSDBCsT(workset, xT_post_SDBCs,
+          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
+    }
+
+    workset.fT = overlapped_fT;
+    workset.JacT = overlapped_jacT;
+    loadWorksetJacobianInfo(workset, alpha, beta, omega);
+
+    //fill Jacobian derivative dimensions:
+    for (int ps = 0; ps < fm.size(); ps++) {
+      (workset.Jacobian_deriv_dims).push_back(
+          PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+              this,
+              ps,
+              explicit_scheme));
+    }
+
+    for (int ws = 0; ws < numWorksets; ws++) {
+      loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(workset, ws);
+   
+#ifdef DEBUG_OUTPUT 
+      *out << "IKT countRes = " << countRes << ", computeGlobalResid workset.xT = \n "; 
+      (workset.xT)->describe(*out, Teuchos::VERB_EXTREME); 
+#endif
+
+      // FillType template argument used to specialize Sacado
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(
+          workset);
+      if (nfm != Teuchos::null) {
+#ifdef ALBANY_PERIDIGM
+    // DJL avoid passing a sphere mesh through a nfm that was
+    // created for non-sphere topology.
+    if (workset.sideSets->size() != 0) {
+      deref_nfm(nfm, wsPhysIndex, ws)
+              ->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+    }
+#else
+        deref_nfm(nfm, wsPhysIndex, ws)
+            ->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+#endif
+      }
+    }
+
+    // Assemble the residual into a non-overlapping vector
+    if (Teuchos::nonnull(fT))
+      fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+
+    // Assemble global Jacobian
+    jacT->doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
+
+#ifdef ALBANY_PERIDIGM
+#if defined(ALBANY_EPETRA)
+    if (Teuchos::nonnull(LCM::PeridigmManager::self())) {
+      LCM::PeridigmManager::self()->copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(jacT);
+    }
+#endif
+#endif
+    if (dfm != Teuchos::null) {
+
+      PHAL::Workset workset;
+
+      workset.fT = fT;
+      workset.JacT = jacT;
+      workset.m_coeff = alpha;
+      workset.n_coeff = omega;
+      workset.j_coeff = beta;
+
+    if (paramLib->isParameter("Time"))
+      workset.current_time = paramLib
+          ->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    else
+      workset.current_time = current_time;
+
+    if (beta == 0.0 && perturbBetaForDirichlets > 0.0) workset.j_coeff =
+        perturbBetaForDirichlets;
+
+    dfm_set(workset, xT_post_SDBCs, xdotT, xdotdotT, rc_mgr);
+
+      loadWorksetNodesetInfo(workset);
+
+      workset.distParamLib = distParamLib;
+      workset.disc = disc;
+
+#if defined(ALBANY_LCM)
+      // For DBCs in Schwarz alternating, the time should be set to remain
+      // fixed to the end of a Schwarz step.
+      if (is_alternating_schwarz_ == true) {
+        workset.current_time = dbc_time_;
+      }
+      // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
+      workset.apps_ = apps_;
+      workset.current_app_ = Teuchos::rcp(this, false);
+#endif // ALBANY_LCM
+
+      // FillType template argument used to specialize Sacado
+      dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+    }
+    jacT->fillComplete();
+  }
+  previous_app = current_app;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if (overlapped_jacT->isFillActive()) {
+    // Makes getLocalMatrix() valid.
+    overlapped_jacT->fillComplete();
+  }
+#endif
+  if (derivatives_check_ > 0)
+    checkDerivatives(*this, current_time, xdotT, xdotdotT, xT, p, fT, jacT,
+        derivatives_check_);
+}
+#endif
+
+#if defined(ALBANY_EPETRA)
+#if !defined(ALBANY_LCM)
 void
 Albany::Application::
 computeGlobalJacobian(const double alpha,
@@ -2161,8 +2644,113 @@ computeGlobalJacobian(const double alpha,
   if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0 || computeJacCondNum != 0 )
   countJac++; //increment Jacobian counter
 }
+#else // ALBANY_LCM
+void
+Albany::Application::
+computeGlobalJacobian(const double alpha,
+    const double beta,
+    const double omega,
+    const double current_time,
+    const Epetra_Vector* xdot,
+    const Epetra_Vector* xdotdot,
+    const Epetra_Vector& x,
+    const Teuchos::Array<ParamVec>& p,
+    Epetra_Vector* f,
+    Epetra_CrsMatrix& jac)
+{
+  // Scatter x and xdot to the overlapped distribution
+  solMgr->scatterX(x, xdot, xdotdot);
+
+  // Create Tpetra copies of Epetra arguments
+  // Names of Tpetra entitied are identified by the suffix T
+  const Teuchos::RCP<const Tpetra_Vector> xT =
+  Petra::EpetraVector_To_TpetraVectorConst(x, commT);
+
+  Teuchos::RCP<const Tpetra_Vector> xdotT;
+  if (xdot != NULL && num_time_deriv > 0) {
+    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
+  }
+
+  Teuchos::RCP<const Tpetra_Vector> xdotdotT;
+  if (xdotdot != NULL && num_time_deriv > 1) {
+    xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
+  }
+
+  Teuchos::RCP<Tpetra_Vector> fT;
+  if (f != NULL) {
+    fT = Petra::EpetraVector_To_TpetraVectorNonConst(*f, commT);
+  }
+
+  const Teuchos::RCP<Tpetra_CrsMatrix> jacT =
+  Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(jac, commT);
+
+  if (problem->useSDBCs() == false) {
+  this->computeGlobalJacobianImplT(alpha, beta, omega, current_time, xdotT, xdotdotT, xT, p, fT, jacT);
+  }
+  else{
+  this->computeGlobalJacobianSDBCsImplT(alpha, beta, omega, current_time, xdotT, xdotdotT, xT, p, fT, jacT);
+  }
+
+  // Convert output back from Tpetra to Epetra
+  if (f != NULL) {
+    Petra::TpetraVector_To_EpetraVector(fT, *f, comm);
+  }
+  Petra::TpetraVector_To_EpetraVector(xT, const_cast<Epetra_Vector &>(x), comm);
+  Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(jacT, jac, comm);
+  jac.FillComplete(true);
+  /*std::cout << "Global Soln x\n" << x << std::endl;
+  std::cout << "f "<< std::endl;
+  if (f != NULL)
+    f->Print(std::cout);
+  else
+    std::cout << "NOT SET!!" << std::endl;*/
+  //std::cout << "J " << jac << std::endl;
+
+  //Debut output
+  if (writeToMatrixMarketJac != 0) { //If requesting writing to MatrixMarket of Jacobian...
+    char name[100];//create string for file name
+    if (writeToMatrixMarketJac == -1) { //write jacobian to MatrixMarket every time it arises
+      sprintf(name, "jac%i.mm", countJac);
+      EpetraExt::RowMatrixToMatrixMarketFile(name, jac);
+    }
+    else {
+      if (countJac == writeToMatrixMarketJac) { //write jacobian only at requested count#
+        sprintf(name, "jac%i.mm", countJac);
+        EpetraExt::RowMatrixToMatrixMarketFile(name, jac);
+      }
+    }
+  }
+  if (writeToCoutJac != 0) { //If requesting writing Jacobian to standard output (cout)...
+    if (writeToCoutJac == -1) { //cout jacobian every time it arises
+      *out << "Global Jacobian #" << countJac << ":\n";
+      *out << jac << "\n";
+    }
+    else {
+      if (countJac == writeToCoutJac) { //cout jacobian only at requested count#
+        *out << "Global Jacobian #" << countJac << ":\n";
+        *out << jac << "\n";
+      }
+    }
+  }
+  if (computeJacCondNum != 0) { //If requesting computation of condition number
+    if (computeJacCondNum == -1) { //cout jacobian condition # every time it arises
+      double condNum = computeConditionNumber(jac);
+      *out << "Jacobian #" << countJac << " condition number = " << condNum << "\n";
+    }
+    else {
+      if (countJac == computeJacCondNum) { //cout jacobian condition # only at requested count#
+        double condNum = computeConditionNumber(jac);
+        *out << "Jacobian #" << countJac << " condition number = " << condNum << "\n";
+      }
+    }
+  }
+  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0 || computeJacCondNum != 0 )
+  countJac++; //increment Jacobian counter
+}
+#endif // ALBANY_LCM
 #endif
 
+//#if !defined(ALBANY_LCM)
 void
 Albany::Application::
 computeGlobalJacobianT(
@@ -2248,6 +2836,109 @@ computeGlobalJacobianT(
     countJac++; //increment Jacobian counter
   }
 }
+/*#else // ALBANY_LCM
+void
+Albany::Application::
+computeGlobalJacobianT(
+    const double alpha,
+    const double beta,
+    const double omega,
+    const double current_time,
+    const Tpetra_Vector* xdotT,
+    const Tpetra_Vector* xdotdotT,
+    const Tpetra_Vector& xT,
+    const Teuchos::Array<ParamVec>& p,
+    Tpetra_Vector* fT,
+    Tpetra_CrsMatrix& jacT)
+{
+  // Create non-owning RCPs to Tpetra objects
+  // to be passed to the implementation
+  if (problem->useSDBCs() == false) {
+  this->computeGlobalJacobianImplT(
+      alpha,
+      beta,
+      omega,
+      current_time,
+      Teuchos::rcp(xdotT, false),
+      Teuchos::rcp(xdotdotT, false),
+      Teuchos::rcpFromRef(xT),
+      p,
+      Teuchos::rcp(fT, false),
+      Teuchos::rcpFromRef(jacT));
+    }
+    else{
+  this->computeGlobalJacobianSDBCsImplT(
+      alpha,
+      beta,
+      omega,
+      current_time,
+      Teuchos::rcp(xdotT, false),
+      Teuchos::rcp(xdotdotT, false),
+      Teuchos::rcpFromRef(xT),
+      p,
+      Teuchos::rcp(fT, false),
+      Teuchos::rcpFromRef(jacT));
+    }
+  //Debut output
+  if (writeToMatrixMarketJac != 0) { //If requesting writing to MatrixMarket of Jacobian...
+    char name[100];  //create string for file name
+    if (writeToMatrixMarketJac == -1) { //write jacobian to MatrixMarket every time it arises
+      sprintf(name, "jac%i.mm", countJac);
+      Tpetra_MatrixMarket_Writer::writeSparseFile(
+          name,
+          Teuchos::rcpFromRef(jacT));
+    }
+    else {
+      if (countJac == writeToMatrixMarketJac) { //write jacobian only at requested count#
+        sprintf(name, "jac%i.mm", countJac);
+        Tpetra_MatrixMarket_Writer::writeSparseFile(
+            name,
+            Teuchos::rcpFromRef(jacT));
+      }
+    }
+  }
+  if (writeToCoutJac != 0) { //If requesting writing Jacobian to standard output (cout)...
+    if (writeToCoutJac == -1) { //cout jacobian every time it arises
+      *out << "Global Jacobian #" << countJac << ":\n";
+      jacT.describe(*out, Teuchos::VERB_EXTREME);
+    }
+    else {
+      if (countJac == writeToCoutJac) { //cout jacobian only at requested count#
+        *out << "Global Jacobian #" << countJac << ":\n";
+        jacT.describe(*out, Teuchos::VERB_EXTREME);
+      }
+    }
+  }
+  if (computeJacCondNum != 0) { //If requesting computation of condition number
+#if defined(ALBANY_EPETRA)
+      Teuchos::RCP<Epetra_CrsMatrix> jac = Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(Teuchos::rcpFromRef(jacT), comm);
+      if (computeJacCondNum == -1) { //cout jacobian condition # every time it arises
+        double condNum = computeConditionNumber(*jac);
+        *out << "Jacobian #" << countJac << " condition number = " << condNum << "\n";
+      }
+      else {
+        if (countJac == computeJacCondNum) { //cout jacobian condition # only at requested count#
+          double condNum = computeConditionNumber(*jac);
+          *out << "Jacobian #" << countJac << " condition number = " << condNum << "\n";
+        }
+      }
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::logic_error,
+        "Error in Albany::Application: Compute Jacobian Condition Number debug option "
+        << " currently relies on an Epetra-based routine in AztecOO.  To use this option, please "
+        << " rebuild Albany with ENABLE_ALBANY_EPETRA_EXE=ON.  You will then be able to have Albany "
+        << " output the Jacobian condition number when running either the Albany or AlbanyT executable.\n");
+#endif
+  }
+  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0
+      || computeJacCondNum != 0) {
+    countJac++; //increment Jacobian counter
+  }
+}
+#endif // ALBANY_LCM
+*/
 
 void
 Albany::Application::
@@ -2641,10 +3332,15 @@ shapeParamsHaveBeenReset = false;
     workset.disc = disc;
 
 #if defined(ALBANY_LCM)
+    // For DBCs in Schwarz alternating, the time should be set to remain
+    // fixed to the end of a Schwarz step.
+    if (is_alternating_schwarz_ == true) {
+      workset.current_time = dbc_time_;
+    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
-#endif
+#endif // ALBANY_LCM
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
@@ -3277,10 +3973,15 @@ computeGlobalSGResidual(
     workset.disc = disc;
 
 #if defined(ALBANY_LCM)
+    // For DBCs in Schwarz alternating, the time should be set to remain
+    // fixed to the end of a Schwarz step.
+    if (is_alternating_schwarz_ == true) {
+      workset.current_time = dbc_time_;
+    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
-#endif
+#endif// ALBANY_LCM
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
@@ -3466,10 +4167,15 @@ computeGlobalSGJacobian(
     workset.disc = disc;
 
 #if defined(ALBANY_LCM)
+    // For DBCs in Schwarz alternating, the time should be set to remain
+    // fixed to the end of a Schwarz step.
+    if (is_alternating_schwarz_ == true) {
+      workset.current_time = dbc_time_;
+    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
-#endif
+#endif // ALBANY_LCM
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
@@ -3745,10 +4451,15 @@ computeGlobalSGTangent(
     workset.disc = disc;
 
 #if defined(ALBANY_LCM)
+    // For DBCs in Schwarz alternating, the time should be set to remain
+    // fixed to the end of a Schwarz step.
+    if (is_alternating_schwarz_ == true) {
+      workset.current_time = dbc_time_;
+    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
-#endif
+#endif // ALBANY_LCM
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGTangent>(workset);
@@ -3969,10 +4680,15 @@ computeGlobalMPResidual(
     workset.disc = disc;
 
 #if defined(ALBANY_LCM)
+    // For DBCs in Schwarz alternating, the time should be set to remain
+    // fixed to the end of a Schwarz step.
+    if (is_alternating_schwarz_ == true) {
+      workset.current_time = dbc_time_;
+    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
-#endif
+#endif // ALBANY_LCM
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
@@ -4152,10 +4868,15 @@ computeGlobalMPJacobian(
     workset.disc = disc;
 
 #if defined(ALBANY_LCM)
+    // For DBCs in Schwarz alternating, the time should be set to remain
+    // fixed to the end of a Schwarz step.
+    if (is_alternating_schwarz_ == true) {
+      workset.current_time = dbc_time_;
+    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
-#endif
+#endif // ALBANY_LCM
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);
@@ -4432,10 +5153,15 @@ computeGlobalMPTangent(
 
     // FillType template argument used to specialize Sacado
 #if defined(ALBANY_LCM)
+    // For DBCs in Schwarz alternating, the time should be set to remain
+    // fixed to the end of a Schwarz step.
+    if (is_alternating_schwarz_ == true) {
+      workset.current_time = dbc_time_;
+    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
-#endif
+#endif // ALBANY_LCM
 
     dfm->evaluateFields<PHAL::AlbanyTraits::MPTangent>(workset);
   }
@@ -6027,11 +6753,25 @@ computeGlobalResidualSDBCsImplT(
 
   if (scale != 1.0) {
     TEUCHOS_TEST_FOR_EXCEPTION(true,
-        std::logic_error, "Scaling cannot be used with computeGlobalResidualTempusSDBCsImplT routine!  "
+        std::logic_error, "Scaling cannot be used with computeGlobalResidualSDBCsImplT routine!  "
         << "Please re-run without scaling.");
   } 
+
+//#define DEBUG_OUTPUT   
+  
+#ifdef DEBUG_OUTPUT  
+  *out << "IKT prev_times_ size = " << prev_times_.size() << '\n';    
+#endif  
+  int app_no;   
+  if (app_index_ < 0) app_no = 0;   
+  else app_no = app_index_;    
  
   bool begin_time_step = false; 
+
+  current_app = app_index_;   
+#ifdef DEBUG_OUTPUT   
+  *out <<" IKT current_app, previous_app = " << current_app << ", " << previous_app << '\n';   
+#endif  
 
   // Load connectivity map and coordinates
   const auto& wsElNodeEqID = disc->getWsElNodeEqID();
@@ -6073,7 +6813,7 @@ computeGlobalResidualSDBCsImplT(
   else xdot_ = Teuchos::null; 
   if (xdotdotT != Teuchos::null) xdotdot_ = Teuchos::rcp(new Tpetra_Vector(*xdotdotT));
   else xdotdot_ = Teuchos::null; 
-#endif
+#endif // ALBANY_LCM
 
   // Mesh motion needs to occur here on the global mesh befor
   // it is potentially carved into worksets.
@@ -6125,12 +6865,12 @@ computeGlobalResidualSDBCsImplT(
     }
  
 #ifdef DEBUG_OUTPUT 
-    *out << "IKT previous_time, this_time = " << previous_time << ", " << this_time << "\n"; 
+    *out << "IKT previous_time, this_time = " << prev_times_[app_no] << ", " << this_time << "\n";
 #endif
     //Check if previous_time is same as current time.  If not, we are at the start 
     //of a new time step, so we set boolean parameter to true. 
-    if (previous_time != this_time) begin_time_step = true;  
-
+    if (prev_times_[app_no] != this_time) begin_time_step = true; 
+    
     workset.fT = overlapped_fT;
 
     for (int ws = 0; ws < numWorksets; ws++) {
@@ -6165,7 +6905,10 @@ computeGlobalResidualSDBCsImplT(
 #endif
       }
     }
-    previous_time = current_time; 
+    prev_times_[app_no] = this_time;   
+    if (previous_app != current_app) {  
+      begin_time_step = true;   
+    }  
   }
 
   // Assemble the residual into a non-overlapping vector
@@ -6177,7 +6920,7 @@ computeGlobalResidualSDBCsImplT(
   // Write the residual to the discretization, which will later (optionally)
   // be written to the output file
   disc->setResidualFieldT(*overlapped_fT);
-#endif
+#endif // ALBANY_LCM
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   Teuchos::RCP<Tpetra_Vector> xT_post_SDBCs; 
@@ -6204,15 +6947,24 @@ computeGlobalResidualSDBCsImplT(
     workset.disc = disc;
 
 #if defined(ALBANY_LCM)
+    // For DBCs in Schwarz alternating, the time should be set to remain
+    // fixed to the end of a Schwarz step.
+    if (is_alternating_schwarz_ == true) {
+      workset.current_time = dbc_time_;
+    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
-#endif
+#endif // ALBANY_LCM
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-    xT_post_SDBCs = Teuchos::rcp(new Tpetra_Vector(*workset.xT)); 
+    xT_post_SDBCs = Teuchos::rcp(new Tpetra_Vector(*workset.xT));
   }
+ 
+#ifdef DEBUG_OUTPUT  
+  *out << "IKT begin_time_step? " << begin_time_step << "\n";   
+#endif 
 
   if (begin_time_step == true) {
   //if (countRes == 0) {
@@ -6273,7 +7025,7 @@ computeGlobalResidualSDBCsImplT(
     // Write the residual to the discretization, which will later (optionally)
     // be written to the output file
     disc->setResidualFieldT(*overlapped_fT);
-#endif
+#endif // ALBANY_LCM
     if (dfm != Teuchos::null) {
 
       PHAL::Workset workset;
@@ -6296,14 +7048,20 @@ computeGlobalResidualSDBCsImplT(
       workset.disc = disc;
 
 #if defined(ALBANY_LCM)
+      // For DBCs in Schwarz alternating, the time should be set to remain
+      // fixed to the end of a Schwarz step.
+      if (is_alternating_schwarz_ == true) {
+        workset.current_time = dbc_time_;
+      }
       // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
       workset.apps_ = apps_;
       workset.current_app_ = Teuchos::rcp(this, false);
-#endif
+#endif // ALBANY_LCM
 
       // FillType template argument used to specialize Sacado
       dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     }
   }
+  previous_app = current_app;
 }
 #endif // ALBANY_LCM

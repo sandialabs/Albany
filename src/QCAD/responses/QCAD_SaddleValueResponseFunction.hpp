@@ -325,7 +325,8 @@ namespace QCAD {
     double maxTimeStep, minTimeStep;
     double minSpringConstant, maxSpringConstant;
     std::size_t maxIterations;
-    std::size_t backtraceAfterIters;
+//    std::size_t backtraceAfterIters;
+    int backtraceAfterIters;
     double convergeTolerance;
 
     //! data for beginning and ending regions

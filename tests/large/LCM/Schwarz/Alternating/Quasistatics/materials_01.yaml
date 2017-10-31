@@ -1,9 +1,9 @@
 ANONYMOUS:
   ElementBlocks:
-    fine:
-      material: Fine
+    coarse:
+      material: Coarse
   Materials:
-    Fine:
+    Coarse:
       Material Model:
         Model Name: Neohookean
       Elastic Modulus:
@@ -13,4 +13,3 @@ ANONYMOUS:
         Poissons Ratio Type: Constant
         Value: 0.25
       Output Cauchy Stress: true
-      

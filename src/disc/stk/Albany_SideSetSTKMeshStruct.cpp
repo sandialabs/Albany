@@ -29,8 +29,6 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
                                             const Teuchos::RCP<const Teuchos_Comm>& commT) :
   GenericSTKMeshStruct(params, Teuchos::null)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (inputMeshSpecs.numDim!=3, std::logic_error,
-                              "Error! For now input mesh has to be 3D.\n");
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
@@ -64,6 +62,10 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
   else if (input_elem_name=="Hexahedron_8")
   {
     stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*partVec[0]);
+  }
+  else if (input_elem_name=="Triangle_3" || input_elem_name=="Quadrilateral_4")
+  {
+    stk::mesh::set_cell_topology<shards::Line<2> >(*partVec[0]);
   }
   else
   {

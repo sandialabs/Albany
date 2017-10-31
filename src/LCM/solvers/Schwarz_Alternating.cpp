@@ -7,7 +7,13 @@
 #include "Albany_SolverFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "MiniTensor.h"
+#include "Piro_LOCASolver.hpp"
+#ifdef ALBANY_TEMPUS
+#include "Piro_TempusSolver.hpp"
+#endif
 #include "Schwarz_Alternating.hpp"
+
+//#define DEBUG
 
 namespace LCM {
 
@@ -35,8 +41,33 @@ SchwarzAlternating(
   maximum_steps_ = alt_system_params.get<int>("Maximum Steps", 0);
   initial_time_ = alt_system_params.get<ST>("Initial Time", 0.0);
   final_time_ = alt_system_params.get<ST>("Final Time", 0.0);
-  initial_time_step_ = alt_system_params.get<ST>("Initial Time Step", 0.0);
+  initial_time_step_ = alt_system_params.get<ST>("Initial Time Step", 1.0);
+
+  ST const
+  dt = initial_time_step_;
+
+  min_time_step_ = alt_system_params.get<ST>("Minimum Time Step", dt);
+  max_time_step_ = alt_system_params.get<ST>("Maximum Time Step", dt);
+  reduction_factor_ = alt_system_params.get<ST>("Reduction Factor", 1.0);
+  increase_factor_ = alt_system_params.get<ST>("Increase Factor", 1.0);
   output_interval_ = alt_system_params.get<int>("Exodus Write Interval", 1);
+
+  // Firewalls
+  ALBANY_ASSERT(min_iters_ >= 1);
+  ALBANY_ASSERT(max_iters_ >= 1);
+  ALBANY_ASSERT(max_iters_ >= min_iters_);
+  ALBANY_ASSERT(rel_tol_ >= 0.0);
+  ALBANY_ASSERT(abs_tol_ >= 0.0);
+  ALBANY_ASSERT(maximum_steps_ >= 1);
+  ALBANY_ASSERT(final_time_ >= initial_time_);
+  ALBANY_ASSERT(initial_time_step_ > 0.0);
+  ALBANY_ASSERT(max_time_step_ > 0.0);
+  ALBANY_ASSERT(min_time_step_ > 0.0);
+  ALBANY_ASSERT(max_time_step_ >= min_time_step_);
+  ALBANY_ASSERT(reduction_factor_ <= 1.0);
+  ALBANY_ASSERT(reduction_factor_ > 0.0);
+  ALBANY_ASSERT(increase_factor_ >= 1.0);
+  ALBANY_ASSERT(output_interval_ >= 1);
 
   //number of models
   num_subdomains_ = model_filenames.size();
@@ -59,17 +90,25 @@ SchwarzAlternating(
   // Arrays to cache useful info for each subdomain for later use
   apps_.resize(num_subdomains_);
   solvers_.resize(num_subdomains_);
-  solution_sniffers_.resize(num_subdomains_);
   stk_mesh_structs_.resize(num_subdomains_);
+  discs_.resize(num_subdomains_);
   model_evaluators_.resize(num_subdomains_);
   sub_inargs_.resize(num_subdomains_);
   sub_outargs_.resize(num_subdomains_);
-  nox_params_.resize(num_subdomains_);
-  solutions_.resize(num_subdomains_);
-  have_loca_.resize(num_subdomains_);
-  have_tempus_.resize(num_subdomains_);
-  step_start_.resize(num_subdomains_);
-  step_stop_.resize(num_subdomains_);
+  solns_nox_.resize(num_subdomains_);
+  prev_solns_nox_.resize(num_subdomains_);
+  schwarz_ics_.resize(num_subdomains_);
+  schwarz_ics_dot_.resize(num_subdomains_);
+  schwarz_ics_dotdot_.resize(num_subdomains_);
+  prev_solns_thyra_.resize(num_subdomains_);
+  prev_solns_dot_thyra_.resize(num_subdomains_);
+  prev_solns_dotdot_thyra_.resize(num_subdomains_);
+
+  bool
+  have_loca{false};
+
+  bool
+  have_tempus{false};
 
   // Initialization
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
@@ -98,94 +137,31 @@ SchwarzAlternating(
     Teuchos::ParameterList &
     piro_params = params.sublist("Piro");
 
-    bool const
-    have_loca = piro_params.isSublist("LOCA");
-
-    have_loca_[subdomain] = have_loca;
-
-    if (have_loca == true) {
-      Teuchos::ParameterList &
-      loca_params = piro_params.sublist("LOCA");
-
-      Teuchos::ParameterList &
-      stepper_params = loca_params.sublist("Stepper");
-
-      start_stop_params_.emplace_back(stepper_params);
-      start_str_.emplace_back("Min Value");
-      stop_str_.emplace_back("Max Value");
-    }
-
-    bool const
-    have_tempus = piro_params.isSublist("Tempus");
-
-    have_tempus_[subdomain] = have_tempus;
-
-    if (have_tempus == true) {
-      Teuchos::ParameterList &
-      tempus_params = piro_params.sublist("Tempus");
-
-      Teuchos::ParameterList &
-      integrator_params = tempus_params.sublist("Tempus Integrator");
-
-      Teuchos::ParameterList &
-      step_params = integrator_params.sublist("Time Step Control");
-
-      start_stop_params_.emplace_back(step_params);
-      start_str_.emplace_back("Initial Time");
-      stop_str_.emplace_back("Final Time");
-    }
-
-    ALBANY_ASSERT(have_loca == true || have_tempus == true);
-
-    bool const
-    have_nox = piro_params.isSublist("NOX");
-
-    ALBANY_ASSERT(have_nox == true);
-
-    Teuchos::ParameterList &
-    nox_params = piro_params.sublist("NOX");
-
-    nox_params_[subdomain] = nox_params;
-
-    bool const
-    have_solver_opts = nox_params.isSublist("Solver Options");
-
-    ALBANY_ASSERT(have_solver_opts == true);
-
-    Teuchos::ParameterList &
-    solver_opts = nox_params.sublist("Solver Options");
-
     std::string const
-    ppo_str{"User Defined Pre/Post Operator"};
+    msg{"All subdomains must have the same solution method (LOCA or Tempus)"};
 
-    bool const
-    have_ppo = solver_opts.isParameter(ppo_str);
-
-    Teuchos::RCP<NOX::Abstract::PrePostOperator>
-    ppo{Teuchos::null};
-
-    if (have_ppo == true) {
-      ppo = solver_opts.get<decltype(ppo)>(ppo_str);
-    } else {
-      ppo = Teuchos::rcp(new SolutionSniffer);
-      solver_opts.set(ppo_str, ppo);
-      ALBANY_ASSERT(solver_opts.isParameter(ppo_str) == true);
+    if (subdomain == 0) { 
+      have_loca = piro_params.isSublist("LOCA");
+      have_tempus = piro_params.isSublist("Tempus");
+#ifndef ALBANY_TEMPUS
+      ALBANY_ASSERT(!have_tempus, "Must compile Albany with Tempus to solve using dynamic Schwarz"); 
+#endif
+      ALBANY_ASSERT(have_loca != have_tempus, "Must have either LOCA or Tempus");
+      have_loca_ = have_loca;
+      have_tempus_ = have_tempus;
     }
-
-    constexpr bool
-    throw_on_fail{true};
-
-    Teuchos::RCP<SolutionSniffer>
-    solution_sniffer = Teuchos::rcp_dynamic_cast<SolutionSniffer>
-    (ppo, throw_on_fail);
-
-    solution_sniffers_[subdomain] = solution_sniffer;
+    else {
+      ALBANY_ASSERT(have_loca == piro_params.isSublist("LOCA"), msg);
+      ALBANY_ASSERT(have_tempus == piro_params.isSublist("Tempus"), msg);
+    }
 
     Teuchos::RCP<Albany::Application>
     app{Teuchos::null};
 
     Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
     solver = solver_factory.createAndGetAlbanyAppT(app, comm, comm);
+
+    app->setAlternatingSchwarz(true);
 
     solvers_[subdomain] = solver;
 
@@ -194,6 +170,8 @@ SchwarzAlternating(
     // Get STK mesh structs to control Exodus output interval
     Teuchos::RCP<Albany::AbstractDiscretization>
     disc = app->getDiscretization();
+    
+    discs_[subdomain] = disc; 
 
     Albany::STKDiscretization &
     stk_disc = *static_cast<Albany::STKDiscretization *>(disc.get());
@@ -205,16 +183,8 @@ SchwarzAlternating(
 
     model_evaluators_[subdomain] = solver_factory.returnModelT();
 
-    solutions_[subdomain] = Teuchos::null;
+    solns_nox_[subdomain] = Teuchos::null;
   }
-
-  //
-  // Setup nominal values
-  //
-  nominal_values_ = this->createInArgsImpl();
-  nominal_values_.set_x(Teuchos::null);
-  nominal_values_.set_x_dot(Teuchos::null);
-  nominal_values_.set_x_dot_dot(Teuchos::null);
 
   //
   // Parameters
@@ -315,7 +285,7 @@ Thyra::ModelEvaluatorBase::InArgs<ST>
 SchwarzAlternating::
 getNominalValues() const
 {
-  return nominal_values_;
+  return this->createInArgsImpl();
 }
 
 //
@@ -498,7 +468,14 @@ evalModelImpl(
     Thyra::ModelEvaluatorBase::InArgs<ST> const &,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const &) const
 {
-  SchwarzLoop();
+  if (have_loca_ == true) {
+    SchwarzLoopQuasistatics();
+  }
+#ifdef ALBANY_TEMPUS
+  if (have_tempus_ == true) {
+    SchwarzLoopDynamics();
+  }
+#endif
   return;
 }
 
@@ -607,16 +584,17 @@ reportFinals(std::ostream & os) const
   os << "Absolute tolerance :" << abs_tol_ << '\n';
   os << "Last relative error:" << rel_error_ << '\n';
   os << "Relative tolerance :" << rel_tol_ << '\n';
-  os << '\n';
+  os << std::endl;
   return;
 }
 
 //
-// Schwarz Alternating loop
+// Schwarz Alternating loop, dynamic
 //
+#ifdef ALBANY_TEMPUS
 void
 SchwarzAlternating::
-SchwarzLoop() const
+SchwarzLoopDynamics() const
 {
   minitensor::Vector<ST>
   norms_init(num_subdomains_, minitensor::Filler::ZEROS);
@@ -630,10 +608,10 @@ SchwarzLoop() const
   std::string const
   delim(72, '=');
 
-  Teuchos::FancyOStream &
+  auto &
   fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
 
-  fos << delim << '\n';
+  fos << delim << std::endl;
   fos << "Schwarz Alternating Method with " << num_subdomains_;
   fos << " subdomains\n";
   fos << std::scientific << std::setprecision(17);
@@ -647,41 +625,132 @@ SchwarzLoop() const
   ST
   current_time{initial_time_};
 
-  ST
-  next_time{current_time + time_step};
+  // Output initial configuration. Then disable output.
+  // Handle it after Schwarz iteration.
+
+  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
+ 
+    Albany::AbstractSTKMeshStruct &
+    ams = *stk_mesh_structs_[subdomain];
+
+    ams.exoOutputInterval = 1;
+    ams.exoOutput = true;
+
+    Albany::AbstractDiscretization &
+    abs_disc = *discs_[subdomain];
+
+    Albany::STKDiscretization &
+    stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
+
+    // Populate schwarz_ics_ and its time-derivatives with values of IC
+    // from nominal values in model evaluator.
+    auto &
+    me = dynamic_cast<Albany::ModelEvaluatorT &>
+    (*model_evaluators_[subdomain]);
+        
+    schwarz_ics_[subdomain] = Thyra::createMember(me.get_x_space());
+    Thyra::copy(*(me.getNominalValues().get_x()), schwarz_ics_[subdomain].ptr());
+    //fos << "IKT subdomain = " << subdomain << ", schwarz_ics_  = " << std::endl; 
+    //const Teuchos::RCP<const Tpetra_Vector> ic = ConverterT::getConstTpetraVector(schwarz_ics_[subdomain]);
+    //ic->describe(fos, Teuchos::VERB_EXTREME);
+
+    schwarz_ics_dot_[subdomain] = Thyra::createMember(me.get_x_space());
+    Thyra::copy(*(me.getNominalValues().get_x_dot()), schwarz_ics_dot_[subdomain].ptr());
+
+    schwarz_ics_dotdot_[subdomain] = Thyra::createMember(me.get_x_space());
+    Thyra::copy(*(me.getNominalValues().get_x_dot_dot()), schwarz_ics_dotdot_[subdomain].ptr());
+
+    prev_solns_thyra_[subdomain] = Thyra::createMember(me.get_x_space());
+    Thyra::copy(*(me.getNominalValues().get_x()), prev_solns_thyra_[subdomain].ptr());
+    
+    prev_solns_dot_thyra_[subdomain] = Thyra::createMember(me.get_x_space());
+    Thyra::copy(*(me.getNominalValues().get_x_dot()), prev_solns_dot_thyra_[subdomain].ptr());
+
+    prev_solns_dotdot_thyra_[subdomain] = Thyra::createMember(me.get_x_space());
+    Thyra::copy(*(me.getNominalValues().get_x_dot_dot()), prev_solns_dotdot_thyra_[subdomain].ptr());
+
+    //Write initial condition to STK mesh 
+    const Teuchos::RCP<const Tpetra_Vector> prev_solns_tpetra = ConverterT::getConstTpetraVector(prev_solns_thyra_[subdomain]);
+    const Teuchos::RCP<const Tpetra_Vector> prev_solns_dot_tpetra = ConverterT::getConstTpetraVector(prev_solns_dot_thyra_[subdomain]);
+    const Teuchos::RCP<const Tpetra_Vector> prev_solns_dotdot_tpetra = ConverterT::getConstTpetraVector(prev_solns_dotdot_thyra_[subdomain]);
+
+#if defined(DEBUG)
+    if (subdomain == 0) {
+      Tpetra_MatrixMarket_Writer::writeDenseFile("init_soln0.mm", prev_solns_tpetra);
+    }
+    else if (subdomain == 1) {
+      Tpetra_MatrixMarket_Writer::writeDenseFile("init_soln1.mm", prev_solns_tpetra);
+    }
+#endif
+
+    const Teuchos::RCP<const Tpetra_MultiVector> xMV =
+      apps_[subdomain]->getAdaptSolMgrT()->getOverlappedSolution();
+
+    stk_disc.writeSolutionMV(*xMV, initial_time_, true); 
+
+    ams.exoOutput = false;
+
+  }
+
 
   // Continuation loop
-  while (stop <= maximum_steps_ && current_time <= final_time_) {
+  while (stop < maximum_steps_ && current_time < final_time_) {
 
-    fos << delim << '\n';
+    fos << delim << std::endl;
     fos << "Time stop          :" << stop << '\n';
     fos << "Time               :" << current_time << '\n';
     fos << "Time step          :" << time_step << '\n';
-    fos << delim << '\n';
+    fos << delim << std::endl;
+
+    ST const
+    next_time{current_time + time_step};
 
     num_iter_ = 0;
 
     do {
+    
+      bool const
+      is_initial_state = stop == 0 && num_iter_ == 0;
 
       for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
-        fos << delim << '\n';
+        fos << delim << std::endl;
         fos << "Schwarz iteration  :" << num_iter_ << '\n';
         fos << "Subdomain          :" << subdomain << '\n';
-        fos << delim << '\n';
-
-        // Output handling
-        Albany::AbstractSTKMeshStruct &
-        ams = *stk_mesh_structs_[subdomain];
-
-        ams.exoOutputInterval = 1;
-
-        ams.exoOutput = output_interval_ > 0 ?
-            (num_iter_ + 1) % output_interval_ == 0 : false;
+        fos << delim << std::endl;
 
         // Solve for each subdomain
         Thyra::ResponseOnlyModelEvaluatorBase<ST> &
         solver = *(solvers_[subdomain]);
+
+        Piro::TempusSolver<ST, LO, GO, KokkosNode> &
+        piro_tempus_solver =
+            dynamic_cast<Piro::TempusSolver<ST, LO, GO, KokkosNode> &>(solver);
+
+        piro_tempus_solver.setStartTime(current_time); 
+        piro_tempus_solver.setFinalTime(next_time); 
+        piro_tempus_solver.setInitTimeStep(time_step);
+
+        double const
+        tempus_start_time = piro_tempus_solver.getStartTime();
+
+        double const
+        tempus_final_time = piro_tempus_solver.getFinalTime();
+
+        double const
+        tempus_time_step = piro_tempus_solver.getInitTimeStep();
+
+        fos << "Initial time       :" << tempus_start_time << '\n';
+        fos << "Final time         :" << tempus_final_time << '\n';
+        fos << "Time step          :" << tempus_time_step << '\n';
+        fos << delim << std::endl;
+
+        // For time dependent DBCs, set the time to be next time
+        auto &
+        app = *apps_[subdomain];
+
+        app.setDBCTime(next_time);
 
         Thyra::ModelEvaluatorBase::InArgs<ST>
         in_args = solver.createInArgs();
@@ -695,28 +764,497 @@ SchwarzLoop() const
 
         me.getNominalValues().set_t(current_time);
 
-        // Use previous solution as initial condition for next step
-        if (stop > 0) {
-          Teuchos::RCP<NOX::Thyra::Vector>
-          ntv = Teuchos::rcp_dynamic_cast<NOX::Thyra::Vector>
-                (solutions_[subdomain]);
+        Teuchos::RCP<Tempus::SolutionHistory<ST> > 
+        solution_history; 
+          
+        Teuchos::RCP<Tempus::SolutionState<ST>> 
+        current_state;
 
-          Teuchos::RCP<Thyra::VectorBase<ST>>
-          x = ntv->getThyraRCPVector();
+        Teuchos::RCP<Thyra::VectorBase<ST>> 
+        ic_soln_rcp = Thyra::createMember(me.get_x_space());
+        
+        Teuchos::RCP<Thyra::VectorBase<ST>> 
+        ic_soln_dot_rcp = Thyra::createMember(me.get_x_space());
+        
+        Teuchos::RCP<Thyra::VectorBase<ST>> 
+        ic_soln_dotdot_rcp = Thyra::createMember(me.get_x_space());
 
-          me.getNominalValues().set_x(x);
+        //set ic_soln_rcp, ic_soln_dot_rcp and ic_soln_dotdot_rcp 
+        //by making copy of what is in schwarz_ics_[subdomain], etc.
+        Thyra::VectorBase<ST> &
+        ic_soln = *schwarz_ics_[subdomain];
+
+        Thyra::VectorBase<ST> &
+        ic_soln_dot = *schwarz_ics_dot_[subdomain];
+
+        Thyra::VectorBase<ST> &
+        ic_soln_dotdot = *schwarz_ics_dotdot_[subdomain];
+
+        Thyra::copy(ic_soln, ic_soln_rcp.ptr());
+
+        Thyra::copy(ic_soln_dot, ic_soln_dot_rcp.ptr());
+
+        Thyra::copy(ic_soln_dotdot, ic_soln_dotdot_rcp.ptr());
+
+        piro_tempus_solver.setInitialState(
+            current_time,
+            ic_soln_rcp,
+            ic_soln_dot_rcp,
+            ic_soln_dotdot_rcp);
+
+        solver.evalModel(in_args, out_args);  
+        
+#if defined(DEBUG)
+        Teuchos::RCP<Tpetra_Vector>
+        prev_soln_tpetra;
+
+        fos << "\n*** Thyra: Previous solution ***\n";
+        prev_solns_thyra_[subdomain]->describe(fos, Teuchos::VERB_EXTREME);
+        fos << "\n*** NORM: " << Thyra::norm(*prev_solns_thyra_[subdomain]) << '\n';
+        if (subdomain == 0) {
+          prev_soln_tpetra = ConverterT::getTpetraVector(prev_solns_thyra_[0]);
+          Albany::writeMatrixMarket(prev_soln_tpetra, "prev_soln_subd0", num_iter_);
         }
+        else if (subdomain == 1) {
+          prev_soln_tpetra = ConverterT::getTpetraVector(solns_thyra_[1]);
+          Albany::writeMatrixMarket(prev_soln_tpetra, "prev_soln_subd1", num_iter_);
+        }
+        fos << "\n*** Thyra: Previous solution ***\n";
+#endif //DEBUG
+        
+        solution_history = piro_tempus_solver.getSolutionHistory();
+
+        current_state = solution_history->getCurrentState();
+
+        Teuchos::RCP<Thyra::VectorBase<ST>> 
+        curr_soln_rcp = Thyra::createMember(me.get_x_space());
+        Thyra::copy(*current_state->getX(), curr_soln_rcp.ptr());
+
+        //Currently time-derivatives are not used in convergence criterion but they may be in the future 
+        //for consistency with Alejandro's matlab Schwarz code. When this is read, un-comment the following code, 
+        //as well as code further down involving curr_soln_dot_rcp, etc.
+ 
+        /*Teuchos::RCP<Thyra::VectorBase<ST>> 
+        curr_soln_dot_rcp = Thyra::createMember(me.get_x_space());
+        Thyra::copy(*current_state->getXDot(), curr_soln_dot_rcp.ptr());
+
+        Teuchos::RCP<Thyra::VectorBase<ST>> 
+        curr_soln_dotdot_rcp = Thyra::createMember(me.get_x_space());
+        Thyra::copy(*current_state->getXDotDot(), curr_soln_dotdot_rcp.ptr());*/
+
+#if defined(DEBUG)
+        fos << "\n*** Thyra: Current solution ***\n";
+        curr_soln_rcp->describe(fos, Teuchos::VERB_EXTREME);
+        fos << "\n*** NORM: " << Thyra::norm(*curr_soln_rcp) << '\n';
+        fos << "\n*** Thyra: Current solution ***\n";
+
+        Teuchos::RCP<Tpetra_Vector>
+        curr_soln_tpetra;
+
+        if (subdomain == 0) {
+          curr_soln_tpetra = ConverterT::getTpetraVector(curr_soln_rcp); 
+          Albany::writeMatrixMarket(curr_soln_tpetra, "curr_soln_subd0", num_iter_);
+        }
+        else if (subdomain == 1) {
+          curr_soln_tpetra = ConverterT::getTpetraVector(curr_soln_rcp); 
+          Albany::writeMatrixMarket(curr_soln_tpetra, "curr_soln_subd1", num_iter_);
+        }
+#endif //DEBUG
+
+        Teuchos::RCP<Thyra::VectorBase<ST>>
+        soln_diff_rcp = Thyra::createMember(me.get_x_space());
+
+        Thyra::put_scalar<ST>(0.0, soln_diff_rcp.ptr()); 
+         
+        Thyra::V_VpStV(
+            soln_diff_rcp.ptr(),
+            *curr_soln_rcp,
+            -1.0,
+            *prev_solns_thyra_[subdomain]);
+
+#if defined(DEBUG)
+        fos << "\n*** Thyra: Solution difference ***\n"; 
+        soln_diff_rcp->describe(fos, Teuchos::VERB_EXTREME); 
+        fos << "\n*** NORM: " << Thyra::norm(*soln_diff_rcp) << '\n';
+        fos << "\n*** Thyra: Solution difference ***\n";
+
+        Teuchos::RCP<Tpetra_Vector>
+        soln_diff_tpetra;
+
+        if (subdomain == 0) {
+          soln_diff_tpetra = ConverterT::getTpetraVector(soln_diff_rcp); 
+          Albany::writeMatrixMarket(soln_diff_tpetra, "soln_diff_subd0", num_iter_);
+        }
+        else if (subdomain == 1) {
+          soln_diff_tpetra = ConverterT::getTpetraVector(soln_diff_rcp); 
+          Albany::writeMatrixMarket(soln_diff_tpetra, "soln_diff_subd1", num_iter_);
+        }
+#endif //DEBUG
+
+        //After solve, save solution and get info to check convergence
+        norms_init(subdomain) = Thyra::norm(*prev_solns_thyra_[subdomain]);
+        norms_final(subdomain) = Thyra::norm(*curr_soln_rcp); 
+        norms_diff(subdomain) = Thyra::norm(*soln_diff_rcp);
+ 
+        //Update prev_solns_thyra_. 
+        Thyra::put_scalar(0.0, prev_solns_thyra_[subdomain].ptr());  
+        Thyra::copy(*curr_soln_rcp, prev_solns_thyra_[subdomain].ptr());
+        //Currently time-derivatives are not used in convergence criterion but they may be in the future 
+        //for consistency with Alejandro's matlab Schwarz code. When this is read, un-comment the following code.
+        /*Thyra::put_scalar(0.0, prev_solns_dot_thyra_[subdomain].ptr());  
+        Thyra::copy(*curr_soln_dot_rcp, prev_solns_dot_thyra_[subdomain].ptr());
+        Thyra::put_scalar(0.0, prev_solns_dotdot_thyra_[subdomain].ptr());  
+        Thyra::copy(*curr_soln_dotdot_rcp, prev_solns_dotdot_thyra_[subdomain].ptr());*/
+
+      } //subdomains loop 
+
+      norm_init_ = minitensor::norm(norms_init);
+      norm_final_ = minitensor::norm(norms_final);
+      norm_diff_ = minitensor::norm(norms_diff);
+
+      updateConvergenceCriterion(); 
+
+      fos << delim << std::endl;
+      fos << "Schwarz iteration         :" << num_iter_ << '\n';
+ 
+      std::string const
+      line(72, '-');
+
+      fos << line << std::endl;
+
+      fos << centered("Sub", 4);
+      fos << centered("Initial norm", 24);
+      fos << centered("Final norm", 24);
+      fos << centered("Difference norm", 24);
+      fos << std::endl;
+
+      fos << centered("dom", 4);
+      fos << centered("||X0||", 24);
+      fos << centered("||Xf||", 24);
+      fos << centered("||Xf-X0||", 24);
+      fos << std::endl;
+
+      fos << line << std::endl;
+
+      for (auto m = 0; m < num_subdomains_; ++m) {
+        fos << std::setw(4) << m;
+        fos << std::setw(24) << norms_init(m);
+        fos << std::setw(24) << norms_final(m);
+        fos << std::setw(24) << norms_diff(m);
+        fos << std::endl;
+      }
+
+      fos << line << std::endl;
+
+      fos << centered("Norm", 4);
+      fos << std::setw(24) << norm_init_;
+      fos << std::setw(24) << norm_final_;
+      fos << std::setw(24) << norm_diff_;
+      fos << std::endl;
+
+      fos << line << std::endl;
+
+      fos << "Absolute error     :" << abs_error_ << '\n';
+      fos << "Absolute tolerance :" << abs_tol_ << '\n';
+      fos << "Relative error     :" << rel_error_ << '\n';
+      fos << "Relative tolerance :" << rel_tol_ << '\n';
+      fos << delim << std::endl;
+ 
+    }  while (continueSolve() == true);
+
+    reportFinals(fos);
+
+    //Output converged solution if at specified interval 
+    for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
+      Albany::AbstractSTKMeshStruct &
+      ams = *stk_mesh_structs_[subdomain];
+
+      ams.exoOutputInterval = 1;
+
+      ams.exoOutput = output_interval_ > 0 ?
+          (stop + 1) % output_interval_ == 0 : false;
+      
+      Albany::AbstractDiscretization &
+      abs_disc = *discs_[subdomain];
+
+      Albany::STKDiscretization &
+      stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
+
+      Teuchos::RCP<Tpetra_MultiVector>
+      soln_mv = stk_disc.getSolutionMV();
+
+      //Update schwarz_ics_ and its time-derivatives
+      schwarz_ics_[subdomain] =
+          Thyra::createVector(soln_mv->getVectorNonConst(0));
+
+      schwarz_ics_dot_[subdomain] =
+          Thyra::createVector(soln_mv->getVectorNonConst(1));
+
+      schwarz_ics_dotdot_[subdomain] =
+          Thyra::createVector(soln_mv->getVectorNonConst(2));
+
+      if (ams.exoOutput == true) {
+        stk_disc.writeSolutionMV(*soln_mv, current_time + time_step);
+      }
+
+      ams.exoOutput = false;
+    }
+
+    ++stop;
+    current_time += time_step;
+  }
+
+  return; 
+}
+#endif
+//
+// Schwarz Alternating loop, quasistatic
+//
+void
+SchwarzAlternating::
+SchwarzLoopQuasistatics() const
+{
+  minitensor::Vector<ST>
+  norms_init(num_subdomains_, minitensor::Filler::ZEROS);
+
+  minitensor::Vector<ST>
+  norms_final(num_subdomains_, minitensor::Filler::ZEROS);
+
+  minitensor::Vector<ST>
+  norms_diff(num_subdomains_, minitensor::Filler::ZEROS);
+
+  std::string
+  init_str{"Initial Value"};
+
+  std::string
+  start_str{"Min Value"};
+
+  std::string
+  stop_str{"Max Value"};
+
+  std::string
+  step_str{"Initial Step Size"};
+
+  std::string const
+  delim(72, '=');
+
+  auto &
+  fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
+
+  fos << delim << std::endl;
+  fos << "Schwarz Alternating Method with " << num_subdomains_;
+  fos << " subdomains\n";
+  fos << std::scientific << std::setprecision(17);
+
+  ST
+  time_step{initial_time_step_};
+
+  int
+  stop{0};
+
+  ST
+  current_time{initial_time_};
+
+  // Output initial configuration. Then disable output.
+  // Handle it after Schwarz iteration.
+
+  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
+    Albany::AbstractSTKMeshStruct &
+    ams = *stk_mesh_structs_[subdomain];
+
+    ams.exoOutputInterval = 1;
+    ams.exoOutput = true;
+
+    Albany::AbstractDiscretization &
+    abs_disc = *discs_[subdomain];
+  
+    Albany::STKDiscretization &
+    stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
+
+    Teuchos::RCP<Tpetra_MultiVector>
+    soln_mv_rcp = stk_disc.getSolutionMV();
+
+    stk_disc.writeSolutionMV(*soln_mv_rcp, initial_time_);
+
+    ams.exoOutput = false;
+
+  }
+
+  // Continuation loop
+  while (stop < maximum_steps_ && current_time < final_time_) {
+
+    fos << delim << std::endl;
+    fos << "Time stop          :" << stop << '\n';
+    fos << "Time               :" << current_time << '\n';
+    fos << "Time step          :" << time_step << '\n';
+    fos << delim << std::endl;
+
+    ST const
+    next_time{current_time + time_step};
+
+    num_iter_ = 0;
+
+    // Before the Schwarz loop, save the solutions for each subdomain in case
+    // the solve phase fails. Then the load step is reduced and the Schwarz
+    // loop is restarted from scratch.
+    for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
+      bool const
+      is_initial_state = stop == 0 && num_iter_ == 0;
+
+      prev_solns_nox_[subdomain] = is_initial_state == true ?
+          Teuchos::null : solns_nox_[subdomain];
+    }
+
+    // Schwarz loop
+    do {
+
+      bool const
+      is_initial_state = stop == 0 && num_iter_ == 0;
+
+      // Subdomain loop
+      for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
+        fos << delim << std::endl;
+        fos << "Schwarz iteration  :" << num_iter_ << '\n';
+        fos << "Subdomain          :" << subdomain << '\n';
+        fos << delim << std::endl;
+
+        // Solve for each subdomain
+        Thyra::ResponseOnlyModelEvaluatorBase<ST> &
+        solver = *(solvers_[subdomain]);
+
+        Piro::LOCASolver<ST> &
+        piro_loca_solver = dynamic_cast<Piro::LOCASolver<ST> &>(solver);
+
+        Teuchos::ParameterList &
+        start_stop_params = piro_loca_solver.getStepperParams();
+
+        start_stop_params.set(init_str, current_time);
+        start_stop_params.set(start_str, current_time);
+        start_stop_params.set(stop_str, next_time);
+        start_stop_params.set("Max Steps", 1);
+
+        Teuchos::ParameterList &
+        time_step_params = piro_loca_solver.getStepSizeParams();
+
+        time_step_params.set(step_str, time_step);
+        time_step_params.set("Method", "Constant");
+        time_step_params.set("Failed Step Reduction Factor", 1.0);
+
+        double const
+        init_time = start_stop_params.get<double>(init_str);
+
+        double const
+        start_time = start_stop_params.get<double>(start_str);
+
+        double const
+        stop_time = start_stop_params.get<double>(stop_str);
+
+        double const
+        step_size = time_step_params.get<double>(step_str);
+
+        fos << "Initial time       :" << init_time << '\n';
+        fos << "Start time         :" << start_time << '\n';
+        fos << "Stop time          :" << stop_time << '\n';
+        fos << "Step size          :" << step_size << '\n';
+        fos << delim << std::endl;
+
+        // For time dependent DBCs, set the time to be next time
+        auto &
+        app = *apps_[subdomain];
+
+        app.setDBCTime(next_time);
+
+        Thyra::ModelEvaluatorBase::InArgs<ST>
+        in_args = solver.createInArgs();
+
+        Thyra::ModelEvaluatorBase::OutArgs<ST>
+        out_args = solver.createOutArgs();
+
+        auto &
+        me = dynamic_cast<Albany::ModelEvaluatorT &>
+        (*model_evaluators_[subdomain]);
+
+        me.getNominalValues().set_t(current_time);
+
+        NOX::Solver::Generic &
+        nox_solver = *piro_loca_solver.getSolver();
+
+        Teuchos::RCP<NOX::Abstract::Vector>
+        prev_soln_rcp = is_initial_state == true ?
+            nox_solver.getPreviousSolutionGroup().getX().clone(NOX::DeepCopy) :
+            solns_nox_[subdomain];
+
+        NOX::Abstract::Vector const &
+        prev_soln = *prev_soln_rcp;
+
+#if defined(DEBUG)
+        fos << "\n*** NOX: Previous solution ***\n";
+        prev_soln.print(fos);
+        fos << "\n*** NORM: " << prev_soln.norm() << '\n';
+        fos << "\n*** NOX: Previous solution ***\n";
+#endif //DEBUG
+
+        nox_solver.reset(prev_soln);
 
         solver.evalModel(in_args, out_args);
 
-        // After solve, save solution and get info to check convergence
-        Teuchos::RCP<SolutionSniffer>
-        solution_sniffer = solution_sniffers_[subdomain];
+        NOX::StatusTest::StatusType const
+        status = piro_loca_solver.getSolver()->getStatus();
 
-        solutions_[subdomain] = solution_sniffer->getLastSoln();
-        norms_init(subdomain) = solution_sniffer->getInitialNorm();
-        norms_final(subdomain) = solution_sniffer->getFinalNorm();
-        norms_diff(subdomain) = solution_sniffer->getDifferenceNorm();
+        if (status == NOX::StatusTest::Failed) {
+          fos << "\nINFO: Unable to solve for subdomain " << subdomain << '\n';
+          failed_ = true;
+          // Break out of the subdomain loop
+          break;
+        }
+
+        auto const &
+        soln_group = piro_loca_solver.getSolver()->getSolutionGroup();
+
+        Teuchos::RCP<NOX::Abstract::Vector>
+        curr_soln_rcp = soln_group.getX().clone(NOX::DeepCopy);
+
+        NOX::Abstract::Vector const &
+        curr_soln = *curr_soln_rcp;
+
+#if defined(DEBUG)
+        fos << "\n*** NOX: Current solution ***\n";
+        curr_soln.print(fos);
+        fos << "\n*** NORM: " << curr_soln.norm() << '\n';
+        fos << "\n*** NOX: Current solution ***\n";
+#endif //DEBUG
+
+        Teuchos::RCP<NOX::Abstract::Vector>
+        soln_diff_rcp = curr_soln.clone(NOX::DeepCopy);
+
+        NOX::Abstract::Vector &
+        soln_diff = *(soln_diff_rcp);
+
+        soln_diff.update(1.0, curr_soln, -1.0, prev_soln, 0.0);
+
+#if defined(DEBUG)
+        fos << "\n*** NOX: Solution difference ***\n";
+        soln_diff.print(fos);
+        fos << "\n*** NORM: " << soln_diff.norm() << '\n';
+        fos << "\n*** NOX: Solution difference ***\n";
+#endif //DEBUG
+
+        // After solve, save solution and get info to check convergence
+        solns_nox_[subdomain] = curr_soln_rcp;
+        norms_init(subdomain) = prev_soln.norm();
+        norms_final(subdomain) = curr_soln.norm();
+        norms_diff(subdomain) = soln_diff.norm();
+      } // Subdomain loop
+
+      if (failed_ == true) {
+        fos << "INFO: Unable to continue Schwarz iteration " << num_iter_;
+        fos << "\n";
+        // Break out of the Schwarz loop.
+        break;
       }
 
       norm_init_ = minitensor::norm(norms_init);
@@ -725,60 +1263,130 @@ SchwarzLoop() const
 
       updateConvergenceCriterion();
 
-      fos << delim << '\n';
+      fos << delim << std::endl;
       fos << "Schwarz iteration         :" << num_iter_ << '\n';
 
       std::string const
       line(72, '-');
 
-      fos << line << '\n';
+      fos << line << std::endl;
 
       fos << centered("Sub", 4);
       fos << centered("Initial norm", 24);
       fos << centered("Final norm", 24);
       fos << centered("Difference norm", 24);
-      fos << '\n';
+      fos << std::endl;
 
       fos << centered("dom", 4);
       fos << centered("||X0||", 24);
       fos << centered("||Xf||", 24);
       fos << centered("||Xf-X0||", 24);
-      fos << '\n';
+      fos << std::endl;
 
-      fos << line << '\n';
+      fos << line << std::endl;
 
       for (auto m = 0; m < num_subdomains_; ++m) {
         fos << std::setw(4) << m;
         fos << std::setw(24) << norms_init(m);
         fos << std::setw(24) << norms_final(m);
         fos << std::setw(24) << norms_diff(m);
-        fos << '\n';
+        fos << std::endl;
       }
 
-      fos << line << '\n';
+      fos << line << std::endl;
 
       fos << centered("Norm", 4);
       fos << std::setw(24) << norm_init_;
       fos << std::setw(24) << norm_final_;
       fos << std::setw(24) << norm_diff_;
-      fos << '\n';
+      fos << std::endl;
 
-      fos << line << '\n';
+      fos << line << std::endl;
 
       fos << "Absolute error     :" << abs_error_ << '\n';
       fos << "Absolute tolerance :" << abs_tol_ << '\n';
       fos << "Relative error     :" << rel_error_ << '\n';
       fos << "Relative tolerance :" << rel_tol_ << '\n';
-      fos << delim << '\n';
+      fos << delim << std::endl;
 
-    }  while (continueSolve() == true);
+    }  while (continueSolve() == true); // Schwarz loop
+
+    // One of the subdomains failed to solve. Reduce step.
+    if (failed_ == true) {
+      failed_ = false;
+
+      ST const
+      reduced_step = std::max(min_time_step_, reduction_factor_ * time_step);
+
+      if (reduced_step < time_step) {
+        fos << "INFO: Reducing step from " << time_step << " to ";
+        fos << reduced_step << '\n';
+      } else {
+        fos << "INFO: Cannot reduce step. Using " << reduced_step << '\n';
+      }
+
+      time_step = reduced_step;
+
+      // Restore previous solutions
+      for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+        solns_nox_[subdomain] = prev_solns_nox_[subdomain];
+      }
+
+      // Jump to the beginning of the continuation loop without advancing
+      // time to try to use a reduced step.
+      continue;
+    }
 
     reportFinals(fos);
 
+    // Output converged solution if at specified interval
+    bool const
+    do_output = output_interval_ > 0 ?
+        (stop + 1) % output_interval_ == 0 : false;
+
+    if (do_output == true) {
+
+      for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
+        Albany::AbstractSTKMeshStruct &
+        ams = *stk_mesh_structs_[subdomain];
+
+        ams.exoOutputInterval = 1;
+        ams.exoOutput = true;
+
+        Albany::AbstractDiscretization &
+        abs_disc = *discs_[subdomain];
+
+        Albany::STKDiscretization &
+        stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
+
+        Teuchos::RCP<Tpetra_MultiVector>
+        soln_mv_rcp = stk_disc.getSolutionMV();
+
+        stk_disc.writeSolutionMV(*soln_mv_rcp, next_time);
+
+        ams.exoOutput = false;
+      }
+
+    }
+
     ++stop;
     current_time += time_step;
-  }
 
+    // Step successful. Try to increase the time step.
+    ST const
+    increased_step = std::min(max_time_step_, increase_factor_ * time_step);
+
+    if (increased_step > time_step) {
+      fos << "\nINFO: Increasing step from " << time_step << " to ";
+      fos << increased_step << '\n';
+    } else {
+      fos << "\nINFO: Cannot increase step. Using " << increased_step << '\n';
+    }
+
+    time_step = increased_step;
+
+  } // Continuation loop
 
   return;
 }

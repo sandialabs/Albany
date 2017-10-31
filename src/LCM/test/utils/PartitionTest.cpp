@@ -3,16 +3,14 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
+//
 // Simple mesh partitioning program
 //
-
-// Define only if Zoltan is enabled
-#if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
-
 #include <algorithm>
 #include <iomanip>
-#include <Teuchos_CommandLineProcessor.hpp>
 
+#include <Teuchos_CommandLineProcessor.hpp>
 #include <LCMPartition.h>
 
 bool TpetraBuild = false;
@@ -38,13 +36,17 @@ int main(int ac, char* av[])
       "Uses random, geometric, hypergraph or K-means variants "
       "partitioning algorithms.\n");
 
-  std::string input_file = "input.e";
+  std::string
+  input_file = "input.e";
+
   command_line_processor.setOption(
       "input",
       &input_file,
       "Input File Name");
 
-  std::string output_file = "output.e";
+  std::string
+  output_file = "output.e";
+
   command_line_processor.setOption(
       "output",
       &output_file,
@@ -55,11 +57,11 @@ int main(int ac, char* av[])
 
   LCM::PARTITION::Scheme const
   scheme_values[] = {
-      LCM::PARTITION::GEOMETRIC,
-      LCM::PARTITION::HYPERGRAPH,
-      LCM::PARTITION::KMEANS,
-      LCM::PARTITION::SEQUENTIAL,
-      LCM::PARTITION::KDTREE};
+      LCM::PARTITION::Scheme::GEOMETRIC,
+      LCM::PARTITION::Scheme::HYPERGRAPH,
+      LCM::PARTITION::Scheme::KMEANS,
+      LCM::PARTITION::Scheme::SEQUENTIAL,
+      LCM::PARTITION::Scheme::KDTREE};
 
   char const *
   scheme_names[] = {
@@ -70,7 +72,7 @@ int main(int ac, char* av[])
       "kdtree"};
 
   LCM::PARTITION::Scheme
-  partition_scheme = LCM::PARTITION::KDTREE;
+  partition_scheme = LCM::PARTITION::Scheme::KDTREE;
 
   command_line_processor.setOption(
       "scheme",
@@ -81,7 +83,7 @@ int main(int ac, char* av[])
       "Partition Scheme");
 
   double
-  length_scale = 0.0017;
+  length_scale = 0.00165;
 
   command_line_processor.setOption(
       "length-scale",
@@ -117,9 +119,9 @@ int main(int ac, char* av[])
 
   LCM::PARTITION::Scheme const
   initializer_values[] = {
-      LCM::PARTITION::RANDOM,
-      LCM::PARTITION::GEOMETRIC,
-      LCM::PARTITION::HYPERGRAPH};
+      LCM::PARTITION::Scheme::RANDOM,
+      LCM::PARTITION::Scheme::GEOMETRIC,
+      LCM::PARTITION::Scheme::HYPERGRAPH};
 
   char const *
   initializer_names[] = {
@@ -128,7 +130,7 @@ int main(int ac, char* av[])
       "hypergraph"};
 
   LCM::PARTITION::Scheme
-  initializer_scheme = LCM::PARTITION::GEOMETRIC;
+  initializer_scheme = LCM::PARTITION::Scheme::GEOMETRIC;
 
   command_line_processor.setOption(
       "initializer",
@@ -165,21 +167,21 @@ int main(int ac, char* av[])
   //
   // Set extra parameters
   //
-  connectivity_array.SetTolerance(tolerance);
-  connectivity_array.SetCellSize(requested_cell_size);
-  connectivity_array.SetMaximumIterations(maximum_iterations);
-  connectivity_array.SetInitializerScheme(initializer_scheme);
+  connectivity_array.setTolerance(tolerance);
+  connectivity_array.setCellSize(requested_cell_size);
+  connectivity_array.setMaximumIterations(maximum_iterations);
+  connectivity_array.setInitializerScheme(initializer_scheme);
 
   //
   // Partition mesh
   //
   std::map<int, int> const
-  partitions = connectivity_array.Partition(partition_scheme, length_scale);
+  partitions = connectivity_array.partition(partition_scheme, length_scale);
 
   // Get abstract discretization from connectivity array and convert
   // to stk discretization to use stk-specific methods.
   Albany::AbstractDiscretization &
-  discretization = connectivity_array.GetDiscretization();
+  discretization = connectivity_array.getDiscretization();
 
   Albany::STKDiscretization &
   stk_discretization = static_cast<Albany::STKDiscretization &>(discretization);
@@ -212,9 +214,9 @@ int main(int ac, char* av[])
       partitions_iterator = partitions.find(element);
 
       if (partitions_iterator == partitions.end()) {
-        std::cerr << std::endl;
+        std::cerr << '\n';
         std::cerr << "Element " << element << " does not have a partition.";
-        std::cerr << std::endl;
+        std::cerr << '\n';
         exit(1);
       }
 
@@ -236,100 +238,89 @@ int main(int ac, char* av[])
 
   // Write report
   double const
-  volume = connectivity_array.GetVolume();
+  volume = connectivity_array.getVolume();
 
   double const
   length_scale_cubed = length_scale * length_scale * length_scale;
 
   LCM::ScalarMap const
-  partition_volumes = connectivity_array.GetPartitionVolumes();
+  partition_volumes = connectivity_array.getPartitionVolumes();
 
   unsigned int const
   number_partitions = partition_volumes.size();
 
-  std::cout << std::endl;
+  std::cout << '\n';
   std::cout << "==========================================";
-  std::cout << std::endl;
+  std::cout << '\n';
   std::cout << "Total Mesh Volume (V)    : ";
   std::cout << std::scientific << std::setw(14) << std::setprecision(8);
-  std::cout << volume << std::endl;
+  std::cout << volume << '\n';
   std::cout << "Length Scale             : ";
   std::cout << std::scientific << std::setw(14) << std::setprecision(8);
-  std::cout << length_scale << std::endl;
+  std::cout << length_scale << '\n';
   std::cout << "Length Scale Cubed (L^3) : ";
   std::cout << std::scientific << std::setw(14) << std::setprecision(8);
-  std::cout << length_scale_cubed << std::endl;
+  std::cout << length_scale_cubed << '\n';
   std::cout << "V/L^3                    : ";
   std::cout << std::scientific << std::setw(14) << std::setprecision(8);
-  std::cout << volume / length_scale_cubed << std::endl;
+  std::cout << volume / length_scale_cubed << '\n';
   std::cout << "Number of Partitions     : " << number_partitions;
-  std::cout << std::endl;
+  std::cout << '\n';
   std::cout << "------------------------------------------";
-  std::cout << std::endl;
+  std::cout << '\n';
   std::cout << "Partition      Volume (Vi)          Vi/L^3";
-  std::cout << std::endl;
+  std::cout << '\n';
   std::cout << "------------------------------------------";
-  std::cout << std::endl;
-  for (LCM::ScalarMap::const_iterator iter = partition_volumes.begin();
-      iter != partition_volumes.end();
-      ++iter) {
-    int partition = (*iter).first;
-    double volume = (*iter).second;
+  std::cout << '\n';
+
+  for (auto&& partition_volume : partition_volumes) {
+
+    int const
+    partition = partition_volume.first;
+
+    double const
+    volume = partition_volume.second;
+
     std::cout << std::setw(10) << partition;
     std::cout << std::scientific << std::setw(16) << std::setprecision(8);
     std::cout << volume;
     std::cout << std::scientific << std::setw(16) << std::setprecision(8);
-    std::cout << volume / length_scale_cubed << std::endl;
+    std::cout << volume / length_scale_cubed << '\n';
   }
-  std::cout << "==========================================";
-  std::cout << std::endl;
 
-#if 0
+#if defined(DEBUG)
+  std::cout << "==========================================";
+  std::cout << '\n';
 
   std::cout << "Number of elements       : ";
   std::cout << std::setw(14);
-  std::cout << connectivity_array.GetNumberElements() << std::endl;
-  std::cout << std::endl;
+  std::cout << connectivity_array.GetNumberElements() << '\n';
+  std::cout << '\n';
   std::cout << "------------------------------------------";
-  std::cout << std::endl;
+  std::cout << '\n';
   std::cout << "Element        Partition";
-  std::cout << std::endl;
+  std::cout << '\n';
   std::cout << "------------------------------------------";
-  std::cout << std::endl;
-  for (std::map<int, int>::const_iterator
-      partitions_iter = partitions.begin();
-      partitions_iter != partitions.end();
-      ++partitions_iter) {
+  std::cout << '\n';
+
+  for (auto&& partition_element : partitions) {
 
     int const
-    element = (*partitions_iter).first;
+    element = partition_element.first;
 
     int const
-    partition = (*partitions_iter).second;
+    partition = partition_element.second;
 
     std::cout << std::setw(16) << element;
     std::cout << std::setw(16) << partition;
-    std::cout << std::endl;
+    std::cout << '\n';
   }
   std::cout << "==========================================";
-  std::cout << std::endl;
+  std::cout << '\n';
 
 
   LCM::DualGraph dual_graph(connectivity_array);
   dual_graph.Print();
-
 #endif
-
-  return 0;
-
-}
-
-#else // #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
-
-// Zoltan not defined, do nothing
-int main(int ac, char* av[])
-{
   return 0;
 }
-
-#endif // #if defined (ALBANY_ZOLTAN)

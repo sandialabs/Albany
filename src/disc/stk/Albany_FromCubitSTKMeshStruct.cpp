@@ -118,6 +118,9 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
   transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh (for FELIX problems)
   felixAlpha = params->get("FELIX alpha", 0.0); 
   felixL = params->get("FELIX L", 1.0); 
+  xShift = params->get("x-shift", 0.0);
+  yShift = params->get("y-shift", 0.0);
+  zShift = params->get("z-shift", 0.0);
   
   //boolean specifying if ascii mesh has contiguous IDs; only used for ascii meshes on 1 processor
   contigIDs = params->get("Contiguous IDs", true);

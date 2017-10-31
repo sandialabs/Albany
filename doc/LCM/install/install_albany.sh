@@ -31,9 +31,7 @@ netcdf-openmpi \
 netcdf-openmpi-devel \
 netcdf-static \
 openmpi \
-openmpi-devel \
-yaml-cpp \
-yaml-cpp-devel; do
+openmpi-devel; do
   query=`dnf list $pkg |& tail -n1`
   if [ ${query:0:5} == "Error" ]; then
     echo "MISSING $pkg"

@@ -212,7 +212,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   // Pull the current basis from the FieldManager
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> curBasis("Current Basis",
       dl->qp_tensor);
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(
+  fieldManager.getFieldData<Residual>(
       curBasis);
 
   // Record the expected current basis
@@ -231,7 +231,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   // Pull the reference basis from the FieldManager
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> refBasis("Reference Basis",
       dl->qp_tensor);
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(
+  fieldManager.getFieldData<Residual>(
       refBasis);
 
   // Record the expected reference basis
@@ -251,7 +251,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> refDualBasis(
       "Reference Dual Basis",
       dl->qp_tensor);
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(
+  fieldManager.getFieldData<Residual>(
       refDualBasis);
 
   // Record the expected reference dual basis
@@ -271,7 +271,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   // Pull the reference normal from the FieldManager
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim> refNormal("Reference Normal",
       dl->qp_vector);
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim>(refNormal);
+  fieldManager.getFieldData<Residual>(refNormal);
 
   // Record the expected reference normal
   Vector<ScalarT> expectedRefNormal(0.0, 1.0, 0.0);
@@ -286,7 +286,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   // Pull the reference area from the FieldManager
   PHX::MDField<ScalarT, Cell, QuadPoint> refArea("Reference Area",
       dl->qp_scalar);
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(refArea);
+  fieldManager.getFieldData<Residual>(refArea);
 
   // Record the expected reference area
   ScalarT expectedRefArea(0.25);
@@ -354,9 +354,9 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
 
   //--------------------------------------------------------------------------
   // Grab the current basis and the ref dual basis
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(
+  fieldManager.getFieldData<Residual>(
       curBasis);
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(
+  fieldManager.getFieldData<Residual>(
       refDualBasis);
 
   //--------------------------------------------------------------------------
@@ -468,7 +468,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
   // Pull the vector jump from the FieldManager
   PHX::MDField<ScalarT, Cell, QuadPoint> jumpField("Scalar Jump",
       dl->qp_scalar);
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(jumpField);
+  fieldManager.getFieldData<Residual>(jumpField);
 
   // Record the expected vector jump, which will be used to check the
   // computed vector jump
@@ -516,7 +516,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
   fieldManager.postEvaluate<Residual>(workset);
 
   // Pull the vector jump from the FieldManager
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(jumpField);
+  fieldManager.getFieldData<Residual>(jumpField);
 
   // Record the expected vector jump, which will be used to check the
   // computed vector jump
@@ -690,7 +690,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorJump )
   // Pull the vector jump from the FieldManager
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim> jumpField("Vector Jump",
       dl->qp_vector);
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim>(jumpField);
+  fieldManager.getFieldData<Residual>(jumpField);
 
   // Record the expected vector jump, which will be used to check the
   // computed vector jump
@@ -874,7 +874,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim> scalarGrad(
       "Surface Scalar Gradient",
       dl->qp_vector);
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim>(
+  fieldManager.getFieldData<Residual>(
       scalarGrad);
 
   // Record the expected gradient
@@ -916,7 +916,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
 
   //--------------------------------------------------------------------------
   // Pull the scalar gradient from the FieldManager
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim>(
+  fieldManager.getFieldData<Residual>(
       scalarGrad);
 
   // Record the expected gradient
@@ -1115,7 +1115,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorGradient )
   //--------------------------------------------------------------------------
   // Pull the deformation gradient from the FieldManager
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> defGrad("F", dl->qp_tensor);
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(
+  fieldManager.getFieldData<Residual>(
       defGrad);
 
   // Record the expected current basis
@@ -1241,7 +1241,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, CohesiveForce )
 
   // Pull the nodal force from the FieldManager
   PHX::MDField<ScalarT, Cell, Node, Dim> forceField("Force", dl->node_vector);
-  fieldManager.getFieldData<ScalarT, Residual, Cell, Node, Dim>(forceField);
+  fieldManager.getFieldData<Residual>(forceField);
 
   // Record the expected nodal forces, used to check the computed force
   // only y component for this particular test
@@ -1536,7 +1536,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
     forceField("Force", dl->node_vector);
 
   // Pull the nodal force from the FieldManager
-  fieldManager.getFieldData<ScalarT, Residual, Cell, Node, Dim>(forceField);
+  fieldManager.getFieldData<Residual>(forceField);
   // Check the computed force
   for (size_type cell = 0; cell < worksetSize; ++cell) {
     for (size_type node = 0; node < numNodes; ++node) {
@@ -1590,24 +1590,24 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   fieldManager.postEvaluate<Residual>(workset);
 
   // Pull the current basis
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(
+  fieldManager.getFieldData<Residual>(
       curBasisField);
   // Pull the ref dual basis
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(
+  fieldManager.getFieldData<Residual>(
       refDualBasisField);
   // Pull the ref normal
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim>(
+  fieldManager.getFieldData<Residual>(
       refNormalField);
   // Pull the ref area
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(refAreaField);
+  fieldManager.getFieldData<Residual>(refAreaField);
   // Pull the deformation gradient
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(
+  fieldManager.getFieldData<Residual>(
       defGradField);
   // Pull the stress
-  fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(
+  fieldManager.getFieldData<Residual>(
       stressField);
   // Pull the forces
-  fieldManager.getFieldData<ScalarT, Residual, Cell, Node, Dim>(forceField);
+  fieldManager.getFieldData<Residual>(forceField);
 
   //----------------------------------------------------------------------------
   // Record the expected current basis vectors
