@@ -677,8 +677,8 @@ ELSE()
   SET(CISM_HAS_FELIX FALSE)
 ENDIF()
 
-# Set optional build of AFRL MultiScale; defaults to ON
-OPTION(ENABLE_AFRL "Flag to turn on AFRL Source code" ON)
+# Set optional build of AFRL MultiScale; defaults to OFF
+OPTION(ENABLE_AFRL "Flag to turn on AFRL Source code" OFF)
 IF (ENABLE_AFRL)
   SET(ENABLE_LCM ON)
   ADD_DEFINITIONS(-DALBANY_AFRL)
