@@ -1,0 +1,9 @@
+#%Module 1.0
+
+module-whatis "LCM Ubuntu base environment"
+
+setenv LCM_ENV_TYPE Ubuntu
+
+module load lcm-common
+
+conflict lcm-sems lcm-cluster lcm-fedora
