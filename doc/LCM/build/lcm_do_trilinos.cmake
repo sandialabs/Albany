@@ -66,7 +66,6 @@ function(lcm_do_trilinos)
       "-DAmesos2_ENABLE_KLU2:BOOL=ON"
       "-DEpetraExt_USING_HDF5:BOOL=OFF"
       "-DIntrepid2_ENABLE_KokkosDynRankView:BOOL=ON"
-      "-DMiniTensor_ENABLE_TESTS:BOOL=ON"
       "-DROL_ENABLE_TESTS:BOOL=OFF"
       "-DPhalanx_INDEX_SIZE_TYPE:STRING=$ENV{LCM_PHALANX_INDEX_TYPE}"
       "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING=$ENV{LCM_KOKKOS_DEVICE}"
