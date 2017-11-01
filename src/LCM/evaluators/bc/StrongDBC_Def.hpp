@@ -8,8 +8,11 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Albany_Utils.hpp"
+#include <Tpetra_MultiVectorFiller.hpp>
 
-//#define DEBUG
+//#define DAN_VERBOSE
+//#define RUN_IKT_CODE
+
 
 namespace LCM {
 
@@ -59,15 +62,6 @@ StrongDBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
 #endif
   }
 
-#if defined(DEBUG)
-  Teuchos::FancyOStream &fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
-  fos << "\n*** RESIDUAL ***\n";
-  f->describe(fos, Teuchos::VERB_EXTREME);
-  fos << "\n*** RESIDUAL ***\n";
-  fos << "\n*** SOLUTION ***\n";
-  x->describe(fos, Teuchos::VERB_EXTREME);
-  fos << "\n*** SOLUTION ***\n";
-#endif  // DEBUG
   return;
 }
 
@@ -88,47 +82,29 @@ template <typename Traits>
 void
 StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset) {
-  Teuchos::RCP<Tpetra_Vector>
-  f = dirichlet_workset.fT;
+  auto f = dirichlet_workset.fT;
 
-  Teuchos::RCP<Tpetra_Vector>
-  x = Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*dirichlet_workset.xT));
+  auto x = Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*dirichlet_workset.xT));
 
-  Teuchos::RCP<Tpetra_CrsMatrix>
-  J = dirichlet_workset.JacT;
+  auto J = dirichlet_workset.JacT;
 
-  Teuchos::RCP<const Tpetra_Map>
-  jac_map = J->getMap();
+  auto row_map = J->getRowMap();
+  auto col_map = J->getColMap();
+  // we make this assumption, which lets us use both local row and column indices
+  // into a single is_dbc vector
+  ALBANY_ASSERT(col_map->isLocallyFitted(*row_map));
 
-  auto const
-  global_length = x->getGlobalLength();
-
-  auto const 
-  max_global_index = x->getMap()->getMaxAllGlobalIndex(); 
-
-  auto const 
-  min_global_index = x->getMap()->getMinAllGlobalIndex(); 
- 
-#ifdef DEBUG
-  Teuchos::FancyOStream &fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
-  fos << "IKT global_length, max_global_index, min_global_index = " << global_length << ", " << 
-                max_global_index << ", " << min_global_index << std::endl; 
-#endif
-
-  std::vector<ST>
-  marker(max_global_index+1, 0.0);
-
-  std::vector<std::vector<int>> const &
-  ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+  auto& ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
   bool const
   fill_residual = f != Teuchos::null;
 
-  Teuchos::ArrayRCP<ST>
-  f_view = fill_residual == true ? f->get1dViewNonConst() : Teuchos::null;
+  auto f_view = fill_residual == true ? f->get1dViewNonConst() : Teuchos::null;
 
-  Teuchos::ArrayRCP<ST>
-  x_view = fill_residual == true ? x->get1dViewNonConst() : Teuchos::null;
+  auto x_view = fill_residual == true ? x->get1dViewNonConst() : Teuchos::null;
+
+  Teuchos::Array<GO>
+  global_index(1);
 
   Teuchos::Array<LO>
   index(1);
@@ -142,88 +118,53 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   Teuchos::Array<LO>
   indices;
 
+  using MV = Tpetra_MultiVector;
+  using MVF = Tpetra::MultiVectorFiller<MV>;
+
+  MVF is_dbc_filler(row_map, 1);
+
   for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
     int const
     dof = ns_nodes[ns_node][this->offset];
+    global_index[0] = row_map->getGlobalElement(dof);
+    entry[0] = 1.0;
+    is_dbc_filler.sumIntoGlobalValues(global_index, 0, entry);
+  }
+  MV is_dbc(col_map, 1);
+  is_dbc_filler.globalAssemble(is_dbc);
+  auto is_dbc_view = is_dbc.get1dView();
 
-    GO const
-    global_dof = jac_map->getGlobalElement(dof);
+  size_t const
+  num_local_rows = J->getNodeNumRows();
+  auto min_local_row = row_map->getMinLocalIndex();
+  auto max_local_row = row_map->getMaxLocalIndex();
+  for (auto local_row = min_local_row; local_row <= max_local_row; ++local_row) {
+    auto num_row_entries = J->getNumEntriesInLocalRow(local_row);
 
-    marker[global_dof] += 1.0;
+    entries.resize(num_row_entries);
+    indices.resize(num_row_entries);
 
-    if (fill_residual == true) {
-      f_view[dof] = 0.0;
-      x_view[dof] = this->value.val();
+    J->getLocalRowCopy(local_row, indices(), entries(), num_row_entries);
+
+    auto row_is_dbc = is_dbc_view[local_row] > 0.0;
+
+    if (row_is_dbc && fill_residual == true) {
+      f_view[local_row] = 0.0;
+      x_view[local_row] = this->value.val();
     }
 
-    size_t const
-    num_rows = J->getNodeNumRows();
-
-    for (size_t row = 0; row < num_rows; ++row) {
-      size_t
-      num_cols = J->getNumEntriesInLocalRow(row);
-
-      entries.resize(num_cols);
-      indices.resize(num_cols);
-
-      index[0] = dof;
-      entry[0] = 0.0;
-
-      J->getLocalRowCopy(row, indices(), entries(), num_cols);
-
-      if (row == dof) {
-        // Set entries other than the diagonal to zero
-        for (size_t col = 0; col < num_cols; ++col) {
-          auto const
-          col_index = indices[col];
-
-          if (col_index != dof) entries[col] = 0.0;
-        }
-        J->replaceLocalValues(dof, indices(), entries());
+    for (size_t row_entry = 0; row_entry < num_row_entries; ++row_entry) {
+      auto local_col = indices[row_entry];
+      auto is_diagonal_entry = local_col == local_row;
+      if (is_diagonal_entry) continue;
+      ALBANY_ASSERT(local_col >= col_map->getMinLocalIndex());
+      ALBANY_ASSERT(local_col <= col_map->getMaxLocalIndex());
+      auto col_is_dbc = is_dbc_view[local_col] > 0.0;
+      if (row_is_dbc || col_is_dbc) {
+        entries[row_entry] = 0.0;
       }
     }
-  }
-
-  std::vector<ST>
-  global_marker(max_global_index+1, 0.0);
-
-  for (int i = 0; i < max_global_index+1; i++) {
-    Teuchos::reduceAll(
-        *(jac_map->getComm()), Teuchos::REDUCE_SUM,
-        /*numvals=*/1, &marker[i], &global_marker[i]);
-  }
-
-  // loop over global columns
-  for (auto gcol = min_global_index; gcol < max_global_index+1; ++gcol) {
-    // check if gcol dof is dirichlet dof
-    ST const
-    is_dir_dof = global_marker[gcol];
-    // if gcol is dirichlet dof, zero out all (global) rows corresponding to
-    // global column gcol
-    if (is_dir_dof != 0.0) {
-#ifdef DEBUG
-      auto const proc_num = jac_map->getComm()->getRank();
-
-      std::cout << "IKT proc, zeroeing out column = " << proc_num << ", "
-                << gcol << std::endl;
-#endif
-      // loop over global rows
-      for (auto grow = min_global_index; grow < max_global_index+1; ++grow) {
-        if (grow != gcol) {
-          Teuchos::Array<GO>
-          gcol_array(1);
-
-          gcol_array[0] = gcol;
-
-          Teuchos::Array<ST>
-          value(1);
-
-          value[0] = 0.0;
-
-          J->replaceGlobalValues(grow, gcol_array(), value());
-        }
-      }
-    }
+    J->replaceLocalValues(local_row, indices(), entries());
   }
   return;
 }
