@@ -29,9 +29,6 @@
 #ifdef ALBANY_FELIX
 #include "Albany_STKDiscretizationStokesH.hpp"
 #endif
-#ifdef ALBANY_CUTR
-#include "Albany_FromCubitSTKMeshStruct.hpp"
-#endif
 #endif
 #ifdef ALBANY_SCOREC
 #include "Albany_PUMIDiscretization.hpp"
@@ -101,14 +98,6 @@ explicit_scheme(explicit_scheme_) {
     }
 
 }
-
-#ifdef ALBANY_CUTR
-
-void
-Albany::DiscretizationFactory::setMeshMover(const Teuchos::RCP<CUTR::CubitMeshMover>& meshMover_) {
-    meshMover = meshMover_;
-}
-#endif
 
 #if defined(ALBANY_LCM)
 
@@ -240,14 +229,7 @@ namespace {
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
 Albany::DiscretizationFactory::createMeshSpecs() {
     // First, create the mesh struct
-#ifdef ALBANY_CUTR
-    // Luca: WARNING, this does not compile. Frankly, I don't even know how it worked before in master,
-    //       since neq was never available...
-    int neq = 1; // Hard coded neq=1. I have no idea where this number was supposed to be fetched from otherwise...
-    meshStruct = createMeshStruct(discParams, adaptParams, commT, meshMover, neq);
-#else
     meshStruct = createMeshStruct(discParams, adaptParams, commT);
-#endif
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
     // Add an interface block. For now relies on STK, so we force a cast that
@@ -279,17 +261,9 @@ Albany::DiscretizationFactory::createMeshSpecs() {
 }
 
 Teuchos::RCP<Albany::AbstractMeshStruct>
-#ifdef ALBANY_CUTR
-Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> disc_params,
-        Teuchos::RCP<Teuchos::ParameterList> adapt_params,
-        Teuchos::RCP<const Teuchos_Comm> comm,
-        Teuchos::RCP<CUTR::CubitMeshMover> mesh_mover,
-        int num_eq)
-#else
 Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> disc_params,
         Teuchos::RCP<Teuchos::ParameterList> adapt_params,
         Teuchos::RCP<const Teuchos_Comm> comm)
-#endif
 {
     std::string& method = disc_params->get("Method", "STK1D");
 #if defined(HAVE_STK)
@@ -366,15 +340,10 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
     }
 #endif // ALBANY_FELIX
     else if (method == "Cubit") {
-#ifdef ALBANY_CUTR
-        // AGS"need to inherit from Generic"
-        return Teuchos::rcp(new Albany::FromCubitSTKMeshStruct(mesh_mover, disc_params, num_eq));
-#else
         TEUCHOS_TEST_FOR_EXCEPTION(method == "Cubit",
                 Teuchos::Exceptions::InvalidParameter,
                 "Error: Discretization method " << method
-                << " requested, but not compiled in" << std::endl);
-#endif // ALBANY_CUTR
+                << " requested, but no longe supported as of 10/2017" << std::endl);
     } else
 #endif // HAVE_STK
         if (method == "PUMI") {
@@ -401,7 +370,7 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
                 "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
                 "!" << std::endl << "Supplied parameter list is " << std::endl << *disc_params <<
                 "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss, Ioss Aeras," <<
-                " Exodus, Exodus Aeras, Cubit, PUMI, PUMI Hierarchic, Sim, Ascii," <<
+                " Exodus, Exodus Aeras, PUMI, PUMI Hierarchic, Sim, Ascii," <<
                 " Ascii2D, Extruded" << std::endl);
 }
 

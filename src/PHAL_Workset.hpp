@@ -161,8 +161,6 @@ struct Workset {
   int num_cols_p;
   int param_offset;
 
-  std::vector<int> *coord_deriv_indices;
-
   // Distributed parameter derivatives
   Teuchos::RCP<DistParamLib> distParamLib;
   std::string dist_param_deriv_name;
@@ -177,7 +175,6 @@ struct Workset {
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
   Teuchos::ArrayRCP<double>  wsSphereVolume;
   Teuchos::ArrayRCP<double*>  wsLatticeOrientation;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
 
   // Needed for Schwarz coupling and for dirichlet conditions based on dist parameters.
