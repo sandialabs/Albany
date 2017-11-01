@@ -69,10 +69,10 @@ const Epetra_MultiVector &GaussNewtonOperatorFactoryBase<Derived>::leftProjectio
 		const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const {
 	//printf("    Computes psi^T*res\n");
 	int err = 0;
-	if (num_dbc_modes_ == 0)
+	//if (num_dbc_modes_ == 0)
 		err = reduce(*this->getLeftBasis(), fullVec, result);
-	else
-		err = reduce(*this->getLeftBasisCopy(), fullVec, result);
+	//else
+	//	err = reduce(*this->getLeftBasisCopy(), fullVec, result);
 	TEUCHOS_TEST_FOR_EXCEPT(err != 0);
 	return result;
 }
@@ -93,10 +93,10 @@ RCP<Epetra_CrsMatrix> GaussNewtonOperatorFactoryBase<Derived>::reducedJacobianNe
 
 template <typename Derived>
 const Epetra_CrsMatrix &GaussNewtonOperatorFactoryBase<Derived>::reducedJacobian(Epetra_CrsMatrix &result) const {
-	if (num_dbc_modes_ == 0)
+	//if (num_dbc_modes_ == 0)
 		return jacobianFactory_.reducedMatrix(*this->getLeftBasis(), result);
-	else
-		return jacobianFactory_.reducedMatrix(*this->getLeftBasisCopy(), result);
+	//else
+	//	return jacobianFactory_.reducedMatrix(*this->getLeftBasisCopy(), result);
 }
 
 template <typename Derived>
@@ -120,6 +120,7 @@ void GaussNewtonOperatorFactoryBase<Derived>::fullJacobianIs(const Epetra_Operat
 	leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.premultipliedRightProjector()));
 
 	//printf("using %d DBC modes\n",num_dbc_modes_);
+	/*
 	if (num_dbc_modes_ > 0)
 	{
 		Epetra_MultiVector* psi_dbc = new Epetra_MultiVector(View,*leftbasis_,0,num_dbc_modes_);
@@ -130,6 +131,7 @@ void GaussNewtonOperatorFactoryBase<Derived>::fullJacobianIs(const Epetra_Operat
 		delete psi_dbc;
 		delete phi_dbc;
 	}
+	*/
 }
 
 template <typename Derived>

@@ -1232,12 +1232,3 @@ f_out->Print(std::cout);
   }
 #endif
 }
-
-double
-Albany::ModelEvaluator::MOR_get_t_init() const
-{
-    if (app->getProblem()->useSDBCs() == false)
-        return -1;
-    else 
-        return app->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-}

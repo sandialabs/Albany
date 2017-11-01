@@ -93,8 +93,8 @@ namespace Albany {
 
     //@}
 
-    //! Return the current time
-    double MOR_get_t_init() const;
+    //! Return the application object
+    Teuchos::RCP<Albany::Application> get_app() const { return app; }
 
   protected:
 
