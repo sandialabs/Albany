@@ -22,10 +22,7 @@ ReactDiffSystem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   Albany::AbstractProblem(params_, paramLib_),
   numDim(numDim_)
 {
-  // Get number of species equations from Problem specifications
-  neq = params_->get("Number of PDE Equations", numDim);
-  std::cout << "neq: " << neq << std::endl; 
-
+  neq = 3; 
 }
 
 Albany::ReactDiffSystem::
@@ -89,7 +86,6 @@ Albany::ReactDiffSystem::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidReactDiffSystemParams");
 
-  validPL->set("Number of PDE Equations", 1, "Number of PDE Equations in ReactDiff System equation set");
   validPL->sublist("Options", false, "");
 
   return validPL;
