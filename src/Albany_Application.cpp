@@ -3116,11 +3116,8 @@ computeGlobalTangentImplT(
     workset.num_cols_p = num_cols_p;
     workset.param_offset = param_offset;
 
-    workset.coord_deriv_indices = &coord_deriv_indices;
-
     for (int ws = 0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Tangent>(workset, ws);
-      workset.ws_coord_derivs = ws_coord_derivs[ws];
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
