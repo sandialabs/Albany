@@ -737,14 +737,14 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   MVF is_dbc_filler(row_map, 1);
 
-  auto const
+  int const
   spatial_dimension{this->app_->getSpatialDimension()};
 
   auto const &
   fixed_dofs = dirichlet_workset.fixed_dofs_;
 
   for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
-    for (auto offset = 0; offset < spatial_dimension; ++offset) {
+    for (int offset = 0; offset < spatial_dimension; ++offset) {
       int const
       dof = ns_nodes[ns_node][offset];
       // If this DOF already has a DBC, skip it.
