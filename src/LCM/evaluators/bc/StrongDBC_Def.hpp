@@ -10,10 +10,6 @@
 #include "Albany_Utils.hpp"
 #include <Tpetra_MultiVectorFiller.hpp>
 
-//#define DAN_VERBOSE
-//#define RUN_IKT_CODE
-
-
 namespace LCM {
 
 //
