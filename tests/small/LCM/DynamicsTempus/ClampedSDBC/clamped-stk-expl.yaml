@@ -6,7 +6,7 @@ ANONYMOUS:
   Problem: 
     Name: Mechanics 3D
     Phalanx Graph Visualization Detail: 0
-    MaterialDB Filename: 'material-clamped-stk.yaml'
+    MaterialDB Filename: 'material-clamped-expl.yaml'
     Solution Method: Transient Tempus
     Initial Condition: 
       Function: Gaussian Z
@@ -19,7 +19,9 @@ ANONYMOUS:
       SDBC on NS NodeSet2 for DOF Y: 0.00000000e+00
       SDBC on NS NodeSet4 for DOF Z: 0.00000000e+00
       SDBC on NS NodeSet5 for DOF Z: 0.00000000e+00
-    Response Functions: 
+    Response Functions:
+      Observe Responses: true
+      Responses Observation Frequency: 100
       Number: 4
       Response 0: Project IP to Nodal Field
       ResponseParams 0: 
@@ -33,12 +35,12 @@ ANONYMOUS:
   Discretization: 
     Method: STK3D
     1D Elements: 1
-    1D Scale: 0.01
+    1D Scale: 0.001
     2D Elements: 1
-    2D Scale: 0.01
-    3D Elements: 100
+    2D Scale: 0.001
+    3D Elements: 1000
     3D Scale: 1.0
-    Exodus Output File Name: 'clamped-stk.e'
+    Exodus Output File Name: 'clamped-stk-expl.e'
     Exodus Solution Name: disp
     Exodus Residual Name: resid
     Separate Evaluators by Element Block: true
@@ -64,8 +66,9 @@ ANONYMOUS:
           Storage Limit: 2000
         Time Step Control:
           Initial Time: 0.0
-          Final Time: 0.05
+          Final Time: 1.5e-3
           Initial Time Index: 0
+          Initial Time Step: 1.0e-07
           Final Time Index: 1000000
           Maximum Absolute Error: 1.0e-8
           Maximum Relative Error: 1.0e-8

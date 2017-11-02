@@ -7,6 +7,8 @@
 # Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/material-clamped-stk.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/material-clamped-stk.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/material-clamped-expl.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/material-clamped-expl.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/clamped-stk-shift.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/clamped-stk-shift.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/clamped-stk-expl.yaml

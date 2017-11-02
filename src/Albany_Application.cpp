@@ -371,7 +371,7 @@ void Albany::Application::initialSetUp(
       }
     }
     else if (stepper_type == "Newmark Explicit a-Form") {
-      requires_orig_dbcs_ = true; 
+      requires_sdbcs_ = true;
     }
 
 #if defined(DEBUG)
