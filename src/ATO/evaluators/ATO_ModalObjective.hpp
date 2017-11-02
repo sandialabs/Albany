@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ATO_MODALBJECTIVE_HPP
+#ifndef ATO_MODALOBJECTIVE_HPP
 #define ATO_MODALOBJECTIVE_HPP
 
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

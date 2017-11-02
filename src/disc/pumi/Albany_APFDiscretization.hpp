@@ -55,9 +55,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
 #ifdef ALBANY_AERAS
     // GAH - Is this right for Aeras? Probably do not use PUMI with Aeras I am assuming.
-    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const override
                  { return this->getOverlapJacobianGraphT(); }
-    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const override
                  { return this->getJacobianGraphT(); }
 #endif
 
