@@ -9,6 +9,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/material-clamped-stk.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/material-clamped-stk.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/clamped-stk-shift.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/clamped-stk-shift.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/clamped-stk-expl.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/clamped-stk-expl.yaml COPYONLY)
 
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
