@@ -80,27 +80,23 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::StrongDBC(
 //
 template <typename Traits>
 void
-StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
-    typename Traits::EvalData dirichlet_workset) {
+StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::
+evaluateFields(typename Traits::EvalData dirichlet_workset) {
   auto f = dirichlet_workset.fT;
-
   auto x = Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*dirichlet_workset.xT));
-
   auto J = dirichlet_workset.JacT;
 
   auto row_map = J->getRowMap();
   auto col_map = J->getColMap();
-  // we make this assumption, which lets us use both local row and column indices
-  // into a single is_dbc vector
+  // we make this assumption, which lets us use both local row and column
+  // indices into a single is_dbc vector
   ALBANY_ASSERT(col_map->isLocallyFitted(*row_map));
 
   auto& ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-  bool const
-  fill_residual = f != Teuchos::null;
+  bool const fill_residual = f != Teuchos::null;
 
   auto f_view = fill_residual == true ? f->get1dViewNonConst() : Teuchos::null;
-
   auto x_view = fill_residual == true ? x->get1dViewNonConst() : Teuchos::null;
 
   Teuchos::Array<GO>
