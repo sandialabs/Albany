@@ -44,7 +44,13 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> U; 
   PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim> UGrad;
   
-  double mu;   //viscosity coefficient
+  double mu0, mu1, mu2;   //viscosity coefficients
+  
+  Teuchos::ArrayRCP<double> forces;
+
+  Teuchos::ArrayRCP<double> reactCoeff0;
+  Teuchos::ArrayRCP<double> reactCoeff1;
+  Teuchos::ArrayRCP<double> reactCoeff2;
   
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;

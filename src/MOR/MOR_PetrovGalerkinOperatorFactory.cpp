@@ -13,19 +13,23 @@ namespace MOR {
 
 using Teuchos::RCP;
 
-PetrovGalerkinOperatorFactory::PetrovGalerkinOperatorFactory(const RCP<const Epetra_MultiVector> &reducedBasis) :
+PetrovGalerkinOperatorFactory::PetrovGalerkinOperatorFactory(const RCP<const Epetra_MultiVector> &reducedBasis,
+                                                             int numDBCModes) :
   reducedBasis_(reducedBasis),
   projectionBasis_(reducedBasis),
-  jacobianFactory_(reducedBasis_)
+  jacobianFactory_(reducedBasis_),
+  num_dbc_modes_(numDBCModes)
 {
   // Nothing to do
 }
 
 PetrovGalerkinOperatorFactory::PetrovGalerkinOperatorFactory(const RCP<const Epetra_MultiVector> &reducedBasis,
-                                                             const RCP<const Epetra_MultiVector> &projectionBasis) :
+                                                             const RCP<const Epetra_MultiVector> &projectionBasis,
+                                                             int numDBCModes) :
   reducedBasis_(reducedBasis),
   projectionBasis_(projectionBasis),
-  jacobianFactory_(reducedBasis_)
+  jacobianFactory_(reducedBasis_),
+  num_dbc_modes_(numDBCModes)
 {
   // Nothing to do
 }

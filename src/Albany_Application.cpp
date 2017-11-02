@@ -28,10 +28,6 @@
 #include "Albany_DataTypes.hpp"
 
 #include "Albany_DummyParameterAccessor.hpp"
-#ifdef ALBANY_CUTR
-#include "CUTR_CubitMeshMover.hpp"
-#include "STKMeshData.hpp"
-#endif
 
 #ifdef ALBANY_TEKO
 #include "Teko_InverseFactoryOperator.hpp"
@@ -480,27 +476,6 @@ void Albany::Application::initialSetUp(
     //IKT, 10/26/16, FIXME: get whether method is explicit from Tempus parameter list 
     //expl = true; 
   }
-  //*out << "stepperType, expl: " <<stepperType << ", " <<  expl << std::endl;
-
-  // Register shape parameters for manipulation by continuation/optimization
-  if (problemParams->get("Enable Cubit Shape Parameters", false)) {
-#ifdef ALBANY_CUTR
-    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
-    meshMover = rcp(new CUTR::CubitMeshMover
-        (problemParams->get<std::string>("Cubit Base Filename")));
-
-    meshMover->getShapeParams(shapeParamNames, shapeParams);
-    *out << "SSS : Registering " << shapeParams.size() << " Shape Parameters" << std::endl;
-
-    registerShapeParameters();
-
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        problemParams->get("Enable Cubit Shape Parameters", false),
-        std::logic_error,
-        "Cubit requested but not Compiled in!");
-#endif
-  }
 
   determinePiroSolver(params);
 
@@ -635,9 +610,6 @@ void Albany::Application::initialSetUp(
   // Create discretization object
   discFactory = rcp(new Albany::DiscretizationFactory(params, commT, expl));
 
-#ifdef ALBANY_CUTR
-  discFactory->setMeshMover(meshMover);
-#endif
 
 #if defined(ALBANY_LCM)
   // Check for Schwarz parameters
@@ -1440,24 +1412,6 @@ computeGlobalResidualImplT(
   else xdotdot_ = Teuchos::null; 
 #endif // ALBANY_LCM
 
-  // Mesh motion needs to occur here on the global mesh befor
-  // it is potentially carved into worksets.
-#ifdef ALBANY_CUTR
-  static int first=true;
-  if (shapeParamsHaveBeenReset) {
-    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
-
-    *out << " Calling moveMesh with params: " << std::setprecision(8);
-    for (unsigned int i=0; i<shapeParams.size(); i++) {
-      *out << shapeParams[i] << "  ";
-    }
-    *out << std::endl;
-    meshMover->moveMesh(shapeParams, morphFromInit);
-    coords = disc->getCoords();
-    shapeParamsHaveBeenReset = false;
-  }
-#endif
-
   // Zero out overlapped residual - Tpetra
   overlapped_fT->putScalar(0.0);
   fT->putScalar(0.0);
@@ -1949,19 +1903,6 @@ computeGlobalJacobianImplT(const double alpha,
     for (unsigned int j = 0; j < p[i].size(); j++)
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
-#ifdef ALBANY_CUTR
-  if (shapeParamsHaveBeenReset) {
-    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
-
-    *out << " Calling moveMesh with params: " << std::setprecision(8);
-    for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-    *out << std::endl;
-    meshMover->moveMesh(shapeParams, morphFromInit);
-    coords = disc->getCoords();
-    shapeParamsHaveBeenReset = false;
-  }
-#endif
-
   // Zero out overlapped residual
   if (Teuchos::nonnull(fT)) {
     overlapped_fT->putScalar(0.0);
@@ -2240,19 +2181,6 @@ computeGlobalJacobianSDBCsImplT(const double alpha,
   for (int i = 0; i < p.size(); i++)
     for (unsigned int j = 0; j < p[i].size(); j++)
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
-
-#ifdef ALBANY_CUTR
-  if (shapeParamsHaveBeenReset) {
-    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
-
-    *out << " Calling moveMesh with params: " << std::setprecision(8);
-    for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-    *out << std::endl;
-    meshMover->moveMesh(shapeParams, morphFromInit);
-    coords = disc->getCoords();
-    shapeParamsHaveBeenReset = false;
-  }
-#endif
 
   // Zero out overlapped residual
   if (Teuchos::nonnull(fT)) {
@@ -3160,87 +3088,6 @@ computeGlobalTangentImplT(
     }
   }
 
-  // Begin shape optimization logic
-  ArrayRCP<ArrayRCP<double>> coord_derivs;
-  // ws, sp, cell, node, dim
-  ArrayRCP<ArrayRCP<ArrayRCP<ArrayRCP<ArrayRCP<double>>>>> ws_coord_derivs;
-  ws_coord_derivs.resize(coords.size());
-  std::vector<int> coord_deriv_indices;
-#ifdef ALBANY_CUTR
-  if (shapeParamsHaveBeenReset) {
-    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
-
-    int num_sp = 0;
-    std::vector<int> shape_param_indices;
-
-    // Find any shape params from param list
-    for (unsigned int i=0; i<params->size(); i++) {
-      for (unsigned int j=0; j<shapeParamNames.size(); j++) {
-        if ((*params)[i].family->getName() == shapeParamNames[j]) {
-          num_sp++;
-          coord_deriv_indices.resize(num_sp);
-          shape_param_indices.resize(num_sp);
-          coord_deriv_indices[num_sp-1] = i;
-          shape_param_indices[num_sp-1] = j;
-        }
-      }
-    }
-
-    TEUCHOS_TEST_FOR_EXCEPTION( Teuchos::nonnull(VpT), std::logic_error,
-        "Derivatives with respect to a vector of shape\n " <<
-        "parameters has not been implemented. Need to write\n" <<
-        "directional derivative perturbation through meshMover!" <<
-        std::endl);
-
-    // Compute FD derivs of coordinate vector w.r.t. shape params
-    double eps = 1.0e-4;
-    double pert;
-    coord_derivs.resize(num_sp);
-    for (int ws=0; ws<coords.size(); ws++) ws_coord_derivs[ws].resize(num_sp);
-    for (int i=0; i<num_sp; i++) {
-      *out << "XXX perturbing parameter " << coord_deriv_indices[i]
-      << " which is shapeParam # " << shape_param_indices[i]
-      << " with name " << shapeParamNames[shape_param_indices[i]]
-      << " which should equal " << (*params)[coord_deriv_indices[i]].family->getName() << std::endl;
-
-      pert = (fabs(shapeParams[shape_param_indices[i]]) + 1.0e-2) * eps;
-
-      shapeParams[shape_param_indices[i]] += pert;
-      *out << " Calling moveMesh with params: " << std::setprecision(8);
-      for (unsigned int ii=0; ii<shapeParams.size(); ii++) *out << shapeParams[ii] << "  ";
-      *out << std::endl;
-      meshMover->moveMesh(shapeParams, morphFromInit);
-      for (int ws=0; ws<coords.size(); ws++) {  //worset
-        ws_coord_derivs[ws][i].resize(coords[ws].size());
-        for (int e=0; e<coords[ws].size(); e++) { //cell
-          ws_coord_derivs[ws][i][e].resize(coords[ws][e].size());
-          for (int j=0; j<coords[ws][e].size(); j++) { //node
-            ws_coord_derivs[ws][i][e][j].resize(disc->getNumDim());
-            for (int d=0; d<disc->getNumDim(); d++)//node
-            ws_coord_derivs[ws][i][e][j][d] = coords[ws][e][j][d];
-          }}}}
-
-    shapeParams[shape_param_indices[i]] -= pert;
-  }
-  *out << " Calling moveMesh with params: " << std::setprecision(8);
-  for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-  *out << std::endl;
-  meshMover->moveMesh(shapeParams, morphFromInit);
-  coords = disc->getCoords();
-
-  for (int i=0; i<num_sp; i++) {
-    for (int ws=0; ws<coords.size(); ws++)  //worset
-    for (int e=0; e<coords[ws].size(); e++)//cell
-    for (int j=0; j<coords[ws][i].size(); j++)//node
-    for (int d=0; d<disc->getNumDim; d++)//node
-    ws_coord_derivs[ws][i][e][j][d] = (ws_coord_derivs[ws][i][e][j][d] - coords[ws][e][j][d]) / pert;
-  }
-}
-shapeParamsHaveBeenReset = false;
-}
-  // End shape optimization logic
-#endif
-
   // Set data in Workset struct, and perform fill via field manager
   {
     PHAL::Workset workset;
@@ -3269,11 +3116,8 @@ shapeParamsHaveBeenReset = false;
     workset.num_cols_p = num_cols_p;
     workset.param_offset = param_offset;
 
-    workset.coord_deriv_indices = &coord_deriv_indices;
-
     for (int ws = 0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Tangent>(workset, ws);
-      workset.ws_coord_derivs = ws_coord_derivs[ws];
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
@@ -3513,19 +3357,6 @@ applyGlobalDistParamDerivImplT(const double current_time,
   for (int i = 0; i < p.size(); i++)
     for (unsigned int j = 0; j < p[i].size(); j++)
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
-
-#ifdef ALBANY_CUTR
-  if (shapeParamsHaveBeenReset) {
-    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
-
-    *out << " Calling moveMesh with params: " << std::setprecision(8);
-    for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-    *out << std::endl;
-    meshMover->moveMesh(shapeParams, morphFromInit);
-    coords = disc->getCoords();
-    shapeParamsHaveBeenReset = false;
-  }
-#endif
 
   RCP<Tpetra_MultiVector> overlapped_fpVT;
   if (trans) {
@@ -3905,18 +3736,6 @@ computeGlobalSGResidual(
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
   //  if (sg_xdot != NULL) timeMgr.setTime(current_time);
 
-#ifdef ALBANY_CUTR
-  if (shapeParamsHaveBeenReset) {
-    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
-    *out << " Calling moveMesh with params: " << std::setprecision(8);
-    for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-    *out << std::endl;
-    meshMover->moveMesh(shapeParams, morphFromInit);
-    coords = disc->getCoords();
-    shapeParamsHaveBeenReset = false;
-  }
-#endif
-
   // Set SG parameters
   for (int i=0; i<sg_p_index.size(); i++) {
     int ii = sg_p_index[i];
@@ -4084,18 +3903,6 @@ computeGlobalSGJacobian(
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
   //  if (sg_xdot != NULL) timeMgr.setTime(current_time);
-
-#ifdef ALBANY_CUTR
-  if (shapeParamsHaveBeenReset) {
-    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
-    *out << " Calling moveMesh with params: " << std::setprecision(8);
-    for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-    *out << std::endl;
-    meshMover->moveMesh(shapeParams, morphFromInit);
-    coords = disc->getCoords();
-    shapeParamsHaveBeenReset = false;
-  }
-#endif
 
   // Set SG parameters
   for (int i=0; i<sg_p_index.size(); i++) {
@@ -4618,18 +4425,6 @@ computeGlobalMPResidual(
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
   //  if (mp_xdot != NULL) timeMgr.setTime(current_time);
 
-#ifdef ALBANY_CUTR
-  if (shapeParamsHaveBeenReset) {
-    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
-    *out << " Calling moveMesh with params: " << std::setprecision(8);
-    for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-    *out << std::endl;
-    meshMover->moveMesh(shapeParams, morphFromInit);
-    coords = disc->getCoords();
-    shapeParamsHaveBeenReset = false;
-  }
-#endif
-
   // Set MP parameters
   for (int i=0; i<mp_p_index.size(); i++) {
     int ii = mp_p_index[i];
@@ -4786,18 +4581,6 @@ computeGlobalMPJacobian(
 
   // put current_time (from Rythmos) if this is a transient problem, then compute dt
   //  if (mp_xdot != NULL) timeMgr.setTime(current_time);
-
-#ifdef ALBANY_CUTR
-  if (shapeParamsHaveBeenReset) {
-    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
-    *out << " Calling moveMesh with params: " << std::setprecision(8);
-    for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
-    *out << std::endl;
-    meshMover->moveMesh(shapeParams, morphFromInit);
-    coords = disc->getCoords();
-    shapeParamsHaveBeenReset = false;
-  }
-#endif
 
   // Set MP parameters
   for (int i=0; i<mp_p_index.size(); i++) {
@@ -6814,24 +6597,6 @@ computeGlobalResidualSDBCsImplT(
   if (xdotdotT != Teuchos::null) xdotdot_ = Teuchos::rcp(new Tpetra_Vector(*xdotdotT));
   else xdotdot_ = Teuchos::null; 
 #endif // ALBANY_LCM
-
-  // Mesh motion needs to occur here on the global mesh befor
-  // it is potentially carved into worksets.
-#ifdef ALBANY_CUTR
-  static int first=true;
-  if (shapeParamsHaveBeenReset) {
-    TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
-
-    *out << " Calling moveMesh with params: " << std::setprecision(8);
-    for (unsigned int i=0; i<shapeParams.size(); i++) {
-      *out << shapeParams[i] << "  ";
-    }
-    *out << std::endl;
-    meshMover->moveMesh(shapeParams, morphFromInit);
-    coords = disc->getCoords();
-    shapeParamsHaveBeenReset = false;
-  }
-#endif
 
   // Zero out overlapped residual - Tpetra
   overlapped_fT->putScalar(0.0);

@@ -34,11 +34,6 @@
 #include "AAdapt_AdaptiveSolutionManagerT.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 
-#if defined(ALBANY_CUTR)
-#include "CUTR_CubitMeshMover.hpp"
-#include "STKMeshData.hpp"
-#endif
-
 #include "Sacado_ScalarParameterLibrary.hpp"
 #include "Sacado_ScalarParameterVector.hpp"
 #include "Sacado_ParameterAccessor.hpp"
@@ -1269,9 +1264,6 @@ namespace Albany {
     bool shapeParamsHaveBeenReset;
     std::vector<RealType> shapeParams;
     std::vector<std::string> shapeParamNames;
-#ifdef ALBANY_CUTR
-    Teuchos::RCP<CUTR::CubitMeshMover> meshMover;
-#endif
 
     unsigned int neq, spatial_dimension, tangent_deriv_dim;
 

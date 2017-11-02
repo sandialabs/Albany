@@ -20,9 +20,11 @@ namespace MOR {
 
 class PetrovGalerkinOperatorFactory : public ReducedOperatorFactory {
 public:
-  explicit PetrovGalerkinOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis);
+  explicit PetrovGalerkinOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis,
+                                         int numDBCModes);
   PetrovGalerkinOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis,
-                                const Teuchos::RCP<const Epetra_MultiVector> &projectionBasis);
+                                const Teuchos::RCP<const Epetra_MultiVector> &projectionBasis,
+                                int numDBCModes);
 
   virtual bool fullJacobianRequired(bool residualRequested, bool jacobianRequested) const;
 
@@ -60,6 +62,10 @@ public:
   virtual Teuchos::RCP<const Epetra_CrsMatrix> getJacobian() const {TEUCHOS_ASSERT(0);}
   virtual void setJacobian(Epetra_CrsMatrix &jacobian) const {TEUCHOS_ASSERT(0);}
   virtual void applyJacobian(const Epetra_MultiVector &vector) const {TEUCHOS_ASSERT(0);}
+
+  virtual int num_dbc_modes() const { return num_dbc_modes_;};
+
+	int num_dbc_modes_;
 
 private:
   Teuchos::RCP<const Epetra_MultiVector> reducedBasis_, projectionBasis_;

@@ -1,8 +1,6 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Heat 2D"/>
-    <Parameter name="Enable Cubit Shape Parameters" type="bool" value="false"/>
-    <Parameter name="Cubit Base Filename" type="string" value="quad"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS nodelist_15 for DOF T" type="double" value="1.5"/>
       <Parameter name="DBC on NS nodelist_16 for DOF T" type="double" value="1.0"/>

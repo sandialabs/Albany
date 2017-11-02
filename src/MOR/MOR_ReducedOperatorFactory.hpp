@@ -57,6 +57,8 @@ public:
   virtual void setJacobian(Epetra_CrsMatrix &jacobian) const = 0;
   virtual void applyJacobian(const Epetra_MultiVector &vector) const = 0;
 
+  virtual int num_dbc_modes() const = 0;
+
   virtual ~ReducedOperatorFactory();
 
 private:
