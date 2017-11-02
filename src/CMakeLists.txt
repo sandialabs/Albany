@@ -826,20 +826,12 @@ IF (ALBANY_MPMD)
 ENDIF()
 
 
-if (ALBANY_STOKHOS AND ALBANY_EPETRA)
-add_executable(AlbanySG Main_SGSolve.cpp)
-SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanySG )
-endif()
 if (ALBANY_ASCR AND ALBANY_EPETRA)
   add_executable(AlbanyAdjoint Main_Adjoint.cpp)
-  add_executable(AlbanySGAdjoint Main_SGAdjoint.cpp)
   add_executable(AlbanyCoupled Main_Coupled.cpp)
-  add_executable(AlbanySGCoupled Main_SGCoupled.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES}
     AlbanyAdjoint
     AlbanyCoupled
-    AlbanySGAdjoint
-    AlbanySGCoupled
     )
 endif()
 IF (ALBANY_DAKOTA AND ALBANY_EPETRA)

@@ -12,11 +12,6 @@
 #include "Albany_DistributedParameterResponseDerivativeOp.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 #include "Teuchos_TestForException.hpp"
-#ifdef ALBANY_STOKHOS
-#include "Stokhos_EpetraVectorOrthogPoly.hpp"
-#include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
-#include "Stokhos_EpetraOperatorOrthogPoly.hpp"
-#endif
 #include "Petra_Converters.hpp"
 
 //IK, 7/15/14: adding option to write the mass matrix to matrix market file, which is needed
@@ -101,7 +96,6 @@ Albany::ModelEvaluator::ModelEvaluator(
   epetra_param_map.resize(num_param_vecs);
   epetra_param_vec.resize(num_param_vecs);
 #ifdef ALBANY_STOKHOS
-  p_sg_vals.resize(num_param_vecs);
   p_mp_vals.resize(num_param_vecs);
 #endif
   Teuchos::RCP<const Epetra_Comm> comm = app->getEpetraComm();
@@ -167,7 +161,6 @@ Albany::ModelEvaluator::ModelEvaluator(
     }
 
 #ifdef ALBANY_STOKHOS
-    p_sg_vals[i].resize(sacado_param_vec[i].size());
     p_mp_vals[i].resize(sacado_param_vec[i].size());
 #endif
   }
@@ -501,18 +494,6 @@ Albany::ModelEvaluator::createInArgs() const
   }
   inArgs.set_Np(num_param_vecs+num_dist_param_vecs);
 
-#ifdef ALBANY_SG
-  inArgs.setSupports(IN_ARG_x_sg,true);
-  if(num_time_deriv > 0)
-    inArgs.setSupports(IN_ARG_x_dot_sg,true);
-  if(num_time_deriv > 1)
-    inArgs.setSupports(IN_ARG_x_dotdot_sg,true);
-  for (int i=0; i<num_param_vecs; i++)
-    inArgs.setSupports(IN_ARG_p_sg, i, true);
-  inArgs.setSupports(IN_ARG_sg_basis,true);
-  inArgs.setSupports(IN_ARG_sg_quadrature,true);
-  inArgs.setSupports(IN_ARG_sg_expansion,true);
-#endif
 #ifdef ALBANY_ENSEMBLE
 
   inArgs.setSupports(IN_ARG_x_mp,true);
@@ -582,37 +563,6 @@ Albany::ModelEvaluator::createOutArgs() const
     }
   }
 
-
-#ifdef ALBANY_SG
-  // Stochastic
-  outArgs.setSupports(OUT_ARG_f_sg,true);
-  outArgs.setSupports(OUT_ARG_W_sg,true);
-  for (int i=0; i<num_param_vecs; i++)
-    outArgs.setSupports(OUT_ARG_DfDp_sg, i, DerivativeSupport(DERIV_MV_BY_COL));
-  for (int i=0; i<n_g; i++)
-    outArgs.setSupports(OUT_ARG_g_sg, i, true);
-  for (int i=0; i<n_g; i++) {
-    if (app->getResponse(i)->isScalarResponse()) {
-      outArgs.setSupports(OUT_ARG_DgDx_sg, i,
-                          DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-      outArgs.setSupports(OUT_ARG_DgDx_dot_sg, i,
-                          DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-      outArgs.setSupports(OUT_ARG_DgDx_dotdot_sg, i,
-                          DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-    }
-    else {
-      outArgs.setSupports(OUT_ARG_DgDx_sg, i,
-                          DerivativeSupport(DERIV_LINEAR_OP));
-      outArgs.setSupports(OUT_ARG_DgDx_dot_sg, i,
-                          DerivativeSupport(DERIV_LINEAR_OP));
-      outArgs.setSupports(OUT_ARG_DgDx_dotdot_sg, i,
-                          DerivativeSupport(DERIV_LINEAR_OP));
-    }
-    for (int j=0; j<num_param_vecs; j++)
-      outArgs.setSupports(OUT_ARG_DgDp_sg, i, j,
-                          DerivativeSupport(DERIV_MV_BY_COL));
-  }
-#endif
 #ifdef ALBANY_ENSEMBLE
 
   // Multi-point
@@ -944,152 +894,6 @@ f_out->Print(std::cout);
     }
   }
 
-  //
-  // Stochastic Galerkin
-  //
-#ifdef ALBANY_SG
-  InArgs::sg_const_vector_t x_sg = inArgs.get_x_sg();
-  if (x_sg != Teuchos::null) {
-    app->init_sg(inArgs.get_sg_basis(),
-                 inArgs.get_sg_quadrature(),
-                 inArgs.get_sg_expansion(),
-                 x_sg->productComm());
-    InArgs::sg_const_vector_t x_dot_sg  = Teuchos::null;
-    InArgs::sg_const_vector_t x_dot_sg  = Teuchos::null;
-    if(num_time_deriv > 0)
-      x_dotdot_sg  = inArgs.get_x_dotdot_sg();
-    if(num_time_deriv > 1)
-      x_dotdot_sg  = inArgs.get_x_dotdot_sg();
-    if (x_dot_sg != Teuchos::null || x_dotdot_sg != Teuchos::null) {
-      alpha = inArgs.get_alpha();
-      beta = inArgs.get_beta();
-      curr_time  = inArgs.get_t();
-    }
-    if (x_dotdot_sg != Teuchos::null) {
-      omega = inArgs.get_omega();
-    }
-
-    InArgs::sg_const_vector_t epetra_p_sg = inArgs.get_p_sg(0);
-    Teuchos::Array<int> p_sg_index;
-    for (int i=0; i<num_param_vecs; i++) {
-      InArgs::sg_const_vector_t p_sg = inArgs.get_p_sg(i);
-      if (p_sg != Teuchos::null) {
-        p_sg_index.push_back(i);
-        for (int j=0; j<p_sg_vals[i].size(); j++) {
-          int num_sg_blocks = p_sg->size();
-          p_sg_vals[i][j].reset(app->getStochasticExpansion(), num_sg_blocks);
-          p_sg_vals[i][j].copyForWrite();
-          for (int l=0; l<num_sg_blocks; l++) {
-            p_sg_vals[i][j].fastAccessCoeff(l) = (*p_sg)[l][j];
-          }
-        }
-      }
-    }
-
-    OutArgs::sg_vector_t f_sg = outArgs.get_f_sg();
-    OutArgs::sg_operator_t W_sg = outArgs.get_W_sg();
-    bool f_sg_computed = false;
-
-    // W_sg
-    if (W_sg != Teuchos::null) {
-      Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> W_sg_crs(W_sg->basis(),
-                                                           W_sg->map());
-      for (int i=0; i<W_sg->size(); i++)
-        W_sg_crs.setCoeffPtr(
-          i,
-          Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_sg->getCoeffPtr(i)));
-      app->computeGlobalSGJacobian(alpha, beta, omega, curr_time,
-                                   x_dot_sg.get(),  x_dotdot_sg.get(), *x_sg,
-                                   sacado_param_vec, p_sg_index, p_sg_vals,
-                                   f_sg.get(), W_sg_crs);
-      f_sg_computed = true;
-    }
-
-    // df/dp_sg
-    for (int i=0; i<num_param_vecs; i++) {
-      Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > dfdp_sg
-        = outArgs.get_DfDp_sg(i).getMultiVector();
-      if (dfdp_sg != Teuchos::null) {
-        Teuchos::Array<int> p_indexes =
-          outArgs.get_DfDp_sg(i).getDerivativeMultiVector().getParamIndexes();
-        Teuchos::RCP<ParamVec> p_vec;
-        if (p_indexes.size() == 0)
-          p_vec = Teuchos::rcp(&sacado_param_vec[i],false);
-        else {
-          p_vec = Teuchos::rcp(new ParamVec);
-          for (int j=0; j<p_indexes.size(); j++)
-            p_vec->addParam(sacado_param_vec[i][p_indexes[j]].family,
-                            sacado_param_vec[i][p_indexes[j]].baseValue);
-        }
-
-        app->computeGlobalSGTangent(0.0, 0.0, 0.0, curr_time, false,
-                                    x_dot_sg.get(), x_dotdot_sg.get(),*x_sg,
-                                    sacado_param_vec, p_sg_index, p_sg_vals,
-                                    p_vec.get(), NULL, NULL, NULL, NULL,
-                                    f_sg.get(), NULL, dfdp_sg.get());
-
-        f_sg_computed = true;
-      }
-    }
-
-    if (f_sg != Teuchos::null && !f_sg_computed)
-      app->computeGlobalSGResidual(curr_time, x_dot_sg.get(), x_dotdot_sg.get(),*x_sg,
-                                   sacado_param_vec, p_sg_index, p_sg_vals,
-                                   *f_sg);
-
-    // Response functions
-    for (int i=0; i<outArgs.Ng(); i++) {
-      OutArgs::sg_vector_t g_sg = outArgs.get_g_sg(i);
-      bool g_sg_computed = false;
-
-      SGDerivative dgdx_sg = outArgs.get_DgDx_sg(i);
-      SGDerivative dgdxdot_sg = outArgs.get_DgDx_dot_sg(i);
-      SGDerivative dgdxdotdot_sg = outArgs.get_DgDx_dotdot_sg(i);
-
-      // dg/dx, dg/dxdot
-      if (!dgdx_sg.isEmpty() || !dgdxdot_sg.isEmpty() || !dgdxdotdot_sg.isEmpty()) {
-        app->evaluateSGResponseDerivative(
-            i, curr_time, x_dot_sg.get(), x_dotdot_sg.get(), *x_sg,
-            sacado_param_vec, p_sg_index, p_sg_vals,
-            NULL, g_sg.get(), dgdx_sg,
-            dgdxdot_sg, dgdxdotdot_sg, SGDerivative());
-        g_sg_computed = true;
-      }
-
-      // dg/dp
-      for (int j=0; j<num_param_vecs; j++) {
-        Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > dgdp_sg =
-          outArgs.get_DgDp_sg(i,j).getMultiVector();
-        if (dgdp_sg != Teuchos::null) {
-          Teuchos::Array<int> p_indexes =
-            outArgs.get_DgDp_sg(i,j).getDerivativeMultiVector().getParamIndexes();
-          Teuchos::RCP<ParamVec> p_vec;
-          if (p_indexes.size() == 0)
-            p_vec = Teuchos::rcp(&sacado_param_vec[j],false);
-          else {
-            p_vec = Teuchos::rcp(new ParamVec);
-            for (int k=0; k<p_indexes.size(); k++)
-              p_vec->addParam(sacado_param_vec[j][p_indexes[k]].family,
-                              sacado_param_vec[j][p_indexes[k]].baseValue);
-          }
-          app->evaluateSGResponseTangent(i, alpha, beta, omega, curr_time, false,
-                                         x_dot_sg.get(), x_dotdot_sg.get(), *x_sg,
-                                         sacado_param_vec, p_sg_index,
-                                         p_sg_vals, p_vec.get(),
-                                         NULL, NULL, NULL, NULL, g_sg.get(),
-                                         NULL, dgdp_sg.get());
-          g_sg_computed = true;
-
-        }
-      }
-
-      if (g_sg != Teuchos::null && !g_sg_computed)
-        app->evaluateSGResponse(i, curr_time, x_dot_sg.get(), x_dotdot_sg.get(), *x_sg,
-                                sacado_param_vec, p_sg_index, p_sg_vals,
-                                *g_sg);
-    }
-  }
-#endif
 #ifdef ALBANY_ENSEMBLE
 
   //

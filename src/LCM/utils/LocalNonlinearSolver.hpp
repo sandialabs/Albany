@@ -114,61 +114,6 @@ public:
       std::vector<ScalarT> & B);
 };
 
-// -----------------------------------------------------------------------------
-// Stochastic Galerkin Residual
-// -----------------------------------------------------------------------------
-#ifdef ALBANY_SG
-template<typename Traits>
-class LocalNonlinearSolver< PHAL::AlbanyTraits::SGResidual, Traits> :
-public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::SGResidual, Traits>
-{
-public:
-  typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
-  LocalNonlinearSolver();
-  void solve(std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
-  void computeFadInfo(std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
-};
-
-// -----------------------------------------------------------------------------
-// Stochastic Galerkin Jacobian
-// -----------------------------------------------------------------------------
-template<typename Traits>
-class LocalNonlinearSolver< PHAL::AlbanyTraits::SGJacobian, Traits> :
-public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::SGJacobian, Traits>
-{
-public:
-  typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
-  LocalNonlinearSolver();
-  void solve(std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
-  void computeFadInfo(std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
-};
-
-// -----------------------------------------------------------------------------
-// Stochastic Galerkin Tangent
-// -----------------------------------------------------------------------------
-template<typename Traits>
-class LocalNonlinearSolver< PHAL::AlbanyTraits::SGTangent, Traits> :
-public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::SGTangent, Traits>
-{
-public:
-  typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
-  LocalNonlinearSolver();
-  void solve(std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
-  void computeFadInfo(std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
-};
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
 // -----------------------------------------------------------------------------

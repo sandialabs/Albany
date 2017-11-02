@@ -153,55 +153,6 @@ private:
   const std::size_t numFields;
 };
 
-// **************************************************************
-// Stochastic Galerkin Residual
-// **************************************************************
-#ifdef ALBANY_SG
-template<typename Traits>
-class MortarContactResidual<PHAL::AlbanyTraits::SGResidual,Traits>
-  : public MortarContactResidualBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
-public:
-  MortarContactResidual(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-  void preEvaluate(typename Traits::PreEvalData d);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
-  const std::size_t numFields;
-};
-
-// **************************************************************
-// Stochastic Galerkin Jacobian
-// **************************************************************
-template<typename Traits>
-class MortarContactResidual<PHAL::AlbanyTraits::SGJacobian,Traits>
-  : public MortarContactResidualBase<PHAL::AlbanyTraits::SGJacobian, Traits>  {
-public:
-  MortarContactResidual(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-  void preEvaluate(typename Traits::PreEvalData d);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
-  const std::size_t numFields;
-};
-
-// **************************************************************
-// Stochastic Galerkin Tangent
-// **************************************************************
-template<typename Traits>
-class MortarContactResidual<PHAL::AlbanyTraits::SGTangent,Traits>
-  : public MortarContactResidualBase<PHAL::AlbanyTraits::SGTangent, Traits>  {
-public:
-  MortarContactResidual(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-  void preEvaluate(typename Traits::PreEvalData d);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
-  const std::size_t numFields;
-};
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************

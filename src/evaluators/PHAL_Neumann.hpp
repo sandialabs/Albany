@@ -319,46 +319,6 @@ private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
 };
 
-// **************************************************************
-// Stochastic Galerkin Residual 
-// **************************************************************
-#ifdef ALBANY_SG
-template<typename Traits>
-class Neumann<PHAL::AlbanyTraits::SGResidual,Traits>
-  : public NeumannBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
-public:
-  Neumann(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
-};
-
-// **************************************************************
-// Stochastic Galerkin Jacobian
-// **************************************************************
-template<typename Traits>
-class Neumann<PHAL::AlbanyTraits::SGJacobian,Traits>
-  : public NeumannBase<PHAL::AlbanyTraits::SGJacobian, Traits>  {
-public:
-  Neumann(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
-};
-
-// **************************************************************
-// Stochastic Galerkin Tangent
-// **************************************************************
-template<typename Traits>
-class Neumann<PHAL::AlbanyTraits::SGTangent,Traits>
-  : public NeumannBase<PHAL::AlbanyTraits::SGTangent, Traits>  {
-public:
-  Neumann(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
-};
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************

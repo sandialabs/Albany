@@ -146,46 +146,6 @@ ScatterResidual2D(const Teuchos::ParameterList& p,
 {
 }
 
-// **********************************************************************
-// Specialization: Stochastic Galerkin Residual
-// **********************************************************************
-
-#ifdef ALBANY_SG
-template<typename Traits>
-ScatterResidual2D<PHAL::AlbanyTraits::SGResidual, Traits>::
-ScatterResidual2D(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl)
-  : ScatterResidual<PHAL::AlbanyTraits::SGResidual,Traits>(p,dl)
-{
-}
-
-
-// **********************************************************************
-// Specialization: Stochastic Galerkin Jacobian
-// **********************************************************************
-
-template<typename Traits>
-ScatterResidual2D<PHAL::AlbanyTraits::SGJacobian, Traits>::
-ScatterResidual2D(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl)
-  : ScatterResidual<PHAL::AlbanyTraits::SGJacobian,Traits>(p,dl)
-{
-}
-
-
-// **********************************************************************
-// Specialization: Stochastic Galerkin Tangent
-// **********************************************************************
-
-template<typename Traits>
-ScatterResidual2D<PHAL::AlbanyTraits::SGTangent, Traits>::
-ScatterResidual2D(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl)
-  : ScatterResidual<PHAL::AlbanyTraits::SGTangent,Traits>(p,dl)
-{
-}
-#endif
-
 #ifdef ALBANY_ENSEMBLE
 // **********************************************************************
 // Specialization: Multi-point Residual
@@ -382,46 +342,6 @@ ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
   : ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p,dl)
 {
 }
-
-// **********************************************************************
-// Specialization: Stochastic Galerkin Residual
-// **********************************************************************
-
-#ifdef ALBANY_SG
-template<typename Traits>
-ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::SGResidual, Traits>::
-ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl)
-  : ScatterResidual<PHAL::AlbanyTraits::SGResidual,Traits>(p,dl)
-{
-}
-
-
-// **********************************************************************
-// Specialization: Stochastic Galerkin Jacobian
-// **********************************************************************
-
-template<typename Traits>
-ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::SGJacobian, Traits>::
-ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl)
-  : ScatterResidual<PHAL::AlbanyTraits::SGJacobian,Traits>(p,dl)
-{
-}
-
-
-// **********************************************************************
-// Specialization: Stochastic Galerkin Tangent
-// **********************************************************************
-
-template<typename Traits>
-ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::SGTangent, Traits>::
-ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl)
-  : ScatterResidual<PHAL::AlbanyTraits::SGTangent,Traits>(p,dl)
-{
-}
-#endif
 
 #ifdef ALBANY_ENSEMBLE
 // **********************************************************************

@@ -1356,16 +1356,6 @@ Albany::BCUtils<BCTraits>::buildFieldManager(
   PHX::Tag<AlbanyTraits::DistParamDeriv::ScalarT> dpd_tag0(allBC, dummy);
   fm->requireField<AlbanyTraits::DistParamDeriv>(dpd_tag0);
 
-#ifdef ALBANY_SG
-  PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag0(allBC, dummy);
-  fm->requireField<AlbanyTraits::SGResidual>(sgres_tag0);
-
-  PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag0(allBC, dummy);
-  fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag0);
-
-  PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag0(allBC, dummy);
-  fm->requireField<AlbanyTraits::SGTangent>(sgtan_tag0);
-#endif
 #ifdef ALBANY_ENSEMBLE
 
   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag0(allBC, dummy);

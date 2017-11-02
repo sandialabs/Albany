@@ -112,62 +112,6 @@ public:
       minitensor::Vector<ScalarT, N> & x) override;
 };
 
-#ifdef ALBANY_SG
-//
-// SGResidual
-//
-template<minitensor::Index N>
-class MiniLinearSolver<PHAL::AlbanyTraits::SGResidual, N> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::SGResidual, N>
-{
-public:
-  using ScalarT = PHAL::AlbanyTraits::SGResidual::ScalarT;
-  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-
-  void
-  solve(
-      minitensor::Tensor<ScalarT, N> const & A,
-      minitensor::Vector<ScalarT, N> const & b,
-      minitensor::Vector<ScalarT, N> & x) override;
-};
-
-//
-// SGJacobian
-//
-template<minitensor::Index N>
-class MiniLinearSolver<PHAL::AlbanyTraits::SGJacobian, N> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::SGJacobian, N>
-{
-public:
-  using ScalarT = PHAL::AlbanyTraits::SGJacobian::ScalarT;
-  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-
-  void
-  solve(
-      minitensor::Tensor<ScalarT, N> const & A,
-      minitensor::Vector<ScalarT, N> const & b,
-      minitensor::Vector<ScalarT, N> & x) override;
-};
-
-//
-// SGTangent
-//
-template<minitensor::Index N>
-class MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, N> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::SGTangent, N>
-{
-public:
-  using ScalarT = PHAL::AlbanyTraits::SGTangent::ScalarT;
-  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-
-  void
-  solve(
-      minitensor::Tensor<ScalarT, N> const & A,
-      minitensor::Vector<ScalarT, N> const & b,
-      minitensor::Vector<ScalarT, N> & x) override;
-};
-#endif
-
 #ifdef ALBANY_ENSEMBLE
 //
 // MPResidual

@@ -292,61 +292,6 @@ private:
   const std::size_t numFields;
 };
 
-// **************************************************************
-// Stochastic Galerkin Residual
-// **************************************************************
-
-#ifdef ALBANY_SG
-template<typename Traits>
-class GatherSolution<PHAL::AlbanyTraits::SGResidual,Traits>
-   : public GatherSolutionBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
-
-public:
-  GatherSolution(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-  GatherSolution(const Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
-  const std::size_t numFields;
-};
-
-
-// **************************************************************
-// Stochastic Galerkin Jacobian
-// **************************************************************
-template<typename Traits>
-class GatherSolution<PHAL::AlbanyTraits::SGJacobian,Traits>
-   : public GatherSolutionBase<PHAL::AlbanyTraits::SGJacobian, Traits>  {
-
-public:
-  GatherSolution(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-  GatherSolution(const Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
-  const std::size_t numFields;
-};
-
-// **************************************************************
-// Stochastic Galerkin Tangent (Jacobian mat-vec + parameter derivatives)
-// **************************************************************
-template<typename Traits>
-class GatherSolution<PHAL::AlbanyTraits::SGTangent,Traits>
-   : public GatherSolutionBase<PHAL::AlbanyTraits::SGTangent, Traits>  {
-
-public:
-  GatherSolution(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-  GatherSolution(const Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
-  typedef typename Kokkos::View<ScalarT*, PHX::Device>::reference_type reference_type;
-  const std::size_t numFields;
-};
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************

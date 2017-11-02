@@ -527,34 +527,6 @@ postEvaluate(typename Traits::PostEvalData workset)
 #endif
 }
 
-#ifdef ALBANY_SG
-// **********************************************************************
-template<typename Traits>
-void ATO::TensorPNormResponseSpec<PHAL::AlbanyTraits::SGJacobian, Traits>::l
-postEvaluate(typename Traits::PostEvalData workset)
-{
-  this->global_response_eval[0] = pow(this->global_response_eval[0],1.0/pVal);
-
-  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> overlapped_dgdx_sg = workset.overlapped_sg_dgdx;
-  if(overlapped_dgdx_sg != Teuchos::null){
-    for(int block=0; block<overlapped_dgdx_sg->size(); block++){
-      auto gVal = this->global_response[0];
-      double scale = pow(gVal.val().coeff(block),1.0/pVal-1.0)/pVal;
-      (*overlapped_dgdx_sg)[block].Scale(scale);
-    }
-  }
-
-  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> overlapped_dgdxdot_sg = workset.overlapped_sg_dgdxdot;
-  if(overlapped_dgdxdot_sg != Teuchos::null){
-    for(int block=0; block<overlapped_dgdxdot_sg->size(); block++){
-      auto gVal = this->global_response[0];
-      double scale = pow(gVal.val().coeff(block),1.0/pVal-1.0)/pVal;
-      (*overlapped_dgdxdot_sg)[block].Scale(scale);
-    }
-  }
-}
-
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 // **********************************************************************
 template<typename Traits>

@@ -13,7 +13,6 @@
 #if defined(ALBANY_EPETRA)
 #ifdef ALBANY_STOKHOS
 #include "Stokhos_ProductEpetraOperator.hpp"
-#include "Stokhos_EpetraOperatorOrthogPoly.hpp"
 #endif
 #endif
 
@@ -68,23 +67,6 @@ namespace Albany {
       Tpetra_Operator* dg_dxdotdotT,
       Tpetra_MultiVector* dg_dpT) = 0;
 
-#ifdef ALBANY_SG
-    //! Evaluate stochastic Galerkin derivative
-    virtual void evaluateSGGradient(
-      const double current_time,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-      const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
-      ParamVec* deriv_p,
-      Stokhos::EpetraVectorOrthogPoly* sg_g,
-      Stokhos::EpetraOperatorOrthogPoly* sg_dg_dx,
-      Stokhos::EpetraOperatorOrthogPoly* sg_dg_dxdot,
-      Stokhos::EpetraOperatorOrthogPoly* sg_dg_dxdotdot,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp) = 0;
-#endif
 #ifdef ALBANY_ENSEMBLE
 
     //! Evaluate multi-point derivative
@@ -143,24 +125,6 @@ namespace Albany {
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp);
 
-   //! Evaluate stochastic Galerkin derivative
-#ifdef ALBANY_SG
-    //! Evaluate stochastic Galerkin derivative
-    virtual void evaluateSGDerivative(
-      const double current_time,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-      const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
-      ParamVec* deriv_p,
-      Stokhos::EpetraVectorOrthogPoly* sg_g,
-      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
-      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
-      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
-      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp);
-#endif
 #ifdef ALBANY_ENSEMBLE
 
     //! Evaluate multi-point derivative

@@ -1051,32 +1051,6 @@ ELSE()
   MESSAGE("-- FADType   is DFAD (default).")
 ENDIF()
 
-# Set optional build of StochasticGalerkin and MultiPoint types
-# These are required for embedded UQ, but slow compilation considerably
-OPTION(ENABLE_SG_MP "DEPRECATED Flag to turn on SG_MP StochasticGalerkin and MP Code" OFF)
-IF (ENABLE_SG_MP)
-  MESSAGE(FATAL_ERROR "\nENABLE_SG_MP configure option no longer exists.
-          Use ENABLE_SG for Stochastic Galerkin
-          Use ENABLE_ENSEMBLE for Ensemble (a.k.a. MP) capability")
-ENDIF()
-
-# OPtional build with embedded Stochastic Galerkin evaluations
-OPTION(ENABLE_SG "Flag to turn on SG Stochastic Galerkin Code" OFF)
-IF (ENABLE_SG)
-  if (1)
-    set (ALBANY_SG FALSE)
-    message ("-- SG        is NOT Enabled.")
-    message ("---> WARNING: SG is not working yet after the Kokkos merge. Disabling.")
-  else ()
-    ADD_DEFINITIONS(-DALBANY_SG)
-    MESSAGE("-- SG        is Enabled, compiling with -DALBANY_SG")
-    SET(ALBANY_SG TRUE)
-  endif ()
-ELSE()
-  MESSAGE("-- SG        is NOT Enabled.")
-  SET(ALBANY_SG FALSE)
-ENDIF()
-
 # Toggle embedded ensemble capability  (ENSEMBLE is a rename of MP)
 OPTION(ENABLE_ENSEMBLE "Flag to turn on Ensemble Code" OFF)
 IF (ENABLE_ENSEMBLE)

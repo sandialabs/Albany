@@ -88,43 +88,6 @@ private:
   std::size_t offset;
 };
 
-#ifdef ALBANY_SG
-template<typename Traits>
-class DOFTensorInterpolationBase<PHAL::AlbanyTraits::SGJacobian, Traits, typename PHAL::AlbanyTraits::SGJacobian::ScalarT>
-      : public PHX::EvaluatorWithBaseImpl<Traits>,
-        public PHX::EvaluatorDerived<PHAL::AlbanyTraits::SGJacobian, Traits>  {
-
-public:
-
-  DOFTensorInterpolationBase(const Teuchos::ParameterList& p,
-                             const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void postRegistrationSetup(typename Traits::SetupData d,
-                             PHX::FieldManager<Traits>& vm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-
-  typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
-
-  // Input:
-  //! Values at nodes
-  PHX::MDField<const ScalarT,Cell,Node,VecDim,VecDim> val_node;
-  //! Basis Functions
-  PHX::MDField<const RealType,Cell,Node,QuadPoint> BF;
-
-  // Output:
-  //! Values at quadrature points
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,VecDim> val_qp;
-
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t vecDim;
-  std::size_t offset;
-};
-#endif
-
 #ifdef ALBANY_ENSEMBLE
 template<typename Traits>
 class DOFTensorInterpolationBase<PHAL::AlbanyTraits::MPJacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>

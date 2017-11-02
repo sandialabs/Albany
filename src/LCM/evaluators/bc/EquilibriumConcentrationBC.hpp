@@ -90,44 +90,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 };
 
-//------------------------------------------------------------------------------
-// Stochastic Galerkin Residual
-//
-
-#ifdef ALBANY_SG
-template<typename Traits>
-class EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGResidual,Traits>
-   : public EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::SGResidual, Traits> {
-public:
-  EquilibriumConcentrationBC(Teuchos::ParameterList& p);
-  typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-//------------------------------------------------------------------------------
-// Stochastic Galerkin Jacobian
-//
-template<typename Traits>
-class EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGJacobian,Traits>
-   : public EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::SGJacobian, Traits> {
-public:
-  EquilibriumConcentrationBC(Teuchos::ParameterList& p);
-  typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-//------------------------------------------------------------------------------
-// Stochastic Galerkin Tangent
-//
-template<typename Traits>
-class EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGTangent,Traits>
-   : public EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::SGTangent, Traits> {
-public:
-  EquilibriumConcentrationBC(Teuchos::ParameterList& p);
-  typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
 //------------------------------------------------------------------------------

@@ -17,7 +17,6 @@
 #ifdef ALBANY_STOKHOS
 #    include "Stokhos_Sacado_Kokkos.hpp"
 #    include "Stokhos_Sacado_MathFunctions.hpp"
-#    include "Sacado_PCE_OrthogPoly.hpp"
 #    include "Sacado_MP_Vector.hpp"
 #endif
 #include "Sacado_ELRFad_DFad.hpp"
@@ -49,8 +48,6 @@ typedef double RealType;
 
 // SG data types
 #ifdef ALBANY_STOKHOS
-typedef Stokhos::StandardStorage<int,RealType> StorageType;
-typedef Sacado::PCE::OrthogPoly<RealType,StorageType> SGType;
 
 // Ensemble (a.k.a. MP) data types
 #ifndef ALBANY_ENSEMBLE_SIZE
@@ -72,7 +69,6 @@ typedef Sacado::MP::Vector<MPStorageType> MPType;
 #define ALBANY_SFAD_SIZE 300
   typedef Sacado::Fad::DFad<RealType> FadType;
 #ifdef ALBANY_STOKHOS
-  typedef Sacado::Fad::DFad<SGType> SGFadType;
   typedef Sacado::Fad::DFad<MPType> MPFadType;
 #endif
 #endif

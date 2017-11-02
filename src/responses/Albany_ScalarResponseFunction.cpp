@@ -131,30 +131,6 @@ evaluateDerivativeT(
 }
 
 
-#ifdef ALBANY_SG
-void
-Albany::ScalarResponseFunction::
-evaluateSGDerivative(
-  const double current_time,
-  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-  const Stokhos::EpetraVectorOrthogPoly& sg_x,
-  const Teuchos::Array<ParamVec>& p,
-  const Teuchos::Array<int>& sg_p_index,
-  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
-  ParamVec* deriv_p,
-  Stokhos::EpetraVectorOrthogPoly* sg_g,
-  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
-  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
-  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
-  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp)
-{
-  this->evaluateSGGradient(
-    current_time, sg_xdot, sg_xdotdot, sg_x, p, sg_p_index, sg_p_vals, deriv_p,
-    sg_g, sg_dg_dx.getMultiVector().get(), sg_dg_dxdot.getMultiVector().get(), sg_dg_dxdotdot.getMultiVector().get(),
-    sg_dg_dp.getMultiVector().get());
-}
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
 void

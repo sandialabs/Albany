@@ -43,14 +43,12 @@
 #include "PHAL_Workset.hpp"
 
 #if defined(ALBANY_STOKHOS)
-#include "Stokhos_OrthogPolyExpansion.hpp"
 #include "Stokhos_Quadrature.hpp"
 #endif
 
 #if defined(ALBANY_EPETRA)
 
 #if defined(ALBANY_STOKHOS)
-#include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #endif
 
@@ -174,21 +172,6 @@ namespace Albany {
 
     //! Return whether problem wants to use its own preconditioner
     bool suppliesPreconditioner() const;
-
-#ifdef ALBANY_STOKHOS
-    //! Get stochastic expansion
-    Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double>>
-    getStochasticExpansion();
-#endif
-
-    //! Intialize stochastic Galerkin method
-#ifdef ALBANY_SG
-    void init_sg(
-      const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double>>& basis,
-      const Teuchos::RCP<const Stokhos::Quadrature<int,double>>& quad,
-      const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double>>& expansion,
-      const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
-#endif
 
     //! Compute global residual
     /*!
@@ -462,128 +445,6 @@ namespace Albany {
       const std::string& dist_param_name,
       Tpetra_MultiVector* dg_dp);
 
-#ifdef ALBANY_SG
-    //! Compute global residual for stochastic Galerkin problem
-    /*!
-     * Set xdot to NULL for steady-state problems
-     */
-    void computeGlobalSGResidual(
-      const double current_time,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-      const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
-      Stokhos::EpetraVectorOrthogPoly& sg_f);
-
-    //! Compute global Jacobian for stochastic Galerkin problem
-    /*!
-     * Set xdot to NULL for steady-state problems
-     */
-    void computeGlobalSGJacobian(
-      const double alpha,
-      const double beta,
-      const double omega,
-      const double current_time,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-      const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
-      Stokhos::EpetraVectorOrthogPoly* sg_f,
-      Stokhos::VectorOrthogPoly<Epetra_CrsMatrix>& sg_jac);
-
-    //! Compute global Tangent for stochastic Galerkin problem
-    /*!
-     * Set xdot to NULL for steady-state problems
-     */
-    void computeGlobalSGTangent(
-      const double alpha,
-      const double beta,
-      const double omega,
-      const double current_time,
-      bool sum_derivs,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-      const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
-      ParamVec* deriv_p,
-      const Epetra_MultiVector* Vx,
-      const Epetra_MultiVector* Vxdot,
-      const Epetra_MultiVector* Vxdotdot,
-      const Epetra_MultiVector* Vp,
-      Stokhos::EpetraVectorOrthogPoly* sg_f,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_JVx,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_fVp);
-
-    //! Evaluate stochastic Galerkin response functions
-    /*!
-     * Set xdot to NULL for steady-state problems
-     */
-    void evaluateSGResponse(
-      int response_index,
-      const double curr_time,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-      const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
-      Stokhos::EpetraVectorOrthogPoly& sg_g);
-
-    //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
-    /*!
-     * Set xdot, dxdot_dp to NULL for steady-state problems
-     */
-    void
-    evaluateSGResponseTangent(
-      int response_index,
-      const double alpha,
-      const double beta,
-      const double omega,
-      const double current_time,
-      bool sum_derivs,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-      const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
-      ParamVec* deriv_p,
-      const Epetra_MultiVector* Vx,
-      const Epetra_MultiVector* Vxdot,
-      const Epetra_MultiVector* Vxdotdot,
-      const Epetra_MultiVector* Vp,
-      Stokhos::EpetraVectorOrthogPoly* sg_g,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_gp);
-
-    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
-    /*!
-     * Set xdot, dg_dxdot to NULL for steady-state problems
-     */
-    void
-    evaluateSGResponseDerivative(
-      int response_index,
-      const double current_time,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-      const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
-      ParamVec* deriv_p,
-      Stokhos::EpetraVectorOrthogPoly* sg_g,
-      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
-      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
-      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
-      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp);
-
-#endif 
 #ifdef ALBANY_ENSEMBLE 
     //! Compute global residual for stochastic Galerkin problem
     /*!
@@ -845,17 +706,6 @@ namespace Albany {
       Teuchos::RCP<const Tpetra_Vector> x,
       const Teuchos::Array<ParamVec>& p);
 
-#ifdef ALBANY_SG
-    void setupBasicWorksetInfo(
-      PHAL::Workset& workset,
-      double current_time,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-      const Stokhos::EpetraVectorOrthogPoly* sg_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals);
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
     void setupBasicWorksetInfo(
@@ -899,23 +749,6 @@ namespace Albany {
       Teuchos::RCP<const Tpetra_MultiVector> VxT,
       Teuchos::RCP<const Tpetra_MultiVector> VpT);
 
-#ifdef ALBANY_SG
-    void setupTangentWorksetInfo(
-      PHAL::Workset& workset,
-      double current_time,
-      bool sum_derivs,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-      const Stokhos::EpetraVectorOrthogPoly* sg_x,
-      const Teuchos::Array<ParamVec>& p,
-      ParamVec* deriv_p,
-      const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
-      const Epetra_MultiVector* Vxdot,
-      const Epetra_MultiVector* Vxdotdot,
-      const Epetra_MultiVector* Vx,
-      const Epetra_MultiVector* Vp);
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
     void setupTangentWorksetInfo(
@@ -1183,38 +1016,11 @@ namespace Albany {
     //! Phalanx Field Manager for states
     Teuchos::Array< Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> sfm;
 
-#ifdef ALBANY_STOKHOS
-    //! Stochastic Galerkin basis
-    Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double>> sg_basis;
-
-    //! Stochastic Galerkin quadrature
-    Teuchos::RCP<const Stokhos::Quadrature<int,double>> sg_quad;
-
-    //! Stochastic Galerkin expansion
-    Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double>> sg_expansion;
-#endif
-
 #if defined(ALBANY_EPETRA)
     //! Product multi-comm
     Teuchos::RCP<const EpetraExt::MultiComm> product_comm;
 
-    //! Overlap stochastic map
-    Teuchos::RCP<const Epetra_BlockMap> sg_overlap_map;
-
 #ifdef ALBANY_STOKHOS
-    //! SG overlapped solution vectors
-    Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly >  sg_overlapped_x;
-
-    //! SG overlapped time derivative vectors
-    Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_overlapped_xdot;
-    Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_overlapped_xdotdot;
-
-    //! SG overlapped residual vectors
-    Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_overlapped_f;
-
-    //! Overlapped Jacobian matrixs
-    Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix>> sg_overlapped_jac;
-
     //! MP overlapped solution vectors
     Teuchos::RCP< Stokhos::ProductEpetraVector >  mp_overlapped_x;
 

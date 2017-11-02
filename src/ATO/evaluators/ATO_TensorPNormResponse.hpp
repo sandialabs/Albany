@@ -87,27 +87,6 @@ namespace ATO
     Albany::StateManager* pStateMgr;
     double pVal;
   };
-  /******************************************************************************/
-  // Specialization: SGJacobian
-  /******************************************************************************/
-#ifdef ALBANY_SG
-  template<typename Traits>
-  class TensorPNormResponseSpec<PHAL::AlbanyTraits::SGJacobian,Traits> : 
-    public PHAL::SeparableScatterScalarResponse<PHAL::AlbanyTraits::SGJacobian,Traits>
-  {
-  public:
-    typedef PHAL::AlbanyTraits::SGJacobian EvalT;
-    typedef typename EvalT::ScalarT ScalarT;
-    
-    void postEvaluate(typename Traits::PostEvalData d);
-	  
-  protected:
-    void saveState(RealType&, ScalarT){}
-    Albany::StateManager* pStateMgr;
-    double pVal;
-  };
-
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
   /******************************************************************************/

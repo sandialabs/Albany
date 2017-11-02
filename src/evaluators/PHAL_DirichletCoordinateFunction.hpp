@@ -115,47 +115,6 @@ class DirichletCoordFunction<PHAL::AlbanyTraits::DistParamDeriv, Traits/*, cfunc
     void evaluateFields(typename Traits::EvalData d);
 };
 
-#ifdef ALBANY_SG
-// **************************************************************
-// Stochastic Galerkin Residual
-// **************************************************************
-
-template<typename Traits/*, typename cfunc_traits*/>
-class DirichletCoordFunction<PHAL::AlbanyTraits::SGResidual, Traits/*, cfunc_traits*/>
-    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::SGResidual, Traits/*, cfunc_traits*/> {
-  public:
-    DirichletCoordFunction(Teuchos::ParameterList& p);
-    typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
-    void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Stochastic Galerkin Jacobian
-// **************************************************************
-
-template<typename Traits/*, typename cfunc_traits*/>
-class DirichletCoordFunction<PHAL::AlbanyTraits::SGJacobian, Traits/*, cfunc_traits*/>
-    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::SGJacobian, Traits/*, cfunc_traits*/> {
-  public:
-    DirichletCoordFunction(Teuchos::ParameterList& p);
-    typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
-    void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Stochastic Galerkin Tangent
-// **************************************************************
-
-template<typename Traits/*, typename cfunc_traits*/>
-class DirichletCoordFunction<PHAL::AlbanyTraits::SGTangent, Traits/*, cfunc_traits*/>
-    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::SGTangent, Traits/*, cfunc_traits*/> {
-  public:
-    DirichletCoordFunction(Teuchos::ParameterList& p);
-    typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
-    void evaluateFields(typename Traits::EvalData d);
-};
-#endif 
-
 #ifdef ALBANY_ENSEMBLE 
 // **************************************************************
 // Multi-point Residual

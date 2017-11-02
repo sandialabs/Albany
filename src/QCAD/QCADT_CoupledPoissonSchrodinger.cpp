@@ -19,7 +19,6 @@ Please remove when issue is resolved
 
 #ifdef ALBANY_STOKHOS
 #include "Stokhos.hpp"
-#include "Sacado_PCE_OrthogPoly.hpp"
 #endif
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_TestForException.hpp"

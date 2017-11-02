@@ -15,18 +15,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
 add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
 endif()
 
-# 4. Repeat process for SG problems if "inputSG.xml" exists
-if (ALBANY_STOKHOS)
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputSG.xml COPYONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_SG NAME)
-  add_test(${testName} ${AlbanySG.exe})
-endif ()
-endif ()
-
 # 5. Repeat process for Dakota problems if "dakota.in" exists
 if (ALBANY_DAKOTA)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)

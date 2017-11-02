@@ -135,62 +135,6 @@ evaluateDistParamDerivT(
   dg_dpT->putScalar(0.0);
 };
 
-#ifdef ALBANY_SG
-void
-Albany::AlbanyPeridigmOBCFunctional::
-evaluateSGResponse(
-  const double current_time,
-  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-  const Stokhos::EpetraVectorOrthogPoly& sg_x,
-  const Teuchos::Array<ParamVec>& p,
-  const Teuchos::Array<int>& sg_p_index,
-  const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
-  Stokhos::EpetraVectorOrthogPoly& sg_g)
-{}
-
-void
-Albany::AlbanyPeridigmOBCFunctional::
-evaluateSGTangent(
-  const double alpha, 
-  const double beta, 
-  const double omega, 
-  const double current_time,
-  bool sum_derivs,
-  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-  const Stokhos::EpetraVectorOrthogPoly& sg_x,
-  const Teuchos::Array<ParamVec>& p,
-  const Teuchos::Array<int>& sg_p_index,
-  const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
-  ParamVec* deriv_p,
-  const Epetra_MultiVector* Vx,
-  const Epetra_MultiVector* Vxdot,
-  const Epetra_MultiVector* Vxdotdot,
-  const Epetra_MultiVector* Vp,
-  Stokhos::EpetraVectorOrthogPoly* sg_g,
-  Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
-  Stokhos::EpetraMultiVectorOrthogPoly* sg_gp)
-{}
-
-void
-Albany::AlbanyPeridigmOBCFunctional::
-evaluateSGGradient(
-  const double current_time,
-  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-  const Stokhos::EpetraVectorOrthogPoly& sg_x,
-  const Teuchos::Array<ParamVec>& p,
-  const Teuchos::Array<int>& sg_p_index,
-  const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
-  ParamVec* deriv_p,
-  Stokhos::EpetraVectorOrthogPoly* sg_g,
-  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
-  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
-  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdotdot,
-  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp)
-{}
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
 void

@@ -62,25 +62,6 @@ namespace ATO
   protected:
     RealType global_measure;
   };
-  /******************************************************************************/
-  // Specialization: SGJacobian
-  /******************************************************************************/
-#ifdef ALBANY_SG
-  template<typename Traits>
-  class TensorAverageResponseSpec<PHAL::AlbanyTraits::SGJacobian,Traits> : 
-    public PHAL::SeparableScatterScalarResponse<PHAL::AlbanyTraits::SGJacobian,Traits>
-  {
-  public:
-    typedef PHAL::AlbanyTraits::SGJacobian EvalT;
-    typedef typename EvalT::ScalarT ScalarT;
-    
-    void postEvaluate(typename Traits::PostEvalData d);
-	  
-  protected:
-    RealType global_measure;
-  };
-
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
   /******************************************************************************/

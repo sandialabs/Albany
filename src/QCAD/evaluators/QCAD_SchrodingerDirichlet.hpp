@@ -109,40 +109,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 };
 
-// **************************************************************
-// Stochastic Galerkin Residual 
-// **************************************************************
-#ifdef ALBANY_SG
-template<typename Traits>
-class SchrodingerDirichlet<PHAL::AlbanyTraits::SGResidual,Traits>
-   : public SchrodingerDirichletBase<PHAL::AlbanyTraits::SGResidual, Traits> {
-public:
-  SchrodingerDirichlet(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Stochastic Galerkin Jacobian
-// **************************************************************
-template<typename Traits>
-class SchrodingerDirichlet<PHAL::AlbanyTraits::SGJacobian,Traits>
-   : public SchrodingerDirichletBase<PHAL::AlbanyTraits::SGJacobian, Traits> {
-public:
-  SchrodingerDirichlet(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Stochastic Galerkin Tangent
-// **************************************************************
-template<typename Traits>
-class SchrodingerDirichlet<PHAL::AlbanyTraits::SGTangent,Traits>
-   : public SchrodingerDirichletBase<PHAL::AlbanyTraits::SGTangent, Traits> {
-public:
-  SchrodingerDirichlet(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-};
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************

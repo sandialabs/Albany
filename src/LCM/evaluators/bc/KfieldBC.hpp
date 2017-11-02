@@ -107,44 +107,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 };
 
-// **************************************************************
-// Stochastic Galerkin Residual
-// **************************************************************
-
-#ifdef ALBANY_SG
-template<typename Traits>
-class KfieldBC<PHAL::AlbanyTraits::SGResidual,Traits>
-   : public KfieldBC_Base<PHAL::AlbanyTraits::SGResidual, Traits> {
-public:
-  KfieldBC(Teuchos::ParameterList& p);
-  typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Stochastic Galerkin Jacobian
-// **************************************************************
-template<typename Traits>
-class KfieldBC<PHAL::AlbanyTraits::SGJacobian,Traits>
-   : public KfieldBC_Base<PHAL::AlbanyTraits::SGJacobian, Traits> {
-public:
-  KfieldBC(Teuchos::ParameterList& p);
-  typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Stochastic Galerkin Tangent
-// **************************************************************
-template<typename Traits>
-class KfieldBC<PHAL::AlbanyTraits::SGTangent,Traits>
-   : public KfieldBC_Base<PHAL::AlbanyTraits::SGTangent, Traits> {
-public:
-  KfieldBC(Teuchos::ParameterList& p);
-  typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************

@@ -200,46 +200,6 @@ private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
 };
 
-// **************************************************************
-// Stochastic Galerkin Residual 
-// **************************************************************
-#ifdef ALBANY_SG
-template<typename Traits>
-class PoissonSourceNeumann<PHAL::AlbanyTraits::SGResidual,Traits>
-  : public PoissonSourceNeumannBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
-public:
-  PoissonSourceNeumann(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
-};
-
-// **************************************************************
-// Stochastic Galerkin Jacobian
-// **************************************************************
-template<typename Traits>
-class PoissonSourceNeumann<PHAL::AlbanyTraits::SGJacobian,Traits>
-  : public PoissonSourceNeumannBase<PHAL::AlbanyTraits::SGJacobian, Traits>  {
-public:
-  PoissonSourceNeumann(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
-};
-
-// **************************************************************
-// Stochastic Galerkin Tangent
-// **************************************************************
-template<typename Traits>
-class PoissonSourceNeumann<PHAL::AlbanyTraits::SGTangent,Traits>
-  : public PoissonSourceNeumannBase<PHAL::AlbanyTraits::SGTangent, Traits>  {
-public:
-  PoissonSourceNeumann(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
-};
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************

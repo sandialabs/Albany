@@ -87,42 +87,6 @@ public:
 //  void evaluateFields(typename Traits::EvalData d);
 };
 
-// **************************************************************
-// Stochastic Galerkin Residual
-// **************************************************************
-#ifdef ALBANY_SG
-template<typename Traits>
-class ScatterResidual2D<PHAL::AlbanyTraits::SGResidual,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::SGResidual, Traits>  {
-public:
-  ScatterResidual2D(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-};
-
-// **************************************************************
-// Stochastic Galerkin Jacobian
-// **************************************************************
-template<typename Traits>
-class ScatterResidual2D<PHAL::AlbanyTraits::SGJacobian,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::SGJacobian, Traits>  {
-public:
-  ScatterResidual2D(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-};
-
-// **************************************************************
-// Stochastic Galerkin Tangent
-// **************************************************************
-template<typename Traits>
-class ScatterResidual2D<PHAL::AlbanyTraits::SGTangent,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::SGTangent, Traits>  {
-public:
-  ScatterResidual2D(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-};
-
-#endif
-
 #ifdef ALBANY_ENSEMBLE
 // **************************************************************
 // Multi-point Residual
@@ -212,41 +176,6 @@ public:
                   const Teuchos::RCP<Albany::Layouts>& dl);
 //  void evaluateFields(typename Traits::EvalData d);
 };
-
-// **************************************************************
-// Stochastic Galerkin Residual
-// **************************************************************
-#ifdef ALBANY_SG
-template<typename Traits>
-class ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::SGResidual,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::SGResidual, Traits>  {
-public:
-  ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-};
-
-// **************************************************************
-// Stochastic Galerkin Jacobian
-// **************************************************************
-template<typename Traits>
-class ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::SGJacobian,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::SGJacobian, Traits>  {
-public:
-  ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-};
-
-// **************************************************************
-// Stochastic Galerkin Tangent
-// **************************************************************
-template<typename Traits>
-class ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::SGTangent,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::SGTangent, Traits>  {
-public:
-  ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-};
-#endif
 
 #ifdef ALBANY_ENSEMBLE
 // **************************************************************

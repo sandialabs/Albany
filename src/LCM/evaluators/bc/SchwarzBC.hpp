@@ -195,44 +195,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 };
 
-//
-// Stochastic Galerkin Residual
-//
-#if defined(ALBANY_SG)
-template<typename Traits>
-class SchwarzBC<PHAL::AlbanyTraits::SGResidual,Traits>
-   : public SchwarzBC_Base<PHAL::AlbanyTraits::SGResidual, Traits> {
-public:
-  SchwarzBC(Teuchos::ParameterList & p);
-  typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-//
-// Stochastic Galerkin Jacobian
-//
-template<typename Traits>
-class SchwarzBC<PHAL::AlbanyTraits::SGJacobian,Traits>
-   : public SchwarzBC_Base<PHAL::AlbanyTraits::SGJacobian, Traits> {
-public:
-  SchwarzBC(Teuchos::ParameterList & p);
-  typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-//
-// Stochastic Galerkin Tangent
-//
-template<typename Traits>
-class SchwarzBC<PHAL::AlbanyTraits::SGTangent,Traits>
-   : public SchwarzBC_Base<PHAL::AlbanyTraits::SGTangent, Traits> {
-public:
-  SchwarzBC(Teuchos::ParameterList & p);
-  typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-#endif // ALBANY_SG
-
 #if defined(ALBANY_ENSEMBLE)
 //
 // Multi-point Residual

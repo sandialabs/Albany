@@ -200,43 +200,6 @@ void broadcast (const Teuchos_Comm& comm, const int root_rank,
   copy<ScalarT>(v, a);
 }
 
-#ifdef ALBANY_SG
-# ifdef ALBANY_ENSEMBLE
-#  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
-#define apply_to_all_ad_types(macro)            \
-  macro(RealType)                               \
-  macro(FadType)                                \
-  macro(TanFadType)                             \
-  macro(SGType)                                 \
-  macro(SGFadType)                              \
-  macro(MPType)                                 \
-  macro(MPFadType)
-#  else
-#define apply_to_all_ad_types(macro)            \
-  macro(RealType)                               \
-  macro(FadType)                                \
-  macro(SGType)                                 \
-  macro(SGFadType)                              \
-  macro(MPType)                                 \
-  macro(MPFadType)
-#  endif
-# else //ALBANY_ENSEMBLE
-#  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
-#define apply_to_all_ad_types(macro)            \
-  macro(RealType)                               \
-  macro(FadType)                                \
-  macro(TanFadType)                             \
-  macro(SGType)                                 \
-  macro(SGFadType)
-#  else
-#define apply_to_all_ad_types(macro)            \
-  macro(RealType)                               \
-  macro(FadType)                                \
-  macro(SGType)                                 \
-  macro(SGFadType)
-#  endif
-# endif //ALBANY_ENSEMBLE
-#else  //ALBANY_SG
 # ifdef ALBANY_ENSEMBLE
 #  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 #define apply_to_all_ad_types(macro)            \
@@ -264,7 +227,6 @@ void broadcast (const Teuchos_Comm& comm, const int root_rank,
   macro(FadType)
 #  endif
 # endif //ALBANY_ENSEMBLE
-#endif //ALBANY_SG
 
 #define eti(T)                                                          \
   template void reduceAll<T> (                                          \

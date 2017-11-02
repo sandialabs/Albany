@@ -128,53 +128,6 @@ private:
 // Distributed Parameter Derivative -- No implementation can be provided
 // **************************************************************
 
-// **************************************************************
-// Stochastic Galerkin Residual
-// **************************************************************
-#ifdef ALBANY_SG
-template<typename Traits>
-class ScatterScalarResponse<PHAL::AlbanyTraits::SGResidual,Traits>
-  : public ScatterScalarResponseBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
-public:
-  ScatterScalarResponse(const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl);
-  void postEvaluate(typename Traits::PostEvalData d);
-protected:
-  typedef PHAL::AlbanyTraits::SGResidual EvalT;
-  ScatterScalarResponse() {}
-  void setup(const Teuchos::ParameterList& p,
-             const Teuchos::RCP<Albany::Layouts>& dl) {
-    ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
-  }
-private:
-  typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
-};
-
-// **************************************************************
-// Stochastic Galerkin Jacobian -- no implementation can be provided
-// **************************************************************
-
-// **************************************************************
-// Stochastic Galerkin Tangent
-// **************************************************************
-template<typename Traits>
-class ScatterScalarResponse<PHAL::AlbanyTraits::SGTangent,Traits>
-  : public ScatterScalarResponseBase<PHAL::AlbanyTraits::SGTangent, Traits>  {
-public:
-  ScatterScalarResponse(const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl);
-  void postEvaluate(typename Traits::PostEvalData d);
-protected:
-  typedef PHAL::AlbanyTraits::SGTangent EvalT;
-  ScatterScalarResponse() {}
-  void setup(const Teuchos::ParameterList& p,
-             const Teuchos::RCP<Albany::Layouts>& dl) {
-    ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
-  }
-private:
-  typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
-};
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************

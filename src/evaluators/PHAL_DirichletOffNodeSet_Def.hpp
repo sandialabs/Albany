@@ -285,64 +285,6 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   }
 }
 
-// **********************************************************************
-// Specialization: Stochastic Galerkin Residual
-// **********************************************************************
-
-#ifdef ALBANY_SG
-template<typename Traits>
-DirichletOffNodeSet<PHAL::AlbanyTraits::SGResidual, Traits>::
-DirichletOffNodeSet(Teuchos::ParameterList& p) :
-  DirichletBase<PHAL::AlbanyTraits::SGResidual, Traits>(p)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Specialization not yet ipmlemented.\n");
-}
-// **********************************************************************
-template<typename Traits>
-void DirichletOffNodeSet<PHAL::AlbanyTraits::SGResidual, Traits>::
-evaluateFields(typename Traits::EvalData dirichletWorkset)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Specialization not yet ipmlemented.\n");
-}
-
-// **********************************************************************
-// Specialization: Stochastic Galerkin Jacobian
-// **********************************************************************
-template<typename Traits>
-DirichletOffNodeSet<PHAL::AlbanyTraits::SGJacobian, Traits>::
-DirichletOffNodeSet(Teuchos::ParameterList& p) :
-  DirichletBase<PHAL::AlbanyTraits::SGJacobian, Traits>(p)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Specialization not yet ipmlemented.\n");
-}
-
-// **********************************************************************
-template<typename Traits>
-void DirichletOffNodeSet<PHAL::AlbanyTraits::SGJacobian, Traits>::
-evaluateFields(typename Traits::EvalData dirichletWorkset)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Specialization not yet ipmlemented.\n");
-}
-
-// **********************************************************************
-// Specialization: Stochastic Galerkin Tangent
-// **********************************************************************
-template<typename Traits>
-DirichletOffNodeSet<PHAL::AlbanyTraits::SGTangent, Traits>::
-DirichletOffNodeSet(Teuchos::ParameterList& p) :
-  DirichletBase<PHAL::AlbanyTraits::SGTangent, Traits>(p)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Specialization not yet ipmlemented.\n");
-}
-
-// **********************************************************************
-template<typename Traits>
-void DirichletOffNodeSet<PHAL::AlbanyTraits::SGTangent, Traits>::
-evaluateFields(typename Traits::EvalData dirichletWorkset)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Specialization not yet ipmlemented.\n");
-}
-#endif
 #ifdef ALBANY_ENSEMBLE
 
 // **********************************************************************

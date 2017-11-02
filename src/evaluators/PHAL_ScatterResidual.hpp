@@ -272,55 +272,6 @@ private:
   Teuchos::RCP<std::map<std::string, int> > extruded_params_levels;
 };
 
-// **************************************************************
-// Stochastic Galerkin Residual
-// **************************************************************
-#ifdef ALBANY_SG
-template<typename Traits>
-class ScatterResidual<PHAL::AlbanyTraits::SGResidual,Traits>
-  : public ScatterResidualBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
-public:
-  ScatterResidual(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-  void evaluateFields(typename Traits::EvalData d);
-protected:
-  const std::size_t numFields;
-private:
-  typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
-};
-
-// **************************************************************
-// Stochastic Galerkin Jacobian
-// **************************************************************
-template<typename Traits>
-class ScatterResidual<PHAL::AlbanyTraits::SGJacobian,Traits>
-  : public ScatterResidualBase<PHAL::AlbanyTraits::SGJacobian, Traits>  {
-public:
-  ScatterResidual(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-  void evaluateFields(typename Traits::EvalData d);
-protected:
-  const std::size_t numFields;
-private:
-  typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
-};
-
-// **************************************************************
-// Stochastic Galerkin Tangent
-// **************************************************************
-template<typename Traits>
-class ScatterResidual<PHAL::AlbanyTraits::SGTangent,Traits>
-  : public ScatterResidualBase<PHAL::AlbanyTraits::SGTangent, Traits>  {
-public:
-  ScatterResidual(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-  void evaluateFields(typename Traits::EvalData d);
-protected:
-  const std::size_t numFields;
-private:
-  typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
-};
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************

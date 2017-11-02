@@ -92,41 +92,6 @@ private:
   std::vector<std::string>  nodeSets;
 };
 
-// **************************************************************
-// Stochastic Galerkin Residual
-// **************************************************************
-#ifdef ALBANY_SG
-template<typename Traits>
-class DirichletOffNodeSet<PHAL::AlbanyTraits::SGResidual,Traits>
-   : public DirichletBase<PHAL::AlbanyTraits::SGResidual, Traits> {
-public:
-  DirichletOffNodeSet(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Stochastic Galerkin Jacobian
-// **************************************************************
-template<typename Traits>
-class DirichletOffNodeSet<PHAL::AlbanyTraits::SGJacobian,Traits>
-   : public DirichletBase<PHAL::AlbanyTraits::SGJacobian, Traits> {
-public:
-  DirichletOffNodeSet(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Stochastic Galerkin Tangent
-// **************************************************************
-template<typename Traits>
-class DirichletOffNodeSet<PHAL::AlbanyTraits::SGTangent,Traits>
-   : public DirichletBase<PHAL::AlbanyTraits::SGTangent, Traits> {
-public:
-  DirichletOffNodeSet(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-};
-#endif
-
 #ifdef ALBANY_ENSEMBLE
 // **************************************************************
 // Multi-point Residual

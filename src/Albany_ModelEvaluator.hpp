@@ -125,9 +125,6 @@ namespace Albany {
     bool supplies_prec;
 
 #ifdef ALBANY_STOKHOS
-    //! Stochastic Galerkin parameters
-    mutable Teuchos::Array< Teuchos::Array<SGType> > p_sg_vals;
-
     //! Multi-point parameters
     mutable Teuchos::Array< Teuchos::Array<MPType> > p_mp_vals;
 #endif

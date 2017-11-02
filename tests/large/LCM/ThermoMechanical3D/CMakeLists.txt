@@ -21,18 +21,6 @@ add_test(${testName} ${AlbanyT.exe} inputT.yaml)
 add_test(${testName}_SplitOutput ${AlbanyT.exe} inputSplitSolutionT.yaml)
 endif ()
 
-# 4. Repeat process for SG problems if "inputSG.yaml" exists
-if (ALBANY_STOKHOS)
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.yaml)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSG.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputSG.yaml COPYONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_SG NAME)
-  add_test(${testName} ${AlbanySG.exe})
-endif ()
-endif ()
-
 # 5. Repeat process for Dakota problems if "dakota.in" exists
 if (ALBANY_DAKOTA)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)

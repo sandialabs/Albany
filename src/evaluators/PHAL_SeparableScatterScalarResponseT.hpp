@@ -152,39 +152,6 @@ private:
   int numNodes;
 }; 
 
-// **************************************************************
-// Stochastic Galerkin Jacobian
-// **************************************************************
-#ifdef ALBANY_SG
-template<typename Traits>
-class SeparableScatterScalarResponseT<PHAL::AlbanyTraits::SGJacobian,Traits>
-  : public ScatterScalarResponseBase<PHAL::AlbanyTraits::SGJacobian, Traits>,
-    public SeparableScatterScalarResponseBaseT<PHAL::AlbanyTraits::SGJacobian, Traits>{
-public:
-  SeparableScatterScalarResponseT(const Teuchos::ParameterList& p,
-			   const Teuchos::RCP<Albany::Layouts>& dl);
-  void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm) {
-    ScatterScalarResponseBase<EvalT, Traits>::postRegistrationSetup(d,vm);
-    SeparableScatterScalarResponseBaseT<EvalT,Traits>::postRegistrationSetup(d,vm);
-  }
-  void preEvaluate(typename Traits::PreEvalData d);
-  void evaluateFields(typename Traits::EvalData d);
-  void postEvaluate(typename Traits::PostEvalData d);
-protected:
-  typedef PHAL::AlbanyTraits::SGJacobian EvalT;
-  SeparableScatterScalarResponseT() {}
-  void setup(const Teuchos::ParameterList& p,
-	     const Teuchos::RCP<Albany::Layouts>& dl) {
-    ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
-    SeparableScatterScalarResponseBaseT<EvalT,Traits>::setup(p,dl);
-    numNodes = dl->node_scalar->dimension(1);
-  }
-private:
-  typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
-  int numNodes;
-};
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************

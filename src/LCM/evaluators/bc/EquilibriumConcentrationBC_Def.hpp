@@ -254,63 +254,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     }
   }
 }
-//------------------------------------------------------------------------------  
-// Specialization: Stochastic Galerkin Residual
-//
-#ifdef ALBANY_SG
-template<typename Traits>
-EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGResidual, Traits>::
-EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
-  EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::SGResidual, Traits>(p)
-{
-}
-//------------------------------------------------------------------------------  
-template<typename Traits>
-void EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGResidual, Traits>::
-evaluateFields(typename Traits::EvalData dirichletWorkset)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true,
-                             std::runtime_error,
-                             "Error! This BC does not support SG Types");
-}
-//------------------------------------------------------------------------------
-// Specialization: Stochastic Galerkin Jacobian
-//
-template<typename Traits>
-EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGJacobian, Traits>::
-EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
-  EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::SGJacobian, Traits>(p)
-{
-}
-//------------------------------------------------------------------------------  
-template<typename Traits>
-void EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGJacobian, Traits>::
-evaluateFields(typename Traits::EvalData dirichletWorkset)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true,
-                             std::runtime_error,
-                             "Error! This BC does not support SG Types");
-}
-//------------------------------------------------------------------------------  
-// Specialization: Stochastic Galerkin Tangent
-//
-template<typename Traits>
-EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGTangent, Traits>::
-EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
-  EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::SGTangent, Traits>(p)
-{
-}
-//------------------------------------------------------------------------------  
-template<typename Traits>
-void EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGTangent, Traits>::
-evaluateFields(typename Traits::EvalData dirichletWorkset)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true,
-                             std::runtime_error,
-                             "Error! This BC does not support SG Types");
-}
 
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 //------------------------------------------------------------------------------  
 // Specialization: Multi-point Residual

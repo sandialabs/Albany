@@ -99,43 +99,6 @@ class DirichletField<PHAL::AlbanyTraits::DistParamDeriv, Traits>
     void evaluateFields(typename Traits::EvalData d);
 };
 
-// **************************************************************
-// Stochastic Galerkin Residual
-// **************************************************************
-#ifdef ALBANY_SG
-template<typename Traits>
-class DirichletField<PHAL::AlbanyTraits::SGResidual, Traits>
-    : public DirichletField_Base<PHAL::AlbanyTraits::SGResidual, Traits> {
-  public:
-    DirichletField(Teuchos::ParameterList& p);
-    typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
-    void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Stochastic Galerkin Jacobian
-// **************************************************************
-template<typename Traits>
-class DirichletField<PHAL::AlbanyTraits::SGJacobian, Traits>
-    : public DirichletField_Base<PHAL::AlbanyTraits::SGJacobian, Traits> {
-  public:
-    DirichletField(Teuchos::ParameterList& p);
-    typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
-    void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Stochastic Galerkin Tangent
-// **************************************************************
-template<typename Traits>
-class DirichletField<PHAL::AlbanyTraits::SGTangent, Traits>
-    : public DirichletField_Base<PHAL::AlbanyTraits::SGTangent, Traits> {
-  public:
-    DirichletField(Teuchos::ParameterList& p);
-    typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
-    void evaluateFields(typename Traits::EvalData d);
-};
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************

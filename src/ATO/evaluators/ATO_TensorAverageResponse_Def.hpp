@@ -284,33 +284,6 @@ postEvaluate(typename Traits::PostEvalData workset)
 #endif
 }
 
-#ifdef ALBANY_SG
-// **********************************************************************
-template<typename Traits>
-void ATO::TensorAverageResponseSpec<PHAL::AlbanyTraits::SGJacobian, Traits>::
-postEvaluate(typename Traits::PostEvalData workset)
-{
-  RealType scale = 1.0/global_measure;
-  int nterms = this->global_response_eval.size();
-  for(int i=0; i<nterms; i++)
-    this->global_response_eval[i] *= scale;
-
-  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> overlapped_dgdx_sg = workset.overlapped_sg_dgdx;
-  if(overlapped_dgdx_sg != Teuchos::null){
-    for(int block=0; block<overlapped_dgdx_sg->size(); block++){
-      (*overlapped_dgdx_sg)[block].Scale(scale);
-    }
-  }
-
-  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> overlapped_dgdxdot_sg = workset.overlapped_sg_dgdxdot;
-  if(overlapped_dgdxdot_sg != Teuchos::null){
-    for(int block=0; block<overlapped_dgdxdot_sg->size(); block++){
-      (*overlapped_dgdxdot_sg)[block].Scale(scale);
-    }
-  }
-}
-
-#endif 
 #ifdef ALBANY_ENSEMBLE 
 // **********************************************************************
 template<typename Traits>

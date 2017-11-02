@@ -41,9 +41,6 @@ namespace PHAL {
 #ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
   template<> struct Ref<TanFadType> : RefKokkos<TanFadType> {};
 #endif
-#ifdef ALBANY_SG
-  template<> struct Ref<SGFadType> : RefKokkos<SGFadType> {};
-#endif
 #ifdef ALBANY_ENSEMBLE
   template<> struct Ref<MPFadType> : RefKokkos<MPFadType> {};
 #endif
@@ -87,32 +84,12 @@ namespace PHAL {
 #endif
 
 
-#ifdef ALBANY_SG
-    struct SGResidual : EvaluationType<SGType,    RealType, RealType> {}; //setting ParamScalarT to RealType in order to get Albany to build, but may need to change it to SGType
-    struct SGJacobian : EvaluationType<SGFadType, RealType, RealType> {}; //setting ParamScalarT to RealType in order to get Albany to build, but may need to change it to SGFadType
-    struct SGTangent  : EvaluationType<SGFadType, RealType, RealType> {}; //setting ParamScalarT to RealType in order to get Albany to build, but may need to change it to SGFadType
-#endif
 #ifdef ALBANY_ENSEMBLE
     struct MPResidual : EvaluationType<MPType,    RealType, RealType> {}; //setting ParamScalarT to RealType in order to get Albany to build, but may need to change it to MPType
     struct MPJacobian : EvaluationType<MPFadType, RealType, RealType> {};
     struct MPTangent  : EvaluationType<MPFadType, RealType, RealType> {};
 #endif
 
-#ifdef ALBANY_SG
-#ifdef ALBANY_ENSEMBLE
-    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
-                                SGResidual, SGJacobian, SGTangent,
-                                MPResidual, MPJacobian, MPTangent> EvalTypes;
-    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
-                               SGResidual, SGJacobian, SGTangent,
-                               MPResidual, MPJacobian, MPTangent> BEvalTypes;
-#else
-    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
-                                SGResidual, SGJacobian, SGTangent> EvalTypes;
-    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
-                               SGResidual, SGJacobian, SGTangent> BEvalTypes;
-#endif
-#else
 #ifdef ALBANY_ENSEMBLE
     typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
                                 MPResidual, MPJacobian, MPTangent> EvalTypes;
@@ -121,7 +98,6 @@ namespace PHAL {
 #else
     typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv> EvalTypes;
     typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv> BEvalTypes;
-#endif
 #endif
 
     // ******************************************************************
@@ -155,16 +131,6 @@ namespace PHX {
   template<> inline std::string typeAsString<PHAL::AlbanyTraits::DistParamDeriv>()
   { return "<DistParamDeriv>"; }
 
-#ifdef ALBANY_SG
-  template<> inline std::string typeAsString<PHAL::AlbanyTraits::SGResidual>()
-  { return "<SGResidual>"; }
-
-  template<> inline std::string typeAsString<PHAL::AlbanyTraits::SGJacobian>()
-  { return "<SGJacobian>"; }
-
-  template<> inline std::string typeAsString<PHAL::AlbanyTraits::SGTangent>()
-  { return "<SGTangent>"; }
-#endif
 #ifdef ALBANY_ENSEMBLE
 
   template<> inline std::string typeAsString<PHAL::AlbanyTraits::MPResidual>()
@@ -194,11 +160,6 @@ namespace PHX {
   DECLARE_EVAL_SCALAR_TYPES(Jacobian, FadType, RealType)
   DECLARE_EVAL_SCALAR_TYPES(Tangent, TanFadType, RealType)
   DECLARE_EVAL_SCALAR_TYPES(DistParamDeriv, TanFadType, RealType)
-#ifdef ALBANY_SG
-  DECLARE_EVAL_SCALAR_TYPES(SGResidual, SGType, RealType)
-  DECLARE_EVAL_SCALAR_TYPES(SGJacobian, SGFadType, RealType)
-  DECLARE_EVAL_SCALAR_TYPES(SGTangent, SGFadType, RealType)
-#endif
 #ifdef ALBANY_ENSEMBLE
   DECLARE_EVAL_SCALAR_TYPES(MPResidual, MPType, RealType)
   DECLARE_EVAL_SCALAR_TYPES(MPJacobian, MPFadType, RealType)
@@ -255,7 +216,6 @@ namespace PHX {
   template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType>;
 #endif
 
-//TODO, add macros for ALBANY_SG case.
 #ifdef ALBANY_ENSEMBLE
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_MPRESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits,MPType>; \
@@ -293,7 +253,6 @@ namespace PHX {
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_RESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits, RealType, RealType>;
 
-//TODO, add macros for ALBANY_SG case, also these ned to be double checked
 #ifdef ALBANY_ENSEMBLE
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_MPRESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits,MPType, MPType>; \
@@ -365,7 +324,6 @@ namespace PHX {
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_RESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits, RealType, RealType>;
 
-//TODO, add macros for ALBANY_SG case, also these ned to be double checked
 #ifdef ALBANY_ENSEMBLE
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_MPRESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits,MPType, MPType>; \
@@ -426,17 +384,6 @@ namespace PHX {
 
 
 
-#ifdef ALBANY_SG
-
-#define PHAL_INSTANTIATE_TEMPLATE_CLASS_SGRESIDUAL(name) \
-  template class name<PHAL::AlbanyTraits::SGResidual, PHAL::AlbanyTraits>;
-#define PHAL_INSTANTIATE_TEMPLATE_CLASS_SGJACOBIAN(name) \
-  template class name<PHAL::AlbanyTraits::SGJacobian, PHAL::AlbanyTraits>;
-#define PHAL_INSTANTIATE_TEMPLATE_CLASS_SGTANGENT(name) \
-  template class name<PHAL::AlbanyTraits::SGTangent, PHAL::AlbanyTraits>;
-
-#endif
-
 #ifdef ALBANY_ENSEMBLE
 
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_MPRESIDUAL(name) \
@@ -448,30 +395,6 @@ namespace PHX {
 
 #endif
 
-#ifdef ALBANY_SG
-#ifdef ALBANY_ENSEMBLE
-#define PHAL_INSTANTIATE_TEMPLATE_CLASS(name)            \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name)         \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_JACOBIAN(name)         \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_TANGENT(name)          \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_DISTPARAMDERIV(name)   \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_SGRESIDUAL(name)       \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_SGJACOBIAN(name)       \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_SGTANGENT(name)        \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_MPRESIDUAL(name)       \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_MPJACOBIAN(name)       \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_MPTANGENT(name)
-#else
-#define PHAL_INSTANTIATE_TEMPLATE_CLASS(name)            \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name)         \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_JACOBIAN(name)         \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_TANGENT(name)          \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_DISTPARAMDERIV(name)   \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_SGRESIDUAL(name)       \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_SGJACOBIAN(name)       \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_SGTANGENT(name)
-#endif
-#else
 #ifdef ALBANY_ENSEMBLE
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name)         \
@@ -488,9 +411,7 @@ namespace PHX {
   PHAL_INSTANTIATE_TEMPLATE_CLASS_TANGENT(name)          \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_DISTPARAMDERIV(name)
 #endif
-#endif
 
-//TODO, ALBANY_SG case.
 #ifdef ALBANY_ENSEMBLE
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_RESIDUAL(name)         \

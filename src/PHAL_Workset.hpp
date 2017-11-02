@@ -25,14 +25,6 @@
 #include "Albany_DistributedParameterLibrary_Tpetra.hpp"
 #include "Kokkos_ViewFactory.hpp"
 
-#ifdef ALBANY_STOKHOS
-#include "Stokhos_OrthogPolyExpansion.hpp"
-#if defined(ALBANY_EPETRA)
-#include "Stokhos_EpetraVectorOrthogPoly.hpp"
-#include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
-#endif
-#endif
-
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Comm.hpp"
 
@@ -57,10 +49,6 @@ struct Workset {
   unsigned int numCells;
   unsigned int wsIndex;
   unsigned int numEqs;
-
-#ifdef ALBANY_STOKHOS
-  Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
-#endif
 
 #if defined(ALBANY_EPETRA)
   // These are solution related.
@@ -87,10 +75,6 @@ struct Workset {
   Teuchos::RCP<const Tpetra_MultiVector> VpT;
 #if defined(ALBANY_EPETRA)
 #ifdef ALBANY_STOKHOS
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_x;
-
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_xdot;
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_xdotdot;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_x;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_xdot;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_xdotdot;
@@ -128,10 +112,6 @@ struct Workset {
 
 #if defined(ALBANY_EPETRA)
 #ifdef ALBANY_STOKHOS
-  Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_f;
-  Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > sg_Jac;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_JV;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_fp;
   Teuchos::RCP< Stokhos::ProductEpetraVector > mp_f;
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > mp_Jac;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_JV;
@@ -246,16 +226,6 @@ struct Workset {
   Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT;
 
 #if defined(ALBANY_STOKHOS) and defined(ALBANY_EPETRA)
-#ifdef ALBANY_SG
-  Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_g;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdx;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdxdot;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdxdotdot;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > overlapped_sg_dgdx;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > overlapped_sg_dgdxdot;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > overlapped_sg_dgdxdotdot;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdp;
-#endif
 #ifdef ALBANY_ENSEMBLE
   Teuchos::RCP< Stokhos::ProductEpetraVector > mp_g;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdx;

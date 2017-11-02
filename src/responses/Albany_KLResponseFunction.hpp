@@ -143,69 +143,6 @@ namespace Albany {
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp);
     //@}
 
-    //! \name Stochastic Galerkin evaluation functions
-    //@{
-
-#ifdef ALBANY_SG
-    //! Intialize stochastic Galerkin method
-    virtual void init_sg(
-      const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
-      const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& quad,
-      const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& expansion,
-      const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
-
-    //! Evaluate stochastic Galerkin response
-    virtual void evaluateSGResponse(
-      const double curr_time,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-      const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
-      Stokhos::EpetraVectorOrthogPoly& sg_g);
-
-    //! Evaluate stochastic Galerkin tangent
-    virtual void evaluateSGTangent(
-      const double alpha, 
-      const double beta, 
-      const double omega, 
-      const double current_time,
-      bool sum_derivs,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-      const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
-      ParamVec* deriv_p,
-      const Epetra_MultiVector* Vx,
-      const Epetra_MultiVector* Vxdot,
-      const Epetra_MultiVector* Vxdotdot,
-      const Epetra_MultiVector* Vp,
-      Stokhos::EpetraVectorOrthogPoly* sg_g,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_gp);
-
-    //! Evaluate stochastic Galerkin derivative
-    virtual void evaluateSGDerivative(
-      const double current_time,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-      const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
-      ParamVec* deriv_p,
-      Stokhos::EpetraVectorOrthogPoly* sg_g,
-      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
-      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
-      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
-      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp);
-#endif
-
-    //@}
-
     //! \name Multi-point evaluation functions
     //@{
 
