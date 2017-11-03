@@ -232,13 +232,13 @@ private:
   prev_solns_nox_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  schwarz_ics_;
+  ics_;
   
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  schwarz_ics_dot_;
+  ics_dot_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  schwarz_ics_dotdot_;
+  ics_dotdot_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
   prev_solns_thyra_;

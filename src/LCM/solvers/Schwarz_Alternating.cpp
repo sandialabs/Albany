@@ -97,9 +97,9 @@ SchwarzAlternating(
   sub_outargs_.resize(num_subdomains_);
   solns_nox_.resize(num_subdomains_);
   prev_solns_nox_.resize(num_subdomains_);
-  schwarz_ics_.resize(num_subdomains_);
-  schwarz_ics_dot_.resize(num_subdomains_);
-  schwarz_ics_dotdot_.resize(num_subdomains_);
+  ics_.resize(num_subdomains_);
+  ics_dot_.resize(num_subdomains_);
+  ics_dotdot_.resize(num_subdomains_);
   prev_solns_thyra_.resize(num_subdomains_);
   prev_solns_dot_thyra_.resize(num_subdomains_);
   prev_solns_dotdot_thyra_.resize(num_subdomains_);
@@ -591,7 +591,6 @@ reportFinals(std::ostream & os) const
 //
 // Schwarz Alternating loop, dynamic
 //
-#ifdef ALBANY_TEMPUS
 void
 SchwarzAlternating::
 SchwarzLoopDynamics() const
@@ -643,37 +642,46 @@ SchwarzLoopDynamics() const
     Albany::STKDiscretization &
     stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
 
-    // Populate schwarz_ics_ and its time-derivatives with values of IC
+    // Populate ics_ and its time-derivatives with values of IC
     // from nominal values in model evaluator.
     auto &
     me = dynamic_cast<Albany::ModelEvaluatorT &>
     (*model_evaluators_[subdomain]);
+
+    auto const &
+    nv = me.getNominalValues();
         
-    schwarz_ics_[subdomain] = Thyra::createMember(me.get_x_space());
-    Thyra::copy(*(me.getNominalValues().get_x()), schwarz_ics_[subdomain].ptr());
-    //fos << "IKT subdomain = " << subdomain << ", schwarz_ics_  = " << std::endl; 
-    //const Teuchos::RCP<const Tpetra_Vector> ic = ConverterT::getConstTpetraVector(schwarz_ics_[subdomain]);
+    ics_[subdomain] = Thyra::createMember(me.get_x_space());
+    Thyra::copy(*(nv.get_x()), ics_[subdomain].ptr());
+    //fos << "IKT subdomain = " << subdomain << ", ics_  = " << std::endl; 
+    //const Teuchos::RCP<const Tpetra_Vector> ic =
+    //ConverterT::getConstTpetraVector(ics_[subdomain]);
     //ic->describe(fos, Teuchos::VERB_EXTREME);
 
-    schwarz_ics_dot_[subdomain] = Thyra::createMember(me.get_x_space());
-    Thyra::copy(*(me.getNominalValues().get_x_dot()), schwarz_ics_dot_[subdomain].ptr());
+    ics_dot_[subdomain] = Thyra::createMember(me.get_x_space());
+    Thyra::copy(*(nv.get_x_dot()), ics_dot_[subdomain].ptr());
 
-    schwarz_ics_dotdot_[subdomain] = Thyra::createMember(me.get_x_space());
-    Thyra::copy(*(me.getNominalValues().get_x_dot_dot()), schwarz_ics_dotdot_[subdomain].ptr());
+    ics_dotdot_[subdomain] = Thyra::createMember(me.get_x_space());
+    Thyra::copy(*(nv.get_x_dot_dot()), ics_dotdot_[subdomain].ptr());
 
     prev_solns_thyra_[subdomain] = Thyra::createMember(me.get_x_space());
-    Thyra::copy(*(me.getNominalValues().get_x()), prev_solns_thyra_[subdomain].ptr());
+    Thyra::copy(*(nv.get_x()), prev_solns_thyra_[subdomain].ptr());
     
     prev_solns_dot_thyra_[subdomain] = Thyra::createMember(me.get_x_space());
-    Thyra::copy(*(me.getNominalValues().get_x_dot()), prev_solns_dot_thyra_[subdomain].ptr());
+    Thyra::copy(*(nv.get_x_dot()), prev_solns_dot_thyra_[subdomain].ptr());
 
     prev_solns_dotdot_thyra_[subdomain] = Thyra::createMember(me.get_x_space());
-    Thyra::copy(*(me.getNominalValues().get_x_dot_dot()), prev_solns_dotdot_thyra_[subdomain].ptr());
+    Thyra::copy(*(nv.get_x_dot_dot()), prev_solns_dotdot_thyra_[subdomain].ptr());
 
     //Write initial condition to STK mesh 
-    const Teuchos::RCP<const Tpetra_Vector> prev_solns_tpetra = ConverterT::getConstTpetraVector(prev_solns_thyra_[subdomain]);
-    const Teuchos::RCP<const Tpetra_Vector> prev_solns_dot_tpetra = ConverterT::getConstTpetraVector(prev_solns_dot_thyra_[subdomain]);
-    const Teuchos::RCP<const Tpetra_Vector> prev_solns_dotdot_tpetra = ConverterT::getConstTpetraVector(prev_solns_dotdot_thyra_[subdomain]);
+    Teuchos::RCP<Tpetra_Vector const> const
+    prev_solns_tpetra = ConverterT::getConstTpetraVector(prev_solns_thyra_[subdomain]);
+
+    Teuchos::RCP<Tpetra_Vector const> const
+    prev_solns_dot_tpetra = ConverterT::getConstTpetraVector(prev_solns_dot_thyra_[subdomain]);
+
+    Teuchos::RCP<Tpetra_Vector const> const
+    prev_solns_dotdot_tpetra = ConverterT::getConstTpetraVector(prev_solns_dotdot_thyra_[subdomain]);
 
 #if defined(DEBUG)
     if (subdomain == 0) {
@@ -780,15 +788,15 @@ SchwarzLoopDynamics() const
         ic_soln_dotdot_rcp = Thyra::createMember(me.get_x_space());
 
         //set ic_soln_rcp, ic_soln_dot_rcp and ic_soln_dotdot_rcp 
-        //by making copy of what is in schwarz_ics_[subdomain], etc.
+        //by making copy of what is in ics_[subdomain], etc.
         Thyra::VectorBase<ST> &
-        ic_soln = *schwarz_ics_[subdomain];
+        ic_soln = *ics_[subdomain];
 
         Thyra::VectorBase<ST> &
-        ic_soln_dot = *schwarz_ics_dot_[subdomain];
+        ic_soln_dot = *ics_dot_[subdomain];
 
         Thyra::VectorBase<ST> &
-        ic_soln_dotdot = *schwarz_ics_dotdot_[subdomain];
+        ic_soln_dotdot = *ics_dotdot_[subdomain];
 
         Thyra::copy(ic_soln, ic_soln_rcp.ptr());
 
@@ -984,14 +992,14 @@ SchwarzLoopDynamics() const
       Teuchos::RCP<Tpetra_MultiVector>
       soln_mv = stk_disc.getSolutionMV();
 
-      //Update schwarz_ics_ and its time-derivatives
-      schwarz_ics_[subdomain] =
+      //Update ics_ and its time-derivatives
+      ics_[subdomain] =
           Thyra::createVector(soln_mv->getVectorNonConst(0));
 
-      schwarz_ics_dot_[subdomain] =
+      ics_dot_[subdomain] =
           Thyra::createVector(soln_mv->getVectorNonConst(1));
 
-      schwarz_ics_dotdot_[subdomain] =
+      ics_dotdot_[subdomain] =
           Thyra::createVector(soln_mv->getVectorNonConst(2));
 
       if (ams.exoOutput == true) {
@@ -1007,7 +1015,7 @@ SchwarzLoopDynamics() const
 
   return; 
 }
-#endif
+
 //
 // Schwarz Alternating loop, quasistatic
 //
