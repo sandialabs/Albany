@@ -3,10 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
-// IK, 9/12/14: Epetra ifdef'ed out!
-// No Epetra if ALBANY_EPETRA_EXE turned off.
-
 #ifndef ALBANY_STATEMANAGER_HPP
 #define ALBANY_STATEMANAGER_HPP
 
@@ -28,7 +24,7 @@
 
 namespace Albany {
 
-//! Class to manage saved state data.
+/// Class to manage saved state data.
 /* \brief The usage is to register state variables that will be saved
  * during problem construction, where they are described by a string
  * and a DataLayout. One time, the allocate method is called, which
@@ -50,8 +46,8 @@ class StateManager {
 
   typedef std::map<std::string, Teuchos::RCP<PHX::DataLayout>> RegisteredStates;
 
-  //! Method to call multiple times (before allocate) to register which states
-  //! will be saved.
+  /// Method to call multiple times (before allocate) to register which states
+  /// will be saved.
   void
   registerStateVariable(
       const std::string&                   stateName,
@@ -76,10 +72,10 @@ class StateManager {
       const bool                           outputToExodus      = true,
       const std::string&                   responseIDtoRequire = "");
 
-  //! Method to call multiple times (before allocate) to register which states
-  //! will be saved.
-  //! Returns param vector with all info to build a SaveStateField or
-  //! LoadStateField evaluator
+  /// Method to call multiple times (before allocate) to register which states
+  /// will be saved.
+  /// Returns param vector with all info to build a SaveStateField or
+  /// LoadStateField evaluator
   Teuchos::RCP<Teuchos::ParameterList>
   registerStateVariable(
       const std::string&                   name,
@@ -101,7 +97,7 @@ class StateManager {
       StateStruct::MeshFieldEntity const*  fieldEntity,
       const std::string&                   meshPartName = "");
 
-  //! If field name to save/load is different from state name
+  /// If field name to save/load is different from state name
   Teuchos::RCP<Teuchos::ParameterList>
   registerStateVariable(
       const std::string&                   stateName,
@@ -113,7 +109,7 @@ class StateManager {
       const bool                           registerOldState,
       const std::string&                   fieldName);
 
-  //! If you want to give more control over whether or not to output to Exodus
+  /// If you want to give more control over whether or not to output to Exodus
   Teuchos::RCP<Teuchos::ParameterList>
   registerStateVariable(
       const std::string&                   stateName,
@@ -136,7 +132,7 @@ class StateManager {
       const bool                           registerOldState,
       const bool                           outputToExodus);
 
-  //! Very basic
+  /// Very basic
   void
   registerStateVariable(
       const std::string&                   stateName,
@@ -169,50 +165,66 @@ class StateManager {
       StateStruct::MeshFieldEntity const*  fieldEntity,
       const std::string&                   meshPartName = "");
 
-  //! Method to re-initialize state variables, which can be called multiple
-  //! times after allocating
+  /// Method to re-initialize state variables, which can be called multiple
+  /// times after allocating
   void
   importStateData(Albany::StateArrays& statesToCopyFrom);
 
-  //! Method to get the Names of the state variables
+  /// Method to get the Names of the state variables
   std::map<std::string, RegisteredStates>&
   getRegisteredStates()
   {
     return statesToStore;
   }
 
-  //! Method to get the ResponseIDs for states which have been registered and
-  //! (should)
-  //!  have a SaveStateField evaluator associated with them that evaluates the
-  //!  responseID
+  /// Method to get the ResponseIDs for states which have been registered and
+  /// (should)
+  ///  have a SaveStateField evaluator associated with them that evaluates the
+  ///  responseID
   std::vector<std::string>
   getResidResponseIDsToRequire(std::string& elementBlockName);
 
-  //! Method to make the current newState the oldState, and vice versa
+  /// Method to make the current newState the oldState, and vice versa
   void
   updateStates();
 
-  //! Method to get a StateInfoStruct of info needed by STK to output States as
-  //! Fields
+#if defined(ALBANY_LCM)
+  /// For Schwarz coupling, more control is needed about when to update the
+  /// states. The accessor and mutator provide that control.
+  void
+  setUpdateState(bool us)
+  {
+    do_update_state_ = us;
+  };
+
+  bool
+  getUpdateState() const
+  {
+    return do_update_state_;
+  };
+#endif // ALBANY_LCM
+
+  /// Method to get a StateInfoStruct of info needed by STK to output States as
+  /// Fields
   Teuchos::RCP<Albany::StateInfoStruct>
   getStateInfoStruct() const;
 
-  //! Equivalent of previous method for the sideSets states
+  /// Equivalent of previous method for the sideSets states
   const std::map<std::string, Teuchos::RCP<StateInfoStruct>>&
   getSideSetStateInfoStruct() const;
 
-  //! Method to set discretization object
+  /// Method to set discretization object
   void
   setStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& discObj);
 
-  //! Method to get discretization object
+  /// Method to get discretization object
   Teuchos::RCP<Albany::AbstractDiscretization>
   getDiscretization() const;
 
-  //! Method to get state information for a specific workset
+  /// Method to get state information for a specific workset
   Albany::StateArray&
   getStateArray(SAType type, int ws) const;
-  //! Method to get state information for all worksets
+  /// Method to get state information for all worksets
   Albany::StateArrays&
   getStateArrays() const;
 
@@ -231,14 +243,14 @@ class StateManager {
   }
 
 #if defined(ALBANY_EPETRA)
-  //! Methods to get/set the EigendataStruct which holds eigenvalue /
-  //! eigenvector data
+  /// Methods to get/set the EigendataStruct which holds eigenvalue /
+  /// eigenvector data
   Teuchos::RCP<Albany::EigendataStruct>
   getEigenData();
   void
   setEigenData(const Teuchos::RCP<Albany::EigendataStruct>& eigdata);
 
-  //! Methods to get/set Auxilliary data vectors
+  /// Methods to get/set Auxilliary data vectors
   Teuchos::RCP<Epetra_MultiVector>
   getAuxData();
   void
@@ -258,35 +270,35 @@ class StateManager {
   }
 
  private:
-  //! Private to prohibit copying
+  /// Private to prohibit copying
   StateManager(const StateManager&);
 
-  //! Private to prohibit copying
+  /// Private to prohibit copying
   StateManager&
   operator=(const StateManager&);
 
-  //! Sets states arrays from a given StateInfoStruct into a given
-  //! discretization
+  /// Sets states arrays from a given StateInfoStruct into a given
+  /// discretization
   void
   doSetStateArrays(
       const Teuchos::RCP<Albany::AbstractDiscretization>& disc,
       const Teuchos::RCP<StateInfoStruct>&                stateInfoPtr);
 
-  //! boolean to enforce that allocate gets called once, and after registration
-  //! and befor gets
+  /// boolean to enforce that allocate gets called once, and after registration
+  /// and befor gets
   bool stateVarsAreAllocated;
 
-  //! Container to hold the states that have been registered, by element block,
-  //! to be allocated later
+  /// Container to hold the states that have been registered, by element block,
+  /// to be allocated later
   std::map<std::string, RegisteredStates> statesToStore;
   std::map<std::string, std::map<std::string, RegisteredStates>>
       sideSetStatesToStore;
 
-  //! Discretization object which allows StateManager to perform input/output
-  //! with exodus and Epetra vectors
+  /// Discretization object which allows StateManager to perform input/output
+  /// with exodus and Epetra vectors
   Teuchos::RCP<Albany::AbstractDiscretization> disc;
 
-  //! NEW WAY
+  /// NEW WAY
   Teuchos::RCP<StateInfoStruct> stateInfo;
   std::map<std::string, Teuchos::RCP<StateInfoStruct>>
       sideSetStateInfo;  // A map sideSetName->stateInfoBd
@@ -297,6 +309,15 @@ class StateManager {
 #endif
   Teuchos::RCP<EigendataStructT>   eigenDataT;
   Teuchos::RCP<Tpetra_MultiVector> auxDataT;
+
+#if defined(ALBANY_LCM)
+  /// For Schwarz coupling, more control is needed about when to update the
+  /// states. This variable is used in conjuction with the corresponding
+  /// accessor and mutator.
+  bool
+  do_update_state_{true};
+#endif // ALBANY_LCM
+
 };
 
 }  // Namespace Albany
