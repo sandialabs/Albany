@@ -858,6 +858,13 @@ Albany::StateManager::getStateArrays() const
 void
 Albany::StateManager::updateStates()
 {
+#if defined(ALBANY_LCM)
+  // Return immediately if update states is disabled.
+  // For Schwarz coupling, more control is needed about when to update the
+  // states. This provides that control.
+  if (do_update_state_ == false) return;
+#endif // ALBANY_LCM
+
   // Swap boolean that defines old and new (in terms of state1 and 2) in
   // accessors
   TEUCHOS_TEST_FOR_EXCEPT(!stateVarsAreAllocated);
