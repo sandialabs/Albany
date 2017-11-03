@@ -23,6 +23,9 @@ int main(int argc, char *argv[]) {
   int status=0; // 0 = pass, failures are incremented
   bool success = true;
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
+
+  Kokkos::initialize(argc, argv);
+
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   // Command-line argument for input file
@@ -77,5 +80,8 @@ int main(int argc, char *argv[]) {
   if (!success) status+=10000;
 
   Teuchos::TimeMonitor::summarize(std::cout, false, true, false);
+
+  Kokkos::finalize_all();
+
   return status;
 }
