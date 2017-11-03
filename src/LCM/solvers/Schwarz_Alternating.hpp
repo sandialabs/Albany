@@ -121,10 +121,8 @@ private:
   void
   SchwarzLoopQuasistatics() const;
 
-#ifdef ALBANY_TEMPUS
   void
   SchwarzLoopDynamics() const;
-#endif
 
   void
   updateConvergenceCriterion() const;
@@ -226,28 +224,28 @@ private:
   model_evaluators_;
 
   mutable std::vector<Teuchos::RCP<NOX::Abstract::Vector>>
-  solns_nox_;
+  disp_nox_;
 
   mutable std::vector<Teuchos::RCP<NOX::Abstract::Vector>>
-  prev_solns_nox_;
+  prev_disp_nox_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  ics_;
+  ics_disp_;
   
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  ics_dot_;
+  ics_velo_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  ics_dotdot_;
+  ics_acce_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  prev_solns_thyra_;
+  prev_disp_thyra_;
  
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  prev_solns_dot_thyra_;
+  prev_velo_thyra_;
   
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  prev_solns_dotdot_thyra_;
+  prev_acce_thyra_;
   
 
   // Used if solving with loca or tempus
