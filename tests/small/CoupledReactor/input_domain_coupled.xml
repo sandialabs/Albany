@@ -104,7 +104,6 @@
     <Parameter  name="Test Values" type="Array(double)" value="{0.3085, 0.2441}"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
-    <Parameter  name="Number of Stochastic Galerkin Comparisons" type="int" value="0"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
   </ParameterList>
 

@@ -134,63 +134,6 @@ private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
 };
 
-
-#ifdef ALBANY_ENSEMBLE
-template<typename Traits>
-class Integral1Dw_Z<PHAL::AlbanyTraits::MPResidual,Traits>
-    : public Integral1Dw_ZBase<PHAL::AlbanyTraits::MPResidual,Traits> {
-
-public:
-
-	Integral1Dw_Z(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
-
-private:
-  typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
-};
-
-template<typename Traits>
-class Integral1Dw_Z<PHAL::AlbanyTraits::MPJacobian,Traits>
-    : public Integral1Dw_ZBase<PHAL::AlbanyTraits::MPJacobian,Traits> {
-
-public:
-
-	Integral1Dw_Z(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
-
-private:
-  typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-};
-
-template<typename Traits>
-class Integral1Dw_Z<PHAL::AlbanyTraits::MPTangent,Traits>
-    : public Integral1Dw_ZBase<PHAL::AlbanyTraits::MPTangent,Traits> {
-
-public:
-
-	Integral1Dw_Z(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
-
-private:
-  typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
-};
-#endif
-
 }
 
 #endif /* FELIX_INTEGRAL1DW_Z_HPP_ */

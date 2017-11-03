@@ -10,12 +10,6 @@
 #define ALBANY_DISTRIBUTED_RESPONSE_FUNCTION_HPP
 
 #include "Albany_AbstractResponseFunction.hpp"
-#if defined(ALBANY_EPETRA)
-#ifdef ALBANY_STOKHOS
-#include "Stokhos_ProductEpetraOperator.hpp"
-#include "Stokhos_EpetraOperatorOrthogPoly.hpp"
-#endif
-#endif
 
 namespace Albany {
 
@@ -68,42 +62,6 @@ namespace Albany {
       Tpetra_Operator* dg_dxdotdotT,
       Tpetra_MultiVector* dg_dpT) = 0;
 
-#ifdef ALBANY_SG
-    //! Evaluate stochastic Galerkin derivative
-    virtual void evaluateSGGradient(
-      const double current_time,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-      const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
-      ParamVec* deriv_p,
-      Stokhos::EpetraVectorOrthogPoly* sg_g,
-      Stokhos::EpetraOperatorOrthogPoly* sg_dg_dx,
-      Stokhos::EpetraOperatorOrthogPoly* sg_dg_dxdot,
-      Stokhos::EpetraOperatorOrthogPoly* sg_dg_dxdotdot,
-      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp) = 0;
-#endif
-#ifdef ALBANY_ENSEMBLE
-
-    //! Evaluate multi-point derivative
-    virtual void evaluateMPGradient(
-      const double current_time,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
-      ParamVec* deriv_p,
-      Stokhos::ProductEpetraVector* mp_g,
-      Stokhos::ProductEpetraOperator* mp_dg_dx,
-      Stokhos::ProductEpetraOperator* mp_dg_dxdot,
-      Stokhos::ProductEpetraOperator* mp_dg_dxdotdot,
-      Stokhos::ProductEpetraMultiVector* mp_dg_dp) = 0;
-#endif
-
     //! \name Implementation of AbstractResponseFunction virtual methods
     //@{
 
@@ -143,45 +101,7 @@ namespace Albany {
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp);
 
-   //! Evaluate stochastic Galerkin derivative
-#ifdef ALBANY_SG
-    //! Evaluate stochastic Galerkin derivative
-    virtual void evaluateSGDerivative(
-      const double current_time,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-      const Stokhos::EpetraVectorOrthogPoly& sg_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
-      ParamVec* deriv_p,
-      Stokhos::EpetraVectorOrthogPoly* sg_g,
-      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
-      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
-      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
-      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp);
-#endif
-#ifdef ALBANY_ENSEMBLE
-
-    //! Evaluate multi-point derivative
-    virtual void evaluateMPDerivative(
-      const double current_time,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
-      ParamVec* deriv_p,
-      Stokhos::ProductEpetraVector* mp_g,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp);
-#endif
-
     //@}
-
 
   private:
 

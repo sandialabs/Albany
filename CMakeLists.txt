@@ -1071,49 +1071,6 @@ ELSE()
   MESSAGE("-- FADType   is DFAD (default).")
 ENDIF()
 
-# Set optional build of StochasticGalerkin and MultiPoint types
-# These are required for embedded UQ, but slow compilation considerably
-OPTION(ENABLE_SG_MP "DEPRECATED Flag to turn on SG_MP StochasticGalerkin and MP Code" OFF)
-IF (ENABLE_SG_MP)
-  MESSAGE(FATAL_ERROR "\nENABLE_SG_MP configure option no longer exists.
-          Use ENABLE_SG for Stochastic Galerkin
-          Use ENABLE_ENSEMBLE for Ensemble (a.k.a. MP) capability")
-ENDIF()
-
-# OPtional build with embedded Stochastic Galerkin evaluations
-OPTION(ENABLE_SG "Flag to turn on SG Stochastic Galerkin Code" OFF)
-IF (ENABLE_SG)
-  if (1)
-    set (ALBANY_SG FALSE)
-    message ("-- SG        is NOT Enabled.")
-    message ("---> WARNING: SG is not working yet after the Kokkos merge. Disabling.")
-  else ()
-    ADD_DEFINITIONS(-DALBANY_SG)
-    MESSAGE("-- SG        is Enabled, compiling with -DALBANY_SG")
-    SET(ALBANY_SG TRUE)
-  endif ()
-ELSE()
-  MESSAGE("-- SG        is NOT Enabled.")
-  SET(ALBANY_SG FALSE)
-ENDIF()
-
-# Toggle embedded ensemble capability  (ENSEMBLE is a rename of MP)
-OPTION(ENABLE_ENSEMBLE "Flag to turn on Ensemble Code" OFF)
-IF (ENABLE_ENSEMBLE)
-  IF(ENABLE_ALBANY_EPETRA_EXE)
-    ADD_DEFINITIONS(-DALBANY_ENSEMBLE)
-    SET(ENSEMBLE_SIZE 32 CACHE INT "set Sacado ENSEMBLE MP::Vector size")
-    ADD_DEFINITIONS(-DALBANY_ENSEMBLE_SIZE=${ENSEMBLE_SIZE})
-    MESSAGE("-- ENSEMBLE  is Enabled, compiling with -DALBANY_ENSEMBLE -DALBANY_ENSEMBLE_SIZE=${ENSEMBLE_SIZE}")
-    SET(ALBANY_ENSEMBLE TRUE)
-  ELSE()
-    MESSAGE(FATAL_ERROR "\nError: ENABLE_ALBANY_ENSEMBLE requires ENABLE_ALBANY_EPETRA_EXE to be ON\n")
-  ENDIF()
-ELSE()
-  MESSAGE("-- ENSEMBLE  is NOT Enabled.")
-  SET(ALBANY_ENSEMBLE FALSE)
-ENDIF()
-
 # optionally disable the use of the Trilinos stokhos package
 OPTION(ENABLE_STOKHOS "Flag to enable / disable the use of Stokhos in Albany" OFF)
 IF (ENABLE_STOKHOS)
