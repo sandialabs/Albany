@@ -90,45 +90,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 };
 
-#ifdef ALBANY_ENSEMBLE 
-
-//------------------------------------------------------------------------------
-// Multi-point Residual
-//
-template<typename Traits>
-class EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPResidual,Traits>
-   : public EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::MPResidual, Traits> {
-public:
-  EquilibriumConcentrationBC(Teuchos::ParameterList& p);
-  typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-//------------------------------------------------------------------------------
-// Multi-point Jacobian
-//
-template<typename Traits>
-class EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPJacobian,Traits>
-   : public EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::MPJacobian, Traits> {
-public:
-  EquilibriumConcentrationBC(Teuchos::ParameterList& p);
-  typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-//------------------------------------------------------------------------------
-// Multi-point Tangent
-//
-template<typename Traits>
-class EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPTangent,Traits>
-   : public EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::MPTangent, Traits> {
-public:
-  EquilibriumConcentrationBC(Teuchos::ParameterList& p);
-  typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-#endif
-
 }
 
 #endif

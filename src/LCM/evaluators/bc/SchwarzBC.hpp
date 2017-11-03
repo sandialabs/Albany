@@ -195,45 +195,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 };
 
-#if defined(ALBANY_ENSEMBLE)
-//
-// Multi-point Residual
-//
-template<typename Traits>
-class SchwarzBC<PHAL::AlbanyTraits::MPResidual,Traits>
-   : public SchwarzBC_Base<PHAL::AlbanyTraits::MPResidual, Traits> {
-public:
-  SchwarzBC(Teuchos::ParameterList & p);
-  typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-//
-// Multi-point Jacobian
-//
-template<typename Traits>
-class SchwarzBC<PHAL::AlbanyTraits::MPJacobian,Traits>
-   : public SchwarzBC_Base<PHAL::AlbanyTraits::MPJacobian, Traits> {
-public:
-  SchwarzBC(Teuchos::ParameterList & p);
-  typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-//
-// Multi-point Tangent
-//
-template<typename Traits>
-class SchwarzBC<PHAL::AlbanyTraits::MPTangent,Traits>
-   : public SchwarzBC_Base<PHAL::AlbanyTraits::MPTangent, Traits> {
-public:
-  SchwarzBC(Teuchos::ParameterList & p);
-  typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-#endif // ALBANY_ENSEMBLE
-
 } // namespace LCM
 
 #endif // LCM_SchwarzBC_hpp

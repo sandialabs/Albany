@@ -86,29 +86,3 @@ evaluateDerivativeT(
     current_time, xdotT, xdotdotT, xT, p, deriv_p, gT,
     dg_dxp, dg_dxdotp, dg_dxdotdotp, dg_dpp);
 }
-
-#ifdef ALBANY_ENSEMBLE 
-
-void
-Albany::DistributedResponseFunction::
-evaluateMPDerivative(
-  const double current_time,
-  const Stokhos::ProductEpetraVector* mp_xdot,
-  const Stokhos::ProductEpetraVector* mp_xdotdot,
-  const Stokhos::ProductEpetraVector& mp_x,
-  const Teuchos::Array<ParamVec>& p,
-  const Teuchos::Array<int>& mp_p_index,
-  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
-  ParamVec* deriv_p,
-  Stokhos::ProductEpetraVector* mp_g,
-  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
-  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
-  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
-  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp)
-{
-  this->evaluateMPGradient(
-    current_time, mp_xdot, mp_xdotdot, mp_x, p, mp_p_index, mp_p_vals, deriv_p,
-    mp_g, mp_dg_dx.getLinearOp().get(), mp_dg_dxdot.getLinearOp().get(),
-    mp_dg_dxdotdot.getLinearOp().get(), mp_dg_dp.getMultiVector().get());
-}
-#endif

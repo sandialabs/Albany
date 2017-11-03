@@ -206,50 +206,6 @@ private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
 };
 
-#ifdef ALBANY_ENSEMBLE 
-
-// **************************************************************
-// Multi-point Residual 
-// **************************************************************
-template<typename Traits>
-class PoissonSourceInterface<PHAL::AlbanyTraits::MPResidual,Traits>
-  : public PoissonSourceInterfaceBase<PHAL::AlbanyTraits::MPResidual, Traits>  {
-public:
-  PoissonSourceInterface(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
-};
-
-// **************************************************************
-// Multi-point Jacobian
-// **************************************************************
-template<typename Traits>
-class PoissonSourceInterface<PHAL::AlbanyTraits::MPJacobian,Traits>
-  : public PoissonSourceInterfaceBase<PHAL::AlbanyTraits::MPJacobian, Traits>  {
-public:
-  PoissonSourceInterface(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-};
-
-// **************************************************************
-// Multi-point Tangent
-// **************************************************************
-template<typename Traits>
-class PoissonSourceInterface<PHAL::AlbanyTraits::MPTangent,Traits>
-  : public PoissonSourceInterfaceBase<PHAL::AlbanyTraits::MPTangent, Traits>  {
-public:
-  PoissonSourceInterface(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
-};
-#endif
-
-
-
 }
 
 #endif

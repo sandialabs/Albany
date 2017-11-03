@@ -109,42 +109,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 };
 
-#ifdef ALBANY_ENSEMBLE 
-
-// **************************************************************
-// Multi-point Residual 
-// **************************************************************
-template<typename Traits>
-class SchrodingerDirichlet<PHAL::AlbanyTraits::MPResidual,Traits>
-   : public SchrodingerDirichletBase<PHAL::AlbanyTraits::MPResidual, Traits> {
-public:
-  SchrodingerDirichlet(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Multi-point Jacobian
-// **************************************************************
-template<typename Traits>
-class SchrodingerDirichlet<PHAL::AlbanyTraits::MPJacobian,Traits>
-   : public SchrodingerDirichletBase<PHAL::AlbanyTraits::MPJacobian, Traits> {
-public:
-  SchrodingerDirichlet(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Multi-point Tangent
-// **************************************************************
-template<typename Traits>
-class SchrodingerDirichlet<PHAL::AlbanyTraits::MPTangent,Traits>
-   : public SchrodingerDirichletBase<PHAL::AlbanyTraits::MPTangent, Traits> {
-public:
-  SchrodingerDirichlet(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-};
-#endif
-
 // **************************************************************
 // **************************************************************
 // Evaluator to aggregate all SchrodingerDirichlet BCs into one "field"

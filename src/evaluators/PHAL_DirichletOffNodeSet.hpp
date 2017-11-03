@@ -92,41 +92,6 @@ private:
   std::vector<std::string>  nodeSets;
 };
 
-#ifdef ALBANY_ENSEMBLE
-// **************************************************************
-// Multi-point Residual
-// **************************************************************
-template<typename Traits>
-class DirichletOffNodeSet<PHAL::AlbanyTraits::MPResidual,Traits>
-   : public DirichletBase<PHAL::AlbanyTraits::MPResidual, Traits> {
-public:
-  DirichletOffNodeSet(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Multi-point Jacobian
-// **************************************************************
-template<typename Traits>
-class DirichletOffNodeSet<PHAL::AlbanyTraits::MPJacobian,Traits>
-   : public DirichletBase<PHAL::AlbanyTraits::MPJacobian, Traits> {
-public:
-  DirichletOffNodeSet(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Multi-point Tangent
-// **************************************************************
-template<typename Traits>
-class DirichletOffNodeSet<PHAL::AlbanyTraits::MPTangent,Traits>
-   : public DirichletBase<PHAL::AlbanyTraits::MPTangent, Traits> {
-public:
-  DirichletOffNodeSet(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-};
-#endif
-
 } // Namespace PHAL
 
 #endif // PHAL_DIRICHLET_OFF_SIDE_SET_HPP

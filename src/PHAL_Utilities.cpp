@@ -158,16 +158,6 @@ template<> void myReduceAll<RealType> (
     comm, reduct_type, v.size(), &send[0], &v[0]);
 }
 
-#ifdef ALBANY_STOKHOS
-template<> void myReduceAll<MPType> (
-  const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
-  std::vector<MPType>& v)
-{
-  std::vector<MPType> send(v);
-  Teuchos::reduceAll<int, MPType>(
-    comm, reduct_type, v.size(), &send[0], &v[0]);
-}
-#endif
 } // namespace
 
 template<typename ScalarT>
@@ -200,22 +190,6 @@ void broadcast (const Teuchos_Comm& comm, const int root_rank,
   copy<ScalarT>(v, a);
 }
 
-# ifdef ALBANY_ENSEMBLE
-#  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
-#define apply_to_all_ad_types(macro)            \
-  macro(RealType)                               \
-  macro(FadType)                                \
-  macro(TanFadType)                             \
-  macro(MPType)                                 \
-  macro(MPFadType)
-#  else
-#define apply_to_all_ad_types(macro)            \
-  macro(RealType)                               \
-  macro(FadType)                                \
-  macro(MPType)                                 \
-  macro(MPFadType)
-#  endif
-# else //ALBANY_ENSEMBLE
 #  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 #define apply_to_all_ad_types(macro)            \
   macro(RealType)                               \
@@ -226,7 +200,6 @@ void broadcast (const Teuchos_Comm& comm, const int root_rank,
   macro(RealType)                               \
   macro(FadType)
 #  endif
-# endif //ALBANY_ENSEMBLE
 
 #define eti(T)                                                          \
   template void reduceAll<T> (                                          \

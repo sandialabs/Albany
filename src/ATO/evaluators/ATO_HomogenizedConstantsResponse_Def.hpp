@@ -251,29 +251,3 @@ postEvaluate(typename Traits::PostEvalData workset)
 #endif
 }
 
-#ifdef ALBANY_ENSEMBLE 
-// **********************************************************************
-template<typename Traits>
-void ATO::HomogenizedConstantsResponseSpec<PHAL::AlbanyTraits::MPJacobian, Traits>::
-postEvaluate(typename Traits::PostEvalData workset)
-{
-  RealType scale = 1.0/global_measure;
-  int nterms = this->global_response_eval.size();
-  for(int i=0; i<nterms; i++)
-    this->global_response_eval[i] *= scale;
-
-  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> overlapped_dgdx_mp = workset.overlapped_mp_dgdx;
-  if(overlapped_dgdx_mp != Teuchos::null){
-    for(int block=0; block<overlapped_dgdx_mp->size(); block++){
-      (*overlapped_dgdx_mp)[block].Scale(scale);
-    }
-  }
-
-  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> overlapped_dgdxdot_mp = workset.overlapped_mp_dgdxdot;
-  if(overlapped_dgdxdot_mp != Teuchos::null){
-    for(int block=0; block<overlapped_dgdxdot_mp->size(); block++){
-      (*overlapped_dgdxdot_mp)[block].Scale(scale);
-    }
-  }
-}
-#endif

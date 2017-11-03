@@ -143,62 +143,6 @@ namespace Albany {
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp);
     //@}
 
-    //! \name Multi-point evaluation functions
-    //@{
-
-#ifdef ALBANY_ENSEMBLE
-    //! Evaluate multi-point response functions
-    virtual void evaluateMPResponse(
-      const double curr_time,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
-      Stokhos::ProductEpetraVector& mp_g);
-
-    //! Evaluate multi-point tangent
-    virtual void evaluateMPTangent(
-      const double alpha, 
-      const double beta, 
-      const double omega, 
-      const double current_time,
-      bool sum_derivs,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
-      ParamVec* deriv_p,
-      const Epetra_MultiVector* Vx,
-      const Epetra_MultiVector* Vxdot,
-      const Epetra_MultiVector* Vxdotdot,
-      const Epetra_MultiVector* Vp,
-      Stokhos::ProductEpetraVector* mp_g,
-      Stokhos::ProductEpetraMultiVector* mp_JV,
-      Stokhos::ProductEpetraMultiVector* mp_gp);
-
-    //! Evaluate stochastic Galerkin derivative
-    virtual void evaluateMPDerivative(
-      const double current_time,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
-      ParamVec* deriv_p,
-      Stokhos::ProductEpetraVector* mp_g,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp);
-#endif
-
-    //@}
-
   private:
 
     //! Private to prohibit copying

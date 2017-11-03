@@ -42,15 +42,7 @@
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Workset.hpp"
 
-#if defined(ALBANY_STOKHOS)
-#include "Stokhos_Quadrature.hpp"
-#endif
-
 #if defined(ALBANY_EPETRA)
-
-#if defined(ALBANY_STOKHOS)
-#include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
-#endif
 
 #include "EpetraExt_MultiComm.h"
 #include "LOCA_Epetra_Group.H"
@@ -445,128 +437,6 @@ namespace Albany {
       const std::string& dist_param_name,
       Tpetra_MultiVector* dg_dp);
 
-#ifdef ALBANY_ENSEMBLE 
-    //! Compute global residual for stochastic Galerkin problem
-    /*!
-     * Set xdot to NULL for steady-state problems
-     */
-    void computeGlobalMPResidual(
-      const double current_time,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
-      Stokhos::ProductEpetraVector& mp_f);
-
-    //! Compute global Jacobian for stochastic Galerkin problem
-    /*!
-     * Set xdot to NULL for steady-state problems
-     */
-    void computeGlobalMPJacobian(
-      const double alpha,
-      const double beta,
-      const double omega,
-      const double current_time,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
-      Stokhos::ProductEpetraVector* mp_f,
-      Stokhos::ProductContainer<Epetra_CrsMatrix>& mp_jac);
-
-    //! Compute global Tangent for multi-point problem
-    /*!
-     * Set xdot to NULL for steady-state problems
-     */
-    void computeGlobalMPTangent(
-      const double alpha,
-      const double beta,
-      const double omega,
-      const double current_time,
-      bool sum_derivs,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
-      ParamVec* deriv_p,
-      const Epetra_MultiVector* Vx,
-      const Epetra_MultiVector* Vxdot,
-      const Epetra_MultiVector* Vxdotdot,
-      const Epetra_MultiVector* Vp,
-      Stokhos::ProductEpetraVector* mp_f,
-      Stokhos::ProductEpetraMultiVector* mp_JVx,
-      Stokhos::ProductEpetraMultiVector* mp_fVp);
-
-    //! Evaluate stochastic Galerkin response functions
-    /*!
-     * Set xdot to NULL for steady-state problems
-     */
-    void evaluateMPResponse(
-      int response_index,
-      const double curr_time,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
-      Stokhos::ProductEpetraVector& mp_g);
-
-    //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
-    /*!
-     * Set xdot, dxdot_dp to NULL for steady-state problems
-     */
-    void
-    evaluateMPResponseTangent(
-      int response_index,
-      const double alpha,
-      const double beta,
-      const double omega,
-      const double current_time,
-      bool sum_derivs,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
-      ParamVec* deriv_p,
-      const Epetra_MultiVector* Vx,
-      const Epetra_MultiVector* Vxdot,
-      const Epetra_MultiVector* Vxdotdot,
-      const Epetra_MultiVector* Vp,
-      Stokhos::ProductEpetraVector* mp_g,
-      Stokhos::ProductEpetraMultiVector* mp_JV,
-      Stokhos::ProductEpetraMultiVector* mp_gp);
-
-    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
-    /*!
-     * Set xdot, dg_dxdot to NULL for steady-state problems
-     */
-    void
-    evaluateMPResponseDerivative(
-      int response_index,
-      const double current_time,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
-      ParamVec* deriv_p,
-      Stokhos::ProductEpetraVector* mp_g,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp);
-#endif
-
     //! Provide access to shapeParameters -- no AD
     PHAL::AlbanyTraits::Residual::ScalarT& getValue(const std::string &n);
 
@@ -706,19 +576,6 @@ namespace Albany {
       Teuchos::RCP<const Tpetra_Vector> x,
       const Teuchos::Array<ParamVec>& p);
 
-#ifdef ALBANY_ENSEMBLE 
-
-    void setupBasicWorksetInfo(
-      PHAL::Workset& workset,
-      double current_time,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector* mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals);
-#endif
-
 #if defined(ALBANY_EPETRA)
     void setupTangentWorksetInfo(
       PHAL::Workset& workset,
@@ -748,25 +605,6 @@ namespace Albany {
       Teuchos::RCP<const Tpetra_MultiVector> VxdotdotT,
       Teuchos::RCP<const Tpetra_MultiVector> VxT,
       Teuchos::RCP<const Tpetra_MultiVector> VpT);
-
-#ifdef ALBANY_ENSEMBLE 
-
-    void setupTangentWorksetInfo(
-      PHAL::Workset& workset,
-      double current_time,
-      bool sum_derivs,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector* mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      ParamVec* deriv_p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
-      const Epetra_MultiVector* Vxdot,
-      const Epetra_MultiVector* Vxdotdot,
-      const Epetra_MultiVector* Vx,
-      const Epetra_MultiVector* Vp);
-#endif
 
     void postRegSetup(std::string eval);
 
@@ -1020,20 +858,6 @@ namespace Albany {
     //! Product multi-comm
     Teuchos::RCP<const EpetraExt::MultiComm> product_comm;
 
-#ifdef ALBANY_STOKHOS
-    //! MP overlapped solution vectors
-    Teuchos::RCP< Stokhos::ProductEpetraVector >  mp_overlapped_x;
-
-    //! MP overlapped time derivative vectors
-    Teuchos::RCP< Stokhos::ProductEpetraVector > mp_overlapped_xdot;
-    Teuchos::RCP< Stokhos::ProductEpetraVector > mp_overlapped_xdotdot;
-
-    //! MP overlapped residual vectors
-    Teuchos::RCP< Stokhos::ProductEpetraVector > mp_overlapped_f;
-
-    //! Overlapped Jacobian matrixs
-    Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix>> mp_overlapped_jac;
-#endif
 #endif
 
     bool explicit_scheme; 

@@ -157,42 +157,6 @@ private:
   int numNodes;
 };
 
-#ifdef ALBANY_ENSEMBLE 
-
-// **************************************************************
-// Multi-point Jacobian
-// **************************************************************
-template<typename Traits>
-class SeparableScatterScalarResponse<PHAL::AlbanyTraits::MPJacobian,Traits>
-  : public ScatterScalarResponseBase<PHAL::AlbanyTraits::MPJacobian, Traits>,
-    public SeparableScatterScalarResponseBase<PHAL::AlbanyTraits::MPJacobian, Traits>{
-public:
-  SeparableScatterScalarResponse(const Teuchos::ParameterList& p,
-                           const Teuchos::RCP<Albany::Layouts>& dl);
-  void postRegistrationSetup(typename Traits::SetupData d,
-                             PHX::FieldManager<Traits>& vm) {
-    ScatterScalarResponseBase<EvalT, Traits>::postRegistrationSetup(d,vm);
-    SeparableScatterScalarResponseBase<EvalT,Traits>::postRegistrationSetup(d,vm);
-  }
-  void preEvaluate(typename Traits::PreEvalData d);
-  void evaluateFields(typename Traits::EvalData d);
-  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData d, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo) {}
-  void postEvaluate(typename Traits::PostEvalData d);
-protected:
-  typedef PHAL::AlbanyTraits::MPJacobian EvalT;
-  SeparableScatterScalarResponse() {}
-  void setup(const Teuchos::ParameterList& p,
-             const Teuchos::RCP<Albany::Layouts>& dl) {
-    ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
-    SeparableScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
-    numNodes = dl->node_scalar->dimension(1);
-  }
-private:
-  typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-  int numNodes;
-};
-#endif
-
 // **************************************************************
 }
 

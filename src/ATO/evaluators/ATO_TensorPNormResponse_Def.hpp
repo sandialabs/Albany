@@ -526,31 +526,3 @@ postEvaluate(typename Traits::PostEvalData workset)
        << "with Epetra turned OFF.  It is not yet clear if this works correctly, so use at your own risk!\n"; 
 #endif
 }
-
-#ifdef ALBANY_ENSEMBLE 
-// **********************************************************************
-template<typename Traits>
-void ATO::TensorPNormResponseSpec<PHAL::AlbanyTraits::MPJacobian, Traits>::
-postEvaluate(typename Traits::PostEvalData workset)
-{
-  this->global_response_eval[0] = pow(this->global_response_eval[0],1.0/pVal);
-
-  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> overlapped_dgdx_mp = workset.overlapped_mp_dgdx;
-  if(overlapped_dgdx_mp != Teuchos::null){
-    for(int block=0; block<overlapped_dgdx_mp->size(); block++){
-      auto gVal = this->global_response[0];
-      double scale = pow(gVal.val().coeff(block),1.0/pVal-1.0)/pVal;
-      (*overlapped_dgdx_mp)[block].Scale(scale);
-    }
-  }
-
-  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> overlapped_dgdxdot_mp = workset.overlapped_mp_dgdxdot;
-  if(overlapped_dgdxdot_mp != Teuchos::null){
-    for(int block=0; block<overlapped_dgdxdot_mp->size(); block++){
-      auto gVal = this->global_response[0];
-      double scale = pow(gVal.val().coeff(block),1.0/pVal-1.0)/pVal;
-      (*overlapped_dgdxdot_mp)[block].Scale(scale);
-    }
-  }
-}
-#endif

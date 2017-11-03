@@ -98,45 +98,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 };
 
-#ifdef ALBANY_ENSEMBLE 
-
-// **************************************************************
-// Multi-point Residual
-// **************************************************************
-template<typename Traits>
-class TorsionBC<PHAL::AlbanyTraits::MPResidual,Traits>
-   : public TorsionBC_Base<PHAL::AlbanyTraits::MPResidual, Traits> {
-public:
-  TorsionBC(Teuchos::ParameterList& p);
-  typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Multi-point Jacobian
-// **************************************************************
-template<typename Traits>
-class TorsionBC<PHAL::AlbanyTraits::MPJacobian,Traits>
-   : public TorsionBC_Base<PHAL::AlbanyTraits::MPJacobian, Traits> {
-public:
-  TorsionBC(Teuchos::ParameterList& p);
-  typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Multi-point Tangent
-// **************************************************************
-template<typename Traits>
-class TorsionBC<PHAL::AlbanyTraits::MPTangent,Traits>
-   : public TorsionBC_Base<PHAL::AlbanyTraits::MPTangent, Traits> {
-public:
-  TorsionBC(Teuchos::ParameterList& p);
-  typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-#endif
-
 }
 
 #endif

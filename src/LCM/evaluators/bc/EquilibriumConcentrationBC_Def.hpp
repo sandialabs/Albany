@@ -255,63 +255,6 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   }
 }
 
-#ifdef ALBANY_ENSEMBLE 
-//------------------------------------------------------------------------------  
-// Specialization: Multi-point Residual
-//
-template<typename Traits>
-EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPResidual, Traits>::
-EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
-  EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::MPResidual, Traits>(p)
-{
-}
-//------------------------------------------------------------------------------  
-template<typename Traits>
-void EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPResidual, Traits>::
-evaluateFields(typename Traits::EvalData dirichletWorkset)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true,
-                             std::runtime_error,
-                             "Error! This BC does not support ENSEMBLES");
-}
-//------------------------------------------------------------------------------  
-// Specialization: Multi-point Jacobian
-//
-template<typename Traits>
-EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPJacobian, Traits>::
-EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
-  EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::MPJacobian, Traits>(p)
-{
-}
-//------------------------------------------------------------------------------
-template<typename Traits>
-void EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPJacobian, Traits>::
-evaluateFields(typename Traits::EvalData dirichletWorkset)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true,
-                             std::runtime_error,
-                             "Error! This BC does not support ENSEMBLES");
-}
-
-//------------------------------------------------------------------------------
-// Specialization: Multi-point Tangent
-//
-template<typename Traits>
-EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPTangent, Traits>::
-EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
-  EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::MPTangent, Traits>(p)
-{
-}
-//------------------------------------------------------------------------------
-template<typename Traits>
-void EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPTangent, Traits>::
-evaluateFields(typename Traits::EvalData dirichletWorkset)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true,
-                             std::runtime_error,
-                             "Error! This BC does not support ENSEMBLES");
-}
-#endif
 //------------------------------------------------------------------------------  
 } // namespace LCM
 

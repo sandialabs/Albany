@@ -100,45 +100,6 @@ class PDNeighborFitBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>
     void evaluateFields(typename Traits::EvalData d);
 };
 
-#ifdef ALBANY_ENSEMBLE 
-
-// **************************************************************
-// Multi-point Residual
-// **************************************************************
-template<typename Traits>
-class PDNeighborFitBC<PHAL::AlbanyTraits::MPResidual, Traits>
-    : public PDNeighborFitBC_Base<PHAL::AlbanyTraits::MPResidual, Traits> {
-  public:
-    PDNeighborFitBC(Teuchos::ParameterList& p);
-    typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
-    void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Multi-point Jacobian
-// **************************************************************
-template<typename Traits>
-class PDNeighborFitBC<PHAL::AlbanyTraits::MPJacobian, Traits>
-    : public PDNeighborFitBC_Base<PHAL::AlbanyTraits::MPJacobian, Traits> {
-  public:
-    PDNeighborFitBC(Teuchos::ParameterList& p);
-    typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-    void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Multi-point Tangent
-// **************************************************************
-template<typename Traits>
-class PDNeighborFitBC<PHAL::AlbanyTraits::MPTangent, Traits>
-    : public PDNeighborFitBC_Base<PHAL::AlbanyTraits::MPTangent, Traits> {
-  public:
-    PDNeighborFitBC(Teuchos::ParameterList& p);
-    typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
-    void evaluateFields(typename Traits::EvalData d);
-};
-#endif
-
 }
 
 #endif

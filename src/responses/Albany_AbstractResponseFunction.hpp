@@ -17,13 +17,6 @@
 #include "Epetra_MultiVector.h"
 #include "EpetraExt_ModelEvaluator.h"
 #include "EpetraExt_MultiComm.h"
-#ifdef ALBANY_STOKHOS
-#include "Stokhos_ProductEpetraVector.hpp"
-#include "Stokhos_ProductEpetraMultiVector.hpp"
-#endif
-#endif
-#ifdef ALBANY_STOKHOS
-#include "Stokhos_Quadrature.hpp"
 #endif
 #include "PHAL_AlbanyTraits.hpp"
 #include "Thyra_ModelEvaluatorBase.hpp"
@@ -145,62 +138,6 @@ namespace Albany {
       const Teuchos::Array<ParamVec>& param_array,
       const std::string& dist_param_name,
       Tpetra_MultiVector*  dg_dpT) = 0;
-    //@}
-
-    //! \name Multi-point evaluation functions
-    //@{
-
-#ifdef ALBANY_ENSEMBLE 
-    //! Evaluate multi-point response functions
-    virtual void evaluateMPResponse(
-      const double curr_time,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
-      Stokhos::ProductEpetraVector& mp_g) = 0;
-
-    //! Evaluate multi-point tangent
-    virtual void evaluateMPTangent(
-      const double alpha, 
-      const double beta, 
-      const double omega, 
-      const double current_time,
-      bool sum_derivs,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
-      ParamVec* deriv_p,
-      const Epetra_MultiVector* Vx,
-      const Epetra_MultiVector* Vxdot,
-      const Epetra_MultiVector* Vxdotdot,
-      const Epetra_MultiVector* Vp,
-      Stokhos::ProductEpetraVector* mp_g,
-      Stokhos::ProductEpetraMultiVector* mp_JV,
-      Stokhos::ProductEpetraMultiVector* mp_gp) = 0;
-
-    //! Evaluate multi-point derivative
-    virtual void evaluateMPDerivative(
-      const double current_time,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
-      ParamVec* deriv_p,
-      Stokhos::ProductEpetraVector* mp_g,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp) = 0;
-#endif
-
     //@}
 
   private:

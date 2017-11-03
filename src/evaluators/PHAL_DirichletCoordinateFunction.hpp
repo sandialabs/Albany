@@ -115,47 +115,6 @@ class DirichletCoordFunction<PHAL::AlbanyTraits::DistParamDeriv, Traits/*, cfunc
     void evaluateFields(typename Traits::EvalData d);
 };
 
-#ifdef ALBANY_ENSEMBLE 
-// **************************************************************
-// Multi-point Residual
-// **************************************************************
-
-template<typename Traits/*, typename cfunc_traits*/>
-class DirichletCoordFunction<PHAL::AlbanyTraits::MPResidual, Traits/*, cfunc_traits*/>
-    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::MPResidual, Traits/*, cfunc_traits*/> {
-  public:
-    DirichletCoordFunction(Teuchos::ParameterList& p);
-    typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
-    void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Multi-point Jacobian
-// **************************************************************
-
-template<typename Traits/*, typename cfunc_traits*/>
-class DirichletCoordFunction<PHAL::AlbanyTraits::MPJacobian, Traits/*, cfunc_traits*/>
-    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::MPJacobian, Traits/*, cfunc_traits*/> {
-  public:
-    DirichletCoordFunction(Teuchos::ParameterList& p);
-    typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-    void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Multi-point Tangent
-// **************************************************************
-
-template<typename Traits/*, typename cfunc_traits*/>
-class DirichletCoordFunction<PHAL::AlbanyTraits::MPTangent, Traits/*, cfunc_traits*/>
-    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::MPTangent, Traits/*, cfunc_traits*/> {
-  public:
-    DirichletCoordFunction(Teuchos::ParameterList& p);
-    typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
-    void evaluateFields(typename Traits::EvalData d);
-};
-#endif
-
 }
 
 #endif

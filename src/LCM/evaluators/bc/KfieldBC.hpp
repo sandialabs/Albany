@@ -107,45 +107,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 };
 
-#ifdef ALBANY_ENSEMBLE 
-
-// **************************************************************
-// Multi-point Residual
-// **************************************************************
-template<typename Traits>
-class KfieldBC<PHAL::AlbanyTraits::MPResidual,Traits>
-   : public KfieldBC_Base<PHAL::AlbanyTraits::MPResidual, Traits> {
-public:
-  KfieldBC(Teuchos::ParameterList& p);
-  typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Multi-point Jacobian
-// **************************************************************
-template<typename Traits>
-class KfieldBC<PHAL::AlbanyTraits::MPJacobian,Traits>
-   : public KfieldBC_Base<PHAL::AlbanyTraits::MPJacobian, Traits> {
-public:
-  KfieldBC(Teuchos::ParameterList& p);
-  typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Multi-point Tangent
-// **************************************************************
-template<typename Traits>
-class KfieldBC<PHAL::AlbanyTraits::MPTangent,Traits>
-   : public KfieldBC_Base<PHAL::AlbanyTraits::MPTangent, Traits> {
-public:
-  KfieldBC(Teuchos::ParameterList& p);
-  typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
-};
-#endif
-
 }
 
 #endif

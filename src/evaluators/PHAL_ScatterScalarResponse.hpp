@@ -128,55 +128,6 @@ private:
 // Distributed Parameter Derivative -- No implementation can be provided
 // **************************************************************
 
-#ifdef ALBANY_ENSEMBLE 
-
-// **************************************************************
-// Multi-point Residual
-// **************************************************************
-template<typename Traits>
-class ScatterScalarResponse<PHAL::AlbanyTraits::MPResidual,Traits>
-  : public ScatterScalarResponseBase<PHAL::AlbanyTraits::MPResidual, Traits>  {
-public:
-  ScatterScalarResponse(const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl);
-  void postEvaluate(typename Traits::PostEvalData d);
-protected:
-  typedef PHAL::AlbanyTraits::MPResidual EvalT;
-  ScatterScalarResponse() {}
-  void setup(const Teuchos::ParameterList& p,
-             const Teuchos::RCP<Albany::Layouts>& dl) {
-    ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
-  }
-private:
-  typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
-};
-
-// **************************************************************
-// Multi-point Jacobian -- No implementation can be provided
-// **************************************************************
-
-// **************************************************************
-// Multi-point Tangent
-// **************************************************************
-template<typename Traits>
-class ScatterScalarResponse<PHAL::AlbanyTraits::MPTangent,Traits>
-  : public ScatterScalarResponseBase<PHAL::AlbanyTraits::MPTangent, Traits>  {
-public:
-  ScatterScalarResponse(const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl);
-  void postEvaluate(typename Traits::PostEvalData d);
-protected:
-  typedef PHAL::AlbanyTraits::MPTangent EvalT;
-  ScatterScalarResponse() {}
-  void setup(const Teuchos::ParameterList& p,
-             const Teuchos::RCP<Albany::Layouts>& dl) {
-    ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
-  }
-private:
-  typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
-};
-#endif
-
 // **************************************************************
 }
 

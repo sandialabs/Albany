@@ -650,44 +650,4 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
 }
 
-#ifdef ALBANY_ENSEMBLE
-// **********************************************************************
-// Specialization: Multi-point Residual
-// **********************************************************************
-template<typename Traits>
-ComputeAndScatterJac<PHAL::AlbanyTraits::MPResidual,Traits>::
-ComputeAndScatterJac(const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Aeras::Layouts>& dl)
-  : ComputeAndScatterJacBase<PHAL::AlbanyTraits::MPResidual,Traits>(p,dl)
-{}
-
-template<typename Traits>
-void ComputeAndScatterJac<PHAL::AlbanyTraits::MPResidual, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-  //FIXME, IKT, 5/9/16: this function needs to be implemented! 
-  std::cout << "ComputeAndScatterJac evaluateFields MPResidual specialization has not been implemented yet!" << std::endl; 
-}
-
-// **********************************************************************
-// Specialization: Multi-point Jacobian
-// **********************************************************************
-
-template<typename Traits>
-ComputeAndScatterJac<PHAL::AlbanyTraits::MPJacobian, Traits>::
-ComputeAndScatterJac(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Aeras::Layouts>& dl)
-  : ComputeAndScatterJacBase<PHAL::AlbanyTraits::MPJacobian,Traits>(p,dl)
-{ }
-
-// **********************************************************************
-template<typename Traits>
-void ComputeAndScatterJac<PHAL::AlbanyTraits::MPJacobian, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-  //FIXME, IKT, 5/9/16: this function needs to be implemented! 
-  std::cout << "ComputeAndScatterJac evaluateFields MPJacobian specialization has not been implemented yet!" << std::endl; 
-}
-#endif
-
 }

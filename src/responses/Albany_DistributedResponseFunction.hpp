@@ -10,11 +10,6 @@
 #define ALBANY_DISTRIBUTED_RESPONSE_FUNCTION_HPP
 
 #include "Albany_AbstractResponseFunction.hpp"
-#if defined(ALBANY_EPETRA)
-#ifdef ALBANY_STOKHOS
-#include "Stokhos_ProductEpetraOperator.hpp"
-#endif
-#endif
 
 namespace Albany {
 
@@ -67,25 +62,6 @@ namespace Albany {
       Tpetra_Operator* dg_dxdotdotT,
       Tpetra_MultiVector* dg_dpT) = 0;
 
-#ifdef ALBANY_ENSEMBLE
-
-    //! Evaluate multi-point derivative
-    virtual void evaluateMPGradient(
-      const double current_time,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
-      ParamVec* deriv_p,
-      Stokhos::ProductEpetraVector* mp_g,
-      Stokhos::ProductEpetraOperator* mp_dg_dx,
-      Stokhos::ProductEpetraOperator* mp_dg_dxdot,
-      Stokhos::ProductEpetraOperator* mp_dg_dxdotdot,
-      Stokhos::ProductEpetraMultiVector* mp_dg_dp) = 0;
-#endif
-
     //! \name Implementation of AbstractResponseFunction virtual methods
     //@{
 
@@ -125,27 +101,7 @@ namespace Albany {
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp);
 
-#ifdef ALBANY_ENSEMBLE
-
-    //! Evaluate multi-point derivative
-    virtual void evaluateMPDerivative(
-      const double current_time,
-      const Stokhos::ProductEpetraVector* mp_xdot,
-      const Stokhos::ProductEpetraVector* mp_xdotdot,
-      const Stokhos::ProductEpetraVector& mp_x,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
-      ParamVec* deriv_p,
-      Stokhos::ProductEpetraVector* mp_g,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
-      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp);
-#endif
-
     //@}
-
 
   private:
 

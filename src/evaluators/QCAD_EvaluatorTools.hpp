@@ -75,52 +75,6 @@ namespace QCAD
     std::string getEvalType() const;
   };
 
-#ifdef ALBANY_ENSEMBLE 
-
-  // Multi-point residual
-  template<typename Traits>
-  class EvaluatorTools<PHAL::AlbanyTraits::MPResidual, Traits>
-  {
-  public:
-    typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
-    typedef typename PHAL::AlbanyTraits::MPResidual::MeshScalarT MeshScalarT;
-
-    EvaluatorTools();
-    double getDoubleValue(const ScalarT& t) const;
-    double getMeshDoubleValue(const MeshScalarT& t) const;
-    std::string getEvalType() const;
-  };
-
-
-  // Multi-point Jacobian
-  template<typename Traits>
-  class EvaluatorTools<PHAL::AlbanyTraits::MPJacobian, Traits>
-  {
-  public:
-    typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-    typedef typename PHAL::AlbanyTraits::MPJacobian::MeshScalarT MeshScalarT;
-
-    EvaluatorTools();
-    double getDoubleValue(const ScalarT& t) const;
-    double getMeshDoubleValue(const MeshScalarT& t) const;
-    std::string getEvalType() const;
-  };
-
-  // Multi-point Tangent
-  template<typename Traits>
-  class EvaluatorTools<PHAL::AlbanyTraits::MPTangent, Traits>
-  {
-  public:
-    typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
-    typedef typename PHAL::AlbanyTraits::MPTangent::MeshScalarT MeshScalarT;
-
-    EvaluatorTools();
-    double getDoubleValue(const ScalarT& t) const;
-    double getMeshDoubleValue(const MeshScalarT& t) const;
-    std::string getEvalType() const;
-  };
-#endif
-
 }
 
 #endif

@@ -114,62 +114,6 @@ public:
       std::vector<ScalarT> & B);
 };
 
-#ifdef ALBANY_ENSEMBLE 
-
-// -----------------------------------------------------------------------------
-// Multi-Point Residual
-// -----------------------------------------------------------------------------
-template<typename Traits>
-class LocalNonlinearSolver< PHAL::AlbanyTraits::MPResidual, Traits> :
-public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::MPResidual, Traits>
-{
-public:
-  typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
-  LocalNonlinearSolver();
-  void solve(std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
-  void computeFadInfo(std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
-};
-
-// -----------------------------------------------------------------------------
-// Multi-Point Jacobian
-// -----------------------------------------------------------------------------
-template<typename Traits>
-class LocalNonlinearSolver< PHAL::AlbanyTraits::MPJacobian, Traits> :
-public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::MPJacobian, Traits>
-{
-public:
-  typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-  LocalNonlinearSolver();
-  void solve(std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
-  void computeFadInfo(std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
-};
-
-// -----------------------------------------------------------------------------
-// Multi-Point Tangent
-// -----------------------------------------------------------------------------
-template<typename Traits>
-class LocalNonlinearSolver< PHAL::AlbanyTraits::MPTangent, Traits> :
-public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::MPTangent, Traits>
-{
-public:
-  typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
-  LocalNonlinearSolver();
-  void solve(std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
-  void computeFadInfo(std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
-};
-#endif
 }
 
 #include "LocalNonlinearSolver_Def.hpp"

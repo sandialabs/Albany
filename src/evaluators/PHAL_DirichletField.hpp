@@ -99,45 +99,6 @@ class DirichletField<PHAL::AlbanyTraits::DistParamDeriv, Traits>
     void evaluateFields(typename Traits::EvalData d);
 };
 
-#ifdef ALBANY_ENSEMBLE 
-
-// **************************************************************
-// Multi-point Residual
-// **************************************************************
-template<typename Traits>
-class DirichletField<PHAL::AlbanyTraits::MPResidual, Traits>
-    : public DirichletField_Base<PHAL::AlbanyTraits::MPResidual, Traits> {
-  public:
-    DirichletField(Teuchos::ParameterList& p);
-    typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
-    void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Multi-point Jacobian
-// **************************************************************
-template<typename Traits>
-class DirichletField<PHAL::AlbanyTraits::MPJacobian, Traits>
-    : public DirichletField_Base<PHAL::AlbanyTraits::MPJacobian, Traits> {
-  public:
-    DirichletField(Teuchos::ParameterList& p);
-    typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-    void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Multi-point Tangent
-// **************************************************************
-template<typename Traits>
-class DirichletField<PHAL::AlbanyTraits::MPTangent, Traits>
-    : public DirichletField_Base<PHAL::AlbanyTraits::MPTangent, Traits> {
-  public:
-    DirichletField(Teuchos::ParameterList& p);
-    typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
-    void evaluateFields(typename Traits::EvalData d);
-};
-#endif
-
 }
 
 #endif

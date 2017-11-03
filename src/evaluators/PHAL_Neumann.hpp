@@ -319,49 +319,6 @@ private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
 };
 
-#ifdef ALBANY_ENSEMBLE 
-
-// **************************************************************
-// Multi-point Residual 
-// **************************************************************
-template<typename Traits>
-class Neumann<PHAL::AlbanyTraits::MPResidual,Traits>
-  : public NeumannBase<PHAL::AlbanyTraits::MPResidual, Traits>  {
-public:
-  Neumann(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
-};
-
-// **************************************************************
-// Multi-point Jacobian
-// **************************************************************
-template<typename Traits>
-class Neumann<PHAL::AlbanyTraits::MPJacobian,Traits>
-  : public NeumannBase<PHAL::AlbanyTraits::MPJacobian, Traits>  {
-public:
-  Neumann(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-};
-
-// **************************************************************
-// Multi-point Tangent
-// **************************************************************
-template<typename Traits>
-class Neumann<PHAL::AlbanyTraits::MPTangent,Traits>
-  : public NeumannBase<PHAL::AlbanyTraits::MPTangent, Traits>  {
-public:
-  Neumann(Teuchos::ParameterList& p);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
-};
-#endif
-
-
 // **************************************************************
 // **************************************************************
 // Evaluator to aggregate all Neumann BCs into one "field"

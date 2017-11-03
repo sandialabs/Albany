@@ -132,44 +132,6 @@ public:
 
 };
 
-#ifdef ALBANY_ENSEMBLE
-template<typename Traits>
-class DOFGradInterpolationBase<PHAL::AlbanyTraits::MPJacobian, Traits, typename PHAL::AlbanyTraits::MPJacobian::ScalarT>
-      : public PHX::EvaluatorWithBaseImpl<Traits>,
-        public PHX::EvaluatorDerived<PHAL::AlbanyTraits::MPJacobian, Traits>  {
-
-public:
-
-  DOFGradInterpolationBase(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-
-  typedef PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-  typedef PHAL::AlbanyTraits::MPJacobian::MeshScalarT MeshScalarT;
-
-  // Input:
-  //! Values at nodes
-  PHX::MDField<const ScalarT,Cell,Node> val_node;
-  //! Basis Functions
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
-
-  // Output:
-  //! Values at quadrature points
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> grad_val_qp;
-
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t numDims;
-  std::size_t offset;
-};
-#endif
-
 // Some shortcut names
 template<typename EvalT, typename Traits>
 using DOFGradInterpolation = DOFGradInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>;

@@ -272,57 +272,6 @@ private:
   Teuchos::RCP<std::map<std::string, int> > extruded_params_levels;
 };
 
-#ifdef ALBANY_ENSEMBLE 
-
-// **************************************************************
-// Multi-point Residual
-// **************************************************************
-template<typename Traits>
-class ScatterResidual<PHAL::AlbanyTraits::MPResidual,Traits>
-  : public ScatterResidualBase<PHAL::AlbanyTraits::MPResidual, Traits>  {
-public:
-  ScatterResidual(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-  void evaluateFields(typename Traits::EvalData d);
-protected:
-  const std::size_t numFields;
-private:
-  typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
-};
-
-// **************************************************************
-// Multi-point Jacobian
-// **************************************************************
-template<typename Traits>
-class ScatterResidual<PHAL::AlbanyTraits::MPJacobian,Traits>
-  : public ScatterResidualBase<PHAL::AlbanyTraits::MPJacobian, Traits>  {
-public:
-  ScatterResidual(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-  void evaluateFields(typename Traits::EvalData d);
-protected:
-  const std::size_t numFields;
-private:
-  typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-};
-
-// **************************************************************
-// Multi-point Tangent
-// **************************************************************
-template<typename Traits>
-class ScatterResidual<PHAL::AlbanyTraits::MPTangent,Traits>
-  : public ScatterResidualBase<PHAL::AlbanyTraits::MPTangent, Traits>  {
-public:
-  ScatterResidual(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-  void evaluateFields(typename Traits::EvalData d);
-protected:
-  const std::size_t numFields;
-private:
-  typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
-};
-#endif
-
 // **************************************************************
 }
 

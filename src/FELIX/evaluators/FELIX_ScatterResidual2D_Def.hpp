@@ -146,49 +146,6 @@ ScatterResidual2D(const Teuchos::ParameterList& p,
 {
 }
 
-#ifdef ALBANY_ENSEMBLE
-// **********************************************************************
-// Specialization: Multi-point Residual
-// **********************************************************************
-
-template<typename Traits>
-ScatterResidual2D<PHAL::AlbanyTraits::MPResidual, Traits>::
-ScatterResidual2D(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl)
-  : ScatterResidual<PHAL::AlbanyTraits::MPResidual,Traits>(p,dl)
-{
-}
-
-
-
-// **********************************************************************
-// Specialization: Multi-point Jacobian
-// **********************************************************************
-
-template<typename Traits>
-ScatterResidual2D<PHAL::AlbanyTraits::MPJacobian, Traits>::
-ScatterResidual2D(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl)
-  : ScatterResidual<PHAL::AlbanyTraits::MPJacobian,Traits>(p,dl)
-{
-}
-
-
-
-// **********************************************************************
-// Specialization: Multi-point Tangent
-// **********************************************************************
-
-template<typename Traits>
-ScatterResidual2D<PHAL::AlbanyTraits::MPTangent, Traits>::
-ScatterResidual2D(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl)
-  : ScatterResidual<PHAL::AlbanyTraits::MPTangent,Traits>(p,dl)
-{
-}
-
-#endif
-
 
 // **********************************************************************
 // Specialization: Residual
@@ -343,48 +300,4 @@ ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
 {
 }
 
-#ifdef ALBANY_ENSEMBLE
-// **********************************************************************
-// Specialization: Multi-point Residual
-// **********************************************************************
-
-template<typename Traits>
-ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::MPResidual, Traits>::
-ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl)
-  : ScatterResidual<PHAL::AlbanyTraits::MPResidual,Traits>(p,dl)
-{
 }
-
-
-
-// **********************************************************************
-// Specialization: Multi-point Jacobian
-// **********************************************************************
-
-template<typename Traits>
-ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::MPJacobian, Traits>::
-ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl)
-  : ScatterResidual<PHAL::AlbanyTraits::MPJacobian,Traits>(p,dl)
-{
-}
-
-
-
-// **********************************************************************
-// Specialization: Multi-point Tangent
-// **********************************************************************
-
-template<typename Traits>
-ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::MPTangent, Traits>::
-ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl)
-  : ScatterResidual<PHAL::AlbanyTraits::MPTangent,Traits>(p,dl)
-{
-}
-
-
-#endif
-}
-

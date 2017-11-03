@@ -87,44 +87,6 @@ public:
 //  void evaluateFields(typename Traits::EvalData d);
 };
 
-#ifdef ALBANY_ENSEMBLE
-// **************************************************************
-// Multi-point Residual
-// **************************************************************
-template<typename Traits>
-class ScatterResidual2D<PHAL::AlbanyTraits::MPResidual,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::MPResidual, Traits>  {
-public:
-  ScatterResidual2D(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-};
-
-// **************************************************************
-// Multi-point Jacobian
-// **************************************************************
-template<typename Traits>
-class ScatterResidual2D<PHAL::AlbanyTraits::MPJacobian,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::MPJacobian, Traits>  {
-public:
-  ScatterResidual2D(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-};
-
-// **************************************************************
-// Multi-point Tangent
-// **************************************************************
-template<typename Traits>
-class ScatterResidual2D<PHAL::AlbanyTraits::MPTangent,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::MPTangent, Traits>  {
-public:
-  ScatterResidual2D(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-};
-#endif
-
-// **************************************************************
-
-
 // **************************************************************
 // Residual
 // **************************************************************
@@ -176,41 +138,6 @@ public:
                   const Teuchos::RCP<Albany::Layouts>& dl);
 //  void evaluateFields(typename Traits::EvalData d);
 };
-
-#ifdef ALBANY_ENSEMBLE
-// **************************************************************
-// Multi-point Residual
-// **************************************************************
-template<typename Traits>
-class ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::MPResidual,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::MPResidual, Traits>  {
-public:
-  ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-};
-
-// **************************************************************
-// Multi-point Jacobian
-// **************************************************************
-template<typename Traits>
-class ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::MPJacobian,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::MPJacobian, Traits>  {
-public:
-  ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-};
-
-// **************************************************************
-// Multi-point Tangent
-// **************************************************************
-template<typename Traits>
-class ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::MPTangent,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::MPTangent, Traits>  {
-public:
-  ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-};
-#endif 
 
 }
 

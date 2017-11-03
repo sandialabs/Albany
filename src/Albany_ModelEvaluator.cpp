@@ -95,9 +95,6 @@ Albany::ModelEvaluator::ModelEvaluator(
   sacado_param_vec.resize(num_param_vecs);
   epetra_param_map.resize(num_param_vecs);
   epetra_param_vec.resize(num_param_vecs);
-#ifdef ALBANY_STOKHOS
-  p_mp_vals.resize(num_param_vecs);
-#endif
   Teuchos::RCP<const Epetra_Comm> comm = app->getEpetraComm();
   for (int i=0; i<num_param_vecs; i++) {
 
@@ -160,9 +157,6 @@ Albany::ModelEvaluator::ModelEvaluator(
         (*(epetra_param_vec[i]))[j] = sacado_param_vec[i][j].baseValue;
     }
 
-#ifdef ALBANY_STOKHOS
-    p_mp_vals[i].resize(sacado_param_vec[i].size());
-#endif
   }
 
   // Setup distributed parameters
@@ -494,17 +488,6 @@ Albany::ModelEvaluator::createInArgs() const
   }
   inArgs.set_Np(num_param_vecs+num_dist_param_vecs);
 
-#ifdef ALBANY_ENSEMBLE
-
-  inArgs.setSupports(IN_ARG_x_mp,true);
-  if(num_time_deriv > 0)
-    inArgs.setSupports(IN_ARG_x_dot_mp,true);
-  if(num_time_deriv > 1)
-    inArgs.setSupports(IN_ARG_x_dotdot_mp,true);
-  for (int i=0; i<num_param_vecs; i++)
-    inArgs.setSupports(IN_ARG_p_mp, i, true);
-#endif
-
   return inArgs;
 }
 
@@ -562,39 +545,6 @@ Albany::ModelEvaluator::createOutArgs() const
                             DerivativeSupport(DERIV_LINEAR_OP));
     }
   }
-
-#ifdef ALBANY_ENSEMBLE
-
-  // Multi-point
-  outArgs.setSupports(OUT_ARG_f_mp,true);
-  outArgs.setSupports(OUT_ARG_W_mp,true);
-  for (int i=0; i<num_param_vecs; i++)
-    outArgs.setSupports(OUT_ARG_DfDp_mp, i, DerivativeSupport(DERIV_MV_BY_COL));
-  for (int i=0; i<n_g; i++)
-    outArgs.setSupports(OUT_ARG_g_mp, i, true);
-  for (int i=0; i<n_g; i++) {
-    outArgs.setSupports(OUT_ARG_g_mp, i, true);
-    if (app->getResponse(i)->isScalarResponse()) {
-      outArgs.setSupports(OUT_ARG_DgDx_mp, i,
-                          DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-      outArgs.setSupports(OUT_ARG_DgDx_dot_mp, i,
-                          DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-      outArgs.setSupports(OUT_ARG_DgDx_dotdot_mp, i,
-                          DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
-    }
-    else {
-      outArgs.setSupports(OUT_ARG_DgDx_mp, i,
-                          DerivativeSupport(DERIV_LINEAR_OP));
-      outArgs.setSupports(OUT_ARG_DgDx_dot_mp, i,
-                          DerivativeSupport(DERIV_LINEAR_OP));
-      outArgs.setSupports(OUT_ARG_DgDx_dotdot_mp, i,
-                          DerivativeSupport(DERIV_LINEAR_OP));
-    }
-    for (int j=0; j<num_param_vecs; j++)
-      outArgs.setSupports(OUT_ARG_DgDp_mp, i, j,
-                          DerivativeSupport(DERIV_MV_BY_COL));
-  }
-#endif
 
   return outArgs;
 }
@@ -894,147 +844,6 @@ f_out->Print(std::cout);
     }
   }
 
-#ifdef ALBANY_ENSEMBLE
-
-  //
-  // Multi-point evaluation
-  //
-  mp_const_vector_t x_mp = inArgs.get_x_mp();
-  if (x_mp != Teuchos::null) {
-    mp_const_vector_t x_dot_mp  = Teuchos::null;
-    mp_const_vector_t x_dotdot_mp  = Teuchos::null;
-    if(num_time_deriv > 0)
-      x_dot_mp  = inArgs.get_x_dot_mp();
-    if(num_time_deriv > 1)
-      x_dotdot_mp  = inArgs.get_x_dotdot_mp();
-    if (x_dot_mp != Teuchos::null || x_dotdot_mp != Teuchos::null) {
-      alpha = inArgs.get_alpha();
-      //omega = inArgs.get_omega();
-      beta = inArgs.get_beta();
-      curr_time  = inArgs.get_t();
-    }
-    if (x_dotdot_mp != Teuchos::null) {
-      omega = inArgs.get_omega();
-    }
-
-    Teuchos::Array<int> p_mp_index;
-    for (int i=0; i<num_param_vecs; i++) {
-      mp_const_vector_t p_mp = inArgs.get_p_mp(i);
-      if (p_mp != Teuchos::null) {
-        p_mp_index.push_back(i);
-        for (int j=0; j<p_mp_vals[i].size(); j++) {
-          int num_mp_blocks = p_mp->size();
-          p_mp_vals[i][j].reset(num_mp_blocks);
-          p_mp_vals[i][j].copyForWrite();
-          for (int l=0; l<num_mp_blocks; l++) {
-            p_mp_vals[i][j].fastAccessCoeff(l) = (*p_mp)[l][j];
-          }
-        }
-      }
-    }
-
-    mp_vector_t f_mp = outArgs.get_f_mp();
-    mp_operator_t W_mp = outArgs.get_W_mp();
-    bool f_mp_computed = false;
-
-    // W_mp
-    if (W_mp != Teuchos::null) {
-      Stokhos::ProductContainer<Epetra_CrsMatrix> W_mp_crs(W_mp->map());
-      for (int i=0; i<W_mp->size(); i++)
-        W_mp_crs.setCoeffPtr(
-          i,
-          Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_mp->getCoeffPtr(i)));
-      app->computeGlobalMPJacobian(alpha, beta, omega, curr_time,
-                                   x_dot_mp.get(), x_dotdot_mp.get(), *x_mp,
-                                   sacado_param_vec, p_mp_index, p_mp_vals,
-                                   f_mp.get(), W_mp_crs);
-      f_mp_computed = true;
-    }
-
-    // df/dp_mp
-    for (int i=0; i<num_param_vecs; i++) {
-      Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dfdp_mp
-        = outArgs.get_DfDp_mp(i).getMultiVector();
-      if (dfdp_mp != Teuchos::null) {
-        Teuchos::Array<int> p_indexes =
-          outArgs.get_DfDp_mp(i).getDerivativeMultiVector().getParamIndexes();
-        Teuchos::RCP<ParamVec> p_vec;
-        if (p_indexes.size() == 0)
-          p_vec = Teuchos::rcp(&sacado_param_vec[i],false);
-        else {
-          p_vec = Teuchos::rcp(new ParamVec);
-          for (int j=0; j<p_indexes.size(); j++)
-            p_vec->addParam(sacado_param_vec[i][p_indexes[j]].family,
-                            sacado_param_vec[i][p_indexes[j]].baseValue);
-        }
-
-        app->computeGlobalMPTangent(0.0, 0.0, 0.0, curr_time, false,
-                                    x_dot_mp.get(), x_dotdot_mp.get(), *x_mp,
-                                    sacado_param_vec, p_mp_index, p_mp_vals,
-                                    p_vec.get(), NULL, NULL, NULL, NULL,
-                                    f_mp.get(), NULL, dfdp_mp.get());
-
-        f_mp_computed = true;
-      }
-    }
-
-    if (f_mp != Teuchos::null && !f_mp_computed)
-      app->computeGlobalMPResidual(curr_time, x_dot_mp.get(), x_dotdot_mp.get(), *x_mp,
-                                   sacado_param_vec, p_mp_index, p_mp_vals,
-                                   *f_mp);
-
-    // Response functions
-    for (int i=0; i<outArgs.Ng(); i++) {
-      mp_vector_t g_mp = outArgs.get_g_mp(i);
-      bool g_mp_computed = false;
-
-      MPDerivative dgdx_mp = outArgs.get_DgDx_mp(i);
-      MPDerivative dgdxdot_mp = outArgs.get_DgDx_dot_mp(i);
-      MPDerivative dgdxdotdot_mp = outArgs.get_DgDx_dotdot_mp(i);
-
-      // dg/dx, dg/dxdot
-      if (!dgdx_mp.isEmpty() || !dgdxdot_mp.isEmpty() || !dgdxdotdot_mp.isEmpty() ) {
-        app->evaluateMPResponseDerivative(
-            i, curr_time, x_dot_mp.get(), x_dotdot_mp.get(), *x_mp,
-            sacado_param_vec, p_mp_index, p_mp_vals,
-            NULL, g_mp.get(), dgdx_mp,
-            dgdxdot_mp, dgdxdotdot_mp, MPDerivative());
-        g_mp_computed = true;
-      }
-
-      // dg/dp
-      for (int j=0; j<num_param_vecs; j++) {
-        Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dgdp_mp =
-          outArgs.get_DgDp_mp(i,j).getMultiVector();
-        if (dgdp_mp != Teuchos::null) {
-          Teuchos::Array<int> p_indexes =
-            outArgs.get_DgDp_mp(i,j).getDerivativeMultiVector().getParamIndexes();
-          Teuchos::RCP<ParamVec> p_vec;
-          if (p_indexes.size() == 0)
-            p_vec = Teuchos::rcp(&sacado_param_vec[j],false);
-          else {
-            p_vec = Teuchos::rcp(new ParamVec);
-            for (int k=0; k<p_indexes.size(); k++)
-              p_vec->addParam(sacado_param_vec[j][p_indexes[k]].family,
-                              sacado_param_vec[j][p_indexes[k]].baseValue);
-          }
-          app->evaluateMPResponseTangent(i, alpha, beta, omega, curr_time, false,
-                                         x_dot_mp.get(), x_dotdot_mp.get(), *x_mp,
-                                         sacado_param_vec, p_mp_index,
-                                         p_mp_vals, p_vec.get(),
-                                         NULL, NULL, NULL, NULL, g_mp.get(),
-                                         NULL, dgdp_mp.get());
-          g_mp_computed = true;
-        }
-      }
-
-      if (g_mp != Teuchos::null && !g_mp_computed)
-        app->evaluateMPResponse(i, curr_time, x_dot_mp.get(), x_dotdot_mp.get(), *x_mp,
-                                sacado_param_vec, p_mp_index, p_mp_vals,
-                                *g_mp);
-    }
-  }
-#endif
 }
 
 double
