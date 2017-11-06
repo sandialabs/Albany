@@ -9,12 +9,15 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/material.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/material.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nobcs.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/nobcs.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nobcs-expl.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/nobcs-expl.yaml COPYONLY)
 
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 if (ALBANY_TEMPUS)
 if (ALBANY_IFPACK2) 
 add_test(Dynamic_${testName}_NewmarkImplicitAForm_Tempus ${AlbanyT.exe} nobcs.yaml)
+add_test(Dynamic_${testName}_NewmarkExplicitAForm_Tempus ${AlbanyT.exe} nobcs-expl.yaml)
 endif()
 endif()
 
