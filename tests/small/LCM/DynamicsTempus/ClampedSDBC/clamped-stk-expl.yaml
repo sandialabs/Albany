@@ -48,7 +48,7 @@ ANONYMOUS:
     Exodus Write Interval: 10
   Regression Results: 
     Number of Comparisons: 4
-    Test Values: [0.000000000000e+00, 2.220446049250e-19, 5.024914413594e-03, -5.024914413594e-03]
+    Test Values: [0.000000000000e+00, 1.669396300663e-04, 4.317188033355e-05, -4.317188033355e-05]
     Relative Tolerance: 1.0e-8
     Absolute Tolerance: 1.0e-8
   Piro:
@@ -66,7 +66,7 @@ ANONYMOUS:
           Storage Limit: 2000
         Time Step Control:
           Initial Time: 0.0
-          Final Time: 1.5e-3
+          Final Time: 1.5e-5
           Initial Time Index: 0
           Initial Time Step: 1.0e-07
           Final Time Index: 1000000

@@ -1,7 +1,6 @@
 # Change coupled tests to run on 4 proc's
 IF (ALBANY_MPI)
   set(AlbanyCoupled.exe   ${MPIEX} ${MPIPRE} ${MPINPF} 4 ${Albany_BINARY_DIR}/src/AlbanyCoupled)
-  set(AlbanySGCoupled.exe ${MPIEX} ${MPIPRE} ${MPINPF} 4 ${Albany_BINARY_DIR}/src/AlbanySGCoupled)
 ENDIF()
 
 # 1. Copy Input file from source to binary dir
@@ -36,21 +35,4 @@ if (ALBANY_EPETRA)
 add_test(${testNamePipe} ${Albany.exe} pipe.xml)
 add_test(${testNameReactor} ${Albany.exe} reactor.xml)
 add_test(${testNameNetwork} ${AlbanyCoupled.exe} network_coupled.xml)
-endif()
-
-# 4. Repeat process for SG problems
-if(ALBANY_DAKOTA)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pipe_sg.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/pipe_sg.xml COPYONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/reactor_sg.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/reactor_sg.xml COPYONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/network_coupled_sg.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/network_coupled_sg.xml COPYONLY)
-  get_filename_component(testNamePipeSG ${CMAKE_CURRENT_SOURCE_DIR}_PipeSG NAME)
-  get_filename_component(testNameReactorSG ${CMAKE_CURRENT_SOURCE_DIR}_ReactorSG NAME)
-  get_filename_component(testNameNetworkSG ${CMAKE_CURRENT_SOURCE_DIR}_NetworkSG NAME)
-
-  add_test(${testNamePipeSG} ${AlbanySG.exe} pipe_sg.xml)
-  add_test(${testNameReactorSG} ${AlbanySG.exe} reactor_sg.xml)
-  add_test(${testNameNetworkSG} ${AlbanySGCoupled.exe} network_coupled_sg.xml)
 endif()

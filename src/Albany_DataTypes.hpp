@@ -14,12 +14,6 @@
 // Include all of our AD types
 #include "Sacado.hpp"
 #include "Sacado_MathFunctions.hpp"
-#ifdef ALBANY_STOKHOS
-#    include "Stokhos_Sacado_Kokkos.hpp"
-#    include "Stokhos_Sacado_MathFunctions.hpp"
-#    include "Sacado_PCE_OrthogPoly.hpp"
-#    include "Sacado_MP_Vector.hpp"
-#endif
 #include "Sacado_ELRFad_DFad.hpp"
 #include "Sacado_ELRCacheFad_DFad.hpp"
 #include "Sacado_Fad_DFad.hpp"
@@ -29,36 +23,13 @@
 #include "Sacado_CacheFad_DFad.hpp"
 #include "Phalanx_KokkosDeviceTypes.hpp"
 
-// ETP:  Uncomment all three of these for enabling partial specializations
-// of Fad types for multipoint ensemble propagation.
-#ifdef ALBANY_STOKHOS
-#  include "Sacado_Fad_DFad_MP_Vector.hpp"
-#  include "Sacado_Fad_SLFad_MP_Vector.hpp"
-#  include "Sacado_Fad_ViewFad_MP_Vector.hpp"
-#endif
-
 //amb Need to move to configuration.
 //#define ALBANY_SFAD_SIZE 27
 //#define ALBANY_SLFAD_SIZE 27
 
-//#define ALBANY_ENSEMBLE_SIZE 32  -- set in CMakeLists.txt
-
 //#define ALBANY_FAST_FELIX
 // Typedef AD types to standard names
 typedef double RealType;
-
-// SG data types
-#ifdef ALBANY_STOKHOS
-typedef Stokhos::StandardStorage<int,RealType> StorageType;
-typedef Sacado::PCE::OrthogPoly<RealType,StorageType> SGType;
-
-// Ensemble (a.k.a. MP) data types
-#ifndef ALBANY_ENSEMBLE_SIZE
-#define ALBANY_ENSEMBLE_SIZE 1
-#endif
-typedef Stokhos::StaticFixedStorage<int,RealType,ALBANY_ENSEMBLE_SIZE,PHX::Device> MPStorageType;
-typedef Sacado::MP::Vector<MPStorageType> MPType;
-#endif
 
 // Switch between dynamic and static FAD types
 #ifdef ALBANY_FAST_FELIX
@@ -66,15 +37,9 @@ typedef Sacado::MP::Vector<MPStorageType> MPType;
   // are the same or different typdefs
 #define ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
   typedef Sacado::Fad::SLFad<RealType, ALBANY_SLFAD_SIZE> FadType;
-  typedef Sacado::Fad::SLFad<SGType, ALBANY_SLFAD_SIZE> SGFadType;
-  typedef Sacado::Fad::SLFad<MPType, ALBANY_SLFAD_SIZE> MPFadType;
 #else
 #define ALBANY_SFAD_SIZE 300
   typedef Sacado::Fad::DFad<RealType> FadType;
-#ifdef ALBANY_STOKHOS
-  typedef Sacado::Fad::DFad<SGType> SGFadType;
-  typedef Sacado::Fad::DFad<MPType> MPFadType;
-#endif
 #endif
 
 typedef Sacado::Fad::DFad<RealType> TanFadType;
