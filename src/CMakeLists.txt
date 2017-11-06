@@ -337,7 +337,7 @@ SET(SOURCES ${SOURCES}
   evaluators/utility/PHAL_ComputeBasisFunctions.cpp
   evaluators/utility/PHAL_ComputeBasisFunctionsSide.cpp
   evaluators/utility/PHAL_ConvertFieldType.cpp
-  evaluators/utility/PHAL_Field2Norm.cpp
+  evaluators/utility/PHAL_FieldFrobeniusNorm.cpp
   evaluators/utility/PHAL_MapToPhysicalFrame.cpp
   evaluators/utility/PHAL_MapToPhysicalFrameSide.cpp
   evaluators/utility/PHAL_SharedParameter.cpp
@@ -495,8 +495,8 @@ SET(HEADERS ${HEADERS}
   evaluators/utility/PHAL_Constant_Def.hpp
   evaluators/utility/PHAL_ConvertFieldType.hpp
   evaluators/utility/PHAL_ConvertFieldType_Def.hpp
-  evaluators/utility/PHAL_Field2Norm.hpp
-  evaluators/utility/PHAL_Field2Norm_Def.hpp
+  evaluators/utility/PHAL_FieldFrobeniusNorm.hpp
+  evaluators/utility/PHAL_FieldFrobeniusNorm_Def.hpp
   evaluators/utility/PHAL_MapToPhysicalFrame.hpp
   evaluators/utility/PHAL_MapToPhysicalFrameSide.hpp
   evaluators/utility/PHAL_MapToPhysicalFrameSide_Def.hpp

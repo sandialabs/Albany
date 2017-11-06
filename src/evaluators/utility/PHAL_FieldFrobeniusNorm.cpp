@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "PHAL_Field2Norm.hpp"
-#include "PHAL_Field2Norm_Def.hpp"
+#include "PHAL_FieldFrobeniusNorm.hpp"
+#include "PHAL_FieldFrobeniusNorm_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(PHAL::Field2NormBase)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(PHAL::FieldFrobeniusNormBase)
