@@ -5,31 +5,22 @@
 //*****************************************************************//
 
 // Define only if Zoltan is enabled
-#if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
-
 #if !defined(LCM_Partition_h)
 #define LCM_Partition_h
 
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <memory>
 #include <set>
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
-
 #include <zoltan_cpp.h>
-
-#include <Teuchos_RCP.hpp>
-#include <Teuchos_ArrayRCP.hpp>
-#include <Teuchos_ParameterList.hpp>
 
 #include <Albany_AbstractDiscretization.hpp>
 #include <Albany_DiscretizationFactory.hpp>
 #include <Albany_STKDiscretization.hpp>
-#include <Albany_SolverFactory.hpp>
 #include <Albany_Utils.hpp>
-
 #include <MiniTensor_Geometry.h>
 
 namespace LCM {
@@ -64,7 +55,7 @@ PointMap;
 ///
 namespace PARTITION {
 
-enum Scheme {
+enum class Scheme {
   UNKNOWN,
   RANDOM,
   GEOMETRIC,
@@ -92,7 +83,6 @@ struct KDTreeNode;
 /// 24(7) July 2002
 ///
 struct ClusterCenter {
-
   minitensor::Vector<double>
   position;
 
@@ -101,7 +91,6 @@ struct ClusterCenter {
 
   minitensor::Index
   count;
-
 };
 
 ///
@@ -115,14 +104,14 @@ struct KDTreeNode {
   std::string
   name;
 
-  boost::shared_ptr<KDTreeNode>
+  std::shared_ptr<KDTreeNode>
   parent;
 
   // Children
-  boost::shared_ptr<KDTreeNode>
+  std::shared_ptr<KDTreeNode>
   left;
 
-  boost::shared_ptr<KDTreeNode>
+  std::shared_ptr<KDTreeNode>
   right;
 
   // Bounding box of cell
@@ -147,7 +136,6 @@ struct KDTreeNode {
 
   minitensor::Index
   closest_center_to_midcell;
-
 };
 
 ///
@@ -161,10 +149,11 @@ template<typename Node>
 class KDTree {
 public:
 
-  KDTree(std::vector<minitensor::Vector<double>> const & points,
+  KDTree(
+      std::vector<minitensor::Vector<double>> const & points,
       minitensor::Index const number_centers);
 
-  boost::shared_ptr<Node> &
+  std::shared_ptr<Node> &
   get_root()
   {
     return root_;
@@ -172,9 +161,8 @@ public:
 
 private:
 
-  boost::shared_ptr<Node>
+  std::shared_ptr<Node>
   root_;
-
 };
 
 ///
@@ -183,8 +171,8 @@ private:
 /// \return Boost shared pointer to root node of tree.
 ///
 template<typename Node>
-boost::shared_ptr<Node>
-BuildKDTree(std::vector<minitensor::Vector<double>> const & points);
+std::shared_ptr<Node>
+buildKDTree(std::vector<minitensor::Vector<double>> const & points);
 
 ///
 /// Create KD tree node.
@@ -192,10 +180,10 @@ BuildKDTree(std::vector<minitensor::Vector<double>> const & points);
 /// \return Boost shared pointer to node of tree if created, 0 otherwise.
 ///
 template<typename Node>
-boost::shared_ptr<Node>
-CreateKDTreeNode(
+std::shared_ptr<Node>
+createKDTreeNode(
     std::string const & name,
-    boost::shared_ptr<Node> parent,
+    std::shared_ptr<Node> parent,
     std::vector<minitensor::Vector<double>> const & points,
     std::set<minitensor::Index> const & points_indices);
 
@@ -205,14 +193,14 @@ CreateKDTreeNode(
 ///
 template<typename Node, typename Visitor>
 void
-VisitTreeNode(Node & node, Visitor const & visitor);
+visitTreeNode(Node & node, Visitor const & visitor);
 
 ///
 /// Traverse a Tree and perform the action defined by the Visitor object.
 ///
 template<typename Tree, typename Visitor>
 void
-TraverseTree(Tree & tree, Visitor const & visitor);
+traverseTree(Tree & tree, Visitor const & visitor);
 
 ///
 /// Output visitor for KDTree node.
@@ -234,11 +222,6 @@ struct OutputVisitor {
 ///
 template<typename Node, typename Center>
 struct FilterVisitor {
-
-  std::vector<minitensor::Vector<double>> & points;
-
-  std::vector<Center> & centers;
-
   FilterVisitor(
       std::vector<minitensor::Vector<double>> & p,
       std::vector<Center> & c);
@@ -251,6 +234,12 @@ struct FilterVisitor {
 
   bool
   post_stop(Node const & node) const;
+
+  std::vector<minitensor::Vector<double>> &
+  points;
+
+  std::vector<Center> &
+  centers;
 };
 
 ///
@@ -278,141 +267,141 @@ public:
   /// \return Number of nodes on the array
   ///
   minitensor::Index
-  GetNumberNodes() const;
+  getNumberNodes() const;
 
   ///
   /// \return Number of elements in the array
   ///
   minitensor::Index
-  GetNumberElements() const;
+  getNumberElements() const;
 
   ///
   /// \return Space dimension
   ///
   minitensor::Index
-  GetDimension() const;
+  getDimension() const;
 
   ///
   /// \return Type of finite element in the array
   /// (assume same type for all elements)
   ///
   minitensor::ELEMENT::Type
-  GetType() const;
+  getType() const;
 
   ///
   /// \return Number of nodes that define element topology
   /// (assume same type for all elements)
   ///
   minitensor::Index
-  GetNodesPerElement() const;
+  getNodesPerElement() const;
 
   ///
   /// \return Node ID and associated point in space
   ///
   PointMap
-  GetNodeList() const;
+  getNodeList() const;
 
   ///
   /// \return Element - nodes connectivity
   ///
   AdjacencyMap
-  GetConnectivity() const;
+  getConnectivity() const;
 
   ///
   /// \return Volume for each element
   ///
   ScalarMap
-  GetVolumes() const;
+  getVolumes() const;
 
   ///
   /// \return Total volume of the array
   ///
   double
-  GetVolume() const;
+  getVolume() const;
 
   ///
   /// \return Partitions when partitioned
   ///
   std::map<int, int>
-  GetPartitions() const;
+  getPartitions() const;
 
   ///
   /// \return Volume for each partition when partitioned
   ///
   ScalarMap
-  GetPartitionVolumes() const;
+  getPartitionVolumes() const;
 
   ///
   /// \return Partition centroids
   ///
   std::vector<minitensor::Vector<double>>
-  GetPartitionCentroids() const;
+  getPartitionCentroids() const;
 
   ///
   /// \return Centroids for each element
   ///
   PointMap
-  GetCentroids() const;
+  getCentroids() const;
 
   ///
   /// \return Bounding box for all nodes
   ///
   std::pair<minitensor::Vector<double>, minitensor::Vector<double>>
-  BoundingBox() const;
+  boundingBox() const;
 
   ///
   /// \param K-means tolerance
   ///
   void
-  SetTolerance(double tolerance);
+  setTolerance(double tolerance);
 
   ///
   /// \return K-means tolerance
   ///
   double
-  GetTolerance() const;
+  getTolerance() const;
 
   ///
   /// \param requested cell size for voxelization
   ///
   void
-  SetCellSize(double requested_cell_size);
+  setCellSize(double requested_cell_size);
 
   ///
   /// \return requested cell size for voxelization
   ///
   double
-  GetCellSize() const;
+  getCellSize() const;
 
   ///
   /// \param maximum iterations for K-means
   ///
   void
-  SetMaximumIterations(minitensor::Index maximum_iterations);
+  setMaximumIterations(minitensor::Index maximum_iterations);
 
   ///
   /// \return maximum iterarions for K-means
   ///
   minitensor::Index
-  GetMaximumIterations() const;
+  getMaximumIterations() const;
 
   ///
   /// \param Initializer scheme
   ///
   void
-  SetInitializerScheme(PARTITION::Scheme initializer_scheme);
+  setInitializerScheme(PARTITION::Scheme initializer_scheme);
 
   ///
   /// \return Initializer scheme
   ///
   PARTITION::Scheme
-  GetInitializerScheme() const;
+  getInitializerScheme() const;
 
   ///
   /// Validate for partitions with zero volume.
   ///
   void
-  CheckNullVolume() const;
+  checkNullVolume() const;
 
   ///
   /// Background grid of the domain for fast determination
@@ -420,19 +409,19 @@ public:
   /// \return points inside the domain.
   ///
   std::vector<minitensor::Vector<double>>
-  CreateGrid();
+  createGrid();
 
   ///
   /// Convert point to index into voxel array
   ///
   minitensor::Vector<int>
-  PointToIndex(minitensor::Vector<double> const & point) const;
+  pointToIndex(minitensor::Vector<double> const & point) const;
 
   ///
-  /// Determine is a given point is inside the mesh.
+  /// Determine if a given point is inside the mesh.
   ///
   bool
-  IsInsideMesh(minitensor::Vector<double> const & point) const;
+  isInsideMesh(minitensor::Vector<double> const & point) const;
 
   ///
   /// Determine is a given point is inside the mesh
@@ -441,7 +430,7 @@ public:
   /// be used on a faster method.
   ///
   bool
-  IsInsideMeshByElement(minitensor::Vector<double> const & point) const;
+  isInsideMeshByElement(minitensor::Vector<double> const & point) const;
 
   ///
   /// \param length_scale Length scale for partitioning for
@@ -450,13 +439,13 @@ public:
   /// of the array divided by the cube of the length scale
   ///
   minitensor::Index
-  GetNumberPartitions(double const length_scale) const;
+  getNumberPartitions(double const length_scale) const;
 
   ///
   /// \return Albany abstract discretization corresponding to array
   ///
   Albany::AbstractDiscretization &
-  GetDiscretization();
+  getDiscretization();
 
   ///
   /// \param Collection of centers
@@ -464,7 +453,7 @@ public:
   /// closest center to its centroid
   ///
   std::map<int, int>
-  PartitionByCenters(std::vector<minitensor::Vector<double>> const & centers);
+  partitionByCenters(std::vector<minitensor::Vector<double>> const & centers);
 
   ///
   /// Partition mesh with the specified algorithm and length scale
@@ -474,7 +463,7 @@ public:
   /// \return Partition number for each element
   ///
   std::map<int, int>
-  Partition(
+  partition(
       const PARTITION::Scheme partition_scheme,
       double const length_scale);
 
@@ -485,7 +474,7 @@ public:
   /// \return Partition number for each element
   ///
   std::map<int, int>
-  PartitionHyperGraph(double const length_scale);
+  partitionHyperGraph(double const length_scale);
 
   ///
   /// Partition mesh with Zoltan Recursive Inertial Bisection algorithm
@@ -494,7 +483,7 @@ public:
   /// \return Partition number for each element
   ///
   std::map<int, int>
-  PartitionGeometric(double const length_scale);
+  partitionGeometric(double const length_scale);
 
   ///
   /// Partition mesh with K-means algorithm
@@ -503,7 +492,7 @@ public:
   /// \return Partition number for each element
   ///
   std::map<int, int>
-  PartitionKMeans(double const length_scale);
+  partitionKMeans(double const length_scale);
 
   ///
   /// Partition mesh with K-means algorithm and KD-tree
@@ -512,7 +501,7 @@ public:
   /// \return Partition number for each element
   ///
   std::map<int, int>
-  PartitionKDTree(double const length_scale);
+  partitionKDTree(double const length_scale);
 
   ///
   /// Partition mesh with sequential K-means algorithm
@@ -521,7 +510,7 @@ public:
   /// \return Partition number for each element
   ///
   std::map<int, int>
-  PartitionSequential(double const length_scale);
+  partitionSequential(double const length_scale);
 
   ///
   /// Partition mesh with randomly generated centers.
@@ -531,7 +520,7 @@ public:
   /// \return Partition number for each element
   ///
   std::map<int, int>
-  PartitionRandom(double const length_scale);
+  partitionRandom(double const length_scale);
 
   ///
   /// Zoltan interface query function that returns the number of values
@@ -546,9 +535,7 @@ public:
   /// geometry of an object.
   ///
   static int
-  GetNumberGeometry(
-      void* data,
-      int* ierr);
+  getNumberGeometry(void* data, int* ierr);
 
   ///
   /// Zoltan interface query function that returns the number of objects
@@ -561,9 +548,7 @@ public:
   /// \return   int The number of objects that are assigned to the processor.
   ///
   static int
-  GetNumberOfObjects(
-      void* data,
-      int* ierr);
+  getNumberOfObjects(void* data, int* ierr);
 
   ///
   /// Zoltan interface query function that fills two
@@ -603,7 +588,7 @@ public:
   /// \param ierr Error code to be set by function.
   ///
   static void
-  GetObjectList(
+  getObjectList(
       void* data,
       int sizeGID,
       int sizeLID,
@@ -652,7 +637,7 @@ public:
   /// \param ierr Error code to be set by function.
   ///
   static void
-  GetGeometry(
+  getGeometry(
       void* data,
       int sizeGID,
       int sizeLID,
@@ -706,7 +691,7 @@ private:
   // of whether a point is inside the domain or not.
   //
   std::vector<std::vector<std::vector<bool>>>
-  cells_;
+  grid_;
 
   //
   // Size of background grid cell
@@ -740,14 +725,12 @@ private:
   //
   PARTITION::Scheme
   initializer_scheme_;
-
 };
 
 ///
 /// Dual graph of a connectivity array
 ///
 class DualGraph {
-
 public:
 
   ///
@@ -764,57 +747,57 @@ public:
   /// \return Number of vertices in the dual graph
   ///
   int
-  GetNumberVertices() const;
+  getNumberVertices() const;
 
   ///
   /// \return Number of edges in the dual graph
   ///
   int
-  GetNumberEdges() const;
+  getNumberEdges() const;
 
   ///
   /// Set weights for dual graph vertices
   /// \param vw Map from vertex ID to weight
   ///
   void
-  SetVertexWeights(ScalarMap & vertex_weights);
+  setVertexWeights(ScalarMap & vertex_weights);
 
   ///
   /// \return Vertex weights of dual graph, if any
   ///
   ScalarMap
-  GetVertexWeights() const;
+  getVertexWeights() const;
 
   ///
   /// Replace current graph structure
   /// \param graph Graph structure that will replace the current one
   ///
   void
-  SetGraph(AdjacencyMap & graph);
+  setGraph(AdjacencyMap & graph);
 
   ///
   /// \return Current graph structure
   ///
   AdjacencyMap
-  GetGraph() const;
+  getGraph() const;
 
   ///
   /// \return Edge list to create boost graph
   ///
   AdjacencyMap
-  GetEdgeList() const;
+  getEdgeList() const;
 
   ///
   /// \return Connected components in the dual graph
   ///
   int
-  GetConnectedComponents(std::vector<int> & components) const;
+  getConnectedComponents(std::vector<int> & components) const;
 
   ///
   /// Print graph for debugging
   ///
   void
-  Print() const;
+  print() const;
 
 private:
 
@@ -823,7 +806,7 @@ private:
   // proper faces
   //
   std::vector<std::vector<int>>
-  GetFaceConnectivity(minitensor::ELEMENT::Type const type) const;
+  getFaceConnectivity(minitensor::ELEMENT::Type const type) const;
 
 private:
 
@@ -844,7 +827,6 @@ private:
   //
   ScalarMap
   vertex_weights_;
-
 };
 
 ///
@@ -859,7 +841,6 @@ private:
 /// http://www.cs.sandia.gov/Zoltan/ug_html/ug.html
 ///
 class ZoltanHyperGraph {
-
 public:
 
   ///
@@ -877,65 +858,65 @@ public:
   /// \return Number of vertices in hypergraph
   ///
   int
-  GetNumberVertices() const;
+  getNumberVertices() const;
 
   ///
   /// Set number of hyperedges
   /// \param number_hyperedges Number of hyperedges
   ///
   void
-  SetNumberHyperedges(int number_hyperedges);
+  setNumberHyperedges(int number_hyperedges);
 
   ///
   /// \return Number of hyperedges
   ///
   int
-  GetNumberHyperedges() const;
+  getNumberHyperedges() const;
 
   ///
   /// Replace current graph structure
   /// \param graph Graph structure that replaces current one
   ///
   void
-  SetGraph(AdjacencyMap & graph);
+  setGraph(AdjacencyMap & graph);
 
   ///
   /// \return Current graph structure
   ///
   AdjacencyMap
-  GetGraph() const;
+  getGraph() const;
 
   ///
   /// Set weights for hypergraph vertices
   /// \param vertex_weights Map from vertex ID to weight
   ///
   void
-  SetVertexWeights(ScalarMap & vertex_weights);
+  setVertexWeights(ScalarMap & vertex_weights);
 
   ///
   /// \return Vertex weights of hypergraph, if any.
   ///
   ScalarMap
-  GetVertexWeights() const;
+  getVertexWeights() const;
 
   ///
   /// \return Zoltan IDs for hyperedges.
   ///
   std::vector<ZOLTAN_ID_TYPE>
-  GetEdgeIDs() const;
+  getEdgeIDs() const;
 
   ///
   /// \return Offsets into array of hyperedges that are attached
   /// to a vertex.
   ///
   std::vector<int>
-  GetEdgePointers() const;
+  getEdgePointers() const;
 
   ///
   /// \return Array with Zoltan vertex IDs
   ///
   std::vector<ZOLTAN_ID_TYPE>
-  GetVertexIDs() const;
+  getVertexIDs() const;
 
   ///
   /// Zoltan interface query function that returns the number of objects
@@ -948,9 +929,7 @@ public:
   /// \return   int The number of objects that are assigned to the processor.
   ///
   static int
-  GetNumberOfObjects(
-      void* data,
-      int* ierr);
+  getNumberOfObjects(void* data, int* ierr);
 
   ///
   /// Zoltan interface query function that fills two
@@ -990,7 +969,7 @@ public:
   /// \param ierr Error code to be set by function.
   ///
   static void
-  GetObjectList(
+  getObjectList(
       void* data,
       int sizeGID,
       int sizeLID,
@@ -1025,7 +1004,7 @@ public:
   /// \param ierr  Error code to be set by function.
   ///
   static void
-  GetHyperGraphSize(
+  getHyperGraphSize(
       void* data,
       int* num_lists,
       int* num_pins,
@@ -1079,7 +1058,7 @@ public:
   /// \param ierr  Error code to be set by function.
   ///
   static void
-  GetHyperGraph(
+  getHyperGraph(
       void* data,
       int num_gid_entries,
       int num_vtx_edge,
@@ -1116,7 +1095,6 @@ private:
   //
   ScalarMap
   vertex_weights_;
-
 };
 
 ///
@@ -1162,5 +1140,3 @@ operator<<(
 } // namespace LCM
 
 #endif // #if !defined(LCM_Partition_h)
-
-#endif // #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)

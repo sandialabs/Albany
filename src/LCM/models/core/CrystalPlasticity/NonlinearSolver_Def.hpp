@@ -115,7 +115,6 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
    // Ensure that the slip increment will not cause overflow
    if (minitensor::norm(rate_slip * dt_) > LOG_HUGE) {
        this->set_failed("Failed on slip");
-       // std::cout << "Failed on slip: " << rate_slip << std::endl;
        return residual;
    }
 
@@ -447,7 +446,6 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Ensure that the slip increment is bounded
   if (minitensor::norm(rate_slip * dt_) > LOG_HUGE) {
     this->set_failed("Failed on slip");
-    // std::cout << "Failed on slip: " << rate_slip << std::endl;
     return residual;
   }
 
@@ -656,7 +654,6 @@ CP::ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>::value(
   // Ensure that the slip increment is bounded
   if (minitensor::norm(rate_slip * dt_) > LOG_HUGE) {
     this->set_failed("Failed on slip");
-    // std::cout << "Failed on slip: " << rate_slip << std::endl;
     T val = 0.5 * minitensor::dot(residual, residual);
     return val;
   }

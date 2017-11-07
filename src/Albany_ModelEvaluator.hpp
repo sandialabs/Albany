@@ -93,6 +93,9 @@ namespace Albany {
 
     //@}
 
+    //! Return the application object
+    Teuchos::RCP<Albany::Application> get_app() const { return app; }
+
   protected:
 
     //! Application object
@@ -120,14 +123,6 @@ namespace Albany {
 
     //! Whether the problem supplies its own preconditioner
     bool supplies_prec;
-
-#ifdef ALBANY_STOKHOS
-    //! Stochastic Galerkin parameters
-    mutable Teuchos::Array< Teuchos::Array<SGType> > p_sg_vals;
-
-    //! Multi-point parameters
-    mutable Teuchos::Array< Teuchos::Array<MPType> > p_mp_vals;
-#endif
 
     //! Allocated Jacobian for sending to user preconditioner
     mutable Teuchos::RCP<Epetra_CrsMatrix> Extra_W_crs;

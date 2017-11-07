@@ -289,6 +289,9 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh (for FELIX problems)
   felixAlpha = params->get("FELIX alpha", 0.0);
   felixL = params->get("FELIX L", 1.0);
+  xShift = params->get("x-shift", 0.0);
+  yShift = params->get("y-shift", 0.0);
+  zShift = params->get("z-shift", 0.0);
 
   points_per_edge = params->get("Element Degree", 1) + 1; //get # of nodes per edge for Aeras::SpectralDiscretization (Aeras problems)
 

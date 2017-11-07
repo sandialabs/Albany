@@ -34,26 +34,31 @@ namespace FELIX {
 
   private:
 
- //   std::string sideName;
- //   std::vector<std::vector<int> >  sideNodes;
+    std::string sideName;
+    std::vector<std::vector<int> >  sideNodes;
+    Teuchos::RCP<shards::CellTopology> cellType;
+    Teuchos::RCP<shards::CellTopology> sideType;
     
     int numCells;
     int numNodes;
     int numQPs;
     int cellDim;
- //   int sideDim;
+
+    int numSideNodes;
+    int numSideQPs;
+    int sideDim;
 
     PHX::MDField<const ScalarT>  field;
     PHX::MDField<const ScalarT>       gradField;
     PHX::MDField<const ParamScalarT>  forcing;
     PHX::MDField<const MeshScalarT>   gradBF;
     PHX::MDField<const MeshScalarT>   w_measure;
+    PHX::MDField<const MeshScalarT>   w_side_measure;
 
     PHX::MDField<ScalarT> residual;
 
     ScalarT p_reg, reg;
-    double laplacian_coeff, mass_coeff;
-    int offset;
+    double laplacian_coeff, mass_coeff, robin_coeff;
   };
 
 } // Namespace FELIX

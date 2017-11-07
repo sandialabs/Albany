@@ -92,50 +92,10 @@ int Albany_Dakota(int argc, char *argv[])
   // Construct a concrete Dakota interface with an EpetraExt::ModelEvaluator
   // trikota_interface is freed in the destructor for the Dakota interface class
   RCP<Dakota::DirectApplicInterface> trikota_interface;
-  bool use_multi_point = dakotaParams.get("Use Multi-Point", false);
-  if (use_multi_point) {
-    // Create MP solver
-    RCP<ParameterList> mpParams =
-      rcp(&(dakotaParams.sublist("Multi-Point")),false);
-    ParameterList& appParams2 = slvrfctry->getParameters();
-    RCP<ParameterList> piroParams =
-      rcp(&(appParams2.sublist("Piro")),false);
-    // ALBANY_ENSEMBLE_SIZE set in Cmake -- defaults=32
-#ifndef ENABLE_ENSEMBLE
-    int ALBANY_ENSEMBLE_SIZE = 32; 
-#endif
-    int block_size = mpParams->get("Block Size", ALBANY_ENSEMBLE_SIZE);
-    TEUCHOS_TEST_FOR_EXCEPTION((block_size != ALBANY_ENSEMBLE_SIZE) ,
-      std::logic_error,
-      "Multi-Point Block Size " << block_size << 
-      " can no longer be set by user. Must be set at compile time with ENSEMBLE_SIZE: "
-      << ALBANY_ENSEMBLE_SIZE);
-    
-    RCP<Piro::Epetra::StokhosMPSolver> mp_solver =
-      rcp(new Piro::Epetra::StokhosMPSolver(
-	    piroParams, mpParams, appComm, block_size,
-	    mpParams->get("Number of Spatial Processors", -1)));
-
-    // Create application & model evaluator
-    Teuchos::RCP<Albany::Application> app;
-    Teuchos::RCP<EpetraExt::ModelEvaluator> model =
-      slvrfctry->createAlbanyAppAndModel(app, appCommT);
-
-    // Setup rest of solver
-    mp_solver->setup(model);
-
-    trikota_interface =
-      rcp(new TriKota::MPDirectApplicInterface(dakota.getProblemDescDB(),
-					       mp_solver, p_index, g_index),
-	  false);
-  }
-  else {
-    RCP<EpetraExt::ModelEvaluator> App = slvrfctry->create(appCommT, appCommT);
-    trikota_interface =
-      rcp(new TriKota::DirectApplicInterface(dakota.getProblemDescDB(), App,
-					     p_index, g_index),
-	  false);
-  }
+  RCP<EpetraExt::ModelEvaluator> App = slvrfctry->create(appCommT, appCommT);
+  trikota_interface =
+    rcp(new TriKota::DirectApplicInterface(dakota.getProblemDescDB(), App, p_index, g_index),
+        false);
 
   // Run the requested Dakota strategy using this interface
   dakota.run(trikota_interface.get());

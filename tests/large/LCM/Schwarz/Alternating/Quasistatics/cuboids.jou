@@ -1,0 +1,62 @@
+## Command Options:
+## -warning = On
+## -information = On
+undo on
+
+${side = 1.0}
+${height = 2.0}
+${overlap_vol_frac = 0.5}
+${h_fine = 0.25}
+${h_coarse = 1.0}
+
+${area = side * side}
+${volume = area * height}
+${overlap_volume = overlap_vol_frac * volume}
+${overlap_length = overlap_volume / area}
+${domain_height = (height + overlap_length) / 2.0}
+${offset = abs(domain_height - overlap_length) / 2.0}
+
+create brick x {side} y {side} z {domain_height}
+move volume 1 z {-offset} include_merged
+#volume 1 scheme tetmesh
+volume 1 size {h_fine}
+mesh volume 1
+block 1 volume 1
+#block 1 element type tetra4
+block 1 name "fine"
+nodeset 1 surface 4
+nodeset 2 surface 6
+nodeset 3 surface 3
+nodeset 4 surface 5
+nodeset 5 surface 2
+nodeset 6 surface 1
+## nodeset 1 curve 7
+## nodeset 2 surface 6
+## nodeset 3 curve 6
+## nodeset 4 surface 5
+## nodeset 5 surface 2
+## nodeset 6 surface 1
+set large exodus file off
+export mesh "cuboid_00.g" overwrite
+delete mesh
+move volume 1 z {2 * offset} include_merged
+#volume 1 scheme tetmesh
+volume 1 size {h_coarse}
+mesh volume 1
+block 1 volume 1
+#block 1 element type tetra4
+block 1 name "coarse"
+nodeset 1 surface 4
+nodeset 2 surface 6
+nodeset 3 surface 3
+nodeset 4 surface 5
+nodeset 5 surface 2
+nodeset 6 surface 1
+## nodeset 1 curve 7
+## nodeset 2 surface 6
+## nodeset 3 curve 6
+## nodeset 4 surface 5
+## nodeset 5 surface 2
+## nodeset 6 surface 1
+set large exodus file off
+export mesh "cuboid_01.g" overwrite

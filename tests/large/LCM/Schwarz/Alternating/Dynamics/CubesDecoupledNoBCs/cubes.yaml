@@ -1,0 +1,19 @@
+ANONYMOUS:
+  Alternating System:
+    Model Input Files: [cube_01.yaml]
+    Minimum Iterations: 1
+    Maximum Iterations: 1
+    Relative Tolerance: 1.0e-15
+    Absolute Tolerance: 1.0e-15
+    Maximum Steps: 1
+    Initial Time: 0.0
+    Final Time: 1.0
+    Initial Time Step: 1.0
+    Exodus Write Interval: 1
+  # MODEL DECLARATION, Look in the Problem directory
+  Problem:
+    # Transient or Steady (Quasi-Static) or Continuation (load steps)
+    Solution Method: Schwarz Alternating
+    # Have Phalanx output a graph of the used evaluators
+    Phalanx Graph Visualization Detail: 0
+...

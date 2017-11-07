@@ -30,6 +30,8 @@ int main(int argc, char *argv[]) {
   int status=0; // 0 = pass, failures are incremented
   bool success = true;
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
+  
+  Kokkos::initialize(argc, argv);
 
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -147,5 +149,8 @@ int main(int argc, char *argv[]) {
   if (!success) status+=10000;
 
   Teuchos::TimeMonitor::summarize(*out,false,true,false/*zero timers*/);
+  
+  Kokkos::finalize_all();
+
   return status;
 }

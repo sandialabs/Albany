@@ -1,0 +1,157 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Scaling: 
+    Scale: 1.0
+  Problem: 
+    Name: Mechanics 3D
+    Phalanx Graph Visualization Detail: 0
+    MaterialDB Filename: 'material_00.yaml'
+    Solution Method: Transient Tempus
+    Initial Condition: 
+      Function: Constant
+      Function Data: [0.0, 0.0, 0.0]
+    Initial Condition Dot: 
+      Function: About Linear Z
+      Function Data: [8000.0]
+    Response Functions: 
+      Number: 1
+      Response 0: Project IP to Nodal Field
+      ResponseParams 0: 
+        Number of Fields: 1
+        IP Field Name 0: Cauchy_Stress
+        IP Field Layout 0: Tensor
+        Output to File: true
+    Dirichlet BCs: 
+      SDBC on NS NodeSet4 for DOF StrongSchwarz:
+        BC Function: StrongSchwarz
+        Coupled Application: nobcs_00.yaml
+        Coupled Block: Block0
+  Discretization: 
+    Method: STK3D
+    1D Elements: 5
+    1D Scale: 0.05
+    2D Elements: 5
+    2D Scale: 0.05
+    3D Elements: 75
+    3D Scale: 0.75
+    Transform Type: Shift
+    x-shift: -0.025
+    y-shift: -0.025
+    z-shift: -0.25
+    Exodus Output File Name: 'nobcs_01.e'
+    Exodus Solution Name: disp
+    Exodus Residual Name: resid
+    Separate Evaluators by Element Block: true
+    Number Of Time Derivatives: 2
+    Exodus Write Interval: 10
+  Piro:
+    Tempus: 
+      Integrator Name: Tempus Integrator
+      Tempus Integrator:
+        Integrator Type: Integrator Basic
+        Stepper Name: Tempus Stepper
+        Solution History:
+          Storage Type: Unlimited
+          Storage Limit: 2000
+        Time Step Control:
+          Initial Time: 0.0
+          Final Time: 2.0e-03
+          Initial Time Index: 0
+          Final Time Index: 10000
+          Initial Time Step: 1.0e-06
+          Integrator Step Type: Constant
+          Output Time List: ''
+          Output Index List: ''
+      Tempus Stepper:
+        Stepper Type: 'Newmark Implicit d-Form'
+        Newmark Parameters:
+          Beta: 0.25
+          Gamma: 0.50
+        Predictor Name: 'None'
+        Solver Name: NOX Solver
+        NOX Solver:
+          NOX:
+            Direction:
+              Method: Newton
+              Newton:
+                Forcing Term Method: Constant
+                Rescue Bad Newton Solve: true
+            Line Search:
+              Method: Full Step
+              Full Step:
+                Full Step: 1.0
+            Nonlinear Solver: Line Search Based 
+            Printing:
+              Output Precision: 3
+              Output Processor: 0
+              Output Information:
+                Error: true
+                Warning: true
+                Outer Iteration: true
+                Parameters: true
+                Details: true
+                Linear Solver Details: true
+                Stepper Iteration: true
+                Stepper Details: true
+                Stepper Parameters: true
+            Solver Options:
+              Status Test Check Type: Complete
+            Status Tests:
+              Test Type: Combo
+              Combo Type: OR
+              Number of Tests: 4
+              Test 0:
+                Test Type: RelativeNormF
+                Tolerance: 1.0e-10
+              Test 1:
+                Test Type: MaxIters
+                Maximum Iterations: 128
+              Test 2:
+                Test Type: Combo
+                Combo Type: OR
+                Number of Tests: 2
+                Test 0:
+                  Test Type: NStep
+                  Number of Nonlinear Iterations: 128
+                Test 1:
+                  Test Type: NormF
+                  Tolerance: 1.0e-10
+              Test 3:
+                Test Type: FiniteValue
+      Stratimikos:
+        Linear Solver Type: Belos
+        Linear Solver Types:
+          AztecOO:
+            Forward Solve:
+              AztecOO Settings:
+                Aztec Solver: GMRES
+                Convergence Test: r0
+                Size of Krylov Subspace: 200
+                Output Frequency: 20
+              Max Iterations: 1000
+              Tolerance: 1e-06
+          Belos:
+            VerboseObject:
+              Verbosity Level: none
+            Solver Type: Block GMRES
+            Solver Types:
+              Block GMRES: 
+                Convergence Tolerance: 1.0e-06
+                Output Frequency: 1
+                Output Style: 1
+                Verbosity: 33
+                Maximum Iterations: 200
+                Block Size: 1
+                Num Blocks: 200
+                Flexible Gmres: false
+        Preconditioner Type: Ifpack2
+        Preconditioner Types:
+          Ifpack2:
+            Prec Type: ILUT
+            Overlap: 2
+            Ifpack2 Settings:
+              'fact: drop tolerance': 0.0
+              'fact: ilut level-of-fill': 1.0
+              'fact: level-of-fill': 1
+

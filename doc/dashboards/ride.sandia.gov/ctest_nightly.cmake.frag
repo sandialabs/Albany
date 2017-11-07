@@ -227,6 +227,7 @@ if (BUILD_TRILINOS)
     "-DTeuchos_ENABLE_COMPLEX:BOOL=ON"
     "-DTpetra_ENABLE_Kokkos_Refactor:BOOL=ON"
     "-DKokkos_ENABLE_Cuda_Lambda:BOOL=ON"
+    "-DTpetra_ASSUME_CUDA_AWARE_MPI:BOOL=ON"
     #
     "-DTPL_ENABLE_Matio:BOOL=OFF"
     "-DTPL_ENABLE_Netcdf:BOOL=ON"

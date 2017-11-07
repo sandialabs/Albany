@@ -72,9 +72,7 @@
 #include "Thyra_DetachedVectorView.hpp"
 
 #include "Teuchos_XMLParameterListHelpers.hpp"
-#if defined(ALBANY_YAML)
 #include "Teuchos_YamlParameterListHelpers.hpp"
-#endif  // ALBANY_YAML
 #include "Teuchos_TestForException.hpp"
 
 #if defined(ALBANY_EPETRA) && defined(ALBANY_RYTHMOS)
@@ -193,19 +191,17 @@ Albany::SolverFactory::SolverFactory(
   // defaults
   // RCP<ParameterList> input_
   appParams = Teuchos::createParameterList("Albany Parameters");
-#if defined(ALBANY_YAML)
-  std::string const input_extension = getFileExtension(inputFile);
-  if (input_extension == "yaml") {
+
+  std::string const
+  input_extension = getFileExtension(inputFile);
+
+  if (input_extension == "yaml" || input_extension == "yml") {
     Teuchos::updateParametersFromYamlFileAndBroadcast(
         inputFile, appParams.ptr(), *tcomm);
   } else {
     Teuchos::updateParametersFromXmlFileAndBroadcast(
         inputFile, appParams.ptr(), *tcomm);
   }
-#else
-  Teuchos::updateParametersFromXmlFileAndBroadcast(
-      inputFile, appParams.ptr(), *tcomm);
-#endif  // ALBANY_YAML
 
   // do not set default solver parameters for QCAD::Solver or ATO::Solver
   // problems,
@@ -1252,99 +1248,6 @@ Albany::SolverFactory::checkAnalysisTestResults(
   return failures;
 }
 
-#if defined(ALBANY_EPETRA)
-#ifdef ALBANY_STOKHOS
-int
-Albany::SolverFactory::checkSGTestResults(
-    int response_index,
-    const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg,
-    const Epetra_Vector* g_mean, const Epetra_Vector* g_std_dev) const {
-  ParameterList* testParams = getTestParameters(response_index);
-
-  int failures = 0;
-  int comparisons = 0;
-  const double relTol = testParams->get<double>("Relative Tolerance");
-  const double absTol = testParams->get<double>("Absolute Tolerance");
-
-  int numSGTests =
-      testParams->get<int>("Number of Stochastic Galerkin Comparisons", 0);
-  if (numSGTests > 0 && g_sg != Teuchos::null) {
-    ALBANY_ASSERT(
-        numSGTests <= (*g_sg)[0].MyLength(),
-        "more Stochastic Galerkin Comparisons ("
-            << numSGTests << ") than values (" << (*g_sg)[0].MyLength()
-            << ") !\n");
-    for (int i = 0; i < numSGTests; i++) {
-      Teuchos::Array<double> testSGValues =
-          testParams->get<Teuchos::Array<double>>(
-              Albany::strint("Stochastic Galerkin Expansion Test Values", i));
-      TEUCHOS_TEST_FOR_EXCEPT(g_sg->size() != testSGValues.size());
-      for (int j = 0; j < g_sg->size(); j++) {
-        auto s = std::string("SG Expansion Test ") + std::to_string(i) + "," +
-                 std::to_string(j);
-        failures +=
-            scaledCompare((*g_sg)[j][i], testSGValues[j], relTol, absTol, s);
-        comparisons++;
-      }
-    }
-  }
-
-  // Repeat comparisons for SG mean statistics
-  int numMeanResponseTests =
-      testParams->get<int>("Number of Stochastic Galerkin Mean Comparisons", 0);
-  if (numMeanResponseTests > 0) {
-    ALBANY_ASSERT(
-        g_mean != nullptr,
-        "Stochastic Galerkin Mean Comparisons: vector of mean value is null "
-        "!\n");
-    ALBANY_ASSERT(
-        numMeanResponseTests <= g_mean->MyLength(),
-        "more Stochastic Galerkin Mean Comparisons ("
-            << numMeanResponseTests << ") than values (" << g_mean->MyLength()
-            << ") !\n");
-    Teuchos::Array<double> testValues = testParams->get<Teuchos::Array<double>>(
-        "Stochastic Galerkin Mean Test Values");
-
-    TEUCHOS_TEST_FOR_EXCEPT(numMeanResponseTests != testValues.size());
-    for (int i = 0; i < testValues.size(); i++) {
-      auto s = std::string("SG Mean Test ") + std::to_string(i);
-      failures += scaledCompare((*g_mean)[i], testValues[i], relTol, absTol, s);
-      comparisons++;
-    }
-  }
-
-  // Repeat comparisons for SG standard deviation statistics
-  int numSDResponseTests = testParams->get<int>(
-      "Number of Stochastic Galerkin Standard Deviation Comparisons", 0);
-  if (numSDResponseTests > 0) {
-    ALBANY_ASSERT(
-        g_std_dev != nullptr,
-        "Stochastic Galerkin Standard Deviation Comparisons: vector is null "
-        "!\n");
-    ALBANY_ASSERT(
-        numSDResponseTests <= g_std_dev->MyLength(),
-        "more Stochastic Galerkin Standard Deviation Comparisons ("
-            << numSDResponseTests << ") than values (" << g_std_dev->MyLength()
-            << ") !\n");
-    Teuchos::Array<double> testValues = testParams->get<Teuchos::Array<double>>(
-        "Stochastic Galerkin Standard Deviation Test Values");
-
-    TEUCHOS_TEST_FOR_EXCEPT(numSDResponseTests != testValues.size());
-    for (int i = 0; i < testValues.size(); i++) {
-      auto s = std::string("SG StdDev Test ") + std::to_string(i);
-      failures +=
-          scaledCompare((*g_std_dev)[i], testValues[i], relTol, absTol, s);
-      comparisons++;
-    }
-  }
-
-  storeTestResults(testParams, failures, comparisons);
-
-  return failures;
-}
-#endif
-#endif
-
 ParameterList*
 Albany::SolverFactory::getTestParameters(int response_index) const {
   ParameterList* result;
@@ -1528,6 +1431,7 @@ Albany::SolverFactory::getValidRegressionResultsParameters() const {
       "Piro Analysis Test Values", ta,
       "Array of regression values for final parameters from Analysis runs");
 
+ // Should deprecate these options, but need to remove them from all input files
   validPL->set<int>(
       "Number of Stochastic Galerkin Comparisons", 0,
       "Number of stochastic Galerkin expansions to regress against");
@@ -1553,6 +1457,7 @@ Albany::SolverFactory::getValidRegressionResultsParameters() const {
   validPL->set<Array<double>>(
       "Stochastic Galerkin Standard Deviation Test Values", ta,
       "Array of regression values for SG standard deviation responses");
+ // End of deprecated Stochastic Galerkin Options
 
   // These two are typically not set on input, just output.
   validPL->set<int>(

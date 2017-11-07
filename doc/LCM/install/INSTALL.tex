@@ -22,7 +22,7 @@
 {\oldendv\egroup\fboxsep0pt \noindent\colorbox[gray]{0.95}{\usebox0}\par}
 
 \title{Installing and compiling \albany{}/\lcm{} and
-  \trilinos{} on Fedora or SEMS/CEE}
+  \trilinos{} on Fedora, Ubuntu, SEMS/CEE, or HPC Sandia clusters}
 
 \author{The \albany{}/\lcm{} team\thanks{Original version by Juli\'an
     R\'imoli}}
@@ -33,18 +33,15 @@
 
 \section{Introduction}
 This document describes the necessary steps to install \albany{}/\lcm{} and
-\trilinos{} on a machine with Fedora Linux or the Linux CEE/SEMS environment. If
-you want a shortcut, obtain the script \verb+install_albany.sh+ (stored in
-\verb+Albany/doc/LCM/install+) and then try
-\begin{verbatim}
-./install_albany
-\end{verbatim}
-This will install and build \trilinos{} and \albany{} in the current directory.
-If the script does not complete it will tell you why and with help from this
-document you will be able to complete the install.
+\trilinos{} on a machine with Fedora Linux 26, Ubuntu Linux 14.04 LTS, the Linux
+CEE/SEMS environment, or Sandia's HPC systems.
 
-\section{Required Packages}
-The following packages should be installed using the {\tt dnf} command
+The Linux CEE/SEMS environment and the HPC clusters already have all the
+libraries mentioned below. Skip to Section \ref{sec:repo} for setting up the
+source code.
+
+\section{Required Packages for Fedora}
+The following packages should be installed using the {\tt dnf install} command
 \begin{verbatim}
 blas
 blas-devel
@@ -68,13 +65,11 @@ netcdf-devel
 netcdf-openmpi
 netcdf-openmpi-devel
 netcdf-static
-openmpi
-openmpi-devel
 \end{verbatim}
 
 \begin{verbatim}
-yaml-cpp
-yaml-cpp-devel
+openmpi
+openmpi-devel
 environment-modules
 gcc-c++
 git
@@ -99,7 +94,51 @@ clang-devel
 gitk
 \end{verbatim}
 
+\section{Required Packages for Ubuntu}
+The following packages should be installed using the {\tt apt-get install}
+command
+\begin{verbatim}
+libblas3
+libblas-dev
+libboost-dev
+libboost-program-options1.54
+libboost-graph1.54
+cmake
+libhdf5-openmpi-7
+libhdf5-openmpi-dev
+liblapack3
+liblapack-dev
+libnetcdfc++4
+libnetcdf-dev
+libopenmpi1.6
+libopenmpi-dev
+mpi-default-bin
+environment-modules
+g++
+gfortran
+git
+\end{verbatim}
+
+For example, to install the first package you should type
+\begin{verbatim}
+sudo apt-get install libblas3
+\end{verbatim}
+
+Make sure that all these packages are installed, specially if you
+create a script to do so. If a package is not installed because of a
+typo then the compilation will fail.
+
+It may be necessary to logout and login for the module alias from the
+\verb+environment-modules+ package to become active.
+
+Optional but strongly recommended packages:
+\begin{verbatim}
+clang-3.9
+gitk
+\end{verbatim}
+
 \section{Repository Setup with GitHub}
+\label{sec:repo}
 
 In a web browser go to \verb+www.github.com+, create an account and
 set up ssh public keys. If you require push privilges for \albany{},
@@ -147,10 +186,17 @@ LCM
 In \verb+~/.bashrc+, the following variables are needed:
 \begin{verbatim}
 export LCM_DIR=~/LCM
-export MODULEPATH=$LCM_DIR/Albany/doc/LCM/modulefiles:$MODULEPATH
+module use --append $LCM_DIR/Albany/doc/LCM/modulefiles
 \end{verbatim}
 The \verb+LCM_DIR+ variable should contain the location of the
 top-level \verb+LCM+ directory.
+
+For Ubuntu, it is also necessary to add to \verb+~/.bashrc+ the following
+definitions before the previous ones:
+\begin{verbatim}
+modules_shell=bash
+module() { eval `/usr/bin/modulecmd $modules_shell $*`; }
+\end{verbatim}
 
 \section{Build Script}
 Create a symbolic link to the build script
@@ -238,14 +284,6 @@ compiling Albany.
 \section{Modules}
 \label{sec:modules}
 
-In \verb+~/.bashrc+, the following variables are needed:
-\begin{verbatim}
-export LCM_DIR=~/LCM
-export MODULEPATH=$LCM_DIR/Albany/doc/LCM/modulefiles:$MODULEPATH
-\end{verbatim}
-The \verb+LCM_DIR+ variable should contain the location of the
-top-level \verb+LCM+ directory.
-
 Modules are used to create different environments for the
 configuration and compilation of both \albany{} and \trilinos{}. To
 see the available modules that correspond to different thread models,
@@ -256,26 +294,26 @@ module avail
 This results in something like:
 \begin{verbatim}
 ------------------ /home/amota/LCM/Albany/doc/LCM/modulefiles ------------------
-cuda-gcc-debug       lcm/sems             pthreads-gcc-small
-cuda-gcc-mixed       lcm/serial           release
-cuda-gcc-profile     lcm/small            serial-clang-debug
-cuda-gcc-release     lcm/tpls             serial-clang-mixed
+cuda-gcc-debug       lcm-sems             pthreads-gcc-small
+cuda-gcc-mixed       lcm-serial           release
+cuda-gcc-profile     lcm-small            serial-clang-debug
+cuda-gcc-release     lcm-tpls             serial-clang-mixed
 cuda-gcc-small       mixed                serial-clang-profile
 debug                openmp-gcc-debug     serial-clang-release
-lcm/cee              openmp-gcc-mixed     serial-clang-small
-lcm/clang            openmp-gcc-profile   serial-gcc-debug
-lcm/common           openmp-gcc-release   serial-gcc-mixed
-lcm/cuda             openmp-gcc-small     serial-gcc-profile
-lcm/debug            openmp-intel-debug   serial-gcc-release
-lcm/fedora           openmp-intel-mixed   serial-gcc-small
-lcm/finalize         openmp-intel-profile serial-intel-debug
-lcm/gcc              openmp-intel-release serial-intel-mixed
-lcm/intel            openmp-intel-small   serial-intel-profile
-lcm/mixed            profile              serial-intel-release
-lcm/openmp           pthreads-gcc-debug   serial-intel-small
-lcm/profile          pthreads-gcc-mixed   small
-lcm/pthreads         pthreads-gcc-profile
-lcm/release          pthreads-gcc-release
+lcm-cee              openmp-gcc-mixed     serial-clang-small
+lcm-clang            openmp-gcc-profile   serial-gcc-debug
+lcm-common           openmp-gcc-release   serial-gcc-mixed
+lcm-cuda             openmp-gcc-small     serial-gcc-profile
+lcm-debug            openmp-intel-debug   serial-gcc-release
+lcm-fedora           openmp-intel-mixed   serial-gcc-small
+lcm-finalize         openmp-intel-profile serial-intel-debug
+lcm-gcc              openmp-intel-release serial-intel-mixed
+lcm-intel            openmp-intel-small   serial-intel-profile
+lcm-mixed            profile              serial-intel-release
+lcm-openmp           pthreads-gcc-debug   serial-intel-small
+lcm-profile          pthreads-gcc-mixed   small
+lcm-pthreads         pthreads-gcc-profile
+lcm-release          pthreads-gcc-release
 \end{verbatim}
 The naming convention for the \verb+*-*-*+ modules follows the pattern
 \begin{verbatim}
@@ -316,41 +354,56 @@ In addition, for \trilinos{} an install directory similarly named is
 created at the \lcm{} top-level directory.
 
 \section{Configuring and compiling}
+\label{sec:config-build}
 
 Assuming that we want to compile with a \verb+serial+ thread model
 using the \verb+gcc+ tool chain in \verb+debug+ mode, load the
-appropriate module:
+appropriate module.
+For the Fedora environment, this would be:
 \begin{verbatim}
-module load lcm/fedora
+module load lcm-fedora
+module load serial-gcc-debug
+\end{verbatim}
+For the Ubuntu environment, this would be:
+\begin{verbatim}
+module load lcm-ubuntu
 module load serial-gcc-debug
 \end{verbatim}
 For the SEMS/CEE environment, this would be:
 \begin{verbatim}
-module load lcm/sems
+module load lcm-sems
 module load serial-gcc-debug
 \end{verbatim}
 For the HPC cluster environment, this would be:
 \begin{verbatim}
-module load lcm/cluster
+module load lcm-cluster
 module load serial-gcc-debug
 \end{verbatim}
+
+In all these cases one can use the \verb+debug+ convenience alias instead of
+\verb+serial-gcc-debug+ for brevity. The \verb+debug+, \verb+release+,
+\verb+profile+, \verb+small+ and \verb+mixed+ modules are convenience aliases
+for \verb+serial-gcc-debug+, \verb+ serial-gcc-release+,
+\verb+ serial-gcc-profile+, \verb+ serial-gcc-small+ and
+\verb+ serial-gcc-mixed+ modules, respectively.
+
 Now first configure and compile \trilinos{}. Within the top-level
 \verb+LCM+ directory type:
 \begin{verbatim}
-./config-build.sh trilinos [# processors]
+./clean-config-build.sh trilinos [# processors]
 \end{verbatim}
 For example, if you want to build using 16 processors, type:
 \begin{verbatim}
-./config-build.sh trilinos 16
+./clean-config-build.sh trilinos 16
 \end{verbatim}
 Finally, repeat the procedure for \albany{}:
 \begin{verbatim}
-./config-build.sh albany [# processors]
+./clean-config-build.sh albany [# processors]
 \end{verbatim}
 For example, if you want to build a version of the code using 16
 processors, type:
 \begin{verbatim}
-./config-build.sh albany 16
+./clean-config-build.sh albany 16
 \end{verbatim}
 
 Note that to compile a version of \albany{} with a specific thread model,
@@ -367,7 +420,7 @@ script. For example:
 \end{verbatim}
 There are times when it is necessary to reconfigure, for example when
 adding or deleting files under the \verb+LCM/Albany/src/LCM+
-directory. This is generally anounced in the commit notices.
+directory. This is generally announced in the commit notices.
 
 Also, note that both \trilinos{} and \albany{} are heavily templetized
 C++ codes. Building the debug version of \albany{} requires large
@@ -405,7 +458,7 @@ helps to avoid coding errors.
 
 The \verb+clang-format+ tool can be used for this. There is a
 \verb+.clang-format+ file in the \verb+Albany/src/LCM+ directory that conforms
-to the C++ Google conding standard. Thus, all that is needed to reformat a
+to the C++ Google coding standard. Thus, all that is needed to reformat a
 source file in place is the command:
 \begin{verbatim}
 clang-format -i [source file name]

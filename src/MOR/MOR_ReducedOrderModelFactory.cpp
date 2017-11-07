@@ -70,10 +70,13 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
     printf("Parameter read: num_DBC_modes = %d.\n", num_DBC_modes);
     if (projectionType == allowedProjectionTypes[0])
     {
+      printf("Galerkin Projection ROM will be run with %d DBC Modes.\n", num_DBC_modes);
+      /*
       if (num_DBC_modes != 0)
       {
         printf("WARNING:  Galerkin Projection selected, specifying Number of DBC Modes will have no effect.\n");
       }
+      */
     }
     else if (projectionType == allowedProjectionTypes[1])
     {
@@ -138,7 +141,7 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
 
     if (projectionType == allowedProjectionTypes[0]) {
       const RCP<const Epetra_MultiVector> projector = spaceFactory_->getProjector(romParams);
-      const RCP<ReducedOperatorFactory> opFactory(new PetrovGalerkinOperatorFactory(basis, projector));
+      const RCP<ReducedOperatorFactory> opFactory(new PetrovGalerkinOperatorFactory(basis, projector, num_DBC_modes));
       result = rcp(new ReducedOrderModelEvaluator(child, reducedSpace, opFactory, output_flags, preconditionerType));
     } else if (projectionType == allowedProjectionTypes[1]) {
       RCP<ReducedOperatorFactory> opFactory;

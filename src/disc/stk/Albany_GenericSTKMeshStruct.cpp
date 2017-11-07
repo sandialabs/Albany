@@ -209,6 +209,9 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh (for FELIX problems)
   felixAlpha = params->get("FELIX alpha", 0.0);
   felixL = params->get("FELIX L", 1.0);
+  xShift = params->get("x-shift", 0.0);
+  yShift = params->get("y-shift", 0.0);
+  zShift = params->get("z-shift", 0.0);
 
   points_per_edge = params->get("Element Degree", 1) + 1;
 
@@ -1787,6 +1790,10 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<bool>("Write Coordinates to MatrixMarket", false, "Writing Coordinates to MatrixMarket File"); //for writing coordinates to matrix market file
   validPL->set<double>("FELIX alpha", 0.0, "Surface boundary inclination for FELIX problems (in degrees)"); //for FELIX problem that require tranformation of STK mesh
   validPL->set<double>("FELIX L", 1, "Domain length for FELIX problems"); //for FELIX problem that require tranformation of STK mesh
+  
+  validPL->set<double>("x-shift", 0.0, "Value by which to shift domain in positive x-direction"); 
+  validPL->set<double>("y-shift", 0.0, "Value by which to shift domain in positive y-direction"); 
+  validPL->set<double>("z-shift", 0.0, "Value by which to shift domain in positive z-direction"); 
 
   validPL->set<bool>("Contiguous IDs", "true", "Tells Ascii mesh reader is mesh has contiguous global IDs on 1 processor."); //for FELIX problem that require tranformation of STK mesh
 

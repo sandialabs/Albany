@@ -226,7 +226,7 @@ Teuchos::RCP<Epetra_Map> QCAD::CreateCombinedMap(Teuchos::RCP<const Epetra_Map> 
   int nExtra = numAdditionalElements % nProcs;
 
   int my_nAdditional = (numAdditionalElements / nProcs) + ((myRank < nExtra) ? 1 : 0);
-  int my_scalar_offset = myRank * (numAdditionalElements / nProcs) + (myRank < nExtra) ? myRank : nExtra;
+  int my_scalar_offset = (myRank * (numAdditionalElements / nProcs) + (myRank < nExtra)) ? myRank : nExtra;
   int my_nElements = disc_map->NumMyElements() * numCopiesOfDiscMap + my_nAdditional;
   std::vector<int> my_global_elements(my_nElements);  //global element indices for this processor
 

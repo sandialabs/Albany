@@ -653,7 +653,9 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     Teuchos::ParameterList& responsesList = homogParams.sublist("Problem").sublist("Response Functions");
     int nResponses = responsesList.get<int>("Number of Response Vectors");
     bool responseFound = false;
-    for(int iResponse=0; iResponse<nResponses; iResponse){
+//    for(int iResponse=0; iResponse<nResponses; iResponse){
+// GAH - is this correct?
+    for(int iResponse=0; iResponse<nResponses; iResponse++){
       Teuchos::ParameterList& responseList = responsesList.sublist(Albany::strint("Response Vector",iResponse));
       std::string rname = responseList.get<std::string>("Name");
       if(rname == "Homogenized Constants Response"){

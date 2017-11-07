@@ -107,8 +107,10 @@ T Topology::Penalize(int functionIndex, T rho)
   if(pfunc.pType == HONE) return pfunc.h1->Penalize<T>(rho);
   else
   if(pfunc.pType == HTWO) return pfunc.h2->Penalize<T>(rho);
-  else
-  if(pfunc.pType == POLY) return pfunc.poly->Penalize<T>(rho);
+//  else
+//  if(pfunc.pType == POLY) return pfunc.poly->Penalize<T>(rho);
+// GAH - Clang warns if we exit and do not return something
+  return pfunc.poly->Penalize<T>(rho);
 }
  
 template<typename T>
@@ -122,8 +124,10 @@ T Topology::dPenalize(int functionIndex, T rho)
   if(pfunc.pType == HONE) return pfunc.h1->dPenalize<T>(rho);
   else
   if(pfunc.pType == HTWO) return pfunc.h2->dPenalize<T>(rho);
-  else
-  if(pfunc.pType == POLY) return pfunc.poly->dPenalize<T>(rho);
+//  else
+//  if(pfunc.pType == POLY) return pfunc.poly->dPenalize<T>(rho);
+// GAH - Clang warns if we exit and do not return something
+  return pfunc.poly->dPenalize<T>(rho);
 }
 
   

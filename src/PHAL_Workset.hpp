@@ -25,14 +25,6 @@
 #include "Albany_DistributedParameterLibrary_Tpetra.hpp"
 #include "Kokkos_ViewFactory.hpp"
 
-#ifdef ALBANY_STOKHOS
-#include "Stokhos_OrthogPolyExpansion.hpp"
-#if defined(ALBANY_EPETRA)
-#include "Stokhos_EpetraVectorOrthogPoly.hpp"
-#include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
-#endif
-#endif
-
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Comm.hpp"
 
@@ -58,10 +50,6 @@ struct Workset {
   unsigned int wsIndex;
   unsigned int numEqs;
 
-#ifdef ALBANY_STOKHOS
-  Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
-#endif
-
 #if defined(ALBANY_EPETRA)
   // These are solution related.
   Teuchos::RCP<const Epetra_Vector> x;
@@ -85,17 +73,6 @@ struct Workset {
   Teuchos::RCP<const Tpetra_MultiVector> VxdotT;
   Teuchos::RCP<const Tpetra_MultiVector> VxdotdotT;
   Teuchos::RCP<const Tpetra_MultiVector> VpT;
-#if defined(ALBANY_EPETRA)
-#ifdef ALBANY_STOKHOS
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_x;
-
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_xdot;
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_xdotdot;
-  Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_x;
-  Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_xdot;
-  Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_xdotdot;
-#endif
-#endif
 
 #if defined(ALBANY_EPETRA)
   // These are residual related.
@@ -126,19 +103,6 @@ struct Workset {
   Teuchos::RCP<Tpetra_MultiVector> fpVT;
   Teuchos::RCP<Tpetra_MultiVector> Vp_bcT;
 
-#if defined(ALBANY_EPETRA)
-#ifdef ALBANY_STOKHOS
-  Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_f;
-  Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > sg_Jac;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_JV;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_fp;
-  Teuchos::RCP< Stokhos::ProductEpetraVector > mp_f;
-  Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > mp_Jac;
-  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_JV;
-  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_fp;
-#endif
-#endif
-
   Teuchos::RCP<const Albany::NodeSetList> nodeSets;
   Teuchos::RCP<const Albany::NodeSetCoordList> nodeSetCoords;
 
@@ -161,8 +125,6 @@ struct Workset {
   int num_cols_p;
   int param_offset;
 
-  std::vector<int> *coord_deriv_indices;
-
   // Distributed parameter derivatives
   Teuchos::RCP<DistParamLib> distParamLib;
   std::string dist_param_deriv_name;
@@ -177,7 +139,6 @@ struct Workset {
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
   Teuchos::ArrayRCP<double>  wsSphereVolume;
   Teuchos::ArrayRCP<double*>  wsLatticeOrientation;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
 
   // Needed for Schwarz coupling and for dirichlet conditions based on dist parameters.
@@ -247,29 +208,6 @@ struct Workset {
   //Tpetra analog of dgdp
   Teuchos::RCP<Tpetra_MultiVector> dgdpT;
   Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT;
-
-#if defined(ALBANY_STOKHOS) and defined(ALBANY_EPETRA)
-#ifdef ALBANY_SG
-  Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_g;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdx;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdxdot;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdxdotdot;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > overlapped_sg_dgdx;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > overlapped_sg_dgdxdot;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > overlapped_sg_dgdxdotdot;
-  Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdp;
-#endif
-#ifdef ALBANY_ENSEMBLE
-  Teuchos::RCP< Stokhos::ProductEpetraVector > mp_g;
-  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdx;
-  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdxdot;
-  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdxdotdot;
-  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdx;
-  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdxdot;
-  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdxdotdot;
-  Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdp;
-#endif
-#endif
 
   // Meta-function class encoding T<EvalT::ScalarT> given EvalT
   // where T is any lambda expression (typically a placeholder expression)
