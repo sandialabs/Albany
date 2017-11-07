@@ -240,27 +240,6 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
    PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag0(allDBC, dummy);
    dfm->requireField<AlbanyTraits::Tangent>(tan_tag0);
 
-#ifdef ALBANY_SG
-   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag0(allDBC, dummy);
-   dfm->requireField<AlbanyTraits::SGResidual>(sgres_tag0);
-
-   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag0(allDBC, dummy);
-   dfm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag0);
-
-   PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag0(allDBC, dummy);
-   dfm->requireField<AlbanyTraits::SGTangent>(sgtan_tag0);
-#endif 
-#ifdef ALBANY_ENSEMBLE 
-
-   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag0(allDBC, dummy);
-   dfm->requireField<AlbanyTraits::MPResidual>(mpres_tag0);
-
-   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag0(allDBC, dummy);
-   dfm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag0);
-
-   PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag0(allDBC, dummy);
-   dfm->requireField<AlbanyTraits::MPTangent>(mptan_tag0);
-#endif
 }
 
 // Neumann BCs
@@ -556,28 +535,6 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
 
    PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag0(allBC, dl->dummy);
    fm->requireField<AlbanyTraits::Tangent>(tan_tag0);
-
-#ifdef ALBANY_SG
-   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag0(allBC, dl->dummy);
-   fm->requireField<AlbanyTraits::SGResidual>(sgres_tag0);
-
-   PHX::Tag<AlbanyTraits::SGJacobian::ScalarT> sgjac_tag0(allBC, dl->dummy);
-   fm->requireField<AlbanyTraits::SGJacobian>(sgjac_tag0);
-
-   PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag0(allBC, dl->dummy);
-   fm->requireField<AlbanyTraits::SGTangent>(sgtan_tag0);
-#endif 
-#ifdef ALBANY_ENSEMBLE 
-
-   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag0(allBC, dl->dummy);
-   fm->requireField<AlbanyTraits::MPResidual>(mpres_tag0);
-
-   PHX::Tag<AlbanyTraits::MPJacobian::ScalarT> mpjac_tag0(allBC, dl->dummy);
-   fm->requireField<AlbanyTraits::MPJacobian>(mpjac_tag0);
-
-   PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag0(allBC, dl->dummy);
-   fm->requireField<AlbanyTraits::MPTangent>(mptan_tag0);
-#endif
 
    nfm[0] = fm;
 }

@@ -20,12 +20,16 @@ namespace MOR {
 
 class PetrovGalerkinOperatorFactory : public ReducedOperatorFactory {
 public:
-  explicit PetrovGalerkinOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis);
+  explicit PetrovGalerkinOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis,
+                                         int numDBCModes);
   PetrovGalerkinOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis,
-                                const Teuchos::RCP<const Epetra_MultiVector> &projectionBasis);
+                                const Teuchos::RCP<const Epetra_MultiVector> &projectionBasis,
+                                int numDBCModes);
 
   virtual bool fullJacobianRequired(bool residualRequested, bool jacobianRequested) const;
 
+  virtual const Epetra_MultiVector &rightProjection(const Epetra_MultiVector &fullVector,
+                                                   Epetra_MultiVector &result) const;
   virtual const Epetra_MultiVector &leftProjection(const Epetra_MultiVector &fullVector,
                                                    Epetra_MultiVector &result) const;
   virtual const Epetra_MultiVector &leftProjection_ProjectedSol(const Epetra_MultiVector &fullVector,
@@ -48,14 +52,20 @@ public:
   virtual Teuchos::RCP<const Epetra_MultiVector> getPreconditioner() const {TEUCHOS_ASSERT(0);}
   virtual void setPreconditioner(Epetra_CrsMatrix &jacobian) const {TEUCHOS_ASSERT(0);}
   virtual void applyPreconditioner(const Epetra_MultiVector &vector) const {TEUCHOS_ASSERT(0);}
+  virtual void applyPreconditionerTwice(const Epetra_MultiVector &vector) const {TEUCHOS_ASSERT(0);}
 
   virtual Teuchos::RCP<Ifpack_Preconditioner> getPreconditionerIfpack() const {TEUCHOS_ASSERT(0);}
   virtual void setPreconditionerIfpack(Epetra_CrsMatrix &jacobian, std::string ifpackType) const {TEUCHOS_ASSERT(0);}
   virtual void applyPreconditionerIfpack(const Epetra_MultiVector &vector) const {TEUCHOS_ASSERT(0);}
+  virtual void applyPreconditionerIfpackTwice(const Epetra_MultiVector &vector) const {TEUCHOS_ASSERT(0);}
 
   virtual Teuchos::RCP<const Epetra_CrsMatrix> getJacobian() const {TEUCHOS_ASSERT(0);}
   virtual void setJacobian(Epetra_CrsMatrix &jacobian) const {TEUCHOS_ASSERT(0);}
   virtual void applyJacobian(const Epetra_MultiVector &vector) const {TEUCHOS_ASSERT(0);}
+
+  virtual int num_dbc_modes() const { return num_dbc_modes_;};
+
+	int num_dbc_modes_;
 
 private:
   Teuchos::RCP<const Epetra_MultiVector> reducedBasis_, projectionBasis_;

@@ -384,6 +384,33 @@ Albany::STKDiscretization::transformMesh()
         x[n] = x[n]/r;
     }
   }
+  else if (transformType == "Shift") {
+    //*out << "Shift!\n";
+    double xshift = stkMeshStruct->xShift;
+    double yshift = stkMeshStruct->yShift;
+    double zshift = stkMeshStruct->zShift;
+    //*out << "xshift, yshift, zshift = " << xshift << ", " << yshift << ", " << zshift << '\n'; 
+    const int numDim = stkMeshStruct->numDim;
+    //*out << "numDim = " << numDim << '\n'; 
+    if (numDim >= 0) {
+      for (int i=0; i < numOverlapNodes; i++)  {
+        double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
+        x[0] = xshift + x[0]; 
+      }
+    }
+    if (numDim >= 1) {
+      for (int i=0; i < numOverlapNodes; i++)  {
+        double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
+        x[1] = yshift + x[1]; 
+      }
+    }
+    if (numDim >= 1) {
+      for (int i=0; i < numOverlapNodes; i++)  {
+        double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
+        x[2] = zshift + x[2]; 
+      }
+    }
+  }
   else if (transformType == "ISMIP-HOM Test A") {
 #ifdef OUTPUT_TO_SCREEN
     *out << "Test A!" << endl;

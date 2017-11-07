@@ -56,36 +56,6 @@ private:
   std::size_t numDim;
 };
 
-#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
-template<typename Traits> 
-class GatherCoordinateVector<PHAL::AlbanyTraits::Tangent, Traits> 
-                    : public PHX::EvaluatorWithBaseImpl<Traits>,
-                      public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Tangent, Traits>  {
-  
-public:
-  
-  GatherCoordinateVector(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-  GatherCoordinateVector(const Teuchos::ParameterList& p);
-  
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
-  
-  void evaluateFields(typename Traits::EvalData d);
-  
-private:
-
-  typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
-  typedef typename PHAL::AlbanyTraits::Tangent::MeshScalarT MeshScalarT;
-
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
- 
-  bool  periodic;
-  std::size_t worksetSize;
-  std::size_t numVertices;
-  std::size_t numDim;
-};
-#endif
 }
 
 #endif

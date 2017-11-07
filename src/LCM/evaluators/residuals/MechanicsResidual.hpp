@@ -23,25 +23,27 @@ namespace LCM {
 /// of linear momentum for infinitesimal and finite deformation,
 /// with or without dynamics
 ///
-template <typename EvalT, typename Traits>
+template<typename EvalT, typename Traits>
 class MechanicsResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
                           public PHX::EvaluatorDerived<EvalT, Traits> {
  public:
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  using ScalarT     = typename EvalT::ScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
 
   ///
   /// Constructor
   ///
   MechanicsResidual(
-      Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
+      Teuchos::ParameterList&              p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
   ///
   /// Phalanx method to allocate space
   ///
   void
   postRegistrationSetup(
-      typename Traits::SetupData d, PHX::FieldManager<Traits>& vm);
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
   ///
   /// Implementation of physics
@@ -116,19 +118,27 @@ class MechanicsResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
   AAdapt::rc::Field<2> def_grad_rc_;
 
  public:  // Kokkos
-  struct residual_Tag {};
-  struct residual_haveBodyForce_Tag {};
-  struct residual_haveBodyForce_and_dynamic_Tag {};
-  struct residual_have_dynamic_Tag {};
+  struct residual_Tag
+  {
+  };
+  struct residual_haveBodyForce_Tag
+  {
+  };
+  struct residual_haveBodyForce_and_dynamic_Tag
+  {
+  };
+  struct residual_have_dynamic_Tag
+  {
+  };
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
   typedef Kokkos::RangePolicy<ExecutionSpace, residual_Tag> residual_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, residual_haveBodyForce_Tag>
       residual_haveBodyForce_Policy;
-  typedef Kokkos::RangePolicy<
-      ExecutionSpace, residual_haveBodyForce_and_dynamic_Tag>
-      residual_haveBodyForce_and_dynamic_Policy;
+  typedef Kokkos::
+      RangePolicy<ExecutionSpace, residual_haveBodyForce_and_dynamic_Tag>
+          residual_haveBodyForce_and_dynamic_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, residual_have_dynamic_Tag>
       residual_have_dynamic_Policy;
 
@@ -140,8 +150,8 @@ class MechanicsResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
   operator()(const residual_haveBodyForce_Tag& tag, const int& i) const;
   KOKKOS_INLINE_FUNCTION
   void
-  operator()(
-      const residual_haveBodyForce_and_dynamic_Tag& tag, const int& i) const;
+  operator()(const residual_haveBodyForce_and_dynamic_Tag& tag, const int& i)
+      const;
   KOKKOS_INLINE_FUNCTION
   void
   operator()(const residual_have_dynamic_Tag& tag, const int& i) const;

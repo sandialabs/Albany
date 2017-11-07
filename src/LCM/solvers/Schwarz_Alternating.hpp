@@ -93,7 +93,7 @@ public:
 
   bool
   get_failed() const;
-
+  
 private:
 
   /// Create operator form of dg/dx for distributed responses
@@ -117,9 +117,12 @@ private:
   Thyra::ModelEvaluatorBase::InArgs<ST>
   createInArgsImpl() const;
 
-  /// Schwarz Alternating loop
+  /// Schwarz Alternating loops
   void
-  SchwarzLoop() const;
+  SchwarzLoopQuasistatics() const;
+
+  void
+  SchwarzLoopDynamics() const;
 
   void
   updateConvergenceCriterion() const;
@@ -136,16 +139,12 @@ private:
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   apps_;
 
-  Teuchos::Array<Teuchos::RCP<SolutionSniffer>>
-  solution_sniffers_;
-
   Teuchos::Array<Teuchos::RCP<Albany::AbstractSTKMeshStruct>>
   stk_mesh_structs_;
-
-  /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
-  Thyra::ModelEvaluatorBase::InArgs<ST>
-  nominal_values_;
   
+  Teuchos::Array<Teuchos::RCP<Albany::AbstractDiscretization>>
+  discs_;
+
   char const *
   failure_message_{"No failure detected"};
 
@@ -176,6 +175,18 @@ private:
   ST
   initial_time_step_{0.0};
 
+  ST
+  min_time_step_{0.0};
+
+  ST
+  max_time_step_{0.0};
+
+  ST
+  reduction_factor_{0.0};
+
+  ST
+  increase_factor_{0.0};
+
   int
   output_interval_{1};
 
@@ -203,42 +214,46 @@ private:
   mutable ST
   norm_diff_{0.0};
 
-  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST>>
+  mutable std::vector<Thyra::ModelEvaluatorBase::InArgs<ST>>
   sub_inargs_;
 
-  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST>>
+  mutable std::vector<Thyra::ModelEvaluatorBase::OutArgs<ST>>
   sub_outargs_;
 
-  mutable Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
+  mutable std::vector<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
   model_evaluators_;
 
-  mutable Teuchos::Array<Teuchos::RCP<NOX::Abstract::Vector>>
-  solutions_;
+  mutable std::vector<Teuchos::RCP<NOX::Abstract::Vector>>
+  disp_nox_;
 
-  Teuchos::Array<Teuchos::ParameterList>
-  nox_params_;
+  mutable std::vector<Teuchos::RCP<NOX::Abstract::Vector>>
+  prev_disp_nox_;
+
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
+  ics_disp_;
+  
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
+  ics_velo_;
+
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
+  ics_acce_;
+
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
+  prev_disp_thyra_;
+ 
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
+  prev_velo_thyra_;
+  
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
+  prev_acce_thyra_;
+  
 
   // Used if solving with loca or tempus
-  mutable std::vector<bool>
-  have_loca_;
+  bool
+  have_loca_{false};
 
-  mutable std::vector<bool>
-  have_tempus_;
-
-  mutable std::vector<ST>
-  step_start_;
-
-  mutable std::vector<ST>
-  step_stop_;
-
-  mutable std::vector<std::reference_wrapper<Teuchos::ParameterList>>
-  start_stop_params_;
-
-  mutable std::vector<std::string>
-  start_str_;
-
-  mutable std::vector<std::string>
-  stop_str_;
+  bool
+  have_tempus_{false};
 };
 
 } // namespace LCM

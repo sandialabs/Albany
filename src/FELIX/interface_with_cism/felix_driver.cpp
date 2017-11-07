@@ -932,132 +932,95 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
       std::cout << "In felix_driver_run: copying Albany solution to uvel and vvel to send back to CISM... " << std::endl;
-#ifdef CISM_USE_EPETRA 
-    //Epetra_Vectors to hold uvel and vvel to be passed to Glimmer/CISM
-    Epetra_Vector uvel(*node_map, true); 
-    Epetra_Vector vvel(*node_map, true);
+    
+    //IKT, 10/6/17: the following is towards fixing Albany github issue #187, having to do 
+    //with the solution passed to the *.nc file not being copied from Albany to CISM 
+    //correctly in parallel for all geometries/decompositions.
+
+    int numGlobalNodes;
+#ifdef CISM_USE_EPETRA
+    numGlobalNodes = node_map->NumGlobalElements();
 #else
-    //Tpetra_Vectors to hold uvel and vvel to be passed to Glimmer/CISM
-    Teuchos::RCP<Tpetra_Vector> uvel = Teuchos::rcp(new Tpetra_Vector(node_map, true));
-    Teuchos::RCP<Tpetra_Vector> vvel = Teuchos::rcp(new Tpetra_Vector(node_map, true));
+    numGlobalNodes = node_map->getGlobalNumElements();
 #endif
 
-#ifdef CISM_USE_EPETRA 
+    //IKT, 10/6/17: ensure size of *vel_local* and *vec_global* std::vecs 
+    //is large enough when reduced comm is used.
+#ifdef REDUCED_COMM
+    numGlobalNodes*=2; 
+#endif
+
+    std::vector<double> uvel_local_vec(numGlobalNodes, 0.0);
+    std::vector<double> vvel_local_vec(numGlobalNodes, 0.0);
+
+    int overlap_map_num_my_elts;
+    int global_dof;
+    double sol_value;  
+    int numDofs;
+#ifdef CISM_USE_EPETRA
+    overlap_map_num_my_elts = overlapMap.NumMyElements(); 
+#else
+    overlap_map_num_my_elts = overlapMap->getNodeNumElements(); 
+#endif
+
     if (interleavedOrdering == true) { 
-      for (int i=0; i<overlapMap.NumMyElements(); i++) { 
-        int global_dof = overlapMap.GID(i);
-        double sol_value = solutionOverlap[i];  
+      for (int i=0; i<overlap_map_num_my_elts; i++) { 
+#ifdef CISM_USE_EPETRA
+        global_dof = overlapMap.GID(i);
+        sol_value = solutionOverlap[i];
+#else
+        global_dof = overlapMap->getGlobalElement(i);
+        sol_value = solutionOverlap_constView[i];
+#endif  
         int modulo = (global_dof % 2); //check if dof is for u or for v 
-        int vel_global_dof, vel_local_dof; 
+        int vel_global_dof; 
         if (modulo == 0) { //u dof 
           vel_global_dof = global_dof/2+1; //add 1 because node_map is 1-based 
-          vel_local_dof = node_map->LID(vel_global_dof); //look up local id corresponding to global id in node_map
-          //std::cout << "uvel: global_dof = " << global_dof << ", uvel_global_dof = " << vel_global_dof << ", uvel_local_dof = " << vel_local_dof << std::endl; 
-          uvel.ReplaceMyValues(1, &sol_value, &vel_local_dof); 
+          uvel_local_vec[vel_global_dof] = sol_value; 
         }
         else { // v dof 
           vel_global_dof = (global_dof-1)/2+1; //add 1 because node_map is 1-based 
-          vel_local_dof = node_map->LID(vel_global_dof); //look up local id corresponding to global id in node_map
-          vvel.ReplaceMyValues(1, &sol_value, & vel_local_dof); 
+          vvel_local_vec[vel_global_dof] = sol_value; 
         }
       }
     }
     else { //note: the case with non-interleaved ordering has not been tested...
-      int numDofs = overlapMap.NumGlobalElements(); 
-      for (int i=0; i<overlapMap.NumMyElements(); i++) { 
-        int global_dof = overlapMap.GID(i);
-        double sol_value = solutionOverlap[i];  
-        int vel_global_dof, vel_local_dof; 
+#ifdef CISM_USE_EPETRA
+      numDofs = overlapMap.NumGlobalElements(); 
+#else
+      numDofs = overlapMap->getGlobalNumElements();
+#endif
+      for (int i=0; i<overlap_map_num_my_elts; i++) {
+#ifdef CISM_USE_EPETRA 
+        global_dof = overlapMap.GID(i);
+        sol_value = solutionOverlap[i];  
+#else
+        global_dof = overlapMap->getGlobalElement(i);
+        sol_value = solutionOverlap_constView[i];
+#endif
+        int vel_global_dof; 
         if (global_dof < numDofs/2) { //u dof
           vel_global_dof = global_dof+1; //add 1 because node_map is 1-based 
-          vel_local_dof = node_map->LID(vel_global_dof); //look up local id corresponding to global id in node_map
-          uvel.ReplaceMyValues(1, &sol_value, &vel_local_dof); 
+          uvel_local_vec[vel_global_dof] = sol_value; 
         }
         else { //v dofs 
           vel_global_dof = global_dof-numDofs/2+1; //add 1 because node_map is 1-based
-          vel_local_dof = node_map->LID(vel_global_dof); //look up local id corresponding to global id in node_map
-          vvel.ReplaceMyValues(1, &sol_value, & vel_local_dof);
+          vvel_local_vec[vel_global_dof] = sol_value; 
         } 
       }
     }
-#else
-    if (interleavedOrdering == true) {
-      for (int i=0; i<overlapMap->getNodeNumElements(); i++) {
-        int global_dof = overlapMap->getGlobalElement(i);
-        double sol_value = solutionOverlap_constView[i];
-        int modulo = (global_dof % 2); //check if dof is for u or for v 
-        int vel_global_dof, vel_local_dof;
-        if (modulo == 0) { //u dof 
-          vel_global_dof = global_dof/2+1; //add 1 because node_map is 1-based 
-          vel_local_dof = node_map->getLocalElement(vel_global_dof); //look up local id corresponding to global id in node_map
-          //std::cout << "uvel: global_dof = " << global_dof << ", uvel_global_dof = " << vel_global_dof << ", uvel_local_dof = " << vel_local_dof << std::endl; 
-          uvel->replaceLocalValue(vel_local_dof, sol_value);
-        }
-        else { // v dof 
-          vel_global_dof = (global_dof-1)/2+1; //add 1 because node_map is 1-based 
-          vel_local_dof = node_map->getLocalElement(vel_global_dof); //look up local id corresponding to global id in node_map
-          vvel->replaceLocalValue(vel_local_dof, sol_value);
-        }
-      }
-    }
-    else { //note: the case with non-interleaved ordering has not been tested...
-      int numDofs = overlapMap->getGlobalNumElements();
-      for (int i=0; i<overlapMap->getNodeNumElements(); i++) {
-        int global_dof = overlapMap->getGlobalElement(i);
-        double sol_value = solutionOverlap_constView[i];
-        int vel_global_dof, vel_local_dof;
-        if (global_dof < numDofs/2) { //u dof
-          vel_global_dof = global_dof+1; //add 1 because node_map is 1-based 
-          vel_local_dof = node_map->getLocalElement(vel_global_dof); //look up local id corresponding to global id in node_map
-          uvel->replaceLocalValue(vel_local_dof, sol_value);
-        }
-        else { //v dofs 
-          vel_global_dof = global_dof-numDofs/2+1; //add 1 because node_map is 1-based
-          vel_local_dof = node_map->getLocalElement(vel_global_dof); //look up local id corresponding to global id in node_map
-          vvel->replaceLocalValue(vel_local_dof, sol_value);
-        }
-      }
-    }
-#endif
- 
 
-#ifdef WRITE_TO_MATRIX_MARKET
-    //For debug: write solution to matrix market file 
-#ifdef CISM_USE_EPETRA
-     EpetraExt::MultiVectorToMatrixMarketFile("uvel.mm", uvel); 
-     EpetraExt::MultiVectorToMatrixMarketFile("vvel.mm", vvel);
-#else
-     Tpetra_MatrixMarket_Writer::writeDenseFile("uvel.mm", uvel);
-     Tpetra_MatrixMarket_Writer::writeDenseFile("vvel.mm", vvel);
-#endif
-#endif
- 
      //Copy uvel and vvel into uVel_ptr and vVel_ptr respectively (the arrays passed back to CISM) according to the numbering consistent w/ CISM. 
      counter1 = 0; 
      counter2 = 0;
-#ifdef CISM_USE_EPETRA
-#else
-     Teuchos::ArrayRCP<const ST> uvel_constView = uvel->get1dView();
-     Teuchos::ArrayRCP<const ST> vvel_constView = vvel->get1dView();
-#endif 
-     local_nodeID = 0;  
      for (int j=0; j<nsn-1; j++) {
        for (int i=0; i<ewn-1; i++) { 
          for (int k=0; k<upn; k++) {
            if (j >= nhalo-1 & j < nsn-nhalo) {
              if (i >= nhalo-1 & i < ewn-nhalo) {
-#ifdef CISM_USE_EPETRA 
-               local_nodeID = node_map->LID(cismToAlbanyNodeNumberMap[counter1]); 
-               //if (mpiComm->MyPID() == 0) 
-               //std::cout << "counter1:" << counter1 << ", cismToAlbanyNodeNumberMap[counter1]: " << cismToAlbanyNodeNumberMap[counter1] << ", local_nodeID: " 
-               //<< local_nodeID << ", uvel: " << uvel[local_nodeID] << std::endl; //uvel[local_nodeID] << std::endl;  
-               uVel_ptr[counter2] = uvel[local_nodeID];
-               vVel_ptr[counter2] = vvel[local_nodeID];  
-#else
-               local_nodeID = node_map->getLocalElement(cismToAlbanyNodeNumberMap[counter1]);
-               uVel_ptr[counter2] = uvel_constView[local_nodeID];
-               vVel_ptr[counter2] = vvel_constView[local_nodeID];
-#endif
+               auto global_nodeID = cismToAlbanyNodeNumberMap[counter1];
+               uVel_ptr[counter2] = uvel_local_vec[global_nodeID];  
+               vVel_ptr[counter2] = vvel_local_vec[global_nodeID];  
                counter1++;
             }
             }

@@ -124,12 +124,10 @@ SET(HEADERS ${HEADERS}
   utility/math/TensorImpl.hpp
   )
 
-IF(ALBANY_YAML)
-  add_executable(xml2yaml utility/xml2yaml.cpp)
-  add_executable(yaml2xml utility/yaml2xml.cpp)
-  target_link_libraries(xml2yaml teuchosparameterlist)
-  target_link_libraries(yaml2xml teuchosparameterlist)
-ENDIF()
+add_executable(xml2yaml utility/xml2yaml.cpp)
+add_executable(yaml2xml utility/yaml2xml.cpp)
+target_link_libraries(xml2yaml teuchosparameterlist)
+target_link_libraries(yaml2xml teuchosparameterlist)
 
 #problems
 SET(SOURCES ${SOURCES}
@@ -146,6 +144,7 @@ SET(SOURCES ${SOURCES}
   )
 SET(PDE_SRCS
   problems/Albany_AdvDiffProblem.cpp
+  problems/Albany_ReactDiffSystem.cpp
   problems/Albany_CahnHillProblem.cpp
   problems/Albany_ComprNSProblem.cpp
   problems/Albany_GPAMProblem.cpp
@@ -172,6 +171,7 @@ SET(HEADERS ${HEADERS}
   )
 SET(PDE_HDRS
   problems/Albany_AdvDiffProblem.hpp
+  problems/Albany_ReactDiffSystem.hpp
   problems/Albany_CahnHillProblem.hpp
   problems/Albany_ComprNSProblem.hpp
   problems/Albany_GPAMProblem.hpp
@@ -359,6 +359,7 @@ ENDIF()
 
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_AdvDiffResid.cpp
+  evaluators/PHAL_ReactDiffSystemResid.cpp
   evaluators/PHAL_CahnHillChemTerm.cpp
   evaluators/PHAL_CahnHillRhoResid.cpp
   evaluators/PHAL_CahnHillWResid.cpp
@@ -530,6 +531,8 @@ ENDIF()
 SET(PDE_HDRS ${PDE_HDRS}
   evaluators/PHAL_AdvDiffResid.hpp
   evaluators/PHAL_AdvDiffResid_Def.hpp
+  evaluators/PHAL_ReactDiffSystemResid.hpp
+  evaluators/PHAL_ReactDiffSystemResid_Def.hpp
   evaluators/PHAL_CahnHillRhoResid.hpp
   evaluators/PHAL_CahnHillRhoResid_Def.hpp
   evaluators/PHAL_CahnHillWResid.hpp
@@ -607,74 +610,6 @@ IF(ALBANY_HYDRIDE AND (NOT ALBANY_DEMO_PDES))
 ENDIF()
 
 
-SET(MESHMOVER_DIR ${Albany_SOURCE_DIR}/src/MeshMover/src)
-SET(CUTR_SRCS
-  ${MESHMOVER_DIR}/CUTR_CubitMeshMover.cpp
-  ${MESHMOVER_DIR}/MeshMorpher.cpp
-  ${MESHMOVER_DIR}/MeshMorpher_BMS.cpp
-  ${MESHMOVER_DIR}/MeshMorpher_smooth.cpp
-  ${MESHMOVER_DIR}/MeshMorpher_XWR.cpp
-  ${MESHMOVER_DIR}/MoverProblem.cpp
-  ${MESHMOVER_DIR}/STKMeshData.cpp
-  ${MESHMOVER_DIR}/ToyProblem.cpp
-  ${MESHMOVER_DIR}/util/CubitBox.cpp
-  ${MESHMOVER_DIR}/util/CubitMatrix.cpp
-  ${MESHMOVER_DIR}/util/CubitPlane.cpp
-  ${MESHMOVER_DIR}/util/CubitVector.cpp
-  ${MESHMOVER_DIR}/util/GeoNode.cpp
-  ${MESHMOVER_DIR}/util/GeoTet.cpp
-  ${MESHMOVER_DIR}/util/KDDTree.cpp
-  ${MESHMOVER_DIR}/util/KDDTreeNode.cpp
-  ${MESHMOVER_DIR}/util/MemoryBlock.cpp
-  ${MESHMOVER_DIR}/util/MemoryManager.cpp
-  ${MESHMOVER_DIR}/util/MMGfxDebug.cpp
-  ${MESHMOVER_DIR}/util/PriorityQueue.cpp
-  ${MESHMOVER_DIR}/util/SimpleNode.cpp
-  ${MESHMOVER_DIR}/util/TDDelaunay.cpp
-  ${MESHMOVER_DIR}/util/TetFacetorTool.cpp
-  ${MESHMOVER_DIR}/util/ToolData.cpp
-  ${MESHMOVER_DIR}/util/ToolDataUser.cpp
-  )
-
-SET(CUTR_HDRS
-  ${MESHMOVER_DIR}/CUTR_CubitMeshMover.hpp
-  ${MESHMOVER_DIR}/MeshMorpher.hpp
-  ${MESHMOVER_DIR}/MeshMorpher_BMS.hpp
-  ${MESHMOVER_DIR}/MeshMorpher_smooth.hpp
-  ${MESHMOVER_DIR}/MeshMorpher_XWR.hpp
-  ${MESHMOVER_DIR}/MoverProblem.hpp
-  ${MESHMOVER_DIR}/STKMeshData.hpp
-  ${MESHMOVER_DIR}/ToyProblem.hpp
-  ${MESHMOVER_DIR}/util/CubitBox.cpp
-  ${MESHMOVER_DIR}/util/CubitMatrix.cpp
-  ${MESHMOVER_DIR}/util/CubitPlane.cpp
-  ${MESHMOVER_DIR}/util/CubitVector.cpp
-  ${MESHMOVER_DIR}/util/GeoNode.cpp
-  ${MESHMOVER_DIR}/util/GeoTet.cpp
-  ${MESHMOVER_DIR}/util/KDDTree.cpp
-  ${MESHMOVER_DIR}/util/KDDTreeNode.cpp
-  ${MESHMOVER_DIR}/util/MemoryBlock.cpp
-  ${MESHMOVER_DIR}/util/MemoryManager.cpp
-  ${MESHMOVER_DIR}/util/MMGfxDebug.cpp
-  ${MESHMOVER_DIR}/util/PriorityQueue.cpp
-  ${MESHMOVER_DIR}/util/SimpleNode.cpp
-  ${MESHMOVER_DIR}/util/TDDelaunay.cpp
-  ${MESHMOVER_DIR}/util/TetFacetorTool.cpp
-  ${MESHMOVER_DIR}/util/ToolData.cpp
-  ${MESHMOVER_DIR}/util/ToolDataUser.cpp
-  )
-
-if (ALBANY_ENABLE_CUBIT)
-  INCLUDE(${MESHMOVER_DIR}/UseUtil.cmake)
-  set (SOURCES ${SOURCES} ${CUTR_SRCS})
-  set (HEADERS ${HEADERS} ${CUTR_HDRS})
-  include_directories (${MESHMOVER_DIR} ${MESHMOVER_DIR}/../cubit)
-  link_directories (${MESHMOVER_DIR}/../cubit/linux64)
-  set(ALB_CUBIT_LIBS  cubiti19)
-  ADD_DEFINITIONS(-DALBANY_CUTR)
-  MESSAGE("-- CUBIT is Enabled, compiling with -DALBANY_CUTR")
-endif (ALBANY_ENABLE_CUBIT)
-
 if (ALBANY_MOR AND ALBANY_EPETRA)
   include_directories (./MOR)
 
@@ -747,6 +682,10 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./Aeras/evaluators
                      ./Hydride/problems
                      ./Hydride/evaluators
+		     ./AFRL/
+		     ./AFRL/problems
+		     ./AFRL/evaluators
+		     ./AFRL/communicators
                      ./AMP/
                      ./AMP/problems
                      ./AMP/evaluators
@@ -791,9 +730,12 @@ ENDIF()
 
 IF ( ENABLE_MPMD )
   include_directories (${PlatoEngine_INSTALL_DIR}/include)
-  link_directories (${PlatoEngine_INSTALL_DIR}/lib)
-  link_directories (${LibConfuse_INSTALL_DIR}/lib)
-  set(PlatoEngine_LIB PlatoDataLayer PlatoInterface PlatoAnalyze PlatoParser PlatoExceptions)
+  set(PlatoEngine_LIB 
+      ${PlatoEngine_INSTALL_DIR}/lib/libPlatoDataLayer.a 
+      ${PlatoEngine_INSTALL_DIR}/lib/libPlatoInterface.a 
+      ${PlatoEngine_INSTALL_DIR}/lib/libPlatoAnalyze.a 
+      ${PlatoEngine_INSTALL_DIR}/lib/libPlatoParser.a 
+      ${PlatoEngine_INSTALL_DIR}/lib/libPlatoExceptions.a)
   ADD_DEFINITIONS(-DCODE_MP)
 ELSE()
   set(PlatoEngine_LIB )
@@ -888,20 +830,12 @@ IF (ALBANY_MPMD)
 ENDIF()
 
 
-if (ALBANY_STOKHOS AND ALBANY_EPETRA)
-add_executable(AlbanySG Main_SGSolve.cpp)
-SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanySG )
-endif()
 if (ALBANY_ASCR AND ALBANY_EPETRA)
   add_executable(AlbanyAdjoint Main_Adjoint.cpp)
-  add_executable(AlbanySGAdjoint Main_SGAdjoint.cpp)
   add_executable(AlbanyCoupled Main_Coupled.cpp)
-  add_executable(AlbanySGCoupled Main_SGCoupled.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES}
     AlbanyAdjoint
     AlbanyCoupled
-    AlbanySGAdjoint
-    AlbanySGCoupled
     )
 endif()
 IF (ALBANY_DAKOTA AND ALBANY_EPETRA)
@@ -949,7 +883,6 @@ set(ALL_LIBRARIES
   ${PlatoEngine_LIB}
   ${PlatoEngine_LIB}
   ${ALB_TRILINOS_LIBS}
-  ${ALB_CUBIT_LIBS}
   ${LAME_LIB}
   ${MATH_TOOLKIT_LIB}
   ${NLOPT_LIB}
@@ -1012,6 +945,11 @@ ENDIF()
 # RPI APF mesh interface
 IF(ALBANY_APF)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPUMI)
+ENDIF()
+
+IF (ALBANY_AFRL)
+  add_subdirectory(AFRL)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AFRL)
 ENDIF()
 
 IF (ALBANY_AMP)

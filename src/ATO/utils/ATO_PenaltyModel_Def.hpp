@@ -351,4 +351,7 @@ ATO::PenaltyModelFactory<N>::create(Teuchos::ParameterList& p,
   TEUCHOS_TEST_FOR_EXCEPTION(blockFound == false, Teuchos::Exceptions::InvalidParameter, std:: endl <<
     "Block spec not found." << std::endl);
 
+  // Clang warns if we don't return something
+  return Teuchos::null;
+
 }

@@ -137,7 +137,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
 
   // Pull the stress from the FieldManager
   PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT,Cell,QuadPoint,Dim,Dim> stressField("Stress", qp_tensor);
-  fieldManager.getFieldData<PHAL::AlbanyTraits::Residual::ScalarT, PHAL::AlbanyTraits::Residual, Cell, QuadPoint, Dim, Dim>(stressField);
+  fieldManager.getFieldData<PHAL::AlbanyTraits::Residual>(stressField);
 
   // Assert the dimensions of the stress field
 //   std::vector<size_type> stressFieldDimensions;

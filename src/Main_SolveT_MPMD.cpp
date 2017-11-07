@@ -58,6 +58,7 @@
 #include <Plato_Interface.hpp>
 #include <Plato_PenaltyModel.hpp>
 #include <Plato_SharedData.hpp>
+#include <Plato_SharedField.hpp>
 
 /******************************************************************************/
 class MPMD_App : public Plato::Application 
@@ -66,12 +67,14 @@ class MPMD_App : public Plato::Application
   public:
     MPMD_App(int argc, char **argv, MPI_Comm& localComm);
     virtual ~MPMD_App();
-    void initialize(std::vector<Plato::SharedData*>);
-    void compute(std::string);
+    void initialize();
+    void compute(const std::string &);
     void finalize();
   
-    void importData(std::string name, Plato::SharedData* sf);
-    void exportData(std::string name, Plato::SharedData* sf);
+    void importData(const std::string & name, const Plato::SharedData& sf);
+    void exportData(const std::string & name, Plato::SharedData& sf);
+    void exportDataMap(const Plato::data::layout_t & aDataLayout, 
+                       std::vector<int> & aMyOwnedGlobalIDs);
   
   private:
 
@@ -84,18 +87,18 @@ class MPMD_App : public Plato::Application
       std::string spec, std::string name, 
       const std::map<std::string,DistributedVector*>& fieldMap);
 
-    void copyFieldIntoState(std::string name, Plato::SharedData* sf);
-    void copyFieldFromState(std::string name, Plato::SharedData* sf);
-    void copyFieldIntoDistParam(std::string name, Plato::SharedData* sf);
-    void copyFieldFromDistParam(std::string name, Plato::SharedData* sf);
+    void copyFieldIntoState(const std::string& name, const Plato::SharedData& sf);
+    void copyFieldFromState(const std::string& name, Plato::SharedData& sf);
+    void copyFieldIntoDistParam(const std::string& name, const Plato::SharedData& sf);
+    void copyFieldFromDistParam(const std::string& name, Plato::SharedData& sf);
 
-    void copyValueFromState(std::string name, Plato::SharedData* sf);
+    void copyValueFromState(const std::string& name, Plato::SharedData& sf);
 
     bool isElemNodeState(std::string localFieldName);
     bool isDistParam(std::string localFieldName);
 
-    bool addField(pugi::xml_node&, vector<Plato::SharedData*>& sharedData);
-    bool addValue(pugi::xml_node&, vector<Plato::SharedData*>& sharedData);
+    bool addField(pugi::xml_node&);
+    bool addValue(pugi::xml_node&);
 
     // data
     Teuchos::RCP<Albany::Application> m_app;
@@ -120,8 +123,6 @@ class MPMD_App : public Plato::Application
 
 
 
-//Communicator LocalComm;
-
 /******************************************************************************/
 int main(int argc, char **argv)
 /******************************************************************************/
@@ -132,7 +133,6 @@ int main(int argc, char **argv)
 
     MPI_Comm localComm;
     platoInterface->getLocalComm(localComm);
-//    LocalComm.init(localComm);
 
     MPMD_App* myApp = new MPMD_App(argc, argv, localComm);
     platoInterface->registerPerformer(myApp);
@@ -252,7 +252,7 @@ MPMD_App::MPMD_App(int argc, char **argv, MPI_Comm& localComm)
 
 
 /******************************************************************************/
-void MPMD_App::initialize(vector<Plato::SharedData*> sharedData)
+void MPMD_App::initialize()
 /******************************************************************************/
 {
 
@@ -280,38 +280,20 @@ void MPMD_App::initialize(vector<Plato::SharedData*> sharedData)
 
   for(pugi::xml_node inputNode : node.children("Input")){
     std::string strType = Plato::Parse::getString(inputNode,"Type");
-    if(strType == "Field") addField(inputNode, sharedData);
+    if(strType == "Field") addField(inputNode);
     else
-    if(strType == "Value") addValue(inputNode, sharedData);
+    if(strType == "Value") addValue(inputNode);
   }
   for(pugi::xml_node inputNode : node.children("Output")){
     std::string strType = Plato::Parse::getString(inputNode,"Type");
-    if(strType == "Field") addField(inputNode, sharedData);
+    if(strType == "Field") addField(inputNode);
     else
-    if(strType == "Value") addValue(inputNode, sharedData);
+    if(strType == "Value") addValue(inputNode);
   }
-
-  // parse InputFields
-  //
-//  for(pugi::xml_node inputNode : node.children("InputField")){
-//    addField(inputNode, sharedData);
-//  }
-
-  // parse InputValues
-  //
-//  for(pugi::xml_node inputNode : node.children("OutputValue")){
-//    addValue(inputNode, sharedData);
-//  }
-  
-  // parse OutputFields
-  //
-//  for(pugi::xml_node inputNode : node.children("OutputField")){
-//    addField(inputNode, sharedData);
-//  }
 }
 
 /******************************************************************************/
-bool MPMD_App::addValue(pugi::xml_node& inputNode, vector<Plato::SharedData*>& sharedData)
+bool MPMD_App::addValue(pugi::xml_node& inputNode)
 /******************************************************************************/
 {
   string argumentName = Plato::Parse::getString(inputNode,"ArgumentName");
@@ -329,7 +311,7 @@ bool MPMD_App::addValue(pugi::xml_node& inputNode, vector<Plato::SharedData*>& s
 }
 
 /******************************************************************************/
-bool MPMD_App::addField(pugi::xml_node& inputNode, vector<Plato::SharedData*>& sharedData)
+bool MPMD_App::addField(pugi::xml_node& inputNode)
 /******************************************************************************/
 {
   string argumentName = Plato::Parse::getString(inputNode,"ArgumentName");
@@ -393,7 +375,7 @@ bool TpetraBuild = true;
 
 /******************************************************************************/
 void
-MPMD_App::compute(std::string noOp)
+MPMD_App::compute(const std::string & noOp)
 /******************************************************************************/
 {
 
@@ -420,10 +402,10 @@ void MPMD_App::finalize()
 
 
 /******************************************************************************/
-void MPMD_App::importData(std::string name, Plato::SharedData* sf)
+void MPMD_App::importData(const std::string& name, const Plato::SharedData& sf)
 /******************************************************************************/
 {
-  if(sf->myLayout() == "Field"){
+  if(sf.myLayout() == Plato::data::layout_t::SCALAR_FIELD){
     {
       auto it = m_stateMap.find(name);
       if(it != m_stateMap.end()){
@@ -439,13 +421,13 @@ void MPMD_App::importData(std::string name, Plato::SharedData* sf)
       }
     }
   } else
-  if(sf->myLayout() == "Value"){
+  if(sf.myLayout() == Plato::data::layout_t::SCALAR){
   }
 }
 
 
 /******************************************************************************/
-void MPMD_App::copyFieldIntoState(std::string name, Plato::SharedData* sf)
+void MPMD_App::copyFieldIntoState(const std::string& name, const Plato::SharedData& sf)
 /******************************************************************************/
 {
   Albany::StateManager& stateMgr = m_app->getStateMgr();
@@ -461,12 +443,11 @@ void MPMD_App::copyFieldIntoState(std::string name, Plato::SharedData* sf)
   m_localVector->putScalar(0.0);
   Teuchos::ArrayRCP<double> ltopo = m_localVector->get1dViewNonConst(); 
   int numLocalVals = m_localVector->getLocalLength();
-  Teuchos::RCP<const Tpetra_Map> localNodeMap = m_localVector->getMap();
-  for(int lid=0; lid<numLocalVals; lid++){
-    int gid = localNodeMap->getGlobalElement(lid);
-    // HACK (figure out why DataLayer's GIDs start from 1 but Albany's start from 0?)
-    sf->getData(ltopo[lid],gid+1);
-  }
+
+  std::vector<double> outVector(numLocalVals);
+  sf.getData(outVector);
+  ltopo.assign(outVector.begin(),outVector.end());
+
   m_overlapVector->doImport(*m_localVector, *m_importer, Tpetra::INSERT);
   Teuchos::RCP<Albany::NodeFieldContainer>
     nodeContainer = stateMgr.getNodalDataBase()->getNodeContainer();
@@ -490,7 +471,7 @@ void MPMD_App::copyFieldIntoState(std::string name, Plato::SharedData* sf)
 }
 
 /******************************************************************************/
-void MPMD_App::copyValueFromState(std::string name, Plato::SharedData* sf)
+void MPMD_App::copyValueFromState(const std::string& name, Plato::SharedData& sf)
 /******************************************************************************/
 {
   Albany::StateManager& stateMgr = m_app->getStateMgr();
@@ -500,16 +481,16 @@ void MPMD_App::copyValueFromState(std::string name, Plato::SharedData* sf)
 
   // copy the field from the state manager
   Albany::MDArray& valSrc = src[/*worksetIndex=*/0][name];
-  double globalVal, val = valSrc(0);
+  std::vector<double> globalVal(1);
+  std::vector<double> val(1,valSrc(0));
   if( m_comm != Teuchos::null ){
-    Teuchos::reduceAll(*m_comm, Teuchos::REDUCE_SUM, /*numvals=*/ 1, &val, &globalVal);
+    Teuchos::reduceAll(*m_comm, Teuchos::REDUCE_SUM, /*numvals=*/ 1, val.data(), globalVal.data());
   } else globalVal = val;
-//  valSrc(0)=0.0;
-  sf->setData(globalVal);
+  sf.setData(globalVal);
 }
 
 /******************************************************************************/
-void MPMD_App::copyFieldFromState(std::string name, Plato::SharedData* sf)
+void MPMD_App::copyFieldFromState(const std::string& name, Plato::SharedData& sf)
 /******************************************************************************/
 {
   Albany::StateManager& stateMgr = m_app->getStateMgr();
@@ -534,17 +515,13 @@ void MPMD_App::copyFieldFromState(std::string name, Plato::SharedData* sf)
         m_overlapVector->sumIntoGlobalValue(wsElNodeID[ws][cell][node],wsSrc(cell,node));
       }
   }
+
   m_localVector->putScalar(0.0);
   m_localVector->doExport(*m_overlapVector, *m_exporter, Tpetra::ADD);
   Teuchos::ArrayRCP<double> ltopo = m_localVector->get1dViewNonConst(); 
   int numLocalVals = m_localVector->getLocalLength();
-  auto map = m_localVector->getMap();
-  for(int lid=0; lid<numLocalVals; lid++){
-    int gid = map->getGlobalElement(lid);
-    // HACK (figure out why DataLayer's GIDs start from 1 but Albany's start from 0?)
-    sf->setData(ltopo[lid],gid+1);
-  }
-//  sf->setData(ltopo.get());
+  std::vector<double> inVector(ltopo.begin(),ltopo.end());
+  sf.setData(inVector);
 
   Teuchos::RCP<Albany::NodeFieldContainer>
     nodeContainer = stateMgr.getNodalDataBase()->getNodeContainer();
@@ -556,25 +533,47 @@ void MPMD_App::copyFieldFromState(std::string name, Plato::SharedData* sf)
 }
 
 /******************************************************************************/
-void MPMD_App::copyFieldIntoDistParam(std::string name, Plato::SharedData* sf)
+void MPMD_App::copyFieldIntoDistParam(const std::string& name, const Plato::SharedData& sf)
 /******************************************************************************/
 {
 }
 /******************************************************************************/
-void MPMD_App::copyFieldFromDistParam(std::string name, Plato::SharedData* sf)
+void MPMD_App::copyFieldFromDistParam(const std::string& name, Plato::SharedData& sf)
 /******************************************************************************/
 {
 }
 
 
 
+/******************************************************************************/
+void MPMD_App::exportDataMap(const Plato::data::layout_t & aDataLayout, 
+                             std::vector<int> & aMyOwnedGlobalIDs)
+{
+    aMyOwnedGlobalIDs.clear();
+
+    if(aDataLayout == Plato::data::layout_t::SCALAR_FIELD)
+    {
+      auto map = m_localVector->getMap();
+      int numLocalVals = map->getNodeNumElements();
+      aMyOwnedGlobalIDs.resize(numLocalVals);
+      for(int lid=0; lid<numLocalVals; lid++){
+        aMyOwnedGlobalIDs[lid] = map->getGlobalElement(lid)+1; // Albany's gids start from 0
+      }
+    }
+    else
+    {
+      Plato::ParsingException pe("AlbanyMPMD currently only supports SCALAR_FIELD data layout");
+      throw pe;
+    }
+}
+/******************************************************************************/
 
 
 /******************************************************************************/
-void MPMD_App::exportData(std::string name, Plato::SharedData* sf)
+void MPMD_App::exportData(const std::string& name, Plato::SharedData& sf)
 /******************************************************************************/
 {
-  if(sf->myLayout() == "Field"){
+  if(sf.myLayout() == Plato::data::layout_t::SCALAR_FIELD){
     {
       auto it = m_stateMap.find(name);
       if(it != m_stateMap.end()){
@@ -590,7 +589,7 @@ void MPMD_App::exportData(std::string name, Plato::SharedData* sf)
       }
     }
   } else
-  if(sf->myLayout() == "Value"){
+  if(sf.myLayout() == Plato::data::layout_t::SCALAR){
     {
       auto it = m_stateMap.find(name);
       if(it != m_stateMap.end()){

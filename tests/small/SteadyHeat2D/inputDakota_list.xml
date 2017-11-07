@@ -47,7 +47,6 @@
       <Parameter name="Error File" type="string" value="dakota.err"/>
       <Parameter name="Parameter Vector Index" type="int" value="0"/>
       <Parameter name="Response Vector Index" type="int" value="0"/>
-      <Parameter name="Use Multi-Point" type="bool" value="false"/>
     </ParameterList>
 
     <Parameter name="Solver Type" type="string" value="NOX"/>

@@ -86,21 +86,6 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP< Teuchos::ParameterList> piroParams =
       Teuchos::rcp(&(albanyParams.sublist("Piro")),false);
 
-    // If SG is not enabled and user chose "Direct" or "AD",
-    // for "SG Method", change this "Global", which always works
-#ifndef ALBANY_SG
-    std::string sg_method =
-      piroParams->sublist("Stochastic Galerkin").get("SG Method", "Global");
-    if (sg_method == "Direct" || sg_method == "AD") {
-      piroParams->sublist("Stochastic Galerkin").set("SG Method", "Global");
-      *out << "**********************************************************\n"
-           << "* WARNING!  Direct SG method was chosen, however         *\n"
-           << "* ALBANY_SG is not enabled.  Changing to Global method.  *\n"
-           << "**********************************************************\n"
-           << std::endl;
-    }
-#endif
-
     // Create stochastic Galerkin solver
     Teuchos::RCP<Piro::Epetra::StokhosSolver> sg_solver =
       Teuchos::rcp(new Piro::Epetra::StokhosSolver(piroParams, globalComm));

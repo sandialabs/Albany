@@ -11,20 +11,20 @@
 #include <iostream>
 //#include <</span>sys/time.h>
 
-#include <Teuchos_GlobalMPISession.hpp>
 #include <Teuchos_CommandLineProcessor.hpp>
-#include <Teuchos_RCP.hpp>
+#include <Teuchos_GlobalMPISession.hpp>
 #include <Teuchos_ParameterList.hpp>
+#include <Teuchos_RCP.hpp>
 #include <Teuchos_TestForException.hpp>
 #include <Teuchos_as.hpp>
 
-#include <PHAL_AlbanyTraits.hpp>
-#include <PHAL_SaveStateField.hpp>
-#include <Albany_Utils.hpp>
+#include <Albany_Layouts.hpp>
+#include <Albany_STKDiscretization.hpp>
 #include <Albany_StateManager.hpp>
 #include <Albany_TmplSTKMeshStruct.hpp>
-#include <Albany_STKDiscretization.hpp>
-#include <Albany_Layouts.hpp>
+#include <Albany_Utils.hpp>
+#include <PHAL_AlbanyTraits.hpp>
+#include <PHAL_SaveStateField.hpp>
 
 #include <MiniTensor.h>
 
@@ -33,55 +33,47 @@
 #include "SetField.hpp"
 #include "parallel_evaluators/ParallelSetField.hpp"
 
+#include "Albany_MaterialDatabase.hpp"
+#include "BifurcationCheck.hpp"
 #include "ConstitutiveModelInterface.hpp"
 #include "ConstitutiveModelParameters.hpp"
-#include "BifurcationCheck.hpp"
-#include "Albany_MaterialDatabase.hpp"
 
 #include "Kokkos_Core.hpp"
 
 #include <fstream>
-#include "utility/PerformanceContext.hpp"
-#include "utility/TimeMonitor.hpp"
 #include "utility/CounterMonitor.hpp"
-#include "utility/VariableMonitor.hpp"
+#include "utility/PerformanceContext.hpp"
 #include "utility/TimeGuard.hpp"
-
-#ifdef KOKKOS_HAVE_CUDA
-#pragma message "compiling with CUDA support"
-#include <cuda.h>
-#endif
+#include "utility/TimeMonitor.hpp"
+#include "utility/VariableMonitor.hpp"
 
 struct KokkosGuard
 {
-  KokkosGuard( int ac, char* av[] )
-  {
-    Kokkos::initialize( ac, av );
-  }
-  
-  ~KokkosGuard()
-  {
-    Kokkos::finalize();
-  }
+  KokkosGuard(int ac, char* av[]) { Kokkos::initialize(ac, av); }
+
+  ~KokkosGuard() { Kokkos::finalize(); }
 };
 
 bool TpetraBuild = false;
 
-int main(int ac, char* av[])
+int
+main(int ac, char* av[])
 {
-  KokkosGuard kokkos( ac, av );
+  KokkosGuard kokkos(ac, av);
 
-  typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
-  typedef PHAL::AlbanyTraits::Residual Residual;
+  typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type
+                                                size_type;
+  typedef PHAL::AlbanyTraits::Residual          Residual;
   typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
-  typedef PHAL::AlbanyTraits Traits;
+  typedef PHAL::AlbanyTraits                    Traits;
   std::cout.precision(15);
   //
   // Create a command line processor and parse command line options
   //
   Teuchos::CommandLineProcessor command_line_processor;
 
-  command_line_processor.setDocString("Material Point Simulator.\n"
+  command_line_processor.setDocString(
+      "Material Point Simulator.\n"
       "For testing material models in LCM.\n");
 
   std::string input_file = "materials.xml";
@@ -94,10 +86,12 @@ int main(int ac, char* av[])
   command_line_processor.setOption("wsize", &workset_size, "Workset Size");
 
   int num_pts = 1;
-  command_line_processor.setOption("npoints", &num_pts, "Number of Gaussian Points");
+  command_line_processor.setOption(
+      "npoints", &num_pts, "Number of Gaussian Points");
 
-  size_t memlimit = 1024; // 1GB heap limit by default
-  command_line_processor.setOption("memlimit", &memlimit, "Heap memory limit in MB for CUDA kernels");
+  size_t memlimit = 1024;  // 1GB heap limit by default
+  command_line_processor.setOption(
+      "memlimit", &memlimit, "Heap memory limit in MB for CUDA kernels");
 
   // Throw a warning and not error for unrecognized options
   command_line_processor.recogniseAllOptions(true);
@@ -109,14 +103,7 @@ int main(int ac, char* av[])
   Teuchos::CommandLineProcessor::EParseCommandLineReturn parse_return =
       command_line_processor.parse(ac, av);
 
-#ifdef KOKKOS_HAVE_CUDA
-  std::cout << "Using a CUDA memory limit of " << memlimit << "MB" << std::endl;
-  memlimit *= 1024 * 1024; // memory limit in MB;
-  if (cudaSuccess != cudaDeviceSetLimit(cudaLimitMallocHeapSize, memlimit))
-    std::cerr << "WARNING: memory limit could not be set" << std::endl;
-#endif
-
-  std::ofstream tout( timing_file.c_str() );
+  std::ofstream tout(timing_file.c_str());
 
   if (parse_return == Teuchos::CommandLineProcessor::PARSE_HELP_PRINTED) {
     return 0;
@@ -126,8 +113,9 @@ int main(int ac, char* av[])
     return 1;
   }
 
-  util::TimeMonitor &tmonitor = util::PerformanceContext::instance().timeMonitor();
-  Teuchos::RCP<Teuchos::Time> total_time = tmonitor["MPS: Total Time"];
+  util::TimeMonitor& tmonitor =
+      util::PerformanceContext::instance().timeMonitor();
+  Teuchos::RCP<Teuchos::Time> total_time   = tmonitor["MPS: Total Time"];
   Teuchos::RCP<Teuchos::Time> compute_time = tmonitor["MPS: Compute Time"];
 
   //
@@ -137,9 +125,9 @@ int main(int ac, char* av[])
 
   // A mpi object must be instantiated before using the comm to read
   // material file
-  Teuchos::GlobalMPISession mpi_session(&ac, &av);
+  Teuchos::GlobalMPISession        mpi_session(&ac, &av);
   Teuchos::RCP<const Teuchos_Comm> commT =
-    Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
+      Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
   Teuchos::RCP<Albany::MaterialDatabase> material_db;
   material_db = Teuchos::rcp(new Albany::MaterialDatabase(input_file, commT));
@@ -147,9 +135,9 @@ int main(int ac, char* av[])
   // Get the name of the material model to be used (and make sure there is one)
   std::string element_block_name = "Block0";
   std::string material_model_name;
-  material_model_name = material_db->getElementBlockSublist(
-      element_block_name,
-      "Material Model").get<std::string>("Model Name");
+  material_model_name =
+      material_db->getElementBlockSublist(element_block_name, "Material Model")
+          .get<std::string>("Model Name");
   TEUCHOS_TEST_FOR_EXCEPTION(
       material_model_name.length() == 0,
       std::logic_error,
@@ -161,17 +149,12 @@ int main(int ac, char* av[])
   //
 
   // Set up the data layout
-  //const int workset_size = 1;
-  const int num_dims = 3;
-  const int num_vertices = 8;
-  const int num_nodes = 8;
-  const Teuchos::RCP<Albany::Layouts> dl = Teuchos::rcp(
-      new Albany::Layouts(
-          workset_size,
-          num_vertices,
-          num_nodes,
-          num_pts,
-          num_dims));
+  // const int workset_size = 1;
+  const int                           num_dims     = 3;
+  const int                           num_vertices = 8;
+  const int                           num_nodes    = 8;
+  const Teuchos::RCP<Albany::Layouts> dl = Teuchos::rcp(new Albany::Layouts(
+      workset_size, num_vertices, num_nodes, num_pts, num_dims));
 
   // create field name strings
   LCM::FieldNameMap field_name_map(false);
@@ -186,8 +169,7 @@ int main(int ac, char* av[])
   for (int i = 0; i < workset_size; ++i) {
     for (int j = 0; j < num_pts; ++j) {
       int base = i * num_pts * 9 + j * 9;
-      for (int k = 0; k < 9; ++k)
-        def_grad[base + k] = 0.0;
+      for (int k = 0; k < 9; ++k) def_grad[base + k] = 0.0;
 
       def_grad[base + 0] = 1.0;
       def_grad[base + 4] = 1.0;
@@ -199,24 +181,21 @@ int main(int ac, char* av[])
   Teuchos::ParameterList setDefGradP("SetFieldDefGrad");
   setDefGradP.set<std::string>("Evaluated Field Name", "F");
   setDefGradP.set<Teuchos::RCP<PHX::DataLayout>>(
-      "Evaluated Field Data Layout",
-      dl->qp_tensor);
+      "Evaluated Field Data Layout", dl->qp_tensor);
   setDefGradP.set<Teuchos::ArrayRCP<ScalarT>>("Field Values", def_grad);
-  auto setFieldDefGrad = Teuchos::rcp(
-      new LCM::SetField<Residual, Traits>(setDefGradP));
+  auto setFieldDefGrad =
+      Teuchos::rcp(new LCM::SetField<Residual, Traits>(setDefGradP));
 
   //---------------------------------------------------------------------------
   // Det(deformation gradient)
   Teuchos::ArrayRCP<ScalarT> detdefgrad(workset_size * num_pts);
-  for (int i = 0; i < workset_size * num_pts; ++i)
-    detdefgrad[i] = 1.0;
+  for (int i = 0; i < workset_size * num_pts; ++i) detdefgrad[i] = 1.0;
   // SetField evaluator, which will be used to manually assign a value
   // to the detdefgrad field
   Teuchos::ParameterList setDetDefGradP("SetFieldDetDefGrad");
   setDetDefGradP.set<std::string>("Evaluated Field Name", "J");
   setDetDefGradP.set<Teuchos::RCP<PHX::DataLayout>>(
-      "Evaluated Field Data Layout",
-      dl->qp_scalar);
+      "Evaluated Field Data Layout", dl->qp_scalar);
   setDetDefGradP.set<Teuchos::ArrayRCP<ScalarT>>("Field Values", detdefgrad);
   auto setFieldDetDefGrad =
       Teuchos::rcp(new LCM::SetField<Residual, Traits>(setDetDefGradP));
@@ -229,8 +208,7 @@ int main(int ac, char* av[])
   for (int i = 0; i < workset_size; ++i) {
     for (int j = 0; j < num_pts; ++j) {
       int base = i * num_pts * 9 + j * 9;
-      for (int k = 0; k < 9; ++k)
-        strain[base + k] = 0.0;
+      for (int k = 0; k < 9; ++k) strain[base + k] = 0.0;
     }
   }
 
@@ -239,11 +217,10 @@ int main(int ac, char* av[])
   Teuchos::ParameterList setStrainP("SetFieldStrain");
   setStrainP.set<std::string>("Evaluated Field Name", "Strain");
   setStrainP.set<Teuchos::RCP<PHX::DataLayout>>(
-      "Evaluated Field Data Layout",
-      dl->qp_tensor);
+      "Evaluated Field Data Layout", dl->qp_tensor);
   setStrainP.set<Teuchos::ArrayRCP<ScalarT>>("Field Values", strain);
-  auto setFieldStrain = Teuchos::rcp(
-      new LCM::SetField<Residual, Traits>(setStrainP));
+  auto setFieldStrain =
+      Teuchos::rcp(new LCM::SetField<Residual, Traits>(setStrainP));
   //---------------------------------------------------------------------------
   // Instantiate a field manager
   PHX::FieldManager<Traits> fieldManager;
@@ -266,24 +243,21 @@ int main(int ac, char* av[])
 
   // extract the Material ParameterList for use below
   std::string matName = material_db->getElementBlockParam<std::string>(
-      element_block_name,
-      "material");
-  Teuchos::ParameterList& paramList = material_db->getElementBlockSublist(
-      element_block_name,
-      matName);
-  Teuchos::ParameterList& mpsParams = paramList.sublist(
-      "Material Point Simulator");
+      element_block_name, "material");
+  Teuchos::ParameterList& paramList =
+      material_db->getElementBlockSublist(element_block_name, matName);
+  Teuchos::ParameterList& mpsParams =
+      paramList.sublist("Material Point Simulator");
 
   // Get loading parameters from .xml file
-  std::string load_case = mpsParams.get<std::string>(
-      "Loading Case Name",
-      "uniaxial");
-  int number_steps = mpsParams.get<int>("Number of Steps", 10);
-  double step_size = mpsParams.get<double>("Step Size", 1.0e-2);
+  std::string load_case =
+      mpsParams.get<std::string>("Loading Case Name", "uniaxial");
+  int    number_steps = mpsParams.get<int>("Number of Steps", 10);
+  double step_size    = mpsParams.get<double>("Step Size", 1.0e-2);
 
-  std::cout << "Loading parameters:" <<
-    "\n  number of steps: " << number_steps <<
-    "\n  step_size      : " << step_size << std::endl;
+  std::cout << "Loading parameters:"
+            << "\n  number of steps: " << number_steps
+            << "\n  step_size      : " << step_size << std::endl;
 
   // determine if temperature is being used
   bool have_temperature = mpsParams.get<bool>("Use Temperature", false);
@@ -292,16 +266,14 @@ int main(int ac, char* av[])
   // Temperature (optional)
   if (have_temperature) {
     Teuchos::ArrayRCP<ScalarT> temperature(workset_size);
-    ScalarT temp = mpsParams.get<double>("Temperature", 1.0);
-    for (int i = 0; i < workset_size * num_pts; ++i)
-      temperature[0] = temp;
+    ScalarT                    temp = mpsParams.get<double>("Temperature", 1.0);
+    for (int i = 0; i < workset_size * num_pts; ++i) temperature[0] = temp;
     // SetField evaluator, which will be used to manually assign a value
     // to the detdefgrad field
     Teuchos::ParameterList setTempP("SetFieldTemperature");
     setTempP.set<std::string>("Evaluated Field Name", "Temperature");
     setTempP.set<Teuchos::RCP<PHX::DataLayout>>(
-        "Evaluated Field Data Layout",
-        dl->qp_scalar);
+        "Evaluated Field Data Layout", dl->qp_scalar);
     setTempP.set<Teuchos::ArrayRCP<ScalarT>>("Field Values", temperature);
     auto setFieldTemperature =
         Teuchos::rcp(new LCM::SetField<Residual, Traits>(setTempP));
@@ -315,11 +287,10 @@ int main(int ac, char* av[])
   delta_time[0] = step_size;
   Teuchos::ParameterList setDTP("SetFieldTimeStep");
   setDTP.set<std::string>("Evaluated Field Name", "Delta Time");
-  setDTP.set<Teuchos::RCP<PHX::DataLayout>>("Evaluated Field Data Layout",
-                                             dl->workset_scalar);
+  setDTP.set<Teuchos::RCP<PHX::DataLayout>>(
+      "Evaluated Field Data Layout", dl->workset_scalar);
   setDTP.set<Teuchos::ArrayRCP<ScalarT>>("Field Values", delta_time);
-  auto setFieldDT =
-    Teuchos::rcp(new LCM::SetField<Residual, Traits>(setDTP));
+  auto setFieldDT = Teuchos::rcp(new LCM::SetField<Residual, Traits>(setDTP));
   fieldManager.registerEvaluator<Residual>(setFieldDT);
   stateFieldManager.registerEvaluator<Residual>(setFieldDT);
 
@@ -331,26 +302,24 @@ int main(int ac, char* av[])
   std::cout << "Check stability = " << check_stability << std::endl;
 
   //---------------------------------------------------------------------------
-  //std::cout << "// Constitutive Model Parameters"
-            //<< std::endl;
+  // std::cout << "// Constitutive Model Parameters"
+  //<< std::endl;
   Teuchos::ParameterList cmpPL;
   paramList.set<Teuchos::RCP<std::map<std::string, std::string>>>(
-      "Name Map",
-      fnm);
+      "Name Map", fnm);
   cmpPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
   if (have_temperature) {
     cmpPL.set<std::string>("Temperature Name", "Temperature");
     paramList.set<bool>("Have Temperature", true);
   }
-  auto CMP =
-      Teuchos::rcp(
-          new LCM::ConstitutiveModelParameters<Residual, Traits>(cmpPL, dl));
+  auto CMP = Teuchos::rcp(
+      new LCM::ConstitutiveModelParameters<Residual, Traits>(cmpPL, dl));
   fieldManager.registerEvaluator<Residual>(CMP);
   stateFieldManager.registerEvaluator<Residual>(CMP);
 
   //---------------------------------------------------------------------------
-  //std::cout << "// Constitutive Model Interface Evaluator"
-           // << std::endl;
+  // std::cout << "// Constitutive Model Interface Evaluator"
+  // << std::endl;
   Teuchos::ParameterList cmiPL;
   cmiPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
   if (have_temperature) {
@@ -363,8 +332,10 @@ int main(int ac, char* av[])
   stateFieldManager.registerEvaluator<Residual>(CMI);
 
   // Set the evaluated fields as required
-  for (std::vector<Teuchos::RCP<PHX::FieldTag>>::const_iterator it = CMI
-      ->evaluatedFields().begin(); it != CMI->evaluatedFields().end(); ++it) {
+  for (std::vector<Teuchos::RCP<PHX::FieldTag>>::const_iterator it =
+           CMI->evaluatedFields().begin();
+       it != CMI->evaluatedFields().end();
+       ++it) {
     fieldManager.requireField<Residual>(**it);
   }
 
@@ -389,16 +360,14 @@ int main(int ac, char* av[])
 
   //---------------------------------------------------------------------------
   if (check_stability) {
-    std::string parametrization_type = mpsParams.get<std::string>(
-      "Parametrization Type", "Spherical");
+    std::string parametrization_type =
+        mpsParams.get<std::string>("Parametrization Type", "Spherical");
 
-    double parametrization_interval = mpsParams.get<double>(
-      "Parametrization Interval", 0.05);
+    double parametrization_interval =
+        mpsParams.get<double>("Parametrization Interval", 0.05);
 
-    std::cout << "Bifurcation Check in Material Point Simulator:"
-            << std::endl;
-    std::cout << "Parametrization Type: " << parametrization_type
-            << std::endl;
+    std::cout << "Bifurcation Check in Material Point Simulator:" << std::endl;
+    std::cout << "Parametrization Type: " << parametrization_type << std::endl;
 
     Teuchos::ParameterList bcPL;
     bcPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
@@ -408,8 +377,8 @@ int main(int ac, char* av[])
     bcPL.set<std::string>("Ellipticity Flag Name", "Ellipticity_Flag");
     bcPL.set<std::string>("Bifurcation Direction Name", "Direction");
     bcPL.set<std::string>("Min detA Name", "Min detA");
-    Teuchos::RCP<LCM::BifurcationCheck<Residual, Traits>> BC = Teuchos::rcp(
-        new LCM::BifurcationCheck<Residual, Traits>(bcPL, dl));
+    Teuchos::RCP<LCM::BifurcationCheck<Residual, Traits>> BC =
+        Teuchos::rcp(new LCM::BifurcationCheck<Residual, Traits>(bcPL, dl));
     fieldManager.registerEvaluator<Residual>(BC);
     stateFieldManager.registerEvaluator<Residual>(BC);
 
@@ -454,12 +423,11 @@ int main(int ac, char* av[])
     ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
     fieldManager.registerEvaluator<Residual>(ev);
     stateFieldManager.registerEvaluator<Residual>(ev);
-
   }
 
   //---------------------------------------------------------------------------
-  //std::cout << "// register deformation gradient"
-           // << std::endl;
+  // std::cout << "// register deformation gradient"
+  // << std::endl;
   p = stateMgr.registerStateVariable(
       "F",
       dl->qp_tensor,
@@ -473,8 +441,8 @@ int main(int ac, char* av[])
   fieldManager.registerEvaluator<Residual>(ev);
   stateFieldManager.registerEvaluator<Residual>(ev);
   //---------------------------------------------------------------------------
-  //std::cout << "// register small strain tensor"
-           // << std::endl;
+  // std::cout << "// register small strain tensor"
+  // << std::endl;
   p = stateMgr.registerStateVariable(
       "Strain",
       dl->qp_tensor,
@@ -490,36 +458,34 @@ int main(int ac, char* av[])
   //---------------------------------------------------------------------------
   //
   Traits::SetupData setupData = "Test String";
-  //std::cout << "Calling postRegistrationSetup" << std::endl;
+  // std::cout << "Calling postRegistrationSetup" << std::endl;
   fieldManager.postRegistrationSetup(setupData);
 
-  //std::cout << "// set the required fields for the state manager"
-            //<< std::endl;
-  Teuchos::RCP<PHX::DataLayout> dummy = Teuchos::rcp(
-      new PHX::MDALayout<Dummy>(0));
+  // std::cout << "// set the required fields for the state manager"
+  //<< std::endl;
+  Teuchos::RCP<PHX::DataLayout> dummy =
+      Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
   std::vector<std::string> responseIDs =
-    stateMgr.getResidResponseIDsToRequire(element_block_name);
+      stateMgr.getResidResponseIDsToRequire(element_block_name);
   std::vector<std::string>::const_iterator it;
   for (it = responseIDs.begin(); it != responseIDs.end(); it++) {
-    const std::string& responseID = *it;
+    const std::string&                              responseID = *it;
     PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT> res_response_tag(
-        responseID,
-        dummy);
+        responseID, dummy);
     stateFieldManager.requireField<PHAL::AlbanyTraits::Residual>(
         res_response_tag);
   }
   stateFieldManager.postRegistrationSetup("");
 
-  //std::cout << "Process using 'dot -Tpng -O <name>'\n";
+  // std::cout << "Process using 'dot -Tpng -O <name>'\n";
   fieldManager.writeGraphvizFile<Residual>("FM", true, true);
   stateFieldManager.writeGraphvizFile<Residual>("SFM", true, true);
 
   //---------------------------------------------------------------------------
   // grab the output file name
   //
-  std::string output_file = mpsParams.get<std::string>(
-      "Output File Name",
-      "output.exo");
+  std::string output_file =
+      mpsParams.get<std::string>("Output File Name", "output.exo");
 
   //---------------------------------------------------------------------------
   // Create discretization, as required by the StateManager
@@ -532,25 +498,22 @@ int main(int ac, char* av[])
   discretizationParameterList->set<std::string>("Method", "STK3D");
   discretizationParameterList->set<int>("Number Of Time Derivatives", 0);
   discretizationParameterList->set<std::string>(
-      "Exodus Output File Name",
-      output_file);
+      "Exodus Output File Name", output_file);
   discretizationParameterList->set<int>("Workset Size", workset_size);
-  Teuchos::RCP<Tpetra_Map> mapT =
-    Teuchos::rcp(new Tpetra_Map(workset_size*num_dims*num_nodes,
-                                0,
-                                commT,
-                                Tpetra::LocallyReplicated));
+  Teuchos::RCP<Tpetra_Map> mapT = Teuchos::rcp(new Tpetra_Map(
+      workset_size * num_dims * num_nodes,
+      0,
+      commT,
+      Tpetra::LocallyReplicated));
   Teuchos::RCP<Tpetra_Vector> solution_vectorT =
-    Teuchos::rcp(new Tpetra_Vector(mapT));
+      Teuchos::rcp(new Tpetra_Vector(mapT));
 
   int numberOfEquations = 3;
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
 
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct = Teuchos::rcp(
-      new Albany::TmplSTKMeshStruct<3>(
-          discretizationParameterList,
-          Teuchos::null,
-          commT));
+  Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct =
+      Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(
+          discretizationParameterList, Teuchos::null, commT));
   stkMeshStruct->setFieldAndBulkData(
       commT,
       discretizationParameterList,
@@ -559,8 +522,9 @@ int main(int ac, char* av[])
       stateMgr.getStateInfoStruct(),
       stkMeshStruct->getMeshSpecs()[0]->worksetSize);
 
-  Teuchos::RCP<Albany::AbstractDiscretization> discretization = Teuchos::rcp(
-      new Albany::STKDiscretization(discretizationParameterList, stkMeshStruct, commT));
+  Teuchos::RCP<Albany::AbstractDiscretization> discretization =
+      Teuchos::rcp(new Albany::STKDiscretization(
+          discretizationParameterList, stkMeshStruct, commT));
 
   //---------------------------------------------------------------------------
   // Associate the discretization with the StateManager
@@ -572,14 +536,12 @@ int main(int ac, char* av[])
   //
   PHAL::Workset workset;
   workset.numCells = workset_size;
-  workset.stateArrayPtr = &stateMgr.getStateArray(
-      Albany::StateManager::ELEM,
-      0);
+  workset.stateArrayPtr =
+      &stateMgr.getStateArray(Albany::StateManager::ELEM, 0);
 
   // create MDFields
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stressField(
-      "Cauchy_Stress",
-      dl->qp_tensor);
+      "Cauchy_Stress", dl->qp_tensor);
 
   // construct the final deformation gradient based on the loading case
   std::vector<ScalarT> F_vector(9, 0.0);
@@ -597,8 +559,9 @@ int main(int ac, char* av[])
     F_vector[4] = 1.0 + number_steps * step_size;
     F_vector[8] = 1.0 + number_steps * step_size;
   } else if (load_case == "general") {
-    F_vector = mpsParams.get<Teuchos::Array<double>>(
-        "Deformation Gradient Components").toVector();
+    F_vector =
+        mpsParams.get<Teuchos::Array<double>>("Deformation Gradient Components")
+            .toVector();
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
@@ -610,32 +573,34 @@ int main(int ac, char* av[])
   minitensor::Tensor<ScalarT> log_F_tensor = minitensor::log(F_tensor);
 
   std::cout << "F\n" << F_tensor << std::endl;
-  //std::cout << "log F\n" << log_F_tensor << std::endl;
+  // std::cout << "log F\n" << log_F_tensor << std::endl;
 
   //
   // Setup loading scenario and instantiate evaluatFields
   //
   PHX::MDField<ScalarT, Cell, QuadPoint> minDetA("Min detA", dl->qp_scalar);
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim> direction("Direction", dl->qp_vector);
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim> direction(
+      "Direction", dl->qp_vector);
 
   // Bifurcation check parameters
-  double mu_0 = 0;
-  double mu_k = 0;
-  int bifurcationTime_rough = number_steps;
-  bool bifurcation_flag = false;
+  double mu_0                  = 0;
+  double mu_k                  = 0;
+  int    bifurcationTime_rough = number_steps;
+  bool   bifurcation_flag      = false;
 
   for (int istep(0); istep <= number_steps; ++istep) {
-    util::TimeGuard total_time_guard( total_time );
-    //std::cout << "****** in MPS step " << istep << " ****** " << std::endl;
+    util::TimeGuard total_time_guard(total_time);
+    // std::cout << "****** in MPS step " << istep << " ****** " << std::endl;
     // alpha \in [0,1]
     double alpha = double(istep) / number_steps;
 
-    //std::cout << "alpha: " << alpha << std::endl;
+    // std::cout << "alpha: " << alpha << std::endl;
     minitensor::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
-    minitensor::Tensor<ScalarT> current_F = minitensor::exp(scaled_log_F_tensor);
+    minitensor::Tensor<ScalarT> current_F =
+        minitensor::exp(scaled_log_F_tensor);
 
-    //std::cout << "scaled log F\n" << scaled_log_F_tensor << std::endl;
-    //std::cout << "current F\n" << current_F << std::endl;
+    // std::cout << "scaled log F\n" << scaled_log_F_tensor << std::endl;
+    // std::cout << "current F\n" << current_F << std::endl;
 
     for (int i = 0; i < 3; ++i) {
       for (int j = 0; j < 3; ++j) {
@@ -648,15 +613,15 @@ int main(int ac, char* av[])
 
     // small strain tensor
     minitensor::Tensor<ScalarT> current_strain;
-    current_strain = 0.5 * (current_F + minitensor::transpose(current_F))
-      - minitensor::eye<ScalarT>(3);
+    current_strain = 0.5 * (current_F + minitensor::transpose(current_F)) -
+                     minitensor::eye<ScalarT>(3);
 
     for (int i = 0; i < 3; ++i) {
       for (int j = 0; j < 3; ++j) {
         strain[3 * i + j] = current_strain(i, j);
       }
     }
-    //std::cout << "current strain\n" << current_strain << std::endl;
+    // std::cout << "current strain\n" << current_strain << std::endl;
 
     // Call the evaluators, evaluateFields() is the function that
     // computes stress based on deformation gradient
@@ -666,33 +631,10 @@ int main(int ac, char* av[])
     fieldManager.postEvaluate<Residual>(workset);
     compute_time->stop();
 
-    stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(
-        stressField);
-
-    // Check the computed stresses
-#if 0
-    for (size_type cell = 0; cell < workset_size; ++cell) {
-      for (size_type qp = 0; qp < num_pts; ++qp) {
-        std::cout << "in MPS Stress tensor at cell " << cell
-            << ", quadrature point " << qp << ":" << std::endl;
-        std::cout << "  " << stressField(cell, qp, 0, 0);
-        std::cout << "  " << stressField(cell, qp, 0, 1);
-        std::cout << "  " << stressField(cell, qp, 0, 2) << std::endl;
-        std::cout << "  " << stressField(cell, qp, 1, 0);
-        std::cout << "  " << stressField(cell, qp, 1, 1);
-        std::cout << "  " << stressField(cell, qp, 1, 2) << std::endl;
-        std::cout << "  " << stressField(cell, qp, 2, 0);
-        std::cout << "  " << stressField(cell, qp, 2, 1);
-        std::cout << "  " << stressField(cell, qp, 2, 2) << std::endl;
-
-        std::cout << std::endl;
-
-      }
-    }
-#endif
+    stateFieldManager.getFieldData<Residual>(stressField);
 
     // Call the state field manager
-    //std::cout << "+++ calling the stateFieldManager\n";
+    // std::cout << "+++ calling the stateFieldManager\n";
     compute_time->start();
     stateFieldManager.preEvaluate<Residual>(workset);
     stateFieldManager.evaluateFields<Residual>(workset);
@@ -704,66 +646,65 @@ int main(int ac, char* av[])
     // output to the exodus file
     // Don't include this in timing data...
     total_time->stop();
-    discretization->writeSolutionT(*solution_vectorT, Teuchos::as<double>(istep));
+    discretization->writeSolutionT(
+        *solution_vectorT, Teuchos::as<double>(istep));
 
     // if check for bifurcation, adaptive step
     total_time->start();
     if (check_stability) {
-
       // get current minDet(A)
-      stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(minDetA);
+      stateFieldManager.getFieldData<Residual>(minDetA);
 
       if (istep == 0) {
-        mu_0 = minDetA(0,0);
+        mu_0 = minDetA(0, 0);
       }
 
-      if (minDetA(0,0) <= 0 && !bifurcation_flag) {
-
-        mu_k = minDetA(0,0);
+      if (minDetA(0, 0) <= 0 && !bifurcation_flag) {
+        mu_k                  = minDetA(0, 0);
         bifurcationTime_rough = istep;
-        bifurcation_flag = true;
+        bifurcation_flag      = true;
 
-  	    // adaptive step begin
-        std::cout << "\nAdaptive step begin - step "
-  	      << istep << std::endl;
+        // adaptive step begin
+        std::cout << "\nAdaptive step begin - step " << istep << std::endl;
 
         // initialization for adaptive step
-  	    double tol = 1E-8;
-  	    double alpha_local = 1.0;
-  	    double alpha_local_step = 0.5;
+        double tol              = 1E-8;
+        double alpha_local      = 1.0;
+        double alpha_local_step = 0.5;
 
-  	    int k = 1;
-  	    int maxIteration = 50;
+        int k            = 1;
+        int maxIteration = 50;
 
-    	// small strain tensor
+        // small strain tensor
         minitensor::Tensor<ScalarT> current_strain;
 
         // iteration begin
-        while ( ((mu_k <= 0) || (std::abs(mu_k / mu_0) > tol)) ) {
+        while (((mu_k <= 0) || (std::abs(mu_k / mu_0) > tol))) {
+          alpha =
+              double(bifurcationTime_rough - 1 + alpha_local) / number_steps;
 
-          alpha = double(bifurcationTime_rough - 1 + alpha_local)
-            / number_steps;
-
-          minitensor::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
-          minitensor::Tensor<ScalarT> current_F
-            = minitensor::exp(scaled_log_F_tensor);
+          minitensor::Tensor<ScalarT> scaled_log_F_tensor =
+              alpha * log_F_tensor;
+          minitensor::Tensor<ScalarT> current_F =
+              minitensor::exp(scaled_log_F_tensor);
 
           for (int i = 0; i < 3; ++i) {
-      	    for (int j = 0; j < 3; ++j) {
+            for (int j = 0; j < 3; ++j) {
               def_grad[3 * i + j] = current_F(i, j);
-      	    }
+            }
           }
 
           // jacobian
           detdefgrad[0] = minitensor::det(current_F);
 
-          current_strain = 0.5 * (current_F + minitensor::transpose(current_F))
-      	    - minitensor::eye<ScalarT>(3);
+          current_strain =
+              0.5 * (current_F + minitensor::transpose(current_F)) -
+              minitensor::eye<ScalarT>(3);
 
           for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 3; ++j) {
               strain[3 * i + j] = current_strain(i, j);
-      	    }
+            }
           }
 
           // Call the evaluators, evaluateFields() is the function that
@@ -773,18 +714,16 @@ int main(int ac, char* av[])
           fieldManager.postEvaluate<Residual>(workset);
 
           // Call the state field manager
-          //std::cout << "+++ calling the stateFieldManager\n";
+          // std::cout << "+++ calling the stateFieldManager\n";
           stateFieldManager.preEvaluate<Residual>(workset);
           stateFieldManager.evaluateFields<Residual>(workset);
           stateFieldManager.postEvaluate<Residual>(workset);
 
-          stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(
-            minDetA);
+          stateFieldManager.getFieldData<Residual>(minDetA);
 
-          stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim>(
-            direction);
+          stateFieldManager.getFieldData<Residual>(direction);
 
-          mu_k = minDetA(0,0);
+          mu_k = minDetA(0, 0);
 
           if (mu_k > 0) {
             alpha_local += alpha_local_step;
@@ -794,21 +733,20 @@ int main(int ac, char* av[])
 
           alpha_local_step /= 2;
 
-          k = k+1;
+          k = k + 1;
 
           if (k >= maxIteration) {
-            std::cout << "Adaptive step for bifurcation check not converging after "
-              << k << " iterations" << std::endl;
+            std::cout
+                << "Adaptive step for bifurcation check not converging after "
+                << k << " iterations" << std::endl;
             break;
           }
 
-        } // adaptive step iteration end
+        }  // adaptive step iteration end
 
+      }  // end adaptive step
 
-      } // end adaptive step
-
-    } // end check bifurcation
-
+    }  // end check bifurcation
 
     stateMgr.updateStates();
 
@@ -820,11 +758,11 @@ int main(int ac, char* av[])
 
     //
 
-  } // end loading steps
+  }  // end loading steps
 
   // Summarize with AlbanyUtil performance monitors
-  if ( tout ) {
-    util::PerformanceContext::instance().timeMonitor().summarize( tout );
+  if (tout) {
+    util::PerformanceContext::instance().timeMonitor().summarize(tout);
     tout.close();
   }
 }

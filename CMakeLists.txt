@@ -518,6 +518,10 @@ IF (Tempus_List_ID GREATER -1)
   SET(ALBANY_TEMPUS TRUE)
 ELSE()
   MESSAGE("-- Looking for Tempus in Trilinos: NOT found.")
+  IF (ENABLE_LCM) 
+    MESSAGE(FATAL_ERROR
+        "LCM enabled but Tempus not installed from Trilinos (LCM needs Tempus)!  Please recompile Trilinos with Tempus enabled.")
+  ENDIF()
   SET(ALBANY_TEMPUS FALSE)
 ENDIF()
 
@@ -671,6 +675,26 @@ to be ON\n")
 ELSE()
   MESSAGE("---> CISM_INTERFACE     is NOT Enabled.")
   SET(CISM_HAS_FELIX FALSE)
+ENDIF()
+
+# Set optional build of AFRL MultiScale; defaults to OFF
+OPTION(ENABLE_AFRL "Flag to turn on AFRL Source code" OFF)
+IF (ENABLE_AFRL)
+  SET(ENABLE_LCM ON)
+  ADD_DEFINITIONS(-DALBANY_AFRL)
+  MESSAGE("-- AFRL      is Enabled, compiling with -DALBANY_AFRL")
+  LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
+  FIND_PACKAGE(OpenSSL REQUIRED)
+  OPTION(AFRL_USE_RABBITMQ "Flag to use RabbitMQ in AFRL Source code" ON)
+  IF (AFRL_USE_RABBITMQ)
+    FIND_PACKAGE(RabbitMQ REQUIRED)
+  ELSE()
+    FIND_PACKAGE(ZeroMQ 3.0 REQUIRED)
+  ENDIF()
+  SET(ALBANY_AFRL TRUE)
+ELSE()
+  MESSAGE("-- AFRL      is NOT Enabled.")
+  SET(ALBANY_AFRL FALSE)
 ENDIF()
 
 # set optional dependency of mesh on parameters, defaults to Disabled
@@ -1047,49 +1071,6 @@ ELSE()
   MESSAGE("-- FADType   is DFAD (default).")
 ENDIF()
 
-# Set optional build of StochasticGalerkin and MultiPoint types
-# These are required for embedded UQ, but slow compilation considerably
-OPTION(ENABLE_SG_MP "DEPRECATED Flag to turn on SG_MP StochasticGalerkin and MP Code" OFF)
-IF (ENABLE_SG_MP)
-  MESSAGE(FATAL_ERROR "\nENABLE_SG_MP configure option no longer exists.
-          Use ENABLE_SG for Stochastic Galerkin
-          Use ENABLE_ENSEMBLE for Ensemble (a.k.a. MP) capability")
-ENDIF()
-
-# OPtional build with embedded Stochastic Galerkin evaluations
-OPTION(ENABLE_SG "Flag to turn on SG Stochastic Galerkin Code" OFF)
-IF (ENABLE_SG)
-  if (1)
-    set (ALBANY_SG FALSE)
-    message ("-- SG        is NOT Enabled.")
-    message ("---> WARNING: SG is not working yet after the Kokkos merge. Disabling.")
-  else ()
-    ADD_DEFINITIONS(-DALBANY_SG)
-    MESSAGE("-- SG        is Enabled, compiling with -DALBANY_SG")
-    SET(ALBANY_SG TRUE)
-  endif ()
-ELSE()
-  MESSAGE("-- SG        is NOT Enabled.")
-  SET(ALBANY_SG FALSE)
-ENDIF()
-
-# Toggle embedded ensemble capability  (ENSEMBLE is a rename of MP)
-OPTION(ENABLE_ENSEMBLE "Flag to turn on Ensemble Code" OFF)
-IF (ENABLE_ENSEMBLE)
-  IF(ENABLE_ALBANY_EPETRA_EXE)
-    ADD_DEFINITIONS(-DALBANY_ENSEMBLE)
-    SET(ENSEMBLE_SIZE 32 CACHE INT "set Sacado ENSEMBLE MP::Vector size")
-    ADD_DEFINITIONS(-DALBANY_ENSEMBLE_SIZE=${ENSEMBLE_SIZE})
-    MESSAGE("-- ENSEMBLE  is Enabled, compiling with -DALBANY_ENSEMBLE -DALBANY_ENSEMBLE_SIZE=${ENSEMBLE_SIZE}")
-    SET(ALBANY_ENSEMBLE TRUE)
-  ELSE()
-    MESSAGE(FATAL_ERROR "\nError: ENABLE_ALBANY_ENSEMBLE requires ENABLE_ALBANY_EPETRA_EXE to be ON\n")
-  ENDIF()
-ELSE()
-  MESSAGE("-- ENSEMBLE  is NOT Enabled.")
-  SET(ALBANY_ENSEMBLE FALSE)
-ENDIF()
-
 # optionally disable the use of the Trilinos stokhos package
 OPTION(ENABLE_STOKHOS "Flag to enable / disable the use of Stokhos in Albany" OFF)
 IF (ENABLE_STOKHOS)
@@ -1351,34 +1332,22 @@ want to useTriKota.")
 ENDIF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
 
 # add a target to generate API documentation with Doxygen
-find_package(Doxygen)
-if(DOXYGEN_FOUND)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/albanyMainPage.doc ${CMAKE_CURRENT_BINARY_DIR}/albanyMainPage.doc)
-add_custom_target(doc
-${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-COMMENT "Generating API documentation with Doxygen" VERBATIM
-)
-endif(DOXYGEN_FOUND)
+IF( NOT DISABLE_DOXYGEN )
+  find_package(Doxygen)
+  if(DOXYGEN_FOUND)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/albanyMainPage.doc ${CMAKE_CURRENT_BINARY_DIR}/albanyMainPage.doc)
+  add_custom_target(doc
+  ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  COMMENT "Generating API documentation with Doxygen" VERBATIM
+  )
+  endif(DOXYGEN_FOUND)
+ENDIF()
 
 # Enable yaml parsing for reading parameters lists
-SET(ALBANY_YAML FALSE)
-IF ((EXISTS "${Trilinos_INCLUDE_DIRS}/Teuchos_YamlParameterListHelpers.hpp")
-     AND (EXISTS "${Trilinos_INCLUDE_DIRS}/TeuchosCore_config.h"))
-  FILE(READ ${Trilinos_INCLUDE_DIRS}/TeuchosCore_config.h TEUCHOS_CONFIG)
-  STRING(REGEX MATCH "\#define HAVE_TEUCHOSCORE_YAML_CPP 1" TEUCHOS_YAML_IS_SET ${TEUCHOS_CONFIG})
-  IF ("#define HAVE_TEUCHOSCORE_YAML_CPP 1" STREQUAL "${TEUCHOS_YAML_IS_SET}")
-    MESSAGE("-- Looking for YAML in Teuchos: Found, compiling with -DALBANY_YAML")
-    SET(ALBANY_YAML TRUE)
-    ADD_DEFINITIONS(-DALBANY_YAML)
-  ENDIF()
-ENDIF()
-IF (NOT ALBANY_YAML)
-  MESSAGE("-- Looking for YAML in Teuchos: NOT found.")
-  IF (ENABLE_LCM)
-    MESSAGE(FATAL_ERROR "Trilinos was not built with YAML enabled - it is required for LCM.")
-  ENDIF()
+IF (ALBANY_LCM)
+  ADD_DEFINITIONS(-DALBANY_YAML)
 ENDIF()
 
 ## End of CMake options to Albany

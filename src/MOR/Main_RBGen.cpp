@@ -187,14 +187,28 @@ int main(int argc, char *argv[]) {
       const RCP<const Teuchos::ParameterList> blockingParams = Teuchos::sublist(listParams, entry_name);
       blockingParams->print();
 
-      const Teuchos::Array<int> mySelectedLIDs = getMyBlockLIDs(*blockingParams, *baseDisc);
+      Teuchos::Array<int> mySelectedLIDs = getMyBlockLIDs(*blockingParams, *baseDisc);
       printf("There are %d Selected LIDs\n",mySelectedLIDs.size());
       *out << "Selected LIDs = " << mySelectedLIDs << "\n";
+
+      for (auto it=mySelectedLIDs.begin(); it!=mySelectedLIDs.end(); )
+      {
+        if (std::find(myBlockedLIDs.begin(), myBlockedLIDs.end(), *it) != myBlockedLIDs.end())
+        {
+          std::cout << "deleting element " << *it << " of mySelectedLIDs" << std::endl;
+          mySelectedLIDs.erase(it);
+        }
+        else
+          it++;
+      }
+
+
       for (int j=0; j<mySelectedLIDs.size(); j++)
         myBlockedLIDs.push_back(mySelectedLIDs[j]);
 
       //blockVectors[i] = MOR::isolateUniformBlock(mySelectedLIDs, *rawSnapshots);
       blockVectors.push_back(MOR::isolateUniformBlock(mySelectedLIDs, *rawSnapshots));
+
     }
     delete[] entry_name;
   }

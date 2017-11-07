@@ -7,3 +7,5 @@
 add_subdirectory(Cubes)
 add_subdirectory(CubesSDBC)
 add_subdirectory(Clamped)
+add_subdirectory(ClampedSDBC)
+add_subdirectory(Torsion)

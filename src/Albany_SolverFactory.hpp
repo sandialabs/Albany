@@ -16,9 +16,6 @@
 #if defined(ALBANY_EPETRA)
 #include "EpetraExt_ModelEvaluator.h"
 #include "Epetra_Vector.h"
-#ifdef ALBANY_STOKHOS
-#include "Stokhos_EpetraVectorOrthogPoly.hpp"
-#endif
 #endif
 
 #include "Albany_PiroObserverT.hpp"

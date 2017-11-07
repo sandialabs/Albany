@@ -57,7 +57,21 @@ namespace Albany {
 
     MapOfDOFsStructs mapOfDOFsStructs;
     std::map<std::string, MapOfDOFsStructs::const_iterator> fieldToMap;
+   
     const DOFsStruct& getDOFsStruct(const std::string& field_name) const {return fieldToMap.find(field_name)->second->second;}; //TODO handole errors
+  
+    //IKT: added the following function, which may be useful for debugging. 
+    void printFieldToMap() const {
+      typedef std::map<std::string, MapOfDOFsStructs::const_iterator>::const_iterator MapIterator;
+      Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream(); 
+      for (MapIterator iter = fieldToMap.begin(); iter != fieldToMap.end(); iter++) {
+        std::string key = iter->first; 
+        *out << "IKT Key: " << key << "\n";
+        Teuchos::RCP<const Tpetra_Map> map = getDOFsStruct(key).map;
+        *out << "IKT Map \n: ";
+        map->describe(*out, Teuchos::VERB_EXTREME); 
+      }
+    }
 
     void addEmptyDOFsStruct(const std::string& field_name, const std::string& meshPart, int numComps){
 

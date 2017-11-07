@@ -4,82 +4,72 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Teuchos_TestForException.hpp"
-#include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_TestForException.hpp"
 
+#include "AAAModel.hpp"
 #include "AnisotropicDamageModel.hpp"
 #include "AnisotropicHyperelasticDamageModel.hpp"
-#include "ElasticDamageModel.hpp"
-#ifndef KOKKOS_HAVE_CUDA
-#  include "GursonHMRModel.hpp"
-#  include "GursonModel.hpp"
-#endif
-#include "J2FiberModel.hpp"
-#include "J2Model.hpp"
-#include "CreepModel.hpp"
-#include "NewtonianFluidModel.hpp"
-#include "MooneyRivlinModel.hpp"
-#include "NeohookeanModel.hpp"
-#include "RIHMRModel.hpp"
-#include "StVenantKirchhoffModel.hpp"
-#include "AAAModel.hpp"
-#include "LinearElasticModel.hpp"
-#include "LinearHMCModel.hpp"
-#include "ElasticCrystalModel.hpp"
-#include "ViscoElasticModel.hpp"
-#include "J2HMCModel.hpp"
-#include "LinearPiezoModel.hpp"
-#ifndef KOKKOS_HAVE_CUDA
-#  include "FM_AlbanyInterface.hpp"
-#endif
-#include "HyperelasticDamageModel.hpp"
+#include "AnisotropicViscoplasticModel.hpp"
 #include "CapExplicitModel.hpp"
 #include "CapImplicitModel.hpp"
+#include "CreepModel.hpp"
+#include "CrystalPlasticityModel.hpp"
 #include "DruckerPragerModel.hpp"
-#ifndef KOKKOS_HAVE_CUDA
-#  include "CrystalPlasticityModel.hpp"
-#endif
-#include "TvergaardHutchinsonModel.hpp"
-#include "AnisotropicViscoplasticModel.hpp"
-#include "OrtizPandolfiModel.hpp"
+#include "ElasticCrystalModel.hpp"
+#include "ElasticDamageModel.hpp"
 #include "ElastoViscoplasticModel.hpp"
+#include "FM_AlbanyInterface.hpp"
+#include "GursonHMRModel.hpp"
+#include "GursonModel.hpp"
+#include "HyperelasticDamageModel.hpp"
+#include "J2FiberModel.hpp"
+#include "J2HMCModel.hpp"
 #include "J2MiniSolver.hpp"
+#include "J2Model.hpp"
+#include "LinearElasticModel.hpp"
+#include "LinearHMCModel.hpp"
+#include "LinearPiezoModel.hpp"
+#include "MooneyRivlinModel.hpp"
+#include "NeohookeanModel.hpp"
+#include "NewtonianFluidModel.hpp"
+#include "OrtizPandolfiModel.hpp"
+#include "RIHMRModel.hpp"
+#include "StVenantKirchhoffModel.hpp"
+#include "TvergaardHutchinsonModel.hpp"
+#include "ViscoElasticModel.hpp"
 
 #include "../parallel_models/ParallelNeohookeanModel.hpp"
 
-namespace LCM
-{
+namespace LCM {
 
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
-ConstitutiveModelInterface<EvalT, Traits>::
-ConstitutiveModelInterface(Teuchos::ParameterList& p,
-                           const Teuchos::RCP<Albany::Layouts>& dl):
-  have_temperature_(false),
-  have_damage_(false),
-  have_total_concentration_(false),
-  have_total_bubble_density_(false),
-  have_bubble_volume_fraction_(false),
-  volume_average_pressure_(p.get<bool>("Volume Average Pressure", false))
+ConstitutiveModelInterface<EvalT, Traits>::ConstitutiveModelInterface(
+    Teuchos::ParameterList&              p,
+    const Teuchos::RCP<Albany::Layouts>& dl)
+    : have_temperature_(false), have_damage_(false),
+      have_total_concentration_(false), have_total_bubble_density_(false),
+      have_bubble_volume_fraction_(false),
+      volume_average_pressure_(p.get<bool>("Volume Average Pressure", false))
 {
-  Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Material Parameters");
+  Teuchos::ParameterList* plist =
+      p.get<Teuchos::ParameterList*>("Material Parameters");
   plist->set<bool>("Volume Average Pressure", volume_average_pressure_);
-  this->initializeModel(plist,dl);
+  this->initializeModel(plist, dl);
 
   // construct the dependent fields
   auto dependent_map = model_->getDependentFieldMap();
   for (auto& pair : dependent_map) {
-    auto temp_field = Teuchos::rcp(
-        new PHX::MDField<const ScalarT>(pair.first, pair.second));
+    auto temp_field =
+        Teuchos::rcp(new PHX::MDField<const ScalarT>(pair.first, pair.second));
     dep_fields_map_.insert(std::make_pair(pair.first, temp_field));
   }
 
   // register dependent fields
   typename decltype(dep_fields_map_)::iterator it;
-  for (it = dep_fields_map_.begin();
-      it != dep_fields_map_.end();
-      ++it) {
+  for (it = dep_fields_map_.begin(); it != dep_fields_map_.end(); ++it) {
     this->addDependentField(*(it->second));
   }
 
@@ -92,23 +82,23 @@ ConstitutiveModelInterface(Teuchos::ParameterList& p,
   // optionally deal with temperature
   if (p.isType<std::string>("Temperature Name")) {
     have_temperature_ = true;
-    temperature_ = decltype(temperature_)(p.get<std::string>("Temperature Name"),
-        dl->qp_scalar);
+    temperature_      = decltype(temperature_)(
+        p.get<std::string>("Temperature Name"), dl->qp_scalar);
     this->addDependentField(temperature_);
   }
 
   // optionally deal with damage
   if (p.isType<std::string>("Damage Name")) {
     have_damage_ = true;
-    damage_ = decltype(damage_)(p.get<std::string>("Damage Name"),
-        dl->qp_scalar);
+    damage_ =
+        decltype(damage_)(p.get<std::string>("Damage Name"), dl->qp_scalar);
     this->addDependentField(damage_);
   }
 
   // optionally deal with total concentration
   if (p.isType<std::string>("Total Concentration Name")) {
     have_total_concentration_ = true;
-    total_concentration_ = decltype(total_concentration_)(
+    total_concentration_      = decltype(total_concentration_)(
         p.get<std::string>("Total Concentration Name"), dl->qp_scalar);
     this->addDependentField(total_concentration_);
   }
@@ -116,7 +106,7 @@ ConstitutiveModelInterface(Teuchos::ParameterList& p,
   // optionally deal with total bubble density
   if (p.isType<std::string>("Total Bubble Density Name")) {
     have_total_bubble_density_ = true;
-    total_bubble_density_ = decltype(total_bubble_density_)(
+    total_bubble_density_      = decltype(total_bubble_density_)(
         p.get<std::string>("Total Bubble Density Name"), dl->qp_scalar);
     this->addDependentField(total_bubble_density_);
   }
@@ -124,15 +114,15 @@ ConstitutiveModelInterface(Teuchos::ParameterList& p,
   // optionally deal with bubble volume fraction
   if (p.isType<std::string>("Bubble Volume Fraction Name")) {
     have_bubble_volume_fraction_ = true;
-    bubble_volume_fraction_ = decltype(bubble_volume_fraction_)(
+    bubble_volume_fraction_      = decltype(bubble_volume_fraction_)(
         p.get<std::string>("Bubble Volume Fraction Name"), dl->qp_scalar);
     this->addDependentField(bubble_volume_fraction_);
   }
 
   // optional volume averaging needs integration weights and J
   if (volume_average_pressure_) {
-    weights_ = decltype(weights_)(p.get<std::string>("Weights Name"),
-        dl->qp_scalar);
+    weights_ =
+        decltype(weights_)(p.get<std::string>("Weights Name"), dl->qp_scalar);
     this->addDependentField(weights_);
 
     j_ = decltype(j_)(p.get<std::string>("J Name"), dl->qp_scalar);
@@ -157,19 +147,22 @@ ConstitutiveModelInterface(Teuchos::ParameterList& p,
 
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
-void ConstitutiveModelInterface<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+void
+ConstitutiveModelInterface<EvalT, Traits>::postRegistrationSetup(
+    typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(dep_fields_map_.size() == 0, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      dep_fields_map_.size() == 0,
+      std::logic_error,
       "something is wrong in the LCM::CMI");
-  TEUCHOS_TEST_FOR_EXCEPTION(eval_fields_map_.size() == 0, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      eval_fields_map_.size() == 0,
+      std::logic_error,
       "something is wrong in the LCM::CMI");
   // dependent fields
   typename decltype(dep_fields_map_)::iterator it;
-  for (it = dep_fields_map_.begin();
-      it != dep_fields_map_.end();
-      ++it) {
+  for (it = dep_fields_map_.begin(); it != dep_fields_map_.end(); ++it) {
     this->utils.setFieldData(*(it->second), fm);
   }
 
@@ -237,42 +230,43 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
-void ConstitutiveModelInterface<EvalT, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+void
+ConstitutiveModelInterface<EvalT, Traits>::evaluateFields(
+    typename Traits::EvalData workset)
 {
   model_->computeState(workset, dep_fields_map_, eval_fields_map_);
   if (volume_average_pressure_) {
-    model_->computeVolumeAverage(workset,dep_fields_map_, eval_fields_map_);
+    model_->computeVolumeAverage(workset, dep_fields_map_, eval_fields_map_);
   }
 }
 
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
-void ConstitutiveModelInterface<EvalT, Traits>::
-fillStateVariableStruct(int state_var)
+void
+ConstitutiveModelInterface<EvalT, Traits>::fillStateVariableStruct(
+    int state_var)
 {
-  sv_struct_.name = model_->getStateVarName(state_var);
-  sv_struct_.data_layout = model_->getStateVarLayout(state_var);
-  sv_struct_.init_type = model_->getStateVarInitType(state_var);
-  sv_struct_.init_value = model_->getStateVarInitValue(state_var);
+  sv_struct_.name               = model_->getStateVarName(state_var);
+  sv_struct_.data_layout        = model_->getStateVarLayout(state_var);
+  sv_struct_.init_type          = model_->getStateVarInitType(state_var);
+  sv_struct_.init_value         = model_->getStateVarInitValue(state_var);
   sv_struct_.register_old_state = model_->getStateVarOldStateFlag(state_var);
-  sv_struct_.output_to_exodus = model_->getStateVarOutputFlag(state_var);
+  sv_struct_.output_to_exodus   = model_->getStateVarOutputFlag(state_var);
 }
 
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
-void ConstitutiveModelInterface<EvalT, Traits>::
-initializeModel(Teuchos::ParameterList* p,
+void
+ConstitutiveModelInterface<EvalT, Traits>::initializeModel(
+    Teuchos::ParameterList*              p,
     const Teuchos::RCP<Albany::Layouts>& dl)
 {
-  std::string
-  model_name = p->sublist("Material Model").get<std::string>("Model Name");
+  std::string model_name =
+      p->sublist("Material Model").get<std::string>("Model Name");
 
-  std::string const
-  error_msg = "Undefined material model name";
+  std::string const error_msg = "Undefined material model name";
 
-  Teuchos::RCP<ConstitutiveModel<EvalT, Traits>>
-  model = Teuchos::null;
+  Teuchos::RCP<ConstitutiveModel<EvalT, Traits>> model = Teuchos::null;
 
   using Teuchos::rcp;
 
@@ -286,22 +280,18 @@ initializeModel(Teuchos::ParameterList* p,
     model = rcp(new J2Model<EvalT, Traits>(p, dl));
   } else if (model_name == "Newtonian Fluid") {
     model = rcp(new NewtonianFluidModel<EvalT, Traits>(p, dl));
-#ifndef KOKKOS_HAVE_CUDA
   } else if (model_name == "CrystalPlasticity") {
     model = rcp(new CrystalPlasticityModel<EvalT, Traits>(p, dl));
-#endif
   } else if (model_name == "ElasticCrystal") {
     model = rcp(new ElasticCrystalModel<EvalT, Traits>(p, dl));
   } else if (model_name == "ViscoElastic") {
     model = rcp(new ViscoElasticModel<EvalT, Traits>(p, dl));
   } else if (model_name == "AHD") {
     model = rcp(new AnisotropicHyperelasticDamageModel<EvalT, Traits>(p, dl));
-#ifndef KOKKOS_HAVE_CUDA
   } else if (model_name == "Gurson") {
     model = rcp(new GursonModel<EvalT, Traits>(p, dl));
   } else if (model_name == "GursonHMR") {
     model = rcp(new GursonHMRModel<EvalT, Traits>(p, dl));
-#endif
   } else if (model_name == "Mooney Rivlin") {
     model = rcp(new MooneyRivlinModel<EvalT, Traits>(p, dl));
   } else if (model_name == "RIHMR") {
@@ -336,10 +326,8 @@ initializeModel(Teuchos::ParameterList* p,
     model = rcp(new J2HMCModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Linear Piezoelectric") {
     model = rcp(new LinearPiezoModel<EvalT, Traits>(p, dl));
-#ifndef KOKKOS_HAVE_CUDA
   } else if (model_name == "Ferroic") {
     model = rcp(new FerroicDriver<EvalT, Traits>(p, dl));
-#endif
   } else if (model_name == "Ortiz Pandolfi") {
     model = rcp(new OrtizPandolfiModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Elasto Viscoplastic") {
@@ -355,4 +343,3 @@ initializeModel(Teuchos::ParameterList* p,
 
 //------------------------------------------------------------------------------
 }
-

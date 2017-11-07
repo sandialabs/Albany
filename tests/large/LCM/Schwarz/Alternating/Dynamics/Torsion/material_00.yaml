@@ -1,0 +1,19 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    Block0: 
+      material: Beam
+  Materials: 
+    Beam: 
+      Material Model: 
+        Model Name: Neohookean
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1.0e09
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.25
+      Density: 1.0e+03
+      Output Cauchy Stress: true
+...

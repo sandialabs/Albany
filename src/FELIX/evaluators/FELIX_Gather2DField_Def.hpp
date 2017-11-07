@@ -189,47 +189,6 @@ void Gather2DField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {}
 
-#ifdef ALBANY_ENSEMBLE
-template<typename Traits>
-Gather2DField<PHAL::AlbanyTraits::MPResidual, Traits>::
-Gather2DField(const Teuchos::ParameterList& p,
-          const Teuchos::RCP<Albany::Layouts>& dl)
-          : Gather2DFieldBase<PHAL::AlbanyTraits::MPResidual, Traits>(p,dl)
-{}
-
-template<typename Traits>
-void Gather2DField<PHAL::AlbanyTraits::MPResidual, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, 
-    "FELIX::Gather2DField not implemented for Ensemble MP types!!");
-}
-
-template<typename Traits>
-Gather2DField<PHAL::AlbanyTraits::MPJacobian, Traits>::
-Gather2DField(const Teuchos::ParameterList& p,
-          const Teuchos::RCP<Albany::Layouts>& dl)
-          : Gather2DFieldBase<PHAL::AlbanyTraits::MPJacobian, Traits>(p,dl)
-            {}
-
-template<typename Traits>
-void Gather2DField<PHAL::AlbanyTraits::MPJacobian, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{}
-
-template<typename Traits>
-Gather2DField<PHAL::AlbanyTraits::MPTangent, Traits>::
-Gather2DField(const Teuchos::ParameterList& p,
-          const Teuchos::RCP<Albany::Layouts>& dl)
-          : Gather2DFieldBase<PHAL::AlbanyTraits::MPTangent, Traits>(p,dl)
-            {}
-
-template<typename Traits>
-void Gather2DField<PHAL::AlbanyTraits::MPTangent, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{}
-#endif
-
 
 //********************************
 
@@ -341,48 +300,6 @@ template<typename Traits>
 void GatherExtruded2DField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {}
-
-#ifdef ALBANY_ENSEMBLE
-template<typename Traits>
-GatherExtruded2DField<PHAL::AlbanyTraits::MPResidual, Traits>::
-GatherExtruded2DField(const Teuchos::ParameterList& p,
-          const Teuchos::RCP<Albany::Layouts>& dl)
-          : Gather2DFieldBase<PHAL::AlbanyTraits::MPResidual, Traits>(p,dl)
-            {}
-
-template<typename Traits>
-void GatherExtruded2DField<PHAL::AlbanyTraits::MPResidual, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, 
-    "FELIX::GatherExtruded2DField not implemented for Ensemble MP types!!");
-}
-
-template<typename Traits>
-GatherExtruded2DField<PHAL::AlbanyTraits::MPJacobian, Traits>::
-GatherExtruded2DField(const Teuchos::ParameterList& p,
-          const Teuchos::RCP<Albany::Layouts>& dl)
-          : Gather2DFieldBase<PHAL::AlbanyTraits::MPJacobian, Traits>(p,dl)
-            {}
-
-template<typename Traits>
-void GatherExtruded2DField<PHAL::AlbanyTraits::MPJacobian, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{}
-
-template<typename Traits>
-GatherExtruded2DField<PHAL::AlbanyTraits::MPTangent, Traits>::
-GatherExtruded2DField(const Teuchos::ParameterList& p,
-          const Teuchos::RCP<Albany::Layouts>& dl)
-          : Gather2DFieldBase<PHAL::AlbanyTraits::MPTangent, Traits>(p,dl)
-            {}
-
-template<typename Traits>
-void GatherExtruded2DField<PHAL::AlbanyTraits::MPTangent, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{}
-#endif
-
 
 }
 

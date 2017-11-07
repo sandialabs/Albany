@@ -18,6 +18,7 @@
 #include "Albany_GPAMProblem.hpp"
 #include "Albany_LinComprNSProblem.hpp"
 #include "Albany_AdvDiffProblem.hpp"
+#include "Albany_ReactDiffSystem.hpp"
 #include "Albany_ComprNSProblem.hpp"
 #include "Albany_ODEProblem.hpp"
 #include "Albany_PNPProblem.hpp"
@@ -57,6 +58,11 @@
 #include "Hydride/problems/HydMorphProblem.hpp"
 #include "Hydride/problems/MesoScaleLinkProblem.hpp"
 #include "Hydride/problems/LaplaceBeltramiProblem.hpp"
+#endif
+
+#ifdef ALBANY_AFRL
+#include "AFRL/problems/MultiScaleHeatProblem.hpp"
+#include "AFRL/problems/RotationMechanicsProblem.hpp"
 #endif
 
 #ifdef ALBANY_AMP
@@ -161,6 +167,9 @@ Albany::ProblemFactory::create()
   }
   else if (method == "AdvDiff 2D") {
     strategy = rcp(new Albany::AdvDiffProblem(problemParams, paramLib, 2));
+  }
+  else if ((method == "Reaction-Diffusion System 3D") || (method == "Reaction-Diffusion System")) {
+    strategy = rcp(new Albany::ReactDiffSystem(problemParams, paramLib, 3));
   }
   else if (method == "LinComprNS 2D") {
     strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 2));
@@ -285,6 +294,20 @@ Albany::ProblemFactory::create()
   }
   else if (method == "LinearElasticityModal 3D") {
     strategy = rcp(new Albany::LinearElasticityModalProblem(problemParams, paramLib, 3));
+  }
+#endif
+#ifdef ALBANY_AFRL
+  else if (method == "MultiScale Heat 1D") {
+    strategy = rcp(new Albany::MultiScaleHeatProblem(problemParams, paramLib, 1, commT));
+  }
+  else if (method == "MultiScale Heat 2D") {
+    strategy = rcp(new Albany::MultiScaleHeatProblem(problemParams, paramLib, 2, commT));
+  }
+  else if (method == "MultiScale Heat 3D") {
+    strategy = rcp(new Albany::MultiScaleHeatProblem(problemParams, paramLib, 3, commT));
+  }
+  else if (method == "Rotation Mechanics 3D") {
+    strategy = rcp(new Albany::RotationMechanicsProblem(problemParams, paramLib, getNumDim(method), rc_mgr, commT));
   }
 #endif
 #ifdef ALBANY_AMP

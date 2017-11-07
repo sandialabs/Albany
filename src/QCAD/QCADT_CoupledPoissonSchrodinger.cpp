@@ -17,10 +17,6 @@ Please remove when issue is resolved
 */
 #undef BOOST_MATH_PROMOTE_DOUBLE_POLICY
 
-#ifdef ALBANY_STOKHOS
-#include "Stokhos.hpp"
-#include "Sacado_PCE_OrthogPoly.hpp"
-#endif
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_TestForException.hpp"
 
@@ -714,6 +710,7 @@ create_DgDx_op_impl(int j) const
   else
     return schrodingerApp->getResponse(j - poissonApp->getNumResponses())->createGradientOp();
 */
+  return Teuchos::null;
 }
 
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
@@ -736,6 +733,7 @@ QCADT::CoupledPoissonSchrodinger::create_DgDx_dot_op_impl(int j) const
   else
     return schrodingerApp->getResponse(j - poissonApp->getNumResponses())->createGradientOp();
 */
+  return Teuchos::null;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>

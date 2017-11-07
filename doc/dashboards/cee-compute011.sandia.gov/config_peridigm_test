@@ -12,7 +12,7 @@ cmake \
 -DCMAKE_CXX_FLAGS:STRING='-O3 -std=c++11 -march=native' \
 -DCMAKE_C_COMPILER:PATH=mpicc \
 -DCMAKE_C_FLAGS:STRING='-O3 -march=native' \
--DCMAKE_CXX_LINK_FLAGS:STRING='-L/projects/albany/lib -lhdf5_hl -lnetcdf -lboost_timer -lboost_chrono -Wl,-rpath,/projects/albany/lib:/sierra/sntools/SDK/compilers/intel/composer_xe_2017.2.174/compilers_and_libraries/linux/mkl/lib/intel64:/sierra/sntools/SDK/compilers/intel/composer_xe_2017.2.174/compilers_and_libraries/linux/lib/intel64' \
+-DCMAKE_CXX_LINK_FLAGS:STRING='-L/projects/albany/lib -lhdf5_hl -lnetcdf -lboost_timer -lboost_chrono -Wl,-rpath,/projects/albany/lib:/sierra/sntools/SDK/compilers/intel/composer_xe_2017.4.196/compilers_and_libraries/linux/mkl/lib/intel64:/sierra/sntools/SDK/compilers/intel/composer_xe_2017.4.196/compilers_and_libraries/linux/lib/intel64' \
 /projects/AppComp/nightly_gahanse/cee-compute011/repos/Peridigm
 
 exit 0

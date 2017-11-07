@@ -559,7 +559,4 @@ computeFADInfo(
   }
 }
 
-#ifdef ALBANY_ENSEMBLE
-#endif // ALBANY_ENSEMBLE
-
 } // namespace LCM

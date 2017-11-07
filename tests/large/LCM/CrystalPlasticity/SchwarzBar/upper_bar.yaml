@@ -23,7 +23,7 @@ ANONYMOUS:
   Problem: 
     Name: Mechanics 3D
     Phalanx Graph Visualization Detail: 0
-    MaterialDB Filename: ../upper_bar_material.yaml
+    MaterialDB Filename: '../upper_bar_material.yaml'
     Dirichlet BCs: 
       Time Dependent DBC on NS nodelist_6 for DOF Y: 
         Number of points: 2
@@ -33,11 +33,11 @@ ANONYMOUS:
       DBC on NS nodelist_6 for DOF Z: 0.00000000e+00
       DBC on NS nodelist_5 for DOF Schwarz: 
         BC Function: Schwarz
-        Coupled Application: ../gauge.yaml
+        Coupled Application: '../gauge.yaml'
         Coupled Block: block_1
   Discretization: 
     Method: Exodus
-    Exodus Input File Name: ../upper_bar.g
+    Exodus Input File Name: '../upper_bar.g'
     Exodus Output File Name: upper_bar.exo
     Exodus Solution Name: displacement
     Exodus Residual Name: resid
