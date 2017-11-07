@@ -10,6 +10,7 @@ sites = [
   'http://my.cdash.org/index.php?project=Albany',
   'http://cdash.sandia.gov/CDash-2-3-0/index.php?project=Albany']
 
+all_good = True
 for site in sites:
   page = requests.get(site)
   soup = BeautifulSoup(page.content, 'html.parser')
@@ -27,15 +28,18 @@ for site in sites:
             print("Configure not reported for", build_name)
           elif int(number_texts[0]) > 0:
             print(build_name, "had", int(number_texts[0]), "configure errors")
+            all_good = False
         if not number_texts[3].isdecimal():
           print("Build not reported for", build_name)
         elif int(number_texts[3]) > 0:
           print(build_name, "had", int(number_texts[3]), "compile errors")
-        if None == re.search(not_tested_regex, build_name, re.IGNORECASE):
+          all_good = False
+        if not re.search(not_tested_regex, build_name, re.IGNORECASE):
           if not number_texts[7].isdecimal():
             print("Tests not reported for", build_name)
           elif int(number_texts[7]) > 0:
             print(build_name, "had", int(number_texts[7]), "test failures")
+            all_good = False
       except AttributeError:
         pass
     else:
@@ -44,3 +48,6 @@ for site in sites:
           past_subprojects = True
       except AttributeError:
         pass
+
+if not all_good:
+  sys.exit(42)
