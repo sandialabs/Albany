@@ -8,6 +8,7 @@
 // Simple mesh partitioning program
 //
 #include <algorithm>
+#include <chrono>
 #include <iomanip>
 
 #include <Teuchos_CommandLineProcessor.hpp>
@@ -175,8 +176,14 @@ int main(int ac, char* av[])
   //
   // Partition mesh
   //
+  auto
+  start = std::chrono::system_clock::now();
+
   std::map<int, int> const
   partitions = connectivity_array.partition(partition_scheme, length_scale);
+
+  auto
+  end = std::chrono::system_clock::now();
 
   // Get abstract discretization from connectivity array and convert
   // to stk discretization to use stk-specific methods.
@@ -322,5 +329,11 @@ int main(int ac, char* av[])
   LCM::DualGraph dual_graph(connectivity_array);
   dual_graph.Print();
 #endif
+
+  std::chrono::duration<double>
+  elapsed_seconds = end - start;
+  std::cout << std::scientific << std::setw(16) << std::setprecision(8);
+  std::cout << "PARTITION TIME [s]: " << elapsed_seconds.count() << std::endl;
+
   return 0;
 }
