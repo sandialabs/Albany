@@ -26,7 +26,7 @@ if { [is-loaded lcm-sems] } {
   module load sems-boost/1.63.0/base
   module load sems-zlib/1.2.8/base
   module load sems-hdf5/1.8.12/parallel
-  module load sems-netcdf/4.3.2/parallel
+  module load sems-netcdf/4.4.1/exo_parallel
   module load sems-parmetis/4.0.3/parallel
   module load sems-superlu/4.3/base
   module load sems-yaml_cpp/0.5.3/base
