@@ -1,7 +1,7 @@
 #!/bin/sh
 
 export ALB_FLAGS="-Wno-deprecated-declarations"
-export ALB_64BIT_INT=OFF
+export ALB_64BIT_INT=ON
 export ALB_EPETRA=ON
 export ALB_ENABLE_SCOREC=ON
 export ALB_ENABLE_LCM=ON
@@ -15,14 +15,11 @@ export ALB_ENABLE_AERAS=ON
 export ALB_ENABLE_FELIX=OFF
 export ALB_ENABLE_AlbanyCI=OFF
 export ALB_DEBUG=OFF
-export ALB_ENABLE_CHECK_FPE=OFF
+export ALB_ENABLE_CHECK_FPE=ON
 export ALB_FLUSH_DENORMALS=ON
 export ALB_ENABLE_SPECULATIVE=OFF
-export ALB_ENABLE_SG_MP=OFF
 export ALB_ENABLE_PERF_TESTS=ON
 export TRILINOS_INSTALL_DIR=/usr/local/trilinos/MPI_DBG
-export ALB_LAME_INC_DIR=/usr/local/src/lame-4.24.1/include
-export ALB_LAME_LIB_DIR=/usr/local/src/lame-4.24.1/build
 #export ALB_CXX_FLAGS="-ftemplate-depth=1024"
 export ALB_VERBOSE=OFF
 
@@ -44,7 +41,6 @@ cmake \
       -D ENABLE_MOR:BOOL=${ALB_ENABLE_MOR} \
       -D ENABLE_ALBANY_CI:BOOL=${ALB_ENABLE_AlbanyCI} \
       -D ENABLE_ASCR:BOOL=${ALB_ENABLE_ASCR} \
-      -D ENABLE_SG_MP:BOOL=${ALB_ENABLE_SG_MP} \
       -D ENABLE_PERFORMANCE_TESTS:BOOL=${ALB_ENABLE_PERF_TESTS} \
       -D ALBANY_CTEST_TIMEOUT:INTEGER=70 \
       -D ENABLE_64BIT_INT:BOOL=${ALB_64BIT_INT} \
