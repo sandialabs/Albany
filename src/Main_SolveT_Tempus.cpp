@@ -242,11 +242,6 @@ int main(int argc, char *argv[]) {
     _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK() & ~_MM_MASK_INVALID);
 #endif
 
-#ifdef ALBANY_64BIT_INT
-  static_assert(sizeof(long) == 8,
-      "Error: The 64 bit build of Albany assumes that sizeof(long) == 64 bits.");
-#endif
-
 #ifdef ALBANY_APF
   Albany::APFMeshStruct::initialize_libraries(&argc, &argv);
 #endif

@@ -32,11 +32,7 @@ SET(SOURCES
 #ATO is free of Epetra
 IF (ALBANY_EPETRA OR ALBANY_ATO)
   SET(SOURCES ${SOURCES} Albany_ObserverFactory.cpp)
-  IF(ALBANY_64BIT_INT)
-    SET(SOURCES ${SOURCES} Petra_Converters_64.cpp)
-  ELSE()
-    SET(SOURCES ${SOURCES} Petra_Converters.cpp)
-  ENDIF()
+  SET(SOURCES ${SOURCES} Petra_Converters_64.cpp)
 ENDIF()
 
 

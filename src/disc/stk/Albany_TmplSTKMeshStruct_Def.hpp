@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 
+#include <cinttypes>
 #include <iostream>
 #include "Teuchos_VerboseObject.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
@@ -24,13 +25,7 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
-#ifdef ALBANY_64BIT_INT
-// long int == 64bit
-//#  define ST_LLU "%ld"
-#  define ST_LLU "%lld" // long long int
-#else
-#  define ST_LLU "%d"
-#endif
+#define ST_LLU "%"PRId64
 
 // Test 64 bit Tpetra address space
 const GO StartIndex = 0;

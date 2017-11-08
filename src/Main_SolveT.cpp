@@ -272,13 +272,6 @@ main(int argc, char *argv[]) {
 
 #endif
 
-#if defined(ALBANY_64BIT_INT)
-  static_assert(
-      sizeof(long) == 8,
-      "Error: The 64 bit build of Albany assumes that sizeof(long) == 64 "
-      "bits.");
-#endif
-
 #if defined(ALBANY_APF)
   Albany::APFMeshStruct::initialize_libraries(&argc, &argv);
 #endif

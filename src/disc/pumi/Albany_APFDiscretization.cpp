@@ -32,25 +32,21 @@
 #include <PCU.h>
 
 #if defined(ALBANY_EPETRA)
-// Some integer-type converter helpers for Epetra_Map so that we can compile
-// the Epetra_Map file regardless of the value of ALBANY_64BIT_INT.
+// Some integer-type converter helpers for Epetra_Map
 namespace {
+
 typedef int EpetraInt;
-#ifdef ALBANY_64BIT_INT
+
 Teuchos::RCP< Teuchos::Array<int> >
 convert (const Teuchos::Array<GO>& indicesAV) {
-Teuchos::RCP< Teuchos::Array<int> > ind = Teuchos::rcp(
-  new Teuchos::Array<int>(indicesAV.size()));
-for (std::size_t i = 0; i < indicesAV.size(); ++i)
-  (*ind)[i] = Teuchos::as<int>(indicesAV[i]);
-return ind;
-};
-#else // not ALBANY_64BIT_INT
-Teuchos::RCP< Teuchos::Array<GO> >
-convert (Teuchos::Array<GO>& indicesAV) {
-return Teuchos::rcp(&indicesAV, false);
+  Teuchos::RCP< Teuchos::Array<int> > ind = Teuchos::rcp(
+      new Teuchos::Array<int>(indicesAV.size()));
+  for (std::size_t i = 0; i < indicesAV.size(); ++i) {
+    (*ind)[i] = Teuchos::as<int>(indicesAV[i]);
+  }
+  return ind;
 }
-#endif // not ALBANY_64BIT_INT
+
 } // namespace
 #endif // ALBANY_EPETRA
 
