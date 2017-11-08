@@ -23,11 +23,15 @@
 #include "Albany_NodalDOFManager.hpp"
 #include "Albany_AbstractMeshStruct.hpp"
 
-#ifdef ALBANY_CONTACT
-#include "Albany_ContactManager.hpp"
-#endif
+//#ifdef ALBANY_CONTACT
+//#include "Albany_ContactManager.hpp"
+//#endif
 
 namespace Albany {
+
+#ifdef ALBANY_CONTACT
+  class ContactManager;
+#endif
 
 class AbstractDiscretization {
   public:
@@ -66,7 +70,7 @@ class AbstractDiscretization {
     //! Get Tpetra Jacobian graph
     virtual Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const = 0;
 
-#ifdef ALBANY_AERAS 
+#ifdef ALBANY_AERAS
     //! Get implicit Tpetra Jacobian graph (for Aeras hyperviscosity)
     virtual Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const = 0;
 #endif
@@ -77,7 +81,7 @@ class AbstractDiscretization {
 #endif
     //! Get Tpetra overlap Jacobian graph
     virtual Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const = 0;
-#ifdef ALBANY_AERAS 
+#ifdef ALBANY_AERAS
     //! Get implicit Tpetra Jacobian graph (for Aeras hyperviscosity)
     virtual Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const = 0;
 #endif
@@ -101,7 +105,7 @@ class AbstractDiscretization {
     //! Get overlapped Node map
     virtual Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const = 0;
 
-    //! Returns boolean telling code whether explicit scheme is used (needed for Aeras problems only) 
+    //! Returns boolean telling code whether explicit scheme is used (needed for Aeras problems only)
     virtual bool isExplicitScheme() const = 0;
 
     //! Get Field Node map
@@ -221,26 +225,26 @@ class AbstractDiscretization {
 #if defined(ALBANY_EPETRA)
     //! Write the solution to the output file
     virtual void writeSolution(const Epetra_Vector& solution, const double time, const bool overlapped = false) = 0;
-    virtual void writeSolution(const Epetra_Vector& solution, const Epetra_Vector& solution_dot, 
+    virtual void writeSolution(const Epetra_Vector& solution, const Epetra_Vector& solution_dot,
                                const double time, const bool overlapped = false) = 0;
 #endif
 
     //! Write the solution to the output file - Tpetra version. Calls next two together.
     virtual void writeSolutionT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
-    virtual void writeSolutionT(const Tpetra_Vector &solutionT, const Tpetra_Vector &solution_dotT, 
+    virtual void writeSolutionT(const Tpetra_Vector &solutionT, const Tpetra_Vector &solution_dotT,
                                 const double time, const bool overlapped = false) = 0;
-    virtual void writeSolutionT(const Tpetra_Vector &solutionT, const Tpetra_Vector &solution_dotT, 
-                                const Tpetra_Vector &solution_dotdotT, 
+    virtual void writeSolutionT(const Tpetra_Vector &solutionT, const Tpetra_Vector &solution_dotT,
+                                const Tpetra_Vector &solution_dotdotT,
                                 const double time, const bool overlapped = false) = 0;
     virtual void writeSolutionMV(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false) = 0;
     //! Write the solution to the mesh database.
     virtual void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
-    virtual void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, 
-                                              const Tpetra_Vector &solution_dotT, 
+    virtual void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT,
+                                              const Tpetra_Vector &solution_dotT,
                                               const double time, const bool overlapped = false) = 0;
-    virtual void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, 
-                                              const Tpetra_Vector &solution_dotT, 
-                                              const Tpetra_Vector &solution_dotdotT, 
+    virtual void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT,
+                                              const Tpetra_Vector &solution_dotT,
+                                              const Tpetra_Vector &solution_dotdotT,
                                               const double time, const bool overlapped = false) = 0;
     virtual void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false) = 0;
     //! Write the solution to file. Must call writeSolutionT first.

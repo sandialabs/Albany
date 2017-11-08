@@ -31,6 +31,10 @@
 #include <apfShape.h>
 #include <PCU.h>
 
+#if defined(ALBANY_CONTACT)
+#include "Albany_ContactManager.hpp"
+#endif
+
 #if defined(ALBANY_EPETRA)
 // Some integer-type converter helpers for Epetra_Map so that we can compile
 // the Epetra_Map file regardless of the value of ALBANY_64BIT_INT.

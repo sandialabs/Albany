@@ -12,6 +12,10 @@
 #include "Albany_STKNodeFieldContainer.hpp"
 #include "Albany_BucketArray.hpp"
 
+#ifdef ALBANY_CONTACT
+#include "Albany_ContactManager.hpp"
+#endif
+
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -2210,8 +2214,7 @@ void Albany::STKDiscretization::computeSideSets(){
   }
 
 #ifdef ALBANY_CONTACT
-  contactManager = Teuchos::rcp(new Albany::ContactManager(discParams, commT, sideSets, getCoordinates(), 
-        node_mapT, wsElNodeID, wsElNodeEqID, stkMeshStruct->getMeshSpecs()));
+  contactManager = Teuchos::rcp(new Albany::ContactManager(discParams, *this, stkMeshStruct->getMeshSpecs()));
 #endif
 }
 
