@@ -18,6 +18,8 @@ if { [is-loaded lcm-cuda] } {
   setenv CXX [exec which g++]
 }
 
-setenv CXXFLAGS -Wno-terminate
+if { [is-loaded lcm-fedora] } {
+  setenv CXXFLAGS -Wno-terminate
+}
 
 setenv FC [exec which gfortran]

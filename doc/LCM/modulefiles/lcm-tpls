@@ -22,7 +22,7 @@ if { [is-loaded lcm-fedora] } {
 if { [is-loaded lcm-ubuntu] } {
   set                     netcdf_root     /usr
   set                     netcdf_inc      $netcdf_root/include
-  set                     netcdf_lib      $netcdf_root/lib
+  set                     netcdf_lib      $netcdf_root/lib/x86_64-linux-gnu
   setenv                  BOOST_INC       /usr/include/boost
   setenv                  BOOST_LIB       /usr/lib
   setenv                  BOOSTLIB_INC    /usr/include/boost
