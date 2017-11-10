@@ -49,10 +49,10 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ParamScalarT,Cell,Node> dsdx_node;
-  PHX::MDField<ParamScalarT,Cell,Node> dsdy_node;
+  PHX::MDField<const ParamScalarT,Cell,Node> dsdx_node;
+  PHX::MDField<const ParamScalarT,Cell,Node> dsdy_node;
   //! Basis Functions
-  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
+  PHX::MDField<const RealType,Cell,Node,QuadPoint> BF;
 
   // Output:
   PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim> gradS_qp;
