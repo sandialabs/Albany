@@ -254,6 +254,12 @@ private:
 
   bool
   have_tempus_{false};
+  
+  bool 
+  use_velo_in_conv_criterion_{false};
+  
+  bool 
+  use_acce_in_conv_criterion_{false}; 
 };
 
 } // namespace LCM

@@ -42,6 +42,15 @@ SchwarzAlternating(
   initial_time_ = alt_system_params.get<ST>("Initial Time", 0.0);
   final_time_ = alt_system_params.get<ST>("Final Time", 0.0);
   initial_time_step_ = alt_system_params.get<ST>("Initial Time Step", 1.0);
+  use_velo_in_conv_criterion_ = alt_system_params.get<bool>("Use Velocity in Convergence Criterion", false); 
+  use_acce_in_conv_criterion_ = alt_system_params.get<bool>("Use Acceleration in Convergence Criterion", false); 
+
+#ifdef DEBUG
+  auto &
+  fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  fos << "Use Velocity in Convergence Criterion = " << use_velo_in_conv_criterion_ << "\n";
+  fos << "Use Acceleration in Convergence Criterion = " << use_acce_in_conv_criterion_ << "\n";
+#endif
 
   ST const
   dt = initial_time_step_;
@@ -838,17 +847,13 @@ SchwarzLoopDynamics() const
         curr_disp_rcp = Thyra::createMember(me.get_x_space());
         Thyra::copy(*current_state->getX(), curr_disp_rcp.ptr());
 
-        //Currently time-derivatives are not used in convergence criterion but they may be in the future 
-        //for consistency with Alejandro's matlab Schwarz code. When this is read, un-comment the following code, 
-        //as well as code further down involving curr_velo_rcp, etc.
- 
-        /*Teuchos::RCP<Thyra::VectorBase<ST>> 
+        Teuchos::RCP<Thyra::VectorBase<ST>> 
         curr_velo_rcp = Thyra::createMember(me.get_x_space());
         Thyra::copy(*current_state->getXDot(), curr_velo_rcp.ptr());
 
         Teuchos::RCP<Thyra::VectorBase<ST>> 
         curr_acce_rcp = Thyra::createMember(me.get_x_space());
-        Thyra::copy(*current_state->getXDotDot(), curr_acce_rcp.ptr());*/
+        Thyra::copy(*current_state->getXDotDot(), curr_acce_rcp.ptr());
 
 #if defined(DEBUG)
         fos << "\n*** Thyra: Current solution ***\n";
@@ -871,14 +876,30 @@ SchwarzLoopDynamics() const
 
         Teuchos::RCP<Thyra::VectorBase<ST>>
         disp_diff_rcp = Thyra::createMember(me.get_x_space());
-
         Thyra::put_scalar<ST>(0.0, disp_diff_rcp.ptr()); 
-         
         Thyra::V_VpStV(
             disp_diff_rcp.ptr(),
             *curr_disp_rcp,
             -1.0,
             *prev_disp_thyra_[subdomain]);
+
+        Teuchos::RCP<Thyra::VectorBase<ST>>
+        velo_diff_rcp = Thyra::createMember(me.get_x_space());
+        Thyra::put_scalar<ST>(0.0, velo_diff_rcp.ptr()); 
+        Thyra::V_VpStV(
+            velo_diff_rcp.ptr(),
+            *curr_velo_rcp,
+            -1.0,
+            *prev_velo_thyra_[subdomain]);
+
+        Teuchos::RCP<Thyra::VectorBase<ST>>
+        acce_diff_rcp = Thyra::createMember(me.get_x_space());
+        Thyra::put_scalar<ST>(0.0, acce_diff_rcp.ptr()); 
+        Thyra::V_VpStV(
+            acce_diff_rcp.ptr(),
+            *curr_acce_rcp,
+            -1.0,
+            *prev_acce_thyra_[subdomain]);
 
 #if defined(DEBUG)
         fos << "\n*** Thyra: Solution difference ***\n"; 
@@ -900,19 +921,29 @@ SchwarzLoopDynamics() const
 #endif //DEBUG
 
         //After solve, save solution and get info to check convergence
-        norms_init(subdomain) = Thyra::norm(*prev_disp_thyra_[subdomain]);
-        norms_final(subdomain) = Thyra::norm(*curr_disp_rcp); 
+        norms_init(subdomain) = Thyra::norm(*prev_disp_thyra_[subdomain]); 
+        norms_final(subdomain) = Thyra::norm(*curr_disp_rcp);
         norms_diff(subdomain) = Thyra::norm(*disp_diff_rcp);
+         
+        if (use_velo_in_conv_criterion_ == true) {
+          norms_init(subdomain)  += time_step*Thyra::norm(*prev_velo_thyra_[subdomain]); 
+          norms_final(subdomain) += time_step*Thyra::norm(*curr_velo_rcp); 
+          norms_diff(subdomain)  += time_step*Thyra::norm(*velo_diff_rcp);
+        }
+       
+        if (use_acce_in_conv_criterion_ == true) { 
+          norms_init(subdomain)  += time_step*time_step*Thyra::norm(*prev_acce_thyra_[subdomain]); 
+          norms_final(subdomain) += time_step*time_step*Thyra::norm(*curr_acce_rcp); 
+          norms_diff(subdomain)  += time_step*time_step*Thyra::norm(*acce_diff_rcp); 
+        }
  
         //Update prev_disp_thyra_. 
         Thyra::put_scalar(0.0, prev_disp_thyra_[subdomain].ptr());  
         Thyra::copy(*curr_disp_rcp, prev_disp_thyra_[subdomain].ptr());
-        //Currently time-derivatives are not used in convergence criterion but they may be in the future 
-        //for consistency with Alejandro's matlab Schwarz code. When this is read, un-comment the following code.
-        /*Thyra::put_scalar(0.0, prev_velo_thyra_[subdomain].ptr());  
+        Thyra::put_scalar(0.0, prev_velo_thyra_[subdomain].ptr());  
         Thyra::copy(*curr_velo_rcp, prev_velo_thyra_[subdomain].ptr());
         Thyra::put_scalar(0.0, prev_acce_thyra_[subdomain].ptr());  
-        Thyra::copy(*curr_acce_rcp, prev_acce_thyra_[subdomain].ptr());*/
+        Thyra::copy(*curr_acce_rcp, prev_acce_thyra_[subdomain].ptr());
 
       } //subdomains loop 
 
