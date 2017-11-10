@@ -9,16 +9,14 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Albany_DataTypes.hpp"
+#include "Albany_AbstractDiscretization.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-// Moertel-specific 
-#include "mrtr_interface.H"
+// Moertel-specific
+#include "Moertel_ManagerT.hpp"
 
 #include <iostream>
 #include <fstream>
-
-#include "Albany_DiscretizationUtils.hpp"
-#include "Albany_StateInfoStruct.hpp"
 
 
 /** \brief This class implements the Mortar contact algorithm. Here is the overall sketch of how things work:
@@ -30,11 +28,11 @@
 
    2. Work with Moertel to perform the nonlinear inequality constrained optimization problem:
 
-      a) Do a global search to find all the slave segments that can potentially intersect the 
+      a) Do a global search to find all the slave segments that can potentially intersect the
       master segments that this processor owns. The active set that contribute to the mortar finite elements
       will change as the gap function G(x) >= 0 changes each Newton iteration.
 
-      b) For the elements in the mortar space, find the element surfaces that are master surface segments. Do a local 
+      b) For the elements in the mortar space, find the element surfaces that are master surface segments. Do a local
          search to find the slave segments that potentially intersect each master segment. Note that the master and slave
          elements that contribute to each mortar element will change each Newton iteration.
 
@@ -42,12 +40,12 @@
          locations residual and gap vectors. These contributions are the M and D matrices that change each iteration
          of the solve process.
 
-    3. The feed a nonlinear solver like a Newton method by adding the M and D to the rest of the nonlinear system. 
-       Need to employ something like pseudotransient continuation - feasible direction, conditional gradient, gradient 
+    3. The feed a nonlinear solver like a Newton method by adding the M and D to the rest of the nonlinear system.
+       Need to employ something like pseudotransient continuation - feasible direction, conditional gradient, gradient
        projection or some such as G(x) >= 0 and x_k + d_k is not always feasible.
 
     4. Go back to 2 until convergence of the nonlinear inequality constrained problem is achieved.
-         
+
 
 */
 
@@ -63,12 +61,7 @@ class ContactManager {
   public:
 
     ContactManager(const Teuchos::RCP<Teuchos::ParameterList>& params,
-				const Teuchos::RCP<const Teuchos_Comm >& comm,
-				const std::vector<Albany::SideSetList>& ssListVec,
-				const Teuchos::ArrayRCP<double>& coordArray,
-				const Teuchos::RCP<const Tpetra_Map>& node_map,
-				const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID,
-				const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type& wsElNodeEqID,
+				const Albany::AbstractDiscretization& disc,
 				const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& meshSpecs);
 
     //! Destructor
@@ -78,13 +71,10 @@ class ContactManager {
 
     ContactManager();
 
-    void processSS(const std::vector<Albany::SideStruct>& sideSet, int workset, std::ofstream& stream );
+    void processSS(const int ctr, const std::vector<Albany::SideStruct>& sideSet, 
+        int workset, int mortarside, std::ofstream& stream );
 
     Teuchos::RCP<Teuchos::ParameterList> params;
-
-    //! Tpetra communicator
-    Teuchos::RCP<const Teuchos_Comm> comm;
-
 
     // Is this a contact problem?
     bool have_contact;
@@ -94,18 +84,19 @@ class ContactManager {
     Teuchos::Array<std::string> sideSetIDs;        // sideset ids
     Teuchos::Array<std::string> constrainedFields; // names of fields to be constrained
 
-    const std::vector<Albany::SideSetList>& ssListVec;
     const Teuchos::ArrayRCP<double>& coordArray;
-    const Teuchos::RCP<const Tpetra_Map>& node_map;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID;
-    const Albany::WorksetArray<Kokkos::View<LO***, PHX::Device>>::type& wsElNodeEqID;
     const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& meshSpecs;
+    const Albany::AbstractDiscretization& disc;
+
+    int probDim;
 
 
     // Moertel-specific library data
-    Teuchos::RCP<MOERTEL::Interface> moertelInterface;
+    Teuchos::RCP<MOERTEL::ManagerT<ST, LO, GO, KokkosNode> > moertelManager;
 
     std::ofstream sfile, mfile;
+
+    bool oneD;
 
 
 };

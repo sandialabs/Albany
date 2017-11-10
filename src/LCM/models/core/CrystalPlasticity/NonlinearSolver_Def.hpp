@@ -115,6 +115,7 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
    // Ensure that the slip increment will not cause overflow
    if (minitensor::norm(rate_slip * dt_) > LOG_HUGE) {
        this->set_failed("Failed on slip");
+       residual.fill(minitensor::Filler::ZEROS);
        return residual;
    }
 
@@ -145,6 +146,7 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Ensure that the stress was calculated properly
   if (failed == true) {
     this->set_failed("Failed on stress");
+    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
 
@@ -162,6 +164,7 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Ensure that the hardening law was calculated properly
   if (failed == true) {
     this->set_failed("Failed on hardness");
+    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
 
@@ -179,6 +182,7 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Ensure that the flow rule was calculated properly
   if (failed == true) {
     this->set_failed("Failed on flow");
+    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
 
@@ -446,6 +450,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Ensure that the slip increment is bounded
   if (minitensor::norm(rate_slip * dt_) > LOG_HUGE) {
     this->set_failed("Failed on slip");
+    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
 
@@ -476,6 +481,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Ensure that the stress was calculated properly
   if (failed == true) {
     this->set_failed("Failed on stress");
+    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
 
@@ -494,6 +500,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Ensure that the hardening law was calculated properly
   if (failed == true) {
     this->set_failed("Failed on hardness");
+    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
 
@@ -511,6 +518,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Ensure that the flow rule was calculated properly
   if (failed == true) {
     this->set_failed("Failed on flow");
+    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
 
@@ -654,6 +662,7 @@ CP::ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>::value(
   // Ensure that the slip increment is bounded
   if (minitensor::norm(rate_slip * dt_) > LOG_HUGE) {
     this->set_failed("Failed on slip");
+    residual.fill(minitensor::Filler::ZEROS);
     T val = 0.5 * minitensor::dot(residual, residual);
     return val;
   }
@@ -685,6 +694,7 @@ CP::ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>::value(
   // Ensure that the stress was calculated properly
   if (failed == true) {
     this->set_failed("Failed on stress");
+    residual.fill(minitensor::Filler::ZEROS);
     T val = 0.5 * minitensor::dot(residual, residual);
     return val;
   }
@@ -704,6 +714,7 @@ CP::ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>::value(
   // Ensure that the hardening law was calculated properly
   if (failed == true) {
     this->set_failed("Failed on hardness");
+    residual.fill(minitensor::Filler::ZEROS);
     T val = 0.5 * minitensor::dot(residual, residual);
     return val;
   }
@@ -722,6 +733,7 @@ CP::ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>::value(
   // Ensure that the flow rule was calculated properly
   if (failed == true) {
     this->set_failed("Failed on flow");
+    residual.fill(minitensor::Filler::ZEROS);
     T val = 0.5 * minitensor::dot(residual, residual);
     return val;
   }

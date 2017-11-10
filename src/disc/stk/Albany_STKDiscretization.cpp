@@ -12,6 +12,10 @@
 #include "Albany_STKNodeFieldContainer.hpp"
 #include "Albany_BucketArray.hpp"
 
+#ifdef ALBANY_CONTACT
+#include "Albany_ContactManager.hpp"
+#endif
+
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -1375,7 +1379,7 @@ void Albany::STKDiscretization::computeNodalMaps (bool overlapped)
 
     Teuchos::RCP<const Tpetra_Map>& map = (overlapped) ? it->second.overlap_map : it->second.map;
     map = Teuchos::null;
-    map = Tpetra::createNonContigMap<LO, GO>(indicesT(), commT);
+    map = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(indicesT(), commT);
 
     Teuchos::RCP<const Tpetra_Map>& node_map = (overlapped) ? it->second.overlap_node_map : it->second.node_map;
     node_map = Teuchos::null;
@@ -1411,29 +1415,6 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
   if (Teuchos::nonnull(stkMeshStruct->nodal_data_base))
     stkMeshStruct->nodal_data_base->resizeLocalMap(
       node_mapT->getNodeElementList(), commT);
-
-
-
-/*
-  Teuchos::Array<GO> indicesT(numOwnedNodes);
-  for (int i=0; i < numOwnedNodes; i++) indicesT[i] = gid(ownednodes[i]);
-
-  node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  node_mapT = Tpetra::createNonContigMap<LO, GO>(indicesT(), commT);
-
-  if (Teuchos::nonnull(stkMeshStruct->nodal_data_base))
-    stkMeshStruct->nodal_data_base->resizeLocalMap(indicesT, commT);
-
-  numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
-
-  indicesT.resize(numOwnedNodes * neq);
-  for (int i=0; i < numOwnedNodes; i++)
-    for (std::size_t j=0; j < neq; j++)
-      indicesT[getOwnedDOF(i,j)] = getGlobalDOF(gid(ownednodes[i]),j);
-
-  mapT = Teuchos::null; // delete existing map happens here on remesh
-  mapT = Tpetra::createNonContigMap<LO, GO>(indicesT(), commT);
-*/
 }
 
 void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
@@ -1464,25 +1445,6 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
     stkMeshStruct->nodal_data_base->resizeOverlapMap(
       overlap_node_mapT->getNodeElementList(), commT);
 
-/*
-  Teuchos::Array<GO> indicesT(numOverlapNodes * neq);
-  for (int i=0; i < numOverlapNodes; i++)
-    for (std::size_t j=0; j < neq; j++)
-      indicesT[getOverlapDOF(i,j)] = getGlobalDOF(gid(overlapnodes[i]),j);
-
-  overlap_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_mapT = Tpetra::createNonContigMap<LO, GO>(indicesT(), commT);
-
-  indicesT.resize(numOverlapNodes);
-  for (int i=0; i < numOverlapNodes; i++)
-    indicesT[i] = gid(overlapnodes[i]);
-
-  overlap_node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_node_mapT = Tpetra::createNonContigMap<LO, GO>(indicesT(), commT);
-
-  if(Teuchos::nonnull(stkMeshStruct->nodal_data_base))
-    stkMeshStruct->nodal_data_base->resizeOverlapMap(indicesT, commT);
-*/
   coordinates.resize(3*numOverlapNodes);
 }
 
@@ -1496,7 +1458,6 @@ void Albany::STKDiscretization::computeGraphsUpToFillComplete()
 {
   std::map<int, stk::mesh::Part*>::iterator pv = stkMeshStruct->partVec.begin();
   int nodes_per_element =  metaData.get_cell_topology(*(pv->second)).getNodeCount();
-// int nodes_per_element_est =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount();
 
   // Loads member data:  overlap_graph, numOverlapodes, overlap_node_map, coordinates, graphs
 
@@ -2198,8 +2159,7 @@ void Albany::STKDiscretization::computeSideSets(){
   }
 
 #ifdef ALBANY_CONTACT
-  contactManager = Teuchos::rcp(new Albany::ContactManager(discParams, commT, sideSets, getCoordinates(), 
-        node_mapT, wsElNodeID, wsElNodeEqID, stkMeshStruct->getMeshSpecs()));
+  contactManager = Teuchos::rcp(new Albany::ContactManager(discParams, *this, stkMeshStruct->getMeshSpecs()));
 #endif
 }
 

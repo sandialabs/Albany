@@ -13,6 +13,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2dsmall.e.2.0
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2dsmall.e.2.1
                ${CMAKE_CURRENT_BINARY_DIR}/2dsmall.e.2.1 COPYONLY)
 
+# Create symlink to AlbanyT for convenience
+if (ALBANY_IFPACK2)
+  execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+    ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+endif()
+
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable

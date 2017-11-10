@@ -1662,7 +1662,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsLines()
   //////////////////////////////////////////////////////////////////////
 
   node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  node_mapT = Tpetra::createNonContigMap<LO, GO>(indicesT(), commT);
+  node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(indicesT(), commT);
 
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
 
@@ -1672,7 +1672,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsLines()
       dofIndicesT[getOwnedDOF(i,j)] = getGlobalDOF(indicesT[i],j);
 
   mapT = Teuchos::null; // delete existing map happens here on remesh
-  mapT = Tpetra::createNonContigMap<LO, GO>(dofIndicesT(), commT);
+  mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(dofIndicesT(), commT);
 
   TEUCHOS_TEST_FOR_EXCEPTION(
     Teuchos::nonnull(stkMeshStruct->nodal_data_base),
@@ -1810,7 +1810,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsQuads()
   //////////////////////////////////////////////////////////////////////
 
   node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  node_mapT = Tpetra::createNonContigMap<LO, GO>(indicesT(), commT);
+  node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(indicesT(), commT);
 
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
 
@@ -1820,7 +1820,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsQuads()
       dofIndicesT[getOwnedDOF(i,j)] = getGlobalDOF(indicesT[i],j);
 
   mapT = Teuchos::null; // delete existing map happens here on remesh
-  mapT = Tpetra::createNonContigMap<LO, GO>(dofIndicesT(), commT);
+  mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(dofIndicesT(), commT);
 
   TEUCHOS_TEST_FOR_EXCEPTION(
     Teuchos::nonnull(stkMeshStruct->nodal_data_base),
@@ -1894,8 +1894,8 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsLines()
   //////////////////////////////////////////////////////////////////////
 
   overlap_node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_node_mapT = Tpetra::createNonContigMap<LO, GO>(overlapIndicesT(),
-                                                         commT);
+  overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
+      overlapIndicesT(), commT);
 
   // Compute the overlap DOF indices.  Since these might be strided by
   // the number of overlap nodes, we compute them from scratch.
@@ -1906,8 +1906,8 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsLines()
         getGlobalDOF(overlapIndicesT[i],j);
 
   overlap_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_mapT = Tpetra::createNonContigMap<LO, GO>(overlapDofIndicesT(),
-                                                    commT);
+  overlap_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
+      overlapDofIndicesT(), commT);
 
   coordinates.resize(3*numOverlapNodes);
 }
@@ -2026,7 +2026,7 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsQuads()
   //////////////////////////////////////////////////////////////////////
 
   overlap_node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_node_mapT = Tpetra::createNonContigMap<LO, GO>(overlapIndicesT(), commT);
+  overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(overlapIndicesT(), commT);
 
   // Compute the overlap DOF indices.  Since these might be strided by
   // the number of overlap nodes, we compute them from scratch.
@@ -2036,7 +2036,7 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsQuads()
       overlapDofIndicesT[getOverlapDOF(i,j)] = getGlobalDOF(overlapIndicesT[i],j);
 
   overlap_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_mapT = Tpetra::createNonContigMap<LO, GO>(overlapDofIndicesT(), commT);
+  overlap_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(overlapDofIndicesT(), commT);
 
   coordinates.resize(3*numOverlapNodes);
 }
