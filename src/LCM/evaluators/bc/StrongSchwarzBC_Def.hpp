@@ -467,8 +467,10 @@ computeBCsDTK()
           coupled_stk_disc->getSTKMeshStruct()->getFieldContainer()
           )->getSolutionFieldArray();
 
-  auto num_sol_vecs = coupled_field_array.size(); 
-  //IKT, FIXME: check that size of coupled_field_array > 0
+  int num_sol_vecs = coupled_field_array.length(); 
+ 
+  ALBANY_ASSERT(num_sol_vecs > 0,
+      "coupled_field_array must have at least 1 entry!");
   
   Albany::AbstractSTKFieldContainer::VectorFieldType*
   coupled_field = coupled_field_array[0]; 
@@ -491,7 +493,8 @@ computeBCsDTK()
           this_stk_disc->getSTKMeshStruct()->getFieldContainer()
           )->getSolutionFieldDTKArray();
 
-  //IKT, FIXME: throw error if size of this_field_array != num_sol_vecs 
+  ALBANY_ASSERT(num_sol_vecs == this_field_array.length(),
+      "coupled_field_array and this_field_array must have the same length!");
 
   Albany::AbstractSTKFieldContainer::VectorFieldType*
   this_field = this_field_array[0]; 
