@@ -13,9 +13,6 @@
 #include "Teuchos_TestForException.hpp"
 #include <Tpetra_MultiVectorFiller.hpp>
 
-#if defined(ALBANY_DTK)
-#include "Albany_OrdinarySTKFieldContainer.hpp"
-#endif
 
 namespace LCM {
 
@@ -522,6 +519,35 @@ computeBCsDTK()
   DataTransferKit::STKMeshManager
   this_manager(this_bulk_data, this_stk_selector);
 
+  //Do interpolation of solution field using DTK
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
+  this_vector = doDTKInterpolation(coupled_manager, this_manager, coupled_field,
+                                   this_field, neq, dtk_params); 
+
+  Albany::AbstractSTKFieldContainer::VectorFieldType* this_field_dot; 
+  Albany::AbstractSTKFieldContainer::VectorFieldType* coupled_field_dot;
+ 
+  if (num_sol_vecs > 1) {
+    this_field_dot = this_field_array[1]; 
+    coupled_field_dot = coupled_field_array[1]; 
+  }
+
+  Teuchos::Array<Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>>
+  this_vector_arrays(num_sol_vecs); 
+  this_vector_arrays[0] = this_vector; 
+
+  return this_vector_arrays;
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
+StrongSchwarzBC_Base<EvalT, Traits>::
+doDTKInterpolation(DataTransferKit::STKMeshManager &coupled_manager, 
+                   DataTransferKit::STKMeshManager &this_manager,
+                   Albany::AbstractSTKFieldContainer::VectorFieldType* coupled_field,
+                   Albany::AbstractSTKFieldContainer::VectorFieldType* this_field,
+                   const int neq, Teuchos::ParameterList &dtk_params) 
+{
   // Create a solution vector for the source.
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
   coupled_vector =
@@ -554,11 +580,8 @@ computeBCsDTK()
   // to the other.
   map_op->apply(*coupled_vector, *this_vector);
 
-  Teuchos::Array<Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>>
-  this_vector_arrays(num_sol_vecs); 
-  this_vector_arrays[0] = this_vector; 
+  return this_vector; 
 
-  return this_vector_arrays;
 }
 #endif //ALBANY_DTK
 
