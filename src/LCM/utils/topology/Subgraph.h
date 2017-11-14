@@ -263,7 +263,7 @@ public:
   Topology &
   get_topology();
 
-  size_t const
+  size_t
   get_space_dimension();
 
   Teuchos::RCP<Albany::AbstractSTKMeshStruct> &
@@ -275,10 +275,10 @@ public:
   stk::mesh::MetaData &
   get_meta_data();
 
-  stk::mesh::EntityId const
+  stk::mesh::EntityId
   get_entity_id(stk::mesh::Entity const entity);
 
-  stk::mesh::EntityRank const
+  stk::mesh::EntityRank
   get_boundary_rank();
 
   IntScalarFieldType &
