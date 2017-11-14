@@ -408,7 +408,7 @@ computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
 //
 #if defined(ALBANY_DTK)
 template<typename EvalT, typename Traits>
-Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
+Teuchos::Array<Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>>
 SchwarzBC_Base<EvalT, Traits>::
 computeBCsDTK()
 {
@@ -465,11 +465,16 @@ computeBCsDTK()
   std::string map_name =
       dtk_params.get("Map Type", "Consistent Interpolation");
 
-  Albany::AbstractSTKFieldContainer::VectorFieldType*
-  coupled_field =
-      Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
+  Teuchos::Array<Albany::AbstractSTKFieldContainer::VectorFieldType*>
+  coupled_field_array = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
           coupled_stk_disc->getSTKMeshStruct()->getFieldContainer()
-          )->getSolutionField();
+          )->getSolutionFieldArray();
+
+  auto num_sol_vecs = coupled_field_array.size(); 
+  //IKT, FIXME: check that size of coupled_field_array > 0
+  
+  Albany::AbstractSTKFieldContainer::VectorFieldType*
+  coupled_field = coupled_field_array[0];
 
   stk::mesh::Selector
   coupled_stk_selector =
@@ -483,12 +488,16 @@ computeBCsDTK()
   //get pointer to metadata from this_stk_disc
   Teuchos::RCP<stk::mesh::MetaData const>
   this_meta_data = Teuchos::rcpFromRef(this_stk_disc->getSTKMetaData());
+  
+  Teuchos::Array<Albany::AbstractSTKFieldContainer::VectorFieldType*>
+  this_field_array = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
+          this_stk_disc->getSTKMeshStruct()->getFieldContainer()
+          )->getSolutionFieldDTKArray();
+
+  //IKT, FIXME: throw error if size of this_field_array != num_sol_vecs 
 
   Albany::AbstractSTKFieldContainer::VectorFieldType*
-  this_field =
-      Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
-          this_stk_disc->getSTKMeshStruct()->getFieldContainer()
-          )->getSolutionFieldDTK();
+  this_field = this_field_array[0]; 
 
   // Get the part corresponding to this nodeset.
   std::string const &
@@ -545,7 +554,11 @@ computeBCsDTK()
   // to the other.
   map_op->apply(*coupled_vector, *this_vector);
 
-  return this_vector;
+  Teuchos::Array<Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>>
+  this_vector_arrays(num_sol_vecs); 
+  this_vector_arrays[0] = this_vector; 
+
+  return this_vector_arrays;
 }
 #endif //ALBANY_DTK
 
@@ -578,22 +591,23 @@ fillResidual(SchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
 
 #if defined(ALBANY_DTK)
 
-  Teuchos::RCP<
-      Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
-  > const
-  schwarz_bcs = sbc.computeBCsDTK();
+  Teuchos::Array<Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>>
+  schwarz_bcs_array = sbc.computeBCsDTK();
+
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const 
+  schwarz_bcs_sol = schwarz_bcs_array[0];
 
   Teuchos::RCP<const Teuchos::Comm<int>>
-  commT = schwarz_bcs->getMap()->getComm();
+  commT = schwarz_bcs_sol->getMap()->getComm();
 
   Teuchos::ArrayRCP<ST const>
-  schwarz_bcs_const_view_x = schwarz_bcs->getData(0);
+  schwarz_bcs_sol_const_view_x = schwarz_bcs_sol->getData(0);
 
   Teuchos::ArrayRCP<ST const>
-  schwarz_bcs_const_view_y = schwarz_bcs->getData(1);
+  schwarz_bcs_sol_const_view_y = schwarz_bcs_sol->getData(1);
 
   Teuchos::ArrayRCP<ST const>
-  schwarz_bcs_const_view_z = schwarz_bcs->getData(2);
+  schwarz_bcs_sol_const_view_z = schwarz_bcs_sol->getData(2);
 
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
@@ -613,13 +627,13 @@ fillResidual(SchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
     fixed_dofs = dirichlet_workset.fixed_dofs_;
 
     if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
-      fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
+      fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_sol_const_view_x[dof];
     }
     if (fixed_dofs.find(y_dof) == fixed_dofs.end()) {
-      fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
+      fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_sol_const_view_y[dof];
     }
     if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
-      fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
+      fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_sol_const_view_z[dof];
     }
 
   }
@@ -913,22 +927,23 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 #if defined(ALBANY_DTK)
     if (fT != Teuchos::null) {
 
-      Teuchos::RCP<
-          Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
-      > const
-      schwarz_bcs = this->computeBCsDTK();
+      Teuchos::Array<Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>>
+      schwarz_bcs_array = this->computeBCsDTK();
+      
+      Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
+      schwarz_bcs_sol = schwarz_bcs_array[0];
 
       Teuchos::RCP<const Teuchos::Comm<int>>
-      commT = schwarz_bcs->getMap()->getComm();
+      commT = schwarz_bcs_sol->getMap()->getComm();
 
       Teuchos::ArrayRCP<ST const>
-      schwarz_bcs_const_view_x = schwarz_bcs->getData(0);
+      schwarz_bcs_sol_const_view_x = schwarz_bcs_sol->getData(0);
 
       Teuchos::ArrayRCP<ST const>
-      schwarz_bcs_const_view_y = schwarz_bcs->getData(1);
+      schwarz_bcs_sol_const_view_y = schwarz_bcs_sol->getData(1);
 
       Teuchos::ArrayRCP<ST const>
-      schwarz_bcs_const_view_z = schwarz_bcs->getData(2);
+      schwarz_bcs_sol_const_view_z = schwarz_bcs_sol->getData(2);
 
       for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
 
@@ -944,9 +959,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         auto const
         dof = x_dof / 3;
 
-        fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
-        fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
-        fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
+        fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_sol_const_view_x[dof];
+        fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_sol_const_view_y[dof];
+        fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_sol_const_view_z[dof];
       }
     }
 

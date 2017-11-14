@@ -50,7 +50,7 @@ public:
   computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val);
 
 #if defined(ALBANY_DTK)
-  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> 
+  Teuchos::Array<Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>>
   computeBCsDTK();
 #endif //ALBANY_DTK
 
