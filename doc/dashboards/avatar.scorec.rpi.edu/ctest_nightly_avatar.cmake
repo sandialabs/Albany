@@ -344,7 +344,6 @@ SET(COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
   "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
   "-DTrilinos_ENABLE_MiniTensor:BOOL=ON"
-  "-DIntrepid2_ENABLE_KokkosDynRankView:BOOL=ON"
   "-DTrilinos_ENABLE_ROL:BOOL=ON"
   "-DTrilinos_ENABLE_NOX:BOOL=ON"
   "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
