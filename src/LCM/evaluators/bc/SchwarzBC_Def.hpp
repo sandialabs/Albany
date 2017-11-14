@@ -526,17 +526,34 @@ computeBCsDTK()
   this_vector = doDTKInterpolation(coupled_manager, this_manager, coupled_field,
                                    this_field, neq, dtk_params); 
 
+  Teuchos::Array<Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>>
+  this_vector_arrays(num_sol_vecs); 
+  this_vector_arrays[0] = this_vector;
+
+  //Do interpolation of solution time-derivatives using DTK (if applicable)  
   Albany::AbstractSTKFieldContainer::VectorFieldType* this_field_dot; 
+  Albany::AbstractSTKFieldContainer::VectorFieldType* this_field_dotdot;
+ 
   Albany::AbstractSTKFieldContainer::VectorFieldType* coupled_field_dot;
+  Albany::AbstractSTKFieldContainer::VectorFieldType* coupled_field_dotdot;
+
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> this_vector_dot; 
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> this_vector_dotdot; 
  
   if (num_sol_vecs > 1) {
     this_field_dot = this_field_array[1]; 
     coupled_field_dot = coupled_field_array[1]; 
+    this_vector_dot = doDTKInterpolation(coupled_manager, this_manager, coupled_field_dot,
+                                         this_field_dot, neq, dtk_params); 
+    this_vector_arrays[1] = this_vector_dot; 
   }
-
-  Teuchos::Array<Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>>
-  this_vector_arrays(num_sol_vecs); 
-  this_vector_arrays[0] = this_vector; 
+  if (num_sol_vecs > 2) {
+    this_field_dotdot = this_field_array[2]; 
+    coupled_field_dotdot = coupled_field_array[2]; 
+    this_vector_dotdot = doDTKInterpolation(coupled_manager, this_manager, coupled_field_dotdot,
+                                            this_field_dotdot, neq, dtk_params); 
+    this_vector_arrays[2] = this_vector_dotdot; 
+  }
 
   return this_vector_arrays;
 }
