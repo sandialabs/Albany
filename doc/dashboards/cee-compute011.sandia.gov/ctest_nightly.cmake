@@ -17,9 +17,9 @@ if (1)
   set (BUILD_SCOREC TRUE)
   set (BUILD_TRILINOS TRUE)
   set (BUILD_PERIDIGM TRUE)
-  set (BUILD_ALB32 TRUE)
-# Drop the gcc 64bit build - the Clang test will cover that well enough
-  set (BUILD_ALB64 FALSE)
+# Drop the gcc 32bit build
+  set (BUILD_ALB32 FALSE)
+  set (BUILD_ALB64 TRUE)
 # Drop the functor dev build - is this still of interest?
   set (BUILD_ALBFUNCTOR FALSE)
   set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
@@ -205,7 +205,7 @@ if (DOWNLOAD)
 
   if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Trilinos")
     execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Trilinos_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Trilinos
+      clone --branch develop ${Trilinos_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Trilinos
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -230,7 +230,7 @@ if (DOWNLOAD)
     #    ERROR_VARIABLE _err
     #    RESULT_VARIABLE HAD_ERROR)
     execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${SCOREC_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC
+      clone --branch develop ${SCOREC_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -305,6 +305,8 @@ if (DOWNLOAD)
   set_property (GLOBAL PROPERTY Label Trilinos)
 
   ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos" RETURN_VALUE count)
+  # assumes that we are already on the desired tracking branch, i.e.,
+  # git checkout -b branch --track origin/branch
   message("Found ${count} changed files")
 
   if (CTEST_DO_SUBMIT)
@@ -332,6 +334,8 @@ if (DOWNLOAD)
     #set (CTEST_UPDATE_COMMAND "${CTEST_SVN_COMMAND}")
     set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
     ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC" RETURN_VALUE count)
+    # assumes that we are already on the desired tracking branch, i.e.,
+    # git checkout -b branch --track origin/branch
     message("Found ${count} changed files")
 
     if (CTEST_DO_SUBMIT)
@@ -413,12 +417,22 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_STRONG_C_COMPILE_WARNINGS:BOOL=OFF"
   "-DTrilinos_ENABLE_STRONG_CXX_COMPILE_WARNINGS:BOOL=OFF"
   "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
+  "-DTrilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
   #
   "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
   "-DMDS_ID_TYPE:STRING='long int'"
   "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON"
-  "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
   "-DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF"
+  "-DTpetra_INST_INT_LONG_LONG:BOOL=ON"
+  "-DTpetra_INST_INT_LONG:BOOL=OFF"
+  "-DTpetra_INST_INT_INT:BOOL=OFF"
+  "-DTpetra_INST_DOUBLE:BOOL=ON"
+  "-DTpetra_INST_FLOAT:BOOL=OFF"
+  "-DTpetra_INST_COMPLEX_FLOAT:BOOL=OFF"
+  "-DTpetra_INST_COMPLEX_DOUBLE:BOOL=OFF"
+  "-DTpetra_INST_INT_UNSIGNED:BOOL=OFF"
+  "-DTpetra_INST_INT_UNSIGNED_LONG:BOOL=OFF"
+  "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
   #
   "-DSEACAS_ENABLE_SEACASSVDI:BOOL=OFF"
   "-DTrilinos_ENABLE_SEACASFastq:BOOL=OFF"
@@ -442,6 +456,7 @@ set (COMMON_CONFIGURE_OPTIONS
   #
   "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
   "-DTrilinos_ENABLE_EXAMPLES:BOOL=OFF"
+  "-DMueLu_ENABLE_Tutorial:BOOL=OFF"
   "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
   "-DTrilinos_ENABLE_EXPORT_MAKEFILES:BOOL=OFF"
   "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
@@ -506,9 +521,7 @@ set (COMMON_CONFIGURE_OPTIONS
   #
   "-DTrilinos_ENABLE_Kokkos:BOOL=ON"
   "-DTrilinos_ENABLE_KokkosCore:BOOL=ON"
-  "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING=SERIAL"
-  "-DPhalanx_INDEX_SIZE_TYPE:STRING=INT"
-  "-DPhalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
+  "-DPhalanx_INDEX_SIZE_TYPE:STRING=KOKKOS"
   "-DKokkos_ENABLE_Serial:BOOL=ON"
   "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
   "-DKokkos_ENABLE_Pthread:BOOL=OFF"
@@ -776,7 +789,7 @@ if (BUILD_ALBFUNCTOR)
     "-DENABLE_QCAD:BOOL=ON"
     "-DENABLE_ASCR:BOOL=OFF"
     "-DENABLE_AERAS:BOOL=ON"
-    "-DENABLE_64BIT_INT:BOOL=OFF"
+    "-DENABLE_64BIT_INT:BOOL=ON"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
     "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
