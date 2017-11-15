@@ -25,7 +25,6 @@
 #include "DTK_STKMeshHelpers.hpp"
 #include "DTK_STKMeshManager.hpp"
 #include "DTK_MapOperatorFactory.hpp"
-#include "Albany_OrdinarySTKFieldContainer.hpp"
 #endif
 
 namespace LCM {
@@ -51,15 +50,8 @@ public:
   computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val);
 
 #if defined(ALBANY_DTK)
-  Teuchos::Array<Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>>
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> 
   computeBCsDTK();
-
-  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
-  doDTKInterpolation(DataTransferKit::STKMeshManager &coupled_manager,
-                    DataTransferKit::STKMeshManager &this_manager,
-                    Albany::AbstractSTKFieldContainer::VectorFieldType* coupled_field,
-                    Albany::AbstractSTKFieldContainer::VectorFieldType* this_field,
-                    const int neq, Teuchos::ParameterList &dtk_params);
 #endif //ALBANY_DTK
 
   void
