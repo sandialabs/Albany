@@ -1082,6 +1082,8 @@ void dfm_set(PHAL::Workset &workset, const Teuchos::RCP<const Tpetra_Vector> &x,
              const Teuchos::RCP<const Tpetra_Vector> &xdd,
              Teuchos::RCP<AAdapt::rc::Manager> &rc_mgr) {
   workset.xT = Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(x) : x;
+  workset.xdotT = Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(xd) : xd;
+  workset.xdotdotT = Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(xdd) : xdd;
   workset.transientTerms = Teuchos::nonnull(xd);
   workset.accelerationTerms = Teuchos::nonnull(xdd);
 }

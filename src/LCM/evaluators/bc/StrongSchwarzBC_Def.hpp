@@ -629,7 +629,7 @@ fillResidual(StrongSchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
     xdot_view = xdot->get1dViewNonConst();
   }
 
-  //Solution dot
+  //Solution dotdot
   Teuchos::RCP<Tpetra_Vector>
   xdotdot = Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*dirichlet_workset.xdotdotT));
   Teuchos::ArrayRCP<ST> xdotdot_view;
