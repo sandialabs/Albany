@@ -33,6 +33,8 @@ set( CTEST_BUILD_NAME           "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
 set( CTEST_BINARY_NAME          build)
 
 SET(PREFIX_DIR /users/ghansen)
+SET(GCC_BIN_DIR "${PREFIX_DIR}/ompi-gcc")
+SET(CLANG_BIN_DIR "${PREFIX_DIR}/clang-5.0.0")
 
 SET (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 SET (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
@@ -232,18 +234,18 @@ ENDIF()
 SET(COMMON_CONFIGURE_OPTIONS
   "-Wno-dev"
   "-DCMAKE_BUILD_TYPE:STRING=NONE"
-  "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
   "-DTrilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
   "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
   "-DTrilinos_ENABLE_EXAMPLES:BOOL=OFF"
-  "-DMueLu_ENABLE_Tutorial:BOOL=OFF"
   #
   "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
   "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
   "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
   "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
   "-DTrilinos_ENABLE_MueLu:BOOL=ON"
+  "-DMueLu_ENABLE_Tutorial:BOOL=OFF"
   #
+  "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
   "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
   "-DMDS_ID_TYPE:STRING='long int'"
   "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON"
@@ -273,40 +275,19 @@ SET(COMMON_CONFIGURE_OPTIONS
   "-DTPL_ENABLE_Boost:BOOL=ON"
   "-DTPL_ENABLE_BoostLib:BOOL=ON"
   "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
-  "-DBoost_INCLUDE_DIRS:PATH=${PREFIX_DIR}/boost-1.64.0/include"
-  "-DBoost_LIBRARY_DIRS:PATH=${PREFIX_DIR}/boost-1.64.0/lib"
-  "-DBoostLib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/boost-1.64.0/include"
-  "-DBoostLib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/boost-1.64.0/lib"
-  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/boost-1.64.0/include"
-  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/boost-1.64.0/lib"
   #
   "-DTPL_ENABLE_Netcdf:STRING=ON"
-  "-DTPL_Netcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DTPL_Netcdf_LIBRARIES=${PREFIX_DIR}/lib/libnetcdf.a"
   "-DTPL_ENABLE_Pnetcdf:STRING=ON"
-  "-DTPL_Pnetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DTPL_Pnetcdf_LIBRARIES=${PREFIX_DIR}/lib/libnetcdf.a"
   #
   "-DTPL_ENABLE_HDF5:STRING=ON"
-  "-DTPL_HDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DTPL_HDF5_LIBRARIES=${PREFIX_DIR}/lib/libhdf5_hl.a"
-  "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lcurl -ldl -Wl,-rpath,${PREFIX_DIR}/lib:/usr/local/intel/11.1/069/mkl/lib/em64t'"
   #
   "-DTPL_ENABLE_Zlib:STRING=ON"
-  "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   #
   "-DTPL_ENABLE_yaml-cpp:STRING=ON"
-  "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   #
   "-DTPL_ENABLE_ParMETIS:STRING=ON"
-  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   #
   "-DTPL_ENABLE_SuperLU:STRING=ON"
-  "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
-  "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
   #
   "-DTPL_BLAS_LIBRARIES:STRING='-L/usr/local/intel/11.1/069/mkl/lib/em64t -lmkl_intel_lp64 -lmkl_blas95_lp64 -lmkl_core -lmkl_sequential'"
   "-DTPL_LAPACK_LIBRARIES:STRING='-L/usr/local/intel/11.1/069/mkl/lib/em64t -lmkl_lapack95_lp64'"
@@ -389,19 +370,41 @@ IF(BUILD_TRILINOS)
   SET_PROPERTY (GLOBAL PROPERTY SubProject Trilinos)
   SET_PROPERTY (GLOBAL PROPERTY Label Trilinos)
 
+
   SET(CONFIGURE_OPTIONS
     "-DTPL_ENABLE_MPI:BOOL=ON"
-    "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/ompi-gcc"
+    "-DMPI_BASE_DIR:PATH=${GCC_BIN_DIR}"
     #
-    "-DCMAKE_CXX_COMPILER:PATH=/users/ghansen/ompi-gcc/bin/mpicxx"
+    "-DCMAKE_CXX_COMPILER:PATH=${GCC_BIN_DIR}/bin/mpicxx"
     "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -DNDEBUG ${extra_cxx_flags}'"
-    "-DCMAKE_C_COMPILER:PATH=/users/ghansen/ompi-gcc/bin/mpicc"
+    "-DCMAKE_C_COMPILER:PATH=${GCC_BIN_DIR}/ompi-gcc/bin/mpicc"
     "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
-    "-DCMAKE_Fortran_COMPILER:PATH=/users/ghansen/ompi-gcc/bin/mpifort"
+    "-DCMAKE_Fortran_COMPILER:PATH=${GCC_BIN_DIR}/bin/mpifort"
     "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
     "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
     "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+  "-DBoost_INCLUDE_DIRS:PATH=${PREFIX_DIR}/boost-1.64.0/include"
+  "-DBoost_LIBRARY_DIRS:PATH=${PREFIX_DIR}/boost-1.64.0/lib"
+  "-DBoostLib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/boost-1.64.0/include"
+  "-DBoostLib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/boost-1.64.0/lib"
+  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/boost-1.64.0/include"
+  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/boost-1.64.0/lib"
+  "-DTPL_Netcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DTPL_Netcdf_LIBRARIES=${PREFIX_DIR}/lib/libnetcdf.a"
+  "-DTPL_Pnetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DTPL_Pnetcdf_LIBRARIES=${PREFIX_DIR}/lib/libnetcdf.a"
+  "-DTPL_HDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DTPL_HDF5_LIBRARIES=${PREFIX_DIR}/lib/libhdf5_hl.a"
+  "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lcurl -ldl -Wl,-rpath,${PREFIX_DIR}/lib:/usr/local/intel/11.1/069/mkl/lib/em64t'"
+  "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
+  "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
     ${COMMON_CONFIGURE_OPTIONS}
     )
 
@@ -497,30 +500,43 @@ IF(BUILD_TRILINOSCLANG)
 
   SET(CONFIGURE_OPTIONS
     "-DTPL_ENABLE_MPI:BOOL=ON"
-    "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/ompi-clang"
+    "-DMPI_BASE_DIR:PATH=${CLANG_BIN_DIR}"
     #
     "-DTrilinos_ENABLE_CXX11:BOOL=ON"
     #  "-DCMAKE_CXX_FLAGS:STRING=-O3 -DADDC_ -DNDEBUG"
     #  "-DCMAKE_C_FLAGS:STRING=-O3 -DADDC_ -DNDEBUG"
     #  "-DCMAKE_Fortran_FLAGS:STRING=-Os -DADDC_ -DNDEBUG"
-    "-DCMAKE_CXX_COMPILER:PATH=/users/ghansen/ompi-clang/bin/mpicxx"
+    "-DCMAKE_CXX_COMPILER:PATH=${CLANG_BIN_DIR}/bin/mpicxx"
     "-DCMAKE_CXX_FLAGS:STRING='-O3 -DNDEBUG  ${extra_cxx_flags}'"
-    "-DCMAKE_C_COMPILER:PATH=/users/ghansen/ompi-clang/bin/mpicc"
+    "-DCMAKE_C_COMPILER:PATH=${CLANG_BIN_DIR}/bin/mpicc"
     "-DCMAKE_C_FLAGS:STRING='-O3 -DNDEBUG'"
-    "-DCMAKE_Fortran_COMPILER:PATH=/users/ghansen/ompi-clang/bin/mpifort"
+    "-DCMAKE_Fortran_COMPILER:PATH=${CLANG_BIN_DIR}/bin/mpifort"
     "-DCMAKE_Fortran_FLAGS:STRING='-Os -DNDEBUG'"
     "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
     "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallClang"
-    "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
-    "-DTpetra_INST_FLOAT=OFF"
-    "-DTpetra_INST_INT_INT=ON"
-    "-DTpetra_INST_DOUBLE=ON"
-    "-DTpetra_INST_COMPLEX_FLOAT=OFF"
-    "-DTpetra_INST_COMPLEX_DOUBLE=OFF"
-    "-DTpetra_INST_INT_LONG=OFF"
-    "-DTpetra_INST_INT_UNSIGNED=OFF"
-    "-DTpetra_INST_INT_LONG_LONG=ON"
+#
+  "-DBoost_INCLUDE_DIRS:PATH=${CLANG_BIN_DIR}/include"
+  "-DBoost_LIBRARY_DIRS:PATH=${CLANG_BIN_DIR}/lib"
+  "-DBoostLib_INCLUDE_DIRS:PATH=${CLANG_BIN_DIR}/include"
+  "-DBoostLib_LIBRARY_DIRS:PATH=${CLANG_BIN_DIR}/lib"
+  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${CLANG_BIN_DIR}/include"
+  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${CLANG_BIN_DIR}/lib"
+  "-DTPL_Netcdf_INCLUDE_DIRS:PATH=${CLANG_BIN_DIR}/include"
+  "-DTPL_Netcdf_LIBRARIES=${CLANG_BIN_DIR}/lib/libnetcdf.a"
+  "-DTPL_Pnetcdf_INCLUDE_DIRS:PATH=${CLANG_BIN_DIR}/include"
+  "-DTPL_Pnetcdf_LIBRARIES=${CLANG_BIN_DIR}/lib/libnetcdf.a"
+  "-DTPL_HDF5_INCLUDE_DIRS:PATH=${CLANG_BIN_DIR}/include"
+  "-DTPL_HDF5_LIBRARIES=${CLANG_BIN_DIR}/lib/libhdf5_hl.a"
+  "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-L${CLANG_BIN_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lcurl -ldl -Wl,-rpath,${CLANG_BIN_DIR}/lib:/usr/local/intel/11.1/069/mkl/lib/em64t'"
+  "-DZlib_INCLUDE_DIRS:PATH=${CLANG_BIN_DIR}/include"
+  "-DZlib_LIBRARY_DIRS:PATH=${CLANG_BIN_DIR}/lib"
+  "-Dyaml-cpp_INCLUDE_DIRS:PATH=${CLANG_BIN_DIR}/include"
+  "-Dyaml-cpp_LIBRARY_DIRS:PATH=${CLANG_BIN_DIR}/lib"
+  "-DParMETIS_INCLUDE_DIRS:PATH=${CLANG_BIN_DIR}/include"
+  "-DParMETIS_LIBRARY_DIRS:PATH=${CLANG_BIN_DIR}/lib"
+  "-DSuperLU_INCLUDE_DIRS:PATH=${CLANG_BIN_DIR}/SuperLU_4.3/include"
+  "-DSuperLU_LIBRARY_DIRS:PATH=${CLANG_BIN_DIR}/SuperLU_4.3/lib"
     ${COMMON_CONFIGURE_OPTIONS}
     )
 
