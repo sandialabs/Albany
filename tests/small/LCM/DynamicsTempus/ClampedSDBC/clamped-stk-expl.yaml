@@ -16,7 +16,9 @@ ANONYMOUS:
       Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00]
     Dirichlet BCs: 
       SDBC on NS NodeSet0 for DOF X: 0.00000000e+00
+      SDBC on NS NodeSet1 for DOF X: 0.00000000e+00
       SDBC on NS NodeSet2 for DOF Y: 0.00000000e+00
+      SDBC on NS NodeSet3 for DOF Y: 0.00000000e+00
       SDBC on NS NodeSet4 for DOF Z: 0.00000000e+00
       SDBC on NS NodeSet5 for DOF Z: 0.00000000e+00
     Response Functions:
@@ -48,7 +50,7 @@ ANONYMOUS:
     Exodus Write Interval: 10
   Regression Results: 
     Number of Comparisons: 4
-    Test Values: [0.000000000000e+00, 1.669396300663e-04, 4.317188033355e-05, -4.317188033355e-05]
+    Test Values: [0.000000000000e+00, 1.669416100320e-04, 0.000000000000e+00, 0.000000000000e+00]
     Relative Tolerance: 1.0e-8
     Absolute Tolerance: 1.0e-8
   Piro:
