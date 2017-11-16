@@ -168,8 +168,6 @@ SchwarzAlternating(
     Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
     solver = solver_factory.createAndGetAlbanyAppT(app, comm, comm);
 
-    app->setAlternatingSchwarz(true);
-
     solvers_[subdomain] = solver;
 
     apps_[subdomain] = app;
@@ -759,11 +757,8 @@ SchwarzLoopDynamics() const
         fos << "Time step          :" << tempus_time_step << '\n';
         fos << delim << std::endl;
 
-        // For time dependent DBCs, set the time to be next time
         auto &
         app = *apps_[subdomain];
-
-        app.setDBCTime(next_time);
 
         Thyra::ModelEvaluatorBase::InArgs<ST>
         in_args = solver.createInArgs();
@@ -1205,11 +1200,8 @@ SchwarzLoopQuasistatics() const
         fos << "Step size          :" << step_size << '\n';
         fos << delim << std::endl;
 
-        // For time dependent DBCs, set the time to be next time
         auto &
         app = *apps_[subdomain];
-
-        app.setDBCTime(next_time);
 
         auto &
         state_mgr = app.getStateMgr();

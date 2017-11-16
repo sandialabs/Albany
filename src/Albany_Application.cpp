@@ -1413,11 +1413,6 @@ void Albany::Application::computeGlobalResidualImplT(
     }
 
 #if defined(ALBANY_LCM)
-    // For DBCs in Schwarz alternating, the time should be set to remain
-    // fixed to the end of a Schwarz step.
-    if (is_alternating_schwarz_ == true) {
-      workset.current_time = dbc_time_;
-    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
@@ -1903,11 +1898,6 @@ void Albany::Application::computeGlobalJacobianImplT(
     workset.disc = disc;
 
 #if defined(ALBANY_LCM)
-    // For DBCs in Schwarz alternating, the time should be set to remain
-    // fixed to the end of a Schwarz step.
-    if (is_alternating_schwarz_ == true) {
-      workset.current_time = dbc_time_;
-    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
@@ -2141,11 +2131,6 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
     workset.disc = disc;
 
 #if defined(ALBANY_LCM)
-    // For DBCs in Schwarz alternating, the time should be set to remain
-    // fixed to the end of a Schwarz step.
-    if (is_alternating_schwarz_ == true) {
-      workset.current_time = dbc_time_;
-    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
@@ -2278,11 +2263,6 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
       workset.disc = disc;
 
 #if defined(ALBANY_LCM)
-      // For DBCs in Schwarz alternating, the time should be set to remain
-      // fixed to the end of a Schwarz step.
-      if (is_alternating_schwarz_ == true) {
-        workset.current_time = dbc_time_;
-      }
       // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
       workset.apps_ = apps_;
       workset.current_app_ = Teuchos::rcp(this, false);
@@ -2978,11 +2958,6 @@ void Albany::Application::computeGlobalTangentImplT(
     workset.disc = disc;
 
 #if defined(ALBANY_LCM)
-    // For DBCs in Schwarz alternating, the time should be set to remain
-    // fixed to the end of a Schwarz step.
-    if (is_alternating_schwarz_ == true) {
-      workset.current_time = dbc_time_;
-    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
@@ -4501,11 +4476,6 @@ void Albany::Application::computeGlobalResidualSDBCsImplT(
     workset.disc = disc;
 
 #if defined(ALBANY_LCM)
-    // For DBCs in Schwarz alternating, the time should be set to remain
-    // fixed to the end of a Schwarz step.
-    if (is_alternating_schwarz_ == true) {
-      workset.current_time = dbc_time_;
-    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
@@ -4603,11 +4573,6 @@ void Albany::Application::computeGlobalResidualSDBCsImplT(
       workset.disc = disc;
 
 #if defined(ALBANY_LCM)
-      // For DBCs in Schwarz alternating, the time should be set to remain
-      // fixed to the end of a Schwarz step.
-      if (is_alternating_schwarz_ == true) {
-        workset.current_time = dbc_time_;
-      }
       // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
       workset.apps_ = apps_;
       workset.current_app_ = Teuchos::rcp(this, false);

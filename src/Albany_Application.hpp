@@ -592,23 +592,14 @@ public:
     return name;
   }
 
-  Teuchos::RCP<Tpetra_Vector const> const &getX() const { return x_; }
+  Teuchos::RCP<Tpetra_Vector const> const &
+  getX() const { return x_; }
 
-  Teuchos::RCP<Tpetra_Vector const> const &getXdot() const { return xdot_; }
+  Teuchos::RCP<Tpetra_Vector const> const &
+  getXdot() const { return xdot_; }
 
-  Teuchos::RCP<Tpetra_Vector const> const &getXdotdot() const {
-    return xdotdot_;
-  }
-
-  void setAlternatingSchwarz(bool isa = false) {
-    is_alternating_schwarz_ = isa;
-  }
-
-  bool getAlternatingSchwarz() const { return is_alternating_schwarz_; }
-
-  void setDBCTime(double t = 0.0) { dbc_time_ = t; }
-
-  double getDBCTime() const { return dbc_time_; }
+  Teuchos::RCP<Tpetra_Vector const> const &
+  getXdotdot() const { return xdotdot_; }
 
 private:
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> apps_;
@@ -625,10 +616,6 @@ private:
   Teuchos::RCP<Tpetra_Vector const> xdot_{Teuchos::null};
 
   Teuchos::RCP<Tpetra_Vector const> xdotdot_{Teuchos::null};
-
-  bool is_alternating_schwarz_{false};
-
-  double dbc_time_{0.0};
 
   std::vector<double> prev_times_;
 
