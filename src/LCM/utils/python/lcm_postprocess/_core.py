@@ -322,7 +322,7 @@ def _populate_tree(tree, parent, dic):
             if isinstance(dic[key], dict):
 
                 tree.insert(parent, 'end', uid, text = str(key) + '{}')
-                populate_tree(tree, uid, dic[key])
+                _populate_tree(tree, uid, dic[key])
 
             elif isinstance(dic[key], et.Element):
 
@@ -337,7 +337,7 @@ def _populate_tree(tree, parent, dic):
                     uid,
                     text = dic[key].attrib['name'],
                     value = value)
-                populate_tree(
+                _populate_tree(
                     tree,
                     uid,
                     dict([(i, x) for i, x in enumerate(list_children)]))
@@ -345,7 +345,7 @@ def _populate_tree(tree, parent, dic):
             elif isinstance(dic[key], (tuple, np.ndarray)):
                 
                 tree.insert(parent, 'end', uid, text = str(key) + '()')
-                populate_tree(
+                _populate_tree(
                     tree,
                     uid,
                     dict([(i, x) for i, x in enumerate(dic[key])]))
@@ -353,7 +353,7 @@ def _populate_tree(tree, parent, dic):
             elif isinstance(dic[key], list):
                 
                 tree.insert(parent, 'end', uid, text = str(key) + '[]')
-                populate_tree(
+                _populate_tree(
                     tree, 
                     uid,
                     dict([(i, x) for i, x in enumerate(dic[key])]))
@@ -361,7 +361,7 @@ def _populate_tree(tree, parent, dic):
             elif isinstance(dic[key], ObjLocal):
 
                 tree.insert(parent, 'end', uid, text = str(key) + '<>')
-                populate_tree(
+                _populate_tree(
                     tree,
                     uid,
                     dic[key].__dict__)
