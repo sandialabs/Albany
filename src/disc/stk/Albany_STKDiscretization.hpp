@@ -299,6 +299,14 @@ class STKDiscretization : public Albany::AbstractDiscretization {
   void
   printCoords() const;
 
+  //! Set stateArrays
+  void
+  setStateArrays(Albany::StateArrays& sa)
+  {
+    stateArrays = sa;
+    return;
+  }
+
   //! Get stateArrays
   Albany::StateArrays&
   getStateArrays()

@@ -736,7 +736,7 @@ void Albany::Application::finalSetUp(
   // Now that space is allocated in STK for state fields, initialize states.
   // If the states have been already allocated, skip this.
   if (!stateMgr.areStateVarsAllocated())
-    stateMgr.setStateArrays(disc);
+    stateMgr.setupStateArrays(disc);
 
 #if defined(ALBANY_EPETRA)
   if (!TpetraBuild) {
