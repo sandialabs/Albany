@@ -214,87 +214,87 @@ namespace Aeras
 
 #if defined(ALBANY_EPETRA)
     //! Get Epetra DOF map
-    Teuchos::RCP<const Epetra_Map> getMap() const;
+    Teuchos::RCP<const Epetra_Map> getMap() const override;
 
     //! Get overlapped node map
-    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
+    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const override;
 #endif
 
     //! Get Tpetra DOF map
-    Teuchos::RCP<const Tpetra_Map> getMapT() const;
+    Teuchos::RCP<const Tpetra_Map> getMapT() const override;
 
     //! Get Tpetra overlapped DOF map
-    Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const;
+    Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const override;
 
     //! Get field overlapped node map
-    Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT(const std::string& field_name) const;
+    Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT(const std::string& field_name) const override;
 
     //! Get field DOF map
-    Teuchos::RCP<const Tpetra_Map> getMapT(const std::string& field_name) const;
+    Teuchos::RCP<const Tpetra_Map> getMapT(const std::string& field_name) const override;
 
 #if defined(ALBANY_EPETRA)
     //! Get Epetra Jacobian graph
-    Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const;
+    Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const override;
 #endif
     //! Get Tpetra Jacobian graph
-    Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
+    Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const override;
 
     //! Get Tpetra implicit Jacobian graph (non-diagonal)
-    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const;
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const override;
 
 #if defined(ALBANY_EPETRA)
     //! Get Epetra overlap Jacobian graph
-    Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const;
+    Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const override;
 #endif
     //! Get Tpetra overlap Jacobian graph
-    Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const;
+    Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const override;
 
     //! Get Tpetra overlap implicit Jacobian graph (non-diagonal)
-    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const;
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const override;
 
 #if defined(ALBANY_EPETRA)
     //! Get field node map
-    Teuchos::RCP<const Epetra_Map> getNodeMap() const;
+    Teuchos::RCP<const Epetra_Map> getNodeMap() const override;
     //! Get field overlapped DOF map
-    Teuchos::RCP<const Epetra_Map> getOverlapMap() const;
+    Teuchos::RCP<const Epetra_Map> getOverlapMap() const override;
 #endif
 
     //! Get Tpetra Node map
-    Teuchos::RCP<const Tpetra_Map> getNodeMapT() const;
+    Teuchos::RCP<const Tpetra_Map> getNodeMapT() const override;
     //! Get field Tpetra node map
-    Teuchos::RCP<const Tpetra_Map> getNodeMapT(const std::string& field_name) const;
+    Teuchos::RCP<const Tpetra_Map> getNodeMapT(const std::string& field_name) const override;
     //! Get field overlapped DOF map
-    Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const;
+    Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const override;
     //! Get field overlapped DOF map
-    Teuchos::RCP<const Tpetra_Map> getOverlapMapT(const std::string& field_name) const;
+    Teuchos::RCP<const Tpetra_Map> getOverlapMapT(const std::string& field_name) const override;
 
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
-    const Albany::NodeSetList& getNodeSets() const
+    const Albany::NodeSetList& getNodeSets() const override
     {
       return nodeSets;
     };
 
-    const Albany::NodeSetCoordList& getNodeSetCoords() const
+    const Albany::NodeSetCoordList& getNodeSetCoords() const override
     {
       return nodeSetCoords;
     };
-    const Albany::NodeSetGIDsList& getNodeSetGIDs() const
+    const Albany::NodeSetGIDsList& getNodeSetGIDs() const override
     {
       return nodeSetGIDs;
     };
 
     //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
-    const Albany::SideSetList& getSideSets(const int workset) const
+    const Albany::SideSetList& getSideSets(const int workset) const override
     {
       return sideSets[workset];
     };
 
     //! Get connectivity map from elementGID to workset
-    Albany::WsLIDList& getElemGIDws()
+    Albany::WsLIDList& getElemGIDws() override
     {
       return elemGIDws;
     };
-    const Albany::WsLIDList& getElemGIDws() const
+    const Albany::WsLIDList& getElemGIDws() const override
     {
       return elemGIDws;
     };
@@ -302,31 +302,31 @@ namespace Aeras
     //! Get map from (Ws, El, Local Node) -> NodeLID
     using Albany::AbstractDiscretization::WorksetConn;
     using Albany::AbstractDiscretization::Conn;
-    const Conn& getWsElNodeEqID() const;
+    const Conn& getWsElNodeEqID() const override;
 
     //! Get map from (Ws, Local Node) -> NodeGID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
-    getWsElNodeID() const;
+    getWsElNodeID() const override;
 
 
     //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID,
     //! works for both scalar and vector fields
     const std::vector<Albany::IDArray>&
-    getElNodeEqID(const std::string& field_name) const
+    getElNodeEqID(const std::string& field_name) const override
     {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Albany::SpectralDiscretization: getElNodeEqID(const std::string& field_name) const not implemented");
     }
 
     const Albany::NodalDOFManager&
-    getDOFManager(const std::string& field_name) const
+    getDOFManager(const std::string& field_name) const override
     {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Albany::SpectralDiscretization: getDOFManager(const std::string& field_name) const not implemented");
     }
 
     const Albany::NodalDOFManager&
-    getOverlapDOFManager(const std::string& field_name) const
+    getOverlapDOFManager(const std::string& field_name) const override
     {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Albany::SpectralDiscretization: getOverlapDOFManager(const std::string& field_name) const not implemented");
@@ -334,42 +334,42 @@ namespace Aeras
     }
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
-    const Teuchos::ArrayRCP<double>& getCoordinates() const;
+    const Teuchos::ArrayRCP<double>& getCoordinates() const override;
 
     //! Set coordinate vector (num_used_nodes * 3)
-    void setCoordinates(const Teuchos::ArrayRCP<const double>& c);
+    void setCoordinates(const Teuchos::ArrayRCP<const double>& c) override;
 
     void
-    setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm);
+    setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm) override;
 
 #ifdef ALBANY_CONTACT
 //! Get the contact manager
-    virtual Teuchos::RCP<const Albany::ContactManager> getContactManager() const;
+    virtual Teuchos::RCP<const Albany::ContactManager> getContactManager() const override;
 #endif
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
-    getCoords() const;
+    getCoords() const override;
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
-    getSphereVolume() const;
+    getSphereVolume() const override;
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type&
-    getLatticeOrientation() const;
+    getLatticeOrientation() const override;
 
     //! Print the coordinates for debugging
-    void printCoords() const;
+    void printCoords() const override;
     void printConnectivity(bool printEdges=false) const;
     void printCoordsAndGIDs() const;
 
     //! Get sideSet discretizations map
-    const SideSetDiscretizationsType& getSideSetDiscretizations () const
+    const SideSetDiscretizationsType& getSideSetDiscretizations () const override
     {
       //warning: returning empty structure (feature not supported with this discretization)
       return sideSetDiscretizations;
     }
 
     //! Get the map side_id->side_set_elem_id
-    const std::map<std::string,std::map<GO,GO>>& getSideToSideSetCellMap () const
+    const std::map<std::string,std::map<GO,GO>>& getSideToSideSetCellMap () const override
     {
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Functionality not supported by Aeras discretization.\n");
       static std::map<std::string,std::map<GO,GO>> sideToSideSetCellMap;
@@ -377,98 +377,104 @@ namespace Aeras
     }
 
     //! Get the map side_node_id->side_set_cell_node_id
-    const std::map<std::string,std::map<GO,std::vector<int>>>& getSideNodeNumerationMap () const
+    const std::map<std::string,std::map<GO,std::vector<int>>>& getSideNodeNumerationMap () const override
     {
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Functionality not supported by Aeras discretization.\n");
       static std::map<std::string,std::map<GO,std::vector<int>>> sideNodeNumerationMap;
       return sideNodeNumerationMap;
     }
 
+    //! Set stateArrays
+    void setStateArrays(Albany::StateArrays& sa) override {
+      stateArrays = sa;
+      return;
+    }
+
     //! Get stateArrays
-    Albany::StateArrays& getStateArrays() {return stateArrays;}
+    Albany::StateArrays& getStateArrays() override {return stateArrays;}
 
     //! Get nodal parameters state info struct
-    const Albany::StateInfoStruct& getNodalParameterSIS() const
+    const Albany::StateInfoStruct& getNodalParameterSIS() const override
     {
       return stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
     }
 
     //! Retrieve Vector (length num worksets) of element block names
-    const Albany::WorksetArray<std::string>::type&  getWsEBNames() const;
+    const Albany::WorksetArray<std::string>::type&  getWsEBNames() const override;
     //! Retrieve Vector (length num worksets) of physics set index
-    const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
+    const Albany::WorksetArray<int>::type&  getWsPhysIndex() const override;
 
 #if defined(ALBANY_EPETRA)
     void writeSolution(const Epetra_Vector& soln,
                        const double time,
-                       const bool overlapped = false);
+                       const bool overlapped = false) override;
     void writeSolution(const Epetra_Vector& soln,
                        const Epetra_Vector& soln_dot, 
                        const double time,
-                       const bool overlapped = false);
+                       const bool overlapped = false) override;
 #endif
 
    void writeSolutionT(const Tpetra_Vector& solnT,
                        const double time,
-                       const bool overlapped = false);
+                       const bool overlapped = false) override;
 
    void writeSolutionT(const Tpetra_Vector& solnT,
                        const Tpetra_Vector& soln_dotT,
                        const double time,
-                       const bool overlapped = false);
+                       const bool overlapped = false) override;
    
    void writeSolutionT(const Tpetra_Vector& solnT,
                        const Tpetra_Vector& soln_dotT,
                        const Tpetra_Vector& soln_dotdotT,
                        const double time,
-                       const bool overlapped = false);
+                       const bool overlapped = false) override;
 
    void writeSolutionMV(const Tpetra_MultiVector& solnT,
                        const double time,
-                       const bool overlapped = false);
+                       const bool overlapped = false) override;
 
    void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT,
                                      const double time,
-                                     const bool overlapped = false);
+                                     const bool overlapped = false) override;
 
    void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT,
                                      const Tpetra_Vector &solution_dotT, 
                                      const double time,
-                                     const bool overlapped = false);
+                                     const bool overlapped = false) override;
 
    void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT,
                                      const Tpetra_Vector &solution_dotT, 
                                      const Tpetra_Vector &solution_dotdotT, 
                                      const double time,
-                                     const bool overlapped = false);
+                                     const bool overlapped = false) override;
 
    void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector &solutionT,
                                      const double time,
-                                     const bool overlapped = false);
+                                     const bool overlapped = false) override;
 
    void writeSolutionToFileT(const Tpetra_Vector& solnT,
                              const double time,
-                             const bool overlapped = false);
+                             const bool overlapped = false) override;
    void writeSolutionMVToFile(const Tpetra_MultiVector& solnT,
                              const double time,
-                             const bool overlapped = false);
+                             const bool overlapped = false) override;
 
 #if defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_Vector>
-    getSolutionField(const bool overlapped=false) const;
+    getSolutionField(const bool overlapped=false) const override;
 #endif
     //Tpetra analog
     Teuchos::RCP<Tpetra_Vector>
-    getSolutionFieldT(const bool overlapped=false) const;
+    getSolutionFieldT(const bool overlapped=false) const override;
 
     Teuchos::RCP<Tpetra_MultiVector>
-    getSolutionMV(const bool overlapped=false) const;
+    getSolutionMV(const bool overlapped=false) const override;
 
     //Tpetra analog
-    void setResidualFieldT(const Tpetra_Vector& residualT);
+    void setResidualFieldT(const Tpetra_Vector& residualT) override;
 
     //Retrieve mesh struct
-    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const {return stkMeshStruct;}
+    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const override {return stkMeshStruct;}
 
     // Retrieve mesh struct
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct()
@@ -477,19 +483,19 @@ namespace Aeras
     }
 
     //! Flag if solution has a restart values -- used in Init Cond
-    bool hasRestartSolution() const
+    bool hasRestartSolution() const override
     {
       return stkMeshStruct->hasRestartSolution();
     }
 
     //! Spectral supports MOR
-    virtual bool supportsMOR() const
+    virtual bool supportsMOR() const override
     {
       return false;
     }
 
     //! If restarting, convenience function to return restart data time
-    double restartDataTime() const
+    double restartDataTime() const override
     {
       return stkMeshStruct->restartDataTime();
     }
@@ -505,18 +511,18 @@ namespace Aeras
     void reNameExodusOutput(std::string& filename);
 
    //! Get number of spatial dimensions
-    int getNumDim() const
+    int getNumDim() const override
     {
       return stkMeshStruct->numDim;
     }
 
     //! Get number of total DOFs per node
-    int getNumEq() const
+    int getNumEq() const override
     {
       return neq;
     }
 
-    bool isExplicitScheme() const
+    bool isExplicitScheme() const override
     {
       return explicit_scheme;
     }
@@ -559,7 +565,7 @@ namespace Aeras
       return bulkData;
     }
 
-    Teuchos::RCP<Albany::LayeredMeshNumbering<LO> > getLayeredMeshNumbering(){
+    Teuchos::RCP<Albany::LayeredMeshNumbering<LO> > getLayeredMeshNumbering() override {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Albany::SpectralDiscretization: getLayeredMeshNumbering() not implemented");
       return Teuchos::null;
@@ -589,12 +595,12 @@ namespace Aeras
 
     //! Copy field from STK Mesh field to given Epetra_Vector
     void getFieldT(Tpetra_Vector &field_vector,
-                  const std::string& field_name) const;
+                  const std::string& field_name) const override;
 
     // Copy field vector into STK Mesh field
     void setFieldT(const Tpetra_Vector &field_vector,
                   const std::string& field_name,
-                  bool overlapped=false);
+                  bool overlapped=false) override;
 
     //Tpetra version of above
     void setSolutionFieldT(const Tpetra_Vector& solnT);
