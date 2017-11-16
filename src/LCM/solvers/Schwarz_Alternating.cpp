@@ -112,6 +112,7 @@ SchwarzAlternating(
   prev_disp_thyra_.resize(num_subdomains_);
   prev_velo_thyra_.resize(num_subdomains_);
   prev_acce_thyra_.resize(num_subdomains_);
+  internal_states_.resize(num_subdomains_);
 
   bool
   have_loca{false};
@@ -152,9 +153,6 @@ SchwarzAlternating(
     if (subdomain == 0) { 
       have_loca = piro_params.isSublist("LOCA");
       have_tempus = piro_params.isSublist("Tempus");
-#ifndef ALBANY_TEMPUS
-      ALBANY_ASSERT(!have_tempus, "Must compile Albany with Tempus to solve using dynamic Schwarz"); 
-#endif
       ALBANY_ASSERT(have_loca != have_tempus, "Must have either LOCA or Tempus");
       have_loca_ = have_loca;
       have_tempus_ = have_tempus;
@@ -480,11 +478,9 @@ evalModelImpl(
   if (have_loca_ == true) {
     SchwarzLoopQuasistatics();
   }
-#ifdef ALBANY_TEMPUS
   if (have_tempus_ == true) {
     SchwarzLoopDynamics();
   }
-#endif
   return;
 }
 
@@ -1145,6 +1141,14 @@ SchwarzLoopQuasistatics() const
 
       prev_disp_nox_[subdomain] = is_initial_state == true ?
           Teuchos::null : disp_nox_[subdomain];
+
+      auto &
+      app = *apps_[subdomain];
+
+      auto &
+      state_mgr = app.getStateMgr();
+
+      internal_states_[subdomain] = state_mgr.getStateArrays();
     }
 
     // Schwarz loop
@@ -1206,6 +1210,11 @@ SchwarzLoopQuasistatics() const
         app = *apps_[subdomain];
 
         app.setDBCTime(next_time);
+
+        auto &
+        state_mgr = app.getStateMgr();
+
+        state_mgr.setStateArrays(internal_states_[subdomain]);
 
         Thyra::ModelEvaluatorBase::InArgs<ST>
         in_args = solver.createInArgs();

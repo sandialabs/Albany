@@ -247,6 +247,8 @@ private:
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
   prev_acce_thyra_;
   
+  mutable std::vector<Albany::StateArrays>
+  internal_states_;
 
   // Used if solving with loca or tempus
   bool
