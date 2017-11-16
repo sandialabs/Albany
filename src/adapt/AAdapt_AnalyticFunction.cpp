@@ -77,6 +77,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Sin-Cos")
     F = Teuchos::rcp(new AAdapt::SinCos(neq, numDim, data));
 
+  else if(name == "Sin Scalar")
+    F = Teuchos::rcp(new AAdapt::SinScalar(neq, numDim, data));
+
   else if(name == "Taylor-Green Vortex")
     F = Teuchos::rcp(new AAdapt::TaylorGreenVortex(neq, numDim, data));
 
@@ -692,6 +695,20 @@ void AAdapt::SinCos::compute(double* x, const double* X) {
   x[0] = sin(2.0 * pi * X[0]) * cos(2.0 * pi * X[1]);
   x[1] = cos(2.0 * pi * X[0]) * sin(2.0 * pi * X[1]);
   x[2] = sin(2.0 * pi * X[0]) * sin(2.0 * pi * X[1]);
+}
+//*****************************************************************************
+AAdapt::SinScalar::SinScalar(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION(neq != 1 || numDim < 2 || data.size() != numDim,
+                             std::logic_error,
+                             "Error! Invalid call of SinScalar with " << neq
+                             << " " << numDim << "  " << data.size() << std::endl);
+}
+void AAdapt::SinScalar::compute(double* x, const double* X) {
+  x[0] = 1.0;
+  for (int dim{0}; dim < numDim; ++dim) {
+    x[0] *= sin(pi / data[dim] * X[dim]);
+  }
 }
 //*****************************************************************************
 AAdapt::TaylorGreenVortex::TaylorGreenVortex(int neq_, int numDim_, Teuchos::Array<double> data_)
