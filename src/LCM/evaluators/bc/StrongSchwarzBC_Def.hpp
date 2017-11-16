@@ -609,36 +609,58 @@ template<typename StrongSchwarzBC, typename Traits>
 void
 fillResidual(StrongSchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
 {
-  bool supports_xdot = false;
-  bool supports_xdotdot = false;
+  Teuchos::RCP<Tpetra_Vector const>
+  const_disp = dirichlet_workset.xT;
 
+  Teuchos::RCP<Tpetra_Vector const>
+  const_velo = dirichlet_workset.xdotT;
+
+  Teuchos::RCP<Tpetra_Vector const>
+  const_acce = dirichlet_workset.xdotdotT;
+
+  bool const
+  has_disp = const_disp != Teuchos::null;
+
+  bool const
+  has_velo = const_velo != Teuchos::null;
+
+  bool const
+  has_acce = const_acce != Teuchos::null;
+
+  ALBANY_ASSERT(has_disp == true);
+
+  // Displacement
+  Teuchos::RCP<Tpetra_Vector>
+  disp = has_disp == true ?
+      Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*const_disp)) :
+      Teuchos::null;
+
+  Teuchos::ArrayRCP<ST>
+  disp_view = has_disp == true ? disp->get1dViewNonConst() : Teuchos::null;
+
+  // Velocity
+  Teuchos::RCP<Tpetra_Vector>
+  velo = has_velo == true ?
+      Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*const_velo)) :
+      Teuchos::null;
+
+  Teuchos::ArrayRCP<ST>
+  velo_view = has_velo == true ? velo->get1dViewNonConst() : Teuchos::null;
+
+
+  // Acceleration
+  Teuchos::RCP<Tpetra_Vector>
+  acce = has_acce == true ?
+      Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*const_acce)) :
+      Teuchos::null;
+
+  Teuchos::ArrayRCP<ST>
+  acce_view = has_acce == true ? acce->get1dViewNonConst() : Teuchos::null;
+
+  //Residual 
   Teuchos::RCP<Tpetra_Vector>
   f = dirichlet_workset.fT;
 
-  //Solution
-  Teuchos::RCP<Tpetra_Vector>
-  x = Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*dirichlet_workset.xT));
-  Teuchos::ArrayRCP<ST> x_view = x->get1dViewNonConst();
-
-  //Solution dot
-  Teuchos::RCP<Tpetra_Vector>
-  xdot = Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*dirichlet_workset.xdotT));
-  Teuchos::ArrayRCP<ST> xdot_view;
-  if (xdot != Teuchos::null) {
-    supports_xdot = true;
-    xdot_view = xdot->get1dViewNonConst();
-  }
-
-  //Solution dotdot
-  Teuchos::RCP<Tpetra_Vector>
-  xdotdot = Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*dirichlet_workset.xdotdotT));
-  Teuchos::ArrayRCP<ST> xdotdot_view;
-  if (xdotdot != Teuchos::null) {
-    supports_xdotdot = true;
-    xdotdot_view = xdotdot->get1dViewNonConst();
-  }
-
-  //Residual 
   Teuchos::ArrayRCP<ST>
   f_view = f->get1dViewNonConst();
 
@@ -651,60 +673,55 @@ fillResidual(StrongSchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
 #if defined(ALBANY_DTK)
 
   Teuchos::Array<Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>>
-  schwarz_bcs_array = sbc.computeBCsDTK();
+  bcs_array = sbc.computeBCsDTK();
 
-  if ((supports_xdot == true) && (schwarz_bcs_array.length() < 2)) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,
-                               Teuchos::Exceptions::InvalidParameter,
-                               "Problem supports xdot but schwarz_bc_array length < 2." );
-  }
+  ALBANY_ASSERT(has_velo == false || bcs_array.length() >= 2);
+  ALBANY_ASSERT(has_acce == false || bcs_array.length() >= 3);
 
-  if ((supports_xdotdot == true) && (schwarz_bcs_array.length() < 3)) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,
-                               Teuchos::Exceptions::InvalidParameter,
-                               "Problem supports xdotdot but schwarz_bc_array length < 3." );
-  }
-
-  //Solution
-  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
-  schwarz_bcs_sol = schwarz_bcs_array[0]; 
+  // Displacement
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
+  bcs_disp = bcs_array[0];
 
   Teuchos::RCP<const Teuchos::Comm<int>>
-  commT = schwarz_bcs_sol->getMap()->getComm();
+  commT = bcs_disp->getMap()->getComm();
 
   Teuchos::ArrayRCP<ST const>
-  schwarz_bcs_sol_const_view_x = schwarz_bcs_sol->getData(0);
+  bcs_disp_const_view_x = bcs_disp->getData(0);
 
   Teuchos::ArrayRCP<ST const>
-  schwarz_bcs_sol_const_view_y = schwarz_bcs_sol->getData(1);
+  bcs_disp_const_view_y = bcs_disp->getData(1);
 
   Teuchos::ArrayRCP<ST const>
-  schwarz_bcs_sol_const_view_z = schwarz_bcs_sol->getData(2);
+  bcs_disp_const_view_z = bcs_disp->getData(2);
 
-  //Solution dot 
-  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> schwarz_bcs_sol_dot;
-  Teuchos::ArrayRCP<ST const> schwarz_bcs_sol_dot_const_view_x;
-  Teuchos::ArrayRCP<ST const> schwarz_bcs_sol_dot_const_view_y;
-  Teuchos::ArrayRCP<ST const> schwarz_bcs_sol_dot_const_view_z;
+  // Velocity
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
+  bcs_velo{Teuchos::null};
 
-  if (schwarz_bcs_array.length() > 1) {
-    schwarz_bcs_sol_dot = schwarz_bcs_array[1];
-    schwarz_bcs_sol_dot_const_view_x = schwarz_bcs_sol_dot->getData(0);
-    schwarz_bcs_sol_dot_const_view_y = schwarz_bcs_sol_dot->getData(1);
-    schwarz_bcs_sol_dot_const_view_z = schwarz_bcs_sol_dot->getData(2);
+  Teuchos::ArrayRCP<ST const> bcs_velo_const_view_x;
+  Teuchos::ArrayRCP<ST const> bcs_velo_const_view_y;
+  Teuchos::ArrayRCP<ST const> bcs_velo_const_view_z;
+
+  if (bcs_array.length() > 1) {
+    bcs_velo = bcs_array[1];
+    bcs_velo_const_view_x = bcs_velo->getData(0);
+    bcs_velo_const_view_y = bcs_velo->getData(1);
+    bcs_velo_const_view_z = bcs_velo->getData(2);
   }
 
-  //Solution dotdot 
-  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> schwarz_bcs_sol_dotdot;
-  Teuchos::ArrayRCP<ST const> schwarz_bcs_sol_dotdot_const_view_x;
-  Teuchos::ArrayRCP<ST const> schwarz_bcs_sol_dotdot_const_view_y;
-  Teuchos::ArrayRCP<ST const> schwarz_bcs_sol_dotdot_const_view_z;
+  // Acceleration
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
+  bcs_acce{Teuchos::null};
 
-  if (schwarz_bcs_array.length() > 2) {
-    schwarz_bcs_sol_dotdot = schwarz_bcs_array[2];
-    schwarz_bcs_sol_dotdot_const_view_x = schwarz_bcs_sol_dotdot->getData(0);
-    schwarz_bcs_sol_dotdot_const_view_y = schwarz_bcs_sol_dotdot->getData(1);
-    schwarz_bcs_sol_dotdot_const_view_z = schwarz_bcs_sol_dotdot->getData(2);
+  Teuchos::ArrayRCP<ST const> bcs_acce_const_view_x;
+  Teuchos::ArrayRCP<ST const> bcs_acce_const_view_y;
+  Teuchos::ArrayRCP<ST const> bcs_acce_const_view_z;
+
+  if (bcs_array.length() > 2) {
+    bcs_acce = bcs_array[2];
+    bcs_acce_const_view_x = bcs_acce->getData(0);
+    bcs_acce_const_view_y = bcs_acce->getData(1);
+    bcs_acce_const_view_z = bcs_acce->getData(2);
   }
 
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
@@ -726,32 +743,32 @@ fillResidual(StrongSchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
 
     if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
       f_view[x_dof] = 0.0;
-      x_view[x_dof] = schwarz_bcs_sol_const_view_x[dof];
-      if (supports_xdot) {
-        xdot_view[x_dof] = schwarz_bcs_sol_dot_const_view_x[dof];
+      disp_view[x_dof] = bcs_disp_const_view_x[dof];
+      if (has_velo) {
+        velo_view[x_dof] = bcs_velo_const_view_x[dof];
       }
-      if (supports_xdotdot) {
-        xdotdot_view[x_dof] = schwarz_bcs_sol_dotdot_const_view_x[dof];
+      if (has_acce) {
+        acce_view[x_dof] = bcs_acce_const_view_x[dof];
       }
     }
     if (fixed_dofs.find(y_dof) == fixed_dofs.end()) {
       f_view[y_dof] = 0.0;
-      x_view[y_dof] = schwarz_bcs_sol_const_view_y[dof];
-      if (supports_xdot) {
-        xdot_view[y_dof] = schwarz_bcs_sol_dot_const_view_y[dof];
+      disp_view[y_dof] = bcs_disp_const_view_y[dof];
+      if (has_velo) {
+        velo_view[y_dof] = bcs_velo_const_view_y[dof];
       }
-      if (supports_xdotdot) {
-        xdotdot_view[y_dof] = schwarz_bcs_sol_dotdot_const_view_y[dof];
+      if (has_acce) {
+        acce_view[y_dof] = bcs_acce_const_view_y[dof];
       }
     }
     if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
       f_view[z_dof] = 0.0;
-      x_view[z_dof] = schwarz_bcs_sol_const_view_z[dof];
-      if (supports_xdot) {
-        xdot_view[z_dof] = schwarz_bcs_sol_dot_const_view_z[dof];
+      disp_view[z_dof] = bcs_disp_const_view_z[dof];
+      if (has_velo) {
+        velo_view[z_dof] = bcs_velo_const_view_z[dof];
       }
-      if (supports_xdotdot) {
-        xdotdot_view[z_dof] = schwarz_bcs_sol_dotdot_const_view_z[dof];
+      if (has_acce) {
+        acce_view[z_dof] = bcs_acce_const_view_z[dof];
       }
     }
 
@@ -778,15 +795,15 @@ fillResidual(StrongSchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
 
     if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
       f_view[x_dof] = 0.0;
-      x_view[x_dof] = x_val;
+      disp_view[x_dof] = x_val;
     }
     if (fixed_dofs.find(y_dof) == fixed_dofs.end()) {
       f_view[y_dof] = 0.0;
-      x_view[y_dof] = y_val;
+      disp_view[y_dof] = y_val;
     }
     if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
       f_view[z_dof] = 0.0;
-      x_view[z_dof] = z_val;
+      disp_view[z_dof] = z_val;
     }
 
   } // node in node set loop
