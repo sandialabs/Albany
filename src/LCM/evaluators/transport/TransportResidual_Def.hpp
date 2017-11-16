@@ -62,6 +62,10 @@ namespace LCM {
       transient_coeff_ = decltype(transient_coeff_)(
           p.get<std::string>("Transient Coefficient Name"), dl->qp_scalar);
       this->addDependentField(transient_coeff_);
+
+      delta_time_ = decltype(delta_time_)(
+          p.get<std::string>("Delta Time Name"), dl->workset_scalar);
+      this->addDependentField(delta_time_);
     }
 
     if (have_diffusion_) {
@@ -144,6 +148,7 @@ namespace LCM {
     if (have_transient_) {
       this->utils.setFieldData(transient_coeff_,fm);
       this->utils.setFieldData(scalar_dot_,fm);
+      this->utils.setFieldData(delta_time_,fm);
     }
 
     if (have_diffusion_) {
@@ -184,8 +189,6 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     
-    //typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
-      
     // zero out residual
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int node = 0; node < num_nodes_; ++node) {
@@ -194,15 +197,9 @@ namespace LCM {
     }
 
     // transient term
-    if ( have_transient_ ) {
-      //if ( dt == 0.0 ) dt = 1.e-15;
-      // grab old state
-      //Albany::MDArray scalar_old = (*workset.stateArrayPtr)[scalar_name_];
-      // compute scalar rate
-      //ScalarT scalar_dot(0.0);
+    if (have_transient_ && delta_time_(0) > 0.0) {
       for (int cell = 0; cell < workset.numCells; ++cell) {
         for (int pt = 0; pt < num_pts_; ++pt) {
-          //scalar_dot = ( scalar_(cell,pt) - scalar_old(cell,pt) ) / dt;
           for (int node = 0; node < num_nodes_; ++node) {
             residual_(cell,node) += transient_coeff_(cell,pt)
               * w_bf_(cell,node,pt) * scalar_dot_(cell,pt);
@@ -211,42 +208,34 @@ namespace LCM {
       }
     }
     
-//     term ==> P : F_dot
-    if (have_transient_ && have_mechanics_ && (SolutionType_ != "Continuation"))
-    {
-        for (int cell = 0; cell < workset.numCells; ++cell)
-        {
-            for (int pt = 0; pt < num_pts_; ++pt)
-            {
-                ScalarT sum(0.0);
-                // This is dumb, but I want to be sure I am initializing the arrays with zeros.
-                term1_(cell, pt) = ScalarT(0.0);
-                for (int i = 0; i < num_dims_; ++i)
-                {
-                    for (int j = 0; j < num_dims_; ++j)
-                    {
-                        sum += stress_(cell, pt, i, j) * vel_grad_(cell, pt, i, j);
-                    }
-                }
-                term1_(cell, pt) = sum;
+    // term ==> P : F_dot
+    if (have_transient_ && have_mechanics_ && (SolutionType_ != "Continuation")) {
+      for (int cell = 0; cell < workset.numCells; ++cell) {
+        for (int pt = 0; pt < num_pts_; ++pt) {
+          ScalarT sum(0.0);
+          // This is dumb, but I want to be sure I am initializing the arrays with zeros.
+          term1_(cell, pt) = ScalarT(0.0);
+          for (int i = 0; i < num_dims_; ++i) {
+            for (int j = 0; j < num_dims_; ++j) {
+              sum += stress_(cell, pt, i, j) * vel_grad_(cell, pt, i, j);
             }
+          }
+          term1_(cell, pt) = sum;
         }
+      }
 
-        // add to residual
-        for (int cell = 0; cell < workset.numCells; ++cell)
-        {
-            for (int pt = 0; pt < num_pts_; ++pt)
-            {
-                for (int node = 0; node < num_nodes_; ++node)
-                {
-                    residual_(cell,node) -= w_bf_(cell,node,pt) * term1_(cell, pt);
-                }
-            }
+      // add to residual
+      for (int cell = 0; cell < workset.numCells; ++cell) {
+        for (int pt = 0; pt < num_pts_; ++pt) {
+          for (int node = 0; node < num_nodes_; ++node) {
+              residual_(cell,node) -= w_bf_(cell,node,pt) * term1_(cell, pt);
+          }
         }
+      }
     }
     
     // diffusive term
-    if ( have_diffusion_ ) {
+    if (have_diffusion_ && !(have_transient_ && delta_time_(0) == 0.0)) {
       for (int cell = 0; cell < workset.numCells; ++cell) {
         for (int pt = 0; pt < num_pts_; ++pt) {
           for (int node = 0; node < num_nodes_; ++node) {
@@ -262,7 +251,7 @@ namespace LCM {
     }
 
     // source term
-    if ( have_source_ ) {
+    if (have_source_) {
       for (int cell = 0; cell < workset.numCells; ++cell) {
         for (int pt = 0; pt < num_pts_; ++pt) {
           for (int node = 0; node < num_nodes_; ++node) {
@@ -273,7 +262,7 @@ namespace LCM {
     }
 
      // second source term
-     if ( have_second_source_ ) {
+     if (have_second_source_) {
        for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
          for (std::size_t pt = 0; pt < num_pts_; ++pt) {
            for (std::size_t node = 0; node < num_nodes_; ++node) {
@@ -284,7 +273,7 @@ namespace LCM {
      }
 
     // convection term
-    if ( have_convection_ ) {
+    if (have_convection_) {
       for (int cell = 0; cell < workset.numCells; ++cell) {
         for (int pt = 0; pt < num_pts_; ++pt) {
           for (int node = 0; node < num_nodes_; ++node) {

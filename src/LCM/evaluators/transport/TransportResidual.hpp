@@ -70,6 +70,11 @@ namespace LCM {
     PHX::MDField<const ScalarT,Cell,QuadPoint> scalar_dot_;
 
     ///
+    /// Input: time step
+    ///
+    PHX::MDField<const ScalarT,Dummy> delta_time_;
+
+    ///
     /// Scalar field for transport variable
     ///
     PHX::MDField<const ScalarT,Cell,QuadPoint, Dim> scalar_grad_;
