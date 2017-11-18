@@ -55,6 +55,8 @@ mv dakota-6.5.0.src Dakota
 #apply Brian Adams' 11/17 patch
 cd Dakota/src
 cp /home/ikalash/nightlyAlbanyTests/dakota_data_types.hpp .
+cd ../packages/pecos/src
+cp /home/ikalash/nightlyAlbanyTests/pecos_data_types.hpp .
 echo; echo "   ...finished Dakota checkout."
 
 echo; echo "   Copying DTK directory into Trilinos..."
