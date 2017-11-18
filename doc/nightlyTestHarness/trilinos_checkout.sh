@@ -53,7 +53,7 @@ tar -zxvf dakota-6.5-public.src.tar.gz
 rm -rf dakota-6.5-public.src.tar.gz 
 mv dakota-6.5.0.src Dakota
 #apply Brian Adams' 11/17 patch
-cd Dakota
+cd Dakota/src
 cp /home/ikalash/nightlyAlbanyTests/dakota_data_types.hpp .
 echo; echo "   ...finished Dakota checkout."
 
