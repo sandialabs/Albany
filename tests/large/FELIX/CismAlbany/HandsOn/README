@@ -27,7 +27,7 @@ $ matlab -nojvm < build_cism_msh_from_nc.m
 $ cd ..
 
 #create 2d exodus file for Greenland.
-#Warning!! this part is very hacky, you'll get a runtime error, but the correct *.exo will be saved in the albanyMesh folder. Also, this can be extremely slow with large files, unless trilinos is compiled with the nodebug option -D CMAKE_CXX_FLAGS:STRING="-O3 -fPIC -fno-var-tracking -DNDEBUG".
+#Warning! this part this can be extremely slow with large files, unless trilinos is compiled with the nodebug option -D CMAKE_CXX_FLAGS:STRING="-O3 -fPIC -fno-var-tracking -DNDEBUG".
 $ path-to-albany-excecutables/AlbanyT inputFiles/create2dExo.xml
 
 #run standalone Albany simultion
