@@ -147,7 +147,6 @@ SET(PDE_SRCS
   problems/Albany_ReactDiffSystem.cpp
   problems/Albany_CahnHillProblem.cpp
   problems/Albany_ComprNSProblem.cpp
-  problems/Albany_GPAMProblem.cpp
   problems/Albany_Helmholtz2DProblem.cpp
   problems/Albany_LinComprNSProblem.cpp
   problems/Albany_ODEProblem.cpp
@@ -174,7 +173,6 @@ SET(PDE_HDRS
   problems/Albany_ReactDiffSystem.hpp
   problems/Albany_CahnHillProblem.hpp
   problems/Albany_ComprNSProblem.hpp
-  problems/Albany_GPAMProblem.hpp
   problems/Albany_Helmholtz2DProblem.hpp
   problems/Albany_LinComprNSProblem.hpp
   problems/Albany_NavierStokes.hpp
@@ -364,7 +362,6 @@ SET(PDE_SRCS ${PDE_SRCS}
   evaluators/pde/PHAL_ComprNSResid.cpp
   evaluators/pde/PHAL_ComprNSViscosity.cpp
   evaluators/pde/PHAL_Constant.cpp
-  evaluators/pde/PHAL_GPAMResid.cpp
   evaluators/pde/PHAL_HelmholtzResid.cpp
   evaluators/pde/PHAL_LangevinNoiseTerm.cpp
   evaluators/pde/PHAL_LinComprNSBodyForce.cpp
@@ -546,8 +543,6 @@ SET(PDE_HDRS ${PDE_HDRS}
   evaluators/pde/PHAL_ComputeBasisFunctions_Def.hpp
   evaluators/pde/PHAL_ComputeBasisFunctionsSide.hpp
   evaluators/pde/PHAL_ComputeBasisFunctionsSide_Def.hpp
-  evaluators/pde/PHAL_GPAMResid.hpp
-  evaluators/pde/PHAL_GPAMResid_Def.hpp
   evaluators/pde/PHAL_HelmholtzResid.hpp
   evaluators/pde/PHAL_HelmholtzResid_Def.hpp
   evaluators/pde/PHAL_LangevinNoiseTerm.hpp
@@ -687,10 +682,10 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./Aeras/evaluators
                      ./Hydride/problems
                      ./Hydride/evaluators
-         ./AFRL/
-         ./AFRL/problems
-         ./AFRL/evaluators
-         ./AFRL/communicators
+		     ./AFRL/
+		     ./AFRL/problems
+		     ./AFRL/evaluators
+		     ./AFRL/communicators
                      ./AMP/
                      ./AMP/problems
                      ./AMP/evaluators

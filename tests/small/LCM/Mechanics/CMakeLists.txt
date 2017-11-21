@@ -47,6 +47,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputJ2Plast2DTraction.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/inputJ2Plast2DTraction.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/J2.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/J2.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/PlasticityJ2_2D_Traction.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/PlasticityJ2_2D_Traction.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/PlasticityJ2_2D_Traction_Material.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/PlasticityJ2_2D_Traction_Material.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/PlasticityJ2_3D_Traction.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/PlasticityJ2_3D_Traction.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/PlasticityJ2_3D_Traction_Material.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/PlasticityJ2_3D_Traction_Material.yaml COPYONLY)
 
 # Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
@@ -54,4 +62,6 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # Create the test with this name and standard executable
 IF(ALBANY_IFPACK2)
   add_test(${testName}2D_J2 ${AlbanyT.exe} inputJ2Plasticity2D.yaml)
+  add_test(${testName}_PlasticityJ2_2D_Traction ${AlbanyT.exe} PlasticityJ2_2D_Traction.yaml)
+  add_test(${testName}_PlasticityJ2_3D_Traction ${AlbanyT.exe} PlasticityJ2_3D_Traction.yaml)
 ENDIF()

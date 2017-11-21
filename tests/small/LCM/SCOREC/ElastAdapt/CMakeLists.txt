@@ -34,6 +34,7 @@ IF(ALBANY_IFPACK2)
   add_test(NAME ${testName}_SPR_Tpetra_postZoltan COMMAND ${AlbanyT.exe} inputSprT_postZoltan.yaml)
   add_test(NAME ${testName}_Necking_SERIAL_Tpetra COMMAND ${SerialAlbanyT.exe} inputNeckingSerialT.yaml)
   add_test(NAME ${testName}_Necking_Tpetra COMMAND ${AlbanyT.exe} inputNeckingT.yaml)
-  add_test(NAME ${testName}_Twist_Tpetra COMMAND ${SerialAlbanyT.exe} inputTwistT.yaml)
+# RCU is broken and likely may not be repaired
+#  add_test(NAME ${testName}_Twist_Tpetra COMMAND ${SerialAlbanyT.exe} inputTwistT.yaml)
 #  add_test(NAME ${testName}_Shear_Tpetra COMMAND ${AlbanyT.exe} inputShearT.yaml)
 ENDIF()

@@ -31,12 +31,16 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
     bool hasSphereVolumeField(){ return buildSphereVolume; }
     bool hasLatticeOrientationField(){ return false; }
 
+    Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*> getSolutionFieldArray() {return solution_field; }
+
     AbstractSTKFieldContainer::VectorFieldType* getSolutionField(){ return solution_field[0]; };
    
 #if defined(ALBANY_LCM)  
     AbstractSTKFieldContainer::VectorFieldType* getResidualField(){ return residual_field; };
 #endif
 #if defined(ALBANY_DTK) 
+    Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*> getSolutionFieldDTKArray(){ return solution_field_dtk; };
+
     AbstractSTKFieldContainer::VectorFieldType* getSolutionFieldDTK(){ return solution_field_dtk[0]; };
 #endif
 

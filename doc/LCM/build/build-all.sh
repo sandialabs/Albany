@@ -79,6 +79,8 @@ elif [[ ${KERNEL_VERSION} == *"el"* ]]; then
     PLATFORM="sems"
 elif [[ ${KERNEL_VERSION} == *"chaos"* ]]; then
     PLATFORM="cluster"
+elif [[ ${KERNEL_VERSION} == *"generic"* ]]; then
+    PLATFORM="ubuntu"
 else
     echo "Unrecongnized platform. Valid platforms: fc, el, chaos"
     uname -r

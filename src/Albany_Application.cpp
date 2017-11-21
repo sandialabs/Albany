@@ -736,7 +736,7 @@ void Albany::Application::finalSetUp(
   // Now that space is allocated in STK for state fields, initialize states.
   // If the states have been already allocated, skip this.
   if (!stateMgr.areStateVarsAllocated())
-    stateMgr.setStateArrays(disc);
+    stateMgr.setupStateArrays(disc);
 
 #if defined(ALBANY_EPETRA)
   if (!TpetraBuild) {
@@ -1082,6 +1082,8 @@ void dfm_set(PHAL::Workset &workset, const Teuchos::RCP<const Tpetra_Vector> &x,
              const Teuchos::RCP<const Tpetra_Vector> &xdd,
              Teuchos::RCP<AAdapt::rc::Manager> &rc_mgr) {
   workset.xT = Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(x) : x;
+  workset.xdotT = Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(xd) : xd;
+  workset.xdotdotT = Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(xdd) : xdd;
   workset.transientTerms = Teuchos::nonnull(xd);
   workset.accelerationTerms = Teuchos::nonnull(xdd);
 }

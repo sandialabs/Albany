@@ -33,8 +33,8 @@
 
 \section{Introduction}
 This document describes the necessary steps to install \albany{}/\lcm{} and
-\trilinos{} on a machine with Fedora Linux 26, Ubuntu Linux 14.04 LTS, the Linux
-CEE/SEMS environment, or Sandia's HPC systems.
+\trilinos{} on a machine with Fedora Linux 26, Ubuntu Linux 14.04 LTS and 16.04
+LTS, the Linux CEE/SEMS environment, or Sandia's HPC systems.
 
 The Linux CEE/SEMS environment and the HPC clusters already have all the
 libraries mentioned below. Skip to Section \ref{sec:repo} for setting up the
@@ -119,7 +119,10 @@ gfortran
 git
 \end{verbatim}
 
-For example, to install the first package you should type
+Depending on the Ubuntu version, the package version may differ slightly, for
+example, \verb+libboost-graph1.58+ instead of \verb+libboost-graph1.54+ or
+\verb+libopenmpi1.10+ instead of \verb+libopenmpi1.6+ and so on. To install the
+first package you should type
 \begin{verbatim}
 sudo apt-get install libblas3
 \end{verbatim}

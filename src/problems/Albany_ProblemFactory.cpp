@@ -15,7 +15,6 @@
 #include "Albany_CahnHillProblem.hpp"
 #include "Albany_Helmholtz2DProblem.hpp"
 #include "Albany_NavierStokes.hpp"
-#include "Albany_GPAMProblem.hpp"
 #include "Albany_LinComprNSProblem.hpp"
 #include "Albany_AdvDiffProblem.hpp"
 #include "Albany_ReactDiffSystem.hpp"
@@ -149,15 +148,6 @@ Albany::ProblemFactory::create()
   }
   else if (method == "NavierStokes 3D") {
     strategy = rcp(new Albany::NavierStokes(problemParams, paramLib, 3));
-  }
-  else if (method == "GPAM 1D") {
-    strategy = rcp(new Albany::GPAMProblem(problemParams, paramLib, 1));
-  }
-  else if (method == "GPAM 2D") {
-    strategy = rcp(new Albany::GPAMProblem(problemParams, paramLib, 2));
-  }
-  else if (method == "GPAM 3D") {
-    strategy = rcp(new Albany::GPAMProblem(problemParams, paramLib, 3));
   }
   else if (method == "LinComprNS 1D") {
     strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 1));

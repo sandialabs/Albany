@@ -188,22 +188,6 @@ class StateManager {
   void
   updateStates();
 
-#if defined(ALBANY_LCM)
-  /// For Schwarz coupling, more control is needed about when to update the
-  /// states. The accessor and mutator provide that control.
-  void
-  setUpdateState(bool us)
-  {
-    do_update_state_ = us;
-  };
-
-  bool
-  getUpdateState() const
-  {
-    return do_update_state_;
-  };
-#endif // ALBANY_LCM
-
   /// Method to get a StateInfoStruct of info needed by STK to output States as
   /// Fields
   Teuchos::RCP<Albany::StateInfoStruct>
@@ -215,7 +199,7 @@ class StateManager {
 
   /// Method to set discretization object
   void
-  setStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& discObj);
+  setupStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& discObj);
 
   /// Method to get discretization object
   Teuchos::RCP<Albany::AbstractDiscretization>
@@ -224,9 +208,14 @@ class StateManager {
   /// Method to get state information for a specific workset
   Albany::StateArray&
   getStateArray(SAType type, int ws) const;
+
   /// Method to get state information for all worksets
   Albany::StateArrays&
   getStateArrays() const;
+
+  // Set the state array for all worksets.
+  void
+  setStateArrays(Albany::StateArrays& sa);
 
   Albany::StateArrays&
   getSideSetStateArrays(const std::string& sideSet);
@@ -309,14 +298,6 @@ class StateManager {
 #endif
   Teuchos::RCP<EigendataStructT>   eigenDataT;
   Teuchos::RCP<Tpetra_MultiVector> auxDataT;
-
-#if defined(ALBANY_LCM)
-  /// For Schwarz coupling, more control is needed about when to update the
-  /// states. This variable is used in conjuction with the corresponding
-  /// accessor and mutator.
-  bool
-  do_update_state_{true};
-#endif // ALBANY_LCM
 
 };
 

@@ -16,7 +16,9 @@ ANONYMOUS:
       Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00]
     Dirichlet BCs: 
       DBC on NS NodeSet0 for DOF X: 0.00000000e+00
+      DBC on NS NodeSet1 for DOF X: 0.00000000e+00
       DBC on NS NodeSet2 for DOF Y: 0.00000000e+00
+      DBC on NS NodeSet3 for DOF Y: 0.00000000e+00
       DBC on NS NodeSet4 for DOF Z: 0.00000000e+00
       DBC on NS NodeSet5 for DOF Z: 0.00000000e+00
     Response Functions: 
@@ -46,7 +48,7 @@ ANONYMOUS:
     Exodus Write Interval: 10
   Regression Results: 
     Number of Comparisons: 4
-    Test Values: [0.000000000000e+00, -1.442043556017e-05, 3.715203484204e-04, -3.715203339250e-04]
+    Test Values: [ 0.000000000000e+00, 1.654540115268e-04, 0.000000000000e+00, 0.000000000000e+00]
     Relative Tolerance: 1.0e-7
     Absolute Tolerance: 1.0e-7
   Piro:
@@ -62,10 +64,10 @@ ANONYMOUS:
           Storage Limit: 2000
         Time Step Control:
           Initial Time: 0.0
-          Final Time: 0.05
+          Final Time: 1.0e-3
           Initial Time Index: 0
           Final Time Index: 1000000
-          Initial Time Step: 1.0e-04
+          Initial Time Step: 1.0e-06
           Integrator Step Type: Constant
           Output Time List: ''
           Output Index List: ''

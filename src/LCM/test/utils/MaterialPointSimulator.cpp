@@ -529,7 +529,7 @@ main(int ac, char* av[])
   //---------------------------------------------------------------------------
   // Associate the discretization with the StateManager
   //
-  stateMgr.setStateArrays(discretization);
+  stateMgr.setupStateArrays(discretization);
 
   //---------------------------------------------------------------------------
   // Create a workset

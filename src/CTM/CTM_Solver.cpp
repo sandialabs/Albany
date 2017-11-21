@@ -136,8 +136,8 @@ void Solver::initial_setup() {
 
   // set the state arrays
   *out << std::endl;
-  t_state_mgr->setStateArrays(t_disc);
-  m_state_mgr->setStateArrays(m_disc);
+  t_state_mgr->setupStateArrays(t_disc);
+  m_state_mgr->setupStateArrays(m_disc);
 
   // write the initial conditions for visualization
   auto apf_disc = rcp_dynamic_cast<Albany::APFDiscretization>(m_disc);

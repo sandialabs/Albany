@@ -143,7 +143,7 @@ Topology(
 //
 //
 //
-stk::mesh::EntityId const
+stk::mesh::EntityId
 Topology::get_entity_id(stk::mesh::Entity const entity)
 {
   size_t const

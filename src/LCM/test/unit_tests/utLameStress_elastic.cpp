@@ -123,7 +123,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
     Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, commT));
 
   // Associate the discretization with the StateManager
-  stateMgr.setStateArrays(discretization);
+  stateMgr.setupStateArrays(discretization);
 
   // Create a workset
   PHAL::Workset workset;

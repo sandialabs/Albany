@@ -148,6 +148,12 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     //! Get number of total DOFs per node
     int getNumEq() const override { return neq; }
 
+    //! Set stateArrays
+    void setStateArrays(Albany::StateArrays& sa) override {
+      stateArrays = sa;
+      return;
+    }
+
     Albany::StateArrays& getStateArrays() override {return stateArrays;}
 
     //! Retrieve Vector (length num worksets) of element block names

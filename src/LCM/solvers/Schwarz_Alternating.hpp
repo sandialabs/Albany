@@ -247,6 +247,8 @@ private:
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
   prev_acce_thyra_;
   
+  mutable std::vector<Albany::StateArrays>
+  internal_states_;
 
   // Used if solving with loca or tempus
   bool
@@ -254,6 +256,12 @@ private:
 
   bool
   have_tempus_{false};
+  
+  bool 
+  use_velo_in_conv_criterion_{false};
+  
+  bool 
+  use_acce_in_conv_criterion_{false}; 
 };
 
 } // namespace LCM

@@ -1,0 +1,142 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Mechanics 2D
+    Solution Method: Continuation
+    Phalanx Graph Visualization Detail: 2
+    MaterialDB Filename: PlasticityJ2_2D_Traction_Material.yaml
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF X: 0.00000000e+00
+      DBC on NS NodeSet99 for DOF Y: 0.00000000e+00
+    Neumann BCs: 
+      Time Dependent NBC on SS SideSet1 for DOF sig_x set dudn: 
+        Time Values: [0.00000000e+00, 1.00000000]
+        BC Values: [[0.00000000e+00], [500.00000000]]
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions:
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    1D Elements: 4
+    2D Elements: 4
+    Method: STK2D
+    Exodus Output File Name: PlasticityJ2_2D_Traction.e
+  Regression Results:
+    Number of Comparisons: 1
+    Test Values: [1.131621760539e-02]
+    Relative Tolerance: 1.00000000e-07
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Tangent
+      Stepper:
+        Continuation Method: Natural 
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: Time
+        Hit Continuation Bound: false
+        Max Steps: 51
+        Max Value: 0.05
+        Min Value: 0.00
+        Compute Eigenvalues: false
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 0
+      Step Size: 
+        Initial Step Size: 0.005
+        Method: Constant
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000e-05
+                Belos: 
+                  VerboseObject:
+                    Verbosity Level: high
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-10
+                      Output Frequency: 1
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information:
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Inner Iteration: true
+          Parameters: true
+          Details: true
+          Linear Solver Details: true
+          Outer Iteration Status Test: true
+          Linear Solver Details: true
+          Test Details: true
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+          Debug: true
+      Solver Options: 
+        Status Test Check Type: Complete
+      Status Tests:
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 4
+        Test 0:
+          Test Type: RelativeNormF
+          Tolerance: 1.00000000e-12
+        Test 1:
+          Test Type: MaxIters
+          Maximum Iterations: 15
+        Test 2:
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0:
+            Test Type: NStep
+            Number of Nonlinear Iterations: 10
+          Test 1:
+            Test Type: NormF
+            Tolerance: 1.00000000e-10
+        Test 3:
+          Test Type: FiniteValue
