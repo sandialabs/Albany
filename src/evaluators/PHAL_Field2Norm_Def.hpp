@@ -14,8 +14,8 @@ namespace PHAL {
 
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
-FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::
-FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
+Field2NormBase<EvalT, Traits, ScalarT>::
+Field2NormBase (const Teuchos::ParameterList& p,
                const Teuchos::RCP<Albany::Layouts>& dl)
 {
   std::string fieldName = p.get<std::string> ("Field Name");
@@ -159,12 +159,12 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
 
   numDims = dims.size();
 
-  this->setName("FieldFrobeniusNormBase(" + fieldNormName + ")" + PHX::typeAsString<EvalT>());
+  this->setName("Field2NormBase(" + fieldNormName + ")" + PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
-void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::
+void Field2NormBase<EvalT, Traits, ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -177,7 +177,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
-void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
+void Field2NormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
   if (regularization_type==GIVEN_PARAMETER)
     regularization = Albany::convertScalar<EScalarT,ScalarT>(regularizationParam(0));
