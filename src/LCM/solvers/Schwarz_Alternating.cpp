@@ -1208,11 +1208,6 @@ SchwarzLoopQuasistatics() const
 
         state_mgr.setStateArrays(internal_states_[subdomain]);
 
-        auto &
-        state_mgr = app.getStateMgr();
-
-        state_mgr.setStateArrays(internal_states_[subdomain]);
-
         Thyra::ModelEvaluatorBase::InArgs<ST>
         in_args = solver.createInArgs();
 
