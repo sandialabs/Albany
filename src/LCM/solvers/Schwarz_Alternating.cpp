@@ -1126,16 +1126,16 @@ SchwarzLoopQuasistatics() const
 
     num_iter_ = 0;
 
+    bool const
+    is_initial_state = stop == 0 && num_iter_ == 0;
+
     // Before the Schwarz loop, save the solutions for each subdomain in case
     // the solve phase fails. Then the load step is reduced and the Schwarz
     // loop is restarted from scratch.
     for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
-      bool const
-      is_initial_state = stop == 0 && num_iter_ == 0;
-
-      prev_disp_nox_[subdomain] = is_initial_state == true ?
-          Teuchos::null : disp_nox_[subdomain];
+      prev_disp_nox_[subdomain] =
+          is_initial_state == true ? Teuchos::null : disp_nox_[subdomain];
 
       auto &
       app = *apps_[subdomain];
@@ -1149,9 +1149,6 @@ SchwarzLoopQuasistatics() const
     // Schwarz loop
     do {
 
-      bool const
-      is_initial_state = stop == 0 && num_iter_ == 0;
-
       // Subdomain loop
       for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
@@ -1161,13 +1158,13 @@ SchwarzLoopQuasistatics() const
         fos << delim << std::endl;
 
         // Solve for each subdomain
-        Thyra::ResponseOnlyModelEvaluatorBase<ST> &
+        auto &
         solver = *(solvers_[subdomain]);
 
-        Piro::LOCASolver<ST> &
+        auto &
         piro_loca_solver = dynamic_cast<Piro::LOCASolver<ST> &>(solver);
 
-        Teuchos::ParameterList &
+        auto &
         start_stop_params = piro_loca_solver.getStepperParams();
 
         start_stop_params.set(init_str, current_time);
@@ -1175,23 +1172,23 @@ SchwarzLoopQuasistatics() const
         start_stop_params.set(stop_str, next_time);
         start_stop_params.set("Max Steps", 1);
 
-        Teuchos::ParameterList &
+        auto &
         time_step_params = piro_loca_solver.getStepSizeParams();
 
         time_step_params.set(step_str, time_step);
         time_step_params.set("Method", "Constant");
         time_step_params.set("Failed Step Reduction Factor", 1.0);
 
-        double const
+        auto const
         init_time = start_stop_params.get<double>(init_str);
 
-        double const
+        auto const
         start_time = start_stop_params.get<double>(start_str);
 
-        double const
+        auto const
         stop_time = start_stop_params.get<double>(stop_str);
 
-        double const
+        auto const
         step_size = time_step_params.get<double>(step_str);
 
         fos << "Initial time       :" << init_time << '\n';
@@ -1208,10 +1205,10 @@ SchwarzLoopQuasistatics() const
 
         state_mgr.setStateArrays(internal_states_[subdomain]);
 
-        Thyra::ModelEvaluatorBase::InArgs<ST>
+        auto
         in_args = solver.createInArgs();
 
-        Thyra::ModelEvaluatorBase::OutArgs<ST>
+        auto
         out_args = solver.createOutArgs();
 
         auto &
@@ -1220,15 +1217,15 @@ SchwarzLoopQuasistatics() const
 
         me.getNominalValues().set_t(current_time);
 
-        NOX::Solver::Generic &
+        auto &
         nox_solver = *piro_loca_solver.getSolver();
 
-        Teuchos::RCP<NOX::Abstract::Vector>
+        auto
         prev_disp_rcp = is_initial_state == true ?
             nox_solver.getPreviousSolutionGroup().getX().clone(NOX::DeepCopy) :
-            disp_nox_[subdomain];
+            prev_disp_nox_[subdomain];
 
-        NOX::Abstract::Vector const &
+        auto const &
         prev_disp = *prev_disp_rcp;
 
 #if defined(DEBUG)
@@ -1242,7 +1239,7 @@ SchwarzLoopQuasistatics() const
 
         solver.evalModel(in_args, out_args);
 
-        NOX::StatusTest::StatusType const
+        auto const
         status = piro_loca_solver.getSolver()->getStatus();
 
         if (status == NOX::StatusTest::Failed) {
@@ -1255,10 +1252,10 @@ SchwarzLoopQuasistatics() const
         auto const &
         disp_group = piro_loca_solver.getSolver()->getSolutionGroup();
 
-        Teuchos::RCP<NOX::Abstract::Vector>
+        auto
         curr_disp_rcp = disp_group.getX().clone(NOX::DeepCopy);
 
-        NOX::Abstract::Vector const &
+        auto const &
         curr_disp = *curr_disp_rcp;
 
 #if defined(DEBUG)
@@ -1268,11 +1265,11 @@ SchwarzLoopQuasistatics() const
         fos << "\n*** NOX: Current solution ***\n";
 #endif //DEBUG
 
-        Teuchos::RCP<NOX::Abstract::Vector>
+        auto
         disp_diff_rcp = curr_disp.clone(NOX::DeepCopy);
 
-        NOX::Abstract::Vector &
-        disp_diff = *(disp_diff_rcp);
+        auto &
+        disp_diff = *disp_diff_rcp;
 
         disp_diff.update(1.0, curr_disp, -1.0, prev_disp, 0.0);
 
@@ -1355,7 +1352,7 @@ SchwarzLoopQuasistatics() const
     if (failed_ == true) {
       failed_ = false;
 
-      ST const
+      auto const
       reduced_step = std::max(min_time_step_, reduction_factor_ * time_step);
 
       if (reduced_step < time_step) {
@@ -1414,7 +1411,7 @@ SchwarzLoopQuasistatics() const
     current_time += time_step;
 
     // Step successful. Try to increase the time step.
-    ST const
+    auto const
     increased_step = std::min(max_time_step_, increase_factor_ * time_step);
 
     if (increased_step > time_step) {
