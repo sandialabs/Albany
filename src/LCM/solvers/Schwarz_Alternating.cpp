@@ -8,9 +8,7 @@
 #include "Albany_STKDiscretization.hpp"
 #include "MiniTensor.h"
 #include "Piro_LOCASolver.hpp"
-#ifdef ALBANY_TEMPUS
 #include "Piro_TempusSolver.hpp"
-#endif
 #include "Schwarz_Alternating.hpp"
 
 //#define DEBUG
