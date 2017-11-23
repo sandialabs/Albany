@@ -7,6 +7,7 @@
 #ifndef PHAL_ADD_NOISE_HPP
 #define PHAL_ADD_NOISE_HPP 1
 
+#include <memory> // std::unique_ptr
 #include <random>
 
 #include "Phalanx_config.hpp"

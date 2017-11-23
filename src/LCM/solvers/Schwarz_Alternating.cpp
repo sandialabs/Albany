@@ -42,8 +42,8 @@ SchwarzAlternating(
   initial_time_ = alt_system_params.get<ST>("Initial Time", 0.0);
   final_time_ = alt_system_params.get<ST>("Final Time", 0.0);
   initial_time_step_ = alt_system_params.get<ST>("Initial Time Step", 1.0);
-  use_velo_in_conv_criterion_ = alt_system_params.get<bool>("Use Velocity in Convergence Criterion", false); 
-  use_acce_in_conv_criterion_ = alt_system_params.get<bool>("Use Acceleration in Convergence Criterion", false); 
+  use_velo_in_conv_criterion_ = alt_system_params.get<bool>("Use Velocity in Convergence Criterion", true); 
+  use_acce_in_conv_criterion_ = alt_system_params.get<bool>("Use Acceleration in Convergence Criterion", true); 
 
 #ifdef DEBUG
   auto &
@@ -1202,6 +1202,11 @@ SchwarzLoopQuasistatics() const
 
         auto &
         app = *apps_[subdomain];
+
+        auto &
+        state_mgr = app.getStateMgr();
+
+        state_mgr.setStateArrays(internal_states_[subdomain]);
 
         auto &
         state_mgr = app.getStateMgr();
