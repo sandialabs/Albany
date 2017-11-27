@@ -24,7 +24,7 @@
 #include "Sacado_CacheFad_DFad.hpp"
 #include "Phalanx_KokkosDeviceTypes.hpp"
 
-#include "TpetraCore_config.hpp"
+#include "TpetraCore_config.h"
 
 #ifndef HAVE_TPETRA_INST_DOUBLE
 #error "Albany needs Tpetra to enable double as a Scalar type"
