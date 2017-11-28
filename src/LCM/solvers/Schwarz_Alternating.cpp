@@ -11,7 +11,7 @@
 #include "Piro_TempusSolver.hpp"
 #include "Schwarz_Alternating.hpp"
 
-//#define DEBUG
+#define DEBUG
 
 namespace LCM {
 
@@ -822,7 +822,7 @@ SchwarzLoopDynamics() const
           Albany::writeMatrixMarket(prev_disp_tpetra, "prev_disp_subd0", num_iter_);
         }
         else if (subdomain == 1) {
-          prev_disp_tpetra = ConverterT::getTpetraVector(disp_thyra_[1]);
+          prev_disp_tpetra = ConverterT::getTpetraVector(prev_disp_thyra_[1]);
           Albany::writeMatrixMarket(prev_disp_tpetra, "prev_disp_subd1", num_iter_);
         }
         fos << "\n*** Thyra: Previous solution ***\n";
