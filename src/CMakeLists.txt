@@ -334,8 +334,10 @@ SET(SOURCES ${SOURCES}
   evaluators/utility/PHAL_AddNoise.cpp
   evaluators/utility/PHAL_ComputeBasisFunctions.cpp
   evaluators/utility/PHAL_ComputeBasisFunctionsSide.cpp
+  evaluators/utility/PHAL_Constant.cpp
   evaluators/utility/PHAL_ConvertFieldType.cpp
   evaluators/utility/PHAL_FieldFrobeniusNorm.cpp
+  evaluators/utility/PHAL_LangevinNoiseTerm.cpp
   evaluators/utility/PHAL_MapToPhysicalFrame.cpp
   evaluators/utility/PHAL_MapToPhysicalFrameSide.cpp
   evaluators/utility/PHAL_SharedParameter.cpp
@@ -361,9 +363,7 @@ SET(PDE_SRCS ${PDE_SRCS}
   evaluators/pde/PHAL_ComprNSBodyForce.cpp
   evaluators/pde/PHAL_ComprNSResid.cpp
   evaluators/pde/PHAL_ComprNSViscosity.cpp
-  evaluators/pde/PHAL_Constant.cpp
   evaluators/pde/PHAL_HelmholtzResid.cpp
-  evaluators/pde/PHAL_LangevinNoiseTerm.cpp
   evaluators/pde/PHAL_LinComprNSBodyForce.cpp
   evaluators/pde/PHAL_LinComprNSResid.cpp
   evaluators/pde/PHAL_NSBodyForce.cpp
@@ -488,12 +488,18 @@ SET(HEADERS ${HEADERS}
   evaluators/utility/PHAL_Absorption_Def.hpp
   evaluators/utility/PHAL_AddNoise.hpp
   evaluators/utility/PHAL_AddNoise_Def.hpp
+  evaluators/utility/PHAL_ComputeBasisFunctions.hpp
+  evaluators/utility/PHAL_ComputeBasisFunctions_Def.hpp
+  evaluators/utility/PHAL_ComputeBasisFunctionsSide.hpp
+  evaluators/utility/PHAL_ComputeBasisFunctionsSide_Def.hpp
   evaluators/utility/PHAL_Constant.hpp
   evaluators/utility/PHAL_Constant_Def.hpp
   evaluators/utility/PHAL_ConvertFieldType.hpp
   evaluators/utility/PHAL_ConvertFieldType_Def.hpp
   evaluators/utility/PHAL_FieldFrobeniusNorm.hpp
   evaluators/utility/PHAL_FieldFrobeniusNorm_Def.hpp
+  evaluators/utility/PHAL_LangevinNoiseTerm.hpp
+  evaluators/utility/PHAL_LangevinNoiseTerm_Def.hpp
   evaluators/utility/PHAL_MapToPhysicalFrame.hpp
   evaluators/utility/PHAL_MapToPhysicalFrameSide.hpp
   evaluators/utility/PHAL_MapToPhysicalFrameSide_Def.hpp
@@ -539,14 +545,8 @@ SET(PDE_HDRS ${PDE_HDRS}
   evaluators/pde/PHAL_ComprNSResid_Def.hpp
   evaluators/pde/PHAL_ComprNSViscosity.hpp
   evaluators/pde/PHAL_ComprNSViscosity_Def.hpp
-  evaluators/pde/PHAL_ComputeBasisFunctions.hpp
-  evaluators/pde/PHAL_ComputeBasisFunctions_Def.hpp
-  evaluators/pde/PHAL_ComputeBasisFunctionsSide.hpp
-  evaluators/pde/PHAL_ComputeBasisFunctionsSide_Def.hpp
   evaluators/pde/PHAL_HelmholtzResid.hpp
   evaluators/pde/PHAL_HelmholtzResid_Def.hpp
-  evaluators/pde/PHAL_LangevinNoiseTerm.hpp
-  evaluators/pde/PHAL_LangevinNoiseTerm_Def.hpp
   evaluators/pde/PHAL_LinComprNSBodyForce.hpp
   evaluators/pde/PHAL_LinComprNSBodyForce_Def.hpp
   evaluators/pde/PHAL_LinComprNSResid.hpp
@@ -682,10 +682,10 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./Aeras/evaluators
                      ./Hydride/problems
                      ./Hydride/evaluators
-		     ./AFRL/
-		     ./AFRL/problems
-		     ./AFRL/evaluators
-		     ./AFRL/communicators
+         ./AFRL/
+         ./AFRL/problems
+         ./AFRL/evaluators
+         ./AFRL/communicators
                      ./AMP/
                      ./AMP/problems
                      ./AMP/evaluators

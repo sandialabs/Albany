@@ -62,7 +62,7 @@
 #include "FELIX_StokesFOBodyForce.hpp"
 #include "FELIX_StokesFOStress.hpp"
 #include "FELIX_ViscosityFO.hpp"
-#include "PHAL_Field2Norm.hpp"
+#include "PHAL_FieldFrobeniusNorm.hpp"
 #include "FELIX_FluxDiv.hpp"
 #include "FELIX_BasalFrictionCoefficient.hpp"
 #include "FELIX_BasalFrictionCoefficientGradient.hpp"
@@ -1307,7 +1307,7 @@ if (basalSideName!="INVALID")
     // Output
     p->set<std::string>("Field Norm Name","Sliding Velocity");
 
-    ev = Teuchos::rcp(new PHAL::Field2Norm<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
+    ev = Teuchos::rcp(new PHAL::FieldFrobeniusNorm<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
 
     //--- Effective pressure (surrogate) calculation ---//
