@@ -15,7 +15,7 @@ namespace LCM {
 template<typename EvalT, typename Traits>
 TimeDepSDBC_Base<EvalT, Traits>::
 TimeDepSDBC_Base(Teuchos::ParameterList & p)
-: offset_(p.get<int>("Equation Offset")), StrongDBC<EvalT, Traits>(p)
+: offset_(p.get<int>("Equation Offset")), PHAL::SDirichlet<EvalT, Traits>(p)
 {
   times_ = p.get<Teuchos::Array<RealType>>("Time Values").toVector();
   values_ = p.get<Teuchos::Array<RealType>>("BC Values").toVector();
@@ -70,7 +70,7 @@ void TimeDepSDBC<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   this->value = this->computeVal(workset.current_time);
-  StrongDBC<EvalT, Traits>::evaluateFields(workset);
+  PHAL::SDirichlet<EvalT, Traits>::evaluateFields(workset);
 }
 
 } // namespace LCM

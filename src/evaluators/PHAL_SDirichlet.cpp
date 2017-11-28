@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "StrongDBC.hpp"
-#include "StrongDBC_Def.hpp"
+#include "PHAL_SDirichlet.hpp"
+#include "PHAL_SDirichlet_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::StrongDBC)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::SDirichlet)
