@@ -33,6 +33,9 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 add_executable(CylHeatProfile CylHeatProfile.cpp)
 
+# Make sure we get any rpath info from the EXTRA_LD_FLAGS def.
+target_link_libraries(CylHeatProfile  ${Trilinos_EXTRA_LD_FLAGS})
+
 #add_test(${testName}_Prep CylHeatProfile)
 
 # 7. Create the test with this name and standard executable
