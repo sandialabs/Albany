@@ -10,13 +10,13 @@
 #include "Albany_Utils.hpp"
 #include <Tpetra_MultiVectorFiller.hpp>
 
-namespace LCM {
+namespace PHAL {
 
 //
 // Specialization: Residual
 //
 template <typename Traits>
-StrongDBC<PHAL::AlbanyTraits::Residual, Traits>::StrongDBC(
+SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::SDirichlet(
     Teuchos::ParameterList &p)
     : PHAL::DirichletBase<PHAL::AlbanyTraits::Residual, Traits>(p) {
   return;
@@ -27,7 +27,7 @@ StrongDBC<PHAL::AlbanyTraits::Residual, Traits>::StrongDBC(
 //
 template <typename Traits>
 void
-StrongDBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
+SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset) {
   Teuchos::RCP<Tpetra_Vector>
   f = dirichlet_workset.fT;
@@ -65,7 +65,7 @@ StrongDBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
 // Specialization: Jacobian
 //
 template <typename Traits>
-StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::StrongDBC(
+SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::SDirichlet(
     Teuchos::ParameterList &p)
     : PHAL::DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits>(p) {
   return;
@@ -76,7 +76,7 @@ StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::StrongDBC(
 //
 template <typename Traits>
 void
-StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::
+SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset) {
   auto f = dirichlet_workset.fT;
   auto x = Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*dirichlet_workset.xT));
@@ -165,7 +165,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset) {
 // Specialization: Tangent
 //
 template <typename Traits>
-StrongDBC<PHAL::AlbanyTraits::Tangent, Traits>::StrongDBC(
+SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::SDirichlet(
     Teuchos::ParameterList &p)
     : PHAL::DirichletBase<PHAL::AlbanyTraits::Tangent, Traits>(p) {
   return;
@@ -176,7 +176,7 @@ StrongDBC<PHAL::AlbanyTraits::Tangent, Traits>::StrongDBC(
 //
 template <typename Traits>
 void
-StrongDBC<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
+SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset) {
   return;
 }
@@ -185,7 +185,7 @@ StrongDBC<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
 // Specialization: DistParamDeriv
 //
 template <typename Traits>
-StrongDBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::StrongDBC(
+SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::SDirichlet(
     Teuchos::ParameterList &p)
     : PHAL::DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p) {
   return;
@@ -196,9 +196,9 @@ StrongDBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::StrongDBC(
 //
 template <typename Traits>
 void
-StrongDBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
+SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset) {
   return;
 }
 
-}  // namespace LCM
+}  // namespace PHAL

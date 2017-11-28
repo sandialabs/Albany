@@ -475,7 +475,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
   for (std::size_t i = 0; i < nodeSetIDs.size(); ++i) {
     for (std::size_t j = 0; j < bcNames.size(); ++j) {
       string ss =
-          traits_type::constructTimeDepStrongDBCName(nodeSetIDs[i], bcNames[j]);
+          traits_type::constructTimeDepSDBCName(nodeSetIDs[i], bcNames[j]);
 
       if (BCparams.isSublist(ss)) {
 
@@ -648,12 +648,12 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
   }
 
   ///
-  /// Strongly enforced DBC
+  /// SDBC (S = "Symmetric", f.k.a. "Strong")
   ///
   for (std::size_t i = 0; i < nodeSetIDs.size(); i++) {
     for (std::size_t j = 0; j < bcNames.size(); j++) {
       string ss =
-          traits_type::constructStrongDBCName(nodeSetIDs[i], bcNames[j]);
+          traits_type::constructSDBCName(nodeSetIDs[i], bcNames[j]);
       if (BCparams.isParameter(ss)) {
         RCP<ParameterList> p = rcp(new ParameterList);
         use_sdbcs_ = true; 
@@ -725,7 +725,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
   /// Strong Schwarz BC specific
   ///
   for (auto i = 0; i < nodeSetIDs.size(); ++i) {
-    string ss = traits_type::constructStrongDBCName(nodeSetIDs[i], "StrongSchwarz");
+    string ss = traits_type::constructSDBCName(nodeSetIDs[i], "StrongSchwarz");
 
     if (BCparams.isSublist(ss)) {
       // grab the sublist
@@ -1374,11 +1374,11 @@ Albany::DirichletTraits::getValidBCParameters(
           Albany::DirichletTraits::constructBCName(nodeSetIDs[i], bcNames[j]);
       std::string tt = Albany::DirichletTraits::constructTimeDepBCName(
           nodeSetIDs[i], bcNames[j]);
-      std::string ts = Albany::DirichletTraits::constructTimeDepStrongDBCName(
+      std::string ts = Albany::DirichletTraits::constructTimeDepSDBCName(
           nodeSetIDs[i], bcNames[j]);
       std::string pp = Albany::DirichletTraits::constructPressureDepBCName(
           nodeSetIDs[i], bcNames[j]);
-      std::string st = Albany::DirichletTraits::constructStrongDBCName(
+      std::string st = Albany::DirichletTraits::constructSDBCName(
           nodeSetIDs[i], bcNames[j]);
       validPL->set<double>(
           ss, 0.0, "Value of BC corresponding to nodeSetID and dofName");
@@ -1392,12 +1392,12 @@ Albany::DirichletTraits::getValidBCParameters(
           pp, false, "SubList of BC corresponding to nodeSetID and dofName");
       ss = Albany::DirichletTraits::constructBCNameField(
           nodeSetIDs[i], bcNames[j]);
-      st = Albany::DirichletTraits::constructStrongDBCNameField(
+      st = Albany::DirichletTraits::constructSDBCNameField(
           nodeSetIDs[i], bcNames[j]);
       validPL->set<std::string>(
           ss, "dirichlet field", "Field used to prescribe Dirichlet BCs");
       validPL->set<std::string>(
-          st, "dirichlet field", "Field used to prescribe Strong DBCs");
+          st, "dirichlet field", "Field used to prescribe SDBCs");
       std::string onsbc = Albany::DirichletTraits::constructBCNameOffNodeSet(
           nodeSetIDs[i], bcNames[j]);
       validPL->set<double>(
@@ -1415,7 +1415,7 @@ Albany::DirichletTraits::getValidBCParameters(
     std::string ww =
         Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "Schwarz");
     std::string sw =
-        Albany::DirichletTraits::constructStrongDBCName(nodeSetIDs[i], "StrongSchwarz");
+        Albany::DirichletTraits::constructSDBCName(nodeSetIDs[i], "StrongSchwarz");
     std::string uu =
         Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "CoordFunc");
     std::string pd =
@@ -1490,7 +1490,7 @@ Albany::DirichletTraits::constructBCName(
 }
 
 std::string
-Albany::DirichletTraits::constructStrongDBCName(
+Albany::DirichletTraits::constructSDBCName(
     const std::string& ns, const std::string& dof) {
   std::stringstream ss;
   ss << "SDBC on NS " << ns << " for DOF " << dof;
@@ -1508,7 +1508,7 @@ Albany::DirichletTraits::constructBCNameField(
 }
 
 std::string
-Albany::DirichletTraits::constructStrongDBCNameField(
+Albany::DirichletTraits::constructSDBCNameField(
     const std::string& ns, const std::string& dof) {
   std::stringstream ss;
   ss << "SDBC on NS " << ns << " for DOF " << dof << " prescribe Field";
@@ -1534,11 +1534,11 @@ Albany::DirichletTraits::constructTimeDepBCName(
 }
 
 std::string
-Albany::DirichletTraits::constructTimeDepStrongDBCName(
+Albany::DirichletTraits::constructTimeDepSDBCName(
     const std::string& ns, const std::string& dof) {
   std::stringstream ss;
   ss << "Time Dependent "
-     << Albany::DirichletTraits::constructStrongDBCName(ns, dof);
+     << Albany::DirichletTraits::constructSDBCName(ns, dof);
   return ss.str();
 }
 

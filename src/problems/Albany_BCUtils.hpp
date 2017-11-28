@@ -91,19 +91,19 @@ struct DirichletTraits {
   constructBCName(const std::string& ns, const std::string& dof);
 
   static std::string
-  constructStrongDBCName(const std::string& ns, const std::string& dof);
+  constructSDBCName(const std::string& ns, const std::string& dof);
 
   static std::string
   constructBCNameField(const std::string& ns, const std::string& dof);
 
   static std::string
-  constructStrongDBCNameField(const std::string& ns, const std::string& dof);
+  constructSDBCNameField(const std::string& ns, const std::string& dof);
 
   static std::string
   constructTimeDepBCName(const std::string& ns, const std::string& dof);
 
   static std::string
-  constructTimeDepStrongDBCName(const std::string& ns, const std::string& dof);
+  constructTimeDepSDBCName(const std::string& ns, const std::string& dof);
 
   static std::string
   constructBCNameOffNodeSet(const std::string& ns, const std::string& dof);
