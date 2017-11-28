@@ -23,12 +23,12 @@ SET(SOURCES
   QCADT_CoupledPSJacobian.cpp
   QCADT_CoupledPoissonSchrodinger.cpp
   ../problems/Albany_ThermoElectrostaticsProblem.cpp
-  ../evaluators/PHAL_JouleHeating.cpp
-  ../evaluators/PHAL_TEProp.cpp
+  ../evaluators/pde/PHAL_JouleHeating.cpp
+  ../evaluators/pde/PHAL_TEProp.cpp
   )
 
 IF (ALBANY_EPETRA)
-  SET(SOURCES ${SOURCES} 
+  SET(SOURCES ${SOURCES}
     QCAD_Solver.cpp
     QCADT_Solver.cpp
     QCAD_CoupledPoissonSchrodinger.cpp
@@ -72,14 +72,14 @@ SET(HEADERS
   problems/QCAD_SchrodingerProblem.hpp
   problems/QCAD_PoissonProblem.hpp
   ../problems/Albany_ThermoElectrostaticsProblem.hpp
-  ../evaluators/PHAL_JouleHeating.hpp
-  ../evaluators/PHAL_JouleHeating_Def.hpp
-  ../evaluators/PHAL_TEProp.hpp
-  ../evaluators/PHAL_TEProp_Def.hpp
+  ../evaluators/pde/PHAL_JouleHeating.hpp
+  ../evaluators/pde/PHAL_JouleHeating_Def.hpp
+  ../evaluators/pde/PHAL_TEProp.hpp
+  ../evaluators/pde/PHAL_TEProp_Def.hpp
   )
 
-IF (ALBANY_EPETRA) 
-  SET(HEADERS ${HEADERS} 
+IF (ALBANY_EPETRA)
+  SET(HEADERS ${HEADERS}
     QCAD_Solver.hpp
     QCADT_Solver.hpp
     QCAD_CoupledPoissonSchrodinger.hpp
@@ -96,8 +96,8 @@ IF (ALBANY_EPETRA)
 ENDIF()
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-  ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 
-  ${Albany_SOURCE_DIR}/src/problems ${Albany_SOURCE_DIR}/src/responses 
+  ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators
+  ${Albany_SOURCE_DIR}/src/problems ${Albany_SOURCE_DIR}/src/responses
   ./problems ./evaluators ./responses
   )
 

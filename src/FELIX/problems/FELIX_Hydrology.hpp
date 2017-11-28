@@ -24,7 +24,7 @@
 #include "FELIX_BasalFrictionCoefficient.hpp"
 #include "FELIX_BasalFrictionCoefficientNode.hpp"
 #include "FELIX_EffectivePressure.hpp"
-#include "PHAL_Field2Norm.hpp"
+#include "PHAL_FieldFrobeniusNorm.hpp"
 #include "FELIX_ParamEnum.hpp"
 #include "FELIX_SharedParameter.hpp"
 #include "FELIX_HydrologyDirichlet.hpp"
@@ -368,7 +368,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // Output
   p->set<std::string>("Field Norm Name","Hydraulic Potential Gradient Norm");
 
-  ev = Teuchos::rcp(new PHAL::Field2Norm<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  ev = Teuchos::rcp(new PHAL::FieldFrobeniusNorm<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // ------- Hydrology Water Discharge -------- //
@@ -418,7 +418,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // Output
   p->set<std::string>("Field Norm Name","Sliding Velocity");
 
-  ev = Teuchos::rcp(new PHAL::Field2NormParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  ev = Teuchos::rcp(new PHAL::FieldFrobeniusNormParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   //--- Effective pressure calculation ---//
@@ -463,7 +463,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // Output
   p->set<std::string>("Field Norm Name","Sliding Velocity");
 
-  ev = Teuchos::rcp(new PHAL::Field2NormParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  ev = Teuchos::rcp(new PHAL::FieldFrobeniusNormParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   //--- FELIX basal friction coefficient node (to be saved in the mesh) ---//

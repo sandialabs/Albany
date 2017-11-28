@@ -22,12 +22,12 @@ namespace PHAL
 */
 
 template<typename EvalT, typename Traits, typename ScalarT>
-class Field2NormBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+class FieldFrobeniusNormBase : public PHX::EvaluatorWithBaseImpl<Traits>,
                       public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  Field2NormBase (const Teuchos::ParameterList& p,
+  FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
                  const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
@@ -66,13 +66,13 @@ private:
 
 // Some shortcut names
 template<typename EvalT, typename Traits>
-using Field2Norm = Field2NormBase<EvalT,Traits,typename EvalT::ScalarT>;
+using FieldFrobeniusNorm = FieldFrobeniusNormBase<EvalT,Traits,typename EvalT::ScalarT>;
 
 template<typename EvalT, typename Traits>
-using Field2NormMesh = Field2NormBase<EvalT,Traits,typename EvalT::MeshScalarT>;
+using FieldFrobeniusNormMesh = FieldFrobeniusNormBase<EvalT,Traits,typename EvalT::MeshScalarT>;
 
 template<typename EvalT, typename Traits>
-using Field2NormParam = Field2NormBase<EvalT,Traits,typename EvalT::ParamScalarT>;
+using FieldFrobeniusNormParam = FieldFrobeniusNormBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
 } // namespace PHAL
 
