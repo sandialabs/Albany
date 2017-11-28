@@ -15,7 +15,7 @@
 #include "LCM/evaluators/bc/EquilibriumConcentrationBC.hpp"
 #include "LCM/evaluators/bc/KfieldBC.hpp"
 #include "LCM/evaluators/bc/PDNeighborFitBC.hpp"
-#include "LCM/evaluators/bc/StrongDBC.hpp"
+#include "PHAL_SDirichlet.hpp"
 #include "LCM/evaluators/bc/TimeDepBC.hpp"
 #include "LCM/evaluators/bc/TimeDepSDBC.hpp"
 #include "LCM/evaluators/bc/TimeTracBC.hpp"
@@ -103,7 +103,7 @@ namespace PHAL {
         LCM::TimeDepBC<_, Traits>,                //  8
         LCM::Time<_, Traits>,                     //  9
         LCM::TorsionBC<_, Traits>,                // 10
-        LCM::StrongDBC<_, Traits>,                // 11
+        PHAL::SDirichlet<_, Traits>,              // 11
         LCM::TimeDepSDBC<_, Traits>               // 12
 #endif
 #if defined(ALBANY_LCM) && defined(HAVE_STK)

@@ -355,6 +355,12 @@ IF (ALBANY_EPETRA)
   )
 ENDIF()
 
+IF (ALBANY_LCM)
+  SET(SOURCES ${SOURCES}
+    evaluators/PHAL_SDirichlet.cpp
+  )
+ENDIF()
+
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_AdvDiffResid.cpp
   evaluators/PHAL_ReactDiffSystemResid.cpp
@@ -522,6 +528,13 @@ IF (ALBANY_EPETRA)
     evaluators/PHAL_ResponseFieldIntegral_Def.hpp
     evaluators/PHAL_SeparableScatterScalarResponse.hpp
     evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
+  )
+ENDIF()
+
+IF (ALBANY_LCM)
+  SET(HEADERS ${HEADERS}
+    evaluators/PHAL_SDirichlet.hpp
+    evaluators/PHAL_SDirichlet_Def.hpp
   )
 ENDIF()
 

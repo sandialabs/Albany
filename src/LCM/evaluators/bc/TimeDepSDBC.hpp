@@ -9,8 +9,8 @@
 
 #include <vector>
 
-#include "StrongDBC.hpp"
-#include "StrongDBC_Def.hpp"
+#include "PHAL_SDirichlet.hpp"
+#include "PHAL_SDirichlet_Def.hpp"
 
 namespace LCM {
 
@@ -18,7 +18,7 @@ namespace LCM {
 /// Time-dependendt, strongly-enforced Dirichlet BC evauator
 ///
 template<typename EvalT, typename Traits>
-class TimeDepSDBC_Base: public StrongDBC<EvalT, Traits>
+class TimeDepSDBC_Base: public PHAL::SDirichlet<EvalT, Traits>
 {
 private:
   using ScalarT = typename EvalT::ScalarT;
