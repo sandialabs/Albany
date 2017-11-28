@@ -356,7 +356,7 @@ ENDIF()
 
 IF (ALBANY_LCM)
   SET(SOURCES ${SOURCES}
-    evaluators/PHAL_SDirichlet.cpp
+    evaluators/bc/PHAL_SDirichlet.cpp
   )
 ENDIF()
 
@@ -536,8 +536,8 @@ ENDIF()
 
 IF (ALBANY_LCM)
   SET(HEADERS ${HEADERS}
-    evaluators/PHAL_SDirichlet.hpp
-    evaluators/PHAL_SDirichlet_Def.hpp
+    evaluators/bc/PHAL_SDirichlet.hpp
+    evaluators/bc/PHAL_SDirichlet_Def.hpp
   )
 ENDIF()
 
