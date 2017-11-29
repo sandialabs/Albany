@@ -288,7 +288,7 @@ void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(
 
     //      const unsigned node_gid = bucket[i].identifier();
     const auto node_gid = mesh.identifier(bucket[i]) - 1;
-    auto node_lid = field_node_map->LID(node_gid);
+    auto node_lid = field_node_map->LID(static_cast<long long>(node_gid));
 
     if(node_lid>=0)
       field_array(i)=field_vector[nodalDofManager.getLocalDOF(node_lid,offset)];
