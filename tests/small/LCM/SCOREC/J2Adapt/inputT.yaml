@@ -37,9 +37,7 @@ ANONYMOUS:
     2nd Order Mesh: true
     Cubature Degree: 2
   Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [0.00305302]
-    Relative Tolerance: 0.01000000
+    Number of Comparisons: 0
   Piro: 
     LOCA: 
       Bifurcation: { }
