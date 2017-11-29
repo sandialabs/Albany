@@ -291,7 +291,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
     "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
     "-DIntrepid2_ENABLE_KokkosDynRankView:BOOL=ON"
-    "-DTrilinos_ENABLE_Tempus:BOOL=ON"
+    "-DTrilinos_ENABLE_Tempus:BOOL=OFF"
     "-DTempus_ENABLE_TESTS:BOOL=OFF"
     "-DTempus_ENABLE_EXAMPLES:BOOL=OFF"
     "-DTempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
