@@ -73,7 +73,7 @@ const
       // build (i,j) block matrix and add it to blocked operator
       if (i == j) { // Diagonal blocks
         Teuchos::RCP<Thyra::LinearOpBase<ST>>
-        block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jacs[i]);
+        block = Thyra::createLinearOp<ST, LO, Tpetra_GO, KokkosNode>(jacs[i]);
         blocked_op->setNonconstBlock(i, j, block);
       } else { // Off-diagonal blocks
 #if defined(USE_OFF_DIAGONAL)
@@ -88,7 +88,7 @@ const
         exp_jac = jac_boundary->getExplicitOperator();
 
         Teuchos::RCP<Thyra::LinearOpBase<ST>>
-        block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(exp_jac);
+        block = Thyra::createLinearOp<ST, LO, Tpetra_GO, KokkosNode>(exp_jac);
 
 #else
 
@@ -98,7 +98,7 @@ const
                 new Schwarz_BoundaryJacobian(comm_, ca, jacs, i, j));
 
         Teuchos::RCP<Thyra::LinearOpBase<ST>>
-        block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jac_boundary);
+        block = Thyra::createLinearOp<ST, LO, Tpetra_GO, KokkosNode>(jac_boundary);
 
 #endif // EXPLICIT_OFF_DIAGONAL
 

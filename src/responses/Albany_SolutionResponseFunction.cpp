@@ -371,7 +371,7 @@ buildCulledMapT(const Tpetra_Map& x_mapT,
 	gids_new[idx++] = gidsT[(inode*Neqns)+ieqn];
   // end cull
 
-  Teuchos::RCP<const Tpetra_Map> x_new_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (gids_new, x_mapT.getComm(), x_mapT.getNode());
+  Teuchos::RCP<const Tpetra_Map> x_new_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode> (gids_new, x_mapT.getComm(), x_mapT.getNode());
 
   return x_new_mapT;
 

@@ -72,7 +72,7 @@ createCombinedTpetraVector(
   }
   //Create global element indices array for combined map for this processor,
   //to be used to create the combined map.
-  std::vector<GO> my_global_elements(local_num_elements);
+  std::vector<Tpetra_GO> my_global_elements(local_num_elements);
 
   LO counter_local = 0;
   GO counter_global = 0;
@@ -81,7 +81,7 @@ createCombinedTpetraVector(
   for (int m = 0; m < n_vecs; ++m) {
     LO local_num_elements_n = vecs[m]->getMap()->getNodeNumElements();
     GO global_num_elements_n = vecs[m]->getMap()->getGlobalNumElements();
-    Teuchos::ArrayView<GO const> disc_global_elements = vecs[m]->getMap()->getNodeElementList();
+    auto disc_global_elements = vecs[m]->getMap()->getNodeElementList();
  
     for (int l = 0; l < local_num_elements_n; ++l) {
       my_global_elements[counter_local + l] = counter_global + disc_global_elements[l];
@@ -90,14 +90,14 @@ createCombinedTpetraVector(
     counter_global += global_num_elements_n;
   }
 
-  Teuchos::ArrayView<GO> const
+  auto
   my_global_elements_AV =
       Teuchos::arrayView(&my_global_elements[0], local_num_elements);
 
-  Teuchos::RCP<const Tpetra_Map>  combined_map = Teuchos::rcp(
+  auto combined_map = Teuchos::rcp(
       new Tpetra_Map(global_num_elements, my_global_elements_AV, 0, vecs[0]->getMap()->getComm()));
  
-  Teuchos::RCP<Tpetra_Vector> combined_vec = Teuchos::rcp(new Tpetra_Vector(combined_map)); 
+  auto combined_vec = Teuchos::rcp(new Tpetra_Vector(combined_map)); 
   
   counter_local = 0; 
   for (int m = 0; m < n_vecs; ++m) {

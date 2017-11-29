@@ -13,6 +13,9 @@
 
 #include "Phalanx_config.hpp" // for std::vector
 #include "Albany_DataTypes.hpp"
+#if defined(ALBANY_LCM)
+#include <set>
+#endif
 #if defined(ALBANY_EPETRA)
 #include "Epetra_Vector.h"
 #include "Epetra_CrsMatrix.h"

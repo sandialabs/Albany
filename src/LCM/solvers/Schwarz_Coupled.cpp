@@ -621,7 +621,7 @@ SchwarzCoupled::getThyraRangeSpace() const
 
     for (auto m = 0; m < num_models_; ++m) {
       vs_array.push_back(
-          Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(disc_maps_[m]));
+          Thyra::createVectorSpace<ST, LO, Tpetra_GO, KokkosNode>(disc_maps_[m]));
     }
 
     range_space_ = Thyra::productVectorSpace<ST>(vs_array);
@@ -639,7 +639,7 @@ SchwarzCoupled::getThyraDomainSpace() const
 
     for (auto m = 0; m < num_models_; ++m) {
       vs_array.push_back(
-          Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(disc_maps_[m]));
+          Thyra::createVectorSpace<ST, LO, Tpetra_GO, KokkosNode>(disc_maps_[m]));
     }
 
     domain_space_ = Thyra::productVectorSpace<ST>(vs_array);
@@ -1093,7 +1093,7 @@ evalModelImpl(
           for (auto i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
             GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
             Teuchos::Array<ST> matrixEntriesT(1);
-            Teuchos::Array<GO> matrixIndicesT(1);
+            Teuchos::Array<Tpetra_GO> matrixIndicesT(1);
             matrixEntriesT[0] = invdiag_constView[i];
             matrixIndicesT[0] = global_row;
             precs_[m]->replaceGlobalValues(
@@ -1146,7 +1146,7 @@ evalModelImpl(
           for (auto i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
             GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
             Teuchos::Array<ST> matrixEntriesT(1);
-            Teuchos::Array<GO> matrixIndicesT(1);
+            Teuchos::Array<Tpetra_GO> matrixIndicesT(1);
             matrixEntriesT[0] = invabsrowsum_constView[i];
             matrixIndicesT[0] = global_row;
             precs_[m]->replaceGlobalValues(
@@ -1160,7 +1160,7 @@ evalModelImpl(
           for (auto i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
             GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
             Teuchos::Array<ST> matrixEntriesT(1);
-            Teuchos::Array<GO> matrixIndicesT(1);
+            Teuchos::Array<Tpetra_GO> matrixIndicesT(1);
             matrixEntriesT[0] = 1.0;
             matrixIndicesT[0] = global_row;
             precs_[m]->replaceGlobalValues(

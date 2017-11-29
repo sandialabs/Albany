@@ -414,8 +414,7 @@ Teuchos::RCP<Thyra::MultiVectorBase<double> >
 AAdapt::AdaptiveSolutionManagerT::
 getCurrentSolution()
 {
-   //return Thyra::createMultiVector<ST, LO, GO, KokkosNode>(current_soln);
-   return Thyra::createMultiVector<ST>(current_soln);
+   return Thyra::createMultiVector<ST, LO, Tpetra_GO, KokkosNode>(current_soln);
 }
 
 void
