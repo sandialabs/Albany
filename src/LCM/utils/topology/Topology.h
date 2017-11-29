@@ -591,7 +591,7 @@ public:
     return *this;
   }
 
-  stk::mesh::EntityId const
+  stk::mesh::EntityId
   get_entity_id(stk::mesh::Entity const entity);
 
   void
@@ -637,13 +637,13 @@ public:
     return *(get_stk_mesh_struct()->metaData);
   }
 
-  size_t const
+  size_t
   get_space_dimension()
   {
     return static_cast<size_t>(get_meta_data().spatial_dimension());
   }
 
-  stk::mesh::EntityRank const
+  stk::mesh::EntityRank
   get_boundary_rank()
   {
     return get_meta_data().side_rank();

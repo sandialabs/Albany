@@ -64,7 +64,6 @@ cmake \
 \
  -D Amesos2_ENABLE_KLU2:BOOL=ON \
  -D EpetraExt_USING_HDF5:BOOL=OFF \
- -D Intrepid2_ENABLE_KokkosDynRankView:BOOL=ON \
  -D MiniTensor_ENABLE_TESTS:BOOL=ON \
  -D ROL_ENABLE_TESTS:BOOL=OFF \
  -D Phalanx_INDEX_SIZE_TYPE:STRING="lcm_phalanx_index_type" \

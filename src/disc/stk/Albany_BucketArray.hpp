@@ -7,6 +7,7 @@
 #ifndef ALBANY_BUCKETARRAY_HPP
 #define ALBANY_BUCKETARRAY_HPP
 
+#include <cassert>
 #include <stk_mesh/base/Bucket.hpp>
 #include <stk_mesh/base/Field.hpp>
 #include <stk_mesh/base/FindRestriction.hpp>

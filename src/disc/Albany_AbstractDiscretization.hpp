@@ -175,6 +175,9 @@ class AbstractDiscretization {
     //! Get MeshStruct
     virtual Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const = 0;
 
+    //! Set stateArrays
+    virtual void setStateArrays(Albany::StateArrays& sa) = 0;
+
     //! Get stateArrays
     virtual Albany::StateArrays& getStateArrays() = 0;
 

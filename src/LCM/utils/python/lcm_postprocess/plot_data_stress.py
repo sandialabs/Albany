@@ -18,7 +18,8 @@ def plot_data_stress(
     truncate_legend = False,
     name_domain = 'Domain',
     names_block = None,
-    monochrome = False):
+    monochrome = False,
+    **kwargs):
 
     if filename != None:
         domain = pickle.load(open(filename, 'rb'))
@@ -56,6 +57,11 @@ def plot_data_stress(
     fig = Figure()
     canvas = FigureCanvas(fig)
 
+    alpha_block = kwargs.get('alpha_block', 0.2)
+    linewidth_block = kwargs.get('linewidth_block', 0.5)
+    linewidth_domain = kwargs.get('linewidth_domain', 4)
+    color_domain = kwargs.get('color_domain', 'k')
+
     for dim_i in range(num_dims):
 
         for dim_j in range(num_dims):
@@ -74,35 +80,45 @@ def plot_data_stress(
                     ax.plot(
                         [int(block.variables['Log_Strain'][key_step][(dim_i, dim_j)]*1e8)/1e8 for key_step in times],
                         [int(block.variables['Cauchy_Stress'][key_step][(dim_i, dim_j)]*1e8)/1e8 for key_step in times],
-                        linewidth = 0.5,
-                        alpha = 0.2)[0])
+                        linewidth = linewidth_block,
+                        alpha = alpha_block)[0])
 
             handles.insert(0,
                 ax.plot(
                     [int(domain.variables['Log_Strain'][key_step][(dim_i, dim_j)]*1e8)/1e8 for key_step in times],
                     [int(domain.variables['Cauchy_Stress'][key_step][(dim_i, dim_j)]*1e8)/1e8 for key_step in times],
-                    linewidth = 4,
-                    color = 'k')[0])
+                    linewidth = linewidth_domain,
+                    color = color_domain)[0])
 
             ax.set_xlabel('Logarithmic Strain $\epsilon_{'+ str(dim_i + 1) + str(dim_j + 1) +'}$')
             ax.set_ylabel('Cauchy Stress $\sigma_{'+ str(dim_i + 1) + str(dim_j + 1) +'}$ (MPa)')
 
+            ax.set_xlim([kwargs.get('x_min',ax.get_xlim()[0]), kwargs.get('x_max',ax.get_xlim()[1])])
+            ax.set_ylim([kwargs.get('y_min',ax.get_ylim()[0]), kwargs.get('y_max',ax.get_ylim()[1])])
+
             # ax.xaxis.set_major_formatter(mtick.FormatStrFormatter('%.1e'))
-            ax.locator_params(axis='x',nbins=4)
+            ax.locator_params(axis = 'x', nbins = kwargs.get('nbins_x', 4))
+            ax.locator_params(axis = 'y', nbins = kwargs.get('nbins_y', 5))
 
-            legend = ax.legend(
-                handles,
-                string_legend,
-                bbox_to_anchor = (1.05, 1), 
-                loc = 2, 
-                borderaxespad = 0.,
-                fontsize = 15)#,
-                # ncol = np.max([1, int(len(string_legend) / 15.)]))
+            if kwargs.get('print_legend', True):
+                legend = ax.legend(
+                    handles,
+                    string_legend,
+                    bbox_to_anchor = (1.05, 1), 
+                    loc = 2, 
+                    borderaxespad = 0.,
+                    fontsize = 15)#,
+                    # ncol = np.max([1, int(len(string_legend) / 15.)]))
 
-            canvas.print_figure(
-                'stress_strain_'+ str(dim_i + 1) + str(dim_j + 1) +'.pdf',
-                bbox_extra_artists = [legend],
-                bbox_inches = 'tight')
+                canvas.print_figure(
+                    'stress_strain_'+ str(dim_i + 1) + str(dim_j + 1) +'.pdf',
+                    bbox_extra_artists = [legend],
+                    bbox_inches = 'tight')
+            else:
+
+                canvas.print_figure(
+                    'stress_strain_'+ str(dim_i + 1) + str(dim_j + 1) +'.pdf',
+                    bbox_inches = 'tight')
 
 # end def plot_data_stress(domain):
 

@@ -16,7 +16,9 @@ ANONYMOUS:
       Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00]
     Dirichlet BCs: 
       SDBC on NS NodeSet0 for DOF X: 0.00000000e+00
+      SDBC on NS NodeSet1 for DOF X: 0.00000000e+00
       SDBC on NS NodeSet2 for DOF Y: 0.00000000e+00
+      SDBC on NS NodeSet3 for DOF Y: 0.00000000e+00
       SDBC on NS NodeSet4 for DOF StrongSchwarz:
         BC Function: StrongSchwarz
         Coupled Application: clamped_00.yaml
@@ -116,7 +118,7 @@ ANONYMOUS:
                 Test Type: NormF
                 Norm Type: Two Norm
                 Scale Type: Scaled
-                Tolerance: 1.00000000e-14
+                Tolerance: 1.00000000e-8
               Test 1:
                 Test Type: MaxIters
                 Maximum Iterations: 128

@@ -13,9 +13,6 @@
 #include "Teuchos_TestForException.hpp"
 #include <Tpetra_MultiVectorFiller.hpp>
 
-#if defined(ALBANY_DTK)
-#include "Albany_OrdinarySTKFieldContainer.hpp"
-#endif
 
 namespace LCM {
 
@@ -405,7 +402,7 @@ computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
 //
 #if defined(ALBANY_DTK)
 template<typename EvalT, typename Traits>
-Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
+Teuchos::Array<Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>>
 StrongSchwarzBC_Base<EvalT, Traits>::
 computeBCsDTK()
 {
@@ -462,11 +459,18 @@ computeBCsDTK()
   std::string map_name =
       dtk_params.get("Map Type", "Consistent Interpolation");
 
-  Albany::AbstractSTKFieldContainer::VectorFieldType*
-  coupled_field =
-      Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
+  Teuchos::Array<Albany::AbstractSTKFieldContainer::VectorFieldType*>
+  coupled_field_array = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
           coupled_stk_disc->getSTKMeshStruct()->getFieldContainer()
-          )->getSolutionField();
+          )->getSolutionFieldArray();
+
+  int num_sol_vecs = coupled_field_array.length(); 
+ 
+  ALBANY_ASSERT(num_sol_vecs > 0,
+      "coupled_field_array must have at least 1 entry!");
+  
+  Albany::AbstractSTKFieldContainer::VectorFieldType*
+  coupled_field = coupled_field_array[0]; 
 
   stk::mesh::Selector
   coupled_stk_selector =
@@ -481,11 +485,16 @@ computeBCsDTK()
   Teuchos::RCP<stk::mesh::MetaData const>
   this_meta_data = Teuchos::rcpFromRef(this_stk_disc->getSTKMetaData());
 
-  Albany::AbstractSTKFieldContainer::VectorFieldType*
-  this_field =
-      Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
+  Teuchos::Array<Albany::AbstractSTKFieldContainer::VectorFieldType*>
+  this_field_array = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
           this_stk_disc->getSTKMeshStruct()->getFieldContainer()
-          )->getSolutionFieldDTK();
+          )->getSolutionFieldDTKArray();
+
+  ALBANY_ASSERT(num_sol_vecs == this_field_array.length(),
+      "coupled_field_array and this_field_array must have the same length!");
+
+  Albany::AbstractSTKFieldContainer::VectorFieldType*
+  this_field = this_field_array[0]; 
 
   // Get the part corresponding to this nodeset.
   std::string const &
@@ -510,6 +519,52 @@ computeBCsDTK()
   DataTransferKit::STKMeshManager
   this_manager(this_bulk_data, this_stk_selector);
 
+  //Do interpolation of solution field using DTK
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
+  this_vector = doDTKInterpolation(coupled_manager, this_manager, coupled_field,
+                                   this_field, neq, dtk_params); 
+
+  Teuchos::Array<Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>>
+  this_vector_arrays(num_sol_vecs); 
+  this_vector_arrays[0] = this_vector;
+
+  //Do interpolation of solution time-derivatives using DTK (if applicable)  
+  Albany::AbstractSTKFieldContainer::VectorFieldType* this_field_dot; 
+  Albany::AbstractSTKFieldContainer::VectorFieldType* this_field_dotdot;
+ 
+  Albany::AbstractSTKFieldContainer::VectorFieldType* coupled_field_dot;
+  Albany::AbstractSTKFieldContainer::VectorFieldType* coupled_field_dotdot;
+
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> this_vector_dot; 
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> this_vector_dotdot; 
+ 
+  if (num_sol_vecs > 1) {
+    this_field_dot = this_field_array[1]; 
+    coupled_field_dot = coupled_field_array[1]; 
+    this_vector_dot = doDTKInterpolation(coupled_manager, this_manager, coupled_field_dot,
+                                         this_field_dot, neq, dtk_params); 
+    this_vector_arrays[1] = this_vector_dot; 
+  }
+  if (num_sol_vecs > 2) {
+    this_field_dotdot = this_field_array[2]; 
+    coupled_field_dotdot = coupled_field_array[2]; 
+    this_vector_dotdot = doDTKInterpolation(coupled_manager, this_manager, coupled_field_dotdot,
+                                            this_field_dotdot, neq, dtk_params); 
+    this_vector_arrays[2] = this_vector_dotdot; 
+  }
+
+  return this_vector_arrays;
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
+StrongSchwarzBC_Base<EvalT, Traits>::
+doDTKInterpolation(DataTransferKit::STKMeshManager &coupled_manager, 
+                   DataTransferKit::STKMeshManager &this_manager,
+                   Albany::AbstractSTKFieldContainer::VectorFieldType* coupled_field,
+                   Albany::AbstractSTKFieldContainer::VectorFieldType* this_field,
+                   const int neq, Teuchos::ParameterList &dtk_params) 
+{
   // Create a solution vector for the source.
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
   coupled_vector =
@@ -542,7 +597,8 @@ computeBCsDTK()
   // to the other.
   map_op->apply(*coupled_vector, *this_vector);
 
-  return this_vector;
+  return this_vector; 
+
 }
 #endif //ALBANY_DTK
 
@@ -553,17 +609,60 @@ template<typename StrongSchwarzBC, typename Traits>
 void
 fillResidual(StrongSchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
 {
+  Teuchos::RCP<Tpetra_Vector const>
+  const_disp = dirichlet_workset.xT;
+
+  Teuchos::RCP<Tpetra_Vector const>
+  const_velo = dirichlet_workset.xdotT;
+
+  Teuchos::RCP<Tpetra_Vector const>
+  const_acce = dirichlet_workset.xdotdotT;
+
+  bool const
+  has_disp = const_disp != Teuchos::null;
+
+  bool const
+  has_velo = const_velo != Teuchos::null;
+
+  bool const
+  has_acce = const_acce != Teuchos::null;
+
+  ALBANY_ASSERT(has_disp == true);
+
+  // Displacement
+  Teuchos::RCP<Tpetra_Vector>
+  disp = has_disp == true ?
+      Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*const_disp)) :
+      Teuchos::null;
+
+  Teuchos::ArrayRCP<ST>
+  disp_view = has_disp == true ? disp->get1dViewNonConst() : Teuchos::null;
+
+  // Velocity
+  Teuchos::RCP<Tpetra_Vector>
+  velo = has_velo == true ?
+      Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*const_velo)) :
+      Teuchos::null;
+
+  Teuchos::ArrayRCP<ST>
+  velo_view = has_velo == true ? velo->get1dViewNonConst() : Teuchos::null;
+
+
+  // Acceleration
+  Teuchos::RCP<Tpetra_Vector>
+  acce = has_acce == true ?
+      Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*const_acce)) :
+      Teuchos::null;
+
+  Teuchos::ArrayRCP<ST>
+  acce_view = has_acce == true ? acce->get1dViewNonConst() : Teuchos::null;
+
+  //Residual 
   Teuchos::RCP<Tpetra_Vector>
   f = dirichlet_workset.fT;
 
-  Teuchos::RCP<Tpetra_Vector>
-  x = Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*dirichlet_workset.xT));
-
   Teuchos::ArrayRCP<ST>
   f_view = f->get1dViewNonConst();
-
-  Teuchos::ArrayRCP<ST>
-  x_view = x->get1dViewNonConst();
 
   std::vector<std::vector<int>> const &
   ns_nodes = dirichlet_workset.nodeSets->find(sbc.nodeSetID)->second;
@@ -573,22 +672,57 @@ fillResidual(StrongSchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
 
 #if defined(ALBANY_DTK)
 
-  Teuchos::RCP<
-      Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
-  > const
-  schwarz_bcs = sbc.computeBCsDTK();
+  Teuchos::Array<Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>>
+  bcs_array = sbc.computeBCsDTK();
+
+  ALBANY_ASSERT(has_velo == false || bcs_array.length() >= 2);
+  ALBANY_ASSERT(has_acce == false || bcs_array.length() >= 3);
+
+  // Displacement
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
+  bcs_disp = bcs_array[0];
 
   Teuchos::RCP<const Teuchos::Comm<int>>
-  commT = schwarz_bcs->getMap()->getComm();
+  commT = bcs_disp->getMap()->getComm();
 
   Teuchos::ArrayRCP<ST const>
-  schwarz_bcs_const_view_x = schwarz_bcs->getData(0);
+  bcs_disp_const_view_x = bcs_disp->getData(0);
 
   Teuchos::ArrayRCP<ST const>
-  schwarz_bcs_const_view_y = schwarz_bcs->getData(1);
+  bcs_disp_const_view_y = bcs_disp->getData(1);
 
   Teuchos::ArrayRCP<ST const>
-  schwarz_bcs_const_view_z = schwarz_bcs->getData(2);
+  bcs_disp_const_view_z = bcs_disp->getData(2);
+
+  // Velocity
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
+  bcs_velo{Teuchos::null};
+
+  Teuchos::ArrayRCP<ST const> bcs_velo_const_view_x;
+  Teuchos::ArrayRCP<ST const> bcs_velo_const_view_y;
+  Teuchos::ArrayRCP<ST const> bcs_velo_const_view_z;
+
+  if (bcs_array.length() > 1) {
+    bcs_velo = bcs_array[1];
+    bcs_velo_const_view_x = bcs_velo->getData(0);
+    bcs_velo_const_view_y = bcs_velo->getData(1);
+    bcs_velo_const_view_z = bcs_velo->getData(2);
+  }
+
+  // Acceleration
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
+  bcs_acce{Teuchos::null};
+
+  Teuchos::ArrayRCP<ST const> bcs_acce_const_view_x;
+  Teuchos::ArrayRCP<ST const> bcs_acce_const_view_y;
+  Teuchos::ArrayRCP<ST const> bcs_acce_const_view_z;
+
+  if (bcs_array.length() > 2) {
+    bcs_acce = bcs_array[2];
+    bcs_acce_const_view_x = bcs_acce->getData(0);
+    bcs_acce_const_view_y = bcs_acce->getData(1);
+    bcs_acce_const_view_z = bcs_acce->getData(2);
+  }
 
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
@@ -609,15 +743,33 @@ fillResidual(StrongSchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
 
     if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
       f_view[x_dof] = 0.0;
-      x_view[x_dof] = schwarz_bcs_const_view_x[dof];
+      disp_view[x_dof] = bcs_disp_const_view_x[dof];
+      if (has_velo) {
+        velo_view[x_dof] = bcs_velo_const_view_x[dof];
+      }
+      if (has_acce) {
+        acce_view[x_dof] = bcs_acce_const_view_x[dof];
+      }
     }
     if (fixed_dofs.find(y_dof) == fixed_dofs.end()) {
       f_view[y_dof] = 0.0;
-      x_view[y_dof] = schwarz_bcs_const_view_y[dof];
+      disp_view[y_dof] = bcs_disp_const_view_y[dof];
+      if (has_velo) {
+        velo_view[y_dof] = bcs_velo_const_view_y[dof];
+      }
+      if (has_acce) {
+        acce_view[y_dof] = bcs_acce_const_view_y[dof];
+      }
     }
     if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
       f_view[z_dof] = 0.0;
-      x_view[z_dof] = schwarz_bcs_const_view_z[dof];
+      disp_view[z_dof] = bcs_disp_const_view_z[dof];
+      if (has_velo) {
+        velo_view[z_dof] = bcs_velo_const_view_z[dof];
+      }
+      if (has_acce) {
+        acce_view[z_dof] = bcs_acce_const_view_z[dof];
+      }
     }
 
   }
@@ -643,15 +795,15 @@ fillResidual(StrongSchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
 
     if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
       f_view[x_dof] = 0.0;
-      x_view[x_dof] = x_val;
+      disp_view[x_dof] = x_val;
     }
     if (fixed_dofs.find(y_dof) == fixed_dofs.end()) {
       f_view[y_dof] = 0.0;
-      x_view[y_dof] = y_val;
+      disp_view[y_dof] = y_val;
     }
     if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
       f_view[z_dof] = 0.0;
-      x_view[z_dof] = z_val;
+      disp_view[z_dof] = z_val;
     }
 
   } // node in node set loop

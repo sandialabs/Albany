@@ -18,7 +18,7 @@ if(DEFINED MPIMNP AND ${MPIMNP} GREATER 1)
 		message(FATAL_ERROR "Cannot find epu")
 	endif()
 
-	SET(EPU_COMMAND ${SEACAS_EPU} -auto physics_0_mitchell3D.exo.${MPIMNP}.0)
+	SET(EPU_COMMAND ${SEACAS_EPU} -auto ${OUTPUT_FILENAME}.${MPIMNP}.0)
 
   message("Running the command:")
   message("${EPU_COMMAND}")
@@ -40,9 +40,9 @@ if (NOT SEACAS_EXODIFF)
 endif()
 
 if(DEFINED MPIMNP AND ${MPIMNP} GREATER 1)
-  SET(EXODIFF_TEST ${SEACAS_EXODIFF} -i -m -f ${DATA_DIR}/${TEST_NAME}.exodiff_commands physics_0_mitchell3D.exo ${DATA_DIR}/${TEST_NAME}.ref.exo)
+  SET(EXODIFF_TEST ${SEACAS_EXODIFF} -i -m -f ${DATA_DIR}/${TEST_NAME}.exodiff_commands ${OUTPUT_FILENAME} ${DATA_DIR}/${REF_FILENAME})
 ELSE()
-  SET(EXODIFF_TEST ${SEACAS_EXODIFF} -i -f ${DATA_DIR}/${TEST_NAME}.exodiff_commands physics_0_mitchell3D.exo ${DATA_DIR}/${TEST_NAME}.ref.exo)
+  SET(EXODIFF_TEST ${SEACAS_EXODIFF} -i -f ${DATA_DIR}/${TEST_NAME}.exodiff_commands ${OUTPUT_FILENAME} ${DATA_DIR}/${REF_FILENAME})
 ENDIF()
 
 message("Running the command:")

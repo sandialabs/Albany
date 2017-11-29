@@ -29,6 +29,7 @@ ANONYMOUS:
     Method: Ioss
     Exodus Input File Name: 'larger-cubes.g'
     Exodus Output File Name: 'larger-cubes-tempus.e'
+    Use Serial Mesh: true
     Exodus Solution Name: disp
     Exodus Residual Name: resid
     Separate Evaluators by Element Block: true
@@ -37,8 +38,8 @@ ANONYMOUS:
   Regression Results: 
     Number of Comparisons: 4
     Test Values: [0.0, 0.0, 1.1628, -1.1628]
-    Relative Tolerance: 1.0e-4
-    Absolute Tolerance: 1.0e-4
+    Relative Tolerance: 1.0e-3
+    Absolute Tolerance: 1.0e-3
   Piro:
     Analysis:
       Compute Sensitivities: false

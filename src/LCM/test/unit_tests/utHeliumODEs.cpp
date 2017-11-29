@@ -288,7 +288,7 @@ using minitensor::eye;
   //---------------------------------------------------------------------------
   // Associate the discretization with the StateManager
   //
-  stateMgr.setStateArrays(discretization);
+  stateMgr.setupStateArrays(discretization);
 
   //--------------------------------------------------------------------------
   // Create a workset

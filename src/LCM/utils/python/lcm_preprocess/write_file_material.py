@@ -13,6 +13,8 @@ def create_mat_params_default():
 
     mat_params = {}
 
+    mat_params["verbosity"] = "None"
+
     mat_params["crystal_structure"] = "fcc"
     mat_params["slip_families"] = "unspecified"
     mat_params["ratio_c_a"] = "unspecified"
@@ -260,15 +262,17 @@ def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, names_bloc
             slip_families = mat_params["slip_families"],
             ratio_c_a = mat_params["ratio_c_a"])
 
-        num_slip_systems = len(slip_systems)
-
         # Material model name
         indent = StartParamList("Material Model", mat_file, indent)
         WriteParameter("Model Name", "string", "CrystalPlasticity", mat_file, indent)
         indent = EndParamList(mat_file, indent)
 
+        # Output verbosity
+        WriteParameter("Verbosity", "string", mat_params["verbosity"], mat_file, indent)
+
         # Number of slip systems
-        WriteParameter("Number of Slip Systems", "int", len(slip_systems), mat_file, indent) 
+        num_slip_systems = len(slip_systems)
+        WriteParameter("Number of Slip Systems", "int", num_slip_systems, mat_file, indent) 
 
         # Integration scheme
         WriteParameter("Integration Scheme", "string", mat_params["integration_scheme"], mat_file, indent)

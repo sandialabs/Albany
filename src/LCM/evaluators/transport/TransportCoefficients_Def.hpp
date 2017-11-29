@@ -117,6 +117,7 @@ namespace LCM {
 
     ScalarT theta_term(0.0);
 
+    // Use the previous iterate of eqps to avoid circular dependency issue
     Albany::MDArray eqps;
     if (have_eqps_) {
       std::string eqps_string = (*field_name_map_)["eqps"];

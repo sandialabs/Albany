@@ -10,6 +10,7 @@
 #define PHAL_WORKSET_HPP
 
 #include <list>
+#include <set>
 
 #include "Phalanx_config.hpp" // for std::vector
 #include "Albany_DataTypes.hpp"

@@ -13,7 +13,7 @@ ANONYMOUS:
         Value: 1.0e+09
       Poissons Ratio: 
         Poissons Ratio Type: Constant
-        Value: 0.25
+        Value: 0.0
       Density: 1.0e+03
       Output Cauchy Stress: true
 ...

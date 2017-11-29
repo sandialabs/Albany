@@ -110,7 +110,7 @@ Subgraph::get_topology()
   return topology_;
 }
 
-size_t const
+size_t
 Subgraph::get_space_dimension()
 {
   return get_topology().get_space_dimension();
@@ -134,13 +134,13 @@ Subgraph::get_meta_data()
   return get_topology().get_meta_data();
 }
 
-stk::mesh::EntityId const
+stk::mesh::EntityId
 Subgraph::get_entity_id(stk::mesh::Entity const entity)
 {
   return get_topology().get_entity_id(entity);
 }
 
-stk::mesh::EntityRank const
+stk::mesh::EntityRank
 Subgraph::get_boundary_rank()
 {
   return get_topology().get_boundary_rank();

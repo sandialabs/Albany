@@ -56,7 +56,6 @@ IF(ALBANY_DEMO_PDES)
 
   # These require exodus, Ioss, stk_io, to read meshes
   IF(ALBANY_SEACAS)
-    add_subdirectory(GPAM)
     add_subdirectory(CahnHillElast2D)
     add_subdirectory(NSPoiseuille2D)
     add_subdirectory(NSRayleighBernard2D)

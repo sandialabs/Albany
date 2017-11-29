@@ -650,7 +650,7 @@ Albany::StateManager::getSideSetStateInfoStruct() const
 }
 
 void
-Albany::StateManager::setStateArrays(
+Albany::StateManager::setupStateArrays(
     const Teuchos::RCP<Albany::AbstractDiscretization>& disc_)
 {
   TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
@@ -694,7 +694,7 @@ Albany::StateManager::getDiscretization() const
 void
 Albany::StateManager::importStateData(Albany::StateArrays& states_from)
 {
-  TEUCHOS_TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  ALBANY_ASSERT(stateVarsAreAllocated == true);
 
   // Get states from STK mesh
   Albany::StateArrays&   sa                   = getStateArrays();
@@ -834,7 +834,7 @@ Albany::StateManager::importStateData(Albany::StateArrays& states_from)
 Albany::StateArray&
 Albany::StateManager::getStateArray(SAType type, const int ws) const
 {
-  TEUCHOS_TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  ALBANY_ASSERT(stateVarsAreAllocated == true);
 
   switch (type) {
     case ELEM: return getStateArrays().elemStateArrays[ws]; break;
@@ -851,23 +851,24 @@ Albany::StateManager::getStateArray(SAType type, const int ws) const
 Albany::StateArrays&
 Albany::StateManager::getStateArrays() const
 {
-  TEUCHOS_TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  ALBANY_ASSERT(stateVarsAreAllocated == true);
   return disc->getStateArrays();
+}
+
+void
+Albany::StateManager::setStateArrays(Albany::StateArrays& sa)
+{
+  ALBANY_ASSERT(stateVarsAreAllocated == true);
+  disc->setStateArrays(sa);
+  return;
 }
 
 void
 Albany::StateManager::updateStates()
 {
-#if defined(ALBANY_LCM)
-  // Return immediately if update states is disabled.
-  // For Schwarz coupling, more control is needed about when to update the
-  // states. This provides that control.
-  if (do_update_state_ == false) return;
-#endif // ALBANY_LCM
-
   // Swap boolean that defines old and new (in terms of state1 and 2) in
   // accessors
-  TEUCHOS_TEST_FOR_EXCEPT(!stateVarsAreAllocated);
+  ALBANY_ASSERT(stateVarsAreAllocated == true);
 
   // Get states from STK mesh
   Albany::StateArrays&   sa              = disc->getStateArrays();
