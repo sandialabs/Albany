@@ -9,6 +9,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-single.g
                ${CMAKE_CURRENT_BINARY_DIR}/cube-single.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/larger-cubes.g
                ${CMAKE_CURRENT_BINARY_DIR}/larger-cubes.g COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/larger-cubes.g.4.0
+               ${CMAKE_CURRENT_BINARY_DIR}/larger-cubes.g.4.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/larger-cubes.g.4.1
+               ${CMAKE_CURRENT_BINARY_DIR}/larger-cubes.g.4.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/larger-cubes.g.4.2
+               ${CMAKE_CURRENT_BINARY_DIR}/larger-cubes.g.4.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/larger-cubes.g.4.3
+               ${CMAKE_CURRENT_BINARY_DIR}/larger-cubes.g.4.3 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials-cubes.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/materials-cubes.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-single-piro.yaml
