@@ -68,8 +68,8 @@ void Albany::STKDiscretizationStokesH::computeGraphs()
   if (commT->getRank()==0)
     *out << "STKDisc: " << cells.size() << " elements on Proc 0 " << std::endl;
 
-  GO row, col;
-  Teuchos::ArrayView<GO> colAV;
+  Tpetra_GO row, col;
+  Teuchos::ArrayView<Tpetra_GO> colAV;
 
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *getLayeredMeshNumbering();
   int numLayers = layeredMeshNumbering.numLayers;

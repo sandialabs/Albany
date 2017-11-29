@@ -41,6 +41,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Workset.hpp"
+#include <set> 
 
 #if defined(ALBANY_EPETRA)
 

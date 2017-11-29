@@ -55,7 +55,7 @@ public:
   }
 #endif
 
-  void print (const Tpetra_Vector& g, const Teuchos::Array<GO>& eq_gids) {
+  void print (const Tpetra_Vector& g, const Teuchos::Array<Tpetra_GO>& eq_gids) {
     print(Teuchos::arrayView(&g.get1dView()[0], g.getLocalLength()), eq_gids);
   }
 
@@ -418,8 +418,8 @@ updateSolutionImporterT()
 {
   const Teuchos::RCP<const Tpetra_Map> solutionMapT = app_->getMapT();
   if (Teuchos::is_null(solutionImporterT_) || !solutionMapT->isSameAs(*solutionImporterT_->getSourceMap())) {
-    const Teuchos::Array<GO> selectedGIDsT = cullingStrategy_->selectedGIDsT(solutionMapT);
-    Teuchos::RCP<const Tpetra_Map> targetMapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (selectedGIDsT, solutionMapT->getComm(), solutionMapT->getNode());
+    const Teuchos::Array<Tpetra_GO> selectedGIDsT = cullingStrategy_->selectedGIDsT(solutionMapT);
+    Teuchos::RCP<const Tpetra_Map> targetMapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode> (selectedGIDsT, solutionMapT->getComm(), solutionMapT->getNode());
     //const Epetra_Map targetMap(-1, selectedGIDs.size(), selectedGIDs.getRawPtr(), 0, solutionMap->Comm());
     solutionImporterT_ = Teuchos::rcp(new Tpetra_Import(solutionMapT, targetMapT));
   }

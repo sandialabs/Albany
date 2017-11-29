@@ -29,7 +29,7 @@ public:
 #if defined(ALBANY_EPETRA)
   virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
 #endif
-  virtual Teuchos::Array<GO> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const;
+  virtual Teuchos::Array<Tpetra_GO> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const;
 private:
   int numValues_;
 };
@@ -43,11 +43,11 @@ UniformSolutionCullingStrategy(int numValues) :
   // Nothing to do
 }
 
-Teuchos::Array<GO>
+Teuchos::Array<Tpetra_GO>
 Albany::UniformSolutionCullingStrategy::
 selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
 {
-  Teuchos::Array<GO> allGIDs(sourceMapT->getGlobalNumElements());
+  Teuchos::Array<Tpetra_GO> allGIDs(sourceMapT->getGlobalNumElements());
   {
     const int ierr = Tpetra::GatherAllV(
         sourceMapT->getComm(),
@@ -57,7 +57,7 @@ selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
   }
   std::sort(allGIDs.begin(), allGIDs.end());
 
-  Teuchos::Array<GO> result(numValues_);
+  Teuchos::Array<Tpetra_GO> result(numValues_);
   const int stride = 1 + (allGIDs.size() - 1) / numValues_;
   for (int i = 0; i < numValues_; ++i) {
     result[i] = allGIDs[i * stride];
@@ -124,7 +124,7 @@ public:
 
   virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
 #endif
-  virtual Teuchos::Array<GO> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const;
+  virtual Teuchos::Array<Tpetra_GO> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const;
   virtual void setupT();
 
 private:
@@ -214,13 +214,13 @@ selectedGIDs(const Epetra_BlockMap &sourceMap) const
 }
 #endif
 
-Teuchos::Array<GO>
+Teuchos::Array<Tpetra_GO>
 Albany::NodeSetSolutionCullingStrategy::
 selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
 {
-  Teuchos::Array<GO> result;
+  Teuchos::Array<Tpetra_GO> result;
   {
-    Teuchos::Array<GO> mySelectedGIDs;
+    Teuchos::Array<Tpetra_GO> mySelectedGIDs;
     {
       const NodeSetList &nodeSets = disc_->getNodeSets();
 
@@ -241,10 +241,10 @@ selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
 
     Teuchos::RCP<const Teuchos::Comm<int> >commT = sourceMapT->getComm(); 
     {
-      GO selectedGIDCount;
+      Tpetra_GO selectedGIDCount;
       {
-        GO mySelectedGIDCount = mySelectedGIDs.size();
-        Teuchos::reduceAll<LO, GO>(*commT, Teuchos::REDUCE_SUM, 1, &mySelectedGIDCount, &selectedGIDCount); 
+        Tpetra_GO mySelectedGIDCount = mySelectedGIDs.size();
+        Teuchos::reduceAll<LO, Tpetra_GO>(*commT, Teuchos::REDUCE_SUM, 1, &mySelectedGIDCount, &selectedGIDCount); 
       }
       result.resize(selectedGIDCount);
     }
@@ -275,7 +275,7 @@ public:
 
   virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
 #endif
-  virtual Teuchos::Array<GO> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const;
+  virtual Teuchos::Array<Tpetra_GO> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const;
   virtual void setupT();
 
 private:
@@ -353,13 +353,13 @@ selectedGIDs(const Epetra_BlockMap &sourceMap) const
 }
 #endif
 
-Teuchos::Array<GO>
+Teuchos::Array<Tpetra_GO>
 Albany::NodeGIDsSolutionCullingStrategy::
 selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
 {
-  Teuchos::Array<GO> result;
+  Teuchos::Array<Tpetra_GO> result;
   {
-    Teuchos::Array<GO> mySelectedGIDs;
+    Teuchos::Array<Tpetra_GO> mySelectedGIDs;
 
     // Subract 1 to convert exodus GIDs to our GIDs
     for (int i=0; i<nodeGIDs_.size(); i++)
@@ -367,10 +367,10 @@ selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
 
     Teuchos::RCP<const Teuchos::Comm<int> >commT = sourceMapT->getComm(); 
     {
-      GO selectedGIDCount;
+      Tpetra_GO selectedGIDCount;
       {
-        GO mySelectedGIDCount = mySelectedGIDs.size();
-        Teuchos::reduceAll<LO, GO>(*commT, Teuchos::REDUCE_SUM, 1, &mySelectedGIDCount, &selectedGIDCount); 
+        Tpetra_GO mySelectedGIDCount = mySelectedGIDs.size();
+        Teuchos::reduceAll<LO, Tpetra_GO>(*commT, Teuchos::REDUCE_SUM, 1, &mySelectedGIDCount, &selectedGIDCount); 
       }
       result.resize(selectedGIDCount);
     }

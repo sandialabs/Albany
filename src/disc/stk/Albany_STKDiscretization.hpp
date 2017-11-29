@@ -569,7 +569,7 @@ namespace Albany {
        return -1;
     }
 
-    ssize_t in_list(const std::size_t value, const Teuchos::Array<GO>& vector) {
+    ssize_t in_list(const std::size_t value, const Teuchos::Array<Tpetra_GO>& vector) {
       for (std::size_t i=0; i < vector.size(); i++)
         if (vector[i] == value)
           return i;
