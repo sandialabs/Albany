@@ -27,22 +27,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface_velocity.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/surface_velocity.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/antarctica_2d.quad.msh
                ${CMAKE_CURRENT_BINARY_DIR}/antarctica_2d.quad.msh COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/antarctica_2d.exo.8.0
-               ${CMAKE_CURRENT_BINARY_DIR}/antarctica_2d.exo.8.0 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/antarctica_2d.exo.8.1
-               ${CMAKE_CURRENT_BINARY_DIR}/antarctica_2d.exo.8.1 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/antarctica_2d.exo.8.2
-               ${CMAKE_CURRENT_BINARY_DIR}/antarctica_2d.exo.8.2 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/antarctica_2d.exo.8.3
-               ${CMAKE_CURRENT_BINARY_DIR}/antarctica_2d.exo.8.3 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/antarctica_2d.exo.8.4
-               ${CMAKE_CURRENT_BINARY_DIR}/antarctica_2d.exo.8.4 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/antarctica_2d.exo.8.5
-               ${CMAKE_CURRENT_BINARY_DIR}/antarctica_2d.exo.8.5 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/antarctica_2d.exo.8.6
-               ${CMAKE_CURRENT_BINARY_DIR}/antarctica_2d.exo.8.6 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/antarctica_2d.exo.8.7
-               ${CMAKE_CURRENT_BINARY_DIR}/antarctica_2d.exo.8.7 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/antarctica_2d.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/antarctica_2d.exo COPYONLY)
 
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 

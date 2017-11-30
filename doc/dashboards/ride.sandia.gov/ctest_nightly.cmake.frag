@@ -228,7 +228,8 @@ if (BUILD_TRILINOS)
     "-DTpetra_ENABLE_Kokkos_Refactor:BOOL=ON"
     "-DKokkos_ENABLE_Cuda_Lambda:BOOL=ON"
     "-DTpetra_ASSUME_CUDA_AWARE_MPI:BOOL=ON"
-    "-DTpetra_INST_INT_INT_LONG_LONG:BOOL=ON"
+    "-DTpetra_INST_INT_LONG_LONG:BOOL=ON"
+    "-DTpetra_INST_INT_INT:BOOL=OFF"
     #
     "-DTPL_ENABLE_Matio:BOOL=OFF"
     "-DTPL_ENABLE_Netcdf:BOOL=ON"
@@ -290,7 +291,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
     "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
     "-DIntrepid2_ENABLE_KokkosDynRankView:BOOL=ON"
-    "-DTrilinos_ENABLE_Tempus:BOOL=ON"
+    "-DTrilinos_ENABLE_Tempus:BOOL=OFF"
     "-DTempus_ENABLE_TESTS:BOOL=OFF"
     "-DTempus_ENABLE_EXAMPLES:BOOL=OFF"
     "-DTempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
