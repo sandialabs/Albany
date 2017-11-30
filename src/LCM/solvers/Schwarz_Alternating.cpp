@@ -1163,31 +1163,24 @@ SchwarzLoopQuasistatics() const
         piro_loca_solver = dynamic_cast<Piro::LOCASolver<ST> &>(solver);
 
         auto &
-        start_stop_params = piro_loca_solver.getStepperParams();
+        stepper = *piro_loca_solver.getStepper();
 
-        start_stop_params.set(init_str, current_time);
-        start_stop_params.set(start_str, current_time);
-        start_stop_params.set(stop_str, next_time);
-        start_stop_params.set("Max Steps", 1);
-
-        auto &
-        time_step_params = piro_loca_solver.getStepSizeParams();
-
-        time_step_params.set(step_str, time_step);
-        time_step_params.set("Method", "Constant");
-        time_step_params.set("Failed Step Reduction Factor", 1.0);
+        stepper.setStartValue(current_time);
+        stepper.setMinValue(current_time);
+        stepper.setMaxValue(next_time);
+        stepper.setStepSize(time_step);
 
         auto const
-        init_time = start_stop_params.get<double>(init_str);
+        init_time = stepper.getStartValue();
 
         auto const
-        start_time = start_stop_params.get<double>(start_str);
+        start_time = stepper.getMinValue();
 
         auto const
-        stop_time = start_stop_params.get<double>(stop_str);
+        stop_time = stepper.getMaxValue();
 
         auto const
-        step_size = time_step_params.get<double>(step_str);
+        step_size = stepper.getStepSize();
 
         fos << "Initial time       :" << init_time << '\n';
         fos << "Start time         :" << start_time << '\n';
