@@ -13,10 +13,10 @@
 #include "Albany_DataTypes.hpp"
 #include "Albany_MaterialDatabase.hpp"
 #include "Albany_ModelEvaluatorT.hpp"
-#include "NOX_PrePostOperator_Vector.H"
 #include "SolutionSniffer.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
+#include "Thyra_ResponseOnlyModelEvaluatorBase.hpp"
 
 namespace LCM {
 
