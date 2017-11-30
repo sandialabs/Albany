@@ -25,7 +25,7 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
-#define ST_LLU "%"PRId64
+#define ST_LLU "%" PRId64
 
 // Test 64 bit Tpetra address space
 const GO StartIndex = 0;

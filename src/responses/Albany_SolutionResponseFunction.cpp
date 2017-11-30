@@ -72,7 +72,7 @@ setupT()
   gradient_graphT =
     Teuchos::rcp(new Tpetra_CrsGraph(culled_mapT, 1));
   for (int i=0; i<culled_mapT->getNodeNumElements(); i++) {
-    GO row = culled_mapT->getGlobalElement(i);
+    Tpetra_GO row = culled_mapT->getGlobalElement(i);
     rowAV = Teuchos::arrayView(&row, 1);
     gradient_graphT->insertGlobalIndices(row, rowAV);
   }
