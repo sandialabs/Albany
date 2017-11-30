@@ -1207,6 +1207,7 @@ SchwarzLoopQuasistatics() const
         (*model_evaluators_[subdomain]);
 
         me.getNominalValues().set_t(current_time);
+        in_args.set_t(current_time);
 
         auto &
         nox_solver = *piro_loca_solver.getSolver();
