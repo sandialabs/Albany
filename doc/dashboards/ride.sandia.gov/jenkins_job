@@ -1,0 +1,27 @@
+#!/bin/bash -lxe
+
+cd /home/projects/albany
+
+rm -rf * 
+
+mkdir repos
+
+cd repos
+cp -r ${WORKSPACE}/repos/Albany .
+cp -r ${WORKSPACE}/repos/Trilinos .
+
+export jenkins_albany_dir=/home/projects/albany/repos/Albany
+export jenkins_trilinos_dir=/home/projects/albany/repos/Trilinos
+
+cd ..
+
+cp repos/Albany/doc/dashboards/ride.sandia.gov/* .
+
+bsub -Is -x -n 8 -W 22:00 -J $BUILD_TAG -q rhel7G ./run_all_lsf.sh
+
+echo "Sending email..."
+bash send_email_ctest.sh
+echo "...done"
+
+chgrp wg-albany -R /home/projects/albany/* 
+chmod ug+rwX -R /home/projects/albany/*
