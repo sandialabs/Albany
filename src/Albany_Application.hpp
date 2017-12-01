@@ -527,6 +527,37 @@ public:
 #endif
 
 #if defined(ALBANY_LCM)
+  double
+  fixTime(double const current_time) const
+  {
+    bool const
+    use_time_param = paramLib->isParameter("Time") == true &&
+      getSchwarzAlternating() == false;
+
+    double const
+    this_time = use_time_param == true ?
+        paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") :
+        current_time;
+
+    return this_time;
+  }
+#else
+  double
+  fixTime(double const current_time) const
+  {
+    bool const
+    use_time_param = paramLib->isParameter("Time") == true;
+
+    double const
+    this_time = use_time_param == true ?
+        paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") :
+        current_time;
+
+    return this_time;
+  }
+#endif // ALBANY_LCM
+
+#if defined(ALBANY_LCM)
   // Needed for coupled Schwarz
 public:
   void
@@ -601,6 +632,12 @@ public:
   Teuchos::RCP<Tpetra_Vector const> const &
   getXdotdot() const { return xdotdot_; }
 
+  void
+  setSchwarzAlternating(bool const isa) {is_schwarz_alternating_ = isa;}
+
+  bool
+  getSchwarzAlternating() const {return is_schwarz_alternating_;}
+
 private:
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> apps_;
 
@@ -618,6 +655,8 @@ private:
   Teuchos::RCP<Tpetra_Vector const> xdotdot_{Teuchos::null};
 
   std::vector<double> prev_times_;
+
+  bool is_schwarz_alternating_{false};
 
 #endif // ALBANY_LCM
 

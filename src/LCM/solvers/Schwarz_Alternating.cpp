@@ -1206,8 +1206,7 @@ SchwarzLoopQuasistatics() const
         me = dynamic_cast<Albany::ModelEvaluatorT &>
         (*model_evaluators_[subdomain]);
 
-        me.getNominalValues().set_t(current_time);
-        in_args.set_t(current_time);
+        me.setCurrentTime(current_time);
 
         auto &
         nox_solver = *piro_loca_solver.getSolver();
@@ -1409,11 +1408,11 @@ SchwarzLoopQuasistatics() const
     if (increased_step > time_step) {
       fos << "\nINFO: Increasing step from " << time_step << " to ";
       fos << increased_step << '\n';
+      time_step = increased_step;
     } else {
-      fos << "\nINFO: Cannot increase step. Using " << increased_step << '\n';
+      fos << "\nINFO: Cannot increase step. Using " << time_step << '\n';
     }
 
-    time_step = increased_step;
 
   } // Continuation loop
 

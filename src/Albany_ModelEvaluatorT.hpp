@@ -85,6 +85,20 @@ class ModelEvaluatorT
 
   //@}
 
+#if defined(ALBANY_LCM)
+  // This is here to have a sane way to handle time and avoid Thyra ME.
+  ST
+  getCurrentTime() const {
+    return current_time_;
+  }
+
+  void
+  setCurrentTime(ST const t) {
+    current_time_ = t;
+    return;
+  }
+#endif // ALBANY_LCM
+
  protected:
   /** \name Overridden from Thyra::ModelEvaluatorDefaultBase<ST> . */
   //@{
@@ -167,6 +181,12 @@ class ModelEvaluatorT
 
   //! Model uses time integration (accelerations)
   bool supports_xdotdot;
+
+#if defined(ALBANY_LCM)
+  // This is here to have a sane way to handle time and avoid Thyra ME.
+  ST
+  current_time_{0.0};
+#endif // ALBANY_LCM
 };
 }
 

@@ -147,17 +147,17 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
       if (param_list->isParameter("Lower Bound") &&
           (distParam->lower_bounds_vector() != Teuchos::null))
         distParam->lower_bounds_vector()->putScalar(
-            param_list->get<double>(
-                "Lower Bound", std::numeric_limits<double>::min()));
+            param_list->get<ST>(
+                "Lower Bound", std::numeric_limits<ST>::min()));
       if (param_list->isParameter("Upper Bound") &&
           (distParam->upper_bounds_vector() != Teuchos::null))
         distParam->upper_bounds_vector()->putScalar(
-            param_list->get<double>(
-                "Upper Bound", std::numeric_limits<double>::max()));
+            param_list->get<ST>(
+                "Upper Bound", std::numeric_limits<ST>::max()));
       if (param_list->isParameter("Initial Uniform Value") &&
           (distParam->vector() != Teuchos::null))
         distParam->vector()->putScalar(
-            param_list->get<double>("Initial Uniform Value"));
+            param_list->get<ST>("Initial Uniform Value"));
     }
   }
 
@@ -617,7 +617,7 @@ Albany::ModelEvaluatorT::evalModelImpl(
   //IKT, 3/30/17: the following logic is meant to support both the Thyra time-integrators in Piro 
   //(e.g., trapezoidal rule) and the second order time-integrators in Tempus.
   Teuchos::RCP<Tpetra_Vector> x_dotdotT;
-  double omega; 
+  ST omega;
   if (supports_xdotdot == true) {
     omega = inArgsT.get_W_x_dot_dot_coeff();
     //The following case is to support second order time-integrators in Piro
@@ -648,17 +648,18 @@ Albany::ModelEvaluatorT::evalModelImpl(
     omega = 0.0; 
   }
 
-  const double alpha = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT))
+  const ST alpha = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT))
                            ? inArgsT.get_alpha()
                            : 0.0;
-  const double beta = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT))
+  const ST beta = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT))
                           ? inArgsT.get_beta()
                           : 1.0;
 
 #if defined (ALBANY_LCM)
-  const double curr_time = inArgsT.get_t();
+  ST const
+  curr_time = getCurrentTime();
 #else
-  const double curr_time =
+  const ST curr_time =
       (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT))
           ? inArgsT.get_t()
           : 0.0;
