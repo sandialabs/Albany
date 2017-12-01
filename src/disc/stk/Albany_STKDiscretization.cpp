@@ -417,7 +417,18 @@ Albany::STKDiscretization::transformMesh()
       }
     }
   } else if (transformType == "Tanh Boundary Layer") {
-    *out << "IKT Tanh Boundary Layer!\n"; 
+    //*out << "IKT Tanh Boundary Layer!\n"; 
+
+     /* The way this transform type works is it takes a uniform STK mesh of [0,L] generated within Albany
+    and applies the following transformation to it:
+    
+    x = L*(1.0 - tanh(beta*(L-x)))/tanh(beta*L))
+    
+    for a specified double beta (and similarly for x and y coordinates).  The result is a mesh
+    that is finer near x = 0 and coarser near x = L.  The relative coarseness/fineness is controlled
+    by the parameter beta: large beta => finer boundary layer near x = 0.  If beta = 0, no tranformation
+    is applied.*/
+
     Teuchos::Array<double> betas = stkMeshStruct->betas_BLtransform; 
     const int numDim = stkMeshStruct->numDim;
     ALBANY_ASSERT(betas.length() >= numDim, "\n Length of Betas BL Transform array (= " << betas.length() << ") cannot be "
