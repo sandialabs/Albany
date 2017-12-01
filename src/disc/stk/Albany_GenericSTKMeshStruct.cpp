@@ -205,13 +205,14 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   cdfOutputInterval = params->get<int>("NetCDF Write Interval", 1);
 
 
-  //get the type of transformation of STK mesh (for FELIX problems)
-  transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh (for FELIX problems)
-  felixAlpha = params->get("FELIX alpha", 0.0);
-  felixL = params->get("FELIX L", 1.0);
+  //get the type of transformation of STK mesh 
+  transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh 
+  felixAlpha = params->get("FELIX alpha", 0.0); //for FELIX problems
+  felixL = params->get("FELIX L", 1.0); //for FELIX problems
   xShift = params->get("x-shift", 0.0);
   yShift = params->get("y-shift", 0.0);
   zShift = params->get("z-shift", 0.0);
+  betas_BLtransform = params->get<Teuchos::Array<double> >("Betas BL Transform",  Teuchos::tuple<double>(0.0, 0.0, 0.0));
 
   points_per_edge = params->get("Element Degree", 1) + 1;
 
@@ -1793,7 +1794,8 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   
   validPL->set<double>("x-shift", 0.0, "Value by which to shift domain in positive x-direction"); 
   validPL->set<double>("y-shift", 0.0, "Value by which to shift domain in positive y-direction"); 
-  validPL->set<double>("z-shift", 0.0, "Value by which to shift domain in positive z-direction"); 
+  validPL->set<double>("z-shift", 0.0, "Value by which to shift domain in positive z-direction");
+  validPL->set<Teuchos::Array<double>>("Betas BL Transform", Teuchos::tuple<double>(0.0, 0.0, 0.0), "Beta parameters for Tanh Boundary Layer transform type");  
 
   validPL->set<bool>("Contiguous IDs", "true", "Tells Ascii mesh reader is mesh has contiguous global IDs on 1 processor."); //for FELIX problem that require tranformation of STK mesh
 

@@ -91,7 +91,11 @@ namespace Albany {
     double felixAlpha;
     double felixL;
     //xShift, yShift and zShift are for "Right-shift" transformMesh routine
-    double xShift, yShift, zShift; 
+    double xShift, yShift, zShift;
+    //beta values for Tanh Boundary Laner tranformMesh routine
+    Teuchos::Array<double> betas_BLtransform;
+    //scale (for mesh generated inside Albany via STK1D, STK2D or STK3D)  
+    Teuchos::Array<double> scales;
 
     //Points per edge in creating enriched spectral mesh in Aeras::SpectralDiscretization (for Aeras only).
     int points_per_edge;

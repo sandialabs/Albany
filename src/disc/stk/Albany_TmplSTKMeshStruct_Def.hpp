@@ -86,6 +86,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 #pragma clang diagnostic ignored "-Wtautological-compare"
 #endif
 
+  scales.resize(Dim);  
   for(unsigned i = 0; i < Dim; i++){ // Get the number of elements in each dimension from params
                                 // Note that nelem will default to 0 and scale to 1 if element
                                 // blocks are specified
@@ -104,6 +105,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
      buf2 << i + 1 << "D Scale";
 
      scale[i] = params->get<double>(buf2.str(),     1.0);
+     scales[i] = scale[i]; 
   }
 
   if(input_nEB <= 0 || Dim == 0){ // If "Element Blocks" are not present in input file
@@ -285,13 +287,14 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   // Set the element types in the EBs
 
-  //get the type of transformation of STK mesh (for FELIX/Aeras problems)
-  transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh (for FELIX problems)
-  felixAlpha = params->get("FELIX alpha", 0.0);
-  felixL = params->get("FELIX L", 1.0);
+  //get the type of transformation of STK mesh
+  transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh 
+  felixAlpha = params->get("FELIX alpha", 0.0); //for FELIX problems
+  felixL = params->get("FELIX L", 1.0); //for FELIX problems
   xShift = params->get("x-shift", 0.0);
   yShift = params->get("y-shift", 0.0);
   zShift = params->get("z-shift", 0.0);
+  betas_BLtransform = params->get<Teuchos::Array<double> >("Betas BL Transform",  Teuchos::tuple<double>(0.0, 0.0, 0.0));
 
   points_per_edge = params->get("Element Degree", 1) + 1; //get # of nodes per edge for Aeras::SpectralDiscretization (Aeras problems)
 
