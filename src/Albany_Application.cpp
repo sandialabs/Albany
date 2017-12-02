@@ -1951,7 +1951,7 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
   if (scale != 1.0) {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                                "Scaling cannot be used with "
-                               "computeGlobalResidualTempusSDBCsImplT routine! "
+                               "computeGlobalResidualSDBCsImplT routine! "
                                " "
                                    << "Please re-run without scaling.");
   }
