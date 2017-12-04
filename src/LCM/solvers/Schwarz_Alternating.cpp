@@ -11,7 +11,7 @@
 #include "Piro_TempusSolver.hpp"
 #include "Schwarz_Alternating.hpp"
 
-//#define DEBUG
+#define DEBUG
 
 namespace LCM {
 
@@ -167,6 +167,8 @@ SchwarzAlternating(
     solver = solver_factory.createAndGetAlbanyAppT(app, comm, comm);
 
     solvers_[subdomain] = solver;
+
+    app->setSchwarzAlternating(true);
 
     apps_[subdomain] = app;
 
