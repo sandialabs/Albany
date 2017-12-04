@@ -589,6 +589,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >> cubature =
       cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
+  if (composite) {
+    ALBANY_ASSERT(meshSpecs.cubatureDegree < 4, "\n Cannot use Composite Tet 10 elements + Cubature Degree > 3!  You have " 
+                                                << " specified Cubature Degree = " << meshSpecs.cubatureDegree << ".\n"); 
+  } 
+
   // FIXME, this could probably go into the ProblemUtils
   // just like the call to getIntrepid2Basis
   Intrepid2Basis

@@ -361,14 +361,8 @@ Albany::STKDiscretization::setReferenceConfigurationManager(
       "implemented.");
 }
 
-// The function transformMesh() maps a unit cube domain by applying the
-// transformation
-// x = L*x
-// y = L*y
-// z = s(x,y)*z + b(x,y)*(1-z)
-// where b(x,y) and s(x,y) are curves specifying the bedrock and top surface
-// geometries respectively.
-// Currently this function is only needed for some FELIX problems.
+// The function transformMesh() maps a unit cube domain by applying a
+// transformation to the mesh.
 void
 Albany::STKDiscretization::transformMesh()
 {
@@ -422,6 +416,62 @@ Albany::STKDiscretization::transformMesh()
         x[2]      = zshift + x[2];
       }
     }
+  } else if (transformType == "Tanh Boundary Layer") {
+    //*out << "IKT Tanh Boundary Layer!\n"; 
+
+     /* The way this transform type works is it takes a uniform STK mesh of [0,L] generated within Albany
+    and applies the following transformation to it:
+    
+    x = L*(1.0 - tanh(beta*(L-x)))/tanh(beta*L))
+    
+    for a specified double beta (and similarly for x and y coordinates).  The result is a mesh
+    that is finer near x = 0 and coarser near x = L.  The relative coarseness/fineness is controlled
+    by the parameter beta: large beta => finer boundary layer near x = 0.  If beta = 0, no tranformation
+    is applied.*/
+
+    Teuchos::Array<double> betas = stkMeshStruct->betas_BLtransform; 
+    const int numDim = stkMeshStruct->numDim;
+    ALBANY_ASSERT(betas.length() >= numDim, "\n Length of Betas BL Transform array (= " << betas.length() << ") cannot be "
+                                               << " < numDim (= " << numDim << ")!\n"); 
+  
+    Teuchos::Array<double> scales = stkMeshStruct->scales;
+ 
+    ALBANY_ASSERT(scales.length() == numDim, "\n Length of scales array (= " << scales.length() << ") must equal numDim (= " 
+                                             << numDim << ") to use transformType = Tanh Boundary Layer!\n"); 
+ 
+    double beta; 
+    double scale; 
+    if (numDim >= 0) {
+      beta = betas[0];
+      scale = scales[0]; 
+      if (abs(beta) > 1.0e-12) {
+        for (int i = 0; i < numOverlapNodes; i++) {
+          double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
+          x[0]      = scale * (1.0 - tanh(beta*(scale - x[0]))/tanh(scale*beta)); 
+        }
+      }
+    }
+    if (numDim >= 1) {
+      beta = betas[1];
+      scale = scales[1]; 
+      if (abs(beta) > 1.0e-12) {
+        for (int i = 0; i < numOverlapNodes; i++) {
+          double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
+          x[1]      = scale * (1.0 - tanh(beta*(scale - x[1]))/tanh(scale*beta)); 
+        }
+      }
+    }
+    if (numDim >= 2) {
+      beta = betas[2];
+      scale = scales[2]; 
+      if (abs(beta) > 1.0e-12) {
+        for (int i = 0; i < numOverlapNodes; i++) {
+          double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
+          x[2]      = scale * (1.0 - tanh(beta*(scale - x[2]))/tanh(scale*beta)); 
+        }
+      }
+    }
+    
   } else if (transformType == "ISMIP-HOM Test A") {
 #ifdef OUTPUT_TO_SCREEN
     *out << "Test A!" << endl;

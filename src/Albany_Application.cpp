@@ -94,6 +94,7 @@ Albany::Application::Application(const RCP<const Teuchos_Comm> &comm_,
   buildProblem();
   createDiscretization();
   finalSetUp(params, initial_guess);
+  prev_times_.resize(1); 
 #ifdef ALBANY_LCM
   int num_apps = apps_.size();
   if (num_apps == 0) {
@@ -1430,71 +1431,6 @@ void Albany::Application::computeGlobalResidualImplT(
 }
 
 #if defined(ALBANY_EPETRA)
-#if !defined(ALBANY_LCM)
-void Albany::Application::computeGlobalResidual(
-    const double current_time, const Epetra_Vector *xdot,
-    const Epetra_Vector *xdotdot, const Epetra_Vector &x,
-    const Teuchos::Array<ParamVec> &p, Epetra_Vector &f) {
-  // Scatter x and xdot to the overlapped distribution
-  solMgr->scatterX(x, xdot, xdotdot);
-
-  // Create Tpetra copies of Epetra arguments
-  // Names of Tpetra entitied are identified by the suffix T
-  const Teuchos::RCP<const Tpetra_Vector> xT =
-      Petra::EpetraVector_To_TpetraVectorConst(x, commT);
-
-  Teuchos::RCP<const Tpetra_Vector> xdotT;
-  if (xdot != NULL && num_time_deriv > 0) {
-    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
-  }
-
-  Teuchos::RCP<const Tpetra_Vector> xdotdotT;
-  if (xdotdot != NULL && num_time_deriv > 1) {
-    xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
-  }
-
-  const Teuchos::RCP<Tpetra_Vector> fT =
-      Petra::EpetraVector_To_TpetraVectorNonConst(f, commT);
-
-  this->computeGlobalResidualImplT(current_time, xdotT, xdotdotT, xT, p, fT);
-
-  // Convert output back from Tpetra to Epetra
-  Petra::TpetraVector_To_EpetraVector(fT, f, comm);
-  // cout << "Global Resid f\n" << f << std::endl;
-  // std::cout << "Global Soln x\n" << x << std::endl;
-
-  // Debut output
-  if (writeToMatrixMarketRes !=
-      0) {          // If requesting writing to MatrixMarket of residual...
-    char name[100]; // create string for file name
-    if (writeToMatrixMarketRes ==
-        -1) { // write residual to MatrixMarket every time it arises
-      sprintf(name, "rhs%i.mm", countRes);
-      EpetraExt::MultiVectorToMatrixMarketFile(name, f);
-    } else {
-      if (countRes ==
-          writeToMatrixMarketRes) { // write residual only at requested count#
-        sprintf(name, "rhs%i.mm", countRes);
-        EpetraExt::MultiVectorToMatrixMarketFile(name, f);
-      }
-    }
-  }
-  if (writeToCoutRes != 0) {    // If requesting writing of residual to cout...
-    if (writeToCoutRes == -1) { // cout residual time it arises
-      std::cout << "Global Residual #" << countRes << ": " << std::endl;
-      std::cout << f << std::endl;
-    } else {
-      if (countRes == writeToCoutRes) { // cout residual only at requested
-                                        // count#
-        std::cout << "Global Residual #" << countRes << ": " << std::endl;
-        std::cout << f << std::endl;
-      }
-    }
-  }
-  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
-    countRes++; // increment residual counter
-}
-#else  // ALBANY_LCM
 void Albany::Application::computeGlobalResidual(
     const double current_time, const Epetra_Vector *xdot,
     const Epetra_Vector *xdotdot, const Epetra_Vector &x,
@@ -1564,54 +1500,8 @@ void Albany::Application::computeGlobalResidual(
   if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
     countRes++; // increment residual counter
 }
-#endif // ALBANY_LCM
 #endif
 
-#if !defined(ALBANY_LCM)
-void Albany::Application::computeGlobalResidualT(
-    const double current_time, const Tpetra_Vector *xdotT,
-    const Tpetra_Vector *xdotdotT, const Tpetra_Vector &xT,
-    const Teuchos::Array<ParamVec> &p, Tpetra_Vector &fT) {
-  // Create non-owning RCPs to Tpetra objects
-  // to be passed to the implementation
-  this->computeGlobalResidualImplT(
-      current_time, Teuchos::rcp(xdotT, false), Teuchos::rcp(xdotdotT, false),
-      Teuchos::rcpFromRef(xT), p, Teuchos::rcpFromRef(fT));
-
-  // Debut output
-  if (writeToMatrixMarketRes !=
-      0) {          // If requesting writing to MatrixMarket of residual...
-    char name[100]; // create string for file name
-    if (writeToMatrixMarketRes ==
-        -1) { // write residual to MatrixMarket every time it arises
-      sprintf(name, "rhs%i.mm", countRes);
-      Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(fT));
-    } else {
-      if (countRes ==
-          writeToMatrixMarketRes) { // write residual only at requested count#
-        sprintf(name, "rhs%i.mm", countRes);
-        Tpetra_MatrixMarket_Writer::writeDenseFile(name,
-                                                   Teuchos::rcpFromRef(fT));
-      }
-    }
-  }
-  if (writeToCoutRes != 0) {    // If requesting writing of residual to cout...
-    if (writeToCoutRes == -1) { // cout residual time it arises
-      std::cout << "Global Residual #" << countRes << ": " << std::endl;
-      fT.describe(*out, Teuchos::VERB_EXTREME);
-    } else {
-      if (countRes == writeToCoutRes) { // cout residual only at requested
-                                        // count#
-        std::cout << "Global Residual #" << countRes << ": " << std::endl;
-        fT.describe(*out, Teuchos::VERB_EXTREME);
-      }
-    }
-  }
-  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0) {
-    countRes++; // increment residual counter
-  }
-}
-#else  // ALBANY_LCM
 void Albany::Application::computeGlobalResidualT(
     const double current_time, const Tpetra_Vector *xdotT,
     const Tpetra_Vector *xdotdotT, const Tpetra_Vector &xT,
@@ -1661,7 +1551,6 @@ void Albany::Application::computeGlobalResidualT(
     countRes++; // increment residual counter
   }
 }
-#endif // ALBANY_LCM
 
 #if defined(ALBANY_EPETRA)
 double Albany::Application::computeConditionNumber(Epetra_CrsMatrix &matrix) {
@@ -1921,7 +1810,6 @@ void Albany::Application::computeGlobalJacobianImplT(
                      derivatives_check_);
 }
 
-#if defined(ALBANY_LCM)
 void Albany::Application::computeGlobalJacobianSDBCsImplT(
     const double alpha, const double beta, const double omega,
     const double current_time, const Teuchos::RCP<const Tpetra_Vector> &xdotT,
@@ -1936,7 +1824,7 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
   if (scale != 1.0) {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                                "Scaling cannot be used with "
-                               "computeGlobalResidualTempusSDBCsImplT routine! "
+                               "computeGlobalResidualSDBCsImplT routine! "
                                " "
                                    << "Please re-run without scaling.");
   }
@@ -1946,18 +1834,22 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
 #ifdef DEBUG_OUTPUT
   *out << "IKT prev_times_ size = " << prev_times_.size() << '\n';
 #endif
-  int app_no;
+  int app_no = 0;
+#ifdef ALBANY_LCM
   if (app_index_ < 0)
     app_no = 0;
   else
     app_no = app_index_;
+#endif
 
   bool begin_time_step = false;
 
+#ifdef ALBANY_LCM
   current_app = app_index_;
 #ifdef DEBUG_OUTPUT
   *out << " IKT current_app, previous_app = " << current_app << ", "
        << previous_app << '\n';
+#endif
 #endif
 
   // Load connectivity map and coordinates
@@ -2271,104 +2163,8 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
     checkDerivatives(*this, current_time, xdotT, xdotdotT, xT, p, fT, jacT,
                      derivatives_check_);
 }
-#endif
 
 #if defined(ALBANY_EPETRA)
-#if !defined(ALBANY_LCM)
-void Albany::Application::computeGlobalJacobian(
-    const double alpha, const double beta, const double omega,
-    const double current_time, const Epetra_Vector *xdot,
-    const Epetra_Vector *xdotdot, const Epetra_Vector &x,
-    const Teuchos::Array<ParamVec> &p, Epetra_Vector *f,
-    Epetra_CrsMatrix &jac) {
-  // Scatter x and xdot to the overlapped distribution
-  solMgr->scatterX(x, xdot, xdotdot);
-
-  // Create Tpetra copies of Epetra arguments
-  // Names of Tpetra entitied are identified by the suffix T
-  const Teuchos::RCP<const Tpetra_Vector> xT =
-      Petra::EpetraVector_To_TpetraVectorConst(x, commT);
-
-  Teuchos::RCP<const Tpetra_Vector> xdotT;
-  if (xdot != NULL && num_time_deriv > 0) {
-    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
-  }
-
-  Teuchos::RCP<const Tpetra_Vector> xdotdotT;
-  if (xdotdot != NULL && num_time_deriv > 1) {
-    xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
-  }
-
-  Teuchos::RCP<Tpetra_Vector> fT;
-  if (f != NULL) {
-    fT = Petra::EpetraVector_To_TpetraVectorNonConst(*f, commT);
-  }
-
-  const Teuchos::RCP<Tpetra_CrsMatrix> jacT =
-      Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(jac, commT);
-
-  this->computeGlobalJacobianImplT(alpha, beta, omega, current_time, xdotT,
-                                   xdotdotT, xT, p, fT, jacT);
-
-  // Convert output back from Tpetra to Epetra
-  if (f != NULL) {
-    Petra::TpetraVector_To_EpetraVector(fT, *f, comm);
-  }
-
-  Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(jacT, jac, comm);
-  jac.FillComplete(true);
-  // std::cout << "f " << *f << std::endl;;
-  // std::cout << "J " << jac << std::endl;;
-
-  // Debut output
-  if (writeToMatrixMarketJac !=
-      0) {          // If requesting writing to MatrixMarket of Jacobian...
-    char name[100]; // create string for file name
-    if (writeToMatrixMarketJac ==
-        -1) { // write jacobian to MatrixMarket every time it arises
-      sprintf(name, "jac%i.mm", countJac);
-      EpetraExt::RowMatrixToMatrixMarketFile(name, jac);
-    } else {
-      if (countJac ==
-          writeToMatrixMarketJac) { // write jacobian only at requested count#
-        sprintf(name, "jac%i.mm", countJac);
-        EpetraExt::RowMatrixToMatrixMarketFile(name, jac);
-      }
-    }
-  }
-  if (writeToCoutJac !=
-      0) { // If requesting writing Jacobian to standard output (cout)...
-    if (writeToCoutJac == -1) { // cout jacobian every time it arises
-      *out << "Global Jacobian #" << countJac << ":\n";
-      *out << jac << "\n";
-    } else {
-      if (countJac == writeToCoutJac) { // cout jacobian only at requested
-                                        // count#
-        *out << "Global Jacobian #" << countJac << ":\n";
-        *out << jac << "\n";
-      }
-    }
-  }
-  if (computeJacCondNum != 0) { // If requesting computation of condition number
-    if (computeJacCondNum ==
-        -1) { // cout jacobian condition # every time it arises
-      double condNum = computeConditionNumber(jac);
-      *out << "Jacobian #" << countJac << " condition number = " << condNum
-           << "\n";
-    } else {
-      if (countJac == computeJacCondNum) { // cout jacobian condition # only at
-                                           // requested count#
-        double condNum = computeConditionNumber(jac);
-        *out << "Jacobian #" << countJac << " condition number = " << condNum
-             << "\n";
-      }
-    }
-  }
-  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0 ||
-      computeJacCondNum != 0)
-    countJac++; // increment Jacobian counter
-}
-#else  // ALBANY_LCM
 void Albany::Application::computeGlobalJacobian(
     const double alpha, const double beta, const double omega,
     const double current_time, const Epetra_Vector *xdot,
@@ -2472,10 +2268,8 @@ void Albany::Application::computeGlobalJacobian(
       computeJacCondNum != 0)
     countJac++; // increment Jacobian counter
 }
-#endif // ALBANY_LCM
 #endif
 
-//#if !defined(ALBANY_LCM)
 void Albany::Application::computeGlobalJacobianT(
     const double alpha, const double beta, const double omega,
     const double current_time, const Tpetra_Vector *xdotT,
@@ -2555,114 +2349,6 @@ void Albany::Application::computeGlobalJacobianT(
     countJac++; // increment Jacobian counter
   }
 }
-/*#else // ALBANY_LCM
-void
-Albany::Application::
-computeGlobalJacobianT(
-    const double alpha,
-    const double beta,
-    const double omega,
-    const double current_time,
-    const Tpetra_Vector* xdotT,
-    const Tpetra_Vector* xdotdotT,
-    const Tpetra_Vector& xT,
-    const Teuchos::Array<ParamVec>& p,
-    Tpetra_Vector* fT,
-    Tpetra_CrsMatrix& jacT)
-{
-  // Create non-owning RCPs to Tpetra objects
-  // to be passed to the implementation
-  if (problem->useSDBCs() == false) {
-  this->computeGlobalJacobianImplT(
-      alpha,
-      beta,
-      omega,
-      current_time,
-      Teuchos::rcp(xdotT, false),
-      Teuchos::rcp(xdotdotT, false),
-      Teuchos::rcpFromRef(xT),
-      p,
-      Teuchos::rcp(fT, false),
-      Teuchos::rcpFromRef(jacT));
-    }
-    else{
-  this->computeGlobalJacobianSDBCsImplT(
-      alpha,
-      beta,
-      omega,
-      current_time,
-      Teuchos::rcp(xdotT, false),
-      Teuchos::rcp(xdotdotT, false),
-      Teuchos::rcpFromRef(xT),
-      p,
-      Teuchos::rcp(fT, false),
-      Teuchos::rcpFromRef(jacT));
-    }
-  //Debut output
-  if (writeToMatrixMarketJac != 0) { //If requesting writing to MatrixMarket of
-Jacobian... char name[100];  //create string for file name if
-(writeToMatrixMarketJac == -1) { //write jacobian to MatrixMarket every time it
-arises sprintf(name, "jac%i.mm", countJac);
-      Tpetra_MatrixMarket_Writer::writeSparseFile(
-          name,
-          Teuchos::rcpFromRef(jacT));
-    }
-    else {
-      if (countJac == writeToMatrixMarketJac) { //write jacobian only at
-requested count# sprintf(name, "jac%i.mm", countJac);
-        Tpetra_MatrixMarket_Writer::writeSparseFile(
-            name,
-            Teuchos::rcpFromRef(jacT));
-      }
-    }
-  }
-  if (writeToCoutJac != 0) { //If requesting writing Jacobian to standard output
-(cout)... if (writeToCoutJac == -1) { //cout jacobian every time it arises *out
-<< "Global Jacobian #" << countJac << ":\n"; jacT.describe(*out,
-Teuchos::VERB_EXTREME);
-    }
-    else {
-      if (countJac == writeToCoutJac) { //cout jacobian only at requested count#
-        *out << "Global Jacobian #" << countJac << ":\n";
-        jacT.describe(*out, Teuchos::VERB_EXTREME);
-      }
-    }
-  }
-  if (computeJacCondNum != 0) { //If requesting computation of condition number
-#if defined(ALBANY_EPETRA)
-      Teuchos::RCP<Epetra_CrsMatrix> jac =
-Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(Teuchos::rcpFromRef(jacT), comm); if
-(computeJacCondNum == -1) { //cout jacobian condition # every time it arises
-        double condNum = computeConditionNumber(*jac);
-        *out << "Jacobian #" << countJac << " condition number = " << condNum <<
-"\n";
-      }
-      else {
-        if (countJac == computeJacCondNum) { //cout jacobian condition # only at
-requested count# double condNum = computeConditionNumber(*jac); *out <<
-"Jacobian #" << countJac << " condition number = " << condNum << "\n";
-        }
-      }
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::logic_error,
-        "Error in Albany::Application: Compute Jacobian Condition Number debug
-option "
-        << " currently relies on an Epetra-based routine in AztecOO.  To use
-this option, please "
-        << " rebuild Albany with ENABLE_ALBANY_EPETRA_EXE=ON.  You will then be
-able to have Albany "
-        << " output the Jacobian condition number when running either the Albany
-or AlbanyT executable.\n"); #endif
-  }
-  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0
-      || computeJacCondNum != 0) {
-    countJac++; //increment Jacobian counter
-  }
-}
-#endif // ALBANY_LCM
-*/
 
 void Albany::Application::computeGlobalPreconditionerT(
     const RCP<Tpetra_CrsMatrix> &jac, const RCP<Tpetra_Operator> &prec) {
@@ -4237,6 +3923,7 @@ void Albany::Application::setCoupledAppBlockNodeset(
 
   coupled_app_index_block_nodeset_names_map_.insert(app_index_block_names);
 }
+#endif
 
 void Albany::Application::computeGlobalResidualSDBCsImplT(
     double const current_time, Teuchos::RCP<Tpetra_Vector const> const &xdotT,
@@ -4258,18 +3945,21 @@ void Albany::Application::computeGlobalResidualSDBCsImplT(
 #ifdef DEBUG_OUTPUT
   *out << "IKT prev_times_ size = " << prev_times_.size() << '\n';
 #endif
-  int app_no;
+  int app_no = 0;
+#ifdef ALBANY_LCM
   if (app_index_ < 0)
     app_no = 0;
   else
     app_no = app_index_;
+#endif
 
   bool begin_time_step = false;
-
+#ifdef ALBANY_LCM
   current_app = app_index_;
 #ifdef DEBUG_OUTPUT
   *out << " IKT current_app, previous_app = " << current_app << ", "
        << previous_app << '\n';
+#endif
 #endif
 
   // Load connectivity map and coordinates
@@ -4528,4 +4218,3 @@ void Albany::Application::computeGlobalResidualSDBCsImplT(
   }
   previous_app = current_app;
 }
-#endif // ALBANY_LCM

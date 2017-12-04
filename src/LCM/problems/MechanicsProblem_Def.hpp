@@ -264,6 +264,11 @@ MechanicsProblem::constructEvaluators(
   cubature = cubFactory.create<PHX::Device, RealType, RealType>(
       *cellType, meshSpecs.cubatureDegree);
 
+  if (composite) {
+    ALBANY_ASSERT(meshSpecs.cubatureDegree < 4, "\n Cannot use Composite Tet 10 elements + Cubature Degree > 3!  You have " 
+                                                << " specified Cubature Degree = " << meshSpecs.cubatureDegree << ".\n"); 
+  } 
+
   // TODO: this could probably go into the ProblemUtils
   // just like the call to getIntrepid2Basis
   Intrepid2Basis

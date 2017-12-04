@@ -11,6 +11,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/material-clamped-expl.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/material-clamped-expl.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/clamped-stk-shift.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/clamped-stk-shift.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/clamped-stk-bl-mesh.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/clamped-stk-bl-mesh.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/clamped-stk-expl.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/clamped-stk-expl.yaml COPYONLY)
 
@@ -20,6 +22,7 @@ if (ALBANY_TEMPUS)
 if (ALBANY_IFPACK2) 
 add_test(Dynamic_${testName}_NewmarkImplicitDForm_Tempus ${AlbanyT.exe} clamped-stk-shift.yaml)
 add_test(Dynamic_${testName}_NewmarkExplicitAForm_Tempus ${AlbanyT.exe} clamped-stk-expl.yaml)
+add_test(Dynamic_${testName}_NewmarkExplicitAForm_BLMesh_Tempus ${AlbanyT.exe} clamped-stk-bl-mesh.yaml)
 endif()
 endif()
 

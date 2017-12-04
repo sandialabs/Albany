@@ -41,6 +41,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Workset.hpp"
+#include <set> 
 
 #if defined(ALBANY_EPETRA)
 
@@ -210,13 +211,11 @@ private:
       const Teuchos::RCP<const Tpetra_Vector> &xT,
       const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT);
 
-#if defined(ALBANY_LCM)
   void computeGlobalResidualSDBCsImplT(
       const double current_time, const Teuchos::RCP<const Tpetra_Vector> &xdotT,
       const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
       const Teuchos::RCP<const Tpetra_Vector> &xT,
       const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT);
-#endif
 
 public:
 //! Compute global Jacobian
@@ -250,7 +249,6 @@ private:
       const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
       const Teuchos::RCP<Tpetra_CrsMatrix> &jacT);
 
-#if defined(ALBANY_LCM)
   void computeGlobalJacobianSDBCsImplT(
       const double alpha, const double beta, const double omega,
       const double current_time, const Teuchos::RCP<const Tpetra_Vector> &xdotT,
@@ -258,7 +256,6 @@ private:
       const Teuchos::RCP<const Tpetra_Vector> &xT,
       const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
       const Teuchos::RCP<Tpetra_CrsMatrix> &jacT);
-#endif
 
 public:
   //! Compute global Preconditioner
@@ -654,11 +651,11 @@ private:
 
   Teuchos::RCP<Tpetra_Vector const> xdotdot_{Teuchos::null};
 
-  std::vector<double> prev_times_;
-
   bool is_schwarz_alternating_{false};
 
 #endif // ALBANY_LCM
+
+  std::vector<double> prev_times_;
 
 protected:
   bool no_dir_bcs_;
