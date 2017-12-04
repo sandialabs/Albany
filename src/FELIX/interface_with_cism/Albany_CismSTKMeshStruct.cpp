@@ -99,14 +99,14 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   sh.resize(NumNodes); 
   thck.resize(NumNodes);
   resizeVec(shGrad, NumNodes, 2); 
-  Teuchos::Array<GO> globalNodesID(NumNodes); // local; doesn't have to be class data unless desired
-  Teuchos::Array<GO> globalElesID(NumEles);
-  Teuchos::Array<GO> basalFacesID(NumBasalFaces); 
-  Teuchos::Array<GO> topFacesID(NumBasalFaces);
-  Teuchos::Array<GO> westFacesID(NumWestFaces); 
-  Teuchos::Array<GO> eastFacesID(NumEastFaces); 
-  Teuchos::Array<GO> southFacesID(NumSouthFaces); 
-  Teuchos::Array<GO> northFacesID(NumNorthFaces); 
+  Teuchos::Array<Tpetra_GO> globalNodesID(NumNodes); // local; doesn't have to be class data unless desired
+  Teuchos::Array<Tpetra_GO> globalElesID(NumEles);
+  Teuchos::Array<Tpetra_GO> basalFacesID(NumBasalFaces); 
+  Teuchos::Array<Tpetra_GO> topFacesID(NumBasalFaces);
+  Teuchos::Array<Tpetra_GO> westFacesID(NumWestFaces); 
+  Teuchos::Array<Tpetra_GO> eastFacesID(NumEastFaces); 
+  Teuchos::Array<Tpetra_GO> southFacesID(NumSouthFaces); 
+  Teuchos::Array<Tpetra_GO> northFacesID(NumNorthFaces); 
   flwa.resize(NumEles); 
   beta.resize(NumNodes);
   uvel.resize(NumNodes); 

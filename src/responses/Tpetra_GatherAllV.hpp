@@ -9,18 +9,18 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Comm.hpp"
+
 #ifdef HAVE_TPETRA_MPI
-#include "Teuchos_DefaultMpiComm.hpp"
+#include <mpi.h>
+#include <Teuchos_DefaultMpiComm.hpp>
 #endif /* HAVE_TPETRA_MPI */
+
 #include "Teuchos_DefaultSerialComm.hpp"
 
 #include "Teuchos_Array.hpp"
 #include "Teuchos_Assert.hpp"
 #include "Teuchos_TestForException.hpp"
-
-#ifdef HAVE_TPETRA_MPI
-#include "mpi.h"
-#endif /* HAVE_TPETRA_MPI */
+#include "Teuchos_Details_MpiTypeTraits.hpp"
 
 #include <numeric>
 #include <algorithm>
@@ -49,13 +49,7 @@ int GatherAllV(
     std::partial_sum(allValCounts.begin(), allValCounts.end() - 1, allValDisps.begin() + 1);
     TEUCHOS_ASSERT(allCount == allValCounts.back() + allValDisps.back());
 
-    MPI_Datatype GO_type =
-#ifdef ALBANY_64BIT_INT
-      MPI_LONG
-#else
-      MPI_INT
-#endif
-      ;
+    auto GO_type = Teuchos::Details::MpiTypeTraits<GO>::getType();
     return MPI_Allgatherv(
         const_cast<GO *>(myVals), myCount, GO_type,
         allVals, allValCounts.getRawPtr(), allValDisps.getRawPtr(), GO_type,

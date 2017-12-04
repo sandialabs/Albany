@@ -37,10 +37,10 @@ public:
   const Teuchos::RCP<const Tpetra_CrsGraph>& getNodalGraph()
   { return nodalGraph; }
 
-  void resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs,
+  void resizeLocalMap(const Teuchos::Array<Tpetra_GO>& local_nodeGIDs,
                       const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
-  void resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs,
+  void resizeOverlapMap(const Teuchos::Array<Tpetra_GO>& overlap_nodeGIDs,
                         const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
   bool isNodeDataPresent() { return Teuchos::nonnull(nodal_data_vector); }

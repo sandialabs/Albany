@@ -50,7 +50,7 @@ void Adapt::NodalDataBase::initialize() {
 }
 
 void Adapt::NodalDataBase::
-resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs,
+resizeOverlapMap(const Teuchos::Array<Tpetra_GO>& overlap_nodeGIDs,
                  const Teuchos::RCP<const Teuchos::Comm<int> >& comm_) {
   initialize();
 
@@ -59,7 +59,7 @@ resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs,
 }
 
 void Adapt::NodalDataBase::
-resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs,
+resizeLocalMap(const Teuchos::Array<Tpetra_GO>& local_nodeGIDs,
                const Teuchos::RCP<const Teuchos::Comm<int> >& comm_) {
   initialize();
 

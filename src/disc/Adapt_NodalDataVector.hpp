@@ -33,9 +33,9 @@ class NodalDataVector {
     //! Destructor
     virtual ~NodalDataVector() {}
 
-    void resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
+    void resizeLocalMap(const Teuchos::Array<Tpetra_GO>& local_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
-    void resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
+    void resizeOverlapMap(const Teuchos::Array<Tpetra_GO>& overlap_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
     const Teuchos::RCP<Tpetra_MultiVector>& getLocalNodeVector() const {
       return local_node_vec;

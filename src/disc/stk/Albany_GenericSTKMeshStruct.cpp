@@ -1095,7 +1095,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
   stk::mesh::get_selected_entities(select_overlap_in_part, bulkData->buckets(stk::topology::NODE_RANK), nodes);
   stk::mesh::get_selected_entities(select_owned_in_part, bulkData->buckets(stk::topology::ELEM_RANK), elems);
 
-  Teuchos::Array<GO> nodeIndices(nodes.size()), elemIndices(elems.size());
+  Teuchos::Array<Tpetra_GO> nodeIndices(nodes.size()), elemIndices(elems.size());
   for (int i = 0; i < nodes.size(); ++i)
     nodeIndices[i] = bulkData->identifier(nodes[i]) - 1;
   for (int i = 0; i < elems.size(); ++i)
@@ -1105,8 +1105,8 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
   // Creating the serial and parallel node maps
   const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
-  Teuchos::RCP<const Tpetra_Map> nodes_map = Tpetra::createNonContigMapWithNode<LO, GO> (nodeIndices, commT, KokkosClassic::Details::getNode<KokkosNode>());
-  Teuchos::RCP<const Tpetra_Map> elems_map = Tpetra::createNonContigMapWithNode<LO, GO> (elemIndices, commT, KokkosClassic::Details::getNode<KokkosNode>());
+  Teuchos::RCP<const Tpetra_Map> nodes_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode> (nodeIndices, commT, KokkosClassic::Details::getNode<KokkosNode>());
+  Teuchos::RCP<const Tpetra_Map> elems_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode> (elemIndices, commT, KokkosClassic::Details::getNode<KokkosNode>());
 
   // NOTE: the serial map cannot be created linearly, with GIDs from 0 to numGlobalNodes/Elems, since
   //       this may be a boundary mesh, and the GIDs may not start from 0, nor be contiguous.
@@ -1120,8 +1120,8 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
   // Note: I tried to use gather, but the number of elements on each process may be different.
   int num_proc = commT->getSize();
   int my_rank  = commT->getRank();
-  int num_global_nodes, num_global_elems;
-  Teuchos::Array<GO> allNodesToRoot(0),allElemsToRoot(0);
+  Tpetra_GO num_global_nodes, num_global_elems;
+  Teuchos::Array<Tpetra_GO> allNodesToRoot(0),allElemsToRoot(0);
   for (int pid=0; pid<num_proc; ++pid)
   {
     int nb_n = num_my_nodes;
@@ -1129,7 +1129,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     Teuchos::broadcast(*commT,pid,1,&nb_n);
     Teuchos::broadcast(*commT,pid,1,&nb_e);
 
-    GO *tmp_nodes, *tmp_elems;
+    Tpetra_GO *tmp_nodes, *tmp_elems;
     if (pid==my_rank)
     {
       tmp_nodes = nodeIndices.getRawPtr();
@@ -1137,8 +1137,8 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     }
     else
     {
-      tmp_nodes = new GO[nb_n];
-      tmp_elems = new GO[nb_e];
+      tmp_nodes = new Tpetra_GO[nb_n];
+      tmp_elems = new Tpetra_GO[nb_e];
     }
 
     Teuchos::broadcast(*commT,pid,nb_n,tmp_nodes);
@@ -1166,7 +1166,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
   allNodesToRoot.resize(std::distance(allNodesToRoot.begin(),it_nodes));    // Resize to the actual number of unique nodes
   allElemsToRoot.resize(std::distance(allElemsToRoot.begin(),it_elems));    // Resize to the actual number of unique elements
 
-  GO node_base, elem_base;
+  Tpetra_GO node_base, elem_base;
   if (my_rank==0)
   {
     node_base = *std::min_element(allNodesToRoot.begin(), allNodesToRoot.end());

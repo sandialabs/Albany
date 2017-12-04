@@ -61,7 +61,7 @@ createCombinedTpetraVector(
   // Figure out how many local and global elements are in the
   // combined map by summing these quantities over each vector.
   LO local_num_elements = 0;
-  GO global_num_elements = 0;
+  Tpetra_GO global_num_elements = 0;
 
   for (int m = 0; m < n_vecs; ++m) {
     local_num_elements += vecs[m]->getMap()->getNodeNumElements();
@@ -69,15 +69,15 @@ createCombinedTpetraVector(
   }
   // Create global element indices array for combined map for this processor,
   // to be used to create the combined map.
-  std::vector<GO> my_global_elements(local_num_elements);
+  std::vector<Tpetra_GO> my_global_elements(local_num_elements);
 
   LO counter_local = 0;
-  GO counter_global = 0;
+  Tpetra_GO counter_global = 0;
 
   for (int m = 0; m < n_vecs; ++m) {
     LO local_num_elements_n = vecs[m]->getMap()->getNodeNumElements();
-    GO global_num_elements_n = vecs[m]->getMap()->getGlobalNumElements();
-    Teuchos::ArrayView<GO const> disc_global_elements =
+    Tpetra_GO global_num_elements_n = vecs[m]->getMap()->getGlobalNumElements();
+    Teuchos::ArrayView<Tpetra_GO const> disc_global_elements =
         vecs[m]->getMap()->getNodeElementList();
 
     for (int l = 0; l < local_num_elements_n; ++l) {
@@ -88,7 +88,7 @@ createCombinedTpetraVector(
     counter_global += global_num_elements_n;
   }
 
-  Teuchos::ArrayView<GO> const my_global_elements_AV =
+  Teuchos::ArrayView<Tpetra_GO> const my_global_elements_AV =
       Teuchos::arrayView(&my_global_elements[0], local_num_elements);
 
   Teuchos::RCP<const Tpetra_Map> combined_map = Teuchos::rcp(
@@ -270,13 +270,6 @@ main(int argc, char *argv[]) {
          )
       );
 
-#endif
-
-#if defined(ALBANY_64BIT_INT)
-  static_assert(
-      sizeof(long) == 8,
-      "Error: The 64 bit build of Albany assumes that sizeof(long) == 64 "
-      "bits.");
 #endif
 
 #if defined(ALBANY_APF)

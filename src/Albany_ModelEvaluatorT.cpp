@@ -301,7 +301,7 @@ Albany::ModelEvaluatorT::allocateVectors() {
     // Set xdotdot in parent class to pass to time integrator 
 
     // GAH set x_dotdot for transient simulations. Note that xDotDot is a member
-    // of Piro::TransientDecorator<ST, LO, GO, KokkosNode>
+    // of Piro::TransientDecorator<ST, LO, Tpetra_GO, KokkosNode>
     const Teuchos::RCP<const Tpetra_Vector> x_dotdotT_init = xMV->getVector(2);
     const Teuchos::RCP<Tpetra_Vector> x_dotdotT_init_nonconst =
         Teuchos::rcp(new Tpetra_Vector(*x_dotdotT_init));

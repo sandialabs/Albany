@@ -214,7 +214,7 @@ fillMassMatrix (const PHAL::Workset& workset, const BasisField& bf,
   for (unsigned int cell = 0; cell < workset.numCells; ++cell)
     for (size_type rnode = 0; rnode < num_node; ++rnode) {
       const GO row = workset.wsElNodeID[cell][rnode];
-      Teuchos::Array<GO> cols;
+      Teuchos::Array<Tpetra_GO> cols;
       Teuchos::Array<ST> vals;
       for (size_type cnode = 0; cnode < num_node; ++cnode) {
         const GO col = workset.wsElNodeID[cell][cnode];

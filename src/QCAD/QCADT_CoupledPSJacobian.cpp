@@ -133,7 +133,7 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
   blocked_op->beginBlockFill(block_dim, block_dim);
 
   //populate (Poisson,Poisson) block with Jac_Poisson
-  Teuchos::RCP<Thyra::LinearOpBase<ST>> blockPP = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(Jac_Poisson);
+  Teuchos::RCP<Thyra::LinearOpBase<ST>> blockPP = Thyra::createLinearOp<ST, LO, Tpetra_GO, KokkosNode>(Jac_Poisson);
   blocked_op->setNonconstBlock(0, 0, blockPP);
 
   Teuchos::Array<ST> matrixEntriesT;
@@ -166,7 +166,7 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
     dn_dPsi_j_crs->fillComplete(); 
     //blockPS_crs = M*diag(dn_dPsi[j]) 
     Tpetra::MatrixMatrix::Multiply(*Mass, false, *dn_dPsi_j_crs, false, *blockPS_crs, true); 
-    Teuchos::RCP<Thyra::LinearOpBase<ST>> blockPS = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(blockPS_crs);
+    Teuchos::RCP<Thyra::LinearOpBase<ST>> blockPS = Thyra::createLinearOp<ST, LO, Tpetra_GO, KokkosNode>(blockPS_crs);
     blocked_op->setNonconstBlock(0, j, blockPS); 
   }
   //FIXME, IKT, 6/22/15: check with Erik what does col mean.
@@ -196,7 +196,7 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
     }
   }
   blockPE_crs->fillComplete();  
-  Teuchos::RCP<Thyra::LinearOpBase<ST>> blockPE = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(blockPE_crs);
+  Teuchos::RCP<Thyra::LinearOpBase<ST>> blockPE = Thyra::createLinearOp<ST, LO, Tpetra_GO, KokkosNode>(blockPE_crs);
   blocked_op->setNonconstBlock(0, block_dim-1, blockPE); 
 
   //populate (Schrodinger, Poisson) blocks with -M*diag(psiVectors[i]) 
@@ -215,7 +215,7 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
     psiVectors_i_crs->fillComplete(); 
     //blockSP_crs = =M*diag(psiVectors[i]) 
     Tpetra::MatrixMatrix::Multiply(*Mass, false, *psiVectors_i_crs, false, *blockSP_crs, true); 
-    Teuchos::RCP<Thyra::LinearOpBase<ST>> blockSP = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(blockSP_crs);
+    Teuchos::RCP<Thyra::LinearOpBase<ST>> blockSP = Thyra::createLinearOp<ST, LO, Tpetra_GO, KokkosNode>(blockSP_crs);
     blocked_op->setNonconstBlock(i, 0, blockSP); 
   }
   //Populate (Schrodinger, Schrodinger) block with delta(i,j)*(H-eval[j]*M)
@@ -230,7 +230,7 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
       //blockSS_crs = H-eval[j]*M
       Tpetra::MatrixMatrix::Add(*Jac_Schrodinger, false, 1.0, *Mass, false, neg_eigenvalues_constView[j-1], blockSS_crs); 
       blockSS_crs->fillComplete(); 
-      Teuchos::RCP<Thyra::LinearOpBase<ST>> blockSS = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(blockSS_crs);
+      Teuchos::RCP<Thyra::LinearOpBase<ST>> blockSS = Thyra::createLinearOp<ST, LO, Tpetra_GO, KokkosNode>(blockSS_crs);
       blocked_op->setNonconstBlock(i, j, blockSS); 
     }
   } 
@@ -262,7 +262,7 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
       }
     }
     blockSE_crs->fillComplete();  
-    Teuchos::RCP<Thyra::LinearOpBase<ST>> blockSE = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(blockSE_crs);
+    Teuchos::RCP<Thyra::LinearOpBase<ST>> blockSE = Thyra::createLinearOp<ST, LO, Tpetra_GO, KokkosNode>(blockSE_crs);
     blocked_op->setNonconstBlock(i, 0, blockSE);
   }
   //Populate (eigenvalue, Schrodinger) block

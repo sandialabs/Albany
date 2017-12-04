@@ -54,15 +54,15 @@ namespace Albany {
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool periodic;
     bool contigIDs; //boolean specifying if node / element / face IDs are contiguous; only relevant for 1 processor run
-    int NumNodes; //number of nodes
-    int NumEles; //number of elements
-    int NumBasalFaces; //number of faces on basal boundary
+    Tpetra_GO NumNodes; //number of nodes
+    Tpetra_GO NumEles; //number of elements
+    Tpetra_GO NumBasalFaces; //number of faces on basal boundary
     double (*xyz)[3]; //hard-coded for 3D for now
     double* sh;
     double* beta;
-    Teuchos::Array<GO> globalElesID; //int array to define element map
-    Teuchos::Array<GO> globalNodesID; //int array to define node map
-    Teuchos::Array<GO> basalFacesID; //int array to define basal face map
+    Teuchos::Array<Tpetra_GO> globalElesID; //int array to define element map
+    Teuchos::Array<Tpetra_GO> globalNodesID; //int array to define node map
+    Teuchos::Array<Tpetra_GO> basalFacesID; //int array to define basal face map
     int (*eles)[8]; //hard-coded for 3D hexes for now
     double *flwa; //double array that gives value of flow factor
     double *temper; //double array that gives value of flow factor

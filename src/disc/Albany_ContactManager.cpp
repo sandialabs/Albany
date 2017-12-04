@@ -25,15 +25,15 @@ Albany::ContactManager::ContactManager(const Teuchos::RCP<Teuchos::ParameterList
 
   probDim = meshSpecs[0]->numDim;
 
-  moertelManager = Teuchos::rcp( new MOERTEL::ManagerT<ST, LO, GO, KokkosNode>(disc.getMapT()->getComm(), printLevel) );
+  moertelManager = Teuchos::rcp( new MOERTEL::ManagerT<ST, LO, Tpetra_GO, KokkosNode>(disc.getMapT()->getComm(), printLevel) );
 
   if(probDim == 2){
     oneD = true;
-    moertelManager->SetDimension(MOERTEL::ManagerT<ST, LO, GO, KokkosNode>::manager_2D);
+    moertelManager->SetDimension(MOERTEL::ManagerT<ST, LO, Tpetra_GO, KokkosNode>::manager_2D);
   }
   else {
     oneD = false;
-    moertelManager->SetDimension(MOERTEL::ManagerT<ST, LO, GO, KokkosNode>::manager_3D);
+    moertelManager->SetDimension(MOERTEL::ManagerT<ST, LO, Tpetra_GO, KokkosNode>::manager_3D);
   }
 
   moertelManager->SetProblemMap(disc.getMapT());
@@ -137,8 +137,8 @@ Albany::ContactManager::processSS(const int ctr, const std::vector<Albany::SideS
     const MOERTEL::Function::FunctionType primal = MOERTEL::Function::func_Linear1D;
     const MOERTEL::Function::FunctionType dual = MOERTEL::Function::func_Linear1D/*func_Constant1D*/;
 
-    Teuchos::RCP<MOERTEL::InterfaceT<ST, LO, GO, KokkosNode> > moertelInterface
-       = Teuchos::rcp( new MOERTEL::InterfaceT<ST, LO, GO, KokkosNode>(ctr, oneD, disc.getMapT()->getComm(), printLevel) );
+    Teuchos::RCP<MOERTEL::InterfaceT<ST, LO, Tpetra_GO, KokkosNode> > moertelInterface
+       = Teuchos::rcp( new MOERTEL::InterfaceT<ST, LO, Tpetra_GO, KokkosNode>(ctr, oneD, disc.getMapT()->getComm(), printLevel) );
 
     moertelInterface->SetMortarSide(mortarside);
     moertelInterface->SetFunctionTypes(primal, dual);

@@ -869,7 +869,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   auto f_view = fill_residual == true ? f->get1dViewNonConst() : Teuchos::null;
   auto x_view = fill_residual == true ? x->get1dViewNonConst() : Teuchos::null;
 
-  Teuchos::Array<GO>
+  Teuchos::Array<Tpetra_GO>
   global_index(1);
 
   Teuchos::Array<LO>

@@ -36,25 +36,21 @@
 #endif
 
 #if defined(ALBANY_EPETRA)
-// Some integer-type converter helpers for Epetra_Map so that we can compile
-// the Epetra_Map file regardless of the value of ALBANY_64BIT_INT.
+// Some integer-type converter helpers for Epetra_Map
 namespace {
+
 typedef int EpetraInt;
-#ifdef ALBANY_64BIT_INT
+
 Teuchos::RCP< Teuchos::Array<int> >
 convert (const Teuchos::Array<GO>& indicesAV) {
-Teuchos::RCP< Teuchos::Array<int> > ind = Teuchos::rcp(
-  new Teuchos::Array<int>(indicesAV.size()));
-for (std::size_t i = 0; i < indicesAV.size(); ++i)
-  (*ind)[i] = Teuchos::as<int>(indicesAV[i]);
-return ind;
-};
-#else // not ALBANY_64BIT_INT
-Teuchos::RCP< Teuchos::Array<GO> >
-convert (Teuchos::Array<GO>& indicesAV) {
-return Teuchos::rcp(&indicesAV, false);
+  Teuchos::RCP< Teuchos::Array<int> > ind = Teuchos::rcp(
+      new Teuchos::Array<int>(indicesAV.size()));
+  for (std::size_t i = 0; i < indicesAV.size(); ++i) {
+    (*ind)[i] = Teuchos::as<int>(indicesAV[i]);
+  }
+  return ind;
 }
-#endif // not ALBANY_64BIT_INT
+
 } // namespace
 #endif // ALBANY_EPETRA
 
@@ -808,10 +804,10 @@ void Albany::APFDiscretization::computeOwnedNodesAndUnknowns()
     offsetNumbering(globalNumbering, ownedNodes);
   numOwnedNodes = ownedNodes.getSize();
   apf::synchronize(globalNumbering);
-  Teuchos::Array<GO> indices(numOwnedNodes);
+  Teuchos::Array<Tpetra_GO> indices(numOwnedNodes);
   for (int i=0; i < numOwnedNodes; ++i)
     indices[i] = apf::getNumber(globalNumbering,ownedNodes[i]);
-  node_mapT = Tpetra::createNonContigMap<LO, GO>(indices, commT);
+  node_mapT = Tpetra::createNonContigMap<LO, Tpetra_GO>(indices, commT);
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
   if(Teuchos::nonnull(meshStruct->nodal_data_base))
     meshStruct->nodal_data_base->resizeLocalMap(indices, commT);
@@ -821,7 +817,7 @@ void Albany::APFDiscretization::computeOwnedNodesAndUnknowns()
       GO gid = apf::getNumber(globalNumbering,ownedNodes[i]);
       indices[getDOF(i,j)] = getDOF(gid,j);
     }
-  mapT = Tpetra::createNonContigMap<LO, GO>(indices, commT);
+  mapT = Tpetra::createNonContigMap<LO, Tpetra_GO>(indices, commT);
 #if defined(ALBANY_EPETRA)
   map = Teuchos::rcp(
     new Epetra_Map(-1, indices.size(), convert(indices)->getRawPtr(), 0,
@@ -837,16 +833,16 @@ void Albany::APFDiscretization::computeOverlapNodesAndUnknowns()
   overlap = apf::numberOverlapNodes(m,"overlap");
   apf::getNodes(overlap,overlapNodes);
   numOverlapNodes = overlapNodes.getSize();
-  Teuchos::Array<GO> nodeIndices(numOverlapNodes);
-  Teuchos::Array<GO> dofIndices(numOverlapNodes*neq);
+  Teuchos::Array<Tpetra_GO> nodeIndices(numOverlapNodes);
+  Teuchos::Array<Tpetra_GO> dofIndices(numOverlapNodes*neq);
   for (int i=0; i < numOverlapNodes; ++i) {
     GO global = apf::getNumber(globalNumbering,overlapNodes[i]);
     nodeIndices[i] = global;
     for (int j=0; j < neq; ++j)
       dofIndices[getDOF(i,j)] = getDOF(global,j);
   }
-  overlap_node_mapT = Tpetra::createNonContigMap<LO, GO>(nodeIndices, commT);
-  overlap_mapT = Tpetra::createNonContigMap<LO, GO>(dofIndices, commT);
+  overlap_node_mapT = Tpetra::createNonContigMap<LO, Tpetra_GO>(nodeIndices, commT);
+  overlap_mapT = Tpetra::createNonContigMap<LO, Tpetra_GO>(dofIndices, commT);
 #if defined(ALBANY_EPETRA)
   overlap_map = Teuchos::rcp(
     new Epetra_Map(-1, dofIndices.size(), convert(dofIndices)->getRawPtr(), 0,
