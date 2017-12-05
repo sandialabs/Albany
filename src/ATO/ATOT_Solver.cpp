@@ -193,7 +193,7 @@ ATOT::SpatialFilter::buildOperator(
     for (std::map<GlobalPoint,std::set<GlobalPoint> >::iterator 
         it=neighbors.begin(); it!=neighbors.end(); ++it) { 
       GlobalPoint homeNode = it->first;
-      GO home_node_gid = homeNode.gid;
+      Tpetra_GO home_node_gid = homeNode.gid;
       std::set<GlobalPoint> connected_nodes = it->second;
       ST weight; 
       ST zero = 0.0;  
@@ -201,7 +201,7 @@ ATOT::SpatialFilter::buildOperator(
       if( connected_nodes.size() > 0 ){
         for (std::set<GlobalPoint>::iterator 
              set_it=connected_nodes.begin(); set_it!=connected_nodes.end(); ++set_it) {
-           GO neighbor_node_gid = set_it->gid;
+           Tpetra_GO neighbor_node_gid = set_it->gid;
            const double* coords = &(set_it->coords[0]);
            double distance = 0.0;
            for (int dim=0; dim<dimension; dim++) 

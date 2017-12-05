@@ -42,7 +42,7 @@ namespace {
 typedef int EpetraInt;
 
 Teuchos::RCP< Teuchos::Array<int> >
-convert (const Teuchos::Array<GO>& indicesAV) {
+convert (const Teuchos::Array<Tpetra_GO>& indicesAV) {
   Teuchos::RCP< Teuchos::Array<int> > ind = Teuchos::rcp(
       new Teuchos::Array<int>(indicesAV.size()));
   for (std::size_t i = 0; i < indicesAV.size(); ++i) {
@@ -888,8 +888,8 @@ void Albany::APFDiscretization::computeGraphs()
         GO row = getDOF(cellNodes[j],k);
         for (int l=0; l < n_nodes_in_elem[i]; ++l) {
           for (int m=0; m < neq; ++m) {
-            GO col = getDOF(cellNodes[l],m);
-            Teuchos::ArrayView<GO> colAV = Teuchos::arrayView(&col, 1);
+            Tpetra_GO col = getDOF(cellNodes[l],m);
+            auto colAV = Teuchos::arrayView(&col, 1);
             overlap_graphT->insertGlobalIndices(row, colAV);
 #if defined(ALBANY_EPETRA)
             EpetraInt ecol = Teuchos::as<EpetraInt>(col);
