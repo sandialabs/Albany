@@ -13,7 +13,7 @@
 #include "Albany_DataTypes.hpp"
 #include "Albany_MaterialDatabase.hpp"
 #include "Albany_ModelEvaluatorT.hpp"
-#include "SolutionSniffer.hpp"
+#include "Piro_NOXSolver.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
 #include "Thyra_ResponseOnlyModelEvaluatorBase.hpp"
@@ -252,7 +252,7 @@ private:
 
   // Used if solving with loca or tempus
   bool
-  have_loca_{false};
+  have_nox_{false};
 
   bool
   have_tempus_{false};

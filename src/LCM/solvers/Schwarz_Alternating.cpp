@@ -113,7 +113,7 @@ SchwarzAlternating(
   internal_states_.resize(num_subdomains_);
 
   bool
-  have_loca{false};
+  have_nox{false};
 
   bool
   have_tempus{false};
@@ -146,17 +146,17 @@ SchwarzAlternating(
     piro_params = params.sublist("Piro");
 
     std::string const
-    msg{"All subdomains must have the same solution method (LOCA or Tempus)"};
+    msg{"All subdomains must have the same solution method (NOX or Tempus)"};
 
     if (subdomain == 0) { 
-      have_loca = piro_params.isSublist("LOCA");
+      have_nox = piro_params.isSublist("NOX");
       have_tempus = piro_params.isSublist("Tempus");
-      ALBANY_ASSERT(have_loca != have_tempus, "Must have either LOCA or Tempus");
-      have_loca_ = have_loca;
+      ALBANY_ASSERT(have_nox != have_tempus, "Must have either NOX or Tempus");
+      have_nox_ = have_nox;
       have_tempus_ = have_tempus;
     }
     else {
-      ALBANY_ASSERT(have_loca == piro_params.isSublist("LOCA"), msg);
+      ALBANY_ASSERT(have_nox == piro_params.isSublist("NOX"), msg);
       ALBANY_ASSERT(have_tempus == piro_params.isSublist("Tempus"), msg);
     }
 
@@ -473,7 +473,7 @@ evalModelImpl(
     Thyra::ModelEvaluatorBase::InArgs<ST> const &,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const &) const
 {
-  if (have_loca_ == true) {
+  if (have_nox_ == true) {
     SchwarzLoopQuasistatics();
   }
   if (have_tempus_ == true) {
@@ -1162,32 +1162,11 @@ SchwarzLoopQuasistatics() const
         solver = *(solvers_[subdomain]);
 
         auto &
-        piro_loca_solver = dynamic_cast<Piro::LOCASolver<ST> &>(solver);
+        piro_nox_solver = dynamic_cast<Piro::NOXSolver<ST> &>(solver);
 
-        auto &
-        stepper = *piro_loca_solver.getStepper();
-
-        stepper.setStartValue(current_time);
-        stepper.setMinValue(current_time);
-        stepper.setMaxValue(next_time);
-        stepper.setStepSize(time_step);
-
-        auto const
-        init_time = stepper.getStartValue();
-
-        auto const
-        start_time = stepper.getMinValue();
-
-        auto const
-        stop_time = stepper.getMaxValue();
-
-        auto const
-        step_size = stepper.getStepSize();
-
-        fos << "Initial time       :" << init_time << '\n';
-        fos << "Start time         :" << start_time << '\n';
-        fos << "Stop time          :" << stop_time << '\n';
-        fos << "Step size          :" << step_size << '\n';
+        fos << "Start time         :" << current_time << '\n';
+        fos << "Stop time          :" << next_time << '\n';
+        fos << "Step size          :" << time_step << '\n';
         fos << delim << std::endl;
 
         auto &
@@ -1211,7 +1190,10 @@ SchwarzLoopQuasistatics() const
         me.setCurrentTime(current_time);
 
         auto &
-        nox_solver = *piro_loca_solver.getSolver();
+        const_nox_solver = *piro_nox_solver.getSolver()->getNOXSolver();
+
+        auto &
+        nox_solver = const_cast<NOX::Solver::Generic &>(const_nox_solver);
 
         auto
         prev_disp_rcp = is_initial_state == true ?
@@ -1233,7 +1215,7 @@ SchwarzLoopQuasistatics() const
         solver.evalModel(in_args, out_args);
 
         auto const
-        status = piro_loca_solver.getSolver()->getStatus();
+        status = nox_solver.getStatus();
 
         if (status == NOX::StatusTest::Failed) {
           fos << "\nINFO: Unable to solve for subdomain " << subdomain << '\n';
@@ -1243,7 +1225,7 @@ SchwarzLoopQuasistatics() const
         }
 
         auto const &
-        disp_group = piro_loca_solver.getSolver()->getSolutionGroup();
+        disp_group = nox_solver.getSolutionGroup();
 
         auto
         curr_disp_rcp = disp_group.getX().clone(NOX::DeepCopy);
