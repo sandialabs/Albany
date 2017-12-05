@@ -1189,30 +1189,33 @@ SchwarzLoopQuasistatics() const
 
         me.setCurrentTime(current_time);
 
-        auto &
-        const_nox_solver = *piro_nox_solver.getSolver()->getNOXSolver();
-
-        auto &
-        nox_solver = const_cast<NOX::Solver::Generic &>(const_nox_solver);
-
         auto
         prev_disp_rcp = is_initial_state == true ?
-            nox_solver.getPreviousSolutionGroup().getX().clone(NOX::DeepCopy) :
+            me.getNominalValues().get_x() :
             prev_disp_nox_[subdomain];
 
         auto const &
         prev_disp = *prev_disp_rcp;
 
+        me.getNominalValues().set_x(prev_disp_rcp);
+
 #if defined(DEBUG)
         fos << "\n*** NOX: Previous solution ***\n";
-        prev_disp.print(fos);
-        fos << "\n*** NORM: " << prev_disp.norm() << '\n';
+        prev_disp.describe(fos, Teuchos::VERB_EXTREME);
+        fos << "\n*** NORM: " << Thyra::norm(prev_disp) << '\n';
         fos << "\n*** NOX: Previous solution ***\n";
 #endif //DEBUG
 
-        nox_solver.reset(prev_disp);
-
         solver.evalModel(in_args, out_args);
+
+        auto const &
+        thyra_nox_solver = *piro_nox_solver.getSolver();
+
+        auto const &
+        const_nox_solver = *thyra_nox_solver.getNOXSolver();
+
+        auto &
+        nox_solver = const_cast<NOX::Solver::Generic &>(const_nox_solver);
 
         auto const
         status = nox_solver.getStatus();
@@ -1224,42 +1227,45 @@ SchwarzLoopQuasistatics() const
           break;
         }
 
-        auto const &
-        disp_group = nox_solver.getSolutionGroup();
-
         auto
-        curr_disp_rcp = disp_group.getX().clone(NOX::DeepCopy);
+        curr_disp_rcp = thyra_nox_solver.get_current_x();
 
         auto const &
         curr_disp = *curr_disp_rcp;
 
 #if defined(DEBUG)
         fos << "\n*** NOX: Current solution ***\n";
-        curr_disp.print(fos);
-        fos << "\n*** NORM: " << curr_disp.norm() << '\n';
+        curr_disp.describe(fos, Teuchos::VERB_EXTREME);
+        fos << "\n*** NORM: " << Thyra::norm(curr_disp) << '\n';
         fos << "\n*** NOX: Current solution ***\n";
 #endif //DEBUG
 
-        auto
-        disp_diff_rcp = curr_disp.clone(NOX::DeepCopy);
+        Teuchos::RCP<Thyra::VectorBase<ST>>
+        disp_diff_rcp = Thyra::createMember(me.get_x_space());
+
+        Thyra::put_scalar<ST>(0.0, disp_diff_rcp.ptr());
+
+        Thyra::V_VpStV(
+            disp_diff_rcp.ptr(),
+            curr_disp,
+            -1.0,
+            prev_disp);
 
         auto &
         disp_diff = *disp_diff_rcp;
 
-        disp_diff.update(1.0, curr_disp, -1.0, prev_disp, 0.0);
-
 #if defined(DEBUG)
         fos << "\n*** NOX: Solution difference ***\n";
-        disp_diff.print(fos);
-        fos << "\n*** NORM: " << disp_diff.norm() << '\n';
+        disp_diff.describe(fos, Teuchos::VERB_EXTREME);
+        fos << "\n*** NORM: " << Thyra::norm(disp_diff) << '\n';
         fos << "\n*** NOX: Solution difference ***\n";
 #endif //DEBUG
 
         // After solve, save solution and get info to check convergence
         disp_nox_[subdomain] = curr_disp_rcp;
-        norms_init(subdomain) = prev_disp.norm();
-        norms_final(subdomain) = curr_disp.norm();
-        norms_diff(subdomain) = disp_diff.norm();
+        norms_init(subdomain) = Thyra::norm(prev_disp);
+        norms_final(subdomain) = Thyra::norm(curr_disp);
+        norms_diff(subdomain) = Thyra::norm(disp_diff);
       } // Subdomain loop
 
       if (failed_ == true) {

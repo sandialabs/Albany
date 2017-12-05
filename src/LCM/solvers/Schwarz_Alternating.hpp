@@ -223,10 +223,10 @@ private:
   mutable std::vector<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
   model_evaluators_;
 
-  mutable std::vector<Teuchos::RCP<NOX::Abstract::Vector>>
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const>>
   disp_nox_;
 
-  mutable std::vector<Teuchos::RCP<NOX::Abstract::Vector>>
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const>>
   prev_disp_nox_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
