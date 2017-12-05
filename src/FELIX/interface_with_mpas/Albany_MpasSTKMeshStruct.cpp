@@ -46,7 +46,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 
   Ordering = (ordering==0) ? LAYER : COLUMN;
 
-  std::vector<GO> indexToPrismID(indexToTriangleID.size()*numLayers);
+  std::vector<Tpetra_GO> indexToPrismID(indexToTriangleID.size()*numLayers);
 
   //Int ElemColumnShift = (ordering == ColumnWise) ? 1 : indexToTriangleID.size();
   int elemColumnShift = (Ordering == COLUMN) ? 1 : nGlobalTriangles;
@@ -64,7 +64,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 	  }
   }
 
-  Teuchos::ArrayView<const GO> indexToPrismIDAV = Teuchos::arrayViewFromVector(indexToPrismID);
+  auto indexToPrismIDAV = Teuchos::arrayViewFromVector(indexToPrismID);
 
   // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
   elem_mapT = Teuchos::rcp(new Tpetra_Map(nGlobalTriangles*numLayers, indexToPrismIDAV, 0, commT));
@@ -167,7 +167,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 
   Ordering = (ordering==0) ? LAYER : COLUMN;
 
-  std::vector<GO> indexToTetraID(3*indexToTriangleID.size()*numLayers);
+  std::vector<Tpetra_GO> indexToTetraID(3*indexToTriangleID.size()*numLayers);
 
   //Int ElemColumnShift = (ordering == ColumnWise) ? 1 : indexToTriangleID.size();
   int elemColumnShift = (Ordering == COLUMN) ? 3 : 3*nGlobalTriangles;
@@ -188,7 +188,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 	  }
   }
 
-  Teuchos::ArrayView<const GO> indexToTetraIDAV = Teuchos::arrayViewFromVector(indexToTetraID);
+  auto indexToTetraIDAV = Teuchos::arrayViewFromVector(indexToTetraID);
   // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
   elem_mapT = Teuchos::rcp(new Tpetra_Map(3*nGlobalTriangles*numLayers, indexToTetraIDAV, 0, commT));
 

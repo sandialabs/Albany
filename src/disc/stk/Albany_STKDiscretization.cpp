@@ -1842,8 +1842,6 @@ Albany::STKDiscretization::insertPeridigmNonzerosIntoGraph()
     computeGraphsUpToFillComplete();
 
     // Allocate nonzeros for the peridynamic portion of the graph
-    GO                     globalRow, globalCol;
-    Teuchos::ArrayView<GO> globalColAV;
     int                    peridigmLocalRow;
     int                    numEntries;
     double*                values;
@@ -1856,13 +1854,13 @@ Albany::STKDiscretization::insertPeridigmNonzerosIntoGraph()
       if (num_nodes == 1) {
         stk::mesh::Entity rowNode = node_rels[0];
         for (std::size_t k = 0; k < neq; k++) {
-          globalRow        = getGlobalDOF(gid(rowNode), k);
-          peridigmLocalRow = peridigmMatrix->RowMap().LID(globalRow);
+          auto globalRow        = getGlobalDOF(gid(rowNode), k);
+          peridigmLocalRow = peridigmMatrix->RowMap().LID(static_cast<long long>(globalRow));
           peridigmMatrix->ExtractMyRowView(
               peridigmLocalRow, numEntries, values, indices);
           for (int i = 0; i < numEntries; ++i) {
-            globalCol   = peridigmMatrix->ColMap().GID(indices[i]);
-            globalColAV = Teuchos::arrayView(&globalCol, 1);
+            Tpetra_GO globalCol   = peridigmMatrix->ColMap().GID(indices[i]);
+            auto globalColAV = Teuchos::arrayView(&globalCol, 1);
             overlap_graphT->insertGlobalIndices(globalRow, globalColAV);
           }
         }

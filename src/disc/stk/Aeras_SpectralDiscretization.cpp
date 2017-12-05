@@ -1000,7 +1000,7 @@ Teuchos::RCP<Epetra_Vector>
 Aeras::SpectralDiscretization::getSolutionField(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
-  Teuchos::ArrayView<const GO> indicesAV = mapT->getNodeElementList();
+  auto indicesAV = mapT->getNodeElementList();
   int numElements = mapT->getNodeNumElements();
   Teuchos::Array<int> i_indices(numElements);
   for(std::size_t k = 0; k < numElements; k++)
