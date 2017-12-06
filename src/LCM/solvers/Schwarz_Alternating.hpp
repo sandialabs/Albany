@@ -131,6 +131,9 @@ private:
   continueSolve() const;
 
   void
+  doQuasistaticOutput(ST const time) const;
+
+  void
   reportFinals(std::ostream & os) const;
 
   std::vector<Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>>

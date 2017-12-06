@@ -1039,6 +1039,38 @@ SchwarzLoopDynamics() const
 }
 
 //
+//
+//
+void
+SchwarzAlternating::
+doQuasistaticOutput(ST const time) const
+{
+  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
+    auto &
+    stk_mesh_struct = *stk_mesh_structs_[subdomain];
+
+    stk_mesh_struct.exoOutputInterval = 1;
+    stk_mesh_struct.exoOutput = true;
+
+    auto &
+    abs_disc = *discs_[subdomain];
+
+    auto &
+    stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
+
+    auto &
+    disp_mv = *stk_disc.getSolutionMV();
+
+    stk_disc.writeSolutionMV(disp_mv, time);
+
+    stk_mesh_struct.exoOutput = false;
+  }
+
+  return;
+}
+
+//
 // Schwarz Alternating loop, quasistatic
 //
 void
@@ -1053,18 +1085,6 @@ SchwarzLoopQuasistatics() const
 
   minitensor::Vector<ST>
   norms_diff(num_subdomains_, minitensor::Filler::ZEROS);
-
-  std::string
-  init_str{"Initial Value"};
-
-  std::string
-  start_str{"Min Value"};
-
-  std::string
-  stop_str{"Max Value"};
-
-  std::string
-  step_str{"Initial Step Size"};
 
   std::string const
   delim(72, '=');
@@ -1086,31 +1106,8 @@ SchwarzLoopQuasistatics() const
   ST
   current_time{initial_time_};
 
-  // Output initial configuration. Then disable output.
-  // Handle it after Schwarz iteration.
-
-  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
-
-    Albany::AbstractSTKMeshStruct &
-    ams = *stk_mesh_structs_[subdomain];
-
-    ams.exoOutputInterval = 1;
-    ams.exoOutput = true;
-
-    Albany::AbstractDiscretization &
-    abs_disc = *discs_[subdomain];
-  
-    Albany::STKDiscretization &
-    stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
-
-    Teuchos::RCP<Tpetra_MultiVector>
-    disp_mv_rcp = stk_disc.getSolutionMV();
-
-    stk_disc.writeSolutionMV(*disp_mv_rcp, initial_time_);
-
-    ams.exoOutput = false;
-
-  }
+  // Output initial configuration.
+  doQuasistaticOutput(current_time);
 
   // Continuation loop
   while (stop < maximum_steps_ && current_time < final_time_) {
@@ -1156,19 +1153,12 @@ SchwarzLoopQuasistatics() const
         fos << "Schwarz iteration  :" << num_iter_ << '\n';
         fos << "Subdomain          :" << subdomain << '\n';
         fos << delim << std::endl;
-
-        // Solve for each subdomain
-        auto &
-        solver = *(solvers_[subdomain]);
-
-        auto &
-        piro_nox_solver = dynamic_cast<Piro::NOXSolver<ST> &>(solver);
-
         fos << "Start time         :" << current_time << '\n';
         fos << "Stop time          :" << next_time << '\n';
         fos << "Step size          :" << time_step << '\n';
         fos << delim << std::endl;
 
+        // Restore internal states
         auto &
         app = *apps_[subdomain];
 
@@ -1177,17 +1167,10 @@ SchwarzLoopQuasistatics() const
 
         state_mgr.setStateArrays(internal_states_[subdomain]);
 
-        auto
-        in_args = solver.createInArgs();
-
-        auto
-        out_args = solver.createOutArgs();
-
+        // Restore previous solution
         auto &
         me = dynamic_cast<Albany::ModelEvaluatorT &>
         (*model_evaluators_[subdomain]);
-
-        me.setCurrentTime(current_time);
 
         auto
         prev_disp_rcp = is_initial_state == true ?
@@ -1206,8 +1189,25 @@ SchwarzLoopQuasistatics() const
         fos << "\n*** NOX: Previous solution ***\n";
 #endif //DEBUG
 
+        // Target time
+        me.setCurrentTime(next_time);
+
+        // Solve for each subdomain
+        auto &
+        solver = *(solvers_[subdomain]);
+
+        auto &
+        piro_nox_solver = dynamic_cast<Piro::NOXSolver<ST> &>(solver);
+
+        auto
+        in_args = solver.createInArgs();
+
+        auto
+        out_args = solver.createOutArgs();
+
         solver.evalModel(in_args, out_args);
 
+        // Check whether solver did OK.
         auto const &
         thyra_nox_solver = *piro_nox_solver.getSolver();
 
@@ -1227,6 +1227,7 @@ SchwarzLoopQuasistatics() const
           break;
         }
 
+        // Solver OK, extract solution
         auto
         curr_disp_rcp = thyra_nox_solver.get_current_x();
 
@@ -1240,16 +1241,15 @@ SchwarzLoopQuasistatics() const
         fos << "\n*** NOX: Current solution ***\n";
 #endif //DEBUG
 
-        Teuchos::RCP<Thyra::VectorBase<ST>>
+        // Compute difference between previous and current solutions
+        auto
         disp_diff_rcp = Thyra::createMember(me.get_x_space());
 
-        Thyra::put_scalar<ST>(0.0, disp_diff_rcp.ptr());
+        auto
+        disp_diff_ptr = disp_diff_rcp.ptr();
 
-        Thyra::V_VpStV(
-            disp_diff_rcp.ptr(),
-            curr_disp,
-            -1.0,
-            prev_disp);
+        Thyra::put_scalar<ST>(0.0, disp_diff_ptr);
+        Thyra::V_VpStV(disp_diff_ptr, curr_disp, -1.0, prev_disp);
 
         auto &
         disp_diff = *disp_diff_rcp;
@@ -1294,13 +1294,11 @@ SchwarzLoopQuasistatics() const
       fos << centered("Final norm", 24);
       fos << centered("Difference norm", 24);
       fos << std::endl;
-
       fos << centered("dom", 4);
       fos << centered("||X0||", 24);
       fos << centered("||Xf||", 24);
       fos << centered("||Xf-X0||", 24);
       fos << std::endl;
-
       fos << line << std::endl;
 
       for (auto m = 0; m < num_subdomains_; ++m) {
@@ -1312,15 +1310,12 @@ SchwarzLoopQuasistatics() const
       }
 
       fos << line << std::endl;
-
       fos << centered("Norm", 4);
       fos << std::setw(24) << norm_init_;
       fos << std::setw(24) << norm_final_;
       fos << std::setw(24) << norm_diff_;
       fos << std::endl;
-
       fos << line << std::endl;
-
       fos << "Absolute error     :" << abs_error_ << '\n';
       fos << "Absolute tolerance :" << abs_tol_ << '\n';
       fos << "Relative error     :" << rel_error_ << '\n';
@@ -1363,29 +1358,7 @@ SchwarzLoopQuasistatics() const
         (stop + 1) % output_interval_ == 0 : false;
 
     if (do_output == true) {
-
-      for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
-
-        Albany::AbstractSTKMeshStruct &
-        ams = *stk_mesh_structs_[subdomain];
-
-        ams.exoOutputInterval = 1;
-        ams.exoOutput = true;
-
-        Albany::AbstractDiscretization &
-        abs_disc = *discs_[subdomain];
-
-        Albany::STKDiscretization &
-        stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
-
-        Teuchos::RCP<Tpetra_MultiVector>
-        disp_mv_rcp = stk_disc.getSolutionMV();
-
-        stk_disc.writeSolutionMV(*disp_mv_rcp, next_time);
-
-        ams.exoOutput = false;
-      }
-
+      doQuasistaticOutput(current_time);
     }
 
     ++stop;
