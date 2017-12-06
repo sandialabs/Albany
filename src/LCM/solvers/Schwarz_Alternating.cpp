@@ -1059,10 +1059,11 @@ doQuasistaticOutput(ST const time) const
     auto &
     stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
 
-    auto &
-    disp_mv = *stk_disc.getSolutionMV();
+    // Do not dereference this RCP. Leads to SEGFAULT (!?)
+    auto
+    disp_mv_rcp = stk_disc.getSolutionMV();
 
-    stk_disc.writeSolutionMV(disp_mv, time);
+    stk_disc.writeSolutionMV(*disp_mv_rcp, time);
 
     stk_mesh_struct.exoOutput = false;
   }
