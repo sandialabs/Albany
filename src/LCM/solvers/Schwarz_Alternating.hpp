@@ -245,29 +245,23 @@ private:
   ics_acce_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  prev_disp_thyra_;
+  prev_disp_;
  
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  prev_velo_thyra_;
+  prev_velo_;
   
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  prev_acce_thyra_;
+  prev_acce_;
   
   mutable std::vector<Albany::StateArrays>
   internal_states_;
 
   // Used if solving with loca or tempus
   bool
-  have_nox_{false};
+  is_static_{false};
 
   bool
-  have_tempus_{false};
-  
-  bool 
-  velo_in_conv_{false};
-  
-  bool 
-  acce_in_conv_{false}; 
+  is_dynamic_{false};
 };
 
 } // namespace LCM

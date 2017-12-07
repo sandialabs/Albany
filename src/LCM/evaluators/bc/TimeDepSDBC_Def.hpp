@@ -7,7 +7,7 @@
 #include "Albany_Utils.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#define DEBUG
+//#define DEBUG
 
 namespace LCM {
 

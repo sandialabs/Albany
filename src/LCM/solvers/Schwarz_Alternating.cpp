@@ -11,7 +11,7 @@
 #include "Piro_TempusSolver.hpp"
 #include "Schwarz_Alternating.hpp"
 
-#define DEBUG
+//#define DEBUG
 
 namespace LCM {
 
@@ -40,15 +40,6 @@ SchwarzAlternating(
   initial_time_ = alt_system_params.get<ST>("Initial Time", 0.0);
   final_time_ = alt_system_params.get<ST>("Final Time", 0.0);
   initial_time_step_ = alt_system_params.get<ST>("Initial Time Step", 1.0);
-  velo_in_conv_ = alt_system_params.get<bool>("Use Velocity in Convergence Criterion", true); 
-  acce_in_conv_ = alt_system_params.get<bool>("Use Acceleration in Convergence Criterion", true); 
-
-#ifdef DEBUG
-  auto &
-  fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
-  fos << "Use Velocity in Convergence Criterion = " << velo_in_conv_ << "\n";
-  fos << "Use Acceleration in Convergence Criterion = " << acce_in_conv_ << "\n";
-#endif
 
   ST const
   dt = initial_time_step_;
@@ -108,16 +99,16 @@ SchwarzAlternating(
   ics_disp_.resize(num_subdomains_);
   ics_velo_.resize(num_subdomains_);
   ics_acce_.resize(num_subdomains_);
-  prev_disp_thyra_.resize(num_subdomains_);
-  prev_velo_thyra_.resize(num_subdomains_);
-  prev_acce_thyra_.resize(num_subdomains_);
+  prev_disp_.resize(num_subdomains_);
+  prev_velo_.resize(num_subdomains_);
+  prev_acce_.resize(num_subdomains_);
   internal_states_.resize(num_subdomains_);
 
   bool
-  have_nox{false};
+  is_static{false};
 
   bool
-  have_tempus{false};
+  is_dynamic{false};
 
   // Initialization
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
@@ -150,15 +141,16 @@ SchwarzAlternating(
     msg{"All subdomains must have the same solution method (NOX or Tempus)"};
 
     if (subdomain == 0) { 
-      have_nox = piro_params.isSublist("NOX");
-      have_tempus = piro_params.isSublist("Tempus");
-      ALBANY_ASSERT(have_nox != have_tempus, "Must have either NOX or Tempus");
-      have_nox_ = have_nox;
-      have_tempus_ = have_tempus;
+      is_dynamic = piro_params.isSublist("Tempus");
+      is_static = !is_dynamic;
+      is_static_ = is_static;
+      is_dynamic_ = is_dynamic;
     }
-    else {
-      ALBANY_ASSERT(have_nox == piro_params.isSublist("NOX"), msg);
-      ALBANY_ASSERT(have_tempus == piro_params.isSublist("Tempus"), msg);
+    if (is_static == true) {
+      ALBANY_ASSERT(piro_params.isSublist("NOX") == true, msg);
+    }
+    if (is_dynamic == true) {
+      ALBANY_ASSERT(piro_params.isSublist("Tempus") == true, msg);
     }
 
     Teuchos::RCP<Albany::Application>
@@ -474,11 +466,11 @@ evalModelImpl(
     Thyra::ModelEvaluatorBase::InArgs<ST> const &,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const &) const
 {
-  if (have_nox_ == true) {
-    SchwarzLoopQuasistatics();
-  }
-  if (have_tempus_ == true) {
+  if (is_dynamic_ == true) {
     SchwarzLoopDynamics();
+  }
+  if (is_static_ == true) {
+    SchwarzLoopQuasistatics();
   }
   return;
 }
@@ -657,10 +649,6 @@ SchwarzLoopDynamics() const
         
     ics_disp_[subdomain] = Thyra::createMember(me.get_x_space());
     Thyra::copy(*(nv.get_x()), ics_disp_[subdomain].ptr());
-    //fos << "IKT subdomain = " << subdomain << ", ics_disp_  = " << std::endl; 
-    //const Teuchos::RCP<const Tpetra_Vector> ic =
-    //ConverterT::getConstTpetraVector(ics_disp_[subdomain]);
-    //ic->describe(fos, Teuchos::VERB_EXTREME);
 
     ics_velo_[subdomain] = Thyra::createMember(me.get_x_space());
     Thyra::copy(*(nv.get_x_dot()), ics_velo_[subdomain].ptr());
@@ -668,41 +656,22 @@ SchwarzLoopDynamics() const
     ics_acce_[subdomain] = Thyra::createMember(me.get_x_space());
     Thyra::copy(*(nv.get_x_dot_dot()), ics_acce_[subdomain].ptr());
 
-    prev_disp_thyra_[subdomain] = Thyra::createMember(me.get_x_space());
-    Thyra::copy(*(nv.get_x()), prev_disp_thyra_[subdomain].ptr());
+    prev_disp_[subdomain] = Thyra::createMember(me.get_x_space());
+    Thyra::copy(*(nv.get_x()), prev_disp_[subdomain].ptr());
     
-    prev_velo_thyra_[subdomain] = Thyra::createMember(me.get_x_space());
-    Thyra::copy(*(nv.get_x_dot()), prev_velo_thyra_[subdomain].ptr());
+    prev_velo_[subdomain] = Thyra::createMember(me.get_x_space());
+    Thyra::copy(*(nv.get_x_dot()), prev_velo_[subdomain].ptr());
 
-    prev_acce_thyra_[subdomain] = Thyra::createMember(me.get_x_space());
-    Thyra::copy(*(nv.get_x_dot_dot()), prev_acce_thyra_[subdomain].ptr());
+    prev_acce_[subdomain] = Thyra::createMember(me.get_x_space());
+    Thyra::copy(*(nv.get_x_dot_dot()), prev_acce_[subdomain].ptr());
 
     //Write initial condition to STK mesh 
-    Teuchos::RCP<Tpetra_Vector const> const
-    prev_disp_tpetra = ConverterT::getConstTpetraVector(prev_disp_thyra_[subdomain]);
-
-    Teuchos::RCP<Tpetra_Vector const> const
-    prev_velo_tpetra = ConverterT::getConstTpetraVector(prev_velo_thyra_[subdomain]);
-
-    Teuchos::RCP<Tpetra_Vector const> const
-    prev_acce_tpetra = ConverterT::getConstTpetraVector(prev_acce_thyra_[subdomain]);
-
-#if defined(DEBUG)
-    if (subdomain == 0) {
-      Tpetra_MatrixMarket_Writer::writeDenseFile("init_disp0.mm", prev_disp_tpetra);
-    }
-    else if (subdomain == 1) {
-      Tpetra_MatrixMarket_Writer::writeDenseFile("init_disp1.mm", prev_disp_tpetra);
-    }
-#endif
-
-    const Teuchos::RCP<const Tpetra_MultiVector> xMV =
-      apps_[subdomain]->getAdaptSolMgrT()->getOverlappedSolution();
+    Teuchos::RCP<Tpetra_MultiVector const> const
+    xMV = apps_[subdomain]->getAdaptSolMgrT()->getOverlappedSolution();
 
     stk_disc.writeSolutionMV(*xMV, initial_time_, true); 
 
     ams.exoOutput = false;
-
   }
 
 
@@ -720,6 +689,7 @@ SchwarzLoopDynamics() const
 
     num_iter_ = 0;
 
+    // Schwarz loop
     do {
     
       bool const
@@ -744,18 +714,9 @@ SchwarzLoopDynamics() const
         piro_tempus_solver.setFinalTime(next_time); 
         piro_tempus_solver.setInitTimeStep(time_step);
 
-        double const
-        tempus_start_time = piro_tempus_solver.getStartTime();
-
-        double const
-        tempus_final_time = piro_tempus_solver.getFinalTime();
-
-        double const
-        tempus_time_step = piro_tempus_solver.getInitTimeStep();
-
-        fos << "Initial time       :" << tempus_start_time << '\n';
-        fos << "Final time         :" << tempus_final_time << '\n';
-        fos << "Time step          :" << tempus_time_step << '\n';
+        fos << "Initial time       :" << current_time << '\n';
+        fos << "Final time         :" << next_time << '\n';
+        fos << "Time step          :" << time_step << '\n';
         fos << delim << std::endl;
 
         auto &
@@ -818,15 +779,15 @@ SchwarzLoopDynamics() const
         prev_disp_tpetra;
 
         fos << "\n*** Thyra: Previous solution ***\n";
-        prev_disp_thyra_[subdomain]->describe(fos, Teuchos::VERB_EXTREME);
-        fos << "\n*** NORM: " << Thyra::norm(*prev_disp_thyra_[subdomain]) << '\n';
+        prev_disp_[subdomain]->describe(fos, Teuchos::VERB_EXTREME);
+        fos << "\n*** NORM: " << Thyra::norm(*prev_disp_[subdomain]) << '\n';
         if (subdomain == 0) {
-          prev_disp_tpetra = ConverterT::getTpetraVector(prev_disp_thyra_[0]);
-          Albany::writeMatrixMarket(prev_disp_tpetra, "prev_disp_subd0", num_iter_);
+          prev_disp_tpetra = ConverterT::getTpetraVector(prev_disp_[0]);
+          Albany::writeMatrixMarket(prev_disp_tpetra, "prev_disp0", num_iter_);
         }
         else if (subdomain == 1) {
-          prev_disp_tpetra = ConverterT::getTpetraVector(prev_disp_thyra_[1]);
-          Albany::writeMatrixMarket(prev_disp_tpetra, "prev_disp_subd1", num_iter_);
+          prev_disp_tpetra = ConverterT::getTpetraVector(prev_disp_[1]);
+          Albany::writeMatrixMarket(prev_disp_tpetra, "prev_disp1", num_iter_);
         }
         fos << "\n*** Thyra: Previous solution ***\n";
 #endif //DEBUG
@@ -858,11 +819,11 @@ SchwarzLoopDynamics() const
 
         if (subdomain == 0) {
           curr_disp_tpetra = ConverterT::getTpetraVector(curr_disp_rcp); 
-          Albany::writeMatrixMarket(curr_disp_tpetra, "curr_disp_subd0", num_iter_);
+          Albany::writeMatrixMarket(curr_disp_tpetra, "curr_disp0", num_iter_);
         }
         else if (subdomain == 1) {
           curr_disp_tpetra = ConverterT::getTpetraVector(curr_disp_rcp); 
-          Albany::writeMatrixMarket(curr_disp_tpetra, "curr_disp_subd1", num_iter_);
+          Albany::writeMatrixMarket(curr_disp_tpetra, "curr_disp1", num_iter_);
         }
 #endif //DEBUG
 
@@ -873,7 +834,7 @@ SchwarzLoopDynamics() const
             disp_diff_rcp.ptr(),
             *curr_disp_rcp,
             -1.0,
-            *prev_disp_thyra_[subdomain]);
+            *prev_disp_[subdomain]);
 
         Teuchos::RCP<Thyra::VectorBase<ST>>
         velo_diff_rcp = Thyra::createMember(me.get_x_space());
@@ -882,7 +843,7 @@ SchwarzLoopDynamics() const
             velo_diff_rcp.ptr(),
             *curr_velo_rcp,
             -1.0,
-            *prev_velo_thyra_[subdomain]);
+            *prev_velo_[subdomain]);
 
         Teuchos::RCP<Thyra::VectorBase<ST>>
         acce_diff_rcp = Thyra::createMember(me.get_x_space());
@@ -891,7 +852,7 @@ SchwarzLoopDynamics() const
             acce_diff_rcp.ptr(),
             *curr_acce_rcp,
             -1.0,
-            *prev_acce_thyra_[subdomain]);
+            *prev_acce_[subdomain]);
 
 #if defined(DEBUG)
         fos << "\n*** Thyra: Solution difference ***\n"; 
@@ -904,38 +865,40 @@ SchwarzLoopDynamics() const
 
         if (subdomain == 0) {
           disp_diff_tpetra = ConverterT::getTpetraVector(disp_diff_rcp); 
-          Albany::writeMatrixMarket(disp_diff_tpetra, "disp_diff_subd0", num_iter_);
+          Albany::writeMatrixMarket(disp_diff_tpetra, "disp_diff0", num_iter_);
         }
         else if (subdomain == 1) {
           disp_diff_tpetra = ConverterT::getTpetraVector(disp_diff_rcp); 
-          Albany::writeMatrixMarket(disp_diff_tpetra, "disp_diff_subd1", num_iter_);
+          Albany::writeMatrixMarket(disp_diff_tpetra, "disp_diff1", num_iter_);
         }
 #endif //DEBUG
 
         //After solve, save solution and get info to check convergence
-        norms_init(subdomain) = Thyra::norm(*prev_disp_thyra_[subdomain]); 
+        norms_init(subdomain) = Thyra::norm(*prev_disp_[subdomain]); 
         norms_final(subdomain) = Thyra::norm(*curr_disp_rcp);
         norms_diff(subdomain) = Thyra::norm(*disp_diff_rcp);
+
+        auto const
+        dt = time_step;
          
-        if (velo_in_conv_ == true) {
-          norms_init(subdomain)  += time_step*Thyra::norm(*prev_velo_thyra_[subdomain]); 
-          norms_final(subdomain) += time_step*Thyra::norm(*curr_velo_rcp); 
-          norms_diff(subdomain)  += time_step*Thyra::norm(*velo_diff_rcp);
-        }
+        norms_init(subdomain)  += dt * Thyra::norm(*prev_velo_[subdomain]);
+        norms_final(subdomain) += dt * Thyra::norm(*curr_velo_rcp);
+        norms_diff(subdomain)  += dt * Thyra::norm(*velo_diff_rcp);
+
+        auto const
+        dt2 = dt * dt;;
        
-        if (acce_in_conv_ == true) { 
-          norms_init(subdomain)  += time_step*time_step*Thyra::norm(*prev_acce_thyra_[subdomain]); 
-          norms_final(subdomain) += time_step*time_step*Thyra::norm(*curr_acce_rcp); 
-          norms_diff(subdomain)  += time_step*time_step*Thyra::norm(*acce_diff_rcp); 
-        }
+        norms_init(subdomain)  += dt2 * Thyra::norm(*prev_acce_[subdomain]);
+        norms_final(subdomain) += dt2 * Thyra::norm(*curr_acce_rcp);
+        norms_diff(subdomain)  += dt2 * Thyra::norm(*acce_diff_rcp);
  
         //Update prev_disp_thyra_. 
-        Thyra::put_scalar(0.0, prev_disp_thyra_[subdomain].ptr());  
-        Thyra::copy(*curr_disp_rcp, prev_disp_thyra_[subdomain].ptr());
-        Thyra::put_scalar(0.0, prev_velo_thyra_[subdomain].ptr());  
-        Thyra::copy(*curr_velo_rcp, prev_velo_thyra_[subdomain].ptr());
-        Thyra::put_scalar(0.0, prev_acce_thyra_[subdomain].ptr());  
-        Thyra::copy(*curr_acce_rcp, prev_acce_thyra_[subdomain].ptr());
+        Thyra::put_scalar(0.0, prev_disp_[subdomain].ptr());  
+        Thyra::copy(*curr_disp_rcp, prev_disp_[subdomain].ptr());
+        Thyra::put_scalar(0.0, prev_velo_[subdomain].ptr());  
+        Thyra::copy(*curr_velo_rcp, prev_velo_[subdomain].ptr());
+        Thyra::put_scalar(0.0, prev_acce_[subdomain].ptr());  
+        Thyra::copy(*curr_acce_rcp, prev_acce_[subdomain].ptr());
 
       } //subdomains loop 
 
@@ -958,13 +921,11 @@ SchwarzLoopDynamics() const
       fos << centered("Final norm", 24);
       fos << centered("Difference norm", 24);
       fos << std::endl;
-
       fos << centered("dom", 4);
       fos << centered("||X0||", 24);
       fos << centered("||Xf||", 24);
       fos << centered("||Xf-X0||", 24);
       fos << std::endl;
-
       fos << line << std::endl;
 
       for (auto m = 0; m < num_subdomains_; ++m) {
@@ -976,15 +937,12 @@ SchwarzLoopDynamics() const
       }
 
       fos << line << std::endl;
-
       fos << centered("Norm", 4);
       fos << std::setw(24) << norm_init_;
       fos << std::setw(24) << norm_final_;
       fos << std::setw(24) << norm_diff_;
       fos << std::endl;
-
       fos << line << std::endl;
-
       fos << "Absolute error     :" << abs_error_ << '\n';
       fos << "Absolute tolerance :" << abs_tol_ << '\n';
       fos << "Relative error     :" << rel_error_ << '\n';
