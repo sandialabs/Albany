@@ -7,6 +7,7 @@
 #ifndef PHAL_DATATYPES
 #define PHAL_DATATYPES
 
+//TODO: this looks suspicious and temporary. remove it soon.
 #define AMB_KOKKOS
 
 //! Data Type Definitions that span the code.
@@ -23,12 +24,11 @@
 #include "Sacado_CacheFad_DFad.hpp"
 #include "Phalanx_KokkosDeviceTypes.hpp"
 
-//amb Need to move to configuration.
-//#define ALBANY_SFAD_SIZE 27
-//#define ALBANY_SLFAD_SIZE 27
+#include "TpetraCore_config.h"
 
-//#define ALBANY_FAST_FELIX
-// Typedef AD types to standard names
+#ifndef HAVE_TPETRA_INST_DOUBLE
+#error "Albany needs Tpetra to enable double as a Scalar type"
+#endif
 typedef double RealType;
 
 // Switch between dynamic and static FAD types
@@ -59,36 +59,48 @@ typedef Sacado::Fad::DFad<RealType> TanFadType;
 #include "MatrixMarket_Tpetra.hpp"
 #include "Tpetra_RowMatrixTransposer.hpp"
 
-
 //Kokkos includes
 #include "Phalanx_KokkosDeviceTypes.hpp"
 
 //Tpetra typedefs
-typedef RealType                                    ST;
-#ifdef ALBANY_64BIT_INT
-typedef long long int                               GO;
-#else
-typedef int                                         GO;
-#endif
-typedef int                                         LO;
+typedef RealType                                             ST;
+typedef std::int64_t                                         GO;
+typedef std::int32_t                                         LO;
 typedef Kokkos::Compat::KokkosDeviceWrapperNode<PHX::Device> KokkosNode;
 
+typedef int Tpetra_LO;
+#if defined( HAVE_TPETRA_INST_INT_LONG_LONG )
+typedef long long Tpetra_GO;
+#elif defined( HAVE_TPETRA_INST_INT_LONG )
+static_assert(sizeof(long) == sizeof(GO),
+    "Tpetra's biggest enabled GlobalOrdinal is long but thats not 64 bit");
+typedef long Tpetra_GO;
+#elif defined( HAVE_TPETRA_INST_INT_UNSIGNED_LONG )
+static_assert(sizeof(long) == sizeof(GO),
+    "Tpetra's biggest enabled GlobalOrdinal is unsigned long but thats not 64 bit");
+typedef unsigned long Tpetra_GO;
+#else
+#error "Albany needs Tpetra to have a 64-bit GlobalOrdinal enabled"
+#endif
+
 typedef Teuchos::Comm<int>                                            Teuchos_Comm;
-typedef Tpetra::Map<LO, GO, KokkosNode>                               Tpetra_Map;
-typedef Tpetra::Details::LocalMap<LO, GO, KokkosNode>                 Tpetra_LocalMap; 
-typedef Tpetra::Export<LO, GO, KokkosNode>                            Tpetra_Export;
-typedef Tpetra::Import<LO, GO, KokkosNode>                            Tpetra_Import;
-typedef Tpetra::CrsGraph<LO, GO, KokkosNode>                          Tpetra_CrsGraph;
-typedef Tpetra::CrsMatrix<ST, LO, GO, KokkosNode>                     Tpetra_CrsMatrix;
-typedef Tpetra::RowMatrix<ST, LO, GO, KokkosNode>                     Tpetra_RowMatrix;
-typedef Tpetra::Operator<ST, LO, GO, KokkosNode>                      Tpetra_Operator;
-typedef Tpetra::Vector<ST, LO, GO, KokkosNode>                        Tpetra_Vector;
-typedef Tpetra::MultiVector<ST, LO, GO, KokkosNode>                   Tpetra_MultiVector;
-typedef Thyra::TpetraOperatorVectorExtraction<ST, LO, GO, KokkosNode> ConverterT;
+typedef Tpetra::Map<Tpetra_LO, Tpetra_GO, KokkosNode>                 Tpetra_Map;
+typedef Tpetra::Details::LocalMap<Tpetra_LO, Tpetra_GO, KokkosNode>   Tpetra_LocalMap; 
+typedef Tpetra::Export<Tpetra_LO, Tpetra_GO, KokkosNode>              Tpetra_Export;
+typedef Tpetra::Import<Tpetra_LO, Tpetra_GO, KokkosNode>              Tpetra_Import;
+typedef Tpetra::CrsGraph<Tpetra_LO, Tpetra_GO, KokkosNode>            Tpetra_CrsGraph;
+typedef Tpetra::CrsMatrix<ST, Tpetra_LO, Tpetra_GO, KokkosNode>       Tpetra_CrsMatrix;
+typedef Tpetra::RowMatrix<ST, Tpetra_LO, Tpetra_GO, KokkosNode>       Tpetra_RowMatrix;
+typedef Tpetra::Operator<ST, Tpetra_LO, Tpetra_GO, KokkosNode>        Tpetra_Operator;
+typedef Tpetra::Vector<ST, Tpetra_LO, Tpetra_GO, KokkosNode>          Tpetra_Vector;
+typedef Tpetra::MultiVector<ST, Tpetra_LO, Tpetra_GO, KokkosNode>     Tpetra_MultiVector;
+typedef Thyra::TpetraOperatorVectorExtraction<
+    ST, Tpetra_LO, Tpetra_GO, KokkosNode> ConverterT;
 typedef Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>                Tpetra_MatrixMarket_Writer;
-typedef Thyra::TpetraVector<ST,LO,GO,KokkosNode>                      ThyraVector;
-typedef Thyra::TpetraMultiVector<ST,LO,GO,KokkosNode>                 ThyraMultiVector;
-typedef Tpetra::RowMatrixTransposer<ST, LO, GO, KokkosNode >          Tpetra_RowMatrixTransposer; 
+typedef Thyra::TpetraVector<ST,Tpetra_LO,Tpetra_GO,KokkosNode>        ThyraVector;
+typedef Thyra::TpetraMultiVector<ST,Tpetra_LO,Tpetra_GO,KokkosNode>   ThyraMultiVector;
+typedef Tpetra::RowMatrixTransposer<
+    ST, Tpetra_LO, Tpetra_GO, KokkosNode >                            Tpetra_RowMatrixTransposer; 
 
 // Include ScalarParameterLibrary to specialize its traits
 #include "Sacado_ScalarParameterLibrary.hpp"

@@ -697,7 +697,7 @@ Aggregator_Scaled::Evaluate()
         int numNodes = derSrc.dimension(1);
         for(int cell=0; cell<numCells; cell++)
           for(int node=0; node<numNodes; node++)
-            deriv.SumIntoGlobalValue(wsElNodeID[ws][cell][node], 0, 
+            deriv.SumIntoGlobalValue(static_cast<long long>(wsElNodeID[ws][cell][node]), 0, 
                                      scaleValueAggregated*normalize[sv]*weights[sv]*derSrc(cell,node));
       }
     }
@@ -838,7 +838,7 @@ void Aggregator_Extremum<C>::Evaluate()
         int numNodes = derSrc.dimension(1);
         for(int cell=0; cell<numCells; cell++)
             for(int node=0; node<numNodes; node++)
-            deriv.SumIntoGlobalValue(wsElNodeID[ws][cell][node], 0, derSrc(cell,node));
+            deriv.SumIntoGlobalValue(static_cast<long long>(wsElNodeID[ws][cell][node]), 0, derSrc(cell,node));
       }
     }
   }

@@ -29,7 +29,7 @@ typedef Belos::LinearProblem<ST, MV, OP> LinearProblem;
 typedef Belos::SolverManager<ST, MV, OP> Solver;
 typedef Belos::BlockGmresSolMgr<ST, MV, OP> GmresSolver;
 typedef Tpetra_Operator Prec;
-typedef Ifpack2::Preconditioner<ST, LO, GO, KokkosNode> IfpackPrec;
+typedef Ifpack2::Preconditioner<ST, LO, Tpetra_GO, KokkosNode> IfpackPrec;
 
 static RCP<ParameterList> get_belos_params(RCP<const ParameterList> in) {
   RCP<ParameterList> p = rcp(new ParameterList);

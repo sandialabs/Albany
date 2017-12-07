@@ -1111,20 +1111,6 @@ Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 Teuchos::RCP<Epetra_Vector>
 Albany::STKDiscretization::getSolutionField(bool overlapped) const
 {
-  /*
-  // Copy soln vector into solution field, one node at a time
-  Teuchos::ArrayView<const GO> indicesAV = mapT->getNodeElementList();
-  int numElements = mapT->getNodeNumElements();
-#ifdef ALBANY_64BIT_INT
-  Teuchos::Array<int> i_indices(numElements);
-  for(std::size_t k = 0; k < numElements; k++)
-  i_indices[k] = Teuchos::as<int>(indicesAV[k]);
-  Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements,
-i_indices.getRawPtr(), 0, *comm));
-#else
-  Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements,
-indicesAV.getRawPtr(), 0, *comm));
-#endif */
   Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
   this->getSolutionField(*soln, overlapped);
   return soln;
@@ -1588,7 +1574,7 @@ Albany::STKDiscretization::computeNodalMaps(bool overlapped)
 
     numNodes = nodes.size();
 
-    Teuchos::Array<GO> indicesT(numNodes * nComp);
+    Teuchos::Array<Tpetra_GO> indicesT(numNodes * nComp);
     NodalDOFManager*   dofManager =
         (overlapped) ? &it->second.overlap_dofManager : &it->second.dofManager;
     dofManager->setup(nComp, numNodes, numGlobalNodes, interleavedOrdering);
@@ -1601,7 +1587,7 @@ Albany::STKDiscretization::computeNodalMaps(bool overlapped)
     Teuchos::RCP<const Tpetra_Map>& map =
         (overlapped) ? it->second.overlap_map : it->second.map;
     map = Teuchos::null;
-    map = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
+    map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(
         indicesT(), commT);
 
     Teuchos::RCP<const Tpetra_Map>& node_map =
@@ -1640,9 +1626,10 @@ Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
   node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
 #endif
 
-  if (Teuchos::nonnull(stkMeshStruct->nodal_data_base))
+  if (Teuchos::nonnull(stkMeshStruct->nodal_data_base)) { 
     stkMeshStruct->nodal_data_base->resizeLocalMap(
-        node_mapT->getNodeElementList(), commT);
+      node_mapT->getNodeElementList(), commT);
+  }
 }
 
 void
@@ -1715,8 +1702,8 @@ Albany::STKDiscretization::computeGraphsUpToFillComplete()
   if (commT->getRank() == 0)
     *out << "STKDisc: " << cells.size() << " elements on Proc 0 " << std::endl;
 
-  GO                     row, col;
-  Teuchos::ArrayView<GO> colAV;
+  Tpetra_GO                     row, col;
+  Teuchos::ArrayView<Tpetra_GO> colAV;
 
   // determining the equations that are defined on the whole domain
   std::vector<int> globalEqns;
@@ -1855,8 +1842,6 @@ Albany::STKDiscretization::insertPeridigmNonzerosIntoGraph()
     computeGraphsUpToFillComplete();
 
     // Allocate nonzeros for the peridynamic portion of the graph
-    GO                     globalRow, globalCol;
-    Teuchos::ArrayView<GO> globalColAV;
     int                    peridigmLocalRow;
     int                    numEntries;
     double*                values;
@@ -1869,13 +1854,13 @@ Albany::STKDiscretization::insertPeridigmNonzerosIntoGraph()
       if (num_nodes == 1) {
         stk::mesh::Entity rowNode = node_rels[0];
         for (std::size_t k = 0; k < neq; k++) {
-          globalRow        = getGlobalDOF(gid(rowNode), k);
-          peridigmLocalRow = peridigmMatrix->RowMap().LID(globalRow);
+          auto globalRow        = getGlobalDOF(gid(rowNode), k);
+          peridigmLocalRow = peridigmMatrix->RowMap().LID(static_cast<long long>(globalRow));
           peridigmMatrix->ExtractMyRowView(
               peridigmLocalRow, numEntries, values, indices);
           for (int i = 0; i < numEntries; ++i) {
-            globalCol   = peridigmMatrix->ColMap().GID(indices[i]);
-            globalColAV = Teuchos::arrayView(&globalCol, 1);
+            Tpetra_GO globalCol   = peridigmMatrix->ColMap().GID(indices[i]);
+            auto globalColAV = Teuchos::arrayView(&globalCol, 1);
             overlap_graphT->insertGlobalIndices(globalRow, globalColAV);
           }
         }
@@ -3378,9 +3363,9 @@ Albany::STKDiscretization::meshToGraph()
   // want all nodes in the overlap graph to be covered in the nodal graph.
 
   // loop over all the nodes owned by this PE
-  for (std::size_t ncnt = 0; ncnt < numOverlapNodes; ncnt++) {
-    Teuchos::Array<GO> adjacency;
-    GO                 globalrow = overlap_node_mapT->getGlobalElement(ncnt);
+  for(std::size_t ncnt = 0; ncnt < numOverlapNodes; ncnt++) {
+    Teuchos::Array<Tpetra_GO> adjacency;
+    Tpetra_GO globalrow = overlap_node_mapT->getGlobalElement(ncnt);
     // loop over the elements surrounding node ncnt
     for (std::size_t ecnt = 0; ecnt < sur_elem[ncnt].size(); ecnt++) {
       const stk::mesh::Entity  elem          = sur_elem[ncnt][ecnt];
@@ -3391,7 +3376,7 @@ Albany::STKDiscretization::meshToGraph()
       for (std::size_t lnode = 0; lnode < num_node_rels; ++lnode) {
         const stk::mesh::Entity node_a = node_rels[lnode];
         // entry is the GID of each node
-        GO entry = gid(node_a);
+        Tpetra_GO entry = gid(node_a);
         // Every node in an element adjacent to node 'globalrow' is in this
         // graph.
         if (in_list(entry, adjacency) < 0) adjacency.push_back(entry);
@@ -3417,7 +3402,7 @@ Albany::STKDiscretization::printVertexConnectivity()
 
     std::cout << "Center vert is : " << globalvert + 1 << std::endl;
 
-    Teuchos::ArrayView<const GO> adj;
+    Teuchos::ArrayView<const Tpetra_GO> adj;
 
     nodalGraph->getGlobalRowView(globalvert, adj);
 
@@ -3440,14 +3425,15 @@ Albany::STKDiscretization::buildSideSetProjectors()
   Teuchos::RCP<Epetra_CrsMatrix> P_E;
 #endif
 
-  Teuchos::Array<GO> cols(1);
+  Teuchos::Array<Tpetra_GO> cols(1);
   Teuchos::Array<ST> vals(1);
   vals[0] = 1.0;
 
-  LO                           num_entries;
-  Teuchos::ArrayView<const GO> ss_indices;
-  stk::mesh::EntityRank        SIDE_RANK = stkMeshStruct->metaData->side_rank();
-  for (auto it : sideSetDiscretizationsSTK) {
+  LO num_entries;
+  Teuchos::ArrayView<const Tpetra_GO> ss_indices;
+  stk::mesh::EntityRank SIDE_RANK = stkMeshStruct->metaData->side_rank();
+  for (auto it : sideSetDiscretizationsSTK)
+  {
     // Extract the discretization
     const std::string&                   sideSetName = it.first;
     const Albany::STKDiscretization&     disc        = *it.second;

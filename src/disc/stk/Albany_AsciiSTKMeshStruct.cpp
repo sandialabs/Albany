@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 
+#include <cinttypes>
 #include <iostream>
 
 #include "Albany_AsciiSTKMeshStruct.hpp"
@@ -24,14 +25,7 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
-#ifdef ALBANY_64BIT_INT
-// long int == 64bit
-//#  define ST_LLI "%li"
-#  define ST_LLI "%lli"  // long long int
-#else
-#  define ST_LLI "%i"
-#endif
-
+#define ST_LLI "%" PRId64
 
 //#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <boost/algorithm/string/predicate.hpp>

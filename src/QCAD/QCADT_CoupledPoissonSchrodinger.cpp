@@ -538,10 +538,10 @@ QCADT::CoupledPoissonSchrodinger::createCombinedRangeSpace() const
 
   //Poisson and Schrodinger models have the same map: disc_map 
   for (int m = 0; m < 1+nEigenvals; ++m) { 
-    vs_array.push_back(Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(disc_map));
+    vs_array.push_back(Thyra::createVectorSpace<ST, LO, Tpetra_GO, KokkosNode>(disc_map));
   }
   //Last map is eigenvalue map
-  vs_array.push_back(Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(dist_eigenval_map));
+  vs_array.push_back(Thyra::createVectorSpace<ST, LO, Tpetra_GO, KokkosNode>(dist_eigenval_map));
   range_space = Thyra::productVectorSpace<ST>(vs_array);
   return range_space;
 }
@@ -583,12 +583,12 @@ Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> QCADT::CoupledPoissonSchrodinger:
   std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
   if(j < poissonApp->getNumResponses()) {
     //Poisson model: 
-    vs_array.push_back(Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(
+    vs_array.push_back(Thyra::createVectorSpace<ST, LO, Tpetra_GO, KokkosNode>(
                 poissonApp->getResponse(j)->responseMapT())); 
   }
   else {
     //Schrodinger model:  
-    vs_array.push_back(Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(
+    vs_array.push_back(Thyra::createVectorSpace<ST, LO, Tpetra_GO, KokkosNode>(
                 schrodingerApp->getResponse(j - poissonApp->getNumResponses())->responseMapT())); 
   }
   return Thyra::productVectorSpace<ST>(vs_array);

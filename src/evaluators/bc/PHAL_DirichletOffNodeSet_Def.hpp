@@ -11,6 +11,8 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Tpetra_CrsMatrix.hpp"
 
+#include<set> 
+
 // **********************************************************************
 // Genereric Template Code for Constructor and PostRegistrationSetup
 // **********************************************************************

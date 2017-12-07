@@ -105,10 +105,6 @@ int main(int ac, char *av[])
   _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK() & ~_MM_MASK_INVALID);
 #endif
 
-#if defined(ALBANY_64BIT_INT)
-  static_assert(sizeof(long) == 8, "64-bit Albany requires sizeof(long) == 8");
-#endif
-
   Teuchos::GlobalMPISession
   mpi_session(&ac,&av);
 

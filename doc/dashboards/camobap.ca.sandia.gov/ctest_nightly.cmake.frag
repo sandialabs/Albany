@@ -130,8 +130,8 @@ if (DOWNLOAD)
   # Update Albany 
   #
 
-  set_property (GLOBAL PROPERTY SubProject IKTAlbany32BitNoEpetra)
-  set_property (GLOBAL PROPERTY Label IKTAlbany32BitNoEpetra)
+  set_property (GLOBAL PROPERTY SubProject IKTAlbanyNoEpetra)
+  set_property (GLOBAL PROPERTY Label IKTAlbanyNoEpetra)
 
   set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
   CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
@@ -153,136 +153,14 @@ if (DOWNLOAD)
 
 endif ()
 
-if (BUILD_ALB64)
 
-  # Configure the Albany 64 Bit build 
+if (BUILD_ALBANY)
+
   # Builds everything!
   #
 
-  set_property (GLOBAL PROPERTY SubProject IKTAlbany64Bit)
-  set_property (GLOBAL PROPERTY Label IKTAlbany64BitNoEpetra)
-
-  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
-
-  set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
-    "-DENABLE_LCM:BOOL=ON"
-    "-DENABLE_CONTACT:BOOL=OFF"
-    "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
-    "-DENABLE_HYDRIDE:BOOL=ON"
-    "-DENABLE_SG:BOOL=OFF"
-    "-DENABLE_ENSEMBLE:BOOL=OFF"
-    "-DENABLE_FELIX:BOOL=ON"
-    "-DENABLE_AERAS:BOOL=ON"
-    "-DENABLE_QCAD:BOOL=ON"
-    "-DENABLE_MOR:BOOL=ON"
-    "-DENABLE_ATO:BOOL=ON"
-    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=ON"
-    "-DENABLE_AMP:BOOL=OFF"
-    "-DENABLE_ASCR:BOOL=OFF"
-    "-DENABLE_CHECK_FPE:BOOL=OFF"
-    "-DENABLE_MPAS_INTERFACE:BOOL=OFF"
-    "-DENABLE_CISM_INTERFACE:BOOL=OFF"
-    "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
-    "-DENABLE_64BIT_INT:BOOL=ON"
-    "-DALBANY_MPI_EXEC_LEADING_OPTIONS:STRING='--noprefix'"
-    "-DENABLE_LAME:BOOL=OFF")
-  
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbany64Bit")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbany64Bit)
-  endif ()
-
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany64Bit"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    APPEND
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany configure results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure Albany build!")
-  endif ()
-
-  #
-  # Build Albany
-  #
-
-  set (CTEST_BUILD_TARGET all)
-
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany64Bit"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-    APPEND
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Build
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany build results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot build Albany!")
-  endif ()
-
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
-  endif ()
-
-  #
-  # Run Albany tests
-  #
-
-  CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany64Bit"
-    #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-    #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-    #NUMBER_FAILED  TEST_NUM_FAILED
-    RETURN_VALUE  HAD_ERROR
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Test
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany test results!")
-    endif ()
-  endif ()
-
-  #if (HAD_ERROR)
-  #	message(FATAL_ERROR "Some Albany tests failed.")
-  #endif ()
-
-endif ()
-
-if (BUILD_ALB32)
-
-  # Configure the Albany 32 Bit build 
-  # Builds everything!
-  #
-
-  set_property (GLOBAL PROPERTY SubProject IKTAlbany32Bit)
-  set_property (GLOBAL PROPERTY Label IKTAlbany32Bit)
+  set_property (GLOBAL PROPERTY SubProject IKTAlbany)
+  set_property (GLOBAL PROPERTY Label IKTAlbany)
 
   set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
 
@@ -310,19 +188,19 @@ if (BUILD_ALB32)
     "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
     "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
     "-DENABLE_INSTALL:BOOL=ON"
-    "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitInstall"
+    "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/IKTAlbanyInstall"
     "-DENABLE_PARAMETERS_DEPEND_ON_SOLUTION:BOOL=ON"
     "-DCISM_EXE_DIR:FILEPATH=${CTEST_BINARY_DIRECTORY}/IKTCismAlbany"
     "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON"
     "-DALBANY_MPI_EXEC_LEADING_OPTIONS:STRING='--noprefix'"
     "-DENABLE_LAME:BOOL=OFF")
   
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbany32Bit")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbany32Bit)
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbany")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbany)
   endif ()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany32Bit"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
@@ -353,7 +231,7 @@ if (BUILD_ALB32)
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany32Bit"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -382,7 +260,7 @@ if (BUILD_ALB32)
   #
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany32Bit"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany"
     #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
     #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
     #NUMBER_FAILED  TEST_NUM_FAILED
@@ -406,14 +284,13 @@ if (BUILD_ALB32)
 endif ()
 
 
-if (BUILD_ALB32_NOEPETRA)
+if (BUILD_ALBANY_NOEPETRA)
 
-  # Configure the Albany 32 Bit build 
   # Builds everything!
   #
 
-  set_property (GLOBAL PROPERTY SubProject IKTAlbany32BitNoEpetra)
-  set_property (GLOBAL PROPERTY Label IKTAlbany32BitNoEpetra)
+  set_property (GLOBAL PROPERTY SubProject IKTAlbanyNoEpetra)
+  set_property (GLOBAL PROPERTY Label IKTAlbanyNoEpetra)
 
   set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
 
@@ -441,17 +318,17 @@ if (BUILD_ALB32_NOEPETRA)
     "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
     "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
     "-DENABLE_INSTALL:BOOL=ON"
-    "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetraInstall"
+    "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetraInstall"
     "-DENABLE_PARAMETERS_DEPEND_ON_SOLUTION:BOOL=ON"
     "-DALBANY_MPI_EXEC_LEADING_OPTIONS:STRING='--noprefix'"
     "-DENABLE_LAME:BOOL=OFF")
   
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetra")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetra)
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetra")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetra)
   endif ()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetra"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetra"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
@@ -481,7 +358,7 @@ if (BUILD_ALB32_NOEPETRA)
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetra"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetra"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -510,7 +387,7 @@ if (BUILD_ALB32_NOEPETRA)
   #
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetra"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetra"
     #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
     #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
     #NUMBER_FAILED  TEST_NUM_FAILED
@@ -533,243 +410,10 @@ if (BUILD_ALB32_NOEPETRA)
 
 endif ()
 
-#
-# Configure the Albany build using GO = long
-#
-
-if (BUILD_ALB64_NOEPETRA)
-  set_property (GLOBAL PROPERTY SubProject IKTAlbany64BitNoEpetra)
-  set_property (GLOBAL PROPERTY Label IKTAlbany64BitNoEpetra)
-
-  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
-
-  set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
-    "-DENABLE_LCM:BOOL=ON"
-    "-DENABLE_CONTACT:BOOL=OFF"
-    "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
-    "-DENABLE_HYDRIDE:BOOL=ON"
-    "-DENABLE_SG:BOOL=OFF"
-    "-DENABLE_ENSEMBLE:BOOL=OFF"
-    "-DENABLE_FELIX:BOOL=ON"
-    "-DENABLE_AERAS:BOOL=ON"
-    "-DENABLE_QCAD:BOOL=ON"
-    "-DENABLE_MOR:BOOL=ON"
-    "-DENABLE_ATO:BOOL=ON"
-    "-DENABLE_AMP:BOOL=OFF"
-    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
-    "-DENABLE_ASCR:BOOL=OFF"
-    "-DENABLE_CHECK_FPE:BOOL=OFF"
-    "-DENABLE_MPAS_INTERFACE:BOOL=ON"
-    "-DENABLE_CISM_INTERFACE:BOOL=OFF"
-    "-DENABLE_64BIT_INT:BOOL=ON"
-    "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
-    "-DALBANY_MPI_EXEC_LEADING_OPTIONS:STRING='--noprefix'"
-    "-DENABLE_LAME:BOOL=OFF")
-
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbany64BitNoEpetra")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbany64BitNoEpetra)
-  endif ()
-
-  #
-  # The 64 bit build 
-  #
-
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany64BitNoEpetra"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    APPEND
-    )
-
-  # Read the CTestCustom.cmake file to turn off ignored tests
-
-  #CTEST_READ_CUSTOM_FILES("${CTEST_BINARY_DIRECTORY}/AlbanyT64")
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany 64 bit configure results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure Albany 64 bit build!")
-  endif ()
-
-  #
-  # Build Albany 64 bit
-  #
-
-  set (CTEST_BUILD_TARGET all)
-
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany64BitNoEpetra"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-    APPEND
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Build
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany 64 bit build results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot build Albany 64 bit!")
-  endif ()
-
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in Albany 64 bit build. Exiting!")
-  endif ()
-  #
-  # Run Albany 64 bit tests
-  #
-
-  CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany64BitNoEpetra"
-    #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-    #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-    #NUMBER_FAILED  TEST_NUM_FAILED
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Test
-      RETURN_VALUE  HAD_ERROR
-      )
-
-    if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany 64 bit test results!")
-    endif ()
-  endif ()
-endif ()
-
 # Add the path to Clang libraries needed for the Clang configure, build and sest cycle
 #
 # Need to add the openmpi libraries at the front of LD_LIBRARY_PATH
 #
-
-
-if (BUILD_ALBFUNCTOR)
-  # ALBANY_KOKKOS_UNDER_DEVELOPMENT build
-
-  set_property (GLOBAL PROPERTY SubProject IKTAlbanyFunctor)
-  set_property (GLOBAL PROPERTY Label IKTAlbanyFunctor)
-
-  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
-
-  set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
-    "-DENABLE_LCM:BOOL=OFF"
-    "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
-    "-DENABLE_LCM_TEST_EXES:BOOL=OFF"
-    "-DENABLE_CONTACT:BOOL=OFF"
-    "-DENABLE_HYDRIDE:BOOL=OFF"
-    "-DENABLE_SG:BOOL=OFF"
-    "-DENABLE_FELIX:BOOL=ON"
-    "-DENABLE_AERAS:BOOL=ON"
-    "-DENABLE_QCAD:BOOL=ON"
-    "-DENABLE_MOR:BOOL=OFF"
-    "-DENABLE_ATO:BOOL=OFF"
-    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=ON"
-    "-DENABLE_AMP:BOOL=OFF"
-    "-DENABLE_ASCR:BOOL=OFF"
-    "-DENABLE_CHECK_FPE:BOOL=OFF"
-    "-DENABLE_MPAS_INTERFACE:BOOL=ON"
-    "-DENABLE_CISM_INTERFACE:BOOL=OFF"
-    "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
-    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
-    "-DENABLE_DAKOTA_RESTART_EXAMPLES=OFF"
-    "-DENABLE_SLFAD:BOOL=OFF"
-    "-DENABLE_ENSEMBLE:BOOL=ON"
-    "-DENSEMBLE_SIZE:INT=16"
-    "-DENABLE_64BIT_INT:BOOL=OFF"
-    "-DALBANY_MPI_EXEC_LEADING_OPTIONS:STRING='--noprefix'"
-    "-DENABLE_LAME:BOOL=OFF")
-  
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctor")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctor)
-  endif ()
-
-  CTEST_CONFIGURE (
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctor"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    APPEND)
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure RETURN_VALUE S_HAD_ERROR)
-    
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany configure results!")
-      set (BUILD_ALBFUNCTOR FALSE)
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot configure Albany build!")
-    set (BUILD_ALBFUNCTOR FALSE)
-  endif ()
-
-  if (BUILD_ALBFUNCTOR)
-    set (CTEST_BUILD_TARGET all)
-
-    message ("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-    CTEST_BUILD (
-      BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctor"
-      RETURN_VALUE HAD_ERROR
-      NUMBER_ERRORS BUILD_LIBS_NUM_ERRORS
-      APPEND)
-
-    if (CTEST_DO_SUBMIT)
-      ctest_submit (PARTS Build
-        RETURN_VALUE S_HAD_ERROR)
-
-      if (S_HAD_ERROR)
-        message ("Cannot submit Albany build results!")
-        set (BUILD_ALBFUNCTOR FALSE)
-      endif ()
-    endif ()
-
-    if (HAD_ERROR)
-      message ("Cannot build Albany!")
-      set (BUILD_ALBFUNCTOR FALSE)
-    endif ()
-
-    if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-      message ("Encountered build errors in Albany build.")
-      set (BUILD_ALBFUNCTOR FALSE)
-    endif ()
-  endif ()
-
-  if (BUILD_ALBFUNCTOR)
-    set (CTEST_TEST_TIMEOUT 1200)
-    CTEST_TEST (
-      BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctor"
-      RETURN_VALUE HAD_ERROR)
-
-    if (CTEST_DO_SUBMIT)
-      ctest_submit (PARTS Test RETURN_VALUE S_HAD_ERROR)
-
-      if (S_HAD_ERROR)
-        message ("Cannot submit Albany test results!")
-      endif ()
-    endif ()
-  endif ()
-endif ()
 
 
 if (BUILD_ALBFUNCTOR_OPENMP)
@@ -901,7 +545,7 @@ if (BUILD_CISM_PISCEES)
     "-DCISM_BUILD_CISM_DRIVER:BOOL=ON"
     "-DALBANY_FELIX_DYCORE:BOOL=ON"
     "-DALBANY_FELIX_CTEST:BOOL=ON"
-    "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetraInstall"
+    "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetraInstall"
     "-DCISM_NETCDF_DIR=${NETCDF_DIR}"
     "-DCISM_NETCDF_LIBS='netcdff'"
     "-DBUILD_SHARED_LIBS:BOOL=ON"
@@ -1016,7 +660,7 @@ if (BUILD_CISM_PISCEES_EPETRA)
     "-DCISM_BUILD_CISM_DRIVER:BOOL=ON"
     "-DALBANY_FELIX_DYCORE:BOOL=ON"
     "-DALBANY_FELIX_CTEST:BOOL=ON"
-    "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitInstall"
+    "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbanyInstall"
     "-DCISM_NETCDF_DIR=${NETCDF_DIR}"
     "-DBUILD_SHARED_LIBS:BOOL=ON"
     "-DCISM_NETCDF_LIBS='netcdff'"

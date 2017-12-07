@@ -18,7 +18,7 @@
 namespace Albany {
 
 class ModelEvaluatorT
-    : public Piro::TransientDecorator<ST, LO, GO, KokkosNode> {
+    : public Piro::TransientDecorator<ST, LO, Tpetra_GO, KokkosNode> {
  public:
   // Constructor
   ModelEvaluatorT(

@@ -1000,16 +1000,12 @@ Teuchos::RCP<Epetra_Vector>
 Aeras::SpectralDiscretization::getSolutionField(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
-  Teuchos::ArrayView<const GO> indicesAV = mapT->getNodeElementList();
+  auto indicesAV = mapT->getNodeElementList();
   int numElements = mapT->getNodeNumElements();
-#ifdef ALBANY_64BIT_INT
   Teuchos::Array<int> i_indices(numElements);
   for(std::size_t k = 0; k < numElements; k++)
 	i_indices[k] = Teuchos::as<int>(indicesAV[k]);
   Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements, i_indices.getRawPtr(), 0, *comm));
-#else
-  Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements, indicesAV.getRawPtr(), 0, *comm));
-#endif
   Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
   this->getSolutionField(*soln, overlapped);
   return soln;
@@ -1637,7 +1633,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsLines()
 
   //////////////////////////////////////////////////////////////////////
   // N.B.: Filling the indicesT array is inherently serial
-  Teuchos::Array<GO> indicesT(numOwnedNodes);
+  Teuchos::Array<Tpetra_GO> indicesT(numOwnedNodes);
   size_t inode = 0;
 
   // Add the ownednodes to indicesT
@@ -1666,17 +1662,17 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsLines()
   //////////////////////////////////////////////////////////////////////
 
   node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(indicesT(), commT);
+  node_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indicesT(), commT);
 
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
 
-  Teuchos::Array<GO> dofIndicesT(numOwnedNodes * neq);
+  Teuchos::Array<Tpetra_GO> dofIndicesT(numOwnedNodes * neq);
   for (size_t i = 0; i < numOwnedNodes; ++i)
     for (size_t j = 0; j < neq; ++j)
       dofIndicesT[getOwnedDOF(i,j)] = getGlobalDOF(indicesT[i],j);
 
   mapT = Teuchos::null; // delete existing map happens here on remesh
-  mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(dofIndicesT(), commT);
+  mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(dofIndicesT(), commT);
 
   TEUCHOS_TEST_FOR_EXCEPTION(
     Teuchos::nonnull(stkMeshStruct->nodal_data_base),
@@ -1764,7 +1760,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsQuads()
 
   //////////////////////////////////////////////////////////////////////
   // N.B.: Filling the indicesT array is inherently serial
-  Teuchos::Array<GO> indicesT(numOwnedNodes);
+  Teuchos::Array<Tpetra_GO> indicesT(numOwnedNodes);
   size_t inode = 0;
 
   // Add the ownednodes to indicesT
@@ -1782,7 +1778,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsQuads()
     for (size_t iedge = 0; iedge < edgeBucket.size(); ++iedge)
     {
       stk::mesh::Entity edge = edgeBucket[iedge];
-      GO edgeID = gid(edge);
+      Tpetra_GO edgeID = gid(edge);
       if (edgeIsOwned[edgeID])
       {
         for (size_t lnode = 1; lnode < np-1; ++lnode)
@@ -1814,17 +1810,17 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsQuads()
   //////////////////////////////////////////////////////////////////////
 
   node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(indicesT(), commT);
+  node_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indicesT(), commT);
 
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
 
-  Teuchos::Array<GO> dofIndicesT(numOwnedNodes * neq);
+  Teuchos::Array<Tpetra_GO> dofIndicesT(numOwnedNodes * neq);
   for (size_t i = 0; i < numOwnedNodes; ++i)
     for (size_t j = 0; j < neq; ++j)
       dofIndicesT[getOwnedDOF(i,j)] = getGlobalDOF(indicesT[i],j);
 
   mapT = Teuchos::null; // delete existing map happens here on remesh
-  mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(dofIndicesT(), commT);
+  mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(dofIndicesT(), commT);
 
   TEUCHOS_TEST_FOR_EXCEPTION(
     Teuchos::nonnull(stkMeshStruct->nodal_data_base),
@@ -1872,8 +1868,8 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsLines()
   // N.B.: Filling the overlapIndicesT array is inherently serial
 
   // Copy owned indices to overlap indices
-  Teuchos::ArrayView<const GO> ownedIndicesT = node_mapT->getNodeElementList();
-  Teuchos::Array<GO> overlapIndicesT(numOverlapNodes);
+  Teuchos::ArrayView<const Tpetra_GO> ownedIndicesT = node_mapT->getNodeElementList();
+  Teuchos::Array<Tpetra_GO> overlapIndicesT(numOverlapNodes);
   for (size_t i = 0; i < ownedIndicesT.size(); ++i)
     overlapIndicesT[i] = ownedIndicesT[i];
 
@@ -1898,19 +1894,19 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsLines()
   //////////////////////////////////////////////////////////////////////
 
   overlap_node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
+  overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(
       overlapIndicesT(), commT);
 
   // Compute the overlap DOF indices.  Since these might be strided by
   // the number of overlap nodes, we compute them from scratch.
-  Teuchos::Array<GO> overlapDofIndicesT(numOverlapNodes * neq);
+  Teuchos::Array<Tpetra_GO> overlapDofIndicesT(numOverlapNodes * neq);
   for (size_t i = 0; i < numOverlapNodes; ++i)
     for (size_t j = 0; j < neq; ++j)
       overlapDofIndicesT[getOverlapDOF(i,j)] =
         getGlobalDOF(overlapIndicesT[i],j);
 
   overlap_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
+  overlap_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(
       overlapDofIndicesT(), commT);
 
   coordinates.resize(3*numOverlapNodes);
@@ -1986,8 +1982,8 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsQuads()
   // N.B.: Filling the overlapIndicesT array is inherently serial
 
   // Copy owned indices to overlap indices
-  Teuchos::ArrayView<const GO> ownedIndicesT = node_mapT->getNodeElementList();
-  Teuchos::Array<GO> overlapIndicesT(numOverlapNodes);
+  Teuchos::ArrayView<const Tpetra_GO> ownedIndicesT = node_mapT->getNodeElementList();
+  Teuchos::Array<Tpetra_GO> overlapIndicesT(numOverlapNodes);
   for (size_t i = 0; i < ownedIndicesT.size(); ++i)
     overlapIndicesT[i] = ownedIndicesT[i];
 
@@ -2005,7 +2001,7 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsQuads()
     for (size_t iedge = 0; iedge < edgeBucket.size(); ++iedge)
     {
       stk::mesh::Entity edge = edgeBucket[iedge];
-      GO edgeID = gid(edge);
+      Tpetra_GO edgeID = gid(edge);
       if (!edgeIsOwned[edgeID])
       {
         for (size_t lnode = 1; lnode < np-1; ++lnode)
@@ -2030,17 +2026,17 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsQuads()
   //////////////////////////////////////////////////////////////////////
 
   overlap_node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(overlapIndicesT(), commT);
+  overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(overlapIndicesT(), commT);
 
   // Compute the overlap DOF indices.  Since these might be strided by
   // the number of overlap nodes, we compute them from scratch.
-  Teuchos::Array<GO> overlapDofIndicesT(numOverlapNodes * neq);
+  Teuchos::Array<Tpetra_GO> overlapDofIndicesT(numOverlapNodes * neq);
   for (size_t i = 0; i < numOverlapNodes; ++i)
     for (size_t j = 0; j < neq; ++j)
       overlapDofIndicesT[getOverlapDOF(i,j)] = getGlobalDOF(overlapIndicesT[i],j);
 
   overlap_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(overlapDofIndicesT(), commT);
+  overlap_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(overlapDofIndicesT(), commT);
 
   coordinates.resize(3*numOverlapNodes);
 }
@@ -2261,8 +2257,8 @@ Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOverlapGraph
     *out << "SpectralDisc: " << cells.size() << " elements on Proc 0 "
          << std::endl;
 
-  GO row, col;
-  Teuchos::ArrayView<GO> colAV;
+  Tpetra_GO row, col;
+  Teuchos::ArrayView<Tpetra_GO> colAV;
 
   //Populate the graphs
   for (int b = 0; b < numBuckets; ++b)
@@ -2344,8 +2340,8 @@ void Aeras::SpectralDiscretization::computeGraphs_Explicit()
     *out << "SpectralDisc: " << cells.size() << " elements on Proc 0 "
          << std::endl;
 
-  GO row;
-  Teuchos::ArrayView<GO> colAV;
+  Tpetra_GO row;
+  Teuchos::ArrayView<Tpetra_GO> colAV;
 
   //Populate the graphs
   for (int b = 0; b < numBuckets; ++b)

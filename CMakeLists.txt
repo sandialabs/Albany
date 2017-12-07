@@ -1106,8 +1106,6 @@ IF (ENABLE_64BIT_INT)
 ELSE()
   MESSAGE("-- 64 bit GO is NOT Enabled.")
   SET(ALBANY_64BIT_INT FALSE)
-  # Remove the CTestCustom.cmake file in the build directory if it exists
-  #EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
 ENDIF()
 
 # It is not currently possible to determine the status of "Kokkos_ENABLE_Cuda" from Albany. So we will deduce it

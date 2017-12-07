@@ -555,7 +555,7 @@ enableMueLu(
     const Teuchos::RCP<Teuchos::ParameterList>& stratList,
     Stratimikos::DefaultLinearSolverBuilder& linearSolverBuilder) {
 #ifdef ALBANY_MUELU
-  Stratimikos::enableMueLu<LO, GO, KokkosNode>(linearSolverBuilder);
+  Stratimikos::enableMueLu<LO, Tpetra_GO, KokkosNode>(linearSolverBuilder);
 #endif
 }
 }  // namespace
@@ -636,7 +636,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     // Piro::SolverFactory
     //      return piroFactory.createSolver<ST>(piroParams, ps_model);
     RCP<Thyra::AdaptiveSolutionManager> solMgrT = Teuchos::null;
-    return piroFactory.createSolver<ST, LO, GO, KokkosNode>(
+    return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
         piroParams, ps_model, solMgrT, Teuchos::null /* observer */);
 
 #else  /* ALBANY_QCAD */
@@ -768,7 +768,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       observerT_ = rcp(new PiroObserverT(albanyApp, modelWithSolveT));
 
       // Piro::SolverFactory
-      return piroFactory.createSolver<ST, LO, GO, KokkosNode>(
+      return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
           piroParams, modelWithSolveT, Teuchos::null, observerT_);
 
     }  // if useExplHV=true and tau <>0.
@@ -817,7 +817,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
     // WARNING: Coupled Schwarz does not contain a primary Albany::Application
     // instance and so albanyApp is null.
-    return piroFactory.createSolver<ST, LO, GO, KokkosNode>(
+    return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
         piroParams, coupled_model_with_solve, Teuchos::null, observerT_);
   }
 
@@ -879,26 +879,26 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   if (solMgrT->isAdaptive()) {
     if (TpetraBuild) {
       observerT_ = rcp(new PiroObserverT(app, modelWithSolveT));
-      return piroFactory.createSolver<ST, LO, GO, KokkosNode>(
+      return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
           piroParams, modelWithSolveT, solMgrT, observerT_);
     }
 #if defined(ALBANY_EPETRA)
     else {
       observerT_ = rcp(new PiroObserver(app));
-      return piroFactory.createSolver<ST, LO, GO, KokkosNode>(
+      return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
           piroParams, modelWithSolveT, solMgrT, observerT_);
     }
 #endif
   } else {
     if (TpetraBuild) {
       observerT_ = rcp(new PiroObserverT(app, modelWithSolveT));
-      return piroFactory.createSolver<ST, LO, GO, KokkosNode>(
+      return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
           piroParams, modelWithSolveT, Teuchos::null, observerT_);
     }
 #if defined(ALBANY_EPETRA)
     else {
       observerT_ = rcp(new PiroObserver(app));
-      return piroFactory.createSolver<ST, LO, GO, KokkosNode>(
+      return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
           piroParams, modelWithSolveT, Teuchos::null, observerT_);
     }
 #endif

@@ -357,7 +357,7 @@ class ProjectIPtoNodalFieldManager::FullMassMatrix
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (int rnode = 0; rnode < num_nodes; ++rnode) {
         GO                 global_row = workset.wsElNodeID[cell][rnode];
-        Teuchos::Array<GO> cols;
+        Teuchos::Array<Tpetra_GO> cols;
         Teuchos::Array<ST> vals;
 
         for (int cnode = 0; cnode < num_nodes; ++cnode) {
@@ -400,7 +400,7 @@ class ProjectIPtoNodalFieldManager::LumpedMassMatrix
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (int rnode = 0; rnode < num_nodes; ++rnode) {
         const GO                 global_row = workset.wsElNodeID[cell][rnode];
-        const Teuchos::Array<GO> cols(1, global_row);
+        const Teuchos::Array<Tpetra_GO> cols(1, global_row);
         double                   diag = 0;
         for (std::size_t qp = 0; qp < num_pts; ++qp) {
           double diag_qp = 0;
@@ -843,9 +843,9 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
   Teuchos::RCP<Thyra::LinearOpWithSolveBase<ST>> nsA = lowsFactory_->createOp();
   Thyra::initializeOp<ST>(*lowsFactory_, A, nsA.ptr());
   Teuchos::RCP<Thyra::MultiVectorBase<ST>>
-      x = Thyra::createMultiVector<ST, LO, GO, KokkosNode>(
+      x = Thyra::createMultiVector<ST, LO, Tpetra_GO, KokkosNode>(
           node_projected_ip_field),
-      b = Thyra::createMultiVector<ST, LO, GO, KokkosNode>(mgr_->ip_field);
+      b = Thyra::createMultiVector<ST, LO, Tpetra_GO, KokkosNode>(mgr_->ip_field);
 
   // Compute the column norms of the right-hand side b. If b = 0, no need to
   // proceed.
