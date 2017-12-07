@@ -13,10 +13,10 @@
 #include "Albany_DataTypes.hpp"
 #include "Albany_MaterialDatabase.hpp"
 #include "Albany_ModelEvaluatorT.hpp"
-#include "NOX_PrePostOperator_Vector.H"
-#include "SolutionSniffer.hpp"
+#include "Piro_NOXSolver.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
+#include "Thyra_ResponseOnlyModelEvaluatorBase.hpp"
 
 namespace LCM {
 
@@ -131,18 +131,21 @@ private:
   continueSolve() const;
 
   void
+  doQuasistaticOutput(ST const time) const;
+
+  void
   reportFinals(std::ostream & os) const;
 
-  Teuchos::Array<Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>>
+  std::vector<Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>>
   solvers_;
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   apps_;
 
-  Teuchos::Array<Teuchos::RCP<Albany::AbstractSTKMeshStruct>>
+  std::vector<Teuchos::RCP<Albany::AbstractSTKMeshStruct>>
   stk_mesh_structs_;
   
-  Teuchos::Array<Teuchos::RCP<Albany::AbstractDiscretization>>
+  std::vector<Teuchos::RCP<Albany::AbstractDiscretization>>
   discs_;
 
   char const *
@@ -223,11 +226,14 @@ private:
   mutable std::vector<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
   model_evaluators_;
 
-  mutable std::vector<Teuchos::RCP<NOX::Abstract::Vector>>
-  disp_nox_;
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const>>
+  curr_disp_;
 
-  mutable std::vector<Teuchos::RCP<NOX::Abstract::Vector>>
-  prev_disp_nox_;
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const>>
+  prev_step_disp_;
+
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const>>
+  prev_iter_disp_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
   ics_disp_;
@@ -239,29 +245,23 @@ private:
   ics_acce_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  prev_disp_thyra_;
+  prev_disp_;
  
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  prev_velo_thyra_;
+  prev_velo_;
   
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  prev_acce_thyra_;
+  prev_acce_;
   
   mutable std::vector<Albany::StateArrays>
   internal_states_;
 
   // Used if solving with loca or tempus
   bool
-  have_loca_{false};
+  is_static_{false};
 
   bool
-  have_tempus_{false};
-  
-  bool 
-  use_velo_in_conv_criterion_{false};
-  
-  bool 
-  use_acce_in_conv_criterion_{false}; 
+  is_dynamic_{false};
 };
 
 } // namespace LCM

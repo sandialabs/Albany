@@ -96,12 +96,14 @@ Albany::Application::Application(const RCP<const Teuchos_Comm> &comm_,
   finalSetUp(params, initial_guess);
   prev_times_.resize(1); 
 #ifdef ALBANY_LCM
-  int num_apps = num_apps = apps_.size();
-  if (num_apps == 0)
+  int num_apps = apps_.size();
+  if (num_apps == 0) {
     num_apps = 1;
+  }
   prev_times_.resize(num_apps);
-  for (int i = 0; i < num_apps; ++i)
+  for (int i = 0; i < num_apps; ++i) {
     prev_times_[i] = -1.0;
+  }
   previous_app = 0;
   current_app = 0;
 #endif
@@ -1294,18 +1296,16 @@ void Albany::Application::computeGlobalResidualImplT(
 
   // Set data in Workset struct, and perform fill via field manager
   {
-    if (Teuchos::nonnull(rc_mgr))
+    if (Teuchos::nonnull(rc_mgr)) {
       rc_mgr->init_x_if_not(xT->getMap());
+    }
 
     PHAL::Workset workset;
 
-    if (!paramLib->isParameter("Time")) {
-      loadBasicWorksetInfoT(workset, current_time);
-    } else {
-      loadBasicWorksetInfoT(
-          workset,
-          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
-    }
+    double const
+    this_time = fixTime(current_time);
+
+    loadBasicWorksetInfoT(workset, this_time);
 
     workset.fT = overlapped_fT;
 
@@ -1406,19 +1406,12 @@ void Albany::Application::computeGlobalResidualImplT(
 
     dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
 
-    if (paramLib->isParameter("Time")) {
-      workset.current_time =
-          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-    } else {
-      workset.current_time = current_time;
-    }
+    double const
+    this_time = fixTime(current_time);
+
+    workset.current_time = this_time;
 
 #if defined(ALBANY_LCM)
-    // For DBCs in Schwarz alternating, the time should be set to remain
-    // fixed to the end of a Schwarz step.
-    if (is_alternating_schwarz_ == true) {
-      workset.current_time = dbc_time_;
-    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
@@ -1645,13 +1638,11 @@ void Albany::Application::computeGlobalJacobianImplT(
   // Set data in Workset struct, and perform fill via field manager
   {
     PHAL::Workset workset;
-    if (!paramLib->isParameter("Time")) {
-      loadBasicWorksetInfoT(workset, current_time);
-    } else {
-      loadBasicWorksetInfoT(
-          workset,
-          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
-    }
+
+    double const
+    this_time = fixTime(current_time);
+
+    loadBasicWorksetInfoT(workset, this_time);
 
 #ifdef DEBUG_OUTPUT
     *out << "IKT countJac = " << countJac
@@ -1766,11 +1757,10 @@ void Albany::Application::computeGlobalJacobianImplT(
     workset.n_coeff = omega;
     workset.j_coeff = beta;
 
-    if (paramLib->isParameter("Time"))
-      workset.current_time =
-          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-    else
-      workset.current_time = current_time;
+    double const
+    this_time = fixTime(current_time);
+
+    workset.current_time = this_time;
 
     if (beta == 0.0 && perturbBetaForDirichlets > 0.0)
       workset.j_coeff = perturbBetaForDirichlets;
@@ -1792,11 +1782,6 @@ void Albany::Application::computeGlobalJacobianImplT(
     workset.disc = disc;
 
 #if defined(ALBANY_LCM)
-    // For DBCs in Schwarz alternating, the time should be set to remain
-    // fixed to the end of a Schwarz step.
-    if (is_alternating_schwarz_ == true) {
-      workset.current_time = dbc_time_;
-    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
@@ -1927,16 +1912,11 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
   // Set data in Workset struct, and perform fill via field manager
   {
     PHAL::Workset workset;
-    double this_time;
-    if (!paramLib->isParameter("Time")) {
-      loadBasicWorksetInfoT(workset, current_time);
-      this_time = current_time;
-    } else {
-      loadBasicWorksetInfoT(
-          workset,
-          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
-      this_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-    }
+
+    double const
+    this_time = fixTime(current_time);
+
+    loadBasicWorksetInfoT(workset, this_time);
 
 #ifdef DEBUG_OUTPUT
     *out << "IKT countJac = " << countJac
@@ -2016,11 +1996,10 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
     workset.n_coeff = omega;
     workset.j_coeff = beta;
 
-    if (paramLib->isParameter("Time"))
-      workset.current_time =
-          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-    else
-      workset.current_time = current_time;
+    double const
+    this_time = fixTime(current_time);
+
+    workset.current_time = this_time;
 
     if (beta == 0.0 && perturbBetaForDirichlets > 0.0)
       workset.j_coeff = perturbBetaForDirichlets;
@@ -2033,11 +2012,6 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
     workset.disc = disc;
 
 #if defined(ALBANY_LCM)
-    // For DBCs in Schwarz alternating, the time should be set to remain
-    // fixed to the end of a Schwarz step.
-    if (is_alternating_schwarz_ == true) {
-      workset.current_time = dbc_time_;
-    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
@@ -2081,13 +2055,10 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
 
 #endif
 
-    if (!paramLib->isParameter("Time")) {
-      loadBasicWorksetInfoSDBCsT(workset, xT_post_SDBCs, current_time);
-    } else {
-      loadBasicWorksetInfoSDBCsT(
-          workset, xT_post_SDBCs,
-          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
-    }
+    double const
+    this_time = fixTime(current_time);
+
+    loadBasicWorksetInfoSDBCsT(workset, xT_post_SDBCs, this_time);
 
     workset.fT = overlapped_fT;
     workset.JacT = overlapped_jacT;
@@ -2153,14 +2124,14 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
       workset.n_coeff = omega;
       workset.j_coeff = beta;
 
-      if (paramLib->isParameter("Time"))
-        workset.current_time =
-            paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-      else
-        workset.current_time = current_time;
+      double const
+      this_time = fixTime(current_time);
 
-      if (beta == 0.0 && perturbBetaForDirichlets > 0.0)
+      workset.current_time = this_time;
+
+      if (beta == 0.0 && perturbBetaForDirichlets > 0.0) {
         workset.j_coeff = perturbBetaForDirichlets;
+      }
 
       dfm_set(workset, xT_post_SDBCs, xdotT, xdotdotT, rc_mgr);
 
@@ -2170,11 +2141,6 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
       workset.disc = disc;
 
 #if defined(ALBANY_LCM)
-      // For DBCs in Schwarz alternating, the time should be set to remain
-      // fixed to the end of a Schwarz step.
-      if (is_alternating_schwarz_ == true) {
-        workset.current_time = dbc_time_;
-      }
       // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
       workset.apps_ = apps_;
       workset.current_app_ = Teuchos::rcp(this, false);
@@ -2578,13 +2544,11 @@ void Albany::Application::computeGlobalTangentImplT(
   // Set data in Workset struct, and perform fill via field manager
   {
     PHAL::Workset workset;
-    if (!paramLib->isParameter("Time")) {
-      loadBasicWorksetInfoT(workset, current_time);
-    } else {
-      loadBasicWorksetInfoT(
-          workset,
-          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
-    }
+
+    double const
+    this_time = fixTime(current_time);
+
+    loadBasicWorksetInfoT(workset, this_time);
 
     workset.params = params;
     workset.VxT = overlapped_VxT;
@@ -2655,20 +2619,14 @@ void Albany::Application::computeGlobalTangentImplT(
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
-    if (paramLib->isParameter("Time"))
-      workset.current_time =
-          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-    else
-      workset.current_time = current_time;
+    double const
+    this_time = fixTime(current_time);
+
+    workset.current_time = this_time;
 
     workset.disc = disc;
 
 #if defined(ALBANY_LCM)
-    // For DBCs in Schwarz alternating, the time should be set to remain
-    // fixed to the end of a Schwarz step.
-    if (is_alternating_schwarz_ == true) {
-      workset.current_time = dbc_time_;
-    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
@@ -2830,11 +2788,10 @@ void Albany::Application::applyGlobalDistParamDerivImplT(
     workset.dist_param_deriv_name = dist_param_name;
     workset.disc = disc;
 
-    if (paramLib->isParameter("Time"))
-      workset.current_time =
-          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-    else
-      workset.current_time = current_time;
+    double const
+    this_time = fixTime(current_time);
+
+    workset.current_time = this_time;
 
     dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
 
@@ -2861,12 +2818,11 @@ void Albany::Application::applyGlobalDistParamDerivImplT(
   // Set data in Workset struct, and perform fill via field manager
   {
     PHAL::Workset workset;
-    if (!paramLib->isParameter("Time"))
-      loadBasicWorksetInfoT(workset, current_time);
-    else
-      loadBasicWorksetInfoT(
-          workset,
-          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
+
+    double const
+    this_time = fixTime(current_time);
+
+    loadBasicWorksetInfoT(workset, this_time);
 
     workset.dist_param_deriv_name = dist_param_name;
     workset.VpT = overlapped_VT;
@@ -2928,11 +2884,10 @@ void Albany::Application::applyGlobalDistParamDerivImplT(
     workset.VpT = V_bcT;
     workset.transpose_dist_param_deriv = trans;
 
-    if (paramLib->isParameter("Time"))
-      workset.current_time =
-          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-    else
-      workset.current_time = current_time;
+    double const
+    this_time = fixTime(current_time);
+
+    workset.current_time = this_time;
 
     dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
 
@@ -2947,11 +2902,10 @@ void Albany::Application::evaluateResponseT(
     int response_index, const double current_time, const Tpetra_Vector *xdotT,
     const Tpetra_Vector *xdotdotT, const Tpetra_Vector &xT,
     const Teuchos::Array<ParamVec> &p, Tpetra_Vector &gT) {
-  double t = current_time;
-  if (paramLib->isParameter("Time"))
-    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-
-  responses[response_index]->evaluateResponseT(t, xdotT, xdotdotT, xT, p, gT);
+  double const
+  this_time = fixTime(current_time);
+  responses[response_index]->evaluateResponseT(
+      this_time, xdotT, xdotdotT, xT, p, gT);
 }
 
 void Albany::Application::evaluateResponseTangentT(
@@ -2963,13 +2917,11 @@ void Albany::Application::evaluateResponseTangentT(
     const Tpetra_MultiVector *VxdotdotT, const Tpetra_MultiVector *VxT,
     const Tpetra_MultiVector *VpT, Tpetra_Vector *gT, Tpetra_MultiVector *gxT,
     Tpetra_MultiVector *gpT) {
-  double t = current_time;
-  if (paramLib->isParameter("Time"))
-    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-
+  double const
+  this_time = fixTime(current_time);
   responses[response_index]->evaluateTangentT(
-      alpha, beta, omega, t, sum_derivs, xdotT, xdotdotT, xT, p, deriv_p,
-      VxdotT, VxdotdotT, VxT, VpT, gT, gxT, gpT);
+      alpha, beta, omega, this_time, sum_derivs, xdotT, xdotdotT, xT, p,
+      deriv_p, VxdotT, VxdotdotT, VxT, VpT, gT, gxT, gpT);
 }
 
 #if defined(ALBANY_EPETRA)
@@ -2982,12 +2934,12 @@ void Albany::Application::evaluateResponseDerivative(
     const EpetraExt::ModelEvaluator::Derivative &dg_dxdotdot,
     const EpetraExt::ModelEvaluator::Derivative &dg_dp) {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Response Gradient");
-  double t = current_time;
-  if (paramLib->isParameter("Time"))
-    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+  double const
+  this_time = fixTime(current_time);
 
   responses[response_index]->evaluateDerivative(
-      t, xdot, xdotdot, x, p, deriv_p, g, dg_dx, dg_dxdot, dg_dxdotdot, dg_dp);
+      this_time, xdot, xdotdot, x, p, deriv_p, g, dg_dx, dg_dxdot,
+      dg_dxdotdot, dg_dp);
 }
 #endif
 
@@ -2999,13 +2951,12 @@ void Albany::Application::evaluateResponseDerivativeT(
     const Thyra::ModelEvaluatorBase::Derivative<ST> &dg_dxdotT,
     const Thyra::ModelEvaluatorBase::Derivative<ST> &dg_dxdotdotT,
     const Thyra::ModelEvaluatorBase::Derivative<ST> &dg_dpT) {
-  double t = current_time;
-  if (paramLib->isParameter("Time"))
-    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+  double const
+  this_time = fixTime(current_time);
 
-  responses[response_index]->evaluateDerivativeT(t, xdotT, xdotdotT, xT, p,
-                                                 deriv_p, gT, dg_dxT, dg_dxdotT,
-                                                 dg_dxdotdotT, dg_dpT);
+  responses[response_index]->evaluateDerivativeT(
+      this_time, xdotT, xdotdotT, xT, p, deriv_p, gT, dg_dxT, dg_dxdotT,
+      dg_dxdotdotT, dg_dpT);
 }
 
 void Albany::Application::evaluateResponseDistParamDerivT(
@@ -3015,12 +2966,11 @@ void Albany::Application::evaluateResponseDistParamDerivT(
     const std::string &dist_param_name, Tpetra_MultiVector *dg_dp) {
   TEUCHOS_FUNC_TIME_MONITOR(
       "> Albany Fill: Response Distributed Parameter Derivative");
-  double t = current_time;
-  if (paramLib->isParameter("Time"))
-    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+  double const
+  this_time = fixTime(current_time);
 
   responses[response_index]->evaluateDistParamDerivT(
-      t, xdot, xdotdot, x, param_array, dist_param_name, dg_dp);
+      this_time, xdot, xdotdot, x, param_array, dist_param_name, dg_dp);
   if (dg_dp != NULL) {
     std::stringstream sensitivity_name;
     sensitivity_name << dist_param_name << "_sensitivity";
@@ -3623,11 +3573,11 @@ void Albany::Application::setupBasicWorksetInfo(
   workset.distParamLib = distParamLib;
   workset.disc = disc;
 
-  if (!paramLib->isParameter("Time"))
-    workset.current_time = current_time;
-  else
-    workset.current_time =
-        paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+  double const
+  this_time = fixTime(current_time);
+
+  workset.current_time = this_time;
+
   workset.transientTerms = Teuchos::nonnull(workset.xdot);
   workset.accelerationTerms = Teuchos::nonnull(workset.xdotdot);
 
@@ -3687,28 +3637,10 @@ void Albany::Application::setupBasicWorksetInfoT(
   workset.distParamLib = distParamLib;
   workset.disc = disc;
 
-  //  original version
-  if (!paramLib->isParameter("Time"))
-    workset.current_time = current_time;
-  else
-    workset.current_time =
-        paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+  double const
+  this_time = fixTime(current_time);
 
-  //  // MJJ (3/30/2016)
-  //  #if !defined ALBANY_AMP_ADD_LAYER
-  //// original version
-  //  if (!paramLib->isParameter("Time"))
-  //    workset.current_time = current_time;
-  //  else
-  //    workset.current_time =
-  //      paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-  //#else
-  //  // version needed when computing responses when we add a new mesh layer to
-  //  a
-  //  // previous mesh model.
-  //  workset.current_time = current_time;
-  //  paramLib->setRealValue<PHAL::AlbanyTraits::Residual>("Time",current_time);
-  //#endif
+  workset.current_time = this_time;
 
   workset.transientTerms = Teuchos::nonnull(workset.xdotT);
   workset.accelerationTerms = Teuchos::nonnull(workset.xdotdotT);
@@ -4096,16 +4028,11 @@ void Albany::Application::computeGlobalResidualSDBCsImplT(
       rc_mgr->init_x_if_not(xT->getMap());
 
     PHAL::Workset workset;
-    double this_time;
-    if (!paramLib->isParameter("Time")) {
-      loadBasicWorksetInfoT(workset, current_time);
-      this_time = current_time;
-    } else {
-      loadBasicWorksetInfoT(
-          workset,
-          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
-      this_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-    }
+
+    double const
+    this_time = fixTime(current_time);
+
+    loadBasicWorksetInfoT(workset, this_time);
 
 #ifdef DEBUG_OUTPUT
     *out << "IKT previous_time, this_time = " << prev_times_[app_no] << ", "
@@ -4113,8 +4040,7 @@ void Albany::Application::computeGlobalResidualSDBCsImplT(
 #endif
     // Check if previous_time is same as current time.  If not, we are at the
     // start  of a new time step, so we set boolean parameter to true.
-    if (prev_times_[app_no] != this_time)
-      begin_time_step = true;
+    begin_time_step = prev_times_[app_no] != this_time;
 
     workset.fT = overlapped_fT;
 
@@ -4180,22 +4106,15 @@ void Albany::Application::computeGlobalResidualSDBCsImplT(
 
     dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
 
-    if (paramLib->isParameter("Time")) {
-      workset.current_time =
-          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-    } else {
-      workset.current_time = current_time;
-    }
+    double const
+    this_time = fixTime(current_time);
+
+    workset.current_time = this_time;
 
     workset.distParamLib = distParamLib;
     workset.disc = disc;
 
 #if defined(ALBANY_LCM)
-    // For DBCs in Schwarz alternating, the time should be set to remain
-    // fixed to the end of a Schwarz step.
-    if (is_alternating_schwarz_ == true) {
-      workset.current_time = dbc_time_;
-    }
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
@@ -4217,13 +4136,10 @@ void Albany::Application::computeGlobalResidualSDBCsImplT(
     fT->putScalar(0.0);
     PHAL::Workset workset;
 
-    if (!paramLib->isParameter("Time")) {
-      loadBasicWorksetInfoSDBCsT(workset, xT_post_SDBCs, current_time);
-    } else {
-      loadBasicWorksetInfoSDBCsT(
-          workset, xT_post_SDBCs,
-          paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
-    }
+    double const
+    this_time = fixTime(current_time);
+
+    loadBasicWorksetInfoSDBCsT(workset, xT_post_SDBCs, this_time);
 
     workset.fT = overlapped_fT;
 
@@ -4282,22 +4198,15 @@ void Albany::Application::computeGlobalResidualSDBCsImplT(
 
       dfm_set(workset, xT_post_SDBCs, xdotT, xdotdotT, rc_mgr);
 
-      if (paramLib->isParameter("Time")) {
-        workset.current_time =
-            paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-      } else {
-        workset.current_time = current_time;
-      }
+      double const
+      this_time = fixTime(current_time);
+
+      workset.current_time = this_time;
 
       workset.distParamLib = distParamLib;
       workset.disc = disc;
 
 #if defined(ALBANY_LCM)
-      // For DBCs in Schwarz alternating, the time should be set to remain
-      // fixed to the end of a Schwarz step.
-      if (is_alternating_schwarz_ == true) {
-        workset.current_time = dbc_time_;
-      }
       // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
       workset.apps_ = apps_;
       workset.current_app_ = Teuchos::rcp(this, false);

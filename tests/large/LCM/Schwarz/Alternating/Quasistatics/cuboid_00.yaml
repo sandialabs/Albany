@@ -1,6 +1,4 @@
 ANONYMOUS:
-  Scaling:
-    Scale: 1.0
   DataTransferKit:
     Map Type: Consistent Interpolation
     L2 Projection:      
@@ -19,10 +17,7 @@ ANONYMOUS:
     Write Solution to Standard Output: true  
   Problem:
     Name: Mechanics 3D
-    Parameters:
-      Number: 1
-      Parameter 0: Time
-    Solution Method: Continuation
+    Solution Method: Steady
     Phalanx Graph Visualization Detail: 0
     MaterialDB Filename: materials_00.yaml
     Dirichlet BCs:
@@ -42,24 +37,6 @@ ANONYMOUS:
     Separate Evaluators by Element Block: true
     Number Of Time Derivatives: 0
   Piro:
-    Solver Type: LOCA
-    LOCA:
-      Bifurcation: { }
-      Constraints: { }
-      Predictor:
-        Method: Constant
-      Stepper:
-        Continuation Method: Natural
-        Initial Value: 0.0
-        Continuation Parameter: Time
-        Max Steps: 10000
-        Min Value: 0.0
-        Max Value: 0.0
-        Return Failed on Reaching Max Steps: false
-        Hit Continuation Bound: false
-      Step Size:
-        Initial Step Size: 0.5
-        Method: Constant
     NOX:
       Direction:
         Method: Newton

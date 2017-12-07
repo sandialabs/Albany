@@ -524,6 +524,37 @@ public:
 #endif
 
 #if defined(ALBANY_LCM)
+  double
+  fixTime(double const current_time) const
+  {
+    bool const
+    use_time_param = paramLib->isParameter("Time") == true &&
+      getSchwarzAlternating() == false;
+
+    double const
+    this_time = use_time_param == true ?
+        paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") :
+        current_time;
+
+    return this_time;
+  }
+#else
+  double
+  fixTime(double const current_time) const
+  {
+    bool const
+    use_time_param = paramLib->isParameter("Time") == true;
+
+    double const
+    this_time = use_time_param == true ?
+        paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") :
+        current_time;
+
+    return this_time;
+  }
+#endif // ALBANY_LCM
+
+#if defined(ALBANY_LCM)
   // Needed for coupled Schwarz
 public:
   void
@@ -589,23 +620,20 @@ public:
     return name;
   }
 
-  Teuchos::RCP<Tpetra_Vector const> const &getX() const { return x_; }
+  Teuchos::RCP<Tpetra_Vector const> const &
+  getX() const { return x_; }
 
-  Teuchos::RCP<Tpetra_Vector const> const &getXdot() const { return xdot_; }
+  Teuchos::RCP<Tpetra_Vector const> const &
+  getXdot() const { return xdot_; }
 
-  Teuchos::RCP<Tpetra_Vector const> const &getXdotdot() const {
-    return xdotdot_;
-  }
+  Teuchos::RCP<Tpetra_Vector const> const &
+  getXdotdot() const { return xdotdot_; }
 
-  void setAlternatingSchwarz(bool isa = false) {
-    is_alternating_schwarz_ = isa;
-  }
+  void
+  setSchwarzAlternating(bool const isa) {is_schwarz_alternating_ = isa;}
 
-  bool getAlternatingSchwarz() const { return is_alternating_schwarz_; }
-
-  void setDBCTime(double t = 0.0) { dbc_time_ = t; }
-
-  double getDBCTime() const { return dbc_time_; }
+  bool
+  getSchwarzAlternating() const {return is_schwarz_alternating_;}
 
 private:
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> apps_;
@@ -623,9 +651,7 @@ private:
 
   Teuchos::RCP<Tpetra_Vector const> xdotdot_{Teuchos::null};
 
-  bool is_alternating_schwarz_{false};
-
-  double dbc_time_{0.0};
+  bool is_schwarz_alternating_{false};
 
 #endif // ALBANY_LCM
 
