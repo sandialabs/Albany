@@ -227,10 +227,13 @@ private:
   model_evaluators_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const>>
-  disp_nox_;
+  curr_disp_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const>>
-  prev_disp_nox_;
+  prev_step_disp_;
+
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const>>
+  prev_iter_disp_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
   ics_disp_;
@@ -261,10 +264,10 @@ private:
   have_tempus_{false};
   
   bool 
-  use_velo_in_conv_criterion_{false};
+  velo_in_conv_{false};
   
   bool 
-  use_acce_in_conv_criterion_{false}; 
+  acce_in_conv_{false}; 
 };
 
 } // namespace LCM

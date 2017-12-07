@@ -40,14 +40,14 @@ SchwarzAlternating(
   initial_time_ = alt_system_params.get<ST>("Initial Time", 0.0);
   final_time_ = alt_system_params.get<ST>("Final Time", 0.0);
   initial_time_step_ = alt_system_params.get<ST>("Initial Time Step", 1.0);
-  use_velo_in_conv_criterion_ = alt_system_params.get<bool>("Use Velocity in Convergence Criterion", true); 
-  use_acce_in_conv_criterion_ = alt_system_params.get<bool>("Use Acceleration in Convergence Criterion", true); 
+  velo_in_conv_ = alt_system_params.get<bool>("Use Velocity in Convergence Criterion", true); 
+  acce_in_conv_ = alt_system_params.get<bool>("Use Acceleration in Convergence Criterion", true); 
 
 #ifdef DEBUG
   auto &
   fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
-  fos << "Use Velocity in Convergence Criterion = " << use_velo_in_conv_criterion_ << "\n";
-  fos << "Use Acceleration in Convergence Criterion = " << use_acce_in_conv_criterion_ << "\n";
+  fos << "Use Velocity in Convergence Criterion = " << velo_in_conv_ << "\n";
+  fos << "Use Acceleration in Convergence Criterion = " << acce_in_conv_ << "\n";
 #endif
 
   ST const
@@ -102,8 +102,9 @@ SchwarzAlternating(
   model_evaluators_.resize(num_subdomains_);
   sub_inargs_.resize(num_subdomains_);
   sub_outargs_.resize(num_subdomains_);
-  disp_nox_.resize(num_subdomains_);
-  prev_disp_nox_.resize(num_subdomains_);
+  curr_disp_.resize(num_subdomains_);
+  prev_step_disp_.resize(num_subdomains_);
+  prev_iter_disp_.resize(num_subdomains_);
   ics_disp_.resize(num_subdomains_);
   ics_velo_.resize(num_subdomains_);
   ics_acce_.resize(num_subdomains_);
@@ -188,7 +189,7 @@ SchwarzAlternating(
 
     model_evaluators_[subdomain] = solver_factory.returnModelT();
 
-    disp_nox_[subdomain] = Teuchos::null;
+    curr_disp_[subdomain] = Teuchos::null;
   }
 
   //
@@ -916,13 +917,13 @@ SchwarzLoopDynamics() const
         norms_final(subdomain) = Thyra::norm(*curr_disp_rcp);
         norms_diff(subdomain) = Thyra::norm(*disp_diff_rcp);
          
-        if (use_velo_in_conv_criterion_ == true) {
+        if (velo_in_conv_ == true) {
           norms_init(subdomain)  += time_step*Thyra::norm(*prev_velo_thyra_[subdomain]); 
           norms_final(subdomain) += time_step*Thyra::norm(*curr_velo_rcp); 
           norms_diff(subdomain)  += time_step*Thyra::norm(*velo_diff_rcp);
         }
        
-        if (use_acce_in_conv_criterion_ == true) { 
+        if (acce_in_conv_ == true) { 
           norms_init(subdomain)  += time_step*time_step*Thyra::norm(*prev_acce_thyra_[subdomain]); 
           norms_final(subdomain) += time_step*time_step*Thyra::norm(*curr_acce_rcp); 
           norms_diff(subdomain)  += time_step*time_step*Thyra::norm(*acce_diff_rcp); 
@@ -1122,18 +1123,13 @@ SchwarzLoopQuasistatics() const
     ST const
     next_time{current_time + time_step};
 
-    num_iter_ = 0;
-
-    bool const
-    is_initial_state = stop == 0 && num_iter_ == 0;
-
     // Before the Schwarz loop, save the solutions for each subdomain in case
-    // the solve phase fails. Then the load step is reduced and the Schwarz
+    // the solve fails. Then the load step is reduced and the Schwarz
     // loop is restarted from scratch.
     for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
-      prev_disp_nox_[subdomain] =
-          is_initial_state == true ? Teuchos::null : disp_nox_[subdomain];
+      prev_step_disp_[subdomain] = stop == 0 ?
+          Teuchos::null : curr_disp_[subdomain];
 
       auto &
       app = *apps_[subdomain];
@@ -1144,8 +1140,13 @@ SchwarzLoopQuasistatics() const
       internal_states_[subdomain] = state_mgr.getStateArrays();
     }
 
+    num_iter_ = 0;
+
     // Schwarz loop
     do {
+
+      bool const
+      is_initial_state = stop == 0 && num_iter_ == 0;
 
       // Subdomain loop
       for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
@@ -1159,6 +1160,19 @@ SchwarzLoopQuasistatics() const
         fos << "Step size          :" << time_step << '\n';
         fos << delim << std::endl;
 
+        // Save solution from previous Schwarz iteration before solve
+        auto &
+        me = dynamic_cast<Albany::ModelEvaluatorT &>
+        (*model_evaluators_[subdomain]);
+
+        auto
+        prev_disp_rcp = is_initial_state == true ?
+            me.getNominalValues().get_x() :
+            curr_disp_[subdomain];
+
+        auto const &
+        prev_disp = *prev_disp_rcp;
+
         // Restore internal states
         auto &
         app = *apps_[subdomain];
@@ -1168,27 +1182,13 @@ SchwarzLoopQuasistatics() const
 
         state_mgr.setStateArrays(internal_states_[subdomain]);
 
-        // Restore previous solution
-        auto &
-        me = dynamic_cast<Albany::ModelEvaluatorT &>
-        (*model_evaluators_[subdomain]);
-
+        // Restore solution from previous time step
         auto
-        prev_disp_rcp = is_initial_state == true ?
+        prev_step_disp_rcp = is_initial_state == true ?
             me.getNominalValues().get_x() :
-            prev_disp_nox_[subdomain];
+            prev_step_disp_[subdomain];
 
-        auto const &
-        prev_disp = *prev_disp_rcp;
-
-        me.getNominalValues().set_x(prev_disp_rcp);
-
-#if defined(DEBUG)
-        fos << "\n*** NOX: Previous solution ***\n";
-        prev_disp.describe(fos, Teuchos::VERB_EXTREME);
-        fos << "\n*** NORM: " << Thyra::norm(prev_disp) << '\n';
-        fos << "\n*** NOX: Previous solution ***\n";
-#endif //DEBUG
+        me.getNominalValues().set_x(prev_step_disp_rcp);
 
         // Target time
         me.setCurrentTime(next_time);
@@ -1230,17 +1230,10 @@ SchwarzLoopQuasistatics() const
 
         // Solver OK, extract solution
         auto
-        curr_disp_rcp = thyra_nox_solver.get_current_x();
+        curr_disp_rcp = thyra_nox_solver.get_current_x()->clone_v();
 
         auto const &
         curr_disp = *curr_disp_rcp;
-
-#if defined(DEBUG)
-        fos << "\n*** NOX: Current solution ***\n";
-        curr_disp.describe(fos, Teuchos::VERB_EXTREME);
-        fos << "\n*** NORM: " << Thyra::norm(curr_disp) << '\n';
-        fos << "\n*** NOX: Current solution ***\n";
-#endif //DEBUG
 
         // Compute difference between previous and current solutions
         auto
@@ -1250,23 +1243,34 @@ SchwarzLoopQuasistatics() const
         disp_diff_ptr = disp_diff_rcp.ptr();
 
         Thyra::put_scalar<ST>(0.0, disp_diff_ptr);
+
         Thyra::V_VpStV(disp_diff_ptr, curr_disp, -1.0, prev_disp);
 
         auto &
         disp_diff = *disp_diff_rcp;
 
+        // After solve, save solution and get info to check convergence
+        curr_disp_[subdomain] = curr_disp_rcp;
+        norms_init(subdomain) = Thyra::norm(prev_disp);
+        norms_final(subdomain) = Thyra::norm(curr_disp);
+        norms_diff(subdomain) = Thyra::norm(disp_diff);
+
 #if defined(DEBUG)
+        fos << "\n*** NOX: Previous solution ***\n";
+        prev_disp.describe(fos, Teuchos::VERB_EXTREME);
+        fos << "\n*** NORM: " << Thyra::norm(prev_disp) << '\n';
+        fos << "\n*** NOX: Previous solution ***\n";
+
+        fos << "\n*** NOX: Current solution ***\n";
+        curr_disp.describe(fos, Teuchos::VERB_EXTREME);
+        fos << "\n*** NORM: " << Thyra::norm(curr_disp) << '\n';
+        fos << "\n*** NOX: Current solution ***\n";
+
         fos << "\n*** NOX: Solution difference ***\n";
         disp_diff.describe(fos, Teuchos::VERB_EXTREME);
         fos << "\n*** NORM: " << Thyra::norm(disp_diff) << '\n';
         fos << "\n*** NOX: Solution difference ***\n";
 #endif //DEBUG
-
-        // After solve, save solution and get info to check convergence
-        disp_nox_[subdomain] = curr_disp_rcp;
-        norms_init(subdomain) = Thyra::norm(prev_disp);
-        norms_final(subdomain) = Thyra::norm(curr_disp);
-        norms_diff(subdomain) = Thyra::norm(disp_diff);
       } // Subdomain loop
 
       if (failed_ == true) {
@@ -1343,7 +1347,7 @@ SchwarzLoopQuasistatics() const
 
       // Restore previous solutions
       for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
-        disp_nox_[subdomain] = prev_disp_nox_[subdomain];
+        curr_disp_[subdomain] = prev_step_disp_[subdomain];
       }
 
       // Jump to the beginning of the continuation loop without advancing
@@ -1359,7 +1363,7 @@ SchwarzLoopQuasistatics() const
         (stop + 1) % output_interval_ == 0 : false;
 
     if (do_output == true) {
-      doQuasistaticOutput(current_time);
+      doQuasistaticOutput(next_time);
     }
 
     ++stop;
