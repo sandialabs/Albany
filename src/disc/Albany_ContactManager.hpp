@@ -92,7 +92,7 @@ class ContactManager {
 
 
     // Moertel-specific library data
-    Teuchos::RCP<MOERTEL::ManagerT<ST, LO, Tpetra_GO, KokkosNode> > moertelManager;
+    Teuchos::RCP<MoertelT::ManagerT<ST, LO, Tpetra_GO, KokkosNode> > moertelManager;
 
     std::ofstream sfile, mfile;
 
