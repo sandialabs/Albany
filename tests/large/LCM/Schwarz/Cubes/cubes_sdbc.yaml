@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   Coupled System: 
     Model Input Files: [cube0_sdbc.yaml, cube1_sdbc.yaml]
   Problem: 

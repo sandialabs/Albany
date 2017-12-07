@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   Coupled System: 
     Model Input Files: [cube0.yaml, cube1.yaml]
     'Matrix-Free Preconditioner': Jacobi

@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   Problem: 
     Name: NonlinearElasticity 2D
     Solution Method: Continuation

@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   Coupled System: 
     Model Input Files: [modelLaserWeldHolder0.yaml, modelLaserWeldGauge.yaml, modelLaserWeldHolder1.yaml]
   Debug Output: 

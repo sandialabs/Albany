@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   ElementBlocks: 
     block_1: 
       material: zircalloy

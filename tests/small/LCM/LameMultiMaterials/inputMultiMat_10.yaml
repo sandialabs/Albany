@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   Problem: 
     Name: Lame
     MaterialDB Filename: materials_10.yaml

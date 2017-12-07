@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   ElementBlocks: 
     holder_1: 
       material: base

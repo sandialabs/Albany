@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   Problem: 
     Name: HydMorph 2D
     Solution Method: Steady

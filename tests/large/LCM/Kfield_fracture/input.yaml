@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   Problem: 
     Name: Total Lagrangian Plasticity with Projection 3D
     Solution Method: Continuation

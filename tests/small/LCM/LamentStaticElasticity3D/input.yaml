@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   Problem: 
     Name: Lame
     Lame Material Model: Elastic_New

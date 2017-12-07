@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   Coupled System: 
     Model Input Files: ['notched-cylinder-0.yaml', 'notched-cylinder-1.yaml']
   Problem: 

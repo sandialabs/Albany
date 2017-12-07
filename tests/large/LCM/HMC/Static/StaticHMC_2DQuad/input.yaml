@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   Problem: 
     Name: HMC 2D
     Phalanx Graph Visualization Detail: 2

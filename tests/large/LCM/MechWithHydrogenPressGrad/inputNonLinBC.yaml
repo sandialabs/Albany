@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   Time Dependent DBC on NS nodelist_7 for DOF X: 
     Number of points: 3
     Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
