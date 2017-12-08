@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   Debug Output: 
     Write Jacobian to MatrixMarket: -1
     Write Solution to MatrixMarket: true

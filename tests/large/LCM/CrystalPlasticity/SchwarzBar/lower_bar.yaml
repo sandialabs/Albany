@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   Scaling: 
     Scale: 1000.0000
   DataTransferKit: 

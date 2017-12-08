@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   Problem: 
     Name: Peridigm Code Coupling
     MaterialDB Filename: MaterialsOneBarPD.yaml

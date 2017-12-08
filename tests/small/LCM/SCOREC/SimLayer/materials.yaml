@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   ElementBlocks: 
     'base-plate': 
       material: 'Mat_base-plate'

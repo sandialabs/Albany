@@ -7,6 +7,8 @@
 #include "Albany_Utils.hpp"
 #include "Phalanx_DataLayout.hpp"
 
+//#define DEBUG
+
 namespace LCM {
 
 //
@@ -49,6 +51,15 @@ TimeDepSDBC_Base<EvalT, Traits>::computeVal(RealType time)
 
     value = values_[index - 1] + slope * (time - times_[index - 1]);
   }
+
+#if defined(DEBUG)
+  auto &
+  fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  fos << "\n*** TimeDepSDBC ***\n";
+  fos << "\n*** TIME: " << time << '\n';
+  fos << "\n*** VALUE: " << value << '\n';
+  fos << "\n*** TimeDepSDBC ***\n";
+#endif //DEBUG
 
   return value;
 }

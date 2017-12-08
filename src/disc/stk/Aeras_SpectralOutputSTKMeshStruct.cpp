@@ -25,9 +25,6 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
-#define ST_LLI "%"PRId64
-
-//#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include "Albany_Utils.hpp"

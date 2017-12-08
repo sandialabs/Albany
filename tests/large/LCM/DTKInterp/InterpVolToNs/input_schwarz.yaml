@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   Source Mesh Input File: '../Meshes/notched-cylinder-0.exo'
   Source Mesh Snapshot Number: 11
   Target Mesh Input File: '../Meshes/notched-cylinder-1.exo'

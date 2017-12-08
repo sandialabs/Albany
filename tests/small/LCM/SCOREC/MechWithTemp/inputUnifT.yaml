@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-ANONYMOUS:
+LCM:
   Problem: 
     Name: Mechanics 3D
     MaterialDB Filename: materials.yaml
