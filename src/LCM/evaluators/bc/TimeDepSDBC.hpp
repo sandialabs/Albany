@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "PHAL_SDirichlet.hpp"
-#include "PHAL_SDirichlet_Def.hpp"
 
 namespace LCM {
 

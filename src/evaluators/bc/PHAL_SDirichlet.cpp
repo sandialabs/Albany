@@ -6,7 +6,6 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "PHAL_SDirichlet.hpp"
 #include "PHAL_SDirichlet_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::SDirichlet)

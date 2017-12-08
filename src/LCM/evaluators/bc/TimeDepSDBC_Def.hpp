@@ -4,8 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "TimeDepSDBC.hpp"
 #include "Albany_Utils.hpp"
 #include "Phalanx_DataLayout.hpp"
+
+#include "PHAL_SDirichlet_Def.hpp"
 
 //#define DEBUG
 

@@ -4,6 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#ifndef PHAL_SDIRICHLET_DEF_HPP
+#define PHAL_SDIRICHLET_DEF_HPP
+
+#include "PHAL_SDirichlet.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
@@ -210,3 +214,5 @@ SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
 }
 
 }  // namespace PHAL
+
+#endif
