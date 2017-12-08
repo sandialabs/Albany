@@ -8,7 +8,6 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Albany_Utils.hpp"
-#include <Tpetra_MultiVectorFiller.hpp>
 
 namespace PHAL {
 
@@ -110,21 +109,30 @@ evaluateFields(typename Traits::EvalData dirichlet_workset) {
   Teuchos::Array<LO>
   indices;
 
-  using MV = Tpetra_MultiVector;
-  using MVF = Tpetra::MultiVectorFiller<MV>;
+  using IntVec = Tpetra::Vector<int, Tpetra_LO, Tpetra_GO, KokkosNode>;
+  using Import = Tpetra::Import<Tpetra_LO, Tpetra_GO, KokkosNode>;
+  Teuchos::RCP<const Import> import;
 
-  MVF is_dbc_filler(row_map, 1);
+  auto domain_map = row_map; // we are assuming this!
+
+//if (J->getCrsGraph()->isFillComplete()) {
+//  import = J->getCrsGraph()->getImporter();
+//} else {
+    // this construction is expensive!
+    import = Teuchos::rcp(new Import(domain_map, col_map));
+//}
+
+  IntVec row_is_dbc(row_map);
+  IntVec col_is_dbc(col_map);
+  auto row_is_dbc_data = row_is_dbc.get1dViewNonConst();
 
   for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
     int const
     dof = ns_nodes[ns_node][this->offset];
-    global_index[0] = row_map->getGlobalElement(dof);
-    entry[0] = 1.0;
-    is_dbc_filler.sumIntoGlobalValues(global_index, 0, entry);
+    row_is_dbc_data[dof] = 1;
   }
-  MV is_dbc(col_map, 1);
-  is_dbc_filler.globalAssemble(is_dbc);
-  auto is_dbc_view = is_dbc.get1dView();
+  col_is_dbc.doImport(row_is_dbc, *import, Tpetra::ADD);
+  auto col_is_dbc_data = col_is_dbc.get1dView();
 
   size_t const
   num_local_rows = J->getNodeNumRows();
@@ -138,7 +146,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset) {
 
     J->getLocalRowCopy(local_row, indices(), entries(), num_row_entries);
 
-    auto row_is_dbc = is_dbc_view[local_row] > 0.0;
+    auto row_is_dbc = col_is_dbc_data[local_row] > 0.0;
 
     if (row_is_dbc && fill_residual == true) {
       f_view[local_row] = 0.0;
@@ -151,7 +159,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset) {
       if (is_diagonal_entry) continue;
       ALBANY_ASSERT(local_col >= col_map->getMinLocalIndex());
       ALBANY_ASSERT(local_col <= col_map->getMaxLocalIndex());
-      auto col_is_dbc = is_dbc_view[local_col] > 0.0;
+      auto col_is_dbc = col_is_dbc_data[local_col] > 0.0;
       if (row_is_dbc || col_is_dbc) {
         entries[row_entry] = 0.0;
       }
