@@ -11,8 +11,11 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Albany_StateInfoStruct.hpp"
+
+#if HAVE_STK
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_AbstractSTKFieldContainer.hpp"
+#endif
 
 namespace PHAL {
 
@@ -198,6 +201,7 @@ saveNodeState(typename Traits::EvalData workset)
   //       must extract entities from the bulk data and use them to access the values
   //       of the stk field.
 
+#if HAVE_STK
   Teuchos::RCP<Albany::AbstractDiscretization> disc = workset.disc;
   TEUCHOS_TEST_FOR_EXCEPTION (disc==Teuchos::null, std::runtime_error, "Error! Discretization is needed to save nodal state.\n");
 
@@ -251,6 +255,9 @@ saveNodeState(typename Traits::EvalData workset)
     default:  // error!
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Unexpected field dimension (only node_scalar/node_vector for now).\n");
   }
+#else
+  (void)workset;
+#endif
 }
 
 } // namespace PHAL
