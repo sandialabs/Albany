@@ -1,0 +1,57 @@
+## /Applications/Cubit-15.1/Cubit.app/Contents/MacOS/cubitx
+## Cubit Version 15.1
+## Cubit Build 403859
+## Revised 2016-04-27 08:15:19 -0600 (Wed, 27 Apr 2016)
+## Running 09/29/2016 03:13:51 PM
+## Command Options:
+#{width = 1.0}
+#{height = 2.0} 
+undo on
+brick x {width} y {height} z {width}
+brick x {width} y {height} z {width}
+brick x {width} y {height} z {width}
+
+move volume 2 x 0 y 1.5 z 0 include_merged
+move volume 3 x 0 y -1.5 z 0 include_merged
+
+volume 1 size {width/1.0}
+mesh volume 1
+volume 2 size {width/1.0}
+mesh volume 2
+volume 3 size {width/1.0} 
+mesh volume 3
+
+# nodesets bounding lower_bar
+nodeset 1 surface 15
+nodeset 2 surface 17
+
+# nodesets bounding gauge
+nodeset 3 surface 3
+nodeset 4 surface 5
+
+# nodesets bounding upper_bar
+nodeset 5 surface 9 
+nodeset 6 surface 11
+
+# establishing blocks
+block 1 volume 1
+block 2 volume 2
+block 3 volume 3
+
+undo group begin
+set exodus netcdf4 off
+set large exodus file on
+export genesis "lower_bar.g" block 3 overwrite
+
+undo group end
+undo group begin
+set exodus netcdf4 off
+set large exodus file on
+export genesis "gauge.g" block 1 overwrite
+
+undo group end
+undo group begin
+set exodus netcdf4 off
+set large exodus file on
+export genesis "upper_bar.g" block 2 overwrite
+undo group end
