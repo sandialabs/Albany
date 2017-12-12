@@ -257,6 +257,8 @@ saveNodeState(typename Traits::EvalData workset)
   }
 #else
   (void)workset;
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+      "Error! Nodal states only available for stk meshes, but Trilinos was compiled without STK!\n");
 #endif
 }
 
