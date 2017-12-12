@@ -134,6 +134,9 @@ private:
   doQuasistaticOutput(ST const time) const;
 
   void
+  setDynamicICVecsAndDoOutput(ST const time, bool const do_output) const;
+
+  void
   reportFinals(std::ostream & os) const;
 
   std::vector<Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>>

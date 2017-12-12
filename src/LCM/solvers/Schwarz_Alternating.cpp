@@ -620,60 +620,9 @@ SchwarzLoopDynamics() const
   ST
   current_time{initial_time_};
 
-  // Output initial configuration. Then disable output.
-  // Handle it after Schwarz iteration.
-
-  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
-
- 
-    Albany::AbstractSTKMeshStruct &
-    ams = *stk_mesh_structs_[subdomain];
-
-    ams.exoOutputInterval = 1;
-    ams.exoOutput = true;
-
-    Albany::AbstractDiscretization &
-    abs_disc = *discs_[subdomain];
-
-    Albany::STKDiscretization &
-    stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
-
-    // Populate ics_disp_ and its time-derivatives with values of IC
-    // from nominal values in model evaluator.
-    auto &
-    me = dynamic_cast<Albany::ModelEvaluatorT &>
-    (*model_evaluators_[subdomain]);
-
-    auto const &
-    nv = me.getNominalValues();
-        
-    ics_disp_[subdomain] = Thyra::createMember(me.get_x_space());
-    Thyra::copy(*(nv.get_x()), ics_disp_[subdomain].ptr());
-
-    ics_velo_[subdomain] = Thyra::createMember(me.get_x_space());
-    Thyra::copy(*(nv.get_x_dot()), ics_velo_[subdomain].ptr());
-
-    ics_acce_[subdomain] = Thyra::createMember(me.get_x_space());
-    Thyra::copy(*(nv.get_x_dot_dot()), ics_acce_[subdomain].ptr());
-
-    prev_disp_[subdomain] = Thyra::createMember(me.get_x_space());
-    Thyra::copy(*(nv.get_x()), prev_disp_[subdomain].ptr());
     
-    prev_velo_[subdomain] = Thyra::createMember(me.get_x_space());
-    Thyra::copy(*(nv.get_x_dot()), prev_velo_[subdomain].ptr());
-
-    prev_acce_[subdomain] = Thyra::createMember(me.get_x_space());
-    Thyra::copy(*(nv.get_x_dot_dot()), prev_acce_[subdomain].ptr());
-
-    //Write initial condition to STK mesh 
-    Teuchos::RCP<Tpetra_MultiVector const> const
-    xMV = apps_[subdomain]->getAdaptSolMgrT()->getOverlappedSolution();
-
-    stk_disc.writeSolutionMV(*xMV, initial_time_, true); 
-
-    ams.exoOutput = false;
-  }
-
+  //Set ICs and PrevSoln vecs and write initial configuration to Exodus file 
+  setDynamicICVecsAndDoOutput(initial_time_, true); 
 
   // Continuation loop
   while (stop < maximum_steps_ && current_time < final_time_) {
@@ -952,23 +901,80 @@ SchwarzLoopDynamics() const
     }  while (continueSolve() == true);
 
     reportFinals(fos);
+  
+    //Update IC vecs and output solution to exodus file 
+    bool const
+    do_output = output_interval_ > 0 ?
+        (stop + 1) % output_interval_ == 0 : false;
+ 
+    setDynamicICVecsAndDoOutput(current_time + time_step, do_output); 
 
-    //Output converged solution if at specified interval 
-    for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+    ++stop;
+    current_time += time_step;
+  }
 
-      Albany::AbstractSTKMeshStruct &
-      ams = *stk_mesh_structs_[subdomain];
+  return; 
+}
 
-      ams.exoOutputInterval = 1;
 
-      ams.exoOutput = output_interval_ > 0 ?
-          (stop + 1) % output_interval_ == 0 : false;
+void
+SchwarzAlternating::
+setDynamicICVecsAndDoOutput(ST const time, bool const do_output) const
+{
+  bool is_initial_time = false;
+
+  if (time == initial_time_) is_initial_time = true; 
+
+  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
       
-      Albany::AbstractDiscretization &
-      abs_disc = *discs_[subdomain];
+    Albany::AbstractSTKMeshStruct &
+    stk_mesh_struct = *stk_mesh_structs_[subdomain];
 
-      Albany::STKDiscretization &
-      stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
+    Albany::AbstractDiscretization &
+    abs_disc = *discs_[subdomain];
+
+    Albany::STKDiscretization &
+    stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
+
+    stk_mesh_struct.exoOutputInterval = 1;
+ 
+    stk_mesh_struct.exoOutput = do_output;
+
+    if (is_initial_time == true) { //initial time-step: get initial solution from nominalValues in ME 
+
+      auto &
+      me = dynamic_cast<Albany::ModelEvaluatorT &>
+      (*model_evaluators_[subdomain]);
+
+      auto const & nv = me.getNominalValues();
+
+      ics_disp_[subdomain] = Thyra::createMember(me.get_x_space());
+      Thyra::copy(*(nv.get_x()), ics_disp_[subdomain].ptr());
+
+      ics_velo_[subdomain] = Thyra::createMember(me.get_x_space());
+      Thyra::copy(*(nv.get_x_dot()), ics_velo_[subdomain].ptr());
+
+      ics_acce_[subdomain] = Thyra::createMember(me.get_x_space());
+      Thyra::copy(*(nv.get_x_dot_dot()), ics_acce_[subdomain].ptr());
+
+      prev_disp_[subdomain] = Thyra::createMember(me.get_x_space());
+      Thyra::copy(*(nv.get_x()), prev_disp_[subdomain].ptr());
+
+      prev_velo_[subdomain] = Thyra::createMember(me.get_x_space());
+      Thyra::copy(*(nv.get_x_dot()), prev_velo_[subdomain].ptr());
+
+      prev_acce_[subdomain] = Thyra::createMember(me.get_x_space());
+      Thyra::copy(*(nv.get_x_dot_dot()), prev_acce_[subdomain].ptr());
+
+      //Write initial condition to STK mesh 
+      Teuchos::RCP<Tpetra_MultiVector const> const
+      xMV = apps_[subdomain]->getAdaptSolMgrT()->getOverlappedSolution();
+
+      stk_disc.writeSolutionMV(*xMV, initial_time_, true);
+
+    }
+
+    else { //subsequent time steps: update ic vecs based on fields in stk discretization
 
       Teuchos::RCP<Tpetra_MultiVector>
       disp_mv = stk_disc.getSolutionMV();
@@ -983,23 +989,21 @@ SchwarzLoopDynamics() const
       ics_acce_[subdomain] =
           Thyra::createVector(disp_mv->getVectorNonConst(2));
 
-      if (ams.exoOutput == true) {
-        stk_disc.writeSolutionMV(*disp_mv, current_time + time_step);
+      if (do_output == true) {  //write solution to Exodus
+
+        stk_disc.writeSolutionMV(*disp_mv, time);
+
       }
 
-      ams.exoOutput = false;
     }
 
-    ++stop;
-    current_time += time_step;
-  }
+    stk_mesh_struct.exoOutput = false;
 
-  return; 
+  }
+  return;
 }
 
-//
-//
-//
+
 void
 SchwarzAlternating::
 doQuasistaticOutput(ST const time) const
