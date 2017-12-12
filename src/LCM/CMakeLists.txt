@@ -67,6 +67,8 @@ set(evaluator-headers
 )
 
 #LCM model evaluators 
+
+IF (ALBANY_HAVE_STK)
 set(model-eval-sources
   "${LCM_DIR}/solvers/Schwarz_Alternating.cpp"
   "${LCM_DIR}/solvers/Schwarz_ObserverImpl.cpp"
@@ -79,7 +81,6 @@ set(model-eval-headers
   "${LCM_DIR}/solvers/Schwarz_PiroObserver.hpp"
   "${LCM_DIR}/solvers/Schwarz_StatelessObserverImpl.hpp"
 )
-IF (ALBANY_HAVE_STK)
   set(model-eval-sources ${model-eval-sources}
     "${LCM_DIR}/solvers/Schwarz_BoundaryJacobian.cpp"
     "${LCM_DIR}/solvers/Schwarz_CoupledJacobian.cpp"

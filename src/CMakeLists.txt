@@ -322,7 +322,6 @@ SET(SOURCES ${SOURCES}
   evaluators/state/PHAL_LoadStateField.cpp
   evaluators/state/PHAL_SaveCellStateField.cpp
   evaluators/state/PHAL_SaveNodalField.cpp
-  evaluators/state/PHAL_SaveSideSetStateField.cpp
   evaluators/state/PHAL_SaveStateField.cpp
   evaluators/state/QCAD_ResponseSaveField.cpp
   evaluators/utility/Adapt_ElementSizeField.cpp
@@ -342,6 +341,11 @@ SET(SOURCES ${SOURCES}
   evaluators/utility/QCAD_MathVector.cpp
   evaluators/utility/QCAD_MeshRegion.cpp
   )
+
+IF (ALBANY_HAVE_STK)
+ SET(SOURCES ${SOURCES}
+   evaluators/state/PHAL_SaveSideSetStateField.cpp)
+ENDIF()
 
 IF (ALBANY_EPETRA)
   SET(SOURCES ${SOURCES}
@@ -478,8 +482,6 @@ SET(HEADERS ${HEADERS}
   evaluators/state/PHAL_SaveCellStateField_Def.hpp
   evaluators/state/PHAL_SaveNodalField.hpp
   evaluators/state/PHAL_SaveNodalField_Def.hpp
-  evaluators/state/PHAL_SaveSideSetStateField.hpp
-  evaluators/state/PHAL_SaveSideSetStateField_Def.hpp
   evaluators/state/PHAL_SaveStateField.hpp
   evaluators/state/PHAL_SaveStateField_Def.hpp
   evaluators/state/QCAD_ResponseSaveField.hpp
@@ -516,6 +518,13 @@ SET(HEADERS ${HEADERS}
   evaluators/utility/QCAD_MeshRegion.hpp
   evaluators/utility/QCAD_MeshRegion_Def.hpp
   )
+
+IF (ALBANY_HAVE_STK)
+  SET(HEADERS ${HEADERS}
+    evaluators/state/PHAL_SaveSideSetStateField.hpp
+    evaluators/state/PHAL_SaveSideSetStateField_Def.hpp)
+ENDIF()
+
 
 IF (ALBANY_EPETRA)
   SET(HEADERS ${HEADERS}
