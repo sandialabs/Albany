@@ -17,7 +17,7 @@ cd ..
 
 cp repos/Albany/doc/dashboards/ride.sandia.gov/* .
 
-bsub -Is -x -n 8 -W 22:00 -J $BUILD_TAG -q rhel7G ./run_all_lsf.sh
+bsub -Is -x -n 8 -W 23:55 -J $BUILD_TAG -q rhel7G ./run_all_lsf.sh
 
 echo "Sending email..."
 bash send_email_ctest.sh
