@@ -1072,14 +1072,15 @@ SchwarzLoopQuasistatics() const
   // Continuation loop
   while (stop < maximum_steps_ && current_time < final_time_) {
 
-    fos << delim << std::endl;
-    fos << "Time stop          :" << stop << '\n';
-    fos << "Time               :" << current_time << '\n';
-    fos << "Time step          :" << time_step << '\n';
-    fos << delim << std::endl;
-
     ST const
     next_time{current_time + time_step};
+
+    fos << delim << std::endl;
+    fos << "Global time stop   :" << stop << '\n';
+    fos << "Start time         :" << current_time << '\n';
+    fos << "Stop time          :" << next_time << '\n';
+    fos << "Time step          :" << time_step << '\n';
+    fos << delim << std::endl;
 
     // Before the Schwarz loop, save the solutions for each subdomain in case
     // the solve fails. Then the load step is reduced and the Schwarz
@@ -1112,10 +1113,9 @@ SchwarzLoopQuasistatics() const
         fos << delim << std::endl;
         fos << "Schwarz iteration  :" << num_iter_ << '\n';
         fos << "Subdomain          :" << subdomain << '\n';
-        fos << delim << std::endl;
         fos << "Start time         :" << current_time << '\n';
         fos << "Stop time          :" << next_time << '\n';
-        fos << "Step size          :" << time_step << '\n';
+        fos << "Time step          :" << time_step << '\n';
         fos << delim << std::endl;
 
         // Save solution from previous Schwarz iteration before solve
@@ -1292,13 +1292,16 @@ SchwarzLoopQuasistatics() const
       failed_ = false;
 
       auto const
-      reduced_step = std::max(min_time_step_, reduction_factor_ * time_step);
+      reduced_step = reduction_factor_ * time_step;
 
-      if (reduced_step < time_step) {
+      if (reduced_step >= min_time_step_) {
         fos << "INFO: Reducing step from " << time_step << " to ";
         fos << reduced_step << '\n';
       } else {
-        fos << "INFO: Cannot reduce step. Using " << reduced_step << '\n';
+        fos << "ERROR: Cannot reduce step. Stopping execution.\n";
+        fos << "INFO: Requested step    :" << reduced_step << '\n';
+        fos << "INFO: Minimum time step :" << min_time_step_ << '\n';
+        return;
       }
 
       time_step = reduced_step;
