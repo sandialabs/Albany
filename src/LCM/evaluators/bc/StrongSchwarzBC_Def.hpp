@@ -889,6 +889,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   auto domain_map = row_map; // we are assuming this!
 
+  //in theory we should use the importer from the CRS graph, although
+  //I saw a segfault in one of the tests when doing this...
+
   //if (J->getCrsGraph()->isFillComplete()) {
   //  import = J->getCrsGraph()->getImporter();
   //} else {
