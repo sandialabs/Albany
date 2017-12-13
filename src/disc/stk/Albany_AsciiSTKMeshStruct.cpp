@@ -43,7 +43,23 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
                                              const Teuchos::RCP<const Teuchos_Comm>& commT) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-  periodic(false)
+  periodic(false),
+  contigIDs(false),
+  NumNodes(0),
+  NumEles(0),
+  NumBasalFaces(0),
+  xyz(nullptr),
+  sh(nullptr),
+  beta(nullptr),
+  eles(nullptr),
+  flwa(nullptr),
+  temper(nullptr),
+  have_sh(false),
+  have_bf(false),
+  have_flwa(false),
+  have_temp(false),
+  have_beta(false),
+  bf(nullptr)
 {
    int numProc = commT->getSize(); //total number of processors
    contigIDs = params->get("Contiguous IDs", true);
