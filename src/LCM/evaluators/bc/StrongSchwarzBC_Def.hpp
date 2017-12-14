@@ -919,7 +919,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     }
   }
   col_is_dbc.doImport(row_is_dbc, *import, Tpetra::ADD);
-  auto col_is_dbc_data = col_is_dbc.get1dView();
+  auto col_is_dbc_data = col_is_dbc.template getLocalView<Kokkos::HostSpace>();
 
   size_t const
   num_local_rows = J->getNodeNumRows();
@@ -933,14 +933,14 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
     J->getLocalRowCopy(local_row, indices(), entries(), num_row_entries);
 
-    auto row_is_dbc = col_is_dbc_data[local_row] > 0.0;
+    auto row_is_dbc = col_is_dbc_data(local_row, 0) > 0;
     for (size_t row_entry = 0; row_entry < num_row_entries; ++row_entry) {
       auto local_col = indices[row_entry];
       auto is_diagonal_entry = local_col == local_row;
       if (is_diagonal_entry) continue;
       ALBANY_ASSERT(local_col >= col_map->getMinLocalIndex());
       ALBANY_ASSERT(local_col <= col_map->getMaxLocalIndex());
-      auto col_is_dbc = col_is_dbc_data[local_col] > 0.0;
+      auto col_is_dbc = col_is_dbc_data(local_col, 0) > 0;
       if (row_is_dbc || col_is_dbc) {
         entries[row_entry] = 0.0;
       }
