@@ -901,7 +901,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   IntVec row_is_dbc(row_map);
   IntVec col_is_dbc(col_map);
-  auto row_is_dbc_data = row_is_dbc.get1dViewNonConst();
 
   int const
   spatial_dimension{this->app_->getSpatialDimension()};
@@ -909,13 +908,17 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   auto const &
   fixed_dofs = dirichlet_workset.fixed_dofs_;
 
-  for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
-    for (int offset = 0; offset < spatial_dimension; ++offset) {
-      int const
-      dof = ns_nodes[ns_node][offset];
-      // If this DOF already has a DBC, skip it.
-      if (fixed_dofs.find(dof) != fixed_dofs.end()) continue;
-      row_is_dbc_data[dof] = 1;
+  row_is_dbc.template modify<Kokkos::HostSpace>();
+  {
+    auto row_is_dbc_data = row_is_dbc.template getLocalView<Kokkos::HostSpace>();
+    ALBANY_ASSERT(row_is_dbc_data.extent(1) == 1);
+    for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
+      for (int offset = 0; offset < spatial_dimension; ++offset) {
+        auto dof = ns_nodes[ns_node][offset];
+        // If this DOF already has a DBC, skip it.
+        if (fixed_dofs.find(dof) != fixed_dofs.end()) continue;
+        row_is_dbc_data(dof,0) = 1;
+      }
     }
   }
   col_is_dbc.doImport(row_is_dbc, *import, Tpetra::ADD);
