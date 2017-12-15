@@ -141,7 +141,7 @@ LCM:
             Number of Nonlinear Iterations: 128
           Test 1:
             Test Type: NormF
-            Tolerance: 1.0e-10
+            Tolerance: 1.0e-6
         Test 3:
           Test Type: FiniteValue
 ...
