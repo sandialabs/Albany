@@ -19,7 +19,8 @@
 
 #include "Sacado_ParameterAccessor.hpp"
 #include "PHAL_AlbanyTraits.hpp"
-#include "PHAL_Dirichlet.hpp"
+//#include "PHAL_Dirichlet.hpp"
+#include "PHAL_SDirichlet.hpp"
 
 #if defined(ALBANY_DTK)
 #include "DTK_STKMeshHelpers.hpp"
@@ -40,7 +41,8 @@ namespace LCM {
 template<typename EvalT, typename Traits> class StrongSchwarzBC;
 
 template <typename EvalT, typename Traits>
-class StrongSchwarzBC_Base : public PHAL::DirichletBase<EvalT, Traits> {
+//class StrongSchwarzBC_Base : public PHAL::DirichletBase<EvalT, Traits> {
+class StrongSchwarzBC_Base: public PHAL::SDirichlet<EvalT, Traits> {
 public:
   typedef typename EvalT::ScalarT ScalarT;
 

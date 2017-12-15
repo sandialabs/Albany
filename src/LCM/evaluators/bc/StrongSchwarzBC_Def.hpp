@@ -12,6 +12,7 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
 
+#include "PHAL_SDirichlet_Def.hpp"
 
 namespace LCM {
 
@@ -21,7 +22,7 @@ namespace LCM {
 template<typename EvalT, typename Traits>
 StrongSchwarzBC_Base<EvalT, Traits>::
 StrongSchwarzBC_Base(Teuchos::ParameterList & p) :
-    PHAL::DirichletBase<EvalT, Traits>(p),
+    PHAL::SDirichlet<EvalT, Traits>(p), 
     app_(p.get<Teuchos::RCP<Albany::Application>>(
         "Application", Teuchos::null)),
     coupled_apps_(app_->getApplications()),
@@ -851,110 +852,15 @@ void
 StrongSchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
-  auto f = dirichlet_workset.fT;
-  auto x = Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*dirichlet_workset.xT));
-  auto J = dirichlet_workset.JacT;
+  dirichlet_workset.is_schwarz_bc_ = true; 
+  dirichlet_workset.spatial_dimension_ = this->app_->getSpatialDimension();
+  PHAL::SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(dirichlet_workset);
 
-  auto row_map = J->getRowMap();
-  auto col_map = J->getColMap();
-  // we make this assumption, which lets us use both local row and column
-  // indices into a single is_dbc vector
-  ALBANY_ASSERT(col_map->isLocallyFitted(*row_map));
-
-  auto& ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
-
-  bool const fill_residual = f != Teuchos::null;
-
-  auto f_view = fill_residual == true ? f->get1dViewNonConst() : Teuchos::null;
-  auto x_view = fill_residual == true ? x->get1dViewNonConst() : Teuchos::null;
-
-  Teuchos::Array<Tpetra_GO>
-  global_index(1);
-
-  Teuchos::Array<LO>
-  index(1);
-
-  Teuchos::Array<ST>
-  entry(1);
-
-  Teuchos::Array<ST>
-  entries;
-
-  Teuchos::Array<LO>
-  indices;
-
-  using IntVec = Tpetra::Vector<int, Tpetra_LO, Tpetra_GO, KokkosNode>;
-  using Import = Tpetra::Import<Tpetra_LO, Tpetra_GO, KokkosNode>;
-  Teuchos::RCP<const Import> import;
-
-  auto domain_map = row_map; // we are assuming this!
-
-  //in theory we should use the importer from the CRS graph, although
-  //I saw a segfault in one of the tests when doing this...
-
-  //if (J->getCrsGraph()->isFillComplete()) {
-  //  import = J->getCrsGraph()->getImporter();
-  //} else {
-    // this construction is expensive!
-    import = Teuchos::rcp(new Import(domain_map, col_map));
-  //}
-
-  IntVec row_is_dbc(row_map);
-  IntVec col_is_dbc(col_map);
-
-  int const
-  spatial_dimension{this->app_->getSpatialDimension()};
-
-  auto const &
-  fixed_dofs = dirichlet_workset.fixed_dofs_;
-
-  row_is_dbc.template modify<Kokkos::HostSpace>();
-  {
-    auto row_is_dbc_data = row_is_dbc.template getLocalView<Kokkos::HostSpace>();
-    ALBANY_ASSERT(row_is_dbc_data.extent(1) == 1);
-    for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
-      for (int offset = 0; offset < spatial_dimension; ++offset) {
-        auto dof = ns_nodes[ns_node][offset];
-        // If this DOF already has a DBC, skip it.
-        if (fixed_dofs.find(dof) != fixed_dofs.end()) continue;
-        row_is_dbc_data(dof,0) = 1;
-      }
-    }
-  }
-  col_is_dbc.doImport(row_is_dbc, *import, Tpetra::ADD);
-  auto col_is_dbc_data = col_is_dbc.template getLocalView<Kokkos::HostSpace>();
-
-  size_t const
-  num_local_rows = J->getNodeNumRows();
-  auto min_local_row = row_map->getMinLocalIndex();
-  auto max_local_row = row_map->getMaxLocalIndex();
-  for (auto local_row = min_local_row; local_row <= max_local_row; ++local_row) {
-    auto num_row_entries = J->getNumEntriesInLocalRow(local_row);
-
-    entries.resize(num_row_entries);
-    indices.resize(num_row_entries);
-
-    J->getLocalRowCopy(local_row, indices(), entries(), num_row_entries);
-
-    auto row_is_dbc = col_is_dbc_data(local_row, 0) > 0;
-    for (size_t row_entry = 0; row_entry < num_row_entries; ++row_entry) {
-      auto local_col = indices[row_entry];
-      auto is_diagonal_entry = local_col == local_row;
-      if (is_diagonal_entry) continue;
-      ALBANY_ASSERT(local_col >= col_map->getMinLocalIndex());
-      ALBANY_ASSERT(local_col <= col_map->getMaxLocalIndex());
-      auto col_is_dbc = col_is_dbc_data(local_col, 0) > 0;
-      if (row_is_dbc || col_is_dbc) {
-        entries[row_entry] = 0.0;
-      }
-    }
-    J->replaceLocalValues(local_row, indices(), entries());
-  }
-
-  if (fill_residual == true) {
+  if (dirichlet_workset.fT != Teuchos::null) {
     fillResidual<StrongSchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>, Traits>
     (*this, dirichlet_workset);
   }
+  dirichlet_workset.is_schwarz_bc_ = false; 
   return;
 }
 

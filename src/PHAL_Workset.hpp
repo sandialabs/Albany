@@ -157,7 +157,12 @@ struct Workset {
 
   std::set<int>
   fixed_dofs_;
+
+  bool 
+  is_schwarz_bc_{false}; 
 #endif
+
+  int spatial_dimension_{0};
 
   Albany::StateArray* stateArrayPtr;
 #if defined(ALBANY_EPETRA)
