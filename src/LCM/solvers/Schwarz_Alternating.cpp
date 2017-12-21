@@ -627,8 +627,6 @@ SchwarzLoopDynamics() const
   //Set ICs and PrevSoln vecs and write initial configuration to Exodus file 
   setDynamicICVecsAndDoOutput(initial_time_, true); 
 
-  //IKT, FIXME: check/fix that ics are set correctly in the case of a subdomain solver failure!!!
-
   // Time-stepping loop
   while (stop < maximum_steps_ && current_time < final_time_) {
 
@@ -640,35 +638,6 @@ SchwarzLoopDynamics() const
 
     ST const
     next_time{current_time + time_step};
-
-    // Before the Schwarz loop, save the solutions for each subdomain in case
-    // the solve fails. Then the load step is reduced and the Schwarz
-    // loop is restarted from scratch.
-    // FIXME, IKT: remove 
-    /*for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
-
-      if (stop == 0) {
-        prev_disp_[subdomain] = Teuchos::null; 
-        prev_velo_[subdomain] = Teuchos::null; 
-        prev_acce_[subdomain] = Teuchos::null; 
-      }
-      else {
-        prev_disp_[subdomain] = Thyra::createMember(this_disp_[subdomain]->space());
-        Thyra::copy(*this_disp_[subdomain], prev_disp_[subdomain].ptr());
-        prev_velo_[subdomain] = Thyra::createMember(this_velo_[subdomain]->space());
-        Thyra::copy(*this_velo_[subdomain], prev_velo_[subdomain].ptr());
-        prev_acce_[subdomain] = Thyra::createMember(this_acce_[subdomain]->space());
-        Thyra::copy(*this_acce_[subdomain], prev_acce_[subdomain].ptr());
-      }
-
-      auto &
-      app = *apps_[subdomain];
-
-      auto &
-      state_mgr = app.getStateMgr();
-
-      internal_states_[subdomain] = state_mgr.getStateArrays();
-    }*/
 
     num_iter_ = 0;
 
@@ -785,7 +754,13 @@ SchwarzLoopDynamics() const
             ic_velo_rcp,
             ic_acce_rcp);
 
-        solver.evalModel(in_args, out_args);  
+        solver.evalModel(in_args, out_args); 
+ 
+        //Allocate current solution vectors 
+
+        this_disp_[subdomain] = Thyra::createMember(me.get_x_space());
+        this_velo_[subdomain] = Thyra::createMember(me.get_x_space());
+        this_acce_[subdomain] = Thyra::createMember(me.get_x_space());
         
 #if defined(DEBUG)
         Teuchos::RCP<Tpetra_Vector>
@@ -807,7 +782,8 @@ SchwarzLoopDynamics() const
       
         // Check whether solver did OK.
 
-        //IKT, FIXME: remove original NOX-related code 
+        //IKT, 12/21/17: uncomment the following if want to check what happened with NOX
+        //solver underlying Tempus solver. 
 
         /*const Teuchos::RCP<const ::Thyra::NonlinearSolverBase<ST> >
         thyra_solver = piro_tempus_solver.getSolver();
@@ -818,15 +794,25 @@ SchwarzLoopDynamics() const
         Teuchos::RCP<const NOX::Solver::Generic> const_nox_solver =
         thyra_nox_solver->getNOXSolver();
 
-        auto &
-        nox_solver = const_cast<NOX::Solver::Generic &>(*const_nox_solver);
+        if (thyra_nox_solver != Teuchos::null) {
+          auto &
+          nox_solver = const_cast<NOX::Solver::Generic &>(*const_nox_solver);
 
-        auto const
-        status = nox_solver.getStatus();
-        */
+          auto const
+          status_nox = nox_solver.getStatus();
  
+          fos << "IKT NOX status = " << status_nox << "\n"; 
+       } */
+
         auto const 
         status = piro_tempus_solver.getTempusIntegratorStatus(); 
+
+        //IKT, 12/21/17: debug print statements
+        /*if (status == Tempus::Status::FAILED) 
+          fos << "IKT tempus status = FAILED \n";
+        else 
+          fos << "IKT tempus status = PASSED \n";
+        */ 
 
         //if (status == NOX::StatusTest::Failed) {
         if (status == Tempus::Status::FAILED) {
@@ -842,13 +828,10 @@ SchwarzLoopDynamics() const
 
         current_state = solution_history->getCurrentState();
 
-        this_disp_[subdomain] = Thyra::createMember(me.get_x_space());
         Thyra::copy(*current_state->getX(), this_disp_[subdomain].ptr());
 
-        this_velo_[subdomain] = Thyra::createMember(me.get_x_space());
         Thyra::copy(*current_state->getXDot(), this_velo_[subdomain].ptr());
 
-        this_acce_[subdomain] = Thyra::createMember(me.get_x_space());
         Thyra::copy(*current_state->getXDotDot(), this_acce_[subdomain].ptr());
 
 #if defined(DEBUG)
@@ -1022,7 +1005,7 @@ SchwarzLoopDynamics() const
         Thyra::copy(*this_acce_[subdomain], prev_acce_[subdomain].ptr());
       }
 
-      // Jump to the beginning of the continuation loop without advancing
+      // Jump to the beginning of the time-step loop without advancing
       // time to try to use a reduced step.
       continue;
     }
