@@ -95,7 +95,6 @@ SchwarzAlternating(
   sub_outargs_.resize(num_subdomains_);
   curr_disp_.resize(num_subdomains_);
   prev_step_disp_.resize(num_subdomains_);
-  prev_iter_disp_.resize(num_subdomains_); //IKT, FIXME: can this variable be removed??  it is not used.
   internal_states_.resize(num_subdomains_);
   //the following 9 arrays are for dynamics
   ics_disp_.resize(num_subdomains_);
@@ -645,7 +644,8 @@ SchwarzLoopDynamics() const
     // Before the Schwarz loop, save the solutions for each subdomain in case
     // the solve fails. Then the load step is reduced and the Schwarz
     // loop is restarted from scratch.
-    for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+    // FIXME, IKT: remove 
+    /*for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
       if (stop == 0) {
         prev_disp_[subdomain] = Teuchos::null; 
@@ -668,7 +668,7 @@ SchwarzLoopDynamics() const
       state_mgr = app.getStateMgr();
 
       internal_states_[subdomain] = state_mgr.getStateArrays();
-    }
+    }*/
 
     num_iter_ = 0;
 
@@ -684,15 +684,6 @@ SchwarzLoopDynamics() const
         fos << "Schwarz iteration  :" << num_iter_ << '\n';
         fos << "Subdomain          :" << subdomain << '\n';
         fos << delim << std::endl;
-
-        // Restore internal states
-        auto &
-        app = *apps_[subdomain];
-
-        auto &
-        state_mgr = app.getStateMgr();
-
-        state_mgr.setStateArrays(internal_states_[subdomain]);
 
         //Restore solution from previous Schwarz iteration before solve
         if (is_initial_state == true) {
@@ -743,6 +734,15 @@ SchwarzLoopDynamics() const
         auto &
         me = dynamic_cast<Albany::ModelEvaluatorT &>
         (*model_evaluators_[subdomain]);
+        
+        // Restore internal states
+        auto &
+        app = *apps_[subdomain];
+
+        auto &
+        state_mgr = app.getStateMgr();
+
+        state_mgr.setStateArrays(internal_states_[subdomain]);
 
         //IKT: the following is different than the quasistatic case...
         me.getNominalValues().set_t(current_time);
@@ -929,7 +929,7 @@ SchwarzLoopDynamics() const
         norms_diff(subdomain)  += dt * Thyra::norm(*velo_diff_rcp);
 
         auto const
-        dt2 = dt * dt;;
+        dt2 = dt * dt;
        
         norms_init(subdomain)  += dt2 * Thyra::norm(*prev_acce_[subdomain]);
         norms_final(subdomain) += dt2 * Thyra::norm(*this_acce_[subdomain]);
@@ -1079,6 +1079,14 @@ setDynamicICVecsAndDoOutput(ST const time, bool const do_output) const
     stk_mesh_struct.exoOutputInterval = 1;
  
     stk_mesh_struct.exoOutput = do_output;
+      
+    auto &
+    app = *apps_[subdomain];
+
+    auto &
+    state_mgr = app.getStateMgr();
+
+    internal_states_[subdomain] = state_mgr.getStateArrays();
 
     if (is_initial_time == true) { //initial time-step: get initial solution from nominalValues in ME 
 
