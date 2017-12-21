@@ -2,22 +2,20 @@ LCM:
   Problem:
     Name: Mechanics 3D
     Solution Method: Steady
-    MaterialDB Filename: 'upper_bar_material.yaml'
+    MaterialDB Filename: '../gauge_material.yaml'
     Dirichlet BCs:
-      Time Dependent SDBC on NS nodelist_6 for DOF Y:
-        Number of points: 2
-        Time Values: [0.00000000e+00, 1000.00000000]
-        BC Values: [0.00000000e+00, 2.50000000]
-      SDBC on NS nodelist_6 for DOF X: 0.00000000e+00
-      SDBC on NS nodelist_6 for DOF Z: 0.00000000e+00
-      SDBC on NS nodelist_5 for DOF StrongSchwarz:
+      SDBC on NS nodelist_4 for DOF StrongSchwarz:
         BC Function: StrongSchwarz
-        Coupled Application: 'gauge.yaml'
-        Coupled Block: block_1
+        Coupled Application: 'upper_bar.yaml'
+        Coupled Block: block_2
+      SDBC on NS nodelist_3 for DOF StrongSchwarz:
+        BC Function: StrongSchwarz
+        Coupled Application: 'lower_bar.yaml'
+        Coupled Block: block_3
   Discretization:
     Method: Exodus
-    Exodus Input File Name: 'upper_bar.g'
-    Exodus Output File Name: 'upper_bar.e'
+    Exodus Input File Name: '../gauge.g'
+    Exodus Output File Name: 'gauge.e'
     Exodus Solution Name: disp
     Exodus Residual Name: resid
     Separate Evaluators by Element Block: true

@@ -2,7 +2,7 @@ LCM:
   Problem:
     Name: Mechanics 3D
     Solution Method: Steady
-    MaterialDB Filename: 'lower_bar_material.yaml'
+    MaterialDB Filename: '../lower_bar_material.yaml'
     Dirichlet BCs:
       Time Dependent SDBC on NS nodelist_1 for DOF Y:
         Number of points: 2
@@ -16,7 +16,7 @@ LCM:
         Coupled Block: block_1
   Discretization:
     Method: Exodus
-    Exodus Input File Name: 'lower_bar.g'
+    Exodus Input File Name: '../lower_bar.g'
     Exodus Output File Name: 'lower_bar.e'
     Exodus Solution Name: disp
     Exodus Residual Name: resid
