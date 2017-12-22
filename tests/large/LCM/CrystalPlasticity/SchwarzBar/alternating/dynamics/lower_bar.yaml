@@ -26,6 +26,7 @@ LCM:
     Analysis:
       Compute Sensitivities: false
     Tempus: 
+      Abort on Failure: true 
       Integrator Name: Tempus Integrator
       Tempus Integrator:
         Integrator Type: Integrator Basic
