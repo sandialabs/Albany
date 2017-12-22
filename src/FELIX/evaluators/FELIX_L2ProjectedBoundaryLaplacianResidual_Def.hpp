@@ -173,7 +173,7 @@ void FELIX::L2ProjectedBoundaryLaplacianResidual<EvalT, Traits>::evaluateFields(
             int cell_nodes[2] = {sideNodes[side][side_nodes[0]],sideNodes[side][side_nodes[1]]};
             MeshScalarT bdEdge_measure = std::sqrt(std::pow(coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0),2)+std::pow(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1),2));
             for(int i=0; i<2; ++i) {
-              bdLaplacian_L2Projection_res(cell,cell_nodes[i]) += robin_coeff*field(cell,side,side_nodes[i])*bdEdge_measure/2.0;
+              bdLaplacian_L2Projection_res(cell,cell_nodes[i]) -= robin_coeff*field(cell,side,side_nodes[i])*bdEdge_measure/2.0;
             }
           }
         }
