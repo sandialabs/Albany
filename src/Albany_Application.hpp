@@ -528,8 +528,8 @@ public:
   fixTime(double const current_time) const
   {
     bool const
-    use_time_param = paramLib->isParameter("Time") == true &&
-      getSchwarzAlternating() == false;
+    use_time_param = (paramLib->isParameter("Time") == true) &&
+      (getSchwarzAlternating() == false) && (solMethod != TransientTempus) ;
 
     double const
     this_time = use_time_param == true ?

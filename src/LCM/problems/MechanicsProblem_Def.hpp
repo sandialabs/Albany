@@ -901,30 +901,21 @@ MechanicsProblem::constructEvaluators(
     offset++;  // for hydrostatic stress
   }
 
-  // IKT, 4/17/17: do not add Time if running a dynamic problem
-  // with Tempus, as this messes up the output to Exodus.  I am still
-  // trying to understand the purpose of the Time evaluator, but it seems
-  // it is for continuation, which is not required w.r.t. time when
-  // running a dynamic problem using a Tempus time-integrator.
+  Teuchos::RCP<Teuchos::ParameterList>
+  p = Teuchos::rcp(new Teuchos::ParameterList("Time"));
 
-  if (dynamic_tempus_ == false) {  // Time
-
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("Time"));
-
-    p->set<std::string>("Time Name", "Time");
-    p->set<std::string>("Delta Time Name", "Delta Time");
-    p->set<Teuchos::RCP<PHX::DataLayout>>(
+  p->set<std::string>("Time Name", "Time");
+  p->set<std::string>("Delta Time Name", "Delta Time");
+  p->set<Teuchos::RCP<PHX::DataLayout>>(
         "Workset Scalar Data Layout", dl_->workset_scalar);
-    p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
-    p->set<bool>("Disable Transient", true);
-    ev = Teuchos::rcp(new LCM::Time<EvalT, PHAL::AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable(
+  p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
+  p->set<bool>("Disable Transient", true);
+  ev = Teuchos::rcp(new LCM::Time<EvalT, PHAL::AlbanyTraits>(*p));
+  fm0.template registerEvaluator<EvalT>(ev);
+  p = stateMgr.registerStateVariable(
         "Time", dl_->workset_scalar, dl_->dummy, eb_name, "scalar", 0.0, true);
-    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+  ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+  fm0.template registerEvaluator<EvalT>(ev);
 
   bool
   reg_dir_field{true};
