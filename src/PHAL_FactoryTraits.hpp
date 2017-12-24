@@ -74,7 +74,7 @@ namespace PHAL {
     static const int id_dirichlet_field                =  3;
     static const int id_dirichlet_off_nodeset          =  4; // To handle equations on side set (see PHAL_DirichletOffNodeSet)
     static const int id_qcad_poisson_dirichlet         =  5;
-    static const int id_strong_dbc                     =  6; 
+    static const int id_sdbc                           =  6; 
     static const int id_kfield_bc                      =  7; // Only for LCM probs
     static const int id_eq_concentration_bc            =  8; // Only for LCM probs
     static const int id_timedep_bc                     =  9; // Only for LCM probs
