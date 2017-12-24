@@ -658,9 +658,8 @@ private:
   std::vector<double> prev_times_;
 
 protected:
+  
   bool no_dir_bcs_;
-
-  bool loca_sdbcs_valid_nonlin_solver_;
 
   bool requires_sdbcs_;
 
