@@ -275,6 +275,7 @@ ENDIF ()
 #evaluators
 SET(SOURCES ${SOURCES}
   evaluators/bc/PHAL_Dirichlet.cpp
+  evaluators/bc/PHAL_SDirichlet.cpp
   evaluators/bc/PHAL_DirichletCoordinateFunction.cpp
   evaluators/bc/PHAL_DirichletField.cpp
   evaluators/bc/PHAL_DirichletOffNodeSet.cpp
@@ -354,12 +355,6 @@ IF (ALBANY_EPETRA)
   )
 ENDIF()
 
-IF (ALBANY_LCM)
-  SET(SOURCES ${SOURCES}
-    evaluators/bc/PHAL_SDirichlet.cpp
-  )
-ENDIF()
-
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/pde/PHAL_AdvDiffResid.cpp
   evaluators/pde/PHAL_ReactDiffSystemResid.cpp
@@ -391,6 +386,7 @@ SET(PDE_SRCS ${PDE_SRCS}
 
 SET(HEADERS ${HEADERS}
   evaluators/bc/PHAL_Dirichlet.hpp
+  evaluators/bc/PHAL_SDirichlet.hpp
   evaluators/bc/PHAL_DirichletCoordinateFunction.hpp
   evaluators/bc/PHAL_DirichletCoordinateFunction_Def.hpp
   evaluators/bc/PHAL_DirichletField.hpp
@@ -398,6 +394,7 @@ SET(HEADERS ${HEADERS}
   evaluators/bc/PHAL_DirichletOffNodeSet.hpp
   evaluators/bc/PHAL_DirichletOffNodeSet_Def.hpp
   evaluators/bc/PHAL_Dirichlet_Def.hpp
+  evaluators/bc/PHAL_SDirichlet_Def.hpp
   evaluators/bc/PHAL_IdentityCoordinateFunctionTraits.hpp
   evaluators/bc/PHAL_IdentityCoordinateFunctionTraits_Def.hpp
   evaluators/bc/PHAL_Neumann.hpp
@@ -536,13 +533,6 @@ IF (ALBANY_EPETRA)
     evaluators/response/PHAL_ResponseFieldIntegral_Def.hpp
     evaluators/scatter/PHAL_SeparableScatterScalarResponse.hpp
     evaluators/scatter/PHAL_SeparableScatterScalarResponse_Def.hpp
-  )
-ENDIF()
-
-IF (ALBANY_LCM)
-  SET(HEADERS ${HEADERS}
-    evaluators/bc/PHAL_SDirichlet.hpp
-    evaluators/bc/PHAL_SDirichlet_Def.hpp
   )
 ENDIF()
 

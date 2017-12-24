@@ -15,7 +15,6 @@
 #include "LCM/evaluators/bc/EquilibriumConcentrationBC.hpp"
 #include "LCM/evaluators/bc/KfieldBC.hpp"
 #include "LCM/evaluators/bc/PDNeighborFitBC.hpp"
-#include "PHAL_SDirichlet.hpp"
 #include "LCM/evaluators/bc/TimeDepBC.hpp"
 #include "LCM/evaluators/bc/TimeDepSDBC.hpp"
 #include "LCM/evaluators/bc/TimeTracBC.hpp"
@@ -34,6 +33,7 @@
 #include "QCAD_PoissonSourceInterface.hpp"
 #endif // ALBANY_QCAD
 
+#include "PHAL_SDirichlet.hpp"
 #include "PHAL_Dirichlet.hpp"
 #include "PHAL_DirichletCoordinateFunction.hpp"
 #include "PHAL_DirichletField.hpp"
@@ -74,12 +74,12 @@ namespace PHAL {
     static const int id_dirichlet_field                =  3;
     static const int id_dirichlet_off_nodeset          =  4; // To handle equations on side set (see PHAL_DirichletOffNodeSet)
     static const int id_qcad_poisson_dirichlet         =  5;
-    static const int id_kfield_bc                      =  6; // Only for LCM probs
-    static const int id_eq_concentration_bc            =  7; // Only for LCM probs
-    static const int id_timedep_bc                     =  8; // Only for LCM probs
-    static const int id_time                           =  9; // Only for LCM probs
-    static const int id_torsion_bc                     = 10; // Only for LCM probs
-    static const int id_strong_dbc                     = 11; // Only for LCM probs
+    static const int id_strong_dbc                     =  6; 
+    static const int id_kfield_bc                      =  7; // Only for LCM probs
+    static const int id_eq_concentration_bc            =  8; // Only for LCM probs
+    static const int id_timedep_bc                     =  9; // Only for LCM probs
+    static const int id_time                           = 10; // Only for LCM probs
+    static const int id_torsion_bc                     = 11; // Only for LCM probs
     static const int id_timedep_sdbc                   = 12; // Only for LCM probs
     static const int id_schwarz_bc                     = 13; // Only for LCM probs
     static const int id_strong_schwarz_bc              = 14; // Only for LCM probs
@@ -96,14 +96,15 @@ namespace PHAL {
 #else
         PHAL::Dirichlet<_,Traits>                 //  5 dummy
 #endif
+        ,
+        PHAL::SDirichlet<_, Traits>               //  6
 #if defined(ALBANY_LCM)
         ,
-        LCM::KfieldBC<_,Traits>,                  //  6
-        LCM::EquilibriumConcentrationBC<_,Traits>, // 7
-        LCM::TimeDepBC<_, Traits>,                //  8
-        LCM::Time<_, Traits>,                     //  9
-        LCM::TorsionBC<_, Traits>,                // 10
-        PHAL::SDirichlet<_, Traits>,              // 11
+        LCM::KfieldBC<_,Traits>,                  //  7
+        LCM::EquilibriumConcentrationBC<_,Traits>, // 8
+        LCM::TimeDepBC<_, Traits>,                //  9
+        LCM::Time<_, Traits>,                     //  10
+        LCM::TorsionBC<_, Traits>,                 // 11
         LCM::TimeDepSDBC<_, Traits>               // 12
 #endif
 #if defined(ALBANY_LCM) && defined(HAVE_STK)

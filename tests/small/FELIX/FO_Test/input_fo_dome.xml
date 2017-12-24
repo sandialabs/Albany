@@ -4,10 +4,10 @@
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS lateral for DOF U0" type="double" value="0.0"/>
-      <Parameter name="DBC on NS lateral for DOF U1" type="double" value="0.0"/>
-      <Parameter name="DBC on NS basal for DOF U0" type="double" value="0.0"/>
-      <Parameter name="DBC on NS basal for DOF U1" type="double" value="0.0"/>
+      <Parameter name="SDBC on NS lateral for DOF U0" type="double" value="0.0"/>
+      <Parameter name="SDBC on NS lateral for DOF U1" type="double" value="0.0"/>
+      <Parameter name="SDBC on NS basal for DOF U0" type="double" value="0.0"/>
+      <Parameter name="SDBC on NS basal for DOF U1" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
@@ -145,13 +145,13 @@
       </ParameterList>
     </ParameterList>
         </ParameterList>
-        <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+        <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
         <ParameterList name="Preconditioner Types">
-    <ParameterList name="Ifpack">
+    <ParameterList name="Ifpack2">
       <Parameter name="Overlap" type="int" value="0"/>
-      <Parameter name="Prec Type" type="string" value="ILU"/>
-      <ParameterList name="Ifpack Settings">
-        <Parameter name="fact: level-of-fill" type="int" value="0"/>
+      <Parameter name="Prec Type" type="string" value="ILUT"/>
+      <ParameterList name="Ifpack2 Settings">
+        <Parameter name="fact: ilut level-of-fill" type="double" value="1.0"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="ML">

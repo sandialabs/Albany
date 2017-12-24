@@ -222,7 +222,13 @@ SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::SDirichlet(
 template <typename Traits>
 void
 SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
-    typename Traits::EvalData dirichlet_workset) {
+    typename Traits::EvalData dirichlet_workset) 
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+          true, Teuchos::Exceptions::InvalidParameter,
+          std::endl
+          << "Error!  Tangent specialization for PHAL::SDirichlet "
+             "is not implemented!\n");
   return;
 }
 
@@ -243,7 +249,13 @@ SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::SDirichlet(
 template <typename Traits>
 void
 SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
-    typename Traits::EvalData dirichlet_workset) {
+    typename Traits::EvalData dirichlet_workset) 
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+          true, Teuchos::Exceptions::InvalidParameter,
+          std::endl
+          << "Error!  DistParamDeriv specialization for PHAL::SDirichlet "
+             "is not implemented!\n");
   return;
 }
 
