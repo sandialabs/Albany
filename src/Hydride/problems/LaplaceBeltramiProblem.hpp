@@ -43,7 +43,7 @@ class LaplaceBeltramiProblem : public AbstractProblem {
     }
 
     //! Get boolean telling code if SDBCs are utilized  
-    virtual bool useSDBCs() const {return false; }
+    virtual bool useSDBCs() const {return use_sdbcs_; }
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void buildProblem(
@@ -92,6 +92,8 @@ class LaplaceBeltramiProblem : public AbstractProblem {
 
     Teuchos::RCP<Albany::Layouts> dl;
 
+    /// Boolean marking whether SDBCs are used 
+    bool use_sdbcs_; 
 };
 
 }

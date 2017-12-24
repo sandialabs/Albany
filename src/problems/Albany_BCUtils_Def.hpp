@@ -333,6 +333,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
   for (std::size_t i = 0; i < nodeSetIDs.size(); i++) {
     for (std::size_t j = 0; j < bcNames.size(); j++) {
       string ss = traits_type::constructBCName(nodeSetIDs[i], bcNames[j]);
+      std::cout << "IKT ss = " << ss << std::endl; 
       if (BCparams.isParameter(ss)) {
         RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -647,6 +648,8 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
     }
   }
 
+#endif //ALBANY_LCM
+
   ///
   /// SDBC (S = "Symmetric", f.k.a. "Strong")
   ///
@@ -673,6 +676,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
     }
   }
 
+#if defined(ALBANY_LCM)
   ///
   /// Schwarz BC specific
   ///

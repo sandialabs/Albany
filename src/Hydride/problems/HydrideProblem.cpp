@@ -21,7 +21,8 @@ HydrideProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   Albany::AbstractProblem(params_, paramLib_),
   numDim(numDim_),
   haveNoise(false),
-  commT(commT_)
+  commT(commT_),
+  use_sdbcs_(false)
 {
 
   // Compute number of equations
@@ -94,6 +95,7 @@ Albany::HydrideProblem::constructDirichletEvaluators(const std::vector<std::stri
    Albany::BCUtils<Albany::DirichletTraits> bcUtils;
    dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
                                           this->params, this->paramLib);
+   use_sdbcs_ = bcUtils.useSDBCs(); 
    offsets_ = bcUtils.getOffsets(); 
 }
 

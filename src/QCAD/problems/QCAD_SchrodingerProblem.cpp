@@ -21,7 +21,8 @@ QCAD::SchrodingerProblem::SchrodingerProblem( const Teuchos::RCP<Teuchos::Parame
                     Teuchos::RCP<const Teuchos::Comm<int> >& commT_):
   Albany::AbstractProblem(params_, paramLib_, 1),
   commT(commT_), havePotential(false), 
-  numDim(numDim_)
+  numDim(numDim_), 
+  use_sdbcs_(false)
 {
   havePotential = params->isSublist("Potential");
 
@@ -123,6 +124,7 @@ QCAD::SchrodingerProblem::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
+   use_sdbcs_ = dirUtils.useSDBCs(); 
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

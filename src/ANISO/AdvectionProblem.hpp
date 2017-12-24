@@ -34,7 +34,7 @@ class AdvectionProblem : public AbstractProblem {
 
     int spatialDimension() const { return num_dims_; }
 
-    bool useSDBCs() const {return false; }
+    bool useSDBCs() const {return use_sdbcs_; }
 
     void buildProblem(
         Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
@@ -79,6 +79,9 @@ class AdvectionProblem : public AbstractProblem {
     Teuchos::RCP<Albany::MaterialDatabase> material_db_;
 
     Teuchos::RCP<Albany::Layouts> dl_;
+  
+    /// Boolean marking whether SDBCs are used 
+    bool use_sdbcs_; 
 
 };
 

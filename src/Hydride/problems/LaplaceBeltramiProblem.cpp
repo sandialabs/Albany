@@ -20,7 +20,8 @@ LaplaceBeltramiProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                        Teuchos::RCP<const Teuchos::Comm<int> >& commT_):
   Albany::AbstractProblem(params_, paramLib_),
   numDim(numDim_),
-  commT(commT_) {
+  commT(commT_), 
+  use_sdbcs_(false) {
 
   std::string& method = params_->get("Method", "Laplace");
 
@@ -98,6 +99,7 @@ Albany::LaplaceBeltramiProblem::constructDirichletEvaluators(const std::vector<s
   Albany::BCUtils<Albany::DirichletTraits> bcUtils;
   dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
                                       this->params, this->paramLib, numDim);
+  use_sdbcs_ = bcUtils.useSDBCs(); 
   offsets_ = bcUtils.getOffsets(); 
 }
 

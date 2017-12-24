@@ -18,7 +18,8 @@ FELIX::Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& params,
                              const Teuchos::RCP<ParamLib>& paramLib,
                              const int numDimensions) :
   Albany::AbstractProblem (params, paramLib,1),
-  numDim (numDimensions)
+  numDim (numDimensions),
+  use_sdbcs_(false)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (numDim!=1 && numDim!=2,std::logic_error,"Problem supports only 1D and 2D");
 
@@ -148,6 +149,7 @@ void FELIX::Hydrology::constructDirichletEvaluators (const Albany::MeshSpecsStru
   HydrologyDirOp op(*this);
   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
 
+  use_sdbcs_ = dirUtils.useSDBCs(); 
   offsets_ = dirUtils.getOffsets();
 }
 

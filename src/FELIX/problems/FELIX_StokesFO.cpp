@@ -23,7 +23,8 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
           const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
   numDim(numDim_),
-  discParams(discParams_)
+  discParams(discParams_),
+  use_sdbcs_(false)
 {
   //Set # of PDEs per node based on the Equation Set.
   //Equation Set is FELIX by default (2 dofs / node -- usual FELIX Stokes FO).
@@ -246,6 +247,7 @@ FELIX::StokesFO::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
+   use_sdbcs_ = dirUtils.useSDBCs(); 
    offsets_ = dirUtils.getOffsets();
 }
 

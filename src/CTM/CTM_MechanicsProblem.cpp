@@ -12,7 +12,8 @@ MechanicsProblem::MechanicsProblem(
     RCP<const Teuchos::Comm<int> >& comm)
     : Albany::AbstractProblem(params, param_lib),
       num_dims(n_dims),
-      comm_(comm) {
+      comm_(comm), 
+      use_sdbcs_(false) {
 
   *out << "Problem name = Mechanics Problem \n";
   this->setNumEquations(num_dims);
@@ -81,6 +82,7 @@ void MechanicsProblem::constructDirichletEvaluators(
   std::vector<std::string>& nodeSetIDs = mesh_specs->nsNames;
   dfm = bcUtils.constructBCEvaluators(nodeSetIDs, dirichletNames,
       this->params, Teuchos::null);
+  use_sdbcs_ = bcUtils.useSDBCs(); 
 }
 
 void MechanicsProblem::constructNeumannEvaluators(

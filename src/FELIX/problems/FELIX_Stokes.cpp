@@ -55,7 +55,8 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   haveFlowEq(false),
   haveSource(false),
   havePSPG(false),
-  numDim(numDim_)
+  numDim(numDim_),
+  use_sdbcs_(false)
 {
 
   getVariableType(params->sublist("Flow"), "DOF", flowType,
@@ -148,6 +149,7 @@ FELIX::Stokes::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
+   use_sdbcs_ = dirUtils.useSDBCs(); 
    offsets_ = dirUtils.getOffsets();
 }
 

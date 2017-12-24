@@ -20,7 +20,8 @@ HydMorphProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              Teuchos::RCP<const Teuchos::Comm<int> >& commT_):  
   Albany::AbstractProblem(params_, paramLib_),
   numDim(numDim_),
-  commT(commT_)
+  commT(commT_),
+  use_sdbcs_(false)
 {
 
   this->setNumEquations(2);
@@ -99,6 +100,7 @@ Albany::HydMorphProblem::constructDirichletEvaluators(const std::vector<std::str
    Albany::BCUtils<Albany::DirichletTraits> bcUtils;
    dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
                                           this->params, this->paramLib);
+   use_sdbcs_ = bcUtils.useSDBCs(); 
    offsets_ = bcUtils.getOffsets(); 
 }
 

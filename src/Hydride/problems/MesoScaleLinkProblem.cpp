@@ -36,6 +36,7 @@ MesoScaleLinkProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   haveSource(false),
   numDim(numDim_),
   commT(commT_),
+  use_sdbcs_(false), 
   mpi_comm(Albany::getMpiCommFromTeuchosComm(commT_)) {
 
   TEUCHOS_TEST_FOR_EXCEPTION(commT->getSize() != 1, std::logic_error,
@@ -161,6 +162,7 @@ Albany::MesoScaleLinkProblem::constructDirichletEvaluators(
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                        this->params, this->paramLib);
+  use_sdbcs_ = dirUtils.useSDBCs(); 
   offsets_ = dirUtils.getOffsets(); 
 }
 

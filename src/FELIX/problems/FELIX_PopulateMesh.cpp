@@ -19,7 +19,8 @@ PopulateMesh::PopulateMesh (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                             const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                             const Teuchos::RCP<ParamLib>& paramLib_) :
   Albany::AbstractProblem(params_, paramLib_),
-  discParams(discParams_)
+  discParams(discParams_), 
+  use_sdbcs_(false)
 {
   neq = 1;
 

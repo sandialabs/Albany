@@ -18,7 +18,8 @@ Albany::AdvectionProblem::AdvectionProblem(
     const int num_dims,
  	  Teuchos::RCP<const Teuchos::Comm<int> >& commT) :
   Albany::AbstractProblem(params_, param_lib),
-  num_dims_(num_dims) {
+  num_dims_(num_dims), 
+  use_sdbcs_(false) {
 
     std::string fname = params->get<std::string>("MaterialDB Filename");
     material_db_ = Teuchos::rcp(new Albany::MaterialDatabase(fname, commT));
@@ -77,6 +78,7 @@ void Albany::AdvectionProblem::constructDirichletEvaluators(
   Albany::BCUtils<Albany::DirichletTraits> bcUtils;
   dfm = bcUtils.constructBCEvaluators(
       nodeSetIDs, bcNames, this->params, this->paramLib);
+  use_sdbcs_ = bcUtils.useSDBCs(); 
   offsets_ = bcUtils.getOffsets();
 }
 

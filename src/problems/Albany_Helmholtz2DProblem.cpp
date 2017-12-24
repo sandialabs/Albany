@@ -13,7 +13,8 @@ Albany::Helmholtz2DProblem::
 Helmholtz2DProblem(
                          const Teuchos::RCP<Teuchos::ParameterList>& params_,
                          const Teuchos::RCP<ParamLib>& paramLib_) :
-  Albany::AbstractProblem(params_, paramLib_, 2)
+  Albany::AbstractProblem(params_, paramLib_, 2),
+  use_sdbcs_(false)
 {
 
   std::string& method = params->get("Name", "Helmholtz 2D Problem");
@@ -72,6 +73,7 @@ Albany::Helmholtz2DProblem::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
+   use_sdbcs_ = dirUtils.useSDBCs(); 
    offsets_ = dirUtils.getOffsets(); 
 }
 

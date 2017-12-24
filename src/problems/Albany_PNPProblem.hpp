@@ -41,7 +41,7 @@ namespace Albany {
     virtual int spatialDimension() const { return numDim; }
 
     //! Get boolean telling code if SDBCs are utilized  
-    virtual bool useSDBCs() const {return false; }
+    virtual bool useSDBCs() const {return use_sdbcs_; }
 
     // Build evaluators
     virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
@@ -85,6 +85,9 @@ namespace Albany {
 
    Teuchos::RCP<Albany::Layouts> dl; 
     
+   /// Boolean marking whether SDBCs are used 
+   bool use_sdbcs_; 
+
   };
 
 }

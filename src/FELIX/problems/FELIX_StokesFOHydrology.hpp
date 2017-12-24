@@ -70,7 +70,7 @@ public:
   virtual int spatialDimension() const { return numDim; }
 
   //! Get boolean telling code if SDBCs are utilized  
-  virtual bool useSDBCs() const {return false; }
+  virtual bool useSDBCs() const {return use_sdbcs_; }
 
   //! Build the PDE instantiations, boundary conditions, and initial solution
   virtual void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
@@ -152,6 +152,9 @@ protected:
   static constexpr char hydraulic_potential_name[] = "hydraulic_potential";
   static constexpr char water_thickness_name[]     = "water_thickness";
   static constexpr char water_thickness_dot_name[] = "water_thickness_dot";
+  
+  /// Boolean marking whether SDBCs are used 
+  bool use_sdbcs_; 
 };
 
 } // Namespace FELIX

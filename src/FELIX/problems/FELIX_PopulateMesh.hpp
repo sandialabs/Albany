@@ -64,7 +64,7 @@ public:
   //! Each problem must generate it's list of valide parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
-  bool useSDBCs() const { return false; }
+  bool useSDBCs() const { return use_sdbcs_; }
 
 private:
 
@@ -112,6 +112,8 @@ protected:
 
   std::string                       cellEBName;
   std::map<std::string,std::string> sideEBName;
+  /// Boolean marking whether SDBCs are used 
+  bool use_sdbcs_; 
 };
 
 } // Namespace FELIX

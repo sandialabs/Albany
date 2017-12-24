@@ -20,7 +20,8 @@ LinComprNSProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
-  numDim(numDim_)
+  numDim(numDim_),
+  use_sdbcs_(false)
 {
   // Get number of species equations from Problem specifications
   neq = params_->get("Number of PDE Equations", numDim);
@@ -78,6 +79,7 @@ Albany::LinComprNSProblem::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
+   use_sdbcs_ = dirUtils.useSDBCs(); 
    offsets_ = dirUtils.getOffsets(); 
 }
 

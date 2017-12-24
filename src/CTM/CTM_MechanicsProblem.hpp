@@ -30,7 +30,7 @@ class MechanicsProblem : public Albany::AbstractProblem {
 
     int spatialDimension() const { return num_dims; }
 
-    bool useSDBCs() const {return false; }
+    bool useSDBCs() const {return use_sdbcs_; }
 
     void buildProblem(
         ArrayRCP<RCP<Albany::MeshSpecsStruct> > mesh_specs,
@@ -67,6 +67,11 @@ class MechanicsProblem : public Albany::AbstractProblem {
     RCP<Albany::MaterialDatabase> material_db_;
     std::string materialFileName_;
     RCP<const Teuchos::Comm<int> > comm_;
+
+  protected:
+
+    /// Boolean marking whether SDBCs are used 
+    bool use_sdbcs_; 
 
 };
 
