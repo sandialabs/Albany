@@ -641,8 +641,6 @@ void Albany::Application::buildProblem() {
 
   problem->buildProblem(meshSpecs, stateMgr);
 
-  std::cout << "IKT useSDBCs? " << problem->useSDBCs() << std::endl; 
-
   if ((requires_sdbcs_ == true) && (problem->useSDBCs() == false) &&
       (no_dir_bcs_ == false)) {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
