@@ -9,4 +9,5 @@ module load PrgEnv-gnu
 module load cmake/3.3.2 python cray-netcdf-hdf5parallel 
 module load boost/1.61
 module load git 
+module unload darshan
 module list
