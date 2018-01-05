@@ -81,6 +81,8 @@ int main(int argc, char *argv[]) {
   const Albany_MPI_Comm nativeComm = Albany_MPI_COMM_WORLD;
   const RCP<const Teuchos::Comm<int> > teuchosComm = Albany::createTeuchosCommFromMpiComm(nativeComm);
 
+  Kokkos::initialize(argc, argv);
+
   // Standard output
   const RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
@@ -88,6 +90,7 @@ int main(int argc, char *argv[]) {
   const std::string firstArg = (argc > 1) ? argv[1] : "";
   if (firstArg.empty() || firstArg == "--help") {
     *out << "AlbanyRBGen input-file-path\n";
+    Kokkos::finalize_all();
     return 0;
   }
   const std::string inputFileName = argv[1];
@@ -386,4 +389,5 @@ int main(int argc, char *argv[]) {
       baseDisc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
     }
   }
+  Kokkos::finalize_all();
 }
