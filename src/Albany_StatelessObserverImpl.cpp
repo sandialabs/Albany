@@ -25,10 +25,18 @@ StatelessObserverImpl (const Teuchos::RCP<Application> &app)
 RealType StatelessObserverImpl::
 getTimeParamValueOrDefault (RealType defaultValue) const {
   const std::string label("Time");
+  //IKT, NOTE: solMethod == 2 corresponds to TransientTempus
+  bool const
+    use_time_param = (app_->getParamLib()->isParameter(label) == true) &&
+      (app_->getSchwarzAlternating() == false) && (app_->getSolutionMethod() != 2);
 
-  return (app_->getParamLib()->isParameter(label)) ?
-    app_->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>(label) :
-    defaultValue;
+  double const
+    this_time = use_time_param == true ?
+        app_->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>(label) :
+        defaultValue;
+
+  return this_time;
+
 }
 
 #if defined(ALBANY_EPETRA)
