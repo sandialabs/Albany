@@ -32,15 +32,17 @@ command = ["./exodiff", "-stat", "-f", \
            name + ".exo"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
+
+with open(log_file_name, 'r') as log_file:
+    print log_file.read() 
+
 if return_code != 0:
     result = return_code
+    
 if result != 0:
     print "result is %s" % result
     print "%s test has failed" % name
     sys.exit(result)
-with open(log_file_name, 'r') as log_file:
-    print log_file.read() 
-    
 
 ######################
 # Test 2 - RBgen
@@ -67,14 +69,16 @@ command = ["./exodiff", "-stat", "-f", \
            name + ".exo"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
+
+with open(log_file_name, 'r') as log_file:
+    print log_file.read() 
+
 if return_code != 0:
     result = return_code
 if result != 0:
     print "result is %s" % result
     print "RBgen test has failed"
     sys.exit(result)
-with open(log_file_name, 'r') as log_file:
-    print log_file.read() 
     
     
 ######################
@@ -102,13 +106,15 @@ command = ["./exodiff", "-stat", "-f", \
            name + ".exo"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
+
+with open(log_file_name, 'r') as log_file:
+    print log_file.read()       
+
 if return_code != 0:
     result = return_code
 if result != 0:
     print "result is %s" % result
     print "%s test has failed" % name
     sys.exit(result)
-with open(log_file_name, 'r') as log_file:
-    print log_file.read()       
     
 sys.exit(result)
