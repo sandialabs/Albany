@@ -57,7 +57,7 @@ LCM:
     Exodus Write Interval: 1
   Regression Results: 
     Number of Comparisons: 3
-    Test Values: [1.149174105616e-01, 0.000000000000e+00, -1.552477683152e-01]
+    Test Values: [1.149255934841e-01, 0.000000000000e+00, -1.552232195477e-01]
     Relative Tolerance: 1.0e-7
     Absolute Tolerance: 1.0e-7
   Piro:
@@ -75,7 +75,11 @@ LCM:
           Initial Time Index: 0
           Final Time Index: 1000000
           Initial Time Step: 0.1
-          Integrator Step Type: Constant
+          Integrator Step Type: Variable
+          Reduction Factor: 0.5 
+          Amplification Factor: 2.0
+          Minimum Value Monitoring Function: 1.0e-1
+          Maximum Value Monitoring Function: 5.0e0
           Output Time List: ''
           Output Index List: ''
       Tempus Stepper:
@@ -121,7 +125,7 @@ LCM:
                 Test Type: NormF
                 Norm Type: Two Norm
                 Scale Type: Scaled
-                Tolerance: 1.00000000e-8
+                Tolerance: 1.00000000e-6
               Test 1:
                 Test Type: MaxIters
                 Maximum Iterations: 128
