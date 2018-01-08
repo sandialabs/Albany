@@ -65,6 +65,7 @@ if return_code != 0:
 # run exodiff
 command = ["./exodiff", "-stat", "-f", \
            name + ".exodiff", \
+           "-steps", "1:19:1", \
            name + ".gold.exo", \
            name + ".exo"]
 p = Popen(command, stdout=logfile, stderr=logfile)
