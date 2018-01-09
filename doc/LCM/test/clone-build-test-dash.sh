@@ -10,10 +10,12 @@ for PACKAGE in $PACKAGES; do
 	trilinos)
 	    PACKAGE_NAME="Trilinos"
 	    REPO="git@github.com:trilinos/Trilinos.git"
+            BRANCH="develop"
 	    ;;
 	albany)
 	    PACKAGE_NAME="Albany"
 	    REPO="git@github.com:gahansen/Albany.git"
+            BRANCH="master"
 	    ;;
 	*)
 	    echo "Unrecognized package option"
@@ -25,7 +27,7 @@ for PACKAGE in $PACKAGES; do
     if [ -d "$PACKAGE_DIR" ]; then
 	rm "$PACKAGE_DIR" -rf
     fi
-    git clone -v "$REPO" "$PACKAGE_NAME" &> "$CHECKOUT_LOG"
+    git clone -v -b "$BRANCH" "$REPO" "$PACKAGE_NAME" &> "$CHECKOUT_LOG"
 done
 
 # For now assume that if there is a DTK directory in the main LCM
