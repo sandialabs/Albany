@@ -1,0 +1,112 @@
+LCM:
+  Problem:
+    Name: Mechanics 3D
+    Solution Method: Transient Tempus
+    MaterialDB Filename: '../lower_bar_material.yaml'
+    Dirichlet BCs:
+      Time Dependent SDBC on NS nodelist_1 for DOF Y:
+        Number of points: 2
+        Time Values: [0.00000000e+00, 1000.00000000]
+        BC Values: [0.00000000e+00, -2.50000000e+00]
+      SDBC on NS nodelist_1 for DOF X: 0.00000000e+00
+      SDBC on NS nodelist_1 for DOF Z: 0.00000000e+00
+      SDBC on NS nodelist_2 for DOF StrongSchwarz:
+        BC Function: StrongSchwarz
+        Coupled Application: 'gauge.yaml'
+        Coupled Block: block_1
+  Discretization:
+    Method: Exodus
+    Exodus Input File Name: '../lower_bar.g'
+    Exodus Output File Name: 'lower_bar.e'
+    Exodus Solution Name: disp
+    Exodus Residual Name: resid
+    Separate Evaluators by Element Block: true
+    Number Of Time Derivatives: 2
+  Piro:
+    Analysis:
+      Compute Sensitivities: false
+    Tempus: 
+      Abort on Failure: true 
+      Integrator Name: Tempus Integrator
+      Tempus Integrator:
+        Integrator Type: Integrator Basic
+        Stepper Name: Tempus Stepper
+        Solution History:
+          Storage Type: Unlimited
+          Storage Limit: 2000
+        Time Step Control:
+          Initial Time Index: 0
+          Final Time Index: 1000000
+          Integrator Step Type: Constant
+          Output Time List: ''
+          Output Index List: ''
+      Tempus Stepper:
+        Stepper Type: 'Newmark Implicit d-Form'
+        Newmark Parameters:
+          Beta: 0.25
+          Gamma: 0.50
+        Solver Name: Demo Solver
+        Demo Solver:
+          NOX:
+            Direction:
+              Method: Newton
+              Newton:
+                Forcing Term Method: Constant
+                Rescue Bad Newton Solve: true
+                Linear Solver:
+                  Tolerance: 1.0e-5
+            Line Search:
+              Method: Full Step
+              Full Step:
+                Full Step: 1.0
+            Nonlinear Solver: Line Search Based
+            Printing:
+              Output Precision: 3
+              Output Processor: 0
+              Output Information:
+                Error: true
+                Warning: true
+                Outer Iteration: true
+                Parameters: true
+                Details: true
+                Linear Solver Details: true
+                Stepper Iteration: true
+                Stepper Details: true
+                Stepper Parameters: true
+            Solver Options:
+              Status Test Check Type: Minimal
+            Status Tests:
+              Test Type: Combo
+              Combo Type: OR
+              Number of Tests: 3
+              Test 0:
+                Test Type: NormUpdate
+                Tolerance: 1.0e-04
+              Test 1:
+                Test Type: MaxIters
+                Maximum Iterations: 256
+              Test 2:
+                Test Type: FiniteValue
+      Stratimikos:
+        Linear Solver Type: Belos
+        Linear Solver Types:
+          AztecOO:
+            Forward Solve:
+              AztecOO Settings:
+                Aztec Solver: GMRES
+                Convergence Test: r0
+                Size of Krylov Subspace: 200
+                Output Frequency: 1
+              Max Iterations: 100
+              Tolerance: 1e-5
+          Belos:
+            Solver Type: Block GMRES
+            Solver Types:
+              Block GMRES: 
+                Convergence Tolerance: 1.00000000e-14
+                Output Frequency: 1
+                Output Style: 1
+                Verbosity: 33
+                Maximum Iterations: 100
+                Num Blocks: 100
+        Preconditioner Type: None

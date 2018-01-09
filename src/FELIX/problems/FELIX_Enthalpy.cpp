@@ -18,7 +18,9 @@ FELIX::Enthalpy::
 Enthalpy(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                  const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
 		 const Teuchos::RCP<ParamLib>& paramLib_,
-		 const int numDim_): Albany::AbstractProblem(params_, paramLib_, numDim_), numDim(numDim_), discParams(discParams_)
+		 const int numDim_): Albany::AbstractProblem(params_, paramLib_, numDim_), 
+  numDim(numDim_), discParams(discParams_), 
+  use_sdbcs_(false)
 {
 	this->setNumEquations(2);
 
@@ -156,6 +158,7 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
+   use_sdbcs_ = dirUtils.useSDBCs(); 
    offsets_ = dirUtils.getOffsets();
 }
 

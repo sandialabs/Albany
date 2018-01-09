@@ -23,7 +23,8 @@ StokesFOHydrology (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                    const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
   numDim(numDim_),
-  discParams(discParams_)
+  discParams(discParams_),
+  use_sdbcs_(false)
 {
   basalSideName   = params->get<std::string>("Basal Side Name");
   surfaceSideName = params->isParameter("Surface Side Name") ? params->get<std::string>("Surface Side Name") : "INVALID";
@@ -262,6 +263,7 @@ FELIX::StokesFOHydrology::constructDirichletEvaluators(
 */
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dir_names, this->params, this->paramLib, neq);
+  use_sdbcs_ = dirUtils.useSDBCs(); 
 }
 
 // Neumann BCs

@@ -11,6 +11,7 @@ LCM:
       Material Model: 
         Model Name: CrystalPlasticity
       Number of Slip Systems: 12
+      Density: 1000.0
       Integration Scheme: Implicit
       Nonlinear Solver Step Type: Newton with Line Search
       Implicit Integration Relative Tolerance: 1.00000000e-35

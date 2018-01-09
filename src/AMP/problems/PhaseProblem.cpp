@@ -18,7 +18,8 @@ PhaseProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     const int num_dims,
  	  Teuchos::RCP<const Teuchos::Comm<int> >& commT) :
   Albany::AbstractProblem(params_, param_lib),
-  num_dims_(num_dims), hasConsolidation_(true)
+  num_dims_(num_dims), hasConsolidation_(true),
+  use_sdbcs_(false)
 {
   // Read the "MaterialDB Filename" parameter from the input deck and create the MaterialDatabase
   std::string filename = params->get<std::string>("MaterialDB Filename");
@@ -101,6 +102,7 @@ void Albany::PhaseProblem::constructDirichletEvaluators(
   Albany::BCUtils<Albany::DirichletTraits> bcUtils;
   dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
       this->params, this->paramLib);
+  use_sdbcs_ = bcUtils.useSDBCs(); 
   offsets_ = bcUtils.getOffsets(); 
 }
 

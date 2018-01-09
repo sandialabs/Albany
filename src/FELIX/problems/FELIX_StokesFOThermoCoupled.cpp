@@ -23,7 +23,8 @@ StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
                        const int numDim_) :
                        Albany::AbstractProblem(params_, paramLib_, numDim_),
                        numDim(numDim_),
-                       discParams(discParams_)
+                       discParams(discParams_),
+                       use_sdbcs_(false)
 {
   // 2 eqns for Stokes FO + 1 eqn. for enthalpy + 1 eqn. for w_z
   this->setNumEquations(4);
@@ -227,6 +228,7 @@ FELIX::StokesFOThermoCoupled::constructDirichletEvaluators(
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                        this->params, this->paramLib);
+  use_sdbcs_ = dirUtils.useSDBCs(); 
   offsets_ = dirUtils.getOffsets();
 }
 

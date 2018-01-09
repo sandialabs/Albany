@@ -20,7 +20,8 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   Albany::AbstractProblem(params_, paramLib_, 1),
   commT(commT_),
   haveSource(false),
-  numDim(numDim_)
+  numDim(numDim_), 
+  use_sdbcs_(false)
 {
   if (numDim==1) periodic = params->get("Periodic BC", false);
   else           periodic = false;

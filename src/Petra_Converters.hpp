@@ -25,9 +25,9 @@
 #include "Epetra_Vector.h"
 #include "Epetra_CrsGraph.h"
 #include "Epetra_CrsMatrix.h"
-#include "Epetra_Export.h" 
-#include "Epetra_Import.h" 
-#include "Epetra_LocalMap.h" 
+#include "Epetra_Export.h"
+#include "Epetra_Import.h"
+#include "Epetra_LocalMap.h"
 
 namespace Petra {
 
@@ -44,15 +44,13 @@ Teuchos::RCP<const Tpetra_Map> EpetraMap_To_TpetraMap(const Teuchos::RCP<const E
                                                       const Teuchos::RCP< KokkosNode > &node = KokkosClassic::Details::getNode< KokkosNode >());
 
 Teuchos::RCP<Epetra_CrsGraph> TpetraCrsGraph_To_EpetraCrsGraph(const Teuchos::RCP<const Tpetra_CrsGraph>& tpetraCrsGraph_,
-                                                                 const Teuchos::RCP<const Epetra_Comm>& comm);
-
+                                                                const Teuchos::RCP<const Epetra_Comm>& comm);
 
 //TpetraCrsMatrix_To_CrsMatrix: copies Tpetra::CrsMatrix object into its analogous
 //Epetra_CrsMatrix object
 void TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<Tpetra_CrsMatrix>& tpetraCrsMatrix_,
                                         Epetra_CrsMatrix& epetraCrsMatrix_,
                                         const Teuchos::RCP<const Epetra_Comm>& comm_);
-
 
 //TpetraCrsMatrix_To_CrsMatrix: takes in Tpetra::CrsMatrix object, converts it to its equivalent Epetra_CrsMatrix object,
 //and returns an RCP pointer to this Eetra_CrsMatrix
@@ -92,7 +90,7 @@ Teuchos::RCP<Tpetra_MultiVector> EpetraMultiVector_To_TpetraMultiVector(const Ep
 Teuchos::RCP<Tpetra_CrsMatrix> EpetraCrsMatrix_To_TpetraCrsMatrix(Epetra_CrsMatrix& epetraMatrix_,
                                                                const Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
                                                                const Teuchos::RCP< KokkosNode > &node = KokkosClassic::Details::getNode< KokkosNode >());
-  
+
 
 // Convenience class for conversions. One use case is to inherit from this class
 // and implement situation-specific conversion functionality using concise

@@ -52,7 +52,7 @@ class MesoScaleLinkProblem : public Albany::AbstractProblem {
     }
 
     //! Get boolean telling code if SDBCs are utilized  
-    virtual bool useSDBCs() const {return false; }
+    virtual bool useSDBCs() const {return use_sdbcs_; }
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void buildProblem(
@@ -117,6 +117,8 @@ class MesoScaleLinkProblem : public Albany::AbstractProblem {
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > oldState;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > newState;
 
+    /// Boolean marking whether SDBCs are used 
+    bool use_sdbcs_; 
 };
 
 }

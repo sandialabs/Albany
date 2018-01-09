@@ -24,7 +24,8 @@ SchoofFit (const Teuchos::RCP<Teuchos::ParameterList>& params_,
            const Teuchos::RCP<ParamLib>& paramLib_,
            const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
-  numDim(numDim_)
+  numDim(numDim_),
+  use_sdbcs_(false)
 {
   neq = 1;
 

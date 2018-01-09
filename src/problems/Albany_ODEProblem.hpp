@@ -36,7 +36,7 @@ namespace Albany {
     virtual int spatialDimension() const { return numDim; }
 
     //! Get boolean telling code if SDBCs are utilized  
-    virtual bool useSDBCs() const {return false; }
+    virtual bool useSDBCs() const {return use_sdbcs_; }
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void buildProblem(
@@ -79,6 +79,8 @@ namespace Albany {
   protected:
     int numDim;
 
+    /// Boolean marking whether SDBCs are used 
+    bool use_sdbcs_; 
   };
 
 }

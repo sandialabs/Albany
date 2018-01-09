@@ -21,6 +21,7 @@
 
 #include "Albany_MaterialDatabase.hpp"
 
+
 namespace Albany {
 
 /*!
@@ -49,7 +50,7 @@ struct DirichletTraits {
     typeTo = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_torsion_bc
   };
   enum {
-    typeSt = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_strong_dbc
+    typeSt = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_sdbc
   };
   enum {
     typeSw = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_schwarz_bc

@@ -16,7 +16,8 @@ ThermalProblem::ThermalProblem(
       have_source_(false),
       thermal_source_(SOURCE_TYPE_NONE),
       thermal_source_evaluated_(false),
-      isTransient_(true) {
+      isTransient_(true),
+      use_sdbcs_(false) {
 
   *out << "Problem name = Thermal Problem \n";
   this->setNumEquations(1);
@@ -93,6 +94,7 @@ void ThermalProblem::constructDirichletEvaluators(
   std::vector<std::string>& nodeSetIDs = mesh_specs->nsNames;
   dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
       this->params, Teuchos::null);
+  use_sdbcs_ = bcUtils.useSDBCs(); 
 }
 
 void ThermalProblem::constructNeumannEvaluators(

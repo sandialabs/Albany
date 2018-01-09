@@ -39,7 +39,7 @@ public:
   int spatialDimension() const { return num_dims_; }
 
   virtual 
-  bool useSDBCs() const {return false; }
+  bool useSDBCs() const {return use_sdbcs_; }
 
   virtual
   void buildProblem(
@@ -98,6 +98,8 @@ protected:
 
   Teuchos::RCP<Albany::Layouts> dl_;
 
+  /// Boolean marking whether SDBCs are used 
+  bool use_sdbcs_; 
 };
 
 }

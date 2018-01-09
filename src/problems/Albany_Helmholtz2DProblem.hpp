@@ -35,7 +35,7 @@ namespace Albany {
     virtual int spatialDimension() const { return 2; }
 
     //! Get boolean telling code if SDBCs are utilized  
-    virtual bool useSDBCs() const {return false; }
+    virtual bool useSDBCs() const {return use_sdbcs_; }
 
      //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void buildProblem(
@@ -80,6 +80,9 @@ namespace Albany {
     //! Boundary conditions, factor on source term
     double ksqr;
     bool haveSource;
+  
+    /// Boolean marking whether SDBCs are used 
+    bool use_sdbcs_; 
   };
 
 }

@@ -20,7 +20,8 @@ StokesL1L2( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
-  numDim(numDim_)
+  numDim(numDim_),
+  use_sdbcs_(false)
 {
   neq = 2; //there are 2 PDEs for L1L2 equations
 
@@ -87,6 +88,7 @@ FELIX::StokesL1L2::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
+   use_sdbcs_ = dirUtils.useSDBCs(); 
    offsets_ = dirUtils.getOffsets(); 
 }
 

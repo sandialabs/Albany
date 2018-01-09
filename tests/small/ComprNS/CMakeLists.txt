@@ -5,6 +5,6 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input2D_taylorGreenVortex.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input2D_taylorGreenVortex.xml COPYONLY)
 if (ALBANY_EPETRA) 
-add_test(${testName}_2DTaylorGreenVortex ${Albany.exe} input2D_taylorGreenVortex.xml)
+add_test(${testName}_2DTaylorGreenVortex_SDBC ${Albany.exe} input2D_taylorGreenVortex.xml)
 endif()
 

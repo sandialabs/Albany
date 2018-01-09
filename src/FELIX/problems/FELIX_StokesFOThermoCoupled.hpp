@@ -99,7 +99,7 @@ namespace FELIX
     virtual int spatialDimension() const { return numDim; }
 
     //! Get boolean telling code if SDBCs are utilized  
-    virtual bool useSDBCs() const {return false; }
+    virtual bool useSDBCs() const {return use_sdbcs_; }
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
@@ -170,6 +170,9 @@ namespace FELIX
     std::string elementBlockName;
     std::string basalEBName;
     std::string surfaceEBName;
+
+    /// Boolean marking whether SDBCs are used 
+    bool use_sdbcs_; 
   };
 
 } // Namespace FELIX

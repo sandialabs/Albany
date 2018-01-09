@@ -64,7 +64,8 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   havePSPG(false),
   haveSUPG(false),
   porousMedia(false),
-  numDim(numDim_)
+  numDim(numDim_),
+  use_sdbcs_(false)
 {
   if (numDim==1) periodic = params->get("Periodic BC", false);
   else           periodic = false;
@@ -178,6 +179,7 @@ Albany::NavierStokes::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(nodeSetIDs, dirichletNames,
                                           this->params, this->paramLib);
+   use_sdbcs_ = dirUtils.useSDBCs(); 
    offsets_ = dirUtils.getOffsets(); 
 }
 

@@ -647,6 +647,8 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
     }
   }
 
+#endif //ALBANY_LCM
+
   ///
   /// SDBC (S = "Symmetric", f.k.a. "Strong")
   ///
@@ -673,6 +675,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
     }
   }
 
+#if defined(ALBANY_LCM)
   ///
   /// Schwarz BC specific
   ///

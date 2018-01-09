@@ -17,6 +17,7 @@ LCM:
       Poissons Ratio: 
         Bulk Modulus Type: Constant
         Value: 0.30000000
+      Density: 1000.0
       Yield Strength: 
         Yield Strength Type: Constant
         Value: 144.00000000

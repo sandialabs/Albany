@@ -16,9 +16,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 IF(ALBANY_SEACAS)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_dome.xml COPYONLY)
-if (ALBANY_EPETRA) 
-add_test(${testName}_Dome ${Albany.exe} input_fo_dome.xml)
-endif()
+add_test(${testName}_Dome_SDBC ${AlbanyT.exe} input_fo_dome.xml)
 ENDIF()
 
 #  Second test 

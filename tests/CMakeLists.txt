@@ -58,6 +58,7 @@ set(AlbanyAdjointPath                  ${Albany_BINARY_DIR}/src/AlbanyAdjoint)
 set(AlbanySGAdjointPath                ${Albany_BINARY_DIR}/src/AlbanySGAdjoint)
 set(AlbanyCoupledPath                  ${Albany_BINARY_DIR}/src/AlbanyCoupled)
 set(AlbanySGCoupledPath                ${Albany_BINARY_DIR}/src/AlbanySGCoupled)
+set(AlbanyRBGenPath                    ${Albany_BINARY_DIR}/src/AlbanyRBGen)
 
 IF (CISM_EXE_DIR)
 set(CismAlbanyPath                ${CISM_EXE_DIR}/cism_driver)

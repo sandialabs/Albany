@@ -528,8 +528,8 @@ public:
   fixTime(double const current_time) const
   {
     bool const
-    use_time_param = paramLib->isParameter("Time") == true &&
-      getSchwarzAlternating() == false;
+    use_time_param = (paramLib->isParameter("Time") == true) &&
+      (getSchwarzAlternating() == false) && (solMethod != TransientTempus) ;
 
     double const
     this_time = use_time_param == true ?
@@ -658,9 +658,8 @@ private:
   std::vector<double> prev_times_;
 
 protected:
+  
   bool no_dir_bcs_;
-
-  bool loca_sdbcs_valid_nonlin_solver_;
 
   bool requires_sdbcs_;
 

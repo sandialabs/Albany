@@ -23,7 +23,8 @@ LaplacianSampling( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
   numDim(numDim_),
-  discParams(discParams_)
+  discParams(discParams_),
+  use_sdbcs_(false)
 {
 
   // Need to allocate a fields in mesh database
@@ -138,6 +139,7 @@ FELIX::LaplacianSampling::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
+   use_sdbcs_ = dirUtils.useSDBCs(); 
 }
 
 // Neumann BCs

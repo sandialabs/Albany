@@ -14,7 +14,8 @@ PoissonsEquationProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 		        const int numDim_) :
   ATO::OptimizationProblem(params_, paramLib_, /*neq=*/ 1),
   Albany::AbstractProblem(params_, paramLib_, /*neq=*/ 1),
-  numDim(numDim_)
+  numDim(numDim_),
+  use_sdbcs_(false)
 {
   std::string& method = params->get("Name", "Poissons Equation ");
   *out << "Problem Name = " << method << std::endl;
@@ -82,6 +83,7 @@ Albany::PoissonsEquationProblem::constructDirichletEvaluators(
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                        this->params, this->paramLib);
+  use_sdbcs_ = dirUtils.useSDBCs(); 
   offsets_ = dirUtils.getOffsets(); 
 }
 

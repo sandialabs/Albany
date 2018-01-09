@@ -235,9 +235,6 @@ private:
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const>>
   prev_step_disp_;
 
-  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const>>
-  prev_iter_disp_;
-
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
   ics_disp_;
   
@@ -255,6 +252,15 @@ private:
   
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
   prev_acce_;
+  
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
+  this_disp_;
+ 
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
+  this_velo_;
+  
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
+  this_acce_;
   
   mutable std::vector<Albany::StateArrays>
   internal_states_;

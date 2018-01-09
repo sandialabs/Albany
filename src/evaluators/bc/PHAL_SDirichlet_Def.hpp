@@ -7,6 +7,7 @@
 #ifndef PHAL_SDIRICHLET_DEF_HPP
 #define PHAL_SDIRICHLET_DEF_HPP
 
+#include "Albany_Application.hpp"
 #include "PHAL_SDirichlet.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
@@ -21,7 +22,8 @@ namespace PHAL {
 template <typename Traits>
 SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::SDirichlet(
     Teuchos::ParameterList &p)
-    : PHAL::DirichletBase<PHAL::AlbanyTraits::Residual, Traits>(p) {
+    : PHAL::DirichletBase<PHAL::AlbanyTraits::Residual, Traits>(p) 
+{
   return;
 }
 
@@ -70,7 +72,8 @@ SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
 template <typename Traits>
 SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::SDirichlet(
     Teuchos::ParameterList &p)
-    : PHAL::DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits>(p) {
+    : PHAL::DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits>(p) 
+{
   return;
 }
 
@@ -130,14 +133,39 @@ evaluateFields(typename Traits::EvalData dirichlet_workset) {
 
   IntVec row_is_dbc(row_map);
   IntVec col_is_dbc(col_map);
+  
+  int const 
+  spatial_dimension = dirichlet_workset.spatial_dimension_; 
+
+#if defined(ALBANY_LCM)
+  auto const &
+  fixed_dofs = dirichlet_workset.fixed_dofs_;
+#endif
+
   row_is_dbc.template modify<Kokkos::HostSpace>();
   {
     auto row_is_dbc_data = row_is_dbc.template getLocalView<Kokkos::HostSpace>();
     ALBANY_ASSERT(row_is_dbc_data.extent(1) == 1);
-    for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
-      auto dof = ns_nodes[ns_node][this->offset];
-      row_is_dbc_data(dof, 0) = 1;
+#if defined (ALBANY_LCM)
+    if (dirichlet_workset.is_schwarz_bc_ == false) { //regular SDBC
+#endif
+      for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
+        auto dof = ns_nodes[ns_node][this->offset];
+        row_is_dbc_data(dof, 0) = 1;
+      }
+#if defined (ALBANY_LCM)
     }
+    else { //special case for Schwarz SDBC 
+      for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
+        for (int offset = 0; offset < spatial_dimension; ++offset) {
+          auto dof = ns_nodes[ns_node][offset];
+          // If this DOF already has a DBC, skip it.
+          if (fixed_dofs.find(dof) != fixed_dofs.end()) continue;
+          row_is_dbc_data(dof,0) = 1;
+        }
+      }
+    }
+#endif
   }
   col_is_dbc.doImport(row_is_dbc, *import, Tpetra::ADD);
   auto col_is_dbc_data = col_is_dbc.template getLocalView<Kokkos::HostSpace>();
@@ -183,7 +211,8 @@ evaluateFields(typename Traits::EvalData dirichlet_workset) {
 template <typename Traits>
 SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::SDirichlet(
     Teuchos::ParameterList &p)
-    : PHAL::DirichletBase<PHAL::AlbanyTraits::Tangent, Traits>(p) {
+    : PHAL::DirichletBase<PHAL::AlbanyTraits::Tangent, Traits>(p) 
+{
   return;
 }
 
@@ -193,7 +222,13 @@ SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::SDirichlet(
 template <typename Traits>
 void
 SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
-    typename Traits::EvalData dirichlet_workset) {
+    typename Traits::EvalData dirichlet_workset) 
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+          true, Teuchos::Exceptions::InvalidParameter,
+          std::endl
+          << "Error!  Tangent specialization for PHAL::SDirichlet "
+             "is not implemented!\n");
   return;
 }
 
@@ -203,7 +238,8 @@ SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
 template <typename Traits>
 SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::SDirichlet(
     Teuchos::ParameterList &p)
-    : PHAL::DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p) {
+    : PHAL::DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
+{
   return;
 }
 
@@ -213,7 +249,13 @@ SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::SDirichlet(
 template <typename Traits>
 void
 SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
-    typename Traits::EvalData dirichlet_workset) {
+    typename Traits::EvalData dirichlet_workset) 
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+          true, Teuchos::Exceptions::InvalidParameter,
+          std::endl
+          << "Error!  DistParamDeriv specialization for PHAL::SDirichlet "
+             "is not implemented!\n");
   return;
 }
 

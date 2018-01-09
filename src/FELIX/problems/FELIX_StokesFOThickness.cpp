@@ -20,7 +20,8 @@ StokesFOThickness( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
-  numDim(numDim_)
+  numDim(numDim_), 
+  use_sdbcs_(false)
 {
   //Set # of PDEs per node.
   std::string eqnSet = params_->sublist("Equation Set").get<std::string>("Type", "FELIX");
@@ -225,6 +226,7 @@ FELIX::StokesFOThickness::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
+   use_sdbcs_ = dirUtils.useSDBCs(); 
    offsets_ = dirUtils.getOffsets();
 }
 

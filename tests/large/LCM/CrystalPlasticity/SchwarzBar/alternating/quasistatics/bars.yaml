@@ -1,0 +1,19 @@
+LCM:
+  Alternating System: 
+    Model Input Files: ['lower_bar.yaml', 'gauge.yaml', 'upper_bar.yaml']
+    Minimum Iterations: 1
+    Maximum Iterations: 32
+    Relative Tolerance: 1.0e-08
+    Absolute Tolerance: 1.0e-08
+    Maximum Steps: 10000
+    Initial Time: 0.0
+    Final Time: 2.0
+    Initial Time Step: 0.01
+    Minimum Time Step: 0.001
+    Maximum Time Step: 0.01
+    Reduction Factor: 0.5
+    Increase Factor: 1.1
+    Exodus Write Interval: 1
+  Problem:
+    Solution Method: Schwarz Alternating
+...

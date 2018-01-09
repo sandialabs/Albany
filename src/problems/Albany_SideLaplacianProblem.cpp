@@ -19,7 +19,8 @@ namespace Albany
 SideLaplacian::SideLaplacian (const Teuchos::RCP<Teuchos::ParameterList>& params,
                         const Teuchos::RCP<ParamLib>& paramLib,
                         const int numEq) :
-  Albany::AbstractProblem (params, paramLib, numEq)
+  Albany::AbstractProblem (params, paramLib, numEq),
+  use_sdbcs_(false)
 {
   bool solve_as_ss_eqn = params->get<bool>("Solve As Side Set Equation");
   numDim = solve_as_ss_eqn ? 3 : 2;
@@ -137,6 +138,7 @@ void SideLaplacian::constructDirichletEvaluators(const Albany::MeshSpecsStruct& 
 
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
+  use_sdbcs_ = dirUtils.useSDBCs(); 
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

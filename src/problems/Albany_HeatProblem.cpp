@@ -22,7 +22,8 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   haveSource(false),
   haveAbsorption(false),
   numDim(numDim_),
-  commT(commT_)
+  commT(commT_),
+  use_sdbcs_(false)
 {
   this->setNumEquations(1);
 
@@ -121,7 +122,8 @@ Albany::HeatProblem::constructDirichletEvaluators(const std::vector<std::string>
    Albany::BCUtils<Albany::DirichletTraits> bcUtils;
    dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
                                           this->params, this->paramLib);
-  offsets_ = bcUtils.getOffsets(); 
+   use_sdbcs_ = bcUtils.useSDBCs(); 
+   offsets_ = bcUtils.getOffsets(); 
 }
 
 // Neumann BCs

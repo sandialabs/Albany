@@ -30,7 +30,7 @@ class ThermalProblem : public Albany::AbstractProblem {
 
     int spatialDimension() const { return num_dims; }
     
-    bool useSDBCs() const {return false; }
+    bool useSDBCs() const {return use_sdbcs_; }
 
     void buildProblem(
         ArrayRCP<RCP<Albany::MeshSpecsStruct> > mesh_specs,
@@ -81,6 +81,9 @@ class ThermalProblem : public Albany::AbstractProblem {
 
     bool thermal_source_evaluated_;
     bool isTransient_;
+  
+    /// Boolean marking whether SDBCs are used 
+    bool use_sdbcs_; 
 };
 
 } // namespace CTM
