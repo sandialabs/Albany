@@ -1,8 +1,17 @@
 #%Module 1.0
 
-module-whatis "LCM TPLs for Trilinos/Albany"
+module-whatis "LCM automatic determination of running Linux distribution"
 
-if { [is-loaded lcm-fedora] } {
+set fedora_str fc
+set ubuntu_str generic
+set sems_str el
+set cluster_str chaos
+
+set kernel_version [uname release]
+
+set fedora_pos [string last $fedora_str $kernel_version]
+if {$fedora_pos > 0} {
+  module load lcm-fedora
   set                     netcdf_root     /usr/local/netcdf
   set                     netcdf_inc      $netcdf_root/include
   set                     netcdf_lib      $netcdf_root/lib
@@ -19,7 +28,9 @@ if { [is-loaded lcm-fedora] } {
   prepend-path            PATH            /usr/lib64/openmpi/bin
 }
 
-if { [is-loaded lcm-ubuntu] } {
+set ubuntu_pos [string last $ubuntu_str $kernel_version]
+if {$ubuntu_pos > 0} {
+  module load lcm-ubuntu
   set                     netcdf_root     /usr
   set                     netcdf_inc      $netcdf_root/include
   set                     netcdf_lib      $netcdf_root/lib/x86_64-linux-gnu
@@ -34,7 +45,9 @@ if { [is-loaded lcm-ubuntu] } {
   prepend-path            LD_LIBRARY_PATH /usr/lib/openmpi/lib
 }
 
-if { [is-loaded lcm-sems] } {
+set sems_pos [string last $sems_str $kernel_version]
+if {$sems_pos > 0} {
+  module load lcm-sems
   module load sems-openmpi/1.8.7
   module load sems-boost/1.63.0/base
   module load sems-zlib/1.2.8/base
@@ -62,7 +75,9 @@ if { [is-loaded lcm-sems] } {
   prepend-path            PATH            $mpi_root/bin
 }
 
-if { [is-loaded lcm-cluster] } {
+set cluster_pos [string last $cluster_str $kernel_version]
+if {$cluster_pos > 0} {
+  module load lcm-cluster
   module load sierra-mpi/openmpi/1.10
   set                     boost_inc       /ascldap/users/daibane/LCM/TPL/install/boost/include
   set                     boost_lib       /ascldap/users/daibane/LCM/TPL/install/boost/lib

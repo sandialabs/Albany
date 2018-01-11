@@ -1,5 +1,4 @@
 load("lcm-serial")
 load("lcm-intel")
 load("lcm-mixed")
-load("lcm-tpls")
 load("lcm-finalize")

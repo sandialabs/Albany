@@ -2,9 +2,12 @@
 
 module-whatis "LCM CUDA config"
 
-if { [is-loaded lcm-fedora] } {
-  prepend-path            LD_LIBRARY_PATH /usr/local/cuda/lib64
-  prepend-path            PATH            /usr/local/cuda/bin
+module load lcm-distro
+
+# Overwrite gcc compiler definitions for CUDA
+if { [is-loaded lcm-fedora] && [is-loaded lcm-gcc]} {
+  setenv CC [exec which cuda-gcc]
+  setenv CXX [exec which cuda-g++]
 }
 
 setenv CUDA_LAUNCH_BLOCKING    1

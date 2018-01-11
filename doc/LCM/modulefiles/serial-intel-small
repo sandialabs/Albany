@@ -6,7 +6,6 @@
 module load lcm-serial
 module load lcm-intel
 module load lcm-small
-module load lcm-tpls
 module load lcm-finalize
 
 

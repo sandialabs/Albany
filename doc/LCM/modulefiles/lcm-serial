@@ -2,6 +2,8 @@
 
 module-whatis "LCM serial (within MPI rank) arch"
 
+module load lcm-distro
+
 setenv ARCH serial
 setenv ARCH_STRING SERIAL
 setenv ARCH_NAME Serial

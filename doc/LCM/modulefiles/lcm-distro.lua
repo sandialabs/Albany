@@ -1,4 +1,4 @@
-whatis("LCM TPLs for Trilinos/Albany")
+whatis("LCM automatic determination of running Linux distribution")
 
 load("openmpi-intel/2.0")
 local boost_inc = "/ascldap/users/daibane/LCM/TPL_toss3/install/boost/include"
