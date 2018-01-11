@@ -1,17 +1,8 @@
 #%Module 1.0
 
-module-whatis "LCM automatic determination of running Linux distribution"
+module-whatis "LCM TPLs for Trilinos/Albany"
 
-set fedora_str fc
-set ubuntu_str generic
-set sems_str el
-set cluster_str chaos
-
-set kernel_version [uname release]
-
-set fedora_pos [string last $fedora_str $kernel_version]
-if {$fedora_pos > 0} {
-  module load lcm-fedora
+if { [is-loaded lcm-fedora] } {
   set                     netcdf_root     /usr/local/netcdf
   set                     netcdf_inc      $netcdf_root/include
   set                     netcdf_lib      $netcdf_root/lib
@@ -23,14 +14,15 @@ if {$fedora_pos > 0} {
   setenv                  MPI_LIB         /usr/lib64/openmpi/lib
   setenv                  MPI_BIN         /usr/lib64/openmpi/bin
   setenv                  LCM_NETCDF_PARALLEL OFF
+  setenv                  NETCDF          $netcdf_root
+  setenv                  NETCDF_INC      $netcdf_inc
+  setenv                  NETCDF_LIB      $netcdf_lib
   prepend-path            LD_LIBRARY_PATH /usr/lib64/openmpi/lib
   prepend-path            LD_LIBRARY_PATH /usr/local/netcdf/lib
   prepend-path            PATH            /usr/lib64/openmpi/bin
 }
 
-set ubuntu_pos [string last $ubuntu_str $kernel_version]
-if {$ubuntu_pos > 0} {
-  module load lcm-ubuntu
+if { [is-loaded lcm-ubuntu] } {
   set                     netcdf_root     /usr
   set                     netcdf_inc      $netcdf_root/include
   set                     netcdf_lib      $netcdf_root/lib/x86_64-linux-gnu
@@ -42,12 +34,13 @@ if {$ubuntu_pos > 0} {
   setenv                  MPI_LIB         /usr/lib/openmpi/lib
   setenv                  MPI_BIN         /usr/bin
   setenv                  LCM_NETCDF_PARALLEL OFF
+  setenv                  NETCDF          $netcdf_root
+  setenv                  NETCDF_INC      $netcdf_inc
+  setenv                  NETCDF_LIB      $netcdf_lib
   prepend-path            LD_LIBRARY_PATH /usr/lib/openmpi/lib
 }
 
-set sems_pos [string last $sems_str $kernel_version]
-if {$sems_pos > 0} {
-  module load lcm-sems
+if { [is-loaded lcm-sems] } {
   module load sems-openmpi/1.8.7
   module load sems-boost/1.63.0/base
   module load sems-zlib/1.2.8/base
@@ -70,14 +63,15 @@ if {$sems_pos > 0} {
   setenv                  MPI_BIN         $mpi_root/bin
   setenv                  LCM_NETCDF_PARALLEL ON
   setenv                  LCM_LINK_FLAGS  -L$boost_lib
+  setenv                  NETCDF          $netcdf_root
+  setenv                  NETCDF_INC      $netcdf_inc
+  setenv                  NETCDF_LIB      $netcdf_lib
   prepend-path            LD_LIBRARY_PATH $mpi_root/lib
   prepend-path            LD_LIBRARY_PATH $netcdf_lib
   prepend-path            PATH            $mpi_root/bin
 }
 
-set cluster_pos [string last $cluster_str $kernel_version]
-if {$cluster_pos > 0} {
-  module load lcm-cluster
+if { [is-loaded lcm-cluster] } {
   module load sierra-mpi/openmpi/1.10
   set                     boost_inc       /ascldap/users/daibane/LCM/TPL/install/boost/include
   set                     boost_lib       /ascldap/users/daibane/LCM/TPL/install/boost/lib
@@ -93,10 +87,9 @@ if {$cluster_pos > 0} {
   setenv                  MPI_LIB         $mpi_root/lib
   setenv                  MPI_BIN         $mpi_root/bin
   setenv                  LCM_NETCDF_PARALLEL ON
+  setenv                  NETCDF          $netcdf_root
+  setenv                  NETCDF_INC      $netcdf_inc
+  setenv                  NETCDF_LIB      $netcdf_lib
 # PATHs for MPI are set by the modules
   prepend-path            LD_LIBRARY_PATH $netcdf_lib
 }
-
-setenv                    NETCDF          $netcdf_root
-setenv                    NETCDF_INC      $netcdf_inc
-setenv                    NETCDF_LIB      $netcdf_lib
