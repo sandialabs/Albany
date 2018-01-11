@@ -1,5 +1,7 @@
 whatis("LCM wrap-up environment definitions")
 
+load("lcm-tpls")
+
 local arch = os.getenv("ARCH")
 local tool_chain = os.getenv("TOOL_CHAIN")
 local build_type = os.getenv("BUILD_TYPE")
