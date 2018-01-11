@@ -2,6 +2,8 @@
 
 module-whatis "LCM wrap-up environment definitions"
 
+module load lcm-distro
+
 set     arch            $env(ARCH)
 set     tool_chain      $env(TOOL_CHAIN)
 set     build_type      $env(BUILD_TYPE)

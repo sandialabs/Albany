@@ -2,7 +2,6 @@
 
 module-whatis "LCM pthreads arch"
 
-module load lcm-distro
 
 setenv ARCH pthreads
 setenv ARCH_STRING PTHREADS

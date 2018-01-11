@@ -2,7 +2,6 @@
 
 module-whatis "LCM OpenMP arch"
 
-module load lcm-distro
 
 setenv ARCH openmp
 setenv ARCH_STRING OPENMP

@@ -2,7 +2,6 @@
 
 module-whatis "LCM CUDA config"
 
-module load lcm-distro
 
 # Overwrite gcc compiler definitions for CUDA
 if { [is-loaded lcm-fedora] && [is-loaded lcm-gcc]} {
