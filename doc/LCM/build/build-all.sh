@@ -97,7 +97,6 @@ for P in $PACKAGES; do
                 echo "MODULE: $MODULE"
 		echo "PLATFORM: $PLATFORM"
                 module purge
-                module load lcm-"$PLATFORM"
                 module load "$MODULE"
                 "$COMMAND" "$P" "$NUM_PROCS"
                 # Update wiki after compiling Albany with gcc release only.
