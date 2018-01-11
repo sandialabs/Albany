@@ -67,7 +67,8 @@ ENDIF()
 find_program(CTEST_GIT_COMMAND NAMES git)
 find_program(CTEST_SVN_COMMAND NAMES svn)
 
-SET(Trilinos_REPOSITORY_LOCATION https://github.com/trilinos/trilinos.git)
+#SET(Trilinos_REPOSITORY_LOCATION https://github.com/trilinos/trilinos.git)
+SET(Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/trilinos.git)
 
 SET(SCOREC_REPOSITORY_LOCATION git@github.com:SCOREC/core.git)
 SET(Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
