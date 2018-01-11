@@ -304,7 +304,7 @@ if (DOWNLOAD)
   set_property (GLOBAL PROPERTY SubProject Trilinos)
   set_property (GLOBAL PROPERTY Label Trilinos)
 
-  ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos" RETURN_VALUE count)
+  CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos" RETURN_VALUE count)
   # assumes that we are already on the desired tracking branch, i.e.,
   # git checkout -b branch --track origin/branch
   message("Found ${count} changed files")
@@ -331,9 +331,8 @@ if (DOWNLOAD)
     set_property (GLOBAL PROPERTY SubProject SCOREC)
     set_property (GLOBAL PROPERTY Label SCOREC)
 
-    #set (CTEST_UPDATE_COMMAND "${CTEST_SVN_COMMAND}")
     set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-    ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC" RETURN_VALUE count)
+    CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC" RETURN_VALUE count)
     # assumes that we are already on the desired tracking branch, i.e.,
     # git checkout -b branch --track origin/branch
     message("Found ${count} changed files")
@@ -384,7 +383,7 @@ if (DOWNLOAD)
     set_property (GLOBAL PROPERTY Label Peridigm)
 
     set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-    ctest_update (SOURCE "${CTEST_SOURCE_DIRECTORY}/Peridigm" RETURN_VALUE count)
+    CTEST_UPDATE (SOURCE "${CTEST_SOURCE_DIRECTORY}/Peridigm" RETURN_VALUE count)
     message ("Found ${count} changed files")
     if (count LESS 0)
       set (BUILD_PERIDIGM FALSE)
@@ -772,6 +771,83 @@ if (BUILD_ALB64CLANG)
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
   do_albany("${CONF_OPTIONS}" "Albany64BitClang")
+
+# Only update the "Good Commits" page on the wiki if we are submitting results to the dashboard
+# This will allow for testing the scripts without messing with the wiki page
+
+  if (CTEST_DO_SUBMIT)
+# Get the Trininos HEAD sha 
+  execute_process (COMMAND "${CTEST_GIT_COMMAND}" rev-parse HEAD
+    WORKING_DIRECTORY ${CTEST_SOURCE_DIRECTORY}/Trilinos
+    OUTPUT_VARIABLE TRILINOS_HEAD_SHA
+    ERROR_VARIABLE _err
+    RESULT_VARIABLE HAD_ERROR)
+  message(STATUS "Trilinos HEAD sha: ${TRILINOS_HEAD_SHA}")
+  message(STATUS "err: ${_err}")
+  message(STATUS "res: ${HAD_ERROR}")
+  if (HAD_ERROR)
+    message(FATAL_ERROR "Cannot determine Trilinos HEAD sha!")
+  endif ()
+
+# Get the Albany HEAD sha 
+  execute_process (COMMAND "${CTEST_GIT_COMMAND}" rev-parse HEAD
+    WORKING_DIRECTORY ${CTEST_SOURCE_DIRECTORY}/Albany
+    OUTPUT_VARIABLE ALBANY_HEAD_SHA
+    ERROR_VARIABLE _err
+    RESULT_VARIABLE HAD_ERROR)
+  message(STATUS "Albany HEAD sha: ${ALBANY_HEAD_SHA}")
+  message(STATUS "err: ${_err}")
+  message(STATUS "res: ${HAD_ERROR}")
+  if (HAD_ERROR)
+    message(FATAL_ERROR "Cannot determine Albany HEAD sha!")
+  endif ()
+
+# Pull the current wiki state
+  execute_process (COMMAND "${CTEST_GIT_COMMAND}" pull
+    WORKING_DIRECTORY ${CTEST_SOURCE_DIRECTORY}/Albany.wiki
+    OUTPUT_VARIABLE _out
+    ERROR_VARIABLE _err
+    RESULT_VARIABLE HAD_ERROR)
+  message(STATUS "out: ${_out}")
+  message(STATUS "err: ${_err}")
+  message(STATUS "res: ${HAD_ERROR}")
+  if (HAD_ERROR)
+    message(FATAL_ERROR "Cannot pull Albany.wiki!")
+  endif ()
+
+# Update the wiki page
+
+  CONFIGURE_FILE (${CTEST_SCRIPT_DIRECTORY}/commits_template.md
+     ${CTEST_SOURCE_DIRECTORY}/Albany.wiki/Current-Working-Sha.md)
+
+# Formulate the commit
+  SET(WIKI_COMMIT_MSG "Update latest known good commits")
+  execute_process (COMMAND "${CTEST_GIT_COMMAND}" commit -a -m "${WIKI_COMMIT_MSG}"
+    WORKING_DIRECTORY ${CTEST_SOURCE_DIRECTORY}/Albany.wiki
+    OUTPUT_VARIABLE _out
+    ERROR_VARIABLE _err
+    RESULT_VARIABLE HAD_ERROR)
+  message(STATUS "out: ${_out}")
+  message(STATUS "err: ${_err}")
+  message(STATUS "res: ${HAD_ERROR}")
+  if (HAD_ERROR)
+    message(FATAL_ERROR "Cannot commit changes to Albany.wiki!")
+  endif ()
+
+# Do the push
+#  execute_process (COMMAND "${CTEST_GIT_COMMAND}" push
+#    WORKING_DIRECTORY ${CTEST_SOURCE_DIRECTORY}/Albany.wiki
+#    OUTPUT_VARIABLE _out
+#    ERROR_VARIABLE _err
+#    RESULT_VARIABLE HAD_ERROR)
+#  message(STATUS "out: ${_out}")
+#  message(STATUS "err: ${_err}")
+#  message(STATUS "res: ${HAD_ERROR}")
+#  if (HAD_ERROR)
+#    message(FATAL_ERROR "Cannot push changes to Albany.wiki!")
+#  endif ()
+
+  endif (CTEST_DO_SUBMIT)
 
 endif (BUILD_ALB64CLANG)
 
