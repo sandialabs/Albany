@@ -65,13 +65,15 @@ int main(int argc, char *argv[]) {
     Teuchos::rcp_dynamic_cast<Albany::MORFacadeImpl>(application->getMorFacade());
   const RCP<const MOR::ReducedSpace> reducedSpace = morFacade->spaceFactory().create(spaceParams);
 
-  const std::string generalizedCoordsFilename =
-    postParams->get("Generalized Coordinates Input File Name", "generalized_coordinates.mtx");
+  const std::string outdir = postParams->get("Output Directory",".");  
+
+  const std::string generalizedCoordsFilename = outdir + "/" + postParams->get("Generalized Coordinates Input File Name", "GC.mtx");
+
   const RCP<const Epetra_MultiVector> reducedSolutions = MOR::readLocalMapMultiVectorFromMatrixMarket(
       generalizedCoordsFilename, reducedSpace->comm(), reducedSpace->basisSize());
 
-  const std::string stampsFilename =
-    postParams->get("Generalized Coordinates Stamps Input File Name", "stamps_" + generalizedCoordsFilename);
+  const std::string stampsFilename = outdir + "/" + postParams->get("Generalized Coordinates Stamps Input File Name", "S.mtx");
+
   const RCP<const Epetra_MultiVector> stamps = MOR::readLocalMapMultiVectorFromMatrixMarket(
       stampsFilename, reducedSpace->comm(), 1);
 

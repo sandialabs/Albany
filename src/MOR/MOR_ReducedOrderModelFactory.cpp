@@ -141,7 +141,7 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
 
     if (projectionType == allowedProjectionTypes[0]) {
       const RCP<const Epetra_MultiVector> projector = spaceFactory_->getProjector(romParams);
-      const RCP<ReducedOperatorFactory> opFactory(new PetrovGalerkinOperatorFactory(basis, projector, num_DBC_modes));
+      const RCP<ReducedOperatorFactory> opFactory(new PetrovGalerkinOperatorFactory(basis, projector));
       result = rcp(new ReducedOrderModelEvaluator(child, reducedSpace, opFactory, output_flags, preconditionerType));
     } else if (projectionType == allowedProjectionTypes[1]) {
       RCP<ReducedOperatorFactory> opFactory;
@@ -151,7 +151,7 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
       if (nonnull(collocationOperator)) {
         opFactory = rcp(new GaussNewtonMetricOperatorFactory(basis, collocationOperator));
       } else {
-        opFactory = rcp(new GaussNewtonOperatorFactory(basis, num_DBC_modes));
+        opFactory = rcp(new GaussNewtonOperatorFactory(basis));
       }
 
       result = rcp(new ReducedOrderModelEvaluator(child, reducedSpace, opFactory, output_flags, preconditionerType));
