@@ -877,8 +877,12 @@ IF (BUILD_ALB64CLANG)
     BUILD "${CTEST_BINARY_DIRECTORY}/Albany64BitClang"
     #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
     #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-    #NUMBER_FAILED  TEST_NUM_FAILED
+                   RETURN_VALUE ERROR_STATUS_OF_TEST_RUN
     )
+
+    if(ERROR_STATUS_OF_TEST_RUN)
+      message( "Some tests failed in Albany64BitClang project.")
+    endif()
 
   IF(CTEST_DO_SUBMIT)
     CTEST_SUBMIT(PARTS Test
@@ -889,6 +893,13 @@ IF (BUILD_ALB64CLANG)
       message( "Cannot submit Albany 64 bit Clang test results!")
     endif()
   ENDIF()
+
+# Update the "Good Commits" wiki page if warranted
+
+  INCLUDE(${CTEST_SCRIPT_DIRECTORY}/wiki_macro.cmake)
+
+  do_wiki_update("${ERROR_STATUS_OF_TEST_RUN}")
+
 ENDIF()
 
 if (BUILD_ALBFUNCTOR)
