@@ -22,9 +22,6 @@ ViscosityFO(const Teuchos::ParameterList& p,
             const Teuchos::RCP<Albany::Layouts>& dl) :
   Ugrad (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
   mu    (p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
-  epsilonSq (p.get<std::string> ("EpsilonSq QP Variable Name"), dl->qp_scalar),
-  temperature(p.get<std::string> ("Temperature Variable Name"), dl->cell_scalar2),
-  flowFactorA(p.get<std::string> ("Flow Factor Variable Name"), dl->cell_scalar2),
   A(1.0),
   n(3.0),
   flowRate_type(UNIFORM),
@@ -118,6 +115,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
     else if (flowRateType == "From File")
     {
       flowRate_type = FROMFILE;
+      flowFactorA=decltype(flowFactorA)(p.get<std::string> ("Flow Factor Variable Name"), dl->cell_scalar2);
       this->addDependentField(flowFactorA);
 #ifdef OUTPUT_TO_SCREEN
       *out << "Flow Rate read in from file (exodus or ascii)." << std::endl;
@@ -126,6 +124,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
     else if (flowRateType == "From CISM")
     {
       flowRate_type = FROMCISM;
+      flowFactorA=decltype(flowFactorA)(p.get<std::string> ("Flow Factor Variable Name"), dl->cell_scalar2);
       this->addDependentField(flowFactorA);
 #ifdef OUTPUT_TO_SCREEN
       *out << "Flow Rate passed in from CISM." << std::endl;
@@ -134,6 +133,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
     else if (flowRateType == "Temperature Based")
     {
       flowRate_type = TEMPERATUREBASED;
+      temperature = decltype(temperature)(p.get<std::string> ("Temperature Variable Name"), dl->cell_scalar2);
       this->addDependentField(temperature);
 #ifdef OUTPUT_TO_SCREEN
       *out << "Flow Rate computed using temperature field." << std::endl;
@@ -155,14 +155,22 @@ ViscosityFO(const Teuchos::ParameterList& p,
     this->addDependentField(stiffeningFactor);
   this->addEvaluatedField(mu);
 
-  if (extractStrainRateSq)
+  if (extractStrainRateSq) {
+    epsilonSq = decltype(epsilonSq)(p.get<std::string> ("EpsilonSq QP Variable Name"), dl->qp_scalar),
     this->addEvaluatedField(epsilonSq);
+  }
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
   numCells = dims[0] ;
+
+  performContinuousHomotopy = visc_list->get("Continuous Homotopy With Constant Initial Viscosity", false);
+  expCoeff = performContinuousHomotopy ? visc_list->get<double>("Coefficient For Continuous Homotopy") : 0.0;
+
+  //dummy initialization
+  R=R2=x_0=y_0=0;
 
   this->setName("ViscosityFO"+PHX::typeAsString<EvalT>());
 }
@@ -197,7 +205,7 @@ template<typename EvalT,typename Traits,typename VelT, typename TemprT>
 template<typename TemperatureT>
 KOKKOS_INLINE_FUNCTION
 TemperatureT ViscosityFO<EvalT,Traits,VelT,TemprT>::flowRate (const TemperatureT& T) const {
-  return (T < switchingT) ? arrml / exp (actenl / gascon / T) : arrmh / exp (actenh / gascon / T);
+  return (T < switchingT) ? arrml / exp (actenl / gascon / std::max(T,TemperatureT(150))) : arrmh / exp (actenh / gascon / T);
 }
 
 //**********************************************************************
@@ -230,7 +238,9 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
 {
   double power = 0.5*(1.0/n - 1.0);
   double a = 1.0;
-  if (homotopyParam(0) == 0.0)
+  //ScalarT scale = std::pow(1.0-homotopyParam(0),8);
+  ScalarT scale = performContinuousHomotopy ? std::pow(1.0-homotopyParam(0),expCoeff) : ScalarT(0);
+  if (0)//homotopyParam(0) == 0.0)
   {
     //set constant viscosity
     for (int qp=0; qp < numQPs; ++qp)
@@ -306,7 +316,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
 
         epsilonSq(cell,qp) = epsilonEqpSq;
         epsilonEqpSq += ff; //add regularization "fudge factor"
-        mu(cell,qp) = flowFactorVec*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law
+        mu(cell,qp) = flowFactorVec*(scale + (1.0-scale)*pow(epsilonEqpSq,  power)); //non-linear viscosity, given by Glen's law
         }
       }
       else
@@ -367,7 +377,8 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw_xz (const TemprT &flowFa
 {
   double power = 0.5*(1.0/n - 1.0);
   double a = 1.0;
-  if (homotopyParam(0) == 0.0)
+  ScalarT scale = performContinuousHomotopy ? std::pow(1.0-homotopyParam(0),expCoeff) : ScalarT(0);
+  if (0)//homotopyParam(0) == 0.0)
   {
     //set constant viscosity
     for (int qp=0; qp < numQPs; ++qp)
@@ -388,7 +399,8 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw_xz (const TemprT &flowFa
         epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,0) + Ugrad(cell,qp,0,1))*(Ugrad(cell,qp,0,0) + Ugrad(cell,qp,0,1)); //+0.25*epsilon_xz^2
         epsilonSq(cell,qp) = epsilonEqpSq;
         epsilonEqpSq += ff; //add regularization "fudge factor"
-        mu(cell,qp) = flowFactorVec*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law
+        //mu(cell,qp) = flowFactorVec*(1-homotopyParam(0)+homotopyParam(0)*pow(epsilonEqpSq,  power)); //non-linear viscosity, given by Glen's law
+        mu(cell,qp) = flowFactorVec*(scale + (1.0-scale)*pow(epsilonEqpSq,  power)); //non-linear viscosity, given by Glen's law
       }
     }
     else
@@ -399,7 +411,8 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw_xz (const TemprT &flowFa
         epsilonEqpSq = u00*u00; //epsilon_xx^2
         epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,0) + Ugrad(cell,qp,0,1))*(Ugrad(cell,qp,0,0) + Ugrad(cell,qp,0,1)); //+0.25*epsilon_xz^2
         epsilonEqpSq += ff; //add regularization "fudge factor"
-        mu(cell,qp) = flowFactorVec*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law
+        //mu(cell,qp) = flowFactorVec*(1-homotopyParam(0)+homotopyParam(0)*pow(epsilonEqpSq,  power)); //non-linear viscosity, given by Glen's law
+        mu(cell,qp) = flowFactorVec*(scale + (1.0-scale)*pow(epsilonEqpSq,  power)); //non-linear viscosity, given by Glen's law
       }
     }
   }
