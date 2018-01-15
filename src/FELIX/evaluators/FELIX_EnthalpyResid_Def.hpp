@@ -92,7 +92,7 @@ namespace FELIX
 
     if (needsBasFric)
     {
-      basalFricHeat = decltype(basalFricHeat)(p.get<std::string> ("Basal Friction Heat QP Variable Name"),dl->node_scalar);
+      //basalFricHeat = decltype(basalFricHeat)(p.get<std::string> ("Basal Friction Heat QP Variable Name"),dl->node_scalar);
       //this->addDependentField(basalFricHeat);
 
       if(haveSUPG)
@@ -102,7 +102,7 @@ namespace FELIX
       }
     }
 
-    geoFluxHeat = decltype(geoFluxHeat)(p.get<std::string> ("Geothermal Flux Heat QP Variable Name"),dl->node_scalar);
+    //geoFluxHeat = decltype(geoFluxHeat)(p.get<std::string> ("Geothermal Flux Heat QP Variable Name"),dl->node_scalar);
     //this->addDependentField(geoFluxHeat);
 
     if(haveSUPG)
@@ -138,7 +138,13 @@ namespace FELIX
 
     std::cout << "Drainage: " << drainage_coeff/rho_w/L*3.1536e7 << std::endl;
 
-    printedAlpha = -1.0;
+    printedRegCoeff = -1.0;
+
+
+    Teuchos::ParameterList* regularization_list = p.get<Teuchos::ParameterList*>("FELIX Enthalpy Regularization");
+    auto flux_reg_list = regularization_list->sublist("Enthalpy Flux Regularization", false);\
+    flux_reg_alpha = flux_reg_list.get<double>("alpha");
+    flux_reg_beta = flux_reg_list.get<double>("beta");
   }
 
   template<typename EvalT, typename Traits, typename VelocityType>
@@ -185,7 +191,6 @@ namespace FELIX
   evaluateFields(typename Traits::EvalData d)
   {
     const double scyr (3.1536e7);  // [s/yr];
-    const double scaling = 1./scyr;// [yr s^{-1}]
     const double drain_vel = drainage_coeff/rho_w/L*scyr; // [m/yr];
     const double pow3 = 1e3;    //[k^{-1}, k=1000
     const double powm3 = 1e-3;  //[k], k=1000
@@ -195,24 +200,20 @@ namespace FELIX
     double pi = atan(1.) * 4.;
     ScalarT hom = homotopy(0);
 
-    ScalarT alpha;
 
-    if (a == -2.0)
-      alpha = pow(10.0, (a + hom*10)/8);
-    else if (a == -1.0)
-      alpha = pow(10.0, (a + hom*10)/4.5);
-    else
-      alpha = pow(10.0, a + hom*10/3);
+    ScalarT flux_reg_coeff = flux_reg_alpha*exp(flux_reg_beta*hom); // [adim]
 
-    if (std::fabs(printedAlpha - alpha) > 0.0001*alpha)
+    if (std::fabs(printedRegCoeff - flux_reg_coeff) > 0.0001*flux_reg_coeff)
     {
-      std::cout << "[Diffusivity()] alpha = " << alpha << " :: " <<hom << "\n";
-      printedAlpha = alpha;
+      std::cout << "[Diffusivity()] alpha = " << flux_reg_coeff << " :: " <<hom << "\n";
+      printedRegCoeff = flux_reg_coeff;
     }
 
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
       for (std::size_t node = 0; node < numNodes; ++node)
         Residual(cell,node) = 0.0;
+
+ // double x_p = -35,z_p = 1;
 
     if (needsDiss)	// this term is always in regardless the bc at the base
     {
@@ -220,9 +221,12 @@ namespace FELIX
       {
         for (std::size_t node = 0; node < numNodes; ++node)
         {
+//        double x = coordVec(cell,node,0), y = coordVec(cell,node,1), z = coordVec(cell,node,2);
           for (std::size_t qp = 0; qp < numQPs; ++qp)
           {
-            Residual(cell,node) -= powm3*diss(cell,qp)*wBF(cell,node,qp);
+//          ScalarT scale = 1+2000*std::max(ScalarT(0.1-std::pow(x-x_p,2)/2500 - std::pow(z-z_p,2)),ScalarT(0));
+//          Residual(cell,node) -= powm3*Albany::ADValue(diss(cell,qp))*wBF(cell,node,qp);
+            Residual(cell,node) -= powm3*(diss(cell,qp))*wBF(cell,node,qp);
           }
         }
       }
@@ -232,10 +236,12 @@ namespace FELIX
     {
       for (std::size_t cell = 0; cell < d.numCells; ++cell)
       {
-        ScalarT diffEnt=0;
-        for (std::size_t qp = 0; qp < numQPs; ++qp)
-          diffEnt += Enthalpy(cell,qp) - EnthalpyHs(cell,qp);
-        diffEnt /= numQPs;
+
+        //ScalarT diffEnt=0;
+        //for (std::size_t qp = 0; qp < numQPs; ++qp)
+        //  diffEnt += Enthalpy(cell,qp) - EnthalpyHs(cell,qp);
+        //diffEnt /= numQPs;
+
         //ScalarT scale = - atan(alpha * diffEnt)/pi + 0.5;
         //scale = Albany::ADValue(scale);
         for (std::size_t node = 0; node < numNodes; ++node)
@@ -246,54 +252,30 @@ namespace FELIX
         }
       }
     }
+
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
     {
-      ScalarT vmax =  1e-3; //min velocity to avoid divide by zero.
-      ScalarT vmax_z =  1e-5; //min velocity to avoid divide by zero.
-      ParamScalarT diam = 0.0, diam_z = 0.0;
-      for (std::size_t qp = 0; qp < numQPs; ++qp)
-      {
-        ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
-        for (std::size_t i = 0; i < vecDimFO; i++)
-          vmax = std::max(vmax,std::fabs(Velocity(cell,qp,i)));
-
-        vmax_z = std::max( vmax_z,std::fabs(- (1-scale)*alpha_om*pow(phi(cell,qp),alpha_om-1)*drain_vel+verticalVel(cell,qp)));
-      }
-
-      for (std::size_t i = 0; i < numNodes-1; ++i)
-      {
-        for (std::size_t j = i + 1; j < numNodes; ++j)
-        {
-          diam = std::max(diam,distance<ParamScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),0*coordVec(cell,i,2),
-                                                      coordVec(cell,j,0),coordVec(cell,j,1),0*coordVec(cell,j,2)));
-          diam_z = std::max(diam_z,std::fabs(coordVec(cell,i,2) - coordVec(cell,j,2)));
-        }
-      }
-
       for (std::size_t node = 0; node < numNodes; ++node)
       {
+//      ScalarT scale = 0.5 - atan(flux_reg_coeff * diffEnth(cell,node))/pi;
         for (std::size_t qp = 0; qp < numQPs; ++qp)
         {
-          ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
+          ScalarT scale = 0.5 - atan(flux_reg_coeff * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi;
           //scale = Albany::ADValue(scale);
-          Residual(cell,node) += powm3 * scale * (K_i - nu) * (EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+          Residual(cell,node) += powm3 * scale * K_i * (EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
               EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-              EnthalpyGrad(cell,qp,2)*wGradBF(cell,node,qp,2)) +
-              scaling * (Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
-                  Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + verticalVel(cell,qp)*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp);
+              EnthalpyGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
 
-          Residual(cell,node) += powm9*(1 - scale)*(k_i - rho_i*c_i*nu) * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+          Residual(cell,node) += (Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
+                  Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + verticalVel(cell,qp)*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp)/scyr ;
+//          Residual(cell,node) += (Albany::ADValue(Velocity(cell,qp,0))*EnthalpyGrad(cell,qp,0) +
+//                  Albany::ADValue(Velocity(cell,qp,1))*EnthalpyGrad(cell,qp,1) + verticalVel(cell,qp)*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp)/scyr ;
+
+          Residual(cell,node) += powm9*(1 - scale)*(k_i + rho_i*c_i*nu) * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
               meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
               meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
 
-          ScalarT totalVertVel = verticalVel(cell,qp) - alpha_om*pow(phi(cell,qp),alpha_om-1)*(1-scale)*drain_vel;
-          ScalarT wSUPG = delta*(std::sqrt(diam/vmax)*(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1)) + std::sqrt(diam_z/vmax_z)*totalVertVel * wGradBF(cell,node,qp,2));
-
-          Residual(cell,node) += (std::sqrt(diam/vmax)*(Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
-              Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1)) + std::sqrt(diam_z/vmax_z)*totalVertVel*EnthalpyGrad(cell,qp,2))*wSUPG/scyr;
-
-
-          Residual(cell,node) -= powm6*(1 - scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp);
+          Residual(cell,node) -= powm6 * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp);
          // Residual(cell,node) += powm6*(1 - scale) * drainage_coeff*pow(phi(cell,qp),alpha_om)*wGradBF(cell,node,qp,2);
         }
       }
@@ -304,12 +286,21 @@ namespace FELIX
 
       for (std::size_t cell = 0; cell < d.numCells; ++cell)
       {
-        VelocityType vmax = 1e-3; //set to a minimum threshold
-        ParamScalarT diam = 0.0;
+        VelocityType  vmax_xy = 1e-3; //set to a minimum threshold
+        ScalarT vmax = 1e-3, vmax_z=1e-5; //set to a minimum threshold
+        ParamScalarT diam = 0.0, diam_xy = 0.0, diam_z = 0.0;
         ScalarT wSUPG = 0.0;
-        for (std::size_t qp = 0; qp < numQPs; ++qp)
-          for (std::size_t i = 0; i < vecDimFO; i++)
-            vmax = std::max(vmax,std::fabs(Velocity(cell,qp,i)));
+        for (std::size_t qp = 0; qp < numQPs; ++qp) {
+          //ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
+          vmax = std::max(vmax,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)+std::pow(verticalVel(cell,qp),2)));
+          vmax_xy = std::max(vmax_xy,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)));
+//          vmax = std::max(vmax,std::sqrt(std::pow(Albany::ADValue(Velocity(cell,qp,0)),2)+std::pow(Albany::ADValue(Velocity(cell,qp,1)),2)+std::pow(verticalVel(cell,qp),2)));
+//          vmax_xy = std::max(vmax_xy,std::sqrt(std::pow(Albany::ADValue(Velocity(cell,qp,0)),2)+std::pow(Albany::ADValue(Velocity(cell,qp,1)),2)));
+
+
+          vmax_z = std::max( vmax_z,std::fabs(verticalVel(cell,qp)));
+          //vmax_z = std::max( vmax_z,std::fabs(- (1-scale)*alpha_om*pow(phi(cell,qp),alpha_om-1)*drain_vel+verticalVel(cell,qp)));
+        }
 
         for (std::size_t i = 0; i < numNodes-1; ++i)
         {
@@ -317,90 +308,43 @@ namespace FELIX
           {
             diam = std::max(diam,distance<ParamScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
                                                         coordVec(cell,j,0),coordVec(cell,j,1),coordVec(cell,j,2)));
+            diam_xy = std::max(diam_xy,distance<ParamScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),0,
+                                                                  coordVec(cell,j,0),coordVec(cell,j,1),0));
+            diam_z = std::max(diam_z,std::fabs(coordVec(cell,i,2) - coordVec(cell,j,2)));
           }
         }
+
 
         for (std::size_t node = 0; node < numNodes; ++node)
         {
           for (std::size_t qp = 0; qp < numQPs; ++qp)
           {
-            wSUPG = delta*diam/vmax*(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) + verticalVel(cell,qp) * wGradBF(cell,node,qp,2) +
-                0.*(velGrad(cell,qp,0,0)+velGrad(cell,qp,1,1))*wBF(cell,node,qp));
+/*
+            //ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
+            //ScalarT totalVertVel = verticalVel(cell,qp);// - alpha_om*pow(phi(cell,qp),alpha_om-1)*(1-scale)*drain_vel;
+            //wSUPG = delta*(std::sqrt(diam_xy/vmax_xy)*(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1)) + std::sqrt(diam_z/vmax_z)*totalVertVel * wGradBF(cell,node,qp,2));
+            //Residual(cell,node) += (std::sqrt(diam_xy/vmax_xy)*(Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
+            //    Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1)) + std::sqrt(diam_z/vmax_z)*totalVertVel*EnthalpyGrad(cell,qp,2))*wSUPG/scyr;
 
+            ScalarT totalVertVel = verticalVel(cell,qp);// - alpha_om*pow(phi(cell,qp),alpha_om-1)*(1-scale)*drain_vel;
+            ScalarT  wSUPG_xy = delta*diam_xy/vmax_xy*(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1));
+            ScalarT  wSUPG_z = delta*diam_z/vmax_z*totalVertVel * wGradBF(cell,node,qp,2);
+
+            Residual(cell,node) += (wSUPG_xy*(Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
+                Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1)) +  wSUPG_z*totalVertVel*EnthalpyGrad(cell,qp,2))/scyr;
+/*/
+            wSUPG = delta*diam/vmax*(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) + verticalVel(cell,qp) * wGradBF(cell,node,qp,2)); // +(velGrad(cell,qp,0,0)+velGrad(cell,qp,1,1))*wBF(cell,node,qp));
+//            ScalarT totalVertVel = verticalVel(cell,qp) - alpha_om*pow(phi(cell,qp),alpha_om-1)*drain_vel;
+//            wSUPG = delta*diam/vmax*(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) + totalVertVel * wGradBF(cell,node,qp,2)); // +(velGrad(cell,qp,0,0)+velGrad(cell,qp,1,1))*wBF(cell,node,qp));
             Residual(cell,node) += (Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
                 Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + verticalVel(cell,qp)*EnthalpyGrad(cell,qp,2))*wSUPG/scyr;
-          }
-        }
-
-        if (stabilization == STABILIZATION_TYPE::SUPG)
-        {
-          ScalarT diffEnt=0;
-          for (std::size_t qp = 0; qp < numQPs; ++qp)
-            diffEnt += Enthalpy(cell,qp) - EnthalpyHs(cell,qp);
-          diffEnt /= numQPs;
-
-          for (std::size_t node=0; node < numNodes; ++node)
-          {
-            for (std::size_t qp=0; qp < numQPs; ++qp)
-            {
-              //wSUPG: [km^3]
-              wSUPG = delta*diam/vmax*(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) + verticalVel(cell,qp) * wGradBF(cell,node,qp,2) +
-                  0.*(velGrad(cell,qp,0,0)+velGrad(cell,qp,1,1))*wBF(cell,node,qp));
-
-              ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
-              //scale = Albany::ADValue(scale);
-              Residual(cell,node) -= powm6*(1-scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2) * wSUPG;
-            }
-          }
-
-          // additional contributions of dissipation, basal friction heat and geothermal flux
-          if (needsDiss && needsBasFric)
-          {
-            //ScalarT scale = - atan(alpha * diffEnt)/pi + 0.5;
-            //scale = Albany::ADValue(scale);
-            for (std::size_t node=0; node < numNodes; ++node)
-            {
-              ScalarT scale = - atan(alpha * diffEnth(cell,node))/pi + 0.5;
-              //scale = Albany::ADValue(scale);
-              //Residual(cell,node) -= powm3*scale*(delta*diam/vmax*scyr)*( basalFricHeatSUPG(cell,node) + geoFluxHeatSUPG(cell,node) );
-              Residual(cell,node) += powm3*(delta*diam/vmax*scyr)*basalResidSUPG(cell,node);
-
-              for (std::size_t qp=0; qp < numQPs; ++qp)
-              {
-                // Modify here if you want to impose different basal BC
-                wSUPG = delta*diam/vmax*(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) + verticalVel(cell,qp) * wGradBF(cell,node,qp,2)+
-                    0.*(velGrad(cell,qp,0,0)+velGrad(cell,qp,1,1))*wBF(cell,node,qp));
-
-                Residual(cell,node) -= diss(cell,qp) * powm3 * wSUPG;
-              }
-            }
-          }
-          else if (needsBasFric)
-          {
-            //ScalarT scale = - atan(alpha * diffEnt)/pi + 0.5;
-            //scale = Albany::ADValue(scale);
-
-            for (std::size_t node=0; node < numNodes; ++node)
-            {
-              ScalarT scale = - atan(alpha * diffEnth(cell,node))/pi + 0.5;
-              //scale = Albany::ADValue(scale);
-              // Modify here if you want to impose different basal BC
-              //Residual(cell,node) -= powm3*scale*(delta*diam/vmax*scyr)*( basalFricHeatSUPG(cell,node) + geoFluxHeatSUPG(cell,node) );
-              Residual(cell,node) += powm3*(delta*diam/vmax*scyr)*basalResidSUPG(cell,node);
-            }
-          }
-          else if (needsDiss)
-          {
-            for (std::size_t node=0; node < numNodes; ++node)
-            {
-              for (std::size_t qp=0; qp < numQPs; ++qp)
-              {
-                wSUPG = delta*diam/vmax*(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) + verticalVel(cell,qp) * wGradBF(cell,node,qp,2)+
-                    0.*(velGrad(cell,qp,0,0)+velGrad(cell,qp,1,1))*wBF(cell,node,qp));
-
-                Residual(cell,node) -= powm3 * diss(cell,qp) * wSUPG;
-              }
-            }
+//            wSUPG = delta*diam/vmax*(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) + totalVertVel * wGradBF(cell,node,qp,2)); // +(velGrad(cell,qp,0,0)+velGrad(cell,qp,1,1))*wBF(cell,node,qp));
+//           Residual(cell,node) += (Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
+//                Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + totalVertVel*EnthalpyGrad(cell,qp,2))*wSUPG/scyr;
+           // wSUPG = delta*diam/vmax*(Albany::ADValue(Velocity(cell,qp,0)) * wGradBF(cell,node,qp,0) + Albany::ADValue(Velocity(cell,qp,1)) * wGradBF(cell,node,qp,1) + totalVertVel * wGradBF(cell,node,qp,2)); // +(velGrad(cell,qp,0,0)+velGrad(cell,qp,1,1))*wBF(cell,node,qp));
+           // Residual(cell,node) += (Albany::ADValue(Velocity(cell,qp,0))*EnthalpyGrad(cell,qp,0) +
+           //     Albany::ADValue(Velocity(cell,qp,1))*EnthalpyGrad(cell,qp,1) + totalVertVel*EnthalpyGrad(cell,qp,2))*wSUPG/scyr;
+//*/
           }
         }
       }

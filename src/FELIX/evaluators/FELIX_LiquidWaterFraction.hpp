@@ -42,7 +42,6 @@ namespace FELIX
     // Input:
     PHX::MDField<const Type,Cell,Node> 		enthalpyHs;  //[MW s m^{-3}]
     PHX::MDField<const ScalarT,Cell,Node> 	enthalpy;  //[MW s m^{-3}]
-    PHX::MDField<const ScalarT,Dim> 		homotopy;
 
     // Output:
     PHX::MDField<ScalarT,Cell,Node> phi;         //[adim]
