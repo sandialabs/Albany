@@ -51,11 +51,13 @@ namespace FELIX
     PHX::MDField<const RealType,Cell,Side,Node,QuadPoint,Dim>  GradBF;      // [km^{-1}
     PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>     	 w_measure;   // [km^2]
     PHX::MDField<const ScalarT,Cell,Node>                      diffEnth;  //[MW s m^{-3}]
+    PHX::MDField<const ScalarT,Cell,Side,QuadPoint>            phi;  // []
     PHX::MDField<const ScalarT,Dim>                            homotopy;
 
     // Output:
     PHX::MDField<ScalarT,Cell,Node> enthalpyBasalResid;      // [MW] = [k^{-2} kPa s^{-1} km^3]
-    PHX::MDField<ScalarT,Cell,Node> enthalpyBasalResidSUPG;  // [MW s^{-1}] = [k^{-2} kPa s^{-2} km^3]
+    PHX::MDField<ScalarT,Cell,Side, QuadPoint> basalMeltRateQP;      // [MW] = [m/yr]
+    PHX::MDField<ScalarT,Cell,Side, Node> basalMeltRate;      // [MW] = [m/yr]
 
     std::vector<std::vector<int> >  sideNodes;
     std::string                     basalSideName;
@@ -68,9 +70,14 @@ namespace FELIX
 
     double a;
     double k_i;   //[W m^{-1} K^{-1}], Conductivity of ice
-    double beta_p;
-    double rho_i;
-    double g;
+    double beta_p;  //[K Pa^{-1}]
+    double rho_i;  // [kg m^{-3}]
+    double rho_w;  // [kg m^{-3}]
+    double g;  //[m s^{-2}]
+    double L;       //[J kg^{-1} ] Latent heat of fusion", 3e5)
+    double k_0;     //[m^2], Permeability factor
+    double eta_w;   //[Pa s], Viscosity of water
+    double alpha_om; //[]
 
     bool haveSUPG;
   };

@@ -48,6 +48,7 @@ namespace FELIX
 
     // Output:
     PHX::MDField<ScalarT,Cell,Node> 	temperature; //[K]
+    PHX::MDField<ScalarT,Cell,Node> 	correctedTemp; //[K]
     PHX::MDField<ScalarT,Cell,Node> 	diffEnth;    //[MW s m^{-3}]
     PHX::MDField<ScalarT,Cell, Side, Node> dTdz;   //[K km^{-1}]
 

@@ -44,7 +44,7 @@ protected:
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input
-  PHX::MDField<const ScalarT,Cell,Node>  basal_melt_rate;
+  PHX::MDField<const ScalarT,Cell,Node>  basal_velocity;
   PHX::MDField<const ParamScalarT,Cell,Node>  thickness;
 
   // Output:

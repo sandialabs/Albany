@@ -139,60 +139,63 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     p = stateMgr.registerStateVariable(fname, layout, cellEBName, true, &entity);
   }
 
-  Teuchos::ParameterList& ss_disc_pl = discParams->sublist("Side Set Discretizations");
-  const Teuchos::Array<std::string>& ss_names = ss_disc_pl.get<Teuchos::Array<std::string>>("Side Sets");
-  for (auto ss_name : ss_names)
+  if (discParams->isSublist("Side Set Discretizations"))
   {
-    Teuchos::ParameterList& this_ss_pl = ss_disc_pl.sublist(ss_name);
-    Teuchos::ParameterList& req_fields_info = this_ss_pl.sublist("Required Fields Info");
-    Teuchos::RCP<Albany::Layouts> sdl = dl->side_layouts[ss_name];
-
-    int num_fields = req_fields_info.get<int>("Number Of Fields",0);
-
-    for (int ifield=0; ifield<num_fields; ++ifield)
+    Teuchos::ParameterList& ss_disc_pl = discParams->sublist("Side Set Discretizations");
+    const Teuchos::Array<std::string>& ss_names = ss_disc_pl.get<Teuchos::Array<std::string>>("Side Sets");
+    for (auto ss_name : ss_names)
     {
-      const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(Albany::strint("Field", ifield));
+      Teuchos::ParameterList& this_ss_pl = ss_disc_pl.sublist(ss_name);
+      Teuchos::ParameterList& req_fields_info = this_ss_pl.sublist("Required Fields Info");
+      Teuchos::RCP<Albany::Layouts> sdl = dl->side_layouts[ss_name];
 
-      fname   = thisFieldList.get<std::string>("Field Name");
-      flayout = thisFieldList.get<std::string>("Field Type");
+      int num_fields = req_fields_info.get<int>("Number Of Fields",0);
 
-      bool is_nodal   = flayout.find("Node")!=std::string::npos;
-      bool is_vector  = flayout.find("Vector")!=std::string::npos;
-      bool is_layered = flayout.find("Layered")!=std::string::npos;
-
-      entity = is_nodal ? Albany::StateStruct::NodalDataToElemNode
-                        : Albany::StateStruct::ElemData;
-
-      // Incrementally build the layout
-      Teuchos::RCP<PHX::DataLayout> layout;
-
-      // Node vs cell
-      if (is_nodal)
-        layout = sdl->node_scalar;
-      else
-        layout = sdl->cell_scalar2;
-
-      // Vector fields
-      if (is_vector)
+      for (int ifield=0; ifield<num_fields; ++ifield)
       {
-        int vec_dim = thisFieldList.get<int>("Vector Dim");
-        layout = is_nodal ? PHAL::ExtendLayout<Dim,Cell,Side,Node>::apply(layout,vec_dim)
-                          : PHAL::ExtendLayout<Dim,Cell,Side>::apply(layout,vec_dim);
-      }
+        const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(Albany::strint("Field", ifield));
 
-      // Layered fields
-      if (is_layered)
-      {
-        int num_layers = thisFieldList.get<int>("Number Of Layers");
-        layout = is_vector
-                    ? (is_nodal ? PHAL::ExtendLayout<LayerDim,Cell,Side,Node,Dim>::apply(layout,num_layers)
-                                : PHAL::ExtendLayout<LayerDim,Cell,Side,Dim>::apply(layout,num_layers))
-                    : (is_nodal ? PHAL::ExtendLayout<LayerDim,Cell,Side,Node>::apply(layout,num_layers)
-                                : PHAL::ExtendLayout<LayerDim,Cell,Side>::apply(layout,num_layers));
-      }
+        fname   = thisFieldList.get<std::string>("Field Name");
+        flayout = thisFieldList.get<std::string>("Field Type");
 
-      // Finally, register the state
-      p = stateMgr.registerSideSetStateVariable(ss_name, fname, fname, layout, sideEBName[ss_name], true, &entity);
+        bool is_nodal   = flayout.find("Node")!=std::string::npos;
+        bool is_vector  = flayout.find("Vector")!=std::string::npos;
+        bool is_layered = flayout.find("Layered")!=std::string::npos;
+
+        entity = is_nodal ? Albany::StateStruct::NodalDataToElemNode
+                          : Albany::StateStruct::ElemData;
+
+        // Incrementally build the layout
+        Teuchos::RCP<PHX::DataLayout> layout;
+
+        // Node vs cell
+        if (is_nodal)
+          layout = sdl->node_scalar;
+        else
+          layout = sdl->cell_scalar2;
+
+        // Vector fields
+        if (is_vector)
+        {
+          int vec_dim = thisFieldList.get<int>("Vector Dim");
+          layout = is_nodal ? PHAL::ExtendLayout<Dim,Cell,Side,Node>::apply(layout,vec_dim)
+                            : PHAL::ExtendLayout<Dim,Cell,Side>::apply(layout,vec_dim);
+        }
+
+        // Layered fields
+        if (is_layered)
+        {
+          int num_layers = thisFieldList.get<int>("Number Of Layers");
+          layout = is_vector
+                      ? (is_nodal ? PHAL::ExtendLayout<LayerDim,Cell,Side,Node,Dim>::apply(layout,num_layers)
+                                  : PHAL::ExtendLayout<LayerDim,Cell,Side,Dim>::apply(layout,num_layers))
+                      : (is_nodal ? PHAL::ExtendLayout<LayerDim,Cell,Side,Node>::apply(layout,num_layers)
+                                  : PHAL::ExtendLayout<LayerDim,Cell,Side>::apply(layout,num_layers));
+        }
+
+        // Finally, register the state
+        p = stateMgr.registerSideSetStateVariable(ss_name, fname, fname, layout, sideEBName[ss_name], true, &entity);
+      }
     }
   }
 

@@ -86,7 +86,10 @@ namespace FELIX
     double drainage_coeff; //[kg s^{-3}]
     double alpha_om;  //[adim], Omega exponent alpha
 
-    ScalarT printedAlpha;
+    double flux_reg_alpha;
+    double flux_reg_beta;
+
+    ScalarT printedRegCoeff;
   };
 
 }

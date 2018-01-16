@@ -32,10 +32,17 @@ namespace FELIX
                                 "Error! Basal side data layout not found.\n");
     Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideName);
 
+    sideBF = decltype(sideBF)(p.get<std::string> ("BF Side Name"), dl_side->node_qp_scalar);
+    side_w_measure = decltype(side_w_measure)(p.get<std::string> ("Weighted Measure Side Name"), dl_side->qp_scalar);
+    side_w_qp  = decltype(side_w_qp)(p.get<std::string> ("w Side QP Variable Name"), dl_side->qp_scalar);
+    basalMeltRateSideQP = decltype(basalMeltRateSideQP)(p.get<std::string>("Basal Melt Rate Side QP Variable Name"), dl_side->qp_scalar);
+
+
     std::vector<PHX::Device::size_type> dims;
     dl->node_qp_vector->dimensions(dims);
     numNodes = dims[1];
     numQPs   = dims[2];
+    numSideQPs   = dl_side->qp_scalar->dimension(2);
     numSideNodes  = dl_side->node_scalar->dimension(2);
 
     int numSides = dl_side->node_scalar->dimension(1);
@@ -53,7 +60,11 @@ namespace FELIX
 
     this->addDependentField(GradVelocity);
     this->addDependentField(basalMeltRate);
+    this->addDependentField(basalMeltRateSideQP);
     this->addDependentField(wBF);
+    this->addDependentField(sideBF);
+    this->addDependentField(side_w_qp);
+    this->addDependentField(side_w_measure);
     this->addDependentField(w);
     this->addDependentField(w_z);
 
@@ -95,8 +106,12 @@ namespace FELIX
         // Get the local data of side and cell
         const int cell = it_side.elem_LID;
         const int side = it_side.side_local_id;
-        for (int inode=0; inode<numSideNodes; ++inode)
-          Residual(cell,sideNodes[side][inode]) = w(cell,sideNodes[side][inode])-basalMeltRate(cell,sideNodes[side][inode]);
+        for (int inode=0; inode<numSideNodes; ++inode) {
+          Residual(cell,sideNodes[side][inode]) =0; //w(cell,sideNodes[side][inode])+Albany::ADValue(basalMeltRate(cell,sideNodes[side][inode]));
+          for (std::size_t qp = 0; qp < numSideQPs; ++qp)
+            Residual(cell,sideNodes[side][inode]) += (side_w_qp(cell,side,qp)+Albany::ADValue(basalMeltRateSideQP(cell, side, qp)))
+                                      * sideBF(cell,side,inode,qp) * side_w_measure(cell,side,qp);
+      }
       }
     }
   }

@@ -57,7 +57,7 @@ evaluateFields(typename Traits::EvalData d)
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
       for (std::size_t node = 0; node < numNodes; ++node)
         for (std::size_t qp = 0; qp < numQPs; ++qp)
-          Residual(cell,node) += ( w_z(cell,qp) + GradVelocity(cell,qp,0,0) +  GradVelocity(cell,qp,1,1) ) * wBF(cell,node,qp);
+          Residual(cell,node) += ( w_z(cell,qp) + GradVelocity(cell,qp,0,0) + GradVelocity(cell,qp,1,1)) * wBF(cell,node,qp);
 }
 
 

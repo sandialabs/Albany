@@ -6,6 +6,7 @@
       <ParameterList name="Reduced-Order Model">
         <Parameter name="Activate" type="bool" value="true"/>
         <Parameter name="System Reduction" type="string" value="Galerkin Projection"/>
+        <Parameter name="Run singular Check" type="bool" value="false"/>
         <Parameter name="Basis Source Type" type="string" value="Stk"/>
         <Parameter name="Basis Size Max" type="int" value="6"/>
       </ParameterList>

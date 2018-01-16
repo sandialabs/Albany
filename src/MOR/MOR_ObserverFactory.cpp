@@ -76,13 +76,21 @@ int getSnapshotPeriod(const RCP<ParameterList> &params)
 
 std::string getGeneralizedCoordinatesFilename(const RCP<ParameterList> &params)
 {
-  return params->get("Generalized Coordinates Output File Name", "generalized_coordinates.mtx");
+  const std::string outdir = params->get("Output Directory",".");
+  const std::string generalizedCoordsFilename = outdir + "/" + params->get("Generalized Coordinates Output File Name", "GC.mtx");
+
+  return generalizedCoordsFilename;
+  //return params->get("Generalized Coordinates Output File Name", "generalized_coordinates.mtx");
 }
 
 std::string getGeneralizedCoordinatesStampsFilename(const RCP<ParameterList> &params)
 {
-  const std::string defaultValue = "stamps_" + getGeneralizedCoordinatesFilename(params);
-  return params->get("Generalized Coordinates Stamps Output File Name", defaultValue);
+  const std::string outdir = params->get("Output Directory",".");
+  const std::string stampsFilename = outdir + "/" + params->get("Generalized Coordinates Stamps Output File Name", "S.mtx");
+
+  return stampsFilename;
+  //const std::string defaultValue = "stamps_" + getGeneralizedCoordinatesFilename(params);
+  //return params->get("Generalized Coordinates Stamps Output File Name", defaultValue);
 }
 
 } // end anonymous namespace
@@ -217,9 +225,7 @@ bool ObserverFactory::useReducedOrderModel() const
 
 bool ObserverFactory::observeGeneralizedCoordinates() const
 {
-  return Teuchos::isParameterType<std::string>(
-      *this->getGeneralizedCoordinatesParameters(),
-      "Generalized Coordinates Output File Name");
+  return Teuchos::isParameterType<std::string>(*this->getGeneralizedCoordinatesParameters(),"Generalized Coordinates Output File Name") || Teuchos::isParameterType<std::string>(*this->getGeneralizedCoordinatesParameters(),"Output Directory");
 }
 
 RCP<ParameterList> ObserverFactory::getSnapParameters() const

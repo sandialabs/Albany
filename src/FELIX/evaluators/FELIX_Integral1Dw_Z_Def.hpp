@@ -24,13 +24,13 @@ template<typename EvalT, typename Traits>
 Integral1Dw_ZBase<EvalT, Traits>::
 Integral1Dw_ZBase(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl) :
-  basal_melt_rate (p.get<std::string>("Basal Melt Rate Variable Name"), dl->node_scalar),
+  basal_velocity (p.get<std::string>("Basal Velocity Variable Name"), dl->node_scalar),
   thickness       (p.get<std::string>("Thickness Variable Name"), dl->node_scalar),
   int1Dw_z        (p.get<std::string>("Integral1D w_z Variable Name"), dl->node_scalar)
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-  this->addDependentField(basal_melt_rate);
+  this->addDependentField(basal_velocity);
   this->addDependentField(thickness);
 
   this->addEvaluatedField(int1Dw_z);
@@ -61,7 +61,7 @@ void Integral1Dw_ZBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-    this->utils.setFieldData(basal_melt_rate,fm);
+    this->utils.setFieldData(basal_velocity,fm);
     this->utils.setFieldData(thickness,fm);
     this->utils.setFieldData(int1Dw_z,fm);
 }
@@ -125,7 +125,7 @@ evaluateFields(typename Traits::EvalData workset)
       {
         LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[node]);
         layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
-        this->int1Dw_z(cell,node) += this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second);
+        this->int1Dw_z(cell,node) += this->basal_velocity(basalCellsMap[baseId].first, basalCellsMap[baseId].second);
       }
     }
 }
@@ -212,14 +212,11 @@ evaluateFields(typename Traits::EvalData workset)
           }
 
         this->int1Dw_z(cell,node) *= this->thickness(cell,node);
-        //FadType mb = (lnodeId == baseId) ? this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second)  :
-            //                 Albany::ADValue(this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second)) ;
 
           if (0)//lnodeId == baseId)
-            this->int1Dw_z(cell,node) += this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second);
+            this->int1Dw_z(cell,node) += this->basal_velocity(basalCellsMap[baseId].first, basalCellsMap[baseId].second);
           else
-            this->int1Dw_z(cell,node) += Albany::ADValue(this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second));
-
+            this->int1Dw_z(cell,node) += Albany::ADValue(this->basal_velocity(basalCellsMap[baseId].first, basalCellsMap[baseId].second));
       }
     }
 }

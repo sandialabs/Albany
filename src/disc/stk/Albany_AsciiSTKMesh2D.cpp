@@ -124,7 +124,7 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
 
   // All the nodes
   std::vector < std::string > nsNames;
-  std::string nsn = "Node";
+  std::string nsn = "node_set";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = &metaData->declare_part(nsn, stk::topology::NODE_RANK);
 #ifdef ALBANY_SEACAS
@@ -133,7 +133,7 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
 
   // All the sidesets
   std::vector < std::string > ssNames;
-  std::string ssn = "LateralSide";
+  std::string ssn = "boundary_side_set";
   ssNames.push_back(ssn);
   ssPartVec[ssn] = &metaData->declare_part(ssn, metaData->side_rank());
 #ifdef ALBANY_SEACAS
@@ -160,8 +160,8 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
     int tag = bdTagsArray[k];
 
     std::stringstream nsn,ssn;
-    nsn << "BoundaryNode" << tag;
-    ssn << "LateralSide"  << tag;
+    nsn << "boundary_node_set_" << tag;
+    ssn << "boundary_side_set_"  << tag;
 
     bdTagToNodeSetName[tag] = nsn.str();
     bdTagToSideSetName[tag] = ssn.str();
@@ -243,7 +243,7 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
     AbstractSTKFieldContainer::VectorFieldType* coordinates_field =
         fieldContainer->getCoordinatesField();
 
-    singlePartVec[0] = nsPartVec["Node"];
+    singlePartVec[0] = nsPartVec["node_set"];
 
     *out << "[AsciiSTKMesh2D] Adding nodes... ";
     out->getOStream()->flush();
@@ -301,7 +301,7 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
     out->getOStream()->flush();
 
     stk::mesh::PartVector multiPartVec(2);
-    multiPartVec[0] = ssPartVec["LateralSide"];
+    multiPartVec[0] = ssPartVec["boundary_side_set"];
     for (int i = 0; i < NumEles; i++)
     {
       for (int j = 0; j < NumElemNodes; j++)

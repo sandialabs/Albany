@@ -70,6 +70,9 @@ private:
   PHX::MDField<const TemprT,Cell> flowFactorA;  // [k^{-(n+1)} Pa^{-n} yr^{-1} ], k=1000.  This is the coefficient A.
   PHX::MDField<const ParamScalarT,Cell,QuadPoint> stiffeningFactor;
   PHX::MDField<const ScalarT> homotopyParam;
+  bool performContinuousHomotopy;
+  double expCoeff;
+
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;  // [k^2 Pa yr], k=1000
@@ -77,7 +80,7 @@ private:
 
   ScalarT printedFF;
 
-  unsigned int numQPs, numDims, numNodes, numCells;
+  unsigned int numQPs, numDims, numCells;
 
   enum VISCTYPE {CONSTANT, EXPTRIG, GLENSLAW, GLENSLAW_XZ};
   enum FLOWRATETYPE {UNIFORM, TEMPERATUREBASED, FROMFILE, FROMCISM};

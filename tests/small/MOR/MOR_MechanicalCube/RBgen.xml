@@ -51,7 +51,8 @@
       <Parameter name="Dof" type="int" value="0"/>
     </ParameterList-->
     <ParameterList name="Blocking List">
-      <Parameter name="Number" type="int" value="8"/>
+        <Parameter name="Unique" type="bool" value="1"/>
+        <Parameter name="Number" type="int" value="8"/>
       <ParameterList name="Entry 0">
         <Parameter name="Node Set" type="string" value="nodeset1"/>
         <Parameter name="Dof" type="int" value="0"/>

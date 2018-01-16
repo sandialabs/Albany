@@ -22,14 +22,19 @@ namespace FELIX
     This evaluator computes the pressure-melting temperature Tm(p) via the hydrostatic approximation of the pressure.
 */
 
+template<typename EvalT, typename Traits, typename Type, typename enable=void>
+class PressureCorrectedTemperature{};
+
+
 template<typename EvalT, typename Traits, typename Type>
-class PressureCorrectedTemperature: public PHX::EvaluatorWithBaseImpl<Traits>,
+class PressureCorrectedTemperature<EvalT, Traits, Type, typename std::enable_if<std::is_convertible<typename EvalT::ParamScalarT, Type>::value>::type>: public PHX::EvaluatorWithBaseImpl<Traits>,
                                    public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  //typedef typename EvalT::ParamScalarT ParamScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  //typedef typename  Sacado::Promote<ParamScalarT, Type>::type type;
 
   PressureCorrectedTemperature (const Teuchos::ParameterList& p,
                        	   	  const Teuchos::RCP<Albany::Layouts>& dl);
@@ -41,7 +46,7 @@ public:
 
 private:
   // Input:
-  PHX::MDField<const Type,Cell> sHeight;
+  PHX::MDField<const ParamScalarT,Cell> sHeight;
   PHX::MDField<const Type,Cell> temp;
   PHX::MDField<const MeshScalarT,Cell,Dim> coord;
 
@@ -49,6 +54,7 @@ private:
   // Output:
   PHX::MDField<Type,Cell> correctedTemp;
 
+  const Teuchos::ParameterList& physicsList;
   double beta, rho_i, g, coeff;
 
 };

@@ -21,9 +21,9 @@ namespace FELIX
   enthalpy     (p.get<std::string> ("Enthalpy Variable Name"), dl->node_scalar),
   thickness     (p.get<std::string> ("Thickness Variable Name"), dl->node_scalar),
   temperature    (p.get<std::string> ("Temperature Variable Name"), dl->node_scalar),
+  correctedTemp  (p.get<std::string> ("Corrected Temperature Variable Name"), dl->node_scalar),
   diffEnth       (p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar)
   {
-
     Teuchos::RCP<shards::CellTopology> cellType;
     cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
@@ -60,15 +60,16 @@ namespace FELIX
     this->addDependentField(thickness);
 
     this->addEvaluatedField(temperature);
+    this->addEvaluatedField(correctedTemp);
     this->addEvaluatedField(diffEnth);
     this->addEvaluatedField(dTdz);
     this->setName("Temperature");
 
     // Setting parameters
     Teuchos::ParameterList& physics = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
-    rho_i   = physics.get<double>("Ice Density", 916.0);
-    c_i   = physics.get<double>("Heat capacity of ice", 2009.0);
-    T0    = physics.get<double>("Reference Temperature", 240.0);
+    rho_i   = physics.get<double>("Ice Density"); //916
+    c_i   = physics.get<double>("Heat capacity of ice"); //2009
+    T0    = physics.get<double>("Reference Temperature"); //265
   }
 
   template<typename EvalT, typename Traits, typename Type>
@@ -81,6 +82,7 @@ namespace FELIX
     this->utils.setFieldData(thickness,fm);
 
     this->utils.setFieldData(temperature,fm);
+    this->utils.setFieldData(correctedTemp,fm);
     this->utils.setFieldData(diffEnth,fm);
     this->utils.setFieldData(dTdz,fm);
   }
@@ -99,6 +101,8 @@ namespace FELIX
           temperature(cell,node) = pow6 * enthalpy(cell,node)/(rho_i * c_i) + T0;
         else
           temperature(cell,node) = meltingTemp(cell,node);
+ 
+        correctedTemp(cell, node) = temperature(cell,node) + 273.15 - meltingTemp(cell,node);
 
         diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
       }

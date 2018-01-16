@@ -35,10 +35,14 @@ namespace FELIX
 
     // Input:
     PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;  // [km^3]
+    PHX::MDField<const MeshScalarT,Cell,Side,Node,QuadPoint> sideBF;  // []
+    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint> side_w_measure;  // [km^2]
     PHX::MDField<const ScalarT,Cell,Node> basalMeltRate; // [m yr^{-1}]
+    PHX::MDField<const ScalarT,Cell,Side, QuadPoint> basalMeltRateSideQP; // [m yr^{-1}]
     PHX::MDField<const VelocityType,Cell,QuadPoint,VecDim,Dim>  GradVelocity; // [k^{-1} yr^{-1}]
     PHX::MDField<const ScalarT,Cell,QuadPoint, Dim> w_z;  // [k^{-1} yr^{-1}]
     PHX::MDField<const ScalarT,Cell,Node> w; // [m yr^{-1}]
+    PHX::MDField<const ScalarT,Cell,Side,QuadPoint> side_w_qp; // [m yr^{-1}]
 
     // Output
     PHX::MDField<ScalarT,Cell,Node> Residual;
@@ -48,6 +52,7 @@ namespace FELIX
     int numNodes;
     int numSideNodes;
     int numQPs;
+    int numSideQPs;
 
   };
 

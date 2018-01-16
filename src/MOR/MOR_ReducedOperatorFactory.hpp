@@ -30,7 +30,8 @@ public:
                                                    Epetra_MultiVector &result) const = 0;
 
   virtual Teuchos::RCP<Epetra_CrsMatrix> reducedJacobianNew() = 0;
-  virtual const Epetra_CrsMatrix &reducedJacobian(Epetra_CrsMatrix &result) const = 0;
+  virtual const Epetra_CrsMatrix &reducedJacobianL(Epetra_CrsMatrix &result) const = 0;
+  virtual const Epetra_CrsMatrix &reducedJacobianR(Epetra_CrsMatrix &result) const = 0;
   virtual const Epetra_CrsMatrix &reducedJacobian_ProjectedSol(Epetra_CrsMatrix &result) const = 0;
 
   virtual void fullJacobianIs(const Epetra_Operator &op) = 0;
@@ -38,12 +39,14 @@ public:
   virtual Teuchos::RCP<const Epetra_MultiVector> getPremultipliedReducedBasis() const = 0;
   virtual Teuchos::RCP<const Epetra_MultiVector> getReducedBasis() const = 0;
   virtual Teuchos::RCP<const Epetra_MultiVector> getLeftBasisCopy() const = 0;
+  virtual Teuchos::RCP<const Epetra_MultiVector> getRightBasis() const = 0;
 
   virtual Teuchos::RCP<const Epetra_MultiVector> getScaling() const = 0;
   virtual void setScaling(Epetra_CrsMatrix &jacobian) const = 0;
   virtual void applyScaling(const Epetra_MultiVector &vector) const = 0;
 
   virtual Teuchos::RCP<const Epetra_MultiVector> getPreconditioner() const = 0;
+  virtual void setPreconditionerDirectly(Epetra_MultiVector &vector) const = 0;
   virtual void setPreconditioner(Epetra_CrsMatrix &jacobian) const = 0;
   virtual void applyPreconditioner(const Epetra_MultiVector &vector) const = 0;
   virtual void applyPreconditionerTwice(const Epetra_MultiVector &vector) const = 0;
@@ -56,8 +59,6 @@ public:
   virtual Teuchos::RCP<const Epetra_CrsMatrix> getJacobian() const = 0;
   virtual void setJacobian(Epetra_CrsMatrix &jacobian) const = 0;
   virtual void applyJacobian(const Epetra_MultiVector &vector) const = 0;
-
-  virtual int num_dbc_modes() const = 0;
 
   virtual ~ReducedOperatorFactory();
 

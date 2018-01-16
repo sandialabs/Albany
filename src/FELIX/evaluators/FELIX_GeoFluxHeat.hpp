@@ -51,6 +51,8 @@ namespace FELIX
     PHX::MDField<ScalarT,Cell,Node> geoFluxHeat;      // [MW] = [k^{-2} kPa s^{-1} km^3]
     PHX::MDField<ScalarT,Cell,Node> geoFluxHeatSUPG;  // [MW s^{-1}] = [k^{-2} kPa s^{-2} km^3]
 
+    double uniformGeoFluxValue; // [W m^{-2}]
+
     std::vector<std::vector<int> >  sideNodes;
     std::string                     basalSideName;
 
