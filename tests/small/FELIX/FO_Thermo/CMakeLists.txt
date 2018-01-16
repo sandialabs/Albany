@@ -6,4 +6,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_test.xml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
+if (ALBANY_EPETRA)
 add_test(${testName} ${Albany.exe} input_FO_Thermo_test.xml)
+endif()
