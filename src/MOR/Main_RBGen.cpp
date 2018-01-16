@@ -153,13 +153,26 @@ int main(int argc, char *argv[]) {
 
   // Isolate Dirichlet BC
   RCP<const Epetra_Vector> blockVector;
+  Teuchos::Array<RCP<const Epetra_Vector> > blockVectors;
+  Teuchos::Array<RCP<const Epetra_Vector> > completeBlockVectors;
+  Teuchos::Array<int>  myBlockedLIDs;
+  int num_blocking_vecs = 0;
+  bool isUnique = false, isComplete = false, isIdentity = false;
   if (rbgenParams->isSublist("Blocking")) {
-    const RCP<const Teuchos::ParameterList> blockingParams = Teuchos::sublist(rbgenParams, "Blocking");
+    RCP<Teuchos::ParameterList> blockingParams = Teuchos::sublist(rbgenParams, "Blocking");
     blockingParams->print();
+    isComplete = blockingParams->get<bool>("Complete", false);
+    isIdentity = blockingParams->get<bool>("Identity",false);
     const Teuchos::Array<int> mySelectedLIDs = getMyBlockLIDs(*blockingParams, *baseDisc);
     *out << "Selected LIDs = " << mySelectedLIDs << "\n";
 
-    blockVector = MOR::isolateUniformBlock(mySelectedLIDs, *rawSnapshots);
+    for (int j=0; j<mySelectedLIDs.size(); j++)
+      myBlockedLIDs.push_back(mySelectedLIDs[j]);
+
+    if (!isComplete)
+    {
+      blockVector = MOR::isolateUniformBlock(mySelectedLIDs, *rawSnapshots);
+    }
   }
 
   Epetra_BlockMap map_all = rawSnapshots->Map();
@@ -169,17 +182,16 @@ int main(int argc, char *argv[]) {
   printf("Processor %d out of %d\n",mpi_rank,mpi_size);
   //map_all.Print(std::cout);
 
-
-  Teuchos::Array<RCP<const Epetra_Vector> > blockVectors;
-  Teuchos::Array<int>  myBlockedLIDs;
-  int num_blocking_vecs = 0;
   if (rbgenParams->isSublist("Blocking List"))
   {
-    const RCP<const Teuchos::ParameterList> listParams = Teuchos::sublist(rbgenParams, "Blocking List");
+    RCP<Teuchos::ParameterList> listParams = Teuchos::sublist(rbgenParams, "Blocking List");
     //listParams->print();
     const Teuchos::ParameterEntry list_length = listParams->getEntry("Number");
     //std::cout << list_length << std::endl;
     num_blocking_vecs = Teuchos::getValue<int>(list_length);
+    isUnique = listParams->get<bool>("Unique", false);
+    isComplete = listParams->get<bool>("Complete", false);
+    isIdentity = listParams->get<bool>("Identity", false);
     *out << "Blocking List has " << num_blocking_vecs << " entries\n";
     //blockVectors.resize(num_blocking_vecs);
     char* entry_name = new char[32];
@@ -194,32 +206,39 @@ int main(int argc, char *argv[]) {
       printf("There are %d Selected LIDs\n",mySelectedLIDs.size());
       *out << "Selected LIDs = " << mySelectedLIDs << "\n";
 
-      for (auto it=mySelectedLIDs.begin(); it!=mySelectedLIDs.end(); )
+      if (isUnique)
       {
-        if (std::find(myBlockedLIDs.begin(), myBlockedLIDs.end(), *it) != myBlockedLIDs.end())
+        for (auto it=mySelectedLIDs.begin(); it!=mySelectedLIDs.end(); )
         {
-          std::cout << "deleting element " << *it << " of mySelectedLIDs" << std::endl;
-          mySelectedLIDs.erase(it);
+          if (std::find(myBlockedLIDs.begin(), myBlockedLIDs.end(), *it) != myBlockedLIDs.end())
+          {
+            std::cout << "deleting element " << *it << " of mySelectedLIDs" << std::endl;
+            mySelectedLIDs.erase(it);
+          }
+          else
+            it++;
         }
-        else
-          it++;
       }
-
 
       for (int j=0; j<mySelectedLIDs.size(); j++)
         myBlockedLIDs.push_back(mySelectedLIDs[j]);
 
-      //blockVectors[i] = MOR::isolateUniformBlock(mySelectedLIDs, *rawSnapshots);
-      blockVectors.push_back(MOR::isolateUniformBlock(mySelectedLIDs, *rawSnapshots));
-
+      if (!isComplete)
+      {
+        //blockVectors[i] = MOR::isolateUniformBlock(mySelectedLIDs, *rawSnapshots);
+        blockVectors.push_back(MOR::isolateUniformBlock(mySelectedLIDs, *rawSnapshots));
+      }
     }
     delete[] entry_name;
   }
-  TEUCHOS_ASSERT(num_blocking_vecs == blockVectors.size());
-  printf("blockVectors has %d entries\n",blockVectors.size());
-  printf("There are %d blocking vectors defined.\n",num_blocking_vecs);
-//  for (int i=0; i<num_blocking_vecs; i++)
-//    blockVectors[i]->Print(std::cout);
+  if (!isComplete)
+  {
+    TEUCHOS_ASSERT(num_blocking_vecs == blockVectors.size());
+    printf("blockVectors has %d entries\n",blockVectors.size());
+    printf("There are %d blocking vectors defined.\n",num_blocking_vecs);
+    //  for (int i=0; i<num_blocking_vecs; i++)
+    //    blockVectors[i]->Print(std::cout);
+  }
   int num_blocked_LIDs = 0;
   num_blocked_LIDs = myBlockedLIDs.size();
   printf("There are %d total Blocked LIDs on processor %d (unsorted, contains duplicate entries)\n", num_blocked_LIDs, mpi_rank);
@@ -248,6 +267,12 @@ int main(int argc, char *argv[]) {
         break;
       }
     }
+    if (rbgenParams->isSublist("Blocking"))
+    {
+      blockedGID = map_all.GID(myBlockedLIDs[0]);
+      if (currentGID == blockedGID)
+        found = true;
+    }
     if (found == false)
       myInternalLIDs.push_back(i);
     else
@@ -263,6 +288,20 @@ int main(int argc, char *argv[]) {
   printf("There are %d total unique Blocked LIDs on processor %d\n", myBlockedLIDs_sorted.size(), mpi_rank);
   *out << "Blocked LIDs = " << myBlockedLIDs_sorted << "\n";
   TEUCHOS_ASSERT(num_local_DOFs == (myInternalLIDs.size() + myBlockedLIDs_sorted.size()));
+
+
+  int num_DBC = myBlockedLIDs_sorted.size();
+  if (isComplete)
+  {
+    std::cout << "Complete option chosen... " << num_DBC << " total number of DBC dofs" << std::endl;
+    for (int pos=0; pos<num_DBC; pos++ )
+    {
+      Teuchos::Array<int> singleDBC(1,myBlockedLIDs_sorted[pos]);
+      completeBlockVectors.push_back(MOR::isolateUniformBlock(singleDBC, *rawSnapshots));
+      //std::cout << "@" << myBlockedLIDs_sorted[pos] << std::endl;
+      //completeBlockVectors[pos]->Print(std::cout);
+    }
+  }
 
   int* myInternalGIDs = new int[num_internal_LIDs];
   for (int i=0; i<num_internal_LIDs; i++)
@@ -366,26 +405,45 @@ int main(int argc, char *argv[]) {
       outputVector.Import(*origin, outputImport, Insert);
       baseDisc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
     }
-    if (Teuchos::nonnull(blockVector)) {
-      const double stamp = -1.0 + std::numeric_limits<double>::epsilon();
-      TEUCHOS_ASSERT(stamp != -1.0);
-      outputVector.Import(*blockVector, outputImport, Insert);
-      baseDisc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
-    }
     double prev_stamp = -1.0;
-    for (int i=0; i<num_blocking_vecs; i++)
+    if (isComplete)
     {
-      const double stamp = -1.0 + (i+1)*std::numeric_limits<double>::epsilon();
-      TEUCHOS_ASSERT(stamp != -1.0);
-      TEUCHOS_ASSERT(stamp != prev_stamp);
-      prev_stamp = stamp;
-      outputVector.Import(*blockVectors[i], outputImport, Insert);
-      baseDisc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
+      for (int i=0; i<num_DBC; i++)
+      {
+        const double stamp = -1.0 + (i+1)*std::numeric_limits<double>::epsilon();
+        TEUCHOS_ASSERT(stamp != -1.0);
+        TEUCHOS_ASSERT(stamp != prev_stamp);
+        prev_stamp = stamp;
+
+        outputVector.Import(*completeBlockVectors[i], outputImport, Insert);
+
+        baseDisc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
+      }
+    }
+    else
+    {
+      for (int i=0; i<num_blocking_vecs; i++)
+      {
+        const double stamp = -1.0 + (i+1)*std::numeric_limits<double>::epsilon();
+        TEUCHOS_ASSERT(stamp != -1.0);
+        TEUCHOS_ASSERT(stamp != prev_stamp);
+        prev_stamp = stamp;
+        outputVector.Import(*blockVectors[i], outputImport, Insert);
+        baseDisc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
+      }
+      if (Teuchos::nonnull(blockVector)) {
+        const double stamp = -1.0 + std::numeric_limits<double>::epsilon();
+        TEUCHOS_ASSERT(stamp != -1.0);
+        outputVector.Import(*blockVector, outputImport, Insert);
+        baseDisc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
+      }
     }
     for (int i = 0; i < basis->NumVectors(); ++i) {
       const double stamp = -discardedEnergyFractions[i]; // Stamps must be increasing
       const Epetra_Vector vec(View, *basis, i);
+
       outputVector.Import(vec, outputImport, Insert);
+
       baseDisc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
     }
   }

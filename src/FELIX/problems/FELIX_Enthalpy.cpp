@@ -222,6 +222,7 @@ FELIX::Enthalpy::getValidProblemParameters() const
 	Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams("ValidEnthalpyParams");
 	validPL->sublist("FELIX Physical Parameters", false, "");
 	validPL->sublist("FELIX Enthalpy Stabilization", false, "Stabilization used for Enthalpy equation. Options: Streamline Upwind, SUPG, None");
+	validPL->sublist("FELIX Enthalpy Regularization", false, "Regularization used for Enthalpy equation");
 	validPL->sublist("FELIX Viscosity", false, "");
 	validPL->sublist("Stereographic Map", false, "");
 	validPL->set<std::string> ("Basal Side Name", "", "Name of the basal side set");

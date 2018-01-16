@@ -28,8 +28,12 @@ namespace FELIX
     BF        = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
     w_measure = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
 
-    if(!isGeoFluxConst)
+    if(!isGeoFluxConst) {
       geoFlux   = decltype(geoFlux)(p.get<std::string> ("Geothermal Flux Side QP Variable Name"), dl_basal->qp_scalar);
+      uniformGeoFluxValue = 0;
+    }
+    else
+      uniformGeoFluxValue = p.get<double> ("Uniform Geothermal Flux Heat Value");
 
     haveSUPG = p.isParameter("FELIX Enthalpy Stabilization") ? (p.get<Teuchos::ParameterList*>("FELIX Enthalpy Stabilization")->get<std::string>("Type") == "SUPG") : false;
 
@@ -149,68 +153,8 @@ namespace FELIX
         {
           geoFluxHeat(cell,sideNodes[side][node]) = 0.;
           for (int qp = 0; qp < numSideQPs; ++qp)
-          {   // we impose a constant flux equal to 0.05 [W m^{-2}]
-            geoFluxHeat(cell,sideNodes[side][node]) += 0.05 * BF(cell,side,node,qp) * w_measure(cell,side,qp);
-          }
-        }
-      }
-    }
-
-    if (haveSUPG)
-    {
-      // Zero out, to avoid leaving stuff from previous workset!
-      for (int cell = 0; cell < d.numCells; ++cell)
-        for (int node = 0; node < numCellNodes; ++node)
-          geoFluxHeatSUPG(cell,node) = 0.;
-
-      const double scyr (3.1536e7);  // [s/yr];
-
-      const std::vector<Albany::SideStruct>& sideSetSUPG = d.sideSets->at(basalSideName);
-      if(!isGeoFluxConst)
-      {
-        for (auto const& iter_side : sideSetSUPG)
-        {
-          // Get the local data of side and cell
-          const int cell = iter_side.elem_LID;
-          const int side = iter_side.side_local_id;
-
-          for (int node = 0; node < numSideNodes; ++node)
-          {
-            geoFluxHeatSUPG(cell,sideNodes[side][node]) = 0.;
-            for (int qp = 0; qp < numSideQPs; ++qp)
-            {
-              for (int dim = 0; dim < vecDimFO; ++dim)
-              {
-                geoFluxHeatSUPG(cell,sideNodes[side][node]) += geoFlux(cell,side,qp) * 0.001/scyr * velocity(cell,side,qp,dim) *
-                    GradBF(cell,side,node,qp,dim) * w_measure(cell,side,qp);
-              }
-              geoFluxHeatSUPG(cell,sideNodes[side][node]) += geoFlux(cell,side,qp) * 0.001/scyr *
-                  verticalVel(cell,side,qp) * GradBF(cell,side,node,qp,2) * w_measure(cell,side,qp);
-            }
-          }
-        }
-      }
-      else
-      {
-        for (auto const& iter_side : sideSetSUPG)
-        {
-          // Get the local data of side and cell
-          const int cell = iter_side.elem_LID;
-          const int side = iter_side.side_local_id;
-
-          for (int node = 0; node < numSideNodes; ++node)
-          {
-            geoFluxHeatSUPG(cell,sideNodes[side][node]) = 0.;
-            for (int qp = 0; qp < numSideQPs; ++qp)
-            {
-              for (int dim = 0; dim < vecDimFO; ++dim)
-              {
-                geoFluxHeatSUPG(cell,sideNodes[side][node]) += 0.05 * 0.001/scyr * velocity(cell,side,qp,dim) *
-                    GradBF(cell,side,node,qp,dim) * w_measure(cell,side,qp);
-              }
-              geoFluxHeatSUPG(cell,sideNodes[side][node]) += 0.05 * 0.001/scyr *
-                  verticalVel(cell,side,qp) * GradBF(cell,side,node,qp,2) * w_measure(cell,side,qp);
-            }
+          {   // we impose a constant flux equal to uniformGeoFluxValue [W m^{-2}]
+            geoFluxHeat(cell,sideNodes[side][node]) += uniformGeoFluxValue * BF(cell,side,node,qp) * w_measure(cell,side,qp);
           }
         }
       }

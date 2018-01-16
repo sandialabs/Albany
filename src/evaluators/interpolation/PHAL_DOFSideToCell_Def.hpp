@@ -76,20 +76,16 @@ DOFSideToCellBase(const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Invalid field layout.\n");
   }
 
-  val_side.dimensions(dims);
-  this->addDependentField(val_side.fieldTag());
-  this->addEvaluatedField(val_cell);
+  Teuchos::RCP<shards::CellTopology> cellType;
+  cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
-  this->setName("DOFSideToCell");
+  int sideDim = cellType->getDimension()-1;
+  int numSides = cellType->getSideCount();
 
   if (layout==NODE_SCALAR || layout==NODE_VECTOR || layout==NODE_TENSOR || layout==VERTEX_VECTOR)
   {
-    Teuchos::RCP<shards::CellTopology> cellType;
-    cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
-
-    int sideDim = cellType->getDimension()-1;
-    sideNodes.resize(dims[1]);
-    for (int side=0; side<dims[1]; ++side)
+    sideNodes.resize(numSides);
+    for (int side=0; side<numSides; ++side)
     {
       // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
       int thisSideNodes = cellType->getNodeCount(sideDim,side);
@@ -100,6 +96,10 @@ DOFSideToCellBase(const Teuchos::ParameterList& p,
       }
     }
   }
+
+  this->addDependentField(val_side.fieldTag());
+  this->addEvaluatedField(val_cell);
+  this->setName("DOFSideToCell");
 }
 
 //**********************************************************************
@@ -110,6 +110,9 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(val_cell,fm);
   this->utils.setFieldData(val_side,fm);
+
+  val_side.dimensions(dims);
+
 }
 
 //**********************************************************************

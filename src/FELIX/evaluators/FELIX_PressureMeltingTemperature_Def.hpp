@@ -32,7 +32,7 @@ PressureMeltingTemperature(const Teuchos::ParameterList& p, const Teuchos::RCP<A
   // Setting parameters
   Teuchos::ParameterList& physics = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
 
-  beta = physics.get<double>("Clausius-Clapeyron coefficient", 0.0);
+  beta = physics.get<double>("Clausius-Clapeyron Coefficient");
 }
 
 template<typename EvalT, typename Traits, typename Type>
@@ -50,7 +50,7 @@ evaluateFields(typename Traits::EvalData d)
 {
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
       for (std::size_t node = 0; node < numNodes; ++node)
-        meltingTemp(cell,node) = - beta * pressure(cell,node) + 273.158004675;
+        meltingTemp(cell,node) = - beta * pressure(cell,node) + 273.15;
 }
 
 

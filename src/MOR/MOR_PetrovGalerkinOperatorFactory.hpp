@@ -20,11 +20,9 @@ namespace MOR {
 
 class PetrovGalerkinOperatorFactory : public ReducedOperatorFactory {
 public:
-  explicit PetrovGalerkinOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis,
-                                         int numDBCModes);
+  explicit PetrovGalerkinOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis);
   PetrovGalerkinOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis,
-                                const Teuchos::RCP<const Epetra_MultiVector> &projectionBasis,
-                                int numDBCModes);
+                                const Teuchos::RCP<const Epetra_MultiVector> &projectionBasis);
 
   virtual bool fullJacobianRequired(bool residualRequested, bool jacobianRequested) const;
 
@@ -36,20 +34,23 @@ public:
                                                    Epetra_MultiVector &result) const {TEUCHOS_ASSERT(0);}
 
   virtual Teuchos::RCP<Epetra_CrsMatrix> reducedJacobianNew();
-  virtual const Epetra_CrsMatrix &reducedJacobian(Epetra_CrsMatrix &result) const;
+  virtual const Epetra_CrsMatrix &reducedJacobianL(Epetra_CrsMatrix &result) const;
+  virtual const Epetra_CrsMatrix &reducedJacobianR(Epetra_CrsMatrix &result) const;
   virtual const Epetra_CrsMatrix &reducedJacobian_ProjectedSol(Epetra_CrsMatrix &result) const {TEUCHOS_ASSERT(0);}
 
   virtual void fullJacobianIs(const Epetra_Operator &op);
 
-  virtual Teuchos::RCP<const Epetra_MultiVector> getPremultipliedReducedBasis() const {TEUCHOS_ASSERT(0);}
+  virtual Teuchos::RCP<const Epetra_MultiVector> getPremultipliedReducedBasis() const;
   virtual Teuchos::RCP<const Epetra_MultiVector> getReducedBasis() const {TEUCHOS_ASSERT(0);}
-  virtual Teuchos::RCP<const Epetra_MultiVector> getLeftBasisCopy() const {TEUCHOS_ASSERT(0);}
+  virtual Teuchos::RCP<const Epetra_MultiVector> getLeftBasisCopy() const;
+  virtual Teuchos::RCP<const Epetra_MultiVector> getRightBasis() const;
 
   virtual Teuchos::RCP<const Epetra_MultiVector> getScaling() const {TEUCHOS_ASSERT(0);}
   virtual void setScaling(Epetra_CrsMatrix &jacobian) const {TEUCHOS_ASSERT(0);}
   virtual void applyScaling(const Epetra_MultiVector &vector) const {TEUCHOS_ASSERT(0);}
 
   virtual Teuchos::RCP<const Epetra_MultiVector> getPreconditioner() const {TEUCHOS_ASSERT(0);}
+  virtual void setPreconditionerDirectly(Epetra_MultiVector &vector) const {TEUCHOS_ASSERT(0);}
   virtual void setPreconditioner(Epetra_CrsMatrix &jacobian) const {TEUCHOS_ASSERT(0);}
   virtual void applyPreconditioner(const Epetra_MultiVector &vector) const {TEUCHOS_ASSERT(0);}
   virtual void applyPreconditionerTwice(const Epetra_MultiVector &vector) const {TEUCHOS_ASSERT(0);}
@@ -62,10 +63,6 @@ public:
   virtual Teuchos::RCP<const Epetra_CrsMatrix> getJacobian() const {TEUCHOS_ASSERT(0);}
   virtual void setJacobian(Epetra_CrsMatrix &jacobian) const {TEUCHOS_ASSERT(0);}
   virtual void applyJacobian(const Epetra_MultiVector &vector) const {TEUCHOS_ASSERT(0);}
-
-  virtual int num_dbc_modes() const { return num_dbc_modes_;};
-
-	int num_dbc_modes_;
 
 private:
   Teuchos::RCP<const Epetra_MultiVector> reducedBasis_, projectionBasis_;

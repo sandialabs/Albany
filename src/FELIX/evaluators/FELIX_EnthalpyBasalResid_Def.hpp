@@ -25,13 +25,16 @@ namespace FELIX
     Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
     BF         = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
-    w_measure  = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
+    w_measure  = decltype(w_measure)(p.get<std::string> ("Weighted Measure Side Name"), dl_basal->qp_scalar);
     velocity   = decltype(velocity)(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
     beta       = decltype(beta)(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl_basal->qp_scalar);
     basal_dTdz = decltype(basal_dTdz)(p.get<std::string> ("Basal dTdz Side QP Variable Name"), dl_basal->qp_scalar);
     enthalpy   = decltype(enthalpy)(p.get<std::string> ("Enthalpy Side QP Variable Name"), dl_basal->qp_scalar);
     enthalpyHs = decltype(enthalpyHs)(p.get<std::string> ("Enthalpy Hs QP Variable Name"), dl_basal->qp_scalar);
     diffEnth   = decltype(diffEnth)(p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar);
+    basalMeltRateQP = decltype(basalMeltRateQP)(p.get<std::string> ("Basal Melt Rate Side QP Variable Name"), dl_basal->qp_scalar);
+    basalMeltRate = decltype(basalMeltRate)(p.get<std::string> ("Basal Melt Rate Side Variable Name"), dl_basal->node_scalar);
+    phi        = decltype(phi)(p.get<std::string> ("Water Content Side QP Variable Name"),dl_basal->node_scalar);
 
     geoFlux   = decltype(geoFlux)(p.get<std::string> ("Geothermal Flux Side QP Variable Name"), dl_basal->qp_scalar);
 
@@ -47,13 +50,16 @@ namespace FELIX
     this->addDependentField(enthalpyHs);
     this->addDependentField(diffEnth);
     this->addDependentField(homotopy);
+    this->addDependentField(phi);
+    this->addDependentField(basalMeltRateQP);
 
     this->addEvaluatedField(enthalpyBasalResid);
+    this->addEvaluatedField(basalMeltRate);
+ //   this->addEvaluatedField(basalMeltRateQP);
     this->setName("Enthalpy Basal Residual");
 
     if (haveSUPG)
     {
-      enthalpyBasalResidSUPG  = decltype(enthalpyBasalResidSUPG)(p.get<std::string> ("Enthalpy Basal Residual SUPG Variable Name"), dl->node_scalar);
       GradBF         = decltype(GradBF)(p.get<std::string> ("Gradient BF Side Name"), dl_basal->node_qp_gradient);
       verticalVel    = decltype(verticalVel)(p.get<std::string>("Vertical Velocity Side QP Variable Name"), dl_basal->qp_scalar);
 
@@ -61,7 +67,6 @@ namespace FELIX
       this->addDependentField(verticalVel);
       this->addDependentField(GradBF);
 
-      this->addEvaluatedField(enthalpyBasalResidSUPG);
       this->setName("Enthalpy Basal Residual SUPG");
     }
 
@@ -78,10 +83,15 @@ namespace FELIX
 
     Teuchos::ParameterList* physics_list = p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
     a = physics_list->get<double>("Diffusivity homotopy exponent");
-    k_i = physics_list->get<double>("Conductivity of ice"); //[W m^{-1} K^{-1}]
-    beta_p = physics_list->get<double>("Clausius-Clapeyron coefficient");
+    beta_p = physics_list->get<double>("Clausius-Clapeyron Coefficient");
     rho_i = physics_list->get<double>("Ice Density");
+    rho_w = physics_list->get<double>("Water Density"); //, 1000.0);
     g     = physics_list->get<double>("Gravity Acceleration");
+    L = physics_list->get<double>("Latent heat of fusion"); //, 3e5);
+    k_0 = physics_list->get<double>("Permeability factor"); //, 0.0);
+    k_i = physics_list->get<double>("Conductivity of ice"); //[W m^{-1} K^{-1}]
+    eta_w = physics_list->get<double>("Viscosity of water"); //, 0.0018);
+    alpha_om = physics_list->get<double>("Omega exponent alpha"); //, 2.0);
 
     // Index of the nodes on the sides in the numeration of the cell
     Teuchos::RCP<shards::CellTopology> cellType;
@@ -116,12 +126,13 @@ namespace FELIX
     this->utils.setFieldData(homotopy,fm);
 
     this->utils.setFieldData(enthalpyBasalResid,fm);
+    this->utils.setFieldData(basalMeltRate,fm);
+    this->utils.setFieldData(basalMeltRateQP,fm);
 
     if (haveSUPG)
     {
       this->utils.setFieldData(verticalVel,fm);
       this->utils.setFieldData(GradBF,fm);
-      this->utils.setFieldData(enthalpyBasalResidSUPG,fm);
     }
   }
 
@@ -143,19 +154,6 @@ namespace FELIX
     double pi = atan(1.) * 4.;
     ScalarT hom = homotopy(0);
 
-    ScalarT alpha;
-
-    if (a == -2.0)
-      alpha = pow(10.0, (a + hom*10)/8);
-    else if (a == -1.0)
-      alpha = pow(10.0, (a + hom*10)/4.5);
-    else
-      alpha = pow(10.0, a + hom*10/3);
-
-    alpha = 1e-1*std::pow(10.0, 5*hom);
-
-    ScalarT  robin_coeff=1e-5*std::pow(10.0, 10*hom);
-
     bool isThereWater = false;
 
     for (auto const& it_side : sideSet)
@@ -168,67 +166,33 @@ namespace FELIX
       {
         int cnode = sideNodes[side][node];
         enthalpyBasalResid(cell,cnode) = 0.;
-        isThereWater =(beta(cell,side,0)<5.0);
-        ScalarT scale = - atan(alpha * std::max(0.,diffEnth(cell,cnode))+
-                                 alpha * double(!isThereWater)* std::min(0.,diffEnth(cell,cnode)))/pi + 0.5;
+  //      isThereWater =(beta(cell,side,0)<5.0);
+
+   //     ScalarT scale = (diffEnth(cell,cnode) > 0 || !isThereWater) ?  ScalarT(0.5 - atan(alpha * diffEnth(cell,cnode))/pi) :
+  //                                                             ScalarT(0.5 - alpha * diffEnth(cell,cnode) /pi);
 
         for (int qp = 0; qp < numSideQPs; ++qp)
         {
-         // isThereWater =(beta(cell,side,qp)<1.0);
-          ScalarT diffEnthalpy = enthalpy(cell,side,qp)-enthalpyHs(cell,side,qp);
-         // ScalarT scale = - atan(alpha * std::max(0.,diffEnthalpy)+
-            //                     alpha * double(!isThereWater)* std::min(0.,diffEnthalpy))/pi + 0.5;
-          ScalarT F = geoFlux(cell,side,qp);
+//          ScalarT diffEnthalpy = enthalpy(cell,side,qp)-enthalpyHs(cell,side,qp);
 
-          for (int dim = 0; dim < vecDimFO; ++dim)
-            F += 1000/scyr * beta(cell,side,qp) * std::pow(velocity(cell,side,qp,dim),2);
+    //      isThereWater =(beta(cell,side,qp)<5.0);
 
-          double dTdz_melting =  beta_p*rho_i*g;
+   //       ScalarT scale = (diffEnthalpy > 0 || !isThereWater) ?  ScalarT(0.5 - atan(alpha * diffEnthalpy)/pi) :
+   //                                                              ScalarT(0.5 - alpha * diffEnthalpy /pi);
+   //       ScalarT M = geoFlux(cell,side,qp);
 
-          ScalarT resid_tmp = -F*scale + (1-scale) * 1e-3*k_i*dTdz_melting;
-          ScalarT m = F+0.001*k_i*(basal_dTdz(cell,side,qp));
-          ScalarT scale_m = - atan(alpha * m)/pi + 0.5;
+   //       for (int dim = 0; dim < vecDimFO; ++dim)
+   //         M += 1000/scyr * beta(cell,side,qp) * std::pow(velocity(cell,side,qp,dim),2);
 
-          enthalpyBasalResid(cell,cnode) += resid_tmp *  BF(cell,side,node,qp) * w_measure(cell,side,qp);
-        }
-        enthalpyBasalResid(cell,cnode) += 0./robin_coeff * diffEnth(cell,cnode) + alpha / pi* isThereWater *std::min(0., diffEnth(cell,cnode));
-      }
-    }
+   //       double dTdz_melting =  beta_p*rho_i*g;  //[K m^{-1}]
+   //       M += 1e-3* k_i * dTdz_melting;
 
+    //      ScalarT resid_tmp = -M*scale + 1e-3*k_i*dTdz_melting;
+    //      enthalpyBasalResid(cell,cnode) += resid_tmp *  BF(cell,side,node,qp) * w_measure(cell,side,qp);
 
-    if (haveSUPG)
-    {
-      // Zero out, to avoid leaving stuff from previous workset!
-      for (int cell = 0; cell < d.numCells; ++cell)
-        for (int node = 0; node < numCellNodes; ++node)
-          enthalpyBasalResidSUPG(cell,node) = 0.;
-
-      for (auto const& iter_side : sideSet)
-      {
-        // Get the local data of side and cell
-        const int cell = iter_side.elem_LID;
-        const int side = iter_side.side_local_id;
-
-        for (int node = 0; node < numSideNodes; ++node)
-        {
-          int cnode = sideNodes[side][node];
-          enthalpyBasalResidSUPG(cell,cnode) = 0.;
-          ScalarT scale = - atan(alpha * diffEnth(cell,cnode))/pi + 0.5;
-
-          for (int qp = 0; qp < numSideQPs; ++qp)
-          {
-            ScalarT wSUPG = 0.001 / scyr * // [km^2 s^{-1}]
-                (velocity(cell,side,qp,0)*GradBF(cell,side,node,qp,0) + velocity(cell,side,qp,1)*GradBF(cell,side,node,qp,1)+verticalVel(cell,side,qp) * GradBF(cell,side,node,qp,2))*w_measure(cell,side,qp);
-            //     ScalarT scale = - atan(alpha * (enthalpy(cell,side,qp)-enthalpyHs(cell,side,qp)))/pi + 0.5;
-
-
-            ScalarT resid_tmp = - geoFlux(cell,side,qp)*scale;
-            resid_tmp += robin_coeff*std::fabs(basal_dTdz(cell,side,qp))*std::max(0.,enthalpy(cell,side,qp)-enthalpyHs(cell,side,qp));
-            for (int dim = 0; dim < vecDimFO; ++dim)
-              resid_tmp -= 1000/scyr * beta(cell,side,qp) * std::pow(velocity(cell,side,qp,dim),2) *scale;
-
-            enthalpyBasalResidSUPG(cell,cnode) += resid_tmp *  wSUPG;
-          }
+          enthalpyBasalResid(cell,cnode) += basalMeltRateQP(cell,side,qp) *  BF(cell,side,node,qp) * w_measure(cell,side,qp);
+  //        ScalarT phiExp = pow(phi(cell,side,qp),alpha_om);
+       //   basalMeltRate(cell,side,qp) = scyr*(1-scale) * M / ((1 - rho_w/rho_i*phi(cell,side,qp))*L*rho_w) +  scyr * k_0 * (rho_w - rho_i) * g / eta_w * phiExp ;
         }
       }
     }

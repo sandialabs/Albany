@@ -18,7 +18,6 @@ namespace FELIX
   LiquidWaterFraction(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
   enthalpyHs (p.get<std::string> ("Enthalpy Hs Variable Name"), dl->node_scalar),
   enthalpy   (p.get<std::string> ("Enthalpy Variable Name"), dl->node_scalar),
-  homotopy   (p.get<std::string> ("Continuation Parameter Name"), dl->shared_param),
   phi        (p.get<std::string> ("Water Content Variable Name"), dl->node_scalar)
   {
     // Get Dimensions
@@ -28,15 +27,14 @@ namespace FELIX
 
     this->addDependentField(enthalpyHs);
     this->addDependentField(enthalpy);
-    //  this->addDependentField(homotopy);
 
     this->addEvaluatedField(phi);
     this->setName("Phi");
 
     // Setting parameters
     Teuchos::ParameterList& physics = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
-    rho_w = physics.get<double>("Water Density", 1000.0);
-    L = physics.get<double>("Latent heat of fusion", 334000.0);
+    rho_w = physics.get<double>("Water Density");//, 1000.0);
+    L = physics.get<double>("Latent heat of fusion");//, 334000.0);
 
     printedAlpha = -1.0;
 
@@ -48,7 +46,6 @@ namespace FELIX
   {
     this->utils.setFieldData(enthalpyHs,fm);
     this->utils.setFieldData(enthalpy,fm);
-    //  this->utils.setFieldData(homotopy,fm);
 
     this->utils.setFieldData(phi,fm);
   }
@@ -58,7 +55,6 @@ namespace FELIX
   evaluateFields(typename Traits::EvalData d)
   {
     const double pow6 = 1e6; //[k^{-2}], k =1000
-    //  ScalarT hom = homotopy(0);
     //  double pi = atan(1.) * 4.;
     ScalarT phiNode;
 
