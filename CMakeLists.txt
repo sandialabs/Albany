@@ -221,29 +221,24 @@ MESSAGE("-- Using ${Trilinos_CXX_COMPILER_ID} Compiler.")
 ## Check for some required Trilinos package dependencies (Piro, Phalanx) ##
 MESSAGE("\nChecking Trilinos build for required and optional packages:")
 
-LIST(FIND Trilinos_PACKAGE_LIST Piro Piro_List_ID)
-IF (Piro_List_ID GREATER -1)
-  MESSAGE("-- Found Piro,    a required Trilinos package for Albany.")
-ELSE()
-  MESSAGE("-- FATAL ERROR: Did not find Piro package in Trilinos Installation.")
-  MESSAGE(FATAL_ERROR "-- Configure Trilinos with guidance from trilinos-cmake script in doc directory.")
-ENDIF()
+SET(ALBANY_REQUIRED_TRILINOS_PACKAGES
+  Piro
+  Phalanx
+  NOX
+  ThyraTpetraAdapters
+  Intrepid2
+  MiniTensor
+  )
 
-LIST(FIND Trilinos_PACKAGE_LIST Phalanx Phalanx_List_ID)
-IF (Phalanx_List_ID GREATER -1)
-  MESSAGE("-- Found Phalanx, a required Trilinos package for Albany.")
-ELSE()
-  MESSAGE("-- FATAL ERROR: Did not find Phalanx package in Trilinos Installation.")
-  MESSAGE(FATAL_ERROR "-- Configure Trilinos with guidance from trilinos-cmake script in doc directory.")
-ENDIF()
-
-LIST(FIND Trilinos_PACKAGE_LIST ThyraTpetraAdapters ThyraTpetraAdapters_List_ID)
-IF (ThyraTpetraAdapters_List_ID GREATER -1)
-  MESSAGE("-- Found ThyraTpetraAdapters, a required Trilinos package for Albany.")
-ELSE()
-  MESSAGE("-- FATAL ERROR: Did not find ThyraTpetraAdapters package in Trilinos Installation.")
-  MESSAGE(FATAL_ERROR "-- Configure Trilinos with guidance from trilinos-cmake script in doc directory.")
-ENDIF()
+foreach(package IN LISTS ALBANY_REQUIRED_TRILINOS_PACKAGES)
+  LIST(FIND Trilinos_PACKAGE_LIST "${package}" ${package}_List_ID)
+  IF (${package}_List_ID GREATER -1)
+    MESSAGE("-- Found ${package},    a required Trilinos package for Albany.")
+  ELSE()
+    MESSAGE("-- FATAL ERROR: Did not find ${package} package in Trilinos Installation.")
+    MESSAGE(FATAL_ERROR "-- Configure Trilinos with guidance from trilinos-cmake script in doc directory.")
+  ENDIF()
+endforeach()
 
 ### Check for some OPTIONAL trilinos packages, which set DEFINES in Alany build ###
 
