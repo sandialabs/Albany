@@ -103,15 +103,12 @@ LCM:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: ML
+              Preconditioner Type: MueLu
               Preconditioner Types: 
-                ML: 
-                  Base Method Defaults: SA
-                  ML Settings: 
-                    'aggregation: damping factor': 1.33300000
-                    'aggregation: local aggregates': 4
-                    'aggregation: nodes per aggregate': 27
-                    'coarse: max size': 220
+                MueLu: 
+                  multigrid algorithm: sa
+                  'aggregation: drop tol': 1.33300000
+                  'coarse: max size': 220
                 Ifpack: 
                   Overlap: 2
                   Prec Type: ILU
