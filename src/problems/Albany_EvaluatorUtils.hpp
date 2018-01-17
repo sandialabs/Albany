@@ -168,31 +168,31 @@ namespace Albany {
     //   computed, and the chain rule is coded with that known sparsity.
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFInterpolationEvaluator(
-       const std::string& dof_names, int offsetToFirstDOF=0) const;
+       const std::string& dof_names, int offsetToFirstDOF=-1) const;
 
     //! Same as above, for Interpolating the Gradient
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFGradInterpolationEvaluator(
-       const std::string& dof_names, int offsetToFirstDOF=0) const;
+       const std::string& dof_names, int offsetToFirstDOF=-1) const;
 
     //! Interpolation functions for vector quantities
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFVecInterpolationEvaluator(
-       const std::string& dof_names, int offsetToFirstDOF=0) const;
+       const std::string& dof_names, int offsetToFirstDOF=-1) const;
 
     //! Same as above, for Interpolating the Gradient for Vector quantities
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFVecGradInterpolationEvaluator(
-       const std::string& dof_names, int offsetToFirstDOF=0) const;
+       const std::string& dof_names, int offsetToFirstDOF=-1) const;
 
     //! Interpolation functions for Tensor quantities
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFTensorInterpolationEvaluator(
-       const std::string& dof_names, int offsetToFirstDOF=0) const;
+       const std::string& dof_names, int offsetToFirstDOF=-1) const;
     //! Same as above, for Interpolating the Gradient for Tensor quantities
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFTensorGradInterpolationEvaluator(
-       const std::string& dof_names, int offsetToFirstDOF=0) const;
+       const std::string& dof_names, int offsetToFirstDOF=-1) const;
 
     //! Interpolation functions for scalar quantities defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >

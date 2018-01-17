@@ -155,64 +155,33 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
 
 }
-
-//**********************************************************************
-template<typename Traits>
-DOFGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
-DOFGradInterpolationBase(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) :
-  val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar),
-  GradBF      (p.get<std::string>   ("Gradient BF Name"), dl->node_qp_gradient),
-  grad_val_qp (p.get<std::string>   ("Gradient Variable Name"), dl->qp_gradient)
-{
-  this->addDependentField(val_node.fieldTag());
-  this->addDependentField(GradBF.fieldTag());
-  this->addEvaluatedField(grad_val_qp);
-
-  this->setName("DOFGradInterpolationBase Jacobian");
-
-  std::vector<PHX::Device::size_type> dims;
-  GradBF.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-  numQPs   = dims[2];
-  numDims  = dims[3];
-
-  offset = p.get<int>("Offset of First DOF");
-}
-
-//**********************************************************************
-template<typename Traits>
-void DOFGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(val_node,fm);
-  this->utils.setFieldData(GradBF,fm);
-  this->utils.setFieldData(grad_val_qp,fm);
-}
+//Specialization for Jacobian evaluation taking advantage of the sparsity of the derivatives
 // *********************************************************************
+#ifndef ALBANY_MESH_DEPENDS_ON_SOLUTION
+
 // Kokkos kernel for Jacobian
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   template< typename Traits>
   KOKKOS_INLINE_FUNCTION
-  void DOFGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
-  operator() (const DOFGradInterpolationBase_Jacobian_Tag& tag, const int& cell) const {
+  void FastSolutionGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
+  operator() (const FastSolutionGradInterpolationBase_Jacobian_Tag& tag, const int& cell) const {
 
-    for (int qp=0; qp < numQPs; ++qp) {
-          for (int dim=0; dim<numDims; dim++) {
-            grad_val_qp(cell,qp,dim) = ScalarT(num_dof, val_node(cell, 0).val() * GradBF(cell, 0, qp, dim));
-            (grad_val_qp(cell,qp,dim)).fastAccessDx(offset) = val_node(cell, 0).fastAccessDx(offset) * GradBF(cell, 0, qp, dim);
-            for (int node= 1 ; node < numNodes; ++node) {
-              (grad_val_qp(cell,qp,dim)).val() += val_node(cell, node).val() * GradBF(cell, node, qp, dim);
-              (grad_val_qp(cell,qp,dim)).fastAccessDx(neq*node+offset) += val_node(cell, node).fastAccessDx(neq*node+offset) * GradBF(cell, node, qp, dim);
+    for (int qp=0; qp < this->numQPs; ++qp) {
+          for (int dim=0; dim<this->numDims; dim++) {
+            this->grad_val_qp(cell,qp,dim) = ScalarT(num_dof, this->val_node(cell, 0).val() * this->GradBF(cell, 0, qp, dim));
+            (this->grad_val_qp(cell,qp,dim)).fastAccessDx(offset) = this->val_node(cell, 0).fastAccessDx(offset) * this->GradBF(cell, 0, qp, dim);
+            for (int node= 1 ; node < this->numNodes; ++node) {
+              (this->grad_val_qp(cell,qp,dim)).val() += this->val_node(cell, node).val() * this->GradBF(cell, node, qp, dim);
+              (this->grad_val_qp(cell,qp,dim)).fastAccessDx(neq*node+offset) += this->val_node(cell, node).fastAccessDx(neq*node+offset) * this->GradBF(cell, node, qp, dim);
           }
         }
       }
 }
 #endif
 //**********************************************************************
+
 template<typename Traits>
-void DOFGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
+void FastSolutionGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
   //Intrepid2 Version:
@@ -221,25 +190,17 @@ evaluateFields(typename Traits::EvalData workset)
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
-  const int num_dof = val_node(0,0).size();
+  const int num_dof = this->val_node(0,0).size();
   const int neq = workset.wsElNodeEqID.dimension(2);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
-          for (std::size_t dim=0; dim<numDims; dim++) {
-#ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
-            grad_val_qp(cell,qp,dim) = val_node(cell, 0) * GradBF(cell, 0, qp, dim);
-#else
-            grad_val_qp(cell,qp,dim) = ScalarT(num_dof, val_node(cell, 0).val() * GradBF(cell, 0, qp, dim));
-            (grad_val_qp(cell,qp,dim)).fastAccessDx(offset) = val_node(cell, 0).fastAccessDx(offset) * GradBF(cell, 0, qp, dim);
-#endif
-            for (std::size_t node= 1 ; node < numNodes; ++node) {
-#ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
-              grad_val_qp(cell,qp,dim) += val_node(cell, node) * GradBF(cell, node, qp, dim);
-#else
-              (grad_val_qp(cell,qp,dim)).val() += val_node(cell, node).val() * GradBF(cell, node, qp, dim);
-              (grad_val_qp(cell,qp,dim)).fastAccessDx(neq*node+offset) += val_node(cell, node).fastAccessDx(neq*node+offset) * GradBF(cell, node, qp, dim);
-#endif
+        for (std::size_t qp=0; qp < this->numQPs; ++qp) {
+          for (std::size_t dim=0; dim<this->numDims; dim++) {
+            this->grad_val_qp(cell,qp,dim) = ScalarT(num_dof, this->val_node(cell, 0).val() * this->GradBF(cell, 0, qp, dim));
+            (this->grad_val_qp(cell,qp,dim)).fastAccessDx(offset) = this->val_node(cell, 0).fastAccessDx(offset) * this->GradBF(cell, 0, qp, dim);
+            for (std::size_t node= 1 ; node < this->numNodes; ++node) {
+              (this->grad_val_qp(cell,qp,dim)).val() += this->val_node(cell, node).val() * this->GradBF(cell, node, qp, dim);
+              (this->grad_val_qp(cell,qp,dim)).fastAccessDx(neq*node+offset) += this->val_node(cell, node).fastAccessDx(neq*node+offset) * this->GradBF(cell, node, qp, dim);
           }
         }
       }
@@ -251,10 +212,10 @@ evaluateFields(typename Traits::EvalData workset)
  auto start = std::chrono::high_resolution_clock::now();
 #endif
 
- num_dof = val_node(0,0).size();
+ num_dof = this->val_node(0,0).size();
  neq = workset.wsElNodeEqID.dimension(2);
 
- Kokkos::parallel_for(DOFGradInterpolationBase_Jacobian_Policy(0,workset.numCells),*this);
+ Kokkos::parallel_for(FastSolutionGradInterpolationBase_Jacobian_Policy(0,workset.numCells),*this);
 
 #ifdef ALBANY_TIMER
  PHX::Device::fence();
@@ -268,6 +229,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 }
+#endif //ALBANY_MESH_DEPENDS_ON_SOLUTION
 
 //**********************************************************************
 

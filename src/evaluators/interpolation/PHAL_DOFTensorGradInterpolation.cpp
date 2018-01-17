@@ -10,3 +10,4 @@
 #include "PHAL_DOFTensorGradInterpolation_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(PHAL::DOFTensorGradInterpolationBase)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(PHAL::FastSolutionTensorGradInterpolationBase)

@@ -129,44 +129,11 @@ std::cout<< "DOFVecInterpolationBase Residual time = "  << millisec << "  "  << 
 #endif
 }
 
-// Specializations for Jacobian are identical for 3 Jacobian types
-
+// Specialization for Jacobian evaluation taking advantage of known sparsity
 //**********************************************************************
-template<typename Traits>
-DOFVecInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
-DOFVecInterpolationBase(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl) :
-  val_node    (p.get<std::string>  ("Variable Name"), dl->node_vector),
-  BF          (p.get<std::string>  ("BF Name"),  dl->node_qp_scalar),
-  val_qp      (p.get<std::string>  ("Variable Name"), dl->qp_vector)
-{
-  this->addDependentField(val_node.fieldTag());
-  this->addDependentField(BF.fieldTag());
-  this->addEvaluatedField(val_qp);
 
-  this->setName("DOFVecInterpolationBase Jacobian");
-  std::vector<PHX::DataLayout::size_type> dims;
-  BF.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-  numQPs   = dims[2];
+#ifndef ALBANY_MESH_DEPENDS_ON_SOLUTION
 
-  val_node.fieldTag().dataLayout().dimensions(dims);
-  vecDim   = dims[2];
-
-  offset = p.get<int>("Offset of First DOF");
-}
-
-//**********************************************************************
-template<typename Traits>
-void DOFVecInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(val_node,fm);
-  this->utils.setFieldData(BF,fm);
-  this->utils.setFieldData(val_qp,fm);
-}
-//**********************************************************************
 //Kokkos kernel for Jacobian
 template <typename ScalarT, class Device, class MDFieldType, class MDFieldTypeFad1, class MDFieldTypeFad2>
 class VecInterpolationJacob {
@@ -218,22 +185,22 @@ class VecInterpolationJacob {
 
 //**********************************************************************
 template<typename Traits>
-void DOFVecInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
+void FastSolutionVecInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  int num_dof = val_node(0,0,0).size();
+  int num_dof = this->val_node(0,0,0).size();
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   const int neq = workset.wsElNodeEqID.dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      for (std::size_t i=0; i<vecDim; i++) {
+    for (std::size_t qp=0; qp < this->numQPs; ++qp) {
+      for (std::size_t i=0; i<this->vecDim; i++) {
         // Zero out for node==0; then += for node = 1 to numNodes
-  val_qp(cell,qp,i) = ScalarT(num_dof, val_node(cell, 0, i).val() * BF(cell, 0, qp));
-        (val_qp(cell,qp,i)).fastAccessDx(offset+i) = val_node(cell, 0, i).fastAccessDx(offset+i) * BF(cell, 0, qp);
-        for (std::size_t node=1; node < numNodes; ++node) {
-          (val_qp(cell,qp,i)).val() += val_node(cell, node, i).val() * BF(cell, node, qp);
-          (val_qp(cell,qp,i)).fastAccessDx(neq*node+offset+i) += val_node(cell, node, i).fastAccessDx(neq*node+offset+i) * BF(cell, node, qp);
+        this->val_qp(cell,qp,i) = ScalarT(num_dof, this->val_node(cell, 0, i).val() * this->BF(cell, 0, qp));
+        (this->val_qp(cell,qp,i)).fastAccessDx(offset+i) = this->val_node(cell, 0, i).fastAccessDx(offset+i) * this->BF(cell, 0, qp);
+        for (std::size_t node=1; node < this->numNodes; ++node) {
+          (this->val_qp(cell,qp,i)).val() += this->val_node(cell, node, i).val() * this->BF(cell, node, qp);
+          (this->val_qp(cell,qp,i)).fastAccessDx(neq*node+offset+i) += this->val_node(cell, node, i).fastAccessDx(neq*node+offset+i) * this->BF(cell, node, qp);
         }
       }
     }
@@ -244,12 +211,13 @@ evaluateFields(typename Traits::EvalData workset)
       VecInterpolationJacob<
         ScalarT,
         PHX::Device,
-        decltype(BF),
-        decltype(val_node),
-        decltype(val_qp)>(
-          BF, val_node, val_qp, numNodes, numQPs, vecDim, num_dof, offset));
+        decltype(this->BF),
+        decltype(this->val_node),
+        decltype(this->val_qp)>(
+            this->BF, this->val_node, this->val_qp, this->numNodes, this->numQPs, this->vecDim, num_dof, offset));
 #endif
 
 }
+#endif //ALBANY_MESH_DEPENDS_ON_SOLUTION
 
 }
