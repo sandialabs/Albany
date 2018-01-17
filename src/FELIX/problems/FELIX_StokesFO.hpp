@@ -834,11 +834,11 @@ if (basalSideName!="INVALID")
   }
 
   // Interpolate solution field
-  ev = evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]);
+  ev = evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0],0);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Interpolate solution gradient
-  ev = evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]);
+  ev = evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0],0);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Scatter residual
