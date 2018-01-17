@@ -38,7 +38,7 @@ ThermoMechanicalCoefficients<EvalT, Traits>::ThermoMechanicalCoefficients(
   if (SolutionType_ == "Continuation") {
     temperature_ = decltype(temperature_)(
         p.get<std::string>("Temperature Name"), dl->qp_scalar);
-    //
+
     temperature_dot_ = decltype(temperature_dot_)(
         p.get<std::string>("Temperature Dot Name"), dl->qp_scalar);
 

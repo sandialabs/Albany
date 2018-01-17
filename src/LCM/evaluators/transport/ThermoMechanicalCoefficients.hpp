@@ -16,8 +16,7 @@
 namespace LCM {
 /// \brief
 ///
-/// This evaluator computes the hydrogen concentration at trapped site
-/// through conservation of hydrogen atom
+/// This evaluator computes quantities needed for heat conduction problems.
 ///
 template <typename EvalT, typename Traits>
 class ThermoMechanicalCoefficients
