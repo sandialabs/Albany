@@ -7,109 +7,110 @@
 #if !defined(LCM_ThermoMechanical_Coefficients_hpp)
 #define LCM_ThermoMechanical_Coefficients_hpp
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
 namespace LCM {
-  /// \brief
+/// \brief
+///
+/// This evaluator computes the hydrogen concentration at trapped site
+/// through conservation of hydrogen atom
+///
+template <typename EvalT, typename Traits>
+class ThermoMechanicalCoefficients
+    : public PHX::EvaluatorWithBaseImpl<Traits>,
+      public PHX::EvaluatorDerived<EvalT, Traits> {
+ public:
   ///
-  /// This evaluator computes the hydrogen concentration at trapped site
-  /// through conservation of hydrogen atom
+  /// Constructor
   ///
-  template<typename EvalT, typename Traits>
-  class ThermoMechanicalCoefficients : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                       public PHX::EvaluatorDerived<EvalT, Traits>  {
+  ThermoMechanicalCoefficients(
+      Teuchos::ParameterList&              p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
-  public:
+  ///
+  /// Phalanx method to allocate space
+  ///
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-    ///
-    /// Constructor
-    ///
-    ThermoMechanicalCoefficients(Teuchos::ParameterList& p,
-                                 const Teuchos::RCP<Albany::Layouts>& dl);
+  ///
+  /// Implementation of physics
+  ///
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-    ///
-    /// Phalanx method to allocate space
-    ///
-    void postRegistrationSetup(typename Traits::SetupData d,
-                               PHX::FieldManager<Traits>& vm);
+ private:
+  typedef typename EvalT::ScalarT     ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
 
-    ///
-    /// Implementation of physics
-    ///
-    void evaluateFields(typename Traits::EvalData d);
+  ///
+  /// Input: temperature
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint> temperature_;
 
-  private:
+  ///
+  /// Input: thermal conductivity
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_cond_;
 
-    typedef typename EvalT::ScalarT ScalarT;
-    typedef typename EvalT::MeshScalarT MeshScalarT;
+  ///
+  /// Input: time step
+  ///
+  PHX::MDField<const ScalarT, Dummy> delta_time_;
 
-    ///
-    /// Input: temperature
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> temperature_;
+  ///
+  /// Optional deformation gradient
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> def_grad_;
 
-    ///
-    /// Input: thermal conductivity
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> thermal_cond_;
+  ///
+  /// Output: thermal transient coefficient
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> thermal_transient_coeff_;
 
-    ///
-    /// Input: time step
-    ///
-    PHX::MDField<const ScalarT,Dummy> delta_time_;
+  ///
+  /// Output: thermal Diffusivity
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> thermal_diffusivity_;
 
-    ///
-    /// Optional deformation gradient
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> def_grad_;
+  ///
+  /// Output: temperature dot
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> temperature_dot_;
 
-    ///
-    /// Output: thermal transient coefficient
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> thermal_transient_coeff_;
+  ///
+  /// Number of integration points
+  ///
+  int num_pts_;
 
-    ///
-    /// Output: thermal Diffusivity
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> thermal_diffusivity_;
+  ///
+  /// Number of spatial dimesions
+  ///
+  int num_dims_;
 
-    ///
-    /// Output: temperature dot
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> temperature_dot_;
+  ///
+  /// Thermal Constants
+  ///
+  RealType heat_capacity_, density_, transient_coeff_;
 
-    ///
-    /// Number of integration points
-    ///
-    int num_pts_;
+  ///
+  /// Scalar name
+  ///
+  std::string temperature_name_;
 
-    ///
-    /// Number of spatial dimesions
-    ///
-    int num_dims_;
+  std::string SolutionType_;
 
-    ///
-    /// Thermal Constants
-    ///
-    RealType heat_capacity_, density_, transient_coeff_;
-
-    ///
-    /// Scalar name
-    ///
-    std::string temperature_name_;
-    
-    std::string SolutionType_;
-
-    ///
-    /// Mechanics flag
-    ///
-    bool have_mech_;
-
-  };
+  ///
+  /// Mechanics flag
+  ///
+  bool have_mech_;
+};
 }
 
 #endif
