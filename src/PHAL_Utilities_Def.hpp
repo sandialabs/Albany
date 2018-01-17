@@ -221,7 +221,7 @@ create_copy( const std::string& name,
     const Kokkos::DynRankView<T,P...> & src )
 {
   using dst_type = typename Kokkos::DynRankView<T,P...>::non_const_type;
-  auto layout = Kokkos::Impl::reconstructLayout(src.layout(), src.rank());
+  auto layout = Kokkos::Experimental::Impl::reconstructLayout(src.layout(), src.rank());
   return dst_type( name , layout );
 }
 
@@ -240,7 +240,7 @@ create_copy( const std::string& name,
   auto fad_rank = src.rank();
   sl.dimension[fad_rank] = sm.dimension_scalar();
   auto real_rank = fad_rank + 1;
-  auto ml = Kokkos::Impl::reconstructLayout(sl, real_rank);
+  auto ml = Kokkos::Experimental::Impl::reconstructLayout(sl, real_rank);
   auto dst = Dst( src.label(), ml );
   return dst;
 }
