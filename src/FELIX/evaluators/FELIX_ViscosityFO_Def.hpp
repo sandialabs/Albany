@@ -205,7 +205,8 @@ template<typename EvalT,typename Traits,typename VelT, typename TemprT>
 template<typename TemperatureT>
 KOKKOS_INLINE_FUNCTION
 TemperatureT ViscosityFO<EvalT,Traits,VelT,TemprT>::flowRate (const TemperatureT& T) const {
-  return (T < switchingT) ? arrml / exp (actenl / gascon / std::max(T,TemperatureT(150))) : arrmh / exp (actenh / gascon / T);
+  return (T < switchingT) ? arrml / exp (actenl / gascon / ((T < TemperatureT(150)) ? T : TemperatureT(150))) : 
+    arrmh / exp (actenh / gascon / T);
 }
 
 //**********************************************************************
