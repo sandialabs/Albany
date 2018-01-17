@@ -600,7 +600,10 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFGradInterpolationE
     // Output (assumes same Name as input)
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
-    return rcp(new PHAL::DOFGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+    if(offsetToFirstDOF == -1)
+      return rcp(new PHAL::DOFGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+    else  //works only for solution or a set of solution components
+      return rcp(new PHAL::FastSolutionGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -692,8 +695,10 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFTensorInterpolatio
     p->set<int>("Offset of First DOF", offsetToFirstDOF);
 
     // Output (assumes same Name as input)
-
-    return rcp(new PHAL::DOFTensorInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+    if(offsetToFirstDOF == -1)
+      return rcp(new PHAL::DOFTensorInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+    else  //works only for solution or a set of solution components
+      return rcp(new PHAL::FastSolutionTensorInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -715,7 +720,11 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFTensorGradInterpol
     // Output (assumes same Name as input)
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
-    return rcp(new PHAL::DOFTensorGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+    if(offsetToFirstDOF == -1)
+      return rcp(new PHAL::DOFTensorGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+    else  //works only for solution or a set of solution components
+      return rcp(new PHAL::FastSolutionTensorGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -737,7 +746,10 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecGradInterpolati
     // Output (assumes same Name as input)
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
-    return rcp(new PHAL::DOFVecGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+    if(offsetToFirstDOF == -1)
+      return rcp(new PHAL::DOFVecGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+    else  //works only for solution or a set of solution components
+      return rcp(new PHAL::FastSolutionVecGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -782,8 +794,10 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecInterpolationEv
     p->set<int>("Offset of First DOF", offsetToFirstDOF);
 
     // Output (assumes same Name as input)
-
-    return rcp(new PHAL::DOFVecInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+    if(offsetToFirstDOF == -1)
+      return rcp(new PHAL::DOFVecInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+    else  //works only for solution or a set of solution components
+      return rcp(new PHAL::FastSolutionVecInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>

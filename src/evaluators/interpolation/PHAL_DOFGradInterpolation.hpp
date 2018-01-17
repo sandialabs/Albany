@@ -36,7 +36,7 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
-private:
+protected:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
@@ -80,18 +80,51 @@ public:
 
 };
 
+/** \brief Fast Finite Element Interpolation Evaluator
+
+    This evaluator interpolates nodal DOF values to their gradients at quad points.
+    It is an optimized version of DOFGradInterpolationBase that exploits the sparsity pattern of the derivatives in the Jacobian evaluation
+    WARNING: it does not work for general fields: it works when the field to be interpolated is the solution
+             or a part (a few contiguous components) of the solution
+             It does not work when the mesh coordinates are of type ScalarT
+*/
+template<typename EvalT, typename Traits, typename ScalarT>
+class FastSolutionGradInterpolationBase : public DOFGradInterpolationBase<EvalT, Traits,  ScalarT>
+{
+public:
+  FastSolutionGradInterpolationBase(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
+    : DOFGradInterpolationBase<EvalT, Traits,  ScalarT>(p, dl) {
+    this->setName("FastSolutionGradInterpolationBase"+PHX::typeAsString<EvalT>());
+  };
+
+  void postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& vm) {
+    DOFGradInterpolationBase<EvalT, Traits,  ScalarT>::postRegistrationSetup(d, vm);
+  }
+
+  void evaluateFields(typename Traits::EvalData d) {
+    DOFGradInterpolationBase<EvalT, Traits,  ScalarT>::evaluateFields(d);
+  }
+};
+
+#ifndef ALBANY_MESH_DEPENDS_ON_SOLUTION  //assumes that the bases gradients are not FAD types
 template<typename Traits>
-class DOFGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>
-      : public PHX::EvaluatorWithBaseImpl<Traits>,
-        public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>  {
+class FastSolutionGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>
+      : public DOFGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT> {
 
 public:
 
-  DOFGradInterpolationBase(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
+  FastSolutionGradInterpolationBase(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl)
+    : DOFGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>(p, dl) {
+    this->setName("FastSolutionGradInterpolationBase"+PHX::typeAsString<PHAL::AlbanyTraits::Jacobian>());
+    offset = p.get<int>("Offset of First DOF");
+  }
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+                      PHX::FieldManager<Traits>& vm) {
+    DOFGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>
+       ::postRegistrationSetup(d, vm);
+  }
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -99,38 +132,25 @@ private:
 
   typedef PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
   typedef PHAL::AlbanyTraits::Jacobian::MeshScalarT MeshScalarT;
-
-  // Input:
-  //! Values at nodes
-  PHX::MDField<const ScalarT,Cell,Node> val_node;
-  //! Basis Functions
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
-
-  // Output:
-  //! Values at quadrature points
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> grad_val_qp;
-
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t numDims;
   std::size_t offset;
 
  #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-  struct DOFGradInterpolationBase_Jacobian_Tag{};
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFGradInterpolationBase_Jacobian_Tag> DOFGradInterpolationBase_Jacobian_Policy;
+  struct FastSolutionGradInterpolationBase_Jacobian_Tag{};
+  typedef Kokkos::RangePolicy<ExecutionSpace, FastSolutionGradInterpolationBase_Jacobian_Tag> FastSolutionGradInterpolationBase_Jacobian_Policy;
 
   int num_dof;
   int neq;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFGradInterpolationBase_Jacobian_Tag& tag, const int& cell) const;
+  void operator() (const FastSolutionGradInterpolationBase_Jacobian_Tag& tag, const int& cell) const;
 
 #endif
 
 };
+#endif //ALBANY_MESH_DEPENDS_ON_SOLUTION
 
 // Some shortcut names
 template<typename EvalT, typename Traits>
@@ -141,6 +161,9 @@ using DOFGradInterpolationMesh = DOFGradInterpolationBase<EvalT,Traits,typename 
 
 template<typename EvalT, typename Traits>
 using DOFGradInterpolationParam = DOFGradInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>;
+
+template<typename EvalT, typename Traits>
+using FastSolutionGradInterpolation = FastSolutionGradInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>;
 
 } // Namespace PHAL
 
