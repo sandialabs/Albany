@@ -14,6 +14,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/elastic.yaml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
-if (ALBANY_IFPACK2) 
+if (ALBANY_IFPACK2)
   add_test(${testName} ${AlbanyT.exe} dynamics.yaml)
 endif()

@@ -41,7 +41,7 @@ def translate (root, fd, indent):
         else:
             fd.write('p("{0}", "{1}", "{2}");\n'.format(
                 root.attrib['name'], root.attrib['type'], root.attrib['value']))
-         
+
 def xml2me (fn):
     print fn
     fd = open(fn + '.cpp', 'a') # Append to be safe.

@@ -1,19 +1,19 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    Block0: 
+  ElementBlocks:
+    Block0:
       material: Hydride
       Weighted Volume Average J: true
       Average J Stabilization Parameter: 0.050000000
-  Materials: 
-    Hydride: 
-      Material Model: 
+  Materials:
+    Hydride:
+      Material Model:
         Model Name: Anisotropic Damage
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 200.00000000
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.25000000
       Matrix volume fraction: 0.40000000
@@ -38,7 +38,7 @@ LCM:
       Output Fiber 1 Damage: true
       Output Fiber 2 Energy: true
       Output Fiber 2 Damage: true
-      Material Point Simulator: 
+      Material Point Simulator:
         Check Stability: true
         Parametrization Type: Cartesian
         Parametrization Interval: 0.05000000

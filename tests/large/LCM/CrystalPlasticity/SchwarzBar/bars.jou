@@ -5,7 +5,7 @@
 ## Running 09/29/2016 03:13:51 PM
 ## Command Options:
 #{width = 1.0}
-#{height = 2.0} 
+#{height = 2.0}
 undo on
 brick x {width} y {height} z {width}
 brick x {width} y {height} z {width}
@@ -18,7 +18,7 @@ volume 1 size {width/1.0}
 mesh volume 1
 volume 2 size {width/1.0}
 mesh volume 2
-volume 3 size {width/1.0} 
+volume 3 size {width/1.0}
 mesh volume 3
 
 # nodesets bounding lower_bar
@@ -30,7 +30,7 @@ nodeset 3 surface 3
 nodeset 4 surface 5
 
 # nodesets bounding upper_bar
-nodeset 5 surface 9 
+nodeset 5 surface 9
 nodeset 6 surface 11
 
 # establishing blocks

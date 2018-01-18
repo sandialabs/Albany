@@ -60,7 +60,7 @@ def runtest(albany_command,yaml_file_name):
       if file in files_to_remove:
         os.remove(file)
 
-    # run Albany    
+    # run Albany
     p = subprocess.Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
@@ -91,7 +91,7 @@ def runtest(albany_command,yaml_file_name):
 
     with open(log_file_name, 'r') as log_file:
         print log_file.read()
-        
+
     return result
 
 if __name__ == "__main__":

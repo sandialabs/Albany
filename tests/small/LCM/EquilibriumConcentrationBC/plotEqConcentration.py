@@ -28,10 +28,10 @@ partial_molar_volume = 2.0
 ideal_gas_constant = 0.008314
 temperature = 300.0
 cl_applied = 5.6e-4
- 
+
 for i in range(n_steps):
     ind_values = exo_file.get_node_variable_values(inp_var_name,i+1)
-    dep_values = exo_file.get_node_variable_values(dep_var_name,i+1) 
+    dep_values = exo_file.get_node_variable_values(dep_var_name,i+1)
     ind_var[i] = ind_values[node_id-1]
     dep_var[i] = dep_values[node_id-1]
     check[i] = cl_applied*numpy.exp(partial_molar_volume*ind_var[i]

@@ -13,7 +13,7 @@ print "test 1 - Schwarz Alternating Parallel"
 
 if os.path.exists(log_file_name):
     os.remove(log_file_name)
-    
+
 logfile = open(log_file_name, 'w')
 
 # run Albany
@@ -22,7 +22,7 @@ p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 
 with open(log_file_name, 'r') as log_file:
-    print log_file.read() 
+    print log_file.read()
 
 if return_code != 0:
     result = return_code
@@ -37,11 +37,11 @@ for line in open(log_file_name):
   if "Schwarz Alternating Method converged: NO" in line:
     converged = False
 
-if converged == False:    
+if converged == False:
   result = result + 1
 
 with open(log_file_name, 'r') as log_file:
-    print log_file.read() 
+    print log_file.read()
 
 if result != 0:
     print "result is %s" % result

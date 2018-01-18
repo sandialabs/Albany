@@ -1,13 +1,13 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: Mechanics 3D
     Solution Method: Continuation
     Phalanx Graph Visualization Detail: 1
     MaterialDB Filename: CrystalElasticity3d_Material.yaml
-    Dirichlet BCs: 
-      Time Dependent DBC on NS nodelist_2 for DOF X: 
+    Dirichlet BCs:
+      Time Dependent DBC on NS nodelist_2 for DOF X:
         Number of points: 2
         Time Values: [0.00000000e+00, 1.00000000]
         BC Values: [0.00000000e+00, 1.00000000]
@@ -16,13 +16,13 @@ LCM:
       DBC on NS nodelist_1 for DOF Z: 0.00000000e+00
       DBC on NS nodelist_2 for DOF Y: 0.00000000e+00
       DBC on NS nodelist_2 for DOF Z: 0.00000000e+00
-    Parameters: 
+    Parameters:
       Number: 1
       Parameter 0: Time
-    Response Functions: 
+    Response Functions:
       Number: 1
       Response 0: Solution Average
-  Discretization: 
+  Discretization:
     Method: Exodus
     Exodus Input File Name: SingleHexElement.g
     Exodus Output File Name: ElasticShear3d.exo
@@ -30,49 +30,49 @@ LCM:
     Solution Vector Components: [displacement, V]
     Residual Vector Components: [force, V]
     Workset Size: 300
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         Method: Tangent
-      Stepper: 
+      Stepper:
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
         Max Steps: 100
         Max Value: 0.10000000
         Min Value: 0.00000000e+00
         Compute Eigenvalues: false
-        Eigensolver: 
+        Eigensolver:
           Method: Anasazi
           Operator: Jacobian Inverse
           Num Eigenvalues: 0
-      Step Size: 
+      Step Size:
         Initial Step Size: 0.01000000
         Method: Constant
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                Belos: 
+              Linear Solver Types:
+                Belos:
                   Solver Type: Pseudo Block CG
               Preconditioner Type: None
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Information: 103
         Output Precision: 3
         Output Processor: 0
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
 ...

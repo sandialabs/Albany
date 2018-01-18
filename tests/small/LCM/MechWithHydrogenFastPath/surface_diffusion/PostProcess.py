@@ -50,13 +50,13 @@ if __name__ == "__main__":
         sys.exit(1)
     if 'disp_z' not in nodeVariableNames:
         print "\nERROR:  Failed to extract disp_z data\n"
-        sys.exit(1)        
+        sys.exit(1)
     if 'CL' not in nodeVariableNames:
         print "\nERROR:  Failed to extract CL data\n"
         sys.exit(1)
     if 'tauH' not in nodeVariableNames:
         print "\nERROR:  Failed to extract tauH data\n"
-        sys.exit(1)        
+        sys.exit(1)
 
     # Read node sets
     nodeSetIds = inFile.get_node_set_ids()
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     Coords = inFile.get_coords()
 
     #nodeset
-    nodeSet = nodeSetNodes[3] 
+    nodeSet = nodeSetNodes[3]
     displacement_x = 0.0
     displacement_y = 0.0
     displacement_z = 0.0
@@ -106,14 +106,14 @@ if __name__ == "__main__":
         nodeset_tauH.append(tauH_)
         nodeset_CL.append(CL_)
         nodeset_Coords.append(Coords_)
-            
+
 
     inFile.close()
 
     Count = 0
     outFileName = outFileLabel + 'CL_disp_tauH.txt'
     dataFile = open(outFileName, 'w')
-    
+
 #   only write data for last time step
     for nodeID in nodeSet:
          # convert to same units used in mathematica file
@@ -124,4 +124,4 @@ if __name__ == "__main__":
     print "CL-displacement data for written to", outFileName
 
     print
-    
+

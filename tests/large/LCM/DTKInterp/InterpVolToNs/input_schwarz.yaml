@@ -11,18 +11,18 @@ LCM:
   Target Field Name: disp
   Field Type: Node Vector
   Number of Iterations: 10
-  DataTransferKit: 
+  DataTransferKit:
     Map Type: Consistent Interpolation
-    L2 Projection: 
+    L2 Projection:
       Integration Order: 2
     Consistent Interpolation: { }
-    Point Cloud: 
+    Point Cloud:
       Map Type: Moving Least Square Reconstruction
       Basis Type: Wu
       Basis Order: 4
       Spatial Dimension: 3
       RBF Radius: 1.0000000
-    Search: 
+    Search:
       Track Missed Range Entities: true
       Point Inclusion Tolerance: 0.10000000
 ...

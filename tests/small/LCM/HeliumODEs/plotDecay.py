@@ -21,7 +21,7 @@ n_steps = exo_file.num_times()
 time_vals = exo_file.get_times()
 
 dep_var = numpy.zeros(shape=(n_steps,1))
-verify_var = numpy.zeros(shape=(n_steps,1)) 
+verify_var = numpy.zeros(shape=(n_steps,1))
 for i in range(n_steps):
     dep_var[i]=exo_file.get_element_variable_values(block_id,dep_var_name,i+1)
 

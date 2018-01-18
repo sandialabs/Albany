@@ -54,7 +54,7 @@ if __name__ == "__main__":
     if 'tauH' not in nodeVariableNames:
         print "\nERROR:  Failed to extract tauH data\n"
         sys.exit(1)
-        
+
 
     # Read node sets
     nodeSetIds = inFile.get_node_set_ids()
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     # Loop through nodesets along pressure gradient
     # only write data for last time step
     for n in range(7,48):
-        nodeSet = nodeSetNodes[n] 
+        nodeSet = nodeSetNodes[n]
         displacement_x = 0.0
         displacement_y = 0.0
         CL_ = 0.0
@@ -104,5 +104,5 @@ if __name__ == "__main__":
         Count += 1
     dataFile.close()
     print "CL-displacement data for written to", outFileName
-    
+
     inFile.close()

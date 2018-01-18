@@ -6,7 +6,7 @@ import scipy.io
 import scipy.linalg
 import matplotlib.pyplot as plt
 
-## Set the number of matrices to examine. 
+## Set the number of matrices to examine.
 filenames = subprocess.check_output("ls -tr *.mm",shell=True)[:-1]
 filenames_split = str.split(filenames)
 numberMatrices = len(filenames_split)

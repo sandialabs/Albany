@@ -1,20 +1,20 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    Block0: 
+  ElementBlocks:
+    Block0:
       material: Composite
-  Materials: 
-    Composite: 
-      Material Model: 
+  Materials:
+    Composite:
+      Material Model:
         Model Name: Neohookean
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 200000.00
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.30000000
-      Material Point Simulator: 
+      Material Point Simulator:
         Check Stability: false
         Loading Case Name: general
         Deformation Gradient Components: [1.00000000, 1.10000000, 0.00000000e+00, 0.00000000e+00, 2.00000000, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 1.00000000]

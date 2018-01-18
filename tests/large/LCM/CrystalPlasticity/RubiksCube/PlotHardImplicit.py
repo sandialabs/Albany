@@ -33,7 +33,7 @@ check = numpy.zeros(shape=(n_steps,1))
 ## Material parameters for power-law hardening
 hardening = 355.0
 recovery = 2.9
- 
+
 for i in range(n_steps):
     inp_var[i]=exo_file.get_element_variable_values(block_id,inp_var_name,i+1)
     inp_var[i] = abs(inp_var[i])
@@ -41,7 +41,7 @@ for i in range(n_steps):
     dep_var_2[i]=exo_file.get_element_variable_values(block_id,dep_var_name_2,i+1)
     dep_var_3[i]=exo_file.get_element_variable_values(block_id,dep_var_name_3,i+1)
     dep_var_4[i]=exo_file.get_element_variable_values(block_id,dep_var_name_4,i+1)
-    check[i] = hardening/recovery*(1.0 - numpy.exp(-recovery*inp_var[i])) 
+    check[i] = hardening/recovery*(1.0 - numpy.exp(-recovery*inp_var[i]))
 
 
 ###############

@@ -39,7 +39,7 @@ create curve vertex 6 vertex 4
 create surface 1 2 3 4
 create surface 3 5 6 7
 sweep surface 1 2 yaxis angle 90.
-##volume 1 2 copy reflect y 
+##volume 1 2 copy reflect y
 imprint all
 merge all
 
@@ -50,7 +50,7 @@ mesh volume all
 volume all smooth scheme condition number beta 1.4 cpu 20
 smooth volume all
 
-## 
+##
 ## Establish blocks, nodesets, and sidesets
 ##
 block 1 volume 1 2
@@ -64,7 +64,7 @@ nodeset 3 surface 3
 sideset 3 surface 3
 nodeset 4 surface 7
 sideset 4 surface 7
-nodeset 5 curve 7 4 
+nodeset 5 curve 7 4
 
 ##
 ## set nodesets for extensomer

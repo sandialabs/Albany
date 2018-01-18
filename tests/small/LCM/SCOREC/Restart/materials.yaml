@@ -1,33 +1,33 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    eb_1: 
+  ElementBlocks:
+    eb_1:
       material: Mat_1
       Weighted Volume Average J: false
       Average J Stabilization Parameter: 0.00000000e+00
       Volume Average Pressure: false
       Use Composite Tet 10: false
-    eb_2: 
+    eb_2:
       material: Mat_2
       Weighted Volume Average J: false
       Average J Stabilization Parameter: 0.00000000e+00
       Volume Average Pressure: false
       Use Composite Tet 10: false
-  Materials: 
-    Mat_1: 
-      Material Model: 
+  Materials:
+    Mat_1:
+      Material Model:
         Model Name: Creep
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 1000.00000000
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.30000000
-      Hardening Modulus: 
+      Hardening Modulus:
         Hardening Modulus Type: Constant
         Value: 100.00000000
-      Yield Strength: 
+      Yield Strength:
         Yield Strength Type: Constant
         Value: 10.00000000
       Reference Temperature: 400.00000000
@@ -39,19 +39,19 @@ LCM:
       Output Cauchy Stress: true
       Output eqps: true
       Output Fp: true
-    Mat_2: 
-      Material Model: 
+    Mat_2:
+      Material Model:
         Model Name: Creep
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 100.00000000
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.25000000
-      Hardening Modulus: 
+      Hardening Modulus:
         Hardening Modulus Type: Constant
         Value: 100.00000000
-      Yield Strength: 
+      Yield Strength:
         Yield Strength Type: Constant
         Value: 1.00000000e-05
       Reference Temperature: 400.00000000

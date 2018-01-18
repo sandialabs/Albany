@@ -1,19 +1,19 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    Block0: 
+  ElementBlocks:
+    Block0:
       material: Plastic
       Weighted Volume Average J: false
       Use Composite Tet 10: false
-  Materials: 
-    Plastic: 
-      Material Model: 
+  Materials:
+    Plastic:
+      Material Model:
         Model Name: Neohookean
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 100000.00
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.45000000
 ...

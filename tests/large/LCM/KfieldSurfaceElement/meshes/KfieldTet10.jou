@@ -35,7 +35,7 @@ curve 129 79 137 90 interval {numIntervals}
 curve 130 80 88 135 interval {numIntervals}
 curve 123 scheme bias fine size {midSize} coarse size {radSize} start vertex 70
 curve 22 scheme bias fine size {midSize} coarse size {radSize} start vertex 6
-curve 77 scheme bias fine size {midSize} coarse size {radSize} start vertex 48 
+curve 77 scheme bias fine size {midSize} coarse size {radSize} start vertex 48
 curve 16 scheme bias fine size {midSize} coarse size {radSize} start vertex 17
 curve 30 scheme bias fine size {midSize} coarse size {radSize} start vertex 22
 surface 83 51 87 59 scheme trimesh
@@ -55,7 +55,7 @@ mesh surface 107 103 71 79
 surface 92 64 66 99 size {smallSize}
 surface 92 64 66 99 scheme trimesh
 mesh surface 66
-mesh surface 92 
+mesh surface 92
 mesh surface 64
 mesh surface 99
 
@@ -82,7 +82,7 @@ curve 64 scheme bias fine size {smallSize} coarse size {midSize} start vertex 30
 curve 106 95 144 152 interval {numIntervals}
 
 volume all scheme tetmesh
-mesh volume all 
+mesh volume all
 
 ## removing lower surface
 delete volume 3 5 9 11 4 10
@@ -114,7 +114,7 @@ nodeset 3 surface with z_coord < {thickness/2.*1.00001} and z_coord > {thickness
 ## Turning off sidesets with subdivision - need check this...
 ## sideset for cohesive surface element - need wrt so we can using coordinates to assign
 ## sideset 1 surface 19 wrt volume 6
-## sideset 1 surface 39 wrt volume 8 
+## sideset 1 surface 39 wrt volume 8
 ## sideset 1 surface 63 wrt volume 7
 
 #nodesets for moving mesh

@@ -1,21 +1,21 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    block_1: 
+  ElementBlocks:
+    block_1:
       material: Plastic
       Weighted Volume Average J: false
       Use Composite Tet 10: false
-    block_2: 
+    block_2:
       material: Plastic
       Weighted Volume Average J: true
       Average J Stabilization Parameter: 0.050000000
-  Materials: 
-    Plastic: 
-      Material Model: 
+  Materials:
+    Plastic:
+      Material Model:
         Model Name: J2
       Stabilization Parameter: 2.00000000
-      Transport Coefficients: 
+      Transport Coefficients:
         Ideal Gas Constant: 8.31400000
         'Pre-exponential Factor': 200.00000000
         Diffusion Activation Enthalpy: 6900.00000000
@@ -28,25 +28,25 @@ LCM:
         Avogadro's Number: 6.02214130e+23
         Reference Total Concentration: 38.70000000
         Lattice Strain Flag: false
-      Molar Volume: 
+      Molar Volume:
         Type: Constant
         Value: 7.11600000e-06
-      Shear Modulus: 
+      Shear Modulus:
         Shear Modulus Type: Constant
         Value: 80000.00000000
         dmudT Value: 0.00000000e+00
-      Bulk Modulus: 
+      Bulk Modulus:
         Bulk Modulus Type: Constant
         Value: 160000.00000000
         dKdT Value: 0.00000000e+00
-      Thermal Conductivity: 
+      Thermal Conductivity:
         Thermal Conductivity Type: Constant
         Value: 0.00000000e+00
-      Yield Strength: 
+      Yield Strength:
         Yield Strength Type: Constant
         Value: 4.50000000e+12
         dYdT Value: 0.00000000e+00
-      Hardening Modulus: 
+      Hardening Modulus:
         Hardening Modulus Type: Constant
         Value: 129.24000000
         dHdT Value: 0.00000000e+00
@@ -54,10 +54,10 @@ LCM:
       Thermal Expansion Coefficient: 0.00000000e+00
       Density: 7.80000000e-09
       Heat Capacity: 4.60000000e+08
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 1.00000000e+11
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.45000000
       Saturation Modulus: 0.00000000e+00

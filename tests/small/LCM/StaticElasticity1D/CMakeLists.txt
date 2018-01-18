@@ -5,7 +5,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputP.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/inputP.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
                ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data
                ${CMAKE_CURRENT_BINARY_DIR}/dakota_nls.data COPYONLY)
 
 # Name the test with the directory name

@@ -27,7 +27,7 @@ LCM:
         BC Function: StrongSchwarz
         Coupled Application: cuboid_00.yaml
         Coupled Block: fine
-      Time Dependent SDBC on NS nodelist_6 for DOF Z: 
+      Time Dependent SDBC on NS nodelist_6 for DOF Z:
         Number of points: 2
         Time Values: [0.0, 2.0]
         BC Values: [0.0, 4.0]

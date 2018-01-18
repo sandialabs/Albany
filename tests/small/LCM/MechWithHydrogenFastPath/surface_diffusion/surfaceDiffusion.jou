@@ -19,7 +19,7 @@ merge all
 volume all size {channel_thick}
 mesh volume all
 ## ns1 - bottom in y
-## ns2 - right in x 
+## ns2 - right in x
 ## ns3 - top in y
 ## ns4 - left in x
 ## ns5 - front in z
@@ -31,7 +31,7 @@ nodeset 2 surface 19 13
 nodeset 3 surface 5
 nodeset 4 surface 16 21
 nodeset 5 surface 15 20
-nodeset 6 surface 14 18 
+nodeset 6 surface 14 18
 sideset 1 surface 27 wrt volume 2
 undo group begin
 set large exodus file on

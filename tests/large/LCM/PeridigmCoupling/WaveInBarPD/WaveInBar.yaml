@@ -1,29 +1,29 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: Peridigm Code Coupling
     Solution Method: Transient
     Second Order: Velocity Verlet
     Perturb Dirichlet: 1.00000000e-06
     MaterialDB Filename: WaveInBarMaterials.yaml
-    Peridigm Parameters: 
-      Discretization: 
+    Peridigm Parameters:
+      Discretization:
         Type: Albany
-      Materials: 
-        My Elastic Material: 
+      Materials:
+        My Elastic Material:
           Material Model: Elastic
           Apply Shear Correction Factor: false
           Density: 2200.00000000
           Bulk Modulus: 1.49000000e+10
           Shear Modulus: 8.94000000e+09
-      Blocks: 
-        My Group of Blocks: 
+      Blocks:
+        My Group of Blocks:
           Block Names: block_1
           Material: My Elastic Material
           Horizon: 0.00601000
-      Output: 
-        Output Variables: 
+      Output:
+        Output Variables:
           Displacement: true
           Force: true
           Velocity: true
@@ -31,10 +31,10 @@ LCM:
           Weighted_Volume: true
           Radius: true
           Number_Of_Neighbors: true
-    Initial Condition Dot: 
+    Initial Condition Dot:
       Function: Expression Parser
       Function Expression for DOF X: 'if( !(x > -0.015) ){ value = -100.0; }else{ value = 0.0; }'
-  Discretization: 
+  Discretization:
     Method: Exodus
     Exodus Input File Name: WaveInBar.g
     Exodus Output File Name: WaveInBar.e
@@ -43,20 +43,20 @@ LCM:
     Separate Evaluators by Element Block: true
     Solution Vector Components: [displacement, V]
     Residual Vector Components: [force, V]
-  Piro: 
-    Velocity Verlet: 
+  Piro:
+    Velocity Verlet:
       Num Time Steps: 220
       Final Time: 0.00002000
       Initial Time: 0.00000000e+00
       Invert Mass Matrix: true
       Lump Mass Matrix: true
-      Stratimikos: 
+      Stratimikos:
         Linear Solver Type: Belos
-        Linear Solver Types: 
-          Belos: 
+        Linear Solver Types:
+          Belos:
             Solver Type: Block GMRES
-            Solver Types: 
-              Block GMRES: 
+            Solver Types:
+              Block GMRES:
                 Convergence Tolerance: 1.00000000e-05
                 Output Frequency: 10
                 Output Style: 1
@@ -66,10 +66,10 @@ LCM:
                 Num Blocks: 100
                 Flexible Gmres: false
         Preconditioner Type: Ifpack
-        Preconditioner Types: 
-          Ifpack: 
+        Preconditioner Types:
+          Ifpack:
             Prec Type: ILU
             Overlap: 1
-            Ifpack Settings: 
+            Ifpack Settings:
               'fact: level-of-fill': 1
 ...

@@ -1,11 +1,11 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    block_1: 
+  ElementBlocks:
+    block_1:
       material: My Peridynamics Material
-  Materials: 
-    My Peridynamics Material: 
-      Material Model: 
+  Materials:
+    My Peridynamics Material:
+      Material Model:
         Model Name: Peridynamics
 ...

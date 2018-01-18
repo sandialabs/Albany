@@ -2,7 +2,7 @@ create curve spline location 1 0 0 location 10 0 0
 create curve spline location 10 0 0 location 10 10 0
 create curve spline location 10 10 0 location 0 10 0
 create curve spline location 0 10 0 location 0 1 0
-create vertex 0 0 0 
+create vertex 0 0 0
 create curve arc center vertex 9 8 1
 
 create surface curve 1 2 3 4 5
@@ -22,7 +22,7 @@ block 1 element type QUAD4
 nodeset 1 curve 1
 
 # left side (u_1 = 0)
-nodeset 2 curve 4 
+nodeset 2 curve 4
 
 #top (\sigma \cdot n = 4.5)
 sideset 1 curve 3

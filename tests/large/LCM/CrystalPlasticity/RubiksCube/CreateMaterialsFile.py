@@ -21,9 +21,9 @@ def ParseMaterialParametersFile(file_name, mat_params):
             value = vals[1]
         if len(vals) == 3:
             name = vals[0]
-            value = vals[1] + " " + vals[2]    
+            value = vals[1] + " " + vals[2]
 
-        
+
         print " ", name, value
         if name in mat_params.keys():
             mat_params[name] = value
@@ -73,7 +73,7 @@ def ConstructBasisVectors(R):
     BasisVector1 = [0.0, 0.0, 0.0]
     BasisVector2 = [0.0, 0.0, 0.0]
     BasisVector3 = [0.0, 0.0, 0.0]
-    
+
     for i in range(3):
         for j in range(3):
             BasisVector1[i] += R[i][j]*e1[j]
@@ -150,7 +150,7 @@ def FCCSlipSystems():
     direction = (0.0, -1.0, -1.0)
     normal = (1.0, -1.0, 1.0)
     slip_systems.append((direction, normal))
-    
+
     return slip_systems
 
 def StartParamList(param_list_name, file, indent):
@@ -162,7 +162,7 @@ def StartParamList(param_list_name, file, indent):
         file.write(" name=\"" + param_list_name + "\"")
     file.write(">\n")
     indent += 1
-    
+
     return indent
 
 def EndParamList(file, indent):
@@ -225,12 +225,12 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
         indent = EndParamList(mat_file, indent)
 
         # Number of slip systems
-        WriteParameter("Number of Slip Systems", "int", len(slip_systems), mat_file, indent) 
+        WriteParameter("Number of Slip Systems", "int", len(slip_systems), mat_file, indent)
 
         # Integration scheme
         WriteParameter("Integration Scheme", "string", mat_params["integration_scheme"], mat_file, indent)
         if mat_params["integration_scheme"] == "Implicit":
-            WriteParameter("Nonlinear Solver Step Type", "string", mat_params["nonlinear_solver_step_type"], mat_file, indent) 
+            WriteParameter("Nonlinear Solver Step Type", "string", mat_params["nonlinear_solver_step_type"], mat_file, indent)
             WriteParameter("Implicit Integration Relative Tolerance", "double", mat_params["implicit_integration_relative_tolerance"], mat_file, indent)
             WriteParameter("Implicit Integration Absolute Tolerance", "double", mat_params["implicit_integration_absolute_tolerance"], mat_file, indent)
             WriteParameter("Implicit Integration Max Iterations", "int", mat_params["implicit_integration_max_iterations"], mat_file, indent)
@@ -262,8 +262,8 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
         WriteParameter("Basis Vector 1", "Array(double)", VectorToString(vec1), mat_file, indent)
         WriteParameter("Basis Vector 2", "Array(double)", VectorToString(vec2), mat_file, indent)
         WriteParameter("Basis Vector 3", "Array(double)", VectorToString(vec3), mat_file, indent)
-        indent = EndParamList(mat_file, indent)        
- 
+        indent = EndParamList(mat_file, indent)
+
         # Flow rule
         indent = StartParamList("Flow Rule", mat_file, indent)
         WriteParameter("Type", "string", "Power Law", mat_file, indent)

@@ -11,7 +11,7 @@ import re
 from subprocess import Popen
 
 result = 0
-    
+
 log_file_name = "partition.log"
 if os.path.exists(log_file_name):
     os.remove(log_file_name)
@@ -35,6 +35,6 @@ if return_code != 0:
     result = return_code
 
 with open(log_file_name, 'r') as log_file:
-    print log_file.read() 
+    print log_file.read()
 
 sys.exit(result)

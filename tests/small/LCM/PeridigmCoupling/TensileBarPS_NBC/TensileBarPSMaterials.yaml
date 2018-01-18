@@ -1,11 +1,11 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    block_1: 
+  ElementBlocks:
+    block_1:
       material: My Peridynamic Partial Stress Material
-  Materials: 
-    My Peridynamic Partial Stress Material: 
-      Material Model: 
+  Materials:
+    My Peridynamic Partial Stress Material:
+      Material Model:
         Model Name: Peridynamic Partial Stress
 ...

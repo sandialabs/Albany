@@ -1,17 +1,17 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    fine: 
+  ElementBlocks:
+    fine:
       material: Fine
-  Materials: 
-    Fine: 
-      Material Model: 
+  Materials:
+    Fine:
+      Material Model:
         Model Name: Neohookean
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 2.0e11
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.3000000
       Density: 7800.00000000

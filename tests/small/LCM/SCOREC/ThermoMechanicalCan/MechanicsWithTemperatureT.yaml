@@ -1,14 +1,14 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: Mechanics 3D
     Solution Method: Continuation
     Phalanx Graph Visualization Detail: 0
     MaterialDB Filename: MechanicsWithTemperatureMaterials.yaml
-    Temperature: 
+    Temperature:
       Variable Type: DOF
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS nodelist_1 for DOF Z: 0.00000000e+00
       DBC on NS nodelist_1a for DOF Z: 0.00000000e+00
       DBC on NS nodelist_1b for DOF Z: 0.00000000e+00
@@ -20,47 +20,47 @@ LCM:
       DBC on NS nodelist_2c for DOF Y: 0.00000000e+00
       DBC on NS nodelist_2d for DOF Y: 0.00000000e+00
       DBC on NS nodelist_3 for DOF X: 0.00000000e+00
-      Time Dependent DBC on NS nodelist_1 for DOF T: 
+      Time Dependent DBC on NS nodelist_1 for DOF T:
         Time Values: [0.00000000e+00, 985.20000000, 3600.00000000]
         BC Values: [300.00000000, 800.00000000, 800.00000000]
-      Time Dependent DBC on NS nodelist_1a for DOF T: 
+      Time Dependent DBC on NS nodelist_1a for DOF T:
         Time Values: [0.00000000e+00, 985.20000000, 3600.00000000]
         BC Values: [300.00000000, 800.00000000, 800.00000000]
-      Time Dependent DBC on NS nodelist_1b for DOF T: 
+      Time Dependent DBC on NS nodelist_1b for DOF T:
         Time Values: [0.00000000e+00, 985.20000000, 3600.00000000]
         BC Values: [300.00000000, 800.00000000, 800.00000000]
-      Time Dependent DBC on NS nodelist_1c for DOF T: 
+      Time Dependent DBC on NS nodelist_1c for DOF T:
         Time Values: [0.00000000e+00, 985.20000000, 3600.00000000]
         BC Values: [300.00000000, 800.00000000, 800.00000000]
-      Time Dependent DBC on NS nodelist_1d for DOF T: 
+      Time Dependent DBC on NS nodelist_1d for DOF T:
         Time Values: [0.00000000e+00, 985.20000000, 3600.00000000]
         BC Values: [300.00000000, 800.00000000, 800.00000000]
-    Neumann BCs: 
-      Time Dependent NBC on SS surface_1 for DOF all set P: 
+    Neumann BCs:
+      Time Dependent NBC on SS surface_1 for DOF all set P:
         Time Values: [0.00000000e+00, 200.00000000, 3600.00000000]
         BC Values: [[0.00000000e+00], [7.15248332e+06], [2.61357490e+07]]
-      Time Dependent NBC on SS surface_1a for DOF all set P: 
+      Time Dependent NBC on SS surface_1a for DOF all set P:
         Time Values: [0.00000000e+00, 200.00000000, 3600.00000000]
         BC Values: [[0.00000000e+00], [7.15248332e+06], [2.61357490e+07]]
-      Time Dependent NBC on SS surface_1b for DOF all set P: 
+      Time Dependent NBC on SS surface_1b for DOF all set P:
         Time Values: [0.00000000e+00, 200.00000000, 3600.00000000]
         BC Values: [[0.00000000e+00], [7.15248332e+06], [2.61357490e+07]]
-      Time Dependent NBC on SS surface_1c for DOF all set P: 
+      Time Dependent NBC on SS surface_1c for DOF all set P:
         Time Values: [0.00000000e+00, 200.00000000, 3600.00000000]
         BC Values: [[0.00000000e+00], [7.15248332e+06], [2.61357490e+07]]
-      Time Dependent NBC on SS surface_1d for DOF all set P: 
+      Time Dependent NBC on SS surface_1d for DOF all set P:
         Time Values: [0.00000000e+00, 200.00000000, 3600.00000000]
         BC Values: [[0.00000000e+00], [7.15248332e+06], [2.61357490e+07]]
-    Initial Condition: 
+    Initial Condition:
       Function: Constant
       Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 300.00000000]
-    Parameters: 
+    Parameters:
       Number: 1
       Parameter 0: Time
-    Response Functions: 
+    Response Functions:
       Number: 1
       Response 0: Solution Average
-  Discretization: 
+  Discretization:
     Method: PUMI
     Workset Size: 50
     Mesh Model Input File Name: ../meshes/tm_bar/bar.dmg
@@ -73,18 +73,18 @@ LCM:
     2nd Order Mesh: true
     Cubature Degree: 2
     Separate Evaluators by Element Block: true
-  Regression Results: 
+  Regression Results:
     Number of Comparisons: 1
     Test Values: [79.33455926]
     Relative Tolerance: 0.01000000
     Absolute Tolerance: 0.01000000
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         Method: Constant
-      Stepper: 
+      Stepper:
         Continuation Method: Natural
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
@@ -92,41 +92,41 @@ LCM:
         Max Value: 600.00000000
         Min Value: 0.00000000e+00
         Compute Eigenvalues: false
-        Eigensolver: 
+        Eigensolver:
           Method: Anasazi
           Operator: Jacobian Inverse
           Num Eigenvalues: 1
-      Step Size: 
+      Step Size:
         Initial Step Size: 10.00000000
         Method: Constant
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
-          Linear Solver: 
+        Newton:
+          Linear Solver:
             Tolerance: 1.00000000e-06
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 10
                     Max Iterations: 360
                     Tolerance: 1.00000000e-05
-                Belos: 
-                  VerboseObject: 
+                Belos:
+                  VerboseObject:
                     Verbosity Level: low
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 1.00000000e-06
                       Maximum Iterations: 200
                       Output Frequency: 10
@@ -136,13 +136,13 @@ LCM:
                       Num Blocks: 200
                       Flexible Gmres: false
               Preconditioner Type: MueLu
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
-        Output Information: 
+      Printing:
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -154,28 +154,28 @@ LCM:
           Stepper Parameters: true
         Output Precision: 3
         Output Processor: 0
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Complete
-      Status Tests: 
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 5
-        Test 0: 
+        Test 0:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Scaled
           Tolerance: 1.00000000e-06
-        Test 1: 
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 100
-        Test 2: 
+        Test 2:
           Test Type: NormF
           Scale Type: Unscaled
           Tolerance: 1.00000000e-06
-        Test 3: 
+        Test 3:
           Test Type: NormUpdate
           Scale Type: Unscaled
           Tolerance: 1.00000000e-06
-        Test 4: 
+        Test 4:
           Test Type: FiniteValue
 ...

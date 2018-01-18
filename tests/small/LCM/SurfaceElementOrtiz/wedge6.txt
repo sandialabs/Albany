@@ -1,5 +1,5 @@
-! Database Title     exotxt                          2013/08/07                       1.23                           
-Sierra Output Default Title                                                     
+! Database Title     exotxt                          2013/08/07                       1.23
+Sierra Output Default Title
 ! Database initial variables
          3      6.11        20     ! dimensions, version number, name length
          6         1         1     ! nodes, elements, element blocks
@@ -7,7 +7,7 @@ Sierra Output Default Title
         14        14               ! len: node set list, dist fact length
          0         0         0     ! side sets len: element, node , dist fact
 ! Coordinate names
-x                    y                    z                   
+x                    y                    z
 ! Coordinates
    1.0000000E+00   0.0000000E+00  -5.0000000E-01
    0.0000000E+00   1.0000000E+00  -5.0000000E-01
@@ -53,26 +53,26 @@ sequence 1..numel
          5     1.0000000E+00
 ! Properties
          1            ! Number of ELEMENT BLOCK Properties
-! Property Name: 
-ID                  
-! Property Value(s): 
-         1         
+! Property Name:
+ID
+! Property Value(s):
+         1
          1            ! Number of NODE SET Properties
-! Property Name: 
-ID                  
-! Property Value(s): 
+! Property Name:
+ID
+! Property Value(s):
          1          2          3          4
          0            ! Number of SIDE SET Properties
 ! QA Records
          2      ! QA records
-unknown                         
-unknown                         
-2015/03/30                      
-17:40:50                        
-exotxt                          
- 1.23                           
-20150406                        
-18:56:22                        
+unknown
+unknown
+2015/03/30
+17:40:50
+exotxt
+ 1.23
+20150406
+18:56:22
 ! Information Records
          0      ! information records
 ! Variable names

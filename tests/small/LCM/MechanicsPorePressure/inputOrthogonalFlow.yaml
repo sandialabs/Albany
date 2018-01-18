@@ -1,19 +1,19 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: Mechanics 3D
     Solution Method: Continuation
     Phalanx Graph Visualization Detail: 1
     MaterialDB Filename: PoroMaterialsLocalized.yaml
-    Pore Pressure: 
+    Pore Pressure:
       Variable Type: DOF
-    Dirichlet BCs: 
-      Time Dependent DBC on NS nodelist_5 for DOF P: 
+    Dirichlet BCs:
+      Time Dependent DBC on NS nodelist_5 for DOF P:
         Number of points: 3
         Time Values: [0.00000000e+00, 3000.00000000, 7.92000000e+13]
         BC Values: [1.00000000, 1.00000000, 1.00000000]
-      Time Dependent DBC on NS nodelist_6 for DOF P: 
+      Time Dependent DBC on NS nodelist_6 for DOF P:
         Number of points: 3
         Time Values: [0.00000000e+00, 3000.00000000, 7.92000000e+13]
         BC Values: [1.00000000, 1.00000000, 1.00000000]
@@ -38,90 +38,90 @@ LCM:
       DBC on NS nodelist_5 for DOF Z: 0.00000000e+00
       DBC on NS nodelist_6 for DOF Z: 0.00000000e+00
       DBC on NS nodelist_9 for DOF Z: 0.00000000e+00
-    Initial Condition: 
+    Initial Condition:
       Function: Constant
       Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00]
-    Parameters: 
+    Parameters:
       Number: 1
       Parameter 0: Time
-    Response Functions: 
+    Response Functions:
       Number: 1
       Response 0: Solution Average
-  Discretization: 
+  Discretization:
     Method: Exodus
     Exodus Input File Name: surface3ElemMesh.g
     Exodus Output File Name: OrthogonalFlow.e
     Separate Evaluators by Element Block: true
     Use Serial Mesh: true
     Cubature Degree: 3
-  Regression Results: 
+  Regression Results:
     Number of Comparisons: 1
     Test Values: [2724.00000000]
     Relative Tolerance: 5.00000000
     Absolute Tolerance: 5.00000000
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         Method: Tangent
-      Stepper: 
+      Stepper:
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
         Max Steps: 3
         Max Value: 2.00000000e+13
         Min Value: 0.00000000e+00
         Compute Eigenvalues: false
-        Eigensolver: 
+        Eigensolver:
           Method: Anasazi
           Operator: Jacobian Inverse
           Num Eigenvalues: 0
-      Step Size: 
+      Step Size:
         Initial Step Size: 1.00000000e+11
         Max Step Size: 1.00000000e+11
         Method: Adaptive
         Aggressiveness: 0.20000000
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Amesos
-              Linear Solver Types: 
-                Amesos: 
+              Linear Solver Types:
+                Amesos:
                   Solver Type: Lapack
-                  Amesos Settings: 
+                  Amesos Settings:
                     Lapack: { }
               Preconditioner Type: Ifpack
             LinearOpTester: { }
             LinearOpWithSolveTester: { }
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Information: 103
         Output Precision: 3
         Output Processor: 0
-      Status Tests: 
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 3
-        Test 0: 
+        Test 0:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Scaled
           Tolerance: 1.00000000e-12
-        Test 1: 
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 15
-        Test 2: 
+        Test 2:
           Test Type: FiniteValue
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
 ...

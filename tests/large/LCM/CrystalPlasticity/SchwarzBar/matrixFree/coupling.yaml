@@ -1,28 +1,28 @@
 %YAML 1.1
 ---
 LCM:
-  Coupled System: 
+  Coupled System:
     Model Input Files: ['../lower_bar.yaml', '../gauge.yaml', '../upper_bar.yaml']
     'Matrix-Free Preconditioner': None
-  Debug Output: 
+  Debug Output:
     Write Solution to MatrixMarket: false
     Write Solution to Standard Output: false
-  Problem: 
+  Problem:
     Solution Method: Coupled Schwarz
     Phalanx Graph Visualization Detail: 0
-    Parameters: 
+    Parameters:
       Number: 1
       Parameter 0: Time
-  Piro: 
+  Piro:
     Jacobian Operator: 'Matrix-Free'
     'Matrix-Free Perturbation': 1.00000000e-07
     Solver Type: LOCA
-    LOCA: 
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         Method: Tangent
-      Stepper: 
+      Stepper:
         Continuation Method: Natural
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
@@ -31,32 +31,32 @@ LCM:
         Max Value: 2.00000000
         Return Failed on Reaching Max Steps: false
         Hit Continuation Bound: false
-      Step Size: 
+      Step Size:
         Method: Adaptive
         Initial Step Size: 1.00000000
         Max Step Size: 2.00000000
         Min Step Size: 0.00100000
         Failed Step Reduction Factor: 0.50000000
         Aggressiveness: 0.00000000e+00
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Linear Solver: 
+          Linear Solver:
             Tolerance: 1.00000000e-08
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                Belos: 
-                  VerboseObject: 
+              Linear Solver Types:
+                Belos:
+                  VerboseObject:
                     Verbosity Level: low
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Output Frequency: 10
                       Output Style: 1
                       Verbosity: 33
@@ -65,17 +65,17 @@ LCM:
                       Num Blocks: 200
                       Flexible Gmres: false
               Preconditioner Type: None
-              Preconditioner Types: 
-                Teko: 
+              Preconditioner Types:
+                Teko:
                   Write Block Operator: false
                   Test Block Operator: false
                   Inverse Type: 'GS-Outer'
-                  Inverse Factory Library: 
-                    'GS-Outer': 
+                  Inverse Factory Library:
+                    'GS-Outer':
                       Type: 'Block Gauss-Seidel'
                       Use Upper Triangle: false
                       Inverse Type: Ifpack2
-                    MueLu: 
+                    MueLu:
                       Type: MueLu
                       multigrid algorithm: sa
                       verbosity: none
@@ -83,30 +83,30 @@ LCM:
                       'aggregation: type': uncoupled
                       'aggregation: drop scheme': classical
                       'smoother: type': CHEBYSHEV
-                      'smoother: params': 
+                      'smoother: params':
                         'chebyshev: degree': 3
                         'chebyshev: ratio eigenvalue': 7.00000000
                         'chebyshev: min eigenvalue': 1.00000000
                         'chebyshev: zero starting solution': true
                       'smoother: pre or post': both
                       'coarse: max size': 1500
-                    Ifpack2: 
+                    Ifpack2:
                       Type: Ifpack2
                       Overlap: 1
                       Prec Type: ILUT
-                      Ifpack2 Settings: 
+                      Ifpack2 Settings:
                         'fact: drop tolerance': 0.00000000e+00
                         'fact: ilut level-of-fill': 3.00000000
                         'fact: level-of-fill': 1
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Precision: 6
         Output Processor: 0
-        Output Information: 
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -116,31 +116,31 @@ LCM:
           Stepper Iteration: true
           Stepper Details: true
           Stepper Parameters: false
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Complete
-      Status Tests: 
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 5
-        Test 0: 
+        Test 0:
           Test Type: RelativeNormF
           Tolerance: 1.00000000e-07
-        Test 1: 
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 25
-        Test 2: 
+        Test 2:
           Test Type: Combo
           Combo Type: AND
           Number of Tests: 2
-          Test 0: 
+          Test 0:
             Test Type: NStep
             Number of Nonlinear Iterations: 20
-          Test 1: 
+          Test 1:
             Test Type: NormF
             Tolerance: 1.00000000e-05
-        Test 3: 
+        Test 3:
           Test Type: FiniteValue
-        Test 4: 
+        Test 4:
           Test Type: NormF
           Tolerance: 1.00000000e-06
 ...

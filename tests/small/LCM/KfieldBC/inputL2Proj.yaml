@@ -1,15 +1,15 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: Mechanics 3D
     Solution Method: Continuation
     Phalanx Graph Visualization Detail: 1
     MaterialDB Filename: materials.yaml
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS nodelist_3 for DOF Z: 0.00000000e+00
       DBC on NS nodelist_4 for DOF Z: 0.00000000e+00
-      DBC on NS nodelist_1 for DOF K: 
+      DBC on NS nodelist_1 for DOF K:
         BC Function: Kfield
         Kfield KI: 1.00000000
         Kfield KII: 0.00000000e+00
@@ -19,37 +19,37 @@ LCM:
         KII Values: [0.00000000e+00, 0.00100000, 500.00000000]
         Shear Modulus: 400.00000000
         Poissons Ratio: 0.25000000
-    Parameters: 
+    Parameters:
       Number: 1
       Parameter 0: Time
-    Response Functions: 
+    Response Functions:
       Number: 3
       Response 0: Solution Average
       Response 1: Solution Max Value
       Response 2: Project IP to Nodal Field
-      ResponseParams 2: 
+      ResponseParams 2:
         Number of Fields: 1
         IP Field Name 0: Cauchy_Stress
         IP Field Layout 0: Tensor
         Output to File: true
         Mass Matrix Type: Full
-  Discretization: 
+  Discretization:
     Method: Exodus
     Exodus Input File Name: K_field.g
     Exodus Output File Name: K_field.e
-  Regression Results: 
+  Regression Results:
     Number of Comparisons: 1
     Test Values: [0.00001990]
     Relative Tolerance: 1.00000000e-05
     Number of Sensitivity Comparisons: 0
     Sensitivity Test Values 0: [0.00000000e+00]
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         Method: Tangent
-      Stepper: 
+      Stepper:
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
         Max Steps: 4
@@ -57,39 +57,39 @@ LCM:
         Min Value: 0.00000000e+00
         Hit Continuation Bound: false
         Compute Eigenvalues: false
-        Eigensolver: 
+        Eigensolver:
           Method: Anasazi
           Operator: Jacobian Inverse
           Num Eigenvalues: 0
-      Step Size: 
+      Step Size:
         Initial Step Size: 0.50000000
         Method: Constant
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
-          Linear Solver: 
+        Newton:
+          Linear Solver:
             Tolerance: 1.00000000e-10
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 10
                     Max Iterations: 200
                     Tolerance: 1.00000000e-05
-                Belos: 
+                Belos:
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 1.00000000e-06
                       Output Frequency: 10
                       Output Style: 1
@@ -99,26 +99,26 @@ LCM:
                       Num Blocks: 200
                       Flexible Gmres: false
               Preconditioner Type: Ifpack2
-              Preconditioner Types: 
-                Ifpack2: 
+              Preconditioner Types:
+                Ifpack2:
                   Overlap: 2
                   Prec Type: ILUT
-                  Ifpack2 Settings: 
+                  Ifpack2 Settings:
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
                     'fact: level-of-fill': 1
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Information: 103
         Output Precision: 3
         Output Processor: 0
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
-      Status Tests: 
-        Test 0: 
+      Status Tests:
+        Test 0:
           Tolerance: 1.00000000e-08
 ...

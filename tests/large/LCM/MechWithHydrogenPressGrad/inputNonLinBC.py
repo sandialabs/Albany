@@ -20,4 +20,4 @@ dataFile.close()
 print "data written to", outFileName
 
 print
-    
+

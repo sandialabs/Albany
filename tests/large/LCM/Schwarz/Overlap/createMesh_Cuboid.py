@@ -2,7 +2,7 @@ import sys
 import os
 import contextlib
 import cStringIO
-    
+
 # add Cubit libraries to your path
 sys.path.append('/home/callema/cubit/bin')
 import cubit
@@ -46,13 +46,13 @@ def stdout_redirected(to=os.devnull):
 def createMesh(nameFileBase, nElementsCoarse, nElementsFine, sizeOverlap):
 
     with stdout_redirected():
-    
+
         #start cubit - this step is key
         cubit.init([''])
-        
+
         sizeElementFine = 1.0 / float(nElementsFine)
         sizeElementCoarse = 1.0 / float(nElementsCoarse)
-    
+
         cubit.cmd('reset')
         cubit.cmd('undo on')
         cubit.cmd('create brick x 1.0 y 1.0 z ' + str(1.0 + sizeOverlap))
@@ -69,7 +69,7 @@ def createMesh(nameFileBase, nElementsCoarse, nElementsFine, sizeOverlap):
         cubit.cmd('nodeset 6 surface 1')
         cubit.cmd('set large exodus file off')
         cubit.cmd('export mesh "' + str(nameFileBase) + '_Cube1.g" overwrite')
-        
+
         cubit.cmd('reset')
         cubit.cmd('undo on')
         cubit.cmd('create brick x 1.0 y 1.0 z ' + str(1.0 + sizeOverlap))
@@ -85,20 +85,20 @@ def createMesh(nameFileBase, nElementsCoarse, nElementsFine, sizeOverlap):
         cubit.cmd('nodeset 6 surface 1')
         cubit.cmd('set large exodus file off')
         cubit.cmd('export mesh "' + str(nameFileBase) + '_Cube0.g" overwrite')
-        
+
     files = os.listdir(os.getcwd())
-    
+
     filesCubit = [file for file in files if file.find('.jou') != -1]
-    
+
     for file in filesCubit:
         os.remove(file)
-    
+
 #    outfile = open(nameFileBase+'_createMesh.out', 'w')
 #    outfile.write(output)
 #    outfile.close()
-    
-    
-    
+
+
+
 
 if __name__ == '__main__':
 
@@ -114,7 +114,7 @@ if __name__ == '__main__':
         print 'Incorrect usage'
         print 'Usage: python createMesh_Cubes.py [base file name, number of coarse element divisions, number of fine element divisions, overlap size]'
         sys.exit()
-    
+
     createMesh(nameFileBase, nElementsCoarse, nElementsFine, sizeOverlap)
 
-    
+

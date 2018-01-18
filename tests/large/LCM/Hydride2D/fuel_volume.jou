@@ -10,7 +10,7 @@
 cd '/Volumes/ascldap/Codes/Albany/examples/Heat2DMMCylWithSource'
 # Build the cylinder that represents the cask and inert gas, one pellet high (inch dimensions)
 # volume 1
-#create cylinder height 0.6 (inches) 
+#create cylinder height 0.6 (inches)
 #create cylinder height 0.01524 (meters) radius 0.01
 # meter dimensions
 create cylinder height 0.01524 radius 0.01

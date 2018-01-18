@@ -68,7 +68,7 @@ if __name__ == "__main__":
         if abs(y - pd_target_y) < tol and abs(z - pd_target_z) < tol:
             pd_initial_data.append([x, y, z, disp])
         if abs(y - fem_target_y) < tol and abs(z - fem_target_z) < tol:
-            fem_initial_data.append([x, y, z, disp])            
+            fem_initial_data.append([x, y, z, disp])
 
     pd_final_data = []
     fem_final_data = []
@@ -86,8 +86,8 @@ if __name__ == "__main__":
         if abs(y - pd_target_y) < tol and abs(z - pd_target_z) < tol:
             pd_final_data.append([x, y, z, disp])
         if abs(y - fem_target_y) < tol and abs(z - fem_target_z) < tol:
-            fem_final_data.append([x, y, z, disp])            
-                
+            fem_final_data.append([x, y, z, disp])
+
     inFile.close()
 
     pd_initial_data.sort()

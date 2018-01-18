@@ -9,7 +9,7 @@ from subprocess import Popen
 result = 0
 
 ######################
-# Test 1 
+# Test 1
 ######################
 print "test 1 - NotchedCylinder Hex-Tet DTK 4 Proc"
 name = "NotchedCylinder_Hex_Tet_DTK_4"
@@ -19,10 +19,10 @@ if os.path.exists(log_file_name):
 logfile = open(log_file_name, 'w')
 
 #specify tolerance to determine test failure / passing
-tolerance = 1.0e-6; 
+tolerance = 1.0e-6;
 meanvalue = 0.000922355860891;
 
-# run AlbanyT 
+# run AlbanyT
 command = ["mpirun", "-np", "4", "./AlbanyT", "notched-cylinder-S-ctest.yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
@@ -36,7 +36,7 @@ for line in open(log_file_name):
     d = float(s)
     print d
     if (d > meanvalue + tolerance or d < meanvalue - tolerance):
-      result = result+1 
+      result = result+1
 
 if result != 0:
     print "result is %s" % result

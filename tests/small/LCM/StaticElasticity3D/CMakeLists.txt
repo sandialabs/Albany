@@ -8,7 +8,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTraction.yaml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
-if (ALBANY_MUELU_EXAMPLES) 
+if (ALBANY_MUELU_EXAMPLES)
     add_test(${testName} ${AlbanyT.exe} input.yaml)
     add_test(${testName}_Traction ${AlbanyT.exe} inputTraction.yaml)
 endif ()

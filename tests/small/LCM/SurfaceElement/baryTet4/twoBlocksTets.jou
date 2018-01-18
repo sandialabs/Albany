@@ -29,7 +29,7 @@ undo group begin
 volume 1 2 smooth scheme condition number beta 1.5 cpu 10
 smooth volume 1 2
 undo group end
-## Ignore sidesets for subdivision 
+## Ignore sidesets for subdivision
 ## sideset 1 surface 7 wrt volume 1
 nodeset 1 surface 9 16
 nodeset 2 surface 11 13

@@ -1,12 +1,12 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: Mechanics 3D
     Solution Method: Continuation
     Phalanx Graph Visualization Detail: 1
     MaterialDB Filename: 1materialNoVolJ.yaml
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS nodelist_7 for DOF X: -3.00000000e-01
       DBC on NS nodelist_7 for DOF Y: 0.00000000e+00
       DBC on NS nodelist_7 for DOF Z: -3.75000000e-01
@@ -19,13 +19,13 @@ LCM:
       DBC on NS nodelist_10 for DOF X: 0.30000000
       DBC on NS nodelist_10 for DOF Y: 0.00000000e+00
       DBC on NS nodelist_10 for DOF Z: 0.37500000
-    Parameters: 
+    Parameters:
       Number: 1
       Parameter 0: Time
-    Response Functions: 
+    Response Functions:
       Number: 1
       Response 0: Solution Average
-  Discretization: 
+  Discretization:
     Workset Size: 1
     Method: Exodus
     Exodus Input File Name: surface1ElemMeshRev.g
@@ -35,41 +35,41 @@ LCM:
     Use Serial Mesh: true
     Exodus Solution Name: disp
     Exodus Residual Name: fint
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         Method: Tangent
-      Stepper: 
+      Stepper:
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
         Max Steps: 100
         Max Value: 1.00000000
         Min Value: 0.00000000e+00
         Compute Eigenvalues: false
-      Step Size: 
+      Step Size:
         Initial Step Size: 1.00000000
         Method: Constant
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                Belos: 
+              Linear Solver Types:
+                Belos:
                   Solver Type: Block CG
               Preconditioner Type: None
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Information: 103
         Output Precision: 3
         Output Processor: 0
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
 ...

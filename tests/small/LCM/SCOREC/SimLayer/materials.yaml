@@ -1,24 +1,24 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    'base-plate': 
+  ElementBlocks:
+    'base-plate':
       material: 'Mat_base-plate'
-    'first-layer': 
+    'first-layer':
       material: 'Mat_first-layer'
-    'additional-layers': 
+    'additional-layers':
       material: 'Mat_additional-layers'
-  Materials: 
-    'Mat_base-plate': 
-      Material Model: 
+  Materials:
+    'Mat_base-plate':
+      Material Model:
         Model Name: Linear Elastic
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 2.10000000e+11
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.29000000
-      Thermal Conductivity: 
+      Thermal Conductivity:
         Thermal Conductivity Type: Constant
         Value: 46.60000000
       Thermal Expansion Coefficient: 0.00001150
@@ -27,16 +27,16 @@ LCM:
       Density: 7900.00000000
       Heat Capacity: 480.00000000
       Initial Temperature: 19.00000000
-    'Mat_first-layer': 
-      Material Model: 
+    'Mat_first-layer':
+      Material Model:
         Model Name: Linear Elastic
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 2.10000000e+11
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.29000000
-      Thermal Conductivity: 
+      Thermal Conductivity:
         Thermal Conductivity Type: Constant
         Value: 46.60000000
       Thermal Expansion Coefficient: 0.00001150
@@ -44,21 +44,21 @@ LCM:
       Reference Temperature: 19.00000000
       Density: 7900.00000000
       Heat Capacity: 480.00000000
-      Source Functions: 
-        Thermal Source: 
-          Table: 
+      Source Functions:
+        Thermal Source:
+          Table:
             Filename: hstable0.dat
       Initial Temperature: 19.00000000
-    'Mat_additional-layers': 
-      Material Model: 
+    'Mat_additional-layers':
+      Material Model:
         Model Name: Linear Elastic
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 2.10000000e+11
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.29000000
-      Thermal Conductivity: 
+      Thermal Conductivity:
         Thermal Conductivity Type: Constant
         Value: 46.60000000
       Thermal Expansion Coefficient: 0.00001150
@@ -66,9 +66,9 @@ LCM:
       Reference Temperature: 19.00000000
       Density: 7900.00000000
       Heat Capacity: 480.00000000
-      Source Functions: 
-        Thermal Source: 
-          Table: 
+      Source Functions:
+        Thermal Source:
+          Table:
             Filename: hstableN.dat
       Initial Temperature: 19.00000000
 ...

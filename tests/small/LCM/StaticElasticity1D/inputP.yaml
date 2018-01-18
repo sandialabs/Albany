@@ -1,32 +1,32 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: Elasticity 1D
     Solution Method: Steady
     Phalanx Graph Visualization Detail: 1
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS NodeSet0 for DOF X: 0.00000000e+00
       DBC on NS NodeSet1 for DOF X: 0.50000000
-    Elastic Modulus: 
+    Elastic Modulus:
       Elastic Modulus Type: Constant
       Value: 1.00000000
-    Poissons Ratio: 
+    Poissons Ratio:
       Poissons Ratio Type: Constant
       Value: 0.25000000
-    Parameters: 
+    Parameters:
       Number: 2
       Parameter 0: DBC on NS NodeSet0 for DOF X
       Parameter 1: DBC on NS NodeSet1 for DOF X
-    Response Functions: 
+    Response Functions:
       Number: 3
       Response 0: Solution Average
       Response 1: Solution Two Norm
       Response 2: Solution Max Value
-  Discretization: 
+  Discretization:
     1D Elements: 100
     Method: STK1D
-  Regression Results: 
+  Regression Results:
     Number of Comparisons: 3
     Test Values: [0.25000000, 2.90839300, 0.50000000]
     Relative Tolerance: 1.00000000e-06
@@ -36,36 +36,36 @@ LCM:
     Sensitivity Test Values 2: [0.00000000e+00, 1.00000000]
     Number of Dakota Comparisons: 2
     Dakota Test Values: [1.50000000, 2.50000000]
-  Piro: 
+  Piro:
     #Jacobian Operator: 'Matrix-Free'
     #'Matrix-Free Perturbation': 1.00000000e-07
-    LOCA: 
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         First Step Predictor: { }
         Last Step Predictor: { }
       Step Size: { }
-      Stepper: 
+      Stepper:
         Eigensolver: { }
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                Belos: 
+              Linear Solver Types:
+                Belos:
                   VerboseObject:
                     #Verbosity Level: medium
                     Verbosity Level: none
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 1.00000000e-08
                       Output Frequency: 10
                       Output Style: 1
@@ -75,24 +75,24 @@ LCM:
                       Num Blocks: 100
                       Flexible Gmres: false
               Preconditioner Type: Ifpack2
-              Preconditioner Types: 
-                Ifpack2: 
+              Preconditioner Types:
+                Ifpack2:
                   Overlap: 2
                   Prec Type: ILUT
-                  Ifpack2 Settings: 
+                  Ifpack2 Settings:
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
                     'fact: level-of-fill': 2
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Information: 103
         Output Precision: 3
         Output Processor: 0
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Complete
       Status Tests:
         Test Type: Combo

@@ -1,34 +1,34 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    block_1: 
+  ElementBlocks:
+    block_1:
       material: Aligned Lattice
-    block_2: 
+    block_2:
       material: Forty Five Degree Rotated Lattice
-  Materials: 
-    Aligned Lattice: 
-      Material Model: 
+  Materials:
+    Aligned Lattice:
+      Material Model:
         Model Name: CrystalPlasticity
-      Crystal Elasticity: 
+      Crystal Elasticity:
         C11: 168.40000
         C12: 121.40000000
         C44: 75.40000000
         Basis Vector 1: [1.00000000, 0.00000000e+00, 0.00000000e+00]
         Basis Vector 2: [0.00000000e+00, 1.00000000, 0.00000000e+00]
         Basis Vector 3: [0.00000000e+00, 0.00000000e+00, 1.00000000]
-      Slip System Family 0: 
-        Flow Rule: 
+      Slip System Family 0:
+        Flow Rule:
           Type: Power Law
           Reference Slip Rate: 1.00000000
           Rate Exponent: 1.00000000
-        Hardening Law: 
+        Hardening Law:
           Type: Linear Minus Recovery
           Hardening Modulus: 0.00000000e+00
           Recovery Modulus: 0.00000000e+00
           Initial Hardening State: 0.60000000
       Number of Slip Systems: 1
-      Slip System 1: 
+      Slip System 1:
         Slip Direction: [1.00000000, 0.00000000e+00, 0.00000000e+00]
         Slip Normal: [0.00000000e+00, 1.00000000, 0.00000000e+00]
       Output Cauchy Stress: true
@@ -36,28 +36,28 @@ LCM:
       Output Lp: true
       Output Mechanical Source: true
       Output CP_Residual: true
-    Forty Five Degree Rotated Lattice: 
-      Material Model: 
+    Forty Five Degree Rotated Lattice:
+      Material Model:
         Model Name: CrystalPlasticity
-      Crystal Elasticity: 
+      Crystal Elasticity:
         C11: 168.40000000
         C12: 121.40000000
         C44: 75.40000000
         Basis Vector 1: [0.70710678, 0.70710678, 0.00000000e+00]
         Basis Vector 2: [-7.07106781e-01, 0.70710678, 0.00000000e+00]
         Basis Vector 3: [0.00000000e+00, 0.00000000e+00, 1.00000000]
-      Slip System Family 0: 
-        Flow Rule: 
+      Slip System Family 0:
+        Flow Rule:
           Type: Power Law
           Reference Slip Rate: 1.00000000
           Rate Exponent: 1.00000000
-        Hardening Law: 
+        Hardening Law:
           Type: Linear Minus Recovery
           Hardening Modulus: 0.00000000e+00
           Recovery Modulus: 0.00000000e+00
           Initial Hardening State: 0.60000000
       Number of Slip Systems: 1
-      Slip System 1: 
+      Slip System 1:
         Slip Direction: [1.00000000, 0.00000000e+00, 0.00000000e+00]
         Slip Normal: [0.00000000e+00, 1.00000000, 0.00000000e+00]
       Output Cauchy Stress: true

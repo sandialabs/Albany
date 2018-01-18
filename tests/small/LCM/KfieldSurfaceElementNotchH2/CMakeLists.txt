@@ -11,7 +11,7 @@ if (ALBANY_IFPACK2)
   # Create a symlink to AlbanyT
   execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
     ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
-  
+
   # input files
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAllLocalHarder.yaml
     ${CMAKE_CURRENT_BINARY_DIR}/inputAllLocalHarder.yaml COPYONLY)
@@ -27,7 +27,7 @@ if (ALBANY_IFPACK2)
     ${CMAKE_CURRENT_BINARY_DIR}/BluntCrackRatio2d_in_m_rev5_reflect_microns_3d_cse.exo.4.2  COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/BluntCrackRatio2d_in_m_rev5_reflect_microns_3d_cse.exo.4.3
     ${CMAKE_CURRENT_BINARY_DIR}/BluntCrackRatio2d_in_m_rev5_reflect_microns_3d_cse.exo.4.3  COPYONLY)
-  
+
   # material files
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialsScaledLocalHarder.yaml
     ${CMAKE_CURRENT_BINARY_DIR}/materialsScaledLocalHarder.yaml COPYONLY)

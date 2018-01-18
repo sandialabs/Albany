@@ -67,7 +67,7 @@ if __name__ == "__main__":
         if abs(y - pd_target_y) < tol and abs(z - pd_target_z) < tol:
             pd_data.append([x, y, z, disp])
         if abs(y - ps_target_y) < tol and abs(z - ps_target_z) < tol:
-            ps_data.append([x, y, z, disp])            
+            ps_data.append([x, y, z, disp])
 
     inFile.close()
 
@@ -81,10 +81,10 @@ if __name__ == "__main__":
 
     outFile = open(outFileLabel + "_ps.txt", 'w')
     for i in range(len(ps_data)):
-        outFile.write(str(ps_data[i][0]) + " " + str(ps_data[i][3]) + "\n")        
+        outFile.write(str(ps_data[i][0]) + " " + str(ps_data[i][3]) + "\n")
     outFile.close()
 
     print "\nData written to " + outFileLabel + "_pd.txt" + " and " + outFileLabel + "_ps.txt"
-    
+
     print
-    
+

@@ -1,34 +1,34 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: Mechanics 3D
     Solution Method: Continuation
     MaterialDB Filename: materials.yaml
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS vtx1 for DOF X: 0.00000000e+00
       DBC on NS vtx1 for DOF Y: 0.00000000e+00
       DBC on NS vtx1 for DOF Z: 0.00000000e+00
       DBC on NS vtx2 for DOF Y: 0.00000000e+00
       DBC on NS vtx3 for DOF Z: 0.00000000e+00
       DBC on NS vtx4 for DOF X: 0.00000000e+00
-    Temperature: 
+    Temperature:
       Variable Type: Time Dependent
       Time Values: [0.00000000e+00, 10.00000000]
       Dependent Values: [400.00000000, 200.00000000]
-    Initial Condition: 
+    Initial Condition:
       Function: Constant
       Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00]
-    Parameters: 
+    Parameters:
       Number: 1
       Parameter 0: Time
-    Response Functions: 
+    Response Functions:
       Number: 0
-  Regression Results: 
+  Regression Results:
     Number of Comparisons: 1
     Test Values: [0.03333793]
     Relative Tolerance: 1.00000000e-10
-  Discretization: 
+  Discretization:
     Method: PUMI
     Workset Size: 50
     Mesh Model Input File Name: two_bars.dmg
@@ -38,26 +38,26 @@ LCM:
     Vertex Node Set Associations: [[54, 56, 60, 248], [vtx1, vtx2, vtx3, vtx4]]
     Cubature Degree: 1
     Separate Evaluators by Element Block: true
-  Piro: 
-    Rythmos: 
+  Piro:
+    Rythmos:
       Num Time Steps: 100
       Final Time: 1.00000000
       Max State Error: 0.00010000
       Alpha: 0.00000000e+00
-      Rythmos Stepper: 
-        VerboseObject: 
+      Rythmos Stepper:
+        VerboseObject:
           Verbosity Level: low
       Rythmos Integration Control: { }
-      Rythmos Integrator: 
-        VerboseObject: 
+      Rythmos Integrator:
+        VerboseObject:
           Verbosity Level: none
       Stratimikos: { }
-    LOCA: 
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         Method: Constant
-      Stepper: 
+      Stepper:
         Continuation Method: Natural
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
@@ -65,42 +65,42 @@ LCM:
         Max Value: 10.00000000
         Min Value: 0.00000000e+00
         Compute Eigenvalues: false
-        Eigensolver: 
+        Eigensolver:
           Method: Anasazi
           Operator: Jacobian Inverse
           Num Eigenvalues: 1
-      Step Size: 
+      Step Size:
         Initial Step Size: 1.00000000
         Method: Constant
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
-          Linear Solver: 
+        Newton:
+          Linear Solver:
             Tolerance: 1.00000000e-08
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 400
                       Output Frequency: 10
                     Max Iterations: 400
                     Tolerance: 1.00000000e-09
-                Belos: 
-                  VerboseObject: 
+                Belos:
+                  VerboseObject:
                     Verbosity Level: none
                   Left Preconditioner If Unspecified: true
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 0.01000000
                       Implicit Residual Scaling: Norm of Preconditioned Initial Residual
                       Explicit Residual Scaling: Norm of RHS
@@ -112,17 +112,17 @@ LCM:
                       Num Blocks: 200
                       Orthogonalization: DGKS
               Preconditioner Type: Ifpack2
-              Preconditioner Types: 
-                Ifpack2: 
+              Preconditioner Types:
+                Ifpack2:
                   Prec Type: RILUK
-                  Ifpack2 Settings: 
+                  Ifpack2 Settings:
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: iluk level-of-fill': 0
                     'fact: ilut level-of-fill': 0.00000000e+00
                     'schwarz: filter singletons': true
                     'schwarz: use reordering': true
                     'schwarz: overlap level': 0
-                MueLu: 
+                MueLu:
                   verbosity: high
                   max levels: 10
                   'repartition: enable': true
@@ -133,15 +133,15 @@ LCM:
                   'coarse: type': KLU
                   'aggregation: type': uncoupled
                   'smoother: type': RELAXATION
-                  'smoother: params': 
+                  'smoother: params':
                     'relaxation: type': 'Symmetric Gauss-Seidel'
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
-        Output Information: 
+      Printing:
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -153,23 +153,23 @@ LCM:
           Stepper Parameters: false
         Output Precision: 3
         Output Processor: 0
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Complete
-      Status Tests: 
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 4
-        Test 0: 
+        Test 0:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Unscaled
           Tolerance: 1.00000000e-06
-        Test 1: 
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 10
-        Test 2: 
+        Test 2:
           Test Type: FiniteValue
-        Test 3: 
+        Test 3:
           Test Type: NormUpdate
           Scale Type: Unscaled
           Tolerance: 1.00000000e-11

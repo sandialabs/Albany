@@ -1,14 +1,14 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    block_1: 
+  ElementBlocks:
+    block_1:
       material: Metal
-  Materials: 
-    Metal: 
-      Material Model: 
+  Materials:
+    Metal:
+      Material Model:
         Model Name: CrystalPlasticity
-      Crystal Elasticity: 
+      Crystal Elasticity:
         C11: 168.40000
         C12: 121.40000000
         C44: 75.40000000

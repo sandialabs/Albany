@@ -1,33 +1,33 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    block_1: 
+  ElementBlocks:
+    block_1:
       material: My Classic Elastic Material
-    block_2: 
+    block_2:
       material: My Peridynamic Partial Stress Material
-    block_3: 
+    block_3:
       material: My Peridynamics Material
-  Materials: 
-    My Peridynamic Partial Stress Material: 
-      Material Model: 
+  Materials:
+    My Peridynamic Partial Stress Material:
+      Material Model:
         Model Name: Peridynamic Partial Stress
-      Density: 
+      Density:
         Value: 2200.0000
-    My Classic Elastic Material: 
-      Material Model: 
+    My Classic Elastic Material:
+      Material Model:
         Model Name: Elastic
-      Density: 
+      Density:
         Value: 2200.00000000
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 2.23500000e+10
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.25000000
-    My Peridynamics Material: 
-      Material Model: 
+    My Peridynamics Material:
+      Material Model:
         Model Name: Peridynamics
-      Density: 
+      Density:
         Value: 2200.00000000
 ...

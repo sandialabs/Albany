@@ -1,53 +1,53 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: Peridigm Code Coupling
     Solution Method: Transient
     Second Order: Velocity Verlet
     Perturb Dirichlet: 1.00000000e-06
     MaterialDB Filename: WaveInBarMaterials.yaml
-    Peridigm Parameters: 
-      Discretization: 
+    Peridigm Parameters:
+      Discretization:
         Type: Albany
-      Materials: 
-        My Elastic Correspondence Material: 
+      Materials:
+        My Elastic Correspondence Material:
           Material Model: Elastic Correspondence
           Density: 2200.00000000
           Bulk Modulus: 1.49000000e+10
           Shear Modulus: 8.94000000e+09
           Hourglass Coefficient: 0.05000000
-        My Elastic Material: 
+        My Elastic Material:
           Material Model: Elastic
           Apply Shear Correction Factor: false
           Density: 2200.00000000
           Bulk Modulus: 1.49000000e+10
           Shear Modulus: 8.94000000e+09
-      Blocks: 
-        Partial Stress Blocks: 
+      Blocks:
+        Partial Stress Blocks:
           Block Names: block_2
           Material: My Elastic Correspondence Material
           Horizon: 0.00190000
-        Peridynamics Blocks: 
+        Peridynamics Blocks:
           Block Names: block_3
           Material: My Elastic Correspondence Material
           Horizon: 0.00190000
-      Output: 
-        Output Variables: 
+      Output:
+        Output Variables:
           Displacement: true
           Force: true
           Velocity: true
           Radius: true
           Volume: true
           Number_Of_Neighbors: true
-    Initial Condition Dot: 
+    Initial Condition Dot:
       Function: Expression Parser
       Function Expression for DOF X: 'if( !(x > -0.01501) ){ value = -100.0; }else{ value = 0.0; }'
-    Dirichlet BCs: 
-      DBC on NS nodelist_1 for DOF lsfit: 
+    Dirichlet BCs:
+      DBC on NS nodelist_1 for DOF lsfit:
         Perturb Dirichlet: 1.00000000e-06
         Time Step: 9.00000000e-08
-  Discretization: 
+  Discretization:
     Method: Exodus
     Exodus Input File Name: WaveInBar.g
     Exodus Output File Name: WaveInBar.e
@@ -56,20 +56,20 @@ LCM:
     Separate Evaluators by Element Block: true
     Solution Vector Components: [displacement, V]
     Residual Vector Components: [force, V]
-  Piro: 
-    Velocity Verlet: 
+  Piro:
+    Velocity Verlet:
       Num Time Steps: 220
       Final Time: 0.00002000
       Initial Time: 0.00000000e+00
       Invert Mass Matrix: true
       Lump Mass Matrix: true
-      Stratimikos: 
+      Stratimikos:
         Linear Solver Type: Belos
-        Linear Solver Types: 
-          Belos: 
+        Linear Solver Types:
+          Belos:
             Solver Type: Block GMRES
-            Solver Types: 
-              Block GMRES: 
+            Solver Types:
+              Block GMRES:
                 Convergence Tolerance: 1.00000000e-05
                 Output Frequency: 10
                 Output Style: 1
@@ -79,10 +79,10 @@ LCM:
                 Num Blocks: 100
                 Flexible Gmres: false
         Preconditioner Type: Ifpack
-        Preconditioner Types: 
-          Ifpack: 
+        Preconditioner Types:
+          Ifpack:
             Prec Type: ILU
             Overlap: 1
-            Ifpack Settings: 
+            Ifpack Settings:
               'fact: level-of-fill': 1
 ...

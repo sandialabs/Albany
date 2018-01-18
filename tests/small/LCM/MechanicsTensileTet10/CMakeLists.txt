@@ -17,7 +17,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 IF(ALBANY_SEACAS AND ALBANY_IOPX)
-  if (ALBANY_EPETRA) 
+  if (ALBANY_EPETRA)
     add_test(${testName}_STK ${Albany.exe} NotchedTensileTet10.yaml)
   endif()
   if (ALBANY_MUELU_EXAMPLES)

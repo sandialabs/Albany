@@ -44,9 +44,9 @@ true_strain = numpy.zeros(shape=(n_steps,1))
 ## Material parameters for power-law hardening
 hardening = 355.0
 recovery = 2.9
- 
+
 for i in range(n_steps):
- 
+
     # Get element data
     inp_var[i] = exo_file.get_element_variable_values(block_id,inp_var_name,i+1)
     inp_var[i] = abs(inp_var[i])
@@ -56,8 +56,8 @@ for i in range(n_steps):
     dep_var_4[i] = exo_file.get_element_variable_values(block_id,dep_var_name_4,i+1)
     dep_var_5[i] = exo_file.get_element_variable_values(block_id,dep_var_name_5,i+1)
     dep_var_6[i] = exo_file.get_element_variable_values(block_id,dep_var_name_6,i+1)
-    check[i] = hardening/recovery*(1.0 - numpy.exp(-8.0*recovery*inp_var[i])) 
-    
+    check[i] = hardening/recovery*(1.0 - numpy.exp(-8.0*recovery*inp_var[i]))
+
     # Get node data (only need displacements)
     displacement_x = exo_file.get_node_variable_values('displacement_x',i+1)
     disp_var[i] = displacement_x[node_number-1]
@@ -67,7 +67,7 @@ for i in range(n_steps):
 stress_increment = dep_var_4[1] - dep_var_4[0]
 strain_increment = (disp_var[1] - disp_var[0])/1.0
 youngs_modulus = stress_increment/strain_increment
- 
+
 for i in range(n_steps):
 
     # subtract small elastic strains for a better comparison with eqps

@@ -22,7 +22,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/runtest.cmake COPYONLY)
 
 # 4. Copy the reference solution over
-if (ALBANY_DTK) 
+if (ALBANY_DTK)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/reference_hole_dtk.exo
                ${CMAKE_CURRENT_BINARY_DIR}/reference_hole_dtk.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest_dtk.cmake
@@ -47,7 +47,7 @@ if (ALBANY_DTK)
 add_test(NAME ${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe};input.yaml"
   -DTEST_NAME=${testName} -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
   -P runtest_dtk.cmake)
-else() 
+else()
 add_test(NAME ${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe};input.yaml"
   -DTEST_NAME=${testName} -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
   -P runtest.cmake)

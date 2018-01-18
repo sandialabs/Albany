@@ -9,7 +9,7 @@ from subprocess import Popen
 result = 0
 
 ######################
-# Test 1 
+# Test 1
 ######################
 print "test - Parallel Cubes 8 proc DBC"
 name = "Parallel_Cubes_8_DBC"
@@ -19,11 +19,11 @@ if os.path.exists(log_file_name):
 logfile = open(log_file_name, 'w')
 
 #specify tolerance to determine test failure / passing
-tolerance = 1.0e-8; 
-#meanvalue = 0.000594484007237; #meanvalue for 10 LOCA steps 
+tolerance = 1.0e-8;
+#meanvalue = 0.000594484007237; #meanvalue for 10 LOCA steps
 meanvalue = 0.000118897637152;
 
-# run AlbanyT 
+# run AlbanyT
 command = ["mpirun", "-np", "8", "AlbanyT", "cubes.yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
@@ -37,7 +37,7 @@ for line in open(log_file_name):
     d = float(s)
     print d
     if (d > meanvalue + tolerance or d < meanvalue - tolerance):
-      result = result+1 
+      result = result+1
 
 if result != 0:
     print "result is %s" % result
@@ -45,10 +45,10 @@ if result != 0:
     sys.exit(result)
 
 with open(log_file_name, 'r') as log_file:
-    print log_file.read() 
+    print log_file.read()
 
 ######################
-# Test 2 
+# Test 2
 ######################
 print "test - Parallel Cubes 8 proc SDBC"
 name = "Parallel_Cubes_8_SDBC"
@@ -58,11 +58,11 @@ if os.path.exists(log_file_name):
 logfile = open(log_file_name, 'w')
 
 #specify tolerance to determine test failure / passing
-tolerance = 1.0e-8; 
-#meanvalue = 0.000594484007237; #meanvalue for 10 LOCA steps 
+tolerance = 1.0e-8;
+#meanvalue = 0.000594484007237; #meanvalue for 10 LOCA steps
 meanvalue = 0.000118897650651;
 
-# run AlbanyT 
+# run AlbanyT
 command = ["mpirun", "-np", "8", "AlbanyT", "cubes.yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
@@ -76,7 +76,7 @@ for line in open(log_file_name):
     d = float(s)
     print d
     if (d > meanvalue + tolerance or d < meanvalue - tolerance):
-      result = result+1 
+      result = result+1
 
 if result != 0:
     print "result is %s" % result
@@ -84,7 +84,7 @@ if result != 0:
     sys.exit(result)
 
 with open(log_file_name, 'r') as log_file:
-    print log_file.read() 
+    print log_file.read()
 
 
 sys.exit(result)

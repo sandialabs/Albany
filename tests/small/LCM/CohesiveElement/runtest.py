@@ -17,7 +17,7 @@ if os.path.exists(log_file_name):
     os.remove(log_file_name)
 logfile = open(log_file_name, 'w')
 
-# run AlbanyT 
+# run AlbanyT
 command = ["./AlbanyT", "input" + name + ".yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
@@ -48,6 +48,6 @@ if result != 0:
     sys.exit(result)
 
 with open(log_file_name, 'r') as log_file:
-    print log_file.read() 
+    print log_file.read()
 
 sys.exit(result)

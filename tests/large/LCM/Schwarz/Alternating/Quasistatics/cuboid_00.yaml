@@ -1,7 +1,7 @@
 LCM:
   DataTransferKit:
     Map Type: Consistent Interpolation
-    L2 Projection:      
+    L2 Projection:
       Integration Order: 2
     Consistent Interpolation: { }
     Point Cloud:
@@ -14,7 +14,7 @@ LCM:
       Track Missed Range Entities: true
   Debug Output:
     Write Solution to MatrixMarket: true
-    Write Solution to Standard Output: true  
+    Write Solution to Standard Output: true
   Problem:
     Name: Mechanics 3D
     Solution Method: Steady

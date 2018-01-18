@@ -29,7 +29,7 @@ if __name__ == "__main__":
         u = numpy.random.uniform(0.0, 1.0)
         v = numpy.random.uniform(0.0, 1.0)
         # calculate uniformly distributed spherical coordinates
-        theta = 2.0 * numpy.pi * u 
+        theta = 2.0 * numpy.pi * u
         phi = numpy.arccos(2.0 * v - 1.0)
         # convert to E3
         axial_vector_1 = numpy.cos(theta)*numpy.sin(phi)
@@ -58,7 +58,7 @@ if __name__ == "__main__":
             rotation[1,0],rotation[1,1],rotation[1,2],
             rotation[2,0],rotation[2,1],rotation[2,2])
         output.write(s)
-        
+
         s = '{0:.15f}  {1:.15f}  {2:.15f}\n'.format(axial_vector_1,axial_vector_2,axial_vector_3)
         output_check.write(s)
 
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     output_check.close()
 
     print "\nWrote", number_blocks, "rotation matrices to rotation_matrices.txt\n"
-    print "\nWrote", number_blocks, "axial vectors to axial_vector.txt\n" 
+    print "\nWrote", number_blocks, "axial vectors to axial_vector.txt\n"
 
 # Rotation matrix for each block in a genesis file.
 # Format is:  R11 R12 R13 R21 R22 R23 R31 R32 R33

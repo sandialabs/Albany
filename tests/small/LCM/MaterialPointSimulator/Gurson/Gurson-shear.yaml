@@ -1,25 +1,25 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    Block0: 
+  ElementBlocks:
+    Block0:
       material: 6061Aluminum
       Weighted Volume Average J: true
       Average J Stabilization Parameter: 0.050000000
-  Materials: 
-    6061Aluminum: 
-      Material Model: 
+  Materials:
+    6061Aluminum:
+      Material Model:
         Model Name: Gurson
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 67559.00000000
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.32990000
-      Hardening Modulus: 
+      Hardening Modulus:
         Hardening Modulus Type: Constant
         Value: 30.40000000
-      Yield Strength: 
+      Yield Strength:
         Yield Strength Type: Constant
         Value: 303.30000000
       Saturation Modulus: 73.60000000
@@ -34,7 +34,7 @@ LCM:
       Yield Parameter q1: 1.00000000
       Yield Parameter q2: 1.00000000
       Yield Parameter q3: 1.00000000
-      Material Point Simulator: 
+      Material Point Simulator:
         Loading Case Name: 'simple-shear'
         Number of Steps: 20
         Step Size: 0.05000000

@@ -40,7 +40,7 @@ if result != 0:
     sys.exit(result)
 
 with open(log_file_name, 'r') as log_file:
-    print log_file.read() 
+    print log_file.read()
 
 
 sys.exit(result)

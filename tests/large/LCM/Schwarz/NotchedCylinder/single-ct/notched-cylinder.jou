@@ -41,9 +41,9 @@ webcut volume 8 with cylinder radius {0.5 * neck_radius} axis z center 0 0 0
 unite volume 8 11
 unite volume 8 10
 volume 8 scheme tetmesh
-set tetmesher interior points on 
-set tetmesher optimize level 3 optimize overconstrained  off sliver  off 
-set tetmesher boundary recovery  off 
+set tetmesher interior points on
+set tetmesher optimize level 3 optimize overconstrained  off sliver  off
+set tetmesher boundary recovery  off
 volume 8 tetmesh growth_factor 1.0
 curve all in volume 8 scheme bias fine size {h_coarse} coarse size {h_coarse}
 mesh volume all

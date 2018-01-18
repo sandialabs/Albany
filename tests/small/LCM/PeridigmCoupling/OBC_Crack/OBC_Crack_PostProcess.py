@@ -55,7 +55,7 @@ if __name__ == "__main__":
     pd_initial_data_top = []
     fem_initial_data_top = []
     pd_initial_data_bottom = []
-    fem_initial_data_bottom = []    
+    fem_initial_data_bottom = []
     timeStep = 1
     displacement_x = inFile.get_node_variable_values('displacement_x', timeStep)
     for i in range(num_nodes):
@@ -72,7 +72,7 @@ if __name__ == "__main__":
         if abs(y + pd_target_y) < tol and abs(z - pd_target_z) < tol:
             pd_initial_data_bottom.append([x, y, z, disp])
         if abs(y + fem_target_y) < tol and abs(z - fem_target_z) < tol:
-            fem_initial_data_bottom.append([x, y, z, disp])                        
+            fem_initial_data_bottom.append([x, y, z, disp])
 
     pd_final_data_top = []
     fem_final_data_top = []
@@ -94,8 +94,8 @@ if __name__ == "__main__":
         if abs(y + pd_target_y) < tol and abs(z - pd_target_z) < tol:
             pd_final_data_bottom.append([x, y, z, disp])
         if abs(y + fem_target_y) < tol and abs(z - fem_target_z) < tol:
-            fem_final_data_bottom.append([x, y, z, disp])                        
-                
+            fem_final_data_bottom.append([x, y, z, disp])
+
     inFile.close()
 
     pd_initial_data_top.sort()
@@ -133,9 +133,9 @@ if __name__ == "__main__":
     outFile = open(outFileLabel + "_fem_bottom.txt", 'w')
     for i in range(len(fem_initial_data_bottom)):
         outFile.write(str(fem_initial_data_bottom[i][0]) + " " + str(fem_initial_data_bottom[i][3]) + " " + str(fem_final_data_bottom[i][3]) + "\n")
-    outFile.close()    
+    outFile.close()
 
     print "\nData written to " + outFileLabel + "_pd_top.txt" + " and " + outFileLabel + "_pd_bottom.txt" + " and " + outFileLabel + "_fem_top.txt" + " and " + outFileLabel + "_fem_bottom.txt"
-    
+
     print
-    
+

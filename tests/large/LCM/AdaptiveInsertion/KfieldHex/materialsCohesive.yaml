@@ -1,26 +1,26 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    'bulk-block': 
+  ElementBlocks:
+    'bulk-block':
       material: TestMat
-    Surface Element: 
+    Surface Element:
       material: Cohesive
       Surface Element: true
       Cohesive Element: true
-  Materials: 
-    TestMat: 
-      Material Model: 
+  Materials:
+    TestMat:
+      Material Model:
         Model Name: Neohookean
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 1.96000000e+11
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.30000000
       Output Cauchy Stress: true
-    Cohesive: 
-      Material Model: 
+    Cohesive:
+      Material Model:
         Model Name: Ortiz Pandolfi
       delta_c: 0.00100000
       sigma_c: 1.00000000e+08
@@ -32,8 +32,8 @@ LCM:
       Output Normal Jump: true
       Output Shear Jump: true
       Output Max Jump: true
-    TestCohesive: 
-      Material Model: 
+    TestCohesive:
+      Material Model:
         Model Name: Tvergaard Hutchinson
       delta_1: 4.00000000e-07
       delta_2: 4.00000000e-07

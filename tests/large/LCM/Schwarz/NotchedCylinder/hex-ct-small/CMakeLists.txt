@@ -62,6 +62,6 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
-if (ALBANY_DTK) 
+if (ALBANY_DTK)
   add_test(NAME Schwarz_NotchedCylinder_${testName}_DTK_8proc COMMAND "python" "runtestT_dtk_8proc.py")
 endif()

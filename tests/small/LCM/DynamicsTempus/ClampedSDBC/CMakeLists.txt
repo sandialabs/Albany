@@ -19,7 +19,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/clamped-stk-expl.yaml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 if (ALBANY_TEMPUS)
-if (ALBANY_IFPACK2) 
+if (ALBANY_IFPACK2)
 add_test(Dynamic_${testName}_NewmarkImplicitDForm_Tempus ${AlbanyT.exe} clamped-stk-shift.yaml)
 add_test(Dynamic_${testName}_NewmarkExplicitAForm_Tempus ${AlbanyT.exe} clamped-stk-expl.yaml)
 add_test(Dynamic_${testName}_NewmarkExplicitAForm_BLMesh_Tempus ${AlbanyT.exe} clamped-stk-bl-mesh.yaml)

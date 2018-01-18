@@ -12,7 +12,7 @@ IF(ALBANY_LCM AND LCM_TEST_EXES AND ALBANY_BGL)
   add_test(utHeliumODEs ${Albany_BINARY_DIR}/src/LCM/utHeliumODEs)
   IF(ALBANY_LAME)
     add_test(utLameStress_elastic ${Albany_BINARY_DIR}/src/LCM/utLameStress_elastic)
-  ENDIF() 
+  ENDIF()
 ENDIF()
 
 # create a custom target "make utest" that runs only the unit tests

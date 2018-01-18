@@ -1,48 +1,48 @@
 %YAML 1.1
 ---
 LCM:
-  Debug Output: 
+  Debug Output:
     Write Solution to Standard Output: 0
     Write Residual to Standard Output: 0
-  DataTransferKit: 
+  DataTransferKit:
     Map Type: Consistent Interpolation
-    L2 Projection: 
+    L2 Projection:
       Integration Order: 2
     Consistent Interpolation: { }
-    Point Cloud: 
+    Point Cloud:
       Map Type: Moving Least Square Reconstruction
       Basis Type: Wu
       Basis Order: 4
       Spatial Dimension: 3
       RBF Radius: 1.0000000
-    Search: 
+    Search:
       Track Missed Range Entities: true
       Point Inclusion Tolerance: 0.10000000
-  Problem: 
+  Problem:
     Name: Mechanics 3D
     Phalanx Graph Visualization Detail: 0
     MaterialDB Filename: 'materials-1.yaml'
-    Dirichlet BCs: 
-      DBC on NS nodelist_3 for DOF Schwarz: 
+    Dirichlet BCs:
+      DBC on NS nodelist_3 for DOF Schwarz:
         BC Function: Schwarz
         Coupled Application: 'notched-cylinder-0.yaml'
         Coupled Block: fine
       DBC on NS nodelist_4 for DOF Z: 0.00000000e+00
       DBC on NS nodelist_5 for DOF X: 0.00000000e+00
       DBC on NS nodelist_6 for DOF Y: 0.00000000e+00
-      Time Dependent DBC on NS nodelist_4 for DOF Z: 
+      Time Dependent DBC on NS nodelist_4 for DOF Z:
         Number of points: 2
         Time Values: [0.00000000e+00, 2.00000000]
         BC Values: [0.00000000e+00, 0.10000000]
-    Response Functions: 
+    Response Functions:
       Number: 1
       Response 0: Project IP to Nodal Field
-      ResponseParams 0: 
+      ResponseParams 0:
         Number of Fields: 1
         IP Field Name 0: Cauchy_Stress
         IP Field Layout 0: Tensor
         Output to File: true
-  Discretization: 
+  Discretization:
     Number Of Time Derivatives: 0
     Method: Ioss
     Exodus Input File Name: 'notched-cylinder-1.g'

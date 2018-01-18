@@ -47,7 +47,7 @@ create cylinder height 10 radius {hourglass_rad}
 move volume 5 x {notch_x_loc+hourglass_rad-notch_rad-hourglass_rad_offset}
 
 subtract volume 5 from volume 4
- 
+
 #webcut volume 4 with plane yplane offset {notch_y_loc*0.02}
 #webcut volume 6 with plane yplane offset {notch_y_loc*0.05}
 #webcut volume 7 with plane yplane offset {notch_y_loc*0.10}
@@ -66,15 +66,15 @@ webcut volume all with plane yplane offset {grip_start_away_from_center}
 #{strain_guage_length = 1.0*0.0254}
 #{weld_surf_width = .0325/2.0*0.0254}  ## the nominal size of the weld at the outer surface in the y direction - divide by two due to y plane symmetry
 
-## define notch radius based on a scale value and calculate inner  
+## define notch radius based on a scale value and calculate inner
 ## mesh refinement cylinder around crack(outer_notch)
 
 #{notch_radius_scale=2.5}
 #{notch_radius = 0.008/2*0.0254}
 #{outer_notch =0.017/2*0.0254}
 
-## define outer cylinder radius for outer mesh 
-## refinement around crack 
+## define outer cylinder radius for outer mesh
+## refinement around crack
 #{cylrad = (outer_notch*2) + .030*0.0254}
 
 
@@ -109,7 +109,7 @@ webcut volume all tool volume 15
 delete volume 15
 
 webcut volume 16 with plane zplane offset {thickness - crack_length + notch_radius} rotate -40 about x center 0 0 {thickness - crack_length + notch_radius}
-webcut volume 16 with plane zplane offset {thickness - crack_length + notch_radius} 
+webcut volume 16 with plane zplane offset {thickness - crack_length + notch_radius}
 
 #{half_weld_width_surface=0.0325/2*0.0254}
 
@@ -152,17 +152,17 @@ volume 4 25 size {mesh_size_medium}
 mesh volume 4 25
 
 volume 16 28 size {mesh_size_medium}
-mesh volume 16 28 
+mesh volume 16 28
 
 volume 23 32 size {mesh_size_medium}
-mesh volume 23 32 
+mesh volume 23 32
 
 volume 17 29 size {mesh_size_medium}
 curve 203 202 201 200 365 329 362 327 interval  6
 curve 203 202 201 200 365 329 362 327 scheme  equal
 
 volume 8 27 size {mesh_size_medium}
-mesh volume 8 27 
+mesh volume 8 27
 
 mesh volume 17 29
 

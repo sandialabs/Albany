@@ -1,33 +1,33 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: Lame
     MaterialDB Filename: materials_100.yaml
     Solution Method: Steady
     Phalanx Graph Visualization Detail: 0
-    Lame Material Parameters: 
+    Lame Material Parameters:
       Material Dependent Data Source: true
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS nodelist_1 for DOF X: 0.00000000e+00
       DBC on NS nodelist_1 for DOF Y: 0.00000000e+00
       DBC on NS nodelist_1 for DOF Z: 0.00000000e+00
       DBC on NS nodelist_2 for DOF X: 1.00000000
-    Parameters: 
+    Parameters:
       Number: 4
       Parameter 0: DBC on NS nodelist_1 for DOF X
       Parameter 1: DBC on NS nodelist_2 for DOF X
       Parameter 2: DBC on NS nodelist_1 for DOF Y
       Parameter 3: DBC on NS nodelist_1 for DOF Z
-    Response Functions: 
+    Response Functions:
       Number: 1
       Response 0: Solution Average
-  Discretization: 
+  Discretization:
     Method: Exodus
     Exodus Input File Name: 100_blocks_1.0_size_1.0_meshSize.g
     Exodus Output File Name: out_multimat_100.exo
     Separate Evaluators by Element Block: true
-  Regression Results: 
+  Regression Results:
     Number of Comparisons: 1
     Test Values: [0.16468853]
     Relative Tolerance: 0.10000000
@@ -35,40 +35,40 @@ LCM:
     Sensitivity Test Values 0: [0.16666666, 0.16666666, 0.33333333, 0.33333333]
     Number of Dakota Comparisons: 0
     Dakota Test Values: [1.00000000, 1.00000000]
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         First Step Predictor: { }
         Last Step Predictor: { }
       Step Size: { }
-      Stepper: 
+      Stepper:
         Eigensolver: { }
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 10
                     Max Iterations: 200
                     Tolerance: 1.00000000e-05
-                Belos: 
+                Belos:
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 0.00010000
                       Output Frequency: 10
                       Output Style: 1
@@ -78,22 +78,22 @@ LCM:
                       Num Blocks: 200
                       Flexible Gmres: false
               Preconditioner Type: Ifpack
-              Preconditioner Types: 
-                Ifpack: 
+              Preconditioner Types:
+                Ifpack:
                   Overlap: 1
                   Prec Type: ILU
-                  Ifpack Settings: 
+                  Ifpack Settings:
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: level-of-fill': 1
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Precision: 3
         Output Processor: 0
-        Output Information: 
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -103,6 +103,6 @@ LCM:
           Stepper Iteration: true
           Stepper Details: true
           Stepper Parameters: true
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
 ...

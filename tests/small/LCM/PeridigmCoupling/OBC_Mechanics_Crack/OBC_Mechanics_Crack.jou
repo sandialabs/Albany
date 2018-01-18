@@ -28,7 +28,7 @@ nodeset 5 volume 1 5 surface 10 18    # complete set of control nodes
 nodeset 6 curve 33
 nodeset 7 curve 31
 nodeset 8 curve 22
-nodeset 9 curve 17 
+nodeset 9 curve 17
 export genesis 'OBC_Mechanics_Crack_AllHex.g' overwrite
 
 # The path to spheregen.py is toolset/contrib/testTools/adagio/spheregen.py

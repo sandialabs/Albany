@@ -4,7 +4,7 @@ C44 126.2e3
 flow_rule Power Law
 rate_slip_reference 1.0
 exponent_rate 20.0
-hardening_law Linear Minus Recovery 
+hardening_law Linear Minus Recovery
 modulus_hardening 355.0
 modulus_recovery 2.9
 state_hardening_initial 122.0

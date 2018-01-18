@@ -3,7 +3,7 @@
 LCM:
   Scaling:
     Scale: 1.0
-  Debug Output: 
+  Debug Output:
     Write Jacobian to MatrixMarket: 0
     Write Jacobian to Standard Output: 0
     Write Residual to MatrixMarket: 0
@@ -34,7 +34,7 @@ LCM:
       Response 1: Solution Average
       Response 2: Solution Max Value
       Response 3: Solution Min Value
-  Regression Results: 
+  Regression Results:
     Number of Comparisons: 4
     Test Values: [0.000000000000e+00, 1.149197794509e-01, 0.000000000000e+00, -1.552406616474e-01]
     Relative Tolerance: 1.0e-7

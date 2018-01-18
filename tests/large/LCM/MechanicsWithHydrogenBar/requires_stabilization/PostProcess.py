@@ -22,7 +22,7 @@ if __name__ == "__main__":
     inFileName = sys.argv[1]
     inFile = exodus.exodus(inFileName, mode='r')
 
-    outFileLabel = string.splitfields(inFileName, '.')[0] 
+    outFileLabel = string.splitfields(inFileName, '.')[0]
 
     # Print database parameters from inFile
     print " "
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     CL = inFile.get_node_variable_values('CL', timeStep)
 
     #nodeset
-    nodeSet = nodeSetNodes[4] 
+    nodeSet = nodeSetNodes[4]
     displacement = 0.0
     CL_ = 0.0
     for nodeId in nodeSet:
@@ -75,14 +75,14 @@ if __name__ == "__main__":
         CL_ = CL[nodeId-1]
         nodeset_displacement.append(displacement)
         nodeset_CL.append(CL_)
-            
+
 
     inFile.close()
 
     Count = 0
     outFileName = outFileLabel + '.txt'
     dataFile = open(outFileName, 'w')
-    
+
     max_displacement =  max(nodeset_displacement)
 
 #   only write data for last time step
@@ -95,4 +95,4 @@ if __name__ == "__main__":
     print "CL-displacement data for written to", outFileName
 
     print
-    
+

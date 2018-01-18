@@ -1,21 +1,21 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    block_1: 
+  ElementBlocks:
+    block_1:
       material: Metal
-    block_2: 
+    block_2:
       material: Metal
-    block_3: 
+    block_3:
       material: Weak Metal
       Surface Element: true
       Localization thickness parameter: 1.00000000e-09
-  Materials: 
-    Metal: 
-      Material Model: 
+  Materials:
+    Metal:
+      Material Model:
         Model Name: J2
       Stabilization Parameter: 2.00000000
-      Transport Coefficients: 
+      Transport Coefficients:
         Partial Molar Volume: 2.00000000e-06
         Ideal Gas Constant: 8.31400000
         'Pre-exponential Factor': 5.40000000e-07
@@ -28,42 +28,42 @@ LCM:
         B Constant: 1.50000000
         C Constant: 6.96000000
         Avogadro's Number: 6.02214130e+23
-      Molar Volume: 
+      Molar Volume:
         Type: Constant
         Value: 7.11600000e-06
-      Shear Modulus: 
+      Shear Modulus:
         Shear Modulus Type: Constant
         Value: 7.56138462e+10
         dmudT Value: 0.00000000e+00
-      Bulk Modulus: 
+      Bulk Modulus:
         Bulk Modulus Type: Constant
         Value: 1.63830000e+11
         dKdT Value: 0.00000000e+00
-      Thermal Conductivity: 
+      Thermal Conductivity:
         Thermal Conductivity Type: Constant
         Value: 0.00000000e+00
-      Yield Strength: 
+      Yield Strength:
         Yield Strength Type: Constant
         Value: 4.50000000e+12
         dYdT Value: 0.00000000e+00
-      Hardening Modulus: 
+      Hardening Modulus:
         Hardening Modulus Type: Constant
         Value: 1.96375000e+09
         dHdT Value: 0.00000000e+00
       Reference Temperature: 300.00000000
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 1.96596000e+11
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.45000000
       Saturation Modulus: 0.00000000e+00
       Saturation Exponent: 0.00000000e+00
-    Weak Metal: 
-      Material Model: 
+    Weak Metal:
+      Material Model:
         Model Name: J2
       Stabilization Parameter: 2.00000000
-      Transport Coefficients: 
+      Transport Coefficients:
         Ideal Gas Constant: 8.31400000
         'Pre-exponential Factor': 0.05400000
         Diffusion Activation Enthalpy: 53900.00000000
@@ -76,33 +76,33 @@ LCM:
         Partial Molar Volume: 2.00000000e-06
         Reference Total Concentration: 38.70000000
         Lattice Strain Flag: false
-      Molar Volume: 
+      Molar Volume:
         Type: Constant
         Value: 7.11600000e-06
-      Shear Modulus: 
+      Shear Modulus:
         Shear Modulus Type: Constant
         Value: 7.56138462e+10
         dmudT Value: 0.00000000e+00
-      Bulk Modulus: 
+      Bulk Modulus:
         Bulk Modulus Type: Constant
         Value: 1.63830000e+11
         dKdT Value: 0.00000000e+00
-      Thermal Conductivity: 
+      Thermal Conductivity:
         Thermal Conductivity Type: Constant
         Value: 0.00000000e+00
-      Yield Strength: 
+      Yield Strength:
         Yield Strength Type: Constant
         Value: 4.50000000e+12
         dYdT Value: 0.00000000e+00
-      Hardening Modulus: 
+      Hardening Modulus:
         Hardening Modulus Type: Constant
         Value: 1.96375000e+09
         dHdT Value: 0.00000000e+00
       Reference Temperature: 300.00000000
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 1.96596000e+11
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.45000000
       Saturation Modulus: 0.00000000e+00

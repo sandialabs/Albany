@@ -1,33 +1,33 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: Mechanics 3D
     Solution Method: Continuation
     Phalanx Graph Visualization Detail: 1
     MaterialDB Filename: 2materials.yaml
-    Dirichlet BCs: 
-      Time Dependent DBC on NS nodelist_1 for DOF X: 
+    Dirichlet BCs:
+      Time Dependent DBC on NS nodelist_1 for DOF X:
         Number of points: 3
         Time Values: [0.00000000e+00, 0.50000000, 1.10000000]
         BC Values: [0.00000000e+00, 0.05000000, 0.11000000]
       DBC on NS nodelist_2 for DOF X: 0.00000000e+00
       DBC on NS nodelist_3 for DOF Z: 0.00000000e+00
       DBC on NS nodelist_4 for DOF Y: 0.00000000e+00
-    Parameters: 
+    Parameters:
       Number: 1
       Parameter 0: Time
-    Response Functions: 
+    Response Functions:
       Number: 1
       Response 0: Solution Average
-  Discretization: 
+  Discretization:
     Workset Size: 1
     Method: Exodus
     Exodus Input File Name: 2hex.g
     Exodus Output File Name: 2hex_tpetra.e
     Cubature Degree: 3
     Separate Evaluators by Element Block: true
-  Regression Results: 
+  Regression Results:
     Number of Comparisons: 1
     Test Values: [0.01118550]
     Relative Tolerance: 1.00000000e-05
@@ -35,13 +35,13 @@ LCM:
     Sensitivity Test Values 0: [0.16666666, 0.16666666, 0.33333333, 0.33333333]
     Number of Dakota Comparisons: 0
     Dakota Test Values: [1.00000000, 1.00000000]
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         Method: Tangent
-      Stepper: 
+      Stepper:
         Continuation Method: Natural
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
@@ -50,37 +50,37 @@ LCM:
         Return Failed on Reaching Max Steps: false
         Min Value: 0.00000000e+00
         Compute Eigenvalues: false
-        Eigensolver: 
+        Eigensolver:
           Method: Anasazi
           Operator: Jacobian Inverse
           Num Eigenvalues: 0
-      Step Size: 
+      Step Size:
         Initial Step Size: 0.10000000
         Method: Constant
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 10
                     Max Iterations: 200
                     Tolerance: 1.00000000e-05
-                Belos: 
+                Belos:
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 1.00000000e-10
                       Output Frequency: 10
                       Output Style: 1
@@ -90,36 +90,36 @@ LCM:
                       Num Blocks: 200
                       Flexible Gmres: false
               Preconditioner Type: Teko
-              Preconditioner Types: 
-                Teko: 
+              Preconditioner Types:
+                Teko:
                   Inverse Type: Ifpack2
                   Write Block Operator: false
                   Test Block Operator: false
-                  Inverse Factory Library: 
-                    Iterative Preconditioner: 
+                  Inverse Factory Library:
+                    Iterative Preconditioner:
                       Type: Ifpack2
                       Overlap: 2
                       Prec Type: ILUT
-                      Ifpack2 Settings: 
+                      Ifpack2 Settings:
                         'fact: drop tolerance': 0.00000000e+00
                         'fact: ilut level-of-fill': 1.00000000
                         'fact: level-of-fill': 1
-                Ifpack2: 
+                Ifpack2:
                   Overlap: 2
                   Prec Type: ILUT
-                  Ifpack2 Settings: 
+                  Ifpack2 Settings:
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
                     'fact: level-of-fill': 1
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Information: 103
         Output Precision: 3
         Output Processor: 0
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
 ...

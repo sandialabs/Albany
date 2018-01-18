@@ -1,20 +1,20 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    eb_1: 
+  ElementBlocks:
+    eb_1:
       material: Metal
-  Materials: 
-    Metal: 
-      Material Model: 
+  Materials:
+    Metal:
+      Material Model:
         Model Name: Neohookean
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 200000.00
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.30000000
-      Thermal Conductivity: 
+      Thermal Conductivity:
         Thermal Conductivity Type: Constant
         Value: 45.00000000
       Reference Temperature: 293.00000000

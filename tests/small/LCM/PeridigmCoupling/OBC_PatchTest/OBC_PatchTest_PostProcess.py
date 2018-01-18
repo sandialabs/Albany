@@ -68,7 +68,7 @@ if __name__ == "__main__":
         if abs(y - pd_target_y) < tol and abs(z - pd_target_z) < tol:
             pd_initial_data.append([x, y, z, disp])
         if abs(y - fem_target_y) < tol and abs(z - fem_target_z) < tol:
-            fem_initial_data.append([x, y, z, disp])            
+            fem_initial_data.append([x, y, z, disp])
 
     pd_final_data = []
     fem_final_data = []
@@ -86,8 +86,8 @@ if __name__ == "__main__":
         if abs(y - pd_target_y) < tol and abs(z - pd_target_z) < tol:
             pd_final_data.append([x, y, z, disp])
         if abs(y - fem_target_y) < tol and abs(z - fem_target_z) < tol:
-            fem_final_data.append([x, y, z, disp])            
-                
+            fem_final_data.append([x, y, z, disp])
+
     inFile.close()
 
     pd_initial_data.sort()
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     for i in range(len(ave_initial_data)):
         if i > 2 and i < len(ave_initial_data)-1:
             ave_initial_data[i][1] = 0.0
-            
+
     all_final_data.sort()
     last_x = all_final_data[0][0]
     tol = 1.0e-8
@@ -149,15 +149,15 @@ if __name__ == "__main__":
 
     outFile = open(outFileLabel + "_fem.txt", 'w')
     for i in range(len(fem_initial_data)):
-        outFile.write(str(fem_initial_data[i][0]) + " " + str(fem_initial_data[i][3]) + " " + str(fem_final_data[i][3]) + "\n")        
+        outFile.write(str(fem_initial_data[i][0]) + " " + str(fem_initial_data[i][3]) + " " + str(fem_final_data[i][3]) + "\n")
     outFile.close()
 
     outFile = open(outFileLabel + "_all.txt", 'w')
     for i in range(len(ave_initial_data)):
-        outFile.write(str(ave_initial_data[i][0]) + " " + str(ave_initial_data[i][1]) + " " + str(ave_final_data[i][1]) + "\n")        
+        outFile.write(str(ave_initial_data[i][0]) + " " + str(ave_initial_data[i][1]) + " " + str(ave_final_data[i][1]) + "\n")
     outFile.close()
 
     print "\nData written to " + outFileLabel + "_pd.txt" + " and " + outFileLabel + "_fem.txt" +  " and " + outFileLabel + "_all.txt"
-    
+
     print
-    
+

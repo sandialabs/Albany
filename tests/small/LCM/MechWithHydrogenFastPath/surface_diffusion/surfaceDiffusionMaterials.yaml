@@ -1,32 +1,32 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    block_1: 
+  ElementBlocks:
+    block_1:
       material: Metal
-    block_2: 
+    block_2:
       material: Metal
-    block_3: 
+    block_3:
       material: Fast Metal
       Surface Element: true
       Localization thickness parameter: 0.020000000
-  Materials: 
-    Hyper: 
-      Material Model: 
+  Materials:
+    Hyper:
+      Material Model:
         Model Name: Neohookean
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 2.00000000e+11
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.30000000
-    AnisoHyperDamage: 
-      Material Model: 
+    AnisoHyperDamage:
+      Material Model:
         Model Name: AHD
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 100000.00000000
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.45000000
       Fiber 1 k: 10000.00000000
@@ -45,12 +45,12 @@ LCM:
       Fiber 1 Orientation Vector: [0.00000000e+00, 1.00000000, 0.00000000e+00]
       Fiber 2 Orientation Vector: [0.00000000e+00, 1.00000000, 0.00000000e+00]
       Use Local Coordinate System: false
-    Metal: 
-      Material Model: 
+    Metal:
+      Material Model:
         Model Name: J2
       Stabilization Parameter: 2.00000000
       Initial Concentration: 0.00003870
-      Transport Coefficients: 
+      Transport Coefficients:
         Partial Molar Volume: 2.00000000
         Ideal Gas Constant: 0.00831400
         'Pre-exponential Factor': 540000.00000000
@@ -63,18 +63,18 @@ LCM:
         B Constant: 1.50000000
         C Constant: 6.96000000
         Avogadro's Number: 6.02214130e+11
-      Yield Strength: 
+      Yield Strength:
         Yield Strength Type: Constant
         Value: 500.00000000
         dYdT Value: 0.00000000e+00
-      Hardening Modulus: 
+      Hardening Modulus:
         Hardening Modulus Type: Constant
         Value: 0.00000000e+00
         dHdT Value: 0.00000000e+00
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 196.00000000
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.30000000
       Saturation Modulus: 2.07000000
@@ -82,12 +82,12 @@ LCM:
       Output Cauchy Stress: true
       Output Total Concentration: true
       Output eqps: true
-    Fast Metal: 
-      Material Model: 
+    Fast Metal:
+      Material Model:
         Model Name: J2
       Stabilization Parameter: 2.00000000
       Initial Concentration: 0.00003870
-      Transport Coefficients: 
+      Transport Coefficients:
         Partial Molar Volume: 2.00000000
         Ideal Gas Constant: 0.00831400
         'Pre-exponential Factor': 5.40000000e+10
@@ -100,18 +100,18 @@ LCM:
         B Constant: 1.50000000
         C Constant: 6.96000000
         Avogadro's Number: 6.02214130e+11
-      Yield Strength: 
+      Yield Strength:
         Yield Strength Type: Constant
         Value: 500.00000000
         dYdT Value: 0.00000000e+00
-      Hardening Modulus: 
+      Hardening Modulus:
         Hardening Modulus Type: Constant
         Value: 0.00000000e+00
         dHdT Value: 0.00000000e+00
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 196.00000000
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.30000000
       Saturation Modulus: 2.07000000

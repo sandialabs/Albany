@@ -26,16 +26,16 @@ def CreateCoProcessor():
       RenderView1.CameraFocalPoint = [4.999999999999999, 0.5000000000000007, 0.0]
       RenderView1.CameraParallelScale = 5.024937810560444
       RenderView1.CenterOfRotation = [4.999999999999999, 0.5000000000000007, 0.0]
-      
+
       filename_0_pvtu = coprocessor.CreateProducer( datadescription, "input" )
-      
+
       a1_Scalars__PiecewiseFunction = CreatePiecewiseFunction( Points=[0.0, 0.0, 0.5, 0.0, 0.9999999999999999, 1.0, 0.5, 0.0] )
-      
+
       a1_Scalars__PVLookupTable = GetLookupTableForArray( "Scalars_", 1, RGBPoints=[0.0, 0.23, 0.299, 0.754, 0.9999999999999999, 0.706, 0.016, 0.15], VectorMode='Magnitude', NanColor=[0.25, 0.0, 0.0], ScalarOpacityFunction=a1_Scalars__PiecewiseFunction, ColorSpace='Diverging', ScalarRangeInitialized=1.0 )
-      
+
       ScalarBarWidgetRepresentation1 = CreateScalarBar( TitleFontSize=12, Title='Scalars_', Enabled=1, LookupTable=a1_Scalars__PVLookupTable, LabelFontSize=12 )
       GetRenderView().Representations.append(ScalarBarWidgetRepresentation1)
-      
+
       DataRepresentation1 = Show()
       DataRepresentation1.EdgeColor = [0.0, 0.0, 0.5000076295109483]
       DataRepresentation1.SelectionPointFieldDataArrayName = 'Scalars_'
@@ -44,7 +44,7 @@ def CreateCoProcessor():
       DataRepresentation1.ScalarOpacityUnitDistance = 0.6557322144483001
       DataRepresentation1.LookupTable = a1_Scalars__PVLookupTable
       DataRepresentation1.ScaleFactor = 0.9999999999999999
-      
+
     return Pipeline()
 
   class CoProcessor(coprocessing.CoProcessor):

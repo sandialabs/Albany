@@ -1,23 +1,23 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: Mechanics 3D
     Solution Method: Continuation
     Phalanx Graph Visualization Detail: 1
     MaterialDB Filename: materialsHe.yaml
-    Transport: 
+    Transport:
       Variable Type: DOF
-    HydroStress: 
+    HydroStress:
       Variable Type: DOF
-    Temperature: 
+    Temperature:
       Variable Type: Constant
       Value: 300.00000
-    Initial Condition: 
+    Initial Condition:
       Function: Constant
       Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00056000, 0.00000000e+00]
-    Dirichlet BCs: 
-      Time Dependent DBC on NS NodeSet3 for DOF Y: 
+    Dirichlet BCs:
+      Time Dependent DBC on NS NodeSet3 for DOF Y:
         Number of points: 3
         Time Values: [0.00000000e+00, 1.00000000, 3.00000000]
         BC Values: [0.00000000e+00, 0.00000000e+00, 0.20000000]
@@ -26,13 +26,13 @@ LCM:
       DBC on NS NodeSet2 for DOF Y: 0.00000000e+00
       DBC on NS NodeSet0 for DOF X: 0.00000000e+00
       DBC on NS NodeSet4 for DOF Z: 0.00000000e+00
-    Parameters: 
+    Parameters:
       Number: 1
       Parameter 0: Time
-    Response Functions: 
+    Response Functions:
       Number: 1
       Response 0: Solution Average
-  Discretization: 
+  Discretization:
     1D Elements: 1
     2D Elements: 1
     3D Elements: 1
@@ -41,52 +41,52 @@ LCM:
     Solution Vector Components: [disp, V, CL, S, tauH, S]
     Residual Vector Components: [force, V, CLresid, S, tauHresid, S]
     Exodus Write Interval: 1
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         Method: Constant
-      Stepper: 
+      Stepper:
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
         Max Steps: 10000
         Max Value: 2.00000000
         Min Value: 0.00000000e+00
         Compute Eigenvalues: false
-        Eigensolver: 
+        Eigensolver:
           Method: Anasazi
           Operator: Jacobian Inverse
           Num Eigenvalues: 0
-      Step Size: 
+      Step Size:
         Method: Constant
         Initial Step Size: 0.10000000
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 20
                       Output Frequency: 10
                     Max Iterations: 500
                     Tolerance: 1.00000000e-06
-                Belos: 
-                  VerboseObject: 
+                Belos:
+                  VerboseObject:
                     Verbosity Level: low
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 1.00000000e-06
                       Output Frequency: -1
                       Output Style: 1
@@ -96,20 +96,20 @@ LCM:
                       Num Blocks: 100
                       Flexible Gmres: false
               Preconditioner Type: Ifpack2
-              Preconditioner Types: 
-                Ifpack2: 
+              Preconditioner Types:
+                Ifpack2:
                   Overlap: 2
                   Prec Type: ILUT
-                  Ifpack2 Settings: 
+                  Ifpack2 Settings:
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
-        Output Information: 
+      Printing:
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -121,28 +121,28 @@ LCM:
           Stepper Parameters: true
         Output Precision: 3
         Output Processor: 0
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Complete
-      Status Tests: 
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 4
-        Test 0: 
+        Test 0:
           Test Type: RelativeNormF
           Tolerance: 1.00000000e-10
-        Test 1: 
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 15
-        Test 2: 
+        Test 2:
           Test Type: Combo
           Combo Type: AND
           Number of Tests: 2
-          Test 0: 
+          Test 0:
             Test Type: NStep
             Number of Nonlinear Iterations: 3
-          Test 1: 
+          Test 1:
             Test Type: NormF
             Tolerance: 1.00000000e-12
-        Test 3: 
+        Test 3:
           Test Type: FiniteValue
 ...

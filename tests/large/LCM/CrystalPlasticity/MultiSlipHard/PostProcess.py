@@ -64,7 +64,7 @@ if __name__ == "__main__":
     nodeset_force = []
 
     for timeStep in range(numTimeSteps):
-        
+
         displacement_x = inFile.get_node_variable_values('displacement_x', timeStep+1)
         force_x = inFile.get_node_variable_values('force_x', timeStep+1)
 
@@ -92,9 +92,9 @@ if __name__ == "__main__":
     print "Force-displacement data for written to", outFileName
 
     print
-   
-    
-    outFileName = outFileLabel + 'load_displacement.pdf' 
+
+
+    outFileName = outFileLabel + 'load_displacement.pdf'
     fig, ax = plt.subplots()
     ax.plot(nodeset_displacement[:],nodeset_force[:],color='blue',marker='o',label='1 elem/block')
     plt.xlabel('displacement (mm)')
@@ -110,12 +110,12 @@ if __name__ == "__main__":
 #
 # Make assumptions regarding volume preservation to reduce the data
 #
-#     
+#
     for i in range(numTimeSteps):
         engr_strain = nodeset_displacement[i]/1.0
         true_strain[i] = numpy.log(1 + engr_strain)
         true_stress[i] = nodeset_force[i]/(1.0 + engr_strain)
- 
+
     outFileName = outFileLabel + 'true_stress_strain.pdf'
     fig, ax = plt.subplots()
     ax.plot(true_strain[:],true_stress[:],color='blue',marker='o',label='1 elem/block')

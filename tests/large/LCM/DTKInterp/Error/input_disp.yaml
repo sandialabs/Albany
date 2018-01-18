@@ -10,18 +10,18 @@ LCM:
   Source Field Name: disp
   Target Field Name: disp
   Scale by Norm of Solution Vector: false
-  DataTransferKit: 
+  DataTransferKit:
     Map Type: Consistent Interpolation
-    L2 Projection: 
+    L2 Projection:
       Integration Order: 2
     Consistent Interpolation: { }
-    Point Cloud: 
+    Point Cloud:
       Map Type: Moving Least Square Reconstruction
       Basis Type: Wu
       Basis Order: 4
       Spatial Dimension: 3
       RBF Radius: 1.0000000
-    Search: 
+    Search:
       Track Missed Range Entities: true
       Point Inclusion Tolerance: 1.00000000e-06
 ...

@@ -1,77 +1,77 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: NonlinearElasticity 2D
     Phalanx Graph Visualization Detail: 1
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS NodeSet0 for DOF X: 0.00000000e+00
       DBC on NS NodeSet0 for DOF Y: 0.00000000e+00
       DBC on NS NodeSet1 for DOF X: 1.00000000
       DBC on NS NodeSet1 for DOF Y: 0.30000000
-    Material Model: 
+    Material Model:
       Model Name: Neohookean AD
-    Elastic Modulus: 
+    Elastic Modulus:
       Elastic Modulus Type: Constant
       Value: 1.00000000
-    Poissons Ratio: 
+    Poissons Ratio:
       Poissons Ratio Type: Constant
       Value: 0.25000000
-    Parameters: 
+    Parameters:
       Number: 3
       Parameter 0: DBC on NS NodeSet0 for DOF X
       Parameter 1: DBC on NS NodeSet1 for DOF X
       Parameter 2: DBC on NS NodeSet0 for DOF Y
-    Response Functions: 
+    Response Functions:
       Number: 1
       Response 0: Solution Average
-  Discretization: 
+  Discretization:
     1D Elements: 70
     2D Elements: 25
     Workset Size: 173
     Cell Topology: Tri
     Method: STK2D
     Exodus Output File Name: nleltri2d.exo
-  Regression Results: 
+  Regression Results:
     Number of Comparisons: 1
     Test Values: [0.32500000]
     Relative Tolerance: 0.00010000
     Number of Sensitivity Comparisons: 1
     Sensitivity Test Values 0: [0.25000000, 0.25000000, 0.25000000]
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         First Step Predictor: { }
         Last Step Predictor: { }
       Step Size: { }
-      Stepper: 
+      Stepper:
         Eigensolver: { }
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 10
                     Max Iterations: 200
                     Tolerance: 1.00000000e-05
-                Belos: 
+                Belos:
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 1.00000000e-12
                       Output Frequency: 10
                       Output Style: 1
@@ -81,23 +81,23 @@ LCM:
                       Num Blocks: 200
                       Flexible Gmres: false
               Preconditioner Type: Ifpack
-              Preconditioner Types: 
-                Ifpack: 
+              Preconditioner Types:
+                Ifpack:
                   Overlap: 2
                   Prec Type: ILU
-                  Ifpack Settings: 
+                  Ifpack Settings:
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
                     'fact: level-of-fill': 2
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Information: 103
         Output Precision: 3
         Output Processor: 0
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
 ...

@@ -1,7 +1,7 @@
 LCM:
   DataTransferKit:
     Map Type: Consistent Interpolation
-    L2 Projection:      
+    L2 Projection:
       Integration Order: 2
     Consistent Interpolation: { }
     Point Cloud:
@@ -14,7 +14,7 @@ LCM:
       Track Missed Range Entities: true
   Debug Output:
     Write Solution to MatrixMarket: true
-    Write Solution to Standard Output: true  
+    Write Solution to Standard Output: true
   Problem:
     Name: Mechanics 3D
     Parameters:
@@ -42,7 +42,7 @@ LCM:
   Piro:
     Analysis:
       Compute Sensitivities: false
-    Tempus: 
+    Tempus:
       Integrator Name: Tempus Integrator
       Tempus Integrator:
         Integrator Type: Integrator Basic
@@ -119,7 +119,7 @@ LCM:
           Belos:
             Solver Type: Block GMRES
             Solver Types:
-              Block GMRES: 
+              Block GMRES:
                 Convergence Tolerance: 1.00000000e-05
                 Output Frequency: 1
                 Output Style: 1

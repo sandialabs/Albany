@@ -1,26 +1,26 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: Mechanics 2D
     Solution Method: Continuation
     Phalanx Graph Visualization Detail: 1
     MaterialDB Filename: CrystalPlasticity2d_Material.yaml
-    Dirichlet BCs: 
-      Time Dependent DBC on NS NodeSet3 for DOF X: 
+    Dirichlet BCs:
+      Time Dependent DBC on NS NodeSet3 for DOF X:
         Number of points: 2
         Time Values: [0.00000000e+00, 1.00000000]
         BC Values: [0.00000000e+00, 1.00000000]
       DBC on NS NodeSet3 for DOF Y: 0.00000000e+00
       DBC on NS NodeSet2 for DOF X: 0.00000000e+00
       DBC on NS NodeSet2 for DOF Y: 0.00000000e+00
-    Parameters: 
+    Parameters:
       Number: 1
       Parameter 0: Time
-    Response Functions: 
+    Response Functions:
       Number: 1
       Response 0: Solution Average
-  Discretization: 
+  Discretization:
     1D Elements: 1
     2D Elements: 1
     Workset Size: 300
@@ -28,45 +28,45 @@ LCM:
     Exodus Output File Name: PlasticShear2d.exo
     Solution Vector Components: [displacement, V]
     Residual Vector Components: [force, V]
-  Regression Results: 
+  Regression Results:
     Number of Comparisons: 1
     Test Values: [0.02500000]
     Relative Tolerance: 1.00000000e-12
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         Method: Tangent
-      Stepper: 
+      Stepper:
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
         Max Steps: 100
         Max Value: 0.10000000
         Min Value: 0.00000000e+00
         Compute Eigenvalues: false
-        Eigensolver: 
+        Eigensolver:
           Method: Anasazi
           Operator: Jacobian Inverse
           Num Eigenvalues: 0
-      Step Size: 
+      Step Size:
         Initial Step Size: 0.00100000
         Method: Constant
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                Belos: 
+              Linear Solver Types:
+                Belos:
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 1.00000000e-10
                       Output Frequency: 0
                       Output Style: 0
@@ -76,15 +76,15 @@ LCM:
                       Num Blocks: 200
                       Flexible Gmres: false
               Preconditioner Type: Ifpack2
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Precision: 3
         Output Processor: 0
-        Output Information: 
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -94,6 +94,6 @@ LCM:
           Stepper Iteration: true
           Stepper Details: true
           Stepper Parameters: true
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
 ...

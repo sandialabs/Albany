@@ -1,24 +1,24 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    block_1: 
+  ElementBlocks:
+    block_1:
       material: block_1 Material
       Weighted Volume Average J: true
       Volume Average Pressure: true
-    block_2: 
+    block_2:
       material: base
       Weighted Volume Average J: true
       Average J Stabilization Parameter: 0.00000000e+00
       Volume Average Pressure: true
-    block_3: 
+    block_3:
       material: base
       Weighted Volume Average J: true
       Average J Stabilization Parameter: 0.00000000e+00
       Volume Average Pressure: true
-  Materials: 
-    block_1 Material: 
-      Material Model: 
+  Materials:
+    block_1 Material:
+      Material Model:
         Model Name: CrystalPlasticity
       Number of Slip Systems: 12
       Integration Scheme: Implicit
@@ -82,73 +82,73 @@ LCM:
       Output gamma_dot_10: false
       Output gamma_dot_11: false
       Output gamma_dot_12: false
-      Crystal Elasticity: 
+      Crystal Elasticity:
         C11: 204600.00000000
         C12: 137700.00000000
         C44: 126200.00000000
         Basis Vector 1: [0.99319611, 0.02287406, -1.14185251e-01]
         Basis Vector 2: [-7.17772523e-04, -9.79298470e-01, -2.02420332e-01]
         Basis Vector 3: [-1.16451616e-01, 0.20112504, -9.72619009e-01]
-      Slip System Family 0: 
-        Flow Rule: 
+      Slip System Family 0:
+        Flow Rule:
           Type: Power Law with Drag
           Reference Slip Rate: 1.00000000
           Rate Exponent: 50.00000000
           Drag Coefficient: 1.00000000e-06
-        Hardening Law: 
+        Hardening Law:
           Type: Linear Minus Recovery
           Hardening Modulus: 355.00000000
           Recovery Modulus: 2.90000000
           Initial Hardening State: 122.00000000
-      Slip System 1: 
+      Slip System 1:
         Slip Direction: [1.00000000, -1.00000000e+00, 0.00000000e+00]
         Slip Normal: [1.00000000, 1.00000000, 1.00000000]
-      Slip System 2: 
+      Slip System 2:
         Slip Direction: [-1.00000000e+00, 0.00000000e+00, 1.00000000]
         Slip Normal: [1.00000000, 1.00000000, 1.00000000]
-      Slip System 3: 
+      Slip System 3:
         Slip Direction: [0.00000000e+00, 1.00000000, -1.00000000e+00]
         Slip Normal: [1.00000000, 1.00000000, 1.00000000]
-      Slip System 4: 
+      Slip System 4:
         Slip Direction: [1.00000000, 0.00000000e+00, 1.00000000]
         Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
-      Slip System 5: 
+      Slip System 5:
         Slip Direction: [-1.00000000e+00, -1.00000000e+00, 0.00000000e+00]
         Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
-      Slip System 6: 
+      Slip System 6:
         Slip Direction: [0.00000000e+00, 1.00000000, -1.00000000e+00]
         Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
-      Slip System 7: 
+      Slip System 7:
         Slip Direction: [-1.00000000e+00, 0.00000000e+00, 1.00000000]
         Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
-      Slip System 8: 
+      Slip System 8:
         Slip Direction: [0.00000000e+00, -1.00000000e+00, -1.00000000e+00]
         Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
-      Slip System 9: 
+      Slip System 9:
         Slip Direction: [1.00000000, 1.00000000, 0.00000000e+00]
         Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
-      Slip System 10: 
+      Slip System 10:
         Slip Direction: [-1.00000000e+00, 1.00000000, 0.00000000e+00]
         Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
-      Slip System 11: 
+      Slip System 11:
         Slip Direction: [1.00000000, 0.00000000e+00, 1.00000000]
         Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
-      Slip System 12: 
+      Slip System 12:
         Slip Direction: [0.00000000e+00, -1.00000000e+00, -1.00000000e+00]
         Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
-    base: 
-      Material Model: 
+    base:
+      Material Model:
         Model Name: J2
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 195000.00000000
-      Poissons Ratio: 
+      Poissons Ratio:
         Bulk Modulus Type: Constant
         Value: 0.30000000
-      Yield Strength: 
+      Yield Strength:
         Yield Strength Type: Constant
         Value: 144.00000000
-      Hardening Modulus: 
+      Hardening Modulus:
         Hardening Modulus Type: Constant
         Value: 300.00000000
       Saturation Modulus: 170.00000000

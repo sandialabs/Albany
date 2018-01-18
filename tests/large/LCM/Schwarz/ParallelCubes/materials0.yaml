@@ -1,17 +1,17 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    fine: 
+  ElementBlocks:
+    fine:
       material: Fine
-  Materials: 
-    Fine: 
-      Material Model: 
+  Materials:
+    Fine:
+      Material Model:
         Model Name: Linear Elastic
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 2.00000000e+11
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.30000000
       Output Cauchy Stress: true

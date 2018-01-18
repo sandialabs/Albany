@@ -1,15 +1,15 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    block_1: 
+  ElementBlocks:
+    block_1:
       material: Metal
       Weighted Volume Average J: true
       Average J Stabilization Parameter: 0.00000000e+00
       Volume Average Pressure: true
       Output Trapped_Concentration: true
       Output Total_Concentration: true
-    block_2: 
+    block_2:
       material: Fast Metal
       Weighted Volume Average J: true
       Average J Stabilization Parameter: 0.00000000e+00
@@ -18,13 +18,13 @@ LCM:
       Localization thickness parameter: 0.01000000
       Compute Membrane Forces: false
       Output surf_Trapped_Concentration: true
-  Materials: 
-    Metal: 
-      Material Model: 
+  Materials:
+    Metal:
+      Material Model:
         Model Name: J2
       Stabilization Parameter: 2.00000000
       Initial Concentration: 0.00003870
-      Transport Coefficients: 
+      Transport Coefficients:
         Partial Molar Volume: 2.00000000
         Ideal Gas Constant: 8.31400000e-06
         'Pre-exponential Factor': 540000.00000000
@@ -37,45 +37,45 @@ LCM:
         B Constant: 1.50000000
         C Constant: 6.96000000
         Avogadro's Number: 6.02214130e+11
-      Molar Volume: 
+      Molar Volume:
         Type: Constant
         Value: 7.11600000
-      Shear Modulus: 
+      Shear Modulus:
         Shear Modulus Type: Constant
         Value: 0.07538462
         dmudT Value: 0.00000000e+00
-      Bulk Modulus: 
+      Bulk Modulus:
         Bulk Modulus Type: Constant
         Value: 0.16333333
         dKdT Value: 0.00000000e+00
-      Thermal Conductivity: 
+      Thermal Conductivity:
         Thermal Conductivity Type: Constant
         Value: 0.00000000e+00
-      Yield Strength: 
+      Yield Strength:
         Yield Strength Type: Constant
         Value: 0.00071400
         dYdT Value: 0.00000000e+00
-      Hardening Modulus: 
+      Hardening Modulus:
         Hardening Modulus Type: Constant
         Value: 0.00000000e+00
         dHdT Value: 0.00000000e+00
       Reference Temperature: 300.00000000
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 0.19600000
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.30000000
       Saturation Modulus: 0.00207000
       Saturation Exponent: 1.00000000
       Output Cauchy Stress: true
       Output eqps: true
-    Fast Metal: 
-      Material Model: 
+    Fast Metal:
+      Material Model:
         Model Name: J2
       Stabilization Parameter: 2.00000000
       Initial Concentration: 0.00003870
-      Transport Coefficients: 
+      Transport Coefficients:
         Partial Molar Volume: 2.00000000
         Ideal Gas Constant: 8.31400000e-06
         'Pre-exponential Factor': 5.40000000e+08
@@ -88,33 +88,33 @@ LCM:
         B Constant: 1.50000000
         C Constant: 6.96000000
         Avogadro's Number: 6.02214130e+11
-      Molar Volume: 
+      Molar Volume:
         Type: Constant
         Value: 7.11600000
-      Shear Modulus: 
+      Shear Modulus:
         Shear Modulus Type: Constant
         Value: 0.07538462
         dmudT Value: 0.00000000e+00
-      Bulk Modulus: 
+      Bulk Modulus:
         Bulk Modulus Type: Constant
         Value: 0.16333333
         dKdT Value: 0.00000000e+00
-      Thermal Conductivity: 
+      Thermal Conductivity:
         Thermal Conductivity Type: Constant
         Value: 0.00000000e+00
-      Yield Strength: 
+      Yield Strength:
         Yield Strength Type: Constant
         Value: 0.00071400
         dYdT Value: 0.00000000e+00
-      Hardening Modulus: 
+      Hardening Modulus:
         Hardening Modulus Type: Constant
         Value: 0.00000000e+00
         dHdT Value: 0.00000000e+00
       Reference Temperature: 300.00000000
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 0.19600000
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.30000000
       Saturation Modulus: 0.00207000

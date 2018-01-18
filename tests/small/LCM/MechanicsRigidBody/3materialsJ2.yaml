@@ -1,22 +1,22 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    block_1: 
+  ElementBlocks:
+    block_1:
       material: Plastic
-    block_2: 
+    block_2:
       material: Plastic
-    block_3: 
+    block_3:
       material: Plastic
       Surface Element: true
-  Materials: 
-    Plastic: 
-      Material Model: 
+  Materials:
+    Plastic:
+      Material Model:
         Model Name: Neohookean
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 1.00000000e+08
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.20000000
 ...

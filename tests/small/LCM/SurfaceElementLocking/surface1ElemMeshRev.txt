@@ -1,4 +1,4 @@
-! Database Title     exotxt                          2012/11/07                       1.22                           
+! Database Title     exotxt                          2012/11/07                       1.22
 cubit(n/Desktop/Localization_scaled_test_1el_preexist_no_bulk.g): 11/03/2009: 13
 ! Database initial variables
          3      6.00        32     ! dimensions, version number, name length
@@ -7,7 +7,7 @@ cubit(n/Desktop/Localization_scaled_test_1el_preexist_no_bulk.g): 11/03/2009: 13
         32        32               ! len: node set list, dist fact length
          1         4         4     ! side sets len: element, node , dist fact
 ! Coordinate names
-X                                Y                                Z                               
+X                                Y                                Z
 ! Coordinates
   -5.0000000E-01  -5.0000000E-01  -5.0000000E-01
   -5.0000000E-01  -5.0000000E-01   5.0000000E-01
@@ -95,51 +95,51 @@ sequence 1..numel
          4   1.0000000E+00
 ! Properties
          1            ! Number of ELEMENT BLOCK Properties
-! Property Name: 
-ID                              
-! Property Value(s): 
+! Property Name:
+ID
+! Property Value(s):
          1
          1            ! Number of NODE SET Properties
-! Property Name: 
-ID                              
-! Property Value(s): 
+! Property Name:
+ID
+! Property Value(s):
          1          2          3          4          5          6          7
          8          9         10
          1            ! Number of SIDE SET Properties
-! Property Name: 
-ID                              
-! Property Value(s): 
+! Property Name:
+ID
+! Property Value(s):
        101
 ! QA Records
          7      ! QA records
-exo2txt                         
- 1.20                           
-20091222                        
-09:28:41                        
-txtexo2                         
- 1.11                           
-20091222                        
-10:06:28                        
-exo2txt                         
- 1.20                           
-20100609                        
-18:29:39                        
-txtexo2                         
- 1.11                           
-20100610                        
-09:28:12                        
-exotxt                          
- 1.22                           
-20140125                        
-20:03:27                        
-txtexo2                         
- 1.13                           
-20140125                        
-20:04:11                        
-exotxt                          
- 1.22                           
-20140126                        
-13:44:14                        
+exo2txt
+ 1.20
+20091222
+09:28:41
+txtexo2
+ 1.11
+20091222
+10:06:28
+exo2txt
+ 1.20
+20100609
+18:29:39
+txtexo2
+ 1.11
+20100610
+09:28:12
+exotxt
+ 1.22
+20140125
+20:03:27
+txtexo2
+ 1.13
+20140125
+20:04:11
+exotxt
+ 1.22
+20140126
+13:44:14
 ! Information Records
          0      ! information records
 ! Variable names

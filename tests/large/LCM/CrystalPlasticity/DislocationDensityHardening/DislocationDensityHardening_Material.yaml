@@ -1,17 +1,17 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    element: 
+  ElementBlocks:
+    element:
       material: FCC
       Weighted Volume Average J: true
       Volume Average Pressure: true
       Output Integration Weights: true
-  Materials: 
-    FCC: 
-      Material Model: 
+  Materials:
+    FCC:
+      Material Model:
         Model Name: CrystalPlasticity
-      Crystal Elasticity: 
+      Crystal Elasticity:
         C11: 267000.00
         C12: 161000.00000000
         C44: 82500.00000000
@@ -25,12 +25,12 @@ LCM:
       Implicit Integration Max Iterations: 100
       Output CP_Residual: true
       Verbosity: None
-      Slip System Family 0: 
-        Flow Rule: 
+      Slip System Family 0:
+        Flow Rule:
           Type: Power Law
           Reference Slip Rate: 0.00100000
           Rate Exponent: 80.00000000
-        Hardening Law: 
+        Hardening Law:
           Type: Dislocation Density
           Geometric Factor: 0.40000000
           #Units of Initial Hardening State must be consistent with
@@ -48,40 +48,40 @@ LCM:
           #  m:  2.87e-10, mm: 2.87e-7, um: 2.87e-4
           Burgers Vector Magnitude: 0.00028700
       Number of Slip Systems: 12
-      Slip System 1: 
+      Slip System 1:
         Slip Direction: [-1.00000000e+00, 1.00000000, 0.00000000e+00]
         Slip Normal: [1.00000000, 1.00000000, 1.00000000]
-      Slip System 2: 
+      Slip System 2:
         Slip Direction: [0.00000000e+00, -1.00000000e+00, 1.00000000]
         Slip Normal: [1.00000000, 1.00000000, 1.00000000]
-      Slip System 3: 
+      Slip System 3:
         Slip Direction: [1.00000000, 0.00000000e+00, -1.00000000e+00]
         Slip Normal: [1.00000000, 1.00000000, 1.00000000]
-      Slip System 4: 
+      Slip System 4:
         Slip Direction: [-1.00000000e+00, -1.00000000e+00, 0.00000000e+00]
         Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
-      Slip System 5: 
+      Slip System 5:
         Slip Direction: [1.00000000, 0.00000000e+00, 1.00000000]
         Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
-      Slip System 6: 
+      Slip System 6:
         Slip Direction: [0.00000000e+00, 1.00000000, -1.00000000e+00]
         Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
-      Slip System 7: 
+      Slip System 7:
         Slip Direction: [1.00000000, -1.00000000e+00, 0.00000000e+00]
         Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
-      Slip System 8: 
+      Slip System 8:
         Slip Direction: [0.00000000e+00, 1.00000000, 1.00000000]
         Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
-      Slip System 9: 
+      Slip System 9:
         Slip Direction: [-1.00000000e+00, 0.00000000e+00, -1.00000000e+00]
         Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
-      Slip System 10: 
+      Slip System 10:
         Slip Direction: [1.00000000, 1.00000000, 0.00000000e+00]
         Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
-      Slip System 11: 
+      Slip System 11:
         Slip Direction: [-1.00000000e+00, 0.00000000e+00, 1.00000000]
         Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
-      Slip System 12: 
+      Slip System 12:
         Slip Direction: [0.00000000e+00, -1.00000000e+00, -1.00000000e+00]
         Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
       Output Cauchy Stress: true

@@ -9,7 +9,7 @@ from subprocess import Popen
 result = 0
 
 ######################
-# Test 1 
+# Test 1
 ######################
 print "test 1 - DTKInterp Volume to NS Notched Cyl"
 name = "DTKInterpVolumeToNsNotchedCyl"
@@ -19,7 +19,7 @@ if os.path.exists(log_file_name):
 logfile = open(log_file_name, 'w')
 
 
-# run DTK_Interp_and_Error 
+# run DTK_Interp_and_Error
 command = ["mpirun", "-np", "4", "DTK_Interp_Volume_to_NS", "--yaml-in-file=input_schwarz.yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
@@ -32,7 +32,7 @@ if result != 0:
     sys.exit(result)
 
 with open(log_file_name, 'r') as log_file:
-    print log_file.read() 
+    print log_file.read()
 
 
 sys.exit(result)

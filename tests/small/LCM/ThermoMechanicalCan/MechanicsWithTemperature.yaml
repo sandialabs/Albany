@@ -1,50 +1,50 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: Mechanics 3D
     Solution Method: Continuation
     Phalanx Graph Visualization Detail: 0
     MaterialDB Filename: MechanicsWithTemperatureMaterials.yaml
-    Temperature: 
+    Temperature:
       Variable Type: DOF
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS nodelist_1 for DOF Z: 0.00000000e+00
       DBC on NS nodelist_2 for DOF Y: 0.00000000e+00
       DBC on NS nodelist_3 for DOF X: 0.00000000e+00
-      Time Dependent DBC on NS nodelist_1 for DOF T: 
+      Time Dependent DBC on NS nodelist_1 for DOF T:
         Time Values: [0.00000000e+00, 985.20000000, 3600.00000000]
         BC Values: [300.00000000, 800.00000000, 800.00000000]
-    Neumann BCs: 
-      Time Dependent NBC on SS surface_1 for DOF all set P: 
+    Neumann BCs:
+      Time Dependent NBC on SS surface_1 for DOF all set P:
         Time Values: [0.00000000e+00, 200.00000000, 3600.00000000]
         BC Values: [[0.00000000e+00], [7.15248332e+06], [2.61357490e+07]]
-    Initial Condition: 
+    Initial Condition:
       Function: Constant
       Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 300.00000000]
-    Parameters: 
+    Parameters:
       Number: 1
       Parameter 0: Time
-    Response Functions: 
+    Response Functions:
       Number: 3
       Response 0: Solution Average
       Response 1: Project IP to Nodal Field
       Response 2: IP to Nodal Field
-      ResponseParams 1: 
+      ResponseParams 1:
         Number of Fields: 2
         IP Field Name 0: Cauchy_Stress
         IP Field Layout 0: Tensor
         IP Field Name 1: eqps
         IP Field Layout 1: Scalar
         Output to File: true
-      ResponseParams 2: 
+      ResponseParams 2:
         Number of Fields: 2
         IP Field Name 0: Cauchy_Stress
         IP Field Layout 0: Tensor
         IP Field Name 1: eqps
         IP Field Layout 1: Scalar
         Output to File: true
-  Discretization: 
+  Discretization:
     Method: Exodus
     Exodus Input File Name: brick_model_2.g
     Exodus Output File Name: tm.exo
@@ -52,55 +52,55 @@ LCM:
     Residual Vector Components: [force, V, TempRes, S]
     Separate Evaluators by Element Block: true
     Use Serial Mesh: true
-  Regression Results: 
+  Regression Results:
     Number of Comparisons: 1
     Test Values: [79.54519701]
     Relative Tolerance: 0.01000000
     Absolute Tolerance: 0.01000000
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         Method: Constant
-      Stepper: 
+      Stepper:
         Continuation Method: Natural
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
         Max Steps: 6
         Max Value: 600.00000000
         Min Value: 0.00000000e+00
-      Step Size: 
+      Step Size:
         Initial Step Size: 10.00000000
         Method: Constant
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
-          Linear Solver: 
+        Newton:
+          Linear Solver:
             Tolerance: 1.00000000e-06
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 10
                     Max Iterations: 360
                     Tolerance: 1.00000000e-05
-                Belos: 
-                  VerboseObject: 
+                Belos:
+                  VerboseObject:
                     Verbosity Level: low
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 1.00000000e-06
                       Maximum Iterations: 200
                       Output Frequency: 20
@@ -110,13 +110,13 @@ LCM:
                       Num Blocks: 200
                       Flexible Gmres: false
               Preconditioner Type: MueLu
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
-        Output Information: 
+      Printing:
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -128,28 +128,28 @@ LCM:
           Stepper Parameters: false
         Output Precision: 3
         Output Processor: 0
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Complete
-      Status Tests: 
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 5
-        Test 0: 
+        Test 0:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Scaled
           Tolerance: 1.00000000e-06
-        Test 1: 
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 100
-        Test 2: 
+        Test 2:
           Test Type: NormF
           Scale Type: Unscaled
           Tolerance: 1.00000000e-06
-        Test 3: 
+        Test 3:
           Test Type: NormUpdate
           Scale Type: Unscaled
           Tolerance: 1.00000000e-06
-        Test 4: 
+        Test 4:
           Test Type: FiniteValue
 ...

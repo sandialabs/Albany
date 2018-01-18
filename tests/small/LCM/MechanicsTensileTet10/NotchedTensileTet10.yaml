@@ -1,32 +1,32 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: Mechanics 3D
     Solution Method: Continuation
     MaterialDB Filename: materials.yaml
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS nodelist_2 for DOF Z: 0.00000000e+00
       DBC on NS nodelist_3 for DOF Y: 0.00000000e+00
       DBC on NS nodelist_4 for DOF X: 0.00000000e+00
-      Time Dependent DBC on NS nodelist_1 for DOF Z: 
+      Time Dependent DBC on NS nodelist_1 for DOF Z:
         Number of points: 2
         Time Values: [0.00000000e+00, 1.00000000]
         BC Values: [0.00000000e+00, 0.00200000]
-    Parameters: 
+    Parameters:
       Number: 1
       Parameter 0: Time
-    Response Functions: 
+    Response Functions:
       Number: 3
       Response 0: Solution Average
       Response 1: Solution Max Value
       Response 2: IP to Nodal Field
-      ResponseParams 2: 
+      ResponseParams 2:
         Number of Fields: 1
         IP Field Name 0: Cauchy_Stress
         IP Field Layout 0: Tensor
         Output to File: true
-  Discretization: 
+  Discretization:
     Method: Exodus
     Exodus Input File Name: notched_tensile_tet10.g
     Exodus Output File Name: notched_tensile_tet10_quad_J2.e
@@ -34,71 +34,71 @@ LCM:
     Cubature Degree: 2
     Exodus Solution Name: disp
     Exodus Residual Name: resid
-  Regression Results: 
+  Regression Results:
     Number of Comparisons: 1
     Test Values: [0.00003084]
     Relative Tolerance: 1.00000000e-05
     Number of Sensitivity Comparisons: 0
     Sensitivity Test Values 0: [0.00000000e+00]
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         Method: Tangent
-      Stepper: 
+      Stepper:
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
         Max Steps: 1
         Max Value: 0.10000000
         Min Value: 0.00000000e+00
         Compute Eigenvalues: false
-        Eigensolver: 
+        Eigensolver:
           Method: Anasazi
           Operator: Jacobian Inverse
           Num Eigenvalues: 0
-      Step Size: 
+      Step Size:
         Initial Step Size: 0.10000000
         Method: Constant
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 10
                     Max Iterations: 200
                     Tolerance: 1.00000000e-05
-                Belos: 
-                  VerboseObject: 
+                Belos:
+                  VerboseObject:
                     Verbosity Level: medium
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Output Frequency: 10
                       Output Style: 1
                       Verbosity: 1248
                       Flexible Gmres: false
                       Maximum Iterations: 500
                       Convergence Tolerance: 1.00000000e-06
-                    Block CG: 
+                    Block CG:
                       Output Frequency: 1
               Preconditioner Type: ML
-              Preconditioner Types: 
-                ML: 
+              Preconditioner Types:
+                ML:
                   Base Method Defaults: none
-                  ML Settings: 
+                  ML Settings:
                     default values: SA
                     prec type: 'full-MGV'
                     max levels: 4
@@ -111,22 +111,22 @@ LCM:
                     'smoother: pre or post': both
                     'coarse: max size': 1500
                     PDE equations: 3
-                Ifpack: 
+                Ifpack:
                   Overlap: 2
                   Prec Type: ILU
-                  Ifpack Settings: 
+                  Ifpack Settings:
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
                     'fact: level-of-fill': 1
-      Line Search: 
-        Backtrack: 
+      Line Search:
+        Backtrack:
           Full Step: 1.00000000
         Method: Backtrack
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Precision: 3
         Output Processor: 0
-        Output Information: 
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -136,30 +136,30 @@ LCM:
           Stepper Iteration: true
           Stepper Details: true
           Stepper Parameters: true
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Complete
-      Status Tests: 
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 2
-        Test 0: 
+        Test 0:
           Test Type: Combo
           Combo Type: AND
           Number of Tests: 2
-          Test 0: 
+          Test 0:
             Test Type: NStep
             Number of Nonlinear Iterations: 0
-          Test 1: 
+          Test 1:
             Test Type: NormF
             Scale Type: Unscaled
             Tolerance: 1.00000000e-07
-        Test 1: 
+        Test 1:
           Test Type: Combo
           Combo Type: OR
           Number of Tests: 2
-          Test 0: 
+          Test 0:
             Test Type: MaxIters
             Maximum Iterations: 15
-          Test 1: 
+          Test 1:
             Test Type: FiniteValue
 ...

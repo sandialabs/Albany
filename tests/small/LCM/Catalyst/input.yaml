@@ -1,55 +1,55 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: Elasticity 3D
     Solution Method: Continuation
     Phalanx Graph Visualization Detail: 0
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS nodelist_1 for DOF X: 0.00000000e+00
       DBC on NS nodelist_1 for DOF Y: 0.00000000e+00
       DBC on NS nodelist_1 for DOF Z: 0.00000000e+00
       DBC on NS nodelist_2 for DOF X: 0.00000000e+00
       DBC on NS nodelist_2 for DOF Y: 0.00000000e+00
       DBC on NS nodelist_2 for DOF Z: 0.00000000e+00
-    Catalyst: 
+    Catalyst:
       Interface Activated: true
       Pipeline Files: [/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Albany/build/examples/LCM/Catalyst/pipeline.py]
-    Neumann BCs: 
-      Time Dependent NBC on SS surface_1 for DOF all set P: 
+    Neumann BCs:
+      Time Dependent NBC on SS surface_1 for DOF all set P:
         Time Values: [0.00000000e+00, 1.00000000, 2.00000000]
         BC Values: [[0.00000000e+00], [10.00000000], [20.00000000]]
-    Elastic Modulus: 
+    Elastic Modulus:
       Elastic Modulus Type: Constant
       Value: 100.00000000
-    Poissons Ratio: 
+    Poissons Ratio:
       Poissons Ratio Type: Constant
       Value: 0.29000000
-    Parameters: 
+    Parameters:
       Number: 1
       Parameter 0: Time
-    Response Functions: 
+    Response Functions:
       Number: 2
       Response 0: Solution Average
       Response 1: Solution Max Value
-  Discretization: 
+  Discretization:
     Method: Ioss
     Exodus Input File Name: cyl.exo
     Exodus Output File Name: cyl_transient_out.exo
     Use Serial Mesh: true
     Exodus Solution Name: disp
     Exodus Residual Name: resid
-  Regression Results: 
+  Regression Results:
     Number of Comparisons: 2
     Test Values: [-1.37227986e-05, 0.05635030]
     Absolute Tolerance: 0.00010000
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         Method: Constant
-      Stepper: 
+      Stepper:
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
         Max Steps: 500
@@ -57,40 +57,40 @@ LCM:
         Min Value: 0.00000000e+00
         Compute Eigenvalues: false
         Skip Parameter Derivative: true
-        Eigensolver: 
+        Eigensolver:
           Method: Anasazi
           Operator: Jacobian Inverse
           Num Eigenvalues: 0
-      Step Size: 
+      Step Size:
         Initial Step Size: 0.10000000
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  VerboseObject: 
+              Linear Solver Types:
+                AztecOO:
+                  VerboseObject:
                     Verbosity Level: none
-                  Forward Solve: 
-                    AztecOO Settings: 
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 10
                     Max Iterations: 200
                     Tolerance: 1.00000000e-10
-                Belos: 
-                  VerboseObject: 
+                Belos:
+                  VerboseObject:
                     Verbosity Level: none
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 1.00000000e-06
                       Output Frequency: 0
                       Output Style: 0
@@ -100,22 +100,22 @@ LCM:
                       Num Blocks: 200
                       Flexible Gmres: false
               Preconditioner Type: Ifpack2
-              Preconditioner Types: 
-                Ifpack2: 
+              Preconditioner Types:
+                Ifpack2:
                   Overlap: 1
                   Prec Type: ILUT
-                  Ifpack2 Settings: 
+                  Ifpack2 Settings:
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Precision: 3
         Output Processor: 0
-        Output Information: 
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -125,24 +125,24 @@ LCM:
           Stepper Iteration: true
           Stepper Details: true
           Stepper Parameters: true
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Complete
-      Status Tests: 
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 4
-        Test 0: 
+        Test 0:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Scaled
           Tolerance: 1.00000000e-10
-        Test 1: 
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 15
-        Test 2: 
+        Test 2:
           Test Type: NormF
           Scale Type: Unscaled
           Tolerance: 1.00000000e-07
-        Test 3: 
+        Test 3:
           Test Type: FiniteValue
 ...

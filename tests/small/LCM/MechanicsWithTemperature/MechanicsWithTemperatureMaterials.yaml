@@ -1,34 +1,34 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    Block0: 
+  ElementBlocks:
+    Block0:
       material: Metal
-  Materials: 
-    Metal: 
-      Material Model: 
+  Materials:
+    Metal:
+      Material Model:
         Model Name: J2
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 205700.00
         Reference Temperature: 293.00000000
         Linear Temperature Coefficient: -1.00000000e-02
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.29000000
         Reference Temperature: 293.00000000
         Linear Temperature Coefficient: 0.00000000e+00
-      Yield Strength: 
+      Yield Strength:
         Yield Strength Type: Constant
         Value: 450.00000000
         Reference Temperature: 293.00000000
         Linear Temperature Coefficient: -2.00000000e-03
-      Hardening Modulus: 
+      Hardening Modulus:
         Hardening Modulus Type: Constant
         Value: 129.24000000
         Reference Temperature: 293.00000000
         Linear Temperature Coefficient: -2.00000000e-03
-      Thermal Conductivity: 
+      Thermal Conductivity:
         Thermal Conductivity Type: Constant
         Value: 45.00000000
       Reference Temperature: 293.00000000

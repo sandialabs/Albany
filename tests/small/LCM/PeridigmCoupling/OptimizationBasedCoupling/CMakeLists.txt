@@ -14,7 +14,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OptimizationBasedCouplingCMWA_Analysi
 
 
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-if (ALBANY_EPETRA) 
+if (ALBANY_EPETRA)
 add_test(PeridigmCoupling_OptimizationBasedCoupling_np1_Epetra python ../run_exodiff_test.py "${SerialAlbany.exe}" OptimizationBasedCouplingCMWA_Analysis.yaml)
 add_test(PeridigmCoupling_OptimizationBasedCoupling_np4_Epetra python ../run_exodiff_test.py "${Albany.exe}" OptimizationBasedCouplingCMWA_Analysis.yaml)
 endif()

@@ -1,6 +1,6 @@
 We need a common set of problems to collaborate
 
-A) Verify the anisotropic damage model 
+A) Verify the anisotropic damage model
 
 1) 1 surface element -> this enables testing of plasticity models (that neck)
 
@@ -17,7 +17,7 @@ A) Verify the anisotropic damage model
    Test: TaperedBarAniso
    Material model: AnisotropicHyperelasticDamage (AHD)
 
-4) K-field BC with anisotropic crack growth 
+4) K-field BC with anisotropic crack growth
 
    Test: KfieldAniso
    Material model: AnisotropicHyperelasticDamage (AHD)

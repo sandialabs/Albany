@@ -3,7 +3,7 @@
 LCM:
   Scaling:
     Scale: 1.0
-  Debug Output: 
+  Debug Output:
     Write Jacobian to MatrixMarket: 0
     Write Jacobian to Standard Output: 0
     Write Residual to MatrixMarket: 0
@@ -22,7 +22,7 @@ LCM:
       DBC on NS nodelist_1 for DOF X: 0.0
       DBC on NS nodelist_3 for DOF Y: 0.0
       DBC on NS nodelist_5 for DOF Z: 0.0
-      Time Dependent DBC on NS nodelist_6 for DOF Z: 
+      Time Dependent DBC on NS nodelist_6 for DOF Z:
         Number of points: 2
         Time Values: [0.0, 2.0]
         BC Values: [0.0, 2.0]

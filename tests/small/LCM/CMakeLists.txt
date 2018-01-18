@@ -52,7 +52,7 @@ IF(ALBANY_HAVE_STK)
     add_subdirectory(TorsionBC)
     add_subdirectory(DynamicsTempus)
     # JTO 8/1/2015
-    # deactivating HeliumDamage until model robustness issues are resolved  
+    # deactivating HeliumDamage until model robustness issues are resolved
     # add_subdirectory(HeliumDamage)
     IF(ALBANY_EPETRA AND ALBANY_PERIDIGM)
       add_subdirectory(PeridigmCoupling)

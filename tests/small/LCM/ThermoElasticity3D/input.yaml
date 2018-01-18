@@ -1,17 +1,17 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: ThermoElasticity 3D
     Phalanx Graph Visualization Detail: 1
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS NodeSet0 for DOF X: 0.00000000e+00
       DBC on NS NodeSet1 for DOF X: 1.00000000
       DBC on NS NodeSet2 for DOF Y: 0.00000000e+00
       DBC on NS NodeSet5 for DOF Z: 0.00000000e+00
       DBC on NS NodeSet2 for DOF T: 0.00000000e+00
       DBC on NS NodeSet3 for DOF T: 1.00000000
-    Elastic Modulus: 
+    Elastic Modulus:
       Elastic Modulus Type: Truncated KL Expansion
       Number of KL Terms: 2
       Mean: 0.40000000
@@ -22,7 +22,7 @@ LCM:
       Domain Upper Bounds: '{1.0, 1.0, 1.0}'
       Correlation Lengths: '{0.1, 0.1, 0.1}'
       dEdT Value: 1.00000000
-    Poissons Ratio: 
+    Poissons Ratio:
       Poissons Ratio Type: Truncated KL Expansion
       Number of KL Terms: 2
       Mean: 50.00000000
@@ -33,56 +33,56 @@ LCM:
       Domain Upper Bounds: '{1.0, 1.0, 1.0}'
       Correlation Lengths: '{0.1, 0.1, 0.1}'
       dnudT Value: 40.00000000
-    Parameters: 
+    Parameters:
       Number: 0
-    Response Functions: 
+    Response Functions:
       Number: 1
       Response 0: Solution Average
-  Discretization: 
+  Discretization:
     1D Elements: 10
     2D Elements: 20
     3D Elements: 15
     Method: STK3D
     Exodus Output File Name: thel3d.exo
-  Regression Results: 
+  Regression Results:
     Number of Comparisons: 1
     Test Values: [1.31329857]
     Relative Tolerance: 0.00010000
     Absolute Tolerance: 0.00010000
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         First Step Predictor: { }
         Last Step Predictor: { }
       Step Size: { }
-      Stepper: 
+      Stepper:
         Eigensolver: { }
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 10
                     Max Iterations: 200
                     Tolerance: 1.00000000e-09
-                Belos: 
+                Belos:
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 1.00000000e-08
                       Output Frequency: 10
                       Output Style: 1
@@ -92,8 +92,8 @@ LCM:
                       Num Blocks: 500
                       Flexible Gmres: false
               Preconditioner Type: MueLu
-              Preconditioner Types: 
-                MueLu: 
+              Preconditioner Types:
+                MueLu:
                   multigrid algorithm: sa
                   'smoother: type': Chebyshev
                   'smoother: pre or post': both
@@ -103,29 +103,29 @@ LCM:
                   'repartition: partitioner': zoltan2
                   'repartition: max imbalance': 1.30000000
                   'repartition: min rows per proc': 500
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Information: 103
         Output Precision: 3
         Output Processor: 0
-      Status Tests: 
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 3
-        Test 0: 
+        Test 0:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Scaled
           Tolerance: 1.00000000e-09
-        Test 1: 
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 30
-        Test 2: 
+        Test 2:
           Test Type: FiniteValue
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
 ...

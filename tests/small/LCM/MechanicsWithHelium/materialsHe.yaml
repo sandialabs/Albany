@@ -1,8 +1,8 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    Block0: 
+  ElementBlocks:
+    Block0:
       material: '21-6-9'
       Weighted Volume Average J: true
       Volume Average Pressure: true
@@ -11,13 +11,13 @@ LCM:
       Output He_Concentration: true
       Output Total_Bubble_Density: true
       Output Bubble_Volume_Fraction: true
-  Materials: 
-    '21-6-9': 
-      Material Model: 
+  Materials:
+    '21-6-9':
+      Material Model:
         Model Name: Elasto Viscoplastic
       Stabilization Parameter: 2.0000000
       Initial Concentration: 0.00056000
-      Transport Coefficients: 
+      Transport Coefficients:
         Partial Molar Volume: 2.00000000
         Ideal Gas Constant: 0.00831400
         'Pre-exponential Factor': 540000.00000000
@@ -30,15 +30,15 @@ LCM:
         B Constant: 1.50000000
         C Constant: 6.96000000
         Avogadro's Number: 6.02214130e+11
-      Tritium Coefficients: 
+      Tritium Coefficients:
         Tritium Decay Constant: 1.79000000e-09
         Helium Radius: 0.00025000
         Atoms Per Cluster: 10.00000000
         Evaluate HeliumODEs: true
-      Molar Volume: 
+      Molar Volume:
         Type: Constant
         Value: 7.11600000
-      Thermal Conductivity: 
+      Thermal Conductivity:
         Thermal Conductivity Type: Constant
         Value: 0.00000000e+00
       Reference Temperature: 300.00000000
@@ -47,37 +47,37 @@ LCM:
       Thermal Expansion Coefficient: 0.00000000e+00
       Density: 7.80600000e-18
       Heat Capacity: 1.00000000
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 196.00000000
         Reference Temperature: 300.00000000
         Linear Temperature Coefficient: -0.00000000e+00
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.30000000
         Reference Temperature: 300.00000000
         Linear Temperature Coefficient: -0.00000000e+00
-      Yield Strength: 
+      Yield Strength:
         Yield Strength Type: Constant
         Value: 0.71400000
         Reference Temperature: 300.00000000
         Linear Temperature Coefficient: -0.00000000e+00
-      Hardening Modulus: 
+      Hardening Modulus:
         Hardening Modulus Type: Constant
         Value: 0.01570000
         Temperature Dependence Type: Arrhenius
         Pre Exponential: 0.01570000
         Exponential Parameter: 0.00000000e+00
-      Recovery Modulus: 
+      Recovery Modulus:
         Recovery Modulus Type: Constant
         Value: 1.96000000
         Temperature Dependence Type: Arrhenius
         Pre Exponential: 1.96000000
         Exponential Parameter: 0.00000000e+00
-      Flow Rule Coefficient: 
+      Flow Rule Coefficient:
         Flow Rule Coefficient Type: Constant
         Value: 100.00000000
-      Flow Rule Exponent: 
+      Flow Rule Exponent:
         Flow Rule Exponent Type: Constant
         Value: 1.00000000
       Initial Void Volume: 0.00000000e+00

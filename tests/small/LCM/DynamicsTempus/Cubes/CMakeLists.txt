@@ -39,15 +39,15 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/larger-cubes-tempus-expl.yaml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 if (ALBANY_TEMPUS)
-if (ALBANY_IFPACK2) 
+if (ALBANY_IFPACK2)
 add_test(Serial_Dynamic_${testName}_NewmarkImplicitAForm_Tempus ${SerialAlbanyT.exe} cube-single-tempus.yaml)
 add_test(Parallel_Dynamic_${testName}_NewmarkImplicitAForm_Tempus ${AlbanyT8.exe} larger-cubes-tempus.yaml)
 add_test(Parallel_Dynamic_${testName}_NewmarkExplicitAForm_LumpedMass_Tempus ${AlbanyT8.exe} larger-cubes-tempus-expl.yaml)
 endif()
 endif()
 
-if (ALBANY_EPETRA) 
+if (ALBANY_EPETRA)
 add_test(Serial_Dynamic_${testName}_Newmark_Piro ${SerialAlbany.exe} cube-single-piro.yaml)
 add_test(Parallel_Dynamic_${testName}_Newmark_Piro ${Albany8.exe} larger-cubes-piro.yaml)
-endif() 
+endif()
 

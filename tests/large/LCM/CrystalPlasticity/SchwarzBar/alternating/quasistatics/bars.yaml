@@ -1,5 +1,5 @@
 LCM:
-  Alternating System: 
+  Alternating System:
     Model Input Files: ['lower_bar.yaml', 'gauge.yaml', 'upper_bar.yaml']
     Minimum Iterations: 1
     Maximum Iterations: 32

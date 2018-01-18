@@ -62,7 +62,7 @@ def EulerAngles(R):
         # case for sin(Phi) == 0
         # if sine_val == 0, phi2 = 0, and ph1 = atan2(R21,R11)
 
-        phi1 = math.atan2(R_12, R_11)    
+        phi1 = math.atan2(R_12, R_11)
         phi2 = 0.0
 
     euler = [phi1, Phi, phi2]
@@ -232,7 +232,7 @@ if __name__ == "__main__":
             block_orientations[block_id].append(orientations[i][7])
             block_orientations[block_id].append(orientations[i][2])
             block_orientations[block_id].append(orientations[i][5])
-            block_orientations[block_id].append(orientations[i][8])            
+            block_orientations[block_id].append(orientations[i][8])
 
     for i in range(len(block_ids)):
         block_id = block_ids[i]
@@ -306,7 +306,7 @@ if __name__ == "__main__":
                 print "  num attr", block_num_attributes[i]
                 print "  conn array len", len(block_connectivity[combined_block_id])
                 print "  attr array len", len(block_attributes[combined_block_id])
-        
+
     # Write ExodusII file
 
     genesis_output_name = genesis_input_name[:-2] + "_orientation.g"
@@ -352,14 +352,14 @@ if __name__ == "__main__":
 
     if len(elem_id_map) > 0:
         genesis_output.put_elem_id_map(elem_id_map)
-        
+
     for block_id in block_ids:
         genesis_output.put_elem_connectivity(block_id, block_connectivity[block_id])
         if len(block_attributes[block_id]) != 0:
             genesis_output.put_elem_attr(block_id, block_attributes[block_id])
             #for i in range(len(block_attributes[block_id])/3):
             #    print block_attributes[block_id][3*i], block_attributes[block_id][3*i+1], block_attributes[block_id][3*i+2]
-            
+
 
     for node_set_id in node_set_ids:
         genesis_output.put_node_set_params(node_set_id, len(node_set_nodes[node_set_id]), len(node_set_distribution_factors[node_set_id]))

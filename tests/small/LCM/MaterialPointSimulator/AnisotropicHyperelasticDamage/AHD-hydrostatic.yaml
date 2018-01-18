@@ -1,17 +1,17 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    Block0: 
+  ElementBlocks:
+    Block0:
       material: Composite
-  Materials: 
-    Composite: 
-      Material Model: 
+  Materials:
+    Composite:
+      Material Model:
         Model Name: AHD
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 200000.00
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.30000000
       Fiber 1 k: 10000.00000000
@@ -36,7 +36,7 @@ LCM:
       Output Fiber 1 Damage: true
       Output Fiber 2 Energy: true
       Output Fiber 2 Damage: true
-      Material Point Simulator: 
+      Material Point Simulator:
         Loading Case Name: hydrostatic
         Number of Steps: 10
         Step Size: 0.01000000

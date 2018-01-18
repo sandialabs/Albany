@@ -1,89 +1,89 @@
 %YAML 1.1
 ---
 LCM:
-  Problem: 
+  Problem:
     Name: Mechanics 3D
     Solution Method: Continuation
     Phalanx Graph Visualization Detail: 1
     MaterialDB Filename: PoroMaterials.yaml
-    Pore Pressure: 
+    Pore Pressure:
       Variable Type: DOF
-    Dirichlet BCs: 
-      Time Dependent DBC on NS nodelist_2 for DOF X: 
+    Dirichlet BCs:
+      Time Dependent DBC on NS nodelist_2 for DOF X:
         Number of points: 3
         Time Values: [0.00000000e+00, 3600.00000000, 7200.00000000]
         BC Values: [0.00000000e+00, 5.00000000e-06, 1.00000000e-05]
-      Time Dependent DBC on NS nodelist_3 for DOF X: 
+      Time Dependent DBC on NS nodelist_3 for DOF X:
         Number of points: 3
         Time Values: [0.00000000e+00, 3600.00000000, 7200.00000000]
         BC Values: [0.00000000e+00, -5.00000000e-06, -1.00000000e-05]
       DBC on NS nodelist_2 for DOF Y: 0.00000000e+00
       DBC on NS nodelist_3 for DOF Y: 0.00000000e+00
       DBC on NS nodelist_1 for DOF Z: 0.00000000e+00
-    Parameters: 
+    Parameters:
       Number: 1
       Parameter 0: Time
-    Response Functions: 
+    Response Functions:
       Number: 1
       Response 0: Solution Average
-  Discretization: 
+  Discretization:
     Method: Exodus
     Exodus Input File Name: surface3ElemMesh.g
     Exodus Output File Name: PoroShearOut_from_localized_off.e
     Separate Evaluators by Element Block: true
     Use Serial Mesh: true
     Cubature Degree: 3
-  Regression Results: 
+  Regression Results:
     Number of Comparisons: 1
     Test Values: [2724.00000000]
     Relative Tolerance: 5.00000000
     Absolute Tolerance: 5.00000000
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         Method: Tangent
-      Stepper: 
+      Stepper:
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
         Max Steps: 10
         Max Value: 7200.00000000
         Min Value: 0.00000000e+00
         Compute Eigenvalues: false
-        Eigensolver: 
+        Eigensolver:
           Method: Anasazi
           Operator: Jacobian Inverse
           Num Eigenvalues: 0
-      Step Size: 
+      Step Size:
         Initial Step Size: 100.00000000
         Max Step Size: 5.00000000
         Method: Adaptive
         Aggressiveness: 0.20000000
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 9999
                       Output Frequency: 10
                     Max Iterations: 1000
                     Tolerance: 1.00000000e-14
-                Belos: 
+                Belos:
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 1.00000000e-09
                       Output Frequency: 0
                       Output Style: 0
@@ -93,41 +93,41 @@ LCM:
                       Num Blocks: 99000
                       Flexible Gmres: true
               Preconditioner Type: Ifpack2
-              Preconditioner Types: 
-                Ifpack2: 
+              Preconditioner Types:
+                Ifpack2:
                   Overlap: 2
                   Prec Type: ILUT
-                  Ifpack2 Settings: 
+                  Ifpack2 Settings:
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Information: 103
         Output Precision: 3
         Output Processor: 0
-      Status Tests: 
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 4
-        Test 0: 
+        Test 0:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Scaled
           Tolerance: 5.00000000e-14
-        Test 1: 
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 15
-        Test 2: 
+        Test 2:
           Test Type: Stagnation
           Consecutive Iterations: 5
           Tolerance: 0.99000000
-        Test 3: 
+        Test 3:
           Test Type: NormUpdate
           Tolerance: 0.01000000
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Complete
 ...

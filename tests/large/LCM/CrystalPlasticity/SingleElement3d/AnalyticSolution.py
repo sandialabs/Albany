@@ -66,7 +66,7 @@ def ConstructBasisVectors(R):
     BasisVector1 = [0.0, 0.0, 0.0]
     BasisVector2 = [0.0, 0.0, 0.0]
     BasisVector3 = [0.0, 0.0, 0.0]
-    
+
     for i in range(3):
         for j in range(3):
             BasisVector1[i] += R[i][j]*e1[j]
@@ -109,7 +109,7 @@ def ComputeCauchyStress(C11, C12, C44, R, DeformationGradient):
                                  [[[ C[5][0], C[5][3], C[5][5] ], [ C[5][3], C[5][1], C[5][4] ], [ C[5][5], C[5][4], C[5][2] ]],
                                   [[ C[4][0], C[4][3], C[4][5] ], [ C[4][3], C[4][1], C[4][4] ], [ C[4][5], C[4][4], C[4][2] ]],
                                   [[ C[2][0], C[2][3], C[2][5] ], [ C[2][3], C[2][1], C[2][4] ], [ C[2][5], C[2][4], C[2][2] ]]]]
-    
+
     ZeroFourthOrderTensor =  [[[[ 0.0, 0.0, 0.0 ], [ 0.0, 0.0, 0.0 ], [ 0.0, 0.0, 0.0 ]],
                                [[ 0.0, 0.0, 0.0 ], [ 0.0, 0.0, 0.0 ], [ 0.0, 0.0, 0.0 ]],
                                [[ 0.0, 0.0, 0.0 ], [ 0.0, 0.0, 0.0 ], [ 0.0, 0.0, 0.0 ]]],
@@ -131,7 +131,7 @@ def ComputeCauchyStress(C11, C12, C44, R, DeformationGradient):
 
     Temp = deepcopy(ElasticityTensorRotated)
     ElasticityTensorRotated = deepcopy(ZeroFourthOrderTensor)
-    
+
     for m in range(3):
         for n in range(3):
             for k in range(3):
@@ -141,7 +141,7 @@ def ComputeCauchyStress(C11, C12, C44, R, DeformationGradient):
 
     Temp = deepcopy(ElasticityTensorRotated)
     ElasticityTensorRotated = deepcopy(ZeroFourthOrderTensor)
-    
+
     for m in range(3):
         for j in range(3):
             for k in range(3):
@@ -151,7 +151,7 @@ def ComputeCauchyStress(C11, C12, C44, R, DeformationGradient):
 
     Temp = deepcopy(ElasticityTensorRotated)
     ElasticityTensorRotated = deepcopy(ZeroFourthOrderTensor)
-        
+
     for i in range(3):
         for j in range(3):
             for k in range(3):
@@ -215,7 +215,7 @@ def ComputeCauchyStress(C11, C12, C44, R, DeformationGradient):
     for i in range(3):
         for j in range(3):
             for k in range(3):
-                CauchyStress[i][j] += (1.0/J)*DeformationGradient[i][k]*Temp[k][j]      
+                CauchyStress[i][j] += (1.0/J)*DeformationGradient[i][k]*Temp[k][j]
 
     return CauchyStress
 
@@ -228,7 +228,7 @@ if __name__ == "__main__":
     DeformationGradient = [[1.0, 0.1, 0.0],
                            [0.0, 1.0, 0.0],
                            [0.0, 0.0, 1.0]]
-    
+
     print "\n**** CASE 1:  CRYSTAL LATTICE ALIGNED WITH COORDINATE AXES ****"
 
     Bunge_Euler_phi1 = 0.0
@@ -254,11 +254,11 @@ if __name__ == "__main__":
     print "\nActive Rotation Tensor"
     for i in range(3):
         print R_active[i]
-        
+
     print "\nDeformation Gradient"
     for i in range(3):
         print DeformationGradient[i]
-        
+
     print "\nCauchy Stress"
     for i in range(3):
         print CauchyStress[i]
@@ -268,7 +268,7 @@ if __name__ == "__main__":
     Bunge_Euler_phi1 = 0.12
     Bunge_Euler_Phi = 0.03
     Bunge_Euler_phi2 = 0.28
-    
+
     R_active = ConstructActiveRotationTensor(Bunge_Euler_phi1, Bunge_Euler_Phi, Bunge_Euler_phi2)
 
     BasisVector1, BasisVector2, BasisVector3 = ConstructBasisVectors(R_active)
@@ -295,7 +295,7 @@ if __name__ == "__main__":
     print "\nDeformation Gradient"
     for i in range(3):
         print DeformationGradient[i]
-        
+
     print "\nCauchy Stress"
     for i in range(3):
         print CauchyStress[i]

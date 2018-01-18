@@ -9,7 +9,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}Simple NAME)
 
 # Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
-  if (ALBANY_IFPACK2) 
+  if (ALBANY_IFPACK2)
     add_test(${testName}_Serial ${SerialAlbanyT.exe} inputMechanicsSimple.yaml)
   endif()
 ENDIF()
@@ -47,7 +47,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}Localized NAME)
 
 # Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
-  if (ALBANY_IFPACK2) 
+  if (ALBANY_IFPACK2)
     add_test(${testName}_Serial ${SerialAlbanyT.exe} inputMechanicsLocalized.yaml)
   endif()
 ENDIF()
@@ -65,7 +65,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}ParallelFlow NAME)
 
 # Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
-  if (ALBANY_IFPACK2) 
+  if (ALBANY_IFPACK2)
     add_test(${testName}_Serial ${SerialAlbanyT.exe} inputParallelFlow.yaml)
   endif()
 ENDIF()

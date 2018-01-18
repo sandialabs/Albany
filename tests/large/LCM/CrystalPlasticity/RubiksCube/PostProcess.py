@@ -64,7 +64,7 @@ if __name__ == "__main__":
     nodeset_force = []
 
     for timeStep in range(numTimeSteps):
-        
+
         displacement_x = inFile.get_node_variable_values('displacement_x', timeStep+1)
         force_x = inFile.get_node_variable_values('force_x', timeStep+1)
 
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     print "Force-displacement data for written to", outFileName
 
     print
-    
+
     fig, ax = plt.subplots()
     ax.plot(nodeset_displacement[:],nodeset_force[:],color='blue',marker='o',label='1 elem/block')
     plt.xlabel('displacement (mm)')

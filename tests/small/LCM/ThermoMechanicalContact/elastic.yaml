@@ -1,42 +1,42 @@
 %YAML 1.1
 ---
 LCM:
-  ElementBlocks: 
-    block_1: 
+  ElementBlocks:
+    block_1:
       material: zircalloy
     block_2:
       material: oxide
-  Materials: 
-    zircalloy: 
-      Material Model: 
+  Materials:
+    zircalloy:
+      Material Model:
         Model Name: Linear Elastic
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 100000.00
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.30000000
-      Thermal Conductivity: 
+      Thermal Conductivity:
         Thermal Conductivity Type: Constant
         Value: 5.00000000
       Thermal Transient Coefficient: 1.00000000
       Thermal Expansion Coefficient: 0.00100000
-    oxide: 
-      Material Model: 
+    oxide:
+      Material Model:
         Model Name: Linear Elastic
-      Elastic Modulus: 
+      Elastic Modulus:
         Elastic Modulus Type: Constant
         Value: 1.0000000
-      Poissons Ratio: 
+      Poissons Ratio:
         Poissons Ratio Type: Constant
         Value: 0.3000000
-      Thermal Conductivity: 
+      Thermal Conductivity:
         Thermal Conductivity Type: Constant
         Value: 1.00000000
       Thermal Transient Coefficient: 1.00000000
       Thermal Expansion Coefficient: 0.00100000
-      Source Functions: 
-        Thermal Source: 
-          Constant: 
+      Source Functions:
+        Thermal Source:
+          Constant:
             Value: 20.00000000
 ...

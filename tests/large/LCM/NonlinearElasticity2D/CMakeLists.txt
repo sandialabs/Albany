@@ -8,7 +8,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAD.yaml
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
-if (ALBANY_EPETRA) 
+if (ALBANY_EPETRA)
 add_test(${testName} ${Albany.exe})
 add_test(${testName}_AD ${Albany.exe} inputAD.yaml)
 endif()
@@ -52,7 +52,7 @@ endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputBlocked.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/inputBlocked.yaml COPYONLY)
 
-if (ALBANY_EPETRA) 
+if (ALBANY_EPETRA)
 add_test(${testName}_Blocked ${Albany.exe} inputBlocked.yaml)
 endif()
 
