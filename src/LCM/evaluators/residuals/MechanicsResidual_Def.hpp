@@ -14,6 +14,12 @@
 #include <chrono>
 #endif
 
+//IKT: uncomment to turn on debug output
+//#define DEBUG_OUTPUT
+
+//Global variable to control printing of warning to screen 
+static int cc = 0; 
+
 namespace LCM {
 
 //------------------------------------------------------------------------------
@@ -27,12 +33,15 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
           dl->node_qp_vector),
       w_bf_(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
       residual_(p.get<std::string>("Residual Name"), dl->node_vector),
+      ct_mass_(p.get<std::string>("Composite Tet Mass Name"), dl->node_vector),  
       have_body_force_(p.isType<bool>("Has Body Force")),
       density_(p.get<RealType>("Density", 1.0))
 {
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
   this->addDependentField(stress_);
   this->addDependentField(w_grad_bf_);
   this->addDependentField(w_bf_);
+  this->addDependentField(ct_mass_);
 
   this->addEvaluatedField(residual_);
 
@@ -41,6 +50,21 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
   else
     enable_dynamics_ = true;
 
+  use_composite_tet_ = p.get<bool>("Use Composite Tet"); 
+  use_ct_exact_mass_ = p.get<bool>("Use Composite Tet Exact Mass");
+#ifdef DEBUG_OUTPUT
+  *out << "IKT use_composite_tet_, use_ct_exact_mass_ = " << use_composite_tet_ << ", " 
+       << use_ct_exact_mass_ << "\n";  
+#endif
+  if ((use_composite_tet_ == false) && (use_ct_exact_mass_ == true) && (cc == 0)) {
+    *out << "\n ****************************************************************\n" 
+         << "WARNING: you are not using a composite tet element yet you have \n" 
+         << "selected 'Use Composite Tet Exact Mass' to true.  This option only \n"
+         << "works correctly for Composite Tet and Hex8 elements, so if you are \n"
+         << "not using a Hex8 element, you will get the wrong result!\n"
+         << "\n ****************************************************************\n\n";  
+  }
+  cc++; 
   if (enable_dynamics_) {
     acceleration_ = decltype(acceleration_)(
         p.get<std::string>("Acceleration Name"), dl->qp_vector);
@@ -77,6 +101,7 @@ MechanicsResidual<EvalT, Traits>::postRegistrationSetup(
   this->utils.setFieldData(stress_, fm);
   this->utils.setFieldData(w_grad_bf_, fm);
   this->utils.setFieldData(w_bf_, fm);
+  this->utils.setFieldData(ct_mass_, fm);
   this->utils.setFieldData(residual_, fm);
   if (have_body_force_) {
     this->utils.setFieldData(body_force_, fm);
@@ -230,17 +255,43 @@ MechanicsResidual<EvalT, Traits>::evaluateFields(
 
   // dynamic term
   if (workset.transientTerms && enable_dynamics_) {
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int node = 0; node < num_nodes_; ++node) {
-        for (int pt = 0; pt < num_pts_; ++pt) {
+  //If transient problem and not using composite tet element, enable acceleration terms.
+  //This is similar to what is done in Peridigm when mass is passed from peridigm rather than 
+  //computed in Albany; see, e.g., albanyIsCreatingMassMatrix-based logic in PeridigmForce_Def.hpp 
+    if (use_ct_exact_mass_ == false) { //not using exact mass (for composite tet and hex8 elts)
+      for (int cell = 0; cell < workset.numCells; ++cell) {
+        for (int node = 0; node < num_nodes_; ++node) {
+          for (int pt = 0; pt < num_pts_; ++pt) {
+            for (int dim = 0; dim < num_dims_; ++dim) {
+              residual_(cell, node, dim) +=
+                  density_ * acceleration_(cell, pt, dim) * w_bf_(cell, node, pt);
+            }
+          }
+        }
+      }
+    }
+    else { //using exact mass (for composite tet and hex8 elts): add contribution from composite tet mass evaluator
+      for (int cell = 0; cell < workset.numCells; ++cell) {
+        for (int node = 0; node < num_nodes_; ++node) {
           for (int dim = 0; dim < num_dims_; ++dim) {
-            residual_(cell, node, dim) +=
-                density_ * acceleration_(cell, pt, dim) * w_bf_(cell, node, pt);
+            residual_(cell, node, dim) += ct_mass_(cell, node, dim); 
           }
         }
       }
     }
   }
+#ifdef DEBUG_OUTPUT
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream(); 
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    if (cell == 0) {
+      for (int node = 0; node < this->num_nodes_; ++node) {
+        for (int dim = 0; dim < this->num_dims_; ++dim) {
+          *out << "IKT node, dim, residual = " << node << ", " << dim << ", " << residual_(cell, node, dim) << "\n";
+        }
+      }
+    }
+  }
+#endif 
 }
 //------------------------------------------------------------------------------
 }

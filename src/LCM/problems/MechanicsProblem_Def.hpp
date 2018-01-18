@@ -18,6 +18,7 @@
 #include "BodyForce.hpp"
 #include "CurrentCoords.hpp"
 #include "MechanicsResidual.hpp"
+#include "CompositeTetMassResidual.hpp"
 #include "SurfaceBasis.hpp"
 #include "SurfaceScalarGradientOperator.hpp"
 #include "SurfaceScalarJump.hpp"
@@ -204,12 +205,12 @@ MechanicsProblem::constructEvaluators(
             eb_name, "Average J Stabilization Parameter", 0.0);
 
   // Check if we are setting the composite tet flag
-  bool const
+  const bool 
   composite = material_db_->getElementBlockParam<bool>(
       eb_name, "Use Composite Tet 10", false);
 
   pFromProb->set<bool>("Use Composite Tet 10", composite);
-
+  
   // set flag for small strain option
   bool
   small_strain{material_model_name == "Linear Elastic"};
@@ -1804,6 +1805,49 @@ MechanicsProblem::constructEvaluators(
         }
       }
     }
+  
+    //IKT, FIXME? We could put in logic to only build Composite Tet Mass Residual
+    //when using a Composite Tet element, but this would be more involved than just 
+    //having an if statement here, as the Mechanics Residual depends on the Composite
+    //Tet Mass Residual.  
+    if (have_mech_eq_) {  // Composite Tet Mass 
+
+      Teuchos::RCP<Teuchos::ParameterList>
+      p = Teuchos::rcp(new Teuchos::ParameterList("Composite Tet Mass Residual"));
+
+      // Input
+      p->set<std::string>("Weighted BF Name", "wBF");
+      p->set<std::string>("Acceleration Name", "Acceleration");
+      // Mechanics residual need value of density for transient analysis.
+      // Get it from material. Assumed constant in element block.
+      if (material_db_->isElementBlockParam(eb_name, "Density")) {
+        p->set<RealType>(
+            "Density", 
+            material_db_->getElementBlockParam<RealType>(eb_name, "Density"));
+      }
+
+      const bool 
+      resid_using_cub = material_db_->getElementBlockParam<bool>(
+           eb_name, "Residual Computed Using Cubature", false);
+      p->set<bool>("Residual Computed Using Cubature", resid_using_cub);
+
+      const bool 
+      composite_tet = material_db_->getElementBlockParam<bool>(
+           eb_name, "Use Composite Tet", false);
+      p->set<bool>("Use Composite Tet", composite_tet);
+
+      const bool 
+      use_ct_exact_mass = material_db_->getElementBlockParam<bool>(
+           eb_name, "Use Composite Tet Exact Mass", false);
+      p->set<bool>("Use Composite Tet Exact Mass", use_ct_exact_mass);
+
+      p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
+      // Output
+      p->set<std::string>("Composite Tet Mass Name", "Composite Tet Mass Residual");
+      ev = Teuchos::rcp(
+          new LCM::CompositeTetMassResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
+      fm0.template registerEvaluator<EvalT>(ev);
+    } // end if (have_mech_eq_)  
 
     if (have_mech_eq_) {  // Residual
 
@@ -1816,6 +1860,15 @@ MechanicsProblem::constructEvaluators(
       p->set<std::string>("Weighted BF Name", "wBF");
       p->set<std::string>("Acceleration Name", "Acceleration");
       p->set<std::string>("Body Force Name", "Body Force");
+      p->set<std::string>("Composite Tet Mass Name", "Composite Tet Mass Residual");
+      const bool 
+      composite_tet = material_db_->getElementBlockParam<bool>(
+           eb_name, "Use Composite Tet", false);
+      p->set<bool>("Use Composite Tet", composite_tet);
+      const bool 
+      use_ct_exact_mass = material_db_->getElementBlockParam<bool>(
+           eb_name, "Use Composite Tet Exact Mass", false);
+      p->set<bool>("Use Composite Tet Exact Mass", use_ct_exact_mass);
       if (Teuchos::nonnull(rc_mgr_)) {
         p->set<std::string>("DefGrad Name", defgrad);
         rc_mgr_->registerField(
