@@ -21,12 +21,16 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/larger-cubes.g.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/larger-cubes.g.4.3 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials-cubes.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/materials-cubes.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials-cubes-ct.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials-cubes-ct.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-single-piro.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cube-single-piro.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-single-piro-expl.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cube-single-piro-expl.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-single-tempus.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cube-single-tempus.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-single-ct-tempus.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/cube-single-ct-tempus.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-single-tempus-expl.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cube-single-tempus-expl.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/larger-cubes-piro.yaml

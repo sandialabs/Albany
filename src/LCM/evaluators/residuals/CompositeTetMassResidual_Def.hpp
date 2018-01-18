@@ -206,7 +206,7 @@ compositeTetLocalMassRow(const int row) const
       break; 
     case 9:
       mass_row[2] = 1.0/160.0; mass_row[3] = 1.0/160.0;
-      mass_row[4] = 1.0/160.0; mass_row[5] = 1.0/180.0;
+      mass_row[4] = 1.0/180.0; mass_row[5] = 13.0/720.0;
       mass_row[6] = 13.0/720.0; mass_row[7] = 13.0/720.0;
       mass_row[8] = 13.0/720.0; mass_row[9] = 1.0/18.0;
       break; 
