@@ -7,6 +7,8 @@
 # Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-single.g
                ${CMAKE_CURRENT_BINARY_DIR}/cube-single.g COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-single-tet10.g
+               ${CMAKE_CURRENT_BINARY_DIR}/cube-single-tet10.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/larger-cubes.g
                ${CMAKE_CURRENT_BINARY_DIR}/larger-cubes.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/larger-cubes.g.4.0
