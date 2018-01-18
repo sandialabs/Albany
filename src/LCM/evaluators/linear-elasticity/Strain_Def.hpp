@@ -20,11 +20,11 @@ namespace LCM {
     strain(p.get<std::string>("Strain Name"),dl->qp_tensor)
   {
     this->addDependentField(GradU);
-    
+
     this->addEvaluatedField(strain);
-    
+
     this->setName("Strain"+PHX::typeAsString<EvalT>());
-    
+
     std::vector<PHX::DataLayout::size_type> dims;
     dl->qp_tensor->dimensions(dims);
     numQPs  = dims[1];

@@ -79,7 +79,7 @@ namespace LCM
     computeState( typename Traits::EvalData workset,
 		  DepFieldMap dep_fields,
 		  FieldMap eval_fields);
-    
+
     // This capability not implemented yet.
     virtual void
     computeStateParallel( typename Traits::EvalData workset,
@@ -94,12 +94,12 @@ namespace LCM
     /// Private to prohibit copying
     ///
     ViscoElasticModel(const ViscoElasticModel&);
-    
+
     ///
     /// Private to prohibit copying
     ///
     ViscoElasticModel& operator=(const ViscoElasticModel&);
-    
+
     // Relaxation time
     RealType tau1_, tau2_, tau3_;
 
@@ -108,7 +108,7 @@ namespace LCM
 
     // Shear modulus
     RealType mu_;
- 
+
     // Gas constant
     RealType R_;
   };

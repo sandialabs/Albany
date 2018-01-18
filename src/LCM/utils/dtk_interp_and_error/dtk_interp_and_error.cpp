@@ -102,9 +102,9 @@ interp_and_calc_error(
       plist->get<std::string>("Target Field Name", "solution");
 
   //IKT, 10/20/17 - the following tells the code whether to divide by the norm of the reference solution
-  //vector when computing the relative error written to the output file.  If false (default), 
+  //vector when computing the relative error written to the output file.  If false (default),
   //each component will be scaled by the norm of that component only in the reference solution.
-  bool scale_by_norm_soln_vec = false; 
+  bool scale_by_norm_soln_vec = false;
   if (plist->isParameter("Scale by Norm of Solution Vector")) {
     scale_by_norm_soln_vec = plist->get<bool>("Scale by Norm of Solution Vector", false);
   }
@@ -118,7 +118,7 @@ interp_and_calc_error(
 
   std::string abs_err_field_name = target_field_name + "AbsErr";
 
-  std::vector<int> src_time_step_indices, tgt_time_step_indices;  
+  std::vector<int> src_time_step_indices, tgt_time_step_indices;
 
   // Get the raw mpi communicator (basic typedef in STK).
   Teuchos::RCP<const Teuchos::MpiComm<int>> mpi_comm =
@@ -164,7 +164,7 @@ interp_and_calc_error(
 #ifdef DEBUG_OUTPUT
   *out << "   timestep_count in source mesh: " << src_timestep_count << std::endl;
 #endif
- 
+
   // Get source_field from source mesh
   FieldType* source_field = src_broker.meta_data().get_field<FieldType>(
       stk::topology::NODE_RANK, source_field_name);
@@ -257,52 +257,52 @@ interp_and_calc_error(
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,
       std::endl
-        << "Source file has 0 snapshots!" << std::endl;) 
+        << "Source file has 0 snapshots!" << std::endl;)
   }
   if (tgt_timestep_count < 1) {
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,
       std::endl
-        << "Taret file has 0 snapshots!" << std::endl;) 
+        << "Taret file has 0 snapshots!" << std::endl;)
   }
-  if (((src_snap_no == -1) && (tgt_snap_no != -1)) || 
+  if (((src_snap_no == -1) && (tgt_snap_no != -1)) ||
       ((tgt_snap_no == -1) && (src_snap_no != -1))) {
       TEUCHOS_TEST_FOR_EXCEPTION(
           true, Teuchos::Exceptions::InvalidParameter,
           std::endl
             << "Invalid value of Source Mesh Snapshot Number = " << src_snap_no
-            << ".  If Target Mesh Snapshot Number = -1, Source Mesh Snapshot Number " 
+            << ".  If Target Mesh Snapshot Number = -1, Source Mesh Snapshot Number "
             << "must be -1." << std::endl;);
   }
   if ((src_snap_no == -1) && (tgt_snap_no == -1)) {
     if (tgt_timestep_count < src_timestep_count) {
-      *out << "\n Number of snapshots in target mesh file = " << tgt_timestep_count 
-           << " < number of snapshots in source mesh file (= " << src_timestep_count 
-           << ").\n  Errors will be computed only up to snapshot #" 
-           << tgt_timestep_count << ".\n \n"; 
-      src_timestep_count = tgt_timestep_count; 
+      *out << "\n Number of snapshots in target mesh file = " << tgt_timestep_count
+           << " < number of snapshots in source mesh file (= " << src_timestep_count
+           << ").\n  Errors will be computed only up to snapshot #"
+           << tgt_timestep_count << ".\n \n";
+      src_timestep_count = tgt_timestep_count;
     }
     if (src_timestep_count < tgt_timestep_count) {
-      *out << "\n Number of snapshots in source mesh file = " << src_timestep_count 
-           << " < number of snapshots in target mesh file (= " << tgt_timestep_count 
-           << ").\n  Errors will be computed only up to snapshot #" 
-           << src_timestep_count << ".\n \n"; 
-      tgt_timestep_count = src_timestep_count; 
+      *out << "\n Number of snapshots in source mesh file = " << src_timestep_count
+           << " < number of snapshots in target mesh file (= " << tgt_timestep_count
+           << ").\n  Errors will be computed only up to snapshot #"
+           << src_timestep_count << ".\n \n";
+      tgt_timestep_count = src_timestep_count;
     }
     if (tgt_timestep_count != src_timestep_count) {
       TEUCHOS_TEST_FOR_EXCEPTION(
           true, Teuchos::Exceptions::InvalidParameter,
           std::endl
-            << "Number of snapshots in source mesh file must equal number of " 
+            << "Number of snapshots in source mesh file must equal number of "
             << "snapshots in target mesh file when Target Mesh Snapshot Number = Source Mesh "
-            << "Snapshot Number = -1." << std::endl;)  
+            << "Snapshot Number = -1." << std::endl;)
     }
     else {
       tgt_time_step_indices.resize(tgt_timestep_count);
       src_time_step_indices.resize(tgt_timestep_count);
-      for (int i=0; i<tgt_timestep_count; i++) tgt_time_step_indices[i] = i+1;  
-      for (int i=0; i<tgt_timestep_count; i++) src_time_step_indices[i] = i+1;  
-    } 
+      for (int i=0; i<tgt_timestep_count; i++) tgt_time_step_indices[i] = i+1;
+      for (int i=0; i<tgt_timestep_count; i++) src_time_step_indices[i] = i+1;
+    }
   }
   else {
     if (src_snap_no > src_timestep_count) {
@@ -336,9 +336,9 @@ interp_and_calc_error(
             << "; valid values are -1 and >0 ." << std::endl;);
     }
     tgt_time_step_indices.resize(1);
-    src_time_step_indices.resize(1); 
+    src_time_step_indices.resize(1);
     tgt_time_step_indices[0] = tgt_snap_no;
-    src_time_step_indices[0] = src_snap_no; 
+    src_time_step_indices[0] = src_snap_no;
   }
 
   // DEFINE PARTS/SELECTOR
@@ -358,9 +358,9 @@ interp_and_calc_error(
   Intrepid::FieldContainer<double> src_node_coords =
       DataTransferKit::STKMeshHelpers::getEntityNodeCoordinates(
           Teuchos::Array<stk::mesh::Entity>(src_part_nodes), *src_bulk_data);
- 
+
   for (int index=0; index<tgt_time_step_indices.size(); index++) {
- 
+
     double time = src_io_region->get_state_time(src_time_step_indices[index]);
     if (src_time_step_indices[index] == src_timestep_count) interpolation_intervals = 1;
 
@@ -492,7 +492,7 @@ interp_and_calc_error(
     std::cout << "   proc #: " << comm->getRank() << ", tgt_num_owned_nodes = ";
     std::cout << tgt_num_owned_nodes << std::endl;
 #endif
-      
+
     double error_l2_norm_global_vec{0.0};
     double rel_error_l2_norm_global_vec{0.0};
     double field_l2_norm_global_vec{0.0};
@@ -523,8 +523,8 @@ interp_and_calc_error(
 
         //IKT, 10/20/17: originally, the relative error was computed in the next line.
         //This can cause problems and erroneous-looking figures in the case the reference
-        //solution is close to 0.  It makes more sense to divife the absolute error by the 
-        //norm of the reference solution rather than a single-point value (done below). 
+        //solution is close to 0.  It makes more sense to divife the absolute error by the
+        //norm of the reference solution rather than a single-point value (done below).
         /*if (std::abs(gold_value[component]) > 1.0e-14) {
           rel_err_field_data[component] /= std::abs(gold_value[component]);
         }*/
@@ -545,7 +545,7 @@ interp_and_calc_error(
 
       double field_l2_norm_global;
 
-      double rel_error_l2_norm_global; 
+      double rel_error_l2_norm_global;
 
       Teuchos::reduceAll(
           *comm, Teuchos::REDUCE_SUM, 1, &error_l2_norm_sq,
@@ -556,7 +556,7 @@ interp_and_calc_error(
           &field_l2_norm_global);
 
       error_l2_norm_global_vec += error_l2_norm_global;
-      field_l2_norm_global_vec += field_l2_norm_global; 
+      field_l2_norm_global_vec += field_l2_norm_global;
 
       error_l2_norm_global = std::sqrt(error_l2_norm_global);
       field_l2_norm_global = std::sqrt(field_l2_norm_global);
@@ -564,7 +564,7 @@ interp_and_calc_error(
         rel_error_l2_norm_global = error_l2_norm_global / field_l2_norm_global;
       }
       else {
-        rel_error_l2_norm_global = 0.0; 
+        rel_error_l2_norm_global = 0.0;
       }
 
       if (scale_by_norm_soln_vec == false) {
@@ -572,13 +572,13 @@ interp_and_calc_error(
           rel_err_field_data =
               stk::mesh::field_data(target_rel_error_field, tgt_part_nodes[n]);
            if (field_l2_norm_global > 1.0e-14) {
-              rel_err_field_data[component] /= field_l2_norm_global; 
+              rel_err_field_data[component] /= field_l2_norm_global;
            }
         }
       }
 
-      *out << "  Target Snapshot = " << tgt_time_step_indices[index] 
-           << ", Source Snapshot = " << src_time_step_indices[index] << std::endl; 
+      *out << "  Target Snapshot = " << tgt_time_step_indices[index]
+           << ", Source Snapshot = " << src_time_step_indices[index] << std::endl;
       *out << "      Dof = " << component
            << ", |e|_2 (abs error): " << error_l2_norm_global << std::endl;
       *out << "      Dof = " << component
@@ -588,33 +588,33 @@ interp_and_calc_error(
       *out << "     -------------------------------------------------------------"
            << "--------------------------" << std::endl;
     }
-      
-    error_l2_norm_global_vec = std::sqrt(error_l2_norm_global_vec); 
-    field_l2_norm_global_vec = std::sqrt(field_l2_norm_global_vec); 
+
+    error_l2_norm_global_vec = std::sqrt(error_l2_norm_global_vec);
+    field_l2_norm_global_vec = std::sqrt(field_l2_norm_global_vec);
 
     if (std::abs(field_l2_norm_global_vec) > 1.0e-14) {
       rel_error_l2_norm_global_vec = error_l2_norm_global_vec / field_l2_norm_global_vec;
     }
     else {
-      rel_error_l2_norm_global_vec = 0.0; 
+      rel_error_l2_norm_global_vec = 0.0;
     }
-      
-    *out << "  Target Snapshot = " << tgt_time_step_indices[index] 
-         << ", Source Snapshot = " << src_time_step_indices[index] << std::endl; 
+
+    *out << "  Target Snapshot = " << tgt_time_step_indices[index]
+         << ", Source Snapshot = " << src_time_step_indices[index] << std::endl;
     *out << "      All dofs, |e|_2 (abs error): " << error_l2_norm_global_vec << std::endl;
     *out << "      All dofs, |f|_2 (norm ref soln): " << field_l2_norm_global_vec << std::endl;
     *out << "      All dofs, |e|_2 / |f|_2 (rel error): "
          << rel_error_l2_norm_global_vec << std::endl;
     *out << "     -------------------------------------------------------------"
          << "--------------------------" << std::endl;
-    
+
     if (scale_by_norm_soln_vec == true) {
       for (int component = 0; component < neq; component++) {
         for (int n = 0; n < num_tgt_part_nodes; ++n) {
           rel_err_field_data =
               stk::mesh::field_data(target_rel_error_field, tgt_part_nodes[n]);
            if (field_l2_norm_global_vec > 1.0e-14) {
-             rel_err_field_data[component] /= field_l2_norm_global_vec; 
+             rel_err_field_data[component] /= field_l2_norm_global_vec;
            }
         }
       }
@@ -622,7 +622,7 @@ interp_and_calc_error(
 
     // TARGET MESH WRITE
     // -----------------
-    std::size_t tgt_output_index; 
+    std::size_t tgt_output_index;
     if (index == 0) {
       tgt_output_index = tgt_broker.create_output_mesh(
       target_mesh_output_file, stk::io::WRITE_RESULTS);
@@ -634,7 +634,7 @@ interp_and_calc_error(
     }
     double state_time = tgt_io_region->get_state_time(tgt_time_step_indices[index]);
 #ifdef DEBUG_OUTPUT
-    *out << "tgt_output_index, time = " << tgt_output_index << ", " << state_time << std::endl; 
+    *out << "tgt_output_index, time = " << tgt_output_index << ", " << state_time << std::endl;
 #endif
     // Write step
     tgt_broker.begin_output_step(tgt_output_index, state_time);

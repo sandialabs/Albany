@@ -16,8 +16,8 @@ namespace LCM {
   SurfaceVectorGradient<EvalT, Traits>::
   SurfaceVectorGradient(Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl) :
-    thickness      (p.get<double>("thickness")), 
-    cubature       (p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")), 
+    thickness      (p.get<double>("thickness")),
+    cubature       (p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")),
     currentBasis   (p.get<std::string>("Current Basis Name"),dl->qp_tensor),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
@@ -36,7 +36,7 @@ namespace LCM {
     this->addDependentField(currentBasis);
     this->addDependentField(refDualBasis);
     this->addDependentField(refNormal);
-    this->addDependentField(jump);    
+    this->addDependentField(jump);
     this->addDependentField(weights);
 
     this->addEvaluatedField(defGrad);
@@ -155,5 +155,5 @@ namespace LCM {
     }
 
   }
-  //**********************************************************************  
+  //**********************************************************************
 }

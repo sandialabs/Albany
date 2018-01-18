@@ -73,7 +73,7 @@ CP::applySlipIncrement(
   minitensor::Index const
   num_dim = Fp_n.get_dimension();
 
-  // 
+  //
   // calculate plastic velocity gradient
   //
   Lp_np1.fill(minitensor::Filler::ZEROS);
@@ -132,15 +132,15 @@ CP::updateHardness(
     HardeningLawFactory<NumDimT, NumSlipT> hardening_law_factory;
 
     auto
-    phardening = hardening_law_factory.template createHardeningLaw<ArgT>(type_hardening_law); 
+    phardening = hardening_law_factory.template createHardeningLaw<ArgT>(type_hardening_law);
 
     phardening->harden(
       slip_family,
       slip_systems,
-      dt, 
-      rate_slip, 
-      state_hardening_n, 
-      state_hardening_np1, 
+      dt,
+      rate_slip,
+      state_hardening_n,
+      state_hardening_np1,
       slip_resistance,
       failed);
   }
@@ -193,7 +193,7 @@ CP::updateSlip(
 
 
 ///
-/// Compute the stresses 
+/// Compute the stresses
 ///
 template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename ArgT>
 void
@@ -236,9 +236,9 @@ CP::computeStress(
     failed = true;
     return;
   }
-  
+
   ArgT
-  det_fp = minitensor::det(Fp);  
+  det_fp = minitensor::det(Fp);
 
   // Saint Venant–Kirchhoff model
   if (det_fp == 0.0)
@@ -267,12 +267,12 @@ CP::computeStress(
 
   deformation_elastic = minitensor::transpose(defgrad_elastic) * defgrad_elastic;
 
-  strain_elastic = 
+  strain_elastic =
     0.5 * (deformation_elastic - minitensor::identity<ArgT, NumDimT>(num_dim));
 
   S = minitensor::dotdot(C, strain_elastic);
 
-  sigma = 1.0 / det_fe * 
+  sigma = 1.0 / det_fe *
     defgrad_elastic * S * minitensor::transpose(defgrad_elastic);
 
   CP::expectFiniteTensor(
@@ -281,7 +281,7 @@ CP::computeStress(
 
   // Compute resolved shear stresses
   for (minitensor::Index s(0); s < num_slip; ++s) {
-    shear[s] = 
+    shear[s] =
       minitensor::dotdot(slip_systems.at(s).projector_, deformation_elastic * S);
   }
 }
@@ -293,9 +293,9 @@ CP::computeStress(
 template<minitensor::Index NumDimT, typename DataT, typename ArgT>
 void
 CP::computeElasticityTensor(
-    DataT c11, 
-    DataT c12,  
-    DataT c13, 
+    DataT c11,
+    DataT c12,
+    DataT c13,
     DataT c33,
     DataT c44,
     DataT c66,

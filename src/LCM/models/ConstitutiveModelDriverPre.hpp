@@ -47,7 +47,7 @@ namespace LCM {
 
     minitensor::Tensor<ScalarT>
     computeLoading(std::string load, double inc);
-    
+
     minitensor::Tensor<ScalarT> F0_;
 
     ///
@@ -84,12 +84,12 @@ namespace LCM {
     /// Number of dimensions
     ///
     std::size_t num_dims_;
-    
+
     ///
     /// Number of integration points
     ///
     std::size_t num_pts_;
-    
+
     ///
     /// Number of integration points
     ///

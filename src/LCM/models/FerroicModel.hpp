@@ -39,11 +39,11 @@ public:
             minitensor::Tensor<ScalarT, FM::THREE_D>& X,
             minitensor::Vector<ScalarT, FM::THREE_D>& D,
             Teuchos::Array<ScalarT>& newfractions);
-     
+
 
   // Accessors
   //
-  minitensor::Tensor<RealType, FM::THREE_D>&          
+  minitensor::Tensor<RealType, FM::THREE_D>&
   getBasis() { return R; }
 
   Teuchos::Array<RealType>&

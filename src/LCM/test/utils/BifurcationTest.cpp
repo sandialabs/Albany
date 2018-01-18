@@ -388,31 +388,31 @@ cartesian_sweep(minitensor::Tensor4<double, 3> const & CC)
 }
 
 //----------------------------------------------------------------------------
-minitensor::Vector<D2FadType, 3> 
+minitensor::Vector<D2FadType, 3>
 spherical_get_normal(minitensor::Vector<D2FadType, 2> & parameters)
 {
-  minitensor::Vector<D2FadType, 3> 
-  normal(sin(parameters[0]) * sin(parameters[1]), 
+  minitensor::Vector<D2FadType, 3>
+  normal(sin(parameters[0]) * sin(parameters[1]),
   cos(parameters[0]), sin(parameters[0]) * cos(parameters[1]));
-  
+
   return normal;
 }
-  
-//----------------------------------------------------------------------------  
-minitensor::Vector<D2FadType, 3> 
+
+//----------------------------------------------------------------------------
+minitensor::Vector<D2FadType, 3>
 stereographic_get_normal(minitensor::Vector<D2FadType, 2> & parameters)
 {
   D2FadType r2 = parameters[0] * parameters[0] + parameters[1] * parameters[1];
 
-  minitensor::Vector<D2FadType, 3> 
+  minitensor::Vector<D2FadType, 3>
   normal(2.0 * parameters[0], 2.0 * parameters[1], r2 - 1.0);
   normal /= (r2 + 1.0);
-      
+
   return normal;
 }
-  
+
 //----------------------------------------------------------------------------
-minitensor::Vector<D2FadType, 3> 
+minitensor::Vector<D2FadType, 3>
 projective_get_normal(minitensor::Vector<D2FadType, 3> & parameters)
 {
   minitensor::Vector<D2FadType, 3>
@@ -420,29 +420,29 @@ projective_get_normal(minitensor::Vector<D2FadType, 3> & parameters)
 
   D2FadType const
   n = minitensor::norm(normal);
-     
+
   if ( (n.val()).val()==0 ) {
 
     minitensor::Vector<DFadType, 3> Xfad;
     minitensor::Vector<D2FadType, 3> Xfad2;
-    
+
     for ( int i = 0; i < 3; ++i ) {
       Xfad[i] = DFadType(3, i, 1.0/sqrt(3.0));
       Xfad2[i] = D2FadType(3, i, Xfad[i]);
       parameters[i] = Xfad2[i];
     }
-    
+
     normal[0] = Xfad2[0];
     normal[1] = Xfad2[1];
     normal[2] = Xfad2[2];
-    
+
   }
-           
+
   return normal;
 }
-  
+
 //----------------------------------------------------------------------------
-minitensor::Vector<D2FadType, 3> 
+minitensor::Vector<D2FadType, 3>
 tangent_get_normal(minitensor::Vector<D2FadType, 2> & parameters)
 {
   D2FadType const
@@ -460,35 +460,35 @@ tangent_get_normal(minitensor::Vector<D2FadType, 2> & parameters)
     normal[1] = parameters[1];
     normal[2] = cos(r);
   }
-      
+
   return normal;
 }
-  
+
 //----------------------------------------------------------------------------
-minitensor::Vector<D2FadType, 3> 
+minitensor::Vector<D2FadType, 3>
 cartesian_get_normal1(minitensor::Vector<D2FadType, 2> & parameters)
 {
-  minitensor::Vector<D2FadType, 3> 
+  minitensor::Vector<D2FadType, 3>
   normal(1, parameters[0], parameters[1]);
-            
+
   return normal;
 }
 
-minitensor::Vector<D2FadType, 3> 
+minitensor::Vector<D2FadType, 3>
 cartesian_get_normal2(minitensor::Vector<D2FadType, 2> & parameters)
 {
-  minitensor::Vector<D2FadType, 3> 
+  minitensor::Vector<D2FadType, 3>
   normal(parameters[0], 1, parameters[1]);
-            
+
   return normal;
 }
 
-minitensor::Vector<D2FadType, 3> 
+minitensor::Vector<D2FadType, 3>
 cartesian_get_normal3(minitensor::Vector<D2FadType, 2> & parameters)
 {
-  minitensor::Vector<D2FadType, 3> 
+  minitensor::Vector<D2FadType, 3>
   normal(parameters[0], parameters[1], 1);
-            
+
   return normal;
 }
 
@@ -497,7 +497,7 @@ void
 spherical_newton_raphson(minitensor::Tensor4<ScalarT, 3> & tangent,
   minitensor::Vector<ScalarT, 2> & parameters,
   minitensor::Vector<ScalarT> & direction, ScalarT & min_detA)
-{    
+{
   minitensor::Vector<ScalarT, 2> Xval;
   minitensor::Vector<DFadType, 2> Xfad;
   minitensor::Vector<D2FadType, 2> Xfad2;
@@ -505,107 +505,107 @@ spherical_newton_raphson(minitensor::Tensor4<ScalarT, 3> & tangent,
   minitensor::Vector<D2FadType, 3> n;
 
   D2FadType detA;
-    
+
   // in std:vector form to work with nonlinear solve
   // size of Jacobian, 4 = 2 * 2
   std::vector<ScalarT> dRdX(4);
-  std::vector<ScalarT> X(2);    
-  std::vector<ScalarT> R(2);    
+  std::vector<ScalarT> X(2);
+  std::vector<ScalarT> R(2);
 
   for (int i(0); i < 2; ++i)
       X[i] = parameters[i];
-           
+
   // local nonlinear solver for Newton iterative solve
   LCM::LocalNonlinearSolver<Residual, Traits> solver;
-               
-  ScalarT normR(0.0), normR0(0.0), relativeR(0.0);    
+
+  ScalarT normR(0.0), normR0(0.0), relativeR(0.0);
   bool converged = false;
   int iter = 0;
-       
+
   while ( !converged ) {
     std::cout << "iter: " << iter << std::endl;
-      
+
     for ( int i = 0; i < 2; ++i ) {
       Xval[i] = Sacado::ScalarValue<ScalarT>::eval(X[i]);
       Xfad[i] = DFadType(2, i, Xval[i]);
       Xfad2[i] = D2FadType(2, i, Xfad[i]);
     }
-      
-    n = spherical_get_normal(Xfad2);     
+
+    n = spherical_get_normal(Xfad2);
 
     detA = minitensor::det(minitensor::dot2(n,minitensor::dot(tangent, n)));
-     
+
     std::cout << "parameters: " << Xval << std::endl;
     std::cout << "determinant: " << (detA.val()).val() << std::endl;
-            
+
     for (int i = 0; i < 2; ++i){
       Rfad[i] = detA.dx(i);
       R[i] = Rfad[i].val();
     }
-      
+
     //std::cout << "R: " << R << std::endl;
-      
+
     normR = sqrt( R[0]*R[0] + R[1]*R[1] );
-      
-    if ( iter == 0 ) 
+
+    if ( iter == 0 )
       normR0 = normR;
-      
+
     std::cout << "normR: " << normR << std::endl;
-      
+
     if (normR0 != 0)
       relativeR = normR / normR0;
     else
       relativeR = normR0;
-      
+
     if (relativeR < 1.0e-8 || normR < 1.0e-8)
       break;
-      
+
     if (iter > 50){
       std::cout << "Newton's loop for bifurcation check not converging after "
-        << 50 << " iterations" << std::endl;      
+        << 50 << " iterations" << std::endl;
       break;
     }
-        
+
     // compute Jacobian
     for ( int i = 0; i < 2; ++i )
       for ( int j = 0; j < 2; ++j )
         dRdX[i + 2 * j] = Rfad[i].dx(j);
-          
+
     // call local nonlinear solver
     solver.solve(dRdX, X, R);
-            
+
     iter++;
-      
+
   } // Newton Raphson iteration end
 
   // compute sensitivity information w.r.t. system parameters
   // and pack the sensitivity back to X
   // solver.computeFadInfo(dRdX, X, R);
-    
+
   //update
   if ( (detA.val()).val() <= min_detA ) {
-      
+
     for (int i(0); i < 3; ++i)
       direction[i] = (n[i].val()).val();
-     
+
     for (int i(0); i < 2; ++i)
       parameters[i] = X[i];
 
     min_detA = (detA.val()).val();
-      
+
   } else {
-    std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)" 
+    std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)"
       << std::endl;
-  }    
-        
+  }
+
 } // Function end
-  
+
 //----------------------------------------------------------------------------
 void
 stereographic_newton_raphson(minitensor::Tensor4<ScalarT, 3> & tangent,
   minitensor::Vector<ScalarT, 2> & parameters,
   minitensor::Vector<ScalarT> & direction, ScalarT & min_detA)
-{    
+{
   minitensor::Vector<ScalarT, 2> Xval;
   minitensor::Vector<DFadType, 2> Xfad;
   minitensor::Vector<D2FadType, 2> Xfad2;
@@ -613,107 +613,107 @@ stereographic_newton_raphson(minitensor::Tensor4<ScalarT, 3> & tangent,
   minitensor::Vector<D2FadType, 3> n;
 
   D2FadType detA;
-    
+
   // in std:vector form to work with nonlinear solve
   // size of Jacobian, 4 = 2 * 2
   std::vector<ScalarT> dRdX(4);
-  std::vector<ScalarT> X(2);    
-  std::vector<ScalarT> R(2);    
+  std::vector<ScalarT> X(2);
+  std::vector<ScalarT> R(2);
 
   for (int i(0); i < 2; ++i)
       X[i] = parameters[i];
-           
+
   // local nonlinear solver for Newton iterative solve
   LCM::LocalNonlinearSolver<Residual, Traits> solver;
-               
-  ScalarT normR(0.0), normR0(0.0), relativeR(0.0);    
+
+  ScalarT normR(0.0), normR0(0.0), relativeR(0.0);
   bool converged = false;
   int iter = 0;
-      
+
   while ( !converged ) {
     std::cout << "iter: " << iter << std::endl;
-      
+
     for ( int i = 0; i < 2; ++i ) {
       Xval[i] = Sacado::ScalarValue<ScalarT>::eval(X[i]);
       Xfad[i] = DFadType(2, i, Xval[i]);
       Xfad2[i] = D2FadType(2, i, Xfad[i]);
     }
-      
-    n = stereographic_get_normal(Xfad2);     
+
+    n = stereographic_get_normal(Xfad2);
 
     detA = minitensor::det(minitensor::dot2(n,minitensor::dot(tangent, n)));
-     
+
     std::cout << "parameters: " << Xval << std::endl;
     std::cout << "determinant: " << (detA.val()).val() << std::endl;
-           
+
     for (int i = 0; i < 2; ++i){
       Rfad[i] = detA.dx(i);
       R[i] = Rfad[i].val();
     }
-      
+
     //std::cout << "R: " << R << std::endl;
-     
+
     normR = sqrt( R[0]*R[0] + R[1]*R[1] );
-      
-    if ( iter == 0 ) 
+
+    if ( iter == 0 )
       normR0 = normR;
-      
+
     std::cout << "normR: " << normR << std::endl;
-      
+
     if (normR0 != 0)
       relativeR = normR / normR0;
     else
       relativeR = normR0;
-      
+
     if (relativeR < 1.0e-8 || normR < 1.0e-8)
       break;
-      
+
     if (iter > 50){
       std::cout << "Newton's loop for bifurcation check not converging after "
-        << 50 << " iterations" << std::endl;      
+        << 50 << " iterations" << std::endl;
       break;
     }
-        
+
     // compute Jacobian
     for ( int i = 0; i < 2; ++i )
       for ( int j = 0; j < 2; ++j )
         dRdX[i + 2 * j] = Rfad[i].dx(j);
-          
+
     // call local nonlinear solver
     solver.solve(dRdX, X, R);
-           
+
     iter++;
-      
+
   } // Newton Raphson iteration end
 
   // compute sensitivity information w.r.t. system parameters
   // and pack the sensitivity back to X
   // solver.computeFadInfo(dRdX, X, R);
-    
+
   //update
   if ( (detA.val()).val() <= min_detA ) {
-      
+
     for (int i(0); i < 3; ++i)
       direction[i] = (n[i].val()).val();
-      
+
     for (int i(0); i < 2; ++i)
       parameters[i] = X[i];
 
     min_detA = (detA.val()).val();
-      
+
   } else {
-    std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)" 
+    std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)"
       << std::endl;
-  }    
-        
+  }
+
 } // Function end
-  
+
 //----------------------------------------------------------------------------
 void
 projective_newton_raphson(minitensor::Tensor4<ScalarT, 3> & tangent,
   minitensor::Vector<ScalarT, 3> & parameters,
   minitensor::Vector<ScalarT> & direction, ScalarT & min_detA)
-{ 
+{
   minitensor::Vector<ScalarT, 4> parameters_new;
   ScalarT nNorm = minitensor::norm(parameters);
   for ( int i = 0; i < 3; ++i ) {
@@ -721,7 +721,7 @@ projective_newton_raphson(minitensor::Tensor4<ScalarT, 3> & tangent,
     if ( nNorm==0 ) parameters_new[i] = 1.0;
   }
   parameters_new[3] = 0;
-      
+
   minitensor::Vector<ScalarT, 4> Xval;
   minitensor::Vector<DFadType, 4> Xfad;
   minitensor::Vector<D2FadType, 4> Xfad2;
@@ -729,113 +729,113 @@ projective_newton_raphson(minitensor::Tensor4<ScalarT, 3> & tangent,
   minitensor::Vector<D2FadType, 3> n;
 
   D2FadType detA;
-    
+
   // in std:vector form to work with nonlinear solve
   // size of Jacobian, 4 = 2 * 2
   std::vector<ScalarT> dRdX(16);
-  std::vector<ScalarT> X(4);    
-  std::vector<ScalarT> R(4);    
+  std::vector<ScalarT> X(4);
+  std::vector<ScalarT> R(4);
 
   for (int i(0); i < 4; ++i)
       X[i] = parameters_new[i];
-            
+
   // local nonlinear solver for Newton iterative solve
   LCM::LocalNonlinearSolver<Residual, Traits> solver;
-               
-  ScalarT normR(0.0), normR0(0.0), relativeR(0.0);    
+
+  ScalarT normR(0.0), normR0(0.0), relativeR(0.0);
   bool converged = false;
   int iter = 0;
-       
+
   while ( !converged ) {
     std::cout << "iter: " << iter << std::endl;
-      
+
     for ( int i = 0; i < 4; ++i ) {
       Xval[i] = Sacado::ScalarValue<ScalarT>::eval(X[i]);
       Xfad[i] = DFadType(4, i, Xval[i]);
       Xfad2[i] = D2FadType(4, i, Xfad[i]);
     }
-      
+
     minitensor::Vector<D2FadType, 3> Xfad2_sub;
     for ( int i = 0; i < 3; ++i ) {
       Xfad2_sub[i] = Xfad2[i];
     }
-    n = projective_get_normal(Xfad2_sub);    
+    n = projective_get_normal(Xfad2_sub);
 
-    detA = minitensor::det(minitensor::dot2(n,minitensor::dot(tangent, n))) 
-      + Xfad2[3] 
+    detA = minitensor::det(minitensor::dot2(n,minitensor::dot(tangent, n)))
+      + Xfad2[3]
       * (Xfad2[0] * Xfad2[0] + Xfad2[1] * Xfad2[1] + Xfad2[2] * Xfad2[2] - 1);
-     
+
     std::cout << "parameters: " << Xval << std::endl;
     std::cout << "determinant: " << (detA.val()).val() << std::endl;
-            
+
     for (int i = 0; i < 4; ++i){
       Rfad[i] = detA.dx(i);
       R[i] = Rfad[i].val();
     }
-      
+
     //std::cout << "R: " << R << std::endl;
-     
+
     normR = sqrt( R[0]*R[0] + R[1]*R[1] + R[2]*R[2] + R[3]*R[3] );
-      
-    if ( iter == 0 ) 
+
+    if ( iter == 0 )
       normR0 = normR;
-      
+
     std::cout << "normR: " << normR << std::endl;
-     
+
     if (normR0 != 0)
       relativeR = normR / normR0;
     else
       relativeR = normR0;
-      
+
     if (relativeR < 1.0e-8 || normR < 1.0e-8)
       break;
-      
+
     if (iter > 50){
       std::cout << "Newton's loop for bifurcation check not converging after "
-        << 50 << " iterations" << std::endl;      
+        << 50 << " iterations" << std::endl;
       break;
     }
-        
+
     // compute Jacobian
     for ( int i = 0; i < 4; ++i )
       for ( int j = 0; j < 4; ++j )
         dRdX[i + 4 * j] = Rfad[i].dx(j);
-          
+
     // call local nonlinear solver
     solver.solve(dRdX, X, R);
-           
+
     iter++;
-      
+
   } // Newton Raphson iteration end
 
   // compute sensitivity information w.r.t. system parameters
   // and pack the sensitivity back to X
   // solver.computeFadInfo(dRdX, X, R);
-    
+
   //update
   if ( (detA.val()).val() <= min_detA ) {
-      
+
     for (int i(0); i < 3; ++i)
       direction[i] = (n[i].val()).val();
-      
+
     for (int i(0); i < 3; ++i)
       parameters[i] = X[i];
 
     min_detA = (detA.val()).val();
-      
+
   } else {
-    std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)" 
+    std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)"
       << std::endl;
-  }    
-        
+  }
+
 } // Function end
-  
+
 //----------------------------------------------------------------------------
 void
 tangent_newton_raphson(minitensor::Tensor4<ScalarT, 3> & tangent,
   minitensor::Vector<ScalarT, 2> & parameters,
   minitensor::Vector<ScalarT> & direction, ScalarT & min_detA)
-{    
+{
   minitensor::Vector<ScalarT, 2> Xval;
   minitensor::Vector<DFadType, 2> Xfad;
   minitensor::Vector<D2FadType, 2> Xfad2;
@@ -843,99 +843,99 @@ tangent_newton_raphson(minitensor::Tensor4<ScalarT, 3> & tangent,
   minitensor::Vector<D2FadType, 3> n;
 
   D2FadType detA;
-    
+
   // in std:vector form to work with nonlinear solve
   // size of Jacobian, 4 = 2 * 2
   std::vector<ScalarT> dRdX(4);
-  std::vector<ScalarT> X(2);    
-  std::vector<ScalarT> R(2);    
+  std::vector<ScalarT> X(2);
+  std::vector<ScalarT> R(2);
 
   for (int i(0); i < 2; ++i)
       X[i] = parameters[i];
-            
+
   // local nonlinear solver for Newton iterative solve
   LCM::LocalNonlinearSolver<Residual, Traits> solver;
-               
-  ScalarT normR(0.0), normR0(0.0), relativeR(0.0);    
+
+  ScalarT normR(0.0), normR0(0.0), relativeR(0.0);
   bool converged = false;
   int iter = 0;
-       
+
   while ( !converged ) {
     std::cout << "iter: " << iter << std::endl;
-      
+
     for ( int i = 0; i < 2; ++i ) {
       Xval[i] = Sacado::ScalarValue<ScalarT>::eval(X[i]);
       Xfad[i] = DFadType(2, i, Xval[i]);
       Xfad2[i] = D2FadType(2, i, Xfad[i]);
     }
-      
-    n = tangent_get_normal(Xfad2);     
+
+    n = tangent_get_normal(Xfad2);
 
     detA = minitensor::det(minitensor::dot2(n,minitensor::dot(tangent, n)));
-     
+
     std::cout << "parameters: " << Xval << std::endl;
     std::cout << "determinant: " << (detA.val()).val() << std::endl;
-            
+
     for (int i = 0; i < 2; ++i){
       Rfad[i] = detA.dx(i);
       R[i] = Rfad[i].val();
     }
-      
+
     //std::cout << "R: " << R << std::endl;
-      
+
     normR = sqrt( R[0]*R[0] + R[1]*R[1] );
-      
-    if ( iter == 0 ) 
+
+    if ( iter == 0 )
       normR0 = normR;
-      
+
     std::cout << "normR: " << normR << std::endl;
-      
+
     if (normR0 != 0)
       relativeR = normR / normR0;
     else
       relativeR = normR0;
-      
+
     if (relativeR < 1.0e-8 || normR < 1.0e-8)
       break;
-      
+
     if (iter > 50){
       std::cout << "Newton's loop for bifurcation check not converging after "
-        << 50 << " iterations" << std::endl;      
+        << 50 << " iterations" << std::endl;
       break;
     }
-        
+
     // compute Jacobian
     for ( int i = 0; i < 2; ++i )
       for ( int j = 0; j < 2; ++j )
         dRdX[i + 2 * j] = Rfad[i].dx(j);
-          
+
     // call local nonlinear solver
     solver.solve(dRdX, X, R);
-            
+
     iter++;
-      
+
   } // Newton Raphson iteration end
 
   // compute sensitivity information w.r.t. system parameters
   // and pack the sensitivity back to X
   // solver.computeFadInfo(dRdX, X, R);
-    
+
   //update
   if ( (detA.val()).val() <= min_detA ) {
-      
+
     for (int i(0); i < 3; ++i)
       direction[i] = (n[i].val()).val();
-      
+
     for (int i(0); i < 2; ++i)
       parameters[i] = X[i];
 
     min_detA = (detA.val()).val();
-      
+
   } else {
-    std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)" 
+    std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)"
       << std::endl;
-  }    
-        
+  }
+
 } // Function end
 
 //----------------------------------------------------------------------------
@@ -943,7 +943,7 @@ void
 cartesian_newton_raphson(minitensor::Tensor4<ScalarT, 3> & tangent,
   minitensor::Vector<ScalarT, 2> & parameters, int surface_index,
   minitensor::Vector<ScalarT> & direction, ScalarT & min_detA)
-{    
+{
   minitensor::Vector<ScalarT, 2> Xval;
   minitensor::Vector<DFadType, 2> Xfad;
   minitensor::Vector<D2FadType, 2> Xfad2;
@@ -951,125 +951,125 @@ cartesian_newton_raphson(minitensor::Tensor4<ScalarT, 3> & tangent,
   minitensor::Vector<D2FadType, 3> n;
 
   D2FadType detA;
-    
+
   // in std:vector form to work with nonlinear solve
   // size of Jacobian, 4 = 2 * 2
   std::vector<ScalarT> dRdX(4);
-  std::vector<ScalarT> X(2);    
-  std::vector<ScalarT> R(2);    
+  std::vector<ScalarT> X(2);
+  std::vector<ScalarT> R(2);
 
   for (int i(0); i < 2; ++i)
       X[i] = parameters[i];
-            
+
   // local nonlinear solver for Newton iterative solve
   LCM::LocalNonlinearSolver<Residual, Traits> solver;
-               
-  ScalarT normR(0.0), normR0(0.0), relativeR(0.0);    
+
+  ScalarT normR(0.0), normR0(0.0), relativeR(0.0);
   bool converged = false;
   int iter = 0;
-       
+
   while ( !converged ) {
     std::cout << "iter: " << iter << std::endl;
-      
+
     for ( int i = 0; i < 2; ++i ) {
       Xval[i] = Sacado::ScalarValue<ScalarT>::eval(X[i]);
       Xfad[i] = DFadType(2, i, Xval[i]);
       Xfad2[i] = D2FadType(2, i, Xfad[i]);
     }
-      
+
     switch ( surface_index ) {
-      case 1: 
+      case 1:
         n = cartesian_get_normal1(Xfad2);
         break;
-      case 2: 
+      case 2:
         n = cartesian_get_normal2(Xfad2);
         break;
-      case 3: 
+      case 3:
         n = cartesian_get_normal3(Xfad2);
         break;
       default:
         n = cartesian_get_normal1(Xfad2);
         break;
-    }    
+    }
 
     detA = minitensor::det(minitensor::dot2(n,minitensor::dot(tangent, n)));
-     
+
     std::cout << "parameters: " << Xval << std::endl;
     std::cout << "determinant: " << (detA.val()).val() << std::endl;
-            
+
     for (int i = 0; i < 2; ++i){
       Rfad[i] = detA.dx(i);
       R[i] = Rfad[i].val();
     }
-      
+
     //std::cout << "R: " << R << std::endl;
-     
+
     normR = sqrt( R[0]*R[0] + R[1]*R[1] );
-     
-    if ( iter == 0 ) 
+
+    if ( iter == 0 )
       normR0 = normR;
-      
+
     std::cout << "normR: " << normR << std::endl;
-      
+
     if (normR0 != 0)
       relativeR = normR / normR0;
     else
       relativeR = normR0;
-      
+
     if (relativeR < 1.0e-8 || normR < 1.0e-8)
       break;
-      
+
     if (iter > 50){
       std::cout << "Newton's loop for bifurcation check not converging after "
-        << 50 << " iterations" << std::endl;      
+        << 50 << " iterations" << std::endl;
       break;
     }
-        
+
     // compute Jacobian
     for ( int i = 0; i < 2; ++i )
       for ( int j = 0; j < 2; ++j )
         dRdX[i + 2 * j] = Rfad[i].dx(j);
-          
+
     // call local nonlinear solver
     solver.solve(dRdX, X, R);
-            
+
     iter++;
-      
+
   } // Newton Raphson iteration end
 
   // compute sensitivity information w.r.t. system parameters
   // and pack the sensitivity back to X
   // solver.computeFadInfo(dRdX, X, R);
-    
+
   //update
   if ( (detA.val()).val() <= min_detA ) {
-      
+
     for (int i(0); i < 3; ++i)
       direction[i] = (n[i].val()).val();
-      
+
     for (int i(0); i < 2; ++i)
       parameters[i] = X[i];
 
     min_detA = (detA.val()).val();
-      
+
   } else {
-    std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)" 
+    std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)"
       << std::endl;
-  }    
-        
+  }
+
 } // Function end
-          
+
 //
 // Simple tests for parametrizations of the bifurcation tensor.
 //
 int main(int ac, char* av[])
 {
   minitensor::Tensor4<ScalarT, 3> tangent;
-  
+
   // To get tangent for testing:
   // Option 1: read tangent from file
-  
-  //std::ifstream file_in("Tangent.txt");      
+
+  //std::ifstream file_in("Tangent.txt");
   //for (int i(0); i < 3; ++i) {
     //for (int j(0); j < 3; ++j) {
       //for (int k(0); k < 3; ++k) {
@@ -1078,9 +1078,9 @@ int main(int ac, char* av[])
         //}
       //}
     //}
-  //}        
+  //}
   //file_in.close();
-  
+
   // Option 2: creat a tangent
   // Set the random seed for reproducibility.
   Teuchos::ScalarTraits<double>().seedrandom(0);
@@ -1107,42 +1107,42 @@ int main(int ac, char* av[])
     0.1 * minitensor::Tensor4<double, 3>(minitensor::Filler::RANDOM_NORMAL);
 
   tangent = lambda * I3 + mu * (I1 + I2);
- 
-    
+
+
   // Define time variables
   //struct timeval start, end;
-  
-  // Generate random initial guess for Newton Raphson 
-  // provided sweep is not used  
+
+  // Generate random initial guess for Newton Raphson
+  // provided sweep is not used
   std::random_device rd;
   std::mt19937 mt_eng(rd());
   std::uniform_real_distribution<ScalarT> real_dist(-1.0, 1.0);
-  
+
   minitensor::Vector<ScalarT, 2> arg_minimum;
   arg_minimum(0) =  real_dist(mt_eng);
   arg_minimum(1) =  real_dist(mt_eng);
-  
+
   minitensor::Vector<ScalarT> direction(1.0, 0.0, 0.0);
   ScalarT min_detA(1.0);
-  
-  // Get start time 
+
+  // Get start time
   //gettimeofday( &start, NULL );
-  
+
   // Newton-Raphson to find exact bifurcation direction
   spherical_newton_raphson(tangent, arg_minimum, direction, min_detA);
   //stereographic_newton_raphson(tangent, arg_minimum, direction, min_detA);
   //projective_newton_raphson(tangent, arg_minimum, direction, min_detA);
   //tangent_newton_raphson(tangent, arg_minimum, direction, min_detA);
   //cartesian_newton_raphson(tangent, arg_minimum, 1, direction, min_detA);
-  
+
   // Get end time
   //gettimeofday( &end, NULL );
-  
+
   // Get time interval in the unit of micro second
-  //int timeuse = 1000000 * ( end.tv_sec - start.tv_sec ) 
+  //int timeuse = 1000000 * ( end.tv_sec - start.tv_sec )
     //+ end.tv_usec - start.tv_usec;
-  
-  // Print time cost onto screen        
+
+  // Print time cost onto screen
   //std::cout << std::endl;
   //std::cout << "Time cost: " << timeuse << std::endl;
   //std::cout << std::endl;

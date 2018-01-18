@@ -77,7 +77,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   TEUCHOS_TEST_FOR_EXCEPT_MSG(metaData->spatial_dimension() != 3, "\n\n**** Error in PeridigmManager::initialize():  Peridigm interface is valid only for three-dimensional meshes.\n\n");
 
   // Store the cell topology for each element mesh part
-  std::map<std::string,CellTopologyData> partCellTopologyData; 
+  std::map<std::string,CellTopologyData> partCellTopologyData;
 
   const stk::mesh::PartVector& stkParts = metaData->get_parts();
   stk::mesh::PartVector stkElementBlocks;
@@ -93,15 +93,15 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   //   for(unsigned int i=0 ; i<fields.size() ; ++i)
   //     std::cout << "DJL DEBUGGING STK field " << *fields[i] << std::endl;
 
-  stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField = 
+  stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField =
       metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d>>(stk::topology::NODE_RANK, "coordinates");
   TEUCHOS_TEST_FOR_EXCEPT_MSG(coordinatesField == 0, "\n\n**** Error in PeridigmManager::initialize(), unable to access coordinates field.\n\n");
 
-  stk::mesh::Field<double,stk::mesh::Cartesian3d>* volumeField = 
+  stk::mesh::Field<double,stk::mesh::Cartesian3d>* volumeField =
       metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d>>(stk::topology::ELEMENT_RANK, "volume");
 
   // Create a selector to select everything in the universal part that is either locally owned or globally shared
-  stk::mesh::Selector selector = 
+  stk::mesh::Selector selector =
       stk::mesh::Selector( metaData->universal_part() ) & ( stk::mesh::Selector( metaData->locally_owned_part() ) | stk::mesh::Selector( metaData->globally_shared_part() ) );
 
   // Select element mesh entities that match the selector
@@ -137,7 +137,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     blockNameToBlockId[blockName] = bId;
 
     // Create a selector for all locally-owned elements in the block
-    stk::mesh::Selector selector = 
+    stk::mesh::Selector selector =
         stk::mesh::Selector( *stkElementBlocks[iBlock] ) & stk::mesh::Selector( metaData->locally_owned_part() );
 
     // Select the mesh entities that match the selector
@@ -283,7 +283,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     int bId = blockNameToBlockId[blockName];
 
     // Create a selector for all locally-owned elements in the block
-    stk::mesh::Selector selector = 
+    stk::mesh::Selector selector =
         stk::mesh::Selector( *stkElementBlocks[iBlock] ) & stk::mesh::Selector( metaData->locally_owned_part() );
 
     // Select the mesh entities that match the selector
@@ -507,11 +507,11 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 
   obcDataPoints = Teuchos::rcp(new std::vector<OBCDataPoint>());
 
-  stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField = 
+  stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField =
     metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d>>(stk::topology::NODE_RANK, "coordinates");
   TEUCHOS_TEST_FOR_EXCEPT_MSG(coordinatesField == 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), unable to access coordinates field.\n\n");
 
-  stk::mesh::Field<double,stk::mesh::Cartesian3d>* volumeField = 
+  stk::mesh::Field<double,stk::mesh::Cartesian3d>* volumeField =
     metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d>>(stk::topology::ELEMENT_RANK, "volume");
   TEUCHOS_TEST_FOR_EXCEPT_MSG(volumeField == 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), unable to access volume field (volume field is expected because it is assumed that thre are sphere elements in the simulation).\n\n");
 
@@ -755,7 +755,7 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 	  for(int dof=0 ; dof<3 ; dof++){
 	    point(dof) = refPoints(0, 0, dof);
 	  }
-          
+
 	  int inElement = Intrepid2::CellTools<PHX::Device>::checkPointInclusion(point, cellTopology);
 
 	  if(inElement){
@@ -946,7 +946,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
     std::string blockName = (*peridigmBlocks)[iBlock].getName();
     bool hasOBCFunctional = peridigm->hasBlockData(blockName, "OBC_Functional");
     if(hasOBCFunctional){
-      Teuchos::RCP<Epetra_Vector> data = peridigm->getBlockData(blockName, "OBC_Functional"); 
+      Teuchos::RCP<Epetra_Vector> data = peridigm->getBlockData(blockName, "OBC_Functional");
       Epetra_Import importer(data->Map(), displacementDiff.Map());
       int importErrorCode = data->Import(displacementDiff, importer, Insert);
       TEUCHOS_TEST_FOR_EXCEPT_MSG(importErrorCode != 0, "\n\n**** Error in PeridigmManager::obcEvaluateFunctional(), import operation failed!\n\n");

@@ -71,7 +71,7 @@ CrystalPlasticityKernel(
 
   // Store an RCP to the NOX status test, if available
   if (p->isParameter("NOX Status Test") == true) {
-    nox_status_test_ = 
+    nox_status_test_ =
         p->get<Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>>(
             "NOX Status Test");
   } else {
@@ -156,7 +156,7 @@ CrystalPlasticityKernel(
     c66_temperature_coeff_ = c44_temperature_coeff_;
   } else {
     c66_ = 0.5 * (c11_ - c12_);
-    c66_temperature_coeff_ = 
+    c66_temperature_coeff_ =
       0.5 * (c11_temperature_coeff_ - c12_temperature_coeff_);
   }
 
@@ -192,7 +192,7 @@ CrystalPlasticityKernel(
     CP::SlipFamily<CP::MAX_DIM, CP::MAX_SLIP> &
     slip_family = slip_families_[slip_system.slip_family_index_];
 
-    minitensor::Index 
+    minitensor::Index
     slip_system_index = slip_family.num_slip_sys_;
 
     slip_family.slip_system_indices_[slip_system_index] = num_ss;
@@ -218,7 +218,7 @@ CrystalPlasticityKernel(
     //
     // Read and normalize slip normals. Miller indices need to be normalized.
     //
-    std::vector<RealType> 
+    std::vector<RealType>
     n_temp = ss_list.get<Teuchos::Array<RealType>>("Slip Normal").toVector();
 
     minitensor::Vector<RealType, CP::MAX_DIM>
@@ -237,14 +237,14 @@ CrystalPlasticityKernel(
       minitensor::dyad(slip_systems_.at(num_ss).s_, slip_systems_.at(num_ss).n_);
 
     auto const
-    index_param = 
+    index_param =
       slip_family.phardening_parameters_->param_map_["Initial Hardening State"];
 
     RealType const
     state_hardening_initial =
       slip_family.phardening_parameters_->getParameter(index_param);
 
-    slip_system.state_hardening_initial_ = 
+    slip_system.state_hardening_initial_ =
       ss_list.get<RealType>("Initial Hardening State", state_hardening_initial);
   }
 
@@ -255,7 +255,7 @@ CrystalPlasticityKernel(
 
     // Create latent matrix for hardening law
     slip_family.phardening_parameters_->createLatentMatrix(
-      slip_family, slip_systems_); 
+      slip_family, slip_systems_);
 
     if (verbosity_ >= CP::Verbosity::HIGH) {
       std::cout << slip_family.latent_matrix_ << std::endl;
@@ -386,7 +386,7 @@ CrystalPlasticityKernel(
   }
 
   // taus - output resolved shear stress for debugging - not stated
-  for (int num_ss = 0; num_ss < num_slip_; ++num_ss) 
+  for (int num_ss = 0; num_ss < num_slip_; ++num_ss)
   {
     std::string const
     t = Albany::strint("tau", num_ss + 1, '_');
@@ -409,7 +409,7 @@ CrystalPlasticityKernel(
 
   // residual iterations
   addStateVariable(residual_iter_string_, dl->qp_scalar, "scalar", 0.0, false,
-      p->get<bool>("Output CP_Residual_Iter", false));    
+      p->get<bool>("Output CP_Residual_Iter", false));
 }
 
 
@@ -428,7 +428,7 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(
   else {
     index_element_ = -1;
   }
-  
+
   if(verbosity_ >= CP::Verbosity::HIGH) {
     std::cout << ">>> in cp initialize compute state\n";
   }
@@ -470,7 +470,7 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(
       eval_fields, workset);
 
   // extract slip rate on each slip system
-  extractEvaluatedFieldArray("gamma_dot", num_slip_, slip_rates_, 
+  extractEvaluatedFieldArray("gamma_dot", num_slip_, slip_rates_,
     previous_slip_rates_, eval_fields, workset);
 
   // extract hardening on each slip system
@@ -484,7 +484,7 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(
 
   previous_plastic_deformation_ = (*workset.stateArrayPtr)[Fp_string_ + "_old"];
   previous_defgrad_ = (*workset.stateArrayPtr)[F_string_ + "_old"];
-  
+
   dt_ = SSV::eval(delta_time_(0));
 
   // Resest status and status message for model failure test
@@ -505,15 +505,15 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
     return;
   }
   // TODO: In the future for CUDA this should be moved out of the kernel because
-  // it uses dynamic allocation for the buffer. It should also be modified to use 
+  // it uses dynamic allocation for the buffer. It should also be modified to use
   // cudaMalloc.
-  utility::StaticAllocator 
+  utility::StaticAllocator
   allocator(1024 * 1024);
 
   //
   // Known quantities
   //
-  minitensor::Tensor<RealType, CP::MAX_DIM> 
+  minitensor::Tensor<RealType, CP::MAX_DIM>
   Fp_n(num_dims_);
 
   minitensor::Vector<RealType, CP::MAX_SLIP>
@@ -618,7 +618,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
     orientation_matrix = element_block_orientation_;
   }
 
-  // Set the rotated elasticity tensor, slip normals, slip directions, 
+  // Set the rotated elasticity tensor, slip normals, slip directions,
   // and projection operator
   C = minitensor::kronecker(orientation_matrix, C_unrotated);
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss)
@@ -809,7 +809,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
               Fp_n,
               Lp_trial,
               Fp_np1);
-         
+
           bool
           failed{false};
 
@@ -894,7 +894,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   }
 
   state_internal.slip_np1_ = slip_np1;
-  
+
   if (dt_ == 0.0)
   {
     if (verbosity_ == CP::Verbosity::EXTREME)
@@ -913,7 +913,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
       outfile.open(file);
       outfile.close();
     }
-        
+
   }
 
   auto

@@ -65,7 +65,7 @@ Stresses(const Teuchos::ParameterList& p) :
     lengthScale[i] = msModel.get<RealType>("Length Scale");
     betaParameter[i] = msModel.get<RealType>("Beta Constant");
   }
-  
+
 
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
@@ -117,7 +117,7 @@ postRegistrationSetup(typename Traits::SetupData d,
      \beta^{np}_{ij} \\
      \bar{\bar{\beta}}^{np}_{ijk} \\
      \end{array} \right\}
-      = 
+      =
      \left[ \begin{array}{ccc}
      C_{ijkl} & 0 & 0 \\
      0 & B_{ijkl} & 0 \\
@@ -145,7 +145,7 @@ TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "Stress:: evaluator has to be fixed for Kokko
   case 1:
     // Compute Stress (uniaxial strain)
     for (std::size_t cell=0; cell < workset.numCells; ++cell)
-      for (std::size_t qp=0; qp < numQPs; ++qp) 
+      for (std::size_t qp=0; qp < numQPs; ++qp)
 	stress(cell,qp,0,0) = C11 * strain(cell,qp,0,0);
     break;
   case 2:
@@ -156,7 +156,7 @@ TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "Stress:: evaluator has to be fixed for Kokko
 	stress(cell,qp,0,0) = C11*e1 + C12*e2;
 	stress(cell,qp,1,1) = C12*e1 + C11*e2;
 	stress(cell,qp,0,1) = C44*e3;
-	stress(cell,qp,1,0) = stress(cell,qp,0,1); 
+	stress(cell,qp,1,0) = stress(cell,qp,0,1);
       }
     }
     // Compute Micro Stress
@@ -204,9 +204,9 @@ TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "Stress:: evaluator has to be fixed for Kokko
 	stress(cell,qp,1,2) = C44*e4;
 	stress(cell,qp,0,2) = C44*e5;
 	stress(cell,qp,0,1) = C66*e6;
-	stress(cell,qp,1,0) = stress(cell,qp,0,1); 
-	stress(cell,qp,2,0) = stress(cell,qp,0,2); 
-	stress(cell,qp,2,1) = stress(cell,qp,1,2); 
+	stress(cell,qp,1,0) = stress(cell,qp,0,1);
+	stress(cell,qp,2,0) = stress(cell,qp,0,2);
+	stress(cell,qp,2,1) = stress(cell,qp,1,2);
       }
     }
     // Compute Micro Stress

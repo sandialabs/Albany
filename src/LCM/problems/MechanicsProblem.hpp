@@ -44,7 +44,7 @@ namespace Albany {
 class MechanicsProblem : public AbstractProblem {
 
 public:
-  
+
   using FC = typename Kokkos::DynRankView<RealType, PHX::Device>;
 
   ///
@@ -70,14 +70,14 @@ public:
   spatialDimension() const {
     return num_dims_;
   }
-  
+
   ///
-  /// Get boolean telling code if SDBCs are utilized  
+  /// Get boolean telling code if SDBCs are utilized
   ///
   virtual
   bool
   useSDBCs() const {
-    return use_sdbcs_; 
+    return use_sdbcs_;
   }
 
   ///
@@ -96,7 +96,7 @@ public:
   Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
   buildEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits> & fm0,
-      MeshSpecsStruct const & meshSpecs, 
+      MeshSpecsStruct const & meshSpecs,
       StateManager & stateMgr,
       FieldManagerChoice fmchoice,
       Teuchos::RCP<Teuchos::ParameterList> const & responseList);
@@ -213,9 +213,9 @@ protected:
   bool
   have_source_;
 
-  /// Boolean marking whether SDBCs are used 
+  /// Boolean marking whether SDBCs are used
   bool
-  use_sdbcs_; 
+  use_sdbcs_;
 
   /// Type of thermal source that is in effect
   SOURCE_TYPE

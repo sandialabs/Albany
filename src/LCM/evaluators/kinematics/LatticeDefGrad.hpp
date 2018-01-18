@@ -65,7 +65,7 @@ private:
 
   //! stabilization parameter for the weighted average
   ScalarT alpha;
-  
+
 
 };
 

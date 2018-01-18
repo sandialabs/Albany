@@ -26,7 +26,7 @@ CP::ParameterReader<EvalT, Traits>::getVerbosity() const
       {"Debug", CP::Verbosity::DEBUG},
       {"Extreme", CP::Verbosity::EXTREME}
     });
-  
+
   return vmap.get(p_);
 }
 
@@ -40,7 +40,7 @@ CP::ParameterReader<EvalT, Traits>::getIntegrationScheme() const
       {"Implicit", CP::IntegrationScheme::IMPLICIT},
       {"Explicit", CP::IntegrationScheme::EXPLICIT}
     });
-  
+
   return imap.get(p_);
 }
 
@@ -55,7 +55,7 @@ CP::ParameterReader<EvalT, Traits>::getResidualType() const
       {"Slip Hardness", CP::ResidualType::SLIP_HARDNESS},
       {"Constrained Slip Hardness", CP::ResidualType::CONSTRAINED_SLIP_HARDNESS}
     });
-  
+
   return rmap.get(p_);
 }
 
@@ -70,7 +70,7 @@ CP::ParameterReader<EvalT, Traits>::getPredictorSlip() const
           {"Rate", CP::PredictorSlip::RATE},
           {"Solve", CP::PredictorSlip::SOLVE}
       });
-  
+
   return pmap.get(p_);
 }
 
@@ -148,14 +148,14 @@ CP::ParameterReader<EvalT, Traits>::getSlipFamily(int index)
 
     auto const
     value_param = f_list.get<RealType>(param.first);
-    
+
     slip_family.pflow_parameters_->setParameter(index_param, value_param);
   }
 
   slip_family.pflow_parameters_->setTolerance();
 
   // Obtain hardening law parameters
-  Teuchos::ParameterList 
+  Teuchos::ParameterList
   h_list = family_plist.sublist("Hardening Law");
 
   static utility::ParameterEnum<CP::HardeningLawType> const hmap(

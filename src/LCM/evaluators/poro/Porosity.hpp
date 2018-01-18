@@ -35,28 +35,28 @@ namespace LCM {
     public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>,
     public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-  
+
   public:
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
     ///
     /// Constructor
-    ///    
+    ///
     Porosity(Teuchos::ParameterList& p,
              const Teuchos::RCP<Albany::Layouts>& dl);
-  
+
     ///
     /// Phalanx method to allocate space
     ///
     void postRegistrationSetup(typename Traits::SetupData d,
                                PHX::FieldManager<Traits>& vm);
-  
+
     ///
     /// Implementation of physics
     ///
     void evaluateFields(typename Traits::EvalData d);
-  
+
     ///
     /// Sacado method to access parameters
     ///
@@ -104,7 +104,7 @@ namespace LCM {
     /// Optional dependence on det(F)
     ///
     PHX::MDField<const ScalarT,Cell,QuadPoint> J;
-    
+
     ///
     /// flag to indicated usage in poroelastic context
     ///

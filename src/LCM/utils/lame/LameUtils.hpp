@@ -67,7 +67,7 @@ namespace LameUtils {
     }
   }
 
-  //! Instantiate a lame::MaterialModel given the model name and a set of material parameters. 
+  //! Instantiate a lame::MaterialModel given the model name and a set of material parameters.
 //  Teuchos::RCP<LameMaterial> constructLameMaterialModel(const std::string& lameMaterialModelName,
   Teuchos::RCP<LameMaterial> constructLameMaterialModel(const std::string lameMaterialModelName,
  							const Teuchos::ParameterList& lameMaterialParameters);
@@ -78,13 +78,13 @@ namespace LameUtils {
   inline
   Teuchos::RCP<lament::Material<ScalarT>> constructLamentMaterialModel(const std::string& lameMaterialModelName,
 									const Teuchos::ParameterList& lameMaterialParameters){
-    
+
     // Strings should be all upper case with spaces replaced with underscores
     std::string materialModelName = lameMaterialModelName;
-    std::transform(materialModelName.begin(), materialModelName.end(), materialModelName.begin(), 
+    std::transform(materialModelName.begin(), materialModelName.end(), materialModelName.begin(),
       (int (*)(int))std::toupper);
     std::replace(materialModelName.begin(), materialModelName.end(), ' ', '_');
-  
+
     LameMatProps props;
     parameterListToMatProps(lameMaterialParameters, props);
 

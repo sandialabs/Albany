@@ -29,7 +29,7 @@ namespace LCM {
     this->addDependentField(scalarJump);
     this->addDependentField(currentBasis);
     this->addDependentField(refDualBasis);
-    this->addDependentField(refNormal);    
+    this->addDependentField(refNormal);
     this->addDependentField(refArea);
 
     this->addEvaluatedField(scalarResidual);
@@ -91,5 +91,5 @@ namespace LCM {
 
 
   }
-  //**********************************************************************  
+  //**********************************************************************
 }

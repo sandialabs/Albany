@@ -14,10 +14,10 @@ Albany::ConstitutiveDriverProblem::
 ConstitutiveDriverProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
                           const Teuchos::RCP<ParamLib>& param_lib,
                           const int num_dims,
-                          Teuchos::RCP<const Teuchos::Comm<int>>& commT) : 
+                          Teuchos::RCP<const Teuchos::Comm<int>>& commT) :
   Albany::AbstractProblem(params, param_lib),
   have_temperature_(false),
-  use_sdbcs_(false), 
+  use_sdbcs_(false),
   num_dims_(num_dims)
 {
 
@@ -79,7 +79,7 @@ buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  ConstructEvaluatorsOp<ConstitutiveDriverProblem> 
+  ConstructEvaluatorsOp<ConstitutiveDriverProblem>
     op(*this,
        fm0,
        meshSpecs,

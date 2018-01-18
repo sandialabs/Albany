@@ -81,7 +81,7 @@ LinearPiezoModel(Teuchos::ParameterList* p,
 
   // DEFINE STATE VARIABLES (output)
   //
-  
+
   // stress
   this->num_state_variables_++;
   this->state_var_names_.push_back(stressName);
@@ -98,7 +98,7 @@ LinearPiezoModel(Teuchos::ParameterList* p,
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
   this->state_var_output_flags_.push_back(true);
-  
+
   // edisp
   this->num_state_variables_++;
   this->state_var_names_.push_back(edispName);
@@ -115,7 +115,7 @@ LinearPiezoModel(Teuchos::ParameterList* p,
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
   this->state_var_output_flags_.push_back(true);
-  
+
 }
 
 /******************************************************************************/
@@ -135,9 +135,9 @@ computeState(typename Traits::EvalData workset,
   int numCells = workset.numCells;
 
   if( num_dims_ == 1 ){
-  } else 
+  } else
   if( num_dims_ == 2 ){
-  } else 
+  } else
   if( num_dims_ == 3 ){
     minitensor::Tensor<ScalarT> x(num_dims_), X(num_dims_);
     minitensor::Vector<ScalarT> E(num_dims_), D(num_dims_);
@@ -145,23 +145,23 @@ computeState(typename Traits::EvalData workset,
     for (int cell=0; cell < numCells; ++cell) {
       for (int qp=0; qp < num_pts_; ++qp) {
         if(test){
-          const ScalarT &x1 = strain(cell,qp,0,0), 
+          const ScalarT &x1 = strain(cell,qp,0,0),
                         &x2 = strain(cell,qp,1,1),
                         &x3 = strain(cell,qp,2,2),
                         &x4 = strain(cell,qp,1,2),
-                        &x5 = strain(cell,qp,0,2), 
+                        &x5 = strain(cell,qp,0,2),
                         &x6 = strain(cell,qp,0,1);
           const ScalarT &E1 = -Gradp(cell,qp,0), &E2 = -Gradp(cell,qp,1), &E3 = -Gradp(cell,qp,2);
-  
+
           stress(cell,qp,0,0) = C11*x1 + C12*x2 + C23*x3 - e31*E3;
           stress(cell,qp,1,1) = C12*x1 + C11*x2 + C23*x3 - e31*E3;
           stress(cell,qp,2,2) = C23*x1 + C23*x2 + C33*x3 - e33*E3;
           stress(cell,qp,1,2) = C44*x4 - e15*E2;
           stress(cell,qp,0,2) = C44*x5 - e15*E1;
           stress(cell,qp,0,1) = C66*x6;
-          stress(cell,qp,1,0) = stress(cell,qp,0,1); 
-          stress(cell,qp,2,0) = stress(cell,qp,0,2); 
-          stress(cell,qp,2,1) = stress(cell,qp,1,2); 
+          stress(cell,qp,1,0) = stress(cell,qp,0,1);
+          stress(cell,qp,2,0) = stress(cell,qp,0,2);
+          stress(cell,qp,2,1) = stress(cell,qp,1,2);
 
           edisp(cell,qp,0) = e15*x5 + E11*E1;
           edisp(cell,qp,1) = e15*x4 + E11*E2;
@@ -172,10 +172,10 @@ computeState(typename Traits::EvalData workset,
           x.fill(strain,cell,qp,0,0);
           E.fill(Gradp,cell,qp,0);
           E *= -1.0;
-  
+
           X = dotdot(C,x) - dot(E,e);
           D = dotdot(e,x) + dot(eps,E);
-  
+
           for(int i=0; i<3; i++)
             for(int j=0; j<3; j++)
               stress(cell,qp,i,j) = X(i,j);

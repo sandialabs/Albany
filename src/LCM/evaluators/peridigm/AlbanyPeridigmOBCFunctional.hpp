@@ -10,10 +10,10 @@
 #include "Albany_ScalarResponseFunction.hpp"
 
 namespace Albany {
-/** 
+/**
  * \brief Response Description
  */
-  class AlbanyPeridigmOBCFunctional : 
+  class AlbanyPeridigmOBCFunctional :
       public ScalarResponseFunction
   {
   public:
@@ -35,8 +35,8 @@ namespace Albany {
          Tpetra_Vector& gT);
 
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
-    virtual void 
-    evaluateTangentT(const double alpha, 
+    virtual void
+    evaluateTangentT(const double alpha,
 		    const double beta,
 		    const double omega,
 		    const double current_time,
@@ -71,7 +71,7 @@ namespace Albany {
 #endif
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
-    virtual void 
+    virtual void
     evaluateGradientT(const double current_time,
 		     const Tpetra_Vector* xdotT,
 		     const Tpetra_Vector* xdotdotT,
@@ -103,7 +103,7 @@ namespace Albany {
      //! Private to prohibit copying
     AlbanyPeridigmOBCFunctional& operator=(const AlbanyPeridigmOBCFunctional&);
   };
-	
+
 }
 
 #endif

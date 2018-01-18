@@ -24,16 +24,16 @@ enum class ExplicitMethod
 
 
 /******************************************************************************/
-// Data structures 
+// Data structures
 /******************************************************************************/
 
 /******************************************************************************/
 struct CrystalPhase
 /******************************************************************************/
 {
-  CrystalPhase(minitensor::Tensor <RealType, THREE_D>& R, 
-               minitensor::Tensor4<RealType, THREE_D>& C, 
-               minitensor::Tensor3<RealType, THREE_D>& h, 
+  CrystalPhase(minitensor::Tensor <RealType, THREE_D>& R,
+               minitensor::Tensor4<RealType, THREE_D>& C,
+               minitensor::Tensor3<RealType, THREE_D>& h,
                minitensor::Tensor <RealType, THREE_D>& eps);
 
   minitensor::Tensor4<RealType, THREE_D> C;
@@ -60,7 +60,7 @@ struct Transition
 /******************************************************************************/
 {
   Transition() {}
-  
+
 //  Teuchos::RCP<CrystalVariant> fromVariant;
 //  Teuchos::RCP<CrystalVariant> toVariant;
 
@@ -76,36 +76,36 @@ struct Transition
 /******************************************************************************/
 
 template<typename DataT>
-void 
+void
 changeBasis(      minitensor::Tensor4<DataT, THREE_D>& inMatlBasis,
             const minitensor::Tensor4<DataT, THREE_D>& inGlblBasis,
             const minitensor::Tensor <DataT, THREE_D>& Basis);
 
 template<typename DataT>
-void 
+void
 changeBasis(      minitensor::Tensor3<DataT, THREE_D>& inMatlBasis,
             const minitensor::Tensor3<DataT, THREE_D>& inGlblBasis,
             const minitensor::Tensor <DataT, THREE_D>& Basis);
 
 template<typename DataT>
-void 
+void
 changeBasis(      minitensor::Tensor <DataT, THREE_D>& inMatlBasis,
             const minitensor::Tensor <DataT, THREE_D>& inGlblBasis,
             const minitensor::Tensor <DataT, THREE_D>& Basis);
 
 template<typename DataT>
-void 
+void
 changeBasis(      minitensor::Vector <DataT, THREE_D>& inMatlBasis,
             const minitensor::Vector <DataT, THREE_D>& inGlblBasis,
             const minitensor::Tensor <DataT, THREE_D>& Basis);
 
 
 template<typename NLS, typename DataT>
-void 
+void
 DescentNorm(NLS & nls, minitensor::Vector<DataT, MAX_TRNS> & xi);
 
 template<typename NLS, typename DataT>
-void 
+void
 ScaledDescent(NLS & nls, minitensor::Vector<DataT, MAX_TRNS> & xi);
 
 template<typename DataT, typename ArgT>
@@ -123,11 +123,11 @@ void
 computeInitialState(
     Teuchos::Array<RealType>            const & fractions,
     Teuchos::Array<FM::CrystalVariant>  const & crystalVariants,
-    minitensor::Tensor<ArgT,FM::THREE_D> const & x, 
-    minitensor::Tensor<ArgT,FM::THREE_D>       & X, 
+    minitensor::Tensor<ArgT,FM::THREE_D> const & x,
+    minitensor::Tensor<ArgT,FM::THREE_D>       & X,
     minitensor::Tensor<ArgT,FM::THREE_D>       & linear_x,
-    minitensor::Vector<ArgT,FM::THREE_D> const & E, 
-    minitensor::Vector<ArgT,FM::THREE_D>       & D, 
+    minitensor::Vector<ArgT,FM::THREE_D> const & E,
+    minitensor::Vector<ArgT,FM::THREE_D>       & D,
     minitensor::Vector<ArgT,FM::THREE_D>       & linear_D);
 
 
@@ -136,11 +136,11 @@ void
 computeRelaxedState(
     Teuchos::Array<ArgT>                const & fractions,
     Teuchos::Array<FM::CrystalVariant>  const & crystalVariants,
-    minitensor::Tensor<ArgT,FM::THREE_D> const & x, 
-    minitensor::Tensor<ArgT,FM::THREE_D>       & X, 
+    minitensor::Tensor<ArgT,FM::THREE_D> const & x,
+    minitensor::Tensor<ArgT,FM::THREE_D>       & X,
     minitensor::Tensor<ArgT,FM::THREE_D>       & linear_x,
-    minitensor::Vector<ArgT,FM::THREE_D>       & E, 
-    minitensor::Vector<ArgT,FM::THREE_D> const & D, 
+    minitensor::Vector<ArgT,FM::THREE_D>       & E,
+    minitensor::Vector<ArgT,FM::THREE_D> const & D,
     minitensor::Vector<ArgT,FM::THREE_D>       & linear_D);
 
 
@@ -154,7 +154,7 @@ computeResidual(
     Teuchos::Array<FM::CrystalVariant>    const & crystalVariants,
     Teuchos::Array<DataT>                 const & tBarrier,
     Kokkos::DynRankView<DataT>            const & aMatrix,
-    minitensor::Tensor<ArgT,FM::THREE_D>   const & X, 
+    minitensor::Tensor<ArgT,FM::THREE_D>   const & X,
     minitensor::Tensor<ArgT,FM::THREE_D>   const & linear_x,
     minitensor::Vector<ArgT,FM::THREE_D>   const & E,
     minitensor::Vector<ArgT,FM::THREE_D>   const & linear_D);
@@ -202,7 +202,7 @@ public:
   T
   value(minitensor::Vector<T, N> const & x);
 
-  //! Gradient function; returns the residual vector as a function of the 
+  //! Gradient function; returns the residual vector as a function of the
   // transition rate at step N+1.
   template<typename T, minitensor::Index N = minitensor::DYNAMIC>
   minitensor::Vector<T, N>

@@ -455,7 +455,7 @@ main(int argc, char* argv[]) {
   // Build the parameter list from the yaml input.
   Teuchos::RCP<Teuchos::ParameterList> plist =
       Teuchos::rcp(new Teuchos::ParameterList());
-  
+
   std::string const input_extension = getFileExtension(yaml_input_filename);
   if (input_extension == "yaml" || input_extension == "yml") {
     Teuchos::updateParametersFromYamlFile(
@@ -464,7 +464,7 @@ main(int argc, char* argv[]) {
     Teuchos::updateParametersFromXmlFile(
         yaml_input_filename, Teuchos::inoutArg(*plist));
   }
-  
+
   std::string field_type = plist->get<std::string>("Field Type", "Node Vector");
   int field_type_num;
   if (field_type == "Node Vector")

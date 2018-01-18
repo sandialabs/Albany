@@ -97,18 +97,18 @@ namespace LCM {
           p.get<std::string>("M Name"), dl->qp_scalar);
       this->addDependentField(M_operator_);
     }
-    
+
     if ( have_transient_ && have_mechanics_ && (SolutionType_ != "Continuation") )
     {
        stress_ = decltype(stress_)(
            p.get<std::string>("Stress Name"), dl->qp_tensor);
-       
+
        vel_grad_ = decltype(vel_grad_)(
            p.get<std::string>("Velocity Gradient Variable Name"),dl->qp_tensor);
-       
+
        this->addDependentField(stress_);
        this->addDependentField(vel_grad_);
-       
+
     }
 
     this->addEvaluatedField(residual_);
@@ -119,7 +119,7 @@ namespace LCM {
     num_nodes_ = dims[1];
     num_pts_   = dims[2];
     num_dims_  = dims[3];
-    
+
     scalar_name_ = p.get<std::string>("Scalar Variable Name")+"_old";
 
     this->setName("TransportResidual"+PHX::typeAsString<EvalT>());
@@ -170,7 +170,7 @@ namespace LCM {
     if (have_contact_) {
       this->utils.setFieldData(M_operator_,fm);
     }
-    
+
     if ( have_transient_ && have_mechanics_ && (SolutionType_ != "Continuation") )
     {
         this->utils.setFieldData(stress_,fm);
@@ -178,7 +178,7 @@ namespace LCM {
     }
 
     this->utils.setFieldData(residual_,fm);
-    
+
     // initialize term1_
     term1_ = Kokkos::createDynRankView(scalar_.get_view(), "XXX", num_cells_,num_pts_);
   }
@@ -188,7 +188,7 @@ namespace LCM {
   void TransportResidual<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    
+
     // zero out residual
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int node = 0; node < num_nodes_; ++node) {
@@ -207,7 +207,7 @@ namespace LCM {
         }
       }
     }
-    
+
     // term ==> P : F_dot
     if (have_transient_ && have_mechanics_ && (SolutionType_ != "Continuation")) {
       for (int cell = 0; cell < workset.numCells; ++cell) {
@@ -233,7 +233,7 @@ namespace LCM {
         }
       }
     }
-    
+
     // diffusive term
     if (have_diffusion_ && !(have_transient_ && delta_time_(0) == 0.0)) {
       for (int cell = 0; cell < workset.numCells; ++cell) {

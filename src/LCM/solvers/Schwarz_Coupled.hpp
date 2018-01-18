@@ -9,7 +9,7 @@
 
 #include "Albany_ModelEvaluatorT.hpp"
 #include "Albany_DataTypes.hpp"
-#include "Schwarz_BoundaryJacobian.hpp" 
+#include "Schwarz_BoundaryJacobian.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
 #include "Albany_MaterialDatabase.hpp"
@@ -90,18 +90,18 @@ public:
 
   Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
   getThyraRangeSpace() const;
-  
+
   Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
   getThyraDomainSpace() const;
-  
+
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
-  getApps() const {return apps_;}  
+  getApps() const {return apps_;}
 
 protected:
 
   mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
   range_space_;
-  
+
   mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
   domain_space_;
 
@@ -122,7 +122,7 @@ protected:
   evalModelImpl(
       Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
-  
+
 
 private:
 
@@ -138,7 +138,7 @@ private:
   /// List of free parameter names
   Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>
   param_names_;
-  
+
   /// RCP to matDB object
   Teuchos::Array<Teuchos::RCP<Albany::MaterialDatabase>>
   material_dbs_;
@@ -159,14 +159,14 @@ private:
   /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
   Thyra::ModelEvaluatorBase::InArgs<ST>
   nominal_values_;
-  
+
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
   disc_maps_;
 
   /// Teuchos array holding main diagonal jacobians (non-coupled models)
   Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
   jacs_;
-  
+
   /// Teuchos array holding main diagonal preconditioners (non-coupled models)
   Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
   precs_;
@@ -189,7 +189,7 @@ private:
   /// For setting get_W_factory()
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
   lowsfb_;
-    
+
   /// Array of Sacado parameter vectors
   mutable Teuchos::Array<Teuchos::Array<ParamVec>>
   sacado_param_vecs_;
@@ -201,12 +201,12 @@ private:
   solver_outargs_;
 
   bool w_prec_supports_;
-  
-  bool supports_xdot_;  
-    
-  enum MF_PREC_TYPE {NONE, JACOBI, ABS_ROW_SUM, ID}; 
-    
-  MF_PREC_TYPE mf_prec_type_; 
+
+  bool supports_xdot_;
+
+  enum MF_PREC_TYPE {NONE, JACOBI, ABS_ROW_SUM, ID};
+
+  MF_PREC_TYPE mf_prec_type_;
 };
 
 } // namespace LCM

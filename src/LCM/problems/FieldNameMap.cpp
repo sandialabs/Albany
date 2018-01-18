@@ -48,8 +48,8 @@ namespace LCM {
 
     // field names for slip on each slip system
     for (int sys{0}; sys < max_slip_systems; ++sys) {
-      
-      std::string const 
+
+      std::string const
       g = Albany::strint("gamma", sys + 1, '_');
 
       name_map->insert(std::make_pair(g, g));
@@ -142,7 +142,7 @@ namespace LCM {
 
       std::map<std::string, std::string>::iterator
       it;
-      
+
       for (it = name_map->begin(); it != name_map->end(); ++it) {
         it->second = "surf_" + it->second;
       }

@@ -19,7 +19,7 @@ namespace LCM
 {
 class IPtoNodalFieldManager;
 
-/// 
+///
 /// \brief Evaltuator to compute a nodal stress field
 ///
 template<typename EvalT, typename Traits>
@@ -99,7 +99,7 @@ public:
 // **************************************************************
 
 // **************************************************************
-// Residual 
+// Residual
 // **************************************************************
 
 template<typename Traits>
@@ -120,7 +120,7 @@ public:
 protected:
 
   std::string nodal_weights_name_;
-    
+
   int num_pts_;
   int num_dims_;
   int num_nodes_;

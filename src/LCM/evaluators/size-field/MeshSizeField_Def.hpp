@@ -29,7 +29,7 @@ namespace LCM {
 
   {
 
-    // Save the adaptation PL to pass back 
+    // Save the adaptation PL to pass back
 
     adapt_PL = p.get<Teuchos::ParameterList*>("Parameter List");
 
@@ -38,11 +38,11 @@ namespace LCM {
     adapt_PL->set<bool>("AdaptNow", false);
 
     this->addDependentField(currentCoords);
-    
+
     this->addEvaluatedField(isoMeshSizeField);
-    
+
     this->setName("IsoMeshSizeField<Residual>");
-    
+
     std::vector<PHX::DataLayout::size_type> dims;
     dl->qp_tensor->dimensions(dims);
     numQPs  = dims[1];
@@ -143,7 +143,7 @@ namespace LCM {
 
   {
 
-    // Save the adaptation PL to pass back 
+    // Save the adaptation PL to pass back
 
     adapt_PL = p.get<Teuchos::ParameterList*>("Parameter List");
 
@@ -152,11 +152,11 @@ namespace LCM {
     adapt_PL->set<bool>("AdaptNow", false);
 
     this->addDependentField(currentCoords);
-    
+
     this->addEvaluatedField(anisoMeshSizeField);
-    
+
     this->setName("AnisoMeshSizeField<Residual>");
-    
+
     std::vector<PHX::DataLayout::size_type> dims;
     dl->qp_tensor->dimensions(dims);
     numQPs  = dims[1];
@@ -231,7 +231,7 @@ namespace LCM {
       }
     }
 
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, 
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
        "NOTE: Please remember that the Anisotropic size field is defined as a vector in xi, etc, zeta space not x, y, z!!!");
 
   }

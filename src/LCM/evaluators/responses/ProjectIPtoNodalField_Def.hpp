@@ -146,7 +146,7 @@ ProjectIPtoNodalFieldQuadrature::ProjectIPtoNodalFieldQuadrature(
   const bool composite =
       pfp.is_null() ? false : pfp->get<bool>("Use Composite Tet 10", false);
 
-  ALBANY_ASSERT(!composite, "\n Project IP to Nodal Field Response not supported with Composite Tet 10s! \n" 
+  ALBANY_ASSERT(!composite, "\n Project IP to Nodal Field Response not supported with Composite Tet 10s! \n"
                             << "Re-run with Use Composite Tet 10 = false or with IP to Nodal Field Response. \n");
 
   intrepid_basis_ = Albany::getIntrepid2Basis(ctd, composite);

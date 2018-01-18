@@ -55,7 +55,7 @@ namespace LCM {
 
     //! Input: Parametrization type
     std::string parametrization_type_;
-    
+
     //! Input: Parametrization sweep interval
     double parametrization_interval_;
 
@@ -67,7 +67,7 @@ namespace LCM {
 
     //! Output: instability direction
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim> direction_;
-    
+
     //! Output: minimum of acoustic tensor
     PHX::MDField<ScalarT,Cell,QuadPoint> min_detA_;
 
@@ -76,13 +76,13 @@ namespace LCM {
 
     //! number of spatial dimensions
     int num_dims_;
-    
+
     ///
     /// Spherical parametrization sweep
     ///
     ScalarT
     spherical_sweep(minitensor::Tensor4<ScalarT, 3> const & tangent,
-      minitensor::Vector<ScalarT, 2> & arg_minimum, 
+      minitensor::Vector<ScalarT, 2> & arg_minimum,
       minitensor::Vector<ScalarT, 3> & direction, double const & interval);
 
     ///
@@ -90,60 +90,60 @@ namespace LCM {
     ///
     ScalarT
     stereographic_sweep(minitensor::Tensor4<ScalarT, 3> const & tangent,
-      minitensor::Vector<ScalarT, 2> & arg_minimum,  
+      minitensor::Vector<ScalarT, 2> & arg_minimum,
       minitensor::Vector<ScalarT, 3> & direction, double const & interval);
-    
+
     ///
     /// Projective parametrization sweep
     ///
     ScalarT
     projective_sweep(minitensor::Tensor4<ScalarT, 3> const & tangent,
-      minitensor::Vector<ScalarT, 3> & arg_minimum,  
+      minitensor::Vector<ScalarT, 3> & arg_minimum,
       minitensor::Vector<ScalarT, 3> & direction, double const & interval);
-    
+
     ///
     /// Tangent parametrization sweep
     ///
     ScalarT
     tangent_sweep(minitensor::Tensor4<ScalarT, 3> const & tangent,
-      minitensor::Vector<ScalarT, 2> & arg_minimum,  
-      minitensor::Vector<ScalarT, 3> & direction, double const & interval);     
-    
+      minitensor::Vector<ScalarT, 2> & arg_minimum,
+      minitensor::Vector<ScalarT, 3> & direction, double const & interval);
+
     ///
     /// Cartesian parametrization sweep
     ///
     ScalarT
     cartesian_sweep(minitensor::Tensor4<ScalarT, 3> const & tangent,
-      minitensor::Vector<ScalarT, 2> & arg_minimum, int surface_index,   
+      minitensor::Vector<ScalarT, 2> & arg_minimum, int surface_index,
       minitensor::Vector<ScalarT, 3> & direction, double const & interval);
-    
+
     ///
     /// Newton-Raphson method to find exact min DetA and direction
-    ///    
+    ///
     void
-    spherical_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent, 
-      minitensor::Vector<ScalarT, 2> & parameters,
-      minitensor::Vector<ScalarT, 3> & direction, ScalarT & min_detA); 
-      
-    void
-    stereographic_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent, 
+    spherical_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent,
       minitensor::Vector<ScalarT, 2> & parameters,
       minitensor::Vector<ScalarT, 3> & direction, ScalarT & min_detA);
-      
+
     void
-    projective_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent, 
+    stereographic_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent,
+      minitensor::Vector<ScalarT, 2> & parameters,
+      minitensor::Vector<ScalarT, 3> & direction, ScalarT & min_detA);
+
+    void
+    projective_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent,
       minitensor::Vector<ScalarT, 3> & parameters,
       minitensor::Vector<ScalarT, 3> & direction, ScalarT & min_detA);
-      
+
     void
-    tangent_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent, 
+    tangent_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent,
       minitensor::Vector<ScalarT, 2> & parameters,
       minitensor::Vector<ScalarT, 3> & direction, ScalarT & min_detA);
-      
+
     void
-    cartesian_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent, 
+    cartesian_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent,
       minitensor::Vector<ScalarT, 2> & parameters, int surface_index,
-      minitensor::Vector<ScalarT, 3> & direction, ScalarT & min_detA);  
+      minitensor::Vector<ScalarT, 3> & direction, ScalarT & min_detA);
 
     ///
     /// PSO method
@@ -152,31 +152,31 @@ namespace LCM {
     stereographic_pso(minitensor::Tensor4<ScalarT, 3> const & tangent,
       minitensor::Vector<ScalarT, 2> & arg_minimum,
       minitensor::Vector<ScalarT, 3> & direction);
-    
+
     ///
     /// Get normal
-    ///  
+    ///
     minitensor::Vector<D2FadType, 3>
     spherical_get_normal(minitensor::Vector<D2FadType, 2> & parameters);
-    
+
     minitensor::Vector<D2FadType, 3>
     stereographic_get_normal(minitensor::Vector<D2FadType, 2> & parameters);
-    
+
     minitensor::Vector<D2FadType, 3>
     projective_get_normal(minitensor::Vector<D2FadType, 3> & parameters);
-    
+
     minitensor::Vector<D2FadType, 3>
     tangent_get_normal(minitensor::Vector<D2FadType, 2> & parameters);
-    
+
     minitensor::Vector<D2FadType, 3>
     cartesian_get_normal1(minitensor::Vector<D2FadType, 2> & parameters);
-    
+
     minitensor::Vector<D2FadType, 3>
     cartesian_get_normal2(minitensor::Vector<D2FadType, 2> & parameters);
-    
+
     minitensor::Vector<D2FadType, 3>
     cartesian_get_normal3(minitensor::Vector<D2FadType, 2> & parameters);
-                           
+
   };
 
 }

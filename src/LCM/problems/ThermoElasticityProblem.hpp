@@ -27,7 +27,7 @@ namespace Albany {
    */
   class ThermoElasticityProblem : public Albany::AbstractProblem {
   public:
-  
+
     //! Default constructor
     ThermoElasticityProblem(
 			    const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -40,7 +40,7 @@ namespace Albany {
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
 
-    //! Get boolean telling code if SDBCs are utilized  
+    //! Get boolean telling code if SDBCs are utilized
     virtual bool useSDBCs() const {return use_sdbcs_; }
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
@@ -68,14 +68,14 @@ namespace Albany {
 
     //! Private to prohibit copying
     ThermoElasticityProblem(const ThermoElasticityProblem&);
-    
+
     //! Private to prohibit copying
     ThermoElasticityProblem& operator=(const ThermoElasticityProblem&);
 
   public:
 
     //! Main problem setup routine. Not directly called, but indirectly by following functions
-    template <typename EvalT> 
+    template <typename EvalT>
     Teuchos::RCP<const PHX::FieldTag>
     constructEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -88,14 +88,14 @@ namespace Albany {
   protected:
 
     ///
-    ///Boolean marking whether SDBCs are used 
-    bool use_sdbcs_; 
+    ///Boolean marking whether SDBCs are used
+    bool use_sdbcs_;
 
     //! Boundary conditions on source term
     bool haveSource;
     int T_offset;  //Position of T unknown in nodal DOFs
     int X_offset;  //Position of X unknown in nodal DOFs, followed by Y,Z
-    int numDim;    //Number of spatial dimensions and displacement variable 
+    int numDim;    //Number of spatial dimensions and displacement variable
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>> oldState;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>> newState;
@@ -161,14 +161,14 @@ Albany::ThermoElasticityProblem::constructEvaluators(
    const int numQPts = cubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();
 
-   *out << "Field Dimensions: Workset=" << worksetSize 
+   *out << "Field Dimensions: Workset=" << worksetSize
         << ", Vertices= " << numVertices
         << ", Nodes= " << numNodes
         << ", QuadPts= " << numQPts
         << ", Dim= " << numDim << std::endl;
 
 
-   // Construct standard FEM evaluators with standard field names                              
+   // Construct standard FEM evaluators with standard field names
    RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
    TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
                               "Data Layout Usage in Mechanics problems assume vecDim = numDim");
@@ -251,7 +251,7 @@ Albany::ThermoElasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // Poissons Ratio 
+  { // Poissons Ratio
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<std::string>("QP Variable Name", "Poissons Ratio");

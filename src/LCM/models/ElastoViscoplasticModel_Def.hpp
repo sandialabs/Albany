@@ -182,8 +182,8 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
 //       S const & f,
 //       S const & n,
 //       S const & twomubar,
-      
-      
+
+
 //   {
 //   }
 
@@ -348,7 +348,7 @@ computeState(typename Traits::EvalData workset,
 
   // void nucleation constants
   ScalarT H_mean_eps_ss(eHN_), He_void_vol_frac_nuc(fHeN_);
-  
+
   // pre-define some tensors that will be re-used below
   //
   minitensor::Tensor<ScalarT> F(num_dims_), be(num_dims_), bebar(num_dims_);
@@ -380,7 +380,7 @@ computeState(typename Traits::EvalData workset,
       //
       if (have_total_bubble_density_ && have_bubble_volume_fraction_) {
         if (total_bubble_density_(cell,pt) > 0.0 && bubble_volume_fraction_(cell,pt) > 0.0) {
-          ScalarT Rb = std::cbrt(radius_fac * bubble_volume_fraction_(cell,pt)/total_bubble_density_(cell,pt)); 
+          ScalarT Rb = std::cbrt(radius_fac * bubble_volume_fraction_(cell,pt)/total_bubble_density_(cell,pt));
           Y += alpha2_ * (Rb*Rb)/(Ra_*Ra_);
           He_void_vol_frac_nuc = fHeN_ + fHeN_coeff_ * bubble_volume_fraction_(cell,pt);
         }
@@ -414,7 +414,7 @@ computeState(typename Traits::EvalData workset,
             Fpn(i, j) = ScalarT(Fp_field_old(cell, pt, i, j));
           }
         }
-        
+
         // compute trial state
         // compute the Kirchhoff stress in the current configuration
         //
@@ -600,7 +600,7 @@ computeState(typename Traits::EvalData workset,
             Fad factor = 1.0 / ( 1.0 + ( two_mubarF * dgamF) );
 
             // deviatoric stress
-            // 
+            //
             minitensor::Tensor<Fad> sF(num_dims_);
             for (int k(0); k < num_dims_; ++k) {
               for (int l(0); l < num_dims_; ++l ) {
@@ -646,13 +646,13 @@ computeState(typename Traits::EvalData workset,
             Fad eps_resF = eps_ssF - eps_ss_old - deps_ssF;
 
             // void nucleation
-            // 
+            //
             Fad eratio = -0.5 * ( eqpsF - eN_ ) * ( eqpsF - eN_ ) / sN_ / sN_;
             Fad Anuc = fN_ / sN_ / ( std::sqrt( 2.0 * pi ) ) * std::exp(eratio);
             Fad dfnuc = Anuc * deq;
 
             // void nucleation with H, He
-            // 
+            //
             Fad Heratio = -0.5 * ( eps_ssF - H_mean_eps_ss ) * ( eps_ssF - H_mean_eps_ss ) / sHN_ / sHN_;
             Fad HAnuc = He_void_vol_frac_nuc / sHN_ / ( std::sqrt( 2.0 * pi ) ) * std::exp(Heratio);
             Fad dHfnuc = HAnuc * deps_ssF;
@@ -685,14 +685,14 @@ computeState(typename Traits::EvalData workset,
             // compute the norm of the residual
             //
             // (ahh! this hurts my eyes!)
-            RealType R0 = Sacado::ScalarValue<ScalarT>::eval(R[0]); 
+            RealType R0 = Sacado::ScalarValue<ScalarT>::eval(R[0]);
             RealType R1 = Sacado::ScalarValue<ScalarT>::eval(R[1]);
             RealType R2 = Sacado::ScalarValue<ScalarT>::eval(R[2]);
             RealType R3 = Sacado::ScalarValue<ScalarT>::eval(R[3]);
             RealType R4 = Sacado::ScalarValue<ScalarT>::eval(R[4]);
             RealType norm_res = std::sqrt(R0*R0 + R1*R1 + R2*R2 + R3*R3 + R4*R4);
             //max_norm = std::max(norm_res, max_norm);
-            
+
 #ifdef PRINT_DEBUG
             std::cout << "---Iteration Loop: " << iter << ", norm_res: " << norm_res << std::endl;
             std::cout << "     dgamF: " << dgamF << std::endl;
@@ -766,7 +766,7 @@ computeState(typename Traits::EvalData workset,
               msg << "    normRes: " << norm_res         << "\n" << std::endl;
               msg << "   initNorm: " << init_norm         << "\n" << std::endl;
               msg << "    RelNorm: " << norm_res/init_norm << "\n" << std::endl;
-              //TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, 
+              //TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
               //                           msg.str());
               X[0] = X[1] = X[2] = X[3] = X[4] = 1./0.;
               break;
@@ -800,11 +800,11 @@ computeState(typename Traits::EvalData workset,
             iter++;
           }
 
-          // patch local sensistivities into global 
+          // patch local sensistivities into global
           // (magic!)
           //
           solver.computeFadInfo(dRdX, X, R);
-          
+
           // extract solution
           //
           ScalarT dgam = X[0];
@@ -920,7 +920,7 @@ compute_fstar( T f, double fcrit, double ffail, double q1 ) {
   } else if ( f >= ffail ) {
     fstar -= ( f - ( 1.0 / q1 ) );
   }
-  
+
   if ( fstar > 1.0 ) fstar = 1.0;
   return fstar;
 }

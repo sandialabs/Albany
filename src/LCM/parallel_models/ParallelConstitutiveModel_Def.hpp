@@ -37,7 +37,7 @@ computeState(
 {
   util::TimeMonitor &
   tmonitor = util::PerformanceContext::instance().timeMonitor();
-  
+
   Teuchos::RCP<Teuchos::Time>
   kernel_time = tmonitor["Constitutive Model: Kernel Time"];
 
@@ -45,7 +45,7 @@ computeState(
   transfer_time = tmonitor["Constitutive Model: Transfer Time"];
 
   kernel_->init(workset, dep_fields, eval_fields);
-  
+
   // Data may be set using CUDA UVM so we need to synchronize
   //transfer_time->start();
   Kokkos::fence();
@@ -64,7 +64,7 @@ computeState(
 
   Kokkos::parallel_for(
     Kokkos::RangePolicy<Kokkos::Schedule<Kokkos::Dynamic>>(0, workset.numCells),
-    [=](int cell) { 
+    [=](int cell) {
       for (int pt = 0; pt < num_pts_; ++pt) {
         (*kernel_ptr)(cell, pt);
       }
@@ -101,7 +101,7 @@ extractEvaluatedFieldArray(std::string const & field_name,
     old_state.emplace_back(&((*workset.stateArrayPtr)[name + "_old"]));
   }
 }
- 
+
 
 template<typename EvalT, typename Traits>
 inline void

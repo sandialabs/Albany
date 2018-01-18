@@ -11,15 +11,15 @@ Albany::LameProblem::
 LameProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
             const Teuchos::RCP<ParamLib>& paramLib_,
             const int numDim_,
-            Teuchos::RCP<const Teuchos::Comm<int>>& commT): 
+            Teuchos::RCP<const Teuchos::Comm<int>>& commT):
   Albany::AbstractProblem(params_, paramLib_, numDim_),
   haveSource(false), haveMatDB(false),
   use_sdbcs_(false)
 {
- 
+
   std::string& method = params->get("Name", "Library of Advanced Materials for Engineering (LAME) ");
   *out << "Problem Name = " << method << std::endl;
-  
+
   haveSource =  params->isSublist("Source Functions");
 
   if(params->isType<std::string>("MaterialDB Filename")){
@@ -66,7 +66,7 @@ buildProblem(
 
   for (int ps=0; ps<physSets; ps++) {
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-    buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM, 
+    buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM,
 		    Teuchos::null);
   }
   constructDirichletEvaluators(*meshSpecs[0]);
@@ -101,8 +101,8 @@ Albany::LameProblem::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
-   offsets_ = dirUtils.getOffsets(); 
-   use_sdbcs_ = dirUtils.useSDBCs(); 
+   offsets_ = dirUtils.getOffsets();
+   use_sdbcs_ = dirUtils.useSDBCs();
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

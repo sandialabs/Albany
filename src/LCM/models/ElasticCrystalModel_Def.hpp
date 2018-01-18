@@ -46,7 +46,7 @@ namespace LCM
     RealType Phid = e_list.get<RealType>("Phi");
     RealType phi2d = e_list.get<RealType>("phi2");
 
-    
+
     // Read gas constant
     e_list = p->sublist("Gas Constant");
     R_ = e_list.get<RealType>("R");
@@ -122,7 +122,7 @@ namespace LCM
     C(1,0,1,2) = c46_;
     C(0,1,2,1) = c46_;
     C(1,0,2,1) = c46_;
-    
+
     // Form rotate elasticity tensor
     for ( int i = 0; i < num_dims_; ++i )
       {
@@ -194,7 +194,7 @@ namespace LCM
 
     // Inverse deformation gradient
     minitensor::Tensor<ScalarT> Finv(num_dims_);
-    
+
     // Right Cauchy-Green deformation tensor (do not confuse with C_). C = F^{T}*F
     minitensor::Tensor<ScalarT> C(num_dims_);
 
@@ -220,7 +220,7 @@ namespace LCM
     minitensor::Tensor<ScalarT> tmp1(num_dims_);
 
     minitensor::Tensor<ScalarT> Dev_Stress(num_dims_);
-    
+
     // Jacobian
     ScalarT Jac;
 
@@ -242,9 +242,9 @@ namespace LCM
     // Identity tensor
     minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
 
-    for (int cell(0); cell < workset.numCells; ++cell) 
+    for (int cell(0); cell < workset.numCells; ++cell)
       {
-    	for (int pt(0); pt < num_pts_; ++pt) 
+    	for (int pt(0); pt < num_pts_; ++pt)
     	  {
 	    //get jacobian
 	    Jac = J(cell,pt);
@@ -288,16 +288,16 @@ namespace LCM
 
 	    // compute p_0 using gas law
 	    p_star = density_ * (1.0/Jac) * R_ * temperature_(cell,pt);
-	    
+
 	    // compute pressure
 	    pressure = p_star - p_0;
-            
+
 	    // compute first Piola-Kirchhoff stress tensor
 	    PK = F * Dev_Stress - Jac * pressure * transpose(Finv);
 
 	    // transform it to Cauchy stress (true stress)
 	    sigma = (1.0/Jac) * PK * transpose(F);
-	   
+
 	    // fill Cauchy stress
 	    for (int i = 0; i < num_dims_; i++)
 	      {

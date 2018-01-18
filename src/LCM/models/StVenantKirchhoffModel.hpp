@@ -57,7 +57,7 @@ public:
   computeState(typename Traits::EvalData workset,
       DepFieldMap dep_fields,
       FieldMap eval_fields);
-  
+
   virtual
   void
   computeStateParallel(typename Traits::EvalData workset,

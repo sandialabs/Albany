@@ -75,11 +75,11 @@ public:
       FieldMap eval_fields);
 
 private:
-  
+
   ///
   /// Private methods
   ///
-  void 
+  void
   computeTrialState( typename Traits::EvalData workset,
                    /* increments */
                    PHX::MDField<const ScalarT> &                delta_macroStrain,
@@ -91,12 +91,12 @@ private:
                    std::vector< PHX::MDField<ScalarT>> & updated_doubleStress);
 
 
-void 
+void
 radialReturn( typename Traits::EvalData workset,
 // macro
-             PHX::MDField<ScalarT> &                trial_macroStress, 
-             PHX::MDField<ScalarT> &                new_macroBackStress, 
-             PHX::MDField<ScalarT> &                new_macroAlpha, 
+             PHX::MDField<ScalarT> &                trial_macroStress,
+             PHX::MDField<ScalarT> &                new_macroBackStress,
+             PHX::MDField<ScalarT> &                new_macroAlpha,
 // micro
              std::vector< PHX::MDField<ScalarT>> & trial_microStress,
              std::vector< PHX::MDField<ScalarT>> & new_microBackStress,
@@ -106,7 +106,7 @@ radialReturn( typename Traits::EvalData workset,
              std::vector< PHX::MDField<ScalarT>> & new_doubleBackStress,
              std::vector< PHX::MDField<ScalarT>> & new_doubleAlpha);
 
-void 
+void
 computeResidualandJacobian(
   std::vector<int> & yieldMask, std::vector<int> & yieldMap,
   std::vector<ScalarT> & X, std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX,
@@ -140,12 +140,12 @@ yieldFunction( std::vector<typename EvalT::ScalarT>&      Fvals,
 void initializeElasticConstants();
 
 
-bool 
+bool
 converged(std::vector<ScalarT> & R, int iteration, ScalarT& initNorm);
 
-minitensor::Tensor3<typename EvalT::ScalarT> 
-dotdotdot( 
-  minitensor::Tensor4<ScalarT> & doubleCelastic, 
+minitensor::Tensor3<typename EvalT::ScalarT>
+dotdotdot(
+  minitensor::Tensor4<ScalarT> & doubleCelastic,
   minitensor::Tensor3<ScalarT> & elTrialDoubleStress);
 
   ///
@@ -191,16 +191,16 @@ dotdotdot(
   std::string delta_macroStrainName;
   std::vector<std::string> delta_strainDifferenceName;
   std::vector<std::string> delta_microStrainGradientName;
- 
+
   // current stress state (i.e., state at N)
   std::string current_macroStressName;
   std::vector<std::string> current_microStressName;
   std::vector<std::string> current_doubleStressName;
-  
+
   ///
   /// EVALUATED FIELD NAMES
   ///
-  
+
   // updated stress state (i.e., state at N+1)
   std::string updated_macroStressName;
   std::vector<std::string> updated_microStressName;
@@ -221,7 +221,7 @@ dotdotdot(
   std::vector<std::string> updated_doubleAlphaName;
   std::vector<std::string> current_doubleBackStressName;
   std::vector<std::string> updated_doubleBackStressName;
-  
+
   typedef PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> HMC2Tensor;
   typedef PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim,Dim> HMC3Tensor;
 

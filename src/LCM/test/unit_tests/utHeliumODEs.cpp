@@ -162,7 +162,7 @@ using minitensor::eye;
   //--------------------------------------------------------------------------
   // Instantiate a state manager
   Albany::StateManager stateMgr;
-  
+
   // register the states
   //
   Teuchos::RCP<Teuchos::ParameterList> p;
@@ -258,7 +258,7 @@ using minitensor::eye;
   discretizationParameterList->set<std::string>(
       "Exodus Output File Name",
       output_file);
-  Teuchos::RCP<Tpetra_Map> mapT = 
+  Teuchos::RCP<Tpetra_Map> mapT =
     Teuchos::rcp(new Tpetra_Map(workset_size*num_dims*num_nodes,
                                 0,
                                 commT,
@@ -319,7 +319,7 @@ using minitensor::eye;
     state_field_manager.postEvaluate<Residual>(workset);
 
     stateMgr.updateStates();
-  
+
     // output to the exodus file
     discretization->writeSolutionT(*solution_vectorT, time);
 
@@ -342,7 +342,7 @@ using minitensor::eye;
   PHX::MDField<ScalarT, Cell, QuadPoint> tot_bub_density("Total Bubble Density",
                                                          dl->qp_scalar);
   field_manager.getFieldData<Residual>(tot_bub_density);
-  
+
   // Record the bubble density
   double expected_density(0.0);
   for (size_type cell = 0; cell < workset_size; ++cell)
@@ -354,7 +354,7 @@ using minitensor::eye;
   PHX::MDField<ScalarT, Cell, QuadPoint> bub_vol_frac("Bubble Volume Fraction",
                                                       dl->qp_scalar);
   field_manager.getFieldData<Residual>(bub_vol_frac);
-  
+
   // Record the bubble volume fraction
   double expected_vol_frac(0.0);
   for (size_type cell = 0; cell < workset_size; ++cell)

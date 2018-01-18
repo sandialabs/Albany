@@ -22,11 +22,11 @@ namespace HMC {
   {
     this->addDependentField(microStrain);
     this->addDependentField(macroStrain);
-    
+
     this->addEvaluatedField(strainDifference);
-    
+
     this->setName("StrainDifference"+PHX::typeAsString<EvalT>());
-    
+
     std::vector<PHX::DataLayout::size_type> dims;
     dl->qp_tensor->dimensions(dims);
     numQPs  = dims[1];

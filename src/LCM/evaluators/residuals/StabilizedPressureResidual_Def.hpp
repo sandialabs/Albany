@@ -97,7 +97,7 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT stab_param = stab_term / shear_modulus_(cell,pt);
         for (int node = 0; node < num_nodes_; ++node) {
           for (int i = 0; i < num_dims_; ++i) {
-            residual_(cell,node) -= stab_param * 
+            residual_(cell,node) -= stab_param *
               w_grad_bf_(cell,node,pt,i) * pressure_grad_(cell,pt,i);
           }
         }
@@ -126,12 +126,12 @@ evaluateFields(typename Traits::EvalData workset)
         F.fill( def_grad_,cell,pt,0,0);
         ScalarT J = minitensor::det(F);
         Cinv = minitensor::inverse( minitensor::transpose(F) * F );
-        ScalarT stab_param = stab_term * h_(cell,pt) * h_(cell,pt) / 
+        ScalarT stab_param = stab_term * h_(cell,pt) * h_(cell,pt) /
           shear_modulus_(cell,pt);
         for (int node = 0; node < num_nodes_; ++node) {
           for (int i = 0; i < num_dims_; ++i) {
             for (int j = 0; j < num_dims_; ++j) {
-              residual_(cell,node) -= stab_param * J * Cinv(i,j) * 
+              residual_(cell,node) -= stab_param * J * Cinv(i,j) *
                 pressure_grad_(cell,pt,i) * w_grad_bf_(cell,node,pt,j);
             }
           }

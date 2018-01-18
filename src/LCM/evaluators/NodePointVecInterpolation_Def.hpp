@@ -92,7 +92,7 @@ NodePointVecInterpolation(
   this->addEvaluatedField(point_value_);
 
   this->setName(
-    "NodePointVecInterpolation" + 
+    "NodePointVecInterpolation" +
     PHX::typeAsString<PHAL::AlbanyTraits::Jacobian>());
 
   std::vector<PHX::DataLayout::size_type>

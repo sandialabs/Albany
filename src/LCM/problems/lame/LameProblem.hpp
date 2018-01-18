@@ -25,12 +25,12 @@ namespace Albany {
    */
   class LameProblem : public Albany::AbstractProblem {
   public:
-  
+
     //! Default constructor
     LameProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
                 const Teuchos::RCP<ParamLib>& paramLib,
                 const int numEqm,
-                Teuchos::RCP<const Teuchos::Comm<int>>& commT); 
+                Teuchos::RCP<const Teuchos::Comm<int>>& commT);
 
     //! Destructor
     virtual ~LameProblem();
@@ -38,7 +38,7 @@ namespace Albany {
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
 
-    //! Get boolean telling code if SDBCs are utilized  
+    //! Get boolean telling code if SDBCs are utilized
     virtual bool useSDBCs() const {return use_sdbcs_; }
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
@@ -62,14 +62,14 @@ namespace Albany {
 
     //! Private to prohibit copying
     LameProblem(const LameProblem&);
-    
+
     //! Private to prohibit copying
     LameProblem& operator=(const LameProblem&);
 
   public:
 
     //! Main problem setup routine. Not directly called, but indirectly by following functions
-    template <typename EvalT> 
+    template <typename EvalT>
     Teuchos::RCP<const PHX::FieldTag>
     constructEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -88,9 +88,9 @@ namespace Albany {
     bool haveMatDB;
     std::string mtrlDbFilename;
     Teuchos::RCP<Albany::MaterialDatabase> materialDB;
-  
-    /// Boolean marking whether SDBCs are used 
-    bool use_sdbcs_; 
+
+    /// Boolean marking whether SDBCs are used
+    bool use_sdbcs_;
 
   };
 
@@ -151,13 +151,13 @@ Albany::LameProblem::constructEvaluators(
    const int numVertices = cellType->getNodeCount();
    //   const int numVertices = cellType->getVertexCount();
 
-   *out << "Field Dimensions: Workset=" << worksetSize 
+   *out << "Field Dimensions: Workset=" << worksetSize
         << ", Vertices= " << numVertices
         << ", Nodes= " << numNodes
         << ", QuadPts= " << numQPts
         << ", Dim= " << numDim << std::endl;
 
-   // Construct standard FEM evaluators with standard field names                              
+   // Construct standard FEM evaluators with standard field names
    RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
    TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
                               "Data Layout Usage in Mechanics problems assume vecDim = numDim");
@@ -253,7 +253,7 @@ Albany::LameProblem::constructEvaluators(
 
     //Output
     p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
-    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
+    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");
     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
@@ -335,7 +335,7 @@ Albany::LameProblem::constructEvaluators(
 
     // \todo Is the required?
     p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
-    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
+    p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient");
     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");

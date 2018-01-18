@@ -20,7 +20,7 @@ FerroicModel<EvalT>::FerroicModel(){}
 
 /******************************************************************************/
 template<typename EvalT>
-void 
+void
 FerroicModel<EvalT>::PostParseInitialize()
 /******************************************************************************/
 {
@@ -72,9 +72,9 @@ computeState(
   // create non-linear system
   //
   using NLS = FM::DomainSwitching<EvalT>;
-  NLS domainSwitching(crystalVariants, transitions, tBarriers, 
+  NLS domainSwitching(crystalVariants, transitions, tBarriers,
                       oldfractions, aMatrix, x, E, /* dt= */ 1.0);
-  
+
   // solution variable
   //
   minitensor::Vector<ScalarT,FM::MAX_TRNS> xi;
@@ -82,7 +82,7 @@ computeState(
   // solve for xi
   //
   switch (m_integrationType){
-        
+
     default:
     break;
 
@@ -90,7 +90,7 @@ computeState(
     {
 
       switch (m_explicitMethod){
-  
+
         default:
         break;
 
@@ -104,7 +104,7 @@ computeState(
         }
       }
     }
- 
+
     case FM::IntegrationType::IMPLICIT:
     {
 
@@ -115,7 +115,7 @@ computeState(
 
       // create stepper
       using STEP = minitensor::StepBase<NLS, ValueT, MAX_TRNS>;
-      std::unique_ptr<STEP> 
+      std::unique_ptr<STEP>
         pstep = minitensor::stepFactory<NLS, ValueT, MAX_TRNS>(m_step_type);
       STEP &step = *pstep;
 

@@ -64,7 +64,7 @@ public:
   computeState(typename Traits::EvalData workset,
       DepFieldMap dep_fields,
       FieldMap eval_fields);
-  
+
   virtual
   void
   computeStateParallel(typename Traits::EvalData workset,
@@ -85,17 +85,17 @@ private:
   /// Private to prohibit copying
   ///
   DruckerPragerModel& operator=(const DruckerPragerModel&);
-    
+
   ///
   /// Parameters for hardening law
   ///
   RealType a0_, a1_, a2_, a3_, b0_;
-  
+
   ///
   /// Cohesion-like parameters
   ///
   RealType Cf_, Cg_;
-  
+
   ///
   /// Compute residual and local jacobian
   ///

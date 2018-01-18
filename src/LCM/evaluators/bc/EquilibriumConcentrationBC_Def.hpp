@@ -56,7 +56,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   int cunk, punk;
   ScalarT Cval;
   ScalarT pressure;
-  
+
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
     cunk = nsNodes[inode][this->coffset_];
     punk = nsNodes[inode][this->poffset_];
@@ -66,7 +66,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     fT_nonconstView[cunk] = xT_constView[cunk] - Cval;
   }
 }
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 // Specialization: Jacobian
 //
 template<typename Traits>
@@ -105,14 +105,14 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::Array<LO> matrixIndicesT;
 
 
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) 
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
   {
     cunk = nsNodes[inode][this->coffset_];
     punk = nsNodes[inode][this->poffset_];
     pressure = xT_constView[punk];
     this->computeBCs(pressure, Cval);
-    
-    // replace jac values for the C dof 
+
+    // replace jac values for the C dof
     numEntriesT = jacT->getNumEntriesInLocalRow(cunk);
     matrixEntriesT.resize(numEntriesT);
     matrixIndicesT.resize(numEntriesT);
@@ -126,10 +126,10 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     if (fillResid)
     {
       fT_nonconstView[cunk] = xT_constView[cunk] - Cval.val();
-    } 
+    }
   }
 }
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 // Specialization: Tangent
 //
 template<typename Traits>
@@ -138,7 +138,7 @@ EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
   EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::Tangent, Traits>(p)
 {
 }
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 template<typename Traits>
 void EquilibriumConcentrationBC<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
@@ -149,11 +149,11 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
   Teuchos::RCP<const Tpetra_MultiVector> VxT = dirichletWorkset.VxT;
 
-  Teuchos::ArrayRCP<const ST> VxT_constView; 
-  Teuchos::ArrayRCP<ST> fT_nonconstView;                                         
+  Teuchos::ArrayRCP<const ST> VxT_constView;
+  Teuchos::ArrayRCP<ST> fT_nonconstView;
   if (fT != Teuchos::null) fT_nonconstView = fT->get1dViewNonConst();
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();                                       
-  
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+
   const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int>>& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
@@ -172,30 +172,30 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     if (fT != Teuchos::null)
     {
       fT_nonconstView[cunk] = xT_constView[cunk] - Cval.val();
-    } 
+    }
 
     if (JVT != Teuchos::null) {
-      Teuchos::ArrayRCP<ST> JVT_nonconstView; 
+      Teuchos::ArrayRCP<ST> JVT_nonconstView;
       for (int i=0; i<dirichletWorkset.num_cols_x; i++)
       {
-        JVT_nonconstView = JVT->getDataNonConst(i); 
-        VxT_constView = VxT->getData(i); 
+        JVT_nonconstView = JVT->getDataNonConst(i);
+        VxT_constView = VxT->getData(i);
 	JVT_nonconstView[cunk] = j_coeff*VxT_constView[cunk];
       }
     }
-    
+
     if (fpT != Teuchos::null) {
-      Teuchos::ArrayRCP<ST> fpT_nonconstView; 
+      Teuchos::ArrayRCP<ST> fpT_nonconstView;
       for (int i=0; i<dirichletWorkset.num_cols_p; i++)
       {
-        fpT_nonconstView = fpT->getDataNonConst(i); 
+        fpT_nonconstView = fpT->getDataNonConst(i);
 	fpT_nonconstView[cunk] = -Cval.dx(dirichletWorkset.param_offset+i);
       }
     }
 
   }
 }
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 // Specialization: DistParamDeriv
 //
 template<typename Traits>
@@ -204,14 +204,14 @@ EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
   EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
 {
 }
-//------------------------------------------------------------------------------    
+//------------------------------------------------------------------------------
 template<typename Traits>
 void EquilibriumConcentrationBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
 
   Teuchos::RCP<Tpetra_MultiVector> fpVT = dirichletWorkset.fpVT;
-  Teuchos::ArrayRCP<ST> fpVT_nonconstView; 
+  Teuchos::ArrayRCP<ST> fpVT_nonconstView;
   bool trans = dirichletWorkset.transpose_dist_param_deriv;
   int num_cols = fpVT->getNumVectors();
 
@@ -231,12 +231,12 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
     {
       Teuchos::RCP<Tpetra_MultiVector> VpT = dirichletWorkset.Vp_bcT;
-      Teuchos::ArrayRCP<ST> VpT_nonconstView; 
+      Teuchos::ArrayRCP<ST> VpT_nonconstView;
       cunk = nsNodes[inode][this->coffset_];
 
       for (int col=0; col<num_cols; ++col) {
-        VpT_nonconstView = VpT->getDataNonConst(col); 
-        VpT_nonconstView[cunk] = 0.0; 
+        VpT_nonconstView = VpT->getDataNonConst(col);
+        VpT_nonconstView[cunk] = 0.0;
       }
     }
   }
@@ -249,12 +249,12 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
       for (int col=0; col<num_cols; ++col) {
         fpVT_nonconstView = fpVT->getDataNonConst(col);
-        fpVT_nonconstView[cunk] = 0.0; 
+        fpVT_nonconstView[cunk] = 0.0;
       }
     }
   }
 }
 
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 } // namespace LCM
 

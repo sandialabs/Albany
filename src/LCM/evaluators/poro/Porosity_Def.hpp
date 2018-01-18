@@ -26,7 +26,7 @@ namespace LCM {
     hasJ(false),
     hasTemp(false)
   {
-    Teuchos::ParameterList* porosity_list = 
+    Teuchos::ParameterList* porosity_list =
       p.get<Teuchos::ParameterList*>("Parameter List");
 
     std::vector<PHX::DataLayout::size_type> dims;
@@ -34,14 +34,14 @@ namespace LCM {
     numQPs  = dims[1];
     numDims = dims[2];
 
-    Teuchos::RCP<ParamLib> paramLib = 
+    Teuchos::RCP<ParamLib> paramLib =
       p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
     std::string type = porosity_list->get("Porosity Type", "Constant");
     if (type == "Constant") {
       is_constant = true;
       // Default value = 0 means no pores in the material
-      constant_value = porosity_list->get("Value", 0.0); 
+      constant_value = porosity_list->get("Value", 0.0);
       // Add Porosity as a Sacado-ized parameter
       this->registerSacadoParameter("Porosity", paramLib);
     }
@@ -52,7 +52,7 @@ namespace LCM {
           p.get<std::string>("QP Coordinate Vector Name"), dl->qp_vector);
       this->addDependentField(coordVec);
 
-      exp_rf_kl = 
+      exp_rf_kl =
         Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>
                      (*porosity_list));
       int num_KL = exp_rf_kl->stochasticDimension();
@@ -67,10 +67,10 @@ namespace LCM {
     }
 #endif
     else {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, 
+      TEUCHOS_TEST_FOR_EXCEPTION(true,
                                  Teuchos::Exceptions::InvalidParameter,
                                  "Invalid porosity type " << type);
-    } 
+    }
 
     // Optional dependence on porePressure and Biot coefficient
     // Switched ON by sending porePressure field in p
@@ -85,7 +85,7 @@ namespace LCM {
       isCompressibleSolidPhase = true;
       isCompressibleFluidPhase = true;
       isPoroElastic = true;
-      initialPorosityValue = 
+      initialPorosityValue =
         porosity_list->get("Initial Porosity Value", 0.0);
       this->registerSacadoParameter("Initial Porosity Value", paramLib);
     }
@@ -94,13 +94,13 @@ namespace LCM {
       J = decltype(J)(p.get<std::string>("DetDefGrad Name"), dl->qp_scalar);
       this->addDependentField(J);
       isPoroElastic = true;
-      initialPorosityValue = 
+      initialPorosityValue =
         porosity_list->get("Initial Porosity Value", 0.0);
       this->registerSacadoParameter("Initial Porosity Value", paramLib);
     }
     else {
       // porosity will not change in this case.
-      isPoroElastic=false; 
+      isPoroElastic=false;
       initialPorosityValue=0.0;
     }
 
@@ -122,8 +122,8 @@ namespace LCM {
       this->addDependentField(porePressure);
 
       // typically Kgrain >> Kskeleton
-      GrainBulkModulus = 
-        porosity_list->get("Grain Bulk Modulus Value", 10.0e12); 
+      GrainBulkModulus =
+        porosity_list->get("Grain Bulk Modulus Value", 10.0e12);
       this->registerSacadoParameter("Grain Bulk Modulus Value", paramLib);
     }
 
@@ -265,7 +265,7 @@ namespace LCM {
   	    }
 
         }
-      }        
+      }
     } else {
       for (int cell=0; cell < numCells; ++cell) {
         for (int qp=0; qp < numQPs; ++qp) {

@@ -16,7 +16,7 @@ ElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   Albany::AbstractProblem(params_, paramLib_, numDim_),
   haveSource(false),
   numDim(numDim_),
-  use_sdbcs_(false), 
+  use_sdbcs_(false),
   rc_mgr(rc_mgr_)
 {
   std::string& method = params->get("Name", "Elasticity ");
@@ -66,7 +66,7 @@ buildProblem(
   fm.resize(1);
 
   fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, 
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM,
 		  Teuchos::null);
 
   if(meshSpecs[0]->nsNames.size() > 0) // Build a nodeset evaluator if nodesets are present
@@ -109,8 +109,8 @@ Albany::ElasticityProblem::constructDirichletEvaluators(
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                        this->params, this->paramLib);
-  use_sdbcs_ = dirUtils.useSDBCs(); 
-  offsets_ = dirUtils.getOffsets(); 
+  use_sdbcs_ = dirUtils.useSDBCs();
+  offsets_ = dirUtils.getOffsets();
 }
 
 // Neumann BCs
@@ -141,7 +141,7 @@ Albany::ElasticityProblem::constructNeumannEvaluators(
    offsets[neq].resize(neq);
    offsets[neq][0] = 0;
 
-   if (neq>1){ 
+   if (neq>1){
       neumannNames[1] = "sig_y";
       offsets[1].resize(1);
       offsets[1][0] = 1;
@@ -240,7 +240,7 @@ Albany::ElasticityProblem::getValidProblemParameters() const
 	validPL->set<double>("fc", false, "");
 	validPL->set<double>("ff", false, "");
 	validPL->set<double>("flag", false, "");
-  }  
+  }
 
   return validPL;
 }

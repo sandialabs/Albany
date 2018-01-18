@@ -28,7 +28,7 @@ struct NeohookeanKernel : public ParallelKernel<EvalT, Traits>
 
   NeohookeanKernel(const NeohookeanKernel&) = delete;
   NeohookeanKernel& operator=(const NeohookeanKernel&) = delete;
-  
+
   using ScalarT = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
   using ScalarField = PHX::MDField<ScalarT>;
@@ -41,19 +41,19 @@ struct NeohookeanKernel : public ParallelKernel<EvalT, Traits>
   using BaseKernel::field_name_map_;
   using BaseKernel::compute_energy_;
   using BaseKernel::compute_tangent_;
-  
+
   using BaseKernel::setDependentField;
   using BaseKernel::setEvaluatedField;
   using BaseKernel::addStateVariable;
 
   using BaseKernel::nox_status_test_;
-  
+
   // Dependent MDFields
   ConstScalarField def_grad;
   ConstScalarField J;
   ConstScalarField poissons_ratio;
   ConstScalarField elastic_modulus;
-  
+
   // Evaluated MDFields
   ScalarField stress;
   ScalarField energy;
@@ -62,7 +62,7 @@ struct NeohookeanKernel : public ParallelKernel<EvalT, Traits>
   void init(Workset &workset,
        FieldMap<const ScalarT> &dep_fields,
        FieldMap<ScalarT> &eval_fields);
-  
+
   KOKKOS_INLINE_FUNCTION
   void operator() (int cell, int pt) const;
 };
@@ -87,7 +87,7 @@ public:
 
   using FieldMap = typename Parent::FieldMap;
   using EvalKernel = typename Parent::EvalKernel;
-  
+
   using Parent::num_dims_;
   using Parent::num_pts_;
   using Parent::field_name_map_;
@@ -107,15 +107,15 @@ public:
   ///
   virtual
   ~ParallelNeohookeanModel() = default;
-  
+
 protected:
-  
+
   virtual
   EvalKernel
   createEvalKernel(typename Traits::EvalData &workset,
                    FieldMap &dep_fields,
                    FieldMap &eval_fields) override;
-  
+
 };
 #endif
 }

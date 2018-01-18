@@ -23,15 +23,15 @@ struct ParallelKernel
 {
   using DataLayoutMap = std::map<std::string, Teuchos::RCP<PHX::DataLayout>>;
   using NameMap = std::map<std::string, std::string>;
-  
+
   using ScalarT = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
   using Workset = typename Traits::EvalData;
   using ScalarField = PHX::MDField<ScalarT>;
   using ConstScalarField = PHX::MDField<const ScalarT>;
-  
+
 protected:
-  
+
   ParallelKernel(ConstitutiveModel<EvalT, Traits> &model)
     : model_(model),
       field_name_map_(*model.field_name_map_),
@@ -60,7 +60,7 @@ protected:
       heat_capacity_(model.heat_capacity_),
       density_(model.density_)
     {}
-    
+
 
   void
   setDependentField(
@@ -69,7 +69,7 @@ protected:
   {
     model_.setDependentField(field_name, field);
   }
-  
+
 
   void
   setEvaluatedField(
@@ -78,7 +78,7 @@ protected:
   {
     model_.setEvaluatedField(field_name, field);
   }
-  
+
   void addStateVariable(std::string const & name,
                         Teuchos::RCP<PHX::DataLayout> layout,
                         std::string const & init_type,
@@ -101,10 +101,10 @@ protected:
                                   std::size_t num,
                                   std::vector<Teuchos::RCP<ScalarField>> & state,
                                   FieldMap<ScalarT> & eval_fields);
-  
+
   ConstitutiveModel<EvalT, Traits> &
   model_;
-  
+
   ///
   /// Map of field names
   ///
@@ -116,34 +116,34 @@ protected:
 
   DataLayoutMap &
   eval_field_map_;
-  
+
   int
   num_dims_;
 
   int
   num_pts_;
-  
+
   bool
   need_integration_pt_locations_;
-  
+
   bool
   compute_energy_;
-  
+
   bool
   compute_tangent_;
-  
+
   bool
   have_temperature_;
-  
+
   bool
   have_damage_;
-  
+
   bool
   have_total_concentration_;
-  
+
   bool
   have_total_bubble_density_;
-  
+
   bool
   have_bubble_volume_fraction_;
 
@@ -158,27 +158,27 @@ protected:
   /// Optional total concentration field
   PHX::MDField<const ScalarT,Cell,QuadPoint>
   total_concentration_;
-  
+
   /// Optional total (He) bubble density field
   PHX::MDField<const ScalarT,Cell,QuadPoint>
-  total_bubble_density_;  
-  
+  total_bubble_density_;
+
   /// Optional (He) bubble volume fraction field
   PHX::MDField<const ScalarT,Cell,QuadPoint>
   bubble_volume_fraction_;
-  
+
   /// optional scalar damage field
   PHX::MDField<const ScalarT, Cell, QuadPoint>
   damage_;
-  
+
   /// optional integration weights field
   PHX::MDField<const MeshScalarT, Cell, QuadPoint>
   weights_;
-  
+
   ///< optional J field
   PHX::MDField<const ScalarT, Cell, QuadPoint>
   j_;
-  
+
   ///< Thermal Expansion Coefficient
   RealType
   expansion_coeff_;
@@ -197,7 +197,7 @@ protected:
   Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
   nox_status_test_{Teuchos::null};
 };
- 
+
 template<typename EvalT, typename Traits, typename Kernel>
 class ParallelConstitutiveModel: public LCM::ConstitutiveModel<EvalT, Traits>
 {
@@ -206,21 +206,21 @@ public:
   using ScalarT = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
   using EvalKernel = Kernel;
-  
+
   using ConstitutiveModel<EvalT, Traits>::num_pts_;
 
   ParallelConstitutiveModel(Teuchos::ParameterList* p,
       const Teuchos::RCP<Albany::Layouts>& dl);
-  
+
   virtual
   ~ParallelConstitutiveModel() = default;
-  
+
   void
   computeState(
       typename Traits::EvalData workset,
       FieldMap<const ScalarT> dep_fields,
       FieldMap<ScalarT> eval_fields) final;
-  
+
   virtual
   void
   computeStateParallel(typename Traits::EvalData workset,
@@ -228,9 +228,9 @@ public:
       FieldMap<ScalarT> eval_fields) override {
          TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
   }
-  
+
 protected:
-  
+
   std::unique_ptr< EvalKernel > kernel_;
 };
 

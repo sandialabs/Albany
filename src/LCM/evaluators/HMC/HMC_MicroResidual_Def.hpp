@@ -82,8 +82,8 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
-          for (std::size_t idim=0; idim<numDims; idim++)  
-            for (std::size_t jdim=0; jdim<numDims; jdim++)  
+          for (std::size_t idim=0; idim<numDims; idim++)
+            for (std::size_t jdim=0; jdim<numDims; jdim++)
               ExResidual(cell,node,idim,jdim)=0.0;
           for (std::size_t qp=0; qp < numQPs; ++qp) {
             for (std::size_t i=0; i<numDims; i++) {

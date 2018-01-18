@@ -140,16 +140,16 @@ operator() (const no_small_strain_Tag& tag, const int& cell) const {
 
       P[1][0] = sig[1][0]*(-F[1][2]*F[2][1] + F[1][1]*F[2][2]) + sig[1][1]*( F[0][2]*F[2][1] - F[0][1]*F[2][2])
         + sig[1][2]*(-F[0][2]*F[1][1] + F[0][1]*F[1][2]);
-      P[1][1] = sig[1][0]*( F[1][2]*F[2][0] - F[1][0]*F[2][2]) + sig[1][1]*(-F[0][2]*F[2][0] + F[0][0]*F[2][2]) 
+      P[1][1] = sig[1][0]*( F[1][2]*F[2][0] - F[1][0]*F[2][2]) + sig[1][1]*(-F[0][2]*F[2][0] + F[0][0]*F[2][2])
         + sig[1][2]*( F[0][2]*F[1][0] - F[0][0]*F[1][2]);
       P[1][2] = sig[1][0]*(-F[1][1]*F[2][0] + F[1][0]*F[2][1]) + sig[1][1]*( F[0][1]*F[2][0] - F[0][0]*F[2][1])
         + sig[1][2]*(-F[0][1]*F[1][0] + F[0][0]*F[1][1]);
 
       P[2][0] = sig[2][0]*(-F[1][2]*F[2][1] + F[1][1]*F[2][2])+ sig[2][1]*( F[0][2]*F[2][1] - F[0][1]*F[2][2])
         + sig[2][2]*(-F[0][2]*F[1][1] + F[0][1]*F[1][2]);
-      P[2][1] = sig[2][0]*( F[1][2]*F[2][0] - F[1][0]*F[2][2])+ sig[2][1]*(-F[0][2]*F[2][0] + F[0][0]*F[2][2]) 
+      P[2][1] = sig[2][0]*( F[1][2]*F[2][0] - F[1][0]*F[2][2])+ sig[2][1]*(-F[0][2]*F[2][0] + F[0][0]*F[2][2])
         + sig[2][2]*( F[0][2]*F[1][0] - F[0][0]*F[1][2]);
-      P[2][2] = sig[2][0]*(-F[1][1]*F[2][0] + F[1][0]*F[2][1])+ sig[2][1]*( F[0][1]*F[2][0] - F[0][0]*F[2][1]) 
+      P[2][2] = sig[2][0]*(-F[1][1]*F[2][0] + F[1][0]*F[2][1])+ sig[2][1]*( F[0][1]*F[2][0] - F[0][0]*F[2][1])
         + sig[2][2]*(-F[0][1]*F[1][0] + F[0][0]*F[1][1]);
       break;
 
@@ -176,7 +176,7 @@ void FirstPK<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset) 
   // Copy stress_ to first_pk_stress_.
   Kokkos::parallel_for(small_strain_Policy(0,workset.numCells),*this);
   // Optionally modify the stress tensor by pressure terms.
-  if (have_stab_pressure_) 
+  if (have_stab_pressure_)
     Kokkos::parallel_for(have_stab_pressure_Policy(0,workset.numCells),*this);
   if (have_pore_pressure_)
     Kokkos::parallel_for(have_pore_pressure_Policy(0,workset.numCells),*this);

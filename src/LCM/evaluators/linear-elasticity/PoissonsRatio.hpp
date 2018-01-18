@@ -21,27 +21,27 @@
 
 namespace LCM {
 
-/** 
+/**
  * \brief Evaluates poissons ratio, either as a constant or a truncated
  * KL expansion.
  */
 template<typename EvalT, typename Traits>
-class PoissonsRatio : 
+class PoissonsRatio :
   public PHX::EvaluatorWithBaseImpl<Traits>,
   public PHX::EvaluatorDerived<EvalT, Traits>,
   public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-  
+
 public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   PoissonsRatio(Teuchos::ParameterList& p);
-  
+
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
-  
+
   void evaluateFields(typename Traits::EvalData d);
-  
+
   ScalarT& getValue(const std::string &n);
 
 private:

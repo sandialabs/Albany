@@ -17,7 +17,7 @@ Density(Teuchos::ParameterList& p) :
   density(p.get<std::string>("Cell Variable Name"),
 	  p.get<Teuchos::RCP<PHX::DataLayout>>("Cell Scalar Data Layout"))
 {
-  Teuchos::ParameterList* density_param_list = 
+  Teuchos::ParameterList* density_param_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
 
   constant_value = density_param_list->get<double>("Value");
@@ -49,7 +49,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 // **********************************************************************
 template<typename EvalT,typename Traits>
-typename Density<EvalT,Traits>::ScalarT& 
+typename Density<EvalT,Traits>::ScalarT&
 Density<EvalT,Traits>::getValue(const std::string &n)
 {
   if (n == "Density"){

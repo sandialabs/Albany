@@ -47,18 +47,18 @@ namespace LCM {
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
-    
+
     ///
     /// Stress field
     ///
     PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> stress_;
-    
+
     // velocity gradient (Lagrangian)
     PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> vel_grad_;
-    
+
     // Temporal container used to store P : F_dot
     Kokkos::DynRankView<ScalarT, PHX::Device> term1_;
-    
+
     ///
     /// Scalar field for transport variable
     ///
@@ -134,7 +134,7 @@ namespace LCM {
     /// Output residual
     ///
     PHX::MDField<ScalarT,Cell,Node> residual_;
-    
+
     ///
     ///  Feature flags
     ///
@@ -147,7 +147,7 @@ namespace LCM {
     bool have_stabilization_;
     bool have_contact_;
     bool have_mechanics_;
-    
+
     std::string SolutionType_;
 
     ///

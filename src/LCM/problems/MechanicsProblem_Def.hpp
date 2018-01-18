@@ -197,7 +197,7 @@ MechanicsProblem::constructEvaluators(
   bool const
   volume_average_pressure = material_db_->getElementBlockParam<bool>(
       eb_name, "Volume Average Pressure", false);
-  
+
   RealType const
   volume_average_stabilization_param =
       material_db_->getElementBlockParam<RealType>(
@@ -222,7 +222,7 @@ MechanicsProblem::constructEvaluators(
   bool const
   surface_element =
       material_db_->getElementBlockParam<bool>(eb_name, "Surface Element", false);
-  
+
   bool const
   cohesive_element =
       material_db_->getElementBlockParam<bool>(eb_name, "Cohesive Element", false);
@@ -265,9 +265,9 @@ MechanicsProblem::constructEvaluators(
       *cellType, meshSpecs.cubatureDegree);
 
   if (composite) {
-    ALBANY_ASSERT(meshSpecs.cubatureDegree < 4, "\n Cannot use Composite Tet 10 elements + Cubature Degree > 3!  You have " 
-                                                << " specified Cubature Degree = " << meshSpecs.cubatureDegree << ".\n"); 
-  } 
+    ALBANY_ASSERT(meshSpecs.cubatureDegree < 4, "\n Cannot use Composite Tet 10 elements + Cubature Degree > 3!  You have "
+                                                << " specified Cubature Degree = " << meshSpecs.cubatureDegree << ".\n");
+  }
 
   // TODO: this could probably go into the ProblemUtils
   // just like the call to getIntrepid2Basis
@@ -638,8 +638,8 @@ MechanicsProblem::constructEvaluators(
     paramList = params->sublist("Temperature");
 
     // This evaluator is called to set a constant temperature when
-    // "Variable Type" is set to "Constant." It is also called when 
-    // "Variable Type" is set to "Time Dependent." There are two "Type" 
+    // "Variable Type" is set to "Constant." It is also called when
+    // "Variable Type" is set to "Time Dependent." There are two "Type"
     // variables in the PL - "Type" and "Variable Type". For the last case,
     // let's set "Type" to "Time Dependent" to hopefully make the evaluator call
     // a little more general (GAH)
@@ -1644,14 +1644,14 @@ MechanicsProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
 
       // optional output
-      bool const 
+      bool const
       output_flag = material_db_->getElementBlockParam<bool>(
             eb_name, "Output Deformation Gradient", false);
 
       // Old values of the deformation gradient
       // optional output
       // FIXME: This currently does nothing - CA
-      bool const 
+      bool const
       old_defgrad_flag = material_db_->getElementBlockParam<bool>(
             eb_name, "Old Deformation Gradient", false);
 
@@ -1830,7 +1830,7 @@ MechanicsProblem::constructEvaluators(
       // Get it from material. Assumed constant in element block.
       if (material_db_->isElementBlockParam(eb_name, "Density")) {
         p->set<RealType>(
-            "Density", 
+            "Density",
             material_db_->getElementBlockParam<RealType>(eb_name, "Density"));
       }
 
@@ -2051,7 +2051,7 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
 
     // Output
-    bool const 
+    bool const
     output_kcperm = material_db_->getElementBlockParam<bool>(
         eb_name, "Output " + kcPerm, false);
 
@@ -2525,7 +2525,7 @@ MechanicsProblem::constructEvaluators(
     RealType const
     heat_capacity = param_list.get<RealType>("Heat Capacity");
 
-    RealType const 
+    RealType const
     density = param_list.get<RealType>("Density");
 
     pFromProb->set<RealType>("Heat Capacity", heat_capacity);

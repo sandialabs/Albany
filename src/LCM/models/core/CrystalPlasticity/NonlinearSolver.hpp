@@ -13,7 +13,7 @@
 namespace CP
 {
   /**
-   *  Nonlinear Solver (NLS) class for the CrystalPlasticity model; slip 
+   *  Nonlinear Solver (NLS) class for the CrystalPlasticity model; slip
    *  increments as unknowns.
    */
   template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
@@ -49,7 +49,7 @@ namespace CP
     T
     value(minitensor::Vector<T, N> const & x);
 
-    //! Gradient function; returns the residual vector as a function of the slip 
+    //! Gradient function; returns the residual vector as a function of the slip
     // at step N+1.
     template<typename T, minitensor::Index N = minitensor::DYNAMIC>
     minitensor::Vector<T, N>
@@ -95,7 +95,7 @@ namespace CP
   };
 
   //
-  //  Dissipation class for the CrystalPlasticity model; slip 
+  //  Dissipation class for the CrystalPlasticity model; slip
   //  increments as unknowns.
   //
   template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
@@ -132,7 +132,7 @@ namespace CP
     T
     value(minitensor::Vector<T, N> const & x);
 
-    //! Gradient function; returns the residual vector as a function of the slip 
+    //! Gradient function; returns the residual vector as a function of the slip
     // at step N+1.
     template<typename T, minitensor::Index N = minitensor::DYNAMIC>
     minitensor::Vector<T, N>
@@ -175,7 +175,7 @@ namespace CP
   };
 
   //
-  //! Nonlinear Solver (NLS) class for the CrystalPlasticity model; slip 
+  //! Nonlinear Solver (NLS) class for the CrystalPlasticity model; slip
   //  increments and hardnesses as unknowns.
   //
   template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
@@ -211,7 +211,7 @@ namespace CP
     T
     value(minitensor::Vector<T, N> const & x);
 
-    //! Gradient function; returns the residual vector as a function of the slip 
+    //! Gradient function; returns the residual vector as a function of the slip
     // and hardness at step N+1.
     template<typename T, minitensor::Index N = minitensor::DYNAMIC>
     minitensor::Vector<T, N>

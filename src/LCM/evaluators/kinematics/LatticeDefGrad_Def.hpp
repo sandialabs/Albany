@@ -108,10 +108,10 @@ namespace LCM {
       }
     }
     // Since Intrepid2 will later perform calculations on the entire workset size
-    // and not just the used portion, we must fill the excess with reasonable 
+    // and not just the used portion, we must fill the excess with reasonable
     // values. Leaving this out leads to inversion of 0 tensors.
-    for (int cell=workset.numCells; cell < worksetSize; ++cell) 
-      for (int qp=0; qp < numQPs; ++qp) 
+    for (int cell=workset.numCells; cell < worksetSize; ++cell)
+      for (int qp=0; qp < numQPs; ++qp)
         for (int i=0; i < numDims; ++i)
           latticeDefGrad(cell,qp,i,i) = 1.0;
 

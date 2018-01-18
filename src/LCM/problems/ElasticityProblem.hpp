@@ -26,7 +26,7 @@ namespace Albany {
    */
   class ElasticityProblem : public Albany::AbstractProblem {
   public:
-  
+
     //! Default constructor
     ElasticityProblem(
 		      const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -39,8 +39,8 @@ namespace Albany {
 
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
-   
-    //! Get boolean telling code if SDBCs are utilized  
+
+    //! Get boolean telling code if SDBCs are utilized
     virtual bool useSDBCs() const {return use_sdbcs_; }
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
@@ -68,14 +68,14 @@ namespace Albany {
 
     //! Private to prohibit copying
     ElasticityProblem(const ElasticityProblem&);
-    
+
     //! Private to prohibit copying
     ElasticityProblem& operator=(const ElasticityProblem&);
 
   public:
 
     //! Main problem setup routine. Not directly called, but indirectly by following functions
-    template <typename EvalT> 
+    template <typename EvalT>
     Teuchos::RCP<const PHX::FieldTag>
     constructEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -91,8 +91,8 @@ namespace Albany {
   protected:
 
      ///
-     ///Boolean marking whether SDBCs are used 
-     bool use_sdbcs_; 
+     ///Boolean marking whether SDBCs are used
+     bool use_sdbcs_;
 
     //! Boundary conditions on source term
     bool haveSource;
@@ -101,7 +101,7 @@ namespace Albany {
     //! Compute exact error in displacement solution
     bool computeError;
 
-    std::string matModel; 
+    std::string matModel;
     Teuchos::RCP<Albany::Layouts> dl;
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>> oldState;
@@ -170,14 +170,14 @@ Albany::ElasticityProblem::constructEvaluators(
    const int numVertices = cellType->getNodeCount();
 //   const int numVertices = cellType->getVertexCount();
 
-   *out << "Field Dimensions: Workset=" << worksetSize 
+   *out << "Field Dimensions: Workset=" << worksetSize
         << ", Vertices= " << numVertices
         << ", Nodes= " << numNodes
         << ", QuadPts= " << numQPts
         << ", Dim= " << numDim << std::endl;
 
 
-   // Construct standard FEM evaluators with standard field names                              
+   // Construct standard FEM evaluators with standard field names
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
    TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
                               "Data Layout Usage in Mechanics problems assume vecDim = numDim");
@@ -310,7 +310,7 @@ Albany::ElasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // Poissons Ratio 
+  { // Poissons Ratio
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<std::string>("QP Variable Name", "Poissons Ratio");
@@ -384,7 +384,7 @@ Albany::ElasticityProblem::constructEvaluators(
 
     //Outputs: F, J
     p->set<std::string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
-    p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
+    p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient");
     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
@@ -448,7 +448,7 @@ Albany::ElasticityProblem::constructEvaluators(
   }
 
   if (computeError) {
-  
+
     { // Displacement Error "Strain"
       RCP<ParameterList> p = rcp(new ParameterList("Error Strain"));
 
@@ -483,7 +483,7 @@ Albany::ElasticityProblem::constructEvaluators(
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
-    
+
   }
 
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->createEvaluators<EvalT>(fm0, dl);

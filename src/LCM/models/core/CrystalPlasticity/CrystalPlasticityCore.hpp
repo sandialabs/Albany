@@ -34,7 +34,7 @@ struct SlipSystem
   n_;
 
   //! Schmid Tensor.
-  minitensor::Tensor<RealType, NumDimT> 
+  minitensor::Tensor<RealType, NumDimT>
   projector_;
 
   //
@@ -53,7 +53,7 @@ public:
   SlipFamily();
 
   ~SlipFamily() {}
-  
+
   void setHardeningLawType(HardeningLawType law);
   HardeningLawType getHardeningLawType() const { return type_hardening_law_; }
   void setFlowRuleType(FlowRuleType rule);
@@ -126,7 +126,7 @@ struct StateMechanical
   TensorType
   Lp_np1_;
 
-  TensorType 
+  TensorType
   sigma_np1_;
 
   TensorType
@@ -185,7 +185,7 @@ StateInternal(int cell, int pt, int num_slip, InputVectorType const & hardening_
 
   VectorType
   shear_np1_;
-  
+
   VectorType
   resistance_;
 };
@@ -268,7 +268,7 @@ computeStress(
 template<minitensor::Index NumDimT, typename DataT, typename ArgT>
 void
 computeElasticityTensor(
-    DataT c11, 
+    DataT c11,
     DataT c12,
     DataT c13,
     DataT c33,

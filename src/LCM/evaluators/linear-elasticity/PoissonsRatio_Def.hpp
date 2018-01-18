@@ -18,10 +18,10 @@ PoissonsRatio(Teuchos::ParameterList& p) :
   poissonsRatio(p.get<std::string>("QP Variable Name"),
       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
 {
-  Teuchos::ParameterList* pr_list = 
+  Teuchos::ParameterList* pr_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
-  
-  Teuchos::RCP<ParamLib> paramLib = 
+
+  Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -46,7 +46,7 @@ PoissonsRatio(Teuchos::ParameterList& p) :
         p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
     this->addDependentField(coordVec);
 
-    exp_rf_kl = 
+    exp_rf_kl =
       Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(*pr_list));
     int num_KL = exp_rf_kl->stochasticDimension();
 
@@ -62,7 +62,7 @@ PoissonsRatio(Teuchos::ParameterList& p) :
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 			       "Invalid Poissons ratio type " << type);
-  } 
+  }
 
   // Optional dependence on Temperature (nu = nu_ + dnudT * T)
   // Switched ON by sending Temperature field in p
@@ -136,7 +136,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 // **********************************************************************
 template<typename EvalT,typename Traits>
-typename PoissonsRatio<EvalT,Traits>::ScalarT& 
+typename PoissonsRatio<EvalT,Traits>::ScalarT&
 PoissonsRatio<EvalT,Traits>::getValue(const std::string &n)
 {
   if (n=="Poissons Ratio")

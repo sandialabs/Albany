@@ -19,14 +19,14 @@ MortarContactResidualBase(const Teuchos::ParameterList& p,
 
   meshSpecs      (p.get<Teuchos::RCP<Albany::MeshSpecsStruct>>("Mesh Specs Struct")),
   // The array of names of all the master side sets in the problem
-  masterSideNames (p.get<Teuchos::ArrayRCP<std::string>>("Master Side Set Names")), 
-  slaveSideNames (p.get<Teuchos::ArrayRCP<std::string>>("Slave Side Set Names")), 
+  masterSideNames (p.get<Teuchos::ArrayRCP<std::string>>("Master Side Set Names")),
+  slaveSideNames (p.get<Teuchos::ArrayRCP<std::string>>("Slave Side Set Names")),
 
   // The array of sidesets to process
-  sideSetIDs (p.get<Teuchos::ArrayRCP<std::string>>("Sideset IDs")), 
+  sideSetIDs (p.get<Teuchos::ArrayRCP<std::string>>("Sideset IDs")),
 
   // Node coords
-  coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector) 
+  coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector)
 
 {
   std::string fieldName;
@@ -98,12 +98,12 @@ postRegistrationSetup(typename Traits::SetupData d,
       this->utils.setFieldData(val[eq],fm);
     numNodes = val[0].dimension(1);
   }
-  else 
+  else
   if (tensorRank == 1) {
     this->utils.setFieldData(valVec[0],fm);
     numNodes = valVec[0].dimension(1);
   }
-  else 
+  else
   if (tensorRank == 2) {
     this->utils.setFieldData(valTensor[0],fm);
     numNodes = valTensor[0].dimension(1);
@@ -143,9 +143,9 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   // No work to do
-  if(workset.sideSets == Teuchos::null || 
-     this->masterSideNames.size() == 0 || 
-     this->slaveSideNames.size() == 0 || 
+  if(workset.sideSets == Teuchos::null ||
+     this->masterSideNames.size() == 0 ||
+     this->slaveSideNames.size() == 0 ||
      this->sideSetIDs.size() == 0)
     return;
 
@@ -176,10 +176,10 @@ evaluateFields(typename Traits::EvalData workset)
         const int num_dofs_per_node = 2;
 
 //        MOERTEL::Node node( nid, x, num_dofs_per_node, dof, on_boundary, print_level );
- 
+
 //        interface.AddNode(node,side);
 
-        // Get the data that corresponds to the side. 
+        // Get the data that corresponds to the side.
 
         const int elem_GID = sideSet[side].elem_GID; // GID of the element that contains the master segment
         const int elem_LID = sideSet[side].elem_LID; // LID (numbered from zero) id of the master segment on this processor
@@ -207,7 +207,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t eq = 0; eq < numFields; eq++)
           f_nonconstView[nodeID(cell,node,this->offset + eq)] += (this->val[eq])(cell,node);
     }
-  } else 
+  } else
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       for (std::size_t node = 0; node < this->numNodes; ++node)
@@ -222,7 +222,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t i = 0; i < numDims; i++)
           for (std::size_t j = 0; j < numDims; j++)
             f_nonconstView[nodeID(cell,node,this->offset + i*numDims + j)] += (this->valTensor[0])(cell,node,i,j);
-  
+
     }
   }
 #endif
@@ -371,7 +371,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  for (int col=0; col<workset.num_cols_x; col++)
 	    JVT->sumIntoLocalValue(row, col, valptr->dx(col));
 
-	if (Teuchos::nonnull(fpT)) 
+	if (Teuchos::nonnull(fpT))
 	  for (int col=0; col<workset.num_cols_p; col++)
 	    fpT->sumIntoLocalValue(row, col, valptr->dx(col+workset.param_offset));
       }

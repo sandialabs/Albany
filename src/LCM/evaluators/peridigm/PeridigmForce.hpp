@@ -63,7 +63,7 @@ protected:
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm;
 };
 
-// Inherted classes 
+// Inherted classes
 template<typename EvalT, typename Traits> class PeridigmForce;
 
 // For all cases except those specialized below, just fall through to base class.

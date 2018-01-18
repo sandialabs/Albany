@@ -165,7 +165,7 @@ evaluateFields(typename Traits::EvalData workset)
     for(int cell = 0; cell < workset.numCells; ++cell){
       globalId = wsElNodeID[cell][0];
       peridigmLocalId = map.LID(globalId);
-      
+
       for(int j=0 ; j<length ; ++j)
         this->outputFields[albanyName](cell, j) = data[length*peridigmLocalId + j];
     }

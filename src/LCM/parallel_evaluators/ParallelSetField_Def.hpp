@@ -43,8 +43,8 @@ evaluateFields(typename Traits::EvalData workset)
 {
   unsigned int numDimensions = evaluatedFieldDimensions.size();
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(numDimensions < 1, "SetField::evaluateFields(), unsupported field type.");  
-  
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(numDimensions < 1, "SetField::evaluateFields(), unsupported field type.");
+
   int dim1 = evaluatedFieldDimensions[0];
 
   if(numDimensions == 1){

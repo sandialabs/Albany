@@ -35,11 +35,11 @@ namespace HMC {
       this->addDependentField(*(microStress[i]));
     }
 
-    
+
     this->addEvaluatedField(totalStress);
-    
+
     this->setName("TotalStress"+PHX::typeAsString<EvalT>());
-    
+
     std::vector<PHX::DataLayout::size_type> dims;
     dl->qp_tensor->dimensions(dims);
     numQPs  = dims[1];
@@ -70,7 +70,7 @@ namespace HMC {
         for (std::size_t i=0; i < numDims; ++i) {
           for (std::size_t j=0; j < numDims; ++j) {
             totalStress(cell,qp,i,j) = macroStress(cell,qp,i,j);
-            for (std::size_t k=0; k < numMicroScales; ++k) 
+            for (std::size_t k=0; k < numMicroScales; ++k)
               totalStress(cell,qp,i,j) += (*microStress[k])(cell,qp,i,j);
           }
         }

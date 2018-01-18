@@ -47,7 +47,7 @@ utility::StaticPointer<CP::FlowRuleBase<ArgT>>
 CP::FlowRuleFactory::createFlowRule(FlowRuleType type_flow_rule) const
 {
   switch (type_flow_rule) {
-    
+
     default:
       std::cerr << __PRETTY_FUNCTION__ << '\n';
       std::cerr << "ERROR: Unknown flow rule\n";
@@ -174,7 +174,7 @@ computeRateSlip(
     RealType const
     sign = shear < 0.0 ? -1.0 : 1.0;
 
-    rate_slip = 
+    rate_slip =
       g0 * std::exp(-F0 * std::pow(1.0 - std::pow(ratio_stress, p), q)) * sign;
   }
 
@@ -238,7 +238,7 @@ computeRateSlip(
   //
   // if ratio_stress > max_tol, computation of pow_ratio_stress will introduce
   // denormalized numbers into subsequent computations. Additionally, such a
-  // large stress value indicates that we are in the viscous drag-dominated 
+  // large stress value indicates that we are in the viscous drag-dominated
   // regime, so return the slip rate computed by the drag constitutive relation
   if (std::fabs(ratio_stress) > max_tol)
   {
@@ -257,7 +257,7 @@ computeRateSlip(
 
   // Low stress regime:
   //
-  // Initialize effective to power_law, because in the low stress regime, the 
+  // Initialize effective to power_law, because in the low stress regime, the
   // constitutive calculation depends only on the power law value
   ArgT
   effective{power_law};

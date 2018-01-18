@@ -251,7 +251,7 @@ computeState(typename Traits::EvalData workset,
 
       f = smag - sq23 * (Y + K * eqpsold(cell, pt));
 
-      
+
       // check yield condition
       if (f <= 0.0) {
         if (a0 > 1.0E-12) {
@@ -304,22 +304,22 @@ computeState(typename Traits::EvalData workset,
             F[0] = X[0] - delta_time(0)*temp_adj_relaxation_para_*std::pow(mu, strain_rate_expo_ )*std::pow( (a0 - 2./3. *  X[0] * a1) * (a0 - 2./3. *  X[0] * a1), strain_rate_expo_ /2.);
 
             dFdX[0] = 1. - delta_time(0)*temp_adj_relaxation_para_*std::pow(mu, strain_rate_expo_ )*( strain_rate_expo_ /2. )*std::pow( (a0 - 2./3. *  X[0] * a1) * (a0 - 2./3. *  X[0] * a1), strain_rate_expo_ /2.- 1.)*(8./9. * X[0] * a1 * a1 - 4./3. * a0 * a1);
- 
+
 
             if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"Creep Solver count = "<<count<<std::endl;
             if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"X[0] = "<<X[0]<<std::endl;
             if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"F[0] = "<<F[0]<<std::endl;
             if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"dFdX[0] = "<<dFdX[0]<<std::endl;
-   
+
             debug_X[count] = X[0];
             debug_F[count] = F[0];
-            debug_dFdX[count] = dFdX[0]; 
+            debug_dFdX[count] = dFdX[0];
 
 
             res = std::abs(F[0]);
             if (res < 1.e-10 )
               converged = true;
-    
+
             if (count == 30) {
               std::cerr << "detected NaN, here are the X, F, dfdX values at each iteration:\n";
               for (int i = 0; i < 30; ++i) {
@@ -330,7 +330,7 @@ computeState(typename Traits::EvalData workset,
                  }
               }
 
-            
+
 
             TEUCHOS_TEST_FOR_EXCEPTION(count == 30, std::runtime_error,
                 std::endl <<
@@ -343,9 +343,9 @@ computeState(typename Traits::EvalData workset,
 
           }
           solver.computeFadInfo(dFdX, X, F);
-          
+
           dgam = X[0];
-      
+
           // plastic direction
           N =  s / minitensor::norm(s);
 

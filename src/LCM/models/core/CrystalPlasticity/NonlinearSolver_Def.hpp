@@ -191,19 +191,19 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
   }
 
 
-  // ***** Residual scaling done below is commented out for now since it is in a 
-  // preliminary stage.  
+  // ***** Residual scaling done below is commented out for now since it is in a
+  // preliminary stage.
 
   // RealType
   // norm_resid = Sacado::ScalarValue<T>::eval(minitensor::norm(residual));
 
   // RealType
   // max_tol = HUGE;
-  
+
   // if (norm_resid > 0.5 * std::pow(max_tol, 1.0 / 10.0)) {
-    
+
   //   residual *= 1.0 / norm_resid;
-    
+
   // }
 
   return residual;
@@ -270,15 +270,15 @@ CP::Dissipation<NumDimT, NumSlipT, EvalT>::value(
     HardeningLawFactory<NumDimT, NumSlipT> hardening_law_factory;
 
     auto
-    phardening = hardening_law_factory.template createHardeningLaw<T>(type_hardening_law); 
+    phardening = hardening_law_factory.template createHardeningLaw<T>(type_hardening_law);
 
     phardening->harden(
       slip_family,
       slip_systems_,
-      dt_, 
-      rate_slip_in, 
-      state_hardening_n_, 
-      state_hardening_np1, 
+      dt_,
+      rate_slip_in,
+      state_hardening_n_,
+      state_hardening_np1,
       slip_resistance);
   }
 
@@ -463,10 +463,10 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
       Fp_n_,
       Lp_np1,
       Fp_np1);
- 
+
   bool
   failed{false};
- 
+
   // Compute sigma_np1, S_np1, and shear_np1
   CP::computeStress<NumDimT, NumSlipT, T>(
       slip_systems_,
@@ -524,25 +524,25 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
 
   for (int i = 0; i< num_slip_; ++i){
     residual[i] = slip_np1[i] - slip_computed[i];
-    residual[i + num_slip_] = 
+    residual[i + num_slip_] =
         state_hardening_np1[i] - state_hardening_computed[i];
   }
 
-  // ***** Residual scaling done below is commented out for now since it is in a 
+  // ***** Residual scaling done below is commented out for now since it is in a
   // preliminary stage.
-  
+
   // RealType
   // norm_resid = Sacado::ScalarValue<T>::eval(minitensor::norm(residual));
 
   // RealType
   // max_tol = HUGE;
-  
+
   // if (norm_resid > 0.5 * std::pow(max_tol, 1.0 / 10.0)) {
-    
+
   //   residual *= 1.0 / norm_resid;
-    
-  // }  
-  
+
+  // }
+
   return residual;
 }
 

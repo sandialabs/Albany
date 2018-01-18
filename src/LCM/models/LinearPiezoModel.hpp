@@ -69,7 +69,7 @@ public:
       FieldMap eval_fields);
 
 private:
-  
+
   ///
   /// Private methods
   ///
@@ -103,13 +103,13 @@ private:
   ///
   std::string strainName;
   std::string efieldName;
- 
+
   ///
   /// EVALUATED FIELD NAMES
   ///
   std::string stressName;
   std::string edispName;
-  
+
 
 };
 }

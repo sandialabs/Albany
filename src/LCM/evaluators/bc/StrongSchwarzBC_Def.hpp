@@ -22,7 +22,7 @@ namespace LCM {
 template<typename EvalT, typename Traits>
 StrongSchwarzBC_Base<EvalT, Traits>::
 StrongSchwarzBC_Base(Teuchos::ParameterList & p) :
-    PHAL::SDirichlet<EvalT, Traits>(p), 
+    PHAL::SDirichlet<EvalT, Traits>(p),
     app_(p.get<Teuchos::RCP<Albany::Application>>(
         "Application", Teuchos::null)),
     coupled_apps_(app_->getApplications()),
@@ -421,7 +421,7 @@ computeBCsDTK()
   // neq should be the same for this_app and coupled_app.
   ALBANY_EXPECT(this_app.getNumEquations() == coupled_app.getNumEquations());
 
-  //Get number of equations from this_app 
+  //Get number of equations from this_app
   int neq = this_app.getNumEquations();
 
   //this_disc = target mesh
@@ -447,7 +447,7 @@ computeBCsDTK()
   Teuchos::RCP<stk::mesh::MetaData const> const
   coupled_meta_data = Teuchos::rcpFromRef(coupled_stk_disc->getSTKMetaData());
 
-  //Get coupled_app parameter list 
+  //Get coupled_app parameter list
   Teuchos::RCP<const Teuchos::ParameterList>
   coupled_app_params = coupled_app.getAppPL();
 
@@ -464,13 +464,13 @@ computeBCsDTK()
           coupled_stk_disc->getSTKMeshStruct()->getFieldContainer()
           )->getSolutionFieldArray();
 
-  int num_sol_vecs = coupled_field_array.length(); 
- 
+  int num_sol_vecs = coupled_field_array.length();
+
   ALBANY_ASSERT(num_sol_vecs > 0,
       "coupled_field_array must have at least 1 entry!");
-  
+
   Albany::AbstractSTKFieldContainer::VectorFieldType*
-  coupled_field = coupled_field_array[0]; 
+  coupled_field = coupled_field_array[0];
 
   stk::mesh::Selector
   coupled_stk_selector =
@@ -494,7 +494,7 @@ computeBCsDTK()
       "coupled_field_array and this_field_array must have the same length!");
 
   Albany::AbstractSTKFieldContainer::VectorFieldType*
-  this_field = this_field_array[0]; 
+  this_field = this_field_array[0];
 
   // Get the part corresponding to this nodeset.
   std::string const &
@@ -522,35 +522,35 @@ computeBCsDTK()
   //Do interpolation of solution field using DTK
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
   this_vector = doDTKInterpolation(coupled_manager, this_manager, coupled_field,
-                                   this_field, neq, dtk_params); 
+                                   this_field, neq, dtk_params);
 
   Teuchos::Array<Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>>
-  this_vector_arrays(num_sol_vecs); 
+  this_vector_arrays(num_sol_vecs);
   this_vector_arrays[0] = this_vector;
 
-  //Do interpolation of solution time-derivatives using DTK (if applicable)  
-  Albany::AbstractSTKFieldContainer::VectorFieldType* this_field_dot; 
+  //Do interpolation of solution time-derivatives using DTK (if applicable)
+  Albany::AbstractSTKFieldContainer::VectorFieldType* this_field_dot;
   Albany::AbstractSTKFieldContainer::VectorFieldType* this_field_dotdot;
- 
+
   Albany::AbstractSTKFieldContainer::VectorFieldType* coupled_field_dot;
   Albany::AbstractSTKFieldContainer::VectorFieldType* coupled_field_dotdot;
 
-  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> this_vector_dot; 
-  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> this_vector_dotdot; 
- 
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> this_vector_dot;
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> this_vector_dotdot;
+
   if (num_sol_vecs > 1) {
-    this_field_dot = this_field_array[1]; 
-    coupled_field_dot = coupled_field_array[1]; 
+    this_field_dot = this_field_array[1];
+    coupled_field_dot = coupled_field_array[1];
     this_vector_dot = doDTKInterpolation(coupled_manager, this_manager, coupled_field_dot,
-                                         this_field_dot, neq, dtk_params); 
-    this_vector_arrays[1] = this_vector_dot; 
+                                         this_field_dot, neq, dtk_params);
+    this_vector_arrays[1] = this_vector_dot;
   }
   if (num_sol_vecs > 2) {
-    this_field_dotdot = this_field_array[2]; 
-    coupled_field_dotdot = coupled_field_array[2]; 
+    this_field_dotdot = this_field_array[2];
+    coupled_field_dotdot = coupled_field_array[2];
     this_vector_dotdot = doDTKInterpolation(coupled_manager, this_manager, coupled_field_dotdot,
-                                            this_field_dotdot, neq, dtk_params); 
-    this_vector_arrays[2] = this_vector_dotdot; 
+                                            this_field_dotdot, neq, dtk_params);
+    this_vector_arrays[2] = this_vector_dotdot;
   }
 
   return this_vector_arrays;
@@ -559,11 +559,11 @@ computeBCsDTK()
 template<typename EvalT, typename Traits>
 Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
 StrongSchwarzBC_Base<EvalT, Traits>::
-doDTKInterpolation(DataTransferKit::STKMeshManager &coupled_manager, 
+doDTKInterpolation(DataTransferKit::STKMeshManager &coupled_manager,
                    DataTransferKit::STKMeshManager &this_manager,
                    Albany::AbstractSTKFieldContainer::VectorFieldType* coupled_field,
                    Albany::AbstractSTKFieldContainer::VectorFieldType* this_field,
-                   const int neq, Teuchos::ParameterList &dtk_params) 
+                   const int neq, Teuchos::ParameterList &dtk_params)
 {
   // Create a solution vector for the source.
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
@@ -597,7 +597,7 @@ doDTKInterpolation(DataTransferKit::STKMeshManager &coupled_manager,
   // to the other.
   map_op->apply(*coupled_vector, *this_vector);
 
-  return this_vector; 
+  return this_vector;
 
 }
 #endif //ALBANY_DTK
@@ -657,7 +657,7 @@ fillResidual(StrongSchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
   Teuchos::ArrayRCP<ST>
   acce_view = has_acce == true ? acce->get1dViewNonConst() : Teuchos::null;
 
-  //Residual 
+  //Residual
   Teuchos::RCP<Tpetra_Vector>
   f = dirichlet_workset.fT;
 
@@ -852,7 +852,7 @@ void
 StrongSchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
-  dirichlet_workset.is_schwarz_bc_ = true; 
+  dirichlet_workset.is_schwarz_bc_ = true;
   dirichlet_workset.spatial_dimension_ = this->app_->getSpatialDimension();
   PHAL::SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(dirichlet_workset);
 
@@ -860,7 +860,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     fillResidual<StrongSchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>, Traits>
     (*this, dirichlet_workset);
   }
-  dirichlet_workset.is_schwarz_bc_ = false; 
+  dirichlet_workset.is_schwarz_bc_ = false;
   return;
 }
 

@@ -38,7 +38,7 @@ namespace LCM {
       p.get<Teuchos::RCP<std::map<std::string, std::string>>>("Name Map");
 
     // get the material parameter list
-    Teuchos::ParameterList* mat_params = 
+    Teuchos::ParameterList* mat_params =
       p.get<Teuchos::ParameterList*>("Material Parameters");
 
     partial_molar_volume_ = mat_params->get<RealType>("Partial Molar Volume");
@@ -158,17 +158,17 @@ namespace LCM {
     // theta term C_T
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
-        theta_term = k_eq_(cell,pt) * c_lattice_(cell,pt) / 
+        theta_term = k_eq_(cell,pt) * c_lattice_(cell,pt) /
           ( k_eq_(cell,pt) * c_lattice_(cell,pt) + n_lattice_ );
       }
     }
     */
-    
+
     // trapped solvent
     if (have_eqps_) {
       for (int cell(0); cell < workset.numCells; ++cell) {
         for (int pt(0); pt < num_pts_; ++pt) {
-          n_trap_(cell,pt) = (1.0/avogadros_num_) * 
+          n_trap_(cell,pt) = (1.0/avogadros_num_) *
             std::pow(10.0,(a_-b_*std::exp(-c_*eqps(cell,pt))));
           //     std::cout  << "ntrap" << n_trap_(cell,pt) << std::endl;
         }
@@ -182,7 +182,7 @@ namespace LCM {
         }
       }
     }
-    
+
     // strain rate factor
     if (have_eqps_) {
       for (std::size_t cell(0); cell < workset.numCells; ++cell) {
@@ -190,7 +190,7 @@ namespace LCM {
           theta_term = k_eq_(cell,pt) * c_lattice_(cell,pt) /
             ( k_eq_(cell,pt) * c_lattice_(cell,pt) + n_lattice_ );
 
-          strain_rate_fac_(cell,pt) = theta_term * n_trap_(cell,pt) * 
+          strain_rate_fac_(cell,pt) = theta_term * n_trap_(cell,pt) *
             std::log(10.0) * b_ * c_ * std::exp( -c_ * eqps(cell,pt) );
         }
       }
@@ -217,7 +217,7 @@ namespace LCM {
         c_trapped_(cell,pt) = theta_term * n_trap_(cell,pt);
       }
     }
-    
+
     // total concentration
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t pt(0); pt < num_pts_; ++pt) {

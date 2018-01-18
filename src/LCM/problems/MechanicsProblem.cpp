@@ -35,7 +35,7 @@ MechanicsProblem::MechanicsProblem(
     have_peridynamics_(false),
     have_topmod_adaptation_(false),
     have_sizefield_adaptation_(false),
-    use_sdbcs_(false), 
+    use_sdbcs_(false),
     rc_mgr_(rc_mgr) {
 
   std::string &
@@ -61,7 +61,7 @@ MechanicsProblem::MechanicsProblem(
   have_contact_ = params->isSublist("Contact");
 
   // Is adaptation specified?
-  bool 
+  bool
   adapt_sublist_exists = params->isSublist("Adaptation");
 
   if (adapt_sublist_exists) {
@@ -193,7 +193,7 @@ MechanicsProblem::MechanicsProblem(
   if (have_source_ && have_temperature_eq_) {
     // If a thermal source is specified
     if (params->sublist("Source Functions").isSublist("Thermal Source"))
-    {  
+    {
       Teuchos::ParameterList &
       thSrcPL = params->sublist("Source Functions").sublist("Thermal Source");
 
@@ -495,7 +495,7 @@ MechanicsProblem::constructDirichletEvaluators(
   dfm = dirUtils.constructBCEvaluators(
       meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
 
-  use_sdbcs_ = dirUtils.useSDBCs(); 
+  use_sdbcs_ = dirUtils.useSDBCs();
   offsets_ = dirUtils.getOffsets();
 }
 
@@ -516,7 +516,7 @@ MechanicsProblem::constructNeumannEvaluators(
   neuUtils;
 
   // Check to make sure that Neumann BCs are given in the input file
-  if (!neuUtils.haveBCSpecified(this->params)) { 
+  if (!neuUtils.haveBCSpecified(this->params)) {
     return;
   }
 
@@ -566,7 +566,7 @@ MechanicsProblem::constructNeumannEvaluators(
   }
 
   if (have_dislocation_density_eq_) {
-    for (int i{0}; i < LCM::DislocationDensity::get_num_slip(num_dims_); ++i) { 
+    for (int i{0}; i < LCM::DislocationDensity::get_num_slip(num_dims_); ++i) {
       neumannNames[index] = strint("DF", i, '_');
       offsets[index] = Teuchos::Array<int>(1, index);
       index++;

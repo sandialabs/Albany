@@ -20,7 +20,7 @@ namespace LCM
 /// \brief StabilizedPressure Residual
 ///
 /// This evaluator computes the residual
-/// for the equal order pressure stabilization 
+/// for the equal order pressure stabilization
 ///
 template<typename EvalT, typename Traits>
 class StabilizedPressureResidual:

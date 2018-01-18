@@ -427,7 +427,7 @@ computeBCsDTK()
   // neq should be the same for this_app and coupled_app.
   ALBANY_EXPECT(this_app.getNumEquations() == coupled_app.getNumEquations());
 
-  //Get number of equations from this_app 
+  //Get number of equations from this_app
   int neq = this_app.getNumEquations();
 
   //this_disc = target mesh
@@ -453,7 +453,7 @@ computeBCsDTK()
   Teuchos::RCP<stk::mesh::MetaData const> const
   coupled_meta_data = Teuchos::rcpFromRef(coupled_stk_disc->getSTKMetaData());
 
-  //Get coupled_app parameter list 
+  //Get coupled_app parameter list
   Teuchos::RCP<const Teuchos::ParameterList>
   coupled_app_params = coupled_app.getAppPL();
 
@@ -953,7 +953,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     if (fpT != Teuchos::null) {
       std::cout << "WARNING: fpT requested but unset when ALBANY_DTK is ON!\n";
     }
-#else  
+#else
     for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
 
       auto const

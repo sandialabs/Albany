@@ -72,7 +72,7 @@ public:
 private:
 
   Teuchos::RCP<FM::FerroicModel<EvalT>> ferroicModel;
-  
+
 
   ///
   /// Private to prohibit copying
@@ -89,7 +89,7 @@ private:
   ///
   std::string strainName;
   std::string efieldName;
- 
+
   ///
   /// EVALUATED FIELD NAMES
   ///
@@ -103,17 +103,17 @@ private:
 };
 
 
-void parseBasis  (const Teuchos::ParameterList&   pBasis, 
+void parseBasis  (const Teuchos::ParameterList&   pBasis,
                         minitensor::Tensor <RealType, FM::THREE_D>& R);
 void parseTensor4(const Teuchos::ParameterList&   pConsts,
                         minitensor::Tensor4<RealType, FM::THREE_D>& tensor);
-void parseTensor3(const Teuchos::ParameterList&   pConsts, 
+void parseTensor3(const Teuchos::ParameterList&   pConsts,
                         minitensor::Tensor3<RealType, FM::THREE_D>& tensor);
-void parseTensor (const Teuchos::ParameterList&   pConsts, 
+void parseTensor (const Teuchos::ParameterList&   pConsts,
                         minitensor::Tensor <RealType, FM::THREE_D>& tensor);
 
 FM::CrystalVariant
-parseCrystalVariant(const Teuchos::Array<Teuchos::RCP<FM::CrystalPhase>>& phases, 
+parseCrystalVariant(const Teuchos::Array<Teuchos::RCP<FM::CrystalPhase>>& phases,
                     const Teuchos::ParameterList& vParam);
 
 }

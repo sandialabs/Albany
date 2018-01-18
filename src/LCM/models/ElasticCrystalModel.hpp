@@ -79,7 +79,7 @@ namespace LCM
     computeState( typename Traits::EvalData workset,
 		  DepFieldMap dep_fields,
 		  FieldMap eval_fields);
-    
+
     // This capability not implemented yet.
     virtual void
     computeStateParallel( typename Traits::EvalData workset,
@@ -95,12 +95,12 @@ namespace LCM
     /// Private to prohibit copying
     ///
     ElasticCrystalModel(const ElasticCrystalModel&);
-    
+
     ///
     /// Private to prohibit copying
     ///
     ElasticCrystalModel& operator=(const ElasticCrystalModel&);
-    
+
     // Elastic crystal coefficients
     RealType c11_, c22_, c33_, c44_, c55_, c66_, c12_, c13_, c23_, c15_, c25_,
       c35_, c46_;
@@ -113,7 +113,7 @@ namespace LCM
 
     // Gas constant
     RealType R_;
-    
+
 
   };
 }

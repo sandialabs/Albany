@@ -27,7 +27,7 @@ public:
   int ndb_start, ndb_numvecs;
   // Multivector that will go into the nodal database.
   Teuchos::RCP<Tpetra_MultiVector> nodal_field;
-  
+
 private:
   int nwrkr_, prectr_, postctr_;
 };

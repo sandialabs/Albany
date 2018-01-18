@@ -276,7 +276,7 @@ computeState(typename Traits::EvalData workset,
       mdf_traction(cell, pt, 1) = traction_vector(1);
       mdf_traction(cell, pt, 2) = traction_vector(2);
 
-      // update state variables 
+      // update state variables
 
       // Calculate normal and shear components of global traction
       ScalarT traction_n = minitensor::dot(traction_vector, n);

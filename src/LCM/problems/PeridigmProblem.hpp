@@ -25,20 +25,20 @@ namespace Albany {
    */
   class PeridigmProblem : public Albany::AbstractProblem {
   public:
-  
+
     //! Default constructor
     PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
                     const Teuchos::RCP<ParamLib>& paramLib,
                     const int numEqm,
-                    Teuchos::RCP<const Teuchos::Comm<int>>& commT); 
+                    Teuchos::RCP<const Teuchos::Comm<int>>& commT);
 
     //! Destructor
     virtual ~PeridigmProblem();
 
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
-    
-    //! Get boolean telling code if SDBCs are utilized  
+
+    //! Get boolean telling code if SDBCs are utilized
     virtual bool useSDBCs() const {return use_sdbcs_; }
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
@@ -60,14 +60,14 @@ namespace Albany {
 
     //! Private to prohibit copying
     PeridigmProblem(const PeridigmProblem&);
-    
+
     //! Private to prohibit copying
     PeridigmProblem& operator=(const PeridigmProblem&);
 
   public:
 
     //! Main problem setup routine. Not directly called, but indirectly by following functions
-    template <typename EvalT> 
+    template <typename EvalT>
     Teuchos::RCP<const PHX::FieldTag>
     constructEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -83,8 +83,8 @@ namespace Albany {
   protected:
 
     ///
-    ///Boolean marking whether SDBCs are used 
-    bool use_sdbcs_; 
+    ///Boolean marking whether SDBCs are used
+    bool use_sdbcs_;
 
     //! Boundary conditions on source term
     bool haveSource;
@@ -141,7 +141,7 @@ Albany::PeridigmProblem::constructEvaluators(
    string elementBlockName = meshSpecs.ebName;
 
    // WHAT'S IN meshSpecs Albany::MeshSpecsStruct?
-   
+
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology(&meshSpecs.ctd));
 
    const int worksetSize = meshSpecs.worksetSize;
@@ -282,7 +282,7 @@ Albany::PeridigmProblem::constructEvaluators(
      }
 
      { // Save Variables to Exodus
-       const Teuchos::ParameterList& outputVariables = peridigmParams->sublist("Output").sublist("Output Variables");     
+       const Teuchos::ParameterList& outputVariables = peridigmParams->sublist("Output").sublist("Output Variables");
        LCM::PeridigmManager& peridigmManager = *LCM::PeridigmManager::self();
        // peridigmManger::setOutputVariableList() records the variables that will be output to Exodus, determines
        // if they are node, element, or global variables, and determines if they are scalar, vector, etc.
@@ -388,13 +388,13 @@ Albany::PeridigmProblem::constructEvaluators(
      const int numQPts = cubature->getNumPoints();
      const int numVertices = cellType->getNodeCount();
 
-     *out << "Field Dimensions: Workset=" << worksetSize 
+     *out << "Field Dimensions: Workset=" << worksetSize
 	  << ", Vertices= " << numVertices
 	  << ", Nodes= " << numNodes
 	  << ", QuadPts= " << numQPts
 	  << ", Dim= " << numDim << std::endl;
 
-     // Construct standard FEM evaluators with standard field names                              
+     // Construct standard FEM evaluators with standard field names
      RCP<Albany::Layouts> dataLayout = rcp(new Albany::Layouts(worksetSize, numVertices, numNodes, numQPts, numDim));
      TEUCHOS_TEST_FOR_EXCEPTION(dataLayout->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
 				"Data Layout Usage in Peridigm problems assume vecDim = numDim");
@@ -492,7 +492,7 @@ Albany::PeridigmProblem::constructEvaluators(
 
        //Outputs: F, J
        p->set<std::string>("DefGrad Name", "Deformation Gradient");
-       p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
+       p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient");
        p->set< RCP<DataLayout>>("QP Scalar Data Layout", dataLayout->qp_scalar);
 
        ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
@@ -511,7 +511,7 @@ Albany::PeridigmProblem::constructEvaluators(
        p->set< RCP<DataLayout>>("QP Tensor Data Layout", dataLayout->qp_tensor);
 
        // Input
-       p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
+       p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient");
        p->set<std::string>("DefGrad Name", "Deformation Gradient");
 
        // Output
@@ -568,7 +568,7 @@ Albany::PeridigmProblem::constructEvaluators(
 
    }  // ---- End Partial Stress Evaluators ----
 
-   // --------- Option 3:  Classic Vector Poisson ---------   
+   // --------- Option 3:  Classic Vector Poisson ---------
 
    else if(materialModelName == "Classic Vector Poisson"){
       *out << "PeridigmProblem::constructEvaluators(), Creating evaluators for classical Poisson Eq, material model = " << materialModelName << std::endl;
@@ -688,8 +688,8 @@ Albany::PeridigmProblem::constructEvaluators(
         return respUtils.constructResponses(fm0, *responseList, stateMgr);
       }
    } // ---- End Classic Vector Poisson Evaluators ----
- 
-   // --------- Option 3:  Classic Elasticity --------- 
+
+   // --------- Option 3:  Classic Elasticity ---------
    else if(materialModelName != "Peridynamics" && materialModelName != "Peridynamics Partial Stress"){
 
      *out << "PeridigmProblem::constructEvaluators(), Creating evaluators for classical elasticity, material model = " << materialModelName << std::endl;
@@ -707,13 +707,13 @@ Albany::PeridigmProblem::constructEvaluators(
      const int numQPts = cubature->getNumPoints();
      const int numVertices = cellType->getNodeCount();
 
-     *out << "Field Dimensions: Workset=" << worksetSize 
+     *out << "Field Dimensions: Workset=" << worksetSize
 	  << ", Vertices= " << numVertices
 	  << ", Nodes= " << numNodes
 	  << ", QuadPts= " << numQPts
 	  << ", Dim= " << numDim << std::endl;
 
-     // Construct standard FEM evaluators with standard field names                              
+     // Construct standard FEM evaluators with standard field names
      RCP<Albany::Layouts> dataLayout = rcp(new Albany::Layouts(worksetSize, numVertices, numNodes, numQPts, numDim));
      TEUCHOS_TEST_FOR_EXCEPTION(dataLayout->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
 				"Data Layout Usage in Peridigm problems assume vecDim = numDim");
@@ -810,7 +810,7 @@ Albany::PeridigmProblem::constructEvaluators(
        fm0.template registerEvaluator<EvalT>(ev);
      }
 
-     { // Poissons Ratio 
+     { // Poissons Ratio
        RCP<ParameterList> p = rcp(new ParameterList);
 
        p->set<std::string>("QP Variable Name", "Poissons Ratio");
@@ -856,7 +856,7 @@ Albany::PeridigmProblem::constructEvaluators(
 
        //Outputs: F, J
        p->set<std::string>("DefGrad Name", "Deformation Gradient"); //dataLayout->qp_tensor also
-       p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
+       p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient");
        p->set< RCP<DataLayout>>("QP Scalar Data Layout", dataLayout->qp_scalar);
 
        ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
@@ -872,7 +872,7 @@ Albany::PeridigmProblem::constructEvaluators(
 
        p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
        p->set< RCP<DataLayout>>("QP Scalar Data Layout", dataLayout->qp_scalar);
-       
+
        p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");  // dataLayout->qp_scalar also
 
        //Output

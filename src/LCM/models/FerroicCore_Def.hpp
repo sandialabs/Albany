@@ -18,13 +18,13 @@ FM::DomainSwitching<EvalT, M>::DomainSwitching(
       RealType dt)
   :
       m_crystalVariants(crystalVariants),
-      m_transitions(transitions), 
+      m_transitions(transitions),
       m_transBarriers(transBarriers),
-      m_binFractions(binFractions), 
+      m_binFractions(binFractions),
       m_aMatrix(aMatrix),
       m_x(x), m_dt(dt)
 /******************************************************************************/
-{ 
+{
 
   // compute trial state
   //
@@ -44,17 +44,17 @@ FM::DomainSwitching<EvalT, M>::DomainSwitching(
 
   // evaluate residual at current bin fractions
   //
-  minitensor::Vector<ArgT, FM::MAX_TRNS> zero; 
-  zero.set_dimension(nTransitions); 
+  minitensor::Vector<ArgT, FM::MAX_TRNS> zero;
+  zero.set_dimension(nTransitions);
   zero.clear();
-  minitensor::Vector<ArgT, FM::MAX_TRNS> 
+  minitensor::Vector<ArgT, FM::MAX_TRNS>
   residual = this->gradient(zero);
 
   // find active transitions
   //
   int nVariants = m_binFractions.size();
   int transition=0, nActive=0;
-  for(int J=0; J<nTransitions; J++) 
+  for(int J=0; J<nTransitions; J++)
     m_transitionMap[J] = -1;
   for(int I=0;I<nVariants;I++){
     if(m_binFractions[I] <= 1.0e-10) continue;
@@ -112,7 +112,7 @@ FM::DomainSwitching<EvalT, M>::gradient(minitensor::Vector<T, N> const & xi) con
   //
   auto const num_unknowns = xi.get_dimension();
   minitensor::Vector<T, N> residual(num_unknowns);
-  computeResidual(residual, fractionsNew, 
+  computeResidual(residual, fractionsNew,
                   m_transitionMap, m_transitions, m_crystalVariants,
                   m_transBarriers, m_aMatrix,
                   X,linear_x, E,linear_D);
@@ -137,8 +137,8 @@ FM::DomainSwitching<EvalT, M>::hessian(
 
 /******************************************************************************/
 template<typename DataT>
-void 
-FM::changeBasis(       minitensor::Tensor4<DataT, FM::THREE_D>& inMatlBasis, 
+void
+FM::changeBasis(       minitensor::Tensor4<DataT, FM::THREE_D>& inMatlBasis,
                  const minitensor::Tensor4<DataT, FM::THREE_D>& inGlobalBasis,
                  const minitensor::Tensor <DataT, FM::THREE_D>& R)
 /******************************************************************************/
@@ -158,7 +158,7 @@ FM::changeBasis(       minitensor::Tensor4<DataT, FM::THREE_D>& inMatlBasis,
 /******************************************************************************/
 template<typename DataT>
 void
-FM::changeBasis(       minitensor::Tensor3<DataT, FM::THREE_D>& inMatlBasis, 
+FM::changeBasis(       minitensor::Tensor3<DataT, FM::THREE_D>& inMatlBasis,
                  const minitensor::Tensor3<DataT, FM::THREE_D>& inGlobalBasis,
                  const minitensor::Tensor <DataT, FM::THREE_D>& R)
 /******************************************************************************/
@@ -176,7 +176,7 @@ FM::changeBasis(       minitensor::Tensor3<DataT, FM::THREE_D>& inMatlBasis,
 /******************************************************************************/
 template<typename DataT>
 void
-FM::changeBasis(       minitensor::Tensor<DataT, FM::THREE_D>& inMatlBasis, 
+FM::changeBasis(       minitensor::Tensor<DataT, FM::THREE_D>& inMatlBasis,
                  const minitensor::Tensor<DataT, FM::THREE_D>& inGlobalBasis,
                  const minitensor::Tensor<DataT, FM::THREE_D>& R)
 /******************************************************************************/
@@ -191,8 +191,8 @@ FM::changeBasis(       minitensor::Tensor<DataT, FM::THREE_D>& inMatlBasis,
 }
 /******************************************************************************/
 template<typename DataT>
-void 
-FM::changeBasis(       minitensor::Vector<DataT, FM::THREE_D>& inMatlBasis, 
+void
+FM::changeBasis(       minitensor::Vector<DataT, FM::THREE_D>& inMatlBasis,
                  const minitensor::Vector<DataT, FM::THREE_D>& inGlobalBasis,
                  const minitensor::Tensor<DataT, FM::THREE_D>& R)
 /******************************************************************************/
@@ -207,17 +207,17 @@ FM::changeBasis(       minitensor::Vector<DataT, FM::THREE_D>& inMatlBasis,
 
 /******************************************************************************/
 template<typename NLS, typename DataT>
-void 
+void
 FM::DescentNorm(NLS & nls, minitensor::Vector<DataT, FM::MAX_TRNS> & xi){}
 /******************************************************************************/
 
 /******************************************************************************/
 template<typename NLS, typename DataT>
-void 
+void
 FM::ScaledDescent(NLS & nls, minitensor::Vector<DataT, FM::MAX_TRNS> & xi)
 /******************************************************************************/
 {
-//  minitensor::Vector<ArgT, FM::MAX_TRNS> 
+//  minitensor::Vector<ArgT, FM::MAX_TRNS>
 //  residual = nls.gradient(xi);
 }
 
@@ -251,11 +251,11 @@ void
 FM::computeInitialState(
     Teuchos::Array<RealType>            const & fractions,
     Teuchos::Array<FM::CrystalVariant>  const & crystalVariants,
-    minitensor::Tensor<ArgT,FM::THREE_D> const & x, 
-    minitensor::Tensor<ArgT,FM::THREE_D>       & X, 
+    minitensor::Tensor<ArgT,FM::THREE_D> const & x,
+    minitensor::Tensor<ArgT,FM::THREE_D>       & X,
     minitensor::Tensor<ArgT,FM::THREE_D>       & linear_x,
-    minitensor::Vector<ArgT,FM::THREE_D> const & E, 
-    minitensor::Vector<ArgT,FM::THREE_D>       & D, 
+    minitensor::Vector<ArgT,FM::THREE_D> const & E,
+    minitensor::Vector<ArgT,FM::THREE_D>       & D,
     minitensor::Vector<ArgT,FM::THREE_D>       & linear_D)
 /******************************************************************************/
 {
@@ -292,11 +292,11 @@ void
 FM::computeRelaxedState(
     Teuchos::Array<ArgT>                const & fractions,
     Teuchos::Array<FM::CrystalVariant>  const & crystalVariants,
-    minitensor::Tensor<ArgT,FM::THREE_D> const & x, 
-    minitensor::Tensor<ArgT,FM::THREE_D>       & X, 
+    minitensor::Tensor<ArgT,FM::THREE_D> const & x,
+    minitensor::Tensor<ArgT,FM::THREE_D>       & X,
     minitensor::Tensor<ArgT,FM::THREE_D>       & linear_x,
-    minitensor::Vector<ArgT,FM::THREE_D>       & E, 
-    minitensor::Vector<ArgT,FM::THREE_D> const & D, 
+    minitensor::Vector<ArgT,FM::THREE_D>       & E,
+    minitensor::Vector<ArgT,FM::THREE_D> const & D,
     minitensor::Vector<ArgT,FM::THREE_D>       & linear_D)
 /******************************************************************************/
 {
@@ -336,7 +336,7 @@ FM::computeResidual(
     Teuchos::Array<FM::CrystalVariant>    const & crystalVariants,
     Teuchos::Array<DataT>                 const & tBarrier,
     Kokkos::DynRankView<DataT>            const & aMatrix,
-    minitensor::Tensor<ArgT,FM::THREE_D>   const & X, 
+    minitensor::Tensor<ArgT,FM::THREE_D>   const & X,
     minitensor::Tensor<ArgT,FM::THREE_D>   const & linear_x,
     minitensor::Vector<ArgT,FM::THREE_D>   const & E,
     minitensor::Vector<ArgT,FM::THREE_D>   const & linear_D)
@@ -352,7 +352,7 @@ FM::computeResidual(
         const Transition& transition = transitions[i];
         int lindex = transitionMap[i];
         residual[lindex] = -tBarrier[i]
-                           -dotdot(transition.transStrain, X) 
+                           -dotdot(transition.transStrain, X)
                            -dot(transition.transEDisp, E);
       }
     }

@@ -14,7 +14,7 @@ template<typename EvalT, typename Traits>
 SurfaceScalarJump<EvalT, Traits>::
 SurfaceScalarJump(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl) :
-  cubature      (p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")), 
+  cubature      (p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")),
   intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>("Intrepid2 Basis"))
 {
   this->setName("Surface Scalar Jump"+PHX::typeAsString<EvalT>());

@@ -21,27 +21,27 @@
 #endif
 
 namespace LCM {
-  /** 
+  /**
    * \brief Evaluates Time and the time step
    */
 
   template<typename EvalT, typename Traits>
-  class Time : 
+  class Time :
     public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>,
     public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-  
+
   public:
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
     Time(Teuchos::ParameterList& p);
-  
+
     void postRegistrationSetup(typename Traits::SetupData d,
 			       PHX::FieldManager<Traits>& vm);
-  
+
     void evaluateFields(typename Traits::EvalData d);
-  
+
     ScalarT& getValue(const std::string &n);
 
   private:

@@ -75,7 +75,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int node = 0; node < num_nodes_; ++node) {
         for (int dim1 = 0; dim1 < num_dims_; ++dim1) {
           for (int dim2 = 0; dim2 < num_dims_; ++dim2) {
-            residual_(cell,node,dim1,dim2) = 
+            residual_(cell,node,dim1,dim2) =
               (F(dim1,dim2) - F0(dim1,dim2));
             //* (P(dim1,dim2) - P0(dim1,dim2));
           }

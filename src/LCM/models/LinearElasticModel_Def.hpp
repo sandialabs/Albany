@@ -66,17 +66,17 @@ computeState(typename Traits::EvalData workset,
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
-      lambda = ( elastic_modulus(cell,pt) * poissons_ratio(cell,pt) ) 
+      lambda = ( elastic_modulus(cell,pt) * poissons_ratio(cell,pt) )
         / ( ( 1 + poissons_ratio(cell,pt) ) * ( 1 - 2 * poissons_ratio(cell,pt) ) );
       mu = elastic_modulus(cell,pt) / ( 2 * ( 1 + poissons_ratio(cell,pt) ) );
 
       eps.fill( strain,cell,pt,0,0);
-      
+
       sigma = 2.0 * mu * eps + lambda * minitensor::trace(eps) * I;
 
       if (print) {
         std::cout << "E      : " << elastic_modulus(cell,pt) << std::endl;
-        std::cout << "nu     : " << poissons_ratio(cell,pt) << std::endl;        
+        std::cout << "nu     : " << poissons_ratio(cell,pt) << std::endl;
         std::cout << "lambda : " << lambda << std::endl;
         std::cout << "mu     : " << mu << std::endl;
         std::cout << "eps    :\n" << eps << std::endl;
@@ -97,7 +97,7 @@ computeState(typename Traits::EvalData workset,
       for (int pt(0); pt < num_pts_; ++pt) {
         sigma.fill(stress,cell,pt,0,0);
         ScalarT three_kappa = elastic_modulus(cell,pt) / (1.0 - 2.0*poissons_ratio(cell,pt));
-        sigma -= three_kappa * expansion_coeff_ 
+        sigma -= three_kappa * expansion_coeff_
           * (temperature_(cell,pt) - ref_temperature_) * I;
 
         if (print) {
@@ -116,7 +116,7 @@ computeState(typename Traits::EvalData workset,
       }
     }
   }
-  
+
 }
 //----------------------------------------------------------------------------
 }

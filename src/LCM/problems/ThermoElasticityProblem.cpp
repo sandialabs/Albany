@@ -16,13 +16,13 @@ ThermoElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 			const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_ + 1),
   haveSource(false),
-  use_sdbcs_(false), 
+  use_sdbcs_(false),
   numDim(numDim_)
 {
- 
+
   std::string& method = params->get("Name", "ThermoElasticity ");
   *out << "Problem Name = " << method << std::endl;
-  
+
   haveSource =  params->isSublist("Source Functions");
 
 // Changing this ifdef changes ordering from  (X,Y,T) to (T,X,Y)
@@ -65,7 +65,7 @@ buildProblem(
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1);
   fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, 
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM,
 		  Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
 }
@@ -100,8 +100,8 @@ Albany::ThermoElasticityProblem::constructDirichletEvaluators(
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                        this->params, this->paramLib);
-  use_sdbcs_ = dirUtils.useSDBCs(); 
-  offsets_ = dirUtils.getOffsets(); 
+  use_sdbcs_ = dirUtils.useSDBCs();
+  offsets_ = dirUtils.getOffsets();
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

@@ -39,14 +39,14 @@ FerroicDriver(Teuchos::ParameterList* p,
     R(0,0) = 1.0; R(1,1) = 1.0; R(2,2) = 1.0;
   }
 
-  
+
   // PARSE INITIAL BIN FRACTIONS
   //
   Teuchos::Array<RealType>&
     initialBinFractions = ferroicModel->getInitialBinFractions();
   if(p->isType<Teuchos::Array<RealType>>("Bin Fractions") )
     initialBinFractions = p->get<Teuchos::Array<RealType>>("Bin Fractions");
-  else 
+  else
     initialBinFractions.resize(0);
 
 
@@ -82,7 +82,7 @@ FerroicDriver(Teuchos::ParameterList* p,
   }
 
   // PARSE CRITICAL ENERGIES
-  // 
+  //
   int nVariants = crystalVariants.size();
   Teuchos::Array<RealType>& tBarrier = ferroicModel->getTransitionBarrier();
   tBarrier.resize(nVariants*nVariants);
@@ -99,7 +99,7 @@ FerroicDriver(Teuchos::ParameterList* p,
       }
     }
   }
- 
+
   // DEFINE THE EVALUATED FIELDS
   //
   stressName = "Stress";
@@ -123,7 +123,7 @@ FerroicDriver(Teuchos::ParameterList* p,
     binNames.push_back(binName);
     this->eval_field_map_.insert(std::make_pair(binName, dl->qp_scalar));
   }
-  
+
   // bin fractions
   for(int i=0; i<nVariants; i++){
     this->num_state_variables_++;
@@ -134,7 +134,7 @@ FerroicDriver(Teuchos::ParameterList* p,
     this->state_var_old_state_flags_.push_back(true);
     this->state_var_output_flags_.push_back(true);
   }
-  
+
   // stress
   this->num_state_variables_++;
   this->state_var_names_.push_back(stressName);
@@ -151,7 +151,7 @@ FerroicDriver(Teuchos::ParameterList* p,
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
   this->state_var_output_flags_.push_back(true);
-  
+
   // edisp
   this->num_state_variables_++;
   this->state_var_names_.push_back(edispName);
@@ -170,7 +170,7 @@ FerroicDriver(Teuchos::ParameterList* p,
   this->state_var_output_flags_.push_back(true);
 
   ferroicModel->PostParseInitialize();
-  
+
 }
 
 /******************************************************************************/
@@ -269,10 +269,10 @@ parseTensor4(const Teuchos::ParameterList& cParam,
 /******************************************************************************/
 {
 
-  // JR:  This should be generalized to read stiffness tensors of various 
-  // symmetries.  
+  // JR:  This should be generalized to read stiffness tensors of various
+  // symmetries.
 
-  // parse 
+  // parse
   //
   RealType C11 = cParam.get<RealType>("C11");
   RealType C33 = cParam.get<RealType>("C33");
@@ -289,17 +289,17 @@ parseTensor4(const Teuchos::ParameterList& cParam,
   C(0,1,0,1) = C66/2.0; C(1,0,1,0) = C66/2.0;
   C(0,2,0,2) = C44/2.0; C(2,0,2,0) = C44/2.0;
   C(1,2,1,2) = C44/2.0; C(2,1,2,1) = C44/2.0;
-} 
+}
 /******************************************************************************/
 void
 parseTensor3(const Teuchos::ParameterList& cParam,
                    minitensor::Tensor3<RealType, FM::THREE_D>& h)
 /******************************************************************************/
 {
-  // JR:  This should be generalized to read piezoelectric tensors of various 
-  // symmetries.  
+  // JR:  This should be generalized to read piezoelectric tensors of various
+  // symmetries.
 
-  // parse 
+  // parse
   //
   RealType h31 = cParam.get<RealType>("h31");
   RealType h33 = cParam.get<RealType>("h33");
@@ -309,17 +309,17 @@ parseTensor3(const Teuchos::ParameterList& cParam,
   h(0,0,2) = h15/2.0; h(0,2,0) = h15/2.0;
   h(1,1,2) = h15/2.0; h(1,2,1) = h15/2.0;
   h(2,0,0) = h31; h(2,1,1) = h31; h(2,2,2) = h33;
-} 
+}
 /******************************************************************************/
 void
 parseTensor(const Teuchos::ParameterList& cParam,
                    minitensor::Tensor<RealType, FM::THREE_D>& e)
 /******************************************************************************/
 {
-  // JR:  This should be generalized to read permittivity tensors of various 
-  // symmetries.  
+  // JR:  This should be generalized to read permittivity tensors of various
+  // symmetries.
 
-  // parse 
+  // parse
   //
   RealType E11 = cParam.get<RealType>("Eps11");
   RealType E33 = cParam.get<RealType>("Eps33");
@@ -328,12 +328,12 @@ parseTensor(const Teuchos::ParameterList& cParam,
   e(0,0) = E11;
   e(1,1) = E11;
   e(2,2) = E33;
-} 
+}
 
 
 /******************************************************************************/
 FM::CrystalVariant
-parseCrystalVariant(const Teuchos::Array<Teuchos::RCP<FM::CrystalPhase>>& phases, 
+parseCrystalVariant(const Teuchos::Array<Teuchos::RCP<FM::CrystalPhase>>& phases,
                     const Teuchos::ParameterList& vParam)
 /******************************************************************************/
 {
@@ -342,7 +342,7 @@ parseCrystalVariant(const Teuchos::Array<Teuchos::RCP<FM::CrystalPhase>>& phases
   ">>> ERROR (FerroicModel): CrystalVariant constructor passed empty list of Phases.");
 
   FM::CrystalVariant cv;
-  
+
   int phaseIndex;
   if(vParam.isType<int>("Phase")){
     phaseIndex = vParam.get<int>("Phase") ;
@@ -351,14 +351,14 @@ parseCrystalVariant(const Teuchos::Array<Teuchos::RCP<FM::CrystalPhase>>& phases
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument,
     ">>> ERROR (FerroicModel): Crystal variants require a phase.");
 
-  TEUCHOS_TEST_FOR_EXCEPTION(phaseIndex < 0 || phaseIndex >= phases.size(), 
+  TEUCHOS_TEST_FOR_EXCEPTION(phaseIndex < 0 || phaseIndex >= phases.size(),
     std::invalid_argument,
     ">>> ERROR (FerroicModel): Requested phase has not been defined.");
 
 
   if(vParam.isType<Teuchos::ParameterList>("Crystallographic Basis")){
     cv.R.set_dimension(phases[phaseIndex]->C.get_dimension());
-    const Teuchos::ParameterList& 
+    const Teuchos::ParameterList&
     pBasis = vParam.get<Teuchos::ParameterList>("Crystallographic Basis");
     LCM::parseBasis(pBasis,cv.R);
   } else
@@ -366,7 +366,7 @@ parseCrystalVariant(const Teuchos::Array<Teuchos::RCP<FM::CrystalPhase>>& phases
     ">>> ERROR (FerroicModel): Crystal variants require a crystallograph basis.");
 
   if(vParam.isType<Teuchos::Array<RealType>>("Spontaneous Polarization")){
-    Teuchos::Array<RealType> 
+    Teuchos::Array<RealType>
       inVals = vParam.get<Teuchos::Array<RealType>>("Spontaneous Polarization");
       TEUCHOS_TEST_FOR_EXCEPTION(inVals.size() != FM::THREE_D, std::invalid_argument,
       ">>> ERROR (FerroicModel): Expected 3 terms 'Spontaneous Polarization' vector.");
@@ -377,7 +377,7 @@ parseCrystalVariant(const Teuchos::Array<Teuchos::RCP<FM::CrystalPhase>>& phases
     ">>> ERROR (FerroicModel): Crystal variants require a 'Spontaneous Polarization'.");
 
   if(vParam.isType<Teuchos::Array<RealType>>("Spontaneous Strain")){
-    Teuchos::Array<RealType> 
+    Teuchos::Array<RealType>
       inVals = vParam.get<Teuchos::Array<RealType>>("Spontaneous Strain");
       TEUCHOS_TEST_FOR_EXCEPTION(inVals.size() != 6, std::invalid_argument,
       ">>> ERROR (FerroicModel): Expected 6 voigt terms 'Spontaneous Strain' tensor.");
@@ -398,13 +398,13 @@ parseCrystalVariant(const Teuchos::Array<Teuchos::RCP<FM::CrystalPhase>>& phases
 
   cv.C.set_dimension(phases[phaseIndex]->C.get_dimension()); cv.C.clear();
   FM::changeBasis(cv.C, phases[phaseIndex]->C, cv.R);
-  
+
   cv.h.set_dimension(phases[phaseIndex]->h.get_dimension()); cv.h.clear();
   FM::changeBasis(cv.h, phases[phaseIndex]->h, cv.R);
-  
+
   cv.b.set_dimension(phases[phaseIndex]->b.get_dimension()); cv.b.clear();
   FM::changeBasis(cv.b, phases[phaseIndex]->b, cv.R);
-  
+
   return cv;
-} 
+}
 }

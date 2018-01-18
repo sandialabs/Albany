@@ -19,19 +19,19 @@ namespace LCM {
 
 */
 
-template<typename EvalT, typename Traits> 
+template<typename EvalT, typename Traits>
 class UpdateField : public PHX::EvaluatorWithBaseImpl<Traits>,
                     public PHX::EvaluatorDerived<EvalT, Traits>  {
-  
+
 public:
-  
+
   UpdateField(const Teuchos::ParameterList& p);
-  
+
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
-  
+
   void evaluateFields(typename Traits::EvalData d);
-  
+
 private:
 
   typedef typename EvalT::ScalarT ScalarT;

@@ -36,7 +36,7 @@ ElasticDamageModel(Teuchos::ParameterList* p,
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(energy_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair(damage_string, dl->qp_scalar));
-  
+
   if(compute_tangent_) {
   this->eval_field_map_.insert(
       std::make_pair(tangent_string, dl->qp_tensor4));
@@ -99,7 +99,7 @@ computeState(typename Traits::EvalData workset,
   auto energy = *eval_fields[energy_string];
   auto damage = *eval_fields[damage_string];
   PHX::MDField<ScalarT> tangent;
-    
+
   if(compute_tangent_) {
     tangent = *eval_fields[tangent_string];
   }

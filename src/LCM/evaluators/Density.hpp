@@ -17,26 +17,26 @@
 #include "Teuchos_Array.hpp"
 
 namespace LCM {
-/** 
+/**
  * \brief Evaluates density.
  */
 
 template<typename EvalT, typename Traits>
-class Density : 
+class Density :
   public PHX::EvaluatorWithBaseImpl<Traits>,
   public PHX::EvaluatorDerived<EvalT, Traits>,
   public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-  
+
 public:
   typedef typename EvalT::ScalarT ScalarT;
 
   Density(Teuchos::ParameterList& p);
-  
+
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
-  
+
   void evaluateFields(typename Traits::EvalData d);
-  
+
   ScalarT& getValue(const std::string &n);
 
 private:

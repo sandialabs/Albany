@@ -14,11 +14,11 @@ PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                 const int numDim_,
                 Teuchos::RCP<const Teuchos::Comm<int>>& commT):
   Albany::AbstractProblem(params_, paramLib_, numDim_),
-  haveSource(false), numDim(numDim_), haveMatDB(false), 
-  use_sdbcs_(false), 
+  haveSource(false), numDim(numDim_), haveMatDB(false),
+  use_sdbcs_(false),
   supportsTransient(false)
 {
- 
+
   std::string& method = params->get("Name", "Peridigm Code Coupling ");
   *out << "Problem Name = " << method << std::endl;
   peridigmParams = Teuchos::rcpFromRef(params->sublist("Peridigm Parameters", true));
@@ -110,8 +110,8 @@ Albany::PeridigmProblem::constructDirichletEvaluators(
    if (neq>2) dirichletNames[2] = "Z";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
-   use_sdbcs_ = dirUtils.useSDBCs(); 
-   offsets_ = dirUtils.getOffsets(); 
+   use_sdbcs_ = dirUtils.useSDBCs();
+   offsets_ = dirUtils.getOffsets();
 }
 
 void

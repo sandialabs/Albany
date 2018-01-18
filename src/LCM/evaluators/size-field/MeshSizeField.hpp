@@ -20,7 +20,7 @@ namespace LCM {
   ///\brief MeshSizeField
   ///
   /// This evaluator computes the MeshSizeField of the current elements in the mesh
-  /// 
+  ///
   ///
   template<typename EvalT, typename Traits>
   class MeshSizeFieldBase : public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -45,14 +45,14 @@ namespace LCM {
 
   private:
 
-    Teuchos::RCP< PHX::Tag<typename EvalT::ScalarT>> field_tag_; 
+    Teuchos::RCP< PHX::Tag<typename EvalT::ScalarT>> field_tag_;
 
   };
 
   ///\brief Isotropic MeshSizeField
   ///
   /// This evaluator computes the MeshSizeField of the current elements in the mesh
-  /// 
+  ///
   ///
 
   // Generic template signature
@@ -66,7 +66,7 @@ namespace LCM {
     ///
     IsoMeshSizeField(const Teuchos::ParameterList& p,
            const Teuchos::RCP<Albany::Layouts>& dl)
-           : MeshSizeFieldBase<EvalT, Traits> (dl) 
+           : MeshSizeFieldBase<EvalT, Traits> (dl)
     {}
 
     ///
@@ -88,7 +88,7 @@ namespace LCM {
 
   // The residual specialization of the MeshSizeField
   template<typename Traits>
-  class IsoMeshSizeField<PHAL::AlbanyTraits::Residual, Traits>  : 
+  class IsoMeshSizeField<PHAL::AlbanyTraits::Residual, Traits>  :
                  public MeshSizeFieldBase<PHAL::AlbanyTraits::Residual, Traits> {
 
   public:
@@ -166,7 +166,7 @@ namespace LCM {
   ///\brief Anisotropic MeshSizeField
   ///
   /// This evaluator computes the MeshSizeField of the current elements in the mesh
-  /// 
+  ///
   ///
   // Generic template instance
   template<typename EvalT, typename Traits>
@@ -179,7 +179,7 @@ namespace LCM {
     ///
     AnisoMeshSizeField(const Teuchos::ParameterList& p,
            const Teuchos::RCP<Albany::Layouts>& dl)
-           : MeshSizeFieldBase<EvalT, Traits> (dl) 
+           : MeshSizeFieldBase<EvalT, Traits> (dl)
     {}
 
     ///
@@ -202,7 +202,7 @@ namespace LCM {
 
   // The residual specialization of the MeshSizeField
   template<typename Traits>
-  class AnisoMeshSizeField<PHAL::AlbanyTraits::Residual, Traits>  : 
+  class AnisoMeshSizeField<PHAL::AlbanyTraits::Residual, Traits>  :
                  public MeshSizeFieldBase<PHAL::AlbanyTraits::Residual, Traits> {
 
   public:

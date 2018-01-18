@@ -18,7 +18,7 @@ namespace LCM {
 /** \brief Evaluates stress using the Library for Advanced Materials for Engineering (LAME).
 */
 
-// Base class 
+// Base class
 // (1) Implements constructor and postRegistrationSetup for all inherited
 // and specialized cases below. Implements a dummy evaluateFields that
 // just throw's a Not Implemented
@@ -42,7 +42,7 @@ protected:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  // Protected function for stress calc, only for RealType 
+  // Protected function for stress calc, only for RealType
   void calcStressRealType(PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& stressFieldRef,
                           PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& defGradFieldRef,
                           typename Traits::EvalData workset,
@@ -83,7 +83,7 @@ protected:
   PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim> stressFieldRealType, defGradFieldRealType;
 };
 
-// Inherted classes 
+// Inherted classes
 template<typename EvalT, typename Traits> class LameStress;
 
 // For all cases except those specialized below, just fall through to base class.

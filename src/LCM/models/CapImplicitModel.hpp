@@ -22,7 +22,7 @@ namespace LCM
   ///
   ///This evaluator computes stress based on a cap plasticity model.
   ///
-  
+
   template<typename EvalT, typename Traits>
   class CapImplicitModel: public LCM::ConstitutiveModel<EvalT,Traits>
   {
@@ -37,27 +37,27 @@ namespace LCM
     typedef typename EvalT::MeshScalarT MeshScalarT;
     typedef typename Sacado::mpl::apply<FadType,ScalarT>::type DFadType;
     typedef typename Sacado::mpl::apply<FadType,DFadType>::type D2FadType;
-            
+
     using ConstitutiveModel<EvalT, Traits>::num_dims_;
     using ConstitutiveModel<EvalT, Traits>::num_pts_;
     using ConstitutiveModel<EvalT, Traits>::field_name_map_;
-    
+
     // optional material tangent computation
     using ConstitutiveModel<EvalT, Traits>::compute_tangent_;
-    
+
   ///
   /// Constructor
   ///
   CapImplicitModel(Teuchos::ParameterList* p,
     const Teuchos::RCP<Albany::Layouts>& dl);
-      
+
   ///
   /// Virtual Destructor
   ///
   virtual
   ~CapImplicitModel()
   {};
-      
+
   ///
   /// Implementation of physics
   ///
@@ -75,31 +75,31 @@ namespace LCM
          TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
  }
 
- 
+
   private:
-      
+
     ///
     /// Private to prohibit copying
     ///
     CapImplicitModel(const CapImplicitModel&);
-      
+
     ///
     /// Private to prohibit copying
     ///
     CapImplicitModel& operator=(const CapImplicitModel&);
-      
+
     // all local functions used in computing cap model stress:
-    
-    // yield function  
+
+    // yield function
     template<typename T> T
-    compute_f(minitensor::Tensor<T> & sigma, minitensor::Tensor<T> & alpha, T & kappa);        
-    
+    compute_f(minitensor::Tensor<T> & sigma, minitensor::Tensor<T> & alpha, T & kappa);
+
     // unknow variable value list
     std::vector<ScalarT>
     initialize(minitensor::Tensor<ScalarT> & sigmaVal,
         minitensor::Tensor<ScalarT> & alphaVal, ScalarT & kappaVal,
         ScalarT & dgammaVal);
-    
+
     // local iteration jacobian
     void
     compute_ResidJacobian(std::vector<ScalarT> const & XXVal,
@@ -107,39 +107,39 @@ namespace LCM
         const minitensor::Tensor<ScalarT> & sigmaVal,
         const minitensor::Tensor<ScalarT> & alphaVal, const ScalarT & kappaVal,
         minitensor::Tensor4<ScalarT> const & Celastic, bool kappa_flag);
-    
-    // plastic potential    
+
+    // plastic potential
     template<typename T> T
-    compute_g(minitensor::Tensor<T> & sigma, minitensor::Tensor<T> & alpha, T & kappa);                
-    
+    compute_g(minitensor::Tensor<T> & sigma, minitensor::Tensor<T> & alpha, T & kappa);
+
     // derivative
     minitensor::Tensor<ScalarT>
     compute_dfdsigma(std::vector<ScalarT> const & XX);
-        
+
     ScalarT
     compute_dfdkappa(std::vector<ScalarT> const & XX);
-    
+
     minitensor::Tensor<ScalarT>
-    compute_dgdsigma(std::vector<ScalarT> const & XX);    
-    
+    compute_dgdsigma(std::vector<ScalarT> const & XX);
+
     minitensor::Tensor<DFadType>
     compute_dgdsigma(std::vector<DFadType> const & XX);
-    
+
     // hardening functions
     template<typename T> T
-    compute_Galpha(T J2_alpha);    
-    
-    template<typename T>     
+    compute_Galpha(T J2_alpha);
+
+    template<typename T>
     minitensor::Tensor<T>
     compute_halpha(minitensor::Tensor<T> const & dgdsigma,
-        T const J2_alpha); 
+        T const J2_alpha);
 
     template<typename T> T
     compute_dedkappa(T const kappa);
-    
+
     template<typename T> T
     compute_hkappa(T const I1_dgdsigma, T const dedkappa);
-    
+
     // elasto-plastic tangent modulus
     minitensor::Tensor4<ScalarT>
     compute_Cep(minitensor::Tensor4<ScalarT> & Celastic, minitensor::Tensor<ScalarT> & sigma,
@@ -167,7 +167,7 @@ namespace LCM
 
     std::string strainName, stressName;
     std::string backStressName, capParameterName, eqpsName,volPlasticStrainName;
-    
+
   };
 }
 

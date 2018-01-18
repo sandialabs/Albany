@@ -1,10 +1,10 @@
 #include "FerroicCore.hpp"
- 
+
 /******************************************************************************/
 FM::CrystalPhase::
-CrystalPhase(minitensor::Tensor <RealType, FM::THREE_D>& matBasis, 
-             minitensor::Tensor4<RealType, FM::THREE_D>& C_matBasis, 
-             minitensor::Tensor3<RealType, FM::THREE_D>& h_matBasis, 
+CrystalPhase(minitensor::Tensor <RealType, FM::THREE_D>& matBasis,
+             minitensor::Tensor4<RealType, FM::THREE_D>& C_matBasis,
+             minitensor::Tensor3<RealType, FM::THREE_D>& h_matBasis,
              minitensor::Tensor <RealType, FM::THREE_D>& e_matBasis)
 /******************************************************************************/
 {

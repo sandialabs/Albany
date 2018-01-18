@@ -80,7 +80,7 @@ private:
   bool enableTransient;
 
   bool have_eqps_;
-  
+
   unsigned int numNodes;
   unsigned int numQPs;
   unsigned int numDims;

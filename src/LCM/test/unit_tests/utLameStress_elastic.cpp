@@ -50,7 +50,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   setFieldParameterList.set<std::string>("Evaluated Field Name", "Deformation Gradient");
   setFieldParameterList.set< Teuchos::RCP<PHX::DataLayout>>("Evaluated Field Data Layout", qp_tensor);
   setFieldParameterList.set< Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT>>("Field Values", tensorValue);
-  Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>> setField = 
+  Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>> setField =
     Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(setFieldParameterList));
 
   // LameStress evaluator
@@ -63,7 +63,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   Teuchos::ParameterList& materialModelParametersList = lameStressParameterList->sublist("Lame Material Parameters");
   materialModelParametersList.set<double>("Youngs Modulus", 1.0);
   materialModelParametersList.set<double>("Poissons Ratio", 0.25);
-  Teuchos::RCP<LCM::LameStress<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>> lameStress = 
+  Teuchos::RCP<LCM::LameStress<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>> lameStress =
     Teuchos::rcp(new LCM::LameStress<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(*lameStressParameterList));
 
   // Instantiate a field manager.
@@ -76,7 +76,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   // Set the LameStress evaluated fields as required fields
   for(std::vector<Teuchos::RCP<PHX::FieldTag>>::const_iterator it = lameStress->evaluatedFields().begin() ; it != lameStress->evaluatedFields().end() ; it++)
     fieldManager.requireField<PHAL::AlbanyTraits::Residual>(**it);
- 
+
   // Call postRegistrationSetup on the evaluators
   PHAL::AlbanyTraits::SetupData setupData = "Test String";
   fieldManager.postRegistrationSetup(setupData);
@@ -99,7 +99,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   }
 
   // Create a discretization, as required by the StateManager
-  Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList 
+  Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList
      = Teuchos::rcp(new Teuchos::ParameterList("Discretization"));
   discretizationParameterList->set<int>("1D Elements", worksetSize);
   discretizationParameterList->set<int>("2D Elements", 1);
@@ -107,11 +107,11 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   discretizationParameterList->set<std::string>("Method", "STK3D");
   discretizationParameterList->set<int>("Number Of Time Derivatives", 0);
   discretizationParameterList->set<std::string>("Exodus Output File Name", "unitTestOutput.exo"); // Is this required?
-  Teuchos::RCP<Teuchos_Comm> 
+  Teuchos::RCP<Teuchos_Comm>
   commT = Albany::createTeuchosCommFromMpiComm(MPI_COMM_WORLD);
   int numberOfEquations = 3;
   Albany::AbstractFieldContainer::FieldContainerRequirements req; // The default fields
-  Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct 
+  Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct
        = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, Teuchos::null, commT));
   stkMeshStruct->setFieldAndBulkData(commT,
                                      discretizationParameterList,

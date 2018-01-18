@@ -93,7 +93,7 @@ public:
 
   bool
   get_failed() const;
-  
+
 private:
 
   /// Create operator form of dg/dx for distributed responses
@@ -113,7 +113,7 @@ private:
   evalModelImpl(
       Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
-  
+
   Thyra::ModelEvaluatorBase::InArgs<ST>
   createInArgsImpl() const;
 
@@ -147,7 +147,7 @@ private:
 
   std::vector<Teuchos::RCP<Albany::AbstractSTKMeshStruct>>
   stk_mesh_structs_;
-  
+
   std::vector<Teuchos::RCP<Albany::AbstractDiscretization>>
   discs_;
 
@@ -237,7 +237,7 @@ private:
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
   ics_disp_;
-  
+
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
   ics_velo_;
 
@@ -246,22 +246,22 @@ private:
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
   prev_disp_;
- 
+
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
   prev_velo_;
-  
+
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
   prev_acce_;
-  
+
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
   this_disp_;
- 
+
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
   this_velo_;
-  
+
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
   this_acce_;
-  
+
   mutable std::vector<Albany::StateArrays>
   internal_states_;
 

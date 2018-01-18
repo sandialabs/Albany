@@ -41,15 +41,15 @@ NLS_DIM = NlsDim<MAX_SLIP>::value;
 
 enum class IntegrationScheme
 {
-  UNDEFINED = 0, 
-  EXPLICIT = 1, 
+  UNDEFINED = 0,
+  EXPLICIT = 1,
   IMPLICIT = 2
 };
 
 enum class ResidualType
 {
-  UNDEFINED = 0, 
-  SLIP = 1, 
+  UNDEFINED = 0,
+  SLIP = 1,
   SLIP_HARDNESS = 2,
   CONSTRAINED_SLIP_HARDNESS = 3
 };

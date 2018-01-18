@@ -45,7 +45,7 @@ std::cout << "Calling ContactConstraints postRegistrationSetup in " << __FILE__ 
 }
 
 // **********************************************************************
-// 
+//
 // **********************************************************************
 // **********************************************************************
 // Specialization: Residual
@@ -74,7 +74,7 @@ std::cout << "Calling ContactConstraints evaluateFields in " << __FILE__ << " li
       for (std::size_t node=0; node < num_nodes; ++node) {
         ret = inserted_nodes.insert(wsElNodeID[elem_LID][node]);
         if (ret.second==true) { // this is a as yet unregistered node. add it
-          const double coords[] = { this->coordVec(elem_LID, node, 0), 
+          const double coords[] = { this->coordVec(elem_LID, node, 0),
                 this->coordVec(elem_LID, node, 1), 0.0 }; // Moertel node is 3 coords
           std::vector<int> list_of_dofgid;
           for (std::size_t eq=0; eq < numFields; eq++) {
@@ -84,10 +84,10 @@ std::cout << "Calling ContactConstraints evaluateFields in " << __FILE__ << " li
 */
 
 /*
-          MOERTEL::Node moertel_node(wsElNodeID[elem_LID][node], 
-                                     coords, list_of_dofgid.size(), 
-                                     &list_of_dofgid[0], 
-                                     on_boundary, 
+          MOERTEL::Node moertel_node(wsElNodeID[elem_LID][node],
+                                     coords, list_of_dofgid.size(),
+                                     &list_of_dofgid[0],
+                                     on_boundary,
                                      print_level);
           _moertelInterface->AddNode(moertel_node,contact_pair_id);
         }
@@ -106,16 +106,16 @@ std::cout << "Calling ContactConstraints evaluateFields in " << __FILE__ << " li
 
       // Loop over the sides that form the boundary condition
       std::cout << "size of sideset array in workset = " << sideSet.size() << std::endl;
-      
+
          for (std::size_t side=0; side < sideSet.size(); ++side) { // loop over the sides on this ws and name
 
-           // Get the data that corresponds to the side. 
-         
+           // Get the data that corresponds to the side.
+
            const int elem_GID = sideSet[side].elem_GID; // GID of the element that contains the master segment
            const int elem_LID = sideSet[side].elem_LID; // LID (numbered from zero) id of the master segment on this processor
            const int elem_side = sideSet[side].side_local_id; // which edge of the element the side is (cf. exodus manual)?
            const int elem_block = sideSet[side].elem_ebIndex; // which  element block is the element in?
- 
+
            std::cout << "side = " << side << std::endl;
            std::cout << "    element that owns side GID = " << elem_GID << std::endl;
            std::cout << "    element that owns side LID = " << elem_LID << std::endl;
@@ -143,7 +143,7 @@ std::cout << "Calling ContactConstraints evaluateFields in " << __FILE__ << " li
         for (std::size_t eq = 0; eq < numFields; eq++)
           f_nonconstView[nodeID(cell,node,this->offset + eq)] += (this->val[eq])(cell,node);
     }
-  } else 
+  } else
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       for (std::size_t node = 0; node < this->numNodes; ++node)
@@ -158,7 +158,7 @@ std::cout << "Calling ContactConstraints evaluateFields in " << __FILE__ << " li
         for (std::size_t i = 0; i < numDims; i++)
           for (std::size_t j = 0; j < numDims; j++)
             f_nonconstView[nodeID(cell,node,this->offset + i*numDims + j)] += (this->valTensor[0])(cell,node,i,j);
-  
+
     }
   }
 #endif

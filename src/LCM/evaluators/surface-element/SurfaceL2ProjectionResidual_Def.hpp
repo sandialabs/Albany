@@ -35,7 +35,7 @@ namespace LCM {
   {
     this->addDependentField(surface_Grad_BF);
     this->addDependentField(refDualBasis);
-    this->addDependentField(refNormal);    
+    this->addDependentField(refNormal);
     this->addDependentField(refArea);
     this->addDependentField(detF_);
     this->addDependentField(Cauchy_stress_);
@@ -119,7 +119,7 @@ namespace LCM {
         int topNode = node + numPlaneNodes;
         	 for (int pt=0; pt < numQPs; ++pt) {
         		 tau = 0.0;
- 
+
                  for (int dim=0; dim <numDims; ++dim){
                 	 tau += detF_(cell,pt)*Cauchy_stress_(cell, pt, dim, dim)/numDims;
                  }
@@ -135,5 +135,5 @@ namespace LCM {
     }
 
   }
-  //**********************************************************************  
+  //**********************************************************************
 }

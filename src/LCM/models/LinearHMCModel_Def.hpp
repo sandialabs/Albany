@@ -106,7 +106,7 @@ computeState(typename Traits::EvalData workset,
   case 1:
     // Compute Stress (uniaxial strain)
     for (std::size_t cell=0; cell < workset.numCells; ++cell)
-      for (std::size_t qp=0; qp < num_pts_; ++qp) 
+      for (std::size_t qp=0; qp < num_pts_; ++qp)
 	macroStress(cell,qp,0,0) = C11 * macroStrain(cell,qp,0,0);
     break;
   case 2:
@@ -114,12 +114,12 @@ computeState(typename Traits::EvalData workset,
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < num_pts_; ++qp) {
         auto e1 = macroStrain(cell,qp,0,0);
-        auto e2 = macroStrain(cell,qp,1,1); 
+        auto e2 = macroStrain(cell,qp,1,1);
         auto e3 = macroStrain(cell,qp,0,1);
         macroStress(cell,qp,0,0) = C11*e1 + C12*e2;
         macroStress(cell,qp,1,1) = C12*e1 + C11*e2;
         macroStress(cell,qp,0,1) = C44*e3;
-        macroStress(cell,qp,1,0) = macroStress(cell,qp,0,1); 
+        macroStress(cell,qp,1,0) = macroStress(cell,qp,0,1);
       }
     }
     // Compute Micro Stress
@@ -129,9 +129,9 @@ computeState(typename Traits::EvalData workset,
       ScalarT beta = betaParameter[i];
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < num_pts_; ++qp) {
-          const ScalarT e1 = sd(cell,qp,0,0), 
-                        e2 = sd(cell,qp,1,1), 
-                        e3 = sd(cell,qp,0,1), 
+          const ScalarT e1 = sd(cell,qp,0,0),
+                        e2 = sd(cell,qp,1,1),
+                        e3 = sd(cell,qp,0,1),
                         e4 = sd(cell,qp,1,0);
           ms(cell,qp,0,0) = beta*(C11*e1 + C12*e2);
           ms(cell,qp,1,1) = beta*(C12*e1 + C11*e2);
@@ -177,9 +177,9 @@ computeState(typename Traits::EvalData workset,
         macroStress(cell,qp,1,2) = C44*e4;
         macroStress(cell,qp,0,2) = C44*e5;
         macroStress(cell,qp,0,1) = C66*e6;
-        macroStress(cell,qp,1,0) = macroStress(cell,qp,0,1); 
-        macroStress(cell,qp,2,0) = macroStress(cell,qp,0,2); 
-        macroStress(cell,qp,2,1) = macroStress(cell,qp,1,2); 
+        macroStress(cell,qp,1,0) = macroStress(cell,qp,0,1);
+        macroStress(cell,qp,2,0) = macroStress(cell,qp,0,2);
+        macroStress(cell,qp,2,1) = macroStress(cell,qp,1,2);
       }
     }
     // Compute Micro Stress

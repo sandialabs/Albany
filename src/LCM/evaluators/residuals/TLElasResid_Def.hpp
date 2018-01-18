@@ -96,10 +96,10 @@ evaluateFields(typename Traits::EvalData workset)
 	  for (int i=0; i<numDims; i++) {
 	    for (int j=0; j<numDims; j++) {
 	      Residual(cell,node,i) += stress(cell, qp, i, j) * wGradBF(cell, node, qp, j);
-	    } 
-	  } 
-	} 
-      } 
+	    }
+	  }
+	}
+      }
     }
   }
   else
@@ -115,19 +115,19 @@ evaluateFields(typename Traits::EvalData workset)
 	  for (int i=0; i<numDims; i++) {
 	    for (int j=0; j<numDims; j++) {
               Residual(cell,node,i) += P(cell, qp, i, j) * wGradBF(cell, node, qp, j);
-	    } 
-	  } 
-	} 
-      } 
+	    }
+	  }
+	}
+      }
     }
   }
-/** // Gravity term used for load stepping 
+/** // Gravity term used for load stepping
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
       for (int qp=0; qp < numQPs; ++qp) {
          Residual(cell,node,2) +=  zGrav * wBF(cell, node, qp);
-      } 
-    } 
+      }
+    }
   }
 **/
 }

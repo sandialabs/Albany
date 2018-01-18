@@ -95,7 +95,7 @@ private:
   std::string macroStrainName;
   std::vector<std::string> strainDifferenceName;
   std::vector<std::string> microStrainGradientName;
-  
+
   ///
   /// evaluated field names
   ///

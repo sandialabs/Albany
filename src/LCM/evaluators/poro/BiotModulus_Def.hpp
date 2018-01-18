@@ -18,7 +18,7 @@ BiotModulus(Teuchos::ParameterList& p) :
   biotModulus(p.get<std::string>("Biot Modulus Name"),
 		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
 {
-  Teuchos::ParameterList* elmd_list = 
+  Teuchos::ParameterList* elmd_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -28,7 +28,7 @@ BiotModulus(Teuchos::ParameterList& p) :
   numQPs  = dims[1];
   numDims = dims[2];
 
-  Teuchos::RCP<ParamLib> paramLib = 
+  Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
   std::string type = elmd_list->get("Biot Modulus Type", "Constant");
@@ -46,7 +46,7 @@ BiotModulus(Teuchos::ParameterList& p) :
         p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
     this->addDependentField(coordVec);
 
-    exp_rf_kl = 
+    exp_rf_kl =
       Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(*elmd_list));
     int num_KL = exp_rf_kl->stochasticDimension();
 
@@ -62,7 +62,7 @@ BiotModulus(Teuchos::ParameterList& p) :
   else {
 	  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Invalid Biot modulus type " << type);
-  } 
+  }
 
   if ( p.isType<std::string>("Porosity Name") ) {
      Teuchos::RCP<PHX::DataLayout> scalar_dl =

@@ -133,7 +133,7 @@ CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::operator()(
   }
 
 }
-    
+
 template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::ExplicitIntegrator(
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
@@ -189,7 +189,7 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update() const
     slip_families_,
     dt_,
     state_internal_.rate_slip_,
-    state_internal_.hardening_n_, 
+    state_internal_.hardening_n_,
     state_internal_.hardening_np1_,
     state_internal_.resistance_,
     failed);
@@ -207,22 +207,22 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update() const
 
   // compute Lp_np1, and Fp_np1
   CP::applySlipIncrement<NumDimT, NumSlipT, ScalarT>(
-    slip_systems_, 
+    slip_systems_,
     dt_,
     state_internal_.slip_n_,
     state_internal_.slip_np1_,
     state_mechanical_.Fp_n_,
-    state_mechanical_.Lp_np1_, 
+    state_mechanical_.Lp_np1_,
     state_mechanical_.Fp_np1_);
 
   // compute sigma_np1, S_np1, and shear_np1 using Fp_np1
   CP::computeStress<NumDimT, NumSlipT, ScalarT>(
-    slip_systems_, 
-    C_, 
-    state_mechanical_.F_np1_, 
-    state_mechanical_.Fp_np1_, 
-    state_mechanical_.sigma_np1_, 
-    state_mechanical_.S_np1_, 
+    slip_systems_,
+    C_,
+    state_mechanical_.F_np1_,
+    state_mechanical_.Fp_np1_,
+    state_mechanical_.sigma_np1_,
+    state_mechanical_.S_np1_,
     state_internal_.shear_np1_,
     failed);
 
@@ -245,7 +245,7 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update() const
   this->norm_residual_ = Sacado::ScalarValue<ScalarT>::eval(norm(residual));
 
   if (dt_ > 0.0) {
-    state_internal_.rate_slip_ = 
+    state_internal_.rate_slip_ =
       (state_internal_.slip_np1_ - state_internal_.slip_n_) / dt_;
   }
 
@@ -342,16 +342,16 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState() const
     return;
   }
 
-  // We now have the solution for slip_np1, including sensitivities 
+  // We now have the solution for slip_np1, including sensitivities
   // (if any). Re-evaluate all the other state variables based on slip_np1.
   // Compute Lp_np1, and Fp_np1
   CP::applySlipIncrement<NumDimT, NumSlipT, ScalarT>(
-    slip_systems_, 
+    slip_systems_,
     dt_,
-    state_internal_.slip_n_, 
-    state_internal_.slip_np1_, 
-    state_mechanical_.Fp_n_, 
-    state_mechanical_.Lp_np1_, 
+    state_internal_.slip_n_,
+    state_internal_.slip_np1_,
+    state_mechanical_.Fp_n_,
+    state_mechanical_.Lp_np1_,
     state_mechanical_.Fp_np1_);
 
   bool
@@ -359,12 +359,12 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState() const
 
   // Compute sigma_np1, S_np1, and shear_np1
   CP::computeStress<NumDimT, NumSlipT, ScalarT>(
-    slip_systems_, 
-    C_, 
-    state_mechanical_.F_np1_, 
-    state_mechanical_.Fp_np1_, 
-    state_mechanical_.sigma_np1_, 
-    state_mechanical_.S_np1_, 
+    slip_systems_,
+    C_,
+    state_mechanical_.F_np1_,
+    state_mechanical_.Fp_np1_,
+    state_mechanical_.sigma_np1_,
+    state_mechanical_.S_np1_,
     state_internal_.shear_np1_,
     failed);
 
@@ -385,18 +385,18 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState() const
   }
 
   if (dt_ > 0.0) {
-    state_internal_.rate_slip_ = 
+    state_internal_.rate_slip_ =
       (state_internal_.slip_np1_ - state_internal_.slip_n_) / dt_;
   }
 
-  // Compute the residual norm 
+  // Compute the residual norm
   if(!using_rol_minimizer_){
     this->norm_residual_ = std::sqrt(2.0 * minimizer_.final_value);
   }
   else{
     this->norm_residual_ = std::sqrt(2.0 * rol_minimizer_.final_value);
   }
-  
+
   this->num_iters_ = minimizer_num_iter;
 
   return;
@@ -464,7 +464,7 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update() const
 
   std::unique_ptr<StepType>
   pstep = minitensor::stepFactory<NonlinearSolver, ValueT, CP::NlsDim<NumSlipT>::value>(step_type_);
-  
+
   // Initial guess for x should be slip_np1
   for (int i = 0; i < this->num_slip_; ++i) {
     x(i) = Sacado::ScalarValue<ScalarT>::eval(state_internal_.slip_np1_(i));
@@ -550,7 +550,7 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update() const
   minitensor::Vector<ScalarT, CP::NlsDim<NumSlipT>::value>
   x(this->num_slip_ * 2);
 
-  using NonlinearSystem = CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>; 
+  using NonlinearSystem = CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>;
 
   NonlinearSystem nls(C_, slip_systems_, slip_families_, state_mechanical_.Fp_n_,
                       state_internal_.hardening_n_, state_internal_.slip_n_,
@@ -565,7 +565,7 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update() const
   std::stringstream ss;
   ss << "slips_" << state_internal_.cell_
      << "_" << state_internal_.pt_ <<  ".out";
-  std::string file = ss.str();  
+  std::string file = ss.str();
 
   if (state_internal_.cell_ != -1) {
     outfile.open(file, std::fstream::app);
@@ -575,7 +575,7 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update() const
     // initial guess for x(0:this->num_slip_-1) from predictor
     x(i) = Sacado::ScalarValue<ScalarT>::eval(state_internal_.slip_np1_(i));
     // initial guess for x(this->num_slip_:2*this->num_slip_) from predictor
-    x(i + this->num_slip_) = 
+    x(i + this->num_slip_) =
     Sacado::ScalarValue<ScalarT>::eval(state_internal_.hardening_n_(i));
   }
 
@@ -590,7 +590,7 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update() const
 	     minitensor::norm_infinity(state_internal_.slip_np1_));
 
     tot_slip = Sacado::ScalarValue<ScalarT>::eval(
-	     minitensor::norm_1(state_internal_.slip_np1_));  
+	     minitensor::norm_1(state_internal_.slip_np1_));
 
     outfile  << dt_ << ", " << max_slip << ", " << tot_slip << ", ";
   }
@@ -618,14 +618,14 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update() const
     max_slip{0.0};
 
     RealType
-    tot_slip{0.0};    
+    tot_slip{0.0};
 
     max_slip = Sacado::ScalarValue<ScalarT>::eval(
              minitensor::norm_infinity(state_internal_.slip_np1_));
 
     tot_slip = Sacado::ScalarValue<ScalarT>::eval(
              minitensor::norm_1(state_internal_.slip_np1_));
-  
+
     outfile << max_slip << ", " << tot_slip << ", ";
   }
 

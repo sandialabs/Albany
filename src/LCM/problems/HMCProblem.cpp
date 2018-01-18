@@ -22,11 +22,11 @@ HMCProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 #endif
   Albany::AbstractProblem(params_, paramLib_, numDim_+params_->get("Additional Scales",1)*numDim_*numDim_),
   haveSource(false),
-  use_sdbcs_(false), 
+  use_sdbcs_(false),
   numDim(numDim_),
   numMicroScales(params_->get("Additional Scales",1))
 {
- 
+
   std::string& method = params->get("Name", "HMC ");
   *out << "Problem Name = " << method << std::endl;
 
@@ -75,7 +75,7 @@ buildProblem(
   fm.resize(1);
 
   fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, 
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM,
 		  Teuchos::null);
 
   if(meshSpecs[0]->nsNames.size() > 0) // Build a nodeset evaluator if nodesets are present
@@ -122,8 +122,8 @@ Albany::HMCProblem::constructDirichletEvaluators(
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                        this->params, this->paramLib);
-  use_sdbcs_ = dirUtils.useSDBCs(); 
-  offsets_ = dirUtils.getOffsets(); 
+  use_sdbcs_ = dirUtils.useSDBCs();
+  offsets_ = dirUtils.getOffsets();
 }
 
 // Neumann BCs
@@ -154,7 +154,7 @@ Albany::HMCProblem::constructNeumannEvaluators(
    offsets[neq].resize(neq);
    offsets[neq][0] = 0;
 
-   if (neq>1){ 
+   if (neq>1){
       neumannNames[1] = "sig_y";
       offsets[1].resize(1);
       offsets[1][0] = 1;
@@ -222,7 +222,7 @@ Albany::HMCProblem::getValidProblemParameters() const
 
 void
 Albany::HMCProblem::
-parseMaterialModel(Teuchos::RCP<Teuchos::ParameterList>& p, 
+parseMaterialModel(Teuchos::RCP<Teuchos::ParameterList>& p,
                    const Teuchos::RCP<Teuchos::ParameterList>& params) const
 {
   Teuchos::ParameterList& modelList = params->sublist("Hierarchical Elasticity Model");
@@ -239,7 +239,7 @@ parseMaterialModel(Teuchos::RCP<Teuchos::ParameterList>& p,
     p->sublist(scaleName);
     p->set(scaleName,scaleList);
   }
-  
+
 }
 
 void

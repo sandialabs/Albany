@@ -40,7 +40,7 @@ namespace LCM {
     this->addDependentField(scalarGrad);
     this->addDependentField(surface_Grad_BF);
     this->addDependentField(refDualBasis);
-    this->addDependentField(refNormal);    
+    this->addDependentField(refNormal);
     this->addDependentField(refArea);
     this->addDependentField(porePressure);
     this->addDependentField(nodalPorePressure);
@@ -177,7 +177,7 @@ namespace LCM {
         poroMassResidual(cell, node)  = 0.0;
       }
     }
- 
+
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int node(0); node < numPlaneNodes; ++node) {
         int topNode = node + numPlaneNodes;
@@ -225,5 +225,5 @@ namespace LCM {
     }
 
   }
-  //**********************************************************************  
+  //**********************************************************************
 }

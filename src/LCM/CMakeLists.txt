@@ -66,7 +66,7 @@ set(evaluator-headers
   "${LCM_DIR}/parallel_evaluators/ParallelSetField.hpp"
 )
 
-#LCM model evaluators 
+#LCM model evaluators
 
 IF (ALBANY_HAVE_STK)
 set(model-eval-sources
@@ -619,7 +619,7 @@ set(HEADERS ${HEADERS}
   ${surface-element-headers}
   ${transport-headers}
   ${hmc-headers}
-  ${pd-headers}       
+  ${pd-headers}
   ${poro-headers}
   ${bc-headers}
   ${models-headers}
@@ -720,12 +720,12 @@ IF (INSTALL_ALBANY)
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
 ENDIF()
 
-IF (LCM_TEST_EXES AND ALBANY_DTK) 
+IF (LCM_TEST_EXES AND ALBANY_DTK)
   add_executable(DTK_Interp_and_Error utils/dtk_interp_and_error/dtk_interp_and_error.cpp)
   add_executable(DTK_Interp_Volume_to_NS utils/dtk_interp_and_error/interpolation_volume_to_ns.cpp)
 ENDIF()
 
-IF (LCM_TEST_EXES) 
+IF (LCM_TEST_EXES)
   add_executable(BifurcationTest test/utils/BifurcationTest.cpp)
   add_executable(MaterialPointSimulator test/utils/MaterialPointSimulator.cpp)
   add_executable(BoundarySurfaceOutput test/utils/BoundarySurfaceOutput.cpp)
@@ -770,7 +770,7 @@ IF (LCM_TEST_EXES)
 ENDIF()
 
 IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
-  IF(ALBANY_EPETRA) 
+  IF(ALBANY_EPETRA)
     add_executable(utLameStress_elastic
       ${Albany_SOURCE_DIR}/src/PHAL_Dimension.cpp
       ${Albany_SOURCE_DIR}/src/PHAL_AlbanyTraits.cpp
@@ -840,7 +840,7 @@ ENDIF(BUILD_SHARED_LIBS)
 IF(ALBANY_STK_REBALANCE)
   SET(LCM_UT_LIBS ${LCM_UT_LIBS} albanySTKRebalance)
 ENDIF()
-   
+
 #Linking tests
 IF (LCM_TEST_EXES AND ALBANY_DTK)
   set (repeat_libs ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${LCM_UT_LIBS} ${ALBANY_LIBRARIES})

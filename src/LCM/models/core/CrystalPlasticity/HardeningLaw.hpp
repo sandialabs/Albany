@@ -18,16 +18,16 @@ namespace CP
  */
 enum class HardeningLawType
 {
-  UNDEFINED = 0, 
-  LINEAR_MINUS_RECOVERY = 1, 
-  SATURATION = 2, 
+  UNDEFINED = 0,
+  LINEAR_MINUS_RECOVERY = 1,
+  SATURATION = 2,
   DISLOCATION_DENSITY = 3
 };
 
 
 /**
  *	Factory returning a pointer to a hardening parameters object.
- *	
+ *
  *	\tparam	NumDimT		Static number of elements in a slip system
  *	\tparam NumSlipT	Static number of slip systems in a slip family
  *	\param type_hardening_law	Which hardening law to instantiate.
@@ -50,11 +50,11 @@ template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 struct HardeningParameterBase
 {
   using ParamIndex = int;
-  
+
   virtual
   void
   createLatentMatrix(
-    SlipFamily<NumDimT, NumSlipT> & slip_family, 
+    SlipFamily<NumDimT, NumSlipT> & slip_family,
     std::vector<SlipSystem<NumDimT>> const & slip_systems) = 0;
 
   void
@@ -137,7 +137,7 @@ struct LinearMinusRecoveryHardeningParameters final :
   virtual
   void
   createLatentMatrix(
-    SlipFamily<NumDimT, NumSlipT> & slip_family, 
+    SlipFamily<NumDimT, NumSlipT> & slip_family,
     std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
 
   virtual
@@ -200,7 +200,7 @@ struct SaturationHardeningParameters final :
   virtual
   void
   createLatentMatrix(
-    SlipFamily<NumDimT, NumSlipT> & slip_family, 
+    SlipFamily<NumDimT, NumSlipT> & slip_family,
     std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
 
   virtual
@@ -261,7 +261,7 @@ struct DislocationDensityHardeningParameters final :
   virtual
   void
   createLatentMatrix(
-    SlipFamily<NumDimT, NumSlipT> & slip_family, 
+    SlipFamily<NumDimT, NumSlipT> & slip_family,
     std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
 
   virtual
@@ -302,7 +302,7 @@ struct NoHardeningParameters final :
   virtual
   void
   createLatentMatrix(
-    SlipFamily<NumDimT, NumSlipT> & slip_family, 
+    SlipFamily<NumDimT, NumSlipT> & slip_family,
     std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
 
   virtual
@@ -380,7 +380,7 @@ struct LinearMinusRecoveryHardeningLaw final : public HardeningLawBase<NumDimT, 
   virtual
   void
   harden(
-    SlipFamily<NumDimT, NumSlipT> const & slip_family, 
+    SlipFamily<NumDimT, NumSlipT> const & slip_family,
     std::vector<SlipSystem<NumDimT>> const & slip_systems,
     RealType dt,
     minitensor::Vector<ArgT, NumSlipT> const & rate_slip,

@@ -134,7 +134,7 @@ evaluateFields(typename Traits::EvalData workset)
   matp->stress_old = &stressOld[0];
   matp->stress_new = &stressNew[0];
 //   matp->dt_mat = std::numeric_limits<double>::max();
-  
+
   // matParams that still need to be added:
   // matp->temp_old  (temperature)
   // matp->temp_new
@@ -151,7 +151,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       // Fill the following entries in matParams for call to LAMENT
       //
-      // nelements     - number of elements 
+      // nelements     - number of elements
       // dt            - time step, this one is tough because Albany does not currently have a concept of time step for implicit integration
       // time          - current time, again Albany does not currently have a concept of time for implicit integration
       // strain_rate   - what Sierra calls the rate of deformation, it is the symmetric part of the velocity gradient
@@ -164,7 +164,7 @@ evaluateFields(typename Traits::EvalData workset)
       // stress_new    - stress at current time step, filled by material model
       //
       // The total deformation gradient is available as field data
-      // 
+      //
       // The velocity gradient is not available but can be computed at the logarithm of the incremental deformation gradient divided by deltaT
       // The incremental deformation gradient is computed as F_new F_old^-1
 
@@ -197,7 +197,7 @@ evaluateFields(typename Traits::EvalData workset)
       // incremental deformation gradient
       minitensor::Tensor<ScalarT> Finc = Fnew * minitensor::inverse(Fold);
 
-      
+
       // DEBUGGING //
       //if(cell==0 && qp==0){
       // std::cout << "Fnew(0,0) " << Fnew(0,0) << endl;
@@ -216,7 +216,7 @@ evaluateFields(typename Traits::EvalData workset)
       minitensor::Tensor<ScalarT> V(3), R(3), U(3);
       boost::tie(V,R) = minitensor::polar_left(Fnew);
       //V = R * U * transpose(R);
-      
+
       // DEBUGGING //
       //if(cell==0 && qp==0){
       // std::cout << "U(0,0) " << U(0,0) << endl;
@@ -252,7 +252,7 @@ evaluateFields(typename Traits::EvalData workset)
       // END DEBUGGING //
 
       // incremental left stretch Vinc, incremental rotation Rinc, and log of incremental left stretch, logVinc
-      
+
       minitensor::Tensor<ScalarT> Uinc(3), Vinc(3), Rinc(3), logVinc(3);
       //boost::tie(Vinc,Rinc,logVinc) = minitensor::polar_left_logV(Finc);
       boost::tie(Vinc,Rinc) = minitensor::polar_left(Finc);
@@ -367,8 +367,8 @@ evaluateFields(typename Traits::EvalData workset)
       // stressField(cell,qp,0,1) = stressNew[3];
       // stressField(cell,qp,1,2) = stressNew[4];
       // stressField(cell,qp,2,0) = stressNew[5];
-      // stressField(cell,qp,1,0) = stressNew[3]; 
-      // stressField(cell,qp,2,1) = stressNew[4]; 
+      // stressField(cell,qp,1,0) = stressNew[3];
+      // stressField(cell,qp,2,1) = stressNew[4];
       // stressField(cell,qp,0,2) = stressNew[5];
 
       // copy state_new data from the LAMENT data structure to the corresponding state variable field

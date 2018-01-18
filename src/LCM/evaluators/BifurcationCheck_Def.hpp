@@ -50,7 +50,7 @@ namespace LCM {
     this->utils.setFieldData(tangent_,fm);
     this->utils.setFieldData(ellipticity_flag_,fm);
     this->utils.setFieldData(direction_,fm);
-    this->utils.setFieldData(min_detA_,fm);   
+    this->utils.setFieldData(min_detA_,fm);
   }
 
   //----------------------------------------------------------------------------
@@ -68,152 +68,152 @@ namespace LCM {
 
         tangent.fill( tangent_,cell,pt,0,0,0,0);
         ellipticity_flag_(cell,pt) = 0;
-       
+
         double interval = parametrization_interval_;
 
         if (parametrization_type_ == "Oliver") {
-            
-          boost::tie(ellipticity_flag, direction) 
+
+          boost::tie(ellipticity_flag, direction)
             = minitensor::check_strong_ellipticity(tangent);
           min_detA = minitensor::det(
             minitensor::dot2(direction,minitensor::dot(tangent, direction)));
         }
 	    else if (parametrization_type_ == "PSO") {
-	      
+
 	      minitensor::Vector<ScalarT, 2> arg_minimum;
-		  
+
 		  min_detA = stereographic_pso(tangent, arg_minimum, direction);
-	    
-	    } 
+
+	    }
 	    else if (parametrization_type_ == "Spherical") {
-	      
+
 	      minitensor::Vector<ScalarT, 2> arg_minimum;
-		  
-		  min_detA = spherical_sweep(tangent, arg_minimum, direction, interval);		  
+
+		  min_detA = spherical_sweep(tangent, arg_minimum, direction, interval);
 		  spherical_newton_raphson(tangent, arg_minimum, direction, min_detA);
-	    
-	    } 
+
+	    }
 	    else if(parametrization_type_ == "Stereographic") {
-	      
+
 	      minitensor::Vector<ScalarT, 2> arg_minimum;
-		  
-		  min_detA = stereographic_sweep(tangent, arg_minimum, direction, interval);		  
+
+		  min_detA = stereographic_sweep(tangent, arg_minimum, direction, interval);
 		  stereographic_newton_raphson(tangent, arg_minimum, direction, min_detA);
-	    
-	    } 
+
+	    }
 	    else if(parametrization_type_ == "Projective") {
-	    
-	      minitensor::Vector<ScalarT, 3> arg_minimum;      
-		  
+
+	      minitensor::Vector<ScalarT, 3> arg_minimum;
+
 		  min_detA = projective_sweep(tangent, arg_minimum, direction, interval);
 		  projective_newton_raphson(tangent, arg_minimum, direction, min_detA);
-	      
-	    } 
+
+	    }
 	    else if(parametrization_type_ == "Tangent") {
-	    
+
 	      minitensor::Vector<ScalarT, 2> arg_minimum;
-		  
-		  min_detA = tangent_sweep(tangent, arg_minimum, direction, interval);		
+
+		  min_detA = tangent_sweep(tangent, arg_minimum, direction, interval);
 		  tangent_newton_raphson(tangent, arg_minimum, direction, min_detA);
-	      
-	    } 
+
+	    }
 	    else if(parametrization_type_ == "Cartesian") {
-		
+
 		  minitensor::Vector<ScalarT, 2> arg_minimum1;
 		  minitensor::Vector<ScalarT, 2> arg_minimum2;
 		  minitensor::Vector<ScalarT, 2> arg_minimum3;
 		  minitensor::Vector<ScalarT, 3> direction1(1.0, 0.0, 0.0);
 		  minitensor::Vector<ScalarT, 3> direction2(0.0, 1.0, 0.0);
 		  minitensor::Vector<ScalarT, 3> direction3(0.0, 0.0, 1.0);
-	      
-		  ScalarT min_detA1 = cartesian_sweep(tangent, 
+
+		  ScalarT min_detA1 = cartesian_sweep(tangent,
 		    arg_minimum1, 1, direction1, interval);
-		  
-		  ScalarT min_detA2 = cartesian_sweep(tangent, 
+
+		  ScalarT min_detA2 = cartesian_sweep(tangent,
 		    arg_minimum2, 2, direction2, interval);
-		  
-		  ScalarT min_detA3 = cartesian_sweep(tangent, 
+
+		  ScalarT min_detA3 = cartesian_sweep(tangent,
 		    arg_minimum3, 3, direction3, interval);
-		  
+
 		  if ( min_detA1 <= min_detA2 && min_detA1 <= min_detA3 ) {
-		  
-		    cartesian_newton_raphson(tangent, 
+
+		    cartesian_newton_raphson(tangent,
 		      arg_minimum1, 1, direction1, min_detA1);
-		  
+
 		    min_detA = min_detA1;
 		    direction = direction1;
-		  
+
 		  }
 		  else if ( min_detA2 <= min_detA1 && min_detA2 <= min_detA3 ) {
-		  
-		    cartesian_newton_raphson(tangent, 
+
+		    cartesian_newton_raphson(tangent,
 		      arg_minimum2, 2, direction2, min_detA2);
-		  
+
 		    min_detA = min_detA2;
 		    direction = direction2;
-		  
+
 		  }
 		  else if ( min_detA3 <= min_detA1 && min_detA3 <= min_detA2 ) {
-		  
-		  	cartesian_newton_raphson(tangent, 
+
+		  	cartesian_newton_raphson(tangent,
 		  	  arg_minimum3, 3, direction3, min_detA3);
-		  
-		    min_detA = min_detA3;		  
+
+		    min_detA = min_detA3;
 		    direction = direction3;
 		  }
-	      
-	    } 
+
+	    }
 	    else {
-	    
+
 	      minitensor::Vector<ScalarT, 2> arg_minimum;
-		  
-		  min_detA = spherical_sweep(tangent, arg_minimum, direction, interval);		
+
+		  min_detA = spherical_sweep(tangent, arg_minimum, direction, interval);
 		  spherical_newton_raphson(tangent, arg_minimum, direction, min_detA);
 	    }
-        
+
         ellipticity_flag = true;
         if(min_detA <= 0.0) ellipticity_flag = false;
 
         ellipticity_flag_(cell,pt) = ellipticity_flag;
         min_detA_(cell,pt) = min_detA;
-        
+
         //std::cout << "\n" << min_detA << " @ " << direction << std::endl;
 
         for (int i(0); i < num_dims_; ++i) {
           direction_(cell,pt,i) = direction(i);
         }
-        
+
       }
     }
-    
+
   }
-  
+
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   typename EvalT::ScalarT BifurcationCheck<EvalT, Traits>::
   spherical_sweep(minitensor::Tensor4<ScalarT, 3> const & tangent,
-    minitensor::Vector<ScalarT, 2> & arg_minimum, 
+    minitensor::Vector<ScalarT, 2> & arg_minimum,
     minitensor::Vector<ScalarT, 3> & direction, double const & interval)
-  { 
-    minitensor::Index const 
+  {
+    minitensor::Index const
     p_number = floor(1.0/interval);
-      
+
     ScalarT const
     domain_min = 0;
-    
+
     ScalarT const
     domain_max = std::acos(-1.0);
-    
-    ScalarT const 
+
+    ScalarT const
     p_mean = (domain_max + domain_min) /2.0;
-    
+
     ScalarT const
     p_span =  domain_max - domain_min;
-    
+
     ScalarT const
     p_min = p_mean - p_span / 2.0 * interval * p_number;
     //p_min = domain_min;
-        
+
     ScalarT const
     p_max = p_mean + p_span / 2.0 * interval * p_number;
     //p_max = domain_min + p_span * interval * p_number;
@@ -238,7 +238,7 @@ namespace LCM {
     minitensor::Index const
     theta_num_points = p_number * 2 + 1;
     //theta_num_points = p_number + 1;
-    
+
     minitensor::Vector<ScalarT, 2> const
     sphere_min(phi_min, theta_min);
 
@@ -262,52 +262,52 @@ namespace LCM {
     // Query the parametrization for the minimum and maximum found on the grid.
     //std::cout << "\n*** SPHERICAL PARAMETRIZATION ***\n";
     //std::cout << "Interval: " << parametrization_interval_ << std::endl;
-    //std::cout << sphere_param.get_minimum() 
+    //std::cout << sphere_param.get_minimum()
     //<< "  " << sphere_param.get_normal_minimum() << std::endl;
 
     ScalarT min_detA = sphere_param.get_minimum();
     for (int i(0); i < 3; ++i) {
        direction(i) = (sphere_param.get_normal_minimum())(i);
     }
-    
+
     for (int i(0); i < 2; ++i) {
       arg_minimum(i) = (sphere_param.get_arg_minimum())(i);
     }
-       
-    return min_detA; 
-  
+
+    return min_detA;
+
   }
-  
+
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   typename EvalT::ScalarT BifurcationCheck<EvalT, Traits>::
   stereographic_sweep(minitensor::Tensor4<ScalarT, 3> const & tangent,
-    minitensor::Vector<ScalarT, 2> & arg_minimum,  
+    minitensor::Vector<ScalarT, 2> & arg_minimum,
     minitensor::Vector<ScalarT, 3> & direction, double const & interval)
-  {    
-    minitensor::Index const 
+  {
+    minitensor::Index const
     p_number = floor(1.0/interval);
-          
+
     ScalarT const
     domain_min = -1.0;
-    
+
     ScalarT const
     domain_max = 1.0;
-    
-    ScalarT const 
+
+    ScalarT const
     p_mean = (domain_max + domain_min) /2.0;
-    
+
     ScalarT const
     p_span =  domain_max - domain_min;
-    
+
     ScalarT const
     p_min = p_mean - p_span / 2.0 * interval * p_number;
     //p_min = domain_min;
-        
+
     ScalarT const
     p_max = p_mean + p_span / 2.0 * interval * p_number;
     //p_max = domain_min + p_span * interval * p_number;
-    
+
     // Initialize parametres
     ScalarT const
     x_min = p_min;
@@ -361,45 +361,45 @@ namespace LCM {
     for (int i(0); i < 3; ++i) {
        direction(i) = (stereographic_param.get_normal_minimum())(i);
     }
-    
+
     for (int i(0); i < 2; ++i) {
       arg_minimum(i) = (stereographic_param.get_arg_minimum())(i);
     }
-    
+
     return min_detA;
-  
+
   }
-  
+
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   typename EvalT::ScalarT BifurcationCheck<EvalT, Traits>::
   projective_sweep(minitensor::Tensor4<ScalarT, 3> const & tangent,
-    minitensor::Vector<ScalarT, 3> & arg_minimum,  
+    minitensor::Vector<ScalarT, 3> & arg_minimum,
     minitensor::Vector<ScalarT, 3> & direction, double const & interval)
-  {   
-    minitensor::Index const 
+  {
+    minitensor::Index const
     p_number = floor(1.0/interval);
-          
+
     ScalarT const
     domain_min = -1.0;
-    
+
     ScalarT const
     domain_max = 1.0;
-    
-    ScalarT const 
+
+    ScalarT const
     p_mean = (domain_max + domain_min) /2.0;
-    
+
     ScalarT const
     p_span =  domain_max - domain_min;
-    
+
     ScalarT const
     p_min = p_mean - p_span / 2.0 * interval * p_number;
     //p_min = domain_min;
-        
+
     ScalarT const
     p_max = p_mean + p_span / 2.0 * interval * p_number;
     //p_max = domain_min + p_span * interval * p_number;
-    
+
     // Initialize parametres
     ScalarT const
     x_min = p_min;
@@ -418,7 +418,7 @@ namespace LCM {
 
     ScalarT const
     z_max = p_max;
-    
+
     minitensor::Index const
     x_num_points = p_number * 2 + 1;
     //x_num_points = p_number + 1;
@@ -430,7 +430,7 @@ namespace LCM {
     minitensor::Index const
     z_num_points = p_number * 2 + 1;
     //z_num_points = p_number + 1;
-       
+
     minitensor::Vector<ScalarT, 3> const
     projective_min(x_min, y_min, z_min);
 
@@ -454,50 +454,50 @@ namespace LCM {
     // Query the parametrization for the minimum and maximum found on the grid.
     //std::cout << "\n*** PROJECTIVE PARAMETRIZATION ***\n";
     //std::cout << "Interval: " << parametrization_interval_ << std::endl;
-    //std::cout << projective_param.get_minimum() 
+    //std::cout << projective_param.get_minimum()
     //<< "  " << projective_param.get_normal_minimum() << std::endl;
 
     ScalarT min_detA = projective_param.get_minimum();
     for (int i(0); i < 3; ++i) {
        direction(i) = (projective_param.get_normal_minimum())(i);
     }
-    
+
     for (int i(0); i < 3; ++i) {
       arg_minimum(i) = (projective_param.get_arg_minimum())(i);
     }
-        
-    return min_detA; 
+
+    return min_detA;
   }
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   typename EvalT::ScalarT BifurcationCheck<EvalT, Traits>::
   tangent_sweep(minitensor::Tensor4<ScalarT, 3> const & tangent,
-    minitensor::Vector<ScalarT, 2> & arg_minimum,  
+    minitensor::Vector<ScalarT, 2> & arg_minimum,
     minitensor::Vector<ScalarT, 3> & direction, double const & interval)
-  {   
-    minitensor::Index const 
+  {
+    minitensor::Index const
     p_number = floor(1.0/interval);
-          
+
     ScalarT const
     domain_min = -std::acos(-1.0) / 2.0;
-    
+
     ScalarT const
     domain_max = std::acos(-1.0) / 2.0;
-    
-    ScalarT const 
+
+    ScalarT const
     p_mean = (domain_max + domain_min) /2.0;
-    
+
     ScalarT const
     p_span =  domain_max - domain_min;
-    
+
     ScalarT const
     p_min = p_mean - p_span / 2.0 * interval * p_number;
     //p_min = domain_min;
-        
+
     ScalarT const
     p_max = p_mean + p_span / 2.0 * interval * p_number;
     //p_max = domain_min + p_span * interval * p_number;
-    
+
     // Initialize parametres
     ScalarT const
     x_min = p_min;
@@ -518,7 +518,7 @@ namespace LCM {
     minitensor::Index const
     y_num_points = p_number * 2 + 1;
     //y_num_points = p_number + 1;
-    
+
     minitensor::Vector<ScalarT, 2> const
     tangent_min(x_min, y_min);
 
@@ -549,43 +549,43 @@ namespace LCM {
     for (int i(0); i < 3; ++i) {
        direction(i) = (tangent_param.get_normal_minimum())(i);
     }
-    
+
     for (int i(0); i < 2; ++i) {
       arg_minimum(i) = (tangent_param.get_arg_minimum())(i);
     }
-        
-    return min_detA;     
+
+    return min_detA;
   }
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   typename EvalT::ScalarT BifurcationCheck<EvalT, Traits>::
-  cartesian_sweep(minitensor::Tensor4<ScalarT, 3> const & tangent, 
-    minitensor::Vector<ScalarT, 2> & arg_minimum, int surface_index,  
+  cartesian_sweep(minitensor::Tensor4<ScalarT, 3> const & tangent,
+    minitensor::Vector<ScalarT, 2> & arg_minimum, int surface_index,
     minitensor::Vector<ScalarT, 3> & direction, double const & interval)
-  {    
-    minitensor::Index const 
+  {
+    minitensor::Index const
     p_number = floor(1.0/interval);
-          
+
     ScalarT const
     domain_min = -1.0;
-    
+
     ScalarT const
     domain_max = 1.0;
-    
-    ScalarT const 
+
+    ScalarT const
     p_mean = (domain_max + domain_min) /2.0;
-    
+
     ScalarT const
     p_span =  domain_max - domain_min;
-    
+
     ScalarT const
     p_min = p_mean - p_span / 2.0 * interval * p_number;
     //p_min = domain_min;
-        
+
     ScalarT const
     p_max = p_mean + p_span / 2.0 * interval * p_number;
     //p_max = domain_min + p_span * interval * p_number;
-    
+
     // Initialize parametres
     ScalarT const
     p_surface = 1.0;
@@ -596,9 +596,9 @@ namespace LCM {
 
     minitensor::Index const
     p_surface_num_points = 1;
-   
+
     ScalarT min_detA(1.0);
-    
+
     if (surface_index == 1) {
       // x surface
       minitensor::Vector<ScalarT, 3> const
@@ -620,13 +620,13 @@ namespace LCM {
 
       // Traverse the grid with the parametrization.
       cartesian1_grid.traverse(cartesian1_param);
-    
+
       // Query the parametrization for the minimum and maximum found on the grid.
       //std::cout << "\n*** CARTESIAN PARAMETRIZATION ***\n";
       //std::cout << "Interval: " << parametrization_interval_ << std::endl;
-      //std::cout << cartesian1_param.get_minimum() 
+      //std::cout << cartesian1_param.get_minimum()
        // << "  " << cartesian1_param.get_normal_minimum() << std::endl;
-          
+
       min_detA = cartesian1_param.get_minimum();
       arg_minimum(0) = (cartesian1_param.get_arg_minimum())(1);
       arg_minimum(1) = (cartesian1_param.get_arg_minimum())(2);
@@ -660,9 +660,9 @@ namespace LCM {
       // Query the parametrization for the minimum and maximum found on the grid.
       //std::cout << "\n*** CARTESIAN PARAMETRIZATION ***\n";
       //std::cout << "Interval: " << parametrization_interval_ << std::endl;
-      //std::cout << cartesian2_param.get_minimum() 
+      //std::cout << cartesian2_param.get_minimum()
        // << "  " << cartesian2_param.get_normal_minimum() << std::endl;
-          
+
       min_detA = cartesian2_param.get_minimum();
       arg_minimum(0) = (cartesian2_param.get_arg_minimum())(0);
       arg_minimum(1) = (cartesian2_param.get_arg_minimum())(2);
@@ -696,9 +696,9 @@ namespace LCM {
       // Query the parametrization for the minimum and maximum found on the grid.
       //std::cout << "\n*** CARTESIAN PARAMETRIZATION ***\n";
       //std::cout << "Interval: " << parametrization_interval_ << std::endl;
-      //std::cout << cartesian3_param.get_minimum() 
+      //std::cout << cartesian3_param.get_minimum()
         //<< "  " << cartesian3_param.get_normal_minimum() << std::endl;
-          
+
       min_detA = cartesian3_param.get_minimum();
       arg_minimum(0) = (cartesian3_param.get_arg_minimum())(0);
       arg_minimum(1) = (cartesian3_param.get_arg_minimum())(1);
@@ -706,17 +706,17 @@ namespace LCM {
         direction(i) = (cartesian3_param.get_normal_minimum())(i);
       }
     }
-    
-    return min_detA;      
+
+    return min_detA;
   }
-  
+
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   void BifurcationCheck<EvalT, Traits>::
   spherical_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent,
     minitensor::Vector<ScalarT, 2> & parameters,
     minitensor::Vector<ScalarT, 3> & direction, ScalarT & min_detA)
-  {    
+  {
     minitensor::Vector<ScalarT, 2> Xval;
     minitensor::Vector<DFadType, 2> Xfad;
     minitensor::Vector<D2FadType, 2> Xfad2;
@@ -724,109 +724,109 @@ namespace LCM {
     minitensor::Vector<D2FadType, 3> n;
 
     D2FadType detA;
-    
+
     // in std:vector form to work with nonlinear solve
     // size of Jacobian, 4 = 2 * 2
     std::vector<ScalarT> dRdX(4);
-    std::vector<ScalarT> X(2);    
-    std::vector<ScalarT> R(2);    
+    std::vector<ScalarT> X(2);
+    std::vector<ScalarT> R(2);
 
     for (int i(0); i < 2; ++i)
         X[i] = parameters[i];
-            
+
     // local nonlinear solver for Newton iterative solve
     LocalNonlinearSolver<EvalT, Traits> solver;
-               
-    ScalarT normR(0.0), normR0(0.0), relativeR(0.0);    
+
+    ScalarT normR(0.0), normR0(0.0), relativeR(0.0);
     bool converged = false;
     int iter = 0;
-       
+
     while ( !converged ) {
       //std::cout << "iter: " << iter << std::endl;
-      
+
       for ( int i = 0; i < 2; ++i ) {
         Xval[i] = Sacado::ScalarValue<ScalarT>::eval(X[i]);
         Xfad[i] = DFadType(2, i, Xval[i]);
         Xfad2[i] = D2FadType(2, i, Xfad[i]);
       }
-      
-      n = spherical_get_normal(Xfad2);     
+
+      n = spherical_get_normal(Xfad2);
 
       detA = minitensor::det(minitensor::dot2(n,minitensor::dot(tangent, n)));
-     
+
       //std::cout << "parameters: " << parameters << std::endl;
       //std::cout << "determinant: " << (detA.val()).val() << std::endl;
-            
+
       for (int i = 0; i < 2; ++i){
         Rfad[i] = detA.dx(i);
         R[i] = Rfad[i].val();
       }
-      
+
       //std::cout << "R: " << R << std::endl;
-      
+
       normR = sqrt( R[0]*R[0] + R[1]*R[1] );
-      
-      if ( iter == 0 ) 
+
+      if ( iter == 0 )
         normR0 = normR;
-      
+
       //std::cout << "normR: " << normR << std::endl;
-      
+
       if (normR0 != 0)
         relativeR = normR / normR0;
       else
         relativeR = normR0;
-      
+
       if (relativeR < 1.0e-8 || normR < 1.0e-8)
         break;
-      
+
       if (iter > 50){
         std::cout << "Newton's loop for bifurcation check not converging after "
-          << 50 << " iterations" << std::endl;      
+          << 50 << " iterations" << std::endl;
         break;
       }
-        
+
       // compute Jacobian
       for ( int i = 0; i < 2; ++i )
         for ( int j = 0; j < 2; ++j )
           dRdX[i + 2 * j] = Rfad[i].dx(j);
-          
+
       // call local nonlinear solver
       solver.solve(dRdX, X, R);
-            
+
       iter++;
-      
+
     } // Newton Raphson iteration end
 
     // compute sensitivity information w.r.t. system parameters
     // and pack the sensitivity back to X
     // solver.computeFadInfo(dRdX, X, R);
-    
+
     //update
     if ( (detA.val()).val() <= min_detA ) {
-      
+
       for (int i(0); i < 3; ++i)
         direction[i] = (n[i].val()).val();
-      
-      
+
+
       for (int i(0); i < 2; ++i)
         parameters[i] = X[i];
 
       min_detA = (detA.val()).val();
-      
+
     } else {
-      std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)" 
+      std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)"
         << std::endl;
-    }    
-        
+    }
+
   } // Function end
-  
+
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   void BifurcationCheck<EvalT, Traits>::
   stereographic_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent,
     minitensor::Vector<ScalarT, 2> & parameters,
     minitensor::Vector<ScalarT, 3> & direction, ScalarT & min_detA)
-  {    
+  {
     minitensor::Vector<ScalarT, 2> Xval;
     minitensor::Vector<DFadType, 2> Xfad;
     minitensor::Vector<D2FadType, 2> Xfad2;
@@ -834,108 +834,108 @@ namespace LCM {
     minitensor::Vector<D2FadType, 3> n;
 
     D2FadType detA;
-    
+
     // in std:vector form to work with nonlinear solve
     // size of Jacobian, 4 = 2 * 2
     std::vector<ScalarT> dRdX(4);
-    std::vector<ScalarT> X(2);    
-    std::vector<ScalarT> R(2);    
+    std::vector<ScalarT> X(2);
+    std::vector<ScalarT> R(2);
 
     for (int i(0); i < 2; ++i)
         X[i] = parameters[i];
-            
+
     // local nonlinear solver for Newton iterative solve
     LocalNonlinearSolver<EvalT, Traits> solver;
-               
-    ScalarT normR(0.0), normR0(0.0), relativeR(0.0);    
+
+    ScalarT normR(0.0), normR0(0.0), relativeR(0.0);
     bool converged = false;
     int iter = 0;
-       
+
     while ( !converged ) {
       //std::cout << "iter: " << iter << std::endl;
-      
+
       for ( int i = 0; i < 2; ++i ) {
         Xval[i] = Sacado::ScalarValue<ScalarT>::eval(X[i]);
         Xfad[i] = DFadType(2, i, Xval[i]);
         Xfad2[i] = D2FadType(2, i, Xfad[i]);
       }
-      
-      n = stereographic_get_normal(Xfad2);     
+
+      n = stereographic_get_normal(Xfad2);
 
       detA = minitensor::det(minitensor::dot2(n,minitensor::dot(tangent, n)));
-     
+
       //std::cout << "parameters: " << parameters << std::endl;
       //std::cout << "determinant: " << (detA.val()).val() << std::endl;
-            
+
       for (int i = 0; i < 2; ++i){
         Rfad[i] = detA.dx(i);
         R[i] = Rfad[i].val();
       }
-      
+
       //std::cout << "R: " << R << std::endl;
-      
+
       normR = sqrt( R[0]*R[0] + R[1]*R[1] );
-      
-      if ( iter == 0 ) 
+
+      if ( iter == 0 )
         normR0 = normR;
-      
+
       //std::cout << "normR: " << normR << std::endl;
-      
+
       if (normR0 != 0)
         relativeR = normR / normR0;
       else
         relativeR = normR0;
-      
+
       if (relativeR < 1.0e-8 || normR < 1.0e-8)
         break;
-      
+
       if (iter > 50){
         std::cout << "Newton's loop for bifurcation check not converging after "
-          << 50 << " iterations" << std::endl;      
+          << 50 << " iterations" << std::endl;
         break;
       }
-        
+
       // compute Jacobian
       for ( int i = 0; i < 2; ++i )
         for ( int j = 0; j < 2; ++j )
           dRdX[i + 2 * j] = Rfad[i].dx(j);
-          
+
       // call local nonlinear solver
       solver.solve(dRdX, X, R);
-            
+
       iter++;
-      
+
     } // Newton Raphson iteration end
 
     // compute sensitivity information w.r.t. system parameters
     // and pack the sensitivity back to X
     // solver.computeFadInfo(dRdX, X, R);
-    
+
     //update
     if ( (detA.val()).val() <= min_detA ) {
-      
+
       for (int i(0); i < 3; ++i)
         direction[i] = (n[i].val()).val();
-      
+
       for (int i(0); i < 2; ++i)
         parameters[i] = X[i];
 
       min_detA = (detA.val()).val();
-      
+
     } else {
-      std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)" 
+      std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)"
         << std::endl;
-    }    
-        
+    }
+
   } // Function end
-  
+
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   void BifurcationCheck<EvalT, Traits>::
   projective_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent,
     minitensor::Vector<ScalarT, 3> & parameters,
     minitensor::Vector<ScalarT, 3> & direction, ScalarT & min_detA)
-  { 
+  {
     minitensor::Vector<ScalarT, 4> parameters_new;
     ScalarT nNorm = minitensor::norm(parameters);
     for ( int i = 0; i < 3; ++i ) {
@@ -943,7 +943,7 @@ namespace LCM {
       if ( nNorm==0 ) parameters_new[i] = 1.0;
     }
     parameters_new[3] = 0;
-      
+
     minitensor::Vector<ScalarT, 4> Xval;
     minitensor::Vector<DFadType, 4> Xfad;
     minitensor::Vector<D2FadType, 4> Xfad2;
@@ -951,114 +951,114 @@ namespace LCM {
     minitensor::Vector<D2FadType, 3> n;
 
     D2FadType detA;
-    
+
     // in std:vector form to work with nonlinear solve
     // size of Jacobian, 4 = 2 * 2
     std::vector<ScalarT> dRdX(16);
-    std::vector<ScalarT> X(4);    
-    std::vector<ScalarT> R(4);    
+    std::vector<ScalarT> X(4);
+    std::vector<ScalarT> R(4);
 
     for (int i(0); i < 4; ++i)
         X[i] = parameters_new[i];
-            
+
     // local nonlinear solver for Newton iterative solve
     LocalNonlinearSolver<EvalT, Traits> solver;
-               
-    ScalarT normR(0.0), normR0(0.0), relativeR(0.0);    
+
+    ScalarT normR(0.0), normR0(0.0), relativeR(0.0);
     bool converged = false;
     int iter = 0;
-       
+
     while ( !converged ) {
       //std::cout << "iter: " << iter << std::endl;
-      
+
       for ( int i = 0; i < 4; ++i ) {
         Xval[i] = Sacado::ScalarValue<ScalarT>::eval(X[i]);
         Xfad[i] = DFadType(4, i, Xval[i]);
         Xfad2[i] = D2FadType(4, i, Xfad[i]);
       }
-      
+
       minitensor::Vector<D2FadType, 3> Xfad2_sub;
       for ( int i = 0; i < 3; ++i ) {
         Xfad2_sub[i] = Xfad2[i];
       }
-      n = projective_get_normal(Xfad2_sub);    
+      n = projective_get_normal(Xfad2_sub);
 
-      detA = minitensor::det(minitensor::dot2(n,minitensor::dot(tangent, n))) 
-        + Xfad2[3] 
+      detA = minitensor::det(minitensor::dot2(n,minitensor::dot(tangent, n)))
+        + Xfad2[3]
         * (Xfad2[0] * Xfad2[0] + Xfad2[1] * Xfad2[1] + Xfad2[2] * Xfad2[2] - 1);
-     
+
       //std::cout << "parameters: " << parameters << std::endl;
       //std::cout << "determinant: " << (detA.val()).val() << std::endl;
-            
+
       for (int i = 0; i < 4; ++i){
         Rfad[i] = detA.dx(i);
         R[i] = Rfad[i].val();
       }
-      
+
       //std::cout << "R: " << R << std::endl;
-      
+
       normR = sqrt( R[0]*R[0] + R[1]*R[1] + R[2]*R[2] + R[3]*R[3] );
-      
-      if ( iter == 0 ) 
+
+      if ( iter == 0 )
         normR0 = normR;
-      
+
       //std::cout << "normR: " << normR << std::endl;
-      
+
       if (normR0 != 0)
         relativeR = normR / normR0;
       else
         relativeR = normR0;
-      
+
       if (relativeR < 1.0e-8 || normR < 1.0e-8)
         break;
-      
+
       if (iter > 50){
         std::cout << "Newton's loop for bifurcation check not converging after "
-          << 50 << " iterations" << std::endl;      
+          << 50 << " iterations" << std::endl;
         break;
       }
-        
+
       // compute Jacobian
       for ( int i = 0; i < 4; ++i )
         for ( int j = 0; j < 4; ++j )
           dRdX[i + 4 * j] = Rfad[i].dx(j);
-          
+
       // call local nonlinear solver
       solver.solve(dRdX, X, R);
-            
+
       iter++;
-      
+
     } // Newton Raphson iteration end
 
     // compute sensitivity information w.r.t. system parameters
     // and pack the sensitivity back to X
     // solver.computeFadInfo(dRdX, X, R);
-    
+
     //update
     if ( (detA.val()).val() <= min_detA ) {
-      
+
       for (int i(0); i < 3; ++i)
         direction[i] = (n[i].val()).val();
-      
+
       for (int i(0); i < 3; ++i)
         parameters[i] = X[i];
 
       min_detA = (detA.val()).val();
-      
+
     } else {
-      std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)" 
+      std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)"
         << std::endl;
-    }    
-        
+    }
+
   } // Function end
-  
+
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   void BifurcationCheck<EvalT, Traits>::
   tangent_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent,
     minitensor::Vector<ScalarT, 2> & parameters,
     minitensor::Vector<ScalarT, 3> & direction, ScalarT & min_detA)
-  {    
+  {
     minitensor::Vector<ScalarT, 2> Xval;
     minitensor::Vector<DFadType, 2> Xfad;
     minitensor::Vector<D2FadType, 2> Xfad2;
@@ -1066,99 +1066,99 @@ namespace LCM {
     minitensor::Vector<D2FadType, 3> n;
 
     D2FadType detA;
-    
+
     // in std:vector form to work with nonlinear solve
     // size of Jacobian, 4 = 2 * 2
     std::vector<ScalarT> dRdX(4);
-    std::vector<ScalarT> X(2);    
-    std::vector<ScalarT> R(2);    
+    std::vector<ScalarT> X(2);
+    std::vector<ScalarT> R(2);
 
     for (int i(0); i < 2; ++i)
         X[i] = parameters[i];
-            
+
     // local nonlinear solver for Newton iterative solve
     LocalNonlinearSolver<EvalT, Traits> solver;
-               
-    ScalarT normR(0.0), normR0(0.0), relativeR(0.0);    
+
+    ScalarT normR(0.0), normR0(0.0), relativeR(0.0);
     bool converged = false;
     int iter = 0;
-       
+
     while ( !converged ) {
       //std::cout << "iter: " << iter << std::endl;
-      
+
       for ( int i = 0; i < 2; ++i ) {
         Xval[i] = Sacado::ScalarValue<ScalarT>::eval(X[i]);
         Xfad[i] = DFadType(2, i, Xval[i]);
         Xfad2[i] = D2FadType(2, i, Xfad[i]);
       }
-      
-      n = tangent_get_normal(Xfad2);     
+
+      n = tangent_get_normal(Xfad2);
 
       detA = minitensor::det(minitensor::dot2(n,minitensor::dot(tangent, n)));
-     
+
       //std::cout << "parameters: " << parameters << std::endl;
       //std::cout << "determinant: " << (detA.val()).val() << std::endl;
-            
+
       for (int i = 0; i < 2; ++i){
         Rfad[i] = detA.dx(i);
         R[i] = Rfad[i].val();
       }
-      
+
       //std::cout << "R: " << R << std::endl;
-      
+
       normR = sqrt( R[0]*R[0] + R[1]*R[1] );
-      
-      if ( iter == 0 ) 
+
+      if ( iter == 0 )
         normR0 = normR;
-      
+
       //std::cout << "normR: " << normR << std::endl;
-      
+
       if (normR0 != 0)
         relativeR = normR / normR0;
       else
         relativeR = normR0;
-      
+
       if (relativeR < 1.0e-8 || normR < 1.0e-8)
         break;
-      
+
       if (iter > 50){
         std::cout << "Newton's loop for bifurcation check not converging after "
-          << 50 << " iterations" << std::endl;      
+          << 50 << " iterations" << std::endl;
         break;
       }
-        
+
       // compute Jacobian
       for ( int i = 0; i < 2; ++i )
         for ( int j = 0; j < 2; ++j )
           dRdX[i + 2 * j] = Rfad[i].dx(j);
-          
+
       // call local nonlinear solver
       solver.solve(dRdX, X, R);
-            
+
       iter++;
-      
+
     } // Newton Raphson iteration end
 
     // compute sensitivity information w.r.t. system parameters
     // and pack the sensitivity back to X
     // solver.computeFadInfo(dRdX, X, R);
-    
+
     //update
     if ( (detA.val()).val() <= min_detA ) {
-      
+
       for (int i(0); i < 3; ++i)
         direction[i] = (n[i].val()).val();
-      
+
       for (int i(0); i < 2; ++i)
         parameters[i] = X[i];
 
       min_detA = (detA.val()).val();
-      
+
     } else {
-      std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)" 
+      std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)"
         << std::endl;
-    }    
-        
+    }
+
   } // Function end
 
   //----------------------------------------------------------------------------
@@ -1167,7 +1167,7 @@ namespace LCM {
   cartesian_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent,
     minitensor::Vector<ScalarT, 2> & parameters, int surface_index,
     minitensor::Vector<ScalarT, 3> & direction, ScalarT & min_detA)
-  {    
+  {
     minitensor::Vector<ScalarT, 2> Xval;
     minitensor::Vector<DFadType, 2> Xfad;
     minitensor::Vector<D2FadType, 2> Xfad2;
@@ -1175,150 +1175,150 @@ namespace LCM {
     minitensor::Vector<D2FadType, 3> n;
 
     D2FadType detA;
-    
+
     // in std:vector form to work with nonlinear solve
     // size of Jacobian, 4 = 2 * 2
     std::vector<ScalarT> dRdX(4);
-    std::vector<ScalarT> X(2);    
-    std::vector<ScalarT> R(2);    
+    std::vector<ScalarT> X(2);
+    std::vector<ScalarT> R(2);
 
     for (int i(0); i < 2; ++i)
         X[i] = parameters[i];
-            
+
     // local nonlinear solver for Newton iterative solve
     LocalNonlinearSolver<EvalT, Traits> solver;
-               
-    ScalarT normR(0.0), normR0(0.0), relativeR(0.0);    
+
+    ScalarT normR(0.0), normR0(0.0), relativeR(0.0);
     bool converged = false;
     int iter = 0;
-       
+
     while ( !converged ) {
       //std::cout << "iter: " << iter << std::endl;
-      
+
       for ( int i = 0; i < 2; ++i ) {
         Xval[i] = Sacado::ScalarValue<ScalarT>::eval(X[i]);
         Xfad[i] = DFadType(2, i, Xval[i]);
         Xfad2[i] = D2FadType(2, i, Xfad[i]);
       }
-      
+
       switch ( surface_index ) {
-        case 1: 
+        case 1:
           n = cartesian_get_normal1(Xfad2);
           break;
-        case 2: 
+        case 2:
           n = cartesian_get_normal2(Xfad2);
           break;
-        case 3: 
+        case 3:
           n = cartesian_get_normal3(Xfad2);
           break;
         default:
           n = cartesian_get_normal1(Xfad2);
           break;
-      }    
+      }
 
       detA = minitensor::det(minitensor::dot2(n,minitensor::dot(tangent, n)));
-     
+
       //std::cout << "parameters: " << parameters << std::endl;
       //std::cout << "determinant: " << (detA.val()).val() << std::endl;
-            
+
       for (int i = 0; i < 2; ++i){
         Rfad[i] = detA.dx(i);
         R[i] = Rfad[i].val();
       }
-      
+
       //std::cout << "R: " << R << std::endl;
-      
+
       normR = sqrt( R[0]*R[0] + R[1]*R[1] );
-      
-      if ( iter == 0 ) 
+
+      if ( iter == 0 )
         normR0 = normR;
-      
+
       //std::cout << "normR: " << normR << std::endl;
-      
+
       if (normR0 != 0)
         relativeR = normR / normR0;
       else
         relativeR = normR0;
-      
+
       if (relativeR < 1.0e-8 || normR < 1.0e-8)
         break;
-      
+
       if (iter > 50){
         std::cout << "Newton's loop for bifurcation check not converging after "
-          << 50 << " iterations" << std::endl;      
+          << 50 << " iterations" << std::endl;
         break;
       }
-        
+
       // compute Jacobian
       for ( int i = 0; i < 2; ++i )
         for ( int j = 0; j < 2; ++j )
           dRdX[i + 2 * j] = Rfad[i].dx(j);
-          
+
       // call local nonlinear solver
       solver.solve(dRdX, X, R);
-            
+
       iter++;
-      
+
     } // Newton Raphson iteration end
 
     // compute sensitivity information w.r.t. system parameters
     // and pack the sensitivity back to X
     // solver.computeFadInfo(dRdX, X, R);
-    
+
     //update
     if ( (detA.val()).val() <= min_detA ) {
-      
+
       for (int i(0); i < 3; ++i)
         direction[i] = (n[i].val()).val();
-      
+
       ScalarT dirNorm = minitensor::norm(direction);
       for (int i(0); i < 3; ++i)
         direction[i] /= dirNorm;
-      
+
       for (int i(0); i < 2; ++i)
         parameters[i] = X[i];
 
       min_detA = (detA.val()).val() / std::pow(dirNorm, 6);
-      
+
     } else {
-      std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)" 
+      std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)"
         << std::endl;
-    }    
-        
+    }
+
   } // Function end
-          
+
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   typename EvalT::ScalarT BifurcationCheck<EvalT, Traits>::
   stereographic_pso(minitensor::Tensor4<ScalarT, 3> const & tangent,
-    minitensor::Vector<ScalarT, 2> & arg_minimum, 
+    minitensor::Vector<ScalarT, 2> & arg_minimum,
     minitensor::Vector<ScalarT, 3> & direction)
   {
     double w = 0.7;
     double c1 = 0.5;
     double c2 = 0.5;
     double r = 1.0;
-    
+
     int const group_size = 10;
-    
+
     std::vector<minitensor::Vector<ScalarT, 2>> arg_group(group_size);
     std::vector<minitensor::Vector<ScalarT, 2>> arg_velocity_group(group_size);
-    
+
     std::vector<minitensor::Vector<ScalarT, 2>> arg_ibest(group_size);
     std::vector<ScalarT> detA_ibest(group_size);
-    
-    minitensor::Vector<ScalarT, 2> arg_gbest;    
+
+    minitensor::Vector<ScalarT, 2> arg_gbest;
     ScalarT detA_gbest = std::numeric_limits<ScalarT>::max();
-    
+
     std::random_device rd;
     std::mt19937 mt_eng(rd());
     std::uniform_real_distribution<double> real_dist(-1.0, 1.0);
-  
+
     for (int i=0; i<group_size; i++) {
-    
+
       minitensor::Vector<ScalarT, 2> arg_tmp;
       minitensor::Vector<ScalarT, 2> arg_velocity_tmp;
-      
+
       for (int j=0; j<2; j++) {
         arg_tmp(j) = real_dist(mt_eng);
         arg_velocity_tmp(j) = real_dist(mt_eng) * 0.2;
@@ -1326,57 +1326,57 @@ namespace LCM {
 
       arg_group[i] = arg_tmp;
       arg_velocity_group[i] = arg_velocity_tmp;
-    
+
       ScalarT r2 = arg_tmp[0] * arg_tmp[0] + arg_tmp[1] * arg_tmp[1];
 
-      minitensor::Vector<ScalarT, 3> 
+      minitensor::Vector<ScalarT, 3>
       n(2.0 * arg_tmp[0], 2.0 * arg_tmp[1], r2 - 1.0);
       n /= (r2 + 1.0);
-      
+
       arg_ibest[i] = arg_tmp;
       detA_ibest[i] = minitensor::det(minitensor::dot2(n,minitensor::dot(tangent, n)));
-            
+
       if ( detA_gbest>detA_ibest[i] ) {
         detA_gbest = detA_ibest[i];
         arg_gbest = arg_group[i];
-      }      
+      }
     } // group initialization
-        
+
     bool converged = false;
     int iter = 0;
     int const iter_max = 1000;
     ScalarT error0 = 1.0;
     while ( !converged ) {
-      
+
       ScalarT error = 0.0;
-      
+
       for (int i=0; i<group_size; i++) {
-                        
-        arg_velocity_group[i] = w*arg_velocity_group[i] 
+
+        arg_velocity_group[i] = w*arg_velocity_group[i]
           + c1*real_dist(mt_eng)*(arg_ibest[i]-arg_group[i])
           + c2*real_dist(mt_eng)*(arg_gbest-arg_group[i]);
         arg_group[i] += r * arg_velocity_group[i];
-        
+
         minitensor::Vector<ScalarT, 2> arg_tmp = arg_group[i];
-        
+
         ScalarT r2 = arg_tmp[0] * arg_tmp[0] + arg_tmp[1] * arg_tmp[1];
 
-        minitensor::Vector<ScalarT, 3> 
+        minitensor::Vector<ScalarT, 3>
         n(2.0 * arg_tmp[0], 2.0 * arg_tmp[1], r2 - 1.0);
         n /= (r2 + 1.0);
-        
+
         ScalarT detA_tmp = minitensor::det(minitensor::dot2(n,minitensor::dot(tangent, n)));
-                
+
         if ( detA_ibest[i]>detA_tmp ) {
           detA_ibest[i] = detA_tmp;
           arg_ibest[i] = arg_tmp;
-        } 
-      
+        }
+
         if ( detA_gbest>detA_ibest[i] ) {
           detA_gbest = detA_ibest[i];
           arg_gbest = arg_group[i];
         }
-        
+
         //error += abs(detA_ibest[i] - detA_gbest);
         error += (detA_tmp - detA_gbest)*(detA_tmp - detA_gbest);
       }
@@ -1385,60 +1385,60 @@ namespace LCM {
       error = sqrt(error/(group_size-1));
       if ( iter==0 ) error0 = error;
       if ( error<=1E-11 || error/error0<=1E-11 ) break;
-      
-      iter ++;            
-      if ( iter>iter_max ) break;           
-            
+
+      iter ++;
+      if ( iter>iter_max ) break;
+
     } // group generation iteration
-           
+
     ScalarT r2 = arg_gbest[0] * arg_gbest[0] + arg_gbest[1] * arg_gbest[1];
 
-    minitensor::Vector<ScalarT, 3> 
+    minitensor::Vector<ScalarT, 3>
     n(2.0 * arg_gbest[0], 2.0 * arg_gbest[1], r2 - 1.0);
     n /= (r2 + 1.0);
-    
+
     for (int i(0); i < 3; ++i) {
        direction(i) = n(i);
     }
-    
+
     for (int i(0); i < 2; ++i) {
        arg_minimum(i) = arg_gbest(i);
     }
-            
-    return detA_gbest;    
+
+    return detA_gbest;
   }
-  
+
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  minitensor::Vector<typename BifurcationCheck<EvalT, Traits>::D2FadType, 3> 
+  minitensor::Vector<typename BifurcationCheck<EvalT, Traits>::D2FadType, 3>
   BifurcationCheck<EvalT, Traits>::
   spherical_get_normal(minitensor::Vector<D2FadType, 2> & parameters)
   {
-    minitensor::Vector<D2FadType, 3> 
-    normal(sin(parameters[0]) * cos(parameters[1]), 
+    minitensor::Vector<D2FadType, 3>
+    normal(sin(parameters[0]) * cos(parameters[1]),
       sin(parameters[0]) * sin(parameters[1]), cos(parameters[0]));
-    
+
     return normal;
   }
-  
-  //----------------------------------------------------------------------------  
+
+  //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
-  minitensor::Vector<typename BifurcationCheck<EvalT, Traits>::D2FadType, 3> 
+  minitensor::Vector<typename BifurcationCheck<EvalT, Traits>::D2FadType, 3>
   BifurcationCheck<EvalT, Traits>::
   stereographic_get_normal(minitensor::Vector<D2FadType, 2> & parameters)
   {
     D2FadType r2 = parameters[0] * parameters[0] + parameters[1] * parameters[1];
 
-    minitensor::Vector<D2FadType, 3> 
+    minitensor::Vector<D2FadType, 3>
     normal(2.0 * parameters[0], 2.0 * parameters[1], r2 - 1.0);
     normal /= (r2 + 1.0);
-      
+
     return normal;
   }
-  
+
   //----------------------------------------------------------------------------
-  template<typename EvalT, typename Traits>   
-  minitensor::Vector<typename BifurcationCheck<EvalT, Traits>::D2FadType, 3> 
+  template<typename EvalT, typename Traits>
+  minitensor::Vector<typename BifurcationCheck<EvalT, Traits>::D2FadType, 3>
   BifurcationCheck<EvalT, Traits>::
   projective_get_normal(minitensor::Vector<D2FadType, 3> & parameters)
   {
@@ -1447,7 +1447,7 @@ namespace LCM {
 
     D2FadType const
     n = minitensor::norm(normal);
-     
+
     if ( (n.val()).val()!=0 ) {
       //normal /= n;
     }
@@ -1463,13 +1463,13 @@ namespace LCM {
       normal[1] = Xfad2[1];
       normal[2] = Xfad2[2];
     }
-           
+
     return normal;
   }
-  
+
   //----------------------------------------------------------------------------
-  template<typename EvalT, typename Traits>   
-  minitensor::Vector<typename BifurcationCheck<EvalT, Traits>::D2FadType, 3> 
+  template<typename EvalT, typename Traits>
+  minitensor::Vector<typename BifurcationCheck<EvalT, Traits>::D2FadType, 3>
   BifurcationCheck<EvalT, Traits>::
   tangent_get_normal(minitensor::Vector<D2FadType, 2> & parameters)
   {
@@ -1488,41 +1488,41 @@ namespace LCM {
       normal[1] = parameters[1];
       normal[2] = cos(r);
     }
-      
+
     return normal;
   }
-  
+
   //----------------------------------------------------------------------------
-  template<typename EvalT, typename Traits>  
-  minitensor::Vector<typename BifurcationCheck<EvalT, Traits>::D2FadType, 3> 
+  template<typename EvalT, typename Traits>
+  minitensor::Vector<typename BifurcationCheck<EvalT, Traits>::D2FadType, 3>
   BifurcationCheck<EvalT, Traits>::
   cartesian_get_normal1(minitensor::Vector<D2FadType, 2> & parameters)
   {
-    minitensor::Vector<D2FadType, 3> 
+    minitensor::Vector<D2FadType, 3>
     normal(D2FadType(1), parameters[0], parameters[1]);
-            
+
     return normal;
   }
 
-  template<typename EvalT, typename Traits>   
-  minitensor::Vector<typename BifurcationCheck<EvalT, Traits>::D2FadType, 3> 
+  template<typename EvalT, typename Traits>
+  minitensor::Vector<typename BifurcationCheck<EvalT, Traits>::D2FadType, 3>
   BifurcationCheck<EvalT, Traits>::
   cartesian_get_normal2(minitensor::Vector<D2FadType, 2> & parameters)
   {
-    minitensor::Vector<D2FadType, 3> 
+    minitensor::Vector<D2FadType, 3>
     normal(parameters[0], D2FadType(1), parameters[1]);
-            
+
     return normal;
   }
 
-  template<typename EvalT, typename Traits>    
-  minitensor::Vector<typename BifurcationCheck<EvalT, Traits>::D2FadType, 3> 
+  template<typename EvalT, typename Traits>
+  minitensor::Vector<typename BifurcationCheck<EvalT, Traits>::D2FadType, 3>
   BifurcationCheck<EvalT, Traits>::
   cartesian_get_normal3(minitensor::Vector<D2FadType, 2> & parameters)
   {
-    minitensor::Vector<D2FadType, 3> 
+    minitensor::Vector<D2FadType, 3>
     normal(parameters[0], parameters[1], D2FadType(1));
-            
+
     return normal;
   }
 }

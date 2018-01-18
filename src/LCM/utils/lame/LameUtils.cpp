@@ -30,7 +30,7 @@ Teuchos::RCP<LameMaterial> constructLameMaterialModel(const std::string lameMate
 
   // Strings should be all upper case with spaces replaced with underscores
   std::string materialModelName = lameMaterialModelName;
-  std::transform(materialModelName.begin(), materialModelName.end(), materialModelName.begin(), 
+  std::transform(materialModelName.begin(), materialModelName.end(), materialModelName.begin(),
     (int (*)(int))std::toupper);
   std::replace(materialModelName.begin(), materialModelName.end(), ' ', '_');
 

@@ -140,7 +140,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<LameMatParams> matp = Teuchos::rcp(new LameMatParams());
   this->setMatP(matp, workset);
 
-  // Begin Finite Difference 
+  // Begin Finite Difference
   // Do Base unperturbed case
   for (int cell=0; cell < (int)workset.numCells; ++cell)
     for (int qp=0; qp < (int)this->numQPs; ++qp)
@@ -167,7 +167,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int qp=0; qp < (int)this->numQPs; ++qp)
         for (int i=0; i < (int)this->numDims; ++i)
           for (int j=0; j < (int)this->numDims; ++j)
-            this->defGradFieldRealType(cell,qp,i,j) = 
+            this->defGradFieldRealType(cell,qp,i,j) =
               this->defGradField(cell,qp,i,j).val() + pert*this->defGradField(cell,qp,i,j).fastAccessDx(iv);
 
     this->calcStressRealType(this->stressFieldRealType, this->defGradFieldRealType, workset, matp);
@@ -202,7 +202,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<LameMatParams> matp = Teuchos::rcp(new LameMatParams());
   this->setMatP(matp, workset);
 
-  // Begin Finite Difference 
+  // Begin Finite Difference
   // Do Base unperturbed case
   for (int cell=0; cell < (int)workset.numCells; ++cell)
     for (int qp=0; qp < (int)this->numQPs; ++qp)
@@ -229,7 +229,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int qp=0; qp < (int)this->numQPs; ++qp)
         for (int i=0; i < (int)this->numDims; ++i)
           for (int j=0; j < (int)this->numDims; ++j)
-            this->defGradFieldRealType(cell,qp,i,j) = 
+            this->defGradFieldRealType(cell,qp,i,j) =
               this->defGradField(cell,qp,i,j).val() + pert*this->defGradField(cell,qp,i,j).fastAccessDx(iv);
 
     this->calcStressRealType(this->stressFieldRealType,
@@ -286,7 +286,7 @@ void LameStressBase<EvalT, Traits>::
   matp->stress_old = stressOld;
   matp->stress_new = stressNew;
 //   matp->dt_mat = std::numeric_limits<double>::max();
-  
+
   // matParams that still need to be added:
   // matp->temp_old  (temperature)
   // matp->temp_new
@@ -316,7 +316,7 @@ void LameStressBase<EvalT, Traits>::
   calcStressRealType(PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& stressFieldRef,
              PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim>& defGradFieldRef,
              typename Traits::EvalData workset,
-             Teuchos::RCP<LameMatParams>& matp) 
+             Teuchos::RCP<LameMatParams>& matp)
 {
   // Get the old state data
   Albany::MDArray oldDefGrad = (*workset.stateArrayPtr)[defGradName];
@@ -339,7 +339,7 @@ void LameStressBase<EvalT, Traits>::
 
       // Fill the following entries in matParams for call to LAME
       //
-      // nelements     - number of elements 
+      // nelements     - number of elements
       // dt            - time step, this one is tough because Albany does not currently have a concept of time step for implicit integration
       // time          - current time, again Albany does not currently have a concept of time for implicit integration
       // strain_rate   - what Sierra calls the rate of deformation, it is the symmetric part of the velocity gradient
@@ -352,7 +352,7 @@ void LameStressBase<EvalT, Traits>::
       // stress_new    - stress at current time step, filled by material model
       //
       // The total deformation gradient is available as field data
-      // 
+      //
       // The velocity gradient is not available but can be computed at the logarithm of the incremental deformation gradient divided by deltaT
       // The incremental deformation gradient is computed as F_new F_old^-1
 
@@ -485,8 +485,8 @@ void LameStressBase<EvalT, Traits>::
       stressFieldRef(cell,qp,0,1) = stressNewPtr[3];
       stressFieldRef(cell,qp,1,2) = stressNewPtr[4];
       stressFieldRef(cell,qp,0,2) = stressNewPtr[5];
-      stressFieldRef(cell,qp,1,0) = stressNewPtr[3]; 
-      stressFieldRef(cell,qp,2,1) = stressNewPtr[4]; 
+      stressFieldRef(cell,qp,1,0) = stressNewPtr[3];
+      stressFieldRef(cell,qp,2,1) = stressNewPtr[4];
       stressFieldRef(cell,qp,2,0) = stressNewPtr[5];
 
       stressNewPtr += 6;

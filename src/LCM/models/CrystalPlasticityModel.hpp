@@ -30,7 +30,7 @@ public:
   using ScalarField = typename BaseKernel::ScalarField;
   using ConstScalarField = typename BaseKernel::ConstScalarField;
   using Workset = typename BaseKernel::Workset;
-	
+
   // Dimension of problem, e.g., 2 -> 2D, 3 -> 3D
   using BaseKernel::num_dims_;
 
@@ -47,7 +47,7 @@ public:
 
   /// Pointer to NOX status test, allows the material model to force a global load step reduction
   using BaseKernel::nox_status_test_;
-  
+
   using BaseKernel::setDependentField;
   using BaseKernel::setEvaluatedField;
   using BaseKernel::addStateVariable;
@@ -155,7 +155,7 @@ private:
 
   int
   num_iter_residual_{0};
-  
+
   minitensor::Tensor<RealType, CP::MAX_DIM>
   element_block_orientation_;
 
@@ -190,7 +190,7 @@ private:
   ///
   /// Solution options
   ///
-  CP::IntegrationScheme 
+  CP::IntegrationScheme
   integration_scheme_{CP::IntegrationScheme::UNDEFINED};
 
   CP::ResidualType
@@ -198,7 +198,7 @@ private:
 
   CP::PredictorSlip
   predictor_slip_{CP::PredictorSlip::UNDEFINED};
-  
+
   minitensor::StepType
   step_type_{minitensor::StepType::UNDEFINED};
 
@@ -211,9 +211,9 @@ private:
   rol_minimizer_;
 
   ///
-  /// Output options 
+  /// Output options
   ///
-  CP::Verbosity 
+  CP::Verbosity
   verbosity_{CP::Verbosity::UNDEFINED};
 
   bool
@@ -245,19 +245,19 @@ private:
 
   ScalarField
   stress_;
-  
+
   ScalarField
   plastic_deformation_;
-  
+
   ScalarField
   velocity_gradient_;
-  
+
   ScalarField
   velocity_gradient_plastic_;
-  
+
   ScalarField
   cp_residual_;
-  
+
   ScalarField
   cp_residual_iter_;
 
@@ -266,7 +266,7 @@ private:
 
   std::vector<Teuchos::RCP<ScalarField>>
   slips_;
-  
+
   std::vector<Albany::MDArray *>
   previous_slips_;
 

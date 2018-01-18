@@ -26,7 +26,7 @@ Time(Teuchos::ParameterList& p) :
   else enableTransient = true;
 
   // Add Time as a Sacado-ized parameter
-  Teuchos::RCP<ParamLib> paramLib = 
+  Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
   this->registerSacadoParameter("Time", paramLib);
 
@@ -60,7 +60,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 // **********************************************************************
 template<typename EvalT,typename Traits>
-typename Time<EvalT,Traits>::ScalarT& 
+typename Time<EvalT,Traits>::ScalarT&
 Time<EvalT,Traits>::getValue(const std::string &n)
 {
   return timeValue;

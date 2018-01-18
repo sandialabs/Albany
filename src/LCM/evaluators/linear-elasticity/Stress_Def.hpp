@@ -75,7 +75,7 @@ evaluateFields(typename Traits::EvalData workset)
 	stress(cell,qp,0,0) = 2.0 * mu * ( strain(cell,qp,0,0) ) + lambda * ( strain(cell,qp,0,0) + strain(cell,qp,1,1) );
 	stress(cell,qp,1,1) = 2.0 * mu * ( strain(cell,qp,1,1) ) + lambda * ( strain(cell,qp,0,0) + strain(cell,qp,1,1) );
 	stress(cell,qp,0,1) = 2.0 * mu * ( strain(cell,qp,0,1) );
-	stress(cell,qp,1,0) = stress(cell,qp,0,1); 
+	stress(cell,qp,1,0) = stress(cell,qp,0,1);
       }
     }
     break;
@@ -91,9 +91,9 @@ evaluateFields(typename Traits::EvalData workset)
 	stress(cell,qp,0,1) = 2.0 * mu * ( strain(cell,qp,0,1) );
 	stress(cell,qp,1,2) = 2.0 * mu * ( strain(cell,qp,1,2) );
 	stress(cell,qp,2,0) = 2.0 * mu * ( strain(cell,qp,2,0) );
-	stress(cell,qp,1,0) = stress(cell,qp,0,1); 
-	stress(cell,qp,2,1) = stress(cell,qp,1,2); 
-	stress(cell,qp,0,2) = stress(cell,qp,2,0); 
+	stress(cell,qp,1,0) = stress(cell,qp,0,1);
+	stress(cell,qp,2,1) = stress(cell,qp,1,2);
+	stress(cell,qp,0,2) = stress(cell,qp,2,0);
       }
     }
     break;

@@ -49,7 +49,7 @@ evaluateResponseT(const double current_time,
 
 void
 Albany::AlbanyPeridigmOBCFunctional::
-evaluateTangentT(const double alpha, 
+evaluateTangentT(const double alpha,
 		const double beta,
 		const double omega,
 		const double current_time,

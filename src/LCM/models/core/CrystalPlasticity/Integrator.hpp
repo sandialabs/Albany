@@ -64,7 +64,7 @@ class Integrator
 
     Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
     nox_status_test_;
- 
+
     int
     num_slip_;
 
@@ -101,7 +101,7 @@ template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 class IntegratorFactory
 {
   public:
-    
+
     using ScalarT = typename EvalT::ScalarT;
     using ValueT = typename Sacado::ValueType<ScalarT>::type;
     using Minimizer = minitensor::Minimizer<ValueT, CP::NlsDim<NumSlipT>::value>;
@@ -143,7 +143,7 @@ class IntegratorFactory
 
     std::vector<CP::SlipSystem<NumDimT>> const &
     slip_systems_;
-    
+
     std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const &
     slip_families_;
 
@@ -164,7 +164,7 @@ template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 class ExplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
 {
   public:
-    
+
     using Base = Integrator<EvalT, NumDimT, NumSlipT>;
     using ScalarT = typename Base::ScalarT;
 
@@ -194,7 +194,7 @@ template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 class ImplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
 {
   public:
-    
+
     using Base = Integrator<EvalT, NumDimT, NumSlipT>;
     using ScalarT = typename Base::ScalarT;
     using ValueT = typename Sacado::ValueType<ScalarT>::type;
@@ -212,7 +212,7 @@ class ImplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
       RealType dt);
-    
+
     void
     reevaluateState() const;
 
@@ -233,7 +233,7 @@ class ImplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
 
     mutable RolMinimizer
     rol_minimizer_;
-    
+
     minitensor::StepType
     step_type_;
 };
@@ -243,7 +243,7 @@ template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 class ImplicitSlipIntegrator : public ImplicitIntegrator<EvalT, NumDimT, NumSlipT>
 {
   public:
-    
+
     using Base = ImplicitIntegrator<EvalT, NumDimT, NumSlipT>;
     using ScalarT = typename Base::ScalarT;
     using ValueT = typename Base::ValueT;
@@ -262,7 +262,7 @@ class ImplicitSlipIntegrator : public ImplicitIntegrator<EvalT, NumDimT, NumSlip
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
       RealType dt);
 
-    virtual void 
+    virtual void
     update() const override;
 
   protected:
@@ -283,7 +283,7 @@ template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 class ImplicitSlipHardnessIntegrator : public ImplicitIntegrator<EvalT, NumDimT, NumSlipT>
 {
   public:
-    
+
     using Base = ImplicitIntegrator<EvalT, NumDimT, NumSlipT>;
     using ScalarT = typename Base::ScalarT;
     using ValueT = typename Base::ValueT;

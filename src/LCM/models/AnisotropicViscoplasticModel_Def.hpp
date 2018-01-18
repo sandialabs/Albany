@@ -196,12 +196,12 @@ computeState(typename Traits::EvalData workset,
       s = mu * minitensor::dev(be);
       p = 0.5 * bulk * (Je * Je - 1.);
       tau = p * I + s;
-      
+
       // pull back the Kirchhoff stress to the intermediate configuration
       // this is the Mandel stress
       //
       M = minitensor::transpose(Fe) * tau * minitensor::inverse(minitensor::transpose(Fe));
-      
+
       // check yield condition
       smag = minitensor::norm(s);
       f = smag - sq23 * (Y + K * eqpsold(cell, pt));

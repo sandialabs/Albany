@@ -20,7 +20,7 @@
 #include "Teuchos_Array.hpp"
 
 namespace LCM {
-/** 
+/**
  * \brief Evaluates permeability based on porosity
  *  through the Kozeny-Carman relation, either as
  *  a constant or a truncated KL expansion.The permeability
@@ -32,18 +32,18 @@ class KCPermeability :
   public PHX::EvaluatorWithBaseImpl<Traits>,
   public PHX::EvaluatorDerived<EvalT, Traits>,
   public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-  
+
 public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   KCPermeability(Teuchos::ParameterList& p);
-  
+
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
-  
+
   void evaluateFields(typename Traits::EvalData d);
-  
+
   ScalarT& getValue(const std::string &n);
 
 private:

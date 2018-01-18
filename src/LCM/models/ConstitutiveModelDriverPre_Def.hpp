@@ -74,10 +74,10 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   // FIXME, I really need to figure out which components are prescribed, and
-  // which will be traction free, and assign the def_grad_ only for the 
+  // which will be traction free, and assign the def_grad_ only for the
   // prescribed components
   for (int cell = 0; cell < workset.numCells; ++cell) {
-    for (int pt = 0; pt < num_pts_; ++pt) {    
+    for (int pt = 0; pt < num_pts_; ++pt) {
       for (int node = 0; node < num_nodes_; ++node) {
         for (int dim1 = 0; dim1 < num_dims_; ++dim1) {
           for (int dim2 = 0; dim2 < num_dims_; ++dim2) {
@@ -100,7 +100,7 @@ computeLoading(std::string load_case, double inc)
 {
   minitensor::Tensor<ScalarT> F0(num_dims_);
   minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
-  
+
   F0 = I;
   if (load_case == "uniaxial-strain") {
     F0(0,0) += inc;

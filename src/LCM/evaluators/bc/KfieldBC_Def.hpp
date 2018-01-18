@@ -234,7 +234,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   int xlunk, ylunk; // local indicies into unknown vector
   double* coord;
 
-  ScalarT Xval, Yval; 
+  ScalarT Xval, Yval;
   Teuchos::Array<LO> index(1);
   Teuchos::Array<ST> value(1);
   size_t numEntriesT;
@@ -243,15 +243,15 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::Array<LO> matrixIndicesT;
 
 
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) 
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
   {
     xlunk = nsNodes[inode][0];
     ylunk = nsNodes[inode][1];
     coord = nsNodeCoords[inode];
 
     this->computeBCs(coord, Xval, Yval, time);
-    
-    // replace jac values for the X dof 
+
+    // replace jac values for the X dof
     numEntriesT = jacT->getNumEntriesInLocalRow(xlunk);
     matrixEntriesT.resize(numEntriesT);
     matrixIndicesT.resize(numEntriesT);
@@ -272,14 +272,14 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     jacT->replaceLocalValues(ylunk, matrixIndicesT(), matrixEntriesT());
 
     index[0] = ylunk;
-    jacT->replaceLocalValues(ylunk, index(), value());    
+    jacT->replaceLocalValues(ylunk, index(), value());
 
 
     if (fillResid)
     {
       fT_nonconstView[xlunk] = xT_constView[xlunk] - Xval.val();
       fT_nonconstView[ylunk] = xT_constView[ylunk] - Yval.val();
-    } 
+    }
   }
 }
 
@@ -303,11 +303,11 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
   Teuchos::RCP<const Tpetra_MultiVector> VxT = dirichletWorkset.VxT;
 
-  Teuchos::ArrayRCP<const ST> VxT_constView; 
-  Teuchos::ArrayRCP<ST> fT_nonconstView;                                         
+  Teuchos::ArrayRCP<const ST> VxT_constView;
+  Teuchos::ArrayRCP<ST> fT_nonconstView;
   if (fT != Teuchos::null) fT_nonconstView = fT->get1dViewNonConst();
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();                                       
-  
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+
 RealType time = dirichletWorkset.current_time;
 
   const RealType j_coeff = dirichletWorkset.j_coeff;
@@ -331,24 +331,24 @@ RealType time = dirichletWorkset.current_time;
     {
       fT_nonconstView[xlunk] = xT_constView[xlunk] - Xval.val();
       fT_nonconstView[ylunk] = xT_constView[ylunk] - Yval.val();
-    } 
+    }
 
     if (JVT != Teuchos::null) {
-      Teuchos::ArrayRCP<ST> JVT_nonconstView; 
+      Teuchos::ArrayRCP<ST> JVT_nonconstView;
       for (int i=0; i<dirichletWorkset.num_cols_x; i++)
       {
-        JVT_nonconstView = JVT->getDataNonConst(i); 
-        VxT_constView = VxT->getData(i); 
+        JVT_nonconstView = JVT->getDataNonConst(i);
+        VxT_constView = VxT->getData(i);
 	JVT_nonconstView[xlunk] = j_coeff*VxT_constView[xlunk];
 	JVT_nonconstView[ylunk] = j_coeff*VxT_constView[ylunk];
       }
     }
-    
+
     if (fpT != Teuchos::null) {
-      Teuchos::ArrayRCP<ST> fpT_nonconstView; 
+      Teuchos::ArrayRCP<ST> fpT_nonconstView;
       for (int i=0; i<dirichletWorkset.num_cols_p; i++)
       {
-        fpT_nonconstView = fpT->getDataNonConst(i); 
+        fpT_nonconstView = fpT->getDataNonConst(i);
 	fpT_nonconstView[xlunk] = -Xval.dx(dirichletWorkset.param_offset+i);
 	fpT_nonconstView[ylunk] = -Yval.dx(dirichletWorkset.param_offset+i);
       }
@@ -373,7 +373,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
 
   Teuchos::RCP<Tpetra_MultiVector> fpVT = dirichletWorkset.fpVT;
-  Teuchos::ArrayRCP<ST> fpVT_nonconstView; 
+  Teuchos::ArrayRCP<ST> fpVT_nonconstView;
   bool trans = dirichletWorkset.transpose_dist_param_deriv;
   int num_cols = fpVT->getNumVectors();
 
@@ -399,7 +399,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
     {
       Teuchos::RCP<Tpetra_MultiVector> VpT = dirichletWorkset.Vp_bcT;
-      Teuchos::ArrayRCP<ST> VpT_nonconstView; 
+      Teuchos::ArrayRCP<ST> VpT_nonconstView;
       xlunk = nsNodes[inode][0];
       ylunk = nsNodes[inode][1];
       // coord = nsNodeCoords[inode];
@@ -409,9 +409,9 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
       for (int col=0; col<num_cols; ++col) {
         //(*Vp)[col][xlunk] = 0.0;
         //(*Vp)[col][ylunk] = 0.0;
-        VpT_nonconstView = VpT->getDataNonConst(col); 
-        VpT_nonconstView[xlunk] = 0.0; 
-        VpT_nonconstView[ylunk] = 0.0; 
+        VpT_nonconstView = VpT->getDataNonConst(col);
+        VpT_nonconstView[xlunk] = 0.0;
+        VpT_nonconstView[ylunk] = 0.0;
       }
     }
   }
@@ -430,8 +430,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
         //(*fpV)[col][xlunk] = 0.0;
         //(*fpV)[col][ylunk] = 0.0;
         fpVT_nonconstView = fpVT->getDataNonConst(col);
-        fpVT_nonconstView[xlunk] = 0.0; 
-        fpVT_nonconstView[ylunk] = 0.0; 
+        fpVT_nonconstView[xlunk] = 0.0;
+        fpVT_nonconstView[ylunk] = 0.0;
       }
     }
   }

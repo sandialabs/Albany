@@ -27,7 +27,7 @@ enum class FlowRuleType
 
 /**
  *	Factory returning a pointer to a Flow parameters object.
- *	
+ *
  *	\param type_flow_rule	Which flow rule to instantiate.
  */
 std::shared_ptr<FlowParameterBase>

@@ -86,7 +86,7 @@ namespace LCM {
     ///
     RealType avogadros_num_, omega_, t_decay_constant_, he_radius_, eta_;
 
-    /// 
+    ///
     /// Scalar names for obtaining state old
     ///
 

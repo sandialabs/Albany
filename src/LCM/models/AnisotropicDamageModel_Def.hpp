@@ -66,7 +66,7 @@ AnisotropicDamageModel(Teuchos::ParameterList* p,
       std::make_pair(matrix_damage_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair(f1_damage_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair(f2_damage_string, dl->qp_scalar));
-  
+
   if(compute_tangent_) {
     this->eval_field_map_.insert(std::make_pair(tangent_string, dl->qp_tensor4));
   }
@@ -213,7 +213,7 @@ computeState(typename Traits::EvalData workset,
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int pt = 0; pt < num_pts_; ++pt) {
-      
+
       // for debugging
       //std::cout << "AnisotropicModel compute_tangent_=" << compute_tangent_ << std::endl;
 
@@ -250,10 +250,10 @@ computeState(typename Traits::EvalData workset,
       // optional material tangent computation
 
       if(compute_tangent_) {
-        tangent_m = volume_fraction_m_ * 
+        tangent_m = volume_fraction_m_ *
           ( lame * minitensor::tensor(invC, invC)
             + mu_tilde * (minitensor::tensor2(invC, invC)
-              + minitensor::tensor3(invC, invC)) ); 
+              + minitensor::tensor3(invC, invC)) );
       }// compute_tangent_
 
 
@@ -274,27 +274,27 @@ computeState(typename Traits::EvalData workset,
         tangent_m = (1.0 - damage_m(cell, pt)) * tangent_m
           - damage_deriv_m * minitensor::tensor(S0_m, S0_m);
 
-        // convert tangent_m to tangentA 
+        // convert tangent_m to tangentA
         // tangentA is w.r.t. the deformation gradient
         tangentA_m.fill(0.0);
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
             for (int p(0); p < num_dims_; ++p) {
               for (int q(0); q < num_dims_; ++q) {
-		
+
                 for (int k(0); k < num_dims_; ++k){
                  for (int n(0); n < num_dims_; ++n){
                    tangentA_m(i,j,p,q) = tangentA_m(i,j,p,q)
                      + F(i,k) * tangent_m(k,j,n,q) * F(p,n);
                  }
                 }
-              
-                tangentA_m(i,j,p,q) = tangentA_m(i,j,p,q) 
+
+                tangentA_m(i,j,p,q) = tangentA_m(i,j,p,q)
                   + (1.0 - damage_m(cell, pt)) * S0_m(q,j) * I(i,p);
               }
             }
           }
-        }    
+        }
 
       }// compute_tangent_
 
@@ -384,7 +384,7 @@ computeState(typename Traits::EvalData workset,
         tangent_f2 = (1.0 - damage_f2(cell, pt)) * tangent_f2
           - damage_deriv_f2 * minitensor::tensor(S0_f2, S0_f2);
 
-        // convert tangent_m to tangentA 
+        // convert tangent_m to tangentA
         // tangentA is w.r.t. the deformation gradient
         tangentA_f1.fill(0.0);
         tangentA_f2.fill(0.0);
@@ -392,10 +392,10 @@ computeState(typename Traits::EvalData workset,
           for (int j(0); j < num_dims_; ++j) {
             for (int p(0); p < num_dims_; ++p) {
               for (int q(0); q < num_dims_; ++q) {
-		
+
                 for (int k(0); k < num_dims_; ++k){
                  for (int n(0); n < num_dims_; ++n){
-                   
+
                    tangentA_f1(i,j,p,q) = tangentA_f1(i,j,p,q)
                      + F(i,k) * tangent_f1(k,j,n,q) * F(p,n);
 
@@ -406,13 +406,13 @@ computeState(typename Traits::EvalData workset,
 
                 tangentA_f1(i,j,p,q) = tangentA_f1(i,j,p,q)
                   + (1.0 - damage_f1(cell, pt)) * S0_f1(q,j) * I(i,p);
-              
+
                 tangentA_f2(i,j,p,q) = tangentA_f2(i,j,p,q)
                   + (1.0 - damage_f2(cell, pt)) * S0_f2(q,j) * I(i,p);
               }
             }
           }
-        }   
+        }
 
       }// compute_tangent_
 
@@ -431,12 +431,12 @@ computeState(typename Traits::EvalData workset,
           for (int j(0); j < num_dims_; ++j) {
             for (int k(0); k < num_dims_; ++k) {
               for (int l(0); l < num_dims_; ++l) {
-                // std::cout << "Tangent w.r.t. the deformation gradient" 
+                // std::cout << "Tangent w.r.t. the deformation gradient"
                 // << std::endl;
                 tangent(cell, pt, i, j, k, l) = tangentA_m(i, j, k, l)
                   + tangentA_f1(i, j, k, l) + tangentA_f2(i, j, k, l);
 
-                  //std::cout << "Tangent w.r.t. the right Cauchy-Green tensor" 
+                  //std::cout << "Tangent w.r.t. the right Cauchy-Green tensor"
                   // << std::endl;
                  // tangent(cell, pt, i, j, k, l) = tangent_m(i, j, k, l)
                    // + tangent_f1(i, j, k, l) + tangent_f2(i, j, k, l);
