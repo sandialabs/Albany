@@ -109,11 +109,11 @@ tet4LocalMassRow(const int row) const
       mass_row[0] = 1.0; mass_row[1] = 2.0; 
       mass_row[2] = 1.0; mass_row[3] = 1.0; 
       break; 
-    case 3: 
+    case 2: 
       mass_row[0] = 1.0; mass_row[1] = 1.0; 
       mass_row[2] = 2.0; mass_row[3] = 1.0; 
       break; 
-    case 4: 
+    case 3: 
       mass_row[0] = 1.0; mass_row[1] = 1.0; 
       mass_row[2] = 1.0; mass_row[3] = 2.0; 
       break; 
