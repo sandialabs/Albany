@@ -97,7 +97,126 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 template<typename EvalT, typename Traits>
 std::vector<RealType> CompositeTetMassResidualBase<EvalT, Traits>::
-hexLocalMassRow(const int row) const 
+tet4LocalMassRow(const int row) const 
+{
+  std::vector<RealType> mass_row(4);
+  switch(row) {
+    case 0: 
+      mass_row[0] = 2.0; mass_row[1] = 1.0; 
+      mass_row[2] = 1.0; mass_row[3] = 1.0; 
+      break; 
+    case 1: 
+      mass_row[0] = 1.0; mass_row[1] = 2.0; 
+      mass_row[2] = 1.0; mass_row[3] = 1.0; 
+      break; 
+    case 3: 
+      mass_row[0] = 1.0; mass_row[1] = 1.0; 
+      mass_row[2] = 2.0; mass_row[3] = 1.0; 
+      break; 
+    case 4: 
+      mass_row[0] = 1.0; mass_row[1] = 1.0; 
+      mass_row[2] = 1.0; mass_row[3] = 2.0; 
+      break; 
+    default: 
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+                                  "Error! invalid value row = " << row << " to tet4LocalMassRow! \n"
+                                  << "Row must be between 0 and 3.\n"); 
+  }
+  for (int i=0; i<mass_row.size(); i++) {
+    mass_row[i] /= 120.0; 
+  }
+  return mass_row; 
+}
+
+template<typename EvalT, typename Traits>
+std::vector<RealType> CompositeTetMassResidualBase<EvalT, Traits>::
+tet10LocalMassRow(const int row) const 
+{
+  std::vector<RealType> mass_row(10);
+  switch(row) {
+    case 0:
+      mass_row[0] = 6.0; mass_row[1] = 1.0; 
+      mass_row[2] = 1.0; mass_row[3] = 1.0; 
+      mass_row[4] = -4.0; mass_row[5] = -6.0; 
+      mass_row[6] = -4.0; mass_row[7] = -4.0; 
+      mass_row[8] = -6.0; mass_row[9] = -6.0;  
+      break; 
+    case 1:
+      mass_row[0] = 1.0; mass_row[1] = 6.0; 
+      mass_row[2] = 1.0; mass_row[3] = 1.0; 
+      mass_row[4] = -4.0; mass_row[5] =-4.0; 
+      mass_row[6] = -6.0; mass_row[7] = -6.0; 
+      mass_row[8] = -4.0; mass_row[9] = -6.0; 
+      break;
+    case 2:
+      mass_row[0] =1.0; mass_row[1] = 1.0; 
+      mass_row[2] = 6.0; mass_row[3] = 1.0; 
+      mass_row[4] = -6.0; mass_row[5] = -4.0; 
+      mass_row[6] = -4.0; mass_row[7] = -6.0; 
+      mass_row[8] = -6.0; mass_row[9] = -4.0; 
+      break; 
+    case 3: 
+      mass_row[0] = 1.0; mass_row[1] = 1.0;
+      mass_row[2] = 1.0; mass_row[3] = 6.0; 
+      mass_row[4] = -6.0; mass_row[5] = -6.0; 
+      mass_row[6] = -6.0; mass_row[7] = -4.0; 
+      mass_row[8] = -4.0; mass_row[9] = -4.0; 
+      break; 
+    case 4: 
+      mass_row[0] = -4.0; mass_row[1] = -4.0; 
+      mass_row[2] = -6.0; mass_row[3] = -6.0; 
+      mass_row[4] = 32.0; mass_row[5] = 16.0; 
+      mass_row[6] = 16.0; mass_row[7] = 16.0; 
+      mass_row[8] = 16.0; mass_row[9] = 8.0; 
+      break; 
+    case 5: 
+      mass_row[0] = -6.0; mass_row[1] = -4.0; 
+      mass_row[4] = 16.0; mass_row[5] = 32.0; 
+      mass_row[6] = 16.0; mass_row[7] = 8.0; 
+      mass_row[8] = 16.0; mass_row[9] = 16.0; 
+      break; 
+    case 6: 
+      mass_row[0] = -4.0; mass_row[1] = -6.0; 
+      mass_row[2] = -4.0; mass_row[3] = -6.0; 
+      mass_row[4] = 16.0; mass_row[5] = 16.0;  
+      mass_row[6] = 32.0; mass_row[7] = 16.0; 
+      mass_row[8] = 8.0; mass_row[9] = 16.0; 
+      break; 
+    case 7: 
+      mass_row[0] = -4.0; mass_row[1] = -6.0; 
+      mass_row[2] = -6.0; mass_row[3] = -4.0; 
+      mass_row[4] = 16.0; mass_row[5] = 8.0; 
+      mass_row[6] = 16.0; mass_row[7] = 32.0; 
+      mass_row[8] = 16.0; mass_row[9] = 16.0; 
+      break; 
+    case 8: 
+      mass_row[0] = -6.0; mass_row[1] = -4.0; 
+      mass_row[2] = -6.0; mass_row[3] = -4.0; 
+      mass_row[4] = 16.0; mass_row[5] = 16.0; 
+      mass_row[6] = 8.0; mass_row[7] = 16.0; 
+      mass_row[8] = 32.0; mass_row[9] = 16.0; 
+      break; 
+    case 9: 
+      mass_row[0] = -6.0; mass_row[1] = -6.0; 
+      mass_row[2] = -4.0; mass_row[3] = -4.0; 
+      mass_row[4] = 8.0; mass_row[5] = 16.0; 
+      mass_row[6] = 16.0; mass_row[7] = 16.0; 
+      mass_row[8] = 16.0; mass_row[9] = 32.0; 
+      break;  
+    default: 
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+                                  "Error! invalid value row = " << row << " to tet10LocalMassRow! \n"
+                                  << "Row must be between 0 and 9.\n"); 
+  }
+  for (int i=0; i<mass_row.size(); i++) {
+    mass_row[i] /= 2520.0; 
+  }
+  return mass_row; 
+}
+
+template<typename EvalT, typename Traits>
+std::vector<RealType> CompositeTetMassResidualBase<EvalT, Traits>::
+hex8LocalMassRow(const int row) const 
 {
   std::vector<RealType> mass_row(8);
   switch(row) {
@@ -143,7 +262,7 @@ hexLocalMassRow(const int row) const
       break; 
     default: 
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-                                  "Error! invalid value row = " << row << " to hexLocalMassRow! \n"
+                                  "Error! invalid value row = " << row << " to hex8LocalMassRow! \n"
                                   << "Row must be between 0 and 7.\n"); 
   }
   for (int i=0; i<mass_row.size(); i++) {
@@ -267,7 +386,7 @@ computeResidualValue(typename Traits::EvalData workset) const
           mass_row = this->compositeTetLocalMassRow(node);
         }
         else { //hex8
-          mass_row = this->hexLocalMassRow(node);
+          mass_row = this->hex8LocalMassRow(node);
         }
         const RealType elt_vol_scale_node = this->computeElementVolScaling(cell, node); 
         for (int dim = 0; dim < this->num_dims_; ++dim) {
@@ -353,7 +472,7 @@ evaluateFields(typename Traits::EvalData workset)
         mass_row = this->compositeTetLocalMassRow(node);
       }
       else { //hex8
-        mass_row = this->hexLocalMassRow(node);
+        mass_row = this->hex8LocalMassRow(node);
       }
       const RealType elt_vol_scale_node = this->computeElementVolScaling(cell, node); 
       for (int dim = 0; dim < this->num_dims_; ++dim) {
