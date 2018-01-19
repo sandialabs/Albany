@@ -277,62 +277,83 @@ compositeTetLocalMassRow(const int row) const
 {
   std::vector<RealType> mass_row(10); 
   switch(row) {
-    case 0: 
-      mass_row[0] = 1.0/80.0; mass_row[4] = 1.0/160.0;
-      mass_row[6] = 1.0/160.0; mass_row[7] = 1.0/160.0;
+    case 0:
+      mass_row[0] = 18.0; mass_row[1] = 0.0; 
+      mass_row[2] = 0.0; mass_row[3] = 0.0; 
+      mass_row[4] = 9.0; mass_row[5] = 0.0; 
+      mass_row[6] = 9.0; mass_row[7] = 9.0; 
+      mass_row[8] = 0.0; mass_row[9] = 0.0;  
       break; 
-    case 1: 
-      mass_row[1] = 1.0/80.0; mass_row[4] = 1.0/160.0;
-      mass_row[5] = 1.0/160.0; mass_row[8] = 1.0/160.0;
+    case 1:
+      mass_row[0] = 0.0; mass_row[1] = 18.0; 
+      mass_row[2] = 0.0; mass_row[3] = 0.0; 
+      mass_row[4] = 9.0; mass_row[5] = 9.0; 
+      mass_row[6] = 0.0; mass_row[7] = 0.0; 
+      mass_row[8] = 9.0; mass_row[9] = 0.0;  
       break;
-    case 2:  
-      mass_row[2] = 1.0/80.0; mass_row[5] = 1.0/160.0;
-      mass_row[6] = 1.0/160.0; mass_row[9] = 1.0/160.0;
+    case 2: 
+      mass_row[0] = 0.0; mass_row[1] = 0.0; 
+      mass_row[2] = 18.0; mass_row[3] = 0.0; 
+      mass_row[4] = 0.0; mass_row[5] = 9.0; 
+      mass_row[6] = 9.0; mass_row[7] = 0.0;  
+      mass_row[8] = 0.0; mass_row[9] = 9.0;  
       break; 
     case 3: 
-      mass_row[3] = 1.0/80.0; mass_row[7] = 1.0/160.0;
-      mass_row[8] = 1.0/160.0; mass_row[9] = 1.0/160.0;
+      mass_row[0] = 0.0; mass_row[1] = 0.0; 
+      mass_row[2] = 0.0; mass_row[3] = 18.0; 
+      mass_row[4] = 0.0; mass_row[5] = 0.0; 
+      mass_row[6] = 0.0; mass_row[7] = 9.0; 
+      mass_row[8] = 9.0; mass_row[9] = 9.0; 
       break;
-    case 4:  
-      mass_row[0] = 1.0/160.0; mass_row[1] = 1.0/160.0;
-      mass_row[4] = 1.0/18.0; mass_row[5] = 13.0/720.0;
-      mass_row[6] = 13.0/720.0; mass_row[7] = 13.0/720.0;
-      mass_row[8] = 13.0/720.0; mass_row[9] = 1.0/180.0;
+    case 4: 
+      mass_row[0] = 9.0; mass_row[1] = 9.0; 
+      mass_row[2] = 0.0; mass_row[3] = 0.0; 
+      mass_row[4] = 80.0; mass_row[5] = 26.0; 
+      mass_row[6] = 26.0; mass_row[7] = 26.0; 
+      mass_row[8] = 26.0; mass_row[9] = 8.0;  
       break; 
-    case 5: 
-      mass_row[1] = 1.0/160.0; mass_row[2] = 1.0/160.0;
-      mass_row[4] = 13.0/720.0; mass_row[5] = 1.0/18.0;
-      mass_row[6] = 13.0/720.0; mass_row[7] = 1.0/180.0;
-      mass_row[8] = 13.0/720.0; mass_row[9] = 13.0/720.0;
+    case 5:
+      mass_row[0] = 0.0; mass_row[1] = 9.0; 
+      mass_row[2] = 9.0; mass_row[3] = 0.0; 
+      mass_row[4] = 26.0; mass_row[5] = 80.0; 
+      mass_row[6] = 26.0; mass_row[7] = 8.0; 
+      mass_row[8] = 26.0; mass_row[9] = 26.0;  
       break; 
     case 6:
-      mass_row[0] = 1.0/160.0; mass_row[2] = 1.0/160.0;
-      mass_row[4] = 13.0/720.0; mass_row[5] = 13.0/720.0;
-      mass_row[6] = 1.0/18.0; mass_row[7] = 13.0/720.0;
-      mass_row[8] = 1.0/180.0; mass_row[9] = 13.0/720.0;
+      mass_row[0] = 9.0; mass_row[1] = 0.0; 
+      mass_row[2] = 9.0; mass_row[3] = 0.0; 
+      mass_row[4] = 26.0; mass_row[5] = 26.0; 
+      mass_row[6] = 80.0; mass_row[7] = 26.0; 
+      mass_row[8] = 8.0; mass_row[9] = 26.0; 
       break; 
-    case 7: 
-      mass_row[0] = 1.0/160.0; mass_row[3] = 1.0/160.0;
-      mass_row[4] = 13.0/720.0; mass_row[5] = 1.0/180.0;
-      mass_row[6] = 13.0/720.0; mass_row[7] = 1.0/18.0;
-      mass_row[8] = 13.0/720.0; mass_row[9] = 13.0/720.0;
+    case 7:
+      mass_row[0] = 9.0; mass_row[1] = 0.0; 
+      mass_row[2] = 0.0; mass_row[3] = 9.0; 
+      mass_row[4] = 26.0; mass_row[5] = 8.0; 
+      mass_row[6] = 26.0; mass_row[7] = 80.0; 
+      mass_row[8] = 26.0; mass_row[9] = 26.0;  
       break; 
-    case 8: 
-      mass_row[1] = 1.0/160.0; mass_row[3] = 1.0/160.0;
-      mass_row[4] = 13.0/720.0; mass_row[5] = 13.0/720.0;
-      mass_row[6] = 1.0/180.0; mass_row[7] = 13.0/720.0;
-      mass_row[8] = 1.0/18.0; mass_row[9] = 13.0/720.0;
+    case 8:
+      mass_row[0] = 0.0; mass_row[1] = 9.0; 
+      mass_row[2] = 0.0; mass_row[3] = 9.0; 
+      mass_row[4] = 26.0; mass_row[5] = 26.0; 
+      mass_row[6] = 8.0; mass_row[7] = 26.0; 
+      mass_row[8] = 80.0; mass_row[9] = 26.0;  
       break; 
     case 9:
-      mass_row[2] = 1.0/160.0; mass_row[3] = 1.0/160.0;
-      mass_row[4] = 1.0/180.0; mass_row[5] = 13.0/720.0;
-      mass_row[6] = 13.0/720.0; mass_row[7] = 13.0/720.0;
-      mass_row[8] = 13.0/720.0; mass_row[9] = 1.0/18.0;
+      mass_row[0] = 0.0; mass_row[1] = 0.0; 
+      mass_row[2] = 9.0; mass_row[3] = 9.0; 
+      mass_row[4] = 8.0; mass_row[5] = 26.0; 
+      mass_row[6] = 26.0; mass_row[7] = 26.0; 
+      mass_row[8] = 26.0; mass_row[9] = 80.0; 
       break; 
     default: 
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
                                   "Error! invalid value row = " << row << " to compositeTetLocalMassRow! \n"
                                   << "Row must be between 0 and 9.\n"); 
+  }
+  for (int i=0; i<mass_row.size(); i++) {
+    mass_row[i] /= 1440.0; 
   }
   return mass_row; 
 }
