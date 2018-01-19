@@ -43,7 +43,7 @@ CompositeTetMassResidualBase(const Teuchos::ParameterList& p,
 
 #ifdef DEBUG_OUTPUT 
   *out_ << "IKT resid_using_cub, use_composite_tet, use_ct_exact_mass = " << resid_using_cub_ << ", " 
-        << use_composite_tet << ", " << use_ct_exact_mass_ << "\n"; 
+        << use_composite_tet_ << ", " << use_ct_exact_mass_ << "\n"; 
 #endif
   this->addDependentField(w_bf_);
   this->addEvaluatedField(ct_mass_);
