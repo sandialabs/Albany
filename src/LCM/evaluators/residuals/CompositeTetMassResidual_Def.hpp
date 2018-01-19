@@ -143,7 +143,7 @@ hexLocalMassRow(const int row) const
       break; 
     default: 
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-                                  "Error! invalid value row = " << row << " to compositeTetLocalMassRow! \n"
+                                  "Error! invalid value row = " << row << " to hexLocalMassRow! \n"
                                   << "Row must be between 0 and 7.\n"); 
   }
   for (int i=0; i<mass_row.size(); i++) {
