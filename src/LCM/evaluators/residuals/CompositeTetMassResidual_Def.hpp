@@ -432,8 +432,6 @@ computeResidualValue(typename Traits::EvalData workset) const
           mass_row = this->hex8LocalMassRow(node);
           elt_vol_scale_node = elt_vol/8.0;  
         }
-        //IKT, FIXME: 
-        //const RealType elt_vol_scale_node = this->computeElementVolScaling(cell, node); 
         for (int dim = 0; dim < this->num_dims_; ++dim) {
           ScalarT val = 0.0; 
           for (int i = 0; i < this->num_nodes_; ++i) { //loop over columns
@@ -508,7 +506,7 @@ evaluateFields(typename Traits::EvalData workset)
   //Set local Jacobian entries 
   double n_coeff = workset.n_coeff;
 #ifdef DEBUG_OUTPUT
-  *(this->out_) << "  IKT n_coeff = " << ", " << n_coeff << "\n"; 
+  *(this->out_) << "  IKT n_coeff = " << n_coeff << "\n"; 
 #endif 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     const RealType elt_vol = this->computeElementVolume(cell); 
@@ -523,8 +521,6 @@ evaluateFields(typename Traits::EvalData workset)
         mass_row = this->hex8LocalMassRow(node);
         elt_vol_scale_node = elt_vol/8.0; 
       }
-      //IKT, FIXME
-      //const RealType elt_vol_scale_node = this->computeElementVolScaling(cell, node); 
       for (int dim = 0; dim < this->num_dims_; ++dim) {
         typename PHAL::Ref<ScalarT>::type valref = (this->ct_mass_)(cell,node,dim); //get Jacobian row 
         int k;
