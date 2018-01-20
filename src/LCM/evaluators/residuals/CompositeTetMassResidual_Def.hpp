@@ -28,6 +28,7 @@ CompositeTetMassResidualBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl)
  :
       w_bf_(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
+      weights_("Weights", dl->qp_scalar),
       ct_mass_(p.get<std::string>("Composite Tet Mass Name"), dl->node_vector), 
       out_(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
@@ -46,6 +47,7 @@ CompositeTetMassResidualBase(const Teuchos::ParameterList& p,
         << use_composite_tet_ << ", " << use_ct_exact_mass_ << "\n"; 
 #endif
   this->addDependentField(w_bf_);
+  this->addDependentField(weights_);
   this->addEvaluatedField(ct_mass_);
 
   if (p.isType<bool>("Disable Dynamics"))
@@ -88,6 +90,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(w_bf_, fm);
+  this->utils.setFieldData(weights_, fm);
   this->utils.setFieldData(ct_mass_, fm);
   if (enable_dynamics_) {
     this->utils.setFieldData(accel_qps_, fm);
@@ -109,11 +112,11 @@ tet4LocalMassRow(const int row) const
       mass_row[0] = 1.0; mass_row[1] = 2.0; 
       mass_row[2] = 1.0; mass_row[3] = 1.0; 
       break; 
-    case 3: 
+    case 2: 
       mass_row[0] = 1.0; mass_row[1] = 1.0; 
       mass_row[2] = 2.0; mass_row[3] = 1.0; 
       break; 
-    case 4: 
+    case 3: 
       mass_row[0] = 1.0; mass_row[1] = 1.0; 
       mass_row[2] = 1.0; mass_row[3] = 2.0; 
       break; 
@@ -169,8 +172,9 @@ tet10LocalMassRow(const int row) const
       mass_row[6] = 16.0; mass_row[7] = 16.0; 
       mass_row[8] = 16.0; mass_row[9] = 8.0; 
       break; 
-    case 5: 
+    case 5:
       mass_row[0] = -6.0; mass_row[1] = -4.0; 
+      mass_row[2] = -4.0; mass_row[3] = -6.0; 
       mass_row[4] = 16.0; mass_row[5] = 32.0; 
       mass_row[6] = 16.0; mass_row[7] = 8.0; 
       mass_row[8] = 16.0; mass_row[9] = 16.0; 
@@ -374,6 +378,21 @@ computeElementVolScaling(const int cell, const int node) const
 }
 
 template<typename EvalT, typename Traits>
+RealType CompositeTetMassResidualBase<EvalT, Traits>::
+computeElementVolume(const int cell) const 
+{
+  RealType elt_vol = 0.0; 
+  for (int pt = 0; pt < num_pts_; ++pt) {
+    elt_vol += weights_(cell, pt); 
+  }
+#ifdef DEBUG_OUTPUT
+  if (cell == 0) 
+    *out_ << "  IKT elt_vol = " << elt_vol << "\n"; 
+#endif
+  return elt_vol; 
+}
+
+template<typename EvalT, typename Traits>
 void CompositeTetMassResidualBase<EvalT, Traits>::
 computeResidualValue(typename Traits::EvalData workset) const 
 {
@@ -401,15 +420,20 @@ computeResidualValue(typename Traits::EvalData workset) const
   else {
     //Approach 2: uses mass matrix to compute residual contribution (r = rho*M*a)
     for (int cell = 0; cell < workset.numCells; ++cell) {
+      const RealType elt_vol = this->computeElementVolume(cell); 
       for (int node = 0; node < this->num_nodes_; ++node) { //loop over rows
         std::vector<RealType> mass_row; 
+        RealType elt_vol_scale_node;  
         if (use_composite_tet_ == true) { //composite tet
           mass_row = this->compositeTetLocalMassRow(node);
+          elt_vol_scale_node = elt_vol;  
         }
         else { //hex8
           mass_row = this->hex8LocalMassRow(node);
+          elt_vol_scale_node = elt_vol/8.0;  
         }
-        const RealType elt_vol_scale_node = this->computeElementVolScaling(cell, node); 
+        //IKT, FIXME: 
+        //const RealType elt_vol_scale_node = this->computeElementVolScaling(cell, node); 
         for (int dim = 0; dim < this->num_dims_; ++dim) {
           ScalarT val = 0.0; 
           for (int i = 0; i < this->num_nodes_; ++i) { //loop over columns
@@ -487,15 +511,20 @@ evaluateFields(typename Traits::EvalData workset)
   *(this->out_) << "  IKT n_coeff = " << ", " << n_coeff << "\n"; 
 #endif 
   for (int cell = 0; cell < workset.numCells; ++cell) {
+    const RealType elt_vol = this->computeElementVolume(cell); 
     for (int node = 0; node < this->num_nodes_; ++node) { //loop over Jacobian rows
       std::vector<RealType> mass_row;
+      RealType elt_vol_scale_node; 
       if (this->use_composite_tet_ == true) { //composite tet
         mass_row = this->compositeTetLocalMassRow(node);
+        elt_vol_scale_node = elt_vol; 
       }
       else { //hex8
         mass_row = this->hex8LocalMassRow(node);
+        elt_vol_scale_node = elt_vol/8.0; 
       }
-      const RealType elt_vol_scale_node = this->computeElementVolScaling(cell, node); 
+      //IKT, FIXME
+      //const RealType elt_vol_scale_node = this->computeElementVolScaling(cell, node); 
       for (int dim = 0; dim < this->num_dims_; ++dim) {
         typename PHAL::Ref<ScalarT>::type valref = (this->ct_mass_)(cell,node,dim); //get Jacobian row 
         int k;

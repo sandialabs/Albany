@@ -1818,6 +1818,7 @@ MechanicsProblem::constructEvaluators(
       // Input
       p->set<std::string>("Weighted BF Name", "wBF");
       p->set<std::string>("Acceleration Name", "Acceleration");
+      p->set<std::string>("Weights Name",          "Weights");
       // Mechanics residual need value of density for transient analysis.
       // Get it from material. Assumed constant in element block.
       if (material_db_->isElementBlockParam(eb_name, "Density")) {
