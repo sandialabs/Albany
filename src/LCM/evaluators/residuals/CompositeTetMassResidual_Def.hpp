@@ -16,6 +16,10 @@
 
 //IKT: uncomment the following for debug output
 //#define DEBUG_OUTPUT
+//IKT: uncomment to try different elements
+#define HEX8
+//#define TET4
+//#define TET10
 
 // **********************************************************************
 // Base Class Generic Implemtation
@@ -100,7 +104,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 template<typename EvalT, typename Traits>
 std::vector<RealType> CompositeTetMassResidualBase<EvalT, Traits>::
-tet4LocalMassRow(const int row) const 
+tet4LocalMassRow(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(4);
   switch(row) {
@@ -125,15 +129,18 @@ tet4LocalMassRow(const int row) const
                                   "Error! invalid value row = " << row << " to tet4LocalMassRow! \n"
                                   << "Row must be between 0 and 3.\n"); 
   }
+  const RealType elt_vol = computeElementVolume(cell); 
+  const RealType scale = elt_vol * 6.0 * density_;
   for (int i=0; i<mass_row.size(); i++) {
     mass_row[i] /= 120.0; 
+    mass_row[i] *= scale;  
   }
   return mass_row; 
 }
 
 template<typename EvalT, typename Traits>
 std::vector<RealType> CompositeTetMassResidualBase<EvalT, Traits>::
-tet10LocalMassRow(const int row) const 
+tet10LocalMassRow(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(10);
   switch(row) {
@@ -212,15 +219,18 @@ tet10LocalMassRow(const int row) const
                                   "Error! invalid value row = " << row << " to tet10LocalMassRow! \n"
                                   << "Row must be between 0 and 9.\n"); 
   }
+  const RealType elt_vol = computeElementVolume(cell); 
+  const RealType scale = elt_vol * 6.0 * density_;
   for (int i=0; i<mass_row.size(); i++) {
-    mass_row[i] /= 2520.0; 
+    mass_row[i] /= 2520.0 ; 
+    mass_row[i] *= scale;  
   }
   return mass_row; 
 }
 
 template<typename EvalT, typename Traits>
 std::vector<RealType> CompositeTetMassResidualBase<EvalT, Traits>::
-hex8LocalMassRow(const int row) const 
+hex8LocalMassRow(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(8);
   switch(row) {
@@ -269,15 +279,18 @@ hex8LocalMassRow(const int row) const
                                   "Error! invalid value row = " << row << " to hex8LocalMassRow! \n"
                                   << "Row must be between 0 and 7.\n"); 
   }
+  const RealType elt_vol = computeElementVolume(cell); 
+  const RealType scale = elt_vol / 8.0 * density_;
   for (int i=0; i<mass_row.size(); i++) {
-    mass_row[i] /= 27.0; 
+    mass_row[i] /= 27.0 ;
+    mass_row[i] *= scale;  
   }
   return mass_row; 
 }
  
 template<typename EvalT, typename Traits>
 std::vector<RealType> CompositeTetMassResidualBase<EvalT, Traits>::
-compositeTetLocalMassRow(const int row) const 
+compositeTetLocalMassRow(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(10); 
   switch(row) {
@@ -356,8 +369,11 @@ compositeTetLocalMassRow(const int row) const
                                   "Error! invalid value row = " << row << " to compositeTetLocalMassRow! \n"
                                   << "Row must be between 0 and 9.\n"); 
   }
+  const RealType elt_vol = computeElementVolume(cell); 
+  const RealType scale = elt_vol * density_;
   for (int i=0; i<mass_row.size(); i++) {
     mass_row[i] /= 1440.0; 
+    mass_row[i] *= scale;  
   }
   return mass_row; 
 }
@@ -420,22 +436,29 @@ computeResidualValue(typename Traits::EvalData workset) const
   else {
     //Approach 2: uses mass matrix to compute residual contribution (r = rho*M*a)
     for (int cell = 0; cell < workset.numCells; ++cell) {
-      const RealType elt_vol = this->computeElementVolume(cell); 
       for (int node = 0; node < this->num_nodes_; ++node) { //loop over rows
         std::vector<RealType> mass_row; 
-        RealType elt_vol_scale_node;  
         if (use_composite_tet_ == true) { //composite tet
-          mass_row = this->compositeTetLocalMassRow(node);
-          elt_vol_scale_node = elt_vol;  
+          mass_row = this->compositeTetLocalMassRow(cell, node);
         }
-        else { //hex8
-          mass_row = this->hex8LocalMassRow(node);
-          elt_vol_scale_node = elt_vol/8.0;  
+        else {
+#ifdef HEX8 
+          //hex8
+          mass_row = this->hex8LocalMassRow(cell, node);
+#endif
+#ifdef TET4
+          //tet4
+          mass_row = this->tet4LocalMassRow(cell, node);
+#endif
+#ifdef TET10
+          //tet10 (isoparametric)
+          mass_row = this->tet10LocalMassRow(cell, node);
+#endif
         }
         for (int dim = 0; dim < this->num_dims_; ++dim) {
           ScalarT val = 0.0; 
           for (int i = 0; i < this->num_nodes_; ++i) { //loop over columns
-            val += (this->density_)*elt_vol_scale_node*mass_row[i]*accel_nodes_(cell, i, dim); 
+            val += mass_row[i]*accel_nodes_(cell, i, dim); 
           }
           (this->ct_mass_)(cell, node, dim) += val; 
         }
@@ -509,24 +532,31 @@ evaluateFields(typename Traits::EvalData workset)
   *(this->out_) << "  IKT n_coeff = " << n_coeff << "\n"; 
 #endif 
   for (int cell = 0; cell < workset.numCells; ++cell) {
-    const RealType elt_vol = this->computeElementVolume(cell); 
     for (int node = 0; node < this->num_nodes_; ++node) { //loop over Jacobian rows
       std::vector<RealType> mass_row;
-      RealType elt_vol_scale_node; 
       if (this->use_composite_tet_ == true) { //composite tet
-        mass_row = this->compositeTetLocalMassRow(node);
-        elt_vol_scale_node = elt_vol; 
+        mass_row = this->compositeTetLocalMassRow(cell, node);
       }
-      else { //hex8
-        mass_row = this->hex8LocalMassRow(node);
-        elt_vol_scale_node = elt_vol/8.0; 
+      else {
+#ifdef HEX8
+        //hex8
+        mass_row = this->hex8LocalMassRow(cell, node);
+#endif
+#ifdef TET4
+        //tet4
+        mass_row = this->tet4LocalMassRow(cell, node);
+#endif
+#ifdef TET10
+        //tet10 (isoparametric)
+        mass_row = this->tet10LocalMassRow(cell, node);
+#endif
       }
       for (int dim = 0; dim < this->num_dims_; ++dim) {
         typename PHAL::Ref<ScalarT>::type valref = (this->ct_mass_)(cell,node,dim); //get Jacobian row 
         int k;
         for (int i=0; i < this->num_nodes_; ++i) { //loop over Jacobian cols 
           k = i*this->num_dims_ + dim;
-          valref.fastAccessDx(k) = n_coeff*mass_row[i]*(this->density_)*elt_vol_scale_node;
+          valref.fastAccessDx(k) = n_coeff*mass_row[i];
         }
       }
     }

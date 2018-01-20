@@ -43,15 +43,15 @@ protected:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  /// Local function: return row of exact composite tet local mass (unscaled)
-  std::vector<RealType> compositeTetLocalMassRow(const int row) const;
-  /// Local function: return row of exact 8-node hexahedron local mass (unscaled)
-  std::vector<RealType> hex8LocalMassRow(const int row) const;
-  /// Local function: return row of exact 4-node tetrahedron local mass (unscaled)
-  std::vector<RealType> tet4LocalMassRow(const int row) const;
+  /// Local function: return row of exact composite tet local mass 
+  std::vector<RealType> compositeTetLocalMassRow(const int cell, const int row) const;
+  /// Local function: return row of exact 8-node hexahedron local mass 
+  std::vector<RealType> hex8LocalMassRow(const int cell, const int row) const;
+  /// Local function: return row of exact 4-node tetrahedron local mass 
+  std::vector<RealType> tet4LocalMassRow(const int cell, const int row) const;
   /// Local function: return row of exact 10-node (isoparametric) tetrahedron 
-  //local mass (unscaled)
-  std::vector<RealType> tet10LocalMassRow(const int row) const;
+  //local mass
+  std::vector<RealType> tet10LocalMassRow(const int cell, const int row) const;
   /// Local function: returns \int w_bf d\Omega for a given cell as a given node, 
   //  needed to compute the volume of each element to multiply local mass by.
   RealType computeElementVolScaling(const int cell, const int node) const; 
