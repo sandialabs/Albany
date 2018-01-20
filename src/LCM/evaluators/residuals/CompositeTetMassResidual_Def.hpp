@@ -173,11 +173,11 @@ tet10LocalMassRow(const int row) const
       mass_row[8] = 16.0; mass_row[9] = 8.0; 
       break; 
     case 5:
-      mass_row[0] = -6.0; mass_row[1] = -4.0; 
-      mass_row[2] = -4.0; mass_row[3] = -6.0; 
-      mass_row[4] = 16.0; mass_row[5] = 32.0; 
-      mass_row[6] = 16.0; mass_row[7] = 8.0; 
-      mass_row[8] = 16.0; mass_row[9] = 16.0; 
+      mass_row[0] = -6.0; mass_row[1] = -4.0;
+      mass_row[2] = -4.0; mass_row[3] = -6.0;
+      mass_row[4] = 16.0; mass_row[5] = 32.0;
+      mass_row[6] = 16.0; mass_row[7] = 8.0;
+      mass_row[8] = 16.0; mass_row[9] = 16.0;
       break; 
     case 6: 
       mass_row[0] = -4.0; mass_row[1] = -6.0; 
