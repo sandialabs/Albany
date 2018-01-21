@@ -35,6 +35,7 @@ LCM:
     2D Scale: 0.25000000
     Method: STK2D
     Exodus Output File Name: thel2d_tpetra.exo
+    Output DTK Field to Exodus: false
   Regression Results:
     Number of Comparisons: 1
     Test Values: [0.18807982]

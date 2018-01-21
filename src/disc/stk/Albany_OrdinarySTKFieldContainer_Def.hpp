@@ -70,7 +70,10 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   typedef typename AbstractSTKFieldContainer::SphereVolumeFieldType SVFT;
 
   int num_time_deriv = params_->get<int>("Number Of Time Derivatives");
-
+  //Boolean marking whether to output DTK Field to Exodus.  This must be true when running
+  //Schwarz!  Note that this is only relevant when code is compiled with DTK turned on. 
+  int output_dtk_field = params_->get<bool>("Output DTK Field to Exodus", true);  
+ 
   //Start STK stuff
   this->coordinates_field = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK, "coordinates");
   stk::mesh::put_field(*this->coordinates_field , metaData_->universal_part(), numDim_);
@@ -101,15 +104,18 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
     stk::mesh::put_field(*solution_field[num_vecs] , metaData_->universal_part(), neq_);
 
 #if defined(ALBANY_DTK)
-    solution_field_dtk[num_vecs] = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK,
-                                    params_->get<std::string>(sol_dtk_tag_name[num_vecs], sol_dtk_id_name[num_vecs]));
-    stk::mesh::put_field(*solution_field_dtk[num_vecs] , metaData_->universal_part() , neq_);
+    if (output_dtk_field == true) { 
+      solution_field_dtk[num_vecs] = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK,
+                                      params_->get<std::string>(sol_dtk_tag_name[num_vecs], sol_dtk_id_name[num_vecs]));
+      stk::mesh::put_field(*solution_field_dtk[num_vecs] , metaData_->universal_part() , neq_);
+   }
 #endif
 
 #ifdef ALBANY_SEACAS
     stk::io::set_field_role(*solution_field[num_vecs], Ioss::Field::TRANSIENT);
 #if defined(ALBANY_DTK)
-    stk::io::set_field_role(*solution_field_dtk[num_vecs], Ioss::Field::TRANSIENT);
+    if (output_dtk_field == true) 
+      stk::io::set_field_role(*solution_field_dtk[num_vecs], Ioss::Field::TRANSIENT);
 #endif
 #endif
 

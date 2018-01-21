@@ -100,6 +100,7 @@ Albany::SimMeshStruct::getValidDiscretizationParameters() const
   validPL->set<std::string>("Sim Restart File Name", "", "read initial solution field from this file");
   validPL->set<double>("Sim Restart Time", 0, "simulation time to restart from");
   validPL->set<int>("Number Of Time Derivatives", -1, "Number of time derivatives");
+  validPL->set<bool>("Output DTK Field to Exodus", true, "Boolean indicating whether to write dtk field to exodus file");  
 
   return validPL;
 }
