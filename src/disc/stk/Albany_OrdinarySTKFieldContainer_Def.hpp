@@ -70,9 +70,8 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   typedef typename AbstractSTKFieldContainer::SphereVolumeFieldType SVFT;
 
   int num_time_deriv = params_->get<int>("Number Of Time Derivatives");
-  //Boolean marking whether to output DTK Field to Exodus.  This must be true when running
-  //Schwarz!  Note that this is only relevant when code is compiled with DTK turned on. 
-  int output_dtk_field = params_->get<bool>("Output DTK Field to Exodus", true);  
+  
+  int output_dtk_field = params_->get<bool>("Output DTK Field to Exodus", false);  
  
   //Start STK stuff
   this->coordinates_field = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK, "coordinates");

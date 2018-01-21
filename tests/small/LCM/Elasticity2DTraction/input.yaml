@@ -25,6 +25,7 @@ LCM:
     Method: Ioss
     Exodus Input File Name: hole.exo
     Exodus Output File Name: hole_out.exo
+    Output DTK Field to Exodus: true
   Piro:
     LOCA:
       Bifurcation: { }

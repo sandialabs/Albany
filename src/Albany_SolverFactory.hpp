@@ -129,6 +129,8 @@ class SolverFactory {
     return *appParams;
   }
 
+  void setSchwarz(const bool schwarz) {is_schwarz_ = schwarz;}
+
  public:
   // Functions to generate reference parameter lists for validation
   //  EGN 9/2013: made these three functions public, as they pertain to valid
@@ -226,6 +228,8 @@ class SolverFactory {
   Teuchos::RCP<Teuchos::ParameterList> appParams;
 
   Teuchos::RCP<Teuchos::FancyOStream> out;
+
+  bool is_schwarz_{false}; 
 
 #if defined(ALBANY_EPETRA)
   Teuchos::RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory;

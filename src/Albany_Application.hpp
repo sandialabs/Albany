@@ -85,7 +85,8 @@ public:
   Application(
       const Teuchos::RCP<const Teuchos_Comm> &comm,
       const Teuchos::RCP<Teuchos::ParameterList> &params,
-      const Teuchos::RCP<const Tpetra_Vector> &initial_guess = Teuchos::null);
+      const Teuchos::RCP<const Tpetra_Vector> &initial_guess = Teuchos::null, 
+      const bool schwarz = false);
 
   //! Constructor
   Application(const Teuchos::RCP<const Teuchos_Comm> &comm);
@@ -454,7 +455,7 @@ public:
   //! Routine to get workset (bucket) size info needed by all Evaluation types
   template <typename EvalT>
   void loadWorksetBucketInfo(PHAL::Workset &workset, const int &ws);
-
+  
 #if defined(ALBANY_EPETRA)
   void loadBasicWorksetInfo(PHAL::Workset &workset, double current_time);
 #endif
@@ -661,6 +662,8 @@ private:
   bool MOR_apply_bcs_{true};
 
 protected:
+
+  bool is_schwarz_; 
   
   bool no_dir_bcs_;
 

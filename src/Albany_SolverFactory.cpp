@@ -336,7 +336,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 
     RCP<Albany::Application> app;
     if (createAlbanyApp) {
-      app = rcp(new Albany::Application(appCommT, appParams, initial_guess));
+      app = rcp(new Albany::Application(appCommT, appParams, initial_guess, is_schwarz_));
       albanyApp = app;
     } else
       app = albanyApp;
@@ -382,7 +382,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
   RCP<Albany::Application> app;
 
   if (createAlbanyApp) {
-    app = rcp(new Albany::Application(appCommT, appParams, initial_guess));
+    app = rcp(new Albany::Application(appCommT, appParams, initial_guess, is_schwarz_));
 
     // Pass back albany app so that interface beyond ModelEvaluator can be used.
     // This is essentially a hack to allow additional in/out arguments beyond
@@ -471,7 +471,7 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     // twice, here and below, when calling
     //    createAndGetAlbanyApp. Why? (Mauro)
     if (createAlbanyApp) {
-      app = rcp(new Albany::Application(appCommT, appParams, initial_guess));
+      app = rcp(new Albany::Application(appCommT, appParams, initial_guess, is_schwarz_));
 
       // Pass back albany app so that interface beyond ModelEvaluator can be
       // used.
@@ -753,7 +753,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
       RCP<Albany::Application> app;
 
-      app = rcp(new Albany::Application(appComm, appParams, initial_guess));
+      app = rcp(new Albany::Application(appComm, appParams, initial_guess, is_schwarz_));
       RCP<Thyra::ModelEvaluatorDefaultBase<ST>> modelHV(
           new Aeras::HVDecorator(app, appParams));
 
@@ -916,7 +916,7 @@ Albany::SolverFactory::createAlbanyAppAndModel(
     const Teuchos::RCP<const Teuchos_Comm>& appCommT,
     const Teuchos::RCP<const Tpetra_Vector>& initial_guess) {
   // Create application
-  albanyApp = rcp(new Albany::Application(appCommT, appParams, initial_guess));
+  albanyApp = rcp(new Albany::Application(appCommT, appParams, initial_guess, is_schwarz_));
 
   return createModel(albanyApp, appCommT);
 }
@@ -946,7 +946,7 @@ Albany::SolverFactory::createAlbanyAppAndModelT(
     const bool createAlbanyApp) {
   if (createAlbanyApp) {
     // Create application
-    albanyApp = rcp(new Albany::Application(appComm, appParams, initial_guess));
+    albanyApp = rcp(new Albany::Application(appComm, appParams, initial_guess, is_schwarz_));
     //  albanyApp = rcp(new Albany::ApplicationT(appComm, appParams,
     //  initial_guess));
   }

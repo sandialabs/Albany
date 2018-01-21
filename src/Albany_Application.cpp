@@ -79,12 +79,13 @@ extern bool TpetraBuild;
 
 Albany::Application::Application(const RCP<const Teuchos_Comm> &comm_,
                                  const RCP<Teuchos::ParameterList> &params,
-                                 const RCP<const Tpetra_Vector> &initial_guess)
+                                 const RCP<const Tpetra_Vector> &initial_guess, 
+                                 const bool schwarz)
     : commT(comm_), out(Teuchos::VerboseObjectBase::getDefaultOStream()),
       physicsBasedPreconditioner(false), shapeParamsHaveBeenReset(false),
       morphFromInit(true), perturbBetaForDirichlets(0.0), phxGraphVisDetail(0),
       stateGraphVisDetail(0), params_(params), requires_sdbcs_(false),
-      requires_orig_dbcs_(false), no_dir_bcs_(false) {
+      requires_orig_dbcs_(false), no_dir_bcs_(false), is_schwarz_{schwarz} {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
 #endif
@@ -247,7 +248,7 @@ void Albany::Application::initialSetUp(
 
   // Set in Albany_AbstractProblem constructor or in siblings
   num_time_deriv = problemParams->get<int>("Number Of Time Derivatives");
-
+  
   // Possibly set in the Discretization list in the input file - this overrides
   // the above if set
   int num_time_deriv_from_input =
@@ -257,6 +258,13 @@ void Albany::Application::initialSetUp(
     discParams.set<int>("Number Of Time Derivatives", num_time_deriv);
   else
     num_time_deriv = num_time_deriv_from_input;
+
+#ifdef ALBANY_DTK
+  if (is_schwarz_ == true) {
+    //Write DTK Field to Exodus if Schwarz is used 
+    discParams.set<bool>("Output DTK Field to Exodus", true); 
+  }
+#endif
 
   TEUCHOS_TEST_FOR_EXCEPTION(
       num_time_deriv > 2, std::logic_error,

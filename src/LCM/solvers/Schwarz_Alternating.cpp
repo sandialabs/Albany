@@ -119,6 +119,8 @@ SchwarzAlternating(
     Albany::SolverFactory
     solver_factory(model_filenames[subdomain], comm);
 
+    solver_factory.setSchwarz(true); 
+
     Teuchos::ParameterList &
     params = solver_factory.getParameters();
 
@@ -158,14 +160,14 @@ SchwarzAlternating(
 
     Teuchos::RCP<Albany::Application>
     app{Teuchos::null};
-
+    
     Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
     solver = solver_factory.createAndGetAlbanyAppT(app, comm, comm);
 
     solvers_[subdomain] = solver;
 
     app->setSchwarzAlternating(true);
-
+    
     apps_[subdomain] = app;
 
     // Get STK mesh structs to control Exodus output interval

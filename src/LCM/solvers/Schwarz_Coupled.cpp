@@ -463,7 +463,7 @@ SchwarzCoupled(
 
     //create application for mth model
     apps_[m] = Teuchos::rcp(new Albany::Application(
-        comm, model_app_params_[m].create_weak(), initial_guess));
+        comm, model_app_params_[m].create_weak(), initial_guess, true));
 
     int num_sol_vectors =
         apps_[m]->getAdaptSolMgrT()->getInitialSolution()->getNumVectors();
