@@ -205,11 +205,10 @@ MechanicsProblem::constructEvaluators(
             eb_name, "Average J Stabilization Parameter", 0.0);
 
   // Check if we are setting the composite tet flag
-  const bool 
-  composite = material_db_->getElementBlockParam<bool>(
+  composite_ = material_db_->getElementBlockParam<bool>(
       eb_name, "Use Composite Tet 10", false);
 
-  pFromProb->set<bool>("Use Composite Tet 10", composite);
+  pFromProb->set<bool>("Use Composite Tet 10", composite_);
   
   // set flag for small strain option
   bool
@@ -243,18 +242,18 @@ MechanicsProblem::constructEvaluators(
 
   // FIXME: really need to check for WEDGE_12 topologies
   TEUCHOS_TEST_FOR_EXCEPTION(
-      composite && surface_element,
+      composite_ && surface_element,
       std::logic_error,
       "Surface elements are not yet supported with the composite tet");
 
   // Get the intrepid basis for the given cell topology
   Intrepid2Basis
-  intrepidBasis = getIntrepid2Basis(meshSpecs.ctd, composite);
+  intrepidBasis = getIntrepid2Basis(meshSpecs.ctd, composite_);
 
   // define cell topologies
   Teuchos::RCP<shards::CellTopology> const
   cellType = Teuchos::rcp(new shards::CellTopology(
-      composite && meshSpecs.ctd.dimension == 3 && meshSpecs.ctd.node_count == 10 ?
+      composite_ && meshSpecs.ctd.dimension == 3 && meshSpecs.ctd.node_count == 10 ?
       shards::getCellTopologyData<shards::Tetrahedron<11>>() :
       &meshSpecs.ctd));
 
@@ -265,7 +264,7 @@ MechanicsProblem::constructEvaluators(
   cubature = cubFactory.create<PHX::Device, RealType, RealType>(
       *cellType, meshSpecs.cubatureDegree);
 
-  if (composite) {
+  if (composite_) {
     ALBANY_ASSERT(meshSpecs.cubatureDegree < 4, "\n Cannot use Composite Tet 10 elements + Cubature Degree > 3!  You have "
                                                 << " specified Cubature Degree = " << meshSpecs.cubatureDegree << ".\n");
   }
@@ -1832,19 +1831,16 @@ MechanicsProblem::constructEvaluators(
            eb_name, "Residual Computed Using Cubature", false);
       p->set<bool>("Residual Computed Using Cubature", resid_using_cub);
 
-      const bool 
-      composite_tet = material_db_->getElementBlockParam<bool>(
-           eb_name, "Use Composite Tet", false);
-      p->set<bool>("Use Composite Tet", composite_tet);
+      p->set<bool>("Use Composite Tet 10", composite_);
 
       const bool 
       use_ct_exact_mass = material_db_->getElementBlockParam<bool>(
-           eb_name, "Use Composite Tet Exact Mass", false);
-      p->set<bool>("Use Composite Tet Exact Mass", use_ct_exact_mass);
+           eb_name, "Use Composite Tet 10 Exact Mass", false);
+      p->set<bool>("Use Composite Tet 10 Exact Mass", use_ct_exact_mass);
 
       p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
       // Output
-      p->set<std::string>("Composite Tet Mass Name", "Composite Tet Mass Residual");
+      p->set<std::string>("Composite Tet 10 Mass Name", "Composite Tet 10 Mass Residual");
       ev = Teuchos::rcp(
           new LCM::CompositeTetMassResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -1861,15 +1857,12 @@ MechanicsProblem::constructEvaluators(
       p->set<std::string>("Weighted BF Name", "wBF");
       p->set<std::string>("Acceleration Name", "Acceleration");
       p->set<std::string>("Body Force Name", "Body Force");
-      p->set<std::string>("Composite Tet Mass Name", "Composite Tet Mass Residual");
-      const bool 
-      composite_tet = material_db_->getElementBlockParam<bool>(
-           eb_name, "Use Composite Tet", false);
-      p->set<bool>("Use Composite Tet", composite_tet);
+      p->set<std::string>("Composite Tet 10 Mass Name", "Composite Tet 10 Mass Residual");
+      p->set<bool>("Use Composite Tet 10", composite_);
       const bool 
       use_ct_exact_mass = material_db_->getElementBlockParam<bool>(
-           eb_name, "Use Composite Tet Exact Mass", false);
-      p->set<bool>("Use Composite Tet Exact Mass", use_ct_exact_mass);
+           eb_name, "Use Composite Tet 10 Exact Mass", false);
+      p->set<bool>("Use Composite Tet 10 Exact Mass", use_ct_exact_mass);
       if (Teuchos::nonnull(rc_mgr_)) {
         p->set<std::string>("DefGrad Name", defgrad);
         rc_mgr_->registerField(

@@ -33,7 +33,7 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
           dl->node_qp_vector),
       w_bf_(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
       residual_(p.get<std::string>("Residual Name"), dl->node_vector),
-      ct_mass_(p.get<std::string>("Composite Tet Mass Name"), dl->node_vector),  
+      ct_mass_(p.get<std::string>("Composite Tet 10 Mass Name"), dl->node_vector),  
       have_body_force_(p.isType<bool>("Has Body Force")),
       density_(p.get<RealType>("Density", 1.0))
 {
@@ -50,8 +50,8 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
   else
     enable_dynamics_ = true;
 
-  use_composite_tet_ = p.get<bool>("Use Composite Tet"); 
-  use_ct_exact_mass_ = p.get<bool>("Use Composite Tet Exact Mass");
+  use_composite_tet_ = p.get<bool>("Use Composite Tet 10"); 
+  use_ct_exact_mass_ = p.get<bool>("Use Composite Tet 10 Exact Mass");
 #ifdef DEBUG_OUTPUT
   *out << "IKT use_composite_tet_, use_ct_exact_mass_ = " << use_composite_tet_ << ", " 
        << use_ct_exact_mass_ << "\n";  
@@ -59,9 +59,9 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
   if ((use_composite_tet_ == false) && (use_ct_exact_mass_ == true) && (cc == 0)) {
     *out << "\n ****************************************************************\n" 
          << "WARNING: you are not using a composite tet element yet you have \n" 
-         << "selected 'Use Composite Tet Exact Mass' to true.  This option only \n"
-         << "works correctly for Composite Tet and Hex8 elements, so if you are \n"
-         << "not using a Hex8 element, you will get the wrong result!\n"
+         << "selected 'Use Composite Tet 10 Exact Mass' to true.  This option only \n"
+         << "works correctly for Composite Tet 10 and Hex 8 elements, so if you are \n"
+         << "not using a Hex 8 element, you will get the wrong result!\n"
          << "\n ****************************************************************\n\n";  
   }
   cc++; 

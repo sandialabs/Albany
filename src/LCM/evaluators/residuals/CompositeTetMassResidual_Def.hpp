@@ -33,7 +33,7 @@ CompositeTetMassResidualBase(const Teuchos::ParameterList& p,
  :
       w_bf_(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
       weights_("Weights", dl->qp_scalar),
-      ct_mass_(p.get<std::string>("Composite Tet Mass Name"), dl->node_vector), 
+      ct_mass_(p.get<std::string>("Composite Tet 10 Mass Name"), dl->node_vector), 
       out_(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
 #ifdef DEBUG_OUTPUT 
@@ -43,8 +43,8 @@ CompositeTetMassResidualBase(const Teuchos::ParameterList& p,
     density_ = p.get<RealType>("Density"); 
 
   resid_using_cub_ = p.get<bool>("Residual Computed Using Cubature"); 
-  use_composite_tet_ = p.get<bool>("Use Composite Tet"); 
-  use_ct_exact_mass_ = p.get<bool>("Use Composite Tet Exact Mass"); 
+  use_composite_tet_ = p.get<bool>("Use Composite Tet 10"); 
+  use_ct_exact_mass_ = p.get<bool>("Use Composite Tet 10 Exact Mass"); 
 
 #ifdef DEBUG_OUTPUT 
   *out_ << "IKT resid_using_cub, use_composite_tet, use_ct_exact_mass = " << resid_using_cub_ << ", " 

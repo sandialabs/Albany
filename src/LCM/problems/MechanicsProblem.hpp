@@ -245,6 +245,10 @@ protected:
   int
   num_vertices_;
 
+  /// boolean marking whether using composite tet
+  bool
+  composite_; 
+
   /// Type of mechanics variable (disp or acc)
   MECH_VAR_TYPE
   mech_type_;
