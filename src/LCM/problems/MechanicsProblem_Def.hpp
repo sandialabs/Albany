@@ -1873,12 +1873,17 @@ MechanicsProblem::constructEvaluators(
             p);
       }
 
+      RealType material_density = 0.0;
+
       // Mechanics residual need value of density for transient analysis.
       // Get it from material. Assumed constant in element block.
       if (material_db_->isElementBlockParam(eb_name, "Density")) {
+
+        material_density = material_db_->getElementBlockParam<RealType>(eb_name, "Density");
         p->set<RealType>(
             "Density",
-            material_db_->getElementBlockParam<RealType>(eb_name, "Density"));
+            material_density);
+
       }
 
       // Optional body force
@@ -1888,6 +1893,7 @@ MechanicsProblem::constructEvaluators(
 
         Teuchos::ParameterList &
         eb_param = material_db_->getElementBlockSublist(eb_name, "Body Force");
+        eb_param.set<RealType>( "Density", material_density);
 
         ev = Teuchos::rcp(
             new LCM::BodyForce<EvalT, PHAL::AlbanyTraits>(eb_param, dl_));
