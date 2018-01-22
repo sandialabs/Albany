@@ -445,6 +445,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     slvrfctry = Teuchos::rcp(new Albany::SolverFactory(input_fname, reducedMpiCommT));
     parameterList = Teuchos::rcp(&slvrfctry->getParameters(),false);
     discParams = Teuchos::sublist(parameterList, "Discretization", true);
+    discParams->set<bool>("Output DTK Field to Exodus", true);
     Albany::AbstractFieldContainer::FieldContainerRequirements req;
     int neq = 2; //number of equations - 2 for FO Stokes
     //IK, 11/14/13, debug output: check that pointers that are passed from CISM are not null 
