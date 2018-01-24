@@ -19,6 +19,7 @@
       <Parameter name="Response 0" type="string" value="Surface Velocity Mismatch"/>
       <ParameterList name="ResponseParams 0">
         <Parameter name="Regularization Coefficient" type="double" value="1.0"/>
+        <Parameter name="Regularization Coefficient Stiffening" type="double" value="1.5"/>
         <Parameter name="Asinh Scaling"              type="double" value="10.0"/>
         <Parameter name="Scaling Coefficient"        type="double" value=" 5.8824e-07"/>
       </ParameterList>
@@ -193,14 +194,14 @@
 
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{61.1982059568}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{61.4474737853}"/>
     <ParameterList name="Sensitivity Comparisons 0">
       <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{1.06071383579}"/>
+      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{1.05999393562}"/>
     </ParameterList>
     <ParameterList name="Sensitivity Comparisons 1">
       <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{2.1438052468}"/>
+      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{2.14380524679}"/>
     </ParameterList>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
