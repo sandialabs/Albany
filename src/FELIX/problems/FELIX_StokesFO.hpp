@@ -954,6 +954,10 @@ if (basalSideName!="INVALID")
     ev = evalUtils.getPSTUtils().constructDOFGradInterpolationSideEvaluator("stiffening_factor", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
+    //---- Interpolate the 3D state on the side (the BasalFrictionCoefficient evaluator needs a side field)
+    ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("stiffening_factor",basalSideName,"Node Scalar",cellType);
+    fm0.template registerEvaluator<EvalT> (ev);
+
     // Intepolate bed_topography
     ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("bed_topography", basalSideName);
     fm0.template registerEvaluator<EvalT> (ev);
