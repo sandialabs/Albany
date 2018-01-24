@@ -106,6 +106,8 @@ SchwarzAlternating(
   this_disp_.resize(num_subdomains_);
   this_velo_.resize(num_subdomains_);
   this_acce_.resize(num_subdomains_);
+  do_outputs_.resize(num_subdomains_); 
+  do_outputs_init_.resize(num_subdomains_); 
 
   bool
   is_static{false};
@@ -181,6 +183,9 @@ SchwarzAlternating(
 
     Teuchos::RCP<Albany::AbstractSTKMeshStruct>
     ams = stk_disc.getSTKMeshStruct();
+  
+    do_outputs_[subdomain] = ams->exoOutput; 
+    do_outputs_init_[subdomain] = ams->exoOutput; 
 
     stk_mesh_structs_[subdomain] = ams;
 
@@ -625,9 +630,8 @@ SchwarzLoopDynamics() const
   ST
   current_time{initial_time_};
 
-
   //Set ICs and PrevSoln vecs and write initial configuration to Exodus file
-  setDynamicICVecsAndDoOutput(initial_time_, true);
+  setDynamicICVecsAndDoOutput(initial_time_);
 
   // Time-stepping loop
   while (stop < maximum_steps_ && current_time < final_time_) {
@@ -1015,11 +1019,15 @@ SchwarzLoopDynamics() const
     reportFinals(fos);
 
     //Update IC vecs and output solution to exodus file
-    bool const
-    do_output = output_interval_ > 0 ?
-        (stop + 1) % output_interval_ == 0 : false;
+    
+    for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+      if (do_outputs_init_[subdomain] == true) {
+        do_outputs_[subdomain] = output_interval_ > 0 ?
+            (stop + 1) % output_interval_ == 0 : false;
+      }
+    }
 
-    setDynamicICVecsAndDoOutput(next_time, do_output);
+    setDynamicICVecsAndDoOutput(next_time);
 
     ++stop;
     current_time += time_step;
@@ -1044,7 +1052,7 @@ SchwarzLoopDynamics() const
 
 void
 SchwarzAlternating::
-setDynamicICVecsAndDoOutput(ST const time, bool const do_output) const
+setDynamicICVecsAndDoOutput(ST const time) const
 {
   bool is_initial_time = false;
 
@@ -1063,7 +1071,7 @@ setDynamicICVecsAndDoOutput(ST const time, bool const do_output) const
 
     stk_mesh_struct.exoOutputInterval = 1;
 
-    stk_mesh_struct.exoOutput = do_output;
+    stk_mesh_struct.exoOutput = do_outputs_[subdomain];
 
     auto &
     app = *apps_[subdomain];
@@ -1113,7 +1121,7 @@ setDynamicICVecsAndDoOutput(ST const time, bool const do_output) const
       ics_acce_[subdomain] =
           Thyra::createVector(disp_mv->getVectorNonConst(2));
 
-      if (do_output == true) {  //write solution to Exodus
+      if (do_outputs_[subdomain] == true) {  //write solution to Exodus
 
         stk_disc.writeSolutionMV(*disp_mv, time);
 
@@ -1134,25 +1142,30 @@ doQuasistaticOutput(ST const time) const
 {
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
-    auto &
-    stk_mesh_struct = *stk_mesh_structs_[subdomain];
+    if (do_outputs_[subdomain] == true) {
 
-    stk_mesh_struct.exoOutputInterval = 1;
-    stk_mesh_struct.exoOutput = true;
+      auto &
+      stk_mesh_struct = *stk_mesh_structs_[subdomain];
 
-    auto &
-    abs_disc = *discs_[subdomain];
+      stk_mesh_struct.exoOutputInterval = 1;
+      stk_mesh_struct.exoOutput = true;
 
-    auto &
-    stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
+      auto &
+      abs_disc = *discs_[subdomain];
 
-    // Do not dereference this RCP. Leads to SEGFAULT (!?)
-    auto
-    disp_mv_rcp = stk_disc.getSolutionMV();
+      auto &
+      stk_disc = static_cast<Albany::STKDiscretization &>(abs_disc);
 
-    stk_disc.writeSolutionMV(*disp_mv_rcp, time);
+      // Do not dereference this RCP. Leads to SEGFAULT (!?)
+      auto
+      disp_mv_rcp = stk_disc.getSolutionMV();
 
-    stk_mesh_struct.exoOutput = false;
+      stk_disc.writeSolutionMV(*disp_mv_rcp, time);
+
+      stk_mesh_struct.exoOutput = false;
+
+    }
+
   }
 
   return;
@@ -1447,13 +1460,15 @@ SchwarzLoopQuasistatics() const
     reportFinals(fos);
 
     // Output converged solution if at specified interval
-    bool const
-    do_output = output_interval_ > 0 ?
-        (stop + 1) % output_interval_ == 0 : false;
-
-    if (do_output == true) {
-      doQuasistaticOutput(next_time);
+    
+    for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+      if (do_outputs_init_[subdomain] == true) {
+        do_outputs_[subdomain] = output_interval_ > 0 ?
+            (stop + 1) % output_interval_ == 0 : false;
+      }
     }
+
+    doQuasistaticOutput(next_time);
 
     ++stop;
     current_time += time_step;

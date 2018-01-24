@@ -134,7 +134,7 @@ private:
   doQuasistaticOutput(ST const time) const;
 
   void
-  setDynamicICVecsAndDoOutput(ST const time, bool const do_output) const;
+  setDynamicICVecsAndDoOutput(ST const time) const;
 
   void
   reportFinals(std::ostream & os) const;
@@ -264,6 +264,12 @@ private:
 
   mutable std::vector<Albany::StateArrays>
   internal_states_;
+
+  mutable std::vector<bool> 
+  do_outputs_; 
+  
+  mutable std::vector<bool> 
+  do_outputs_init_; 
 
   // Used if solving with loca or tempus
   bool
