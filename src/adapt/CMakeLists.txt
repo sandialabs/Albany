@@ -43,32 +43,6 @@ IF(ALBANY_HAVE_STK)
   )
 ENDIF()
 
-
-IF (ALBANY_EPETRA) 
-  SET(SOURCES ${SOURCES} 
-    AAdapt_AbstractAdapter.cpp
-    AAdapt_AdaptationFactory.cpp
-    AAdapt_AdaptiveSolutionManager.cpp
-    AAdapt_AdaptiveModelFactory.cpp
-    AAdapt_ThyraAdaptiveModelEvaluator.cpp
-   ) 
-  SET(HEADERS ${HEADERS} 
-    AAdapt_AbstractAdapter.hpp
-    AAdapt_AdaptationFactory.hpp
-    AAdapt_AdaptiveSolutionManager.hpp
-    AAdapt_AdaptiveModelFactory.hpp
-    AAdapt_ThyraAdaptiveModelEvaluator.hpp
-  )
-  IF(ALBANY_HAVE_STK)
-    SET(SOURCES ${SOURCES}
-      AAdapt_CopyRemesh.cpp
-    )
-    SET(HEADERS ${HEADERS}
-      AAdapt_CopyRemesh.hpp
-    )
-  ENDIF()
-ENDIF()
-
 # Random Criterion & Stress Fracture depend on LCM
 # Speculative features and code, currently
 IF(ALBANY_LCM AND LCM_SPECULATIVE AND ALBANY_HAVE_STK)
@@ -83,14 +57,6 @@ SET(HEADERS ${HEADERS}
     AAdapt_StressFracture.hpp
    )
 
-IF (ALBANY_EPETRA) 
-SET(SOURCES ${SOURCES} 
-    AAdapt_RandomFracture.cpp
-    )
-SET(HEADERS ${HEADERS}
-    AAdapt_RandomFracture.hpp
-    )
-ENDIF()
 ENDIF()
 
 # Topology Modification depends on LCM and STK
@@ -103,17 +69,6 @@ SET(SOURCES ${SOURCES}
 SET(HEADERS ${HEADERS}
     AAdapt_TopologyModificationT.hpp
    )
-
-IF (ALBANY_EPETRA)
- 
-SET(SOURCES ${SOURCES} 
-    AAdapt_TopologyModification.cpp
-    )
-SET(HEADERS ${HEADERS}
-    AAdapt_TopologyModification.hpp
-    )
-    
-ENDIF()
 
 ENDIF()
 
@@ -129,16 +84,6 @@ SET(HEADERS ${HEADERS}
     AAdapt_STKAdaptT_Def.hpp
     AAdapt_STKConstantSizeField.hpp
    )
-
-IF (ALBANY_EPETRA) 
-SET(SOURCES ${SOURCES}
-    AAdapt_STKAdapt.cpp
-    )
-SET(HEADERS ${HEADERS}
-    AAdapt_STKAdapt.hpp
-    AAdapt_STKAdapt_Def.hpp
-)
-ENDIF()
 
 ENDIF()
 
