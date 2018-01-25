@@ -82,8 +82,6 @@
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
 
-extern bool TpetraBuild;
-
 #if defined(ALBANY_EPETRA)
 namespace Albany {
 
