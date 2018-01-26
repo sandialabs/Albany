@@ -256,8 +256,6 @@ safe_system(char const* str);
 void
 assert_fail(std::string const& msg) __attribute__((noreturn));
 
-extern bool TpetraBuild;
-
 }  // end namespace Albany
 
 #ifdef __CUDA_ARCH__
