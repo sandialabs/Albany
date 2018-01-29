@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "Albany_Utils.hpp"
 #include "Albany_ContactManager.hpp"
 
 #include "Moertel_InterfaceT.hpp"
@@ -72,8 +73,13 @@ Albany::ContactManager::ContactManager(const Teuchos::RCP<Teuchos::ParameterList
 
   if(disc.getMapT()->getComm()->getSize() != 2){ // Need exactly two ranks to write parallel rank output
 
+    ALBANY_ASSERT(disc.getMapT()->getComm()->getSize() == 1, "ERROR - running in parallel but not using two ranks");
+    // We are only serial here
+
     sfile.open ("slave_interface.txt");
+    sfile << "This file contains the interface from sideset: " << slaveSideNames[0] << std::endl;
     mfile.open ("master_interface.txt");
+    mfile << "This file contains the interface from sideset: " << masterSideNames[0] << std::endl;
 
   }
   else {
@@ -106,25 +112,53 @@ Albany::ContactManager::ContactManager(const Teuchos::RCP<Teuchos::ParameterList
     // If slave ss exists, loop over the slave sides and construct moertel nodes/faces and interface
     if(it_slave != ssList.end()){
 
-      processSS(ctr, slaveSideSet, workset, mortarside, sfile);
+      processSS(ctr, slaveSideSet, 0 /* Slave side */, workset, mortarside, sfile);
       ctr++;
 
     }
 
     if(it_master != ssList.end()){
 
-      processSS(ctr, masterSideSet, workset, nonmortarside, mfile);
+      processSS(ctr, masterSideSet, workset, 1 /* mortar side */, nonmortarside, mfile);
       ctr++;
 
     }
 
   }
 
+
+  // ============================================================= //
+  // choose integration parameters
+  // ============================================================= //
+
+  Teuchos::ParameterList& moertelparams = moertelManager->Default_Parameters();
+
+  // this does not affect this 2D case
+
+  moertelparams.set("exact values at gauss points", true);
+
+  // 1D interface possible values are 1,2,3,4,5,6,7,8,10 (2 recommended with linear shape functions)
+
+  moertelparams.set("number gaussian points 1D", 2);
+
+ // 2D interface possible values are 3,6,12,13,16,19,27
+
+//    moertelparams.set("number gaussian points 2D",27);
+  moertelparams.set("number gaussian points 2D", 12);  // 12 recommended with linear functions
+
+
+  moertelManager->Integrate_Interfaces();
+
+//   if (printlevel) cout << *manager;
+  std::cout << *moertelManager;
+
+  // GAH here
+
 }
 
 // Process all the contact surfaces and insert the data into a Moertel Interface
 void
-Albany::ContactManager::processSS(const int ctr, const std::vector<Albany::SideStruct>& sideSet, int workset, int mortarside,
+Albany::ContactManager::processSS(const int ctr, const std::vector<Albany::SideStruct>& sideSet, int s_or_mortar, int workset, int mortarside,
     std::ofstream& stream ){
 
     std::set<int> inserted_nodes;
@@ -216,10 +250,12 @@ Albany::ContactManager::processSS(const int ctr, const std::vector<Albany::SideS
 // 2D
       MOERTEL::Segment_Linear1D segment( side_GID, nodev, printLevel );
 //	  MOERTEL::Segment_BiLinearQuad segment( side_GID, nnodes, nodeid, printLevel ); // 3D
-	  moertelInterface->AddSegment(segment, side);
+	  moertelInterface->AddSegment(segment, s_or_mortar);
 
     }
 
+
+    ALBANY_ASSERT(moertelInterface->Complete() == true, "Contact interface is not complete");
 
     moertelManager->AddInterface(moertelInterface);
 

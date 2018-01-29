@@ -71,7 +71,7 @@ class ContactManager {
 
     ContactManager();
 
-    void processSS(const int ctr, const std::vector<Albany::SideStruct>& sideSet, 
+    void processSS(const int ctr, const std::vector<Albany::SideStruct>& sideSet, int s_or_mortar,
         int workset, int mortarside, std::ofstream& stream );
 
     Teuchos::RCP<Teuchos::ParameterList> params;
