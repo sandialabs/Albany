@@ -406,9 +406,8 @@ public:
   ///
   /// Background grid of the domain for fast determination
   /// of points being inside or outside the domain.
-  /// \return points inside the domain.
   ///
-  std::vector<minitensor::Vector<double>>
+  void
   createGrid();
 
   ///
@@ -692,6 +691,15 @@ private:
   //
   std::vector<std::vector<std::vector<bool>>>
   grid_;
+
+  //
+  // Points in the domain according to the grid.
+  //
+  std::vector<minitensor::Vector<double>>
+  domain_points_;
+
+  bool
+  has_grid_{false};
 
   //
   // Size of background grid cell

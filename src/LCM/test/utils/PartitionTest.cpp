@@ -54,20 +54,22 @@ int main(int ac, char* av[])
       "Output File Name");
 
   int const
-  number_schemes = 5;
+  number_schemes = 6;
 
   LCM::PARTITION::Scheme const
   scheme_values[] = {
-      LCM::PARTITION::Scheme::GEOMETRIC,
+      LCM::PARTITION::Scheme::RANDOM,
       LCM::PARTITION::Scheme::HYPERGRAPH,
+      LCM::PARTITION::Scheme::GEOMETRIC,
       LCM::PARTITION::Scheme::KMEANS,
       LCM::PARTITION::Scheme::SEQUENTIAL,
       LCM::PARTITION::Scheme::KDTREE};
 
   char const *
   scheme_names[] = {
-      "geometric",
+      "random",
       "hypergraph",
+      "geometric",
       "kmeans",
       "sequential",
       "kdtree"};

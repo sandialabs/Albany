@@ -18,6 +18,8 @@
 #include "Albany_Utils.hpp"
 #include "LCMPartition.h"
 
+//#define DEBUG
+
 namespace LCM {
 
 //
@@ -430,11 +432,9 @@ createKDTreeNode(
       std::string
       name_right = name + "1";
 
-      node->left =
-          createKDTreeNode(name_left, node, points, indices_left);
+      node->left = createKDTreeNode(name_left, node, points, indices_left);
 
-      node->right =
-          createKDTreeNode(name_right, node, points, indices_right);
+      node->right = createKDTreeNode(name_right, node, points, indices_right);
     }
     break;
 
@@ -1517,11 +1517,14 @@ parametric_limits(minitensor::ELEMENT::Type const element_type)
 //
 // Background of the domain for fast determination
 // of points being inside or outside the domain.
-// \return points inside the domain.
 //
-std::vector<minitensor::Vector<double>>
+void
 ConnectivityArray::createGrid()
 {
+  if (has_grid_ == true) return;
+
+  has_grid_ = true;
+
   std::cout << '\n';
   std::cout << "Creating background mesh ..." << '\n';
 
@@ -1713,10 +1716,8 @@ ConnectivityArray::createGrid()
 
   std::cout << connectivity_.size() << " elements processed." << '\n';
 
+#if defined(DEBUG)
   // Create points and output voxelization for debugging
-  std::vector<minitensor::Vector<double>>
-  domain_points;
-
   std::ofstream
   in_ofs("in.csv");
 
@@ -1729,6 +1730,8 @@ ConnectivityArray::createGrid()
   minitensor::Vector<double>
   p(dimension);
 
+  domain_points_.clear();
+
   for (minitensor::Index i = 0; i < points_per_dim(0); ++i) {
     p(0) = i * cell_size_(0) + lower_corner_(0);
     for (minitensor::Index j = 0; j < points_per_dim(1); ++j) {
@@ -1736,7 +1739,7 @@ ConnectivityArray::createGrid()
       for (minitensor::Index k = 0; k < points_per_dim(2); ++k) {
         p(2) = k * cell_size_(2) + lower_corner_(2);
         if (grid_[i][j][k] == true) {
-          domain_points.push_back(p);
+          domain_points_.push_back(p);
           in_ofs << p << '\n';
         } else {
           out_ofs << p << '\n';
@@ -1745,12 +1748,14 @@ ConnectivityArray::createGrid()
     }
   }
 
+#endif // DEBUG
+
   minitensor::Index const
   number_generated_points =
       points_per_dim(0) * points_per_dim(1) * points_per_dim(2);
 
   minitensor::Index const
-  number_points_in_domain = domain_points.size();
+  number_points_in_domain = domain_points_.size();
 
   double const
   ratio = double(number_points_in_domain) / double(number_generated_points);
@@ -1765,7 +1770,7 @@ ConnectivityArray::createGrid()
   std::cout << ratio;
   std::cout << '\n';
 
-  return domain_points;
+  return;
 }
 
 //
@@ -2484,8 +2489,7 @@ ConnectivityArray::partitionKMeans(double const length_scale)
   lower_corner_ = lower_corner;
   upper_corner_ = upper_corner;
 
-  std::vector<minitensor::Vector<double>>
-  domain_points = createGrid();
+  createGrid();
 
   //
   // K-means iteration
@@ -2515,16 +2519,16 @@ ConnectivityArray::partitionKMeans(double const length_scale)
   }
 
   minitensor::Index const
-  number_points = domain_points.size();
+  number_points = domain_points_.size();
 
   while (step_norm >= tolerance && number_iterations < max_iterations) {
 
     // Assign points to closest generators
-    std::vector<double>
+    std::vector<minitensor::Index>
     point_to_generator(number_points);
 
-    for (minitensor::Index i = 0; i < domain_points.size(); ++i) {
-      point_to_generator[i] = closest_point(domain_points[i], centers);
+    for (minitensor::Index i = 0; i < domain_points_.size(); ++i) {
+      point_to_generator[i] = closest_point(domain_points_[i], centers);
     }
 
     // Determine cluster of points for each generator
@@ -2538,7 +2542,7 @@ ConnectivityArray::partitionKMeans(double const length_scale)
       minitensor::Index const
       c = point_to_generator[p];
 
-      clusters[c].push_back(domain_points[p]);
+      clusters[c].push_back(domain_points_[p]);
 
     }
 
@@ -2598,13 +2602,14 @@ ConnectivityArray::partitionKDTree(double const length_scale)
   std::cout << "Partition with initializer ..." << '\n';
 
   // Partition with initializer
+  //PARTITION::Scheme const
+  //initializer_scheme = getInitializerScheme();
   PARTITION::Scheme const
-  initializer_scheme = getInitializerScheme();
+  initializer_scheme = PARTITION::Scheme::RANDOM;
 
   partition(initializer_scheme, length_scale);
 
   // Compute partition centroids and use those as initial centers
-
   std::vector<minitensor::Vector<double>>
   center_positions = getPartitionCentroids();
 
@@ -2633,17 +2638,16 @@ ConnectivityArray::partitionKDTree(double const length_scale)
   lower_corner_ = lower_corner;
   upper_corner_ = upper_corner;
 
-  std::vector<minitensor::Vector<double>>
-  domain_points = createGrid();
+  createGrid();
 
   //
   // Create KDTree
   //
   KDTree<KDTreeNode>
-  kdtree(domain_points, number_partitions);
+  kdtree(domain_points_, number_partitions);
 
   FilterVisitor<std::shared_ptr<KDTreeNode>, ClusterCenter>
-  filter_visitor(domain_points, centers);
+  filter_visitor(domain_points_, centers);
 
   //
   // K-means iteration
@@ -2875,6 +2879,7 @@ ConnectivityArray::partitionRandom(double const length_scale)
   lower_corner_ = lower_corner;
   upper_corner_ = upper_corner;
 
+  createGrid();
   //
   // Create initial centers
   //
@@ -2892,6 +2897,8 @@ ConnectivityArray::partitionRandom(double const length_scale)
     if (isInsideMesh(p) == true) {
       centers.push_back(p);
       ++number_generators;
+      std::cout << "Generated center: " << number_generators;
+      std::cout << "/" << number_partitions << '\n';
     }
 
   }
