@@ -5,30 +5,15 @@ SUBMIT_RESULTS=ON
 THE_TEST_TYPE=Nightly
 #THE_TEST_TYPE=Experimental
 
-if [ "${MODULESHOME:-}" = "" ]; then
-  # Modules have not been set
-  . /usr/share/Modules/init/bash
-  module purge
-  module load sierra-git/2.6.1
-  module load sierra-compiler/gcc/5.2.0
-  module load sierra-mkl/17.0-2017.2.174
-else
-  module purge
-  module load sierra-git/2.6.1
-  module load sierra-compiler/gcc/5.2.0
-  module load sierra-mkl/17.0-2017.2.174
-fi
-
 BUILD_OPT="$1"
 
 if [ -z "$BUILD_OPT" ]; then
 
-   echo "Please supply an argument: base, clang, or intel"
+   echo "Please supply an argument: base, debug, clang, or intel"
 
    exit 1;
 
 fi
-
 SCRIPT_DIR=/ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov
 # Install directory holds final installed versions of the build. This is cross-mounted usually.
 INSTALL_DIR=/projects/AppComp/nightly_gahanse/cee-compute011
@@ -38,19 +23,83 @@ SCRATCH_DIR=/scratch/gahanse
 export LM_LICENSE_FILE=7500@sitelicense.sandia.gov
 
 if [ "$BUILD_OPT" = "intel" ]; then
-   . /sierra/sntools/SDK/compilers/intel/composer_xe_2017.4.196/compilers_and_libraries/linux/bin/compilervars.sh intel64
+
+  # Load a gcc as the intel compiler needs it
+  if [ "${MODULESHOME:-}" = "" ]; then
+    # Modules have not been set
+    . /usr/share/Modules/init/bash
+    module purge
+    module load sierra-git/2.6.1
+    module load sierra-compiler/gcc/5.2.0
+    module load sierra-mkl/18.0-2018.1.163
+  else
+    module purge
+    module load sierra-git/2.6.1
+    module load sierra-compiler/gcc/5.2.0
+    module load sierra-mkl/18.0-2018.1.163
+  fi
+
+   . /sierra/sntools/SDK/compilers/intel/composer_xe_2018.1.163/compilers_and_libraries/linux/bin/compilervars.sh intel64
+
+elif [ "$BUILD_OPT" = "debug" ]; then
+
+  # Load latest gcc
+  if [ "${MODULESHOME:-}" = "" ]; then
+    # Modules have not been set
+    . /usr/share/Modules/init/bash
+    module purge
+    module load sierra-git/2.6.1
+    module load sierra-devel/gcc-7.2.0-openmpi-1.10.2
+    module load sierra-mkl/18.0-2018.1.163
+  else
+    module purge
+    module load sierra-git/2.6.1
+    module load sierra-devel/gcc-7.2.0-openmpi-1.10.2
+    module load sierra-mkl/18.0-2018.1.163
+  fi
 
 elif [ "$BUILD_OPT" = "clang" ]; then
 
-export PATH=/projects/albany/bin:/projects/albany/trilinos/MPI_REL/bin:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/bin:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/bin:/projects/sierra/linux_rh6/install/git/2.6.1/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/sbin
+  # Need a gcc for stuff associated with clang
+  if [ "${MODULESHOME:-}" = "" ]; then
+    # Modules have not been set
+    . /usr/share/Modules/init/bash
+    module purge
+    module load sierra-git/2.6.1
+    module load sierra-compiler/gcc/5.2.0
+    module load sierra-mkl/18.0-2018.1.163
+  else
+    module purge
+    module load sierra-git/2.6.1
+    module load sierra-compiler/gcc/5.2.0
+    module load sierra-mkl/18.0-2018.1.163
+  fi
 
-export LD_LIBRARY_PATH=/projects/sierra/linux_rh6/SDK/compilers/intel/composer_xe_2017.4.196/compilers_and_libraries/linux/mkl/lib/intel64:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/lib:/projects/sierra/linux_rh6/SDK/hwloc/lib:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/lib64:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/lib
+  export PATH=/projects/albany/bin:/projects/albany/trilinos/MPI_REL/bin:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/bin:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/bin:/projects/sierra/linux_rh6/install/git/2.6.1/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/sbin
+
+  export LD_LIBRARY_PATH=/projects/sierra/linux_rh6/SDK/compilers/intel/composer_xe_2018.1.163/compilers_and_libraries/linux/mkl/lib/intel64:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/lib:/projects/sierra/linux_rh6/SDK/hwloc/lib:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/lib64:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/lib
 
 else
 
-export PATH=/projects/albany/bin:/projects/albany/trilinos/MPI_REL/bin:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/bin:/projects/sierra/linux_rh6/SDK/mpi/openmpi/1.10.2-gcc-5.4.0-RHEL6/bin:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/bin:/projects/sierra/linux_rh6/install/git/2.6.1/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/sbin
+  # Base gcc build
+  if [ "${MODULESHOME:-}" = "" ]; then
+    # Modules have not been set
+    . /usr/share/Modules/init/bash
+    module purge
+    module load sierra-git/2.6.1
+    module load sierra-compiler/gcc/5.2.0
+    module load sierra-mkl/18.0-2018.1.163
+  else
+    module purge
+    module load sierra-git/2.6.1
+    module load sierra-compiler/gcc/5.2.0
+    module load sierra-mkl/18.0-2018.1.163
+  fi
 
-export LD_LIBRARY_PATH=/projects/sierra/linux_rh6/SDK/compilers/intel/composer_xe_2017.4.196/compilers_and_libraries/linux/mkl/lib/intel64:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/lib:/projects/sierra/linux_rh6/SDK/hwloc/lib:/projects/sierra/linux_rh6/SDK/mpi/openmpi/1.10.2-gcc-5.4.0-RHEL6/lib:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/lib64:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/lib
+  export PATH=/projects/albany/bin:/projects/albany/trilinos/MPI_REL/bin:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/bin:/projects/sierra/linux_rh6/SDK/mpi/openmpi/1.10.2-gcc-5.4.0-RHEL6/bin:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/bin:/projects/sierra/linux_rh6/install/git/2.6.1/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/sbin
+
+  export LD_LIBRARY_PATH=/projects/sierra/linux_rh6/SDK/compilers/intel/composer_xe_2018.1.163/compilers_and_libraries/linux/mkl/lib/intel64:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/lib:/projects/sierra/linux_rh6/SDK/hwloc/lib:/projects/sierra/linux_rh6/SDK/mpi/openmpi/1.10.2-gcc-5.4.0-RHEL6/lib:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/lib64:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/lib
+
 fi
 
 

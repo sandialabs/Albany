@@ -23,7 +23,23 @@ if (1)
 # Drop the functor dev build - is this still of interest?
   set (BUILD_ALBFUNCTOR FALSE)
   set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
-#  set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
+  IF(CTEST_BUILD_OPTION MATCHES "debug")
+    set (BUILD_TRILINOS FALSE)
+    set (BUILD_TRILINOSDBG TRUE)
+    set (BUILD_PERIDIGM FALSE)
+    set (BUILD_ALB32 FALSE)
+    set (BUILD_ALB64 FALSE)
+    set (BUILD_ALB64DBG TRUE)
+    set (BUILD_TRILINOSCLANG FALSE)
+    set (BUILD_ALB64CLANG FALSE)
+    set (BUILD_ALBFUNCTOR FALSE)
+    set (BUILD_INTEL_TRILINOS FALSE)
+    set (BUILD_INTEL_ALBANY FALSE)
+    set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
+  ELSE()
+    set (BUILD_TRILINOSDBG FALSE)
+    set (BUILD_ALB64DBG FALSE)
+  ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "clang")
     set (BUILD_TRILINOS FALSE)
     set (BUILD_PERIDIGM FALSE)
@@ -113,10 +129,11 @@ endif ()
 set (PREFIX_DIR /projects/albany)
 set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.1)
 set (GCC_MPI_DIR /projects/sierra/linux_rh6/SDK/mpi/openmpi/1.10.2-gcc-5.4.0-RHEL6)
+set (GCC_DBG_MPI_DIR /projects/sierra/linux_rh6/SDK/mpi/openmpi/1.10.2-gcc-7.2.0-RHEL6)
 set (GCC_DIR /projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6)
-set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2017.4.196/compilers_and_libraries/linux)
+set (GCC_DBG_DIR /projects/sierra/linux_rh6/SDK/compilers/gcc/7.2.0-RHEL6)
+set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2018.1.163/compilers_and_libraries/linux)
 
-#set (BOOST_ROOT /projects/albany/nightly)
 set (BOOST_ROOT /projects/albany)
 set (INTEL_BOOST_ROOT ${BOOST_ROOT}/intel5.1)
 set (CLANG_BOOST_ROOT ${BOOST_ROOT}/clang)
@@ -657,12 +674,12 @@ if (BUILD_ALB64)
   set (CONF_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstall"
     "-DENABLE_64BIT_INT:BOOL=ON"
-    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
+#    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
     "-DENABLE_LCM:BOOL=ON"
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
     "-DENABLE_HYDRIDE:BOOL=ON"
-    "-DENABLE_QCAD:BOOL=OFF"
-    "-DENABLE_MOR:BOOL=OFF"
+    "-DENABLE_QCAD:BOOL=ON"
+    "-DENABLE_MOR:BOOL=ON"
     "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
     )
   if (BUILD_SCOREC)
@@ -699,7 +716,6 @@ if (BUILD_TRILINOSCLANG)
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/clang/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/clang/lib:${MKL_PATH}:${INTEL_DIR}/lib/intel64:${GCC_DIR}/lib64'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
     "-DBUILD_SHARED_LIBS:BOOL=OFF"
-    "-DTPL_ENABLE_SuperLU:BOOL=OFF"
     "-DAmesos2_ENABLE_KLU2:BOOL=ON"
     "-DBoost_INCLUDE_DIRS:PATH=${CLANG_BOOST_ROOT}/include"
     "-DBoost_LIBRARY_DIRS:PATH=${CLANG_BOOST_ROOT}/lib"
@@ -773,6 +789,101 @@ if (BUILD_ALB64CLANG)
   do_albany("${CONF_OPTIONS}" "Albany64BitClang")
 
 endif (BUILD_ALB64CLANG)
+
+if (BUILD_TRILINOSDBG)
+
+  set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosDbg")
+
+  set (CONFIGURE_OPTIONS
+    "${COMMON_CONFIGURE_OPTIONS}"
+    "-DCMAKE_BUILD_TYPE:STRING=DEBUG"
+    "-DTPL_ENABLE_MPI:BOOL=ON"
+    #
+    "-DMPI_BASE_DIR:PATH=${GCC_DBG_MPI_DIR}"
+    "-DCMAKE_CXX_COMPILER:STRING=${GCC_DBG_MPI_DIR}/bin/mpicxx"
+    "-DCMAKE_CXX_FLAGS:STRING='-g -march=native '"
+    "-DCMAKE_C_COMPILER:STRING=${GCC_DBG_MPI_DIR}/bin/mpicc"
+    "-DCMAKE_C_FLAGS:STRING='-g -march=native'"
+    "-DCMAKE_Fortran_COMPILER:STRING=${GCC_DBG_MPI_DIR}/bin/mpifort"
+    "-DCMAKE_Fortran_FLAGS:STRING='-g -march=native'"
+    "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
+    "-DMDS_ID_TYPE:STRING='long int'"
+    "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
+    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/lib:${MKL_PATH}:${INTEL_DIR}/lib/intel64:${GCC_DBG_DIR}/lib64'"
+    "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
+    "-DBUILD_SHARED_LIBS:BOOL=OFF"
+    "-DAmesos2_ENABLE_KLU2:BOOL=ON"
+    "-DBoost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+    "-DBoost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+    "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+    "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+    "-DBoostAlbLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+    "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+#
+    "-DTPL_ENABLE_Netcdf:BOOL=ON"
+    "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+    "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
+    "-DTPL_ENABLE_Pnetcdf:STRING=ON"
+    "-DPnetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+    "-DPnetcdf_LIBRARY_DIRS=${PREFIX_DIR}/lib"
+#
+    "-DTPL_ENABLE_HDF5:BOOL=ON"
+    "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+    "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+    "-DHDF5_LIBRARY_NAMES:STRING='hdf5_hl\\;hdf5\\;z'"
+#
+    "-DTPL_ENABLE_Zlib:BOOL=ON"
+    "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+    "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+#
+    "-DTPL_ENABLE_yaml-cpp:BOOL=ON"
+    "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+    "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+#
+    "-DTPL_ENABLE_ParMETIS:BOOL=ON"
+    "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+    "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+#
+    "-DTPL_ENABLE_SuperLU:BOOL=ON"
+    "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
+    "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
+    "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
+    "-DCMAKE_INSTALL_RPATH:STRING=${PREFIX_DIR}/lib"
+    "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
+  )
+
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+  do_trilinos("${CONFIGURE_OPTIONS}" "TrilinosDbg" "${INSTALL_LOCATION}")
+
+endif (BUILD_TRILINOSDBG)
+#
+# Configure the Albany build using GO = long
+#
+
+if (BUILD_ALB64DBG)
+
+  set (CONF_OPTIONS
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosDbg"
+    "-DENABLE_64BIT_INT:BOOL=ON"
+    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
+    "-DENABLE_LCM:BOOL=ON"
+    "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
+    "-DENABLE_HYDRIDE:BOOL=ON"
+    "-DENABLE_QCAD:BOOL=OFF"
+    "-DENABLE_MOR:BOOL=OFF"
+    "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
+    )
+  if (BUILD_SCOREC)
+    set (CONF_OPTIONS ${CONF_OPTIONS}
+      "-DENABLE_SCOREC:BOOL=ON")
+  endif (BUILD_SCOREC)
+
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+  do_albany("${CONF_OPTIONS}" "Albany64BitDbg")
+
+endif (BUILD_ALB64DBG)
+
 
 if (BUILD_ALBFUNCTOR)
 
