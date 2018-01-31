@@ -41,7 +41,7 @@ if { [is-loaded lcm-ubuntu] } {
 }
 
 if { [is-loaded lcm-sems] } {
-  module load sems-openmpi/1.8.7
+  module load sems-openmpi/1.10.1
   module load sems-boost/1.63.0/base
   module load sems-zlib/1.2.8/base
   module load sems-hdf5/1.8.12/parallel
