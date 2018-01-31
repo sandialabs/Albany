@@ -18,7 +18,7 @@
 #include "BodyForce.hpp"
 #include "CurrentCoords.hpp"
 #include "MechanicsResidual.hpp"
-#include "CompositeTetMassResidual.hpp"
+#include "ExactMassResidual.hpp"
 #include "SurfaceBasis.hpp"
 #include "SurfaceScalarGradientOperator.hpp"
 #include "SurfaceScalarJump.hpp"
@@ -1805,14 +1805,10 @@ MechanicsProblem::constructEvaluators(
       }
     }
   
-    //IKT, FIXME? We could put in logic to only build Composite Tet Mass Residual
-    //when using a Composite Tet element, but this would be more involved than just 
-    //having an if statement here, as the Mechanics Residual depends on the Composite
-    //Tet Mass Residual.  
-    if (have_mech_eq_) {  // Composite Tet Mass 
+    if (have_mech_eq_) {  // Exact Mass residual
 
       Teuchos::RCP<Teuchos::ParameterList>
-      p = Teuchos::rcp(new Teuchos::ParameterList("Composite Tet Mass Residual"));
+      p = Teuchos::rcp(new Teuchos::ParameterList("Exact Mass Residual"));
 
       // Input
       p->set<std::string>("Weighted BF Name", "wBF");
@@ -1840,9 +1836,9 @@ MechanicsProblem::constructEvaluators(
 
       p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
       // Output
-      p->set<std::string>("Composite Tet 10 Mass Name", "Composite Tet 10 Mass Residual");
+      p->set<std::string>("Exact Mass Name", "Exact Mass Residual");
       ev = Teuchos::rcp(
-          new LCM::CompositeTetMassResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
+          new LCM::ExactMassResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
     } // end if (have_mech_eq_)  
 
@@ -1857,7 +1853,7 @@ MechanicsProblem::constructEvaluators(
       p->set<std::string>("Weighted BF Name", "wBF");
       p->set<std::string>("Acceleration Name", "Acceleration");
       p->set<std::string>("Body Force Name", "Body Force");
-      p->set<std::string>("Composite Tet 10 Mass Name", "Composite Tet 10 Mass Residual");
+      p->set<std::string>("Exact Mass Name", "Exact Mass Residual");
       p->set<bool>("Use Composite Tet 10", composite_);
       const bool 
       use_exact_mass = material_db_->getElementBlockParam<bool>(

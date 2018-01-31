@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LCM_CompositeTetMass_RESIDUAL_HPP
-#define LCM_CompositeTetMass_RESIDUAL_HPP
+#ifndef LCM_ExactMass_RESIDUAL_HPP
+#define LCM_ExactMass_RESIDUAL_HPP
 
 #include <Phalanx_Evaluator_Derived.hpp>
 #include <Phalanx_Evaluator_WithBaseImpl.hpp>
@@ -17,8 +17,11 @@
 
 namespace LCM {
 /** \brief This evaluator computes the residual and Jacobian contributions
- * coming from the analytic mass matrix (eqn. (C.4) in (Ostien et al, 2016))
- * for the composite tet elements. 
+ * coming from the analytic mass matrix for various elements.  The main
+ * element of interest is the composite tet element, where the exact mass comes from 
+ * eqn. (C.4) in (Ostien et al, 2016).  One may be interested in the exact 
+ * mass for other elements, like the isoparameteric tet10, to avoid having to use
+ * very high cubature degrees to numericall integrate the mass to a sufficient accuracy. 
 
 */
 // **************************************************************
@@ -26,12 +29,12 @@ namespace LCM {
 // **************************************************************
 
 template<typename EvalT, typename Traits>
-class CompositeTetMassResidualBase
+class ExactMassResidualBase
   : public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
-  CompositeTetMassResidualBase(const Teuchos::ParameterList& p,
+  ExactMassResidualBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -74,8 +77,8 @@ protected:
   PHX::MDField<const ScalarT, Cell, Node, Dim> accel_nodes_;
   /// Input: integration weights
   PHX::MDField<const MeshScalarT> weights_;
-  /// Output: Composite Tet Mass contribution to residual/Jacobian 
-  PHX::MDField<ScalarT, Cell, Node, Dim> ct_mass_;
+  /// Output: mass contribution to residual/Jacobian 
+  PHX::MDField<ScalarT, Cell, Node, Dim> exact_mass_;
   /// Number of element nodes
   int num_nodes_;
   /// Number of integration points
@@ -103,7 +106,7 @@ protected:
  
 };
 
-template<typename EvalT, typename Traits> class CompositeTetMassResidual;
+template<typename EvalT, typename Traits> class ExactMassResidual;
 
 
 // **************************************************************
@@ -117,10 +120,10 @@ template<typename EvalT, typename Traits> class CompositeTetMassResidual;
 // Residual
 // **************************************************************
 template<typename Traits>
-class CompositeTetMassResidual<PHAL::AlbanyTraits::Residual,Traits>
-  : public CompositeTetMassResidualBase<PHAL::AlbanyTraits::Residual, Traits>  {
+class ExactMassResidual<PHAL::AlbanyTraits::Residual,Traits>
+  : public ExactMassResidualBase<PHAL::AlbanyTraits::Residual, Traits>  {
 public:
-  CompositeTetMassResidual(const Teuchos::ParameterList& p,
+  ExactMassResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 protected:
@@ -134,10 +137,10 @@ private:
 // Jacobian
 // **************************************************************
 template<typename Traits>
-class CompositeTetMassResidual<PHAL::AlbanyTraits::Jacobian,Traits>
-  : public CompositeTetMassResidualBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
+class ExactMassResidual<PHAL::AlbanyTraits::Jacobian,Traits>
+  : public ExactMassResidualBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
 public:
-  CompositeTetMassResidual(const Teuchos::ParameterList& p,
+  ExactMassResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 protected:
@@ -151,10 +154,10 @@ private:
 // Tangent
 // **************************************************************
 template<typename Traits>
-class CompositeTetMassResidual<PHAL::AlbanyTraits::Tangent,Traits>
-  : public CompositeTetMassResidualBase<PHAL::AlbanyTraits::Tangent, Traits>  {
+class ExactMassResidual<PHAL::AlbanyTraits::Tangent,Traits>
+  : public ExactMassResidualBase<PHAL::AlbanyTraits::Tangent, Traits>  {
 public:
-  CompositeTetMassResidual(const Teuchos::ParameterList& p,
+  ExactMassResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 protected:
@@ -167,10 +170,10 @@ private:
 // Distributed parameter derivative
 // **************************************************************
 template<typename Traits>
-class CompositeTetMassResidual<PHAL::AlbanyTraits::DistParamDeriv,Traits>
-  : public CompositeTetMassResidualBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
+class ExactMassResidual<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+  : public ExactMassResidualBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
 public:
-  CompositeTetMassResidual(const Teuchos::ParameterList& p,
+  ExactMassResidual(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 protected:

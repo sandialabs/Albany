@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "CompositeTetMassResidual.hpp"
-#include "CompositeTetMassResidual_Def.hpp"
+#include "ExactMassResidual.hpp"
+#include "ExactMassResidual_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::CompositeTetMassResidual)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ExactMassResidual)

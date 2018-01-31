@@ -30,7 +30,7 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
           dl->node_qp_vector),
       w_bf_(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
       residual_(p.get<std::string>("Residual Name"), dl->node_vector),
-      ct_mass_(p.get<std::string>("Composite Tet 10 Mass Name"), dl->node_vector),  
+      exact_mass_(p.get<std::string>("Exact Mass Name"), dl->node_vector),  
       have_body_force_(p.isType<bool>("Has Body Force")),
       density_(p.get<RealType>("Density", 1.0))
 {
@@ -38,7 +38,7 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
   this->addDependentField(stress_);
   this->addDependentField(w_grad_bf_);
   this->addDependentField(w_bf_);
-  this->addDependentField(ct_mass_);
+  this->addDependentField(exact_mass_);
 
   this->addEvaluatedField(residual_);
 
@@ -89,7 +89,7 @@ MechanicsResidual<EvalT, Traits>::postRegistrationSetup(
   this->utils.setFieldData(stress_, fm);
   this->utils.setFieldData(w_grad_bf_, fm);
   this->utils.setFieldData(w_bf_, fm);
-  this->utils.setFieldData(ct_mass_, fm);
+  this->utils.setFieldData(exact_mass_, fm);
   this->utils.setFieldData(residual_, fm);
   if (have_body_force_) {
     this->utils.setFieldData(body_force_, fm);
@@ -262,7 +262,7 @@ MechanicsResidual<EvalT, Traits>::evaluateFields(
       for (int cell = 0; cell < workset.numCells; ++cell) {
         for (int node = 0; node < num_nodes_; ++node) {
           for (int dim = 0; dim < num_dims_; ++dim) {
-            residual_(cell, node, dim) += ct_mass_(cell, node, dim); 
+            residual_(cell, node, dim) += exact_mass_(cell, node, dim); 
           }
         }
       }

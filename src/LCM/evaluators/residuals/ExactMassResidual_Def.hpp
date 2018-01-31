@@ -23,17 +23,17 @@
 namespace LCM {
 
 template<typename EvalT, typename Traits>
-CompositeTetMassResidualBase<EvalT, Traits>::
-CompositeTetMassResidualBase(const Teuchos::ParameterList& p,
+ExactMassResidualBase<EvalT, Traits>::
+ExactMassResidualBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl)
  :
       w_bf_(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
       weights_("Weights", dl->qp_scalar),
-      ct_mass_(p.get<std::string>("Composite Tet 10 Mass Name"), dl->node_vector), 
+      exact_mass_(p.get<std::string>("Exact Mass Name"), dl->node_vector), 
       out_(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
 #ifdef DEBUG_OUTPUT 
-  *out_ << "IKT CompositeTetMassResidualBase! \n"; 
+  *out_ << "IKT ExactMassResidualBase! \n"; 
 #endif
   if (p.isParameter("Density"))  
     density_ = p.get<RealType>("Density"); 
@@ -48,7 +48,7 @@ CompositeTetMassResidualBase(const Teuchos::ParameterList& p,
 #endif
   this->addDependentField(w_bf_);
   this->addDependentField(weights_);
-  this->addEvaluatedField(ct_mass_);
+  this->addEvaluatedField(exact_mass_);
 
   if (p.isType<bool>("Disable Dynamics"))
     enable_dynamics_ = !p.get<bool>("Disable Dynamics");
@@ -64,7 +64,7 @@ CompositeTetMassResidualBase(const Teuchos::ParameterList& p,
     this->addDependentField(accel_nodes_);
   }
 
-  this->setName("CompositeTetMassResidual" + PHX::typeAsString<EvalT>());
+  this->setName("ExactMassResidual" + PHX::typeAsString<EvalT>());
 
 
   Teuchos::RCP<PHX::DataLayout> vector_dl = dl->node_qp_vector;
@@ -100,13 +100,13 @@ CompositeTetMassResidualBase(const Teuchos::ParameterList& p,
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void CompositeTetMassResidualBase<EvalT, Traits>::
+void ExactMassResidualBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(w_bf_, fm);
   this->utils.setFieldData(weights_, fm);
-  this->utils.setFieldData(ct_mass_, fm);
+  this->utils.setFieldData(exact_mass_, fm);
   if (enable_dynamics_) {
     this->utils.setFieldData(accel_qps_, fm);
     this->utils.setFieldData(accel_nodes_, fm);
@@ -114,7 +114,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 template<typename EvalT, typename Traits>
-std::vector<RealType> CompositeTetMassResidualBase<EvalT, Traits>::
+std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::
 tet4LocalMassRow(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(4);
@@ -150,7 +150,7 @@ tet4LocalMassRow(const int cell, const int row) const
 }
 
 template<typename EvalT, typename Traits>
-std::vector<RealType> CompositeTetMassResidualBase<EvalT, Traits>::
+std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::
 tet10LocalMassRow(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(10);
@@ -240,7 +240,7 @@ tet10LocalMassRow(const int cell, const int row) const
 }
 
 template<typename EvalT, typename Traits>
-std::vector<RealType> CompositeTetMassResidualBase<EvalT, Traits>::
+std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::
 tet10LocalMassRowLumped(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(10);
@@ -291,7 +291,7 @@ tet10LocalMassRowLumped(const int cell, const int row) const
 
  
 template<typename EvalT, typename Traits>
-std::vector<RealType> CompositeTetMassResidualBase<EvalT, Traits>::
+std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::
 hex8LocalMassRow(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(8);
@@ -351,7 +351,7 @@ hex8LocalMassRow(const int cell, const int row) const
 }
  
 template<typename EvalT, typename Traits>
-std::vector<RealType> CompositeTetMassResidualBase<EvalT, Traits>::
+std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::
 compositeTet10LocalMassRow(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(10); 
@@ -442,7 +442,7 @@ compositeTet10LocalMassRow(const int cell, const int row) const
 
 
 template<typename EvalT, typename Traits>
-std::vector<RealType> CompositeTetMassResidualBase<EvalT, Traits>::
+std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::
 compositeTet10LocalMassRowLumped(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(10); 
@@ -493,7 +493,7 @@ compositeTet10LocalMassRowLumped(const int cell, const int row) const
 
 
 template<typename EvalT, typename Traits>
-RealType CompositeTetMassResidualBase<EvalT, Traits>::
+RealType ExactMassResidualBase<EvalT, Traits>::
 computeElementVolScaling(const int cell, const int node) const 
 {
   RealType elt_vol_scale_at_node = 0.0; 
@@ -508,7 +508,7 @@ computeElementVolScaling(const int cell, const int node) const
 }
 
 template<typename EvalT, typename Traits>
-RealType CompositeTetMassResidualBase<EvalT, Traits>::
+RealType ExactMassResidualBase<EvalT, Traits>::
 computeElementVolume(const int cell) const 
 {
   RealType elt_vol = 0.0; 
@@ -523,14 +523,14 @@ computeElementVolume(const int cell) const
 }
 
 template<typename EvalT, typename Traits>
-void CompositeTetMassResidualBase<EvalT, Traits>::
+void ExactMassResidualBase<EvalT, Traits>::
 computeResidualValue(typename Traits::EvalData workset) const 
 {
-  //Zero out ct_mass_ 
+  //Zero out exact_mass_ 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int node = 0; node < this->num_nodes_; ++node) {
       for (int dim = 0; dim < this->num_dims_; ++dim) {
-        (this->ct_mass_)(cell,node,dim) = ScalarT(0.0);
+        (this->exact_mass_)(cell,node,dim) = ScalarT(0.0);
       }
     }
   }
@@ -540,7 +540,7 @@ computeResidualValue(typename Traits::EvalData workset) const
       for (int node = 0; node < this->num_nodes_; ++node) {
         for (int pt = 0; pt < this->num_pts_; ++pt) {
           for (int dim = 0; dim < this->num_dims_; ++dim) {
-            (this->ct_mass_)(cell, node, dim) +=
+            (this->exact_mass_)(cell, node, dim) +=
               (this->density_) * (this->accel_qps_)(cell, pt, dim) * (this->w_bf_)(cell, node, pt);
           }
         }
@@ -572,7 +572,7 @@ computeResidualValue(typename Traits::EvalData workset) const
           for (int i = 0; i < this->num_nodes_; ++i) { //loop over columns
             val += mass_row[i]*accel_nodes_(cell, i, dim); 
           }
-          (this->ct_mass_)(cell, node, dim) += val; 
+          (this->exact_mass_)(cell, node, dim) += val; 
         }
       }
     }
@@ -582,7 +582,7 @@ computeResidualValue(typename Traits::EvalData workset) const
     if (cell == 0) {
       for (int node = 0; node < this->num_nodes_; ++node) {
         for (int dim = 0; dim < this->num_dims_; ++dim) {
-          *(this->out_) << "IKT node, dim, ct_mass = " << node << ", " << dim << ", " << (this->ct_mass_)(cell, node, dim) << "\n";
+          *(this->out_) << "IKT node, dim, ct_mass = " << node << ", " << dim << ", " << (this->exact_mass_)(cell, node, dim) << "\n";
         }
       }
     }
@@ -594,18 +594,18 @@ computeResidualValue(typename Traits::EvalData workset) const
 // Specialization: Residual
 // **********************************************************************
 template<typename Traits>
-CompositeTetMassResidual<PHAL::AlbanyTraits::Residual,Traits>::
-CompositeTetMassResidual(const Teuchos::ParameterList& p,
+ExactMassResidual<PHAL::AlbanyTraits::Residual,Traits>::
+ExactMassResidual(const Teuchos::ParameterList& p,
                        const Teuchos::RCP<Albany::Layouts>& dl)
-  : CompositeTetMassResidualBase<PHAL::AlbanyTraits::Residual,Traits>(p,dl) {}
+  : ExactMassResidualBase<PHAL::AlbanyTraits::Residual,Traits>(p,dl) {}
 
 // **********************************************************************
 template<typename Traits>
-void CompositeTetMassResidual<PHAL::AlbanyTraits::Residual, Traits>::
+void ExactMassResidual<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #ifdef DEBUG_OUTPUT 
-  *(this->out_) << "IKT CompositeTetMassResidual Residual Specialization evaluateFields!\n";
+  *(this->out_) << "IKT ExactMassResidual Residual Specialization evaluateFields!\n";
 #endif
   if (this->use_exact_mass_ == false) 
     return; 
@@ -613,7 +613,7 @@ evaluateFields(typename Traits::EvalData workset)
   //Throw error is trying to call with unsupported element type
   if (this->elt_type == this->UNSUPPORTED) {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-                               "Error! CompositeTetMassResidual is being run with unsupported element having \n" 
+                               "Error! ExactMassResidual is being run with unsupported element having \n" 
                                 << this->num_nodes_ << " nodes.  Please re-run with 'Use Exact Mass' = 'false'.\n"); 
   }
 
@@ -625,18 +625,18 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-CompositeTetMassResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
-CompositeTetMassResidual(const Teuchos::ParameterList& p,
+ExactMassResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
+ExactMassResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl)
-  : CompositeTetMassResidualBase<PHAL::AlbanyTraits::Jacobian,Traits>(p,dl) {}
+  : ExactMassResidualBase<PHAL::AlbanyTraits::Jacobian,Traits>(p,dl) {}
 
 // **********************************************************************
 template<typename Traits>
-void CompositeTetMassResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
+void ExactMassResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #ifdef DEBUG_OUTPUT 
-  *(this->out_) << "IKT CompositeTetMassResidual Jacobian Specialization evaluateFields!\n";
+  *(this->out_) << "IKT ExactMassResidual Jacobian Specialization evaluateFields!\n";
 #endif
 
   if (this->use_exact_mass_ == false) 
@@ -645,7 +645,7 @@ evaluateFields(typename Traits::EvalData workset)
   //Throw error is trying to call with unsupported element type
   if (this->elt_type == this->UNSUPPORTED) {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-                               "Error! CompositeTetMassResidual is being run with unsupported element having \n" 
+                               "Error! ExactMassResidual is being run with unsupported element having \n" 
                                 << this->num_nodes_ << " nodes.  Please re-run with 'Use Exact Mass' = 'false'.\n"); 
   }
 
@@ -676,7 +676,7 @@ evaluateFields(typename Traits::EvalData workset)
           break; 
       } 
       for (int dim = 0; dim < this->num_dims_; ++dim) {
-        typename PHAL::Ref<ScalarT>::type valref = (this->ct_mass_)(cell,node,dim); //get Jacobian row 
+        typename PHAL::Ref<ScalarT>::type valref = (this->exact_mass_)(cell,node,dim); //get Jacobian row 
         int k;
         for (int i=0; i < this->num_nodes_; ++i) { //loop over Jacobian cols 
           k = i*this->num_dims_ + dim;
@@ -691,7 +691,7 @@ evaluateFields(typename Traits::EvalData workset)
     if (cell == 0) {
       for (int node = 0; node < this->num_nodes_; ++node) {
         for (int dim = 0; dim < this->num_dims_; ++dim) {
-          *(this->out_) << "IKT node, dim, ct_mass = " << node << ", " << dim << ", " << (this->ct_mass_)(cell, node, dim) << "\n";
+          *(this->out_) << "IKT node, dim, ct_mass = " << node << ", " << dim << ", " << (this->exact_mass_)(cell, node, dim) << "\n";
         }
       }
     }
@@ -705,14 +705,14 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-CompositeTetMassResidual<PHAL::AlbanyTraits::Tangent, Traits>::
-CompositeTetMassResidual(const Teuchos::ParameterList& p,
+ExactMassResidual<PHAL::AlbanyTraits::Tangent, Traits>::
+ExactMassResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl)
-  : CompositeTetMassResidualBase<PHAL::AlbanyTraits::Tangent,Traits>(p,dl) {}
+  : ExactMassResidualBase<PHAL::AlbanyTraits::Tangent,Traits>(p,dl) {}
 
 // **********************************************************************
 template<typename Traits>
-void CompositeTetMassResidual<PHAL::AlbanyTraits::Tangent, Traits>::
+void ExactMassResidual<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   //IKT, FIXME: fill in!
@@ -723,14 +723,14 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-CompositeTetMassResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-CompositeTetMassResidual(const Teuchos::ParameterList& p,
+ExactMassResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+ExactMassResidual(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Albany::Layouts>& dl)
-  : CompositeTetMassResidualBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p,dl) {}
+  : ExactMassResidualBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p,dl) {}
 
 // **********************************************************************
 template<typename Traits>
-void CompositeTetMassResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+void ExactMassResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   //IKT, FIXME: fill in! 
