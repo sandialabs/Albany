@@ -44,7 +44,9 @@ protected:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   /// Local function: return row of exact composite tet local mass 
-  std::vector<RealType> compositeTetLocalMassRow(const int cell, const int row) const;
+  std::vector<RealType> compositeTet10LocalMassRow(const int cell, const int row) const;
+  /// Local function: return row of exact lumped composite tet local mass 
+  std::vector<RealType> compositeTet10LocalMassRowLumped(const int cell, const int row) const;
   /// Local function: return row of exact 8-node hexahedron local mass 
   std::vector<RealType> hex8LocalMassRow(const int cell, const int row) const;
   /// Local function: return row of exact 4-node tetrahedron local mass 
@@ -52,6 +54,9 @@ protected:
   /// Local function: return row of exact 10-node (isoparametric) tetrahedron 
   //local mass
   std::vector<RealType> tet10LocalMassRow(const int cell, const int row) const;
+  /// Local function: return row of exact lumped 10-node (isoparametric) tetrahedron 
+  //local mass
+  std::vector<RealType> tet10LocalMassRowLumped(const int cell, const int row) const;
   /// Local function: returns \int w_bf d\Omega for a given cell as a given node, 
   //  needed to compute the volume of each element to multiply local mass by.
   RealType computeElementVolScaling(const int cell, const int node) const; 
@@ -91,7 +96,11 @@ protected:
   /// Flag to mark if using composite tet
   bool use_composite_tet_; 
   /// Flag to mark if using composite tet exact mass
-  bool use_ct_exact_mass_; 
+  bool use_ct_exact_mass_;
+
+  enum ELT_TYPE {TET4, HEX8, TET10, CT10, UNSUPPORTED};
+  ELT_TYPE elt_type;
+ 
 };
 
 template<typename EvalT, typename Traits> class CompositeTetMassResidual;
@@ -149,7 +158,7 @@ public:
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 protected:
-  std::vector<RealType> compositeTetLocalMassRow(const int row) const;  
+  std::vector<RealType> compositeTet10LocalMassRow(const int row) const;  
 private:
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
 };

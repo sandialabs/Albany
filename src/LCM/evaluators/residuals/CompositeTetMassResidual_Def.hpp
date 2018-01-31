@@ -16,10 +16,6 @@
 
 //IKT: uncomment the following for debug output
 //#define DEBUG_OUTPUT
-//IKT: uncomment to try different elements
-#define HEX8
-//#define TET4
-//#define TET10
 
 // **********************************************************************
 // Base Class Generic Implemtation
@@ -81,6 +77,21 @@ CompositeTetMassResidualBase(const Teuchos::ParameterList& p,
 #ifdef DEBUG_OUTPUT
   *out_ << "IKT num_cells_, num_nodes, num_pts_, num_dims = " << num_cells_ << ", " << num_nodes_ << ", " << num_pts_ << ", " << num_dims_ << "\n"; 
 #endif
+
+  //Infer what is element type based on # of nodes 
+  switch(num_nodes_) {
+    case 4:
+      elt_type = TET4; 
+      break;
+    case 8: 
+      elt_type = HEX8; 
+    case 10: 
+      if (use_composite_tet_ == true) elt_type = CT10; 
+      else elt_type = TET10; 
+      break;
+    default:
+      elt_type = UNSUPPORTED;
+  } 
 
   Teuchos::RCP<ParamLib> paramLib =
       p.get<Teuchos::RCP<ParamLib>>("Parameter Library");
@@ -230,6 +241,57 @@ tet10LocalMassRow(const int cell, const int row) const
 
 template<typename EvalT, typename Traits>
 std::vector<RealType> CompositeTetMassResidualBase<EvalT, Traits>::
+tet10LocalMassRowLumped(const int cell, const int row) const 
+{
+  std::vector<RealType> mass_row(10);
+  switch(row) {
+    case 0:
+      mass_row[0] = -1.0; 
+      break; 
+    case 1:
+      mass_row[1] = -1.0; 
+      break;
+    case 2:
+      mass_row[2] = -1.0; 
+      break;
+    case 3:
+      mass_row[3] = -1.0; 
+      break;
+    case 4:
+      mass_row[4] = 4.0; 
+      break;
+    case 5:
+      mass_row[5] = 4.0; 
+      break;
+    case 6:
+      mass_row[6] = 4.0; 
+      break;
+    case 7:
+      mass_row[7] = 4.0; 
+      break;
+    case 8:
+      mass_row[8] = 4.0; 
+      break;
+    case 9:
+      mass_row[9] = 4.0; 
+      break;
+    default: 
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+                                  "Error! invalid value row = " << row << " to tet10LocalMassRowLumped! \n"
+                                  << "Row must be between 0 and 9.\n"); 
+  }
+  const RealType elt_vol = computeElementVolume(cell); 
+  const RealType scale = elt_vol * 6.0 * density_;
+  for (int i=0; i<mass_row.size(); i++) {
+    mass_row[i] /= 120.0 ; 
+    mass_row[i] *= scale;  
+  }
+  return mass_row; 
+}
+
+ 
+template<typename EvalT, typename Traits>
+std::vector<RealType> CompositeTetMassResidualBase<EvalT, Traits>::
 hex8LocalMassRow(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(8);
@@ -290,7 +352,7 @@ hex8LocalMassRow(const int cell, const int row) const
  
 template<typename EvalT, typename Traits>
 std::vector<RealType> CompositeTetMassResidualBase<EvalT, Traits>::
-compositeTetLocalMassRow(const int cell, const int row) const 
+compositeTet10LocalMassRow(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(10); 
   switch(row) {
@@ -366,7 +428,7 @@ compositeTetLocalMassRow(const int cell, const int row) const
       break; 
     default: 
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-                                  "Error! invalid value row = " << row << " to compositeTetLocalMassRow! \n"
+                                  "Error! invalid value row = " << row << " to compositeTet10LocalMassRow! \n"
                                   << "Row must be between 0 and 9.\n"); 
   }
   const RealType elt_vol = computeElementVolume(cell); 
@@ -377,6 +439,58 @@ compositeTetLocalMassRow(const int cell, const int row) const
   }
   return mass_row; 
 }
+
+
+template<typename EvalT, typename Traits>
+std::vector<RealType> CompositeTetMassResidualBase<EvalT, Traits>::
+compositeTet10LocalMassRowLumped(const int cell, const int row) const 
+{
+  std::vector<RealType> mass_row(10); 
+  switch(row) {
+    case 0:
+      mass_row[0] = 3.0; 
+      break; 
+    case 1:
+      mass_row[1] = 3.0; 
+      break;
+    case 2:
+      mass_row[2] = 3.0; 
+      break;
+    case 3:
+      mass_row[3] = 3.0; 
+      break;
+    case 4:
+      mass_row[4] = 14.0; 
+      break;
+    case 5:
+      mass_row[5] = 14.0; 
+      break;
+    case 6:
+      mass_row[6] = 14.0; 
+      break;
+    case 7:
+      mass_row[7] = 14.0; 
+      break;
+    case 8:
+      mass_row[8] = 14.0; 
+      break;
+    case 9:
+      mass_row[9] = 14.0; 
+      break;
+    default: 
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+                                  "Error! invalid value row = " << row << " to compositeTet10LocalMassRowLumped! \n"
+                                  << "Row must be between 0 and 9.\n"); 
+  }
+  const RealType elt_vol = computeElementVolume(cell); 
+  const RealType scale = elt_vol * density_;
+  for (int i=0; i<mass_row.size(); i++) {
+    mass_row[i] /= 96.0; 
+    mass_row[i] *= scale;  
+  }
+  return mass_row; 
+}
+
 
 template<typename EvalT, typename Traits>
 RealType CompositeTetMassResidualBase<EvalT, Traits>::
@@ -437,24 +551,22 @@ computeResidualValue(typename Traits::EvalData workset) const
     //Approach 2: uses mass matrix to compute residual contribution (r = rho*M*a)
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int node = 0; node < this->num_nodes_; ++node) { //loop over rows
-        std::vector<RealType> mass_row; 
-        if (use_composite_tet_ == true) { //composite tet
-          mass_row = this->compositeTetLocalMassRow(cell, node);
-        }
-        else {
-#ifdef HEX8 
-          //hex8
-          mass_row = this->hex8LocalMassRow(cell, node);
-#endif
-#ifdef TET4
-          //tet4
-          mass_row = this->tet4LocalMassRow(cell, node);
-#endif
-#ifdef TET10
-          //tet10 (isoparametric)
-          mass_row = this->tet10LocalMassRow(cell, node);
-#endif
-        }
+        std::vector<RealType> mass_row;
+        switch (this->elt_type) 
+        {
+          case this->TET4:
+            mass_row = this->tet4LocalMassRow(cell, node);
+            break;
+          case this->HEX8: 
+            mass_row = this->hex8LocalMassRow(cell, node);
+            break; 
+          case this->TET10: 
+            mass_row = this->tet10LocalMassRow(cell, node);
+            break;
+          case this->CT10: 
+            mass_row = this->compositeTet10LocalMassRow(cell, node);
+            break; 
+        } 
         for (int dim = 0; dim < this->num_dims_; ++dim) {
           ScalarT val = 0.0; 
           for (int i = 0; i < this->num_nodes_; ++i) { //loop over columns
@@ -498,6 +610,13 @@ evaluateFields(typename Traits::EvalData workset)
   if (this->use_ct_exact_mass_ == false) 
     return; 
 
+  //Throw error is trying to call with unsupported element type
+  if (this->elt_type == this->UNSUPPORTED) {
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+                               "Error! CompositeTetMassResidual is being run with unsupported element having \n" 
+                                << this->num_nodes_ << " nodes.  Please re-run with 'Use Composite Tet 10 Exact Mass' = 'false'.\n"); 
+  }
+
   this->computeResidualValue(workset);  
 }
 
@@ -523,6 +642,13 @@ evaluateFields(typename Traits::EvalData workset)
   if (this->use_ct_exact_mass_ == false) 
     return; 
 
+  //Throw error is trying to call with unsupported element type
+  if (this->elt_type == this->UNSUPPORTED) {
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+                               "Error! CompositeTetMassResidual is being run with unsupported element having \n" 
+                                << this->num_nodes_ << " nodes.  Please re-run with 'Use Composite Tet 10 Exact Mass' = 'false'.\n"); 
+  }
+
   //Compute residual value 
   this->computeResidualValue(workset);  
  
@@ -534,23 +660,21 @@ evaluateFields(typename Traits::EvalData workset)
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int node = 0; node < this->num_nodes_; ++node) { //loop over Jacobian rows
       std::vector<RealType> mass_row;
-      if (this->use_composite_tet_ == true) { //composite tet
-        mass_row = this->compositeTetLocalMassRow(cell, node);
-      }
-      else {
-#ifdef HEX8
-        //hex8
-        mass_row = this->hex8LocalMassRow(cell, node);
-#endif
-#ifdef TET4
-        //tet4
-        mass_row = this->tet4LocalMassRow(cell, node);
-#endif
-#ifdef TET10
-        //tet10 (isoparametric)
-        mass_row = this->tet10LocalMassRow(cell, node);
-#endif
-      }
+      switch (this->elt_type) 
+      {
+        case this->TET4:
+          mass_row = this->tet4LocalMassRow(cell, node);
+          break;
+        case this->HEX8: 
+          mass_row = this->hex8LocalMassRow(cell, node);
+          break; 
+        case this->TET10: 
+          mass_row = this->tet10LocalMassRow(cell, node);
+          break;
+        case this->CT10: 
+          mass_row = this->compositeTet10LocalMassRow(cell, node);
+          break; 
+      } 
       for (int dim = 0; dim < this->num_dims_; ++dim) {
         typename PHAL::Ref<ScalarT>::type valref = (this->ct_mass_)(cell,node,dim); //get Jacobian row 
         int k;
