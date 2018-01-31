@@ -1833,6 +1833,11 @@ MechanicsProblem::constructEvaluators(
       use_analytic_mass = material_db_->getElementBlockParam<bool>(
            eb_name, "Use Analytic Mass", false);
       p->set<bool>("Use Analytic Mass", use_analytic_mass);
+      
+      const bool 
+      lump_analytic_mass = material_db_->getElementBlockParam<bool>(
+           eb_name, "Lump Analytic Mass", false);
+      p->set<bool>("Lump Analytic Mass", lump_analytic_mass);
 
       p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
       // Output

@@ -102,10 +102,12 @@ protected:
   bool resid_using_cub_; 
   /// Flag to mark if using composite tet
   bool use_composite_tet_; 
-  /// Flag to mark if using composite tet analytic mass
+  /// Flag to mark if using analytic mass
   bool use_analytic_mass_;
+  /// Flag to mark if using user wants to lump analytic mass (false by default) 
+  bool lump_analytic_mass_;
 
-  enum ELT_TYPE {TET4, HEX8, TET10, CT10, UNSUPPORTED};
+  enum ELT_TYPE {TET4, LUMPED_TET4, HEX8, LUMPED_HEX8,  TET10, LUMPED_TET10, CT10, LUMPED_CT10, UNSUPPORTED};
   ELT_TYPE elt_type;
  
 };

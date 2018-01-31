@@ -6,6 +6,7 @@ ANONYMOUS:
       material: Clamped
       Use Composite Tet 10: true
       Use Analytic Mass: true
+      Lump Analytic Mass: false 
       Residual Computed Using Cubature: false
   Materials: 
     Clamped: 

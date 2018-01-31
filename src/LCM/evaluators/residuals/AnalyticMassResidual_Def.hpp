@@ -41,10 +41,11 @@ AnalyticMassResidualBase(const Teuchos::ParameterList& p,
   resid_using_cub_ = p.get<bool>("Residual Computed Using Cubature"); 
   use_composite_tet_ = p.get<bool>("Use Composite Tet 10"); 
   use_analytic_mass_ = p.get<bool>("Use Analytic Mass"); 
+  lump_analytic_mass_ = p.get<bool>("Lump Analytic Mass"); 
 
 #ifdef DEBUG_OUTPUT 
-  *out_ << "IKT resid_using_cub, use_composite_tet, use_analytic_mass = " << resid_using_cub_ << ", " 
-        << use_composite_tet_ << ", " << use_analytic_mass_ << "\n"; 
+  *out_ << "IKT resid_using_cub, use_composite_tet, use_analytic_mass, lump_analytic_mass = " << resid_using_cub_ << ", " 
+        << use_composite_tet_ << ", " << use_analytic_mass_ << ", " << lump_analytic_mass_ << "\n"; 
 #endif
   this->addDependentField(w_bf_);
   this->addDependentField(weights_);
@@ -81,13 +82,22 @@ AnalyticMassResidualBase(const Teuchos::ParameterList& p,
   //Infer what is element type based on # of nodes 
   switch(num_nodes_) {
     case 4:
-      elt_type = TET4; 
+      if (!lump_analytic_mass_) elt_type = TET4;
+      else elt_type = LUMPED_TET4;  
       break;
     case 8: 
-      elt_type = HEX8; 
+      if (!lump_analytic_mass_) elt_type = HEX8; 
+      else elt_type = LUMPED_HEX8; 
+      break; 
     case 10: 
-      if (use_composite_tet_ == true) elt_type = CT10; 
-      else elt_type = TET10; 
+      if (!use_composite_tet_) {
+        if (!lump_analytic_mass_) elt_type = TET10; 
+        else elt_type = LUMPED_TET10; 
+      }
+      else {
+        if (!lump_analytic_mass_) elt_type = CT10; 
+        else elt_type = LUMPED_CT10; 
+      }
       break;
     default:
       elt_type = UNSUPPORTED;
@@ -635,14 +645,26 @@ computeResidualValue(typename Traits::EvalData workset) const
           case this->TET4:
             mass_row = this->tet4LocalMassRow(cell, node);
             break;
+          case this->LUMPED_TET4:
+            mass_row = this->tet4LocalMassRowLumped(cell, node);
+            break;
           case this->HEX8: 
             mass_row = this->hex8LocalMassRow(cell, node);
+            break; 
+          case this->LUMPED_HEX8: 
+            mass_row = this->hex8LocalMassRowLumped(cell, node);
             break; 
           case this->TET10: 
             mass_row = this->tet10LocalMassRow(cell, node);
             break;
+          case this->LUMPED_TET10: 
+            mass_row = this->tet10LocalMassRowLumped(cell, node);
+            break;
           case this->CT10: 
             mass_row = this->compositeTet10LocalMassRow(cell, node);
+            break; 
+          case this->LUMPED_CT10: 
+            mass_row = this->compositeTet10LocalMassRowLumped(cell, node);
             break; 
         } 
         for (int dim = 0; dim < this->num_dims_; ++dim) {
@@ -743,14 +765,26 @@ evaluateFields(typename Traits::EvalData workset)
         case this->TET4:
           mass_row = this->tet4LocalMassRow(cell, node);
           break;
+        case this->LUMPED_TET4:
+          mass_row = this->tet4LocalMassRowLumped(cell, node);
+          break;
         case this->HEX8: 
           mass_row = this->hex8LocalMassRow(cell, node);
+          break; 
+        case this->LUMPED_HEX8: 
+          mass_row = this->hex8LocalMassRowLumped(cell, node);
           break; 
         case this->TET10: 
           mass_row = this->tet10LocalMassRow(cell, node);
           break;
+        case this->LUMPED_TET10: 
+          mass_row = this->tet10LocalMassRowLumped(cell, node);
+          break;
         case this->CT10: 
           mass_row = this->compositeTet10LocalMassRow(cell, node);
+          break; 
+        case this->LUMPED_CT10: 
+          mass_row = this->compositeTet10LocalMassRowLumped(cell, node);
           break; 
       } 
       for (int dim = 0; dim < this->num_dims_; ++dim) {
