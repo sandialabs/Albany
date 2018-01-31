@@ -22,7 +22,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 if (ALBANY_TEMPUS)
 if (ALBANY_IFPACK2)
-add_test(${testName}_NewmarkImplicitAForm_CompositeTet_ExactM ${AlbanyT.exe} clamped-ct.yaml)
+add_test(${testName}_NewmarkImplicitAForm_CompositeTet10_AnalyticMass ${AlbanyT.exe} clamped-ct.yaml)
 endif()
 endif()
 
