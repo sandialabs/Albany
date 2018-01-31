@@ -41,6 +41,9 @@ if [ "$BUILD_OPT" = "intel" ]; then
 
    . /sierra/sntools/SDK/compilers/intel/composer_xe_2018.1.163/compilers_and_libraries/linux/bin/compilervars.sh intel64
 
+   # Argh! The 2018.1.163 compiler install is apparently broken
+   export I_MPI_ROOT=/projects/sierra/linux_rh6/SDK/mpi/intel/5.1.2.150
+
 elif [ "$BUILD_OPT" = "debug" ]; then
 
   # Load latest gcc
