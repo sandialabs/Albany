@@ -149,6 +149,40 @@ tet4LocalMassRow(const int cell, const int row) const
   return mass_row; 
 }
 
+
+template<typename EvalT, typename Traits>
+std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::
+tet4LocalMassRowLumped(const int cell, const int row) const 
+{
+  std::vector<RealType> mass_row(4);
+  switch(row) {
+    case 0: 
+      mass_row[0] = 1.0; 
+      break; 
+    case 1: 
+      mass_row[1] = 1.0; 
+      break; 
+    case 2: 
+      mass_row[2] = 1.0; 
+      break; 
+    case 3: 
+      mass_row[3] = 1.0; 
+      break; 
+    default: 
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+                                  "Error! invalid value row = " << row << " to tet4LocalMassRowLumped! \n"
+                                  << "Row must be between 0 and 3.\n"); 
+  }
+  const RealType elt_vol = computeElementVolume(cell); 
+  const RealType scale = elt_vol * 6.0 * density_;
+  for (int i=0; i<mass_row.size(); i++) {
+    mass_row[i] /= 24.0; 
+    mass_row[i] *= scale;  
+  }
+  return mass_row; 
+}
+
+ 
 template<typename EvalT, typename Traits>
 std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::
 tet10LocalMassRow(const int cell, const int row) const 
@@ -349,6 +383,50 @@ hex8LocalMassRow(const int cell, const int row) const
   }
   return mass_row; 
 }
+ 
+template<typename EvalT, typename Traits>
+std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::
+hex8LocalMassRowLumped(const int cell, const int row) const 
+{
+  std::vector<RealType> mass_row(8);
+  switch(row) {
+    case 0: 
+      mass_row[0] = 1.0;  
+      break; 
+    case 1: 
+      mass_row[1] = 1.0;  
+      break; 
+    case 2: 
+      mass_row[2] = 1.0;  
+      break; 
+    case 3: 
+      mass_row[3] = 1.0;  
+      break; 
+    case 4: 
+      mass_row[4] = 1.0;  
+      break; 
+    case 5: 
+      mass_row[5] = 1.0;  
+      break; 
+    case 6: 
+      mass_row[6] = 1.0;  
+      break; 
+    case 7: 
+      mass_row[7] = 1.0;  
+      break; 
+    default: 
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+                                  "Error! invalid value row = " << row << " to hex8LocalMassRowLumped! \n"
+                                  << "Row must be between 0 and 7.\n"); 
+  }
+  const RealType elt_vol = computeElementVolume(cell); 
+  const RealType scale = elt_vol / 8.0 * density_;
+  for (int i=0; i<mass_row.size(); i++) {
+    mass_row[i] *= scale;  
+  }
+  return mass_row; 
+}
+
  
 template<typename EvalT, typename Traits>
 std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::

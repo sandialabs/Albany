@@ -52,8 +52,12 @@ protected:
   std::vector<RealType> compositeTet10LocalMassRowLumped(const int cell, const int row) const;
   /// Local function: return row of exact 8-node hexahedron local mass 
   std::vector<RealType> hex8LocalMassRow(const int cell, const int row) const;
+  /// Local function: return row of exact lumped 8-node hexahedron local mass 
+  std::vector<RealType> hex8LocalMassRowLumped(const int cell, const int row) const;
   /// Local function: return row of exact 4-node tetrahedron local mass 
   std::vector<RealType> tet4LocalMassRow(const int cell, const int row) const;
+  /// Local function: return row of exact lumped 4-node tetrahedron local mass 
+  std::vector<RealType> tet4LocalMassRowLumped(const int cell, const int row) const;
   /// Local function: return row of exact 10-node (isoparametric) tetrahedron 
   //local mass
   std::vector<RealType> tet10LocalMassRow(const int cell, const int row) const;
