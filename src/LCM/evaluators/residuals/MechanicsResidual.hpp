@@ -118,9 +118,9 @@ class MechanicsResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
   bool enable_dynamics_;
 
   ///
-  /// Flag to mark if using mass from ExactMassResidual evaluator
+  /// Flag to mark if using mass from AnalyticMassResidual evaluator
   ///
-  bool use_exact_mass_; 
+  bool use_analytic_mass_; 
 
   ///
   /// Input, if RCU.

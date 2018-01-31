@@ -5,7 +5,7 @@ ANONYMOUS:
     Block0: 
       material: Clamped
       Use Composite Tet 10: true
-      Use Exact Mass: true
+      Use Analytic Mass: true
       Residual Computed Using Cubature: false
   Materials: 
     Clamped: 

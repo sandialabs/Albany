@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "ExactMassResidual.hpp"
-#include "ExactMassResidual_Def.hpp"
+#include "AnalyticMassResidual.hpp"
+#include "AnalyticMassResidual_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ExactMassResidual)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::AnalyticMassResidual)

@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LCM_ExactMass_RESIDUAL_HPP
-#define LCM_ExactMass_RESIDUAL_HPP
+#ifndef LCM_AnalyticMass_RESIDUAL_HPP
+#define LCM_AnalyticMass_RESIDUAL_HPP
 
 #include <Phalanx_Evaluator_Derived.hpp>
 #include <Phalanx_Evaluator_WithBaseImpl.hpp>
@@ -18,8 +18,8 @@
 namespace LCM {
 /** \brief This evaluator computes the residual and Jacobian contributions
  * coming from the analytic mass matrix for various elements.  The main
- * element of interest is the composite tet element, where the exact mass comes from 
- * eqn. (C.4) in (Ostien et al, 2016).  One may be interested in the exact 
+ * element of interest is the composite tet element, where the mass matrix expression comes from 
+ * eqn. (C.4) in (Ostien et al, 2016).  One may be interested in the analytic 
  * mass for other elements, like the isoparameteric tet10, to avoid having to use
  * very high cubature degrees to numericall integrate the mass to a sufficient accuracy. 
 
@@ -29,12 +29,12 @@ namespace LCM {
 // **************************************************************
 
 template<typename EvalT, typename Traits>
-class ExactMassResidualBase
+class AnalyticMassResidualBase
   : public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
-  ExactMassResidualBase(const Teuchos::ParameterList& p,
+  AnalyticMassResidualBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -46,22 +46,22 @@ protected:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  /// Local function: return row of exact composite tet local mass 
+  /// Local function: return row of analytic composite tet local mass 
   std::vector<RealType> compositeTet10LocalMassRow(const int cell, const int row) const;
-  /// Local function: return row of exact lumped composite tet local mass 
+  /// Local function: return row of analytic lumped composite tet local mass 
   std::vector<RealType> compositeTet10LocalMassRowLumped(const int cell, const int row) const;
-  /// Local function: return row of exact 8-node hexahedron local mass 
+  /// Local function: return row of analytic 8-node hexahedron local mass 
   std::vector<RealType> hex8LocalMassRow(const int cell, const int row) const;
-  /// Local function: return row of exact lumped 8-node hexahedron local mass 
+  /// Local function: return row of analytic lumped 8-node hexahedron local mass 
   std::vector<RealType> hex8LocalMassRowLumped(const int cell, const int row) const;
-  /// Local function: return row of exact 4-node tetrahedron local mass 
+  /// Local function: return row of analytic 4-node tetrahedron local mass 
   std::vector<RealType> tet4LocalMassRow(const int cell, const int row) const;
-  /// Local function: return row of exact lumped 4-node tetrahedron local mass 
+  /// Local function: return row of analytic lumped 4-node tetrahedron local mass 
   std::vector<RealType> tet4LocalMassRowLumped(const int cell, const int row) const;
-  /// Local function: return row of exact 10-node (isoparametric) tetrahedron 
+  /// Local function: return row of analytic 10-node (isoparametric) tetrahedron 
   //local mass
   std::vector<RealType> tet10LocalMassRow(const int cell, const int row) const;
-  /// Local function: return row of exact lumped 10-node (isoparametric) tetrahedron 
+  /// Local function: return row of analytic lumped 10-node (isoparametric) tetrahedron 
   //local mass
   std::vector<RealType> tet10LocalMassRowLumped(const int cell, const int row) const;
   /// Local function: returns \int w_bf d\Omega for a given cell as a given node, 
@@ -102,15 +102,15 @@ protected:
   bool resid_using_cub_; 
   /// Flag to mark if using composite tet
   bool use_composite_tet_; 
-  /// Flag to mark if using composite tet exact mass
-  bool use_exact_mass_;
+  /// Flag to mark if using composite tet analytic mass
+  bool use_analytic_mass_;
 
   enum ELT_TYPE {TET4, HEX8, TET10, CT10, UNSUPPORTED};
   ELT_TYPE elt_type;
  
 };
 
-template<typename EvalT, typename Traits> class ExactMassResidual;
+template<typename EvalT, typename Traits> class AnalyticMassResidual;
 
 
 // **************************************************************
@@ -124,10 +124,10 @@ template<typename EvalT, typename Traits> class ExactMassResidual;
 // Residual
 // **************************************************************
 template<typename Traits>
-class ExactMassResidual<PHAL::AlbanyTraits::Residual,Traits>
-  : public ExactMassResidualBase<PHAL::AlbanyTraits::Residual, Traits>  {
+class AnalyticMassResidual<PHAL::AlbanyTraits::Residual,Traits>
+  : public AnalyticMassResidualBase<PHAL::AlbanyTraits::Residual, Traits>  {
 public:
-  ExactMassResidual(const Teuchos::ParameterList& p,
+  AnalyticMassResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 protected:
@@ -141,10 +141,10 @@ private:
 // Jacobian
 // **************************************************************
 template<typename Traits>
-class ExactMassResidual<PHAL::AlbanyTraits::Jacobian,Traits>
-  : public ExactMassResidualBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
+class AnalyticMassResidual<PHAL::AlbanyTraits::Jacobian,Traits>
+  : public AnalyticMassResidualBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
 public:
-  ExactMassResidual(const Teuchos::ParameterList& p,
+  AnalyticMassResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 protected:
@@ -158,10 +158,10 @@ private:
 // Tangent
 // **************************************************************
 template<typename Traits>
-class ExactMassResidual<PHAL::AlbanyTraits::Tangent,Traits>
-  : public ExactMassResidualBase<PHAL::AlbanyTraits::Tangent, Traits>  {
+class AnalyticMassResidual<PHAL::AlbanyTraits::Tangent,Traits>
+  : public AnalyticMassResidualBase<PHAL::AlbanyTraits::Tangent, Traits>  {
 public:
-  ExactMassResidual(const Teuchos::ParameterList& p,
+  AnalyticMassResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 protected:
@@ -174,10 +174,10 @@ private:
 // Distributed parameter derivative
 // **************************************************************
 template<typename Traits>
-class ExactMassResidual<PHAL::AlbanyTraits::DistParamDeriv,Traits>
-  : public ExactMassResidualBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
+class AnalyticMassResidual<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+  : public AnalyticMassResidualBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
 public:
-  ExactMassResidual(const Teuchos::ParameterList& p,
+  AnalyticMassResidual(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 protected:

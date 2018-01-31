@@ -18,7 +18,7 @@
 #include "BodyForce.hpp"
 #include "CurrentCoords.hpp"
 #include "MechanicsResidual.hpp"
-#include "ExactMassResidual.hpp"
+#include "AnalyticMassResidual.hpp"
 #include "SurfaceBasis.hpp"
 #include "SurfaceScalarGradientOperator.hpp"
 #include "SurfaceScalarJump.hpp"
@@ -1805,10 +1805,10 @@ MechanicsProblem::constructEvaluators(
       }
     }
   
-    if (have_mech_eq_) {  // Exact Mass residual
+    if (have_mech_eq_) {  // Analytic Mass residual
 
       Teuchos::RCP<Teuchos::ParameterList>
-      p = Teuchos::rcp(new Teuchos::ParameterList("Exact Mass Residual"));
+      p = Teuchos::rcp(new Teuchos::ParameterList("Analytic Mass Residual"));
 
       // Input
       p->set<std::string>("Weighted BF Name", "wBF");
@@ -1830,15 +1830,15 @@ MechanicsProblem::constructEvaluators(
       p->set<bool>("Use Composite Tet 10", composite_);
 
       const bool 
-      use_exact_mass = material_db_->getElementBlockParam<bool>(
-           eb_name, "Use Exact Mass", false);
-      p->set<bool>("Use Exact Mass", use_exact_mass);
+      use_analytic_mass = material_db_->getElementBlockParam<bool>(
+           eb_name, "Use Analytic Mass", false);
+      p->set<bool>("Use Analytic Mass", use_analytic_mass);
 
       p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
       // Output
-      p->set<std::string>("Exact Mass Name", "Exact Mass Residual");
+      p->set<std::string>("Analytic Mass Name", "Analytic Mass Residual");
       ev = Teuchos::rcp(
-          new LCM::ExactMassResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
+          new LCM::AnalyticMassResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
     } // end if (have_mech_eq_)  
 
@@ -1853,11 +1853,11 @@ MechanicsProblem::constructEvaluators(
       p->set<std::string>("Weighted BF Name", "wBF");
       p->set<std::string>("Acceleration Name", "Acceleration");
       p->set<std::string>("Body Force Name", "Body Force");
-      p->set<std::string>("Exact Mass Name", "Exact Mass Residual");
+      p->set<std::string>("Analytic Mass Name", "Analytic Mass Residual");
       const bool 
-      use_exact_mass = material_db_->getElementBlockParam<bool>(
-           eb_name, "Use Exact Mass", false);
-      p->set<bool>("Use Exact Mass", use_exact_mass);
+      use_analytic_mass = material_db_->getElementBlockParam<bool>(
+           eb_name, "Use Analytic Mass", false);
+      p->set<bool>("Use Analytic Mass", use_analytic_mass);
       if (Teuchos::nonnull(rc_mgr_)) {
         p->set<std::string>("DefGrad Name", defgrad);
         rc_mgr_->registerField(

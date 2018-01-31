@@ -23,28 +23,28 @@
 namespace LCM {
 
 template<typename EvalT, typename Traits>
-ExactMassResidualBase<EvalT, Traits>::
-ExactMassResidualBase(const Teuchos::ParameterList& p,
+AnalyticMassResidualBase<EvalT, Traits>::
+AnalyticMassResidualBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl)
  :
       w_bf_(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
       weights_("Weights", dl->qp_scalar),
-      mass_(p.get<std::string>("Exact Mass Name"), dl->node_vector), 
+      mass_(p.get<std::string>("Analytic Mass Name"), dl->node_vector), 
       out_(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
 #ifdef DEBUG_OUTPUT 
-  *out_ << "IKT ExactMassResidualBase! \n"; 
+  *out_ << "IKT AnalyticMassResidualBase! \n"; 
 #endif
   if (p.isParameter("Density"))  
     density_ = p.get<RealType>("Density"); 
 
   resid_using_cub_ = p.get<bool>("Residual Computed Using Cubature"); 
   use_composite_tet_ = p.get<bool>("Use Composite Tet 10"); 
-  use_exact_mass_ = p.get<bool>("Use Exact Mass"); 
+  use_analytic_mass_ = p.get<bool>("Use Analytic Mass"); 
 
 #ifdef DEBUG_OUTPUT 
-  *out_ << "IKT resid_using_cub, use_composite_tet, use_exact_mass = " << resid_using_cub_ << ", " 
-        << use_composite_tet_ << ", " << use_exact_mass_ << "\n"; 
+  *out_ << "IKT resid_using_cub, use_composite_tet, use_analytic_mass = " << resid_using_cub_ << ", " 
+        << use_composite_tet_ << ", " << use_analytic_mass_ << "\n"; 
 #endif
   this->addDependentField(w_bf_);
   this->addDependentField(weights_);
@@ -64,7 +64,7 @@ ExactMassResidualBase(const Teuchos::ParameterList& p,
     this->addDependentField(accel_nodes_);
   }
 
-  this->setName("ExactMassResidual" + PHX::typeAsString<EvalT>());
+  this->setName("AnalyticMassResidual" + PHX::typeAsString<EvalT>());
 
 
   Teuchos::RCP<PHX::DataLayout> vector_dl = dl->node_qp_vector;
@@ -100,7 +100,7 @@ ExactMassResidualBase(const Teuchos::ParameterList& p,
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void ExactMassResidualBase<EvalT, Traits>::
+void AnalyticMassResidualBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -114,7 +114,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 template<typename EvalT, typename Traits>
-std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::
+std::vector<RealType> AnalyticMassResidualBase<EvalT, Traits>::
 tet4LocalMassRow(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(4);
@@ -151,7 +151,7 @@ tet4LocalMassRow(const int cell, const int row) const
 
 
 template<typename EvalT, typename Traits>
-std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::
+std::vector<RealType> AnalyticMassResidualBase<EvalT, Traits>::
 tet4LocalMassRowLumped(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(4);
@@ -184,7 +184,7 @@ tet4LocalMassRowLumped(const int cell, const int row) const
 
  
 template<typename EvalT, typename Traits>
-std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::
+std::vector<RealType> AnalyticMassResidualBase<EvalT, Traits>::
 tet10LocalMassRow(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(10);
@@ -274,7 +274,7 @@ tet10LocalMassRow(const int cell, const int row) const
 }
 
 template<typename EvalT, typename Traits>
-std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::
+std::vector<RealType> AnalyticMassResidualBase<EvalT, Traits>::
 tet10LocalMassRowLumped(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(10);
@@ -325,7 +325,7 @@ tet10LocalMassRowLumped(const int cell, const int row) const
 
  
 template<typename EvalT, typename Traits>
-std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::
+std::vector<RealType> AnalyticMassResidualBase<EvalT, Traits>::
 hex8LocalMassRow(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(8);
@@ -385,7 +385,7 @@ hex8LocalMassRow(const int cell, const int row) const
 }
  
 template<typename EvalT, typename Traits>
-std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::
+std::vector<RealType> AnalyticMassResidualBase<EvalT, Traits>::
 hex8LocalMassRowLumped(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(8);
@@ -429,7 +429,7 @@ hex8LocalMassRowLumped(const int cell, const int row) const
 
  
 template<typename EvalT, typename Traits>
-std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::
+std::vector<RealType> AnalyticMassResidualBase<EvalT, Traits>::
 compositeTet10LocalMassRow(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(10); 
@@ -520,7 +520,7 @@ compositeTet10LocalMassRow(const int cell, const int row) const
 
 
 template<typename EvalT, typename Traits>
-std::vector<RealType> ExactMassResidualBase<EvalT, Traits>::
+std::vector<RealType> AnalyticMassResidualBase<EvalT, Traits>::
 compositeTet10LocalMassRowLumped(const int cell, const int row) const 
 {
   std::vector<RealType> mass_row(10); 
@@ -571,7 +571,7 @@ compositeTet10LocalMassRowLumped(const int cell, const int row) const
 
 
 template<typename EvalT, typename Traits>
-RealType ExactMassResidualBase<EvalT, Traits>::
+RealType AnalyticMassResidualBase<EvalT, Traits>::
 computeElementVolScaling(const int cell, const int node) const 
 {
   RealType elt_vol_scale_at_node = 0.0; 
@@ -586,7 +586,7 @@ computeElementVolScaling(const int cell, const int node) const
 }
 
 template<typename EvalT, typename Traits>
-RealType ExactMassResidualBase<EvalT, Traits>::
+RealType AnalyticMassResidualBase<EvalT, Traits>::
 computeElementVolume(const int cell) const 
 {
   RealType elt_vol = 0.0; 
@@ -601,7 +601,7 @@ computeElementVolume(const int cell) const
 }
 
 template<typename EvalT, typename Traits>
-void ExactMassResidualBase<EvalT, Traits>::
+void AnalyticMassResidualBase<EvalT, Traits>::
 computeResidualValue(typename Traits::EvalData workset) const 
 {
   //Zero out mass_ 
@@ -672,27 +672,27 @@ computeResidualValue(typename Traits::EvalData workset) const
 // Specialization: Residual
 // **********************************************************************
 template<typename Traits>
-ExactMassResidual<PHAL::AlbanyTraits::Residual,Traits>::
-ExactMassResidual(const Teuchos::ParameterList& p,
+AnalyticMassResidual<PHAL::AlbanyTraits::Residual,Traits>::
+AnalyticMassResidual(const Teuchos::ParameterList& p,
                        const Teuchos::RCP<Albany::Layouts>& dl)
-  : ExactMassResidualBase<PHAL::AlbanyTraits::Residual,Traits>(p,dl) {}
+  : AnalyticMassResidualBase<PHAL::AlbanyTraits::Residual,Traits>(p,dl) {}
 
 // **********************************************************************
 template<typename Traits>
-void ExactMassResidual<PHAL::AlbanyTraits::Residual, Traits>::
+void AnalyticMassResidual<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #ifdef DEBUG_OUTPUT 
-  *(this->out_) << "IKT ExactMassResidual Residual Specialization evaluateFields!\n";
+  *(this->out_) << "IKT AnalyticMassResidual Residual Specialization evaluateFields!\n";
 #endif
-  if (this->use_exact_mass_ == false) 
+  if (this->use_analytic_mass_ == false) 
     return; 
 
   //Throw error is trying to call with unsupported element type
   if (this->elt_type == this->UNSUPPORTED) {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-                               "Error! ExactMassResidual is being run with unsupported element having \n" 
-                                << this->num_nodes_ << " nodes.  Please re-run with 'Use Exact Mass' = 'false'.\n"); 
+                               "Error! AnalyticMassResidual is being run with unsupported element having \n" 
+                                << this->num_nodes_ << " nodes.  Please re-run with 'Use Analytic Mass' = 'false'.\n"); 
   }
 
   this->computeResidualValue(workset);  
@@ -703,28 +703,28 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-ExactMassResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
-ExactMassResidual(const Teuchos::ParameterList& p,
+AnalyticMassResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
+AnalyticMassResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl)
-  : ExactMassResidualBase<PHAL::AlbanyTraits::Jacobian,Traits>(p,dl) {}
+  : AnalyticMassResidualBase<PHAL::AlbanyTraits::Jacobian,Traits>(p,dl) {}
 
 // **********************************************************************
 template<typename Traits>
-void ExactMassResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
+void AnalyticMassResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #ifdef DEBUG_OUTPUT 
-  *(this->out_) << "IKT ExactMassResidual Jacobian Specialization evaluateFields!\n";
+  *(this->out_) << "IKT AnalyticMassResidual Jacobian Specialization evaluateFields!\n";
 #endif
 
-  if (this->use_exact_mass_ == false) 
+  if (this->use_analytic_mass_ == false) 
     return; 
 
   //Throw error is trying to call with unsupported element type
   if (this->elt_type == this->UNSUPPORTED) {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-                               "Error! ExactMassResidual is being run with unsupported element having \n" 
-                                << this->num_nodes_ << " nodes.  Please re-run with 'Use Exact Mass' = 'false'.\n"); 
+                               "Error! AnalyticMassResidual is being run with unsupported element having \n" 
+                                << this->num_nodes_ << " nodes.  Please re-run with 'Use Analytic Mass' = 'false'.\n"); 
   }
 
   //Compute residual value 
@@ -783,18 +783,18 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-ExactMassResidual<PHAL::AlbanyTraits::Tangent, Traits>::
-ExactMassResidual(const Teuchos::ParameterList& p,
+AnalyticMassResidual<PHAL::AlbanyTraits::Tangent, Traits>::
+AnalyticMassResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl)
-  : ExactMassResidualBase<PHAL::AlbanyTraits::Tangent,Traits>(p,dl) {}
+  : AnalyticMassResidualBase<PHAL::AlbanyTraits::Tangent,Traits>(p,dl) {}
 
 // **********************************************************************
 template<typename Traits>
-void ExactMassResidual<PHAL::AlbanyTraits::Tangent, Traits>::
+void AnalyticMassResidual<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-                             "Error! Tangent specialization of ExactMassResidual not implemented!\n"); 
+                             "Error! Tangent specialization of AnalyticMassResidual not implemented!\n"); 
 }
 
 // **********************************************************************
@@ -802,18 +802,18 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-ExactMassResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-ExactMassResidual(const Teuchos::ParameterList& p,
+AnalyticMassResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+AnalyticMassResidual(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Albany::Layouts>& dl)
-  : ExactMassResidualBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p,dl) {}
+  : AnalyticMassResidualBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p,dl) {}
 
 // **********************************************************************
 template<typename Traits>
-void ExactMassResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+void AnalyticMassResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-                             "Error! DistParamDeriv specialization of ExactMassResidual not implemented!\n"); 
+                             "Error! DistParamDeriv specialization of AnalyticMassResidual not implemented!\n"); 
 }
 
 }
