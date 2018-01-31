@@ -30,7 +30,7 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
           dl->node_qp_vector),
       w_bf_(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
       residual_(p.get<std::string>("Residual Name"), dl->node_vector),
-      exact_mass_(p.get<std::string>("Exact Mass Name"), dl->node_vector),  
+      mass_(p.get<std::string>("Exact Mass Name"), dl->node_vector),  
       have_body_force_(p.isType<bool>("Has Body Force")),
       density_(p.get<RealType>("Density", 1.0))
 {
@@ -38,7 +38,6 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
   this->addDependentField(stress_);
   this->addDependentField(w_grad_bf_);
   this->addDependentField(w_bf_);
-  this->addDependentField(exact_mass_);
 
   this->addEvaluatedField(residual_);
 
@@ -47,16 +46,15 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
   else
     enable_dynamics_ = true;
 
-  use_composite_tet_ = p.get<bool>("Use Composite Tet 10"); 
   use_exact_mass_ = p.get<bool>("Use Exact Mass");
 #ifdef DEBUG_OUTPUT
-  *out << "IKT use_composite_tet_, use_exact_mass_ = " << use_composite_tet_ << ", " 
-       << use_exact_mass_ << "\n";  
+  *out << "IKT use_exact_mass_ = " << use_exact_mass_ << "\n";  
 #endif
   if (enable_dynamics_) {
     acceleration_ = decltype(acceleration_)(
         p.get<std::string>("Acceleration Name"), dl->qp_vector);
     this->addDependentField(acceleration_);
+    if (use_exact_mass_) this->addDependentField(mass_);
   }
 
   this->setName("MechanicsResidual" + PHX::typeAsString<EvalT>());
@@ -89,13 +87,13 @@ MechanicsResidual<EvalT, Traits>::postRegistrationSetup(
   this->utils.setFieldData(stress_, fm);
   this->utils.setFieldData(w_grad_bf_, fm);
   this->utils.setFieldData(w_bf_, fm);
-  this->utils.setFieldData(exact_mass_, fm);
   this->utils.setFieldData(residual_, fm);
   if (have_body_force_) {
     this->utils.setFieldData(body_force_, fm);
   }
   if (enable_dynamics_) {
     this->utils.setFieldData(acceleration_, fm);
+    if (use_exact_mass_) this->utils.setFieldData(mass_, fm);
   }
   if (def_grad_rc_) this->utils.setFieldData(def_grad_rc_(), fm);
 }
@@ -246,7 +244,7 @@ MechanicsResidual<EvalT, Traits>::evaluateFields(
   //If transient problem and not using exact mass, enable acceleration terms.
   //This is similar to what is done in Peridigm when mass is passed from peridigm rather than 
   //computed in Albany; see, e.g., albanyIsCreatingMassMatrix-based logic in PeridigmForce_Def.hpp 
-    if (use_exact_mass_ == false) { //not using exact mass
+    if (!use_exact_mass_) { //not using exact mass
       for (int cell = 0; cell < workset.numCells; ++cell) {
         for (int node = 0; node < num_nodes_; ++node) {
           for (int pt = 0; pt < num_pts_; ++pt) {
@@ -262,7 +260,7 @@ MechanicsResidual<EvalT, Traits>::evaluateFields(
       for (int cell = 0; cell < workset.numCells; ++cell) {
         for (int node = 0; node < num_nodes_; ++node) {
           for (int dim = 0; dim < num_dims_; ++dim) {
-            residual_(cell, node, dim) += exact_mass_(cell, node, dim); 
+            residual_(cell, node, dim) += mass_(cell, node, dim); 
           }
         }
       }

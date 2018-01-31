@@ -1842,7 +1842,7 @@ MechanicsProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     } // end if (have_mech_eq_)  
 
-    if (have_mech_eq_) {  // Residual
+    if (have_mech_eq_) {  // Mechanics Residual
 
       Teuchos::RCP<Teuchos::ParameterList>
       p = Teuchos::rcp(new Teuchos::ParameterList("Displacement Residual"));
@@ -1854,7 +1854,6 @@ MechanicsProblem::constructEvaluators(
       p->set<std::string>("Acceleration Name", "Acceleration");
       p->set<std::string>("Body Force Name", "Body Force");
       p->set<std::string>("Exact Mass Name", "Exact Mass Residual");
-      p->set<bool>("Use Composite Tet 10", composite_);
       const bool 
       use_exact_mass = material_db_->getElementBlockParam<bool>(
            eb_name, "Use Exact Mass", false);

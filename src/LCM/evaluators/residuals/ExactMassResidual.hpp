@@ -78,7 +78,7 @@ protected:
   /// Input: integration weights
   PHX::MDField<const MeshScalarT> weights_;
   /// Output: mass contribution to residual/Jacobian 
-  PHX::MDField<ScalarT, Cell, Node, Dim> exact_mass_;
+  PHX::MDField<ScalarT, Cell, Node, Dim> mass_;
   /// Number of element nodes
   int num_nodes_;
   /// Number of integration points

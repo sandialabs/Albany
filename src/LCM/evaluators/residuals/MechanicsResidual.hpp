@@ -78,9 +78,9 @@ class MechanicsResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
   PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> acceleration_;
   
   ///
-  /// Input: exact mass contribution to residual/Jacobian (if not using AD to compute mass matrix)  
+  /// Input: mass contribution to residual/Jacobian (if not using AD to compute mass matrix)  
   ///
-  PHX::MDField<const ScalarT, Cell, Node, Dim> exact_mass_;
+  PHX::MDField<const ScalarT, Cell, Node, Dim> mass_;
 
   ///
   /// Output: Residual Forces
@@ -118,12 +118,7 @@ class MechanicsResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
   bool enable_dynamics_;
 
   ///
-  /// Flag to mark if using composite tet
-  ///
-  bool use_composite_tet_; 
-
-  ///
-  /// Flag to mark if using composite tet exact mass
+  /// Flag to mark if using mass from ExactMassResidual evaluator
   ///
   bool use_exact_mass_; 
 

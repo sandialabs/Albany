@@ -29,7 +29,7 @@ ExactMassResidualBase(const Teuchos::ParameterList& p,
  :
       w_bf_(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
       weights_("Weights", dl->qp_scalar),
-      exact_mass_(p.get<std::string>("Exact Mass Name"), dl->node_vector), 
+      mass_(p.get<std::string>("Exact Mass Name"), dl->node_vector), 
       out_(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
 #ifdef DEBUG_OUTPUT 
@@ -48,7 +48,7 @@ ExactMassResidualBase(const Teuchos::ParameterList& p,
 #endif
   this->addDependentField(w_bf_);
   this->addDependentField(weights_);
-  this->addEvaluatedField(exact_mass_);
+  this->addEvaluatedField(mass_);
 
   if (p.isType<bool>("Disable Dynamics"))
     enable_dynamics_ = !p.get<bool>("Disable Dynamics");
@@ -106,7 +106,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(w_bf_, fm);
   this->utils.setFieldData(weights_, fm);
-  this->utils.setFieldData(exact_mass_, fm);
+  this->utils.setFieldData(mass_, fm);
   if (enable_dynamics_) {
     this->utils.setFieldData(accel_qps_, fm);
     this->utils.setFieldData(accel_nodes_, fm);
@@ -526,11 +526,11 @@ template<typename EvalT, typename Traits>
 void ExactMassResidualBase<EvalT, Traits>::
 computeResidualValue(typename Traits::EvalData workset) const 
 {
-  //Zero out exact_mass_ 
+  //Zero out mass_ 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int node = 0; node < this->num_nodes_; ++node) {
       for (int dim = 0; dim < this->num_dims_; ++dim) {
-        (this->exact_mass_)(cell,node,dim) = ScalarT(0.0);
+        (this->mass_)(cell,node,dim) = ScalarT(0.0);
       }
     }
   }
@@ -540,7 +540,7 @@ computeResidualValue(typename Traits::EvalData workset) const
       for (int node = 0; node < this->num_nodes_; ++node) {
         for (int pt = 0; pt < this->num_pts_; ++pt) {
           for (int dim = 0; dim < this->num_dims_; ++dim) {
-            (this->exact_mass_)(cell, node, dim) +=
+            (this->mass_)(cell, node, dim) +=
               (this->density_) * (this->accel_qps_)(cell, pt, dim) * (this->w_bf_)(cell, node, pt);
           }
         }
@@ -572,7 +572,7 @@ computeResidualValue(typename Traits::EvalData workset) const
           for (int i = 0; i < this->num_nodes_; ++i) { //loop over columns
             val += mass_row[i]*accel_nodes_(cell, i, dim); 
           }
-          (this->exact_mass_)(cell, node, dim) += val; 
+          (this->mass_)(cell, node, dim) += val; 
         }
       }
     }
@@ -582,7 +582,7 @@ computeResidualValue(typename Traits::EvalData workset) const
     if (cell == 0) {
       for (int node = 0; node < this->num_nodes_; ++node) {
         for (int dim = 0; dim < this->num_dims_; ++dim) {
-          *(this->out_) << "IKT node, dim, ct_mass = " << node << ", " << dim << ", " << (this->exact_mass_)(cell, node, dim) << "\n";
+          *(this->out_) << "IKT node, dim, ct_mass = " << node << ", " << dim << ", " << (this->mass_)(cell, node, dim) << "\n";
         }
       }
     }
@@ -676,7 +676,7 @@ evaluateFields(typename Traits::EvalData workset)
           break; 
       } 
       for (int dim = 0; dim < this->num_dims_; ++dim) {
-        typename PHAL::Ref<ScalarT>::type valref = (this->exact_mass_)(cell,node,dim); //get Jacobian row 
+        typename PHAL::Ref<ScalarT>::type valref = (this->mass_)(cell,node,dim); //get Jacobian row 
         int k;
         for (int i=0; i < this->num_nodes_; ++i) { //loop over Jacobian cols 
           k = i*this->num_dims_ + dim;
@@ -691,7 +691,7 @@ evaluateFields(typename Traits::EvalData workset)
     if (cell == 0) {
       for (int node = 0; node < this->num_nodes_; ++node) {
         for (int dim = 0; dim < this->num_dims_; ++dim) {
-          *(this->out_) << "IKT node, dim, ct_mass = " << node << ", " << dim << ", " << (this->exact_mass_)(cell, node, dim) << "\n";
+          *(this->out_) << "IKT node, dim, ct_mass = " << node << ", " << dim << ", " << (this->mass_)(cell, node, dim) << "\n";
         }
       }
     }
@@ -715,7 +715,8 @@ template<typename Traits>
 void ExactMassResidual<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //IKT, FIXME: fill in!
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+                             "Error! Tangent specialization of ExactMassResidual not implemented!\n"); 
 }
 
 // **********************************************************************
@@ -733,7 +734,8 @@ template<typename Traits>
 void ExactMassResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //IKT, FIXME: fill in! 
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+                             "Error! DistParamDeriv specialization of ExactMassResidual not implemented!\n"); 
 }
 
 }
