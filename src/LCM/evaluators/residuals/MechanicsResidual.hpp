@@ -125,7 +125,7 @@ class MechanicsResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
   ///
   /// Flag to mark if using composite tet exact mass
   ///
-  bool use_ct_exact_mass_; 
+  bool use_exact_mass_; 
 
   ///
   /// Input, if RCU.

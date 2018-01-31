@@ -40,11 +40,11 @@ CompositeTetMassResidualBase(const Teuchos::ParameterList& p,
 
   resid_using_cub_ = p.get<bool>("Residual Computed Using Cubature"); 
   use_composite_tet_ = p.get<bool>("Use Composite Tet 10"); 
-  use_ct_exact_mass_ = p.get<bool>("Use Composite Tet 10 Exact Mass"); 
+  use_exact_mass_ = p.get<bool>("Use Exact Mass"); 
 
 #ifdef DEBUG_OUTPUT 
-  *out_ << "IKT resid_using_cub, use_composite_tet, use_ct_exact_mass = " << resid_using_cub_ << ", " 
-        << use_composite_tet_ << ", " << use_ct_exact_mass_ << "\n"; 
+  *out_ << "IKT resid_using_cub, use_composite_tet, use_exact_mass = " << resid_using_cub_ << ", " 
+        << use_composite_tet_ << ", " << use_exact_mass_ << "\n"; 
 #endif
   this->addDependentField(w_bf_);
   this->addDependentField(weights_);
@@ -607,14 +607,14 @@ evaluateFields(typename Traits::EvalData workset)
 #ifdef DEBUG_OUTPUT 
   *(this->out_) << "IKT CompositeTetMassResidual Residual Specialization evaluateFields!\n";
 #endif
-  if (this->use_ct_exact_mass_ == false) 
+  if (this->use_exact_mass_ == false) 
     return; 
 
   //Throw error is trying to call with unsupported element type
   if (this->elt_type == this->UNSUPPORTED) {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
                                "Error! CompositeTetMassResidual is being run with unsupported element having \n" 
-                                << this->num_nodes_ << " nodes.  Please re-run with 'Use Composite Tet 10 Exact Mass' = 'false'.\n"); 
+                                << this->num_nodes_ << " nodes.  Please re-run with 'Use Exact Mass' = 'false'.\n"); 
   }
 
   this->computeResidualValue(workset);  
@@ -639,14 +639,14 @@ evaluateFields(typename Traits::EvalData workset)
   *(this->out_) << "IKT CompositeTetMassResidual Jacobian Specialization evaluateFields!\n";
 #endif
 
-  if (this->use_ct_exact_mass_ == false) 
+  if (this->use_exact_mass_ == false) 
     return; 
 
   //Throw error is trying to call with unsupported element type
   if (this->elt_type == this->UNSUPPORTED) {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
                                "Error! CompositeTetMassResidual is being run with unsupported element having \n" 
-                                << this->num_nodes_ << " nodes.  Please re-run with 'Use Composite Tet 10 Exact Mass' = 'false'.\n"); 
+                                << this->num_nodes_ << " nodes.  Please re-run with 'Use Exact Mass' = 'false'.\n"); 
   }
 
   //Compute residual value 

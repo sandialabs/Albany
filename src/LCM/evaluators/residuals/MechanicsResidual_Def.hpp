@@ -17,9 +17,6 @@
 //IKT: uncomment to turn on debug output
 //#define DEBUG_OUTPUT
 
-//Global variable to control printing of warning to screen 
-static int cc = 0; 
-
 namespace LCM {
 
 //------------------------------------------------------------------------------
@@ -51,20 +48,11 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
     enable_dynamics_ = true;
 
   use_composite_tet_ = p.get<bool>("Use Composite Tet 10"); 
-  use_ct_exact_mass_ = p.get<bool>("Use Composite Tet 10 Exact Mass");
+  use_exact_mass_ = p.get<bool>("Use Exact Mass");
 #ifdef DEBUG_OUTPUT
-  *out << "IKT use_composite_tet_, use_ct_exact_mass_ = " << use_composite_tet_ << ", " 
-       << use_ct_exact_mass_ << "\n";  
+  *out << "IKT use_composite_tet_, use_exact_mass_ = " << use_composite_tet_ << ", " 
+       << use_exact_mass_ << "\n";  
 #endif
-  if ((use_composite_tet_ == false) && (use_ct_exact_mass_ == true) && (cc == 0)) {
-    *out << "\n ****************************************************************\n" 
-         << "WARNING: you are not using a composite tet element yet you have \n" 
-         << "selected 'Use Composite Tet 10 Exact Mass' to true.  This option only \n"
-         << "works correctly for Composite Tet 10 and Hex 8 elements, so if you are \n"
-         << "not using a Hex 8 element, you will get the wrong result!\n"
-         << "\n ****************************************************************\n\n";  
-  }
-  cc++; 
   if (enable_dynamics_) {
     acceleration_ = decltype(acceleration_)(
         p.get<std::string>("Acceleration Name"), dl->qp_vector);
@@ -255,10 +243,10 @@ MechanicsResidual<EvalT, Traits>::evaluateFields(
 
   // dynamic term
   if (workset.transientTerms && enable_dynamics_) {
-  //If transient problem and not using composite tet element, enable acceleration terms.
+  //If transient problem and not using exact mass, enable acceleration terms.
   //This is similar to what is done in Peridigm when mass is passed from peridigm rather than 
   //computed in Albany; see, e.g., albanyIsCreatingMassMatrix-based logic in PeridigmForce_Def.hpp 
-    if (use_ct_exact_mass_ == false) { //not using exact mass (for composite tet and hex8 elts)
+    if (use_exact_mass_ == false) { //not using exact mass
       for (int cell = 0; cell < workset.numCells; ++cell) {
         for (int node = 0; node < num_nodes_; ++node) {
           for (int pt = 0; pt < num_pts_; ++pt) {
@@ -270,7 +258,7 @@ MechanicsResidual<EvalT, Traits>::evaluateFields(
         }
       }
     }
-    else { //using exact mass (for composite tet and hex8 elts): add contribution from composite tet mass evaluator
+    else { //using exact mass: add contribution from exact mass evaluator
       for (int cell = 0; cell < workset.numCells; ++cell) {
         for (int node = 0; node < num_nodes_; ++node) {
           for (int dim = 0; dim < num_dims_; ++dim) {

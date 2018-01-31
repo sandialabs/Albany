@@ -1834,9 +1834,9 @@ MechanicsProblem::constructEvaluators(
       p->set<bool>("Use Composite Tet 10", composite_);
 
       const bool 
-      use_ct_exact_mass = material_db_->getElementBlockParam<bool>(
-           eb_name, "Use Composite Tet 10 Exact Mass", false);
-      p->set<bool>("Use Composite Tet 10 Exact Mass", use_ct_exact_mass);
+      use_exact_mass = material_db_->getElementBlockParam<bool>(
+           eb_name, "Use Exact Mass", false);
+      p->set<bool>("Use Exact Mass", use_exact_mass);
 
       p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
       // Output
@@ -1860,9 +1860,9 @@ MechanicsProblem::constructEvaluators(
       p->set<std::string>("Composite Tet 10 Mass Name", "Composite Tet 10 Mass Residual");
       p->set<bool>("Use Composite Tet 10", composite_);
       const bool 
-      use_ct_exact_mass = material_db_->getElementBlockParam<bool>(
-           eb_name, "Use Composite Tet 10 Exact Mass", false);
-      p->set<bool>("Use Composite Tet 10 Exact Mass", use_ct_exact_mass);
+      use_exact_mass = material_db_->getElementBlockParam<bool>(
+           eb_name, "Use Exact Mass", false);
+      p->set<bool>("Use Exact Mass", use_exact_mass);
       if (Teuchos::nonnull(rc_mgr_)) {
         p->set<std::string>("DefGrad Name", defgrad);
         rc_mgr_->registerField(
