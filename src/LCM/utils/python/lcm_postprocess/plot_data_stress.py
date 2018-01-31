@@ -36,12 +36,15 @@ def plot_data_stress(
     else:
         num_blocks_plot = num_blocks    
 
-    if names_block == None:
-        name_base = 'Block'
-    elif type(names_block) is str:
-        name_base = names_block
-
-    names_block = [name_base + ' ' + str(key_block) for key_block in sorted(list(domain.blocks))]
+    if type(names_block) is list:
+        if len(names_block) != num_blocks:
+            raise Exception('Wrong number of block names')
+    else:
+        if names_block == None:
+            name_base = 'Block'
+        elif type(names_block) is str:
+            name_base = names_block
+        names_block = [name_base + ' ' + str(key_block) for key_block in sorted(list(domain.blocks))]
     
     if truncate_legend ==True:
         string_legend.extend(names_block[:num_blocks_plot] + ['...'] + [names_block[-1]])
