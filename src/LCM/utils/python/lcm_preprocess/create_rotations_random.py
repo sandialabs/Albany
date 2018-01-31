@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 
+import argparse
 import numpy
+import os
 from scipy import linalg
 import sys
 import string
+from lcm_preprocess.write_file_material import read_names_block
 
-
-def create_rotations_random(num_blocks = 1):
+def create_rotations_random(num_rotations=1, basename=''):
 
     # Exporting data to file
-    output = open('rotation_matrices.txt','w')
+    filename_rotations = basename + 'Rotations.txt'
+    output = open(filename_rotations,'w')
     output.write('#\n')
     output.write('# Rotation matrix for each block in a genesis file.\n')
     output.write('# Format is:  R11 R12 R13 R21 R22 R23 R31 R32 R33.\n')
@@ -18,7 +21,7 @@ def create_rotations_random(num_blocks = 1):
     # Checking distribution of sphere point picking algorithm
     output_check = open('axial_vectors.txt','w')
 
-    for i in range(num_blocks):
+    for i in range(num_rotations):
 
         # Create uniform distribution
         # Please refer to sphere point picking algorithms
@@ -67,8 +70,8 @@ def create_rotations_random(num_blocks = 1):
     output.close()
     output_check.close()
 
-    print "\nWrote", num_blocks, "rotation matrices to rotation_matrices.txt\n"
-    print "\nWrote", num_blocks, "axial vectors to axial_vector.txt\n" 
+    print '\nWrote', num_rotations, 'rotation matrices to {}\n'.format(filename_rotations)
+    print '\nWrote', num_rotations, 'axial vectors to axial_vector.txt\n'
 
     return True
 
@@ -83,11 +86,24 @@ def create_rotations_random(num_blocks = 1):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 2:
-        print "\nUsage: create_rotations_random <num_blocks>\n"
-        sys.exit(1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('num_blocks', help='Specify number of blocks (old style)', nargs='*')
+    parser.add_argument('-f', '--filename', help = 'Specify name of exodus file.')
+    parser.add_argument('-n', '--num_rotations', help = 'Specify number of rotations.')
 
+    args = parser.parse_args()
+    filename = getattr(args, 'filename', None)
+    if filename is not None:
+        assert(os.path.isfile(filename))
+        num_rotations = len(read_names_block(filename))
+        basename = os.path.splitext(filename)[0] + '_'
+    else:
+        basename = ''
+        num_rotations = getattr(args, 'num_rotations', None)
+        if num_rotations is None:
+            num_rotations = getattr(args, 'num_blocks', None)
+            if num_rotations is None:
+                parser.print_help()
+                sys.exit(1)
 
-    num_blocks = int(sys.argv[1])
-
-    success = create_rotations_random(num_blocks)
+    success = create_rotations_random(num_rotations=num_rotations, basename=basename)
