@@ -11,6 +11,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/material-clamped-ct-lumped.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/material-clamped-ct-lumped.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/clamped-ct.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/clamped-ct.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/clamped-ct-expl.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/clamped-ct-expl.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/clamped_ct.g.4.0 
                ${CMAKE_CURRENT_BINARY_DIR}/clamped_ct.g.4.0 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/clamped_ct.g.4.1 
