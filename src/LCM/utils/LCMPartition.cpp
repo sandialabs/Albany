@@ -2889,6 +2889,8 @@ ConnectivityArray::partitionRandom(double const length_scale)
   std::vector<minitensor::Vector<double>>
   centers;
 
+  std::srand(1);
+
   while (number_generators < number_partitions) {
 
     minitensor::Vector<double>
