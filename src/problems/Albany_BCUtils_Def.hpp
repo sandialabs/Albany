@@ -479,7 +479,8 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
 
       if (BCparams.isSublist(ss)) {
 
-        use_sdbcs_ = true; 
+        use_sdbcs_ = true;
+ 
         // grab the sublist
         ParameterList& sub_list = BCparams.sublist(ss);
 
@@ -731,6 +732,9 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
     string ss = traits_type::constructSDBCName(nodeSetIDs[i], "StrongSchwarz");
 
     if (BCparams.isSublist(ss)) {
+
+      use_sdbcs_ = true; 
+
       // grab the sublist
       ParameterList& sub_list = BCparams.sublist(ss);
 
