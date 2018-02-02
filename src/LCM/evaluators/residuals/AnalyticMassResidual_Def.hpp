@@ -82,25 +82,25 @@ AnalyticMassResidualBase(const Teuchos::ParameterList& p,
   //Infer what is element type based on # of nodes 
   switch(num_nodes_) {
     case 4:
-      if (!lump_analytic_mass_) elt_type = TET4;
-      else elt_type = LUMPED_TET4;  
+      if (!lump_analytic_mass_) elt_type = ELT_TYPE::TET4;
+      else elt_type = ELT_TYPE::LUMPED_TET4;  
       break;
     case 8: 
-      if (!lump_analytic_mass_) elt_type = HEX8; 
-      else elt_type = LUMPED_HEX8; 
+      if (!lump_analytic_mass_) elt_type = ELT_TYPE::HEX8; 
+      else elt_type = ELT_TYPE::LUMPED_HEX8; 
       break; 
     case 10: 
       if (!use_composite_tet_) {
-        if (!lump_analytic_mass_) elt_type = TET10; 
-        else elt_type = LUMPED_TET10; 
+        if (!lump_analytic_mass_) elt_type = ELT_TYPE::TET10; 
+        else elt_type = ELT_TYPE::LUMPED_TET10; 
       }
       else {
-        if (!lump_analytic_mass_) elt_type = CT10; 
-        else elt_type = LUMPED_CT10; 
+        if (!lump_analytic_mass_) elt_type = ELT_TYPE::CT10; 
+        else elt_type = ELT_TYPE::LUMPED_CT10; 
       }
       break;
     default:
-      elt_type = UNSUPPORTED;
+      elt_type = ELT_TYPE::UNSUPPORTED;
   } 
 
   Teuchos::RCP<ParamLib> paramLib =
@@ -642,30 +642,32 @@ computeResidualValue(typename Traits::EvalData workset) const
         std::vector<RealType> mass_row;
         switch (this->elt_type) 
         {
-          case this->TET4:
+          case ELT_TYPE::TET4:
             mass_row = this->tet4LocalMassRow(cell, node);
             break;
-          case this->LUMPED_TET4:
+          case ELT_TYPE::LUMPED_TET4:
             mass_row = this->tet4LocalMassRowLumped(cell, node);
             break;
-          case this->HEX8: 
+          case ELT_TYPE::HEX8: 
             mass_row = this->hex8LocalMassRow(cell, node);
             break; 
-          case this->LUMPED_HEX8: 
+          case ELT_TYPE::LUMPED_HEX8: 
             mass_row = this->hex8LocalMassRowLumped(cell, node);
             break; 
-          case this->TET10: 
+          case ELT_TYPE::TET10: 
             mass_row = this->tet10LocalMassRow(cell, node);
             break;
-          case this->LUMPED_TET10: 
+          case ELT_TYPE::LUMPED_TET10: 
             mass_row = this->tet10LocalMassRowLumped(cell, node);
             break;
-          case this->CT10: 
+          case ELT_TYPE::CT10: 
             mass_row = this->compositeTet10LocalMassRow(cell, node);
             break; 
-          case this->LUMPED_CT10: 
+          case ELT_TYPE::LUMPED_CT10: 
             mass_row = this->compositeTet10LocalMassRowLumped(cell, node);
             break; 
+          default:
+            break;
         } 
         for (int dim = 0; dim < this->num_dims_; ++dim) {
           ScalarT val = 0.0; 
@@ -711,7 +713,7 @@ evaluateFields(typename Traits::EvalData workset)
     return; 
 
   //Throw error is trying to call with unsupported element type
-  if (this->elt_type == this->UNSUPPORTED) {
+  if (this->elt_type == AnalyticMassResidualBase<PHAL::AlbanyTraits::Residual, Traits>::ELT_TYPE::UNSUPPORTED) {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
                                "Error! AnalyticMassResidual is being run with unsupported element having \n" 
                                 << this->num_nodes_ << " nodes.  Please re-run with 'Use Analytic Mass' = 'false'.\n"); 
@@ -743,7 +745,7 @@ evaluateFields(typename Traits::EvalData workset)
     return; 
 
   //Throw error is trying to call with unsupported element type
-  if (this->elt_type == this->UNSUPPORTED) {
+  if (this->elt_type == AnalyticMassResidualBase<PHAL::AlbanyTraits::Jacobian, Traits>::ELT_TYPE::UNSUPPORTED) {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
                                "Error! AnalyticMassResidual is being run with unsupported element having \n" 
                                 << this->num_nodes_ << " nodes.  Please re-run with 'Use Analytic Mass' = 'false'.\n"); 
@@ -762,30 +764,32 @@ evaluateFields(typename Traits::EvalData workset)
       std::vector<RealType> mass_row;
       switch (this->elt_type) 
       {
-        case this->TET4:
+        case AnalyticMassResidualBase<PHAL::AlbanyTraits::Jacobian, Traits>::ELT_TYPE::TET4:
           mass_row = this->tet4LocalMassRow(cell, node);
           break;
-        case this->LUMPED_TET4:
+        case AnalyticMassResidualBase<PHAL::AlbanyTraits::Jacobian, Traits>::ELT_TYPE::LUMPED_TET4:
           mass_row = this->tet4LocalMassRowLumped(cell, node);
           break;
-        case this->HEX8: 
+        case AnalyticMassResidualBase<PHAL::AlbanyTraits::Jacobian, Traits>::ELT_TYPE::HEX8: 
           mass_row = this->hex8LocalMassRow(cell, node);
           break; 
-        case this->LUMPED_HEX8: 
+        case AnalyticMassResidualBase<PHAL::AlbanyTraits::Jacobian, Traits>::ELT_TYPE::LUMPED_HEX8: 
           mass_row = this->hex8LocalMassRowLumped(cell, node);
           break; 
-        case this->TET10: 
+        case AnalyticMassResidualBase<PHAL::AlbanyTraits::Jacobian, Traits>::ELT_TYPE::TET10: 
           mass_row = this->tet10LocalMassRow(cell, node);
           break;
-        case this->LUMPED_TET10: 
+        case AnalyticMassResidualBase<PHAL::AlbanyTraits::Jacobian, Traits>::ELT_TYPE::LUMPED_TET10: 
           mass_row = this->tet10LocalMassRowLumped(cell, node);
           break;
-        case this->CT10: 
+        case AnalyticMassResidualBase<PHAL::AlbanyTraits::Jacobian, Traits>::ELT_TYPE::CT10: 
           mass_row = this->compositeTet10LocalMassRow(cell, node);
           break; 
-        case this->LUMPED_CT10: 
+        case AnalyticMassResidualBase<PHAL::AlbanyTraits::Jacobian, Traits>::ELT_TYPE::LUMPED_CT10: 
           mass_row = this->compositeTet10LocalMassRowLumped(cell, node);
           break; 
+        default:
+          break;
       } 
       for (int dim = 0; dim < this->num_dims_; ++dim) {
         typename PHAL::Ref<ScalarT>::type valref = (this->mass_)(cell,node,dim); //get Jacobian row 
