@@ -150,7 +150,7 @@ computeState(
         F.fill(def_grad, cell, pt, 0, 0);
         ScalarT J = minitensor::det(F);
         sigma.fill(stress, cell, pt, 0, 0);
-        sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J * J))
+        sigma -= 3.0 * kappa * expansion_coeff_ * (1.0 + 1.0 / (J * J))
             * (temperature_(cell, pt) - ref_temperature_) * I;
 
         for (int i = 0; i < num_dims_; ++i) {

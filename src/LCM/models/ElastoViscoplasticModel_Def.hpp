@@ -893,10 +893,13 @@ computeState(typename Traits::EvalData workset,
   if (have_temperature_) {
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
+        ScalarT const
+        bulk = elastic_modulus(cell, pt)
+        / (3. * (1. - 2. * poissons_ratio(cell, pt)));
         F.fill(def_grad_field,cell,pt,0,0);
         ScalarT J = minitensor::det(F);
         sigma.fill(stress_field,cell,pt,0,0);
-        sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
+        sigma -= 3.0 * bulk * expansion_coeff_ * (1.0 + 1.0 / (J*J))
           * (temperature_(cell,pt) - ref_temperature_) * I;
         for (std::size_t i = 0; i < num_dims_; ++i) {
           for (std::size_t j = 0; j < num_dims_; ++j) {

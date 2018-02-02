@@ -117,10 +117,10 @@ computeState(typename Traits::EvalData workset,
         energy += heat_capacity_
             * ((delta_temp) - temperature_(cell, pt)
                 * std::log(temperature_(cell, pt) / ref_temperature_))
-            - 3.0 * expansion_coeff_ * (J(cell, pt) - 1.0 / J(cell, pt))
+            - 3.0 * kappa * expansion_coeff_ * (J(cell, pt) - 1.0 / J(cell, pt))
                 * delta_temp;
-        sigma -= expansion_coeff_ * (1.0 + 1.0 / (J(cell, pt) * J(cell, pt)))
-            * delta_temp * I;
+        sigma -= kappa * expansion_coeff_ *
+            (1.0 + 1.0 / (J(cell, pt) * J(cell, pt))) * delta_temp * I;
       }
 
       alpha(cell, pt) = std::max((ScalarT) alpha_old(cell, pt), energy);
