@@ -648,11 +648,55 @@ SchwarzCoupled::getThyraDomainSpace() const
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
+SchwarzCoupled::getThyraResponseSpace(int l) const
+{
+  //IKT, 2/2/18: this fixes dangling reference error but may
+  //cause problems for > 1 responses.
+  if (response_space_ == Teuchos::null) {
+    // loop over all vectors and build the vector space
+    std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
+    vs_array;
+
+    for (auto m = 0; m < num_models_; ++m) {
+      Teuchos::RCP<const Tpetra_Map> mapT = apps_[m]->getResponse(l)->responseMapT();
+      vs_array.push_back(
+          Thyra::createVectorSpace<ST, LO, Tpetra_GO, KokkosNode>(mapT));
+    }
+
+    response_space_ = Thyra::productVectorSpace<ST>(vs_array);
+  }
+  return response_space_;
+}
+
+Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
+SchwarzCoupled::getThyraParamSpace(int l) const
+{
+  //IKT, 2/2/18: this may cause problems for > 1 responses.
+  if (param_space_ == Teuchos::null) {
+    // loop over all vectors and build the vector space
+    std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
+    vs_array;
+
+    for (auto m = 0; m < num_models_; ++m) {
+      vs_array.push_back(models_[m]->get_p_space(l));
+    }
+
+    param_space_ = Thyra::productVectorSpace<ST>(vs_array);
+  }
+  return param_space_;  
+}
+
+
+Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 SchwarzCoupled::get_p_space(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_params_total_);
 
-  std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
+  return getThyraParamSpace(l); 
+
+  //IKT, 2/2/18: original code which may give rise to dangling
+  //reference errors in debug code.
+  /*std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
   vs_array;
 
   // create product space for lth parameter by concatenating lth parameter
@@ -661,15 +705,19 @@ SchwarzCoupled::get_p_space(int l) const
     vs_array.push_back(models_[m]->get_p_space(l));
   }
 
-  return Thyra::productVectorSpace<ST>(vs_array);
+  return Thyra::productVectorSpace<ST>(vs_array);*/
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 SchwarzCoupled::get_g_space(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_responses_total_);
+  
+  return getThyraResponseSpace(l); 
 
-  Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
+  //IKT, 2/2/18: original code which was giving rise to dangling
+  //reference errors in debug code.
+  /*Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
   vs_array;
 
   // create product space for lth response by concatenating lth response
@@ -678,7 +726,7 @@ SchwarzCoupled::get_g_space(int l) const
     vs_array.push_back(models_[m]->get_g_space(l));
   }
 
-  return Thyra::productVectorSpace<ST>(vs_array);
+  return Thyra::productVectorSpace<ST>(vs_array);*/
 }
 
 Teuchos::RCP<const Teuchos::Array<std::string>>

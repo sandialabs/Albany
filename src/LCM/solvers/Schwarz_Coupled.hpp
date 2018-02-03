@@ -93,6 +93,12 @@ public:
 
   Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
   getThyraDomainSpace() const;
+  
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
+  getThyraResponseSpace(int l) const;
+
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
+  getThyraParamSpace(int l) const;
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   getApps() const {return apps_;}
@@ -104,6 +110,12 @@ protected:
 
   mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
   domain_space_;
+  
+  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
+  response_space_;
+  
+  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
+  param_space_;
 
   /// Create operator form of dg/dx for distributed responses
   Teuchos::RCP<Thyra::LinearOpBase<ST>>
