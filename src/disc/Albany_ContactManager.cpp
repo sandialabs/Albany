@@ -92,40 +92,31 @@ Albany::ContactManager::ContactManager(const Teuchos::RCP<Teuchos::ParameterList
     mfile.open (strstrm.str());
   }
 
-  // Loop over all the worksets, and put the sides in the Moertel Interface Obj
+  const int mortarside(1);
+  const int nonmortarside(0);
 
-  for(int workset = 0; workset < disc.getWsElNodeID().size(); workset++){
+  const int number_of_mortar_pairs = masterSideNames.size();
+  ALBANY_ASSERT(number_of_mortar_pairs == slaveSideNames.size(), "Input error: number of master and slave interfaces differ.");
 
-    const Albany::SideSetList& ssList = disc.getSideSets(workset);
+  int interface_ctr = 0;
 
-    Albany::SideSetList::const_iterator it_master = ssList.find(masterSideNames[0]);
-    Albany::SideSetList::const_iterator it_slave  = ssList.find(slaveSideNames[0]);
+  // Loop over all the master interfaces
+  for(int pair = 0; pair < number_of_mortar_pairs; pair++){
 
-    const std::vector<Albany::SideStruct>& slaveSideSet = it_slave->second;
-    const std::vector<Albany::SideStruct>& masterSideSet = it_master->second;
+      processSS(interface_ctr, slaveSideNames[pair], 0 /* Slave side */, mortarside, sfile);
 
-    const int mortarside(1);
-    const int nonmortarside(0);
-
-    int ctr = 0;
-
-    // If slave ss exists, loop over the slave sides and construct moertel nodes/faces and interface
-    if(it_slave != ssList.end()){
-
-      processSS(ctr, slaveSideSet, 0 /* Slave side */, workset, mortarside, sfile);
-      ctr++;
-
-    }
-
-    if(it_master != ssList.end()){
-
-      processSS(ctr, masterSideSet, workset, 1 /* mortar side */, nonmortarside, mfile);
-      ctr++;
-
-    }
+      interface_ctr++;
 
   }
 
+  // Loop over all the slave interfaces
+  for(int pair = 0; pair < number_of_mortar_pairs; pair++){
+
+      processSS(interface_ctr, masterSideNames[pair], 1 /* mortar side */, nonmortarside, mfile);
+
+      interface_ctr++;
+
+  }
 
   // ============================================================= //
   // choose integration parameters
@@ -158,106 +149,123 @@ Albany::ContactManager::ContactManager(const Teuchos::RCP<Teuchos::ParameterList
 
 // Process all the contact surfaces and insert the data into a Moertel Interface
 void
-Albany::ContactManager::processSS(const int ctr, const std::vector<Albany::SideStruct>& sideSet, int s_or_mortar, int workset, int mortarside,
-    std::ofstream& stream ){
+Albany::ContactManager::processSS(const int ctr, const std::string& sideSetName, int s_or_mortar, 
+         int mortarside, std::ofstream& stream ){
 
-    std::set<int> inserted_nodes;
-    std::set<int>::iterator int_set_it;
-    std::pair<std::set<int>::iterator, bool> ret;
+  // one interface per side set name
+  Teuchos::RCP<MoertelT::InterfaceT<ST, LO, Tpetra_GO, KokkosNode> > moertelInterface
+     = Teuchos::rcp( new MoertelT::InterfaceT<ST, LO, Tpetra_GO, KokkosNode>(ctr, oneD, disc.getMapT()->getComm(), printLevel) );
 
-//    std::size_t numFields = disc.getWsElNodeEqID()[0][0][0].size(); // num equations at each node
-    std::size_t numFields = disc.getWsElNodeEqID()->dimension(3); // num equations at each node
+  const MOERTEL::Function::FunctionType primal = MOERTEL::Function::func_Linear1D;
+  const MOERTEL::Function::FunctionType dual = MOERTEL::Function::func_Linear1D/*func_Constant1D*/;
 
-    const MOERTEL::Function::FunctionType primal = MOERTEL::Function::func_Linear1D;
-    const MOERTEL::Function::FunctionType dual = MOERTEL::Function::func_Linear1D/*func_Constant1D*/;
+  moertelInterface->SetMortarSide(mortarside);
+  moertelInterface->SetFunctionTypes(primal, dual);
 
-    Teuchos::RCP<MoertelT::InterfaceT<ST, LO, Tpetra_GO, KokkosNode> > moertelInterface
-       = Teuchos::rcp( new MoertelT::InterfaceT<ST, LO, Tpetra_GO, KokkosNode>(ctr, oneD, disc.getMapT()->getComm(), printLevel) );
+//  std::size_t numFields = disc.getWsElNodeEqID()[0][0][0].size(); // num equations at each node
+  std::size_t numFields = disc.getWsElNodeEqID()->dimension(3); // num equations at each node
 
-    moertelInterface->SetMortarSide(mortarside);
-    moertelInterface->SetFunctionTypes(primal, dual);
+  // Loop over all the worksets, and put the sides in the Moertel Interface Obj
 
-    for (std::size_t side=0; side < sideSet.size(); ++side) {
+  for(int workset = 0; workset < disc.getWsElNodeID().size(); workset++){
 
+    const Albany::SideSetList& ssList = disc.getSideSets(workset);
 
-      // Get the data that corresponds to the side.
-      const int elem_GID   = sideSet[side].elem_GID; // GID of the element that contains the master segment
-      const int elem_LID   = sideSet[side].elem_LID; // LID (numbered from zero) id of the element containing the
+    Albany::SideSetList::const_iterator it_side_set = ssList.find(sideSetName);
+
+    // If ss exists in this workset, loop over the sides in it and construct moertel nodes/faces and interface
+    if(it_side_set != ssList.end()){
+
+      std::set<int> inserted_nodes;
+      std::pair<std::set<int>::iterator, bool> ret;
+
+      const std::vector<Albany::SideStruct>& theSideSet = it_side_set->second;
+
+      for (std::size_t side=0; side < theSideSet.size(); ++side) {
+
+        // Get the data that corresponds to the side.
+        const int elem_GID   = theSideSet[side].elem_GID; // GID of the element that contains the master segment
+        const int elem_LID   = theSideSet[side].elem_LID; // LID (numbered from zero) id of the element containing the
                                                      // master segment on this processor
-      const int elem_side  = sideSet[side].side_local_id; // which edge of the element the side is (cf. exodus manual)?
-      const int side_GID   = sideSet[side].side_GID; // Need a global id for each contact "edge / face"
-      const int elem_block = sideSet[side].elem_ebIndex; // which  element block is the element in?
-      const CellTopologyData_Subcell& subcell_side =  meshSpecs[elem_block]->ctd.side[elem_side];
-      int numSideNodes = subcell_side.topology->node_count;
+        const int elem_side  = theSideSet[side].side_local_id; // which edge of the element the side is (cf. exodus manual)?
+        const int side_GID   = theSideSet[side].side_GID; // Need a global id for each contact "edge / face"
+        const int elem_block = theSideSet[side].elem_ebIndex; // which  element block is the element in?
+        const CellTopologyData_Subcell& subcell_side =  meshSpecs[elem_block]->ctd.side[elem_side];
+        int numSideNodes = subcell_side.topology->node_count;
 
-           stream << "side = " << side << std::endl;
-           stream << "wsIndex = " << workset << std::endl;
-           stream << "    element that owns side GID = " << elem_GID << std::endl;
-           stream << "    element that owns side LID = " << elem_LID << std::endl;
-           stream << "    side, local ID inside element = " << elem_side << std::endl;
-           stream << "    side, global ID               = " << side_GID << std::endl;
-           stream << "    element block side is in = " << elem_block << std::endl;
+             stream << "side = " << side << std::endl;
+             stream << "wsIndex = " << workset << std::endl;
+             stream << "    element that owns side GID = " << elem_GID << std::endl;
+             stream << "    element that owns side LID = " << elem_LID << std::endl;
+             stream << "    side, local ID inside element = " << elem_side << std::endl;
+             stream << "    side, global ID               = " << side_GID << std::endl;
+             stream << "    element block side is in = " << elem_block << std::endl;
 
-      // gather nodes from sideset and if unique then create moertel node
-      const bool on_boundary = false; // will eventually want to allow boundaries to be intersected by contact surfaces
-      const int  contact_pair_id = 0; // will eventually want to allow multiple pairs
-      const Teuchos::ArrayRCP<GO>& elNodeID = disc.getWsElNodeID()[workset][elem_LID];
-      const auto elNodeEqID = disc.getWsElNodeEqID()[workset];
+        // gather nodes from sideset and if unique then create moertel node
+        const bool on_boundary = false; // will eventually want to allow boundaries to be intersected by contact surfaces
+        const int  contact_pair_id = 0; // will eventually want to allow multiple pairs
+        const Teuchos::ArrayRCP<GO>& elNodeID = disc.getWsElNodeID()[workset][elem_LID];
+        const auto elNodeEqID = disc.getWsElNodeEqID()[workset];
 
-      // loop over the nodes on the side
+        // loop over the nodes on the side
 
-      std::vector<int> nodev;
+        std::vector<int> nodev(numSideNodes);
 
-      for (int i = 0; i < numSideNodes; ++i) {
-        std::size_t node = subcell_side.node[i];
-        nodev.push_back(node);
-        LO lnodeId = disc.getMapT()->getLocalElement(elNodeID[node]);
-        GO gnodeId = disc.getMapT()->getGlobalElement(elNodeID[node]);
-        const double coords[] = { coordArray[3 * lnodeId],
-             coordArray[3 * lnodeId + 1], 0.0 }; // Moertel node is 3 coords
-//        const double coords[] = { coordArray[3 * lnodeId],
-//             coordArray[3 * lnodeId + 1], coordArray[3 * lnodeid + 2] }; // Moertel node is 3 coords
-        stream << "         node_LID = " << lnodeId << "   node_GID = " << gnodeId << "    node = " << node << std::endl;
-        stream << "         coords = " << coords[0] << ", " << coords[1] << ", " << coords[2] << " - " << std::endl << std::endl;
+        for (int i = 0; i < numSideNodes; ++i) {
+          std::size_t node = subcell_side.node[i];
+          LO lnodeId = disc.getMapT()->getLocalElement(elNodeID[node]);
+          GO gnodeId = disc.getMapT()->getGlobalElement(elNodeID[node]);
+          nodev[i] = gnodeId;
+          const double coords[] = { coordArray[3 * lnodeId],
+               coordArray[3 * lnodeId + 1], 0.0 }; // Moertel node is 3 coords
+//          const double coords[] = { coordArray[3 * lnodeId],
+//               coordArray[3 * lnodeId + 1], coordArray[3 * lnodeid + 2] }; // Moertel node is 3 coords
+          stream << "         node_LID = " << lnodeId << "   node_GID = " << gnodeId << "    node = " << node << std::endl;
+          stream << "         coords = " << coords[0] << ", " << coords[1] << ", " << coords[2] << " - " << std::endl << std::endl;
 
-// Build the Moertel node list corresponding to unique nodes along the interface
+  // Build the Moertel node list corresponding to unique nodes along the interface
 
-        ret = inserted_nodes.insert(gnodeId);
-//        const Teuchos::ArrayRCP<GO>& elNodeID = disc.getWsElNodeID()[workset][elem_LID];
+          ret = inserted_nodes.insert(gnodeId);
+//          const Teuchos::ArrayRCP<GO>& elNodeID = disc.getWsElNodeID()[workset][elem_LID];
 
-        if (ret.second == true) { // this is a as yet unregistered node. add it
+          if (ret.second == true) { // this is a as yet unregistered node. add it
 
-          std::vector<int> list_of_dofgid;
+            std::vector<int> list_of_dofgid;
 
-          for (std::size_t eq = 0; eq < numFields; eq++) {
+            for (std::size_t eq = 0; eq < numFields; eq++) {
 
-            int global_eq_id = elNodeEqID(elem_LID, node, eq);
-            list_of_dofgid.push_back(global_eq_id);
+              int global_eq_id = elNodeEqID(elem_LID, node, eq);
+              list_of_dofgid.push_back(global_eq_id);
 
-          }
+            }
 
-          MOERTEL::Node moertel_node(gnodeId,
-                                     coords, list_of_dofgid.size(),
-                                     &list_of_dofgid[0],
-                                     on_boundary,
-                                     printLevel);
+            MOERTEL::Node moertel_node(gnodeId,
+                                       coords, 
+                                       list_of_dofgid.size(),
+                                       &list_of_dofgid[0],
+                                       on_boundary,
+                                       printLevel);
 
-          moertelInterface->AddNode(moertel_node, contact_pair_id);
+            std::cout << "Adding node: " << gnodeId << "  to interface: " << ctr << std::endl;
+            moertelInterface->AddNode(moertel_node, contact_pair_id);
 
-        } // end add nodes to interface operations
-      } // end loop over nodes on element side
+          } // end add nodes to interface operations
+        } // end loop over nodes on element side
 
-// 2D
-      MOERTEL::Segment_Linear1D segment( side_GID, nodev, printLevel );
-//	  MOERTEL::Segment_BiLinearQuad segment( side_GID, nnodes, nodeid, printLevel ); // 3D
-	  moertelInterface->AddSegment(segment, s_or_mortar);
+  // 2D
+        MOERTEL::Segment_Linear1D segment( side_GID, nodev, printLevel );
+//  	  MOERTEL::Segment_BiLinearQuad segment( side_GID, nnodes, nodeid, printLevel ); // 3D
+  	  moertelInterface->AddSegment(segment, s_or_mortar);
 
+      }
     }
+  }
 
+  // once we have looped over all the worksets for this side set name, we close the interface
+  ALBANY_ASSERT(moertelInterface->Complete() == true, "Contact interface is not complete");
 
-    ALBANY_ASSERT(moertelInterface->Complete() == true, "Contact interface is not complete");
-
-    moertelManager->AddInterface(moertelInterface);
+  // add it to the manager
+  moertelManager->AddInterface(moertelInterface);
 
 }
 
@@ -274,19 +282,19 @@ Albany::ContactManager::processSS(const int ctr, const std::vector<Albany::SideS
          for (std::size_t dim=0; dim < 3; ++dim)
              neumann(cell, node, dim) = 0.0; // zero out the accumulation vector
 
-      const std::vector<Albany::SideStruct>& sideSet = int_set_it->second;
+      const std::vector<Albany::SideStruct>& theSideSet = int_set_it->second;
 
       // Loop over the sides that form the boundary condition
-      std::cout << "size of sideset array in workset = " << sideSet.size() << std::endl;
+      std::cout << "size of sideset array in workset = " << theSideSet.size() << std::endl;
 
-         for (std::size_t side=0; side < sideSet.size(); ++side) { // loop over the sides on this ws and name
+         for (std::size_t side=0; side < theSideSet.size(); ++side) { // loop over the sides on this ws and name
 
            // Get the data that corresponds to the side.
 
-           const int elem_GID = sideSet[side].elem_GID; // GID of the element that contains the master segment
-           const int elem_LID = sideSet[side].elem_LID; // LID (numbered from zero) id of the master segment on this processor
-           const int elem_side = sideSet[side].side_local_id; // which edge of the element the side is (cf. exodus manual)?
-           const int elem_block = sideSet[side].elem_ebIndex; // which  element block is the element in?
+           const int elem_GID = theSideSet[side].elem_GID; // GID of the element that contains the master segment
+           const int elem_LID = theSideSet[side].elem_LID; // LID (numbered from zero) id of the master segment on this processor
+           const int elem_side = theSideSet[side].side_local_id; // which edge of the element the side is (cf. exodus manual)?
+           const int elem_block = theSideSet[side].elem_ebIndex; // which  element block is the element in?
 
            std::cout << "side = " << side << std::endl;
            std::cout << "    element that owns side GID = " << elem_GID << std::endl;

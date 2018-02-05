@@ -1017,16 +1017,13 @@ ENDIF()
 
 # Add option for CONTACT work, defaults to disabled
 OPTION(ENABLE_CONTACT "Flag to turn on CONTACT code in LCM" OFF)
-IF (ENABLE_CONTACT AND ENABLE_ALBANY_EPETRA_EXE)
+IF (ENABLE_CONTACT)
   ADD_DEFINITIONS(-DALBANY_CONTACT)
   MESSAGE("-- CONTACT   is Enabled, compiling with -DALBANY_CONTACT")
   SET(ALBANY_CONTACT TRUE)
 ELSE()
   MESSAGE("-- CONTACT   is NOT Enabled.")
   SET(ALBANY_CONTACT FALSE)
-  IF (ENABLE_CONTACT AND (NOT ENABLE_ALBANY_EPETRA_EXE))
-    MESSAGE("-- WARNING: CONTACT was turned off because this is a Tpetra-only build.")
-  ENDIF()
 ENDIF()
 
 # Set option to disable compiling some code for nightly tests
