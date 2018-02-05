@@ -641,6 +641,18 @@ SchwarzLoopDynamics() const
     fos << "Time               :" << current_time << '\n';
     fos << "Time step          :" << time_step << '\n';
     fos << delim << std::endl;
+    
+    // Before the Schwarz loop, get internal states
+    for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
+      auto &
+      app = *apps_[subdomain];
+
+      auto &
+      state_mgr = app.getStateMgr();
+
+      internal_states_[subdomain] = state_mgr.getStateArrays();
+    } 
 
     ST const
     next_time{current_time + time_step};
@@ -1072,14 +1084,6 @@ setDynamicICVecsAndDoOutput(ST const time) const
     stk_mesh_struct.exoOutputInterval = 1;
 
     stk_mesh_struct.exoOutput = do_outputs_[subdomain];
-
-    auto &
-    app = *apps_[subdomain];
-
-    auto &
-    state_mgr = app.getStateMgr();
-
-    internal_states_[subdomain] = state_mgr.getStateArrays();
 
     if (is_initial_time == true) { //initial time-step: get initial solution from nominalValues in ME
 
