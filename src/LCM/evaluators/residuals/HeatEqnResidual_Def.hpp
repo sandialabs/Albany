@@ -11,10 +11,11 @@
 #include "PHAL_Utilities.hpp"
 
 namespace LCM {
-
-//**********************************************************************
-template <typename EvalT, typename Traits>
-HeatEqnResidual<EvalT, Traits>::HeatEqnResidual(const Teuchos::ParameterList &p)
+  //
+  //
+  //
+  template <typename EvalT, typename Traits>
+  HeatEqnResidual<EvalT, Traits>::HeatEqnResidual(const Teuchos::ParameterList &p)
     : wBF(p.get<std::string>("Weighted BF Name"),
           p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout")),
       Temperature(
@@ -179,7 +180,21 @@ void HeatEqnResidual<EvalT, Traits>::evaluateFields(
     FST::integrate(TResidual.get_view(), aterm, wBF.get_view(), true);
   }
 
-  // TResidual.print(std::cout, true);
 }
+
+  //
+  //
+  //
+template <typename EvalT, typename Traits>
+typename EvalT::ScalarT
+HeatEqnResidual<EvalT, Traits>::
+meltingTemperature() {
+
+  ScalarT
+  melting_temperature = 0.0;
+
+  return melting_temperature;
+}
+
 
 } // namespace LCM

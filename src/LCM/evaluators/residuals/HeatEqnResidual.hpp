@@ -23,17 +23,22 @@ class HeatEqnResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
                         public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
+  using ScalarT = typename EvalT::ScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
+
   HeatEqnResidual(const Teuchos::ParameterList &p);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-                             PHX::FieldManager<Traits> &vm);
+  void
+  postRegistrationSetup(typename Traits::SetupData d,
+			PHX::FieldManager<Traits> &vm);
 
-  void evaluateFields(typename Traits::EvalData d);
+  void
+  evaluateFields(typename Traits::EvalData d);
+
+  ScalarT
+  meltingTemperature();
 
 private:
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-
   // Input:
   PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint> wBF;
   PHX::MDField<const ScalarT, Cell, QuadPoint> Temperature;
@@ -45,6 +50,9 @@ private:
   PHX::MDField<const ScalarT, Cell, QuadPoint> rhoCp;
   PHX::MDField<const ScalarT, Cell, QuadPoint> Absorption;
   Teuchos::Array<double> convectionVels;
+
+  PHX::MDField<const ScalarT, Cell, QuadPoint> pressure_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> salinity_;
 
   // Output:
   PHX::MDField<ScalarT, Cell, Node> TResidual;
