@@ -278,29 +278,31 @@ set(proj-headers
 
 # LCM residual evaluators
 set(residual-sources
+  "${LCM_DIR}/evaluators/residuals/AnalyticMassResidual.cpp"
   "${LCM_DIR}/evaluators/residuals/ElasticityResid.cpp"
   "${LCM_DIR}/evaluators/residuals/ElectrostaticResidual.cpp"
   "${LCM_DIR}/evaluators/residuals/HDiffusionDeformationMatterResidual.cpp"
+  "${LCM_DIR}/evaluators/residuals/HeatEqnResidual.cpp"
   "${LCM_DIR}/evaluators/residuals/MechanicsResidual.cpp"
-  "${LCM_DIR}/evaluators/residuals/AnalyticMassResidual.cpp"
   "${LCM_DIR}/evaluators/residuals/StabilizedPressureResidual.cpp"
   "${LCM_DIR}/evaluators/residuals/TLElasResid.cpp"
 )
 set(residual-headers
-  "${LCM_DIR}/evaluators/residuals/ElasticityResid_Def.hpp"
-  "${LCM_DIR}/evaluators/residuals/ElasticityResid.hpp"
-  "${LCM_DIR}/evaluators/residuals/ElectrostaticResidual_Def.hpp"
-  "${LCM_DIR}/evaluators/residuals/ElectrostaticResidual.hpp"
-  "${LCM_DIR}/evaluators/residuals/HDiffusionDeformationMatterResidual_Def.hpp"
-  "${LCM_DIR}/evaluators/residuals/HDiffusionDeformationMatterResidual.hpp"
-  "${LCM_DIR}/evaluators/residuals/MechanicsResidual_Def.hpp"
-  "${LCM_DIR}/evaluators/residuals/MechanicsResidual.hpp"
-  "${LCM_DIR}/evaluators/residuals/AnalyticMassResidual_Def.hpp"
   "${LCM_DIR}/evaluators/residuals/AnalyticMassResidual.hpp"
-  "${LCM_DIR}/evaluators/residuals/StabilizedPressureResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/residuals/AnalyticMassResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/residuals/ElasticityResid.hpp"
+  "${LCM_DIR}/evaluators/residuals/ElasticityResid_Def.hpp"
+  "${LCM_DIR}/evaluators/residuals/ElectrostaticResidual.hpp"
+  "${LCM_DIR}/evaluators/residuals/ElectrostaticResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/residuals/HDiffusionDeformationMatterResidual.hpp"
+  "${LCM_DIR}/evaluators/residuals/HDiffusionDeformationMatterResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/residuals/HeatEqnResidual.hpp"
+  "${LCM_DIR}/evaluators/residuals/MechanicsResidual.hpp"
+  "${LCM_DIR}/evaluators/residuals/MechanicsResidual_Def.hpp"
   "${LCM_DIR}/evaluators/residuals/StabilizedPressureResidual.hpp"
-  "${LCM_DIR}/evaluators/residuals/TLElasResid_Def.hpp"
+  "${LCM_DIR}/evaluators/residuals/StabilizedPressureResidual_Def.hpp"
   "${LCM_DIR}/evaluators/residuals/TLElasResid.hpp"
+  "${LCM_DIR}/evaluators/residuals/TLElasResid_Def.hpp"
 )
 
 # LCM response evaluators
