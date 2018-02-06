@@ -21,22 +21,22 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cuboid_00.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cuboid_00.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cuboid_01.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cuboid_01.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cuboid_00_j2_stk.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/cuboid_00_j2_stk.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cuboid_01_j2_stk.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/cuboid_01_j2_stk.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cuboid_00_j2.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/cuboid_00_j2.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cuboid_01_j2.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/cuboid_01_j2.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cuboids.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cuboids.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cuboids_j2_stk.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/cuboids_j2_stk.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cuboids_j2.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/cuboids_j2.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials_00.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/materials_00.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials_01.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/materials_01.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials_00_j2_stk.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/materials_00_j2_stk.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials_01_j2_stk.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/materials_01_j2_stk.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials_00_j2.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials_00_j2.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials_01_j2.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials_01_j2.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
 IF(ALBANY_DTK)
