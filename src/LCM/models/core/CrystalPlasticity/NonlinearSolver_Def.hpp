@@ -50,74 +50,46 @@ minitensor::Vector<T, N>
 CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
     minitensor::Vector<T, N> const & x)
 {
-  // Tensor mechanical state variables
-  minitensor::Tensor<T, NumDimT>
-  Fp_np1(num_dim_);
-
-  minitensor::Tensor<T, NumDimT>
-  Lp_np1(num_dim_);
-
-  minitensor::Tensor<T, NumDimT>
-  sigma_np1(num_dim_);
-
-  minitensor::Tensor<T, NumDimT>
-  S_np1(num_dim_);
-
-  // Slip system state variables
-  minitensor::Vector<T, NumSlipT>
-  state_hardening_np1(num_slip_);
-
-  minitensor::Vector<T, NumSlipT>
-  slip_resistance(num_slip_);
-
-  minitensor::Vector<T, NumSlipT>
-  slip_np1(num_slip_);
-
-  minitensor::Vector<T, NumSlipT>
-  slip_computed(num_slip_);
-
-  minitensor::Vector<T, NumSlipT>
-  shear_np1(num_slip_);
-
-  minitensor::Vector<T, NumSlipT>
-  rate_slip(num_slip_);
-
   auto const
   num_unknowns = x.get_dimension();
 
   minitensor::Vector<T, N>
-  residual(num_unknowns);
+  residual(num_unknowns, minitensor::Filler::ZEROS);
 
   // Return immediately if something failed catastrophically.
   if (this->get_failed() == true) {
-    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
 
-  minitensor::Tensor<T, NumDimT> const
-  F_np1_peeled = LCM::peel_tensor<EvalT, T, N, NumDimT>()(F_np1_);
+  minitensor::Vector<T, NumSlipT>
+  slip_np1(num_slip_, minitensor::Filler::ZEROS);
 
-  minitensor::Tensor4<T, NumDimT> const
-  C_peeled = LCM::peel_tensor4<EvalT, T, N, CP::MAX_DIM>()(C_);
+  minitensor::Vector<T, NumSlipT>
+  state_hardening_np1(num_slip_, minitensor::Filler::ZEROS);
 
   for (int i = 0; i< num_slip_; ++i){
     slip_np1[i] = x[i];
     state_hardening_np1[i] = state_hardening_n_[i];
   }
 
+  minitensor::Vector<T, NumSlipT>
+  rate_slip(num_slip_, minitensor::Filler::ZEROS);
+
   if(dt_ > 0.0){
     rate_slip = (slip_np1 - slip_n_) / dt_;
   }
-  else{
-    rate_slip.fill(minitensor::Filler::ZEROS);
-  }
 
-   // Ensure that the slip increment will not cause overflow
-   if (minitensor::norm(rate_slip * dt_) > LOG_HUGE) {
-       this->set_failed("Failed on slip");
-       residual.fill(minitensor::Filler::ZEROS);
-       return residual;
+  // Ensure that the slip increment will not cause overflow
+  if (minitensor::norm(rate_slip * dt_) > LOG_HUGE) {
+    this->set_failed("Failed on slip");
+    return residual;
    }
+
+  minitensor::Tensor<T, NumDimT>
+  Lp_np1(num_dim_, minitensor::Filler::ZEROS);
+
+  minitensor::Tensor<T, NumDimT>
+  Fp_np1(num_dim_, minitensor::Filler::ZEROS);
 
   // Compute Lp_np1, and Fp_np1
   CP::applySlipIncrement<NumDimT, NumSlipT, T>(
@@ -131,6 +103,21 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
 
   bool
   failed{false};
+
+  minitensor::Tensor<T, NumDimT> const
+  F_np1_peeled = LCM::peel_tensor<EvalT, T, N, NumDimT>()(F_np1_);
+
+  minitensor::Tensor4<T, NumDimT> const
+  C_peeled = LCM::peel_tensor4<EvalT, T, N, CP::MAX_DIM>()(C_);
+
+  minitensor::Tensor<T, NumDimT>
+  sigma_np1(num_dim_, minitensor::Filler::ZEROS);
+
+  minitensor::Tensor<T, NumDimT>
+  S_np1(num_dim_, minitensor::Filler::ZEROS);
+
+  minitensor::Vector<T, NumSlipT>
+  shear_np1(num_slip_, minitensor::Filler::ZEROS);
 
   // Compute sigma_np1, S_np1, and shear_np1
   CP::computeStress<NumDimT, NumSlipT, T>(
@@ -146,9 +133,11 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Ensure that the stress was calculated properly
   if (failed == true) {
     this->set_failed("Failed on stress");
-    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
+
+  minitensor::Vector<T, NumSlipT>
+  slip_resistance(num_slip_, minitensor::Filler::ZEROS);
 
   // Compute state_hardening_np1
   CP::updateHardness<NumDimT, NumSlipT, T>(
@@ -164,9 +153,11 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Ensure that the hardening law was calculated properly
   if (failed == true) {
     this->set_failed("Failed on hardness");
-    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
+
+  minitensor::Vector<T, NumSlipT>
+  slip_computed(num_slip_, minitensor::Filler::ZEROS);
 
   // Compute slips
   CP::updateSlip<NumDimT, NumSlipT, T>(
@@ -182,7 +173,6 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Ensure that the flow rule was calculated properly
   if (failed == true) {
     this->set_failed("Failed on flow");
-    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
 
@@ -201,9 +191,7 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // max_tol = HUGE;
 
   // if (norm_resid > 0.5 * std::pow(max_tol, 1.0 / 10.0)) {
-
   //   residual *= 1.0 / norm_resid;
-
   // }
 
   return residual;
@@ -379,80 +367,46 @@ minitensor::Vector<T, N>
 CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
     minitensor::Vector<T, N> const & x)
 {
-  // Tensor mechanical state variables
-  minitensor::Tensor<T, NumDimT>
-  Fp_np1(num_dim_);
-
-  minitensor::Tensor<T, NumDimT>
-  Lp_np1(num_dim_);
-
-  minitensor::Tensor<T, NumDimT>
-  sigma_np1(num_dim_);
-
-  minitensor::Tensor<T, NumDimT>
-  S_np1(num_dim_);
-
-  // Slip system state variables
-  minitensor::Vector<T, NumSlipT>
-  state_hardening_np1(num_slip_);
-
-  minitensor::Vector<T, NumSlipT>
-  state_hardening_computed(num_slip_);
-
-  minitensor::Vector<T, NumSlipT>
-  slip_resistance(num_slip_);
-
-  minitensor::Vector<T, NumSlipT>
-  slip_np1(num_slip_);
-
-  minitensor::Vector<T, NumSlipT>
-  slip_computed(num_slip_);
-
-  minitensor::Vector<T, NumSlipT>
-  shear_np1(num_slip_);
-
-  minitensor::Vector<T, NumSlipT>
-  slip_residual(num_slip_);
-
-  minitensor::Vector<T, NumSlipT>
-  rate_slip(num_slip_);
-
   auto const
   num_unknowns = x.get_dimension();
 
   minitensor::Vector<T, N>
-  residual(num_unknowns);
+  residual(num_unknowns, minitensor::Filler::ZEROS);
 
   // Return immediately if something failed catastrophically.
   if (this->get_failed() == true) {
-    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
 
-  minitensor::Tensor<T, NumDimT> const
-  F_np1_peeled = LCM::peel_tensor<EvalT, T, N, NumDimT>()(F_np1_);
+  minitensor::Vector<T, NumSlipT>
+  slip_np1(num_slip_, minitensor::Filler::ZEROS);
 
-  minitensor::Tensor4<T, NumDimT> const
-  C_peeled = LCM::peel_tensor4<EvalT, T, N, CP::MAX_DIM>()(C_);
+  minitensor::Vector<T, NumSlipT>
+  state_hardening_np1(num_slip_, minitensor::Filler::ZEROS);
 
   for (int i = 0; i< num_slip_; ++i){
     slip_np1[i] = x[i];
     state_hardening_np1[i] = x[i + num_slip_];
   }
 
+  minitensor::Vector<T, NumSlipT>
+  rate_slip(num_slip_, minitensor::Filler::ZEROS);
+
   if(dt_ > 0.0){
     rate_slip = (slip_np1 - slip_n_) / dt_;
-  }
-  else{
-    rate_slip.fill(minitensor::Filler::ZEROS);
   }
 
   // Ensure that the slip increment is bounded
   if (minitensor::norm(rate_slip * dt_) > LOG_HUGE) {
     this->set_failed("Failed on slip");
-    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
+
+  minitensor::Tensor<T, NumDimT>
+  Fp_np1(num_dim_, minitensor::Filler::ZEROS);
+
+  minitensor::Tensor<T, NumDimT>
+  Lp_np1(num_dim_, minitensor::Filler::ZEROS);
 
   // Compute Lp_np1, and Fp_np1
   CP::applySlipIncrement<NumDimT, NumSlipT, T>(
@@ -466,6 +420,21 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
 
   bool
   failed{false};
+
+  minitensor::Tensor<T, NumDimT> const
+  F_np1_peeled = LCM::peel_tensor<EvalT, T, N, NumDimT>()(F_np1_);
+
+  minitensor::Tensor4<T, NumDimT> const
+  C_peeled = LCM::peel_tensor4<EvalT, T, N, CP::MAX_DIM>()(C_);
+
+  minitensor::Tensor<T, NumDimT>
+  sigma_np1(num_dim_, minitensor::Filler::ZEROS);
+
+  minitensor::Tensor<T, NumDimT>
+  S_np1(num_dim_, minitensor::Filler::ZEROS);
+
+  minitensor::Vector<T, NumSlipT>
+  shear_np1(num_slip_, minitensor::Filler::ZEROS);
 
   // Compute sigma_np1, S_np1, and shear_np1
   CP::computeStress<NumDimT, NumSlipT, T>(
@@ -481,9 +450,14 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Ensure that the stress was calculated properly
   if (failed == true) {
     this->set_failed("Failed on stress");
-    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
+
+  minitensor::Vector<T, NumSlipT>
+  state_hardening_computed(num_slip_, minitensor::Filler::ZEROS);
+
+  minitensor::Vector<T, NumSlipT>
+  slip_resistance(num_slip_, minitensor::Filler::ZEROS);
 
   // Compute state_hardening_np1
   state_hardening_computed = state_hardening_np1;
@@ -500,9 +474,11 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Ensure that the hardening law was calculated properly
   if (failed == true) {
     this->set_failed("Failed on hardness");
-    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
+
+  minitensor::Vector<T, NumSlipT>
+  slip_computed(num_slip_, minitensor::Filler::ZEROS);
 
   // Compute slips
   CP::updateSlip<NumDimT, NumSlipT, T>(
@@ -518,7 +494,6 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Ensure that the flow rule was calculated properly
   if (failed == true) {
     this->set_failed("Failed on flow");
-    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
 
@@ -538,9 +513,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // max_tol = HUGE;
 
   // if (norm_resid > 0.5 * std::pow(max_tol, 1.0 / 10.0)) {
-
   //   residual *= 1.0 / norm_resid;
-
   // }
 
   return residual;
@@ -623,9 +596,6 @@ CP::ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>::value(
   shear_np1(num_slip_);
 
   minitensor::Vector<T, NumSlipT>
-  slip_residual(num_slip_);
-
-  minitensor::Vector<T, NumSlipT>
   rate_slip(num_slip_);
 
   auto const
@@ -637,8 +607,7 @@ CP::ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>::value(
   // Return immediately if something failed catastrophically.
   if (this->get_failed() == true) {
     residual.fill(minitensor::Filler::ZEROS);
-    T val = 0.5 * minitensor::dot(residual, residual);
-    return val;
+    return 0.5 * minitensor::dot(residual, residual);
   }
 
   minitensor::Tensor<T, NumDimT> const
