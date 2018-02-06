@@ -11,10 +11,11 @@
 #include "PHAL_Utilities.hpp"
 
 namespace LCM {
-
-//**********************************************************************
-template <typename EvalT, typename Traits>
-HeatEqnResidual<EvalT, Traits>::HeatEqnResidual(const Teuchos::ParameterList &p)
+  //
+  //
+  //
+  template <typename EvalT, typename Traits>
+  HeatEqnResidual<EvalT, Traits>::HeatEqnResidual(const Teuchos::ParameterList &p)
     : wBF(p.get<std::string>("Weighted BF Name"),
           p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout")),
       Temperature(
@@ -22,7 +23,7 @@ HeatEqnResidual<EvalT, Traits>::HeatEqnResidual(const Teuchos::ParameterList &p)
           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
       Tdot(p.get<std::string>("QP Time Derivative Variable Name"),
            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      ThermalCond(
+      thermal_conductivity_(
           p.get<std::string>("Thermal Conductivity Name"),
           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
       wGradBF(
@@ -30,156 +31,140 @@ HeatEqnResidual<EvalT, Traits>::HeatEqnResidual(const Teuchos::ParameterList &p)
           p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout")),
       TGrad(p.get<std::string>("Gradient QP Variable Name"),
             p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout")),
-      Source(p.get<std::string>("Source Name"),
-             p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      density_(p.get<std::string>("QP Density Variable Name"),
+           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      specific_heat_(p.get<std::string>("QP Specific Heat Variable Name"),
+           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      pressure_(p.get<std::string>("QP Pressure Variable Name"),
+           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      salinity_(p.get<std::string>("QP Salinity Variable Name"),
+           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
       TResidual(
           p.get<std::string>("Residual Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout")),
-      haveSource(p.get<bool>("Have Source")), haveConvection(false),
-      haveAbsorption(p.get<bool>("Have Absorption")), haverhoCp(false) {
-
-  if (p.isType<bool>("Disable Transient"))
-    enableTransient = !p.get<bool>("Disable Transient");
-  else
-    enableTransient = true;
+          p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout")) {
 
   this->addDependentField(wBF);
   this->addDependentField(Temperature);
-  this->addDependentField(ThermalCond);
-  if (enableTransient)
-    this->addDependentField(Tdot);
+  this->addDependentField(Tdot);
+  this->addDependentField(thermal_conductivity_);
   this->addDependentField(TGrad);
   this->addDependentField(wGradBF);
-  if (haveSource)
-    this->addDependentField(Source);
-  if (haveAbsorption) {
-    Absorption = decltype(Absorption)(
-        p.get<std::string>("Absorption Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"));
-    this->addDependentField(Absorption);
-  }
+  this->addDependentField(density_);
+  this->addDependentField(specific_heat_);
+  this->addDependentField(pressure_);
+  this->addDependentField(salinity_);
+
   this->addEvaluatedField(TResidual);
 
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-      p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout");
-  std::vector<PHX::DataLayout::size_type> dims;
+  Teuchos::RCP<PHX::DataLayout>
+  vector_dl = p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout");
+
+  std::vector<PHX::DataLayout::size_type>
+  dims;
+
   vector_dl->dimensions(dims);
   worksetSize = dims[0];
   numNodes = dims[1];
   numQPs = dims[2];
   numDims = dims[3];
 
-  convectionVels = Teuchos::getArrayFromStringParameter<double>(
-      p, "Convection Velocity", numDims, false);
-  if (p.isType<std::string>("Convection Velocity")) {
-    convectionVels = Teuchos::getArrayFromStringParameter<double>(
-        p, "Convection Velocity", numDims, false);
-  }
-  if (convectionVels.size() > 0) {
-    haveConvection = true;
-    if (p.isType<bool>("Have Rho Cp"))
-      haverhoCp = p.get<bool>("Have Rho Cp");
-    if (haverhoCp) {
-      rhoCp = decltype(rhoCp)(
-          p.get<std::string>("Rho Cp Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"));
-      this->addDependentField(rhoCp);
-    }
-  }
-
   this->setName("HeatEqnResidual");
 }
 
-//**********************************************************************
+  //
+  //
+  //
 template <typename EvalT, typename Traits>
-void HeatEqnResidual<EvalT, Traits>::postRegistrationSetup(
-    typename Traits::SetupData d, PHX::FieldManager<Traits> &fm) {
+void
+HeatEqnResidual<EvalT, Traits>::
+postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &fm)
+{
   this->utils.setFieldData(wBF, fm);
   this->utils.setFieldData(Temperature, fm);
-  this->utils.setFieldData(ThermalCond, fm);
-  this->utils.setFieldData(TGrad, fm);
+  this->utils.setFieldData(Tdot, fm);
+  this->utils.setFieldData(thermal_conductivity_, fm);
   this->utils.setFieldData(wGradBF, fm);
-  if (haveSource)
-    this->utils.setFieldData(Source, fm);
-  if (enableTransient)
-    this->utils.setFieldData(Tdot, fm);
-
-  if (haveAbsorption)
-    this->utils.setFieldData(Absorption, fm);
-
-  if (haveConvection && haverhoCp)
-    this->utils.setFieldData(rhoCp, fm);
+  this->utils.setFieldData(TGrad, fm);
+  this->utils.setFieldData(density_, fm);
+  this->utils.setFieldData(specific_heat_, fm);
+  this->utils.setFieldData(pressure_, fm);
+  this->utils.setFieldData(salinity_, fm);
 
   this->utils.setFieldData(TResidual, fm);
 
   // Allocate workspace
-  flux = Kokkos::createDynRankView(Temperature.get_view(), "XXX", worksetSize,
-                                   numQPs, numDims);
-  if (haveAbsorption)
-    aterm = Kokkos::createDynRankView(Temperature.get_view(), "XXX",
-                                      worksetSize, numQPs);
-  if (haveConvection)
-    convection = Kokkos::createDynRankView(Temperature.get_view(), "XXX",
-                                           worksetSize, numQPs);
+  heat_flux_ = Kokkos::createDynRankView(
+    Temperature.get_view(), "XXX", worksetSize, numQPs, numDims);
+
+  accumulation_ = Kokkos::createDynRankView(
+    Temperature.get_view(), "XXX", worksetSize, numQPs);
+
+  return;
 }
 
-//**********************************************************************
+  //
+  //
+  //
 template <typename EvalT, typename Traits>
-void HeatEqnResidual<EvalT, Traits>::evaluateFields(
-    typename Traits::EvalData workset) {
+void
+HeatEqnResidual<EvalT, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  using FST = Intrepid2::FunctionSpaceTools<PHX::Device>;
 
-  //// workset.print(std::cout);
+  // heat flux term:
+  FST::scalarMultiplyDataData(
+    heat_flux_,
+    thermal_conductivity_.get_view(), 
+    TGrad.get_view());
 
-  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
-
-  FST::scalarMultiplyDataData(flux, ThermalCond.get_view(), TGrad.get_view());
-
-  FST::integrate(TResidual.get_view(), flux, wGradBF.get_view(),
-                 false); // "false" overwrites
-
-  if (haveSource) {
-    auto neg_source = PHAL::create_copy("neg_source", Source.get_view());
-
-    for (int i = 0; i < Source.dimension(0); i++)
-      for (int j = 0; j < Source.dimension(1); j++)
-        neg_source(i, j) = Source(i, j) * -1.0;
-    FST::integrate(TResidual.get_view(), neg_source, wBF.get_view(),
-                   true); // "true" sums into
-  }
-
-  if (workset.transientTerms && enableTransient) {
-
-    FST::integrate(TResidual.get_view(), Tdot.get_view(), wBF.get_view(),
-                   true); // "true" sums into
-  }
-
-  if (haveConvection) {
-
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp = 0; qp < numQPs; ++qp) {
-        convection(cell, qp) = 0.0;
-        for (std::size_t i = 0; i < numDims; ++i) {
-          if (haverhoCp)
-            convection(cell, qp) +=
-                rhoCp(cell, qp) * convectionVels[i] * TGrad(cell, qp, i);
-          else
-            convection(cell, qp) += convectionVels[i] * TGrad(cell, qp, i);
-        }
-      }
+  FST::integrate(
+    TResidual.get_view(),
+    heat_flux_, wGradBF.get_view(), 
+    false); // "false" overwrites
+  
+  // accumulation term:
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
+      accumulation_(cell,qp) = 0.0;
+      accumulation_(cell,qp) += thermalInertia(cell,qp) * Tdot(cell,qp);
     }
-
-    FST::integrate(TResidual.get_view(), convection, wBF.get_view(),
-                   true); // "true" sums into
   }
 
-  if (haveAbsorption) {
+  FST::integrate(
+    TResidual.get_view(),
+    accumulation_, wBF.get_view(), 
+    true); // "true" sums into
 
-    FST::scalarMultiplyDataData(aterm, Absorption.get_view(),
-                                Temperature.get_view());
-    FST::integrate(TResidual.get_view(), aterm, wBF.get_view(), true);
-  }
+  return;
+}
 
-  // TResidual.print(std::cout, true);
+  //
+  //
+  //
+template <typename EvalT, typename Traits>
+typename EvalT::ScalarT
+HeatEqnResidual<EvalT, Traits>::
+meltingTemperature(std::size_t cell, std::size_t qp) {
+
+  ScalarT
+  melting_temperature = 0.0;
+
+  return melting_temperature;
+}
+
+  //
+  //
+  //
+template <typename EvalT, typename Traits>
+typename EvalT::ScalarT
+HeatEqnResidual<EvalT, Traits>::
+thermalInertia(std::size_t cell, std::size_t qp) {
+
+  ScalarT
+  chi = 0.0;
+
+  return chi;
 }
 
 } // namespace LCM
