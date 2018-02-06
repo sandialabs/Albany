@@ -136,10 +136,8 @@ bool first_time_step = true;
   Teuchos::RCP<Tpetra_Map> node_map; 
 #endif
 //Teuchos::RCP<Tpetra_Vector> previousSolution;
-#ifdef CISM_USE_EPETRA
-bool TpetraBuild = false; 
-#else
-bool TpetraBuild = true; 
+#ifndef CISM_USE_EPETRA
+static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
 #endif
 bool keep_proc = true; 
 const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();

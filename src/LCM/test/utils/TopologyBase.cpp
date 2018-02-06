@@ -11,8 +11,6 @@
 #include "topology/Topology_FractureCriterion.h"
 #include "topology/Topology_Utils.h"
 
-bool TpetraBuild = false;
-
 int main(int ac, char* av[])
 {
   // Create a command line processor and parse command line options

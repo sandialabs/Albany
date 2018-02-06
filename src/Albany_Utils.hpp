@@ -256,6 +256,9 @@ safe_system(char const* str);
 void
 assert_fail(std::string const& msg) __attribute__((noreturn));
 
+enum class BuildType {None, Tpetra, Epetra};
+BuildType build_type(const BuildType value=BuildType::None);
+
 }  // end namespace Albany
 
 #ifdef __CUDA_ARCH__

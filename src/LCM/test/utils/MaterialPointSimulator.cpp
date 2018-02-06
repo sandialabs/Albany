@@ -54,8 +54,6 @@ struct KokkosGuard
   ~KokkosGuard() { Kokkos::finalize(); }
 };
 
-bool TpetraBuild = false;
-
 int
 main(int ac, char* av[])
 {

@@ -146,9 +146,6 @@ RCP<Teuchos::ParameterEntry> getEntryCopy(
   return Teuchos::null;
 }
 
-// Global variable that denotes this is the Tpetra executable
-bool TpetraBuild = false;
-
 int main(int argc, char *argv[])
 {
   // Communicators

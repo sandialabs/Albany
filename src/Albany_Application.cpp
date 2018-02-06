@@ -75,8 +75,6 @@ int countScale;
 int previous_app;
 int current_app;
 
-extern bool TpetraBuild;
-
 Albany::Application::Application(const RCP<const Teuchos_Comm> &comm_,
                                  const RCP<Teuchos::ParameterList> &params,
                                  const RCP<const Tpetra_Vector> &initial_guess, 
@@ -739,6 +737,7 @@ void Albany::Application::finalSetUp(
     const Teuchos::RCP<Teuchos::ParameterList> &params,
     const Teuchos::RCP<const Tpetra_Vector> &initial_guess) {
 
+  bool TpetraBuild = Albany::build_type() == Albany::BuildType::Tpetra;
   /*
    RCP<const Tpetra_Vector> initial_guessT;
    if (Teuchos::nonnull(initial_guess)) {
