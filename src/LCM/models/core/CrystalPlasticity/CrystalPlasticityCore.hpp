@@ -27,14 +27,14 @@ struct SlipSystem
   slip_family_index_;
 
   //! Slip system vectors.
-  minitensor::Vector<RealType, NumDimT>
+  minitensor::Vector<RealType, MAX_DIM>
   s_;
 
-  minitensor::Vector<RealType, NumDimT>
+  minitensor::Vector<RealType, MAX_DIM>
   n_;
 
   //! Schmid Tensor.
-  minitensor::Tensor<RealType, NumDimT>
+  minitensor::Tensor<RealType, MAX_DIM>
   projector_;
 
   //

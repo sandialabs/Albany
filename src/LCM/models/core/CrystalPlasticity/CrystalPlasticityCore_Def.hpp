@@ -81,7 +81,11 @@ CP::applySlipIncrement(
 
   if(dt > 0){
     for (minitensor::Index s(0); s < num_slip; ++s) {
-      Lp_np1 += (slip_np1[s] - slip_n[s])/dt * slip_systems.at(s).projector_;
+      for (int i = 0; i < num_dim; ++i) {
+        for (int j = 0; j < num_dim; ++j) {
+          Lp_np1(i,j) += (slip_np1[s] - slip_n[s])/dt * slip_systems.at(s).projector_(i,j);
+        }
+      }
     }
   }
 
@@ -270,7 +274,18 @@ CP::computeStress(
   strain_elastic =
     0.5 * (deformation_elastic - minitensor::identity<ArgT, NumDimT>(num_dim));
 
-  S = minitensor::dotdot(C, strain_elastic);
+  // Not using minitensor::dotdot since C is 3x3x3x3 while strain_elastic could be 2x2
+  // S = minitensor::dotdot(C, strain_elastic);
+  S.fill(minitensor::Filler::ZEROS);
+  for (int i = 0; i < num_dim; ++i) {
+    for (int j = 0; j < num_dim; ++j) {
+      for (int k = 0; k < num_dim; ++k) {
+        for (int l = 0; l < num_dim; ++l) {
+          S(i,j) += C(i,j,k,l) * strain_elastic(k,l);
+        }
+      }
+    }
+  }
 
   sigma = 1.0 / det_fe *
     defgrad_elastic * S * minitensor::transpose(defgrad_elastic);
@@ -280,9 +295,15 @@ CP::computeStress(
       "Cauchy stress in ResidualSlipNLS::computeStress()");
 
   // Compute resolved shear stresses
+  minitensor::Tensor<ArgT,NumDimT> const
+  s_trans = deformation_elastic * S;
+  shear.fill(minitensor::Filler::ZEROS); 
   for (minitensor::Index s(0); s < num_slip; ++s) {
-    shear[s] =
-      minitensor::dotdot(slip_systems.at(s).projector_, deformation_elastic * S);
+    for (int i = 0; i < num_dim; ++i) {
+      for (int j = 0; j < num_dim; ++j) {
+        shear[s] += slip_systems.at(s).projector_(i,j) * s_trans(i,j);
+      }
+    }
   }
 }
 
@@ -302,27 +323,20 @@ CP::computeElasticityTensor(
     minitensor::Tensor4<ArgT, NumDimT> & C)
 {
 
-  minitensor::Index const
-  num_dim = C.get_dimension();
-
   C.fill(minitensor::Filler::ZEROS);
 
-  if (num_dim >= 2) {
-    C(0, 0, 0, 0) = c11;
-    C(1, 1, 1, 1) = c11;
-    C(0, 0, 1, 1) = c12;
-    C(0, 1, 0, 1) = c66;
-    if (num_dim >= 3) {
-      C(0, 0, 2, 2) = c13;
-      C(2, 2, 2, 2) = c33;
-      C(1, 1, 2, 2) = c13;
-      C(1, 2, 1, 2) = c44;
-      C(0, 2, 0, 2) = c44;
-    }
-  }
+  C(0, 0, 0, 0) = c11;
+  C(1, 1, 1, 1) = c11;
+  C(0, 0, 1, 1) = c12;
+  C(0, 1, 0, 1) = c66;
+  C(0, 0, 2, 2) = c13;
+  C(2, 2, 2, 2) = c33;
+  C(1, 1, 2, 2) = c13;
+  C(1, 2, 1, 2) = c44;
+  C(0, 2, 0, 2) = c44;
 
-  for (minitensor::Index dim_i = 0; dim_i < num_dim; ++dim_i) {
-    for (minitensor::Index dim_j = dim_i + 1; dim_j < num_dim; ++dim_j) {
+  for (minitensor::Index dim_i = 0; dim_i < CP::MAX_DIM; ++dim_i) {
+    for (minitensor::Index dim_j = dim_i + 1; dim_j < CP::MAX_DIM; ++dim_j) {
       C(dim_j, dim_j, dim_i, dim_i) = C(dim_i, dim_i, dim_j, dim_j);
       C(dim_j, dim_i, dim_j, dim_i) = C(dim_i, dim_j, dim_i, dim_j);
       C(dim_i, dim_j, dim_j, dim_i) = C(dim_i, dim_j, dim_i, dim_j);

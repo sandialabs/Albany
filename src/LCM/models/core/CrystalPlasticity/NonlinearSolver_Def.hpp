@@ -98,7 +98,7 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
   F_np1_peeled = LCM::peel_tensor<EvalT, T, N, NumDimT>()(F_np1_);
 
   minitensor::Tensor4<T, NumDimT> const
-  C_peeled = LCM::peel_tensor4<EvalT, T, N, NumDimT>()(C_);
+  C_peeled = LCM::peel_tensor4<EvalT, T, N, CP::MAX_DIM>()(C_);
 
   for (int i = 0; i< num_slip_; ++i){
     slip_np1[i] = x[i];
@@ -433,7 +433,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   F_np1_peeled = LCM::peel_tensor<EvalT, T, N, NumDimT>()(F_np1_);
 
   minitensor::Tensor4<T, NumDimT> const
-  C_peeled = LCM::peel_tensor4<EvalT, T, N, NumDimT>()(C_);
+  C_peeled = LCM::peel_tensor4<EvalT, T, N, CP::MAX_DIM>()(C_);
 
   for (int i = 0; i< num_slip_; ++i){
     slip_np1[i] = x[i];
@@ -645,7 +645,7 @@ CP::ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>::value(
   F_np1_peeled = LCM::peel_tensor<EvalT, T, N, NumDimT>()(F_np1_);
 
   minitensor::Tensor4<T, NumDimT> const
-  C_peeled = LCM::peel_tensor4<EvalT, T, N, NumDimT>()(C_);
+  C_peeled = LCM::peel_tensor4<EvalT, T, N, CP::MAX_DIM>()(C_);
 
   for (int i = 0; i< num_slip_; ++i){
     slip_np1[i] = x[i];
@@ -663,8 +663,7 @@ CP::ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>::value(
   if (minitensor::norm(rate_slip * dt_) > LOG_HUGE) {
     this->set_failed("Failed on slip");
     residual.fill(minitensor::Filler::ZEROS);
-    T val = 0.5 * minitensor::dot(residual, residual);
-    return val;
+    return 0.5 * minitensor::dot(residual, residual);
   }
 
   // Compute Lp_np1, and Fp_np1

@@ -90,16 +90,16 @@ CrystalPlasticityKernel(
     read_orientations_from_mesh_ = false;
     // TODO check if basis is given else default
     // NOTE default to coordinate axes; construct 3rd direction if only 2 given
-    element_block_orientation_.set_dimension(num_dims_);
-    for (int i = 0; i < num_dims_; ++i) {
+    element_block_orientation_.set_dimension(CP::MAX_DIM);
+    for (int i = 0; i < CP::MAX_DIM; ++i) {
       std::vector<RealType> const
       b_temp = e_list.get<Teuchos::Array<RealType>>(
         Albany::strint("Basis Vector", i + 1)).toVector();
 
       minitensor::Vector<RealType, CP::MAX_DIM>
-      basis(num_dims_);
+      basis(CP::MAX_DIM);
 
-      for (int dim = 0; dim < num_dims_; ++dim){
+      for (int dim = 0; dim < CP::MAX_DIM; ++dim){
         basis[dim] = b_temp[dim];
       }
 
@@ -108,7 +108,7 @@ CrystalPlasticityKernel(
       // TODO check zero, rh system
       // Filling columns of transformation with basis vectors
       // We are forming R^{T} which is equivalent to the direction cosine matrix
-      for (int j = 0; j < num_dims_; ++j) {
+      for (int j = 0; j < CP::MAX_DIM; ++j) {
         element_block_orientation_(j, i) = basis[j];
       }
     }
@@ -150,7 +150,7 @@ CrystalPlasticityKernel(
   c44_temperature_coeff_ = e_list.get<RealType>("M44", NAN);
   reference_temperature_ = e_list.get<RealType>("Reference Temperature", NAN);
 
-  C_unrotated_.set_dimension(num_dims_);
+  C_unrotated_.set_dimension(CP::MAX_DIM);
   if (c11_ == c33_) {
     c66_ = c44_;
     c66_temperature_coeff_ = c44_temperature_coeff_;
@@ -206,13 +206,13 @@ CrystalPlasticityKernel(
     s_temp = ss_list.get<Teuchos::Array<RealType>>("Slip Direction").toVector();
 
     minitensor::Vector<RealType, CP::MAX_DIM>
-    s_temp_normalized(num_dims_);
+    s_temp_normalized(CP::MAX_DIM);
 
-    for (int i = 0; i < num_dims_; ++i) {
+    for (int i = 0; i < CP::MAX_DIM; ++i) {
       s_temp_normalized[i] = s_temp[i];
     }
     s_temp_normalized = minitensor::unit(s_temp_normalized);
-    slip_systems_.at(num_ss).s_.set_dimension(num_dims_);
+    slip_systems_.at(num_ss).s_.set_dimension(CP::MAX_DIM);
     slip_systems_.at(num_ss).s_ = s_temp_normalized;
 
     //
@@ -222,17 +222,17 @@ CrystalPlasticityKernel(
     n_temp = ss_list.get<Teuchos::Array<RealType>>("Slip Normal").toVector();
 
     minitensor::Vector<RealType, CP::MAX_DIM>
-    n_temp_normalized(num_dims_);
+    n_temp_normalized(CP::MAX_DIM);
 
-    for (int i = 0; i < num_dims_; ++i) {
+    for (int i = 0; i < CP::MAX_DIM; ++i) {
       n_temp_normalized[i] = n_temp[i];
     }
 
     n_temp_normalized = minitensor::unit(n_temp_normalized);
-    slip_systems_.at(num_ss).n_.set_dimension(num_dims_);
+    slip_systems_.at(num_ss).n_.set_dimension(CP::MAX_DIM);
     slip_systems_.at(num_ss).n_ = n_temp_normalized;
 
-    slip_systems_.at(num_ss).projector_.set_dimension(num_dims_);
+    slip_systems_.at(num_ss).projector_.set_dimension(CP::MAX_DIM);
     slip_systems_.at(num_ss).projector_ =
       minitensor::dyad(slip_systems_.at(num_ss).s_, slip_systems_.at(num_ss).n_);
 
@@ -429,8 +429,8 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(
     index_element_ = -1;
   }
 
-  if(verbosity_ >= CP::Verbosity::HIGH) {
-    std::cout << ">>> in cp initialize compute state\n";
+  if(verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << ">>> kernel::init\n";
   }
 
   if (read_orientations_from_mesh_)
@@ -497,6 +497,9 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
 CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 {
+  if(verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << ">>> in kernel::operator\n";
+  }
   // If a previous constitutive calculation has failed, exit immediately.
   if (nox_status_test_->status_ == NOX::StatusTest::Failed) {
     if (verbosity_ == CP::Verbosity::DEBUG) {
@@ -562,13 +565,13 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   C_unrotated = C_unrotated_;
 
   minitensor::Tensor4<ScalarT, CP::MAX_DIM>
-  C(num_dims_);
+  C(CP::MAX_DIM);
 
   RealType
   norm_slip_residual;
 
   minitensor::Tensor<RealType, CP::MAX_DIM>
-  orientation_matrix(num_dims_);
+  orientation_matrix(CP::MAX_DIM);
 
   std::vector<CP::SlipSystem<CP::MAX_DIM>>
   element_slip_systems = slip_systems_;
@@ -608,9 +611,9 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   }
 
   if (read_orientations_from_mesh_) {
-    for (int i = 0; i < 3; ++i) {
-      for (int j = 0; j < 3; ++j) {
-        orientation_matrix(i,j) = rotation_matrix_transpose_[cell][i * 3 + j];
+    for (int i = 0; i < CP::MAX_DIM; ++i) {
+      for (int j = 0; j < CP::MAX_DIM; ++j) {
+        orientation_matrix(i,j) = rotation_matrix_transpose_[cell][i * CP::MAX_DIM + j];
       }
     }
   }
@@ -680,7 +683,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
         dyad_matrix.fill(minitensor::Filler::ZEROS);
 
         for (int s = 0; s < num_slip_; ++s) {
-          for (int d(0); d < num_dims_ * num_dims_; ++d) {
+          for (int d(0); d < CP::MAX_DIM * CP::MAX_DIM; ++d) {
             dyad_matrix(d, s) = element_slip_systems.at(s).projector_[d];
           }
         }
@@ -928,12 +931,20 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
     state_mechanical,
     state_internal,
     C,
-    dt_);
+    dt_,
+    verbosity_);
 
   utility::StaticPointer<CP::Integrator<EvalT, CP::MAX_DIM, CP::MAX_SLIP>>
   integrator = integratorFactory(integration_scheme_, residual_type_);
 
   integrator->update();
+
+  if (verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << "Fp_{n+1}" << std::endl;
+    std::cout << state_mechanical.Fp_np1_ << std::endl;
+    std::cout << "sigma_{n+1}" << std::endl;
+    std::cout << state_mechanical.sigma_np1_ << std::endl;
+  }
 
   // Check to make sure there is only one status test
   ALBANY_ASSERT(integrator->getStatus() == nox_status_test_->status_);

@@ -26,7 +26,8 @@ CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::IntegratorFactory(
       CP::StateMechanical<ScalarT, NumDimT> & state_mechanical,
       CP::StateInternal<ScalarT, NumSlipT> & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      RealType dt)
+      RealType dt,
+      CP::Verbosity verbosity)
   : allocator_(allocator),
     minimizer_(minimizer),
     rol_minimizer_(rol_minimizer),
@@ -37,7 +38,8 @@ CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::IntegratorFactory(
     state_mechanical_(state_mechanical),
     state_internal_(state_internal),
     C_(C),
-    dt_(dt)
+    dt_(dt),
+    verbosity_(verbosity)
 {}
 
 template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
@@ -46,6 +48,10 @@ CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::operator()(
     CP::IntegrationScheme integration_scheme,
     CP::ResidualType residual_type) const
 {
+  if(verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << ">>> in IntegratorFactory::operator\n";
+  }
+
   switch (integration_scheme)
   {
     case CP::IntegrationScheme::EXPLICIT:
@@ -58,7 +64,8 @@ CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::operator()(
           state_mechanical_,
           state_internal_,
           C_,
-          dt_);
+          dt_,
+          verbosity_);
 
     } break;
 
@@ -80,7 +87,8 @@ CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::operator()(
               state_mechanical_,
               state_internal_,
               C_,
-              dt_);
+              dt_,
+              verbosity_);
         } break;
 
         case CP::ResidualType::SLIP_HARDNESS:
@@ -97,7 +105,8 @@ CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::operator()(
               state_mechanical_,
               state_internal_,
               C_,
-              dt_);
+              dt_,
+              verbosity_);
         } break;
 
         case CP::ResidualType::CONSTRAINED_SLIP_HARDNESS:
@@ -114,7 +123,8 @@ CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::operator()(
               state_mechanical_,
               state_internal_,
               C_,
-              dt_);
+              dt_,
+              verbosity_);
         } break;
 
         default:
@@ -142,7 +152,8 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::ExplicitIntegrator(
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      RealType dt)
+      RealType dt,
+      CP::Verbosity const verbosity)
   : Base(
       nox_status_test,
       slip_systems,
@@ -150,7 +161,8 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::ExplicitIntegrator(
       state_mechanical,
       state_internal,
       C,
-      dt)
+      dt,
+      verbosity)
 {
 
 }
@@ -172,6 +184,11 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update() const
   bool
   failed{false};
 
+  if (verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << "F_{n+1}" << std::endl;
+    std::cout << state_mechanical_.F_np1_ << std::endl;
+  }
+
   // compute sigma_np1, S_np1, and shear_np1 using Fp_n
   CP::computeStress<NumDimT, NumSlipT, ScalarT>(
     slip_systems_,
@@ -182,6 +199,11 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update() const
     state_mechanical_.S_np1_,
     state_internal_.shear_np1_,
     failed);
+
+  if (verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << "S_{n+1}" << std::endl;
+    std::cout << state_mechanical_.S_np1_ << std::endl;
+  }
 
   // compute state_hardening_np1 using slip_n
   CP::updateHardness<NumDimT, NumSlipT, ScalarT>(
@@ -194,6 +216,11 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update() const
     state_internal_.resistance_,
     failed);
 
+  if (verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << "resistance_{n+1}" << std::endl;
+    std::cout << state_internal_.resistance_ << std::endl;
+  }
+
   // compute slip_np1
   CP::updateSlip<NumDimT, NumSlipT, ScalarT>(
     slip_systems_,
@@ -205,6 +232,11 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update() const
     state_internal_.slip_np1_,
     failed);
 
+  if (verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << "slip_{n+1}" << std::endl;
+    std::cout << state_internal_.slip_np1_ << std::endl;
+  }
+
   // compute Lp_np1, and Fp_np1
   CP::applySlipIncrement<NumDimT, NumSlipT, ScalarT>(
     slip_systems_,
@@ -214,6 +246,11 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update() const
     state_mechanical_.Fp_n_,
     state_mechanical_.Lp_np1_,
     state_mechanical_.Fp_np1_);
+
+  if (verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << "Fp_{n+1}" << std::endl;
+    std::cout << state_mechanical_.Fp_np1_ << std::endl;
+  }
 
   // compute sigma_np1, S_np1, and shear_np1 using Fp_np1
   CP::computeStress<NumDimT, NumSlipT, ScalarT>(
@@ -242,6 +279,11 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update() const
 
   residual = state_internal_.slip_np1_ - slip_computed;
 
+  if (verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << "residual" << std::endl;
+    std::cout << residual << std::endl;
+  }
+
   this->norm_residual_ = Sacado::ScalarValue<ScalarT>::eval(norm(residual));
 
   if (dt_ > 0.0) {
@@ -264,7 +306,8 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::ImplicitIntegrator(
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      RealType dt)
+      RealType dt,
+      CP::Verbosity const verbosity)
   : Base(
       nox_status_test,
       slip_systems,
@@ -272,7 +315,8 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::ImplicitIntegrator(
       state_mechanical,
       state_internal,
       C,
-      dt),
+      dt,
+      verbosity),
     minimizer_(minimizer), rol_minimizer_(rol_minimizer), step_type_(step_type), using_rol_minimizer_(false)
 {
 
@@ -282,6 +326,9 @@ template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 void
 CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState() const
 {
+  if (verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << ">>> in ImplicitIntegrator::reevaluateState" << std::endl;
+  }
 
   std::ofstream outfile;
   std::stringstream ss;
@@ -354,6 +401,17 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState() const
     state_mechanical_.Lp_np1_,
     state_mechanical_.Fp_np1_);
 
+  if (verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << "F_{n+1}" << std::endl;
+    std::cout << state_mechanical_.F_np1_ << std::endl;
+    std::cout << "Fp_{n+1}" << std::endl;
+    std::cout << state_mechanical_.Fp_np1_ << std::endl;
+    std::cout << "projector_" << std::endl;
+    std::cout << slip_systems_[0].projector_ << std::endl;
+    std::cout << "C_" << std::endl;
+    std::cout << C_ << std::endl;
+  }
+
   bool
   failed{false};
 
@@ -367,6 +425,11 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState() const
     state_mechanical_.S_np1_,
     state_internal_.shear_np1_,
     failed);
+
+  if (verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << "sigma_{n+1}" << std::endl;
+    std::cout << state_mechanical_.sigma_np1_ << std::endl;
+  }
 
   if(failed == true){
     this->forceGlobalLoadStepReduction("ComputeStress failed.");
@@ -413,7 +476,8 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::ImplicitSlipIntegrator(
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      RealType dt)
+      RealType dt,
+      CP::Verbosity const verbosity)
   : Base(
       minimizer,
       rol_minimizer,
@@ -424,7 +488,8 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::ImplicitSlipIntegrator(
       state_mechanical,
       state_internal,
       C,
-      dt)
+      dt,
+      verbosity)
 {
 }
 
@@ -433,6 +498,10 @@ template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 void
 CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update() const
 {
+  if (verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << ">>> in ImplicitSlipIntegrator::update" << std::endl;
+  }
+
   // Unknown for solver
   minitensor::Vector<ScalarT, CP::NlsDim<NumSlipT>::value>
   x(this->num_slip_);
@@ -470,8 +539,20 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update() const
     x(i) = Sacado::ScalarValue<ScalarT>::eval(state_internal_.slip_np1_(i));
   }
 
+  if (verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << "F_{n+1}" << std::endl;
+    std::cout << state_mechanical_.F_np1_ << std::endl;
+    std::cout << "Fp_{n}" << std::endl;
+    std::cout << state_mechanical_.Fp_n_ << std::endl;
+  }
+
   LCM::MiniSolver<Minimizer, StepType, NonlinearSolver, EvalT, CP::NlsDim<NumSlipT>::value>
   mini_solver(minimizer_, *pstep, nls, x);
+
+  if (verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << "x_{n+1}" << std::endl;
+    std::cout << x << std::endl;
+  }
 
   if (minimizer_.failed == true)
   {
@@ -505,6 +586,11 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update() const
       state_internal_.resistance_,
       hardness_failed);
 
+  if (verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << "resistance_{n+1}" << std::endl;
+    std::cout << state_internal_.resistance_ << std::endl;
+  }
+
   if (hardness_failed) {
     this->forceGlobalLoadStepReduction("Failed on hardness");
     return;
@@ -526,7 +612,8 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::ImplicitSlipHardne
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      RealType dt)
+      RealType dt,
+      CP::Verbosity const verbosity)
   : Base(
       minimizer,
       rol_minimizer,
@@ -537,7 +624,8 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::ImplicitSlipHardne
       state_mechanical,
       state_internal,
       C,
-      dt)
+      dt,
+      verbosity)
 {
 }
 
@@ -681,7 +769,8 @@ CP::ImplicitConstrainedSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::Implici
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      RealType dt)
+      RealType dt,
+      CP::Verbosity const verbosity)
   : Base(
       minimizer,
       rol_minimizer,
@@ -692,7 +781,8 @@ CP::ImplicitConstrainedSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::Implici
       state_mechanical,
       state_internal,
       C,
-      dt)
+      dt,
+      verbosity)
 {
   this->using_rol_minimizer_ = true;
 }
