@@ -15,6 +15,8 @@ def create_mat_params_default():
 
     mat_params["verbosity"] = "None"
 
+    mat_params["orientation_on_mesh"] = "unspecified"
+
     mat_params["crystal_structure"] = "fcc"
     mat_params["slip_families"] = "unspecified"
     mat_params["ratio_c_a"] = "unspecified"
@@ -270,6 +272,8 @@ def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, names_bloc
 
         # Output verbosity
         WriteParameter("Verbosity", "string", mat_params["verbosity"], mat_file, indent)
+
+        WriteParameter("Read Lattice Orientation From Mesh", "bool", mat_params["orientation_on_mesh"], mat_file, indent)
 
         # Number of slip systems
         num_slip_systems = len(slip_systems)
