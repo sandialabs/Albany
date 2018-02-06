@@ -24,7 +24,7 @@ LCM:
       Parameter 0: Time
     Solution Method: Transient Tempus
     Phalanx Graph Visualization Detail: 0
-    MaterialDB Filename: materials_01_j2_stk.yaml
+    MaterialDB Filename: materials_01_j2.yaml
     Response Functions:
       Number: 1
       Response 0: Project IP to Nodal Field
@@ -36,30 +36,21 @@ LCM:
         IP Field Layout 1: Scalar
         Output to File: true
     Dirichlet BCs:
-      SDBC on NS NodeSet0 for DOF X: 0.0
-      SDBC on NS NodeSet2 for DOF Y: 0.0
-      SDBC on NS NodeSet4 for DOF StrongSchwarz:
+      SDBC on NS nodelist_1 for DOF X: 0.0
+      SDBC on NS nodelist_3 for DOF Y: 0.0
+      SDBC on NS nodelist_5 for DOF StrongSchwarz:
         BC Function: StrongSchwarz
-        Coupled Application: cuboid_00_j2_stk.yaml
+        Coupled Application: cuboid_00_j2.yaml
         Coupled Block: fine
       #SDBC on NS nodelist_6 for DOF Z: 0.2
-      Time Dependent SDBC on NS NodeSet5 for DOF Z:
+      Time Dependent SDBC on NS nodelist_6 for DOF Z:
         Number of points: 2
         Time Values: [0.0, 2.0]
         BC Values: [0.0, 0.006]
   Discretization:
-    Method: STK3D
-    1D Elements: 1
-    1D Scale: 1.0
-    2D Elements: 1
-    2D Scale: 1.0
-    3D Elements: 2
-    3D Scale: 0.75
-    Transform Type: Shift
-    x-shift: -0.5
-    y-shift: -0.5
-    z-shift: -0.25
-    Exodus Output File Name: cuboid_01_j2_stk.e
+    Method: Ioss
+    Exodus Input File Name: cuboid_01_1elt.g
+    Exodus Output File Name: cuboid_01_1elt_j2.e
     Exodus Solution Name: disp
     Exodus Residual Name: resid
     Separate Evaluators by Element Block: true

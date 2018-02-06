@@ -1,6 +1,6 @@
 LCM:
   Alternating System:
-    Model Input Files: [cuboid_00_j2_stk.yaml, cuboid_01_j2_stk.yaml]
+    Model Input Files: [cuboid_00_j2.yaml, cuboid_01_j2.yaml]
     Minimum Iterations: 1
     Maximum Iterations: 32
     Relative Tolerance: 1.0e-15
