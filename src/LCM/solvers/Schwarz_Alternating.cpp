@@ -12,6 +12,9 @@
 #include "Schwarz_Alternating.hpp"
 
 //#define DEBUG
+//IKT, 2/7/18: uncomment the following to show verbose
+//debug output pertaining to internal states
+//#define DEBUG_INTERNAL_STATES
 
 namespace LCM {
 
@@ -651,7 +654,16 @@ SchwarzLoopDynamics() const
       auto &
       state_mgr = app.getStateMgr();
 
+#ifdef DEBUG_INTERNAL_STATES
+      fos << "IKT getting internal states subdomain = " << subdomain << ": "; 
+#endif
       internal_states_[subdomain] = state_mgr.getStateArrays();
+#ifdef DEBUG_INTERNAL_STATES
+      Albany::StateArrayVec& esa  = internal_states_[subdomain].elemStateArrays;
+      std::string eqps_string = "eqps"; 
+      auto cell = 0; auto pt = 0; auto ws = 0; 
+      fos << "eqps = " << esa[ws][eqps_string](cell, pt) << "\n";
+#endif
     } 
 
     ST const
@@ -729,7 +741,16 @@ SchwarzLoopDynamics() const
         auto &
         state_mgr = app.getStateMgr();
 
+#ifdef DEBUG_INTERNAL_STATES
+        fos << "IKT setting internal states subdomain = " << subdomain << ": ";
+#endif 
         state_mgr.setStateArrays(internal_states_[subdomain]);
+#ifdef DEBUG_INTERNAL_STATES
+        Albany::StateArrayVec& esa  = internal_states_[subdomain].elemStateArrays;
+        std::string eqps_string = "eqps"; 
+        auto cell = 0; auto pt = 0; auto ws = 0; 
+        fos << "eqps = " << esa[ws][eqps_string](cell, pt) << "\n";
+#endif
 
         //IKT: the following is different than the quasistatic case...
         me.getNominalValues().set_t(current_time);
