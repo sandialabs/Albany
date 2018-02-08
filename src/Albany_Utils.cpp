@@ -117,7 +117,7 @@
 
 #if defined(ALBANY_EPETRA)
 
-  const Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) { return 1; }
+  Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) { return 1; }
 
   Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(Epetra_Comm& ec) { return 1; }
 
@@ -125,11 +125,11 @@
     return Teuchos::rcp(new Epetra_SerialComm);
   }
 
-  Teuchos::RCP<Epetra_Comm> Albany::createEpetraCommFromTeuchosComm(const RCP<const Teuchos_Comm>& tc) {
+  Teuchos::RCP<Epetra_Comm> Albany::createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc) {
     return Teuchos::rcp(new Epetra_SerialComm);
   }
 
-  Teuchos::RCP<const Teuchos_Comm> Albany::createTeuchosCommFromEpetraComm(const RCP<const Epetra_Comm>& ec) {
+  Teuchos::RCP<Teuchos_Comm> Albany::createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec) {
     return Teuchos::rcp(new Teuchos::SerialComm<int>());
   }
 #endif
