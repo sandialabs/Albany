@@ -564,3 +564,19 @@ void Albany::assert_fail(std::string const& msg) {
   std::cerr << msg;
   abort();
 }
+
+namespace Albany {
+
+BuildType build_type(const BuildType value)
+{
+  static bool initialized_ = false;
+  static BuildType value_ = value;
+  if (!initialized_ && (value != BuildType::None)) {
+    value_ = value;
+    initialized_ = true;
+  }
+  return value_;
+}
+
+} // namespace Albany
+

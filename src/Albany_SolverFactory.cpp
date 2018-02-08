@@ -82,8 +82,6 @@
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
 
-extern bool TpetraBuild;
-
 #if defined(ALBANY_EPETRA)
 namespace Albany {
 
@@ -457,6 +455,8 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
   const Teuchos::Ptr<const std::string> solverToken(
       piroParams->getPtr<std::string>("Solver Type"));
 
+  bool TpetraBuild = Albany::build_type() == Albany::BuildType::Tpetra;
+
   const RCP<ParameterList> problemParams =
       Teuchos::sublist(appParams, "Problem");
   const std::string solutionMethod =
@@ -571,6 +571,8 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       Teuchos::sublist(appParams, "Problem");
   const std::string solutionMethod =
       problemParams->get("Solution Method", "Steady");
+
+  bool TpetraBuild = Albany::build_type() == Albany::BuildType::Tpetra;
 
   if (solutionMethod == "QCAD Multi-Problem") {
 #ifdef ALBANY_QCAD

@@ -12,6 +12,9 @@
 #include "Schwarz_Alternating.hpp"
 
 //#define DEBUG
+//IKT, 2/7/18: uncomment the following to show verbose
+//debug output pertaining to internal states
+//#define DEBUG_INTERNAL_STATES
 
 namespace LCM {
 
@@ -594,6 +597,67 @@ reportFinals(std::ostream & os) const
   return;
 }
 
+void 
+SchwarzAlternating::
+printInternalElementStates(const int subdomain, Teuchos::RCP<Albany::StateInfoStruct> sis) const 
+{
+  Albany::StateArrayVec& esa  = internal_states_[subdomain].elemStateArrays;
+  //Print stuff for only workset 0
+  const int ws = 0; 
+  for (auto ii=0; ii < sis->size(); ii++) {
+    const std::string& stateName    = (*sis)[ii]->name;
+    const std::string& init_type    = (*sis)[ii]->initType;
+    Albany::StateStruct::FieldDims dims;
+    esa[ws][stateName].dimensions(dims);
+    int size = dims.size();
+    printInternalElementState(esa, stateName, init_type, size, ws); 
+  } 
+}
+
+void 
+SchwarzAlternating::
+printInternalElementState(Albany::StateArrayVec& esa, const std::string statename, 
+                          const std::string& init_type, const int size, const int ws) const
+{
+  //IKT, 2/7/18: this is cut/paste from Albany::StateManager.
+  //Note we are only printing states at first cell, quad point, dimension, etc., 
+  //to suppress amount of debug output.  This can be changed, as desired, by modifying
+  //the code here.
+  auto &
+  fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  if (size == 0) return; 
+  int cell = 0; int qp = 0; int i = 0; int j = 0; int k = 0;
+  if (init_type == "scalar") {
+    switch (size) {
+      case 1:
+        fos << "   DEBUG: case 1, " << statename << " = " << esa[ws][statename](cell) << "\n"; 
+        break;
+      case 2:
+        fos << "   DEBUG: case 2, " << statename << " = " << esa[ws][statename](cell, qp) << "\n"; 
+        break;
+      case 3:
+        fos << "   DEBUG: case 3, " << statename << " = " << esa[ws][statename](cell, qp, i) << "\n"; 
+        break;
+      case 4:
+        fos << "   DEBUG: case 4, " << statename << " = " << esa[ws][statename](cell, qp, i, j) << "\n"; 
+        break;
+      case 5:
+        fos << "   DEBUG: case 5, " << statename << " = " << esa[ws][statename](cell, qp, i, j, k) << "\n"; 
+        break;
+      default:
+        TEUCHOS_TEST_FOR_EXCEPTION(
+                   size < 2 || size > 5,
+                   std::logic_error,
+                   "Something is wrong during scalar state variable "
+                   "initialization: "
+                       << size);
+    }
+  }
+  else if (init_type == "identity") {
+    fos << "   DEBUG: " << statename << " = " << esa[ws][statename](cell, qp, i, j) << "\n"; 
+  }
+}
+
 //
 // Schwarz Alternating loop, dynamic
 //
@@ -651,7 +715,14 @@ SchwarzLoopDynamics() const
       auto &
       state_mgr = app.getStateMgr();
 
+#ifdef DEBUG_INTERNAL_STATES
+      fos << "DEBUG: Getting internal states subdomain = " << subdomain << "...\n";
+#endif
       internal_states_[subdomain] = state_mgr.getStateArrays();
+#ifdef DEBUG_INTERNAL_STATES
+      printInternalElementStates(subdomain, state_mgr.getStateInfoStruct()); 
+      fos << "DEBUG: ...done setting internal states subdomain = " << subdomain << ".\n";  
+#endif
     } 
 
     ST const
@@ -729,7 +800,14 @@ SchwarzLoopDynamics() const
         auto &
         state_mgr = app.getStateMgr();
 
+#ifdef DEBUG_INTERNAL_STATES
+        fos << "DEBUG: Setting internal states subdomain = " << subdomain << "...\n";
+#endif 
         state_mgr.setStateArrays(internal_states_[subdomain]);
+#ifdef DEBUG_INTERNAL_STATES
+        printInternalElementStates(subdomain, state_mgr.getStateInfoStruct()); 
+        fos << "DEBUG: ...done setting internal states subdomain = " << subdomain << ".\n";  
+#endif
 
         //IKT: the following is different than the quasistatic case...
         me.getNominalValues().set_t(current_time);
@@ -1241,7 +1319,14 @@ SchwarzLoopQuasistatics() const
       auto &
       state_mgr = app.getStateMgr();
 
+#ifdef DEBUG_INTERNAL_STATES
+      fos << "DEBUG: Getting internal states subdomain = " << subdomain << "...\n";
+#endif
       internal_states_[subdomain] = state_mgr.getStateArrays();
+#ifdef DEBUG_INTERNAL_STATES
+      printInternalElementStates(subdomain, state_mgr.getStateInfoStruct()); 
+      fos << "...DEBUG: done setting internal states subdomain = " << subdomain << ".\n";  
+#endif
     }
 
     num_iter_ = 0;
@@ -1283,7 +1368,14 @@ SchwarzLoopQuasistatics() const
         auto &
         state_mgr = app.getStateMgr();
 
+#ifdef DEBUG_INTERNAL_STATES
+        fos << "DEBUG: Setting internal states subdomain = " << subdomain << "...\n";
+#endif 
         state_mgr.setStateArrays(internal_states_[subdomain]);
+#ifdef DEBUG_INTERNAL_STATES
+        printInternalElementStates(subdomain, state_mgr.getStateInfoStruct()); 
+        fos << "...DEBUG: done setting internal states subdomain = " << subdomain << ".\n";  
+#endif
 
         // Restore solution from previous time step
         auto

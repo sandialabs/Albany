@@ -16,8 +16,6 @@ typedef stk::mesh::Entity Entity;
 // \brief Function that helps creating text files with different names
 std::string itoa(int num);
 
-bool TpetraBuild = false;
-
 int main (int ac, char* av[]){
 
 	std::string input_file;

@@ -43,10 +43,9 @@ bool MPAS_useGLP(true);
 
 #ifdef MPAS_USE_EPETRA
   Teuchos::RCP<Thyra::ModelEvaluator<double> > solver;
-  bool TpetraBuild = false;
 #else
   Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
-  bool TpetraBuild = true;
+  static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
 #endif
 bool keptMesh =false;
 

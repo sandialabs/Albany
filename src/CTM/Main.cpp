@@ -4,10 +4,11 @@
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <Teuchos_GlobalMPISession.hpp>
 #include <Kokkos_Core.hpp>
-
-bool TpetraBuild = true;
+#include <Albany_Utils.hpp>
 
 int main(int argc, char** argv) {
+
+  static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
 
   Teuchos::GlobalMPISession mpiSession(&argc, &argv, NULL);
   Kokkos::initialize(argc, argv);

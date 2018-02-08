@@ -68,9 +68,6 @@
 
 // #define DEBUG_OUTPUT
 
-// Global variable that denotes this is the Tpetra executable
-bool TpetraBuild = false;
-
 template <typename FieldType>
 void
 interp_and_calc_error(

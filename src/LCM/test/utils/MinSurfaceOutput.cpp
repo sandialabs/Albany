@@ -15,8 +15,6 @@
 #include <sstream>
 typedef stk::mesh::Entity Entity;
 
-bool TpetraBuild = false;
-
 int main(int ac, char* av[])
 {
 
