@@ -32,9 +32,6 @@ Please remove when issue is resolved
 
 #include "Albany_Networks.hpp"
 
-// Global variable that denotes this is the Tpetra executable
-bool TpetraBuild = false;
-
 int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented

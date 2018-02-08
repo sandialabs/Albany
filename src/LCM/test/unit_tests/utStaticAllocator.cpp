@@ -10,9 +10,6 @@
 
 using namespace utility;
 
-// Why is this needed?
-bool TpetraBuild = false;
-
 namespace
 {
   template<std::size_t N>

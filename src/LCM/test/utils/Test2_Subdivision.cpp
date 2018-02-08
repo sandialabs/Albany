@@ -30,8 +30,6 @@ std::string
 verify_subdivision(const std::vector<int> & former_num_entities,
     const std::vector<int> & final_num_entities);
 
-bool TpetraBuild = false;
-
 int main(int ac, char* av[])
 {
 

@@ -43,9 +43,6 @@ typedef PHAL::AlbanyTraits Traits;
 typedef Sacado::mpl::apply<FadType,ScalarT>::type DFadType;
 typedef Sacado::mpl::apply<FadType,DFadType>::type D2FadType;
 
-// No idea why this is required but build fails if missing.
-bool TpetraBuild = false;
-
 //
 // Spherical parametrization sweep
 //
