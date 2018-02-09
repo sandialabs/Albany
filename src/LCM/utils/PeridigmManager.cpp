@@ -805,6 +805,7 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 
 double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalDerivWrtDisplacement)
 {
+
   if(!enableOptimizationBasedCoupling){
     return 0.0;
   }
@@ -1180,7 +1181,7 @@ double LCM::PeridigmManager::getForce(int globalAlbanyNodeId, int dof)
 #ifdef HARD_CODED_BODY_FORCE_PERIDIGM_MANAGER
     if(dof == 0){
       Epetra_Vector& peridigmVolume = *(peridigm->getVolume());
-      force += peridigmVolume[peridigmLocalId] * 5.1732283464566922;
+      force += peridigmVolume[peridigmLocalId] * 3.33333333333;
     }
 #endif
   }
@@ -1379,7 +1380,7 @@ void LCM::PeridigmManager::setOutputFields(const Teuchos::ParameterList& params)
     field.albanyName = "Peridigm_" + name;
     field.peridigmName = name;
 
-    if(name == "Dilatation" || name == "Weighted_Volume" || name == "Radius" || name == "Number_Of_Neighbors" || name == "Horizon" || name == "Volume"){
+    if(name == "Dilatation" || name == "Weighted_Volume" || name == "Radius" || name == "Number_Of_Neighbors" || name == "Horizon" || name == "Volume" || name == "Error"){
       field.relation = "element";
       field.initType = "scalar";
       field.length = 1;
@@ -1426,7 +1427,7 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
           double* dirichletData = stk::mesh::field_data (*dirichletField, node);
 
           //set dirichletData as any function of the coordinates;
-          dirichletData[0] = 0.001*coord[0];
+          dirichletData[0] = 1.0*coord[0]*coord[0];
         }
       }
     }
@@ -1441,7 +1442,7 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
           double* coord = stk::mesh::field_data(*stkDisc->getSTKMeshStruct()->getCoordinatesField(), node);
           double* dirichletData = stk::mesh::field_data(*dirichletField, node);
           //set dirichletData as any function of the coordinates;
-          dirichletData[0]= 0.001*coord[0];
+          //dirichletData[0]= 0.001*coord[0];
         }
       }
     }
@@ -1456,7 +1457,7 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
           double* coord = stk::mesh::field_data(*stkDisc->getSTKMeshStruct()->getCoordinatesField(), node);
           double* dirichletData = stk::mesh::field_data(*dirichletField, node);
           //set dirichletData as any function of the coordinates;
-          dirichletData[0]= 0.00001*coord[0]*coord[0];
+          //dirichletData[0]= 0.00001*coord[0]*coord[0];
         }
       }
     }
