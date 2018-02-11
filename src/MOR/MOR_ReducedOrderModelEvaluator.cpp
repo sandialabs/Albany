@@ -16,6 +16,7 @@
 
 #include "MOR_ContainerUtils.hpp"
 #include "EpetraExt_MultiVectorOut.h"
+#include "EpetraExt_BlockMapOut.h"
 
 // includes to make the DBC fix possible
 #include <Tpetra_MultiVectorFiller.hpp>
@@ -28,9 +29,15 @@
 //   the left basis Psi, this behavior can be replicated by simply calling the singular
 //   version of the perconditioner call.
 // This is useful as a sanity check of the LSPG method...
-//   if you only apply J_inverse to the left basis, then LSPG should be equivalent
-//   to Galerkin.
+//   if you only apply J_inverse to the left basis via. preconditioner types
+//   "InverseJacobian" (which requires an additional define) or "Ifpack_Amesos",
+//   then LSPG should be equivalent to Galerkin.
 #define precLBonly false
+
+// Set invJacPrec to true only if you REALLY want to enable preconditioning
+//   with the inverse Jacobian.  It's a memory hog and causes issues for large
+//   problems (i.e. PCAP), so it's commented out for now.
+#define invJacPrec false // ALSO MOR_GaussNewtonOperatorFactory.cpp
 
 int count_jacr_pl;
 
@@ -65,6 +72,10 @@ ReducedOrderModelEvaluator::ReducedOrderModelEvaluator(const RCP<EpetraExt::Mode
 	// get data we'll need later on
 	morParams_ = Teuchos::sublist(Teuchos::sublist(app_->getProblemPL(), "Model Order Reduction", true), "Reduced-Order Model",true);
 	isThermoMech_ = app_->getProblemPL()->isSublist("Temperature");
+	//std::cout << "thermoMech problem? " << std::boolalpha << isThermoMech_ << std::endl;
+	bool overwriteTM = morParams_->get<bool>("Pretend it's not thermo-mechanical", false);
+	if (overwriteTM)
+		isThermoMech_ = false;
 	apply_bcs_ = morParams_->get<bool>("Apply BCs", true);
 	run_nan_check_ = morParams_->get<bool>("Run nan Check", true);
 	run_singular_check_ = morParams_->get<bool>("Run singular Check", true);
@@ -95,14 +106,16 @@ ReducedOrderModelEvaluator::ReducedOrderModelEvaluator(const RCP<EpetraExt::Mode
 			"Ifpack_IC0",
 			"Ifpack_IC1",
 			"Ifpack_IC2",
-			"Ifpack_Amesos"
-	);
+			"Ifpack_Amesos");
 	TEUCHOS_TEST_FOR_EXCEPTION(!contains(allowedPreconditionerTypes, preconditionerType), std::out_of_range, preconditionerType + " not in " + allowedPreconditionerTypes.toString());
 
 	if (preconditionerType.compare("Identity") == 0)
 	{
 		PrecondType=identity;
 		printf("Preconditioning: Identity\n");
+#if !invJacPrec
+		TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Preconditioning using the identity matrix is currently disabled.  This is because it piggy-backs on some of the inverse Jacobian calls, and the memory declaration for that preconditioner segfaults for large problems.  If you really want to use this preconditioner for a smaller problem, change \"invJacPrec\" to true and rebuild.\n");
+#endif
 	}
 	else if (preconditionerType.compare("DiagonalScaling") == 0)
 	{
@@ -113,6 +126,9 @@ ReducedOrderModelEvaluator::ReducedOrderModelEvaluator(const RCP<EpetraExt::Mode
 	{
 		PrecondType=invJac;
 		printf("Preconditioning: Inverse Jacobian\n");
+#if !invJacPrec
+		TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Preconditioning using the inverse Jacobian is currently disabled.  The memory declaration for the preconditioner segfaults for large problems.  If you really want to use this preconditioner for a smaller problem, change \"invJacPrec\" to true and rebuild.\n");
+#endif
 	}
 	else if (preconditionerType.compare("ProjectedSolution") == 0)
 	{
@@ -123,70 +139,60 @@ ReducedOrderModelEvaluator::ReducedOrderModelEvaluator(const RCP<EpetraExt::Mode
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "Jacobi";
-		printf("Preconditioning: Ifpack - Jacobi\n");
 		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
 	}
 	else if (preconditionerType.compare("Ifpack_GaussSeidel") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "GaussSeidel";
-		printf("Preconditioning: Ifpack - Gauss-Seidel\n");
 		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
 	}
 	else if (preconditionerType.compare("Ifpack_SymmetricGaussSeidel") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "SymmetricGaussSeidel";
-		printf("Preconditioning: Ifpack - Symmetric Gauss-Seidel\n");
 		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
 	}
 	else if (preconditionerType.compare("Ifpack_ILU0") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "ILU0";
-		printf("Preconditioning: Ifpack - ILU 0\n");
 		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
 	}
 	else if (preconditionerType.compare("Ifpack_ILU1") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "ILU1";
-		printf("Preconditioning: Ifpack - ILU 1\n");
 		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
 	}
 	else if (preconditionerType.compare("Ifpack_ILU2") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "ILU2";
-		printf("Preconditioning: Ifpack - ILU 2\n");
 		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
 	}
 	else if (preconditionerType.compare("Ifpack_IC0") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "IC0";
-		printf("Preconditioning: Ifpack - IC 0\n");
 		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
 	}
 	else if (preconditionerType.compare("Ifpack_IC1") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "IC1";
-		printf("Preconditioning: Ifpack - IC 1\n");
 		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
 	}
 	else if (preconditionerType.compare("Ifpack_IC2") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "IC2";
-		printf("Preconditioning: Ifpack - IC 2\n");
 		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
 	}
 	else if (preconditionerType.compare("Ifpack_Amesos") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "Amesos";
-		printf("Preconditioning: Ifpack - Amesos\n");
 		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
 	}
 }
@@ -639,6 +645,14 @@ void ReducedOrderModelEvaluator::printCRSMatrix(std::string filename, const Teuc
 	TEUCHOS_TEST_FOR_EXCEPT(CRSM == Teuchos::null)
 	Teuchos::RCP<Tpetra_CrsMatrix> CRSM_T = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*CRSM, app_->getComm());
 	Tpetra_MatrixMarket_Writer::writeSparseFile(full_filename, CRSM_T);
+	/*
+	Tpetra_MatrixMarket_Writer::writeSparseFile(full_filename, CRSM_T, true);
+
+	std::string mystr = outdir_ + filename + "_Rmap" + std::to_string(index) + ".mm";
+	Tpetra_MatrixMarket_Writer::writeMapFile(mystr, *CRSM_T->getRowMap());
+	std::string mystr2 = outdir_ + filename + "_Cmap" + std::to_string(index) + ".mm";
+	Tpetra_MatrixMarket_Writer::writeMapFile(mystr2, *CRSM_T->getColMap());
+	*/
 }
 
 void ReducedOrderModelEvaluator::printConstCRSMatrix(std::string filename, const Teuchos::RCP<const Epetra_CrsMatrix> CRSM, int index) const
@@ -695,19 +709,36 @@ Teuchos::RCP<VectorType> ReducedOrderModelEvaluator::serialVector(Teuchos::RCP<V
 	return MV_serial;
 }
 
-void ReducedOrderModelEvaluator::printMultiVectorT(std::string filename, const Teuchos::RCP<Tpetra_MultiVector> MV, int index) const
+void ReducedOrderModelEvaluator::printMultiVectorT(std::string filename, const Teuchos::RCP<Tpetra_MultiVector> MV, int index, bool isDist) const
 {
+	// bool isDist = MV->isDistributed();
+
 	std::string full_filename = outdir_ + filename + std::to_string(index) + ".mm";
 	std::cout << "ReducedOrderModelEvaluator::evalModel writing file named: " << full_filename << std::endl;
 
-	Teuchos::RCP<Tpetra_MultiVector> MV_serial = serialVector<Tpetra_MultiVector>(MV);
-	Tpetra_MatrixMarket_Writer::writeDenseFile(full_filename, MV_serial);
+	if (isDist)
+	{
+		Teuchos::RCP<Tpetra_MultiVector> MV_serial = serialVector<Tpetra_MultiVector>(MV);
+		Tpetra_MatrixMarket_Writer::writeDenseFile(full_filename, MV_serial);
+	}
+	else
+	{
+		Tpetra_MatrixMarket_Writer::writeDenseFile(full_filename, MV);
+	}
+
+	/*
+	std::string mystr = outdir_ + filename + "_map" + std::to_string(index) + ".mm";
+	Tpetra_MatrixMarket_Writer::writeMapFile(mystr, *MV->getMap());
+	//std::string mystr2 = outdir_ + filename + "_serial_map" + std::to_string(index) + ".mm";
+	//Tpetra_MatrixMarket_Writer::writeMapFile(mystr2, *MV_serial->getMap());
+	*/
 }
 
 void ReducedOrderModelEvaluator::printMultiVector(std::string filename, const Teuchos::RCP<Epetra_MultiVector> MV, int index) const
 {
+	bool isDist = MV->DistributedGlobal();
 	Teuchos::RCP<Tpetra_MultiVector> MV_T = Petra::EpetraMultiVector_To_TpetraMultiVector(*MV, app_->getComm());
-	printMultiVectorT(filename, MV_T, index);
+	printMultiVectorT(filename, MV_T, index, isDist);
 }
 
 void ReducedOrderModelEvaluator::printConstMultiVector(std::string filename, const Teuchos::RCP<const Epetra_MultiVector> MV, int index) const
@@ -760,7 +791,7 @@ void ReducedOrderModelEvaluator::nanCheck(const Teuchos::RCP<Epetra_Vector> &f) 
 
 		if (num_nans>0)
 			printMultiVector("Rerr",f,0);
-		std::string str = "The residual has " + std::to_string(num_nans) + " nan entries (see output for actual elements).  Check Rerr0.mm for actual residual in MatrixMarket format.  This might mean that you should take a close look at your model (e.g. material params).  Otherwise, set \"Run nan Check\" to true in the input and Albany will keep going by dropping the time-step and trying again. \n";
+		std::string str = "The residual has " + std::to_string(num_nans) + " nan entries (see output for actual elements).  Check Rerr0.mm for actual residual in MatrixMarket format.  This might mean that you should take a close look at your model (e.g. material params).  Otherwise, set \"Run nan Check\" to false in the input and Albany will keep going by dropping the time-step and trying again. \n";
 		TEUCHOS_TEST_FOR_EXCEPTION(num_nans>0, std::runtime_error, str);
 	}
 }
@@ -814,6 +845,7 @@ void ReducedOrderModelEvaluator::DBC_ROM_jac(const InArgs& inArgs, const OutArgs
 	Teuchos::RCP<Tpetra_CrsMatrix> W_rT = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*W_r, app_->getComm());
 	auto row_map = W_rT->getRowMap();
 	auto col_map = W_rT->getColMap();
+
 	// we make this assumption, which lets us use both local row and column indices
 	// into a single is_dbc vector
 	ALBANY_ASSERT(col_map->isLocallyFitted(*row_map));
@@ -1089,6 +1121,13 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 	bool SDBC = app_->getProblem()->useSDBCs();
 
 	if ((prev_time_ != this_time) && SDBC){
+		if (writeSolution_reduced_)
+		{
+			printConstMultiVector("xr_pre",inArgs.get_x(), count_sol_MR);
+			printConstMultiVector("x_pre",fullInArgs.get_x(), count_sol_MR);
+		}
+
+
 		solutionSpace_->reduction(*fullInArgs.get_x(),const_cast<Epetra_Vector&> (*inArgs.get_x()));
 		//const_cast<InArgs&>(inArgs).set_x(solutionSpace_->reduction(*fullInArgs.get_x())); // DOESN'T WORK!! changes the solution, but doesn't get out to the solver somehow!
 		prev_time_ = this_time;
@@ -1170,17 +1209,20 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 				{
 					std::cout << "setting up Ifpack preconditioning" << std::endl;
 					reducedOpFactory_->setPreconditionerIfpack(*W_temp, ifpackType_);
-					Teuchos::RCP<Epetra_MultiVector> M = eye(); // can pull into if statement for a bit of comp. gain
-					reducedOpFactory_->applyPreconditionerIfpack(*M); // can pull into if statement for a bit of comp. gain
-					if (writePreconditioner_)
+					if (writePreconditioner_ || prec_full_jac_)
 					{
-						printMultiVector("M", M, count_jac_MR);
-					}
-					if (prec_full_jac_){
-						DBC_MultiVector(M);
-						reducedOpFactory_->setPreconditionerDirectly(*M);
+						Teuchos::RCP<Epetra_MultiVector> M = eye(); // can pull into if statement for a bit of comp. gain
+						reducedOpFactory_->applyPreconditionerIfpack(*M); // can pull into if statement for a bit of comp. gain
 						if (writePreconditioner_)
-							printMultiVector("M_post", M, count_jac_MR);
+						{
+							printMultiVector("M", M, count_jac_MR);
+						}
+						if (prec_full_jac_){
+							DBC_MultiVector(M);
+							reducedOpFactory_->setPreconditionerDirectly(*M);
+							if (writePreconditioner_)
+								printMultiVector("M_post", M, count_jac_MR);
+						}
 					}
 					break;
 				}
@@ -1406,14 +1448,20 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 
 		if (writeJacobian_reduced_)
 		{
-			printCRSMatrix("Jr_pre", W_r, count_jacr_pl);
+			EpetraExt::RowMatrixToMatrixMarketFile("JEr_pre.mm", *W_r);
+			EpetraExt::BlockMapToMatrixMarketFile("JEr_pre_Rmap.mm", W_r->RowMap());
+			EpetraExt::BlockMapToMatrixMarketFile("JEr_pre_Cmap.mm", W_r->ColMap());
+			//printCRSMatrix("Jr_pre", W_r, count_jacr_pl); // Tpetra_MatrixMarket_Writer::writeSparseFile fails here because the Jacobian is locally replicated (see issue #1021 on GitHub)
 		}
 
 		DBC_ROM_jac(inArgs,outArgs,SDBC);
 
 		if (writeJacobian_reduced_)
 		{
-			printCRSMatrix("Jr", W_r, count_jacr_pl);
+			EpetraExt::RowMatrixToMatrixMarketFile("JEr.mm", *W_r);
+			EpetraExt::BlockMapToMatrixMarketFile("JEr_Rmap.mm", W_r->RowMap());
+			EpetraExt::BlockMapToMatrixMarketFile("JEr_Cmap.mm", W_r->ColMap());
+			//printCRSMatrix("Jr", W_r, count_jacr_pl); // Tpetra_MatrixMarket_Writer::writeSparseFile fails here because the Jacobian is locally replicated (see issue #1021 on GitHub)
 			count_jacr_pl++;
 		}
 	}
@@ -1459,15 +1507,19 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 	}
 
 	if (outputTrace_ == true)
+	{
 		printf("ReducedOrderModelEvaluator::evalModel  done\n");
+	}
 
-		if (requestedJacobian)
-			iter_++;
-		if (!requestedResidual && !requestedJacobian)
-		{
-			step_++;
-			iter_=0;
-		}
+	if (requestedJacobian)
+	{
+		iter_++;
+	}
+	if (!requestedResidual && !requestedJacobian)
+	{
+		step_++;
+		iter_=0;
+	}
 }
 
 } // namespace MOR

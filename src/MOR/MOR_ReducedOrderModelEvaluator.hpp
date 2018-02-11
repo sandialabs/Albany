@@ -62,7 +62,7 @@ public:
 
 	void printCRSMatrix(std::string filename, const Teuchos::RCP<Epetra_CrsMatrix> CRSM, int index) const;
 	void printConstCRSMatrix(std::string filename, const Teuchos::RCP<const Epetra_CrsMatrix> CRSM, int index) const;
-	void printMultiVectorT(std::string full_filename, const Teuchos::RCP<Tpetra_MultiVector> MV, int index) const;
+	void printMultiVectorT(std::string full_filename, const Teuchos::RCP<Tpetra_MultiVector> MV, int index, bool isDist) const;
 	void printMultiVector(std::string full_filename, const Teuchos::RCP<Epetra_MultiVector> MV, int index) const;
 	void printConstMultiVector(std::string filename, const Teuchos::RCP<const Epetra_MultiVector> MV, int index) const;
 	Teuchos::RCP<Epetra_MultiVector> eye() const;

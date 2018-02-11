@@ -18,6 +18,7 @@ ReducedSpace::ReducedSpace(const Teuchos::RCP<const Epetra_MultiVector> &orthogo
   basis_(orthogonalBasis),
   projector_(basis_),
   componentMap_(createComponentMap(this->basis()))
+  //componentMap_(createSerialComponentMap(this->basis()))
 {
   // Nothing to do
 }
@@ -26,6 +27,7 @@ ReducedSpace::ReducedSpace(const Epetra_MultiVector &orthogonalBasis) :
   basis_(new Epetra_MultiVector(orthogonalBasis)),
   projector_(basis_),
   componentMap_(createComponentMap(this->basis()))
+  //componentMap_(createSerialComponentMap(this->basis()))
 {
   // Nothing to do
 }
@@ -36,6 +38,7 @@ ReducedSpace::ReducedSpace(
   basis_(basis),
   projector_(projector),
   componentMap_(createComponentMap(this->basis()))
+  //componentMap_(createSerialComponentMap(this->basis()))
 {
   // Precondition could be relaxed (e.g. by switching to PointSameAs)
   TEUCHOS_TEST_FOR_EXCEPT(!this->basis().Map().SameAs(this->projector().Map()));

@@ -27,35 +27,23 @@ ReducedJacobianFactory::ReducedJacobianFactory(const RCP<const Epetra_MultiVecto
   rightProjector_(rightProjector),
   premultipliedRightProjector_(new Epetra_MultiVector(*rightProjector)),
   reducedGraph_(Copy,
-                Epetra_Map(rightProjector->NumVectors(), isMasterProcess() ? rightProjector->NumVectors() : 0, 0, rightProjector->Comm()),
+                Epetra_LocalMap(rightProjector->NumVectors(), 0, rightProjector->Comm()),
+                Epetra_LocalMap(rightProjector->NumVectors(), 0, rightProjector->Comm()),
                 rightProjector->NumVectors(),
                 true /* static profile */)
 {
-  const int rowColCount = rightProjector->NumVectors();
-
-  if (isMasterProcess())
-  {
-    Array<int> entryIndices(rowColCount);
-    for (int iCol = 0; iCol < entryIndices.size(); ++iCol) {
-      entryIndices[iCol] = iCol;
-    }
-
-    for (int iRow = 0; iRow < rowColCount; ++iRow) {
-      const int err = reducedGraph_.InsertGlobalIndices(iRow, rowColCount, entryIndices.getRawPtr());
-      TEUCHOS_ASSERT(err == 0);
-    }
+  Teuchos::Array<int> Indices;
+  for (int i=0; i<reducedGraph_.NumMyRows(); i++) {
+     Indices.resize(reducedGraph_.NumMyCols());
+     for (int j=0; j<reducedGraph_.NumMyCols(); j++) {
+       Indices[j] = j;
+     }
+     int err = reducedGraph_.InsertMyIndices(i, reducedGraph_.NumMyCols(), Indices.getRawPtr());
+     TEUCHOS_ASSERT(err == 0);
   }
 
-  {
-    const Epetra_LocalMap replicationMap(rowColCount, 0, rightProjector->Comm());
-    const int err = reducedGraph_.FillComplete(replicationMap, replicationMap);
-    TEUCHOS_ASSERT(err == 0);
-  }
-
-  {
-    const int err = reducedGraph_.OptimizeStorage();
-    TEUCHOS_ASSERT(err == 0);
-  }
+  const int err = reducedGraph_.FillComplete();
+  TEUCHOS_ASSERT(err == 0);
 }
 
 void ReducedJacobianFactory::fullJacobianIs(const Epetra_Operator &op) {
@@ -74,35 +62,18 @@ const Epetra_CrsMatrix &ReducedJacobianFactory::reducedMatrix(const Epetra_Multi
   TEUCHOS_ASSERT(leftProjector.NumVectors() == rightProjector_->NumVectors());
   TEUCHOS_ASSERT(result.Filled());
 
-  Ptr<const int> entryIndices;
-  if (isMasterProcess())
-  {
-    int dummyEntryCount;
-    int *entryIndicesTemp;
-    const int err = reducedGraph_.ExtractMyRowView(0, dummyEntryCount, entryIndicesTemp);
-    TEUCHOS_ASSERT(err == 0);
-    entryIndices = ptr(entryIndicesTemp);
-  }
-
   Epetra_Vector rowVector(result.RangeMap(), false);
-  for (int iRow = 0; iRow < leftProjector.NumVectors(); ++iRow) {
-    {
-      const int err = reduce(*premultipliedRightProjector_, *(leftProjector)(iRow), rowVector);
-      TEUCHOS_ASSERT(err == 0);
-    }
-    if (isMasterProcess())
-    {
-      const int err = result.ReplaceMyValues(iRow, rightProjector_->NumVectors(), rowVector.Values(), entryIndices.get());
-      TEUCHOS_ASSERT(err == 0);
-    }
+  for (int i = 0; i<result.NumMyRows(); i++) {
+     int NumEntries; int *Indices;
+     int err = reducedGraph_.ExtractMyRowView(i, NumEntries, Indices);
+     TEUCHOS_ASSERT(err == 0);
+     err = reduce(*premultipliedRightProjector_, *(leftProjector)(i), rowVector);
+     TEUCHOS_ASSERT(err == 0);
+     err = result.ReplaceMyValues(i, NumEntries, rowVector.Values(), Indices);
+     TEUCHOS_ASSERT(err == 0);
   }
 
   return result;
-}
-
-bool ReducedJacobianFactory::isMasterProcess() const
-{
-  return rightProjector_->Comm().MyPID() == 0;
 }
 
 } // namespace MOR

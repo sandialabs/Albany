@@ -16,6 +16,11 @@
 
 #define PsiEqualsPhi false
 
+// Set invJacPrec to true only if you REALLY want to enable preconditioning
+//   with the inverse Jacobian.  It's a memory hog and causes issues for large
+//   problems (i.e. PCAP), so it's commented out for now.
+#define invJacPrec false // ALSO MOR_ReducedOrderModelEvaluator.cpp
+
 namespace MOR {
 
 using ::Teuchos::RCP;
@@ -32,6 +37,7 @@ jacobianFactory_(reducedBasis_)
 	//set initial scaling to 1 in case used before computed
 	scaling_->PutScalar(1.0);
 
+#if invJacPrec
 	preconditioner_ = Teuchos::rcp(new Epetra_MultiVector(reducedBasis->Map(), reducedBasis->GlobalLength(), true));
 	int num_rows = preconditioner_->MyLength();
 	int num_vecs = preconditioner_->NumVectors();
@@ -46,6 +52,7 @@ jacobianFactory_(reducedBasis_)
 #else //PsiEqualsPhi
 	leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.premultipliedRightProjector()));
 #endif //PsiEqualsPhi
+#endif //invJacPrec
 }
 
 template <typename Derived>
@@ -384,7 +391,7 @@ void GaussNewtonOperatorFactoryBase<Derived>::setPreconditionerIfpack(Epetra_Crs
 		else if (ifpackType.compare("Amesos") == 0)
 		{
 			PrecType = "Amesos";
-			List.set("fact: ict level-of-fill",2.0);
+			//List.set("amesos: solver type","Amesos_Dscpack"); //Amesos_Klu
 		}
 
 		int OverlapLevel = 0; // must be >= 0. If Comm.NumProc() == 1, it is ignored.
@@ -498,20 +505,20 @@ void GaussNewtonOperatorFactoryBase<Derived>::applyJacobian(const Epetra_MultiVe
 		Amesos_BaseSolver* solver;
 		Amesos factory;
 		std::string solvertype = "Klu";
+		//std::string solvertype = "Superludist";
 		solver = factory.Create(solvertype, problem);
-		if (solver == 0)
-			std::cerr << "Specified solver is not available\n";
+		TEUCHOS_TEST_FOR_EXCEPTION(solver == 0, std::runtime_error, "Specified solver is not available\n");
 		Teuchos::ParameterList list;
 		list.set("PrintTiming",true);
 		list.set("PrintStatus",true);
 		solver->SetParameters(list);
 		int ierr;
 		ierr = solver->SymbolicFactorization();
-		if (ierr > 0) std::cerr << "Error when calling SymbolicFactorization.\n";
+		TEUCHOS_TEST_FOR_EXCEPTION(ierr!=0, std::runtime_error, "Error when calling SymbolicFactorization.\n");
 		ierr = solver->NumericFactorization();
-		if (ierr > 0) std::cerr << "Error when calling NumericFactorization.\n";
+		TEUCHOS_TEST_FOR_EXCEPTION(ierr!=0, std::runtime_error, "Error when calling NumericFactorization.\n");
 		ierr = solver->Solve();
-		if (ierr > 0) std::cerr << "Error when calling Solve.\n";
+		TEUCHOS_TEST_FOR_EXCEPTION(ierr!=0, std::runtime_error, "Error when calling Solve.\n");
 		delete solver;
 		printf("  finish\n");
 		delete xxx;
