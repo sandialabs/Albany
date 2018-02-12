@@ -165,7 +165,7 @@ meltingTemperature(std::size_t cell, std::size_t qp) {
 }
 
   //
-  //
+  // Calculates the thermal inertia term.
   //
 template <typename EvalT, typename Traits>
 typename EvalT::ScalarT
@@ -173,7 +173,20 @@ HeatEqnResidual<EvalT, Traits>::
 thermalInertia(std::size_t cell, std::size_t qp) {
 
   ScalarT
-  chi = 0.0;
+  chi = 0.0;  
+  
+  ScalarT  // placeholder for now - should come from input deck material properties
+  latent_heat = 334.0;  // latent heat of formation water/ice [kJ/kg-C] 
+  
+  ScalarT // placeholder for now - should come from input deck material properties
+  rho_ice = 900.0;  // ice density in [kg/m3]
+  
+  ScalarT // placeholder for now - should come from a function call
+  dfdT = -1.0;  // change in ice saturation with change in temperature
+  //dfdT = derivative_freezing_curve(cell,qp);
+  
+  chi = (density_(cell,qp) * specific_heat_(cell,qp)) - 
+        (rho_ice * latent_heat * dfdT);
 
   return chi;
 }
