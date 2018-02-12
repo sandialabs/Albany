@@ -31,29 +31,11 @@ namespace LCM {
       TGrad(
         p.get<std::string>("QP Gradient Variable Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout")),
-      thermal_conductivity_(
-        p.get<std::string>("QP Thermal Conductivity Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      density_(
-        p.get<std::string>("QP Density Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      specific_heat_(
-        p.get<std::string>("QP Specific Heat Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
       pressure_(
         p.get<std::string>("QP Pressure Variable Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
       salinity_(
         p.get<std::string>("QP Salinity Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      dfdT_(
-        p.get<std::string>("QP Freezing Curve Slope Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      f_(
-        p.get<std::string>("QP Ice Saturation Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      w_(
-        p.get<std::string>("QP Water Saturation Variable Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
       TResidual(
         p.get<std::string>("Residual Name"),
@@ -64,14 +46,8 @@ namespace LCM {
   this->addDependentField(Temperature);
   this->addDependentField(Tdot);
   this->addDependentField(TGrad);
-  this->addDependentField(thermal_conductivity_);
-  this->addDependentField(density_);
-  this->addDependentField(specific_heat_);
   this->addDependentField(pressure_);
   this->addDependentField(salinity_);
-  this->addDependentField(dfdT_);
-  this->addDependentField(f_);
-  this->addDependentField(w_);
   this->addEvaluatedField(TResidual);
 
   Teuchos::RCP<PHX::DataLayout>
@@ -102,25 +78,23 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &f
   this->utils.setFieldData(Temperature, fm);
   this->utils.setFieldData(Tdot, fm);
   this->utils.setFieldData(TGrad, fm);
-  this->utils.setFieldData(thermal_conductivity_, fm);
-  this->utils.setFieldData(density_, fm);
-  this->utils.setFieldData(specific_heat_, fm);
   this->utils.setFieldData(pressure_, fm);
   this->utils.setFieldData(salinity_, fm);
-  this->utils.setFieldData(dfdT_, fm);
-  this->utils.setFieldData(f_, fm);
-  this->utils.setFieldData(w_, fm);
 
   this->utils.setFieldData(TResidual, fm);
 
   // Allocate workspace:
   heat_flux_ = Kokkos::createDynRankView(
     Temperature.get_view(), "XXX", worksetSize, numQPs, numDims);
-
   accumulation_ = Kokkos::createDynRankView(
     Temperature.get_view(), "XXX", worksetSize, numQPs);
-  
   Tmelt_ = Kokkos::createDynRankView(
+    Temperature.get_view(), "XXX", worksetSize, numQPs);
+  dfdT_ = Kokkos::createDynRankView(
+    Temperature.get_view(), "XXX", worksetSize, numQPs);
+  f_ = Kokkos::createDynRankView(
+    Temperature.get_view(), "XXX", worksetSize, numQPs);
+  w_ = Kokkos::createDynRankView(
     Temperature.get_view(), "XXX", worksetSize, numQPs);
 
   return;
@@ -143,9 +117,6 @@ evaluateFields(typename Traits::EvalData workset)
       updateMeltingTemperature(cell,qp);
       update_dfdT(cell,qp);
       updateSaturations(cell,qp);
-      updateThermalConductivity(cell,qp);
-      updateDensity(cell,qp);
-      updateSpecificHeat(cell,qp);
     }
   }
   
@@ -156,7 +127,7 @@ evaluateFields(typename Traits::EvalData workset)
       heat_flux_(cell,qp) = 0.0;
       for (std::size_t dims=0; dims < numDims; ++dims) {
         heat_flux_(cell,qp) += 
-          thermal_conductivity_(cell,qp) * TGrad(cell,qp,dims);
+          thermalConductivity(cell,qp) * TGrad(cell,qp,dims);
       }
       // accumulation term:
       accumulation_(cell,qp) = thermalInertia(cell,qp) * Tdot(cell,qp);
@@ -221,36 +192,48 @@ updateSaturations(std::size_t cell, std::size_t qp)
 }
 
   //
-  // Updates the thermal conductivity.
+  // Calculates the thermal conductivity.
   //
 template <typename EvalT, typename Traits>
-void HeatEqnResidual<EvalT, Traits>::
-updateThermalConductivity(std::size_t cell, std::size_t qp) 
+typename EvalT::ScalarT 
+HeatEqnResidual<EvalT, Traits>::
+thermalConductivity(std::size_t cell, std::size_t qp) 
 {
-
-  return;
+  
+  ScalarT
+  thermal_K = 0.0;
+  
+  return thermal_K;
 }
 
   //
-  // Updates the density.
+  // Calculates the density.
   //
 template <typename EvalT, typename Traits>
-void HeatEqnResidual<EvalT, Traits>::
-updateDensity(std::size_t cell, std::size_t qp) 
+typename EvalT::ScalarT 
+HeatEqnResidual<EvalT, Traits>::
+density(std::size_t cell, std::size_t qp) 
 {
-
-  return;
+  
+  ScalarT
+  density = 0.0;
+  
+  return density;
 }
 
   //
-  // Updates the specific heat.
+  // Calculates the specific heat.
   //
 template <typename EvalT, typename Traits>
-void HeatEqnResidual<EvalT, Traits>::
-updateSpecificHeat(std::size_t cell, std::size_t qp) 
+typename EvalT::ScalarT 
+HeatEqnResidual<EvalT, Traits>::
+specificHeat(std::size_t cell, std::size_t qp) 
 {
-
-  return;
+  
+  ScalarT
+  specific_heat = 0.0;
+  
+  return specific_heat;
 }
 
   //
@@ -271,12 +254,8 @@ thermalInertia(std::size_t cell, std::size_t qp)
   ScalarT // placeholder for now - should come from input deck material properties
   rho_ice = 900.0;  // ice density in [kg/m3]
   
-  ScalarT // placeholder for now - should come from a function call
-  dfdT = -1.0;  // change in ice saturation with change in temperature
-  //dfdT = slopeFreezingCurve(cell,qp);
-  
-  chi = (density_(cell,qp) * specific_heat_(cell,qp)) - 
-        (rho_ice * latent_heat * dfdT);
+  chi = (density(cell,qp) * specificHeat(cell,qp)) - 
+        (rho_ice * latent_heat * dfdT_(cell,qp));
 
   return chi;
 }

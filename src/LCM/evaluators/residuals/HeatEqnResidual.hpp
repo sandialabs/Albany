@@ -44,14 +44,14 @@ public:
   void
   updateSaturations(std::size_t cell, std::size_t qp);
   
-  void
-  updateThermalConductivity(std::size_t cell, std::size_t qp);
+  ScalarT
+  thermalConductivity(std::size_t cell, std::size_t qp);
   
-  void
-  updateDensity(std::size_t cell, std::size_t qp);
+  ScalarT
+  density(std::size_t cell, std::size_t qp);
   
-  void
-  updateSpecificHeat(std::size_t cell, std::size_t qp);
+  ScalarT
+  specificHeat(std::size_t cell, std::size_t qp);
 
   ScalarT
   thermalInertia(std::size_t cell, std::size_t qp);
@@ -63,22 +63,20 @@ private:
   PHX::MDField<const ScalarT, Cell, QuadPoint> Temperature;
   PHX::MDField<const ScalarT, Cell, QuadPoint> Tdot;
   PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> TGrad;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_conductivity_;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> density_;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> specific_heat_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> pressure_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> salinity_;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> dfdT_;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> f_;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> w_;
 
   // Output:
   PHX::MDField<ScalarT, Cell, Node> TResidual;
 
+  // Workspace:
   unsigned int numQPs, numDims, numNodes, worksetSize;
   Kokkos::DynRankView<ScalarT, PHX::Device> heat_flux_;
   Kokkos::DynRankView<ScalarT, PHX::Device> accumulation_;
   Kokkos::DynRankView<ScalarT, PHX::Device> Tmelt_;
+  Kokkos::DynRankView<ScalarT, PHX::Device> dfdT_;
+  Kokkos::DynRankView<ScalarT, PHX::Device> f_;
+  Kokkos::DynRankView<ScalarT, PHX::Device> w_;
 };
 
 } // namespace LCM
