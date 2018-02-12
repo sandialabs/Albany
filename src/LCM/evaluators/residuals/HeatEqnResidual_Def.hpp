@@ -140,25 +140,26 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
   //
-  // Calculates the local melting temperature [C] given the local salinity [ppt]
-  // and local pressure [Pa].
+  // Calculates the local melting temperature [C].
   //
 template <typename EvalT, typename Traits>
 typename EvalT::ScalarT
 HeatEqnResidual<EvalT, Traits>::
 meltingTemperature(std::size_t cell, std::size_t qp) {
 
-  ScalarT       // this is a placeholder - should come from DOF
-  sal = 32.0;   // salinity in [ppt]
+  ScalarT    
+  sal = 0.0;  // salinity in [ppt]
+  sal = salinity_(cell,qp);
   
-  ScalarT       // this is a placeholder - should come from mechanics
-  pressure = 1.0e4;     // hydrostatic pressure in [Pa]
+  ScalarT   
+  press = 0.0;  // hydrostatic pressure in [Pa]
+  press = pressure_(cell,qp);
   
   ScalarT
-  melting_temperature = 0.0;    // temperature in [C]
+  melting_temperature = 0.0;  // temperature in [C]
   
   melting_temperature = -0.0575*sal + 0.00170523*pow(sal,1.5)
-    - 0.0002154996*pow(sal,2) - (0.000753/10000)*pressure;
+    - 0.0002154996*pow(sal,2) - (0.000753/10000)*press;
 
   return melting_temperature;
 }
