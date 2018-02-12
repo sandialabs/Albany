@@ -18,19 +18,19 @@ namespace LCM {
   HeatEqnResidual<EvalT, Traits>::HeatEqnResidual(const Teuchos::ParameterList &p)
     : wBF(p.get<std::string>("Weighted BF Name"),
           p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout")),
+      wGradBF(
+          p.get<std::string>("Weighted Gradient BF Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout")),
       Temperature(
           p.get<std::string>("QP Variable Name"),
           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
       Tdot(p.get<std::string>("QP Time Derivative Variable Name"),
            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      thermal_conductivity_(
-          p.get<std::string>("Thermal Conductivity Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      wGradBF(
-          p.get<std::string>("Weighted Gradient BF Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout")),
-      TGrad(p.get<std::string>("Gradient QP Variable Name"),
+      TGrad(p.get<std::string>("QP Gradient Variable Name"),
             p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout")),
+      thermal_conductivity_(
+          p.get<std::string>("QP Thermal Conductivity Variable Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
       density_(p.get<std::string>("QP Density Variable Name"),
            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
       specific_heat_(p.get<std::string>("QP Specific Heat Variable Name"),
@@ -44,11 +44,11 @@ namespace LCM {
           p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout")) {
 
   this->addDependentField(wBF);
+  this->addDependentField(wGradBF);
   this->addDependentField(Temperature);
   this->addDependentField(Tdot);
-  this->addDependentField(thermal_conductivity_);
   this->addDependentField(TGrad);
-  this->addDependentField(wGradBF);
+  this->addDependentField(thermal_conductivity_);
   this->addDependentField(density_);
   this->addDependentField(specific_heat_);
   this->addDependentField(pressure_);
@@ -80,11 +80,11 @@ HeatEqnResidual<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &fm)
 {
   this->utils.setFieldData(wBF, fm);
+  this->utils.setFieldData(wGradBF, fm);
   this->utils.setFieldData(Temperature, fm);
   this->utils.setFieldData(Tdot, fm);
-  this->utils.setFieldData(thermal_conductivity_, fm);
-  this->utils.setFieldData(wGradBF, fm);
   this->utils.setFieldData(TGrad, fm);
+  this->utils.setFieldData(thermal_conductivity_, fm);
   this->utils.setFieldData(density_, fm);
   this->utils.setFieldData(specific_heat_, fm);
   this->utils.setFieldData(pressure_, fm);
