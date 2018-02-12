@@ -34,8 +34,24 @@ public:
   void
   evaluateFields(typename Traits::EvalData d);
 
-  ScalarT
-  meltingTemperature(std::size_t cell, std::size_t qp);
+  // update functions:
+  void
+  updateMeltingTemperature(std::size_t cell, std::size_t qp);
+  
+  void
+  update_dfdT(std::size_t cell, std::size_t qp);
+  
+  void
+  updateSaturations(std::size_t cell, std::size_t qp);
+  
+  void
+  updateThermalConductivity(std::size_t cell, std::size_t qp);
+  
+  void
+  updateDensity(std::size_t cell, std::size_t qp);
+  
+  void
+  updateSpecificHeat(std::size_t cell, std::size_t qp);
 
   ScalarT
   thermalInertia(std::size_t cell, std::size_t qp);
@@ -62,6 +78,7 @@ private:
   unsigned int numQPs, numDims, numNodes, worksetSize;
   Kokkos::DynRankView<ScalarT, PHX::Device> heat_flux_;
   Kokkos::DynRankView<ScalarT, PHX::Device> accumulation_;
+  Kokkos::DynRankView<ScalarT, PHX::Device> Tmelt_;
 };
 
 } // namespace LCM

@@ -113,11 +113,14 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &f
 
   this->utils.setFieldData(TResidual, fm);
 
-  // Allocate workspace
+  // Allocate workspace:
   heat_flux_ = Kokkos::createDynRankView(
     Temperature.get_view(), "XXX", worksetSize, numQPs, numDims);
 
   accumulation_ = Kokkos::createDynRankView(
+    Temperature.get_view(), "XXX", worksetSize, numQPs);
+  
+  Tmelt_ = Kokkos::createDynRankView(
     Temperature.get_view(), "XXX", worksetSize, numQPs);
 
   return;
@@ -136,12 +139,13 @@ evaluateFields(typename Traits::EvalData workset)
   // update saturations and thermal properties:
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
-      //updateMeltingTemperature(cell,qp);
-      //update_dfdT(cell,qp);
-      //updateSaturations(cell,qp);
-      //updateThermalConductivity(cell,qp);
-      //updateDensity(cell,qp);
-      //updateThermalInertia(cell,qp);
+      // the order these are called is important:
+      updateMeltingTemperature(cell,qp);
+      update_dfdT(cell,qp);
+      updateSaturations(cell,qp);
+      updateThermalConductivity(cell,qp);
+      updateDensity(cell,qp);
+      updateSpecificHeat(cell,qp);
     }
   }
   
@@ -173,12 +177,12 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
   //
-  // Calculates the local melting temperature [C].
+  // Updates the local melting temperature [C].
   //
 template <typename EvalT, typename Traits>
-typename EvalT::ScalarT
-HeatEqnResidual<EvalT, Traits>::
-meltingTemperature(std::size_t cell, std::size_t qp) {
+void HeatEqnResidual<EvalT, Traits>::
+updateMeltingTemperature(std::size_t cell, std::size_t qp) 
+{
 
   ScalarT    
   sal = 0.0;  // salinity in [ppt]
@@ -188,13 +192,65 @@ meltingTemperature(std::size_t cell, std::size_t qp) {
   press = 0.0;  // hydrostatic pressure in [Pa]
   press = pressure_(cell,qp);
   
-  ScalarT
-  melting_temperature = 0.0;  // temperature in [C]
-  
-  melting_temperature = -0.0575*sal + 0.00170523*pow(sal,1.5)
+  Tmelt_(cell,qp) = -0.0575*sal + 0.00170523*pow(sal,1.5)
     - 0.0002154996*pow(sal,2) - (0.000753/10000)*press;
 
-  return melting_temperature;
+  return;
+}
+
+  //
+  // Updates the freezing curve slope.
+  //
+template <typename EvalT, typename Traits>
+void HeatEqnResidual<EvalT, Traits>::
+update_dfdT(std::size_t cell, std::size_t qp) 
+{
+
+  return;
+}
+
+  //
+  // Updates the ice and water saturations.
+  //
+template <typename EvalT, typename Traits>
+void HeatEqnResidual<EvalT, Traits>::
+updateSaturations(std::size_t cell, std::size_t qp) 
+{
+
+  return;
+}
+
+  //
+  // Updates the thermal conductivity.
+  //
+template <typename EvalT, typename Traits>
+void HeatEqnResidual<EvalT, Traits>::
+updateThermalConductivity(std::size_t cell, std::size_t qp) 
+{
+
+  return;
+}
+
+  //
+  // Updates the density.
+  //
+template <typename EvalT, typename Traits>
+void HeatEqnResidual<EvalT, Traits>::
+updateDensity(std::size_t cell, std::size_t qp) 
+{
+
+  return;
+}
+
+  //
+  // Updates the specific heat.
+  //
+template <typename EvalT, typename Traits>
+void HeatEqnResidual<EvalT, Traits>::
+updateSpecificHeat(std::size_t cell, std::size_t qp) 
+{
+
+  return;
 }
 
   //
@@ -203,7 +259,8 @@ meltingTemperature(std::size_t cell, std::size_t qp) {
 template <typename EvalT, typename Traits>
 typename EvalT::ScalarT
 HeatEqnResidual<EvalT, Traits>::
-thermalInertia(std::size_t cell, std::size_t qp) {
+thermalInertia(std::size_t cell, std::size_t qp) 
+{
 
   ScalarT
   chi = 0.0;  
