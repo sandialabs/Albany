@@ -1448,9 +1448,10 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 
 		if (writeJacobian_reduced_)
 		{
-			EpetraExt::RowMatrixToMatrixMarketFile("JEr_pre.mm", *W_r);
-			EpetraExt::BlockMapToMatrixMarketFile("JEr_pre_Rmap.mm", W_r->RowMap());
-			EpetraExt::BlockMapToMatrixMarketFile("JEr_pre_Cmap.mm", W_r->ColMap());
+			std::string full_filename = outdir_ + "JEr_pre" + std::to_string(count_jacr_pl) + ".mm";
+			EpetraExt::RowMatrixToMatrixMarketFile(full_filename.c_str(), *W_r);
+			//EpetraExt::BlockMapToMatrixMarketFile("JEr_pre_Rmap.mm", W_r->RowMap());
+			//EpetraExt::BlockMapToMatrixMarketFile("JEr_pre_Cmap.mm", W_r->ColMap());
 			//printCRSMatrix("Jr_pre", W_r, count_jacr_pl); // Tpetra_MatrixMarket_Writer::writeSparseFile fails here because the Jacobian is locally replicated (see issue #1021 on GitHub)
 		}
 
@@ -1458,14 +1459,14 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 
 		if (writeJacobian_reduced_)
 		{
-			EpetraExt::RowMatrixToMatrixMarketFile("JEr.mm", *W_r);
-			EpetraExt::BlockMapToMatrixMarketFile("JEr_Rmap.mm", W_r->RowMap());
-			EpetraExt::BlockMapToMatrixMarketFile("JEr_Cmap.mm", W_r->ColMap());
+			std::string full_filename = outdir_ + "JEr" + std::to_string(count_jacr_pl) + ".mm";
+			EpetraExt::RowMatrixToMatrixMarketFile(full_filename.c_str(), *W_r);
+			//EpetraExt::BlockMapToMatrixMarketFile("JEr_Rmap.mm", W_r->RowMap());
+			//EpetraExt::BlockMapToMatrixMarketFile("JEr_Cmap.mm", W_r->ColMap());
 			//printCRSMatrix("Jr", W_r, count_jacr_pl); // Tpetra_MatrixMarket_Writer::writeSparseFile fails here because the Jacobian is locally replicated (see issue #1021 on GitHub)
 			count_jacr_pl++;
 		}
 	}
-
 
 	// (DgDx_r)^T <- basis^T * (DgDx)^T
 	for (int j = 0; j < outArgs.Ng(); ++j) {

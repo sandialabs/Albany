@@ -14,6 +14,10 @@
 #include "Epetra_Vector.h"  //JF
 #include "Amesos.h"  //JF
 
+#include "EpetraExt_MultiVectorOut.h"
+
+#define runQR false
+
 #define PsiEqualsPhi false
 
 // Set invJacPrec to true only if you REALLY want to enable preconditioning
@@ -53,6 +57,37 @@ jacobianFactory_(reducedBasis_)
 	leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.premultipliedRightProjector()));
 #endif //PsiEqualsPhi
 #endif //invJacPrec
+
+#if runQR
+	// QR Initialization
+	int num_vecs_tot;//,tot_rows;
+	num_vecs_tot = jacobianFactory_.premultipliedRightProjector()->NumVectors();
+	//tot_rows = jacobianFactory_.premultipliedRightProjector()->GlobalLength();
+	/* this is for the old DBC fix...
+	int num_vecs_int;
+	num_vecs_int = num_vecs_tot - num_dbc_modes_;
+
+	// Create a view of the "free" columns of Psi (i.e. corresponding to the
+	// modes from num_dbc_modes_ to num_vecs_tot  - those are the modes that
+	// aren't blocked to represent DBCs) such that when we edit jacphi_int_,
+	// we modify those free columns as well (and vice versa).
+	jacphi_int_ = Teuchos::rcp(new Epetra_MultiVector(View,*jacobianFactory_.premultipliedRightProjector(),num_dbc_modes_,num_vecs_int));
+	*/
+	jacphi_int_ = Teuchos::rcp(new Epetra_MultiVector(View,*jacobianFactory_.premultipliedRightProjector(),0,num_vecs_tot));
+
+	Q_ = Teuchos::rcp(new Epetra_MultiVector(*jacphi_int_));
+	//R_ = Teuchos::rcp(new Teuchos::SerialDenseMatrix<int,double> (num_vecs_int,num_vecs_int)); this is for the old DBC fix...
+	R_ = Teuchos::rcp(new Teuchos::SerialDenseMatrix<int,double> (num_vecs_tot,num_vecs_tot));
+
+	tsqr_params_ = Teuchos::rcp(new Teuchos::ParameterList());
+
+	////////////////  FROM THE TRILINOS CODE...  //////////////////////
+	// TSQR (Tall Skinny QR factorization) is an orthogonalization
+	// kernel that is as accurate as Householder QR, yet requires only
+	// \f$2 \log P\f$ messages between $P$ MPI processes, independently
+	// of the number of columns in the multivector.
+	tsqr_adaptor_ = Teuchos::rcp(new Epetra::TsqrAdaptor(tsqr_params_));
+#endif //runQR
 }
 
 template <typename Derived>
@@ -147,6 +182,53 @@ void GaussNewtonOperatorFactoryBase<Derived>::fullJacobianIs(const Epetra_Operat
 		delete phi_dbc;
 	}
 	*/
+#if runQR
+	/* this is for the old DBC fix...
+	int num_vecs_tot,tot_rows;
+	num_vecs_tot = jacobianFactory_.premultipliedRightProjector()->NumVectors();
+	tot_rows = jacobianFactory_.premultipliedRightProjector()->GlobalLength();
+	int num_vecs_int;
+	num_vecs_int = num_vecs_tot - num_dbc_modes_;
+	*/
+
+	Teuchos::RCP<Epetra_MultiVector> A = Teuchos::rcp(new Epetra_MultiVector(*jacphi_int_));
+
+	//EpetraExt::MultiVectorToMatrixMarketFile("A.mm", *A); (if you want to output the data)
+
+	// NOTE: this is NOT the same as [Q,R] = qr(A,0) in Matlab, even in serial
+	// (even though the documentation in Trilinos might lead you to think it is)
+	tsqr_adaptor_->factorExplicit(*A,*Q_,*R_);
+
+	/* this is for the old DBC fix...
+	if (num_dbc_modes_ > 0)
+	{
+		Epetra_MultiVector* psi_dbc = new Epetra_MultiVector(View,*leftbasis_,0,num_dbc_modes_);
+		//psi_dbc->Print(std::cout);
+		Epetra_MultiVector* phi_dbc = new Epetra_MultiVector(View,*jacobianFactory_.rightProjector(),0,num_dbc_modes_);
+		psi_dbc->Scale(1.0, *phi_dbc);
+		//psi_dbc->Print(std::cout);
+		// replace the "free" columns/modes of psi with the Q part of the QR factorization.
+		Epetra_MultiVector* psi_int = new Epetra_MultiVector(View,*leftbasis_,num_dbc_modes_,num_vecs_int);
+		psi_int->Scale(1.0, *Q_);
+		delete psi_dbc;
+		delete phi_dbc;
+		delete psi_int;
+	}
+	*/
+	leftbasis_->Scale(1.0, *Q_);
+
+	/* (if you want to output the data)
+	EpetraExt::MultiVectorToMatrixMarketFile("Q.mm", *Q_);
+	std::cout << "R = " << R_ << std::endl;
+	int num_vecs_tot = jacobianFactory_.premultipliedRightProjector()->NumVectors();
+	for (int i=0; i<num_vecs_tot; i++){
+		for (int j=0; j<num_vecs_tot-1; j++){
+			std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << (*R_)(i,j) << ", ";
+		}
+		std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << (*R_)(i,num_vecs_tot-1) << std::endl;
+	}
+	*/
+#endif //runQR
 }
 
 template <typename Derived>
