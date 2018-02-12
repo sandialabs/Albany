@@ -58,6 +58,15 @@ namespace LCM {
       cp_sed_(
         p.get<std::string>("QP Specific Heat of Sediments Variable Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      rho_ice_(
+        p.get<std::string>("QP Density of Ice Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      rho_water_(
+        p.get<std::string>("QP Density of Water Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      rho_sed_(
+        p.get<std::string>("QP Density of Sediments Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
       TResidual(
         p.get<std::string>("Residual Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout")) {
@@ -76,6 +85,10 @@ namespace LCM {
   this->addDependentField(cp_ice_);
   this->addDependentField(cp_water_);
   this->addDependentField(cp_sed_);
+  this->addDependentField(rho_ice_);
+  this->addDependentField(rho_water_);
+  this->addDependentField(rho_sed_);
+  
   this->addEvaluatedField(TResidual);
 
   Teuchos::RCP<PHX::DataLayout>
@@ -112,6 +125,12 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &f
   this->utils.setFieldData(thermal_K_ice_, fm);
   this->utils.setFieldData(thermal_K_water_, fm);
   this->utils.setFieldData(thermal_K_sed_, fm);
+  this->utils.setFieldData(cp_ice_, fm);
+  this->utils.setFieldData(cp_water_, fm);
+  this->utils.setFieldData(cp_sed_, fm);
+  this->utils.setFieldData(rho_ice_, fm);
+  this->utils.setFieldData(rho_water_, fm);
+  this->utils.setFieldData(rho_sed_, fm);
 
   this->utils.setFieldData(TResidual, fm);
 
@@ -152,7 +171,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   
-
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       // heat flux term:
@@ -224,7 +242,7 @@ updateSaturations(std::size_t cell, std::size_t qp)
 }
 
   //
-  // Calculates the thermal conductivity.
+  // Calculates the mixture model thermal conductivity.
   //
 template <typename EvalT, typename Traits>
 typename EvalT::ScalarT 
@@ -233,7 +251,7 @@ thermalConductivity(std::size_t cell, std::size_t qp)
 {
   
   ScalarT
-  thermal_K = 0.0;  // this is isotropic for the moment
+  thermal_K = 0.0;  // thermal conductivity [W/C/m]
   
   thermal_K = pow(thermal_K_ice_(cell,qp),(f_(cell,qp)*porosity_(cell,qp))) *
               pow(thermal_K_water_(cell,qp),(w_(cell,qp)*porosity_(cell,qp))) *
@@ -243,7 +261,7 @@ thermalConductivity(std::size_t cell, std::size_t qp)
 }
 
   //
-  // Calculates the density.
+  // Calculates the mixture model density.
   //
 template <typename EvalT, typename Traits>
 typename EvalT::ScalarT 
@@ -252,13 +270,17 @@ density(std::size_t cell, std::size_t qp)
 {
   
   ScalarT
-  density = 0.0;
+  density = 0.0;  // density [kg/m3]
+  
+  density = porosity_(cell,qp) *
+       ( (f_(cell,qp)*rho_ice_(cell,qp)) + (w_(cell,qp)*rho_water_(cell,qp)) ) +
+       ( (1.0-porosity_(cell,qp)) * rho_sed_(cell,qp) );
   
   return density;
 }
 
   //
-  // Calculates the specific heat.
+  // Calculates the mixture model specific heat.
   //
 template <typename EvalT, typename Traits>
 typename EvalT::ScalarT 
@@ -267,7 +289,7 @@ specificHeat(std::size_t cell, std::size_t qp)
 {
   
   ScalarT
-  specific_heat = 0.0;
+  specific_heat = 0.0;  // specific heat [kJ/kg/C]
   
   specific_heat = porosity_(cell,qp) *
        ( (f_(cell,qp)*cp_ice_(cell,qp)) + (w_(cell,qp)*cp_water_(cell,qp)) ) +
@@ -291,11 +313,8 @@ thermalInertia(std::size_t cell, std::size_t qp)
   ScalarT  // placeholder for now - should come from input deck material properties
   latent_heat = 334.0;  // latent heat of formation water/ice [kJ/kg-C] 
   
-  ScalarT // placeholder for now - should come from input deck material properties
-  rho_ice = 900.0;  // ice density in [kg/m3]
-  
   chi = (density(cell,qp) * specificHeat(cell,qp)) - 
-        (rho_ice * latent_heat * dfdT_(cell,qp));
+        (rho_ice_(cell,qp) * latent_heat * dfdT_(cell,qp));
 
   return chi;
 }
