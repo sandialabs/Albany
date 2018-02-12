@@ -43,11 +43,11 @@ public:
 private:
   // Input:
   PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint> wBF;
+  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> wGradBF;
   PHX::MDField<const ScalarT, Cell, QuadPoint> Temperature;
   PHX::MDField<const ScalarT, Cell, QuadPoint> Tdot;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_conductivity_;
-  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> wGradBF;
   PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> TGrad;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_conductivity_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> density_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> specific_heat_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> pressure_;
