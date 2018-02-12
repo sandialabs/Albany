@@ -60,23 +60,14 @@ jacobianFactory_(reducedBasis_)
 
 #if runQR
 	// QR Initialization
-	int num_vecs_tot;//,tot_rows;
+	int num_vecs_tot;
 	num_vecs_tot = jacobianFactory_.premultipliedRightProjector()->NumVectors();
-	//tot_rows = jacobianFactory_.premultipliedRightProjector()->GlobalLength();
-	/* this is for the old DBC fix...
-	int num_vecs_int;
-	num_vecs_int = num_vecs_tot - num_dbc_modes_;
 
-	// Create a view of the "free" columns of Psi (i.e. corresponding to the
-	// modes from num_dbc_modes_ to num_vecs_tot  - those are the modes that
-	// aren't blocked to represent DBCs) such that when we edit jacphi_int_,
-	// we modify those free columns as well (and vice versa).
-	jacphi_int_ = Teuchos::rcp(new Epetra_MultiVector(View,*jacobianFactory_.premultipliedRightProjector(),num_dbc_modes_,num_vecs_int));
-	*/
+	// Create a view of the Psi such that when we edit jacphi_int_,
+	// we modify Psi as well (and vice versa).
 	jacphi_int_ = Teuchos::rcp(new Epetra_MultiVector(View,*jacobianFactory_.premultipliedRightProjector(),0,num_vecs_tot));
 
 	Q_ = Teuchos::rcp(new Epetra_MultiVector(*jacphi_int_));
-	//R_ = Teuchos::rcp(new Teuchos::SerialDenseMatrix<int,double> (num_vecs_int,num_vecs_int)); this is for the old DBC fix...
 	R_ = Teuchos::rcp(new Teuchos::SerialDenseMatrix<int,double> (num_vecs_tot,num_vecs_tot));
 
 	tsqr_params_ = Teuchos::rcp(new Teuchos::ParameterList());
@@ -109,10 +100,7 @@ const Epetra_MultiVector &GaussNewtonOperatorFactoryBase<Derived>::leftProjectio
 		const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const {
 	//printf("    Computes psi^T*res\n");
 	int err = 0;
-	//if (num_dbc_modes_ == 0)
-		err = reduce(*this->getLeftBasis(), fullVec, result);
-	//else
-	//	err = reduce(*this->getLeftBasisCopy(), fullVec, result);
+	err = reduce(*this->getLeftBasis(), fullVec, result);
 	TEUCHOS_TEST_FOR_EXCEPT(err != 0);
 	return result;
 }
@@ -133,10 +121,7 @@ RCP<Epetra_CrsMatrix> GaussNewtonOperatorFactoryBase<Derived>::reducedJacobianNe
 
 template <typename Derived>
 const Epetra_CrsMatrix &GaussNewtonOperatorFactoryBase<Derived>::reducedJacobianL(Epetra_CrsMatrix &result) const {
-	//if (num_dbc_modes_ == 0)
-		return jacobianFactory_.reducedMatrix(*this->getLeftBasis(), result);
-	//else
-	//	return jacobianFactory_.reducedMatrix(*this->getLeftBasisCopy(), result);
+	return jacobianFactory_.reducedMatrix(*this->getLeftBasis(), result);
 }
 
 template <typename Derived>
@@ -169,28 +154,7 @@ void GaussNewtonOperatorFactoryBase<Derived>::fullJacobianIs(const Epetra_Operat
 	leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.premultipliedRightProjector()));
 #endif //PsiEqualsPhi
 
-	//printf("using %d DBC modes\n",num_dbc_modes_);
-	/*
-	if (num_dbc_modes_ > 0)
-	{
-		Epetra_MultiVector* psi_dbc = new Epetra_MultiVector(View,*leftbasis_,0,num_dbc_modes_);
-		//psi_dbc->Print(std::cout);
-		Epetra_MultiVector* phi_dbc = new Epetra_MultiVector(View,*jacobianFactory_.rightProjector(),0,num_dbc_modes_);
-		psi_dbc->Scale(1.0, *phi_dbc);
-		//psi_dbc->Print(std::cout);
-		delete psi_dbc;
-		delete phi_dbc;
-	}
-	*/
 #if runQR
-	/* this is for the old DBC fix...
-	int num_vecs_tot,tot_rows;
-	num_vecs_tot = jacobianFactory_.premultipliedRightProjector()->NumVectors();
-	tot_rows = jacobianFactory_.premultipliedRightProjector()->GlobalLength();
-	int num_vecs_int;
-	num_vecs_int = num_vecs_tot - num_dbc_modes_;
-	*/
-
 	Teuchos::RCP<Epetra_MultiVector> A = Teuchos::rcp(new Epetra_MultiVector(*jacphi_int_));
 
 	//EpetraExt::MultiVectorToMatrixMarketFile("A.mm", *A); (if you want to output the data)
@@ -199,22 +163,6 @@ void GaussNewtonOperatorFactoryBase<Derived>::fullJacobianIs(const Epetra_Operat
 	// (even though the documentation in Trilinos might lead you to think it is)
 	tsqr_adaptor_->factorExplicit(*A,*Q_,*R_);
 
-	/* this is for the old DBC fix...
-	if (num_dbc_modes_ > 0)
-	{
-		Epetra_MultiVector* psi_dbc = new Epetra_MultiVector(View,*leftbasis_,0,num_dbc_modes_);
-		//psi_dbc->Print(std::cout);
-		Epetra_MultiVector* phi_dbc = new Epetra_MultiVector(View,*jacobianFactory_.rightProjector(),0,num_dbc_modes_);
-		psi_dbc->Scale(1.0, *phi_dbc);
-		//psi_dbc->Print(std::cout);
-		// replace the "free" columns/modes of psi with the Q part of the QR factorization.
-		Epetra_MultiVector* psi_int = new Epetra_MultiVector(View,*leftbasis_,num_dbc_modes_,num_vecs_int);
-		psi_int->Scale(1.0, *Q_);
-		delete psi_dbc;
-		delete phi_dbc;
-		delete psi_int;
-	}
-	*/
 	leftbasis_->Scale(1.0, *Q_);
 
 	/* (if you want to output the data)
