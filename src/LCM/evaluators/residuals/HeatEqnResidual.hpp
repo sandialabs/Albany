@@ -44,6 +44,7 @@ public:
   void
   updateSaturations(std::size_t cell, std::size_t qp);
   
+  // calculation functions:
   ScalarT
   thermalConductivity(std::size_t cell, std::size_t qp);
   
@@ -65,6 +66,10 @@ private:
   PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> TGrad;
   PHX::MDField<const ScalarT, Cell, QuadPoint> pressure_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> salinity_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> porosity_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_K_ice_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_K_water_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_K_sed_;
 
   // Output:
   PHX::MDField<ScalarT, Cell, Node> TResidual;

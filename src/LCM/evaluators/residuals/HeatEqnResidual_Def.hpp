@@ -37,6 +37,18 @@ namespace LCM {
       salinity_(
         p.get<std::string>("QP Salinity Variable Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      porosity_(
+        p.get<std::string>("QP Salinity Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      thermal_K_ice_(
+        p.get<std::string>("QP Thermal Conductivity of Ice Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      thermal_K_water_(
+        p.get<std::string>("QP Thermal Conductivity of Water Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      thermal_K_sed_(
+        p.get<std::string>("QP Thermal Conductivity of Sediments Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
       TResidual(
         p.get<std::string>("Residual Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout")) {
@@ -48,6 +60,10 @@ namespace LCM {
   this->addDependentField(TGrad);
   this->addDependentField(pressure_);
   this->addDependentField(salinity_);
+  this->addDependentField(porosity_);
+  this->addDependentField(thermal_K_ice_);
+  this->addDependentField(thermal_K_water_);
+  this->addDependentField(thermal_K_sed_);
   this->addEvaluatedField(TResidual);
 
   Teuchos::RCP<PHX::DataLayout>
@@ -80,6 +96,10 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &f
   this->utils.setFieldData(TGrad, fm);
   this->utils.setFieldData(pressure_, fm);
   this->utils.setFieldData(salinity_, fm);
+  this->utils.setFieldData(porosity_, fm);
+  this->utils.setFieldData(thermal_K_ice_, fm);
+  this->utils.setFieldData(thermal_K_water_, fm);
+  this->utils.setFieldData(thermal_K_sed_, fm);
 
   this->utils.setFieldData(TResidual, fm);
 
@@ -201,7 +221,11 @@ thermalConductivity(std::size_t cell, std::size_t qp)
 {
   
   ScalarT
-  thermal_K = 0.0;
+  thermal_K = 0.0;  // this is isotropic for the moment
+  
+  thermal_K = pow(thermal_K_ice_(cell,qp),(f_(cell,qp)*porosity_(cell,qp))) *
+              pow(thermal_K_water_(cell,qp),(w_(cell,qp)*porosity_(cell,qp))) *
+              pow(thermal_K_sed_(cell,qp),(1.0-porosity_(cell,qp)));
   
   return thermal_K;
 }
