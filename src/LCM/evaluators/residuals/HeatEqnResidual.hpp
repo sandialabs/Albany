@@ -52,6 +52,9 @@ private:
   PHX::MDField<const ScalarT, Cell, QuadPoint> specific_heat_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> pressure_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> salinity_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> dfdT_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> f_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> w_;
 
   // Output:
   PHX::MDField<ScalarT, Cell, Node> TResidual;

@@ -16,32 +16,48 @@ namespace LCM {
   //
   template <typename EvalT, typename Traits>
   HeatEqnResidual<EvalT, Traits>::HeatEqnResidual(const Teuchos::ParameterList &p)
-    : wBF(p.get<std::string>("Weighted BF Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout")),
+    : wBF(
+        p.get<std::string>("Weighted BF Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout")),
       wGradBF(
-          p.get<std::string>("Weighted Gradient BF Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout")),
+        p.get<std::string>("Weighted Gradient BF Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout")),
       Temperature(
-          p.get<std::string>("QP Variable Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      Tdot(p.get<std::string>("QP Time Derivative Variable Name"),
-           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      TGrad(p.get<std::string>("QP Gradient Variable Name"),
-            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout")),
+        p.get<std::string>("QP Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      Tdot(
+        p.get<std::string>("QP Time Derivative Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      TGrad(
+        p.get<std::string>("QP Gradient Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout")),
       thermal_conductivity_(
-          p.get<std::string>("QP Thermal Conductivity Variable Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      density_(p.get<std::string>("QP Density Variable Name"),
-           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      specific_heat_(p.get<std::string>("QP Specific Heat Variable Name"),
-           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      pressure_(p.get<std::string>("QP Pressure Variable Name"),
-           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      salinity_(p.get<std::string>("QP Salinity Variable Name"),
-           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+        p.get<std::string>("QP Thermal Conductivity Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      density_(
+        p.get<std::string>("QP Density Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      specific_heat_(
+        p.get<std::string>("QP Specific Heat Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      pressure_(
+        p.get<std::string>("QP Pressure Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      salinity_(
+        p.get<std::string>("QP Salinity Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      dfdT_(
+        p.get<std::string>("QP Freezing Curve Slope Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      f_(
+        p.get<std::string>("QP Ice Saturation Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      w_(
+        p.get<std::string>("QP Water Saturation Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
       TResidual(
-          p.get<std::string>("Residual Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout")) {
+        p.get<std::string>("Residual Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout")) {
 
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
@@ -53,7 +69,9 @@ namespace LCM {
   this->addDependentField(specific_heat_);
   this->addDependentField(pressure_);
   this->addDependentField(salinity_);
-
+  this->addDependentField(dfdT_);
+  this->addDependentField(f_);
+  this->addDependentField(w_);
   this->addEvaluatedField(TResidual);
 
   Teuchos::RCP<PHX::DataLayout>
@@ -89,6 +107,9 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &f
   this->utils.setFieldData(specific_heat_, fm);
   this->utils.setFieldData(pressure_, fm);
   this->utils.setFieldData(salinity_, fm);
+  this->utils.setFieldData(dfdT_, fm);
+  this->utils.setFieldData(f_, fm);
+  this->utils.setFieldData(w_, fm);
 
   this->utils.setFieldData(TResidual, fm);
 
@@ -111,25 +132,37 @@ HeatEqnResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   using FST = Intrepid2::FunctionSpaceTools<PHX::Device>;
+  
+  // update saturations and thermal properties:
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
+      //updateMeltingTemperature(cell,qp);
+      //update_dfdT(cell,qp);
+      //updateSaturations(cell,qp);
+      //updateThermalConductivity(cell,qp);
+      //updateDensity(cell,qp);
+      //updateThermalInertia(cell,qp);
+    }
+  }
+  
 
-  // heat flux term:
-  FST::scalarMultiplyDataData(
-    heat_flux_,
-    thermal_conductivity_.get_view(), 
-    TGrad.get_view());
-
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
+      // heat flux term:
+      heat_flux_(cell,qp) = 0.0;
+      for (std::size_t dims=0; dims < numDims; ++dims) {
+        heat_flux_(cell,qp) += 
+          thermal_conductivity_(cell,qp) * TGrad(cell,qp,dims);
+      }
+      // accumulation term:
+      accumulation_(cell,qp) = thermalInertia(cell,qp) * Tdot(cell,qp);
+    }
+  }
+  
   FST::integrate(
     TResidual.get_view(),
     heat_flux_, wGradBF.get_view(), 
     false); // "false" overwrites
-  
-  // accumulation term:
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      accumulation_(cell,qp) = 0.0;
-      accumulation_(cell,qp) += thermalInertia(cell,qp) * Tdot(cell,qp);
-    }
-  }
 
   FST::integrate(
     TResidual.get_view(),
@@ -183,7 +216,7 @@ thermalInertia(std::size_t cell, std::size_t qp) {
   
   ScalarT // placeholder for now - should come from a function call
   dfdT = -1.0;  // change in ice saturation with change in temperature
-  //dfdT = derivative_freezing_curve(cell,qp);
+  //dfdT = slopeFreezingCurve(cell,qp);
   
   chi = (density_(cell,qp) * specific_heat_(cell,qp)) - 
         (rho_ice * latent_heat * dfdT);
