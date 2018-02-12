@@ -70,6 +70,9 @@ private:
   PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_K_ice_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_K_water_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_K_sed_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> cp_ice_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> cp_water_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> cp_sed_;
 
   // Output:
   PHX::MDField<ScalarT, Cell, Node> TResidual;

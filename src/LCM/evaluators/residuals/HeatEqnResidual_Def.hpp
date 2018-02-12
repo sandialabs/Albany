@@ -49,6 +49,15 @@ namespace LCM {
       thermal_K_sed_(
         p.get<std::string>("QP Thermal Conductivity of Sediments Variable Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      cp_ice_(
+        p.get<std::string>("QP Specific Heat of Ice Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      cp_water_(
+        p.get<std::string>("QP Specific Heat of Water Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      cp_sed_(
+        p.get<std::string>("QP Specific Heat of Sediments Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
       TResidual(
         p.get<std::string>("Residual Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout")) {
@@ -64,6 +73,9 @@ namespace LCM {
   this->addDependentField(thermal_K_ice_);
   this->addDependentField(thermal_K_water_);
   this->addDependentField(thermal_K_sed_);
+  this->addDependentField(cp_ice_);
+  this->addDependentField(cp_water_);
+  this->addDependentField(cp_sed_);
   this->addEvaluatedField(TResidual);
 
   Teuchos::RCP<PHX::DataLayout>
@@ -256,6 +268,10 @@ specificHeat(std::size_t cell, std::size_t qp)
   
   ScalarT
   specific_heat = 0.0;
+  
+  specific_heat = porosity_(cell,qp) *
+       ( (f_(cell,qp)*cp_ice_(cell,qp)) + (w_(cell,qp)*cp_water_(cell,qp)) ) +
+       ( (1.0-porosity_(cell,qp)) * cp_sed_(cell,qp) );
   
   return specific_heat;
 }
