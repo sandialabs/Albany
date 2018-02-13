@@ -139,6 +139,10 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &f
     Temperature.get_view(), "XXX", worksetSize, numQPs, numDims);
   accumulation_ = Kokkos::createDynRankView(
     Temperature.get_view(), "XXX", worksetSize, numQPs);
+  Temperature_old_ = Kokkos::createDynRankView(
+    Temperature.get_view(), "XXX", worksetSize, numQPs);
+  delTemp_ = Kokkos::createDynRankView(
+    Temperature.get_view(), "XXX", worksetSize, numQPs);
   Tmelt_ = Kokkos::createDynRankView(
     Temperature.get_view(), "XXX", worksetSize, numQPs);
   dfdT_ = Kokkos::createDynRankView(
@@ -146,6 +150,8 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &f
   f_ = Kokkos::createDynRankView(
     Temperature.get_view(), "XXX", worksetSize, numQPs);
   w_ = Kokkos::createDynRankView(
+    Temperature.get_view(), "XXX", worksetSize, numQPs);
+  f_old_ = Kokkos::createDynRankView(
     Temperature.get_view(), "XXX", worksetSize, numQPs);
 
   return;
@@ -166,6 +172,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       // the order these are called is important:
       updateMeltingTemperature(cell,qp);
+      updateTemperatureChange(cell,qp);
       update_dfdT(cell,qp);
       updateSaturations(cell,qp);
     }
@@ -198,13 +205,24 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
   //
+  // Updates the change in temperature since last time step.
+  //
+template <typename EvalT, typename Traits>
+void HeatEqnResidual<EvalT, Traits>::
+updateTemperatureChange(std::size_t cell, std::size_t qp) 
+{
+  delTemp_(cell,qp) = Temperature(cell,qp) - Temperature_old_(cell,qp);
+  
+  return;
+}
+
+  //
   // Updates the local melting temperature [C].
   //
 template <typename EvalT, typename Traits>
 void HeatEqnResidual<EvalT, Traits>::
 updateMeltingTemperature(std::size_t cell, std::size_t qp) 
 {
-
   ScalarT    
   sal = 0.0;  // salinity in [ppt]
   sal = salinity_(cell,qp);
@@ -226,6 +244,14 @@ template <typename EvalT, typename Traits>
 void HeatEqnResidual<EvalT, Traits>::
 update_dfdT(std::size_t cell, std::size_t qp) 
 {
+  ScalarT
+  f_evaluated = 0.0;
+  
+  f_evaluated = evaluateFreezingCurve(Temperature(cell,qp));
+  dfdT_(cell,qp) = (f_evaluated-f_old_(cell,qp))/delTemp_(cell,qp);
+  
+  // swap old and new temperatures now:
+  Temperature_old_(cell,qp) = Temperature(cell,qp);
 
   return;
 }
@@ -237,6 +263,17 @@ template <typename EvalT, typename Traits>
 void HeatEqnResidual<EvalT, Traits>::
 updateSaturations(std::size_t cell, std::size_t qp) 
 {
+  f_(cell,qp) += dfdT_(cell,qp) * delTemp_(cell,qp);
+  w_(cell,qp) -= dfdT_(cell,qp) * delTemp_(cell,qp);
+  
+  // check on realistic bounds:
+  f_(cell,qp) = std::max(0.0,f_(cell,qp));
+  f_(cell,qp) = std::min(1.0,f_(cell,qp));
+  w_(cell,qp) = std::max(0.0,w_(cell,qp));
+  w_(cell,qp) = std::min(1.0,w_(cell,qp));
+  
+  // swap old and new saturations now:
+  f_old_(cell,qp) = f_(cell,qp);
 
   return;
 }
@@ -249,7 +286,6 @@ typename EvalT::ScalarT
 HeatEqnResidual<EvalT, Traits>::
 thermalConductivity(std::size_t cell, std::size_t qp) 
 {
-  
   ScalarT
   thermal_K = 0.0;  // thermal conductivity [W/C/m]
   
@@ -268,7 +304,6 @@ typename EvalT::ScalarT
 HeatEqnResidual<EvalT, Traits>::
 density(std::size_t cell, std::size_t qp) 
 {
-  
   ScalarT
   density = 0.0;  // density [kg/m3]
   
@@ -287,7 +322,6 @@ typename EvalT::ScalarT
 HeatEqnResidual<EvalT, Traits>::
 specificHeat(std::size_t cell, std::size_t qp) 
 {
-  
   ScalarT
   specific_heat = 0.0;  // specific heat [kJ/kg/C]
   
@@ -306,7 +340,6 @@ typename EvalT::ScalarT
 HeatEqnResidual<EvalT, Traits>::
 thermalInertia(std::size_t cell, std::size_t qp) 
 {
-
   ScalarT
   chi = 0.0;  
   
@@ -317,6 +350,22 @@ thermalInertia(std::size_t cell, std::size_t qp)
         (rho_ice_(cell,qp) * latent_heat * dfdT_(cell,qp));
 
   return chi;
+}
+
+  //
+  // Calculates ice saturation given a temperature from the soil freezing curve.
+  //
+template <typename EvalT, typename Traits>
+typename EvalT::ScalarT 
+HeatEqnResidual<EvalT, Traits>::
+evaluateFreezingCurve(ScalarT temperature) 
+{
+  ScalarT
+  f_evaluated = 0.0;  // ice saturation
+  
+  f_evaluated = temperature;  // to be updated with real f(temperature)
+    
+  return f_evaluated;
 }
 
 } // namespace LCM
