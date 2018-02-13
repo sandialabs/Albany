@@ -14,7 +14,16 @@
 #include "Epetra_Vector.h"  //JF
 #include "Amesos.h"  //JF
 
+#include "EpetraExt_MultiVectorOut.h"
+
+#define runQR false
+
 #define PsiEqualsPhi false
+
+// Set invJacPrec to true only if you REALLY want to enable preconditioning
+//   with the inverse Jacobian.  It's a memory hog and causes issues for large
+//   problems (i.e. PCAP), so it's commented out for now.
+#define invJacPrec false // ALSO MOR_ReducedOrderModelEvaluator.cpp
 
 namespace MOR {
 
@@ -32,6 +41,7 @@ jacobianFactory_(reducedBasis_)
 	//set initial scaling to 1 in case used before computed
 	scaling_->PutScalar(1.0);
 
+#if invJacPrec
 	preconditioner_ = Teuchos::rcp(new Epetra_MultiVector(reducedBasis->Map(), reducedBasis->GlobalLength(), true));
 	int num_rows = preconditioner_->MyLength();
 	int num_vecs = preconditioner_->NumVectors();
@@ -46,6 +56,29 @@ jacobianFactory_(reducedBasis_)
 #else //PsiEqualsPhi
 	leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.premultipliedRightProjector()));
 #endif //PsiEqualsPhi
+#endif //invJacPrec
+
+#if runQR
+	// QR Initialization
+	int num_vecs_tot;
+	num_vecs_tot = jacobianFactory_.premultipliedRightProjector()->NumVectors();
+
+	// Create a view of the Psi such that when we edit jacphi_int_,
+	// we modify Psi as well (and vice versa).
+	jacphi_int_ = Teuchos::rcp(new Epetra_MultiVector(View,*jacobianFactory_.premultipliedRightProjector(),0,num_vecs_tot));
+
+	Q_ = Teuchos::rcp(new Epetra_MultiVector(*jacphi_int_));
+	R_ = Teuchos::rcp(new Teuchos::SerialDenseMatrix<int,double> (num_vecs_tot,num_vecs_tot));
+
+	tsqr_params_ = Teuchos::rcp(new Teuchos::ParameterList());
+
+	////////////////  FROM THE TRILINOS CODE...  //////////////////////
+	// TSQR (Tall Skinny QR factorization) is an orthogonalization
+	// kernel that is as accurate as Householder QR, yet requires only
+	// \f$2 \log P\f$ messages between $P$ MPI processes, independently
+	// of the number of columns in the multivector.
+	tsqr_adaptor_ = Teuchos::rcp(new Epetra::TsqrAdaptor(tsqr_params_));
+#endif //runQR
 }
 
 template <typename Derived>
@@ -67,10 +100,7 @@ const Epetra_MultiVector &GaussNewtonOperatorFactoryBase<Derived>::leftProjectio
 		const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const {
 	//printf("    Computes psi^T*res\n");
 	int err = 0;
-	//if (num_dbc_modes_ == 0)
-		err = reduce(*this->getLeftBasis(), fullVec, result);
-	//else
-	//	err = reduce(*this->getLeftBasisCopy(), fullVec, result);
+	err = reduce(*this->getLeftBasis(), fullVec, result);
 	TEUCHOS_TEST_FOR_EXCEPT(err != 0);
 	return result;
 }
@@ -91,10 +121,7 @@ RCP<Epetra_CrsMatrix> GaussNewtonOperatorFactoryBase<Derived>::reducedJacobianNe
 
 template <typename Derived>
 const Epetra_CrsMatrix &GaussNewtonOperatorFactoryBase<Derived>::reducedJacobianL(Epetra_CrsMatrix &result) const {
-	//if (num_dbc_modes_ == 0)
-		return jacobianFactory_.reducedMatrix(*this->getLeftBasis(), result);
-	//else
-	//	return jacobianFactory_.reducedMatrix(*this->getLeftBasisCopy(), result);
+	return jacobianFactory_.reducedMatrix(*this->getLeftBasis(), result);
 }
 
 template <typename Derived>
@@ -127,19 +154,29 @@ void GaussNewtonOperatorFactoryBase<Derived>::fullJacobianIs(const Epetra_Operat
 	leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.premultipliedRightProjector()));
 #endif //PsiEqualsPhi
 
-	//printf("using %d DBC modes\n",num_dbc_modes_);
-	/*
-	if (num_dbc_modes_ > 0)
-	{
-		Epetra_MultiVector* psi_dbc = new Epetra_MultiVector(View,*leftbasis_,0,num_dbc_modes_);
-		//psi_dbc->Print(std::cout);
-		Epetra_MultiVector* phi_dbc = new Epetra_MultiVector(View,*jacobianFactory_.rightProjector(),0,num_dbc_modes_);
-		psi_dbc->Scale(1.0, *phi_dbc);
-		//psi_dbc->Print(std::cout);
-		delete psi_dbc;
-		delete phi_dbc;
+#if runQR
+	Teuchos::RCP<Epetra_MultiVector> A = Teuchos::rcp(new Epetra_MultiVector(*jacphi_int_));
+
+	//EpetraExt::MultiVectorToMatrixMarketFile("A.mm", *A); (if you want to output the data)
+
+	// NOTE: this is NOT the same as [Q,R] = qr(A,0) in Matlab, even in serial
+	// (even though the documentation in Trilinos might lead you to think it is)
+	tsqr_adaptor_->factorExplicit(*A,*Q_,*R_);
+
+	leftbasis_->Scale(1.0, *Q_);
+
+	/* (if you want to output the data)
+	EpetraExt::MultiVectorToMatrixMarketFile("Q.mm", *Q_);
+	std::cout << "R = " << R_ << std::endl;
+	int num_vecs_tot = jacobianFactory_.premultipliedRightProjector()->NumVectors();
+	for (int i=0; i<num_vecs_tot; i++){
+		for (int j=0; j<num_vecs_tot-1; j++){
+			std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << (*R_)(i,j) << ", ";
+		}
+		std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << (*R_)(i,num_vecs_tot-1) << std::endl;
 	}
 	*/
+#endif //runQR
 }
 
 template <typename Derived>
@@ -384,7 +421,7 @@ void GaussNewtonOperatorFactoryBase<Derived>::setPreconditionerIfpack(Epetra_Crs
 		else if (ifpackType.compare("Amesos") == 0)
 		{
 			PrecType = "Amesos";
-			List.set("fact: ict level-of-fill",2.0);
+			//List.set("amesos: solver type","Amesos_Dscpack"); //Amesos_Klu
 		}
 
 		int OverlapLevel = 0; // must be >= 0. If Comm.NumProc() == 1, it is ignored.
@@ -498,20 +535,20 @@ void GaussNewtonOperatorFactoryBase<Derived>::applyJacobian(const Epetra_MultiVe
 		Amesos_BaseSolver* solver;
 		Amesos factory;
 		std::string solvertype = "Klu";
+		//std::string solvertype = "Superludist";
 		solver = factory.Create(solvertype, problem);
-		if (solver == 0)
-			std::cerr << "Specified solver is not available\n";
+		TEUCHOS_TEST_FOR_EXCEPTION(solver == 0, std::runtime_error, "Specified solver is not available\n");
 		Teuchos::ParameterList list;
 		list.set("PrintTiming",true);
 		list.set("PrintStatus",true);
 		solver->SetParameters(list);
 		int ierr;
 		ierr = solver->SymbolicFactorization();
-		if (ierr > 0) std::cerr << "Error when calling SymbolicFactorization.\n";
+		TEUCHOS_TEST_FOR_EXCEPTION(ierr!=0, std::runtime_error, "Error when calling SymbolicFactorization.\n");
 		ierr = solver->NumericFactorization();
-		if (ierr > 0) std::cerr << "Error when calling NumericFactorization.\n";
+		TEUCHOS_TEST_FOR_EXCEPTION(ierr!=0, std::runtime_error, "Error when calling NumericFactorization.\n");
 		ierr = solver->Solve();
-		if (ierr > 0) std::cerr << "Error when calling Solve.\n";
+		TEUCHOS_TEST_FOR_EXCEPTION(ierr!=0, std::runtime_error, "Error when calling Solve.\n");
 		delete solver;
 		printf("  finish\n");
 		delete xxx;

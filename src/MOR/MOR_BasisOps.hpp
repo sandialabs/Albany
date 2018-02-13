@@ -15,6 +15,7 @@ namespace MOR {
 
 // Convenience functions for common reduced-order basis computations
 Epetra_LocalMap createComponentMap(const Epetra_MultiVector &projector);
+Epetra_Map createSerialComponentMap(const Epetra_MultiVector &projector);
 
 // result <- (basis * components) + (resultScaling * result)
 inline

@@ -136,9 +136,6 @@ bool first_time_step = true;
   Teuchos::RCP<Tpetra_Map> node_map; 
 #endif
 //Teuchos::RCP<Tpetra_Vector> previousSolution;
-#ifndef CISM_USE_EPETRA
-static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
-#endif
 bool keep_proc = true; 
 const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
@@ -272,6 +269,9 @@ extern "C" void felix_driver_();
 //What is exec_mode??
 void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const char * input_fname)
 {
+#ifndef CISM_USE_EPETRA
+   static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+#endif
    if (first_time_step) 
      Kokkos::initialize();  
     // ---------------------------------------------
@@ -637,6 +637,9 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
 // IK, 12/3/13: time_inc_yr and cur_time_yr are not used here... 
 void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc_yr)
 {
+/*#ifndef CISM_USE_EPETRA
+   static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+#endif*/
     //IK, 12/9/13: how come FancyOStream prints an all processors??    
     Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
