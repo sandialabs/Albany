@@ -43,10 +43,8 @@ bool MPAS_useGLP(true);
 
 #ifdef MPAS_USE_EPETRA
   Teuchos::RCP<Thyra::ModelEvaluator<double> > solver;
-  bool TpetraBuild = false;
 #else
   Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
-  bool TpetraBuild = true;
 #endif
 bool keptMesh =false;
 
@@ -75,6 +73,10 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     std::vector<double>& velocityOnVertices,
     int& error,
     const double& deltat) {
+
+#ifndef MPAS_USE_EPETRA
+  static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+#endif
 
   int numVertices3D = (nLayers + 1) * indexToVertexID.size();
   int numPrisms = nLayers * indexToTriangleID.size();

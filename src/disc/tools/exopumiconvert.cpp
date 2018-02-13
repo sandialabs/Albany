@@ -19,6 +19,7 @@ namespace bopt = boost::program_options;
 #include <apfMDS.h>
 #include <apfMesh2.h>
 
+#include "Albany_Utils.hpp"
 #include "Albany_IossSTKMeshStruct.hpp"
 
 //#include "/home/ambradl/bigcode/amb.hpp"
@@ -170,12 +171,13 @@ void run (const Input& in) {
 }
 } // namespace
 
-bool TpetraBuild = true;
 int main (int argc, char** argv) {
+
+  static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+
   Teuchos::GlobalMPISession mpiSession(&argc, &argv);
   PcuSession pcu;
   KokkosSession kokkos(argc, argv);
-
   Input in;
   if ( ! parse_cmd_line(argc, argv, in)) return -1;
 

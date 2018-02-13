@@ -1,0 +1,27 @@
+
+reset
+
+#{HORIZON=0.05}
+#{REFINEMENT_FACTOR=1.0}
+#{FEM_ELEM_SIZE=HORIZON*REFINEMENT_FACTOR}
+
+#{BAR_LENGTH=20*HORIZON}
+#{BAR_HEIGHT=10*HORIZON}
+#{BAR_DEPTH=10*HORIZON}
+
+#{OVERLAP=6*HORIZON}
+
+create brick x {BAR_LENGTH} y {BAR_HEIGHT} z {BAR_DEPTH}
+volume 1 move x {1.5*BAR_LENGTH - OVERLAP} y 0.0 z 0.0
+
+volume 1 size {FEM_ELEM_SIZE}
+mesh volume all
+
+block 2 volume 1
+
+# dirichlet BC
+nodeset 1 surface 1 2 3 4 5 6
+
+export genesis 'OBC_Quadratic_Convergence_FEM_Only_NoBC.g' overwrite
+
+# ../imprint_dirichlet_field_on_mesh.py OBC_Quadratic_Convergence_FEM_Only_NoBC.g OBC_Quadratic_Convergence_FEM_Only.g

@@ -48,8 +48,6 @@
 #include "Albany_APFMeshStruct.hpp"
 #endif
 
-// Global variable that denotes this is the Tpetra executable
-bool TpetraBuild = true;
 const Tpetra::global_size_t INVALID =
     Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
 
@@ -244,6 +242,10 @@ tpetraFromThyra(
 
 int
 main(int argc, char *argv[]) {
+
+  // Global variable that denotes this is the Tpetra executable
+  static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+
   int status = 0;  // 0 = pass, failures are incremented
   bool success = true;
 

@@ -1,0 +1,74 @@
+
+Verbose "false"
+Discretization
+    Type "Exodus"
+    Input Mesh File "OBC_Convergence_AllHex.g"
+    Store Exodus Mesh "true"
+    Influence Function "1.0 - 3.0*(zeta/horizon)*(zeta/horizon) + 2.0*(zeta/horizon)*(zeta/horizon)*(zeta/horizon)"
+
+Materials
+    My Material
+      Material Model "Linear LPS Partial Volume"
+      Density 8.05000000e-09
+      Bulk Modulus 1.0
+      Shear Modulus 0.5
+
+Blocks
+    My Block
+      Block Names "block_1"
+      Material "My Material"
+      Horizon 0.0500000000001
+
+Boundary Conditions
+    Prescribed Displacement Quadratic
+      Type "Prescribed Displacement"
+      Node Set "nodelist_1"
+      Coordinate "x"
+      Value "1.0*x*x"
+    Prescribed Displacement Fixed Y
+      Type "Prescribed Displacement"
+      Node Set "nodelist_1"
+      Coordinate "y"
+      Value "0.0"
+    Prescribed Displacement Fixed Z
+      Type "Prescribed Displacement"
+      Node Set "nodelist_1"
+      Coordinate "z"
+      Value "0.0"
+    Applied Loading
+      Type "Body Force"
+      Node Set "nodelist_2"
+      Coordinate "x"
+      Value "-3.3333333333333333333"
+
+Solver
+    Initial Time 0.0
+    Final Time 1.0
+    Peridigm Preconditioner "None"
+    NOXQuasiStatic
+      Nonlinear Solver "Line Search Based"
+      Number of Load Steps 1
+      Max Solver Iterations 100
+      Relative Tolerance 1.0e-9
+      Max Age Of Prec 100
+      Direction
+        Method "Newton"
+        Newton
+          Linear Solver
+            Jacobian Operator "Matrix-Free"
+            Preconditioner "None"
+      Line Search
+        Method "Polynomial"
+
+Output
+    Output File Type "ExodusII"
+    Output Filename "OBC_Convergence"
+    Output Frequency 1
+    Output Variables
+      Displacement "true"
+      Velocity "true"
+      Force "true"
+      Volume "true"
+      Radius "true"
+      Number_Of_Neighbors "true"
+      Error "true"

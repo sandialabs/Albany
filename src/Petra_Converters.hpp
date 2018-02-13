@@ -31,6 +31,11 @@
 
 namespace Petra {
 
+template<class LocalOrdinal , class GlobalOrdinal , class Node >
+Teuchos::RCP< const Tpetra_Map> createMapWithNode(const int & 	numElements,
+                                                  const Teuchos::Array< GlobalOrdinal > & 	elementList,
+                                                  const Teuchos::RCP< const Teuchos::Comm< int > > & 	 comm,
+                                                  const Teuchos::RCP< Node > & 	 node = Teuchos::null);
 
 //TpetraMap_To_EpetraMap: takes in Tpetra::Map object, converts it to its equivalent Epetra_Map object,
 //and returns an RCP pointer to this Epetra_Map

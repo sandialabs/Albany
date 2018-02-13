@@ -19,6 +19,7 @@ public:
   const Epetra_Comm &comm() const;
   const Epetra_BlockMap &basisMap() const;
   const Epetra_LocalMap &componentMap() const { return componentMap_; }
+  //const Epetra_Map &componentMap() const { return componentMap_; }  // NOTE: this is the direction needed if you wanted to make the solution/residual all on processor zero (like the Jacobian was before).  Instead, I opted to make the Jaocbian locally replicated like everything else (which seems like a better / more standard solution).
 
   virtual Teuchos::RCP<Epetra_MultiVector> expansion(const Epetra_MultiVector &reducedVector) const = 0;
   virtual Teuchos::RCP<Epetra_Vector> expansion(const Epetra_Vector &reducedVector) const = 0;
@@ -53,6 +54,7 @@ private:
   Teuchos::RCP<const Epetra_MultiVector> basis_;
   Teuchos::RCP<const Epetra_MultiVector> projector_;
   Epetra_LocalMap componentMap_;
+  //Epetra_Map componentMap_;
 
   // Disallow copy & assignment
   ReducedSpace(const ReducedSpace &);
