@@ -8,6 +8,10 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
+//IKT, 2/7/18: uncomment the following to show verbose
+//debug output pertaining to internal states
+//#define DEBUG_INTERNAL_STATES
+
 Albany::StateManager::StateManager()
     : stateVarsAreAllocated(false), stateInfo(Teuchos::rcp(new StateInfoStruct))
 {
@@ -852,7 +856,14 @@ Albany::StateArrays&
 Albany::StateManager::getStateArrays() const
 {
   ALBANY_ASSERT(stateVarsAreAllocated == true);
-  return disc->getStateArrays();
+  Albany::StateArrays& sa = disc->getStateArrays(); 
+#ifdef DEBUG_INTERNAL_STATES
+  Albany::StateArrayVec& esa             = sa.elemStateArrays;
+  std::string eqps_string = "eqps";
+  int cell = 0; int qp = 0; int ws = 0; 
+  std::cout << "DEBUG: Albany::StateManager::getStateArrays eqps = " << esa[ws][eqps_string](cell, qp) << "\n"; 
+#endif
+  return sa;
 }
 
 void
@@ -860,6 +871,12 @@ Albany::StateManager::setStateArrays(Albany::StateArrays& sa)
 {
   ALBANY_ASSERT(stateVarsAreAllocated == true);
   disc->setStateArrays(sa);
+#ifdef DEBUG_INTERNAL_STATES
+  Albany::StateArrayVec& esa             = sa.elemStateArrays;
+  std::string eqps_string = "eqps"; 
+  int cell = 0; int qp = 0; int ws = 0; 
+  std::cout << "DEBUG: Albany::StateManager::setStateArrays eqps = " << esa[ws][eqps_string](cell, qp) << "\n";
+#endif 
   return;
 }
 
