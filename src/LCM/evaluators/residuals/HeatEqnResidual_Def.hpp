@@ -247,7 +247,7 @@ update_dfdT(std::size_t cell, std::size_t qp)
   ScalarT
   f_evaluated = 0.0;
   
-  f_evaluated = evaluateFreezingCurve(Temperature(cell,qp));
+  f_evaluated = evaluateFreezingCurve(cell,qp);
   dfdT_(cell,qp) = (f_evaluated-f_old_(cell,qp))/delTemp_(cell,qp);
   
   // swap old and new temperatures now:
@@ -358,12 +358,35 @@ thermalInertia(std::size_t cell, std::size_t qp)
 template <typename EvalT, typename Traits>
 typename EvalT::ScalarT 
 HeatEqnResidual<EvalT, Traits>::
-evaluateFreezingCurve(ScalarT temperature) 
+evaluateFreezingCurve(std::size_t cell, std::size_t qp) 
 {
   ScalarT
   f_evaluated = 0.0;  // ice saturation
   
-  f_evaluated = temperature;  // to be updated with real f(temperature)
+  ScalarT
+  T_range = 1.0;  // temperature range over which phase change occurs
+  
+  ScalarT
+  T_low = Tmelt_(cell,qp) - (T_range/2.0);
+  
+  ScalarT
+  T_high = Tmelt_(cell,qp) + (T_range/2.0);
+  
+  // completely frozen
+  if (Temperature(cell,qp) <= T_low) {
+    f_evaluated = 1.0;
+  }
+  // completely melted
+  if (Temperature(cell,qp) >= T_high) {
+    f_evaluated = 0.0;
+  }
+  // in phase change
+  if ((Temperature(cell,qp) > T_low) && (Temperature(cell,qp) < T_high)) {
+    f_evaluated = -1.0*(Temperature(cell,qp)/T_range) + T_high;
+  }
+  // Note: The freezing curve is a simple linear relationship that is sharp
+  // at the T_low and T_high points. I don't know if this will actually cause
+  // problems or not. If it does, we can try a curved relationship.
     
   return f_evaluated;
 }

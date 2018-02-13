@@ -61,7 +61,7 @@ public:
   thermalInertia(std::size_t cell, std::size_t qp);
   
   ScalarT
-  evaluateFreezingCurve(ScalarT temperature);
+  evaluateFreezingCurve(std::size_t cell, std::size_t qp);
 
 private:
   // Input:
