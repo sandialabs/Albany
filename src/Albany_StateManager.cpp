@@ -8,8 +8,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
-//IKT, 2/7/18: uncomment the following to show verbose
-//debug output pertaining to internal states
+// IKT, 2/7/18: uncomment the following to show verbose
+// debug output pertaining to internal states
 //#define DEBUG_INTERNAL_STATES
 
 Albany::StateManager::StateManager()
@@ -227,16 +227,14 @@ Albany::StateManager::registerStateVariable(
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
           std::logic_error,
-          "StateManager: Element Entity type - " << dl->name(1)
-                                                 << " - not supported"
-                                                 << std::endl);
+          "StateManager: Element Entity type - "
+              << dl->name(1) << " - not supported" << std::endl);
   } else
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
         std::logic_error,
-        "StateManager: Unknown Entity type - " << dl->name(0)
-                                               << " - not supported"
-                                               << std::endl);
+        "StateManager: Unknown Entity type - "
+            << dl->name(0) << " - not supported" << std::endl);
 
   (*stateInfo).push_back(Teuchos::rcp(new StateStruct(stateName, mfe_type)));
   StateStruct& stateRef = *stateInfo->back();
@@ -346,16 +344,14 @@ Albany::StateManager::registerNodalVectorStateVariable(
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
           std::logic_error,
-          "StateManager: Element Entity type - " << dl->name(1)
-                                                 << " - not supported"
-                                                 << std::endl);
+          "StateManager: Element Entity type - "
+              << dl->name(1) << " - not supported" << std::endl);
   } else
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
         std::logic_error,
-        "StateManager: Unknown Entity type - " << dl->name(0)
-                                               << " - not supported"
-                                               << std::endl);
+        "StateManager: Unknown Entity type - "
+            << dl->name(0) << " - not supported" << std::endl);
 
   (*stateInfo).push_back(Teuchos::rcp(new StateStruct(stateName, mfe_type)));
   StateStruct& stateRef = *stateInfo->back();
@@ -731,7 +727,7 @@ Albany::StateManager::importStateData(Albany::StateArrays& states_from)
         if (elemStatesToCopyFrom[0].find(stateName) ==
             elemStatesToCopyFrom[0].end()) {
           //*out << "StateManager: state " << stateName << " not present, so not
-          //filled" << std::endl;
+          // filled" << std::endl;
           continue;
         }
 
@@ -785,7 +781,7 @@ Albany::StateManager::importStateData(Albany::StateArrays& states_from)
         if (nodeStatesToCopyFrom[0].find(stateName) ==
             nodeStatesToCopyFrom[0].end()) {
           //*out << "StateManager: state " << stateName << " not present, so not
-          //filled" << std::endl;
+          // filled" << std::endl;
           continue;
         }
 
@@ -856,12 +852,15 @@ Albany::StateArrays&
 Albany::StateManager::getStateArrays() const
 {
   ALBANY_ASSERT(stateVarsAreAllocated == true);
-  Albany::StateArrays& sa = disc->getStateArrays(); 
+  Albany::StateArrays& sa = disc->getStateArrays();
 #ifdef DEBUG_INTERNAL_STATES
-  Albany::StateArrayVec& esa             = sa.elemStateArrays;
-  std::string eqps_string = "eqps";
-  int cell = 0; int qp = 0; int ws = 0; 
-  std::cout << "DEBUG: Albany::StateManager::getStateArrays eqps = " << esa[ws][eqps_string](cell, qp) << "\n"; 
+  Albany::StateArrayVec& esa         = sa.elemStateArrays;
+  std::string            eqps_string = "eqps";
+  int                    cell        = 0;
+  int                    qp          = 0;
+  int                    ws          = 0;
+  std::cout << "DEBUG: Albany::StateManager::getStateArrays eqps = "
+            << esa[ws][eqps_string](cell, qp) << "\n";
 #endif
   return sa;
 }
@@ -872,11 +871,14 @@ Albany::StateManager::setStateArrays(Albany::StateArrays& sa)
   ALBANY_ASSERT(stateVarsAreAllocated == true);
   disc->setStateArrays(sa);
 #ifdef DEBUG_INTERNAL_STATES
-  Albany::StateArrayVec& esa             = sa.elemStateArrays;
-  std::string eqps_string = "eqps"; 
-  int cell = 0; int qp = 0; int ws = 0; 
-  std::cout << "DEBUG: Albany::StateManager::setStateArrays eqps = " << esa[ws][eqps_string](cell, qp) << "\n";
-#endif 
+  Albany::StateArrayVec& esa         = sa.elemStateArrays;
+  std::string            eqps_string = "eqps";
+  int                    cell        = 0;
+  int                    qp          = 0;
+  int                    ws          = 0;
+  std::cout << "DEBUG: Albany::StateManager::setStateArrays eqps = "
+            << esa[ws][eqps_string](cell, qp) << "\n";
+#endif
   return;
 }
 
@@ -904,7 +906,7 @@ Albany::StateManager::updateStates()
       switch ((*stateInfo)[i]->entity) {
         case Albany::StateStruct::NodalDataToElemNode:
           for (int ws = 0; ws < numNodeWorksets; ws++)
-            for (int j                  = 0; j < nsa[ws][stateName].size(); j++)
+            for (int j = 0; j < nsa[ws][stateName].size(); j++)
               nsa[ws][stateName_old][j] = nsa[ws][stateName][j];
 
         case Albany::StateStruct::WorksetValue:
@@ -913,7 +915,7 @@ Albany::StateManager::updateStates()
         case Albany::StateStruct::ElemNode:
 
           for (int ws = 0; ws < numElemWorksets; ws++)
-            for (int j                  = 0; j < esa[ws][stateName].size(); j++)
+            for (int j = 0; j < esa[ws][stateName].size(); j++)
               esa[ws][stateName_old][j] = esa[ws][stateName][j];
 
           break;
@@ -921,7 +923,7 @@ Albany::StateManager::updateStates()
         case Albany::StateStruct::NodalData:
 
           for (int ws = 0; ws < numNodeWorksets; ws++)
-            for (int j                  = 0; j < nsa[ws][stateName].size(); j++)
+            for (int j = 0; j < nsa[ws][stateName].size(); j++)
               nsa[ws][stateName_old][j] = nsa[ws][stateName][j];
 
           break;
@@ -1097,7 +1099,7 @@ Albany::StateManager::doSetStateArrays(
           if (init_type == "scalar") {
             switch (size) {
               case 1:
-                for (int cell              = 0; cell < dims[0]; ++cell)
+                for (int cell = 0; cell < dims[0]; ++cell)
                   esa[ws][stateName](cell) = init_val;
                 break;
 
@@ -1192,7 +1194,7 @@ Albany::StateManager::doSetStateArrays(
 
           if (init_type == "scalar") switch (size) {
               case 1:  // node scalar
-                for (int node              = 0; node < dims[0]; ++node)
+                for (int node = 0; node < dims[0]; ++node)
                   nsa[ws][stateName](node) = init_val;
                 break;
 
