@@ -30,7 +30,7 @@ namespace Albany {
  * and a DataLayout. One time, the allocate method is called, which
  * creates the memory for a vector of worksets of these states, which
  * are stored as MDFields.
-*/
+ */
 
 class StateManager {
  public:
@@ -298,7 +298,6 @@ class StateManager {
 #endif
   Teuchos::RCP<EigendataStructT>   eigenDataT;
   Teuchos::RCP<Tpetra_MultiVector> auxDataT;
-
 };
 
 }  // Namespace Albany

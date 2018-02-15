@@ -918,7 +918,7 @@ MechanicsProblem::constructEvaluators(
   fm0.template registerEvaluator<EvalT>(ev);
 
   bool
-  reg_dir_field{true};
+  reg_dir_field{false};
 
   if (params->isParameter("Register dirichlet_field")) {
     reg_dir_field = params->get<bool>("Register dirichlet_field");
