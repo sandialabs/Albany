@@ -16,6 +16,9 @@ class Epetra_Operator;
 
 #include "Teuchos_RCP.hpp"
 
+#include "Teuchos_SerialDenseMatrix.hpp"  //JF
+#include "Epetra_TsqrAdaptor.hpp"  //JF
+
 namespace MOR {
 
 template <typename Derived>
@@ -70,6 +73,11 @@ private:
 	Teuchos::RCP<Epetra_MultiVector> scaling_;
 	Teuchos::RCP<Epetra_MultiVector> preconditioner_;
 	Teuchos::RCP<Epetra_MultiVector> leftbasis_;
+	Teuchos::RCP<Epetra_MultiVector> Q_;
+	Teuchos::RCP<Epetra_MultiVector> jacphi_int_;
+	Teuchos::RCP<Teuchos::SerialDenseMatrix<int,double> > R_;
+	Teuchos::RCP<Teuchos::ParameterList> tsqr_params_;
+	Teuchos::RCP<Epetra::TsqrAdaptor> tsqr_adaptor_;
 	mutable Teuchos::RCP<Ifpack_Preconditioner> preconditioner_ifpack_;
 	mutable Teuchos::RCP<Epetra_CrsMatrix> jacobian_;
 

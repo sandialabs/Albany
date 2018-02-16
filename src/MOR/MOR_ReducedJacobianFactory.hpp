@@ -33,8 +33,6 @@ private:
   Teuchos::RCP<Epetra_MultiVector> premultipliedRightProjector_;
 
   Epetra_CrsGraph reducedGraph_;
-
-  bool isMasterProcess() const;
 };
 
 } // namespace MOR
