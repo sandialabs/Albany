@@ -321,7 +321,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
     const std::vector<int>& trianglesPositionsOnEdge,
     const std::vector<int>& verticesOnEdge,
     const std::vector<int>& indexToEdgeID,
-    const std::vector<GO>& indexToTriangleID,
+    const std::vector<int>& indexToTriangleID,
     const std::vector<int>& dirichletNodesIds,
     const std::vector<int>& floating2dEdgesIds) {
 
@@ -481,8 +481,11 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
 
   int neq = (paramList->sublist("Problem").get<std::string>("Name") == "FELIX Coupled FO H 3D") ? 3 : 2;
 
+  //temporary fix, TODO: use GO for indexToTriangleID (need to synchronize with MPAS).
+  std::vector<GO> indexToTriangleGOID;
+  indexToTriangleGOID.assign(indexToTriangleID.begin(), indexToTriangleID.end());
   meshStruct = Teuchos::rcp(
-      new Albany::MpasSTKMeshStruct(discParams, mpiCommT, indexToTriangleID,
+      new Albany::MpasSTKMeshStruct(discParams, mpiCommT, indexToTriangleGOID,
           nGlobalTriangles, nLayers, Ordering));
   albanyApp->createMeshSpecs(meshStruct);
 
@@ -492,7 +495,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
       albanyApp->getStateMgr().getStateInfoStruct(), indexToVertexID,
       mpasIndexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
       verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
-      verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleID,
+      verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleGOID,
       dirichletNodesIds, floating2dEdgesIds,
       meshStruct->getMeshSpecs()[0]->worksetSize, nLayers, Ordering);
 }
