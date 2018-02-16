@@ -24,4 +24,5 @@ tags
 .nfs*
 .project
 .cproject
+.settings
 *.pyc
