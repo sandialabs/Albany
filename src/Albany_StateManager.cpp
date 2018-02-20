@@ -10,7 +10,7 @@
 
 // IKT, 2/7/18: uncomment the following to show verbose
 // debug output pertaining to internal states
-//#define DEBUG_INTERNAL_STATES
+#define DEBUG_INTERNAL_STATES
 
 Albany::StateManager::StateManager()
     : stateVarsAreAllocated(false), stateInfo(Teuchos::rcp(new StateInfoStruct))

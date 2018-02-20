@@ -11,8 +11,7 @@
 #include "Piro_TempusSolver.hpp"
 #include "Schwarz_Alternating.hpp"
 
-//#define DEBUG
-//#define DEBUG_INTERNAL_STATES
+#define DEBUG
 
 namespace LCM {
 
@@ -713,11 +712,11 @@ SchwarzLoopDynamics() const
       auto &
       state_mgr = app.getStateMgr();
 
-#ifdef DEBUG_INTERNAL_STATES
+#ifdef DEBUG
       fos << "DEBUG: Getting internal states subdomain = " << subdomain << "...\n";
 #endif
       internal_states_[subdomain] = state_mgr.getStateArrays();
-#ifdef DEBUG_INTERNAL_STATES
+#ifdef DEBUG
       printInternalElementStates(subdomain, state_mgr.getStateInfoStruct()); 
       fos << "DEBUG: ...done setting internal states subdomain = " << subdomain << ".\n";  
 #endif
@@ -798,11 +797,11 @@ SchwarzLoopDynamics() const
         auto &
         state_mgr = app.getStateMgr();
 
-#ifdef DEBUG_INTERNAL_STATES
+#ifdef DEBUG
         fos << "DEBUG: Setting internal states subdomain = " << subdomain << "...\n";
 #endif 
         state_mgr.setStateArrays(internal_states_[subdomain]);
-#ifdef DEBUG_INTERNAL_STATES
+#ifdef DEBUG
         printInternalElementStates(subdomain, state_mgr.getStateInfoStruct()); 
         fos << "DEBUG: ...done setting internal states subdomain = " << subdomain << ".\n";  
 #endif
@@ -1317,11 +1316,11 @@ SchwarzLoopQuasistatics() const
       auto &
       state_mgr = app.getStateMgr();
 
-#ifdef DEBUG_INTERNAL_STATES
+#ifdef DEBUG
       fos << "DEBUG: Initial internal states subdomain " << subdomain << '\n';
 #endif
       internal_states_[subdomain] = state_mgr.getStateArrays();
-#ifdef DEBUG_INTERNAL_STATES
+#ifdef DEBUG
       printInternalElementStates(subdomain, state_mgr.getStateInfoStruct()); 
       fos << "DEBUG: Initial internal states subdomain " << subdomain << '\n';
 #endif
@@ -1366,14 +1365,14 @@ SchwarzLoopQuasistatics() const
         auto &
         state_mgr = app.getStateMgr();
 
-#ifdef DEBUG_INTERNAL_STATES
+#ifdef DEBUG
         fos << "DEBUG: BEGIN set internal states subdomain " << subdomain << '\n';
         fos << "DEBUG: BEFORE" << '\n';
         printInternalElementStates(subdomain, state_mgr.getStateInfoStruct());
         fos << "DEBUG: SETTING ..." << '\n';
 #endif 
         state_mgr.importStateData(internal_states_[subdomain]);
-#ifdef DEBUG_INTERNAL_STATES
+#ifdef DEBUG
         fos << "DEBUG: AFTER" << '\n';
         printInternalElementStates(subdomain, state_mgr.getStateInfoStruct()); 
         fos << "DEBUG: END set internal states subdomain " << subdomain << '\n';
