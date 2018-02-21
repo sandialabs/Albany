@@ -409,6 +409,23 @@ computeState(typename Traits::EvalData workset,
         //
         F.fill(def_grad_field, cell, pt, 0, 0);
 
+        // Mechanical deformation gradient
+        auto Fm = minitensor::Tensor<ScalarT>(F);
+        if (have_temperature_) {
+          // Compute the mechanical deformation gradient Fe based on the
+          // multiplicative decomposition of the deformation gradient
+          //
+          //            F = Fm.Ft => Fm = F.inv(Ft)
+          //
+          // where Ft is the thermal part of F, given as
+          //
+          //     Ft = Le * I = exp(alpha * dtemp) * I
+          //
+          ScalarT dtemp = temperature_(cell, pt) - ref_temperature_;
+          ScalarT thermal_stretch = std::exp(expansion_coeff_ * dtemp);
+          Fm /= thermal_stretch;
+        }
+
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
             Fpn(i, j) = ScalarT(Fp_field_old(cell, pt, i, j));
@@ -424,7 +441,7 @@ computeState(typename Traits::EvalData workset,
 
         // calculate \f$ b^{e} = F {C^{p}}^{-1} F^{T} \f$
         //
-        be = F * Cpinv * minitensor::transpose(F);
+        be = Fm * Cpinv * minitensor::transpose(Fm);
 
         // calculate the determinant of the deformation gradient: \f$ J = det[F] \f$
         //
@@ -885,25 +902,6 @@ computeState(typename Traits::EvalData workset,
           for (int j(0); j < num_dims_; ++j) {
             Fp_field(cell,pt,i,j) = Fp_field_old(cell,pt,i,j);
             stress_field(cell,pt,i,j) = 0.0;
-          }
-        }
-      }
-    }
-  }
-  if (have_temperature_) {
-    for (int cell(0); cell < workset.numCells; ++cell) {
-      for (int pt(0); pt < num_pts_; ++pt) {
-        ScalarT const
-        bulk = elastic_modulus(cell, pt)
-        / (3. * (1. - 2. * poissons_ratio(cell, pt)));
-        F.fill(def_grad_field,cell,pt,0,0);
-        ScalarT J = minitensor::det(F);
-        sigma.fill(stress_field,cell,pt,0,0);
-        sigma -= 3.0 * bulk * expansion_coeff_ * (1.0 + 1.0 / (J*J))
-          * (temperature_(cell,pt) - ref_temperature_) * I;
-        for (std::size_t i = 0; i < num_dims_; ++i) {
-          for (std::size_t j = 0; j < num_dims_; ++j) {
-            stress_field(cell, pt, i, j) = sigma(i, j);
           }
         }
       }

@@ -103,7 +103,25 @@ computeState(typename Traits::EvalData workset,
       Jm23 = Jm53 * J(cell, pt);
 
       F.fill(def_grad,cell, pt,0,0);
-      b = F * transpose(F);
+
+      // Mechanical deformation gradient
+      auto Fm = minitensor::Tensor<ScalarT>(F);
+      if (have_temperature_) {
+        // Compute the mechanical deformation gradient Fe based on the
+        // multiplicative decomposition of the deformation gradient
+        //
+        //            F = Fm.Ft => Fm = F.inv(Ft)
+        //
+        // where Ft is the thermal part of F, given as
+        //
+        //     Ft = Le * I = exp(alpha * dtemp) * I
+        //
+        ScalarT dtemp = temperature_(cell, pt) - ref_temperature_;
+        ScalarT thermal_stretch = std::exp(expansion_coeff_ * dtemp);
+        Fm /= thermal_stretch;
+      }
+
+      b = Fm * transpose(Fm);
       mubar = (1.0 / 3.0) * mu * Jm23 * minitensor::trace(b);
       sigma = 0.5 * kappa * (J(cell, pt) - 1. / J(cell, pt)) * I
           + mu * Jm53 * minitensor::dev(b);
@@ -119,8 +137,6 @@ computeState(typename Traits::EvalData workset,
                 * std::log(temperature_(cell, pt) / ref_temperature_))
             - 3.0 * kappa * expansion_coeff_ * (J(cell, pt) - 1.0 / J(cell, pt))
                 * delta_temp;
-        sigma -= kappa * expansion_coeff_ *
-            (1.0 + 1.0 / (J(cell, pt) * J(cell, pt))) * delta_temp * I;
       }
 
       alpha(cell, pt) = std::max((ScalarT) alpha_old(cell, pt), energy);

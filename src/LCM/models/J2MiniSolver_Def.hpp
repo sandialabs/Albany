@@ -243,6 +243,23 @@ J2MiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // fill local tensors
   F.fill(def_grad, cell, pt, 0, 0);
 
+  // Mechanical deformation gradient
+  auto Fm = Tensor(F);
+  if (have_temperature_) {
+    // Compute the mechanical deformation gradient Fe based on the
+    // multiplicative decomposition of the deformation gradient
+    //
+    //            F = Fm.Ft => Fm = F.inv(Ft)
+    //
+    // where Ft is the thermal part of F, given as
+    //
+    //     Ft = Le * I = exp(alpha * dtemp) * I
+    //
+    ScalarT dtemp = temperature_(cell, pt) - ref_temperature_;
+    ScalarT thermal_stretch = std::exp(expansion_coeff_ * dtemp);
+    Fm /= thermal_stretch;
+  }
+
   Tensor Fpn(num_dims_);
 
   for (int i{0}; i < num_dims_; ++i) {
@@ -254,7 +271,7 @@ J2MiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // compute trial state
   Tensor const  Fpinv = minitensor::inverse(Fpn);
   Tensor const  Cpinv = Fpinv * minitensor::transpose(Fpinv);
-  Tensor const  be    = Jm23 * F * Cpinv * minitensor::transpose(F);
+  Tensor const  be    = Jm23 * Fm * Cpinv * minitensor::transpose(Fm);
   Tensor        s     = mu * minitensor::dev(be);
   ScalarT const mubar = minitensor::trace(be) * mu / (num_dims_);
 
@@ -344,21 +361,6 @@ J2MiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   for (int i(0); i < num_dims_; ++i) {
     for (int j(0); j < num_dims_; ++j) {
       stress(cell, pt, i, j) = sigma(i, j);
-    }
-  }
-
-  if (have_temperature_ == true) {
-    F.fill(def_grad, cell, pt, 0, 0);
-
-    ScalarT const J = minitensor::det(F);
-
-    sigma.fill(stress, cell, pt, 0, 0);
-    sigma -= 3.0 * kappa * expansion_coeff_ * (1.0 + 1.0 / (J * J)) *
-             (temperature_(cell, pt) - ref_temperature_) * I;
-    for (int i = 0; i < num_dims_; ++i) {
-      for (int j = 0; j < num_dims_; ++j) {
-        stress(cell, pt, i, j) = sigma(i, j);
-      }
     }
   }
 }
