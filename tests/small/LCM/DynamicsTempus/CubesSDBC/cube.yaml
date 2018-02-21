@@ -76,10 +76,14 @@ LCM:
           Final Time Index: 1000000
           Initial Time Step: 0.1
           Integrator Step Type: Variable
-          Reduction Factor: 0.5
-          Amplification Factor: 2.0
-          Minimum Value Monitoring Function: 1.0e-1
-          Maximum Value Monitoring Function: 5.0e0
+          Time Step Control Strategy:
+            Time Step Control Strategy List: basic_vs
+            basic_vs:
+              Name: 'Basic VS'
+              Reduction Factor: 0.5
+              Amplification Factor: 2.0 
+              Minimum Value Monitoring Function: 1.0e-1
+              Maximum Value Monitoring Function: 5.0e0
           Output Time List: ''
           Output Index List: ''
       Tempus Stepper:
