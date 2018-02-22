@@ -19,4 +19,13 @@ BasicEpetraMVSource::truncatedMultiVectorNew(int vectorCountMax)
   return nonConstTruncatedView(fullMultiVector, vectorCountMax);
 }
 
+Teuchos::RCP<Epetra_MultiVector>
+BasicEpetraMVSource::truncatedMultiVectorNew(int vectorCountMin, int vectorCountMax)
+{
+  // Inefficient default implementation:
+  // Generate the full multivector then returns a truncated view
+  const Teuchos::RCP<Epetra_MultiVector> fullMultiVector = this->multiVectorNew();
+  return nonConstTruncatedView(fullMultiVector, vectorCountMin, vectorCountMax);
+}
+
 } // end namespace MOR

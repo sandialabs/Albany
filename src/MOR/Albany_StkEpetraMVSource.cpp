@@ -36,6 +36,12 @@ StkEpetraMVSource::truncatedMultiVectorNew(int vectorCountMax)
   return disc_->getSolutionFieldHistory(vectorCountMax);
 }
 
+Teuchos::RCP<Epetra_MultiVector>
+StkEpetraMVSource::truncatedMultiVectorNew(int vectorCountMin, int vectorCountMax)
+{
+  return disc_->getSolutionFieldHistory(vectorCountMin, vectorCountMax);
+}
+
 const Epetra_MultiVector &
 StkEpetraMVSource::filledMultiVector(Epetra_MultiVector &result)
 {

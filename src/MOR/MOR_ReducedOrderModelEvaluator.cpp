@@ -23,6 +23,8 @@
 #include "Petra_Converters.hpp"
 #include "EpetraExt_RowMatrixOut.h"
 
+// for mkdir
+#include <sys/stat.h>
 
 // Set precLBonly to true if you want to ONLY apply a preconditioner to the left basis (Psi)
 // NOTE: if we're using the implementation where the preconditioner is just applied twice to
@@ -52,6 +54,26 @@ using Teuchos::nonnull;
 using Teuchos::Tuple;
 using Teuchos::tuple;
 
+static void _mkdir(const char *dir)
+{
+	char tmp[256];
+	char *p = NULL;
+	size_t len;
+
+	snprintf(tmp, sizeof(tmp),"%s",dir);
+	len = strlen(tmp);
+	if(tmp[len - 1] == '/')
+	tmp[len - 1] = 0;
+	for(p = tmp + 1; *p; p++)
+	if(*p == '/')
+	{
+		*p = 0;
+		mkdir(tmp, S_IRWXU);
+		*p = '/';
+	}
+	mkdir(tmp, S_IRWXU);
+}
+
 ReducedOrderModelEvaluator::ReducedOrderModelEvaluator(const RCP<EpetraExt::ModelEvaluator> &fullOrderModel,
 		const RCP<const ReducedSpace> &solutionSpace,
 		const RCP<ReducedOperatorFactory> &reducedOpFactory,
@@ -71,11 +93,7 @@ ReducedOrderModelEvaluator::ReducedOrderModelEvaluator(const RCP<EpetraExt::Mode
 	app_ = dynamic_cast<Albany::ModelEvaluator &>(*fullOrderModel_).get_app();
 	// get data we'll need later on
 	morParams_ = Teuchos::sublist(Teuchos::sublist(app_->getProblemPL(), "Model Order Reduction", true), "Reduced-Order Model",true);
-	isThermoMech_ = app_->getProblemPL()->isSublist("Temperature");
-	//std::cout << "thermoMech problem? " << std::boolalpha << isThermoMech_ << std::endl;
-	bool overwriteTM = morParams_->get<bool>("Pretend it's not thermo-mechanical", false);
-	if (overwriteTM)
-		isThermoMech_ = false;
+	isThermoMech_ = morParams_->get<bool>("Use thermo-mechanical first step fix", false); // depreciated behavior meant as a work-around for some changes to the thermo-mechanical residual code by Coleman Alleman where the Jacobain would be singular.  However, there were several other concerns with his approach and so it was decided that we should just restart beyond the first step to avoid refactoring code later, so this work-around is no longer needed.  If you really want to use the ROM at the initialization step, mechanical problems should be fine.
 	apply_bcs_ = morParams_->get<bool>("Apply BCs", true);
 	run_nan_check_ = morParams_->get<bool>("Run nan Check", true);
 	run_singular_check_ = morParams_->get<bool>("Run singular Check", true);
@@ -83,6 +101,7 @@ ReducedOrderModelEvaluator::ReducedOrderModelEvaluator(const RCP<EpetraExt::Mode
 	num_dbc_modes_ = morParams_->get("Number of DBC Modes", 0);
 	extract_DBC_data(Teuchos::sublist(app_->getProblemPL(), "Dirichlet BCs"));
 	outdir_ = morParams_->get("Output Directory",".") + "/" ;
+	_mkdir(outdir_.c_str());
 
 	outputTrace_ = outputFlags[0];
 	writeJacobian_reduced_ = outputFlags[1];
@@ -1027,7 +1046,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 	const bool requestedProjection = requestedResidual || requestedAnyDfDp;
 	const bool fullJacobianRequired =
 			reducedOpFactory_->fullJacobianRequired(requestedProjection, requestedJacobian)
-			&& !(step_ == 0 && isThermoMech_); // this is a way to not run into trouble with initial step on thermo-mechanical problems
+			&& !(step_ == 0 && isThermoMech_); // this is a (depreciated) way to not run into trouble with initial step on thermo-mechanical problems - see the note where isThermoMech_ is set for more info
 
 	{
 		// Prepare forwarded outArgs content (g and DgDp)
