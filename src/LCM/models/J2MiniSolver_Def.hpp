@@ -246,7 +246,7 @@ J2MiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Mechanical deformation gradient
   auto Fm = Tensor(F);
   if (have_temperature_) {
-    // Compute the mechanical deformation gradient Fe based on the
+    // Compute the mechanical deformation gradient Fm based on the
     // multiplicative decomposition of the deformation gradient
     //
     //            F = Fm.Ft => Fm = F.inv(Ft)
@@ -255,6 +255,8 @@ J2MiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     //
     //     Ft = Le * I = exp(alpha * dtemp) * I
     //
+    // Le = exp(alpha*dtemp) is the thermal stretch and alpha the
+    // coefficient of thermal expansion.
     ScalarT dtemp = temperature_(cell, pt) - ref_temperature_;
     ScalarT thermal_stretch = std::exp(expansion_coeff_ * dtemp);
     Fm /= thermal_stretch;
