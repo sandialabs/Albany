@@ -11,7 +11,7 @@
 #include "Piro_TempusSolver.hpp"
 #include "Schwarz_Alternating.hpp"
 
-#define DEBUG
+//#define DEBUG
 
 namespace LCM {
 

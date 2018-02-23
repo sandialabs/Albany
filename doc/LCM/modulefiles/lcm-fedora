@@ -11,4 +11,4 @@ if { ![ file exists /etc/fedora-release ] } {
 
 module load lcm-common
 
-conflict lcm-sems lcm-cluster lcm-ubuntu
+conflict lcm-sems lcm-cluster lcm-ubuntu lcm-scientific-linux

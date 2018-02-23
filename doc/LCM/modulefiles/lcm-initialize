@@ -4,7 +4,7 @@ module-whatis "LCM automatic determination of running Linux distribution"
 
 set fedora_str fc
 set ubuntu_str generic
-set sems_str el
+set el_str el
 set cluster_str chaos
 
 set kernel_version [uname release]
@@ -19,9 +19,13 @@ if {$ubuntu_pos > 0} {
   module load lcm-ubuntu
 }
 
-set sems_pos [string last $sems_str $kernel_version]
-if {$sems_pos > 0} {
-  module load lcm-sems
+set el_pos [string last $el_str $kernel_version]
+if {$el_pos > 0} {
+  if {is-avail sems-env} {
+    module load lcm-sems
+  } else {
+    module load lcm-scientific-linux
+  }
 }
 
 set cluster_pos [string last $cluster_str $kernel_version]
