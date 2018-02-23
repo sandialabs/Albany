@@ -22,7 +22,7 @@
 {\oldendv\egroup\fboxsep0pt \noindent\colorbox[gray]{0.95}{\usebox0}\par}
 
 \title{Installing and compiling \albany{}/\lcm{} and
-  \trilinos{} on Fedora, Ubuntu, SEMS/CEE, or HPC Sandia clusters}
+  \trilinos{}}
 
 \author{The \albany{}/\lcm{} team\thanks{Original version by Juli\'an
     R\'imoli}}
@@ -33,15 +33,21 @@
 
 \section{Introduction}
 This document describes the necessary steps to install \albany{}/\lcm{} and
-\trilinos{} on a machine with Fedora Linux 26, Ubuntu Linux 14.04 LTS and 16.04
-LTS, the Linux CEE/SEMS environment, or Sandia's HPC systems.
+\trilinos{} on a machine with Fedora Linux 27, Ubuntu Linux 14.04 LTS and 16.04
+LTS, Scientific Linux 7.5, the Linux CEE/SEMS environment, or Sandia's HPC
+systems.
 
 The Linux CEE/SEMS environment and the HPC clusters already have all the
 libraries mentioned below. Skip to Section \ref{sec:repo} for setting up the
 source code.
 
-\section{Required Packages for Fedora}
+\section{Required Packages for Fedora and Scientific Linux}
+For Scientific Linux, install first the following package
+\begin{verbatim}
+yum install epel-release
+\end{verbatim}
 The following packages should be installed using the {\tt dnf install} command
+on Fedora and the {\tt yum install} command on Scientific Linux
 \begin{verbatim}
 blas
 blas-devel
@@ -194,8 +200,8 @@ module use --append $LCM_DIR/Albany/doc/LCM/modulefiles
 The \verb+LCM_DIR+ variable should contain the location of the
 top-level \verb+LCM+ directory.
 
-For Ubuntu, it is also necessary to add to \verb+~/.bashrc+ the following
-definitions before the previous ones:
+For Ubuntu and Scientific Linux, it is also necessary to add to \verb+~/.bashrc+
+the following definitions before the previous ones:
 \begin{verbatim}
 modules_shell=bash
 module() { eval `/usr/bin/modulecmd $modules_shell $*`; }
@@ -297,26 +303,27 @@ module avail
 This results in something like:
 \begin{verbatim}
 ------------------ /home/amota/LCM/Albany/doc/LCM/modulefiles ------------------
-cuda-gcc-debug       lcm-sems             pthreads-gcc-small
-cuda-gcc-mixed       lcm-serial           release
-cuda-gcc-profile     lcm-small            serial-clang-debug
-cuda-gcc-release     lcm-tpls             serial-clang-mixed
-cuda-gcc-small       mixed                serial-clang-profile
-debug                openmp-gcc-debug     serial-clang-release
-lcm-cee              openmp-gcc-mixed     serial-clang-small
-lcm-clang            openmp-gcc-profile   serial-gcc-debug
-lcm-common           openmp-gcc-release   serial-gcc-mixed
-lcm-cuda             openmp-gcc-small     serial-gcc-profile
-lcm-debug            openmp-intel-debug   serial-gcc-release
-lcm-fedora           openmp-intel-mixed   serial-gcc-small
-lcm-finalize         openmp-intel-profile serial-intel-debug
-lcm-gcc              openmp-intel-release serial-intel-mixed
-lcm-intel            openmp-intel-small   serial-intel-profile
-lcm-mixed            profile              serial-intel-release
-lcm-openmp           pthreads-gcc-debug   serial-intel-small
-lcm-profile          pthreads-gcc-mixed   small
-lcm-pthreads         pthreads-gcc-profile
-lcm-release          pthreads-gcc-release
+cuda-gcc-debug       lcm-scientific-linux pthreads-gcc-release
+cuda-gcc-mixed       lcm-sems             pthreads-gcc-small
+cuda-gcc-profile     lcm-serial           release
+cuda-gcc-release     lcm-small            serial-clang-debug
+cuda-gcc-small       lcm-tpls             serial-clang-mixed
+debug                lcm-ubuntu           serial-clang-profile
+lcm-clang            mixed                serial-clang-release
+lcm-cluster          openmp-gcc-debug     serial-clang-small
+lcm-common           openmp-gcc-mixed     serial-gcc-debug
+lcm-cuda             openmp-gcc-profile   serial-gcc-mixed
+lcm-debug            openmp-gcc-release   serial-gcc-profile
+lcm-fedora           openmp-gcc-small     serial-gcc-release
+lcm-finalize         openmp-intel-debug   serial-gcc-small
+lcm-gcc              openmp-intel-mixed   serial-intel-debug
+lcm-initialize       openmp-intel-profile serial-intel-mixed
+lcm-intel            openmp-intel-release serial-intel-profile
+lcm-mixed            openmp-intel-small   serial-intel-release
+lcm-openmp           profile              serial-intel-small
+lcm-profile          pthreads-gcc-debug   small
+lcm-pthreads         pthreads-gcc-mixed
+lcm-release          pthreads-gcc-profile
 \end{verbatim}
 The naming convention for the \verb+*-*-*+ modules follows the pattern
 \begin{verbatim}
