@@ -179,6 +179,26 @@ computeState(typename Traits::EvalData workset,
 
       // fill local tensors
       F.fill(def_grad, cell, pt,0,0);
+
+      // Mechanical deformation gradient
+      auto Fm = minitensor::Tensor<ScalarT>(F);
+      if (have_temperature_) {
+        // Compute the mechanical deformation gradient Fm based on the
+        // multiplicative decomposition of the deformation gradient
+        //
+        //            F = Fm.Ft => Fm = F.inv(Ft)
+        //
+        // where Ft is the thermal part of F, given as
+        //
+        //     Ft = Le * I = exp(alpha * dtemp) * I
+        //
+        // Le is the thermal stretch and alpha the coefficient of thermal
+        // expansion.
+        ScalarT dtemp = temperature_(cell, pt) - ref_temperature_;
+        ScalarT thermal_stretch = std::exp(expansion_coeff_ * dtemp);
+        Fm /= thermal_stretch;
+      }
+
       //Fpn.fill( &Fpold(cell,pt,int(0),int(0)) );
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {
@@ -189,9 +209,9 @@ computeState(typename Traits::EvalData workset,
       // compute trial state
       // compute the Kirchhoff stress in the current configuration
       //
-      Fe = F * minitensor::inverse(Fpn);
+      Fe = Fm * minitensor::inverse(Fpn);
       Cpinv = minitensor::inverse(Fpn) * minitensor::transpose(minitensor::inverse(Fpn));
-      be = F * Cpinv * minitensor::transpose(F);
+      be = Fm * Cpinv * minitensor::transpose(Fm);
       ScalarT Je = std::sqrt( minitensor::det(be));
       s = mu * minitensor::dev(be);
       p = 0.5 * bulk * (Je * Je - 1.);
@@ -299,24 +319,6 @@ computeState(typename Traits::EvalData workset,
       }
     }
   }
-
-  if (have_temperature_) {
-    for (int cell(0); cell < workset.numCells; ++cell) {
-      for (int pt(0); pt < num_pts_; ++pt) {
-        F.fill(def_grad,cell,pt,0,0);
-        ScalarT J = minitensor::det(F);
-        sigma.fill(stress,cell,pt,0,0);
-        sigma -= 3.0 * bulk * expansion_coeff_ * (1.0 + 1.0 / (J*J))
-          * (temperature_(cell,pt) - ref_temperature_) * I;
-        for (int i = 0; i < num_dims_; ++i) {
-          for (int j = 0; j < num_dims_; ++j) {
-            stress(cell, pt, i, j) = sigma(i, j);
-          }
-        }
-      }
-    }
-  }
-
 }
 //------------------------------------------------------------------------------
 }
