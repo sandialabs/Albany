@@ -130,6 +130,16 @@ Teuchos::RCP<Epetra_MultiVector> nonConstTruncatedView(const Teuchos::RCP<Epetra
   return Detail::truncatedViewImpl(mv, vectorCountMax);
 }
 
+Teuchos::RCP<const Epetra_MultiVector> truncatedView(const Teuchos::RCP<const Epetra_MultiVector> &mv, int vectorCountMin, int vectorCountMax)
+{
+  return Detail::rangeViewImpl(mv, vectorCountMin, vectorCountMax);
+}
+
+Teuchos::RCP<Epetra_MultiVector> nonConstTruncatedView(const Teuchos::RCP<Epetra_MultiVector> &mv, int vectorCountMin, int vectorCountMax)
+{
+  return Detail::rangeViewImpl(mv, vectorCountMin, vectorCountMax);
+}
+
 Teuchos::RCP<const Epetra_Vector> memberView(const Teuchos::RCP<const Epetra_MultiVector> &mv, int i)
 {
   return Detail::memberViewImpl(mv, i);

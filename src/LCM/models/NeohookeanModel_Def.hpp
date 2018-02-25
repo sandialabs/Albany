@@ -105,7 +105,26 @@ computeState(
       Jm53 = Jm23 * Jm23 * Jm13;
 
       F.fill(def_grad, cell, pt, 0, 0);
-      b = F * minitensor::transpose(F);
+
+      // Mechanical deformation gradient
+      auto Fm = minitensor::Tensor<ScalarT>(F);
+      if (have_temperature_) {
+        // Compute the mechanical deformation gradient Fm based on the
+        // multiplicative decomposition of the deformation gradient
+        //
+        //            F = Fm.Ft => Fm = F.inv(Ft)
+        //
+        // where Ft is the thermal part of F, given as
+        //
+        //     Ft = Le * I = exp(alpha * dtemp) * I
+        //
+        // Le = exp(alpha*dtemp) is the thermal stretch and alpha the
+        // coefficient of thermal expansion.
+        ScalarT dtemp = temperature_(cell, pt) - ref_temperature_;
+        ScalarT thermal_stretch = std::exp(expansion_coeff_ * dtemp);
+        Fm /= thermal_stretch;
+      }
+      b = Fm * minitensor::transpose(Fm);
       mubar = (1.0 / 3.0) * mu * Jm23 * minitensor::trace(b);
       sigma = 0.5 * kappa * (J - 1.0 / J) * I + mu * Jm53 * minitensor::dev(b);
 
@@ -144,23 +163,6 @@ computeState(
     }
   }
 
-  if (have_temperature_ == true) {
-    for (int cell(0); cell < workset.numCells; ++cell) {
-      for (int pt(0); pt < num_pts_; ++pt) {
-        F.fill(def_grad, cell, pt, 0, 0);
-        ScalarT J = minitensor::det(F);
-        sigma.fill(stress, cell, pt, 0, 0);
-        sigma -= 3.0 * kappa * expansion_coeff_ * (1.0 + 1.0 / (J * J))
-            * (temperature_(cell, pt) - ref_temperature_) * I;
-
-        for (int i = 0; i < num_dims_; ++i) {
-          for (int j = 0; j < num_dims_; ++j) {
-            stress(cell, pt, i, j) = sigma(i, j);
-          }
-        }
-      }
-    }
-  }
 }
 
 } // namespace LCM

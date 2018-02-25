@@ -6,6 +6,7 @@ LCM:
     Solution Method: Continuation
     Phalanx Graph Visualization Detail: 1
     MaterialDB Filename: CrystalElasticity3d_Material.yaml
+    Register dirichlet_field: true
     Dirichlet BCs:
       Time Dependent DBC on NS nodelist_2 for DOF X:
         Number of points: 2

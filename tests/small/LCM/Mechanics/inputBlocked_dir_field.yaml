@@ -5,6 +5,7 @@ LCM:
     Name: Mechanics 2D
     Phalanx Graph Visualization Detail: 1
     MaterialDB Filename: materials.yaml
+    Register dirichlet_field: true
     Dirichlet BCs:
       DBC on NS nodeset0 for DOF X prescribe Field: dirichlet_field
       DBC on NS nodeset0 for DOF Y prescribe Field: dirichlet_field

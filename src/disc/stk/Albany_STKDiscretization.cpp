@@ -1159,6 +1159,14 @@ Albany::STKDiscretization::getSolutionFieldHistory(int maxStepCount) const
   return this->getSolutionFieldHistoryImpl(stepCount);
 }
 
+Teuchos::RCP<Epetra_MultiVector>
+Albany::STKDiscretization::getSolutionFieldHistory(int minStep, int maxStep) const
+{
+  const int stepCount =
+      std::min(this->getSolutionFieldHistoryDepth(), maxStep);
+  return this->getSolutionFieldHistoryImpl(minStep, stepCount);
+}
+
 // IK, 10/28/13: this function should be converted to Tpetra...
 void
 Albany::STKDiscretization::getSolutionFieldHistory(
@@ -1185,6 +1193,26 @@ Albany::STKDiscretization::getSolutionFieldHistoryImpl(int stepCount) const
   return result;
 }
 
+Teuchos::RCP<Epetra_MultiVector>
+Albany::STKDiscretization::getSolutionFieldHistoryImpl(int stepMin, int stepMax) const
+{
+  const int stepCount = stepMax - stepMin;
+  const int vectorMin = stepCount > 0 ?
+                              stepMin :
+                              0;  // A valid MultiVector has at least one vector
+  const int vectorMax = stepCount > 0 ?
+                              stepMax :
+                              1;  // A valid MultiVector has at least one vector
+  const int vectorCount = vectorMax - vectorMin;
+
+  const Teuchos::RCP<Epetra_MultiVector> result =
+      Teuchos::rcp(new Epetra_MultiVector(*map, vectorCount));
+  if (stepCount > 0) {
+    this->getSolutionFieldHistoryImpl(*result, vectorMin, vectorMax);
+  }
+  return result;
+}
+
 void
 Albany::STKDiscretization::getSolutionFieldHistoryImpl(
     Epetra_MultiVector& result) const
@@ -1193,6 +1221,17 @@ Albany::STKDiscretization::getSolutionFieldHistoryImpl(
   for (int i = 0; i < stepCount; ++i) {
     stkMeshStruct->loadSolutionFieldHistory(i);
     Epetra_Vector v(View, result, i);
+    this->getSolutionField(v);
+  }
+}
+
+void
+Albany::STKDiscretization::getSolutionFieldHistoryImpl(
+    Epetra_MultiVector& result, int stepMin, int stepMax) const
+{
+  for (int i = stepMin; i < stepMax; ++i) {
+    stkMeshStruct->loadSolutionFieldHistory(i);
+    Epetra_Vector v(View, result, i-stepMin);
     this->getSolutionField(v);
   }
 }

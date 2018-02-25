@@ -10,6 +10,7 @@ LCM:
     Solution Method: Continuation
     Phalanx Graph Visualization Detail: 0
     MaterialDB Filename: RubiksCube_Implicit_Materials.yaml
+    Register dirichlet_field: true
     Dirichlet BCs:
       Time Dependent DBC on NS nodelist_2 for DOF X:
         Number of points: 3

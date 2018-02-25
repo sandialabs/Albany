@@ -20,6 +20,7 @@ public:
 
   virtual Teuchos::RCP<Epetra_MultiVector> multiVectorNew() = 0;
   virtual Teuchos::RCP<Epetra_MultiVector> truncatedMultiVectorNew(int vectorCountMax);
+  virtual Teuchos::RCP<Epetra_MultiVector> truncatedMultiVectorNew(int vectorCountMin, int vectorCountMax);
 
   virtual ~BasicEpetraMVSource() {}
 };

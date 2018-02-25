@@ -6,4 +6,4 @@ setenv LCM_ENV_TYPE Ubuntu
 
 module load lcm-common
 
-conflict lcm-sems lcm-cluster lcm-fedora
+conflict lcm-sems lcm-cluster lcm-fedora lcm-scientific-linux
