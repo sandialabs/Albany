@@ -68,11 +68,13 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     const std::vector<double>& betaData,
     const std::vector<double>& bedTopographyData,
     const std::vector<double>& smbData,
+    const std::vector<double>& stiffeningFactorData,
     const std::vector<double>& temperatureOnTetra,
     std::vector<double>& dissipationHeatOnTetra,
     std::vector<double>& velocityOnVertices,
     int& error,
     const double& deltat) {
+
 
 #ifndef MPAS_USE_EPETRA
   static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
@@ -119,6 +121,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
   ScalarFieldType* smbField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "surface_mass_balance");
   VectorFieldType* dirichletField = meshStruct->metaData->get_field <VectorFieldType> (stk::topology::NODE_RANK, "dirichlet_field");
   ScalarFieldType* basalFrictionField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "basal_friction");
+  ScalarFieldType* stiffeningFactorField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "stiffening_factor");
 
   for (UInt j = 0; j < numVertices3D; ++j) {
     int ib = (ordering == 0) * (j % lVertexColumnShift)
@@ -137,6 +140,9 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     sHeight[0] = elevationData[ib];
     double* bedTopography = stk::mesh::field_data(*bedTopographyField, node);
     bedTopography[0] = bedTopographyData[ib];
+    double* stiffeningFactor = stk::mesh::field_data(*stiffeningFactorField, node);
+    stiffeningFactor[0] = std::log(stiffeningFactorData[ib]);
+    
     if(smbField != NULL) {
       double* smb = stk::mesh::field_data(*smbField, node);
       smb[0] = smbData[ib];
@@ -329,9 +335,9 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
       new Albany::SolverFactory("albany_input.xml", mpiCommT));
   paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
 
-  Teuchos::Array<std::string> arrayRequiredFields(7); 
+  Teuchos::Array<std::string> arrayRequiredFields(8); 
   arrayRequiredFields[0]="temperature";  arrayRequiredFields[1]="ice_thickness"; arrayRequiredFields[2]="surface_height"; arrayRequiredFields[3]="bed_topography";
-  arrayRequiredFields[4]="basal_friction";  arrayRequiredFields[5]="surface_mass_balance"; arrayRequiredFields[6]="dirichlet_field";
+  arrayRequiredFields[4]="basal_friction";  arrayRequiredFields[5]="surface_mass_balance"; arrayRequiredFields[6]="dirichlet_field", arrayRequiredFields[7]="stiffening_factor";
   paramList->sublist("Problem").set("Required Fields", arrayRequiredFields);
 
   //Physical Parameters
@@ -410,6 +416,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   viscosityList.set("Glen's Law A", viscosityList.get("Glen's Law A", MPAS_flowParamA));
   viscosityList.set("Glen's Law n", viscosityList.get("Glen's Law n",  MPAS_flowLawExponent));
   viscosityList.set("Flow Rate Type", viscosityList.get("Flow Rate Type", "Temperature Based"));
+  viscosityList.set("Use Stiffening Factor", viscosityList.get("Use Stiffening Factor", true));
   viscosityList.set("Extract Strain Rate Sq", viscosityList.get("Extract Strain Rate Sq", true)); //set true if not defined
 
 
@@ -422,7 +429,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   discretizationList.set("Cubature Degree", discretizationList.get("Cubature Degree", 1));  //set 1 if not defined
   discretizationList.set("Interleaved Ordering", discretizationList.get("Interleaved Ordering", true));  //set true if not define
   
-  discretizationList.sublist("Required Fields Info").set<int>("Number Of Fields",7);
+  discretizationList.sublist("Required Fields Info").set<int>("Number Of Fields",8);
   Teuchos::ParameterList& field0 = discretizationList.sublist("Required Fields Info").sublist("Field 0");
   Teuchos::ParameterList& field1 = discretizationList.sublist("Required Fields Info").sublist("Field 1");
   Teuchos::ParameterList& field2 = discretizationList.sublist("Required Fields Info").sublist("Field 2");
@@ -430,6 +437,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   Teuchos::ParameterList& field4 = discretizationList.sublist("Required Fields Info").sublist("Field 4");
   Teuchos::ParameterList& field5 = discretizationList.sublist("Required Fields Info").sublist("Field 5");
   Teuchos::ParameterList& field6 = discretizationList.sublist("Required Fields Info").sublist("Field 6");
+  Teuchos::ParameterList& field7 = discretizationList.sublist("Required Fields Info").sublist("Field 7");
 
   //set temperature
   field0.set<std::string>("Field Name", "temperature");
@@ -465,6 +473,13 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   field6.set<std::string>("Field Name", "dirichlet_field");
   field6.set<std::string>("Field Type", "Node Vector");
   field6.set<std::string>("Field Origin", "Mesh");
+  
+  //set stiffening factor
+  field7.set<std::string>("Field Name", "stiffening_factor");
+  field7.set<std::string>("Field Type", "Node Scalar");
+  field7.set<std::string>("Field Origin", "Mesh");
+  
+  
 
   discParams = Teuchos::sublist(paramList, "Discretization", true);
 
