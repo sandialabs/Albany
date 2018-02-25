@@ -4,8 +4,9 @@ LCM:
   ElementBlocks:
     fine:
       material: Fine
-      Use Composite Tet: false
-      Use Composite Tet Exact Mass: true
+      Use Composite Tet 10: false
+      Use Analytic Mass: true
+      Lump Analytic Mass: false
       Residual Computed Using Cubature: false
   Materials:
     Fine:
