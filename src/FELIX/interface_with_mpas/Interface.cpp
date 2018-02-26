@@ -410,7 +410,8 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   Teuchos::ParameterList& viscosityList =  paramList->sublist("Problem").sublist("FELIX Viscosity"); //empty list if FELIXViscosity not in input file.
 
   viscosityList.set("Type", viscosityList.get("Type", "Glen's Law"));
-  viscosityList.set("Glen's Law Homotopy Parameter", viscosityList.get("Glen's Law Homotopy Parameter", 1e-6));
+  double homotopy_param = (paramList->sublist("Problem").get("Solution Method", "Steady") == "Steady") ? 0.3 : 1e-6;
+  viscosityList.set("Glen's Law Homotopy Parameter", viscosityList.get("Glen's Law Homotopy Parameter", homotopy_param));
   viscosityList.set("Glen's Law A", viscosityList.get("Glen's Law A", MPAS_flowParamA));
   viscosityList.set("Glen's Law n", viscosityList.get("Glen's Law n",  MPAS_flowLawExponent));
   viscosityList.set("Flow Rate Type", viscosityList.get("Flow Rate Type", "Temperature Based"));
