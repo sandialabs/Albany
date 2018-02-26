@@ -37,7 +37,7 @@ Teuchos::RCP<Albany::SolverFactory> slvrfctry;
 Teuchos::RCP<double> MPAS_dt;
 
 double MPAS_gravity(9.8), MPAS_rho_ice(910.0), MPAS_rho_seawater(1028.0), MPAS_sea_level(0),
-       MPAS_flowParamA(1e-4), MPAS_enhancementFactor(1.0), MPAS_flowLawExponent(3), MPAS_dynamic_thickness(1e-2),
+       MPAS_flowParamA(1e-4), MPAS_flowLawExponent(3), MPAS_dynamic_thickness(1e-2),
        MPAS_ClausiusClapeyoronCoeff(9.7546e-8);
 bool MPAS_useGLP(true);
 
@@ -301,14 +301,12 @@ void velocity_solver_compute_2d_grid(MPI_Comm reducedComm) {
   mpiCommT = Albany::createTeuchosCommFromMpiComm(reducedComm);
 }
 
-void velocity_solver_set_physical_parameters(double const& gravity, double const& ice_density, double const& ocean_density, double const& sea_level, double const& flowParamA,
-                                             double const& enhancementFactor, double const& flowLawExponent, double const& dynamic_thickness, bool const& use_GLP, double const& clausiusClapeyoronCoeff) {
+void velocity_solver_set_physical_parameters(double const& gravity, double const& ice_density, double const& ocean_density, double const& sea_level, double const& flowParamA, double const& flowLawExponent, double const& dynamic_thickness, bool const& use_GLP, double const& clausiusClapeyoronCoeff) {
   MPAS_gravity=gravity;
   MPAS_rho_ice = ice_density;
   MPAS_rho_seawater = ocean_density;
   MPAS_sea_level = sea_level;
   MPAS_flowParamA = flowParamA;
-  MPAS_enhancementFactor = enhancementFactor;
   MPAS_flowLawExponent = flowLawExponent;
   MPAS_dynamic_thickness = dynamic_thickness;
   MPAS_useGLP = use_GLP;
