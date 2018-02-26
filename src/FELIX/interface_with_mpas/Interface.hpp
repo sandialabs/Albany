@@ -69,8 +69,7 @@ const ID NotAnId = std::numeric_limits<int>::max();
 // 1
 int velocity_solver_init_mpi(int *fComm);
 
-void velocity_solver_set_physical_parameters(double const& gravity, double const& ice_density, double const& ocean_density, double const& sea_level, double const& flowParamA,
-                                             double const& enhancementFactor, double const& flowLawExponent, double const& dynamic_thickness, bool const& use_GLP, double const& clausiusClapeyoronCoeff);
+void velocity_solver_set_physical_parameters(double const& gravity, double const& ice_density, double const& ocean_density, double const& sea_level, double const& flowParamA, double const& flowLawExponent, double const& dynamic_thickness, bool const& use_GLP, double const& clausiusClapeyoronCoeff);
 
 void velocity_solver_finalize();
 
@@ -83,7 +82,8 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 void velocity_solver_solve_fo(int nLayers, int nGlobalVertices, int nGlobalTriangles,
     bool ordering, bool first_time_step, const std::vector<int>& indexToVertexID, const std::vector<int>& indexToTriangleID,
     double minBeta, const std::vector<double>& regulThk,  const std::vector<double>& levelsNormalizedThickness, const std::vector<double>& elevationData, const std::vector<double>& thicknessData,
-    const std::vector<double>& betaData, const std::vector<double>& bedTopographyData, const std::vector<double>& SMBData, const std::vector<double>& temperatureOnTetra,
+    const std::vector<double>& betaData, const std::vector<double>& bedTopographyData, const std::vector<double>& SMBData, const std::vector<double>& stiffeningFactorData,
+    const std::vector<double>& temperatureOnTetra,
     std::vector<double>& dissipationHeatOnTetra, std::vector<double>& velocityOnVertices, int& error, const double& deltat=0.0);
 
 
