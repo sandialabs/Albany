@@ -554,11 +554,6 @@ void MPMD_App::exportDataMap(const Plato::data::layout_t & aDataLayout,
         aMyOwnedGlobalIDs[lid] = map->getGlobalElement(lid)+1; // Albany's gids start from 0
       }
     }
-    else
-    {
-      Plato::ParsingException pe("AlbanyMPMD currently only supports SCALAR_FIELD data layout");
-      throw pe;
-    }
 }
 /******************************************************************************/
 
