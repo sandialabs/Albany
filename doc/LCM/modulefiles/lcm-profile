@@ -12,4 +12,4 @@ if { [is-loaded lcm-ubuntu] } {
    setenv LCM_DENORMAL_SWITCH OFF
 }
 
-setenv LCM_CXX_FLAGS "-g -O3"
+setenv LCM_CXX_FLAGS "-msse3 -g -O3"
