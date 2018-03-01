@@ -110,7 +110,6 @@ LCM:
           Details: true
           Linear Solver Details: true
           Outer Iteration Status Test: true
-          Linear Solver Details: true
           Test Details: true
           Stepper Iteration: true
           Stepper Details: true
