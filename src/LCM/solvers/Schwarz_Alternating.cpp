@@ -581,6 +581,12 @@ printInternalElementStates(
   }
 }
 
+void
+toFrom(Albany::StateArrays & to, Albany::StateArrays const & from)
+{
+  return;
+}
+
 } // anonymous
 
 //
