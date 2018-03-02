@@ -5,7 +5,7 @@
 
 # run cism-albany after modifying (if needed) the paths of the input nc "name" file and the "dycore_input_file" in the file inputFiles/cism-albanyT.config.
 cd inputFiles
-../cism_driver cism-albanyT.config
+../cism_driver/cism_driver cism-albanyT.config
 cd ..
 
 # [optional] if you run the above on multiple processors, you need to merge the exodus files into one:
@@ -59,7 +59,7 @@ cd ..
 
 #after modifying the inputFiles/cism-albanyT.config to use the new gid greenland_standalone-albanyT.nc, run cism-albanyT, and compare again
 cd inputFiles
-../cism_driver cism-albanyT.config
+../cism_driver/cism_driver cism-albanyT.config
 cd ..
 
 cd mFiles

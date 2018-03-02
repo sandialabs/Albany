@@ -11,7 +11,7 @@ disregard_coord_shifts = true;
 
 %% import fields of exo mesh
 
-s_exo_names = struct('x', 'coordx','y', 'coordy', 'z', 'coordz', 'basal_friction','basal_friction', 'flow_factor' ,'flow_factor',  'Velx', 'solution_x', 'Vely', 'solution_y', 'sh', 'surface_height', 'thk', 'thickness', 'temperature', 'temperature', 'cell2node_map', 'connect1');
+s_exo_names = struct('x', 'coordx','y', 'coordy', 'z', 'coordz', 'basal_friction','basal_friction', 'flow_factor' ,'flow_factor',  'Velx', 'solution_x', 'Vely', 'solution_y', 'sh', 'surface_height', 'thk', 'thickness', 'ice_thk', 'ice_thickness', 'temperature', 'temperature', 'cell2node_map', 'connect1');
 
 s_geo = exo_read( [fdir_in, exo_fname_in], s_exo_names);
 s_geo2 = exo_read( [fdir_in, exo_fname2_in], s_exo_names);
@@ -27,7 +27,7 @@ exo2_Vely = s_geo2.Vely(:,end);
 exo_sh = s_geo.sh(:,end);
 exo2_sh = s_geo2.sh(:,end);
 exo_thk = s_geo.thk(:,end);
-exo2_thk = s_geo2.thk(:,end);
+exo2_thk = s_geo2.ice_thk(:,end);
 exo_c2n = s_geo.cell2node_map';
 exo2_c2n = s_geo2.cell2node_map';
 
@@ -76,7 +76,8 @@ disp(['coordinates mismatch [km]: ',  num2str(norm(coords1(:,:) - coords2(I12,:)
 
 disp(['thickness mismatch [km]: ',  num2str(norm(exo_thk(:,1) - exo2_thk(I12,1), inf))]);
 
-disp(['surface heigth mismatch [km]: ',  num2str(norm(exo_sh(:,1) - exo2_sh(I12,1)+2, inf))]);
+%disp(['surface height mismatch [km]: ',  num2str(norm(exo_sh(:,1) - exo2_sh(I12,1)+2, inf))]);
+disp(['surface height mismatch [km]: ',  num2str(norm(exo_sh(:,1) - exo2_sh(I12,1), inf))]);
 
 disp(['basal_friction mismatch [kPa m/yr]: ',  num2str(norm(exo_beta(:,1) - exo2_beta(I12,1), inf))]);
 

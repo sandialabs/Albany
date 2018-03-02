@@ -35,12 +35,19 @@ if os.path.exists('mismatches'):
 subprocess.call("bash run_test.sh >& out",shell=True); 
 subprocess.call("bash process_output_test.sh",shell=True)
 
+with open('out', 'r') as log_file:
+    print log_file.read() 
+
+
 log_file_name = 'mismatches'
 logfile = open(log_file_name, 'r')
 
 #specify tolerance to determine test failure / passing
 tolerance = 1.0e-9; 
-mismatch = [9.8825e-06, 4.9986e-06, 4.9991e-06, 0.039632, 0.40334, 0.26009, 0.020565];
+#mismatch = [9.8825e-06, 4.9986e-06, 4.9991e-06, 0.039632, 0.40334, 0.26009, 0.020565];
+mismatch = [1.1039e-05, 4.9986e-06, 4.9991e-06, 0.039632, 0.40334, 0.26009, 0.020565];
+
+
 result = 0
 i = 0
 for line in open(log_file_name):
