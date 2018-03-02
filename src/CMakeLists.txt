@@ -24,7 +24,6 @@ SET(SOURCES
   Albany_ObserverImpl.cpp
   Albany_PiroObserverT.cpp
   Albany_StatelessObserverImpl.cpp
-  Albany_StateArray.cpp
   Albany_StateManager.cpp
   PHAL_Utilities.cpp
   )
@@ -65,7 +64,6 @@ SET(HEADERS
   Albany_ObserverImpl.hpp
   Albany_PiroObserverT.hpp
   Albany_SolverFactory.hpp
-  Albany_StateArray.hpp
   Albany_StateManager.hpp
   Albany_StateInfoStruct.hpp
   Albany_StatelessObserverImpl.hpp
