@@ -32,10 +32,21 @@
 
 namespace Albany {
 
-typedef shards::Array<double, shards::NaturalOrder> MDArray;
-typedef shards::Array<LO, shards::NaturalOrder>     IDArray;
-typedef std::map<std::string, MDArray>              StateArray;
-typedef std::vector<StateArray> StateArrayVec;
+//
+// Using these most of the Albany code compiles, but there are some errors
+// with converting from STK data structures.
+// In any case, the operator= still does a shallow copym which was the
+// motivation to try Kokkos::View
+//
+//using MDArray = Kokkos::View<double*, PHX::Device>;
+//using IDArray = Kokkos::View<LO*, PHX::Device>;
+//using StateArray = std::map<std::string, MDArray>;
+//using StateArrayVec = std::vector<StateArray>;
+
+using MDArray = shards::Array<double, shards::NaturalOrder>;
+using IDArray = shards::Array<LO, shards::NaturalOrder>;
+using StateArray = std::map<std::string, MDArray>;
+using StateArrayVec = std::vector<StateArray>;
 
 struct StateArrays
 {
