@@ -4,13 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "Albany_Utils.hpp"
-#include "J2MiniSolver.hpp"
+#include "ACE/ACEdensity.hpp"
+#include "ACEice.hpp"
 #include "MiniNonlinearSolver.h"
 
 namespace LCM {
 
 template<typename EvalT, typename Traits>
-J2MiniKernel<EvalT, Traits>::J2MiniKernel(
+ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
     ConstitutiveModel<EvalT, Traits>& model,
     Teuchos::ParameterList*              p,
     Teuchos::RCP<Albany::Layouts> const& dl)
@@ -29,10 +30,15 @@ J2MiniKernel<EvalT, Traits>::J2MiniKernel(
   // define the dependent fields
   setDependentField(F_string, dl->qp_tensor);
   setDependentField(J_string, dl->qp_scalar);
-  setDependentField("Poissons Ratio", dl->qp_scalar);
+
+  setDependentField("Density", dl->qp_scalar);
   setDependentField("Elastic Modulus", dl->qp_scalar);
-  setDependentField("Yield Strength", dl->qp_scalar);
   setDependentField("Hardening Modulus", dl->qp_scalar);
+  setDependentField("Heat Capacity", dl->qp_scalar);
+  setDependentField("Poissons Ratio", dl->qp_scalar);
+  setDependentField("Thermal Conductivity", dl->qp_scalar);
+  setDependentField("Yield Strength", dl->qp_scalar);
+
   setDependentField("Delta Time", dl->workset_scalar);
 
   // define the evaluated fields
@@ -96,7 +102,7 @@ J2MiniKernel<EvalT, Traits>::J2MiniKernel(
 
 template<typename EvalT, typename Traits>
 void
-J2MiniKernel<EvalT, Traits>::init(
+ACEiceMiniKernel<EvalT, Traits>::init(
     Workset&                 workset,
     FieldMap<const ScalarT>& dep_fields,
     FieldMap<ScalarT>&       eval_fields)
@@ -112,11 +118,15 @@ J2MiniKernel<EvalT, Traits>::init(
   // extract dependent MDFields
   def_grad         = *dep_fields[F_string];
   J                = *dep_fields[J_string];
-  poissons_ratio   = *dep_fields["Poissons Ratio"];
-  elastic_modulus  = *dep_fields["Elastic Modulus"];
-  yield_strength    = *dep_fields["Yield Strength"];
-  hardening_modulus = *dep_fields["Hardening Modulus"];
-  delta_time       = *dep_fields["Delta Time"];
+
+  delta_time           = *dep_fields["Delta Time"];
+  density              = *dep_fields["Density"];
+  elastic_modulus      = *dep_fields["Elastic Modulus"];
+  hardening_modulus    = *dep_fields["Hardening Modulus"];
+  heat_capacity        = *dep_fields["Heat Capacity"];
+  poissons_ratio       = *dep_fields["Poissons Ratio"];
+  thermal_conductivity = *dep_fields["Thermal Conductivity"];
+  yield_strength       = *dep_fields["Yield Strength"];
 
   // extract evaluated MDFields
   stress    = *eval_fields[cauchy_string];
@@ -222,7 +232,7 @@ class J2NLS : public minitensor::
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
-J2MiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
+ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 {
   constexpr minitensor::Index MAX_DIM{3};
 
@@ -231,6 +241,7 @@ J2MiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   Tensor        F(num_dims_);
   Tensor const  I(minitensor::eye<ScalarT, MAX_DIM>(num_dims_));
   Tensor        sigma(num_dims_);
+
   ScalarT const E     = elastic_modulus(cell, pt);
   ScalarT const nu    = poissons_ratio(cell, pt);
   ScalarT const kappa = E / (3.0 * (1.0 - 2.0 * nu));
@@ -239,6 +250,9 @@ J2MiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const Y     = yield_strength(cell, pt);
   ScalarT const J1    = J(cell, pt);
   ScalarT const Jm23  = 1.0 / std::cbrt(J1 * J1);
+  ScalarT const rho   = density(cell, pt);
+  ScalarT const Cp    = heat_capacity(cell, pt);
+  ScalarT const KK    = thermal_conductivity(cell, pt);
 
   // fill local tensors
   F.fill(def_grad, cell, pt, 0, 0);
@@ -246,17 +260,6 @@ J2MiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Mechanical deformation gradient
   auto Fm = Tensor(F);
   if (have_temperature_) {
-    // Compute the mechanical deformation gradient Fm based on the
-    // multiplicative decomposition of the deformation gradient
-    //
-    //            F = Fm.Ft => Fm = F.inv(Ft)
-    //
-    // where Ft is the thermal part of F, given as
-    //
-    //     Ft = Le * I = exp(alpha * dtemp) * I
-    //
-    // Le = exp(alpha*dtemp) is the thermal stretch and alpha the
-    // coefficient of thermal expansion.
     ScalarT dtemp = temperature_(cell, pt) - ref_temperature_;
     ScalarT thermal_stretch = std::exp(expansion_coeff_ * dtemp);
     Fm /= thermal_stretch;
@@ -325,7 +328,7 @@ J2MiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     if (have_temperature_ == true && delta_time(0) > 0) {
       source(cell, pt) =
           (sq23 * dgam / delta_time(0) * (Y + H + temperature_(cell, pt))) /
-          (density_ * heat_capacity_);
+          (density(cell, pt) * heat_capacity(cell, pt));
     }
 
     // exponential map to get Fpnew

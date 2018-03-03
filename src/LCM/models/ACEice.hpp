@@ -4,20 +4,20 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_J2MiniSolver_hpp)
-#define LCM_J2MiniSolver_hpp
+#if !defined(LCM_ACEice_hpp)
+#define LCM_ACEice_hpp
 
 #include "../parallel_models/ParallelConstitutiveModel.hpp"
 
 namespace LCM {
 
 template<typename EvalT, typename Traits>
-struct J2MiniKernel : public ParallelKernel<EvalT, Traits>
+struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
 {
   ///
   /// Constructor
   ///
-  J2MiniKernel(
+  ACEiceMiniKernel(
       ConstitutiveModel<EvalT, Traits>& model,
       Teuchos::ParameterList*              p,
       Teuchos::RCP<Albany::Layouts> const& dl);
@@ -25,13 +25,13 @@ struct J2MiniKernel : public ParallelKernel<EvalT, Traits>
   ///
   /// No copy constructor
   ///
-  J2MiniKernel(J2MiniKernel const&) = delete;
+  ACEiceMiniKernel(ACEiceMiniKernel const&) = delete;
 
   ///
   /// No copy assignment
   ///
-  J2MiniKernel&
-  operator=(J2MiniKernel const&) = delete;
+  ACEiceMiniKernel&
+  operator=(ACEiceMiniKernel const&) = delete;
 
   using ScalarT          = typename EvalT::ScalarT;
   using ScalarField      = PHX::MDField<ScalarT>;
@@ -44,11 +44,10 @@ struct J2MiniKernel : public ParallelKernel<EvalT, Traits>
   using BaseKernel::field_name_map_;
 
   // optional temperature support
-  using BaseKernel::have_temperature_;
   using BaseKernel::expansion_coeff_;
+  using BaseKernel::have_temperature_;
+  using BaseKernel::latent_heat_;
   using BaseKernel::ref_temperature_;
-  using BaseKernel::heat_capacity_;
-  using BaseKernel::density_;
   using BaseKernel::temperature_;
 
   using BaseKernel::setDependentField;
@@ -61,12 +60,16 @@ struct J2MiniKernel : public ParallelKernel<EvalT, Traits>
 
   // Dependent MDFields
   ConstScalarField def_grad;
+  ConstScalarField delta_time;
+  ConstScalarField density;
+  ConstScalarField elastic_modulus;
+  ConstScalarField hardening_modulus;
+  ConstScalarField heat_capacity;
   ConstScalarField J;
   ConstScalarField poissons_ratio;
-  ConstScalarField elastic_modulus;
+  ConstScalarField thermal_conductivity;
   ConstScalarField yield_strength;
-  ConstScalarField hardening_modulus;
-  ConstScalarField delta_time;
+
 
   // extract evaluated MDFields
   ScalarField stress;
@@ -94,14 +97,14 @@ struct J2MiniKernel : public ParallelKernel<EvalT, Traits>
 };
 
 template<typename EvalT, typename Traits>
-class J2MiniSolver : public LCM::ParallelConstitutiveModel<
+class ACEice : public LCM::ParallelConstitutiveModel<
                          EvalT,
                          Traits,
-                         J2MiniKernel<EvalT, Traits>> {
+                         ACEiceMiniKernel<EvalT, Traits>> {
  public:
-  J2MiniSolver(
+  ACEice(
       Teuchos::ParameterList*              p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 };
 }
-#endif  // LCM_J2MiniSolver_hpp
+#endif  // LCM_ACEice_hpp

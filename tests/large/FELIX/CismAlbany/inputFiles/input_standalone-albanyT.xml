@@ -44,6 +44,7 @@
       <Parameter name="Water Density" type="double" value="1028"/>
       <Parameter name="Ice Density" type="double" value="910"/>
       <Parameter name="Gravity Acceleration" type="double" value="9.81"/>
+      <Parameter name="Clausius-Clapeyron Coefficient" type="double" value="0.0"/>
     </ParameterList>
 
     <ParameterList name="FELIX Viscosity">
@@ -79,7 +80,7 @@
     <Parameter name="Basal Elem Layered Fields Ranks"       type="Array(int)"    value="{1}"/>
     <Parameter name="Use Glimmer Spacing" type="bool" value="true"/>
     <ParameterList name="Required Fields Info">
-     <Parameter name="Number Of Fields" type="int" value="1"/>
+     <Parameter name="Number Of Fields" type="int" value="4"/>
       <!--ParameterList name="Field 0">
         <Parameter name="Field Name" type="string" value="flow_factor"/>
         <Parameter name="Field Type" type="string" value="Elem Scalar"/>
@@ -89,6 +90,21 @@
         <Parameter name="Field Name" type="string" value="temperature"/>
         <Parameter name="Field Type" type="string" value="Elem Scalar"/>
         <Parameter name="File Origin"  type="string" value="Output"/>
+      </ParameterList>
+      <ParameterList name="Field 1">
+        <Parameter name="Field Name"   type="string" value="basal_friction"/>
+        <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin" type="string" value="Mesh"/>
+      </ParameterList>
+      <ParameterList name="Field 2">
+        <Parameter name="Field Name" type="string" value="thickness"/>
+        <Parameter name="Field Type" type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin" type="string" value="Mesh"/>
+      </ParameterList>
+      <ParameterList name="Field 3">
+        <Parameter name="Field Name" type="string" value="surface_height"/>
+        <Parameter name="Field Type" type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin" type="string" value="Mesh"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="Side Set Discretizations">
@@ -106,11 +122,13 @@
             <Parameter name="Field Name" type="string" value="thickness"/>
             <Parameter name="Field Type" type="string" value="Node Scalar"/>
             <Parameter name="File Name"  type="string" value="albanyMesh/thickness.ascii"/>
+            <Parameter name="Field Origin" type="string" value="File"/>
           </ParameterList>
           <ParameterList name="Field 1">
             <Parameter name="Field Name" type="string" value="surface_height"/>
             <Parameter name="Field Type" type="string" value="Node Scalar"/>
             <Parameter name="File Name"  type="string" value="albanyMesh/surface_height.ascii"/>
+            <Parameter name="Field Origin" type="string" value="File"/>
           </ParameterList>
           <!--ParameterList name="Field 2">
             <Parameter name="Field Name" type="string" value="flow_factor"/>
@@ -122,12 +140,14 @@
             <Parameter name="Field Name" type="string" value="basal_friction"/>
             <Parameter name="Field Type" type="string" value="Node Scalar"/>
             <Parameter name="File Name"  type="string" value="albanyMesh/basal_friction.ascii"/>
+            <Parameter name="Field Origin" type="string" value="File"/>
           </ParameterList>
           <ParameterList name="Field 3">
             <Parameter name="Field Name" type="string" value="temperature"/>
             <Parameter name="Field Type" type="string" value="Elem Layered Scalar"/>
             <Parameter name="Number Of Layers" type="int" value="12"/>
             <Parameter name="File Name"  type="string" value="albanyMesh/temperature.ascii"/>
+            <Parameter name="Field Origin" type="string" value="File"/>
           </ParameterList>
         </ParameterList>
       </ParameterList>

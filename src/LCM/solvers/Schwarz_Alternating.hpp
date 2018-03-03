@@ -139,12 +139,6 @@ private:
   void
   reportFinals(std::ostream & os) const;
 
-  void printInternalElementStates(const int subdomain, Teuchos::RCP<Albany::StateInfoStruct> sis) const; 
-
-  void 
-  printInternalElementState(Albany::StateArrayVec& esa, const std::string statename, 
-                            const std::string& init_type, const int size, const int ws) const;  
-
   std::vector<Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>>
   solvers_;
 

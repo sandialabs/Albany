@@ -165,8 +165,8 @@ computeState(typename Traits::EvalData workset,
   auto J                = *dep_fields[J_string];
   auto poissons_ratio   = *dep_fields["Poissons Ratio"];
   auto elastic_modulus  = *dep_fields["Elastic Modulus"];
-  auto yieldStrength    = *dep_fields["Yield Strength"];
-  auto hardeningModulus = *dep_fields["Hardening Modulus"];
+  auto yield_strength    = *dep_fields["Yield Strength"];
+  auto hardening_modulus = *dep_fields["Hardening Modulus"];
   auto delta_time       = *dep_fields["Delta Time"];
 
   // extract evaluated MDFields
@@ -208,8 +208,8 @@ computeState(typename Traits::EvalData workset,
       kappa = elastic_modulus(cell, pt)
         / (3. * (1. - 2. * poissons_ratio(cell, pt)));
       mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
-      K = hardeningModulus(cell, pt);
-      Y = yieldStrength(cell, pt);
+      K = hardening_modulus(cell, pt);
+      Y = yield_strength(cell, pt);
       Jm23 = std::pow(J(cell, pt), -2. / 3.);
 
 

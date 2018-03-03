@@ -9,6 +9,7 @@
 #include "Teuchos_TestForException.hpp"
 
 #include "AAAModel.hpp"
+#include "ACEice.hpp"
 #include "AnisotropicDamageModel.hpp"
 #include "AnisotropicHyperelasticDamageModel.hpp"
 #include "AnisotropicViscoplasticModel.hpp"
@@ -270,7 +271,9 @@ ConstitutiveModelInterface<EvalT, Traits>::initializeModel(
 
   using Teuchos::rcp;
 
-  if (model_name == "Neohookean") {
+  if (model_name == "") {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, error_msg);
+  } else if (model_name == "Neohookean") {
     model = rcp(new NeohookeanModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Parallel Neohookean") {
     model = rcp(new ParallelNeohookeanModel<EvalT, Traits>(p, dl));
@@ -334,6 +337,8 @@ ConstitutiveModelInterface<EvalT, Traits>::initializeModel(
     model = rcp(new ElastoViscoplasticModel<EvalT, Traits>(p, dl));
   } else if (model_name == "J2 MiniSolver") {
     model = rcp(new J2MiniSolver<EvalT, Traits>(p, dl));
+  } else if (model_name == "ACE ice") {
+    model = rcp(new ACEice<EvalT, Traits>(p, dl));
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, error_msg);
   }

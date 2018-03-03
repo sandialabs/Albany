@@ -152,6 +152,20 @@ ConstitutiveModelParameters<EvalT, Traits>::ConstitutiveModelParameters(
     field_map_.insert(std::make_pair(f_exp, flow_exp_));
     parseParameters(f_exp, p, paramLib);
   }
+  // mass density
+  std::string density_str("Density");
+  if (mat_params->isSublist(density_str)) {
+    density_ = decltype(density_)(density_str, dl_->qp_scalar);
+    field_map_.insert(std::make_pair(density_str, density_));
+    parseParameters(density_str, p, paramLib);
+  }
+  // heat capacity
+  std::string cp_str("Heat Capacity");
+  if (mat_params->isSublist(cp_str)) {
+    heat_capacity_ = decltype(heat_capacity_)(cp_str, dl_->qp_scalar);
+    field_map_.insert(std::make_pair(cp_str, heat_capacity_));
+    parseParameters(cp_str, p, paramLib);
+  }
 
   // register evaluated fields
   for (auto& pair : field_map_) {
