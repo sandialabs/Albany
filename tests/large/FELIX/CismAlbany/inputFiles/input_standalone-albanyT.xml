@@ -112,7 +112,7 @@
       <ParameterList name="basalside">
         <Parameter name="Method" type="string" value="Ioss"/>
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
-        <Parameter name="Use Serial Mesh" type="bool" value="true"/>
+        <Parameter name="Use Serial Mesh" type="bool" value="false"/>
         <Parameter name="Exodus Input File Name" type="string" value="albanyMesh/greenland_2d.exo"/>
         <Parameter name="Exodus Output File Name" type="string" value="greenland_standalone-albanyT_basal.exo"/>
         <!--Parameter name="Cubature Degree" type="int" value="3"/-->
