@@ -1,6 +1,9 @@
 
 #!/bin/bash
 
+#IKT, WARNING: the following is specific to Irina Tezaur's machine, camobap!
+export LD_LIBRARY_PATH=/usr/lib64:/usr/lib64/openmpi/lib:/usr/lib:/home/ikalash/oldNetcdfLibs
+
 # CISM-ALBANY
 
 # run cism-albany after modifying (if needed) the paths of the input nc "name" file and the "dycore_input_file" in the file inputFiles/cism-albanyT.config.
@@ -67,4 +70,5 @@ matlab -nojvm < compare_exos.m
 
 #quite a difference.. this is an interpolation error.. so it should diminish as the grid is refined.
 
-
+#IKT, WARNING: the following is specific to Irina Tezaur's machine, camobap!
+export LD_LIBRARY_PATH=/usr/lib64:/usr/lib64/openmpi/lib:/usr/lib
