@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "Albany_Utils.hpp"
+#include "ACE/ACEdensity.hpp"
 #include "ACEice.hpp"
 #include "MiniNonlinearSolver.h"
 

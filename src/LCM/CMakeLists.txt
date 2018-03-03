@@ -93,6 +93,15 @@ set(model-eval-headers
   )
 ENDIF(ALBANY_HAVE_STK)
 
+# LCM ACE evaluators
+set(ace-sources
+  "${LCM_DIR}/evaluators/ACE/ACEdensity.cpp"
+)
+set(ace-headers
+  "${LCM_DIR}/evaluators/ACE/ACEdensity.hpp"
+  "${LCM_DIR}/evaluators/ACE/ACEdensity_Def.hpp"
+)
+
 # LCM special boundary conditions
 set(bc-sources
   "${LCM_DIR}/evaluators/bc/EquilibriumConcentrationBC.cpp"
@@ -608,6 +617,7 @@ set(SOURCES ${SOURCES}
   ${hmc-sources}
   ${pd-sources}
   ${poro-sources}
+  ${ace-sources}
   ${bc-sources}
   ${models-sources}
   ${utils-sources}
@@ -629,6 +639,7 @@ set(HEADERS ${HEADERS}
   ${hmc-headers}
   ${pd-headers}
   ${poro-headers}
+  ${ace-headers}
   ${bc-headers}
   ${models-headers}
   ${utils-headers}
