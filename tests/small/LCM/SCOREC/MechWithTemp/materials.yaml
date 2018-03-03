@@ -20,7 +20,7 @@ LCM:
       Reference Temperature: 293.00000000
       Initial Temperature: 293.00000000
       Thermal Transient Coefficient: 0.00000000e+00
-      Thermal Expansion Coefficient: 100.00000000
+      Thermal Expansion Coefficient: 1.00000000e-05
       Density: 7.80000000e-09
       Heat Capacity: 4.60000000e+08
 ...
