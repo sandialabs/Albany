@@ -37,7 +37,7 @@ LCM:
     Cubature Degree: 2
   Regression Results:
     Number of Comparisons: 1
-    Test Values: [100.03875618]
+    Test Values: [9.999999999914e+01]
     Relative Tolerance: 1.00000000e-05
   Piro:
     LOCA:
