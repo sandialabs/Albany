@@ -4,10 +4,14 @@
 #IKT, WARNING: the following is specific to Irina Tezaur's machine, camobap!
 export LD_LIBRARY_PATH=/usr/lib64:/usr/lib64/openmpi/lib:/usr/lib:/home/ikalash/oldNetcdfLibs
 
+
+rm -rf *exo 
+
 # CISM-ALBANY
 
 # run cism-albany after modifying (if needed) the paths of the input nc "name" file and the "dycore_input_file" in the file inputFiles/cism-albanyT.config.
 cd inputFiles
+rm -rf *exo 
 ../cism_driver/cism_driver cism-albanyT.config
 cd ..
 
