@@ -182,9 +182,9 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       // heat flux term:
       heat_flux_(cell,qp) = 0.0;
-      for (std::size_t dims=0; dims < numDims; ++dims) {
+      for (std::size_t i=0; i < numDims; ++i) {
         heat_flux_(cell,qp) += 
-          thermalConductivity(cell,qp) * TGrad(cell,qp,dims);
+          thermalConductivity(cell,qp) * TGrad(cell,qp,i);
       }
       // accumulation term:
       accumulation_(cell,qp) = thermalInertia(cell,qp) * Tdot(cell,qp);
@@ -231,8 +231,11 @@ updateMeltingTemperature(std::size_t cell, std::size_t qp)
   press = 0.0;  // hydrostatic pressure in [Pa]
   press = pressure_(cell,qp);
   
-  Tmelt_(cell,qp) = -0.0575*sal + 0.00170523*pow(sal,1.5)
-    - 0.0002154996*pow(sal,2) - (0.000753/10000)*press;
+  ScalarT const
+  sal15 = std::sqrt(sal * sal * sal);
+
+  Tmelt_(cell,qp) = -0.0575 * sal + 0.00170523 * sal15
+    - 0.0002154996 * sal * sal - (0.000753/10000) * press;
 
   return;
 }
@@ -247,8 +250,8 @@ update_dfdT(std::size_t cell, std::size_t qp)
   ScalarT
   f_evaluated = 0.0;
   
-  f_evaluated = evaluateFreezingCurve(cell,qp);
-  dfdT_(cell,qp) = (f_evaluated-f_old_(cell,qp))/delTemp_(cell,qp);
+  f_evaluated = evaluateFreezingCurve(cell, qp);
+  dfdT_(cell, qp) = (f_evaluated - f_old_(cell, qp)) / delTemp_(cell, qp);
   
   // swap old and new temperatures now:
   Temperature_old_(cell,qp) = Temperature(cell,qp);

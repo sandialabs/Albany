@@ -433,6 +433,11 @@ class ConstitutiveModel {
   /// Density
   ///
   RealType density_{1.0};
+
+  ///
+  /// Latent Heat
+  ///
+  RealType latent_heat_{1.0};
 };
 
 }  // namespace LCM
