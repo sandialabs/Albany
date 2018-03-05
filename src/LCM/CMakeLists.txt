@@ -93,6 +93,15 @@ set(model-eval-headers
   )
 ENDIF(ALBANY_HAVE_STK)
 
+# LCM ACE evaluators
+set(ace-sources
+  "${LCM_DIR}/evaluators/ACE/ACEdensity.cpp"
+)
+set(ace-headers
+  "${LCM_DIR}/evaluators/ACE/ACEdensity.hpp"
+  "${LCM_DIR}/evaluators/ACE/ACEdensity_Def.hpp"
+)
+
 # LCM special boundary conditions
 set(bc-sources
   "${LCM_DIR}/evaluators/bc/EquilibriumConcentrationBC.cpp"
@@ -395,6 +404,7 @@ set(transport-headers
 #LCM models
 set(models-sources
   "${LCM_DIR}/models/AAAModel.cpp"
+  "${LCM_DIR}/models/ACEice.cpp"
   "${LCM_DIR}/models/AbstractModel.cpp"
   "${LCM_DIR}/models/AnisotropicDamageModel.cpp"
   "${LCM_DIR}/models/AnisotropicHyperelasticDamageModel.cpp"
@@ -432,6 +442,8 @@ set(models-sources
 set(models-headers
   "${LCM_DIR}/models/AAAModel_Def.hpp"
   "${LCM_DIR}/models/AAAModel.hpp"
+  "${LCM_DIR}/models/ACEice_Def.hpp"
+  "${LCM_DIR}/models/ACEice.hpp"
   "${LCM_DIR}/models/AbstractModel.hpp"
   "${LCM_DIR}/models/AnisotropicDamageModel_Def.hpp"
   "${LCM_DIR}/models/AnisotropicDamageModel.hpp"
@@ -605,6 +617,7 @@ set(SOURCES ${SOURCES}
   ${hmc-sources}
   ${pd-sources}
   ${poro-sources}
+  ${ace-sources}
   ${bc-sources}
   ${models-sources}
   ${utils-sources}
@@ -626,6 +639,7 @@ set(HEADERS ${HEADERS}
   ${hmc-headers}
   ${pd-headers}
   ${poro-headers}
+  ${ace-headers}
   ${bc-headers}
   ${models-headers}
   ${utils-headers}

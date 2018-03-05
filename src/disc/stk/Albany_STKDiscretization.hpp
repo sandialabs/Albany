@@ -417,12 +417,18 @@ class STKDiscretization : public Albany::AbstractDiscretization {
   getSolutionFieldHistory() const;
   Teuchos::RCP<Epetra_MultiVector>
   getSolutionFieldHistory(int maxStepCount) const;
+  Teuchos::RCP<Epetra_MultiVector>
+  getSolutionFieldHistory(int minStep, int maxStep) const;
   void
   getSolutionFieldHistory(Epetra_MultiVector& result) const;
   Teuchos::RCP<Epetra_MultiVector>
   getSolutionFieldHistoryImpl(int stepCount) const;
+  Teuchos::RCP<Epetra_MultiVector>
+  getSolutionFieldHistoryImpl(int stepMin, int stepMax) const;
   void
   getSolutionFieldHistoryImpl(Epetra_MultiVector& result) const;
+  void
+  getSolutionFieldHistoryImpl(Epetra_MultiVector& result, int stepMin, int stepMax) const;
 #endif
 
   // Tpetra analog

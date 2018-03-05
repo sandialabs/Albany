@@ -8,12 +8,11 @@
 #define LCM_ConstitutiveModelInterface_hpp
 
 #include "Albany_Layouts.hpp"
+#include "ConstitutiveModel.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Phalanx_config.hpp"
-
-#include "models/ConstitutiveModel.hpp"
 
 namespace LCM {
 
@@ -30,7 +29,7 @@ struct StateVariableRegistrationStruct
 };
 
 /// \brief Constitutive Model Interface
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 class ConstitutiveModelInterface : public PHX::EvaluatorWithBaseImpl<Traits>,
                                    public PHX::EvaluatorDerived<EvalT, Traits> {
  public:
@@ -227,6 +226,6 @@ class ConstitutiveModelInterface : public PHX::EvaluatorWithBaseImpl<Traits>,
   ///
   bool volume_average_pressure_;
 };
-}
+}  // namespace LCM
 
 #endif

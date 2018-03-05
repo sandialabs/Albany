@@ -9,7 +9,7 @@ grep "thickness mismatch" out >& thk_mismatch
 sed -e '1,1d' < thk_mismatch >& tm
 mv tm thk_mismatch
 sed 's/^.*:/:/' thk_mismatch >> mismatches
-grep "surface heigth mismatch" out >& sh_mismatch
+grep "surface height mismatch" out >& sh_mismatch
 sed -e '1,1d' < sh_mismatch >& sh
 mv sh sh_mismatch
 sed 's/^.*:/:/' sh_mismatch >> mismatches

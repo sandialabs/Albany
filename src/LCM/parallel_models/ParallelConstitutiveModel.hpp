@@ -58,7 +58,8 @@ protected:
       expansion_coeff_(model.expansion_coeff_),
       ref_temperature_(model.ref_temperature_),
       heat_capacity_(model.heat_capacity_),
-      density_(model.density_)
+      density_(model.density_),
+      latent_heat_(model.latent_heat_)
     {}
 
 
@@ -156,11 +157,11 @@ protected:
   temperature_;
 
   /// Optional total concentration field
-  PHX::MDField<const ScalarT,Cell,QuadPoint>
+  PHX::MDField<const ScalarT, Cell, QuadPoint>
   total_concentration_;
 
   /// Optional total (He) bubble density field
-  PHX::MDField<const ScalarT,Cell,QuadPoint>
+  PHX::MDField<const ScalarT, Cell, QuadPoint>
   total_bubble_density_;
 
   /// Optional (He) bubble volume fraction field
@@ -192,6 +193,9 @@ protected:
 
   RealType
   density_;
+
+  RealType
+  latent_heat_;
 
   /// Flag indicating failure in model calculation
   Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>

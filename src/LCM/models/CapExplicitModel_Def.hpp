@@ -224,7 +224,7 @@ computeState(typename Traits::EvalData workset,
       // (which will be updated only if plasticity occurs)
       //friction(cell, qp) = 0.0;
       //dilatancy(cell, qp) = 0.0;
-      //hardeningModulus(cell, qp) = 0.0;
+      //hardening_modulus(cell, qp) = 0.0;
 
       // define generalized plastic hardening modulus H
       //ScalarT H(0.0), Htan(0.0);
@@ -447,9 +447,9 @@ computeState(typename Traits::EvalData workset,
         //  Htan = dtau / dGamma;
 
         //if (std::abs(1. - Htan / mu) > 1.0e-10)
-        //  hardeningModulus(cell, qp) = Htan / (1. - Htan / mu);
+        //  hardening_modulus(cell, qp) = Htan / (1. - Htan / mu);
         //else
-        //  hardeningModulus(cell, qp) = 0.0;
+        //  hardening_modulus(cell, qp) = 0.0;
 
       } // end of plastic correction
 

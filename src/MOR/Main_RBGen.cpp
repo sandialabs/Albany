@@ -38,6 +38,8 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
 
+//#include "EpetraExt_MultiVectorOut.h"
+
 #include <string>
 #include <limits>
 
@@ -116,8 +118,9 @@ int main(int argc, char *argv[]) {
 
   typedef Teuchos::Array<RCP<Albany::STKDiscretization> > DiscretizationList;
   DiscretizationList discretizations;
+  RCP<Albany::STKDiscretization> baseSTKDisc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(baseDisc, /*throw_on_fail =*/ true);
   if (snapshotFiles.empty()) {
-    discretizations.push_back(Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(baseDisc, /*throw_on_fail =*/ true));
+    discretizations.push_back(baseSTKDisc);
   } else {
     discretizations.reserve(snapshotFiles.size());
     for (FileNameList::const_iterator it = snapshotFiles.begin(), it_end = snapshotFiles.end(); it != it_end; ++it) {
@@ -397,6 +400,14 @@ int main(int argc, char *argv[]) {
     const Epetra_Import outputImport(outputMap, snapshotSource.vectorMap());
     Epetra_Vector outputVector(outputMap, /*zeroOut =*/ false);
 
+    int snapshot0_step = discParams->get("Restart Index", -1);
+    if (snapshot0_step != -1)
+    {    
+      double snapshot0_time = baseSTKDisc->getSTKMeshStruct()->getSolutionFieldHistoryStamp(snapshot0_step-1);
+      Epetra_Vector snapshot0(Copy, *baseSTKDisc->getSolutionFieldHistory(snapshot0_step-1, snapshot0_step), 0);
+      baseDisc->writeSolution(snapshot0, snapshot0_time, /*zeroOut =*/ true);
+    }
+
     if (nonzeroOrigin) {
       const double stamp = -1.0; // Stamps must be increasing
       outputVector.Import(*origin, outputImport, Insert);
@@ -435,8 +446,14 @@ int main(int argc, char *argv[]) {
         baseDisc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
       }
     }
+    int num_zeros = 0;
     for (int i = 0; i < basis->NumVectors(); ++i) {
-      const double stamp = -discardedEnergyFractions[i]; // Stamps must be increasing
+      double stamp = -discardedEnergyFractions[i]; // Stamps must be increasing
+      if (stamp == 0)
+      {
+	stamp = stamp + num_zeros*std::numeric_limits<double>::epsilon();
+	num_zeros++;
+      }
       const Epetra_Vector vec(View, *basis, i);
 
       outputVector.Import(vec, outputImport, Insert);

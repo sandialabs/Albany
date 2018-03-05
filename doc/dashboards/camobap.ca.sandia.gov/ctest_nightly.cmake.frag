@@ -258,6 +258,8 @@ if (BUILD_ALBANY)
   #
   # Run Albany tests
   #
+  
+  set (CTEST_TEST_TIMEOUT 1200)
 
   CTEST_TEST(
     BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany"

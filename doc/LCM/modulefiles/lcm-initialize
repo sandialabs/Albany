@@ -2,26 +2,26 @@
 
 module-whatis "LCM automatic determination of running Linux distribution"
 
-set fedora_str fc
 set ubuntu_str generic
-set sems_str el
 set cluster_str chaos
 
 set kernel_version [uname release]
 
-set fedora_pos [string last $fedora_str $kernel_version]
-if {$fedora_pos > 0} {
+if { [ file exists /etc/fedora-release ] } {
   module load lcm-fedora
+}
+
+if { [ file exists /etc/sl-release ] } {
+  module load lcm-scientific-linux
+}
+
+if { [ file exists /etc/leostreamagent.release ] } {
+  module load lcm-sems
 }
 
 set ubuntu_pos [string last $ubuntu_str $kernel_version]
 if {$ubuntu_pos > 0} {
   module load lcm-ubuntu
-}
-
-set sems_pos [string last $sems_str $kernel_version]
-if {$sems_pos > 0} {
-  module load lcm-sems
 }
 
 set cluster_pos [string last $cluster_str $kernel_version]

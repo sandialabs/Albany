@@ -37,7 +37,7 @@ Teuchos::RCP<Albany::SolverFactory> slvrfctry;
 Teuchos::RCP<double> MPAS_dt;
 
 double MPAS_gravity(9.8), MPAS_rho_ice(910.0), MPAS_rho_seawater(1028.0), MPAS_sea_level(0),
-       MPAS_flowParamA(1e-4), MPAS_enhancementFactor(1.0), MPAS_flowLawExponent(3), MPAS_dynamic_thickness(1e-2),
+       MPAS_flowParamA(1e-4), MPAS_flowLawExponent(3), MPAS_dynamic_thickness(1e-2),
        MPAS_ClausiusClapeyoronCoeff(9.7546e-8);
 bool MPAS_useGLP(true);
 
@@ -68,11 +68,13 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     const std::vector<double>& betaData,
     const std::vector<double>& bedTopographyData,
     const std::vector<double>& smbData,
+    const std::vector<double>& stiffeningFactorData,
     const std::vector<double>& temperatureOnTetra,
     std::vector<double>& dissipationHeatOnTetra,
     std::vector<double>& velocityOnVertices,
     int& error,
     const double& deltat) {
+
 
 #ifndef MPAS_USE_EPETRA
   static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
@@ -119,6 +121,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
   ScalarFieldType* smbField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "surface_mass_balance");
   VectorFieldType* dirichletField = meshStruct->metaData->get_field <VectorFieldType> (stk::topology::NODE_RANK, "dirichlet_field");
   ScalarFieldType* basalFrictionField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "basal_friction");
+  ScalarFieldType* stiffeningFactorField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "stiffening_factor");
 
   for (UInt j = 0; j < numVertices3D; ++j) {
     int ib = (ordering == 0) * (j % lVertexColumnShift)
@@ -137,6 +140,9 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     sHeight[0] = elevationData[ib];
     double* bedTopography = stk::mesh::field_data(*bedTopographyField, node);
     bedTopography[0] = bedTopographyData[ib];
+    double* stiffeningFactor = stk::mesh::field_data(*stiffeningFactorField, node);
+    stiffeningFactor[0] = std::log(stiffeningFactorData[ib]);
+    
     if(smbField != NULL) {
       double* smb = stk::mesh::field_data(*smbField, node);
       smb[0] = smbData[ib];
@@ -295,14 +301,12 @@ void velocity_solver_compute_2d_grid(MPI_Comm reducedComm) {
   mpiCommT = Albany::createTeuchosCommFromMpiComm(reducedComm);
 }
 
-void velocity_solver_set_physical_parameters(double const& gravity, double const& ice_density, double const& ocean_density, double const& sea_level, double const& flowParamA,
-                                             double const& enhancementFactor, double const& flowLawExponent, double const& dynamic_thickness, bool const& use_GLP, double const& clausiusClapeyoronCoeff) {
+void velocity_solver_set_physical_parameters(double const& gravity, double const& ice_density, double const& ocean_density, double const& sea_level, double const& flowParamA, double const& flowLawExponent, double const& dynamic_thickness, bool const& use_GLP, double const& clausiusClapeyoronCoeff) {
   MPAS_gravity=gravity;
   MPAS_rho_ice = ice_density;
   MPAS_rho_seawater = ocean_density;
   MPAS_sea_level = sea_level;
   MPAS_flowParamA = flowParamA;
-  MPAS_enhancementFactor = enhancementFactor;
   MPAS_flowLawExponent = flowLawExponent;
   MPAS_dynamic_thickness = dynamic_thickness;
   MPAS_useGLP = use_GLP;
@@ -321,7 +325,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
     const std::vector<int>& trianglesPositionsOnEdge,
     const std::vector<int>& verticesOnEdge,
     const std::vector<int>& indexToEdgeID,
-    const std::vector<GO>& indexToTriangleID,
+    const std::vector<int>& indexToTriangleID,
     const std::vector<int>& dirichletNodesIds,
     const std::vector<int>& floating2dEdgesIds) {
 
@@ -329,9 +333,9 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
       new Albany::SolverFactory("albany_input.xml", mpiCommT));
   paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
 
-  Teuchos::Array<std::string> arrayRequiredFields(7); 
+  Teuchos::Array<std::string> arrayRequiredFields(8); 
   arrayRequiredFields[0]="temperature";  arrayRequiredFields[1]="ice_thickness"; arrayRequiredFields[2]="surface_height"; arrayRequiredFields[3]="bed_topography";
-  arrayRequiredFields[4]="basal_friction";  arrayRequiredFields[5]="surface_mass_balance"; arrayRequiredFields[6]="dirichlet_field";
+  arrayRequiredFields[4]="basal_friction";  arrayRequiredFields[5]="surface_mass_balance"; arrayRequiredFields[6]="dirichlet_field", arrayRequiredFields[7]="stiffening_factor";
   paramList->sublist("Problem").set("Required Fields", arrayRequiredFields);
 
   //Physical Parameters
@@ -366,9 +370,9 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   neumannBcList.set("Cubature Degree", neumannBcList.get("Cubature Degree", cub_degree));
 
   if (neumannStr.find("NBC on SS") == std::string::npos) {
-    //Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (5, 0.0));
-    //neumannBcList.set("NBC on SS basalside for DOF all set basal", neumannBcList.get("NBC on SS basalside for DOF all set basal", *inputArrayBasal));
-    //neumannBcList.set("BetaXY", neumannBcList.get("BetaXY", "Scalar Field"));
+    Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (5, 0.0));
+    neumannBcList.set("NBC on SS basalside for DOF all set basal", neumannBcList.get("NBC on SS basalside for DOF all set basal", *inputArrayBasal));
+    neumannBcList.set("BetaXY", neumannBcList.get("BetaXY", "Scalar Field"));
 
     //Lateral floating ice BCs
     Teuchos::RCP<Teuchos::Array<double> >inputArrayLateral = Teuchos::rcp(new Teuchos::Array<double> (1, rho_ice/rho_seawater));
@@ -379,7 +383,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   }
 
   //! temporary fix: basal friction needs to be a distributed parameter
-    paramList->sublist("Problem").sublist("Distributed Parameters").set("Number of Parameter Vectors",1);
+/*    paramList->sublist("Problem").sublist("Distributed Parameters").set("Number of Parameter Vectors",1);
     paramList->sublist("Problem").sublist("Distributed Parameters").sublist("Distributed Parameter 0").set("Name", "basal_friction");
 
 
@@ -389,7 +393,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
     } else {
       std::cout<<"\nWARNING: Using Basal Friction Coefficient provided in Albany input file. In order to use boundary conditions provided by MPAS, remove \"Neumann BCs\" sublist from Albany input file.\n"<<std::endl;
     }
-
+*/
   //Dirichlet BCs
   if(!paramList->sublist("Problem").isSublist("Dirichlet BCs")) {
     paramList->sublist("Problem").sublist("Dirichlet BCs").set("DBC on NS dirichlet for DOF U0 prescribe Field", "dirichlet_field");
@@ -406,10 +410,12 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   Teuchos::ParameterList& viscosityList =  paramList->sublist("Problem").sublist("FELIX Viscosity"); //empty list if FELIXViscosity not in input file.
 
   viscosityList.set("Type", viscosityList.get("Type", "Glen's Law"));
-  viscosityList.set("Glen's Law Homotopy Parameter", viscosityList.get("Glen's Law Homotopy Parameter", 1e-6));
+  double homotopy_param = (paramList->sublist("Problem").get("Solution Method", "Steady") == "Steady") ? 0.3 : 1e-6;
+  viscosityList.set("Glen's Law Homotopy Parameter", viscosityList.get("Glen's Law Homotopy Parameter", homotopy_param));
   viscosityList.set("Glen's Law A", viscosityList.get("Glen's Law A", MPAS_flowParamA));
   viscosityList.set("Glen's Law n", viscosityList.get("Glen's Law n",  MPAS_flowLawExponent));
   viscosityList.set("Flow Rate Type", viscosityList.get("Flow Rate Type", "Temperature Based"));
+  viscosityList.set("Use Stiffening Factor", viscosityList.get("Use Stiffening Factor", true));
   viscosityList.set("Extract Strain Rate Sq", viscosityList.get("Extract Strain Rate Sq", true)); //set true if not defined
 
 
@@ -422,7 +428,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   discretizationList.set("Cubature Degree", discretizationList.get("Cubature Degree", 1));  //set 1 if not defined
   discretizationList.set("Interleaved Ordering", discretizationList.get("Interleaved Ordering", true));  //set true if not define
   
-  discretizationList.sublist("Required Fields Info").set<int>("Number Of Fields",7);
+  discretizationList.sublist("Required Fields Info").set<int>("Number Of Fields",8);
   Teuchos::ParameterList& field0 = discretizationList.sublist("Required Fields Info").sublist("Field 0");
   Teuchos::ParameterList& field1 = discretizationList.sublist("Required Fields Info").sublist("Field 1");
   Teuchos::ParameterList& field2 = discretizationList.sublist("Required Fields Info").sublist("Field 2");
@@ -430,6 +436,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   Teuchos::ParameterList& field4 = discretizationList.sublist("Required Fields Info").sublist("Field 4");
   Teuchos::ParameterList& field5 = discretizationList.sublist("Required Fields Info").sublist("Field 5");
   Teuchos::ParameterList& field6 = discretizationList.sublist("Required Fields Info").sublist("Field 6");
+  Teuchos::ParameterList& field7 = discretizationList.sublist("Required Fields Info").sublist("Field 7");
 
   //set temperature
   field0.set<std::string>("Field Name", "temperature");
@@ -465,15 +472,22 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   field6.set<std::string>("Field Name", "dirichlet_field");
   field6.set<std::string>("Field Type", "Node Vector");
   field6.set<std::string>("Field Origin", "Mesh");
+  
+  //set stiffening factor
+  field7.set<std::string>("Field Name", "stiffening_factor");
+  field7.set<std::string>("Field Type", "Node Scalar");
+  field7.set<std::string>("Field Origin", "Mesh");
+  
+  
 
   discParams = Teuchos::sublist(paramList, "Discretization", true);
 
 
-  //discParams>setSublist("Side Set Discretizations");
+/*  //discParams>setSublist("Side Set Discretizations");
   Teuchos::RCP<Teuchos::Array<std::string> > sideSetsArray = Teuchos::rcp(new Teuchos::Array<std::string> (1, "basalside"));
   discParams->sublist("Side Set Discretizations").set("Side Sets", *sideSetsArray);
   discParams->sublist("Side Set Discretizations").sublist("basalside").set("Method", "SideSetSTK");
-
+*/
 
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
   albanyApp = Teuchos::rcp(new Albany::Application(mpiCommT));
@@ -481,8 +495,11 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
 
   int neq = (paramList->sublist("Problem").get<std::string>("Name") == "FELIX Coupled FO H 3D") ? 3 : 2;
 
+  //temporary fix, TODO: use GO for indexToTriangleID (need to synchronize with MPAS).
+  std::vector<GO> indexToTriangleGOID;
+  indexToTriangleGOID.assign(indexToTriangleID.begin(), indexToTriangleID.end());
   meshStruct = Teuchos::rcp(
-      new Albany::MpasSTKMeshStruct(discParams, mpiCommT, indexToTriangleID,
+      new Albany::MpasSTKMeshStruct(discParams, mpiCommT, indexToTriangleGOID,
           nGlobalTriangles, nLayers, Ordering));
   albanyApp->createMeshSpecs(meshStruct);
 
@@ -492,7 +509,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
       albanyApp->getStateMgr().getStateInfoStruct(), indexToVertexID,
       mpasIndexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
       verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
-      verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleID,
+      verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleGOID,
       dirichletNodesIds, floating2dEdgesIds,
       meshStruct->getMeshSpecs()[0]->worksetSize, nLayers, Ordering);
 }
