@@ -24,25 +24,22 @@ namespace MOR {
 template <typename Derived>
 class GaussNewtonOperatorFactoryBase : public ReducedOperatorFactory {
 public:
-	explicit GaussNewtonOperatorFactoryBase(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis);
+	explicit GaussNewtonOperatorFactoryBase(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis, bool PsiEqualsPhi, bool runWithQR);
 
 	virtual bool fullJacobianRequired(bool residualRequested, bool jacobianRequested) const;
 
-	virtual const Epetra_MultiVector &rightProjection(const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const;
 	virtual const Epetra_MultiVector &leftProjection(const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const;
 	virtual const Epetra_MultiVector &leftProjection_ProjectedSol(const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const;
 
 	virtual Teuchos::RCP<Epetra_CrsMatrix> reducedJacobianNew();
-	virtual const Epetra_CrsMatrix &reducedJacobianL(Epetra_CrsMatrix &result) const;
-	virtual const Epetra_CrsMatrix &reducedJacobianR(Epetra_CrsMatrix &result) const;
+	virtual const Epetra_CrsMatrix &reducedJacobian(Epetra_CrsMatrix &result) const;
 	virtual const Epetra_CrsMatrix &reducedJacobian_ProjectedSol(Epetra_CrsMatrix &result) const;
 
 	virtual void fullJacobianIs(const Epetra_Operator &op);
 
 	virtual Teuchos::RCP<const Epetra_MultiVector> getPremultipliedReducedBasis() const;
 	virtual Teuchos::RCP<const Epetra_MultiVector> getReducedBasis() const;
-	virtual Teuchos::RCP<const Epetra_MultiVector> getLeftBasisCopy() const;
-	virtual Teuchos::RCP<const Epetra_MultiVector> getRightBasis() const;
+	virtual Teuchos::RCP<const Epetra_MultiVector> getLeftBasis() const;
 
 	virtual Teuchos::RCP<const Epetra_MultiVector> getScaling() const;
 	virtual void setScaling(Epetra_CrsMatrix &jacobian) const;
@@ -64,6 +61,8 @@ public:
 	virtual void applyJacobian(const Epetra_MultiVector &vector) const;
 
 protected:
+	bool PsiEqualsPhi_, runWithQR_;
+	void parOut(std::string text) const;
 
 private:
 	Teuchos::RCP<const Epetra_MultiVector> reducedBasis_;
@@ -81,12 +80,12 @@ private:
 	mutable Teuchos::RCP<Ifpack_Preconditioner> preconditioner_ifpack_;
 	mutable Teuchos::RCP<Epetra_CrsMatrix> jacobian_;
 
-	Teuchos::RCP<const Epetra_MultiVector> getLeftBasis() const;
+	Teuchos::RCP<const Epetra_MultiVector> getMyLeftBasis() const;
 };
 
 class GaussNewtonOperatorFactory : public GaussNewtonOperatorFactoryBase<GaussNewtonOperatorFactory> {
 public:
-	explicit GaussNewtonOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis);
+	explicit GaussNewtonOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis, bool PsiEqualsPhi, bool runWithQR);
 
 	Teuchos::RCP<const Epetra_MultiVector> leftProjectorBasis() const;
 };
@@ -94,7 +93,7 @@ public:
 class GaussNewtonMetricOperatorFactory : public GaussNewtonOperatorFactoryBase<GaussNewtonMetricOperatorFactory> {
 public:
 	GaussNewtonMetricOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis,
-			const Teuchos::RCP<const Epetra_Operator> &metric);
+			const Teuchos::RCP<const Epetra_Operator> &metric, bool PsiEqualsPhi, bool runWithQR);
 
 	// Overridden
 	virtual void fullJacobianIs(const Epetra_Operator &op);

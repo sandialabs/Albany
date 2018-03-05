@@ -60,12 +60,16 @@ public:
 	void reset_x_init();
 	void reset_x_dot_init();
 
+	void parOut(std::string text) const;
+	void parOut(std::string text, int val) const;
+	void parOut(std::string text, double val) const;
 	void printCRSMatrix(std::string filename, const Teuchos::RCP<Epetra_CrsMatrix> CRSM, int index) const;
 	void printConstCRSMatrix(std::string filename, const Teuchos::RCP<const Epetra_CrsMatrix> CRSM, int index) const;
 	void printMultiVectorT(std::string full_filename, const Teuchos::RCP<Tpetra_MultiVector> MV, int index, bool isDist) const;
 	void printMultiVector(std::string full_filename, const Teuchos::RCP<Epetra_MultiVector> MV, int index) const;
 	void printConstMultiVector(std::string filename, const Teuchos::RCP<const Epetra_MultiVector> MV, int index) const;
 	Teuchos::RCP<Epetra_MultiVector> eye() const;
+	Teuchos::RCP<Epetra_CrsMatrix> eyeFromCRSMatrix(Teuchos::RCP<Epetra_CrsMatrix> CRSM_E) const;
 	double getTime(const InArgs& inArgs) const;
 	void nanCheck(const Teuchos::RCP<Epetra_Vector> &f) const;
 	void singularCheck(const Teuchos::RCP<Epetra_CrsMatrix> &J) const;

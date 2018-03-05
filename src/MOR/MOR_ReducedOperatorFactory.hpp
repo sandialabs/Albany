@@ -22,24 +22,20 @@ public:
 
   virtual bool fullJacobianRequired(bool residualRequested, bool jacobianRequested) const = 0;
 
-  virtual const Epetra_MultiVector &rightProjection(const Epetra_MultiVector &fullVector,
-                                                   Epetra_MultiVector &result) const = 0;
   virtual const Epetra_MultiVector &leftProjection(const Epetra_MultiVector &fullVector,
                                                    Epetra_MultiVector &result) const = 0;
   virtual const Epetra_MultiVector &leftProjection_ProjectedSol(const Epetra_MultiVector &fullVector,
                                                    Epetra_MultiVector &result) const = 0;
 
   virtual Teuchos::RCP<Epetra_CrsMatrix> reducedJacobianNew() = 0;
-  virtual const Epetra_CrsMatrix &reducedJacobianL(Epetra_CrsMatrix &result) const = 0;
-  virtual const Epetra_CrsMatrix &reducedJacobianR(Epetra_CrsMatrix &result) const = 0;
+  virtual const Epetra_CrsMatrix &reducedJacobian(Epetra_CrsMatrix &result) const = 0;
   virtual const Epetra_CrsMatrix &reducedJacobian_ProjectedSol(Epetra_CrsMatrix &result) const = 0;
 
   virtual void fullJacobianIs(const Epetra_Operator &op) = 0;
 
   virtual Teuchos::RCP<const Epetra_MultiVector> getPremultipliedReducedBasis() const = 0;
   virtual Teuchos::RCP<const Epetra_MultiVector> getReducedBasis() const = 0;
-  virtual Teuchos::RCP<const Epetra_MultiVector> getLeftBasisCopy() const = 0;
-  virtual Teuchos::RCP<const Epetra_MultiVector> getRightBasis() const = 0;
+  virtual Teuchos::RCP<const Epetra_MultiVector> getLeftBasis() const = 0;
 
   virtual Teuchos::RCP<const Epetra_MultiVector> getScaling() const = 0;
   virtual void setScaling(Epetra_CrsMatrix &jacobian) const = 0;
