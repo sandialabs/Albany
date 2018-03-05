@@ -39,32 +39,53 @@ with open('out', 'r') as log_file:
     print log_file.read() 
 
 
-log_file_name = 'mismatches'
-logfile = open(log_file_name, 'r')
-
-#specify tolerance to determine test failure / passing
-tolerance = 1.0e-9; 
-#mismatch = [9.8825e-06, 4.9986e-06, 4.9991e-06, 0.039632, 0.40334, 0.26009, 0.020565];
-mismatch = [1.1039e-05, 4.9986e-06, 4.9991e-06, 0.039632, 0.40334, 0.26009, 0.020565];
-
-
 result = 0
-i = 0
-for line in open(log_file_name):
-  s = line
-  d = float(s)
-  m = d - mismatch[i]
-  print 'mismatch', m
-  i = i + 1
-  if (m > tolerance or m < -tolerance):
-    result = result+1 
+
+log_file_name = 'mismatches'
+log_file_exists = True
+
+if os.path.isfile(log_file_name) == False:
+    result = 100
+    log_file_exists = False      
+
+if log_file_exists == True: 
+    logfile = open(log_file_name, 'r')
+    
+    length_mismatches = 0 
+
+    i = 0
+    with open(log_file_name) as f:
+      for i, l in enumerate(f):
+        pass
+    length_mismatches = i + 1
+
+    if length_mismatches != 7:
+      result = 100
+    else: 
+      #specify tolerance to determine test failure / passing
+      tolerance = 1.0e-9; 
+      #mismatch = [9.8825e-06, 4.9986e-06, 4.9991e-06, 0.039632, 0.40334, 0.26009, 0.020565];
+      mismatch = [1.1039e-05, 4.9986e-06, 4.9991e-06, 0.039632, 0.40334, 0.26009, 0.020565];
+
+      i = 0
+      for line in open(log_file_name):
+        s = line
+        d = float(s)
+        m = d - mismatch[i]
+        print 'mismatch', m
+        i = i + 1
+      if (m > tolerance or m < -tolerance):
+        result = result+1 
+
+      with open(log_file_name, 'r') as log_file:
+        print log_file.read() 
+
 
 if result != 0:
     print "result is %s" % result
     print "%s test has failed" % name
     sys.exit(result)
 
-with open(log_file_name, 'r') as log_file:
-    print log_file.read() 
-
 sys.exit(result)
+
+
