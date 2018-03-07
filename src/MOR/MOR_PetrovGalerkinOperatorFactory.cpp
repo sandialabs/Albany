@@ -37,27 +37,21 @@ bool PetrovGalerkinOperatorFactory::fullJacobianRequired(bool residualRequested,
   //return jacobianRequested;
 }
 
-const Epetra_MultiVector & PetrovGalerkinOperatorFactory::rightProjection(const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const {
-  const int err = reduce(*projectionBasis_, fullVec, result);
-  TEUCHOS_TEST_FOR_EXCEPT(err != 0);
-  return result;
-}
-
 const Epetra_MultiVector & PetrovGalerkinOperatorFactory::leftProjection(const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const {
   const int err = reduce(*projectionBasis_, fullVec, result);
   TEUCHOS_TEST_FOR_EXCEPT(err != 0);
   return result;
 }
 
-RCP<const Epetra_MultiVector> PetrovGalerkinOperatorFactory::getRightBasis() const {
-  return jacobianFactory_.rightProjector();
+RCP<const Epetra_MultiVector> PetrovGalerkinOperatorFactory::getReducedBasis() const {
+  return projectionBasis_;
 }
 
 RCP<const Epetra_MultiVector> PetrovGalerkinOperatorFactory::getPremultipliedReducedBasis() const {
 	return jacobianFactory_.premultipliedRightProjector();
 }
 
-RCP<const Epetra_MultiVector> PetrovGalerkinOperatorFactory::getLeftBasisCopy() const {
+RCP<const Epetra_MultiVector> PetrovGalerkinOperatorFactory::getLeftBasis() const {
 	return projectionBasis_;
 }
 
@@ -65,11 +59,7 @@ RCP<Epetra_CrsMatrix> PetrovGalerkinOperatorFactory::reducedJacobianNew() {
   return jacobianFactory_.reducedMatrixNew();
 }
 
-const Epetra_CrsMatrix & PetrovGalerkinOperatorFactory::reducedJacobianL(Epetra_CrsMatrix &result) const {
-  return jacobianFactory_.reducedMatrix(*projectionBasis_, result);
-}
-
-const Epetra_CrsMatrix & PetrovGalerkinOperatorFactory::reducedJacobianR(Epetra_CrsMatrix &result) const {
+const Epetra_CrsMatrix & PetrovGalerkinOperatorFactory::reducedJacobian(Epetra_CrsMatrix &result) const {
   return jacobianFactory_.reducedMatrix(*projectionBasis_, result);
 }
 

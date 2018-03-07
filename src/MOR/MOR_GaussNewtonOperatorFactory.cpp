@@ -16,10 +16,6 @@
 
 #include "EpetraExt_MultiVectorOut.h"
 
-#define runQR false
-
-#define PsiEqualsPhi false
-
 // Set invJacPrec to true only if you REALLY want to enable preconditioning
 //   with the inverse Jacobian.  It's a memory hog and causes issues for large
 //   problems (i.e. PCAP), so it's commented out for now.
@@ -29,10 +25,20 @@ namespace MOR {
 
 using ::Teuchos::RCP;
 
+
 template <typename Derived>
-GaussNewtonOperatorFactoryBase<Derived>::GaussNewtonOperatorFactoryBase(const RCP<const Epetra_MultiVector> &reducedBasis) :
+void GaussNewtonOperatorFactoryBase<Derived>::parOut(std::string text) const
+{
+	if (reducedBasis_->Comm().MyPID() == 0)
+		std::cout << text << std::endl;
+}
+
+template <typename Derived>
+GaussNewtonOperatorFactoryBase<Derived>::GaussNewtonOperatorFactoryBase(const RCP<const Epetra_MultiVector> &reducedBasis, bool PsiEqualsPhi, bool runWithQR) :
 reducedBasis_(reducedBasis),
-jacobianFactory_(reducedBasis_)
+jacobianFactory_(reducedBasis_),
+PsiEqualsPhi_(PsiEqualsPhi),
+runWithQR_(runWithQR)
 {
 	// Nothing to do
 
@@ -45,40 +51,41 @@ jacobianFactory_(reducedBasis_)
 	preconditioner_ = Teuchos::rcp(new Epetra_MultiVector(reducedBasis->Map(), reducedBasis->GlobalLength(), true));
 	int num_rows = preconditioner_->MyLength();
 	int num_vecs = preconditioner_->NumVectors();
-	printf("preconditioner has %d rows and %d columns\n",num_rows,num_vecs);
+	if (reducedBasis_->Comm().MyPID() == 0)
+		std::cout << "preconditioner has " << num_rows << " rows and " << num_vecs << " columns" std::endl;
 	//set initial preconditioner to identity matrix in case used before computed
 	for (int ind_rows = 0; ind_rows < num_rows; ind_rows++)
 		preconditioner_->ReplaceMyValue(ind_rows, ind_rows, 1.0);
 	//preconditioner_->ReplaceGlobalValue(ind_rows, ind_rows, 1.0);
-
-#if PsiEqualsPhi
-	leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.rightProjector()));
-#else //PsiEqualsPhi
-	leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.premultipliedRightProjector()));
-#endif //PsiEqualsPhi
 #endif //invJacPrec
 
-#if runQR
-	// QR Initialization
-	int num_vecs_tot;
-	num_vecs_tot = jacobianFactory_.premultipliedRightProjector()->NumVectors();
+	if (PsiEqualsPhi_)
+		leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.rightProjector()));
+	else //PsiEqualsPhi
+		leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.premultipliedRightProjector()));
 
-	// Create a view of the Psi such that when we edit jacphi_int_,
-	// we modify Psi as well (and vice versa).
-	jacphi_int_ = Teuchos::rcp(new Epetra_MultiVector(View,*jacobianFactory_.premultipliedRightProjector(),0,num_vecs_tot));
+	if (runWithQR_)
+	{
+		// QR Initialization
+		int num_vecs_tot;
+		num_vecs_tot = jacobianFactory_.premultipliedRightProjector()->NumVectors();
 
-	Q_ = Teuchos::rcp(new Epetra_MultiVector(*jacphi_int_));
-	R_ = Teuchos::rcp(new Teuchos::SerialDenseMatrix<int,double> (num_vecs_tot,num_vecs_tot));
+		// Create a view of the Psi such that when we edit jacphi_int_,
+		// we modify Psi as well (and vice versa).
+		jacphi_int_ = Teuchos::rcp(new Epetra_MultiVector(View,*jacobianFactory_.premultipliedRightProjector(),0,num_vecs_tot));
 
-	tsqr_params_ = Teuchos::rcp(new Teuchos::ParameterList());
+		Q_ = Teuchos::rcp(new Epetra_MultiVector(*jacphi_int_));
+		R_ = Teuchos::rcp(new Teuchos::SerialDenseMatrix<int,double> (num_vecs_tot,num_vecs_tot));
 
-	////////////////  FROM THE TRILINOS CODE...  //////////////////////
-	// TSQR (Tall Skinny QR factorization) is an orthogonalization
-	// kernel that is as accurate as Householder QR, yet requires only
-	// \f$2 \log P\f$ messages between $P$ MPI processes, independently
-	// of the number of columns in the multivector.
-	tsqr_adaptor_ = Teuchos::rcp(new Epetra::TsqrAdaptor(tsqr_params_));
-#endif //runQR
+		tsqr_params_ = Teuchos::rcp(new Teuchos::ParameterList());
+
+		////////////////  FROM THE TRILINOS CODE...  //////////////////////
+		// TSQR (Tall Skinny QR factorization) is an orthogonalization
+		// kernel that is as accurate as Householder QR, yet requires only
+		// \f$2 \log P\f$ messages between $P$ MPI processes, independently
+		// of the number of columns in the multivector.
+		tsqr_adaptor_ = Teuchos::rcp(new Epetra::TsqrAdaptor(tsqr_params_));
+	} //runWithQR
 }
 
 template <typename Derived>
@@ -87,20 +94,10 @@ bool GaussNewtonOperatorFactoryBase<Derived>::fullJacobianRequired(bool residual
 }
 
 template <typename Derived>
-const Epetra_MultiVector &GaussNewtonOperatorFactoryBase<Derived>::rightProjection(
-		const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const {
-	//printf("    Computes phi^T*res\n");
-	int err = reduce(*jacobianFactory_.rightProjector(), fullVec, result);
-	TEUCHOS_TEST_FOR_EXCEPT(err != 0);
-	return result;
-}
-
-template <typename Derived>
 const Epetra_MultiVector &GaussNewtonOperatorFactoryBase<Derived>::leftProjection(
 		const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const {
-	//printf("    Computes psi^T*res\n");
-	int err = 0;
-	err = reduce(*this->getLeftBasis(), fullVec, result);
+	//parOut("    Computes psi^T*res");
+	int err = reduce(*this->getMyLeftBasis(), fullVec, result);
 	TEUCHOS_TEST_FOR_EXCEPT(err != 0);
 	return result;
 }
@@ -108,7 +105,7 @@ const Epetra_MultiVector &GaussNewtonOperatorFactoryBase<Derived>::leftProjectio
 template <typename Derived>
 const Epetra_MultiVector &GaussNewtonOperatorFactoryBase<Derived>::leftProjection_ProjectedSol(
 		const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const {
-	//printf("    Computes phi^T*res\n");
+	//parOut("    Computes phi^T*res");
 	const int err = reduce(*this->getReducedBasis(), fullVec, result);
 	TEUCHOS_TEST_FOR_EXCEPT(err != 0);
 	return result;
@@ -120,13 +117,8 @@ RCP<Epetra_CrsMatrix> GaussNewtonOperatorFactoryBase<Derived>::reducedJacobianNe
 }
 
 template <typename Derived>
-const Epetra_CrsMatrix &GaussNewtonOperatorFactoryBase<Derived>::reducedJacobianL(Epetra_CrsMatrix &result) const {
-	return jacobianFactory_.reducedMatrix(*this->getLeftBasis(), result);
-}
-
-template <typename Derived>
-const Epetra_CrsMatrix &GaussNewtonOperatorFactoryBase<Derived>::reducedJacobianR(Epetra_CrsMatrix &result) const {
-	return jacobianFactory_.reducedMatrix(*this->getRightBasis(), result);
+const Epetra_CrsMatrix &GaussNewtonOperatorFactoryBase<Derived>::reducedJacobian(Epetra_CrsMatrix &result) const {
+	return jacobianFactory_.reducedMatrix(*this->getMyLeftBasis(), result);
 }
 
 template <typename Derived>
@@ -136,10 +128,8 @@ const Epetra_CrsMatrix &GaussNewtonOperatorFactoryBase<Derived>::reducedJacobian
 	ones.PutScalar(1.0);
 
 	result.PutScalar(0.0);
-	int err = 0;
-	err = result.ReplaceDiagonalValues(ones);
-	if (err != 0)
-		printf("error in replacing diagonal values\n");
+	int err = result.ReplaceDiagonalValues(ones);
+	TEUCHOS_TEST_FOR_EXCEPTION(err!=0, std::runtime_error, "Error in replacing diagonal values.\n");
 	return result;
 }
 
@@ -147,36 +137,38 @@ template <typename Derived>
 void GaussNewtonOperatorFactoryBase<Derived>::fullJacobianIs(const Epetra_Operator &op) {
 
 	jacobianFactory_.fullJacobianIs(op);
+	if (PsiEqualsPhi_)
+		leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.rightProjector()));
+	else //PsiEqualsPhi
+		leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.premultipliedRightProjector()));
 
-#if PsiEqualsPhi
-	leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.rightProjector()));
-#else //PsiEqualsPhi
-	leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.premultipliedRightProjector()));
-#endif //PsiEqualsPhi
+	if (runWithQR_)
+	{
+		Teuchos::RCP<Epetra_MultiVector> A = Teuchos::rcp(new Epetra_MultiVector(*jacphi_int_));
 
-#if runQR
-	Teuchos::RCP<Epetra_MultiVector> A = Teuchos::rcp(new Epetra_MultiVector(*jacphi_int_));
+		//EpetraExt::MultiVectorToMatrixMarketFile("A.mm", *A); (if you want to output the data)
 
-	//EpetraExt::MultiVectorToMatrixMarketFile("A.mm", *A); (if you want to output the data)
+		// NOTE: this is NOT the same as [Q,R] = qr(A,0) in Matlab, even in serial
+		// (even though the documentation in Trilinos might lead you to think it is)
+		tsqr_adaptor_->factorExplicit(*A,*Q_,*R_);
 
-	// NOTE: this is NOT the same as [Q,R] = qr(A,0) in Matlab, even in serial
-	// (even though the documentation in Trilinos might lead you to think it is)
-	tsqr_adaptor_->factorExplicit(*A,*Q_,*R_);
+		leftbasis_->Scale(1.0, *Q_);
 
-	leftbasis_->Scale(1.0, *Q_);
-
-	/* (if you want to output the data)
-	EpetraExt::MultiVectorToMatrixMarketFile("Q.mm", *Q_);
-	std::cout << "R = " << R_ << std::endl;
-	int num_vecs_tot = jacobianFactory_.premultipliedRightProjector()->NumVectors();
-	for (int i=0; i<num_vecs_tot; i++){
-		for (int j=0; j<num_vecs_tot-1; j++){
-			std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << (*R_)(i,j) << ", ";
+		/* (if you want to output the data)
+		EpetraExt::MultiVectorToMatrixMarketFile("Q.mm", *Q_);
+		if (reducedBasis_->Comm().MyPID() == 0)
+			std::cout << "R = " << R_ << std::endl;
+		int num_vecs_tot = jacobianFactory_.premultipliedRightProjector()->NumVectors();
+		for (int i=0; i<num_vecs_tot; i++){
+			for (int j=0; j<num_vecs_tot-1; j++){
+				if (reducedBasis_->Comm().MyPID() == 0)
+					std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << (*R_)(i,j) << ", ";
+			}
+			if (reducedBasis_->Comm().MyPID() == 0)
+				std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << (*R_)(i,num_vecs_tot-1) << std::endl;
 		}
-		std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << (*R_)(i,num_vecs_tot-1) << std::endl;
-	}
-	*/
-#endif //runQR
+		*/
+	} //runWithQR
 }
 
 template <typename Derived>
@@ -198,7 +190,7 @@ RCP<const Epetra_MultiVector> GaussNewtonOperatorFactoryBase<Derived>::getScalin
 template <typename Derived>
 void GaussNewtonOperatorFactoryBase<Derived>::setScaling(Epetra_CrsMatrix &jacobian) const
 {
-	printf("Computing Scaling Factors\n");
+	parOut("Computing Scaling Factors");
 	int num_rows = scaling_->MyLength();
 	int num_vecs = scaling_->NumVectors();
 	TEUCHOS_ASSERT(num_rows == jacobian.NumMyRows());
@@ -226,7 +218,8 @@ void GaussNewtonOperatorFactoryBase<Derived>::setScaling(Epetra_CrsMatrix &jacob
 		data_array[0][ind_rows] = 1.0;
 		for (int ind_vals = 0; ind_vals < value_count; ind_vals++)
 		{
-			//printf(" %d : %d < %d : %d\n",ind_rows,ind_vals,value_count,value_indices[ind_vals]);
+			//if (reducedBasis_->Comm().MyPID() == 0)
+			//	printf(" %d : %d < %d : %d\n",ind_rows,ind_vals,value_count,value_indices[ind_vals]);
 			if (value_indices[ind_vals] == ind_rows)
 			{
 				data_array[0][ind_rows] = 1.0/row_values[ind_vals];
@@ -241,7 +234,7 @@ void GaussNewtonOperatorFactoryBase<Derived>::applyScaling(const Epetra_MultiVec
 {
 	//NOTE:  vector is "const" in the sense that this function does not change what is pointed to,
 	//       but the values of the MultiVector are modified.
-	printf("Applying Scaling Factors\n");
+	parOut("Applying Scaling Factors");
 	int num_rows = vector.MyLength();
 	int num_vecs = vector.NumVectors();
 	TEUCHOS_ASSERT(num_rows == scaling_->MyLength());
@@ -274,7 +267,7 @@ void GaussNewtonOperatorFactoryBase<Derived>::setPreconditionerDirectly(Epetra_M
 template <typename Derived>
 void GaussNewtonOperatorFactoryBase<Derived>::setPreconditioner(Epetra_CrsMatrix &jacobian) const
 {
-	printf("Computing Preconditioner\n");
+	parOut("Computing Preconditioner");
 
 	preconditioner_->PutScalar(0.0);
 	Teuchos::RCP<Epetra_MultiVector> identity = Teuchos::rcp(new Epetra_MultiVector(*preconditioner_));
@@ -292,7 +285,7 @@ void GaussNewtonOperatorFactoryBase<Derived>::setPreconditioner(Epetra_CrsMatrix
 	}
 
 	{
-		printf("  start\n");
+		parOut("  start");
 		Epetra_CrsMatrix* aaa = &jacobian;
 		Epetra_MultiVector* xxx = new Epetra_MultiVector(View,*preconditioner_,0,preconditioner_->NumVectors());
 		Epetra_MultiVector* bbb = new Epetra_MultiVector(View,*identity,0,identity->NumVectors());
@@ -301,8 +294,7 @@ void GaussNewtonOperatorFactoryBase<Derived>::setPreconditioner(Epetra_CrsMatrix
 		Amesos factory;
 		std::string solvertype = "Klu";
 		solver = factory.Create(solvertype, problem);
-		if (solver == 0)
-			std::cerr << "Specified solver is not available\n";
+		TEUCHOS_TEST_FOR_EXCEPTION(solver!=0, std::runtime_error, "Solver type" + solvertype + "is not available.\n");
 		Teuchos::ParameterList list;
 		list.set("PrintTiming",true);
 		list.set("PrintStatus",true);
@@ -315,7 +307,7 @@ void GaussNewtonOperatorFactoryBase<Derived>::setPreconditioner(Epetra_CrsMatrix
 		ierr = solver->Solve();
 		TEUCHOS_TEST_FOR_EXCEPTION(ierr!=0, std::runtime_error, "Error when calling Solve.\n");
 		delete solver;
-		printf("  finish\n");
+		parOut("  finish");
 	}
 }
 
@@ -324,7 +316,7 @@ void GaussNewtonOperatorFactoryBase<Derived>::applyPreconditioner(const Epetra_M
 {
 	//NOTE:  vector is "const" in the sense that this function does not change what is pointed to,
 	//       but the values of the MultiVector are modified.
-	printf("Applying Preconditioner\n");
+	parOut("Applying Preconditioner");
 	Teuchos::RCP<Epetra_MultiVector> temp = Teuchos::rcp(new Epetra_MultiVector(vector));
 	Teuchos::RCP<Epetra_MultiVector> temp2 = Teuchos::rcp(new Epetra_MultiVector(View, vector, 0, vector.NumVectors()));
 
@@ -344,7 +336,7 @@ void GaussNewtonOperatorFactoryBase<Derived>::applyPreconditionerTwice(const Epe
 {
 	//NOTE:  vector is "const" in the sense that this function does not change what is pointed to,
 	//       but the values of the MultiVector are modified.
-	printf("Applying Preconditioner, TWICE\n");
+	parOut("Applying Preconditioner, TWICE");
 	Teuchos::RCP<Epetra_MultiVector> temp = Teuchos::rcp(new Epetra_MultiVector(vector));
 	Teuchos::RCP<Epetra_MultiVector> temp2 = Teuchos::rcp(new Epetra_MultiVector(vector));
 	Teuchos::RCP<Epetra_MultiVector> temp3 = Teuchos::rcp(new Epetra_MultiVector(View, vector, 0, vector.NumVectors()));
@@ -365,10 +357,10 @@ RCP<Ifpack_Preconditioner> GaussNewtonOperatorFactoryBase<Derived>::getPrecondit
 template <typename Derived>
 void GaussNewtonOperatorFactoryBase<Derived>::setPreconditionerIfpack(Epetra_CrsMatrix &jacobian, std::string ifpackType) const
 {
-	printf("Computing Preconditioner (Ifpack)\n");
+	parOut("Computing Preconditioner (Ifpack)");
 
 	{
-		printf("  start\n");
+		parOut("  start");
 		Epetra_CrsMatrix* aaa = &jacobian;
 		Ifpack PrecFactory;
 		std::string PrecType;
@@ -423,6 +415,10 @@ void GaussNewtonOperatorFactoryBase<Derived>::setPreconditionerIfpack(Epetra_Crs
 			PrecType = "Amesos";
 			//List.set("amesos: solver type","Amesos_Dscpack"); //Amesos_Klu
 		}
+		else if (ifpackType.compare("Identity") == 0)
+		{
+			PrecType = "Chebyshev";
+		}
 
 		int OverlapLevel = 0; // must be >= 0. If Comm.NumProc() == 1, it is ignored.
 		preconditioner_ifpack_ = Teuchos::rcp(PrecFactory.Create(PrecType, aaa, OverlapLevel));
@@ -430,25 +426,25 @@ void GaussNewtonOperatorFactoryBase<Derived>::setPreconditionerIfpack(Epetra_Crs
 
 		int err;
 		err = preconditioner_ifpack_->SetParameters(List);
-		std::cout << err << std::endl;
 		TEUCHOS_ASSERT(err == 0);
 		err = preconditioner_ifpack_->Initialize();
-		std::cout << err << std::endl;
 		TEUCHOS_ASSERT(err == 0);
 		err = preconditioner_ifpack_->Compute();
-		std::cout << err << std::endl;
 		TEUCHOS_ASSERT(err == 0);
 
 		TEUCHOS_ASSERT(preconditioner_ifpack_->IsInitialized() == true);
 		TEUCHOS_ASSERT(preconditioner_ifpack_->IsComputed() == true);
 
 		/*
-		std::cout << preconditioner_ifpack_->NumInitialize() << std::endl;
-		std::cout << preconditioner_ifpack_->NumCompute() << std::endl;
-		std::cout << preconditioner_ifpack_->NumApplyInverse() << std::endl;
-		std::cout << *preconditioner_ifpack_ << std::endl;
+		if (reducedBasis_->Comm().MyPID() == 0)
+		{
+			std::cout << preconditioner_ifpack_->NumInitialize() << std::endl;
+			std::cout << preconditioner_ifpack_->NumCompute() << std::endl;
+			std::cout << preconditioner_ifpack_->NumApplyInverse() << std::endl;
+			std::cout << *preconditioner_ifpack_ << std::endl;
+		}
 		*/
-		printf("  finish\n");
+		parOut("  finish");
 	}
 }
 
@@ -457,20 +453,23 @@ void GaussNewtonOperatorFactoryBase<Derived>::applyPreconditionerIfpack(const Ep
 {
 	//NOTE:  vector is "const" in the sense that this function does not change what is pointed to,
 	//       but the values of the MultiVector are modified.
-	printf("Applying Preconditioner\n");
+	parOut("Applying Preconditioner");
 	Teuchos::RCP<Epetra_MultiVector> temp = Teuchos::rcp(new Epetra_MultiVector(vector));
 	Teuchos::RCP<Epetra_MultiVector> temp2 = Teuchos::rcp(new Epetra_MultiVector(View, vector, 0, vector.NumVectors()));
 
 	TEUCHOS_ASSERT(preconditioner_ifpack_ != Teuchos::null);
 	TEUCHOS_ASSERT(preconditioner_ifpack_->IsInitialized() == true);
 	TEUCHOS_ASSERT(preconditioner_ifpack_->IsComputed() == true);
-/*
-	std::cout << preconditioner_ifpack_->NumInitialize() << std::endl;
-	std::cout << preconditioner_ifpack_->NumCompute() << std::endl;
-	std::cout << preconditioner_ifpack_->NumApplyInverse() << std::endl;
-	std::cout << preconditioner_ifpack_ << std::endl;
-	std::cout << *preconditioner_ifpack_ << std::endl;
-*/
+	/*
+	if (reducedBasis_->Comm().MyPID() == 0)
+	{
+		std::cout << preconditioner_ifpack_->NumInitialize() << std::endl;
+		std::cout << preconditioner_ifpack_->NumCompute() << std::endl;
+		std::cout << preconditioner_ifpack_->NumApplyInverse() << std::endl;
+		std::cout << preconditioner_ifpack_ << std::endl;
+		std::cout << *preconditioner_ifpack_ << std::endl;
+	}
+	*/
 	int err = preconditioner_ifpack_->ApplyInverse(*temp,*temp2);
 
 	std::string errstr = "The preconditioner application failed in applyPreconditionerIfpack (error code " + std::to_string(err) + ")\n";
@@ -482,7 +481,7 @@ void GaussNewtonOperatorFactoryBase<Derived>::applyPreconditionerIfpackTwice(con
 {
 	//NOTE:  vector is "const" in the sense that this function does not change what is pointed to,
 	//       but the values of the MultiVector are modified.
-	printf("Applying Preconditioner\n");
+	parOut("Applying Preconditioner");
 	Teuchos::RCP<Epetra_MultiVector> temp = Teuchos::rcp(new Epetra_MultiVector(vector));
 	Teuchos::RCP<Epetra_MultiVector> temp2 = Teuchos::rcp(new Epetra_MultiVector(vector));
 	Teuchos::RCP<Epetra_MultiVector> temp3 = Teuchos::rcp(new Epetra_MultiVector(View, vector, 0, vector.NumVectors()));
@@ -491,16 +490,21 @@ void GaussNewtonOperatorFactoryBase<Derived>::applyPreconditionerIfpackTwice(con
 	TEUCHOS_ASSERT(preconditioner_ifpack_->IsInitialized() == true);
 	TEUCHOS_ASSERT(preconditioner_ifpack_->IsComputed() == true);
 
-	std::cout << preconditioner_ifpack_->NumInitialize() << std::endl;
-	std::cout << preconditioner_ifpack_->NumCompute() << std::endl;
-	std::cout << preconditioner_ifpack_->NumApplyInverse() << std::endl;
-	std::cout << preconditioner_ifpack_ << std::endl;
-	std::cout << *preconditioner_ifpack_ << std::endl;
+	/*
+	if (reducedBasis_->Comm().MyPID() == 0)
+	{
+		std::cout << preconditioner_ifpack_->NumInitialize() << std::endl;
+		std::cout << preconditioner_ifpack_->NumCompute() << std::endl;
+		std::cout << preconditioner_ifpack_->NumApplyInverse() << std::endl;
+		std::cout << preconditioner_ifpack_ << std::endl;
+		std::cout << *preconditioner_ifpack_ << std::endl;
+	}
+	*/
 
 	preconditioner_ifpack_->ApplyInverse(*temp,*temp2);
 	int err = preconditioner_ifpack_->SetUseTranspose(true);
 	if (err==-1)
-		printf("This Ifpack implementation doesn't support using a transposed preconditioner!\n");
+		parOut("This Ifpack implementation doesn't support using a transposed preconditioner!");
 	TEUCHOS_ASSERT(err == 0);
 	preconditioner_ifpack_->ApplyInverse(*temp2,*temp3);
 }
@@ -514,7 +518,7 @@ RCP<const Epetra_CrsMatrix> GaussNewtonOperatorFactoryBase<Derived>::getJacobian
 template <typename Derived>
 void GaussNewtonOperatorFactoryBase<Derived>::setJacobian(Epetra_CrsMatrix &jacobian) const
 {
-	printf("Copying Jacobian for Projected Solution\n");
+	parOut("Copying Jacobian for Projected Solution");
 
 	jacobian_ = Teuchos::rcp(new Epetra_CrsMatrix(jacobian));
 
@@ -525,9 +529,9 @@ void GaussNewtonOperatorFactoryBase<Derived>::applyJacobian(const Epetra_MultiVe
 {
 	//NOTE:  vector is "const" in the sense that this function does not change what is pointed to,
 	//       but the values of the MultiVector are modified.
-	printf("Applying Jacobian\n");
+	parOut("Applying Jacobian");
 	{
-		printf("  start\n");
+		parOut("  start");
 		Epetra_CrsMatrix* aaa = jacobian_.getRawPtr();
 		Epetra_MultiVector* bbb = new Epetra_MultiVector(vector);
 		Epetra_MultiVector* xxx = new Epetra_MultiVector(View, vector, 0, vector.NumVectors());
@@ -550,45 +554,38 @@ void GaussNewtonOperatorFactoryBase<Derived>::applyJacobian(const Epetra_MultiVe
 		ierr = solver->Solve();
 		TEUCHOS_TEST_FOR_EXCEPTION(ierr!=0, std::runtime_error, "Error when calling Solve.\n");
 		delete solver;
-		printf("  finish\n");
+		parOut("  finish");
 		delete xxx;
 		delete bbb;
 	}
 }
 
 template <typename Derived>
-RCP<const Epetra_MultiVector> GaussNewtonOperatorFactoryBase<Derived>::getLeftBasis() const {
+RCP<const Epetra_MultiVector> GaussNewtonOperatorFactoryBase<Derived>::getMyLeftBasis() const {
 	return static_cast<const Derived *>(this)->leftProjectorBasis();
 }
 
 template <typename Derived>
-RCP<const Epetra_MultiVector> GaussNewtonOperatorFactoryBase<Derived>::getRightBasis() const {
-	return jacobianFactory_.rightProjector();
-}
-
-template <typename Derived>
-RCP<const Epetra_MultiVector> GaussNewtonOperatorFactoryBase<Derived>::getLeftBasisCopy() const {
+RCP<const Epetra_MultiVector> GaussNewtonOperatorFactoryBase<Derived>::getLeftBasis() const {
 	return leftbasis_;
 }
 
-GaussNewtonOperatorFactory::GaussNewtonOperatorFactory(const RCP<const Epetra_MultiVector> &reducedBasis) :
-		  GaussNewtonOperatorFactoryBase<GaussNewtonOperatorFactory>(reducedBasis)
+GaussNewtonOperatorFactory::GaussNewtonOperatorFactory(const RCP<const Epetra_MultiVector> &reducedBasis, bool PsiEqualsPhi, bool runWithQR) :
+		  GaussNewtonOperatorFactoryBase<GaussNewtonOperatorFactory>(reducedBasis, PsiEqualsPhi, runWithQR)
 		  {
 	// Nothing to do
 		  }
 
 RCP<const Epetra_MultiVector> GaussNewtonOperatorFactory::leftProjectorBasis() const {
-#if PsiEqualsPhi
-	return this->getReducedBasis();
-#else //PsiEqualsPhi
-	return this->getPremultipliedReducedBasis();
-#endif //PsiEqualsPhi
+	return this->getLeftBasis();
 }
 
 GaussNewtonMetricOperatorFactory::GaussNewtonMetricOperatorFactory(
 		const RCP<const Epetra_MultiVector> &reducedBasis,
-		const Teuchos::RCP<const Epetra_Operator> &metric) :
-		GaussNewtonOperatorFactoryBase<GaussNewtonMetricOperatorFactory>(reducedBasis),
+		const Teuchos::RCP<const Epetra_Operator> &metric,
+		bool PsiEqualsPhi,
+		bool runWithQR) :
+		GaussNewtonOperatorFactoryBase<GaussNewtonMetricOperatorFactory>(reducedBasis, PsiEqualsPhi, runWithQR),
 		metric_(metric),
 		premultipliedLeftProjector_(new Epetra_MultiVector(metric->OperatorDomainMap(), reducedBasis->NumVectors(), false))
 		{
@@ -605,11 +602,8 @@ void GaussNewtonMetricOperatorFactory::fullJacobianIs(const Epetra_Operator &op)
 }
 
 void GaussNewtonMetricOperatorFactory::updatePremultipliedLeftProjector() {
-#if PsiEqualsPhi
-	const int err = metric_->Apply(*this->getReducedBasis(), *premultipliedLeftProjector_);
-#else //PsiEqualsPhi
-	const int err = metric_->Apply(*this->getPremultipliedReducedBasis(), *premultipliedLeftProjector_);
-#endif //PsiEqualsPhi
+	int err = 0;
+	err = metric_->Apply(*this->getLeftBasis(), *premultipliedLeftProjector_);
 	TEUCHOS_TEST_FOR_EXCEPT(err != 0);
 }
 

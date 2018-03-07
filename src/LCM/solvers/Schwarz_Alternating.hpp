@@ -20,6 +20,23 @@
 
 namespace LCM {
 
+//
+// These are to mirror Albany::StateArrays, which are shards:Arrays
+// under the hood, which in turn use for storage a raw pointer that comes
+// from the depths of STK. Thus, to make a copy of the states without
+// touching that pointer, we create these so that the values can be
+// passed back and forth between LCM::StateArrays and Albany::StateArrays
+// whenever we need to reset states.
+//
+using StateArray = std::map<std::string, std::vector<ST>>;
+using StateArrayVec = std::vector<StateArray>;
+
+struct StateArrays
+{
+  StateArrayVec element_state_arrays;
+  StateArrayVec node_state_arrays;
+};
+
 ///
 /// SchwarzAlternating coupling class
 ///
@@ -262,7 +279,7 @@ private:
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
   this_acce_;
 
-  mutable std::vector<Albany::StateArrays>
+  mutable std::vector<LCM::StateArrays>
   internal_states_;
 
   mutable std::vector<bool> 

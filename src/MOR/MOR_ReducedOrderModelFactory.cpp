@@ -34,6 +34,7 @@ using ::Teuchos::sublist;
 using ::Teuchos::Tuple;
 using ::Teuchos::tuple;
 
+
 ReducedOrderModelFactory::ReducedOrderModelFactory(
     const Teuchos::RCP<ReducedSpaceFactory> &spaceFactory,
     const RCP<ParameterList> &parentParams) :
@@ -67,67 +68,21 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
                                projectionType + " not in " + allowedProjectionTypes.toString());
 
     const int num_DBC_modes = romParams->get("Number of DBC Modes", 0);
-    printf("Parameter read: num_DBC_modes = %d.\n", num_DBC_modes);
-    if (projectionType == allowedProjectionTypes[0])
-    {
-      printf("Galerkin Projection ROM will be run with %d DBC Modes.\n", num_DBC_modes);
-      /*
-      if (num_DBC_modes != 0)
-      {
-        printf("WARNING:  Galerkin Projection selected, specifying Number of DBC Modes will have no effect.\n");
-      }
-      */
-    }
-    else if (projectionType == allowedProjectionTypes[1])
-    {
-      printf("Minimum Residual ROM will be run with %d DBC Modes.\n", num_DBC_modes);
-    }
-    else
-    {
-      if (num_DBC_modes != 0)
-      {
-        printf("WARNING:  Unknown projection type, specifying Number of DBC Modes will have no effect.\n");
-      }
-    }
 
     std::string preconditionerType = romParams->get("Preconditioner Type", "None");
-    printf("Parameter read: preconditionerType = %s.\n", preconditionerType.c_str());
     if (projectionType == allowedProjectionTypes[0])
-    {
       if (preconditionerType.compare("None") != 0)
-      {
-        printf("WARNING:  Galerkin Projection selected, preconditioning is not supported, setting preconditionerType to None.\n");
         preconditionerType = "None";
-      }
-    }
-    else if (projectionType == allowedProjectionTypes[1])
-    {
-      printf("Minimum Residual ROM will be run with preconditioner = %s.\n", preconditionerType.c_str());
-    }
     else
-    {
       if (preconditionerType.compare("None") != 0)
-      {
-        printf("WARNING:  Unknown projection type selected, preconditioning is not supported, setting preconditionerType to None.\n");
         preconditionerType = "None";
-      }
-    }
 
 
     const bool outputTrace = romParams->get("Output Trace", false);
-    printf("Parameter read: outputTrace = %d.\n", outputTrace);
-
     const bool writeJacobian = romParams->get("Write Jacobian to File", false);
-    printf("Parameter read: writeJacobian = %d.\n", writeJacobian);
-
     const bool writeResidual = romParams->get("Write Residual to File", false);
-    printf("Parameter read: writeResidual = %d.\n", writeResidual);
-
     const bool writeSolution = romParams->get("Write Solution to File", false);
-    printf("Parameter read: writeSolution = %d.\n", writeSolution);
-
     const bool writePreconditioner = romParams->get("Write Preconditioner to File", false);
-    printf("Parameter read: writePreconditioner = %d.\n", writePreconditioner);
 
     bool output_flags[8];
     output_flags[0] = outputTrace;
@@ -135,9 +90,42 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
     output_flags[2] = writeResidual;
     output_flags[3] = writeSolution;
     output_flags[4] = writePreconditioner;
+	
+	bool pretendWereGalerkin = (preconditionerType.compare("Mimic Galerkin") == 0);
+	bool runWithQR = romParams->get<bool>("Enable QR", false);
 
     const RCP<const ReducedSpace> reducedSpace = spaceFactory_->create(romParams);
     const RCP<const Epetra_MultiVector> basis = spaceFactory_->getBasis(romParams);
+
+
+	if (basis->Comm().MyPID() == 0)
+	{
+		std::cout << "Parameter read: num_DBC_modes = " <<  num_DBC_modes << std::endl;
+		if (projectionType == allowedProjectionTypes[0])
+		  std::cout << "Galerkin Projection ROM will be run with " << num_DBC_modes << " DBC Modes." << std::endl;
+		else if (projectionType == allowedProjectionTypes[1])
+		  std::cout << "Minimum Residual ROM will be run with " << num_DBC_modes << " DBC Modes." << std::endl;
+		else
+		  if (num_DBC_modes != 0)
+		    std::cout << "WARNING:  Unknown projection type, specifying Number of DBC Modes will have no effect." << std::endl;
+
+		std::cout << "Parameter read: preconditionerType = " <<  preconditionerType.c_str() << std::endl;
+		if (projectionType == allowedProjectionTypes[0])
+		  if (preconditionerType.compare("None") != 0)
+		    std::cout << "WARNING:  Galerkin Projection selected, preconditioning is not supported, setting preconditionerType to None." << std::endl;
+		else if (projectionType == allowedProjectionTypes[1])
+		  std::cout << "Minimum Residual ROM will be run with preconditioner = " <<  preconditionerType.c_str() << std::endl;
+		else
+		  if (preconditionerType.compare("None") != 0)
+		    std::cout << "WARNING:  Unknown projection type selected, preconditioning is not supported, setting preconditionerType to None." << std::endl;
+
+		std::cout << "Parameter read: outputTrace = " <<  outputTrace << std::endl;
+		std::cout << "Parameter read: writeJacobian = " <<  writeJacobian << std::endl;
+		std::cout << "Parameter read: writeResidual = " <<  writeResidual << std::endl;
+		std::cout << "Parameter read: writeSolution = " <<  writeSolution << std::endl;
+		std::cout << "Parameter read: writePreconditioner = " <<  writePreconditioner << std::endl;
+	}
+
 
     if (projectionType == allowedProjectionTypes[0]) {
       const RCP<const Epetra_MultiVector> projector = spaceFactory_->getProjector(romParams);
@@ -149,9 +137,9 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
       const RCP<const Epetra_Operator> collocationOperator =
         spaceFactory_->getSamplingOperator(romParams, *child->get_x_map());
       if (nonnull(collocationOperator)) {
-        opFactory = rcp(new GaussNewtonMetricOperatorFactory(basis, collocationOperator));
+        opFactory = rcp(new GaussNewtonMetricOperatorFactory(basis, collocationOperator, pretendWereGalerkin, runWithQR));
       } else {
-        opFactory = rcp(new GaussNewtonOperatorFactory(basis));
+        opFactory = rcp(new GaussNewtonOperatorFactory(basis, pretendWereGalerkin, runWithQR));
       }
 
       result = rcp(new ReducedOrderModelEvaluator(child, reducedSpace, opFactory, output_flags, preconditionerType));

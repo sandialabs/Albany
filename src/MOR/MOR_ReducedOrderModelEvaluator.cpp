@@ -74,6 +74,24 @@ static void _mkdir(const char *dir)
 	mkdir(tmp, S_IRWXU);
 }
 
+void ReducedOrderModelEvaluator::parOut(std::string text) const
+{
+	if (app_->getEpetraComm()->MyPID() == 0)
+		std::cout << text << std::endl;
+}
+
+void ReducedOrderModelEvaluator::parOut(std::string text, double val) const
+{
+	if (app_->getEpetraComm()->MyPID() == 0)
+		std::cout << text << val << std::endl;
+}
+
+void ReducedOrderModelEvaluator::parOut(std::string text, int val) const
+{
+	if (app_->getEpetraComm()->MyPID() == 0)
+		std::cout << text << val << std::endl;
+}
+
 ReducedOrderModelEvaluator::ReducedOrderModelEvaluator(const RCP<EpetraExt::ModelEvaluator> &fullOrderModel,
 		const RCP<const ReducedSpace> &solutionSpace,
 		const RCP<ReducedOperatorFactory> &reducedOpFactory,
@@ -110,28 +128,14 @@ ReducedOrderModelEvaluator::ReducedOrderModelEvaluator(const RCP<EpetraExt::Mode
 	writePreconditioner_ = outputFlags[4];
 	count_jacr_pl = 0;
 
-	const Tuple<std::string, 15> allowedPreconditionerTypes = tuple<std::string>(
-			"None",
-			"Identity",
-			"DiagonalScaling",
-			"InverseJacobian",
-			"ProjectedSolution",
-			"Ifpack_Jacobi",
-			"Ifpack_GaussSeidel",
-			"Ifpack_SymmetricGaussSeidel",
-			"Ifpack_ILU0",
-			"Ifpack_ILU1",
-			"Ifpack_ILU2",
-			"Ifpack_IC0",
-			"Ifpack_IC1",
-			"Ifpack_IC2",
-			"Ifpack_Amesos");
-	TEUCHOS_TEST_FOR_EXCEPTION(!contains(allowedPreconditionerTypes, preconditionerType), std::out_of_range, preconditionerType + " not in " + allowedPreconditionerTypes.toString());
-
-	if (preconditionerType.compare("Identity") == 0)
+	if (preconditionerType.compare("None") == 0)
+	{
+		// nothing to do
+	}
+	else if (preconditionerType.compare("Identity") == 0)
 	{
 		PrecondType=identity;
-		printf("Preconditioning: Identity\n");
+		parOut("Preconditioning: Identity");
 #if !invJacPrec
 		TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Preconditioning using the identity matrix is currently disabled.  This is because it piggy-backs on some of the inverse Jacobian calls, and the memory declaration for that preconditioner segfaults for large problems.  If you really want to use this preconditioner for a smaller problem, change \"invJacPrec\" to true and rebuild.\n");
 #endif
@@ -139,12 +143,12 @@ ReducedOrderModelEvaluator::ReducedOrderModelEvaluator(const RCP<EpetraExt::Mode
 	else if (preconditionerType.compare("DiagonalScaling") == 0)
 	{
 		PrecondType=scaling;
-		printf("Preconditioning: Diagonal Scaling\n");
+		parOut("Preconditioning: Diagonal Scaling");
 	}
 	else if (preconditionerType.compare("InverseJacobian") == 0)
 	{
 		PrecondType=invJac;
-		printf("Preconditioning: Inverse Jacobian\n");
+		parOut("Preconditioning: Inverse Jacobian");
 #if !invJacPrec
 		TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Preconditioning using the inverse Jacobian is currently disabled.  The memory declaration for the preconditioner segfaults for large problems.  If you really want to use this preconditioner for a smaller problem, change \"invJacPrec\" to true and rebuild.\n");
 #endif
@@ -152,67 +156,81 @@ ReducedOrderModelEvaluator::ReducedOrderModelEvaluator(const RCP<EpetraExt::Mode
 	else if (preconditionerType.compare("ProjectedSolution") == 0)
 	{
 		PrecondType=projSoln;
-		printf("Preconditioning: Projected Solution\n");
+		parOut("Preconditioning: Projected Solution");
 	}
 	else if (preconditionerType.compare("Ifpack_Jacobi") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "Jacobi";
-		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
+		parOut("Preconditioning: Ifpack - Type: " + ifpackType_);
 	}
 	else if (preconditionerType.compare("Ifpack_GaussSeidel") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "GaussSeidel";
-		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
+		parOut("Preconditioning: Ifpack - Type: " + ifpackType_);
 	}
 	else if (preconditionerType.compare("Ifpack_SymmetricGaussSeidel") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "SymmetricGaussSeidel";
-		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
+		parOut("Preconditioning: Ifpack - Type: " + ifpackType_);
 	}
 	else if (preconditionerType.compare("Ifpack_ILU0") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "ILU0";
-		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
+		parOut("Preconditioning: Ifpack - Type: " + ifpackType_);
 	}
 	else if (preconditionerType.compare("Ifpack_ILU1") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "ILU1";
-		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
+		parOut("Preconditioning: Ifpack - Type: " + ifpackType_);
 	}
 	else if (preconditionerType.compare("Ifpack_ILU2") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "ILU2";
-		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
+		parOut("Preconditioning: Ifpack - Type: " + ifpackType_);
 	}
 	else if (preconditionerType.compare("Ifpack_IC0") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "IC0";
-		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
+		parOut("Preconditioning: Ifpack - Type: " + ifpackType_);
 	}
 	else if (preconditionerType.compare("Ifpack_IC1") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "IC1";
-		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
+		parOut("Preconditioning: Ifpack - Type: " + ifpackType_);
 	}
 	else if (preconditionerType.compare("Ifpack_IC2") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "IC2";
-		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
+		parOut("Preconditioning: Ifpack - Type: " + ifpackType_);
 	}
 	else if (preconditionerType.compare("Ifpack_Amesos") == 0)
 	{
 		PrecondType=ifPack;
 		ifpackType_ = "Amesos";
-		printf("Preconditioning: Ifpack - Type: %s\n",ifpackType_.c_str());
+		parOut("Preconditioning: Ifpack - Type: " + ifpackType_);
+	}
+	else if (preconditionerType.compare("Ifpack_Identity") == 0)
+	{
+		PrecondType=ifPack;
+		ifpackType_ = "Identity";
+		parOut("Preconditioning: Ifpack - Type: " + ifpackType_);
+	}
+	else if (preconditionerType.compare("Mimic Galerkin") == 0)
+	{
+		// nothing to do... this isn't really a preconditioner, but it's convinient to define it here...
+	}
+	else
+	{
+		TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Preconditioner type not recognized!!");
 	}
 }
 
@@ -237,7 +255,7 @@ double ReducedOrderModelEvaluator::valAtTime(std::pair< bool, std::vector<double
 		return y1 + (t-x1)*s;
 	}
 	else
-	return vals.second[0];
+		return vals.second[0];
 }
 
 void ReducedOrderModelEvaluator::extract_DBC_data(Teuchos::RCP<Teuchos::ParameterList> my_DBC_params)
@@ -259,6 +277,8 @@ void ReducedOrderModelEvaluator::extract_DBC_data(Teuchos::RCP<Teuchos::Paramete
 			dof = 1;
 		else if (DOF=="Z")
 			dof = 2;
+		else if (DOF=="T")
+			dof = 3;
 
 		std::vector<double> vals;
 		if (time_varying)
@@ -660,7 +680,7 @@ const Tpetra::global_size_t INVALID =
 void ReducedOrderModelEvaluator::printCRSMatrix(std::string filename, const Teuchos::RCP<Epetra_CrsMatrix> CRSM, int index) const
 {
 	std::string full_filename = outdir_ + filename + std::to_string(index) + ".mm";
-	std::cout << "ReducedOrderModelEvaluator::evalModel writing file named: " << full_filename << std::endl;
+	parOut("ReducedOrderModelEvaluator::evalModel writing file named: " + full_filename);
 	TEUCHOS_TEST_FOR_EXCEPT(CRSM == Teuchos::null)
 	Teuchos::RCP<Tpetra_CrsMatrix> CRSM_T = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*CRSM, app_->getComm());
 	Tpetra_MatrixMarket_Writer::writeSparseFile(full_filename, CRSM_T);
@@ -733,7 +753,7 @@ void ReducedOrderModelEvaluator::printMultiVectorT(std::string filename, const T
 	// bool isDist = MV->isDistributed();
 
 	std::string full_filename = outdir_ + filename + std::to_string(index) + ".mm";
-	std::cout << "ReducedOrderModelEvaluator::evalModel writing file named: " << full_filename << std::endl;
+	parOut("ReducedOrderModelEvaluator::evalModel writing file named: " + full_filename);
 
 	if (isDist)
 	{
@@ -784,6 +804,61 @@ Teuchos::RCP<Epetra_MultiVector> ReducedOrderModelEvaluator::eye() const
 	Petra::TpetraMultiVector_To_EpetraMultiVector(I, *I_E, app_->getEpetraComm());
 
 	return I_E;
+}
+
+RCP<Epetra_CrsMatrix> ReducedOrderModelEvaluator::eyeFromCRSMatrix(RCP<Epetra_CrsMatrix> CRSM_E) const
+{
+	Teuchos::RCP<Tpetra_CrsMatrix> CRSM = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*CRSM_E, app_->getComm());
+
+	auto row_map = CRSM->getRowMap();
+	auto col_map = CRSM->getColMap();
+
+	// we make this assumption, which lets us use both local row and column indices
+	// into a single is_dbc vector
+	ALBANY_ASSERT(col_map->isLocallyFitted(*row_map));
+
+	Teuchos::Array<ST> entries;
+	Teuchos::Array<LO> indices;
+
+	auto min_local_row = row_map->getMinLocalIndex();
+	auto max_local_row = row_map->getMaxLocalIndex();
+
+	CRSM->resumeFill();
+	for (auto local_row = min_local_row; local_row <= max_local_row; ++local_row)
+	{
+		auto global_row = row_map->getGlobalElement(local_row);
+		auto num_row_entries = CRSM->getNumEntriesInLocalRow(local_row);
+
+		entries.resize(num_row_entries);
+		indices.resize(num_row_entries);
+
+		CRSM->getLocalRowCopy(local_row, indices(), entries(), num_row_entries);
+
+		for (size_t row_entry = 0; row_entry < num_row_entries; ++row_entry)
+		{
+			auto local_col = indices[row_entry];
+			auto global_col = col_map->getGlobalElement(local_col);
+
+			auto is_diagonal_entry = (local_col == local_row); // should this be against global_row/col?
+
+			ALBANY_ASSERT(local_col >= col_map->getMinLocalIndex());
+			ALBANY_ASSERT(local_col <= col_map->getMaxLocalIndex());
+			
+			if (is_diagonal_entry)
+			{
+				entries[row_entry] = 1.0;
+			}
+			else
+			{
+				entries[row_entry] = 0.0;
+			}
+
+		}
+		CRSM->replaceLocalValues(local_row, indices(), entries());
+	}
+	CRSM->fillComplete();
+
+	return Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(CRSM, app_->getEpetraComm());
 }
 
 void ReducedOrderModelEvaluator::nanCheck(const Teuchos::RCP<Epetra_Vector> &f) const
@@ -931,7 +1006,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 {
 	ROME_call++;
 	if (outputTrace_ == true)
-		printf("ReducedOrderModelEvaluator::evalModel  start call # %d.\n",ROME_call);
+		parOut("ReducedOrderModelEvaluator::evalModel... starting call ", ROME_call);
 
 	// Copy arguments to be able to modify x and x_dot
 	InArgs fullInArgs = fullOrderModel_->createInArgs();
@@ -945,7 +1020,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 		}
 
 		if (outputTrace_ == true)
-			printf("ReducedOrderModelEvaluator::evalModel  construct full solution: \n");
+			parOut("ReducedOrderModelEvaluator::evalModel... construct full solution");
 		// x <- basis * x_r + x_origin
 		TEUCHOS_TEST_FOR_EXCEPT(is_null(inArgs.get_x()));
 		fullInArgs.set_x(solutionSpace_->expansion(*inArgs.get_x()));
@@ -974,9 +1049,12 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 
 	if (outputTrace_ == true)
 	{
-		std::cout << "RunMode (ROME call " << ROME_call << ", step " << step_ << ", iter " << iter_ << "): ";
-		std::cout << "requestedResidual = " << std::boolalpha << requestedResidual;
-		std::cout << ", requestedJacobian = " << std::boolalpha << requestedJacobian << std::endl;
+		if (app_->getEpetraComm()->MyPID() == 0)
+		{
+			std::cout << "RunMode (ROME call " << ROME_call << ", step " << step_ << ", iter " << iter_ << "): ";
+			std::cout << "requestedResidual = " << std::boolalpha << requestedResidual;
+			std::cout << ", requestedJacobian = " << std::boolalpha << requestedJacobian << std::endl;
+		}
 	}
 
 
@@ -984,53 +1062,53 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 	{
 		if (fullOutArgs.supports(OUT_ARG_f))
 		{
-			printf("FOM supports Residual\n");
+			parOut("FOM supports Residual");
 			if (nonnull(outArgs.get_f()))
-				printf("ROM f is nonnull, requestedResidual will be set to true\n");
+				parOut("ROM f is nonnull, requestedResidual will be set to true");
 			else
-				printf("ROM f is null, requestedResidual will be set to false\n");
+				parOut("ROM f is null, requestedResidual will be set to false");
 		}
 		else
 		{
-			printf("FOM does not support Residual\n");
+			parOut("FOM does not support Residual");
 		}
 
 		if (fullOutArgs.supports(OUT_ARG_W))
 		{
-			printf("FOM supports Jacobian\n");
+			parOut("FOM supports Jacobian");
 			if (nonnull(outArgs.get_W()))
-				printf("ROM W is nonnull, requestedJacobian will be set to true\n");
+				parOut("ROM W is nonnull, requestedJacobian will be set to true");
 			else
-				printf("ROM W is null, requestedJacobian will be set to false\n");
+				parOut("ROM W is null, requestedJacobian will be set to false");
 		}
 		else
 		{
-			printf("FOM does not support Jacobian\n");
+			parOut("FOM does not support Jacobian");
 		}
 
-		printf("ROM Np = %d\n",outArgs.Np());
-		printf("ROM Ng = %d\n",outArgs.Ng());
-		printf("FOM Np = %d\n",fullOutArgs.Np());
-		printf("FOM Ng = %d\n",fullOutArgs.Ng());
+		parOut("ROM Np = ",outArgs.Np());
+		parOut("ROM Ng = ",outArgs.Ng());
+		parOut("FOM Np = ",fullOutArgs.Np());
+		parOut("FOM Ng = ",fullOutArgs.Ng());
 	}
 	for (int j = 0; j < outArgs.Ng(); ++j)
 	{
 		if (nonnull(outArgs.get_g(j)))
 		{
 			if (outputTrace_ == true)
-				printf("ROM g(j) is nonnull for j = %d\n",j);
+				parOut("ROM g(j) is nonnull for j = ",j);
 			//if (useInvJac_ || useScaling_ || usePreconditionerIfpack_)
 			if (PrecondType!=none && PrecondType!=projSoln)
 			{
 				recomputePreconditioner = true;
 				if (outputTrace_ == true)
-					printf("ROME call %d, setting recomputePreconditioner to true.\n",ROME_call);
+					parOut("Setting recomputePreconditioner to true @ ROME call ",ROME_call);
 			}
 		}
 		else
 		{
 			if (outputTrace_ == true)
-				printf("ROM g(j) is null for j = %d\n",j);
+				parOut("ROM g(j) is null for j = ",j);
 		}
 	}
 
@@ -1126,11 +1204,11 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 
 	if (outputTrace_ == true)
 	{
-		printf("ReducedOrderModelEvaluator::evalModel  run FOM: \n");
+		parOut("ReducedOrderModelEvaluator::evalModel... run FOM");
 		if (nonnull(fullOutArgs.get_f()))
-			printf("ReducedOrderModelEvaluator::evalModel  run FOM - full residual is nonnull: \n");
+			parOut("ReducedOrderModelEvaluator::evalModel... run FOM - full residual is nonnull");
 		if (nonnull(fullOutArgs.get_W()))
-			printf("ReducedOrderModelEvaluator::evalModel  run FOM - full Jacobian is nonnull: \n");
+			parOut("ReducedOrderModelEvaluator::evalModel... run FOM - full Jacobian is nonnull");
 	}
 
 	// (f, W) <- fullOrderModel(x, x_dot, ...)
@@ -1161,11 +1239,11 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 	// (W * basis, W_r) <- W
 	if (fullJacobianRequired) {
 		if (outputTrace_ == true)
-			printf("ReducedOrderModelEvaluator::evalModel  multiply Jac*phi: \n");
+			parOut("ReducedOrderModelEvaluator::evalModel... multiply Jac*phi");
 
 		const RCP<Epetra_CrsMatrix> W_temp = rcp_dynamic_cast<Epetra_CrsMatrix>(fullOutArgs.get_W());
 		if (!apply_bcs_ && !prec_full_jac_){ // if we didn't handle DBCs in evalModel, we need to do that here...
-			std::cout << "calling DBC_CRSMatrix on the Jacobian (before preconditioning)" << std::endl;
+			parOut("calling DBC_CRSMatrix on the Jacobian (before preconditioning)");
 			DBC_CRSMatrix(W_temp);
 	 	}
 		if (run_singular_check_)
@@ -1174,6 +1252,10 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 		reducedOpFactory_->fullJacobianIs(*fullOutArgs.get_W());
 
 		count_jac_MR++;
+		if (outputTrace_ == true)
+		{
+			parOut("ReducedOrderModelEvaluator::evalModel... full Jacobian norm = ", W_temp->NormFrobenius());
+		}
 		if (writeJacobian_reduced_)
 		{
 			printCRSMatrix("J", W_temp,count_jac_MR);
@@ -1186,7 +1268,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 				if (recomputePreconditionerStepStart)
 					recomputePreconditioner = false;
 				if (outputTrace_ == true)
-					printf("ReducedOrderModelEvaluator::evalModel  computing preconditioner:\n");
+					parOut("ReducedOrderModelEvaluator::evalModel... computing preconditioner");
 				switch(PrecondType)
 				{
 				case identity:
@@ -1216,7 +1298,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 				}
 				case projSoln:
 				{
-					std::cout << "setting up projected solution preconditioning" << std::endl;
+					parOut("setting up projected solution preconditioning");
 					reducedOpFactory_->setJacobian(*W_temp);
 					if (writePreconditioner_)
 					{
@@ -1226,8 +1308,15 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 				}
 				case ifPack:
 				{
-					std::cout << "setting up Ifpack preconditioning" << std::endl;
-					reducedOpFactory_->setPreconditionerIfpack(*W_temp, ifpackType_);
+					parOut("setting up Ifpack preconditioning");
+					if (ifpackType_.compare("Identity") == 0)
+					{
+						reducedOpFactory_->setPreconditionerIfpack(*eyeFromCRSMatrix(W_temp), "Identity");
+					}
+					else
+					{
+						reducedOpFactory_->setPreconditionerIfpack(*W_temp, ifpackType_);
+					}
 					if (writePreconditioner_ || prec_full_jac_)
 					{
 						Teuchos::RCP<Epetra_MultiVector> M = eye(); // can pull into if statement for a bit of comp. gain
@@ -1249,7 +1338,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 			}
 		}
 		if (!apply_bcs_ && prec_full_jac_){ // if we didn't handle DBCs in evalModel, we need to do that here...
-			std::cout << "calling DBC_CRSMatrix on the Jacobian (after preconditioning)" << std::endl;
+			parOut("calling DBC_CRSMatrix on the Jacobian (after preconditioning)");
 			DBC_CRSMatrix(W_temp);
 			printCRSMatrix("J_post", W_temp, count_jac_MR);
 		}
@@ -1261,9 +1350,9 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 	{
 		if (writeJacobian_reduced_)
 		{
-			printConstMultiVector("Phi", reducedOpFactory_->getRightBasis(), count_jac_MR);
+			printConstMultiVector("Phi", reducedOpFactory_->getReducedBasis(), count_jac_MR);
 			printConstMultiVector("JPhi", reducedOpFactory_->getPremultipliedReducedBasis(), count_jac_MR);
-			printConstMultiVector("Psi", reducedOpFactory_->getLeftBasisCopy(), count_jac_MR);
+			printConstMultiVector("Psi", reducedOpFactory_->getLeftBasis(), count_jac_MR);
 		}
 		if (PrecondType!=none && PrecondType!=projSoln)
 		{
@@ -1276,14 +1365,14 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 				//reducedOpFactory_->applyPreconditioner(*reducedOpFactory_->getPremultipliedReducedBasis()); // DOESN'T WORK IN PARALLEL
 				multiplyInPlace(*reducedOpFactory_->getPremultipliedReducedBasis(), *reducedOpFactory_->getPreconditioner());
 #endif
-				//reducedOpFactory_->applyPreconditioner(*reducedOpFactory_->getLeftBasisCopy()); // DOESN'T WORK IN PARALLEL
-				multiplyInPlace(*reducedOpFactory_->getLeftBasisCopy(), *reducedOpFactory_->getPreconditioner());
+				//reducedOpFactory_->applyPreconditioner(*reducedOpFactory_->getLeftBasis()); // DOESN'T WORK IN PARALLEL
+				multiplyInPlace(*reducedOpFactory_->getLeftBasis(), *reducedOpFactory_->getPreconditioner());
 				break;
 			}
 			case scaling:
 			{
 				reducedOpFactory_->applyScaling(*reducedOpFactory_->getPremultipliedReducedBasis());
-				reducedOpFactory_->applyScaling(*reducedOpFactory_->getLeftBasisCopy());
+				reducedOpFactory_->applyScaling(*reducedOpFactory_->getLeftBasis());
 				break;
 			}
 			case invJac:
@@ -1292,8 +1381,8 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 				//reducedOpFactory_->applyPreconditioner(*reducedOpFactory_->getPremultipliedReducedBasis()); // DOESN'T WORK IN PARALLEL
 				multiplyInPlace(*reducedOpFactory_->getPremultipliedReducedBasis(), *reducedOpFactory_->getPreconditioner());
 #endif
-				//reducedOpFactory_->applyPreconditioner(*reducedOpFactory_->getLeftBasisCopy()); // DOESN'T WORK IN PARALLEL
-				multiplyInPlace(*reducedOpFactory_->getLeftBasisCopy(), *reducedOpFactory_->getPreconditioner());
+				//reducedOpFactory_->applyPreconditioner(*reducedOpFactory_->getLeftBasis()); // DOESN'T WORK IN PARALLEL
+				multiplyInPlace(*reducedOpFactory_->getLeftBasis(), *reducedOpFactory_->getPreconditioner());
 				break;
 			}
 			case ifPack:
@@ -1305,9 +1394,9 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 					reducedOpFactory_->applyPreconditionerIfpack(*reducedOpFactory_->getPremultipliedReducedBasis());
 #endif //precLBonly
 				if (prec_full_jac_)
-					multiplyInPlace(*reducedOpFactory_->getLeftBasisCopy(), *reducedOpFactory_->getPreconditioner());
+					multiplyInPlace(*reducedOpFactory_->getLeftBasis(), *reducedOpFactory_->getPreconditioner());
 				else
-					reducedOpFactory_->applyPreconditionerIfpack(*reducedOpFactory_->getLeftBasisCopy());
+					reducedOpFactory_->applyPreconditionerIfpack(*reducedOpFactory_->getLeftBasis());
 				break;
 			}
 			}
@@ -1315,7 +1404,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 			if (writePreconditioner_)
 			{
 				printConstMultiVector("MJPhi", reducedOpFactory_->getPremultipliedReducedBasis(), count_jac_MR);
-				printConstMultiVector("MPsi", reducedOpFactory_->getLeftBasisCopy(), count_jac_MR);
+				printConstMultiVector("MPsi", reducedOpFactory_->getLeftBasis(), count_jac_MR);
 			}
 		}
 	}
@@ -1323,10 +1412,10 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 	// f_r <- leftBasis^T * f
 	if (requestedResidual) {
 		if (outputTrace_ == true)
-			printf("ReducedOrderModelEvaluator::evalModel  multiply psiT*res: \n");
+			parOut("ReducedOrderModelEvaluator::evalModel... multiply psiT*res");
 
 		if (!apply_bcs_){ // if we didn't handle DBCs in evalModel, we need to do that here...
-			std::cout << "calling DBC_MultiVector on R" << std::endl;
+			parOut("calling DBC_MultiVector on R");
 			DBC_MultiVector(fullOutArgs.get_f());
 		}
 		if (run_nan_check_)
@@ -1337,7 +1426,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 		{
 			double res_norm = 0.0;
 			fullOutArgs.get_f()->Norm2(&res_norm);
-			printf("ReducedOrderModelEvaluator::evalModel  full residual norm = %e\n", res_norm);
+			parOut("ReducedOrderModelEvaluator::evalModel... full residual norm = ", res_norm);
 		}
 		if (writeResidual_reduced_)
 		{
@@ -1394,7 +1483,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 				{
 					double res_norm = 0.0;
 					fullOutArgs.get_f()->Norm2(&res_norm);
-					printf("ReducedOrderModelEvaluator::evalModel  full residual norm (after preconditioner applied) = %e\n", res_norm);
+					parOut("ReducedOrderModelEvaluator::evalModel... full residual norm (after preconditioner applied) = ", res_norm);
 				}
 			}
 			if ((PrecondType!=none) && writePreconditioner_)
@@ -1412,6 +1501,17 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 		{
 			// f_r <- psi^T * f
 			reducedOpFactory_->leftProjection(*fullOutArgs.get_f(), *outArgs.get_f());
+		}
+
+		if (outputTrace_ == true)
+		{
+			double res_norm = 0;
+			outArgs.get_f()->Norm2(&res_norm);
+			parOut("ReducedOrderModelEvaluator::evalModel... reduced residual norm (psiT*resid, pre DBC) = ", res_norm);
+		}
+		if (writeResidual_reduced_)
+		{
+			printMultiVector("Rr_pre", outArgs.get_f(), count_res_MR);
 		}
 
 		// replace DBC rows of fr with Phi_B*f
@@ -1434,23 +1534,22 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 			Petra::TpetraVector_To_EpetraVector(f_T,*outArgs.get_f(),app_->getEpetraComm());
 		}
 
-		if (writeResidual_reduced_)
-		{
-			printMultiVector("Rr", outArgs.get_f(), count_res_MR);
-		}
-
 		if (outputTrace_ == true)
 		{
 			double res_norm = 0;
 			outArgs.get_f()->Norm2(&res_norm);
-			printf("ReducedOrderModelEvaluator::evalModel  reduced residual norm (psiT*resid) = %e\n", res_norm);
+			parOut("ReducedOrderModelEvaluator::evalModel... reduced residual norm (psiT*resid, post DBC) = ", res_norm);
+		}
+		if (writeResidual_reduced_)
+		{
+			printMultiVector("Rr", outArgs.get_f(), count_res_MR);
 		}
 	}
 
 	// Wr <- leftBasis^T * W * basis
 	if (requestedJacobian) {
 		if (outputTrace_ == true)
-			printf("ReducedOrderModelEvaluator::evalModel  multiply psiT*(Jac*phi): \n");
+			parOut("ReducedOrderModelEvaluator::evalModel... multiply psiT*(Jac*phi)");
 
 		RCP<Epetra_CrsMatrix> W_r = rcp_dynamic_cast<Epetra_CrsMatrix>(outArgs.get_W());
 		TEUCHOS_TEST_FOR_EXCEPT(is_null((W_r)));
@@ -1462,9 +1561,13 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 		}
 		else
 		{
-			reducedOpFactory_->reducedJacobianL(*W_r);
+			reducedOpFactory_->reducedJacobian(*W_r);
 		}
 
+		if (outputTrace_ == true)
+		{
+			parOut("ReducedOrderModelEvaluator::evalModel... reduced Jacobian norm (pre DBC) = ", W_r->NormFrobenius());
+		}
 		if (writeJacobian_reduced_)
 		{
 			std::string full_filename = outdir_ + "JEr_pre" + std::to_string(count_jacr_pl) + ".mm";
@@ -1476,6 +1579,10 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 
 		DBC_ROM_jac(inArgs,outArgs,SDBC);
 
+		if (outputTrace_ == true)
+		{
+			parOut("ReducedOrderModelEvaluator::evalModel... reduced Jacobian norm (post DBC) = ", W_r->NormFrobenius());
+		}
 		if (writeJacobian_reduced_)
 		{
 			std::string full_filename = outdir_ + "JEr" + std::to_string(count_jacr_pl) + ".mm";
@@ -1485,6 +1592,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 			//printCRSMatrix("Jr", W_r, count_jacr_pl); // Tpetra_MatrixMarket_Writer::writeSparseFile fails here because the Jacobian is locally replicated (see issue #1021 on GitHub)
 			count_jacr_pl++;
 		}
+//TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "we'll just stop here...");
 	}
 
 	// (DgDx_r)^T <- basis^T * (DgDx)^T
@@ -1493,7 +1601,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 			const RCP<Epetra_MultiVector> dgdx_r_mv = outArgs.get_DgDx(j).getMultiVector();
 			if (nonnull(dgdx_r_mv)) {
 				if (outputTrace_ == true)
-					printf("ReducedOrderModelEvaluator::evalModel  compute DgDx_r: \n");
+					parOut("ReducedOrderModelEvaluator::evalModel... compute DgDx_r");
 				const RCP<const Epetra_MultiVector> full_dgdx_mv = fullOutArgs.get_DgDx(j).getMultiVector();
 				solutionSpace_->linearReduction(*full_dgdx_mv, *dgdx_r_mv);
 			}
@@ -1506,7 +1614,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 			const RCP<Epetra_MultiVector> dgdx_dot_r_mv = outArgs.get_DgDx_dot(j).getMultiVector();
 			if (nonnull(dgdx_dot_r_mv)) {
 				if (outputTrace_ == true)
-					printf("ReducedOrderModelEvaluator::evalModel  compute DgDx_dot_r: \n");
+					parOut("ReducedOrderModelEvaluator::evalModel... compute DgDx_dot_r");
 				const RCP<const Epetra_MultiVector> full_dgdx_dot_mv = fullOutArgs.get_DgDx_dot(j).getMultiVector();
 				solutionSpace_->linearReduction(*full_dgdx_dot_mv, *dgdx_dot_r_mv);
 			}
@@ -1519,7 +1627,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 			const RCP<Epetra_MultiVector> dfdp_r_mv = outArgs.get_DfDp(l).getMultiVector();
 			if (nonnull(dfdp_r_mv)) {
 				if (outputTrace_ == true)
-					printf("ReducedOrderModelEvaluator::evalModel  compute DfDp_r: \n");
+					parOut("ReducedOrderModelEvaluator::evalModel... compute DfDp_r");
 				const RCP<const Epetra_MultiVector> full_dfdp_mv = fullOutArgs.get_DfDp(l).getMultiVector();
 				reducedOpFactory_->leftProjection(*full_dfdp_mv, *dfdp_r_mv);
 			}
@@ -1528,7 +1636,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 
 	if (outputTrace_ == true)
 	{
-		printf("ReducedOrderModelEvaluator::evalModel  done\n");
+		parOut("ReducedOrderModelEvaluator::evalModel... done");
 	}
 
 	if (requestedJacobian)

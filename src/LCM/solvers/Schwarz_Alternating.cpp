@@ -582,8 +582,103 @@ printInternalElementStates(
 }
 
 void
-toFrom(Albany::StateArrays & to, Albany::StateArrays const & from)
+toFrom(LCM::StateArrayVec & dst, Albany::StateArrayVec const & src)
 {
+  auto const
+  num_maps = src.size();
+
+  dst.resize(num_maps);
+
+  for (auto i = 0; i < num_maps; ++i) {
+    auto &&
+    src_map = src[i];
+
+    auto &&
+    dst_map = dst[i];
+
+    for (auto && kv : src_map) {
+
+      auto &&
+      state_name = kv.first;
+
+      auto &&
+      src_states = kv.second;
+
+      auto &&
+      dst_states = dst_map[state_name];
+
+      auto const
+      num_states = src_states.size();
+
+      dst_states.resize(num_states);
+
+      for (auto j = 0; j < num_states; ++j) {
+        dst_states[j] = src_states[j];
+      }
+
+    }
+  }
+  return;
+}
+
+void
+toFrom(Albany::StateArrayVec & dst, LCM::StateArrayVec const & src)
+{
+  auto const
+  num_maps = src.size();
+
+  ALBANY_ASSERT(num_maps == dst.size(),
+      "Inconsistent number of state maps from LCM to Albany");
+
+  for (auto i = 0; i < num_maps; ++i) {
+    auto &&
+    src_map = src[i];
+
+    auto &&
+    dst_map = dst[i];
+
+    for (auto && kv : src_map) {
+
+      auto &&
+      state_name = kv.first;
+
+      auto &&
+      src_states = kv.second;
+
+      ALBANY_ASSERT(dst_map.find(state_name) != dst_map.end(),
+          "Missing state name in transfer from LCM to Albany: " + state_name);
+
+      auto &&
+      dst_states = dst_map[state_name];
+
+      auto const
+      num_states = src_states.size();
+
+      ALBANY_ASSERT(num_states == dst_states.size(),
+          "Inconsistent number of state entries from LCM to Albany");
+
+      for (auto j = 0; j < num_states; ++j) {
+        dst_states[j] = src_states[j];
+      }
+
+    }
+  }
+  return;
+}
+
+void
+toFrom(LCM::StateArrays & dst, Albany::StateArrays const & src)
+{
+  toFrom(dst.element_state_arrays, src.elemStateArrays);
+  toFrom(dst.node_state_arrays, src.nodeStateArrays);
+  return;
+}
+
+void
+toFrom(Albany::StateArrays & dst, LCM::StateArrays const & src)
+{
+  toFrom(dst.elemStateArrays, src.element_state_arrays);
+  toFrom(dst.nodeStateArrays, src.node_state_arrays);
   return;
 }
 
@@ -732,7 +827,7 @@ SchwarzLoopDynamics() const
 #ifdef DEBUG
       fos << "DEBUG: Getting internal states subdomain = " << subdomain << "...\n";
 #endif
-      internal_states_[subdomain] = state_mgr.getStateArrays();
+      toFrom(internal_states_[subdomain], state_mgr.getStateArrays());
 #ifdef DEBUG
       printInternalElementStates(
           internal_states_[subdomain], state_mgr.getStateInfoStruct());
@@ -818,7 +913,7 @@ SchwarzLoopDynamics() const
 #ifdef DEBUG
         fos << "DEBUG: Setting internal states subdomain = " << subdomain << "...\n";
 #endif 
-        state_mgr.setStateArrays(internal_states_[subdomain]);
+        toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
 #ifdef DEBUG
         printInternalElementStates(
             internal_states_[subdomain], state_mgr.getStateInfoStruct());
@@ -1338,7 +1433,7 @@ SchwarzLoopQuasistatics() const
 #ifdef DEBUG
       fos << "DEBUG: Initial internal states subdomain " << subdomain << '\n';
 #endif
-      internal_states_[subdomain] = state_mgr.getStateArrays();
+      toFrom(internal_states_[subdomain], state_mgr.getStateArrays());
 #ifdef DEBUG
       printInternalElementStates(
           internal_states_[subdomain], state_mgr.getStateInfoStruct());
@@ -1391,7 +1486,7 @@ SchwarzLoopQuasistatics() const
             internal_states_[subdomain], state_mgr.getStateInfoStruct());
         fos << "DEBUG: SETTING ..." << '\n';
 #endif 
-        state_mgr.setStateArrays(internal_states_[subdomain]);
+        toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
 
         // Restore solution from previous time step
         auto
