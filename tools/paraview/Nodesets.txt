@@ -1,0 +1,16 @@
+To view nodesets in Paraview:
+
+1. Load the exodus file as usual.
+2. Scroll down the Properties menu, past the "Apply Displacements" button, you should see a "Sets" dialog.
+3. Select the nodesets that you wish to view.
+4. Hit "Apply"
+5. Select a field to color on, other than the default "Solid Color", in the main view menu. The nodes in the set will be colored
+   based on this selection. It is often most helpful to select "GlobalNodeId", the residual or solution node fields to color the
+   nodeset with. Verify that "Surface" is selected in the view menu.
+6. Load the exodus file *again*, and then hit "Apply".
+
+Note that the file is loaded again in the "Pipeline Browser"; verify that the "eyeball" for both files are active, and that the
+second (lowest) file is highlighted. Verify that "Solid Color" and "Surface" are selected in the view menu.
+
+One should see the nodes of the nodeset slightly elevated (and colored based on GlobalNodeId or the selected fields) above a solid
+gray surface of the part.
