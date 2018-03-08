@@ -1363,6 +1363,7 @@ void Albany::Application::computeGlobalResidualImplT(
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
 
   // Allocate scaleVec_
+#ifdef ALBANY_MPI
   if (scale != 1.0) {
     if (scaleVec_ == Teuchos::null) {
       scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap()));
@@ -1374,6 +1375,9 @@ void Albany::Application::computeGlobalResidualImplT(
       }
     }
   }
+#else
+  ALBANY_ASSERT(scale == 1.0, "non-unity scale implementation requires MPI!");
+#endif
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char nameResUnscaled[100]; // create string for file name

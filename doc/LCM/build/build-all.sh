@@ -69,7 +69,7 @@ case "$SCRIPT_NAME" in
 	exit 1
 	;;
 esac
-WIKI_TEMPLATE="LCM-Status:-Last-known-commits-that-work.md"
+WIKI_TEMPLATE="LCM-Status-Last-known-commits-that-work.md"
 
 KERNEL_VERSION=`uname -r`
 PLATFORM="unknown"
