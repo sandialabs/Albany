@@ -7,61 +7,65 @@
 #if !defined(LCM_IPtoNodalField_hpp)
 #define LCM_IPtoNodalField_hpp
 
-#include <Phalanx_Evaluator_WithBaseImpl.hpp>
-#include <Phalanx_Evaluator_Derived.hpp>
-#include <Phalanx_MDField.hpp>
 #include <Phalanx_DataLayout.hpp>
+#include <Phalanx_Evaluator_Derived.hpp>
+#include <Phalanx_Evaluator_WithBaseImpl.hpp>
+#include <Phalanx_MDField.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_StateManager.hpp"
 
-namespace LCM
-{
+namespace LCM {
 class IPtoNodalFieldManager;
 
 ///
 /// \brief Evaltuator to compute a nodal stress field
 ///
-template<typename EvalT, typename Traits>
-class IPtoNodalFieldBase:
-    public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<EvalT, Traits>
-{
-public:
-  typedef typename EvalT::ScalarT ScalarT;
+template <typename EvalT, typename Traits>
+class IPtoNodalFieldBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+                           public PHX::EvaluatorDerived<EvalT, Traits> {
+ public:
+  typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  IPtoNodalFieldBase(Teuchos::ParameterList& p,
+  IPtoNodalFieldBase(
+      Teuchos::ParameterList&              p,
       const Teuchos::RCP<Albany::Layouts>& dl,
-      const Albany::MeshSpecsStruct* mesh_specs);
+      const Albany::MeshSpecsStruct*       mesh_specs);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
       PHX::FieldManager<Traits>& vm);
 
   ///
   /// These functions are defined in the specializations
   ///
-  void preEvaluate(typename Traits::PreEvalData d) = 0;
-  void postEvaluate(typename Traits::PostEvalData d) = 0;
-  void evaluateFields(typename Traits::EvalData d) = 0;
+  void
+  preEvaluate(typename Traits::PreEvalData d) = 0;
+  void
+  postEvaluate(typename Traits::PostEvalData d) = 0;
+  void
+  evaluateFields(typename Traits::EvalData d) = 0;
 
-
-  Teuchos::RCP<const PHX::FieldTag> getEvaluatedFieldTag() const
+  Teuchos::RCP<const PHX::FieldTag>
+  getEvaluatedFieldTag() const
   {
     return field_tag_;
   }
 
-  Teuchos::RCP<const PHX::FieldTag> getResponseFieldTag() const
+  Teuchos::RCP<const PHX::FieldTag>
+  getResponseFieldTag() const
   {
     return field_tag_;
   }
 
-protected:
+ protected:
   Teuchos::RCP<const Teuchos::ParameterList>
   getValidIPtoNodalFieldParameters() const;
 
-  PHX::MDField<MeshScalarT const,Cell,QuadPoint> weights_;
-  Teuchos::RCP<PHX::Tag<ScalarT>> field_tag_;
+  PHX::MDField<MeshScalarT const, Cell, QuadPoint> weights_;
+  Teuchos::RCP<PHX::Tag<ScalarT>>                  field_tag_;
 
   bool output_to_exodus_;
 
@@ -76,20 +80,31 @@ protected:
   Albany::StateManager* p_state_mgr_;
 };
 
-template<typename EvalT, typename Traits>
-class IPtoNodalField
-: public IPtoNodalFieldBase<EvalT, Traits> {
-public:
-  IPtoNodalField(Teuchos::ParameterList& p,
+template <typename EvalT, typename Traits>
+class IPtoNodalField : public IPtoNodalFieldBase<EvalT, Traits> {
+ public:
+  IPtoNodalField(
+      Teuchos::ParameterList&              p,
       const Teuchos::RCP<Albany::Layouts>& dl,
-      const Albany::MeshSpecsStruct* mesh_specs):
-  IPtoNodalFieldBase<EvalT, Traits>(p, dl, mesh_specs) {}
+      const Albany::MeshSpecsStruct*       mesh_specs)
+      : IPtoNodalFieldBase<EvalT, Traits>(p, dl, mesh_specs)
+  {
+  }
 
-  void preEvaluate(typename Traits::PreEvalData d) {}
+  void
+  preEvaluate(typename Traits::PreEvalData d)
+  {
+  }
 
-  void postEvaluate(typename Traits::PostEvalData d) {}
+  void
+  postEvaluate(typename Traits::PostEvalData d)
+  {
+  }
 
-  void evaluateFields(typename Traits::EvalData d) {}
+  void
+  evaluateFields(typename Traits::EvalData d)
+  {
+  }
 };
 
 // **************************************************************
@@ -102,23 +117,26 @@ public:
 // Residual
 // **************************************************************
 
-template<typename Traits>
+template <typename Traits>
 class IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>
-: public IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits> {
-public:
+    : public IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits> {
+ public:
   typedef IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits> Base;
-  typedef typename Base::ScalarT ScalarT;
-  typedef typename Base::MeshScalarT MeshScalarT;
+  typedef typename Base::ScalarT                                   ScalarT;
+  typedef typename Base::MeshScalarT                               MeshScalarT;
 
-  IPtoNodalField(Teuchos::ParameterList& p,
+  IPtoNodalField(
+      Teuchos::ParameterList&              p,
       const Teuchos::RCP<Albany::Layouts>& dl,
-      const Albany::MeshSpecsStruct* mesh_specs);
-  void preEvaluate(typename Traits::PreEvalData d);
-  void postEvaluate(typename Traits::PostEvalData d);
-  void evaluateFields(typename Traits::EvalData d);
+      const Albany::MeshSpecsStruct*       mesh_specs);
+  void
+  preEvaluate(typename Traits::PreEvalData d);
+  void
+  postEvaluate(typename Traits::PostEvalData d);
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-protected:
-
+ protected:
   std::string nodal_weights_name_;
 
   int num_pts_;
@@ -128,6 +146,6 @@ protected:
 
   Teuchos::RCP<IPtoNodalFieldManager> mgr_;
 };
-}
+}  // namespace LCM
 
 #endif  // IPtoNodalField.hpp

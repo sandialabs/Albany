@@ -78,15 +78,15 @@ class ProjectIPtoNodalFieldManager : public Adapt::NodalDataBase::Manager {
 typedef Intrepid2::Basis<PHX::Device, RealType, RealType> Intrepid2Basis;
 
 class ProjectIPtoNodalFieldQuadrature {
-  typedef PHAL::AlbanyTraits::Residual::MeshScalarT MeshScalarT;
+  typedef PHAL::AlbanyTraits::Residual::MeshScalarT      MeshScalarT;
   PHX::MDField<RealType, Cell, Node, QuadPoint>          bf_;
   PHX::MDField<const RealType, Cell, Node, QuadPoint>    bf_const_;
   PHX::MDField<MeshScalarT, Cell, Node, QuadPoint>       wbf_;
   PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint> wbf_const_;
 
-  Teuchos::RCP<Intrepid2Basis>       intrepid_basis_;
-  CellTopologyData                   ctd_;
-  Teuchos::RCP<shards::CellTopology> cell_topo_;
+  Teuchos::RCP<Intrepid2Basis>               intrepid_basis_;
+  CellTopologyData                           ctd_;
+  Teuchos::RCP<shards::CellTopology>         cell_topo_;
   Kokkos::DynRankView<RealType, PHX::Device> ref_points_, ref_weights_;
 
  public:
@@ -146,15 +146,19 @@ ProjectIPtoNodalFieldQuadrature::ProjectIPtoNodalFieldQuadrature(
   const bool composite =
       pfp.is_null() ? false : pfp->get<bool>("Use Composite Tet 10", false);
 
-  ALBANY_ASSERT(!composite, "\n Project IP to Nodal Field Response not supported with Composite Tet 10s! \n"
-                            << "Re-run with Use Composite Tet 10 = false or with IP to Nodal Field Response. \n");
+  ALBANY_ASSERT(
+      !composite,
+      "\n Project IP to Nodal Field Response not supported with Composite Tet "
+      "10s! \n"
+          << "Re-run with Use Composite Tet 10 = false or with IP to Nodal "
+             "Field Response. \n");
 
   intrepid_basis_ = Albany::getIntrepid2Basis(ctd, composite);
 
   typedef PHX::MDALayout<Cell, Node, QuadPoint> Layout;
   Teuchos::RCP<Layout> node_qp_scalar = Teuchos::rcp(new Layout(
       dl->node_qp_scalar->dimension(0), dl->node_qp_scalar->dimension(1), nqp));
-  bf_        = decltype(bf_)("my BF", node_qp_scalar);
+  bf_                                 = decltype(bf_)("my BF", node_qp_scalar);
   bf_const_  = decltype(bf_const_)("my BF", node_qp_scalar);
   wbf_       = decltype(wbf_)("my wBF", node_qp_scalar);
   wbf_const_ = decltype(wbf_const_)("my wBF", node_qp_scalar);
@@ -205,7 +209,7 @@ initQuadMgr(
       p, dl, mesh_specs->ctd, min_quad_deg));
 }
 
-template<typename Traits>
+template <typename Traits>
 typename ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
     EFieldLayout::Enum
     ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::EFieldLayout::
@@ -313,8 +317,7 @@ struct EMassMatrixType
           true,
           Teuchos::Exceptions::InvalidParameterValue,
           "Mass Matrix Type value "
-              << str
-              << "is invalid; valid values are Full and Lumped.");
+              << str << "is invalid; valid values are Full and Lumped.");
     }
   }
 };
@@ -326,7 +329,7 @@ class ProjectIPtoNodalFieldManager::MassMatrix {
 
   virtual void
   fill(
-      const PHAL::Workset& workset,
+      const PHAL::Workset&                                       workset,
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& bf,
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& wbf) = 0;
 
@@ -348,7 +351,7 @@ class ProjectIPtoNodalFieldManager::FullMassMatrix
  public:
   virtual void
   fill(
-      const PHAL::Workset& workset,
+      const PHAL::Workset&                                       workset,
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& bf,
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& wbf)
   {
@@ -356,9 +359,9 @@ class ProjectIPtoNodalFieldManager::FullMassMatrix
     const bool is_static_graph = this->matrix_->isStaticGraph();
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (int rnode = 0; rnode < num_nodes; ++rnode) {
-        GO                 global_row = workset.wsElNodeID[cell][rnode];
+        GO                        global_row = workset.wsElNodeID[cell][rnode];
         Teuchos::Array<Tpetra_GO> cols;
-        Teuchos::Array<ST> vals;
+        Teuchos::Array<ST>        vals;
 
         for (int cnode = 0; cnode < num_nodes; ++cnode) {
           const GO global_col = workset.wsElNodeID[cell][cnode];
@@ -391,7 +394,7 @@ class ProjectIPtoNodalFieldManager::LumpedMassMatrix
  public:
   virtual void
   fill(
-      const PHAL::Workset& workset,
+      const PHAL::Workset&                                       workset,
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& bf,
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& wbf)
   {
@@ -399,9 +402,9 @@ class ProjectIPtoNodalFieldManager::LumpedMassMatrix
     const bool is_static_graph = this->matrix_->isStaticGraph();
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (int rnode = 0; rnode < num_nodes; ++rnode) {
-        const GO                 global_row = workset.wsElNodeID[cell][rnode];
+        const GO global_row = workset.wsElNodeID[cell][rnode];
         const Teuchos::Array<Tpetra_GO> cols(1, global_row);
-        double                   diag = 0;
+        double                          diag = 0;
         for (std::size_t qp = 0; qp < num_pts; ++qp) {
           double diag_qp = 0;
           for (int cnode = 0; cnode < num_nodes; ++cnode)
@@ -427,7 +430,7 @@ ProjectIPtoNodalFieldManager::MassMatrix::create(EMassMatrixType::Enum type)
   }
 }
 
-template<typename Traits>
+template <typename Traits>
 bool
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::initManager(
     Teuchos::ParameterList* const pl,
@@ -462,7 +465,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::initManager(
   return !isr;
 }
 
-template<typename Traits>
+template <typename Traits>
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
     ProjectIPtoNodalField(
         Teuchos::ParameterList&              p,
@@ -577,9 +580,9 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
       decltype(test_ip_field_)(ip_field_names_.back(), dl->qp_scalar);
   ip_fields_.push_back(
       PHX::MDField<const ScalarT>(ip_field_names_.back(), dl->qp_scalar));
-  auto& f = ip_fields_.back();
+  auto&                                                f = ip_fields_.back();
   typedef PHX::KokkosViewFactory<ScalarT, PHX::Device> ViewFactory;
-  std::vector<PHX::index_size_type> dims;
+  std::vector<PHX::index_size_type>                    dims;
   dims.push_back(100);
   auto test_data = ViewFactory::buildView(f.fieldTag(), dims);
   f.setFieldData(test_data);
@@ -634,7 +637,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
   this->lowsFactory_->setVerbLevel(Teuchos::VERB_LOW);
 }
 
-template<typename Traits>
+template <typename Traits>
 void
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
     postRegistrationSetup(
@@ -651,7 +654,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
   this->utils.setFieldData(coords_verts_, fm);
 }
 
-template<typename Traits>
+template <typename Traits>
 void
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
     typename Traits::PreEvalData workset)
@@ -686,7 +689,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
       mgr_->mass_matrix->matrix()->getRowMap(), mgr_->ndb_numvecs, true));
 }
 
-template<typename Traits>
+template <typename Traits>
 void
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::fillRHS(
     const typename Traits::EvalData workset)
@@ -752,7 +755,7 @@ test_fn(const double x, const double y, const double z)
 }
 #endif
 
-template<typename Traits>
+template <typename Traits>
 void
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     typename Traits::EvalData workset)
@@ -774,7 +777,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
   fillRHS(workset);
 }
 
-template<typename Traits>
+template <typename Traits>
 void
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
     typename Traits::PostEvalData workset)
@@ -845,7 +848,8 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
   Teuchos::RCP<Thyra::MultiVectorBase<ST>>
       x = Thyra::createMultiVector<ST, LO, Tpetra_GO, KokkosNode>(
           node_projected_ip_field),
-      b = Thyra::createMultiVector<ST, LO, Tpetra_GO, KokkosNode>(mgr_->ip_field);
+      b = Thyra::createMultiVector<ST, LO, Tpetra_GO, KokkosNode>(
+          mgr_->ip_field);
 
   // Compute the column norms of the right-hand side b. If b = 0, no need to
   // proceed.
@@ -893,7 +897,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
                                              node_projected_ip_field->getMap();
     Teuchos::RCP<Tpetra_MultiVector> npif = rcp(new Tpetra_MultiVector(
         ovl_map, node_projected_ip_field->getNumVectors()));
-    Teuchos::RCP<Tpetra_Import> im =
+    Teuchos::RCP<Tpetra_Import>      im =
         Teuchos::rcp(new Tpetra_Import(map, ovl_map));
     npif->doImport(*node_projected_ip_field, *im, Tpetra::ADD);
     p_state_mgr_->getStateInfoStruct()
