@@ -35,11 +35,15 @@ TruncatedReducedBasisSource<EpetraMVSourceProvider>::operator()(
   const Teuchos::RCP<BasicEpetraMVSource> mvSource = provider_(params);
 
   int firstVectorRank = params->get("First Vector Rank", 0); // equiv... number of initial basis modes to skip
-  int numModes = params->get("Basis Size Max", -1); // equiv... total number of basis modes
+  int numModes = params->get("Basis Size Max", -1); // equiv... total number of basis modes (NOT including any origin)
   int numFixedModes = params->get("Number of DBC Modes", 0);
-  int numFreeModes = params->get("Number of Free Modes", -1);
+  int numFreeModes = params->get("Number of Free Modes", -1); // (NOT including any origin)
   int lastVectorRank = std::max(numModes,numFixedModes+numFreeModes) + firstVectorRank;
   // We take the basis multivector to be everything from INDEX "firstVectorRank" (0-based counting), through (NOT INCLUDING) index "lastVectorRank".  In other words, we skip the first "firstVectorRank" modes and take the next "numModes" (or "numFixedModes+numFreeModes") ones.
+  const std::string originType = params->get("Origin", "Default");
+  if (originType != "Default"){
+	lastVectorRank++; // adjust for any origin
+  }
   if (lastVectorRank>0) {
     if (firstVectorRank>0){
       return mvSource->truncatedMultiVectorNew(firstVectorRank, lastVectorRank);
