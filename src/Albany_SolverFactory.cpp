@@ -41,11 +41,11 @@
 
 #ifdef ALBANY_QCAD
 #if defined(ALBANY_EPETRA)
+#include "QCADT_Solver.hpp"
 #include "QCAD_CoupledPSObserver.hpp"
 #include "QCAD_CoupledPoissonSchrodinger.hpp"
 #include "QCAD_GenEigensolver.hpp"
 #include "QCAD_Solver.hpp"
-#include "QCADT_Solver.hpp"
 #endif
 #include "QCADT_CoupledPoissonSchrodinger.hpp"
 #endif
@@ -71,9 +71,9 @@
 #include "Thyra_DefaultModelEvaluatorWithSolveFactory.hpp"
 #include "Thyra_DetachedVectorView.hpp"
 
+#include "Teuchos_TestForException.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_YamlParameterListHelpers.hpp"
-#include "Teuchos_TestForException.hpp"
 
 #if defined(ALBANY_EPETRA) && defined(ALBANY_RYTHMOS)
 #include "Rythmos_IntegrationObserverBase.hpp"
@@ -89,20 +89,25 @@ class NOXObserverConstructor
     : public Piro::ProviderBase<NOX::Epetra::Observer> {
  public:
   explicit NOXObserverConstructor(const Teuchos::RCP<Application>& app)
-      : factory_(app), instance_(Teuchos::null) {}
+      : factory_(app), instance_(Teuchos::null)
+  {
+  }
 
   virtual Teuchos::RCP<NOX::Epetra::Observer>
   getInstance(const Teuchos::RCP<Teuchos::ParameterList>& params);
 
  private:
-  NOXObserverFactory factory_;
+  NOXObserverFactory                  factory_;
   Teuchos::RCP<NOX::Epetra::Observer> instance_;
 };
 
 Teuchos::RCP<NOX::Epetra::Observer>
 NOXObserverConstructor::getInstance(
-    const Teuchos::RCP<Teuchos::ParameterList>& /*params*/) {
-  if (Teuchos::is_null(instance_)) { instance_ = factory_.createInstance(); }
+    const Teuchos::RCP<Teuchos::ParameterList>& /*params*/)
+{
+  if (Teuchos::is_null(instance_)) {
+    instance_ = factory_.createInstance();
+  }
   return instance_;
 }
 
@@ -110,16 +115,19 @@ class NOXStatelessObserverConstructor
     : public Piro::ProviderBase<NOX::Epetra::Observer> {
  public:
   explicit NOXStatelessObserverConstructor(const Teuchos::RCP<Application>& app)
-      : factory_(app), instance_(Teuchos::null) {}
+      : factory_(app), instance_(Teuchos::null)
+  {
+  }
 
   virtual Teuchos::RCP<NOX::Epetra::Observer>
-  getInstance(const Teuchos::RCP<Teuchos::ParameterList>& params) {
+  getInstance(const Teuchos::RCP<Teuchos::ParameterList>& params)
+  {
     if (Teuchos::is_null(instance_)) instance_ = factory_.createInstance();
     return instance_;
   }
 
  private:
-  NOXStatelessObserverFactory factory_;
+  NOXStatelessObserverFactory         factory_;
   Teuchos::RCP<NOX::Epetra::Observer> instance_;
 };
 
@@ -128,20 +136,25 @@ class RythmosObserverConstructor
     : public Piro::ProviderBase<Rythmos::IntegrationObserverBase<double>> {
  public:
   explicit RythmosObserverConstructor(const Teuchos::RCP<Application>& app)
-      : factory_(app), instance_(Teuchos::null) {}
+      : factory_(app), instance_(Teuchos::null)
+  {
+  }
 
   virtual Teuchos::RCP<Rythmos::IntegrationObserverBase<double>>
   getInstance(const Teuchos::RCP<Teuchos::ParameterList>& params);
 
  private:
-  RythmosObserverFactory factory_;
+  RythmosObserverFactory                                 factory_;
   Teuchos::RCP<Rythmos::IntegrationObserverBase<double>> instance_;
 };
 
 Teuchos::RCP<Rythmos::IntegrationObserverBase<double>>
 RythmosObserverConstructor::getInstance(
-    const Teuchos::RCP<Teuchos::ParameterList>& /*params*/) {
-  if (Teuchos::is_null(instance_)) { instance_ = factory_.createInstance(); }
+    const Teuchos::RCP<Teuchos::ParameterList>& /*params*/)
+{
+  if (Teuchos::is_null(instance_)) {
+    instance_ = factory_.createInstance();
+  }
   return instance_;
 }
 #endif
@@ -150,26 +163,30 @@ class SaveEigenDataConstructor
     : public Piro::ProviderBase<LOCA::SaveEigenData::AbstractStrategy> {
  public:
   SaveEigenDataConstructor(
-      Teuchos::ParameterList& locaParams, StateManager* pStateMgr,
+      Teuchos::ParameterList& locaParams,
+      StateManager*           pStateMgr,
       const Teuchos::RCP<Piro::ProviderBase<NOX::Epetra::Observer>>&
           observerProvider)
       : locaParams_(locaParams),
         pStateMgr_(pStateMgr),
-        observerProvider_(observerProvider) {}
+        observerProvider_(observerProvider)
+  {
+  }
 
   virtual Teuchos::RCP<LOCA::SaveEigenData::AbstractStrategy>
   getInstance(const Teuchos::RCP<Teuchos::ParameterList>& params);
 
  private:
   Teuchos::ParameterList& locaParams_;
-  StateManager* pStateMgr_;
+  StateManager*           pStateMgr_;
 
   Teuchos::RCP<Piro::ProviderBase<NOX::Epetra::Observer>> observerProvider_;
 };
 
 Teuchos::RCP<LOCA::SaveEigenData::AbstractStrategy>
 SaveEigenDataConstructor::getInstance(
-    const Teuchos::RCP<Teuchos::ParameterList>& params) {
+    const Teuchos::RCP<Teuchos::ParameterList>& params)
+{
   const Teuchos::RCP<NOX::Epetra::Observer> noxObserver =
       observerProvider_->getInstance(params);
   return Teuchos::rcp(new SaveEigenData(locaParams_, noxObserver, pStateMgr_));
@@ -178,20 +195,21 @@ SaveEigenDataConstructor::getInstance(
 }  // namespace Albany
 #endif
 
+using Teuchos::ParameterList;
 using Teuchos::RCP;
 using Teuchos::rcp;
-using Teuchos::ParameterList;
 
 Albany::SolverFactory::SolverFactory(
-    const std::string& inputFile, const RCP<const Teuchos_Comm>& tcomm)
-    : out(Teuchos::VerboseObjectBase::getDefaultOStream()) {
+    const std::string&             inputFile,
+    const RCP<const Teuchos_Comm>& tcomm)
+    : out(Teuchos::VerboseObjectBase::getDefaultOStream())
+{
   // Set up application parameters: read and broadcast XML file, and set
   // defaults
   // RCP<ParameterList> input_
   appParams = Teuchos::createParameterList("Albany Parameters");
 
-  std::string const
-  input_extension = getFileExtension(inputFile);
+  std::string const input_extension = getFileExtension(inputFile);
 
   if (input_extension == "yaml" || input_extension == "yml") {
     Teuchos::updateParametersFromYamlFileAndBroadcast(
@@ -218,9 +236,10 @@ Albany::SolverFactory::SolverFactory(
 
 Albany::SolverFactory::SolverFactory(
     const Teuchos::RCP<Teuchos::ParameterList>& input_appParams,
-    const RCP<const Teuchos_Comm>& tcomm)
+    const RCP<const Teuchos_Comm>&              tcomm)
     : appParams(input_appParams),
-      out(Teuchos::VerboseObjectBase::getDefaultOStream()) {
+      out(Teuchos::VerboseObjectBase::getDefaultOStream())
+{
   // do not set default solver parameters for QCAD::Solver or ATO::Solver
   // problems,
   // ... as they handle this themselves
@@ -236,7 +255,8 @@ Albany::SolverFactory::SolverFactory(
   appParams->validateParametersAndSetDefaults(*getValidAppParameters(), 0);
 }
 
-Albany::SolverFactory::~SolverFactory() {
+Albany::SolverFactory::~SolverFactory()
+{
 #if defined(ALBANY_EPETRA)
   // Release the model to eliminate RCP circular reference
   if (Teuchos::nonnull(thyraModelFactory)) thyraModelFactory->releaseModel();
@@ -250,9 +270,10 @@ Albany::SolverFactory::~SolverFactory() {
 #if defined(ALBANY_EPETRA)
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::create(
-    const Teuchos::RCP<const Teuchos_Comm>& appCommT,
-    const Teuchos::RCP<const Teuchos_Comm>& solverCommT,
-    const Teuchos::RCP<const Tpetra_Vector>& initial_guess) {
+    const Teuchos::RCP<const Teuchos_Comm>&  appCommT,
+    const Teuchos::RCP<const Teuchos_Comm>&  solverCommT,
+    const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+{
   Teuchos::RCP<Albany::Application> dummyAlbanyApp;
   return createAndGetAlbanyApp(
       dummyAlbanyApp, appCommT, solverCommT, initial_guess);
@@ -261,9 +282,10 @@ Albany::SolverFactory::create(
 
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
 Albany::SolverFactory::createT(
-    const Teuchos::RCP<const Teuchos_Comm>& appComm,
-    const Teuchos::RCP<const Teuchos_Comm>& solverComm,
-    const Teuchos::RCP<const Tpetra_Vector>& initial_guess) {
+    const Teuchos::RCP<const Teuchos_Comm>&  appComm,
+    const Teuchos::RCP<const Teuchos_Comm>&  solverComm,
+    const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+{
   Teuchos::RCP<Albany::Application> dummyAlbanyApp;
   //  Teuchos::RCP<Albany::ApplicationT> dummyAlbanyApp;
   return createAndGetAlbanyAppT(
@@ -273,11 +295,12 @@ Albany::SolverFactory::createT(
 #if defined(ALBANY_EPETRA)
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::createAndGetAlbanyApp(
-    Teuchos::RCP<Albany::Application>& albanyApp,
-    const Teuchos::RCP<const Teuchos_Comm>& appCommT,
-    const Teuchos::RCP<const Teuchos_Comm>& solverCommT,
+    Teuchos::RCP<Albany::Application>&       albanyApp,
+    const Teuchos::RCP<const Teuchos_Comm>&  appCommT,
+    const Teuchos::RCP<const Teuchos_Comm>&  solverCommT,
     const Teuchos::RCP<const Tpetra_Vector>& initial_guess,
-    bool createAlbanyApp) {
+    bool                                     createAlbanyApp)
+{
   const RCP<ParameterList> problemParams =
       Teuchos::sublist(appParams, "Problem");
   const std::string solutionMethod =
@@ -334,7 +357,8 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 
     RCP<Albany::Application> app;
     if (createAlbanyApp) {
-      app = rcp(new Albany::Application(appCommT, appParams, initial_guess, is_schwarz_));
+      app       = rcp(new Albany::Application(
+          appCommT, appParams, initial_guess, is_schwarz_));
       albanyApp = app;
     } else
       app = albanyApp;
@@ -351,9 +375,8 @@ Albany::SolverFactory::createAndGetAlbanyApp(
         &(appParams->sublist("Piro").sublist("LOCA").sublist("Stepper").sublist(
             "Eigensolver")),
         false);
-    const RCP<QCAD::GenEigensolver> es_model =
-        rcp(new QCAD::GenEigensolver(
-            eigensolveParams, model, observer, solverComm));
+    const RCP<QCAD::GenEigensolver> es_model = rcp(new QCAD::GenEigensolver(
+        eigensolveParams, model, observer, solverComm));
     return es_model;
 
 #else  /* ALBANY_QCAD */
@@ -371,7 +394,8 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     return rcp(new ATO::Solver(appParams, solverCommT, initial_guess));
 #else  /* ALBANY_ATO */
     TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::logic_error,
+        true,
+        std::logic_error,
         "Must activate ATO (topological optimization)\n");
 #endif /* ALBANY_ATO */
   }
@@ -380,7 +404,8 @@ Albany::SolverFactory::createAndGetAlbanyApp(
   RCP<Albany::Application> app;
 
   if (createAlbanyApp) {
-    app = rcp(new Albany::Application(appCommT, appParams, initial_guess, is_schwarz_));
+    app = rcp(new Albany::Application(
+        appCommT, appParams, initial_guess, is_schwarz_));
 
     // Pass back albany app so that interface beyond ModelEvaluator can be used.
     // This is essentially a hack to allow additional in/out arguments beyond
@@ -428,10 +453,10 @@ Albany::SolverFactory::createAndGetAlbanyApp(
           noxStatelessObserverProvider =
               rcp(new NOXStatelessObserverConstructor(app));
       const RCP<Piro::ProviderBase<LOCA::SaveEigenData::AbstractStrategy>>
-          saveEigenDataProvider =
-              rcp(new SaveEigenDataConstructor(
-                  piroParams->sublist("LOCA"), &app->getStateMgr(),
-                  noxStatelessObserverProvider));
+          saveEigenDataProvider = rcp(new SaveEigenDataConstructor(
+              piroParams->sublist("LOCA"),
+              &app->getStateMgr(),
+              noxStatelessObserverProvider));
       piroEpetraFactory.setSource<LOCA::SaveEigenData::AbstractStrategy>(
           saveEigenDataProvider);
     }
@@ -443,11 +468,12 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 
 Teuchos::RCP<Thyra::ModelEvaluator<double>>
 Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
-    Teuchos::RCP<Application>& albanyApp,
-    const Teuchos::RCP<const Teuchos_Comm>& appCommT,
-    const Teuchos::RCP<const Teuchos_Comm>& solverCommT,
+    Teuchos::RCP<Application>&               albanyApp,
+    const Teuchos::RCP<const Teuchos_Comm>&  appCommT,
+    const Teuchos::RCP<const Teuchos_Comm>&  solverCommT,
     const Teuchos::RCP<const Tpetra_Vector>& initial_guess,
-    bool createAlbanyApp) {
+    bool                                     createAlbanyApp)
+{
   const Teuchos::RCP<const Epetra_Comm> appComm =
       Albany::createEpetraCommFromTeuchosComm(appCommT);
 
@@ -471,7 +497,8 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     // twice, here and below, when calling
     //    createAndGetAlbanyApp. Why? (Mauro)
     if (createAlbanyApp) {
-      app = rcp(new Albany::Application(appCommT, appParams, initial_guess, is_schwarz_));
+      app = rcp(new Albany::Application(
+          appCommT, appParams, initial_guess, is_schwarz_));
 
       // Pass back albany app so that interface beyond ModelEvaluator can be
       // used.
@@ -540,9 +567,10 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
 namespace {
 
 void
-enableIfpack2(Stratimikos::DefaultLinearSolverBuilder& linearSolverBuilder) {
+enableIfpack2(Stratimikos::DefaultLinearSolverBuilder& linearSolverBuilder)
+{
 #ifdef ALBANY_IFPACK2
-  typedef Thyra::PreconditionerFactoryBase<ST> Base;
+  typedef Thyra::PreconditionerFactoryBase<ST>                  Base;
   typedef Thyra::Ifpack2PreconditionerFactory<Tpetra_CrsMatrix> Impl;
   linearSolverBuilder.setPreconditioningStrategyFactory(
       Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
@@ -551,9 +579,10 @@ enableIfpack2(Stratimikos::DefaultLinearSolverBuilder& linearSolverBuilder) {
 
 void
 enableMueLu(
-    Teuchos::RCP<Albany::Application>& albanyApp,
+    Teuchos::RCP<Albany::Application>&          albanyApp,
     const Teuchos::RCP<Teuchos::ParameterList>& stratList,
-    Stratimikos::DefaultLinearSolverBuilder& linearSolverBuilder) {
+    Stratimikos::DefaultLinearSolverBuilder&    linearSolverBuilder)
+{
 #ifdef ALBANY_MUELU
   Stratimikos::enableMueLu<LO, Tpetra_GO, KokkosNode>(linearSolverBuilder);
 #endif
@@ -562,11 +591,12 @@ enableMueLu(
 
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
 Albany::SolverFactory::createAndGetAlbanyAppT(
-    Teuchos::RCP<Albany::Application>& albanyApp,
-    const Teuchos::RCP<const Teuchos_Comm>& appComm,
-    const Teuchos::RCP<const Teuchos_Comm>& solverComm,
+    Teuchos::RCP<Albany::Application>&       albanyApp,
+    const Teuchos::RCP<const Teuchos_Comm>&  appComm,
+    const Teuchos::RCP<const Teuchos_Comm>&  solverComm,
     const Teuchos::RCP<const Tpetra_Vector>& initial_guess,
-    bool createAlbanyApp) {
+    bool                                     createAlbanyApp)
+{
   const RCP<ParameterList> problemParams =
       Teuchos::sublist(appParams, "Problem");
   const std::string solutionMethod =
@@ -577,14 +607,15 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   if (solutionMethod == "QCAD Multi-Problem") {
 #ifdef ALBANY_QCAD
     TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::logic_error,
+        true,
+        std::logic_error,
         "QCAD Multi-Problem does not work with AlbanyT executable!  "
         "QCAD::Solver class needs to be implemented with Thyra::ModelEvaluator "
         "instead of EpetraExt. \n");
 // IK, 7/25/17: need to finish implementing QCADT::Solver class that returns
 // Thyra::ModelEvaluator instead of EpetraExt one
 // and takes in Tpetra objects.
-    //return rcp(new QCADT::Solver(appParams, solverComm, initial_guess));
+// return rcp(new QCADT::Solver(appParams, solverComm, initial_guess));
 #else  /* ALBANY_QCAD */
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
 #endif /* ALBANY_QCAD */
@@ -593,7 +624,8 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   if (solutionMethod == "QCAD Poisson-Schrodinger") {
 #ifdef ALBANY_QCAD
     TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::logic_error,
+        true,
+        std::logic_error,
         "QCAD Poisson-Schrodinger does not work with AlbanyT executable!  "
         "QCAD::CoupledPoissonSchrodinger class needs to be implemented with "
         "Thyra::ModelEvaluator instead of EpetraExt. \n");
@@ -649,28 +681,27 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   if (solutionMethod == "Eigensolve") {
 #ifdef ALBANY_QCAD
     TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::logic_error,
+        true,
+        std::logic_error,
         "Eigensolve does not work with AlbanyT executable!  "
         "QCAD::GenEigensolver class needs to be implemented with "
         "Thyra::ModelEvaluator instead of EpetraExt. \n");
 
-// RCP<Albany::Application> app;
-// const RCP<Thyra::ModelEvaluator<ST> > modelT_ = createAlbanyAppAndModelT(app,
-// appComm, initial_guess);
-// albanyApp = app;
+    // RCP<Albany::Application> app;
+    // const RCP<Thyra::ModelEvaluator<ST> > modelT_ =
+    // createAlbanyAppAndModelT(app, appComm, initial_guess); albanyApp = app;
 
-// QCAD::GenEigensolver uses a state manager as an observer (for now)
-// RCP<Albany::StateManager> observer = rcp( &(app->getStateMgr()), false);
+    // QCAD::GenEigensolver uses a state manager as an observer (for now)
+    // RCP<Albany::StateManager> observer = rcp( &(app->getStateMgr()), false);
 
-// Currently, QCAD eigensolver just uses LOCA's eigensolver list under Piro --
-// maybe give it it's own list
-// outside of Piro?
-// const RCP<ParameterList> eigensolveParams =
-// rcp(&(appParams->sublist("Piro").sublist("LOCA").sublist("Stepper").sublist("Eigensolver")),
-// false);
-// const RCP<QCAD::GenEigensolver> es_model = rcp(new
-// QCAD::GenEigensolver(eigensolveParams, modelT_, observer, solverComm));
-// return es_model;
+    // Currently, QCAD eigensolver just uses LOCA's eigensolver list under Piro
+    // -- maybe give it it's own list outside of Piro? const RCP<ParameterList>
+    // eigensolveParams =
+    // rcp(&(appParams->sublist("Piro").sublist("LOCA").sublist("Stepper").sublist("Eigensolver")),
+    // false);
+    // const RCP<QCAD::GenEigensolver> es_model = rcp(new
+    // QCAD::GenEigensolver(eigensolveParams, modelT_, observer, solverComm));
+    // return es_model;
 
 #else  /* ALBANY_QCAD */
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
@@ -682,7 +713,8 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     return rcp(new ATOT::Solver(appParams, solverComm, initial_guess));
 #else  /* ALBANY_ATO */
     TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::logic_error,
+        true,
+        std::logic_error,
         "Must activate ATO (topological optimization)\n");
 #endif /* ALBANY_ATO */
   }
@@ -695,12 +727,12 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     // is no need for Aeras HVDecorator.
 
     double tau;
-    bool useExplHyperviscosity;
+    bool   useExplHyperviscosity;
 
-    std::string swProblem_name = "Shallow Water Problem",
+    std::string swProblem_name    = "Shallow Water Problem",
                 hydroProblem_name = "Hydrostatic Problem";
 
-    bool swProblem = problemParams->isSublist(swProblem_name);
+    bool swProblem    = problemParams->isSublist(swProblem_name);
     bool hydroProblem = problemParams->isSublist(hydroProblem_name);
 
     if ((!swProblem) && (!hydroProblem)) {
@@ -708,11 +740,12 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
               "or Aeras:Hydrostatic."
            << std::endl;
       TEUCHOS_TEST_FOR_EXCEPTION(
-          true, std::logic_error, "Error: cannot locate "
-                                      << swProblem_name << " or "
-                                      << hydroProblem_name
-                                      << " sublist in the input file."
-                                      << "\n");
+          true,
+          std::logic_error,
+          "Error: cannot locate " << swProblem_name << " or "
+                                  << hydroProblem_name
+                                  << " sublist in the input file."
+                                  << "\n");
     }
 
     if (swProblem) {
@@ -755,7 +788,8 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
       RCP<Albany::Application> app;
 
-      app = rcp(new Albany::Application(appComm, appParams, initial_guess, is_schwarz_));
+      app = rcp(new Albany::Application(
+          appComm, appParams, initial_guess, is_schwarz_));
       RCP<Thyra::ModelEvaluatorDefaultBase<ST>> modelHV(
           new Aeras::HVDecorator(app, appParams));
 
@@ -849,7 +883,8 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     piroParams->print(*out);
     // GAH: this is an error - should be fatal
     TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::logic_error,
+        true,
+        std::logic_error,
         "Error: cannot locate Stratimikos solver parameters in the input file."
             << "\n");
   }
@@ -870,13 +905,12 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     const RCP<Thyra::LinearOpWithSolveFactoryBase<ST>> lowsFactory =
         createLinearSolveStrategy(linearSolverBuilder);
 
-    modelWithSolveT =
-        rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(
-            modelT_, lowsFactory));
+    modelWithSolveT = rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(
+        modelT_, lowsFactory));
   }
 
   const RCP<Thyra::AdaptiveSolutionManager> solMgrT = app->getAdaptSolMgrT();
-  Piro::SolverFactory piroFactory;
+  Piro::SolverFactory                       piroFactory;
 
   if (solMgrT->isAdaptive()) {
     if (TpetraBuild) {
@@ -906,19 +940,23 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif
   }
   TEUCHOS_TEST_FOR_EXCEPTION(
-      true, std::logic_error, "Reached end of createAndGetAlbanyAppT()"
-                                  << "\n");
+      true,
+      std::logic_error,
+      "Reached end of createAndGetAlbanyAppT()"
+          << "\n");
   return Teuchos::null;
 }
 
 #if defined(ALBANY_EPETRA)
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::createAlbanyAppAndModel(
-    Teuchos::RCP<Albany::Application>& albanyApp,
-    const Teuchos::RCP<const Teuchos_Comm>& appCommT,
-    const Teuchos::RCP<const Tpetra_Vector>& initial_guess) {
+    Teuchos::RCP<Albany::Application>&       albanyApp,
+    const Teuchos::RCP<const Teuchos_Comm>&  appCommT,
+    const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+{
   // Create application
-  albanyApp = rcp(new Albany::Application(appCommT, appParams, initial_guess, is_schwarz_));
+  albanyApp = rcp(
+      new Albany::Application(appCommT, appParams, initial_guess, is_schwarz_));
 
   return createModel(albanyApp, appCommT);
 }
@@ -926,7 +964,8 @@ Albany::SolverFactory::createAlbanyAppAndModel(
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::createModel(
     const Teuchos::RCP<Albany::Application>& albanyApp,
-    const Teuchos::RCP<const Teuchos_Comm>& appCommT) {
+    const Teuchos::RCP<const Teuchos_Comm>&  appCommT)
+{
   // Validate Response list: may move inside individual Problem class
   const RCP<ParameterList> problemParams =
       Teuchos::sublist(appParams, "Problem");
@@ -942,13 +981,15 @@ Albany::SolverFactory::createModel(
 
 Teuchos::RCP<Thyra::ModelEvaluator<ST>>
 Albany::SolverFactory::createAlbanyAppAndModelT(
-    Teuchos::RCP<Albany::Application>& albanyApp,
-    const Teuchos::RCP<const Teuchos_Comm>& appComm,
+    Teuchos::RCP<Albany::Application>&       albanyApp,
+    const Teuchos::RCP<const Teuchos_Comm>&  appComm,
     const Teuchos::RCP<const Tpetra_Vector>& initial_guess,
-    const bool createAlbanyApp) {
+    const bool                               createAlbanyApp)
+{
   if (createAlbanyApp) {
     // Create application
-    albanyApp = rcp(new Albany::Application(appComm, appParams, initial_guess, is_schwarz_));
+    albanyApp = rcp(new Albany::Application(
+        appComm, appParams, initial_guess, is_schwarz_));
     //  albanyApp = rcp(new Albany::ApplicationT(appComm, appParams,
     //  initial_guess));
   }
@@ -968,8 +1009,10 @@ Albany::SolverFactory::createAlbanyAppAndModelT(
     /* TODO: this should be a boolean, not a string ! */
     const std::string secondOrder = problemParams->get("Second Order", "No");
     TEUCHOS_TEST_FOR_EXCEPTION(
-        secondOrder != "No", std::logic_error, "Second Order is not supported"
-                                                   << "\n");
+        secondOrder != "No",
+        std::logic_error,
+        "Second Order is not supported"
+            << "\n");
 
     // Populate the Piro parameter list accordingly to inform the Piro solver
     // factory
@@ -989,7 +1032,8 @@ Albany::SolverFactory::createAlbanyAppAndModelT(
       piroSolverToken = "Unsupported";
     }
 
-    ALBANY_ASSERT(piroSolverToken != "Unsupported",
+    ALBANY_ASSERT(
+        piroSolverToken != "Unsupported",
         "Unsupported Solution Method: " << solutionMethod);
 
     piroParams->set("Solver Type", piroSolverToken);
@@ -1002,14 +1046,17 @@ Albany::SolverFactory::createAlbanyAppAndModelT(
 
 int
 Albany::SolverFactory::checkSolveTestResultsT(
-    int response_index, int parameter_index, const Tpetra_Vector* g,
-    const Tpetra_MultiVector* dgdp) const {
+    int                       response_index,
+    int                       parameter_index,
+    const Tpetra_Vector*      g,
+    const Tpetra_MultiVector* dgdp) const
+{
   ParameterList* testParams = getTestParameters(response_index);
 
-  int failures = 0;
-  int comparisons = 0;
-  const double relTol = testParams->get<double>("Relative Tolerance");
-  const double absTol = testParams->get<double>("Absolute Tolerance");
+  int          failures    = 0;
+  int          comparisons = 0;
+  const double relTol      = testParams->get<double>("Relative Tolerance");
+  const double absTol      = testParams->get<double>("Absolute Tolerance");
 
   // Get number of responses (g) to test
   const int numResponseTests = testParams->get<int>("Number of Comparisons");
@@ -1041,7 +1088,7 @@ Albany::SolverFactory::checkSolveTestResultsT(
 
   // Repeat comparisons for sensitivities
   Teuchos::ParameterList* sensitivityParams = 0;
-  std::string sensitivity_sublist_name =
+  std::string             sensitivity_sublist_name =
       Albany::strint("Sensitivity Comparisons", parameter_index);
   if (parameter_index == 0 && !testParams->isSublist(sensitivity_sublist_name))
     sensitivityParams = testParams;
@@ -1092,14 +1139,17 @@ Albany::SolverFactory::checkSolveTestResultsT(
 #if defined(ALBANY_EPETRA)
 int
 Albany::SolverFactory::checkSolveTestResults(
-    int response_index, int parameter_index, const Epetra_Vector* g,
-    const Epetra_MultiVector* dgdp) const {
+    int                       response_index,
+    int                       parameter_index,
+    const Epetra_Vector*      g,
+    const Epetra_MultiVector* dgdp) const
+{
   ParameterList* testParams = getTestParameters(response_index);
 
-  int failures = 0;
-  int comparisons = 0;
-  const double relTol = testParams->get<double>("Relative Tolerance");
-  const double absTol = testParams->get<double>("Absolute Tolerance");
+  int          failures    = 0;
+  int          comparisons = 0;
+  const double relTol      = testParams->get<double>("Relative Tolerance");
+  const double absTol      = testParams->get<double>("Absolute Tolerance");
 
   // Get number of responses (g) to test
   const int numResponseTests = testParams->get<int>("Number of Comparisons");
@@ -1130,7 +1180,7 @@ Albany::SolverFactory::checkSolveTestResults(
 
   // Repeat comparisons for sensitivities
   Teuchos::ParameterList* sensitivityParams = 0;
-  std::string sensitivity_sublist_name =
+  std::string             sensitivity_sublist_name =
       Albany::strint("Sensitivity Comparisons", parameter_index);
   if (parameter_index == 0 && !testParams->isSublist(sensitivity_sublist_name))
     sensitivityParams = testParams;
@@ -1179,14 +1229,15 @@ Albany::SolverFactory::checkSolveTestResults(
 
 int
 Albany::SolverFactory::checkDakotaTestResults(
-    int response_index,
-    const Teuchos::SerialDenseVector<int, double>* drdv) const {
+    int                                            response_index,
+    const Teuchos::SerialDenseVector<int, double>* drdv) const
+{
   ParameterList* testParams = getTestParameters(response_index);
 
-  int failures = 0;
-  int comparisons = 0;
-  const double relTol = testParams->get<double>("Relative Tolerance");
-  const double absTol = testParams->get<double>("Absolute Tolerance");
+  int          failures    = 0;
+  int          comparisons = 0;
+  const double relTol      = testParams->get<double>("Relative Tolerance");
+  const double absTol      = testParams->get<double>("Absolute Tolerance");
 
   const int numDakotaTests =
       testParams->get<int>("Number of Dakota Comparisons");
@@ -1214,14 +1265,15 @@ Albany::SolverFactory::checkDakotaTestResults(
 
 int
 Albany::SolverFactory::checkAnalysisTestResults(
-    int response_index,
-    const Teuchos::RCP<Thyra::VectorBase<double>>& tvec) const {
+    int                                            response_index,
+    const Teuchos::RCP<Thyra::VectorBase<double>>& tvec) const
+{
   ParameterList* testParams = getTestParameters(response_index);
 
-  int failures = 0;
-  int comparisons = 0;
-  const double relTol = testParams->get<double>("Relative Tolerance");
-  const double absTol = testParams->get<double>("Absolute Tolerance");
+  int          failures    = 0;
+  int          comparisons = 0;
+  const double relTol      = testParams->get<double>("Relative Tolerance");
+  const double absTol      = testParams->get<double>("Absolute Tolerance");
 
   int numPiroTests =
       testParams->get<int>("Number of Piro Analysis Comparisons");
@@ -1230,9 +1282,9 @@ Albany::SolverFactory::checkAnalysisTestResults(
     ::Thyra::DetachedVectorView<double> p(tvec);
 
     ALBANY_ASSERT(
-        numPiroTests <= p.subDim(), "more Piro Analysis Comparisons ("
-                                        << numPiroTests << ") than values ("
-                                        << p.subDim() << ") !\n");
+        numPiroTests <= p.subDim(),
+        "more Piro Analysis Comparisons (" << numPiroTests << ") than values ("
+                                           << p.subDim() << ") !\n");
     // Read accepted test results
     Teuchos::Array<double> testValues =
         testParams->get<Teuchos::Array<double>>("Piro Analysis Test Values");
@@ -1251,19 +1303,20 @@ Albany::SolverFactory::checkAnalysisTestResults(
 }
 
 ParameterList*
-Albany::SolverFactory::getTestParameters(int response_index) const {
+Albany::SolverFactory::getTestParameters(int response_index) const
+{
   ParameterList* result;
 
   if (response_index == 0 && appParams->isSublist("Regression Results")) {
     result = &(appParams->sublist("Regression Results"));
   } else {
-    result =
-        &(appParams->sublist(
-            Albany::strint("Regression Results", response_index)));
+    result = &(appParams->sublist(
+        Albany::strint("Regression Results", response_index)));
   }
 
   TEUCHOS_TEST_FOR_EXCEPTION(
-      result->isType<std::string>("Test Values"), std::logic_error,
+      result->isType<std::string>("Test Values"),
+      std::logic_error,
       "Array information in XML file must now be of type Array(double)\n");
   result->validateParametersAndSetDefaults(
       *getValidRegressionResultsParameters(), 0);
@@ -1273,7 +1326,10 @@ Albany::SolverFactory::getTestParameters(int response_index) const {
 
 void
 Albany::SolverFactory::storeTestResults(
-    ParameterList* testParams, int failures, int comparisons) const {
+    ParameterList* testParams,
+    int            failures,
+    int            comparisons) const
+{
   // Store failures in param list (this requires mutable appParams!)
   testParams->set("Number of Failures", failures);
   testParams->set("Number of Comparisons Attempted", comparisons);
@@ -1283,13 +1339,17 @@ Albany::SolverFactory::storeTestResults(
 
 bool
 Albany::SolverFactory::scaledCompare(
-    double x1, double x2, double relTol, double absTol,
-    std::string const& name) const {
-  auto d = fabs(x1 - x2);
+    double             x1,
+    double             x2,
+    double             relTol,
+    double             absTol,
+    std::string const& name) const
+{
+  auto d       = fabs(x1 - x2);
   auto avg_mag = (0.5 * (fabs(x1) + fabs(x2)));
-  auto rel_ok = (d <= (avg_mag * relTol));
-  auto abs_ok = (d <= fabs(absTol));
-  auto ok = rel_ok || abs_ok;
+  auto rel_ok  = (d <= (avg_mag * relTol));
+  auto abs_ok  = (d <= fabs(absTol));
+  auto ok      = rel_ok || abs_ok;
   if (!ok) {
     *out << name << ": " << x1 << " != " << x2 << " (rel " << relTol << " abs "
          << absTol << ")\n";
@@ -1299,10 +1359,12 @@ Albany::SolverFactory::scaledCompare(
 
 void
 Albany::SolverFactory::setSolverParamDefaults(
-    ParameterList* appParams_, int myRank) {
+    ParameterList* appParams_,
+    int            myRank)
+{
   // Set the nonlinear solver method
   ParameterList& piroParams = appParams_->sublist("Piro");
-  ParameterList& noxParams = piroParams.sublist("NOX");
+  ParameterList& noxParams  = piroParams.sublist("NOX");
   noxParams.set("Nonlinear Solver", "Line Search Based");
 
   // Set the printing parameters in the "Printing" sublist
@@ -1351,7 +1413,8 @@ Albany::SolverFactory::setSolverParamDefaults(
 }
 
 RCP<const ParameterList>
-Albany::SolverFactory::getValidAppParameters() const {
+Albany::SolverFactory::getValidAppParameters() const
+{
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidAppParams"));
 
   validPL->sublist("Problem", false, "Problem sublist");
@@ -1360,7 +1423,8 @@ Albany::SolverFactory::getValidAppParameters() const {
   validPL->sublist("DataTransferKit", false, "DataTransferKit sublist");
   validPL->sublist("DataTransferKit", false, "DataTransferKit sublist")
       .sublist(
-          "Consistent Interpolation", false,
+          "Consistent Interpolation",
+          false,
           "DTK Consistent Interpolation sublist");
   validPL->sublist("DataTransferKit", false, "DataTransferKit sublist")
       .sublist("Search", false, "DTK Search sublist");
@@ -1385,7 +1449,8 @@ Albany::SolverFactory::getValidAppParameters() const {
 }
 
 RCP<const ParameterList>
-Albany::SolverFactory::getValidRegressionResultsParameters() const {
+Albany::SolverFactory::getValidRegressionResultsParameters() const
+{
   using Teuchos::Array;
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidRegressionParams"));
   ;
@@ -1393,10 +1458,12 @@ Albany::SolverFactory::getValidRegressionResultsParameters() const {
   ;  // std::string to be converted to teuchos array
 
   validPL->set<double>(
-      "Relative Tolerance", 1.0e-4,
+      "Relative Tolerance",
+      1.0e-4,
       "Relative Tolerance used in regression testing");
   validPL->set<double>(
-      "Absolute Tolerance", 1.0e-8,
+      "Absolute Tolerance",
+      1.0e-8,
       "Absolute Tolerance used in regression testing");
 
   validPL->set<int>(
@@ -1405,69 +1472,85 @@ Albany::SolverFactory::getValidRegressionResultsParameters() const {
       "Test Values", ta, "Array of regression values for responses");
 
   validPL->set<int>(
-      "Number of Sensitivity Comparisons", 0,
+      "Number of Sensitivity Comparisons",
+      0,
       "Number of sensitivity vectors to regress against");
 
   const int maxSensTests = 10;
   for (int i = 0; i < maxSensTests; i++) {
     validPL->set<Array<double>>(
-        Albany::strint("Sensitivity Test Values", i), ta,
+        Albany::strint("Sensitivity Test Values", i),
+        ta,
         Albany::strint(
             "Array of regression values for Sensitivities w.r.t parameter", i));
     validPL->sublist(
-        Albany::strint("Sensitivity Comparisons", i), false,
+        Albany::strint("Sensitivity Comparisons", i),
+        false,
         "Sensitivity Comparisons sublist");
   }
 
   validPL->set<int>(
-      "Number of Dakota Comparisons", 0,
+      "Number of Dakota Comparisons",
+      0,
       "Number of paramters from Dakota runs to regress against");
   validPL->set<Array<double>>(
-      "Dakota Test Values", ta,
+      "Dakota Test Values",
+      ta,
       "Array of regression values for final parameters from Dakota runs");
 
   validPL->set<int>(
-      "Number of Piro Analysis Comparisons", 0,
+      "Number of Piro Analysis Comparisons",
+      0,
       "Number of paramters from Analysis to regress against");
   validPL->set<Array<double>>(
-      "Piro Analysis Test Values", ta,
+      "Piro Analysis Test Values",
+      ta,
       "Array of regression values for final parameters from Analysis runs");
 
- // Should deprecate these options, but need to remove them from all input files
+  // Should deprecate these options, but need to remove them from all input
+  // files
   validPL->set<int>(
-      "Number of Stochastic Galerkin Comparisons", 0,
+      "Number of Stochastic Galerkin Comparisons",
+      0,
       "Number of stochastic Galerkin expansions to regress against");
 
   const int maxSGTests = 10;
   for (int i = 0; i < maxSGTests; i++) {
     validPL->set<Array<double>>(
-        Albany::strint("Stochastic Galerkin Expansion Test Values", i), ta,
+        Albany::strint("Stochastic Galerkin Expansion Test Values", i),
+        ta,
         Albany::strint(
             "Array of regression values for stochastic Galerkin expansions",
             i));
   }
 
   validPL->set<int>(
-      "Number of Stochastic Galerkin Mean Comparisons", 0,
+      "Number of Stochastic Galerkin Mean Comparisons",
+      0,
       "Number of SG mean responses to regress against");
   validPL->set<Array<double>>(
-      "Stochastic Galerkin Mean Test Values", ta,
+      "Stochastic Galerkin Mean Test Values",
+      ta,
       "Array of regression values for SG mean responses");
   validPL->set<int>(
-      "Number of Stochastic Galerkin Standard Deviation Comparisons", 0,
+      "Number of Stochastic Galerkin Standard Deviation Comparisons",
+      0,
       "Number of SG standard deviation responses to regress against");
   validPL->set<Array<double>>(
-      "Stochastic Galerkin Standard Deviation Test Values", ta,
+      "Stochastic Galerkin Standard Deviation Test Values",
+      ta,
       "Array of regression values for SG standard deviation responses");
- // End of deprecated Stochastic Galerkin Options
+  // End of deprecated Stochastic Galerkin Options
 
   // These two are typically not set on input, just output.
   validPL->set<int>(
-      "Number of Failures", 0,
+      "Number of Failures",
+      0,
       "Output information from regression tests reporting number of failed "
       "tests");
   validPL->set<int>(
-      "Number of Comparisons Attempted", 0,
+      "Number of Comparisons Attempted",
+      0,
       "Output information from regression tests reporting number of "
       "comparisons attempted");
 
@@ -1475,7 +1558,8 @@ Albany::SolverFactory::getValidRegressionResultsParameters() const {
 }
 
 RCP<const ParameterList>
-Albany::SolverFactory::getValidParameterParameters() const {
+Albany::SolverFactory::getValidParameterParameters() const
+{
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidParameterParams"));
   ;
 
@@ -1488,7 +1572,8 @@ Albany::SolverFactory::getValidParameterParameters() const {
 }
 
 RCP<const ParameterList>
-Albany::SolverFactory::getValidResponseParameters() const {
+Albany::SolverFactory::getValidResponseParameters() const
+{
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidResponseParams"));
   ;
   validPL->set<std::string>("Collection Method", "Sum Responses");
@@ -1497,7 +1582,8 @@ Albany::SolverFactory::getValidResponseParameters() const {
   validPL->set<int>("Responses Observation Frequency", 1);
   Teuchos::Array<unsigned int> defaultDataUnsignedInt;
   validPL->set<Teuchos::Array<unsigned int>>(
-      "Relative Responses Markers", defaultDataUnsignedInt,
+      "Relative Responses Markers",
+      defaultDataUnsignedInt,
       "Array of responses for which relative change will be obtained");
 
   validPL->set<int>("Number", 0);
