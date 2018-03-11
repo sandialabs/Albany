@@ -12,12 +12,12 @@
 namespace LCM {
 
 template <typename EvalT, typename Traits>
-ACEdensity<EvalT, Traits>::ACEdensity(Teuchos::ParameterList& p)
-    : density_(
+ACEheatCapacity<EvalT, Traits>::ACEheatCapacity(Teuchos::ParameterList& p)
+    : heat_capacity_(
           p.get<std::string>("QP Variable Name"),
           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
 {
-  Teuchos::ParameterList* density_list =
+  Teuchos::ParameterList* heat_capacity_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -30,45 +30,45 @@ ACEdensity<EvalT, Traits>::ACEdensity(Teuchos::ParameterList& p)
   Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
-  std::string type = density_list->get("Density Type", "Constant");
+  std::string type = heat_capacity_list->get("Heat Capacity Type", "Constant");
   if (type == "Constant") {
     is_constant_ = true;
-    constant_value_ = density_list->get<double>("Value");
+    constant_value_ = heat_capacity_list->get<double>("Value");
 
     // Add density as a Sacado-ized parameter
-    this->registerSacadoParameter("Density", paramLib);
+    this->registerSacadoParameter("Heat Capacity", paramLib);
   }
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
              "Invalid density type " << type);
   }
 
-  this->addEvaluatedField(density_);
-  this->setName("Density" + PHX::typeAsString<EvalT>());
+  this->addEvaluatedField(heat_capacity_);
+  this->setName("Heat Capacity" + PHX::typeAsString<EvalT>());
 }
 
 //
 template <typename EvalT, typename Traits>
 void
-ACEdensity<EvalT, Traits>::postRegistrationSetup(
+ACEheatCapacity<EvalT, Traits>::postRegistrationSetup(
     typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(density_, fm);
+  this->utils.setFieldData(heat_capacity_, fm);
   return;
 }
 
 //
 template <typename EvalT, typename Traits>
 void
-ACEdensity<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+ACEheatCapacity<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
   int num_cells = workset.numCells;
 
   if (is_constant_ == true) {
     for (int cell = 0; cell < num_cells; ++cell) {
       for (int qp = 0; qp < num_qps_; ++qp) {
-        density_(cell, qp) = constant_value_;
+        heat_capacity_(cell, qp) = constant_value_;
       }
     }
   }
@@ -78,14 +78,14 @@ ACEdensity<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 
 //
 template <typename EvalT, typename Traits>
-typename ACEdensity<EvalT, Traits>::ScalarT&
-ACEdensity<EvalT, Traits>::getValue(const std::string& n)
+typename ACEheatCapacity<EvalT, Traits>::ScalarT&
+ACEheatCapacity<EvalT, Traits>::getValue(const std::string& n)
 {
-  if (n == "Density") {
+  if (n == "Heat Capacity") {
     return constant_value_;
   }
 
-  ALBANY_ASSERT(false, "Invalid request for value of Density");
+  ALBANY_ASSERT(false, "Invalid request for value of Heat Capacity");
 
   return constant_value_;
 }

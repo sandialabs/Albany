@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(ACEdensity_hpp)
-#define ACEdensity_hpp
+#if !defined(ACEheatCapacity_hpp)
+#define ACEheatCapacity_hpp
 
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -18,16 +18,16 @@
 
 namespace LCM {
 ///
-/// Evaluated mass density at integration points
+/// Evaluates heat capacity at integration points
 ///
 template <typename EvalT, typename Traits>
-class ACEdensity : public PHX::EvaluatorWithBaseImpl<Traits>,
-                   public PHX::EvaluatorDerived<EvalT, Traits>,
-                   public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+class ACEheatCapacity : public PHX::EvaluatorWithBaseImpl<Traits>,
+                        public PHX::EvaluatorDerived<EvalT, Traits>,
+                        public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
  public:
   using ScalarT = typename EvalT::ScalarT;
 
-  ACEdensity(Teuchos::ParameterList& p);
+  ACEheatCapacity(Teuchos::ParameterList& p);
 
   void
   postRegistrationSetup(
@@ -44,7 +44,7 @@ class ACEdensity : public PHX::EvaluatorWithBaseImpl<Traits>,
   int num_qps_{0};
   int num_dims_{0};
 
-  PHX::MDField<ScalarT, Cell, QuadPoint> density_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> heat_capacity_;
 
   /// Constant value
   ScalarT constant_value_{0.0};
@@ -55,4 +55,4 @@ class ACEdensity : public PHX::EvaluatorWithBaseImpl<Traits>,
 };
 }  // namespace LCM
 
-#endif  // ACE_density_hpp
+#endif  // ACEheatCapacity_hpp
