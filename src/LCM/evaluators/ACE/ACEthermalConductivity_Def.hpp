@@ -12,12 +12,12 @@
 namespace LCM {
 
 template <typename EvalT, typename Traits>
-ACEdensity<EvalT, Traits>::ACEdensity(Teuchos::ParameterList& p)
-    : density_(
+ACEthermalConductivity<EvalT, Traits>::ACEthermalConductivity(Teuchos::ParameterList& p)
+    : thermal_conductivity_(
           p.get<std::string>("QP Variable Name"),
           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
 {
-  Teuchos::ParameterList* density_list =
+  Teuchos::ParameterList* thermal_conductivity_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -30,45 +30,45 @@ ACEdensity<EvalT, Traits>::ACEdensity(Teuchos::ParameterList& p)
   Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
-  std::string type = density_list->get("Density Type", "Constant");
+  std::string type = thermal_conductivity_list->get("Thermal Conductivity Type", "Constant");
   if (type == "Constant") {
     is_constant_ = true;
-    constant_value_ = density_list->get<double>("Value");
+    constant_value_ = thermal_conductivity_list->get<double>("Value");
 
-    // Add density as a Sacado-ized parameter
-    this->registerSacadoParameter("Density", paramLib);
+    // Add thermal conductivity as a Sacado-ized parameter
+    this->registerSacadoParameter("Thermal Conductivity", paramLib);
   }
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
              "Invalid density type " << type);
   }
 
-  this->addEvaluatedField(density_);
-  this->setName("Density" + PHX::typeAsString<EvalT>());
+  this->addEvaluatedField(thermal_conductivity_);
+  this->setName("Thermal Conductivity" + PHX::typeAsString<EvalT>());
 }
 
 //
 template <typename EvalT, typename Traits>
 void
-ACEdensity<EvalT, Traits>::postRegistrationSetup(
+ACEthermalConductivity<EvalT, Traits>::postRegistrationSetup(
     typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(density_, fm);
+  this->utils.setFieldData(thermal_conductivity_, fm);
   return;
 }
 
 //
 template <typename EvalT, typename Traits>
 void
-ACEdensity<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+ACEthermalConductivity<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
   int num_cells = workset.numCells;
 
   if (is_constant_ == true) {
     for (int cell = 0; cell < num_cells; ++cell) {
       for (int qp = 0; qp < num_qps_; ++qp) {
-        density_(cell, qp) = constant_value_;
+        thermal_conductivity_(cell, qp) = constant_value_;
       }
     }
   }
@@ -78,14 +78,14 @@ ACEdensity<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 
 //
 template <typename EvalT, typename Traits>
-typename ACEdensity<EvalT, Traits>::ScalarT&
-ACEdensity<EvalT, Traits>::getValue(const std::string& n)
+typename ACEthermalConductivity<EvalT, Traits>::ScalarT&
+ACEthermalConductivity<EvalT, Traits>::getValue(const std::string& n)
 {
-  if (n == "Density") {
+  if (n == "Thermal Conductivity") {
     return constant_value_;
   }
 
-  ALBANY_ASSERT(false, "Invalid request for value of Density");
+  ALBANY_ASSERT(false, "Invalid request for value of Thermal Conductivity");
 
   return constant_value_;
 }
