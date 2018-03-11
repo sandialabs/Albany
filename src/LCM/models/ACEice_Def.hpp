@@ -6,6 +6,7 @@
 #include "Albany_Utils.hpp"
 #include "ACE/ACEdensity.hpp"
 #include "ACE/ACEheatCapacity.hpp"
+#include "ACE/ACEthermalConductivity.hpp"
 #include "ACEice.hpp"
 #include "MiniNonlinearSolver.h"
 
