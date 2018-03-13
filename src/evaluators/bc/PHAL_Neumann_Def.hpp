@@ -113,6 +113,10 @@ NeumannBase(const Teuchos::ParameterList& p) :
        this->addDependentField(dof);
      }
   }
+  else if( inputConditions == "closed_form")
+  {
+    bc_type = CLOSED_FORM;
+  }
 
   // else parse the input to determine what type of BC to calculate
 
@@ -491,6 +495,10 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
        neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
          (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
        break;
+    case CLOSED_FORM:
+       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+         (dofVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
+       break;
     default:
     //std::cout << "NN1 " << std::endl;
        neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
@@ -817,7 +825,10 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
          calc_traction_components(data, physPointsSide, jacobianSide, *cellType, cellDims, side);
          break;
+      case CLOSED_FORM:
 
+         calc_closed_form(data, physPointsSide, jacobianSide, *cellType, cellDims, side, workset);
+         break;
       default:
 
          calc_gradu_dotn_const(data, physPointsSide, jacobianSide, *cellType, cellDims, side);
@@ -1061,6 +1072,55 @@ calc_press(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
         qp_data_returned(cell, pt, dim) = const_val * side_normals(cell, pt, dim) / area;
 
 
+}
+
+template<typename EvalT, typename Traits>
+void NeumannBase<EvalT, Traits>::
+calc_closed_form(       Kokkos::DynRankView<ScalarT, PHX::Device>    & qp_data_returned,
+                  const Kokkos::DynRankView<MeshScalarT, PHX::Device>& physPointsSide,
+                  const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
+                  const shards::CellTopology & celltopo,
+                  const int                    cellDims,
+                        int                    local_side_id,
+               typename Traits::EvalData       workset)
+{
+  // How many cell's worth of data is being computed?
+  int numCells  = qp_data_returned.dimension( 0);
+  // How many QPs per cell?
+  int numPoints = qp_data_returned.dimension( 1); 
+  // How many DOFs per node to calculate?
+  int numDOFs   = qp_data_returned.dimension( 2);
+
+  using DynRankViewMeshScalarT = Kokkos::DynRankView<MeshScalarT, PHX::Device>;
+  DynRankViewMeshScalarT side_normals = 
+          Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells, numPoints, cellDims);
+  DynRankViewMeshScalarT normal_lengths = 
+          Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells, numPoints);
+
+  // for this side in the reference cell, get the components of the normal direction vector
+  Intrepid2::CellTools<PHX::Device>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
+    local_side_id, celltopo);
+  // scale normals (unity)
+  Intrepid2::RealSpaceTools<PHX::Device>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
+  Intrepid2::FunctionSpaceTools<PHX::Device>::scalarMultiplyDataData(side_normals, normal_lengths,
+    side_normals, true);
+
+  for(int cell = 0; cell < numCells; cell++) 
+  {
+    for(int pt = 0; pt < numPoints; pt++) 
+    {
+      MeshScalarT x = physPointsSide( cell, pt, 0);
+      MeshScalarT y = physPointsSide( cell, pt, 1);
+      MeshScalarT z = physPointsSide( cell, pt, 2);
+      double      t = workset.current_time;
+      for(int dim = 0; dim < numDOFsSet; dim++) 
+      {
+        // Your closed form equation here!
+        double value = 0.0;
+        qp_data_returned(cell, pt, dim) =  value;
+      }
+    }
+  }
 }
 
 

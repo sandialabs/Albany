@@ -39,7 +39,7 @@ class NeumannBase :
 
 public:
 
-  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, BASAL, BASAL_SCALAR_FIELD, TRACTION, LATERAL};
+  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, BASAL, BASAL_SCALAR_FIELD, TRACTION, LATERAL, CLOSED_FORM};
   enum SIDE_TYPE {OTHER, LINE, TRI, QUAD}; // to calculate areas for pressure bc
 
   typedef typename EvalT::ScalarT ScalarT;
@@ -124,6 +124,15 @@ protected:
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id);
+
+  // closed_from bc assignment
+  void calc_closed_form(Kokkos::DynRankView<ScalarT, PHX::Device> &    qp_data_returned,
+                        const Kokkos::DynRankView<MeshScalarT, PHX::Device>& physPointsSide,
+                        const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
+                        const shards::CellTopology & celltopo,
+                        const int cellDims,
+                        int local_side_id,
+                        typename Traits::EvalData workset);
 
   //Basal bc
   void calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,

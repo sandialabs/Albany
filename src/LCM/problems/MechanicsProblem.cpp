@@ -582,7 +582,7 @@ MechanicsProblem::constructNeumannEvaluators(
   dof_names(1, "Displacement");
 
   std::vector<std::string>
-  condNames(3);  // dudx, dudy, dudz, dudn, P
+  condNames(4);  // dudx, dudy, dudz, dudn, P, closed_form
 
   // Note that sidesets are only supported for two and 3D currently
   if (num_dims_ == 2) {
@@ -599,6 +599,7 @@ MechanicsProblem::constructNeumannEvaluators(
 
   condNames[1] = "dudn";
   condNames[2] = "P";
+  condNames[3] = "closed_form";
 
   // FIXME: The resize below assumes a single element block
   nfm.resize(1);
