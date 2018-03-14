@@ -153,7 +153,7 @@ ConstitutiveModelParameters<EvalT, Traits>::ConstitutiveModelParameters(
     parseParameters(f_exp, p, paramLib);
   }
   // mass density
-  std::string density_str("Density");
+  std::string density_str("ACE Density");
   if (mat_params->isSublist(density_str)) {
     density_ = decltype(density_)(density_str, dl_->qp_scalar);
     field_map_.insert(std::make_pair(density_str, density_));

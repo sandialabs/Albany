@@ -30,13 +30,13 @@ ACEdensity<EvalT, Traits>::ACEdensity(Teuchos::ParameterList& p)
   Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
-  std::string type = density_list->get("Density Type", "Constant");
+  std::string type = density_list->get("ACE Density Type", "Constant");
   if (type == "Constant") {
     is_constant_ = true;
     constant_value_ = density_list->get<double>("Value");
 
     // Add density as a Sacado-ized parameter
-    this->registerSacadoParameter("Density", paramLib);
+    this->registerSacadoParameter("ACE Density", paramLib);
   }
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -44,7 +44,7 @@ ACEdensity<EvalT, Traits>::ACEdensity(Teuchos::ParameterList& p)
   }
 
   this->addEvaluatedField(density_);
-  this->setName("Density" + PHX::typeAsString<EvalT>());
+  this->setName("ACE Density" + PHX::typeAsString<EvalT>());
 }
 
 //
@@ -81,11 +81,11 @@ template <typename EvalT, typename Traits>
 typename ACEdensity<EvalT, Traits>::ScalarT&
 ACEdensity<EvalT, Traits>::getValue(const std::string& n)
 {
-  if (n == "Density") {
+  if (n == "ACE Density") {
     return constant_value_;
   }
 
-  ALBANY_ASSERT(false, "Invalid request for value of Density");
+  ALBANY_ASSERT(false, "Invalid request for value of ACE Density");
 
   return constant_value_;
 }

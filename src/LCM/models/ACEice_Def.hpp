@@ -4,9 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "Albany_Utils.hpp"
-#include "ACEdensity.hpp"
-#include "ACEheatCapacity.hpp"
-#include "ACEthermalConductivity.hpp"
+//#include "ACEdensity.hpp"
+//#include "ACEheatCapacity.hpp"
+//#include "ACEthermalConductivity.hpp"
 #include "ACEice.hpp"
 #include "MiniNonlinearSolver.h"
 
@@ -33,7 +33,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setDependentField(F_string, dl->qp_tensor);
   setDependentField(J_string, dl->qp_scalar);
 
-  setDependentField("Density", dl->qp_scalar);
+  setDependentField("ACE Density", dl->qp_scalar);
   setDependentField("Elastic Modulus", dl->qp_scalar);
   setDependentField("Hardening Modulus", dl->qp_scalar);
   setDependentField("Heat Capacity", dl->qp_scalar);
@@ -122,7 +122,7 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   J                = *dep_fields[J_string];
 
   delta_time           = *dep_fields["Delta Time"];
-  density              = *dep_fields["Density"];
+  density              = *dep_fields["ACE Density"];
   elastic_modulus      = *dep_fields["Elastic Modulus"];
   hardening_modulus    = *dep_fields["Hardening Modulus"];
   heat_capacity        = *dep_fields["Heat Capacity"];
