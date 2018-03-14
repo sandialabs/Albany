@@ -36,12 +36,11 @@
 #include "NeohookeanModel.hpp"
 #include "NewtonianFluidModel.hpp"
 #include "OrtizPandolfiModel.hpp"
+#include "ParallelNeohookeanModel.hpp"
 #include "RIHMRModel.hpp"
 #include "StVenantKirchhoffModel.hpp"
 #include "TvergaardHutchinsonModel.hpp"
 #include "ViscoElasticModel.hpp"
-
-#include "../parallel_models/ParallelNeohookeanModel.hpp"
 
 namespace LCM {
 

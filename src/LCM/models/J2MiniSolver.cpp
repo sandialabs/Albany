@@ -8,7 +8,7 @@
 
 #include "J2MiniSolver.hpp"
 #include "J2MiniSolver_Def.hpp"
-#include "../parallel_models/ParallelConstitutiveModel_Def.hpp"
+#include "ParallelConstitutiveModel_Def.hpp"
 
 template<typename EvalT, typename Traits>
 LCM::J2MiniSolver<EvalT,Traits>::J2MiniSolver(Teuchos::ParameterList* p,

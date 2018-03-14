@@ -8,7 +8,7 @@
 
 #include "ParallelNeohookeanModel.hpp"
 #include "ParallelNeohookeanModel_Def.hpp"
-#include "../parallel_models/ParallelConstitutiveModel_Def.hpp"
+#include "ParallelConstitutiveModel_Def.hpp"
 
 template<typename EvalT, typename Traits>
 LCM::ParallelNeohookeanModel<EvalT,Traits>::ParallelNeohookeanModel(Teuchos::ParameterList* p,

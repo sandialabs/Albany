@@ -31,7 +31,7 @@
 #include "FieldNameMap.hpp"
 
 #include "SetField.hpp"
-#include "parallel_evaluators/ParallelSetField.hpp"
+#include "ParallelSetField.hpp"
 
 #include "Albany_MaterialDatabase.hpp"
 #include "BifurcationCheck.hpp"

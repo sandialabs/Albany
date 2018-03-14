@@ -10,7 +10,7 @@
 #include "core/CrystalPlasticity/CrystalPlasticityCore.hpp"
 #include "core/CrystalPlasticity/NonlinearSolver.hpp"
 #include "core/CrystalPlasticity/Integrator.hpp"
-#include "../parallel_models/ParallelConstitutiveModel.hpp"
+#include "ParallelConstitutiveModel.hpp"
 #include "NOX_StatusTest_ModelEvaluatorFlag.h"
 #include "../../utility/StaticAllocator.hpp"
 

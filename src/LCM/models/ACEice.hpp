@@ -7,7 +7,7 @@
 #if !defined(LCM_ACEice_hpp)
 #define LCM_ACEice_hpp
 
-#include "../parallel_models/ParallelConstitutiveModel.hpp"
+#include "ParallelConstitutiveModel.hpp"
 
 namespace LCM {
 

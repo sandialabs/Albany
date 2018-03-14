@@ -7,7 +7,7 @@
 #if !defined(LCM_J2MiniSolver_hpp)
 #define LCM_J2MiniSolver_hpp
 
-#include "../parallel_models/ParallelConstitutiveModel.hpp"
+#include "ParallelConstitutiveModel.hpp"
 
 namespace LCM {
 

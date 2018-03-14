@@ -8,7 +8,7 @@
 
 #include "CrystalPlasticityModel.hpp"
 #include "CrystalPlasticityModel_Def.hpp"
-#include "../parallel_models/ParallelConstitutiveModel_Def.hpp"
+#include "ParallelConstitutiveModel_Def.hpp"
 
 template<typename EvalT, typename Traits>
 LCM::CrystalPlasticityModel<EvalT,Traits>::CrystalPlasticityModel(Teuchos::ParameterList* p,
