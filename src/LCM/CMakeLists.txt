@@ -700,6 +700,7 @@ set(INCLUDE_DIRS
   ${Albany_SOURCE_DIR}/src/adapt
   ${LCM_DIR}/problems
   ${LCM_DIR}/evaluators
+  ${LCM_DIR}/evaluators/ACE
   ${LCM_DIR}/evaluators/bc
   ${LCM_DIR}/evaluators/contact
   ${LCM_DIR}/evaluators/HMC

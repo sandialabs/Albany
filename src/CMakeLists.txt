@@ -665,6 +665,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./disc
                      ./LCM/
                      ./LCM/evaluators
+                     ./LCM/evaluators/ACE
                      ./LCM/evaluators/bc
                      ./LCM/evaluators/contact
                      ./LCM/evaluators/HMC

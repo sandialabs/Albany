@@ -75,6 +75,11 @@
 // Damage equation specific evaluators
 #include "StabilizedPressureResidual.hpp"
 
+// ACE specific evaluators
+#include "ACEdensity.hpp"
+#include "ACEheatCapacity.hpp"
+#include "ACEthermalConductivity.hpp"
+
 #ifdef ALBANY_CONTACT
 // Contact evaluator
 #include "MortarContactConstraints.hpp"
