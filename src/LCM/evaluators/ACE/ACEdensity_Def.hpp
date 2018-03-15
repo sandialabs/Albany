@@ -30,18 +30,13 @@ ACEdensity<EvalT, Traits>::ACEdensity(Teuchos::ParameterList& p)
   Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
-  std::string type = density_list->get("ACE Density Type", "Constant");
-  if (type == "Constant") {
-    is_constant_ = true;
-    constant_value_ = density_list->get<double>("Value");
+  // Read density values
+  rho_ice_ = density_list->get<double>("Ice Value");
+  rho_wat_ = density_list->get<double>("Water Value");
+  rho_sed_ = density_list->get<double>("Sediment Value");
 
-    // Add density as a Sacado-ized parameter
-    this->registerSacadoParameter("ACE Density", paramLib);
-  }
-  else {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-             "Invalid density type " << type);
-  }
+  // Add density as a Sacado-ized parameter
+  this->registerSacadoParameter("ACE Density", paramLib);
 
   this->addEvaluatedField(density_);
   this->setName("ACE Density" + PHX::typeAsString<EvalT>());
@@ -59,17 +54,25 @@ ACEdensity<EvalT, Traits>::postRegistrationSetup(
 }
 
 //
+// This function needs to know the water, ice, and sediment intrinsic densities
+// plus the current QP ice/water saturations and QP porosity which come from 
+// the material model.
+// The density calculation is based on a volume average mixture model.
 template <typename EvalT, typename Traits>
 void
 ACEdensity<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
   int num_cells = workset.numCells;
+  double por = 0.50;  // this needs to come from QP value, here temporary
+  double w = 0.50;  // this is an evolving QP parameter, here temporary
+  double f = 0.50;  // this is an evolving QP parameter, here temporary
+  // notes: if the material model is ACEice, por = 1.0, f = 1.0, w = 0.0
+  //        if the material model is ACEpermafrost, then por, f, and w evolve
 
-  if (is_constant_ == true) {
-    for (int cell = 0; cell < num_cells; ++cell) {
-      for (int qp = 0; qp < num_qps_; ++qp) {
-        density_(cell, qp) = constant_value_;
-      }
+  for (int cell = 0; cell < num_cells; ++cell) {
+    for (int qp = 0; qp < num_qps_; ++qp) {
+      density_(cell, qp) = por*(rho_ice_*f + rho_wat_*w) + 
+                           ((1.0-por)*rho_sed_);
     }
   }
 
@@ -81,13 +84,19 @@ template <typename EvalT, typename Traits>
 typename ACEdensity<EvalT, Traits>::ScalarT&
 ACEdensity<EvalT, Traits>::getValue(const std::string& n)
 {
-  if (n == "ACE Density") {
-    return constant_value_;
+  if (n == "ACE Ice Density") {
+    return rho_ice_;
+  }
+  if (n == "ACE Water Density") {
+    return rho_wat_;
+  }
+  if (n == "ACE Sediment Density") {
+    return rho_sed_;
   }
 
-  ALBANY_ASSERT(false, "Invalid request for value of ACE Density");
+  ALBANY_ASSERT(false, "Invalid request for value of ACE Component Density");
 
-  return constant_value_;
+  return rho_wat_; // does it matter what we return here?
 }
 
 }  // namespace LCM
