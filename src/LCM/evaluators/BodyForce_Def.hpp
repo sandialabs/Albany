@@ -40,7 +40,7 @@ BodyForce(Teuchos::ParameterList & p, Teuchos::RCP<Albany::Layouts> dl)
   if (type == "Constant") {
     is_constant_ = true;
     constant_value_ = p.get<Teuchos::Array<RealType>>("Value");
-  } else if (type == "Centripedal") {
+  } else if (type == "Centripetal") {
     is_constant_ = false;
     rotation_center_ = p.get<Teuchos::Array<RealType>>("Rotation Center",
         Teuchos::tuple<double>(0.0, 0.0, 0.0));

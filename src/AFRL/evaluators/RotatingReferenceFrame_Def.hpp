@@ -118,7 +118,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
     r = std::sqrt(len2 - dot*dot);
 
-    // Determine the direction of force due to centripedal acceleration
+    // Determine the direction of force due to centripetal acceleration
     len2 = 0.;
     for (std::size_t i = 0; i < 3; i++)
     {
@@ -139,7 +139,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
     m = val(this->density(cell)) * cellVol;
 
-    // Determine the force due to centripedal acceleration
+    // Determine the force due to centripetal acceleration
     fMag = m * omega2 * r;
 
     for (std::size_t i = 0; i < 3; i++)
