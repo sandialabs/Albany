@@ -111,22 +111,6 @@ ELEMENT VARIABLES relative 1.e-6 floor 1.0e-9
 	Cauchy_Stress_70      # min:               0 @ t1,b1,e1	max:   6.1844066e-12 @ t17,b1,e1
 	Cauchy_Stress_71      # min:               0 @ t1,b1,e1	max:   3.9252562e-14 @ t21,b1,e1
 	Cauchy_Stress_72      # min:               0 @ t1,b1,e1	max:   5.7998754e-10 @ t3,b1,e1
-	CP_Residual_1         # min:               0 @ t1,b1,e1	max:   1.9791267e-13 @ t10,b1,e1
-	CP_Residual_2         # min:               0 @ t1,b1,e1	max:   1.9791294e-13 @ t10,b1,e1
-	CP_Residual_3         # min:               0 @ t1,b1,e1	max:   1.9791263e-13 @ t10,b1,e1
-	CP_Residual_4         # min:               0 @ t1,b1,e1	max:   1.9791269e-13 @ t10,b1,e1
-	CP_Residual_5         # min:               0 @ t1,b1,e1	max:   1.9791263e-13 @ t10,b1,e1
-	CP_Residual_6         # min:               0 @ t1,b1,e1	max:   1.9791263e-13 @ t10,b1,e1
-	CP_Residual_7         # min:               0 @ t1,b1,e1	max:   1.9791248e-13 @ t10,b1,e1
-	CP_Residual_8         # min:               0 @ t1,b1,e1	max:   1.9791267e-13 @ t10,b1,e1
-	CP_Residual_Iter_1    # min:               0 @ t1,b1,e1	max:               4 @ t7,b1,e1
-	CP_Residual_Iter_2    # min:               0 @ t1,b1,e1	max:               4 @ t7,b1,e1
-	CP_Residual_Iter_3    # min:               0 @ t1,b1,e1	max:               4 @ t7,b1,e1
-	CP_Residual_Iter_4    # min:               0 @ t1,b1,e1	max:               4 @ t7,b1,e1
-	CP_Residual_Iter_5    # min:               0 @ t1,b1,e1	max:               4 @ t7,b1,e1
-	CP_Residual_Iter_6    # min:               0 @ t1,b1,e1	max:               4 @ t7,b1,e1
-	CP_Residual_Iter_7    # min:               0 @ t1,b1,e1	max:               4 @ t7,b1,e1
-	CP_Residual_Iter_8    # min:               0 @ t1,b1,e1	max:               4 @ t7,b1,e1
 	eqps_1                # min:               0 @ t1,b1,e1	max:    0.0068690391 @ t21,b1,e1
 	eqps_2                # min:               0 @ t1,b1,e1	max:    0.0068690391 @ t21,b1,e1
 	eqps_3                # min:               0 @ t1,b1,e1	max:    0.0068690391 @ t21,b1,e1

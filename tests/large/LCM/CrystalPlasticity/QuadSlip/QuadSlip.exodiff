@@ -112,22 +112,6 @@ ELEMENT VARIABLES relative 1.e-6 floor 1.0e-9
 	Cauchy_Stress_70      # min:               0 @ t1,b1,e1	max:   7.0037761e-12 @ t6,b1,e1
 	Cauchy_Stress_71      # min:               0 @ t1,b1,e1	max:   1.8150483e-12 @ t6,b1,e1
 	Cauchy_Stress_72      # min:               0 @ t1,b1,e1	max:   4.7601922e-11 @ t8,b1,e1
-	CP_Residual_1         # min:               0 @ t1,b1,e1	max:   1.1009171e-13 @ t7,b1,e1
-	CP_Residual_2         # min:               0 @ t1,b1,e1	max:   8.6767014e-14 @ t6,b1,e1
-	CP_Residual_3         # min:               0 @ t1,b1,e1	max:   9.9002345e-14 @ t8,b1,e1
-	CP_Residual_4         # min:               0 @ t1,b1,e1	max:   1.2224477e-13 @ t6,b1,e1
-	CP_Residual_5         # min:               0 @ t1,b1,e1	max:   9.5183912e-14 @ t8,b1,e1
-	CP_Residual_6         # min:               0 @ t1,b1,e1	max:   7.0256276e-14 @ t5,b1,e1
-	CP_Residual_7         # min:               0 @ t1,b1,e1	max:   9.2816369e-14 @ t7,b1,e1
-	CP_Residual_8         # min:               0 @ t1,b1,e1	max:   7.3553688e-14 @ t8,b1,e1
-	CP_Residual_Iter_1    # min:               0 @ t1,b1,e1	max:              46 @ t3,b1,e1
-	CP_Residual_Iter_2    # min:               0 @ t1,b1,e1	max:              46 @ t3,b1,e1
-	CP_Residual_Iter_3    # min:               0 @ t1,b1,e1	max:              46 @ t3,b1,e1
-	CP_Residual_Iter_4    # min:               0 @ t1,b1,e1	max:              46 @ t3,b1,e1
-	CP_Residual_Iter_5    # min:               0 @ t1,b1,e1	max:              46 @ t3,b1,e1
-	CP_Residual_Iter_6    # min:               0 @ t1,b1,e1	max:              46 @ t3,b1,e1
-	CP_Residual_Iter_7    # min:               0 @ t1,b1,e1	max:              46 @ t3,b1,e1
-	CP_Residual_Iter_8    # min:               0 @ t1,b1,e1	max:              46 @ t3,b1,e1
 	eqps_1                # min:               0 @ t1,b1,e1	max:     0.042595659 @ t8,b1,e1
 	eqps_2                # min:               0 @ t1,b1,e1	max:     0.042595659 @ t8,b1,e1
 	eqps_3                # min:               0 @ t1,b1,e1	max:     0.042595659 @ t8,b1,e1

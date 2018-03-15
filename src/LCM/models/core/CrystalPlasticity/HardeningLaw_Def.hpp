@@ -406,7 +406,7 @@ createLatentMatrix(
     for (minitensor::Index ss_index_j(0); ss_index_j < slip_family.num_slip_sys_; ++ss_index_j)
     {
       slip_family.aux_matrix_(ss_index_i, ss_index_j) =
-	std::sqrt(1.0 - std::pow(slip_family.latent_matrix_(ss_index_i, ss_index_j), 2));
+        std::sqrt(1.0 - std::pow(slip_family.latent_matrix_(ss_index_i, ss_index_j), 2));
     }
   }
 

@@ -97,7 +97,7 @@ CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::operator()(
             = CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>;
           return allocator_.create<IntegratorType>(
               minimizer_,
-	      rol_minimizer_,
+              rol_minimizer_,
               step_type_,
               nox_status_test_,
               slip_systems_,
@@ -297,8 +297,8 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update() const
 
 template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::ImplicitIntegrator(
-      const Minimizer & minimizer,
-      const RolMinimizer & rol_minimizer,
+      Minimizer const & minimizer,
+      RolMinimizer const & rol_minimizer,
       minitensor::StepType step_type,
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
@@ -401,17 +401,6 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState() const
     state_mechanical_.Lp_np1_,
     state_mechanical_.Fp_np1_);
 
-  if (verbosity_ >= CP::Verbosity::MEDIUM) {
-    std::cout << "F_{n+1}" << std::endl;
-    std::cout << state_mechanical_.F_np1_ << std::endl;
-    std::cout << "Fp_{n+1}" << std::endl;
-    std::cout << state_mechanical_.Fp_np1_ << std::endl;
-    std::cout << "projector_" << std::endl;
-    std::cout << slip_systems_[0].projector_ << std::endl;
-    std::cout << "C_" << std::endl;
-    std::cout << C_ << std::endl;
-  }
-
   bool
   failed{false};
 
@@ -425,11 +414,6 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState() const
     state_mechanical_.S_np1_,
     state_internal_.shear_np1_,
     failed);
-
-  if (verbosity_ >= CP::Verbosity::MEDIUM) {
-    std::cout << "sigma_{n+1}" << std::endl;
-    std::cout << state_mechanical_.sigma_np1_ << std::endl;
-  }
 
   if(failed == true){
     this->forceGlobalLoadStepReduction("ComputeStress failed.");
@@ -467,8 +451,8 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState() const
 
 template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::ImplicitSlipIntegrator(
-      const Minimizer & minimizer,
-      const RolMinimizer & rol_minimizer,
+      Minimizer const & minimizer,
+      RolMinimizer const & rol_minimizer,
       minitensor::StepType step_type,
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
@@ -664,7 +648,7 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update() const
     x(i) = Sacado::ScalarValue<ScalarT>::eval(state_internal_.slip_np1_(i));
     // initial guess for x(this->num_slip_:2*this->num_slip_) from predictor
     x(i + this->num_slip_) =
-    Sacado::ScalarValue<ScalarT>::eval(state_internal_.hardening_n_(i));
+    Sacado::ScalarValue<ScalarT>::eval(state_internal_.hardening_np1_(i));
   }
 
   if (state_internal_.cell_ != -1) {

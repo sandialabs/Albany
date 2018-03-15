@@ -499,6 +499,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 {
   if(verbosity_ >= CP::Verbosity::MEDIUM) {
     std::cout << ">>> in kernel::operator\n";
+    std::cout << "    cell: " << cell << " point: " << pt << "\n";
   }
   // If a previous constitutive calculation has failed, exit immediately.
   if (nox_status_test_->status_ == NOX::StatusTest::Failed) {
@@ -649,13 +650,25 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
     slip_np1[s] = slip_n[s];
     slip_dot_n[s] = (*(previous_slip_rates_[s]))(cell, pt);
     state_hardening_n[s] = (*(previous_hards_[s]))(cell, pt);
+    state_hardening_np1[s] = state_hardening_n[s];
   }
 
   //
   // Set up slip predictor to assign isochoric part of F_increment to Fp_increment
   //
+  minitensor::Vector<ScalarT, CP::MAX_SLIP>
+  slip_resistance(num_slip_);
+
+  minitensor::Vector<ScalarT, CP::MAX_SLIP>
+  rate_slip(num_slip_);
+  for (int s(0); s < num_slip_; ++s) {
+    rate_slip[s] = slip_dot_n[s];
+  }
+
   if (dt_ > 0.0)
   {
+    bool
+    failed{false};
     switch (predictor_slip_)
     {
       case CP::PredictorSlip::NONE:
@@ -670,6 +683,16 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
         if (verbosity_ == CP::Verbosity::DEBUG) {
           std::cout << slip_np1 <<std::endl;
         }
+
+        CP::updateHardness<CP::MAX_DIM, CP::MAX_SLIP, ScalarT>(
+            slip_systems_,
+            slip_families_,
+            dt_,
+            rate_slip,
+            state_hardening_n,
+            state_hardening_np1,
+            slip_resistance,
+            failed);
       } break;
 
       case CP::PredictorSlip::SOLVE:
@@ -897,6 +920,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   }
 
   state_internal.slip_np1_ = slip_np1;
+  state_internal.hardening_np1_ = state_hardening_np1;
 
   if (dt_ == 0.0)
   {
@@ -944,6 +968,8 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
     std::cout << state_mechanical.Fp_np1_ << std::endl;
     std::cout << "sigma_{n+1}" << std::endl;
     std::cout << state_mechanical.sigma_np1_ << std::endl;
+    std::cout << "g_{n+1}" << std::endl;
+    std::cout << state_internal.hardening_np1_ << std::endl;
   }
 
   // Check to make sure there is only one status test
