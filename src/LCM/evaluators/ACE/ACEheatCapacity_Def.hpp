@@ -30,21 +30,21 @@ ACEheatCapacity<EvalT, Traits>::ACEheatCapacity(Teuchos::ParameterList& p)
   Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
-  std::string type = heat_capacity_list->get("Heat Capacity Type", "Constant");
+  std::string type = heat_capacity_list->get("ACE Heat Capacity Type", "Constant");
   if (type == "Constant") {
     is_constant_ = true;
     constant_value_ = heat_capacity_list->get<double>("Value");
 
-    // Add density as a Sacado-ized parameter
-    this->registerSacadoParameter("Heat Capacity", paramLib);
+    // Add heat capacity as a Sacado-ized parameter
+    this->registerSacadoParameter("ACE Heat Capacity", paramLib);
   }
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-             "Invalid density type " << type);
+             "Invalid ACE heat capacity type " << type);
   }
 
   this->addEvaluatedField(heat_capacity_);
-  this->setName("Heat Capacity" + PHX::typeAsString<EvalT>());
+  this->setName("ACE Heat Capacity" + PHX::typeAsString<EvalT>());
 }
 
 //
@@ -81,11 +81,11 @@ template <typename EvalT, typename Traits>
 typename ACEheatCapacity<EvalT, Traits>::ScalarT&
 ACEheatCapacity<EvalT, Traits>::getValue(const std::string& n)
 {
-  if (n == "Heat Capacity") {
+  if (n == "ACE Heat Capacity") {
     return constant_value_;
   }
 
-  ALBANY_ASSERT(false, "Invalid request for value of Heat Capacity");
+  ALBANY_ASSERT(false, "Invalid request for value of ACE Heat Capacity");
 
   return constant_value_;
 }
