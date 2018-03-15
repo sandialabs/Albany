@@ -7,45 +7,46 @@
 #ifndef DENSITY_HPP
 #define DENSITY_HPP
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
-#include "Teuchos_ParameterList.hpp"
 #include "Sacado_ParameterAccessor.hpp"
 #include "Teuchos_Array.hpp"
+#include "Teuchos_ParameterList.hpp"
 
 namespace LCM {
 /**
  * \brief Evaluates density.
  */
 
-template<typename EvalT, typename Traits>
-class Density :
-  public PHX::EvaluatorWithBaseImpl<Traits>,
-  public PHX::EvaluatorDerived<EvalT, Traits>,
-  public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-
-public:
+template <typename EvalT, typename Traits>
+class Density : public PHX::EvaluatorWithBaseImpl<Traits>,
+                public PHX::EvaluatorDerived<EvalT, Traits>,
+                public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+ public:
   typedef typename EvalT::ScalarT ScalarT;
 
   Density(Teuchos::ParameterList& p);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-  void evaluateFields(typename Traits::EvalData d);
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-  ScalarT& getValue(const std::string &n);
+  ScalarT&
+  getValue(const std::string& n);
 
-private:
-
-  PHX::MDField<ScalarT,Cell> density;
+ private:
+  PHX::MDField<ScalarT, Cell> density;
 
   //! Constant value
   ScalarT constant_value;
 };
-}
+}  // namespace LCM
 
 #endif
