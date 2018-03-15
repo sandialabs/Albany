@@ -35,7 +35,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setDependentField("Hardening Modulus", dl->qp_scalar);
   setDependentField("ACE Heat Capacity", dl->qp_scalar);
   setDependentField("Poissons Ratio", dl->qp_scalar);
-  setDependentField("Thermal Conductivity", dl->qp_scalar);
+  setDependentField("ACE Thermal Conductivity", dl->qp_scalar);
   setDependentField("Yield Strength", dl->qp_scalar);
 
   setDependentField("Delta Time", dl->workset_scalar);
@@ -124,7 +124,7 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   hardening_modulus    = *dep_fields["Hardening Modulus"];
   heat_capacity        = *dep_fields["ACE Heat Capacity"];
   poissons_ratio       = *dep_fields["Poissons Ratio"];
-  thermal_conductivity = *dep_fields["Thermal Conductivity"];
+  thermal_conductivity = *dep_fields["ACE Thermal Conductivity"];
   yield_strength       = *dep_fields["Yield Strength"];
 
   // extract evaluated MDFields

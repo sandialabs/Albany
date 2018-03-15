@@ -30,21 +30,21 @@ ACEthermalConductivity<EvalT, Traits>::ACEthermalConductivity(Teuchos::Parameter
   Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
-  std::string type = thermal_conductivity_list->get("Thermal Conductivity Type", "Constant");
+  std::string type = thermal_conductivity_list->get("ACE Thermal Conductivity Type", "Constant");
   if (type == "Constant") {
     is_constant_ = true;
     constant_value_ = thermal_conductivity_list->get<double>("Value");
 
     // Add thermal conductivity as a Sacado-ized parameter
-    this->registerSacadoParameter("Thermal Conductivity", paramLib);
+    this->registerSacadoParameter("ACE Thermal Conductivity", paramLib);
   }
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-             "Invalid density type " << type);
+             "Invalid ACE thermal conductivity type " << type);
   }
 
   this->addEvaluatedField(thermal_conductivity_);
-  this->setName("Thermal Conductivity" + PHX::typeAsString<EvalT>());
+  this->setName("ACE Thermal Conductivity" + PHX::typeAsString<EvalT>());
 }
 
 //
@@ -81,11 +81,11 @@ template <typename EvalT, typename Traits>
 typename ACEthermalConductivity<EvalT, Traits>::ScalarT&
 ACEthermalConductivity<EvalT, Traits>::getValue(const std::string& n)
 {
-  if (n == "Thermal Conductivity") {
+  if (n == "ACE Thermal Conductivity") {
     return constant_value_;
   }
 
-  ALBANY_ASSERT(false, "Invalid request for value of Thermal Conductivity");
+  ALBANY_ASSERT(false, "Invalid request for value of ACE Thermal Conductivity");
 
   return constant_value_;
 }
