@@ -61,14 +61,13 @@ class BodyForce : public PHX::EvaluatorWithBaseImpl<Traits>,
   constant_value_;
 
   Teuchos::Array<RealType>
-     rotation_center_;
+  rotation_center_;
 
   Teuchos::Array<RealType>
-     rotation_axis_;
+  rotation_axis_;
 
   RealType 
-     angular_frequency_;
-
+  angular_frequency_;
 };
 
 }

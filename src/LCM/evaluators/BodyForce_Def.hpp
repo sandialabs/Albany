@@ -49,7 +49,7 @@ BodyForce(Teuchos::ParameterList & p, Teuchos::RCP<Albany::Layouts> dl)
     angular_frequency_ = p.get<RealType>("Angular Frequency", 0.0);
 
     // Ensure that axisDirection is normalized
-    double len = 0.;
+    double len = 0.0;
     for (int i = 0; i < 3; i++){
       len += this->rotation_axis_[i] * this->rotation_axis_[i];
     }
@@ -88,7 +88,7 @@ postRegistrationSetup(
 //
 //
 //
-template <typename EvalT, typename Traits>
+template<typename EvalT, typename Traits>
 void
 BodyForce<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
@@ -108,43 +108,44 @@ evaluateFields(typename Traits::EvalData workset)
   else {
 
     double omega2 = this->angular_frequency_ * this->angular_frequency_;
-    ScalarT qpmass, fMag;
-    MeshScalarT xyz[3], len2, dot, r, fDir[3];
+    ScalarT qpmass, f_mag;
+    MeshScalarT xyz[3], len2, dot, r, f_dir[3];
 
     for (int cell = 0; cell < num_cells; ++cell) {
-      for (std::size_t qp=0; qp < num_qp_; ++qp) {
+      for (std::size_t qp = 0; qp < num_qp_; ++qp) {
 
         // Determine the qp's distance from the axis of rotation
         len2 = dot = 0.;
         for (std::size_t dim = 0; dim < num_dim_; dim++) {
 
-          xyz[dim] = fDir[dim] = this->coordinates_(cell, qp, dim) - this->rotation_center_[dim];
+          xyz[dim] = f_dir[dim] = this->coordinates_(cell, qp, dim)
+              - this->rotation_center_[dim];
           dot += xyz[dim] * this->rotation_axis_[dim];
           len2 += xyz[dim] * xyz[dim];
         }
-        r = std::sqrt(len2 - dot*dot);
-  
-        // Determine the direction of force due to centripedal acceleration
+        r = std::sqrt(len2 - dot * dot);
+
+        // Determine the direction of force due to centripetal acceleration
         len2 = 0.;
         for (std::size_t dim = 0; dim < num_dim_; dim++) {
 
-          fDir[dim] -= this->rotation_axis_[dim] * dot;
-          len2 += fDir[dim] * fDir[dim];
+          f_dir[dim] -= this->rotation_axis_[dim] * dot;
+          len2 += f_dir[dim] * f_dir[dim];
         }
-        double lenReciprocal = 1./sqrt(len2);
+        double len_reciprocal = 1. / sqrt(len2);
         for (std::size_t dim = 0; dim < num_dim_; dim++) {
 
-          fDir[dim] *= lenReciprocal;
+          f_dir[dim] *= len_reciprocal;
         }
-  
+
         // Determine the qp's mass
+        // qpmass = weights_(cell,qp) * density_(cell, qp);
+        // qp volume * density - Is this right?
+        qpmass = weights_(cell, qp) * density_;
+        f_mag = qpmass * omega2 * r;
+        for (std::size_t dim = 0; dim < num_dim_; dim++)
 
-//        qpmass = weights_(cell,qp) * density_(cell, qp); // qp volume * density - Is this right?
-        qpmass = weights_(cell,qp) * density_; // qp volume * density - Is this right?
-        fMag = qpmass * omega2 * r;
-        for (std::size_t dim = 0; dim < num_dim_; dim++) 
-
-          this->body_force_(cell, qp, dim) = fDir[dim] * fMag;
+          this->body_force_(cell, qp, dim) = f_dir[dim] * f_mag;
 
       }
     }
