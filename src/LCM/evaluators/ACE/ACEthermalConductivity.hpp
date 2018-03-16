@@ -34,9 +34,11 @@ class ACEthermalConductivity : public PHX::EvaluatorWithBaseImpl<Traits>,
       typename Traits::SetupData d,
       PHX::FieldManager<Traits>& vm);
 
+  /// Calculates mixture model thermal conductivity
   void
-  evaluateFields(typename Traits::EvalData d);
+  evaluateFields(typename Traits::EvalData workset);
 
+  /// Gets the intrinsic thermal conductivity values
   ScalarT&
   getValue(const std::string& n);
 
@@ -44,13 +46,14 @@ class ACEthermalConductivity : public PHX::EvaluatorWithBaseImpl<Traits>,
   int num_qps_{0};
   int num_dims_{0};
 
+  // contains the mixture model thermal conductivity value
   PHX::MDField<ScalarT, Cell, QuadPoint> thermal_conductivity_;
 
-  /// Constant value
-  ScalarT constant_value_{0.0};
-
-  /// Whether it is constant
-  bool is_constant_{false};
+  // contains the intrinsic thermal conductivity values for ice, water, sediment
+  // these values are constant
+  ScalarT k_ice_{0.0};
+  ScalarT k_wat_{0.0};
+  ScalarT k_sed_{0.0};
 
 };
 }  // namespace LCM

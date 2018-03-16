@@ -12,7 +12,8 @@
 namespace LCM {
 
 template <typename EvalT, typename Traits>
-ACEthermalConductivity<EvalT, Traits>::ACEthermalConductivity(Teuchos::ParameterList& p)
+ACEthermalConductivity<EvalT, Traits>::
+ACEthermalConductivity(Teuchos::ParameterList& p)
     : thermal_conductivity_(
           p.get<std::string>("QP Variable Name"),
           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
@@ -30,18 +31,13 @@ ACEthermalConductivity<EvalT, Traits>::ACEthermalConductivity(Teuchos::Parameter
   Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
-  std::string type = thermal_conductivity_list->get("ACE Thermal Conductivity Type", "Constant");
-  if (type == "Constant") {
-    is_constant_ = true;
-    constant_value_ = thermal_conductivity_list->get<double>("Value");
+  // Read thermal conductivity values
+  k_ice_ = thermal_conductivity_list->get<double>("Ice Value");
+  k_wat_ = thermal_conductivity_list->get<double>("Water Value");
+  k_sed_ = thermal_conductivity_list->get<double>("Sediment Value");
 
-    // Add thermal conductivity as a Sacado-ized parameter
-    this->registerSacadoParameter("ACE Thermal Conductivity", paramLib);
-  }
-  else {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-             "Invalid ACE thermal conductivity type " << type);
-  }
+  // Add thermal conductivity as a Sacado-ized parameter
+  this->registerSacadoParameter("ACE Thermal Conductivity", paramLib);
 
   this->addEvaluatedField(thermal_conductivity_);
   this->setName("ACE Thermal Conductivity" + PHX::typeAsString<EvalT>());
@@ -59,19 +55,29 @@ ACEthermalConductivity<EvalT, Traits>::postRegistrationSetup(
 }
 
 //
+// This function needs to know the water, ice, and sediment intrinsic thermal
+// conductivities plus the current QP ice/water saturations and QP porosity 
+// which come from the material model.
+// The thermal K calculation is based on a volume average mixture model.
 template <typename EvalT, typename Traits>
 void
-ACEthermalConductivity<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+ACEthermalConductivity<EvalT, Traits>::evaluateFields(
+    typename Traits::EvalData workset)
 {
   int num_cells = workset.numCells;
+  double por = 0.50;  // this needs to come from QP value, here temporary
+  double w = 0.50;  // this is an evolving QP parameter, here temporary
+  double f = 0.50;  // this is an evolving QP parameter, here temporary
+  // notes: if the material model is ACEice, por = 1.0, f = 1.0, w = 0.0
+  //        if the material model is ACEpermafrost, then por, f, and w evolve
 
-  if (is_constant_ == true) {
-    for (int cell = 0; cell < num_cells; ++cell) {
-      for (int qp = 0; qp < num_qps_; ++qp) {
-        thermal_conductivity_(cell, qp) = constant_value_;
+  for (int cell = 0; cell < num_cells; ++cell) {
+    for (int qp = 0; qp < num_qps_; ++qp) {
+      thermal_conductivity_(cell, qp) = 
+          pow(k_ice_,(f*por)) * pow(k_wat_,(w*por)) *
+          pow(k_sed_,(1.0-por));
       }
     }
-  }
 
   return;
 }
@@ -81,13 +87,20 @@ template <typename EvalT, typename Traits>
 typename ACEthermalConductivity<EvalT, Traits>::ScalarT&
 ACEthermalConductivity<EvalT, Traits>::getValue(const std::string& n)
 {
-  if (n == "ACE Thermal Conductivity") {
-    return constant_value_;
+  if (n == "ACE Ice Thermal Conductivity") {
+    return k_ice_;
+  }
+  if (n == "ACE Water Thermal Conductivity") {
+    return k_wat_;
+  }
+  if (n == "ACE Sediment Thermal Conductivity") {
+    return k_sed_;
   }
 
-  ALBANY_ASSERT(false, "Invalid request for value of ACE Thermal Conductivity");
+  ALBANY_ASSERT(false, 
+             "Invalid request for value of ACE Component Thermal Conductivity");
 
-  return constant_value_;
+  return k_wat_; // does it matter what we return here?
 }
 
 }  // namespace LCM
