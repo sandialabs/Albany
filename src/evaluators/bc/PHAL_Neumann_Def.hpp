@@ -52,7 +52,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   int position;
 
-  if((inputConditions == "scaled jump" || inputConditions == "robin") &&
+  if((inputConditions == "scaled jump" || inputConditions == "robin" || inputConditions == "radiate") &&
      p.isType<Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB")){
 
     //! Material database - holds the scaling we need
@@ -65,7 +65,17 @@ NeumannBase(const Teuchos::ParameterList& p) :
       const_val = inputValues[0];
       this->registerSacadoParameter(name, paramLib);
     }
-    else { // inputConditions == "robin"
+	else if(inputConditions == "radiate" ) { 
+      bc_type = STEFAN_BOLTZMANN;
+      robin_vals[0] = inputValues[0]; // dof_value
+      robin_vals[1] = inputValues[1]; // coeff multiplying difference (dof^4 - dof_value^4) 
+
+      for(int i = 0; i < 2; i++) {
+        std::stringstream ss; ss << name << "[" << i << "]";
+        this->registerSacadoParameter(ss.str(), paramLib);
+      }
+    }
+    else { // inputConditions == "robin" 
       bc_type = ROBIN;
       robin_vals[0] = inputValues[0]; // dof_value
       robin_vals[1] = inputValues[1]; // coeff multiplying difference (dof - dof_value) -- could be permittivity/distance (distance in mesh units)
@@ -98,7 +108,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
      }
 
      // In the robin boundary condition case, the NBC depends on the solution (dof) field
-     if (inputConditions == "robin") {
+     if (inputConditions == "robin" || inputConditions == "radiate") {
       // Currently, the Neumann evaluator doesn't handle the case when the degree of freedom is a vector.
       // It wouldn't be difficult to have the boundary condition use a component of the vector, but I'm
       // not sure this is the correct behavior.  In any case, the only time when this evaluator needs
@@ -368,7 +378,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(coordVec,fm);
-  if (inputConditions == "robin")
+  if (inputConditions == "robin" || inputConditions == "radiate")
   {
     this->utils.setFieldData(dof,fm);
     dofSide_buffer = Kokkos::createDynRankView(dof.get_view(), "dofSide", numCells*maxNumQpSide);
@@ -424,7 +434,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   side_normals_buffer = Kokkos::createDynRankView(coordVec.get_view(),"side_normals", numCells*maxNumQpSide*cellDims);
   normal_lengths_buffer =Kokkos::createDynRankView(coordVec.get_view(),"normal_lengths", numCells*maxNumQpSide);
 
-  if (inputConditions == "robin") {
+  if (inputConditions == "robin" || inputConditions == "radiate") {
     dofCell_buffer = Kokkos::createDynRankView(dof.get_view(), "dofCell", numCells, numNodes);
   }
   else if (inputConditions == "basal" || inputConditions == "basal_scalar_field" || inputConditions == "lateral") {
@@ -449,9 +459,9 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
          "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
-  // neumann data type is always ScalarT, but the deriv dimentsion
+  // neumann data type is always ScalarT, but the deriv dimension
   // actually needed depends on BC type. For many it just needs
-  // deriv dimentsions from MeshScalarT (cloned from coordVec).
+  // deriv dimensions from MeshScalarT (cloned from coordVec).
   // "data" is same as neumann -- always ScalarT but not always
   // with full deriv dimension of a ScalarT variable.
 
@@ -462,6 +472,10 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
          (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
        break;
     case ROBIN:
+       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+         (dof.get_view(), "DDN", numCells, numNodes, numDOFsSet);
+       break;
+    case STEFAN_BOLTZMANN:
        neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
          (dof.get_view(), "DDN", numCells, numNodes, numDOFsSet);
        break;
@@ -660,7 +674,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
 
     // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
-    if(bc_type == ROBIN) {
+    if(bc_type == ROBIN || bc_type == STEFAN_BOLTZMANN ) {
       dofCell = Kokkos::createViewWithType<DynRankViewScalarT>(dofCell_buffer, dofCell_buffer.data(), numCells_, numNodes);
       dofSide = Kokkos::createViewWithType<DynRankViewScalarT>(dofSide_buffer, dofSide_buffer.data(), numCells_, numQPsSide);
 
@@ -789,6 +803,13 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
          calc_dudn_robin(data, physPointsSide, dofSide, jacobianSide, *cellType, cellDims, side, elem_scale, robin_vals);
          break;
        }
+	   
+      case STEFAN_BOLTZMANN:
+       {
+         const ScalarT elem_scale = matScaling[ebIndexVec[iblock]];
+         calc_dudn_radiate(data, physPointsSide, dofSide, jacobianSide, *cellType, cellDims, side, elem_scale, robin_vals);
+         break;
+       }
 
       case NORMAL:
 
@@ -857,6 +878,12 @@ getValue(const std::string &n) {
 
   if(std::string::npos != n.find("robin")) {
     for(int i = 0; i < 3; i++) {
+      std::stringstream ss; ss << name << "[" << i << "]";
+      if (n == ss.str())  return robin_vals[i];
+    }
+  }
+  else if(std::string::npos != n.find("radiate")) {
+    for(int i = 0; i < 2; i++) {
       std::stringstream ss; ss << name << "[" << i << "]";
       if (n == ss.str())  return robin_vals[i];
     }
@@ -997,6 +1024,32 @@ calc_dudn_robin(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
         qp_data_returned(cell, pt, dim) = coeff*(dof_side(cell,pt) - dof_value) - jump * scale * 2.0;
          // mult by 2 to emulate behavior of an internal side within a single material (element block)
          //  in which case usual Neumann would add contributions from both sides, giving factor of 2
+}
+
+template<typename EvalT, typename Traits>
+void NeumannBase<EvalT, Traits>::
+calc_dudn_radiate(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+                const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
+                const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
+                const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
+                const shards::CellTopology & celltopo,
+                const int cellDims,
+                int local_side_id,
+                ScalarT scale,
+                const ScalarT* robin_param_values){
+
+  int numCells = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
+  int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
+  int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
+
+  const ScalarT& dof_value = robin_vals[0];
+  const ScalarT& coeff = robin_vals[1];
+  const ScalarT& jump = robin_vals[2];
+
+  for(int cell = 0; cell < numCells; cell++)
+    for(int pt = 0; pt < numPoints; pt++)
+      for(int dim = 0; dim < numDOFsSet; dim++)
+        qp_data_returned(cell, pt, dim) = coeff*(std::pow(dof_side(cell,pt),4) - std::pow(dof_value,4));
 }
 
 
@@ -1166,7 +1219,7 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
   const double a = 1.0;
   const double Atmp = 1.0;
   const double ntmp = 3.0;
-  if (beta_type == CONSTANT) {//basal (robin) condition indepenent of space
+  if (beta_type == CONSTANT) {//basal (robin) condition independent of space
     betaXY = 1.0;
     for(int cell = 0; cell < numCells; cell++) {
       for(int pt = 0; pt < numPoints; pt++) {
@@ -1176,7 +1229,7 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
       }
     }
   }
-  if (beta_type == SCALAR_FIELD) {//basal (robin) condition indepenent of space
+  if (beta_type == SCALAR_FIELD) {//basal (robin) condition independent of space
       betaXY = 1.0;
 
       if(useStereographicMap)
@@ -1208,7 +1261,7 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
         }
       }
   }
-  else if (beta_type == EXP_SCALAR_FIELD) {//basal (robin) condition indepenent of space
+  else if (beta_type == EXP_SCALAR_FIELD) {//basal (robin) condition independent of space
       betaXY = 1.0;
 
       if(useStereographicMap)
@@ -1240,7 +1293,7 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
         }
       }
   }
-  else if (beta_type == POWERLAW_SCALAR_FIELD) {//basal (robin) condition indepenent of space
+  else if (beta_type == POWERLAW_SCALAR_FIELD) {//basal (robin) condition independent of space
         betaXY = 1.0;
 
         if(useStereographicMap)
@@ -1280,7 +1333,7 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
           }
         }
     }
-  else if (beta_type == EXP_SCALAR_FIELD_THK) {//basal (robin) condition indepenent of space
+  else if (beta_type == EXP_SCALAR_FIELD_THK) {//basal (robin) condition independent of space
       betaXY = 1.0;
 
       if(useStereographicMap)
@@ -1521,7 +1574,7 @@ calc_dudn_lateral(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
           }
          }
          else {
-           immersedRatio = immersedRatioProvided; //alteranate case: immersedRatio is set to some value given in the input file
+           immersedRatio = immersedRatioProvided; //alternate case: immersedRatio is set to some value given in the input file
          }
         ScalarT normalStress = - 0.5 * g *  H * (rho - rho_w * immersedRatio*immersedRatio);
         for(int dim = 0; dim < numDOFsSet; dim++)

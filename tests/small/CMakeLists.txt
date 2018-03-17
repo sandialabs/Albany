@@ -11,6 +11,7 @@ IF(ALBANY_HAVE_STK) # STK is needed for all these
   add_subdirectory(SteadyHeat2D)
   add_subdirectory(SteadyHeatConstrainedOpt2D)
   add_subdirectory(SteadyHeat3D)
+  add_subdirectory(SteadyHeat3DTest)
   add_subdirectory(SteadyHeat1DEB)
   add_subdirectory(SteadyHeat2DEB)
   add_subdirectory(ContinuationHeat1D)
