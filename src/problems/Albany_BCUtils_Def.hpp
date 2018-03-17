@@ -954,7 +954,7 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
 
           TEUCHOS_TEST_FOR_EXCEPTION(
               BCparams.isType<string>(ss), std::logic_error,
-              "NBC array information in XML file must be of type "
+              "NBC array information in XML/YAML file must be of type "
               "Array(double)\n");
 
           // These are read in the Albany::Neumann constructor
@@ -979,7 +979,7 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
                                                     // side will be set to that
                                                     // of the element
 
-          if (conditions[k] == "robin") {
+          if (conditions[k] == "robin" || conditions[k] == "radiate") {
             p->set<string>("DOF Name", dof_names[j]);
 
             p->set<bool>("Vector Field", isVectorField);
@@ -1065,7 +1065,7 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
           // (includes "robin" too)
           // The material DB database needs to be passed to the BC object
 
-          if (conditions[k] == "scaled jump" || conditions[k] == "robin") {
+          if (conditions[k] == "scaled jump" || conditions[k] == "robin" || conditions[k] == "radiate") {
             TEUCHOS_TEST_FOR_EXCEPTION(
                 materialDB == Teuchos::null,
                 Teuchos::Exceptions::InvalidParameter,
