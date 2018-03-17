@@ -39,7 +39,7 @@ class NeumannBase :
 
 public:
 
-  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, BASAL, BASAL_SCALAR_FIELD, TRACTION, LATERAL, CLOSED_FORM, STEFAN_BOLTZMANN};
+  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, BASAL, BASAL_SCALAR_FIELD, TRACTION, LATERAL, CLOSED_FORM};
   enum SIDE_TYPE {OTHER, LINE, TRI, QUAD}; // to calculate areas for pressure bc
 
   typedef typename EvalT::ScalarT ScalarT;
@@ -92,17 +92,6 @@ protected:
 
   // robin (also uses flux scaling)
   void calc_dudn_robin (Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
-                        const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
-                        const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
-                        const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
-                        const shards::CellTopology & celltopo,
-                        const int cellDims,
-                        int local_side_id,
-                        ScalarT scale,
-                        const ScalarT* robin_param_values);
-						
-  // Stefan-Boltzmann (also uses flux scaling)
-  void calc_dudn_radiate (Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
                         const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
                         const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
                         const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
