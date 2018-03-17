@@ -1,0 +1,12 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Reference Material: Block_0
+  ElementBlocks: 
+    block_1: 
+      material: Metal
+  Materials: 
+    Metal: 
+      Category: Non-ferrous
+      Flux Scale: 2.50000000000000000e+02
+...
