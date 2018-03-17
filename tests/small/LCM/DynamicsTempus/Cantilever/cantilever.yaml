@@ -6,7 +6,7 @@ LCM:
   Problem:
     Name: Mechanics 3D
     Phalanx Graph Visualization Detail: 0
-    MaterialDB Filename: 'material-beam.yaml'
+    MaterialDB Filename: 'material-cantilever.yaml'
     Solution Method: Transient Tempus
     Initial Condition:
       Function: Constant
