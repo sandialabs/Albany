@@ -52,7 +52,7 @@ runWithQR_(runWithQR)
 	int num_rows = preconditioner_->MyLength();
 	int num_vecs = preconditioner_->NumVectors();
 	if (reducedBasis_->Comm().MyPID() == 0)
-		std::cout << "preconditioner has " << num_rows << " rows and " << num_vecs << " columns" std::endl;
+		std::cout << "preconditioner has " << num_rows << " rows and " << num_vecs << " columns" << std::endl;
 	//set initial preconditioner to identity matrix in case used before computed
 	for (int ind_rows = 0; ind_rows < num_rows; ind_rows++)
 		preconditioner_->ReplaceMyValue(ind_rows, ind_rows, 1.0);
@@ -294,7 +294,7 @@ void GaussNewtonOperatorFactoryBase<Derived>::setPreconditioner(Epetra_CrsMatrix
 		Amesos factory;
 		std::string solvertype = "Klu";
 		solver = factory.Create(solvertype, problem);
-		TEUCHOS_TEST_FOR_EXCEPTION(solver!=0, std::runtime_error, "Solver type" + solvertype + "is not available.\n");
+		TEUCHOS_TEST_FOR_EXCEPTION(solver!=0, std::runtime_error, "Solver type " + solvertype + " is not available.\n");
 		Teuchos::ParameterList list;
 		list.set("PrintTiming",true);
 		list.set("PrintStatus",true);
