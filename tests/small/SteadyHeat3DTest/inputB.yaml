@@ -1,0 +1,27 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Heat 3D
+    Phalanx Graph Visualization Detail: 1
+    Dirichlet BCs: 
+      DBC on NS nodelist_1 for DOF T: 0.00000000000000000e+00
+    Neumann BCs: 
+      NBC on SS surface_3 for DOF T set dudn: [2.50000000000000000e+03]
+    Thermal Conductivity: 
+      Thermal Conductivity Type: Constant
+      Value: 5.00000000000000000e+01
+    Parameters: 
+      Number: 3
+      Parameter 0: DBC on NS nodelist_1 for DOF T
+      Parameter 1: NBC on SS surface_3 for DOF T set dudn
+      Parameter 2: Thermal Conductivity
+  Discretization: 
+    Method: Pamgen
+    Exodus Output File Name: beamB.exo
+    Pamgen Input File Name: beam.pg
+    Workset Size: 1
+    Cubature Degree: 2
+  Regression Results: 
+    Relative Tolerance: 1.00000000000000002e-03
+...
