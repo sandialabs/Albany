@@ -38,6 +38,8 @@ int main(int argc, char *argv[]) {
   const RCP<const Teuchos::Comm<int> > teuchosComm = Albany::createTeuchosCommFromMpiComm(nativeComm);
   const RCP<const Epetra_Comm> epetraComm = Albany::createEpetraCommFromMpiComm(nativeComm);
 
+  Kokkos::initialize(argc, argv);
+
   // Standard output
   const RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
@@ -45,6 +47,7 @@ int main(int argc, char *argv[]) {
   const std::string firstArg = (argc > 1) ? argv[1] : "";
   if (firstArg.empty() || firstArg == "--help") {
     *out << "AlbanyRomPostProcess input-file-path\n";
+    Kokkos::finalize_all();
     return 0;
   }
   const std::string inputFileName = argv[1];
@@ -84,4 +87,5 @@ int main(int argc, char *argv[]) {
     const double stamp = (*stamps)[step][0];
     observer.observeSolution(stamp, fullSolution, fullSolution_dot.ptr());
   }
+  Kokkos::finalize_all();
 }
