@@ -695,7 +695,8 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         p->set<string>(
             "Coupled Application", sub_list.get<string>("Coupled Application"));
 
-        p->set<string>("Coupled Block", sub_list.get<string>("Coupled Block"));
+        p->set<string>("Coupled Block",
+            sub_list.get<string>("Coupled Block", "NONE"));
 
         // Get the application from the main parameters list above
         // and pass it to the Schwarz BC evaluator.

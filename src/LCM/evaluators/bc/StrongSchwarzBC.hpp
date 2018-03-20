@@ -58,10 +58,10 @@ public:
 
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
   doDTKInterpolation(DataTransferKit::STKMeshManager &coupled_manager,
-                    DataTransferKit::STKMeshManager &this_manager,
-                    Albany::AbstractSTKFieldContainer::VectorFieldType* coupled_field,
-                    Albany::AbstractSTKFieldContainer::VectorFieldType* this_field,
-                    const int neq, Teuchos::ParameterList &dtk_params);
+      DataTransferKit::STKMeshManager &this_manager,
+      Albany::AbstractSTKFieldContainer::VectorFieldType* coupled_field,
+      Albany::AbstractSTKFieldContainer::VectorFieldType* this_field,
+      const int neq, Teuchos::ParameterList &dtk_params);
 #endif //ALBANY_DTK
 
   void

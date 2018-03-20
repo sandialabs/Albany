@@ -128,16 +128,16 @@ protected:
   coupled_apps_;
 
   std::string
-  coupled_app_name_;
+  coupled_app_name_{"SELF"};
 
   std::string
-  coupled_block_name_;
+  coupled_block_name_{"NONE"};
 
   int
-  this_app_index_;
+  this_app_index_{-1};
 
   int
-  coupled_app_index_;
+  coupled_app_index_{-1};
 };
 
 //
