@@ -47,13 +47,11 @@
 #define INTERNAL_DOFS
 
 Teuchos::Array<int> getMyBlockLIDs(
-    const Teuchos::ParameterList &blockingParams,
+    std::string nodeSetLabel,
+	int dofRank,
     const Albany::AbstractDiscretization &disc)
 {
   Teuchos::Array<int> result;
-
-  const std::string nodeSetLabel = blockingParams.get<std::string>("Node Set");
-  const int dofRank = blockingParams.get<int>("Dof");
 
   const Albany::NodeSetList &nodeSets = disc.getNodeSets();
   const Albany::NodeSetList::const_iterator it = nodeSets.find(nodeSetLabel);
@@ -70,6 +68,74 @@ Teuchos::Array<int> getMyBlockLIDs(
   }
 
   return result;
+}
+
+std::vector<std::string> split(const char *str, char c = ' ')
+{
+  std::vector<std::string> result;
+  do
+  {
+    const char *begin = str;
+    while(*str != c && *str)
+        str++;
+    result.push_back(std::string(begin, str));
+  } while (0 != *str++);
+  return result;
+}
+
+bool extract_DBC_data(Teuchos::RCP<Teuchos::ParameterList> myDBCParams, Teuchos::RCP<Teuchos::ParameterList> myrbgenParams, Teuchos::RCP<Albany::AbstractDiscretization> mybaseDisc, Teuchos::RCP<Epetra_MultiVector>& rawSnapshots, Teuchos::Array<Teuchos::RCP<const Epetra_Vector> >& blockVectors, Teuchos::Array<int>& blockedLIDs)
+{
+	bool isUnique = myrbgenParams->get<bool>("Unique DBC", false);
+    bool isComplete = myrbgenParams->get<bool>("Complete DBC", false);
+
+	for (auto it=myDBCParams->begin(); it!=myDBCParams->end(); it++)
+	{
+		std::string this_name = myDBCParams->name(it);
+		std::vector<std::string> token_name = split(this_name.c_str());
+
+		int offset;
+		bool time_varying = token_name[0].compare("Time") == 0 ? offset = 2 : offset = 0;
+		//bool sdbc = token_name[offset].compare("SDBC")==0;
+		std::string name = token_name[offset+3];
+		std::string DOF = token_name[offset+6];
+		int dof=-1;
+		if (DOF=="X")
+			dof = 0;
+		else if (DOF=="Y")
+			dof = 1;
+		else if (DOF=="Z")
+			dof = 2;
+		else if (DOF=="T")
+			dof = 3;
+
+		Teuchos::Array<int> mySelectedLIDs = getMyBlockLIDs(name, dof, *mybaseDisc);
+		std::cout << "DOF " << DOF << " of " << name << " has " << mySelectedLIDs.size() << " selected LIDs: " << mySelectedLIDs << std::endl;
+
+		if (isUnique)
+		{
+		for (auto it=mySelectedLIDs.begin(); it!=mySelectedLIDs.end(); )
+		{
+		  if (std::find(blockedLIDs.begin(), blockedLIDs.end(), *it) != blockedLIDs.end())
+		  {
+			std::cout << "deleting element " << *it << " of mySelectedLIDs" << std::endl;
+			mySelectedLIDs.erase(it);
+		  }
+		  else
+			it++;
+		}
+		}
+
+		for (int j=0; j<mySelectedLIDs.size(); j++)
+		{
+		  blockedLIDs.push_back(mySelectedLIDs[j]);
+		}
+
+		if (!isComplete)
+		{
+		  blockVectors.push_back(MOR::isolateUniformBlock(mySelectedLIDs, *rawSnapshots));
+		}
+	}
+	return isComplete;
 }
 
 int main(int argc, char *argv[]) {
@@ -109,6 +175,12 @@ int main(int argc, char *argv[]) {
   const RCP<Teuchos::ParameterList> discParams =
 		  Teuchos::sublist(topLevelParams, "Discretization", /*sublistMustExist =*/ true);
 
+  const RCP<Teuchos::ParameterList> probParams =
+		  Teuchos::sublist(topLevelParams, "Problem", /*sublistMustExist =*/ true);
+
+  const RCP<Teuchos::ParameterList> DBCParams =
+		  Teuchos::sublist(probParams, "Dirichlet BCs", /*sublistMustExist =*/ true);
+
   typedef Teuchos::Array<std::string> FileNameList;
   FileNameList snapshotFiles;
   {
@@ -131,9 +203,6 @@ int main(int argc, char *argv[]) {
         localDiscParams.set("Method", "Ioss");
         localDiscParams.set("Exodus Input File Name", *it);
         localDiscParams.setParametersNotAlreadySet(*discParams);
-        //std::cout << "LOOKHERE" << std::endl;
-        //localDiscParams.print();
-        //std::cout << "ENDHERE" << std::endl;
         localTopLevelParams->set("Discretization", localDiscParams);
       }
       const RCP<Albany::AbstractDiscretization> disc = Albany::discretizationNew(localTopLevelParams, teuchosComm);
@@ -149,31 +218,8 @@ int main(int argc, char *argv[]) {
 
   MOR::ConcatenatedEpetraMVSource snapshotSource(*baseDisc->getMap(), snapshotSources);
   *out << "Total snapshot count = " << snapshotSource.vectorCount() << "\n";
-  const Teuchos::RCP<Epetra_MultiVector> rawSnapshots = snapshotSource.multiVectorNew();
+  Teuchos::RCP<Epetra_MultiVector> rawSnapshots = snapshotSource.multiVectorNew();
 
-  // Isolate Dirichlet BC
-  RCP<const Epetra_Vector> blockVector;
-  Teuchos::Array<RCP<const Epetra_Vector> > blockVectors;
-  Teuchos::Array<RCP<const Epetra_Vector> > completeBlockVectors;
-  Teuchos::Array<int>  myBlockedLIDs;
-  int num_blocking_vecs = 0;
-  bool isUnique = false, isComplete = false, isIdentity = false;
-  if (rbgenParams->isSublist("Blocking")) {
-    RCP<Teuchos::ParameterList> blockingParams = Teuchos::sublist(rbgenParams, "Blocking");
-    blockingParams->print();
-    isComplete = blockingParams->get<bool>("Complete", false);
-    isIdentity = blockingParams->get<bool>("Identity",false);
-    const Teuchos::Array<int> mySelectedLIDs = getMyBlockLIDs(*blockingParams, *baseDisc);
-    *out << "Selected LIDs = " << mySelectedLIDs << "\n";
-
-    for (int j=0; j<mySelectedLIDs.size(); j++)
-      myBlockedLIDs.push_back(mySelectedLIDs[j]);
-
-    if (!isComplete)
-    {
-      blockVector = MOR::isolateUniformBlock(mySelectedLIDs, *rawSnapshots);
-    }
-  }
 
   Epetra_BlockMap map_all = rawSnapshots->Map();
   int mpi_rank, mpi_size;
@@ -182,62 +228,28 @@ int main(int argc, char *argv[]) {
   printf("Processor %d out of %d\n",mpi_rank,mpi_size);
   //map_all.Print(std::cout);
 
-  if (rbgenParams->isSublist("Blocking List"))
-  {
-    RCP<Teuchos::ParameterList> listParams = Teuchos::sublist(rbgenParams, "Blocking List");
-    //listParams->print();
-    const Teuchos::ParameterEntry list_length = listParams->getEntry("Number");
-    //std::cout << list_length << std::endl;
-    num_blocking_vecs = Teuchos::getValue<int>(list_length);
-    isUnique = listParams->get<bool>("Unique", false);
-    isComplete = listParams->get<bool>("Complete", false);
-    isIdentity = listParams->get<bool>("Identity", false);
-    *out << "Blocking List has " << num_blocking_vecs << " entries\n";
-    //blockVectors.resize(num_blocking_vecs);
-    char* entry_name = new char[32];
-    for (int i=0; i<num_blocking_vecs; i++)
-    {
-      sprintf(entry_name, "Entry %d", i);
-      printf("Reading: %s\n", entry_name);
-      const RCP<const Teuchos::ParameterList> blockingParams = Teuchos::sublist(listParams, entry_name);
-      blockingParams->print();
+  // Isolate Dirichlet BC
+  Teuchos::Array<RCP<const Epetra_Vector> > blockVectors;
+  Teuchos::Array<RCP<const Epetra_Vector> > completeBlockVectors;
+  Teuchos::Array<int>  myBlockedLIDs;
+  // I suppose you're grepping for "Blocking" or "Blocking List"...
+  // Those are depreciated options in your RBGen input where you would
+  // Explicitly define which DBCs you wanted to block off.
+  // We now just pull that data from the "Dirichlet BCs" section, which
+  // is IMHO a much better solution - why would you want to write your  
+  // entire set of DBCs twice, and in a longer and more complicated format?
+  // Either way, if for some reason you did still want to block off only a 
+  // few of your defined DBCs, just delete all of the DBCs you don't want to 
+  // block from your "Dirichlet BCs" section and keep the rest - we don't 
+  // use that section for anything else, and the ROM input has its own 
+  // DBC section.
+  // If you're working with an old input file it should be fine - whatever 
+  // you have defined in those sections will just be ignored.
+  bool isComplete = extract_DBC_data(DBCParams, rbgenParams, baseDisc, rawSnapshots, blockVectors, myBlockedLIDs);
 
-      Teuchos::Array<int> mySelectedLIDs = getMyBlockLIDs(*blockingParams, *baseDisc);
-      printf("There are %d Selected LIDs\n",mySelectedLIDs.size());
-      *out << "Selected LIDs = " << mySelectedLIDs << "\n";
-
-      if (isUnique)
-      {
-        for (auto it=mySelectedLIDs.begin(); it!=mySelectedLIDs.end(); )
-        {
-          if (std::find(myBlockedLIDs.begin(), myBlockedLIDs.end(), *it) != myBlockedLIDs.end())
-          {
-            std::cout << "deleting element " << *it << " of mySelectedLIDs" << std::endl;
-            mySelectedLIDs.erase(it);
-          }
-          else
-            it++;
-        }
-      }
-
-      for (int j=0; j<mySelectedLIDs.size(); j++)
-        myBlockedLIDs.push_back(mySelectedLIDs[j]);
-
-      if (!isComplete)
-      {
-        //blockVectors[i] = MOR::isolateUniformBlock(mySelectedLIDs, *rawSnapshots);
-        blockVectors.push_back(MOR::isolateUniformBlock(mySelectedLIDs, *rawSnapshots));
-      }
-    }
-    delete[] entry_name;
-  }
   if (!isComplete)
   {
-    TEUCHOS_ASSERT(num_blocking_vecs == blockVectors.size());
     printf("blockVectors has %d entries\n",blockVectors.size());
-    printf("There are %d blocking vectors defined.\n",num_blocking_vecs);
-    //  for (int i=0; i<num_blocking_vecs; i++)
-    //    blockVectors[i]->Print(std::cout);
   }
   int num_blocked_LIDs = 0;
   num_blocked_LIDs = myBlockedLIDs.size();
@@ -430,19 +442,13 @@ int main(int argc, char *argv[]) {
     }
     else
     {
-      for (int i=0; i<num_blocking_vecs; i++)
+      for (int i=0; i<blockVectors.size(); i++)
       {
         const double stamp = -1.0 + (i+1)*std::numeric_limits<double>::epsilon();
         TEUCHOS_ASSERT(stamp != -1.0);
         TEUCHOS_ASSERT(stamp != prev_stamp);
         prev_stamp = stamp;
         outputVector.Import(*blockVectors[i], outputImport, Insert);
-        baseDisc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
-      }
-      if (Teuchos::nonnull(blockVector)) {
-        const double stamp = -1.0 + std::numeric_limits<double>::epsilon();
-        TEUCHOS_ASSERT(stamp != -1.0);
-        outputVector.Import(*blockVector, outputImport, Insert);
         baseDisc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
       }
     }
