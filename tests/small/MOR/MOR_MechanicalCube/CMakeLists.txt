@@ -16,8 +16,8 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 	# input files			 
 		configure_file(${CMAKE_CURRENT_SOURCE_DIR}/FOM.yaml
 					 ${CMAKE_CURRENT_BINARY_DIR}/FOM.yaml COPYONLY)
-		configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RBgen.xml
-					 ${CMAKE_CURRENT_BINARY_DIR}/RBgen.xml COPYONLY)
+		configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RB.xml
+					 ${CMAKE_CURRENT_BINARY_DIR}/RB.xml COPYONLY)
 		configure_file(${CMAKE_CURRENT_SOURCE_DIR}/PGROM.yaml
 					 ${CMAKE_CURRENT_BINARY_DIR}/PGROM.yaml COPYONLY)
 
