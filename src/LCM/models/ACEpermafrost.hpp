@@ -46,7 +46,6 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   // optional temperature support
   using BaseKernel::expansion_coeff_;
   using BaseKernel::have_temperature_;
-  using BaseKernel::latent_heat_;
   using BaseKernel::ref_temperature_;
   using BaseKernel::temperature_;
 
@@ -84,6 +83,9 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   // Saturation hardening constraints
   RealType sat_mod;
   RealType sat_exp;
+  
+  // Latent heat phase change
+  RealType latent_heat;
 
   void
   init(
