@@ -70,16 +70,19 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ConstScalarField yield_strength;
 
 
-  // extract evaluated MDFields
+  // Extract evaluated MDFields
   ScalarField stress;
   ScalarField Fp;
   ScalarField eqps;
   ScalarField yieldSurf;
   ScalarField source;
+  ScalarField i_sat;
+  ScalarField w_sat;
 
+  // Workspace arrays
   Albany::MDArray Fpold;
   Albany::MDArray eqpsold;
-
+  
   // Saturation hardening constraints
   RealType sat_mod;
   RealType sat_exp;

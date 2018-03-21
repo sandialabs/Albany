@@ -26,6 +26,8 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   std::string const source_string       = field_name_map_["Mechanical_Source"];
   std::string const F_string            = field_name_map_["F"];
   std::string const J_string            = field_name_map_["J"];
+  std::string const isat_string         = field_name_map_["Ice_Saturation"];
+  std::string const wsat_string         = field_name_map_["Water_Saturation"];
 
   // define the dependent fields
   setDependentField(F_string, dl->qp_tensor);
@@ -46,6 +48,8 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setEvaluatedField(Fp_string, dl->qp_tensor);
   setEvaluatedField(eqps_string, dl->qp_scalar);
   setEvaluatedField(yieldSurface_string, dl->qp_scalar);
+  setEvaluatedField(isat_string, dl->qp_scalar);
+  setEvaluatedField(wsat_string, dl->qp_scalar);
   if (have_temperature_ == true) {
     setEvaluatedField(source_string, dl->qp_scalar);
   }
@@ -87,7 +91,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       0.0,
       false,
       p->get<bool>("Output Yield Surface", false));
-  //
+
   // mechanical source
   if (have_temperature_ == true) {
     addStateVariable(
@@ -98,6 +102,24 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
         false,
         p->get<bool>("Output Mechanical Source", false));
   }
+  
+  // ice saturation
+  addStateVariable(
+      isat_string,
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("Output Ice Saturation", false));
+  
+  // water saturation
+  addStateVariable(
+      wsat_string,
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("Output Water Saturation", false));
 }
 
 template<typename EvalT, typename Traits>
@@ -114,6 +136,8 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   std::string source_string       = field_name_map_["Mechanical_Source"];
   std::string F_string            = field_name_map_["F"];
   std::string J_string            = field_name_map_["J"];
+  std::string isat_string         = field_name_map_["Ice_Saturation"];
+  std::string wsat_string         = field_name_map_["Water_Saturation"];
 
   // extract dependent MDFields
   def_grad         = *dep_fields[F_string];
@@ -133,6 +157,8 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   Fp        = *eval_fields[Fp_string];
   eqps      = *eval_fields[eqps_string];
   yieldSurf = *eval_fields[yieldSurface_string];
+  i_sat     = *eval_fields[isat_string];
+  w_sat     = *eval_fields[wsat_string];
 
   if (have_temperature_ == true) {
     source = *eval_fields[source_string];
@@ -368,5 +394,12 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
       stress(cell, pt, i, j) = sigma(i, j);
     }
   }
+  
+  // update ice/water saturations
+  // note these quantities will need to be updated according to the 
+  // change in temperature and the freezing curve df/dT
+  // for right now they are held constant
+  i_sat(cell, pt) = 1.0;
+  w_sat(cell, pt) = 0.0;
 }
 }  // namespace LCM
