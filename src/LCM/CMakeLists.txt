@@ -411,6 +411,7 @@ set(transport-headers
 set(models-sources
   "${LCM_DIR}/models/AAAModel.cpp"
   "${LCM_DIR}/models/ACEice.cpp"
+  "${LCM_DIR}/models/ACEpermafrost.cpp"
   "${LCM_DIR}/models/AbstractModel.cpp"
   "${LCM_DIR}/models/AnisotropicDamageModel.cpp"
   "${LCM_DIR}/models/AnisotropicHyperelasticDamageModel.cpp"
@@ -450,6 +451,8 @@ set(models-headers
   "${LCM_DIR}/models/AAAModel.hpp"
   "${LCM_DIR}/models/ACEice_Def.hpp"
   "${LCM_DIR}/models/ACEice.hpp"
+  "${LCM_DIR}/models/ACEpermafrost_Def.hpp"
+  "${LCM_DIR}/models/ACEpermafrost.hpp"
   "${LCM_DIR}/models/AbstractModel.hpp"
   "${LCM_DIR}/models/AnisotropicDamageModel_Def.hpp"
   "${LCM_DIR}/models/AnisotropicDamageModel.hpp"
