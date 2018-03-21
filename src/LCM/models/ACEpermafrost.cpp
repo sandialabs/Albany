@@ -6,17 +6,17 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "ACEice.hpp"
-#include "ACEice_Def.hpp"
+#include "ACEpermafrost.hpp"
+#include "ACEpermafrost_Def.hpp"
 #include "ParallelConstitutiveModel_Def.hpp"
 
 template<typename EvalT, typename Traits>
-LCM::ACEice<EvalT, Traits>::ACEice(Teuchos::ParameterList* p,
+LCM::ACEpermafrost<EvalT, Traits>::ACEpermafrost(Teuchos::ParameterList* p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
     LCM::ParallelConstitutiveModel<EvalT, Traits,
-        ACEiceMiniKernel<EvalT, Traits>>(p, dl)
+        ACEpermafrostMiniKernel<EvalT, Traits>>(p, dl)
 {
 }
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ACEiceMiniKernel)
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ACEice)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ACEpermafrostMiniKernel)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ACEpermafrost)

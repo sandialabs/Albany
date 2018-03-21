@@ -4,13 +4,13 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "Albany_Utils.hpp"
-#include "ACEice.hpp"
+#include "ACEpermafrost.hpp"
 #include "MiniNonlinearSolver.h"
 
 namespace LCM {
 
 template<typename EvalT, typename Traits>
-ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
+ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
     ConstitutiveModel<EvalT, Traits>& model,
     Teuchos::ParameterList*              p,
     Teuchos::RCP<Albany::Layouts> const& dl)
@@ -101,7 +101,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
 
 template<typename EvalT, typename Traits>
 void
-ACEiceMiniKernel<EvalT, Traits>::init(
+ACEpermafrostMiniKernel<EvalT, Traits>::init(
     Workset&                 workset,
     FieldMap<const ScalarT>& dep_fields,
     FieldMap<ScalarT>&       eval_fields)
@@ -231,7 +231,7 @@ class J2NLS : public minitensor::
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
-ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
+ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 {
   constexpr minitensor::Index MAX_DIM{3};
 

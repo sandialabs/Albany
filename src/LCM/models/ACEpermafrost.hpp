@@ -4,20 +4,20 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_ACEice_hpp)
-#define LCM_ACEice_hpp
+#if !defined(LCM_ACEpermafrost_hpp)
+#define LCM_ACEpermafrost_hpp
 
 #include "ParallelConstitutiveModel.hpp"
 
 namespace LCM {
 
 template<typename EvalT, typename Traits>
-struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
+struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
 {
   ///
   /// Constructor
   ///
-  ACEiceMiniKernel(
+  ACEpermafrostMiniKernel(
       ConstitutiveModel<EvalT, Traits>& model,
       Teuchos::ParameterList*              p,
       Teuchos::RCP<Albany::Layouts> const& dl);
@@ -25,13 +25,13 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ///
   /// No copy constructor
   ///
-  ACEiceMiniKernel(ACEiceMiniKernel const&) = delete;
+  ACEpermafrostMiniKernel(ACEpermafrostMiniKernel const&) = delete;
 
   ///
   /// No copy assignment
   ///
-  ACEiceMiniKernel&
-  operator=(ACEiceMiniKernel const&) = delete;
+  ACEpermafrostMiniKernel&
+  operator=(ACEpermafrostMiniKernel const&) = delete;
 
   using ScalarT          = typename EvalT::ScalarT;
   using ScalarField      = PHX::MDField<ScalarT>;
@@ -97,14 +97,14 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
 };
 
 template<typename EvalT, typename Traits>
-class ACEice : public LCM::ParallelConstitutiveModel<
+class ACEpermafrost : public LCM::ParallelConstitutiveModel<
                          EvalT,
                          Traits,
-                         ACEiceMiniKernel<EvalT, Traits>> {
+                         ACEpermafrostMiniKernel<EvalT, Traits>> {
  public:
-  ACEice(
+  ACEpermafrost(
       Teuchos::ParameterList*              p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 };
 }
-#endif  // LCM_ACEice_hpp
+#endif  // LCM_ACEpermafrost_hpp
