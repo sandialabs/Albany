@@ -63,6 +63,7 @@ public:
 protected:
 	bool PsiEqualsPhi_, runWithQR_;
 	void parOut(std::string text) const;
+	Teuchos::RCP<const Epetra_MultiVector> getFullLeftBasis() const;
 
 private:
 	Teuchos::RCP<const Epetra_MultiVector> reducedBasis_;
@@ -71,7 +72,7 @@ private:
 
 	Teuchos::RCP<Epetra_MultiVector> scaling_;
 	Teuchos::RCP<Epetra_MultiVector> preconditioner_;
-	Teuchos::RCP<Epetra_MultiVector> leftbasis_;
+	Teuchos::RCP<Epetra_MultiVector> fullleftbasis_;
 	Teuchos::RCP<Epetra_MultiVector> Q_;
 	Teuchos::RCP<Epetra_MultiVector> jacphi_int_;
 	Teuchos::RCP<Teuchos::SerialDenseMatrix<int,double> > R_;
@@ -79,15 +80,13 @@ private:
 	Teuchos::RCP<Epetra::TsqrAdaptor> tsqr_adaptor_;
 	mutable Teuchos::RCP<Ifpack_Preconditioner> preconditioner_ifpack_;
 	mutable Teuchos::RCP<Epetra_CrsMatrix> jacobian_;
-
-	Teuchos::RCP<const Epetra_MultiVector> getMyLeftBasis() const;
 };
 
 class GaussNewtonOperatorFactory : public GaussNewtonOperatorFactoryBase<GaussNewtonOperatorFactory> {
 public:
 	explicit GaussNewtonOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis, bool PsiEqualsPhi, bool runWithQR);
 
-	Teuchos::RCP<const Epetra_MultiVector> leftProjectorBasis() const;
+	Teuchos::RCP<const Epetra_MultiVector> getMyLeftBasis() const;
 };
 
 class GaussNewtonMetricOperatorFactory : public GaussNewtonOperatorFactoryBase<GaussNewtonMetricOperatorFactory> {
@@ -98,14 +97,14 @@ public:
 	// Overridden
 	virtual void fullJacobianIs(const Epetra_Operator &op);
 
-	Teuchos::RCP<const Epetra_MultiVector> leftProjectorBasis() const;
+	Teuchos::RCP<const Epetra_MultiVector> getMyLeftBasis() const;
 
 private:
 	Teuchos::RCP<const Epetra_Operator> metric_;
 
-	Teuchos::RCP<Epetra_MultiVector> premultipliedLeftProjector_;
+	Teuchos::RCP<Epetra_MultiVector> sampledleftbasis_;
 
-	void updatePremultipliedLeftProjector();
+	void updateSampledLeftBasis();
 };
 
 } // namespace MOR

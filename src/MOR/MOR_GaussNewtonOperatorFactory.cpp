@@ -60,9 +60,9 @@ runWithQR_(runWithQR)
 #endif //invJacPrec
 
 	if (PsiEqualsPhi_)
-		leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.rightProjector()));
+		fullleftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.rightProjector()));
 	else //PsiEqualsPhi
-		leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.premultipliedRightProjector()));
+		fullleftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.premultipliedRightProjector()));
 
 	if (runWithQR_)
 	{
@@ -97,7 +97,7 @@ template <typename Derived>
 const Epetra_MultiVector &GaussNewtonOperatorFactoryBase<Derived>::leftProjection(
 		const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const {
 	//parOut("    Computes psi^T*res");
-	int err = reduce(*this->getMyLeftBasis(), fullVec, result);
+	int err = reduce(*this->getLeftBasis(), fullVec, result);
 	TEUCHOS_TEST_FOR_EXCEPT(err != 0);
 	return result;
 }
@@ -118,7 +118,7 @@ RCP<Epetra_CrsMatrix> GaussNewtonOperatorFactoryBase<Derived>::reducedJacobianNe
 
 template <typename Derived>
 const Epetra_CrsMatrix &GaussNewtonOperatorFactoryBase<Derived>::reducedJacobian(Epetra_CrsMatrix &result) const {
-	return jacobianFactory_.reducedMatrix(*this->getMyLeftBasis(), result);
+	return jacobianFactory_.reducedMatrix(*this->getLeftBasis(), result);
 }
 
 template <typename Derived>
@@ -138,9 +138,9 @@ void GaussNewtonOperatorFactoryBase<Derived>::fullJacobianIs(const Epetra_Operat
 
 	jacobianFactory_.fullJacobianIs(op);
 	if (PsiEqualsPhi_)
-		leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.rightProjector()));
+		fullleftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.rightProjector()));
 	else //PsiEqualsPhi
-		leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.premultipliedRightProjector()));
+		fullleftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.premultipliedRightProjector()));
 
 	if (runWithQR_)
 	{
@@ -152,7 +152,7 @@ void GaussNewtonOperatorFactoryBase<Derived>::fullJacobianIs(const Epetra_Operat
 		// (even though the documentation in Trilinos might lead you to think it is)
 		tsqr_adaptor_->factorExplicit(*A,*Q_,*R_);
 
-		leftbasis_->Scale(1.0, *Q_);
+		fullleftbasis_->Scale(1.0, *Q_);
 
 		/* (if you want to output the data)
 		EpetraExt::MultiVectorToMatrixMarketFile("Q.mm", *Q_);
@@ -561,13 +561,13 @@ void GaussNewtonOperatorFactoryBase<Derived>::applyJacobian(const Epetra_MultiVe
 }
 
 template <typename Derived>
-RCP<const Epetra_MultiVector> GaussNewtonOperatorFactoryBase<Derived>::getMyLeftBasis() const {
-	return static_cast<const Derived *>(this)->leftProjectorBasis();
+RCP<const Epetra_MultiVector> GaussNewtonOperatorFactoryBase<Derived>::getLeftBasis() const {
+	return static_cast<const Derived *>(this)->getMyLeftBasis();
 }
 
 template <typename Derived>
-RCP<const Epetra_MultiVector> GaussNewtonOperatorFactoryBase<Derived>::getLeftBasis() const {
-	return leftbasis_;
+RCP<const Epetra_MultiVector> GaussNewtonOperatorFactoryBase<Derived>::getFullLeftBasis() const {
+	return fullleftbasis_;
 }
 
 GaussNewtonOperatorFactory::GaussNewtonOperatorFactory(const RCP<const Epetra_MultiVector> &reducedBasis, bool PsiEqualsPhi, bool runWithQR) :
@@ -576,8 +576,8 @@ GaussNewtonOperatorFactory::GaussNewtonOperatorFactory(const RCP<const Epetra_Mu
 	// Nothing to do
 		  }
 
-RCP<const Epetra_MultiVector> GaussNewtonOperatorFactory::leftProjectorBasis() const {
-	return this->getLeftBasis();
+RCP<const Epetra_MultiVector> GaussNewtonOperatorFactory::getMyLeftBasis() const {
+	return this->getFullLeftBasis();
 }
 
 GaussNewtonMetricOperatorFactory::GaussNewtonMetricOperatorFactory(
@@ -587,23 +587,23 @@ GaussNewtonMetricOperatorFactory::GaussNewtonMetricOperatorFactory(
 		bool runWithQR) :
 		GaussNewtonOperatorFactoryBase<GaussNewtonMetricOperatorFactory>(reducedBasis, PsiEqualsPhi, runWithQR),
 		metric_(metric),
-		premultipliedLeftProjector_(new Epetra_MultiVector(metric->OperatorDomainMap(), reducedBasis->NumVectors(), false))
+		sampledleftbasis_(new Epetra_MultiVector(metric->OperatorDomainMap(), reducedBasis->NumVectors(), false))
 		{
-	this->updatePremultipliedLeftProjector();
+	this->updateSampledLeftBasis();
 		}
 
-RCP<const Epetra_MultiVector> GaussNewtonMetricOperatorFactory::leftProjectorBasis() const {
-	return this->premultipliedLeftProjector_;
+RCP<const Epetra_MultiVector> GaussNewtonMetricOperatorFactory::getMyLeftBasis() const {
+	return this->sampledleftbasis_;
 }
 
 void GaussNewtonMetricOperatorFactory::fullJacobianIs(const Epetra_Operator &op) {
 	this->GaussNewtonOperatorFactoryBase<GaussNewtonMetricOperatorFactory>::fullJacobianIs(op);
-	this->updatePremultipliedLeftProjector();
+	this->updateSampledLeftBasis();
 }
 
-void GaussNewtonMetricOperatorFactory::updatePremultipliedLeftProjector() {
+void GaussNewtonMetricOperatorFactory::updateSampledLeftBasis() {
 	int err = 0;
-	err = metric_->Apply(*this->getLeftBasis(), *premultipliedLeftProjector_);
+	err = metric_->Apply(*this->getFullLeftBasis(), *sampledleftbasis_);
 	TEUCHOS_TEST_FOR_EXCEPT(err != 0);
 }
 
