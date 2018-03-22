@@ -64,9 +64,11 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ConstScalarField elastic_modulus;
   ConstScalarField hardening_modulus;
   ConstScalarField heat_capacity;
+  ConstScalarField ice_saturation;
   ConstScalarField J;
   ConstScalarField poissons_ratio;
   ConstScalarField thermal_conductivity;
+  ConstScalarField water_saturation;
   ConstScalarField yield_strength;
 
 
@@ -76,8 +78,6 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ScalarField eqps;
   ScalarField yieldSurf;
   ScalarField source;
-  ScalarField i_sat;
-  ScalarField w_sat;
 
   // Workspace arrays
   Albany::MDArray Fpold;
