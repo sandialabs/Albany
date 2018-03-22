@@ -32,11 +32,13 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   setDependentField(J_string, dl->qp_scalar);
 
   setDependentField("ACE Density", dl->qp_scalar);
+  setDependentField("ACE Heat Capacity", dl->qp_scalar);
+  setDependentField("ACE Ice Saturation", dl->qp_scalar);
+  setDependentField("ACE Thermal Conductivity", dl->qp_scalar);
+  setDependentField("ACE Water Saturation", dl->qp_scalar);
   setDependentField("Elastic Modulus", dl->qp_scalar);
   setDependentField("Hardening Modulus", dl->qp_scalar);
-  setDependentField("ACE Heat Capacity", dl->qp_scalar);
   setDependentField("Poissons Ratio", dl->qp_scalar);
-  setDependentField("ACE Thermal Conductivity", dl->qp_scalar);
   setDependentField("Yield Strength", dl->qp_scalar);
 
   setDependentField("Delta Time", dl->workset_scalar);
@@ -124,8 +126,10 @@ ACEpermafrostMiniKernel<EvalT, Traits>::init(
   elastic_modulus      = *dep_fields["Elastic Modulus"];
   hardening_modulus    = *dep_fields["Hardening Modulus"];
   heat_capacity        = *dep_fields["ACE Heat Capacity"];
+  ice_saturation       = *dep_fields["ACE Ice Saturation"];
   poissons_ratio       = *dep_fields["Poissons Ratio"];
   thermal_conductivity = *dep_fields["ACE Thermal Conductivity"];
+  water_saturation     = *dep_fields["ACE Water Saturation"];
   yield_strength       = *dep_fields["Yield Strength"];
 
   // extract evaluated MDFields
@@ -253,6 +257,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const rho   = density(cell, pt);
   ScalarT const Cp    = heat_capacity(cell, pt);
   ScalarT const KK    = thermal_conductivity(cell, pt);
+  ScalarT const isat  = ice_saturation(cell, pt);
+  ScalarT const wsat  = water_saturation(cell, pt);
 
   // fill local tensors
   F.fill(def_grad, cell, pt, 0, 0);
