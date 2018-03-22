@@ -79,6 +79,7 @@
 #include "ACEdensity.hpp"
 #include "ACEheatCapacity.hpp"
 #include "ACEthermalConductivity.hpp"
+#include "ACEsaturations.hpp"
 
 #ifdef ALBANY_CONTACT
 // Contact evaluator

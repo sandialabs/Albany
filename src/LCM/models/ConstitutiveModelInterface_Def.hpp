@@ -10,6 +10,7 @@
 
 #include "AAAModel.hpp"
 #include "ACEice.hpp"
+#include "ACEpermafrost.hpp"
 #include "AnisotropicDamageModel.hpp"
 #include "AnisotropicHyperelasticDamageModel.hpp"
 #include "AnisotropicViscoplasticModel.hpp"
@@ -338,6 +339,8 @@ ConstitutiveModelInterface<EvalT, Traits>::initializeModel(
     model = rcp(new J2MiniSolver<EvalT, Traits>(p, dl));
   } else if (model_name == "ACE ice") {
     model = rcp(new ACEice<EvalT, Traits>(p, dl));
+  } else if (model_name == "ACE permafrost") {
+    model = rcp(new ACEpermafrost<EvalT, Traits>(p, dl));
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, error_msg);
   }

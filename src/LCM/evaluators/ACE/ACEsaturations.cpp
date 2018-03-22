@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "ACEdensity.hpp"
-#include "ACEdensity_Def.hpp"
+#include "ACEsaturations.hpp"
+#include "ACEsaturations_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ACEdensity)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ACEsaturations)
