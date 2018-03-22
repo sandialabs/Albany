@@ -173,6 +173,20 @@ ConstitutiveModelParameters<EvalT, Traits>::ConstitutiveModelParameters(
     field_map_.insert(std::make_pair(ace_k_str, thermal_cond_));
     parseParameters(ace_k_str, p, paramLib);
   }
+  // ACE ice saturation
+  std::string isat_str("ACE Ice Saturation");
+  if (mat_params->isSublist(isat_str)) {
+    ice_saturation_ = decltype(ice_saturation_)(isat_str, dl_->qp_scalar);
+    field_map_.insert(std::make_pair(isat_str, ice_saturation_));
+    parseParameters(isat_str, p, paramLib);
+  }
+  // ACE water saturation
+  std::string wsat_str("ACE Water Saturation");
+  if (mat_params->isSublist(wsat_str)) {
+    water_saturation_ = decltype(water_saturation_)(wsat_str, dl_->qp_scalar);
+    field_map_.insert(std::make_pair(wsat_str, water_saturation_));
+    parseParameters(wsat_str, p, paramLib);
+  }
 
   // register evaluated fields
   for (auto& pair : field_map_) {
