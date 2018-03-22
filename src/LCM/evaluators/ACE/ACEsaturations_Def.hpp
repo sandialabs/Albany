@@ -41,10 +41,13 @@ ACEsaturations<EvalT, Traits>::ACEsaturations(Teuchos::ParameterList& p)
   this->registerSacadoParameter("ACE Ice Saturation", paramLib);
   this->registerSacadoParameter("ACE Water Saturation", paramLib);
 
+  // List evaluated fields
   this->addEvaluatedField(ice_saturation_);
-  this->setName("ACE Ice Saturation" + PHX::typeAsString<EvalT>());
   this->addEvaluatedField(water_saturation_);
-  this->setName("ACE Water Saturation" + PHX::typeAsString<EvalT>());
+  
+  // List dependent fields
+  
+  this->setName("ACE Saturations" + PHX::typeAsString<EvalT>());
 }
 
 //
@@ -54,6 +57,7 @@ ACEsaturations<EvalT, Traits>::postRegistrationSetup(
     typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
+  // List all fields
   this->utils.setFieldData(ice_saturation_, fm);
   this->utils.setFieldData(water_saturation_, fm);
   return;

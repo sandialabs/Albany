@@ -12,10 +12,15 @@
 namespace LCM {
 
 template <typename EvalT, typename Traits>
-ACEdensity<EvalT, Traits>::ACEdensity(Teuchos::ParameterList& p)
+ACEdensity<EvalT, Traits>::ACEdensity(
+    Teuchos::ParameterList&              p,
+    const Teuchos::RCP<Albany::Layouts>& dl)
     : density_(
           p.get<std::string>("QP Variable Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+      porosity_(
+          p.get<std::string>("ACE Porosity"),
+          dl->qp_scalar)
 {
   Teuchos::ParameterList* density_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
@@ -38,7 +43,12 @@ ACEdensity<EvalT, Traits>::ACEdensity(Teuchos::ParameterList& p)
   // Add density as a Sacado-ized parameter
   this->registerSacadoParameter("ACE Density", paramLib);
 
+  // List evaluated fields
   this->addEvaluatedField(density_);
+  
+  // List dependent fields
+  this->addDependentField(porosity_);
+  
   this->setName("ACE Density" + PHX::typeAsString<EvalT>());
 }
 
@@ -49,7 +59,9 @@ ACEdensity<EvalT, Traits>::postRegistrationSetup(
     typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
+  // List all fields
   this->utils.setFieldData(density_, fm);
+  this->utils.setFieldData(porosity_, fm);
   return;
 }
 
@@ -63,16 +75,13 @@ void
 ACEdensity<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
   int num_cells = workset.numCells;
-  double por = 0.50;  // this needs to come from QP value, here temporary
   double w = 0.50;  // this is an evolving QP parameter, here temporary
   double f = 0.50;  // this is an evolving QP parameter, here temporary
-  // notes: if the material model is ACEice, por = 1.0, f = 1.0, w = 0.0
-  //        if the material model is ACEpermafrost, then por, f, and w evolve
 
   for (int cell = 0; cell < num_cells; ++cell) {
     for (int qp = 0; qp < num_qps_; ++qp) {
-      density_(cell, qp) = por*(rho_ice_*f + rho_wat_*w) + 
-                           ((1.0-por)*rho_sed_);
+      density_(cell, qp) = porosity_(cell, qp)*(rho_ice_*f + rho_wat_*w) + 
+                           ((1.0-porosity_(cell, qp))*rho_sed_);
     }
   }
 

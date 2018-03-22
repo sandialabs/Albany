@@ -187,6 +187,13 @@ ConstitutiveModelParameters<EvalT, Traits>::ConstitutiveModelParameters(
     field_map_.insert(std::make_pair(wsat_str, water_saturation_));
     parseParameters(wsat_str, p, paramLib);
   }
+  // ACE porosity
+  std::string por_str("ACE Porosity");
+  if (mat_params->isSublist(por_str)) {
+    porosity_ = decltype(porosity_)(por_str, dl_->qp_scalar);
+    field_map_.insert(std::make_pair(por_str, porosity_));
+    parseParameters(por_str, p, paramLib);
+  }
 
   // register evaluated fields
   for (auto& pair : field_map_) {

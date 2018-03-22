@@ -57,31 +57,34 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   /// a global load step reduction
   using BaseKernel::nox_status_test_;
 
-  // Dependent MDFields
+  // Dependent constant MDFields
   ConstScalarField def_grad;
   ConstScalarField delta_time;
-  ConstScalarField density;
   ConstScalarField elastic_modulus;
   ConstScalarField hardening_modulus;
-  ConstScalarField heat_capacity;
-  ConstScalarField ice_saturation;
   ConstScalarField J;
   ConstScalarField poissons_ratio;
+  ConstScalarField yield_strength;
+  
+  // Dependent constant MDFields
+  ConstScalarField density;
+  ConstScalarField heat_capacity;
+  ConstScalarField ice_saturation;
+  ConstScalarField porosity;
   ConstScalarField thermal_conductivity;
   ConstScalarField water_saturation;
-  ConstScalarField yield_strength;
 
-
-  // extract evaluated MDFields
+  // Extract evaluated MDFields
   ScalarField stress;
   ScalarField Fp;
   ScalarField eqps;
   ScalarField yieldSurf;
   ScalarField source;
 
+  // Workspace arrays
   Albany::MDArray Fpold;
   Albany::MDArray eqpsold;
-
+  
   // Saturation hardening constraints
   RealType sat_mod;
   RealType sat_exp;
@@ -92,8 +95,8 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   void
   init(
       Workset&                 workset,
-      FieldMap<ScalarT const>& dep_fields,
-      FieldMap<ScalarT>&       eval_fields);
+      FieldMap<ScalarT const>& fields_const,
+      FieldMap<ScalarT>&       fields);
 
   KOKKOS_INLINE_FUNCTION
   void

@@ -12,12 +12,12 @@
 namespace LCM {
 
 template <typename EvalT, typename Traits>
-ACEdensity<EvalT, Traits>::ACEdensity(Teuchos::ParameterList& p)
-    : density_(
+ACEporosity<EvalT, Traits>::ACEporosity(Teuchos::ParameterList& p)
+    : porosity_(
           p.get<std::string>("QP Variable Name"),
           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
 {
-  Teuchos::ParameterList* density_list =
+  Teuchos::ParameterList* porosity_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -30,49 +30,40 @@ ACEdensity<EvalT, Traits>::ACEdensity(Teuchos::ParameterList& p)
   Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
-  // Read density values
-  rho_ice_ = density_list->get<double>("Ice Value");
-  rho_wat_ = density_list->get<double>("Water Value");
-  rho_sed_ = density_list->get<double>("Sediment Value");
+  // Read input deck values
+  surface_porosity_ = porosity_list->get<double>("Surface Porosity");
+  efolding_depth_ = porosity_list->get<double>("E-Depth");
 
-  // Add density as a Sacado-ized parameter
-  this->registerSacadoParameter("ACE Density", paramLib);
+  // Add porosity as a Sacado-ized parameter
+  this->registerSacadoParameter("ACE Porosity", paramLib);
 
-  this->addEvaluatedField(density_);
-  this->setName("ACE Density" + PHX::typeAsString<EvalT>());
+  this->addEvaluatedField(porosity_);
+  this->setName("ACE Porosity" + PHX::typeAsString<EvalT>());
 }
 
 //
 template <typename EvalT, typename Traits>
 void
-ACEdensity<EvalT, Traits>::postRegistrationSetup(
+ACEporosity<EvalT, Traits>::postRegistrationSetup(
     typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(density_, fm);
+  this->utils.setFieldData(porosity_, fm);
   return;
 }
 
-//
-// This function needs to know the water, ice, and sediment intrinsic densities
-// plus the current QP ice/water saturations and QP porosity which come from 
-// the material model.
-// The density calculation is based on a volume average mixture model.
+// This function calculates the depth-dependent porosity
+// Based on Athy's Law (Athy, 1930)
 template <typename EvalT, typename Traits>
 void
-ACEdensity<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+ACEporosity<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
   int num_cells = workset.numCells;
-  double por = 0.50;  // this needs to come from QP value, here temporary
-  double w = 0.50;  // this is an evolving QP parameter, here temporary
-  double f = 0.50;  // this is an evolving QP parameter, here temporary
-  // notes: if the material model is ACEice, por = 1.0, f = 1.0, w = 0.0
-  //        if the material model is ACEpermafrost, then por, f, and w evolve
+  double z = 1.0;  // this is the depth -> how to construct this from cell & qp?
 
   for (int cell = 0; cell < num_cells; ++cell) {
     for (int qp = 0; qp < num_qps_; ++qp) {
-      density_(cell, qp) = por*(rho_ice_*f + rho_wat_*w) + 
-                           ((1.0-por)*rho_sed_);
+      porosity_(cell, qp) = surface_porosity_*exp(-1.0*z/efolding_depth_);
     }
   }
 
@@ -81,22 +72,19 @@ ACEdensity<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 
 //
 template <typename EvalT, typename Traits>
-typename ACEdensity<EvalT, Traits>::ScalarT&
-ACEdensity<EvalT, Traits>::getValue(const std::string& n)
+typename ACEporosity<EvalT, Traits>::ScalarT&
+ACEporosity<EvalT, Traits>::getValue(const std::string& n)
 {
-  if (n == "ACE Ice Density") {
-    return rho_ice_;
+  if (n == "Surface Porosity") {
+    return surface_porosity_;
   }
-  if (n == "ACE Water Density") {
-    return rho_wat_;
-  }
-  if (n == "ACE Sediment Density") {
-    return rho_sed_;
+  if (n == "E-Depth") {
+    return efolding_depth_;
   }
 
-  ALBANY_ASSERT(false, "Invalid request for value of ACE Component Density");
+  ALBANY_ASSERT(false, "Invalid request for value of ACE Porosity Input");
 
-  return rho_wat_; // does it matter what we return here?
+  return surface_porosity_; // does it matter what we return here?
 }
 
 }  // namespace LCM

@@ -25,9 +25,12 @@ class ACEdensity : public PHX::EvaluatorWithBaseImpl<Traits>,
                    public PHX::EvaluatorDerived<EvalT, Traits>,
                    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
  public:
-  using ScalarT = typename EvalT::ScalarT;
+   
+  using ScalarT          = typename EvalT::ScalarT;
 
-  ACEdensity(Teuchos::ParameterList& p);
+  ACEdensity(
+      Teuchos::ParameterList&              p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
   void
   postRegistrationSetup(
@@ -43,8 +46,12 @@ class ACEdensity : public PHX::EvaluatorWithBaseImpl<Traits>,
   getValue(const std::string& n);
 
  private:
+  
   int num_qps_{0};
   int num_dims_{0};
+  
+  // dependent MDFields
+  PHX::MDField<ScalarT, Cell, QuadPoint> porosity_;
 
   // contains the mixture model density value
   PHX::MDField<ScalarT, Cell, QuadPoint> density_;
@@ -58,4 +65,4 @@ class ACEdensity : public PHX::EvaluatorWithBaseImpl<Traits>,
 };
 }  // namespace LCM
 
-#endif  // ACE_density_hpp
+#endif  // ACEdensity_hpp

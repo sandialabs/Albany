@@ -97,6 +97,7 @@ ENDIF(ALBANY_HAVE_STK)
 set(ace-sources
   "${LCM_DIR}/evaluators/ACE/ACEdensity.cpp"
   "${LCM_DIR}/evaluators/ACE/ACEheatCapacity.cpp"
+  "${LCM_DIR}/evaluators/ACE/ACEporosity.cpp"
   "${LCM_DIR}/evaluators/ACE/ACEsaturations.cpp"
   "${LCM_DIR}/evaluators/ACE/ACEthermalConductivity.cpp"
 )
@@ -105,6 +106,8 @@ set(ace-headers
   "${LCM_DIR}/evaluators/ACE/ACEdensity_Def.hpp"
   "${LCM_DIR}/evaluators/ACE/ACEheatCapacity.hpp"
   "${LCM_DIR}/evaluators/ACE/ACEheatCapacity_Def.hpp"
+  "${LCM_DIR}/evaluators/ACE/ACEporosity.hpp"
+  "${LCM_DIR}/evaluators/ACE/ACEporosity_Def.hpp"
   "${LCM_DIR}/evaluators/ACE/ACEsaturations.hpp"
   "${LCM_DIR}/evaluators/ACE/ACEsaturations_Def.hpp"
   "${LCM_DIR}/evaluators/ACE/ACEthermalConductivity.hpp"

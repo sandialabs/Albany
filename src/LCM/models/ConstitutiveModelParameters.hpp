@@ -113,6 +113,7 @@ class ConstitutiveModelParameters
   ///  ACE parameters
   PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
   PHX::MDField<ScalarT, Cell, QuadPoint> water_saturation_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> porosity_;
 
   ///
   /// map of strings to specify parameter names to MDFields

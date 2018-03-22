@@ -78,8 +78,9 @@
 // ACE specific evaluators
 #include "ACEdensity.hpp"
 #include "ACEheatCapacity.hpp"
-#include "ACEthermalConductivity.hpp"
+#include "ACEporosity.hpp"
 #include "ACEsaturations.hpp"
+#include "ACEthermalConductivity.hpp"
 
 #ifdef ALBANY_CONTACT
 // Contact evaluator

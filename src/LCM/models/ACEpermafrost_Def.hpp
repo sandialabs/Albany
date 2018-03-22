@@ -35,6 +35,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   setDependentField("ACE Heat Capacity", dl->qp_scalar);
   setDependentField("ACE Ice Saturation", dl->qp_scalar);
   setDependentField("ACE Thermal Conductivity", dl->qp_scalar);
+  setDependentField("ACE Porosity", dl->qp_scalar);
   setDependentField("ACE Water Saturation", dl->qp_scalar);
   setDependentField("Elastic Modulus", dl->qp_scalar);
   setDependentField("Hardening Modulus", dl->qp_scalar);
@@ -106,8 +107,8 @@ template<typename EvalT, typename Traits>
 void
 ACEpermafrostMiniKernel<EvalT, Traits>::init(
     Workset&                 workset,
-    FieldMap<const ScalarT>& dep_fields,
-    FieldMap<ScalarT>&       eval_fields)
+    FieldMap<const ScalarT>& fields_const,
+    FieldMap<ScalarT>&       fields)
 {
   std::string cauchy_string       = field_name_map_["Cauchy_Stress"];
   std::string Fp_string           = field_name_map_["Fp"];
@@ -118,28 +119,30 @@ ACEpermafrostMiniKernel<EvalT, Traits>::init(
   std::string J_string            = field_name_map_["J"];
 
   // extract dependent MDFields
-  def_grad         = *dep_fields[F_string];
-  J                = *dep_fields[J_string];
+  def_grad = *fields_const[F_string];
+  J        = *fields_const[J_string]; 
+  
+  delta_time        = *fields_const["Delta Time"];
+  elastic_modulus   = *fields_const["Elastic Modulus"];
+  hardening_modulus = *fields_const["Hardening Modulus"];
+  poissons_ratio    = *fields_const["Poissons Ratio"];
+  yield_strength    = *fields_const["Yield Strength"];
 
-  delta_time           = *dep_fields["Delta Time"];
-  density              = *dep_fields["ACE Density"];
-  elastic_modulus      = *dep_fields["Elastic Modulus"];
-  hardening_modulus    = *dep_fields["Hardening Modulus"];
-  heat_capacity        = *dep_fields["ACE Heat Capacity"];
-  ice_saturation       = *dep_fields["ACE Ice Saturation"];
-  poissons_ratio       = *dep_fields["Poissons Ratio"];
-  thermal_conductivity = *dep_fields["ACE Thermal Conductivity"];
-  water_saturation     = *dep_fields["ACE Water Saturation"];
-  yield_strength       = *dep_fields["Yield Strength"];
+  density              = *fields_const["ACE Density"];
+  heat_capacity        = *fields_const["ACE Heat Capacity"];
+  ice_saturation       = *fields_const["ACE Ice Saturation"];
+  porosity             = *fields_const["ACE Porosity"];
+  thermal_conductivity = *fields_const["ACE Thermal Conductivity"];
+  water_saturation     = *fields_const["ACE Water Saturation"];
 
   // extract evaluated MDFields
-  stress    = *eval_fields[cauchy_string];
-  Fp        = *eval_fields[Fp_string];
-  eqps      = *eval_fields[eqps_string];
-  yieldSurf = *eval_fields[yieldSurface_string];
+  stress    = *fields[cauchy_string];
+  Fp        = *fields[Fp_string];
+  eqps      = *fields[eqps_string];
+  yieldSurf = *fields[yieldSurface_string];
 
   if (have_temperature_ == true) {
-    source = *eval_fields[source_string];
+    source = *fields[source_string];
   }
 
   // get State Variables
@@ -259,6 +262,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const KK    = thermal_conductivity(cell, pt);
   ScalarT const isat  = ice_saturation(cell, pt);
   ScalarT const wsat  = water_saturation(cell, pt);
+  ScalarT const por   = porosity(cell, pt);
 
   // fill local tensors
   F.fill(def_grad, cell, pt, 0, 0);

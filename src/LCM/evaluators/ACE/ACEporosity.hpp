@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(ACEdensity_hpp)
-#define ACEdensity_hpp
+#if !defined(ACEporosity_hpp)
+#define ACEporosity_hpp
 
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -18,27 +18,27 @@
 
 namespace LCM {
 ///
-/// Evaluates mass density at integration points
+/// Evaluates porosity at integration points
 ///
 template <typename EvalT, typename Traits>
-class ACEdensity : public PHX::EvaluatorWithBaseImpl<Traits>,
-                   public PHX::EvaluatorDerived<EvalT, Traits>,
-                   public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+class ACEporosity : public PHX::EvaluatorWithBaseImpl<Traits>,
+                    public PHX::EvaluatorDerived<EvalT, Traits>,
+                    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
  public:
   using ScalarT = typename EvalT::ScalarT;
 
-  ACEdensity(Teuchos::ParameterList& p);
+  ACEporosity(Teuchos::ParameterList& p);
 
   void
   postRegistrationSetup(
       typename Traits::SetupData d,
       PHX::FieldManager<Traits>& vm);
 
-  /// Calculates mixture model density
+  /// Calculates depth-dependent porosity
   void
   evaluateFields(typename Traits::EvalData workset);
 
-  /// Gets the intrinsic density values
+  /// Gets the input deck entered values
   ScalarT&
   getValue(const std::string& n);
 
@@ -46,16 +46,14 @@ class ACEdensity : public PHX::EvaluatorWithBaseImpl<Traits>,
   int num_qps_{0};
   int num_dims_{0};
 
-  // contains the mixture model density value
-  PHX::MDField<ScalarT, Cell, QuadPoint> density_;
+  // contains the depth-dependent porosity value
+  PHX::MDField<ScalarT, Cell, QuadPoint> porosity_;
   
-  // contains the intrinsic density values for ice, water, sediment
-  // these values are constant
-  ScalarT rho_ice_{0.0};
-  ScalarT rho_wat_{0.0};
-  ScalarT rho_sed_{0.0};
+  // parameters to calculate porosity
+  ScalarT surface_porosity_{0.50};
+  ScalarT efolding_depth_{10.0};
 
 };
 }  // namespace LCM
 
-#endif  // ACE_density_hpp
+#endif  // ACEporosity_hpp
