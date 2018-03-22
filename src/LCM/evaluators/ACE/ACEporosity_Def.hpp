@@ -31,8 +31,22 @@ ACEporosity<EvalT, Traits>::ACEporosity(Teuchos::ParameterList& p)
     p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
   // Read input deck values
-  surface_porosity_ = porosity_list->get<double>("Surface Porosity");
-  efolding_depth_ = porosity_list->get<double>("E-Depth");
+  std::string const &
+  type = porosity_list->get<std::string>("Porosity Type");
+  if (type == "Constant") {
+    is_constant_ = true;
+    constant_value_ = porosity_list->get<double>("Value");
+  }
+  else if (type == "Depth-Dependent"){
+    is_constant_ = false;
+    surface_porosity_ = porosity_list->get<double>("Surface Porosity");
+    efolding_depth_ = porosity_list->get<double>("E-Depth");
+  }
+  else {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true, Teuchos::Exceptions::InvalidParameter,
+        "Invalid Porosity Type " << type);
+  }
 
   // Add porosity as a Sacado-ized parameter
   this->registerSacadoParameter("ACE Porosity", paramLib);
@@ -52,8 +66,9 @@ ACEporosity<EvalT, Traits>::postRegistrationSetup(
   return;
 }
 
-// This function calculates the depth-dependent porosity
-// Based on Athy's Law (Athy, 1930)
+// This function calculates the depth-dependent porosity, 
+// or assigns a constant value.
+// Based on Athy's Law (Athy, 1930).
 template <typename EvalT, typename Traits>
 void
 ACEporosity<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
@@ -63,7 +78,12 @@ ACEporosity<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 
   for (int cell = 0; cell < num_cells; ++cell) {
     for (int qp = 0; qp < num_qps_; ++qp) {
-      porosity_(cell, qp) = surface_porosity_*exp(-1.0*z/efolding_depth_);
+      if (is_constant_) { // constant porosity:
+        porosity_(cell, qp) = constant_value_;
+      }
+      else { // depth-dependent porosity:
+        porosity_(cell, qp) = surface_porosity_*exp(-1.0*z/efolding_depth_);
+      }
     }
   }
 

@@ -50,8 +50,12 @@ class ACEporosity : public PHX::EvaluatorWithBaseImpl<Traits>,
   PHX::MDField<ScalarT, Cell, QuadPoint> porosity_;
   
   // parameters to calculate porosity
-  ScalarT surface_porosity_{0.50};
+  ScalarT surface_porosity_{0.75};
   ScalarT efolding_depth_{10.0};
+  ScalarT constant_value_{1.0};
+  
+  bool
+  is_constant_{false};
 
 };
 }  // namespace LCM
