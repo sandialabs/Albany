@@ -48,7 +48,6 @@ class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
 
   // contains the ice/water saturation values
   PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> water_saturation_;
   
   // contains the initial ice saturation value
   ScalarT ice_saturation_init_{1.0};

@@ -15,9 +15,6 @@ template <typename EvalT, typename Traits>
 ACEiceSaturation<EvalT, Traits>::ACEiceSaturation(Teuchos::ParameterList& p)
     : ice_saturation_(
           p.get<std::string>("QP Variable Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      water_saturation_(
-          p.get<std::string>("QP Variable Name"),
           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
 {
   Teuchos::ParameterList* iceSaturation_list =
@@ -39,15 +36,13 @@ ACEiceSaturation<EvalT, Traits>::ACEiceSaturation(Teuchos::ParameterList& p)
 
   // Add iceSaturation as Sacado-ized parameters
   this->registerSacadoParameter("ACE Ice Saturation", paramLib);
-  this->registerSacadoParameter("ACE Water Saturation", paramLib);
 
   // List evaluated fields
   this->addEvaluatedField(ice_saturation_);
-  this->addEvaluatedField(water_saturation_);
   
   // List dependent fields
   
-  this->setName("ACE Saturations" + PHX::typeAsString<EvalT>());
+  this->setName("ACE Ice Saturation" + PHX::typeAsString<EvalT>());
 }
 
 //
@@ -59,27 +54,24 @@ ACEiceSaturation<EvalT, Traits>::postRegistrationSetup(
 {
   // List all fields
   this->utils.setFieldData(ice_saturation_, fm);
-  this->utils.setFieldData(water_saturation_, fm);
   return;
 }
 
 
-// This function updates the ice and water saturations.
+// This function updates the ice saturation based on the temperature change.
 template <typename EvalT, typename Traits>
 void
-ACEiceSaturation<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+ACEiceSaturation<EvalT, Traits>::
+evaluateFields(typename Traits::EvalData workset)
 {
   int num_cells = workset.numCells;
 
   for (int cell = 0; cell < num_cells; ++cell) {
     for (int qp = 0; qp < num_qps_; ++qp) {
-      ice_saturation_(cell, qp) = 1.0;
-      water_saturation_(cell, qp) = 1.0 - ice_saturation_(cell, qp);      
+      ice_saturation_(cell, qp) = 1.0;      
       // check on realistic bounds
       ice_saturation_(cell, qp) = std::max(0.0,ice_saturation_(cell, qp));
       ice_saturation_(cell, qp) = std::min(1.0,ice_saturation_(cell, qp));
-      water_saturation_(cell, qp) = std::max(0.0,water_saturation_(cell, qp));
-      water_saturation_(cell, qp) = std::min(1.0,water_saturation_(cell, qp));
     }
   }
 
@@ -94,13 +86,10 @@ ACEiceSaturation<EvalT, Traits>::evaluateFields(typename Traits::EvalData workse
 //   if (n == "ACE Ice Saturation") {
 //     return ice_saturation_;
 //   }
-//   if (n == "ACE Water Saturation") {
-//     return water_saturation_;
-//   }
 // 
 //   ALBANY_ASSERT(
 //       false, 
-//       "Invalid request for value of ACE Ice or Water Saturation");
+//       "Invalid request for value of ACE Ice Saturation");
 // 
 //   return ice_saturation_; // does it matter what we return here?
 // }
