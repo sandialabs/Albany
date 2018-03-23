@@ -72,7 +72,7 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   ConstScalarField ice_saturation;
   ConstScalarField porosity;
   ConstScalarField thermal_conductivity;
-  ConstScalarField water_saturation;
+  //ConstScalarField water_saturation;
 
   // Extract evaluated MDFields
   ScalarField stress;

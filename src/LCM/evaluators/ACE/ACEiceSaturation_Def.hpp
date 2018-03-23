@@ -12,9 +12,10 @@
 namespace LCM {
 
 template <typename EvalT, typename Traits>
-ACEiceSaturation<EvalT, Traits>::ACEiceSaturation(Teuchos::ParameterList& p)
+ACEiceSaturation<EvalT, Traits>::ACEiceSaturation(
+  Teuchos::ParameterList& p)
     : ice_saturation_(
-          p.get<std::string>("QP Variable Name"),
+          p.get<std::string>("ACE Ice Saturation"),
           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
 {
   Teuchos::ParameterList* iceSaturation_list =
@@ -34,7 +35,7 @@ ACEiceSaturation<EvalT, Traits>::ACEiceSaturation(Teuchos::ParameterList& p)
   ice_saturation_init_ = 
       iceSaturation_list->get<double>("Initial Ice Saturation");
 
-  // Add iceSaturation as Sacado-ized parameters
+  // Add ice saturation as Sacado-ized parameters
   this->registerSacadoParameter("ACE Ice Saturation", paramLib);
 
   // List evaluated fields

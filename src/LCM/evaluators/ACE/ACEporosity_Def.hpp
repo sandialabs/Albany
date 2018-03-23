@@ -14,7 +14,7 @@ namespace LCM {
 template <typename EvalT, typename Traits>
 ACEporosity<EvalT, Traits>::ACEporosity(Teuchos::ParameterList& p)
     : porosity_(
-          p.get<std::string>("QP Variable Name"),
+          p.get<std::string>("ACE Porosity"),
           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
 {
   Teuchos::ParameterList* porosity_list =

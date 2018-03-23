@@ -18,7 +18,7 @@
 
 namespace LCM {
 ///
-/// Evaluates ice/water saturations at integration points
+/// Evaluates ice saturation at integration points
 ///
 template <typename EvalT, typename Traits>
 class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -34,7 +34,7 @@ class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
       typename Traits::SetupData d,
       PHX::FieldManager<Traits>& vm);
 
-  /// Calculates evolution of ice and water saturation
+  /// Calculates evolution of ice saturation
   void
   evaluateFields(typename Traits::EvalData workset);
 

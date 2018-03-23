@@ -33,10 +33,10 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
 
   setDependentField("ACE Density", dl->qp_scalar);
   setDependentField("ACE Heat Capacity", dl->qp_scalar);
-  setDependentField("ACE Ice Saturation", dl->qp_scalar);
+  //setDependentField("ACE Ice Saturation", dl->qp_scalar);
   setDependentField("ACE Thermal Conductivity", dl->qp_scalar);
   setDependentField("ACE Porosity", dl->qp_scalar);
-  setDependentField("ACE Water Saturation", dl->qp_scalar);
+  //setDependentField("ACE Water Saturation", dl->qp_scalar);
   setDependentField("Elastic Modulus", dl->qp_scalar);
   setDependentField("Hardening Modulus", dl->qp_scalar);
   setDependentField("Poissons Ratio", dl->qp_scalar);
@@ -131,10 +131,10 @@ ACEiceMiniKernel<EvalT, Traits>::init(
 
   density              = *fields_const["ACE Density"];
   heat_capacity        = *fields_const["ACE Heat Capacity"];
-  ice_saturation       = *fields_const["ACE Ice Saturation"];
+  //ice_saturation       = *fields_const["ACE Ice Saturation"];
   porosity             = *fields_const["ACE Porosity"];
   thermal_conductivity = *fields_const["ACE Thermal Conductivity"];
-  water_saturation     = *fields_const["ACE Water Saturation"];
+  //water_saturation     = *fields_const["ACE Water Saturation"];
 
   // extract evaluated MDFields
   stress    = *fields[cauchy_string];
@@ -261,8 +261,8 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const rho   = density(cell, pt);
   ScalarT const Cp    = heat_capacity(cell, pt);
   ScalarT const KK    = thermal_conductivity(cell, pt);
-  ScalarT const isat  = ice_saturation(cell, pt);
-  ScalarT const wsat  = water_saturation(cell, pt);
+  //ScalarT const isat  = ice_saturation(cell, pt);
+  //ScalarT const wsat  = water_saturation(cell, pt);
   ScalarT const por   = porosity(cell, pt);
 
   // fill local tensors

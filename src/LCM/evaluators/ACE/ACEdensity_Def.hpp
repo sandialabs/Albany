@@ -16,16 +16,15 @@ ACEdensity<EvalT, Traits>::ACEdensity(
     Teuchos::ParameterList&              p,
     const Teuchos::RCP<Albany::Layouts>& dl)
     : density_(
-          p.get<std::string>("QP Variable Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
+          p.get<std::string>("ACE Density"), dl->qp_scalar),
       porosity_(
-          p.get<std::string>("ACE Porosity"),dl->qp_scalar),
+          p.get<std::string>("ACE Porosity"), dl->qp_scalar),
       ice_saturation_(
-          p.get<std::string>("ACE Ice Saturation"),dl->qp_scalar),
+          p.get<std::string>("ACE Ice Saturation"), dl->qp_scalar),
       water_saturation_(
-          p.get<std::string>("ACE Water Saturation"),dl->qp_scalar)
+          p.get<std::string>("ACE Water Saturation"), dl->qp_scalar)
 {
-  Teuchos::ParameterList* density_list =
+  Teuchos::ParameterList* density_p_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -39,9 +38,9 @@ ACEdensity<EvalT, Traits>::ACEdensity(
     p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
   // Read density values
-  rho_ice_ = density_list->get<double>("Ice Value");
-  rho_wat_ = density_list->get<double>("Water Value");
-  rho_sed_ = density_list->get<double>("Sediment Value");
+  rho_ice_ = density_p_list->get<double>("Ice Value");
+  rho_wat_ = density_p_list->get<double>("Water Value");
+  rho_sed_ = density_p_list->get<double>("Sediment Value");
 
   // Add density as a Sacado-ized parameter
   this->registerSacadoParameter("ACE Density", paramLib);

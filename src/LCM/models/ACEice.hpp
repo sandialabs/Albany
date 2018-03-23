@@ -69,10 +69,10 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   // Dependent constant MDFields
   ConstScalarField density;
   ConstScalarField heat_capacity;
-  ConstScalarField ice_saturation;
+  //ConstScalarField ice_saturation;
   ConstScalarField porosity;
   ConstScalarField thermal_conductivity;
-  ConstScalarField water_saturation;
+  //ConstScalarField water_saturation;
 
   // Extract evaluated MDFields
   ScalarField stress;

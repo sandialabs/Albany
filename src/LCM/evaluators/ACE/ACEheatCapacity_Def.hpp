@@ -14,7 +14,7 @@ namespace LCM {
 template <typename EvalT, typename Traits>
 ACEheatCapacity<EvalT, Traits>::ACEheatCapacity(Teuchos::ParameterList& p)
     : heat_capacity_(
-          p.get<std::string>("QP Variable Name"),
+          p.get<std::string>("ACE Heat Capacity"),
           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
 {
   Teuchos::ParameterList* heat_capacity_list =
