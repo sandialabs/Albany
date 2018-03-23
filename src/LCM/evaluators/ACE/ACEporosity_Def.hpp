@@ -51,7 +51,9 @@ ACEporosity<EvalT, Traits>::ACEporosity(Teuchos::ParameterList& p)
   // Add porosity as a Sacado-ized parameter
   this->registerSacadoParameter("ACE Porosity", paramLib);
 
+  // List evaluated fields
   this->addEvaluatedField(porosity_);
+  
   this->setName("ACE Porosity" + PHX::typeAsString<EvalT>());
 }
 
