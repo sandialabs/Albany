@@ -169,8 +169,9 @@ ConstitutiveModelParameters<EvalT, Traits>::ConstitutiveModelParameters(
   // ACE thermal conductivity
   std::string ace_k_str("ACE Thermal Conductivity");
   if (mat_params->isSublist(ace_k_str)) {
-    thermal_cond_ = decltype(thermal_cond_)(ace_k_str, dl_->qp_scalar);
-    field_map_.insert(std::make_pair(ace_k_str, thermal_cond_));
+    thermal_conductivity_ = 
+        decltype(thermal_conductivity_)(ace_k_str, dl_->qp_scalar);
+    field_map_.insert(std::make_pair(ace_k_str, thermal_conductivity_));
     parseParameters(ace_k_str, p, paramLib);
   }
   // ACE ice saturation
