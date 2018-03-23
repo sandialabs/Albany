@@ -52,6 +52,9 @@ class ACEdensity : public PHX::EvaluatorWithBaseImpl<Traits>,
   
   // dependent MDFields
   PHX::MDField<ScalarT, Cell, QuadPoint> porosity_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> water_saturation_;
+  
 
   // contains the mixture model density value
   PHX::MDField<ScalarT, Cell, QuadPoint> density_;
