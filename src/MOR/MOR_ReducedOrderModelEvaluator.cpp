@@ -843,7 +843,7 @@ RCP<Epetra_CrsMatrix> ReducedOrderModelEvaluator::eyeFromCRSMatrix(RCP<Epetra_Cr
 
 			ALBANY_ASSERT(local_col >= col_map->getMinLocalIndex());
 			ALBANY_ASSERT(local_col <= col_map->getMaxLocalIndex());
-			
+
 			if (is_diagonal_entry)
 			{
 				entries[row_entry] = 1.0;
@@ -868,14 +868,12 @@ void ReducedOrderModelEvaluator::nanCheck(const Teuchos::RCP<Epetra_Vector> &f) 
 	//	possibly... add a Jacobian check where we only go into it if isnan(J_T->getFrobeniusNorm())
 	if (f_T != Teuchos::null && isnan(f_T->norm2()))
 	{
-		Teuchos::RCP<Tpetra_Vector> f_T_serial = locallyReplicatedVector<Tpetra_Vector>(f_T);
-
-
-		auto f_view = f_T_serial->get1dViewNonConst();
-		auto row_map = f_T_serial->getMap();
+		//Teuchos::RCP<Tpetra_Vector> f_T_serial = locallyReplicatedVector<Tpetra_Vector>(f_T);
+		auto f_view = f_T->get1dViewNonConst();
+		auto row_map = f_T->getMap();
 
 		int num_nans = 0;
-		auto num_local_rows = f_T_serial->getLocalLength();
+		auto num_local_rows = f_T->getLocalLength();
 		for (auto local_row = 0; local_row < num_local_rows; ++local_row){
 			if (isnan(f_view[local_row])){
 				num_nans++;
@@ -897,13 +895,14 @@ void ReducedOrderModelEvaluator::singularCheck(const Teuchos::RCP<Epetra_CrsMatr
 	Teuchos::RCP<Tpetra_Vector> J_diag = Teuchos::rcp(new Tpetra_Vector(J_T->getRowMap()));
 	J_T->getLocalDiagCopy(*J_diag);
 
-	Teuchos::RCP<Tpetra_Vector> J_diag_serial = locallyReplicatedVector<Tpetra_Vector>(J_diag);
+	//Teuchos::RCP<Tpetra_Vector> J_diag_serial = locallyReplicatedVector<Tpetra_Vector>(J_diag);
 
 	int num_zero_diags = 0;
-	auto num_local_rows = J_diag_serial->getLocalLength();
+	auto num_local_rows = J_diag->getLocalLength();
 
-	auto J_diag_view = J_diag_serial->get1dViewNonConst();
-	auto row_map = J_diag_serial->getMap();
+	auto J_diag_view = J_diag->get1dViewNonConst();
+	auto row_map = J_diag->getMap();
+
 	for (auto local_row=0; local_row<num_local_rows; local_row++){
 		if (J_diag_view[local_row] == 0.0)
 		{

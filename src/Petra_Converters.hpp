@@ -30,13 +30,6 @@
 #include "Epetra_LocalMap.h"
 
 namespace Petra {
-
-template<class LocalOrdinal , class GlobalOrdinal , class Node >
-Teuchos::RCP< const Tpetra_Map> createMapWithNode(const int & 	numElements,
-                                                  const Teuchos::Array< GlobalOrdinal > & 	elementList,
-                                                  const Teuchos::RCP< const Teuchos::Comm< int > > & 	 comm,
-                                                  const Teuchos::RCP< Node > & 	 node = Teuchos::null);
-
 //TpetraMap_To_EpetraMap: takes in Tpetra::Map object, converts it to its equivalent Epetra_Map object,
 //and returns an RCP pointer to this Epetra_Map
 Teuchos::RCP<Epetra_Map> TpetraMap_To_EpetraMap(const Teuchos::RCP<const Tpetra_Map>& tpetraMap_,
@@ -45,6 +38,18 @@ Teuchos::RCP<Epetra_Map> TpetraMap_To_EpetraMap(const Teuchos::RCP<const Tpetra_
 //EpetraMap_To_TpetraMap: takes in Epetra_Map object, converts it to its equivalent Tpetra::Map object,
 //and returns an RCP pointer to this Tpetra::Map
 Teuchos::RCP<const Tpetra_Map> EpetraMap_To_TpetraMap(const Teuchos::RCP<const Epetra_Map>& epetraMap_,
+                                                      const Teuchos::RCP<const Teuchos::Comm<int> >& comm_,
+                                                      const Teuchos::RCP< KokkosNode > &node = KokkosClassic::Details::getNode< KokkosNode >());
+
+//EpetraMap_To_TpetraMap: takes in Epetra_Map object, converts it to its equivalent Tpetra::Map object,
+//and returns an RCP pointer to this Tpetra::Map
+Teuchos::RCP<const Tpetra_Map> EpetraMap_To_TpetraMap(const Epetra_Map& epetraMap_,
+                                                      const Teuchos::RCP<const Teuchos::Comm<int> >& comm_,
+                                                      const Teuchos::RCP< KokkosNode > &node = KokkosClassic::Details::getNode< KokkosNode >());
+
+//EpetraMap_To_TpetraMap: takes in Epetra_Map object, converts it to its equivalent Tpetra::Map object,
+//and returns an RCP pointer to this Tpetra::Map
+Teuchos::RCP<const Tpetra_Map> EpetraMap_To_TpetraMap(const Epetra_BlockMap& epetraMap_,
                                                       const Teuchos::RCP<const Teuchos::Comm<int> >& comm_,
                                                       const Teuchos::RCP< KokkosNode > &node = KokkosClassic::Details::getNode< KokkosNode >());
 
