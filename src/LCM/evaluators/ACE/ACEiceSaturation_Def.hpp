@@ -12,7 +12,7 @@
 namespace LCM {
 
 template <typename EvalT, typename Traits>
-ACEsaturations<EvalT, Traits>::ACEsaturations(Teuchos::ParameterList& p)
+ACEiceSaturation<EvalT, Traits>::ACEiceSaturation(Teuchos::ParameterList& p)
     : ice_saturation_(
           p.get<std::string>("QP Variable Name"),
           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
@@ -20,7 +20,7 @@ ACEsaturations<EvalT, Traits>::ACEsaturations(Teuchos::ParameterList& p)
           p.get<std::string>("QP Variable Name"),
           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
 {
-  Teuchos::ParameterList* saturations_list =
+  Teuchos::ParameterList* iceSaturation_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -35,9 +35,9 @@ ACEsaturations<EvalT, Traits>::ACEsaturations(Teuchos::ParameterList& p)
 
   // Read initial saturation values
   ice_saturation_init_ = 
-      saturations_list->get<double>("Initial Ice Saturation");
+      iceSaturation_list->get<double>("Initial Ice Saturation");
 
-  // Add saturations as Sacado-ized parameters
+  // Add iceSaturation as Sacado-ized parameters
   this->registerSacadoParameter("ACE Ice Saturation", paramLib);
   this->registerSacadoParameter("ACE Water Saturation", paramLib);
 
@@ -53,7 +53,7 @@ ACEsaturations<EvalT, Traits>::ACEsaturations(Teuchos::ParameterList& p)
 //
 template <typename EvalT, typename Traits>
 void
-ACEsaturations<EvalT, Traits>::postRegistrationSetup(
+ACEiceSaturation<EvalT, Traits>::postRegistrationSetup(
     typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
@@ -67,7 +67,7 @@ ACEsaturations<EvalT, Traits>::postRegistrationSetup(
 // This function updates the ice and water saturations.
 template <typename EvalT, typename Traits>
 void
-ACEsaturations<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+ACEiceSaturation<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
   int num_cells = workset.numCells;
 
@@ -88,8 +88,8 @@ ACEsaturations<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 
 //
 // template <typename EvalT, typename Traits>
-// typename ACEsaturations<EvalT, Traits>::ScalarT&
-// ACEsaturations<EvalT, Traits>::getValue(const std::string& n)
+// typename ACEiceSaturation<EvalT, Traits>::ScalarT&
+// ACEiceSaturation<EvalT, Traits>::getValue(const std::string& n)
 // {
 //   if (n == "ACE Ice Saturation") {
 //     return ice_saturation_;

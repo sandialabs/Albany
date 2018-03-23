@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(ACEsaturations_hpp)
-#define ACEsaturations_hpp
+#if !defined(ACEiceSaturation_hpp)
+#define ACEiceSaturation_hpp
 
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -21,13 +21,13 @@ namespace LCM {
 /// Evaluates ice/water saturations at integration points
 ///
 template <typename EvalT, typename Traits>
-class ACEsaturations : public PHX::EvaluatorWithBaseImpl<Traits>,
-                       public PHX::EvaluatorDerived<EvalT, Traits>,
-                       public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
+                         public PHX::EvaluatorDerived<EvalT, Traits>,
+                         public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
  public:
   using ScalarT = typename EvalT::ScalarT;
 
-  ACEsaturations(Teuchos::ParameterList& p);
+  ACEiceSaturation(Teuchos::ParameterList& p);
 
   void
   postRegistrationSetup(
@@ -56,4 +56,4 @@ class ACEsaturations : public PHX::EvaluatorWithBaseImpl<Traits>,
 };
 }  // namespace LCM
 
-#endif  // ACEsaturations_hpp
+#endif  // ACEiceSaturation_hpp
