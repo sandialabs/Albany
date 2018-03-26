@@ -15,8 +15,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
     Teuchos::ParameterList*              p,
     Teuchos::RCP<Albany::Layouts> const& dl)
     : BaseKernel(model), sat_mod(p->get<RealType>("Saturation Modulus", 0.0)),
-      sat_exp(p->get<RealType>("Saturation Exponent", 0.0)),
-      latent_heat(p->get<RealType>("Latent Heat",0.0))
+      sat_exp(p->get<RealType>("Saturation Exponent", 0.0))
 {
   // retrieve appropriate field name strings
   std::string const cauchy_string       = field_name_map_["Cauchy_Stress"];

@@ -88,9 +88,6 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   // Saturation hardening constraints
   RealType sat_mod;
   RealType sat_exp;
-  
-  // Latent heat phase change
-  RealType latent_heat;
 
   void
   init(

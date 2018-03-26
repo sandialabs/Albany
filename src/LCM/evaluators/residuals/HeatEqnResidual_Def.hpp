@@ -55,7 +55,7 @@ HeatEqnResidual(
     
   // Read heat equation parameter values
   rho_ice_ = heatEqnResidual_list->get<double>("ACE Ice Density");
-  latent_heat_ = heatEqnResidual_list->get<double>("ACE Latent Heat");
+  latent_heat_ = heatEqnResidual_list->get<double>("ACE Latent Heat of Phase Change");
 
   // List dependent fields
   this->addDependentField(wBF);
