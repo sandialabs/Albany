@@ -419,18 +419,6 @@ ELSE()
   SET(ALBANY_DAKOTA FALSE)
 ENDIF()
 
-# set optional dependency on RBGen, for reduced basis computation
-LIST(FIND Trilinos_LIBRARIES rbgen RBGen_List_ID)
-IF (RBGen_List_ID GREATER -1)
-  ADD_DEFINITIONS(-DALBANY_RBGEN)
-  MESSAGE("-- Looking for rbgen library:      Found, compiling with -DALBANY_RBGEN")
-  SET(ALBANY_RBGEN TRUE)
-ELSE()
-  MESSAGE("-- Looking for rbgen library:      NOT found.")
-  MESSAGE("      -- To turn on, rebuild Trilinos with Anasazi_ENABLE_RBGen turned ON")
-  SET(ALBANY_RBGEN FALSE)
-ENDIF()
-
 # Check for optional physics sets in Albany
 MESSAGE("\nChecking which Albany physics sets are enabled:")
 
@@ -910,22 +898,24 @@ ENDIF()
 OPTION(ENABLE_MOR "Flag to turn on MOR Source code" OFF)
 IF (ENABLE_MOR)
   #Check if RBGen library has been built as a part of Anasazi.
-  #If it has not, turn MOR off despite what user requested and print message explaining that MOR requires RBGen library.
+  #If not, throw fatal error - MOR requires RBGen.
   LIST(FIND Trilinos_LIBRARIES rbgen rbgen_List_ID)
   IF (rbgen_List_ID GREATER -1)
-    MESSAGE("-- Looking for rbgen library: -- found!  Continuing.")
+    MESSAGE("-- Looking for rbgen library: -- Found, compiling with -DALBANY_RBGEN!  Continuing.")
+    ADD_DEFINITIONS(-DALBANY_RBGEN)
+    SET(ALBANY_RBGEN TRUE)
     ADD_DEFINITIONS(-DALBANY_MOR)
     MESSAGE("-- MOR       is Enabled, compiling with -DALBANY_MOR")
     SET(ALBANY_MOR TRUE)
   ELSE()
     MESSAGE("---- Looking for rbgen library: -- NOT found!")
-    MESSAGE("-- MOR requires RBGen library.  To turn on, rebuild Trilinos with Anasazi_ENABLE_RBGen turned ON")
-    MESSAGE("-- MOR       is NOT Enabled.")
-    SET(ALBANY_MOR FALSE)
+    MESSAGE(FATAL_ERROR "\nError:  MOR requires RBGen library.  \n" 
+            "To turn on, rebuild Trilinos with Anasazi_ENABLE_RBGen turned ON!")
   ENDIF()
 ELSE()
   MESSAGE("-- MOR       is NOT Enabled.")
   SET(ALBANY_MOR FALSE)
+  SET(ALBANY_RBGEN FALSE)
 ENDIF()
 
 # Set optional build of ALBANY_CI Configuration Interaction, defaults to Disabled
