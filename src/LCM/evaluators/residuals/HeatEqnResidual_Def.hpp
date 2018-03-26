@@ -14,81 +14,63 @@ namespace LCM {
   //
   //
   //
-  template <typename EvalT, typename Traits>
-  HeatEqnResidual<EvalT, Traits>::HeatEqnResidual(const Teuchos::ParameterList &p)
-    : wBF(
+template <typename EvalT, typename Traits>
+HeatEqnResidual<EvalT, Traits>::
+HeatEqnResidual(
+    const Teuchos::ParameterList&        p,
+    const Teuchos::RCP<Albany::Layouts>& dl)
+    : wBF(  // dependent
         p.get<std::string>("Weighted BF Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout")),
-      wGradBF(
+      wGradBF(  // dependent
         p.get<std::string>("Weighted Gradient BF Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout")),
-      Temperature(
+      Temperature(  // dependent
         p.get<std::string>("QP Variable Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      Tdot(
+      Tdot(  // dependent
         p.get<std::string>("QP Time Derivative Variable Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      TGrad(
+      TGrad(  // dependent
         p.get<std::string>("QP Gradient Variable Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout")),
-      pressure_(
-        p.get<std::string>("QP Pressure Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      salinity_(
-        p.get<std::string>("QP Salinity Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      porosity_(
-        p.get<std::string>("QP Salinity Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      thermal_K_ice_(
-        p.get<std::string>("QP Thermal Conductivity of Ice Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      thermal_K_water_(
-        p.get<std::string>("QP Thermal Conductivity of Water Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      thermal_K_sed_(
-        p.get<std::string>("QP Thermal Conductivity of Sediments Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      cp_ice_(
-        p.get<std::string>("QP Specific Heat of Ice Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      cp_water_(
-        p.get<std::string>("QP Specific Heat of Water Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      cp_sed_(
-        p.get<std::string>("QP Specific Heat of Sediments Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      rho_ice_(
-        p.get<std::string>("QP Density of Ice Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      rho_water_(
-        p.get<std::string>("QP Density of Water Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      rho_sed_(
-        p.get<std::string>("QP Density of Sediments Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      TResidual(
+      pressure_(  // dependent
+        p.get<std::string>("QP Pressure Variable Name"), dl->qp_scalar),
+      density_(  // dependent
+        p.get<std::string>("ACE Density"), dl->qp_scalar),
+      salinity_(  // dependent
+        p.get<std::string>("ACE Salinity"), dl->qp_scalar),
+      porosity_(  // dependent
+        p.get<std::string>("ACE Porosity"), dl->qp_scalar),
+      thermal_conductivity_(  // dependent
+        p.get<std::string>("ACE Thermal Conductivity"), dl->qp_scalar),
+      heat_capacity_(  // dependent
+        p.get<std::string>("ACE Heat Capacity"), dl->qp_scalar),
+      TResidual(  // evaluated
         p.get<std::string>("Residual Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout")) {
+        p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout")) 
+{
+  Teuchos::ParameterList* heatEqnResidual_list =
+    p.get<Teuchos::ParameterList*>("Parameter List");
+    
+  // Read heat equation parameter values
+  rho_ice_ = heatEqnResidual_list->get<double>("ACE Ice Density");
+  latent_heat_ = heatEqnResidual_list->get<double>("ACE Latent Heat");
 
+  // List dependent fields
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
   this->addDependentField(Temperature);
   this->addDependentField(Tdot);
   this->addDependentField(TGrad);
   this->addDependentField(pressure_);
+  this->addDependentField(density_);
   this->addDependentField(salinity_);
   this->addDependentField(porosity_);
-  this->addDependentField(thermal_K_ice_);
-  this->addDependentField(thermal_K_water_);
-  this->addDependentField(thermal_K_sed_);
-  this->addDependentField(cp_ice_);
-  this->addDependentField(cp_water_);
-  this->addDependentField(cp_sed_);
-  this->addDependentField(rho_ice_);
-  this->addDependentField(rho_water_);
-  this->addDependentField(rho_sed_);
+  this->addDependentField(thermal_conductivity_);
+  this->addDependentField(heat_capacity_);
   
+  // List evaluated field
   this->addEvaluatedField(TResidual);
 
   Teuchos::RCP<PHX::DataLayout>
@@ -114,23 +96,18 @@ void
 HeatEqnResidual<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &fm)
 {
+  // List all fields
   this->utils.setFieldData(wBF, fm);
   this->utils.setFieldData(wGradBF, fm);
   this->utils.setFieldData(Temperature, fm);
   this->utils.setFieldData(Tdot, fm);
   this->utils.setFieldData(TGrad, fm);
   this->utils.setFieldData(pressure_, fm);
+  this->utils.setFieldData(density_, fm);
   this->utils.setFieldData(salinity_, fm);
   this->utils.setFieldData(porosity_, fm);
-  this->utils.setFieldData(thermal_K_ice_, fm);
-  this->utils.setFieldData(thermal_K_water_, fm);
-  this->utils.setFieldData(thermal_K_sed_, fm);
-  this->utils.setFieldData(cp_ice_, fm);
-  this->utils.setFieldData(cp_water_, fm);
-  this->utils.setFieldData(cp_sed_, fm);
-  this->utils.setFieldData(rho_ice_, fm);
-  this->utils.setFieldData(rho_water_, fm);
-  this->utils.setFieldData(rho_sed_, fm);
+  this->utils.setFieldData(thermal_conductivity_, fm);
+  this->utils.setFieldData(heat_capacity_, fm);
 
   this->utils.setFieldData(TResidual, fm);
 
@@ -181,10 +158,10 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       // heat flux term:
-      heat_flux_(cell,qp) = 0.0;
+      heat_flux_(cell, qp) = 0.0;
       for (std::size_t i=0; i < numDims; ++i) {
-        heat_flux_(cell,qp) += 
-          thermalConductivity(cell,qp) * TGrad(cell,qp,i);
+        heat_flux_(cell, qp) += 
+          thermal_conductivity_(cell, qp) * TGrad(cell, qp, i);
       }
       // accumulation term:
       accumulation_(cell,qp) = thermalInertia(cell,qp) * Tdot(cell,qp);
@@ -282,60 +259,6 @@ updateSaturations(std::size_t cell, std::size_t qp)
 }
 
   //
-  // Calculates the mixture model thermal conductivity.
-  //
-template <typename EvalT, typename Traits>
-typename EvalT::ScalarT 
-HeatEqnResidual<EvalT, Traits>::
-thermalConductivity(std::size_t cell, std::size_t qp) 
-{
-  ScalarT
-  thermal_K = 0.0;  // thermal conductivity [W/C/m]
-  
-  thermal_K = pow(thermal_K_ice_(cell,qp),(f_(cell,qp)*porosity_(cell,qp))) *
-              pow(thermal_K_water_(cell,qp),(w_(cell,qp)*porosity_(cell,qp))) *
-              pow(thermal_K_sed_(cell,qp),(1.0-porosity_(cell,qp)));
-  
-  return thermal_K;
-}
-
-  //
-  // Calculates the mixture model density.
-  //
-template <typename EvalT, typename Traits>
-typename EvalT::ScalarT 
-HeatEqnResidual<EvalT, Traits>::
-density(std::size_t cell, std::size_t qp) 
-{
-  ScalarT
-  density = 0.0;  // density [kg/m3]
-  
-  density = porosity_(cell,qp) *
-       ( (f_(cell,qp)*rho_ice_(cell,qp)) + (w_(cell,qp)*rho_water_(cell,qp)) ) +
-       ( (1.0-porosity_(cell,qp)) * rho_sed_(cell,qp) );
-  
-  return density;
-}
-
-  //
-  // Calculates the mixture model specific heat.
-  //
-template <typename EvalT, typename Traits>
-typename EvalT::ScalarT 
-HeatEqnResidual<EvalT, Traits>::
-specificHeat(std::size_t cell, std::size_t qp) 
-{
-  ScalarT
-  specific_heat = 0.0;  // specific heat [kJ/kg/C]
-  
-  specific_heat = porosity_(cell,qp) *
-       ( (f_(cell,qp)*cp_ice_(cell,qp)) + (w_(cell,qp)*cp_water_(cell,qp)) ) +
-       ( (1.0-porosity_(cell,qp)) * cp_sed_(cell,qp) );
-  
-  return specific_heat;
-}
-
-  //
   // Calculates the thermal inertia term.
   //
 template <typename EvalT, typename Traits>
@@ -346,11 +269,8 @@ thermalInertia(std::size_t cell, std::size_t qp)
   ScalarT
   chi = 0.0;  
   
-  ScalarT  // placeholder for now - should come from input deck material properties
-  latent_heat = 334.0;  // latent heat of formation water/ice [kJ/kg-C] 
-  
-  chi = (density(cell,qp) * specificHeat(cell,qp)) - 
-        (rho_ice_(cell,qp) * latent_heat * dfdT_(cell,qp));
+  chi = (density_(cell, qp) * heat_capacity_(cell, qp)) - 
+        (rho_ice_ * latent_heat_ * dfdT_(cell, qp));
 
   return chi;
 }

@@ -15,7 +15,7 @@
 namespace LCM {
 
 ///
-/// Heat equation residual evaluator for LCM
+/// Heat equation residual evaluator for ACE-LCM
 ///
 template <typename EvalT, typename Traits>
 class HeatEqnResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -25,12 +25,23 @@ public:
   using ScalarT = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
 
-  HeatEqnResidual(const Teuchos::ParameterList &p);
+  ///
+  /// Constructor
+  ///
+  HeatEqnResidual(
+      const Teuchos::ParameterList&        p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
+  ///
+  /// Phalanx method to allocate space
+  ///
   void
   postRegistrationSetup(typename Traits::SetupData d,
 			PHX::FieldManager<Traits> &vm);
 
+  ///
+  /// Calculates the heat equation residual
+  ///
   void
   evaluateFields(typename Traits::EvalData d);
 
@@ -49,39 +60,28 @@ public:
   
   // calculation functions:
   ScalarT
-  thermalConductivity(std::size_t cell, std::size_t qp);
-  
-  ScalarT
-  density(std::size_t cell, std::size_t qp);
-  
-  ScalarT
-  specificHeat(std::size_t cell, std::size_t qp);
-
-  ScalarT
   thermalInertia(std::size_t cell, std::size_t qp);
   
   ScalarT
   evaluateFreezingCurve(std::size_t cell, std::size_t qp);
 
 private:
-  // Input:
+  // Input (MDFields):
   PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint> wBF;
   PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> wGradBF;
   PHX::MDField<const ScalarT, Cell, QuadPoint> Temperature;
   PHX::MDField<const ScalarT, Cell, QuadPoint> Tdot;
   PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> TGrad;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> density_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> pressure_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> salinity_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> porosity_;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_K_ice_;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_K_water_;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_K_sed_;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> cp_ice_;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> cp_water_;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> cp_sed_;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> rho_ice_;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> rho_water_;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> rho_sed_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_conductivity_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> heat_capacity_;
+  
+  // Input (ScalarTs):
+  ScalarT rho_ice_;
+  ScalarT latent_heat_;
 
   // Output:
   PHX::MDField<ScalarT, Cell, Node> TResidual;
