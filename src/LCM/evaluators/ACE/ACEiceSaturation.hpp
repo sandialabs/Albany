@@ -27,29 +27,51 @@ class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
  public:
   using ScalarT = typename EvalT::ScalarT;
 
+  ///
+  /// Constructor
+  ///
   ACEiceSaturation(Teuchos::ParameterList& p);
 
+  ///
+  /// Phalanx method to allocate space
+  ///
   void
   postRegistrationSetup(
       typename Traits::SetupData d,
       PHX::FieldManager<Traits>& vm);
 
+  ///
   /// Calculates evolution of ice saturation
+  ///
   void
   evaluateFields(typename Traits::EvalData workset);
 
-  /// Gets the saturation values
-  //ScalarT&
-  //getValue(const std::string& n);
+  ///
+  /// Sacado method to access parameters
+  ///
+  ScalarT&
+  getValue(const std::string& n);
 
  private:
+   
+  ///
+  /// Number of integration points
+  ///
   int num_qps_{0};
+  
+  ///
+  /// Number of problem dimensions
+  ///
   int num_dims_{0};
 
-  // contains the ice/water saturation values
+  //
+  // Contains the ice saturation values
+  //
   PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
   
-  // contains the initial ice saturation value
+  //
+  // Contains the initial ice saturation value
+  //
   ScalarT ice_saturation_init_{1.0};
 
 };

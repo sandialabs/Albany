@@ -80,19 +80,19 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 //
-// template <typename EvalT, typename Traits>
-// typename ACEiceSaturation<EvalT, Traits>::ScalarT&
-// ACEiceSaturation<EvalT, Traits>::getValue(const std::string& n)
-// {
-//   if (n == "ACE Ice Saturation") {
-//     return ice_saturation_;
-//   }
-// 
-//   ALBANY_ASSERT(
-//       false, 
-//       "Invalid request for value of ACE Ice Saturation");
-// 
-//   return ice_saturation_; // does it matter what we return here?
-// }
+template <typename EvalT, typename Traits>
+typename ACEiceSaturation<EvalT, Traits>::ScalarT&
+ACEiceSaturation<EvalT, Traits>::getValue(const std::string& n)
+{
+  if (n == "Initial Ice Saturation") {
+    return ice_saturation_init_;
+  }
+
+  ALBANY_ASSERT(
+      false, 
+      "Invalid request for value of Initial Ice Saturation");
+
+  return ice_saturation_init_; // does it matter what we return here?
+}
 
 }  // namespace LCM
