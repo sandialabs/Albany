@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(ACEiceSaturation_hpp)
-#define ACEiceSaturation_hpp
+#if !defined(ACEwaterSaturation_hpp)
+#define ACEwaterSaturation_hpp
 
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -18,19 +18,21 @@
 
 namespace LCM {
 ///
-/// Evaluates ice saturation at integration points
+/// Evaluates water saturation at integration points
 ///
 template <typename EvalT, typename Traits>
-class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
-                         public PHX::EvaluatorDerived<EvalT, Traits>,
-                         public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+class ACEwaterSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
+                           public PHX::EvaluatorDerived<EvalT, Traits>,
+                           public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
  public:
   using ScalarT = typename EvalT::ScalarT;
 
   ///
   /// Constructor
   ///
-  ACEiceSaturation(Teuchos::ParameterList& p);
+  ACEwaterSaturation(
+      Teuchos::ParameterList&              p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
   ///
   /// Phalanx method to allocate space
@@ -41,7 +43,7 @@ class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
       PHX::FieldManager<Traits>& vm);
 
   ///
-  /// Calculates evolution of ice saturation
+  /// Calculates evolution of water saturation
   ///
   void
   evaluateFields(typename Traits::EvalData workset);
@@ -63,18 +65,16 @@ class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
   /// Number of problem dimensions
   ///
   int num_dims_{0};
-
-  //
-  // Contains the ice saturation values
-  //
-  PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
   
-  //
-  // Contains the initial ice saturation value
-  //
-  ScalarT ice_saturation_init_{1.0};
+  // MDFields that water saturation depends on
+  PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
+
+  ///
+  /// Contains the water saturation values
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> water_saturation_;
 
 };
 }  // namespace LCM
 
-#endif  // ACEiceSaturation_hpp
+#endif  // ACEwaterSaturation_hpp
