@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(ACEthermalConductivity_hpp)
-#define ACEthermalConductivity_hpp
+#if !defined(ACEthermalInertia_hpp)
+#define ACEthermalInertia_hpp
 
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -18,10 +18,10 @@
 
 namespace LCM {
 ///
-/// Evaluates thermal conductivity at integration points
+/// Evaluates thermal inertia at integration points
 ///
 template <typename EvalT, typename Traits>
-class ACEthermalConductivity : public PHX::EvaluatorWithBaseImpl<Traits>,
+class ACEthermalInertia : public PHX::EvaluatorWithBaseImpl<Traits>,
                    public PHX::EvaluatorDerived<EvalT, Traits>,
                    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
  public:
@@ -30,7 +30,7 @@ class ACEthermalConductivity : public PHX::EvaluatorWithBaseImpl<Traits>,
   ///
   /// Constructor
   ///
-  ACEthermalConductivity(
+  ACEthermalInertia(
       Teuchos::ParameterList&              p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
@@ -43,7 +43,7 @@ class ACEthermalConductivity : public PHX::EvaluatorWithBaseImpl<Traits>,
       PHX::FieldManager<Traits>& vm);
 
   ///
-  /// Calculates mixture model thermal conductivity
+  /// Calculates mixture model thermal inertia
   ///
   void
   evaluateFields(typename Traits::EvalData workset);
@@ -66,23 +66,23 @@ class ACEthermalConductivity : public PHX::EvaluatorWithBaseImpl<Traits>,
   ///
   int num_dims_{0};
   
-  // MDFields that thermal conductivity depends on
-  PHX::MDField<ScalarT, Cell, QuadPoint> porosity_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> water_saturation_;
+  // MDFields that thermal inertia depends on
+  PHX::MDField<ScalarT, Cell, QuadPoint> density_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> heat_capacity_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> dfdT_;
 
   ///
-  /// Contains the mixture model thermal conductivity value
+  /// Contains the mixture model thermal inertia value
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint> thermal_conductivity_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> thermal_inertia_;
 
-  // contains the intrinsic thermal conductivity values for ice, water, sediment
-  // these values are constant
-  ScalarT k_ice_{0.0};
-  ScalarT k_wat_{0.0};
-  ScalarT k_sed_{0.0};
+  ///
+  /// Constants needed to calculate thermal inertia
+  ///
+  ScalarT latent_heat_{334.0};
+  ScalarT rho_ice_{920.0};
 
 };
 }  // namespace LCM
 
-#endif  // ACEthermalConductivity_hpp
+#endif  // ACEthermalInertia_hpp

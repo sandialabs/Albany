@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "ACEthermalConductivity.hpp"
-#include "ACEthermalConductivity_Def.hpp"
+#include "ACEthermalInertia.hpp"
+#include "ACEthermalInertia_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ACEthermalConductivity)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ACEthermalInertia)
