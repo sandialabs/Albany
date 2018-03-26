@@ -71,10 +71,6 @@ ACEdensity<EvalT, Traits>::postRegistrationSetup(
   return;
 }
 
-//
-// This function needs to know the water, ice, and sediment intrinsic densities
-// plus the current QP ice/water saturations and QP porosity which come from 
-// the material model.
 // The density calculation is based on a volume average mixture model.
 template <typename EvalT, typename Traits>
 void

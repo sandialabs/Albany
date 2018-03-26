@@ -90,10 +90,13 @@ ACEiceSaturation<EvalT, Traits>::getValue(const std::string& n)
   if (n == "Initial Ice Saturation") {
     return ice_saturation_init_;
   }
+  if (n == "Maximum Ice Saturation") {
+    return max_ice_saturation_;
+  }
 
   ALBANY_ASSERT(
       false, 
-      "Invalid request for value of Initial Ice Saturation");
+      "Invalid request for value of Ice Saturation Parameter");
 
   return ice_saturation_init_; // does it matter what we return here?
 }

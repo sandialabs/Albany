@@ -12,10 +12,17 @@
 namespace LCM {
 
 template <typename EvalT, typename Traits>
-ACEheatCapacity<EvalT, Traits>::ACEheatCapacity(Teuchos::ParameterList& p)
-    : heat_capacity_(
-          p.get<std::string>("ACE Heat Capacity"),
-          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
+ACEheatCapacity<EvalT, Traits>::ACEheatCapacity(
+    Teuchos::ParameterList&              p,
+    const Teuchos::RCP<Albany::Layouts>& dl)
+    : heat_capacity_(  // evaluated 
+          p.get<std::string>("ACE Heat Capacity"), dl->qp_scalar),
+      porosity_(  // dependent
+          p.get<std::string>("ACE Porosity"), dl->qp_scalar),
+      ice_saturation_(  // dependent
+          p.get<std::string>("ACE Ice Saturation"), dl->qp_scalar),
+      water_saturation_(  // dependent
+          p.get<std::string>("ACE Water Saturation"), dl->qp_scalar)
 {
   Teuchos::ParameterList* heat_capacity_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
@@ -38,7 +45,14 @@ ACEheatCapacity<EvalT, Traits>::ACEheatCapacity(Teuchos::ParameterList& p)
   // Add heat capacity as a Sacado-ized parameter
   this->registerSacadoParameter("ACE Heat Capacity", paramLib);
 
+  // List evaluated fields
   this->addEvaluatedField(heat_capacity_);
+  
+  // List dependent fields
+  this->addDependentField(porosity_);
+  this->addDependentField(ice_saturation_);
+  this->addDependentField(water_saturation_);
+  
   this->setName("ACE Heat Capacity" + PHX::typeAsString<EvalT>());
 }
 
@@ -49,30 +63,27 @@ ACEheatCapacity<EvalT, Traits>::postRegistrationSetup(
     typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
+  // List all fields
   this->utils.setFieldData(heat_capacity_, fm);
+  this->utils.setFieldData(porosity_, fm);
+  this->utils.setFieldData(ice_saturation_, fm);
+  this->utils.setFieldData(water_saturation_, fm);
   return;
 }
 
-//
-// This function needs to know the water, ice, and sediment intrinsic heat
-// capacities plus the current QP ice/water saturations and QP porosity which  
-// come from the material model.
 // The heat capacity calculation is based on a volume average mixture model.
 template <typename EvalT, typename Traits>
 void
 ACEheatCapacity<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
   int num_cells = workset.numCells;
-  double por = 0.50;  // this needs to come from QP value, here temporary
-  double w = 0.50;  // this is an evolving QP parameter, here temporary
-  double f = 0.50;  // this is an evolving QP parameter, here temporary
-  // notes: if the material model is ACEice, por = 1.0, f = 1.0, w = 0.0
-  //        if the material model is ACEpermafrost, then por, f, and w evolve
 
   for (int cell = 0; cell < num_cells; ++cell) {
     for (int qp = 0; qp < num_qps_; ++qp) {
-      heat_capacity_(cell, qp) = por*(cp_ice_*f + cp_wat_*w) + 
-                                 ((1.0-por)*cp_sed_);
+      heat_capacity_(cell, qp) = 
+        porosity_(cell, qp)*(cp_ice_*ice_saturation_(cell, qp) + 
+        cp_wat_*water_saturation_(cell, qp)) + 
+        ((1.0-porosity_(cell, qp))*cp_sed_);
     }
   }
 

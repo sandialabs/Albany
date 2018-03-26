@@ -27,26 +27,53 @@ class ACEheatCapacity : public PHX::EvaluatorWithBaseImpl<Traits>,
  public:
   using ScalarT = typename EvalT::ScalarT;
 
-  ACEheatCapacity(Teuchos::ParameterList& p);
+  ///
+  /// Constructor
+  ///
+  ACEheatCapacity(
+      Teuchos::ParameterList&              p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
+  ///
+  /// Phalanx method to allocate space
+  ///
   void
   postRegistrationSetup(
       typename Traits::SetupData d,
       PHX::FieldManager<Traits>& vm);
 
+  ///
   /// Calculates mixture model heat capacity
+  ///
   void
   evaluateFields(typename Traits::EvalData workset);
 
-  /// Gets the intrinsic heat capacity values
+  ///
+  /// Sacado method to access parameters
+  ///
   ScalarT&
   getValue(const std::string& n);
 
  private:
+   
+  ///
+  /// Number of integration points
+  ///
   int num_qps_{0};
+  
+  ///
+  /// Number of problem dimensions
+  ///
   int num_dims_{0};
+  
+  // MDFields that density depends on
+  PHX::MDField<ScalarT, Cell, QuadPoint> porosity_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> water_saturation_;
 
-  // contains the mixture model heat capacity value
+  ///
+  /// Contains the mixture model heat capacity value
+  ///
   PHX::MDField<ScalarT, Cell, QuadPoint> heat_capacity_;
 
   // contains the intrinsic heat capacity values for ice, water, sediment
