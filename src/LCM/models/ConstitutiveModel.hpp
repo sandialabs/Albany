@@ -438,6 +438,12 @@ class ConstitutiveModel {
   /// Latent Heat
   ///
   RealType latent_heat_{1.0};
+  
+  ///
+  /// Ice and Water Saturation
+  ///
+  RealType ice_saturation_{1.0};
+  RealType water_saturation_{0.0};
 };
 
 }  // namespace LCM

@@ -100,6 +100,7 @@ set(ace-sources
   "${LCM_DIR}/evaluators/ACE/ACEiceSaturation.cpp"
   "${LCM_DIR}/evaluators/ACE/ACEporosity.cpp"
   "${LCM_DIR}/evaluators/ACE/ACEthermalConductivity.cpp"
+  "${LCM_DIR}/evaluators/ACE/ACEwaterSaturation.cpp"
 )
 set(ace-headers
   "${LCM_DIR}/evaluators/ACE/ACEdensity.hpp"
@@ -112,6 +113,8 @@ set(ace-headers
   "${LCM_DIR}/evaluators/ACE/ACEporosity_Def.hpp"
   "${LCM_DIR}/evaluators/ACE/ACEthermalConductivity.hpp"
   "${LCM_DIR}/evaluators/ACE/ACEthermalConductivity_Def.hpp"
+  "${LCM_DIR}/evaluators/ACE/ACEwaterSaturation.hpp"
+  "${LCM_DIR}/evaluators/ACE/ACEwaterSaturation_Def.hpp"
 )
 
 # LCM special boundary conditions
