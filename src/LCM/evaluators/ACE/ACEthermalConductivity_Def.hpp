@@ -13,10 +13,17 @@ namespace LCM {
 
 template <typename EvalT, typename Traits>
 ACEthermalConductivity<EvalT, Traits>::
-ACEthermalConductivity(Teuchos::ParameterList& p)
-    : thermal_conductivity_(
-          p.get<std::string>("QP Variable Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
+ACEthermalConductivity(
+    Teuchos::ParameterList&              p,
+    const Teuchos::RCP<Albany::Layouts>& dl)
+    : thermal_conductivity_(  // evaluated
+          p.get<std::string>("ACE Thermal Conductivity"), dl->qp_scalar),
+      porosity_(  // dependent
+          p.get<std::string>("ACE Porosity"), dl->qp_scalar),
+      ice_saturation_(  // dependent
+          p.get<std::string>("ACE Ice Saturation"), dl->qp_scalar),
+      water_saturation_(  // dependent
+          p.get<std::string>("ACE Water Saturation"), dl->qp_scalar)
 {
   Teuchos::ParameterList* thermal_conductivity_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
@@ -39,7 +46,14 @@ ACEthermalConductivity(Teuchos::ParameterList& p)
   // Add thermal conductivity as a Sacado-ized parameter
   this->registerSacadoParameter("ACE Thermal Conductivity", paramLib);
 
+  // List evaluated fields
   this->addEvaluatedField(thermal_conductivity_);
+  
+  // List dependent fields
+  this->addDependentField(porosity_);
+  this->addDependentField(ice_saturation_);
+  this->addDependentField(water_saturation_);
+  
   this->setName("ACE Thermal Conductivity" + PHX::typeAsString<EvalT>());
 }
 
@@ -51,13 +65,12 @@ ACEthermalConductivity<EvalT, Traits>::postRegistrationSetup(
     PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(thermal_conductivity_, fm);
+  this->utils.setFieldData(porosity_, fm);
+  this->utils.setFieldData(ice_saturation_, fm);
+  this->utils.setFieldData(water_saturation_, fm);
   return;
 }
 
-//
-// This function needs to know the water, ice, and sediment intrinsic thermal
-// conductivities plus the current QP ice/water saturations and QP porosity 
-// which come from the material model.
 // The thermal K calculation is based on a volume average mixture model.
 template <typename EvalT, typename Traits>
 void
@@ -65,17 +78,13 @@ ACEthermalConductivity<EvalT, Traits>::evaluateFields(
     typename Traits::EvalData workset)
 {
   int num_cells = workset.numCells;
-  double por = 0.50;  // this needs to come from QP value, here temporary
-  double w = 0.50;  // this is an evolving QP parameter, here temporary
-  double f = 0.50;  // this is an evolving QP parameter, here temporary
-  // notes: if the material model is ACEice, por = 1.0, f = 1.0, w = 0.0
-  //        if the material model is ACEpermafrost, then por, f, and w evolve
 
   for (int cell = 0; cell < num_cells; ++cell) {
     for (int qp = 0; qp < num_qps_; ++qp) {
       thermal_conductivity_(cell, qp) = 
-          pow(k_ice_,(f*por)) * pow(k_wat_,(w*por)) *
-          pow(k_sed_,(1.0-por));
+          pow(k_ice_,(ice_saturation_(cell, qp)*porosity_(cell, qp))) * 
+          pow(k_wat_,(water_saturation_(cell, qp)*porosity_(cell, qp))) *
+          pow(k_sed_,(1.0-porosity_(cell, qp)));
       }
     }
 
