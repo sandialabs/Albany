@@ -32,6 +32,10 @@ ACEwaterSaturation<EvalT, Traits>::ACEwaterSaturation(
 
   Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
+    
+  // Read minimum water saturation value
+  min_water_saturation_ = 
+      waterSaturation_list->get<double>("Minimum Water Saturation");
 
   // Add water saturation as Sacado-ized parameters
   this->registerSacadoParameter("ACE Water Saturation", paramLib);
@@ -71,7 +75,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (int qp = 0; qp < num_qps_; ++qp) {
       water_saturation_(cell, qp) = 1.0 - ice_saturation_(cell, qp);      
       // check on realistic bounds
-      water_saturation_(cell, qp) = std::max(0.0,water_saturation_(cell, qp));
+      water_saturation_(cell, qp) = std::max(
+          min_water_saturation_,water_saturation_(cell, qp));
       water_saturation_(cell, qp) = std::min(1.0,water_saturation_(cell, qp));
     }
   }
@@ -84,8 +89,14 @@ template <typename EvalT, typename Traits>
 typename ACEwaterSaturation<EvalT, Traits>::ScalarT&
 ACEwaterSaturation<EvalT, Traits>::getValue(const std::string& n)
 {
-  // nothing to return here
-  return 0.0; 
+  if (n == "Minimum Water Saturation") {
+    return min_water_saturation_;
+  }
+  
+  ALBANY_ASSERT(false, 
+             "Invalid request for value of Minimum Water Saturation");
+  
+  return min_water_saturation_; 
 }
 
 }  // namespace LCM

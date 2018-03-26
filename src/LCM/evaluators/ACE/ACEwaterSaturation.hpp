@@ -66,6 +66,11 @@ class ACEwaterSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
   ///
   int num_dims_{0};
   
+  ///
+  /// Minimum water saturation
+  ///
+  ScalarT min_water_saturation_{0.05};
+  
   // MDFields that water saturation depends on
   PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
 

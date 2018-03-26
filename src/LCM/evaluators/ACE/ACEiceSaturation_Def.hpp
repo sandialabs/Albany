@@ -34,6 +34,8 @@ ACEiceSaturation<EvalT, Traits>::ACEiceSaturation(
   // Read initial saturation values
   ice_saturation_init_ = 
       iceSaturation_list->get<double>("Initial Ice Saturation");
+  max_ice_saturation_ = 
+      iceSaturation_list->get<double>("Maximum Ice Saturation");
 
   // Add ice saturation as Sacado-ized parameters
   this->registerSacadoParameter("ACE Ice Saturation", paramLib);
@@ -71,8 +73,9 @@ evaluateFields(typename Traits::EvalData workset)
     for (int qp = 0; qp < num_qps_; ++qp) {
       ice_saturation_(cell, qp) = 1.0;      
       // check on realistic bounds
-      ice_saturation_(cell, qp) = std::max(0.0,ice_saturation_(cell, qp));
-      ice_saturation_(cell, qp) = std::min(1.0,ice_saturation_(cell, qp));
+      ice_saturation_(cell, qp) = std::max(0.0, ice_saturation_(cell, qp));
+      ice_saturation_(cell, qp) = std::min(
+          max_ice_saturation_, ice_saturation_(cell, qp));
     }
   }
 

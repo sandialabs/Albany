@@ -64,15 +64,20 @@ class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
   ///
   int num_dims_{0};
 
-  //
-  // Contains the ice saturation values
-  //
+  ///
+  /// Contains the ice saturation values
+  ///
   PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
   
-  //
-  // Contains the initial ice saturation value
-  //
+  ///
+  /// Contains the initial ice saturation value
+  ///
   ScalarT ice_saturation_init_{1.0};
+  
+  ///
+  /// Contains the maximum ice saturation value
+  ///
+  ScalarT max_ice_saturation_{0.95};
 
 };
 }  // namespace LCM
