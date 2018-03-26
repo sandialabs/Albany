@@ -15,13 +15,13 @@ template <typename EvalT, typename Traits>
 ACEdensity<EvalT, Traits>::ACEdensity(
     Teuchos::ParameterList&              p,
     const Teuchos::RCP<Albany::Layouts>& dl)
-    : density_(
+    : density_(  // evaluated
           p.get<std::string>("ACE Density"), dl->qp_scalar),
-      porosity_(
+      porosity_(  // dependent
           p.get<std::string>("ACE Porosity"), dl->qp_scalar),
-      ice_saturation_(
+      ice_saturation_(  // dependent
           p.get<std::string>("ACE Ice Saturation"), dl->qp_scalar),
-      water_saturation_(
+      water_saturation_(  // dependent
           p.get<std::string>("ACE Water Saturation"), dl->qp_scalar)
 {
   Teuchos::ParameterList* density_p_list =
