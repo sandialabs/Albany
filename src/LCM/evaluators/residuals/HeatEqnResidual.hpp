@@ -50,9 +50,6 @@ public:
   updateTemperatureChange(std::size_t cell, std::size_t qp);
   
   void
-  updateMeltingTemperature(std::size_t cell, std::size_t qp);
-  
-  void
   update_dfdT(std::size_t cell, std::size_t qp);
   
   void
