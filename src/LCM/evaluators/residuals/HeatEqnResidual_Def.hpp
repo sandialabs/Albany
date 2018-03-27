@@ -44,6 +44,8 @@ HeatEqnResidual(
         p.get<std::string>("ACE Porosity"), dl->qp_scalar),
       thermal_conductivity_(  // dependent
         p.get<std::string>("ACE Thermal Conductivity"), dl->qp_scalar),
+      thermal_inertia_(  // dependent
+        p.get<std::string>("ACE Thermal Inertia"), dl->qp_scalar),
       heat_capacity_(  // dependent
         p.get<std::string>("ACE Heat Capacity"), dl->qp_scalar),
       TResidual(  // evaluated
@@ -68,6 +70,7 @@ HeatEqnResidual(
   this->addDependentField(salinity_);
   this->addDependentField(porosity_);
   this->addDependentField(thermal_conductivity_);
+  this->addDependentField(thermal_inertia_);
   this->addDependentField(heat_capacity_);
   
   // List evaluated field
@@ -107,6 +110,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &f
   this->utils.setFieldData(salinity_, fm);
   this->utils.setFieldData(porosity_, fm);
   this->utils.setFieldData(thermal_conductivity_, fm);
+  this->utils.setFieldData(thermal_inertia_, fm);
   this->utils.setFieldData(heat_capacity_, fm);
 
   this->utils.setFieldData(TResidual, fm);
@@ -164,7 +168,8 @@ evaluateFields(typename Traits::EvalData workset)
           thermal_conductivity_(cell, qp) * TGrad(cell, qp, i);
       }
       // accumulation term:
-      accumulation_(cell,qp) = thermalInertia(cell,qp) * Tdot(cell,qp);
+      accumulation_(cell,qp) = 
+        thermal_inertia_(cell, qp) * Tdot(cell, qp);
     }
   }
   
@@ -256,23 +261,6 @@ updateSaturations(std::size_t cell, std::size_t qp)
   f_old_(cell,qp) = f_(cell,qp);
 
   return;
-}
-
-  //
-  // Calculates the thermal inertia term.
-  //
-template <typename EvalT, typename Traits>
-typename EvalT::ScalarT
-HeatEqnResidual<EvalT, Traits>::
-thermalInertia(std::size_t cell, std::size_t qp) 
-{
-  ScalarT
-  chi = 0.0;  
-  
-  chi = (density_(cell, qp) * heat_capacity_(cell, qp)) - 
-        (rho_ice_ * latent_heat_ * dfdT_(cell, qp));
-
-  return chi;
 }
 
   //

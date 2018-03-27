@@ -60,9 +60,6 @@ public:
   
   // calculation functions:
   ScalarT
-  thermalInertia(std::size_t cell, std::size_t qp);
-  
-  ScalarT
   evaluateFreezingCurve(std::size_t cell, std::size_t qp);
 
 private:
@@ -77,6 +74,7 @@ private:
   PHX::MDField<const ScalarT, Cell, QuadPoint> salinity_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> porosity_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_conductivity_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_inertia_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> heat_capacity_;
   
   // Input (ScalarTs):
