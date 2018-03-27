@@ -12,19 +12,17 @@
 namespace LCM {
 
 template <typename EvalT, typename Traits>
-ACEdensity<EvalT, Traits>::ACEdensity(
+ACEmeltingTemperature<EvalT, Traits>::ACEmeltingTemperature(
     Teuchos::ParameterList&              p,
     const Teuchos::RCP<Albany::Layouts>& dl)
-    : density_(  // evaluated
-          p.get<std::string>("ACE Density"), dl->qp_scalar),
-      porosity_(  // dependent
-          p.get<std::string>("ACE Porosity"), dl->qp_scalar),
-      ice_saturation_(  // dependent
-          p.get<std::string>("ACE Ice Saturation"), dl->qp_scalar),
-      water_saturation_(  // dependent
-          p.get<std::string>("ACE Water Saturation"), dl->qp_scalar)
+    : melting_temperature_(  // evaluated
+          p.get<std::string>("ACE Melting Temperature"), dl->qp_scalar),
+      pressure_(  // dependent
+          p.get<std::string>("ACE Pressure"), dl->qp_scalar),
+      salinity_(  // dependent
+          p.get<std::string>("ACE Salinity"), dl->qp_scalar)
 {
-  Teuchos::ParameterList* density_p_list =
+  Teuchos::ParameterList* melting_temp_p_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -37,53 +35,59 @@ ACEdensity<EvalT, Traits>::ACEdensity(
   Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
-  // Read density values
-  rho_ice_ = density_p_list->get<double>("Ice Value");
-  rho_wat_ = density_p_list->get<double>("Water Value");
-  rho_sed_ = density_p_list->get<double>("Sediment Value");
+  // Read melting temperature values
+  //rho_ice_ = melting_temp_p_list->get<double>("Ice Value");
 
-  // Add density as a Sacado-ized parameter
-  this->registerSacadoParameter("ACE Density", paramLib);
+  // Add melting temperature as a Sacado-ized parameter
+  this->registerSacadoParameter("ACE Melting Temperature", paramLib);
 
   // List evaluated fields
-  this->addEvaluatedField(density_);
+  this->addEvaluatedField(melting_temperature_);
   
   // List dependent fields
-  this->addDependentField(porosity_);
-  this->addDependentField(ice_saturation_);
-  this->addDependentField(water_saturation_);
+  this->addDependentField(pressure_);
+  this->addDependentField(salinity_);
   
-  this->setName("ACE Density" + PHX::typeAsString<EvalT>());
+  this->setName("ACE Melting Temperature" + PHX::typeAsString<EvalT>());
 }
 
 //
 template <typename EvalT, typename Traits>
 void
-ACEdensity<EvalT, Traits>::postRegistrationSetup(
+ACEmeltingTemperature<EvalT, Traits>::postRegistrationSetup(
     typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
   // List all fields
-  this->utils.setFieldData(density_, fm);
-  this->utils.setFieldData(porosity_, fm);
-  this->utils.setFieldData(ice_saturation_, fm);
-  this->utils.setFieldData(water_saturation_, fm);
+  this->utils.setFieldData(melting_temperature_, fm);
+  this->utils.setFieldData(pressure_, fm);
+  this->utils.setFieldData(salinity_, fm);
   return;
 }
 
-// The density calculation is based on a volume average mixture model.
+// The melting temperature calculation is based on . . . need citation.
+// It assumes the salinity is in [ppt] units.
+// It assumes the pressure is in [Pa] units.
 template <typename EvalT, typename Traits>
 void
-ACEdensity<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+ACEmeltingTemperature<EvalT, Traits>::
+evaluateFields(typename Traits::EvalData workset)
 {
-  int num_cells = workset.numCells;
-
+  int 
+  num_cells = workset.numCells;
+  
   for (int cell = 0; cell < num_cells; ++cell) {
     for (int qp = 0; qp < num_qps_; ++qp) {
-      density_(cell, qp) = 
-        porosity_(cell, qp)*(rho_ice_*ice_saturation_(cell, qp) + 
-        rho_wat_*water_saturation_(cell, qp)) + 
-        ((1.0-porosity_(cell, qp))*rho_sed_);
+  
+      ScalarT const
+      sal = salinity_(cell, qp);
+    
+      ScalarT const
+      sal15 = std::sqrt(sal * sal * sal);
+
+      melting_temperature_(cell, qp) =
+        (-0.057 * sal) + (0.00170523 * sal15) - (0.0002154996 * sal * sal) - 
+        ((0.000753/10000.0) * pressure_(cell, qp))
     }
   }
 
@@ -91,23 +95,23 @@ ACEdensity<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 }
 
 //
-template <typename EvalT, typename Traits>
-typename ACEdensity<EvalT, Traits>::ScalarT&
-ACEdensity<EvalT, Traits>::getValue(const std::string& n)
-{
-  if (n == "ACE Ice Density") {
-    return rho_ice_;
-  }
-  if (n == "ACE Water Density") {
-    return rho_wat_;
-  }
-  if (n == "ACE Sediment Density") {
-    return rho_sed_;
-  }
-
-  ALBANY_ASSERT(false, "Invalid request for value of ACE Component Density");
-
-  return rho_wat_; // does it matter what we return here?
-}
+//template <typename EvalT, typename Traits>
+//typename ACEmeltingTemperature<EvalT, Traits>::ScalarT&
+//ACEmeltingTemperature<EvalT, Traits>::getValue(const std::string& n)
+//{
+//  if (n == "ACE Ice Density") {
+//    return rho_ice_;
+//  }
+//  if (n == "ACE Water Density") {
+//    return rho_wat_;
+//  }
+//  if (n == "ACE Sediment Density") {
+//    return rho_sed_;
+//  }
+//
+//  ALBANY_ASSERT(false, "Invalid request for value of ACE Component Density");
+//
+//  return rho_wat_; // does it matter what we return here?
+//}
 
 }  // namespace LCM

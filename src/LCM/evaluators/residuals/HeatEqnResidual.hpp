@@ -70,12 +70,12 @@ private:
   PHX::MDField<const ScalarT, Cell, QuadPoint> Tdot;
   PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> TGrad;
   PHX::MDField<const ScalarT, Cell, QuadPoint> density_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> heat_capacity_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> melting_temperature_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> pressure_;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> salinity_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> porosity_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_conductivity_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_inertia_;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> heat_capacity_;
   
   // Input (ScalarTs):
   ScalarT rho_ice_;

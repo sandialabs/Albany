@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(ACEdensity_hpp)
-#define ACEdensity_hpp
+#if !defined(ACEmeltingTemperature_hpp)
+#define ACEmeltingTemperature_hpp
 
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -18,12 +18,13 @@
 
 namespace LCM {
 ///
-/// Evaluates mass density at integration points
+/// Evaluates mass meltingTemperature at integration points
 ///
 template <typename EvalT, typename Traits>
-class ACEdensity : public PHX::EvaluatorWithBaseImpl<Traits>,
-                   public PHX::EvaluatorDerived<EvalT, Traits>,
-                   public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+class ACEmeltingTemperature : 
+          public PHX::EvaluatorWithBaseImpl<Traits>,
+          public PHX::EvaluatorDerived<EvalT, Traits>,
+          public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
  public:
    
   using ScalarT          = typename EvalT::ScalarT;
@@ -31,7 +32,7 @@ class ACEdensity : public PHX::EvaluatorWithBaseImpl<Traits>,
   ///
   /// Constructor
   ///
-  ACEdensity(
+  ACEmeltingTemperature(
       Teuchos::ParameterList&              p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
@@ -44,7 +45,7 @@ class ACEdensity : public PHX::EvaluatorWithBaseImpl<Traits>,
       PHX::FieldManager<Traits>& vm);
 
   ///
-  /// Calculates mixture model density
+  /// Calculates melting temperature
   ///
   void
   evaluateFields(typename Traits::EvalData workset);
@@ -67,23 +68,16 @@ class ACEdensity : public PHX::EvaluatorWithBaseImpl<Traits>,
   ///
   int num_dims_{0};
   
-  // MDFields that density depends on
-  PHX::MDField<ScalarT, Cell, QuadPoint> porosity_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> water_saturation_;
+  // MDFields that meltingTemperature depends on
+  PHX::MDField<ScalarT, Cell, QuadPoint> pressure_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> salinity_;
   
   ///
-  /// Contains the mixture model density value
+  /// Contains the melting temperature value
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint> density_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> melting_temperature_;
   
-  // contains the intrinsic density values for ice, water, sediment
-  // these values are constant
-  ScalarT rho_ice_{0.0};
-  ScalarT rho_wat_{0.0};
-  ScalarT rho_sed_{0.0};
-
 };
 }  // namespace LCM
 
-#endif  // ACEdensity_hpp
+#endif  // ACEmeltingTemperature_hpp

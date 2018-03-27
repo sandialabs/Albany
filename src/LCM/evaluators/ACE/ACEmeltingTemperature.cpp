@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "ACEdensity.hpp"
-#include "ACEdensity_Def.hpp"
+#include "ACEmeltingTemperature.hpp"
+#include "ACEmeltingTemperature_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ACEdensity)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ACEmeltingTemperature)

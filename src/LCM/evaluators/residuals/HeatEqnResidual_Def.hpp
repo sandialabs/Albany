@@ -34,20 +34,20 @@ HeatEqnResidual(
       TGrad(  // dependent
         p.get<std::string>("QP Gradient Variable Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout")),
-      pressure_(  // dependent
-        p.get<std::string>("QP Pressure Variable Name"), dl->qp_scalar),
       density_(  // dependent
         p.get<std::string>("ACE Density"), dl->qp_scalar),
-      salinity_(  // dependent
-        p.get<std::string>("ACE Salinity"), dl->qp_scalar),
+      heat_capacity_(  // dependent
+        p.get<std::string>("ACE Heat Capacity"), dl->qp_scalar),
+      melting_temperature_(  // dependent
+        p.get<std::string>("ACE Melting Temperature"), dl->qp_scalar),
       porosity_(  // dependent
         p.get<std::string>("ACE Porosity"), dl->qp_scalar),
+      pressure_(  // dependent
+        p.get<std::string>("QP Pressure Variable Name"), dl->qp_scalar),
       thermal_conductivity_(  // dependent
         p.get<std::string>("ACE Thermal Conductivity"), dl->qp_scalar),
       thermal_inertia_(  // dependent
         p.get<std::string>("ACE Thermal Inertia"), dl->qp_scalar),
-      heat_capacity_(  // dependent
-        p.get<std::string>("ACE Heat Capacity"), dl->qp_scalar),
       TResidual(  // evaluated
         p.get<std::string>("Residual Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout")) 
@@ -57,7 +57,8 @@ HeatEqnResidual(
     
   // Read heat equation parameter values
   rho_ice_ = heatEqnResidual_list->get<double>("ACE Ice Density");
-  latent_heat_ = heatEqnResidual_list->get<double>("ACE Latent Heat of Phase Change");
+  latent_heat_ = 
+    heatEqnResidual_list->get<double>("ACE Latent Heat of Phase Change");
 
   // List dependent fields
   this->addDependentField(wBF);
@@ -65,13 +66,14 @@ HeatEqnResidual(
   this->addDependentField(Temperature);
   this->addDependentField(Tdot);
   this->addDependentField(TGrad);
-  this->addDependentField(pressure_);
+
   this->addDependentField(density_);
-  this->addDependentField(salinity_);
+  this->addDependentField(heat_capacity_);
+  this->addDependentField(melting_temperature_);
   this->addDependentField(porosity_);
+  this->addDependentField(pressure_);
   this->addDependentField(thermal_conductivity_);
   this->addDependentField(thermal_inertia_);
-  this->addDependentField(heat_capacity_);
   
   // List evaluated field
   this->addEvaluatedField(TResidual);
@@ -105,13 +107,14 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &f
   this->utils.setFieldData(Temperature, fm);
   this->utils.setFieldData(Tdot, fm);
   this->utils.setFieldData(TGrad, fm);
-  this->utils.setFieldData(pressure_, fm);
+
   this->utils.setFieldData(density_, fm);
-  this->utils.setFieldData(salinity_, fm);
+  this->utils.setFieldData(heat_capacity_, fm);
+  this->utils.setFieldData(melting_temperature_, fm);
   this->utils.setFieldData(porosity_, fm);
+  this->utils.setFieldData(pressure_, fm);
   this->utils.setFieldData(thermal_conductivity_, fm);
   this->utils.setFieldData(thermal_inertia_, fm);
-  this->utils.setFieldData(heat_capacity_, fm);
 
   this->utils.setFieldData(TResidual, fm);
 
@@ -152,7 +155,6 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       // the order these are called is important:
-      updateMeltingTemperature(cell,qp);
       updateTemperatureChange(cell,qp);
       update_dfdT(cell,qp);
       updateSaturations(cell,qp);
@@ -195,30 +197,6 @@ updateTemperatureChange(std::size_t cell, std::size_t qp)
 {
   delTemp_(cell,qp) = Temperature(cell,qp) - Temperature_old_(cell,qp);
   
-  return;
-}
-
-  //
-  // Updates the local melting temperature [C].
-  //
-template <typename EvalT, typename Traits>
-void HeatEqnResidual<EvalT, Traits>::
-updateMeltingTemperature(std::size_t cell, std::size_t qp) 
-{
-  ScalarT    
-  sal = 0.0;  // salinity in [ppt]
-  sal = salinity_(cell,qp);
-  
-  ScalarT   
-  press = 0.0;  // hydrostatic pressure in [Pa]
-  press = pressure_(cell,qp);
-  
-  ScalarT const
-  sal15 = std::sqrt(sal * sal * sal);
-
-  Tmelt_(cell,qp) = -0.0575 * sal + 0.00170523 * sal15
-    - 0.0002154996 * sal * sal - (0.000753/10000) * press;
-
   return;
 }
 
