@@ -112,10 +112,11 @@ class ConstitutiveModelParameters
   PHX::MDField<ScalarT, Cell, QuadPoint> density_;
   PHX::MDField<ScalarT, Cell, QuadPoint> heat_capacity_;
   PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> melting_temperature_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> porosity_;
   PHX::MDField<ScalarT, Cell, QuadPoint> thermal_conductivity_;
   PHX::MDField<ScalarT, Cell, QuadPoint> thermal_inertia_;
   PHX::MDField<ScalarT, Cell, QuadPoint> water_saturation_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> porosity_;
 
   ///
   /// map of strings to specify parameter names to MDFields

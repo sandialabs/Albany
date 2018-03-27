@@ -202,7 +202,16 @@ ConstitutiveModelParameters<EvalT, Traits>::ConstitutiveModelParameters(
     porosity_ = decltype(porosity_)(por_str, dl_->qp_scalar);
     field_map_.insert(std::make_pair(por_str, porosity_));
     parseParameters(por_str, p, paramLib);
+  }   
+  // ACE melting temperature
+  std::string tmelt_str("ACE Melting Temperature");
+  if (mat_params->isSublist(tmelt_str)) {
+    melting_temperature_ = 
+        decltype(melting_temperature_)(tmelt_str, dl_->qp_scalar);
+    field_map_.insert(std::make_pair(tmelt_str, melting_temperature_));
+    parseParameters(tmelt_str, p, paramLib);
   }
+
 
   // register evaluated fields
   for (auto& pair : field_map_) {

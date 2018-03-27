@@ -87,7 +87,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       melting_temperature_(cell, qp) =
         (-0.057 * sal) + (0.00170523 * sal15) - (0.0002154996 * sal * sal) - 
-        ((0.000753/10000.0) * pressure_(cell, qp))
+        ((0.000753/10000.0) * pressure_(cell, qp));
     }
   }
 

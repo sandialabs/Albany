@@ -53,8 +53,8 @@ class ACEmeltingTemperature :
   ///
   /// Sacado method to access parameters
   ///
-  ScalarT&
-  getValue(const std::string& n);
+  //ScalarT&
+  //getValue(const std::string& n);
 
  private:
    
