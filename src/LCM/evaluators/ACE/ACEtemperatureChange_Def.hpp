@@ -12,15 +12,15 @@
 namespace LCM {
 
 template <typename EvalT, typename Traits>
-ACEwaterSaturation<EvalT, Traits>::ACEwaterSaturation(
+ACEtemperatureChange<EvalT, Traits>::ACEtemperatureChange(
     Teuchos::ParameterList&              p,
     const Teuchos::RCP<Albany::Layouts>& dl)
-    : water_saturation_(  // evaluated
-          p.get<std::string>("ACE Water Saturation"), dl->qp_scalar),
-      ice_saturation_(  // dependent
-          p.get<std::string>("ACE Ice Saturation"), dl->qp_scalar)
+    : delta_temperature_(  // evaluated
+          p.get<std::string>("ACE Temperature Change"), dl->qp_scalar),
+      Temperature(  // dependent
+          p.get<std::string>("QP Temperature"), dl->qp_scalar)
 {
-  Teuchos::ParameterList* waterSaturation_list =
+  Teuchos::ParameterList* temperatureChange_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -33,70 +33,66 @@ ACEwaterSaturation<EvalT, Traits>::ACEwaterSaturation(
   Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
     
-  // Read minimum water saturation value
-  min_water_saturation_ = 
-      waterSaturation_list->get<double>("Minimum Water Saturation");
+  // Read parameter values from input
+  //min_water_saturation_ = 
+  //    temperatureChange_list->get<double>("Minimum Water Saturation");
 
-  // Add water saturation as Sacado-ized parameters
-  this->registerSacadoParameter("ACE Water Saturation", paramLib);
+  // Add temperature change as Sacado-ized parameters
+  this->registerSacadoParameter("ACE Temperature Change", paramLib);
 
   // List evaluated fields
-  this->addEvaluatedField(water_saturation_);
+  this->addEvaluatedField(delta_temperature_);
   
   // List dependent fields
-  this->addDependentField(ice_saturation_);
+  this->addDependentField(Temperature);
   
-  this->setName("ACE Water Saturation" + PHX::typeAsString<EvalT>());
+  this->setName("ACE Temperature Change" + PHX::typeAsString<EvalT>());
 }
 
 //
 template <typename EvalT, typename Traits>
 void
-ACEwaterSaturation<EvalT, Traits>::postRegistrationSetup(
+ACEtemperatureChange<EvalT, Traits>::postRegistrationSetup(
     typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
   // List all fields
-  this->utils.setFieldData(water_saturation_, fm);
+  this->utils.setFieldData(temperature_change_, fm);
   return;
 }
 
 
-// This function updates the water saturation based on the 
-// ice saturation change.
+// This function updates the temperature change since the last time step.
 template <typename EvalT, typename Traits>
 void
-ACEwaterSaturation<EvalT, Traits>::
+ACEtemperatureChange<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   int num_cells = workset.numCells;
 
   for (int cell = 0; cell < num_cells; ++cell) {
     for (int qp = 0; qp < num_qps_; ++qp) {
-      water_saturation_(cell, qp) = 1.0 - ice_saturation_(cell, qp);      
-      // check on realistic bounds
-      water_saturation_(cell, qp) = std::max(
-          min_water_saturation_,water_saturation_(cell, qp));
-      water_saturation_(cell, qp) = std::min(1.0,water_saturation_(cell, qp));
+      delta_temperature_(cell, qp) = 
+          Temperature(cell, qp) - temperature_old_(cell, qp);
+      // Swap temperatures now
+      temperature_old_(cell, qp) = Temperature(cell, qp);      
+      // set Boolean fields
+      if (delta_temperature_(cell, qp) > 0.0) {
+        temp_increasing_(cell, qp) = true;
+        temp_decreasing_(cell, qp) = false;
+      }
+      else if (delta_temperature_(cell, qp) < 0.0) {
+        temp_increasing_(cell, qp) = false;
+        temp_decreasing_(cell, qp) = true;
+      }
+      else {
+        temp_increasing_(cell, qp) = false;
+        temp_decreasing_(cell, qp) = false;
+      }
     }
   }
 
   return;
-}
-
-//
-template <typename EvalT, typename Traits>
-typename ACEwaterSaturation<EvalT, Traits>::ScalarT&
-ACEwaterSaturation<EvalT, Traits>::getValue(const std::string& n)
-{
-  if (n == "Minimum Water Saturation") {
-    return min_water_saturation_;
-  }
-  
-  ALBANY_ASSERT(false, 
-             "Invalid request for value of Minimum Water Saturation");
-  
-  return min_water_saturation_; 
 }
 
 }  // namespace LCM

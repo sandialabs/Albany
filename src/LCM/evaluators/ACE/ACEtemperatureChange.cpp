@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "ACEwaterSaturation.hpp"
-#include "ACEwaterSaturation_Def.hpp"
+#include "ACEtemperatureChange.hpp"
+#include "ACEtemperatureChange_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ACEwaterSaturation)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ACEtemperatureChange)

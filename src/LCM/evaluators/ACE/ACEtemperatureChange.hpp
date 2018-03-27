@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(ACEwaterSaturation_hpp)
-#define ACEwaterSaturation_hpp
+#if !defined(ACEtemperatureChange_hpp)
+#define ACEtemperatureChange_hpp
 
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -18,19 +18,20 @@
 
 namespace LCM {
 ///
-/// Evaluates water saturation at integration points
+/// Evaluates the temperature change at integration points
 ///
 template <typename EvalT, typename Traits>
-class ACEwaterSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
-                           public PHX::EvaluatorDerived<EvalT, Traits>,
-                           public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+class ACEtemperatureChange 
+   : public PHX::EvaluatorWithBaseImpl<Traits>,
+     public PHX::EvaluatorDerived<EvalT, Traits>,
+     public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
  public:
   using ScalarT = typename EvalT::ScalarT;
 
   ///
   /// Constructor
   ///
-  ACEwaterSaturation(
+  ACEtemperatureChange(
       Teuchos::ParameterList&              p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
@@ -43,16 +44,10 @@ class ACEwaterSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
       PHX::FieldManager<Traits>& vm);
 
   ///
-  /// Calculates evolution of water saturation
+  /// Calculates temperature change since last timestep
   ///
   void
   evaluateFields(typename Traits::EvalData workset);
-
-  ///
-  /// Sacado method to access parameters
-  ///
-  ScalarT&
-  getValue(const std::string& n);
 
  private:
    
@@ -66,20 +61,17 @@ class ACEwaterSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
   ///
   int num_dims_{0};
   
-  ///
-  /// Minimum water saturation
-  ///
-  ScalarT min_water_saturation_{0.05};
-  
-  // MDFields that water saturation depends on
-  PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
+  // MDField  that aid temperature change calculation
+  PHX::MDField<bool, Cell, QuadPoint> temperature_old_;
+  PHX::MDField<bool, Cell, QuadPoint> temp_increasing_;
+  PHX::MDField<bool, Cell, QuadPoint> temp_decreasing_;
 
   ///
-  /// Contains the water saturation values
+  /// Contains the temperature change
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint> water_saturation_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> delta_temperature_{0.0};
 
 };
 }  // namespace LCM
 
-#endif  // ACEwaterSaturation_hpp
+#endif  // ACEtemperatureChange_hpp
