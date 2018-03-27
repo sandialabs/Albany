@@ -34,6 +34,8 @@ HeatEqnResidual(
       TGrad(  // dependent
         p.get<std::string>("QP Gradient Variable Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout")),
+      delta_temperature_(  // dependent
+        p.get<std::string>("ACE Temperature Change"), dl->qp_scalar),
       density_(  // dependent
         p.get<std::string>("ACE Density"), dl->qp_scalar),
       heat_capacity_(  // dependent
@@ -67,6 +69,7 @@ HeatEqnResidual(
   this->addDependentField(Tdot);
   this->addDependentField(TGrad);
 
+  this->addDependentField(delta_temperature_);
   this->addDependentField(density_);
   this->addDependentField(heat_capacity_);
   this->addDependentField(melting_temperature_);
@@ -108,6 +111,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &f
   this->utils.setFieldData(Tdot, fm);
   this->utils.setFieldData(TGrad, fm);
 
+  this->utils.setFieldData(delta_temperature_, fm);
   this->utils.setFieldData(density_, fm);
   this->utils.setFieldData(heat_capacity_, fm);
   this->utils.setFieldData(melting_temperature_, fm);
@@ -124,8 +128,6 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &f
   accumulation_ = Kokkos::createDynRankView(
     Temperature.get_view(), "XXX", worksetSize, numQPs);
   Temperature_old_ = Kokkos::createDynRankView(
-    Temperature.get_view(), "XXX", worksetSize, numQPs);
-  delTemp_ = Kokkos::createDynRankView(
     Temperature.get_view(), "XXX", worksetSize, numQPs);
   dfdT_ = Kokkos::createDynRankView(
     Temperature.get_view(), "XXX", worksetSize, numQPs);
@@ -153,7 +155,6 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       // the order these are called is important:
-      updateTemperatureChange(cell,qp);
       update_dfdT(cell,qp);
       updateSaturations(cell,qp);
     }
@@ -187,18 +188,6 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
   //
-  // Updates the change in temperature since last time step.
-  //
-template <typename EvalT, typename Traits>
-void HeatEqnResidual<EvalT, Traits>::
-updateTemperatureChange(std::size_t cell, std::size_t qp) 
-{
-  delTemp_(cell,qp) = Temperature(cell,qp) - Temperature_old_(cell,qp);
-  
-  return;
-}
-
-  //
   // Updates the freezing curve slope.
   //
 template <typename EvalT, typename Traits>
@@ -209,7 +198,8 @@ update_dfdT(std::size_t cell, std::size_t qp)
   f_evaluated = 0.0;
   
   f_evaluated = evaluateFreezingCurve(cell, qp);
-  dfdT_(cell, qp) = (f_evaluated - f_old_(cell, qp)) / delTemp_(cell, qp);
+  dfdT_(cell, qp) = (f_evaluated - f_old_(cell, qp)) / 
+                    delta_temperature_(cell, qp);
   
   // swap old and new temperatures now:
   Temperature_old_(cell,qp) = Temperature(cell,qp);
@@ -224,8 +214,8 @@ template <typename EvalT, typename Traits>
 void HeatEqnResidual<EvalT, Traits>::
 updateSaturations(std::size_t cell, std::size_t qp) 
 {
-  f_(cell,qp) += dfdT_(cell,qp) * delTemp_(cell,qp);
-  w_(cell,qp) -= dfdT_(cell,qp) * delTemp_(cell,qp);
+  f_(cell,qp) += dfdT_(cell,qp) * delta_temperature_(cell,qp);
+  w_(cell,qp) -= dfdT_(cell,qp) * delta_temperature_(cell,qp);
   
   // check on realistic bounds:
   f_(cell,qp) = std::max(0.0,f_(cell,qp));

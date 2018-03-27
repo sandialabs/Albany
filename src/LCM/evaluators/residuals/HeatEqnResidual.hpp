@@ -47,9 +47,6 @@ public:
 
   // update functions:
   void
-  updateTemperatureChange(std::size_t cell, std::size_t qp);
-  
-  void
   update_dfdT(std::size_t cell, std::size_t qp);
   
   void
@@ -66,6 +63,7 @@ private:
   PHX::MDField<const ScalarT, Cell, QuadPoint> Temperature;
   PHX::MDField<const ScalarT, Cell, QuadPoint> Tdot;
   PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> TGrad;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> delta_temperature_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> density_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> heat_capacity_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> melting_temperature_;
@@ -86,7 +84,6 @@ private:
   Kokkos::DynRankView<ScalarT, PHX::Device> heat_flux_;
   Kokkos::DynRankView<ScalarT, PHX::Device> accumulation_;
   Kokkos::DynRankView<ScalarT, PHX::Device> Temperature_old_;
-  Kokkos::DynRankView<ScalarT, PHX::Device> delTemp_;
   Kokkos::DynRankView<ScalarT, PHX::Device> dfdT_;
   Kokkos::DynRankView<ScalarT, PHX::Device> f_;
   Kokkos::DynRankView<ScalarT, PHX::Device> w_;
