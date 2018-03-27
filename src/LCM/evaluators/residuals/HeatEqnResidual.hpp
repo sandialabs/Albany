@@ -90,7 +90,6 @@ private:
   Kokkos::DynRankView<ScalarT, PHX::Device> accumulation_;
   Kokkos::DynRankView<ScalarT, PHX::Device> Temperature_old_;
   Kokkos::DynRankView<ScalarT, PHX::Device> delTemp_;
-  Kokkos::DynRankView<ScalarT, PHX::Device> Tmelt_;
   Kokkos::DynRankView<ScalarT, PHX::Device> dfdT_;
   Kokkos::DynRankView<ScalarT, PHX::Device> f_;
   Kokkos::DynRankView<ScalarT, PHX::Device> w_;

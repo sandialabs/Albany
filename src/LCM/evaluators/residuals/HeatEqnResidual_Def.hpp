@@ -127,8 +127,6 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &f
     Temperature.get_view(), "XXX", worksetSize, numQPs);
   delTemp_ = Kokkos::createDynRankView(
     Temperature.get_view(), "XXX", worksetSize, numQPs);
-  Tmelt_ = Kokkos::createDynRankView(
-    Temperature.get_view(), "XXX", worksetSize, numQPs);
   dfdT_ = Kokkos::createDynRankView(
     Temperature.get_view(), "XXX", worksetSize, numQPs);
   f_ = Kokkos::createDynRankView(
@@ -256,10 +254,10 @@ evaluateFreezingCurve(std::size_t cell, std::size_t qp)
   T_range = 1.0;  // temperature range over which phase change occurs
   
   ScalarT
-  T_low = Tmelt_(cell,qp) - (T_range/2.0);
+  T_low = melting_temperature_(cell,qp) - (T_range/2.0);
   
   ScalarT
-  T_high = Tmelt_(cell,qp) + (T_range/2.0);
+  T_high = melting_temperature_(cell,qp) + (T_range/2.0);
   
   // completely frozen
   if (Temperature(cell,qp) <= T_low) {
