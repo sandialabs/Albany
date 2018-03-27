@@ -174,6 +174,14 @@ ConstitutiveModelParameters<EvalT, Traits>::ConstitutiveModelParameters(
     field_map_.insert(std::make_pair(ace_k_str, thermal_conductivity_));
     parseParameters(ace_k_str, p, paramLib);
   }
+  // ACE thermal inertia
+  std::string chi_str("ACE Thermal Inertia");
+  if (mat_params->isSublist(chi_str)) {
+    thermal_inertia_ =
+        decltype(thermal_inertia_)(chi_str, dl_->qp_scalar);
+    field_map_.insert(std::make_pair(chi_str, thermal_inertia_));
+    parseParameters(chi_str, p, paramLib);
+  }
   // ACE ice saturation
   std::string isat_str("ACE Ice Saturation");
   if (mat_params->isSublist(isat_str)) {

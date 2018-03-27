@@ -80,8 +80,10 @@
 #include "ACEheatCapacity.hpp"
 #include "ACEiceSaturation.hpp"
 #include "ACEporosity.hpp"
-#include "ACEwaterSaturation.hpp"
 #include "ACEthermalConductivity.hpp"
+#include "ACEthermalInertia.hpp"
+#include "ACEwaterSaturation.hpp"
+
 
 #ifdef ALBANY_CONTACT
 // Contact evaluator

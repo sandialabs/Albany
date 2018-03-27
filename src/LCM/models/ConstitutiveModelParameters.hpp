@@ -113,6 +113,7 @@ class ConstitutiveModelParameters
   PHX::MDField<ScalarT, Cell, QuadPoint> heat_capacity_;
   PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
   PHX::MDField<ScalarT, Cell, QuadPoint> thermal_conductivity_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> thermal_inertia_;
   PHX::MDField<ScalarT, Cell, QuadPoint> water_saturation_;
   PHX::MDField<ScalarT, Cell, QuadPoint> porosity_;
 
