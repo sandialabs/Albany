@@ -13,10 +13,12 @@ namespace LCM {
 
 template <typename EvalT, typename Traits>
 ACEiceSaturation<EvalT, Traits>::ACEiceSaturation(
-  Teuchos::ParameterList& p)
-    : ice_saturation_(
-          p.get<std::string>("ACE Ice Saturation"),
-          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
+    Teuchos::ParameterList&              p,
+    const Teuchos::RCP<Albany::Layouts>& dl)
+    : ice_saturation_(  // evaluated
+          p.get<std::string>("ACE Ice Saturation"), dl->qp_scalar),
+      delta_temperature_(  // dependent
+          p.get<std::string>("ACE Temperature Change"), dl->qp_scalar)
 {
   Teuchos::ParameterList* iceSaturation_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
@@ -44,7 +46,8 @@ ACEiceSaturation<EvalT, Traits>::ACEiceSaturation(
   this->addEvaluatedField(ice_saturation_);
   
   // List dependent fields
-  
+  this->addEvaluatedField(delta_temperature_);  
+
   this->setName("ACE Ice Saturation" + PHX::typeAsString<EvalT>());
 }
 
@@ -57,6 +60,7 @@ ACEiceSaturation<EvalT, Traits>::postRegistrationSetup(
 {
   // List all fields
   this->utils.setFieldData(ice_saturation_, fm);
+  this->utils.setFieldData(delta_temperature_, fm);
   return;
 }
 
@@ -68,10 +72,12 @@ ACEiceSaturation<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   int num_cells = workset.numCells;
+  double temp_dfdT = 0.02;
 
   for (int cell = 0; cell < num_cells; ++cell) {
     for (int qp = 0; qp < num_qps_; ++qp) {
-      ice_saturation_(cell, qp) = 1.0;      
+      ice_saturation_(cell, qp) += 
+          temp_dfdT * delta_temperature_(cell, qp);     
       // check on realistic bounds
       ice_saturation_(cell, qp) = std::max(0.0, ice_saturation_(cell, qp));
       ice_saturation_(cell, qp) = std::min(

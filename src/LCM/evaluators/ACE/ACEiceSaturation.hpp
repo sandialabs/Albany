@@ -30,7 +30,9 @@ class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
   ///
   /// Constructor
   ///
-  ACEiceSaturation(Teuchos::ParameterList& p);
+  ACEiceSaturation(
+      Teuchos::ParameterList&              p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
   ///
   /// Phalanx method to allocate space
@@ -69,6 +71,9 @@ class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
   ///
   PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
   
+  // MDFields that ice saturation depends on
+  PHX::MDField<ScalarT, Cell, QuadPoint> delta_temperature_;
+
   ///
   /// Contains the initial ice saturation value
   ///
