@@ -62,7 +62,8 @@ class ACEtemperatureChange
   int num_dims_{0};
   
   // MDField  that aid temperature change calculation
-  PHX::MDField<bool, Cell, QuadPoint> temperature_old_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> Temperature;
+  PHX::MDField<ScalarT, Cell, QuadPoint> temperature_old_;
   PHX::MDField<bool, Cell, QuadPoint> temp_increasing_;
   PHX::MDField<bool, Cell, QuadPoint> temp_decreasing_;
 

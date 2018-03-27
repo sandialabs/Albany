@@ -18,7 +18,7 @@ ACEtemperatureChange<EvalT, Traits>::ACEtemperatureChange(
     : delta_temperature_(  // evaluated
           p.get<std::string>("ACE Temperature Change"), dl->qp_scalar),
       Temperature(  // dependent
-          p.get<std::string>("QP Temperature"), dl->qp_scalar)
+          p.get<std::string>("Temperature Name"), dl->qp_scalar)
 {
   Teuchos::ParameterList* temperatureChange_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
@@ -57,7 +57,8 @@ ACEtemperatureChange<EvalT, Traits>::postRegistrationSetup(
     PHX::FieldManager<Traits>& fm)
 {
   // List all fields
-  this->utils.setFieldData(temperature_change_, fm);
+  this->utils.setFieldData(delta_temperature_, fm);
+  this->utils.setFieldData(Temperature, fm);
   return;
 }
 

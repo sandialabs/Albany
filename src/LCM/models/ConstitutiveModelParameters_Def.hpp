@@ -211,6 +211,14 @@ ConstitutiveModelParameters<EvalT, Traits>::ConstitutiveModelParameters(
     field_map_.insert(std::make_pair(tmelt_str, melting_temperature_));
     parseParameters(tmelt_str, p, paramLib);
   }
+  // ACE temperature change
+  std::string delT_str("ACE Temperature Change");
+  if (mat_params->isSublist(delT_str)) {
+    delta_temperature_ =
+        decltype(delta_temperature_)(delT_str, dl_->qp_scalar);
+    field_map_.insert(std::make_pair(delT_str, delta_temperature_));
+    parseParameters(delT_str, p, paramLib);
+  }
 
 
   // register evaluated fields
