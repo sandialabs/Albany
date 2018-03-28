@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "ACEtemperatureChange.hpp"
-#include "ACEtemperatureChange_Def.hpp"
+#include "ACEfreezingCurve.hpp"
+#include "ACEfreezingCurve_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ACEtemperatureChange)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ACEfreezingCurve)

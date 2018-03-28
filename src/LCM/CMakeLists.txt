@@ -96,6 +96,7 @@ ENDIF(ALBANY_HAVE_STK)
 # LCM ACE evaluators
 set(ace-sources
   "${LCM_DIR}/evaluators/ACE/ACEdensity.cpp"
+  "${LCM_DIR}/evaluators/ACE/ACEfreezingCurve.cpp"
   "${LCM_DIR}/evaluators/ACE/ACEheatCapacity.cpp"
   "${LCM_DIR}/evaluators/ACE/ACEiceSaturation.cpp"
   "${LCM_DIR}/evaluators/ACE/ACEmeltingTemperature.cpp"
@@ -108,6 +109,8 @@ set(ace-sources
 set(ace-headers
   "${LCM_DIR}/evaluators/ACE/ACEdensity.hpp"
   "${LCM_DIR}/evaluators/ACE/ACEdensity_Def.hpp"
+  "${LCM_DIR}/evaluators/ACE/ACEfreezingCurve.hpp"
+  "${LCM_DIR}/evaluators/ACE/ACEfreezingCurve_Def.hpp"
   "${LCM_DIR}/evaluators/ACE/ACEheatCapacity.hpp"
   "${LCM_DIR}/evaluators/ACE/ACEheatCapacity_Def.hpp"
   "${LCM_DIR}/evaluators/ACE/ACEiceSaturation.hpp"

@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #if !defined(ACEtemperatureChange_hpp)
-#define ACEtemperatureChange_hpp
+#define ACEfreezingCurve_hpp
 
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -18,20 +18,20 @@
 
 namespace LCM {
 ///
-/// Evaluates the temperature change at integration points
+/// Evaluates the freezing curve at integration points
 ///
 template <typename EvalT, typename Traits>
-class ACEtemperatureChange 
-   : public PHX::EvaluatorWithBaseImpl<Traits>,
-     public PHX::EvaluatorDerived<EvalT, Traits>,
-     public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+class ACEfreezingCurve 
+    : public PHX::EvaluatorWithBaseImpl<Traits>,
+      public PHX::EvaluatorDerived<EvalT, Traits>,
+      public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
  public:
   using ScalarT = typename EvalT::ScalarT;
 
   ///
   /// Constructor
   ///
-  ACEtemperatureChange(
+  ACEfreezingCurve(
       Teuchos::ParameterList&              p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
@@ -44,10 +44,16 @@ class ACEtemperatureChange
       PHX::FieldManager<Traits>& vm);
 
   ///
-  /// Calculates temperature change since last timestep
+  /// Calculates the freezing curve and evaluated ice saturation
   ///
   void
   evaluateFields(typename Traits::EvalData workset);
+  
+  ///
+  /// Sacado method to access parameters
+  ///
+  ScalarT&
+  getValue(const std::string& n);
 
  private:
    
@@ -61,18 +67,28 @@ class ACEtemperatureChange
   ///
   int num_dims_{0};
   
-  // MDField  that aid temperature change calculation
+  // MDField  that aid freezing curve calculations
   PHX::MDField<ScalarT, Cell, QuadPoint> Temperature;
-  PHX::MDField<ScalarT, Cell, QuadPoint> temperature_old_;
-  PHX::MDField<bool, Cell, QuadPoint> temp_increasing_;
-  PHX::MDField<bool, Cell, QuadPoint> temp_decreasing_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> melting_temperature_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> delta_temperature_;
 
   ///
-  /// Contains the temperature change
+  /// Contains the evaluated ice saturation
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint> delta_temperature_{0.0};
+  PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_evaluated_;
+  
+  ///
+  /// Contains the evaluated freezing curve slope
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> dfdT_;
+  
+  ///
+  /// Temperature range over which phase change can occur
+  ///
+  ScalarT
+  temperature_range_{1.0};
 
 };
 }  // namespace LCM
 
-#endif  // ACEtemperatureChange_hpp
+#endif  // ACEfreezingCurve_hpp
