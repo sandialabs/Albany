@@ -80,7 +80,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (int qp = 0; qp < num_qps_; ++qp) {
   
       ScalarT const
-      sal = salinity_(cell, qp);
+      //sal = salinity_(cell, qp); salinity residual not written yet
+      sal = 0.10;
     
       ScalarT const
       sal15 = std::sqrt(sal * sal * sal);
