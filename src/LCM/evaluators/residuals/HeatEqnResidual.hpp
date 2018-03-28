@@ -48,10 +48,7 @@ public:
   // update functions:
   void
   update_dfdT(std::size_t cell, std::size_t qp);
-  
-  void
-  updateSaturations(std::size_t cell, std::size_t qp);
-  
+    
   // calculation functions:
   ScalarT
   evaluateFreezingCurve(std::size_t cell, std::size_t qp);
@@ -85,9 +82,6 @@ private:
   Kokkos::DynRankView<ScalarT, PHX::Device> accumulation_;
   Kokkos::DynRankView<ScalarT, PHX::Device> Temperature_old_;
   Kokkos::DynRankView<ScalarT, PHX::Device> dfdT_;
-  Kokkos::DynRankView<ScalarT, PHX::Device> f_;
-  Kokkos::DynRankView<ScalarT, PHX::Device> w_;
-  Kokkos::DynRankView<ScalarT, PHX::Device> f_old_;
 };
 
 } // namespace LCM

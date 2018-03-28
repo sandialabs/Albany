@@ -131,12 +131,6 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &f
     Temperature.get_view(), "XXX", worksetSize, numQPs);
   dfdT_ = Kokkos::createDynRankView(
     Temperature.get_view(), "XXX", worksetSize, numQPs);
-  f_ = Kokkos::createDynRankView(
-    Temperature.get_view(), "XXX", worksetSize, numQPs);
-  w_ = Kokkos::createDynRankView(
-    Temperature.get_view(), "XXX", worksetSize, numQPs);
-  f_old_ = Kokkos::createDynRankView(
-    Temperature.get_view(), "XXX", worksetSize, numQPs);
 
   return;
 }
@@ -156,7 +150,6 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       // the order these are called is important:
       update_dfdT(cell,qp);
-      updateSaturations(cell,qp);
     }
   }
   
@@ -197,34 +190,15 @@ update_dfdT(std::size_t cell, std::size_t qp)
   ScalarT
   f_evaluated = 0.0;
   
+  ScalarT
+  f_old = 0.0;
+  
   f_evaluated = evaluateFreezingCurve(cell, qp);
-  dfdT_(cell, qp) = (f_evaluated - f_old_(cell, qp)) / 
+  dfdT_(cell, qp) = (f_evaluated - f_old) / 
                     delta_temperature_(cell, qp);
   
   // swap old and new temperatures now:
   Temperature_old_(cell,qp) = Temperature(cell,qp);
-
-  return;
-}
-
-  //
-  // Updates the ice and water saturations.
-  //
-template <typename EvalT, typename Traits>
-void HeatEqnResidual<EvalT, Traits>::
-updateSaturations(std::size_t cell, std::size_t qp) 
-{
-  f_(cell,qp) += dfdT_(cell,qp) * delta_temperature_(cell,qp);
-  w_(cell,qp) -= dfdT_(cell,qp) * delta_temperature_(cell,qp);
-  
-  // check on realistic bounds:
-  f_(cell,qp) = std::max(0.0,f_(cell,qp));
-  f_(cell,qp) = std::min(1.0,f_(cell,qp));
-  w_(cell,qp) = std::max(0.0,w_(cell,qp));
-  w_(cell,qp) = std::min(1.0,w_(cell,qp));
-  
-  // swap old and new saturations now:
-  f_old_(cell,qp) = f_(cell,qp);
 
   return;
 }
