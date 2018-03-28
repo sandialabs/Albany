@@ -111,6 +111,7 @@ class ConstitutiveModelParameters
   ///  ACE parameters
   PHX::MDField<ScalarT, Cell, QuadPoint> delta_temperature_;
   PHX::MDField<ScalarT, Cell, QuadPoint> density_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> dfdT_;
   PHX::MDField<ScalarT, Cell, QuadPoint> heat_capacity_;
   PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
   PHX::MDField<ScalarT, Cell, QuadPoint> melting_temperature_;

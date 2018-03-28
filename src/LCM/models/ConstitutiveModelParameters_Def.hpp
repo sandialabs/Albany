@@ -219,6 +219,13 @@ ConstitutiveModelParameters<EvalT, Traits>::ConstitutiveModelParameters(
     field_map_.insert(std::make_pair(delT_str, delta_temperature_));
     parseParameters(delT_str, p, paramLib);
   }
+  // ACE freezing curve slope
+  std::string dfdT_str("ACE Freezing Curve Slope");
+  if (mat_params->isSublist(dfdT_str)) {
+    dfdT_ = decltype(dfdT_)(dfdT_str, dl_->qp_scalar);
+    field_map_.insert(std::make_pair(dfdT_str, dfdT_));
+    parseParameters(dfdT_str, p, paramLib);
+  }
 
 
   // register evaluated fields
