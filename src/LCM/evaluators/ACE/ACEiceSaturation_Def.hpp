@@ -76,12 +76,17 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (int cell = 0; cell < num_cells; ++cell) {
     for (int qp = 0; qp < num_qps_; ++qp) {
+      
       ice_saturation_(cell, qp) += 
-          temp_dfdT * delta_temperature_(cell, qp);     
+          temp_dfdT * delta_temperature_(cell, qp);
+          
       // check on realistic bounds
       ice_saturation_(cell, qp) = std::max(0.0, ice_saturation_(cell, qp));
       ice_saturation_(cell, qp) = std::min(
           max_ice_saturation_, ice_saturation_(cell, qp));
+      
+      // swap ice saturations
+      ice_saturation_old_(cell, qp) = ice_saturation_(cell, qp); 
     }
   }
 

@@ -77,12 +77,17 @@ class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
   ///
   /// Contains the initial ice saturation value
   ///
-  ScalarT ice_saturation_init_{1.0};
+  ScalarT ice_saturation_init_{0.95};
   
   ///
   /// Contains the maximum ice saturation value
   ///
   ScalarT max_ice_saturation_{0.95};
+
+  ///
+  /// Contains the ice saturation from last timestep
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_old_;
 
 };
 }  // namespace LCM
