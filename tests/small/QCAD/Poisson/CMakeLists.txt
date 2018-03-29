@@ -72,7 +72,7 @@ IF(NOT ALBANY_PARALLEL_ONLY)
 ENDIF()
 
 # Create tests with this name and standard executable
-IF (ALBANY_EPETRA)
+IF (ALBANY_EPETRA AND ALBANY_IOEX)
 add_test(${testRoot}_pmoscap ${Albany.exe} input_pmoscap.xml)
 add_test(${testRoot}_pmoscap_polygate ${Albany.exe} input_pmoscap_polygate.xml)
 add_test(${testRoot}_pmoscap_3D ${Albany.exe} input_pmoscap_3D_itrap.xml)
@@ -88,7 +88,7 @@ ENDIF()
 ## TODO add_test(${testRoot}_pointcharge ${Albany.exe} input_pointcharge_3D.xml)
 ## TODO add_test(${testRoot}_cloudcharge ${Albany.exe} input_cloudcharge_3D.xml)
 
-if (ALBANY_IFPACK2) 
+if (ALBANY_IFPACK2 AND ALBANY_IOEX) 
 add_test(${testRoot}_gaascap_onesc_Tpetra ${AlbanyT.exe} input_gaascap_onescT.xml)
 add_test(${testRoot}_pmoscap_3D_Tpetra ${AlbanyT.exe} input_pmoscap_3D_itrapT.xml)
 add_test(${testRoot}_mosdot_3D_Tpetra ${AlbanyT.exe} input_mosdot_3DT.xml)
@@ -98,7 +98,7 @@ add_test(${testRoot}_pndiode_Tpetra ${AlbanyT.exe} input_pndiodeT.xml)
 add_test(${testRoot}_mosdot_2D_tri6_Tpetra ${AlbanyT.exe} input_mosdot_2D_tri6T.xml)
 endif()
 
-if (ALBANY_MUELU_EXAMPLES)
+if (ALBANY_MUELU_EXAMPLES AND ALBANY_IOEX)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mosdot_3D_tet10T.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_mosdot_3D_tet10T.xml COPYONLY)
     add_test(${testRoot}_mosdot_3D_tet10_Tpetra ${AlbanyT.exe} input_mosdot_3D_tet10T.xml)
