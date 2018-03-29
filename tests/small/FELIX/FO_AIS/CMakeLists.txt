@@ -34,10 +34,10 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 #3. Tests 
 #  First Test
-if (ALBANY_EPETRA) 
+if (ALBANY_EPETRA AND ALBANY_IOEX) 
 add_test(${testName}_16km_ML ${Albany8.exe} inputML3.xml)
-endif(ALBANY_EPETRA)
-if(ALBANY_IFPACK2)
+endif(ALBANY_EPETRA AND ALBANY_IOEX)
+if(ALBANY_IFPACK2 AND ALBANY_IOEX)
 add_test(${testName}_16km_MueLu ${AlbanyT8.exe} inputMueLuShort3.xml)
-endif(ALBANY_IFPACK2)
+endif(ALBANY_IFPACK2 AND ALBANY_IOEX)
 
