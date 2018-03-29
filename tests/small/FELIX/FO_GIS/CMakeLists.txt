@@ -65,7 +65,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km_testT.xml
 if (ALBANY_EPETRA) 
 add_test(${testName}_Gis20km ${Albany.exe} input_fo_gis20km_test.xml)
 ENDIF() 
-if (ALBANY_EPETRA AND ALBANY_IOEX)
+if (ALBANY_EPETRA AND ALBANY_IOPX)
 add_test(${testName}_GisPopulateMeshes ${Albany.exe} input_fo_gis_populate_meshes.xml)
 add_test(${testName}_GisUnstructured ${Albany.exe} input_fo_gis_unstruct.xml)
 set_tests_properties(${testName}_GisUnstructured PROPERTIES DEPENDS ${testName}_GisPopulateMeshes)
