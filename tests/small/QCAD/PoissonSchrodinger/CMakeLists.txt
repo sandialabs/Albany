@@ -24,5 +24,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_ps_integrated_test.xml
 #a problem in get_x_init in the QCAD::CoupledPoissonSchrodinger class that
 #requires further conversion of the QCAD code to Tpetra...
 
+IF (ALBANY_IOEX) 
 add_test(${testRoot}_ps_integrated ${Albany8.exe} input_ps_integrated_test.xml)
+ENDIF() 
 
