@@ -1,0 +1,18 @@
+# .bashrc
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+        . /etc/bashrc
+fi
+
+# User specific aliases and functions
+if [ ! -e ~/.ssh/id_rsa ] ; then
+  echo Generating private/public keypairs
+  ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa -q
+  cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+  chmod 600 ~/.ssh/authorized_keys
+fi
+
+export PATH=$PATH:/home/ikalash/Trilinos/seacas-build/install/bin:/home/ikalash/Install/ParaView-4.4.0-Qt4-Linux-64bit/bin:/home/ikalash/Install/Cubit
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/share/Modules/apps/gcc/5.4.0/install/lib64/
+~                                                                                          
