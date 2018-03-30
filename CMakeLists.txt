@@ -897,6 +897,7 @@ ENDIF()
 # Set optional build of MOR (Model Order Reduction) defaults to OFF
 OPTION(ENABLE_MOR "Flag to turn on MOR Source code" OFF)
 IF (ENABLE_MOR)
+  MESSAGE("-- MOR       is Enabled, compiling with -DALBANY_MOR")
   #Check if RBGen library has been built as a part of Anasazi.
   #If not, throw fatal error - MOR requires RBGen.
   LIST(FIND Trilinos_LIBRARIES rbgen rbgen_List_ID)
@@ -905,7 +906,6 @@ IF (ENABLE_MOR)
     ADD_DEFINITIONS(-DALBANY_RBGEN)
     SET(ALBANY_RBGEN TRUE)
     ADD_DEFINITIONS(-DALBANY_MOR)
-    MESSAGE("-- MOR       is Enabled, compiling with -DALBANY_MOR")
     SET(ALBANY_MOR TRUE)
   ELSE()
     MESSAGE("---- Looking for rbgen library: -- NOT found!")
