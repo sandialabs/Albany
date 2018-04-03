@@ -16,7 +16,7 @@
 namespace LCM {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 DefGrad<EvalT, Traits>::DefGrad(const Teuchos::ParameterList& p)
     : GradU(
           p.get<std::string>("Gradient QP Variable Name"),
@@ -55,7 +55,7 @@ DefGrad<EvalT, Traits>::DefGrad(const Teuchos::ParameterList& p)
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 void
 DefGrad<EvalT, Traits>::postRegistrationSetup(
     typename Traits::SetupData d,
@@ -67,7 +67,7 @@ DefGrad<EvalT, Traits>::postRegistrationSetup(
   this->utils.setFieldData(GradU, fm);
 }
 //**********************************************************************
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 void
 DefGrad<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
@@ -104,17 +104,16 @@ DefGrad<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
       Jbar = 0.0;
       vol  = 0.0;
       for (int qp = 0; qp < numQPs; ++qp) {
-        Jbar += weights(cell, qp) * std::log(J(cell, qp));
+        Jbar += weights(cell, qp) * J(cell, qp);
         vol += weights(cell, qp);
       }
       Jbar /= vol;
 
-      // Jbar = std::exp(Jbar);
       for (int qp = 0; qp < numQPs; ++qp) {
         for (int i = 0; i < numDims; ++i) {
           for (int j = 0; j < numDims; ++j) {
-            wJbar =
-                std::exp((1 - alpha) * Jbar + alpha * std::log(J(cell, qp)));
+            wJbar = std::exp(
+                (1 - alpha) * std::log(Jbar) + alpha * std::log(J(cell, qp)));
             defgrad(cell, qp, i, j) *= std::cbrt(wJbar / J(cell, qp));
           }
         }
@@ -125,4 +124,4 @@ DefGrad<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 }
 
 //**********************************************************************
-}
+}  // namespace LCM
