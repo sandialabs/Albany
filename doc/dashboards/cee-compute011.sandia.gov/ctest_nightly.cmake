@@ -490,6 +490,7 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_AztecOO:BOOL=ON"
   "-DTrilinos_ENABLE_Amesos:BOOL=ON"
   "-DTrilinos_ENABLE_Anasazi:BOOL=ON"
+  "-DAnasazi_ENABLE_RBGen:BOOL=ON"
   "-DTrilinos_ENABLE_Belos:BOOL=ON"
   "-DTrilinos_ENABLE_ML:BOOL=ON"
   "-DTrilinos_ENABLE_Phalanx:BOOL=ON"

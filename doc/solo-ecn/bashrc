@@ -1,0 +1,13 @@
+# .bashrc
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+        . /etc/bashrc
+fi
+
+export PATH=$PATH:/ascldap/users/ikalash/Trilinos/seacas-build/install/bin:/ascldap/users/ikalash/Install/ParaView-4.4.0-Qt4-Linux-64bit/bin:/ascldap/users/ikalash/Install/Cubit:$MPIHOME/bin
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/ikalash/Install/albany_tpls/lib
+
+# User specific aliases and functions
+~                                                

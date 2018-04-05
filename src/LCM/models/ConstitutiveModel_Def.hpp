@@ -103,7 +103,7 @@ class computeVolumeAverageKernel {
         for (int j = 0; j < num_dims_; ++j) sig(i, j) = stress(cell, pt, i, j);
 
       pbar += weights_(cell, pt) * (1. / num_dims_) * minitensor::trace(sig);
-      volume += weights_(cell, pt) * j_(cell, pt);
+      volume += weights_(cell, pt);
     }
 
     pbar /= volume;
@@ -148,7 +148,7 @@ ConstitutiveModel<EvalT, Traits>::computeVolumeAverage(
     for (int pt(0); pt < num_pts; ++pt) {
       sig.fill(stress, cell, pt, 0, 0);
       pbar += weights_(cell, pt) * (1. / num_dims) * minitensor::trace(sig);
-      volume += weights_(cell, pt) * j_(cell, pt);
+      volume += weights_(cell, pt);
     }
 
     pbar /= volume;

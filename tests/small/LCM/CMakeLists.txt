@@ -16,6 +16,7 @@ add_subdirectory(ThermoElasticity2D)
 add_subdirectory(ThermoElasticity3D)
 add_subdirectory(ThermoMechanicalCan)
 add_subdirectory(TransientElasticity2D)
+add_subdirectory(TensionSpecimen)
 add_subdirectory(UnitTests)
 # amota: Deactivating Catalyst as unclear who owns it
 # add_subdirectory(Catalyst)

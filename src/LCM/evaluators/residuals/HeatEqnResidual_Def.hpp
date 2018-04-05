@@ -34,18 +34,6 @@ HeatEqnResidual(
       TGrad(  // dependent
         p.get<std::string>("QP Gradient Variable Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout")),
-      delta_temperature_(  // dependent
-        p.get<std::string>("ACE Temperature Change"), dl->qp_scalar),
-      density_(  // dependent
-        p.get<std::string>("ACE Density"), dl->qp_scalar),
-      heat_capacity_(  // dependent
-        p.get<std::string>("ACE Heat Capacity"), dl->qp_scalar),
-      melting_temperature_(  // dependent
-        p.get<std::string>("ACE Melting Temperature"), dl->qp_scalar),
-      porosity_(  // dependent
-        p.get<std::string>("ACE Porosity"), dl->qp_scalar),
-      pressure_(  // dependent
-        p.get<std::string>("QP Pressure Variable Name"), dl->qp_scalar),
       thermal_conductivity_(  // dependent
         p.get<std::string>("ACE Thermal Conductivity"), dl->qp_scalar),
       thermal_inertia_(  // dependent
@@ -57,11 +45,6 @@ HeatEqnResidual(
   Teuchos::ParameterList* heatEqnResidual_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
     
-  // Read heat equation parameter values
-  rho_ice_ = heatEqnResidual_list->get<double>("ACE Ice Density");
-  latent_heat_ = 
-    heatEqnResidual_list->get<double>("ACE Latent Heat of Phase Change");
-
   // List dependent fields
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
@@ -69,12 +52,6 @@ HeatEqnResidual(
   this->addDependentField(Tdot);
   this->addDependentField(TGrad);
 
-  this->addDependentField(delta_temperature_);
-  this->addDependentField(density_);
-  this->addDependentField(heat_capacity_);
-  this->addDependentField(melting_temperature_);
-  this->addDependentField(porosity_);
-  this->addDependentField(pressure_);
   this->addDependentField(thermal_conductivity_);
   this->addDependentField(thermal_inertia_);
   
@@ -111,12 +88,6 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &f
   this->utils.setFieldData(Tdot, fm);
   this->utils.setFieldData(TGrad, fm);
 
-  this->utils.setFieldData(delta_temperature_, fm);
-  this->utils.setFieldData(density_, fm);
-  this->utils.setFieldData(heat_capacity_, fm);
-  this->utils.setFieldData(melting_temperature_, fm);
-  this->utils.setFieldData(porosity_, fm);
-  this->utils.setFieldData(pressure_, fm);
   this->utils.setFieldData(thermal_conductivity_, fm);
   this->utils.setFieldData(thermal_inertia_, fm);
 
@@ -126,10 +97,6 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &f
   heat_flux_ = Kokkos::createDynRankView(
     Temperature.get_view(), "XXX", worksetSize, numQPs, numDims);
   accumulation_ = Kokkos::createDynRankView(
-    Temperature.get_view(), "XXX", worksetSize, numQPs);
-  Temperature_old_ = Kokkos::createDynRankView(
-    Temperature.get_view(), "XXX", worksetSize, numQPs);
-  dfdT_ = Kokkos::createDynRankView(
     Temperature.get_view(), "XXX", worksetSize, numQPs);
 
   return;
@@ -144,14 +111,6 @@ HeatEqnResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   using FST = Intrepid2::FunctionSpaceTools<PHX::Device>;
-  
-  // update saturations and thermal properties:
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      // the order these are called is important:
-      update_dfdT(cell,qp);
-    }
-  }
   
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -180,66 +139,6 @@ evaluateFields(typename Traits::EvalData workset)
   return;
 }
 
-  //
-  // Updates the freezing curve slope.
-  //
-template <typename EvalT, typename Traits>
-void HeatEqnResidual<EvalT, Traits>::
-update_dfdT(std::size_t cell, std::size_t qp) 
-{
-  ScalarT
-  f_evaluated = 0.0;
-  
-  ScalarT
-  f_old = 0.0;
-  
-  f_evaluated = evaluateFreezingCurve(cell, qp);
-  dfdT_(cell, qp) = (f_evaluated - f_old) / 
-                    delta_temperature_(cell, qp);
-  
-  // swap old and new temperatures now:
-  Temperature_old_(cell,qp) = Temperature(cell,qp);
 
-  return;
-}
-
-  //
-  // Calculates ice saturation given a temperature from the soil freezing curve.
-  //
-template <typename EvalT, typename Traits>
-typename EvalT::ScalarT 
-HeatEqnResidual<EvalT, Traits>::
-evaluateFreezingCurve(std::size_t cell, std::size_t qp) 
-{
-  ScalarT
-  f_evaluated = 0.0;  // ice saturation
-  
-  ScalarT
-  T_range = 1.0;  // temperature range over which phase change occurs
-  
-  ScalarT
-  T_low = melting_temperature_(cell,qp) - (T_range/2.0);
-  
-  ScalarT
-  T_high = melting_temperature_(cell,qp) + (T_range/2.0);
-  
-  // completely frozen
-  if (Temperature(cell,qp) <= T_low) {
-    f_evaluated = 1.0;
-  }
-  // completely melted
-  if (Temperature(cell,qp) >= T_high) {
-    f_evaluated = 0.0;
-  }
-  // in phase change
-  if ((Temperature(cell,qp) > T_low) && (Temperature(cell,qp) < T_high)) {
-    f_evaluated = -1.0*(Temperature(cell,qp)/T_range) + T_high;
-  }
-  // Note: The freezing curve is a simple linear relationship that is sharp
-  // at the T_low and T_high points. I don't know if this will actually cause
-  // problems or not. If it does, we can try a curved relationship.
-    
-  return f_evaluated;
-}
 
 } // namespace LCM

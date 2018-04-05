@@ -1,0 +1,26 @@
+LCM:
+  ElementBlocks:
+    tension:
+      material: Aluminum
+      Weighted Volume Average J: true
+      Volume Average Pressure: true
+  Materials:
+    Aluminum:
+      Material Model:
+        Model Name: J2 MiniSolver
+      Elastic Modulus:
+        Elastic Modulus Type: Constant
+        Value: 70.0e+09
+      Poissons Ratio:
+        Poissons Ratio Type: Constant
+        Value: 0.36
+      Yield Strength:
+        Yield Strength Type: Constant
+        Value: 250.0e+06
+      Hardening Modulus:
+        Hardening Modulus Type: Constant
+        Value: 7.0e+09
+      Saturation Modulus: 0.0
+      Saturation Exponent: 0.0
+      Output Cauchy Stress: true
+      Output eqps: true

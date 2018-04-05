@@ -9,10 +9,10 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dirichlet.hpp"
-#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 #include "Sacado_ParameterAccessor.hpp"
 #include "Teuchos_ParameterList.hpp"
 
@@ -22,8 +22,7 @@ namespace PHAL {
 /// Strong Dirichlet boundary condition evaluator
 ///
 template<typename EvalT, typename Traits>
-class SDirichlet
-{
+class SDirichlet {
 };
 
 //
@@ -35,12 +34,11 @@ class SDirichlet
 //
 template<typename Traits>
 class SDirichlet<PHAL::AlbanyTraits::Residual, Traits>
-: public PHAL::DirichletBase<PHAL::AlbanyTraits::Residual, Traits>
-{
-public:
-  using ScalarT =  typename PHAL::AlbanyTraits::Residual::ScalarT;
+    : public PHAL::DirichletBase<PHAL::AlbanyTraits::Residual, Traits> {
+ public:
+  using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
 
-  SDirichlet(Teuchos::ParameterList & p);
+  SDirichlet(Teuchos::ParameterList& p);
 
   void
   evaluateFields(typename Traits::EvalData d);
@@ -51,12 +49,11 @@ public:
 //
 template<typename Traits>
 class SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>
-: public PHAL::DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits>
-{
-public:
+    : public PHAL::DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits> {
+ public:
   using ScalarT = typename PHAL::AlbanyTraits::Jacobian::ScalarT;
 
-  SDirichlet(Teuchos::ParameterList & p);
+  SDirichlet(Teuchos::ParameterList& p);
 
   void
   evaluateFields(typename Traits::EvalData d);
@@ -67,12 +64,11 @@ public:
 //
 template<typename Traits>
 class SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>
-: public PHAL::DirichletBase<PHAL::AlbanyTraits::Tangent, Traits>
-{
-public:
+    : public PHAL::DirichletBase<PHAL::AlbanyTraits::Tangent, Traits> {
+ public:
   using ScalarT = typename PHAL::AlbanyTraits::Tangent::ScalarT;
 
-  SDirichlet(Teuchos::ParameterList & p);
+  SDirichlet(Teuchos::ParameterList& p);
 
   void
   evaluateFields(typename Traits::EvalData d);
@@ -83,17 +79,16 @@ public:
 //
 template<typename Traits>
 class SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>
-: public PHAL::DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>
-{
-public:
+    : public PHAL::DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits> {
+ public:
   using ScalarT = typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT;
 
-  SDirichlet(Teuchos::ParameterList & p);
+  SDirichlet(Teuchos::ParameterList& p);
 
   void
   evaluateFields(typename Traits::EvalData d);
 };
 
-} // namespace PHAL
+}  // namespace PHAL
 
-#endif // PHAL_SDirichlet_hpp
+#endif  // PHAL_SDirichlet_hpp

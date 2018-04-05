@@ -73,6 +73,7 @@ class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
   
   // MDFields that ice saturation depends on
   PHX::MDField<ScalarT, Cell, QuadPoint> delta_temperature_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> dfdT_;
 
   ///
   /// Contains the initial ice saturation value
