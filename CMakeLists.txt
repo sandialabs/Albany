@@ -903,6 +903,16 @@ IF (ENABLE_MOR)
   LIST(FIND Trilinos_LIBRARIES rbgen rbgen_List_ID)
   IF (rbgen_List_ID GREATER -1)
     MESSAGE("-- Looking for rbgen library: -- Found, compiling with -DALBANY_RBGEN!  Continuing.")
+    #Check if kokkostsqr library has been built
+    #If not, throw fatal error - MOR requires kokkossqr
+    LIST(FIND Trilinos_LIBRARIES kokkostsqr tsqr_List_ID)
+    IF (tsqr_List_ID GREATER -1)
+      MESSAGE("-- Looking for kokkostqr library: -- Found.")
+    ELSE(tsqr_List_ID GREATER -1)
+      MESSAGE("---- Looking for kokkostsqr library: -- NOT found!")
+      MESSAGE(FATAL_ERROR "\nError:  MOR requires kokkostsqr library.  \n" 
+              "To turn on, rebuild Trilinos with Trilinos_ENABLE_TpetraTSQR turned ON!")
+    ENDIF(tsqr_List_ID GREATER -1)
     ADD_DEFINITIONS(-DALBANY_RBGEN)
     SET(ALBANY_RBGEN TRUE)
     ADD_DEFINITIONS(-DALBANY_MOR)

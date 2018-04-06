@@ -38,7 +38,8 @@ macro(do_trilinos CONFIGURE_OPTIONS BTYPE ILOC)
   endif (CTEST_DO_SUBMIT)
 
   if (HAD_ERROR)
-    message ("Cannot configure Trilinos/SCOREC build!")
+# No sense in going on if Trilinos will not config!
+    message (FATAL_ERROR "Cannot configure Trilinos/SCOREC build!")
   endif (HAD_ERROR)
 
   SET(SEPARATE_BUILD_SCOREC FALSE)
@@ -77,12 +78,14 @@ macro(do_trilinos CONFIGURE_OPTIONS BTYPE ILOC)
     endif (CTEST_DO_SUBMIT)
 
     if (HAD_ERROR)
-      message ("Cannot build SCOREC!")
+# No sense in going on if SCOREC is requested and it will not build!
+      message (FATAL_ERROR "Cannot build SCOREC!")
       set (BUILD_SCOREC FALSE)
     endif (HAD_ERROR)
 
     if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-      message ("Encountered build errors in SCOREC build. Exiting!")
+# No sense in going on if SCOREC is requested and it will not build!
+      message (FATAL_ERROR "Encountered build errors in SCOREC build. Exiting!")
       set (BUILD_SCOREC FALSE)
     endif (BUILD_LIBS_NUM_ERRORS GREATER 0)
 
@@ -128,11 +131,13 @@ macro(do_trilinos CONFIGURE_OPTIONS BTYPE ILOC)
   endif (CTEST_DO_SUBMIT)
 
   if (HAD_ERROR)
-    message ("Cannot build Trilinos!")
+# No sense in going on if Trilinos will not build!
+    message (FATAL_ERROR "Cannot build Trilinos!")
   endif (HAD_ERROR)
 
   if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message ("Encountered build errors in Trilinos build. Exiting!")
+# No sense in going on if Trilinos will not build!
+    message (FATAL_ERROR "Encountered build errors in Trilinos build. Exiting!")
   endif (BUILD_LIBS_NUM_ERRORS GREATER 0)
 
 endmacro(do_trilinos CONFIGURE_OPTIONS BTYPE ILOC)

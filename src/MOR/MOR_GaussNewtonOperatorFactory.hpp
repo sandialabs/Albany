@@ -19,6 +19,10 @@ class Epetra_Operator;
 #include "Teuchos_SerialDenseMatrix.hpp"  //JF
 #include "Epetra_TsqrAdaptor.hpp"  //JF
 
+#if !defined(HAVE_TPETRA_EPETRA) || !defined(HAVE_TPETRA_TSQR)
+#error Both _HAVE_TPETRA_EPETRA_ and _HAVE_TPETRA_TSQR_ must be defined - please turn off MOR or add -DTrilinos_ENABLE_TpetraTSQR:BOOL=ON to your Trilinos build
+#endif
+
 namespace MOR {
 
 template <typename Derived>

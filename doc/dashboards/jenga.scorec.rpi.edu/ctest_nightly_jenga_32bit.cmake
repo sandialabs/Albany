@@ -32,7 +32,7 @@ set( CTEST_BINARY_NAME          build)
 
 SET(PREFIX_DIR /users/ghansen)
 SET(BOOST_DIR /users/mperego/TPL/boost_1_60_0/install)
-SET(YAML_DIR /users/mperego/TPL/yaml/build/install)
+#SET(YAML_DIR /users/mperego/TPL/yaml/build/install)
 
 SET (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 SET (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
@@ -357,6 +357,11 @@ SET(COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_AztecOO:BOOL=ON"
   "-DTrilinos_ENABLE_Amesos:BOOL=ON"
   "-DTrilinos_ENABLE_Anasazi:BOOL=ON"
+  "-DAnasazi_ENABLE_RBGen:BOOL=ON"
+  "-DTrilinos_ENABLE_TpetraTSQR:BOOL=ON"
+  "-DTpetraCore_ENABLE_TSQR:BOOL=ON"
+  "-DAnazazi_ENABLE_TSQR:BOOL=ON"
+  "-DBelos_ENABLE_TSQR:BOOL=ON"
   "-DTrilinos_ENABLE_Belos:BOOL=ON"
   "-DTrilinos_ENABLE_ML:BOOL=ON"
   "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
@@ -402,9 +407,9 @@ SET(COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_STKUnit_tests:BOOL=OFF"
   "-DTrilinos_ENABLE_STKDoc_tests:BOOL=OFF"
   #
-  "-DTPL_ENABLE_yaml-cpp:BOOL=ON"
-  "-Dyaml-cpp_INCLUDE_DIRS:PATH=${YAML_DIR}/include"
-  "-Dyaml-cpp_LIBRARY_DIRS:PATH=${YAML_DIR}/lib"
+#  "-DTPL_ENABLE_yaml-cpp:BOOL=ON"
+#  "-Dyaml-cpp_INCLUDE_DIRS:PATH=${YAML_DIR}/include"
+#  "-Dyaml-cpp_LIBRARY_DIRS:PATH=${YAML_DIR}/lib"
   )
 
 IF(BUILD_TRILINOS)

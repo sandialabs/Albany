@@ -284,7 +284,7 @@ SET(COMMON_CONFIGURE_OPTIONS
   #
   "-DTPL_ENABLE_Zlib:STRING=ON"
   #
-  "-DTPL_ENABLE_yaml-cpp:STRING=ON"
+#  "-DTPL_ENABLE_yaml-cpp:STRING=ON"
   #
   "-DTPL_ENABLE_ParMETIS:STRING=ON"
   #
@@ -321,6 +321,11 @@ SET(COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_AztecOO:BOOL=ON"
   "-DTrilinos_ENABLE_Amesos:BOOL=ON"
   "-DTrilinos_ENABLE_Anasazi:BOOL=ON"
+  "-DAnasazi_ENABLE_RBGen:BOOL=ON"
+  "-DTrilinos_ENABLE_TpetraTSQR:BOOL=ON"
+  "-DTpetraCore_ENABLE_TSQR:BOOL=ON"
+  "-DAnazazi_ENABLE_TSQR:BOOL=ON"
+  "-DBelos_ENABLE_TSQR:BOOL=ON"
   "-DTrilinos_ENABLE_Belos:BOOL=ON"
   "-DTrilinos_ENABLE_ML:BOOL=ON"
   "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
@@ -400,8 +405,8 @@ IF(BUILD_TRILINOS)
   "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-L${PREFIX_DIR}/lib -L${PREFIX_DIR}/lib64 -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lcurl -ldl -Wl,-rpath,${PREFIX_DIR}/lib:${PREFIX_DIR}/lib64:/usr/local/intel/11.1/069/mkl/lib/em64t'"
   "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+#  "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+#  "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
@@ -532,8 +537,8 @@ IF(BUILD_TRILINOSCLANG)
   "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-L${CLANG_BIN_DIR}/lib -L${PREFIX_DIR}/lib64 -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lcurl -ldl -Wl,-rpath,${CLANG_BIN_DIR}/lib:${PREFIX_DIR}/lib64:/usr/local/intel/11.1/069/mkl/lib/em64t'"
   "-DZlib_INCLUDE_DIRS:PATH=${CLANG_BIN_DIR}/include"
   "-DZlib_LIBRARY_DIRS:PATH=${CLANG_BIN_DIR}/lib"
-  "-Dyaml-cpp_INCLUDE_DIRS:PATH=${CLANG_BIN_DIR}/include"
-  "-Dyaml-cpp_LIBRARY_DIRS:PATH=${CLANG_BIN_DIR}/lib"
+#  "-Dyaml-cpp_INCLUDE_DIRS:PATH=${CLANG_BIN_DIR}/include"
+#  "-Dyaml-cpp_LIBRARY_DIRS:PATH=${CLANG_BIN_DIR}/lib"
   "-DParMETIS_INCLUDE_DIRS:PATH=${CLANG_BIN_DIR}/include"
   "-DParMETIS_LIBRARY_DIRS:PATH=${CLANG_BIN_DIR}/lib"
   "-DSuperLU_INCLUDE_DIRS:PATH=${CLANG_BIN_DIR}/SuperLU_4.3/include"
