@@ -512,7 +512,6 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Piro:BOOL=ON"
   "-DTrilinos_ENABLE_Teko:BOOL=ON"
   "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
-  "-DTrilinos_ENABLE_Moertel:BOOL=ON"
   #
   "-DTrilinos_ENABLE_FEI:BOOL=OFF"
   #

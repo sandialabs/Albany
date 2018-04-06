@@ -138,6 +138,26 @@ namespace Albany {
        Teuchos::RCP<std::map<std::string, int> > extruded_params_levels,
        int offsetToFirstDOF=0, std::string scatterName="Scatter") const;
 
+    //! Function to create parameter list for construction of ScatterResidual
+    //! evaluator with standard Field names
+    //! Tensor rank of solution variable is 0, 1, or 2
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructScatterResidualEvaluator(
+       int tensorRank,
+       Teuchos::ArrayRCP<std::string> resid_names,
+       int offsetToFirstDOF=0, std::string scatterName="Scatter") const;
+
+#ifdef ALBANY_CONTACT
+    //! Function to create parameter list for construction of MortarContactResidual
+    //! evaluator with standard Field names
+    //! Tensor rank of solution variable is 0, 1, or 2
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructMortarContactResidualEvaluator(
+       Teuchos::ArrayRCP<std::string> resid_names,
+       int offsetToFirstDOF=0) const;
+
+#endif
+
     //! Function to create parameter list for construction of GatherScalarNodalParameter
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructGatherScalarNodalParameter(
@@ -149,15 +169,6 @@ namespace Albany {
     constructGatherScalarExtruded2DNodalParameter(
         const std::string& param_name,
         const std::string& field_name="") const;
-
-    //! Function to create parameter list for construction of ScatterResidual
-    //! evaluator with standard Field names
-    //! Tensor rank of solution variable is 0, 1, or 2
-    Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructScatterResidualEvaluator(
-       int tensorRank,
-       Teuchos::ArrayRCP<std::string> resid_names,
-       int offsetToFirstDOF=0, std::string scatterName="Scatter") const;
 
     //! Function to create parameter list for construction of DOFInterpolation
     //! evaluator with standard field names

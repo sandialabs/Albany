@@ -21,7 +21,6 @@ MechanicsProblem::MechanicsProblem(
     have_source_(false),
     thermal_source_(SOURCE_TYPE_NONE),
     thermal_source_evaluated_(false),
-    have_contact_(false),
     num_dims_(num_dims),
     have_mech_eq_(false),
     have_temperature_eq_(false),
@@ -56,9 +55,6 @@ MechanicsProblem::MechanicsProblem(
 
   // Are any source functions specified?
   have_source_ = params->isSublist("Source Functions");
-
-  // Is contact specified?
-  have_contact_ = params->isSublist("Contact");
 
   // Is adaptation specified?
   bool

@@ -57,9 +57,9 @@ cmake \
     -D Trilinos_ENABLE_ROL:BOOL=ON \
     -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
     -D Trilinos_ENABLE_ML:BOOL=ON \
-    -D Trilinos_ENABLE_Moertel:BOOL=ON \
-    -D Trilinos_ENABLE_Moertel_TESTS:BOOL=ON \
-    -D Trilinos_ENABLE_Moertel_EXAMPLES:BOOL=ON \
+    -D Trilinos_ENABLE_MueLu:BOOL=ON \
+    -D MueLu_ENABLE_Tutorial:BOOL=OFF \
+    -D Trilinos_ENABLE_Moertel:BOOL=OFF \
     -D Trilinos_ENABLE_NOX:BOOL=ON \
     -D Trilinos_ENABLE_Rythmos:BOOL=ON \
     -D Trilinos_ENABLE_Sacado:BOOL=ON \
@@ -98,7 +98,6 @@ cmake \
     -D Kokkos_ENABLE_Serial:BOOL=ON \
     -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
     -D Kokkos_ENABLE_Pthread:BOOL=OFF \
-    -D Moertel_ENABLE_Morkon:BOOL=OFF \
 \
     -D SEACAS_ENABLE_SEACASSVDI:BOOL=OFF \
     -D Trilinos_ENABLE_SEACASFastq:BOOL=OFF \
@@ -132,15 +131,11 @@ cmake \
 \
     -D TPL_ENABLE_HDF5:STRING=ON \
     -D HDF5_INCLUDE_DIRS:PATH="${HDFDIR}/include" \
-    -D TPL_HDF5_LIBRARY_DIRS:PATH="${HDFDIR}/lib" \
+    -D HDF5_LIBRARY_DIRS:PATH="${HDFDIR}/lib" \
 \
     -D TPL_ENABLE_Zlib:STRING=ON \
     -D Zlib_INCLUDE_DIRS:PATH=$LIB_DIR/include \
-    -D TPL_Zlib_LIBRARY_DIRS:PATH="$LIB_DIR/lib" \
-\
-	-D TPL_ENABLE_yaml-cpp:BOOL=ON \
-	-D yaml-cpp_INCLUDE_DIRS:PATH=$LIB_DIR/include \
-	-D yaml-cpp_LIBRARY_DIRS:PATH=$LIB_DIR/lib \
+    -D Zlib_LIBRARY_DIRS:PATH=$LIB_DIR/lib \
 \
     -D TPL_ENABLE_SuperLU:STRING=ON \
     -D SuperLU_INCLUDE_DIRS:STRING="${SUPERLUDIR}/include" \
@@ -149,7 +144,9 @@ cmake \
     -D TPL_ENABLE_BLAS:STRING=ON \
     -D TPL_ENABLE_LAPACK:STRING=ON \
     -D BLAS_LIBRARY_DIRS:STRING="/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current" \
+    -D BLAS_INCLUDE_DIRS:STRING="/Users/gahanse/Codes/include" \
     -D LAPACK_LIBRARY_DIRS:STRING="/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current" \
+    -D LAPACK_INCLUDE_DIRS:STRING="/Users/gahanse/Codes/include" \
 \
     -D TPL_ENABLE_ParMETIS:STRING=ON \
     -D ParMETIS_INCLUDE_DIRS:PATH="${PARMETISDIR}/include" \

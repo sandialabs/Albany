@@ -23,10 +23,6 @@
 #include "Albany_NodalDOFManager.hpp"
 #include "Albany_AbstractMeshStruct.hpp"
 
-//#ifdef ALBANY_CONTACT
-//#include "Albany_ContactManager.hpp"
-//#endif
-
 namespace Albany {
 
 #ifdef ALBANY_CONTACT

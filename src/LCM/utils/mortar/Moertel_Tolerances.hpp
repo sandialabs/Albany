@@ -4,11 +4,18 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "PHAL_AlbanyTraits.hpp"
 
-#include "MortarContactConstraints.hpp"
-#include "MortarContactConstraints_Def.hpp"
+#ifndef MOERTEL_TOLERANCES_H
+#define MOERTEL_TOLERANCES_H
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MortarContact)
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MortarContactBase)
+namespace MOERTEL
+{
 
+const double Nodes_Identical_Epsilon = 1.0e-15;
+const double Projection_Length_Epsilon = 1.0e-10;
+const double Rough_Search_Radius = 2.5;
+
+
+} // namespace MOERTEL
+
+#endif // MOERTEL_TOLERANCES_H

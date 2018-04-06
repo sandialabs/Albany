@@ -171,20 +171,6 @@ IF (ALBANY_HAVE_STK)
   )
 ENDIF (ALBANY_HAVE_STK)
 
-# LCM contact
-IF (ALBANY_CONTACT)
-  set(contact-sources
-    "${LCM_DIR}/evaluators/contact/MortarContactConstraints.cpp"
-    "${LCM_DIR}/evaluators/contact/MortarContactResidual.cpp"
-  )
-  set(contact-headers
-    "${LCM_DIR}/evaluators/contact/MortarContactConstraints_Def.hpp"
-    "${LCM_DIR}/evaluators/contact/MortarContactConstraints.hpp"
-    "${LCM_DIR}/evaluators/contact/MortarContactResidual_Def.hpp"
-    "${LCM_DIR}/evaluators/contact/MortarContactResidual.hpp"
-  )
-ENDIF (ALBANY_CONTACT)
-
 # LCM HMC evaluators
 set(hmc-sources
   "${LCM_DIR}/evaluators/HMC/HMC_MicroResidual.cpp"
@@ -653,7 +639,6 @@ set(SOURCES ${SOURCES}
   ${models-sources}
   ${utils-sources}
   ${topology-sources}
-  ${contact-sources}
   ${residual-sources}
   ${lin-sources}
   ${proj-sources}
@@ -675,7 +660,6 @@ set(HEADERS ${HEADERS}
   ${models-headers}
   ${utils-headers}
   ${topology-headers}
-  ${contact-headers}
   ${residual-headers}
   ${lin-headers}
   ${proj-headers}
@@ -727,7 +711,6 @@ set(INCLUDE_DIRS
   ${LCM_DIR}/evaluators
   ${LCM_DIR}/evaluators/ACE
   ${LCM_DIR}/evaluators/bc
-  ${LCM_DIR}/evaluators/contact
   ${LCM_DIR}/evaluators/HMC
   ${LCM_DIR}/evaluators/kinematics
   ${LCM_DIR}/evaluators/lame

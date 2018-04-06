@@ -67,12 +67,19 @@ class ContactManager {
     //! Destructor
     virtual ~ContactManager() {}
 
+    void fillInMortarResidual(const int, Teuchos::ArrayRCP<ST>&);
+
   private:
 
     ContactManager();
 
+    typedef Teuchos::Array<Teuchos::Array<GO> > WorksetContactNodes;
+
+    WorksetContactNodes masterNodeGIDs;
+    WorksetContactNodes slaveNodeGIDs;
+
     void processSS(const int ctr, const std::string& sideSetName, int s_or_mortar,
-         int mortarside, std::ofstream& stream );
+         int mortarside, WorksetContactNodes&, std::ofstream& stream );
 
     Teuchos::RCP<Teuchos::ParameterList> params;
 

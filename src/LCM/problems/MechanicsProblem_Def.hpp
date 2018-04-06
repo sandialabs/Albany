@@ -90,7 +90,7 @@
 
 #ifdef ALBANY_CONTACT
 // Contact evaluator
-#include "MortarContactConstraints.hpp"
+#include "PHAL_MortarContactResidual.hpp"
 #endif
 
 namespace Albany {
@@ -547,6 +547,12 @@ MechanicsProblem::constructEvaluators(
 
     fm0.template registerEvaluator<EvalT>(
         evalUtils.constructScatterResidualEvaluator(true, resid_names));
+
+#ifdef ALBANY_CONTACT
+    fm0.template registerEvaluator<EvalT>(
+        evalUtils.constructMortarContactResidualEvaluator(resid_names));
+#endif
+
     offset += num_dims_;
   } else if (have_mech_) {  // constant configuration
 
@@ -2612,35 +2618,6 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  // Evaluate contact contributions
-
-  if (have_contact_) {  // create the contact evaluator to fill in the
-#ifdef ALBANY_CONTACT
-    Teuchos::ParameterList &
-    paramList = params->sublist("Contact");
-
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList);
-
-    p->set<const MeshSpecsStruct*>("Mesh Specs Struct", &meshSpecs);
-    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-
-    p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
-
-    p->set<std::string>("M Name", "M");
-
-    ev = Teuchos::rcp(
-        new LCM::MortarContact<EvalT, PHAL::AlbanyTraits>(*p, dl_));
-    fm0.template registerEvaluator<EvalT>(ev);
-#else   // ! defined ALBANY_CONTACT
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::logic_error,
-        "A contact problem is being created, but ALBANY_CONTACT is not "
-        "defined. "
-        "Use the flag -D ENABLE_CONTACT:BOOL=ON in your Albany configuration.");
-#endif  // ALBANY_CONTACT
-  }
-
   // Transport of the temperature field
   if (have_temperature_eq_ && !surface_element) {
 
@@ -2689,12 +2666,6 @@ MechanicsProblem::constructEvaluators(
     if (thermal_source_evaluated_) {
       p->set<bool>("Have Second Source", true);
       p->set<std::string>("Second Source Name", "Heat Source");
-    }
-
-    if (have_contact_) {  // Pass M to the heat eqn for thermal fluxes between
-                          // surfaces
-      p->set<bool>("Have Contact", true);
-      p->set<std::string>("M Name", "M");
     }
 
     // Output

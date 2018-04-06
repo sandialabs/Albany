@@ -412,7 +412,6 @@ SET(CONFIGURE_OPTIONS
   "-DTrilinos_EXTRA_LINK_FLAGS='-L${NETCDF_DIR}/lib -lnetcdf -lhdf5_hl -lhdf5 -lz'"
   "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
 #
-  "-DTrilinos_ENABLE_Moertel:BOOL=OFF"
   "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
   "-DTPL_ENABLE_X11:BOOL=OFF"
   "-DTPL_ENABLE_Matio:BOOL=OFF"

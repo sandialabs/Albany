@@ -103,7 +103,8 @@ Albany::ContactManager::ContactManager(const Teuchos::RCP<Teuchos::ParameterList
   // Loop over all the master interfaces
   for(int pair = 0; pair < number_of_mortar_pairs; pair++){
 
-      processSS(interface_ctr, slaveSideNames[pair], 0 /* Slave side */, mortarside, sfile);
+      processSS(interface_ctr, slaveSideNames[pair], 0 /* Slave side */, mortarside, 
+           slaveNodeGIDs, sfile);
 
       interface_ctr++;
 
@@ -112,7 +113,8 @@ Albany::ContactManager::ContactManager(const Teuchos::RCP<Teuchos::ParameterList
   // Loop over all the slave interfaces
   for(int pair = 0; pair < number_of_mortar_pairs; pair++){
 
-      processSS(interface_ctr, masterSideNames[pair], 1 /* mortar side */, nonmortarside, mfile);
+      processSS(interface_ctr, masterSideNames[pair], 1 /* mortar side */, nonmortarside, 
+           masterNodeGIDs, mfile);
 
       interface_ctr++;
 
@@ -150,7 +152,7 @@ Albany::ContactManager::ContactManager(const Teuchos::RCP<Teuchos::ParameterList
 // Process all the contact surfaces and insert the data into a Moertel Interface
 void
 Albany::ContactManager::processSS(const int ctr, const std::string& sideSetName, int s_or_mortar, 
-         int mortarside, std::ofstream& stream ){
+         int mortarside, WorksetContactNodes& nodeGIDs, std::ofstream& stream ){
 
   // one interface per side set name
   Teuchos::RCP<MoertelT::InterfaceT<ST, LO, Tpetra_GO, KokkosNode> > moertelInterface
@@ -167,7 +169,11 @@ Albany::ContactManager::processSS(const int ctr, const std::string& sideSetName,
 
   // Loop over all the worksets, and put the sides in the Moertel Interface Obj
 
-  for(int workset = 0; workset < disc.getWsElNodeID().size(); workset++){
+  int numWorksets =  disc.getWsElNodeID().size();
+
+  nodeGIDs.resize(numWorksets);
+
+  for(int workset = 0; workset < numWorksets; workset++){
 
     const Albany::SideSetList& ssList = disc.getSideSets(workset);
 
@@ -216,8 +222,9 @@ Albany::ContactManager::processSS(const int ctr, const std::string& sideSetName,
           LO lnodeId = disc.getMapT()->getLocalElement(elNodeID[node]);
           GO gnodeId = disc.getMapT()->getGlobalElement(elNodeID[node]);
           nodev[i] = gnodeId;
-          const double coords[] = { coordArray[3 * lnodeId],
-               coordArray[3 * lnodeId + 1], 0.0 }; // Moertel node is 3 coords
+          double *coords = &coordArray[3 * lnodeId]; // location of the first coordinate
+//          const double coords[] = { coordArray[3 * lnodeId],
+//               coordArray[3 * lnodeId + 1], 0.0 }; // Moertel node is 3 coords
 //          const double coords[] = { coordArray[3 * lnodeId],
 //               coordArray[3 * lnodeId + 1], coordArray[3 * lnodeid + 2] }; // Moertel node is 3 coords
           stream << "         node_LID = " << lnodeId << "   node_GID = " << gnodeId << "    node = " << node << std::endl;
@@ -229,6 +236,8 @@ Albany::ContactManager::processSS(const int ctr, const std::string& sideSetName,
 //          const Teuchos::ArrayRCP<GO>& elNodeID = disc.getWsElNodeID()[workset][elem_LID];
 
           if (ret.second == true) { // this is a as yet unregistered node. add it
+
+            nodeGIDs[workset].push_back(gnodeId);
 
             std::vector<int> list_of_dofgid;
 
@@ -244,7 +253,8 @@ Albany::ContactManager::processSS(const int ctr, const std::string& sideSetName,
                                        list_of_dofgid.size(),
                                        &list_of_dofgid[0],
                                        on_boundary,
-                                       printLevel);
+                                       printLevel,
+                                       2);
 
             std::cout << "Adding node: " << gnodeId << "  to interface: " << ctr << std::endl;
             moertelInterface->AddNode(moertel_node, contact_pair_id);
@@ -269,77 +279,12 @@ Albany::ContactManager::processSS(const int ctr, const std::string& sideSetName,
 
 }
 
+// Fill in residual from M&D
+void
+Albany::ContactManager::fillInMortarResidual(const int ws,  Teuchos::ArrayRCP<ST>& resid){
 
+//  Teuchos::Array<GO> masterNodeGIDs& = contactManager->masterNodeGIDs[ws];
+//  Teuchos::Array<GO> slaveNodeGIDs& = contactManager->slaveNodeGIDs[ws];
 
-
-
-
- #if 0
-
-  // Loop over the slave sides and construct moertel nodes/faces and interface
-      for (std::size_t cell=0; cell < workset.numCells; ++cell)
-       for (std::size_t node=0; node < numNodes; ++node)
-         for (std::size_t dim=0; dim < 3; ++dim)
-             neumann(cell, node, dim) = 0.0; // zero out the accumulation vector
-
-      const std::vector<Albany::SideStruct>& theSideSet = int_set_it->second;
-
-      // Loop over the sides that form the boundary condition
-      std::cout << "size of sideset array in workset = " << theSideSet.size() << std::endl;
-
-         for (std::size_t side=0; side < theSideSet.size(); ++side) { // loop over the sides on this ws and name
-
-           // Get the data that corresponds to the side.
-
-           const int elem_GID = theSideSet[side].elem_GID; // GID of the element that contains the master segment
-           const int elem_LID = theSideSet[side].elem_LID; // LID (numbered from zero) id of the master segment on this processor
-           const int elem_side = theSideSet[side].side_local_id; // which edge of the element the side is (cf. exodus manual)?
-           const int elem_block = theSideSet[side].elem_ebIndex; // which  element block is the element in?
-
-           std::cout << "side = " << side << std::endl;
-           std::cout << "    element that owns side GID = " << elem_GID << std::endl;
-           std::cout << "    element that owns side LID = " << elem_LID << std::endl;
-           std::cout << "    side, local ID inside element = " << elem_side << std::endl;
-           std::cout << "    element block side is in = " << elem_block << std::endl << std::endl;
-
-
-         }
-#endif
-
-
-  // Then assemble the DOFs (flux, traction) at the slaves into the master side local elements
-
-#if 0  // Here is the assemble code, more or less
-
-  auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
-
-  //get nonconst (read and write) view of fT
-  Teuchos::ArrayRCP<ST> f_nonconstView = fT->get1dViewNonConst();
-
-  if (this->tensorRank == 0) {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      for (std::size_t node = 0; node < this->numNodes; ++node)
-        for (std::size_t eq = 0; eq < numFields; eq++)
-          f_nonconstView[nodeID(cell,node,this->offset + eq)] += (this->val[eq])(cell,node);
-    }
-  } else
-  if (this->tensorRank == 1) {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      for (std::size_t node = 0; node < this->numNodes; ++node)
-        for (std::size_t eq = 0; eq < numFields; eq++)
-          f_nonconstView[nodeID(cell,node,this->offset + eq)] += (this->valVec[0])(cell,node,eq);
-    }
-  } else
-  if (this->tensorRank == 2) {
-    int numDims = this->valTensor[0].dimension(2);
-    for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      for (std::size_t node = 0; node < this->numNodes; ++node)
-        for (std::size_t i = 0; i < numDims; i++)
-          for (std::size_t j = 0; j < numDims; j++)
-            f_nonconstView[nodeID(cell,node,this->offset + i*numDims + j)] += (this->valTensor[0])(cell,node,i,j);
-
-    }
-  }
-#endif
+}
 

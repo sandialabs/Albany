@@ -225,10 +225,6 @@ protected:
   bool
   thermal_source_evaluated_;
 
-  /// Is this a contact problem?
-  bool
-  have_contact_;
-
   /// num of dimensions
   int
   num_dims_;

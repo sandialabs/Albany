@@ -4,11 +4,17 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "PHAL_AlbanyTraits.hpp"
 
-#include "MortarContactResidual.hpp"
-#include "MortarContactResidual_Def.hpp"
+#include "Moertel_ExplicitTemplateInstantiation.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MortarContactResidualBase)
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MortarContactResidual)
+#ifdef HAVE_MOERTEL_EXPLICIT_INSTANTIATION
+#include "Moertel_ManagerT.hpp"
+#include "Moertel_ManagerT_Def.hpp"
 
+namespace MoertelT {
+
+  MOERTEL_INSTANTIATE_TEMPLATE_CLASS(ManagerT)
+
+} // namespace Moertel
+
+#endif
