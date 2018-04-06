@@ -4,7 +4,7 @@ LCM:
   Scaling:
     Scale: 1.0000000
   Debug Output:
-    #Write Jacobian to MatrixMarket: -1
+    Write Jacobian to MatrixMarket: -1
     #Write Jacobian to Standard Output: 0
     #Write Residual to MatrixMarket: -1
     #Write Residual to Standard Output: -1
@@ -34,10 +34,11 @@ LCM:
     #  Function: Constant
     #  Function Data: [0.0, 0.0, 0.0]
     Dirichlet BCs:
-      SDBC on NS nodelist_1 for DOF X: 0.0
-      SDBC on NS nodelist_3 for DOF Y: 0.0
-      SDBC on NS nodelist_5 for DOF Z: 0.0
+      Scaled SDBC on NS nodelist_1 for DOF X: [0.0, 10]
+      Scaled SDBC on NS nodelist_3 for DOF Y: [0.0, 10]
+      Scaled SDBC on NS nodelist_5 for DOF Z: [0.0, 10]
       Time Dependent SDBC on NS nodelist_6 for DOF Z:
+        SDBC Scaling: 10.0 
         Number of points: 2
         Time Values: [0.0, 2.0]
         BC Values: [0.0, 2.0]

@@ -36,14 +36,16 @@ LCM:
         IP Field Layout 1: Scalar
         Output to File: true
     Dirichlet BCs:
-      SDBC on NS nodelist_1 for DOF X: 0.0
-      SDBC on NS nodelist_3 for DOF Y: 0.0
+      Scaled SDBC on NS nodelist_1 for DOF X: [0.0, 10.0]
+      Scaled SDBC on NS nodelist_3 for DOF Y: [0.0, 10.0] 
       SDBC on NS nodelist_5 for DOF StrongSchwarz:
+        SDBC Scaling: 10.0 
         BC Function: StrongSchwarz
         Coupled Application: cuboid_00.yaml
         Coupled Block: fine
       #SDBC on NS nodelist_6 for DOF Z: 0.2
       Time Dependent SDBC on NS nodelist_6 for DOF Z:
+        SDBC Scaling: 10.0 
         Number of points: 2
         Time Values: [0.0, 2.0]
         BC Values: [0.0, 0.04]

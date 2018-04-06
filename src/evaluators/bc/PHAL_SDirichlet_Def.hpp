@@ -71,6 +71,7 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::SDirichlet(
     Teuchos::ParameterList& p)
     : PHAL::DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits>(p)
 {
+  scale = p.get<RealType>("SDBC Scaling", 1.0);  
   return;
 }
 
@@ -180,10 +181,15 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
       f_view[local_row] = 0.0;
       x_view[local_row] = this->value.val();
     }
+    
 
     for (size_t row_entry = 0; row_entry < num_row_entries; ++row_entry) {
       auto local_col         = indices[row_entry];
       auto is_diagonal_entry = local_col == local_row;
+      //IKT, 4/5/18: scale diagonal entries by provided scaling 
+      if (is_diagonal_entry && row_is_dbc) {
+        entries[row_entry] *= scale;   
+      }
       if (is_diagonal_entry) continue;
       ALBANY_ASSERT(local_col >= col_map->getMinLocalIndex());
       ALBANY_ASSERT(local_col <= col_map->getMaxLocalIndex());

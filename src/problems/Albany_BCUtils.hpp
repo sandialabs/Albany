@@ -95,10 +95,16 @@ struct DirichletTraits {
   constructSDBCName(const std::string& ns, const std::string& dof);
 
   static std::string
+  constructScaledSDBCName(const std::string& ns, const std::string& dof);
+
+  static std::string
   constructBCNameField(const std::string& ns, const std::string& dof);
 
   static std::string
   constructSDBCNameField(const std::string& ns, const std::string& dof);
+
+  static std::string
+  constructScaledSDBCNameField(const std::string& ns, const std::string& dof);
 
   static std::string
   constructTimeDepBCName(const std::string& ns, const std::string& dof);

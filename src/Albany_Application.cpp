@@ -1850,10 +1850,9 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
 
   if (scale != 1.0) {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                               "Scaling cannot be used with "
-                               "computeGlobalJacobianSDBCsImplT routine! "
-                               " "
-                                   << "Please re-run without scaling.");
+                               "'Scaling' sublist not recognized when using SDBCs. \n" <<
+                               "To use scaling with SDBCs, specify 'Scaled SDBC' and/or \n" <<
+                               "'SDBC Scaling' in 'Dirichlet BCs' sublist."); 
   }
 
 //#define DEBUG_OUTPUT
@@ -3990,10 +3989,10 @@ void Albany::Application::computeGlobalResidualSDBCsImplT(
   postRegSetup("Residual");
 
   if (scale != 1.0) {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::logic_error,
-        "Scaling cannot be used with computeGlobalResidualSDBCsImplT routine!  "
-            << "Please re-run without scaling.");
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                               "'Scaling' sublist not recognized when using SDBCs. \n" <<
+                               "To use scaling with SDBCs, specify 'Scaled SDBC' and/or \n" <<
+                               "'SDBC Scaling' in 'Dirichlet BCs' sublist."); 
   }
 
 //#define DEBUG_OUTPUT

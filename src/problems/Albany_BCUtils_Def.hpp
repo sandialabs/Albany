@@ -501,6 +501,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         p->set<RCP<DataLayout>>("Data Layout", dummy);
         p->set<string>("Dirichlet Name", ss);
         p->set<RealType>("Dirichlet Value", 0.0);
+        p->set<RealType>("SDBC Scaling", sub_list.get<RealType>("SDBC Scaling", 1.0));
         p->set<int>("Equation Offset", j);
         offsets_[i].push_back(j);
         p->set<RCP<ParamLib>>("Parameter Library", paramLib);
@@ -675,6 +676,38 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
       }
     }
   }
+  ///
+  /// Scaled SDBC (S = "Symmetric", f.k.a. "Strong")
+  ///
+  for (std::size_t i = 0; i < nodeSetIDs.size(); i++) {
+    for (std::size_t j = 0; j < bcNames.size(); j++) {
+      string ss =
+          traits_type::constructScaledSDBCName(nodeSetIDs[i], bcNames[j]);
+      if (BCparams.isParameter(ss)) {
+        RCP<ParameterList> p = rcp(new ParameterList);
+        use_sdbcs_ = true; 
+        p->set<int>("Type", traits_type::typeSt);
+        p->set<RCP<DataLayout>>("Data Layout", dummy);
+        p->set<string>("Dirichlet Name", ss);
+        Teuchos::Array<RealType> array = BCparams.get<Teuchos::Array<RealType>>(ss);
+        p->set<RealType>("Dirichlet Value", array[0]);
+        if (array.size() > 1) {
+          p->set<RealType>("SDBC Scaling", array[1]);
+        }
+        else {
+          p->set<RealType>("SDBC Scaling", 1.0);
+        }
+        p->set<string>("Node Set ID", nodeSetIDs[i]);
+        p->set<int>("Equation Offset", j);
+        offsets_[i].push_back(j);
+        p->set<RCP<ParamLib>>("Parameter Library", paramLib);
+
+        evaluators_to_build[evaluatorsToBuildName(ss)] = p;
+
+        bcs->push_back(ss);
+      }
+    }
+  }
 
 #if defined(ALBANY_LCM)
   ///
@@ -761,6 +794,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         p->set<RCP<DataLayout>>("Data Layout", dummy);
         p->set<string>("Dirichlet Name", ss);
         p->set<RealType>("Dirichlet Value", 0.0);
+        p->set<RealType>("SDBC Scaling", sub_list.get<RealType>("SDBC Scaling", 1.0));
         p->set<string>("Node Set ID", nodeSetIDs[i]);
         p->set<int>("Equation Offset", 0);
         for (std::size_t j = 0; j < bcNames.size(); j++) {
@@ -1389,10 +1423,16 @@ Albany::DirichletTraits::getValidBCParameters(
           nodeSetIDs[i], bcNames[j]);
       std::string st = Albany::DirichletTraits::constructSDBCName(
           nodeSetIDs[i], bcNames[j]);
+      std::string sst = Albany::DirichletTraits::constructScaledSDBCName(
+          nodeSetIDs[i], bcNames[j]);
       validPL->set<double>(
           ss, 0.0, "Value of BC corresponding to nodeSetID and dofName");
       validPL->set<double>(
           st, 0.0, "Value of SDBC corresponding to nodeSetID and dofName");
+      Teuchos::Array<double> array(1);
+      array[0] = 0.0; 
+      validPL->set<Teuchos::Array<double>>(
+          sst, array, "Value of Scaled SDBC corresponding to nodeSetID and dofName");
       validPL->sublist(
           tt, false, "SubList of BC corresponding to nodeSetID and dofName");
       validPL->sublist(
@@ -1402,6 +1442,8 @@ Albany::DirichletTraits::getValidBCParameters(
       ss = Albany::DirichletTraits::constructBCNameField(
           nodeSetIDs[i], bcNames[j]);
       st = Albany::DirichletTraits::constructSDBCNameField(
+          nodeSetIDs[i], bcNames[j]);
+      sst = Albany::DirichletTraits::constructScaledSDBCNameField(
           nodeSetIDs[i], bcNames[j]);
       validPL->set<std::string>(
           ss, "dirichlet field", "Field used to prescribe Dirichlet BCs");
@@ -1508,6 +1550,16 @@ Albany::DirichletTraits::constructSDBCName(
 }
 
 std::string
+Albany::DirichletTraits::constructScaledSDBCName(
+    const std::string& ns, const std::string& dof) {
+  std::stringstream ss;
+  ss << "Scaled SDBC on NS " << ns << " for DOF " << dof;
+
+  return ss.str();
+}
+
+
+std::string
 Albany::DirichletTraits::constructBCNameField(
     const std::string& ns, const std::string& dof) {
   std::stringstream ss;
@@ -1524,6 +1576,16 @@ Albany::DirichletTraits::constructSDBCNameField(
 
   return ss.str();
 }
+
+std::string
+Albany::DirichletTraits::constructScaledSDBCNameField(
+    const std::string& ns, const std::string& dof) {
+  std::stringstream ss;
+  ss << "Scaled SDBC on NS " << ns << " for DOF " << dof << " prescribe Field";
+
+  return ss.str();
+}
+
 
 std::string
 Albany::NeumannTraits::constructBCName(

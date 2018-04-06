@@ -57,6 +57,9 @@ class SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>
 
   void
   evaluateFields(typename Traits::EvalData d);
+
+ protected:
+  double scale; 
 };
 
 //
