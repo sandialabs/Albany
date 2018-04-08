@@ -26,6 +26,8 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   asinh_scaling = plist->get<double>("Asinh Scaling", 10.0);
   alpha_stiffening = plist->get<double>("Regularization Coefficient Stiffening", 0.0);
 
+  scalarRMS = paramList->get<bool>("Scalar RMS", false);
+
   const std::string& velocity_name           = paramList->get<std::string>("Surface Velocity Side QP Variable Name");
   const std::string& obs_velocity_name       = paramList->get<std::string>("Observed Surface Velocity Side QP Variable Name");
   const std::string& obs_velocityRMS_name    = paramList->get<std::string>("Observed Surface Velocity RMS Side QP Variable Name");
@@ -40,8 +42,12 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 
   velocity            = decltype(velocity)(velocity_name, dl_surface->qp_vector);
   observedVelocity    = decltype(observedVelocity)(obs_velocity_name, dl_surface->qp_vector);
-  observedVelocityRMS = decltype(observedVelocityRMS)(obs_velocityRMS_name, dl_surface->qp_vector);
   w_measure_surface   = decltype(w_measure_surface)(w_measure_surface_name, dl_surface->qp_scalar);
+  if(scalarRMS)
+    observedVelocityMagnitudeRMS = decltype(observedVelocityMagnitudeRMS)(obs_velocityRMS_name, dl_surface->qp_scalar);
+  else
+    observedVelocityRMS = decltype(observedVelocityRMS)(obs_velocityRMS_name, dl_surface->qp_vector);
+
   //metric_surface      = decltype(metric_surface)(metric_surface_name, dl_surface->qp_tensor);
 
   // Get Dimensions
@@ -52,8 +58,12 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   // add dependent fields
   this->addDependentField(velocity);
   this->addDependentField(observedVelocity);
-  this->addDependentField(observedVelocityRMS);
   this->addDependentField(w_measure_surface);
+  if(scalarRMS)
+    this->addDependentField(observedVelocityMagnitudeRMS);
+  else
+    this->addDependentField(observedVelocityRMS);
+
   //this->addDependentField(metric_surface);
 
   if (alpha!=0)
@@ -131,29 +141,6 @@ template<typename EvalT, typename Traits>
 void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(velocity, fm);
-  this->utils.setFieldData(observedVelocity, fm);
-  this->utils.setFieldData(observedVelocityRMS, fm);
-  this->utils.setFieldData(w_measure_surface, fm);
-  //this->utils.setFieldData(metric_surface, fm);
-
-  if (alpha!=0)
-  {
-    // Regularization-related fields
-    this->utils.setFieldData(w_measure_basal, fm);
-    this->utils.setFieldData(metric_basal, fm);
-    this->utils.setFieldData(grad_beta, fm);
-  }
-
-  if (alpha_stiffening!=0)
-  {
-    // Regularization-related fields
-    this->utils.setFieldData(w_measure_basal, fm);
-    this->utils.setFieldData(metric_basal, fm);
-    this->utils.setFieldData(grad_stiffening, fm);
-    this->utils.setFieldData(stiffening, fm);
-  }
-
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postRegistrationSetup(d, fm);
 }
 
@@ -193,23 +180,33 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
 
       ScalarT t = 0;
       ScalarT data = 0;
-      for (int qp=0; qp<numSurfaceQPs; ++qp)
-      {
-        ParamScalarT refVel0 = asinh(observedVelocity (cell, side, qp, 0) / observedVelocityRMS(cell, side, qp, 0) / asinh_scaling);
-        ParamScalarT refVel1 = asinh(observedVelocity (cell, side, qp, 1) / observedVelocityRMS(cell, side, qp, 1) / asinh_scaling);
-        ScalarT vel0 = asinh(velocity(cell, side, qp, 0) / observedVelocityRMS(cell, side, qp, 0) / asinh_scaling);
-        ScalarT vel1 = asinh(velocity(cell, side, qp, 1) / observedVelocityRMS(cell, side, qp, 1) / asinh_scaling);
-        ScalarT diff0 = refVel0 - vel0;
-        ScalarT diff1 = refVel1 - vel1;
-        data = diff0 * diff0
-             + diff1 * diff1;
-        //data = diff0 * metric_surface(cell,side,qp,0,0) * diff0
-        //     + diff0 * metric_surface(cell,side,qp,0,1) * diff1
-        //     + diff1 * metric_surface(cell,side,qp,1,0) * diff0;
-        //     + diff1 * metric_surface(cell,side,qp,1,1) * diff1;
-        data *= asinh_scaling * asinh_scaling;
-        t += data * w_measure_surface(cell,side,qp);
-      }
+      if(scalarRMS)
+        for (int qp=0; qp<numSurfaceQPs; ++qp)
+        {
+          ScalarT diff2 = std::pow(velocity(cell, side, qp, 0)  - observedVelocity (cell, side, qp, 0),2) 
+                               + std::pow(velocity(cell, side, qp, 1)  - observedVelocity (cell, side, qp, 1),2);
+          ScalarT weightedDiff = std::sqrt(diff2)/observedVelocityMagnitudeRMS(cell, side, qp);
+          ScalarT weightedDiff2 = std::pow(asinh(weightedDiff/ asinh_scaling)*asinh_scaling,2);
+          t += weightedDiff2 * w_measure_surface(cell,side,qp);
+        }
+      else
+        for (int qp=0; qp<numSurfaceQPs; ++qp)
+        {
+          ParamScalarT refVel0 = asinh(observedVelocity (cell, side, qp, 0) / observedVelocityRMS(cell, side, qp, 0) / asinh_scaling);
+          ParamScalarT refVel1 = asinh(observedVelocity (cell, side, qp, 1) / observedVelocityRMS(cell, side, qp, 1) / asinh_scaling);
+          ScalarT vel0 = asinh(velocity(cell, side, qp, 0) / observedVelocityRMS(cell, side, qp, 0) / asinh_scaling);
+          ScalarT vel1 = asinh(velocity(cell, side, qp, 1) / observedVelocityRMS(cell, side, qp, 1) / asinh_scaling);
+          ScalarT diff0 = refVel0 - vel0;
+          ScalarT diff1 = refVel1 - vel1;
+          data = diff0 * diff0
+               + diff1 * diff1;
+          //data = diff0 * metric_surface(cell,side,qp,0,0) * diff0
+          //     + diff0 * metric_surface(cell,side,qp,0,1) * diff1
+          //     + diff1 * metric_surface(cell,side,qp,1,0) * diff0;
+          //     + diff1 * metric_surface(cell,side,qp,1,1) * diff1;
+          data *= asinh_scaling * asinh_scaling;
+          t += data * w_measure_surface(cell,side,qp);
+        }
 
       this->local_response_eval(cell, 0) += t*scaling;
       this->global_response_eval(0) += t*scaling;

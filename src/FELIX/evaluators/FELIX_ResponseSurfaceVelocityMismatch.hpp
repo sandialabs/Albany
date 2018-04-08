@@ -47,6 +47,7 @@ namespace FELIX {
     PHX::MDField<const ScalarT,Cell,Side,QuadPoint,VecDim>       velocity;
     PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint,VecDim>  observedVelocity;
     PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint,VecDim>  observedVelocityRMS;
+    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         observedVelocityMagnitudeRMS;
     PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim>          grad_beta;
     PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint,Dim>     grad_stiffening;
     PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         stiffening;
@@ -58,6 +59,7 @@ namespace FELIX {
 
     ScalarT p_resp, p_reg, resp, reg, p_reg_stiffening,reg_stiffening;
     double scaling, alpha, asinh_scaling, alpha_stiffening;
+    bool scalarRMS;
   };
 
 } // Namespace FELIX

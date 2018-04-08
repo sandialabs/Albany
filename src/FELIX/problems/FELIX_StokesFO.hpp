@@ -171,6 +171,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils_scalar(dl_scalar);
 
   int offset=0;
+  bool isObsVelRMSScalar=false;
 
   Albany::StateStruct::MeshFieldEntity entity;
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
@@ -374,7 +375,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
         // Get current state specs
         stateName  = fieldName = thisFieldList.get<std::string>("Field Name");
-        fieldUsage = thisFieldList.get<std::string>("Field Usage","Input"); // WARNING: assuming Input if not specified
+        fieldUsage = thisFieldList.get<std::string>("Field Usage","Input"); // WARNING: assuming Input if not specified        
 
         if (fieldUsage == "Unused")
           continue;
@@ -394,6 +395,8 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
           entity = is_dist_param[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
           p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->node_scalar, sideEBName, true, &entity, meshPart);
           nodal_state = true;
+          if(stateName == "observed_surface_velocity_RMS")
+            isObsVelRMSScalar = true;
         }
         else if(fieldType == "Elem Vector") {
           entity = Albany::StateStruct::ElemData;
@@ -1067,8 +1070,14 @@ if (basalSideName!="INVALID")
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate surface velocity rms on QP on side
-    ev = evalUtils.getPSTUtils().constructDOFVecInterpolationSideEvaluator("observed_surface_velocity_RMS", surfaceSideName);
-    fm0.template registerEvaluator<EvalT>(ev);
+    if(isObsVelRMSScalar) {
+      ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("observed_surface_velocity_RMS", surfaceSideName);
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+    else {
+      ev = evalUtils.getPSTUtils().constructDOFVecInterpolationSideEvaluator("observed_surface_velocity_RMS", surfaceSideName);
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
 
     //---- Restrict velocity (the solution) from cell-based to cell-side-based on upper side
     ev = evalUtils.constructDOFCellToSideEvaluator("Velocity",surfaceSideName,"Node Vector",cellType,"surface_velocity");
@@ -1585,6 +1594,7 @@ if (basalSideName!="INVALID")
     paramList->set<std::string>("Thickness RMS Side QP Variable Name","observed_ice_thickness_RMS");
     paramList->set<std::string>("Observed Thickness Side QP Variable Name","observed_ice_thickness");
     paramList->set<std::string>("Observed Surface Velocity Side QP Variable Name","observed_surface_velocity");
+    paramList->set<bool>("Scalar RMS",isObsVelRMSScalar);
     paramList->set<std::string>("Observed Surface Velocity RMS Side QP Variable Name","observed_surface_velocity_RMS");
     paramList->set<std::string>("Weighted Measure Basal Name","Weighted Measure " + basalSideName);
     paramList->set<std::string>("Weighted Measure 2D Name","Weighted Measure " + basalSideName);
