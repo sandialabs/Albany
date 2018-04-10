@@ -67,12 +67,12 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ConstScalarField yield_strength;
   
   // Dependent constant MDFields
-  ConstScalarField density;
-  ConstScalarField heat_capacity;
-  ConstScalarField ice_saturation;
-  ConstScalarField porosity;
-  ConstScalarField thermal_conductivity;
-  ConstScalarField water_saturation;
+  ScalarField density;
+  ScalarField heat_capacity;
+  ScalarField ice_saturation;
+  ScalarField porosity;
+  ScalarField thermal_conductivity;
+  ScalarField water_saturation;
 
   // Extract evaluated MDFields
   ScalarField stress;
@@ -84,7 +84,9 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   // Workspace arrays
   Albany::MDArray Fpold;
   Albany::MDArray eqpsold;
-  
+  Albany::MDArray Told;
+  Albany::MDArray ice_saturation_old;
+
   // Saturation hardening constraints
   RealType sat_mod;
   RealType sat_exp;
@@ -92,8 +94,8 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   void
   init(
       Workset&                 workset,
-      FieldMap<ScalarT const>& fields_const,
-      FieldMap<ScalarT>&       fields);
+      FieldMap<ScalarT const>& input_fields,
+      FieldMap<ScalarT>&       output_fields);
 
   KOKKOS_INLINE_FUNCTION
   void

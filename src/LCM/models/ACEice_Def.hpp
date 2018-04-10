@@ -3,15 +3,15 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "Albany_Utils.hpp"
 #include "ACEice.hpp"
+#include "Albany_Utils.hpp"
 #include "MiniNonlinearSolver.h"
 
 namespace LCM {
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
-    ConstitutiveModel<EvalT, Traits>& model,
+    ConstitutiveModel<EvalT, Traits>&    model,
     Teuchos::ParameterList*              p,
     Teuchos::RCP<Albany::Layouts> const& dl)
     : BaseKernel(model), sat_mod(p->get<RealType>("Saturation Modulus", 0.0)),
@@ -29,18 +29,20 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   // define the dependent fields
   setDependentField(F_string, dl->qp_tensor);
   setDependentField(J_string, dl->qp_scalar);
-
-  setDependentField("ACE Density", dl->qp_scalar);
-  setDependentField("ACE Heat Capacity", dl->qp_scalar);
-  setDependentField("ACE Ice Saturation", dl->qp_scalar);
-  setDependentField("ACE Thermal Conductivity", dl->qp_scalar);
-  setDependentField("ACE Porosity", dl->qp_scalar);
-  setDependentField("ACE Water Saturation", dl->qp_scalar);
   setDependentField("Elastic Modulus", dl->qp_scalar);
   setDependentField("Hardening Modulus", dl->qp_scalar);
   setDependentField("Poissons Ratio", dl->qp_scalar);
   setDependentField("Yield Strength", dl->qp_scalar);
 
+  // Computed incrementally
+  setDependentField("ACE Ice Saturation", dl->qp_scalar);
+
+  // For output/convenience
+  setDependentField("ACE Density", dl->qp_scalar);
+  setDependentField("ACE Heat Capacity", dl->qp_scalar);
+  setDependentField("ACE Thermal Conductivity", dl->qp_scalar);
+  setDependentField("ACE Porosity", dl->qp_scalar);
+  setDependentField("ACE Water Saturation", dl->qp_scalar);
   setDependentField("Delta Time", dl->workset_scalar);
 
   // define the evaluated fields
@@ -90,6 +92,60 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       false,
       p->get<bool>("Output Yield Surface", false));
 
+  // Ice saturation
+  addStateVariable(
+      "ACE Ice Saturation",
+      dl->qp_scalar,
+      "scalar",
+      1.0,
+      false,
+      p->get<bool>("Output ACE Ice Saturation", false));
+
+  // Density
+  addStateVariable(
+      "ACE Density",
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("Output ACE Density", false));
+
+  // Heat Capacity
+  addStateVariable(
+      "ACE Heat Capacity",
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("Output ACE Heat Capacity", false));
+
+  // ACE Thermal Conductivity
+  addStateVariable(
+      "ACE Thermal Conductivity",
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("Output ACE Thermal Conductivity", false));
+
+  // ACE Porosity
+  addStateVariable(
+      "ACE Porosity",
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("Output ACE Porosity", false));
+
+  // ACE Water Saturation
+  addStateVariable(
+      "ACE Water Saturation",
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("ACE Water Saturation", false));
+
   // mechanical source
   if (have_temperature_ == true) {
     addStateVariable(
@@ -100,15 +156,14 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
         false,
         p->get<bool>("Output Mechanical Source", false));
   }
-
 }
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 void
 ACEiceMiniKernel<EvalT, Traits>::init(
     Workset&                 workset,
-    FieldMap<const ScalarT>& fields_const,
-    FieldMap<ScalarT>&       fields)
+    FieldMap<const ScalarT>& input_fields,
+    FieldMap<ScalarT>&       output_fields)
 {
   std::string cauchy_string       = field_name_map_["Cauchy_Stress"];
   std::string Fp_string           = field_name_map_["Fp"];
@@ -118,42 +173,42 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   std::string F_string            = field_name_map_["F"];
   std::string J_string            = field_name_map_["J"];
 
-  // extract dependent MDFields
-  def_grad = *fields_const[F_string];
-  J        = *fields_const[J_string]; 
-  
-  delta_time        = *fields_const["Delta Time"];
-  elastic_modulus   = *fields_const["Elastic Modulus"];
-  hardening_modulus = *fields_const["Hardening Modulus"];
-  poissons_ratio    = *fields_const["Poissons Ratio"];
-  yield_strength    = *fields_const["Yield Strength"];
+  def_grad = *input_fields[F_string];
+  J        = *input_fields[J_string];
 
-  density              = *fields_const["ACE Density"];
-  heat_capacity        = *fields_const["ACE Heat Capacity"];
-  ice_saturation       = *fields_const["ACE Ice Saturation"];
-  porosity             = *fields_const["ACE Porosity"];
-  thermal_conductivity = *fields_const["ACE Thermal Conductivity"];
-  water_saturation     = *fields_const["ACE Water Saturation"];
+  delta_time        = *input_fields["Delta Time"];
+  elastic_modulus   = *input_fields["Elastic Modulus"];
+  hardening_modulus = *input_fields["Hardening Modulus"];
+  poissons_ratio    = *input_fields["Poissons Ratio"];
+  yield_strength    = *input_fields["Yield Strength"];
 
-  // extract evaluated MDFields
-  stress    = *fields[cauchy_string];
-  Fp        = *fields[Fp_string];
-  eqps      = *fields[eqps_string];
-  yieldSurf = *fields[yieldSurface_string];
+  stress    = *output_fields[cauchy_string];
+  Fp        = *output_fields[Fp_string];
+  eqps      = *output_fields[eqps_string];
+  yieldSurf = *output_fields[yieldSurface_string];
+
+  ice_saturation       = *output_fields["ACE Ice Saturation"];
+  density              = *output_fields["ACE Density"];
+  heat_capacity        = *output_fields["ACE Heat Capacity"];
+  porosity             = *output_fields["ACE Porosity"];
+  thermal_conductivity = *output_fields["ACE Thermal Conductivity"];
+  water_saturation     = *output_fields["ACE Water Saturation"];
 
   if (have_temperature_ == true) {
-    source = *fields[source_string];
+    source = *output_fields[source_string];
   }
 
   // get State Variables
-  Fpold   = (*workset.stateArrayPtr)[Fp_string + "_old"];
-  eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
+  Fpold              = (*workset.stateArrayPtr)[Fp_string + "_old"];
+  eqpsold            = (*workset.stateArrayPtr)[eqps_string + "_old"];
+  Told               = (*workset.stateArrayPtr)["Temperature_old"];
+  ice_saturation_old = (*workset.stateArrayPtr)["ACE Ice Saturation_old"];
 }
 
 //
 // J2 nonlinear system
 //
-template<typename EvalT, minitensor::Index M = 1>
+template <typename EvalT, minitensor::Index M = 1>
 class J2NLS : public minitensor::
                   Function_Base<J2NLS<EvalT, M>, typename EvalT::ScalarT, M> {
   using S = typename EvalT::ScalarT;
@@ -178,7 +233,7 @@ class J2NLS : public minitensor::
       minitensor::Function_Base<J2NLS<EvalT, M>, typename EvalT::ScalarT, M>;
 
   // Default value.
-  template<typename T, minitensor::Index N>
+  template <typename T, minitensor::Index N>
   T
   value(minitensor::Vector<T, N> const& x)
   {
@@ -186,7 +241,7 @@ class J2NLS : public minitensor::
   }
 
   // Explicit gradient.
-  template<typename T, minitensor::Index N>
+  template <typename T, minitensor::Index N>
   minitensor::Vector<T, N>
   gradient(minitensor::Vector<T, N> const& x)
   {
@@ -217,7 +272,7 @@ class J2NLS : public minitensor::
   }
 
   // Default AD hessian.
-  template<typename T, minitensor::Index N>
+  template <typename T, minitensor::Index N>
   minitensor::Tensor<T, N>
   hessian(minitensor::Vector<T, N> const& x)
   {
@@ -237,7 +292,7 @@ class J2NLS : public minitensor::
   S const& Y_;
 };
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
 ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 {
@@ -245,9 +300,9 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   using Tensor = minitensor::Tensor<ScalarT, MAX_DIM>;
 
-  Tensor        F(num_dims_);
-  Tensor const  I(minitensor::eye<ScalarT, MAX_DIM>(num_dims_));
-  Tensor        sigma(num_dims_);
+  Tensor       F(num_dims_);
+  Tensor const I(minitensor::eye<ScalarT, MAX_DIM>(num_dims_));
+  Tensor       sigma(num_dims_);
 
   ScalarT const E     = elastic_modulus(cell, pt);
   ScalarT const nu    = poissons_ratio(cell, pt);
@@ -270,7 +325,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Mechanical deformation gradient
   auto Fm = Tensor(F);
   if (have_temperature_) {
-    ScalarT dtemp = temperature_(cell, pt) - ref_temperature_;
+    ScalarT dtemp           = temperature_(cell, pt) - ref_temperature_;
     ScalarT thermal_stretch = std::exp(expansion_coeff_ * dtemp);
     Fm /= thermal_stretch;
   }
@@ -294,9 +349,8 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const smag = minitensor::norm(s);
   ScalarT const sq23{std::sqrt(2.0 / 3.0)};
   ScalarT const f =
-      smag -
-      sq23 * (Y + K * eqpsold(cell, pt) +
-              sat_mod * (1.0 - std::exp(-sat_exp * eqpsold(cell, pt))));
+      smag - sq23 * (Y + K * eqpsold(cell, pt) +
+                     sat_mod * (1.0 - std::exp(-sat_exp * eqpsold(cell, pt))));
 
   RealType constexpr yield_tolerance = 1.0e-12;
 
@@ -378,6 +432,5 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
       stress(cell, pt, i, j) = sigma(i, j);
     }
   }
-  
 }
 }  // namespace LCM
