@@ -38,7 +38,8 @@ def postprocess(
     fmt = 'pdf',
     **kwargs):
 
-    print ''
+    if verbosity > 0:
+        print ''
 
 
     domain = None

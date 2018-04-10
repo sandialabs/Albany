@@ -121,6 +121,8 @@ def plot_inverse_pole_figure(**kwargs):
         bbox_extra_artists = extra_artists,
         bbox_inches = 'tight')
 
+    return X,Y
+
 # end plot_inverse_pole_figure(**kwargs):
 
 
@@ -152,6 +154,6 @@ if __name__ == '__main__':
             args_dict['time'] = domain.times[time]
             plot_inverse_pole_figure(**args_dict)
     else:
-    	plot_inverse_pole_figure(**args_dict)
+    	X,Y = plot_inverse_pole_figure(**args_dict)
 
 # end if __name__ == '__main__':
