@@ -210,7 +210,7 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update() const
     slip_systems_,
     slip_families_,
     dt_,
-    state_internal_.rate_slip_,
+    state_internal_.rates_slip_,
     state_internal_.hardening_n_,
     state_internal_.hardening_np1_,
     state_internal_.resistance_,
@@ -287,7 +287,7 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update() const
   this->norm_residual_ = Sacado::ScalarValue<ScalarT>::eval(norm(residual));
 
   if (dt_ > 0.0) {
-    state_internal_.rate_slip_ =
+    state_internal_.rates_slip_ =
       (state_internal_.slip_np1_ - state_internal_.slip_n_) / dt_;
   }
 
@@ -432,7 +432,7 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState() const
   }
 
   if (dt_ > 0.0) {
-    state_internal_.rate_slip_ =
+    state_internal_.rates_slip_ =
       (state_internal_.slip_np1_ - state_internal_.slip_n_) / dt_;
   }
 
@@ -501,7 +501,8 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update() const
       state_internal_.hardening_n_,
       state_internal_.slip_n_,
       state_mechanical_.F_np1_,
-      dt_);
+      dt_,
+      verbosity_);
 
   CP::Dissipation<NumDimT, NumSlipT, EvalT>
   initial_guess_nls(
@@ -511,7 +512,8 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update() const
       state_internal_.slip_n_,
       state_mechanical_.F_n_,
       state_mechanical_.F_np1_,
-      dt_);
+      dt_,
+      verbosity_);
 
   using StepType = minitensor::StepBase<NonlinearSolver, ValueT, CP::NlsDim<NumSlipT>::value>;
 
@@ -524,6 +526,8 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update() const
   }
 
   if (verbosity_ >= CP::Verbosity::MEDIUM) {
+    std::cout << "x_{n+1}^(0)" << std::endl;
+    std::cout << x << std::endl;
     std::cout << "F_{n+1}" << std::endl;
     std::cout << state_mechanical_.F_np1_ << std::endl;
     std::cout << "Fp_{n}" << std::endl;
@@ -551,7 +555,7 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update() const
   }
 
   minitensor::Vector<ScalarT, NumSlipT>
-  slip_rate(state_internal_.rate_slip_.get_dimension());
+  slip_rate(state_internal_.rates_slip_.get_dimension());
 
   slip_rate.fill(minitensor::Filler::ZEROS);
   if (dt_ > 0.0) {
@@ -624,9 +628,17 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update() const
 
   using NonlinearSystem = CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>;
 
-  NonlinearSystem nls(C_, slip_systems_, slip_families_, state_mechanical_.Fp_n_,
-                      state_internal_.hardening_n_, state_internal_.slip_n_,
-                      state_mechanical_.F_np1_, dt_);
+  NonlinearSystem
+  nls(
+      C_,
+      slip_systems_,
+      slip_families_,
+      state_mechanical_.Fp_n_,
+      state_internal_.hardening_n_,
+      state_internal_.slip_n_,
+      state_mechanical_.F_np1_,
+      dt_,
+      verbosity_);
 
   using StepType = minitensor::StepBase<NonlinearSystem, ValueT, CP::NlsDim<NumSlipT>::value>;
 
@@ -782,9 +794,17 @@ CP::ImplicitConstrainedSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update(
 
   using FN = CP::ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>;
 
-  FN fn(C_, slip_systems_, slip_families_, state_mechanical_.Fp_n_,
-	state_internal_.hardening_n_, state_internal_.slip_n_,
-	state_mechanical_.F_np1_, dt_);
+  FN
+  fn(
+      C_,
+      slip_systems_,
+      slip_families_,
+      state_mechanical_.Fp_n_,
+      state_internal_.hardening_n_,
+      state_internal_.slip_n_,
+      state_mechanical_.F_np1_,
+      dt_,
+      verbosity_);
 
   std::ofstream outfile;
   std::stringstream ss;

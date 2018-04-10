@@ -35,7 +35,8 @@ namespace CP
         minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
         minitensor::Vector<RealType, NumSlipT> const & slip_n,
         minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-        RealType dt);
+        RealType dt,
+        Verbosity verbosity);
 
     static constexpr char const * const
     NAME{"Crystal Plasticity Nonlinear System"};
@@ -92,6 +93,9 @@ namespace CP
 
     RealType
     dt_;
+
+    Verbosity
+    verbosity_;
   };
 
   //
@@ -116,7 +120,8 @@ namespace CP
         minitensor::Vector<RealType, NumSlipT> const & slip_n,
         minitensor::Tensor<RealType, NumDimT> const & F_n,
         minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-        RealType dt);
+        RealType dt,
+        Verbosity verbosity);
 
     static constexpr char const * const
     NAME{"Dissipation with slip"};
@@ -172,6 +177,9 @@ namespace CP
 
     RealType
     dt_;
+
+    Verbosity
+    verbosity_;
   };
 
   //
@@ -197,7 +205,8 @@ namespace CP
         minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
         minitensor::Vector<RealType, NumSlipT> const & slip_n,
         minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-        RealType dt);
+        RealType dt,
+        Verbosity verbosity);
 
     static constexpr char const * const
     NAME{"Slip and Hardness Residual Nonlinear System"};
@@ -254,6 +263,9 @@ namespace CP
 
     RealType
     dt_;
+
+    Verbosity
+    verbosity_;
   };
 
   template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
@@ -278,7 +290,8 @@ namespace CP
         minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
         minitensor::Vector<RealType, NumSlipT> const & slip_n,
         minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-        RealType dt);
+        RealType dt,
+        Verbosity verbosity);
 
     static constexpr char const * const
     NAME{"Crystal Plasticity Function"};
@@ -330,6 +343,9 @@ namespace CP
 
     RealType
     dt_;
+
+    Verbosity
+    verbosity_;
   };
 
 }

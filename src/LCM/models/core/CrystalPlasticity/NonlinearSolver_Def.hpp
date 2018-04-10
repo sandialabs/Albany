@@ -20,7 +20,8 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::ResidualSlipNLS(
       minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
       minitensor::Vector<RealType, NumSlipT> const & slip_n,
       minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-      RealType dt)
+      RealType dt,
+      CP::Verbosity verbosity)
   :
       C_(C),
       slip_systems_(slip_systems),
@@ -29,7 +30,8 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::ResidualSlipNLS(
       state_hardening_n_(state_hardening_n),
       slip_n_(slip_n),
       F_np1_(F_np1),
-      dt_(dt)
+      dt_(dt),
+      verbosity_(verbosity)
 {
   num_dim_ = Fp_n_.get_dimension();
   num_slip_ = state_hardening_n_.get_dimension();
@@ -218,7 +220,8 @@ CP::Dissipation<NumDimT, NumSlipT, EvalT>::Dissipation(
       minitensor::Vector<RealType, NumSlipT> const & slip_n,
       minitensor::Tensor<RealType, NumDimT> const & F_n,
       minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-      RealType dt)
+      RealType dt,
+      CP::Verbosity verbosity)
   :
       slip_systems_(slip_systems),
       slip_families_(slip_families),
@@ -226,7 +229,8 @@ CP::Dissipation<NumDimT, NumSlipT, EvalT>::Dissipation(
       slip_n_(slip_n),
       F_n_(F_n),
       F_np1_(F_np1),
-      dt_(dt)
+      dt_(dt),
+      verbosity_(verbosity)
 {
   num_dim_ = F_n_.get_dimension();
   num_slip_ = state_hardening_n_.get_dimension();
@@ -337,7 +341,8 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::ResidualSlipHardnessNLS(
       minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
       minitensor::Vector<RealType, NumSlipT> const & slip_n,
       minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-      RealType dt)
+      RealType dt,
+      CP::Verbosity verbosity)
   :
       C_(C),
       slip_systems_(slip_systems),
@@ -346,7 +351,8 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::ResidualSlipHardnessNLS(
       state_hardening_n_(state_hardening_n),
       slip_n_(slip_n),
       F_np1_(F_np1),
-      dt_(dt)
+      dt_(dt),
+      verbosity_(verbosity)
 {
   num_dim_ = Fp_n_.get_dimension();
   num_slip_ = state_hardening_n_.get_dimension();
@@ -367,11 +373,8 @@ minitensor::Vector<T, N>
 CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
     minitensor::Vector<T, N> const & x)
 {
-  auto const
-  num_unknowns = x.get_dimension();
-
   minitensor::Vector<T, N>
-  residual(num_unknowns, minitensor::Filler::ZEROS);
+  residual(x.get_dimension(), minitensor::Filler::ZEROS);
 
   // Return immediately if something failed catastrophically.
   if (this->get_failed() == true) {
@@ -397,7 +400,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   }
 
   // Ensure that the slip increment is bounded
-  if (minitensor::norm(rate_slip * dt_) > LOG_HUGE) {
+  if (minitensor::norm_infinity(rate_slip * dt_) > LOG_HUGE) {
     this->set_failed("Failed on slip");
     return residual;
   }
@@ -538,7 +541,8 @@ CP::ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>::ResidualSlipHardnessFN(
       minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
       minitensor::Vector<RealType, NumSlipT> const & slip_n,
       minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-      RealType dt)
+      RealType dt,
+      CP::Verbosity verbosity)
   :
       C_(C),
       slip_systems_(slip_systems),
@@ -547,7 +551,8 @@ CP::ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>::ResidualSlipHardnessFN(
       state_hardening_n_(state_hardening_n),
       slip_n_(slip_n),
       F_np1_(F_np1),
-      dt_(dt)
+      dt_(dt),
+      verbosity_(verbosity)
 {
   num_dim_ = Fp_n_.get_dimension();
   num_slip_ = state_hardening_n_.get_dimension();
@@ -621,11 +626,11 @@ CP::ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>::value(
     state_hardening_np1[i] = x[i + num_slip_];
   }
 
-  if(dt_ > 0.0){
-    rate_slip = (slip_np1 - slip_n_) / dt_;
-  }
-  else{
-    rate_slip.fill(minitensor::Filler::ZEROS);
+  minitensor::Vector<T, NumSlipT>
+  rates_slip(num_slip_, minitensor::Filler::ZEROS);
+
+  if (dt_ > 0.0) {
+    rates_slip = (slip_np1 - slip_n_) / dt_;
   }
 
   // Ensure that the slip increment is bounded

@@ -74,7 +74,7 @@ struct HardeningParameterBase
 
   virtual
   void
-  setAsymptoticValue() = 0;
+  setValueAsymptotic() = 0;
 
   virtual
   void
@@ -142,7 +142,7 @@ struct LinearMinusRecoveryHardeningParameters final :
 
   virtual
   void
-  setAsymptoticValue() override
+  setValueAsymptotic() override
   {
     this->asymptotic_value_ = this->hardening_params_(MODULUS_HARDENING) / this->hardening_params_(MODULUS_RECOVERY);
   }
@@ -205,7 +205,7 @@ struct SaturationHardeningParameters final :
 
   virtual
   void
-  setAsymptoticValue() override
+  setValueAsymptotic() override
   {
     // For this model, the asymptotic value depends on the slip rate
     return;
@@ -266,7 +266,7 @@ struct DislocationDensityHardeningParameters final :
 
   virtual
   void
-  setAsymptoticValue() override
+  setValueAsymptotic() override
   {
     // Need to get transformation of state variable \rho -> \rho_F
     return;
@@ -307,7 +307,7 @@ struct NoHardeningParameters final :
 
   virtual
   void
-  setAsymptoticValue() override
+  setValueAsymptotic() override
   {
     return;
   }
