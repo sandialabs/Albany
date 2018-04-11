@@ -197,11 +197,6 @@ computeState(typename Traits::EvalData workset,
 
   long int debug_output_counter = 0;
 
-//  if (sizeof(ScalarT) == sizeof(double))
-//    std::cerr << "Model double times_called " << times_called << '\n';
-//  else
-//    std::cerr << "Model FAD times_called " << times_called << '\n';
-
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
       debug_output_counter++;
@@ -260,11 +255,13 @@ computeState(typename Traits::EvalData workset,
           ScalarT alpha = 0.0;
           ScalarT res = 0.0;
           int count = 0;
+          int const max_count = 100;
           // ScalarT H = 0.0;
           dgam = 0.0;
-          ScalarT debug_X[32];
-          ScalarT debug_F[32];
-          ScalarT debug_dFdX[32];
+          ScalarT debug_X[max_count+1];
+          ScalarT debug_F[max_count+1];
+          ScalarT debug_dFdX[max_count+1];
+          ScalarT debug_res[max_count+1];
 
 
           LocalNonlinearSolver<EvalT, Traits> solver;
@@ -295,8 +292,9 @@ computeState(typename Traits::EvalData workset,
           debug_X[0] = X[0];
           debug_F[0] = F[0];
           debug_dFdX[0] = dFdX[0];
+          debug_res[0] = 0.0;
 
-          while (!converged && count <= 30)
+          while (!converged && count <= max_count)
           {
             count++;
             solver.solve(dFdX, X, F);
@@ -317,22 +315,26 @@ computeState(typename Traits::EvalData workset,
 
 
             res = std::abs(F[0]);
+            debug_res[count] = res;
             if (res < 1.e-10 )
+            {
               converged = true;
+            }
 
-            if (count == 30) {
+            if (count == max_count) {
               std::cerr << "detected NaN, here are the X, F, dfdX values at each iteration:\n";
-              for (int i = 0; i < 30; ++i) {
+              for (int i = 0; i < max_count; ++i) {
               std::cout<<"i = " << i <<std::endl;
               std::cout<<"debug_X =" << debug_X[i] <<std::endl;
               std::cout<<"debug_F =" << debug_F[i] <<std::endl;
               std::cout<<"debug_dFdX =" << debug_dFdX[i] <<std::endl;
+              std::cout<<"debug_res =" << debug_res[i] <<std::endl;
                  }
               }
 
 
 
-            TEUCHOS_TEST_FOR_EXCEPTION(count == 30, std::runtime_error,
+            TEUCHOS_TEST_FOR_EXCEPTION(count == max_count, std::runtime_error,
                 std::endl <<
                 "Error in return mapping, count = " <<
                 count <<
@@ -369,8 +371,6 @@ computeState(typename Traits::EvalData workset,
             }
           }
         } else {
-      //    if (doit)
-      //      std::cerr << "a0 <= 1E-12\n";
           eqps(cell, pt) = eqpsold(cell, pt);
           for (int i(0); i < num_dims_; ++i) {
             for (int j(0); j < num_dims_; ++j) {
@@ -379,8 +379,6 @@ computeState(typename Traits::EvalData workset,
           }
         }
       } else {
-       //  if (doit)
-       //   std::cerr << "f > 0\n";
         bool converged = false;
         ScalarT H = 0.0;
         ScalarT dH = 0.0;
@@ -424,10 +422,6 @@ computeState(typename Traits::EvalData workset,
               "\ndg = " << dFdX[0] << std::endl);
         }
         solver.computeFadInfo(dFdX, X, F);
-       // if (doit) {
-       //   std::cerr << "X[0] after fadinfo: ";
-       //   aprints(X[0]);
-       // }
 
         dgam_plastic = X[0];
 
@@ -477,10 +471,6 @@ computeState(typename Traits::EvalData workset,
     }
   }
 
- //   abort();
-
- // ++times_called;
-//}
 
 if (have_temperature_) {
     for (int cell(0); cell < workset.numCells; ++cell) {
