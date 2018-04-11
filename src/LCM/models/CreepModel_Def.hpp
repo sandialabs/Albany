@@ -355,10 +355,17 @@ computeState(typename Traits::EvalData workset,
           s -= 2.0 * mubar * dgam * N;
 
           // mechanical source
-          if (have_temperature_ && delta_time(0) > 0) {
-          source(cell, pt) = 0.0 * (sq23 * dgam / delta_time(0)
-            * (Y + temperature_(cell,pt))) / (density_ * heat_capacity_);
-          }
+          /* The below source heat calculation is not correct.
+          *  It is not correct because the yield strength (Y) 
+          *  is being added to the temperature (temperature_)
+          *  which is dimensionally wrong.
+          * 
+          *  if (have_temperature_ && delta_time(0) > 0) 
+          *  {
+          *  source(cell, pt) = 0.0 * (sq23 * dgam / delta_time(0)
+          *    * (Y + temperature_(cell,pt))) / (density_ * heat_capacity_);
+          *  }
+          */
 
           // exponential map to get Fpnew
           A = dgam * N;
