@@ -312,12 +312,6 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const Y     = yield_strength(cell, pt);
   ScalarT const J1    = J(cell, pt);
   ScalarT const Jm23  = 1.0 / std::cbrt(J1 * J1);
-  ScalarT const rho   = density(cell, pt);
-  ScalarT const Cp    = heat_capacity(cell, pt);
-  ScalarT const KK    = thermal_conductivity(cell, pt);
-  ScalarT const isat  = ice_saturation(cell, pt);
-  ScalarT const wsat  = water_saturation(cell, pt);
-  ScalarT const por   = porosity(cell, pt);
 
   // fill local tensors
   F.fill(def_grad, cell, pt, 0, 0);
@@ -337,6 +331,9 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
       Fpn(i, j) = ScalarT(Fpold(cell, pt, i, j));
     }
   }
+
+  // Deal with non-mechanical values
+  water_saturation(cell, pt) = 1.0 - ice_saturation(cell, pt);
 
   // compute trial state
   Tensor const  Fpinv = minitensor::inverse(Fpn);

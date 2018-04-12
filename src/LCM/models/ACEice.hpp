@@ -57,7 +57,7 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   /// a global load step reduction
   using BaseKernel::nox_status_test_;
 
-  // Dependent constant MDFields
+  // Input constant MDFields
   ConstScalarField def_grad;
   ConstScalarField delta_time;
   ConstScalarField elastic_modulus;
@@ -66,7 +66,7 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ConstScalarField poissons_ratio;
   ConstScalarField yield_strength;
   
-  // Dependent constant MDFields
+  // Output MDFields
   ScalarField density;
   ScalarField heat_capacity;
   ScalarField ice_saturation;
@@ -74,7 +74,7 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ScalarField thermal_conductivity;
   ScalarField water_saturation;
 
-  // Extract evaluated MDFields
+  // Mechanical MDFields
   ScalarField stress;
   ScalarField Fp;
   ScalarField eqps;

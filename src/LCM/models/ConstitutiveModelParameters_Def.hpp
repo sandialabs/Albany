@@ -331,6 +331,49 @@ ConstitutiveModelParameters<EvalT, Traits>::getValue(const std::string& n)
   return dummy;
 }
 
+namespace { // anonymous namespace
+
+template<typename EvalT>
+void
+parseACEparams(
+    std::string const & name,
+    Teuchos::ParameterList const & params,
+    std::map<std::string, bool> & is_const_map,
+    std::map<std::string, typename EvalT::ScalarT> & const_value_map)
+{
+  std::string const
+  ice_val_str = "Ice Value";
+
+  std::string const
+  water_val_str = "Water Value";
+
+  std::string const
+  sed_val_str = "Sediment Value";
+
+  std::string
+  long_name = name;
+
+  std::string
+  val_str = "";
+
+  if (params.isParameter(ice_val_str) == true) {
+    val_str = ice_val_str;
+  } else if (params.isParameter(water_val_str) == true) {
+    val_str = water_val_str;
+  } else if (params.isParameter(sed_val_str) == true) {
+    val_str = sed_val_str;
+  }
+
+  long_name += " " + val_str;
+  auto value = params.get<typename EvalT::ScalarT>(val_str);
+  is_const_map.insert(std::make_pair(long_name, true));
+  const_value_map.insert(std::make_pair(long_name, value));
+
+  return;
+}
+
+} // anonymous namespace
+
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void
@@ -343,6 +386,15 @@ ConstitutiveModelParameters<EvalT, Traits>::parseParameters(
       p.get<Teuchos::ParameterList*>("Material Parameters")->sublist(n);
   std::string type_name(n + " Type");
   std::string type = pl.get(type_name, "Constant");
+
+  std::string hdr_str = n.substr(0, 3);
+  bool const is_ace = hdr_str == "ACE";
+
+  if (is_ace == true) {
+    parseACEparams<EvalT>(n, pl, is_constant_map_, constant_value_map_);
+    return;
+  }
+
   if (type == "Constant") {
     is_constant_map_.insert(std::make_pair(n, true));
     constant_value_map_.insert(std::make_pair(n, pl.get("Value", 1.0)));
