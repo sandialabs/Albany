@@ -189,6 +189,12 @@ CP::updateSlip(
         slip_resistance[ss_index],
         failed);
 
+    // return with failed immediately if slip increment is too large
+    if (std::abs(rate_slip) > slip_family.pflow_parameters_->max_incr_) {
+      failed = true;
+      return;
+    }
+
     slip_np1[ss_index] = slip_n[ss_index] + dt * rate_slip;
   }
 

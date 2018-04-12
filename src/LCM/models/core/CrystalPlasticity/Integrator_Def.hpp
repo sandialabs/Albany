@@ -15,6 +15,18 @@ CP::Integrator<EvalT, NumDimT, NumSlipT>::forceGlobalLoadStepReduction(
 }
 
 template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
+void
+CP::Integrator<EvalT, NumDimT, NumSlipT>::setWarningStatus(
+  std::string const & message) const
+{
+  // only output warning messages if desired
+  if (verbosity_ >= CP::Verbosity::LOW) {
+    std::cout << "Warning: " << message << std::endl;
+  }
+}
+
+
+template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::IntegratorFactory(
       utility::StaticAllocator & allocator,
       Minimizer const & minimizer,
@@ -681,6 +693,11 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update() const
 
   LCM::MiniSolver<Minimizer, StepType, NonlinearSystem, EvalT, CP::NlsDim<NumSlipT>::value>
   mini_solver(minimizer_, *pstep, nls, x);
+
+  if (minimizer_.warning == true) {
+    // std::cout << "MiniSolver WARNING: " << minimizer_.warning_message << std::endl;
+    this->setWarningStatus(minimizer_.warning_message);
+  }
 
   if (minimizer_.failed == true)
   {

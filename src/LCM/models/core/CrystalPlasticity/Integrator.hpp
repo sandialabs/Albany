@@ -50,6 +50,9 @@ class Integrator
     void forceGlobalLoadStepReduction(
       std::string const & message) const;
 
+    void setWarningStatus(
+      std::string const & message) const;
+  
     int
     getNumIters() const { return num_iters_; }
 

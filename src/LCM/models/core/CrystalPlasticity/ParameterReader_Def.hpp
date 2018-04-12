@@ -101,8 +101,12 @@ CP::ParameterReader<EvalT, Traits>::getMinimizer() const
 
   min.rel_tol = p_->get<RealType>("Implicit Integration Relative Tolerance", 1.0e-6);
   min.abs_tol = p_->get<RealType>("Implicit Integration Absolute Tolerance", 1.0e-10);
+  min.acc_tol = p_->get<RealType>("Implicit Integration Acceptable Tolerance", 1.0e-14);
   min.max_num_iter = p_->get<int>("Implicit Integration Max Iterations", 100);
   min.min_num_iter = p_->get<int>("Implicit Integration Min Iterations", 2);
+  min.enforce_non_stagnation = p_->get<bool>("Implicit Integration Enforce Non-Stagnation", false);
+  min.max_stagnation_iter = p_->get<int>("Implicit Integration Max Stagnation Iterations", 100);
+  min.stagnation_tol = p_->get<RealType>("Implicit Integration Stagnation Tolerance", 1.0);
 
   return min;
 }
@@ -153,6 +157,11 @@ CP::ParameterReader<EvalT, Traits>::getSlipFamily(int index)
   }
 
   slip_family.pflow_parameters_->setTolerance();
+
+  // set max slip increment if user specified
+  RealType const max_incr = family_plist.get<RealType>("Max Slip Increment", LOG_HUGE);
+
+  slip_family.pflow_parameters_->setMaxIncrement(max_incr);
 
   // Obtain hardening law parameters
   Teuchos::ParameterList

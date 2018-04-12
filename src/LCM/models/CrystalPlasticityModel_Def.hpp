@@ -122,6 +122,11 @@ CrystalPlasticityKernel(
 	minimizer_ = preader.getMinimizer();
 	rol_minimizer_ = preader.getRolMinimizer();
   predictor_slip_ = preader.getPredictorSlip();
+						   
+  // ensure minimizer abs tolerance isn't too low
+  ALBANY_ASSERT(minimizer_.abs_tol >= CP::MIN_TOL,
+		"Specified absolute tolerance is too tight:"
+		" minimum tolerance: 1.0e-14");
 
   if (verbosity_ >= CP::Verbosity::HIGH) {
     std::cout << "Slip predictor: " << int(predictor_slip_) << std::endl;

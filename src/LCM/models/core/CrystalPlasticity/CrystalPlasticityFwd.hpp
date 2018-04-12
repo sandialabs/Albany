@@ -30,6 +30,9 @@ MAX_SLIP = 48;
 static constexpr minitensor::Index
 MAX_FAMILY = 3;
 
+static constexpr RealType
+MIN_TOL = 1.0e-14;
+
 template<minitensor::Index NumSlipT>
 struct NlsDim
 {
