@@ -39,8 +39,6 @@ SideQuadPointsToSideInterpolationBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Field dimension not supported.\n");
   }
 
-  field_qp.dimensions(dims);
-
   this->addDependentField (field_qp.fieldTag());
   this->addDependentField (w_measure.fieldTag());
   this->addEvaluatedField (field_side);
@@ -57,6 +55,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData (w_measure,fm);
 
   this->utils.setFieldData (field_side,fm);
+  field_qp.dimensions(dims);
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -89,8 +88,9 @@ void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::evaluateFiel
     {
       case 0:
         field_side(cell,side) = 0.0;
-        for (int qp(0); qp<dims[2]; ++qp)
+        for (int qp(0); qp<dims[2]; ++qp) {
           field_side(cell,side) += field_qp(cell,side,qp)*w_measure(cell,side,qp);
+        }
         field_side(cell,side) /= meas;
         break;
 
