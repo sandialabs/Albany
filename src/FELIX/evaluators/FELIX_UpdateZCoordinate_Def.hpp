@@ -110,6 +110,7 @@ UpdateZCoordinateMovingBed(const Teuchos::ParameterList& p,
   coordVecIn (p.get<std::string> ("Old Coords Name"), dl->vertices_vector),
   coordVecOut(p.get<std::string> ("New Coords Name"), dl->vertices_vector),
   H(p.get<std::string> ("Thickness Name"), dl->node_scalar),
+  bedTopo(p.get<std::string> ("Bed Topography Name"), dl->node_scalar),
   topSurface(p.get<std::string>("Top Surface Name"), dl->node_scalar)
 {
   this->addEvaluatedField(coordVecOut);
@@ -117,6 +118,7 @@ UpdateZCoordinateMovingBed(const Teuchos::ParameterList& p,
   this->addDependentField(coordVecIn);
 
   this->addDependentField(H);
+  this->addDependentField(bedTopo);
 
   this->addDependentField(topSurface);
 
@@ -125,6 +127,12 @@ UpdateZCoordinateMovingBed(const Teuchos::ParameterList& p,
   dl->vertices_vector->dimensions(dims);
   numNodes = dims[1];
   numDims = dims[2];
+
+  Teuchos::ParameterList* p_list = p.get<Teuchos::ParameterList*>("Physical Parameter List");
+  rho_i = p_list->get<double>("Ice Density");
+  rho_w = p_list->get<double>("Water Density");
+
+
   this->setName("Update Z Coordinate Moving Bed");
 }
 
@@ -134,10 +142,6 @@ void UpdateZCoordinateMovingBed<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(coordVecIn,fm);
-  this->utils.setFieldData(coordVecOut,fm);
-  this->utils.setFieldData(H, fm);
-  this->utils.setFieldData(topSurface,fm);
 }
 
 //**********************************************************************
@@ -175,6 +179,8 @@ evaluateFields(typename Traits::EvalData workset)
       layeredMeshNumbering.getIndices(lnodeId, base_id,  ilevel);
       MeshScalarT h = H(cell,node);
       MeshScalarT top = topSurface(cell,node);
+      MeshScalarT bed = bedTopo(cell,node);
+      top = ((rho_i*h - rho_w*bed) < 0) ? h*(1.0 - rho_i/rho_w) : top; //adjust surface when floating
 
       for(std::size_t icomp=0; icomp< numDims; icomp++) {
         typename PHAL::Ref<MeshScalarT>::type val = coordVecOut(cell,node,icomp);
