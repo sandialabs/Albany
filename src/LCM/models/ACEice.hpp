@@ -66,11 +66,14 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ConstScalarField poissons_ratio;
   ConstScalarField yield_strength;
   
+  ConstScalarField ice_density;
+  ConstScalarField water_density;
+
   // Output MDFields
   ScalarField density;
   ScalarField heat_capacity;
   ScalarField ice_saturation;
-  ScalarField porosity;
+  //ScalarField porosity;
   ScalarField thermal_conductivity;
   ScalarField water_saturation;
 

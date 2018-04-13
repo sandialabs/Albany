@@ -16,6 +16,75 @@
 
 namespace LCM {
 
+namespace { // anonymous namespace
+
+template<typename EvalT>
+void
+parseACEparams(
+    std::string const & name,
+    Teuchos::ParameterList const & params,
+    std::map<std::string, bool> & is_const_map,
+    std::map<std::string, typename EvalT::ScalarT> & const_value_map)
+{
+  Teuchos::ParameterList
+  sub_params = params.get<Teuchos::ParameterList*>("Material Parameters")
+  ->sublist(name);
+
+  std::string const
+  ice_val_str = "Ice Value";
+
+  std::string const
+  water_val_str = "Water Value";
+
+  std::string const
+  sed_val_str = "Sediment Value";
+
+  std::string const
+  init_val_str = "Initial Value";
+
+  std::string const
+  max_val_str = "Maximum Value";
+
+  if (sub_params.isParameter(ice_val_str) == true) {
+    std::string const long_name = name + " " + ice_val_str;
+    auto value = sub_params.get<double>(ice_val_str);
+    is_const_map.insert(std::make_pair(long_name, true));
+    const_value_map.insert(std::make_pair(long_name, value));
+  }
+
+  if (sub_params.isParameter(water_val_str) == true) {
+    std::string const long_name = name + " " + water_val_str;
+    auto value = sub_params.get<double>(water_val_str);
+    is_const_map.insert(std::make_pair(long_name, true));
+    const_value_map.insert(std::make_pair(long_name, value));
+  }
+
+  if (sub_params.isParameter(sed_val_str) == true) {
+    std::string const long_name = name + " " + sed_val_str;
+    auto value = sub_params.get<double>(sed_val_str);
+    is_const_map.insert(std::make_pair(long_name, true));
+    const_value_map.insert(std::make_pair(long_name, value));
+  }
+
+  if (sub_params.isParameter(init_val_str) == true) {
+    std::string const long_name = name + " " + init_val_str;
+    auto value = sub_params.get<double>(init_val_str);
+    is_const_map.insert(std::make_pair(long_name, true));
+    const_value_map.insert(std::make_pair(long_name, value));
+  }
+
+  if (sub_params.isParameter(max_val_str) == true) {
+    std::string const long_name = name + " " + max_val_str;
+    auto value = sub_params.get<double>(max_val_str);
+    is_const_map.insert(std::make_pair(long_name, true));
+    const_value_map.insert(std::make_pair(long_name, value));
+  }
+
+  return;
+}
+
+} // anonymous namespace
+
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 ConstitutiveModelParameters<EvalT, Traits>::ConstitutiveModelParameters(
@@ -155,78 +224,33 @@ ConstitutiveModelParameters<EvalT, Traits>::ConstitutiveModelParameters(
   // ACE mass density
   std::string density_str("ACE Density");
   if (mat_params->isSublist(density_str)) {
-    density_ = decltype(density_)(density_str, dl_->qp_scalar);
-    field_map_.insert(std::make_pair(density_str, density_));
-    parseParameters(density_str, p, paramLib);
+    parseACEparams<EvalT>
+    (density_str, p, is_constant_map_, constant_value_map_);
   }
   // ACE heat capacity
   std::string cp_str("ACE Heat Capacity");
   if (mat_params->isSublist(cp_str)) {
-    heat_capacity_ = decltype(heat_capacity_)(cp_str, dl_->qp_scalar);
-    field_map_.insert(std::make_pair(cp_str, heat_capacity_));
-    parseParameters(cp_str, p, paramLib);
+    parseACEparams<EvalT>
+    (cp_str, p, is_constant_map_, constant_value_map_);
   }
   // ACE thermal conductivity
   std::string ace_k_str("ACE Thermal Conductivity");
   if (mat_params->isSublist(ace_k_str)) {
-    thermal_conductivity_ = 
-        decltype(thermal_conductivity_)(ace_k_str, dl_->qp_scalar);
-    field_map_.insert(std::make_pair(ace_k_str, thermal_conductivity_));
-    parseParameters(ace_k_str, p, paramLib);
-  }
-  // ACE thermal inertia
-  std::string chi_str("ACE Thermal Inertia");
-  if (mat_params->isSublist(chi_str)) {
-    thermal_inertia_ =
-        decltype(thermal_inertia_)(chi_str, dl_->qp_scalar);
-    field_map_.insert(std::make_pair(chi_str, thermal_inertia_));
-    parseParameters(chi_str, p, paramLib);
+    parseACEparams<EvalT>
+    (ace_k_str, p, is_constant_map_, constant_value_map_);
   }
   // ACE ice saturation
   std::string isat_str("ACE Ice Saturation");
   if (mat_params->isSublist(isat_str)) {
-    ice_saturation_ = decltype(ice_saturation_)(isat_str, dl_->qp_scalar);
-    field_map_.insert(std::make_pair(isat_str, ice_saturation_));
-    parseParameters(isat_str, p, paramLib);
-  }
-  // ACE water saturation
-  std::string wsat_str("ACE Water Saturation");
-  if (mat_params->isSublist(wsat_str)) {
-    water_saturation_ = decltype(water_saturation_)(wsat_str, dl_->qp_scalar);
-    field_map_.insert(std::make_pair(wsat_str, water_saturation_));
-    parseParameters(wsat_str, p, paramLib);
+    parseACEparams<EvalT>
+    (isat_str, p, is_constant_map_, constant_value_map_);
   }
   // ACE porosity
   std::string por_str("ACE Porosity");
   if (mat_params->isSublist(por_str)) {
-    porosity_ = decltype(porosity_)(por_str, dl_->qp_scalar);
-    field_map_.insert(std::make_pair(por_str, porosity_));
-    parseParameters(por_str, p, paramLib);
+    parseACEparams<EvalT>
+    (por_str, p, is_constant_map_, constant_value_map_);
   }   
-  // ACE melting temperature
-  std::string tmelt_str("ACE Melting Temperature");
-  if (mat_params->isSublist(tmelt_str)) {
-    melting_temperature_ = 
-        decltype(melting_temperature_)(tmelt_str, dl_->qp_scalar);
-    field_map_.insert(std::make_pair(tmelt_str, melting_temperature_));
-    parseParameters(tmelt_str, p, paramLib);
-  }
-  // ACE temperature change
-  std::string delT_str("ACE Temperature Change");
-  if (mat_params->isSublist(delT_str)) {
-    delta_temperature_ =
-        decltype(delta_temperature_)(delT_str, dl_->qp_scalar);
-    field_map_.insert(std::make_pair(delT_str, delta_temperature_));
-    parseParameters(delT_str, p, paramLib);
-  }
-  // ACE freezing curve slope
-  std::string dfdT_str("ACE Freezing Curve Slope");
-  if (mat_params->isSublist(dfdT_str)) {
-    dfdT_ = decltype(dfdT_)(dfdT_str, dl_->qp_scalar);
-    field_map_.insert(std::make_pair(dfdT_str, dfdT_));
-    parseParameters(dfdT_str, p, paramLib);
-  }
-
 
   // register evaluated fields
   for (auto& pair : field_map_) {
@@ -331,49 +355,6 @@ ConstitutiveModelParameters<EvalT, Traits>::getValue(const std::string& n)
   return dummy;
 }
 
-namespace { // anonymous namespace
-
-template<typename EvalT>
-void
-parseACEparams(
-    std::string const & name,
-    Teuchos::ParameterList const & params,
-    std::map<std::string, bool> & is_const_map,
-    std::map<std::string, typename EvalT::ScalarT> & const_value_map)
-{
-  std::string const
-  ice_val_str = "Ice Value";
-
-  std::string const
-  water_val_str = "Water Value";
-
-  std::string const
-  sed_val_str = "Sediment Value";
-
-  std::string
-  long_name = name;
-
-  std::string
-  val_str = "";
-
-  if (params.isParameter(ice_val_str) == true) {
-    val_str = ice_val_str;
-  } else if (params.isParameter(water_val_str) == true) {
-    val_str = water_val_str;
-  } else if (params.isParameter(sed_val_str) == true) {
-    val_str = sed_val_str;
-  }
-
-  long_name += " " + val_str;
-  auto value = params.get<typename EvalT::ScalarT>(val_str);
-  is_const_map.insert(std::make_pair(long_name, true));
-  const_value_map.insert(std::make_pair(long_name, value));
-
-  return;
-}
-
-} // anonymous namespace
-
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void
@@ -386,14 +367,6 @@ ConstitutiveModelParameters<EvalT, Traits>::parseParameters(
       p.get<Teuchos::ParameterList*>("Material Parameters")->sublist(n);
   std::string type_name(n + " Type");
   std::string type = pl.get(type_name, "Constant");
-
-  std::string hdr_str = n.substr(0, 3);
-  bool const is_ace = hdr_str == "ACE";
-
-  if (is_ace == true) {
-    parseACEparams<EvalT>(n, pl, is_constant_map_, constant_value_map_);
-    return;
-  }
 
   if (type == "Constant") {
     is_constant_map_.insert(std::make_pair(n, true));

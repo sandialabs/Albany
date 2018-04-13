@@ -109,16 +109,17 @@ class ConstitutiveModelParameters
   ///  Thermal parameters
   PHX::MDField<ScalarT, Cell, QuadPoint> thermal_cond_;
   ///  ACE parameters
-  PHX::MDField<ScalarT, Cell, QuadPoint> delta_temperature_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> density_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> dfdT_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> heat_capacity_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> melting_temperature_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> porosity_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> thermal_conductivity_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> thermal_inertia_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> water_saturation_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> ice_density_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> water_density_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> sediment_density_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> ice_heat_capacity_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> water_heat_capacity_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> sediment_heat_capacity_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> max_ice_saturation_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> init_ice_saturation_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> ice_thermal_conductivity_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> water_thermal_conductivity_;
+  PHX::MDField<ScalarT, Cell, QuadPoint> sediment_thermal_conductivity_;
 
   ///
   /// map of strings to specify parameter names to MDFields
