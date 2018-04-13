@@ -10,7 +10,7 @@
     <Parameter name="Extruded Column Coupled in 2D Response" type="bool" value="true"/>
     <Parameter name="Required Fields"         type="Array(string)" value="{temperature}"/>
     <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction, ice_thickness, observed_ice_thickness, observed_ice_thickness_RMS,
-                                                                           temperature,surface_height, surface_mass_balance, surface_mass_balance_RMS}"/>
+                                                                           temperature, surface_height, bed_topography, surface_mass_balance, surface_mass_balance_RMS}"/>
     <Parameter name="Required Surface Fields" type="Array(string)" value="{observed_surface_velocity,observed_surface_velocity_RMS}"/>
     <Parameter name="Basal Side Name"         type="string" value="basalside"/>
     <Parameter name="Surface Side Name"       type="string" value="upperside"/>
@@ -81,12 +81,12 @@
     <Parameter name="NumLayers"                             type="int"           value="5"/>
     <Parameter name="Use Glimmer Spacing"                   type="bool"          value="true"/>
     <Parameter name="Thickness Field Name"                  type="string"        value="ice_thickness"/>
-    <Parameter name="Extrude Basal Node Fields"             type="Array(string)" value="{ice_thickness,surface_height}"/>
-    <Parameter name="Basal Node Fields Ranks"               type="Array(int)"    value="{1,1}"/>
+    <Parameter name="Extrude Basal Node Fields"             type="Array(string)" value="{ice_thickness,surface_height,bed_topography}"/>
+    <Parameter name="Basal Node Fields Ranks"               type="Array(int)"    value="{1,1,1}"/>
     <Parameter name="Interpolate Basal Node Layered Fields" type="Array(string)" value="{temperature}"/>
     <Parameter name="Basal Node Layered Fields Ranks"       type="Array(int)"    value="{1}"/>
     <ParameterList name="Required Fields Info">
-     <Parameter name="Number Of Fields" type="int" value="3"/>
+     <Parameter name="Number Of Fields" type="int" value="4"/>
       <ParameterList name="Field 0">
         <Parameter name="Field Name"   type="string" value="temperature"/>
         <Parameter name="Field Type"   type="string" value="Node Scalar"/>
@@ -102,6 +102,11 @@
         <Parameter name="Field Type"   type="string" value="Node Scalar"/>
         <Parameter name="Field Origin" type="string" value="Mesh"/>
       </ParameterList>
+      <ParameterList name="Field 3">
+        <Parameter name="Field Name"   type="string" value="bed_topography"/>
+        <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin" type="string" value="Mesh"/>
+      </ParameterList>
     </ParameterList>
     <ParameterList name="Side Set Discretizations">
       <Parameter name="Side Sets" type="Array(string)" value="{basalside,upperside}"/>
@@ -113,7 +118,7 @@
         <Parameter name="Use Serial Mesh"            type="bool"   value="true"/>
         <Parameter name="Exodus Input File Name"     type="string" value="../ExoMeshes/gis_unstruct_2d.exo"/>
         <ParameterList name="Required Fields Info">
-          <Parameter name="Number Of Fields" type="int" value="8"/>
+          <Parameter name="Number Of Fields" type="int" value="9"/>
           <ParameterList name="Field 0">
             <Parameter name="Field Name"   type="string" value="ice_thickness"/>
             <Parameter name="Field Type"   type="string" value="Node Scalar"/>
@@ -162,6 +167,12 @@
             <Parameter name="Field Type"   type="string" value="Node Scalar"/>
             <Parameter name="Field Origin" type="string" value="File"/>
             <Parameter name="File Name"    type="string" value="../AsciiMeshes/GisUnstructFiles/surface_mass_balance_RMS.ascii"/>
+          </ParameterList>
+          <ParameterList name="Field 8">
+            <Parameter name="Field Name"   type="string" value="bed_topography"/>
+            <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+            <Parameter name="Field Origin" type="string" value="File"/>
+            <Parameter name="File Name"    type="string" value="../AsciiMeshes/GisUnstructFiles/bed_topography.ascii"/>
           </ParameterList>
         </ParameterList>
       </ParameterList>
