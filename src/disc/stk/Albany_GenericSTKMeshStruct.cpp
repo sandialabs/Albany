@@ -246,6 +246,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 
 void Albany::GenericSTKMeshStruct::setAllPartsIO()
 {
+#ifdef ALBANY_SEACAS
   for (auto& it : partVec)
   {
     stk::mesh::Part& part = *it.second;
@@ -264,6 +265,7 @@ void Albany::GenericSTKMeshStruct::setAllPartsIO()
     if (!stk::io::is_part_io_part(part))
       stk::io::put_io_part_attribute(part);
   }
+#endif
 }
 
 bool Albany::GenericSTKMeshStruct::buildPerceptEMesh(){
