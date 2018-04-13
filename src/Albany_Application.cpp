@@ -789,7 +789,7 @@ void Albany::Application::finalSetUp(
       const std::string &param_name = distParamSIS[is]->name;
 
       // Get parameter maps and build parameter vector
-      Teuchos::RCP<Tpetra_Vector> dist_paramT;
+      Teuchos::RCP<Tpetra_Vector> dist_paramT, dist_param_lowerboundT, dist_param_upperboundT;
       Teuchos::RCP<const Tpetra_Map> node_mapT, overlap_node_mapT;
       node_mapT = disc->getMapT(
           param_name); // Petra::EpetraMap_To_TpetraMap(node_map, commT);
@@ -797,12 +797,28 @@ void Albany::Application::finalSetUp(
           param_name); // Petra::EpetraMap_To_TpetraMap(overlap_node_map,
                        // commT);
       dist_paramT = Teuchos::rcp(new Tpetra_Vector(node_mapT));
+      dist_param_lowerboundT = Teuchos::rcp(new Tpetra_Vector(node_mapT));
+      dist_param_upperboundT = Teuchos::rcp(new Tpetra_Vector(node_mapT));
+      std::stringstream lowerbound_name, upperbound_name;
+      lowerbound_name << param_name << "_lowerbound";
+      upperbound_name << param_name << "_upperbound";
 
       // Initialize parameter with data stored in the mesh
-      disc->getFieldT(
-          *dist_paramT,
-          param_name); // Petra::EpetraVector_To_TpetraVectorNonConst(dist_param,
-                       // commT);
+      disc->getFieldT(*dist_paramT, param_name);
+      const auto& nodal_param_states = disc->getNodalParameterSIS();
+      bool has_lowerbound(false), has_upperbound(false);
+      for (int is = 0; is < nodal_param_states.size(); is++) {
+        has_lowerbound = has_lowerbound || (nodal_param_states[is]->name == lowerbound_name.str());
+        has_upperbound = has_upperbound || (nodal_param_states[is]->name == upperbound_name.str());
+      }
+      if(has_lowerbound)
+        disc->getFieldT(*dist_param_lowerboundT, lowerbound_name.str() );
+      else
+        dist_param_lowerboundT->putScalar(std::numeric_limits<ST>::lowest());
+      if(has_upperbound)
+        disc->getFieldT(*dist_param_upperboundT, upperbound_name.str());
+      else
+        dist_param_upperboundT->putScalar(std::numeric_limits<ST>::max());
 
       // JR: for now, initialize to constant value from user input if requested.
       // This needs to be generalized.
@@ -823,8 +839,8 @@ void Albany::Application::finalSetUp(
 
       // Create distributed parameter and set workset_elem_dofs
       Teuchos::RCP<TpetraDistributedParameter> parameter(
-          new TpetraDistributedParameter(param_name, dist_paramT, node_mapT,
-                                         overlap_node_mapT));
+          new TpetraDistributedParameter(param_name, dist_paramT, dist_param_lowerboundT, dist_param_upperboundT,
+                                         node_mapT, overlap_node_mapT));
       parameter->set_workset_elem_dofs(
           Teuchos::rcpFromRef(disc->getElNodeEqID(param_name)));
 

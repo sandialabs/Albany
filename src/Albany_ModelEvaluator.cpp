@@ -200,9 +200,9 @@ Albany::ModelEvaluator::ModelEvaluator(
     if(param_list) {
       Teuchos::RCP<const DistParam> distParam = distParamLib->get(*p_name_ptr);
       if(param_list->isParameter("Lower Bound") && (distParam->lower_bounds_vector() != Teuchos::null))
-        distParam->lower_bounds_vector()->putScalar(param_list->get<double>("Lower Bound", std::numeric_limits<double>::min()));
+        distParam->lower_bounds_vector()->putScalar(param_list->get<double>("Lower Bound"));
       if(param_list->isParameter("Upper Bound") && (distParam->upper_bounds_vector() != Teuchos::null))
-        distParam->upper_bounds_vector()->putScalar(param_list->get<double>("Upper Bound", std::numeric_limits<double>::max()));
+        distParam->upper_bounds_vector()->putScalar(param_list->get<double>("Upper Bound"));
       if(param_list->isParameter("Initial Uniform Value") && (distParam->vector() != Teuchos::null))
         distParam->vector()->putScalar(param_list->get<double>("Initial Uniform Value"));
     }

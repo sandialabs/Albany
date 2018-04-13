@@ -37,12 +37,14 @@ namespace Albany {
     TpetraDistributedParameter(
       const std::string& param_name_,
       const Teuchos::RCP<Tpetra_Vector>& vec_,
+      const Teuchos::RCP<Tpetra_Vector>& lowbounds_vec_,
+      const Teuchos::RCP<Tpetra_Vector>& upperbounds_vec_,
       const Teuchos::RCP<const Tpetra_Map>& owned_map_,
       const Teuchos::RCP<const Tpetra_Map>& overlapped_map_) :
       param_name(param_name_),
       vec(vec_),
-      lower_bounds_vec(new Tpetra_Vector(owned_map_, false)),
-      upper_bounds_vec(new Tpetra_Vector(owned_map_, false)),
+      lower_bounds_vec(lowbounds_vec_),
+      upper_bounds_vec(upperbounds_vec_),
       owned_map(owned_map_),
       overlapped_map(overlapped_map_) {
       importer = Teuchos::rcp(new Tpetra_Import(owned_map, overlapped_map));
