@@ -56,7 +56,7 @@ struct FlowParameterBase
     return flow_params_[index_param];
   }
 
-  RealType
+  void
   setMaxIncrement(const RealType& max_incr)
   {
     max_incr_ = max_incr;
@@ -65,6 +65,12 @@ struct FlowParameterBase
   virtual
   void
   setTolerance() = 0;
+
+  virtual
+  ~FlowParameterBase()
+  {
+    return;
+  }
 
   RealType
   min_tol_{TINY};
