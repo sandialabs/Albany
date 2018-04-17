@@ -1,0 +1,192 @@
+#!/bin/bash
+
+SUPERLU_PATH=$SUPERLU_ROOT
+HDF5_PATH=$HDF5_ROOT
+NETCDF_PATH=$NETCDF_ROOT
+PNETCDF_PATH=$PNETCDF_ROOT
+BOOST_PATH=$BOOST_ROOT
+LAPACK_PATH=$OPENBLAS_ROOT
+BLAS_PATH=$OPENBLAS_ROOT
+ZLIB_PATH=$ZLIB_ROOT
+#-G Ninja \
+#\
+
+rm -rf CMake* 
+
+PWD=`pwd`
+cmake \
+-D Trilinos_ENABLE_OpenMP=ON \
+-D Kokkos_ENABLE_Pthread=PFF \
+-D Teuchos_ENABLE_COMPLEX=ON \
+\
+-D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+-D Trilinos_ENABLE_DEBUG:BOOL=OFF \
+-D TPL_FIND_SHARED_LIBS:BOOL=OFF \
+\
+-D CMAKE_INSTALL_PREFIX:PATH="$PWD/install" \
+-D CMAKE_C_COMPILER=mpicc \
+-D CMAKE_CXX_COMPILER=mpicxx \
+-D CMAKE_Fortran_COMPILER=mpif90 \
+-D TPL_DLlib_LIBRARIES="dl" \
+-D Trilinos_ENABLE_INSTALL_CMAKE_CONFIG_FILES:BOOL=ON \
+-D CMAKE_BUILD_TYPE:STRING=RELEASE \
+-D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+-D Trilinos_ENABLE_CHECKED_STL:BOOL=OFF \
+-D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+-D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
+-D BUILD_SHARED_LIBS:BOOL=OFF \
+-D DART_TESTING_TIMEOUT:STRING=600 \
+-D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
+-D Trilinos_ENABLE_CXX11=ON \
+\
+-D TPL_ENABLE_MPI=ON \
+-D MPI_EXEC_POST_NUMPROCS_FLAGS:STRING="-bind-to;numa;-map-by;numa;" \
+-D TPL_ENABLE_BinUtils=OFF \
+-D TPL_ENABLE_SuperLU=OFF \
+-D TPL_SuperLU_LIBRARIES:STRING="${SUPERLU_PATH}/lib/libsuperlu.a" \
+-D TPL_SuperLU_INCLUDE_DIRS:STRING="${SUPERLU_PATH}/include" \
+-D TPL_ENABLE_BLAS=ON \
+-D TPL_BLAS_LIBRARIES="blas;gfortran;gomp" \
+-D TPL_LAPACK_LIBRARIES="lapack;gfortran;gomp" \
+-D BLAS_INCLUDE_DIRS:PATH="${BLAS_PATH}/include" \
+-D BLAS_LIBRARY_DIRS:PATH="${BLAS_PATH}/lib" \
+-D TPL_ENABLE_LAPACK=ON \
+-D LAPACK_INCLUDE_DIRS:PATH="${LAPACK_PATH}/include" \
+-D LAPACK_LIBRARY_DIRS:PATH="${LAPACK_PATH}/lib" \
+-D TPL_ENABLE_Boost=ON \
+-D Boost_INCLUDE_DIRS:PATH="${BOOST_PATH}/include" \
+-D Boost_LIBRARY_DIRS:PATH="${BOOST_PATH}/lib" \
+-D TPL_ENABLE_BoostLib=ON \
+-D BoostLib_INCLUDE_DIRS:PATH="${BOOST_PATH}/include" \
+-D BoostLib_LIBRARY_DIRS:PATH="${BOOST_PATH}/lib" \
+-D TPL_ENABLE_Netcdf=ON \
+-D Netcdf_INCLUDE_DIRS:PATH="${NETCDF_PATH}/include" \
+-D Netcdf_LIBRARY_DIRS:PATH="${NETCDF_PATH}/lib" \
+-D TPL_Netcdf_LIBRARIES:PATH="${NETCDF_PATH}/lib/libnetcdf.a;${PNETCDF_PATH}/lib/libpnetcdf.a;${HDF5_PATH}/lib/libhdf5_hl.a;${HDF5_PATH}/lib/libhdf5.a;${ZLIB_PATH}/lib/libz.a;dl" \
+-D TPL_ENABLE_HDF5=ON \
+-D HDF5_INCLUDE_DIRS:PATH="${HDF5_PATH}/include" \
+-D TPL_HDF5_LIBRARIES:PATH="${HDF5_PATH}/lib/libhdf5_hl.a;${HDF5_PATH}/lib/libhdf5.a;${ZLIB_PATH}/lib/libz.a;dl" \
+-D TPL_ENABLE_Zlib=ON \
+-D Zlib_INCLUDE_DIRS:PATH="${ZLIB_PATH}/include" \
+-D TPL_Zlib_LIBRARIES:PATH="${ZLIB_PATH}/lib/libz.a" \
+\
+-D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+-D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
+-D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+-D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
+-D Trilinos_ENABLE_SECONDARY_TESTED_CODE:BOOL=ON \
+-D Trilinos_ENABLE_EXPORT_MAKEFILES:BOOL=OFF \
+-D Trilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF \
+-D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
+-D Teuchos_ENABLE_LONG_LONG_INT:BOOL=ON \
+-D Teuchos_ENABLE_COMPLEX:BOOL=OFF \
+\
+-D TPL_ENABLE_Matio=OFF \
+-D Trilinos_ENABLE_TESTS:BOOL=OFF \
+-D Trilinos_ENABLE_MiniTensor:BOOL=ON \
+-D Trilinos_ENABLE_TriKota:BOOL=OFF \
+-D Trilinos_ENABLE_Teuchos:BOOL=ON \
+-D Trilinos_ENABLE_Shards:BOOL=ON \
+-D Trilinos_ENABLE_Sacado:BOOL=ON \
+-D Trilinos_ENABLE_Epetra:BOOL=ON \
+-D Trilinos_ENABLE_Tempus:BOOL=ON \
+-D Trilinos_ENABLE_EpetraExt:BOOL=ON \
+-D Trilinos_ENABLE_Ifpack:BOOL=ON \
+-D Trilinos_ENABLE_AztecOO:BOOL=ON \
+-D Trilinos_ENABLE_Amesos:BOOL=ON \
+-D Trilinos_ENABLE_Anasazi:BOOL=ON \
+-D Trilinos_ENABLE_Belos:BOOL=ON \
+-D Trilinos_ENABLE_ML:BOOL=ON \
+-D Trilinos_ENABLE_Phalanx:BOOL=ON \
+-D Phalanx_ENABLE_TESTS:BOOL=ON \
+-D Phalanx_ENABLE_EXAMPLES:BOOL=ON \
+-D Trilinos_ENABLE_Intrepid:BOOL=ON \
+-D Trilinos_ENABLE_Intrepid2:BOOL=ON \
+-D Intrepid2_ENABLE_TESTS:BOOL=ON \
+-D Intrepid2_ENABLE_EXAMPLES:BOOL=ON \
+-D Trilinos_ENABLE_ROL:BOOL=ON \
+-D Trilinos_ENABLE_NOX:BOOL=ON \
+-D Trilinos_ENABLE_Stratimikos:BOOL=ON \
+-D Trilinos_ENABLE_Thyra:BOOL=ON \
+-D Trilinos_ENABLE_Rythmos:BOOL=ON \
+-D Trilinos_ENABLE_OptiPack:BOOL=ON \
+-D Trilinos_ENABLE_GlobiPack:BOOL=ON \
+-D Trilinos_ENABLE_MOOCHO:BOOL=ON \
+-D Trilinos_ENABLE_Stokhos:BOOL=ON \
+-D Trilinos_ENABLE_Piro:BOOL=ON \
+-D Trilinos_ENABLE_Pamgen:BOOL=ON \
+-D Trilinos_ENABLE_Isorropia:BOOL=ON \
+-D Trilinos_ENABLE_Teko:BOOL=ON \
+-D Trilinos_ENABLE_PyTrilinos:BOOL=OFF \
+\
+-D Trilinos_ENABLE_STK:BOOL=ON \
+-D Trilinos_ENABLE_STKExp:BOOL=OFF \
+-D Trilinos_ENABLE_STKClassic:BOOL=OFF \
+-D Trilinos_ENABLE_STKDoc_tests:BOOL=OFF \
+-D Trilinos_ENABLE_STKIO:BOOL=ON \
+-D Trilinos_ENABLE_STKMesh:BOOL=ON \
+-D Trilinos_ENABLE_STKSearch:BOOL=ON \
+-D Trilinos_ENABLE_STKSearchUtil:BOOL=OFF \
+-D Trilinos_ENABLE_STKTopology:BOOL=ON \
+-D Trilinos_ENABLE_STKTransfer:BOOL=ON \
+-D Trilinos_ENABLE_STKUnit_tests:BOOL=OFF \
+-D Trilinos_ENABLE_STKUtil:BOOL=ON \
+\
+-D Trilinos_ENABLE_SEACAS:BOOL=ON \
+-D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
+-D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
+-D SEACAS_ENABLE_SEACASSVDI:BOOL=OFF \
+-D Trilinos_ENABLE_SEACASFastq:BOOL=OFF \
+-D Trilinos_ENABLE_SEACASBlot:BOOL=OFF \
+-D Trilinos_ENABLE_SEACASPLT:BOOL=OFF \
+-D TPL_ENABLE_X11:BOOL=OFF \
+-D Trilinos_ENABLE_Tpetra:BOOL=ON \
+-D Trilinos_ENABLE_Kokkos:BOOL=ON \
+-D Trilinos_ENABLE_Ifpack2:BOOL=ON \
+-D Trilinos_ENABLE_Amesos2:BOOL=ON \
+-D Trilinos_ENABLE_Zoltan2:BOOL=ON \
+-D Trilinos_ENABLE_Zoltan:BOOL=ON \
+-D Zoltan_ENABLE_ULONG_IDS:BOOL=ON \
+-D ZOLTAN_BUILD_ZFDRIVE:BOOL=OFF \
+-D Trilinos_ENABLE_FEI:BOOL=OFF \
+-D Phalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+-D Stokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+-D Stratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+-D Trilinos_ENABLE_MueLu:BOOL=ON \
+-D Amesos2_ENABLE_KLU2:BOOL=ON \
+-D Anasazi_ENABLE_RBGen:BOOL=ON \
+\
+-D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+-D Tpetra_INST_INT_LONG_LONG:BOOL=ON \
+-D Tpetra_INST_INT_INT:BOOL=ON \
+-D Tpetra_INST_DOUBLE:BOOL=ON \
+-D Tpetra_INST_FLOAT:BOOL=OFF \
+-D Tpetra_INST_COMPLEX_FLOAT:BOOL=OFF \
+-D Tpetra_INST_COMPLEX_DOUBLE:BOOL=OFF \
+-D Tpetra_INST_INT_LONG:BOOL=OFF \
+-D Tpetra_INST_INT_UNSIGNED:BOOL=OFF \
+\
+-D Trilinos_ENABLE_Kokkos:BOOL=ON \
+-D Trilinos_ENABLE_KokkosCore:BOOL=ON \
+-D Phalanx_KOKKOS_DEVICE_TYPE:STRING="OPENMP" \
+-D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
+-D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
+-D Trilinos_ENABLE_OpenMP:BOOL=ON \
+-D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
+-D TPL_ENABLE_HWLOC:STRING=OFF \
+-D Trilinos_ENABLE_ThreadPool:BOOL=ON \
+\
+-D Trilinos_ENABLE_Panzer:BOOL=OFF \
+-D Panzer_ENABLE_TESTS:BOOL=ON \
+-D Panzer_ENABLE_EXAMPLES:BOOL=ON \
+-D Panzer_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+-D Panzer_ENABLE_FADTYPE:STRING="Sacado::Fad::DFad" \
+-D MPI_EXEC=mpirun \
+-D MPI_EXEC_MAX_NUMPROCS:STRING="4" \
+-D MPI_EXEC_NUMPROCS_FLAG:STRING="-np" \
+..
+
+#-D CMAKE_CXX_FLAGS="-mcpu=power8 -mpowerpc -DNOSSE -ldl -Wall -ansi -pedantic -Wno-unknown-pragmas -Wno-narrowing -Wno-pragmas -Wno-unused-but-set-variable -Wno-delete-non-virtual-dtor -Wno-inline -Wshadow -L/${ZLIB_PATH}/lib -L/${HDF5_PATH}/lib -L/${NETCDF_PATH}/lib -L/${BOOST_PATH}/lib -L/${LAPACK_PATH}/lib -L/${BLAS_PATH}/lib -L/${SUPERLU_PATH}/lib" \
+#-D CMAKE_C_FLAGS="-mcpu=power8 -mpowerpc -DNOSSE -ldl -Wall -ansi -pedantic -Wno-unknown-pragmas -Wno-narrowing -Wno-pragmas -Wno-unused-but-set-variable -Wno-inline -Wshadow -L/${ZLIB_PATH}/lib -L/${HDF5_PATH}/lib -L/${NETCDF_PATH}/lib -L/${BOOST_PATH}/lib -L/${LAPACK_PATH}/lib -L/${BLAS_PATH}/lib -L/${SUPERLU_PATH}/lib" \
+#-D TPL_HWLOC_LIBRARIES:PATHNAME="${HWLOC_PATH}/lib/libhwloc.so" \
+#-D TPL_HWLOC_INCLUDE_DIRS:PATHNAME="${HWLOC_PATH}/include" \

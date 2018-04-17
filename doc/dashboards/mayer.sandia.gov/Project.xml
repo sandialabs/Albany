@@ -1,0 +1,6 @@
+<Project name="Albany">
+  <SubProject name="IKTMayerARMTrilinos">
+  </SubProject>
+  <SubProject name="IKTMayerARMAlbany">
+  </SubProject>
+</Project>
