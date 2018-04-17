@@ -1,5 +1,3 @@
-%YAML 1.1
----
 LCM:
   Problem:
     Name: Mechanics 3D
@@ -28,8 +26,8 @@ LCM:
         Output to File: true
   Discretization:
     Method: Exodus
-    Exodus Input File Name: notched_tensile_tet10.g
-    Exodus Output File Name: notched_tensile_tet10_quad_J2.e
+    Exodus Input File Name: notched_tensile.g
+    Exodus Output File Name: notched_tensile.e
     Use Serial Mesh: true
     Cubature Degree: 2
     Exodus Solution Name: disp
