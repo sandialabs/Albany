@@ -30,6 +30,7 @@
        evaluators/FELIX_HydrologyResidualPotentialEqn.cpp
        evaluators/FELIX_HydrologyWaterDischarge.cpp
        evaluators/FELIX_HydrologyWaterSource.cpp
+       evaluators/FELIX_HydrologyWaterThickness.cpp
        evaluators/FELIX_HydrostaticPressure.cpp
        evaluators/FELIX_Integral1Dw_Z.cpp
        evaluators/FELIX_LiquidWaterFraction.cpp
@@ -151,6 +152,8 @@ ENDIF()
        evaluators/FELIX_HydrologyWaterDischarge_Def.hpp
        evaluators/FELIX_HydrologyWaterSource.hpp
        evaluators/FELIX_HydrologyWaterSource_Def.hpp
+       evaluators/FELIX_HydrologyWaterThickness.hpp
+       evaluators/FELIX_HydrologyWaterThickness_Def.hpp
        evaluators/FELIX_HydrostaticPressure.hpp
        evaluators/FELIX_HydrostaticPressure_Def.hpp
        evaluators/FELIX_Integral1Dw_Z.hpp
