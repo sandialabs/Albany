@@ -17,25 +17,33 @@
 namespace FELIX
 {
 
-/** \brief Hydrology Residual Evaluator
+/* \brief Hydrology Water Discharge Evaluator
+ *
+ *   This evaluator evaluates
+ *
+ *     q = - (k_0 * h^3)/(\rho_w * g) * grad \Phi
+ *
+ *   It is assumed that the units of each term are
+ *
+ *    1) k_0       : [m^-1 s^-1]
+ *    2) h         : [m]
+ *    3) \rho_w    : [kg m^-3]
+ *    4) g         : [m s^-2]
+ *    5) grad \Phi : [kPa km^-1]
+ *
+ *   which yields water discharge units [m^2 s^-1].
+ *
+ */
 
-    This evaluator evaluates the residual of the Hydrology model
-*/
-
-template<typename EvalT, typename Traits, bool HasThicknessEqn, bool IsStokes>
-class HydrologyWaterDischarge;
-
-// Partial specialization for Hydrology Only problem
-template<typename EvalT, typename Traits, bool HasThicknessEqn>
-class HydrologyWaterDischarge<EvalT,Traits,HasThicknessEqn,false> :
-      public PHX::EvaluatorWithBaseImpl<Traits>,
-      public PHX::EvaluatorDerived<EvalT, Traits>
+template<typename EvalT, typename Traits, bool HasCavitiesEqn, bool IsStokes>
+class HydrologyWaterDischarge : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
   typedef typename EvalT::ScalarT       ScalarT;
   typedef typename EvalT::ParamScalarT  ParamScalarT;
-  typedef typename std::conditional<HasThicknessEqn,ScalarT,ParamScalarT>::type hScalarT;
+  typedef typename std::conditional<HasCavitiesEqn,ScalarT,ParamScalarT>::type hScalarT;
 
   HydrologyWaterDischarge (const Teuchos::ParameterList& p,
                            const Teuchos::RCP<Albany::Layouts>& dl);
@@ -47,65 +55,24 @@ public:
 
 private:
 
-  // Input:
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim>  gradPhi;
-  PHX::MDField<const ScalarT,Cell,QuadPoint>      gradPhiNorm;
-  PHX::MDField<const hScalarT,Cell,QuadPoint>     h;
-
-  // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  q;
-
-  int numQPs;
-  int numDim;
-
-  double mu_w;
-  double k_0;
-  double alpha;
-  double beta;
-
-  bool needsGradPhiNorm;
-};
-
-// Partial specialization for StokesFO coupling
-template<typename EvalT, typename Traits, bool HasThicknessEqn>
-class HydrologyWaterDischarge<EvalT,Traits,HasThicknessEqn,true> :
-      public PHX::EvaluatorWithBaseImpl<Traits>,
-      public PHX::EvaluatorDerived<EvalT, Traits>
-{
-public:
-
-  typedef typename EvalT::ScalarT       ScalarT;
-  typedef typename EvalT::ParamScalarT  ParamScalarT;
-  typedef typename std::conditional<HasThicknessEqn,ScalarT,ParamScalarT>::type hScalarT;
-
-  HydrologyWaterDischarge (const Teuchos::ParameterList& p,
-                           const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
+  void evaluateFieldsCell(typename Traits::EvalData d);
+  void evaluateFieldsSide(typename Traits::EvalData d);
 
   // Input:
-  PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim>   gradPhi;
-  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>       gradPhiNorm;
-  PHX::MDField<const hScalarT,Cell,Side,QuadPoint>      h;
+  PHX::MDField<const ScalarT>       gradPhi;
+  PHX::MDField<const hScalarT>      h;
+  PHX::MDField<const ScalarT,Dim>   regularizationParam;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>   q;
+  PHX::MDField<ScalarT>   q;
 
   int numQPs;
   int numDim;
   std::string   sideSetName;
 
-  double mu_w;
   double k_0;
-  double alpha;
-  double beta;
 
-  bool needsGradPhiNorm;
+  bool regularize;
 };
 
 } // Namespace FELIX
