@@ -63,7 +63,6 @@ namespace FELIX
       GradBF         = decltype(GradBF)(p.get<std::string> ("Gradient BF Side Name"), dl_basal->node_qp_gradient);
       verticalVel    = decltype(verticalVel)(p.get<std::string>("Vertical Velocity Side QP Variable Name"), dl_basal->qp_scalar);
 
-      this->addDependentField(velocity);
       this->addDependentField(verticalVel);
       this->addDependentField(GradBF);
 
