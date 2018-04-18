@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "FELIX_HydrologyBasalWaterPotential.hpp"
-#include "FELIX_HydrologyBasalWaterPotential_Def.hpp"
+#include "FELIX_HydrologyBasalGravitationalWaterPotential.hpp"
+#include "FELIX_HydrologyBasalGravitationalWaterPotential_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::BasalGravitationalWaterPotential)
