@@ -21,14 +21,15 @@
        evaluators/FELIX_EnthalpyBasalResid.cpp
        evaluators/FELIX_EpsilonL1L2.cpp
        evaluators/FELIX_FlowRate.cpp
+       evaluators/FELIX_FlowFactorA.cpp
        evaluators/FELIX_FluxDiv.cpp
        evaluators/FELIX_GeoFluxHeat.cpp
        evaluators/FELIX_HydrologyDirichlet.cpp
+       evaluators/FELIX_HydrologyMeltingRate.cpp
+       evaluators/FELIX_HydrologyResidualThicknessEqn.cpp
+       evaluators/FELIX_HydrologyResidualPotentialEqn.cpp
        evaluators/FELIX_HydrologyWaterDischarge.cpp
        evaluators/FELIX_HydrologyWaterSource.cpp
-       evaluators/FELIX_HydrologyMeltingRate.cpp
-       evaluators/FELIX_HydrologyResidualPotentialEqn.cpp
-       evaluators/FELIX_HydrologyResidualThicknessEqn.cpp
        evaluators/FELIX_HydrostaticPressure.cpp
        evaluators/FELIX_Integral1Dw_Z.cpp
        evaluators/FELIX_LiquidWaterFraction.cpp
@@ -132,22 +133,24 @@ ENDIF()
        evaluators/FELIX_EpsilonL1L2_Def.hpp
        evaluators/FELIX_FlowRate.hpp
        evaluators/FELIX_FlowRate_Def.hpp
+       evaluators/FELIX_FlowFactorA.hpp
+       evaluators/FELIX_FlowFactorA_Def.hpp
        evaluators/FELIX_FluxDiv.hpp
        evaluators/FELIX_FluxDiv_Def.hpp
        evaluators/FELIX_GeoFluxHeat.hpp
        evaluators/FELIX_GeoFluxHeat_Def.hpp
        evaluators/FELIX_HydrologyDirichlet.hpp
        evaluators/FELIX_HydrologyDirichlet_Def.hpp
+       evaluators/FELIX_HydrologyMeltingRate.hpp
+       evaluators/FELIX_HydrologyMeltingRate_Def.hpp
+       evaluators/FELIX_HydrologyResidualThicknessEqn.hpp
+       evaluators/FELIX_HydrologyResidualThicknessEqn_Def.hpp
+       evaluators/FELIX_HydrologyResidualPotentialEqn.hpp
+       evaluators/FELIX_HydrologyResidualPotentialEqn_Def.hpp
        evaluators/FELIX_HydrologyWaterDischarge.hpp
        evaluators/FELIX_HydrologyWaterDischarge_Def.hpp
        evaluators/FELIX_HydrologyWaterSource.hpp
        evaluators/FELIX_HydrologyWaterSource_Def.hpp
-       evaluators/FELIX_HydrologyMeltingRate.hpp
-       evaluators/FELIX_HydrologyMeltingRate_Def.hpp
-       evaluators/FELIX_HydrologyResidualPotentialEqn.hpp
-       evaluators/FELIX_HydrologyResidualPotentialEqn_Def.hpp
-       evaluators/FELIX_HydrologyResidualThicknessEqn.hpp
-       evaluators/FELIX_HydrologyResidualThicknessEqn_Def.hpp
        evaluators/FELIX_HydrostaticPressure.hpp
        evaluators/FELIX_HydrostaticPressure_Def.hpp
        evaluators/FELIX_Integral1Dw_Z.hpp
