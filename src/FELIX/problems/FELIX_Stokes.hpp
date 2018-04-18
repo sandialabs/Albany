@@ -11,6 +11,7 @@
 #include "Teuchos_ParameterList.hpp"
 
 #include "Albany_AbstractProblem.hpp"
+#include "Albany_GeneralPurposeFieldsNames.hpp"
 
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
@@ -361,8 +362,8 @@ FELIX::Stokes::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Momentum Resid"));
 
     //Input
-    p->set<std::string>("Weighted BF Name", "wBF");
-    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Weighted BF Name", Albany::weighted_bf_name);
+    p->set<std::string>("Weighted Gradient BF Name", Albany::weighted_grad_bf_name);
     p->set<std::string>("Velocity QP Variable Name", "Velocity");
     p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
     p->set<std::string>("Pressure QP Variable Name", "Pressure");
@@ -388,13 +389,13 @@ FELIX::Stokes::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Continuity Resid"));
 
     //Input
-    p->set<std::string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Weighted BF Name", Albany::weighted_bf_name);
     p->set<std::string>("Velocity QP Variable Name", "Velocity");
     p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
     p->set<std::string>("Density QP Variable Name", "Density");
 
     p->set<bool>("Have PSPG", havePSPG);
-    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Weighted Gradient BF Name", Albany::weighted_grad_bf_name);
     p->set<std::string> ("Tau M Name", "Tau M");
     p->set<std::string> ("Rm Name", "Rm");
 

@@ -164,9 +164,21 @@ namespace Albany {
         const std::string& param_name,
         const std::string& field_name="") const;
 
+    //! Function to create parameter list for construction of ScatterScalarNodalParameter
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructScatterScalarNodalParameter(
+        const std::string& param_name,
+        const std::string& field_name="") const;
+
     //! Function to create parameter list for construction of GatherScalarExtruded2DNodalParameter
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructGatherScalarExtruded2DNodalParameter(
+        const std::string& param_name,
+        const std::string& field_name="") const;
+
+    //! Function to create parameter list for construction of ScatterScalarExtruded2DNodalParameter
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructScatterScalarExtruded2DNodalParameter(
         const std::string& param_name,
         const std::string& field_name="") const;
 

@@ -18,6 +18,7 @@
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
+#include "Albany_GeneralPurposeFieldsNames.hpp"
 #include "Albany_ResponseUtilities.hpp"
 
 #include "PHAL_Workset.hpp"
@@ -476,7 +477,7 @@ FELIX::StokesFOThickness::constructEvaluators(
     // -------------------- Special evaluators for side handling ----------------- //
 
     //---- Restrict coordinate vector from cell-based to cell-side-based
-    ev = evalUtils_full.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",basalSideName,"Vertex Vector",cellType,"Coord Vec " + basalSideName);
+    ev = evalUtils_full.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,basalSideName,"Vertex Vector",cellType,"Coord Vec " + basalSideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Compute side basis functions
@@ -519,7 +520,7 @@ FELIX::StokesFOThickness::constructEvaluators(
   if (surfaceSideName!="INVALID")
   {
     //---- Restrict coordinate vector from cell-based to cell-side-based
-    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",surfaceSideName,"Vertex Vector",cellType,"Coord Vec " + surfaceSideName);
+    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,surfaceSideName,"Vertex Vector",cellType,"Coord Vec " + surfaceSideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Compute side basis functions
@@ -601,7 +602,7 @@ FELIX::StokesFOThickness::constructEvaluators(
   p->set<std::string>("Averaged Velocity Variable Name", "Averaged Velocity");
   p->set<std::string>("Thickness Increment Variable Name", "Thickness2D");
   p->set<std::string>("Past Thickness Name", "ice_thickness");
-  p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+  p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
   p->set<int>("Cubature Degree",3);
   if(have_SMB)
     p->set<std::string>("SMB Name", "surface_mass_balance");
@@ -672,8 +673,8 @@ FELIX::StokesFOThickness::constructEvaluators(
     p = rcp(new ParameterList("Stokes Basal Residual"));
 
     //Input
-    p->set<std::string>("BF Side Name", "BF "+basalSideName);
-    p->set<std::string>("Weighted Measure Name", "Weighted Measure "+basalSideName);
+    p->set<std::string>("BF Side Name", Albany::bf_name + " "+basalSideName);
+    p->set<std::string>("Weighted Measure Name", Albany::weighted_measure_name + " "+basalSideName);
     p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", "beta");
     p->set<std::string>("Velocity Side QP Variable Name", "basal_velocity");
     p->set<std::string>("Side Set Name", basalSideName);
@@ -784,7 +785,7 @@ FELIX::StokesFOThickness::constructEvaluators(
 
     //Input
     p->set<std::string>("Sliding Velocity QP Variable Name", "sliding_velocity");
-    p->set<std::string>("BF Variable Name", "BF " + basalSideName);
+    p->set<std::string>("BF Variable Name", Albany::bf_name + " " + basalSideName);
     p->set<std::string>("Effective Pressure QP Variable Name", "effective_pressure");
     p->set<std::string>("Bed Roughness Variable Name", "bed_roughness");
     p->set<std::string>("Side Set Name", basalSideName);
@@ -824,7 +825,7 @@ FELIX::StokesFOThickness::constructEvaluators(
 
     // Input
     p->set<std::string>("Old Coords Name", "Coord Vec Old");
-    p->set<std::string>("New Coords Name", "Coord Vec");
+    p->set<std::string>("New Coords Name", Albany::coord_vec_name);
     p->set<std::string>("Thickness Increment Name", "ExtrudedThickness");
     p->set<std::string>("Past Thickness Name", "ice_thickness");
     p->set<std::string>("Top Surface Name", "surface_height");
@@ -838,15 +839,15 @@ FELIX::StokesFOThickness::constructEvaluators(
   p = rcp(new ParameterList("StokesFO Resid"));
 
   //Input
-  p->set<std::string>("Weighted BF Variable Name", "wBF");
-  p->set<std::string>("Weighted Gradient BF Variable Name", "wGrad BF");
+  p->set<std::string>("Weighted BF Variable Name", Albany::weighted_bf_name);
+  p->set<std::string>("Weighted Gradient BF Variable Name", Albany::weighted_grad_bf_name);
   p->set<std::string>("Velocity QP Variable Name", "Velocity");
   p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
   p->set<std::string>("Body Force Variable Name", "Body Force");
   p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
   p->set<bool>("Needs Basal Residual", sliding);
   p->set<std::string>("Basal Residual Variable Name", "Basal Residual");
-  p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+  p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
   p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("Equation Set"));
 
@@ -862,8 +863,8 @@ FELIX::StokesFOThickness::constructEvaluators(
   //Input
   p->set<std::string>("Input Residual Name", "StokesFO Residual");
   p->set<std::string>("Thickness Increment Variable Name", "ExtrudedThickness");
-  p->set<std::string>("Gradient BF Name", "Grad BF");
-  p->set<std::string>("Weighted BF Name", "wBF");
+  p->set<std::string>("Gradient BF Name", Albany::grad_bf_name);
+  p->set<std::string>("Weighted BF Name", Albany::weighted_bf_name);
 
   Teuchos::ParameterList& physParamList = params->sublist("FELIX Physical Parameters");
   p->set<Teuchos::ParameterList*>("Physical Parameter List", &physParamList);
@@ -890,7 +891,7 @@ FELIX::StokesFOThickness::constructEvaluators(
   p = rcp(new ParameterList("FELIX Viscosity"));
 
   //Input
-  p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
+  p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
   p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
   p->set<std::string>("Velocity QP Variable Name", "Velocity");
   p->set<std::string>("Temperature Variable Name", "temperature");
@@ -912,7 +913,7 @@ FELIX::StokesFOThickness::constructEvaluators(
 
   //Input
   p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
-  p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
+  p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
   p->set<std::string>("Surface Height Gradient Name", "surface_height Gradient");
   p->set<std::string>("Surface Height Name", "Surface Height");
   p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("Body Force"));
@@ -946,7 +947,7 @@ FELIX::StokesFOThickness::constructEvaluators(
 
     // Input
     p->set<std::string>("Beta Given Variable Name", "basal_friction");
-    p->set<std::string>("Gradient BF Side Variable Name", "Grad BF "+basalSideName);
+    p->set<std::string>("Gradient BF Side Variable Name", Albany::grad_bf_name + " "+basalSideName);
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<std::string>("Effective Pressure QP Name", "effective_pressure");
     p->set<std::string>("Effective Pressure Gradient QP Name", "effective_pressure Gradient");
@@ -981,12 +982,12 @@ FELIX::StokesFOThickness::constructEvaluators(
     paramList->set<std::string>("Surface Velocity Side QP Variable Name","surface_velocity");
     paramList->set<std::string>("Observed Surface Velocity Side QP Variable Name","observed_surface_velocity");
     paramList->set<std::string>("Observed Surface Velocity RMS Side QP Variable Name","observed_surface_velocity_RMS");
-    paramList->set<std::string>("BF Surface Name","BF " + surfaceSideName);
-    paramList->set<std::string>("Weighted Measure Basal Name","Weighted Measure " + basalSideName);
-    paramList->set<std::string>("Weighted Measure Surface Name","Weighted Measure " + surfaceSideName);
-    paramList->set<std::string>("Inverse Metric Basal Name","Inv Metric " + basalSideName);
-    paramList->set<std::string>("Metric Basal Name","Metric " + basalSideName);
-    paramList->set<std::string>("Metric Surface Name","Metric " + surfaceSideName);
+    paramList->set<std::string>("BF Surface Name",Albany::bf_name + " " + surfaceSideName);
+    paramList->set<std::string>("Weighted Measure Basal Name",Albany::weighted_measure_name + " " + basalSideName);
+    paramList->set<std::string>("Weighted Measure Surface Name",Albany::weighted_measure_name + " " + surfaceSideName);
+    paramList->set<std::string>("Inverse Metric Basal Name",Albany::metric_inv_name + " " + basalSideName);
+    paramList->set<std::string>("Metric Basal Name",Albany::metric_name + " " + basalSideName);
+    paramList->set<std::string>("Metric Surface Name",Albany::metric_name + " " + surfaceSideName);
     paramList->set<std::string>("Basal Side Name", basalSideName);
     paramList->set<std::string>("Surface Side Name", surfaceSideName);
     paramList->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",rcp(new CellTopologyData(meshSpecs.ctd)));

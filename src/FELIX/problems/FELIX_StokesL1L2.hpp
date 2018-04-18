@@ -11,6 +11,7 @@
 #include "Teuchos_ParameterList.hpp"
 
 #include "Albany_AbstractProblem.hpp"
+#include "Albany_GeneralPurposeFieldsNames.hpp"
 
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
@@ -191,7 +192,7 @@ FELIX::StokesL1L2::constructEvaluators(
      // Input
      p->set<std::string>("Variable Name", dof_names[0]);
 
-     p->set<std::string>("Gradient BF Name", "Grad BF");
+     p->set<std::string>("Gradient BF Name", Albany::grad_bf_name);
 
      // Output (assumes same Name as input)
      p->set<std::string>("Gradient Variable Name", dof_names[0]+" Gradient");
@@ -204,8 +205,8 @@ FELIX::StokesL1L2::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Stokes Resid"));
 
     //Input
-    p->set<std::string>("Weighted BF Name", "wBF");
-    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Weighted BF Name", Albany::weighted_bf_name);
+    p->set<std::string>("Weighted Gradient BF Name", Albany::weighted_grad_bf_name);
     p->set<std::string>("QP Variable Name", "Velocity");
     p->set<std::string>("QP Time Derivative Variable Name", "Velocity_dot");
     p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");

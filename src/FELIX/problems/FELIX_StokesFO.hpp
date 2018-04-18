@@ -899,7 +899,7 @@ if (basalSideName!="INVALID")
     p = Teuchos::rcp(new Teuchos::ParameterList("Update Z Coordinate"));
 
     p->set<std::string>("Old Coords Name",  "Coord Vec Old");
-    p->set<std::string>("New Coords Name",  "Coord Vec");
+    p->set<std::string>("New Coords Name",  Albany::coord_vec_name);
     p->set<std::string>("Thickness Name",   "ice_thickness");
     p->set<std::string>("Top Surface Name", "surface_height");
     p->set<std::string>("Bed Topography Name", "bed_topography");
@@ -935,7 +935,7 @@ if (basalSideName!="INVALID")
     // -------------------- Special evaluators for side handling ----------------- //
 
     //---- Restrict vertex coordinates from cell-based to cell-side-based
-    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",basalSideName,"Vertex Vector",cellType,"Coord Vec " + basalSideName);
+    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,basalSideName,"Vertex Vector",cellType,Albany::coord_vec_name +" " + basalSideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Compute side basis functions
@@ -1070,7 +1070,7 @@ if (basalSideName!="INVALID")
   if (surfaceSideName!="INVALID")
   {
     //---- Restrict vertex coordinates from cell-based to cell-side-based
-    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",surfaceSideName,"Vertex Vector",cellType,"Coord Vec " + surfaceSideName);
+    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,surfaceSideName,"Vertex Vector",cellType,Albany::coord_vec_name + " " + surfaceSideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Compute side basis functions
@@ -1110,7 +1110,7 @@ if (basalSideName!="INVALID")
   p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
   p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
   p->set<std::string>("Surface Height QP Name", "surface_height");
-  p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+  p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
   p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("FELIX Physical Parameters"));
 
@@ -1124,13 +1124,13 @@ if (basalSideName!="INVALID")
   p = Teuchos::rcp(new Teuchos::ParameterList("Stokes Resid"));
 
   //Input
-  p->set<std::string>("Weighted BF Variable Name", "wBF");
-  p->set<std::string>("Weighted Gradient BF Variable Name", "wGrad BF");
+  p->set<std::string>("Weighted BF Variable Name", Albany::weighted_bf_name);
+  p->set<std::string>("Weighted Gradient BF Variable Name", Albany::weighted_grad_bf_name);
   p->set<std::string>("Velocity QP Variable Name", "Velocity");
   p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
   p->set<std::string>("Body Force Variable Name", "Body Force");
   p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
-  p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+  p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
   p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("Equation Set"));
   p->set<std::string>("Basal Residual Variable Name", "Basal Residual");
@@ -1150,12 +1150,12 @@ if (basalSideName!="INVALID")
 
     //Input
     p->set<std::string>("Solution Variable Name", "L2 Projected Boundary Laplacian");
-    p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
+    p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
     p->set<std::string>("Field Name", "basal_friction");
     p->set<std::string>("Field Gradient Name", "beta Gradient");
-    p->set<std::string>("Gradient BF Side Name", "Grad BF "+basalSideName);
-    p->set<std::string>("Weighted Measure Side Name", "Weighted Measure "+basalSideName);
-    p->set<std::string>("Tangents Side Name", "Tangents "+basalSideName);
+    p->set<std::string>("Gradient BF Side Name", Albany::grad_bf_name + " " + basalSideName);
+    p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + " "+basalSideName);
+    p->set<std::string>("Tangents Side Name", Albany::tangents_name + " "+basalSideName);
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<std::string>("Boundary Edges Set Name", params->sublist("FELIX L2 Projected Boundary Laplacian").get<std::string>("Boundary Edges Set Name", "lateralside"));
     p->set<double>("Mass Coefficient", params->sublist("FELIX L2 Projected Boundary Laplacian").get<double>("Mass Coefficient",1.0));
@@ -1177,8 +1177,8 @@ if (basalSideName!="INVALID")
     p = Teuchos::rcp(new Teuchos::ParameterList("Stokes Basal Residual"));
 
     //Input
-    p->set<std::string>("BF Side Name", "BF "+basalSideName);
-    p->set<std::string>("Weighted Measure Name", "Weighted Measure "+basalSideName);
+    p->set<std::string>("BF Side Name", Albany::bf_name + " "+basalSideName);
+    p->set<std::string>("Weighted Measure Name", Albany::weighted_measure_name + " "+basalSideName);
     p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", "beta");
     p->set<std::string>("Velocity Side QP Variable Name", "basal_velocity");
     p->set<std::string>("Side Set Name", basalSideName);
@@ -1293,11 +1293,11 @@ if (basalSideName!="INVALID")
 
     //Input
     p->set<std::string>("Sliding Velocity QP Variable Name", "sliding_velocity");
-    p->set<std::string>("BF Variable Name", "BF " + basalSideName);
+    p->set<std::string>("BF Variable Name", Albany::bf_name + " " + basalSideName);
     p->set<std::string>("Effective Pressure QP Variable Name", "effective_pressure");
     p->set<std::string>("Bed Roughness Variable Name", "bed_roughness");
     p->set<std::string>("Side Set Name", basalSideName);
-    p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec " + basalSideName);
+    p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name + " " + basalSideName);
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
     p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("FELIX Physical Parameters"));
     p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
@@ -1370,7 +1370,7 @@ if (basalSideName!="INVALID")
   fm0.template registerEvaluator<EvalT>(ptr_homotopy);
 
   fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructQuadPointsToCellInterpolationEvaluator("surface_height"));
-  fm0.template registerEvaluator<EvalT> (evalUtils.getMSTUtils().constructQuadPointsToCellInterpolationEvaluator("Coord Vec",dl->qp_gradient, dl->cell_gradient));
+  fm0.template registerEvaluator<EvalT> (evalUtils.getMSTUtils().constructQuadPointsToCellInterpolationEvaluator(Albany::coord_vec_name,dl->qp_gradient, dl->cell_gradient));
 
 
 
@@ -1380,7 +1380,7 @@ if (basalSideName!="INVALID")
 
     //Input
     p->set<std::string>("Surface Height Variable Name", "surface_height");
-    p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
+    p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
 
     p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
 
@@ -1399,7 +1399,7 @@ if (basalSideName!="INVALID")
   p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Viscosity"));
 
   //Input
-  p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
+  p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
   p->set<std::string>("Velocity QP Variable Name", "Velocity");
   p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
   p->set<std::string>("Temperature Variable Name", "corrected temperature");
@@ -1490,7 +1490,7 @@ if (basalSideName!="INVALID")
   //Input
   p->set<std::string>("CISM Surface Height Gradient X Variable Name", "xgrad_surface_height");
   p->set<std::string>("CISM Surface Height Gradient Y Variable Name", "ygrad_surface_height");
-  p->set<std::string>("BF Variable Name", "BF");
+  p->set<std::string>("BF Variable Name", Albany::bf_name);
 
   //Output
   p->set<std::string>("Surface Height Gradient QP Variable Name", "CISM Surface Height Gradient");
@@ -1506,7 +1506,7 @@ if (basalSideName!="INVALID")
 #ifdef CISM_HAS_FELIX
   p->set<std::string>("Surface Height Gradient QP Variable Name", "CISM Surface Height Gradient");
 #endif
-  p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
+  p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
   p->set<std::string>("Surface Height Gradient Name", "surface_height Gradient");
   p->set<std::string>("Surface Height Name", "surface_height");
   p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("Body Force"));
@@ -1526,7 +1526,7 @@ if (basalSideName!="INVALID")
 
     // Input
     p->set<std::string>("Variable Name", "Averaged Velocity");
-    p->set<std::string>("Gradient BF Name", "Grad BF "+basalSideName);
+    p->set<std::string>("Gradient BF Name", Albany::grad_bf_name + " "+basalSideName);
     p->set<std::string>("Tangents Name", "Tangents "+basalSideName);
     p->set<std::string>("Side Set Name",basalSideName);
 
@@ -1540,14 +1540,14 @@ if (basalSideName!="INVALID")
     p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Basal Friction Coefficient Gradient"));
 
     // Input
-    p->set<std::string>("Gradient BF Side Variable Name", "Grad BF "+basalSideName);
+    p->set<std::string>("Gradient BF Side Variable Name", Albany::grad_bf_name + " "+basalSideName);
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<std::string>("Effective Pressure QP Name", "effective_pressure");
     p->set<std::string>("Effective Pressure Gradient QP Name", "effective_pressure Gradient");
     p->set<std::string>("Basal Velocity QP Name", "basal_velocity");
     p->set<std::string>("Basal Velocity Gradient QP Name", "basal_velocity Gradient");
     p->set<std::string>("Sliding Velocity QP Name", "sliding_velocity");
-    p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec "+basalSideName);
+    p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name +" "+basalSideName);
     p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
 
@@ -1609,14 +1609,14 @@ if (basalSideName!="INVALID")
     paramList->set<std::string>("Observed Surface Velocity Side QP Variable Name","observed_surface_velocity");
     paramList->set<bool>("Scalar RMS",isObsVelRMSScalar);
     paramList->set<std::string>("Observed Surface Velocity RMS Side QP Variable Name","observed_surface_velocity_RMS");
-    paramList->set<std::string>("Weighted Measure Basal Name","Weighted Measure " + basalSideName);
-    paramList->set<std::string>("Weighted Measure 2D Name","Weighted Measure " + basalSideName);
-    paramList->set<std::string>("Weighted Measure Surface Name","Weighted Measure " + surfaceSideName);
-    paramList->set<std::string>("Metric 2D Name","Metric " + basalSideName);
-    paramList->set<std::string>("Metric Basal Name","Metric " + basalSideName);
-    paramList->set<std::string>("Metric Surface Name","Metric " + surfaceSideName);
-    paramList->set<std::string>("Inverse Metric Basal Name","Inv Metric " + basalSideName);
-    paramList->set<std::string>("Basal Side Tangents Name","Tangents " + basalSideName);
+    paramList->set<std::string>("Weighted Measure Basal Name",Albany::weighted_measure_name + " " + basalSideName);
+    paramList->set<std::string>("Weighted Measure 2D Name",Albany::weighted_measure_name + " " + basalSideName);
+    paramList->set<std::string>("Weighted Measure Surface Name",Albany::weighted_measure_name + " " + surfaceSideName);
+    paramList->set<std::string>("Metric 2D Name",Albany::metric_name + " " + basalSideName);
+    paramList->set<std::string>("Metric Basal Name",Albany::metric_name + " " + basalSideName);
+    paramList->set<std::string>("Metric Surface Name",Albany::metric_name + " " + surfaceSideName);
+    paramList->set<std::string>("Inverse Metric Basal Name",Albany::metric_inv_name + " " + basalSideName);
+    paramList->set<std::string>("Basal Side Tangents Name",Albany::tangents_name + " " + basalSideName);
     paramList->set<std::string>("Basal Side Name", basalSideName);
     paramList->set<std::string>("Surface Side Name", surfaceSideName);
     paramList->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));

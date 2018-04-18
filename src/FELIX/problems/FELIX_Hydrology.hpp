@@ -14,6 +14,7 @@
 
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_EvaluatorUtils.hpp"
+#include "Albany_GeneralPurposeFieldsNames.hpp"
 #include "Albany_ResponseUtilities.hpp"
 
 #include "PHAL_Workset.hpp"
@@ -444,7 +445,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //Input
   p->set<std::string>("Sliding Velocity QP Variable Name", "Sliding Velocity");
-  p->set<std::string>("BF Variable Name", "BF");
+  p->set<std::string>("BF Variable Name", Albany::bf_name);
   p->set<std::string>("Effective Pressure QP Variable Name", "Effective Pressure");
   p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
@@ -488,9 +489,9 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p = rcp(new Teuchos::ParameterList("Hydrology Residual Potential Eqn"));
 
   //Input
-  p->set<std::string> ("BF Name", "BF");
-  p->set<std::string> ("Gradient BF Name", "Grad BF");
-  p->set<std::string> ("Weighted Measure Name", "Weights");
+  p->set<std::string> ("BF Name", Albany::bf_name);
+  p->set<std::string> ("Gradient BF Name", Albany::grad_bf_name);
+  p->set<std::string> ("Weighted Measure Name", Albany::weights_name);
   p->set<std::string> ("Water Discharge QP Variable Name", "Water Discharge");
   p->set<std::string> ("Effective Pressure QP Variable Name", "Effective Pressure");
   p->set<std::string> ("Water Thickness QP Variable Name", "Water Thickness");
@@ -517,8 +518,8 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p = rcp(new Teuchos::ParameterList("Hydrology Residual Thickness"));
 
     //Input
-    p->set<std::string> ("BF Name", "BF");
-    p->set<std::string> ("Weighted Measure Name", "Weights");
+    p->set<std::string> ("BF Name", Albany::bf_name);
+    p->set<std::string> ("Weighted Measure Name", Albany::weights_name);
     p->set<std::string> ("Water Thickness QP Variable Name","Water Thickness");
     p->set<std::string> ("Water Thickness Dot QP Variable Name","Water Thickness Dot");
     p->set<std::string> ("Effective Pressure QP Variable Name","Effective Pressure");
