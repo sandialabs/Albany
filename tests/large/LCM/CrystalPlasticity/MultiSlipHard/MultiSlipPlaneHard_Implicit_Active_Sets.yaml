@@ -47,8 +47,12 @@ LCM:
           Operator: Jacobian Inverse
           Num Eigenvalues: 0
       Step Size:
-        Method: Constant
-        Step Size: 0.00050000
+        Method: Adaptive
+        Initial Step Size: 1.00000000e-03
+        Max Step Size: 1.00000000e-03
+        Min Step Size: 1.00000000e-03
+        Failed Step Reduction Factor: 0.50000000
+        Aggressiveness: 0.10000000
     NOX:
       Direction:
         Method: Newton

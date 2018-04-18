@@ -1,0 +1,21 @@
+## /home/jwfoulk/Downloads/bin/clarox
+## Cubit Version 15.1b
+## Cubit Build 400448
+## Revised 2015-10-06 17:05:11 -0400 (Tue, 06 Oct 2015)
+## Running 02/07/2018 11:20:28 AM
+## Command Options:
+import mesh geometry "DislocationDensityHardening.g" block all use nodeset sideset feature_angle 135 linear merge
+sideset 1 surface 1
+sideset 2 surface 2
+sideset 3 surface 3
+sideset 4 surface 4
+sideset 5 surface 5
+sideset 6 surface 6
+undo group begin
+set exodus netcdf4 off
+set large exodus file on
+export genesis "QuadSlip.g" block all overwrite
+
+## Refine the mesh
+refine volume 1 numsplit 1 bias 1 depth 1 smooth
+export genesis "QuadSlip8.g" block all overwrite

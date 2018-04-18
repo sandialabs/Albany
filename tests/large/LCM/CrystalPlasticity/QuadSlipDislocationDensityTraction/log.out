@@ -1,0 +1,1134 @@
+No protocol specified
+Teuchos::GlobalMPISession::GlobalMPISession(): started processor with name algol.ca.sandia.gov and rank 0!
+Problem Name = Mechanics 3D
+Solution Method = Continuation
+Mechanics problem:
+	Spatial dimension             : 3
+	Mechanics variables           : DOF
+	Temperature variables         : None
+	Dislocation Density variables         : None
+	Pore Pressure variables       : None
+	Transport variables           : None
+	HydroStress variables         : None
+	Damage variables              : None
+	Stabilized Pressure variables : None
+Initializing material database from QuadSlipDislocationDensity_Material.yaml
+Albany_IOSS: Loading STKMesh from Exodus file  QuadSlip.g
+MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? 
+Num MeshSpecs: 1
+Calling MechanicsProblem::buildEvaluators
+Calling MechanicsProblem::constructDirichletEvaluators
+Calling MechanicsProblem::constructNeumannEvaluators
+IOSS-STK: number of node sets = 6
+IOSS-STK: number of side sets = 6
+Restart Index not set. Not reading solution from exodus (-1)
+[GenericSTKMeshStruct] Processing field requirements...
+STKDisc: 1 elements on Proc 0 
+STKDisc: nodeset nodelist_1 has size 4  on Proc 0.
+STKDisc: nodeset nodelist_2 has size 4  on Proc 0.
+STKDisc: nodeset nodelist_3 has size 4  on Proc 0.
+STKDisc: nodeset nodelist_4 has size 4  on Proc 0.
+STKDisc: nodeset nodelist_5 has size 4  on Proc 0.
+STKDisc: nodeset nodelist_6 has size 4  on Proc 0.
+STKDisc: sideset surface_1 has size 1  on Proc 0.
+STKDisc: sideset surface_2 has size 1  on Proc 0.
+STKDisc: sideset surface_3 has size 1  on Proc 0.
+STKDisc: sideset surface_4 has size 1  on Proc 0.
+STKDisc: sideset surface_5 has size 1  on Proc 0.
+STKDisc: sideset surface_6 has size 1  on Proc 0.
+StateManager: initializing state:  Time
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  Time_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  eqps
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  Re
+ with initialization type 'identity'
+StateManager: initializing state:  Cauchy_Stress
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  Fp
+ with initialization type 'identity'
+StateManager: initializing state:  Fp_old
+ with initialization type 'identity'
+StateManager: initializing state:  Velocity_Gradient
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  Velocity_Gradient_Plastic
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_1
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_1_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_2
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_2_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_3
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_3_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_4
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_4_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_5
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_5_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_6
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_6_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_7
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_7_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_8
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_8_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_9
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_9_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_10
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_10_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_11
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_11_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_12
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_12_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_1
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_1_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_2
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_2_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_3
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_3_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_4
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_4_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_5
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_5_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_6
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_6_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_7
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_7_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_8
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_8_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_9
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_9_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_10
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_10_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_11
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_11_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_12
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  gamma_dot_12_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  tau_hard_1
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_1_old
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_2
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_2_old
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_3
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_3_old
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_4
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_4_old
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_5
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_5_old
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_6
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_6_old
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_7
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_7_old
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_8
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_8_old
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_9
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_9_old
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_10
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_10_old
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_11
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_11_old
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_12
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_hard_12_old
+ with initialization type 'scalar' and value: 80
+StateManager: initializing state:  tau_1
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  tau_2
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  tau_3
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  tau_4
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  tau_5
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  tau_6
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  tau_7
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  tau_8
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  tau_9
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  tau_10
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  tau_11
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  tau_12
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  CP_Residual
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  CP_Residual_Iter
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  F
+ with initialization type 'identity'
+StateManager: initializing state:  F_old
+ with initialization type 'identity'
+StateManager: initializing state:  Weights
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  J
+ with initialization type 'scalar' and value: 1
+StateManager: initializing state:  J_old
+ with initialization type 'scalar' and value: 1
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ Sacado ParameterLibrary has been initialized:
+ Library of all registered parameters:
+	DBC on NS nodelist_1 for DOF X:  Supports AD = 1, Supports_Analytic = 0
+	DBC on NS nodelist_3 for DOF Y:  Supports AD = 1, Supports_Analytic = 0
+	DBC on NS nodelist_5 for DOF Z:  Supports AD = 1, Supports_Analytic = 0
+	Time:  Supports AD = 1, Supports_Analytic = 0
+	Time Dependent NBC on SS surface_6 for DOF sig_z set dudn:  Supports AD = 1, Supports_Analytic = 0
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+Number of parameter vectors  = 1
+Number of parameters in parameter vector 0 = 1
+Number of distributed parameters vectors  = 0
+Number of response vectors  = 1
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Beginning Continuation Run 
+Stepper Method:             Natural
+Initial Parameter Value = 0.000e+00
+Maximum Parameter Value = 1.000e+01
+Minimum Parameter Value = 0.000e+00
+Maximum Number of Continuation Steps = 200
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Start of Continuation Step 0 : Attempting to converge initial guess at initial parameter values.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+************************************************************************
+-- Nonlinear Solver Step 0 -- 
+||F|| = 0.000e+00  step = 0.000e+00  dx = 0.000e+00
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 1 -- 
+||F|| = 0.000e+00  step = 1.000e+00  dx = 0.000e+00
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 2 -- 
+||F|| = 0.000e+00  step = 1.000e+00  dx = 0.000e+00
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 3 -- 
+||F|| = 0.000e+00  step = 1.000e+00  dx = 0.000e+00
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 4 -- 
+||F|| = 0.000e+00  step = 1.000e+00  dx = 0.000e+00
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 5 -- 
+||F|| = 0.000e+00  step = 1.000e+00  dx = 0.000e+00 (Converged!)
+************************************************************************
+
+************************************************************************
+-- Final Status Test Results --
+Converged....OR Combination -> 
+  **...........Model Evaluator Flag: 
+  Converged....OR Combination -> 
+    **...........F-Norm = 0.000e+00 < 0.000e+00 (1.000e-11 * 0.000e+00)
+    **...........Number of Iterations = 5 < 100
+    Converged....AND Combination -> 
+      Converged....N-Step: 5 = 5
+      Converged....F-Norm = 0.000e+00 < 1.000e-10
+                   (Unscaled Two-Norm, Absolute Tolerance)
+    **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+End of Continuation Step 0 : Parameter: Time = 0.000e+00
+--> Step Converged in 5 Nonlinear Solver Iterations!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Albany::STKDiscretization::writeSolution: writing time 0 to index 1 in file QuadSlipDislocationDensityTraction.exo
+Time = 0
+         Response[0] = 0.00000000e+00  
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Start of Continuation Step 1 : Parameter: Time = 1.000e+00 from 0.000e+00
+Continuation Method: Natural
+Current step size  = 1.000e+00   Previous step size = 0.000e+00
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+************************************************************************
+-- Nonlinear Solver Step 0 -- 
+||F|| = 2.925e-04  step = 0.000e+00  dx = 0.000e+00
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 1 -- 
+||F|| = 2.352e-11  step = 1.000e+00  dx = 4.908e-09
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 2 -- 
+||F|| = 3.405e-11  step = 1.000e+00  dx = 2.550e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 3 -- 
+||F|| = 2.352e-11  step = 1.000e+00  dx = 2.568e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 4 -- 
+||F|| = 1.655e-11  step = 1.000e+00  dx = 2.549e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 5 -- 
+||F|| = 1.691e-11  step = 1.000e+00  dx = 2.217e-16 (Converged!)
+************************************************************************
+
+************************************************************************
+-- Final Status Test Results --
+Converged....OR Combination -> 
+  **...........Model Evaluator Flag: 
+  Converged....OR Combination -> 
+    **...........F-Norm = 1.691e-11 < 2.925e-15 (1.000e-11 * 2.925e-04)
+    **...........Number of Iterations = 5 < 100
+    Converged....AND Combination -> 
+      Converged....N-Step: 5 = 5
+      Converged....F-Norm = 1.691e-11 < 1.000e-10
+                   (Unscaled Two-Norm, Absolute Tolerance)
+    **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+End of Continuation Step 1 : Parameter: Time = 1.000e+00 from 0.000e+00
+--> Step Converged in 5 Nonlinear Solver Iterations!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Albany::STKDiscretization::writeSolution: writing time 1.00000000e+00 to index 2 in file QuadSlipDislocationDensityTraction.exo
+Time = 1.00000000e+00
+         Response[0] = 1.98051309e-06  
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Start of Continuation Step 2 : Parameter: Time = 2.000e+00 from 1.000e+00
+Continuation Method: Natural
+Current step size  = 1.000e+00   Previous step size = 1.000e+00
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+************************************************************************
+-- Nonlinear Solver Step 0 -- 
+||F|| = 2.924e-04  step = 0.000e+00  dx = 0.000e+00
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 1 -- 
+||F|| = 1.891e-11  step = 1.000e+00  dx = 4.907e-09
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 2 -- 
+||F|| = 1.810e-11  step = 1.000e+00  dx = 2.560e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 3 -- 
+||F|| = 2.679e-11  step = 1.000e+00  dx = 1.408e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 4 -- 
+||F|| = 9.599e-12  step = 1.000e+00  dx = 3.480e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 5 -- 
+||F|| = 1.414e-11  step = 1.000e+00  dx = 2.488e-16 (Converged!)
+************************************************************************
+
+************************************************************************
+-- Final Status Test Results --
+Converged....OR Combination -> 
+  **...........Model Evaluator Flag: 
+  Converged....OR Combination -> 
+    **...........F-Norm = 1.414e-11 < 2.924e-15 (1.000e-11 * 2.924e-04)
+    **...........Number of Iterations = 5 < 100
+    Converged....AND Combination -> 
+      Converged....N-Step: 5 = 5
+      Converged....F-Norm = 1.414e-11 < 1.000e-10
+                   (Unscaled Two-Norm, Absolute Tolerance)
+    **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+End of Continuation Step 2 : Parameter: Time = 2.000e+00 from 1.000e+00
+--> Step Converged in 5 Nonlinear Solver Iterations!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Albany::STKDiscretization::writeSolution: writing time 2.00000000e+00 to index 3 in file QuadSlipDislocationDensityTraction.exo
+Time = 2.00000000e+00
+         Response[0] = 3.96053577e-06  
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Start of Continuation Step 3 : Parameter: Time = 3.000e+00 from 2.000e+00
+Continuation Method: Natural
+Current step size  = 1.000e+00   Previous step size = 1.000e+00
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+************************************************************************
+-- Nonlinear Solver Step 0 -- 
+||F|| = 2.923e-04  step = 0.000e+00  dx = 0.000e+00
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 1 -- 
+||F|| = 1.040e-11  step = 1.000e+00  dx = 4.905e-09
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 2 -- 
+||F|| = 9.253e-12  step = 1.000e+00  dx = 3.192e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 3 -- 
+||F|| = 4.838e-12  step = 1.000e+00  dx = 2.629e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 4 -- 
+||F|| = 1.146e-11  step = 1.000e+00  dx = 1.606e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 5 -- 
+||F|| = 2.210e-11  step = 1.000e+00  dx = 2.892e-16 (Converged!)
+************************************************************************
+
+************************************************************************
+-- Final Status Test Results --
+Converged....OR Combination -> 
+  **...........Model Evaluator Flag: 
+  Converged....OR Combination -> 
+    **...........F-Norm = 2.210e-11 < 2.923e-15 (1.000e-11 * 2.923e-04)
+    **...........Number of Iterations = 5 < 100
+    Converged....AND Combination -> 
+      Converged....N-Step: 5 = 5
+      Converged....F-Norm = 2.210e-11 < 1.000e-10
+                   (Unscaled Two-Norm, Absolute Tolerance)
+    **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+End of Continuation Step 3 : Parameter: Time = 3.000e+00 from 2.000e+00
+--> Step Converged in 5 Nonlinear Solver Iterations!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Albany::STKDiscretization::writeSolution: writing time 3.00000000e+00 to index 4 in file QuadSlipDislocationDensityTraction.exo
+Time = 3.00000000e+00
+         Response[0] = 5.94006819e-06  
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Start of Continuation Step 4 : Parameter: Time = 4.000e+00 from 3.000e+00
+Continuation Method: Natural
+Current step size  = 1.000e+00   Previous step size = 1.000e+00
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+************************************************************************
+-- Nonlinear Solver Step 0 -- 
+||F|| = 2.923e-04  step = 0.000e+00  dx = 0.000e+00
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 1 -- 
+||F|| = 7.107e-12  step = 1.000e+00  dx = 4.903e-09
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 2 -- 
+||F|| = 7.352e-12  step = 1.000e+00  dx = 2.184e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 3 -- 
+||F|| = 1.943e-11  step = 1.000e+00  dx = 2.297e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 4 -- 
+||F|| = 1.451e-11  step = 1.000e+00  dx = 4.024e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 5 -- 
+||F|| = 7.696e-12  step = 1.000e+00  dx = 1.753e-16 (Converged!)
+************************************************************************
+
+************************************************************************
+-- Final Status Test Results --
+Converged....OR Combination -> 
+  **...........Model Evaluator Flag: 
+  Converged....OR Combination -> 
+    **...........F-Norm = 7.696e-12 < 2.923e-15 (1.000e-11 * 2.923e-04)
+    **...........Number of Iterations = 5 < 100
+    Converged....AND Combination -> 
+      Converged....N-Step: 5 = 5
+      Converged....F-Norm = 7.696e-12 < 1.000e-10
+                   (Unscaled Two-Norm, Absolute Tolerance)
+    **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+End of Continuation Step 4 : Parameter: Time = 4.000e+00 from 3.000e+00
+--> Step Converged in 5 Nonlinear Solver Iterations!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Albany::STKDiscretization::writeSolution: writing time 4.00000000e+00 to index 5 in file QuadSlipDislocationDensityTraction.exo
+Time = 4.00000000e+00
+         Response[0] = 7.91911051e-06  
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Start of Continuation Step 5 : Parameter: Time = 5.000e+00 from 4.000e+00
+Continuation Method: Natural
+Current step size  = 1.000e+00   Previous step size = 1.000e+00
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+************************************************************************
+-- Nonlinear Solver Step 0 -- 
+||F|| = 2.922e-04  step = 0.000e+00  dx = 0.000e+00
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 1 -- 
+||F|| = 1.547e-11  step = 1.000e+00  dx = 4.902e-09
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 2 -- 
+||F|| = 5.095e-12  step = 1.000e+00  dx = 1.881e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 3 -- 
+||F|| = 1.402e-11  step = 1.000e+00  dx = 9.433e-17
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 4 -- 
+||F|| = 1.517e-11  step = 1.000e+00  dx = 3.094e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 5 -- 
+||F|| = 1.043e-11  step = 1.000e+00  dx = 3.429e-16 (Converged!)
+************************************************************************
+
+************************************************************************
+-- Final Status Test Results --
+Converged....OR Combination -> 
+  **...........Model Evaluator Flag: 
+  Converged....OR Combination -> 
+    **...........F-Norm = 1.043e-11 < 2.922e-15 (1.000e-11 * 2.922e-04)
+    **...........Number of Iterations = 5 < 100
+    Converged....AND Combination -> 
+      Converged....N-Step: 5 = 5
+      Converged....F-Norm = 1.043e-11 < 1.000e-10
+                   (Unscaled Two-Norm, Absolute Tolerance)
+    **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+End of Continuation Step 5 : Parameter: Time = 5.000e+00 from 4.000e+00
+--> Step Converged in 5 Nonlinear Solver Iterations!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Albany::STKDiscretization::writeSolution: writing time 5.00000000e+00 to index 6 in file QuadSlipDislocationDensityTraction.exo
+Time = 5.00000000e+00
+         Response[0] = 9.89766287e-06  
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Start of Continuation Step 6 : Parameter: Time = 6.000e+00 from 5.000e+00
+Continuation Method: Natural
+Current step size  = 1.000e+00   Previous step size = 1.000e+00
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+************************************************************************
+-- Nonlinear Solver Step 0 -- 
+||F|| = 2.922e-04  step = 0.000e+00  dx = 0.000e+00
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 1 -- 
+||F|| = 2.525e-11  step = 1.000e+00  dx = 4.900e-09
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 2 -- 
+||F|| = 8.555e-12  step = 1.000e+00  dx = 4.474e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 3 -- 
+||F|| = 6.335e-12  step = 1.000e+00  dx = 8.562e-17
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 4 -- 
+||F|| = 1.660e-11  step = 1.000e+00  dx = 1.246e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 5 -- 
+||F|| = 7.387e-12  step = 1.000e+00  dx = 3.244e-16 (Converged!)
+************************************************************************
+
+************************************************************************
+-- Final Status Test Results --
+Converged....OR Combination -> 
+  **...........Model Evaluator Flag: 
+  Converged....OR Combination -> 
+    **...........F-Norm = 7.387e-12 < 2.922e-15 (1.000e-11 * 2.922e-04)
+    **...........Number of Iterations = 5 < 100
+    Converged....AND Combination -> 
+      Converged....N-Step: 5 = 5
+      Converged....F-Norm = 7.387e-12 < 1.000e-10
+                   (Unscaled Two-Norm, Absolute Tolerance)
+    **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+End of Continuation Step 6 : Parameter: Time = 6.000e+00 from 5.000e+00
+--> Step Converged in 5 Nonlinear Solver Iterations!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Albany::STKDiscretization::writeSolution: writing time 6.00000000e+00 to index 7 in file QuadSlipDislocationDensityTraction.exo
+Time = 6.00000000e+00
+         Response[0] = 1.18757254e-05  
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Start of Continuation Step 7 : Parameter: Time = 7.000e+00 from 6.000e+00
+Continuation Method: Natural
+Current step size  = 1.000e+00   Previous step size = 1.000e+00
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+************************************************************************
+-- Nonlinear Solver Step 0 -- 
+||F|| = 2.921e-04  step = 0.000e+00  dx = 0.000e+00
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 1 -- 
+||F|| = 1.248e-11  step = 1.000e+00  dx = 4.899e-09
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 2 -- 
+||F|| = 1.347e-11  step = 1.000e+00  dx = 2.927e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 3 -- 
+||F|| = 1.142e-11  step = 1.000e+00  dx = 3.113e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 4 -- 
+||F|| = 1.068e-11  step = 1.000e+00  dx = 3.400e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 5 -- 
+||F|| = 1.045e-11  step = 1.000e+00  dx = 4.477e-16 (Converged!)
+************************************************************************
+
+************************************************************************
+-- Final Status Test Results --
+Converged....OR Combination -> 
+  **...........Model Evaluator Flag: 
+  Converged....OR Combination -> 
+    **...........F-Norm = 1.045e-11 < 2.921e-15 (1.000e-11 * 2.921e-04)
+    **...........Number of Iterations = 5 < 100
+    Converged....AND Combination -> 
+      Converged....N-Step: 5 = 5
+      Converged....F-Norm = 1.045e-11 < 1.000e-10
+                   (Unscaled Two-Norm, Absolute Tolerance)
+    **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+End of Continuation Step 7 : Parameter: Time = 7.000e+00 from 6.000e+00
+--> Step Converged in 5 Nonlinear Solver Iterations!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Albany::STKDiscretization::writeSolution: writing time 7.00000000e+00 to index 8 in file QuadSlipDislocationDensityTraction.exo
+Time = 7.00000000e+00
+         Response[0] = 1.38532984e-05  
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Start of Continuation Step 8 : Parameter: Time = 8.000e+00 from 7.000e+00
+Continuation Method: Natural
+Current step size  = 1.000e+00   Previous step size = 1.000e+00
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+************************************************************************
+-- Nonlinear Solver Step 0 -- 
+||F|| = 2.921e-04  step = 0.000e+00  dx = 0.000e+00
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 1 -- 
+||F|| = 8.636e-12  step = 1.000e+00  dx = 4.897e-09
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 2 -- 
+||F|| = 9.870e-12  step = 1.000e+00  dx = 2.486e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 3 -- 
+||F|| = 1.014e-11  step = 1.000e+00  dx = 1.327e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 4 -- 
+||F|| = 1.013e-11  step = 1.000e+00  dx = 9.699e-17
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 5 -- 
+||F|| = 9.800e-12  step = 1.000e+00  dx = 9.669e-17 (Converged!)
+************************************************************************
+
+************************************************************************
+-- Final Status Test Results --
+Converged....OR Combination -> 
+  **...........Model Evaluator Flag: 
+  Converged....OR Combination -> 
+    **...........F-Norm = 9.800e-12 < 2.921e-15 (1.000e-11 * 2.921e-04)
+    **...........Number of Iterations = 5 < 100
+    Converged....AND Combination -> 
+      Converged....N-Step: 5 = 5
+      Converged....F-Norm = 9.800e-12 < 1.000e-10
+                   (Unscaled Two-Norm, Absolute Tolerance)
+    **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+End of Continuation Step 8 : Parameter: Time = 8.000e+00 from 7.000e+00
+--> Step Converged in 5 Nonlinear Solver Iterations!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Albany::STKDiscretization::writeSolution: writing time 8.00000000e+00 to index 9 in file QuadSlipDislocationDensityTraction.exo
+Time = 8.00000000e+00
+         Response[0] = 1.58303818e-05  
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Start of Continuation Step 9 : Parameter: Time = 9.000e+00 from 8.000e+00
+Continuation Method: Natural
+Current step size  = 1.000e+00   Previous step size = 1.000e+00
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+************************************************************************
+-- Nonlinear Solver Step 0 -- 
+||F|| = 2.920e-04  step = 0.000e+00  dx = 0.000e+00
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 1 -- 
+||F|| = 4.670e-12  step = 1.000e+00  dx = 4.896e-09
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 2 -- 
+||F|| = 1.780e-11  step = 1.000e+00  dx = 1.132e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 3 -- 
+||F|| = 4.006e-12  step = 1.000e+00  dx = 1.936e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 4 -- 
+||F|| = 1.954e-11  step = 1.000e+00  dx = 9.282e-17
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 5 -- 
+||F|| = 5.163e-12  step = 1.000e+00  dx = 3.014e-16 (Converged!)
+************************************************************************
+
+************************************************************************
+-- Final Status Test Results --
+Converged....OR Combination -> 
+  **...........Model Evaluator Flag: 
+  Converged....OR Combination -> 
+    **...........F-Norm = 5.163e-12 < 2.920e-15 (1.000e-11 * 2.920e-04)
+    **...........Number of Iterations = 5 < 100
+    Converged....AND Combination -> 
+      Converged....N-Step: 5 = 5
+      Converged....F-Norm = 5.163e-12 < 1.000e-10
+                   (Unscaled Two-Norm, Absolute Tolerance)
+    **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+End of Continuation Step 9 : Parameter: Time = 9.000e+00 from 8.000e+00
+--> Step Converged in 5 Nonlinear Solver Iterations!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Albany::STKDiscretization::writeSolution: writing time 9.00000000e+00 to index 10 in file QuadSlipDislocationDensityTraction.exo
+Time = 9.00000000e+00
+         Response[0] = 1.78069759e-05  
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Start of Continuation Step 10 : Parameter: Time = 1.000e+01 from 9.000e+00
+Continuation Method: Natural
+Current step size  = 1.000e+00   Previous step size = 1.000e+00
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+************************************************************************
+-- Nonlinear Solver Step 0 -- 
+||F|| = 2.919e-04  step = 0.000e+00  dx = 0.000e+00
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 1 -- 
+||F|| = 8.144e-12  step = 1.000e+00  dx = 4.894e-09
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 2 -- 
+||F|| = 1.623e-11  step = 1.000e+00  dx = 2.578e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 3 -- 
+||F|| = 8.507e-12  step = 1.000e+00  dx = 1.845e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 4 -- 
+||F|| = 3.334e-11  step = 1.000e+00  dx = 2.099e-16
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 5 -- 
+||F|| = 2.003e-11  step = 1.000e+00  dx = 3.766e-16 (Converged!)
+************************************************************************
+
+************************************************************************
+-- Final Status Test Results --
+Converged....OR Combination -> 
+  **...........Model Evaluator Flag: 
+  Converged....OR Combination -> 
+    **...........F-Norm = 2.003e-11 < 2.919e-15 (1.000e-11 * 2.919e-04)
+    **...........Number of Iterations = 5 < 100
+    Converged....AND Combination -> 
+      Converged....N-Step: 5 = 5
+      Converged....F-Norm = 2.003e-11 < 1.000e-10
+                   (Unscaled Two-Norm, Absolute Tolerance)
+    **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+End of Continuation Step 10 : Parameter: Time = 1.000e+01 from 9.000e+00
+--> Step Converged in 5 Nonlinear Solver Iterations!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Albany::STKDiscretization::writeSolution: writing time 1.00000000e+01 to index 11 in file QuadSlipDislocationDensityTraction.exo
+Time = 1.00000000e+01
+         Response[0] = 1.97830808e-05  
+
+	Continuation run stopping: parameter reached bound of 1.000e+01
+Continuation Stepper Finished.
+Finished eval of first model: Params, Responses 
+
+Parameter vector 0:
+
+                    Time	0.000000000000e+00
+
+ Response vector 0: {Solution Average}
+
+                    1.978308083726e-05
+
+CheckTestResults: Number of Comparisons Attempted = 0
+
+Main_Solve: MeanValue of final solution 1.978308083726e-05
+
+Number of Failed Comparisons: 0
+===================================================================================================================================================
+
+                                                       TimeMonitor results over 1 processor
+
+Timer Name                                                                                                              Global time (num calls)    
+---------------------------------------------------------------------------------------------------------------------------------------------------
+> Albany Fill: Jacobian                                                                                                 3.8859e-01 (66.00)         
+> Albany Fill: Jacobian Export                                                                                          2.3942e-03 (66.00)         
+> Albany Fill: Residual                                                                                                 1.9223e-01 (88.00)         
+Albany: ***Total Time***                                                                                                8.7643e-01 (1.000)         
+Albany: **Total Fill Time**                                                                                             5.8276e-01 (166.0)         
+Albany: Output to File                                                                                                  5.2543e-02 (11.00)         
+Albany: Setup Time                                                                                                      9.4579e-02 (1.000)         
+Belos: BlockGmresSolMgr total solve time                                                                                6.9709e-02 (66.00)         
+Belos: DGKS[2]: Ortho (Inner Product)                                                                                   2.2428e-02 (1280.)         
+Belos: DGKS[2]: Ortho (Norm)                                                                                            3.1033e-03 (1986.)         
+---------------------------------------------------------------------------------------------------------------------------------------------------
+Belos: DGKS[2]: Ortho (Update)                                                                                          1.6294e-02 (1280.)         
+Belos: DGKS[2]: Orthogonalization                                                                                       4.4999e-02 (706.0)         
+Belos: Operation Op*x                                                                                                   3.8119e-03 (772.0)         
+NOX Total Linear Solve                                                                                                  7.8610e-02 (66.00)         
+NOX Total Preconditioner Construction                                                                                   1.6347e-03 (66.00)         
+Phalanx: Evaluator 0: [<Residual>] Gather Solution<Residual>                                                            1.6948e-04 (88.00)         
+Phalanx: Evaluator 10: [<Residual>] Time<Residual>                                                                      9.5257e-05 (88.00)         
+Phalanx: Evaluator 149: [<Jacobian>] Kinematics<Jacobian>                                                               1.6054e-03 (66.00)         
+Phalanx: Evaluator 14: [<Residual>] ConstitutiveModelInterface<Residual>                                                1.7054e-01 (88.00)         
+Phalanx: Evaluator 154: [<Jacobian>] MechanicsResidual<Jacobian>                                                        1.4994e-03 (66.00)         
+---------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 155: [<Jacobian>] FirstPK<Jacobian>                                                                  2.7877e-03 (66.00)         
+Phalanx: Evaluator 1: [<Residual>] Gather Coordinate Vector<Residual>                                                   9.3936e-05 (88.00)         
+Phalanx: Evaluator 312: [<Residual>] DBC on NS nodelist_1 for DOF X<Residual>                                           2.0278e-04 (88.00)         
+Phalanx: Evaluator 313: [<Jacobian>] DBC on NS nodelist_1 for DOF X<Jacobian>                                           4.1593e-04 (66.00)         
+Phalanx: Evaluator 316: [<Residual>] DBC on NS nodelist_3 for DOF Y<Residual>                                           1.6530e-04 (88.00)         
+Phalanx: Evaluator 317: [<Jacobian>] DBC on NS nodelist_3 for DOF Y<Jacobian>                                           1.3696e-04 (66.00)         
+Phalanx: Evaluator 320: [<Residual>] DBC on NS nodelist_5 for DOF Z<Residual>                                           1.4059e-04 (88.00)         
+Phalanx: Evaluator 321: [<Jacobian>] DBC on NS nodelist_5 for DOF Z<Jacobian>                                           1.1968e-04 (66.00)         
+Phalanx: Evaluator 324: [<Residual>] Dirichlet Aggregator<Residual>                                                     2.3169e-05 (88.00)         
+Phalanx: Evaluator 325: [<Jacobian>] Dirichlet Aggregator<Jacobian>                                                     1.8093e-05 (66.00)         
+---------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 328: [<Residual>] Gather Coordinate Vector<Residual>                                                 5.1179e-05 (88.00)         
+Phalanx: Evaluator 329: [<Jacobian>] Gather Coordinate Vector<Jacobian>                                                 5.4910e-05 (66.00)         
+Phalanx: Evaluator 336: [<Residual>] Time Dependent NBC on SS surface_6 for DOF sig_z set dudn<Residual>                8.7437e-03 (88.00)         
+Phalanx: Evaluator 337: [<Jacobian>] Time Dependent NBC on SS surface_6 for DOF sig_z set dudn<Jacobian>                6.5625e-03 (66.00)         
+Phalanx: Evaluator 340: [<Residual>] Neumann Aggregator<Residual>                                                       2.5352e-05 (88.00)         
+Phalanx: Evaluator 341: [<Jacobian>] Neumann Aggregator<Jacobian>                                                       2.1490e-05 (66.00)         
+Phalanx: Evaluator 344: [<Residual>] Gather Solution<Residual>                                                          2.7586e-05 (11.00)         
+Phalanx: Evaluator 345: [<Residual>] Gather Coordinate Vector<Residual>                                                 1.0046e-05 (11.00)         
+Phalanx: Evaluator 349: [<Residual>] DOFVecGradInterpolationBase<Residual>                                              1.8186e-05 (11.00)         
+Phalanx: Evaluator 352: [<Residual>] ComputeBasisFunctions<Residual>                                                    3.5802e-04 (11.00)         
+---------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 354: [<Residual>] Time<Residual>                                                                     3.0273e-05 (11.00)         
+Phalanx: Evaluator 355: [<Residual>] Save Field Time to State TimeResidual                                              2.5275e-05 (11.00)         
+Phalanx: Evaluator 358: [<Residual>] ConstitutiveModelInterface<Residual>                                               2.1506e-02 (11.00)         
+Phalanx: Evaluator 359: [<Residual>] Save Field eqps to State eqpsResidual                                              2.8347e-05 (11.00)         
+Phalanx: Evaluator 360: [<Residual>] Save Field Re to State ReResidual                                                  1.8598e-05 (11.00)         
+Phalanx: Evaluator 361: [<Residual>] Save Field Cauchy_Stress to State Cauchy_StressResidual                            1.2745e-05 (11.00)         
+Phalanx: Evaluator 362: [<Residual>] Save Field Fp to State FpResidual                                                  8.1768e-06 (11.00)         
+Phalanx: Evaluator 363: [<Residual>] Save Field Velocity_Gradient to State Velocity_GradientResidual                    1.0660e-05 (11.00)         
+Phalanx: Evaluator 364: [<Residual>] Save Field Velocity_Gradient_Plastic to State Velocity_Gradient_PlasticResidual    7.7918e-06 (11.00)         
+Phalanx: Evaluator 365: [<Residual>] Save Field gamma_1 to State gamma_1Residual                                        8.1433e-06 (11.00)         
+---------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 366: [<Residual>] Save Field gamma_2 to State gamma_2Residual                                        7.4790e-06 (11.00)         
+Phalanx: Evaluator 367: [<Residual>] Save Field gamma_3 to State gamma_3Residual                                        6.5070e-06 (11.00)         
+Phalanx: Evaluator 368: [<Residual>] Save Field gamma_4 to State gamma_4Residual                                        4.9721e-06 (11.00)         
+Phalanx: Evaluator 369: [<Residual>] Save Field gamma_5 to State gamma_5Residual                                        6.7052e-06 (11.00)         
+Phalanx: Evaluator 370: [<Residual>] Save Field gamma_6 to State gamma_6Residual                                        4.3731e-06 (11.00)         
+Phalanx: Evaluator 371: [<Residual>] Save Field gamma_7 to State gamma_7Residual                                        1.0643e-05 (11.00)         
+Phalanx: Evaluator 372: [<Residual>] Save Field gamma_8 to State gamma_8Residual                                        5.0868e-06 (11.00)         
+Phalanx: Evaluator 373: [<Residual>] Save Field gamma_9 to State gamma_9Residual                                        7.8779e-06 (11.00)         
+Phalanx: Evaluator 374: [<Residual>] Save Field gamma_10 to State gamma_10Residual                                      1.3936e-05 (11.00)         
+Phalanx: Evaluator 375: [<Residual>] Save Field gamma_11 to State gamma_11Residual                                      6.0126e-06 (11.00)         
+---------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 376: [<Residual>] Save Field gamma_12 to State gamma_12Residual                                      7.2772e-06 (11.00)         
+Phalanx: Evaluator 377: [<Residual>] Save Field gamma_dot_1 to State gamma_dot_1Residual                                5.9380e-06 (11.00)         
+Phalanx: Evaluator 378: [<Residual>] Save Field gamma_dot_2 to State gamma_dot_2Residual                                7.7860e-06 (11.00)         
+Phalanx: Evaluator 379: [<Residual>] Save Field gamma_dot_3 to State gamma_dot_3Residual                                5.9721e-06 (11.00)         
+Phalanx: Evaluator 380: [<Residual>] Save Field gamma_dot_4 to State gamma_dot_4Residual                                5.7130e-06 (11.00)         
+Phalanx: Evaluator 381: [<Residual>] Save Field gamma_dot_5 to State gamma_dot_5Residual                                5.9630e-06 (11.00)         
+Phalanx: Evaluator 382: [<Residual>] Save Field gamma_dot_6 to State gamma_dot_6Residual                                5.2240e-06 (11.00)         
+Phalanx: Evaluator 383: [<Residual>] Save Field gamma_dot_7 to State gamma_dot_7Residual                                6.3132e-06 (11.00)         
+Phalanx: Evaluator 384: [<Residual>] Save Field gamma_dot_8 to State gamma_dot_8Residual                                6.5737e-06 (11.00)         
+Phalanx: Evaluator 385: [<Residual>] Save Field gamma_dot_9 to State gamma_dot_9Residual                                8.6557e-06 (11.00)         
+---------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 386: [<Residual>] Save Field gamma_dot_10 to State gamma_dot_10Residual                              5.5452e-06 (11.00)         
+Phalanx: Evaluator 387: [<Residual>] Save Field gamma_dot_11 to State gamma_dot_11Residual                              6.3856e-06 (11.00)         
+Phalanx: Evaluator 388: [<Residual>] Save Field gamma_dot_12 to State gamma_dot_12Residual                              7.3418e-06 (11.00)         
+Phalanx: Evaluator 389: [<Residual>] Save Field tau_hard_1 to State tau_hard_1Residual                                  8.3219e-06 (11.00)         
+Phalanx: Evaluator 390: [<Residual>] Save Field tau_hard_2 to State tau_hard_2Residual                                  7.4471e-06 (11.00)         
+Phalanx: Evaluator 391: [<Residual>] Save Field tau_hard_3 to State tau_hard_3Residual                                  5.9541e-06 (11.00)         
+Phalanx: Evaluator 392: [<Residual>] Save Field tau_hard_4 to State tau_hard_4Residual                                  8.2711e-06 (11.00)         
+Phalanx: Evaluator 393: [<Residual>] Save Field tau_hard_5 to State tau_hard_5Residual                                  5.8179e-06 (11.00)         
+Phalanx: Evaluator 394: [<Residual>] Save Field tau_hard_6 to State tau_hard_6Residual                                  6.3370e-06 (11.00)         
+Phalanx: Evaluator 395: [<Residual>] Save Field tau_hard_7 to State tau_hard_7Residual                                  5.4509e-06 (11.00)         
+---------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 396: [<Residual>] Save Field tau_hard_8 to State tau_hard_8Residual                                  6.6631e-06 (11.00)         
+Phalanx: Evaluator 397: [<Residual>] Save Field tau_hard_9 to State tau_hard_9Residual                                  4.7231e-06 (11.00)         
+Phalanx: Evaluator 398: [<Residual>] Save Field tau_hard_10 to State tau_hard_10Residual                                6.1571e-06 (11.00)         
+Phalanx: Evaluator 399: [<Residual>] Save Field tau_hard_11 to State tau_hard_11Residual                                5.9090e-06 (11.00)         
+Phalanx: Evaluator 400: [<Residual>] Save Field tau_hard_12 to State tau_hard_12Residual                                5.0248e-06 (11.00)         
+Phalanx: Evaluator 401: [<Residual>] Save Field tau_1 to State tau_1Residual                                            6.2149e-06 (11.00)         
+Phalanx: Evaluator 402: [<Residual>] Save Field tau_2 to State tau_2Residual                                            7.3459e-06 (11.00)         
+Phalanx: Evaluator 403: [<Residual>] Save Field tau_3 to State tau_3Residual                                            6.4072e-06 (11.00)         
+Phalanx: Evaluator 404: [<Residual>] Save Field tau_4 to State tau_4Residual                                            6.1950e-06 (11.00)         
+Phalanx: Evaluator 405: [<Residual>] Save Field tau_5 to State tau_5Residual                                            6.7059e-06 (11.00)         
+---------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 406: [<Residual>] Save Field tau_6 to State tau_6Residual                                            5.7149e-06 (11.00)         
+Phalanx: Evaluator 407: [<Residual>] Save Field tau_7 to State tau_7Residual                                            5.1429e-06 (11.00)         
+Phalanx: Evaluator 408: [<Residual>] Save Field tau_8 to State tau_8Residual                                            5.4159e-06 (11.00)         
+Phalanx: Evaluator 409: [<Residual>] Save Field tau_9 to State tau_9Residual                                            5.4480e-06 (11.00)         
+Phalanx: Evaluator 410: [<Residual>] Save Field tau_10 to State tau_10Residual                                          8.1321e-06 (11.00)         
+Phalanx: Evaluator 411: [<Residual>] Save Field tau_11 to State tau_11Residual                                          5.6030e-06 (11.00)         
+Phalanx: Evaluator 412: [<Residual>] Save Field tau_12 to State tau_12Residual                                          6.3181e-06 (11.00)         
+Phalanx: Evaluator 413: [<Residual>] Save Field CP_Residual to State CP_ResidualResidual                                6.7360e-06 (11.00)         
+Phalanx: Evaluator 414: [<Residual>] Save Field CP_Residual_Iter to State CP_Residual_IterResidual                      6.0749e-06 (11.00)         
+Phalanx: Evaluator 415: [<Residual>] Kinematics<Residual>                                                               3.7913e-05 (11.00)         
+---------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 416: [<Residual>] Save Field F to State FResidual                                                    6.8692e-06 (11.00)         
+Phalanx: Evaluator 417: [<Residual>] Save Field Weights to State WeightsResidual                                        7.0550e-06 (11.00)         
+Phalanx: Evaluator 418: [<Residual>] Save Field J to State JResidual                                                    5.2049e-06 (11.00)         
+Phalanx: Evaluator 4: [<Residual>] DOFVecInterpolationBase<Residual>                                                    5.4750e-05 (88.00)         
+Phalanx: Evaluator 5: [<Residual>] DOFVecGradInterpolationBase<Residual>                                                1.1178e-04 (88.00)         
+Phalanx: Evaluator 71: [<Residual>] Kinematics<Residual>                                                                2.7205e-04 (88.00)         
+Phalanx: Evaluator 76: [<Residual>] MechanicsResidual<Residual>                                                         1.7919e-04 (88.00)         
+Phalanx: Evaluator 77: [<Residual>] FirstPK<Residual>                                                                   5.3535e-04 (88.00)         
+Phalanx: Evaluator 78: [<Jacobian>] Gather Solution<Jacobian>                                                           2.4095e-04 (66.00)         
+Phalanx: Evaluator 79: [<Jacobian>] Gather Coordinate Vector<Jacobian>                                                  6.1447e-05 (66.00)         
+---------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 82: [<Jacobian>] DOFVecInterpolationBase<Jacobian>                                                   3.0675e-04 (66.00)         
+Phalanx: Evaluator 83: [<Jacobian>] DOFVecGradInterpolationBase<Jacobian>                                               7.1097e-04 (66.00)         
+Phalanx: Evaluator 86: [<Jacobian>] ComputeBasisFunctions<Jacobian>                                                     1.7217e-03 (66.00)         
+Phalanx: Evaluator 87: [<Jacobian>] Scatter<Jacobian>                                                                   5.6880e-04 (66.00)         
+Phalanx: Evaluator 88: [<Jacobian>] Time<Jacobian>                                                                      6.9355e-05 (66.00)         
+Phalanx: Evaluator 8: [<Residual>] ComputeBasisFunctions<Residual>                                                      2.6535e-03 (88.00)         
+Phalanx: Evaluator 92: [<Jacobian>] ConstitutiveModelInterface<Jacobian>                                                3.6408e-01 (66.00)         
+Phalanx: Evaluator 9: [<Residual>] Scatter<Residual>                                                                    2.5797e-04 (88.00)         
+Phalanx::SortAndOrderEvaluators                                                                                         4.5799e-06 (10.00)         
+Stratimikos: BelosLOWS                                                                                                  7.8555e-02 (66.00)         
+---------------------------------------------------------------------------------------------------------------------------------------------------
+Thyra::DefaultModelEvaluatorWithSolveFactory<double>::evalModel(...)                                                    5.8664e-01 (166.0)         
+===================================================================================================================================================
