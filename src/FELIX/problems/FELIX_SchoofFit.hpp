@@ -373,14 +373,14 @@ FELIX::SchoofFit::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm
   //Output
   p->set<std::string>("Basal Friction Coefficient Variable Name", "beta");
 
-  ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,false>(*p,dl));
+  ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,false,false>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   if (save_state["beta"])
   {
     //--- FELIX basal friction coefficient at nodes ---//
     p->set<bool>("Nodal",true);
-    ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,false>(*p,dl));
+    ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,false,false>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

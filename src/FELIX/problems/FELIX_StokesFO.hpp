@@ -1307,12 +1307,12 @@ if (basalSideName!="INVALID")
     //Output
     p->set<std::string>("Basal Friction Coefficient Variable Name", "beta");
 
-    ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,true>(*p,dl_basal));
+    ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,true,false>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
 
     //--- FELIX basal friction coefficient at nodes ---//
     p->set<bool>("Nodal",true);
-    ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,true>(*p,dl_basal));
+    ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,true,false>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

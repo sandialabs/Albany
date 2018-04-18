@@ -18,8 +18,8 @@
 namespace FELIX
 {
 
-template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes>
-BasalFrictionCoefficient<EvalT, Traits, IsHydrology, IsStokes>::
+template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes, bool ThermoCoupled>
+BasalFrictionCoefficient<EvalT, Traits, IsHydrology, IsStokes, ThermoCoupled>::
 BasalFrictionCoefficient (const Teuchos::ParameterList& p,
                           const Teuchos::RCP<Albany::Layouts>& dl)
 {
@@ -131,33 +131,24 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     printedMu      = -9999.999;
     printedLambda  = -9999.999;
     printedQ       = -9999.999;
-    if (beta_list.isParameter("Constant Flow Factor A"))
-    {
-      A = beta_list.get<double>("Constant Flow Factor A");
 
-      // A*N^{1/q} is dimensionally correct only for q=1/3. To fix this, we modify A
-      // so that the formula becomes (A_mod*N)^{1/q}. This means that A_mod = A^{1/3}
-      //A = std::cbrt(A);
-    }
-    else
-    {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! The case with variable flow factor has not been implemented yet.\n");
-    }
 #ifdef OUTPUT_TO_SCREEN
     *output << "Velocity-dependent beta (regularized coulomb law):\n\n"
             << "      beta = mu * N * |u|^{p-1} / [|u| + lambda*A*N^(1/p)]^p\n\n"
             << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
-    N          = PHX::MDField<const HydroScalarT>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
-    u_norm     = PHX::MDField<const IceScalarT>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
-    muParam    = PHX::MDField<const ScalarT,Dim>("Coulomb Friction Coefficient", dl->shared_param);
-    powerParam = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
+    N           = PHX::MDField<const HydroScalarT>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
+    u_norm      = PHX::MDField<const IceScalarT>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
+    muParam     = PHX::MDField<const ScalarT,Dim>("Coulomb Friction Coefficient", dl->shared_param);
+    powerParam  = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
+    flowFactorA = PHX::MDField<const TempScalarT>(p.get<std::string>("Flow Factor A Variable Name"), dl->cell_scalar2);
 
     this->addDependentField (muParam);
     this->addDependentField (powerParam);
     this->addDependentField (N);
     this->addDependentField (u_norm);
+    this->addDependentField (flowFactorA);
 
     distributedLambda = beta_list.get<bool>("Distributed Bed Roughness",false);
     if (distributedLambda)
@@ -208,8 +199,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes>
-void BasalFrictionCoefficient<EvalT, Traits, IsHydrology, IsStokes>::
+template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes, bool ThermoCoupled>
+void BasalFrictionCoefficient<EvalT, Traits, IsHydrology, IsStokes, ThermoCoupled>::
 postRegistrationSetup (typename Traits::SetupData d,
                        PHX::FieldManager<Traits>& fm)
 {
@@ -234,6 +225,7 @@ postRegistrationSetup (typename Traits::SetupData d,
       this->utils.setFieldData(powerParam,fm);
       this->utils.setFieldData(N,fm);
       this->utils.setFieldData(u_norm,fm);
+      this->utils.setFieldData(flowFactorA,fm);
       if (distributedLambda)
         this->utils.setFieldData(lambdaField,fm);
       else
@@ -250,8 +242,8 @@ postRegistrationSetup (typename Traits::SetupData d,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes>
-void BasalFrictionCoefficient<EvalT, Traits, IsHydrology, IsStokes>::
+template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes, bool ThermoCoupled>
+void BasalFrictionCoefficient<EvalT, Traits, IsHydrology, IsStokes, ThermoCoupled>::
 evaluateFields (typename Traits::EvalData workset)
 {
   ParamScalarT mu, lambda, power;
@@ -340,8 +332,8 @@ evaluateFields (typename Traits::EvalData workset)
     evaluateFieldsCell(workset,mu,lambda,power);
 }
 
-template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes>
-void BasalFrictionCoefficient<EvalT, Traits, IsHydrology, IsStokes>::
+template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes, bool ThermoCoupled>
+void BasalFrictionCoefficient<EvalT, Traits, IsHydrology, IsStokes, ThermoCoupled>::
 evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambda, ScalarT power)
 {
   if (workset.sideSets->find(basalSideName)==workset.sideSets->end())
@@ -378,7 +370,7 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
       case REGULARIZED_COULOMB:
         for (int ipt=0; ipt<dim; ++ipt)
         {
-          ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambda*std::pow(A*N(cell,side,ipt),1./power) );
+          ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambda*std::pow(flowFactorA(cell,side)*N(cell,side,ipt),1./power) );
           beta(cell,side,ipt) = mu * N(cell,side,ipt) * std::pow( q, power) / u_norm(cell,side,ipt);
         }
         break;
@@ -422,8 +414,8 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
   }
 }
 
-template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes>
-void BasalFrictionCoefficient<EvalT, Traits, IsHydrology, IsStokes>::
+template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes, bool ThermoCoupled>
+void BasalFrictionCoefficient<EvalT, Traits, IsHydrology, IsStokes, ThermoCoupled>::
 evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambda, ScalarT power)
 {
   const int dim = nodal ? numNodes : numQPs;
@@ -451,14 +443,14 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
           for (int cell=0; cell<workset.numCells; ++cell)
             for (int ipt=0; ipt<dim; ++ipt)
             {
-              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*A*std::pow(std::exp(N(cell,ipt)),3) );
+              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*flowFactorA(cell)*std::pow(std::exp(N(cell,ipt)),3) );
               beta(cell,ipt) = mu * std::exp(N(cell,ipt)) * std::pow( q, power) / u_norm(cell,ipt);
             }
         else
           for (int cell=0; cell<workset.numCells; ++cell)
             for (int ipt=0; ipt<dim; ++ipt)
             {
-              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*A*std::pow(std::max(N(cell,ipt),0.0),3) );
+              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*flowFactorA(cell)*std::pow(std::max(N(cell,ipt),0.0),3) );
               beta(cell,ipt) = mu * std::max(N(cell,ipt),0.0) * std::pow( q, power) / u_norm(cell,ipt);
             }
       }
@@ -468,14 +460,14 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
           for (int cell=0; cell<workset.numCells; ++cell)
             for (int ipt=0; ipt<dim; ++ipt)
             {
-              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*A*std::pow(std::exp(N(cell,ipt)),3) );
+              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*flowFactorA(cell)*std::pow(std::exp(N(cell,ipt)),3) );
               beta(cell,ipt) = mu * std::exp(N(cell,ipt)) * std::pow( q, power) / u_norm(cell,ipt);
             }
         else
           for (int cell=0; cell<workset.numCells; ++cell)
             for (int ipt=0; ipt<dim; ++ipt)
             {
-              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*A*std::pow(std::max(N(cell,ipt),0.0),3) );
+              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*flowFactorA(cell)*std::pow(std::max(N(cell,ipt),0.0),3) );
               beta(cell,ipt) = mu * std::max(N(cell,ipt),0.0) * std::pow( q, power) / u_norm(cell,ipt);
             }
       }

@@ -1379,7 +1379,7 @@ if (basalSideName!="INVALID")
     //Output
     p->set<std::string>("Basal Friction Coefficient Variable Name", "Beta");
 
-    ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,true>(*p,dl_basal));
+    ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,true,true>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
