@@ -48,11 +48,11 @@ LCM:
           Num Eigenvalues: 0
       Step Size:
         Method: Adaptive
-        Initial Step Size: 0.00050000
-        Max Step Size: 0.02000000
-        Min Step Size: 1.00000000e-05
+        Initial Step Size: 1.00000000e-03
+        Max Step Size: 1.00000000e-03
+        Min Step Size: 1.00000000e-03
         Failed Step Reduction Factor: 0.50000000
-        Aggressiveness: 0.20000000
+        Aggressiveness: 0.10000000
     NOX:
       Direction:
         Method: Newton
