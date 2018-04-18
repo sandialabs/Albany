@@ -16,13 +16,13 @@
 namespace FELIX
 {
 
-/** \brief Hydrology ResidualPotentialEqn Evaluator
+/** \brief Hydrology ResidualMassEqn Evaluator
 
     This evaluator evaluates the residual of the Hydrology model (quasi-static formulation)
 */
 
-template<typename EvalT, typename Traits, bool HasThicknessEqn, bool IsStokesCoupling>
-class HydrologyResidualPotentialEqn : public PHX::EvaluatorWithBaseImpl<Traits>,
+template<typename EvalT, typename Traits, bool HasCavitiesEqn, bool IsStokesCoupling, bool ThermoCoupled>
+class HydrologyResidualMassEqn : public PHX::EvaluatorWithBaseImpl<Traits>,
                                       public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
@@ -32,9 +32,10 @@ public:
   typedef typename EvalT::ScalarT       ScalarT;
 
   typedef typename std::conditional<IsStokesCoupling,ScalarT,ParamScalarT>::type  uScalarT;
-  typedef typename std::conditional<HasThicknessEqn,ScalarT,ParamScalarT>::type   hScalarT;
+  typedef typename std::conditional<HasCavitiesEqn,ScalarT,ParamScalarT>::type   hScalarT;
+  typedef typename std::conditional<ThermoCoupled,ScalarT,ParamScalarT>::type     tScalarT;
 
-  HydrologyResidualPotentialEqn (const Teuchos::ParameterList& p,
+  HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
                                  const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
@@ -44,16 +45,19 @@ public:
 
 private:
 
+  void evaluateFieldsCell(typename Traits::EvalData d);
+  void evaluateFieldsSide(typename Traits::EvalData d);
+
   // Input:
   PHX::MDField<const RealType>      BF;
   PHX::MDField<const RealType>      GradBF;
   PHX::MDField<const MeshScalarT>   w_measure;
-  PHX::MDField<const ScalarT>       N;
   PHX::MDField<const ScalarT>       q;
-  PHX::MDField<const hScalarT>      h;
   PHX::MDField<const ScalarT>       m;
   PHX::MDField<const ParamScalarT>  omega;
-  PHX::MDField<const uScalarT>      u_b;
+  PHX::MDField<const ScalarT>       phi;
+  PHX::MDField<const ParamScalarT>  phi_0;
+  PHX::MDField<const hScalarT>      h_dot;
 
   // Input only needed if equation is on a sideset
   PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>   metric;
@@ -65,13 +69,13 @@ private:
   int numQPs;
   int numDims;
 
-  double eta_i;
-  double use_eff_cav;
-  double mu_w;
-  double rho_combo;
-  double h_r;
-  double l_r;
-  double A;
+  double rho_w_inv;
+  double scaling_omega;
+  double scaling_q;
+
+  bool mass_lumping;
+  bool penalization;
+  bool unsteady;
 
   // Variables necessary for stokes coupling
   std::string                     sideSetName;
