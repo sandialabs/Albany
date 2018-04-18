@@ -14,12 +14,22 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
     ConstitutiveModel<EvalT, Traits>&    model,
     Teuchos::ParameterList*              p,
     Teuchos::RCP<Albany::Layouts> const& dl)
-    : BaseKernel(model),
-      sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
-      sat_exp_(p->get<RealType>("Saturation Exponent", 0.0)),
-      ice_density_(p->get<RealType>("ACE Density Ice", 0.0)),
-      water_density_(p->get<RealType>("ACE Density Water", 0.0))
+    : BaseKernel(model)
 {
+  // Baseline constants
+  sat_mod_ = p->get<RealType>("Saturation Modulus", 0.0);
+  sat_exp_ = p->get<RealType>("Saturation Exponent", 0.0);
+
+  ice_density_ = p->get<RealType>("ACE Ice Density", 0.0);
+  water_density_ = p->get<RealType>("ACE Water Density", 0.0);
+  ice_thermal_cond_ = p->get<RealType>("ACE Ice Thermal Conductivity", 0.0);
+  water_thermal_cond_ = p->get<RealType>("ACE Water Thermal Conductivity", 0.0);
+  ice_heat_capacity_ = p->get<RealType>("ACE Ice Heat Capacity", 0.0);
+  ice_saturation_init_ = p->get<RealType>("ACE Ice Initial Saturation", 0.0);
+  ice_saturation_max_ = p->get<RealType>("ACE Ice Maximum Saturation", 0.0);
+  water_saturation_min_ = p->get<RealType>("ACE Water Minimum Saturation", 0.0);
+  porosity_ = p->get<RealType>("ACE Porosity", 0.0);
+
   // retrieve appropriate field name strings
   std::string const cauchy_string       = field_name_map_["Cauchy_Stress"];
   std::string const Fp_string           = field_name_map_["Fp"];
@@ -196,8 +206,7 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   ice_saturation       = *output_fields["ACE Ice Saturation"];
   density              = *output_fields["ACE Density"];
   heat_capacity        = *output_fields["ACE Heat Capacity"];
-  //porosity             = *output_fields["ACE Porosity"];
-  thermal_conductivity = *output_fields["ACE Thermal Conductivity"];
+  thermal_cond =         *output_fields["ACE Thermal Conductivity"];
   water_saturation     = *output_fields["ACE Water Saturation"];
 
   if (have_temperature_ == true) {

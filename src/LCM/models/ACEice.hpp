@@ -66,15 +66,11 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ConstScalarField poissons_ratio;
   ConstScalarField yield_strength;
   
-  RealType ice_density_{0.0};
-  RealType water_density_{0.0};
-
   // Output MDFields
   ScalarField density;
   ScalarField heat_capacity;
   ScalarField ice_saturation;
-  //ScalarField porosity;
-  ScalarField thermal_conductivity;
+  ScalarField thermal_cond;
   ScalarField water_saturation;
 
   // Mechanical MDFields
@@ -90,9 +86,20 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   Albany::MDArray Told;
   Albany::MDArray ice_saturation_old;
 
+  // Baseline constants
+  RealType ice_density_{0.0};
+  RealType water_density_{0.0};
+  RealType ice_thermal_cond_{0.0};
+  RealType water_thermal_cond_{0.0};
+  RealType ice_heat_capacity_{0.0};
+  RealType ice_saturation_init_{0.0};
+  RealType ice_saturation_max_{0.0};
+  RealType water_saturation_min_{0.0};
+  RealType porosity_{0.0};
+
   // Saturation hardening constraints
-  RealType sat_mod_;
-  RealType sat_exp_;
+  RealType sat_mod_{0.0};
+  RealType sat_exp_{0.0};
 
   void
   init(
