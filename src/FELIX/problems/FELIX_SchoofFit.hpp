@@ -34,7 +34,6 @@
 #include "FELIX_DummyResidual.hpp"
 #include "PHAL_FieldFrobeniusNorm.hpp"
 #include "FELIX_BasalFrictionCoefficient.hpp"
-#include "FELIX_BasalFrictionCoefficientNode.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -377,6 +376,15 @@ FELIX::SchoofFit::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm
   ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,false>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
+  if (save_state["beta"])
+  {
+    //--- FELIX basal friction coefficient at nodes ---//
+    p->set<bool>("Nodal",true);
+    ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,false>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+
   //--- Basal Friction log ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Basal Friction Coefficient"));
 
@@ -402,24 +410,6 @@ FELIX::SchoofFit::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm
 
   ev = Teuchos::rcp(new FELIX::SimpleOperationLog<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
-
-  if (save_state["beta"])
-  {
-    //--- FELIX basal friction coefficient at nodes ---//
-    p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Basal Friction Coefficient"));
-
-    //Input
-    p->set<std::string>("Sliding Velocity Variable Name", "sliding_velocity");
-    p->set<std::string>("Effective Pressure Variable Name", "effective_pressure");
-    p->set<std::string>("Bed Roughness Variable Name", "bed_roughness");
-    p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
-
-    //Output
-    p->set<std::string>("Basal Friction Coefficient Variable Name", "beta");
-
-    ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficientNode<EvalT,PHAL::AlbanyTraits,false,false>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)
   {

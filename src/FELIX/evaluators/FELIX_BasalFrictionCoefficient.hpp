@@ -89,6 +89,7 @@ private:
   bool logParameters;
   bool distributedLambda;
   bool regularize;
+  bool nodal;
 
   enum BETA_TYPE {GIVEN_CONSTANT, GIVEN_FIELD, EXP_GIVEN_FIELD, GAL_PROJ_EXP_GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
   BETA_TYPE beta_type;

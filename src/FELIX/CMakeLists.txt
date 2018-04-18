@@ -9,7 +9,6 @@
   SET(SOURCES
        evaluators/FELIX_BasalFrictionCoefficient.cpp
        evaluators/FELIX_BasalFrictionCoefficientGradient.cpp
-       evaluators/FELIX_BasalFrictionCoefficientNode.cpp
        evaluators/FELIX_BasalFrictionHeat.cpp
        evaluators/FELIX_BasalMeltRate.cpp
        evaluators/FELIX_DirichletEnthalpySurface.cpp
@@ -109,8 +108,6 @@ ENDIF()
        evaluators/FELIX_BasalFrictionCoefficient_Def.hpp
        evaluators/FELIX_BasalFrictionCoefficientGradient.hpp
        evaluators/FELIX_BasalFrictionCoefficientGradient_Def.hpp
-       evaluators/FELIX_BasalFrictionCoefficientNode.hpp
-       evaluators/FELIX_BasalFrictionCoefficientNode_Def.hpp
        evaluators/FELIX_BasalFrictionHeat.hpp
        evaluators/FELIX_BasalFrictionHeat_Def.hpp
        evaluators/FELIX_BasalMeltRate.hpp
