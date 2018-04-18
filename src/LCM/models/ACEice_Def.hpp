@@ -14,8 +14,11 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
     ConstitutiveModel<EvalT, Traits>&    model,
     Teuchos::ParameterList*              p,
     Teuchos::RCP<Albany::Layouts> const& dl)
-    : BaseKernel(model), sat_mod(p->get<RealType>("Saturation Modulus", 0.0)),
-      sat_exp(p->get<RealType>("Saturation Exponent", 0.0))
+    : BaseKernel(model),
+      sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
+      sat_exp_(p->get<RealType>("Saturation Exponent", 0.0)),
+      ice_density_(p->get<RealType>("ACE Density Ice", 0.0)),
+      water_density_(p->get<RealType>("ACE Density Water", 0.0))
 {
   // retrieve appropriate field name strings
   std::string const cauchy_string       = field_name_map_["Cauchy_Stress"];
@@ -33,6 +36,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setDependentField("Hardening Modulus", dl->qp_scalar);
   setDependentField("Poissons Ratio", dl->qp_scalar);
   setDependentField("Yield Strength", dl->qp_scalar);
+  setDependentField("Delta Time", dl->workset_scalar);
 
   // Computed incrementally
   setEvaluatedField("ACE Ice Saturation", dl->qp_scalar);
@@ -43,7 +47,6 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setEvaluatedField("ACE Thermal Conductivity", dl->qp_scalar);
   //setEvaluatedField("ACE Porosity", dl->qp_scalar);
   setEvaluatedField("ACE Water Saturation", dl->qp_scalar);
-  setEvaluatedField("Delta Time", dl->workset_scalar);
 
   // define the evaluated fields
   setEvaluatedField(cauchy_string, dl->qp_tensor);
@@ -182,9 +185,6 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   hardening_modulus = *input_fields["Hardening Modulus"];
   poissons_ratio    = *input_fields["Poissons Ratio"];
   yield_strength    = *input_fields["Yield Strength"];
-
-  ice_density       = *input_fields["ACE Density Ice Value"];
-  water_density     = *input_fields["ACE Density Water Value"];
 
   delta_time        = *input_fields["Delta Time"];
 
@@ -339,9 +339,6 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   }
 
   // Deal with non-mechanical values
-  std::cout << "Ice density   (cell, pt):" << cell << "," << pt << "," << ice_density(cell, pt);
-  std::cout << "Water density (cell, pt):" << cell << "," << pt << "," << water_density(cell, pt);
-
   water_saturation(cell, pt) = 1.0 - ice_saturation(cell, pt);
 
   // compute trial state
@@ -356,7 +353,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const sq23{std::sqrt(2.0 / 3.0)};
   ScalarT const f =
       smag - sq23 * (Y + K * eqpsold(cell, pt) +
-                     sat_mod * (1.0 - std::exp(-sat_exp * eqpsold(cell, pt))));
+                     sat_mod_ * (1.0 - std::exp(-sat_exp_ * eqpsold(cell, pt))));
 
   RealType constexpr yield_tolerance = 1.0e-12;
 
@@ -372,7 +369,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
     MIN  minimizer;
     STEP step;
-    NLS  j2nls(sat_mod, sat_exp, eqpsold(cell, pt), K, smag, mubar, Y);
+    NLS  j2nls(sat_mod_, sat_exp_, eqpsold(cell, pt), K, smag, mubar, Y);
 
     minitensor::Vector<ScalarT, nls_dim> x;
 
@@ -382,7 +379,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
         minimizer, step, j2nls, x);
 
     ScalarT const alpha = eqpsold(cell, pt) + sq23 * x(0);
-    ScalarT const H     = K * alpha + sat_mod * (1.0 - exp(-sat_exp * alpha));
+    ScalarT const H     = K * alpha + sat_mod_ * (1.0 - exp(-sat_exp_ * alpha));
     ScalarT const dgam  = x(0);
 
     // plastic direction
@@ -425,7 +422,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // update yield surface
   yieldSurf(cell, pt) = Y + K * eqps(cell, pt) +
-                        sat_mod * (1. - std::exp(-sat_exp * eqps(cell, pt)));
+                        sat_mod_ * (1. - std::exp(-sat_exp_ * eqps(cell, pt)));
 
   // compute pressure
   ScalarT const p = 0.5 * kappa * (J(cell, pt) - 1. / (J(cell, pt)));
