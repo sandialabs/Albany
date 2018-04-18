@@ -26,8 +26,8 @@ namespace FELIX {
 
     //! Default constructor
     StokesL1L2(const Teuchos::RCP<Teuchos::ParameterList>& params,
-		 const Teuchos::RCP<ParamLib>& paramLib,
-		 const int numDim_);
+     const Teuchos::RCP<ParamLib>& paramLib,
+     const int numDim_);
 
     //! Destructor
     ~StokesL1L2();
@@ -35,7 +35,7 @@ namespace FELIX {
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
 
-    //! Get boolean telling code if SDBCs are utilized  
+    //! Get boolean telling code if SDBCs are utilized
     virtual bool useSDBCs() const {return use_sdbcs_; }
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
@@ -79,8 +79,8 @@ namespace FELIX {
   protected:
     int numDim;
 
-    /// Boolean marking whether SDBCs are used 
-    bool use_sdbcs_; 
+    /// Boolean marking whether SDBCs are used
+    bool use_sdbcs_;
 
   };
 } // Namespace FELIX
@@ -122,14 +122,14 @@ FELIX::StokesL1L2::constructEvaluators(
   using std::string;
   using std::map;
   using PHAL::AlbanyTraits;
-  
+
   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
 
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
-  
+
   Intrepid2::DefaultCubatureFactory cubFactory;
   RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
 
@@ -230,8 +230,8 @@ FELIX::StokesL1L2::constructEvaluators(
     p->set<std::string>("Parameter Name", param_name);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
-    RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FELIX::FelixParamEnum,FELIX::FelixParamEnum::Homotopy>> ptr_homotopy;
-    ptr_homotopy = rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FELIX::FelixParamEnum,FELIX::FelixParamEnum::Homotopy>(*p,dl));
+    RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FELIX::ParamEnum,FELIX::ParamEnum::Homotopy>> ptr_homotopy;
+    ptr_homotopy = rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FELIX::ParamEnum,FELIX::ParamEnum::Homotopy>(*p,dl));
     ptr_homotopy->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Viscosity").get<double>(param_name,-1.0));
     fm0.template registerEvaluator<EvalT>(ptr_homotopy);
   }

@@ -64,8 +64,8 @@ namespace FELIX
 
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
-    
-    //! Get boolean telling code if SDBCs are utilized  
+
+    //! Get boolean telling code if SDBCs are utilized
     virtual bool useSDBCs() const {return use_sdbcs_; }
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
@@ -115,8 +115,8 @@ namespace FELIX
 
     std::string basalSideName, basalEBName;
 
-    /// Boolean marking whether SDBCs are used 
-    bool use_sdbcs_; 
+    /// Boolean marking whether SDBCs are used
+    bool use_sdbcs_;
   };
 
 } // end of the namespace FELIX
@@ -548,7 +548,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     fm0.template registerEvaluator<EvalT>(ev);
   }
   else  // --- w Residual ---
-  {  
+  {
     p = rcp(new ParameterList("w Resid"));
 
     //Input
@@ -933,8 +933,8 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   p->set<std::string>("Parameter Name", param_name);
   p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 
-  Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Homotopy>> ptr_homotopy;
-  ptr_homotopy = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Homotopy>(*p,dl));
+  Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>> ptr_homotopy;
+  ptr_homotopy = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>(*p,dl));
   ptr_homotopy->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Viscosity").get<double>(param_name,-1.0));
   fm0.template registerEvaluator<EvalT>(ptr_homotopy);
 
