@@ -17,7 +17,7 @@
 #include "FELIX_LaplacianSampling.hpp"
 
 #ifdef ALBANY_EPETRA
-#include "FELIX_StokesFOHydrology.hpp"
+// #include "FELIX_StokesFOHydrology.hpp"
 #include "FELIX_StokesFOThickness.hpp"
 #endif
 
