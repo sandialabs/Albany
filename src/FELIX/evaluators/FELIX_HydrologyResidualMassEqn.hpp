@@ -21,9 +21,9 @@ namespace FELIX
     This evaluator evaluates the residual of the Hydrology model (quasi-static formulation)
 */
 
-template<typename EvalT, typename Traits, bool HasCavitiesEqn, bool IsStokesCoupling, bool ThermoCoupled>
+template<typename EvalT, typename Traits, bool IsStokesCoupling, bool ThermoCoupled>
 class HydrologyResidualMassEqn : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                      public PHX::EvaluatorDerived<EvalT, Traits>
+                                 public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
@@ -32,7 +32,6 @@ public:
   typedef typename EvalT::ScalarT       ScalarT;
 
   typedef typename std::conditional<IsStokesCoupling,ScalarT,ParamScalarT>::type  uScalarT;
-  typedef typename std::conditional<HasCavitiesEqn,ScalarT,ParamScalarT>::type   hScalarT;
   typedef typename std::conditional<ThermoCoupled,ScalarT,ParamScalarT>::type     tScalarT;
 
   HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
@@ -57,7 +56,7 @@ private:
   PHX::MDField<const ParamScalarT>  omega;
   PHX::MDField<const ScalarT>       phi;
   PHX::MDField<const ParamScalarT>  phi_0;
-  PHX::MDField<const hScalarT>      h_dot;
+  PHX::MDField<const ScalarT>       h_dot;
 
   // Input only needed if equation is on a sideset
   PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>   metric;

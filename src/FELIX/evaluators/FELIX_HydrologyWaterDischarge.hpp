@@ -35,7 +35,7 @@ namespace FELIX
  *
  */
 
-template<typename EvalT, typename Traits, bool HasCavitiesEqn, bool IsStokes>
+template<typename EvalT, typename Traits, bool IsStokes>
 class HydrologyWaterDischarge : public PHX::EvaluatorWithBaseImpl<Traits>,
                                 public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -43,7 +43,6 @@ public:
 
   typedef typename EvalT::ScalarT       ScalarT;
   typedef typename EvalT::ParamScalarT  ParamScalarT;
-  typedef typename std::conditional<HasCavitiesEqn,ScalarT,ParamScalarT>::type hScalarT;
 
   HydrologyWaterDischarge (const Teuchos::ParameterList& p,
                            const Teuchos::RCP<Albany::Layouts>& dl);
@@ -60,7 +59,7 @@ private:
 
   // Input:
   PHX::MDField<const ScalarT>       gradPhi;
-  PHX::MDField<const hScalarT>      h;
+  PHX::MDField<const ScalarT>       h;
   PHX::MDField<const ScalarT,Dim>   regularizationParam;
 
   // Output:

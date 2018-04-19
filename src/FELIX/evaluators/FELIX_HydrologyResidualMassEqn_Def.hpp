@@ -10,10 +10,10 @@
 namespace FELIX {
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool HasCavitiesEqn, bool IsStokesCoupling, bool ThermoCoupled>
-HydrologyResidualMassEqn<EvalT, Traits, HasCavitiesEqn, IsStokesCoupling, ThermoCoupled>::
+template<typename EvalT, typename Traits, bool IsStokesCoupling, bool ThermoCoupled>
+HydrologyResidualMassEqn<EvalT, Traits, IsStokesCoupling, ThermoCoupled>::
 HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
-                               const Teuchos::RCP<Albany::Layouts>& dl) :
+                          const Teuchos::RCP<Albany::Layouts>& dl) :
   BF        (p.get<std::string> ("BF Name"), dl->node_qp_scalar),
   GradBF    (p.get<std::string> ("Gradient BF Name"), dl->node_qp_gradient),
   w_measure (p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar),
@@ -71,7 +71,7 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
   unsteady = p.get<bool>("Unsteady");
   if (unsteady)
   {
-    h_dot = PHX::MDField<const hScalarT>(p.get<std::string> ("Water Thickness Dot Variable Name"), dl->qp_scalar);
+    h_dot = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Thickness Dot Variable Name"), dl->qp_scalar);
     this->addDependentField(h_dot);
   }
 
@@ -131,8 +131,8 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool HasCavitiesEqn, bool IsStokesCoupling, bool ThermoCoupled>
-void HydrologyResidualMassEqn<EvalT, Traits, HasCavitiesEqn, IsStokesCoupling, ThermoCoupled>::
+template<typename EvalT, typename Traits, bool IsStokesCoupling, bool ThermoCoupled>
+void HydrologyResidualMassEqn<EvalT, Traits, IsStokesCoupling, ThermoCoupled>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -159,8 +159,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool HasCavitiesEqn, bool IsStokesCoupling, bool ThermoCoupled>
-void HydrologyResidualMassEqn<EvalT, Traits, HasCavitiesEqn, IsStokesCoupling, ThermoCoupled>::
+template<typename EvalT, typename Traits, bool IsStokesCoupling, bool ThermoCoupled>
+void HydrologyResidualMassEqn<EvalT, Traits, IsStokesCoupling, ThermoCoupled>::
 evaluateFields (typename Traits::EvalData workset)
 {
   if (IsStokesCoupling) {
@@ -170,8 +170,8 @@ evaluateFields (typename Traits::EvalData workset)
   }
 }
 
-template<typename EvalT, typename Traits, bool HasCavitiesEqn, bool IsStokesCoupling, bool ThermoCoupled>
-void HydrologyResidualMassEqn<EvalT, Traits, HasCavitiesEqn, IsStokesCoupling, ThermoCoupled>::
+template<typename EvalT, typename Traits, bool IsStokesCoupling, bool ThermoCoupled>
+void HydrologyResidualMassEqn<EvalT, Traits, IsStokesCoupling, ThermoCoupled>::
 evaluateFieldsSide (typename Traits::EvalData workset)
 {
   // Zero out, to avoid leaving stuff from previous workset!
@@ -225,8 +225,8 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   }
 }
 
-template<typename EvalT, typename Traits, bool HasCavitiesEqn, bool IsStokesCoupling, bool ThermoCoupled>
-void HydrologyResidualMassEqn<EvalT, Traits, HasCavitiesEqn, IsStokesCoupling, ThermoCoupled>::
+template<typename EvalT, typename Traits, bool IsStokesCoupling, bool ThermoCoupled>
+void HydrologyResidualMassEqn<EvalT, Traits, IsStokesCoupling, ThermoCoupled>::
 evaluateFieldsCell (typename Traits::EvalData workset)
 {
   ScalarT res_qp, res_node, zero(0);

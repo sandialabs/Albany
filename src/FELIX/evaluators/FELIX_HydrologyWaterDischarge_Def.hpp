@@ -11,8 +11,8 @@
 namespace FELIX
 {
 
-template<typename EvalT, typename Traits, bool HasCavitiesEqn, bool IsStokes>
-HydrologyWaterDischarge<EvalT, Traits, HasCavitiesEqn, IsStokes>::
+template<typename EvalT, typename Traits, bool IsStokes>
+HydrologyWaterDischarge<EvalT, Traits, IsStokes>::
 HydrologyWaterDischarge (const Teuchos::ParameterList& p,
                          const Teuchos::RCP<Albany::Layouts>& dl) :
   gradPhi (p.get<std::string> ("Hydraulic Potential Gradient Variable Name"), dl->qp_gradient),
@@ -58,8 +58,8 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool HasCavitiesEqn, bool IsStokes>
-void HydrologyWaterDischarge<EvalT, Traits, HasCavitiesEqn, IsStokes>::
+template<typename EvalT, typename Traits, bool IsStokes>
+void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -74,8 +74,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool HasCavitiesEqn, bool IsStokes>
-void HydrologyWaterDischarge<EvalT, Traits, HasCavitiesEqn, IsStokes>::evaluateFields (typename Traits::EvalData workset)
+template<typename EvalT, typename Traits, bool IsStokes>
+void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::evaluateFields (typename Traits::EvalData workset)
 {
   if (IsStokes) {
     evaluateFieldsSide(workset);
@@ -84,8 +84,8 @@ void HydrologyWaterDischarge<EvalT, Traits, HasCavitiesEqn, IsStokes>::evaluateF
   }
 }
 
-template<typename EvalT, typename Traits, bool HasCavitiesEqn, bool IsStokes>
-void HydrologyWaterDischarge<EvalT, Traits, HasCavitiesEqn, IsStokes>::evaluateFieldsCell (typename Traits::EvalData workset)
+template<typename EvalT, typename Traits, bool IsStokes>
+void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::evaluateFieldsCell (typename Traits::EvalData workset)
 {
   ScalarT regularization(0.0);
   if (regularize)
@@ -117,8 +117,8 @@ void HydrologyWaterDischarge<EvalT, Traits, HasCavitiesEqn, IsStokes>::evaluateF
   }
 }
 
-template<typename EvalT, typename Traits, bool HasCavitiesEqn, bool IsStokes>
-void HydrologyWaterDischarge<EvalT, Traits, HasCavitiesEqn, IsStokes>::
+template<typename EvalT, typename Traits, bool IsStokes>
+void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::
 evaluateFieldsSide (typename Traits::EvalData workset)
 {
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())

@@ -92,7 +92,7 @@ ProblemFactory::create() const
     problem = rcp(new FELIX::StokesL1L2(problemParams, paramLib, 2));
   }
   else if (method == "FELIX Hydrology 2D") {
-    problem = rcp(new FELIX::Hydrology(problemParams, paramLib, 2));
+    problem = rcp(new FELIX::Hydrology(problemParams, discretizationParams, paramLib, 2));
   }
   else if (method == "FELIX Enthalpy 3D") {
     problem = rcp(new FELIX::Enthalpy(problemParams, discretizationParams, paramLib, 3));
