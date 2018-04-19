@@ -56,7 +56,6 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setEvaluatedField("ACE Density", dl->qp_scalar);
   setEvaluatedField("ACE Heat Capacity", dl->qp_scalar);
   setEvaluatedField("ACE Thermal Conductivity", dl->qp_scalar);
-  //setEvaluatedField("ACE Porosity", dl->qp_scalar);
   setEvaluatedField("ACE Water Saturation", dl->qp_scalar);
 
   // define the evaluated fields
@@ -142,17 +141,6 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       false,
       p->get<bool>("Output ACE Thermal Conductivity", false));
 
-  // ACE Porosity
-  /*
-  addStateVariable(
-      "ACE Porosity",
-      dl->qp_scalar,
-      "scalar",
-      0.0,
-      false,
-      p->get<bool>("Output ACE Porosity", false));
-  */
-
   // ACE Water Saturation
   addStateVariable(
       "ACE Water Saturation",
@@ -189,64 +177,71 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   std::string F_string            = field_name_map_["F"];
   std::string J_string            = field_name_map_["J"];
 
-  def_grad = *input_fields[F_string];
-  J        = *input_fields[J_string];
+  def_grad_ = *input_fields[F_string];
+  J_        = *input_fields[J_string];
 
-  elastic_modulus   = *input_fields["Elastic Modulus"];
-  hardening_modulus = *input_fields["Hardening Modulus"];
-  poissons_ratio    = *input_fields["Poissons Ratio"];
-  yield_strength    = *input_fields["Yield Strength"];
+  elastic_modulus_   = *input_fields["Elastic Modulus"];
+  hardening_modulus_ = *input_fields["Hardening Modulus"];
+  poissons_ratio_    = *input_fields["Poissons Ratio"];
+  yield_strength_    = *input_fields["Yield Strength"];
 
-  delta_time        = *input_fields["Delta Time"];
+  delta_time_ = *input_fields["Delta Time"];
 
-  stress    = *output_fields[cauchy_string];
-  Fp        = *output_fields[Fp_string];
-  eqps      = *output_fields[eqps_string];
-  yieldSurf = *output_fields[yieldSurface_string];
+  stress_     = *output_fields[cauchy_string];
+  Fp_         = *output_fields[Fp_string];
+  eqps_       = *output_fields[eqps_string];
+  yield_surf_ = *output_fields[yieldSurface_string];
 
-  ice_saturation       = *output_fields["ACE Ice Saturation"];
-  density              = *output_fields["ACE Density"];
-  heat_capacity        = *output_fields["ACE Heat Capacity"];
-  thermal_cond         = *output_fields["ACE Thermal Conductivity"];
-  water_saturation     = *output_fields["ACE Water Saturation"];
+  ice_saturation_   = *output_fields["ACE Ice Saturation"];
+  density_          = *output_fields["ACE Density"];
+  heat_capacity_    = *output_fields["ACE Heat Capacity"];
+  thermal_cond_     = *output_fields["ACE Thermal Conductivity"];
+  water_saturation_ = *output_fields["ACE Water Saturation"];
 
   if (have_temperature_ == true) {
-    source = *output_fields[source_string];
+    source_ = *output_fields[source_string];
   }
 
   // get State Variables
-  Fpold              = (*workset.stateArrayPtr)[Fp_string + "_old"];
-  eqpsold            = (*workset.stateArrayPtr)[eqps_string + "_old"];
-  Told               = (*workset.stateArrayPtr)["Temperature_old"];
-  ice_saturation_old = (*workset.stateArrayPtr)["ACE Ice Saturation_old"];
+  Fp_old_             = (*workset.stateArrayPtr)[Fp_string + "_old"];
+  eqps_old_           = (*workset.stateArrayPtr)[eqps_string + "_old"];
+  T_old_              = (*workset.stateArrayPtr)["Temperature_old"];
+  ice_saturation_old_ = (*workset.stateArrayPtr)["ACE Ice Saturation_old"];
 }
 
+namespace {
+
+constexpr RealType SQ23{std::sqrt(2.0 / 3.0)};
+
+}  // anonymous namespace
+
 //
-// J2 nonlinear system
+// ACE ice nonlinear system
 //
 template <typename EvalT, minitensor::Index M = 1>
-class J2NLS : public minitensor::
-                  Function_Base<J2NLS<EvalT, M>, typename EvalT::ScalarT, M> {
+class IceNLS : public minitensor::
+                   Function_Base<IceNLS<EvalT, M>, typename EvalT::ScalarT, M>
+{
   using S = typename EvalT::ScalarT;
 
  public:
-  J2NLS(
-      RealType sat_mod_,
-      RealType sat_exp_,
-      RealType eqps_old_,
+  IceNLS(
+      RealType sat_mod,
+      RealType sat_exp,
+      RealType eqps_old,
       S const& K,
       S const& smag,
       S const& mubar,
       S const& Y)
-      : sat_mod(sat_mod_), sat_exp(sat_exp_), eqps_old(eqps_old_), K_(K),
+      : sat_mod_(sat_mod), sat_exp_(sat_exp), eqps_old_(eqps_old), K_(K),
         smag_(smag), mubar_(mubar), Y_(Y)
   {
   }
 
-  static constexpr char const* const NAME{"J2 NLS"};
+  constexpr static char const* const NAME{"ACE ice NLS"};
 
   using Base =
-      minitensor::Function_Base<J2NLS<EvalT, M>, typename EvalT::ScalarT, M>;
+      minitensor::Function_Base<IceNLS<EvalT, M>, typename EvalT::ScalarT, M>;
 
   // Default value.
   template <typename T, minitensor::Index N>
@@ -278,9 +273,9 @@ class J2NLS : public minitensor::
     minitensor::Vector<T, N> r(dimension);
 
     T const& X     = x(0);
-    T const  alpha = eqps_old + sq23 * X;
-    T const  H     = K * alpha + sat_mod * (1.0 - std::exp(-sat_exp * alpha));
-    T const  R     = smag - (2.0 * mubar * X + sq23 * (Y + H));
+    T const  alpha = eqps_old_ + SQ23 * X;
+    T const  H     = K * alpha + sat_mod_ * (1.0 - std::exp(-sat_exp_ * alpha));
+    T const  R     = smag - (2.0 * mubar * X + SQ23 * (Y + H));
 
     r(0) = R;
 
@@ -296,10 +291,9 @@ class J2NLS : public minitensor::
   }
 
   // Constants.
-  RealType const sq23{std::sqrt(2.0 / 3.0)};
-  RealType const sat_mod{0.0};
-  RealType const sat_exp{0.0};
-  RealType const eqps_old{0.0};
+  RealType const sat_mod_{0.0};
+  RealType const sat_exp_{0.0};
+  RealType const eqps_old_{0.0};
 
   // Inputs
   S const& K_;
@@ -320,17 +314,17 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   Tensor const I(minitensor::eye<ScalarT, MAX_DIM>(num_dims_));
   Tensor       sigma(num_dims_);
 
-  ScalarT const E     = elastic_modulus(cell, pt);
-  ScalarT const nu    = poissons_ratio(cell, pt);
+  ScalarT const E     = elastic_modulus_(cell, pt);
+  ScalarT const nu    = poissons_ratio_(cell, pt);
   ScalarT const kappa = E / (3.0 * (1.0 - 2.0 * nu));
   ScalarT const mu    = E / (2.0 * (1.0 + nu));
-  ScalarT const K     = hardening_modulus(cell, pt);
-  ScalarT const Y     = yield_strength(cell, pt);
-  ScalarT const J1    = J(cell, pt);
+  ScalarT const K     = hardening_modulus_(cell, pt);
+  ScalarT const Y     = yield_strength_(cell, pt);
+  ScalarT const J1    = J_(cell, pt);
   ScalarT const Jm23  = 1.0 / std::cbrt(J1 * J1);
 
   // fill local tensors
-  F.fill(def_grad, cell, pt, 0, 0);
+  F.fill(def_grad_, cell, pt, 0, 0);
 
   // Mechanical deformation gradient
   auto Fm = Tensor(F);
@@ -344,12 +338,12 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   for (int i{0}; i < num_dims_; ++i) {
     for (int j{0}; j < num_dims_; ++j) {
-      Fpn(i, j) = ScalarT(Fpold(cell, pt, i, j));
+      Fpn(i, j) = ScalarT(Fp_old_(cell, pt, i, j));
     }
   }
 
   // Deal with non-mechanical values
-  water_saturation(cell, pt) = 1.0 - ice_saturation(cell, pt);
+  water_saturation_(cell, pt) = 1.0 - ice_saturation_(cell, pt);
 
   // compute trial state
   Tensor const  Fpinv = minitensor::inverse(Fpn);
@@ -360,17 +354,17 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // check yield condition
   ScalarT const smag = minitensor::norm(s);
-  ScalarT const sq23{std::sqrt(2.0 / 3.0)};
   ScalarT const f =
-      smag - sq23 * (Y + K * eqpsold(cell, pt) +
-                     sat_mod_ * (1.0 - std::exp(-sat_exp_ * eqpsold(cell, pt))));
+      smag -
+      SQ23 * (Y + K * eqps_old_(cell, pt) +
+              sat_mod_ * (1.0 - std::exp(-sat_exp_ * eqps_old_(cell, pt))));
 
   RealType constexpr yield_tolerance = 1.0e-12;
 
   if (f > yield_tolerance) {
     // Use minimization equivalent to return mapping
     using ValueT = typename Sacado::ValueType<ScalarT>::type;
-    using NLS    = J2NLS<EvalT>;
+    using NLS    = IceNLS<EvalT>;
 
     constexpr minitensor::Index nls_dim{NLS::DIMENSION};
 
@@ -379,7 +373,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
     MIN  minimizer;
     STEP step;
-    NLS  j2nls(sat_mod_, sat_exp_, eqpsold(cell, pt), K, smag, mubar, Y);
+    NLS  j2nls(sat_mod_, sat_exp_, eqps_old_(cell, pt), K, smag, mubar, Y);
 
     minitensor::Vector<ScalarT, nls_dim> x;
 
@@ -388,7 +382,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     LCM::MiniSolver<MIN, STEP, NLS, EvalT, nls_dim> mini_solver(
         minimizer, step, j2nls, x);
 
-    ScalarT const alpha = eqpsold(cell, pt) + sq23 * x(0);
+    ScalarT const alpha = eqps_old_(cell, pt) + SQ23 * x(0);
     ScalarT const H     = K * alpha + sat_mod_ * (1.0 - exp(-sat_exp_ * alpha));
     ScalarT const dgam  = x(0);
 
@@ -399,13 +393,13 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     s -= 2 * mubar * dgam * N;
 
     // update eqps
-    eqps(cell, pt) = alpha;
+    eqps_(cell, pt) = alpha;
 
     // mechanical source
-    if (have_temperature_ == true && delta_time(0) > 0) {
-      source(cell, pt) =
-          (sq23 * dgam / delta_time(0) * (Y + H + temperature_(cell, pt))) /
-          (density(cell, pt) * heat_capacity(cell, pt));
+    if (have_temperature_ == true && delta_time_(0) > 0) {
+      source_(cell, pt) =
+          (SQ23 * dgam / delta_time_(0) * (Y + H + temperature_(cell, pt))) /
+          (density_(cell, pt) * heat_capacity_(cell, pt));
     }
 
     // exponential map to get Fpnew
@@ -415,34 +409,35 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
     for (int i{0}; i < num_dims_; ++i) {
       for (int j{0}; j < num_dims_; ++j) {
-        Fp(cell, pt, i, j) = Fpnew(i, j);
+        Fp_(cell, pt, i, j) = Fpnew(i, j);
       }
     }
   } else {
-    eqps(cell, pt) = eqpsold(cell, pt);
+    eqps_(cell, pt) = eqps_old_(cell, pt);
 
-    if (have_temperature_ == true) source(cell, pt) = 0.0;
+    if (have_temperature_ == true) source_(cell, pt) = 0.0;
 
     for (int i{0}; i < num_dims_; ++i) {
       for (int j{0}; j < num_dims_; ++j) {
-        Fp(cell, pt, i, j) = Fpn(i, j);
+        Fp_(cell, pt, i, j) = Fpn(i, j);
       }
     }
   }
 
   // update yield surface
-  yieldSurf(cell, pt) = Y + K * eqps(cell, pt) +
-                        sat_mod_ * (1. - std::exp(-sat_exp_ * eqps(cell, pt)));
+  yield_surf_(cell, pt) =
+      Y + K * eqps_(cell, pt) +
+      sat_mod_ * (1. - std::exp(-sat_exp_ * eqps_(cell, pt)));
 
   // compute pressure
-  ScalarT const p = 0.5 * kappa * (J(cell, pt) - 1. / (J(cell, pt)));
+  ScalarT const p = 0.5 * kappa * (J_(cell, pt) - 1. / (J_(cell, pt)));
 
   // compute stress
-  sigma = p * I + s / J(cell, pt);
+  sigma = p * I + s / J_(cell, pt);
 
   for (int i(0); i < num_dims_; ++i) {
     for (int j(0); j < num_dims_; ++j) {
-      stress(cell, pt, i, j) = sigma(i, j);
+      stress_(cell, pt, i, j) = sigma(i, j);
     }
   }
 }
