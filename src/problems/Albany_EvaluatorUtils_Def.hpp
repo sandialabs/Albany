@@ -248,7 +248,8 @@ template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterScalarNodalParameter(
        const std::string& param_name,
-       const std::string& field_name) const
+       const std::string& field_name,
+       const bool scatter_only_once) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -262,6 +263,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterScalarNodalPar
     } else {
       p->set<std::string>("Field Name", param_name);
     }
+    p->set<bool>("Scatter Only Once", scatter_only_once);
 
     return rcp(new PHAL::ScatterScalarNodalParameter<EvalT,Traits>(*p,dl));
 }
@@ -292,7 +294,8 @@ template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterScalarExtruded2DNodalParameter(
        const std::string& param_name,
-       const std::string& field_name) const
+       const std::string& field_name,
+       const bool scatter_only_once) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -306,6 +309,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterScalarExtruded
     } else {
       p->set<std::string>("Field Name", param_name);
     }
+    p->set<bool>("Scatter Only Once", scatter_only_once);
 
     p->set<int>("Field Level", 0);
     return rcp(new PHAL::ScatterScalarExtruded2DNodalParameter<EvalT,Traits>(*p,dl));
