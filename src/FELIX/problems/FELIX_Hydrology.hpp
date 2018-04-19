@@ -666,7 +666,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Sliding Velocity Variable Name", sliding_velocity_name);
   p->set<std::string>("BF Variable Name", Albany::bf_name);
   p->set<std::string>("Effective Pressure Variable Name", effective_pressure_name);
-  p->set<std::string>("Flow Factor A Variable Name", "Flow Factor A");
+  p->set<std::string>("Flow Factor A Variable Name", flow_factor_A_name);
   p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
 
