@@ -211,7 +211,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::init(
 
 namespace {
 
-constexpr RealType SQ23{std::sqrt(2.0 / 3.0)};
+static RealType const SQ23{std::sqrt(2.0 / 3.0)};
 
 }  // anonymous namespace
 
