@@ -2,8 +2,8 @@
 
 UPLOAD_FILES="True"
 
-BASE_DIR=/home/ikalash/nightlyCDashRide
-SCRIPT_DIR=/home/ikalash/nightlyCDashRide
+BASE_DIR=/home/ikalash/nightlyMayerCDash
+SCRIPT_DIR=/home/ikalash/nightlyMayerCDash
 DOWNLOAD_DIR=$BASE_DIR/Results 
 
 CDASH_SITE="http://cdash.sandia.gov/CDash-2-3-0/submit.php?project=Albany"
@@ -11,7 +11,7 @@ CDASH_SITE="http://cdash.sandia.gov/CDash-2-3-0/submit.php?project=Albany"
 #export PATH=/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin
 
 now=$(date +"%m_%d_%Y-%H_%M")
-LOG_FILE=/home/ikalash/nightlyCDashRide/submit.log
+LOG_FILE=/home/ikalash/nightlyMayerCDash/submit.log
 
 cd $BASE_DIR
 rm $LOG_FILE 

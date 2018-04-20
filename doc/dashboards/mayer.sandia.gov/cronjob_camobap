@@ -1,0 +1,1 @@
+01 06 * * 1-7 cd /home/ikalash/nightlyMayerCDash; rm -rf Results; scp -r ikalash@mayer.sandia.gov:/home/projects/albany/nightlyCDash/build/Testing/2018* Results; bash submit_script.sh
