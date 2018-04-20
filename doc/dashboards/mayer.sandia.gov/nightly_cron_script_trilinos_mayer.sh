@@ -1,6 +1,6 @@
 #!/bin/csh
 
-BASE_DIR=/home/projects/albany/nightlyCDash
+BASE_DIR=/home/projects/albany/nightlyCDashTrilinos
 cd $BASE_DIR
 
 rm -rf build
