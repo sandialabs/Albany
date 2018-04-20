@@ -2,10 +2,10 @@
   
 #source $1 
 
-TTT=`grep "Failed" /home/ikalash/nightlyCDash/results_arm -c`
-TTTT=`grep "Not Run" /home/ikalash/nightlyCDash/results_arm -c`
-TTTTT=`grep "Timeout" /home/ikalash/nightlyCDash/results_arm -c`
-TT=`grep "...   Passed" /home/ikalash/nightlyCDash/results_arm -c`
+TTT=`grep "Failed" /home/projects/albany/nightlyCDash/results_arm -c`
+TTTT=`grep "Not Run" /home/projects/albany/nightlyCDash/results_arm -c`
+TTTTT=`grep "Timeout" /home/projects/albany/nightlyCDash/results_arm -c`
+TT=`grep "...   Passed" /home/projects/albany/nightlyCDash/results_arm -c`
 
 
 echo "Subject: Albany (master, OpenMP KokkosNode, ARM): $TT tests passed, $TTT tests failed, $TTTT tests not run, $TTTTT timeouts" >& a
@@ -14,5 +14,5 @@ cat a b >& c
 cat c results_arm >& d
 mv d results_arm
 rm a b c
-cat results_arm | /usr/lib/sendmail -F ikalash@mayer.sandia.gov -t "ikalash@sandia.gov, mperego@sandia.gov, jwatkin@sandia.gov, amota@sandia.gov, gahanse@sandia.gov, daibane@sandia.gov, tjfulle@sandia.gov"
+cat results_arm | /usr/lib/sendmail -F ikalash@mayer.sandia.gov -t "ikalash@sandia.gov"
 
