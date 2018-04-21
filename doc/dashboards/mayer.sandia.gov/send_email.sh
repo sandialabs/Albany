@@ -2,10 +2,10 @@
   
 #source $1 
 
-TTT=`grep "Failed" /home/projects/albany/nightlyCDash/results_arm -c`
-TTTT=`grep "Not Run" /home/projects/albany/nightlyCDash/results_arm -c`
-TTTTT=`grep "Timeout" /home/projects/albany/nightlyCDash/results_arm -c`
-TT=`grep "...   Passed" /home/projects/albany/nightlyCDash/results_arm -c`
+TTT=`grep "Failed" /home/projects/albany/nightlyCDashAlbany/results_arm -c`
+TTTT=`grep "Not Run" /home/projects/albany/nightlyCDashAlbany/results_arm -c`
+TTTTT=`grep "Timeout" /home/projects/albany/nightlyCDashAlbany/results_arm -c`
+TT=`grep "...   Passed" /home/projects/albany/nightlyCDashAlbany/results_arm -c`
 
 
 echo "Subject: Albany (master, OpenMP KokkosNode, ARM): $TT tests passed, $TTT tests failed, $TTTT tests not run, $TTTTT timeouts" >& a
