@@ -35,9 +35,6 @@ if (ALBANY_IFPACK2 AND SEACAS_EXODIFF)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/HeBubblesDecay.gold.e
     ${CMAKE_CURRENT_BINARY_DIR}/HeBubblesDecay.gold.e COPYONLY)
 
-  # python runtest file
-  #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
-  #  ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
   # cmake runtest file
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/runtest.cmake COPYONLY)
@@ -47,7 +44,6 @@ if (ALBANY_IFPACK2 AND SEACAS_EXODIFF)
 
   # 3. Create the test with this name and standard executable
   IF (NOT ALBANY_PARALLEL_ONLY)
-    #add_test(NAME ${testName} COMMAND "python" "runtest.py")
     #test 1: HeBubbles
     SET(OUTFILE "HeBubbles.e")
     SET(REF_FILE "HeBubbles.gold.e")
