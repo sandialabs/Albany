@@ -35,15 +35,33 @@ if (ALBANY_IFPACK2 AND SEACAS_EXODIFF)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/HeBubblesDecay.gold.e
     ${CMAKE_CURRENT_BINARY_DIR}/HeBubblesDecay.gold.e COPYONLY)
 
-  # python runtest file
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
-    ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
+  # cmake runtest file
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/runtest.cmake COPYONLY)
 
   # 2. Name the test with the directory name
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
   # 3. Create the test with this name and standard executable
   IF (NOT ALBANY_PARALLEL_ONLY)
-    add_test(NAME ${testName} COMMAND "python" "runtest.py")
+    #test 1: HeBubbles
+    SET(OUTFILE "HeBubbles.e")
+    SET(REF_FILE "HeBubbles.gold.e")
+    add_test(NAME ${testName}_HeBubbles
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+           -DTEST_NAME=HeBubbles -DTEST_ARGS=HeBubbles.yaml -DMPIMNP=1
+           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+    #test 2: HeBubblesDecay
+    SET(OUTFILE "HeBubblesDecay.e")
+    SET(REF_FILE "HeBubblesDecay.gold.e")
+    add_test(NAME ${testName}_HeBubblesDecay
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+           -DTEST_NAME=HeBubblesDecay -DTEST_ARGS=HeBubblesDecay.yaml -DMPIMNP=1
+           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
   ENDIF()
+
 endif(ALBANY_IFPACK2 AND SEACAS_EXODIFF)

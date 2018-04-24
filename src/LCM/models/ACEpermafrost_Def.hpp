@@ -3,20 +3,34 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "Albany_Utils.hpp"
 #include "ACEpermafrost.hpp"
+#include "Albany_Utils.hpp"
 #include "MiniNonlinearSolver.h"
 
 namespace LCM {
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
-    ConstitutiveModel<EvalT, Traits>& model,
+    ConstitutiveModel<EvalT, Traits>&    model,
     Teuchos::ParameterList*              p,
     Teuchos::RCP<Albany::Layouts> const& dl)
-    : BaseKernel(model), sat_mod(p->get<RealType>("Saturation Modulus", 0.0)),
-      sat_exp(p->get<RealType>("Saturation Exponent", 0.0))
+    : BaseKernel(model)
 {
+  // Baseline constants
+  sat_mod_ = p->get<RealType>("Saturation Modulus", 0.0);
+  sat_exp_ = p->get<RealType>("Saturation Exponent", 0.0);
+
+  ice_density_        = p->get<RealType>("ACE Ice Density", 0.0);
+  water_density_      = p->get<RealType>("ACE Water Density", 0.0);
+  ice_thermal_cond_   = p->get<RealType>("ACE Ice Thermal Conductivity", 0.0);
+  water_thermal_cond_ = p->get<RealType>("ACE Water Thermal Conductivity", 0.0);
+  ice_heat_capacity_  = p->get<RealType>("ACE Ice Heat Capacity", 0.0);
+
+  ice_saturation_init_  = p->get<RealType>("ACE Ice Initial Saturation", 0.0);
+  ice_saturation_max_   = p->get<RealType>("ACE Ice Maximum Saturation", 0.0);
+  water_saturation_min_ = p->get<RealType>("ACE Water Minimum Saturation", 0.0);
+  porosity_             = p->get<RealType>("ACE Porosity", 0.0);
+
   // retrieve appropriate field name strings
   std::string const cauchy_string       = field_name_map_["Cauchy_Stress"];
   std::string const Fp_string           = field_name_map_["Fp"];
@@ -29,19 +43,20 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   // define the dependent fields
   setDependentField(F_string, dl->qp_tensor);
   setDependentField(J_string, dl->qp_scalar);
-
-  setDependentField("ACE Density", dl->qp_scalar);
-  setDependentField("ACE Heat Capacity", dl->qp_scalar);
-  setDependentField("ACE Ice Saturation", dl->qp_scalar);
-  setDependentField("ACE Thermal Conductivity", dl->qp_scalar);
-  setDependentField("ACE Porosity", dl->qp_scalar);
-  setDependentField("ACE Water Saturation", dl->qp_scalar);
   setDependentField("Elastic Modulus", dl->qp_scalar);
   setDependentField("Hardening Modulus", dl->qp_scalar);
   setDependentField("Poissons Ratio", dl->qp_scalar);
   setDependentField("Yield Strength", dl->qp_scalar);
-
   setDependentField("Delta Time", dl->workset_scalar);
+
+  // Computed incrementally
+  setEvaluatedField("ACE Ice Saturation", dl->qp_scalar);
+
+  // For output/convenience
+  setEvaluatedField("ACE Density", dl->qp_scalar);
+  setEvaluatedField("ACE Heat Capacity", dl->qp_scalar);
+  setEvaluatedField("ACE Thermal Conductivity", dl->qp_scalar);
+  setEvaluatedField("ACE Water Saturation", dl->qp_scalar);
 
   // define the evaluated fields
   setEvaluatedField(cauchy_string, dl->qp_tensor);
@@ -89,7 +104,52 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
       0.0,
       false,
       p->get<bool>("Output Yield Surface", false));
-  //
+
+  // Ice saturation
+  addStateVariable(
+      "ACE Ice Saturation",
+      dl->qp_scalar,
+      "scalar",
+      1.0,
+      false,
+      p->get<bool>("Output ACE Ice Saturation", false));
+
+  // Density
+  addStateVariable(
+      "ACE Density",
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("Output ACE Density", false));
+
+  // Heat Capacity
+  addStateVariable(
+      "ACE Heat Capacity",
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("Output ACE Heat Capacity", false));
+
+  // ACE Thermal Conductivity
+  addStateVariable(
+      "ACE Thermal Conductivity",
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("Output ACE Thermal Conductivity", false));
+
+  // ACE Water Saturation
+  addStateVariable(
+      "ACE Water Saturation",
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("ACE Water Saturation", false));
+
   // mechanical source
   if (have_temperature_ == true) {
     addStateVariable(
@@ -102,12 +162,12 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   }
 }
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 void
 ACEpermafrostMiniKernel<EvalT, Traits>::init(
     Workset&                 workset,
-    FieldMap<const ScalarT>& fields_const,
-    FieldMap<ScalarT>&       fields)
+    FieldMap<const ScalarT>& input_fields,
+    FieldMap<ScalarT>&       output_fields)
 {
   std::string cauchy_string       = field_name_map_["Cauchy_Stress"];
   std::string Fp_string           = field_name_map_["Fp"];
@@ -117,67 +177,74 @@ ACEpermafrostMiniKernel<EvalT, Traits>::init(
   std::string F_string            = field_name_map_["F"];
   std::string J_string            = field_name_map_["J"];
 
-  // extract dependent MDFields
-  def_grad = *fields_const[F_string];
-  J        = *fields_const[J_string]; 
-  
-  delta_time        = *fields_const["Delta Time"];
-  elastic_modulus   = *fields_const["Elastic Modulus"];
-  hardening_modulus = *fields_const["Hardening Modulus"];
-  poissons_ratio    = *fields_const["Poissons Ratio"];
-  yield_strength    = *fields_const["Yield Strength"];
+  def_grad_ = *input_fields[F_string];
+  J_        = *input_fields[J_string];
 
-  density              = *fields_const["ACE Density"];
-  heat_capacity        = *fields_const["ACE Heat Capacity"];
-  ice_saturation       = *fields_const["ACE Ice Saturation"];
-  porosity             = *fields_const["ACE Porosity"];
-  thermal_conductivity = *fields_const["ACE Thermal Conductivity"];
-  water_saturation     = *fields_const["ACE Water Saturation"];
+  elastic_modulus_   = *input_fields["Elastic Modulus"];
+  hardening_modulus_ = *input_fields["Hardening Modulus"];
+  poissons_ratio_    = *input_fields["Poissons Ratio"];
+  yield_strength_    = *input_fields["Yield Strength"];
 
-  // extract evaluated MDFields
-  stress    = *fields[cauchy_string];
-  Fp        = *fields[Fp_string];
-  eqps      = *fields[eqps_string];
-  yieldSurf = *fields[yieldSurface_string];
+  delta_time_ = *input_fields["Delta Time"];
+
+  stress_     = *output_fields[cauchy_string];
+  Fp_         = *output_fields[Fp_string];
+  eqps_       = *output_fields[eqps_string];
+  yield_surf_ = *output_fields[yieldSurface_string];
+
+  ice_saturation_   = *output_fields["ACE Ice Saturation"];
+  density_          = *output_fields["ACE Density"];
+  heat_capacity_    = *output_fields["ACE Heat Capacity"];
+  thermal_cond_     = *output_fields["ACE Thermal Conductivity"];
+  water_saturation_ = *output_fields["ACE Water Saturation"];
 
   if (have_temperature_ == true) {
-    source = *fields[source_string];
+    source_ = *output_fields[source_string];
   }
 
   // get State Variables
-  Fpold   = (*workset.stateArrayPtr)[Fp_string + "_old"];
-  eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
+  Fp_old_             = (*workset.stateArrayPtr)[Fp_string + "_old"];
+  eqps_old_           = (*workset.stateArrayPtr)[eqps_string + "_old"];
+  T_old_              = (*workset.stateArrayPtr)["Temperature_old"];
+  ice_saturation_old_ = (*workset.stateArrayPtr)["ACE Ice Saturation_old"];
 }
 
+namespace {
+
+static RealType const SQ23{std::sqrt(2.0 / 3.0)};
+
+}  // anonymous namespace
+
 //
-// J2 nonlinear system
+// ACE ice nonlinear system
 //
-template<typename EvalT, minitensor::Index M = 1>
-class J2NLS : public minitensor::
-                  Function_Base<J2NLS<EvalT, M>, typename EvalT::ScalarT, M> {
+template <typename EvalT, minitensor::Index M = 1>
+class PermNLS : public minitensor::
+                    Function_Base<PermNLS<EvalT, M>, typename EvalT::ScalarT, M>
+{
   using S = typename EvalT::ScalarT;
 
  public:
-  J2NLS(
-      RealType sat_mod_,
-      RealType sat_exp_,
-      RealType eqps_old_,
+  PermNLS(
+      RealType sat_mod,
+      RealType sat_exp,
+      RealType eqps_old,
       S const& K,
       S const& smag,
       S const& mubar,
       S const& Y)
-      : sat_mod(sat_mod_), sat_exp(sat_exp_), eqps_old(eqps_old_), K_(K),
+      : sat_mod_(sat_mod), sat_exp_(sat_exp), eqps_old_(eqps_old), K_(K),
         smag_(smag), mubar_(mubar), Y_(Y)
   {
   }
 
-  static constexpr char const* const NAME{"J2 NLS"};
+  constexpr static char const* const NAME{"ACE permafrost NLS"};
 
   using Base =
-      minitensor::Function_Base<J2NLS<EvalT, M>, typename EvalT::ScalarT, M>;
+      minitensor::Function_Base<PermNLS<EvalT, M>, typename EvalT::ScalarT, M>;
 
   // Default value.
-  template<typename T, minitensor::Index N>
+  template <typename T, minitensor::Index N>
   T
   value(minitensor::Vector<T, N> const& x)
   {
@@ -185,7 +252,7 @@ class J2NLS : public minitensor::
   }
 
   // Explicit gradient.
-  template<typename T, minitensor::Index N>
+  template <typename T, minitensor::Index N>
   minitensor::Vector<T, N>
   gradient(minitensor::Vector<T, N> const& x)
   {
@@ -206,9 +273,9 @@ class J2NLS : public minitensor::
     minitensor::Vector<T, N> r(dimension);
 
     T const& X     = x(0);
-    T const  alpha = eqps_old + sq23 * X;
-    T const  H     = K * alpha + sat_mod * (1.0 - std::exp(-sat_exp * alpha));
-    T const  R     = smag - (2.0 * mubar * X + sq23 * (Y + H));
+    T const  alpha = eqps_old_ + SQ23 * X;
+    T const  H     = K * alpha + sat_mod_ * (1.0 - std::exp(-sat_exp_ * alpha));
+    T const  R     = smag - (2.0 * mubar * X + SQ23 * (Y + H));
 
     r(0) = R;
 
@@ -216,7 +283,7 @@ class J2NLS : public minitensor::
   }
 
   // Default AD hessian.
-  template<typename T, minitensor::Index N>
+  template <typename T, minitensor::Index N>
   minitensor::Tensor<T, N>
   hessian(minitensor::Vector<T, N> const& x)
   {
@@ -224,10 +291,9 @@ class J2NLS : public minitensor::
   }
 
   // Constants.
-  RealType const sq23{std::sqrt(2.0 / 3.0)};
-  RealType const sat_mod{0.0};
-  RealType const sat_exp{0.0};
-  RealType const eqps_old{0.0};
+  RealType const sat_mod_{0.0};
+  RealType const sat_exp_{0.0};
+  RealType const eqps_old_{0.0};
 
   // Inputs
   S const& K_;
@@ -236,7 +302,7 @@ class J2NLS : public minitensor::
   S const& Y_;
 };
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
 ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 {
@@ -244,32 +310,26 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   using Tensor = minitensor::Tensor<ScalarT, MAX_DIM>;
 
-  Tensor        F(num_dims_);
-  Tensor const  I(minitensor::eye<ScalarT, MAX_DIM>(num_dims_));
-  Tensor        sigma(num_dims_);
+  Tensor       F(num_dims_);
+  Tensor const I(minitensor::eye<ScalarT, MAX_DIM>(num_dims_));
+  Tensor       sigma(num_dims_);
 
-  ScalarT const E     = elastic_modulus(cell, pt);
-  ScalarT const nu    = poissons_ratio(cell, pt);
+  ScalarT const E     = elastic_modulus_(cell, pt);
+  ScalarT const nu    = poissons_ratio_(cell, pt);
   ScalarT const kappa = E / (3.0 * (1.0 - 2.0 * nu));
   ScalarT const mu    = E / (2.0 * (1.0 + nu));
-  ScalarT const K     = hardening_modulus(cell, pt);
-  ScalarT const Y     = yield_strength(cell, pt);
-  ScalarT const J1    = J(cell, pt);
+  ScalarT const K     = hardening_modulus_(cell, pt);
+  ScalarT const Y     = yield_strength_(cell, pt);
+  ScalarT const J1    = J_(cell, pt);
   ScalarT const Jm23  = 1.0 / std::cbrt(J1 * J1);
-  ScalarT const rho   = density(cell, pt);
-  ScalarT const Cp    = heat_capacity(cell, pt);
-  ScalarT const KK    = thermal_conductivity(cell, pt);
-  ScalarT const isat  = ice_saturation(cell, pt);
-  ScalarT const wsat  = water_saturation(cell, pt);
-  ScalarT const por   = porosity(cell, pt);
 
   // fill local tensors
-  F.fill(def_grad, cell, pt, 0, 0);
+  F.fill(def_grad_, cell, pt, 0, 0);
 
   // Mechanical deformation gradient
   auto Fm = Tensor(F);
   if (have_temperature_) {
-    ScalarT dtemp = temperature_(cell, pt) - ref_temperature_;
+    ScalarT dtemp           = temperature_(cell, pt) - ref_temperature_;
     ScalarT thermal_stretch = std::exp(expansion_coeff_ * dtemp);
     Fm /= thermal_stretch;
   }
@@ -278,9 +338,12 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   for (int i{0}; i < num_dims_; ++i) {
     for (int j{0}; j < num_dims_; ++j) {
-      Fpn(i, j) = ScalarT(Fpold(cell, pt, i, j));
+      Fpn(i, j) = ScalarT(Fp_old_(cell, pt, i, j));
     }
   }
+
+  // Deal with non-mechanical values
+  water_saturation_(cell, pt) = 1.0 - ice_saturation_(cell, pt);
 
   // compute trial state
   Tensor const  Fpinv = minitensor::inverse(Fpn);
@@ -291,18 +354,17 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // check yield condition
   ScalarT const smag = minitensor::norm(s);
-  ScalarT const sq23{std::sqrt(2.0 / 3.0)};
   ScalarT const f =
       smag -
-      sq23 * (Y + K * eqpsold(cell, pt) +
-              sat_mod * (1.0 - std::exp(-sat_exp * eqpsold(cell, pt))));
+      SQ23 * (Y + K * eqps_old_(cell, pt) +
+              sat_mod_ * (1.0 - std::exp(-sat_exp_ * eqps_old_(cell, pt))));
 
   RealType constexpr yield_tolerance = 1.0e-12;
 
   if (f > yield_tolerance) {
     // Use minimization equivalent to return mapping
     using ValueT = typename Sacado::ValueType<ScalarT>::type;
-    using NLS    = J2NLS<EvalT>;
+    using NLS    = PermNLS<EvalT>;
 
     constexpr minitensor::Index nls_dim{NLS::DIMENSION};
 
@@ -311,7 +373,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
     MIN  minimizer;
     STEP step;
-    NLS  j2nls(sat_mod, sat_exp, eqpsold(cell, pt), K, smag, mubar, Y);
+    NLS  j2nls(sat_mod_, sat_exp_, eqps_old_(cell, pt), K, smag, mubar, Y);
 
     minitensor::Vector<ScalarT, nls_dim> x;
 
@@ -320,8 +382,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     LCM::MiniSolver<MIN, STEP, NLS, EvalT, nls_dim> mini_solver(
         minimizer, step, j2nls, x);
 
-    ScalarT const alpha = eqpsold(cell, pt) + sq23 * x(0);
-    ScalarT const H     = K * alpha + sat_mod * (1.0 - exp(-sat_exp * alpha));
+    ScalarT const alpha = eqps_old_(cell, pt) + SQ23 * x(0);
+    ScalarT const H     = K * alpha + sat_mod_ * (1.0 - exp(-sat_exp_ * alpha));
     ScalarT const dgam  = x(0);
 
     // plastic direction
@@ -331,13 +393,13 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     s -= 2 * mubar * dgam * N;
 
     // update eqps
-    eqps(cell, pt) = alpha;
+    eqps_(cell, pt) = alpha;
 
     // mechanical source
-    if (have_temperature_ == true && delta_time(0) > 0) {
-      source(cell, pt) =
-          (sq23 * dgam / delta_time(0) * (Y + H + temperature_(cell, pt))) /
-          (density(cell, pt) * heat_capacity(cell, pt));
+    if (have_temperature_ == true && delta_time_(0) > 0) {
+      source_(cell, pt) =
+          (SQ23 * dgam / delta_time_(0) * (Y + H + temperature_(cell, pt))) /
+          (density_(cell, pt) * heat_capacity_(cell, pt));
     }
 
     // exponential map to get Fpnew
@@ -347,34 +409,35 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
     for (int i{0}; i < num_dims_; ++i) {
       for (int j{0}; j < num_dims_; ++j) {
-        Fp(cell, pt, i, j) = Fpnew(i, j);
+        Fp_(cell, pt, i, j) = Fpnew(i, j);
       }
     }
   } else {
-    eqps(cell, pt) = eqpsold(cell, pt);
+    eqps_(cell, pt) = eqps_old_(cell, pt);
 
-    if (have_temperature_ == true) source(cell, pt) = 0.0;
+    if (have_temperature_ == true) source_(cell, pt) = 0.0;
 
     for (int i{0}; i < num_dims_; ++i) {
       for (int j{0}; j < num_dims_; ++j) {
-        Fp(cell, pt, i, j) = Fpn(i, j);
+        Fp_(cell, pt, i, j) = Fpn(i, j);
       }
     }
   }
 
   // update yield surface
-  yieldSurf(cell, pt) = Y + K * eqps(cell, pt) +
-                        sat_mod * (1. - std::exp(-sat_exp * eqps(cell, pt)));
+  yield_surf_(cell, pt) =
+      Y + K * eqps_(cell, pt) +
+      sat_mod_ * (1. - std::exp(-sat_exp_ * eqps_(cell, pt)));
 
   // compute pressure
-  ScalarT const p = 0.5 * kappa * (J(cell, pt) - 1. / (J(cell, pt)));
+  ScalarT const p = 0.5 * kappa * (J_(cell, pt) - 1. / (J_(cell, pt)));
 
   // compute stress
-  sigma = p * I + s / J(cell, pt);
+  sigma = p * I + s / J_(cell, pt);
 
   for (int i(0); i < num_dims_; ++i) {
     for (int j(0); j < num_dims_; ++j) {
-      stress(cell, pt, i, j) = sigma(i, j);
+      stress_(cell, pt, i, j) = sigma(i, j);
     }
   }
 }

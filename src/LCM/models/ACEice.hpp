@@ -11,14 +11,14 @@
 
 namespace LCM {
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
 {
   ///
   /// Constructor
   ///
   ACEiceMiniKernel(
-      ConstitutiveModel<EvalT, Traits>& model,
+      ConstitutiveModel<EvalT, Traits>&    model,
       Teuchos::ParameterList*              p,
       Teuchos::RCP<Albany::Layouts> const& dl);
 
@@ -39,9 +39,9 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   using BaseKernel       = ParallelKernel<EvalT, Traits>;
   using Workset          = typename BaseKernel::Workset;
 
+  using BaseKernel::field_name_map_;
   using BaseKernel::num_dims_;
   using BaseKernel::num_pts_;
-  using BaseKernel::field_name_map_;
 
   // optional temperature support
   using BaseKernel::expansion_coeff_;
@@ -49,50 +49,57 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   using BaseKernel::ref_temperature_;
   using BaseKernel::temperature_;
 
+  using BaseKernel::addStateVariable;
   using BaseKernel::setDependentField;
   using BaseKernel::setEvaluatedField;
-  using BaseKernel::addStateVariable;
 
   /// Pointer to NOX status test, allows the material model to force
   /// a global load step reduction
   using BaseKernel::nox_status_test_;
 
   // Input constant MDFields
-  ConstScalarField def_grad;
-  ConstScalarField delta_time;
-  ConstScalarField elastic_modulus;
-  ConstScalarField hardening_modulus;
-  ConstScalarField J;
-  ConstScalarField poissons_ratio;
-  ConstScalarField yield_strength;
-  
-  RealType ice_density_{0.0};
-  RealType water_density_{0.0};
+  ConstScalarField def_grad_;
+  ConstScalarField delta_time_;
+  ConstScalarField elastic_modulus_;
+  ConstScalarField hardening_modulus_;
+  ConstScalarField J_;
+  ConstScalarField poissons_ratio_;
+  ConstScalarField yield_strength_;
 
   // Output MDFields
-  ScalarField density;
-  ScalarField heat_capacity;
-  ScalarField ice_saturation;
-  //ScalarField porosity;
-  ScalarField thermal_conductivity;
-  ScalarField water_saturation;
+  ScalarField density_;
+  ScalarField heat_capacity_;
+  ScalarField ice_saturation_;
+  ScalarField thermal_cond_;
+  ScalarField water_saturation_;
 
   // Mechanical MDFields
-  ScalarField stress;
-  ScalarField Fp;
-  ScalarField eqps;
-  ScalarField yieldSurf;
-  ScalarField source;
+  ScalarField eqps_;
+  ScalarField Fp_;
+  ScalarField source_;
+  ScalarField stress_;
+  ScalarField yield_surf_;
 
   // Workspace arrays
-  Albany::MDArray Fpold;
-  Albany::MDArray eqpsold;
-  Albany::MDArray Told;
-  Albany::MDArray ice_saturation_old;
+  Albany::MDArray Fp_old_;
+  Albany::MDArray eqps_old_;
+  Albany::MDArray T_old_;
+  Albany::MDArray ice_saturation_old_;
+
+  // Baseline constants
+  RealType ice_density_{0.0};
+  RealType water_density_{0.0};
+  RealType ice_thermal_cond_{0.0};
+  RealType water_thermal_cond_{0.0};
+  RealType ice_heat_capacity_{0.0};
+  RealType ice_saturation_init_{0.0};
+  RealType ice_saturation_max_{0.0};
+  RealType water_saturation_min_{0.0};
+  RealType porosity_{0.0};
 
   // Saturation hardening constraints
-  RealType sat_mod_;
-  RealType sat_exp_;
+  RealType sat_mod_{0.0};
+  RealType sat_exp_{0.0};
 
   void
   init(
@@ -105,15 +112,14 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   operator()(int cell, int pt) const;
 };
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 class ACEice : public LCM::ParallelConstitutiveModel<
-                         EvalT,
-                         Traits,
-                         ACEiceMiniKernel<EvalT, Traits>> {
+                   EvalT,
+                   Traits,
+                   ACEiceMiniKernel<EvalT, Traits>>
+{
  public:
-  ACEice(
-      Teuchos::ParameterList*              p,
-      const Teuchos::RCP<Albany::Layouts>& dl);
+  ACEice(Teuchos::ParameterList* p, const Teuchos::RCP<Albany::Layouts>& dl);
 };
-}
+}  // namespace LCM
 #endif  // LCM_ACEice_hpp

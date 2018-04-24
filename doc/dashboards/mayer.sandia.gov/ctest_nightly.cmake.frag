@@ -402,7 +402,7 @@ if (BUILD_ALBANY)
   set_property (GLOBAL PROPERTY Label IKTMayerARMAlbany)
   
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinos/build/TrilinosInstall"
     "-DENABLE_LCM:BOOL=ON"
     "-DENABLE_MOR:BOOL=ON"
     "-DENABLE_GOAL:BOOL=OFF"

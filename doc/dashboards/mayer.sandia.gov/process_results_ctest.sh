@@ -13,8 +13,7 @@ grep "Total Test" nightly_log_mayerAlbany.txt >& results4
 #grep "...   Passed" nightly_log_mayerAlbany.txt >& results6
 cat results3 results4 >& results_arm 
 echo "" >> results_arm 
-#echo "The Albany CDash site can be accessed here: http://cdash.sandia.gov/CDash-2-3-0/index.php?project=Albany" >> results_arm
-echo "The nightly test files can be accessed here on mayer.sandia.gov: /home/projects/albany/nightlyCDash." >> results_arm 
+echo "The Albany CDash site can be accessed here: http://cdash.sandia.gov/CDash-2-3-0/index.php?project=Albany" >> results_arm
 echo "" >> results_arm
 rm results0 results1 results11 results2 results3 results4
 bash send_email.sh
