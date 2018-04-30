@@ -343,8 +343,11 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     }
   }
 
-  // Deal with non-mechanical values
+  // Update the water saturation
   water_saturation_(cell, pt) = 1.0 - ice_saturation_(cell, pt);
+  water_saturation_(cell, pt) = std::max(water_saturation_min_,
+                                         water_saturation_(cell, pt));
+  water_saturation_(cell, pt) = std::min(1.0,water_saturation_(cell, pt));
 
   // compute trial state
   Tensor const  Fpinv = minitensor::inverse(Fpn);
