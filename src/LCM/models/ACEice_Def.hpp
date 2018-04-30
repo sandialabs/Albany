@@ -204,10 +204,10 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   }
 
   // get State Variables
-  Fp_old_             = (*workset.stateArrayPtr)[Fp_string + "_old"];
-  eqps_old_           = (*workset.stateArrayPtr)[eqps_string + "_old"];
-  T_old_              = (*workset.stateArrayPtr)["Temperature_old"];
-  ice_saturation_old_ = (*workset.stateArrayPtr)["ACE Ice Saturation_old"];
+  Fp_old_              = (*workset.stateArrayPtr)[Fp_string + "_old"];
+  eqps_old_            = (*workset.stateArrayPtr)[eqps_string + "_old"];
+  T_old_               = (*workset.stateArrayPtr)["Temperature_old"];
+  ice_saturation_old_  = (*workset.stateArrayPtr)["ACE Ice Saturation_old"];
 }
 
 namespace {
@@ -342,6 +342,20 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
       Fpn(i, j) = ScalarT(Fp_old_(cell, pt, i, j));
     }
   }
+  
+  // Calculate melting temperature
+  ScalarT sal = 0.10;  // note: this should come from chemical part of model
+  ScalarT sal15 = std::sqrt(sal * sal * sal);
+  ScalarT pressure = 101325.0; // [Pa] 
+  // pressure = (1.0/3.0)*minitensor::trace(stress_(cell, pt)); 
+  ScalarT Tmelt =
+      (-0.057 * sal) + (0.00170523 * sal15) - (0.0002154996 * sal * sal) - 
+      ((0.000753/10000.0) * pressure);
+      
+  // Calculate temperature change (not sure where temperature_ comes from, but 
+  // it seems to be getting used in here already for the source term, and I
+  // assume its the current temperature value)
+  ScalarT dTemp = temperature_(cell, pt) - T_old_(cell, pt);
 
   // Update the water saturation
   water_saturation_(cell, pt) = 1.0 - ice_saturation_(cell, pt);
