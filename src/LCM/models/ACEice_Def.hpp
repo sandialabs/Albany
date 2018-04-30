@@ -390,6 +390,27 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
                                          water_saturation_(cell, pt));
   water_saturation_(cell, pt) = std::min(1.0,water_saturation_(cell, pt));
   
+  // The following calculations need porosity: density, heat capacity, thermal
+  // conductivity. However, we need to calculate a porosity field at the 
+  // beginning of the simulation based on lithostatic pressure and surface
+  // porosity value. Porosity doesn't change in time.
+  ScalarT porosity_ = 0.65;
+  
+  // Update the effective material density
+  density_(cell, pt) = 
+      porosity_*(ice_density_*ice_saturation_(cell, pt) + 
+                 water_density_*water_saturation_(cell, pt));
+      
+  // Update the effective material heat capacity
+  heat_capacity_(cell, pt) = 
+      porosity_*(ice_heat_capacity_*ice_saturation_(cell, pt) + 
+                 water_heat_capacity_*water_saturation_(cell, pt));
+     
+  // Update the effective material thermal conductivity
+  thermal_cond_(cell, pt) = 
+      pow(ice_thermal_cond_,(ice_saturation_(cell, pt)*porosity_)) * 
+      pow(water_thermal_cond_,(water_saturation_(cell, pt)*porosity_));
+  
   // Swap for old variables
   // these cause compiler errors!!
   //ice_saturation_old_(cell, pt) = ice_saturation_(cell, pt);
