@@ -356,6 +356,27 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // it seems to be getting used in here already for the source term, and I
   // assume its the current temperature value)
   ScalarT dTemp = temperature_(cell, pt) - T_old_(cell, pt);
+  
+  // Calculate the freezing curve function df/dTemp
+  ScalarT T_range = 1.0;
+  ScalarT T_low   = Tmelt - (T_range/2.0);
+  ScalarT T_high  = Tmelt + (T_range/2.0);
+  ScalarT i_sat_evaluated;
+  
+  // completely frozen
+  if (temperature_(cell, pt) <= T_low) {
+    i_sat_evaluated = 1.0;
+  }
+  // completely melted
+  if (temperature_(cell, pt) >= T_high) {
+    i_sat_evaluated = 0.0;
+  }
+  // in phase change
+  if ((temperature_(cell, pt) > T_low) && (temperature_(cell, pt) < T_high)) {
+    i_sat_evaluated = -1.0*(temperature_(cell, pt)/T_range) + T_high;
+  }
+  
+  ScalarT dfdT = (i_sat_evaluated - ice_saturation_old_(cell, pt))/dTemp;
 
   // Update the water saturation
   water_saturation_(cell, pt) = 1.0 - ice_saturation_(cell, pt);
