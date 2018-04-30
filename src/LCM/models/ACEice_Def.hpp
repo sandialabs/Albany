@@ -377,12 +377,23 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   }
   
   ScalarT dfdT = (i_sat_evaluated - ice_saturation_old_(cell, pt))/dTemp;
-
+  
+  // Update the ice saturation
+  ice_saturation_(cell, pt) += dfdT * dTemp;
+  ice_saturation_(cell, pt) = std::max(0.0, ice_saturation_(cell, pt));
+  ice_saturation_(cell, pt) = std::min(ice_saturation_max_, 
+                                       ice_saturation_(cell, pt));
+  
   // Update the water saturation
   water_saturation_(cell, pt) = 1.0 - ice_saturation_(cell, pt);
   water_saturation_(cell, pt) = std::max(water_saturation_min_,
                                          water_saturation_(cell, pt));
   water_saturation_(cell, pt) = std::min(1.0,water_saturation_(cell, pt));
+  
+  // Swap for old variables
+  // these cause compiler errors!!
+  //ice_saturation_old_(cell, pt) = ice_saturation_(cell, pt);
+  //T_old_(cell, pt) = temperature_(cell, pt);
 
   // compute trial state
   Tensor const  Fpinv = minitensor::inverse(Fpn);
