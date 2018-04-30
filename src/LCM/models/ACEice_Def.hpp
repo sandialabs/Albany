@@ -20,11 +20,12 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   sat_mod_ = p->get<RealType>("Saturation Modulus", 0.0);
   sat_exp_ = p->get<RealType>("Saturation Exponent", 0.0);
 
-  ice_density_        = p->get<RealType>("ACE Ice Density", 0.0);
-  water_density_      = p->get<RealType>("ACE Water Density", 0.0);
-  ice_thermal_cond_   = p->get<RealType>("ACE Ice Thermal Conductivity", 0.0);
-  water_thermal_cond_ = p->get<RealType>("ACE Water Thermal Conductivity", 0.0);
-  ice_heat_capacity_  = p->get<RealType>("ACE Ice Heat Capacity", 0.0);
+  ice_density_          = p->get<RealType>("ACE Ice Density", 0.0);
+  water_density_        = p->get<RealType>("ACE Water Density", 0.0);
+  ice_thermal_cond_     = p->get<RealType>("ACE Ice Thermal Conductivity", 0.0);
+  water_thermal_cond_   = p->get<RealType>("ACE Water Thermal Conductivity", 0.0);
+  ice_heat_capacity_    = p->get<RealType>("ACE Ice Heat Capacity", 0.0);
+  water_heat_capacity_  = p->get<RealType>("ACE Water Heat Capacity", 0.0);
 
   ice_saturation_init_  = p->get<RealType>("ACE Ice Initial Saturation", 0.0);
   ice_saturation_max_   = p->get<RealType>("ACE Ice Maximum Saturation", 0.0);

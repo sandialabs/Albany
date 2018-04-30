@@ -92,6 +92,7 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   RealType ice_thermal_cond_{0.0};
   RealType water_thermal_cond_{0.0};
   RealType ice_heat_capacity_{0.0};
+  RealType water_heat_capacity_{0.0};
   RealType ice_saturation_init_{0.0};
   RealType ice_saturation_max_{0.0};
   RealType water_saturation_min_{0.0};
