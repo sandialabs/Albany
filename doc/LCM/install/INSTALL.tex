@@ -6,6 +6,9 @@
 \usepackage{graphicx}
 \usepackage{fancyvrb}
 \usepackage{color}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{supertabular}
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
 
 \newcommand{\trilinos}{\textsc{Trilinos}}
@@ -33,12 +36,18 @@
 
 \section{Introduction}
 This document describes the necessary steps to install \albany{}/\lcm{} and
-\trilinos{} on a machine with: Fedora Linux 27; Ubuntu Linux 14.04 LTS, 16.04
-LTS, and 18.04 LTS; Scientific Linux 7.5; the Linux CEE/SEMS environment; and
-Sandia's HPC systems.
+\trilinos{} on:
+\begin{itemize}
+\item \verb+Fedora Linux 20-27+
+\item \verb+Ubuntu Linux 14.04 LTS, 16.04LTS, and 18.04 LTS+
+\item \verb+Scientific Linux 7.5+
+\item \verb+The Linux CEE/SEMS environment at Sandia+
+\item \verb+Sandia's HPC systems Chama and Skybridge+
+\end{itemize}
 
+\section{Required Packages for Sandia's CEE and HPC}
 The Linux CEE/SEMS environment and the HPC clusters already have all the
-libraries mentioned below. Skip to Section \ref{sec:repo} for setting up the
+required libraries installed. Skip to Section \ref{sec:repo} to set up the
 source code.
 
 \section{Required Packages for Fedora and Scientific Linux}
@@ -46,8 +55,8 @@ For Scientific Linux, install first the following package
 \begin{verbatim}
 yum install epel-release
 \end{verbatim}
-The following packages should be installed using the {\tt dnf install} command
-on Fedora and the {\tt yum install} command on Scientific Linux
+The following packages should be installed using the \verb+dnf install+ command
+on Fedora and the \verb+yum install+ command on Scientific Linux
 \begin{verbatim}
 blas
 blas-devel
@@ -64,6 +73,9 @@ hdf5-openmpi-devel
 hdf5-static
 lapack
 lapack-devel
+\end{verbatim}
+
+\begin{verbatim}
 matio
 matio-devel
 netcdf
@@ -71,9 +83,6 @@ netcdf-devel
 netcdf-openmpi
 netcdf-openmpi-devel
 netcdf-static
-\end{verbatim}
-
-\begin{verbatim}
 openmpi
 openmpi-devel
 environment-modules
@@ -101,14 +110,14 @@ gitk
 \end{verbatim}
 
 \section{Required Packages for Ubuntu}
-The following packages should be installed using the {\tt apt-get install}
+The following packages should be installed using the \verb+apt install+
 command
 \begin{verbatim}
 libblas3
 libblas-dev
 libboost-dev
-libboost-program-options1.54
 libboost-graph1.54
+libboost-program-options1.54
 cmake
 libhdf5-openmpi-7
 libhdf5-openmpi-dev
@@ -126,11 +135,34 @@ git
 \end{verbatim}
 
 Depending on the Ubuntu version, the package version may differ slightly, for
-example, \verb+libboost-graph1.58+ instead of \verb+libboost-graph1.54+ or
-\verb+libopenmpi1.10+ instead of \verb+libopenmpi1.6+ and so on. To install the
+example:
+
+\begin{table}[H]
+  \begin{center}
+    \begin{tabular}{l l l}
+      \toprule
+      \verb+Ubuntu 14.04 LTS+ &
+      \verb+Ubuntu 16.04 LTS+ &
+      \verb+Ubuntu 18.04 LTS+ \\
+      \midrule
+      \verb+libboost-graph1.54+ &
+      \verb+libboost-graph1.58+ &
+      \verb+libboost-graph1.65+ \\
+      \verb+libboost-program-options1.54+ &
+      \verb+libboost-program-options1.58+ &
+      \verb+libboost-program-options1.65+ \\
+      \verb+libopenmpi1.6+ &
+      \verb+libopenmpi1.10+ &
+      \verb+libopenmpi100+ \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+\end{table}
+
+To install the
 first package you should type
 \begin{verbatim}
-sudo apt-get install libblas3
+sudo apt install libblas3
 \end{verbatim}
 
 Make sure that all these packages are installed, specially if you
@@ -139,12 +171,6 @@ typo then the compilation will fail.
 
 It may be necessary to logout and login for the module alias from the
 \verb+environment-modules+ package to become active.
-
-Optional but strongly recommended packages:
-\begin{verbatim}
-clang-3.9
-gitk
-\end{verbatim}
 
 \section{Repository Setup with GitHub}
 \label{sec:repo}
