@@ -1,6 +1,11 @@
 whatis("LCM TPLs for Trilinos/Albany")
 
-load("openmpi-intel/2.0")
+if (isloaded("lcm-intel")) then
+  load("openmpi-intel/2.0")
+end
+if (isloaded("lcm-gcc")) then
+  load("openmpi-gnu/2.0")
+end
 local boost_inc = "/ascldap/users/daibane/LCM/TPL_toss3/install/boost/include"
 local boost_lib = "/ascldap/users/daibane/LCM/TPL_toss3/install/boost/lib"
 local mpi_root = os.getenv("MPI_ROOT")
