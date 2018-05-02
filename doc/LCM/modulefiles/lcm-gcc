@@ -8,6 +8,10 @@ if { [is-loaded lcm-sems] } {
   module load sems-gcc/6.1.0
 }
 
+if { [is-loaded lcm-cluster] } {
+  module load gnu/7.2.1
+}
+
 setenv TOOL_CHAIN gcc
 
 setenv CC [exec which gcc]
