@@ -59,6 +59,7 @@ private:
 
   // Input:
   PHX::MDField<const ScalarT>       gradPhi;
+  PHX::MDField<const ScalarT>       gradPhiNorm;
   PHX::MDField<const ScalarT>       h;
   PHX::MDField<const ScalarT,Dim>   regularizationParam;
 
@@ -70,8 +71,11 @@ private:
   std::string   sideSetName;
 
   double k_0;
+  double alpha;
+  double beta;
 
   bool regularize;
+  bool needsGradPhiNorm;
 };
 
 } // Namespace FELIX

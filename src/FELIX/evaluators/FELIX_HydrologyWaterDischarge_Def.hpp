@@ -40,12 +40,23 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
 
   // Setting parameters
   Teuchos::ParameterList& hydrology = *p.get<Teuchos::ParameterList*>("FELIX Hydrology");
-  Teuchos::ParameterList& physics   = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
 
-  double rho_w = physics.get<double>("Water Density");
-  double g     = physics.get<double>("Gravity Acceleration");
   k_0   = hydrology.get<double>("Transmissivity");
-  k_0 /= (rho_w * g);
+  alpha = hydrology.get<double>("Darcy Law: Water Thickness Exponent");
+  beta  = hydrology.get<double>("Darcy Law: Potential Gradient Norm Exponent");
+
+  TEUCHOS_TEST_FOR_EXCEPTION (beta<=1, Teuchos::Exceptions::InvalidParameter, "Error! 'Darcy Law: Potential Gradient Norm Exponent' must be larger than 1.0.\n");
+
+  if (beta==2.0) {
+    needsGradPhiNorm = false;
+  } else {
+    needsGradPhiNorm = true;
+  }
+
+  if (needsGradPhiNorm) {
+    gradPhiNorm = decltype(gradPhiNorm)(p.get<std::string>("Hydraulic Potential Gradient Norm Variable Name"), dl->qp_scalar);
+    this->addDependentField(gradPhiNorm);
+  }
 
   regularize = hydrology.get<bool>("Regularize With Continuation", false);
   if (regularize)
@@ -105,13 +116,23 @@ void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::evaluateFieldsCell (typen
     printedReg = regularization;
   }
 
-  for (int cell=0; cell < workset.numCells; ++cell)
-  {
-    for (int qp=0; qp < numQPs; ++qp)
-    {
-      for (int dim(0); dim<numDim; ++dim)
-      {
-        q(cell,qp,dim) = -k_0 * (std::pow(h(cell,qp),3)+regularization) * gradPhi(cell,qp,dim);
+  if (needsGradPhiNorm) {
+    double grad_norm_exponent = beta - 2.0;
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
+        for (int dim(0); dim<numDim; ++dim) {
+          q(cell,qp,dim) = -k_0 * (std::pow(h(cell,qp),alpha)+regularization)
+                                * std::pow(gradPhiNorm(cell,qp),grad_norm_exponent)
+                                * gradPhi(cell,qp,dim);
+        }
+      }
+    }
+  } else {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
+        for (int dim(0); dim<numDim; ++dim) {
+          q(cell,qp,dim) = -k_0 * (std::pow(h(cell,qp),alpha)+regularization) * gradPhi(cell,qp,dim);
+        }
       }
     }
   }
@@ -149,11 +170,20 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     const int cell = it_side.elem_LID;
     const int side = it_side.side_local_id;
 
-    for (int qp=0; qp < numQPs; ++qp)
-    {
-      for (int dim(0); dim<numDim; ++dim)
-      {
-        q(cell,side,qp,dim) = -k_0 * (std::pow(h(cell,side,qp),3)+regularization) * gradPhi(cell,side,qp,dim);
+    if (needsGradPhiNorm) {
+      double grad_norm_exponent = beta - 2.0;
+      for (int qp=0; qp < numQPs; ++qp) {
+        for (int dim(0); dim<numDim; ++dim) {
+          q(cell,side,qp,dim) = -k_0 * (std::pow(h(cell,side,qp),alpha)+regularization)
+                                     * std::pow(gradPhiNorm(cell,side,qp),grad_norm_exponent)
+                                     * gradPhi(cell,side,qp,dim);
+        }
+      }
+    } else {
+      for (int qp=0; qp < numQPs; ++qp) {
+        for (int dim(0); dim<numDim; ++dim) {
+          q(cell,side,qp,dim) = -k_0 * (std::pow(h(cell,side,qp),alpha)+regularization) * gradPhi(cell,side,qp,dim);
+        }
       }
     }
   }
