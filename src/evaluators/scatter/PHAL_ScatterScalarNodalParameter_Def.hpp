@@ -22,6 +22,13 @@ ScatterScalarNodalParameterBase(const Teuchos::ParameterList& p,
   val = decltype(val)(field_name,dl->node_scalar);
   numNodes = 0;
 
+  if (p.isParameter("Scatter Only Once")) {
+    scatter_only_once = p.get<bool>("Scatter Only Once");
+  } else {
+    scatter_only_once = false;
+  }
+  do_scatter = true;
+
   this->addDependentField(val);
 
   this->setName("Scatter Nodal Parameter" );
@@ -76,6 +83,10 @@ template<typename Traits>
 void ScatterScalarNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  if (!this->do_scatter) {
+    return;
+  }
+
   Teuchos::RCP<Tpetra_Vector> pvecT;
   try {
     pvecT = workset.distParamLib->get(this->param_name)->vector();
@@ -95,13 +106,18 @@ evaluateFields(typename Traits::EvalData workset)
   auto overlap_map = workset.distParamLib->get(this->param_name)->overlap_map();
   auto map = workset.distParamLib->get(this->param_name)->map();
 
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       const LO lid_overlap = wsElDofs((int)cell,(int)node,0);
       const LO lid = map->getLocalElement(overlap_map->getGlobalElement(lid_overlap));
       if(lid >= 0)
        pvecT_constView[lid] = (this->val)(cell,node);
     }
+  }
+
+  if (this->scatter_only_once) {
+    this->do_scatter = false;
+  }
 }
 
 template<typename Traits>
@@ -123,6 +139,10 @@ template<typename Traits>
 void ScatterScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  if (!this->do_scatter) {
+    return;
+  }
+
   Teuchos::RCP<Tpetra_Vector> pvecT;
   try {
     pvecT = workset.distParamLib->get(this->param_name)->vector();
@@ -162,8 +182,12 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+
+  if (this->scatter_only_once) {
+    this->do_scatter = false;
+  }
 }
 
 // **********************************************************************
 
-}
+} // namespace PHAL

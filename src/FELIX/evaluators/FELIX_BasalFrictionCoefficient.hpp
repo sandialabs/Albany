@@ -21,7 +21,7 @@ namespace FELIX
     This evaluator computes the friction coefficient beta for basal natural BC
 */
 
-template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes>
+template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes, bool ThermoCoupled>
 class BasalFrictionCoefficient : public PHX::EvaluatorWithBaseImpl<Traits>,
                                  public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -31,8 +31,9 @@ public:
   typedef typename EvalT::MeshScalarT   MeshScalarT;
   typedef typename EvalT::ParamScalarT  ParamScalarT;
 
-  typedef typename std::conditional<IsStokes,ScalarT,ParamScalarT>::type     IceScalarT;
-  typedef typename std::conditional<IsHydrology,ScalarT,ParamScalarT>::type  HydroScalarT;
+  typedef typename std::conditional<IsStokes,ScalarT,ParamScalarT>::type       IceScalarT;
+  typedef typename std::conditional<IsHydrology,ScalarT,ParamScalarT>::type    HydroScalarT;
+  typedef typename std::conditional<ThermoCoupled,ScalarT,ParamScalarT>::type  TempScalarT;
 
   BasalFrictionCoefficient (const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl);
@@ -57,7 +58,6 @@ private:
   ScalarT printedQ;
 
   double beta_given_val;  // Constant value (for CONSTANT only)
-  double A;               // Constant value for the flowFactorA field (for REGULARIZED_COULOMB only)
 
   // Input:
   PHX::MDField<const ParamScalarT>      beta_given_field;
@@ -66,6 +66,8 @@ private:
   PHX::MDField<const ParamScalarT>      lambdaField;
   PHX::MDField<const HydroScalarT>      N;
   PHX::MDField<const MeshScalarT>       coordVec;
+
+  PHX::MDField<const TempScalarT>       flowFactorA;
 
   PHX::MDField<const ParamScalarT>      bed_topo_field;
   PHX::MDField<const ParamScalarT>      thickness_field;
@@ -88,7 +90,7 @@ private:
 
   bool logParameters;
   bool distributedLambda;
-  bool regularize;
+  bool nodal;
 
   enum BETA_TYPE {GIVEN_CONSTANT, GIVEN_FIELD, EXP_GIVEN_FIELD, GAL_PROJ_EXP_GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
   BETA_TYPE beta_type;

@@ -16,7 +16,7 @@ namespace FELIX {
 template<typename EvalT, typename Traits>
 BasalGravitationalWaterPotential<EvalT, Traits>::
 BasalGravitationalWaterPotential (const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl) :
+                                  const Teuchos::RCP<Albany::Layouts>& dl) :
   phi_0 (p.get<std::string> ("Basal Gravitational Water Potential Variable Name"), dl->node_scalar),
   z_s   (p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar),
   H     (p.get<std::string> ("Ice Thickness Variable Name"), dl->node_scalar)
@@ -25,6 +25,9 @@ BasalGravitationalWaterPotential (const Teuchos::ParameterList& p,
 
   if (stokes)
   {
+    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+                                "Error! The layout structure does not appear to be that of a side set.\n");
+
     basalSideName = p.get<std::string>("Side Set Name");
     numNodes = dl->node_scalar->dimension(2);
   }

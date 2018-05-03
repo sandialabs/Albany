@@ -16,7 +16,7 @@ namespace FELIX
     from measurements of the Surface Mass Balance
 */
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, bool OnSide>
 class HydrologyWaterSource: public PHX::EvaluatorWithBaseImpl<Traits>,
                             public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -34,13 +34,18 @@ public:
 
 private:
 
+  void evaluateFieldsCell(typename Traits::EvalData d);
+  void evaluateFieldsSide(typename Traits::EvalData d);
+
   // Input:
-  PHX::MDField<const ParamScalarT,Cell,Node>   smb;
+  PHX::MDField<const ParamScalarT>  smb;
 
   // Output:
-  PHX::MDField<ParamScalarT,Cell,Node>  omega;
+  PHX::MDField<ParamScalarT>        omega;
 
   int numNodes;
+
+  std::string sideSetName;  // Needed only if OnSide=true
 };
 
 } // Namespace FELIX

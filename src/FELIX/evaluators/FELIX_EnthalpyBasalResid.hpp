@@ -25,7 +25,7 @@ namespace FELIX
 
   template<typename EvalT, typename Traits, typename Type>
   class EnthalpyBasalResid : public PHX::EvaluatorWithBaseImpl<Traits>,
-  public PHX::EvaluatorDerived<EvalT, Traits>
+                             public PHX::EvaluatorDerived<EvalT, Traits>
   {
   public:
     EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
@@ -40,23 +40,23 @@ namespace FELIX
     typedef typename EvalT::ParamScalarT ParamScalarT;
 
     // Input:
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>    	 geoFlux;     // [W m^{-2}] = [Pa m s^{-1}]
+    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>       geoFlux;     // [W m^{-2}] = [Pa m s^{-1}]
     PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>       beta; // [kPa m / yr]
     PHX::MDField<const ScalarT,Cell,Side,QuadPoint>            basal_dTdz; // [K  km^{-1}]
     PHX::MDField<const ScalarT,Cell,Side, QuadPoint>           enthalpy;  //[MW s m^{-3}]
     PHX::MDField<const ParamScalarT,Cell, Side, QuadPoint>     enthalpyHs;  //[MW s m^{-3}]
     PHX::MDField<const Type,Cell,Side,QuadPoint,VecDim>        velocity; // [m yr^{-1}
     PHX::MDField<const ScalarT,Cell,Side,QuadPoint>            verticalVel; // [m y^{-1}]
-    PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>   	 BF;          // []
+    PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>      BF;          // []
     PHX::MDField<const RealType,Cell,Side,Node,QuadPoint,Dim>  GradBF;      // [km^{-1}
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>     	 w_measure;   // [km^2]
+    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>        w_measure;   // [km^2]
     PHX::MDField<const ScalarT,Cell,Node>                      diffEnth;  //[MW s m^{-3}]
     PHX::MDField<const ScalarT,Cell,Side,QuadPoint>            phi;  // []
     PHX::MDField<const ScalarT,Dim>                            homotopy;
+    PHX::MDField<const ScalarT,Cell,Side,QuadPoint>            basalMeltRateQP;      // [MW] = [m/yr]
 
     // Output:
     PHX::MDField<ScalarT,Cell,Node> enthalpyBasalResid;      // [MW] = [k^{-2} kPa s^{-1} km^3]
-    PHX::MDField<ScalarT,Cell,Side, QuadPoint> basalMeltRateQP;      // [MW] = [m/yr]
     PHX::MDField<ScalarT,Cell,Side, Node> basalMeltRate;      // [MW] = [m/yr]
 
     std::vector<std::vector<int> >  sideNodes;
@@ -82,6 +82,6 @@ namespace FELIX
     bool haveSUPG;
   };
 
-}	// end namespace FELIX
+} // end namespace FELIX
 
 #endif /* FELIX_ENTHALPY_BASAL_RESID_HPP_ */

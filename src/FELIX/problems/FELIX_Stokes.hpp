@@ -11,6 +11,7 @@
 #include "Teuchos_ParameterList.hpp"
 
 #include "Albany_AbstractProblem.hpp"
+#include "Albany_GeneralPurposeFieldsNames.hpp"
 
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
@@ -35,7 +36,7 @@ namespace FELIX {
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
 
-    //! Get boolean telling code if SDBCs are utilized  
+    //! Get boolean telling code if SDBCs are utilized
     virtual bool useSDBCs() const {return use_sdbcs_; }
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
@@ -108,9 +109,9 @@ namespace FELIX {
     bool havePSPG;     //! have pressure stabilization
 
     Teuchos::RCP<Albany::Layouts> dl;
-  
-    /// Boolean marking whether SDBCs are used 
-    bool use_sdbcs_; 
+
+    /// Boolean marking whether SDBCs are used
+    bool use_sdbcs_;
 
   };
 
@@ -153,7 +154,7 @@ FELIX::Stokes::constructEvaluators(
   using std::string;
   using std::map;
   using PHAL::AlbanyTraits;
-  
+
   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
 
     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
@@ -161,7 +162,7 @@ FELIX::Stokes::constructEvaluators(
 
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
-  
+
   Intrepid2::DefaultCubatureFactory cubFactory;
   RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
 
@@ -328,8 +329,8 @@ FELIX::Stokes::constructEvaluators(
     p->set<std::string>("Parameter Name", param_name);
     p->set< RCP<ParamLib> >("Parameter Library", paramLib);
 
-    RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Homotopy>> ptr_homotopy;
-    ptr_homotopy = rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Homotopy>(*p,dl));
+    RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>> ptr_homotopy;
+    ptr_homotopy = rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>(*p,dl));
     ptr_homotopy->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Viscosity").get<double>(param_name,-1.0));
     fm0.template registerEvaluator<EvalT>(ptr_homotopy);
   }
@@ -361,8 +362,8 @@ FELIX::Stokes::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Momentum Resid"));
 
     //Input
-    p->set<std::string>("Weighted BF Name", "wBF");
-    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Weighted BF Name", Albany::weighted_bf_name);
+    p->set<std::string>("Weighted Gradient BF Name", Albany::weighted_grad_bf_name);
     p->set<std::string>("Velocity QP Variable Name", "Velocity");
     p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
     p->set<std::string>("Pressure QP Variable Name", "Pressure");
@@ -388,13 +389,13 @@ FELIX::Stokes::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Continuity Resid"));
 
     //Input
-    p->set<std::string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Weighted BF Name", Albany::weighted_bf_name);
     p->set<std::string>("Velocity QP Variable Name", "Velocity");
     p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
     p->set<std::string>("Density QP Variable Name", "Density");
 
     p->set<bool>("Have PSPG", havePSPG);
-    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Weighted Gradient BF Name", Albany::weighted_grad_bf_name);
     p->set<std::string> ("Tau M Name", "Tau M");
     p->set<std::string> ("Rm Name", "Rm");
 

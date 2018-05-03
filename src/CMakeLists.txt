@@ -155,6 +155,7 @@ SET(HEADERS ${HEADERS}
   problems/Albany_BCUtils_Def.hpp
   problems/Albany_EvaluatorUtils.hpp
   problems/Albany_EvaluatorUtils_Def.hpp
+  problems/Albany_GeneralPurposeFieldsNames.hpp
   problems/Albany_HeatProblem.hpp
   problems/Albany_Layouts.hpp
   problems/Albany_ProblemFactory.hpp

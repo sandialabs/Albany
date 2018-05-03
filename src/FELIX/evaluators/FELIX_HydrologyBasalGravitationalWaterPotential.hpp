@@ -23,7 +23,7 @@ namespace FELIX
 
 template<typename EvalT, typename Traits>
 class BasalGravitationalWaterPotential : public PHX::EvaluatorWithBaseImpl<Traits>,
-                       public PHX::EvaluatorDerived<EvalT, Traits>
+                                         public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
@@ -41,8 +41,8 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ParamScalarT>  H;
-  PHX::MDField<ParamScalarT>  z_s;
+  PHX::MDField<const ParamScalarT>  H;
+  PHX::MDField<const ParamScalarT>  z_s;
 
   // Output:
   PHX::MDField<ParamScalarT>  phi_0;

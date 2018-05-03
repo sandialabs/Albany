@@ -21,9 +21,9 @@ namespace FELIX
     This evaluator evaluates the residual of the Hydrology model
 */
 
-template<typename EvalT, typename Traits, bool IsStokes>
-class HydrologyResidualThicknessEqn : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                      public PHX::EvaluatorDerived<EvalT, Traits>
+template<typename EvalT, typename Traits, bool IsStokes, bool ThermoCoupled>
+class HydrologyResidualCavitiesEqn : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                     public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
@@ -31,9 +31,10 @@ public:
   typedef typename EvalT::MeshScalarT     MeshScalarT;
   typedef typename EvalT::ParamScalarT    ParamScalarT;
 
-  typedef typename std::conditional<IsStokes,ScalarT,ParamScalarT>::type     IceScalarT;
+  typedef typename std::conditional<IsStokes,ScalarT,ParamScalarT>::type       IceScalarT;
+  typedef typename std::conditional<ThermoCoupled,ScalarT,ParamScalarT>::type  TempScalarT;
 
-  HydrologyResidualThicknessEqn (const Teuchos::ParameterList& p,
+  HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
                                  const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
@@ -43,6 +44,9 @@ public:
 
 private:
 
+  void evaluateFieldsCell(typename Traits::EvalData d);
+  void evaluateFieldsSide(typename Traits::EvalData d);
+
   // Input:
   PHX::MDField<const RealType>      BF;
   PHX::MDField<const MeshScalarT>   w_measure;
@@ -51,9 +55,10 @@ private:
   PHX::MDField<const ScalarT>       N;
   PHX::MDField<const ScalarT>       m;
   PHX::MDField<const IceScalarT>    u_b;
+  PHX::MDField<const TempScalarT>   flowFactorA;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node>   residual;
+  PHX::MDField<ScalarT>             residual;
 
   int numNodes;
   int numQPs;
@@ -62,9 +67,11 @@ private:
   double rho_i_inv;
   double h_r;
   double l_r;
-  double A;
+  double scaling_h_t;
+  double scaling_A;
 
   bool unsteady;
+  bool nodal_equation;
 
   // Variables necessary for stokes coupling
   bool                            stokes_coupling;

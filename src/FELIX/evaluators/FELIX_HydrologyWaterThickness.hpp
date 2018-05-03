@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_HYDROLOGY_WATER_DISCHARGE_HPP
-#define FELIX_HYDROLOGY_WATER_DISCHARGE_HPP 1
+#ifndef FELIX_HYDROLOGY_WATER_THICKNESS_HPP
+#define FELIX_HYDROLOGY_WATER_THICKNESS_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -17,34 +17,24 @@
 namespace FELIX
 {
 
-/* \brief Hydrology Water Discharge Evaluator
- *
- *   This evaluator evaluates
- *
- *     q = - (k_0 * h^3)/(\rho_w * g) * grad \Phi
- *
- *   It is assumed that the units of each term are
- *
- *    1) k_0       : [m^-1 s^-1]
- *    2) h         : [m]
- *    3) \rho_w    : [kg m^-3]
- *    4) g         : [m s^-2]
- *    5) grad \Phi : [kPa km^-1]
- *
- *   which yields water discharge units [m^2 s^-1].
- *
- */
+/** \brief Hydrology Residual Evaluator
 
-template<typename EvalT, typename Traits, bool IsStokes>
-class HydrologyWaterDischarge : public PHX::EvaluatorWithBaseImpl<Traits>,
+    This evaluator computes the hydrology water thickness in the steady case,
+    by solving the cavities equation for h
+*/
+
+template<typename EvalT, typename Traits, bool IsStokes, bool ThermoCoupled>
+class HydrologyWaterThickness : public PHX::EvaluatorWithBaseImpl<Traits>,
                                 public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
   typedef typename EvalT::ScalarT       ScalarT;
   typedef typename EvalT::ParamScalarT  ParamScalarT;
+  typedef typename std::conditional<IsStokes,ScalarT,ParamScalarT>::type      IceScalarT;
+  typedef typename std::conditional<ThermoCoupled,ScalarT,ParamScalarT>::type TempScalarT;
 
-  HydrologyWaterDischarge (const Teuchos::ParameterList& p,
+  HydrologyWaterThickness (const Teuchos::ParameterList& p,
                            const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
@@ -58,22 +48,25 @@ private:
   void evaluateFieldsSide(typename Traits::EvalData d);
 
   // Input:
-  PHX::MDField<const ScalarT>       gradPhi;
-  PHX::MDField<const ScalarT>       h;
-  PHX::MDField<const ScalarT,Dim>   regularizationParam;
+  PHX::MDField<const IceScalarT>    u_b;
+  PHX::MDField<const TempScalarT>   A;
+  PHX::MDField<const ScalarT>       m;
+  PHX::MDField<const ScalarT>       N;
 
   // Output:
-  PHX::MDField<ScalarT>   q;
+  PHX::MDField<ScalarT>   h;
 
-  int numQPs;
-  int numDim;
+  double h_r;
+  double l_r;
+  double rho_i_inv;
+  double scaling_A;
+
+  int numPts;
   std::string   sideSetName;
 
-  double k_0;
-
-  bool regularize;
+  bool use_eff_cav;
 };
 
 } // Namespace FELIX
 
-#endif // FELIX_HYDROLOGY_WATER_DISCHARGE_HPP
+#endif // FELIX_HYDROLOGY_WATER_THICKNESS_HPP

@@ -53,6 +53,8 @@ namespace PHAL {
     PHX::MDField<const ParamScalarT,Cell,Node> val;
     std::string param_name;
     std::size_t numNodes;
+    bool scatter_only_once;
+    bool do_scatter;
   };
 
   // General version for most evaluation types

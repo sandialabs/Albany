@@ -17,6 +17,7 @@
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
+#include "Albany_GeneralPurposeFieldsNames.hpp"
 #include "Albany_ResponseUtilities.hpp"
 
 #include "PHAL_Workset.hpp"
@@ -64,8 +65,8 @@ namespace FELIX
 
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
-    
-    //! Get boolean telling code if SDBCs are utilized  
+
+    //! Get boolean telling code if SDBCs are utilized
     virtual bool useSDBCs() const {return use_sdbcs_; }
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
@@ -115,8 +116,8 @@ namespace FELIX
 
     std::string basalSideName, basalEBName;
 
-    /// Boolean marking whether SDBCs are used 
-    bool use_sdbcs_; 
+    /// Boolean marking whether SDBCs are used
+    bool use_sdbcs_;
   };
 
 } // end of the namespace FELIX
@@ -412,10 +413,10 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p = rcp(new ParameterList("Enthalpy Resid"));
 
     //Input
-    p->set<string>("Weighted BF Variable Name", "wBF");
+    p->set<string>("Weighted BF Variable Name", Albany::weighted_bf_name);
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
 
-    p->set<string>("Weighted Gradient BF Variable Name", "wGrad BF");
+    p->set<string>("Weighted Gradient BF Variable Name", Albany::weighted_grad_bf_name);
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     p->set<string>("Enthalpy QP Variable Name", "Enthalpy");
@@ -488,9 +489,9 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     //Input
 
-    p->set<std::string>("BF Side Name", "BF "+basalSideName);
-    p->set<std::string>("Gradient BF Side Name", "Grad BF "+basalSideName);
-    p->set<std::string>("Weighted Measure Side Name", "Weighted Measure "+basalSideName);
+    p->set<std::string>("BF Side Name", Albany::bf_name +" "+basalSideName);
+    p->set<std::string>("Gradient BF Side Name", Albany::grad_bf_name +" "+basalSideName);
+    p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name+" "+basalSideName);
     p->set<std::string>("Velocity Side QP Variable Name", "velocity");
     p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", "basal_friction");
     p->set<std::string>("Side Set Name", basalSideName);
@@ -531,7 +532,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p = rcp(new ParameterList("w_z Resid"));
 
     //Input
-    p->set<string>("Weighted BF Variable Name", "wBF");
+    p->set<string>("Weighted BF Variable Name", Albany::weighted_bf_name);
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
 
     p->set<string>("w_z QP Variable Name", "w_z");
@@ -548,14 +549,14 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     fm0.template registerEvaluator<EvalT>(ev);
   }
   else  // --- w Residual ---
-  {  
+  {
     p = rcp(new ParameterList("w Resid"));
 
     //Input
-    p->set<string>("Weighted BF Variable Name", "wBF");
+    p->set<string>("Weighted BF Variable Name", Albany::weighted_bf_name);
 
-    p->set<std::string>("BF Side Name", "BF "+basalSideName);
-    p->set<std::string>("Weighted Measure Side Name", "Weighted Measure "+basalSideName);
+    p->set<std::string>("BF Side Name", Albany::bf_name +" "+basalSideName);
+    p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name+" "+basalSideName);
 
     p->set<string>("w Gradient QP Variable Name", "w Gradient");
     p->set<string>("w Variable Name", "w");
@@ -623,9 +624,9 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   {
     p = rcp(new ParameterList("FELIX Basal Friction Heat"));
     //Input
-    p->set<std::string>("BF Side Name", "BF "+basalSideName);
-    p->set<std::string>("Gradient BF Side Name", "Grad BF "+basalSideName);
-    p->set<std::string>("Weighted Measure Name", "Weighted Measure "+basalSideName);
+    p->set<std::string>("BF Side Name", Albany::bf_name+" "+basalSideName);
+    p->set<std::string>("Gradient BF Side Name", Albany::grad_bf_name+" "+basalSideName);
+    p->set<std::string>("Weighted Measure Name", Albany::weighted_measure_name+" "+basalSideName);
     p->set<std::string>("Velocity Side QP Variable Name", "velocity");
     p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", "basal_friction");
 
@@ -648,9 +649,9 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   {
     p = rcp(new ParameterList("FELIX Geothermal Flux Heat"));
     //Input
-    p->set<std::string>("BF Side Name", "BF "+basalSideName);
-    p->set<std::string>("Gradient BF Side Name", "Grad BF "+basalSideName);
-    p->set<std::string>("Weighted Measure Name", "Weighted Measure "+basalSideName);
+    p->set<std::string>("BF Side Name", Albany::bf_name+" "+basalSideName);
+    p->set<std::string>("Gradient BF Side Name", Albany::grad_bf_name+" "+basalSideName);
+    p->set<std::string>("Weighted Measure Name", Albany::weighted_measure_name+" "+basalSideName);
     p->set<std::string>("Velocity Side QP Variable Name", "velocity");
     p->set<std::string>("Vertical Velocity Side QP Variable Name", "w");
 
@@ -933,8 +934,8 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   p->set<std::string>("Parameter Name", param_name);
   p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 
-  Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Homotopy>> ptr_homotopy;
-  ptr_homotopy = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Homotopy>(*p,dl));
+  Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>> ptr_homotopy;
+  ptr_homotopy = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>(*p,dl));
   ptr_homotopy->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Viscosity").get<double>(param_name,-1.0));
   fm0.template registerEvaluator<EvalT>(ptr_homotopy);
 
