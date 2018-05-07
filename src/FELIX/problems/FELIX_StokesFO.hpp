@@ -1291,7 +1291,7 @@ if (basalSideName!="INVALID")
     p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Basal Friction Coefficient"));
 
     //Input
-    p->set<std::string>("Sliding Velocity QP Variable Name", "sliding_velocity");
+    p->set<std::string>("Sliding Velocity Variable Name", "sliding_velocity");
     p->set<std::string>("BF Variable Name", Albany::bf_name + " " + basalSideName);
     p->set<std::string>("Effective Pressure QP Variable Name", "effective_pressure");
     p->set<std::string>("Bed Roughness Variable Name", "bed_roughness");
@@ -1301,8 +1301,8 @@ if (basalSideName!="INVALID")
     p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("FELIX Physical Parameters"));
     p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
     params->sublist("FELIX Basal Friction Coefficient").set<std::string>("Beta Given Variable Name", "basal_friction");
-    p->set<std::string>("Bed Topography QP Name", "bed_topography");
-    p->set<std::string>("Thickness QP Name", "ice_thickness");
+    p->set<std::string>("Bed Topography Variable Name", "bed_topography");
+    p->set<std::string>("Ice Thickness Variable Name", "ice_thickness");
 
     //Output
     p->set<std::string>("Basal Friction Coefficient Variable Name", "beta");

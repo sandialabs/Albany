@@ -169,8 +169,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   }
 
   if(zero_on_floating) {
-    bed_topo_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Bed Topography Name"), layout);
-    thickness_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Thickness Name"), layout);
+    bed_topo_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Bed Topography Variable Name"), layout);
+    thickness_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), layout);
     Teuchos::ParameterList& phys_param_list = *p.get<Teuchos::ParameterList*>("Physical Parameter List");
     rho_i = phys_param_list.get<double> ("Ice Density");
     rho_w = phys_param_list.get<double> ("Water Density");
