@@ -1,223 +1,363 @@
 <ParameterList>
 
-    <ParameterList name="Debug Output">
-        <Parameter name="Write Jacobian to MatrixMarket" type="int" value="0"/>
-        <Parameter name="Write Solution to MatrixMarket" type="bool" value="false"/>
+  <ParameterList name="Debug Output">
+    <Parameter name="Write Jacobian to MatrixMarket" type="int" value="0"/>
+    <Parameter name="Write Solution to MatrixMarket" type="bool" value="false"/>
+  </ParameterList>
+
+  <ParameterList name="Problem">
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
+    <Parameter name="Solution Method" type="string"        value="Transient Tempus"/>
+    <Parameter name="Name"            type="string"        value="FELIX Hydrology 2D"/>
+    <Parameter name="Required Fields" type="Array(string)" value="{surface_height,surface_water_input,basal_velocity,ice_thickness,geothermal_flux}"/>
+
+    <ParameterList name="Response Functions">
+      <Parameter name="Number" type="int" value="0"/>
     </ParameterList>
 
-    <ParameterList name="Problem">
-        <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
-        <Parameter name="Solution Method" type="string" value="Unsteady"/>
-        <Parameter name="Name" type="string" value="FELIX Hydrology 2D"/>
+    <ParameterList name="Initial Condition">
+       <Parameter name="Function" type="string" value="Constant"/>
+       <Parameter name="Function Data" type="Array(double)" value="{100.0,0.1}"/>
+    </ParameterList>
 
-        <ParameterList name="Dirichlet BCs">
-            <Parameter name="DBC on NS NodeSet1 for DOF Hydraulic Potential" type="double" value="0.0"/>
+    <ParameterList name="Dirichlet BCs">
+      <Parameter name="DBC on NS NodeSet1 for DOF hydraulic_potential prescribe Field" type="string" value="basal_gravitational_water_potential"/>
+    </ParameterList>
+
+    <ParameterList name="Neumann BCs">
+    </ParameterList>
+
+    <ParameterList name="Parameters">
+      <Parameter name="Number of Parameter Vectors" type="int"    value="3"/>
+      <ParameterList name="Parameter Vector 0">
+        <Parameter name="Number"      type="int"    value="1"/>
+        <Parameter name="Parameter 0" type="string" value="Homotopy Parameter"/>
+        <Parameter name="Nominal Values" type="Array(double)" value="{1.0}"/>
+      </ParameterList>
+      <ParameterList name="Parameter Vector 1">   <!-- Basal Friction Coefficient Parameters -->
+        <Parameter name="Number"         type="int"           value="3"/>
+        <Parameter name="Parameter 0"    type="string"        value="Coulomb Friction Coefficient"/>
+        <Parameter name="Parameter 1"    type="string"        value="Bed Roughness"/>
+        <Parameter name="Parameter 2"    type="string"        value="Power Exponent"/>
+        <Parameter name="Nominal Values" type="Array(double)" value="{0.16,1.0,0.33}"/>
+      </ParameterList>
+      <ParameterList name="Parameter Vector 2">
+        <Parameter name="Number"      type="int"    value="1"/>
+        <Parameter name="Parameter 0" type="string" value="Constant Flow Factor A"/>
+        <Parameter name="Nominal Values" type="Array(double)" value="{0.000215}"/>
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="FELIX Physical Parameters">
+      <Parameter name="Water Density"        type="double" value="1000"/> <!-- [kg/m^3] -->
+      <Parameter name="Ice Density"          type="double" value="910"/>  <!-- [kg/m^3] -->
+      <Parameter name="Ice Latent Heat"      type="double" value="3.35e5"/>  <!-- [J/kg]   -->
+      <Parameter name="Gravity Acceleration" type="double" value="9.8"/>  <!-- [m/s^2]  -->
+    </ParameterList>
+
+    <ParameterList name="FELIX Field Norm">
+      <ParameterList name="sliding_velocity">
+        <Parameter name="Regularization Type"           type="string" value="Parameter Exponential"/>
+        <Parameter name="Regularization Parameter Name" type="string" value="Homotopy Parameter"/>
+      </ParameterList>
+      <ParameterList name="hydraulic_potential Gradient">
+        <Parameter name="Regularization Type"           type="string" value="Parameter Exponential"/>
+        <Parameter name="Regularization Parameter Name" type="string" value="Homotopy Parameter"/>
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="FELIX Hydrology">
+      <Parameter name="Cavities Equation Nodal"                     type="bool"    value="false"/>
+      <Parameter name="Lump Mass In Mass Equation"                  type="bool"    value="true"/>
+      <Parameter name="Use Effective Cavities Height"               type="bool"    value="true"/>
+      <Parameter name="Use Melting In Conservation Of Mass"         type="bool"    value="true"/>
+      <Parameter name="Use Melting In Cavities Equation"            type="bool"    value="true"/>
+      <Parameter name="Regularize With Continuation"                type="bool"    value="true"/>
+      <Parameter name="Darcy Law: Water Thickness Exponent"         type="double"  value="1"/>     <!-- q = -kh^alpha |grad(phi)|^beta grad(phi) [1] -->
+      <Parameter name="Darcy Law: Potential Gradient Norm Exponent" type="double"  value="2"/>   <!-- q = -kh^alpha |grad(phi)|^beta grad(phi) [1] -->
+      <Parameter name="Transmissivity"                              type="double"  value="0.05"/>  <!-- [m^2 s^-1] -->
+      <Parameter name="Bed Bumps Height"                            type="double"  value="0.5"/>   <!-- [m] -->
+      <Parameter name="Bed Bumps Length"                            type="double"  value="5"/>     <!-- [m] -->
+    </ParameterList>
+
+    <ParameterList name="FELIX Basal Friction Coefficient">
+      <Parameter name="Type" type="string" value="Regularized Coulomb"/> <!-- "Given Constant", "Given Field", "Regularized Coulomb", "Power Law" -->
+    </ParameterList>
+
+  </ParameterList> <!-- Problem -->
+
+  <ParameterList name="Regression Results">
+    <Parameter  name="Number of Comparisons" type="int" value="1"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{8940176.73567}"/>
+    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
+    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
+  </ParameterList>
+
+  <ParameterList name="Discretization">
+    <Parameter name="Number Of Time Derivatives" type="int"    value="1"/>
+    <Parameter name="Method"                     type="string" value="STK2D"/>
+    <Parameter name="Cubature Degree"            type="int"    value="3"/>
+    <Parameter name="Workset Size"               type="int"    value="10"/>
+    <Parameter name="Periodic_y BC"              type="bool"   value="true"/>
+    <Parameter name="Exodus Output File Name"    type="string" value="./hydrology_unsteady.exo"/>
+    <Parameter name="1D Elements"                type="int"    value="50"/>
+    <Parameter name="2D Elements"                type="int"    value="10"/>
+    <Parameter name="1D Scale"                   type="double" value="50"/>
+    <Parameter name="2D Scale"                   type="double" value="10"/>
+    <Parameter name="Cell Topology"              type="string" value="Quadrilateral"/>
+    <ParameterList name="Required Fields Info">
+      <Parameter name="Number Of Fields"  type="int" value="10"/>
+      <ParameterList name="Field 0">
+        <Parameter name="Field Name"       type="string" value="ice_thickness"/>
+        <Parameter name="Field Type"       type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin"     type="string" value="File"/>
+        <Parameter name="File Name"        type="string" value="../AsciiMeshes/Rectangle/ice_thickness.ascii"/>
+      </ParameterList>
+      <ParameterList name="Field 1">
+        <Parameter name="Field Name"       type="string" value="surface_height"/>
+        <Parameter name="Field Type"       type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin"     type="string" value="File"/>
+        <Parameter name="File Name"        type="string" value="../AsciiMeshes/Rectangle/surface_height.ascii"/>
+      </ParameterList>
+      <ParameterList name="Field 2">
+        <Parameter name="Field Name"       type="string" value="surface_water_input"/>
+        <Parameter name="Field Type"       type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin"     type="string" value="File"/>
+        <Parameter name="File Name"        type="string" value="../AsciiMeshes/Rectangle/surface_water_input.ascii"/>
+      </ParameterList>
+      <ParameterList name="Field 3">
+        <Parameter name="Field Name"       type="string" value="geothermal_flux"/>
+        <Parameter name="Field Type"       type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin"     type="string" value="File"/>
+        <Parameter name="Field Value"      type="Array(double)" value="{0.06}"/>
+      </ParameterList>
+      <ParameterList name="Field 4">
+        <Parameter name="Field Name"       type="string" value="basal_velocity"/>
+        <Parameter name="Field Type"       type="string" value="Node Vector"/>
+        <Parameter name="Field Origin"     type="string" value="File"/>
+        <Parameter name="Field Value"      type="Array(double)" value="{0,0.3}"/>
+      </ParameterList>
+      <ParameterList name="Field 5">
+        <Parameter name="Field Name"       type="string" value="effective_pressure"/>
+        <Parameter name="Field Type"       type="string" value="Node Scalar"/>
+        <Parameter name="Field Usage"      type="string" value="Output"/>
+      </ParameterList>
+      <ParameterList name="Field 6">
+        <Parameter name="Field Name"       type="string" value="beta"/>
+        <Parameter name="Field Type"       type="string" value="Node Scalar"/>
+        <Parameter name="Field Usage"      type="string" value="Output"/>
+      </ParameterList>
+      <ParameterList name="Field 7">
+        <Parameter name="Field Name"       type="string" value="water_thickness"/>
+        <Parameter name="Field Type"       type="string" value="Node Scalar"/>
+        <Parameter name="Field Usage"      type="string" value="Output"/>
+      </ParameterList>
+      <ParameterList name="Field 8">
+        <Parameter name="Field Name"       type="string" value="hydraulic_potential"/>
+        <Parameter name="Field Type"       type="string" value="Node Scalar"/>
+        <Parameter name="Field Usage"      type="string" value="Output"/>
+      </ParameterList>
+      <ParameterList name="Field 9">
+        <Parameter name="Field Name"    type="string" value="water_discharge"/>
+        <Parameter name="Field Type"    type="string" value="Elem Vector"/>
+        <Parameter name="Field Usage"   type="string" value="Output"/>
+      </ParameterList>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Piro">
+
+    <ParameterList name="Tempus">
+      <Parameter name="Integrator Name" type="string" value="Tempus Integrator"/>
+
+      <ParameterList name="Tempus Integrator">
+        <Parameter name="Integrator Type" type="string" value="Integrator Basic"/>
+        <Parameter name="Screen Output Index List"    type="string" value="1"/>
+        <Parameter name="Screen Output Index Interval" type="int"   value="100"/>
+        <Parameter name="Stepper Name"       type="string" value="Tempus Stepper"/>
+
+        <ParameterList name="Solution History">
+          <Parameter name="Storage Type"  type="string" value="Unlimited"/>
+          <Parameter name="Storage Limit" type="int"    value="20"/>
         </ParameterList>
 
-        <!--ParameterList name="Neumann BCs">
-            <Parameter name="NBC on SS SideSet0 for DOF Hydraulic Potential set neumann" type="Array(double)" value="{0.0, 0.0, 0.0, 0.0, 0.0}"/>
-        </ParameterList-->
-
-        <ParameterList name="Response Functions">
-          <Parameter name="Number" type="int" value="1"/>
-          <Parameter name="Response 0" type="string" value="Solution Max Value"/>
-          <ParameterList name="ResponseParams 1">
-            <Parameter name="Equation" type="int" value="1" />
+        <ParameterList name="Time Step Control">
+          <Parameter name="Initial Time"       type="double" value="0.0"/>
+          <Parameter name="Initial Time Index" type="int"    value="0"/>
+          <Parameter name="Initial Time Step"  type="double" value="100"/>
+          <Parameter name="Initial Order"      type="int"    value="0"/>
+          <Parameter name="Final Time"         type="double" value="86400"/>
+          <Parameter name="Final Time Index"   type="int"    value="10000"/>
+          <Parameter name="Maximum Absolute Error"  type="double" value="1.0e-8"/>
+          <Parameter name="Maximum Relative Error"  type="double" value="1.0e-8"/>
+          <Parameter name="Integrator Step Type"  type="string" value="Variable"/>
+          <ParameterList name="Time Step Control Strategy">
+            <Parameter name="Time Step Control Strategy List" type="string" value="basic_vs"/>
+            <ParameterList name="basic_vs">
+                <Parameter name="Name" type="string" value="Basic VS"/>
+                <Parameter name="Reduction Factor" type="double" value="0.5"/>
+                <Parameter name="Amplification Factor" type="double" value="2.0"/>
+                <Parameter name="Minimum Value Monitoring Function" type="double" value="4.0e-2"/>
+                <Parameter name="Maximum Value Monitoring Function" type="double" value="5.0e-2"/>
+            </ParameterList>
           </ParameterList>
+          <Parameter name="Output Time List"        type="string" value=""/>
+          <Parameter name="Output Index List"       type="string" value=""/>
+          <Parameter name="Output Time Interval"    type="double" value="10.0"/>
+          <Parameter name="Output Index Interval"   type="int"    value="1000"/>
+          <Parameter name="Maximum Number of Stepper Failures" type="int" value="10"/>
+          <Parameter name="Maximum Number of Consecutive Stepper Failures" type="int" value="5"/>
         </ParameterList>
+      </ParameterList> <!-- Tempus Integrator -->
 
-        <ParameterList name="FELIX Physical Parameters">
-            <Parameter name="Water Viscosity" type="double" value="1e-3"/>
-            <Parameter name="Water Density" type="double" value="1000"/>
-            <Parameter name="Ice Density" type="double" value="900"/>
-            <Parameter name="Ice Latent Heat" type="double" value="3e5"/>
-            <Parameter name="Gravity Acceleration" type="double" value="10"/>
-        </ParameterList>
+      <ParameterList name="Tempus Stepper">
+        <Parameter name="Stepper Type" type="string" value="Backward Euler"/>
+        <Parameter name="Solver Name"    type="string" value="Hydrology Solver"/>
+        <Parameter name="Predictor Name" type="string" value="None"/>
+        <ParameterList name="Hydrology Solver">
 
-        <ParameterList name="FELIX Hydrology">
-            <Parameter name="Has Melt Opening" type="bool" value="false"/>
-            <Parameter name="Transmissivity" type="double" value="1e-5"/>
-            <Parameter name="Bed Bumps Height" type="double" value="10"/>
-            <Parameter name="Bed Bumps Length" type="double" value="5000"/>
-            <Parameter name="Use Net Bump Height" type="bool" value="true"/>
-            <Parameter name="Nonlinearity Coefficient" type="double" value="0.0"/> <!-- How much we want to weigh the nonlinear term -->
-        </ParameterList>
+          <ParameterList name="NOX">
+            <ParameterList name="Thyra Group Options">
+              <Parameter name="Function Scaling" type="string" value="Row Sum"/>
+            </ParameterList>
 
-    </ParameterList> <!-- Problem -->
-
-    <ParameterList name="Regression Results">
-      <Parameter  name="Number of Comparisons" type="int" value="1"/>
-      <Parameter  name="Test Values" type="Array(double)" value="{8940176.73567}"/>
-      <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
-      <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
-      <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
-    </ParameterList>
-
-    <ParameterList name="Discretization">
-        <Parameter name="Periodic_y BC" type="bool" value="true"/>
-        <Parameter name="Workset Size" type="int" value="100"/>
-        <Parameter name="1D Elements" type="int" value="50"/>
-        <Parameter name="2D Elements" type="int" value="10"/>
-        <Parameter name="1D Scale" type="double" value="1000e3"/>
-        <Parameter name="2D Scale" type="double" value="10e3"/>
-        <Parameter name="Method" type="string" value="STK2D"/>
-        <Parameter name="Write points coordinates to ascii file" type="bool" value="false"/>
-        <Parameter name="Cell Topology" type="string" value="Triangle"/>
-        <Parameter name="Cubature Degree" type="int" value="3"/>
-        <Parameter name="Exodus Output File Name" type="string" value="./rectangle_out.exo"/>
-        <ParameterList name="Required Fields Info">
-            <Parameter name="sliding_velocity Field Type" type="string" value="Node Scalar"/>
-            <Parameter name="sliding_velocity Value" type="double" value="1e-7"/>
-            <Parameter name="basal_friction Field Type" type="string" value="Node Scalar"/>
-            <Parameter name="basal_friction Value" type="double" value="-1e12"/>
-            <Parameter name="surface_height Field Type" type="string" value="Node Scalar"/>
-            <Parameter name="surface_height File Name" type="string" value="../AsciiMeshes/Rectangle/surface_height.ascii"/>
-            <Parameter name="drainage_sheet_depth Field Type" type="string" value="Node Scalar"/>
-            <Parameter name="drainage_sheet_depth File Name" type="string" value="../AsciiMeshes/Rectangle/drainage_sheet_depth.ascii"/>
-            <Parameter name="ice_thickness Field Type" type="string" value="Node Scalar"/>
-            <Parameter name="ice_thickness File Name" type="string" value="../AsciiMeshes/Rectangle/thickness.ascii"/>
-            <Parameter name="ice_viscosity Field Type" type="string" value="Elem Scalar"/>
-            <Parameter name="ice_viscosity Value" type="double" value="1e13"/>
-            <Parameter name="surface_water_input Field Type" type="string" value="Node Scalar"/>
-            <Parameter name="surface_water_input Value" type="double" value="2e-10"/>
-            <Parameter name="geothermal_flux Field Type" type="string" value="Node Scalar"/>
-            <Parameter name="geothermal_flux Value" type="double" value="0.067"/>
-        </ParameterList>
-    </ParameterList>
-
-    <ParameterList name="Piro">
-        <ParameterList name="NOX">
             <ParameterList name="Solver Options">
-                <Parameter name="Status Test Check Type" type="string" value="Minimal"/>
+              <Parameter name="Status Test Check Type" type="string" value="Minimal"/>
             </ParameterList>
 
             <ParameterList name="Status Tests">
-                <Parameter name="Test Type" type="string" value="Combo"/>
-                <Parameter name="Combo Type" type="string" value="OR"/>
-                <Parameter name="Number of Tests" type="int" value="3"/>
+              <Parameter name="Test Type" type="string" value="Combo"/>
+              <Parameter name="Combo Type" type="string" value="OR"/>
+              <Parameter name="Number of Tests" type="int" value="2"/>
 
-                <ParameterList name="Test 0">
-                    <Parameter name="Test Type" type="string" value="NormF"/>
-                    <Parameter name="Norm Type" type="string" value="Two Norm"/>
-                    <Parameter name="Scale Type" type="string" value="Unscaled"/>
-                    <Parameter name="Tolerance" type="double" value="1e-2"/>
-                </ParameterList>
-                <ParameterList name="Test 1">
-                    <Parameter name="Test Type" type="string" value="RelativeNormF"/>
-                    <Parameter name="Norm Type" type="string" value="Two Norm"/>
-                    <Parameter name="Scale Type" type="string" value="Unscaled"/>
-                    <Parameter name="Tolerance" type="double" value="1e-6"/>
-                </ParameterList>
-                <ParameterList name="Test 2">
-                    <Parameter name="Test Type" type="string" value="MaxIters"/>
-                    <Parameter name="Maximum Iterations" type="int" value="1"/>
-                </ParameterList>
-            </ParameterList>
-
-            <ParameterList name="Direction">
-                <Parameter name="Method" type="string" value="Newton"/>
-
-                <ParameterList name="Newton">
-                    <Parameter name="Forcing Term Method" type="string" value="Constant"/>
-
-                    <ParameterList name="Linear Solver">
-                        <Parameter name="Write Linear System" type="bool" value="false"/>
-                    </ParameterList>
-
-                    <ParameterList name="Stratimikos Linear Solver">
-                        <ParameterList name="NOX Stratimikos Options">
-                        </ParameterList>
-                        <ParameterList name="Stratimikos">
-                            <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
-                            <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
-
-                            <ParameterList name="Linear Solver Types">
-                                <ParameterList name="AztecOO">
-                                    <ParameterList name="Forward Solve">
-                                        <ParameterList name="AztecOO Settings">
-                                            <Parameter name="Aztec Solver" type="string" value="GMRES"/>
-                                            <Parameter name="Convergence Test" type="string" value="r0"/>
-                                            <Parameter name="Size of Krylov Subspace" type="int" value="4000"/>
-                                            <Parameter name="Output Frequency" type="int" value="20"/>
-                                        </ParameterList>
-                                        <Parameter name="Max Iterations" type="int" value="1500"/>
-                                        <Parameter name="Tolerance" type="double" value="1e-9"/>
-                                    </ParameterList>
-                                </ParameterList>
-                            </ParameterList>
-
-                            <ParameterList name="Preconditioner Types">
-                                <ParameterList name="Ifpack">
-                                    <Parameter name="Overlap" type="int" value="1"/>
-                                    <Parameter name="Prec Type" type="string" value="ILU"/>
-                                    <ParameterList name="Ifpack Settings">
-                                        <Parameter name="fact: level-of-fill" type="int" value="1"/>
-                                    </ParameterList>
-                                </ParameterList>
-                                <ParameterList name="ML">
-                                    <Parameter name="Base Method Defaults" type="string" value="none"/>
-                                    <ParameterList name="ML Settings">
-                                        <Parameter name="default values" type="string" value="SA"/>
-                                        <Parameter name="aggregation: damping factor" type="double" value="1.333"/>
-                                        <Parameter name="aggregation: local aggregates" type="int" value="1"/>
-                                        <Parameter name="aggregation: next-level aggregates per process" type="int" value="128"/>
-                                        <Parameter name="aggregation: nodes per aggregate" type="int" value="128"/>
-                                        <Parameter name="aggregation: type" type="string" value="METIS"/>
-                                        <Parameter name="coarse: max size" type="int" value="1024"/>
-                                        <Parameter name="coarse: pre or post" type="string" value="post"/>
-                                        <Parameter name="coarse: sweeps" type="int" value="1"/>
-                                        <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
-                                        <Parameter name="eigen-analysis: iterations" type="int" value="20"/>
-                                        <Parameter name="eigen-analysis: type" type="string" value="power-method"/>
-                                        <Parameter name="increasing or decreasing" type="string" value="increasing"/>
-                                        <Parameter name="max levels" type="int" value="3"/>
-                                        <Parameter name="prec type" type="string" value="MGW"/>
-                                        <Parameter name="smoother: Aztec as solver" type="bool" value="false"/>
-                                        <Parameter name="smoother: damping factor" type="double" value="0.67"/>
-                                        <Parameter name="smoother: pre or post" type="string" value="both"/>
-                                        <Parameter name="smoother: sweeps" type="int" value="1"/>
-                                        <Parameter name="smoother: type" type="string" value="symmetric Gauss-Seidel"/>
-                                    </ParameterList>
-                                </ParameterList>
-                            </ParameterList>
-
-                        </ParameterList>
-                    </ParameterList> <!-- Stratimikos linear solver -->
-
-                    <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
-                </ParameterList> <!-- Newton -->
-            </ParameterList>
-
-            <ParameterList name="Line Search">
-                <Parameter name="Method" type="string" value="Backtrack"/> <!--"Backtrack", "Full Step", and others (See NOX_LineSearch_Factory.C)-->
-                <ParameterList name="Full Step">
-                    <Parameter name="Full Step" type="double" value="1"/>
-                </ParameterList>
-                <ParameterList name="Backtrack">
-                    <Parameter name="Max Iters" type="int" value="10"/>
-                    <Parameter name="Default Step" type="double" value="1."/>
-                    <Parameter name="Minimum Step" type="double" value="1e-10"/>
-                    <Parameter name="Reduction Factor" type="double" value="0.5"/>
-                </ParameterList>
-            </ParameterList>
+              <ParameterList name="Test 0">
+                <Parameter name="Test Type" type="string" value="MaxIters"/>
+                <Parameter name="Maximum Iterations" type="int" value="50"/>
+              </ParameterList>
+              <ParameterList name="Test 1">
+                <Parameter name="Test Type" type="string" value="NormF"/>
+                <Parameter name="Norm Type" type="string" value="Two Norm"/>
+                <Parameter name="Scale Type" type="string" value="Unscaled"/>
+                <Parameter name="Tolerance" type="double" value="1e-3"/>
+              </ParameterList>
+              <ParameterList name="Test 2">
+                <Parameter name="Test Type" type="string" value="NormWRMS"/>
+                <Parameter name="Absolute Tolerance" type="double" value="1e-4"/>
+                <Parameter name="Relative Tolerance" type="double" value="1e-3"/>
+              </ParameterList>
+            </ParameterList> <!-- Status Tests -->
 
             <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
-            <ParameterList name="Printing">
-                <Parameter name="Output Precision" type="int" value="3"/>
-                <Parameter name="Output Processor" type="int" value="0"/>
-                <ParameterList name="Output Information">
-                    <Parameter name="Error" type="bool" value="1"/>
-                    <Parameter name="Warning" type="bool" value="1"/>
-                    <Parameter name="Outer Iteration" type="bool" value="1"/>
-                    <Parameter name="Parameters" type="bool" value="0"/>
-                    <Parameter name="Details" type="bool" value="0"/>
-                    <Parameter name="Linear Solver Details" type="bool" value="0"/>
-                    <Parameter name="Stepper Iteration" type="bool" value="1"/>
-                    <Parameter name="Stepper Details" type="bool" value="1"/>
-                    <Parameter name="Stepper Parameters" type="bool" value="1"/>
-                </ParameterList>
-            </ParameterList>
-        </ParameterList> <!-- NOX-->
 
-    </ParameterList> <!-- Piro -->
+            <ParameterList name="Direction">
+              <Parameter name="Method" type="string" value="Newton"/>
+
+              <ParameterList name="Newton">
+                <Parameter name="Forcing Term Method" type="string" value="Constant"/>
+                <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
+
+                <ParameterList name="Linear Solver">
+                  <Parameter name="Write Linear System" type="bool" value="false"/>
+                </ParameterList>
+              </ParameterList> <!-- Newton -->
+            </ParameterList> <!-- Direction -->
+
+            <ParameterList name="Line Search">
+              <Parameter name="Method" type="string" value="Backtrack"/>
+              <ParameterList name="Full Step">
+                <Parameter name="Full Step" type="double" value="1"/>
+              </ParameterList>
+              <ParameterList name="Backtrack">
+                <Parameter name="Max Iters"        type="int" value="10"/>
+                <Parameter name="Default Step"     type="double" value="1.0"/>
+                <Parameter name="Minimum Step"     type="double" value="1e-6"/>
+                <Parameter name="Reduction Factor" type="double" value="0.5"/>
+                <Parameter name="Recovery Step"    type="double" value="1e-3"/>
+              </ParameterList>
+            </ParameterList> <!-- Line Search -->
+
+            <ParameterList name="Printing">
+              <Parameter name="Output Precision" type="int" value="3"/>
+              <Parameter name="Output Processor" type="int" value="0"/>
+              <ParameterList name="Output Information">
+                <Parameter name="Error" type="bool" value="1"/>
+                <Parameter name="Warning" type="bool" value="1"/>
+                <Parameter name="Outer Iteration" type="bool" value="1"/>
+                <Parameter name="Parameters" type="bool" value="0"/>
+                <Parameter name="Details" type="bool" value="0"/>
+                <Parameter name="Linear Solver Details" type="bool" value="0"/>
+                <Parameter name="Stepper Iteration" type="bool" value="1"/>
+                <Parameter name="Stepper Details" type="bool" value="1"/>
+                <Parameter name="Stepper Parameters" type="bool" value="1"/>
+              </ParameterList>
+            </ParameterList> <!-- Printing -->
+
+          </ParameterList> <!-- NOX -->
+        </ParameterList> <!-- Hydrology Solver -->
+      </ParameterList> <!-- Tempus Stepper -->
+
+      <ParameterList name="Stratimikos">
+        <Parameter name="Linear Solver Type" type="string" value="Belos"/>
+        <Parameter name="Preconditioner Type" type="string" value="MueLu"/>
+
+        <ParameterList name="Linear Solver Types">
+          <ParameterList name="Belos">
+            <ParameterList name="VerboseObject">
+              <Parameter name="Verbosity Level" type="string" value="low"/>
+            </ParameterList>
+            <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+            <ParameterList name="Solver Types">
+              <ParameterList name="Block GMRES">
+                <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
+                <Parameter name="Output Frequency" type="int" value="20"/>
+                <Parameter name="Output Style" type="int" value="1"/>
+                <Parameter name="Verbosity" type="int" value="33"/>
+                <Parameter name="Maximum Iterations" type="int" value="200"/>
+                <Parameter name="Block Size" type="int" value="1"/>
+                <Parameter name="Num Blocks" type="int" value="200"/>
+                <Parameter name="Flexible Gmres" type="bool" value="0"/>
+              </ParameterList>
+            </ParameterList>
+          </ParameterList>
+        </ParameterList> <!-- Linear Solver Types -->
+
+        <ParameterList name="Preconditioner Types">
+          <ParameterList name="Ifpack2">
+            <Parameter name="Overlap" type="int" value="0"/>
+            <Parameter name="Prec Type" type="string" value="ILUT"/>
+            <ParameterList name="Ifpack Settings">
+              <Parameter name="fact: ilut level-of-fill" type="double" value="1.0"/>
+            </ParameterList>
+          </ParameterList>
+          <ParameterList name="MueLu">
+            <Parameter name="verbosity" type="string" value="low"/>
+            <Parameter name="repartition: enable" type="bool" value="true"/>
+            <Parameter name="repartition: partitioner" type="string" value="zoltan"/>
+            <Parameter name="repartition: max imbalance" type="double" value="1.327"/>
+            <Parameter name="repartition: min rows per proc" type="int" value="600"/>
+            <Parameter name="repartition: start level" type="int" value="4"/>
+            <Parameter name="semicoarsen: number of levels" type="int" value="2"/>
+            <Parameter name="semicoarsen: coarsen rate" type="int" value="14"/>
+            <Parameter name="linedetection: orientation" type="string" value="coordinates"/>
+            <Parameter name="smoother: type" type="string" value="LINESMOOTHING_BANDED_RELAXATION"/>
+            <ParameterList name="smoother: params">
+              <Parameter name="relaxation: sweeps" type="int" value="1"/>
+              <Parameter name="relaxation: type" type="string" value="Jacobi"/>
+              <Parameter name="relaxation: damping factor" type="double" value="0.25"/>
+            </ParameterList>
+            <Parameter name="coarse: type" type="string" value="RELAXATION"/>
+            <ParameterList name="coarse: params">
+              <Parameter name="relaxation: sweeps" type="int" value="4"/>
+              <Parameter name="relaxation: type" type="string" value="Jacobi"/>
+              <Parameter name="relaxation: damping factor" type="double" value="0.8"/>
+            </ParameterList>
+            <Parameter name="max levels" type="int" value="5"/>
+            <Parameter name="number of equations" type="int" value="4"/>
+          </ParameterList>
+        </ParameterList> <!-- Preconditioner Types -->
+      </ParameterList> <!-- Stratimikos -->
+    </ParameterList> <!-- Tempus -->
+  </ParameterList> <!-- Piro -->
+
 </ParameterList>

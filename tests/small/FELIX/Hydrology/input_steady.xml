@@ -62,17 +62,17 @@
     </ParameterList>
 
     <ParameterList name="FELIX Hydrology">
-      <Parameter name="Cavities Equation Nodal"              type="bool"    value="false"/>
-      <Parameter name="Lump Mass In Mass Equation"           type="bool"    value="true"/>
-      <Parameter name="Use Effective Cavities Height"        type="bool"    value="true"/>
-      <Parameter name="Use Melting In Conservation Of Mass"  type="bool"    value="true"/>
-      <Parameter name="Use Melting In Cavities Equation"     type="bool"    value="true"/>
-      <Parameter name="Regularize With Continuation"         type="bool"    value="true"/>
-      <Parameter name="Darcy Law Alpha"                      type="double"  value="1"/>     <!-- q = -kh^alpha |grad(phi)|^beta grad(phi) [1] -->
-      <Parameter name="Darcy Law Beta"                       type="double"  value="1.5"/>   <!-- q = -kh^alpha |grad(phi)|^beta grad(phi) [1] -->
-      <Parameter name="Transmissivity"                       type="double"  value="0.05"/>  <!-- [m^2 s^-1] -->
-      <Parameter name="Bed Bumps Height"                     type="double"  value="0.5"/>   <!-- [m] -->
-      <Parameter name="Bed Bumps Length"                     type="double"  value="5"/>     <!-- [m] -->
+      <Parameter name="Cavities Equation Nodal"                     type="bool"    value="false"/>
+      <Parameter name="Lump Mass In Mass Equation"                  type="bool"    value="true"/>
+      <Parameter name="Use Effective Cavities Height"               type="bool"    value="true"/>
+      <Parameter name="Use Melting In Conservation Of Mass"         type="bool"    value="true"/>
+      <Parameter name="Use Melting In Cavities Equation"            type="bool"    value="true"/>
+      <Parameter name="Regularize With Continuation"                type="bool"    value="true"/>
+      <Parameter name="Darcy Law: Water Thickness Exponent"         type="double"  value="1"/>     <!-- q = -kh^alpha |grad(phi)|^beta grad(phi) [1] -->
+      <Parameter name="Darcy Law: Potential Gradient Norm Exponent" type="double"  value="1.5"/>   <!-- q = -kh^alpha |grad(phi)|^beta grad(phi) [1] -->
+      <Parameter name="Transmissivity"                              type="double"  value="0.05"/>  <!-- [m^2 s^-1] -->
+      <Parameter name="Bed Bumps Height"                            type="double"  value="0.5"/>   <!-- [m] -->
+      <Parameter name="Bed Bumps Length"                            type="double"  value="5"/>     <!-- [m] -->
     </ParameterList>
 
     <ParameterList name="FELIX Basal Friction Coefficient">
@@ -95,7 +95,7 @@
     <Parameter name="Cubature Degree"            type="int"    value="3"/>
     <Parameter name="Workset Size"               type="int"    value="10"/>
     <Parameter name="Periodic_y BC"              type="bool"   value="true"/>
-    <Parameter name="Exodus Output File Name"    type="string" value="./hydrology.exo"/>
+    <Parameter name="Exodus Output File Name"    type="string" value="./hydrology_steady.exo"/>
     <Parameter name="1D Elements"                type="int"    value="50"/>
     <Parameter name="2D Elements"                type="int"    value="10"/>
     <Parameter name="1D Scale"                   type="double" value="50"/>
