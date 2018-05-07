@@ -29,7 +29,7 @@ Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& problemParams_
 
   eliminate_h = params->sublist("FELIX Hydrology").get<bool>("Eliminate Water Thickness", false);
   std::string sol_method = params->get<std::string>("Solution Method");
-  if (sol_method=="Transient") {
+  if (sol_method=="Transient" || sol_method=="Transient Tempus") {
     unsteady = true;
   } else {
     unsteady = false;
@@ -216,24 +216,25 @@ Hydrology::getValidProblemParameters () const
   return validPL;
 }
 
-constexpr char Hydrology::hydraulic_potential_name[]         ;  //= "hydraulic_potential";
-constexpr char Hydrology::hydraulic_potential_gradient_name[];  //= "hydraulic_potential Gradient";
-constexpr char Hydrology::water_thickness_name[]             ;  //= "water_thickness";
-constexpr char Hydrology::water_thickness_dot_name[]         ;  //= "water_thickness_dot";
+constexpr char Hydrology::hydraulic_potential_name[]              ;  //= "hydraulic_potential";
+constexpr char Hydrology::hydraulic_potential_gradient_name[]     ;  //= "hydraulic_potential Gradient";
+constexpr char Hydrology::water_thickness_name[]                  ;  //= "water_thickness";
+constexpr char Hydrology::water_thickness_dot_name[]              ;  //= "water_thickness_dot";
 
-constexpr char Hydrology::flow_factor_A_name[]               ;  //= "flow_factor_A";
-constexpr char Hydrology::effective_pressure_name[]          ;  //= "effective_pressure";
-constexpr char Hydrology::ice_temperature_name[]             ;  //= "ice_temperature";
-constexpr char Hydrology::ice_thickness_name[]               ;  //= "ice_thickness";
-constexpr char Hydrology::surface_height_name[]              ;  //= "surface_height";
-constexpr char Hydrology::beta_name[]                        ;  //= "beta";
-constexpr char Hydrology::melting_rate_name[]                ;  //= "melting_rate";
-constexpr char Hydrology::surface_water_input_name[]         ;  //= "surface_water_input";
-constexpr char Hydrology::surface_mass_balance_name[]        ;  //= "surface_mass_balance";
-constexpr char Hydrology::geothermal_flux_name[]             ;  //= "geothermal_flux";
-constexpr char Hydrology::water_discharge_name[]             ;  //= "water_discharge";
-constexpr char Hydrology::sliding_velocity_name[]            ;  //= "sliding_velocity";
-constexpr char Hydrology::basal_velocity_name[]              ;  //= "basal_velocity";
+constexpr char Hydrology::hydraulic_potential_gradient_norm_name[];  //= "hydraulic_potential Gradient Norm";
+constexpr char Hydrology::flow_factor_A_name[]                    ;  //= "flow_factor_A";
+constexpr char Hydrology::effective_pressure_name[]               ;  //= "effective_pressure";
+constexpr char Hydrology::ice_temperature_name[]                  ;  //= "ice_temperature";
+constexpr char Hydrology::ice_thickness_name[]                    ;  //= "ice_thickness";
+constexpr char Hydrology::surface_height_name[]                   ;  //= "surface_height";
+constexpr char Hydrology::beta_name[]                             ;  //= "beta";
+constexpr char Hydrology::melting_rate_name[]                     ;  //= "melting_rate";
+constexpr char Hydrology::surface_water_input_name[]              ;  //= "surface_water_input";
+constexpr char Hydrology::surface_mass_balance_name[]             ;  //= "surface_mass_balance";
+constexpr char Hydrology::geothermal_flux_name[]                  ;  //= "geothermal_flux";
+constexpr char Hydrology::water_discharge_name[]                  ;  //= "water_discharge";
+constexpr char Hydrology::sliding_velocity_name[]                 ;  //= "sliding_velocity";
+constexpr char Hydrology::basal_velocity_name[]                   ;  //= "basal_velocity";
 constexpr char Hydrology::basal_grav_water_potential_name[]  ;  //= "basal_gravitational_water_potential";
 
 } // namespace FELIX

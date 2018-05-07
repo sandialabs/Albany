@@ -152,25 +152,26 @@ protected:
   /// Boolean marking whether SDBCs are used
   bool use_sdbcs_;
 
-  static constexpr char hydraulic_potential_name[]          = "hydraulic_potential";
-  static constexpr char hydraulic_potential_gradient_name[] = "hydraulic_potential Gradient";
-  static constexpr char water_thickness_name[]              = "water_thickness";
-  static constexpr char water_thickness_dot_name[]          = "water_thickness_dot";
+  static constexpr char hydraulic_potential_name[]               = "hydraulic_potential";
+  static constexpr char hydraulic_potential_gradient_name[]      = "hydraulic_potential Gradient";
+  static constexpr char water_thickness_name[]                   = "water_thickness";
+  static constexpr char water_thickness_dot_name[]               = "water_thickness_dot";
 
-  static constexpr char flow_factor_A_name[]                = "flow_factor_A";
-  static constexpr char effective_pressure_name[]           = "effective_pressure";
-  static constexpr char ice_temperature_name[]              = "ice_temperature";
-  static constexpr char ice_thickness_name[]                = "ice_thickness";
-  static constexpr char surface_height_name[]               = "surface_height";
-  static constexpr char beta_name[]                         = "beta";
-  static constexpr char melting_rate_name[]                 = "melting_rate";
-  static constexpr char surface_water_input_name[]          = "surface_water_input";
-  static constexpr char surface_mass_balance_name[]         = "surface_mass_balance";
-  static constexpr char geothermal_flux_name[]              = "geothermal_flux";
-  static constexpr char water_discharge_name[]              = "water_discharge";
-  static constexpr char sliding_velocity_name[]             = "sliding_velocity";
-  static constexpr char basal_velocity_name[]               = "basal_velocity";
-  static constexpr char basal_grav_water_potential_name[]   = "basal_gravitational_water_potential";
+  static constexpr char hydraulic_potential_gradient_norm_name[] = "hydraulic_potential Gradient Norm";
+  static constexpr char flow_factor_A_name[]                     = "flow_factor_A";
+  static constexpr char effective_pressure_name[]                = "effective_pressure";
+  static constexpr char ice_temperature_name[]                   = "ice_temperature";
+  static constexpr char ice_thickness_name[]                     = "ice_thickness";
+  static constexpr char surface_height_name[]                    = "surface_height";
+  static constexpr char beta_name[]                              = "beta";
+  static constexpr char melting_rate_name[]                      = "melting_rate";
+  static constexpr char surface_water_input_name[]               = "surface_water_input";
+  static constexpr char surface_mass_balance_name[]              = "surface_mass_balance";
+  static constexpr char geothermal_flux_name[]                   = "geothermal_flux";
+  static constexpr char water_discharge_name[]                   = "water_discharge";
+  static constexpr char sliding_velocity_name[]                  = "sliding_velocity";
+  static constexpr char basal_velocity_name[]                    = "basal_velocity";
+  static constexpr char basal_grav_water_potential_name[]        = "basal_gravitational_water_potential";
 };
 
 // ===================================== IMPLEMENTATION ======================================= //
@@ -571,6 +572,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   p->set<std::string> ("Water Thickness Variable Name",water_thickness_name);
   p->set<std::string> ("Hydraulic Potential Gradient Variable Name",hydraulic_potential_gradient_name);
+  p->set<std::string> ("Hydraulic Potential Gradient Norm Variable Name",hydraulic_potential_gradient_norm_name);
   p->set<std::string> ("Regularization Parameter Name","Regularization");
 
   p->set<Teuchos::ParameterList*> ("FELIX Hydrology",&params->sublist("FELIX Hydrology"));
@@ -642,6 +644,20 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = Teuchos::rcp(new PHAL::FieldFrobeniusNormParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
+  // ------- Hydraulic Potential Gradient Norm -------- //
+  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Velocity Norm"));
+
+  // Input
+  p->set<std::string>("Field Name",hydraulic_potential_gradient_name);
+  p->set<std::string>("Field Layout","Cell QuadPoint Gradient");
+  p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Field Norm"));
+
+  // Output
+  p->set<std::string>("Field Norm Name",hydraulic_potential_gradient_norm_name);
+
+  ev = Teuchos::rcp(new PHAL::FieldFrobeniusNorm<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  fm0.template registerEvaluator<EvalT>(ev);
+
   //--- Effective pressure calculation ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Effective Pressure"));
 
@@ -690,6 +706,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string> ("Water Discharge Variable Name", water_discharge_name);
   p->set<std::string> ("Effective Pressure Variable Name", effective_pressure_name);
   p->set<std::string> ("Water Thickness Variable Name", water_thickness_name);
+  p->set<std::string> ("Water Thickness Dot Variable Name", water_thickness_dot_name);
   p->set<std::string> ("Melting Rate Variable Name",melting_rate_name);
   p->set<std::string> ("Surface Water Input Variable Name",surface_water_input_name);
   p->set<std::string> ("Sliding Velocity Variable Name",sliding_velocity_name);
