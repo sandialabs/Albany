@@ -299,16 +299,19 @@ The current parallel implementation of the Schwarz method requires \verb+DTK+,
 which is tightly integrated to \trilinos{}, specifically \verb+STK+. Go to the
 the top-level \verb+LCM+ directory and create a symbolic link to the \verb+DTK+
 CMake fragment that resides in \verb+LCM/Albany/doc/LCM/build+, then download
-the \verb+DTK+ package from:
+the \verb+DTK+ package from
 
-\verb+https://github.com/ORNL-CEES/DataTransferKit/archive/2.0.0.tar.gz+.
+\begin{verbatim}
+https://github.com/ORNL-CEES/DataTransferKit/archive/2.0.0.tar.gz
+\end{verbatim}
 
-Expand the package inside the \trilinos{} directory and rename it:
+\noindent
+and place inside the \verb+~/LCM/Trilinos+ directory. Expand the package and
+rename it:
 \begin{verbatim}
 cd ~/LCM
 ln -s Albany/doc/LCM/build/dtk-frag.sh .
 cd Trilinos
-curl -L https://github.com/ORNL-CEES/DataTransferKit/archive/2.0.0.tar.gz -O
 tar zxf 2.0.0.tar.gz
 mv DataTransferKit-2.0.0 DataTransferKit
 \end{verbatim}
