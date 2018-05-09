@@ -158,6 +158,12 @@ SchwarzAlternating(
     }
     if (is_dynamic == true) {
       ALBANY_ASSERT(piro_params.isSublist("Tempus") == true, msg);
+      Teuchos::ParameterList &time_step_control_params = piro_params.sublist("Tempus").sublist("Tempus Integrator").sublist("Time Step Control");
+      std::string const integrator_step_type = time_step_control_params.get("Integrator Step Type", "Constant");
+      std::string const msg2{"Non-constant time-stepping through Tempus not supported with dynamic alternating Schwarz; \n"
+                             "In this case, variable time-stepping is handled within the Schwarz loop.\n"
+                             "Please rerun with 'Integrator Step Type: Constant' in 'Time Step Control' sublist.\n"};
+      ALBANY_ASSERT(integrator_step_type == "Constant", msg2); 
     }
 
     Teuchos::RCP<Albany::Application>
