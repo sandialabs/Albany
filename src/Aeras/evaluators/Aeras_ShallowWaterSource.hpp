@@ -13,7 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Sacado_ParameterAccessor.hpp" 
 #include "Albany_Layouts.hpp"
-#include "Aeras_EvaluatorUtilities.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace Aeras {
 /** \brief Finite Element Interpolation Evaluator
@@ -77,7 +77,7 @@ private:
   ScalarT SIGMA;
   ScalarT NPWR;
 
-  MDFieldMemoizer<Traits> memoizer_;          
+  PHAL::MDFieldMemoizer<Traits> memoizer_;          
           
   KOKKOS_INLINE_FUNCTION
   ScalarT dbubf(const ScalarT &lat) const;

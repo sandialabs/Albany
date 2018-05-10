@@ -13,7 +13,7 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Aeras_Layouts.hpp"
-#include "Aeras_EvaluatorUtilities.hpp"
+#include "PHAL_Utilities.hpp"
 
 #include "Intrepid2_CellTools.hpp"
 #include "Intrepid2_Cubature.hpp"
@@ -89,7 +89,7 @@ private:
                             const double rrearth=1) const;
   void initialize_grad(Kokkos::DynRankView<RealType, PHX::Device> &) const;
 
-  MDFieldMemoizer<Traits> memoizer_;
+  PHAL::MDFieldMemoizer<Traits> memoizer_;
 
   // Kokkos
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT

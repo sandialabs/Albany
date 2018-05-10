@@ -204,6 +204,28 @@ struct ExtendLayout
   }
 };
 
+/* In the case of a single workset, an MDField may not need to be recomputed.
+ * Currently, this memoizer (which is not really a true memoizer) checks to 
+ * see whether the workset index has changed in order to determine whether an 
+ * MDField has to be recomputed.
+ *
+ * WARNING: Use with caution. This class should not be used if an MDField
+ * changes within the lifetime of the object.
+ */
+template<typename Traits>
+class MDFieldMemoizer {
+  int prev_workset_index_;
+
+public:
+  MDFieldMemoizer () : prev_workset_index_(-1) {}
+
+  bool haveStoredData (typename Traits::EvalData workset) {
+    const bool stored = workset.wsIndex == prev_workset_index_;
+    prev_workset_index_ = workset.wsIndex;
+    return stored;
+  }
+};
+
 } // namespace PHAL
 
 // No ETI for these utilities at the moment.
