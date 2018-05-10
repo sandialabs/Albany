@@ -61,6 +61,10 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename ScalarT>
 void NodesToCellInterpolationBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
+#ifdef FELIX_FOSTOKES_MEMOIZER
+  if (memoizer.haveStoredData(workset)) return;
+#endif
+
   MeshScalarT meas;
   ScalarT field_qp;
 

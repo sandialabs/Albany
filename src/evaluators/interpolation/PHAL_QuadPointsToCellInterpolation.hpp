@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace PHAL
 {
@@ -43,6 +44,8 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   std::vector<PHX::DataLayout::size_type> qp_dims;
+
+  MDFieldMemoizer<Traits> memoizer;
 
   // Input:
   PHX::MDField<const ScalarT>                    field_qp;

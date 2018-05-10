@@ -75,6 +75,10 @@ template<typename EvalT, typename Traits>
 void MapToPhysicalFrame<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifdef FELIX_FOSTOKES_MEMOIZER
+  if (memoizer.haveStoredData(workset)) return;
+#endif
+
   if (intrepidBasis != Teuchos::null){ 
     Intrepid2::CellTools<PHX::Device>::mapToPhysicalFrame
          (coords_qp.get_view(), refPoints, coords_vertices.get_view(), intrepidBasis);

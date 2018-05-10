@@ -49,6 +49,10 @@ template<typename EvalT, typename Traits, typename ScalarT>
 void DOFInterpolationBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifdef FELIX_FOSTOKES_MEMOIZER
+  if (memoizer.haveStoredData(workset)) return;
+#endif
+
   //Intrepid2 version:
   // for (int i=0; i < val_qp.size() ; i++) val_qp[i] = 0.0;
   // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);

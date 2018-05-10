@@ -16,6 +16,7 @@
 #include "Intrepid2_Cubature.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace PHAL {
 /** \brief Finite Element Interpolation Evaluator
@@ -45,6 +46,8 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   int numQPs, numDim;
+
+  MDFieldMemoizer<Traits> memoizer;
 
   // Input:
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;

@@ -11,7 +11,9 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
 #include "Albany_Layouts.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace FELIX {
 /** \brief Finite Element Interpolation Evaluator
@@ -61,6 +63,8 @@ private:
   std::size_t numDims;
   std::size_t vecDimFO;
   std::size_t numNodes;
+
+  PHAL::MDFieldMemoizer<Traits> memoizer;
 
   //Glen's law parameters
   double n; 

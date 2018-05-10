@@ -454,6 +454,10 @@ evaluateFields(typename Traits::EvalData workset)
     force.deep_copy(0.0);
   }
   else if (bf_type == FO_INTERP_SURF_GRAD || bf_type == FO_SURF_GRAD_PROVIDED) {
+#ifdef FELIX_FOSTOKES_MEMOIZER
+   if (memoizer.haveStoredData(workset)) return;
+#endif
+
    R = stereographicMapList->get<double>("Earth Radius", 6371);
    x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
    y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);

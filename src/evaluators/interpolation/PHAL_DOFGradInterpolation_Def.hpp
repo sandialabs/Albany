@@ -49,7 +49,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 // *********************************************************************
-// Kokkos functor Reesidual
+// Kokkos functor Residual
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 #ifdef KOKKOS_OPTIMIZED
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -108,6 +108,10 @@ template<typename EvalT, typename Traits, typename ScalarT>
 void DOFGradInterpolationBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifdef FELIX_FOSTOKES_MEMOIZER
+  if (memoizer.haveStoredData(workset)) return;
+#endif
+
   //Intrepid2 Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
@@ -184,6 +188,7 @@ template<typename Traits>
 void FastSolutionGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
+
   //Intrepid2 Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);

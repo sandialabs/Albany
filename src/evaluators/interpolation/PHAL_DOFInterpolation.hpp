@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace PHAL {
 /** \brief Finite Element Interpolation Evaluator
@@ -49,6 +50,8 @@ private:
 
   std::size_t numNodes;
   std::size_t numQPs;
+
+  MDFieldMemoizer<Traits> memoizer;
 };
 
 // Some shortcut names

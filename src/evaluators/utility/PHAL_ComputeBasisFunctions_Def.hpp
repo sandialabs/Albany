@@ -86,6 +86,9 @@ template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifdef FELIX_FOSTOKES_MEMOIZER
+  if (memoizer.haveStoredData(workset)) return;
+#endif
 
   /** The allocated size of the Field Containers must currently
     * match the full workset size of the allocated PHX Fields,

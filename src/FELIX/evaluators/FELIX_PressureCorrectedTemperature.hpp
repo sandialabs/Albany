@@ -12,7 +12,9 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
 #include "Albany_Layouts.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace FELIX
 {
@@ -50,13 +52,13 @@ private:
   PHX::MDField<const Type,Cell> temp;
   PHX::MDField<const MeshScalarT,Cell,Dim> coord;
 
-
   // Output:
   PHX::MDField<Type,Cell> correctedTemp;
 
   const Teuchos::ParameterList& physicsList;
   double beta, rho_i, g, coeff;
 
+  PHAL::MDFieldMemoizer<Traits> memoizer;
 };
 
 } // Namespace FELIX

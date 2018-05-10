@@ -39,6 +39,10 @@ void LoadStateFieldBase<EvalT, Traits, ScalarType>::postRegistrationSetup(typena
 template<typename EvalT, typename Traits, typename ScalarType>
 void LoadStateFieldBase<EvalT, Traits, ScalarType>::evaluateFields(typename Traits::EvalData workset)
 {
+#ifdef FELIX_FOSTOKES_MEMOIZER
+  if (memoizer.haveStoredData(workset)) return;
+#endif
+
   //cout << "LoadStateFieldBase importing state " << stateName << " to field "
   //     << fieldName << " with size " << data.size() << endl;
 
@@ -77,6 +81,10 @@ void LoadStateField<EvalT, Traits>::postRegistrationSetup(typename Traits::Setup
 template<typename EvalT, typename Traits>
 void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
+#ifdef FELIX_FOSTOKES_MEMOIZER
+  if (memoizer.haveStoredData(workset)) return;
+#endif
+
   //cout << "LoadStateField importing state " << stateName << " to field " 
   //     << fieldName << " with size " << data.size() << endl;
 

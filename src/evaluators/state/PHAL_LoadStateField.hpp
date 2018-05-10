@@ -14,6 +14,8 @@
 
 #include "Teuchos_ParameterList.hpp"
 
+#include "PHAL_Utilities.hpp"
+
 namespace PHAL {
 /** \brief LoadStateField
 
@@ -34,10 +36,11 @@ public:
   
 private:
 
-
   PHX::MDField<ScalarT> data;
   std::string fieldName;
   std::string stateName;
+
+  MDFieldMemoizer<Traits> memoizer;
 };
 
 template<typename EvalT, typename Traits>
@@ -60,6 +63,8 @@ private:
   PHX::MDField<ParamScalarT> data;
   std::string fieldName;
   std::string stateName;
+
+  MDFieldMemoizer<Traits> memoizer;
 };
 
 

@@ -47,6 +47,10 @@ template<typename EvalT, typename Traits, typename Type>
 void PressureCorrectedTemperature<EvalT,Traits,Type, typename std::enable_if<std::is_convertible<typename EvalT::ParamScalarT, Type>::value>::type>::
 evaluateFields(typename Traits::EvalData d)
 {
+#ifdef FELIX_FOSTOKES_MEMOIZER
+  if (memoizer.haveStoredData(d)) return;
+#endif
+
   for (std::size_t cell = 0; cell < d.numCells; ++cell)
     correctedTemp(cell) = std::min(temp(cell) +coeff * (sHeight(cell) - coord(cell,2)), 273.15);
 }

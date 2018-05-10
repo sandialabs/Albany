@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace PHAL
 {
@@ -45,6 +46,8 @@ private:
   int vecDim;
 
   bool isVectorField;
+
+  MDFieldMemoizer<Traits> memoizer;
 
   // Input:
   PHX::MDField<const ScalarT>                       field_node;

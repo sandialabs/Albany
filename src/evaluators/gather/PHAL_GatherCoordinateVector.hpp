@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "PHAL_Utilities.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 
@@ -54,6 +55,8 @@ private:
   std::size_t worksetSize;
   std::size_t numVertices;
   std::size_t numDim;
+  
+  MDFieldMemoizer<Traits> memoizer;
 };
 
 }
