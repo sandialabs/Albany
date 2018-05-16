@@ -1416,10 +1416,10 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
 
     int field_dim = 1;
     if (!scalar) {
-      TEUCHOS_TEST_FOR_EXCEPTION(!params.isParameter("Vector Length"), std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(!params.isParameter("Vector Dim"), std::logic_error,
                                  "Error! In order to compute a vector field from a mathematical expression, "
-                                 "you must provide the parameter 'Vector Length'.\n");
-      field_dim = params.get<int>("Vector Length");
+                                 "you must provide the parameter 'Vector Dim'.\n");
+      field_dim = params.get<int>("Vector Dim");
     }
 
     // Get the expressions out of the parameter list.
@@ -1435,17 +1435,9 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
     TEUCHOS_TEST_FOR_EXCEPTION(num_expr<field_dim, Teuchos::Exceptions::InvalidParameter,
                                "Error! Input array for 'Field Expression' is too short. "
                                "Expected length >=" << field_dim << ". Got " << num_expr << " instead.\n");
-    panzer::Expr::Eval<double*,Kokkos::HostSpace> eval;
-    Teuchos::any result;
-
-    // Start by reading the parameters used in the field expression(s)
-    int num_params = num_expr - field_dim;
-    std::string expr_params;
-    for (int iparam=0; iparam<num_params; ++iparam) {
-      expr_params += expressions[iparam] + ";";
-    }
 
     *out << "  - Computing " << field_type << " field '" << field_name << "' from mathematical expression(s):";
+    int num_params = num_expr - field_dim;
     for (int idim=num_params; idim<num_expr; ++idim) {
       *out << " " << expressions[idim] << (idim==num_expr-1 ? "" : ";");
     }
@@ -1458,42 +1450,62 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
     }
     *out << " ... ";
 
-    // Now loop through the nodes, and read the components
+    // Extract coordinates of all nodes
     const auto& coordinates = *this->getCoordinatesField3d();
-    stk::mesh::EntityId gid;
-    LO lid;
-    double* values;
     double* xyz;
+    Kokkos::View<double*> x("x",entities.size()), y("y",entities.size()), z("z",entities.size());
+    Kokkos::View<double*>::HostMirror x_h = Kokkos::create_mirror_view(x);
+    Kokkos::View<double*>::HostMirror y_h = Kokkos::create_mirror_view(y);
+    Kokkos::View<double*>::HostMirror z_h = Kokkos::create_mirror_view(z);
+    for (int i(0); i<entities.size(); ++i)
+    {
+      xyz = stk::mesh::field_data(coordinates, entities[i]);
+
+      x_h(i) = xyz[0];
+      y_h(i) = xyz[1];
+      z_h(i) = xyz[2];
+    }
+    Kokkos::deep_copy(x,x_h);
+    Kokkos::deep_copy(y,y_h);
+    Kokkos::deep_copy(z,z_h);
+
+    // Set up the expression parser
+    panzer::Expr::Eval<double*> eval;
+    set_cmath_functions(eval);
+    eval.set("x",x);
+    eval.set("y",y);
+    eval.set("z",z);
+
+    // Start by reading the parameters used in the field expression(s)
+    for (int iparam=0; iparam<num_params; ++iparam) {
+      Teuchos::any result;
+      eval.read_string(result,expressions[iparam]+";","params");
+    }
+
+    // Parse and evaluate all the expressions
+    Teuchos::Array<Kokkos::View<const double*>::HostMirror> results_views_h(field_dim);
+    Teuchos::Array<Teuchos::any> results(field_dim);
+    for (int idim=0; idim<field_dim; ++idim) {
+      eval.read_string(results[idim],expressions[num_params+idim],"field expression");
+      auto result_view = Teuchos::any_cast<Kokkos::View<const double*>>(results[idim]);
+      results_views_h[idim] = Kokkos::create_mirror_view(result_view);
+      Kokkos::deep_copy(results_views_h[idim],result_view);
+    }
+
     stk::topology::rank_t entity_rank = stk::topology::NODE_RANK;
-    if (scalar) {
-      AbstractSTKFieldContainer::ScalarFieldType* field = metaData->get_field<AbstractSTKFieldContainer::ScalarFieldType> (entity_rank, field_name);
-      for (int i(0); i<entities.size(); ++i)
-      {
-        values = stk::mesh::field_data(*field, entities[i]);
-        xyz    = stk::mesh::field_data(coordinates, entities[i]);
+    double* values;
+    AbstractSTKFieldContainer::ScalarFieldType* scalar_field = metaData->get_field<AbstractSTKFieldContainer::ScalarFieldType> (entity_rank, field_name);
+    AbstractSTKFieldContainer::VectorFieldType* vector_field = metaData->get_field<AbstractSTKFieldContainer::VectorFieldType> (entity_rank, field_name);
 
-        eval.set("x",xyz[0]);
-        eval.set("y",xyz[1]);
-        eval.set("z",xyz[2]);
-        eval.read_string(result,expr_params+expressions[num_params],"");
-
-        values[0] = Teuchos::any_cast<Kokkos::View<const double,Kokkos::HostSpace>>(result)(0);
+    for (int i(0); i<entities.size(); ++i)
+    {
+      if (scalar) {
+        values = stk::mesh::field_data(*scalar_field, entities[i]);
+      } else {
+        values = stk::mesh::field_data(*vector_field, entities[i]);
       }
-    } else {
-      AbstractSTKFieldContainer::VectorFieldType* field = metaData->get_field<AbstractSTKFieldContainer::VectorFieldType> (entity_rank, field_name);
-      for (int i(0); i<entities.size(); ++i)
-      {
-        values = stk::mesh::field_data(*field, entities[i]);
-        xyz    = stk::mesh::field_data(coordinates, entities[i]);
-
-        eval.set("x",xyz[0]);
-        eval.set("y",xyz[1]);
-        eval.set("z",xyz[2]);
-        for (int idim=0; idim<field_dim; ++idim) {
-          eval.read_string(result,expressions[num_params+idim],"");
-
-          values[idim] = Teuchos::any_cast<Kokkos::View<const double,Kokkos::HostSpace>>(result)(0);
-        }
+      for (int idim=0; idim<field_dim; ++idim) {
+        values[idim] = results_views_h[idim](i);
       }
     }
 
