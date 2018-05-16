@@ -40,6 +40,8 @@ IF(ALBANY_HAVE_STK) # STK is needed for all these
 
 ENDIF(ALBANY_HAVE_STK)
 
+add_subdirectory(Utils)
+
 IF(ALBANY_SCOREC)
   add_subdirectory(Heat3DPUMI)
 ENDIF()
