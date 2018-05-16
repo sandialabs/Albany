@@ -60,8 +60,6 @@ if __name__ == "__main__":
 
     inFile.close()
 
-    print data
-
     outFileName = outFileLabel + 'quantities.txt'
     dataFile = open(outFileName, 'w')
 
