@@ -1357,7 +1357,7 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
     if (layered)
     {
       temp_str = field_name + "_NLC";
-      auto norm_layers_coords = fieldContainer->getMeshVectorStates()[temp_str];
+      auto& norm_layers_coords = fieldContainer->getMeshVectorStates()[temp_str];
       readLayeredScalarFileSerial (fname,serial_req_mvec,serial_map,norm_layers_coords,commT);
 
       // Broadcast the normalized layers coordinates
@@ -1374,7 +1374,7 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
     if (layered)
     {
       temp_str = field_name + "_NLC";
-      auto norm_layers_coords = fieldContainer->getMeshVectorStates()[temp_str];
+      auto& norm_layers_coords = fieldContainer->getMeshVectorStates()[temp_str];
       readLayeredVectorFileSerial (fname,serial_req_mvec,serial_map,norm_layers_coords,commT);
 
       // Broadcast the normalized layers coordinates
@@ -1427,7 +1427,7 @@ void Albany::GenericSTKMeshStruct::fillField (const std::string& field_name, con
       *out << "    - Filling layers normalized coordinates linearly in [0,1].\n";
 
       temp_str = field_name + "_NLC";
-      auto norm_layers_coords = fieldContainer->getMeshVectorStates()[temp_str];
+      auto& norm_layers_coords = fieldContainer->getMeshVectorStates()[temp_str];
       int size = norm_layers_coords.size();
       if (size==1) {
         norm_layers_coords[0] = 1.;
@@ -1465,7 +1465,7 @@ void Albany::GenericSTKMeshStruct::fillField (const std::string& field_name, con
       *out << "  - Filling " << field_type << " field '" << field_name << "' with constant value " << values << " and filling layers normalized coordinates linearly in [0,1].\n";
 
       temp_str = field_name + "_NLC";
-      auto norm_layers_coords = fieldContainer->getMeshVectorStates()[temp_str];
+      auto& norm_layers_coords = fieldContainer->getMeshVectorStates()[temp_str];
       int size = norm_layers_coords.size();
       if (size==1) {
         norm_layers_coords[0] = 1.;
