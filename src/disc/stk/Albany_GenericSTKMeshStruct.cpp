@@ -25,6 +25,11 @@
 
 #include <Albany_STKNodeSharing.hpp>
 
+// Expression reading
+#ifdef ALBANY_PANZER_EXPR_EVAL
+#include <Panzer_ExprEval_impl.hpp>
+#endif
+
 // Rebalance
 #ifdef ALBANY_ZOLTAN
 #include <percept/stk_rebalance/Rebalance.hpp>
@@ -205,8 +210,8 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   cdfOutputInterval = params->get<int>("NetCDF Write Interval", 1);
 
 
-  //get the type of transformation of STK mesh 
-  transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh 
+  //get the type of transformation of STK mesh
+  transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh
   felixAlpha = params->get("FELIX alpha", 0.0); //for FELIX problems
   felixL = params->get("FELIX L", 1.0); //for FELIX problems
   xShift = params->get("x-shift", 0.0);
@@ -1374,7 +1379,7 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
 
     if (layered)
     {
-      *out << "  - Discarding other info about " << field_type << " field " << field_name << " and filling it with constant value " << values << " and filling layers normalized coordinates linearly in [0,1].\n";
+      *out << "  - Discarding other info about " << field_type << " field " << field_name << " and filling it with constant value " << values << " and filling layers normalized coordinates linearly in [0,1] ... ";
 
       temp_str = field_name + "_NLC";
       norm_layers_coords = &fieldContainer->getMeshVectorStates()[temp_str];
@@ -1393,13 +1398,111 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
     }
     else
     {
-      *out << "  - Discarding other info about " << field_type << " field '" << field_name << "' and filling it with constant value " << values << "\n";
+      *out << "  - Discarding other info about " << field_type << " field '" << field_name << "' and filling it with constant value " << values << " ... ";
     }
     // For debug, we allow to fill the field with a given uniform value
     for (int iv(0); iv<serial_req_mvec->getNumVectors(); ++iv)
     {
       serial_req_mvec->getVectorNonConst(iv)->putScalar(values[iv]);
     }
+    *out << "done!\n";
+  }
+  else if (params.isParameter("Field Expression"))
+  {
+#ifdef ALBANY_PANZER_EXPR_EVAL
+    // Only nodal fields allowed, no layered fields
+    TEUCHOS_TEST_FOR_EXCEPTION(!node, std::logic_error, "Error! Only nodal fields can be computed from a mathematical expression.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(layered, std::logic_error, "Error! Layered fields cannot be computed from a mathematical expression.\n");
+
+    int field_dim = 1;
+    if (!scalar) {
+      TEUCHOS_TEST_FOR_EXCEPTION(!params.isParameter("Vector Length"), std::logic_error,
+                                 "Error! In order to compute a vector field from a mathematical expression, "
+                                 "you must provide the parameter 'Vector Length'.\n");
+      field_dim = params.get<int>("Vector Length");
+    }
+
+    // Get the expressions out of the parameter list.
+    Teuchos::Array<std::string> expressions = params.get<Teuchos::Array<std::string>>("Field Expression");
+
+    // NOTE: we need expressions to be of length AT LEAST equal to the field dimension.
+    //       If the length L is larger than the field dimension M, then the first L-M
+    //       strings are assumed to be coefficients needed for the field formula.
+    //       E.g.: if we have a field of dimension 2, one could write
+    //         <Parameter name="Field Expression" type="Array(string)" value="{a=1.5;b=-1;c=2;a*x^2+b*x+c;a*x+b*x+c}"/>
+
+    int num_expr = expressions.size();
+    TEUCHOS_TEST_FOR_EXCEPTION(num_expr<field_dim, Teuchos::Exceptions::InvalidParameter,
+                               "Error! Input array for 'Field Expression' is too short. "
+                               "Expected length >=" << field_dim << ". Got " << num_expr << " instead.\n");
+    panzer::Expr::Eval<double*,Kokkos::HostSpace> eval;
+    Teuchos::any result;
+
+    // Start by reading the parameters used in the field expression(s)
+    int num_params = num_expr - field_dim;
+    std::string expr_params;
+    for (int iparam=0; iparam<num_params; ++iparam) {
+      expr_params += expressions[iparam] + ";";
+    }
+
+    *out << "  - Computing " << field_type << " field '" << field_name << "' from mathematical expression(s):";
+    for (int idim=num_params; idim<num_expr; ++idim) {
+      *out << " " << expressions[idim] << (idim==num_expr-1 ? "" : ";");
+    }
+    if (num_params>0) {
+      *out << " (with";
+      for (int idim=0; idim<num_params; ++idim) {
+        *out << " " << expressions[idim] << (idim==num_params-1 ? "" : ";");
+      }
+      *out << ")";
+    }
+    *out << " ... ";
+
+    // Now loop through the nodes, and read the components
+    const auto& coordinates = *this->getCoordinatesField3d();
+    stk::mesh::EntityId gid;
+    LO lid;
+    double* values;
+    double* xyz;
+    stk::topology::rank_t entity_rank = stk::topology::NODE_RANK;
+    if (scalar) {
+      AbstractSTKFieldContainer::ScalarFieldType* field = metaData->get_field<AbstractSTKFieldContainer::ScalarFieldType> (entity_rank, field_name);
+      for (int i(0); i<entities.size(); ++i)
+      {
+        values = stk::mesh::field_data(*field, entities[i]);
+        xyz    = stk::mesh::field_data(coordinates, entities[i]);
+
+        eval.set("x",xyz[0]);
+        eval.set("y",xyz[1]);
+        eval.set("z",xyz[2]);
+        eval.read_string(result,expr_params+expressions[num_params],"");
+
+        values[0] = Teuchos::any_cast<Kokkos::View<const double,Kokkos::HostSpace>>(result)(0);
+      }
+    } else {
+      AbstractSTKFieldContainer::VectorFieldType* field = metaData->get_field<AbstractSTKFieldContainer::VectorFieldType> (entity_rank, field_name);
+      for (int i(0); i<entities.size(); ++i)
+      {
+        values = stk::mesh::field_data(*field, entities[i]);
+        xyz    = stk::mesh::field_data(coordinates, entities[i]);
+
+        eval.set("x",xyz[0]);
+        eval.set("y",xyz[1]);
+        eval.set("z",xyz[2]);
+        for (int idim=0; idim<field_dim; ++idim) {
+          eval.read_string(result,expressions[num_params+idim],"");
+
+          values[idim] = Teuchos::any_cast<Kokkos::View<const double,Kokkos::HostSpace>>(result)(0);
+        }
+      }
+    }
+
+    // We filled the stk fields directly, so we're done
+    *out << "done!\n";
+    return;
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Cannot read the field from a mathematical expression, since PanzerExprEval package was not found in Trilinos.\n");
+#endif
   }
   else
   {
@@ -1407,7 +1510,7 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
 
     std::string fname = params.get<std::string>("File Name");
 
-    *out << "  - Reading " << field_type << " field '" << field_name << "' from file '" << fname << "'...";
+    *out << "  - Reading " << field_type << " field '" << field_name << "' from file '" << fname << "' ... ";
     out->getOStream()->flush();
     // Read the input file and stuff it in the Tpetra multivector
 
@@ -1721,10 +1824,10 @@ void Albany::GenericSTKMeshStruct::checkFieldIsInMesh (const std::string& fname,
     }
     if(isFieldInMesh) {
        TEUCHOS_TEST_FOR_EXCEPTION (missing, std::runtime_error, "Error! The field '" << fname << "' in the mesh has different rank or dimensions than the ones specified\n"
-                                                        << " Rank required: " << entity_rank << ", rank of field in mesh: " << (*f)->entity_rank() << "\n"  
+                                                        << " Rank required: " << entity_rank << ", rank of field in mesh: " << (*f)->entity_rank() << "\n"
                                                         << " Dimension required: " << dim << ", dimension of field in mesh: " << (*f)->field_array_rank()+1 << "\n");
     }
-    else 
+    else
       TEUCHOS_TEST_FOR_EXCEPTION (missing, std::runtime_error, "Error! The field '" << fname << "' was not found in the mesh.\n"
                                                        << "  Probably it was not registered it in the state manager (which forwards it to the mesh)\n");
   }
@@ -1771,7 +1874,7 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<std::string>("Exodus SolutionDotDot DTK Name", "",
       "Name of solution_dotdot dtk written to Exodus file. Requires SEACAS build");
 #endif
-  validPL->set<bool>("Output DTK Field to Exodus", true, "Boolean indicating whether to write dtk field to exodus file");  
+  validPL->set<bool>("Output DTK Field to Exodus", true, "Boolean indicating whether to write dtk field to exodus file");
   validPL->set<int>("Exodus Write Interval", 3, "Step interval to write solution data to Exodus file");
   validPL->set<std::string>("NetCDF Output File Name", "",
       "Request NetCDF output to given file name. Requires SEACAS build");
@@ -1794,11 +1897,11 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<bool>("Write Coordinates to MatrixMarket", false, "Writing Coordinates to MatrixMarket File"); //for writing coordinates to matrix market file
   validPL->set<double>("FELIX alpha", 0.0, "Surface boundary inclination for FELIX problems (in degrees)"); //for FELIX problem that require tranformation of STK mesh
   validPL->set<double>("FELIX L", 1, "Domain length for FELIX problems"); //for FELIX problem that require tranformation of STK mesh
-  
-  validPL->set<double>("x-shift", 0.0, "Value by which to shift domain in positive x-direction"); 
-  validPL->set<double>("y-shift", 0.0, "Value by which to shift domain in positive y-direction"); 
+
+  validPL->set<double>("x-shift", 0.0, "Value by which to shift domain in positive x-direction");
+  validPL->set<double>("y-shift", 0.0, "Value by which to shift domain in positive y-direction");
   validPL->set<double>("z-shift", 0.0, "Value by which to shift domain in positive z-direction");
-  validPL->set<Teuchos::Array<double>>("Betas BL Transform", Teuchos::tuple<double>(0.0, 0.0, 0.0), "Beta parameters for Tanh Boundary Layer transform type");  
+  validPL->set<Teuchos::Array<double>>("Betas BL Transform", Teuchos::tuple<double>(0.0, 0.0, 0.0), "Beta parameters for Tanh Boundary Layer transform type");
 
   validPL->set<bool>("Contiguous IDs", "true", "Tells Ascii mesh reader is mesh has contiguous global IDs on 1 processor."); //for FELIX problem that require tranformation of STK mesh
 
