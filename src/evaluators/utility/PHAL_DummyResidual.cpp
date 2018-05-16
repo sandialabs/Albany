@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "FELIX_DummyResidual.hpp"
-#include "FELIX_DummyResidual_Def.hpp"
+#include "PHAL_DummyResidual.hpp"
+#include "PHAL_DummyResidual_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::DummyResidual)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DummyResidual)

@@ -10,16 +10,16 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
-#include "FELIX_PopulateMesh.hpp"
+#include "Albany_PopulateMesh.hpp"
 
-namespace FELIX
+namespace Albany
 {
 
 PopulateMesh::PopulateMesh (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                             const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                             const Teuchos::RCP<ParamLib>& paramLib_) :
-  Albany::AbstractProblem(params_, paramLib_),
-  discParams(discParams_), 
+  AbstractProblem(params_, paramLib_),
+  discParams(discParams_),
   use_sdbcs_(false)
 {
   neq = 1;
@@ -33,8 +33,8 @@ PopulateMesh::~PopulateMesh()
   // Nothing to be done here
 }
 
-void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>> meshSpecs,
-                                 Albany::StateManager& stateMgr)
+void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>> meshSpecs,
+                                 StateManager& stateMgr)
 {
   Intrepid2::DefaultCubatureFactory   cubFactory;
 
@@ -43,7 +43,7 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 
   cellEBName    = meshSpecs[0]->ebName;
   cellTopology  = Teuchos::rcp(new shards::CellTopology (cell_top_data));
-  cellBasis     = Albany::getIntrepid2Basis(*cell_top_data);
+  cellBasis     = getIntrepid2Basis(*cell_top_data);
   cellCubature  = cubFactory.create<PHX::Device, RealType, RealType>(*cellTopology, meshSpecs[0]->cubatureDegree);
 
   const int worksetSize     = meshSpecs[0]->worksetSize;
@@ -54,7 +54,7 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   const int numCellDim      = meshSpecs[0]->numDim;
   const int numCellVecDim   = -1;
 
-  dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numCellDim,numCellVecDim));
+  dl = Teuchos::rcp(new Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numCellDim,numCellVecDim));
 
   if (discParams->isSublist("Side Set Discretizations"))
   {
@@ -64,14 +64,14 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     {
       Teuchos::ParameterList& this_ss_pl = ss_disc_pl.sublist(ss_name);
 
-      const Albany::MeshSpecsStruct& ssMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(ss_name)[0];
+      const MeshSpecsStruct& ssMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(ss_name)[0];
 
       // Building also side structures
       const CellTopologyData * const side_top_data = &ssMeshSpecs.ctd;
 
       sideEBName[ss_name]   = meshSpecs[0]->ebName;
       sideTopology[ss_name] = Teuchos::rcp(new shards::CellTopology (side_top_data));
-      sideBasis[ss_name]    = Albany::getIntrepid2Basis(*side_top_data);
+      sideBasis[ss_name]    = getIntrepid2Basis(*side_top_data);
       sideCubature[ss_name] = cubFactory.create<PHX::Device, RealType, RealType>(*sideTopology[ss_name], ssMeshSpecs.cubatureDegree);
 
       const int numSideVertices = sideTopology[ss_name]->getNodeCount();
@@ -80,14 +80,14 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
       const int numSideQPs      = sideCubature[ss_name]->getNumPoints();
       const int numSideVecDim   = -1;
 
-      dl->side_layouts[ss_name] = Teuchos::rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes,numSideQPs,
-                                                                   numSideDim,numCellDim,numCellSides,numSideVecDim));
+      dl->side_layouts[ss_name] = Teuchos::rcp(new Layouts(worksetSize,numSideVertices,numSideNodes,numSideQPs,
+                                                           numSideDim,numCellDim,numCellSides,numSideVecDim));
     }
   }
 
   // ---------------------------- Registering state variables ------------------------- //
 
-  Albany::StateStruct::MeshFieldEntity entity;
+  StateStruct::MeshFieldEntity entity;
   Teuchos::RCP<Teuchos::ParameterList> p;
 
   std::string fname, flayout;
@@ -95,7 +95,7 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   int num_fields = req_fields_info.get<int>("Number Of Fields",0);
   for (int ifield=0; ifield<num_fields; ++ifield)
   {
-    const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(Albany::strint("Field", ifield));
+    const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(strint("Field", ifield));
 
     fname   = thisFieldList.get<std::string>("Field Name");
     flayout = thisFieldList.get<std::string>("Field Type");
@@ -104,8 +104,7 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     bool is_vector  = flayout.find("Vector")!=std::string::npos;
     bool is_layered = flayout.find("Layered")!=std::string::npos;
 
-    entity = is_nodal ? Albany::StateStruct::NodalDataToElemNode
-                      : Albany::StateStruct::ElemData;
+    entity = is_nodal ? StateStruct::NodalDataToElemNode : StateStruct::ElemData;
 
     // Incrementally build the layout
     Teuchos::RCP<PHX::DataLayout> layout;
@@ -147,13 +146,13 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     {
       Teuchos::ParameterList& this_ss_pl = ss_disc_pl.sublist(ss_name);
       Teuchos::ParameterList& req_fields_info = this_ss_pl.sublist("Required Fields Info");
-      Teuchos::RCP<Albany::Layouts> sdl = dl->side_layouts[ss_name];
+      Teuchos::RCP<Layouts> sdl = dl->side_layouts[ss_name];
 
       int num_fields = req_fields_info.get<int>("Number Of Fields",0);
 
       for (int ifield=0; ifield<num_fields; ++ifield)
       {
-        const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(Albany::strint("Field", ifield));
+        const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(strint("Field", ifield));
 
         fname   = thisFieldList.get<std::string>("Field Name");
         flayout = thisFieldList.get<std::string>("Field Type");
@@ -162,8 +161,7 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
         bool is_vector  = flayout.find("Vector")!=std::string::npos;
         bool is_layered = flayout.find("Layered")!=std::string::npos;
 
-        entity = is_nodal ? Albany::StateStruct::NodalDataToElemNode
-                          : Albany::StateStruct::ElemData;
+        entity = is_nodal ? StateStruct::NodalDataToElemNode : StateStruct::ElemData;
 
         // Incrementally build the layout
         Teuchos::RCP<PHX::DataLayout> layout;
@@ -204,19 +202,19 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1);
   fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM,Teuchos::null);
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM,Teuchos::null);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
 PopulateMesh::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                               const Albany::MeshSpecsStruct& meshSpecs,
-                               Albany::StateManager& stateMgr,
-                               Albany::FieldManagerChoice fmchoice,
+                               const MeshSpecsStruct& meshSpecs,
+                               StateManager& stateMgr,
+                               FieldManagerChoice fmchoice,
                                const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  Albany::ConstructEvaluatorsOp<PopulateMesh> op(
+  ConstructEvaluatorsOp<PopulateMesh> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
@@ -229,4 +227,4 @@ PopulateMesh::getValidProblemParameters () const
   return validPL;
 }
 
-} // Namespace FELIX
+} // Namespace Albany

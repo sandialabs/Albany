@@ -31,7 +31,7 @@
 #include "FELIX_ParamEnum.hpp"
 
 #include "FELIX_EffectivePressure.hpp"
-#include "FELIX_DummyResidual.hpp"
+#include "PHAL_DummyResidual.hpp"
 #include "PHAL_FieldFrobeniusNorm.hpp"
 #include "FELIX_BasalFrictionCoefficient.hpp"
 
@@ -293,7 +293,7 @@ FELIX::SchoofFit::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm
   //Output
   p->set<std::string>("Residual Variable Name", resid_names[0]);
 
-  ev = Teuchos::rcp(new FELIX::DummyResidual<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  ev = Teuchos::rcp(new PHAL::DummyResidual<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   //--- Sliding velocity calculation ---//
