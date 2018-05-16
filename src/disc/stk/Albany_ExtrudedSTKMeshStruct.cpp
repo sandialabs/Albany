@@ -598,6 +598,9 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   extrudeBasalFields (nodes2D,cells2D,maxGlobalElements2dId,maxGlobalVertices2dId);
   interpolateBasalLayeredFields (nodes2D,cells2D,levelsNormalizedThickness,maxGlobalElements2dId,maxGlobalVertices2dId);
 
+  // Loading required input fields from file
+  this->loadRequiredInputFields (req,comm);
+
   //Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
   fieldAndBulkDataSet = true;
