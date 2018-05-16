@@ -1108,12 +1108,43 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
   for (int i = 0; i < elems.size(); ++i)
     elemIndices[i] = bulkData->identifier(elems[i]) - 1;
 
-
   // Creating the serial and parallel node maps
   const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
   Teuchos::RCP<const Tpetra_Map> nodes_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode> (nodeIndices, commT, KokkosClassic::Details::getNode<KokkosNode>());
   Teuchos::RCP<const Tpetra_Map> elems_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode> (elemIndices, commT, KokkosClassic::Details::getNode<KokkosNode>());
+
+  // Check whether we need the serial map or not. The only scenario where we DO need it is if we are
+  // loading a field from an ASCII file. So let's check the fields info to see if that's the case.
+  Teuchos::ParameterList dummyList;
+  Teuchos::ParameterList* req_fields_info;
+  if (params->isSublist("Required Fields Info")) {
+    req_fields_info = &params->sublist("Required Fields Info");
+  } else {
+    req_fields_info = &dummyList;
+  }
+  int num_fields = req_fields_info->get<int>("Number Of Fields",0);
+  bool node_field_ascii_loads = false;
+  bool elem_field_ascii_loads = false;
+  std::string fname, fusage, ftype, forigin;
+  for (int ifield=0; ifield<num_fields; ++ifield) {
+    std::stringstream ss;
+    ss << "Field " << ifield;
+    Teuchos::ParameterList& fparams = req_fields_info->sublist(ss.str());
+
+    fusage = fparams.get<std::string>("Field Usage", "Input");
+    ftype  = fparams.get<std::string>("Field Type","INVALID");
+    if (fusage == "Input" || fusage == "Input-Output") {
+      forigin = fparams.get<std::string>("Field Origin","INVALID");
+      if (forigin=="File" && fparams.isParameter("File Name")) {
+        if (ftype.find("Node")!=std::string::npos) {
+          node_field_ascii_loads = true;
+        } else if (ftype.find("Elem")!=std::string::npos) {
+          elem_field_ascii_loads = true;
+        }
+      }
+    }
+  }
 
   // NOTE: the serial map cannot be created linearly, with GIDs from 0 to numGlobalNodes/Elems, since
   //       this may be a boundary mesh, and the GIDs may not start from 0, nor be contiguous.
@@ -1121,100 +1152,22 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
   //       of the GID, we read the serial input files in the correct order), and we can't sort them
   //       once the map is created, so we cannot use the Tpetra utility gatherMap.
 
-  int num_my_nodes = nodes_map->getNodeNumElements();
-  int num_my_elems = elems_map->getNodeNumElements();
-
-  // Note: I tried to use gather, but the number of elements on each process may be different.
-  int num_proc = commT->getSize();
-  int my_rank  = commT->getRank();
-  Tpetra_GO num_global_nodes, num_global_elems;
-  Teuchos::Array<Tpetra_GO> allNodesToRoot(0),allElemsToRoot(0);
-  for (int pid=0; pid<num_proc; ++pid)
-  {
-    int nb_n = num_my_nodes;
-    int nb_e = num_my_elems;
-    Teuchos::broadcast(*commT,pid,1,&nb_n);
-    Teuchos::broadcast(*commT,pid,1,&nb_e);
-
-    Tpetra_GO *tmp_nodes, *tmp_elems;
-    if (pid==my_rank)
-    {
-      tmp_nodes = nodeIndices.getRawPtr();
-      tmp_elems = elemIndices.getRawPtr();
-    }
-    else
-    {
-      tmp_nodes = new Tpetra_GO[nb_n];
-      tmp_elems = new Tpetra_GO[nb_e];
-    }
-
-    Teuchos::broadcast(*commT,pid,nb_n,tmp_nodes);
-    Teuchos::broadcast(*commT,pid,nb_e,tmp_elems);
-    if (my_rank==0)
-    {
-      allNodesToRoot.insert(allNodesToRoot.begin(),tmp_nodes,tmp_nodes+nb_n);
-      allElemsToRoot.insert(allElemsToRoot.begin(),tmp_elems,tmp_elems+nb_e);
-    }
-
-    if (pid!=my_rank)
-    {
-      delete[] tmp_nodes;
-      delete[] tmp_elems;
-    }
+  Teuchos::RCP<const Tpetra_Map> serial_nodes_map = nodes_map;
+  Teuchos::RCP<const Tpetra_Map> serial_elems_map = elems_map;
+  if (node_field_ascii_loads) {
+    serial_nodes_map = create_root_map(nodeIndices,commT);
   }
-
-  // Sorting
-  std::sort(allNodesToRoot.begin(),allNodesToRoot.end());
-  std::sort(allElemsToRoot.begin(),allElemsToRoot.end());
-
-  // Removing duplicates (should do nothing for the elements)
-  auto it_nodes = std::unique(allNodesToRoot.begin(),allNodesToRoot.end());
-  auto it_elems = std::unique(allElemsToRoot.begin(),allElemsToRoot.end());
-  allNodesToRoot.resize(std::distance(allNodesToRoot.begin(),it_nodes));    // Resize to the actual number of unique nodes
-  allElemsToRoot.resize(std::distance(allElemsToRoot.begin(),it_elems));    // Resize to the actual number of unique elements
-
-  Tpetra_GO node_base, elem_base;
-  if (my_rank==0)
-  {
-    node_base = *std::min_element(allNodesToRoot.begin(), allNodesToRoot.end());
-    elem_base = *std::min_element(allElemsToRoot.begin(), allElemsToRoot.end());
+  if (elem_field_ascii_loads) {
+    serial_elems_map = create_root_map(elemIndices,commT);
   }
-  Teuchos::broadcast(*commT,0,1,&node_base);
-  Teuchos::broadcast(*commT,0,1,&elem_base);
-
-  num_global_nodes = allNodesToRoot.size();
-  num_global_elems = allElemsToRoot.size();
-  Teuchos::broadcast(*commT,0,1,&num_global_nodes);
-  Teuchos::broadcast(*commT,0,1,&num_global_elems);
-
-  Teuchos::RCP<const Tpetra_Map> serial_nodes_map, serial_elems_map;
-  serial_nodes_map = Teuchos::rcp (new Tpetra_Map (num_global_nodes,allNodesToRoot(),node_base,commT,KokkosClassic::Details::getNode<KokkosNode>()));
-  serial_elems_map = Teuchos::rcp (new Tpetra_Map (num_global_elems,allElemsToRoot(),elem_base,commT,KokkosClassic::Details::getNode<KokkosNode>()));
-
-  //Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Tpetra::Details::computeGatherMap(nodes_map,out);
-  //Teuchos::RCP<const Tpetra_Map> serial_elems_map = Tpetra::Details::computeGatherMap(elems_map,out);
-
   // Creating the Tpetra_Import object (to transfer from serial to parallel vectors)
   Tpetra_Import importOperatorNode (serial_nodes_map, nodes_map);
   Tpetra_Import importOperatorElem (serial_elems_map, elems_map);
-
-  Teuchos::ParameterList dummyList;
-  Teuchos::ParameterList* req_fields_info;
-  if (params->isSublist("Required Fields Info"))
-  {
-    req_fields_info = &params->sublist("Required Fields Info");
-  }
-  else
-  {
-    req_fields_info = &dummyList;
-  }
 
   std::set<std::string> missing;
   for (auto rname : req)
     missing.insert(rname);
 
-  std::string fname, fusage, ftype, forigin;
-  int num_fields = req_fields_info->get<int>("Number Of Fields",0);
   for (int ifield=0; ifield<num_fields; ++ifield)
   {
     std::stringstream ss;
@@ -1231,65 +1184,134 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     {
       *out << "  - Skipping field '" << fname << "' since it's listed as output. Make sure there's an evaluator set to save it!\n";
       continue;
-    }
-    else if (fusage == "Unused")
-    {
+    } else if (fusage == "Unused") {
       *out << "  - Skipping field '" << fname << "' since it's listed as unused.\n";
       continue;
-    }
-    else
+    } else {
       TEUCHOS_TEST_FOR_EXCEPTION (fusage!="Input" && fusage!="Input-Output", Teuchos::Exceptions::InvalidParameter,
                                   "Error! 'Field Usage' for field '" << fname << "' must be one of 'Input', 'Output', 'Input-Output' or 'Unused'.\n");
+    }
 
     forigin = fparams.get<std::string>("Field Origin","INVALID");
 
-    if (forigin=="Mesh")
-    {
+    if (forigin=="Mesh") {
       *out << "  - Skipping field '" << fname << "' since it's listed as present in the mesh.\n";
       continue;
-    }
-    else
+    } else {
       TEUCHOS_TEST_FOR_EXCEPTION (forigin!="File", Teuchos::Exceptions::InvalidParameter,
                                   "Error! 'Field Origin' for field '" << fname << "' must be one of 'File' or 'Mesh'.\n");
+    }
+
+    // Detect load type
+    bool load_ascii = fparams.isParameter("File Name");
+    bool load_math_expr = fparams.isParameter("Field Expression");
+    bool load_value = fparams.isParameter("Field Value") || fparams.isParameter("Random Value");
+    TEUCHOS_TEST_FOR_EXCEPTION ( load_ascii && load_math_expr, std::logic_error, "Error! You cannot specify both 'File Name' and 'Field Expression' for loading a field.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION ( load_ascii && load_value,     std::logic_error, "Error! You cannot specify both 'File Name' and 'Field Value' (or 'Random Value') for loading a field.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION ( load_math_expr && load_value, std::logic_error, "Error! You cannot specify both 'Field Expression' and 'Field Value' (or 'Random Value') for loading a field.\n");
 
     // Depending on the input field type, we need to use different pointers/importers/vectors
+    bool nodal, scalar, layered;
+    Tpetra_Import* importOperator;
+    std::vector<stk::mesh::Entity>* entities;
     if (ftype == "Node Scalar")
     {
-      loadField (fname, fparams, importOperatorNode, nodes, commT, true, true, false);
-    }
-    else if (ftype == "Elem Scalar")
-    {
-      loadField (fname, fparams, importOperatorElem, elems, commT, false, true, false);
-    }
-    else if (ftype == "Node Vector")
-    {
-      loadField (fname, fparams, importOperatorNode, nodes, commT, true, false, false);
-    }
-    else if (ftype == "Elem Vector")
-    {
-      loadField (fname, fparams, importOperatorElem, elems, commT, false, false, false);
-    }
-    else if (ftype == "Node Layered Scalar")
-    {
-      loadField (fname, fparams, importOperatorNode, nodes, commT, true, true, true);
-    }
-    else if (ftype == "Elem Layered Scalar")
-    {
-      loadField (fname, fparams, importOperatorElem, elems, commT, false, true, true);
-    }
-    else if (ftype == "Node Layered Vector")
-    {
-      loadField (fname, fparams, importOperatorNode, nodes, commT, true, false, true);
-    }
-    else if (ftype == "Elem Layered Vector")
-    {
-      loadField (fname, fparams, importOperatorElem, elems, commT, false, false, true);
-    }
-    else
-    {
+      nodal = true; scalar = true; layered = false;
+      importOperator = &importOperatorNode;
+      entities = &nodes;
+    } else if (ftype == "Elem Scalar") {
+      nodal = false; scalar = true; layered = false;
+      importOperator = &importOperatorElem;
+      entities = &elems;
+    } else if (ftype == "Node Vector") {
+      nodal = true; scalar = false; layered = false;
+      importOperator = &importOperatorNode;
+      entities = &nodes;
+    } else if (ftype == "Elem Vector") {
+      nodal = false; scalar = false; layered = false;
+      importOperator = &importOperatorElem;
+      entities = &elems;
+    } else if (ftype == "Node Layered Scalar") {
+      nodal = true; scalar = true; layered = true;
+      importOperator = &importOperatorNode;
+      entities = &nodes;
+    } else if (ftype == "Elem Layered Scalar") {
+      nodal = false; scalar = true; layered = true;
+      importOperator = &importOperatorElem;
+      entities = &elems;
+    } else if (ftype == "Node Layered Vector") {
+      nodal = true; scalar = false; layered = true;
+      importOperator = &importOperatorNode;
+      entities = &nodes;
+    } else if (ftype == "Elem Layered Vector") {
+      nodal = false; scalar = false; layered = true;
+      importOperator = &importOperatorElem;
+      entities = &elems;
+    } else {
       TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
                                   "Error! Field '" << fname << "' has type '" << ftype << "'.\n" <<
                                   "Unfortunately, the only supported field types so fare are 'Node/Elem Scalar/Vector' and 'Node/Elem Layered Scalar/Vector'.\n");
+    }
+
+    Teuchos::RCP<Tpetra_MultiVector> field_mv;
+    if (load_ascii) {
+      loadField (fname, fparams, field_mv, *importOperator, *entities, commT, nodal, scalar, layered, out);
+    } else if (load_value) {
+      fillField (fname, fparams, field_mv, importOperator->getTargetMap(), *entities, nodal, scalar, layered, out);
+    } else if (load_math_expr) {
+      computeField (fname, fparams, field_mv, importOperator->getTargetMap(), *entities, nodal, scalar, layered, out);
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! No means of loading the field were specified.\n");
+    }
+
+    Teuchos::Array<Teuchos::ArrayRCP<const ST> > field_mv_view(field_mv->getNumVectors());
+    for (int i(0); i<field_mv->getNumVectors(); ++i) {
+      field_mv_view[i] = field_mv->getVector(i)->get1dView();
+    }
+
+    //Now we have to stuff the vector in the mesh data
+    typedef AbstractSTKFieldContainer::ScalarFieldType  SFT;
+    typedef AbstractSTKFieldContainer::VectorFieldType  VFT;
+    typedef AbstractSTKFieldContainer::TensorFieldType  TFT;
+
+    SFT* scalar_field = 0;
+    VFT* vector_field = 0;
+    TFT* tensor_field = 0;
+
+    stk::topology::rank_t entity_rank = nodal ? stk::topology::NODE_RANK : stk::topology::ELEM_RANK;
+
+    if (scalar && !layered) {
+      // Purely scalar field
+      scalar_field = metaData->get_field<SFT> (entity_rank, fname);
+    } else if ( scalar==layered ) {
+      // Either (non-layered) vector or layered scalar field
+      vector_field = metaData->get_field<VFT> (entity_rank, fname);
+    } else {
+      // Layered vector field
+      tensor_field = metaData->get_field<TFT> (entity_rank, fname);
+    }
+
+    TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==0 && vector_field==0 && tensor_field==0, std::logic_error,
+                                "Error! Field " << fname << " not present (perhaps is not '" << ftype << "'?).\n");
+
+    stk::mesh::EntityId gid;
+    LO lid;
+    double* values;
+    for (int i(0); i<entities->size(); ++i)
+    {
+      if (scalar_field!=0) {
+        values = stk::mesh::field_data(*scalar_field, (*entities)[i]);
+      } else if (vector_field!=0) {
+        values = stk::mesh::field_data(*vector_field, (*entities)[i]);
+      } else {
+        values = stk::mesh::field_data(*tensor_field, (*entities)[i]);
+      }
+
+      gid    = bulkData->identifier((*entities)[i]) - 1;
+      lid    = importOperator->getTargetMap()->getLocalElement((GO)(gid));
+      for (int iDim(0); iDim<field_mv_view.size(); ++iDim) {
+        values[iDim] = field_mv_view[iDim][lid];
+      }
     }
   }
 
@@ -1306,19 +1328,15 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
 }
 
 void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, const Teuchos::ParameterList& params,
-                                              const Tpetra_Import& importOperator, const std::vector<stk::mesh::Entity>& entities,
+                                              Teuchos::RCP<Tpetra_MultiVector>& field_mv, const Tpetra_Import& importOperator,
+                                              const std::vector<stk::mesh::Entity>& entities,
                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                              bool node, bool scalar, bool layered)
+                                              bool node, bool scalar, bool layered,
+                                              const Teuchos::RCP<Teuchos::FancyOStream> out)
 {
-  std::vector<double>* norm_layers_coords;
-
-  // Getting the serial and (possibly) parallel maps
+  // Getting the (possibly) serial and (possibly) parallel maps
   const Teuchos::RCP<const Tpetra_Map> serial_map = importOperator.getSourceMap();
   const Teuchos::RCP<const Tpetra_Map> map = importOperator.getTargetMap();
-
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
-  out->setProcRankAndSize(commT->getRank(), commT->getSize());
-  out->setOutputToRootOnly(0);
 
   std::string temp_str;
   std::string field_type = (node ? "Node" : "Elem");
@@ -1328,309 +1346,245 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
   // The serial Tpetra service multivector
   Teuchos::RCP<Tpetra_MultiVector> serial_req_mvec;
 
-  if (params.isParameter("Random Value"))
-  {
-    Teuchos::Array<std::string> randomize = params.get<Teuchos::Array<std::string> >("Random Value");
-    serial_req_mvec = Teuchos::rcp(new Tpetra_MultiVector(serial_map,randomize.size()));
+  std::string fname = params.get<std::string>("File Name");
 
-    *out << "  - Discarding other info about " << field_type << " field " << field_name << " and filling it with random values.\n";
+  *out << "  - Reading " << field_type << " field '" << field_name << "' from file '" << fname << "' ... ";
+  out->getOStream()->flush();
+  // Read the input file and stuff it in the Tpetra multivector
+
+  if (scalar)
+  {
     if (layered)
     {
+      temp_str = field_name + "_NLC";
+      auto norm_layers_coords = fieldContainer->getMeshVectorStates()[temp_str];
+      readLayeredScalarFileSerial (fname,serial_req_mvec,serial_map,norm_layers_coords,commT);
+
+      // Broadcast the normalized layers coordinates
+      int size = norm_layers_coords.size();
+      Teuchos::broadcast(*commT,0,size,norm_layers_coords.data());
+    }
+    else
+    {
+      readScalarFileSerial (fname,serial_req_mvec,serial_map,commT);
+    }
+  }
+  else
+  {
+    if (layered)
+    {
+      temp_str = field_name + "_NLC";
+      auto norm_layers_coords = fieldContainer->getMeshVectorStates()[temp_str];
+      readLayeredVectorFileSerial (fname,serial_req_mvec,serial_map,norm_layers_coords,commT);
+
+      // Broadcast the normalized layers coordinates
+      int size = norm_layers_coords.size();
+      Teuchos::broadcast(*commT,0,size,norm_layers_coords.data());
+    }
+    else
+    {
+      readVectorFileSerial (fname,serial_req_mvec,serial_map,commT);
+    }
+  }
+  *out << "done!\n";
+
+  if (params.isParameter("Scale Factor"))
+  {
+    Teuchos::Array<double> scale_factors = params.get<Teuchos::Array<double> >("Scale Factor");
+    TEUCHOS_TEST_FOR_EXCEPTION (scale_factors.size()!=serial_req_mvec->getNumVectors(), Teuchos::Exceptions::InvalidParameter,
+                                "Error! The given scale factors vector size does not match the field dimension.\n");
+    *out << "   - Scaling " << field_type << " field '" << field_name << "' with scaling factors [" << scale_factors[0];
+    for (int i=1; i<scale_factors.size(); ++i)
+      *out << " " << scale_factors[i];
+    *out << "]\n";
+
+    serial_req_mvec->scale (scale_factors);
+  }
+
+  // Fill the (possibly) parallel vector
+  field_mv = Teuchos::rcp(new Tpetra_MultiVector(map,serial_req_mvec->getNumVectors()));
+  field_mv->doImport(*serial_req_mvec,importOperator,Tpetra::INSERT);
+}
+
+void Albany::GenericSTKMeshStruct::fillField (const std::string& field_name, const Teuchos::ParameterList& params,
+                                              Teuchos::RCP<Tpetra_MultiVector>& field_mv, const Teuchos::RCP<const Tpetra_Map> entities_map,
+                                              const std::vector<stk::mesh::Entity>& entities,
+                                              bool nodal, bool scalar, bool layered,
+                                              const Teuchos::RCP<Teuchos::FancyOStream> out)
+{
+  std::string temp_str;
+  std::string field_type = (nodal ? "Node" : "Elem");
+  field_type += (layered ? " Layered" : "");
+  field_type += (scalar ? " Scalar" : " Vector");
+
+  if (params.isParameter("Random Value")) {
+    *out << "  - Filling " << field_type << " field '" << field_name << "' with random values.\n";
+
+    Teuchos::Array<std::string> randomize = params.get<Teuchos::Array<std::string> >("Random Value");
+    field_mv = Teuchos::rcp(new Tpetra_MultiVector(entities_map,randomize.size()));
+
+    if (layered) {
       *out << "    - Filling layers normalized coordinates linearly in [0,1].\n";
 
       temp_str = field_name + "_NLC";
-      norm_layers_coords = &fieldContainer->getMeshVectorStates()[temp_str];
-      int size = norm_layers_coords->size();
-      if (size==1)
-        (*norm_layers_coords)[0] = 1.;
-      else
-      {
+      auto norm_layers_coords = fieldContainer->getMeshVectorStates()[temp_str];
+      int size = norm_layers_coords.size();
+      if (size==1) {
+        norm_layers_coords[0] = 1.;
+      } else {
         int n_int = size-1;
         double dx = 1./n_int;
-        (*norm_layers_coords)[0] = 0.;
-        for (int i=0; i<n_int; ++i)
-          (*norm_layers_coords)[i+1] = (*norm_layers_coords)[i]+dx;
+        norm_layers_coords[0] = 0.;
+        for (int i=0; i<n_int; ++i) {
+          norm_layers_coords[i+1] = norm_layers_coords[i]+dx;
+        }
       }
     }
-
-    serial_req_mvec->randomize();
 
     // If there are components that were marked to not be randomized,
     // we look for the parameter 'Field Value' and use the corresponding entry.
     // If there is no such parameter, we fill the non random entries with zeroes.
     Teuchos::Array<double> values;
-    if (params.isParameter("Field Value"))
+    if (params.isParameter("Field Value")) {
       values = params.get<Teuchos::Array<double> >("Field Value");
-    else
+    } else {
       values.resize(randomize.size(),0.);
+    }
 
-    for (int iv=0; iv<randomize.size(); ++iv)
-      if (randomize[iv]=="false" || randomize[iv]=="no")
-      {
+    for (int iv=0; iv<randomize.size(); ++iv) {
+      if (randomize[iv]=="false" || randomize[iv]=="no") {
         *out << "    - Using constant value " << values[iv] << " for component " << iv << ", which was marked as not random.\n";
-        serial_req_mvec->getVectorNonConst(iv)->putScalar(values[iv]);
+        field_mv->getVectorNonConst(iv)->putScalar(values[iv]);
       }
-  }
-  else if (params.isParameter("Field Value"))
-  {
+    }
+  } else if (params.isParameter("Field Value")) {
     Teuchos::Array<double> values = params.get<Teuchos::Array<double> >("Field Value");
+    field_mv = Teuchos::rcp(new Tpetra_MultiVector(entities_map,values.size()));
 
-    serial_req_mvec = Teuchos::rcp(new Tpetra_MultiVector(serial_map,values.size()));
-
-    if (layered)
-    {
-      *out << "  - Discarding other info about " << field_type << " field " << field_name << " and filling it with constant value " << values << " and filling layers normalized coordinates linearly in [0,1] ... ";
+    if (layered) {
+      *out << "  - Filling " << field_type << " field '" << field_name << "' with constant value " << values << " and filling layers normalized coordinates linearly in [0,1].\n";
 
       temp_str = field_name + "_NLC";
-      norm_layers_coords = &fieldContainer->getMeshVectorStates()[temp_str];
-      int size = norm_layers_coords->size();
-      if (size==1)
-        (*norm_layers_coords)[0] = 1.;
-      else
-      {
+      auto norm_layers_coords = fieldContainer->getMeshVectorStates()[temp_str];
+      int size = norm_layers_coords.size();
+      if (size==1) {
+        norm_layers_coords[0] = 1.;
+      } else {
         int n_int = size-1;
         double dx = 1./n_int;
-        (*norm_layers_coords)[0] = 0.;
-        for (int i=0; i<n_int; ++i)
-          (*norm_layers_coords)[i+1] = (*norm_layers_coords)[i]+dx;
-
+        norm_layers_coords[0] = 0.;
+        for (int i=0; i<n_int; ++i) {
+          norm_layers_coords[i+1] = norm_layers_coords[i]+dx;
+        }
       }
+    } else {
+      *out << "  - Filling " << field_type << " field '" << field_name << "' with constant value " << values << ".\n";
     }
-    else
-    {
-      *out << "  - Discarding other info about " << field_type << " field '" << field_name << "' and filling it with constant value " << values << " ... ";
+
+    for (int iv(0); iv<field_mv->getNumVectors(); ++iv) {
+      field_mv->getVectorNonConst(iv)->putScalar(values[iv]);
     }
-    // For debug, we allow to fill the field with a given uniform value
-    for (int iv(0); iv<serial_req_mvec->getNumVectors(); ++iv)
-    {
-      serial_req_mvec->getVectorNonConst(iv)->putScalar(values[iv]);
-    }
-    *out << "done!\n";
   }
-  else if (params.isParameter("Field Expression"))
-  {
+}
+
+void Albany::GenericSTKMeshStruct::computeField (const std::string& field_name, const Teuchos::ParameterList& params,
+                                                 Teuchos::RCP<Tpetra_MultiVector>& field_mv, const Teuchos::RCP<const Tpetra_Map> entities_map,
+                                                 const std::vector<stk::mesh::Entity>& entities,
+                                                 bool nodal, bool scalar, bool layered,
+                                                 const Teuchos::RCP<Teuchos::FancyOStream> out)
+{
 #ifdef ALBANY_PANZER_EXPR_EVAL
-    // Only nodal fields allowed, no layered fields
-    TEUCHOS_TEST_FOR_EXCEPTION(!node, std::logic_error, "Error! Only nodal fields can be computed from a mathematical expression.\n");
-    TEUCHOS_TEST_FOR_EXCEPTION(layered, std::logic_error, "Error! Layered fields cannot be computed from a mathematical expression.\n");
+  // Only nodal fields allowed, no layered fields
+  TEUCHOS_TEST_FOR_EXCEPTION(!nodal, std::logic_error, "Error! Only nodal fields can be computed from a mathematical expression.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(layered, std::logic_error, "Error! Layered fields cannot be computed from a mathematical expression.\n");
 
-    int field_dim = 1;
-    if (!scalar) {
-      TEUCHOS_TEST_FOR_EXCEPTION(!params.isParameter("Vector Dim"), std::logic_error,
-                                 "Error! In order to compute a vector field from a mathematical expression, "
-                                 "you must provide the parameter 'Vector Dim'.\n");
-      field_dim = params.get<int>("Vector Dim");
-    }
-
-    // Get the expressions out of the parameter list.
-    Teuchos::Array<std::string> expressions = params.get<Teuchos::Array<std::string>>("Field Expression");
-
-    // NOTE: we need expressions to be of length AT LEAST equal to the field dimension.
-    //       If the length L is larger than the field dimension M, then the first L-M
-    //       strings are assumed to be coefficients needed for the field formula.
-    //       E.g.: if we have a field of dimension 2, one could write
-    //         <Parameter name="Field Expression" type="Array(string)" value="{a=1.5;b=-1;c=2;a*x^2+b*x+c;a*x+b*x+c}"/>
-
-    int num_expr = expressions.size();
-    TEUCHOS_TEST_FOR_EXCEPTION(num_expr<field_dim, Teuchos::Exceptions::InvalidParameter,
-                               "Error! Input array for 'Field Expression' is too short. "
-                               "Expected length >=" << field_dim << ". Got " << num_expr << " instead.\n");
-
-    *out << "  - Computing " << field_type << " field '" << field_name << "' from mathematical expression(s):";
-    int num_params = num_expr - field_dim;
-    for (int idim=num_params; idim<num_expr; ++idim) {
-      *out << " " << expressions[idim] << (idim==num_expr-1 ? "" : ";");
-    }
-    if (num_params>0) {
-      *out << " (with";
-      for (int idim=0; idim<num_params; ++idim) {
-        *out << " " << expressions[idim] << (idim==num_params-1 ? "" : ";");
-      }
-      *out << ")";
-    }
-    *out << " ... ";
-
-    // Extract coordinates of all nodes
-    const auto& coordinates = *this->getCoordinatesField3d();
-    double* xyz;
-    Kokkos::View<double*> x("x",entities.size()), y("y",entities.size()), z("z",entities.size());
-    Kokkos::View<double*>::HostMirror x_h = Kokkos::create_mirror_view(x);
-    Kokkos::View<double*>::HostMirror y_h = Kokkos::create_mirror_view(y);
-    Kokkos::View<double*>::HostMirror z_h = Kokkos::create_mirror_view(z);
-    for (int i(0); i<entities.size(); ++i)
-    {
-      xyz = stk::mesh::field_data(coordinates, entities[i]);
-
-      x_h(i) = xyz[0];
-      y_h(i) = xyz[1];
-      z_h(i) = xyz[2];
-    }
-    Kokkos::deep_copy(x,x_h);
-    Kokkos::deep_copy(y,y_h);
-    Kokkos::deep_copy(z,z_h);
-
-    // Set up the expression parser
-    panzer::Expr::Eval<double*> eval;
-    set_cmath_functions(eval);
-    eval.set("x",x);
-    eval.set("y",y);
-    eval.set("z",z);
-
-    // Start by reading the parameters used in the field expression(s)
-    for (int iparam=0; iparam<num_params; ++iparam) {
-      Teuchos::any result;
-      eval.read_string(result,expressions[iparam]+";","params");
-    }
-
-    // Parse and evaluate all the expressions
-    Teuchos::Array<Kokkos::View<const double*>::HostMirror> results_views_h(field_dim);
-    Teuchos::Array<Teuchos::any> results(field_dim);
-    for (int idim=0; idim<field_dim; ++idim) {
-      eval.read_string(results[idim],expressions[num_params+idim],"field expression");
-      auto result_view = Teuchos::any_cast<Kokkos::View<const double*>>(results[idim]);
-      results_views_h[idim] = Kokkos::create_mirror_view(result_view);
-      Kokkos::deep_copy(results_views_h[idim],result_view);
-    }
-
-    stk::topology::rank_t entity_rank = stk::topology::NODE_RANK;
-    double* values;
-    AbstractSTKFieldContainer::ScalarFieldType* scalar_field = metaData->get_field<AbstractSTKFieldContainer::ScalarFieldType> (entity_rank, field_name);
-    AbstractSTKFieldContainer::VectorFieldType* vector_field = metaData->get_field<AbstractSTKFieldContainer::VectorFieldType> (entity_rank, field_name);
-
-    for (int i(0); i<entities.size(); ++i)
-    {
-      if (scalar) {
-        values = stk::mesh::field_data(*scalar_field, entities[i]);
-      } else {
-        values = stk::mesh::field_data(*vector_field, entities[i]);
-      }
-      for (int idim=0; idim<field_dim; ++idim) {
-        values[idim] = results_views_h[idim](i);
-      }
-    }
-
-    // We filled the stk fields directly, so we're done
-    *out << "done!\n";
-    return;
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Cannot read the field from a mathematical expression, since PanzerExprEval package was not found in Trilinos.\n");
-#endif
-  }
-  else
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (!params.isParameter("File Name"), std::logic_error, "Error! No file name or constant value specified for field " << field_name << ".\n");
-
-    std::string fname = params.get<std::string>("File Name");
-
-    *out << "  - Reading " << field_type << " field '" << field_name << "' from file '" << fname << "' ... ";
-    out->getOStream()->flush();
-    // Read the input file and stuff it in the Tpetra multivector
-
-    if (scalar)
-    {
-      if (layered)
-      {
-        temp_str = field_name + "_NLC";
-        norm_layers_coords = &fieldContainer->getMeshVectorStates()[temp_str];
-        readLayeredScalarFileSerial (fname,serial_req_mvec,serial_map,*norm_layers_coords,commT);
-
-        // Broadcast the normalized layers coordinates
-        int size = norm_layers_coords->size();
-        Teuchos::broadcast(*commT,0,size,norm_layers_coords->data());
-      }
-      else
-      {
-        readScalarFileSerial (fname,serial_req_mvec,serial_map,commT);
-      }
-    }
-    else
-    {
-      if (layered)
-      {
-        temp_str = field_name + "_NLC";
-        norm_layers_coords = &fieldContainer->getMeshVectorStates()[temp_str];
-        readLayeredVectorFileSerial (fname,serial_req_mvec,serial_map,*norm_layers_coords,commT);
-
-        // Broadcast the normalized layers coordinates
-        int size = norm_layers_coords->size();
-        Teuchos::broadcast(*commT,0,size,norm_layers_coords->data());
-      }
-      else
-      {
-        readVectorFileSerial (fname,serial_req_mvec,serial_map,commT);
-      }
-    }
-    *out << "done!\n";
-
-    if (params.isParameter("Scale Factor"))
-    {
-      Teuchos::Array<double> scale_factors = params.get<Teuchos::Array<double> >("Scale Factor");
-      TEUCHOS_TEST_FOR_EXCEPTION (scale_factors.size()!=serial_req_mvec->getNumVectors(), Teuchos::Exceptions::InvalidParameter,
-                                  "Error! The given scale factors vector size does not match the field dimension.\n");
-      *out << "   - Scaling " << field_type << " field '" << field_name << "' with scaling factors [" << scale_factors[0];
-      for (int i=1; i<scale_factors.size(); ++i)
-        *out << " " << scale_factors[i];
-      *out << "]\n";
-
-      serial_req_mvec->scale (scale_factors);
-    }
+  int field_dim = 1;
+  if (!scalar) {
+    TEUCHOS_TEST_FOR_EXCEPTION(!params.isParameter("Vector Dim"), std::logic_error,
+                               "Error! In order to compute a vector field from a mathematical expression, "
+                               "you must provide the parameter 'Vector Dim'.\n");
+    field_dim = params.get<int>("Vector Dim");
   }
 
-  // Fill the (possibly) parallel vector
-  Tpetra_MultiVector req_mvec(map,serial_req_mvec->getNumVectors());
-  req_mvec.doImport(*serial_req_mvec,importOperator,Tpetra::INSERT);
-  std::vector<Teuchos::ArrayRCP<const ST> > req_mvec_view;
+  // Get the expressions out of the parameter list.
+  Teuchos::Array<std::string> expressions = params.get<Teuchos::Array<std::string>>("Field Expression");
 
-  for (int i(0); i<req_mvec.getNumVectors(); ++i)
-    req_mvec_view.push_back(req_mvec.getVector(i)->get1dView());
+  // NOTE: we need expressions to be of length AT LEAST equal to the field dimension.
+  //       If the length L is larger than the field dimension M, then the first L-M
+  //       strings are assumed to be coefficients needed for the field formula.
+  //       E.g.: if we have a field of dimension 2, one could write
+  //         <Parameter name="Field Expression" type="Array(string)" value="{a=1.5;b=-1;c=2;a*x^2+b*x+c;a*x+b*x+c}"/>
 
-  //Now we have to stuff the vector in the mesh data
-  typedef AbstractSTKFieldContainer::ScalarFieldType  SFT;
-  typedef AbstractSTKFieldContainer::VectorFieldType  VFT;
-  typedef AbstractSTKFieldContainer::TensorFieldType  TFT;
+  int num_expr = expressions.size();
+  std::string temp_str;
+  std::string field_type = (nodal ? "Node" : "Elem");
+  field_type += (layered ? " Layered" : "");
+  field_type += (scalar ? " Scalar" : " Vector");
+  TEUCHOS_TEST_FOR_EXCEPTION(num_expr<field_dim, Teuchos::Exceptions::InvalidParameter,
+                             "Error! Input array for 'Field Expression' is too short. "
+                             "Expected length >=" << field_dim << ". Got " << num_expr << " instead.\n");
 
-  SFT* scalar_field = 0;
-  VFT* vector_field = 0;
-  TFT* tensor_field = 0;
-
-  stk::topology::rank_t entity_rank = node ? stk::topology::NODE_RANK : stk::topology::ELEM_RANK;
-
-  if (scalar && !layered)
-  {
-    // Purely scalar field
-    scalar_field = metaData->get_field<SFT> (entity_rank, field_name);
+  *out << "  - Computing " << field_type << " field '" << field_name << "' from mathematical expression(s):";
+  int num_params = num_expr - field_dim;
+  for (int idim=num_params; idim<num_expr; ++idim) {
+    *out << " " << expressions[idim] << (idim==num_expr-1 ? "" : ";");
   }
-  else if ( scalar==layered )
-  {
-    // Either (non-layered) vector or layered scalar field
-    vector_field = metaData->get_field<VFT> (entity_rank, field_name);
+  if (num_params>0) {
+    *out << " (with";
+    for (int idim=0; idim<num_params; ++idim) {
+      *out << " " << expressions[idim] << (idim==num_params-1 ? "" : ";");
+    }
+    *out << ")";
   }
-  else
-  {
-    // Layered vector field
-    tensor_field = metaData->get_field<TFT> (entity_rank, field_name);
-  }
+  *out << ".\n";
 
-  TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==0 && vector_field==0 && tensor_field==0, std::logic_error,
-                              "Error! Field " << field_name << " not present (perhaps is not '" << field_type << "'?).\n");
+  // Extract coordinates of all nodes
+  field_mv = Teuchos::rcp(new Tpetra_MultiVector(entities_map,field_dim));
+  using exec_space = Tpetra_MultiVector::execution_space;
+  using view_type = decltype(field_mv->getLocalView<exec_space>());
+  using layout = view_type::traits::array_layout;
 
-  stk::mesh::EntityId gid;
-  LO lid;
-  double* values;
+  view_type x("x",entities.size(),1), y("y",entities.size(),1), z("z",entities.size(),1);
+  view_type::HostMirror x_h = Kokkos::create_mirror_view(x);
+  view_type::HostMirror y_h = Kokkos::create_mirror_view(y);
+  view_type::HostMirror z_h = Kokkos::create_mirror_view(z);
+  const auto& coordinates = *this->getCoordinatesField3d();
+  double* xyz;
   for (int i(0); i<entities.size(); ++i)
   {
-    if (scalar_field!=0)
-      values = stk::mesh::field_data(*scalar_field, entities[i]);
-    else if (vector_field!=0)
-      values = stk::mesh::field_data(*vector_field, entities[i]);
-    else
-      values = stk::mesh::field_data(*tensor_field, entities[i]);
+    xyz = stk::mesh::field_data(coordinates, entities[i]);
 
-    gid    = bulkData->identifier(entities[i]) - 1;
-    lid    = map->getLocalElement((GO)(gid));
-    for (int iDim(0); iDim<req_mvec_view.size(); ++iDim)
-      values[iDim] = req_mvec_view[iDim][lid];
+    x_h(i,0) = xyz[0];
+    y_h(i,0) = xyz[1];
+    z_h(i,0) = xyz[2];
   }
+  Kokkos::deep_copy(x,x_h);
+  Kokkos::deep_copy(y,y_h);
+  Kokkos::deep_copy(z,z_h);
+
+  // Set up the expression parser
+  panzer::Expr::Eval<double**,layout,exec_space> eval;
+  using const_view_type = decltype(eval)::const_view_type;
+  set_cmath_functions(eval);
+  eval.set("x",x);
+  eval.set("y",y);
+  eval.set("z",z);
+
+  // Start by reading the parameters used in the field expression(s)
+  Teuchos::any result;
+  for (int iparam=0; iparam<num_params; ++iparam) {
+    eval.read_string(result,expressions[iparam]+";","params");
+  }
+
+  // Parse and evaluate all the expressions
+  for (int idim=0; idim<field_dim; ++idim) {
+    eval.read_string(result,expressions[num_params+idim],"field expression");
+    auto result_view = Teuchos::any_cast<const_view_type>(result);
+    Kokkos::deep_copy(field_mv->getLocalView<exec_space>(),result_view);
+  }
+#else
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Cannot read the field from a mathematical expression, since PanzerExprEval package was not found in Trilinos.\n");
+#endif
 }
 
 void Albany::GenericSTKMeshStruct::readScalarFileSerial (const std::string& fname, Teuchos::RCP<Tpetra_MultiVector>& mvec,
@@ -1843,6 +1797,58 @@ void Albany::GenericSTKMeshStruct::checkFieldIsInMesh (const std::string& fname,
       TEUCHOS_TEST_FOR_EXCEPTION (missing, std::runtime_error, "Error! The field '" << fname << "' was not found in the mesh.\n"
                                                        << "  Probably it was not registered it in the state manager (which forwards it to the mesh)\n");
   }
+}
+
+Teuchos::RCP<const Tpetra_Map>
+Albany::GenericSTKMeshStruct::create_root_map (Teuchos::Array<Tpetra_GO>& nodeElements,
+                                               const Teuchos::RCP<const Teuchos_Comm> commT)
+{
+  int num_my_elems = nodeElements.size();
+
+  // Note: I tried to use gather, but the number of elements on each process may be different.
+  int num_proc = commT->getSize();
+  int my_rank  = commT->getRank();
+  Tpetra_GO num_global_elems;
+  Teuchos::Array<Tpetra_GO> allElemsToRoot(0);
+  for (int pid=0; pid<num_proc; ++pid)
+  {
+    int nb_e = num_my_elems;
+    Teuchos::broadcast(*commT,pid,1,&nb_e);
+
+    Tpetra_GO *tmp_elems;
+    if (pid==my_rank) {
+      tmp_elems = nodeElements.getRawPtr();
+    } else {
+      tmp_elems = new Tpetra_GO[nb_e];
+    }
+
+    Teuchos::broadcast(*commT,pid,nb_e,tmp_elems);
+    if (my_rank==0) {
+      allElemsToRoot.insert(allElemsToRoot.begin(),tmp_elems,tmp_elems+nb_e);
+    }
+
+    if (pid!=my_rank) {
+      delete[] tmp_elems;
+    }
+  }
+
+  // Sorting
+  std::sort(allElemsToRoot.begin(),allElemsToRoot.end());
+
+  // Removing duplicates
+  auto it_elems = std::unique(allElemsToRoot.begin(),allElemsToRoot.end());
+  allElemsToRoot.resize(std::distance(allElemsToRoot.begin(),it_elems));    // Resize to the actual number of unique elements
+
+  Tpetra_GO elem_base;
+  if (my_rank==0) {
+    elem_base = *std::min_element(allElemsToRoot.begin(), allElemsToRoot.end());
+  }
+  Teuchos::broadcast(*commT,0,1,&elem_base);
+
+  num_global_elems = allElemsToRoot.size();
+  Teuchos::broadcast(*commT,0,1,&num_global_elems);
+
+  return Teuchos::rcp (new Tpetra_Map (num_global_elems,allElemsToRoot(),elem_base,commT,KokkosClassic::Details::getNode<KokkosNode>()));
 }
 
 void
