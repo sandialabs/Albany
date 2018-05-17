@@ -29,6 +29,7 @@ LCM:
     Exodus Output File Name: tetra10_out.exo
     Exodus Solution Name: disp
     Exodus Residual Name: resid
+    Use Serial Mesh: true
   Regression Results:
     Number of Comparisons: 2
     Test Values: [-1.37227986e-05, 0.05635030]
