@@ -1070,60 +1070,20 @@ calc_press(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
   DynRankViewMeshScalarT side_normals = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells, numPoints, cellDims);
   DynRankViewMeshScalarT normal_lengths = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells, numPoints);
 
-  Kokkos::DynRankView<RealType, PHX::Device> ref_normal("ref_normal", cellDims);
-
   // for this side in the reference cell, get the components of the normal direction vector
   Intrepid2::CellTools<PHX::Device>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
     local_side_id, celltopo);
 
-  // for this side in the reference cell, get the constant normal vector to the side for area calc
-  Intrepid2::CellTools<PHX::Device>::getReferenceSideNormal(ref_normal, local_side_id, celltopo);
-  /* Note: if the side is 1D the length of the normal times 2 is the side length
-     If the side is a 2D quad, the length of the normal is the area of the side
-     If the side is a 2D triangle, the length of the normal times 1/2 is the area of the side
-   */
-
-  RealType area =
-    Intrepid2::RealSpaceTools<PHX::Device>::Serial::vectorNorm(ref_normal, Intrepid2::NORM_TWO);
-
-  // Calculate proper areas
-
-  switch(side_type[local_side_id]){
-
-    case LINE:
-
-      area *= 2;
-      break;
-
-    case TRI:
-
-      area /= 2;
-      break;
-
-    case QUAD:
-
-      break;
-
-    default:
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-             "Need to supply area function for boundary type: " << side_type[local_side_id] << std::endl);
-      break;
-
-  }
 
   // scale normals (unity)
   Intrepid2::RealSpaceTools<PHX::Device>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
   Intrepid2::FunctionSpaceTools<PHX::Device>::scalarMultiplyDataData(side_normals, normal_lengths,
     side_normals, true);
 
-  // Pressure is a force of magnitude P along the normal to the side, divided by the side area (det)
-
   for(int cell = 0; cell < numCells; cell++)
     for(int pt = 0; pt < numPoints; pt++)
       for(int dim = 0; dim < numDOFsSet; dim++)
-//        qp_data_returned(cell, pt, dim) = const_val * side_normals(cell, pt, dim);
-        qp_data_returned(cell, pt, dim) = const_val * side_normals(cell, pt, dim) / area;
-
+        qp_data_returned(cell, pt, dim) = const_val * side_normals(cell, pt, dim);
 
 }
 
