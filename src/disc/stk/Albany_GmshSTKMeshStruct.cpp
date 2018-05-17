@@ -139,8 +139,8 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
     int tag = bdTagsArray[k];
 
     std::stringstream nsn_i,ssn_i;
-    nsn_i << "BoundaryNode" << tag;
-    ssn_i << "BoundarySide" << tag;
+    nsn_i << "BoundaryNodeSet" << tag;
+    ssn_i << "BoundarySideSet" << tag;
 
     bdTagToNodeSetName[tag] = nsn_i.str();
     bdTagToSideSetName[tag] = ssn_i.str();
@@ -332,6 +332,9 @@ void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
   // Rebalance the mesh before starting the simulation if indicated
   rebalanceInitialMeshT(commT);
 #endif
+
+  // Setting the default 3d coordinates
+  this->setDefaultCoordinates3d();
 
   // Loading required input fields from file
   this->loadRequiredInputFields (req,commT);

@@ -574,10 +574,12 @@ void Albany::GenericSTKMeshStruct::setDefaultCoordinates3d ()
     values3d = stk::mesh::field_data(*this->getCoordinatesField3d(), node);
     values   = stk::mesh::field_data(*this->getCoordinatesField(), node);
 
-    for (int iDim=0; iDim<numDim; ++iDim)
+    for (int iDim=0; iDim<numDim; ++iDim) {
       values3d[iDim] = values[iDim];
-    for (int iDim=numDim; iDim<3; ++iDim)
+    }
+    for (int iDim=numDim; iDim<3; ++iDim) {
       values3d[iDim] = 0.0;
+    }
   }
 }
 
@@ -1501,8 +1503,8 @@ void Albany::GenericSTKMeshStruct::computeField (const std::string& field_name, 
   int field_dim = 1;
   if (!scalar) {
     TEUCHOS_TEST_FOR_EXCEPTION(!params.isParameter("Vector Dim"), std::logic_error,
-                               "Error! In order to compute a vector field from a mathematical expression, "
-                               "you must provide the parameter 'Vector Dim'.\n");
+                               "Error! In order to compute the vector field '" << field_name << "' "
+                               "from a mathematical expression, you must provide the parameter 'Vector Dim'.\n");
     field_dim = params.get<int>("Vector Dim");
   }
 
@@ -1580,7 +1582,7 @@ void Albany::GenericSTKMeshStruct::computeField (const std::string& field_name, 
   for (int idim=0; idim<field_dim; ++idim) {
     eval.read_string(result,expressions[num_params+idim],"field expression");
     auto result_view = Teuchos::any_cast<const_view_type>(result);
-    Kokkos::deep_copy(field_mv->getLocalView<exec_space>(),result_view);
+    Kokkos::deep_copy(field_mv->getVector(idim)->getLocalView<exec_space>(),result_view);
   }
 #else
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Cannot read the field from a mathematical expression, since PanzerExprEval package was not found in Trilinos.\n");
