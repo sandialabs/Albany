@@ -118,9 +118,21 @@ namespace Albany {
                                   const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     void loadField (const std::string& field_name, const Teuchos::ParameterList& params,
-                    const Tpetra_Import& importOperator, const std::vector<stk::mesh::Entity>& entities,
+                    Teuchos::RCP<Tpetra_MultiVector>& field_mv, const Tpetra_Import& importOperator,
+                    const std::vector<stk::mesh::Entity>& entities,
                     const Teuchos::RCP<const Teuchos_Comm>& commT,
-                    bool node, bool scalar, bool layered);
+                    bool node, bool scalar, bool layered,
+                    const Teuchos::RCP<Teuchos::FancyOStream> out);
+    void fillField (const std::string& field_name, const Teuchos::ParameterList& params,
+                    Teuchos::RCP<Tpetra_MultiVector>& field_mv, const Teuchos::RCP<const Tpetra_Map> entities_map,
+                    const std::vector<stk::mesh::Entity>& entities,
+                    bool node, bool scalar, bool layered,
+                    const Teuchos::RCP<Teuchos::FancyOStream> out);
+    void computeField (const std::string& field_name, const Teuchos::ParameterList& params,
+                       Teuchos::RCP<Tpetra_MultiVector>& field_mv, const Teuchos::RCP<const Tpetra_Map> entities_map,
+                       const std::vector<stk::mesh::Entity>& entities,
+                       bool node, bool scalar, bool layered,
+                       const Teuchos::RCP<Teuchos::FancyOStream> out);
 
     void readScalarFileSerial (const std::string& fname, Teuchos::RCP<Tpetra_MultiVector>& contentVec,
                                const Teuchos::RCP<const Tpetra_Map>& map,
@@ -150,7 +162,17 @@ namespace Albany {
 
     void setDefaultCoordinates3d ();
 
-    ~GenericSTKMeshStruct();
+    // Given a map, creates a gather map on proc 0.
+    // NOTE: the root map cannot be created linearly, with GIDs from 0 to numGlobalNodes/Elems, since
+    //       this may be a boundary mesh, and the GIDs may not start from 0, nor be contiguous.
+    //       Therefore, we must create a root map. Moreover, we need the GIDs sorted (so that, regardless
+    //       of the GID, we read the serial input files in the correct order), and we can't sort them
+    //       once the map is created, so we cannot use the Tpetra utility gatherMap.
+    Teuchos::RCP<const Tpetra_Map>
+    create_root_map (Teuchos::Array<Tpetra_GO>& nodeElements,
+                     const Teuchos::RCP<const Teuchos_Comm> commT);
+
+    virtual ~GenericSTKMeshStruct();
 
     Teuchos::RCP<Teuchos::ParameterList> getValidGenericSTKParameters(
          std::string listname = "Discretization Param Names") const;

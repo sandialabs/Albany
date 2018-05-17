@@ -1,0 +1,59 @@
+<ParameterList>
+  <ParameterList name="Debug Output">
+    <!--Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/-->
+    <Parameter name="Write Solution to MatrixMarket" type="bool" value="false"/>
+  </ParameterList>
+
+  <ParameterList name="Problem">
+    <Parameter name="Solution Method"   type="string" value="Steady"/>
+    <Parameter name="Name"              type="string" value="Populate Mesh"/>
+
+  </ParameterList> <!-- Problem -->
+
+  <ParameterList name="Discretization">
+    <Parameter name="Number Of Time Derivatives"  type="int"    value="0"/>
+    <Parameter name="Number Of Time Derivatives" type="int"    value="0"/>
+    <Parameter name="Method"                     type="string" value="STK2D"/>
+    <Parameter name="Cubature Degree"            type="int"    value="1"/>
+    <Parameter name="Workset Size"               type="int"    value="10"/>
+    <Parameter name="Exodus Output File Name"    type="string" value="./populated_mesh.exo"/>
+    <Parameter name="1D Elements"                type="int"    value="2"/>
+    <Parameter name="2D Elements"                type="int"    value="2"/>
+    <Parameter name="1D Scale"                   type="double" value="1"/>
+    <Parameter name="2D Scale"                   type="double" value="1"/>
+    <Parameter name="Cell Topology"              type="string" value="Quad"/>
+    <ParameterList name="Required Fields Info">
+      <Parameter name="Number Of Fields"  type="int" value="3"/>
+      <ParameterList name="Field 0">
+        <Parameter name="Field Name"       type="string"        value="field_0"/>
+        <Parameter name="Field Type"       type="string"        value="Node Scalar"/>
+        <Parameter name="Field Origin"     type="string"        value="File"/>
+        <Parameter name="File Name"        type="string"        value="./dummy_field.ascii"/>
+      </ParameterList>
+      <ParameterList name="Field 1">
+        <Parameter name="Field Name"       type="string"        value="field_1"/>
+        <Parameter name="Field Type"       type="string"        value="Elem Vector"/>
+        <Parameter name="Field Origin"     type="string"        value="File"/>
+        <Parameter name="Vector Dim"       type="int"           value="3"/>
+        <Parameter name="Field Value"      type="Array(double)" value="{0.1234,5.6789,-1.0}"/>
+      </ParameterList>
+      <ParameterList name="Field 2">
+        <Parameter name="Field Name"       type="string"        value="field_2"/>
+        <Parameter name="Field Type"       type="string"        value="Node Scalar"/>
+        <Parameter name="Field Origin"     type="string"        value="File"/>
+        <Parameter name="Random Value"     type="Array(string)" value="{true}"/>
+      </ParameterList>
+    </ParameterList>
+  </ParameterList> <!--Discretization -->
+
+  <ParameterList name="Piro">
+    <ParameterList name="NOX">
+      <ParameterList name="Printing">
+        <ParameterList name="Output Information">
+          <Parameter name="Details" type="bool" value="0"/>
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>  <!-- NOX -->
+  </ParameterList>    <!-- Piro -->
+
+</ParameterList>

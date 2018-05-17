@@ -12,7 +12,6 @@
 #include "FELIX_StokesL1L2.hpp"
 #include "FELIX_Hydrology.hpp"
 #include "FELIX_Enthalpy.hpp"
-#include "FELIX_PopulateMesh.hpp"
 #include "FELIX_StokesFOThermoCoupled.hpp"
 #include "FELIX_LaplacianSampling.hpp"
 
@@ -49,7 +48,6 @@ bool ProblemFactory::hasProblem (const std::string& problemName)
       problemName == "FELIX Stokes L1L2 2D" ||
       problemName == "FELIX Hydrology 2D" ||
       problemName == "FELIX Enthalpy 3D" ||
-      problemName == "FELIX Populate Mesh" ||
       problemName == "FELIX Stokes FO Thermo Coupled 3D" ||
       problemName == "FELIX Schoof Fit" ||
       problemName == "FELIX Laplacian Sampling")
@@ -96,9 +94,6 @@ ProblemFactory::create() const
   }
   else if (method == "FELIX Enthalpy 3D") {
     problem = rcp(new FELIX::Enthalpy(problemParams, discretizationParams, paramLib, 3));
-  }
-  else if (method == "FELIX Populate Mesh") {
-    problem = rcp(new FELIX::PopulateMesh(problemParams, discretizationParams, paramLib));
   }
   else if (method == "FELIX Stokes FO Thermo Coupled 3D") {
     problem = rcp(new FELIX::StokesFOThermoCoupled(problemParams, discretizationParams, paramLib, 3));

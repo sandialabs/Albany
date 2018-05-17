@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_DUMMY_RESIDUAL_HPP
-#define FELIX_DUMMY_RESIDUAL_HPP
+#ifndef PHAL_DUMMY_RESIDUAL_HPP
+#define PHAL_DUMMY_RESIDUAL_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -13,7 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 
-namespace FELIX
+namespace PHAL
 {
 
 template<typename EvalT, typename Traits>
@@ -41,6 +41,6 @@ private:
   PHX::MDField<ScalarT,Cell,Node>       residual;
 };
 
-} // Namespace FELIX
+} // Namespace PHAL
 
-#endif // FELIX_DUMMY_RESIDUAL_HPP
+#endif // PHAL_DUMMY_RESIDUAL_HPP

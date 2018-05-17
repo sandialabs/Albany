@@ -6,7 +6,7 @@
 
   <ParameterList name="Problem">
     <Parameter name="Solution Method"         type="string" value="Steady"/>
-    <Parameter name="Name"                    type="string" value="FELIX Populate Mesh"/>
+    <Parameter name="Name"                    type="string" value="Populate Mesh"/>
   </ParameterList> <!-- Problem -->
 
   <ParameterList name="Discretization">

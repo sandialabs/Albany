@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_POPULATE_MESH_HPP
-#define FELIX_POPULATE_MESH_HPP 1
+#ifndef ALBANY_POPULATE_MESH_HPP
+#define ALBANY_POPULATE_MESH_HPP 1
 
 #include <type_traits>
 
@@ -19,9 +19,9 @@
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Utilities.hpp"
 
-#include "FELIX_DummyResidual.hpp"
+#include "PHAL_DummyResidual.hpp"
 
-namespace FELIX
+namespace Albany
 {
 
 /*!
@@ -112,23 +112,21 @@ protected:
 
   std::string                       cellEBName;
   std::map<std::string,std::string> sideEBName;
-  /// Boolean marking whether SDBCs are used 
-  bool use_sdbcs_; 
+  /// Boolean marking whether SDBCs are used
+  bool use_sdbcs_;
 };
-
-} // Namespace FELIX
 
 // ================================ IMPLEMENTATION ============================ //
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-FELIX::PopulateMesh::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                          const Albany::MeshSpecsStruct& meshSpecs,
-                                          Albany::StateManager& stateMgr,
-                                          Albany::FieldManagerChoice fieldManagerChoice,
-                                          const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+PopulateMesh::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                                   const MeshSpecsStruct& meshSpecs,
+                                   StateManager& stateMgr,
+                                   FieldManagerChoice fieldManagerChoice,
+                                   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-  Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+  EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
@@ -153,10 +151,10 @@ FELIX::PopulateMesh::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>&
   p = Teuchos::rcp(new Teuchos::ParameterList("Dummy Residual"));
   p->set<std::string>("Solution Variable Name", dof_names[0]);
   p->set<std::string>("Residual Variable Name", resid_names[0]);
-  ev = Teuchos::rcp(new FELIX::DummyResidual<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  ev = Teuchos::rcp(new PHAL::DummyResidual<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
-  if (fieldManagerChoice == Albany::BUILD_RESID_FM)
+  if (fieldManagerChoice == BUILD_RESID_FM)
   {
     // Require scattering of residual
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter Dummy Residual", dl->dummy);
@@ -166,4 +164,6 @@ FELIX::PopulateMesh::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>&
   return Teuchos::null;
 }
 
-#endif // FELIX_POPULATE_MESH_HPP
+} // Namespace Albany
+
+#endif // ALBANY_POPULATE_MESH_HPP

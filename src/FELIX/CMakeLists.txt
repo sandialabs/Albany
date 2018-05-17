@@ -14,7 +14,6 @@
        evaluators/FELIX_DirichletEnthalpySurface.cpp
        evaluators/FELIX_Dissipation.cpp
        evaluators/FELIX_DOFDivInterpolationSide.cpp
-       evaluators/FELIX_DummyResidual.cpp
        evaluators/FELIX_EffectivePressure.cpp
        evaluators/FELIX_EnthalpyResid.cpp
        evaluators/FELIX_EnthalpyBasalResid.cpp
@@ -69,7 +68,6 @@
        problems/FELIX_ProblemFactory.cpp
        problems/FELIX_Enthalpy.cpp
        problems/FELIX_Hydrology.cpp
-       problems/FELIX_PopulateMesh.cpp
        problems/FELIX_SchoofFit.cpp
        problems/FELIX_Stokes.cpp
        problems/FELIX_StokesFO.cpp
@@ -120,8 +118,6 @@ ENDIF()
        evaluators/FELIX_Dissipation_Def.hpp
        evaluators/FELIX_DOFDivInterpolationSide.hpp
        evaluators/FELIX_DOFDivInterpolationSide_Def.hpp
-       evaluators/FELIX_DummyResidual.hpp
-       evaluators/FELIX_DummyResidual_Def.hpp
        evaluators/FELIX_EffectivePressure.hpp
        evaluators/FELIX_EffectivePressure_Def.hpp
        evaluators/FELIX_EnthalpyResid.hpp
@@ -226,7 +222,6 @@ ENDIF()
        problems/FELIX_StokesFOThermoCoupled.hpp
        problems/FELIX_Hydrology.hpp
        problems/FELIX_ParamEnum.hpp
-       problems/FELIX_PopulateMesh.hpp
        problems/FELIX_SchoofFit.hpp
        problems/FELIX_Stokes.hpp
        problems/FELIX_StokesFO.hpp
