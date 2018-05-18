@@ -1176,26 +1176,30 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     ss << "Field " << ifield;
     Teuchos::ParameterList& fparams = req_fields_info->sublist(ss.str());
 
+    // First, get the name and usage of the field, and check if it's used
     fname = fparams.get<std::string>("Field Name");
+    fusage = fparams.get<std::string>("Field Usage", "Input");
+    if (fusage == "Unused") {
+      *out << "  - Skipping field '" << fname << "' since it's listed as unused.\n";
+      continue;
+    }
+
+    // The field is used somehow. Check that it is present in the mesh
     ftype = fparams.get<std::string>("Field Type","INVALID");
     checkFieldIsInMesh(fname, ftype);
     missing.erase(fname);
 
-    fusage = fparams.get<std::string>("Field Usage", "Input");
-    if (fusage == "Output")
-    {
+    // Check if it's an output file (nothing to be done then). If not, check that the usage is a valid string
+    if (fusage == "Output") {
       *out << "  - Skipping field '" << fname << "' since it's listed as output. Make sure there's an evaluator set to save it!\n";
-      continue;
-    } else if (fusage == "Unused") {
-      *out << "  - Skipping field '" << fname << "' since it's listed as unused.\n";
       continue;
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION (fusage!="Input" && fusage!="Input-Output", Teuchos::Exceptions::InvalidParameter,
                                   "Error! 'Field Usage' for field '" << fname << "' must be one of 'Input', 'Output', 'Input-Output' or 'Unused'.\n");
     }
 
+    // Ok, it's an input (or input-output) field. Find out where the field comes from
     forigin = fparams.get<std::string>("Field Origin","INVALID");
-
     if (forigin=="Mesh") {
       *out << "  - Skipping field '" << fname << "' since it's listed as present in the mesh.\n";
       continue;
@@ -1203,6 +1207,8 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
       TEUCHOS_TEST_FOR_EXCEPTION (forigin!="File", Teuchos::Exceptions::InvalidParameter,
                                   "Error! 'Field Origin' for field '" << fname << "' must be one of 'File' or 'Mesh'.\n");
     }
+
+    // The field is not already present (with updated values) in the mesh, and must be loaded/computed filled here.
 
     // Detect load type
     bool load_ascii = fparams.isParameter("File Name");
