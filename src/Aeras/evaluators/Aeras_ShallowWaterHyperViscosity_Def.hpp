@@ -64,6 +64,8 @@ ShallowWaterHyperViscosity(const Teuchos::ParameterList& p,
 #endif
 
   this->setName("ShallowWaterHyperViscosity"+PHX::typeAsString<EvalT>());
+
+  memoizer_.enable_memoizer(true);
 }
 
 //**********************************************************************
@@ -116,7 +118,7 @@ void ShallowWaterHyperViscosity<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // WARNING: Don't use this if hyperviscosity is non-constant.
-  if (memoizer_.haveStoredData(workset)) return;
+  if (memoizer_.have_stored_data(workset)) return;
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (useHyperviscosity == false) { //no hyperviscosity

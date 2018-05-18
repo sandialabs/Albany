@@ -30,12 +30,13 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   n(3.0),
   alpha(0.0)
 {
+  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   Teuchos::ParameterList* bf_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
   Teuchos::ParameterList* p_list =
     p.get<Teuchos::ParameterList*>("Physical Parameter List");
-
 
   std::string type = bf_list->get("Type", "None");
   A = bf_list->get("Glen's Law A", 1.0);
@@ -447,50 +448,47 @@ template<typename EvalT, typename Traits>
 void StokesFOBodyForce<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
   rho_g_kernel=rho_g;
 
   if (bf_type == NONE) {
     force.deep_copy(0.0);
   }
   else if (bf_type == FO_INTERP_SURF_GRAD || bf_type == FO_SURF_GRAD_PROVIDED) {
-#ifdef FELIX_FOSTOKES_MEMOIZER
-   if (memoizer.haveStoredData(workset)) return;
-#endif
+    if (memoizer.have_stored_data(workset)) return;
 
-   R = stereographicMapList->get<double>("Earth Radius", 6371);
-   x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
-   y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
-   R2 = std::pow(R,2);
+    R = stereographicMapList->get<double>("Earth Radius", 6371);
+    x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+    y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+    R2 = std::pow(R,2);
 
-   Kokkos::parallel_for(FO_INTERP_SURF_GRAD_Policy(0,workset.numCells),*this);
+    Kokkos::parallel_for(FO_INTERP_SURF_GRAD_Policy(0,workset.numCells),*this);
   }
   else if (bf_type == POISSON) {
-   Kokkos::parallel_for(POISSON_Policy(0,workset.numCells),*this);
+    Kokkos::parallel_for(POISSON_Policy(0,workset.numCells),*this);
   }
   else if (bf_type == FO_SINCOS2D) {
-   Kokkos::parallel_for(FO_SINCOS2D_Policy(0,workset.numCells),*this);
+    Kokkos::parallel_for(FO_SINCOS2D_Policy(0,workset.numCells),*this);
   }
   else if (bf_type == FO_COSEXP2D) {
-   Kokkos::parallel_for(FO_COSEXP2D_Policy(0,workset.numCells),*this);
+    Kokkos::parallel_for(FO_COSEXP2D_Policy(0,workset.numCells),*this);
   }
   else if (bf_type == FO_COSEXP2DFLIP) {
-   Kokkos::parallel_for(FO_COSEXP2DFLIP_Policy(0,workset.numCells),*this);
+    Kokkos::parallel_for(FO_COSEXP2DFLIP_Policy(0,workset.numCells),*this);
   }
   else if (bf_type == FO_COSEXP2DALL) {
-   Kokkos::parallel_for(FO_COSEXP2DALL_Policy(0,workset.numCells),*this);
+    Kokkos::parallel_for(FO_COSEXP2DALL_Policy(0,workset.numCells),*this);
   }
   else if (bf_type == FO_SINCOSZ) {
-   Kokkos::parallel_for(FO_SINCOSZ_Policy(0,workset.numCells),*this);
+    Kokkos::parallel_for(FO_SINCOSZ_Policy(0,workset.numCells),*this);
   }
   else if (bf_type == FO_SINEXP2D) {
-   Kokkos::parallel_for(FO_SINEXP2D_Policy(0,workset.numCells),*this);
+    Kokkos::parallel_for(FO_SINEXP2D_Policy(0,workset.numCells),*this);
   }
   else if (bf_type == FO_DOME) {
-   Kokkos::parallel_for(FO_DOME_Policy(0,workset.numCells),*this);
+    Kokkos::parallel_for(FO_DOME_Policy(0,workset.numCells),*this);
   }
   else if (bf_type == FO_XZMMS ) {
-   Kokkos::parallel_for(FO_XZMMS_Policy(0,workset.numCells),*this);
+    Kokkos::parallel_for(FO_XZMMS_Policy(0,workset.numCells),*this);
   }
 }
 

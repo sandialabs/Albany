@@ -13,13 +13,15 @@ namespace FELIX
 
 template<typename EvalT, typename Traits, typename Type >
 PressureCorrectedTemperature<EvalT,Traits,Type,typename std::enable_if<std::is_convertible<typename EvalT::ParamScalarT, Type>::value>::type>::
-PressureCorrectedTemperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
-	sHeight       (p.get<std::string> ("Surface Height Variable Name"), dl->cell_scalar2),
-	temp (p.get<std::string> ("Temperature Variable Name"), dl->cell_scalar2),
-	correctedTemp (p.get<std::string> ("Corrected Temperature Variable Name"), dl->cell_scalar2),
-        coord (p.get<std::string> ("Coordinate Vector Variable Name"), dl->cell_gradient),
-        physicsList(*p.get<Teuchos::ParameterList*>("FELIX Physical Parameters"))
+PressureCorrectedTemperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
+  sHeight (p.get<std::string> ("Surface Height Variable Name"), dl->cell_scalar2),
+  temp (p.get<std::string> ("Temperature Variable Name"), dl->cell_scalar2),
+  correctedTemp (p.get<std::string> ("Corrected Temperature Variable Name"), dl->cell_scalar2),
+  coord (p.get<std::string> ("Coordinate Vector Variable Name"), dl->cell_gradient),
+  physicsList (*p.get<Teuchos::ParameterList*>("FELIX Physical Parameters"))
 {
+  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+
 	this->addDependentField(sHeight);
 	this->addDependentField(coord);
 	this->addDependentField(temp);
@@ -47,9 +49,7 @@ template<typename EvalT, typename Traits, typename Type>
 void PressureCorrectedTemperature<EvalT,Traits,Type, typename std::enable_if<std::is_convertible<typename EvalT::ParamScalarT, Type>::value>::type>::
 evaluateFields(typename Traits::EvalData d)
 {
-#ifdef FELIX_FOSTOKES_MEMOIZER
-  if (memoizer.haveStoredData(d)) return;
-#endif
+  if (memoizer.have_stored_data(d)) return;
 
   for (std::size_t cell = 0; cell < d.numCells; ++cell)
     correctedTemp(cell) = std::min(temp(cell) +coeff * (sHeight(cell) - coord(cell,2)), 273.15);

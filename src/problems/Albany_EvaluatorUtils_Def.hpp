@@ -415,7 +415,8 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructMortarContactResidual
 
 template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherCoordinateVectorEvaluator(std::string strCurrentDisp) const
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherCoordinateVectorEvaluator(
+    std::string strCurrentDisp, const bool enableMemoizer) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -433,6 +434,8 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherCoordinateVecto
     if( strCurrentDisp != "" )
       p->set<std::string>("Current Displacement Vector Name", strCurrentDisp);
 
+    if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
+
     return rcp(new PHAL::GatherCoordinateVector<EvalT,Traits>(*p,dl));
 }
 
@@ -441,25 +444,28 @@ Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructMapToPhysicalFrameEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
     const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature,
-    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis) const
+    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis,
+    const bool enableMemoizer) const
 {
-    using Teuchos::RCP;
-    using Teuchos::rcp;
-    using Teuchos::ParameterList;
-    using std::string;
+  using Teuchos::RCP;
+  using Teuchos::rcp;
+  using Teuchos::ParameterList;
+  using std::string;
 
-    RCP<ParameterList> p = rcp(new ParameterList("Map To Physical Frame"));
+  RCP<ParameterList> p = rcp(new ParameterList("Map To Physical Frame"));
 
-    // Input: X, Y at vertices
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set<RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-    p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
-        ("Intrepid2 Basis", intrepidBasis);
+  // Input: X, Y at vertices
+  p->set<string>("Coordinate Vector Name", "Coord Vec");
+  p->set<RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
+  p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+  p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
+      ("Intrepid2 Basis", intrepidBasis);
 
-    // Output: X, Y at Quad Points (same name as input)
+  // Output: X, Y at Quad Points (same name as input)
 
-    return rcp(new PHAL::MapToPhysicalFrame<EvalT,Traits>(*p,dl));
+  if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
+
+  return rcp(new PHAL::MapToPhysicalFrame<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -494,7 +500,8 @@ Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructComputeBasisFunctionsEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
     const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis,
-    const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature) const
+    const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature,
+    const bool enableMemoizer) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -520,6 +527,8 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructComputeBasisFunctions
     p->set<std::string>("Weighted BF Name",          weighted_bf_name);
     p->set<std::string>("Gradient BF Name",          grad_bf_name);
     p->set<std::string>("Weighted Gradient BF Name", weighted_grad_bf_name);
+
+    if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
 
     return rcp(new PHAL::ComputeBasisFunctions<EvalT,Traits>(*p,dl));
 }
@@ -655,8 +664,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFSideToCellEvaluato
 template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFGradInterpolationEvaluator(
-       const std::string& dof_name,
-       int offsetToFirstDOF) const
+    const std::string& dof_name, int offsetToFirstDOF, const bool enableMemoizer) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -672,7 +680,10 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFGradInterpolationE
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
     if(offsetToFirstDOF == -1)
+    {
+      if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
       return rcp(new PHAL::DOFGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+    }
     else  //works only for solution or a set of solution components
       return rcp(new PHAL::FastSolutionGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
 }
@@ -705,8 +716,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFGradInterpolationS
 template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFInterpolationEvaluator(
-       const std::string& dof_name,
-       int offsetToFirstDOF) const
+    const std::string& dof_name, int offsetToFirstDOF, const bool enableMemoizer) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -720,6 +730,8 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFInterpolationEvalu
     p->set<int>("Offset of First DOF", offsetToFirstDOF);
 
     // Output (assumes same Name as input)
+
+    if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
 
     return rcp(new PHAL::DOFInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
 }
@@ -898,8 +910,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecInterpolationSi
 template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructNodesToCellInterpolationEvaluator(
-  const std::string& dof_name,
-  bool isVectorField) const
+    const std::string& dof_name, bool isVectorField, const bool enableMemoizer) const
 {
   Teuchos::RCP<Teuchos::ParameterList> p;
   p = Teuchos::rcp(new Teuchos::ParameterList("DOF Nodes to Cell Interpolation "+dof_name));
@@ -913,15 +924,16 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructNodesToCellInterpolat
   // Output
   p->set<std::string>("Field Cell Name", dof_name);
 
+  if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
+
   return Teuchos::rcp(new PHAL::NodesToCellInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructQuadPointsToCellInterpolationEvaluator(
-  const std::string& dof_name,
-  const Teuchos::RCP<PHX::DataLayout> qp_layout,
-  const Teuchos::RCP<PHX::DataLayout> cell_layout) const
+    const std::string& dof_name, const Teuchos::RCP<PHX::DataLayout> qp_layout, 
+    const Teuchos::RCP<PHX::DataLayout> cell_layout, const bool enableMemoizer) const
 {
   Teuchos::RCP<Teuchos::ParameterList> p;
   p = Teuchos::rcp(new Teuchos::ParameterList("DOF QuadPoint to Cell Interpolation "+dof_name));
@@ -932,6 +944,8 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructQuadPointsToCellInter
 
   // Output
   p->set<std::string>("Field Cell Name", dof_name);
+
+  if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
 
   if((qp_layout == Teuchos::null)&&(cell_layout == Teuchos::null))
     return Teuchos::rcp(new PHAL::QuadPointsToCellInterpolationBase<EvalT,Traits,ScalarT>(*p,dl, dl->qp_scalar, dl->cell_scalar2));

@@ -21,6 +21,9 @@ DOFInterpolationBase(const Teuchos::ParameterList& p,
   BF          (p.get<std::string>   ("BF Name"), dl->node_qp_scalar),
   val_qp      (p.get<std::string>   ("Variable Name"), dl->qp_scalar )
 {
+  if (p.isType<bool>("Enable Memoizer")) 
+    memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+
   this->addDependentField(val_node.fieldTag());
   this->addDependentField(BF.fieldTag());
   this->addEvaluatedField(val_qp);
@@ -49,9 +52,7 @@ template<typename EvalT, typename Traits, typename ScalarT>
 void DOFInterpolationBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifdef FELIX_FOSTOKES_MEMOIZER
-  if (memoizer.haveStoredData(workset)) return;
-#endif
+  if (memoizer.have_stored_data(workset)) return;
 
   //Intrepid2 version:
   // for (int i=0; i < val_qp.size() ; i++) val_qp[i] = 0.0;

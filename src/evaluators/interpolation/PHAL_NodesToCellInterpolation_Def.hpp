@@ -17,8 +17,9 @@ NodesToCellInterpolationBase (const Teuchos::ParameterList& p,
   BF        (p.get<std::string>("BF Variable Name"), dl->node_qp_scalar),
   w_measure (p.get<std::string>("Weighted Measure Name"), dl->qp_scalar)
 {
-  isVectorField = p.get<bool>("Is Vector Field");
+  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
 
+  isVectorField = p.get<bool>("Is Vector Field");
   if (isVectorField)
   {
     field_node = decltype(field_node)(p.get<std::string> ("Field Node Name"), dl->node_vector);
@@ -61,9 +62,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename ScalarT>
 void NodesToCellInterpolationBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
-#ifdef FELIX_FOSTOKES_MEMOIZER
-  if (memoizer.haveStoredData(workset)) return;
-#endif
+  if (memoizer.have_stored_data(workset)) return;
 
   MeshScalarT meas;
   ScalarT field_qp;

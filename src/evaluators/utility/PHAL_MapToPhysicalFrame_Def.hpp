@@ -22,6 +22,8 @@ MapToPhysicalFrame(const Teuchos::ParameterList& p,
   cellType         (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   coords_qp        (p.get<std::string>  ("Coordinate Vector Name"), dl->qp_gradient)
 {
+  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+
   this->addDependentField(coords_vertices.fieldTag());
   this->addEvaluatedField(coords_qp);
 
@@ -75,9 +77,7 @@ template<typename EvalT, typename Traits>
 void MapToPhysicalFrame<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifdef FELIX_FOSTOKES_MEMOIZER
-  if (memoizer.haveStoredData(workset)) return;
-#endif
+  if (memoizer.have_stored_data(workset)) return;
 
   if (intrepidBasis != Teuchos::null){ 
     Intrepid2::CellTools<PHX::Device>::mapToPhysicalFrame

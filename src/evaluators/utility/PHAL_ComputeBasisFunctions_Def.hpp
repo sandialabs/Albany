@@ -26,6 +26,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   GradBF        (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient),
   wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient)
 {
+  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+
   this->addDependentField(coordVec.fieldTag());
   this->addEvaluatedField(weighted_measure);
   this->addEvaluatedField(jacobian_det);
@@ -86,9 +88,7 @@ template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifdef FELIX_FOSTOKES_MEMOIZER
-  if (memoizer.haveStoredData(workset)) return;
-#endif
+  if (memoizer.have_stored_data(workset)) return;
 
   /** The allocated size of the Field Containers must currently
     * match the full workset size of the allocated PHX Fields,

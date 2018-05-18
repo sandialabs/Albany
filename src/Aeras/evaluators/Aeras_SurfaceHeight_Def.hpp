@@ -57,6 +57,8 @@ SurfaceHeight(const Teuchos::ParameterList& p,
   numDims = dims[2];
 
   this->setName("SurfaceHeight"+PHX::typeAsString<EvalT>());
+
+  memoizer_.enable_memoizer(true);
 }
 
 //**********************************************************************
@@ -118,7 +120,7 @@ template<typename EvalT, typename Traits>
 void SurfaceHeight<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (memoizer_.haveStoredData(workset)) return;
+  if (memoizer_.have_stored_data(workset)) return;
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   switch (hs_type) {

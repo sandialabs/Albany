@@ -193,12 +193,16 @@ namespace Albany {
     //   computed, and the chain rule is coded with that known sparsity.
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFInterpolationEvaluator(
-       const std::string& dof_names, int offsetToFirstDOF=-1) const;
+        const std::string& dof_names,
+        int offsetToFirstDOF = -1,
+        const bool enableMemoizer = false) const;
 
     //! Same as above, for Interpolating the Gradient
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFGradInterpolationEvaluator(
-       const std::string& dof_names, int offsetToFirstDOF=-1) const;
+        const std::string& dof_names,
+        int offsetToFirstDOF = -1,
+        const bool enableMemoizer = false) const;
 
     //! Interpolation functions for vector quantities
     Teuchos::RCP< PHX::Evaluator<Traits> >
@@ -246,15 +250,18 @@ namespace Albany {
     //! Function to create parameter list for construction of GatherCoordinateVector
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructGatherCoordinateVectorEvaluator(std::string strCurrentDisp="") const;
+    constructGatherCoordinateVectorEvaluator(
+        std::string strCurrentDisp="",
+        const bool enableMemoizer = false) const;
 
     //! Function to create parameter list for construction of MapToPhysicalFrame
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructMapToPhysicalFrameEvaluator(
-      const Teuchos::RCP<shards::CellTopology>& cellType,
-      const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature,
-      const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis = Teuchos::null) const;
+        const Teuchos::RCP<shards::CellTopology>& cellType,
+        const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature,
+        const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis = Teuchos::null,
+        const bool enableMemoizer = false) const;
 
     //! Function to create parameter list for construction of MapToPhysicalFrameSide
     //! evaluator with standard Field names
@@ -294,15 +301,17 @@ namespace Albany {
     //! Function to create evaluator NodesToCellInterpolation (=DOFInterpolation+QuadPointsToCellInterpolation)
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructNodesToCellInterpolationEvaluator(
-      const std::string& dof_name,
-      bool isVectorField = false) const;
+        const std::string& dof_name,
+        bool isVectorField = false,
+        const bool enableMemoizer = false) const;
 
     //! Function to create evaluator QuadPointsToCellInterpolation
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructQuadPointsToCellInterpolationEvaluator(
-      const std::string& dof_name,
-      const Teuchos::RCP<PHX::DataLayout> qp_layout = Teuchos::null,
-      const Teuchos::RCP<PHX::DataLayout> cell_layout= Teuchos::null) const;
+        const std::string& dof_name,
+        const Teuchos::RCP<PHX::DataLayout> qp_layout = Teuchos::null,
+        const Teuchos::RCP<PHX::DataLayout> cell_layout = Teuchos::null,
+        const bool enableMemoizer = false) const;
 
     //! Function to create evaluator QuadPointsToCellInterpolation
     Teuchos::RCP< PHX::Evaluator<Traits> >
@@ -315,9 +324,10 @@ namespace Albany {
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructComputeBasisFunctionsEvaluator(
-      const Teuchos::RCP<shards::CellTopology>& cellType,
-      const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis,
-      const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature) const;
+        const Teuchos::RCP<shards::CellTopology>& cellType,
+        const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis,
+        const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature,
+        const bool enableMemoizer = false) const;
 
     //! Function to create parameter list for construction of ComputeBasisFunctionsSide
     //! evaluator with standard Field names

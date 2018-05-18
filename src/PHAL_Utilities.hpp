@@ -214,14 +214,21 @@ struct ExtendLayout
  */
 template<typename Traits>
 class MDFieldMemoizer {
-  int prev_workset_index_;
+  bool _enableMemoizer;
+  int _prevWorksetIndex;
 
 public:
-  MDFieldMemoizer () : prev_workset_index_(-1) {}
+  MDFieldMemoizer () : _enableMemoizer(false), _prevWorksetIndex(-1) {}
 
-  bool haveStoredData (typename Traits::EvalData workset) {
-    const bool stored = workset.wsIndex == prev_workset_index_;
-    prev_workset_index_ = workset.wsIndex;
+  void enable_memoizer (const bool enableMemoizer) {
+    _enableMemoizer = enableMemoizer;
+  }
+
+  bool have_stored_data (const typename Traits::EvalData workset) {
+    if (!_enableMemoizer) return false;
+
+    const bool stored = (workset.wsIndex == _prevWorksetIndex);
+    _prevWorksetIndex = workset.wsIndex;
     return stored;
   }
 };

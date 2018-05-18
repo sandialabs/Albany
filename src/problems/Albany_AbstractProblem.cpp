@@ -153,6 +153,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->set<bool>("Solve Adjoint", false, "");
   validPL->set<int>("Number Of Time Derivatives", 1, "Number of time derivatives in use in the problem");
 
+  validPL->set<bool>("Use MDField Memoization", false, "Use memoizer optimization to avoid recomputing MDFields (currently only works for FELIX)");
   validPL->set<bool>("Ignore Residual In Jacobian", false,
                      "Ignore residual calculations while computing the Jacobian (only generally appropriate for linear problems)");
   validPL->set<double>("Perturb Dirichlet", 0.0,

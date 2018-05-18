@@ -23,6 +23,9 @@ DOFGradInterpolationBase(const Teuchos::ParameterList& p,
   GradBF      (p.get<std::string>   ("Gradient BF Name"), dl->node_qp_gradient),
   grad_val_qp (p.get<std::string>   ("Gradient Variable Name"), dl->qp_gradient)
 {
+  if (p.isType<bool>("Enable Memoizer"))
+    memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+
   this->addDependentField(val_node.fieldTag());
   this->addDependentField(GradBF.fieldTag());
   this->addEvaluatedField(grad_val_qp);
@@ -108,9 +111,7 @@ template<typename EvalT, typename Traits, typename ScalarT>
 void DOFGradInterpolationBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifdef FELIX_FOSTOKES_MEMOIZER
-  if (memoizer.haveStoredData(workset)) return;
-#endif
+  if (memoizer.have_stored_data(workset)) return;
 
   //Intrepid2 Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;

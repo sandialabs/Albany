@@ -18,6 +18,7 @@ QuadPointsToCellInterpolationBase (const Teuchos::ParameterList& p,
                                   const Teuchos::RCP<PHX::DataLayout>& cell_layout) :
   w_measure (p.get<std::string>("Weighted Measure Name"), dl->qp_scalar)
 {
+  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
 
   qp_layout->dimensions(qp_dims);
 
@@ -47,9 +48,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename ScalarT>
 void QuadPointsToCellInterpolationBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
-#ifdef FELIX_FOSTOKES_MEMOIZER
-  if (memoizer.haveStoredData(workset)) return;
-#endif
+  if (memoizer.have_stored_data(workset)) return;
 
   ScalarT meas;
   int numQPs = qp_dims[1];

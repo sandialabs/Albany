@@ -172,6 +172,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
   int offset=0;
   bool isObsVelRMSScalar=false;
+  const bool enableMemoizer = this->params->get<bool>("Use MDField Memoization", false);
 
   Albany::StateStruct::MeshFieldEntity entity;
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
@@ -313,6 +314,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
       {
         // Not a parameter but still required as input: load it.
         p->set<std::string>("Field Name", fieldName);
+        if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
         ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
@@ -861,7 +863,7 @@ if (basalSideName!="INVALID")
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Interpolate temperature from nodes to cell
-  ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator ("temperature",false);
+  ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator ("temperature",false,enableMemoizer);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Interpolate flow factor from nodes to cell
@@ -871,14 +873,14 @@ if (basalSideName!="INVALID")
   if(!is_dist_param["ice_thickness"])
   {
     //----- Gather Coordinate Vector (general parameters)
-    ev = evalUtils.constructGatherCoordinateVectorEvaluator();
+    ev = evalUtils.constructGatherCoordinateVectorEvaluator("",enableMemoizer);
     fm0.template registerEvaluator<EvalT> (ev);
   }
   else
   {
 #ifndef ALBANY_MESH_DEPENDS_ON_PARAMETERS
     //----- Gather Coordinate Vector (general parameters)
-    ev = evalUtils.constructGatherCoordinateVectorEvaluator();
+    ev = evalUtils.constructGatherCoordinateVectorEvaluator("",enableMemoizer);
     fm0.template registerEvaluator<EvalT> (ev);
 #else
 
@@ -910,15 +912,15 @@ if (basalSideName!="INVALID")
   }
 
   // Map to physical frame
-  ev = evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cellCubature);
+  ev = evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cellCubature, Teuchos::null, enableMemoizer);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Compute basis funcitons
-  ev = evalUtils.constructComputeBasisFunctionsEvaluator(cellType, cellBasis, cellCubature);
+  ev = evalUtils.constructComputeBasisFunctionsEvaluator(cellType, cellBasis, cellCubature, enableMemoizer);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Intepolate surface height
-  ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("surface_height");
+  ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("surface_height", -1, enableMemoizer);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Intepolate stiffening_factor
@@ -926,7 +928,7 @@ if (basalSideName!="INVALID")
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Intepolate surface height gradient
-  ev = evalUtils.getPSTUtils().constructDOFGradInterpolationEvaluator("surface_height");
+  ev = evalUtils.getPSTUtils().constructDOFGradInterpolationEvaluator("surface_height", -1, enableMemoizer);
   fm0.template registerEvaluator<EvalT> (ev);
 
   if (basalSideName!="INVALID")
@@ -1357,8 +1359,10 @@ if (basalSideName!="INVALID")
   ptr_homotopy->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Viscosity").get<double>(param_name,-1.0));
   fm0.template registerEvaluator<EvalT>(ptr_homotopy);
 
-  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructQuadPointsToCellInterpolationEvaluator("surface_height"));
-  fm0.template registerEvaluator<EvalT> (evalUtils.getMSTUtils().constructQuadPointsToCellInterpolationEvaluator(Albany::coord_vec_name,dl->qp_gradient, dl->cell_gradient));
+  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructQuadPointsToCellInterpolationEvaluator(
+        "surface_height", Teuchos::null, Teuchos::null, enableMemoizer));
+  fm0.template registerEvaluator<EvalT> (evalUtils.getMSTUtils().constructQuadPointsToCellInterpolationEvaluator(
+        Albany::coord_vec_name, dl->qp_gradient, dl->cell_gradient, enableMemoizer));
 
 
 
@@ -1376,6 +1380,8 @@ if (basalSideName!="INVALID")
 
     //Output
     p->set<std::string>("Corrected Temperature Variable Name", "corrected temperature");
+
+    if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
 
     ev = Teuchos::rcp(new FELIX::PressureCorrectedTemperature<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -1503,6 +1509,8 @@ if (basalSideName!="INVALID")
 
   //Output
   p->set<std::string>("Body Force Variable Name", "Body Force");
+
+  if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
 
   ev = Teuchos::rcp(new FELIX::StokesFOBodyForce<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);

@@ -80,6 +80,8 @@ ShallowWaterSource(const Teuchos::ParameterList& p,
   
   ALFA =  -0.03*(PHI0/(2.*Omega*sin(myPi/4.)));
   SIGMA = (2.*earthRadius/1.0e6)*(2.*earthRadius/1.0e6);
+
+  memoizer_.enable_memoizer(true);
 }
 
 //**********************************************************************
@@ -201,7 +203,7 @@ template<typename EvalT, typename Traits>
 void ShallowWaterSource<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (memoizer_.haveStoredData(workset)) return;
+  if (memoizer_.have_stored_data(workset)) return;
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (sourceType == NONE) {
