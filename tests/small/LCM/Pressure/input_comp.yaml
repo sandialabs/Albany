@@ -20,19 +20,20 @@ LCM:
       Number: 1
       Parameter 0: 'NBC on SS cl1 for DOF all set (t_x, t_y, t_z)[0]'
     Response Functions:
-      Number: 2
-      Response 0: Solution Average
-      Response 1: Solution Max Value
+      Number: 1
+      Response 0: Solution Min Value
+      ResponseParams 0:
+        Equation: 2
   Discretization:
     Method: Ioss
     Exodus Input File Name: tetra10.exo
-    Exodus Output File Name: tetra10_out.exo
+    Exodus Output File Name: tetra10_comp.exo
     Exodus Solution Name: disp
     Exodus Residual Name: resid
     Use Serial Mesh: true
   Regression Results:
-    Number of Comparisons: 2
-    Test Values: [-1.37227986e-05, 0.05635030]
+    Number of Comparisons: 1
+    Test Values: [-0.3704]
     Absolute Tolerance: 0.00010000
   Piro:
     LOCA:
