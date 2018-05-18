@@ -51,8 +51,9 @@ evaluateFields (typename Traits::EvalData workset)
 {
   PHAL::MDFieldIterator<const ScalarT> in(field_in);
   PHAL::MDFieldIterator<ScalarT> out(field_out);
-  for (; !in.done(); ++in, ++out)
+  for (; !in.done(); ++in, ++out) {
     *out = this->op(*in);
+  }
 }
 
 } // Namespace FELIX

@@ -16,13 +16,16 @@
 namespace FELIX
 {
 
-/** \brief Field Norm Evaluator
-
-    This evaluator evaluates the norm of a field
-*/
-
 namespace SimpleOps
 {
+
+template<typename ScalarT>
+struct Scale
+{
+  ScalarT operator() (const ScalarT& x) const {return factor*x;}
+
+  ScalarT factor;
+};
 
 template<typename ScalarT>
 struct Log
@@ -33,7 +36,34 @@ struct Log
 template<typename ScalarT>
 struct Exp
 {
-  ScalarT operator() (const ScalarT& x) const {return std::exp(x);}
+  ScalarT operator() (const ScalarT& x) const {return std::exp(tau*x);}
+
+  ScalarT tau;
+};
+
+template<typename ScalarT>
+struct LowPass
+{
+  ScalarT operator() (const ScalarT& x) const {return std::min(x,threshold_up);}
+
+  ScalarT threshold_up;
+};
+
+template<typename ScalarT>
+struct HighPass
+{
+  ScalarT operator() (const ScalarT& x) const {return std::max(x,threshold_lo);}
+
+  ScalarT threshold_lo;
+};
+
+template<typename ScalarT>
+struct BandPass
+{
+  ScalarT operator() (const ScalarT& x) const {return std::max(std::min(x,threshold_up),threshold_lo);}
+
+  ScalarT threshold_lo;
+  ScalarT threshold_up;
 };
 
 }
@@ -55,7 +85,7 @@ public:
   KOKKOS_INLINE_FUNCTION
   void operator () (const int i) const;
 
-private:
+protected:
 
   // Input:
   PHX::MDField<const ScalarT> field_in;
@@ -67,13 +97,28 @@ private:
   UnaryOperation    op;
 };
 
+// ======================= Derived Specializations ================= //
+
+template<typename EvalT, typename Traits, typename ScalarT>
+class SimpleOperationScale : public SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::Scale<ScalarT> >
+{
+public:
+  SimpleOperationScale (const Teuchos::ParameterList& p,
+                       const Teuchos::RCP<Albany::Layouts>& dl) :
+    SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::Scale<ScalarT> >(p,dl) {
+      this->op.factor = ScalarT(p.get<double>("Scaling Factor"));
+    }
+};
+
 template<typename EvalT, typename Traits, typename ScalarT>
 class SimpleOperationExp : public SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::Exp<ScalarT> >
 {
 public:
   SimpleOperationExp (const Teuchos::ParameterList& p,
                       const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::Exp<ScalarT> >(p,dl) {}
+    SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::Exp<ScalarT> >(p,dl) {
+      this->op.tau = ScalarT(p.get<double>("Tau"));
+    }
 };
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -83,6 +128,40 @@ public:
   SimpleOperationLog (const Teuchos::ParameterList& p,
                       const Teuchos::RCP<Albany::Layouts>& dl) :
     SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::Log<ScalarT> > (p,dl) {}
+};
+
+template<typename EvalT, typename Traits, typename ScalarT>
+class SimpleOperationLowPass : public SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::LowPass<ScalarT> >
+{
+public:
+  SimpleOperationLowPass (const Teuchos::ParameterList& p,
+                          const Teuchos::RCP<Albany::Layouts>& dl) :
+    SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::LowPass<ScalarT> > (p,dl) {
+      this->op.threshold_up = ScalarT(p.get<double>("Upper Threshold"));
+    }
+};
+
+template<typename EvalT, typename Traits, typename ScalarT>
+class SimpleOperationHighPass : public SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::HighPass<ScalarT> >
+{
+public:
+  SimpleOperationHighPass (const Teuchos::ParameterList& p,
+                          const Teuchos::RCP<Albany::Layouts>& dl) :
+    SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::HighPass<ScalarT> > (p,dl) {
+      this->op.threshold_lo = ScalarT(p.get<double>("Lower Threshold"));
+    }
+};
+
+template<typename EvalT, typename Traits, typename ScalarT>
+class SimpleOperationBandPass : public SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::BandPass<ScalarT> >
+{
+public:
+  SimpleOperationBandPass (const Teuchos::ParameterList& p,
+                           const Teuchos::RCP<Albany::Layouts>& dl) :
+    SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::BandPass<ScalarT> > (p,dl) {
+      this->op.threshold_lo = ScalarT(p.get<double>("Lower Threshold"));
+      this->op.threshold_up = ScalarT(p.get<double>("Upper Threshold"));
+    }
 };
 
 } // Namespace FELIX
