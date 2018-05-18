@@ -7,9 +7,5 @@ CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/input_unsteady.xml
 GET_FILENAME_COMPONENT (testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 #2. Tests
-IF (ALBANY_EPETRA)
- ADD_TEST (${testName}_steady ${Albany.exe} input_steady.xml)
-ENDIF()
-IF (ALBANY_TEMPUS)
- ADD_TEST (${testName}_unsteady ${AlbanyTempus.exe} input_unsteady.xml)
-ENDIF()
+ADD_TEST (${testName}_steady   ${AlbanyT.exe} input_steady.xml)
+ADD_TEST (${testName}_unsteady ${AlbanyT.exe} input_unsteady.xml)

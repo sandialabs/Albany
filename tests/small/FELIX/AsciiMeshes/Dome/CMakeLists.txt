@@ -1,3 +1,5 @@
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/circle.msh
+               ${CMAKE_CURRENT_BINARY_DIR}/circle.msh COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/xyz
                ${CMAKE_CURRENT_BINARY_DIR}/xyz COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/eles
@@ -15,7 +17,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome_ascii.xml
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome_restart.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_dome_restart.xml COPYONLY)
 
-if (ALBANY_EPETRA) 
+if (ALBANY_EPETRA)
 add_test(FELIX_FO_Dome_Ascii ${SerialAlbany.exe} input_fo_dome_ascii.xml)
 
 IF (ALBANY_SEACSAS)
