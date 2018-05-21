@@ -69,7 +69,7 @@ private:
   PHX::MDField<const HydroScalarT>      N;
   PHX::MDField<const MeshScalarT>       coordVec;
 
-  PHX::MDField<const TempScalarT>       flowFactorA;
+  PHX::MDField<const TempScalarT>       ice_softness;
 
   PHX::MDField<const ParamScalarT>      bed_topo_field;
   PHX::MDField<const ParamScalarT>      thickness_field;

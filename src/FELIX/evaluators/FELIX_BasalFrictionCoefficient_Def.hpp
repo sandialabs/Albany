@@ -138,17 +138,17 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
             << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
-    N           = PHX::MDField<const HydroScalarT>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
-    u_norm      = PHX::MDField<const IceScalarT>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
-    muParam     = PHX::MDField<const ScalarT,Dim>("Coulomb Friction Coefficient", dl->shared_param);
-    powerParam  = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
-    flowFactorA = PHX::MDField<const TempScalarT>(p.get<std::string>("Flow Factor A Variable Name"), dl->cell_scalar2);
+    N            = PHX::MDField<const HydroScalarT>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
+    u_norm       = PHX::MDField<const IceScalarT>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
+    muParam      = PHX::MDField<const ScalarT,Dim>("Coulomb Friction Coefficient", dl->shared_param);
+    powerParam   = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
+    ice_softness = PHX::MDField<const TempScalarT>(p.get<std::string>("Ice Softness Variable Name"), dl->cell_scalar2);
 
     this->addDependentField (muParam);
     this->addDependentField (powerParam);
     this->addDependentField (N);
     this->addDependentField (u_norm);
-    this->addDependentField (flowFactorA);
+    this->addDependentField (ice_softness);
 
     distributedLambda = beta_list.get<bool>("Distributed Bed Roughness",false);
     if (distributedLambda)
@@ -227,7 +227,7 @@ postRegistrationSetup (typename Traits::SetupData d,
       this->utils.setFieldData(powerParam,fm);
       this->utils.setFieldData(N,fm);
       this->utils.setFieldData(u_norm,fm);
-      this->utils.setFieldData(flowFactorA,fm);
+      this->utils.setFieldData(ice_softness,fm);
       if (distributedLambda)
         this->utils.setFieldData(lambdaField,fm);
       else
@@ -374,7 +374,7 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
       case REGULARIZED_COULOMB:
         for (int ipt=0; ipt<dim; ++ipt)
         {
-          ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambda*std::pow(flowFactorA(cell,side)*N(cell,side,ipt),1./power) );
+          ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambda*std::pow(ice_softness(cell,side)*N(cell,side,ipt),1./power) );
           beta(cell,side,ipt) = mu * N(cell,side,ipt) * std::pow( q, power) / u_norm(cell,side,ipt);
         }
         break;
@@ -447,14 +447,14 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
           for (int cell=0; cell<workset.numCells; ++cell)
             for (int ipt=0; ipt<dim; ++ipt)
             {
-              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*flowFactorA(cell)*std::pow(std::exp(N(cell,ipt)),3) );
+              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*ice_softness(cell)*std::pow(std::exp(N(cell,ipt)),3) );
               beta(cell,ipt) = mu * std::exp(N(cell,ipt)) * std::pow( q, power) / u_norm(cell,ipt);
             }
         else
           for (int cell=0; cell<workset.numCells; ++cell)
             for (int ipt=0; ipt<dim; ++ipt)
             {
-              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*flowFactorA(cell)*std::pow(std::max(N(cell,ipt),0.0),3) );
+              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*ice_softness(cell)*std::pow(std::max(N(cell,ipt),0.0),3) );
               beta(cell,ipt) = mu * std::max(N(cell,ipt),0.0) * std::pow( q, power) / u_norm(cell,ipt);
             }
       }
@@ -464,14 +464,14 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
           for (int cell=0; cell<workset.numCells; ++cell)
             for (int ipt=0; ipt<dim; ++ipt)
             {
-              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*flowFactorA(cell)*std::pow(std::exp(N(cell,ipt)),3) );
+              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*ice_softness(cell)*std::pow(std::exp(N(cell,ipt)),3) );
               beta(cell,ipt) = mu * std::exp(N(cell,ipt)) * std::pow( q, power) / u_norm(cell,ipt);
             }
         else
           for (int cell=0; cell<workset.numCells; ++cell)
             for (int ipt=0; ipt<dim; ++ipt)
             {
-              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*flowFactorA(cell)*std::pow(std::max(N(cell,ipt),0.0),3) );
+              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*ice_softness(cell)*std::pow(std::max(N(cell,ipt),0.0),3) );
               beta(cell,ipt) = mu * std::max(N(cell,ipt),0.0) * std::pow( q, power) / u_norm(cell,ipt);
             }
       }
