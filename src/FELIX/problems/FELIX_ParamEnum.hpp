@@ -12,8 +12,7 @@ enum class ParamEnum
   Lambda       = 1,
   Mu           = 2,
   Power        = 3,
-  Homotopy     = 4,
-  FlowFactorA  = 5
+  Homotopy     = 4
 };
 
 namespace ParamEnumName
@@ -23,7 +22,6 @@ namespace ParamEnumName
   static const std::string Mu            = "Coulomb Friction Coefficient";
   static const std::string Power         = "Power Exponent";
   static const std::string HomotopyParam = "Homotopy Parameter";
-  static const std::string FlowFactorA   = "Constant Flow Factor A";
 } // ParamEnum
 
 } // Namespace FELIX
