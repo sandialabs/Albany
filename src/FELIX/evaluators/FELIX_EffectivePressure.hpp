@@ -48,6 +48,7 @@ private:
   PHX::MDField<const ParamScalarT>  H;
   PHX::MDField<const ParamScalarT>  z_s;
   PHX::MDField<const HydroScalarT>  phi;
+  PHX::MDField<const HydroScalarT>  h;
 
   // Output:
   PHX::MDField<HydroScalarT>  N;
@@ -62,6 +63,8 @@ private:
 
   // Parameters needed for Stokes alone case
   bool   regularized;
+  bool   use_h;
+
   PHX::MDField<const ScalarT,Dim> alphaParam;
   PHX::MDField<const ScalarT,Dim> regularizationParam;
   ScalarT printedAlpha;

@@ -53,6 +53,16 @@ EffectivePressure (const Teuchos::ParameterList& p,
 
     this->addDependentField (phi);
     this->addDependentField (z_s);
+
+    Teuchos::ParameterList& hydro_params = *p.get<Teuchos::ParameterList*>("FELIX Hydrology");
+
+    use_h = false;
+    if (hydro_params.get<bool>("Use Water Thickness In Effective Pressure Formula",false)) {
+      use_h = true;
+
+      h = PHX::MDField<const HydroScalarT>(p.get<std::string> ("Water Thickness Variable Name"), dl->node_scalar);
+      this->addDependentField(h);
+    }
   }
 
   this->addDependentField (H);
@@ -87,6 +97,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   {
     this->utils.setFieldData(z_s,fm);
     this->utils.setFieldData(phi,fm);
+    if (use_h) {
+      this->utils.setFieldData(h,fm);
+    }
   }
 }
 
@@ -199,14 +212,15 @@ evaluateFieldsCell (typename Traits::EvalData workset)
   }
   else
   {
+    HydroScalarT zero (0.0);
     for (int cell=0; cell<workset.numCells; ++cell)
     {
       for (int node=0; node<numNodes; ++node)
       {
-        // N = p_i-p_w
-        // p_i = rho_i*g*H
-        // p_w = rho_w*g*z_b - phi
-        N(cell,node) = std::max(rho_i*g*H(cell,node) + rho_w*g*(z_s(cell,node) - H(cell,node)) - phi(cell,node),0.0);
+        // N = p_i-p_w;
+        // p_i = rho_i*g*H;
+        // p_w = phi - rho_w*g*(z_b+h);   (recall, z_b is in km, h in m)
+        N(cell,node) = rho_i*g*H(cell,node) + rho_w*g*(z_s(cell,node) - H(cell,node)) + (rho_w*g/1000)*(use_h ? h(cell,node) : zero) - phi(cell,node);
       }
     }
   }
