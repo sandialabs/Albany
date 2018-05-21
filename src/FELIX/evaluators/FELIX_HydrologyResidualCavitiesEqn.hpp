@@ -55,7 +55,7 @@ private:
   PHX::MDField<const ScalarT>       N;
   PHX::MDField<const ScalarT>       m;
   PHX::MDField<const IceScalarT>    u_b;
-  PHX::MDField<const TempScalarT>   flowFactorA;
+  PHX::MDField<const TempScalarT>   ice_softness;
 
   // Output:
   PHX::MDField<ScalarT>             residual;
@@ -64,13 +64,14 @@ private:
   int numQPs;
 
   double use_eff_cav;
-  double rho_i_inv;
+  double rho_i;
   double h_r;
   double l_r;
+  double c_creep;
   double scaling_h_t;
-  double scaling_A;
 
   bool unsteady;
+  bool use_melting;
   bool nodal_equation;
 
   // Variables necessary for stokes coupling
