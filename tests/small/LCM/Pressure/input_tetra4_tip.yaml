@@ -27,7 +27,7 @@ LCM:
   Discretization:
     Method: Ioss
     Exodus Input File Name: tetra4.exo
-    Exodus Output File Name: tetra4_out.exo
+    Exodus Output File Name: tetra4_tip_out.exo
     Exodus Solution Name: disp
     Exodus Residual Name: resid
     Use Serial Mesh: true
