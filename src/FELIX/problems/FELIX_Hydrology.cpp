@@ -48,9 +48,6 @@ Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& problemParams_
   }
 
   // Some fields that we know are FOR SURE required (if not added already)
-  if (std::find(this->requirements.begin(),this->requirements.end(),geothermal_flux_name)==this->requirements.end()) {
-    this->requirements.push_back(geothermal_flux_name);
-  }
   if (std::find(this->requirements.begin(),this->requirements.end(),surface_height_name)==this->requirements.end()) {
     this->requirements.push_back(surface_height_name);
   }
@@ -222,7 +219,7 @@ constexpr char Hydrology::water_thickness_name[]                  ;  //= "water_
 constexpr char Hydrology::water_thickness_dot_name[]              ;  //= "water_thickness_dot";
 
 constexpr char Hydrology::hydraulic_potential_gradient_norm_name[];  //= "hydraulic_potential Gradient Norm";
-constexpr char Hydrology::flow_factor_A_name[]                    ;  //= "flow_factor_A";
+constexpr char Hydrology::ice_softness_name[]                     ;  //= "ice_softness";
 constexpr char Hydrology::effective_pressure_name[]               ;  //= "effective_pressure";
 constexpr char Hydrology::ice_temperature_name[]                  ;  //= "ice_temperature";
 constexpr char Hydrology::ice_thickness_name[]                    ;  //= "ice_thickness";

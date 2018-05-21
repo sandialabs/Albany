@@ -26,13 +26,13 @@
 #include "FELIX_BasalFrictionCoefficient.hpp"
 #include "FELIX_HydrologyBasalGravitationalWaterPotential.hpp"
 #include "FELIX_EffectivePressure.hpp"
-#include "FELIX_FlowFactorA.hpp"
+#include "FELIX_IceSoftness.hpp"
 #include "FELIX_HydrologyDirichlet.hpp"
 #include "FELIX_HydrologyMeltingRate.hpp"
 #include "FELIX_HydrologyResidualCavitiesEqn.hpp"
 #include "FELIX_HydrologyResidualMassEqn.hpp"
 #include "FELIX_HydrologyWaterDischarge.hpp"
-#include "FELIX_HydrologyWaterSource.hpp"
+#include "FELIX_HydrologySurfaceWaterInput.hpp"
 #include "FELIX_HydrologyWaterThickness.hpp"
 #include "FELIX_ParamEnum.hpp"
 #include "FELIX_SharedParameter.hpp"
@@ -80,7 +80,7 @@ namespace FELIX
  *      h_r  : typical bed bump height
  *      l_r  : typical bed bump length
  *      u_b  : ice basal velocity
- *      A    : flow factor constant in Glen's law (may be temperature dependent)
+ *      A    : ice softness (A in Glen's law). May be temperature dependent
  */
 
 class Hydrology : public Albany::AbstractProblem
@@ -158,7 +158,7 @@ protected:
   static constexpr char water_thickness_dot_name[]               = "water_thickness_dot";
 
   static constexpr char hydraulic_potential_gradient_norm_name[] = "hydraulic_potential Gradient Norm";
-  static constexpr char flow_factor_A_name[]                     = "flow_factor_A";
+  static constexpr char ice_softness_name[]                      = "ice_softness";
   static constexpr char effective_pressure_name[]                = "effective_pressure";
   static constexpr char ice_temperature_name[]                   = "ice_temperature";
   static constexpr char ice_thickness_name[]                     = "ice_thickness";
@@ -285,9 +285,6 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     stateName  = fieldName = thisFieldList.get<std::string>("Field Name");
     fieldUsage = thisFieldList.get<std::string>("Field Usage","Input"); // WARNING: assuming Input if not specified
 
-    is_dist_param.insert(std::pair<std::string,bool>(stateName, false));      //gets inserted only if not there.
-    is_dirichlet_field.insert(std::pair<std::string,bool>(stateName, false)); //gets inserted only if not there.
-
     // Skip everything else if the field is unused. This may seem odd (why is it in the plist to start with?),
     // but it could be the user is switching between different options for the model, which require different
     // inputs. To minimize changes in the input files, the user can simply mark a field 'Unused' when the
@@ -295,6 +292,9 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     if (fieldUsage == "Unused") {
       continue;
     }
+
+    is_dist_param.insert(std::pair<std::string,bool>(stateName, false));      //gets inserted only if not there.
+    is_dirichlet_field.insert(std::pair<std::string,bool>(stateName, false)); //gets inserted only if not there.
 
     // Determine if we need to load/save (or gather/scatter) the field
     bool inputField  = (fieldUsage == "Input")  || (fieldUsage == "Input-Output") || is_dist_param[stateName] || is_dirichlet_field[stateName];
@@ -528,28 +528,19 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // |           Creating FELIX specific evaluators            |
   // +---------------------------------------------------------+
 
-  if (params->sublist("FELIX Hydrology").get<bool>("Use SMB To Approximate Water Input",false)) {
-    TEUCHOS_TEST_FOR_EXCEPTION (inputs_found.find(surface_mass_balance_name)==inputs_found.end(), std::logic_error,
-                                "Error! The field '" << surface_mass_balance_name << "' is required "
-                                "(due to 'Use SMB To Approximate Water Input' being true), "
-                                "but was not found in the discretization list.\n");
+  //--- Compute Water Input
+  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Hydrology Water Input"));
 
-    //--- Compute Water Input From SMB
-    p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Hydrology Water Input"));
+  // Input
+  p->set<std::string>("Surface Mass Balance Variable Name",surface_mass_balance_name);
+  p->set<std::string>("Surface Height Variable Name",surface_height_name);
+  p->set<Teuchos::ParameterList*> ("Surface Water Input Params",&params->sublist("FELIX Hydrology").sublist("Surface Water Input"));
 
-    // Input
-    p->set<std::string>("Surface Mass Balance Variable Name",surface_mass_balance_name);
+  // Output
+  p->set<std::string>("Surface Water Input Variable Name",surface_water_input_name);
 
-    // Output
-    p->set<std::string>("Surface Water Input Variable Name",surface_water_input_name);
-
-    ev = Teuchos::rcp(new FELIX::HydrologyWaterSource<EvalT,PHAL::AlbanyTraits,false>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION (inputs_found.find(surface_water_input_name)==inputs_found.end(), std::logic_error,
-                                "Error! The field '" << surface_water_input_name << "' is required, " <<
-                                "but was not found in the discretization list.\n");
-  }
+  ev = Teuchos::rcp(new FELIX::HydrologySurfaceWaterInput<EvalT,PHAL::AlbanyTraits,false>(*p,dl));
+  fm0.template registerEvaluator<EvalT>(ev);
 
   // ------- Hydrology Basal Gravitational Potential -------- //
   p = Teuchos::rcp(new Teuchos::ParameterList("Hydrology Basal Gravitational Water Potential"));
@@ -586,10 +577,6 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // ------- Hydrology Melting Rate -------- //
   p = Teuchos::rcp(new Teuchos::ParameterList("Hydrology Melting Rate"));
 
-  TEUCHOS_TEST_FOR_EXCEPTION (inputs_found.find(geothermal_flux_name)==inputs_found.end(), std::logic_error,
-                              "Error! The field '" << geothermal_flux_name << "' is required, " <<
-                              "but was not found in the discretization list.\n");
-
   //Input
   p->set<std::string> ("Geothermal Heat Source Variable Name",geothermal_flux_name);
   p->set<std::string> ("Sliding Velocity Variable Name",sliding_velocity_name);
@@ -612,17 +599,18 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  // --------- Flow Factor A --------- //
-  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Flow Factor A"));
+  // --------- Ice Softness --------- //
+  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Ice Softness"));
 
   // Input
-  p->set<std::string>("Flow Rate Type",params->sublist("FELIX Basal Friction Coefficient").get<std::string>("Flow Rate Type","Uniform"));
-  p->set<std::string>("Temperature Variable Name",ice_temperature_name);  // N
+  p->set<std::string>("Ice Softness Type",params->sublist("FELIX Hydrology").get<std::string>("Ice Softness Type","Uniform"));
+  p->set<std::string>("Temperature Variable Name",ice_temperature_name);
+  p->set<Teuchos::ParameterList*> ("FELIX Physical Parameters",&params->sublist("FELIX Physical Parameters"));
 
   // Output
-  p->set<std::string>("Flow Factor A Variable Name",flow_factor_A_name);
+  p->set<std::string>("Ice Softness Variable Name",ice_softness_name);
 
-  ev = Teuchos::rcp(new FELIX::FlowFactorA<EvalT,PHAL::AlbanyTraits, false>(*p,dl));
+  ev = Teuchos::rcp(new FELIX::IceSoftness<EvalT,PHAL::AlbanyTraits, false>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // ------- Sliding Velocity -------- //
@@ -665,7 +653,9 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Surface Height Variable Name",surface_height_name);
   p->set<std::string>("Ice Thickness Variable Name", ice_thickness_name);
   p->set<std::string>("Hydraulic Potential Variable Name", hydraulic_potential_name);
+  p->set<std::string>("Water Thickness Variable Name", water_thickness_name);
   p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
+  p->set<Teuchos::ParameterList*>("FELIX Hydrology", &params->sublist("FELIX Hydrology"));
 
   // Output
   p->set<std::string>("Effective Pressure Variable Name",effective_pressure_name);
@@ -681,7 +671,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Sliding Velocity Variable Name", sliding_velocity_name);
   p->set<std::string>("BF Variable Name", Albany::bf_name);
   p->set<std::string>("Effective Pressure Variable Name", effective_pressure_name);
-  p->set<std::string>("Flow Factor A Variable Name", flow_factor_A_name);
+  p->set<std::string>("Ice Softness Variable Name", ice_softness_name);
   p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
 
@@ -710,7 +700,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string> ("Melting Rate Variable Name",melting_rate_name);
   p->set<std::string> ("Surface Water Input Variable Name",surface_water_input_name);
   p->set<std::string> ("Sliding Velocity Variable Name",sliding_velocity_name);
-  p->set<std::string> ("Flow Factor A Variable Name","Flow Factor A");
+  p->set<std::string> ("Ice Softness Variable Name",ice_softness_name);
   p->set<std::string> ("Basal Gravitational Water Potential Variable Name",basal_grav_water_potential_name);
   p->set<bool>("Unsteady",unsteady);
 
@@ -732,7 +722,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string> ("Effective Pressure Variable Name",effective_pressure_name);
     p->set<std::string> ("Melting Rate Variable Name",melting_rate_name);
     p->set<std::string> ("Sliding Velocity Variable Name",sliding_velocity_name);
-    p->set<std::string> ("Flow Factor A Variable Name","Flow Factor A");
+    p->set<std::string> ("Ice Softness Variable Name",ice_softness_name);
     p->set<bool> ("Nodal", false);
     p->set<Teuchos::ParameterList*> ("FELIX Hydrology",&params->sublist("FELIX Hydrology"));
     p->set<Teuchos::ParameterList*> ("FELIX Physical Parameters",&params->sublist("FELIX Physical Parameters"));
@@ -760,7 +750,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string> ("Effective Pressure Variable Name",effective_pressure_name);
     p->set<std::string> ("Melting Rate Variable Name",melting_rate_name);
     p->set<std::string> ("Sliding Velocity Variable Name",sliding_velocity_name);
-    p->set<std::string> ("Flow Factor A Variable Name",flow_factor_A_name);
+    p->set<std::string> ("Ice Softness Variable Name",ice_softness_name);
     p->set<bool> ("Unsteady", unsteady);
     p->set<Teuchos::ParameterList*> ("FELIX Hydrology",&params->sublist("FELIX Hydrology"));
     p->set<Teuchos::ParameterList*> ("FELIX Physical Parameters",&params->sublist("FELIX Physical Parameters"));
@@ -786,18 +776,6 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   ev = Teuchos::rcp(new FELIX::SimpleOperationExp<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
-
-  //--- Shared Parameter: Uniform Flow Factor A ---//
-  p = Teuchos::rcp(new Teuchos::ParameterList("Constant Flow Factor A"));
-
-  param_name = ParamEnumName::FlowFactorA;
-  p->set<std::string>("Parameter Name", param_name);
-  p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-
-  Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::FlowFactorA>> ptr_A;
-  ptr_A = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::FlowFactorA>(*p,dl));
-  ptr_A->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Hydrology").get<double>(param_name,-1.0));
-  fm0.template registerEvaluator<EvalT>(ptr_A);
 
   //--- Shared Parameter for basal friction coefficient: lambda ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: lambda"));
