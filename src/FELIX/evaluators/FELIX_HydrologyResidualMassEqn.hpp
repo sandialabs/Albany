@@ -18,7 +18,7 @@ namespace FELIX
 
 /** \brief Hydrology ResidualMassEqn Evaluator
 
-    This evaluator evaluates the residual of the Hydrology model (quasi-static formulation)
+    This evaluator evaluates the residual of the mass conservation for the Hydrology model
 */
 
 template<typename EvalT, typename Traits, bool IsStokesCoupling, bool ThermoCoupled>
@@ -68,12 +68,14 @@ private:
   int numQPs;
   int numDims;
 
-  double rho_w_inv;
+  double rho_w;
   double scaling_omega;
   double scaling_q;
+  double scaling_h_dot;
 
   bool mass_lumping;
   bool penalization;
+  bool use_melting;
   bool unsteady;
 
   // Variables necessary for stokes coupling
