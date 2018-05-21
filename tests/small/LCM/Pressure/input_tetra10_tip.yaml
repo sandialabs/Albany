@@ -9,7 +9,7 @@ LCM:
       SDBC on NS fix for DOF Y: 0.00000000e+00
       SDBC on NS fix for DOF Z: 0.00000000e+00
     Neumann BCs:
-      'NBC on SS cl1 for DOF all set (t_x, t_y, t_z)': [0.00000000, 0.00000000e+00, -1.00000000e-01]
+      'NBC on SS xmax for DOF all set (t_x, t_y, t_z)': [0.00000000, 0.00000000e+00, -1.00000000e-01]
     Elastic Modulus:
       Elastic Modulus Type: Constant
       Value: 4000.00000000
@@ -18,7 +18,7 @@ LCM:
       Value: 0.3
     Parameters:
       Number: 1
-      Parameter 0: 'NBC on SS cl1 for DOF all set (t_x, t_y, t_z)[0]'
+      Parameter 0: 'NBC on SS xmax for DOF all set (t_x, t_y, t_z)[0]'
     Response Functions:
       Number: 1
       Response 0: Solution Min Value
@@ -27,13 +27,13 @@ LCM:
   Discretization:
     Method: Ioss
     Exodus Input File Name: tetra10.exo
-    Exodus Output File Name: tetra10_comp.exo
+    Exodus Output File Name: tetra10_out.exo
     Exodus Solution Name: disp
     Exodus Residual Name: resid
     Use Serial Mesh: true
   Regression Results:
     Number of Comparisons: 1
-    Test Values: [-0.3704]
+    Test Values: [-0.0990]
     Absolute Tolerance: 0.00010000
   Piro:
     LOCA:
