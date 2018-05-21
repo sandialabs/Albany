@@ -19,6 +19,19 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   h       (p.get<std::string> ("Water Thickness Variable Name"), dl->qp_scalar),
   q       (p.get<std::string> ("Water Discharge Variable Name"), dl->qp_gradient)
 {
+  /*
+   *  The water discharge follows the following Darcy-like form
+   *
+   *     q = - k * h^alpha * |grad(Phi)|^(beta-2) * grad(Phi)
+   *
+   *  where q is the water discharge, h the water thickness, k a transmissivity constant,
+   *  phi is the hydraulic poential, and alpha/beta are two constants, with requirements
+   *  alpha>1, beta>1. The units of q follow from those of the mesh, h, k and Phi.
+   *  We assume h is in [m], Phi in [kPa], the mesh is in [km], and k has units
+   *     [k] =  m^(2*beta-alpha) s^(2*beta-3) kg^(1-beta).
+   *  Putting everything togeter, we get
+   *     [q] = mm/s
+   */
 
   if (IsStokes) {
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, std::logic_error,
@@ -41,7 +54,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   // Setting parameters
   Teuchos::ParameterList& hydrology = *p.get<Teuchos::ParameterList*>("FELIX Hydrology");
 
-  k_0   = hydrology.get<double>("Transmissivity");
+  k_0   = hydrology.get<double>("Darcy Law: Transmissivity");
   alpha = hydrology.get<double>("Darcy Law: Water Thickness Exponent");
   beta  = hydrology.get<double>("Darcy Law: Potential Gradient Norm Exponent");
 
