@@ -493,7 +493,6 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DAnasazi_ENABLE_RBGen:BOOL=ON"
   "-DTrilinos_ENABLE_TpetraTSQR:BOOL=ON"
   "-DTpetraCore_ENABLE_TSQR:BOOL=ON"
-  "-DAnazazi_ENABLE_TSQR:BOOL=ON"
   "-DBelos_ENABLE_TSQR:BOOL=ON"
   "-DTrilinos_ENABLE_Belos:BOOL=ON"
   "-DTrilinos_ENABLE_ML:BOOL=ON"
