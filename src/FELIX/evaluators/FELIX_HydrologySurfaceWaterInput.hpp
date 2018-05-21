@@ -1,5 +1,5 @@
-#ifndef FELIX_HYDROLOGY_WATER_SOURCE_HPP
-#define FELIX_HYDROLOGY_WATER_SOURCE_HPP
+#ifndef FELIX_HYDROLOGY_SURFACE_WATER_INPUT_HPP
+#define FELIX_HYDROLOGY_SURFACE_WATER_INPUT_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -17,15 +17,15 @@ namespace FELIX
 */
 
 template<typename EvalT, typename Traits, bool OnSide>
-class HydrologyWaterSource: public PHX::EvaluatorWithBaseImpl<Traits>,
-                            public PHX::EvaluatorDerived<EvalT, Traits>
+class HydrologySurfaceWaterInput: public PHX::EvaluatorWithBaseImpl<Traits>,
+                                  public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
-  HydrologyWaterSource (const Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl);
+  HydrologySurfaceWaterInput (const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
@@ -34,14 +34,22 @@ public:
 
 private:
 
+  enum class InputType {
+    GIVEN_FIELD,
+    SMB_APPROX
+  };
+
   void evaluateFieldsCell(typename Traits::EvalData d);
   void evaluateFieldsSide(typename Traits::EvalData d);
 
-  // Input:
-  PHX::MDField<const ParamScalarT>  smb;
+  // Input(s):
+  PHX::MDField<const ParamScalarT>  smb;          // surface mass balance; only for SMB_APPROX
+  PHX::MDField<const ParamScalarT>  sh;           // surface height: only for MATH_EXPR
 
   // Output:
   PHX::MDField<ParamScalarT>        omega;
+
+  InputType input_type;
 
   int numNodes;
 
@@ -50,4 +58,4 @@ private:
 
 } // Namespace FELIX
 
-#endif // FELIX_HYDROLOGY_WATER_SOURCE_HPP
+#endif // FELIX_HYDROLOGY_SURFACE_WATER_INPUT_HPP
