@@ -867,7 +867,7 @@ if (basalSideName!="INVALID")
   ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator ("temperature",false,enableMemoizer);
   fm0.template registerEvaluator<EvalT> (ev);
 
-  // Interpolate flow factor from nodes to cell
+  // Interpolate ice softness (aka, flow_factor) from nodes to cell
   ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator ("flow_factor",false);
   fm0.template registerEvaluator<EvalT> (ev);
 
@@ -1401,7 +1401,7 @@ if (basalSideName!="INVALID")
   p->set<std::string>("Velocity QP Variable Name", "Velocity");
   p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
   p->set<std::string>("Temperature Variable Name", "corrected temperature");
-  p->set<std::string>("Flow Factor Variable Name", "flow_factor");
+  p->set<std::string>("Ice Softness Variable Name", "flow_factor");
   p->set<std::string>("Stiffening Factor QP Name", "stiffening_factor");
   p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
