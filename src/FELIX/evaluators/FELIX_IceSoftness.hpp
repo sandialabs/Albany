@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_FLOW_FACTOR_A_HPP
-#define FELIX_FLOW_FACTOR_A_HPP 1
+#ifndef FELIX_ICE_SOFTNESS_HPP
+#define FELIX_ICE_SOFTNESS_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -22,12 +22,12 @@ namespace FELIX
 */
 
 template<typename EvalT, typename Traits, bool ThermoCoupled>
-class FlowFactorA : public PHX::EvaluatorWithBaseImpl<Traits>,
+class IceSoftness : public PHX::EvaluatorWithBaseImpl<Traits>,
                     public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  FlowFactorA (const Teuchos::ParameterList& p,
+  IceSoftness (const Teuchos::ParameterList& p,
                const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
@@ -42,17 +42,17 @@ private:
   typedef typename std::conditional<ThermoCoupled, ScalarT, ParamScalarT>::type TempScalarT;
 
   // Input:
-  PHX::MDField<const ParamScalarT, Cell>  given_flow_factor;
+  PHX::MDField<const ParamScalarT, Cell>  given_ice_softness;
   PHX::MDField<const TempScalarT, Cell>   temperature;
-  PHX::MDField<const ScalarT, Dim>        flowFactorParam;
+  double A;
 
   // Output:
-  PHX::MDField<TempScalarT, Cell> flowFactor;
+  PHX::MDField<TempScalarT, Cell> ice_softness;
 
-  enum FlowFactorType {UNIFORM, GIVEN_FIELD, TEMPERATURE_BASED};
-  FlowFactorType flowFactor_type;
+  enum IceSoftnessType {UNIFORM, GIVEN_FIELD, TEMPERATURE_BASED};
+  IceSoftnessType ice_softness_type;
 };
 
 } // Namespace FELIX
 
-#endif // FELIX_FLOW_FACTOR_A_HPP
+#endif // FELIX_ICE_SOFTNESS_HPP

@@ -19,7 +19,6 @@
        evaluators/FELIX_EnthalpyBasalResid.cpp
        evaluators/FELIX_EpsilonL1L2.cpp
        evaluators/FELIX_FlowRate.cpp
-       evaluators/FELIX_FlowFactorA.cpp
        evaluators/FELIX_FluxDiv.cpp
        evaluators/FELIX_GeoFluxHeat.cpp
        evaluators/FELIX_HydrologyBasalGravitationalWaterPotential.cpp
@@ -31,6 +30,7 @@
        evaluators/FELIX_HydrologySurfaceWaterInput.cpp
        evaluators/FELIX_HydrologyWaterThickness.cpp
        evaluators/FELIX_HydrostaticPressure.cpp
+       evaluators/FELIX_IceSoftness.cpp
        evaluators/FELIX_Integral1Dw_Z.cpp
        evaluators/FELIX_LiquidWaterFraction.cpp
        evaluators/FELIX_PressureMeltingTemperature.cpp
@@ -128,8 +128,6 @@ ENDIF()
        evaluators/FELIX_EpsilonL1L2_Def.hpp
        evaluators/FELIX_FlowRate.hpp
        evaluators/FELIX_FlowRate_Def.hpp
-       evaluators/FELIX_FlowFactorA.hpp
-       evaluators/FELIX_FlowFactorA_Def.hpp
        evaluators/FELIX_FluxDiv.hpp
        evaluators/FELIX_FluxDiv_Def.hpp
        evaluators/FELIX_GeoFluxHeat.hpp
@@ -152,6 +150,8 @@ ENDIF()
        evaluators/FELIX_HydrologyWaterThickness_Def.hpp
        evaluators/FELIX_HydrostaticPressure.hpp
        evaluators/FELIX_HydrostaticPressure_Def.hpp
+       evaluators/FELIX_IceSoftness.hpp
+       evaluators/FELIX_IceSoftness_Def.hpp
        evaluators/FELIX_Integral1Dw_Z.hpp
        evaluators/FELIX_Integral1Dw_Z_Def.hpp
        evaluators/FELIX_LiquidWaterFraction.hpp

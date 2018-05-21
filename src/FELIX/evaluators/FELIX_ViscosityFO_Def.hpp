@@ -115,7 +115,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
     else if (flowRateType == "From File")
     {
       flowRate_type = FROMFILE;
-      flowFactorA=decltype(flowFactorA)(p.get<std::string> ("Flow Factor Variable Name"), dl->cell_scalar2);
+      flowFactorA=decltype(flowFactorA)(p.get<std::string> ("Ice Softness Variable Name"), dl->cell_scalar2);
       this->addDependentField(flowFactorA);
 #ifdef OUTPUT_TO_SCREEN
       *out << "Flow Rate read in from file (exodus or ascii)." << std::endl;
@@ -124,7 +124,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
     else if (flowRateType == "From CISM")
     {
       flowRate_type = FROMCISM;
-      flowFactorA=decltype(flowFactorA)(p.get<std::string> ("Flow Factor Variable Name"), dl->cell_scalar2);
+      flowFactorA=decltype(flowFactorA)(p.get<std::string> ("Ice Softness Variable Name"), dl->cell_scalar2);
       this->addDependentField(flowFactorA);
 #ifdef OUTPUT_TO_SCREEN
       *out << "Flow Rate passed in from CISM." << std::endl;
@@ -205,7 +205,7 @@ template<typename EvalT,typename Traits,typename VelT, typename TemprT>
 template<typename TemperatureT>
 KOKKOS_INLINE_FUNCTION
 TemperatureT ViscosityFO<EvalT,Traits,VelT,TemprT>::flowRate (const TemperatureT& T) const {
-  return (T < switchingT) ? arrml / exp (actenl / gascon / ((T > TemperatureT(150)) ? T : TemperatureT(150))) : 
+  return (T < switchingT) ? arrml / exp (actenl / gascon / ((T > TemperatureT(150)) ? T : TemperatureT(150))) :
     arrmh / exp (actenh / gascon / T);
 }
 
