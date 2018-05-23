@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace PHAL {
 /** \brief Finite Element CellToSide Evaluator
@@ -63,6 +64,8 @@ private:
   };
 
   LayoutType layout;
+
+  MDFieldMemoizer<Traits> memoizer;
 };
 
 // Some shortcut names

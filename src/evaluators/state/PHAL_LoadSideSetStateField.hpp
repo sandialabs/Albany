@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "PHAL_Utilities.hpp"
 #include "Teuchos_ParameterList.hpp"
 
 namespace PHAL
@@ -42,6 +43,8 @@ private:
   std::string sideSetName;
   std::string fieldName;
   std::string stateName;
+
+  MDFieldMemoizer<Traits> memoizer;
 };
 
 } // Namespace PHAL

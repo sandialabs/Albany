@@ -27,6 +27,8 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   BF            (p.get<std::string> ("BF Name"), dl_side->node_qp_scalar),
   GradBF        (p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient)
 {
+  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+
   this->addDependentField(sideCoordVec);
   this->addEvaluatedField(tangents);
   this->addEvaluatedField(metric);
@@ -137,6 +139,7 @@ template<typename EvalT, typename Traits>
 void ComputeBasisFunctionsSide<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  if (memoizer.have_stored_data(workset)) return;
 
   //TODO: use Intrepid routines as much as possible
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())

@@ -195,6 +195,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
   logParameters = beta_list.get<bool>("Use log scalar parameters",false);
 
+  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+
   this->setName("BasalFrictionCoefficient"+PHX::typeAsString<EvalT>());
 }
 
@@ -246,6 +248,8 @@ template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes, bool 
 void BasalFrictionCoefficient<EvalT, Traits, IsHydrology, IsStokes, ThermoCoupled>::
 evaluateFields (typename Traits::EvalData workset)
 {
+  if (memoizer.have_stored_data(workset)) return;
+
   ParamScalarT mu, lambda, power;
 
   if (beta_type==POWER_LAW || beta_type==REGULARIZED_COULOMB)

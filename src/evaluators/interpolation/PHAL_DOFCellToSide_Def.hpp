@@ -102,6 +102,8 @@ DOFCellToSideBase(const Teuchos::ParameterList& p,
       }
     }
   }
+
+  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
 }
 
 //**********************************************************************
@@ -121,6 +123,7 @@ template<typename EvalT, typename Traits, typename ScalarT>
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  if (memoizer.have_stored_data(workset)) return;
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
 
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);

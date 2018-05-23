@@ -226,8 +226,9 @@ namespace Albany {
     //! Interpolation functions for scalar quantities defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFInterpolationSideEvaluator(
-       const std::string& dof_names,
-       const std::string& sideSetName) const;
+        const std::string& dof_names,
+        const std::string& sideSetName,
+        const bool enableMemoizer = false) const;
 
     //! Interpolation functions for vector defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
@@ -274,11 +275,12 @@ namespace Albany {
     //! Function to create evaluator for restriction to side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFCellToSideEvaluator(
-       const std::string& cell_dof_name,
-       const std::string& sideSetName,
-       const std::string& layout,
-       const Teuchos::RCP<shards::CellTopology>& cellType = Teuchos::null,
-       const std::string& side_dof_name = "") const;
+        const std::string& cell_dof_name,
+        const std::string& sideSetName,
+        const std::string& layout,
+        const Teuchos::RCP<shards::CellTopology>& cellType = Teuchos::null,
+        const std::string& side_dof_name = "",
+        const bool enableMemoizer = false) const;
 
     //! Combo: restriction to side plus interpolation
     Teuchos::RCP< PHX::Evaluator<Traits> >
@@ -333,10 +335,11 @@ namespace Albany {
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructComputeBasisFunctionsSideEvaluator(
-      const Teuchos::RCP<shards::CellTopology>& cellType,
-      const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasisSide,
-      const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureSide,
-      const std::string& sideSetName) const;
+        const Teuchos::RCP<shards::CellTopology>& cellType,
+        const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasisSide,
+        const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureSide,
+        const std::string& sideSetName,
+        const bool enableMemoizer = false) const;
 
   private:
 

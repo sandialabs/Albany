@@ -539,7 +539,8 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructComputeBasisFunctions
     const Teuchos::RCP<shards::CellTopology>& cellType,
     const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasisSide,
     const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureSide,
-    const std::string& sideSetName) const
+    const std::string& sideSetName,
+    const bool enableMemoizer) const
 {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
                                 "Error! The layout structure for side set " << sideSetName << " was not found.\n");
@@ -567,17 +568,20 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructComputeBasisFunctions
     p->set<std::string>("Gradient BF Name",          grad_bf_name + " "+sideSetName);
     p->set<std::string>("Inverse Metric Name",       metric_inv_name + " "+sideSetName);
 
+    if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
+
     return rcp(new PHAL::ComputeBasisFunctionsSide<EvalT,Traits>(*p,dl->side_layouts.at(sideSetName)));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFCellToSideEvaluator(
-       const std::string& cell_dof_name,
-       const std::string& sideSetName,
-       const std::string& layout,
-       const Teuchos::RCP<shards::CellTopology>& cellType,
-       const std::string& side_dof_name) const
+    const std::string& cell_dof_name,
+    const std::string& sideSetName,
+    const std::string& layout,
+    const Teuchos::RCP<shards::CellTopology>& cellType,
+    const std::string& side_dof_name,
+    const bool enableMemoizer) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -596,6 +600,8 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFCellToSideEvaluato
       p->set<std::string>("Side Variable Name", side_dof_name);
     else
       p->set<std::string>("Side Variable Name", cell_dof_name);
+
+    if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
 
     return rcp(new PHAL::DOFCellToSideBase<EvalT,Traits,ScalarT>(*p,dl));
 }
@@ -739,8 +745,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFInterpolationEvalu
 template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFInterpolationSideEvaluator(
-       const std::string& dof_name,
-       const std::string& sideSetName) const
+    const std::string& dof_name, const std::string& sideSetName, const bool enableMemoizer) const
 {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
                                 "Error! The layout structure for side set " << sideSetName << " was not found.\n");
@@ -757,6 +762,8 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFInterpolationSideE
     p->set<std::string>("Side Set Name",sideSetName);
 
     // Output (assumes same Name as input)
+
+    if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
 
     return rcp(new PHAL::DOFInterpolationSideBase<EvalT,Traits,ScalarT>(*p,dl->side_layouts.at(sideSetName)));
 }

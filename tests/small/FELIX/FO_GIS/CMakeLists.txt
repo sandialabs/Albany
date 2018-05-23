@@ -21,6 +21,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstructT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstructT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_perfT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_perfT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupled.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled_shape_opt.xml
@@ -64,9 +66,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km_testT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis20km_testT.xml COPYONLY)
 if (ALBANY_EPETRA) 
 add_test(${testName}_Gis20km ${Albany.exe} input_fo_gis20km_test.xml)
-ENDIF() 
+ENDIF()
+if (ALBANY_IOPX)
+add_test(${testName}_GisPopulateMeshes ${AlbanyT.exe} input_fo_gis_populate_meshes.xml)
+ENDIF()
 if (ALBANY_EPETRA AND ALBANY_IOPX)
-add_test(${testName}_GisPopulateMeshes ${Albany.exe} input_fo_gis_populate_meshes.xml)
 add_test(${testName}_GisUnstructured ${Albany.exe} input_fo_gis_unstruct.xml)
 set_tests_properties(${testName}_GisUnstructured PROPERTIES DEPENDS ${testName}_GisPopulateMeshes)
 if (ALBANY_MESH_DEPENDS_ON_SOLUTION)
@@ -93,4 +97,6 @@ set_tests_properties(${testName}_Gis20km  PROPERTIES LABELS CUDA_TEST)
 endif()
 if(ALBANY_IFPACK2)
 add_test(${testName}_Gis20km_Tpetra ${AlbanyT.exe} input_fo_gis20km_testT.xml)
+add_test(${testName}_GisUnstructuredPerformance_Tpetra ${AlbanyT.exe} input_fo_gis_unstruct_perfT.xml)
+set_tests_properties(${testName}_GisUnstructuredPerformance_Tpetra PROPERTIES DEPENDS ${testName}_GisPopulateMeshes)
 endif(ALBANY_IFPACK2)

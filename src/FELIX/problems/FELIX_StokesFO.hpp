@@ -478,6 +478,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
         {
           // Not a parameter but requires as input: load it.
           p->set<std::string>("Field Name", fieldName);
+          if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
           ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
         }
@@ -936,11 +937,12 @@ if (basalSideName!="INVALID")
     // -------------------- Special evaluators for side handling ----------------- //
 
     //---- Restrict vertex coordinates from cell-based to cell-side-based
-    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,basalSideName,"Vertex Vector",cellType,Albany::coord_vec_name +" " + basalSideName);
+    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,basalSideName,
+        "Vertex Vector",cellType,Albany::coord_vec_name +" " + basalSideName,enableMemoizer);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Compute side basis functions
-    ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, basalSideBasis, basalCubature, basalSideName);
+    ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, basalSideBasis, basalCubature, basalSideName, enableMemoizer);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Restrict velocity from cell-based to cell-side-based
@@ -1024,7 +1026,7 @@ if (basalSideName!="INVALID")
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate basal_friction (if needed) on QP on side
-    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("basal_friction", basalSideName);
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("basal_friction", basalSideName,enableMemoizer);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate effective_pressure (if needed) on QP on side
@@ -1308,6 +1310,8 @@ if (basalSideName!="INVALID")
 
     //Output
     p->set<std::string>("Basal Friction Coefficient Variable Name", "beta");
+
+    if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
 
     ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,true,false>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
