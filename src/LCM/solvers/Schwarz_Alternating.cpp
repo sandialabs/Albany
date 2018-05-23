@@ -158,12 +158,23 @@ SchwarzAlternating(
     }
     if (is_dynamic == true) {
       ALBANY_ASSERT(piro_params.isSublist("Tempus") == true, msg);
-      Teuchos::ParameterList &time_step_control_params = piro_params.sublist("Tempus").sublist("Tempus Integrator").sublist("Time Step Control");
-      std::string const integrator_step_type = time_step_control_params.get("Integrator Step Type", "Constant");
-      std::string const msg2{"Non-constant time-stepping through Tempus not supported with dynamic alternating Schwarz; \n"
-                             "In this case, variable time-stepping is handled within the Schwarz loop.\n"
-                             "Please rerun with 'Integrator Step Type: Constant' in 'Time Step Control' sublist.\n"};
-      ALBANY_ASSERT(integrator_step_type == "Constant", msg2); 
+      Teuchos::ParameterList &
+      time_step_control_params = piro_params.sublist(
+          "Tempus").sublist("Tempus Integrator").sublist("Time Step Control");
+
+      std::string const
+      integrator_step_type = time_step_control_params.get(
+          "Integrator Step Type",
+          "Constant");
+
+      std::string const
+      msg2{"Non-constant time-stepping through Tempus not supported "
+        "with dynamic alternating Schwarz; \n"
+        "In this case, variable time-stepping is "
+        "handled within the Schwarz loop.\n"
+        "Please rerun with 'Integrator Step Type: "
+        "Constant' in 'Time Step Control' sublist.\n"};
+      ALBANY_ASSERT(integrator_step_type == "Constant", msg2);
     }
 
     Teuchos::RCP<Albany::Application>
@@ -831,13 +842,15 @@ SchwarzLoopDynamics() const
       state_mgr = app.getStateMgr();
 
 #ifdef DEBUG
-      fos << "DEBUG: Getting internal states subdomain = " << subdomain << "...\n";
+      fos << "DEBUG: Getting internal states subdomain = "
+          << subdomain << "...\n";
 #endif
       toFrom(internal_states_[subdomain], state_mgr.getStateArrays());
 #ifdef DEBUG
       printInternalElementStates(
           internal_states_[subdomain], state_mgr.getStateInfoStruct());
-      fos << "DEBUG: ...done setting internal states subdomain = " << subdomain << ".\n";  
+      fos << "DEBUG: ...done setting internal states subdomain = "
+          << subdomain << ".\n";
 #endif
     } 
 
@@ -888,7 +901,8 @@ SchwarzLoopDynamics() const
 
         Piro::TempusSolver<ST, LO, Tpetra_GO, KokkosNode> &
         piro_tempus_solver =
-            dynamic_cast<Piro::TempusSolver<ST, LO, Tpetra_GO, KokkosNode> &>(solver);
+            dynamic_cast<Piro::TempusSolver<ST, LO, Tpetra_GO, KokkosNode>
+        &>(solver);
 
         piro_tempus_solver.setStartTime(current_time);
         piro_tempus_solver.setFinalTime(next_time);
@@ -917,13 +931,15 @@ SchwarzLoopDynamics() const
         state_mgr = app.getStateMgr();
 
 #ifdef DEBUG
-        fos << "DEBUG: Setting internal states subdomain = " << subdomain << "...\n";
+        fos << "DEBUG: Setting internal states subdomain = "
+            << subdomain << "...\n";
 #endif 
         toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
 #ifdef DEBUG
         printInternalElementStates(
             internal_states_[subdomain], state_mgr.getStateInfoStruct());
-        fos << "DEBUG: ...done setting internal states subdomain = " << subdomain << ".\n";  
+        fos << "DEBUG: ...done setting internal states subdomain = "
+            << subdomain << ".\n";
 #endif
 
         //IKT: the following is different than the quasistatic case...
@@ -995,14 +1011,16 @@ SchwarzLoopDynamics() const
 
         // Check whether solver did OK.
 
-        //IKT, 12/21/17: uncomment the following if want to check what happened with NOX
+        //IKT, 12/21/17: uncomment the following if want to check
+        //what happened with NOX
         //solver underlying Tempus solver.
 
         /*const Teuchos::RCP<const ::Thyra::NonlinearSolverBase<ST> >
         thyra_solver = piro_tempus_solver.getSolver();
 
         Teuchos::RCP<const ::Thyra::NOXNonlinearSolver > thyra_nox_solver =
-        Teuchos::rcp_dynamic_cast<const ::Thyra::NOXNonlinearSolver>(thyra_solver);
+        Teuchos::rcp_dynamic_cast<const ::Thyra::NOXNonlinearSolver>
+        (thyra_solver);
 
         Teuchos::RCP<const NOX::Solver::Generic> const_nox_solver =
         thyra_nox_solver->getNOXSolver();
@@ -1196,17 +1214,22 @@ SchwarzLoopDynamics() const
       auto const
       reduced_step = reduction_factor_ * time_step;
 
-      if (reduced_step >= min_time_step_) {
-        fos << "INFO: Reducing step from " << time_step << " to ";
-        fos << reduced_step << '\n';
-      } else {
+      if (time_step <= min_time_step_) {
         fos << "ERROR: Cannot reduce step. Stopping execution.\n";
         fos << "INFO: Requested step    :" << reduced_step << '\n';
         fos << "INFO: Minimum time step :" << min_time_step_ << '\n';
         return;
       }
 
-      time_step = reduced_step;
+      if (reduced_step > min_time_step_) {
+        fos << "INFO: Reducing step from " << time_step << " to ";
+        fos << reduced_step << '\n';
+        time_step = reduced_step;
+      } else {
+        fos << "INFO: Reducing step from " << time_step << " to ";
+        fos << min_time_step_ << '\n';
+        time_step = min_time_step_;
+      }
 
       // Restore previous solutions
       for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
@@ -1648,17 +1671,22 @@ SchwarzLoopQuasistatics() const
       auto const
       reduced_step = reduction_factor_ * time_step;
 
-      if (reduced_step >= min_time_step_) {
-        fos << "INFO: Reducing step from " << time_step << " to ";
-        fos << reduced_step << '\n';
-      } else {
+      if (time_step <= min_time_step_) {
         fos << "ERROR: Cannot reduce step. Stopping execution.\n";
         fos << "INFO: Requested step    :" << reduced_step << '\n';
         fos << "INFO: Minimum time step :" << min_time_step_ << '\n';
         return;
       }
 
-      time_step = reduced_step;
+      if (reduced_step > min_time_step_) {
+        fos << "INFO: Reducing step from " << time_step << " to ";
+        fos << reduced_step << '\n';
+        time_step = reduced_step;
+      } else {
+        fos << "INFO: Reducing step from " << time_step << " to ";
+        fos << min_time_step_ << '\n';
+        time_step = min_time_step_;
+      }
 
       // Restore previous solutions
       for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
