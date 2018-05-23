@@ -1154,31 +1154,31 @@ SchwarzLoopDynamics() const
 
       fos << line << std::endl;
 
-      fos << centered("Sub", 4);
-      fos << centered("Initial norm", 24);
-      fos << centered("Final norm", 24);
-      fos << centered("Difference norm", 24);
+      fos << centered("Sub", 6);
+      fos << centered("Initial norm", 22);
+      fos << centered("Final norm", 22);
+      fos << centered("Difference norm", 22);
       fos << std::endl;
-      fos << centered("dom", 4);
-      fos << centered("||X0||", 24);
-      fos << centered("||Xf||", 24);
-      fos << centered("||Xf-X0||", 24);
+      fos << centered("dom", 6);
+      fos << centered("||X0||", 22);
+      fos << centered("||Xf||", 22);
+      fos << centered("||Xf-X0||", 22);
       fos << std::endl;
       fos << line << std::endl;
 
       for (auto m = 0; m < num_subdomains_; ++m) {
-        fos << std::setw(4) << m;
-        fos << std::setw(24) << norms_init(m);
-        fos << std::setw(24) << norms_final(m);
-        fos << std::setw(24) << norms_diff(m);
+        fos << std::setw(6) << m;
+        fos << std::setw(22) << norms_init(m);
+        fos << std::setw(22) << norms_final(m);
+        fos << std::setw(22) << norms_diff(m);
         fos << std::endl;
       }
 
       fos << line << std::endl;
-      fos << centered("Norm", 4);
-      fos << std::setw(24) << norm_init_;
-      fos << std::setw(24) << norm_final_;
-      fos << std::setw(24) << norm_diff_;
+      fos << centered("Norm", 6);
+      fos << std::setw(22) << norm_init_;
+      fos << std::setw(22) << norm_final_;
+      fos << std::setw(22) << norm_diff_;
       fos << std::endl;
       fos << line << std::endl;
       fos << "Absolute error     :" << abs_error_ << '\n';
@@ -1606,31 +1606,31 @@ SchwarzLoopQuasistatics() const
 
       fos << line << std::endl;
 
-      fos << centered("Sub", 4);
-      fos << centered("Initial norm", 24);
-      fos << centered("Final norm", 24);
-      fos << centered("Difference norm", 24);
+      fos << centered("Sub", 6);
+      fos << centered("Initial norm", 22);
+      fos << centered("Final norm", 22);
+      fos << centered("Difference norm", 22);
       fos << std::endl;
-      fos << centered("dom", 4);
-      fos << centered("||X0||", 24);
-      fos << centered("||Xf||", 24);
-      fos << centered("||Xf-X0||", 24);
+      fos << centered("dom", 6);
+      fos << centered("||X0||", 22);
+      fos << centered("||Xf||", 22);
+      fos << centered("||Xf-X0||", 22);
       fos << std::endl;
       fos << line << std::endl;
 
       for (auto m = 0; m < num_subdomains_; ++m) {
-        fos << std::setw(4) << m;
-        fos << std::setw(24) << norms_init(m);
-        fos << std::setw(24) << norms_final(m);
-        fos << std::setw(24) << norms_diff(m);
+        fos << std::setw(6) << m;
+        fos << std::setw(22) << norms_init(m);
+        fos << std::setw(22) << norms_final(m);
+        fos << std::setw(22) << norms_diff(m);
         fos << std::endl;
       }
 
       fos << line << std::endl;
-      fos << centered("Norm", 4);
-      fos << std::setw(24) << norm_init_;
-      fos << std::setw(24) << norm_final_;
-      fos << std::setw(24) << norm_diff_;
+      fos << centered("Norm", 6);
+      fos << std::setw(22) << norm_init_;
+      fos << std::setw(22) << norm_final_;
+      fos << std::setw(22) << norm_diff_;
       fos << std::endl;
       fos << line << std::endl;
       fos << "Absolute error     :" << abs_error_ << '\n';
