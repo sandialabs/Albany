@@ -11,12 +11,14 @@
 
 /**
  *  \file string.hpp
- *  
- *  \brief 
+ *
+ *  \brief
  */
 
 #include <string>
 #include <type_traits>
+#include <cctype>
+#include <algorithm>
 
 namespace util {
 typedef std::string string;
@@ -63,6 +65,14 @@ string string_convert (
 template<typename T>
 inline string to_string (T&& val) {
   return detail::string_convert<T>(std::forward<T>(val));
+}
+
+inline string upper_case (const string& s) {
+  string s_up = s;
+  std::transform(s_up.begin(), s_up.end(), s_up.begin(),
+                 [](unsigned char c)->char { return std::toupper(c); }
+                );
+  return s_up;
 }
 
 /*
