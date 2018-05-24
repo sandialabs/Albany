@@ -78,9 +78,9 @@
     <ParameterList name="Required Fields Info">
      <Parameter name="Number Of Fields" type="int" value="4"/>
       <ParameterList name="Field 0">
-        <Parameter name="Field Name" type="string" value="temperature"/>
-        <Parameter name="Field Type" type="string" value="Node Scalar"/>
-        <Parameter name="Field Origin"  type="string" value="Output"/>
+        <Parameter name="Field Name"   type="string" value="temperature"/>
+        <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin" type="string" value="Mesh"/>
       </ParameterList>
       <ParameterList name="Field 1">
         <Parameter name="Field Name"   type="string" value="ice_thickness"/>
