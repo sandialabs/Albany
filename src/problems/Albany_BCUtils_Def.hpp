@@ -958,6 +958,8 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
   using PHAL::AlbanyTraits;
   using std::string;
 
+  const bool enableMemoizer = params->get<bool>("Use MDField Memoization", false);
+
   // Drop into the "Neumann BCs" sublist
   ParameterList BCparams = params->sublist(traits_type::bcParamsPl);
   BCparams.validateParameters(
@@ -1095,6 +1097,10 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
           p->set<Teuchos::Array<double>>(
               "Neumann Input Value", BCparams.get<Teuchos::Array<double>>(ss));
           p->set<string>("Neumann Input Conditions", conditions[k]);
+
+          // Enable Memoizer
+          if (enableMemoizer && conditions[k] == "lateral")
+            p->set<bool>("Enable Memoizer", enableMemoizer);
 
           // If we are doing a Neumann internal boundary with a "scaled jump"
           // (includes "robin" too)
@@ -1316,6 +1322,8 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
     p->set<string>("State Name", paramName);
     p->set<std::string>("Field Name", paramName);
 
+    if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
+
     evaluators_to_build[NeuGT] = p;
   }
 
@@ -1328,6 +1336,8 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
     p->set<RCP<DataLayout>>("State Field Layout", dl->node_scalar);
     p->set<string>("State Name", "surface_height");
     p->set<string>("Field Name", "surface_height");
+
+    if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
 
     evaluators_to_build[NeuGSH] = p;
   }

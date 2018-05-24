@@ -30,6 +30,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
   sideSetID      (p.get<std::string>("Side Set ID")),
   coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector)
 {
+  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+
   useGLP = false;
   // the input.xml string "NBC on SS sidelist_12 for DOF T set dudn" (or something like it)
   name = p.get< std::string >("Neumann Input String");
@@ -446,6 +448,7 @@ template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
 evaluateNeumannContribution(typename Traits::EvalData workset)
 {
+  if (memoizer.have_stored_data(workset)) return;
 
   // setJacobian only needs to be RealType since the data type is only
   //  used internally for Basis Fns on reference elements, which are

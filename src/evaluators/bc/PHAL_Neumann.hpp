@@ -20,6 +20,7 @@
 #include "Albany_ProblemUtils.hpp"
 #include "Sacado_ParameterAccessor.hpp"
 #include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_Utilities.hpp"
 
 #include "Albany_MaterialDatabase.hpp"
 
@@ -253,6 +254,7 @@ protected:
 
   std::vector<ScalarT> matScaling;
 
+  MDFieldMemoizer<Traits> memoizer;
 };
 
 template<typename EvalT, typename Traits> class Neumann;

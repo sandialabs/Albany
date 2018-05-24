@@ -16,14 +16,14 @@ namespace PHAL {
 template<typename EvalT, typename Traits, typename ScalarType>
 LoadStateFieldBase<EvalT, Traits, ScalarType>::
 LoadStateFieldBase(const Teuchos::ParameterList& p)
-{  
+{
+  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+
   fieldName =  p.get<std::string>("Field Name");
   stateName =  p.get<std::string>("State Name");
 
   PHX::MDField<ScalarType> f(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("State Field Layout") );
   data = f;
-
-  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
 
   this->addEvaluatedField(data);
   this->setName("Load State Field"+PHX::typeAsString<EvalT>());
@@ -58,14 +58,14 @@ void LoadStateFieldBase<EvalT, Traits, ScalarType>::evaluateFields(typename Trai
 template<typename EvalT, typename Traits>
 LoadStateField<EvalT, Traits>::
 LoadStateField(const Teuchos::ParameterList& p) 
-{  
+{
+  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+
   fieldName =  p.get<std::string>("Field Name");
   stateName =  p.get<std::string>("State Name");
 
   PHX::MDField<ParamScalarT> f(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("State Field Layout") );
   data = f;
-
-  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
 
   this->addEvaluatedField(data);
   this->setName("Load State Field"+PHX::typeAsString<EvalT>());
