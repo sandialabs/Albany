@@ -45,13 +45,6 @@ public:
   void
   evaluateFields(typename Traits::EvalData d);
 
-  // update functions:
-  void
-  update_dfdT(std::size_t cell, std::size_t qp);
-    
-  // calculation functions:
-  ScalarT
-  evaluateFreezingCurve(std::size_t cell, std::size_t qp);
 
 private:
   // Input (MDFields):
