@@ -31,6 +31,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   ice_saturation_max_   = p->get<RealType>("ACE Ice Maximum Saturation", 0.0);
   water_saturation_min_ = p->get<RealType>("ACE Water Minimum Saturation", 0.0);
   porosity_             = p->get<RealType>("ACE Porosity", 0.0);
+  latent_heat_          = p->get<RealType>("ACE Latent Heat", 0.0);
 
   // retrieve appropriate field name strings
   std::string const cauchy_string       = field_name_map_["Cauchy_Stress"];
@@ -57,6 +58,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setEvaluatedField("ACE Density", dl->qp_scalar);
   setEvaluatedField("ACE Heat Capacity", dl->qp_scalar);
   setEvaluatedField("ACE Thermal Conductivity", dl->qp_scalar);
+  setEvaluatedField("ACE Thermal Inertia", dl->qp_scalar);
   setEvaluatedField("ACE Water Saturation", dl->qp_scalar);
 
   // define the evaluated fields
@@ -106,7 +108,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       false,
       p->get<bool>("Output Yield Surface", false));
 
-  // Ice saturation
+  // ACE Ice saturation
   addStateVariable(
       "ACE Ice Saturation",
       dl->qp_scalar,
@@ -115,7 +117,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       false,
       p->get<bool>("Output ACE Ice Saturation", false));
 
-  // Density
+  // ACE Density
   addStateVariable(
       "ACE Density",
       dl->qp_scalar,
@@ -124,7 +126,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       false,
       p->get<bool>("Output ACE Density", false));
 
-  // Heat Capacity
+  // ACE Heat Capacity
   addStateVariable(
       "ACE Heat Capacity",
       dl->qp_scalar,
@@ -142,6 +144,15 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       false,
       p->get<bool>("Output ACE Thermal Conductivity", false));
 
+  // ACE Thermal Inertia
+  addStateVariable(
+      "ACE Thermal Inertia",
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("Output ACE Thermal Inertia", false));
+  
   // ACE Water Saturation
   addStateVariable(
       "ACE Water Saturation",
@@ -197,6 +208,7 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   density_          = *output_fields["ACE Density"];
   heat_capacity_    = *output_fields["ACE Heat Capacity"];
   thermal_cond_     = *output_fields["ACE Thermal Conductivity"];
+  thermal_inertia_  = *output_fields["ACE Thermal Inertia"];
   water_saturation_ = *output_fields["ACE Water Saturation"];
 
   if (have_temperature_ == true) {
@@ -410,6 +422,11 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   thermal_cond_(cell, pt) = 
       pow(ice_thermal_cond_,(ice_saturation_(cell, pt)*porosity_)) * 
       pow(water_thermal_cond_,(water_saturation_(cell, pt)*porosity_));
+      
+  // Update the material thermal inertia term
+  thermal_inertia_(cell, pt) = 
+      (density_(cell, pt)*heat_capacity_(cell, pt)) -
+      (ice_density_*latent_heat_*dfdT);
   
   // Swap for old variables
   // these cause compiler errors!!
