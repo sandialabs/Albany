@@ -73,6 +73,7 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ScalarField thermal_cond_;
   ScalarField thermal_inertia_;
   ScalarField water_saturation_;
+  ScalarField porosity_;
 
   // Mechanical MDFields
   ScalarField eqps_;
@@ -97,8 +98,9 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   RealType ice_saturation_init_{0.0};
   RealType ice_saturation_max_{0.0};
   RealType water_saturation_min_{0.0};
-  RealType porosity_{0.0};
   RealType latent_heat_{0.0};
+  RealType porosity0_{0.0};
+  RealType porosityE_{0.0};
 
   // Saturation hardening constraints
   RealType sat_mod_{0.0};

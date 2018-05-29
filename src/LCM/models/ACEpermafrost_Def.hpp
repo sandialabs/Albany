@@ -33,8 +33,9 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   ice_saturation_init_  = p->get<RealType>("ACE Ice Initial Saturation", 0.0);
   ice_saturation_max_   = p->get<RealType>("ACE Ice Maximum Saturation", 0.0);
   water_saturation_min_ = p->get<RealType>("ACE Water Minimum Saturation", 0.0);
-  porosity_             = p->get<RealType>("ACE Porosity", 0.0);
   latent_heat_          = p->get<RealType>("ACE Latent Heat", 0.0);
+  porosity0_            = p->get<RealType>("ACE Surface Porosity", 0.0);
+  porosityE_            = p->get<RealType>("ACE Porosity E-Depth", 0.0);
 
   // retrieve appropriate field name strings
   std::string const cauchy_string       = field_name_map_["Cauchy_Stress"];
@@ -63,6 +64,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   setEvaluatedField("ACE Thermal Conductivity", dl->qp_scalar);
   setEvaluatedField("ACE Thermal Inertia", dl->qp_scalar);
   setEvaluatedField("ACE Water Saturation", dl->qp_scalar);
+  setEvaluatedField("ACE Porosity", dl->qp_scalar);
 
   // define the evaluated fields
   setEvaluatedField(cauchy_string, dl->qp_tensor);
@@ -164,6 +166,15 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
       0.0,
       false,
       p->get<bool>("ACE Water Saturation", false));
+  
+  // ACE Porosity
+  addStateVariable(
+      "ACE Porosity",
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("ACE Porosity", false));
 
   // mechanical source
   if (have_temperature_ == true) {
@@ -213,6 +224,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::init(
   thermal_cond_     = *output_fields["ACE Thermal Conductivity"];
   thermal_inertia_  = *output_fields["ACE Thermal Inertia"];
   water_saturation_ = *output_fields["ACE Water Saturation"];
+  porosity_         = *output_fields["ACE Porosity"];
 
   if (have_temperature_ == true) {
     source_ = *output_fields[source_string];
@@ -358,11 +370,19 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     }
   }
 
+  // Calculate the pressure 
+  ScalarT pressure = 101325.0; // [Pa] 
+  // pressure = (1.0/3.0)*minitensor::trace(stress_(cell, pt));
+  
+  // Calculate the depth-dependent porosity
+  // Note: The porosity does not change in time so this calculation only needs
+  //       to be done once, at the beginning of the simulation.
+  // porosity_(cell, pt) = porosity0_ * std::exp(-pressure/(porosityE_*9.81*1500.0))
+  porosity_(cell, pt) = 0.70;
+  
   // Calculate melting temperature
   ScalarT sal = 0.10;  // note: this should come from chemical part of model
-  ScalarT sal15 = std::sqrt(sal * sal * sal);
-  ScalarT pressure = 101325.0; // [Pa] 
-  // pressure = (1.0/3.0)*minitensor::trace(stress_(cell, pt)); 
+  ScalarT sal15 = std::sqrt(sal * sal * sal); 
   ScalarT Tmelt =
       (-0.057 * sal) + (0.00170523 * sal15) - (0.0002154996 * sal * sal) - 
       ((0.000753/10000.0) * pressure);
@@ -405,29 +425,23 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
                                          water_saturation_(cell, pt));
   water_saturation_(cell, pt) = std::min(1.0,water_saturation_(cell, pt));
   
-  // The following calculations need porosity: density, heat capacity, thermal
-  // conductivity. However, we need to calculate a porosity field at the 
-  // beginning of the simulation based on lithostatic pressure and surface
-  // porosity value. Porosity doesn't change in time.
-  ScalarT porosity_ = 0.65;
-  
   // Update the effective material density
   density_(cell, pt) = 
-      porosity_*(ice_density_*ice_saturation_(cell, pt) + 
-                 water_density_*water_saturation_(cell, pt)) +
-      (1.0 - porosity_)*sediment_density_;
+      porosity_(cell, pt)*(ice_density_*ice_saturation_(cell, pt) + 
+                           water_density_*water_saturation_(cell, pt)) +
+      (1.0 - porosity_(cell, pt))*sediment_density_;
       
   // Update the effective material heat capacity
   heat_capacity_(cell, pt) = 
-      porosity_*(ice_heat_capacity_*ice_saturation_(cell, pt) + 
-                 water_heat_capacity_*water_saturation_(cell, pt)) +
-      (1.0 - porosity_)*sediment_heat_capacity_;
+      porosity_(cell, pt)*(ice_heat_capacity_*ice_saturation_(cell, pt) + 
+                           water_heat_capacity_*water_saturation_(cell, pt)) +
+      (1.0 - porosity_(cell, pt))*sediment_heat_capacity_;
      
   // Update the effective material thermal conductivity
   thermal_cond_(cell, pt) = 
-      pow(ice_thermal_cond_,(ice_saturation_(cell, pt)*porosity_)) * 
-      pow(water_thermal_cond_,(water_saturation_(cell, pt)*porosity_)) *
-      pow(sediment_thermal_cond_,(1.0 - porosity_));
+      pow(ice_thermal_cond_,(ice_saturation_(cell, pt)*porosity_(cell, pt))) * 
+      pow(water_thermal_cond_,(water_saturation_(cell, pt)*porosity_(cell, pt))) *
+      pow(sediment_thermal_cond_,(1.0 - porosity_(cell, pt)));
       
   // Update the material thermal inertia term
   thermal_inertia_(cell, pt) = 
