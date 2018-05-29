@@ -55,7 +55,7 @@ public:
   Teuchos::Array<FM::CrystalVariant>&
   getCrystalVariants() { return crystalVariants; }
 
-  std::vector< FM::Transition >&
+  Teuchos::Array< FM::Transition >&
   getTransitions() { return transitions; }
 
   Teuchos::Array<RealType>&

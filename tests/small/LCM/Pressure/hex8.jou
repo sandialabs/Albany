@@ -1,0 +1,21 @@
+## /projects/cubit/claro.Lin64.15.3/bin/clarox
+## Cubit Version 15.3
+## Cubit Build 412282
+## Revised 2018-04-11 14:46:39 -0600 (Wed, 11 Apr 2018)
+## Running 05/21/2018 12:54:03 PM
+## Command Options:
+undo on
+brick x 10 y 1 z 1
+volume 1 size 1
+volume 1 size 0.5
+volume 1 size 0.1
+volume 1 scheme map
+mesh volume 1
+nodeset 1 add surface 4
+sideset 1 add surface 5
+sideset 2 add surface 6
+undo group begin
+set exodus netcdf4 off
+set large exodus file on
+export mesh "/projects/AppComp/nightly_gahanse/cee-compute011/repos/Albany/tests/small/LCM/Pressure/hex8.e" overwrite
+undo group end
