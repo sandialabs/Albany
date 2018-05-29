@@ -89,7 +89,7 @@
       <ParameterList name="Field 0">
         <Parameter name="Field Name" type="string" value="temperature"/>
         <Parameter name="Field Type" type="string" value="Elem Scalar"/>
-        <Parameter name="File Origin"  type="string" value="Output"/>
+        <Parameter name="Field Origin"  type="string" value="Mesh"/>
       </ParameterList>
       <ParameterList name="Field 1">
         <Parameter name="Field Name"   type="string" value="basal_friction"/>
