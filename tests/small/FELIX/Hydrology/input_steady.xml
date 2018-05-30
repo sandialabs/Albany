@@ -33,18 +33,11 @@
     </ParameterList>
 
     <ParameterList name="Parameters">
-      <Parameter name="Number of Parameter Vectors" type="int"    value="2"/>
+      <Parameter name="Number of Parameter Vectors" type="int"    value="1"/>
       <ParameterList name="Parameter Vector 0">
         <Parameter name="Number"      type="int"    value="1"/>
         <Parameter name="Parameter 0" type="string" value="Homotopy Parameter"/>
-        <Parameter name="Nominal Values" type="Array(double)" value="{1.0}"/>
-      </ParameterList>
-      <ParameterList name="Parameter Vector 1">   <!-- Basal Friction Coefficient Parameters -->
-        <Parameter name="Number"         type="int"           value="3"/>
-        <Parameter name="Parameter 0"    type="string"        value="Coulomb Friction Coefficient"/>
-        <Parameter name="Parameter 1"    type="string"        value="Bed Roughness"/>
-        <Parameter name="Parameter 2"    type="string"        value="Power Exponent"/>
-        <Parameter name="Nominal Values" type="Array(double)" value="{0.16,1.0,0.33}"/>
+        <Parameter name="Nominal Values" type="Array(double)" value="{0.0}"/>
       </ParameterList>
     </ParameterList>
 
@@ -61,26 +54,21 @@
         <Parameter name="Regularization Type"     type="string" value="Given Value"/>
         <Parameter name="Regularization Value"    type="double" value="1e-10"/>
       </ParameterList>
-      <ParameterList name="hydraulic_potential Gradient Norm">
-        <Parameter name="Regularization Type"     type="string" value="Given Value"/>
-        <Parameter name="Regularization Value"    type="double" value="1e-10"/>
-      </ParameterList>
     </ParameterList>
 
     <ParameterList name="FELIX Hydrology">
-      <Parameter name="Cavities Equation Nodal"                           type="bool"    value="false"/>
+      <Parameter name="Cavities Equation Nodal"                           type="bool"    value="true"/>
       <Parameter name="Lump Mass In Mass Equation"                        type="bool"    value="false"/>
-      <Parameter name="Use Water Thickness In Effective Pressure Formula" type="bool"    value="false"/>
-      <Parameter name="Use Effective Cavities Height"                     type="bool"    value="true"/>
+      <Parameter name="Use Water Thickness In Effective Pressure Formula" type="bool"    value="true"/>
       <Parameter name="Use Melting In Conservation Of Mass"               type="bool"    value="false"/>
       <Parameter name="Use Melting In Cavities Equation"                  type="bool"    value="false"/>
       <Parameter name="Regularize With Continuation"                      type="bool"    value="true"/>
-      <Parameter name="Creep Closure Coefficient"                         type="double"  value="0.04"/>  <!-- q = -kh^alpha |grad(phi)|^beta grad(phi) [1] -->
-      <Parameter name="Darcy Law: Water Thickness Exponent"               type="double"  value="1.0"/>   <!-- q = -kh^alpha |grad(phi)|^beta grad(phi) [1] -->
-      <Parameter name="Darcy Law: Potential Gradient Norm Exponent"       type="double"  value="2.0"/>   <!-- q = -kh^alpha |grad(phi)|^beta grad(phi) [1] -->
-      <Parameter name="Darcy Law: Transmissivity"                         type="double"  value="0.01"/>  <!-- [m^(2*beta-alpha) s^(2*beta-3) kg(1-beta)] -->
-      <Parameter name="Bed Bumps Height"                                  type="double"  value="1"/>     <!-- [m] -->
-      <Parameter name="Bed Bumps Length"                                  type="double"  value="2"/>     <!-- [m] -->
+      <Parameter name="Creep Closure Coefficient"                         type="double"  value="0.04"/>
+      <Parameter name="Darcy Law: Water Thickness Exponent"               type="double"  value="1.0"/>    <!-- q = -kh^alpha |grad(phi)|^beta grad(phi) [1] -->
+      <Parameter name="Darcy Law: Potential Gradient Norm Exponent"       type="double"  value="2.0"/>    <!-- q = -kh^alpha |grad(phi)|^beta grad(phi) [1] -->
+      <Parameter name="Darcy Law: Transmissivity"                         type="double"  value="0.0001"/> <!-- [m^(2*beta-alpha) s^(2*beta-3) kg(1-beta)] -->
+      <Parameter name="Bed Bumps Height"                                  type="double"  value="1"/>      <!-- [m] -->
+      <Parameter name="Bed Bumps Length"                                  type="double"  value="2"/>      <!-- [m] -->
       <ParameterList name="Surface Water Input">
         <Parameter name="Type"  type="string" value="Given Field"/>
       </ParameterList>
@@ -94,7 +82,7 @@
 
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{264.8730791203}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{331.3886465}"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
@@ -108,7 +96,7 @@
     <Parameter name="Gmsh Input Mesh File Name"  type="string" value="../AsciiMeshes/Dome/circle.msh"/>
     <Parameter name="Exodus Output File Name"    type="string" value="./hydrology_steady.exo"/>
     <ParameterList name="Required Fields Info">
-      <Parameter name="Number Of Fields"  type="int" value="8"/>
+      <Parameter name="Number Of Fields"  type="int" value="9"/>
       <ParameterList name="Field 0">
         <Parameter name="Field Name"       type="string"        value="ice_thickness"/>
         <Parameter name="Field Type"       type="string"        value="Node Scalar"/>
@@ -125,7 +113,7 @@
         <Parameter name="Field Name"       type="string"        value="surface_water_input"/>
         <Parameter name="Field Type"       type="string"        value="Node Scalar"/>
         <Parameter name="Field Origin"     type="string"        value="File"/>
-        <Parameter name="Field Expression" type="Array(string)" value="{200/365.25+0*x}"/>
+        <Parameter name="Field Value"      type="Array(double)" value="{54.8}"/>
       </ParameterList>
       <ParameterList name="Field 3">
         <Parameter name="Field Name"       type="string"        value="basal_velocity"/>
@@ -150,6 +138,11 @@
         <Parameter name="Field Usage"      type="string" value="Output"/>
       </ParameterList>
       <ParameterList name="Field 7">
+        <Parameter name="Field Name"    type="string" value="ice_overburden"/>
+        <Parameter name="Field Type"    type="string" value="Node Scalar"/>
+        <Parameter name="Field Usage"   type="string" value="Output"/>
+      </ParameterList>
+      <ParameterList name="Field 8">
         <Parameter name="Field Name"    type="string" value="water_discharge"/>
         <Parameter name="Field Type"    type="string" value="Elem Vector"/>
         <Parameter name="Field Usage"   type="string" value="Output"/>
@@ -160,10 +153,6 @@
   <ParameterList name="Piro">
 
     <ParameterList name="LOCA">
-      <ParameterList name="Bifurcation">
-      </ParameterList>
-      <ParameterList name="Constraints">
-      </ParameterList>
       <ParameterList name="Predictor">
         <Parameter  name="Method" type="string" value="Constant"/>
       </ParameterList>
@@ -196,7 +185,7 @@
 
         <ParameterList name="Test 0">
           <Parameter name="Test Type" type="string" value="MaxIters"/>
-          <Parameter name="Maximum Iterations" type="int" value="20"/>
+          <Parameter name="Maximum Iterations" type="int" value="10"/>
         </ParameterList>
         <ParameterList name="Test 1">
           <Parameter name="Test Type" type="string" value="NormF"/>
