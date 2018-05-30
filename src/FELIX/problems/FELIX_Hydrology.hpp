@@ -496,8 +496,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   fm0.template registerEvaluator<EvalT>(ev);
 
   // Interpolate Water Thickness
-  if (!eliminate_h)
-  {
+  if (!eliminate_h) {
     ev = evalUtils.constructDOFInterpolationEvaluator(water_thickness_name);
     fm0.template registerEvaluator<EvalT> (ev);
     if (unsteady)
@@ -697,6 +696,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string> ("Effective Pressure Variable Name", effective_pressure_name);
   p->set<std::string> ("Water Thickness Variable Name", water_thickness_name);
   p->set<std::string> ("Water Thickness Dot Variable Name", water_thickness_dot_name);
+  p->set<std::string> ("Hydraulic Potential Variable Name", hydraulic_potential_name);
   p->set<std::string> ("Melting Rate Variable Name",melting_rate_name);
   p->set<std::string> ("Surface Water Input Variable Name",surface_water_input_name);
   p->set<std::string> ("Sliding Velocity Variable Name",sliding_velocity_name);

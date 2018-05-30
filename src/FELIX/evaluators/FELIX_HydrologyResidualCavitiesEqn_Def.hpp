@@ -122,6 +122,11 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
     this->addDependentField(h_dot);
   }
 
+  penalization_coeff = hydrology_params.isParameter("Thickness Bounds Penalization Coefficient")
+                     ? hydrology_params.get<double>("Thickness Bounds Penalization Coefficient") : 0.0;
+  TEUCHOS_TEST_FOR_EXCEPTION (penalization_coeff<0.0, Teuchos::Exceptions::InvalidParameter, "Error! Penalization coefficient must be positive.\n");
+  penalization = (penalization_coeff!=0.0);
+
   this->setName("HydrologyResidualCavitiesEqn"+PHX::typeAsString<EvalT>());
 }
 
@@ -187,6 +192,9 @@ evaluateFieldsSide (typename Traits::EvalData workset)
                  + (h_r - h(cell,side,node))*u_b(cell,side,node)/l_r
                  - c_creep*h(cell,side,node)*ice_softness(cell)*std::pow(N(cell,side,node),3)
                  - (unsteady ? scaling_h_t*h_dot(cell,side,node) : zero);
+        if (penalization) {
+          res_node += penalization_coeff*std::pow(std::min(ScalarT(0.0),h(cell,side,node)),2);
+        }
       } else {
         for (int qp=0; qp < numQPs; ++qp)
         {
@@ -194,6 +202,10 @@ evaluateFieldsSide (typename Traits::EvalData workset)
                  + (h_r - h(cell,side,qp))*u_b(cell,side,qp)/l_r
                  - c_creep*h(cell,side,qp)*ice_softness(cell,side)*std::pow(N(cell,side,qp),3)
                  - (unsteady ? scaling_h_t*h_dot(cell,side,qp) : zero);
+
+          if (penalization) {
+            res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),h(cell,side,qp)),2);
+          }
 
           res_node += res_qp * BF(cell,side,node,qp) * w_measure(cell,side,qp);
         }
@@ -221,6 +233,10 @@ evaluateFieldsCell (typename Traits::EvalData workset)
                  + (h_r - h(cell,node))*u_b(cell,node)/l_r
                  - c_creep*h(cell,node)*ice_softness(cell)*std::pow(N(cell,node),3)
                  - (unsteady ? scaling_h_t*h_dot(cell,node) : zero);
+
+        if (penalization) {
+          res_node += penalization_coeff*std::pow(std::min(ScalarT(0.0),h(cell,node)),2);
+        }
       } else {
         for (int qp=0; qp < numQPs; ++qp)
         {
@@ -228,6 +244,10 @@ evaluateFieldsCell (typename Traits::EvalData workset)
                  + (h_r - h(cell,qp))*u_b(cell,qp)/l_r
                  - c_creep*h(cell,qp)*ice_softness(cell)*std::pow(N(cell,qp),3)
                  - (unsteady ? scaling_h_t*h_dot(cell,qp) : zero);
+
+          if (penalization) {
+            res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),h(cell,qp)),2);
+          }
 
           res_node += res_qp * BF(cell,node,qp) * w_measure(cell,qp);
         }

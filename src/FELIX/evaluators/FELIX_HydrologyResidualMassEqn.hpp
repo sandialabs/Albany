@@ -72,6 +72,7 @@ private:
   double scaling_omega;
   double scaling_q;
   double scaling_h_dot;
+  double penalization_coeff;
 
   bool mass_lumping;
   bool penalization;

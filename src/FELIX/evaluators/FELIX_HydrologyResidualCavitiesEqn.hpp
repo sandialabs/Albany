@@ -68,10 +68,12 @@ private:
   double l_r;
   double c_creep;
   double scaling_h_t;
+  double penalization_coeff;
 
   bool unsteady;
   bool use_melting;
   bool nodal_equation;
+  bool penalization;
 
   // Variables necessary for stokes coupling
   bool                            stokes_coupling;

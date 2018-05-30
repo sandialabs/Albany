@@ -71,7 +71,17 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
     this->addDependentField(h_dot);
   }
 
-  penalization = hydrology_params.isParameter("Penalize Negative Potential") ? hydrology_params.get<bool>("Penalize Negative Potential") : false;
+  penalization_coeff = hydrology_params.isParameter("Potential Bounds Penalization Coefficient")
+                     ? hydrology_params.get<double>("Potential Bounds Penalization Coefficient") : 0.0;
+  TEUCHOS_TEST_FOR_EXCEPTION (penalization_coeff<0.0, Teuchos::Exceptions::InvalidParameter, "Error! Penalization coefficient must be positive.\n");
+  penalization = (penalization_coeff!=0.0);
+  if (penalization) {
+    phi = PHX::MDField<const ScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->qp_scalar);
+    phi_0 = PHX::MDField<const ParamScalarT>(p.get<std::string>("Basal Gravitational Water Potential Variable Name"),dl->qp_scalar);
+    this->addDependentField(phi);
+    this->addDependentField(phi_0);
+  }
+
   Teuchos::RCP<PHX::DataLayout> layout;
   if (use_melting) {
     mass_lumping = hydrology_params.isParameter("Mass Lumping") ? hydrology_params.get<bool>("Mass Lumping") : false;
@@ -90,13 +100,6 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
     this->addDependentField(m);
   }
 
-  if (penalization) {
-    phi = PHX::MDField<const ScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->node_scalar);
-    phi_0 = PHX::MDField<const ParamScalarT>(p.get<std::string>("Basal Gravitational Water Potential Variable Name"),dl->node_scalar);
-    this->addDependentField(phi);
-    this->addDependentField(phi_0);
-  }
-
   this->addDependentField(BF);
   this->addDependentField(GradBF);
   this->addDependentField(w_measure);
@@ -105,31 +108,31 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
 
   /*
    * Scalings, needed to account for different units: ice velocity
-   * is in m/yr, the mesh is in km, and hydrology time unit is s.
+   * is in m/yr, the mesh is in km, and hydrology space/time unit are m/s.
    *
-   * The residual has 4 terms (here in weak form, without signs), with the following
-   * units (including the km^2 from dx):
+   * The residual has 4 terms (here in strong form, without signs), with the following units:
    *
-   *  1) \int dh/dt*v*dx            [m  s^-1   km^2]
-   *  2) \int dot(q*grad(v))*dx     [mm s^-1   km^2]
-   *  3) \int m/rho_w*v*dx          [m  yr^-1  km^2]
-   *  4) \int omega*v*dx            [mm day^-1 km^2]
+   *  1) dh/dt            [m  s^-1  ]
+   *  2) div(q)           [mm s^-1  ]
+   *  3) m/rho_w          [m  yr^-1 ]
+   *  4) omega            [mm day^-1]
    *
-   * where q=k*h^alpha*|gradPhi|^(beta-2)*gradPhi, and v is the test function (non-dimensional).
-   * We decide to uniform all terms to have units [m km^2 yr^-1].
+   * where q=k*h^alpha*|gradPhi|^(beta-2)*gradPhi.
+   * We decide to uniform all terms to have units [m yr^-1].
    * Where possible, we do this by rescaling some constants. Otherwise,
    * we simply introduce a new scaling factor
    *
-   *  1) dh/dt                          scaling_h_dot = yr_to_s
-   *  2) scaling_q*dot(q,grad(v))       scaling_q     = 1e-3*yr_to_s
-   *  3) m/rho_w                        (no scaling)
-   *  4) scaling_omega*omega            scaling_omega = yr_to_day/1000
+   *  1) dh/dt                  scaling_h_dot = yr_to_s
+   *  2) scaling_q*div(q)       scaling_q     = 1e-3*yr_to_s
+   *  3) m/rho_w                (no scaling)
+   *  4) scaling_omega*omega    scaling_omega = 1e-3*yr_to_d
    *
    * where yr_to_s=365.25*24*3600 (the number of seconds in a year)
-   * and   yr_to_day=365.25 (the number of days in a year)
+   * and   yr_to_d=365.25 (the number of days in a year)
    */
-  double yr_to_s  = 365.25*24*3600;
-  scaling_omega   = 365.25/1000;
+  double yr_to_d  = 365.25;
+  double yr_to_s  = yr_to_d*24*3600;
+  scaling_omega   = 1e-3*yr_to_d;
   scaling_h_dot   = yr_to_s;
   scaling_q       = 1e-3*yr_to_s;
 
@@ -217,6 +220,13 @@ evaluateFieldsSide (typename Traits::EvalData workset)
           }
         }
 
+        if (penalization) {
+          ScalarT over_shoot  =  phi(cell,side,qp) - phi_0(cell,side,qp);
+
+          res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),over_shoot),2);
+          res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),phi(cell,side,qp)),2);
+        }
+
         res_node += res_qp * w_measure(cell,side,qp);
       }
 
@@ -224,10 +234,6 @@ evaluateFieldsSide (typename Traits::EvalData workset)
         res_node += m(cell,side,node)/rho_w;
       }
 
-      if (penalization) {
-        ScalarT over_shoot = phi(cell,side,node) - phi_0(cell,side,node);
-        res_node += std::pow(std::min(ScalarT(0.0),over_shoot),2);
-      }
       residual (cell,side,node) = res_node;
     }
   }
@@ -258,6 +264,13 @@ evaluateFieldsCell (typename Traits::EvalData workset)
           res_qp += scaling_q*q(cell,qp,dim) * GradBF(cell,node,qp,dim);
         }
 
+        if (penalization) {
+          ScalarT over_shoot  =  phi(cell,qp) - phi_0(cell,qp);
+
+          res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),over_shoot),2);
+          res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),phi(cell,qp)),2);
+        }
+
         res_node += res_qp * w_measure(cell,qp);
       }
 
@@ -265,10 +278,6 @@ evaluateFieldsCell (typename Traits::EvalData workset)
         res_node += m(cell,node)/rho_w;
       }
 
-      if (penalization) {
-        ScalarT over_shoot = phi(cell,node) - phi_0(cell,node);
-        res_node += std::pow(std::min(ScalarT(0.0),over_shoot),2);
-      }
       residual (cell,node) = res_node;
     }
   }
