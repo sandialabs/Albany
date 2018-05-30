@@ -71,15 +71,15 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
     this->addDependentField(h_dot);
   }
 
-  penalization_coeff = hydrology_params.isParameter("Potential Bounds Penalization Coefficient")
-                     ? hydrology_params.get<double>("Potential Bounds Penalization Coefficient") : 0.0;
+  penalization_coeff = hydrology_params.isParameter("Water Pressure Bounds Penalization Coefficient")
+                     ? hydrology_params.get<double>("Water Pressure Bounds Penalization Coefficient") : 0.0;
   TEUCHOS_TEST_FOR_EXCEPTION (penalization_coeff<0.0, Teuchos::Exceptions::InvalidParameter, "Error! Penalization coefficient must be positive.\n");
   penalization = (penalization_coeff!=0.0);
   if (penalization) {
-    phi = PHX::MDField<const ScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->qp_scalar);
-    phi_0 = PHX::MDField<const ParamScalarT>(p.get<std::string>("Basal Gravitational Water Potential Variable Name"),dl->qp_scalar);
-    this->addDependentField(phi);
-    this->addDependentField(phi_0);
+    P_w = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Pressure Variable Name"), dl->qp_scalar);
+    P_o = PHX::MDField<const ParamScalarT>(p.get<std::string>("Ice Overburden Variable Name"),dl->qp_scalar);
+    this->addDependentField(P_w);
+    this->addDependentField(P_o);
   }
 
   Teuchos::RCP<PHX::DataLayout> layout;
@@ -155,8 +155,8 @@ postRegistrationSetup(typename Traits::SetupData d,
     this->utils.setFieldData(metric,fm);
 
   if (penalization) {
-    this->utils.setFieldData(phi,fm);
-    this->utils.setFieldData(phi_0,fm);
+    this->utils.setFieldData(P_w,fm);
+    this->utils.setFieldData(P_o,fm);
   }
   if (unsteady) {
     this->utils.setFieldData(h_dot,fm);
@@ -221,10 +221,8 @@ evaluateFieldsSide (typename Traits::EvalData workset)
         }
 
         if (penalization) {
-          ScalarT over_shoot  =  phi(cell,side,qp) - phi_0(cell,side,qp);
-
-          res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),over_shoot),2);
-          res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),phi(cell,side,qp)),2);
+          res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),P_o(cell,side,qp)-P_w(cell,side,qp)),2);
+          res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),P_w(cell,side,qp)),2);
         }
 
         res_node += res_qp * w_measure(cell,side,qp);
@@ -265,10 +263,8 @@ evaluateFieldsCell (typename Traits::EvalData workset)
         }
 
         if (penalization) {
-          ScalarT over_shoot  =  phi(cell,qp) - phi_0(cell,qp);
-
-          res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),over_shoot),2);
-          res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),phi(cell,qp)),2);
+          res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),P_o(cell,qp)-P_w(cell,qp)),2);
+          res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),P_w(cell,qp)),2);
         }
 
         res_node += res_qp * w_measure(cell,qp);

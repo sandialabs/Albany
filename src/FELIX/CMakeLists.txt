@@ -26,10 +26,12 @@
        evaluators/FELIX_HydrologyMeltingRate.cpp
        evaluators/FELIX_HydrologyResidualCavitiesEqn.cpp
        evaluators/FELIX_HydrologyResidualMassEqn.cpp
-       evaluators/FELIX_HydrologyWaterDischarge.cpp
        evaluators/FELIX_HydrologySurfaceWaterInput.cpp
+       evaluators/FELIX_HydrologyWaterDischarge.cpp
+       evaluators/FELIX_HydrologyWaterPressure.cpp
        evaluators/FELIX_HydrologyWaterThickness.cpp
        evaluators/FELIX_HydrostaticPressure.cpp
+       evaluators/FELIX_IceOverburden.cpp
        evaluators/FELIX_IceSoftness.cpp
        evaluators/FELIX_Integral1Dw_Z.cpp
        evaluators/FELIX_LiquidWaterFraction.cpp
@@ -142,14 +144,18 @@ ENDIF()
        evaluators/FELIX_HydrologyResidualCavitiesEqn_Def.hpp
        evaluators/FELIX_HydrologyResidualMassEqn.hpp
        evaluators/FELIX_HydrologyResidualMassEqn_Def.hpp
-       evaluators/FELIX_HydrologyWaterDischarge.hpp
-       evaluators/FELIX_HydrologyWaterDischarge_Def.hpp
        evaluators/FELIX_HydrologySurfaceWaterInput.hpp
        evaluators/FELIX_HydrologySurfaceWaterInput_Def.hpp
+       evaluators/FELIX_HydrologyWaterDischarge.hpp
+       evaluators/FELIX_HydrologyWaterDischarge_Def.hpp
+       evaluators/FELIX_HydrologyWaterPressure.hpp
+       evaluators/FELIX_HydrologyWaterPressure_Def.hpp
        evaluators/FELIX_HydrologyWaterThickness.hpp
        evaluators/FELIX_HydrologyWaterThickness_Def.hpp
        evaluators/FELIX_HydrostaticPressure.hpp
        evaluators/FELIX_HydrostaticPressure_Def.hpp
+       evaluators/FELIX_IceOverburden.hpp
+       evaluators/FELIX_IceOverburden_Def.hpp
        evaluators/FELIX_IceSoftness.hpp
        evaluators/FELIX_IceSoftness_Def.hpp
        evaluators/FELIX_Integral1Dw_Z.hpp
