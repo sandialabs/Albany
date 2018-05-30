@@ -13,214 +13,151 @@
 
 namespace FELIX {
 
-template<typename EvalT, typename Traits, bool OnSide, bool Surrogate>
-EffectivePressure<EvalT, Traits, OnSide, Surrogate>::
+template<typename EvalT, typename Traits, bool IsStokes, bool Surrogate>
+EffectivePressure<EvalT, Traits, IsStokes, Surrogate>::
 EffectivePressure (const Teuchos::ParameterList& p,
-                   const Teuchos::RCP<Albany::Layouts>& dl) :
-  H (p.get<std::string> ("Ice Thickness Variable Name"), dl->node_scalar),
-  N (p.get<std::string> ("Effective Pressure Variable Name"), dl->node_scalar)
+                   const Teuchos::RCP<Albany::Layouts>& dl)
 {
-  regularized = false;
+  Teuchos::RCP<PHX::DataLayout> layout;
+  if (p.isParameter("Nodal") && p.get<bool>("Nodal")) {
+    layout = dl->node_scalar;
+  } else {
+    layout = dl->qp_scalar;
+  }
 
-  numNodes = dl->node_scalar->dimension(1); // If OnSide=true, it will be fixed
-
-  if (OnSide)
-  {
+  if (IsStokes) {
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
 
     basalSideName = p.get<std::string>("Side Set Name");
-    numNodes = dl->node_scalar->dimension(2);
+    numPts = layout->dimension(2);
+  } else {
+    numPts = layout->dimension(1);
   }
 
-  if (Surrogate)
-  {
+  if (Surrogate) {
+    // P_w is set to a percentage of the overburden
     alphaParam = PHX::MDField<const ScalarT,Dim> ("Hydraulic-Over-Hydrostatic Potential Ratio",dl->shared_param);
     this->addDependentField (alphaParam);
 
-    Teuchos::ParameterList& plist = *p.get<Teuchos::ParameterList*>("Parameter List");
-
-    regularized = plist.get("Regularize With Continuation",false);
     printedAlpha = -1.0;
-
-    if (regularized)
-      regularizationParam = PHX::MDField<const ScalarT,Dim>(plist.get<std::string>("Regularization Parameter Name"),dl->shared_param);
-  }
-  else
-  {
-    z_s  = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar);
-    phi  = PHX::MDField<const HydroScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->node_scalar);
-
-    this->addDependentField (phi);
-    this->addDependentField (z_s);
-
-    Teuchos::ParameterList& hydro_params = *p.get<Teuchos::ParameterList*>("FELIX Hydrology");
-
-    use_h = false;
-    if (hydro_params.get<bool>("Use Water Thickness In Effective Pressure Formula",false)) {
-      use_h = true;
-
-      h = PHX::MDField<const HydroScalarT>(p.get<std::string> ("Water Thickness Variable Name"), dl->node_scalar);
-      this->addDependentField(h);
-    }
+  } else {
+    P_w  = PHX::MDField<const HydroScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), layout);
+    this->addDependentField (P_w);
   }
 
-  this->addDependentField (H);
+  P_o = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Ice Overburden Variable Name"), layout);
+  N   = PHX::MDField<HydroScalarT>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
+  this->addDependentField (P_o);
   this->addEvaluatedField (N);
-
-  // Setting parameters
-  Teuchos::ParameterList& physics  = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
-
-  rho_i = physics.get<double>("Ice Density",910);
-  rho_w = physics.get<double>("Water Density",1000);
-  g     = physics.get<double>("Gravity Acceleration",9.8);
 
   this->setName("EffectivePressure"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool OnSide, bool Surrogate>
-void EffectivePressure<EvalT, Traits, OnSide, Surrogate>::
+template<typename EvalT, typename Traits, bool IsStokes, bool Surrogate>
+void EffectivePressure<EvalT, Traits, IsStokes, Surrogate>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(H,fm);
+  this->utils.setFieldData(P_o,fm);
   this->utils.setFieldData(N,fm);
 
-  if (Surrogate)
-  {
+  if (Surrogate) {
     this->utils.setFieldData(alphaParam,fm);
-    if (regularized)
-      this->utils.setFieldData(regularizationParam,fm);
-  }
-  else
-  {
-    this->utils.setFieldData(z_s,fm);
-    this->utils.setFieldData(phi,fm);
-    if (use_h) {
-      this->utils.setFieldData(h,fm);
-    }
+  } else {
+    this->utils.setFieldData(P_w,fm);
   }
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool OnSide, bool Surrogate>
-void EffectivePressure<EvalT, Traits, OnSide, Surrogate>::
+template<typename EvalT, typename Traits, bool IsStokes, bool Surrogate>
+void EffectivePressure<EvalT, Traits, IsStokes, Surrogate>::
 evaluateFields (typename Traits::EvalData workset)
 {
-  if (OnSide)
+  if (IsStokes) {
     evaluateFieldsSide(workset);
-  else
+  } else {
     evaluateFieldsCell(workset);
+  }
 }
 
-template<typename EvalT, typename Traits, bool OnSide, bool Surrogate>
-void EffectivePressure<EvalT, Traits, OnSide, Surrogate>::
+template<typename EvalT, typename Traits, bool IsStokes, bool Surrogate>
+void EffectivePressure<EvalT, Traits, IsStokes, Surrogate>::
 evaluateFieldsSide (typename Traits::EvalData workset)
 {
   const Albany::SideSetList& ssList = *(workset.sideSets);
   Albany::SideSetList::const_iterator it_ss = ssList.find(basalSideName);
 
-  if (it_ss==ssList.end())
+  if (it_ss==ssList.end()) {
     return;
+  }
 
   const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
   std::vector<Albany::SideStruct>::const_iterator iter_s;
-
-  if (Surrogate)
-  {
+  if (Surrogate) {
     ParamScalarT alpha = Albany::convertScalar<ScalarT,ParamScalarT>(alphaParam(0));
-    if (regularized)
-    {
-      alpha = alpha*std::sqrt(Albany::convertScalar<ScalarT,ParamScalarT>(regularizationParam(0)));
-    }
 
 #ifdef OUTPUT_TO_SCREEN
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
-    if (std::fabs(printedAlpha-alpha)>0.0001)
-    {
+    if (std::fabs(printedAlpha-alpha)>1e-10) {
       *output << "[Effective Pressure<" << PHX::typeAsString<EvalT>() << ">]] alpha = " << alpha << "\n";
       printedAlpha = alpha;
     }
 #endif
 
-    for (iter_s=sideSet.begin(); iter_s!=sideSet.end(); ++iter_s)
-    {
+    for (iter_s=sideSet.begin(); iter_s!=sideSet.end(); ++iter_s) {
       // Get the local data of side and cell
       const int cell = iter_s->elem_LID;
       const int side = iter_s->side_local_id;
 
-      for (int node=0; node<numNodes; ++node)
-      {
-        // N = p_i-p_w
-        // p_i = rho_i*g*H
-        // p_w = alpha*p_i
-        N (cell,side,node) = (1-alpha)*rho_i*g*H(cell,side,node);
+      for (int pt=0; pt<numPts; ++pt) {
+        // N = P_o-P_w
+        N (cell,side,pt) = (1-alpha)*P_o(cell,side,pt);
       }
     }
-  }
-  else
-  {
-    for (const auto& it : sideSet)
-    {
+  } else {
+    for (const auto& it : sideSet) {
       // Get the local data of side and cell
       const int cell = it.elem_LID;
       const int side = it.side_local_id;
 
-      for (int node=0; node<numNodes; ++node)
-      {
-        // N = p_i-p_w
-        // p_i = rho_i*g*H
-        // p_w = rho_w*g*z_b - phi
-        N (cell,side,node) = std::max(rho_i*g*H(cell,side,node) + rho_w*g*(z_s(cell,side,node) - H(cell,side,node)) - phi (cell,side,node),0.0);
+      for (int node=0; node<numPts; ++node) {
+        // N = P_o - P_w
+        N (cell,side,node) = P_o(cell,side,node) - P_w(cell,side,node);
       }
     }
   }
 }
 
-template<typename EvalT, typename Traits, bool OnSide, bool Surrogate>
-void EffectivePressure<EvalT, Traits, OnSide, Surrogate>::
+template<typename EvalT, typename Traits, bool IsStokes, bool Surrogate>
+void EffectivePressure<EvalT, Traits, IsStokes, Surrogate>::
 evaluateFieldsCell (typename Traits::EvalData workset)
 {
   if (Surrogate)
   {
     ParamScalarT alpha = Albany::convertScalar<ScalarT,ParamScalarT>(alphaParam(0));
-    if (regularized)
-    {
-      alpha = alpha*std::sqrt(Albany::convertScalar<ScalarT,ParamScalarT>(regularizationParam(0)));
-    }
 
 #ifdef OUTPUT_TO_SCREEN
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
-    if (std::fabs(printedAlpha-alpha)>0.0001)
-    {
+    if (std::fabs(printedAlpha-alpha)>1e-10) {
       *output << "[Effective Pressure " << PHX::typeAsString<EvalT>() << "] alpha = " << alpha << "\n";
       printedAlpha = alpha;
     }
 #endif
 
-    for (int cell=0; cell<workset.numCells; ++cell)
-    {
-      for (int node=0; node<numNodes; ++node)
+    for (int cell=0; cell<workset.numCells; ++cell) {
+      for (int node=0; node<numPts; ++node)
       {
-        // N = p_i-p_w
-        // p_i = rho_i*g*H
-        // p_w = rho_w*g*z_b - phi
-        N (cell,node) = (1-alpha)*rho_i*g*H(cell,node);
+        // N = P_o - P_w
+        N (cell,node) = (1-alpha)*P_o(cell,node);
       }
     }
-  }
-  else
-  {
-    HydroScalarT zero (0.0);
-    for (int cell=0; cell<workset.numCells; ++cell)
-    {
-      for (int node=0; node<numNodes; ++node)
-      {
-        // N = p_i-p_w;
-        // p_i = rho_i*g*H;
-        // p_w = phi - rho_w*g*(z_b+h);   (recall, z_b is in km, h in m)
-        N(cell,node) = rho_i*g*H(cell,node) + rho_w*g*(z_s(cell,node) - H(cell,node)) + (rho_w*g/1000)*(use_h ? h(cell,node) : zero) - phi(cell,node);
+  } else {
+    for (int cell=0; cell<workset.numCells; ++cell) {
+      for (int node=0; node<numPts; ++node) {
+        // N = P_o - P_w
+        N(cell,node) = P_o(cell,node) - P_w(cell,node);
       }
     }
   }

@@ -30,6 +30,7 @@
 #include "FELIX_SimpleOperation.hpp"
 #include "FELIX_ParamEnum.hpp"
 
+#include "FELIX_IceOverburden.hpp"
 #include "FELIX_EffectivePressure.hpp"
 #include "PHAL_DummyResidual.hpp"
 #include "PHAL_FieldFrobeniusNorm.hpp"
@@ -229,9 +230,11 @@ FELIX::SchoofFit::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm
   ev = evalUtils.constructGatherCoordinateVectorEvaluator();
   fm0.template registerEvaluator<EvalT> (ev);
 
-  // Interpolate effective pressure
-  ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("effective_pressure");
-  fm0.template registerEvaluator<EvalT> (ev);
+  // Interpolate effective pressure (if needed)
+  if (!is_state_a_parameter["effective_pressure"]) {
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("effective_pressure");
+    fm0.template registerEvaluator<EvalT> (ev);
+  }
 
   // Gradient of bed_roughness
   ev = evalUtils.getPSTUtils().constructDOFGradInterpolationEvaluator("bed_roughness");
@@ -256,18 +259,40 @@ FELIX::SchoofFit::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm
   // -------------------------------- FELIX evaluators ------------------------- //
   if (!is_state_a_parameter["effective_pressure"])
   {
-    //--- Effective pressure (surrogate) calculation ---//
+    //--- Ice Overburden (QPs) ---//
     p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Effective Pressure Surrogate"));
 
     // Input
-    p->set<std::string>("Surface Height Variable Name","surface_height");
+    p->set<bool>("Nodal",false);
     p->set<std::string>("Ice Thickness Variable Name", "thickness");
     p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
-    p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Effective Pressure Surrogate"));
+
+    // Output
+    p->set<std::string>("Ice Overburden Variable Name", "ice_overburden");
+
+    ev = Teuchos::rcp(new FELIX::IceOverburden<EvalT,PHAL::AlbanyTraits,false>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //--- Ice Overburden (Nodes) ---//
+    p->set<bool>("Nodal",true);
+    ev = Teuchos::rcp(new FELIX::IceOverburden<EvalT,PHAL::AlbanyTraits,false>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //--- Effective pressure surrogate (QPs) ---//
+    p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Effective Pressure Surrogate"));
+
+    // Input
+    p->set<bool>("Nodal",false);
+    p->set<std::string>("Ice Overburden Variable Name", "ice_overburden");
 
     // Output
     p->set<std::string>("Effective Pressure Variable Name","effective_pressure");
 
+    ev = Teuchos::rcp(new FELIX::EffectivePressure<EvalT,PHAL::AlbanyTraits,false,true>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //--- Effective pressure surrogate (Nodes) ---//
+    p->set<bool>("Nodal",true);
     ev = Teuchos::rcp(new FELIX::EffectivePressure<EvalT,PHAL::AlbanyTraits,false,true>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 

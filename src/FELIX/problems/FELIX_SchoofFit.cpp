@@ -122,7 +122,6 @@ FELIX::SchoofFit::getValidProblemParameters () const
   validPL->set<Teuchos::Array<std::string> > ("Required Vector Fields", Teuchos::Array<std::string>(), "");
   validPL->set<Teuchos::Array<std::string> > ("Save Fields", Teuchos::Array<std::string>(), "");
   validPL->sublist("FELIX Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");
-  validPL->sublist("FELIX Effective Pressure Surrogate", false, "");
   validPL->sublist("FELIX Field Norm", false, "");
   validPL->sublist("FELIX Physical Parameters", false, "");
 

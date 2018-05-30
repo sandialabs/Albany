@@ -52,6 +52,7 @@
 #include "FELIX_BasalFrictionCoefficientGradient.hpp"
 #include "FELIX_BasalFrictionHeat.hpp"
 #include "FELIX_Dissipation.hpp"
+#include "FELIX_IceOverburden.hpp"
 #include "FELIX_UpdateZCoordinate.hpp"
 #include "FELIX_GatherVerticallyAveragedVelocity.hpp"
 #include "FELIX_PressureCorrectedTemperature.hpp"
@@ -993,10 +994,6 @@ if (basalSideName!="INVALID")
     ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("observed_ice_thickness_RMS", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
-    //---- Interpolate effective pressure on QP on side
-    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("effective_pressure", basalSideName);
-    fm0.template registerEvaluator<EvalT>(ev);
-
     //---- Interpolate effective pressure gradient on QP on side
     ev = evalUtils.getPSTUtils().constructDOFGradInterpolationSideEvaluator("effective_pressure", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
@@ -1029,16 +1026,13 @@ if (basalSideName!="INVALID")
     ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("basal_friction", basalSideName,enableMemoizer);
     fm0.template registerEvaluator<EvalT>(ev);
 
-    //---- Interpolate effective_pressure (if needed) on QP on side
-    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("effective_pressure", basalSideName);
-    fm0.template registerEvaluator<EvalT>(ev);
-
     //---- Interpolate bed_roughness (if needed) on QP on side
     ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("bed_roughness", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
-    fm0.template registerEvaluator<EvalT> (evalUtils.constructSideQuadPointsToSideInterpolationEvaluator("flux_divergence",basalSideName,false));
-
+    //---- Interpolate flux_divergence from side quad points to side
+    ev = evalUtils.constructSideQuadPointsToSideInterpolationEvaluator("flux_divergence",basalSideName,false);
+    fm0.template registerEvaluator<EvalT> (ev);
 
     // Parameters are loaded as 3D fields. If any field needed on basal side is a parameter, we must project it on side
     if (is_dist_param["basal_friction"])
@@ -1226,19 +1220,42 @@ if (basalSideName!="INVALID")
 
     if (!is_dist_param["effective_pressure"])
     {
-      //--- Effective pressure (surrogate) calculation ---//
+      //--- Ice Overburden (QPs) ---//
       p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Effective Pressure Surrogate"));
 
       // Input
+      p->set<bool>("Nodal",false);
       p->set<std::string>("Side Set Name", basalSideName);
-      p->set<std::string>("Surface Height Variable Name","surface_height");
       p->set<std::string>("Ice Thickness Variable Name", "ice_thickness");
       p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
-      p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Effective Pressure Surrogate"));
+
+      // Output
+      p->set<std::string>("Ice Overburden Variable Name", "ice_overburden");
+
+      ev = Teuchos::rcp(new FELIX::IceOverburden<EvalT,PHAL::AlbanyTraits,true>(*p,dl_basal));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      //--- Ice Overburden (Nodes) ---//
+      p->set<bool>("Nodal",true);
+      ev = Teuchos::rcp(new FELIX::IceOverburden<EvalT,PHAL::AlbanyTraits,true>(*p,dl_basal));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      //--- Effective pressure surrogate (QPs) ---//
+      p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Effective Pressure Surrogate"));
+
+      // Input
+      p->set<bool>("Nodal",false);
+      p->set<std::string>("Side Set Name", basalSideName);
+      p->set<std::string>("Ice Overburden Variable Name", "ice_overburden");
 
       // Output
       p->set<std::string>("Effective Pressure Variable Name","effective_pressure");
 
+      ev = Teuchos::rcp(new FELIX::EffectivePressure<EvalT,PHAL::AlbanyTraits,true,true>(*p,dl_basal));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      //--- Effective pressure surrogate (Nodes) ---//
+      p->set<bool>("Nodal",true);
       ev = Teuchos::rcp(new FELIX::EffectivePressure<EvalT,PHAL::AlbanyTraits,true,true>(*p,dl_basal));
       fm0.template registerEvaluator<EvalT>(ev);
     }

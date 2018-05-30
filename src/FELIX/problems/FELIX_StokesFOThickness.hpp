@@ -33,6 +33,7 @@
 
 #include "FELIX_SharedParameter.hpp"
 #include "FELIX_ParamEnum.hpp"
+#include "FELIX_IceOverburden.hpp"
 #include "FELIX_EffectivePressure.hpp"
 #include "FELIX_StokesFOResid.hpp"
 #include "FELIX_StokesFOBasalResid.hpp"
@@ -511,10 +512,6 @@ FELIX::StokesFOThickness::constructEvaluators(
     //---- Interpolate surface height on QP on side
     ev = evalUtils_full.constructDOFInterpolationSideEvaluator("surface_height", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
-
-    //---- Interpolate effective pressure on QP on side
-    ev = evalUtils_full.constructDOFInterpolationSideEvaluator("effective_pressure", basalSideName);
-    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if (surfaceSideName!="INVALID")
@@ -716,20 +713,43 @@ FELIX::StokesFOThickness::constructEvaluators(
     ev = Teuchos::rcp(new PHAL::FieldFrobeniusNorm<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    //--- Effective pressure (surrogate) calculation ---//
+    //--- Ice Overburden (QPs) ---//
     p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Effective Pressure Surrogate"));
 
     // Input
-    p->set<std::string>("Surface Height Variable Name","surface_height");
-    p->set<std::string>("Ice Thickness Variable Name", "ice_thickness");
+    p->set<bool>("Nodal",false);
     p->set<std::string>("Side Set Name", basalSideName);
+    p->set<std::string>("Ice Thickness Variable Name", "ice_thickness");
     p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
-    p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
+
+    // Output
+    p->set<std::string>("Ice Overburden Variable Name", "ice_overburden");
+
+    ev = Teuchos::rcp(new FELIX::IceOverburden<EvalT,PHAL::AlbanyTraits,true>(*p,dl_basal));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //--- Ice Overburden (Nodes) ---//
+    p->set<bool>("Nodal",true);
+    ev = Teuchos::rcp(new FELIX::IceOverburden<EvalT,PHAL::AlbanyTraits,true>(*p,dl_basal));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //--- Effective pressure surrogate (QPs) ---//
+    p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Effective Pressure Surrogate"));
+
+    // Input
+    p->set<bool>("Nodal",false);
+    p->set<std::string>("Side Set Name", basalSideName);
+    p->set<std::string>("Ice Overburden Variable Name", "ice_overburden");
 
     // Output
     p->set<std::string>("Effective Pressure Variable Name","effective_pressure");
 
-    ev = Teuchos::rcp(new FELIX::EffectivePressure<EvalT,PHAL::AlbanyTraits,false,true>(*p,dl_basal));
+    ev = Teuchos::rcp(new FELIX::EffectivePressure<EvalT,PHAL::AlbanyTraits,true,true>(*p,dl_basal));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //--- Effective pressure surrogate (Nodes) ---//
+    p->set<bool>("Nodal",true);
+    ev = Teuchos::rcp(new FELIX::EffectivePressure<EvalT,PHAL::AlbanyTraits,true,true>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
 
     //--- Shared Parameter for basal friction coefficient: alpha ---//

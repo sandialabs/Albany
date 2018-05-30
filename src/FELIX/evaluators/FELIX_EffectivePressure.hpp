@@ -21,7 +21,7 @@ namespace FELIX
     This evaluator evaluates the effective pressure at the basal side
 */
 
-template<typename EvalT, typename Traits, bool OnSide, bool Surrogate>
+template<typename EvalT, typename Traits, bool IsStokes, bool Surrogate>
 class EffectivePressure : public PHX::EvaluatorWithBaseImpl<Traits>,
                           public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -45,28 +45,17 @@ private:
   void evaluateFieldsCell (typename Traits::EvalData workset);
 
   // Input:
-  PHX::MDField<const ParamScalarT>  H;
-  PHX::MDField<const ParamScalarT>  z_s;
-  PHX::MDField<const HydroScalarT>  phi;
-  PHX::MDField<const HydroScalarT>  h;
+  PHX::MDField<const ParamScalarT>  P_o;
+  PHX::MDField<const HydroScalarT>  P_w;
 
   // Output:
   PHX::MDField<HydroScalarT>  N;
 
-  int numNodes;
-
-  double rho_i;
-  double rho_w;
-  double g;
+  int numPts;
 
   std::string basalSideName; // Needed if OnSide=true
 
-  // Parameters needed for Stokes alone case
-  bool   regularized;
-  bool   use_h;
-
   PHX::MDField<const ScalarT,Dim> alphaParam;
-  PHX::MDField<const ScalarT,Dim> regularizationParam;
   ScalarT printedAlpha;
 };
 
