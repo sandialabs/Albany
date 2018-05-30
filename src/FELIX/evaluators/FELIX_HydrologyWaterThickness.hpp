@@ -58,13 +58,13 @@ private:
 
   double h_r;
   double l_r;
-  double rho_i_inv;
-  double scaling_A;
+  double rho_i;
+  double c_creep;
 
   int numPts;
   std::string   sideSetName;
 
-  bool use_eff_cav;
+  bool use_melting;
 };
 
 } // Namespace FELIX

@@ -18,20 +18,19 @@ HydrologyWaterThickness (const Teuchos::ParameterList& p,
   /*
    *  The (water) thickness equation has the following (strong) form
    *
-   *     dh/dt = m/rho_i + (h_r-k*h)*|u_b|/l_r - AhN^3
+   *     dh/dt = m/rho_i + (h_r-h)*|u_b|/l_r - c_creep*AhN^3
    *
    *  where h is the water thickness, m the melting rate of the ice,
    *  h_r/l_r typical height/length of bed bumps, u_b the sliding
    *  velocity of the ice, A the Glen's law flow factor, and N is
-   *  the effective pressure. k=0,1 allows to consider effective or
-   *  total cavities height in the model
+   *  the effective pressure.
    *  NOTE: if the term m/rho_i is present, there is no proof of well posedness
    *        for the hydrology equations. Therefore, we only turn this term
    *        on upon request.
    *
    *  In the steady case, we can solve for h, leading to the expression
    *
-   *     h = ( m/rho_i + |u_b|*h_r/l_r ) / ( AN^3 + k*|u_b|/l_r )
+   *     h = ( m/rho_i + |u_b|*h_r/l_r ) / ( c_creep*AN^3 + |u_b|/l_r )
    */
 
   bool nodal = p.get<bool>("Nodal");
@@ -50,13 +49,11 @@ HydrologyWaterThickness (const Teuchos::ParameterList& p,
 
   u_b = PHX::MDField<const IceScalarT>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
   N   = PHX::MDField<const ScalarT>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
-  m   = PHX::MDField<const ScalarT>(p.get<std::string> ("Melting Rate Variable Name"), layout);
-  A   = PHX::MDField<const TempScalarT>(p.get<std::string> ("Flow Factor A Variable Name"), dl->cell_scalar2);
+  A   = PHX::MDField<const TempScalarT>(p.get<std::string> ("Ice Softness Variable Name"), dl->cell_scalar2);
   h   = PHX::MDField<ScalarT>(p.get<std::string> ("Water Thickness Variable Name"), layout);
 
   this->addDependentField(u_b);
   this->addDependentField(N);
-  this->addDependentField(m);
   this->addDependentField(A);
 
   this->addEvaluatedField(h);
@@ -65,44 +62,40 @@ HydrologyWaterThickness (const Teuchos::ParameterList& p,
   Teuchos::ParameterList& hydrology = *p.get<Teuchos::ParameterList*>("FELIX Hydrology");
   Teuchos::ParameterList& physics   = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
 
-  double rho_i = physics.get<double>("Ice Density");
+  rho_i = physics.get<double>("Ice Density");
   h_r = hydrology.get<double>("Bed Bumps Height");
   l_r = hydrology.get<double>("Bed Bumps Length");
+  c_creep = hydrology.get<double>("Creep Closure Coefficient",1.0);
 
-  bool melting_cav = hydrology.get<bool>("Use Melting In Cavities Equation", false);
-  use_eff_cav = (hydrology.get<bool>("Use Effective Cavities Height", true) ? 1.0 : 0.0);
-  if (melting_cav) {
-    rho_i_inv = 1./rho_i;
-  } else {
-    rho_i_inv = 0;
+  use_melting = hydrology.get<bool>("Use Melting In Cavities Equation", false);
+  if (use_melting) {
+    m = PHX::MDField<const ScalarT>(p.get<std::string> ("Melting Rate Variable Name"), layout);
+    this->addDependentField(m);
   }
 
   /*
    * Scalings, needed to account for different units: ice velocity
    * is in m/yr, the mesh is in km, and hydrology time unit is s.
    *
-   * The steady cavity equation has 3 terms (forget about signs), with the following
-   * units (including the km^2 from dx):
+   * The steady cavity equation has 3 terms (here in strong form, without signs), with the following units:
    *
-   *  1) \int rho_i_inv*m*v*dx      [m km^2 yr^-1]
-   *  2) \int 2/(n^n)*A*h*N^3*v*dx          [1000 m km^2 yr^-1]
-   *  3) \int (h_r-h)*|u|/l_r*v*dx  [m km^2 yr^-1]
+   *  2) m/rho_i          [m yr^-1]
+   *  3) c_creep*A*h*N^3  [m s^-1 ]
+   *  4) (h_r-h)*|u|/l_r  [m yr^-1]
    *
-   * where q=k*h^3*gradPhi/mu_w, n as in Glen's law, and v is the test function.
-   * We decide to uniform all terms to have units [m km^2 yr^-1].
+   * We decide to uniform all terms to have units [m yr^-1].
    * Where possible, we do this by rescaling some constants. Otherwise,
    * we simply introduce a new scaling factor
    *
-   *  1) rho_i_inv_m          (no scaling)
-   *  2) scaling_A*A*h*N^3    scaling_A = 1.0/1000
+   *  1) m/rho_i              (no scaling)
+   *  2) scaling_A*A*h*N^3    scaling_A = yr_to_s
    *  3) (h_r-h)*|u|/l_r      (no scaling)
    *
    * where yr_to_s=365.25*24*3600 (the number of seconds in a year)
    */
 
-  // Scalings, needed to account for different units: ice velocity
-  // is in m/yr rather than m/s, while all other quantities are in SI units.
-  scaling_A   = 1.0/1000;
+  double yr_to_s = 365.25*24*3600;
+  c_creep *= yr_to_s;
 
   this->setName("HydrologyWaterThickness"+PHX::typeAsString<EvalT>());
 }
@@ -115,7 +108,9 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(u_b,fm);
   this->utils.setFieldData(N,fm);
-  this->utils.setFieldData(m,fm);
+  if (use_melting) {
+    this->utils.setFieldData(m,fm);
+  }
 
   this->utils.setFieldData(h,fm);
 }
@@ -134,12 +129,13 @@ void HydrologyWaterThickness<EvalT, Traits, IsStokes, ThermoCoupled>::evaluateFi
 template<typename EvalT, typename Traits, bool IsStokes, bool ThermoCoupled>
 void HydrologyWaterThickness<EvalT, Traits, IsStokes, ThermoCoupled>::evaluateFieldsCell (typename Traits::EvalData workset)
 {
+  ScalarT zero (0.0);
   for (int cell=0; cell < workset.numCells; ++cell)
   {
     for (int ipt=0; ipt < numPts; ++ipt)
     {
-      h(cell,ipt)  = rho_i_inv*m(cell,ipt) + u_b(cell,ipt)*h_r/l_r;
-      h(cell,ipt) /= (2.0/9.0)*scaling_A*A(cell)*std::pow(N(cell,ipt),3) + use_eff_cav*u_b(cell,ipt)/l_r;
+      h(cell,ipt)  = (use_melting ? m(cell,ipt)/rho_i : zero) + u_b(cell,ipt)*h_r/l_r;
+      h(cell,ipt) /= c_creep*A(cell)*std::pow(N(cell,ipt),3) + u_b(cell,ipt)/l_r;
     }
   }
 }
@@ -151,6 +147,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
     return;
 
+  ScalarT zero (0.0);
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
   for (auto const& it_side : sideSet)
   {
@@ -160,8 +157,8 @@ evaluateFieldsSide (typename Traits::EvalData workset)
 
     for (int ipt=0; ipt < numPts; ++ipt)
     {
-      h(cell,ipt)  = rho_i_inv*m(cell,side,ipt) + u_b(cell,side,ipt)*h_r/l_r;
-      h(cell,ipt) /= (2.0/9.0)*scaling_A*A(cell)*std::pow(N(cell,side,ipt),3) + use_eff_cav*u_b(cell,side,ipt)/l_r;
+      h(cell,ipt)  = (use_melting ? m(cell,side,ipt)/rho_i : zero) + u_b(cell,side,ipt)*h_r/l_r;
+      h(cell,ipt) /= c_creep*A(cell)*std::pow(N(cell,side,ipt),3) + u_b(cell,side,ipt)/l_r;
     }
   }
 }
