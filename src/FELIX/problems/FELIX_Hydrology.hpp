@@ -526,6 +526,14 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator(geothermal_flux_name);
   fm0.template registerEvaluator<EvalT> (ev);
 
+  // Surface Height
+  ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator(surface_height_name);
+  fm0.template registerEvaluator<EvalT> (ev);
+
+  // Ice Thickness
+  ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator(ice_thickness_name);
+  fm0.template registerEvaluator<EvalT> (ev);
+
   // +---------------------------------------------------------+
   // |           Creating FELIX specific evaluators            |
   // +---------------------------------------------------------+

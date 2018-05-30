@@ -8,8 +8,9 @@
 #include "Phalanx_TypeStrings.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
+#include "FELIX_ParamEnum.hpp"
 //uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+// #define OUTPUT_TO_SCREEN
 
 namespace FELIX {
 
@@ -37,12 +38,12 @@ EffectivePressure (const Teuchos::ParameterList& p,
 
   if (Surrogate) {
     // P_w is set to a percentage of the overburden
-    alphaParam = PHX::MDField<const ScalarT,Dim> ("Hydraulic-Over-Hydrostatic Potential Ratio",dl->shared_param);
+    alphaParam = PHX::MDField<const ScalarT,Dim> (ParamEnumName::Alpha,dl->shared_param);
     this->addDependentField (alphaParam);
 
     printedAlpha = -1.0;
   } else {
-    P_w  = PHX::MDField<const HydroScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), layout);
+    P_w  = PHX::MDField<const HydroScalarT>(p.get<std::string> ("Water Pressure Variable Name"), layout);
     this->addDependentField (P_w);
   }
 
