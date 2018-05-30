@@ -10,7 +10,7 @@
 #include <cstddef>
 #include <type_traits>
 #include <algorithm>
-#ifndef KOKKOS_HAVE_CUDA
+#ifndef KOKKOS_ENABLE_CUDA
 #include <new>
 #include <iostream>
 #endif
@@ -229,7 +229,7 @@ namespace utility
   {
     if (ptr_ + sizeof(T) > buffer_ + size_)
     {
-#ifdef KOKKOS_HAVE_CUDA
+#ifdef KOKKOS_ENABLE_CUDA
       return nullptr;
 #else
       std::cerr << "Static Allocator bad alloc" << "\n";
@@ -267,7 +267,7 @@ namespace utility
   {
     if (ptr_ + sizeof(T) > buffer_ + Size)
     {
-#ifdef KOKKOS_HAVE_CUDA
+#ifdef KOKKOS_ENABLE_CUDA
       return nullptr;
 #else
       std::cerr << "Static Stack Allocator bad alloc" << "\n";

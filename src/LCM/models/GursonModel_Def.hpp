@@ -164,7 +164,7 @@ computeState(typename Traits::EvalData workset,
       Fpinv = minitensor::inverse(Fpn);
       Cpinv = Fpinv * minitensor::transpose(Fpinv);
       be = F * Cpinv * minitensor::transpose(F);
-#if defined(KOKKOS_HAVE_CUDA)
+#if defined(KOKKOS_ENABLE_CUDA)
       logbe = minitensor::log<ScalarT>(be);
 #else
       logbe = minitensor::log_sym<ScalarT>(be);
