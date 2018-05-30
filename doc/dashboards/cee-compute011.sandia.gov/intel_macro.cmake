@@ -78,7 +78,7 @@ macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
     "-DCMAKE_CXX_FLAGS:STRING='-g -O0 -mkl=sequential ${extra_cxx_flags}'"
     "-DCMAKE_C_FLAGS:STRING='-g -O0 -mkl=sequential'"
     "-DCMAKE_Fortran_FLAGS:STRING='-g -O0 -mkl=sequential'"
-    "-DDART_TESTING_TIMEOUT:STRING=1200"
+    "-DDART_TESTING_TIMEOUT:STRING=2400"
       "${CONFIGURE_OPTIONS}")
   else (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
 
