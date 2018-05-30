@@ -512,7 +512,7 @@ IF(BUILD_TRILINOSCLANG)
     #  "-DCMAKE_C_FLAGS:STRING=-O3 -DADDC_ -DNDEBUG"
     #  "-DCMAKE_Fortran_FLAGS:STRING=-Os -DADDC_ -DNDEBUG"
     "-DCMAKE_CXX_COMPILER:PATH=${CLANG_BIN_DIR}/bin/mpicxx"
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -DNDEBUG  ${extra_cxx_flags}'"
+    "-DCMAKE_CXX_FLAGS:STRING='-O3 -DNDEBUG  -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
     "-DCMAKE_C_COMPILER:PATH=${CLANG_BIN_DIR}/bin/mpicc"
     "-DCMAKE_C_FLAGS:STRING='-O3 -DNDEBUG'"
     "-DCMAKE_Fortran_COMPILER:PATH=${CLANG_BIN_DIR}/bin/mpifort"

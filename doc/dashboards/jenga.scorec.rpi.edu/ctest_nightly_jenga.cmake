@@ -485,7 +485,7 @@ IF(BUILD_TRILINOSCLANG)
     #  "-DCMAKE_C_FLAGS:STRING=-O3 -DADDC_"
     #  "-DCMAKE_Fortran_FLAGS:STRING=-Os -DADDC_"
     "-DCMAKE_CXX_COMPILER:PATH=/users/ghansen/ompi-clang/bin/mpicxx"
-    "-DCMAKE_CXX_FLAGS:STRING='-O3  ${extra_cxx_flags}'"
+    "-DCMAKE_CXX_FLAGS:STRING='-O3  -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
     "-DCMAKE_C_COMPILER:PATH=/users/ghansen/ompi-clang/bin/mpicc"
     "-DCMAKE_C_FLAGS:STRING='-O3'"
     "-DCMAKE_Fortran_COMPILER:PATH=/users/ghansen/ompi-clang/bin/mpifort"

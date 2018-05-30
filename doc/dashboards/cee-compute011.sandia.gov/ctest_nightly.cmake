@@ -706,8 +706,8 @@ if (BUILD_TRILINOSCLANG)
     "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/clang"
     #
     "-DCMAKE_CXX_COMPILER:STRING=/projects/albany/clang/bin/mpicxx"
-#    "-DCMAKE_CXX_FLAGS:STRING='-msoft-float -march=native -O3 -DNDEBUG ${extra_cxx_flags}'"
-    "-DCMAKE_CXX_FLAGS:STRING='-march=native -O3 -DNDEBUG ${extra_cxx_flags}'"
+#    "-DCMAKE_CXX_FLAGS:STRING='-msoft-float -march=native -O3 -Wno-inconsistent-missing-override -DNDEBUG ${extra_cxx_flags}'"
+    "-DCMAKE_CXX_FLAGS:STRING='-march=native -O3 -DNDEBUG -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
     "-DCMAKE_C_COMPILER:STRING=/projects/albany/clang/bin/mpicc"
     "-DCMAKE_C_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
     "-DCMAKE_Fortran_COMPILER:STRING=/projects/albany/clang/bin/mpifort"
