@@ -63,7 +63,6 @@ private:
   int numNodes;
   int numQPs;
 
-  double use_eff_cav;
   double rho_i;
   double h_r;
   double l_r;

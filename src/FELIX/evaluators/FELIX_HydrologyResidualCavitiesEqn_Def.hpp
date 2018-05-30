@@ -58,22 +58,19 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
   c_creep = hydrology_params.get<double>("Creep Closure Coefficient",1.0);
 
   use_melting = hydrology_params.get<bool>("Use Melting In Cavities Equation", false);
-  use_eff_cav = (hydrology_params.get<bool>("Use Effective Cavities Height", true) ? 1.0 : 0.0);
 
   /*
    * Scalings, needed to account for different units: ice velocity
    * is in m/yr, the mesh is in km, and hydrology time unit is s.
    *
-   * The residual has 4 terms (forget about signs), with the following
-   * units (including the km^2 from dx):
+   * The residual has 4 terms (here in strong form, without signs), with the following units:
    *
-   *  1) \int h_t*v*dx              [m s^-1  km^2]
-   *  2) \int rho_i_inv*m*v*dx      [m yr^-1 km^2]
-   *  3) \int c_creep*A*h*N^3*v*dx  [m s^-1  km^2]
-   *  4) \int (h_r-h)*|u|/l_r*v*dx  [m yr^-1 km^2]
+   *  1) h_t              [m s^-1 ]
+   *  2) m/rho_i          [m yr^-1]
+   *  3) c_creep*A*h*N^3  [m s^-1 ]
+   *  4) (h_r-h)*|u|/l_r  [m yr^-1]
    *
-   * where q=k*h^3*gradPhi/mu_w, and v is the test function.
-   * We decide to uniform all terms to have units [m km^2 yr^-1].
+   * We decide to uniform all terms to have units [m yr^-1].
    * Where possible, we do this by rescaling some constants. Otherwise,
    * we simply introduce a new scaling factor
    *
@@ -187,14 +184,14 @@ evaluateFieldsSide (typename Traits::EvalData workset)
       res_node = 0;
       if (nodal_equation) {
         res_node = (use_melting ? m(cell,side,node)/rho_i : zero)
-                 + (h_r - use_eff_cav*h(cell,side,node))*u_b(cell,side,node)/l_r
+                 + (h_r - h(cell,side,node))*u_b(cell,side,node)/l_r
                  - c_creep*h(cell,side,node)*ice_softness(cell)*std::pow(N(cell,side,node),3)
                  - (unsteady ? scaling_h_t*h_dot(cell,side,node) : zero);
       } else {
         for (int qp=0; qp < numQPs; ++qp)
         {
           res_qp = (use_melting ? m(cell,side,qp)/rho_i : zero)
-                 + (h_r - use_eff_cav*h(cell,side,qp))*u_b(cell,side,qp)/l_r
+                 + (h_r - h(cell,side,qp))*u_b(cell,side,qp)/l_r
                  - c_creep*h(cell,side,qp)*ice_softness(cell,side)*std::pow(N(cell,side,qp),3)
                  - (unsteady ? scaling_h_t*h_dot(cell,side,qp) : zero);
 
@@ -221,7 +218,7 @@ evaluateFieldsCell (typename Traits::EvalData workset)
       res_node = 0;
       if (nodal_equation) {
         res_node = (use_melting ? m(cell,node)/rho_i : zero)
-                 + std::max(h_r - h(cell,node),zero)*u_b(cell,node)/l_r
+                 + (h_r - h(cell,node))*u_b(cell,node)/l_r
                  - c_creep*h(cell,node)*ice_softness(cell)*std::pow(N(cell,node),3)
                  - (unsteady ? scaling_h_t*h_dot(cell,node) : zero);
       } else {
