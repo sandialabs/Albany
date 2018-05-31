@@ -116,7 +116,7 @@ void HydrologyMeltingRate<EvalT, Traits, IsStokes>::evaluateFields (typename Tra
 
       for (int qp=0; qp < numQPs; ++qp)
       {
-        m(cell,side,qp) = ( scaling_G*G(cell,side,qp) - beta(cell,side,qp) * std::pow(u_b(cell,side,qp),2) ) / L;
+        m(cell,side,qp) = ( scaling_G*G(cell,side,qp) + beta(cell,side,qp) * std::pow(u_b(cell,side,qp),2) ) / L;
       }
     }
   }
@@ -127,7 +127,7 @@ void HydrologyMeltingRate<EvalT, Traits, IsStokes>::evaluateFields (typename Tra
     {
       for (int i=0; i<dim; ++i)
       {
-        m(cell,i) = ( scaling_G*G(cell,i) - beta(cell,i) * std::pow(u_b(cell,i),2) ) / L;
+        m(cell,i) = ( scaling_G*G(cell,i) + beta(cell,i) * std::pow(u_b(cell,i),2) ) / L;
       }
     }
   }
