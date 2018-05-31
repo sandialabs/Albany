@@ -112,8 +112,7 @@ template<typename EvalT, typename Traits, bool IsStokes>
 void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::evaluateFieldsCell (typename Traits::EvalData workset)
 {
   ScalarT regularization(0.0);
-  if (regularize)
-  {
+  if (regularize) {
     regularization = regularizationParam(0);
   }
   Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -123,9 +122,8 @@ void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::evaluateFieldsCell (typen
   output->setOutputToRootOnly (0);
 
   static ScalarT printedReg = -1;
-  if (printedReg!=regularization)
-  {
-    *output << "reg = " << regularization << "\n";
+  if (printedReg!=regularization) {
+    *output << "[HydrologyWaterDischarge" << PHX::typeAsString<EvalT>() << "] reg = " << regularization << "\n";
     printedReg = regularization;
   }
 
@@ -155,12 +153,12 @@ template<typename EvalT, typename Traits, bool IsStokes>
 void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::
 evaluateFieldsSide (typename Traits::EvalData workset)
 {
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
+  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
     return;
+  }
 
   ScalarT regularization(0.0);
-  if (regularize)
-  {
+  if (regularize) {
     regularization = regularizationParam(0);
   }
 
@@ -170,8 +168,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   output->setProcRankAndSize (procRank, numProcs);
   output->setOutputToRootOnly (0);
   static ScalarT printedReg = -1;
-  if (printedReg!=regularization)
-  {
+  if (printedReg!=regularization) {
     *output << "[HydrologyWaterDischarge<" << PHX::typeAsString<EvalT>() << ">] reg = " << regularization << "\n";
     printedReg = regularization;
   }
