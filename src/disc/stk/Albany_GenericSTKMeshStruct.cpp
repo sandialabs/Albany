@@ -1398,9 +1398,19 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
 
   if (params.isParameter("Scale Factor"))
   {
-    Teuchos::Array<double> scale_factors = params.get<Teuchos::Array<double> >("Scale Factor");
-    TEUCHOS_TEST_FOR_EXCEPTION (scale_factors.size()!=serial_req_mvec->getNumVectors(), Teuchos::Exceptions::InvalidParameter,
-                                "Error! The given scale factors vector size does not match the field dimension.\n");
+    Teuchos::Array<double> scale_factors;
+    if (params.isType<Teuchos::Array<double>>("Scale Factor")) {
+      scale_factors = params.get<Teuchos::Array<double> >("Scale Factor");
+      TEUCHOS_TEST_FOR_EXCEPTION (scale_factors.size()!=serial_req_mvec->getNumVectors(), Teuchos::Exceptions::InvalidParameter,
+                                  "Error! The given scale factors vector size does not match the field dimension.\n");
+    } else if (params.isType<double>("Scale Factor")) {
+      scale_factors.resize(serial_req_mvec->getNumVectors());
+      std::fill_n(scale_factors.begin(),scale_factors.size(),params.get<double>("Scale Factor"));
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+                                 "Error! Invalid type for parameter 'Scale Factor'. Should be either 'double' or 'Array(double)'.\n");
+    }
+
     *out << "   - Scaling " << field_type << " field '" << field_name << "' with scaling factors [" << scale_factors[0];
     for (int i=1; i<scale_factors.size(); ++i)
       *out << " " << scale_factors[i];
@@ -1466,7 +1476,31 @@ void Albany::GenericSTKMeshStruct::fillField (const std::string& field_name, con
       }
     }
   } else if (params.isParameter("Field Value")) {
-    Teuchos::Array<double> values = params.get<Teuchos::Array<double> >("Field Value");
+    Teuchos::Array<double> values;
+    if (params.isType<Teuchos::Array<double>>("Field Value")) {
+      values = params.get<Teuchos::Array<double> >("Field Value");
+      TEUCHOS_TEST_FOR_EXCEPTION (values.size()==0 , Teuchos::Exceptions::InvalidParameter,
+                                  "Error! The given field value array has size 0.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (values.size()==1 && !scalar , Teuchos::Exceptions::InvalidParameter,
+                                  "Error! The given field value array has size 1, but the field is not scalar.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (values.size()>1 && scalar , Teuchos::Exceptions::InvalidParameter,
+                                  "Error! The given field value array has size >1, but the field is scalar.\n");
+    } else if (params.isType<double>("Field Value")) {
+      if (scalar) {
+        values.resize(1);
+        values[0] = params.get<double>("Field Value");
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION (!params.isParameter("Vector Dim"), std::logic_error,
+                                    "Error! Cannot determine dimension of " << field_type << " field '" << field_name << "'. "
+                                    "In order to fill with constant value, either specify 'Vector Dim', or make 'Field Value' an Array(double).\n");
+        values.resize(params.get<int>("Vector Dim"));
+        std::fill_n(values.begin(),values.size(),params.get<double>("Field Value"));
+      }
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+                                 "Error! Invalid type for parameter 'Field Value'. Should be either 'double' or 'Array(double)'.\n");
+    }
+
     field_mv = Teuchos::rcp(new Tpetra_MultiVector(entities_map,values.size()));
 
     if (layered) {
