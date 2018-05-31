@@ -1,0 +1,39 @@
+
+reset
+
+#{HORIZON=0.05}
+
+#{BAR_LENGTH=20*HORIZON}
+#{BAR_HEIGHT=10*HORIZON}
+#{BAR_DEPTH=10*HORIZON}
+
+#{PD_ELEM_SIZE=HORIZON/4.0}
+
+#{OVERLAP=6*HORIZON}
+
+#{EPSILON=0.1*FEM_ELEM_SIZE}
+
+#{TEMP_OFFSET=2.0*BAR_LENGTH}
+
+create brick x {BAR_LENGTH} y {BAR_HEIGHT} z {BAR_DEPTH}
+webcut volume 1 with plane xplane offset {-0.5*BAR_LENGTH + 2.0*HORIZON - PD_ELEM_SIZE} imprint merge
+webcut volume 1 with plane xplane offset { 0.5*BAR_LENGTH - 2.0*HORIZON + PD_ELEM_SIZE} imprint merge
+webcut volume 1 2 3 with plane yplane offset {-0.5*BAR_HEIGHT + 2.0*HORIZON - PD_ELEM_SIZE} imprint merge
+webcut volume 4 5 6 with plane yplane offset { 0.5*BAR_HEIGHT - 2.0*HORIZON + PD_ELEM_SIZE} imprint merge
+webcut volume 1 2 3 4 5 6 7 8 9 with plane zplane offset {-0.5*BAR_DEPTH + 2.0*HORIZON - PD_ELEM_SIZE} imprint merge
+webcut volume 1 2 3 4 5 6 7 8 9 with plane zplane offset { 0.5*BAR_DEPTH - 2.0*HORIZON + PD_ELEM_SIZE} imprint merge
+volume 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 move x {0.5*BAR_LENGTH} y 0.0 z 0.0
+
+block 1 volume 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
+
+# dirichlet
+nodeset 1 volume 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 25 26 27
+
+#nodeset 2 volume 24
+
+volume all size {PD_ELEM_SIZE}
+mesh volume all
+
+export genesis 'PD_Convergence_AllHex.g' overwrite
+
+# /ascldap/users/djlittl/scripts/spheregen/spheregen.py -o PD_Convergence.g PD_Convergence_AllHex.g

@@ -1,0 +1,49 @@
+
+reset
+
+#{HORIZON=0.05}
+
+#{BAR_LENGTH=20*HORIZON}
+#{BAR_HEIGHT=10*HORIZON}
+#{BAR_DEPTH=10*HORIZON}
+
+#{REFINEMENT_FACTOR=1.0}
+#{PD_ELEM_SIZE=0.5*HORIZON*REFINEMENT_FACTOR}
+#{FEM_ELEM_SIZE=HORIZON*REFINEMENT_FACTOR}
+
+#{OVERLAP=6*HORIZON}
+
+#{EPSILON=0.1*FEM_ELEM_SIZE}
+
+#{TEMP_OFFSET=2.0*BAR_LENGTH}
+
+create brick x {BAR_LENGTH} y {BAR_HEIGHT} z {BAR_DEPTH}
+webcut volume 1 with plane xplane offset {-0.5*BAR_LENGTH + 2.0*HORIZON - PD_ELEM_SIZE} imprint merge
+webcut volume 1 with plane xplane offset { 0.5*BAR_LENGTH - 2.0*HORIZON + PD_ELEM_SIZE} imprint merge
+webcut volume 1 2 3 with plane yplane offset {-0.5*BAR_HEIGHT + 2.0*HORIZON - PD_ELEM_SIZE} imprint merge
+webcut volume 4 5 6 with plane yplane offset { 0.5*BAR_HEIGHT - 2.0*HORIZON + PD_ELEM_SIZE} imprint merge
+webcut volume 1 2 3 4 5 6 7 8 9 with plane zplane offset {-0.5*BAR_DEPTH + 2.0*HORIZON - PD_ELEM_SIZE} imprint merge
+webcut volume 1 2 3 4 5 6 7 8 9 with plane zplane offset { 0.5*BAR_DEPTH - 2.0*HORIZON + PD_ELEM_SIZE} imprint merge
+volume 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 move x {0.5*BAR_LENGTH} y 0.0 z 0.0
+
+create brick x {BAR_LENGTH} y {BAR_HEIGHT} z {BAR_DEPTH}
+volume 28 move x {1.5*BAR_LENGTH - OVERLAP} y 0.0 z 0.0
+
+volume 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 size {PD_ELEM_SIZE}
+volume 28 size {FEM_ELEM_SIZE}
+mesh volume all
+
+block 1 volume 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
+block 2 volume 28
+
+# dirichlet
+nodeset 1 volume 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 23 25 26 27 surface 267 268 269 271 272
+
+# control
+volume 28 move x {TEMP_OFFSET} y 0.0 z 0.0
+nodeset 2 node with x_coord < {BAR_LENGTH + EPSILON} and x_coord > {BAR_LENGTH - 2.0*HORIZON + PD_ELEM_SIZE - EPSILON} and y_coord > {-0.5*BAR_HEIGHT + 2.0*HORIZON + PD_ELEM_SIZE - EPSILON} and y_coord < {0.5*BAR_HEIGHT - 2.0*HORIZON - PD_ELEM_SIZE + EPSILON} and z_coord > {-0.5*BAR_HEIGHT + 2.0*HORIZON + PD_ELEM_SIZE - EPSILON} and z_coord < {0.5*BAR_HEIGHT - 2.0*HORIZON - PD_ELEM_SIZE + EPSILON} node with x_coord < {TEMP_OFFSET + 1.5*BAR_LENGTH - OVERLAP + EPSILON} and x_coord > {TEMP_OFFSET + 1.5*BAR_LENGTH - OVERLAP - EPSILON} and y_coord > {-0.5*BAR_HEIGHT + EPSILON} and y_coord < {0.5*BAR_HEIGHT - EPSILON} and z_coord > {-0.5*BAR_HEIGHT + EPSILON} and z_coord < {0.5*BAR_HEIGHT - EPSILON}
+volume 28 move x {-TEMP_OFFSET} y 0.0 z 0.0
+
+export genesis 'OBC_Convergence_AllHex.g' overwrite
+
+# /ascldap/users/djlittl/scripts/spheregen/spheregen.py --ignore-blocks 2 -o OBC_Convergence.g OBC_Convergence_AllHex.g
