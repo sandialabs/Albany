@@ -35,6 +35,7 @@ public:
 private:
 
   enum class InputType {
+    GIVEN_VALUE,
     GIVEN_FIELD,
     SMB_APPROX
   };
@@ -52,6 +53,8 @@ private:
   InputType input_type;
 
   int numNodes;
+
+  double omega_val;
 
   std::string sideSetName;  // Needed only if OnSide=true
 };

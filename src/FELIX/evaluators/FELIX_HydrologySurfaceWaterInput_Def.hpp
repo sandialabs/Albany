@@ -21,7 +21,15 @@ HydrologySurfaceWaterInput (const Teuchos::ParameterList& p,
   Teuchos::ParameterList& plist = *p.get<Teuchos::ParameterList*>("Surface Water Input Params");
   std::string type = plist.get<std::string>("Type","Given Field");
   type = util::upper_case(type);
-  if (type=="GIVEN FIELD") {
+  if (type=="GIVEN VALUE") {
+    // Set omega=val
+    omega = decltype(omega)(p.get<std::string> ("Surface Water Input Variable Name"), dl->node_scalar);
+    this->addEvaluatedField(omega);
+
+    omega_val = plist.get<double>("Given Value");
+
+    input_type = InputType::GIVEN_VALUE;
+  } else if (type=="GIVEN FIELD") {
     // Nothing to be done. The user should already be loading a surface water input nodal field.
     // If not, the Phalanx DAG will be broken and Phalanx will report it.
     input_type = InputType::GIVEN_FIELD;
