@@ -6,7 +6,6 @@
   <ParameterList name="Problem">
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <Parameter name="Number RBMs for ML" type="int" value="3"/>
-    <Parameter name="Use MDField Memoization" type="bool"          value="true"/>
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
     <Parameter name="Required Fields"         type="Array(string)" value="{temperature}"/>
@@ -61,7 +60,7 @@
 
   <ParameterList name="Discretization">
     <Parameter name="Method"                                type="string"        value="Extruded"/>
-    <Parameter name="Workset Size"                          type="int"           value="-1"/>
+    <Parameter name="Workset Size"                          type="int"           value="10000"/>
     <Parameter name="Number Of Time Derivatives"            type="int"           value="0"/>
     <Parameter name="Cubature Degree"                       type="int"           value="3"/>
     <Parameter name="Exodus Output File Name"               type="string"        value="antarctica_muelu_out.exo"/>
