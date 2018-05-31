@@ -6,12 +6,16 @@ ANONYMOUS:
   Problem:
     Name: Mechanics 3D
     MaterialDB Filename: FEM_Convergence_Materials.yaml
+    Register dirichlet_field: true
     Solution Method: Steady
     Phalanx Graph Visualization Detail: 0
     Dirichlet BCs:
       DBC on NS nodelist_1 for DOF X prescribe Field: dirichlet_field
       DBC on NS nodelist_1 for DOF Y: 0.00000000e+00
       DBC on NS nodelist_1 for DOF Z: 0.00000000e+00
+    Parameters:
+      Number: 1
+      Parameter 0: DBC on NS nodelist_1 for DOF X prescribe Field
     Response Functions:
       Number: 0
       Response 0: OBC Functional
