@@ -51,6 +51,7 @@ private:
   PHX::MDField<const RealType>      BF;
   PHX::MDField<const MeshScalarT>   w_measure;
   PHX::MDField<const ScalarT>       h;
+  PHX::MDField<const ScalarT>       h_node;
   PHX::MDField<const ScalarT>       h_dot;
   PHX::MDField<const ScalarT>       N;
   PHX::MDField<const ScalarT>       m;

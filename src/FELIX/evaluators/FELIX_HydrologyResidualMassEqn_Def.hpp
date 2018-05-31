@@ -76,8 +76,8 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
   TEUCHOS_TEST_FOR_EXCEPTION (penalization_coeff<0.0, Teuchos::Exceptions::InvalidParameter, "Error! Penalization coefficient must be positive.\n");
   penalization = (penalization_coeff!=0.0);
   if (penalization) {
-    P_w = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Pressure Variable Name"), dl->qp_scalar);
-    P_o = PHX::MDField<const ParamScalarT>(p.get<std::string>("Ice Overburden Variable Name"),dl->qp_scalar);
+    P_w = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Pressure Variable Name"), dl->node_scalar);
+    P_o = PHX::MDField<const ParamScalarT>(p.get<std::string>("Ice Overburden Variable Name"),dl->node_scalar);
     this->addDependentField(P_w);
     this->addDependentField(P_o);
   }
@@ -204,7 +204,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
       res_node = 0;
       for (int qp=0; qp < numQPs; ++qp)
       {
-        res_qp = scaling_omega*omega(cell,side,qp) + (unsteady ? scaling_h_dot*h_dot(cell,side,qp) : zero);
+        res_qp = scaling_omega*omega(cell,side,qp) - (unsteady ? scaling_h_dot*h_dot(cell,side,qp) : zero);
 
         if (use_melting && !mass_lumping) {
           res_qp += m(cell,side,qp)/rho_w;
@@ -220,17 +220,18 @@ evaluateFieldsSide (typename Traits::EvalData workset)
           }
         }
 
-        if (penalization) {
-          res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),P_o(cell,side,qp)-P_w(cell,side,qp)),2);
-          res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),P_w(cell,side,qp)),2);
-        }
-
         res_node += res_qp * w_measure(cell,side,qp);
       }
 
       if (use_melting && mass_lumping) {
         res_node += m(cell,side,node)/rho_w;
       }
+
+      if (penalization) {
+        res_node += penalization_coeff*std::pow(std::min(ScalarT(0.0),P_o(cell,side,node)-P_w(cell,side,node)),2);
+        res_node += penalization_coeff*std::pow(std::min(ScalarT(0.0),P_w(cell,side,node)),2);
+      }
+
 
       residual (cell,side,node) = res_node;
     }
@@ -249,7 +250,7 @@ evaluateFieldsCell (typename Traits::EvalData workset)
       res_node = 0;
       for (int qp=0; qp < numQPs; ++qp)
       {
-        res_qp = scaling_omega*omega(cell,qp) + (unsteady ? scaling_h_dot*h_dot(cell,qp) : zero);
+        res_qp = scaling_omega*omega(cell,qp) - (unsteady ? scaling_h_dot*h_dot(cell,qp) : zero);
 
         if (use_melting && !mass_lumping) {
           res_qp += m(cell,qp)/rho_w;
@@ -262,17 +263,18 @@ evaluateFieldsCell (typename Traits::EvalData workset)
           res_qp += scaling_q*q(cell,qp,dim) * GradBF(cell,node,qp,dim);
         }
 
-        if (penalization) {
-          res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),P_o(cell,qp)-P_w(cell,qp)),2);
-          res_qp += penalization_coeff*std::pow(std::min(ScalarT(0.0),P_w(cell,qp)),2);
-        }
-
         res_node += res_qp * w_measure(cell,qp);
       }
 
       if (use_melting && mass_lumping) {
         res_node += m(cell,node)/rho_w;
       }
+
+      if (penalization) {
+        res_node += penalization_coeff*std::min(ScalarT(0.0),P_o(cell,node)-P_w(cell,node));
+        res_node += penalization_coeff*std::min(ScalarT(0.0),P_w(cell,node));
+      }
+
 
       residual (cell,node) = res_node;
     }
