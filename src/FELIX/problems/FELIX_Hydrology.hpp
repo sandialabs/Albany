@@ -281,7 +281,8 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   int num_fields = req_fields_info.get<int>("Number Of Fields",0);
 
   std::string fieldType, fieldUsage, meshPart;
-  bool nodal_state;
+  bool nodal_state, scalar_state;
+  std::map<std::string, bool> is_input_state_scalar;
   // Loop over the number of required fields
   for (int ifield=0; ifield<num_fields; ++ifield)
   {
@@ -319,6 +320,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       entity = Albany::StateStruct::ElemData;
       p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, elementBlockName, true, &entity, meshPart);
       nodal_state = false;
+      scalar_state = true;
 
       // Sanity check: dist parameters and dirichlet field MUST be node scalars
       TEUCHOS_TEST_FOR_EXCEPTION (is_dist_param[stateName] || is_dirichlet_field[stateName], std::logic_error,
@@ -328,10 +330,12 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       entity = is_dist_param[stateName] || is_dirichlet_field[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
       p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, meshPart);
       nodal_state = true;
+      scalar_state = true;
     } else if(fieldType == "Elem Vector") {
       entity = Albany::StateStruct::ElemData;
       p = stateMgr.registerStateVariable(stateName, dl->cell_vector, elementBlockName, true, &entity, meshPart);
       nodal_state = false;
+      scalar_state = false;
 
       // Sanity check: dist parameters and dirichlet field MUST be node scalars
       TEUCHOS_TEST_FOR_EXCEPTION (is_dist_param[stateName] || is_dirichlet_field[stateName], std::logic_error,
@@ -340,6 +344,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       entity = is_dist_param[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
       p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName, true, &entity, meshPart);
       nodal_state = true;
+      scalar_state = false;
 
       // Sanity check: dist parameters and dirichlet field MUST be node scalars
       TEUCHOS_TEST_FOR_EXCEPTION (is_dist_param[stateName] || is_dirichlet_field[stateName], std::logic_error,
@@ -386,6 +391,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
+      is_input_state_scalar[stateName] = scalar_state;
     }
   }
 
@@ -410,6 +416,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       // Gather evaluator
       ev = evalUtils.constructGatherScalarNodalParameter(it.first,it.first);
       fm0.template registerEvaluator<EvalT>(ev);
+      is_input_state_scalar[it.first] = true;
 
       // Mark this state as 'found'
       inputs_found.insert(it.first);
@@ -490,6 +497,16 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = evalUtils.constructScatterResidualEvaluator(false, resid_names, offset, "Scatter Hydrology");
   fm0.template registerEvaluator<EvalT> (ev);
 
+  // Interpolating all input fields
+  for (auto it : is_input_state_scalar) {
+    if (it.second) {
+      ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator(it.first);
+    } else {
+      ev = evalUtils.getPSTUtils().constructDOFVecInterpolationEvaluator(it.first);
+    }
+    fm0.template registerEvaluator<EvalT> (ev);
+  }
+
   // Interpolate Hydraulic Potential
   ev = evalUtils.constructDOFInterpolationEvaluator(hydraulic_potential_name);
   fm0.template registerEvaluator<EvalT> (ev);
@@ -516,6 +533,10 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Basal Velocity
   ev = evalUtils.getPSTUtils().constructDOFVecInterpolationEvaluator(basal_velocity_name);
+  fm0.template registerEvaluator<EvalT> (ev);
+
+  // Basal Friction (beta)
+  ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator(beta_name);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Surface Water Input
@@ -630,7 +651,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = Teuchos::rcp(new FELIX::HydrologyWaterDischarge<EvalT,PHAL::AlbanyTraits,false>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
-  // ------- Hydrology Melting Rate -------- //
+  // ------- Hydrology Melting Rate (QPs) -------- //
   p = Teuchos::rcp(new Teuchos::ParameterList("Hydrology Melting Rate"));
 
   //Input
@@ -646,14 +667,10 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = Teuchos::rcp(new FELIX::HydrologyMeltingRate<EvalT,PHAL::AlbanyTraits,false>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
-  if (params->sublist("FELIX Hydrology").get<bool>("Cavities Equation Nodal", false) ||
-      params->sublist("FELIX Hydrology").get<bool>("Lump Mass In Mass Equation", false)) {
-    // We need the melting rate in the nodes
-    p->set<bool>("Nodal", true);
-
-    ev = Teuchos::rcp(new FELIX::HydrologyMeltingRate<EvalT,PHAL::AlbanyTraits,false>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
+  // ------- Hydrology Melting Rate (Nodes) -------- //
+  p->set<bool>("Nodal", true);    // If we have mass lumping or we are saving melting_rate to mesh
+  ev = Teuchos::rcp(new FELIX::HydrologyMeltingRate<EvalT,PHAL::AlbanyTraits,false>(*p,dl));
+  fm0.template registerEvaluator<EvalT>(ev);
 
   // --------- Ice Softness --------- //
   p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Ice Softness"));
@@ -755,7 +772,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string> ("Water Thickness Variable Name", water_thickness_name);
   p->set<std::string> ("Water Thickness Dot Variable Name", water_thickness_dot_name);
   p->set<std::string> ("Ice Overburden Variable Name", ice_overburden_name);
-  p->set<std::string> ("Water Pressure Variable Name", hydraulic_potential_name);
+  p->set<std::string> ("Water Pressure Variable Name", water_pressure_name);
   p->set<std::string> ("Melting Rate Variable Name",melting_rate_name);
   p->set<std::string> ("Surface Water Input Variable Name",surface_water_input_name);
   p->set<std::string> ("Sliding Velocity Variable Name",sliding_velocity_name);
