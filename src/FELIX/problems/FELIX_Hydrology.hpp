@@ -443,8 +443,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p = stateMgr.registerStateVariable(it.first, dl->node_scalar, elementBlockName, true, &entity, meshPart);
 
       // Create the scatter evaluator
-      bool scatter_only_once = true;
-      ev = evalUtils.constructScatterScalarNodalParameter(it.first,it.first, scatter_only_once);
+      ev = evalUtils.constructScatterScalarNodalParameter(it.first,it.first);
       fm0.template registerEvaluator<EvalT>(ev);
 
       // Only PHAL::AlbanyTraits::Residual evaluates something, others will have empty list of evaluated fields

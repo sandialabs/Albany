@@ -168,8 +168,7 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructScatterScalarNodalParameter(
         const std::string& param_name,
-        const std::string& field_name="",
-        const bool scatter_only_once = false) const;
+        const std::string& field_name="") const;
 
     //! Function to create parameter list for construction of GatherScalarExtruded2DNodalParameter
     Teuchos::RCP< PHX::Evaluator<Traits> >
@@ -181,8 +180,7 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructScatterScalarExtruded2DNodalParameter(
         const std::string& param_name,
-        const std::string& field_name="",
-        const bool scatter_only_once = false) const;
+        const std::string& field_name="") const;
 
     //! Function to create parameter list for construction of DOFInterpolation
     //! evaluator with standard field names

@@ -248,8 +248,7 @@ template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterScalarNodalParameter(
        const std::string& param_name,
-       const std::string& field_name,
-       const bool scatter_only_once) const
+       const std::string& field_name) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -263,7 +262,6 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterScalarNodalPar
     } else {
       p->set<std::string>("Field Name", param_name);
     }
-    p->set<bool>("Scatter Only Once", scatter_only_once);
 
     return rcp(new PHAL::ScatterScalarNodalParameter<EvalT,Traits>(*p,dl));
 }
@@ -294,8 +292,7 @@ template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterScalarExtruded2DNodalParameter(
        const std::string& param_name,
-       const std::string& field_name,
-       const bool scatter_only_once) const
+       const std::string& field_name) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -309,7 +306,6 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterScalarExtruded
     } else {
       p->set<std::string>("Field Name", param_name);
     }
-    p->set<bool>("Scatter Only Once", scatter_only_once);
 
     p->set<int>("Field Level", 0);
     return rcp(new PHAL::ScatterScalarExtruded2DNodalParameter<EvalT,Traits>(*p,dl));
@@ -939,7 +935,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructNodesToCellInterpolat
 template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructQuadPointsToCellInterpolationEvaluator(
-    const std::string& dof_name, const Teuchos::RCP<PHX::DataLayout> qp_layout, 
+    const std::string& dof_name, const Teuchos::RCP<PHX::DataLayout> qp_layout,
     const Teuchos::RCP<PHX::DataLayout> cell_layout, const bool enableMemoizer) const
 {
   Teuchos::RCP<Teuchos::ParameterList> p;

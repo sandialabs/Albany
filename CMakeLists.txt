@@ -78,9 +78,9 @@ ENDIF()
 
 # Optional Installation helpers
 # Note that some of this functionality depends on CMAKE > 2.8.8
-SET (INSTALL_ALBANY FALSE)
+SET (INSTALL_ALBANY FALSE CACHE BOOL "Whether Albany should be installed")
+IF (INSTALL_ALBANY)
   IF (${CMAKE_VERSION} VERSION_GREATER 2.8.8 OR ${CMAKE_VERSION} VERSION_EQUAL 2.8.8)
-    SET (INSTALL_ALBANY TRUE)
     MESSAGE("")
     MESSAGE("Installation files for Albany will be created")
     MESSAGE("-- install location = ${CMAKE_INSTALL_PREFIX}")
@@ -95,6 +95,7 @@ SET (INSTALL_ALBANY FALSE)
     MESSAGE("-- Please upgrade CMAKE to version >= 2.8.8")
     MESSAGE("")
   ENDIF()
+ENDIF()
 
 option (ENABLE_CROSS_COMPILE "Flag to turn on cross-compiling tools" OFF)
 if (ENABLE_CROSS_COMPILE)
