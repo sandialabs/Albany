@@ -88,14 +88,22 @@ class ModelEvaluatorT
 #if defined(ALBANY_LCM)
   // This is here to have a sane way to handle time and avoid Thyra ME.
   ST
-  getCurrentTime() const {
+  getCurrentTime() const
+  {
     return current_time_;
   }
 
   void
-  setCurrentTime(ST const t) {
+  setCurrentTime(ST const t)
+  {
     current_time_ = t;
     return;
+  }
+
+  void
+  setNominalValues(Thyra::ModelEvaluatorBase::InArgs<ST> nv)
+  {
+    nominalValues = nv;
   }
 #endif // ALBANY_LCM
 
