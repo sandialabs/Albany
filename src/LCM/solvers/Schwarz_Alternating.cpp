@@ -1432,7 +1432,9 @@ SchwarzLoopQuasistatics() const
   // Output initial configuration.
   doQuasistaticOutput(current_time);
 
-  // Continuation loop
+  // Continuation loop. We do continuation manually for Schwarz instead
+  // using LOCA. It turned out to be too complicated to use LOCA to sync
+  // continuation between different subdomains.
   while (stop < maximum_steps_ && current_time < final_time_) {
 
     ST const
@@ -1449,9 +1451,6 @@ SchwarzLoopQuasistatics() const
     // for the model evaluator to a desired value. This is used to save
     // previous values of the solution at each Schwarz iteration for
     // each subdomain.
-    // No idea why this is needed instead of just using the set_x() method
-    // directly. The latter does not work as the solutions does not change.
-    // More RCP fun, I guess.
     Thyra::ModelEvaluatorBase::InArgsSetup<ST> nv;
     nv.setModelEvalDescription(this->description());
     nv.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x, true);
@@ -1470,15 +1469,15 @@ SchwarzLoopQuasistatics() const
         (*model_evaluators_[subdomain]);
 
         auto
-        zero_soln_rcp = Thyra::createMember(me.get_x_space());
+        zero_disp_rcp = Thyra::createMember(me.get_x_space());
 
         auto
-        zero_soln_ptr = zero_soln_rcp.ptr();
+        zero_disp_ptr = zero_disp_rcp.ptr();
 
-        Thyra::put_scalar<ST>(0.0, zero_soln_ptr);
+        Thyra::put_scalar<ST>(0.0, zero_disp_ptr);
 
-        prev_step_disp_[subdomain] = zero_soln_rcp;
-        curr_disp_[subdomain] = zero_soln_rcp;
+        prev_step_disp_[subdomain] = zero_disp_rcp;
+        curr_disp_[subdomain] = zero_disp_rcp;
       } else {
         prev_step_disp_[subdomain] = curr_disp_[subdomain];
       }
@@ -1491,12 +1490,6 @@ SchwarzLoopQuasistatics() const
 
       toFrom(internal_states_[subdomain], state_mgr.getStateArrays());
 
-#ifdef DEBUG
-      fos << "DEBUG: Initial internal states subdomain " << subdomain << '\n';
-      printInternalElementStates(
-          internal_states_[subdomain], state_mgr.getStateInfoStruct());
-      fos << "DEBUG: Initial internal states subdomain " << subdomain << '\n';
-#endif
     }
 
     num_iter_ = 0;
@@ -1533,38 +1526,14 @@ SchwarzLoopQuasistatics() const
         auto &
         state_mgr = app.getStateMgr();
 
-#ifdef DEBUG
-        fos << "DEBUG: SETTING internal states subdomain " << subdomain << '\n';
-        printInternalElementStates(
-            internal_states_[subdomain], state_mgr.getStateInfoStruct());
-        fos << "DEBUG: SETTING ..." << '\n';
-#endif
-
         toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
 
         // Restore solution from previous time step
         auto
         prev_step_disp_rcp = prev_step_disp_[subdomain];
 
-        auto &
-        prev_step_disp = *prev_step_disp_rcp;
-
         nv.set_x(prev_step_disp_rcp);
         me.setNominalValues(nv);
-
-#ifdef DEBUG
-        auto const &
-        get_x_me = *me.getNominalValues().get_x();
-        auto const &
-        get_x_nv = *nv.get_x();
-        fos << "*** NORM BEFORE set_x ***" << '\n';
-        fos << "*** NORM: " << Thyra::norm(prev_step_disp) << '\n';
-        fos << "*** NORM BEFORE set_x ***" << '\n';
-        fos << "*** NORM AFTER set_x ***" << '\n';
-        fos << "*** NORM ME: " << Thyra::norm(get_x_me) << '\n';
-        fos << "*** NORM NV: " << Thyra::norm(get_x_nv) << '\n';
-        fos << "*** NORM AFTER set_x ***" << '\n';
-#endif
 
         // Target time
         me.setCurrentTime(next_time);
@@ -1631,22 +1600,6 @@ SchwarzLoopQuasistatics() const
         norms_final(subdomain) = Thyra::norm(curr_disp);
         norms_diff(subdomain) = Thyra::norm(disp_diff);
 
-#if defined(DEBUG)
-        fos << "\n*** NOX: Previous solution ***\n";
-        prev_disp.describe(fos, Teuchos::VERB_EXTREME);
-        fos << "\n*** NORM: " << Thyra::norm(prev_disp) << '\n';
-        fos << "\n*** NOX: Previous solution ***\n";
-
-        fos << "\n*** NOX: Current solution ***\n";
-        curr_disp.describe(fos, Teuchos::VERB_EXTREME);
-        fos << "\n*** NORM: " << Thyra::norm(curr_disp) << '\n';
-        fos << "\n*** NOX: Current solution ***\n";
-
-        fos << "\n*** NOX: Solution difference ***\n";
-        disp_diff.describe(fos, Teuchos::VERB_EXTREME);
-        fos << "\n*** NORM: " << Thyra::norm(disp_diff) << '\n';
-        fos << "\n*** NOX: Solution difference ***\n";
-#endif //DEBUG
       } // Subdomain loop
 
       if (failed_ == true) {
