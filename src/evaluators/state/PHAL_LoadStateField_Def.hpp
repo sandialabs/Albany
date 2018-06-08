@@ -17,7 +17,8 @@ template<typename EvalT, typename Traits, typename ScalarType>
 LoadStateFieldBase<EvalT, Traits, ScalarType>::
 LoadStateFieldBase(const Teuchos::ParameterList& p)
 {
-  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
+    memoizer.enable_memoizer();
 
   fieldName =  p.get<std::string>("Field Name");
   stateName =  p.get<std::string>("State Name");
@@ -59,7 +60,8 @@ template<typename EvalT, typename Traits>
 LoadStateField<EvalT, Traits>::
 LoadStateField(const Teuchos::ParameterList& p) 
 {
-  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
+    memoizer.enable_memoizer();
 
   fieldName =  p.get<std::string>("Field Name");
   stateName =  p.get<std::string>("State Name");

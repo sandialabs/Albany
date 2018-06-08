@@ -23,8 +23,8 @@ DOFGradInterpolationBase(const Teuchos::ParameterList& p,
   GradBF      (p.get<std::string>   ("Gradient BF Name"), dl->node_qp_gradient),
   grad_val_qp (p.get<std::string>   ("Gradient Variable Name"), dl->qp_gradient)
 {
-  if (p.isType<bool>("Enable Memoizer"))
-    memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
+    memoizer.enable_memoizer();
 
   this->addDependentField(val_node.fieldTag());
   this->addDependentField(GradBF.fieldTag());

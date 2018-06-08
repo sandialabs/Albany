@@ -26,7 +26,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   GradBF        (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient),
   wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient)
 {
-  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
+    memoizer.enable_memoizer();
 
   this->addDependentField(coordVec.fieldTag());
   this->addEvaluatedField(weighted_measure);

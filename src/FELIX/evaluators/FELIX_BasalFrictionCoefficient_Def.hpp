@@ -195,7 +195,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
   logParameters = beta_list.get<bool>("Use log scalar parameters",false);
 
-  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
+    memoizer.enable_memoizer();
 
   this->setName("BasalFrictionCoefficient"+PHX::typeAsString<EvalT>());
 }

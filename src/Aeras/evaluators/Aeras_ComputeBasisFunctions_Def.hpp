@@ -64,7 +64,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
 
   this->setName("Aeras::ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
 
-  memoizer_.enable_memoizer(true);
+  memoizer_.enable_memoizer();
 }
 
 //**********************************************************************

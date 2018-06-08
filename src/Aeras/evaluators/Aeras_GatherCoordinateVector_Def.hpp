@@ -21,7 +21,7 @@ GatherCoordinateVector(const Teuchos::ParameterList& p,
 {  
   this->addEvaluatedField(coordVec);
   this->setName("Aeras::GatherCoordinateVector"+PHX::typeAsString<EvalT>());
-  memoizer_.enable_memoizer(true);
+  memoizer_.enable_memoizer();
 }
 
 // **********************************************************************

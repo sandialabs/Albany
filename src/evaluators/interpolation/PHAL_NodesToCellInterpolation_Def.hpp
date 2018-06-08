@@ -17,7 +17,8 @@ NodesToCellInterpolationBase (const Teuchos::ParameterList& p,
   BF        (p.get<std::string>("BF Variable Name"), dl->node_qp_scalar),
   w_measure (p.get<std::string>("Weighted Measure Name"), dl->qp_scalar)
 {
-  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
+    memoizer.enable_memoizer();
 
   isVectorField = p.get<bool>("Is Vector Field");
   if (isVectorField)

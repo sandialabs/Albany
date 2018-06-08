@@ -218,17 +218,22 @@ class MDFieldMemoizer {
   int _prevWorksetIndex;
 
 public:
-  MDFieldMemoizer () : _enableMemoizer(false), _prevWorksetIndex(-1) {}
+  MDFieldMemoizer() :
+    _enableMemoizer(false),
+    _prevWorksetIndex(-1) {
+  }
 
-  void enable_memoizer (const bool enableMemoizer) {
-    _enableMemoizer = enableMemoizer;
+  void enable_memoizer() {
+    _enableMemoizer = true;
   }
 
   bool have_stored_data (const typename Traits::EvalData workset) {
     if (!_enableMemoizer) return false;
 
+    // Check workset index
     const bool stored = (workset.wsIndex == _prevWorksetIndex);
     _prevWorksetIndex = workset.wsIndex;
+
     return stored;
   }
 };

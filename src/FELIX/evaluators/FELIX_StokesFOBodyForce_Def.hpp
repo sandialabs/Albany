@@ -30,7 +30,8 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   n(3.0),
   alpha(0.0)
 {
-  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
+    memoizer.enable_memoizer();
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   Teuchos::ParameterList* bf_list =

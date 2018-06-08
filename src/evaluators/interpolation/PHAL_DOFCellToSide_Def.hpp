@@ -103,7 +103,8 @@ DOFCellToSideBase(const Teuchos::ParameterList& p,
     }
   }
 
-  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
+    memoizer.enable_memoizer();
 }
 
 //**********************************************************************

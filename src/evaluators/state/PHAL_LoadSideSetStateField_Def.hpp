@@ -19,7 +19,8 @@ template<typename EvalT, typename Traits>
 LoadSideSetStateField<EvalT, Traits>::
 LoadSideSetStateField (const Teuchos::ParameterList& p)
 {
-  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
+    memoizer.enable_memoizer();
 
   sideSetName = p.get<std::string>("Side Set Name");
 

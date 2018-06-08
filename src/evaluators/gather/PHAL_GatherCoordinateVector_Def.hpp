@@ -27,7 +27,8 @@ GatherCoordinateVector(const Teuchos::ParameterList& p,
     dispVecName = Teuchos::rcp( new std::string(strDispVec) );
   }
     
-  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
+    memoizer.enable_memoizer();
 
   this->addEvaluatedField(coordVec);
   this->setName("Gather Coordinate Vector"+PHX::typeAsString<EvalT>());
@@ -43,7 +44,8 @@ GatherCoordinateVector(const Teuchos::ParameterList& p) :
   if (p.isType<bool>("Periodic BC")) periodic = p.get<bool>("Periodic BC");
   else periodic = false;
 
-  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
+    memoizer.enable_memoizer();
 
   this->addEvaluatedField(coordVec);
   this->setName("Gather Coordinate Vector"+PHX::typeAsString<EvalT>());

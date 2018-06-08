@@ -882,7 +882,7 @@ if (basalSideName!="INVALID")
   {
 #ifndef ALBANY_MESH_DEPENDS_ON_PARAMETERS
     //----- Gather Coordinate Vector (general parameters)
-    ev = evalUtils.constructGatherCoordinateVectorEvaluator("",enableMemoizer);
+    ev = evalUtils.constructGatherCoordinateVectorEvaluator("");
     fm0.template registerEvaluator<EvalT> (ev);
 #else
 
@@ -1023,7 +1023,8 @@ if (basalSideName!="INVALID")
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate basal_friction (if needed) on QP on side
-    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("basal_friction", basalSideName,enableMemoizer);
+    const bool basalMemoizer = enableMemoizer ? (!is_dist_param["basal_friction"] ? true : false) : false;
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("basal_friction", basalSideName, basalMemoizer);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate bed_roughness (if needed) on QP on side
@@ -1328,7 +1329,8 @@ if (basalSideName!="INVALID")
     //Output
     p->set<std::string>("Basal Friction Coefficient Variable Name", "beta");
 
-    if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
+    const bool basalMemoizer = enableMemoizer ? (!is_dist_param["basal_friction"] ? true : false) : false;
+    if (basalMemoizer) p->set<bool>("Enable Memoizer", basalMemoizer);
 
     ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,true,false>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);

@@ -21,8 +21,8 @@ DOFInterpolationBase(const Teuchos::ParameterList& p,
   BF          (p.get<std::string>   ("BF Name"), dl->node_qp_scalar),
   val_qp      (p.get<std::string>   ("Variable Name"), dl->qp_scalar )
 {
-  if (p.isType<bool>("Enable Memoizer")) 
-    memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
+    memoizer.enable_memoizer();
 
   this->addDependentField(val_node.fieldTag());
   this->addDependentField(BF.fieldTag());

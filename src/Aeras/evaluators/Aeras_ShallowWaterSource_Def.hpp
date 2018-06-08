@@ -81,7 +81,7 @@ ShallowWaterSource(const Teuchos::ParameterList& p,
   ALFA =  -0.03*(PHI0/(2.*Omega*sin(myPi/4.)));
   SIGMA = (2.*earthRadius/1.0e6)*(2.*earthRadius/1.0e6);
 
-  memoizer_.enable_memoizer(true);
+  memoizer_.enable_memoizer();
 }
 
 //**********************************************************************

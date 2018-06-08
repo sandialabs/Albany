@@ -27,7 +27,8 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   BF            (p.get<std::string> ("BF Name"), dl_side->node_qp_scalar),
   GradBF        (p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient)
 {
-  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
+    memoizer.enable_memoizer();
 
   this->addDependentField(sideCoordVec);
   this->addEvaluatedField(tangents);

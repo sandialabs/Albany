@@ -65,7 +65,7 @@ ShallowWaterHyperViscosity(const Teuchos::ParameterList& p,
 
   this->setName("ShallowWaterHyperViscosity"+PHX::typeAsString<EvalT>());
 
-  memoizer_.enable_memoizer(true);
+  memoizer_.enable_memoizer();
 }
 
 //**********************************************************************

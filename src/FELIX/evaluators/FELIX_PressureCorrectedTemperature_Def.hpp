@@ -20,7 +20,7 @@ PressureCorrectedTemperature(const Teuchos::ParameterList& p, const Teuchos::RCP
   coord (p.get<std::string> ("Coordinate Vector Variable Name"), dl->cell_gradient),
   physicsList (*p.get<Teuchos::ParameterList*>("FELIX Physical Parameters"))
 {
-  if (p.isType<bool>("Enable Memoizer")) memoizer.enable_memoizer(p.get<bool>("Enable Memoizer"));
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer")) memoizer.enable_memoizer();
 
 	this->addDependentField(sHeight);
 	this->addDependentField(coord);
