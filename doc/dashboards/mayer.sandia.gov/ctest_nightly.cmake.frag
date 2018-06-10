@@ -98,6 +98,19 @@ if (DOWNLOAD_TRILINOS)
     endif ()
   endif ()
 
+  # Pull the repo
+  execute_process (COMMAND "${CTEST_GIT_COMMAND}" pull
+      WORKING_DIRECTORY ${CTEST_SOURCE_DIRECTORY}/Trilinos
+      OUTPUT_VARIABLE _out
+      ERROR_VARIABLE _err
+      RESULT_VARIABLE HAD_ERROR)
+  message(STATUS "Output of Trilinos pull: ${_out}")
+  message(STATUS "Text sent to standard error stream: ${_err}")
+  message(STATUS "command result status: ${HAD_ERROR}")
+  if (HAD_ERROR)
+    message(FATAL_ERROR "Cannot pull Trilinos!")
+  endif ()
+
 endif()
 
 
@@ -126,7 +139,19 @@ if (DOWNLOAD_ALBANY)
   endif ()
 
   set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-
+  
+  # Pull the repo
+  execute_process (COMMAND "${CTEST_GIT_COMMAND}" pull
+      WORKING_DIRECTORY ${CTEST_SOURCE_DIRECTORY}/Albany
+      OUTPUT_VARIABLE _out
+      ERROR_VARIABLE _err
+      RESULT_VARIABLE HAD_ERROR)
+  message(STATUS "Output of Trilinos pull: ${_out}")
+  message(STATUS "Text sent to standard error stream: ${_err}")
+  message(STATUS "command result status: ${HAD_ERROR}")
+  if (HAD_ERROR)
+    message(FATAL_ERROR "Cannot pull Albany!")
+  endif ()
 
 endif ()
 

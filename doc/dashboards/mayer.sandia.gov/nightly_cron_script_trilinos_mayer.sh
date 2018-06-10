@@ -4,7 +4,7 @@ BASE_DIR=/home/projects/albany/nightlyCDashTrilinos
 cd $BASE_DIR
 
 rm -rf build
-rm -rf repos 
+#rm -rf repos 
 rm -rf *log*
 rm -rf results_arm
 rm -rf ctest_nightly.cmake 
