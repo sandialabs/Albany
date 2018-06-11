@@ -45,7 +45,7 @@
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
        evaluators/FELIX_ResponseSMBMismatch.cpp
        evaluators/FELIX_ResponseBoundarySquaredL2Norm.cpp
-       evaluators/FELIX_SimpleOperation.cpp
+       evaluators/FELIX_SimpleOperationEvaluator.cpp
        evaluators/FELIX_StackFields.cpp
        evaluators/FELIX_StokesMomentumResid.cpp
        evaluators/FELIX_StokesFOBasalResid.cpp
@@ -184,7 +184,8 @@ ENDIF()
        evaluators/FELIX_ResponseSMBMismatch_Def.hpp
        evaluators/FELIX_SharedParameter.hpp
        evaluators/FELIX_SimpleOperation.hpp
-       evaluators/FELIX_SimpleOperation_Def.hpp
+       evaluators/FELIX_SimpleOperationEvaluator.hpp
+       evaluators/FELIX_SimpleOperationEvaluator_Def.hpp
        evaluators/FELIX_StackFields.hpp
        evaluators/FELIX_StackFields_Def.hpp
        evaluators/FELIX_StokesBodyForce.hpp

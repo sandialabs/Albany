@@ -27,7 +27,7 @@
 #include "PHAL_DOFVecInterpolationSide.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "FELIX_SharedParameter.hpp"
-#include "FELIX_SimpleOperation.hpp"
+#include "FELIX_SimpleOperationEvaluator.hpp"
 #include "FELIX_ParamEnum.hpp"
 
 #include "FELIX_IceOverburden.hpp"
@@ -420,7 +420,7 @@ FELIX::SchoofFit::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm
   //Output
   p->set<std::string>("Output Field Name", "log_basal_friction");
 
-  ev = Teuchos::rcp(new FELIX::SimpleOperationLog<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+  ev = Teuchos::rcp(new FELIX::UnaryLogOp<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   //--- FELIX basal friction coefficient log ---//
@@ -433,7 +433,7 @@ FELIX::SchoofFit::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm
   //Output
   p->set<std::string>("Output Field Name", "log_beta");
 
-  ev = Teuchos::rcp(new FELIX::SimpleOperationLog<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
+  ev = Teuchos::rcp(new FELIX::UnaryLogOp<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)

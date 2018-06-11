@@ -7,163 +7,179 @@
 #ifndef FELIX_SIMPLE_OPERATION_HPP
 #define FELIX_SIMPLE_OPERATION_HPP 1
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
-#include "Albany_Layouts.hpp"
+#include <cmath>
+#include <algorithm>
+
+#include "Albany_DataTypes.hpp"
 
 namespace FELIX
 {
 
-namespace SimpleOps
+namespace UnaryOps
 {
 
 template<typename ScalarT>
 struct Scale
 {
-  ScalarT operator() (const ScalarT& x) const {return factor*x;}
+  void setup (const Teuchos::ParameterList& p) { factor = p.get<double>("Scaling Factor"); }
 
-  ScalarT factor;
+  ScalarT operator() (const ScalarT& x) const {
+    return factor*x;
+  }
+
+private:
+  double factor;
 };
 
 template<typename ScalarT>
 struct Log
 {
-  ScalarT operator() (const ScalarT& x) const {return std::log(x);}
+  void setup (const Teuchos::ParameterList& p) { a = p.isParameter("Factor") ? p.get<double>("Factor") : 0.0; }
+  ScalarT operator() (const ScalarT& x) const {
+    return std::log(a*x);
+  }
+private:
+  double a;
 };
 
 template<typename ScalarT>
 struct Exp
 {
-  ScalarT operator() (const ScalarT& x) const {return std::exp(tau*x);}
+  void setup (const Teuchos::ParameterList& p) { tau = p.isParameter("Tau") ? p.get<double>("Tau") : 0.0; }
+  ScalarT operator() (const ScalarT& x) const {
+    return std::exp(tau*x);
+  }
 
-  ScalarT tau;
+private:
+  double tau;
 };
 
 template<typename ScalarT>
 struct LowPass
 {
-  ScalarT operator() (const ScalarT& x) const {return std::min(x,threshold_up);}
+  void setup (const Teuchos::ParameterList& p) { threshold_up = p.get<double>("Upper Threshold"); }
+  ScalarT operator() (const ScalarT& x) const {
+    return std::min(x,threshold_up);
+  }
 
-  ScalarT threshold_up;
+private:
+  double threshold_up;
 };
 
 template<typename ScalarT>
 struct HighPass
 {
-  ScalarT operator() (const ScalarT& x) const {return std::max(x,threshold_lo);}
+  void setup (const Teuchos::ParameterList& p) { threshold_lo = p.get<double>("Lower Threshold"); }
+  ScalarT operator() (const ScalarT& x) const {
+    return std::max(x,threshold_lo);
+  }
 
-  ScalarT threshold_lo;
+private:
+  double threshold_lo;
 };
 
 template<typename ScalarT>
 struct BandPass
 {
-  ScalarT operator() (const ScalarT& x) const {return std::max(std::min(x,threshold_up),threshold_lo);}
+  void setup (const Teuchos::ParameterList& p) { threshold_lo = p.get<double>("Lower Threshold");
+                                                 threshold_up = p.get<double>("Upper Threshold"); }
+  ScalarT operator() (const ScalarT& x) const {
+    return std::max(std::min(x,threshold_up),threshold_lo);
+  }
 
-  ScalarT threshold_lo;
-  ScalarT threshold_up;
+private:
+  double threshold_lo;
+  double threshold_up;
 };
 
-}
+} // namespace UnaryOps
 
-template<typename EvalT, typename Traits, typename ScalarT, typename UnaryOperation>
-class SimpleOperationBase: public PHX::EvaluatorWithBaseImpl<Traits>,
-                           public PHX::EvaluatorDerived<EvalT, Traits>
+namespace BinaryOps
 {
-public:
 
-  SimpleOperationBase (const Teuchos::ParameterList& p,
-                       const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
-
-protected:
-
-  // Input:
-  PHX::MDField<const ScalarT> field_in;
-
-  // Output:
-  PHX::MDField<ScalarT> field_out;
-
-  // The operation
-  UnaryOperation    op;
-};
-
-// ======================= Derived Specializations ================= //
-
-template<typename EvalT, typename Traits, typename ScalarT>
-class SimpleOperationScale : public SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::Scale<ScalarT> >
+template<typename ScalarT>
+struct Scale
 {
-public:
-  SimpleOperationScale (const Teuchos::ParameterList& p,
-                       const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::Scale<ScalarT> >(p,dl) {
-      this->op.factor = ScalarT(p.get<double>("Scaling Factor"));
-    }
+  void setup (const Teuchos::ParameterList& /*p*/) {}
+  ScalarT operator() (const ScalarT& x, const ScalarT& factor) const {
+    return factor*x;
+  }
 };
 
-template<typename EvalT, typename Traits, typename ScalarT>
-class SimpleOperationExp : public SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::Exp<ScalarT> >
+template<typename ScalarT>
+struct Log
 {
-public:
-  SimpleOperationExp (const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::Exp<ScalarT> >(p,dl) {
-      this->op.tau = ScalarT(p.get<double>("Tau"));
-    }
+  void setup (const Teuchos::ParameterList& /*p*/) {}
+  ScalarT operator() (const ScalarT& x, const ScalarT& a) const {
+    return std::log(a*x);
+  }
 };
 
-template<typename EvalT, typename Traits, typename ScalarT>
-class SimpleOperationLog : public SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::Log<ScalarT> >
+template<typename ScalarT>
+struct Exp
 {
-public:
-  SimpleOperationLog (const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::Log<ScalarT> > (p,dl) {}
+  void setup (const Teuchos::ParameterList& /*p*/) {}
+  ScalarT operator() (const ScalarT& x, const ScalarT& tau) const {
+    return std::exp(tau*x);
+  }
 };
 
-template<typename EvalT, typename Traits, typename ScalarT>
-class SimpleOperationLowPass : public SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::LowPass<ScalarT> >
+template<typename ScalarT>
+struct LowPass
 {
-public:
-  SimpleOperationLowPass (const Teuchos::ParameterList& p,
-                          const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::LowPass<ScalarT> > (p,dl) {
-      this->op.threshold_up = ScalarT(p.get<double>("Upper Threshold"));
-    }
+  void setup (const Teuchos::ParameterList& /*p*/) {}
+  ScalarT operator() (const ScalarT& x, const ScalarT& threshold_up) const {
+    return std::min(x,threshold_up);
+  }
 };
 
-template<typename EvalT, typename Traits, typename ScalarT>
-class SimpleOperationHighPass : public SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::HighPass<ScalarT> >
+template<typename ScalarT>
+struct HighPass
 {
-public:
-  SimpleOperationHighPass (const Teuchos::ParameterList& p,
-                          const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::HighPass<ScalarT> > (p,dl) {
-      this->op.threshold_lo = ScalarT(p.get<double>("Lower Threshold"));
-    }
+  void setup (const Teuchos::ParameterList& /*p*/) {}
+  ScalarT operator() (const ScalarT& x, const ScalarT& threshold_lo) const {
+    return std::max(x,threshold_lo);
+  }
 };
 
-template<typename EvalT, typename Traits, typename ScalarT>
-class SimpleOperationBandPass : public SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::BandPass<ScalarT> >
+template<typename ScalarT>
+struct BandPassFixedUpper
 {
-public:
-  SimpleOperationBandPass (const Teuchos::ParameterList& p,
-                           const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleOperationBase<EvalT,Traits,ScalarT,SimpleOps::BandPass<ScalarT> > (p,dl) {
-      this->op.threshold_lo = ScalarT(p.get<double>("Lower Threshold"));
-      this->op.threshold_up = ScalarT(p.get<double>("Upper Threshold"));
-    }
+  void setup (const Teuchos::ParameterList& p) { threshold_up = p.get<double>("Upper Threshold"); }
+  ScalarT operator() (const ScalarT& x, const ScalarT& threshold_lo) const {
+    return std::max(std::min(x,threshold_up),threshold_lo);
+    return std::max(x,threshold_lo);
+  }
+private:
+  double threshold_up;
 };
 
-} // Namespace FELIX
+template<typename ScalarT>
+struct BandPassFixedLower
+{
+  void setup (const Teuchos::ParameterList& p) { threshold_lo = p.get<double>("Lower Threshold"); }
+  ScalarT operator() (const ScalarT& x, const ScalarT& threshold_up) const {
+    return std::max(std::min(x,threshold_up),threshold_lo);
+  }
+private:
+  double threshold_lo;
+};
+
+} // namespace BinaryOps
+
+namespace TernaryOps
+{
+
+template<typename ScalarT>
+struct BandPass
+{
+  ScalarT operator() (const ScalarT& x, const ScalarT& threshold_lo, const ScalarT& threshold_up) const {
+    return std::max(std::min(x,threshold_up),threshold_lo);
+  }
+};
+
+} // namespace TernaryOps
+
+} // namespace FELIX
 
 #endif // FELIX_SIMPLE_OPERATION_HPP
