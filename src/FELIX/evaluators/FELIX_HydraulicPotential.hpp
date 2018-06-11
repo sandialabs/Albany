@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_HYDROLOGY_WATER_PRESSURE_HPP
-#define FELIX_HYDROLOGY_WATER_PRESSURE_HPP 1
+#ifndef FELIX_HYDRAULIC_POTENTIAL_HPP
+#define FELIX_HYDRAULIC_POTENTIAL_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -22,16 +22,16 @@ namespace FELIX
 */
 
 template<typename EvalT, typename Traits, bool IsStokes>
-class HydrologyWaterPressure : public PHX::EvaluatorWithBaseImpl<Traits>,
-                               public PHX::EvaluatorDerived<EvalT, Traits>
+class HydraulicPotential : public PHX::EvaluatorWithBaseImpl<Traits>,
+                           public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
   typedef typename EvalT::ScalarT      ScalarT;
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
-  HydrologyWaterPressure (const Teuchos::ParameterList& p,
-                          const Teuchos::RCP<Albany::Layouts>& dl);
+  HydraulicPotential (const Teuchos::ParameterList& p,
+                       const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
@@ -44,13 +44,12 @@ private:
   void evaluateFieldsSide(typename Traits::EvalData d);
 
   // Input:
-  PHX::MDField<const ParamScalarT>  H;
-  PHX::MDField<const ParamScalarT>  z_s;
-  PHX::MDField<const ScalarT>       phi;
+  PHX::MDField<const ScalarT>       P_w;
+  PHX::MDField<const ParamScalarT>  phi_0;
   PHX::MDField<const ScalarT>       h;
 
   // Output:
-  PHX::MDField<ScalarT>             P_w;
+  PHX::MDField<ScalarT>         phi;
 
   std::string basalSideName;  // Only if IsStokes  is true
 
@@ -64,4 +63,4 @@ private:
 
 } // Namespace FELIX
 
-#endif // FELIX_HYDROLOGY_WATER_PRESSURE_HPP
+#endif // FELIX_HYDRAULIC_POTENTIAL_HPP

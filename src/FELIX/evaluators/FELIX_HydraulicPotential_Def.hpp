@@ -10,8 +10,8 @@
 namespace FELIX {
 
 template<typename EvalT, typename Traits, bool IsStokes>
-HydrologyWaterPressure<EvalT, Traits, IsStokes>::
-HydrologyWaterPressure (const Teuchos::ParameterList& p,
+HydraulicPotential<EvalT, Traits, IsStokes>::
+HydraulicPotential (const Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl)
 {
   Teuchos::RCP<PHX::DataLayout> layout;
@@ -31,16 +31,14 @@ HydrologyWaterPressure (const Teuchos::ParameterList& p,
     numPts = layout->dimension(1);
   }
 
-  z_s   = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Surface Height Variable Name"), layout);
-  H     = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), layout);
-  phi   = PHX::MDField<const ScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), layout);
-  P_w     = PHX::MDField<ScalarT>(p.get<std::string> ("Water Pressure Variable Name"), layout);
+  P_w   = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Pressure Variable Name"), layout);
+  phi_0 = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Basal Gravitational Water Potential Variable Name"), layout);
+  phi   = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), layout);
 
-  this->addDependentField (z_s);
-  this->addDependentField (H);
-  this->addDependentField (phi);
+  this->addDependentField (P_w);
+  this->addDependentField (phi_0);
 
-  this->addEvaluatedField (P_w);
+  this->addEvaluatedField (phi);
 
   use_h = false;
   Teuchos::ParameterList& hydro_params = *p.get<Teuchos::ParameterList*>("FELIX Hydrology");
@@ -49,35 +47,34 @@ HydrologyWaterPressure (const Teuchos::ParameterList& p,
 
     h = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Thickness Variable Name"), layout);
     this->addDependentField(h);
+
+    // Setting parameters
+    Teuchos::ParameterList& physics  = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
+
+    rho_w = physics.get<double>("Water Density",1000);
+    g     = physics.get<double>("Gravity Acceleration",9.8);
   }
 
-  // Setting parameters
-  Teuchos::ParameterList& physics  = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
-
-  rho_w = physics.get<double>("Water Density",1000);
-  g     = physics.get<double>("Gravity Acceleration",9.8);
-
-  this->setName("HydrologyWaterPressure"+PHX::typeAsString<EvalT>());
+  this->setName("HydraulicPotential"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits, bool IsStokes>
-void HydrologyWaterPressure<EvalT, Traits, IsStokes>::
+void HydraulicPotential<EvalT, Traits, IsStokes>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(z_s,fm);
-  this->utils.setFieldData(H,fm);
-  this->utils.setFieldData(phi,fm);
   this->utils.setFieldData(P_w,fm);
+  this->utils.setFieldData(phi_0,fm);
   if (use_h) {
     this->utils.setFieldData(h,fm);
   }
+  this->utils.setFieldData(phi,fm);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits, bool IsStokes>
-void HydrologyWaterPressure<EvalT, Traits, IsStokes>::
+void HydraulicPotential<EvalT, Traits, IsStokes>::
 evaluateFields (typename Traits::EvalData workset)
 {
   if (IsStokes) {
@@ -88,7 +85,7 @@ evaluateFields (typename Traits::EvalData workset)
 }
 
 template<typename EvalT, typename Traits, bool IsStokes>
-void HydrologyWaterPressure<EvalT, Traits, IsStokes>::
+void HydraulicPotential<EvalT, Traits, IsStokes>::
 evaluateFieldsSide (typename Traits::EvalData workset)
 {
   const Albany::SideSetList& ssList = *(workset.sideSets);
@@ -107,20 +104,22 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     const int side = it.side_local_id;
 
     for (int pt=0; pt<numPts; ++pt) {
-      P_w (cell,side,pt) = phi(cell,side,pt) - rho_w*g*( (z_s(cell,side,pt) - H(cell,side,pt)) + (use_h ? h(cell,side,pt) : zero) );
+      // Recall that phi is in kPa, but h is in m. Need to convert to km.
+      phi(cell,side,pt) = P_w(cell,side,pt) + phi_0(cell,side,pt) + (use_h ? rho_w*g*h(cell,side,pt)/1000 : zero);
     }
   }
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits, bool IsStokes>
-void HydrologyWaterPressure<EvalT, Traits, IsStokes>::
+void HydraulicPotential<EvalT, Traits, IsStokes>::
 evaluateFieldsCell (typename Traits::EvalData workset)
 {
   ScalarT zero(0.0);
   for (int cell=0; cell<workset.numCells; ++cell) {
     for (int pt=0; pt<numPts; ++pt) {
-      P_w (cell,pt) = phi(cell,pt) - rho_w*g*( (z_s(cell,pt) - H(cell,pt)) + (use_h ? h(cell,pt)/1000 : zero) ) ;
+      // Recall that phi is in kPa, but h is in m. Need to convert to km.
+      phi(cell,pt) = P_w(cell,pt) + phi_0(cell,pt) + (use_h ? rho_w*g*h(cell,pt)/1000 : zero);
     }
   }
 }
