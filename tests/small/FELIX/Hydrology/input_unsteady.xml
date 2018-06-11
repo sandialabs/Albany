@@ -22,11 +22,11 @@
 
     <ParameterList name="Initial Condition">
        <Parameter name="Function" type="string" value="Constant"/>
-       <Parameter name="Function Data" type="Array(double)" value="{500.0,0.1}"/>
+       <Parameter name="Function Data" type="Array(double)" value="{100.0,0.1}"/>
     </ParameterList>
 
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS BoundaryNodeSet1 for DOF hydraulic_potential prescribe Field" type="string" value="basal_gravitational_water_potential"/>
+      <Parameter name="DBC on NS BoundaryNodeSet1 for DOF water_pressure" type="double" value="0.0"/>
     </ParameterList>
 
     <ParameterList name="Neumann BCs">
@@ -59,10 +59,9 @@
       <Parameter name="Use Melting In Cavities Equation"                  type="bool"    value="false"/>
       <Parameter name="Regularize With Continuation"                      type="bool"    value="false"/>
       <Parameter name="Creep Closure Coefficient"                         type="double"  value="0.04"/>
-      <Parameter name="Water Pressure Bounds Penalization Coefficient"    type="double"  value="1"/>
       <Parameter name="Darcy Law: Water Thickness Exponent"               type="double"  value="1.0"/>    <!-- q = -kh^alpha |grad(phi)|^beta grad(phi) [1] -->
       <Parameter name="Darcy Law: Potential Gradient Norm Exponent"       type="double"  value="2.0"/>    <!-- q = -kh^alpha |grad(phi)|^beta grad(phi) [1] -->
-      <Parameter name="Darcy Law: Transmissivity"                         type="double"  value="0.01"/>   <!-- [m^(2*beta-alpha) s^(2*beta-3) kg(1-beta)] -->
+      <Parameter name="Darcy Law: Transmissivity"                         type="double"  value="0.0001"/> <!-- [m^(2*beta-alpha) s^(2*beta-3) kg(1-beta)] -->
       <Parameter name="Bed Bumps Height"                                  type="double"  value="1"/>      <!-- [m] -->
       <Parameter name="Bed Bumps Length"                                  type="double"  value="2"/>      <!-- [m] -->
       <ParameterList name="Surface Water Input">
@@ -78,7 +77,7 @@
 
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{76.14347284}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{325.46300}"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
@@ -165,9 +164,9 @@
         <ParameterList name="Time Step Control">
           <Parameter name="Initial Time"       type="double" value="0.0"/>
           <Parameter name="Initial Time Index" type="int"    value="0"/>
-          <Parameter name="Initial Time Step"  type="double" value="43200"/>
+          <Parameter name="Initial Time Step"  type="double" value="3600"/>
           <Parameter name="Initial Order"      type="int"    value="0"/>
-          <Parameter name="Final Time"         type="double" value="432000"/>
+          <Parameter name="Final Time"         type="double" value="8640000"/>
           <Parameter name="Maximum Absolute Error"  type="double" value="1.0e-8"/>
           <Parameter name="Maximum Relative Error"  type="double" value="1.0e-8"/>
           <Parameter name="Integrator Step Type"  type="string" value="Variable"/>
@@ -183,7 +182,7 @@
           </ParameterList>
           <Parameter name="Output Time List"        type="string" value=""/>
           <Parameter name="Output Index List"       type="string" value=""/>
-          <Parameter name="Output Time Interval"    type="double" value="86400.0"/>
+          <Parameter name="Output Time Interval"    type="double" value="864000.0"/>
           <Parameter name="Maximum Number of Stepper Failures" type="int" value="10"/>
           <Parameter name="Maximum Number of Consecutive Stepper Failures" type="int" value="5"/>
         </ParameterList>
