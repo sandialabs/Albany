@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_HYDROLOGY_RESIDUAL_ELLIPTIC_EQN_HPP
-#define FELIX_HYDROLOGY_RESIDUAL_ELLIPTIC_EQN_HPP 1
+#ifndef FELIX_HYDROLOGY_RESIDUAL_MASS_EQN_HPP
+#define FELIX_HYDROLOGY_RESIDUAL_MASS_EQN_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -20,6 +20,17 @@ namespace FELIX
 
     This evaluator evaluates the residual of the mass conservation for the Hydrology model
 */
+
+/*
+ *  The mass conservation equation has the following (strong) form
+ *
+ *     dh/dt + div(q) = m/rho_w + omega
+ *
+ *  where q is the water discharge, h the water thickness, rho_w is the water density,
+ *  m the melting rate of the ice (due to geothermal flow and sliding), and omega
+ *  is  the water source (water reaching the bed from the surface, through crevasses)
+ */
+
 
 template<typename EvalT, typename Traits, bool IsStokesCoupling, bool ThermoCoupled>
 class HydrologyResidualMassEqn : public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -55,6 +66,7 @@ private:
   PHX::MDField<const ScalarT>       m;
   PHX::MDField<const ParamScalarT>  omega;
   PHX::MDField<const ScalarT>       h_dot;
+  PHX::MDField<const ScalarT>       h_till_dot;
   PHX::MDField<const ScalarT>       P_w;  // Water pressure (for penalization)
   PHX::MDField<const ParamScalarT>  P_o;  // Overburden (for penalization)
 
@@ -78,6 +90,7 @@ private:
   bool penalization;
   bool use_melting;
   bool unsteady;
+  bool has_h_till;
 
   // Variables necessary for stokes coupling
   std::string                     sideSetName;
@@ -86,4 +99,4 @@ private:
 
 } // Namespace FELIX
 
-#endif // FELIX_HYDROLOGY_RESIDUAL_ELLIPTIC_EQN_HPP
+#endif // FELIX_HYDROLOGY_RESIDUAL_MASS_EQN_HPP

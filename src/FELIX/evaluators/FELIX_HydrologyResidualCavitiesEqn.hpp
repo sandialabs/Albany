@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_HYDROLOGY_RESIDUAL_EVOLUTION_EQN_H_HPP
-#define FELIX_HYDROLOGY_RESIDUAL_EVOLUTION_EQN_H_HPP 1
+#ifndef FELIX_HYDROLOGY_RESIDUAL_CAVITIES_EQN_HPP
+#define FELIX_HYDROLOGY_RESIDUAL_CAVITIES_EQN_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -20,6 +20,18 @@ namespace FELIX
 
     This evaluator evaluates the residual of the Hydrology model
 */
+
+/*
+ *  The (water) thickness equation has the following (strong) form
+ *
+ *     dh/dt = m/rho_i + (h_r-h)*|u_b|/l_r - c_creep*A*h*N^3
+ *
+ *  where h is the water thickness, m the melting rate of the ice,
+ *  h_r/l_r typical height/length of bed bumps, u_b the sliding
+ *  velocity of the ice, A is the ice softness, N is the
+ *  effective pressure, and c_creep is a tuning coefficient.
+ *  Also, dh/dt denotes the *partial* time derivative.
+ */
 
 template<typename EvalT, typename Traits, bool IsStokes, bool ThermoCoupled>
 class HydrologyResidualCavitiesEqn : public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -53,6 +65,7 @@ private:
   PHX::MDField<const ScalarT>       h;
   PHX::MDField<const ScalarT>       h_node;
   PHX::MDField<const ScalarT>       h_dot;
+  PHX::MDField<const ScalarT>       P_dot;
   PHX::MDField<const ScalarT>       N;
   PHX::MDField<const ScalarT>       m;
   PHX::MDField<const IceScalarT>    u_b;
@@ -65,6 +78,7 @@ private:
   int numQPs;
 
   double rho_i;
+  double phi0;
   double h_r;
   double l_r;
   double c_creep;
@@ -72,6 +86,7 @@ private:
   double penalization_coeff;
 
   bool unsteady;
+  bool has_p_dot;
   bool use_melting;
   bool nodal_equation;
   bool penalization;
@@ -84,4 +99,4 @@ private:
 
 } // Namespace FELIX
 
-#endif // FELIX_HYDROLOGY_RESIDUAL_EVOLUTION_EQN_H_HPP
+#endif // FELIX_HYDROLOGY_RESIDUAL_CAVITIES_EQN_HPP

@@ -22,7 +22,7 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
   residual  (p.get<std::string> ("Mass Eqn Residual Name"),dl->node_scalar)
 {
   /*
-   *  The mass conserbation equation has the following (strong) form
+   *  The mass conservation equation has the following (strong) form
    *
    *     dh/dt + div(q) = m/rho_w + omega
    *
@@ -65,26 +65,21 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
   use_melting = hydrology_params.get<bool>("Use Melting In Conservation Of Mass", false);
 
   unsteady = p.get<bool>("Unsteady");
+  has_h_till = p.get<bool>("Has Till Storage");
   if (unsteady)
   {
     h_dot = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Thickness Dot Variable Name"), dl->qp_scalar);
     this->addDependentField(h_dot);
-  }
 
-  penalization_coeff = hydrology_params.isParameter("Water Pressure Bounds Penalization Coefficient")
-                     ? hydrology_params.get<double>("Water Pressure Bounds Penalization Coefficient") : 0.0;
-  TEUCHOS_TEST_FOR_EXCEPTION (penalization_coeff<0.0, Teuchos::Exceptions::InvalidParameter, "Error! Penalization coefficient must be positive.\n");
-  penalization = (penalization_coeff!=0.0);
-  if (penalization) {
-    P_w = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Pressure Variable Name"), dl->node_scalar);
-    P_o = PHX::MDField<const ParamScalarT>(p.get<std::string>("Ice Overburden Variable Name"),dl->node_scalar);
-    this->addDependentField(P_w);
-    this->addDependentField(P_o);
+    if (has_h_till) {
+      h_till_dot = PHX::MDField<const ScalarT>(p.get<std::string> ("Till Water Storage Dot Variable Name"), dl->qp_scalar);
+      this->addDependentField(h_till_dot);
+    }
   }
 
   Teuchos::RCP<PHX::DataLayout> layout;
   if (use_melting) {
-    mass_lumping = hydrology_params.isParameter("Mass Lumping") ? hydrology_params.get<bool>("Mass Lumping") : false;
+    mass_lumping = hydrology_params.isParameter("Lump Mass In Mass Equation") ? hydrology_params.get<bool>("Lump Mass In Mass Equation") : false;
   } else {
     mass_lumping = false;
   }
@@ -113,16 +108,17 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
    * The residual has 4 terms (here in strong form, without signs), with the following units:
    *
    *  1) dh/dt            [m  s^-1  ]
-   *  2) div(q)           [mm s^-1  ]
+   *  2) div(q)           [mm s^-1  ]     ([q] = m^2/s, but mesh is in km, so [div] = 1/km)
    *  3) m/rho_w          [m  yr^-1 ]
    *  4) omega            [mm day^-1]
    *
    * where q=k*h^alpha*|gradPhi|^(beta-2)*gradPhi.
+   * Notice that [q] = m^2/s, but the mesh is in km, hence [div(q)] = 1e-3 m/s
    * We decide to uniform all terms to have units [m yr^-1].
    * Where possible, we do this by rescaling some constants. Otherwise,
    * we simply introduce a new scaling factor
    *
-   *  1) dh/dt                  scaling_h_dot = yr_to_s
+   *  1) scaling_h_dot*dh/dt    scaling_h_dot = yr_to_s
    *  2) scaling_q*div(q)       scaling_q     = 1e-3*yr_to_s
    *  3) m/rho_w                (no scaling)
    *  4) scaling_omega*omega    scaling_omega = 1e-3*yr_to_d
@@ -131,7 +127,8 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
    * and   yr_to_d=365.25 (the number of days in a year)
    */
   double yr_to_d  = 365.25;
-  double yr_to_s  = yr_to_d*24*3600;
+  double d_to_s   = 24*3600;
+  double yr_to_s  = yr_to_d*d_to_s;
   scaling_omega   = 1e-3*yr_to_d;
   scaling_h_dot   = yr_to_s;
   scaling_q       = 1e-3*yr_to_s;
@@ -154,12 +151,11 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (IsStokesCoupling)
     this->utils.setFieldData(metric,fm);
 
-  if (penalization) {
-    this->utils.setFieldData(P_w,fm);
-    this->utils.setFieldData(P_o,fm);
-  }
   if (unsteady) {
     this->utils.setFieldData(h_dot,fm);
+    if (has_h_till) {
+      this->utils.setFieldData(h_till_dot,fm);
+    }
   }
 
   if (use_melting) {
@@ -204,7 +200,13 @@ evaluateFieldsSide (typename Traits::EvalData workset)
       res_node = 0;
       for (int qp=0; qp < numQPs; ++qp)
       {
-        res_qp = scaling_omega*omega(cell,side,qp) - (unsteady ? scaling_h_dot*h_dot(cell,side,qp) : zero);
+        res_qp = scaling_omega*omega(cell,side,qp);
+        if (unsteady) {
+          res_qp -= scaling_h_dot*h_dot(cell,side,qp);
+          if (has_h_till) {
+            res_qp -= scaling_h_dot*h_till_dot(cell,side,qp);
+          }
+        }
 
         if (use_melting && !mass_lumping) {
           res_qp += m(cell,side,qp)/rho_w;
@@ -227,12 +229,6 @@ evaluateFieldsSide (typename Traits::EvalData workset)
         res_node += m(cell,side,node)/rho_w;
       }
 
-      if (penalization) {
-        res_node += penalization_coeff*std::pow(std::min(ScalarT(0.0),P_o(cell,side,node)-P_w(cell,side,node)),2);
-        res_node += penalization_coeff*std::pow(std::min(ScalarT(0.0),P_w(cell,side,node)),2);
-      }
-
-
       residual (cell,side,node) = res_node;
     }
   }
@@ -250,7 +246,13 @@ evaluateFieldsCell (typename Traits::EvalData workset)
       res_node = 0;
       for (int qp=0; qp < numQPs; ++qp)
       {
-        res_qp = scaling_omega*omega(cell,qp) - (unsteady ? scaling_h_dot*h_dot(cell,qp) : zero);
+        res_qp = scaling_omega*omega(cell,qp);
+        if (unsteady) {
+          res_qp -= scaling_h_dot*h_dot(cell,qp);
+          if (has_h_till) {
+            res_qp -= scaling_h_dot*h_till_dot(cell,qp);
+          }
+        }
 
         if (use_melting && !mass_lumping) {
           res_qp += m(cell,qp)/rho_w;
@@ -269,12 +271,6 @@ evaluateFieldsCell (typename Traits::EvalData workset)
       if (use_melting && mass_lumping) {
         res_node += m(cell,node)/rho_w;
       }
-
-      if (penalization) {
-        res_node += penalization_coeff*std::min(ScalarT(0.0),P_o(cell,node)-P_w(cell,node));
-        res_node += penalization_coeff*std::min(ScalarT(0.0),P_w(cell,node));
-      }
-
 
       residual (cell,node) = res_node;
     }

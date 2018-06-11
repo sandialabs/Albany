@@ -28,6 +28,9 @@ Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& problemParams_
   TEUCHOS_TEST_FOR_EXCEPTION (numDim!=1 && numDim!=2,std::logic_error,"Problem supports only 1D and 2D");
 
   eliminate_h = params->sublist("FELIX Hydrology").get<bool>("Eliminate Water Thickness", false);
+  has_h_till  = params->sublist("FELIX Hydrology").get<double>("Maximum Till Water Storage",0.0) > 0.0;
+  has_p_dot   = params->sublist("FELIX Hydrology").get<double>("Englacial Porosity",0.0) > 0.0;
+
   std::string sol_method = params->get<std::string>("Solution Method");
   if (sol_method=="Transient" || sol_method=="Transient Tempus") {
     unsteady = true;
@@ -37,6 +40,10 @@ Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& problemParams_
 
   TEUCHOS_TEST_FOR_EXCEPTION (eliminate_h && unsteady, std::logic_error,
                               "Error! Water Thickness can be eliminated only in the steady case.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (has_h_till && !unsteady, std::logic_error,
+                              "Error! Till Water Storage equation only makes sense in the unsteady case.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (has_p_dot && !unsteady, std::logic_error,
+                              "Error! Englacial porosity model only makes sense in the unsteady case.\n");
 
   // Need to allocate a fields in mesh database
   if (params->isParameter("Required Fields")) {
@@ -55,32 +62,57 @@ Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& problemParams_
     this->requirements.push_back(ice_thickness_name);
   }
 
-  // Set the num PDEs for the null space object to pass to ML
+  // Set the num PDEs depending on the problem specs
   if (eliminate_h) {
     this->setNumEquations(1);
-
-    dof_names.resize(1);
-    resid_names.resize(1);
-
-    dof_names[0] = hydraulic_potential_name;
-
-    resid_names[0] = "Residual Mass Eqn";
+  } else if (has_h_till) {
+    this->setNumEquations(3);
   } else {
     this->setNumEquations(2);
+  }
+  dofs_names.resize(neq);
+  resid_names.resize(neq);
 
-    dof_names.resize(2);
-    resid_names.resize(2);
+  // We always solve for the water pressure
+  dofs_names[0] = water_pressure_name;
+  resid_names[0] = "Residual Mass Eqn";
 
-    dof_names[0] = hydraulic_potential_name;
-    dof_names[1] = water_thickness_name;
+  if (!eliminate_h) {
+    dofs_names[1] = water_thickness_name;
+    resid_names[1] = "Residual Cavities Eqn";
+  }
 
-    if (unsteady) {
-      dof_names_dot.resize(1);
-      dof_names_dot[0] = water_thickness_dot_name;
+  if (neq>2) {
+    dofs_names[2] = till_water_storage_name;
+    resid_names[2] = "Residual Till Storage Eqn";
+  }
+
+  if (unsteady) {
+    // Prognositc dofs appear under time derivative, while diagnostic dofs do not.
+    // In math terms, progrnostic dofs need an initial condition, while diagnostic dofs do not.
+    if (has_p_dot) {
+      diagnostic_dofs_names.resize(0);
+      prognostic_dofs_names = dofs_names;
+      prognostic_dofs_names_dot.resize(neq);
+      prognostic_dofs_names_dot[0] = water_pressure_dot_name;
+      prognostic_dofs_names_dot[1] = water_thickness_dot_name;
+      if (has_h_till) {
+        prognostic_dofs_names_dot[2] = till_water_storage_dot_name;
+      }
+    } else {
+      diagnostic_dofs_names.resize(1);
+      prognostic_dofs_names.resize(neq-1);
+      prognostic_dofs_names_dot.resize(neq-1);
+
+      diagnostic_dofs_names[0] = water_pressure_name;
+      prognostic_dofs_names[0] = water_thickness_name;
+      prognostic_dofs_names_dot[0] = water_thickness_dot_name;
+
+      if (has_h_till) {
+        prognostic_dofs_names[1] = till_water_storage_name;
+        prognostic_dofs_names_dot[1] = till_water_storage_dot_name;
+      }
     }
-
-    resid_names[0] = "Residual Mass Eqn";
-    resid_names[1] = "Residual Cavities Eqp";
   }
 }
 
@@ -139,21 +171,13 @@ void Hydrology::constructDirichletEvaluators (const Albany::MeshSpecsStruct& mes
 {
   // Construct Dirichlet evaluators for all nodesets and names
   std::vector<std::string> dirichletNames(neq);
-  dirichletNames[0] = dof_names[0];
+  dirichletNames[0] = dofs_names[0];
   if (!eliminate_h) {
-    dirichletNames[1] = dof_names[1];
+    dirichletNames[1] = dofs_names[1];
   }
 
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
-
-  // Ensure that dfm is initialized
-  Teuchos::ParameterList& hydro = params->sublist("FELIX Hydrology");
-  Teuchos::Array<std::string> ns_names = hydro.get<Teuchos::Array<std::string>>("Zero Porewater Pressure On Node Sets",Teuchos::Array<std::string>());
-  if (ns_names.size()>0 && dfm==Teuchos::null) {
-    dfm = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  }
-
   offsets_ = dirUtils.getOffsets();
 }
 
@@ -176,7 +200,7 @@ void Hydrology::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs
   Teuchos::Array<Teuchos::Array<int> > offsets;
   offsets.resize(neq);
 
-  neumannNames[0] = "Hydraulic Potential";
+  neumannNames[0] = "Water Pressure";
   if (!eliminate_h) {
     neumannNames[1] = "Water Thickness";
   }
@@ -195,7 +219,7 @@ void Hydrology::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs
 
   nfm.resize(1); // FELIX problem only has one element block
 
-  nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, false, 0,
+  nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dofs_names, false, 0,
                                           condNames, offsets, dl,
                                           this->params, this->paramLib);
 }
@@ -213,11 +237,16 @@ Hydrology::getValidProblemParameters () const
   return validPL;
 }
 
+constexpr char Hydrology::water_pressure_name[]                   ;  //= "water_pressure";
+constexpr char Hydrology::water_thickness_name[]                  ;  //= "water_thickness";
+constexpr char Hydrology::till_water_storage_name[]               ;  //= "till_water_storage";
+
+constexpr char Hydrology::water_pressure_dot_name[]               ;  //= "water_pressure_dot";
+constexpr char Hydrology::water_thickness_dot_name[]              ;  //= "water_thickness_dot";
+constexpr char Hydrology::till_water_storage_dot_name[]           ;  //= "till_water_storage_dot";
+
 constexpr char Hydrology::hydraulic_potential_name[]              ;  //= "hydraulic_potential";
 constexpr char Hydrology::hydraulic_potential_gradient_name[]     ;  //= "hydraulic_potential Gradient";
-constexpr char Hydrology::water_thickness_name[]                  ;  //= "water_thickness";
-constexpr char Hydrology::water_thickness_dot_name[]              ;  //= "water_thickness_dot";
-
 constexpr char Hydrology::hydraulic_potential_gradient_norm_name[];  //= "hydraulic_potential Gradient Norm";
 constexpr char Hydrology::ice_softness_name[]                     ;  //= "ice_softness";
 constexpr char Hydrology::ice_overburden_name[]                   ;  //= "ice_overburden";
@@ -234,6 +263,5 @@ constexpr char Hydrology::water_discharge_name[]                  ;  //= "water_
 constexpr char Hydrology::sliding_velocity_name[]                 ;  //= "sliding_velocity";
 constexpr char Hydrology::basal_velocity_name[]                   ;  //= "basal_velocity";
 constexpr char Hydrology::basal_grav_water_potential_name[]  ;  //= "basal_gravitational_water_potential";
-constexpr char Hydrology::water_pressure_name[]                   ;  //= "water_pressure";
 
 } // namespace FELIX

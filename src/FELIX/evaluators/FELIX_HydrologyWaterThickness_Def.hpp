@@ -59,7 +59,7 @@ HydrologyWaterThickness (const Teuchos::ParameterList& p,
   this->addEvaluatedField(h);
 
   // Setting parameters
-  Teuchos::ParameterList& hydrology = *p.get<Teuchos::ParameterList*>("FELIX Hydrology");
+  Teuchos::ParameterList& hydrology = *p.get<Teuchos::ParameterList*>("FELIX Hydrology Parameters");
   Teuchos::ParameterList& physics   = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
 
   rho_i = physics.get<double>("Ice Density");

@@ -18,17 +18,17 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
   /*
    *  The (water) thickness equation has the following (strong) form
    *
-   *     dh/dt = m/rho_i + (h_r-h)*|u_b|/l_r - c_creep*A*h*N^3
+   *     dh/dt - phi0/(rhow*g) dP/dt = m/rho_i + (h_r-h)*|u_b|/l_r - c_creep*A*h*N^3
    *
-   *  where h is the water thickness, m the melting rate of the ice,
+   *  where h is the water thickness, P is the water pressure,
+   *  phi0 is the englacial porositi, m the melting rate of the ice,
    *  h_r/l_r typical height/length of bed bumps, u_b the sliding
    *  velocity of the ice, A is the ice softness, N is the
    *  effective pressure, and c_creep is a tuning coefficient.
    *  Also, dh/dt denotes the *partial* time derivative.
    */
 
-  if (IsStokes)
-  {
+  if (IsStokes) {
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
 
@@ -36,9 +36,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
     numQPs   = dl->qp_scalar->dimension(2);
 
     sideSetName = p.get<std::string>("Side Set Name");
-  }
-  else
-  {
+  } else {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure appears to be that of a side set.\n");
 
@@ -49,13 +47,24 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
   this->addEvaluatedField(residual);
 
   // Setting parameters
-  Teuchos::ParameterList& hydrology_params = *p.get<Teuchos::ParameterList*>("FELIX Hydrology");
+  Teuchos::ParameterList& hydrology_params = *p.get<Teuchos::ParameterList*>("FELIX Hydrology Parameters");
   Teuchos::ParameterList& physical_params  = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
+
+  unsteady = p.get<bool>("Unsteady");
 
   rho_i = physical_params.get<double>("Ice Density");
   h_r = hydrology_params.get<double>("Bed Bumps Height");
   l_r = hydrology_params.get<double>("Bed Bumps Length");
   c_creep = hydrology_params.get<double>("Creep Closure Coefficient",1.0);
+  phi0 = hydrology_params.get<double>("Englacial Porosity",0.0);
+  if (phi0>0 && unsteady) {
+    has_p_dot = true;
+    double rho_w = physical_params.get<double>("Water Density");
+    double g = physical_params.get<double>("Gravity Acceleration");
+    phi0 /= (rho_w*g);
+  } else {
+    has_p_dot = false;
+  }
 
   use_melting = hydrology_params.get<bool>("Use Melting In Cavities Equation", false);
 
@@ -63,21 +72,23 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
    * Scalings, needed to account for different units: ice velocity
    * is in m/yr, the mesh is in km, and hydrology time unit is s.
    *
-   * The residual has 4 terms (here in strong form, without signs), with the following units:
+   * The residual has 5 terms (here in strong form, without signs), with the following units:
    *
    *  1) h_t              [m s^-1 ]
-   *  2) m/rho_i          [m yr^-1]
-   *  3) c_creep*A*h*N^3  [m s^-1 ]
-   *  4) (h_r-h)*|u|/l_r  [m yr^-1]
+   *  2) phi0/(rhow*g)P_t [km s^-1]
+   *  3) m/rho_i          [m yr^-1]
+   *  4) c_creep*A*h*N^3  [m s^-1 ]
+   *  5) (h_r-h)*|u|/l_r  [m yr^-1]
    *
    * We decide to uniform all terms to have units [m yr^-1].
    * Where possible, we do this by rescaling some constants. Otherwise,
    * we simply introduce a new scaling factor
    *
-   *  1) scaling_h_t*h_t            scaling_h_t = yr_to_s
-   *  2) rho_i_inv_m                (no scaling)
-   *  3) c_creep*scaling_A*A*h*N^3  scaling_A = yr_to_s
-   *  4) (h_r-h)*|u|/l_r            (no scaling)
+   *  1) scaling_h_t*h_t                scaling_h_t = yr_to_s
+   *  2) scaling_P_t*phi0/(rhow*g)P_t   scaling_P_t = 10^3
+   *  3) m/rho_i                        (no scaling)
+   *  4) c_creep*scaling_A*A*h*N^3      scaling_A = yr_to_s
+   *  5) (h_r-h)*|u|/l_r                (no scaling)
    *
    * where yr_to_s=365.25*24*3600 (the number of seconds in a year)
    */
@@ -86,6 +97,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
 
   scaling_h_t = yr_to_s;
   c_creep *= yr_to_s;
+  phi0 *= 1e3;
 
   // We can solve this equation as a nodal equation
   nodal_equation = hydrology_params.isParameter("Cavities Equation Nodal") ? hydrology_params.get<bool>("Cavities Equation Nodal") : false;
@@ -115,20 +127,13 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
   this->addDependentField(u_b);
   this->addDependentField(ice_softness);
 
-  unsteady = p.get<bool>("Unsteady");
-  if (unsteady)
-  {
+  if (unsteady) {
     h_dot = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Thickness Dot Variable Name"), layout);
     this->addDependentField(h_dot);
-  }
-
-  penalization_coeff = hydrology_params.isParameter("Water Thickness Bounds Penalization Coefficient")
-                     ? hydrology_params.get<double>("Water Thickness Bounds Penalization Coefficient") : 0.0;
-  TEUCHOS_TEST_FOR_EXCEPTION (penalization_coeff<0.0, Teuchos::Exceptions::InvalidParameter, "Error! Penalization coefficient must be positive.\n");
-  penalization = (penalization_coeff!=0.0);
-  if (penalization) {
-    h_node = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Thickness Variable Name"), dl->node_scalar);
-    this->addDependentField(h_node);
+    if (has_p_dot) {
+      P_dot = PHX::MDField<const ScalarT>(p.get<std::string>("Water Pressure Dot Variable Name"), layout);
+      this->addDependentField(P_dot);
+    }
   }
 
   this->setName("HydrologyResidualCavitiesEqn"+PHX::typeAsString<EvalT>());
@@ -149,13 +154,13 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(ice_softness,fm);
   if (unsteady) {
     this->utils.setFieldData(h_dot,fm);
+    if (has_p_dot) {
+      this->utils.setFieldData(P_dot,fm);
+    }
   }
   if (!nodal_equation) {
     this->utils.setFieldData(BF,fm);
     this->utils.setFieldData(w_measure,fm);
-  }
-  if (penalization) {
-    this->utils.setFieldData(h_node,fm);
   }
   this->utils.setFieldData(residual,fm);
 }
@@ -181,37 +186,34 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   // Zero out, to avoid leaving stuff from previous workset!
   residual.deep_copy(ScalarT(0.0));
 
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
+  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
     return;
+  }
 
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet)
-  {
+  for (auto const& it_side : sideSet) {
     // Get the local data of side and cell
     const int cell = it_side.elem_LID;
     const int side = it_side.side_local_id;
 
-    for (int node=0; node < numNodes; ++node)
-    {
+    for (int node=0; node < numNodes; ++node) {
       res_node = 0;
       if (nodal_equation) {
         res_node = (use_melting ? m(cell,side,node)/rho_i : zero)
                  + (h_r - h(cell,side,node))*u_b(cell,side,node)/l_r
                  - c_creep*h(cell,side,node)*ice_softness(cell)*std::pow(N(cell,side,node),3)
-                 - (unsteady ? scaling_h_t*h_dot(cell,side,node) : zero);
+                 - (unsteady ? scaling_h_t*h_dot(cell,side,node) : zero)
+                 + (has_p_dot ? -phi0*P_dot(cell,side,node) : zero);
       } else {
-        for (int qp=0; qp < numQPs; ++qp)
-        {
+        for (int qp=0; qp < numQPs; ++qp) {
           res_qp = (use_melting ? m(cell,side,qp)/rho_i : zero)
                  + (h_r - h(cell,side,qp))*u_b(cell,side,qp)/l_r
                  - c_creep*h(cell,side,qp)*ice_softness(cell,side)*std::pow(N(cell,side,qp),3)
-                 - (unsteady ? scaling_h_t*h_dot(cell,side,qp) : zero);
+                 - (unsteady ? scaling_h_t*h_dot(cell,side,qp) : zero)
+                 + (has_p_dot ? -phi0*P_dot(cell,side,qp) : zero);
 
           res_node += res_qp * BF(cell,side,node,qp) * w_measure(cell,side,qp);
         }
-      }
-      if (penalization) {
-        res_node += penalization_coeff*std::pow(std::min(ScalarT(0.0),h_node(cell,side,node)),2);
       }
 
       residual (cell,side,node) = res_node;
@@ -226,29 +228,25 @@ evaluateFieldsCell (typename Traits::EvalData workset)
   // h' = W_O - W_C = (m/rho_i + u_b*(h_b-h)/l_b) - AhN^n
   ScalarT res_node, res_qp, zero(0.0);
 
-  for (int cell=0; cell < workset.numCells; ++cell)
-  {
-    for (int node=0; node < numNodes; ++node)
-    {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int node=0; node < numNodes; ++node) {
       res_node = 0;
       if (nodal_equation) {
         res_node = (use_melting ? m(cell,node)/rho_i : zero)
                  + (h_r - h(cell,node))*u_b(cell,node)/l_r
                  - c_creep*h(cell,node)*ice_softness(cell)*std::pow(N(cell,node),3)
-                 - (unsteady ? scaling_h_t*h_dot(cell,node) : zero);
+                 - (unsteady ? scaling_h_t*h_dot(cell,node) : zero)
+                 + (has_p_dot ? -phi0*P_dot(cell,node) : zero);
       } else {
-        for (int qp=0; qp < numQPs; ++qp)
-        {
+        for (int qp=0; qp < numQPs; ++qp) {
           res_qp = (use_melting ? m(cell,qp)/rho_i : zero)
                  + (h_r - h(cell,qp))*u_b(cell,qp)/l_r
                  - c_creep*h(cell,qp)*ice_softness(cell)*std::pow(N(cell,qp),3)
-                 - (unsteady ? scaling_h_t*h_dot(cell,qp) : zero);
+                 - (unsteady ? scaling_h_t*h_dot(cell,qp) : zero)
+                 + (has_p_dot ? -phi0*P_dot(cell,qp) : zero);
 
           res_node += res_qp * BF(cell,node,qp) * w_measure(cell,qp);
         }
-      }
-      if (penalization) {
-        res_node += penalization_coeff*std::pow(std::min(ScalarT(0.0),h_node(cell,node)),2);
       }
       residual (cell,node) = res_node;
     }
