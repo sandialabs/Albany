@@ -26,6 +26,7 @@
        evaluators/FELIX_HydrologyMeltingRate.cpp
        evaluators/FELIX_HydrologyResidualCavitiesEqn.cpp
        evaluators/FELIX_HydrologyResidualMassEqn.cpp
+       evaluators/FELIX_HydrologyResidualTillStorageEqn.cpp
        evaluators/FELIX_HydrologySurfaceWaterInput.cpp
        evaluators/FELIX_HydrologyWaterDischarge.cpp
        evaluators/FELIX_HydrologyWaterPressure.cpp
@@ -143,6 +144,8 @@ ENDIF()
        evaluators/FELIX_HydrologyResidualCavitiesEqn_Def.hpp
        evaluators/FELIX_HydrologyResidualMassEqn.hpp
        evaluators/FELIX_HydrologyResidualMassEqn_Def.hpp
+       evaluators/FELIX_HydrologyResidualTillStorageEqn.hpp
+       evaluators/FELIX_HydrologyResidualTillStorageEqn_Def.hpp
        evaluators/FELIX_HydrologySurfaceWaterInput.hpp
        evaluators/FELIX_HydrologySurfaceWaterInput_Def.hpp
        evaluators/FELIX_HydrologyWaterDischarge.hpp
