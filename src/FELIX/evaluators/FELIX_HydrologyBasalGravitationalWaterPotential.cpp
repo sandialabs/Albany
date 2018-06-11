@@ -9,4 +9,5 @@
 #include "FELIX_HydrologyBasalGravitationalWaterPotential.hpp"
 #include "FELIX_HydrologyBasalGravitationalWaterPotential_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::BasalGravitationalWaterPotential)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(FELIX::BasalGravitationalWaterPotential,true)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(FELIX::BasalGravitationalWaterPotential,false)

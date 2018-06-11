@@ -21,7 +21,7 @@ namespace FELIX
     This evaluator evaluates the basal potential phi = \rho_w * g * z_b at the basal side
 */
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, bool IsStokes>
 class BasalGravitationalWaterPotential : public PHX::EvaluatorWithBaseImpl<Traits>,
                                          public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -40,6 +40,9 @@ public:
 
 private:
 
+  void evaluateFieldsCell(typename Traits::EvalData d);
+  void evaluateFieldsSide(typename Traits::EvalData d);
+
   // Input:
   PHX::MDField<const ParamScalarT>  H;
   PHX::MDField<const ParamScalarT>  z_s;
@@ -51,7 +54,6 @@ private:
 
   int numNodes;
 
-  bool stokes;
   double rho_w;
   double g;
 };
