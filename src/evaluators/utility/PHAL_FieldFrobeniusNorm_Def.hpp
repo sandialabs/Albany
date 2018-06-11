@@ -180,9 +180,9 @@ template<typename EvalT, typename Traits, typename ScalarT>
 void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
   if (regularization_type==GIVEN_PARAMETER)
-    regularization = Albany::convertScalar<EScalarT,ScalarT>(regularizationParam(0));
+    regularization = Albany::convertScalar<const ScalarT>(regularizationParam(0));
   else if (regularization_type==PARAMETER_EXPONENTIAL)
-    regularization = pow(10.0, -10.0*Albany::convertScalar<EScalarT,ScalarT>(regularizationParam(0)));
+    regularization = pow(10.0, -10.0*Albany::convertScalar<const ScalarT>(regularizationParam(0)));
 
 #ifdef OUTPUT_TO_SCREEN
   if (regularization_type!=NONE)

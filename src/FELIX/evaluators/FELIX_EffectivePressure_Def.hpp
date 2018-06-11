@@ -97,7 +97,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
   std::vector<Albany::SideStruct>::const_iterator iter_s;
   if (Surrogate) {
-    ParamScalarT alpha = Albany::convertScalar<ScalarT,ParamScalarT>(alphaParam(0));
+    ParamScalarT alpha = Albany::convertScalar<const ParamScalarT>(alphaParam(0));
 
 #ifdef OUTPUT_TO_SCREEN
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -137,7 +137,7 @@ evaluateFieldsCell (typename Traits::EvalData workset)
 {
   if (Surrogate)
   {
-    ParamScalarT alpha = Albany::convertScalar<ScalarT,ParamScalarT>(alphaParam(0));
+    ParamScalarT alpha = Albany::convertScalar<const ParamScalarT>(alphaParam(0));
 
 #ifdef OUTPUT_TO_SCREEN
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());

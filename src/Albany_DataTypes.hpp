@@ -85,7 +85,7 @@ typedef unsigned long Tpetra_GO;
 
 typedef Teuchos::Comm<int>                                            Teuchos_Comm;
 typedef Tpetra::Map<Tpetra_LO, Tpetra_GO, KokkosNode>                 Tpetra_Map;
-typedef Tpetra::Details::LocalMap<Tpetra_LO, Tpetra_GO, KokkosNode>   Tpetra_LocalMap; 
+typedef Tpetra::Details::LocalMap<Tpetra_LO, Tpetra_GO, KokkosNode>   Tpetra_LocalMap;
 typedef Tpetra::Export<Tpetra_LO, Tpetra_GO, KokkosNode>              Tpetra_Export;
 typedef Tpetra::Import<Tpetra_LO, Tpetra_GO, KokkosNode>              Tpetra_Import;
 typedef Tpetra::CrsGraph<Tpetra_LO, Tpetra_GO, KokkosNode>            Tpetra_CrsGraph;
@@ -100,7 +100,7 @@ typedef Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>                Tpetra_Mat
 typedef Thyra::TpetraVector<ST,Tpetra_LO,Tpetra_GO,KokkosNode>        ThyraVector;
 typedef Thyra::TpetraMultiVector<ST,Tpetra_LO,Tpetra_GO,KokkosNode>   ThyraMultiVector;
 typedef Tpetra::RowMatrixTransposer<
-    ST, Tpetra_LO, Tpetra_GO, KokkosNode >                            Tpetra_RowMatrixTransposer; 
+    ST, Tpetra_LO, Tpetra_GO, KokkosNode >                            Tpetra_RowMatrixTransposer;
 
 // Include ScalarParameterLibrary to specialize its traits
 #include "Sacado_ScalarParameterLibrary.hpp"
@@ -134,17 +134,18 @@ namespace Albany {
   // where ParamScalarT=RealType and ScalarT=FadType.
   // Notice also that if the two scalar types are different, the conversion works
   // only if the target type has a constructor from the source type.
-  template<typename FromST,typename ToST>
+  template<typename ToST,typename FromST>
   struct ScalarConversionHelper
   {
-    static ToST apply (const FromST& x)
+    static typename std::enable_if<std::is_constructible<ToST,FromST>::value,ToST>::type
+    apply (const FromST& x)
     {
       return ToST(x);
     }
   };
 
   template<typename FromST>
-  struct ScalarConversionHelper<FromST,typename Sacado::ScalarType<FromST>::type>
+  struct ScalarConversionHelper<typename Sacado::ScalarType<FromST>::type,FromST>
   {
     static typename Sacado::ScalarType<FromST>::type apply (const FromST& x)
     {
@@ -152,10 +153,10 @@ namespace Albany {
     }
   };
 
-  template<typename FromST,typename ToST>
+  template<typename ToST,typename FromST>
   ToST convertScalar (const FromST& x)
   {
-    return ScalarConversionHelper<FromST,ToST>::apply(x);
+    return ScalarConversionHelper<ToST,FromST>::apply(x);
   }
 }
 
