@@ -101,6 +101,7 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   RealType latent_heat_{0.0};
   RealType porosity0_{0.0};
   RealType porosityE_{0.0};
+  RealType T_init_{0.0};
 
   // Saturation hardening constraints
   RealType sat_mod_{0.0};

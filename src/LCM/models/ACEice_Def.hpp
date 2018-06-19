@@ -33,6 +33,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   latent_heat_          = p->get<RealType>("ACE Latent Heat", 0.0);
   porosity0_            = p->get<RealType>("ACE Surface Porosity", 0.0);
   porosityE_            = p->get<RealType>("ACE Porosity E-Depth", 0.0);
+  T_init_               = p->get<RealType>("ACE Initial Temperature", 0.0);
 
   // retrieve appropriate field name strings
   std::string const cauchy_string       = field_name_map_["Cauchy_Stress"];
@@ -115,7 +116,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       "ACE Ice Saturation",
       dl->qp_scalar,
       "scalar",
-      1.0,
+      ice_saturation_init_,
       false,
       p->get<bool>("Output ACE Ice Saturation", false));
 
@@ -176,6 +177,14 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   // mechanical source
   if (have_temperature_ == true) {
     addStateVariable(
+        "ACE Temperature",
+        dl->qp_scalar,
+        "scalar",
+        T_init_,
+        false,
+        p->get<bool>("ACE Temperature", false));
+
+    addStateVariable(
         source_string,
         dl->qp_scalar,
         "scalar",
@@ -230,7 +239,7 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   // get State Variables
   Fp_old_             = (*workset.stateArrayPtr)[Fp_string + "_old"];
   eqps_old_           = (*workset.stateArrayPtr)[eqps_string + "_old"];
-  T_old_              = (*workset.stateArrayPtr)["Temperature_old"];
+  T_old_              = (*workset.stateArrayPtr)["ACE Temperature_old"];
   ice_saturation_old_ = (*workset.stateArrayPtr)["ACE Ice Saturation_old"];
 }
 
@@ -536,11 +545,6 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt)) -
                                (ice_density_ * latent_heat_ * dfdT);
 
-  // Swap for old variables
-  ice_saturation_old_(cell, pt) =
-      Sacado::Value<ScalarT>::eval(ice_saturation_(cell, pt));
-
-  T_old_(cell, pt) = Sacado::Value<ScalarT>::eval(temperature_(cell, pt));
 }
 
 }  // namespace LCM
