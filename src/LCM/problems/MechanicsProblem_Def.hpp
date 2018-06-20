@@ -75,19 +75,6 @@
 // Damage equation specific evaluators
 #include "StabilizedPressureResidual.hpp"
 
-// ACE specific evaluators
-#include "ACEdensity.hpp"
-#include "ACEheatCapacity.hpp"
-#include "ACEfreezingCurve.hpp"
-#include "ACEiceSaturation.hpp"
-#include "ACEmeltingTemperature.hpp"
-#include "ACEporosity.hpp"
-#include "ACEtemperatureChange.hpp"
-#include "ACEthermalConductivity.hpp"
-#include "ACEthermalInertia.hpp"
-#include "ACEwaterSaturation.hpp"
-
-
 #ifdef ALBANY_CONTACT
 // Contact evaluator
 #include "PHAL_MortarContactResidual.hpp"
