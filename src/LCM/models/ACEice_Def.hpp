@@ -70,6 +70,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setEvaluatedField(eqps_string, dl->qp_scalar);
   setEvaluatedField(yieldSurface_string, dl->qp_scalar);
   if (have_temperature_ == true) {
+    setDependentField("Temperature", dl->qp_scalar);
     setEvaluatedField(source_string, dl->qp_scalar);
   }
 
@@ -177,12 +178,12 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   // mechanical source
   if (have_temperature_ == true) {
     addStateVariable(
-        "ACE Temperature",
+        "Temperature",
         dl->qp_scalar,
         "scalar",
         T_init_,
-        false,
-        p->get<bool>("ACE Temperature", false));
+        true,
+        p->get<bool>("Output Temperature", false));
 
     addStateVariable(
         source_string,
@@ -234,6 +235,7 @@ ACEiceMiniKernel<EvalT, Traits>::init(
 
   if (have_temperature_ == true) {
     source_ = *output_fields[source_string];
+    temperature_ = *input_fields["Temperature"];
   }
 
   // get State Variables

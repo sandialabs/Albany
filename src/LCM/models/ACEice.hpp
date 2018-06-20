@@ -47,7 +47,6 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   using BaseKernel::expansion_coeff_;
   using BaseKernel::have_temperature_;
   using BaseKernel::ref_temperature_;
-  using BaseKernel::temperature_;
 
   using BaseKernel::addStateVariable;
   using BaseKernel::setDependentField;
@@ -65,6 +64,7 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ConstScalarField J_;
   ConstScalarField poissons_ratio_;
   ConstScalarField yield_strength_;
+  ConstScalarField temperature_;
 
   // Output MDFields
   ScalarField density_;
