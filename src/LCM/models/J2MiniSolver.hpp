@@ -49,7 +49,7 @@ struct J2MiniKernel : public ParallelKernel<EvalT, Traits>
   using BaseKernel::have_temperature_;
   using BaseKernel::heat_capacity_;
   using BaseKernel::ref_temperature_;
-  using BaseKernel::temperature_;
+  //using BaseKernel::temperature_;
 
   using BaseKernel::addStateVariable;
   using BaseKernel::setDependentField;
@@ -67,6 +67,7 @@ struct J2MiniKernel : public ParallelKernel<EvalT, Traits>
   ConstScalarField J_;
   ConstScalarField poissons_ratio_;
   ConstScalarField yield_strength_;
+  ConstScalarField temperature_;
 
   // extract evaluated MDFields
   ScalarField eqps_;

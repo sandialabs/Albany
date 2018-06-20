@@ -41,6 +41,7 @@ J2MiniKernel<EvalT, Traits>::J2MiniKernel(
   setEvaluatedField(eqps_string, dl->qp_scalar);
   setEvaluatedField(yieldSurface_string, dl->qp_scalar);
   if (have_temperature_ == true) {
+    setDependentField("Temperature", dl->qp_scalar);
     setEvaluatedField(source_string, dl->qp_scalar);
   }
 
@@ -85,6 +86,14 @@ J2MiniKernel<EvalT, Traits>::J2MiniKernel(
   // mechanical source
   if (have_temperature_ == true) {
     addStateVariable(
+        "Temperature",
+        dl->qp_scalar,
+        "scalar",
+        0.0,
+        true,
+        p->get<bool>("Output Temperature", false));
+
+    addStateVariable(
         source_string,
         dl->qp_scalar,
         "scalar",
@@ -126,6 +135,7 @@ J2MiniKernel<EvalT, Traits>::init(
 
   if (have_temperature_ == true) {
     source_ = *eval_fields[source_string];
+    temperature_ = *dep_fields["Temperature"];
   }
 
   // get State Variables
