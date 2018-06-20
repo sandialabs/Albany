@@ -118,7 +118,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       dl->qp_scalar,
       "scalar",
       ice_saturation_init_,
-      false,
+      true,
       p->get<bool>("Output ACE Ice Saturation", false));
 
   // ACE Density
@@ -241,7 +241,7 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   // get State Variables
   Fp_old_             = (*workset.stateArrayPtr)[Fp_string + "_old"];
   eqps_old_           = (*workset.stateArrayPtr)[eqps_string + "_old"];
-  T_old_              = (*workset.stateArrayPtr)["ACE Temperature_old"];
+  T_old_              = (*workset.stateArrayPtr)["Temperature_old"];
   ice_saturation_old_ = (*workset.stateArrayPtr)["ACE Ice Saturation_old"];
 }
 
@@ -464,6 +464,8 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // compute pressure
   ScalarT const pressure = 0.5 * kappa * (J_(cell, pt) - 1. / (J_(cell, pt)));
+  // Add calculation of hydrostatic pressure. Assume
+  // p_hyd = pressure * rho_water / rho_soil
 
   // compute stress
   sigma = pressure * I + s / J_(cell, pt);
@@ -485,7 +487,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT sal15 = std::sqrt(sal * sal * sal);
   ScalarT Tmelt = (-0.057 * sal) + (0.00170523 * sal15) -
                   (0.0002154996 * sal * sal) -
-                  ((0.000753 / 10000.0) * pressure);
+                  ((0.000753 / 10000.0) * pressure) + 273.15;
 
   // Calculate temperature change (not sure where temperature_ comes from, but
   // it seems to be getting used in here already for the source term, and I
