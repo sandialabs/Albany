@@ -43,7 +43,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, typename InOutScalarT, template<typename> typename UnaryOperation>
+template<typename EvalT, typename Traits, typename InOutScalarT, template<typename> class UnaryOperation>
 void SimpleUnaryOperation<EvalT, Traits, InOutScalarT, UnaryOperation>::
 evaluateFields (typename Traits::EvalData workset)
 {
@@ -55,7 +55,7 @@ evaluateFields (typename Traits::EvalData workset)
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT, template<typename> typename BinaryOperation>
+template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT, template<typename> class BinaryOperation>
 void SimpleBinaryOperation<EvalT, Traits, InOutScalarT, FieldScalarT, BinaryOperation>::
 evaluateFields (typename Traits::EvalData workset)
 {
@@ -68,7 +68,7 @@ evaluateFields (typename Traits::EvalData workset)
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT, template<typename> typename TernaryOperation>
+template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT, template<typename> class TernaryOperation>
 void SimpleTernaryOperation<EvalT, Traits, InOutScalarT, FieldScalarT, TernaryOperation>::
 evaluateFields (typename Traits::EvalData workset)
 {

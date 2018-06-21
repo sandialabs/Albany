@@ -43,7 +43,7 @@ protected:
 
 // =================== Specializations For Unary Operations ================= //
 
-template<typename EvalT, typename Traits, typename InOutScalarT, template<typename> typename UnaryOperation>
+template<typename EvalT, typename Traits, typename InOutScalarT, template<typename> class UnaryOperation>
 class SimpleUnaryOperation : public SimpleOperationBase<EvalT,Traits,InOutScalarT,UnaryOperation<InOutScalarT>>
 {
 public:
@@ -113,7 +113,7 @@ public:
 
 // =================== Specializations For Binary Operations ================= //
 
-template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT, template<typename> typename BinaryOperation>
+template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT, template<typename> class BinaryOperation>
 class SimpleBinaryOperation : public SimpleOperationBase<EvalT,Traits,InOutScalarT,BinaryOperation<InOutScalarT>>
 {
 public:
@@ -203,7 +203,7 @@ public:
 
 // =================== Specializations For Ternary Operations ================= //
 
-template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT, template<typename> typename TernaryOperation>
+template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT, template<typename> class TernaryOperation>
 class SimpleTernaryOperation : public SimpleOperationBase<EvalT,Traits,InOutScalarT,TernaryOperation<InOutScalarT>>
 {
 public:
