@@ -33,13 +33,17 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 if (ALBANY_IFPACK2)
 add_test(${testName}_tetra4 ${SerialAlbanyT.exe} input_tetra4.yaml)
 add_test(${testName}_tetra10 ${SerialAlbanyT.exe} input_tetra10.yaml)
-add_test(${testName}_hex8 ${AlbanyT.exe} input_hex8.yaml)
 
 add_test(${testName}_tetra4_tip ${SerialAlbanyT.exe} input_tetra4_tip.yaml)
 add_test(${testName}_tetra10_tip ${SerialAlbanyT.exe} input_tetra10_tip.yaml)
-add_test(${testName}_hex8_tip ${AlbanyT.exe} input_hex8_tip.yaml)
 
 add_test(${testName}_tetra4_trac ${SerialAlbanyT.exe} input_tetra4_trac.yaml)
 add_test(${testName}_tetra10_trac ${SerialAlbanyT.exe} input_tetra10_trac.yaml)
+
+IF(NOT ALBANY_PARALLEL_ONLY)
+add_test(${testName}_hex8 ${AlbanyT.exe} input_hex8.yaml)
+add_test(${testName}_hex8_tip ${AlbanyT.exe} input_hex8_tip.yaml)
 add_test(${testName}_hex8_trac ${AlbanyT.exe} input_hex8_trac.yaml)
+endif ()
+
 endif ()
