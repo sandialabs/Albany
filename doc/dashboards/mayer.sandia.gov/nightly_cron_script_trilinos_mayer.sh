@@ -12,6 +12,10 @@ rm -rf ctest_nightly.cmake
 unset http_proxy
 unset https_proxy
 
+export OMP_NUM_THREADS=1
+export OMP_PLACES=threads
+export OMP_PROC_BIND=spread
+
 cat trilinos ctest_nightly.cmake.frag >& ctest_nightly.cmake  
 
 now=$(date +"%m_%d_%Y-%H_%M")
