@@ -55,9 +55,25 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
 #endif
 
   std::string input_elem_name = inputMeshSpecs.ctd.base->name;
-  if (input_elem_name=="Tetrahedron_4" || input_elem_name=="Wedge_6")
+  if (input_elem_name=="Tetrahedron_4")
   {
     stk::mesh::set_cell_topology<shards::Triangle<3> >(*partVec[0]);
+  }
+  else if (input_elem_name=="Wedge_6") {
+    // Wedges have different side topologies, depending on what side is requested.
+    // If the user does not specify anything, for backward compatibility, we select
+    // the top/bottom topology. Otherwise, we honor the request (if valid)
+    std::string side_topo_name = params->get<std::string>("Side Topology Name","Triangle");
+    if (side_topo_name=="Triangle") {
+      // Top/bottom
+      stk::mesh::set_cell_topology<shards::Triangle<3> >(*partVec[0]);
+    } else if (side_topo_name=="Quadrilateral") {
+      stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*partVec[0]);
+    } else {
+      // Invalid
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
+                                  "Error! Invalid side topology name for elemeent 'Wedge_6'. Valid options are 'Triangle', 'Quadrilateral'.\n");
+    }
   }
   else if (input_elem_name=="Hexahedron_8")
   {
