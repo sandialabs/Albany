@@ -75,6 +75,12 @@ StokesFOResid(const Teuchos::ParameterList& p,
     basalRes  = decltype(basalRes)(p.get<std::string> ("Basal Residual Variable Name"), dl->node_vector);
     this->addDependentField(basalRes);
   }
+  needsLateralResidual = p.get<bool>("Needs Lateral Residual");
+  if (needsLateralResidual)
+  {
+    lateralRes  = decltype(lateralRes)(p.get<std::string> ("Lateral Residual Variable Name"), dl->node_vector);
+    this->addDependentField(lateralRes);
+  }
 
   stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
   useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
@@ -134,10 +140,15 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(muFELIX,fm);
-  if (needsBasalResidual)
+  if (needsBasalResidual) {
     this->utils.setFieldData(basalRes,fm);
-  if(useStereographicMap)
+  }
+  if (needsLateralResidual) {
+    this->utils.setFieldData(lateralRes,fm);
+  }
+  if(useStereographicMap) {
     this->utils.setFieldData(coordVec, fm);
+  }
 
   this->utils.setFieldData(Residual,fm);
 }
@@ -148,18 +159,29 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const FELIX_3D_Tag& tag, const int& cell) const{
 
-  if (needsBasalResidual)
-  {
-    for (int node=0; node<numNodes; ++node){
-      Residual(cell,node,0)=basalRes(cell,node,0);
-      Residual(cell,node,1)=basalRes(cell,node,1);
+  if (needsBasalResidual) {
+    if (needsLateralResidual) {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=lateralRes(cell,node,0) + basalRes(cell,node,0);
+        Residual(cell,node,1)=lateralRes(cell,node,1) + basalRes(cell,node,1);
+      }
+    } else {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=basalRes(cell,node,0);
+        Residual(cell,node,1)=basalRes(cell,node,1);
+      }
     }
-  }
-  else
-  {
-    for (int node=0; node<numNodes; ++node){
-      Residual(cell,node,0)=0.;
-      Residual(cell,node,1)=0.;
+  } else {
+    if (needsLateralResidual) {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=lateralRes(cell,node,0);
+        Residual(cell,node,1)=lateralRes(cell,node,1);
+      }
+    } else {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=0.;
+        Residual(cell,node,1)=0.;
+      }
     }
   }
 
@@ -220,12 +242,12 @@ operator() (const FELIX_3D_Tag& tag, const int& cell) const{
       ScalarT strs02 = mu*Ugrad(cell,qp,0,2);
       ScalarT strs12 = mu*Ugrad(cell,qp,1,2);
       for (int node=0; node < numNodes; ++node) {
-           Residual(cell,node,0) += strs00*wGradBF(cell,node,qp,0) +
-                                    strs01*wGradBF(cell,node,qp,1) +
-                                    strs02*wGradBF(cell,node,qp,2);
-           Residual(cell,node,1) += strs01*wGradBF(cell,node,qp,0) +
-                                    strs11*wGradBF(cell,node,qp,1) +
-                                    strs12*wGradBF(cell,node,qp,2);
+        Residual(cell,node,0) += strs00*wGradBF(cell,node,qp,0) +
+                                 strs01*wGradBF(cell,node,qp,1) +
+                                 strs02*wGradBF(cell,node,qp,2);
+        Residual(cell,node,1) += strs01*wGradBF(cell,node,qp,0) +
+                                 strs11*wGradBF(cell,node,qp,1) +
+                                 strs12*wGradBF(cell,node,qp,2);
       }
     }
   }
@@ -245,29 +267,40 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const POISSON_3D_Tag& tag, const int& cell) const{
 
-  if (needsBasalResidual)
-  {
-    for (int node=0; node<numNodes; ++node){
-      Residual(cell,node,0)=basalRes(cell,node,0);
-      Residual(cell,node,1)=basalRes(cell,node,1);
+  if (needsBasalResidual) {
+    if (needsLateralResidual) {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=lateralRes(cell,node,0) + basalRes(cell,node,0);
+        Residual(cell,node,1)=lateralRes(cell,node,1) + basalRes(cell,node,1);
+      }
+    } else {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=basalRes(cell,node,0);
+        Residual(cell,node,1)=basalRes(cell,node,1);
+      }
     }
-  }
-  else
-  {
-    for (int node=0; node<numNodes; ++node){
-      Residual(cell,node,0)=0.;
-      Residual(cell,node,1)=0.;
+  } else {
+    if (needsLateralResidual) {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=lateralRes(cell,node,0);
+        Residual(cell,node,1)=lateralRes(cell,node,1);
+      }
+    } else {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=0.;
+        Residual(cell,node,1)=0.;
+      }
     }
   }
 
   for (int node=0; node < numNodes; ++node) {
-          for (int qp=0; qp < numQPs; ++qp) {
-             Residual(cell,node,0) += Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0) +
-                                      Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1) +
-                                      Ugrad(cell,qp,0,2)*wGradBF(cell,node,qp,2) +
-                                      force(cell,qp,0)*wBF(cell,node,qp);
-              }
-      }
+    for (int qp=0; qp < numQPs; ++qp) {
+       Residual(cell,node,0) += Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0) +
+                                Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1) +
+                                Ugrad(cell,qp,0,2)*wGradBF(cell,node,qp,2) +
+                                force(cell,qp,0)*wBF(cell,node,qp);
+    }
+  }
 }
 
 template<typename EvalT, typename Traits>
@@ -275,30 +308,41 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const FELIX_2D_Tag& tag, const int& cell) const{
 
-  if (needsBasalResidual)
-  {
-    for (int node=0; node<numNodes; ++node){
-      Residual(cell,node,0)=basalRes(cell,node,0);
-      Residual(cell,node,1)=basalRes(cell,node,1);
+  if (needsBasalResidual) {
+    if (needsLateralResidual) {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=lateralRes(cell,node,0) + basalRes(cell,node,0);
+        Residual(cell,node,1)=lateralRes(cell,node,1) + basalRes(cell,node,1);
+      }
+    } else {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=basalRes(cell,node,0);
+        Residual(cell,node,1)=basalRes(cell,node,1);
+      }
     }
-  }
-  else
-  {
-    for (int node=0; node<numNodes; ++node){
-      Residual(cell,node,0)=0.;
-      Residual(cell,node,1)=0.;
+  } else {
+    if (needsLateralResidual) {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=lateralRes(cell,node,0);
+        Residual(cell,node,1)=lateralRes(cell,node,1);
+      }
+    } else {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=0.;
+        Residual(cell,node,1)=0.;
+      }
     }
   }
 
   for (int node=0; node < numNodes; ++node) {
-          for (int qp=0; qp < numQPs; ++qp) {
-             Residual(cell,node,0) += 2.0*muFELIX(cell,qp)*((2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1))*wGradBF(cell,node,qp,0) +
-                                      0.5*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*wGradBF(cell,node,qp,1)) +
-                                      force(cell,qp,0)*wBF(cell,node,qp);
-             Residual(cell,node,1) += 2.0*muFELIX(cell,qp)*(0.5*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*wGradBF(cell,node,qp,0) +
-                                      (Ugrad(cell,qp,0,0) + 2.0*Ugrad(cell,qp,1,1))*wGradBF(cell,node,qp,1)) + force(cell,qp,1)*wBF(cell,node,qp);
-              }
-   }
+    for (int qp=0; qp < numQPs; ++qp) {
+       Residual(cell,node,0) += 2.0*muFELIX(cell,qp)*((2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1))*wGradBF(cell,node,qp,0) +
+                                0.5*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*wGradBF(cell,node,qp,1)) +
+                                force(cell,qp,0)*wBF(cell,node,qp);
+       Residual(cell,node,1) += 2.0*muFELIX(cell,qp)*(0.5*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*wGradBF(cell,node,qp,0) +
+                                (Ugrad(cell,qp,0,0) + 2.0*Ugrad(cell,qp,1,1))*wGradBF(cell,node,qp,1)) + force(cell,qp,1)*wBF(cell,node,qp);
+    }
+  }
 }
 
 template<typename EvalT, typename Traits>
@@ -306,29 +350,40 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const FELIX_XZ_2D_Tag& tag, const int& cell) const{
 
-  if (needsBasalResidual)
-  {
-    for (int node=0; node<numNodes; ++node){
-      Residual(cell,node,0)=basalRes(cell,node,0);
-      Residual(cell,node,1)=basalRes(cell,node,1);
+  if (needsBasalResidual) {
+    if (needsLateralResidual) {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=lateralRes(cell,node,0) + basalRes(cell,node,0);
+        Residual(cell,node,1)=lateralRes(cell,node,1) + basalRes(cell,node,1);
+      }
+    } else {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=basalRes(cell,node,0);
+        Residual(cell,node,1)=basalRes(cell,node,1);
+      }
     }
-  }
-  else
-  {
-    for (int node=0; node<numNodes; ++node){
-      Residual(cell,node,0)=0.;
-      Residual(cell,node,1)=0.;
+  } else {
+    if (needsLateralResidual) {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=lateralRes(cell,node,0);
+        Residual(cell,node,1)=lateralRes(cell,node,1);
+      }
+    } else {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=0.;
+        Residual(cell,node,1)=0.;
+      }
     }
   }
 
   for (int node=0; node < numNodes; ++node) {
-          for (int qp=0; qp < numQPs; ++qp) {
-             //z dimension is treated as 2nd dimension
-             //PDEs is: -d/dx(4*mu*du/dx) - d/dz(mu*du/dz) - f1 0
-             Residual(cell,node,0) += 4.0*muFELIX(cell,qp)*Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0)
-                                   + muFELIX(cell,qp)*Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1)+force(cell,qp,0)*wBF(cell,node,qp);
-          }
-       }
+    for (int qp=0; qp < numQPs; ++qp) {
+       //z dimension is treated as 2nd dimension
+       //PDEs is: -d/dx(4*mu*du/dx) - d/dz(mu*du/dz) - f1 0
+       Residual(cell,node,0) += 4.0*muFELIX(cell,qp)*Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0)
+                             + muFELIX(cell,qp)*Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1)+force(cell,qp,0)*wBF(cell,node,qp);
+    }
+  }
 
 }
 
@@ -337,114 +392,40 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const POISSON_2D_Tag& tag, const int& cell) const{
 
-  if (needsBasalResidual)
-  {
-    for (int node=0; node<numNodes; ++node){
-      Residual(cell,node,0)=basalRes(cell,node,0);
-      Residual(cell,node,1)=basalRes(cell,node,1);
+  if (needsBasalResidual) {
+    if (needsLateralResidual) {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=lateralRes(cell,node,0) + basalRes(cell,node,0);
+        Residual(cell,node,1)=lateralRes(cell,node,1) + basalRes(cell,node,1);
+      }
+    } else {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=basalRes(cell,node,0);
+        Residual(cell,node,1)=basalRes(cell,node,1);
+      }
     }
-  }
-  else
-  {
-    for (int node=0; node<numNodes; ++node){
-      Residual(cell,node,0)=0.;
-      Residual(cell,node,1)=0.;
+  } else {
+    if (needsLateralResidual) {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=lateralRes(cell,node,0);
+        Residual(cell,node,1)=lateralRes(cell,node,1);
+      }
+    } else {
+      for (int node=0; node<numNodes; ++node){
+        Residual(cell,node,0)=0.;
+        Residual(cell,node,1)=0.;
+      }
     }
   }
 
   for (int node=0; node < numNodes; ++node) {
-          for (int qp=0; qp < numQPs; ++qp) {
-             Residual(cell,node,0) += Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0) +
-                                      Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1) +
-                                      force(cell,qp,0)*wBF(cell,node,qp);
-              }
-   }
+    for (int qp=0; qp < numQPs; ++qp) {
+      Residual(cell,node,0) += Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0) +
+                               Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1) +
+                               force(cell,qp,0)*wBF(cell,node,qp);
+    }
+  }
 }
-
-// TODO: this functor class is never used. Should we remove it?
-template <typename ScalarType, class DeviceType, class MDFieldType1, class MDFieldType2, class MDFieldType3, class MDFieldType4, class MDFieldType5, class MDFieldType6, class MDFieldType7 >
-class StokesFOResid_3D_FELIX  {
- MDFieldType1 Residual_;
- MDFieldType2 wGradBF_;
- MDFieldType3 force_;
- MDFieldType4 Ugrad_;
- MDFieldType5 mu_;
- MDFieldType6 wBF_;
- MDFieldType7 basalRes_;
- const int numNodes_;
- const int numQPs_;
- bool needsBasalResidual_;
-
- public:
- typedef DeviceType device_type;
-
- StokesFOResid_3D_FELIX (MDFieldType1 &Residual,
-                         MDFieldType2 &wGradBF,
-                         MDFieldType3 &force,
-                         MDFieldType4 &Ugrad,
-                         MDFieldType5 &mu,
-                         MDFieldType6 &wBF,
-                         MDFieldType7 &basalRes,
-                         int numNodes,
-                         int numQPs,
-                         bool needsBasalResidual)
-  : Residual_(Residual)
-  , wGradBF_(wGradBF)
-  , force_(force)
-  , Ugrad_(Ugrad)
-  , mu_(mu)
-  , wBF_(wBF)
-  , basalRes_(basalRes)
-  , numNodes_(numNodes)
-  , numQPs_(numQPs)
-  , needsBasalResidual_(needsBasalResidual){}
-
- KOKKOS_INLINE_FUNCTION
- void operator () (const int i) const
- {
-  if (needsBasalResidual_)
-  {
-    for (int node=0; node<numNodes_; ++node){
-      Residual_(i,node,0)=basalRes_(i,node,0);
-      Residual_(i,node,1)=basalRes_(i,node,1);
-    }
-  }
-  else
-  {
-    for (int node=0; node<numNodes_; ++node){
-      Residual_(i,node,0)=0.;
-      Residual_(i,node,1)=0.;
-    }
-  }
-
-  for (int j=0; j<numQPs_; j++)
-  {
-   const ScalarType strs00 = 2.0*mu_(i,j)*(2.0*Ugrad_(i,j,0,0)+Ugrad_(i,j,1,1));
-   const ScalarType strs11 = 2.0*mu_(i,j)*(2.0*Ugrad_(i,j,1,1)+Ugrad_(i,j,0,0));
-   const ScalarType strs01 = mu_(i,j)*(Ugrad_(i,j,1,0)+Ugrad_(i,j,0,1));
-   const ScalarType strs02 = mu_(i,j)*Ugrad_(i,j,0,2);
-   const ScalarType strs12 = mu_(i,j)*Ugrad_(i,j,1,2);
-   for (int node=0; node<numNodes_; ++node){
-     Residual_(i,node,0) +=strs00*wGradBF_(i,node,j,0) +
-                        strs01*wGradBF_(i,node,j,1) +
-                        strs02*wGradBF_(i,node,j,2);
-     Residual_(i,node,1) +=strs01*wGradBF_(i,node,j,0) +
-                       strs11*wGradBF_(i,node,j,1) +
-                        strs12*wGradBF_(i,node,j,2);
-   }
-
-  }
-
-  for (int qp=0; qp < numQPs_; ++qp) {
-        const ScalarType frc0 = force_(i,qp,0);
-        const ScalarType frc1 = force_(i,qp,1);
-        for (int node=0; node < numNodes_; ++node) {
-             Residual_(i,node,0) += frc0*wBF_(i,node,qp);
-             Residual_(i,node,1) += frc1*wBF_(i,node,qp);
-        }
-      }
- }
-};
 
 //**********************************************************************
 template<typename EvalT, typename Traits>

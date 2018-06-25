@@ -39,6 +39,7 @@
 #include "FELIX_EffectivePressure.hpp"
 #include "FELIX_StokesFOResid.hpp"
 #include "FELIX_StokesFOBasalResid.hpp"
+#include "FELIX_StokesFOLateralResid.hpp"
 #include "FELIX_L2ProjectedBoundaryLaplacianResidual.hpp"
 #ifdef CISM_HAS_FELIX
 #include "FELIX_CismSurfaceGradFO.hpp"
@@ -127,26 +128,31 @@ protected:
 
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::RCP<shards::CellTopology> basalSideType;
+  Teuchos::RCP<shards::CellTopology> lateralSideType;
   Teuchos::RCP<shards::CellTopology> surfaceSideType;
 
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >  cellCubature;
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >  basalCubature;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >  lateralCubature;
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >  surfaceCubature;
 
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > cellBasis;
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > basalSideBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > lateralSideBasis;
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > surfaceSideBasis;
 
   int numDim;
   int vecDimFO;
-  Teuchos::RCP<Albany::Layouts> dl, dl_scalar, dl_side_scalar, dl_basal, dl_surface;
+  Teuchos::RCP<Albany::Layouts> dl, dl_scalar, dl_side_scalar, dl_basal, dl_surface, dl_lateral;
 
   //! Discretization parameters
   Teuchos::RCP<Teuchos::ParameterList> discParams;
 
 
   bool  sliding;
+  bool  lateral_resid;
   std::string basalSideName;
+  std::string lateralSideName;
   std::string surfaceSideName;
 
   std::string elementBlockName;
@@ -1098,6 +1104,25 @@ if (basalSideName!="INVALID")
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  if (lateralSideName!="INVALID")
+  {
+    //---- Restrict vertex coordinates from cell-based to cell-side-based
+    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,lateralSideName,"Vertex Vector",cellType,Albany::coord_vec_name + " " + lateralSideName);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    //---- Compute side basis functions
+    ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, lateralSideBasis, lateralCubature, lateralSideName, false, true);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    //---- Interpolate ice thickness on QP on side
+    ev = evalUtils.getPSTUtils().constructDOFCellToSideQPEvaluator("ice_thickness", lateralSideName, "Node Scalar", cellType);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //---- Interpolate surface height on QP on side
+    ev = evalUtils.getPSTUtils().constructDOFCellToSideQPEvaluator("surface_height", lateralSideName, "Node Scalar", cellType);
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   // -------------------------------- FELIX evaluators ------------------------- //
 
   // --- FO Stokes Stress --- //
@@ -1132,7 +1157,9 @@ if (basalSideName!="INVALID")
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
   p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("Equation Set"));
   p->set<std::string>("Basal Residual Variable Name", "Basal Residual");
+  p->set<std::string>("Lateral Residual Variable Name", "Lateral Residual");
   p->set<bool>("Needs Basal Residual", sliding);
+  p->set<bool>("Needs Lateral Residual", lateral_resid);
 
   //Output
   p->set<std::string>("Residual Variable Name", "Stokes Residual");
@@ -1341,6 +1368,28 @@ if (basalSideName!="INVALID")
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  if (lateral_resid) {
+    p = Teuchos::rcp( new Teuchos::ParameterList("Lateral Residual") );
+
+    // Input
+    p->set<std::string>("Ice Thickness Variable Name", "ice_thickness");
+    p->set<std::string>("Ice Surface Elevation Variable Name", "surface_height");
+    p->set<std::string>("BF Side Name", Albany::bf_name + " " + lateralSideName);
+    p->set<std::string>("Weighted Measure Name", Albany::weighted_measure_name + " " + lateralSideName);
+    p->set<std::string>("Side Normal Name", Albany::normal_name + " " + lateralSideName);
+    p->set<std::string>("Side Set Name", lateralSideName);
+    p->set<Teuchos::RCP<shards::CellTopology>>("Cell Type", cellType);
+    p->set<Teuchos::ParameterList*>("Lateral BC Parameters",&params->sublist("FELIX Lateral BC"));
+    p->set<Teuchos::ParameterList*>("Physical Parameters",&params->sublist("FELIX Physical Parameters"));
+    p->set<Teuchos::ParameterList*>("Stereographic Map",&params->sublist("Stereographic Map"));
+
+    // Output
+    p->set<std::string>("Lateral Residual Variable Name", "Lateral Residual");
+
+    ev = Teuchos::rcp( new FELIX::StokesFOLateralResid<EvalT,PHAL::AlbanyTraits,false>(*p,dl) );
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   if (basalSideName!="INVALID")
   {
     fieldName = "flux_divergence";
@@ -1355,7 +1404,7 @@ if (basalSideName!="INVALID")
     p->set<std::string>("Side Tangents Name", "Tangents " + basalSideName);
 
     p->set<std::string>("Field Name",  "flux_divergence");
-    p->set<std::string> ("Side Set Name", basalSideName);
+    p->set<std::string>("Side Set Name", basalSideName);
 
     ev = Teuchos::rcp(new FELIX::FluxDiv<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
