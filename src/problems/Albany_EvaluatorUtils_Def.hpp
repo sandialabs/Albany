@@ -536,7 +536,8 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructComputeBasisFunctions
     const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasisSide,
     const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureSide,
     const std::string& sideSetName,
-    const bool enableMemoizer) const
+    const bool enableMemoizer,
+    const bool buildNormals) const
 {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
                                 "Error! The layout structure for side set " << sideSetName << " was not found.\n");
@@ -563,10 +564,14 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructComputeBasisFunctions
     p->set<std::string>("BF Name",                   bf_name + " "+sideSetName);
     p->set<std::string>("Gradient BF Name",          grad_bf_name + " "+sideSetName);
     p->set<std::string>("Inverse Metric Name",       metric_inv_name + " "+sideSetName);
+    if (buildNormals) {
+      p->set<std::string>("Side Normal Name",normal_name + " " + sideSetName);
+      p->set<std::string>("Coordinate Vector Name",coord_vec_name);
+    }
 
     if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
 
-    return rcp(new PHAL::ComputeBasisFunctionsSide<EvalT,Traits>(*p,dl->side_layouts.at(sideSetName)));
+    return rcp(new PHAL::ComputeBasisFunctionsSide<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
