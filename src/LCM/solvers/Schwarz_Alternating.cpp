@@ -1011,39 +1011,8 @@ SchwarzLoopDynamics() const
 
         // Check whether solver did OK.
 
-        //IKT, 12/21/17: uncomment the following if want to check
-        //what happened with NOX
-        //solver underlying Tempus solver.
-
-        /*const Teuchos::RCP<const ::Thyra::NonlinearSolverBase<ST> >
-        thyra_solver = piro_tempus_solver.getSolver();
-
-        Teuchos::RCP<const ::Thyra::NOXNonlinearSolver > thyra_nox_solver =
-        Teuchos::rcp_dynamic_cast<const ::Thyra::NOXNonlinearSolver>
-        (thyra_solver);
-
-        Teuchos::RCP<const NOX::Solver::Generic> const_nox_solver =
-        thyra_nox_solver->getNOXSolver();
-
-        if (thyra_nox_solver != Teuchos::null) {
-          auto &
-          nox_solver = const_cast<NOX::Solver::Generic &>(*const_nox_solver);
-
-          auto const
-          status_nox = nox_solver.getStatus();
-
-          fos << "IKT NOX status = " << status_nox << "\n";
-       } */
-
         auto const
         status = piro_tempus_solver.getTempusIntegratorStatus();
-
-        //IKT, 12/21/17: debug print statements
-        /*if (status == Tempus::Status::FAILED)
-          fos << "IKT tempus status = FAILED \n";
-        else
-          fos << "IKT tempus status = PASSED \n";
-        */
 
         //if (status == NOX::StatusTest::Failed) {
         if (status == Tempus::Status::FAILED) {
@@ -1239,6 +1208,16 @@ SchwarzLoopDynamics() const
         Thyra::copy(*this_velo_[subdomain], prev_velo_[subdomain].ptr());
         Thyra::put_scalar(0.0, this_acce_[subdomain].ptr());
         Thyra::copy(*this_acce_[subdomain], prev_acce_[subdomain].ptr());
+
+        //restore the state manager with the state variables from the previous
+        //loadstep.
+        auto &
+        app = *apps_[subdomain];
+
+        auto &
+        state_mgr = app.getStateMgr();
+
+        toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
       }
 
       // Jump to the beginning of the time-step loop without advancing
@@ -1532,7 +1511,7 @@ SchwarzLoopQuasistatics() const
         auto
         prev_step_disp_rcp = prev_step_disp_[subdomain];
 
-        nv.set_x(prev_step_disp_rcp);
+        nv.set_x(prev_disp_rcp);
         me.setNominalValues(nv);
 
         // Target time
@@ -1685,6 +1664,16 @@ SchwarzLoopQuasistatics() const
       // Restore previous solutions
       for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
         curr_disp_[subdomain] = prev_step_disp_[subdomain];
+
+        //restore the state manager with the state variables from the previous
+        //loadstep.
+        auto &
+        app = *apps_[subdomain];
+
+        auto &
+        state_mgr = app.getStateMgr();
+
+        toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
       }
 
       // Jump to the beginning of the continuation loop without advancing
