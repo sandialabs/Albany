@@ -18,8 +18,8 @@ LCM:
       Track Missed Range Entities: true
       Point Inclusion Tolerance: 0.01000000
   Debug Output:
-    Write Solution to Standard Output: 0
-    Write Residual to Standard Output: 0
+    Write Solution to Standard Output: false
+    #Write Residual to Standard Output: -1
   Problem:
     Name: Mechanics 3D
     Phalanx Graph Visualization Detail: 0

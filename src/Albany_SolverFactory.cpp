@@ -1471,6 +1471,12 @@ Albany::SolverFactory::getValidDebugParameters() const
   validPL->set<bool>("Write Distributed Solution and Map to MatrixMarket", false, "Flag to Write Distributed Solution and Map to MatrixMarket"); 
   validPL->set<bool>("Write Solution to Standard Output", false, "Flag to Write Sotion to Standard Output");
   validPL->set<bool>("Analyze Memory", false, "Flag to Analyze Memory");
+#ifdef ALBANY_QCAD
+  validPL->set<std::string>("Poisson XML Input", "debugInput.xml", "Debug PL for QCAD Poisson problem"); 
+  validPL->set<std::string>("Schrodinger XML Input", "debugInput.xml", "Debug PL for QCAD Schrodinger problem");
+  validPL->set<std::string>("Poisson Exodus Output", "debug_poisson.exo", "Debug Exo File for QCAD Poisson problem"); 
+  validPL->set<std::string>("Schrodinger Exodus Output", "debug_schrodinger.exo", "Debug Exo File for QCAD Schrodinger problem"); 
+#endif
   return validPL; 
 }
 
