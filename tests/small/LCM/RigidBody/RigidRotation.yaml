@@ -2,7 +2,7 @@
 ---
 LCM:
   Scaling:
-    Scale: 1.00000000000000000e+03
+    Type: Diagonal
     Scale BC Dofs: true
   Problem:
     Name: Mechanics 3D
