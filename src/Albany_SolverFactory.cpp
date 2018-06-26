@@ -232,6 +232,10 @@ Albany::SolverFactory::SolverFactory(
   }
 
   appParams->validateParametersAndSetDefaults(*getValidAppParameters(), 0);
+  if (appParams->isSublist("Debug Output")) {
+    Teuchos::RCP<Teuchos::ParameterList> debugPL = Teuchos::rcpFromRef(appParams->sublist("Debug Output", false)); 
+    debugPL->validateParametersAndSetDefaults(*getValidDebugParameters(), 0);
+  }
 }
 
 Albany::SolverFactory::SolverFactory(
@@ -253,6 +257,10 @@ Albany::SolverFactory::SolverFactory(
   }
 
   appParams->validateParametersAndSetDefaults(*getValidAppParameters(), 0);
+  if (appParams->isSublist("Debug Output")) {
+    Teuchos::RCP<Teuchos::ParameterList> debugPL = Teuchos::rcpFromRef(appParams->sublist("Debug Output", false)); 
+    debugPL->validateParametersAndSetDefaults(*getValidDebugParameters(), 0);
+  }
 }
 
 Albany::SolverFactory::~SolverFactory()
@@ -1447,6 +1455,25 @@ Albany::SolverFactory::getValidAppParameters() const
 
   return validPL;
 }
+
+
+RCP<const ParameterList>
+Albany::SolverFactory::getValidDebugParameters() const
+{
+  RCP<ParameterList> validPL = rcp(new ParameterList("ValidDebugParams"));
+  validPL->set<int>("Write Jacobian to MatrixMarket", 0, "Jacobian Number to Dump to MatrixMarket");
+  validPL->set<int>("Compute Jacobian Condition Number", 0, "Jacobian Condition Number to Compute");
+  validPL->set<int>("Write Residual to MatrixMarket", 0, "Residual Number to Dump to MatrixMarket");
+  validPL->set<int>("Write Jacobian to Standard Output", 0, "Jacobian Number to Dump to Standard Output");
+  validPL->set<int>("Write Residual to Standard Output", 0, "Residual Number to Dump to Standard Output");
+  validPL->set<int>("Derivative Check", 0, "Derivative check");
+  validPL->set<bool>("Write Solution to MatrixMarket", false, "Flag to Write Solution to MatrixMarket"); 
+  validPL->set<bool>("Write Distributed Solution and Map to MatrixMarket", false, "Flag to Write Distributed Solution and Map to MatrixMarket"); 
+  validPL->set<bool>("Write Solution to Standard Output", false, "Flag to Write Sotion to Standard Output");
+  validPL->set<bool>("Analyze Memory", false, "Flag to Analyze Memory");
+  return validPL; 
+}
+
 
 RCP<const ParameterList>
 Albany::SolverFactory::getValidRegressionResultsParameters() const

@@ -147,6 +147,8 @@ class SolverFactory {
   Teuchos::RCP<const Teuchos::ParameterList>
   getValidAppParameters() const;
   Teuchos::RCP<const Teuchos::ParameterList>
+  getValidDebugParameters() const; 
+  Teuchos::RCP<const Teuchos::ParameterList>
   getValidParameterParameters() const;
   Teuchos::RCP<const Teuchos::ParameterList>
   getValidResponseParameters() const;
