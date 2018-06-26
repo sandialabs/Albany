@@ -38,7 +38,7 @@ int Preconditioner::BuildPreconditioner(
   
   // for now, just do inverse row sum.  Later, we'll hook in Cogent.
   RCP<Tpetra_Vector> invRowSums = Teuchos::rcp(new Tpetra_Vector(jacT->getRowMap()));
-  Albany::InvRowSum(invRowSums, jacT); 
+  Albany::InvAbsRowSum(invRowSums, jacT); 
   //IKT, FIXME: ReplaceDiagonalEntries has not been tested!  Need to test prior to using. 
   Albany::ReplaceDiagonalEntries(operator_, invRowSums);
 

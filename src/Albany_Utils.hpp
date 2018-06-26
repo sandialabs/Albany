@@ -86,10 +86,17 @@ ReplaceDiagonalEntries(
     const Teuchos::RCP<Tpetra_Vector>& diag);
 
 // Helper function which computes absolute values of the rowsum
+// of a matrix, takes its inverse, and puts it in a vector.
+void
+InvAbsRowSum(
+    Teuchos::RCP<Tpetra_Vector>& invAbsRowSumsTpetra,
+    const Teuchos::RCP<Tpetra_CrsMatrix> matrix);
+
+// Helper function which computes absolute values of the rowsum
 // of a matrix, and puts it in a vector.
 void
-InvRowSum(
-    Teuchos::RCP<Tpetra_Vector>& rowSumsTpetra,
+AbsRowSum(
+    Teuchos::RCP<Tpetra_Vector>& absRowSumsTpetra,
     const Teuchos::RCP<Tpetra_CrsMatrix> matrix);
 
 // IKT, FIXME: ultimately get ride of || defined (ALBANY_ATO) below

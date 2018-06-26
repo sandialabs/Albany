@@ -698,6 +698,8 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./LCM/utils/topology
                      ./FELIX/problems
                      ./FELIX/evaluators
+                     ./Tsunami/problems
+                     ./Tsunami/evaluators
                      ./Aeras/problems
                      ./Aeras/evaluators
                      ./Hydride/problems
@@ -960,6 +962,11 @@ ENDIF()
 IF (ALBANY_AERAS)
   add_subdirectory(Aeras)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} Aeras)
+ENDIF()
+
+IF (ALBANY_TSUNAMI)
+  add_subdirectory(Tsunami)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} Tsunami)
 ENDIF()
 
 # RPI APF mesh interface

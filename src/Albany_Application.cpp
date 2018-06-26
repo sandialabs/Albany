@@ -490,25 +490,9 @@ void Albany::Application::initialSetUp(
   } else if (scaleType == "Diagonal") {
     scale_type = DIAG;
     scale = 1.0e1;
-    if (scaleBCdofs == true) {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          true, Teuchos::Exceptions::InvalidParameter,
-          std::endl
-              << "Error in Albany::Application: "
-              << "Scale BC dofs does not work with " << scaleType
-              << "Type scaling, only Type = Constant Scaling." << std::endl);
-    }
   } else if (scaleType == "Abs Row Sum") {
     scale_type = ABSROWSUM;
     scale = 1.0e1;
-    if (scaleBCdofs == true) {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          true, Teuchos::Exceptions::InvalidParameter,
-          std::endl
-              << "Error in Albany::Application: "
-              << "Scale BC dofs does not work with " << scaleType
-              << "Type scaling, only Type = Constant Scaling." << std::endl);
-    }
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true, std::logic_error,
@@ -1431,9 +1415,9 @@ void Albany::Application::computeGlobalResidualImplT(
     if (scaleBCdofs == true) {
       setScaleBCDofs(workset);
 #ifdef WRITE_TO_MATRIX_MARKET
-      if (countScale == 0) {
-        Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
-      }
+      char nameScale[100]; // create string for file name
+      sprintf(nameScale, "scale%i.mm", countScale);
+      Tpetra_MatrixMarket_Writer::writeDenseFile(nameScale, scaleVec_);
 #endif
       countScale++;
     }
@@ -1810,10 +1794,11 @@ void Albany::Application::computeGlobalJacobianImplT(
     loadWorksetNodesetInfo(workset);
 
     if (scaleBCdofs == true) {
-      setScaleBCDofs(workset);
+      setScaleBCDofs(workset, jacT);
 #ifdef WRITE_TO_MATRIX_MARKET
-      if (countScale == 0)
-        Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
+      char nameScale[100]; // create string for file name
+      sprintf(nameScale, "scale%i.mm", countScale);
+      Tpetra_MatrixMarket_Writer::writeDenseFile(nameScale, scaleVec_);
 #endif
       countScale++;
     }
@@ -3525,7 +3510,11 @@ void Albany::Application::loadWorksetNodesetInfo(PHAL::Workset &workset) {
   workset.nodeSetCoords = Teuchos::rcpFromRef(disc->getNodeSetCoords());
 }
 
-void Albany::Application::setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT) {
+void Albany::Application::setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT) 
+{
+  if (scaleBCdofs == true) 
+    return; 
+
   if (scale_type == CONSTANT) { // constant scaling
     scaleVec_->putScalar(1.0 / scale);
   } else if (scale_type == DIAG) { // diagonal scaling
@@ -3547,13 +3536,36 @@ void Albany::Application::setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT) {
       scaleVec_->putScalar(1.0);
     } else {
       scaleVec_->putScalar(0.0);
-      Albany::InvRowSum(scaleVec_, jacT);
+      Albany::InvAbsRowSum(scaleVec_, jacT);
     }
   }
 }
 
-void Albany::Application::setScaleBCDofs(PHAL::Workset &workset) {
-  scaleVec_->putScalar(1.0);
+void Albany::Application::setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<Tpetra_CrsMatrix> jacT) 
+{
+  //First step: set scaleVec_ to all 1.0s
+  //IKT, FIXME: do we want to reset this to all 1.0s for each new Newton step? 
+  //May be hard to get that information at this level in the code.
+  if (scaleVec_->norm2() == 0.0) { 
+    scaleVec_->putScalar(1.0);
+  }
+  //If calling setScaleBCDofs with null Jacobian, don't recompute the scaling
+  if (jacT == Teuchos::null) 
+    return; 
+
+  //For diagonal or abs row sum scaling, set the scale equal to the maximum magnitude value 
+  //of the diagonal / abs row sum (inf-norm).  This way, scaling adjusts throughout 
+  //the simulation based on the Jacobian.  
+  Teuchos::RCP<Tpetra_Vector> tmp = Teuchos::rcp(new Tpetra_Vector(scaleVec_->getMap()));  
+  if (scale_type == DIAG) {
+    jacT->getLocalDiagCopy(*tmp);
+    scale = tmp->normInf(); 
+  }
+  else if (scale_type == ABSROWSUM) {
+    Albany::AbsRowSum(tmp, jacT);
+    scale = tmp->normInf(); 
+  }
+
   int l = 0;
   for (auto iterator = workset.nodeSets->begin();
        iterator != workset.nodeSets->end(); iterator++) {

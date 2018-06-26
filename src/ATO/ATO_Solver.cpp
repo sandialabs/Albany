@@ -1940,7 +1940,7 @@ ATO::SpatialFilter::buildOperator(
 
     // scale filter operator so rows sum to one.
     Teuchos::RCP<Tpetra_Vector> rowSumsT = Teuchos::rcp(new Tpetra_Vector(filterOperatorT->getRowMap()));
-    Albany::InvRowSum(rowSumsT, filterOperatorT); 
+    Albany::InvAbsRowSum(rowSumsT, filterOperatorT); 
     filterOperatorT->leftScale(*rowSumsT); 
 
     //IKT, FIXME: remove the following creation of filterOperatorTransposeT 

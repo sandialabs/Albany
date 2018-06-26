@@ -609,6 +609,17 @@ ELSE()
   SET(ALBANY_FELIX FALSE)
 ENDIF()
 
+OPTION(ENABLE_TSUNAMI "Flag to turn on TSUNAMI Source code" OFF)
+IF (ENABLE_TSUNAMI)
+  ADD_DEFINITIONS(-DALBANY_TSUNAMI)
+  MESSAGE("-- TSUNAMI     is Enabled, compiling with -DALBANY_TSUNAMI")
+  SET(ALBANY_TSUNAMI TRUE)
+ELSE()
+  MESSAGE("-- TSUNAMI     is NOT Enabled.")
+  SET(ALBANY_TSUNAMI FALSE)
+ENDIF()
+
+
 # Set optional build of CISM Interface for FELIX (Land Ice SciDAC project),
 # defaults to Disabled
 
