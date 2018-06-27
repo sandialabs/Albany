@@ -236,6 +236,10 @@ Albany::SolverFactory::SolverFactory(
     Teuchos::RCP<Teuchos::ParameterList> debugPL = Teuchos::rcpFromRef(appParams->sublist("Debug Output", false)); 
     debugPL->validateParametersAndSetDefaults(*getValidDebugParameters(), 0);
   }
+  if (appParams->isSublist("Scaling")) {
+    Teuchos::RCP<Teuchos::ParameterList> scalingPL = Teuchos::rcpFromRef(appParams->sublist("Scaling", false)); 
+    scalingPL->validateParametersAndSetDefaults(*getValidScalingParameters(), 0);
+  }
 }
 
 Albany::SolverFactory::SolverFactory(
@@ -1480,6 +1484,15 @@ Albany::SolverFactory::getValidDebugParameters() const
   return validPL; 
 }
 
+RCP<const ParameterList>
+Albany::SolverFactory::getValidScalingParameters() const
+{
+  RCP<ParameterList> validPL = rcp(new ParameterList("ValidScalingParams"));
+  validPL->set<double>("Scale", 1.0, "Value of Scaling to Apply to Jacobian/Residual");
+  validPL->set<bool>("Scale BC Dofs", false, "Flag to Scale Jacobian/Residual Rows Corresponding to DBC Dofs");
+  validPL->set<std::string>("Type", "Constant", "Scaling Type (Constant, Diagonal, AbsRowSum)"); 
+  return validPL; 
+}
 
 RCP<const ParameterList>
 Albany::SolverFactory::getValidRegressionResultsParameters() const
