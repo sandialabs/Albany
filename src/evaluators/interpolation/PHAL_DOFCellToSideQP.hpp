@@ -39,15 +39,15 @@ private:
 
   std::string                     sideSetName;
   std::vector<std::vector<int> >  sideNodes;
-  std::vector<int>                dims_cell;
   std::vector<int>                dims_side;
+  int                             num_side_nodes;
 
   // Input:
   PHX::MDField<const ScalarT>                           val_cell;
-  PHX::MDField<const ScalarT,Cell,Side,Node,QuadPoint>  BF;
+  PHX::MDField<const RealType,Cell,Side,Node,QuadPoint> BF;
 
   // Output:
-  PHX::MDField<ScalarT>                           val_side_qp;
+  PHX::MDField<ScalarT>                                 val_side_qp;
 
   enum LayoutType
   {
