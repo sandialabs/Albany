@@ -1115,11 +1115,11 @@ if (basalSideName!="INVALID")
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate ice thickness on QP on side
-    ev = evalUtils.getPSTUtils().constructDOFCellToSideQPEvaluator("ice_thickness", lateralSideName, "Node Scalar", cellType);
+    ev = evalUtils.getPSTUtils().constructDOFCellToSideQPEvaluator("ice_thickness", lateralSideName, "Node Scalar", cellType,"ice_thickness_"+lateralSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate surface height on QP on side
-    ev = evalUtils.getPSTUtils().constructDOFCellToSideQPEvaluator("surface_height", lateralSideName, "Node Scalar", cellType);
+    ev = evalUtils.getPSTUtils().constructDOFCellToSideQPEvaluator("surface_height", lateralSideName, "Node Scalar", cellType,"surface_height_"+lateralSideName);
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -1372,8 +1372,8 @@ if (basalSideName!="INVALID")
     p = Teuchos::rcp( new Teuchos::ParameterList("Lateral Residual") );
 
     // Input
-    p->set<std::string>("Ice Thickness Variable Name", "ice_thickness");
-    p->set<std::string>("Ice Surface Elevation Variable Name", "surface_height");
+    p->set<std::string>("Ice Thickness Variable Name", "ice_thickness_"+lateralSideName);
+    p->set<std::string>("Ice Surface Elevation Variable Name", "surface_height_"+lateralSideName);
     p->set<std::string>("BF Side Name", Albany::bf_name + " " + lateralSideName);
     p->set<std::string>("Weighted Measure Name", Albany::weighted_measure_name + " " + lateralSideName);
     p->set<std::string>("Side Normal Name", Albany::normal_name + " " + lateralSideName);
