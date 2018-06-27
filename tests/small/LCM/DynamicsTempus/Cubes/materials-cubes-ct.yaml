@@ -7,7 +7,6 @@ LCM:
       Use Composite Tet 10: false
       Use Analytic Mass: true
       Lump Analytic Mass: false
-      Residual Computed Using Cubature: false
   Materials:
     Fine:
       Material Model:
