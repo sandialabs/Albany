@@ -22,7 +22,7 @@
     </ParameterList>
 
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="0"/>
+      <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0" type="string" value="Solution Max Value"/>
       <ParameterList name="ResponseParams 0">
         <Parameter name="Equation" type="int" value="0"/>
@@ -34,16 +34,13 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="vortex.exo"/>
-    <Parameter name="Exodus Output File Name" type="string" value="vortex--transient.exo"/>
-    <Parameter name="Use Serial Mesh" type="bool" value="1"/>
+    <Parameter name="Exodus Output File Name" type="string" value="vortex-transient.exo"/>
   </ParameterList>
 
   <ParameterList name="Regression Results">
-    <Parameter name="Number of Comparisons" type="int" value="0"/>
-    <Parameter name="Test Values" type="Array(double)" value="{56.3530812}"/>
+    <Parameter name="Number of Comparisons" type="int" value="1"/>
+    <Parameter name="Test Values" type="Array(double)" value="{72.6888316627}"/>
     <Parameter name="Relative Tolerance" type="double" value="1.0e-3"/>
-    <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
-    <Parameter name="Sensitivity Test Values 0" type="Array(double)" value="{1.3989041,-0.47483441}"/>
   </ParameterList>
 
   <ParameterList name="Piro">

@@ -28,9 +28,15 @@ add_test(${testName}_Blocked ${Albany.exe} inputBlocked.xml)
 endif()
 
 # Uses Time Dep BC infrastructure from LCM
-if (ALBANY_LCM AND ALBANY_EPETRA AND ALBANY_IOPX)
+if (ALBANY_LCM AND ALBANY_EPETRA)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTransientRK.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputTransientRK.xml COPYONLY)
 
 add_test(${testName}_TransIRK ${Albany.exe} inputTransientRK.xml)
-endif(ALBANY_LCM AND ALBANY_EPETRA AND ALBANY_IOPX)
+endif(ALBANY_LCM AND ALBANY_EPETRA)
+if (ALBANY_LCM AND ALBANY_IFPACK2)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTransientRKT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputTransientRKT.yaml COPYONLY)
+
+add_test(${testName}_TransIRK_Tpetra ${AlbanyT.exe} inputTransientRKT.yaml)
+endif(ALBANY_LCM AND ALBANY_IFPACK2)
