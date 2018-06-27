@@ -127,10 +127,10 @@ namespace Tsunami {
 
 #include "PHAL_Neumann.hpp"
 #include "Tsunami_NavierStokesContravarientMetricTensor.hpp"
+#include "Tsunami_NavierStokesBodyForce.hpp"
 //IKT, FIXME: rename and uncomment! 
 /*#include "FELIX_SharedParameter.hpp"
 #include "FELIX_ParamEnum.hpp"
-#include "FELIX_StokesBodyForce.hpp"
 #include "FELIX_StokesRm.hpp"
 #include "FELIX_StokesTauM.hpp"
 #include "FELIX_StokesMomentumResid.hpp"
@@ -266,12 +266,10 @@ Tsunami::NavierStokes::constructEvaluators(
 
 
 
-/*
   if (haveFlowEq) { // Body Force
     RCP<ParameterList> p = rcp(new ParameterList("Body Force"));
 
     //Input
-    p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
 
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
@@ -284,7 +282,6 @@ Tsunami::NavierStokes::constructEvaluators(
     ev = rcp(new Tsunami::NavierStokesBodyForce<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-*/
 
 /*
   if (haveFlowEq) { // Rm
