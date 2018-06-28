@@ -54,6 +54,10 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> Rm;
 
   unsigned int numQPs, numDims, numNodes;
+
+  bool have_advection; 
+  bool have_unsteady;
+  Teuchos::RCP<Teuchos::FancyOStream> out;  
  
 };
 }

@@ -19,8 +19,8 @@ NavierStokesRm(const Teuchos::ParameterList& p,
   VGrad  (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_tensor),
   V      (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
   force  (p.get<std::string> ("Body Force QP Variable Name"), dl->qp_vector),
-  Rm     (p.get<std::string> ("Rm Name"), dl->qp_vector)
-
+  Rm     (p.get<std::string> ("Rm Name"), dl->qp_vector),
+  out    (Teuchos::VerboseObjectBase::getDefaultOStream()) 
 {
   coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
@@ -38,6 +38,11 @@ NavierStokesRm(const Teuchos::ParameterList& p,
   numQPs  = dims[2];
   numDims = dims[3];
 
+  have_advection = p.get<bool>("Have Advection Term"); 
+  have_unsteady = p.get<bool>("Have Transient Term"); 
+  
+  *out << "Have_advection = " << have_advection << "\n"; 
+  *out << "Have_unsteady = "  << have_unsteady << "\n"; 
   this->setName("NavierStokesRm"+PHX::typeAsString<EvalT>());
 }
 

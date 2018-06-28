@@ -49,13 +49,17 @@ variableTypeToString(Tsunami::NavierStokes::NS_VAR_TYPE variableType)
 Tsunami::NavierStokes::
 NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
-             const int numDim_) :
+             const int numDim_, 
+             const bool haveAdvection_, 
+             const bool haveUnsteady_) :
   Albany::AbstractProblem(params_, paramLib_),
   haveFlow(false),
   haveFlowEq(false),
   haveSource(false),
   havePSPG(false),
   numDim(numDim_),
+  haveAdvection(haveAdvection_),
+  haveUnsteady(haveUnsteady_),
   use_sdbcs_(false)
 {
 
@@ -67,8 +71,6 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
 
   haveSource = true;
-
-
 
   // Compute number of equations
   int num_eq = 0;
@@ -85,10 +87,11 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
 
   // Print out a summary of the problem
-  *out << "Stokes problem:" << std::endl
+  *out << "Navier Stokes problem:" << std::endl
        << "\tSpatial dimension:      " << numDim << std::endl
-       << "\tFlow variables:         " << variableTypeToString(flowType)
-       << std::endl
+       << "\tFlow variables:         " << variableTypeToString(flowType) << std::endl
+       << "\tHave Advection:         " << haveAdvection << std::endl
+       << "\tHave Unsteadey:         " << haveUnsteady << std::endl
        << "\tPressure stabilization: " << havePSPG << std::endl;
 }
 

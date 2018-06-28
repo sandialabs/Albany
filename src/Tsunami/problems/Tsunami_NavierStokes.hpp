@@ -28,7 +28,9 @@ namespace Tsunami {
     //! Default constructor
     NavierStokes(const Teuchos::RCP<Teuchos::ParameterList>& params,
      const Teuchos::RCP<ParamLib>& paramLib,
-     const int numDim_);
+     const int numDim_, 
+     const bool haveAdvection_=true,
+     const bool haveUnsteady_=true);
 
     //! Destructor
     ~NavierStokes();
@@ -108,6 +110,9 @@ namespace Tsunami {
     bool haveSource;   //! have source term in heat equation
     bool havePSPG;     //! have pressure stabilization
 
+    bool haveAdvection; //! turns on nonlinear convection terms in NS
+    bool haveUnsteady;  //! turns on time-dependent terms in NS 
+
     Teuchos::RCP<Albany::Layouts> dl;
 
     /// Boolean marking whether SDBCs are used
@@ -132,10 +137,6 @@ namespace Tsunami {
 #include "Tsunami_NavierStokesContinuityResid.hpp"
 #include "Tsunami_NavierStokesMomentumResid.hpp"
 #include "Tsunami_NavierStokesTauM.hpp"
-//IKT, FIXME: rename and uncomment! 
-/*#include "FELIX_SharedParameter.hpp"
-#include "FELIX_ParamEnum.hpp"
-*/
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -294,6 +295,8 @@ Tsunami::NavierStokes::constructEvaluators(
     p->set<std::string>("Pressure Gradient QP Variable Name", "Pressure Gradient");
     p->set<std::string>("Body Force QP Variable Name", "Body Force");
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+    p->set<bool>("Have Advection Term", haveAdvection); 
+    p->set<bool>("Have Transient Term", haveUnsteady); 
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
