@@ -1110,6 +1110,10 @@ if (basalSideName!="INVALID")
     ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,lateralSideName,"Vertex Vector",cellType,Albany::coord_vec_name + " " + lateralSideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
+    //---- Compute Quad Points coordinates on the side set
+    ev = evalUtils.constructMapToPhysicalFrameSideEvaluator(cellType,lateralCubature,lateralSideName);
+    fm0.template registerEvaluator<EvalT> (ev);
+
     //---- Compute side basis functions
     ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, lateralSideBasis, lateralCubature, lateralSideName, false, true);
     fm0.template registerEvaluator<EvalT> (ev);
@@ -1374,6 +1378,7 @@ if (basalSideName!="INVALID")
     // Input
     p->set<std::string>("Ice Thickness Variable Name", "ice_thickness_"+lateralSideName);
     p->set<std::string>("Ice Surface Elevation Variable Name", "surface_height_"+lateralSideName);
+    p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name + " " + lateralSideName);
     p->set<std::string>("BF Side Name", Albany::bf_name + " " + lateralSideName);
     p->set<std::string>("Weighted Measure Name", Albany::weighted_measure_name + " " + lateralSideName);
     p->set<std::string>("Side Normal Name", Albany::normal_name + " " + lateralSideName);
