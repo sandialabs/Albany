@@ -20,7 +20,7 @@ StokesFOThickness( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
-  numDim(numDim_), 
+  numDim(numDim_),
   use_sdbcs_(false)
 {
   //Set # of PDEs per node.
@@ -41,11 +41,15 @@ StokesFOThickness( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   basalSideName   = params->isParameter("Basal Side Name")   ? params->get<std::string>("Basal Side Name")   : "INVALID";
   surfaceSideName = params->isParameter("Surface Side Name") ? params->get<std::string>("Surface Side Name") : "INVALID";
+  lateralSideName = params->isParameter("Lateral Side Name") ? params->get<std::string>("Lateral Side Name") : "INVALID";
   basalEBName = "INVALID";
   surfaceEBName = "INVALID";
   sliding = params->isSublist("FELIX Basal Friction Coefficient");
+  lateral_resid = params->isSublist("FELIX Lateral BC");
   TEUCHOS_TEST_FOR_EXCEPTION (sliding && basalSideName=="INVALID", std::logic_error,
                               "Error! With sliding, you need to provide a valid 'Basal Side Name',\n" );
+  TEUCHOS_TEST_FOR_EXCEPTION (lateral_resid && lateralSideName=="INVALID", std::logic_error,
+                              "Error! With lateral BC, you need to provide a valid 'Lateral Side Name',\n" );
 
   // Loading basal requirements (if any)
   if (params->isParameter("Required Basal Fields"))
@@ -116,6 +120,11 @@ buildProblem(
   int numBasalSideVertices   = -1;
   int numBasalSideNodes      = -1;
   int numBasalSideQPs        = -1;
+  int numLateralSideVertices = -1;
+  int numLateralSideNodes    = -1;
+  int numLateralSideQPs      = -1;
+
+  int sideDim = numDim-1;
 
   if (basalSideName!="INVALID")
   {
@@ -136,7 +145,7 @@ buildProblem(
     numBasalSideQPs      = basalCubature->getNumPoints();
 
     dl_basal = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,
-                                       numBasalSideQPs,numDim-1,numDim,numCellSides,neq));
+                                       numBasalSideQPs,sideDim,numDim,numCellSides,neq));
     dl_full->side_layouts[basalSideName] = dl_basal;
   }
 
@@ -160,8 +169,67 @@ buildProblem(
     numSurfaceSideQPs      = surfaceCubature->getNumPoints();
 
     dl_surface = rcp(new Albany::Layouts(worksetSize,numSurfaceSideVertices,numSurfaceSideNodes,
-                                         numSurfaceSideQPs,numDim-1,numDim,numCellSides,vecDimFO));
+                                         numSurfaceSideQPs,sideDim,numDim,numCellSides,vecDimFO));
     dl->side_layouts[surfaceSideName] = dl_surface;
+  }
+
+  if (lateralSideName!="INVALID") {
+    // For lateral bc, we want to give the option of not creating a whole discretization, since
+    // it would just be needed to setup the lateral bc. If the user does not specify a lateral
+    // discretization, we build the information we need ourself. The user can specify the quadrature
+    // degree for the lateral bc in the 'FELIX Lateral BC' sublist. This would also be used to
+    // override the specs of the lateral discretization (if present).
+
+    const CellTopologyData* side_top = nullptr;
+    int lateralCubDegree = -1;
+
+    auto ss_ms = meshSpecs[0]->sideSetMeshSpecs;
+    auto it = ss_ms.find(lateralSideName);
+    if (it!=ss_ms.end()) {
+      // The user specified a lateral side discretization. Just get the topology from the lateral side mesh specs
+      side_top = &it->second[0]->ctd;
+      lateralCubDegree = it->second[0]->cubatureDegree;
+    } else {
+      // The user did not specify a lateral side discretization. We need to create a topology from
+      // the cell topology. We need to check what's the cell topology: if tetra/tria/quad/hexa, then
+      // all sides have the same topology, so any side of the cell topology works. But if we have wedges,
+      // then lateral side is the quadrilateral. As of this writing, the quad sides of a wedge are the first
+      // three. However, for safety, we loop through all sides and check their node count, and pick the first
+      // side with 4 nodes.
+      std::string cell_top_name (cell_top->base->name);
+      if (cell_top_name=="Wedge_6") {
+        for (int i=0; i<cellType->getSubcellCount(sideDim); ++i) {
+          std::string tmp (cellType->getCellTopologyData(sideDim,i)->base->name);
+          if (tmp=="Quadrilateral_4") {
+            // Found the lateral side. Get topology and break
+            side_top = cellType->getCellTopologyData(sideDim,i);
+            break;
+          }
+        }
+      } else {
+        // All sides have the same topology. Just pick the first
+        side_top = cellType->getCellTopologyData(sideDim,0);
+      }
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION (side_top==nullptr, std::runtime_error, "Error! Something went wrong while detecting lateral side topology.\n");
+
+    if (params->sublist("FELIX Lateral BC").isParameter("Cubature Degree")) {
+      lateralCubDegree = params->sublist("FELIX Lateral BC").get<int>("Cubature Degree");
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION (lateralCubDegree<0, std::runtime_error, "Error! Missing cubature degree information on side '" << lateralSideName << ".\n");
+
+    lateralSideBasis = Albany::getIntrepid2Basis(*side_top);
+    lateralSideType = rcp(new shards::CellTopology (side_top));
+
+    lateralCubature = cubFactory.create<PHX::Device, RealType, RealType>(*lateralSideType, lateralCubDegree);
+
+    numLateralSideVertices = lateralSideType->getNodeCount();
+    numLateralSideNodes    = lateralSideBasis->getCardinality();
+    numLateralSideQPs      = lateralCubature->getNumPoints();
+
+    dl_lateral = rcp(new Albany::Layouts(worksetSize,numLateralSideVertices,numLateralSideNodes,
+                                         numLateralSideQPs,sideDim,numDim,numCellSides,vecDimFO));
+    dl->side_layouts[lateralSideName] = dl_lateral;
   }
 
 //#ifdef OUTPUT_TO_SCREEN
@@ -178,7 +246,10 @@ buildProblem(
        << "  BasalSideQuadPts    = " << numBasalSideQPs << "\n"
        << "  SurfaceSideVertices = " << numSurfaceSideVertices << "\n"
        << "  SurfaceSideNodes    = " << numSurfaceSideNodes << "\n"
-       << "  SurfaceSideQuadPts  = " << numSurfaceSideQPs << std::endl;
+       << "  SurfaceSideQuadPts  = " << numSurfaceSideQPs << "\n"
+       << "  LateralSideVertices = " << numLateralSideVertices << "\n"
+       << "  LateralSideNodes    = " << numLateralSideNodes << "\n"
+       << "  LateralSideQuadPts  = " << numLateralSideQPs << std::endl;
 //#endif
 
  /* Construct All Phalanx Evaluators */
@@ -226,7 +297,7 @@ FELIX::StokesFOThickness::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
-   use_sdbcs_ = dirUtils.useSDBCs(); 
+   use_sdbcs_ = dirUtils.useSDBCs();
    offsets_ = dirUtils.getOffsets();
 }
 
@@ -326,6 +397,8 @@ FELIX::StokesFOThickness::getValidProblemParameters() const
   validPL->sublist("Parameter Fields", false, "Parameter Fields to be registered");
   validPL->set<std::string> ("Basal Side Name", "", "Name of the basal side set");
   validPL->set<std::string> ("Surface Side Name", "", "Name of the surface side set");
+  validPL->set<std::string> ("Lateral Side Name", "", "Name of the lateral side set");
+  validPL->sublist("FELIX Lateral BC", false, "Specify parameters to use for the lateral BC");
   validPL->set<Teuchos::Array<std::string> > ("Required Fields", Teuchos::Array<std::string>(), "");
   validPL->set<Teuchos::Array<std::string> > ("Required Basal Fields", Teuchos::Array<std::string>(), "");
   validPL->set<Teuchos::Array<std::string> > ("Required Surface Fields", Teuchos::Array<std::string>(), "");
