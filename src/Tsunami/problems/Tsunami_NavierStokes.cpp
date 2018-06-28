@@ -237,13 +237,9 @@ Tsunami::NavierStokes::getValidProblemParameters() const
     this->getGenericProblemParams("ValidStokesParams");
 
   validPL->set<bool>("Have Pressure Stabilization", true);
-  validPL->sublist("Flow", false, "");
-  validPL->sublist("Density", false, "");
-  validPL->sublist("Viscosity", false, "");
-  validPL->sublist("FELIX Viscosity", false, "");
   validPL->sublist("Tau M", false, "");
   validPL->sublist("Body Force", false, "");
-  validPL->sublist("FELIX Physical Parameters", false, "");
+  validPL->sublist("Tsunami Physical Parameters", false, "");
 
   return validPL;
 }

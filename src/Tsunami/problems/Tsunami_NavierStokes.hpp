@@ -130,12 +130,12 @@ namespace Tsunami {
 #include "Tsunami_NavierStokesBodyForce.hpp"
 #include "Tsunami_NavierStokesRm.hpp"
 #include "Tsunami_NavierStokesContinuityResid.hpp"
+#include "Tsunami_NavierStokesMomentumResid.hpp"
+#include "Tsunami_NavierStokesTauM.hpp"
 //IKT, FIXME: rename and uncomment! 
 /*#include "FELIX_SharedParameter.hpp"
 #include "FELIX_ParamEnum.hpp"
-#include "FELIX_StokesTauM.hpp"
-#include "FELIX_StokesMomentumResid.hpp"
-#include "FELIX_Viscosity.hpp"*/
+*/
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -303,37 +303,6 @@ Tsunami::NavierStokes::constructEvaluators(
     ev = rcp(new Tsunami::NavierStokesRm<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-  /*
-  //IK, 7/24/2012
-  if (haveFlowEq) { // FELIX viscosity
-    RCP<ParameterList> p = rcp(new ParameterList("FELIX Viscosity"));
-
-    //Input
-    p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("FELIX Viscosity");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-
-    //Output
-    p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
-
-    ev = rcp(new FELIX::Viscosity<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    //--- Shared Parameter for Continuation:  ---//
-    p = rcp(new ParameterList("Homotopy Parameter"));
-
-    std::string param_name = "Glen's Law Homotopy Parameter";
-    p->set<std::string>("Parameter Name", param_name);
-    p->set< RCP<ParamLib> >("Parameter Library", paramLib);
-
-    RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>> ptr_homotopy;
-    ptr_homotopy = rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>(*p,dl));
-    ptr_homotopy->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Viscosity").get<double>(param_name,-1.0));
-    fm0.template registerEvaluator<EvalT>(ptr_homotopy);
-  }
-
 
   if (haveFlowEq && havePSPG) { // Tau M
     RCP<ParameterList> p = rcp(new ParameterList("Tau M"));
@@ -344,7 +313,6 @@ Tsunami::NavierStokes::constructEvaluators(
     p->set<std::string>("Jacobian Det Name", "Jacobian Det");
     p->set<string>("Jacobian Name",          "Jacobian");
     p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
-    p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Tau M");
@@ -367,7 +335,6 @@ Tsunami::NavierStokes::constructEvaluators(
     p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
     p->set<std::string>("Pressure QP Variable Name", "Pressure");
     p->set<std::string>("Pressure Gradient QP Variable Name", "Pressure Gradient");
-    p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
     p->set<std::string>("Body Force Name", "Body Force");
 
     p->set<std::string>("Velocity QP Variable Name", "Velocity");
@@ -382,7 +349,7 @@ Tsunami::NavierStokes::constructEvaluators(
     ev = rcp(new Tsunami::NavierStokesMomentumResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-*/
+
 
   if (haveFlowEq) { // Continuity Resid
     RCP<ParameterList> p = rcp(new ParameterList("Continuity Resid"));
