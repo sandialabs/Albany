@@ -3,7 +3,7 @@
 ANONYMOUS:
   Problem: 
     Phalanx Graph Visualization Detail: 1
-    Name: Tsunami Navier Stokes 2D
+    Name: Tsunami Steady Stokes 2D
     Dirichlet BCs: 
       DBC on NS NodeSet0 for DOF ux: 0.00000000000000000e+00
       DBC on NS NodeSet1 for DOF ux: 0.00000000000000000e+00
@@ -15,7 +15,7 @@ ANONYMOUS:
       DBC on NS NodeSet3 for DOF uy: 0.00000000000000000e+00
       DBC on NS NodeSet99 for DOF p: 4.16129999999999978e+00
     Body Force: 
-      Type: Poly
+      Type: Poly Steady Stokes 2D
     Parameters: 
       Number: 0
       Parameter 0: DBC on NS NodeSet1 for DOF ux

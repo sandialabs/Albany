@@ -29,7 +29,7 @@ NavierStokesBodyForce(const Teuchos::ParameterList& p,
   if (type == "None") {
     bf_type = NONE;
   }
-  else if (type == "Poly") {
+  else if (type == "Poly Steady Stokes 2D") {
     bf_type = POLY;
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
