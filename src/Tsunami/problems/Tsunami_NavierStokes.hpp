@@ -128,13 +128,13 @@ namespace Tsunami {
 #include "PHAL_Neumann.hpp"
 #include "Tsunami_NavierStokesContravarientMetricTensor.hpp"
 #include "Tsunami_NavierStokesBodyForce.hpp"
+#include "Tsunami_NavierStokesRm.hpp"
+#include "Tsunami_NavierStokesContinuityResid.hpp"
 //IKT, FIXME: rename and uncomment! 
 /*#include "FELIX_SharedParameter.hpp"
 #include "FELIX_ParamEnum.hpp"
-#include "FELIX_StokesRm.hpp"
 #include "FELIX_StokesTauM.hpp"
 #include "FELIX_StokesMomentumResid.hpp"
-#include "FELIX_StokesContinuityResid.hpp"
 #include "FELIX_Viscosity.hpp"*/
 
 template <typename EvalT>
@@ -283,7 +283,7 @@ Tsunami::NavierStokes::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-/*
+
   if (haveFlowEq) { // Rm
     RCP<ParameterList> p = rcp(new ParameterList("Rm"));
 
@@ -303,7 +303,7 @@ Tsunami::NavierStokes::constructEvaluators(
     ev = rcp(new Tsunami::NavierStokesRm<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-
+  /*
   //IK, 7/24/2012
   if (haveFlowEq) { // FELIX viscosity
     RCP<ParameterList> p = rcp(new ParameterList("FELIX Viscosity"));
@@ -382,7 +382,7 @@ Tsunami::NavierStokes::constructEvaluators(
     ev = rcp(new Tsunami::NavierStokesMomentumResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-
+*/
 
   if (haveFlowEq) { // Continuity Resid
     RCP<ParameterList> p = rcp(new ParameterList("Continuity Resid"));
@@ -405,7 +405,7 @@ Tsunami::NavierStokes::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-
+/*
   Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
 
   //basal friction

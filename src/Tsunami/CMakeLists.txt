@@ -10,6 +10,8 @@
        problems/Tsunami_NavierStokes.cpp
        evaluators/Tsunami_NavierStokesContravarientMetricTensor.cpp
        evaluators/Tsunami_NavierStokesBodyForce.cpp
+       evaluators/Tsunami_NavierStokesRm.cpp
+       evaluators/Tsunami_NavierStokesContinuityResid.cpp
    )
 
   SET(HEADERS
@@ -18,6 +20,10 @@
        evaluators/Tsunami_NavierStokesContravarientMetricTensor_Def.hpp
        evaluators/Tsunami_NavierStokesBodyForce.hpp
        evaluators/Tsunami_NavierStokesBodyForce_Def.hpp
+       evaluators/Tsunami_NavierStokesRm.hpp
+       evaluators/Tsunami_NavierStokesRm_Def.hpp
+       evaluators/Tsunami_NavierStokesContinuityResid.hpp
+       evaluators/Tsunami_NavierStokesContinuityResid_Def.hpp
   )
 
 

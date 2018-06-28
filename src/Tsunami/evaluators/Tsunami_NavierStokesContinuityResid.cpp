@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "FELIX_StokesRm.hpp"
-#include "FELIX_StokesRm_Def.hpp"
+#include "Tsunami_NavierStokesContinuityResid.hpp"
+#include "Tsunami_NavierStokesContinuityResid_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::StokesRm)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Tsunami::NavierStokesContinuityResid)
 

@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_STOKESCONTINUITYRESID_HPP
-#define FELIX_STOKESCONTINUITYRESID_HPP
+#ifndef TSUNAMI_NAVIERSTOKESCONTINUITYRESID_HPP
+#define TSUNAMI_NAVIERSTOKESCONTINUITYRESID_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -13,7 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 
-namespace FELIX {
+namespace Tsunami {
 /** \brief Finite Element Interpolation Evaluator
 
     This evaluator interpolates nodal DOF values to quad points.
@@ -21,12 +21,12 @@ namespace FELIX {
 */
 
 template<typename EvalT, typename Traits>
-class StokesContinuityResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+class NavierStokesContinuityResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  StokesContinuityResid(const Teuchos::ParameterList& p,
+  NavierStokesContinuityResid(const Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,

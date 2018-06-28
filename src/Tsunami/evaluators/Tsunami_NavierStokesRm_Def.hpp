@@ -8,12 +8,12 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
 
-namespace FELIX {
+namespace Tsunami {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-StokesRm<EvalT, Traits>::
-StokesRm(const Teuchos::ParameterList& p,
+NavierStokesRm<EvalT, Traits>::
+NavierStokesRm(const Teuchos::ParameterList& p,
          const Teuchos::RCP<Albany::Layouts>& dl) :
   pGrad  (p.get<std::string> ("Pressure Gradient QP Variable Name"), dl->qp_vector),
   VGrad  (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_tensor),
@@ -38,12 +38,12 @@ StokesRm(const Teuchos::ParameterList& p,
   numQPs  = dims[2];
   numDims = dims[3];
 
-  this->setName("StokesRm"+PHX::typeAsString<EvalT>());
+  this->setName("NavierStokesRm"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void StokesRm<EvalT, Traits>::
+void NavierStokesRm<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -58,7 +58,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void StokesRm<EvalT, Traits>::
+void NavierStokesRm<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {

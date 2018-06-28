@@ -9,13 +9,13 @@
 #include "Phalanx_TypeStrings.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
-namespace FELIX {
+namespace Tsunami {
 
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-StokesContinuityResid<EvalT, Traits>::
-StokesContinuityResid(const Teuchos::ParameterList& p,
+NavierStokesContinuityResid<EvalT, Traits>::
+NavierStokesContinuityResid(const Teuchos::ParameterList& p,
                       const Teuchos::RCP<Albany::Layouts>& dl) :
   wBF       (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
   VGrad     (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_tensor),
@@ -45,12 +45,12 @@ StokesContinuityResid(const Teuchos::ParameterList& p,
   numQPs  = dims[2];
   numDims = dims[3];
 
-  this->setName("StokesContinuityResid"+PHX::typeAsString<EvalT>());
+  this->setName("NavierStokesContinuityResid"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void StokesContinuityResid<EvalT, Traits>::
+void NavierStokesContinuityResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -132,7 +132,7 @@ void contractDataFieldScalar(ArrayOutFields &       outputFields,
 }
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void StokesContinuityResid<EvalT, Traits>::
+void NavierStokesContinuityResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;

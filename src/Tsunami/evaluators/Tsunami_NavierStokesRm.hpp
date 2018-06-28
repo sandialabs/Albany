@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_STOKESRM_HPP
-#define FELIX_STOKESRM_HPP
+#ifndef Tsunami_NAVIERSTOKESRM_HPP
+#define Tsunami_NAVIERSTOKESRM_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -13,7 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 
-namespace FELIX {
+namespace Tsunami {
 /** \brief Finite Element Interpolation Evaluator
 
     This evaluator interpolates nodal DOF values to quad points.
@@ -21,14 +21,14 @@ namespace FELIX {
 */
 
 template<typename EvalT, typename Traits>
-class StokesRm : public PHX::EvaluatorWithBaseImpl<Traits>,
+class NavierStokesRm : public PHX::EvaluatorWithBaseImpl<Traits>,
 	     public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  StokesRm(const Teuchos::ParameterList& p,
+  NavierStokesRm(const Teuchos::ParameterList& p,
            const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
