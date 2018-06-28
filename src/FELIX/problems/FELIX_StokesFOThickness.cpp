@@ -228,8 +228,8 @@ buildProblem(
     numLateralSideQPs      = lateralCubature->getNumPoints();
 
     dl_lateral = rcp(new Albany::Layouts(worksetSize,numLateralSideVertices,numLateralSideNodes,
-                                         numLateralSideQPs,sideDim,numDim,numCellSides,vecDimFO));
-    dl->side_layouts[lateralSideName] = dl_lateral;
+                                         numLateralSideQPs,sideDim,numDim,numCellSides,neq));
+    dl_full->side_layouts[lateralSideName] = dl_lateral;
   }
 
 //#ifdef OUTPUT_TO_SCREEN

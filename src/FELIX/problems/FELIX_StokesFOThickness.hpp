@@ -550,19 +550,19 @@ FELIX::StokesFOThickness::constructEvaluators(
   if (lateralSideName!="INVALID")
   {
     //---- Restrict vertex coordinates from cell-based to cell-side-based
-    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,lateralSideName,"Vertex Vector",cellType,Albany::coord_vec_name + " " + lateralSideName);
+    ev = evalUtils_full.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,lateralSideName,"Vertex Vector",cellType,Albany::coord_vec_name + " " + lateralSideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Compute side basis functions
-    ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, lateralSideBasis, lateralCubature, lateralSideName, false, true);
+    ev = evalUtils_full.constructComputeBasisFunctionsSideEvaluator(cellType, lateralSideBasis, lateralCubature, lateralSideName, false, true);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate ice thickness on QP on side
-    ev = evalUtils.getPSTUtils().constructDOFCellToSideQPEvaluator("ice_thickness", lateralSideName, "Node Scalar", cellType,"ice_thickness_"+lateralSideName);
+    ev = evalUtils_full.getPSTUtils().constructDOFCellToSideQPEvaluator("ice_thickness", lateralSideName, "Node Scalar", cellType,"ice_thickness_"+lateralSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate surface height on QP on side
-    ev = evalUtils.getPSTUtils().constructDOFCellToSideQPEvaluator("surface_height", lateralSideName, "Node Scalar", cellType,"surface_height_"+lateralSideName);
+    ev = evalUtils_full.getPSTUtils().constructDOFCellToSideQPEvaluator("surface_height", lateralSideName, "Node Scalar", cellType,"surface_height_"+lateralSideName);
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -923,7 +923,7 @@ FELIX::StokesFOThickness::constructEvaluators(
     // Output
     p->set<std::string>("Lateral Residual Variable Name", "Lateral Residual");
 
-    ev = Teuchos::rcp( new FELIX::StokesFOLateralResid<EvalT,PHAL::AlbanyTraits,false>(*p,dl) );
+    ev = Teuchos::rcp( new FELIX::StokesFOLateralResid<EvalT,PHAL::AlbanyTraits,false>(*p,dl_full) );
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
