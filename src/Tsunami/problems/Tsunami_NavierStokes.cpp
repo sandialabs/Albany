@@ -239,6 +239,7 @@ Tsunami::NavierStokes::getValidProblemParameters() const
   validPL->set<bool>("Have Pressure Stabilization", true);
   validPL->sublist("Tau M", false, "");
   validPL->sublist("Body Force", false, "");
+  validPL->sublist("Flow", false, "");
   validPL->sublist("Tsunami Physical Parameters", false, "");
 
   return validPL;

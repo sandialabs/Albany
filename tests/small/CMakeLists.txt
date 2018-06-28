@@ -108,6 +108,12 @@ IF(ALBANY_FELIX AND ALBANY_SEACAS )
   add_subdirectory(FELIX)
 ENDIF()
 
+# FELIX ##################
+
+IF(ALBANY_TSUNAMI AND ALBANY_SEACAS )
+  add_subdirectory(Tsunami)
+ENDIF()
+
 # MOR   ##################
 
 IF(ALBANY_MOR AND ALBANY_EPETRA)
