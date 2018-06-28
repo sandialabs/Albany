@@ -13,6 +13,7 @@
     <Parameter name="Required Surface Fields" type="Array(string)" value="{observed_surface_velocity,observed_surface_velocity_RMS}"/>
     <Parameter name="Basal Side Name"         type="string"        value="basalside"/>
     <Parameter name="Surface Side Name"       type="string"        value="upperside"/>
+    <Parameter name="Lateral Side Name"       type="string" value="lateralside"/>
 
     <ParameterList name="Response Functions">
       <Parameter name="Number"     type="int"    value="1"/>
@@ -25,8 +26,8 @@
     </ParameterList>
 
     <ParameterList name="Neumann BCs">
-       <Parameter name="NBC on SS lateralside for DOF all set lateral" type="Array(double)" value="{0.0, 0.0, 0.0, 0.0, 0.0}"/>
-       <Parameter name="Cubature Degree" type="int" value="3"/>
+       <!-- <Parameter name="NBC on SS lateralside for DOF all set lateral" type="Array(double)" value="{0.0, 0.0, 0.0, 0.0, 0.0}"/> -->
+       <!-- <Parameter name="Cubature Degree" type="int" value="3"/> -->
     </ParameterList>
 
     <ParameterList name="Parameters">
@@ -36,6 +37,10 @@
 
     <ParameterList name="Distributed Parameters">
       <Parameter name="Number of Parameter Vectors" type="int" value="0"/>
+    </ParameterList>
+
+    <ParameterList name="FELIX Lateral BC">
+      <Parameter name="Cubature Degree" type="int" value="3"/>
     </ParameterList>
 
     <ParameterList name="FELIX Physical Parameters">
@@ -235,25 +240,25 @@
                     <Parameter name="Tolerance" type="double" value="1e-6"/>
                   </ParameterList>
                 </ParameterList>
-	        <ParameterList name="Belos">
+                <ParameterList name="Belos">
                   <ParameterList name="VerboseObject">
-                   <Parameter name="Verbosity Level" type="string" value="high"/>
+                    <Parameter name="Verbosity Level" type="string" value="high"/>
                   </ParameterList>
-	          <Parameter name="Solver Type" type="string" value="Block GMRES"/>
-	          <ParameterList name="Solver Types">
-	            <ParameterList name="Block GMRES">
-	            <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
-	            <Parameter name="Output Frequency" type="int" value="20"/>
-	            <Parameter name="Output Style" type="int" value="1"/>
-	            <Parameter name="Verbosity" type="int" value="33"/>
-	            <Parameter name="Maximum Iterations" type="int" value="200"/>
-	            <Parameter name="Block Size" type="int" value="1"/>
-	            <Parameter name="Num Blocks" type="int" value="200"/>
-	            <Parameter name="Flexible Gmres" type="bool" value="0"/>
-	          </ParameterList>
-                 </ParameterList>
-                 </ParameterList>
-	      </ParameterList>
+                  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+                  <ParameterList name="Solver Types">
+                    <ParameterList name="Block GMRES">
+                      <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
+                      <Parameter name="Output Frequency" type="int" value="20"/>
+                      <Parameter name="Output Style" type="int" value="1"/>
+                      <Parameter name="Verbosity" type="int" value="33"/>
+                      <Parameter name="Maximum Iterations" type="int" value="200"/>
+                      <Parameter name="Block Size" type="int" value="1"/>
+                      <Parameter name="Num Blocks" type="int" value="200"/>
+                      <Parameter name="Flexible Gmres" type="bool" value="0"/>
+                    </ParameterList>
+                  </ParameterList>
+                </ParameterList>
+              </ParameterList>
               <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
               <ParameterList name="Preconditioner Types">
                 <ParameterList name="Ifpack2">
