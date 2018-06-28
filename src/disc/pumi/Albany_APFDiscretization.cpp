@@ -181,7 +181,7 @@ Albany::APFDiscretization::getOverlapNodeMapT() const
 return overlap_node_mapT;
 }
 
-const Albany::APFDiscretization::Conn&
+const Albany::APFDiscretization::ConnWsArray&
 Albany::APFDiscretization::getWsElNodeEqID() const
 {
 return wsElNodeEqID;
@@ -193,7 +193,7 @@ Albany::APFDiscretization::getWsElNodeID() const
 return wsElNodeID;
 }
 
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+const Albany::AbstractDiscretization::CoordsWsArray&
 Albany::APFDiscretization::getCoords() const
 {
 return coords;
@@ -208,12 +208,12 @@ std::cout << "Processor " << PCU_Comm_Self() << " has " << coords.size()
     << " worksets." << std::endl;
 
 for (int ws=0; ws<coords.size(); ws++)  //workset
-  for (int e=0; e<coords[ws].size(); e++) //cell
-    for (int j=0; j<coords[ws][e].size(); j++) //node
+  for (int e=0; e<coords[ws].extent(0); e++) //cell
+    for (int j=0; j<coords[ws].extent(1); j++) //node
       for (int d=0; d<mesh_dim; d++) //dim
         std::cout << "Coord for workset: " << ws << " element: " << e
             << " node: " << j << " DOF: " << d << " is: " <<
-            coords[ws][e][j][d] << std::endl;
+            coords[ws](e,j,d) << std::endl;
 }
 
 const Teuchos::ArrayRCP<double>&
@@ -928,7 +928,7 @@ void Albany::APFDiscretization::computeWorksetInfo()
 {
   apf::Mesh* m = meshStruct->getMesh();
   apf::FieldShape* shape = m->getShape();
-  int numDim = m->getDimension();
+  const int numDim = m->getDimension();
   assert(!elementNumbering);
   elementNumbering = apf::makeGlobal(apf::numberElements(m,"element"));
 
@@ -1022,7 +1022,6 @@ void Albany::APFDiscretization::computeWorksetInfo()
 
     std::vector<apf::MeshEntity*>& buck = buckets[b];
     wsElNodeID[b].resize(buck.size());
-    coords[b].resize(buck.size());
 
     // Set size of Kokkos views
     // Note: Assumes nodes_per_element is the same across all elements in a workset
@@ -1031,7 +1030,8 @@ void Albany::APFDiscretization::computeWorksetInfo()
       element = buck[0];
       const int nodes_per_element = apf::countElementNodes(
           shape,m->getType(element));
-      wsElNodeEqID[b] = WorksetConn("wsElNodeEqID", buckSize, nodes_per_element, neq);
+      wsElNodeEqID[b] = ConnView("wsElNodeEqID", buckSize, nodes_per_element, neq);
+      coords[b] = CoordsView("coords", buckSize, nodes_per_element, numDim);
     }
 
     // i is the element index within bucket b
@@ -1056,7 +1056,6 @@ void Albany::APFDiscretization::computeWorksetInfo()
       int nodes_per_element = apf::countElementNodes(
           shape,m->getType(element));
       wsElNodeID[b][i].resize(nodes_per_element);
-      coords[b][i].resize(nodes_per_element);
 
       // loop over local nodes
       const int spdim = getNumDim();
@@ -1067,7 +1066,9 @@ void Albany::APFDiscretization::computeWorksetInfo()
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
             "PUMI: node_lid " << node_lid << " out of range\n");
 
-        coords[b][i][j] = &coordinates[node_lid * spdim];
+        for (int d = 0; d < numDim; d++)
+          coords[b](i,j,d) = coordinates[node_lid * spdim + d];
+
         wsElNodeID[b][i][j] = node_gid;
 
         for (std::size_t eq=0; eq < neq; eq++)

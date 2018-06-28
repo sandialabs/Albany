@@ -56,8 +56,8 @@ private:
   int DegreesOfFreedom;
 
   // lookup [wsId][wsElLid][elNodeInd][0] / neq = global node id
-  using Conn = Albany::AbstractDiscretization::Conn;
-  Conn NodeLookup;
+  using ConnWsArray = Albany::AbstractDiscretization::ConnWsArray;
+  ConnWsArray NodeLookup;
 
   // Map of all elements, global element id -> struct { int ws, int lid }
   const WsLIDList *ElementsWsLid;

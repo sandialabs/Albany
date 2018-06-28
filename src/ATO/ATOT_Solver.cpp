@@ -91,8 +91,7 @@ ATOT::SpatialFilter::buildOperator(
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
           wsElNodeID = app->getDiscretization()->getWsElNodeID();
   
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
-      coords = app->getDiscretization()->getCoords();
+    const auto& coords = app->getDiscretization()->getCoords();
 
     const Albany::WorksetArray<std::string>::type& 
       wsEBNames = app->getDiscretization()->getWsEBNames();
@@ -105,9 +104,9 @@ ATOT::SpatialFilter::buildOperator(
       // add to the excludeNodes set all nodes that are not to be smoothed
       for (size_t ws=0; ws<num_worksets; ws++) {
         if( find(blocks.begin(), blocks.end(), wsEBNames[ws]) != blocks.end() ) continue;
-        int num_cells = coords[ws].size();
+        int num_cells = coords[ws].extent(0);
         for (int cell=0; cell<num_cells; cell++) {
-          size_t num_nodes = coords[ws][cell].size();
+          size_t num_nodes = coords[ws].extent(1);
           for (int node=0; node<num_nodes; node++) {
             int gid = wsElNodeID[ws][cell][node];
             excludeNodes.insert(gid);
@@ -119,9 +118,9 @@ ATOT::SpatialFilter::buildOperator(
       std::set<int>::iterator it;
       for (size_t ws=0; ws<num_worksets; ws++) {
         if( find(blocks.begin(), blocks.end(), wsEBNames[ws]) == blocks.end() ) continue;
-        int num_cells = coords[ws].size();
+        int num_cells = coords[ws].extent(0);
         for (int cell=0; cell<num_cells; cell++) {
-          size_t num_nodes = coords[ws][cell].size();
+          size_t num_nodes = coords[ws].extent(1);
           for (int node=0; node<num_nodes; node++) {
             int gid = wsElNodeID[ws][cell][node];
             it = excludeNodes.find(gid);
@@ -139,37 +138,37 @@ ATOT::SpatialFilter::buildOperator(
     GlobalPoint homeNode;
     size_t num_worksets = coords.size();
     for (size_t home_ws=0; home_ws<num_worksets; home_ws++) {
-      int home_num_cells = coords[home_ws].size();
+      int home_num_cells = coords[home_ws].extent(0);
       for (int home_cell=0; home_cell<home_num_cells; home_cell++) {
-        size_t num_nodes = coords[home_ws][home_cell].size();
+        size_t num_nodes = coords[home_ws].extent(1);
         for (int home_node=0; home_node<num_nodes; home_node++) {
           homeNode.gid = wsElNodeID[home_ws][home_cell][home_node];
           if(neighbors.find(homeNode)==neighbors.end()) {  // if this node was already accessed just skip
             for (int dim=0; dim<dimension; dim++)  {
-              homeNode.coords[dim] = coords[home_ws][home_cell][home_node][dim];
+              homeNode.coords[dim] = coords[home_ws](home_cell,home_node,dim);
             }
             std::set<GlobalPoint> my_neighbors;
             if( excludeNodes.find(homeNode.gid) == excludeNodes.end() ){
               for (size_t trial_ws=0; trial_ws<num_worksets; trial_ws++) {
                 if( blocks.size() > 0 && 
                     find(blocks.begin(), blocks.end(), wsEBNames[trial_ws]) == blocks.end() ) continue;
-                int trial_num_cells = coords[trial_ws].size();
+                int trial_num_cells = coords[trial_ws].extent(0);
                 for (int trial_cell=0; trial_cell<trial_num_cells; trial_cell++) {
-                  size_t trial_num_nodes = coords[trial_ws][trial_cell].size();
+                  size_t trial_num_nodes = coords[trial_ws].extent(1);
                   for (int trial_node=0; trial_node<trial_num_nodes; trial_node++) {
                     int gid = wsElNodeID[trial_ws][trial_cell][trial_node];
                     if( excludeNodes.find(gid) != excludeNodes.end() ) continue; // don't add excluded nodes
                     double tmp;
                     double delta_norm_sqr = 0.;
                     for (int dim=0; dim<dimension; dim++)  { //individual coordinates
-                      tmp = homeNode.coords[dim]-coords[trial_ws][trial_cell][trial_node][dim];
+                      tmp = homeNode.coords[dim]-coords[trial_ws](trial_cell,trial_node,dim);
                       delta_norm_sqr += tmp*tmp;
                     }
                     if(delta_norm_sqr<=filter_radius_sqrd) {
                       GlobalPoint newIntx;
                       newIntx.gid = wsElNodeID[trial_ws][trial_cell][trial_node];
                       for (int dim=0; dim<dimension; dim++) 
-                        newIntx.coords[dim] = coords[trial_ws][trial_cell][trial_node][dim];
+                        newIntx.coords[dim] = coords[trial_ws](trial_cell,trial_node,dim);
                       my_neighbors.insert(newIntx);
                     }
                   }

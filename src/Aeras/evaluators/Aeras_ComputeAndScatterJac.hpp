@@ -98,7 +98,7 @@ public:
   RealType mc;
   int neq;
 
-  Albany::AbstractDiscretization::WorksetConn nodeID;
+  Albany::AbstractDiscretization::ConnView nodeID;
 
   struct ComputeAndScatterJac_buildMass_Tag{};
 

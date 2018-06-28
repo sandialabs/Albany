@@ -1245,13 +1245,8 @@ void Albany::Application::computeGlobalResidualImplT(
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
   postRegSetup("Residual");
 
-  // Load connectivity map and coordinates
-  const auto &wsElNodeEqID = disc->getWsElNodeEqID();
-  const auto &coords = disc->getCoords();
-  const auto &wsEBNames = disc->getWsEBNames();
   const auto &wsPhysIndex = disc->getWsPhysIndex();
-
-  int const numWorksets = wsElNodeEqID.size();
+  int const numWorksets = wsPhysIndex.size();
 
   Teuchos::RCP<Tpetra_Vector> const overlapped_fT =
       solMgrT->get_overlapped_fT();
@@ -1601,13 +1596,8 @@ void Albany::Application::computeGlobalJacobianImplT(
 
   postRegSetup("Jacobian");
 
-  // Load connectivity map and coordinates
-  const auto &wsElNodeEqID = disc->getWsElNodeEqID();
-  const auto &coords = disc->getCoords();
-  const auto &wsEBNames = disc->getWsEBNames();
   const auto &wsPhysIndex = disc->getWsPhysIndex();
-
-  int numWorksets = wsElNodeEqID.size();
+  int numWorksets = wsPhysIndex.size();
 
   // Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
   Teuchos::RCP<Tpetra_Vector> overlapped_fT;
@@ -1879,13 +1869,8 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
 #endif
 #endif
 
-  // Load connectivity map and coordinates
-  const auto &wsElNodeEqID = disc->getWsElNodeEqID();
-  const auto &coords = disc->getCoords();
-  const auto &wsEBNames = disc->getWsEBNames();
   const auto &wsPhysIndex = disc->getWsPhysIndex();
-
-  int numWorksets = wsElNodeEqID.size();
+  int numWorksets = wsPhysIndex.size();
 
   // Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
   Teuchos::RCP<Tpetra_Vector> overlapped_fT;
@@ -2462,13 +2447,8 @@ void Albany::Application::computeGlobalTangentImplT(
 
   postRegSetup("Tangent");
 
-  // Load connectivity map and coordinates
-  const auto &wsElNodeEqID = disc->getWsElNodeEqID();
-  const auto &coords = disc->getCoords();
-  const auto &wsEBNames = disc->getWsEBNames();
   const auto &wsPhysIndex = disc->getWsPhysIndex();
-
-  int numWorksets = wsElNodeEqID.size();
+  int numWorksets = wsPhysIndex.size();
 
   Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
   Teuchos::RCP<Tpetra_Import> importerT = solMgrT->get_importerT();
@@ -2787,13 +2767,8 @@ void Albany::Application::applyGlobalDistParamDerivImplT(
 
   postRegSetup("Distributed Parameter Derivative");
 
-  // Load connectivity map and coordinates
-  const auto &wsElNodeEqID = disc->getWsElNodeEqID();
-  const auto &coords = disc->getCoords();
-  const auto &wsEBNames = disc->getWsEBNames();
   const auto &wsPhysIndex = disc->getWsPhysIndex();
-
-  int numWorksets = wsElNodeEqID.size();
+  int numWorksets = wsPhysIndex.size();
 
   Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
 
@@ -3120,13 +3095,8 @@ void Albany::Application::evaluateStateFieldManagerT(
 
   Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
 
-  // Load connectivity map and coordinates
-  const auto &wsElNodeEqID = disc->getWsElNodeEqID();
-  const auto &coords = disc->getCoords();
-  const auto &wsEBNames = disc->getWsEBNames();
   const auto &wsPhysIndex = disc->getWsPhysIndex();
-
-  int numWorksets = wsElNodeEqID.size();
+  int numWorksets = wsPhysIndex.size();
 
   // Scatter xT and xdotT to the overlapped distrbution
   solMgrT->scatterXT(xT, xdotT.get(), xdotdotT.get());
@@ -4045,13 +4015,8 @@ void Albany::Application::computeGlobalResidualSDBCsImplT(
 #endif
 #endif
 
-  // Load connectivity map and coordinates
-  const auto &wsElNodeEqID = disc->getWsElNodeEqID();
-  const auto &coords = disc->getCoords();
-  const auto &wsEBNames = disc->getWsEBNames();
   const auto &wsPhysIndex = disc->getWsPhysIndex();
-
-  int const numWorksets = wsElNodeEqID.size();
+  int const numWorksets = wsPhysIndex.size();
 
   Teuchos::RCP<Tpetra_Vector> const overlapped_fT =
       solMgrT->get_overlapped_fT();

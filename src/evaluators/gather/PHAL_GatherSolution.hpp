@@ -73,7 +73,7 @@ protected:
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT 
 protected:
-  Albany::AbstractDiscretization::WorksetConn nodeID;
+  Albany::AbstractDiscretization::ConnView nodeID;
   Kokkos::View<const ST*, PHX::Device> xT_constView, xdotT_constView, xdotdotT_constView;
 
   typedef Kokkos::vector<Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device> KV;

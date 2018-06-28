@@ -19,18 +19,18 @@ namespace AAdapt {
 
 #if defined(ALBANY_EPETRA)
 void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
-                       const Albany::AbstractDiscretization::Conn& wsElNodeEqID,
+                       const Albany::AbstractDiscretization::ConnWsArray& wsElNodeEqID,
                        const Teuchos::ArrayRCP<std::string>& wsEBNames,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
+                       const Albany::AbstractDiscretization::CoordsWsArray& coords,
                        const int neq, const int numDim,
                        Teuchos::ParameterList& icParams,
                        const bool gasRestartSolution = false);
 #endif
 
 void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
-                       const Albany::AbstractDiscretization::Conn& wsElNodeEqID,
+                       const Albany::AbstractDiscretization::ConnWsArray& wsElNodeEqID,
                        const Teuchos::ArrayRCP<std::string>& wsEBNames,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
+                       const Albany::AbstractDiscretization::CoordsWsArray& coords,
                        const int neq, const int numDim,
                        Teuchos::ParameterList& icParams,
                        const bool gasRestartSolution = false);

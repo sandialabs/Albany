@@ -268,8 +268,7 @@ TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParamete
   const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
   int numWorksets = wsElNodeID.size();
 
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
-        coords = disc->getCoords();
+  const auto& coords = disc->getCoords();
 
   Kokkos::DynRankView<RealType, PHX::Device> coordCon;
   Kokkos::DynRankView<RealType, PHX::Device> topoVals;
@@ -324,7 +323,7 @@ TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParamete
 
       for(int node=0; node<numNodes; node++){
         for(int dim=0; dim<numDims; dim++)
-          coordCon(node,dim) = coords[ws][cell][node][dim];
+          coordCon(node,dim) = coords[ws](cell,node,dim);
         GO gid = wsElNodeID[ws][cell][node];
         LO lidT = overlapNodeMapT->getLocalElement(gid);
         topoVals(node) = p[lidT];
@@ -423,8 +422,7 @@ TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParamete
   const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
   int numWorksets = wsElNodeID.size();
 
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
-        coords = disc->getCoords();
+  const auto& coords = disc->getCoords();
 
   Kokkos::DynRankView<RealType, PHX::Device> coordCon;
   Kokkos::DynRankView<RealType, PHX::Device> topoVals;
@@ -453,7 +451,7 @@ TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParamete
     for(int cell=0; cell<numCells; cell++){
       for(int node=0; node<numNodes; node++){
         for(int dim=0; dim<numDims; dim++)
-          coordCon(node,dim) = coords[ws][cell][node][dim];
+          coordCon(node,dim) = coords[ws](cell,node,dim);
         GO gid = wsElNodeID[ws][cell][node];
         LO lidT = overlapNodeMapT->getLocalElement(gid);
         topoVals(node) = p[lidT];
@@ -712,7 +710,7 @@ ATO::OptimizationProblem::InitTopOpt()
       for(int cell=0; cell<numCells; cell++)
         for(int node=0; node<numNodes; node++)
           for(int dim=0; dim<numDims; dim++)
-            coordCon(cell,node,dim) = coords[ws][cell][node][dim];
+            coordCon(cell,node,dim) = coords[ws](cell,node,dim);
       Intrepid2::CellTools<PHX::Device>::setJacobian(jacobian, refPoints[physIndex], 
                                                coordCon, *(cellTypes[physIndex]));
       Intrepid2::CellTools<PHX::Device>::setJacobianDet(jacobian_det, jacobian);
@@ -1238,8 +1236,7 @@ computeConformalMeasureT(std::string measureType,
   const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
   int numWorksets = wsElNodeID.size();
 
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
-        coords = disc->getCoords();
+  const auto& coords = disc->getCoords();
 
   Kokkos::DynRankView<RealType, PHX::Device> coordCon;
   Kokkos::DynRankView<RealType, PHX::Device> topoVals;
@@ -1294,7 +1291,7 @@ computeConformalMeasureT(std::string measureType,
 
       for(int node=0; node<numNodes; node++){
         for(int dim=0; dim<numDims; dim++)
-          coordCon(node,dim) = coords[ws][cell][node][dim];
+          coordCon(node,dim) = coords[ws](cell,node,dim);
         GO gid = wsElNodeID[ws][cell][node];
         LO lidT = overlapNodeMapT->getLocalElement(gid);
         topoVals(node) = p[lidT];
@@ -1393,8 +1390,7 @@ TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParamete
   const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
   int numWorksets = wsElNodeID.size();
 
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
-        coords = disc->getCoords();
+  const auto& coords = disc->getCoords();
 
   Kokkos::DynRankView<RealType, PHX::Device> coordCon;
   Kokkos::DynRankView<RealType, PHX::Device> topoVals;
@@ -1423,7 +1419,7 @@ TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParamete
     for(int cell=0; cell<numCells; cell++){
       for(int node=0; node<numNodes; node++){
         for(int dim=0; dim<numDims; dim++)
-          coordCon(node,dim) = coords[ws][cell][node][dim];
+          coordCon(node,dim) = coords[ws](cell,node,dim);
         GO gid = wsElNodeID[ws][cell][node];
         LO lidT = overlapNodeMapT->getLocalElement(gid);
         topoVals(node) = p[lidT];

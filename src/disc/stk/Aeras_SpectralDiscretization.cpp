@@ -300,7 +300,7 @@ Aeras::SpectralDiscretization::getOverlapNodeMapT(const std::string& field_name)
   return Teuchos::null;
 }
 
-const Aeras::SpectralDiscretization::Conn&
+const Aeras::SpectralDiscretization::ConnWsArray&
 Aeras::SpectralDiscretization::getWsElNodeEqID() const
 {
   return wsElNodeEqID;
@@ -312,7 +312,7 @@ Aeras::SpectralDiscretization::getWsElNodeID() const
   return wsElNodeID;
 }
 
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+const Albany::AbstractDiscretization::CoordsWsArray&
 Aeras::SpectralDiscretization::getCoords() const
 {
   return coords;
@@ -340,21 +340,17 @@ Aeras::SpectralDiscretization::getLatticeOrientation() const
 void
 Aeras::SpectralDiscretization::printCoords() const
 {
-  // Print coordinates
   std::cout << "Processor " << bulkData.parallel_rank() << " has "
             << coords.size() << " worksets." << std::endl;
-  for (int ws = 0; ws < coords.size(); ws++)             // workset
-  {
-    for (int e = 0; e < coords[ws].size(); e++)          // cell
-    {
-      for (int j = 0; j < coords[ws][e].size(); j++)     // node
-      {
-        // IK, 1/27/15: the following assumes a 3D mesh.
-        // FIXME, 4/21/15: add logic for the case when we have line elements.
+  for (int ws = 0; ws < coords.size(); ws++) {
+    for (int e = 0; e < coords[ws].extent(0); e++) {
+      for (int j = 0; j < coords[ws].extent(1); j++) {
         std::cout << "Coord for workset: " << ws << " element: " << e
-                  << " node: " << j << " x, y, z: "
-                  << coords[ws][e][j][0] << ", " << coords[ws][e][j][1]
-                  << ", " << coords[ws][e][j][2] << std::endl;
+                  << " node: " << j << " coords:";
+        for (int d = 0; d < coords[ws].extent(2); d++) {
+          std::cout << " " << coords[ws](e,j,d);
+        }
+        std::cout << std::endl;
       }
     }
   }
@@ -363,20 +359,17 @@ Aeras::SpectralDiscretization::printCoords() const
 void
 Aeras::SpectralDiscretization::printCoordsAndGIDs() const
 {
-  //print coordinates
   std::cout << "Processor " << bulkData.parallel_rank() << " has "
             << coords.size() << " worksets." << std::endl;
-  for (int ws = 0; ws < coords.size(); ws++)             // workset
-  {
-    for (int e = 0; e < coords[ws].size(); e++)          // cell
-    {
-      for (int j = 0; j < coords[ws][e].size(); j++)     // node
-      {
-      // IK, 1/27/15: the following assumes a 3D mesh.
-      // FIXME, 4/21/15: add logic for the case when we have line elements.
-        std::cout << "GID, x, y, z: " << wsElNodeID[ws][e][j]<< " "
-                  << coords[ws][e][j][0] << " " << coords[ws][e][j][1]
-                  << " " << coords[ws][e][j][2] << std::endl;
+  for (int ws = 0; ws < coords.size(); ws++) {
+    for (int e = 0; e < coords[ws].extent(0); e++) {
+      for (int j = 0; j < coords[ws].extent(1); j++) {
+        std::cout << "Coord for workset: " << ws << " element: " << e
+                  << " node: " << j << " GID, coords: " << wsElNodeID[ws][e][j];
+        for (int d = 0; d < coords[ws].extent(2); d++) {
+          std::cout << " " << coords[ws](e,j,d);
+        }
+        std::cout << std::endl;
       }
     }
   }
@@ -502,15 +495,15 @@ Aeras::SpectralDiscretization::transformMesh()
 #endif
     const int numDim  = stkMeshStruct->numDim;
     for (int ws = 0; ws < coords.size(); ws++) { //workset
-      for (int e = 0; e < coords[ws].size(); e++) {  // cell
-        for (int j = 0; j < coords[ws][e].size(); j++)  {// node
+      for (int e = 0; e < coords[ws].extent(0); e++) {  // cell
+        for (int j = 0; j < coords[ws].extent(1); j++)  {// node
           double r = 0.0;
           for (int n=0; n<numDim; n++) //dimensions
-             r += coords[ws][e][j][n]*coords[ws][e][j][n];
+             r += coords[ws](e,j,n)*coords[ws](e,j,n);
           r = sqrt(r);
           for (int n=0; n<numDim; n++) { //dimensions
             //FIXME: there could be division by 0 here!
-            coords[ws][e][j][n] = coords[ws][e][j][n]/r;
+            coords[ws](e,j,n) = coords[ws](e,j,n)/r;
           }
         }
       }
@@ -2077,18 +2070,11 @@ void Aeras::SpectralDiscretization::computeCoordsLines()
   {
     stk::mesh::Bucket & bucket = *buckets[iws];
     size_t numElements = wsElNodeID[iws].size();
-    coords[iws].resize(numElements);
+    coords[iws] = CoordsView("coords", numElements, np, 3);
     for (size_t ielem = 0; ielem < numElements; ++ielem)
     {
       stk::mesh::Entity element = bucket[ielem];
       const stk::mesh::Entity * stkNodes = bulkData.begin_nodes(element);
-      coords[iws][ielem].resize(np);
-      for (size_t inode = 0; inode < np; ++inode)
-      {
-        double * coordVals = new double[3];
-        coords[iws][ielem][inode] = coordVals;
-        toDelete.push_back(coordVals);
-      }
 
       // Get the coordinates value along this axis of the end nodes
       // from the STK mesh
@@ -2125,10 +2111,10 @@ void Aeras::SpectralDiscretization::computeCoordsLines()
       for (size_t inode = 0; inode < np; ++inode)
       {
         double x = refCoords(inode,0);
-        coords[iws][ielem][inode][0] = (-c[0] * (x-1.0) +
+        coords[iws](ielem,inode,0) = (-c[0] * (x-1.0) +
                                         c[1] * (x+1.0)) * 0.5;
-        coords[iws][ielem][inode][1] = 0.0;
-        coords[iws][ielem][inode][2] = 0.0;
+        coords[iws](ielem,inode,1) = 0.0;
+        coords[iws](ielem,inode,2) = 0.0;
       }
     }
   }
@@ -2179,18 +2165,11 @@ std::cout << "AGS -- need to uncomment to run -- just trying to compile" << std:
   {
     stk::mesh::Bucket & bucket = *buckets[iws];
     size_t numElements = wsElNodeID[iws].size();
-    coords[iws].resize(numElements);
+    coords[iws] = CoordsView("coords", numElements, np2, 3);
     for (size_t ielem = 0; ielem < numElements; ++ielem)
     {
       stk::mesh::Entity element = bucket[ielem];
       const stk::mesh::Entity * stkNodes = bulkData.begin_nodes(element);
-      coords[iws][ielem].resize(np2);
-      for (size_t inode = 0; inode < np2; ++inode)
-      {
-        double * coordVals = new double[3];
-        coords[iws][ielem][inode] = coordVals;
-        toDelete.push_back(coordVals);
-      }
 
       // Phase I: project the reference element coordinates onto the
       // "twisted plane" defined by the four corners of the linear STK
@@ -2205,10 +2184,10 @@ std::cout << "AGS -- need to uncomment to run -- just trying to compile" << std:
         {
           double x = refCoords(inode,0);
           double y = refCoords(inode,1);
-          coords[iws][ielem][inode][idim] = (c[0] * (x-1.0) * (y-1.0) -
-                                             c[1] * (x+1.0) * (y-1.0) +
-                                             c[2] * (x+1.0) * (y+1.0) -
-                                             c[3] * (x-1.0) * (y+1.0)) * 0.25;
+          coords[iws](ielem,inode,idim) = (c[0] * (x-1.0) * (y-1.0) -
+                                           c[1] * (x+1.0) * (y-1.0) +
+                                           c[2] * (x+1.0) * (y+1.0) -
+                                           c[3] * (x-1.0) * (y+1.0)) * 0.25;
         }
       }
 
@@ -2218,11 +2197,11 @@ std::cout << "AGS -- need to uncomment to run -- just trying to compile" << std:
       {
         double distance = 0.0;
         for (size_t idim = 0; idim < 3; ++idim)
-          distance += coords[iws][ielem][inode][idim] *
-                      coords[iws][ielem][inode][idim];
+          distance += coords[iws](ielem,inode,idim) *
+                      coords[iws](ielem,inode,idim);
         distance = sqrt(distance);
         for (size_t idim = 0; idim < 3; ++idim)
-          coords[iws][ielem][inode][idim] /= distance;
+          coords[iws](ielem,inode,idim) /= distance;
       }
     }
   }
@@ -2439,8 +2418,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
 
   wsElNodeEqID.resize(numBuckets);
-  //wsElNodeID.resize(numBuckets);
-  //coords.resize(numBuckets);
   sphereVolume.resize(numBuckets);
 
   nodesOnElemStateVec.resize(numBuckets);
@@ -2459,11 +2436,9 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
   {
 
     stk::mesh::Bucket & buck = *buckets[b];
-    //wsElNodeID[b].resize(buck.size());
-    //coords[b].resize(buck.size());
 
     // Set size of Kokkos views
-    wsElNodeEqID[b] = WorksetConn("wsElNodeEqID", buck.size(), nodes_per_element, neq);
+    wsElNodeEqID[b] = ConnView("wsElNodeEqID", buck.size(), nodes_per_element, neq);
 
     {  // nodalDataToElemNode.
 
@@ -2560,9 +2535,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
       Teuchos::ArrayRCP< GO > node_rels = wsElNodeID[b][i];
       // const int nodes_per_element = bulkData.num_nodes(element);
 
-      //wsElNodeID[b][i].resize(nodes_per_element);
-      //coords[b][i].resize(nodes_per_element);
-
       // loop over local nodes
       for (int j = 0; j < nodes_per_element; ++j)
       {
@@ -2575,9 +2547,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
           node_lid < 0,
           std::logic_error,
 	  "STK1D_Disc: node_lid out of range " << node_lid << std::endl);
-        //coords[b][i][j] = stk::mesh::field_data(*coordinates_field, rowNode);
-
-        //wsElNodeID[b][i][j] = node_gid;
 
         for (std::size_t eq = 0; eq < neq; ++eq)
           wsElNodeEqID[b](i,j,eq) = getOverlapDOF(node_lid,eq);
@@ -2596,28 +2565,29 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
       {
         bool anyXeqZero=false;
         for (int j=0; j < nodes_per_element; j++) {
-          if (coords[b][i][j][d]==0.0)
+          if (coords[b](i,j,d)==0.0)
             anyXeqZero=true;
         }
         if (anyXeqZero)
         {
           bool flipZeroToScale=false;
           for (int j=0; j < nodes_per_element; j++)
-            if (coords[b][i][j][d] > stkMeshStruct->PBCStruct.scale[d]/1.9)
+            if (coords[b](i,j,d) > stkMeshStruct->PBCStruct.scale[d]/1.9)
               flipZeroToScale=true;
           if (flipZeroToScale)
           {
             for (int j=0; j < nodes_per_element; j++)
             {
-              if (coords[b][i][j][d] == 0.0)
+              if (coords[b](i,j,d) == 0.0)
               {
                 double* xleak = new double [stkMeshStruct->numDim];
                 for (int k=0; k < stkMeshStruct->numDim; k++)
                   if (k==d)
                     xleak[d]=stkMeshStruct->PBCStruct.scale[d];
                   else
-                    xleak[k] = coords[b][i][j][k];
-                coords[b][i][j] = xleak; // replace ptr to coords
+                    xleak[k] = coords[b](i,j,k);
+                for (int k=0; k < stkMeshStruct->numDim; k++)
+                  coords[b](i,j,k) = xleak[k];
                 toDelete.push_back(xleak);
               }
             }
@@ -3058,372 +3028,6 @@ void Aeras::SpectralDiscretization::setupExodusOutput()
 #endif
 }
 
-namespace
-{
-const std::vector<double>
-spherical_to_cart(const std::pair<double, double> & sphere)
-{
-  const double radius_of_earth = 1;
-  std::vector<double> cart(3);
-
-  cart[0] = radius_of_earth*std::cos(sphere.first)*std::cos(sphere.second);
-  cart[1] = radius_of_earth*std::cos(sphere.first)*std::sin(sphere.second);
-  cart[2] = radius_of_earth*std::sin(sphere.first);
-
-  return cart;
-}
-
-double distance (const double* x, const double* y)
-{
-  const double d = std::sqrt((x[0]-y[0])*(x[0]-y[0]) +
-                             (x[1]-y[1])*(x[1]-y[1]) +
-                             (x[2]-y[2])*(x[2]-y[2]));
-  return d;
-}
-
-double distance (const std::vector<double> &x, const std::vector<double> &y)
-{
-  const double d = std::sqrt((x[0]-y[0])*(x[0]-y[0]) +
-                             (x[1]-y[1])*(x[1]-y[1]) +
-                             (x[2]-y[2])*(x[2]-y[2]));
-  return d;
-}
-
-bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
-                  const std::vector<double>        &sphere_xyz)
-{
-  // first check if point is near the element:
-  const double  tol_inside = 1e-12;
-  const double elem_diam =
-    std::max(::distance(coords[0],coords[2]), ::distance(coords[1],coords[3]));
-  std::vector<double> center(3,0);
-  for (unsigned i=0; i<4; ++i)
-    for (unsigned j=0; j<3; ++j)
-      center[j] += coords[i][j];
-  for (unsigned j=0; j<3; ++j)
-    center[j] /= 4;
-  bool inside = true;
-
-  if ( ::distance(&center[0],&sphere_xyz[0]) > 1.0*elem_diam )
-    inside = false;
-
-  unsigned j=3;
-  for (unsigned i=0; i<4 && inside; ++i)
-  {
-    std::vector<double> cross(3);
-    // outward normal to plane containing j->i edge:  corner(i) x corner(j)
-    // sphere dot (corner(i) x corner(j) ) = negative if inside
-    cross[0]=  coords[i][1]*coords[j][2] - coords[i][2]*coords[j][1];
-    cross[1]=-(coords[i][0]*coords[j][2] - coords[i][2]*coords[j][0]);
-    cross[2]=  coords[i][0]*coords[j][1] - coords[i][1]*coords[j][0];
-    j = i;
-    const double dotprod = cross[0]*sphere_xyz[0] +
-                           cross[1]*sphere_xyz[1] +
-                           cross[2]*sphere_xyz[2];
-
-      // dot product is proportional to elem_diam. positive means outside,
-      // but allow machine precision tolorence:
-      if (tol_inside*elem_diam < dotprod) inside = false;
-    }
-    return inside;
-  }
-
-
-  const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
-  Basis(const int C)
-  {
-    // Static types
-    typedef Kokkos::DynRankView<RealType, PHX::Device> Field_t;
-    typedef Intrepid2::Basis<PHX::Device, RealType, RealType> Basis_t;
-    static const Teuchos::RCP< Basis_t > HGRAD_Basis_4 =
-      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::Device>() );
-    static const Teuchos::RCP< Basis_t > HGRAD_Basis_9 =
-      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C2_FEM<PHX::Device>() );
-
-    // Check for valid value of C
-    int deg = (int) std::sqrt((double)C);
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      deg*deg != C || deg < 2,
-      std::logic_error,
-      " Aeras::SpectralDiscretization Error Basis not perfect "
-      "square > 1" << std::endl);
-
-    // Quick return for linear or quad
-    if (C == 4) return HGRAD_Basis_4;
-    if (C == 9) return HGRAD_Basis_9;
-
-    // Spectral bases
-std::cout << "AGS -- changing POINTTYPE_SPECTRAL to POINTTYPE_WARPBLEND -- check with Kyungjoo" << std::endl;
-    return Teuchos::rcp(
-      new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::Device>(
-        deg, Intrepid2::POINTTYPE_WARPBLEND) );
-//        deg, Intrepid2::POINTTYPE_SPECTRAL) );
-  }
-
-  double value(const std::vector<double> &soln,
-               const std::pair<double, double> &ref)
-  {
-
-    const int C = soln.size();
-    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
-      HGRAD_Basis = Basis(C);
-
-    const int numPoints = 1;
-    Kokkos::DynRankView<RealType, PHX::Device> basisVals ("AAA", C, numPoints);
-    Kokkos::DynRankView<RealType, PHX::Device> tempPoints("AAA", numPoints, 2);
-    tempPoints(0,0) = ref.first;
-    tempPoints(0,1) = ref.second;
-
-    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid2::OPERATOR_VALUE);
-
-    double x = 0;
-    for (unsigned j=0; j<C; ++j) x += soln[j] * basisVals(j,0);
-    return x;
-  }
-
-  void value(double x[3],
-             const Teuchos::ArrayRCP<double*> &coords,
-             const std::pair<double, double> &ref)
-  {
-
-    const int C = coords.size();
-    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
-      HGRAD_Basis = Basis(C);
-
-    const int numPoints = 1;
-    Kokkos::DynRankView<RealType, PHX::Device> basisVals ("AAA", C, numPoints);
-    Kokkos::DynRankView<RealType, PHX::Device> tempPoints("AAA", numPoints, 2);
-    tempPoints(0,0) = ref.first;
-    tempPoints(0,1) = ref.second;
-
-    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid2::OPERATOR_VALUE);
-
-    for (unsigned i = 0; i < 3; ++i)
-      x[i] = 0;
-    for (unsigned i = 0; i < 3; ++i)
-      for (unsigned j = 0; j < C; ++j)
-        x[i] += coords[j][i] * basisVals(j,0);
-  }
-
-  void grad(double x[3][2],
-            const Teuchos::ArrayRCP<double*> &coords,
-            const std::pair<double, double> &ref)
-  {
-    const int C = coords.size();
-    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
-      HGRAD_Basis = Basis(C);
-
-    const int numPoints = 1;
-    Kokkos::DynRankView<RealType, PHX::Device> basisGrad ("AAA", C, numPoints, 2);
-    Kokkos::DynRankView<RealType, PHX::Device> tempPoints("AAA", numPoints, 2);
-    tempPoints(0,0) = ref.first;
-    tempPoints(0,1) = ref.second;
-
-    HGRAD_Basis->getValues(basisGrad, tempPoints, Intrepid2::OPERATOR_GRAD);
-
-    for (unsigned i = 0; i < 3; ++i)
-      x[i][0] = x[i][1] = 0;
-    for (unsigned i = 0; i < 3; ++i)
-      for (unsigned j = 0; j < C; ++j)
-      {
-        x[i][0] += coords[j][i] * basisGrad(j,0,0);
-        x[i][1] += coords[j][i] * basisGrad(j,0,1);
-      }
-  }
-
-  std::pair<double, double>  ref2sphere(const Teuchos::ArrayRCP<double*> &coords,
-                                        const std::pair<double, double> &ref)
-  {
-
-    static const double DIST_THRESHOLD= 1.0e-9;
-
-    double x[3];
-    value(x,coords,ref);
-
-    const double r = std::sqrt(x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
-
-    for (unsigned i=0; i<3; ++i) x[i] /= r;
-
-    std::pair<double, double> sphere(std::asin(x[2]), std::atan2(x[1],x[0]));
-
-    // ==========================================================
-    // enforce three facts:
-    //
-    // 1) lon at poles is defined to be zero
-    //
-    // 2) Grid points must be separated by about .01 Meter (on earth)
-    //   from pole to be considered "not the pole".
-    //
-    // 3) range of lon is { 0<= lon < 2*PI }
-    //
-    // ==========================================================
-
-    if (std::abs(std::abs(sphere.first)-pi/2) < DIST_THRESHOLD) sphere.second = 0;
-    else if (sphere.second < 0) sphere.second += 2*pi;
-
-    return sphere;
-  }
-
-  void Dmap(const Teuchos::ArrayRCP<double*> &coords,
-            const std::pair<double, double>  &sphere,
-            const std::pair<double, double>  &ref,
-            double D[][2])
-  {
-
-    const double th     = sphere.first;
-    const double lam    = sphere.second;
-    const double sinlam = std::sin(lam);
-    const double sinth  = std::sin(th);
-    const double coslam = std::cos(lam);
-    const double costh  = std::cos(th);
-
-    const double D1[2][3] = {{-sinlam, coslam, 0},
-                             {      0,      0, 1}};
-
-    const double D2[3][3] =
-      {{ sinlam*sinlam*costh*costh+sinth*sinth, -sinlam*coslam*costh*costh,             -coslam*sinth*costh},
-       {-sinlam*coslam*costh*costh,              coslam*coslam*costh*costh+sinth*sinth, -sinlam*sinth*costh},
-       {-coslam*sinth,                          -sinlam*sinth,                          costh              }};
-
-    double D3[3][2] = {0};
-    grad(D3,coords,ref);
-
-    double D4[3][2] = {0};
-    for (unsigned i = 0; i < 3; ++i)
-      for (unsigned j = 0; j < 2; ++j)
-        for (unsigned k = 0; k < 3; ++k)
-           D4[i][j] += D2[i][k] * D3[k][j];
-
-    for (unsigned i=0; i<2; ++i)
-      for (unsigned j=0; j<2; ++j)
-        D[i][j] = 0;
-
-    for (unsigned i=0; i<2; ++i)
-      for (unsigned j=0; j<2; ++j)
-        for (unsigned k=0; k<3; ++k)
-          D[i][j] += D1[i][k] * D4[k][j];
-  }
-
-  std::pair<double, double>
-  parametric_coordinates(const Teuchos::ArrayRCP<double*> &coords,
-                         const std::pair<double, double>  &sphere)
-  {
-    static const double tol_sq = 1e-26;
-    static const unsigned MAX_NR_ITER = 10;
-    double costh = std::cos(sphere.first);
-    double D[2][2], Dinv[2][2];
-    double resa = 1;
-    double resb = 1;
-    std::pair<double, double> ref(0,0); // initial guess is center of element.
-
-    for (unsigned i = 0; i < MAX_NR_ITER && tol_sq < (costh*resb*resb+resa*resa);
-         ++i)
-    {
-      const std::pair<double, double> sph = ref2sphere(coords,ref);
-      resa = sph.first  - sphere.first;
-      resb = sph.second - sphere.second;
-
-      if (resb >  pi) resb -= 2*pi;
-      if (resb < -pi) resb += 2*pi;
-
-      Dmap(coords, sph, ref, D);
-      const double detD = D[0][0]*D[1][1] - D[0][1]*D[1][0];
-      Dinv[0][0] =  D[1][1]/detD;
-      Dinv[0][1] = -D[0][1]/detD;
-      Dinv[1][0] = -D[1][0]/detD;
-      Dinv[1][1] =  D[0][0]/detD;
-
-      const std::pair<double, double>
-        del( Dinv[0][0]*costh*resb + Dinv[0][1]*resa,
-             Dinv[1][0]*costh*resb + Dinv[1][1]*resa);
-      ref.first  -= del.first;
-      ref.second -= del.second;
-    }
-    return ref;
-  }
-
-  const std::pair<bool,std::pair<unsigned, unsigned> >
-  point_in_element(
-    const std::pair<double, double> &sphere,
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords,
-    std::pair<double, double> &parametric)
-  {
-    const std::vector<double> sphere_xyz = spherical_to_cart(sphere);
-    std::pair<bool,std::pair<unsigned, unsigned> >
-      element(false,
-              std::pair<unsigned, unsigned>(0,0));
-    for (unsigned i = 0; i < coords.size() && !element.first; ++i)
-    {
-      for (unsigned j = 0; j < coords[i].size() && !element.first; ++j)
-      {
-        const bool found =  point_inside(coords[i][j], sphere_xyz);
-        if (found)
-        {
-          parametric = parametric_coordinates(coords[i][j], sphere);
-          if (parametric.first  < -1) parametric.first  = -1;
-          if (parametric.second < -1) parametric.second = -1;
-          if (1 < parametric.first  ) parametric.first  =  1;
-          if (1 < parametric.second ) parametric.second =  1;
-          element.first         = true;
-          element.second.first  = i;
-          element.second.second = j;
-        }
-      }
-    }
-    return element;
-  }
-
-  void setup_latlon_interp(
-    const unsigned nlat,
-    const double nlon,
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords,
-    Albany::WorksetArray<Teuchos::ArrayRCP<std::vector<Aeras::SpectralDiscretization::interp> > >::type& interpdata,
-    const Teuchos::RCP<const Teuchos_Comm> commT)
-  {
-    double err=0;
-    const long long unsigned rank = commT->getRank();
-    std::vector<double> lat(nlat);
-    std::vector<double> lon(nlon);
-
-    unsigned count = 0;
-    for (unsigned i = 0; i < nlat; ++i)
-      lat[i] = -pi/2 + i*pi/(nlat-1);
-    for (unsigned j = 0; j < nlon; ++j)
-      lon[j] = 2*j*pi/nlon;
-    for (unsigned i = 0; i < nlat; ++i)
-    {
-      for (unsigned j=0; j<nlon; ++j)
-      {
-        const std::pair<double, double> sphere(lat[i],lon[j]);
-        std::pair<double, double> paramtric;
-        const std::pair<bool,std::pair<unsigned, unsigned> >element =
-          point_in_element(sphere, coords, paramtric);
-        if (element.first)
-        {
-          // compute error: map 'cart' back to sphere and compare with original
-          // interpolation point:
-          const unsigned b = element.second.first ;
-          const unsigned e = element.second.second;
-          const std::vector<double> sphere2_xyz =
-            spherical_to_cart(ref2sphere(coords[b][e], paramtric));
-          const std::vector<double> sphere_xyz  =
-            spherical_to_cart(sphere);
-          err = std::max(err, ::distance(&sphere2_xyz[0],&sphere_xyz[0]));
-          Aeras::SpectralDiscretization::interp interp;
-          interp.parametric_coords = paramtric;
-          interp.latitude_longitude = std::pair<unsigned,unsigned>(i,j);
-          interpdata[b][e].push_back(interp);
-          ++count;
-        }
-      }
-      if (!rank && (!(i%64) || i==nlat-1))
-        std::cout << "Finished Latitude " << i << " of " << nlat << std::endl;
-    }
-    if (!rank)
-      std::cout<<"Max interpolation point search error: " <<err<<std::endl;
-  }
-}
-
 int
 Aeras::SpectralDiscretization::processNetCDFOutputRequestT(const Tpetra_Vector& solution_fieldT)
 {
@@ -3431,142 +3035,6 @@ Aeras::SpectralDiscretization::processNetCDFOutputRequestT(const Tpetra_Vector& 
   // IK, 10/13/14: need to implement!
 #endif
   return 0;
-}
-
-void Aeras::SpectralDiscretization::setupNetCDFOutput()
-{
-  const long long unsigned rank = commT->getRank();
-#ifdef ALBANY_SEACAS
-  if (stkMeshStruct->cdfOutput)
-  {
-    outputInterval = 0;
-    const unsigned nlat = stkMeshStruct->nLat;
-    const unsigned nlon = stkMeshStruct->nLon;
-
-
-    std::string str = stkMeshStruct->cdfOutFile;
-
-    interpolateData.resize(coords.size());
-    for (int b=0; b < coords.size(); b++) interpolateData[b].resize(coords[b].size());
-
-    setup_latlon_interp(nlat, nlon, coords, interpolateData, commT);
-
-    const std::string name = stkMeshStruct->cdfOutFile;
-    netCDFp=0;
-    netCDFOutputRequest=0;
-
-#ifdef ALBANY_PAR_NETCDF
-    MPI_Comm theMPIComm = Albany::getMpiCommFromTeuchosComm(commT);
-    MPI_Info info;
-    MPI_Info_create(&info);
-    if (const int ierr = nc_create_par (name.c_str(), NC_NETCDF4 | NC_MPIIO | NC_CLOBBER | NC_64BIT_OFFSET, theMPIComm, info, &netCDFp))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "nc_create_par returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-    MPI_Info_free(&info);
-#else
-    if (!rank)
-    if (const int ierr = nc_create (name.c_str(), NC_CLOBBER | NC_SHARE | NC_64BIT_OFFSET | NC_CLASSIC_MODEL, &netCDFp))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "nc_create returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-#endif
-
-    const size_t nlev = 1;
-    const char *dimnames[] = {"time","lev","lat","lon"};
-    const size_t  dimlen[] = {NC_UNLIMITED, nlev, nlat, nlon};
-    int dimID[4]={0,0,0,0};
-
-    for (unsigned i=0; i<4; ++i)
-    {
-      if (netCDFp)
-      if (const int ierr = nc_def_dim (netCDFp,  dimnames[i], dimlen[i], &dimID[i]))
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "nc_def_dim returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-    }
-    varSolns.resize(neq,0);
-
-    for (unsigned n=0; n<neq; ++n)
-    {
-      std::ostringstream var;
-      var <<"variable_"<<n;
-      const char *field_name = var.str().c_str();
-      if (netCDFp)
-      if (const int ierr = nc_def_var (netCDFp,  field_name, NC_DOUBLE, 4, dimID, &varSolns[n]))
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "nc_def_var "<<field_name<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-
-      const double fillVal = -9999.0;
-      if (netCDFp)
-      if (const int ierr = nc_put_att (netCDFp,  varSolns[n], "FillValue", NC_DOUBLE, 1, &fillVal))
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "nc_put_att FillValue returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-    }
-
-    const char lat_name[] = "latitude";
-    const char lat_unit[] = "degrees_north";
-    const char lon_name[] = "longitude";
-    const char lon_unit[] = "degrees_east";
-    int latVarID=0;
-      if (netCDFp)
-    if (const int ierr = nc_def_var (netCDFp,  "lat", NC_DOUBLE, 1, &dimID[2], &latVarID))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "nc_def_var lat returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-      if (netCDFp)
-    if (const int ierr = nc_put_att_text (netCDFp,  latVarID, "long_name", sizeof(lat_name), lat_name))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "nc_put_att_text "<<lat_name<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-      if (netCDFp)
-    if (const int ierr = nc_put_att_text (netCDFp,  latVarID, "units", sizeof(lat_unit), lat_unit))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "nc_put_att_text "<<lat_unit<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-
-    int lonVarID=0;
-      if (netCDFp)
-    if (const int ierr = nc_def_var (netCDFp,  "lon", NC_DOUBLE, 1, &dimID[3], &lonVarID))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "nc_def_var lon returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-      if (netCDFp)
-    if (const int ierr = nc_put_att_text (netCDFp,  lonVarID, "long_name", sizeof(lon_name), lon_name))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "nc_put_att_text "<<lon_name<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-      if (netCDFp)
-    if (const int ierr = nc_put_att_text (netCDFp,  lonVarID, "units", sizeof(lon_unit), lon_unit))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "nc_put_att_text "<<lon_unit<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-
-    const char history[]="Created by Albany";
-      if (netCDFp)
-    if (const int ierr = nc_put_att_text (netCDFp,  NC_GLOBAL, "history", sizeof(history), history))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "nc_put_att_text "<<history<<" returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-
-      if (netCDFp)
-    if (const int ierr = nc_enddef (netCDFp))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "nc_enddef returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-
-    std::vector<double> deglon(nlon);
-    std::vector<double> deglat(nlat);
-    for (unsigned i=0; i<nlon; ++i) deglon[i] =((      2*i*pi/nlon) *   (180/pi)) - 180;
-    for (unsigned i=0; i<nlat; ++i) deglat[i] = (-pi/2 + i*pi/(nlat-1))*(180/pi);
-
-
-      if (netCDFp)
-    if (const int ierr = nc_put_var (netCDFp, lonVarID, &deglon[0]))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "nc_put_var lon returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-      if (netCDFp)
-    if (const int ierr = nc_put_var (netCDFp, latVarID, &deglat[0]))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "nc_put_var lat returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-
-  }
-#else
-  if (stkMeshStruct->cdfOutput)
-    *out << "\nWARNING: NetCDF output requested but SEACAS not compiled in:"
-         << " disabling NetCDF output \n" << std::endl;
-  stkMeshStruct->cdfOutput = false;
-
-#endif
 }
 
 void Aeras::SpectralDiscretization::reNameExodusOutput(std::string& filename)

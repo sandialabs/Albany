@@ -30,6 +30,12 @@
 namespace Albany {
 
 class APFDiscretization : public Albany::AbstractDiscretization {
+  using Albany::AbstractDiscretization::ConnView;
+  using Albany::AbstractDiscretization::CoordsView;
+
+  using Albany::AbstractDiscretization::ConnWsArray;
+  using Albany::AbstractDiscretization::CoordsWsArray;
+
   public:
 
     //! Constructor
@@ -92,9 +98,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     const Albany::WsLIDList& getElemGIDws() const override { return elemGIDws; }
 
     //! Get map from (Ws, El, Local Node, Eqn) -> dof LID
-    using Albany::AbstractDiscretization::WorksetConn;
-    using Albany::AbstractDiscretization::Conn;
-    const Conn& getWsElNodeEqID() const override;
+    const ConnWsArray& getWsElNodeEqID() const override;
 
     //! Get map from (Ws, El, Local Node) -> NodeGID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& getWsElNodeID() const override;
@@ -110,7 +114,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     virtual Teuchos::RCP<const Albany::ContactManager> getContactManager() const;
 #endif
 
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const override;
+    const CoordsWsArray& getCoords() const override;
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const override;
 
@@ -476,7 +480,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     std::map<std::string,std::map<GO,std::vector<int> > >               sideNodeNumerationMap;
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
-    Conn wsElNodeEqID;
+    ConnWsArray wsElNodeEqID;
 
     //! Connectivity array [workset, element, local-node] => GID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;
@@ -485,7 +489,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     Teuchos::RCP<Tpetra_MultiVector> coordMV;
     Albany::WorksetArray<std::string>::type wsEBNames;
     Albany::WorksetArray<int>::type wsPhysIndex;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
+    CoordsWsArray coords;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
     Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type latticeOrientation;
 

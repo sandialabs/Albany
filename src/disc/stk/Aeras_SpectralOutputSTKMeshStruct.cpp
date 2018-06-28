@@ -41,7 +41,7 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
                                              const int numDim_, const int worksetSize_,
                                              const bool periodic_, const double scale_,
                                              const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID_,
-                                             const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords_,
+                                             const Albany::AbstractDiscretization::CoordsWsArray& coords_,
                                              const int points_per_edge_, const std::string element_name_):
   GenericSTKMeshStruct(params,Teuchos::null, numDim_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
@@ -192,41 +192,41 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
             //set node 0 in STK bilinear mesh
             coord = stk::mesh::field_data(*coordinates_field, node0);
 #ifdef OUTPUT_TO_SCREEN
-           std::cout << "Output mesh node0 coords: " << coords[ws][e][i+j*points_per_edge][0]
-                     << ", " << coords[ws][e][i+j*points_per_edge][1] << ", " << coords[ws][e][i+j*points_per_edge][2] << std::endl;
+           std::cout << "Output mesh node0 coords: " << coords[ws](e,i+j*points_per_edge,0)
+                     << ", " << coords[ws](e,i+j*points_per_edge,1) << ", " << coords[ws](e,i+j*points_per_edge,2) << std::endl;
 #endif
-            coord[0] = coords[ws][e][i+j*points_per_edge][0];
-            coord[1] = coords[ws][e][i+j*points_per_edge][1];
-            coord[2] = coords[ws][e][i+j*points_per_edge][2];
+            coord[0] = coords[ws](e,i+j*points_per_edge,0);
+            coord[1] = coords[ws](e,i+j*points_per_edge,1);
+            coord[2] = coords[ws](e,i+j*points_per_edge,2);
             //set node 1 in STK bilinear mesh
             coord = stk::mesh::field_data(*coordinates_field, node1);
 #ifdef OUTPUT_TO_SCREEN
-            std::cout << "Output mesh node1 coords: " << coords[ws][e][i+1+j*points_per_edge][0]
-                      << ", " << coords[ws][e][i+1+j*points_per_edge][1] << ", " << coords[ws][e][i+1+j*points_per_edge][2] << std::endl;
+            std::cout << "Output mesh node1 coords: " << coords[ws](e,i+1+j*points_per_edge,0)
+                      << ", " << coords[ws](e,i+1+j*points_per_edge,1) << ", " << coords[ws](e,i+1+j*points_per_edge,2) << std::endl;
 #endif
-            coord[0] = coords[ws][e][i+1+j*points_per_edge][0];
-            coord[1] = coords[ws][e][i+1+j*points_per_edge][1];
-            coord[2] = coords[ws][e][i+1+j*points_per_edge][2];
+            coord[0] = coords[ws](e,i+1+j*points_per_edge,0);
+            coord[1] = coords[ws](e,i+1+j*points_per_edge,1);
+            coord[2] = coords[ws](e,i+1+j*points_per_edge,2);
             //set node 2 in STK bilinear mesh
             coord = stk::mesh::field_data(*coordinates_field, node2);
 #ifdef OUTPUT_TO_SCREEN
-            std::cout << "Output mesh node2 coords: " << coords[ws][e][i+points_per_edge+1+j*points_per_edge][0]
-                      << ", " << coords[ws][e][i+points_per_edge+1+j*points_per_edge][1]
-                      << ", " << coords[ws][e][i+points_per_edge+1+j*points_per_edge][2] << std::endl;
+            std::cout << "Output mesh node2 coords: " << coords[ws](e,i+points_per_edge+1+j*points_per_edge,0)
+                      << ", " << coords[ws](e,i+points_per_edge+1+j*points_per_edge,1)
+                      << ", " << coords[ws](e,i+points_per_edge+1+j*points_per_edge,2) << std::endl;
 #endif
-            coord[0] = coords[ws][e][i+points_per_edge+1+j*points_per_edge][0];
-            coord[1] = coords[ws][e][i+points_per_edge+1+j*points_per_edge][1];
-            coord[2] = coords[ws][e][i+points_per_edge+1+j*points_per_edge][2];
+            coord[0] = coords[ws](e,i+points_per_edge+1+j*points_per_edge,0);
+            coord[1] = coords[ws](e,i+points_per_edge+1+j*points_per_edge,1);
+            coord[2] = coords[ws](e,i+points_per_edge+1+j*points_per_edge,2);
             //set node 3 in STK bilinear mesh
             coord = stk::mesh::field_data(*coordinates_field, node3);
 #ifdef OUTPUT_TO_SCREEN
-            std::cout << "Output mesh node3 coords: " << coords[ws][e][i+points_per_edge+j*points_per_edge][0]
-                      << ", " << coords[ws][e][i+points_per_edge+j*points_per_edge][1]
-                      << ", " << coords[ws][e][i+points_per_edge+j*points_per_edge][2] << std::endl;
+            std::cout << "Output mesh node3 coords: " << coords[ws](e,i+points_per_edge+j*points_per_edge,0)
+                      << ", " << coords[ws](e,i+points_per_edge+j*points_per_edge,1)
+                      << ", " << coords[ws](e,i+points_per_edge+j*points_per_edge,2) << std::endl;
 #endif
-            coord[0] = coords[ws][e][i+points_per_edge+j*points_per_edge][0];
-            coord[1] = coords[ws][e][i+points_per_edge+j*points_per_edge][1];
-            coord[2] = coords[ws][e][i+points_per_edge+j*points_per_edge][2];
+            coord[0] = coords[ws](e,i+points_per_edge+j*points_per_edge,0);
+            coord[1] = coords[ws](e,i+points_per_edge+j*points_per_edge,1);
+            coord[2] = coords[ws](e,i+points_per_edge+j*points_per_edge,2);
           }
         }
       }
@@ -274,14 +274,14 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
           double* coord;
           //set node 0 in STK linear mesh
           coord = stk::mesh::field_data(*coordinates_field, node0);
-          coord[0] = coords[ws][e][i][0];
+          coord[0] = coords[ws](e,i,0);
 #ifdef OUTPUT_TO_SCREEN
           std::cout << "Output mesh node0 x-coord: " << coord[0] << std::endl;  
 #endif 
           //set node 1 in STK linear mesh 
           coord = stk::mesh::field_data(*coordinates_field, node1);
-          coord[0] = coords[ws][e][i+1][0];
-          if ((periodic == true) && (coords[ws][e][i+1][0] == scale))
+          coord[0] = coords[ws](e,i+1,0);
+          if ((periodic == true) && (coords[ws](e,i+1,0) == scale))
             coord[0] = 0.0; 
 #ifdef OUTPUT_TO_SCREEN
           std::cout << "Output mesh node1 x-coord: " << coord[0] << std::endl;  

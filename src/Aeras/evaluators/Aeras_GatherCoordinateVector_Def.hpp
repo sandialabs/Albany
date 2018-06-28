@@ -47,12 +47,12 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
   if (memoizer_.have_stored_data(workset)) return;
 
   unsigned int numCells = workset.numCells;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords = workset.wsCoords;
+  const auto& wsCoords = workset.wsCoords;
 
   for (std::size_t cell=0; cell < numCells; ++cell) {
     for (std::size_t node = 0; node < numNodes; ++node) {
       for (std::size_t i=0; i < numCoords; ++i) { 
-        coordVec(cell,node,i) = wsCoords[cell][node][i]; 
+        coordVec(cell,node,i) = wsCoords(cell,node,i);
       }
     }
   }

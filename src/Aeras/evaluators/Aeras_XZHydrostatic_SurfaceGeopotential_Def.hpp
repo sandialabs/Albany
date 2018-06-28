@@ -140,13 +140,13 @@ evaluateFields(typename Traits::EvalData workset)
       for (int node=0; node < numNodes; ++node) {
       
         //How to get x coordinate:
-        //workset.wsCoords[cell][node][0]
+        //workset.wsCoords(cell,node,0)
         PhiSurf(cell,node) = 0.0;
       
         //std::cout << "topotype = none" <<std::endl;
         
         //std::cout << "cell="<<cell<<", node="<<node<<", coord x="<<
-        //workset.wsCoords[cell][node][0] << std::endl;
+        //workset.wsCoords(cell,node,0) << std::endl;
       
       }
     }
@@ -158,9 +158,9 @@ evaluateFields(typename Traits::EvalData workset)
       for (int node=0; node < numNodes; ++node) {
         
         //How to get x coordinate:
-        //workset.wsCoords[cell][node][0]
+        //workset.wsCoords(cell,node,0)
         
-        double xcoord = workset.wsCoords[cell][node][0];
+        double xcoord = workset.wsCoords(cell,node,0);
         if (std::abs(xcoord - center) <= (width/2.)) {
           PhiSurf(cell,node) =
                  (std::cos( (xcoord - center)*local_pi*2./width ) + 1.)

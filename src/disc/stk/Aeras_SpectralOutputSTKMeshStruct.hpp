@@ -26,7 +26,7 @@ namespace Aeras {
                   const int numDim_, const int worksetSize_,
                   const bool periodic_, const double scale_,
                   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID_,
-                  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords_,
+                  const Albany::AbstractDiscretization::CoordsWsArray& coords_,
                   const int points_per_edge_, const std::string element_name_);
 
 
@@ -68,7 +68,7 @@ namespace Aeras {
     const int numDim;
     const int points_per_edge;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
+    const Albany::AbstractDiscretization::CoordsWsArray coords;
 
     //Create enum type for the different kinds of elements (currently lines and quads)
     enum elemType {LINE, QUAD};

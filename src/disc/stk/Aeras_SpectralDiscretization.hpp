@@ -197,6 +197,12 @@ namespace Aeras
 
   class SpectralDiscretization : public Albany::AbstractDiscretization
   {
+    using Albany::AbstractDiscretization::ConnView;
+    using Albany::AbstractDiscretization::CoordsView;
+
+    using Albany::AbstractDiscretization::ConnWsArray;
+    using Albany::AbstractDiscretization::CoordsWsArray;
+
   public:
 
     //! Constructor
@@ -300,9 +306,7 @@ namespace Aeras
     };
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
-    using Albany::AbstractDiscretization::WorksetConn;
-    using Albany::AbstractDiscretization::Conn;
-    const Conn& getWsElNodeEqID() const override;
+    const ConnWsArray& getWsElNodeEqID() const override;
 
     //! Get map from (Ws, Local Node) -> NodeGID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
@@ -347,7 +351,7 @@ namespace Aeras
     virtual Teuchos::RCP<const Albany::ContactManager> getContactManager() const override;
 #endif
 
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+    const CoordsWsArray&
     getCoords() const override;
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
@@ -545,16 +549,6 @@ namespace Aeras
     GO getGlobalDOF(const GO inode,
                     const int eq) const;
 
-
-    //! Used when NetCDF output on a latitude-longitude grid is
-    //! requested.  Each struct contains a latitude/longitude index
-    //! and it's parametric coordinates in an element.
-    struct interp
-    {
-      std::pair<double  , double  > parametric_coords ;
-      std::pair<unsigned, unsigned> latitude_longitude;
-    };
-
     const stk::mesh::MetaData& getSTKMetaData()
     {
       return metaData;
@@ -670,9 +664,6 @@ namespace Aeras
 
     void setupExodusOutput();
 
-    //! Call stk_io for creating NetCDF output file
-    void setupNetCDFOutput();
-
     int processNetCDFOutputRequestT(const Tpetra_Vector&);
 
     //! Find the local side id number within parent element
@@ -771,7 +762,7 @@ namespace Aeras
     std::map< GO, Teuchos::ArrayRCP< GO > > enrichedEdges;
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
-    Conn wsElNodeEqID;
+    ConnWsArray wsElNodeEqID;
 
     //! Connectivity array [workset, element, local-node] => GID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;
@@ -779,7 +770,7 @@ namespace Aeras
     mutable Teuchos::ArrayRCP<double> coordinates;
     Albany::WorksetArray<std::string>::type wsEBNames;
     Albany::WorksetArray<int>::type wsPhysIndex;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
+    CoordsWsArray coords;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
     Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type latticeOrientation;
 
@@ -815,7 +806,6 @@ namespace Aeras
     int netCDFp;
     size_t netCDFOutputRequest;
     std::vector<int> varSolns;
-    Albany::WorksetArray<Teuchos::ArrayRCP<std::vector<interp> > >::type interpolateData;
 
     // Storage used in periodic BCs to un-roll coordinates. Pointers
     // saved for destructor.

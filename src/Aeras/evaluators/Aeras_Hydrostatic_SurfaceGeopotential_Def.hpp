@@ -172,13 +172,13 @@ evaluateFields(typename Traits::EvalData workset)
       for (int node=0; node < numNodes; ++node) {
       
         //How to get x coordinate:
-        //workset.wsCoords[cell][node][0]
+        //workset.wsCoords(cell,node,0)
         PhiSurf(cell,node) = 0.0;
       
         //std::cout << "topotype = none" <<std::endl;
         
         //std::cout << "cell="<<cell<<", node="<<node<<", coord x="<<
-        //workset.wsCoords[cell][node][0] << std::endl;
+        //workset.wsCoords(cell,node,0) << std::endl;
       
       }
     }
@@ -188,9 +188,9 @@ evaluateFields(typename Traits::EvalData workset)
   else if ( topoType == SPHERE_MOUNTAIN1 ){
     for ( int cell = 0; cell < workset.numCells; ++cell ) {
       for ( int node = 0; node < numNodes; ++node ) {
-        const double x = workset.wsCoords[cell][node][0];
-        const double y = workset.wsCoords[cell][node][1];
-        const double z = workset.wsCoords[cell][node][2];
+        const double x = workset.wsCoords(cell,node,0);
+        const double y = workset.wsCoords(cell,node,1);
+        const double z = workset.wsCoords(cell,node,2);
             
         const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
         const double lambda = std::atan2( y, x );
@@ -219,9 +219,9 @@ evaluateFields(typename Traits::EvalData workset)
 
     for ( int cell = 0; cell < workset.numCells; ++cell ) {
       for ( int node = 0; node < numNodes; ++node ) {
-        const double x = workset.wsCoords[cell][node][0];
-        const double y = workset.wsCoords[cell][node][1];
-        const double z = workset.wsCoords[cell][node][2];
+        const double x = workset.wsCoords(cell,node,0);
+        const double y = workset.wsCoords(cell,node,1);
+        const double z = workset.wsCoords(cell,node,2);
 
         const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
 

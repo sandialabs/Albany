@@ -99,6 +99,12 @@ struct NodalDOFsStructContainer
 };
 
 class STKDiscretization : public Albany::AbstractDiscretization {
+  using Albany::AbstractDiscretization::ConnView;
+  using Albany::AbstractDiscretization::CoordsView;
+
+  using Albany::AbstractDiscretization::ConnWsArray;
+  using Albany::AbstractDiscretization::CoordsWsArray;
+
  public:
   //! Constructor
   STKDiscretization(
@@ -241,9 +247,7 @@ class STKDiscretization : public Albany::AbstractDiscretization {
   };
 
   //! Get map from (Ws, El, Local Node) -> NodeLID
-  using Albany::AbstractDiscretization::WorksetConn;
-  using Albany::AbstractDiscretization::Conn;
-  const Conn&
+  const ConnWsArray&
   getWsElNodeEqID() const;
 
   //! Get map from (Ws, Local Node) -> NodeGID
@@ -286,8 +290,7 @@ class STKDiscretization : public Albany::AbstractDiscretization {
   getContactManager() const;
 #endif
 
-  const Albany::WorksetArray<
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
+  const CoordsWsArray&
   getCoords() const;
   const Albany::WorksetArray<Teuchos::ArrayRCP<double>>::type&
   getSphereVolume() const;
@@ -739,7 +742,7 @@ class STKDiscretization : public Albany::AbstractDiscretization {
   std::vector<Albany::SideSetList> sideSets;
 
   //! Connectivity array [workset, element, local-node, Eq] => LID
-  Conn wsElNodeEqID;
+  ConnWsArray wsElNodeEqID;
 
   //! Connectivity array [workset, element, local-node] => GID
   Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>::type
@@ -749,8 +752,7 @@ class STKDiscretization : public Albany::AbstractDiscretization {
   Teuchos::RCP<Tpetra_MultiVector>        coordMV;
   Albany::WorksetArray<std::string>::type wsEBNames;
   Albany::WorksetArray<int>::type         wsPhysIndex;
-  Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type
-                                                         coords;
+  CoordsWsArray coords;
   Albany::WorksetArray<Teuchos::ArrayRCP<double>>::type  sphereVolume;
   Albany::WorksetArray<Teuchos::ArrayRCP<double*>>::type latticeOrientation;
 

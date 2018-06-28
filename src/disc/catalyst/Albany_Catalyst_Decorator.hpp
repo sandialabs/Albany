@@ -90,8 +90,7 @@ public:
   const SideSetList& getSideSets(const int workset) const override;
 
   //! Get map from (Ws, El, Local Node) -> NodeLID
-  using AbstractDiscretization::Conn;
-  const Conn& getWsElNodeEqID() const override;
+  const AbstractDiscretization::ConnWsArray& getWsElNodeEqID() const override;
 
   //! Get map from (Ws, El, Local Node) -> unkGID
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
@@ -109,7 +108,7 @@ public:
       const std::string& field_name) const override;
 
   //! Retrieve coodinate vector (num_used_nodes * 3)
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const override;
+  const AbstractDiscretization::CoordsWsArray& getCoords() const override;
 
   //! Get coordinates (overlap map).
   const Teuchos::ArrayRCP<double>& getCoordinates() const override;

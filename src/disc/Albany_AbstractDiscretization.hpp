@@ -31,6 +31,11 @@ namespace Albany {
 
 class AbstractDiscretization {
   public:
+    using ConnView = Kokkos::View<LO***, Kokkos::LayoutRight, PHX::Device>;
+    using CoordsView = Kokkos::View<double***, PHX::Device>;
+
+    using ConnWsArray = typename Albany::WorksetArray<ConnView>::type;
+    using CoordsWsArray = typename Albany::WorksetArray<CoordsView>::type;
 
     typedef std::map<std::string,Teuchos::RCP<Albany::AbstractDiscretization> > SideSetDiscretizationsType;
 
@@ -115,11 +120,8 @@ class AbstractDiscretization {
     //! Get Side set lists
     virtual const SideSetList& getSideSets(const int ws) const = 0;
 
-    using WorksetConn = Kokkos::View<LO***, Kokkos::LayoutRight, PHX::Device>;
-    using Conn = typename Albany::WorksetArray<WorksetConn>::type;
-
     //! Get map from (Ws, El, Local Node, Eq) -> unkLID
-    virtual const Conn& getWsElNodeEqID() const = 0;
+    virtual const ConnWsArray& getWsElNodeEqID() const = 0;
 
     //! Get map from (Ws, El, Local Node) -> unkGID
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
@@ -135,7 +137,7 @@ class AbstractDiscretization {
     virtual const NodalDOFManager& getOverlapDOFManager(const std::string& field_name) const = 0;
 
     //! Retrieve coodinate ptr_field (ws, el, node)
-    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const = 0;
+    virtual const CoordsWsArray& getCoords() const = 0;
 
     //! Get coordinates (overlap map).
     virtual const Teuchos::ArrayRCP<double>& getCoordinates() const = 0;

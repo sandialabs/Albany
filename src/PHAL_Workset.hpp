@@ -138,9 +138,9 @@ struct Workset {
   std::vector<PHX::index_size_type> Jacobian_deriv_dims;
   std::vector<PHX::index_size_type> Tangent_deriv_dims;
 
-  Albany::AbstractDiscretization::WorksetConn wsElNodeEqID;
+  Albany::AbstractDiscretization::ConnView wsElNodeEqID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
+  Albany::AbstractDiscretization::CoordsView  wsCoords;
   Teuchos::ArrayRCP<double>  wsSphereVolume;
   Teuchos::ArrayRCP<double*>  wsLatticeOrientation;
   std::string EBName;
@@ -238,22 +238,22 @@ struct Workset {
   };
 
   void print(std::ostream &os){
-
     os << "Printing workset data:" << std::endl;
     os << "\tEB name : " << EBName << std::endl;
     os << "\tnumCells : " << numCells << std::endl;
     os << "\twsElNodeEqID : " << std::endl;
-    for(int i = 0; i < wsElNodeEqID.dimension(0); i++)
-      for(int j = 0; j < wsElNodeEqID.dimension(1); j++)
-        for(int k = 0; k < wsElNodeEqID.dimension(2); k++)
+    for(int i = 0; i < wsElNodeEqID.extent(0); i++)
+      for(int j = 0; j < wsElNodeEqID.extent(1); j++)
+        for(int k = 0; k < wsElNodeEqID.extent(2); k++)
           os << "\t\twsElNodeEqID(" << i << "," << j << "," << k << ") = " <<
             wsElNodeEqID(i,j,k) << std::endl;
     os << "\twsCoords : " << std::endl;
-    for(int i = 0; i < wsCoords.size(); i++)
-      for(int j = 0; j < wsCoords[i].size(); j++)
-          os << "\t\tcoord0:" << wsCoords[i][j][0] << "][" << wsCoords[i][j][1] << std::endl;
+    for(int i = 0; i < wsCoords.extent(0); i++)
+      for(int j = 0; j < wsCoords.extent(1); j++)
+        for(int k = 0; k < wsCoords.extent(2); k++)
+          os << "\t\twsCoords(" << i << "," << j << "," << k << ") = " <<
+            wsCoords(i,j,k) << std::endl;
   }
-
 };
 
 }

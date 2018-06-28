@@ -143,7 +143,7 @@ const SideSetList &Decorator::getSideSets(const int workset) const
   return discretization->getSideSets(workset);
 }
 
-const Decorator::Conn&
+const AbstractDiscretization::ConnWsArray&
 Decorator::getWsElNodeEqID() const
 {
   return discretization->getWsElNodeEqID();
@@ -168,7 +168,7 @@ const NodalDOFManager& Decorator::getOverlapDOFManager(
   return discretization->getOverlapDOFManager(field_name);
 }
 
-const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type &Decorator::getCoords() const
+const AbstractDiscretization::CoordsWsArray &Decorator::getCoords() const
 {
   return discretization->getCoords();
 }

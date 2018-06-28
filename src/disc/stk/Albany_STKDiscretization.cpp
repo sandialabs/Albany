@@ -263,7 +263,7 @@ Albany::STKDiscretization::getOverlapNodeMapT() const
   return overlap_node_mapT;
 }
 
-const Albany::STKDiscretization::Conn&
+const Albany::STKDiscretization::ConnWsArray&
 Albany::STKDiscretization::getWsElNodeEqID() const
 {
   return wsElNodeEqID;
@@ -275,7 +275,7 @@ Albany::STKDiscretization::getWsElNodeID() const
   return wsElNodeID;
 }
 
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
+const Albany::STKDiscretization::CoordsWsArray&
 Albany::STKDiscretization::getCoords() const
 {
   return coords;
@@ -307,12 +307,14 @@ Albany::STKDiscretization::printCoords() const
   std::cout << "Processor " << bulkData.parallel_rank() << " has "
             << coords.size() << " worksets." << std::endl;
   for (int ws = 0; ws < coords.size(); ws++) {
-    for (int e = 0; e < coords[ws].size(); e++) {
-      for (int j = 0; j < coords[ws][e].size(); j++) {
+    for (int e = 0; e < coords[ws].extent(0); e++) {
+      for (int j = 0; j < coords[ws].extent(1); j++) {
         std::cout << "Coord for workset: " << ws << " element: " << e
-                  << " node: " << j << " x, y, z: " << coords[ws][e][j][0]
-                  << ", " << coords[ws][e][j][1] << ", " << coords[ws][e][j][2]
-                  << std::endl;
+                  << " node: " << j << " coords:";
+        for (int d = 0; d < coords[ws].extent(2); d++) {
+          std::cout << " " << coords[ws](e,j,d);
+        }
+        std::cout << std::endl;
       }
     }
   }
@@ -1998,7 +2000,6 @@ Albany::STKDiscretization::computeWorksetInfo()
   for (int b = 0; b < numBuckets; b++) {
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeID[b].resize(buck.size());
-    coords[b].resize(buck.size());
 
     // Set size of Kokkos views
     // Note: Assumes nodes_per_element is the same across all elements in a
@@ -2008,7 +2009,9 @@ Albany::STKDiscretization::computeWorksetInfo()
       stk::mesh::Entity element           = buck[0];
       const int         nodes_per_element = bulkData.num_nodes(element);
       wsElNodeEqID[b] =
-          WorksetConn("wsElNodeEqID", buckSize, nodes_per_element, neq);
+          ConnView("wsElNodeEqID", buckSize, nodes_per_element, neq);
+      coords[b] =
+          CoordsView("coords", buckSize, nodes_per_element, stkMeshStruct->numDim);
     }
 
     {  // nodalDataToElemNode.
@@ -2125,7 +2128,6 @@ Albany::STKDiscretization::computeWorksetInfo()
       const int                nodes_per_element = bulkData.num_nodes(element);
 
       wsElNodeID[b][i].resize(nodes_per_element);
-      coords[b][i].resize(nodes_per_element);
 
       for (auto it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end();
            ++it) {
@@ -2174,30 +2176,16 @@ Albany::STKDiscretization::computeWorksetInfo()
             node_lid < 0,
             std::logic_error,
             "STK1D_Disc: node_lid out of range " << node_lid << std::endl);
-        coords[b][i][j] = stk::mesh::field_data(*coordinates_field, rowNode);
+
+        double* x = stk::mesh::field_data(*coordinates_field, rowNode);
+        for (int d = 0; d < stkMeshStruct->numDim; d++)
+          coords[b](i,j,d) = x[d];
 
         wsElNodeID[b][i][j] = node_array((int)i, j);
 
         for (int eq = 0; eq < neq; eq++)
-          wsElNodeEqID[b](i, j, eq) = node_eq_array((int)i, j, eq);
+          wsElNodeEqID[b](i,j,eq) = node_eq_array((int)i, j, eq);
       }
-      /*
-            for (int j=0; j < nodes_per_element; j++) {
-              const stk::mesh::Entity rowNode = node_rels[j];
-              const GO node_gid = gid(rowNode);
-              const LO node_lid = overlap_node_mapT->getLocalElement(node_gid);
-
-              TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
-               "STK1D_Disc: node_lid out of range " << node_lid << std::endl);
-              coords[b][i][j] = stk::mesh::field_data(*coordinates_field,
-         rowNode);
-              wsElNodeID[b][i][j] = node_gid;
-
-              wsElNodeEqID[b][i][j].resize(neq);
-              for (std::size_t eq=0; eq < neq; eq++)
-                wsElNodeEqID[b][i][j][eq] = getOverlapDOF(node_lid,eq);
-            }
-      */
     }
   }
 
@@ -2208,21 +2196,21 @@ Albany::STKDiscretization::computeWorksetInfo()
           int  nodes_per_element = buckets[b]->num_nodes(i);
           bool anyXeqZero        = false;
           for (int j = 0; j < nodes_per_element; j++)
-            if (coords[b][i][j][d] == 0.0) anyXeqZero = true;
+            if (coords[b](i,j,d) == 0.0) anyXeqZero = true;
           if (anyXeqZero) {
             bool flipZeroToScale = false;
             for (int j = 0; j < nodes_per_element; j++)
-              if (coords[b][i][j][d] > stkMeshStruct->PBCStruct.scale[d] / 1.9)
+              if (coords[b](i,j,d) > stkMeshStruct->PBCStruct.scale[d] / 1.9)
                 flipZeroToScale = true;
             if (flipZeroToScale) {
               for (int j = 0; j < nodes_per_element; j++) {
-                if (coords[b][i][j][d] == 0.0) {
+                if (coords[b](i,j,d) == 0.0) {
                   double* xleak = new double[stkMeshStruct->numDim];
                   for (int k = 0; k < stkMeshStruct->numDim; k++)
                     if (k == d)
                       xleak[d] = stkMeshStruct->PBCStruct.scale[d];
                     else
-                      xleak[k]              = coords[b][i][j][k];
+                      xleak[k]              = coords[b](i,j,k);
                   std::string transformType = stkMeshStruct->transformType;
                   double      alpha         = stkMeshStruct->felixAlpha;
                   alpha *= pi / 180.;  // convert alpha, read in from
@@ -2239,7 +2227,8 @@ Albany::STKDiscretization::computeWorksetInfo()
                       sHeight->second(int(i), j) -=
                           stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
                   }
-                  coords[b][i][j] = xleak;  // replace ptr to coords
+                  for (int k = 0; k < stkMeshStruct->numDim; k++)
+                    coords[b](i,j,k) = xleak[k];
                   toDelete.push_back(xleak);
                 }
               }
@@ -2743,19 +2732,33 @@ distance(const std::vector<double>& x, const std::vector<double>& y)
       (x[2] - y[2]) * (x[2] - y[2]));
   return d;
 }
+double
+distance(const Albany::AbstractDiscretization::CoordsView& coords,
+    const unsigned cell, const unsigned node1, const unsigned node2)
+{
+  const double d =
+      (coords(cell,node1,0) - coords(cell,node2,0)) *
+      (coords(cell,node1,0) - coords(cell,node2,0)) +
+      (coords(cell,node1,1) - coords(cell,node2,1)) *
+      (coords(cell,node1,1) - coords(cell,node2,1)) +
+      (coords(cell,node1,2) - coords(cell,node2,2)) *
+      (coords(cell,node1,2) - coords(cell,node2,2));
+  return std::sqrt(d);
+}
 
 bool
 point_inside(
-    const Teuchos::ArrayRCP<double*>& coords,
-    const std::vector<double>&        sphere_xyz)
+    const Albany::AbstractDiscretization::CoordsView& coords,
+    const std::vector<double>&        sphere_xyz,
+    const unsigned cell)
 {
   // first check if point is near the element:
   const double tol_inside = 1e-12;
   const double elem_diam  = std::max(
-      ::distance(coords[0], coords[2]), ::distance(coords[1], coords[3]));
+      ::distance(coords, cell, 0, 2), ::distance(coords, cell, 1, 3));
   std::vector<double> center(3, 0);
   for (unsigned i = 0; i < 4; ++i)
-    for (unsigned j = 0; j < 3; ++j) center[j] += coords[i][j];
+    for (unsigned j = 0; j < 3; ++j) center[j] += coords(cell,i,j);
   for (unsigned j      = 0; j < 3; ++j) center[j] /= 4;
   bool          inside = true;
 
@@ -2766,9 +2769,9 @@ point_inside(
     std::vector<double> cross(3);
     // outward normal to plane containing j->i edge:  corner(i) x corner(j)
     // sphere dot (corner(i) x corner(j) ) = negative if inside
-    cross[0] = coords[i][1] * coords[j][2] - coords[i][2] * coords[j][1];
-    cross[1] = -(coords[i][0] * coords[j][2] - coords[i][2] * coords[j][0]);
-    cross[2] = coords[i][0] * coords[j][1] - coords[i][1] * coords[j][0];
+    cross[0] = coords(cell,i,1) * coords(cell,j,2) - coords(cell,i,2) * coords(cell,j,1);
+    cross[1] = -(coords(cell,i,0) * coords(cell,j,2) - coords(cell,i,2) * coords(cell,j,0));
+    cross[2] = coords(cell,i,0) * coords(cell,j,1) - coords(cell,i,1) * coords(cell,j,0);
     j        = i;
     const double dotprod = cross[0] * sphere_xyz[0] + cross[1] * sphere_xyz[1] +
                            cross[2] * sphere_xyz[2];
@@ -2832,10 +2835,11 @@ value(const std::vector<double>& soln, const std::pair<double, double>& ref)
 void
 value(
     double                            x[3],
-    const Teuchos::ArrayRCP<double*>& coords,
-    const std::pair<double, double>& ref)
+    const Albany::AbstractDiscretization::CoordsView& coords,
+    const std::pair<double, double>& ref,
+    const unsigned cell)
 {
-  const int C = coords.size();
+  const int C = coords.extent(1);
   const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
       HGRAD_Basis = Basis(C);
 
@@ -2849,16 +2853,17 @@ value(
 
   for (unsigned i = 0; i < 3; ++i) x[i] = 0;
   for (unsigned i = 0; i < 3; ++i)
-    for (unsigned j = 0; j < C; ++j) x[i] += coords[j][i] * basisVals(j, 0);
+    for (unsigned j = 0; j < C; ++j) x[i] += coords(cell,j,i) * basisVals(j, 0);
 }
 
 void
 grad(
     double                            x[3][2],
-    const Teuchos::ArrayRCP<double*>& coords,
-    const std::pair<double, double>& ref)
+    const Albany::AbstractDiscretization::CoordsView& coords,
+    const std::pair<double, double>& ref,
+    const unsigned cell)
 {
-  const int C = coords.size();
+  const int C = coords.extent(1);
   const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
       HGRAD_Basis = Basis(C);
 
@@ -2873,20 +2878,21 @@ grad(
   for (unsigned i = 0; i < 3; ++i) x[i][0] = x[i][1] = 0;
   for (unsigned i = 0; i < 3; ++i)
     for (unsigned j = 0; j < C; ++j) {
-      x[i][0] += coords[j][i] * basisGrad(j, 0, 0);
-      x[i][1] += coords[j][i] * basisGrad(j, 0, 1);
+      x[i][0] += coords(cell,j,i) * basisGrad(j, 0, 0);
+      x[i][1] += coords(cell,j,i) * basisGrad(j, 0, 1);
     }
 }
 
 std::pair<double, double>
 ref2sphere(
-    const Teuchos::ArrayRCP<double*>& coords,
-    const std::pair<double, double>& ref)
+    const Albany::AbstractDiscretization::CoordsView& coords,
+    const std::pair<double, double>& ref,
+    const unsigned cell)
 {
   static const double DIST_THRESHOLD = 1.0e-9;
 
   double x[3];
-  value(x, coords, ref);
+  value(x, coords, ref, cell);
 
   const double r = std::sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
 
@@ -2916,10 +2922,11 @@ ref2sphere(
 
 void
 Dmap(
-    const Teuchos::ArrayRCP<double*>& coords,
+    const Albany::AbstractDiscretization::CoordsView& coords,
     const std::pair<double, double>& sphere,
     const std::pair<double, double>& ref,
-    double D[][2])
+    double D[][2],
+    const unsigned cell)
 {
   const double th     = sphere.first;
   const double lam    = sphere.second;
@@ -2939,7 +2946,7 @@ Dmap(
                            {-coslam * sinth, -sinlam * sinth, costh}};
 
   double D3[3][2] = {0};
-  grad(D3, coords, ref);
+  grad(D3, coords, ref, cell);
 
   double D4[3][2] = {0};
   for (unsigned i = 0; i < 3; ++i)
@@ -2956,8 +2963,9 @@ Dmap(
 
 std::pair<double, double>
 parametric_coordinates(
-    const Teuchos::ArrayRCP<double*>& coords,
-    const std::pair<double, double>& sphere)
+    const Albany::AbstractDiscretization::CoordsView& coords,
+    const std::pair<double, double>& sphere,
+    const unsigned cell)
 {
   static const double   tol_sq      = 1e-26;
   static const unsigned MAX_NR_ITER = 10;
@@ -2970,14 +2978,14 @@ parametric_coordinates(
   for (unsigned i = 0;
        i < MAX_NR_ITER && tol_sq < (costh * resb * resb + resa * resa);
        ++i) {
-    const std::pair<double, double> sph = ref2sphere(coords, ref);
+    const std::pair<double, double> sph = ref2sphere(coords, ref, cell);
     resa = sph.first - sphere.first;
     resb = sph.second - sphere.second;
 
     if (resb > pi) resb -= 2 * pi;
     if (resb < -pi) resb += 2 * pi;
 
-    Dmap(coords, sph, ref, D);
+    Dmap(coords, sph, ref, D, cell);
     const double detD = D[0][0] * D[1][1] - D[0][1] * D[1][0];
     Dinv[0][0]        = D[1][1] / detD;
     Dinv[0][1]        = -D[0][1] / detD;
@@ -2996,18 +3004,17 @@ parametric_coordinates(
 const std::pair<bool, std::pair<unsigned, unsigned>>
 point_in_element(
     const std::pair<double, double>& sphere,
-    const Albany::WorksetArray<
-        Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type& coords,
+    const Albany::AbstractDiscretization::CoordsWsArray& coords,
     std::pair<double, double>& parametric)
 {
   const std::vector<double> sphere_xyz = spherical_to_cart(sphere);
   std::pair<bool, std::pair<unsigned, unsigned>> element(
       false, std::pair<unsigned, unsigned>(0, 0));
   for (unsigned i = 0; i < coords.size() && !element.first; ++i) {
-    for (unsigned j = 0; j < coords[i].size() && !element.first; ++j) {
-      const bool found = point_inside(coords[i][j], sphere_xyz);
+    for (unsigned j = 0; j < coords[i].extent(0) && !element.first; ++j) {
+      const bool found = point_inside(coords[i], sphere_xyz, j);
       if (found) {
-        parametric = parametric_coordinates(coords[i][j], sphere);
+        parametric = parametric_coordinates(coords[i], sphere, j);
         if (parametric.first < -1) parametric.first   = -1;
         if (parametric.second < -1) parametric.second = -1;
         if (1 < parametric.first) parametric.first    = 1;
@@ -3025,8 +3032,7 @@ void
 setup_latlon_interp(
     const unsigned nlat,
     const double   nlon,
-    const Albany::WorksetArray<
-        Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type& coords,
+    const Albany::AbstractDiscretization::CoordsWsArray& coords,
     Albany::WorksetArray<Teuchos::ArrayRCP<
         std::vector<Albany::STKDiscretization::interp>>>::type& interpdata,
     const Teuchos::RCP<const Teuchos_Comm>                      commT)
@@ -3051,7 +3057,7 @@ setup_latlon_interp(
         const unsigned            b = element.second.first;
         const unsigned            e = element.second.second;
         const std::vector<double> sphere2_xyz =
-            spherical_to_cart(ref2sphere(coords[b][e], paramtric));
+            spherical_to_cart(ref2sphere(coords[b], paramtric, e));
         const std::vector<double> sphere_xyz = spherical_to_cart(sphere);
         err = std::max(err, ::distance(&sphere2_xyz[0], &sphere_xyz[0]));
         Albany::STKDiscretization::interp interp;
@@ -3103,7 +3109,7 @@ Albany::STKDiscretization::setupNetCDFOutput()
 
     interpolateData.resize(coords.size());
     for (int b = 0; b < coords.size(); b++)
-      interpolateData[b].resize(coords[b].size());
+      interpolateData[b].resize(coords[b].extent(0));
 
     setup_latlon_interp(nlat, nlon, coords, interpolateData, commT);
 
