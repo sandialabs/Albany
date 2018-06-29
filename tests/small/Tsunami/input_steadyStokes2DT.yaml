@@ -1,6 +1,10 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Debug Output:
+    #Write Jacobian to MatrixMarket: -1
+    #Write Residual to MatrixMarket: -1
+    Write Solution to MatrixMarket: true
   Problem: 
     Phalanx Graph Visualization Detail: 1
     Name: Tsunami Steady Stokes 2D
@@ -31,6 +35,7 @@ ANONYMOUS:
     2D Scale: 1.00000000000000000e+00
     Method: STK2D
     Exodus Output File Name: stokes_outT.exo
+    Write Coordinates to MatrixMarket: true
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [1.202898566199e-01]
@@ -89,7 +94,7 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 250
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack2
+              Preconditioner Type: MueLu
               Preconditioner Types:
                 Ifpack2:
                   Overlap: 2
