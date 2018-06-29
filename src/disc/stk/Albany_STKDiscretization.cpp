@@ -712,7 +712,7 @@ Albany::STKDiscretization::writeCoordsToMatrixMarket() const
 {
   // if user wants to write the coordinates to matrix market file, write them to
   // matrix market file
-  if (rigidBodyModes->isMLUsed() && stkMeshStruct->writeCoordsToMMFile) {
+  if ((rigidBodyModes->isMLUsed() || rigidBodyModes->isMueLuUsed()) && stkMeshStruct->writeCoordsToMMFile) {
     if (node_mapT->getComm()->getRank() == 0) {
       std::cout << "Writing mesh coordinates to Matrix Market file."
                 << std::endl;
