@@ -18,6 +18,7 @@ NavierStokesRm(const Teuchos::ParameterList& p,
   pGrad  (p.get<std::string> ("Pressure Gradient QP Variable Name"), dl->qp_vector),
   VGrad  (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_tensor),
   V      (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
+  V_Dot  (p.get<std::string> ("Velocity Dot QP Variable Name"),dl->qp_vector ),
   force  (p.get<std::string> ("Body Force QP Variable Name"), dl->qp_vector),
   Rm     (p.get<std::string> ("Rm Name"), dl->qp_vector),
   out    (Teuchos::VerboseObjectBase::getDefaultOStream()) 
@@ -29,6 +30,7 @@ NavierStokesRm(const Teuchos::ParameterList& p,
   this->addDependentField(pGrad);
   this->addDependentField(VGrad);
   this->addDependentField(V);
+  this->addDependentField(V_Dot);
   this->addDependentField(force);
   this->addEvaluatedField(Rm);
 
@@ -59,6 +61,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(pGrad,fm);
   this->utils.setFieldData(VGrad,fm);
   this->utils.setFieldData(V,fm);
+  this->utils.setFieldData(V_Dot,fm);
   this->utils.setFieldData(force,fm);
   this->utils.setFieldData(coordVec,fm);
 

@@ -20,14 +20,23 @@ NavierStokesMomentumResid(const Teuchos::ParameterList& p,
   VGrad     (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_tensor),
   P         (p.get<std::string> ("Pressure QP Variable Name"), dl->qp_scalar),
   force     (p.get<std::string> ("Body Force Name"), dl->qp_vector),
-  MResidual (p.get<std::string> ("Residual Name"),dl->node_vector)
+  MResidual (p.get<std::string> ("Residual Name"),dl->node_vector),
+  Rm        (p.get<std::string> ("Rm Name"), dl->qp_vector),
+  haveSUPG  (p.get<bool>        ("Have SUPG"))
 {
+
+  if (haveSUPG) {
+    TauSUPG = decltype(TauSUPG)(
+      p.get<std::string>("Tau SUPG Name"), dl->qp_scalar);
+    this->addDependentField(TauSUPG);
+  }
 
   this->addDependentField(wBF);
   this->addDependentField(VGrad);
   this->addDependentField(wGradBF);
   this->addDependentField(P);
   this->addDependentField(force);
+  this->addDependentField(Rm);
 
   this->addEvaluatedField(MResidual);
 
@@ -54,7 +63,10 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(P,fm);
   this->utils.setFieldData(force,fm);
-
+  this->utils.setFieldData(Rm,fm);
+  if (haveSUPG) {
+    this->utils.setFieldData(TauSUPG,fm);
+  }
   this->utils.setFieldData(MResidual,fm);
 }
 

@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef TSUNAMI_NAVIERSTOKESTAUM_HPP
-#define TSUNAMI_NAVIERSTOKESTAUM_HPP
+#ifndef TSUNAMI_NAVIERSTOKESTAUSUPG_HPP
+#define TSUNAMI_NAVIERSTOKESTAUSUPG_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -21,12 +21,12 @@ namespace Tsunami {
 */
 
 template<typename EvalT, typename Traits>
-class NavierStokesTauM : public PHX::EvaluatorWithBaseImpl<Traits>,
+class NavierStokesTauSUPG : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  NavierStokesTauM(const Teuchos::ParameterList& p,
+  NavierStokesTauSUPG(const Teuchos::ParameterList& p,
              const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -48,7 +48,7 @@ private:
   ScalarT meshSize; //mesh size h 
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> TauM;
+  PHX::MDField<ScalarT,Cell,Node> TauSUPG;
 
   unsigned int numQPs, numDims, numCells;
   Kokkos::DynRankView<MeshScalarT, PHX::Device> normGc;

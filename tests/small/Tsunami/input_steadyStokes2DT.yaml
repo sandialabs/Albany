@@ -23,6 +23,9 @@ ANONYMOUS:
     Tsunami Physical Parameters:
       Viscosity: 1.0
       Density: 1.0 
+    Stabilization Parameters:
+      PSPG Constant: 1.0
+      SUPG Constant: 7.0 
     Parameters: 
       Number: 0
       Parameter 0: DBC on NS NodeSet1 for DOF ux

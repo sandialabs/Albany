@@ -20,19 +20,19 @@ NavierStokesContinuityResid(const Teuchos::ParameterList& p,
   wBF       (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
   VGrad     (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_tensor),
   CResidual (p.get<std::string> ("Residual Name"), dl->node_scalar),
-  havePSPG(p.get<bool>("Have PSPG"))
+  havePSPG  (p.get<bool>("Have PSPG"))
 {
   this->addDependentField(wBF);
   this->addDependentField(VGrad);
   if (havePSPG) {
     wGradBF = decltype(wGradBF)(
       p.get<std::string>("Weighted Gradient BF Name"), dl->node_qp_vector);
-    TauM = decltype(TauM)(
-      p.get<std::string>("Tau M Name"), dl->qp_scalar);
+    TauPSPG = decltype(TauPSPG)(
+      p.get<std::string>("Tau PSPG Name"), dl->qp_scalar);
     Rm = decltype(Rm)(
       p.get<std::string>("Rm Name"), dl->qp_vector);
     this->addDependentField(wGradBF);
-    this->addDependentField(TauM);
+    this->addDependentField(TauPSPG);
     this->addDependentField(Rm);
   }
 
@@ -60,7 +60,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(VGrad,fm);
   if (havePSPG) {
     this->utils.setFieldData(wGradBF,fm);
-    this->utils.setFieldData(TauM,fm);
+    this->utils.setFieldData(TauPSPG,fm);
     this->utils.setFieldData(Rm,fm);
   }
 
@@ -157,12 +157,11 @@ evaluateFields(typename Traits::EvalData workset)
   if (havePSPG) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
-  for (std::size_t qp=0; qp < numQPs; ++qp) {
-    for (std::size_t j=0; j < numDims; ++j) {
-      CResidual(cell,node) +=
-        TauM(cell,qp)*Rm(cell,qp,j)*wGradBF(cell,node,qp,j);
-    }
-  }
+        for (std::size_t qp=0; qp < numQPs; ++qp) {
+          for (std::size_t j=0; j < numDims; ++j) {
+            CResidual(cell,node) += TauPSPG(cell,qp)*Rm(cell,qp,j)*wGradBF(cell,node,qp,j);
+          }
+        }
       }
     }
   }

@@ -109,6 +109,7 @@ namespace Tsunami {
 
     bool haveSource;   //! have source term in heat equation
     bool havePSPG;     //! have pressure stabilization
+    bool haveSUPG;     //! have SUPG stabilization (for convection-dominated flows) 
 
     bool haveAdvection; //! turns on nonlinear convection terms in NS
     bool haveUnsteady;  //! turns on time-dependent terms in NS 
@@ -119,6 +120,8 @@ namespace Tsunami {
     bool use_sdbcs_;
 
     double mu, rho; //visocity and density
+
+    double tauPSPG, tauSUPG; //stabilization parameters 
   };
 
 }
@@ -137,7 +140,8 @@ namespace Tsunami {
 #include "Tsunami_NavierStokesRm.hpp"
 #include "Tsunami_NavierStokesContinuityResid.hpp"
 #include "Tsunami_NavierStokesMomentumResid.hpp"
-#include "Tsunami_NavierStokesTauM.hpp"
+#include "Tsunami_NavierStokesTauPSPG.hpp"
+#include "Tsunami_NavierStokesTauSUPG.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -249,7 +253,7 @@ Tsunami::NavierStokes::constructEvaluators(
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
-  if (havePSPG) { // Compute Contravarient Metric Tensor
+  if (havePSPG || haveSUPG) { // Compute Contravarient Metric Tensor
     RCP<ParameterList> p =
       rcp(new ParameterList("Contravarient Metric Tensor"));
 
@@ -312,8 +316,8 @@ Tsunami::NavierStokes::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (haveFlowEq && havePSPG) { // Tau M
-    RCP<ParameterList> p = rcp(new ParameterList("Tau M"));
+  if (haveFlowEq && havePSPG) { // Tau PSPG
+    RCP<ParameterList> p = rcp(new ParameterList("Tau PSPG"));
 
     //Input
     p->set<std::string>("Velocity QP Variable Name", "Velocity");
@@ -322,16 +326,41 @@ Tsunami::NavierStokes::constructEvaluators(
     p->set<string>("Jacobian Name",          "Jacobian");
     p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
     p->set<double>("Viscosity", mu); 
-    p->set<double>("Density", rho); 
+    p->set<double>("Density", rho);
+    p->set<double>("PSPG Constant", tauPSPG); 
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Tau M");
+    Teuchos::ParameterList& paramList = params->sublist("Tau PSPG");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     //Output
-    p->set<std::string>("Tau M Name", "Tau M");
+    p->set<std::string>("Tau PSPG Name", "Tau PSPG");
 
-    ev = rcp(new Tsunami::NavierStokesTauM<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Tsunami::NavierStokesTauPSPG<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+  
+  if (haveFlowEq && haveSUPG) { // Tau SUPG
+    RCP<ParameterList> p = rcp(new ParameterList("Tau SUPG"));
+
+    //Input
+    p->set<std::string>("Velocity QP Variable Name", "Velocity");
+    p->set<std::string>("Contravarient Metric Tensor Name", "Gc");
+    p->set<std::string>("Jacobian Det Name", "Jacobian Det");
+    p->set<string>("Jacobian Name",          "Jacobian");
+    p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
+    p->set<double>("Viscosity", mu); 
+    p->set<double>("Density", rho);
+    p->set<double>("SUPG Constant", tauSUPG); 
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Tau SUPG");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    //Output
+    p->set<std::string>("Tau SUPG Name", "Tau SUPG");
+
+    ev = rcp(new Tsunami::NavierStokesTauSUPG<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -346,12 +375,14 @@ Tsunami::NavierStokes::constructEvaluators(
     p->set<std::string>("Pressure QP Variable Name", "Pressure");
     p->set<std::string>("Pressure Gradient QP Variable Name", "Pressure Gradient");
     p->set<std::string>("Body Force Name", "Body Force");
+    p->set<std::string> ("Rm Name", "Rm");
+    p->set<std::string> ("Tau SUPG Name", "Tau SUPG");
     p->set<double>("Viscosity", mu); 
     p->set<double>("Density", rho); 
 
     p->set<std::string>("Velocity QP Variable Name", "Velocity");
     p->set<std::string>("Density QP Variable Name", "Density");
-    p->set<std::string> ("Tau M Name", "Tau M");
+    p->set<bool> ("Have SUPG", haveSUPG);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
@@ -376,7 +407,7 @@ Tsunami::NavierStokes::constructEvaluators(
 
     p->set<bool>("Have PSPG", havePSPG);
     p->set<std::string>("Weighted Gradient BF Name", Albany::weighted_grad_bf_name);
-    p->set<std::string> ("Tau M Name", "Tau M");
+    p->set<std::string> ("Tau PSPG Name", "Tau PSPG");
     p->set<std::string> ("Rm Name", "Rm");
 
     //Output

@@ -56,25 +56,34 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   haveFlow(false),
   haveFlowEq(false),
   haveSource(false),
-  havePSPG(false),
+  havePSPG(true),
+  haveSUPG(false),
   numDim(numDim_),
   haveAdvection(haveAdvection_),
   haveUnsteady(haveUnsteady_),
-  use_sdbcs_(false)
+  use_sdbcs_(false), 
+  mu(1.0), 
+  rho(1.0), 
+  tauPSPG(1.0), 
+  tauSUPG(1.0) 
 {
 
   getVariableType(params->sublist("Flow"), "DOF", flowType,
       haveFlow, haveFlowEq);
 
-  if (haveFlowEq) {
-    havePSPG = params->get("Have Pressure Stabilization", true);
-  }
- 
-  mu = 1.0; 
-  rho = 1.0; 
+  //IKT FIXME: put in exception throwing if mu, rho are <= 0 
   if (params->isSublist("Tsunami Physical Parameters")) {
     mu = params->sublist("Tsunami Physical Parameters").get<double>("Viscosity",1.0);
     rho = params->sublist("Tsunami Physical Parameters").get<double>("Density",1.0);
+  }
+
+  //IKT FIXME, put in exception throwing if tauPSPG, tauSUPG < 0 
+  if (params->isSublist("Stabilization Parameters")) {
+    tauPSPG = params->sublist("Stabilization Parameters").get<double>("PSPG Constant",1.0);
+    tauSUPG = params->sublist("Stabilization Parameters").get<double>("SUPG Constant",0.0);
+    if (tauSUPG != 0.0) {
+      haveSUPG = true; 
+    }
   }
 
   haveSource = true;
@@ -99,7 +108,10 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
        << "\tFlow variables:         " << variableTypeToString(flowType) << std::endl
        << "\tHave Advection:         " << haveAdvection << std::endl
        << "\tHave Unsteadey:         " << haveUnsteady << std::endl
-       << "\tPressure stabilization: " << havePSPG << std::endl;
+       << "\tPSPG stabilization:     " << havePSPG << std::endl
+       << "\t  PSPG parameter:       " << tauPSPG << std::endl
+       << "\tSUPG stabilization:     " << haveSUPG << std::endl
+       << "\t  SUPG parameter:       " << tauSUPG << std::endl; 
 }
 
 Tsunami::NavierStokes::
@@ -246,8 +258,7 @@ Tsunami::NavierStokes::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidStokesParams");
 
-  validPL->set<bool>("Have Pressure Stabilization", true);
-  validPL->sublist("Tau M", false, "");
+  validPL->sublist("Stabilization Parameters", false, "");
   validPL->sublist("Body Force", false, "");
   validPL->sublist("Flow", false, "");
   validPL->sublist("Tsunami Physical Parameters", false, "");

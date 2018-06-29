@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef Tsunami_NAVIERSTOKESRM_HPP
-#define Tsunami_NAVIERSTOKESRM_HPP
+#ifndef TSUNAMI_NAVIERSTOKESTAUPSPG_HPP
+#define TSUNAMI_NAVIERSTOKESTAUPSPG_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -21,44 +21,40 @@ namespace Tsunami {
 */
 
 template<typename EvalT, typename Traits>
-class NavierStokesRm : public PHX::EvaluatorWithBaseImpl<Traits>,
-	     public PHX::EvaluatorDerived<EvalT, Traits> {
+class NavierStokesTauPSPG : public PHX::EvaluatorWithBaseImpl<Traits>,
+		    public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  typedef typename EvalT::ScalarT ScalarT;
-
-  NavierStokesRm(const Teuchos::ParameterList& p,
-           const Teuchos::RCP<Albany::Layouts>& dl);
+  NavierStokesTauPSPG(const Teuchos::ParameterList& p,
+             const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
-
 private:
- 
+
+  typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  // Input:
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> pGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
+  // Input: 
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> V;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> V_Dot;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> force;  
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> coordVec;
-  
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> VGrad; //IK - added 7/19/2012
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint> jacobian_det; //jacobian determinant - for getting mesh size h 
+  double delta; 
+  ScalarT meshSize; //mesh size h 
+
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> Rm;
+  PHX::MDField<ScalarT,Cell,Node> TauPSPG;
 
-  unsigned int numQPs, numDims, numNodes;
+  unsigned int numQPs, numDims, numCells;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> normGc;
 
-  bool have_advection; 
-  bool have_unsteady;
   double mu, rho; 
-  Teuchos::RCP<Teuchos::FancyOStream> out;  
- 
+  
 };
 }
 

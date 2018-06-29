@@ -47,14 +47,17 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> V;
   PHX::MDField<const ScalarT,Cell,QuadPoint> P;
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> force;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> TauM;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> TauSUPG;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> Rm;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> MResidual;
 
   unsigned int numQPs, numDims, numNodes;
 
-  double mu, rho; 
+  double mu, rho;
+
+  bool haveSUPG; 
  
 };
 }
