@@ -52,6 +52,8 @@ private:
 
   unsigned int numQPs, numDims, numCells;
   Kokkos::DynRankView<MeshScalarT, PHX::Device> normGc;
+
+  double mu, rho; 
   
 };
 }

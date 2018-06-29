@@ -31,8 +31,8 @@ NavierStokesMomentumResid(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(MResidual);
 
-  //IKT: for now hard-coding viscosity mu to 1
-  mu = 1.0;
+  mu = p.get<double>("Viscosity"); 
+  rho = p.get<double>("Density"); 
  
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_qp_vector->dimensions(dims);

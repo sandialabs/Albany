@@ -44,6 +44,8 @@ NavierStokesContinuityResid(const Teuchos::ParameterList& p,
   numNodes = dims[1];
   numQPs  = dims[2];
   numDims = dims[3];
+  mu = p.get<double>("Viscosity"); 
+  rho = p.get<double>("Density"); 
 
   this->setName("NavierStokesContinuityResid"+PHX::typeAsString<EvalT>());
 }

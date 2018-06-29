@@ -57,6 +57,7 @@ private:
 
   bool have_advection; 
   bool have_unsteady;
+  double mu, rho; 
   Teuchos::RCP<Teuchos::FancyOStream> out;  
  
 };

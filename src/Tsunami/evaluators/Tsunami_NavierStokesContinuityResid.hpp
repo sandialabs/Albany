@@ -53,6 +53,7 @@ private:
   unsigned int numQPs, numDims, numNodes, numCells;
   Kokkos::DynRankView<ScalarT, PHX::Device> divergence;
   bool havePSPG;
+  double mu, rho; 
 };
 }
 

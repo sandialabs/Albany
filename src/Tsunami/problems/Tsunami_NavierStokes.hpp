@@ -118,6 +118,7 @@ namespace Tsunami {
     /// Boolean marking whether SDBCs are used
     bool use_sdbcs_;
 
+    double mu, rho; //visocity and density
   };
 
 }
@@ -275,6 +276,8 @@ Tsunami::NavierStokes::constructEvaluators(
 
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+    p->set<double>("Viscosity", mu); 
+    p->set<double>("Density", rho); 
 
 
     //Output
@@ -297,6 +300,8 @@ Tsunami::NavierStokes::constructEvaluators(
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set<bool>("Have Advection Term", haveAdvection); 
     p->set<bool>("Have Transient Term", haveUnsteady); 
+    p->set<double>("Viscosity", mu); 
+    p->set<double>("Density", rho); 
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
@@ -316,6 +321,8 @@ Tsunami::NavierStokes::constructEvaluators(
     p->set<std::string>("Jacobian Det Name", "Jacobian Det");
     p->set<string>("Jacobian Name",          "Jacobian");
     p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
+    p->set<double>("Viscosity", mu); 
+    p->set<double>("Density", rho); 
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Tau M");
@@ -339,6 +346,8 @@ Tsunami::NavierStokes::constructEvaluators(
     p->set<std::string>("Pressure QP Variable Name", "Pressure");
     p->set<std::string>("Pressure Gradient QP Variable Name", "Pressure Gradient");
     p->set<std::string>("Body Force Name", "Body Force");
+    p->set<double>("Viscosity", mu); 
+    p->set<double>("Density", rho); 
 
     p->set<std::string>("Velocity QP Variable Name", "Velocity");
     p->set<std::string>("Density QP Variable Name", "Density");
@@ -362,6 +371,8 @@ Tsunami::NavierStokes::constructEvaluators(
     p->set<std::string>("Velocity QP Variable Name", "Velocity");
     p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
     p->set<std::string>("Density QP Variable Name", "Density");
+    p->set<double>("Viscosity", mu); 
+    p->set<double>("Density", rho); 
 
     p->set<bool>("Have PSPG", havePSPG);
     p->set<std::string>("Weighted Gradient BF Name", Albany::weighted_grad_bf_name);

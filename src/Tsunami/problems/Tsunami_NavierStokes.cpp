@@ -69,6 +69,13 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if (haveFlowEq) {
     havePSPG = params->get("Have Pressure Stabilization", true);
   }
+ 
+  mu = 1.0; 
+  rho = 1.0; 
+  if (params->isSublist("Tsunami Physical Parameters")) {
+    mu = params->sublist("Tsunami Physical Parameters").get<double>("Viscosity",1.0);
+    rho = params->sublist("Tsunami Physical Parameters").get<double>("Density",1.0);
+  }
 
   haveSource = true;
 

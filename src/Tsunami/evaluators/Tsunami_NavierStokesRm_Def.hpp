@@ -40,9 +40,13 @@ NavierStokesRm(const Teuchos::ParameterList& p,
 
   have_advection = p.get<bool>("Have Advection Term"); 
   have_unsteady = p.get<bool>("Have Transient Term"); 
+  mu = p.get<double>("Viscosity"); 
+  rho = p.get<double>("Density"); 
   
   *out << "Have_advection = " << have_advection << "\n"; 
   *out << "Have_unsteady = "  << have_unsteady << "\n"; 
+  *out << "mu = " << mu << "\n"; 
+  *out << "rho = "  << rho << "\n"; 
   this->setName("NavierStokesRm"+PHX::typeAsString<EvalT>());
 }
 

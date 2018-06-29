@@ -24,8 +24,9 @@ NavierStokesBodyForce(const Teuchos::ParameterList& p,
     p.get<Teuchos::ParameterList*>("Parameter List");
 
   std::string type = bf_list->get("Type", "None");
-  //IKT: for now hard-coding viscosity mu to 1
-  mu = 1.0; 
+  mu = p.get<double>("Viscosity"); 
+  rho = p.get<double>("Density"); 
+  
   if (type == "None") {
     bf_type = NONE;
   }

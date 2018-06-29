@@ -20,6 +20,9 @@ ANONYMOUS:
       DBC on NS NodeSet99 for DOF p: 4.16129999999999978e+00
     Body Force: 
       Type: Poly Steady Stokes 2D
+    Tsunami Physical Parameters:
+      Viscosity: 1.0
+      Density: 1.0 
     Parameters: 
       Number: 0
       Parameter 0: DBC on NS NodeSet1 for DOF ux
@@ -73,15 +76,6 @@ ANONYMOUS:
             Stratimikos: 
               Linear Solver Type: Belos
               Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 250
-                      Output Frequency: 10
-                    Max Iterations: 250
-                    Tolerance: 9.99999999999999955e-07
                 Belos: 
                   Solver Type: Block GMRES
                   Solver Types: 

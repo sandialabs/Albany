@@ -53,7 +53,7 @@ private:
 
   unsigned int numQPs, numDims;
 
-  double mu; 
+  double mu, rho; 
 };
 }
 

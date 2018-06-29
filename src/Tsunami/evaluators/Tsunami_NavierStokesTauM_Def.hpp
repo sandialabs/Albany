@@ -37,6 +37,8 @@ NavierStokesTauM(const Teuchos::ParameterList& p,
   numCells= dims[0];
   numQPs  = dims[1];
   numDims = dims[2];
+  mu = p.get<double>("Viscosity"); 
+  rho = p.get<double>("Density"); 
 
   this->setName("NavierStokesTauM"+PHX::typeAsString<EvalT>());
 }
