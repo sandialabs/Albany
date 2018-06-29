@@ -22,6 +22,7 @@ static const std::string tangents_name         = "Tangents";
 static const std::string metric_name           = "Metric";
 static const std::string metric_det_name       = "Metric Det";
 static const std::string metric_inv_name       = "Metric Inv";
+static const std::string normal_name           = "Normal";
 
 } // namespace Albany
 

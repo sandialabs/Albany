@@ -80,7 +80,10 @@ struct MeshSpecsStruct
         sepEvalsByEB(sepEvalsByEB_),
         cubatureRule(cubatureRule_)
   {
+    TEUCHOS_TEST_FOR_EXCEPTION (cubatureDegree<0, Teuchos::Exceptions::InvalidArgument,
+                                "Error! Invalid cubature degree on element block '" << ebName << "'.\n");
   }
+
   // nonconst to allow replacement when the mesh adapts
   CellTopologyData ctd;
   int              numDim;

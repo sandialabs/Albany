@@ -47,6 +47,8 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> node_gradient;
     //! Data Layout for gradient quantity that lives at quad points
     Teuchos::RCP<PHX::DataLayout> qp_gradient;
+    //! Data Layout for vector quantity that lives at quad points, with dimension of the ambient space
+    Teuchos::RCP<PHX::DataLayout> qp_vector_spacedim;
     //! Data Layout for gradient quantity that lives on a cell
     Teuchos::RCP<PHX::DataLayout> cell_gradient;
     //! Data Layout for gradient quantity that lives on a face

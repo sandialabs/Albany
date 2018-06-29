@@ -337,7 +337,8 @@ namespace Albany {
         const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasisSide,
         const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureSide,
         const std::string& sideSetName,
-        const bool enableMemoizer = false) const;
+        const bool enableMemoizer = false,
+        const bool buildNormals = false) const;
 
   private:
 
