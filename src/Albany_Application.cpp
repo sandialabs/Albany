@@ -76,6 +76,9 @@ int countScale;
 int previous_app;
 int current_app;
 
+const Tpetra::global_size_t INVALID =
+    Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
+
 Albany::Application::Application(const RCP<const Teuchos_Comm> &comm_,
                                  const RCP<Teuchos::ParameterList> &params,
                                  const RCP<const Tpetra_Vector> &initial_guess, 
@@ -852,6 +855,7 @@ void Albany::Application::finalSetUp(
   dfm = problem->getDirichletFieldManager();
 
   offsets_ = problem->getOffsets();
+  nodeSetIDs_ = problem->getNodeSetIDs();
 
   nfm = problem->getNeumannFieldManager();
 
@@ -1416,8 +1420,28 @@ void Albany::Application::computeGlobalResidualImplT(
       setScaleBCDofs(workset);
 #ifdef WRITE_TO_MATRIX_MARKET
       char nameScale[100]; // create string for file name
-      sprintf(nameScale, "scale%i.mm", countScale);
-      Tpetra_MatrixMarket_Writer::writeDenseFile(nameScale, scaleVec_);
+      if (commT->getSize() == 1) {
+        sprintf(nameScale, "scale%i.mm", countScale);
+        Tpetra_MatrixMarket_Writer::writeDenseFile(nameScale, scaleVec_);
+      }
+      else {
+        // create serial map that puts the whole solution on processor 0
+        int numMyElements = (scaleVec_->getMap()->getComm()->getRank() == 0)
+                                  ? scaleVec_->getMap()->getGlobalNumElements()
+                                  : 0;
+        Teuchos::RCP<const Tpetra_Map> serial_map =
+              Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, commT));
+
+        // create importer from parallel map to serial map and populate serial
+        // solution scale_serial
+        Teuchos::RCP<Tpetra_Import> importOperator =
+            Teuchos::rcp(new Tpetra_Import(scaleVec_->getMap(), serial_map));
+        Teuchos::RCP<Tpetra_Vector> scale_serial =
+            Teuchos::rcp(new Tpetra_Vector(serial_map));
+        scale_serial->doImport(*scaleVec_, *importOperator, Tpetra::INSERT);
+        sprintf(nameScale, "scaleSerial%i.mm", countScale);
+        Tpetra_MatrixMarket_Writer::writeDenseFile(nameScale, scale_serial);
+      }
 #endif
       countScale++;
     }
@@ -1797,8 +1821,28 @@ void Albany::Application::computeGlobalJacobianImplT(
       setScaleBCDofs(workset, jacT);
 #ifdef WRITE_TO_MATRIX_MARKET
       char nameScale[100]; // create string for file name
-      sprintf(nameScale, "scale%i.mm", countScale);
-      Tpetra_MatrixMarket_Writer::writeDenseFile(nameScale, scaleVec_);
+      if (commT->getSize() == 1) {
+        sprintf(nameScale, "scale%i.mm", countScale);
+      }
+      else {
+        Tpetra_MatrixMarket_Writer::writeDenseFile(nameScale, scaleVec_);
+        // create serial map that puts the whole solution on processor 0
+        int numMyElements = (scaleVec_->getMap()->getComm()->getRank() == 0)
+                                ? scaleVec_->getMap()->getGlobalNumElements()
+                                : 0;
+        Teuchos::RCP<const Tpetra_Map> serial_map =
+            Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, commT));
+
+        // create importer from parallel map to serial map and populate serial
+        // solution scale_serial
+        Teuchos::RCP<Tpetra_Import> importOperator =
+            Teuchos::rcp(new Tpetra_Import(scaleVec_->getMap(), serial_map));
+        Teuchos::RCP<Tpetra_Vector> scale_serial =
+            Teuchos::rcp(new Tpetra_Vector(serial_map));
+        scale_serial->doImport(*scaleVec_, *importOperator, Tpetra::INSERT);
+        sprintf(nameScale, "scaleSerial%i.mm", countScale);
+        Tpetra_MatrixMarket_Writer::writeDenseFile(nameScale, scale_serial);
+      }
 #endif
       countScale++;
     }
@@ -3566,26 +3610,30 @@ void Albany::Application::setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<Tp
     scale = tmp->normInf(); 
   }
 
-  int l = 0;
-  for (auto iterator = workset.nodeSets->begin();
-       iterator != workset.nodeSets->end(); iterator++) {
-    // std::cout << "key: " << iterator->first <<  std::endl;
-    const std::vector<std::vector<int>> &nsNodes = iterator->second;
+  for (int ns=0; ns<nodeSetIDs_.size(); ns++) {
+    std::string key = nodeSetIDs_[ns]; 
+    //std::cout << "IKTIKT key = " << key << std::endl; 
+    const std::vector<std::vector<int> >& nsNodes = workset.nodeSets->find(key)->second;
     for (unsigned int i = 0; i < nsNodes.size(); i++) {
-      // std::cout << "l, offsets size: " << l << ", " << offsets_[l].size() <<
-      // std::endl;
-      for (unsigned j = 0; j < offsets_[l].size(); j++) {
-        int lunk = nsNodes[i][offsets_[l][j]];
-        // std::cout << "l, j, i, offsets_: " << l << ", " << j << ", " << i <<
-        // ", " << offsets_[l][j] << std::endl;  std::cout << "lunk = " << lunk <<
-        // std::endl;
+      //std::cout << "IKTIKT ns, offsets size: " << ns << ", " << offsets_[ns].size() << "\n";
+      for (unsigned j = 0; j < offsets_[ns].size(); j++) {
+        int lunk = nsNodes[i][offsets_[ns][j]];
+        /*std::cout << "IKTIKT ns, j, i, offsets_: " << ns << ", " << j << ", " << i <<
+             ", " << offsets_[ns][j] << "\n";  
+        std::cout << "IKTIKT lunk = " << lunk << "\n";*/
         scaleVec_->replaceLocalValue(lunk, scale);
       }
     }
-    l++;
-  }
+  } 
 
   if (problem->getSideSetEquations().size() > 0) {
+  
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true,
+      std::logic_error,
+      "Albany::Application::setScaleBCDofs is not yet implemented for"
+          << " sideset equations!\n"); 
+
     // Case where we have sideset equations: loop through sidesets' nodesets
     // Note: the side discretizations' nodesets are indexed progressively:
     //       nodeSet_0,...,nodeSetN,
@@ -3594,7 +3642,12 @@ void Albany::Application::setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<Tp
     //       sideM_nodeSet0,...,sideM_nodeSetNM
     // Therefore, we simply loop through the sideset discretizations (in order)
     // and in each one we loop through its nodesets
-    const auto &sdn =
+    //
+    // IKT, FIXME, 6/30/18: the code below needs to be reimplemented using
+    // nodeSetIDs_, as done above, if wishing to use setScaleBCDofs with 
+    // nodeset specified via the sideset discretization.
+    //
+    /*const auto &sdn =
         disc->getMeshStruct()->getMeshSpecs()[0]->sideSetMeshNames;
     for (int isd = 0; isd < sdn.size(); ++isd) {
       const auto &sd = disc->getSideSetDiscretizations().at(sdn[isd]);
@@ -3615,10 +3668,10 @@ void Albany::Application::setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<Tp
         }
         l++;
       }
-    }
+    }*/
   }
-  // std::cout << "scaleVec_: " <<std::endl;
-  // scaleVec_->describe(*out, Teuchos::VERB_EXTREME);
+  /*std::cout << "scaleVec_: " <<std::endl;
+  scaleVec_->describe(*out, Teuchos::VERB_EXTREME);*/
 }
 
 void Albany::Application::loadWorksetSidesetInfo(PHAL::Workset &workset,

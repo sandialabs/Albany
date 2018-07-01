@@ -301,6 +301,7 @@ FELIX::StokesFOThermoCoupled::constructDirichletEvaluators(
                                        this->params, this->paramLib);
   use_sdbcs_ = dirUtils.useSDBCs();
   offsets_ = dirUtils.getOffsets();
+  nodeSetIDs_ = dirUtils.getNodeSetIDs();
 }
 
 // Neumann BCs

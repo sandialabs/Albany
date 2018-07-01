@@ -217,6 +217,7 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct & mesh_specs)
       this->paramLib);
 
   offsets_ = dirichlet_utils.getOffsets();
+  nodeSetIDs_ = dirichlet_utils.getNodeSetIDs();
 
   return;
 }

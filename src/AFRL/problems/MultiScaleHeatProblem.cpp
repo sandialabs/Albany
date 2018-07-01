@@ -104,6 +104,7 @@ Albany::MultiScaleHeatProblem::constructDirichletEvaluators(const std::vector<st
    dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
                                        this->params, this->paramLib);
   offsets_ = bcUtils.getOffsets();
+  nodeSetIDs_ = bcUtils.getNodeSetIDs();
 }
 
 // Neumann BCs

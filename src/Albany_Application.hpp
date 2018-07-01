@@ -813,6 +813,7 @@ protected:
 
   // The following are for Jacobian/residual scaling
   Teuchos::Array<Teuchos::Array<int>> offsets_;
+  std::vector<std::string> nodeSetIDs_;
   Teuchos::RCP<Tpetra_Vector> scaleVec_;
 
   // boolean read from input file telling code whether to compute/print
