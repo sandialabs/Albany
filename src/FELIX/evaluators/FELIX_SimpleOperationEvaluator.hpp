@@ -23,14 +23,12 @@ class SimpleOperationBase: public PHX::EvaluatorWithBaseImpl<Traits>,
                            public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
-
   SimpleOperationBase (const Teuchos::ParameterList& p,
                        const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
 protected:
-
   // Input:
   PHX::MDField<const InOutScalarT> field_in;
 
@@ -47,12 +45,8 @@ template<typename EvalT, typename Traits, typename InOutScalarT, template<typena
 class SimpleUnaryOperation : public SimpleOperationBase<EvalT,Traits,InOutScalarT,UnaryOperation<InOutScalarT>>
 {
 public:
-  SimpleUnaryOperation  (const Teuchos::ParameterList& p,
-                         const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleOperationBase<EvalT,Traits,InOutScalarT,UnaryOperation<InOutScalarT>> (p,dl)
-  {
-    this->op.setup(p);
-  }
+  SimpleUnaryOperation (const Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
 };
@@ -62,8 +56,7 @@ class UnaryScaleOp : public SimpleUnaryOperation<EvalT,Traits,InOutScalarT,Unary
 {
 public:
   UnaryScaleOp (const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleUnaryOperation<EvalT,Traits,InOutScalarT,UnaryOps::Scale>(p,dl) {}
+                const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 template<typename EvalT, typename Traits, typename InOutScalarT>
@@ -71,8 +64,7 @@ class UnaryLogOp : public SimpleUnaryOperation<EvalT,Traits,InOutScalarT,UnaryOp
 {
 public:
   UnaryLogOp (const Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleUnaryOperation<EvalT,Traits,InOutScalarT,UnaryOps::Log>(p,dl) {}
+              const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 template<typename EvalT, typename Traits, typename InOutScalarT>
@@ -80,8 +72,7 @@ class UnaryExpOp : public SimpleUnaryOperation<EvalT,Traits,InOutScalarT,UnaryOp
 {
 public:
   UnaryExpOp (const Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleUnaryOperation<EvalT,Traits,InOutScalarT,UnaryOps::Exp>(p,dl) {}
+              const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 template<typename EvalT, typename Traits, typename InOutScalarT>
@@ -89,8 +80,7 @@ class UnaryLowPassOp : public SimpleUnaryOperation<EvalT,Traits,InOutScalarT,Una
 {
 public:
   UnaryLowPassOp (const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleUnaryOperation<EvalT,Traits,InOutScalarT,UnaryOps::LowPass>(p,dl) {}
+                  const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 template<typename EvalT, typename Traits, typename InOutScalarT>
@@ -98,8 +88,7 @@ class UnaryHighPassOp : public SimpleUnaryOperation<EvalT,Traits,InOutScalarT,Un
 {
 public:
   UnaryHighPassOp (const Teuchos::ParameterList& p,
-                   const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleUnaryOperation<EvalT,Traits,InOutScalarT,UnaryOps::HighPass>(p,dl) {}
+                   const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 template<typename EvalT, typename Traits, typename InOutScalarT>
@@ -107,8 +96,7 @@ class UnaryBandPassOp : public SimpleUnaryOperation<EvalT,Traits,InOutScalarT,Un
 {
 public:
   UnaryBandPassOp (const Teuchos::ParameterList& p,
-                   const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleUnaryOperation<EvalT,Traits,InOutScalarT,UnaryOps::BandPass>(p,dl) {}
+                   const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 // =================== Specializations For Binary Operations ================= //
@@ -117,21 +105,12 @@ template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldS
 class SimpleBinaryOperation : public SimpleOperationBase<EvalT,Traits,InOutScalarT,BinaryOperation<InOutScalarT>>
 {
 public:
-
-  SimpleBinaryOperation  (const Teuchos::ParameterList& p,
-                          const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleOperationBase<EvalT,Traits,InOutScalarT,BinaryOperation<InOutScalarT>> (p,dl)
-  {
-    field1 = PHX::MDField<const FieldScalarT> (p.get<std::string>("Parameter Field 1"), p.get<Teuchos::RCP<PHX::DataLayout>>("Field Layout"));
-    this->addDependentField(field1);
-  }
+  SimpleBinaryOperation (const Teuchos::ParameterList& p,
+                         const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm)
-  {
-    SimpleOperationBase<EvalT,Traits,InOutScalarT,BinaryOperation<InOutScalarT>>::postRegistrationSetup(d,fm);
-    this->utils.setFieldData(field1,fm);
-  }
+                              PHX::FieldManager<Traits>& fm);
+
   void evaluateFields(typename Traits::EvalData d);
 
 private:
@@ -143,8 +122,7 @@ class BinaryScaleOp : public SimpleBinaryOperation<EvalT,Traits,InOutScalarT,Fie
 {
 public:
   BinaryScaleOp (const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::Scale>(p,dl) {}
+                 const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
@@ -152,8 +130,7 @@ class BinaryLogOp : public SimpleBinaryOperation<EvalT,Traits,InOutScalarT,Field
 {
 public:
   BinaryLogOp (const Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::Log>(p,dl) {}
+               const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
@@ -161,8 +138,7 @@ class BinaryExpOp : public SimpleBinaryOperation<EvalT,Traits,InOutScalarT,Field
 {
 public:
   BinaryExpOp (const Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::Exp>(p,dl) {}
+               const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
@@ -170,8 +146,7 @@ class BinaryLowPassOp : public SimpleBinaryOperation<EvalT,Traits,InOutScalarT,F
 {
 public:
   BinaryLowPassOp (const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::LowPass>(p,dl) {}
+                   const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
@@ -179,8 +154,7 @@ class BinaryHighPassOp : public SimpleBinaryOperation<EvalT,Traits,InOutScalarT,
 {
 public:
   BinaryHighPassOp (const Teuchos::ParameterList& p,
-                   const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::HighPass>(p,dl) {}
+                   const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
@@ -188,8 +162,7 @@ class BinaryBandPassFixedLowerOp : public SimpleBinaryOperation<EvalT,Traits,InO
 {
 public:
   BinaryBandPassFixedLowerOp (const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::BandPassFixedLower>(p,dl) {}
+                              const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
@@ -197,8 +170,7 @@ class BinaryBandPassFixedUpperOp : public SimpleBinaryOperation<EvalT,Traits,InO
 {
 public:
   BinaryBandPassFixedUpperOp (const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::BandPassFixedUpper>(p,dl) {}
+                              const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 // =================== Specializations For Ternary Operations ================= //
@@ -207,28 +179,15 @@ template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldS
 class SimpleTernaryOperation : public SimpleOperationBase<EvalT,Traits,InOutScalarT,TernaryOperation<InOutScalarT>>
 {
 public:
-
   SimpleTernaryOperation (const Teuchos::ParameterList& p,
-                          const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleOperationBase<EvalT,Traits,InOutScalarT,TernaryOperation<InOutScalarT>> (p,dl)
-  {
-    field1 = PHX::MDField<const FieldScalarT> (p.get<std::string>("Parameter Field 1"), p.get<Teuchos::RCP<PHX::DataLayout>>("Field Layout"));
-    field2 = PHX::MDField<const FieldScalarT> (p.get<std::string>("Parameter Field 2"), p.get<Teuchos::RCP<PHX::DataLayout>>("Field Layout"));
-    this->addDependentField(field1);
-    this->addDependentField(field2);
-  }
+                          const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm)
-  {
-    SimpleOperationBase<EvalT,Traits,InOutScalarT,TernaryOperation<InOutScalarT>>::postRegistrationSetup(d,fm);
-    this->utils.setFieldData(field1,fm);
-    this->utils.setFieldData(field2,fm);
-  }
+                              PHX::FieldManager<Traits>& fm);
+
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-
   PHX::MDField<const FieldScalarT> field1;
   PHX::MDField<const FieldScalarT> field2;
 };
@@ -238,8 +197,7 @@ class TernaryBandPassOp : public SimpleTernaryOperation<EvalT,Traits,InOutScalar
 {
 public:
   TernaryBandPassOp (const Teuchos::ParameterList& p,
-                     const Teuchos::RCP<Albany::Layouts>& dl) :
-    SimpleTernaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,TernaryOps::BandPass>(p,dl) {}
+                     const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 } // Namespace FELIX
