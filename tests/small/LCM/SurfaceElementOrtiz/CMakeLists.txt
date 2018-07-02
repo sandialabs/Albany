@@ -26,18 +26,26 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/out.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/out.exodiff COPYONLY)
 
 # gold files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/out.e.gold
-               ${CMAKE_CURRENT_BINARY_DIR}/out.e.gold COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/out.gold.e
+               ${CMAKE_CURRENT_BINARY_DIR}/out.gold.e COPYONLY)
 
 # python runtest file
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
-               ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/runtest.cmake COPYONLY)
 
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
-  add_test(NAME ${testName} COMMAND "python" "runtest.py")
+  SET(OUTFILE  "out.e")
+  SET(REF_FILE "out.gold.e")
+   add_test(NAME ${testName}
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+           -DTEST_NAME=out -DTEST_ARGS=input.yaml -DMPIMNP=1
+           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+
 ENDIF()
 endif()
