@@ -310,7 +310,7 @@ void Albany::Application::initialSetUp(
 
     Teuchos::ParameterList &piro_params = params->sublist("Piro");
 
-    bool const have_dbcs = params->isSublist("Dirichlet BCs");
+    bool const have_dbcs = problemParams->isSublist("Dirichlet BCs");
 
     if (have_dbcs == false)
       no_dir_bcs_ = true;
@@ -657,6 +657,7 @@ void Albany::Application::buildProblem() {
                                "solver that requires SDBCs yet you are not "
                                "using SDBCs!\n");
   }
+
   if ((requires_orig_dbcs_ == true) && (problem->useSDBCs() == true)) {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                                "Error in Albany::Application: you are using a "
