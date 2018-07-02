@@ -33,7 +33,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube.g.2.1
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-#add_test(NAME ${testName} COMMAND "python" "runtest.py")
 if (ALBANY_IFPACK2)
 add_test(${testName} ${AlbanyT.exe} finer_cube_sdbc.yaml)
 endif ()

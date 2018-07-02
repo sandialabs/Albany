@@ -41,7 +41,6 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
-#  add_test(NAME ${testName} COMMAND "python" "runtestT.py")
   SET(OUTFILE  "EqConcentrationBC.e") 
   SET(REF_FILE "EqConcentrationBC.gold.e") 
    add_test(NAME ${testName}
