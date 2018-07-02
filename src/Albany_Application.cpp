@@ -359,7 +359,6 @@ void Albany::Application::initialSetUp(
       // Set flag marking that we are running with Tempus + d-Form Newmark +
       // SDBCs.
       if (stepper_type == "Newmark Implicit d-Form") {
-        requires_sdbcs_ = true;
         if (nonlinear_solver != "Line Search Based") {
           TEUCHOS_TEST_FOR_EXCEPTION(
               true, std::logic_error,
