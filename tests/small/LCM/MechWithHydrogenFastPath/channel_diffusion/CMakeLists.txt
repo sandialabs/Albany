@@ -1,6 +1,8 @@
 # Create a symbolic link for exodiff
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
                 ${SEACAS_EXODIFF} ${CMAKE_CURRENT_BINARY_DIR}/exodiff)
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ${runtest.cmake} ${CMAKE_CURRENT_BINARY_DIR}/runtest.cmake)
 
 # Copy Input files from source to binary dir
 
@@ -16,7 +18,17 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/channelDiffusion.exodiff
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/channelDiffusion.gold.e
                ${CMAKE_CURRENT_BINARY_DIR}/channelDiffusion.gold.e COPYONLY)
 
+# Name the test with the directory name
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(MechWithHydrogenFastPath_channelDiffusion python ../run_exodiff_test.py "${SerialAlbanyT.exe}" channelDiffusion.yaml)
+ SET(OUTFILE "channelDiffusion.e")
+ SET(REF_FILE "channelDiffusion.gold.e")
+ add_test(NAME ${testName}_channelDiffusion
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+          -DTEST_NAME=channelDiffusion -DTEST_ARGS=channelDiffusion.yaml -DMPIMNP=1
+          -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+          -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
+
 endif()
