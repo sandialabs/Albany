@@ -159,7 +159,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t node=0; node < numNodes; ++node) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           for (std::size_t j=0; j < numDims; ++j) {
-            CResidual(cell,node) += TauPSPG(cell,qp)*Rm(cell,qp,j)*wGradBF(cell,node,qp,j);
+            CResidual(cell,node) += TauPSPG(cell,qp)/rho*Rm(cell,qp,j)*wGradBF(cell,node,qp,j);
           }
         }
       }

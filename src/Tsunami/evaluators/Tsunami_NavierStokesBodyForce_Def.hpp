@@ -34,6 +34,7 @@ NavierStokesBodyForce(const Teuchos::ParameterList& p,
     bf_type = POLY;
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
+    this->addDependentField(coordVec);
   }
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -42,7 +43,6 @@ NavierStokesBodyForce(const Teuchos::ParameterList& p,
             << type << "!  Valid types are 'None' and 'Poly'.");
   }
 
-  this->addDependentField(coordVec);
   this->addEvaluatedField(force);
 
   std::vector<PHX::DataLayout::size_type> dims;
@@ -59,7 +59,7 @@ void NavierStokesBodyForce<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(coordVec,fm);
+  if (bf_type == POLY) this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(force,fm);
 }
 

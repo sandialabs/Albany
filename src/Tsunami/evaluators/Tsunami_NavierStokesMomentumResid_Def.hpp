@@ -17,6 +17,7 @@ NavierStokesMomentumResid(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl) :
   wBF       (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
   wGradBF   (p.get<std::string> ("Weighted Gradient BF Name"), dl->node_qp_vector),
+  pGrad     (p.get<std::string> ("Pressure Gradient QP Variable Name"), dl->qp_vector),
   VGrad     (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_tensor),
   P         (p.get<std::string> ("Pressure QP Variable Name"), dl->qp_scalar),
   force     (p.get<std::string> ("Body Force Name"), dl->qp_vector),
@@ -33,6 +34,7 @@ NavierStokesMomentumResid(const Teuchos::ParameterList& p,
 
   this->addDependentField(wBF);
   this->addDependentField(VGrad);
+  this->addDependentField(pGrad);
   this->addDependentField(wGradBF);
   this->addDependentField(P);
   this->addDependentField(force);
@@ -60,6 +62,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(VGrad,fm);
+  this->utils.setFieldData(pGrad,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(P,fm);
   this->utils.setFieldData(force,fm);
@@ -81,7 +84,7 @@ evaluateFields(typename Traits::EvalData workset)
   MResidual(cell,node,i) = 0.0;
   for (int qp=0; qp < numQPs; ++qp) {
     MResidual(cell,node,i) +=
-      force(cell,qp,i)*wBF(cell,node,qp) -
+      (Rm(cell,qp,i) - pGrad(cell,qp,i))*wBF(cell,node,qp) -
        P(cell,qp)*wGradBF(cell,node,qp,i);
     for (int j=0; j < numDims; ++j) {
       MResidual(cell,node,i) +=

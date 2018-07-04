@@ -74,13 +74,34 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   //IKT FIXME: put in exception throwing if mu, rho are <= 0 
   if (params->isSublist("Tsunami Physical Parameters")) {
     mu = params->sublist("Tsunami Physical Parameters").get<double>("Viscosity",1.0);
+    if (mu <= 0) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                              "Invalid value of Viscosity in Tsunami Problem = "
+                               << mu <<"!  Viscosity must be >0.");
+    }
     rho = params->sublist("Tsunami Physical Parameters").get<double>("Density",1.0);
+    if (rho <= 0) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                              "Invalid value of Density in Tsunami Problem = "
+                               << rho <<"!  Density must be >0.");
+    }
   }
 
   //IKT FIXME, put in exception throwing if tauPSPG, tauSUPG < 0 
   if (params->isSublist("Stabilization Parameters")) {
     tauPSPG = params->sublist("Stabilization Parameters").get<double>("PSPG Constant",1.0);
+    if (tauPSPG <= 0) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                              "Invalid value of PSPG Constant in Tsunami Problem = "
+                               << tauPSPG <<"!  PSPG Constant must be >0.");
+    }
+    rho = params->sublist("Tsunami Physical Parameters").get<double>("Density",1.0);
     tauSUPG = params->sublist("Stabilization Parameters").get<double>("SUPG Constant",0.0);
+    if (tauSUPG < 0) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                              "Invalid value of SUPG Constant in Tsunami Problem = "
+                               << tauSUPG <<"!  SUPG Constant must be >=0.");
+    }
     if (tauSUPG != 0.0) {
       haveSUPG = true; 
     }

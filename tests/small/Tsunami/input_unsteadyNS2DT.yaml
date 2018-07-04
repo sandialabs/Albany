@@ -28,7 +28,7 @@ ANONYMOUS:
       Density: 1.0 
     Stabilization Parameters:
       PSPG Constant: 1.0
-      SUPG Constant: 0.0 
+      SUPG Constant: 1.0 
   Discretization: 
     Method: Exodus
     Exodus Input File Name: vortex.exo

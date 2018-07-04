@@ -77,7 +77,27 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t i=0; i < numDims; ++i) {
         Rm(cell,qp,i) = 0;
-        Rm(cell,qp,i) += pGrad(cell,qp,i)+force(cell,qp,i);
+        Rm(cell,qp,i) += rho*force(cell,qp,i) +  pGrad(cell,qp,i);
+      }
+    }
+  }
+  if (have_advection == true) { 
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        for (std::size_t i=0; i < numDims; ++i) {
+          for (std::size_t j=0; j < numDims; ++j) {
+            Rm(cell,qp,i) += rho*V(cell,qp,j)*VGrad(cell,qp,i,j);
+          }
+        }
+      }
+    }
+  }
+  if (have_unsteady == true) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        for (std::size_t i=0; i < numDims; ++i) {
+          Rm(cell,qp,i) += rho*force(cell,qp,i) +  pGrad(cell,qp,i);
+        }
       }
     }
   }
