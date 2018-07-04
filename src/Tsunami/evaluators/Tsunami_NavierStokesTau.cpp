@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "Tsunami_NavierStokesTauPSPG.hpp"
-#include "Tsunami_NavierStokesTauPSPG_Def.hpp"
+#include "Tsunami_NavierStokesTau.hpp"
+#include "Tsunami_NavierStokesTau_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Tsunami::NavierStokesTauPSPG)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Tsunami::NavierStokesTau)
 

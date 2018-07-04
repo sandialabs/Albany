@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef TSUNAMI_NAVIERSTOKESTAUSUPG_HPP
-#define TSUNAMI_NAVIERSTOKESTAUSUPG_HPP
+#ifndef TSUNAMI_NAVIERSTOKESTAU_HPP
+#define TSUNAMI_NAVIERSTOKESTAU_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -21,12 +21,12 @@ namespace Tsunami {
 */
 
 template<typename EvalT, typename Traits>
-class NavierStokesTauSUPG : public PHX::EvaluatorWithBaseImpl<Traits>,
+class NavierStokesTau : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  NavierStokesTauSUPG(const Teuchos::ParameterList& p,
+  NavierStokesTau(const Teuchos::ParameterList& p,
              const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -44,11 +44,10 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> VGrad; //IK - added 7/19/2012
   PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;
   PHX::MDField<const MeshScalarT,Cell,QuadPoint> jacobian_det; //jacobian determinant - for getting mesh size h 
-  double delta; 
   ScalarT meshSize; //mesh size h 
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> TauSUPG;
+  PHX::MDField<ScalarT,Cell,Node> Tau;
 
   unsigned int numQPs, numDims, numCells;
   Kokkos::DynRankView<MeshScalarT, PHX::Device> normGc;

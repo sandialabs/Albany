@@ -28,8 +28,11 @@ NavierStokesMomentumResid(const Teuchos::ParameterList& p,
 
   if (haveSUPG) {
     TauSUPG = decltype(TauSUPG)(
-      p.get<std::string>("Tau SUPG Name"), dl->qp_scalar);
+      p.get<std::string>("Tau Name"), dl->qp_scalar);
+    V = decltype(V)(
+      p.get<std::string>("Velocity QP Variable Name"), dl->qp_vector);  
     this->addDependentField(TauSUPG);
+    this->addDependentField(V);
   }
 
   this->addDependentField(wBF);
@@ -69,6 +72,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(Rm,fm);
   if (haveSUPG) {
     this->utils.setFieldData(TauSUPG,fm);
+    this->utils.setFieldData(V,fm);
   }
   this->utils.setFieldData(MResidual,fm);
 }
@@ -81,21 +85,23 @@ evaluateFields(typename Traits::EvalData workset)
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
       for (int i=0; i<numDims; i++) {
-  MResidual(cell,node,i) = 0.0;
-  for (int qp=0; qp < numQPs; ++qp) {
-    MResidual(cell,node,i) +=
-      (Rm(cell,qp,i) - pGrad(cell,qp,i))*wBF(cell,node,qp) -
-       P(cell,qp)*wGradBF(cell,node,qp,i);
-    for (int j=0; j < numDims; ++j) {
-      MResidual(cell,node,i) +=
-        mu*(VGrad(cell,qp,i,j)+VGrad(cell,qp,j,i))*wGradBF(cell,node,qp,j);
-//        mu*VGrad(cell,qp,i,j)*wGradBF(cell,node,qp,j);
-    }
-  }
+        MResidual(cell,node,i) = 0.0;
+        for (int qp=0; qp < numQPs; ++qp) {
+          MResidual(cell,node,i) +=
+            (Rm(cell,qp,i) - pGrad(cell,qp,i))*wBF(cell,node,qp) -
+             P(cell,qp)*wGradBF(cell,node,qp,i);
+          for (int j=0; j < numDims; ++j) {
+            MResidual(cell,node,i) +=
+              mu*(VGrad(cell,qp,i,j)+VGrad(cell,qp,j,i))*wGradBF(cell,node,qp,j);
+    //        mu*VGrad(cell,qp,i,j)*wGradBF(cell,node,qp,j);
+          }
+        }
       }
     }
   }
-
+  //IKT, FIXME for Zhiheng/Xiaoshu: add SUPG term
+  /*if (haveSUPG) {
+  }*/
 
 }
 

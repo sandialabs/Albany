@@ -28,7 +28,7 @@ NavierStokesContinuityResid(const Teuchos::ParameterList& p,
     wGradBF = decltype(wGradBF)(
       p.get<std::string>("Weighted Gradient BF Name"), dl->node_qp_vector);
     TauPSPG = decltype(TauPSPG)(
-      p.get<std::string>("Tau PSPG Name"), dl->qp_scalar);
+      p.get<std::string>("Tau Name"), dl->qp_scalar);
     Rm = decltype(Rm)(
       p.get<std::string>("Rm Name"), dl->qp_vector);
     this->addDependentField(wGradBF);
@@ -70,68 +70,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   divergence = Kokkos::createDynRankView(VGrad.get_view(), "XXX", numCells, numQPs);
 
 }
-//*********************************************************************
-template<class Scalar, class ArrayOutFields, class ArrayInData, class ArrayInFields>
-void contractDataFieldScalar(ArrayOutFields &       outputFields,
-                             const ArrayInData &    inputData,
-                             const ArrayInFields &  inputFields,
-                             const bool             sumInto) {
 
-  int numCells       = inputFields.dimension(0);
-  int numFields      = inputFields.dimension(1);
-  int numPoints      = inputFields.dimension(2);
-  int numDataPoints  = inputData.dimension(1);
-
-  if (sumInto) {
-        if (numDataPoints != 1) { // nonconstant data
-          for (int cl = 0; cl < numCells; cl++) {
-            for (int lbf = 0; lbf < numFields; lbf++) {
-              Scalar tmpVal(0);
-              for (int qp = 0; qp < numPoints; qp++) {
-                tmpVal += inputFields(cl, lbf, qp)*inputData(cl, qp);
-              } // P-loop
-              outputFields(cl, lbf) += tmpVal;
-            } // F-loop
-          } // C-loop
-        }
-        else { // constant data
-          for (int cl = 0; cl < numCells; cl++) {
-            for (int lbf = 0; lbf < numFields; lbf++) {
-              Scalar tmpVal(0);
-              for (int qp = 0; qp < numPoints; qp++) {
-                tmpVal += inputFields(cl, lbf, qp)*inputData(cl, 0);
-              } // P-loop
-              outputFields(cl, lbf) += tmpVal;
-            } // F-loop
-          } // C-loop
-        } // numDataPoints
-      }
-      else {
-        if (numDataPoints != 1) { // nonconstant data
-          for (int cl = 0; cl < numCells; cl++) {
-            for (int lbf = 0; lbf < numFields; lbf++) {
-              Scalar tmpVal(0);
-              for (int qp = 0; qp < numPoints; qp++) {
-                tmpVal += inputFields(cl, lbf, qp)*inputData(cl, qp);
-              } // P-loop
-              outputFields(cl, lbf) = tmpVal;
-            } // F-loop
-          } // C-loop
-        }
-        else { // constant data
-          for (int cl = 0; cl < numCells; cl++) {
-            for (int lbf = 0; lbf < numFields; lbf++) {
-              Scalar tmpVal(0);
-              for (int qp = 0; qp < numPoints; qp++) {
-                tmpVal += inputFields(cl, lbf, qp)*inputData(cl, 0);
-              } // P-loop
-              outputFields(cl, lbf) = tmpVal;
-            } // F-loop
-          } // C-loop
-        } // numDataPoints
-      }
-
-}
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void NavierStokesContinuityResid<EvalT, Traits>::
@@ -149,10 +88,6 @@ evaluateFields(typename Traits::EvalData workset)
   }
   FST::integrate(CResidual.get_view(), divergence, wBF.get_view(),
                           false); // "false" overwrites
-
-  contractDataFieldScalar<ScalarT>(CResidual, divergence, wBF,false); // "false" overwrites
-
-
 
   if (havePSPG) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {

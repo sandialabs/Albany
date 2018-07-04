@@ -23,12 +23,10 @@ ANONYMOUS:
         Equation: 0
     Body Force: 
       Type: None
-    Tsunami Physical Parameters:
+    Tsunami Parameters:
       Viscosity: 1.0
-      Density: 1.0 
-    Stabilization Parameters:
-      PSPG Constant: 1.0
-      SUPG Constant: 1.0 
+      Density: 1.0  
+      Have SUPG Stabilization: true
   Discretization: 
     Method: Exodus
     Exodus Input File Name: vortex.exo

@@ -63,50 +63,29 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   haveUnsteady(haveUnsteady_),
   use_sdbcs_(false), 
   mu(1.0), 
-  rho(1.0), 
-  tauPSPG(1.0), 
-  tauSUPG(1.0) 
+  rho(1.0) 
 {
 
   getVariableType(params->sublist("Flow"), "DOF", flowType,
       haveFlow, haveFlowEq);
 
-  //IKT FIXME: put in exception throwing if mu, rho are <= 0 
-  if (params->isSublist("Tsunami Physical Parameters")) {
-    mu = params->sublist("Tsunami Physical Parameters").get<double>("Viscosity",1.0);
+  if (params->isSublist("Tsunami Parameters")) {
+    mu = params->sublist("Tsunami Parameters").get<double>("Viscosity",1.0);
     if (mu <= 0) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                               "Invalid value of Viscosity in Tsunami Problem = "
                                << mu <<"!  Viscosity must be >0.");
     }
-    rho = params->sublist("Tsunami Physical Parameters").get<double>("Density",1.0);
+    rho = params->sublist("Tsunami Parameters").get<double>("Density",1.0);
     if (rho <= 0) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                               "Invalid value of Density in Tsunami Problem = "
                                << rho <<"!  Density must be >0.");
     }
+    haveSUPG = params->sublist("Tsunami Parameters").get<bool>("Have SUPG Stabilization", true);
   }
 
-  //IKT FIXME, put in exception throwing if tauPSPG, tauSUPG < 0 
-  if (params->isSublist("Stabilization Parameters")) {
-    tauPSPG = params->sublist("Stabilization Parameters").get<double>("PSPG Constant",1.0);
-    if (tauPSPG <= 0) {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                              "Invalid value of PSPG Constant in Tsunami Problem = "
-                               << tauPSPG <<"!  PSPG Constant must be >0.");
-    }
-    rho = params->sublist("Tsunami Physical Parameters").get<double>("Density",1.0);
-    tauSUPG = params->sublist("Stabilization Parameters").get<double>("SUPG Constant",0.0);
-    if (tauSUPG < 0) {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                              "Invalid value of SUPG Constant in Tsunami Problem = "
-                               << tauSUPG <<"!  SUPG Constant must be >=0.");
-    }
-    if (tauSUPG != 0.0) {
-      haveSUPG = true; 
-    }
-  }
-
+  if (haveAdvection == false) haveSUPG = false; 
   haveSource = true;
 
   // Compute number of equations
@@ -130,9 +109,7 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
        << "\tHave Advection:         " << haveAdvection << std::endl
        << "\tHave Unsteadey:         " << haveUnsteady << std::endl
        << "\tPSPG stabilization:     " << havePSPG << std::endl
-       << "\t  PSPG parameter:       " << tauPSPG << std::endl
-       << "\tSUPG stabilization:     " << haveSUPG << std::endl
-       << "\t  SUPG parameter:       " << tauSUPG << std::endl; 
+       << "\tSUPG stabilization:     " << haveSUPG << std::endl;
 }
 
 Tsunami::NavierStokes::
@@ -280,10 +257,9 @@ Tsunami::NavierStokes::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidStokesParams");
 
-  validPL->sublist("Stabilization Parameters", false, "");
   validPL->sublist("Body Force", false, "");
   validPL->sublist("Flow", false, "");
-  validPL->sublist("Tsunami Physical Parameters", false, "");
+  validPL->sublist("Tsunami Parameters", false, "");
 
   return validPL;
 }
