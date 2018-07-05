@@ -54,7 +54,7 @@ if(ALBANY_IFPACK2)
  #test 1 - OrientationOnMesh
  SET(OUTFILE "OrientationOnMesh.exo")
  SET(REF_FILE "OrientationOnMesh.gold.exo")
- add_test(NAME CrystalPlasticity_${testName}_OrientationOnMesh
+ add_test(NAME CrystalPlasticity_${testName}
           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
           -DTEST_NAME=OrientationOnMesh -DTEST_ARGS=OrientationOnMesh.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
@@ -63,7 +63,7 @@ if(ALBANY_IFPACK2)
  #test 2 - OrientationOnMesh 4 procs
  SET(OUTFILE "OrientationOnMesh.exo")
  SET(REF_FILE "OrientationOnMesh.gold.exo")
- add_test(NAME CrystalPlasticity_${testName}_OrientationOnMesh_np4
+ add_test(NAME CrystalPlasticity_${testName}_np4
           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
           -DTEST_NAME=OrientationOnMesh -DTEST_ARGS=OrientationOnMesh.yaml -DMPIMNP=${MPIMNP}
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF} -DSEACAS_EPU=${SEACAS_EPU}
@@ -72,7 +72,7 @@ if(ALBANY_IFPACK2)
  #test 3 - OrientationNotOnMesh
  SET(OUTFILE "OrientationNotOnMesh.exo")
  SET(REF_FILE "OrientationNotOnMesh.gold.exo")
- add_test(NAME CrystalPlasticity_${testName}_NotOrientationOnMesh
+ add_test(NAME CrystalPlasticity_OrientationNotOnMesh
           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
           -DTEST_NAME=OrientationNotOnMesh -DTEST_ARGS=OrientationNotOnMesh.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
@@ -81,7 +81,7 @@ if(ALBANY_IFPACK2)
  #test 4 - OrientationNotOnMesh 4 procs
  SET(OUTFILE "OrientationNotOnMesh.exo")
  SET(REF_FILE "OrientationNotOnMesh.gold.exo")
- add_test(NAME CrystalPlasticity_${testName}_NotOrientationOnMesh_np4
+ add_test(NAME CrystalPlasticity_OrientationNotOnMesh_np4
           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
           -DTEST_NAME=OrientationNotOnMesh -DTEST_ARGS=OrientationNotOnMesh.yaml -DMPIMNP=${MPIMNP}
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF} -DSEACAS_EPU=${SEACAS_EPU}
