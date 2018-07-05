@@ -96,7 +96,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         for (std::size_t i=0; i < numDims; ++i) {
-          Rm(cell,qp,i) += rho*force(cell,qp,i) +  pGrad(cell,qp,i);
+          Rm(cell,qp,i) += rho*V_Dot(cell,qp,i);;
         }
       }
     }
