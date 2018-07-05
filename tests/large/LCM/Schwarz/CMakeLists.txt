@@ -4,7 +4,7 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-#add_subdirectory(Alternating)
+set(runtest.cmake ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
 add_subdirectory(Cubes)
 add_subdirectory(Alternating)
 if(ALBANY_DTK)
