@@ -107,7 +107,7 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
        << "\tSpatial dimension:      " << numDim << std::endl
        << "\tFlow variables:         " << variableTypeToString(flowType) << std::endl
        << "\tHave Advection:         " << haveAdvection << std::endl
-       << "\tHave Unsteadey:         " << haveUnsteady << std::endl
+       << "\tHave Unsteady:          " << haveUnsteady << std::endl
        << "\tPSPG stabilization:     " << havePSPG << std::endl
        << "\tSUPG stabilization:     " << haveSUPG << std::endl;
 }
