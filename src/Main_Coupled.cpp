@@ -44,13 +44,10 @@ int main(int argc, char *argv[]) {
   std::string xmlfilename_coupled = cmd.xml_filename;
 
   try {
-
-    RCP<Teuchos::Time> totalTime = 
-      Teuchos::TimeMonitor::getNewTimer("Albany: ***Total Time***");
-    RCP<Teuchos::Time> setupTime = 
-      Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time");
-    Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
-    Teuchos::TimeMonitor setupTimer(*setupTime); //start timer
+    auto totalTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
+        *Teuchos::TimeMonitor::getNewTimer("Albany: Total Time")));
+    auto setupTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
+        *Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")));
 
     //***********************************************************
     // Set up coupled model
@@ -105,6 +102,7 @@ int main(int argc, char *argv[]) {
     Piro::Epetra::SolverFactory piroEpetraFactory;
     RCP<EpetraExt::ModelEvaluator> coupledSolver =
       piroEpetraFactory.createSolver(coupledPiroParams, coupledModel);
+    setupTimer = Teuchos::null;
     
     // Solve coupled system
     EpetraExt::ModelEvaluator::InArgs inArgs = coupledSolver->createInArgs();

@@ -16,6 +16,7 @@
 
 #include "Teuchos_FancyOStream.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
+#include "Teuchos_StackedTimer.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
@@ -288,14 +289,15 @@ main(int argc, char *argv[]) {
   Albany::CmdLineArgs cmd;
   cmd.parse_cmdline(argc, argv, *out);
 
-  try {
-    RCP<Teuchos::Time> totalTime =
-        Teuchos::TimeMonitor::getNewTimer("Albany: ***Total Time***");
+//  const auto stackedTimer = Teuchos::rcp(
+//      new Teuchos::StackedTimer("Albany Stacked Timer"));
+//  Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
 
-    RCP<Teuchos::Time> setupTime =
-        Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time");
-    Teuchos::TimeMonitor totalTimer(*totalTime);  // start timer
-    Teuchos::TimeMonitor setupTimer(*setupTime);  // start timer
+  try {
+    auto totalTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
+        *Teuchos::TimeMonitor::getNewTimer("Albany: Total Time")));
+    auto setupTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
+        *Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")));
 
     RCP<const Teuchos_Comm> comm =
         Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
@@ -308,7 +310,7 @@ main(int argc, char *argv[]) {
     const RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>> solver =
         slvrfctry.createAndGetAlbanyAppT(app, comm, comm);
 
-    setupTimer.~TimeMonitor();
+    setupTimer = Teuchos::null;
 
     std::string solnMethod =
         slvrfctry.getParameters().sublist("Problem").get<std::string>(
@@ -569,6 +571,11 @@ main(int argc, char *argv[]) {
   if (!success) status += 10000;
 
   Teuchos::TimeMonitor::summarize(*out, false, true, false /*zero timers*/);
+//  stackedTimer->stop("Albany Stacked Timer");
+//  Teuchos::StackedTimer::OutputOptions options;
+//  options.output_fraction = true;
+//  options.output_minmax = true;
+//  stackedTimer->report(std::cout, Teuchos::DefaultComm<int>::getComm(), options);
 
 #ifdef ALBANY_APF
   Albany::APFMeshStruct::finalize_libraries();

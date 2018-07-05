@@ -183,13 +183,10 @@ MPMD_App::MPMD_App(int argc, char **argv, MPI_Comm& localComm)
   cmd.parse_cmdline(argc, argv, *out);
 
   try {
-    RCP<Teuchos::Time> totalTime =
-        Teuchos::TimeMonitor::getNewTimer("Albany: ***Total Time***");
-
-    RCP<Teuchos::Time> setupTime =
-        Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time");
-    Teuchos::TimeMonitor totalTimer(*totalTime);  // start timer
-    Teuchos::TimeMonitor setupTimer(*setupTime);  // start timer
+    auto totalTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
+        *Teuchos::TimeMonitor::getNewTimer("Albany: Total Time")));
+    auto setupTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
+        *Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")));
 
     Tpetra::MpiPlatform<Tpetra::Details::DefaultTypes::node_type> localPlatform(Teuchos::null, localComm);
     m_comm = localPlatform.getComm();
@@ -221,7 +218,7 @@ MPMD_App::MPMD_App(int argc, char **argv, MPI_Comm& localComm)
     m_solverFactory = rcp(new Albany::SolverFactory(appParams, m_comm));
     m_solver = m_solverFactory->createAndGetAlbanyAppT(m_app, m_comm, m_comm);
 
-    setupTimer.~TimeMonitor();
+    setupTimer = Teuchos::null;
 
     std::string solnMethod =
         m_solverFactory->getParameters().sublist("Problem").get<std::string>(

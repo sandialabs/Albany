@@ -37,13 +37,10 @@ int main(int argc, char *argv[]) {
   std::string xmladjfilename = cmd.xml_filename2;
 
   try {
-
-    RCP<Teuchos::Time> totalTime = 
-      Teuchos::TimeMonitor::getNewTimer("Albany: ***Total Time***");
-    RCP<Teuchos::Time> setupTime = 
-      Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time");
-    Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
-    Teuchos::TimeMonitor setupTimer(*setupTime); //start timer
+    auto totalTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
+        *Teuchos::TimeMonitor::getNewTimer("Albany: Total Time")));
+    auto setupTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
+        *Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")));
 
     RCP<const Teuchos_Comm> comm =
       Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
@@ -100,7 +97,7 @@ int main(int argc, char *argv[]) {
     responses_out.set_g(num_g-1,xfinal);
 
     if (Teuchos::nonnull(dgdp)) responses_out.set_DgDp(0,0,dgdp);
-    setupTimer.~TimeMonitor();
+    setupTimer = Teuchos::null;
     App->evalModel(params_in, responses_out);
 
     *out << "Finished eval of first model: Params, Responses " 
@@ -127,12 +124,10 @@ int main(int argc, char *argv[]) {
     RCP<Epetra_Vector> xinit =
       rcp(new Epetra_Vector(*(App->get_g_map(num_g-1)),true) );
     
-    RCP<Teuchos::Time> totalAdjTime = 
-      Teuchos::TimeMonitor::getNewTimer("Albany: ***Total Time***");
-    RCP<Teuchos::Time> setupAdjTime = 
-      Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time");
-    Teuchos::TimeMonitor totalAdjTimer(*totalAdjTime); //start timer
-    Teuchos::TimeMonitor setupAdjTimer(*setupAdjTime); //start timer
+    auto totalAdjTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
+        *Teuchos::TimeMonitor::getNewTimer("Albany: Total Time")));
+    auto setupAdjTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
+        *Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")));
 
     Albany::SolverFactory adjslvrfctry(xmladjfilename, comm);
     RCP<EpetraExt::ModelEvaluator> AdjApp;
@@ -196,7 +191,7 @@ int main(int argc, char *argv[]) {
     adj_responses_out.set_g(adj_num_g-1,adj_xfinal);
 
     if (Teuchos::nonnull(adj_dgdp)) adj_responses_out.set_DgDp(0,0,adj_dgdp);
-    setupAdjTimer.~TimeMonitor();
+    setupAdjTimer = Teuchos::null;
     AdjApp->evalModel(adj_params_in, adj_responses_out);
 
     *out << "Finished eval of adjoint model: Params, Responses " 
