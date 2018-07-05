@@ -99,9 +99,20 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-  //IKT, FIXME for Zhiheng/Xiaoshu: add SUPG term
-  /*if (haveSUPG) {
-  }*/
+  if (haveSUPG) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t node=0; node < numNodes; ++node) {          
+	for (std::size_t i=0; i<numDims; i++) {
+	  for (std::size_t qp=0; qp < numQPs; ++qp) {           
+	    for (std::size_t j=0; j < numDims; ++j) { 
+	      MResidual(cell,node,i) += 
+		TauSUPG(cell,qp)*Rm(cell,qp,j)*V(cell,qp,j)*wGradBF(cell,node,qp,j);
+	    }  
+	  }
+	}
+      }
+    }
+  }
 
 }
 
