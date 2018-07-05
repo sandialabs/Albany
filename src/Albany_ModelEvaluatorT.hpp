@@ -160,17 +160,21 @@ class ModelEvaluatorT
   Thyra::ModelEvaluatorBase::InArgs<ST>
   createInArgsImpl() const;
 
-  //! Cached nominal values
+  //! Cached nominal values and lower/upper bounds
   Thyra::ModelEvaluatorBase::InArgs<ST> nominalValues;
+  Thyra::ModelEvaluatorBase::InArgs<ST> lowerBounds;
+  Thyra::ModelEvaluatorBase::InArgs<ST> upperBounds;
 
   //! List of free parameter names
   Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>> param_names;
 
   //! Tpetra map for parameter vector
-  Teuchos::Array<Teuchos::RCP<Tpetra_Map>> tpetra_param_map;
+  Teuchos::Array<Teuchos::RCP<const Tpetra_Map>> tpetra_param_map;
 
-  //! Tpetra parameter vector
+  //! Tpetra parameter vectors and their bounds
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector>> tpetra_param_vec;
+  Teuchos::Array< Teuchos::RCP< Tpetra_Vector > > param_lower_bd;
+  Teuchos::Array< Teuchos::RCP< Tpetra_Vector > > param_upper_bd;
 
   //! Tpetra response vector
   Teuchos::Array<Teuchos::RCP<Thyra::VectorBase<ST>>> thyra_response_vec;
