@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./algebra NoVolJ.e outNoVolJ.alg.e < alg.i
+./algebra outVolJ.e outVolJ.alg.e < alg.i
