@@ -25,7 +25,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 if(ALBANY_IFPACK2)
  SET(OUTFILE "DislocationDensityHardening.exo")
  SET(REF_FILE "DislocationDensityHardening.gold.exo")
- add_test(NAME ${testName}
+ add_test(NAME CrystalPlasticity_${testName}
           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
           -DTEST_NAME=DislocationDensityHardening -DTEST_ARGS=DislocationDensityHardening.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}

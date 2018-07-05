@@ -64,7 +64,7 @@ if(ALBANY_IFPACK2)
  #test 1 - Newton
  SET(OUTFILE "MinisolverStep_Newton.exo")
  SET(REF_FILE "MinisolverStep_Newton.gold.exo")
- add_test(NAME ${testName}_Newton
+ add_test(NAME CrystalPlasticity_${testName}_Newton
           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
           -DTEST_NAME=MinisolverStep_Newton -DTEST_ARGS=MinisolverStep_Newton.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
@@ -73,7 +73,7 @@ if(ALBANY_IFPACK2)
  #test 2 - Newton Line Search
  SET(OUTFILE "MinisolverStep_NewtonLineSearch.exo")
  SET(REF_FILE "MinisolverStep_NewtonLineSearch.gold.exo")
- add_test(NAME ${testName}_NewtonLineSearch
+ add_test(NAME CrystalPlasticity_${testName}_NewtonLineSearch
           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
           -DTEST_NAME=MinisolverStep_NewtonLineSearch -DTEST_ARGS=MinisolverStep_NewtonLineSearch.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
@@ -82,7 +82,7 @@ if(ALBANY_IFPACK2)
  #test 3 - Trust Region
  SET(OUTFILE "MinisolverStep_TrustRegion.exo")
  SET(REF_FILE "MinisolverStep_TrustRegion.gold.exo")
- add_test(NAME ${testName}_TrustRegion
+ add_test(NAME CrystalPlasticity_${testName}_TrustRegion
           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
           -DTEST_NAME=MinisolverStep_TrustRegion -DTEST_ARGS=MinisolverStep_TrustRegion.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}

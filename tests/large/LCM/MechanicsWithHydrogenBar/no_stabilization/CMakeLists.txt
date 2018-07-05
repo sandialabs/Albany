@@ -28,7 +28,7 @@ if(ALBANY_IFPACK2)
 # Big diffs in parallel
  SET(OUTFILE "blockDiffusionNoStab.e")
  SET(REF_FILE "blockDiffusionNoStab.gold.e")
- add_test(NAME ${testName}
+ add_test(NAME MechanicsWithHydrogenBar_${testName}
           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
           -DTEST_NAME=blockDiffusionNoStab -DTEST_ARGS=blockDiffusionNoStab.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
