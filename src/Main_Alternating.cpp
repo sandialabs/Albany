@@ -125,16 +125,11 @@ int main(int ac, char *av[])
   cmd.parse_cmdline(ac, av, *fos);
 
   auto
-  total_time = Teuchos::TimeMonitor::getNewTimer("Albany: Total Time");
-
+  totalTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
+      *Teuchos::TimeMonitor::getNewTimer("Albany: Total Time")));
   auto
-  setup_time = Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time");
-
-  Teuchos::TimeMonitor
-  total_timer(*total_time);
-
-  Teuchos::TimeMonitor
-  setup_timer(*setup_time);
+  setupTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
+      *Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")));
 
   auto
   comm = Tpetra::DefaultPlatform::getDefaultPlatform().getComm();

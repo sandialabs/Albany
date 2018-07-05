@@ -152,14 +152,10 @@ int main(int argc, char *argv[]) {
   cmd.parse_cmdline(argc, argv, *out);
 
   try {
-
-    RCP<Teuchos::Time> totalTime =
-      Teuchos::TimeMonitor::getNewTimer("Albany: ***Total Time***");
-
-    RCP<Teuchos::Time> setupTime =
-      Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time");
-    Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
-    Teuchos::TimeMonitor setupTimer(*setupTime); //start timer
+    auto totalTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
+        *Teuchos::TimeMonitor::getNewTimer("Albany: Total Time")));
+    auto setupTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
+        *Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")));
 
     RCP<const Teuchos_Comm> comm =
       Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
@@ -175,7 +171,7 @@ int main(int argc, char *argv[]) {
     const RCP<Thyra::ModelEvaluator<double> > solver =
       slvrfctry.createThyraSolverAndGetAlbanyApp(app, comm, comm);
 
-    setupTimer.~TimeMonitor();
+    setupTimer = Teuchos::null;
 
 //    PHX::InitializeKokkosDevice();
    
