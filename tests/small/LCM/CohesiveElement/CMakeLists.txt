@@ -58,9 +58,9 @@ if (SEACAS_EXODIFF AND SEACAS_ALGEBRA)
   # 3. Create the test with this name and standard executable
   IF(NOT ALBANY_PARALLEL_ONLY)
     if (ALBANY_IFPACK2)
-      SET(OUTFILE "outCohesive.e ")
+      SET(OUTFILE "outCohesive.e")
       SET(REF_FILE "outCohesive.alg.gold.e")
-      SET(ALG_OUTFILE "outCohesive.alg.e ") 
+      SET(ALG_OUTFILE "outCohesive.alg.e") 
       add_test(NAME ${testName}
                COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
                -DTEST_NAME=Cohesive -DTEST_ARGS=inputCohesive.yaml -DMPIMNP=1
