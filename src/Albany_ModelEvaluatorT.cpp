@@ -70,6 +70,8 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
   }
 
   param_names.resize(num_param_vecs);
+  param_lower_bd.resize(num_param_vecs);
+  param_upper_bd.resize(num_param_vecs);
   for (int l = 0; l < num_param_vecs; ++l) {
     const Teuchos::ParameterList* pList =
         using_old_parameter_list ?
@@ -96,6 +98,135 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
 
     *out << "Number of parameters in parameter vector " << l << " = "
          << numParameters << std::endl;
+  }
+
+  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>> response_names;
+  response_names.resize(num_response_vecs);
+  for (int l = 0; l < num_response_vecs; ++l) {
+    const Teuchos::ParameterList* pList =
+        using_old_response_list ?
+            &responseParams :
+            &(responseParams.sublist(Albany::strint("Response Vector", l)));
+
+    bool number_exists = pList->getEntryPtr("Number");
+
+    if (number_exists) {
+      const int numParameters = pList->get<int>("Number");
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          numParameters == 0,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl
+              << "Error!  In Albany::ModelEvaluatorT constructor:  "
+              << "Response vector "
+              << l
+              << " has zero parameters!"
+              << std::endl);
+
+      response_names[l] =
+          Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
+      for (int k = 0; k < numParameters; ++k) {
+        (*response_names[l])[k] =
+            pList->get<std::string>(Albany::strint("Response", k));
+      }
+    }
+  }
+
+  *out << "Number of response vectors  = " << num_response_vecs << std::endl;
+
+  // Setup sacado and tpetra storage for parameters
+  sacado_param_vec.resize(num_param_vecs);
+  tpetra_param_vec.resize(num_param_vecs);
+  tpetra_param_map.resize(num_param_vecs);
+  thyra_response_vec.resize(num_response_vecs);
+
+  Teuchos::RCP<const Teuchos::Comm<int>> commT = app->getComm();
+  for (int l = 0; l < tpetra_param_vec.size(); ++l) {
+    try {
+      // Initialize Sacado parameter vector
+      // The following call will throw, and it is often due to an incorrect
+      // input line in the "Parameters" PL
+      // in the input file. Give the user a hint about what might be happening
+      app->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
+          *(param_names[l]), sacado_param_vec[l]);
+    } catch (const std::logic_error& le) {
+      *out << "Error: exception thrown from ParamLib fillVector in file "
+           << __FILE__ << " line " << __LINE__ << std::endl;
+      *out << "This is probably due to something incorrect in the "
+              "\"Parameters\" list in the input file, one of the lines:"
+           << std::endl;
+      for (int k = 0; k < param_names[l]->size(); ++k)
+        *out << "      " << (*param_names[l])[k] << std::endl;
+
+      throw le;  // rethrow to shut things down
+    }
+
+    // Create Tpetra map for parameter vector
+    Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
+    tpetra_param_map[l] =
+        Teuchos::rcp(new Tpetra_Map(sacado_param_vec[l].size(), 0, commT, lg));
+
+    // Create Tpetra vector for parameters
+    tpetra_param_vec[l] = Teuchos::rcp(new Tpetra_Vector(tpetra_param_map[l]));
+
+    Teuchos::ParameterList* pList;
+    if (using_old_parameter_list)
+      pList = &parameterParams;
+    else
+      pList = &(parameterParams.sublist(Albany::strint("Parameter Vector",l)));
+
+    int numParameters = tpetra_param_map[l]->getNodeNumElements();
+
+    // Loading lower bounds (if any)
+    if (pList->isParameter("Lower Bounds"))
+    {
+      param_lower_bd[l] = Teuchos::rcp(new Tpetra_Vector(tpetra_param_map[l]));
+      Teuchos::Array<ST> lb = pList->get<Teuchos::Array<ST>>("Lower Bounds");
+      TEUCHOS_TEST_FOR_EXCEPTION (lb.size()!=numParameters, Teuchos::Exceptions::InvalidParameter,
+                                  "Error! Input lower bounds array has the wrong dimension.\n");
+
+      for (unsigned int k = 0; k < numParameters; ++k) {
+        const Teuchos::ArrayRCP<ST> param_lower_bd_nonConstView =
+            param_lower_bd[l]->get1dViewNonConst();
+        param_lower_bd_nonConstView[k] = lb[k];
+      }
+    }
+
+    // Loading upper bounds (if any)
+    if (pList->isParameter("Upper Bounds"))
+    {
+      param_upper_bd[l] = Teuchos::rcp(new Tpetra_Vector(tpetra_param_map[l]));
+      Teuchos::Array<ST> ub = pList->get<Teuchos::Array<ST>>("Upper Bounds");
+      TEUCHOS_TEST_FOR_EXCEPTION (ub.size()!=numParameters, Teuchos::Exceptions::InvalidParameter,
+                                  "Error! Input upper bounds array has the wrong dimension.\n");
+
+      for (unsigned int k = 0; k < numParameters; ++k) {
+        const Teuchos::ArrayRCP<ST> param_upper_bd_nonConstView =
+            param_upper_bd[l]->get1dViewNonConst();
+        param_upper_bd_nonConstView[k] = ub[k];
+      }
+    }
+
+    // Loading nominal values (if any)
+    if (pList->isParameter("Nominal Values"))
+    {
+      Teuchos::Array<ST> nvals = pList->get<Teuchos::Array<ST>>("Nominal Values");
+      TEUCHOS_TEST_FOR_EXCEPTION (nvals.size()!=numParameters, Teuchos::Exceptions::InvalidParameter,
+                                  "Error! Input nominal values array has the wrong dimension.\n");
+
+      for (unsigned int k = 0; k < numParameters; ++k) {
+        const Teuchos::ArrayRCP<ST> tpetra_param_vec_nonConstView =
+            tpetra_param_vec[l]->get1dViewNonConst();
+        sacado_param_vec[l][k].baseValue = tpetra_param_vec_nonConstView[k] = nvals[k];
+      }
+    }
+    else
+    {
+      for (unsigned int k = 0; k < numParameters; ++k) {
+        const Teuchos::ArrayRCP<ST> tpetra_param_vec_nonConstView =
+            tpetra_param_vec[l]->get1dViewNonConst();
+        tpetra_param_vec_nonConstView[k] = sacado_param_vec[l][k].baseValue;
+      }
+    }
   }
 
   // Setup distributed parameters
@@ -157,88 +288,15 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
       if (param_list->isParameter("Lower Bound") &&
           (distParam->lower_bounds_vector() != Teuchos::null))
         distParam->lower_bounds_vector()->putScalar(
-            param_list->get<ST>("Lower Bound", std::numeric_limits<ST>::min()));
+            param_list->get<ST>("Lower Bound"));
       if (param_list->isParameter("Upper Bound") &&
           (distParam->upper_bounds_vector() != Teuchos::null))
         distParam->upper_bounds_vector()->putScalar(
-            param_list->get<ST>("Upper Bound", std::numeric_limits<ST>::max()));
+            param_list->get<ST>("Upper Bound"));
       if (param_list->isParameter("Initial Uniform Value") &&
           (distParam->vector() != Teuchos::null))
         distParam->vector()->putScalar(
             param_list->get<ST>("Initial Uniform Value"));
-    }
-  }
-
-  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>> response_names;
-  response_names.resize(num_response_vecs);
-  for (int l = 0; l < num_response_vecs; ++l) {
-    const Teuchos::ParameterList* pList =
-        using_old_response_list ?
-            &responseParams :
-            &(responseParams.sublist(Albany::strint("Response Vector", l)));
-
-    bool number_exists = pList->getEntryPtr("Number");
-
-    if (number_exists) {
-      const int numParameters = pList->get<int>("Number");
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          numParameters == 0,
-          Teuchos::Exceptions::InvalidParameter,
-          std::endl
-              << "Error!  In Albany::ModelEvaluatorT constructor:  "
-              << "Response vector "
-              << l
-              << " has zero parameters!"
-              << std::endl);
-
-      response_names[l] =
-          Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
-      for (int k = 0; k < numParameters; ++k) {
-        (*response_names[l])[k] =
-            pList->get<std::string>(Albany::strint("Response", k));
-      }
-    }
-  }
-
-  *out << "Number of response vectors  = " << num_response_vecs << std::endl;
-
-  sacado_param_vec.resize(num_param_vecs);
-  tpetra_param_vec.resize(num_param_vecs);
-  tpetra_param_map.resize(num_param_vecs);
-  thyra_response_vec.resize(num_response_vecs);
-
-  Teuchos::RCP<const Teuchos::Comm<int>> commT = app->getComm();
-  for (int l = 0; l < tpetra_param_vec.size(); ++l) {
-    try {
-      // Initialize Sacado parameter vector
-      // The following call will throw, and it is often due to an incorrect
-      // input line in the "Parameters" PL
-      // in the input file. Give the user a hint about what might be happening
-      app->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
-          *(param_names[l]), sacado_param_vec[l]);
-    } catch (const std::logic_error& le) {
-      *out << "Error: exception thrown from ParamLib fillVector in file "
-           << __FILE__ << " line " << __LINE__ << std::endl;
-      *out << "This is probably due to something incorrect in the "
-              "\"Parameters\" list in the input file, one of the lines:"
-           << std::endl;
-      for (int k = 0; k < param_names[l]->size(); ++k)
-        *out << "      " << (*param_names[l])[k] << std::endl;
-
-      throw le;  // rethrow to shut things down
-    }
-
-    // Create Tpetra map for parameter vector
-    Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
-    tpetra_param_map[l] =
-        Teuchos::rcp(new Tpetra_Map(sacado_param_vec[l].size(), 0, commT, lg));
-
-    // Create Tpetra vector for parameters
-    tpetra_param_vec[l] = Teuchos::rcp(new Tpetra_Vector(tpetra_param_map[l]));
-    for (unsigned int k = 0; k < sacado_param_vec[l].size(); ++k) {
-      const Teuchos::ArrayRCP<ST> tpetra_param_vec_nonConstView =
-          tpetra_param_vec[l]->get1dViewNonConst();
-      tpetra_param_vec_nonConstView[k] = sacado_param_vec[l][k].baseValue;
     }
   }
 
@@ -262,19 +320,36 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
     if (num_sol_vectors > 2)  // have both x dot and x dotdot
       supports_xdotdot = true;
 
-    // Setup nominal values
+    // Setup nominal values, lower and upper bounds
     nominalValues = this->createInArgsImpl();
+    lowerBounds = this->createInArgsImpl();
+    upperBounds = this->createInArgsImpl();
 
     // All the ME vectors are unallocated here
     allocateVectors();
 
     // TODO: Check if correct nominal values for parameters
     for (int l = 0; l < num_param_vecs; ++l) {
-      Teuchos::RCP<const Tpetra_Map>                 map = tpetra_param_map[l];
       Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> tpetra_param_space =
-          Thyra::createVectorSpace<ST>(map);
+          Thyra::createVectorSpace<ST>(tpetra_param_map[l]);
       nominalValues.set_p(
           l, Thyra::createVector(tpetra_param_vec[l], tpetra_param_space));
+      if(Teuchos::nonnull(param_lower_bd[l]))
+        lowerBounds.set_p(
+            l, Thyra::createVector(param_lower_bd[l], tpetra_param_space));
+      if(Teuchos::nonnull(param_upper_bd[l]))
+        upperBounds.set_p(
+            l, Thyra::createVector(param_upper_bd[l], tpetra_param_space));
+    }
+    for (int l = 0; l < num_dist_param_vecs; ++l) {
+      Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> tpetra_param_space =
+          Thyra::createVectorSpace<ST>(distParamLib->get(dist_param_names[l])->map());
+      nominalValues.set_p(
+          l+num_param_vecs, Thyra::createVector(distParamLib->get(dist_param_names[l])->vector(), tpetra_param_space));
+      lowerBounds.set_p(
+          l+num_param_vecs, Thyra::createVector(distParamLib->get(dist_param_names[l])->lower_bounds_vector(), tpetra_param_space));
+      upperBounds.set_p(
+          l+num_param_vecs, Thyra::createVector(distParamLib->get(dist_param_names[l])->upper_bounds_vector(), tpetra_param_space));
     }
   }
 
@@ -414,13 +489,13 @@ Albany::ModelEvaluatorT::getNominalValues() const
 Thyra::ModelEvaluatorBase::InArgs<ST>
 Albany::ModelEvaluatorT::getLowerBounds() const
 {
-  return Thyra::ModelEvaluatorBase::InArgs<ST>();  // Default value
+  return lowerBounds;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
 Albany::ModelEvaluatorT::getUpperBounds() const
 {
-  return Thyra::ModelEvaluatorBase::InArgs<ST>();  // Default value
+  return upperBounds;
 }
 
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
@@ -726,17 +801,20 @@ Albany::ModelEvaluatorT::evalModelImpl(
     dt = inArgsT.get_step_size(); 
   }
 
-  for (int l = 0; l < inArgsT.Np(); ++l) {
+  for (int l = 0; l < num_param_vecs+num_dist_param_vecs; ++l) {
     const Teuchos::RCP<const Thyra::VectorBase<ST>> p = inArgsT.get_p(l);
     if (Teuchos::nonnull(p)) {
       const Teuchos::RCP<const Tpetra_Vector> pT =
           ConverterT::getConstTpetraVector(p);
-      const Teuchos::ArrayRCP<const ST> pT_constView = pT->get1dView();
 
-      ParamVec& sacado_param_vector = sacado_param_vec[l];
-      for (unsigned int k = 0; k < sacado_param_vector.size(); ++k) {
-        sacado_param_vector[k].baseValue = pT_constView[k];
+      if(l<num_param_vecs){
+        const Teuchos::ArrayRCP<const ST> pT_constView = pT->get1dView();
+        ParamVec& sacado_param_vector = sacado_param_vec[l];
+        for (unsigned int k = 0; k < sacado_param_vector.size(); ++k)
+          sacado_param_vector[k].baseValue = pT_constView[k];
       }
+      else
+        *(distParamLib->get(dist_param_names[l-num_param_vecs])->vector()) = *pT;
     }
   }
 
@@ -851,7 +929,7 @@ Albany::ModelEvaluatorT::evalModelImpl(
   }
 
   // df/dp
-  for (int l = 0; l < outArgsT.Np(); ++l) {
+  for (int l = 0; l < num_param_vecs; ++l) {
     const Teuchos::RCP<Thyra::MultiVectorBase<ST>> dfdp_out =
         outArgsT.get_DfDp(l).getMultiVector();
 
@@ -884,6 +962,20 @@ Albany::ModelEvaluatorT::evalModelImpl(
           dfdp_outT.get());
 
       f_already_computed = true;
+    }
+  }
+
+  // distributed df/dp
+  for (int i=0; i<num_dist_param_vecs; i++) {
+	  const Teuchos::RCP<Tpetra_Operator> dfdp_out =
+	      Teuchos::nonnull(outArgsT.get_DfDp(i+num_param_vecs).getLinearOp()) ?
+	          ConverterT::getTpetraOperator(outArgsT.get_DfDp(i+num_param_vecs).getLinearOp()) :
+	          Teuchos::null;
+    if (dfdp_out != Teuchos::null) {
+      Teuchos::RCP<DistributedParameterDerivativeOpT> dfdp_op =
+        Teuchos::rcp_dynamic_cast<DistributedParameterDerivativeOpT>(dfdp_out);
+      dfdp_op->set(curr_time, x_dotT, x_dotdotT, xT,
+                   Teuchos::rcp(&sacado_param_vec,false));
     }
   }
 
