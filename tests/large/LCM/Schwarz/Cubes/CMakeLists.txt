@@ -37,7 +37,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 #test 1 - Cubes DBC 
-SET(OUTFILE "Cubes_DBC.Log")
+SET(OUTFILE "Cubes_DBC.log")
 SET(PYTHON_FILE "check_comparisons.py") 
 add_test(NAME Schwarz_${testName}
         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
@@ -45,13 +45,3 @@ add_test(NAME Schwarz_${testName}
         -DLOGFILE=${OUTFILE} -DPY_FILE=${PYTHON_FILE}
         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
 
-IF(ALBANY_DTK)
-  #test 2 - Cubes DBC matrix-free
-  SET(OUTFILE "CubesMatrixFree.Log")
-  SET(PYTHON_FILE "check_comparisons.py") 
-  add_test(NAME Schwarz_${testName}_MatrixFree
-        COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
-        -DTEST_NAME=CubesMatrixFree -DTEST_ARGS=cubes_matrix-free.yaml -DMPIMNP=1
-        -DLOGFILE=${OUTFILE} -DPY_FILE=${PYTHON_FILE}
-        -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
-ENDIF()

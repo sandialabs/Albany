@@ -20,7 +20,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/check_comparisons.py
                ${CMAKE_CURRENT_BINARY_DIR}/check_comparisons.py COPYONLY)
 
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-SET(OUTFILE "DTKInterpNotchedCyl.Log")
+SET(OUTFILE "DTKInterpNotchedCyl.log")
 SET(PYTHON_FILE "check_comparisons.py") 
 add_test(NAME DTKInterp_${testName}
         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Parallel_DTK_Interp_and_Error.exe}"
