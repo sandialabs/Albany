@@ -8,6 +8,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
 
+
 namespace Tsunami {
 
 
@@ -35,7 +36,11 @@ NavierStokesTau(const Teuchos::ParameterList& p,
   numDims = dims[2];
   mu = p.get<double>("Viscosity"); 
   rho = p.get<double>("Density"); 
-
+  stabType = p.get<std::string>("Stabilization Type"); 
+  if (stabType == "Shakib-Hughes") 
+    stab_type=SHAKIBHUGHES;
+  else if (stabType == "Tsunami")
+    stab_type=TSUNAMI; 
   this->setName("NavierStokesTau"+PHX::typeAsString<EvalT>());
 }
 
@@ -60,20 +65,32 @@ template<typename EvalT, typename Traits>
 void NavierStokesTau<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      Tau(cell,qp) = 0.0;
-      normGc(cell,qp) = 0.0;
-      for (std::size_t i=0; i < numDims; ++i) {
-        for (std::size_t j=0; j < numDims; ++j) {
-          Tau(cell,qp) += rho*rho*V(cell,qp,i)*Gc(cell,qp,i,j)*V(cell,qp,j);
-          normGc(cell,qp) += Gc(cell,qp,i,j)*Gc(cell,qp,i,j);
+  if (stab_type == SHAKIBHUGHES) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        Tau(cell,qp) = 0.0;
+        normGc(cell,qp) = 0.0;
+        for (std::size_t i=0; i < numDims; ++i) {
+          for (std::size_t j=0; j < numDims; ++j) {
+            Tau(cell,qp) += rho*rho*V(cell,qp,i)*Gc(cell,qp,i,j)*V(cell,qp,j);
+            normGc(cell,qp) += Gc(cell,qp,i,j)*Gc(cell,qp,i,j);
+          }
         }
+        Tau(cell,qp) += 12.*mu*mu*std::sqrt(normGc(cell,qp));
+        Tau(cell,qp) = 1./std::sqrt(Tau(cell,qp));
       }
-      Tau(cell,qp) += 12.*mu*mu*std::sqrt(normGc(cell,qp));
-      Tau(cell,qp) = 1./std::sqrt(Tau(cell,qp));
     }
   }
+  //IKT, FIXME: Zhiheng & Xiaoshu - please fill in 
+  /*else if (stab_type == TSUNAMI) {
+    double dt; //IKT, FIXME: Irina needs to get dt to this evaluator 
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        //Estimate of mesh size h 
+        double h = 2.0*pow(jacobian_det(cell,qp), 1.0/numDims);
+      }
+    }
+  }*/
 }
 
 //**********************************************************************

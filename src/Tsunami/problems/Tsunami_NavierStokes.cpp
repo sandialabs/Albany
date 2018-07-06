@@ -61,6 +61,7 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_),
   haveAdvection(haveAdvection_),
   haveUnsteady(haveUnsteady_),
+  stabType("Shakib-Hughes"),
   use_sdbcs_(false), 
   mu(1.0), 
   rho(1.0) 
@@ -83,6 +84,12 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
                                << rho <<"!  Density must be >0.");
     }
     haveSUPG = params->sublist("Tsunami Parameters").get<bool>("Have SUPG Stabilization", true);
+    stabType = params->sublist("Tsunami Parameters").get<std::string>("Stabilization Type", "Shakib-Hughes");
+    if ((stabType != "Shakib-Hughes") && (stabType != "Tsunami")) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                              "Invalid Stabilizaton Type = "
+                               << stabType <<"!  Valid types are 'Shakib-Hughes' and 'Tsunami'.");
+    }
   }
 
   if (haveAdvection == false) haveSUPG = false; 
@@ -109,7 +116,8 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
        << "\tHave Advection:         " << haveAdvection << std::endl
        << "\tHave Unsteady:          " << haveUnsteady << std::endl
        << "\tPSPG stabilization:     " << havePSPG << std::endl
-       << "\tSUPG stabilization:     " << haveSUPG << std::endl;
+       << "\tSUPG stabilization:     " << haveSUPG << std::endl
+       << "\tStabilization type:     " << stabType << std::endl;
 }
 
 Tsunami::NavierStokes::

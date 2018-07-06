@@ -53,7 +53,11 @@ private:
   Kokkos::DynRankView<MeshScalarT, PHX::Device> normGc;
 
   double mu, rho; 
-  
+
+  std::string stabType;  
+
+  enum STAB_TYPE {SHAKIBHUGHES, TSUNAMI};
+  STAB_TYPE stab_type;  
 };
 }
 

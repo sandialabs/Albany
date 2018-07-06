@@ -121,6 +121,7 @@ namespace Tsunami {
 
     double mu, rho; //visocity and density
 
+    std::string stabType; //stabilization type
   };
 
 }
@@ -314,7 +315,7 @@ Tsunami::NavierStokes::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (haveFlowEq && havePSPG) { // Tau PSPG
+  if (haveFlowEq && havePSPG) { // Tau PSPG/SUPG
     RCP<ParameterList> p = rcp(new ParameterList("Tau"));
 
     //Input
@@ -325,6 +326,7 @@ Tsunami::NavierStokes::constructEvaluators(
     p->set<string>("Jacobian Inv Name",      "Jacobian Inv");
     p->set<double>("Viscosity", mu); 
     p->set<double>("Density", rho);
+    p->set<std::string>("Stabilization Type", stabType); 
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Tau");
