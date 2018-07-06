@@ -205,20 +205,23 @@ public:
   void
   computeGlobalResidualT(const double current_time, const Tpetra_Vector *xdotT,
                          const Tpetra_Vector *xdotdotT, const Tpetra_Vector &xT,
-                         const Teuchos::Array<ParamVec> &p, Tpetra_Vector &fT);
+                         const Teuchos::Array<ParamVec> &p, Tpetra_Vector &fT,
+                         const double dt = 0.0);
 
 private:
   void computeGlobalResidualImplT(
       const double current_time, const Teuchos::RCP<const Tpetra_Vector> &xdotT,
       const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
       const Teuchos::RCP<const Tpetra_Vector> &xT,
-      const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT);
+      const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
+      const double dt = 0.0);
 
   void computeGlobalResidualSDBCsImplT(
       const double current_time, const Teuchos::RCP<const Tpetra_Vector> &xdotT,
       const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
       const Teuchos::RCP<const Tpetra_Vector> &xT,
-      const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT);
+      const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
+      const double dt = 0.0);
 
 public:
 //! Compute global Jacobian
@@ -241,7 +244,8 @@ public:
                               const Tpetra_Vector *xdotdotT,
                               const Tpetra_Vector &xT,
                               const Teuchos::Array<ParamVec> &p,
-                              Tpetra_Vector *fT, Tpetra_CrsMatrix &jacT);
+                              Tpetra_Vector *fT, Tpetra_CrsMatrix &jacT,
+                              const double dt = 0.0);
 
 private:
   void computeGlobalJacobianImplT(
@@ -250,7 +254,8 @@ private:
       const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
       const Teuchos::RCP<const Tpetra_Vector> &xT,
       const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
-      const Teuchos::RCP<Tpetra_CrsMatrix> &jacT);
+      const Teuchos::RCP<Tpetra_CrsMatrix> &jacT,
+      const double dt = 0.0);
 
   void computeGlobalJacobianSDBCsImplT(
       const double alpha, const double beta, const double omega,
@@ -258,7 +263,8 @@ private:
       const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
       const Teuchos::RCP<const Tpetra_Vector> &xT,
       const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
-      const Teuchos::RCP<Tpetra_CrsMatrix> &jacT);
+      const Teuchos::RCP<Tpetra_CrsMatrix> &jacT,
+      const double dt = 0.0);
 
 public:
   //! Compute global Preconditioner

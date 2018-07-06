@@ -83,7 +83,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
   //IKT, FIXME: Zhiheng & Xiaoshu - please fill in 
   /*else if (stab_type == TSUNAMI) {
-    double dt; //IKT, FIXME: Irina needs to get dt to this evaluator 
+    double dt  = workset.time_step; 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         //Estimate of mesh size h 

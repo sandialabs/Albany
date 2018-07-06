@@ -1245,7 +1245,8 @@ void Albany::Application::computeGlobalResidualImplT(
     double const current_time, Teuchos::RCP<Tpetra_Vector const> const &xdotT,
     Teuchos::RCP<Tpetra_Vector const> const &xdotdotT,
     Teuchos::RCP<Tpetra_Vector const> const &xT,
-    Teuchos::Array<ParamVec> const &p, Teuchos::RCP<Tpetra_Vector> const &fT) {
+    Teuchos::Array<ParamVec> const &p, Teuchos::RCP<Tpetra_Vector> const &fT,
+    double dt) {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
   postRegSetup("Residual");
 
@@ -1321,6 +1322,8 @@ void Albany::Application::computeGlobalResidualImplT(
     this_time = fixTime(current_time);
 
     loadBasicWorksetInfoT(workset, this_time);
+
+    workset.time_step = dt; 
 
     workset.fT = overlapped_fT;
 
@@ -1550,17 +1553,19 @@ void Albany::Application::computeGlobalResidual(
 void Albany::Application::computeGlobalResidualT(
     const double current_time, const Tpetra_Vector *xdotT,
     const Tpetra_Vector *xdotdotT, const Tpetra_Vector &xT,
-    const Teuchos::Array<ParamVec> &p, Tpetra_Vector &fT) {
+    const Teuchos::Array<ParamVec> &p, Tpetra_Vector &fT,
+    const double dt) 
+{
   // Create non-owning RCPs to Tpetra objects
   // to be passed to the implementation
   if (problem->useSDBCs() == false) {
     this->computeGlobalResidualImplT(
         current_time, Teuchos::rcp(xdotT, false), Teuchos::rcp(xdotdotT, false),
-        Teuchos::rcpFromRef(xT), p, Teuchos::rcpFromRef(fT));
+        Teuchos::rcpFromRef(xT), p, Teuchos::rcpFromRef(fT), dt);
   } else {
     this->computeGlobalResidualSDBCsImplT(
         current_time, Teuchos::rcp(xdotT, false), Teuchos::rcp(xdotdotT, false),
-        Teuchos::rcpFromRef(xT), p, Teuchos::rcpFromRef(fT));
+        Teuchos::rcpFromRef(xT), p, Teuchos::rcpFromRef(fT), dt);
   }
 
   // Debut output
@@ -1620,7 +1625,8 @@ void Albany::Application::computeGlobalJacobianImplT(
     const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
     const Teuchos::RCP<const Tpetra_Vector> &xT,
     const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
-    const Teuchos::RCP<Tpetra_CrsMatrix> &jacT) {
+    const Teuchos::RCP<Tpetra_CrsMatrix> &jacT,
+    const double dt) {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian");
 
   postRegSetup("Jacobian");
@@ -1688,6 +1694,8 @@ void Albany::Application::computeGlobalJacobianImplT(
     this_time = fixTime(current_time);
 
     loadBasicWorksetInfoT(workset, this_time);
+
+    workset.time_step = dt; 
 
 #ifdef DEBUG_OUTPUT
     *out << "IKT countJac = " << countJac
@@ -1888,7 +1896,8 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
     const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
     const Teuchos::RCP<const Tpetra_Vector> &xT,
     const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
-    const Teuchos::RCP<Tpetra_CrsMatrix> &jacT) {
+    const Teuchos::RCP<Tpetra_CrsMatrix> &jacT,
+    const double dt) {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian");
 
   postRegSetup("Jacobian");
@@ -1988,6 +1997,8 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
     this_time = fixTime(current_time);
 
     loadBasicWorksetInfoT(workset, this_time);
+
+    workset.time_step = dt; 
 
 #ifdef DEBUG_OUTPUT
     *out << "IKT countJac = " << countJac
@@ -2360,13 +2371,14 @@ void Albany::Application::computeGlobalJacobianT(
     const double current_time, const Tpetra_Vector *xdotT,
     const Tpetra_Vector *xdotdotT, const Tpetra_Vector &xT,
     const Teuchos::Array<ParamVec> &p, Tpetra_Vector *fT,
-    Tpetra_CrsMatrix &jacT) {
+    Tpetra_CrsMatrix &jacT, const double dt) 
+{
   // Create non-owning RCPs to Tpetra objects
   // to be passed to the implementation
   this->computeGlobalJacobianImplT(
       alpha, beta, omega, current_time, Teuchos::rcp(xdotT, false),
       Teuchos::rcp(xdotdotT, false), Teuchos::rcpFromRef(xT), p,
-      Teuchos::rcp(fT, false), Teuchos::rcpFromRef(jacT));
+      Teuchos::rcp(fT, false), Teuchos::rcpFromRef(jacT), dt);
   // Debut output
   if (writeToMatrixMarketJac !=
       0) {          // If requesting writing to MatrixMarket of Jacobian...
@@ -4065,7 +4077,8 @@ void Albany::Application::computeGlobalResidualSDBCsImplT(
     double const current_time, Teuchos::RCP<Tpetra_Vector const> const &xdotT,
     Teuchos::RCP<Tpetra_Vector const> const &xdotdotT,
     Teuchos::RCP<Tpetra_Vector const> const &xT,
-    Teuchos::Array<ParamVec> const &p, Teuchos::RCP<Tpetra_Vector> const &fT) {
+    Teuchos::Array<ParamVec> const &p, Teuchos::RCP<Tpetra_Vector> const &fT,
+    double const dt) {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
   postRegSetup("Residual");
 
@@ -4169,6 +4182,8 @@ void Albany::Application::computeGlobalResidualSDBCsImplT(
     this_time = fixTime(current_time);
 
     loadBasicWorksetInfoT(workset, this_time);
+    
+    workset.time_step = dt; 
 
 #ifdef DEBUG_OUTPUT
     *out << "IKT previous_time, this_time = " << prev_times_[app_no] << ", "
