@@ -184,14 +184,6 @@ SET(PDE_HDRS
   )
 
 #responses
-IF (ALBANY_EPETRA)
-SET(SOURCES ${SOURCES}
-  responses/Epetra_GatherAllV.cpp
-)
-SET(HEADERS ${HEADERS}
-  responses/Epetra_GatherAllV.hpp
-)
-ENDIF()
 SET(SOURCES ${SOURCES}
   responses/Albany_AggregateScalarResponseFunction.cpp
   responses/Albany_CumulativeScalarResponseFunction.cpp
@@ -238,15 +230,6 @@ SET(HEADERS ${HEADERS}
   responses/Albany_SolutionResponseFunction.hpp
 )
 
-ENDIF()
-
-IF(ALBANY_EPETRA)
-SET(SOURCES ${SOURCES}
-  responses/Epetra_ImportWithAlternateMap.cpp
-)
-SET(HEADERS ${HEADERS}
-  responses/Epetra_ImportWithAlternateMap.hpp
-)
 ENDIF()
 
 #discretization

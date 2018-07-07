@@ -6,31 +6,6 @@
 
 #include "Albany_DistributedResponseFunction.hpp"
 
-//IK, 9/13/14: Epetra ifdef'ed out except if SG and MP if ALBANY_EPETRA_EXE set to off.
-
-#if defined(ALBANY_EPETRA)
-void
-Albany::DistributedResponseFunction::
-evaluateDerivative(
-  const double current_time,
-  const Epetra_Vector* xdot,
-  const Epetra_Vector* xdotdot,
-  const Epetra_Vector& x,
-  const Teuchos::Array<ParamVec>& p,
-  ParamVec* deriv_p,
-  Epetra_Vector* g,
-  const EpetraExt::ModelEvaluator::Derivative& dg_dx,
-  const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
-  const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
-  const EpetraExt::ModelEvaluator::Derivative& dg_dp)
-{
-  this->evaluateGradient(
-    current_time, xdot, xdotdot, x, p, deriv_p, g,
-    dg_dx.getLinearOp().get(), dg_dxdot.getLinearOp().get(),
-    dg_dxdotdot.getLinearOp().get(), dg_dp.getMultiVector().get());
-}
-#endif
-
 void
 Albany::DistributedResponseFunction::
 evaluateDerivativeT(

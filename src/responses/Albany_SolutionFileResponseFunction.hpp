@@ -60,22 +60,6 @@ namespace Albany {
 		    Tpetra_Vector* g,
 		    Tpetra_MultiVector* gx,
 		    Tpetra_MultiVector* gp);
-
-#if defined(ALBANY_EPETRA)
-    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
-    virtual void 
-    evaluateGradient(const double current_time,
-		     const Epetra_Vector* xdot,
-		     const Epetra_Vector* xdotdot,
-		     const Epetra_Vector& x,
-		     const Teuchos::Array<ParamVec>& p,
-		     ParamVec* deriv_p,
-		     Epetra_Vector* g,
-		     Epetra_MultiVector* dg_dx,
-		     Epetra_MultiVector* dg_dxdot,
-		     Epetra_MultiVector* dg_dxdotdot,
-		     Epetra_MultiVector* dg_dp);
-#endif
   
     virtual void 
     evaluateGradientT(const double current_time,
@@ -109,20 +93,11 @@ namespace Albany {
     //! Private to prohibit copying
     SolutionFileResponseFunction& operator=(const SolutionFileResponseFunction&);
 
-#if defined(ALBANY_EPETRA)
-    //! Reference Vector
-    Epetra_Vector* RefSoln;
-#endif
     //! Reference Vector - Tpetra
     Tpetra_Vector* RefSolnT;
 
     bool solutionLoaded;
 
-#if defined(ALBANY_EPETRA)
-    //! Basic idea borrowed from EpetraExt - TO DO: put it back there?
-    int MatrixMarketFileToVector( const char *filename, const Epetra_BlockMap & map, Epetra_Vector * & A);
-    int MatrixMarketFileToMultiVector( const char *filename, const Epetra_BlockMap & map, Epetra_MultiVector * & A);
-#endif    
 
     int MatrixMarketFileToTpetraVector( const char *filename, const Tpetra_Map & map, Tpetra_Vector * & A);
     int MatrixMarketFileToTpetraMultiVector( const char *filename, const Tpetra_Map & map, Tpetra_MultiVector * & A);
@@ -132,19 +107,19 @@ namespace Albany {
 //	namespace SolutionFileResponseFunction {
 	
 	  struct NormTwo {
-#if defined(ALBANY_EPETRA)	
-	    double Norm(const Epetra_Vector& vec){ double norm; vec.Norm2(&norm); return norm * norm;}
-#endif
 	    double NormT(const Tpetra_Vector& vecT){ Teuchos::ScalarTraits<ST>::magnitudeType normT = vecT.norm2(); return normT * normT;}
-	
+	    void NormDerivativeT(const Tpetra_Vector& xT, const Tpetra_Vector& solnT, Tpetra_MultiVector& gradT) {
+	      gradT.update(2.0,xT,-2.0,solnT,0.0);
+	    }
 	  };
 	
 	  struct NormInf {
-	
-#if defined(ALBANY_EPETRA)
-	    double Norm(const Epetra_Vector& vec){ double norm; vec.NormInf(&norm); return norm;}
-#endif
 	    double NormT(const Tpetra_Vector& vecT){ Teuchos::ScalarTraits<ST>::magnitudeType normT = vecT.normInf(); return normT;}
+	    void NormDerivativeT(const Tpetra_Vector& xT, const Tpetra_Vector& solnT, Tpetra_MultiVector& gradT) {
+	      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
+	        std::endl << "SolutionFileResponseFunction::NormInf::NormDerivativeT is not Implemented yet!"
+	        << std::endl);
+      }
 	
 	  };
 //	}

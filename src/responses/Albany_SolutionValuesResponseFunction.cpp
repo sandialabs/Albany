@@ -8,11 +8,6 @@
 
 #include "Albany_SolutionCullingStrategy.hpp"
 
-#if defined(ALBANY_EPETRA)
-//#include "Epetra_ImportWithAlternateMap.hpp"
-#include "Epetra_Import.h"
-#endif
-
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Array.hpp"
 
@@ -48,12 +43,6 @@ public:
       return Teuchos::rcp(new SolutionPrinter(app, response_parms));
     return Teuchos::null;
   }
-
-#if defined(ALBANY_EPETRA)
-  void print (const Epetra_Vector& g, const Teuchos::Array<int>& eq_gids) {
-    print(Teuchos::arrayView(g.Values(), g.MyLength()), eq_gids);
-  }
-#endif
 
   void print (const Tpetra_Vector& g, const Teuchos::Array<Tpetra_GO>& eq_gids) {
     print(Teuchos::arrayView(&g.get1dView()[0], g.getLocalLength()), eq_gids);
@@ -133,16 +122,6 @@ SolutionValuesResponseFunction(const Teuchos::RCP<const Application>& app,
   sol_printer_ = SolutionPrinter::create(app_, responseParams);
 }
 
-#if defined(ALBANY_EPETRA)
-void
-Albany::SolutionValuesResponseFunction::
-setup()
-{
-  cullingStrategy_->setup();
-  this->updateSolutionImporter();
-}
-#endif
-
 void
 Albany::SolutionValuesResponseFunction::
 setupT()
@@ -157,29 +136,8 @@ numResponses() const
 {
   if (Teuchos::nonnull(solutionImporterT_))
     return solutionImporterT_->getTargetMap()->getNodeNumElements();
-#if defined(ALBANY_EPETRA)
-  if (Teuchos::nonnull(solutionImporter_))
-    return solutionImporter_->TargetMap().NumMyElements();
-#endif
   return 0u;
 }
-
-#if defined(ALBANY_EPETRA)
-void
-Albany::SolutionValuesResponseFunction::
-evaluateResponse(const double /*current_time*/,
-		 const Epetra_Vector* /*xdot*/,
-		 const Epetra_Vector* /*xdot*/,
-		 const Epetra_Vector& x,
-		 const Teuchos::Array<ParamVec>& /*p*/,
-		 Epetra_Vector& g)
-{
-  this->updateSolutionImporter();
-  this->ImportWithAlternateMap(*solutionImporter_, x, g, Insert);
-  if (Teuchos::nonnull(sol_printer_))
-    sol_printer_->print(g, cullingStrategy_->selectedGIDs(*app_->getMap()));
-}
-#endif
 
 void
 Albany::SolutionValuesResponseFunction::
@@ -195,50 +153,6 @@ evaluateResponseT(const double /*current_time*/,
   if (Teuchos::nonnull(sol_printer_))
     sol_printer_->print(gT, cullingStrategy_->selectedGIDsT(app_->getMapT()));
 }
-
-#if defined(ALBANY_EPETRA)
-void
-Albany::SolutionValuesResponseFunction::
-evaluateTangent(const double /*alpha*/,
-		const double beta,
-		const double omega,
-		const double /*current_time*/,
-		bool /*sum_derivs*/,
-		const Epetra_Vector* /*xdot*/,
-		const Epetra_Vector* /*xdot*/,
-		const Epetra_Vector& x,
-		const Teuchos::Array<ParamVec>& /*p*/,
-		ParamVec* /*deriv_p*/,
-		const Epetra_MultiVector* /*Vxdot*/,
-		const Epetra_MultiVector* /*Vxdot*/,
-		const Epetra_MultiVector* Vx,
-		const Epetra_MultiVector* /*Vp*/,
-		Epetra_Vector* g,
-		Epetra_MultiVector* gx,
-		Epetra_MultiVector* gp)
-{
-  this->updateSolutionImporter();
-
-  if (g) {
-    this->ImportWithAlternateMap(*solutionImporter_, x, *g, Insert);
-    if (Teuchos::nonnull(sol_printer_))
-      sol_printer_->print(*g, cullingStrategy_->selectedGIDs(*app_->getMap()));
-  }
-
-  if (gx) {
-    TEUCHOS_ASSERT(Vx);
-    this->ImportWithAlternateMap(*solutionImporter_, *Vx, *gx, Insert);
-    if (beta != 1.0) {
-      gx->Scale(beta);
-    }
-  }
-
-  if (gp) {
-    gp->PutScalar(0.0);
-  }
-}
-#endif
-
 
 void
 Albany::SolutionValuesResponseFunction::
@@ -280,57 +194,6 @@ evaluateTangentT(const double /*alpha*/,
     gpT->putScalar(0.0);
   }
 }
-
-
-#if defined(ALBANY_EPETRA)
-void
-Albany::SolutionValuesResponseFunction::
-evaluateGradient(const double /*current_time*/,
-		 const Epetra_Vector* /*xdot*/,
-		 const Epetra_Vector* /*xdot*/,
-		 const Epetra_Vector& x,
-		 const Teuchos::Array<ParamVec>& /*p*/,
-		 ParamVec* /*deriv_p*/,
-		 Epetra_Vector* g,
-		 Epetra_MultiVector* dg_dx,
-		 Epetra_MultiVector* dg_dxdot,
-		 Epetra_MultiVector* dg_dxdotdot,
-		 Epetra_MultiVector* dg_dp)
-{
-  this->updateSolutionImporter();
-
-  if (g) {
-    this->ImportWithAlternateMap(*solutionImporter_, x, *g, Insert);
-    if (Teuchos::nonnull(sol_printer_))
-      sol_printer_->print(*g, cullingStrategy_->selectedGIDs(*app_->getMap()));
-  }
-
-  if (dg_dx) {
-    dg_dx->PutScalar(0.0);
-
-    const Epetra_BlockMap &replicatedMap = solutionImporter_->TargetMap();
-    const Epetra_BlockMap &derivMap = dg_dx->Map();
-    const int colCount = dg_dx->NumVectors();
-    for (int icol = 0; icol < colCount; ++icol) {
-      const int lid = derivMap.LID(replicatedMap.GID(icol));
-      if (lid != -1) {
-        dg_dx->ReplaceMyValue(lid, icol, 1.0);
-      }
-    }
-  }
-
-  if (dg_dxdot) {
-    dg_dxdot->PutScalar(0.0);
-  }
-  if (dg_dxdotdot) {
-    dg_dxdotdot->PutScalar(0.0);
-  }
-
-  if (dg_dp) {
-    dg_dp->PutScalar(0.0);
-  }
-}
-#endif
 
 //! Evaluate distributed parameter derivative dg/dp
 void
@@ -397,21 +260,6 @@ evaluateGradientT(const double /*current_time*/,
   }
 }
 
-
-#if defined(ALBANY_EPETRA)
-void
-Albany::SolutionValuesResponseFunction::
-updateSolutionImporter()
-{
-  const Teuchos::RCP<const Epetra_BlockMap> solutionMap = app_->getMap();
-  if (Teuchos::is_null(solutionImporter_) || !solutionMap->SameAs(solutionImporter_->SourceMap())) {
-    const Teuchos::Array<int> selectedGIDs = cullingStrategy_->selectedGIDs(*solutionMap);
-    const Epetra_Map targetMap(-1, selectedGIDs.size(), selectedGIDs.getRawPtr(), 0, solutionMap->Comm());
-    solutionImporter_ = Teuchos::rcp(new Epetra_Import(targetMap, *solutionMap));
-  }
-}
-#endif
-
 void
 Albany::SolutionValuesResponseFunction::
 updateSolutionImporterT()
@@ -424,30 +272,6 @@ updateSolutionImporterT()
     solutionImporterT_ = Teuchos::rcp(new Tpetra_Import(solutionMapT, targetMapT));
   }
 }
-#if defined(ALBANY_EPETRA)
-void
-Albany::SolutionValuesResponseFunction::
-ImportWithAlternateMap(
-    const Epetra_Import &importer,
-    const Epetra_MultiVector &source,
-    Epetra_MultiVector &target,
-    Epetra_CombineMode mode)
-{
-  const Epetra_BlockMap savedMap = target.Map();
-  {
-    const int ierr = target.ReplaceMap(importer.TargetMap());
-    TEUCHOS_ASSERT(ierr == 0);
-  }
-  {
-    const int ierr = target.Import(source, importer, mode);
-    TEUCHOS_ASSERT(ierr == 0);
-  }
-  {
-    const int ierr = target.ReplaceMap(savedMap);
-    TEUCHOS_ASSERT(ierr == 0);
-  }
-}
-#endif
 
 void
 Albany::SolutionValuesResponseFunction::

@@ -14,17 +14,13 @@
 #include "Albany_SolutionMinValueResponseFunction.hpp"
 #include "Albany_SolutionFileResponseFunction.hpp"
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
 #include "AlbanyPeridigmOBCFunctional.hpp"
-#endif
 #endif
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_CumulativeScalarResponseFunction.hpp"
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
 #include "Albany_FieldManagerResidualOnlyResponseFunction.hpp"
-#if defined(ALBANY_EPETRA)
 #include "Albany_SolutionResponseFunction.hpp"
-#endif
 #include "Albany_KLResponseFunction.hpp"
 
 #ifdef ALBANY_QCAD
@@ -91,9 +87,7 @@ createResponseFunction(
 
   else if (name == "OBC Functional") {
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
     responses.push_back(rcp(new Albany::AlbanyPeridigmOBCFunctional(comm)));
-#endif
 #endif
   }
 
@@ -200,10 +194,8 @@ createResponseFunction(
   }
 
   else if (name == "Solution") {
-#if defined(ALBANY_EPETRA)
     responses.push_back(
       rcp(new Albany::SolutionResponseFunction(app, responseParams)));
-#endif
   }
 
   else if (name == "KL") {

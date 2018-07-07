@@ -14,9 +14,6 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Albany_Utils.hpp"
-#if defined(ALBANY_EPETRA)
-#include "Epetra_CombineMode.h"
-#endif
 
 #include "Tpetra_CombineMode.hpp"
 
@@ -39,58 +36,9 @@ namespace Albany {
     //! Get the number of responses
     virtual unsigned int numResponses() const;
 
-#if defined(ALBANY_EPETRA)
-    //! Setup response function
-    virtual void setup();
-#endif
-
     //! Setup response function
     virtual void setupT();
 
-#if defined(ALBANY_EPETRA)
-    //! Evaluate responses
-    virtual void
-    evaluateResponse(const double current_time,
-		     const Epetra_Vector* xdot,
-		     const Epetra_Vector* xdotdot,
-		     const Epetra_Vector& x,
-		     const Teuchos::Array<ParamVec>& p,
-		     Epetra_Vector& g);
-
-    //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
-    virtual void
-    evaluateTangent(const double alpha,
-		    const double beta,
-		    const double omega,
-		    const double current_time,
-		    bool sum_derivs,
-		    const Epetra_Vector* xdot,
-		    const Epetra_Vector* xdotdot,
-		    const Epetra_Vector& x,
-		    const Teuchos::Array<ParamVec>& p,
-		    ParamVec* deriv_p,
-		    const Epetra_MultiVector* Vxdot,
-		    const Epetra_MultiVector* Vxdotdot,
-		    const Epetra_MultiVector* Vx,
-		    const Epetra_MultiVector* Vp,
-		    Epetra_Vector* g,
-		    Epetra_MultiVector* gx,
-		    Epetra_MultiVector* gp);
-
-    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
-    virtual void
-    evaluateGradient(const double current_time,
-		     const Epetra_Vector* xdot,
-		     const Epetra_Vector* xdotdot,
-		     const Epetra_Vector& x,
-		     const Teuchos::Array<ParamVec>& p,
-		     ParamVec* deriv_p,
-		     Epetra_Vector* g,
-		     Epetra_MultiVector* dg_dx,
-		     Epetra_MultiVector* dg_dxdot,
-		     Epetra_MultiVector* dg_dxdotdot,
-		     Epetra_MultiVector* dg_dp);
-#endif
     //! Evaluate responses
     virtual void
     evaluateResponseT(const double current_time,
@@ -155,27 +103,13 @@ namespace Albany {
     Teuchos::RCP<const Application> app_;
 
     Teuchos::RCP<SolutionCullingStrategyBase> cullingStrategy_;
-#if defined(ALBANY_EPETRA)
-    Teuchos::RCP<Epetra_Import> solutionImporter_;
-#endif
+
     Teuchos::RCP<Tpetra_Import> solutionImporterT_;
 
     class SolutionPrinter;
     Teuchos::RCP<SolutionPrinter> sol_printer_;
 
-#if defined(ALBANY_EPETRA)
-    void updateSolutionImporter();
-#endif
     void updateSolutionImporterT();
-
-#if defined(ALBANY_EPETRA)
-void
-ImportWithAlternateMap(
-    const Epetra_Import &importer,
-    const Epetra_MultiVector &source,
-    Epetra_MultiVector &target,
-    Epetra_CombineMode mode);
-#endif
 
 void
 ImportWithAlternateMapT(

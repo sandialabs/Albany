@@ -42,22 +42,6 @@ namespace Albany {
       return commT;
     }
 
-#if defined(ALBANY_EPETRA)
-    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
-    virtual void evaluateGradient(
-      const double current_time,
-      const Epetra_Vector* xdot,
-      const Epetra_Vector* xdotdot,
-      const Epetra_Vector& x,
-      const Teuchos::Array<ParamVec>& p,
-      ParamVec* deriv_p,
-      Epetra_Vector* g,
-      Epetra_MultiVector* dg_dx,
-      Epetra_MultiVector* dg_dxdot,
-      Epetra_MultiVector* dg_dxdotdot,
-      Epetra_MultiVector* dg_dp) = 0;
-#endif
-
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra
     virtual void evaluateGradientT(
       const double current_time,
@@ -76,11 +60,6 @@ namespace Albany {
     //! \name Implementation of AbstractResponseFunction virtual methods
     //@{
 
-#if defined(ALBANY_EPETRA)
-    //! Setup response function
-    virtual void setup() {}
-#endif
-
     //! Setup response function
     virtual void setupT() {}
 
@@ -95,34 +74,10 @@ namespace Albany {
      * Here we just throw an error.  We could actually support this a coupled
      * of ways if we wanted to.
      */
-#if defined(ALBANY_EPETRA)
-    virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const;
-#endif
     virtual Teuchos::RCP<Tpetra_Operator> createGradientOpT() const;
-
-#if defined(ALBANY_EPETRA)
-    //! Get the map associate with this response
-    virtual Teuchos::RCP<const Epetra_Map> responseMap() const;
-#endif
     
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const;
-
-#if defined(ALBANY_EPETRA)
-    //! Evaluate derivative dg/dx, dg/dxdot, dg/dp
-    virtual void evaluateDerivative(
-      const double current_time,
-      const Epetra_Vector* xdot,
-      const Epetra_Vector* xdotdot,
-      const Epetra_Vector& x,
-      const Teuchos::Array<ParamVec>& p,
-      ParamVec* deriv_p,
-      Epetra_Vector* g,
-      const EpetraExt::ModelEvaluator::Derivative& dg_dx,
-      const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
-      const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
-      const EpetraExt::ModelEvaluator::Derivative& dg_dp);
-#endif
 
     virtual void evaluateDerivativeT(
       const double current_time,

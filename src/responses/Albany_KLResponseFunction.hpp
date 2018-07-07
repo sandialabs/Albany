@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: Epetra ifdef'ed out except SG and MP when ALBANY_EPETRA_EXE is off.
-
 #ifndef ALBANY_KL_RESPONSE_FUNCTION_HPP
 #define ALBANY_KL_RESPONSE_FUNCTION_HPP
 
@@ -14,12 +12,6 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_FancyOStream.hpp"
-
-#if defined(ALBANY_EPETRA)
-#include "Epetra_Map.h"
-#include "Epetra_Import.h"
-#include "Epetra_CrsGraph.h"
-#endif
 
 namespace Albany {
 
@@ -40,20 +32,11 @@ namespace Albany {
     //! Destructor
     virtual ~KLResponseFunction();
 
-#if defined(ALBANY_EPETRA)
-    //! Setup response function
-    virtual void setup() { response->setup(); }
-#endif
     //! Setup response function
     virtual void setupT() { response->setupT(); }
 
     //! Perform post registration setup (do nothing)
     virtual void postRegSetup(){};
-
-#if defined(ALBANY_EPETRA)
-    //! Get the map associate with this response
-    virtual Teuchos::RCP<const Epetra_Map> responseMap() const;
-#endif
     
     //! Get the map associate with this response - Tpetra version
     virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const;
@@ -64,10 +47,6 @@ namespace Albany {
      */
     virtual bool isScalarResponse() const;
 
-#if defined(ALBANY_EPETRA)
-    //! Create operator for gradient (e.g., dg/dx)
-    virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const;
-#endif
     //! Create Tpetra operator for gradient (e.g., dg/dx)
     virtual Teuchos::RCP<Tpetra_Operator> createGradientOpT() const;
 
@@ -114,21 +93,6 @@ namespace Albany {
       Tpetra_MultiVector*  dg_dpT);
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
-#if defined(ALBANY_EPETRA)
-    virtual void evaluateDerivative(
-      const double current_time,
-      const Epetra_Vector* xdot,
-      const Epetra_Vector* xdotdot,
-      const Epetra_Vector& x,
-      const Teuchos::Array<ParamVec>& p,
-      ParamVec* deriv_p,
-      Epetra_Vector* g,
-      const EpetraExt::ModelEvaluator::Derivative& dg_dx,
-      const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
-      const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
-      const EpetraExt::ModelEvaluator::Derivative& dg_dp);
-#endif
-
     virtual void evaluateDerivativeT(
       const double current_time,
       const Tpetra_Vector* xdot,
@@ -150,15 +114,6 @@ namespace Albany {
     
     //! Private to prohibit copying
     KLResponseFunction& operator=(const KLResponseFunction&);
-
-  protected:
-
-#if defined(ALBANY_EPETRA)
-    bool computeKL(const Stokhos::EpetraVectorOrthogPoly& sg_u,
-		   const int NumKL,
-		   Teuchos::Array<double>& evals,
-		   Teuchos::RCP<Epetra_MultiVector>& evecs);
-#endif
 
   protected:
 
