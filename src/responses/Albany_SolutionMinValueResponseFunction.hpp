@@ -58,22 +58,6 @@ namespace Albany {
 		    Tpetra_Vector* g,
 		    Tpetra_MultiVector* gx,
 		    Tpetra_MultiVector* gp);
-
-#if defined(ALBANY_EPETRA)
-    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
-    virtual void 
-    evaluateGradient(const double current_time,
-		     const Epetra_Vector* xdot,
-		     const Epetra_Vector* xdotdot,
-		     const Epetra_Vector& x,
-		     const Teuchos::Array<ParamVec>& p,
-		     ParamVec* deriv_p,
-		     Epetra_Vector* g,
-		     Epetra_MultiVector* dg_dx,
-		     Epetra_MultiVector* dg_dxdot,
-		     Epetra_MultiVector* dg_dxdotdot,
-		     Epetra_MultiVector* dg_dp);
-#endif
     
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra version
     virtual void 
@@ -121,12 +105,6 @@ namespace Albany {
     //! Flag for interleaved verus blocked unknown ordering
     bool interleavedOrdering;
 
-#if defined(ALBANY_EPETRA)
-    /*
-    //! Compute max value and index
-    void computeMaxValue(const Epetra_Vector& x, double& val, int& index);
-    */
-#endif
     //! Compute max value and index - Tpetra
     void computeMinValueT(const Tpetra_Vector& xT, double& val, int& index);
 

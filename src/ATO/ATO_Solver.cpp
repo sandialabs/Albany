@@ -750,7 +750,7 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
     int distParamIndex = subSolver.params_in->Np()-1;
     Teuchos::RCP<Epetra_Comm> comm = 
       Albany::createEpetraCommFromTeuchosComm(localNodeMapT->getComm());
-    Teuchos::RCP<Epetra_Map> localNodeMap = Petra::TpetraMap_To_EpetraMap(localNodeMapT, comm); 
+    Teuchos::RCP<const Epetra_Map> localNodeMap = Petra::TpetraMap_To_EpetraMap(localNodeMapT, comm);
     Teuchos::RCP<Epetra_Vector> topoVec = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
     Petra::TpetraVector_To_EpetraVector(topoVecT, *topoVec, comm); 
     subSolver.params_in->set_p(distParamIndex,topoVec);
@@ -1905,7 +1905,7 @@ ATO::SpatialFilter::buildOperator(
     int numnonzeros = 0;
     Teuchos::RCP<Epetra_Comm> comm = 
       Albany::createEpetraCommFromTeuchosComm(localNodeMapT->getComm());
-    Teuchos::RCP<Epetra_Map> localNodeMap = Petra::TpetraMap_To_EpetraMap(localNodeMapT, comm); 
+    Teuchos::RCP<const Epetra_Map> localNodeMap = Petra::TpetraMap_To_EpetraMap(localNodeMapT, comm);
     filterOperatorT = Teuchos::rcp(new Tpetra_CrsMatrix(localNodeMapT,numnonzeros));
     for (std::map<GlobalPoint,std::set<GlobalPoint> >::iterator 
         it=neighbors.begin(); it!=neighbors.end(); ++it) { 

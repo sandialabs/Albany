@@ -8,6 +8,8 @@
 #include "PeridigmManager.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "AlbanyPeridigmOBCFunctional.hpp"
+#include "Albany_Utils.hpp"
+#include "Petra_Converters.hpp"
 
 Albany::AlbanyPeridigmOBCFunctional::
 AlbanyPeridigmOBCFunctional(const Teuchos::RCP<const Teuchos_Comm>& commT) :
@@ -69,43 +71,6 @@ evaluateTangentT(const double alpha,
 {}
 
 
-#ifdef ALBANY_EPETRA
-void
-Albany::AlbanyPeridigmOBCFunctional::
-evaluateGradient(const double current_time,
-     const Epetra_Vector* xdot,
-     const Epetra_Vector* xdotdot,
-     const Epetra_Vector& x,
-     const Teuchos::Array<ParamVec>& p,
-     ParamVec* deriv_p,
-     Epetra_Vector* g,
-     Epetra_MultiVector* dg_dx,
-     Epetra_MultiVector* dg_dxdot,
-     Epetra_MultiVector* dg_dxdotdot,
-     Epetra_MultiVector* dg_dp)
-{
-
-  // Evaluate response g
-  if ((g != NULL) || dg_dx != NULL) {
-    LCM::PeridigmManager& peridigmManager = *LCM::PeridigmManager::self();
-    Epetra_Vector* dgdx0 = (dg_dx != NULL) ? (*dg_dx)(0) : NULL;
-    double resp = peridigmManager.obcEvaluateFunctional((*dg_dx)(0));
-    if (g != NULL)
-      (*g)[0] = resp;
-  }
-
-  // Evaluate dg/dxdot
-  if (dg_dxdot != NULL)
-    dg_dxdot->PutScalar(0.0);
-  if (dg_dxdotdot != NULL)
-    dg_dxdotdot->PutScalar(0.0);
-
-  // Evaluate dg/dp
-  if (dg_dp != NULL)
-    dg_dp->PutScalar(0.0);
-}
-#endif
-
 //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
 void
 Albany::AlbanyPeridigmOBCFunctional::
@@ -119,7 +84,33 @@ evaluateGradientT(const double current_time,
      Tpetra_MultiVector* dg_dxT,
      Tpetra_MultiVector* dg_dxdotT,
      Tpetra_MultiVector* dg_dxdotdotT,
-     Tpetra_MultiVector* dg_dpT){};
+     Tpetra_MultiVector* dg_dpT){  // Evaluate response g
+
+  LCM::PeridigmManager& peridigmManager = *LCM::PeridigmManager::self();
+  if (dg_dxT != NULL) {
+    Teuchos::RCP<const Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
+    Epetra_MultiVector dgdx(*Petra::TpetraMap_To_EpetraMap(dg_dxT->getMap(),comm), dg_dxT->getNumVectors(), false);
+    Petra::TpetraMultiVector_To_EpetraMultiVector(Teuchos::rcp(dg_dxT,false), dgdx, comm);
+
+    double resp = peridigmManager.obcEvaluateFunctional((dgdx)(0));
+    Teuchos::RCP<Tpetra_MultiVector> dg_dxT_rcp = Petra::EpetraMultiVector_To_TpetraMultiVector(dgdx, commT);
+    dg_dxT->assign(*dg_dxT_rcp);
+
+    if (gT != NULL)
+      gT->getDataNonConst()[0] = resp;
+  } else if (gT != NULL)
+      gT->getDataNonConst()[0] = peridigmManager.obcEvaluateFunctional();
+
+  // Evaluate dg/dxdot
+  if (dg_dxdotT != NULL)
+    dg_dxdotT->putScalar(0.0);
+  if (dg_dxdotdotT != NULL)
+    dg_dxdotdotT->putScalar(0.0);
+
+  // Evaluate dg/dp
+  if (dg_dpT != NULL)
+    dg_dpT->putScalar(0.0);
+}
 
 //! Evaluate distributed parameter derivative dg/dp
 void

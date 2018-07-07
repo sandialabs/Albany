@@ -7,25 +7,9 @@
 
 #include "Albany_ScalarResponseFunction.hpp"
 #include "Teuchos_TestForException.hpp"
-#if defined(ALBANY_EPETRA)
-#include "Epetra_LocalMap.h"
-#endif
 
 #include "Albany_DataTypes.hpp"
 #include "Albany_Utils.hpp"
-
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<const Epetra_Map>
-Albany::ScalarResponseFunction::
-responseMap() const
-{
-  int num_responses = this->numResponses();
-  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
-  Teuchos::RCP<const Epetra_LocalMap> response_map =
-    Teuchos::rcp(new Epetra_LocalMap(num_responses, 0, *comm));
-  return response_map;
-}
-#endif
 
 //Tpetra version of above
 Teuchos::RCP<const Tpetra_Map>
@@ -41,53 +25,16 @@ responseMapT() const
 
 }
 
-
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<Epetra_Operator>
-Albany::ScalarResponseFunction::
-createGradientOp() const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    true, std::logic_error,
-    "Error!  Albany::ScalarResponseFunction::createGradientOp():  " <<
-    "Operator form of dg/dx is not supported for scalar responses.");
-  return Teuchos::null;
-}
-#endif
-
 Teuchos::RCP<Tpetra_Operator>
 Albany::ScalarResponseFunction::
 createGradientOpT() const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
     true, std::logic_error,
-    "Error!  Albany::ScalarResponseFunction::createGradientOp():  " <<
+    "Error!  Albany::ScalarResponseFunction::createGradientOpT():  " <<
     "Operator form of dg/dx is not supported for scalar responses.");
   return Teuchos::null;
 }
-
-#if defined(ALBANY_EPETRA)
-void
-Albany::ScalarResponseFunction::
-evaluateDerivative(
-  const double current_time,
-  const Epetra_Vector* xdot,
-  const Epetra_Vector* xdotdot,
-  const Epetra_Vector& x,
-  const Teuchos::Array<ParamVec>& p,
-  ParamVec* deriv_p,
-  Epetra_Vector* g,
-  const EpetraExt::ModelEvaluator::Derivative& dg_dx,
-  const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
-  const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
-  const EpetraExt::ModelEvaluator::Derivative& dg_dp)
-{
-  this->evaluateGradient(
-    current_time, xdot, xdotdot, x, p, deriv_p, g,
-    dg_dx.getMultiVector().get(), dg_dxdot.getMultiVector().get(), dg_dxdotdot.getMultiVector().get(),
-    dg_dp.getMultiVector().get());
-}
-#endif
 
 void
 Albany::ScalarResponseFunction::

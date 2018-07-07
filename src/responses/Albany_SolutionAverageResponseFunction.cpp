@@ -90,42 +90,6 @@ evaluateTangentT(const double alpha,
     gpT->putScalar(0.0);
 }
 
-#if defined(ALBANY_EPETRA)
-void
-Albany::SolutionAverageResponseFunction::
-evaluateGradient(const double current_time,
-		 const Epetra_Vector* xdot,
-		 const Epetra_Vector* xdotdot,
-		 const Epetra_Vector& x,
-		 const Teuchos::Array<ParamVec>& p,
-		 ParamVec* deriv_p,
-		 Epetra_Vector* g,
-		 Epetra_MultiVector* dg_dx,
-		 Epetra_MultiVector* dg_dxdot,
-		 Epetra_MultiVector* dg_dxdotdot,
-		 Epetra_MultiVector* dg_dp)
-{
-
-  // Evaluate response g
-  if (g != NULL)
-    x.MeanValue(&(*g)[0]);
-
-  // Evaluate dg/dx
-  if (dg_dx != NULL)
-    dg_dx->PutScalar(1.0 / x.GlobalLength());
-
-  // Evaluate dg/dxdot
-  if (dg_dxdot != NULL)
-    dg_dxdot->PutScalar(0.0);
-  if (dg_dxdotdot != NULL)
-    dg_dxdotdot->PutScalar(0.0);
-
-  // Evaluate dg/dp
-  if (dg_dp != NULL)
-    dg_dp->PutScalar(0.0);
-}
-#endif 
-
 void
 Albany::SolutionAverageResponseFunction::
 evaluateGradientT(const double current_time,
