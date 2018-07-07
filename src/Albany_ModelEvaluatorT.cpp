@@ -709,10 +709,10 @@ Albany::ModelEvaluatorT::evalModelImpl(
                       inArgsT.get_beta() :
                       1.0;
 
-#if defined(ALBANY_LCM)
   bool const is_dynamic =
       Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT);
 
+#if defined(ALBANY_LCM)
   ST const curr_time = is_dynamic == true ? inArgsT.get_t() : getCurrentTime();
 #else
   const ST curr_time =
