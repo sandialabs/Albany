@@ -33,22 +33,34 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_restart.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_restart.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivityT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivityT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_wedge_adjoint_sensitivity.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_wedge_adjoint_sensitivity.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_beta.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_beta.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_thickness.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_thickness.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_thicknessT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_thicknessT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_stiffening.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_stiffening.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_stiffeningT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_stiffeningT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_betaT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_betaT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_thickness.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_thickness.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_two_params.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_two_params.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_two_paramsT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_two_paramsT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_beta_smb.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_beta_smbT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smbT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_beta_smb_restart.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb_restart.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_wedge_pumi.xml
@@ -100,5 +112,15 @@ add_test(${testName}_Gis20km_Tpetra ${AlbanyT.exe} input_fo_gis20km_testT.xml)
 if (ALBANY_IOPX)
 add_test(${testName}_GisUnstructuredPerformance_Tpetra ${AlbanyT.exe} input_fo_gis_unstruct_perfT.xml)
 set_tests_properties(${testName}_GisUnstructuredPerformance_Tpetra PROPERTIES DEPENDS ${testName}_GisPopulateMeshes)
+add_test(${testName}_GisUnstructuredTpetra ${AlbanyT.exe} input_fo_gis_unstructT.xml)
+set_tests_properties(${testName}_GisUnstructuredTpetra PROPERTIES DEPENDS ${testName}_GisPopulateMeshes)
+add_test(${testName}_GisAdjointSensitivityTpetra ${AlbanyT.exe} input_fo_gis_adjoint_sensitivityT.xml)
+add_test(${testName}_GisAdjointSensitivityBasalFrictionTpetra ${AlbanyT.exe} input_fo_gis_analysis_betaT.xml)
+add_test(${testName}_GisAdjointSensitivityStiffeningBasalFrictionTpetra ${AlbanyT.exe} input_fo_gis_analysis_stiffeningT.xml)
+add_test(${testName}_GisSensSMBwrtBetaTpetra ${AlbanyT.exe} input_fo_gis_beta_smbT.xml)
+  if (ALBANY_MESH_DEPENDS_ON_PARAMETERS)
+    add_test(${testName}_GisAdjointSensitivityThicknessTpetra ${AlbanyT.exe} input_fo_gis_adjoint_sensitivity_thicknessT.xml)
+    add_test(${testName}_GisAdjointSensitivityTwoParametersTpetra ${AlbanyT.exe} input_fo_gis_analysis_two_paramsT.xml)
+  endif()
 endif(ALBANY_IOPX)
 endif(ALBANY_IFPACK2)

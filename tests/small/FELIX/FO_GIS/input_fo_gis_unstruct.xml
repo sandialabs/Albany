@@ -269,7 +269,6 @@
         <ParameterList name="Full Step">
           <Parameter name="Full Step" type="double" value="1"/>
         </ParameterList>
-        <Parameter name="Method" type="string" value="Full Step"/>
         <Parameter name="Method" type="string" value="Backtrack"/>
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
