@@ -23,10 +23,7 @@ NavierStokesTau(const Teuchos::ParameterList& p,
   densityQP          (p.get<std::string> ("Fluid Density QP Name"), dl->qp_scalar),
   viscosityQP        (p.get<std::string> ("Fluid Viscosity QP Name"), dl->qp_scalar),
   Tau                (p.get<std::string> ("Tau Name"), dl->qp_scalar),
-  mu                 (p.get<double>("Viscosity")),
-  rho                (p.get<double>("Density")),
-  stabType           (p.get<std::string>("Stabilization Type")),
-  use_params_on_mesh (p.get<bool>("Use Parameters on Mesh"))
+  stabType           (p.get<std::string>("Stabilization Type"))
 {
 
   this->addDependentField(V);
@@ -72,14 +69,6 @@ template<typename EvalT, typename Traits>
 void NavierStokesTau<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (use_params_on_mesh == false) {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-        densityQP(cell,qp) = ScalarT(rho); 
-        viscosityQP(cell,qp) = ScalarT(mu); 
-      }
-    }
-  }
   if (stab_type == SHAKIBHUGHES) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {

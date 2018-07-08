@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef TSUNAMI_NAVIERSTOKESBODYFORCE_HPP
-#define TSUNAMI_NAVIERSTOKESBODYFORCE_HPP
+#ifndef TSUNAMI_NAVIERSTOKESPARAMETERS_HPP
+#define TSUNAMI_NAVIERSTOKESPARAMETERS_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -21,14 +21,14 @@ namespace Tsunami {
 */
 
 template<typename EvalT, typename Traits>
-class NavierStokesBodyForce : public PHX::EvaluatorWithBaseImpl<Traits>,
+class NavierStokesParameters : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  NavierStokesBodyForce(const Teuchos::ParameterList& p,
+  NavierStokesParameters(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -43,10 +43,12 @@ private:
 
   // Input:  
   PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> coordVec;
-  PHX::MDField<const ScalarT,Cell,QuadPoint>          viscosityQP;
+  PHX::MDField<const ScalarT,Cell,QuadPoint>          viscosityQPin;
+  PHX::MDField<const ScalarT,Cell,QuadPoint>          densityQPin;
   
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
+  PHX::MDField<ScalarT,Cell,QuadPoint>          viscosityQP;
+  PHX::MDField<ScalarT,Cell,QuadPoint>          densityQP;
 
    //Radom field types
   enum BFTYPE {NONE, POLY};
@@ -54,6 +56,8 @@ private:
 
   unsigned int numQPs, numDims;
 
+  double mu, rho;
+ 
   bool use_params_on_mesh; 
 
 };

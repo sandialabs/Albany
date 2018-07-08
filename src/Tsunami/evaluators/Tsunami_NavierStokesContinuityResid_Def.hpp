@@ -20,9 +20,7 @@ NavierStokesContinuityResid(const Teuchos::ParameterList& p,
   wBF                (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
   VGrad              (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_tensor),
   CResidual          (p.get<std::string> ("Residual Name"), dl->node_scalar),
-  havePSPG           (p.get<bool>("Have PSPG")),
-  rho                (p.get<double>("Density")), 
-  use_params_on_mesh (p.get<bool>("Use Parameters on Mesh"))
+  havePSPG           (p.get<bool>("Have PSPG"))
 {
   this->addDependentField(wBF);
   this->addDependentField(VGrad);
@@ -81,25 +79,6 @@ template<typename EvalT, typename Traits>
 void NavierStokesContinuityResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (use_params_on_mesh == false) {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-        densityQP(cell,qp) = ScalarT(rho); 
-      }
-    }
-  }
-  else {
-    //IKT, we may want to fix this so it is not recomputed every time
-    for (int cell=0; cell < workset.numCells; ++cell) {
-      for (int qp=0; qp < numQPs; ++qp) {
-        if (densityQP(cell,qp) <= 0) {
-          TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-           "Invalid value of density field!  Density must be >0.\n");
-        }
-      }
-    }
-  }
-
   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {

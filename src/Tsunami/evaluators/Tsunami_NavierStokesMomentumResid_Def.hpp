@@ -24,9 +24,7 @@ NavierStokesMomentumResid(const Teuchos::ParameterList& p,
   MResidual          (p.get<std::string> ("Residual Name"),dl->node_vector),
   Rm                 (p.get<std::string> ("Rm Name"), dl->qp_vector),
   haveSUPG           (p.get<bool>        ("Have SUPG")), 
-  viscosityQP        (p.get<std::string> ("Fluid Viscosity QP Name"), dl->qp_scalar),
-  mu                 (p.get<double>("Viscosity")),
-  use_params_on_mesh (p.get<bool>("Use Parameters on Mesh"))
+  viscosityQP        (p.get<std::string> ("Fluid Viscosity QP Name"), dl->qp_scalar)
 {
 
   if (haveSUPG) {
@@ -85,25 +83,6 @@ template<typename EvalT, typename Traits>
 void NavierStokesMomentumResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
- if (use_params_on_mesh == false) {
-   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-     for (std::size_t qp=0; qp < numQPs; ++qp) {
-       viscosityQP(cell,qp) = ScalarT(mu); 
-     }
-   }
- }
- else {
-   //IKT, we may want to fix this so it is not recomputed every time
-   for (int cell=0; cell < workset.numCells; ++cell) {
-     for (int qp=0; qp < numQPs; ++qp) {
-       if (viscosityQP(cell,qp) <= 0) {
-         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-           "Invalid value of viscosity field!  Viscosity must be >0.\n");
-       }
-     }
-   }
- }
-
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
       for (int i=0; i<numDims; i++) {

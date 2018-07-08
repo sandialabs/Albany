@@ -141,6 +141,7 @@ namespace Tsunami {
 #include "PHAL_Neumann.hpp"
 #include "Tsunami_NavierStokesContravarientMetricTensor.hpp"
 #include "Tsunami_NavierStokesBodyForce.hpp"
+#include "Tsunami_NavierStokesParameters.hpp"
 #include "Tsunami_NavierStokesRm.hpp"
 #include "Tsunami_NavierStokesContinuityResid.hpp"
 #include "Tsunami_NavierStokesMomentumResid.hpp"
@@ -311,9 +312,7 @@ Tsunami::NavierStokes::constructEvaluators(
 
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-    p->set<double>("Viscosity", mu); 
-    p->set<std::string>("Fluid Viscosity QP Name", "viscosity");
-    p->set<bool>("Use Parameters on Mesh", use_params_on_mesh); 
+    p->set<std::string>("Fluid Viscosity QP Name", "Viscosity Field");
 
     //Output
     p->set<std::string>("Body Force Name", "Body Force");
@@ -322,6 +321,26 @@ Tsunami::NavierStokes::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  if (haveFlowEq) { // Parameters
+    RCP<ParameterList> p = rcp(new ParameterList("Parameters"));
+
+    //Input
+
+    Teuchos::ParameterList& paramList = params->sublist("Parameters");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+    p->set<std::string>("Fluid Viscosity In QP Name", "viscosity");
+    p->set<std::string>("Fluid Density In QP Name", "density");
+    p->set<double>("Viscosity", mu); 
+    p->set<double>("Density", rho); 
+    p->set<bool>("Use Parameters on Mesh", use_params_on_mesh); 
+
+    //Output
+    p->set<std::string>("Fluid Viscosity QP Name", "Viscosity Field");
+    p->set<std::string>("Fluid Density QP Name", "Density Field");
+
+    ev = rcp(new Tsunami::NavierStokesParameters<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   if (haveFlowEq) { // Rm
     RCP<ParameterList> p = rcp(new ParameterList("Rm"));
@@ -335,9 +354,7 @@ Tsunami::NavierStokes::constructEvaluators(
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set<bool>("Have Advection Term", haveAdvection); 
     p->set<bool>("Have Transient Term", haveUnsteady); 
-    p->set<double>("Density", rho); 
-    p->set<std::string>("Fluid Density QP Name", "density");
-    p->set<bool>("Use Parameters on Mesh", use_params_on_mesh); 
+    p->set<std::string>("Fluid Density QP Name", "Density Field");
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
@@ -357,11 +374,8 @@ Tsunami::NavierStokes::constructEvaluators(
     p->set<std::string>("Jacobian Det Name", "Jacobian Det");
     p->set<string>("Jacobian Name",          "Jacobian");
     p->set<string>("Jacobian Inv Name",      "Jacobian Inv");
-    p->set<double>("Viscosity", mu); 
-    p->set<double>("Density", rho);
-    p->set<std::string>("Fluid Viscosity QP Name", "viscosity");
-    p->set<std::string>("Fluid Density QP Name", "density");
-    p->set<bool>("Use Parameters on Mesh", use_params_on_mesh); 
+    p->set<std::string>("Fluid Viscosity QP Name", "Viscosity Field");
+    p->set<std::string>("Fluid Density QP Name", "Density Field");
     p->set<std::string>("Stabilization Type", stabType); 
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -389,10 +403,7 @@ Tsunami::NavierStokes::constructEvaluators(
     p->set<std::string>("Body Force Name", "Body Force");
     p->set<std::string> ("Rm Name", "Rm");
     p->set<std::string> ("Tau Name", "Tau");
-    p->set<double>("Viscosity", mu); 
-    p->set<double>("Density", rho); 
-    p->set<std::string>("Fluid Viscosity QP Name", "viscosity");
-    p->set<bool>("Use Parameters on Mesh", use_params_on_mesh); 
+    p->set<std::string>("Fluid Viscosity QP Name", "Viscosity Field");
 
     p->set<std::string>("Velocity QP Variable Name", "Velocity");
     p->set<bool> ("Have SUPG", haveSUPG);
@@ -414,12 +425,8 @@ Tsunami::NavierStokes::constructEvaluators(
     p->set<std::string>("Weighted BF Name", Albany::weighted_bf_name);
     p->set<std::string>("Velocity QP Variable Name", "Velocity");
     p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
-    p->set<std::string>("Density QP Variable Name", "Density");
-    p->set<double>("Viscosity", mu); 
-    p->set<double>("Density", rho); 
     p->set<bool> ("Have PSPG", havePSPG);
-    p->set<std::string>("Fluid Density QP Name", "density");
-    p->set<bool>("Use Parameters on Mesh", use_params_on_mesh); 
+    p->set<std::string>("Fluid Density QP Name", "Density Field");
 
     p->set<std::string>("Weighted Gradient BF Name", Albany::weighted_grad_bf_name);
     p->set<std::string> ("Tau Name", "Tau");

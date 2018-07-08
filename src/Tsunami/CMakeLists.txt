@@ -14,6 +14,7 @@
        evaluators/Tsunami_NavierStokesContinuityResid.cpp
        evaluators/Tsunami_NavierStokesMomentumResid.cpp
        evaluators/Tsunami_NavierStokesTau.cpp
+       evaluators/Tsunami_NavierStokesParameters.cpp
    )
 
   SET(HEADERS
@@ -30,6 +31,8 @@
        evaluators/Tsunami_NavierStokesMomentumResid_Def.hpp
        evaluators/Tsunami_NavierStokesTau.hpp
        evaluators/Tsunami_NavierStokesTau_Def.hpp
+       evaluators/Tsunami_NavierStokesParameters.hpp
+       evaluators/Tsunami_NavierStokesParameters_Def.hpp
   )
 
 

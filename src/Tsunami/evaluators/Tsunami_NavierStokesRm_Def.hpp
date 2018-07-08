@@ -24,9 +24,7 @@ NavierStokesRm(const Teuchos::ParameterList& p,
   densityQP          (p.get<std::string> ("Fluid Density QP Name"), dl->qp_scalar),
   out                (Teuchos::VerboseObjectBase::getDefaultOStream()),
   have_advection     (p.get<bool>("Have Advection Term")),
-  have_unsteady      (p.get<bool>("Have Transient Term")),
-  rho                (p.get<double>("Density")),
-  use_params_on_mesh (p.get<bool>("Use Parameters on Mesh"))
+  have_unsteady      (p.get<bool>("Have Transient Term"))
 {
   coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
@@ -48,7 +46,6 @@ NavierStokesRm(const Teuchos::ParameterList& p,
 
   *out << "Have_advection = " << have_advection << "\n"; 
   *out << "Have_unsteady = "  << have_unsteady << "\n"; 
-  *out << "rho = "  << rho << "\n"; 
   this->setName("NavierStokesRm"+PHX::typeAsString<EvalT>());
 }
 
@@ -74,13 +71,6 @@ template<typename EvalT, typename Traits>
 void NavierStokesRm<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (use_params_on_mesh == false) {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-        densityQP(cell,qp) = ScalarT(rho); 
-      }
-    }
-  }
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t i=0; i < numDims; ++i) {

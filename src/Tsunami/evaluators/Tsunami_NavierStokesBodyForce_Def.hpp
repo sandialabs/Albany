@@ -17,9 +17,7 @@ template<typename EvalT, typename Traits>
 NavierStokesBodyForce<EvalT, Traits>::
 NavierStokesBodyForce(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Albany::Layouts>& dl) :
-  force              (p.get<std::string>("Body Force Name"),dl->qp_vector),
-  mu                 (p.get<double>("Viscosity")), 
-  use_params_on_mesh (p.get<bool>("Use Parameters on Mesh"))
+  force              (p.get<std::string>("Body Force Name"),dl->qp_vector)
 {
 
   Teuchos::ParameterList* bf_list =
@@ -82,13 +80,6 @@ evaluateFields(typename Traits::EvalData workset)
   }
   //The following is hard-coded for a 2D Stokes problem with manufactured solution
   else if (bf_type == POLY) {
-    if (use_params_on_mesh == false) {
-      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
-          viscosityQP(cell,qp) = ScalarT(mu); 
-        }
-      }
-    }
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         //ScalarT* f = &force(cell,qp,0);
