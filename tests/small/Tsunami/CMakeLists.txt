@@ -14,6 +14,16 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vortex.exo.4.2
                ${CMAKE_CURRENT_BINARY_DIR}/vortex.exo.4.2 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vortex.exo.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/vortex.exo.4.3 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vortex_with_fields.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/vortex_with_fields.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vortex_with_fields.exo.4.0
+               ${CMAKE_CURRENT_BINARY_DIR}/vortex_with_fields.exo.4.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vortex_with_fields.exo.4.1
+               ${CMAKE_CURRENT_BINARY_DIR}/vortex_with_fields.exo.4.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vortex_with_fields.exo.4.2
+               ${CMAKE_CURRENT_BINARY_DIR}/vortex_with_fields.exo.4.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vortex_with_fields.exo.4.3
+               ${CMAKE_CURRENT_BINARY_DIR}/vortex_with_fields.exo.4.3 COPYONLY)
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
@@ -24,7 +34,5 @@ add_test(${testName}_Steady_Stokes2D ${AlbanyT.exe} input_steadyStokes2DT.yaml)
 endif ()
 if (ALBANY_IFPACK2)
 add_test(${testName}_2D_Unsteady_Vortex_Shedding ${AlbanyT.exe} input_unsteadyNS2DT.yaml)
+add_test(${testName}_2D_Unsteady_Vortex_Shedding_with_Fields ${AlbanyT.exe} input_unsteadyNS2DT_with_fields.yaml)
 endif ()
-#if (ALBANY_LCM AND ALBANY_IFPACK2)
-#add_test(${testName}_Unsteady_NS2D ${AlbanyT.exe} input_unsteadyNS2DT.yaml)
-#endif(ALBANY_LCM AND ALBANY_IFPACK2)

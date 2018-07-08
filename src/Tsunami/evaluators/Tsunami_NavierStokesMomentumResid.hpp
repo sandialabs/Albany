@@ -50,15 +50,18 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> force;
   PHX::MDField<const ScalarT,Cell,QuadPoint> TauSUPG;
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> Rm;
+  PHX::MDField<ScalarT,Cell,QuadPoint> viscosityQP;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> MResidual;
 
   unsigned int numQPs, numDims, numNodes;
 
-  double mu, rho;
+  double mu;
 
   bool haveSUPG; 
+
+  bool use_params_on_mesh; 
  
 };
 }

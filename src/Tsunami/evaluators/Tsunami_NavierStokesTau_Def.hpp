@@ -17,15 +17,23 @@ template<typename EvalT, typename Traits>
 NavierStokesTau<EvalT, Traits>::
 NavierStokesTau(const Teuchos::ParameterList& p,
            const Teuchos::RCP<Albany::Layouts>& dl) :
-  V       (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
-  Gc      (p.get<std::string> ("Contravarient Metric Tensor Name"), dl->qp_tensor),
-  jacobian_det (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
-  Tau    (p.get<std::string> ("Tau Name"), dl->qp_scalar)
+  V                  (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
+  Gc                 (p.get<std::string> ("Contravarient Metric Tensor Name"), dl->qp_tensor),
+  jacobian_det       (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
+  densityQP          (p.get<std::string> ("Fluid Density QP Name"), dl->qp_scalar),
+  viscosityQP        (p.get<std::string> ("Fluid Viscosity QP Name"), dl->qp_scalar),
+  Tau                (p.get<std::string> ("Tau Name"), dl->qp_scalar),
+  mu                 (p.get<double>("Viscosity")),
+  rho                (p.get<double>("Density")),
+  stabType           (p.get<std::string>("Stabilization Type")),
+  use_params_on_mesh (p.get<bool>("Use Parameters on Mesh"))
 {
 
   this->addDependentField(V);
   this->addDependentField(Gc);
   this->addDependentField(jacobian_det);
+  this->addDependentField(densityQP);
+  this->addDependentField(viscosityQP);
 
   this->addEvaluatedField(Tau);
 
@@ -34,9 +42,6 @@ NavierStokesTau(const Teuchos::ParameterList& p,
   numCells= dims[0];
   numQPs  = dims[1];
   numDims = dims[2];
-  mu = p.get<double>("Viscosity"); 
-  rho = p.get<double>("Density"); 
-  stabType = p.get<std::string>("Stabilization Type"); 
   if (stabType == "Shakib-Hughes") 
     stab_type=SHAKIBHUGHES;
   else if (stabType == "Tsunami")
@@ -53,6 +58,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(V,fm);
   this->utils.setFieldData(Gc,fm);
   this->utils.setFieldData(jacobian_det,fm);
+  this->utils.setFieldData(densityQP,fm);
+  this->utils.setFieldData(viscosityQP,fm);
 
   this->utils.setFieldData(Tau,fm);
 
@@ -65,6 +72,14 @@ template<typename EvalT, typename Traits>
 void NavierStokesTau<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  if (use_params_on_mesh == false) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        densityQP(cell,qp) = ScalarT(rho); 
+        viscosityQP(cell,qp) = ScalarT(mu); 
+      }
+    }
+  }
   if (stab_type == SHAKIBHUGHES) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -72,11 +87,11 @@ evaluateFields(typename Traits::EvalData workset)
         normGc(cell,qp) = 0.0;
         for (std::size_t i=0; i < numDims; ++i) {
           for (std::size_t j=0; j < numDims; ++j) {
-            Tau(cell,qp) += rho*rho*V(cell,qp,i)*Gc(cell,qp,i,j)*V(cell,qp,j);
+            Tau(cell,qp) += densityQP(cell,qp)*densityQP(cell,qp)*V(cell,qp,i)*Gc(cell,qp,i,j)*V(cell,qp,j);
             normGc(cell,qp) += Gc(cell,qp,i,j)*Gc(cell,qp,i,j);
           }
         }
-        Tau(cell,qp) += 12.*mu*mu*std::sqrt(normGc(cell,qp));
+        Tau(cell,qp) += 12.*viscosityQP(cell,qp)*viscosityQP(cell,qp)*std::sqrt(normGc(cell,qp));
         Tau(cell,qp) = 1./std::sqrt(Tau(cell,qp));
       }
     }

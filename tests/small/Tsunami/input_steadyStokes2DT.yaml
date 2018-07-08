@@ -39,6 +39,7 @@ ANONYMOUS:
     Method: STK2D
     Exodus Output File Name: stokes_outT.exo
     Write Coordinates to MatrixMarket: true
+    Workset Size: -1
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [1.201228033099e-01]

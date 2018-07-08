@@ -63,6 +63,7 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   haveUnsteady(haveUnsteady_),
   stabType("Shakib-Hughes"),
   use_sdbcs_(false), 
+  use_params_on_mesh(false), 
   mu(1.0), 
   rho(1.0) 
 {
@@ -84,6 +85,7 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
                                << rho <<"!  Density must be >0.");
     }
     haveSUPG = params->sublist("Tsunami Parameters").get<bool>("Have SUPG Stabilization", true);
+    use_params_on_mesh = params->sublist("Tsunami Parameters").get<bool>("Use Parameters on Mesh", false);
     stabType = params->sublist("Tsunami Parameters").get<std::string>("Stabilization Type", "Shakib-Hughes");
     if ((stabType != "Shakib-Hughes") && (stabType != "Tsunami")) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
@@ -117,7 +119,8 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
        << "\tHave Unsteady:          " << haveUnsteady << std::endl
        << "\tPSPG stabilization:     " << havePSPG << std::endl
        << "\tSUPG stabilization:     " << haveSUPG << std::endl
-       << "\tStabilization type:     " << stabType << std::endl;
+       << "\tStabilization type:     " << stabType << std::endl
+       << "\tUse Parameters on Mesh: " << use_params_on_mesh << std::endl;
 }
 
 Tsunami::NavierStokes::
@@ -137,6 +140,7 @@ buildProblem(
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1);
   fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  elementBlockName = meshSpecs[0]->ebName;
   buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM,
       Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);

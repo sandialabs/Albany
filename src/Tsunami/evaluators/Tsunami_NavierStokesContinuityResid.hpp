@@ -45,7 +45,7 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
   PHX::MDField<const ScalarT,Cell,QuadPoint> TauPSPG;
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> Rm;
-  
+  PHX::MDField<ScalarT,Cell,QuadPoint> densityQP;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> CResidual;
@@ -53,7 +53,8 @@ private:
   unsigned int numQPs, numDims, numNodes, numCells;
   Kokkos::DynRankView<ScalarT, PHX::Device> divergence;
   bool havePSPG;
-  double mu, rho; 
+  double rho; 
+  bool use_params_on_mesh; 
 };
 }
 

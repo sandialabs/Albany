@@ -48,6 +48,7 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> V_Dot;
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> force;  
   PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,QuadPoint> densityQP;
   
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> Rm;
@@ -56,8 +57,9 @@ private:
 
   bool have_advection; 
   bool have_unsteady;
-  double mu, rho; 
+  double rho; 
   Teuchos::RCP<Teuchos::FancyOStream> out;  
+  bool use_params_on_mesh; 
  
 };
 }

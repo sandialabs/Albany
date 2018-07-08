@@ -4,6 +4,7 @@ ANONYMOUS:
   Problem: 
     Name: Tsunami Navier Stokes 2D
     Solution Method: Transient
+    Required Fields: [density, viscosity]
     Dirichlet BCs: 
       Time Dependent DBC on NS inlet for DOF ux: 
         Time Values: [0.00000000000000000e+00, 1.00000000000000000e+00, 1.20000000000000000e+01]
@@ -24,14 +25,24 @@ ANONYMOUS:
     Body Force: 
       Type: None
     Tsunami Parameters:
-      Viscosity: 1.0
-      Density: 1.0  
       Have SUPG Stabilization: true
+      Use Parameters on Mesh: true
   Discretization: 
     Method: Exodus
-    Exodus Input File Name: vortex.exo
-    Exodus Output File Name: vortex-out.exo
+    Exodus Input File Name: vortex_with_fields.exo
+    Exodus Output File Name: vortex_with_fields-out.exo
+    Restart Index: 1
     Workset Size: -1
+    Required Fields Info:
+      Number Of Fields: 2
+      Field 0:
+        Field Name: density
+        Field Type: Node Scalar 
+        Field Origin: Mesh 
+      Field 1:
+        Field Name: viscosity
+        Field Type: Node Scalar 
+        Field Origin: Mesh 
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [7.26888316626999966e+01]

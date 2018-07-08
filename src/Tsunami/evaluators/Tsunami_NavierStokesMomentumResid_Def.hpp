@@ -15,15 +15,18 @@ template<typename EvalT, typename Traits>
 NavierStokesMomentumResid<EvalT, Traits>::
 NavierStokesMomentumResid(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl) :
-  wBF       (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
-  wGradBF   (p.get<std::string> ("Weighted Gradient BF Name"), dl->node_qp_vector),
-  pGrad     (p.get<std::string> ("Pressure Gradient QP Variable Name"), dl->qp_vector),
-  VGrad     (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_tensor),
-  P         (p.get<std::string> ("Pressure QP Variable Name"), dl->qp_scalar),
-  force     (p.get<std::string> ("Body Force Name"), dl->qp_vector),
-  MResidual (p.get<std::string> ("Residual Name"),dl->node_vector),
-  Rm        (p.get<std::string> ("Rm Name"), dl->qp_vector),
-  haveSUPG  (p.get<bool>        ("Have SUPG"))
+  wBF                (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
+  wGradBF            (p.get<std::string> ("Weighted Gradient BF Name"), dl->node_qp_vector),
+  pGrad              (p.get<std::string> ("Pressure Gradient QP Variable Name"), dl->qp_vector),
+  VGrad              (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_tensor),
+  P                  (p.get<std::string> ("Pressure QP Variable Name"), dl->qp_scalar),
+  force              (p.get<std::string> ("Body Force Name"), dl->qp_vector),
+  MResidual          (p.get<std::string> ("Residual Name"),dl->node_vector),
+  Rm                 (p.get<std::string> ("Rm Name"), dl->qp_vector),
+  haveSUPG           (p.get<bool>        ("Have SUPG")), 
+  viscosityQP        (p.get<std::string> ("Fluid Viscosity QP Name"), dl->qp_scalar),
+  mu                 (p.get<double>("Viscosity")),
+  use_params_on_mesh (p.get<bool>("Use Parameters on Mesh"))
 {
 
   if (haveSUPG) {
@@ -42,12 +45,10 @@ NavierStokesMomentumResid(const Teuchos::ParameterList& p,
   this->addDependentField(P);
   this->addDependentField(force);
   this->addDependentField(Rm);
+  this->addDependentField(viscosityQP);
 
   this->addEvaluatedField(MResidual);
 
-  mu = p.get<double>("Viscosity"); 
-  rho = p.get<double>("Density"); 
- 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_qp_vector->dimensions(dims);
   numNodes = dims[1];
@@ -70,6 +71,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(P,fm);
   this->utils.setFieldData(force,fm);
   this->utils.setFieldData(Rm,fm);
+  this->utils.setFieldData(force,fm);
+  this->utils.setFieldData(viscosityQP,fm);
   if (haveSUPG) {
     this->utils.setFieldData(TauSUPG,fm);
     this->utils.setFieldData(V,fm);
@@ -82,6 +85,25 @@ template<typename EvalT, typename Traits>
 void NavierStokesMomentumResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+ if (use_params_on_mesh == false) {
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (std::size_t qp=0; qp < numQPs; ++qp) {
+       viscosityQP(cell,qp) = ScalarT(mu); 
+     }
+   }
+ }
+ else {
+   //IKT, we may want to fix this so it is not recomputed every time
+   for (int cell=0; cell < workset.numCells; ++cell) {
+     for (int qp=0; qp < numQPs; ++qp) {
+       if (viscosityQP(cell,qp) <= 0) {
+         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+           "Invalid value of viscosity field!  Viscosity must be >0.\n");
+       }
+     }
+   }
+ }
+
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
       for (int i=0; i<numDims; i++) {
@@ -92,8 +114,7 @@ evaluateFields(typename Traits::EvalData workset)
              P(cell,qp)*wGradBF(cell,node,qp,i);
           for (int j=0; j < numDims; ++j) {
             MResidual(cell,node,i) +=
-              mu*(VGrad(cell,qp,i,j)+VGrad(cell,qp,j,i))*wGradBF(cell,node,qp,j);
-    //        mu*VGrad(cell,qp,i,j)*wGradBF(cell,node,qp,j);
+                viscosityQP(cell,qp)*(VGrad(cell,qp,i,j)+VGrad(cell,qp,j,i))*wGradBF(cell,node,qp,j);
           }
         }
       }

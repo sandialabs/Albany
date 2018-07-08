@@ -17,10 +17,12 @@ template<typename EvalT, typename Traits>
 NavierStokesContinuityResid<EvalT, Traits>::
 NavierStokesContinuityResid(const Teuchos::ParameterList& p,
                       const Teuchos::RCP<Albany::Layouts>& dl) :
-  wBF       (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
-  VGrad     (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_tensor),
-  CResidual (p.get<std::string> ("Residual Name"), dl->node_scalar),
-  havePSPG  (p.get<bool>("Have PSPG"))
+  wBF                (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
+  VGrad              (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_tensor),
+  CResidual          (p.get<std::string> ("Residual Name"), dl->node_scalar),
+  havePSPG           (p.get<bool>("Have PSPG")),
+  rho                (p.get<double>("Density")), 
+  use_params_on_mesh (p.get<bool>("Use Parameters on Mesh"))
 {
   this->addDependentField(wBF);
   this->addDependentField(VGrad);
@@ -31,9 +33,12 @@ NavierStokesContinuityResid(const Teuchos::ParameterList& p,
       p.get<std::string>("Tau Name"), dl->qp_scalar);
     Rm = decltype(Rm)(
       p.get<std::string>("Rm Name"), dl->qp_vector);
+    densityQP = decltype(densityQP)(
+      p.get<std::string> ("Fluid Density QP Name"), dl->qp_scalar);
     this->addDependentField(wGradBF);
     this->addDependentField(TauPSPG);
     this->addDependentField(Rm);
+    this->addDependentField(densityQP);
   }
 
   this->addEvaluatedField(CResidual);
@@ -44,8 +49,6 @@ NavierStokesContinuityResid(const Teuchos::ParameterList& p,
   numNodes = dims[1];
   numQPs  = dims[2];
   numDims = dims[3];
-  mu = p.get<double>("Viscosity"); 
-  rho = p.get<double>("Density"); 
 
   this->setName("NavierStokesContinuityResid"+PHX::typeAsString<EvalT>());
 }
@@ -58,10 +61,12 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(VGrad,fm);
+  this->utils.setFieldData(VGrad,fm);
   if (havePSPG) {
     this->utils.setFieldData(wGradBF,fm);
     this->utils.setFieldData(TauPSPG,fm);
     this->utils.setFieldData(Rm,fm);
+    this->utils.setFieldData(densityQP,fm);
   }
 
   this->utils.setFieldData(CResidual,fm);
@@ -76,6 +81,25 @@ template<typename EvalT, typename Traits>
 void NavierStokesContinuityResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  if (use_params_on_mesh == false) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        densityQP(cell,qp) = ScalarT(rho); 
+      }
+    }
+  }
+  else {
+    //IKT, we may want to fix this so it is not recomputed every time
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
+        if (densityQP(cell,qp) <= 0) {
+          TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+           "Invalid value of density field!  Density must be >0.\n");
+        }
+      }
+    }
+  }
+
   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -94,7 +118,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t node=0; node < numNodes; ++node) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           for (std::size_t j=0; j < numDims; ++j) {
-            CResidual(cell,node) += TauPSPG(cell,qp)/rho*Rm(cell,qp,j)*wGradBF(cell,node,qp,j);
+            CResidual(cell,node) += TauPSPG(cell,qp)/densityQP(cell,qp)*Rm(cell,qp,j)*wGradBF(cell,node,qp,j);
           }
         }
       }

@@ -44,6 +44,8 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> VGrad; //IK - added 7/19/2012
   PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;
   PHX::MDField<const MeshScalarT,Cell,QuadPoint> jacobian_det; //jacobian determinant - for getting mesh size h 
+  PHX::MDField<ScalarT,Cell,QuadPoint> densityQP;
+  PHX::MDField<ScalarT,Cell,QuadPoint> viscosityQP;
   ScalarT meshSize; //mesh size h 
 
   // Output:
@@ -58,6 +60,7 @@ private:
 
   enum STAB_TYPE {SHAKIBHUGHES, TSUNAMI};
   STAB_TYPE stab_type;  
+  bool use_params_on_mesh; 
 };
 }
 
