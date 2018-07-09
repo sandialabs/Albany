@@ -7,13 +7,14 @@
 #ifndef AADAPT_INITIALCONDITION_HPP
 #define AADAPT_INITIALCONDITION_HPP
 
+#include "Albany_DataTypes.hpp"
+#include "Albany_AbstractDiscretization.hpp"
+
 #include <string>
 #include "Teuchos_ParameterList.hpp"
 #if defined(ALBANY_EPETRA)
 #include "Epetra_Vector.h"
 #endif
-#include "Albany_DataTypes.hpp"
-#include "Albany_AbstractDiscretization.hpp"
 
 namespace AAdapt {
 

@@ -12,7 +12,7 @@ if(ALBANY_CATALYST)
   add_subdirectory(catalyst)
 endif()
 
-IF(ALBANY_HAVE_STK)
+IF(ALBANY_STK)
   add_subdirectory(stk)
 ENDIF()
 

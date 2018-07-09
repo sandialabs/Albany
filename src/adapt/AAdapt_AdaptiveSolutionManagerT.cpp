@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "AAdapt_AdaptiveSolutionManagerT.hpp"
-#if defined(HAVE_STK)
+#if defined(ALBANY_STK)
 #include "AAdapt_CopyRemeshT.hpp"
 #if defined(ALBANY_LCM) && defined(ALBANY_BGL)
 #include "AAdapt_TopologyModificationT.hpp"
@@ -174,7 +174,7 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
   std::string& method = adaptParams_->get("Method", "");
   std::string first_three_chars = method.substr(0, 3);
 
-#if defined(HAVE_STK)
+#if defined(ALBANY_STK)
   if (method == "Copy Remesh") {
     adapter_ = Teuchos::rcp(new AAdapt::CopyRemeshT(adaptParams_,
         paramLib_,

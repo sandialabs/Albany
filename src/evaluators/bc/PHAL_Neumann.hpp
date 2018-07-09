@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: only Epetra is SG and MP
-
 #ifndef PHAL_NEUMANN_HPP
 #define PHAL_NEUMANN_HPP
 
@@ -33,7 +31,7 @@ namespace PHAL {
 
 
 template<typename EvalT, typename Traits>
-class NeumannBase : 
+class NeumannBase :
     public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>,
     public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
@@ -65,16 +63,16 @@ protected:
   Teuchos::Array<int> offset;
   int numDOFsSet;
 
-  //The following are for the basal BC 
+  //The following are for the basal BC
   std::string betaName; //name of function betaXY to be used
-  double L;           //length scale for ISMIP-HOM Test cases 
+  double L;           //length scale for ISMIP-HOM Test cases
   MeshScalarT betaXY; //function of x and y to multiply scalar values of beta read from input file
   enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, EXP_SCALAR_FIELD, POWERLAW_SCALAR_FIELD, EXP_SCALAR_FIELD_THK, LATERAL_BACKPRESSURE, FELIX_XZ_MMS};
   BETAXY_NAME beta_type;
- 
-  //The following are for the lateral BC 
-  double g; 
-  double rho; 
+
+  //The following are for the lateral BC
+  double g;
+  double rho;
   double rho_w;
   bool useGLP;
   Teuchos::ParameterList* stereographicMapList;
@@ -101,7 +99,7 @@ protected:
                         int local_side_id,
                         ScalarT scale,
                         const ScalarT* robin_param_values);
-						
+
   // Stefan-Boltzmann (also uses flux scaling)
   void calc_dudn_radiate (Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
                         const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
@@ -149,10 +147,10 @@ protected:
   //Basal bc
   void calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
                        const Kokkos::DynRankView<MeshScalarT, PHX::Device>& physPointsSide,
-   		       const Kokkos::DynRankView<ScalarT, PHX::Device>& basalFriction_side,
-   		       const Kokkos::DynRankView<ScalarT, PHX::Device>& thickness_side,
-   		      const Kokkos::DynRankView<ScalarT, PHX::Device>& bedTopo_side,
-   		       const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
+             const Kokkos::DynRankView<ScalarT, PHX::Device>& basalFriction_side,
+             const Kokkos::DynRankView<ScalarT, PHX::Device>& thickness_side,
+            const Kokkos::DynRankView<ScalarT, PHX::Device>& bedTopo_side,
+             const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
                        const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                        const shards::CellTopology & celltopo,
                        const int cellDims,
@@ -204,8 +202,8 @@ protected:
 
   Kokkos::DynRankView<ScalarT, PHX::Device> dofCell_buffer;
   Kokkos::DynRankView<ScalarT, PHX::Device> dofCellVec_buffer;
-  
-  
+
+
   Kokkos::DynRankView<RealType, PHX::Device> cubPointsSide_buffer;
   Kokkos::DynRankView<RealType, PHX::Device> refPointsSide_buffer;
   Kokkos::DynRankView<RealType, PHX::Device> cubWeightsSide_buffer;
@@ -219,7 +217,7 @@ protected:
   Kokkos::DynRankView<MeshScalarT, PHX::Device> weighted_trans_basis_refPointsSide_buffer;
   Kokkos::DynRankView<MeshScalarT, PHX::Device> side_normals_buffer;
   Kokkos::DynRankView<MeshScalarT, PHX::Device> normal_lengths_buffer;
-  
+
   Kokkos::DynRankView<ScalarT, PHX::Device> betaOnSide_buffer;
   Kokkos::DynRankView<ScalarT, PHX::Device> thicknessOnSide_buffer;
   Kokkos::DynRankView<ScalarT, PHX::Device> bedTopoOnSide_buffer;
@@ -230,9 +228,9 @@ protected:
   Kokkos::DynRankView<ScalarT, PHX::Device> thicknessOnCell;
   Kokkos::DynRankView<ScalarT, PHX::Device> elevationOnCell;
   Kokkos::DynRankView<ScalarT, PHX::Device> bedTopoOnCell;
-  
+
   Kokkos::DynRankView<MeshScalarT, PHX::Device> temporary_buffer;
-  Kokkos::DynRankView<ScalarT, PHX::Device> data_buffer;  
+  Kokkos::DynRankView<ScalarT, PHX::Device> data_buffer;
 
   Kokkos::DynRankView<ScalarT, PHX::Device> data;
 
@@ -267,7 +265,7 @@ template<typename EvalT, typename Traits> class Neumann;
 
 
 // **************************************************************
-// Residual 
+// Residual
 // **************************************************************
 template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::Residual,Traits>
@@ -355,12 +353,12 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
 
 public:
-  
+
   NeumannAggregator(const Teuchos::ParameterList& p);
-  
+
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm) {};
-  
+
   void evaluateFields(typename Traits::EvalData d) {};
 
 };

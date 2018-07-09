@@ -4,7 +4,7 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-IF(ALBANY_HAVE_STK) # STK is needed for all these
+IF(ALBANY_STK) # STK is needed for all these
 
 # Heat Transfer Problems ###############
   add_subdirectory(SteadyHeat1D)
@@ -38,7 +38,7 @@ IF(ALBANY_HAVE_STK) # STK is needed for all these
     add_subdirectory(SteadyHeat2DSS)
   ENDIF(ALBANY_SEACAS)
 
-ENDIF(ALBANY_HAVE_STK)
+ENDIF(ALBANY_STK)
 
 add_subdirectory(Utils)
 
@@ -46,7 +46,7 @@ IF(ALBANY_SCOREC)
   add_subdirectory(Heat3DPUMI)
 ENDIF()
 
-IF(ALBANY_HAVE_STK)
+IF(ALBANY_STK)
 # DEMO PDES ###############
 IF(ALBANY_DEMO_PDES)
   add_subdirectory(Helmholtz2D)
@@ -73,7 +73,7 @@ IF(ALBANY_DEMO_PDES)
 
 ENDIF(ALBANY_DEMO_PDES)
 
-ENDIF(ALBANY_HAVE_STK)
+ENDIF(ALBANY_STK)
 
 # LCM ###############
 
@@ -87,7 +87,7 @@ IF(ALBANY_GOAL)
   add_subdirectory(GOAL)
 ENDIF()
 
-IF(ALBANY_HAVE_STK)
+IF(ALBANY_STK)
 
 # QCAD ##################
 
@@ -126,6 +126,6 @@ IF(ALBANY_ANISO)
   add_subdirectory(ANISO)
 ENDIF(ALBANY_ANISO)
 
-ENDIF(ALBANY_HAVE_STK)
+ENDIF(ALBANY_STK)
 
 ###################

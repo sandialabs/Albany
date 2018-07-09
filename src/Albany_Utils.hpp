@@ -7,6 +7,9 @@
 #ifndef ALBANY_UTILS_H
 #define ALBANY_UTILS_H
 
+// Get Albany configuration macros
+#include "Albany_config.h"
+
 // For cudaCheckError
 #include <stdexcept>
 
@@ -52,11 +55,11 @@ cudaError(const char* file, int line) {
 #define cudaCheckError()
 #endif
 
-// NVTX Range creates a colored range which can be viewed on the nvvp timeline 
+// NVTX Range creates a colored range which can be viewed on the nvvp timeline
 // (from Parallel Forall blog)
 #ifdef ALBANY_CUDA_NVTX
 #include "nvToolsExt.h"
-static const uint32_t nvtx_colors[] = { 0x0000ff00, 0x000000ff, 0x00ffff00, 
+static const uint32_t nvtx_colors[] = { 0x0000ff00, 0x000000ff, 0x00ffff00,
     0x00ff00ff, 0x0000ffff, 0x00ff0000, 0x00ffffff };
 static const int num_nvtx_colors = sizeof(nvtx_colors)/sizeof(uint32_t);
 #define PUSH_RANGE(name,cid) { \

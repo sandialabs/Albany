@@ -4,12 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "Albany_IossSTKMeshStruct.hpp"
 
 #ifdef ALBANY_SEACAS
 
 #include <iostream>
 
-#include "Albany_IossSTKMeshStruct.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
 #include <Shards_BasicTopologies.hpp>

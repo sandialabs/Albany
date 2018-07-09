@@ -357,7 +357,7 @@ SET(SOURCES ${SOURCES}
   evaluators/utility/QCAD_MeshRegion.cpp
   )
 
-IF (ALBANY_HAVE_STK)
+IF (ALBANY_STK)
  SET(SOURCES ${SOURCES}
    evaluators/state/PHAL_SaveSideSetStateField.cpp)
 ENDIF()
@@ -532,7 +532,7 @@ SET(HEADERS ${HEADERS}
   evaluators/utility/QCAD_MeshRegion_Def.hpp
   )
 
-IF (ALBANY_HAVE_STK)
+IF (ALBANY_STK)
   SET(HEADERS ${HEADERS}
     evaluators/state/PHAL_SaveSideSetStateField.hpp
     evaluators/state/PHAL_SaveSideSetStateField_Def.hpp)
@@ -928,7 +928,7 @@ set(ALL_LIBRARIES
 add_subdirectory(adapt)
 add_subdirectory(disc)
 
-IF(ALBANY_HAVE_STK)
+IF(ALBANY_STK)
 SET(ALBANY_LIBRARIES albanyLib albanyAdapt albanySTK)
 ELSE()
 SET(ALBANY_LIBRARIES albanyLib albanyAdapt)

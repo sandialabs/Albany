@@ -284,7 +284,7 @@ IF (have_stk_List_ID GREATER -1)
 
 ELSE()
   MESSAGE("-- Looking for STK:        NOT found.")
-  SET(ALBANY_HAVE_STK FALSE)
+  SET(ALBANY_STK FALSE)
 ENDIF()
 
 # set optional dependency on Panzer's ExprEval subpackage
@@ -302,7 +302,7 @@ ENDIF()
 LIST(FIND Trilinos_PACKAGE_LIST Zoltan Zoltan_List_ID)
 IF (Zoltan_List_ID GREATER -1)
   SET(ALBANY_ZOLTAN TRUE)
-  IF(ALBANY_HAVE_STK)
+  IF(ALBANY_STK)
     SET(ALBANY_STK_REBALANCE TRUE)
     MESSAGE("-- Looking for Zoltan:             Found, compiling with -DALBANY_ZOLTAN -DALBANY_STK_REBALANCE")
   ELSE()
@@ -459,7 +459,7 @@ IF (ENABLE_LCM)
   ENDIF()
   MESSAGE("-- LCM       is Enabled, compiling with -DALBANY_LCM")
   SET(ALBANY_LCM TRUE)
-  IF (ENABLE_LCM_TEST_EXES AND ALBANY_HAVE_STK) # Need STK for the EXES
+  IF (ENABLE_LCM_TEST_EXES AND ALBANY_STK) # Need STK for the EXES
     SET(LCM_TEST_EXES TRUE)
   ENDIF()
 ELSE()

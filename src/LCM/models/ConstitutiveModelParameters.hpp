@@ -7,6 +7,8 @@
 #if !defined(LCM_ConstitutiveModelParameters_hpp)
 #define LCM_ConstitutiveModelParameters_hpp
 
+#include "Albany_config.h"
+
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_MDField.hpp"

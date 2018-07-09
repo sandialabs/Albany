@@ -7,6 +7,8 @@
 #ifndef ALBANY_DAKOTA_H
 #define ALBANY_DAKOTA_H
 
+#include "Albany_config.h"
+
 #ifdef ALBANY_DAKOTA
 
 /** \brief Main routine to drive ModelEvaluator application with Dakota */

@@ -10,6 +10,8 @@
 #include <Sacado_ParameterRegistration.hpp>
 #include <Teuchos_TestForException.hpp>
 
+#include "Albany_config.h"
+
 #ifdef ALBANY_TIMER
 #include <chrono>
 #endif
@@ -30,7 +32,7 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
           dl->node_qp_vector),
       w_bf_(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
       residual_(p.get<std::string>("Residual Name"), dl->node_vector),
-      mass_(p.get<std::string>("Analytic Mass Name"), dl->node_vector),  
+      mass_(p.get<std::string>("Analytic Mass Name"), dl->node_vector),
       have_body_force_(p.isType<bool>("Has Body Force")),
       density_(p.get<RealType>("Density", 1.0))
 {
@@ -48,7 +50,7 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
 
   use_analytic_mass_ = p.get<bool>("Use Analytic Mass");
 #ifdef DEBUG_OUTPUT
-  *out << "IKT use_analytic_mass_ = " << use_analytic_mass_ << "\n";  
+  *out << "IKT use_analytic_mass_ = " << use_analytic_mass_ << "\n";
 #endif
   if (enable_dynamics_) {
     acceleration_ = decltype(acceleration_)(
@@ -242,8 +244,8 @@ MechanicsResidual<EvalT, Traits>::evaluateFields(
   // dynamic term
   if (workset.transientTerms && enable_dynamics_) {
   //If transient problem and not using analytic mass, enable acceleration terms.
-  //This is similar to what is done in Peridigm when mass is passed from peridigm rather than 
-  //computed in Albany; see, e.g., albanyIsCreatingMassMatrix-based logic in PeridigmForce_Def.hpp 
+  //This is similar to what is done in Peridigm when mass is passed from peridigm rather than
+  //computed in Albany; see, e.g., albanyIsCreatingMassMatrix-based logic in PeridigmForce_Def.hpp
     if (!use_analytic_mass_) { //not using analytic mass
       for (int cell = 0; cell < workset.numCells; ++cell) {
         for (int node = 0; node < num_nodes_; ++node) {
@@ -260,14 +262,14 @@ MechanicsResidual<EvalT, Traits>::evaluateFields(
       for (int cell = 0; cell < workset.numCells; ++cell) {
         for (int node = 0; node < num_nodes_; ++node) {
           for (int dim = 0; dim < num_dims_; ++dim) {
-            residual_(cell, node, dim) += mass_(cell, node, dim); 
+            residual_(cell, node, dim) += mass_(cell, node, dim);
           }
         }
       }
     }
   }
 #ifdef DEBUG_OUTPUT
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream(); 
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
   for (int cell = 0; cell < workset.numCells; ++cell) {
     if (cell == 0) {
       for (int node = 0; node < this->num_nodes_; ++node) {
@@ -277,7 +279,7 @@ MechanicsResidual<EvalT, Traits>::evaluateFields(
       }
     }
   }
-#endif 
+#endif
 }
 //------------------------------------------------------------------------------
 }

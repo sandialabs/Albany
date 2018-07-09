@@ -7,6 +7,8 @@
 #ifndef PHAL_THERMAL_CONDUCTIVITY_HPP
 #define PHAL_THERMAL_CONDUCTIVITY_HPP
 
+#include "Albany_config.h"
+
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -22,14 +24,14 @@
 #include "Albany_MaterialDatabase.hpp"
 
 namespace PHAL {
-/** 
+/**
  * \brief Evaluates thermal conductivity, either as a constant or a truncated
  * KL expansion.
 
-This class may be used in two ways. 
+This class may be used in two ways.
 
 1. The simplest is to use a constant thermal conductivity across the entire domain (one element block,
-one material), say with a value of 5.0. In this case, one would declare at the "Problem" level, that a 
+one material), say with a value of 5.0. In this case, one would declare at the "Problem" level, that a
 constant thermal conductivity was being used, and its value was 5.0:
 
 <ParameterList name="Problem">
@@ -49,11 +51,11 @@ block. See the test problem Heat2DMMCylWithSource for an example of this use cas
  */
 
 template<typename EvalT, typename Traits>
-class ThermalConductivity : 
+class ThermalConductivity :
   public PHX::EvaluatorWithBaseImpl<Traits>,
   public PHX::EvaluatorDerived<EvalT, Traits>,
   public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-  
+
 public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
@@ -61,17 +63,17 @@ public:
   enum SG_RF {CONSTANT, UNIFORM, LOGNORMAL};
 
   ThermalConductivity(Teuchos::ParameterList& p);
-  
+
   void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
-  
+           PHX::FieldManager<Traits>& vm);
+
   void evaluateFields(typename Traits::EvalData d);
-  
+
   ScalarT& getValue(const std::string &n);
 
-private:       
+private:
 
-//! Validate the name strings under "Thermal Conductivity" section in xml input file, 
+//! Validate the name strings under "Thermal Conductivity" section in xml input file,
   Teuchos::RCP<const Teuchos::ParameterList>
                getValidThermalCondParameters() const;
 
@@ -83,7 +85,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> thermalCond;
 
   //! Conductivity type
-  std::string type; 
+  std::string type;
 
   //! Constant value
   ScalarT constant_value;
@@ -102,7 +104,7 @@ private:
   //! Convenience function to initialize constant thermal conductivity
   void init_constant(ScalarT value, Teuchos::ParameterList& p);
 
-  //! Convenience function to initialize thermal conductivity based on 
+  //! Convenience function to initialize thermal conductivity based on
   //  Truncated KL Expansion || Log Normal RF
   void init_KL_RF(std::string &type, Teuchos::ParameterList& subList, Teuchos::ParameterList& p);
 

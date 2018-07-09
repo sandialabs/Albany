@@ -3,8 +3,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: only Epetra is SG and MP
-
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include <string>
@@ -68,17 +66,17 @@ NeumannBase(const Teuchos::ParameterList& p) :
       const_val = inputValues[0];
       this->registerSacadoParameter(name, paramLib);
     }
-	else if(inputConditions == "radiate" ) { 
+  else if(inputConditions == "radiate" ) {
       bc_type = STEFAN_BOLTZMANN;
       robin_vals[0] = inputValues[0]; // dof_value
-      robin_vals[1] = inputValues[1]; // coeff multiplying difference (dof^4 - dof_value^4) 
+      robin_vals[1] = inputValues[1]; // coeff multiplying difference (dof^4 - dof_value^4)
 
       for(int i = 0; i < 2; i++) {
         std::stringstream ss; ss << name << "[" << i << "]";
         this->registerSacadoParameter(ss.str(), paramLib);
       }
     }
-    else { // inputConditions == "robin" 
+    else { // inputConditions == "robin"
       bc_type = ROBIN;
       robin_vals[0] = inputValues[0]; // dof_value
       robin_vals[1] = inputValues[1]; // coeff multiplying difference (dof - dof_value) -- could be permittivity/distance (distance in mesh units)
@@ -284,8 +282,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
       int numInputs = inputValues.size(); //number of arguments user entered at command line.
 
-      //The following is for backward compatibility: the lateral BC used to have 5 inputs, now really it has 1. 
-      for (int i = numInputs; i < 5; i++) 
+      //The following is for backward compatibility: the lateral BC used to have 5 inputs, now really it has 1.
+      for (int i = numInputs; i < 5; i++)
         robin_vals[i] = 0.0;
 
       //The following should really go to 1 but above backward compatibility line keeps this at length 5.
@@ -807,7 +805,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
          calc_dudn_robin(data, physPointsSide, dofSide, jacobianSide, *cellType, cellDims, side, elem_scale, robin_vals);
          break;
        }
-	   
+
       case STEFAN_BOLTZMANN:
        {
          const ScalarT elem_scale = matScaling[ebIndexVec[iblock]];
@@ -1104,14 +1102,14 @@ calc_closed_form(       Kokkos::DynRankView<ScalarT, PHX::Device>    & qp_data_r
   // How many cell's worth of data is being computed?
   int numCells  = qp_data_returned.dimension( 0);
   // How many QPs per cell?
-  int numPoints = qp_data_returned.dimension( 1); 
+  int numPoints = qp_data_returned.dimension( 1);
   // How many DOFs per node to calculate?
   int numDOFs   = qp_data_returned.dimension( 2);
 
   using DynRankViewMeshScalarT = Kokkos::DynRankView<MeshScalarT, PHX::Device>;
-  DynRankViewMeshScalarT side_normals = 
+  DynRankViewMeshScalarT side_normals =
           Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells, numPoints, cellDims);
-  DynRankViewMeshScalarT normal_lengths = 
+  DynRankViewMeshScalarT normal_lengths =
           Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
@@ -1122,15 +1120,15 @@ calc_closed_form(       Kokkos::DynRankView<ScalarT, PHX::Device>    & qp_data_r
   Intrepid2::FunctionSpaceTools<PHX::Device>::scalarMultiplyDataData(side_normals, normal_lengths,
     side_normals, true);
 
-  for(int cell = 0; cell < numCells; cell++) 
+  for(int cell = 0; cell < numCells; cell++)
   {
-    for(int pt = 0; pt < numPoints; pt++) 
+    for(int pt = 0; pt < numPoints; pt++)
     {
       MeshScalarT x = physPointsSide( cell, pt, 0);
       MeshScalarT y = physPointsSide( cell, pt, 1);
       MeshScalarT z = physPointsSide( cell, pt, 2);
       double      t = workset.current_time;
-      for(int dim = 0; dim < numDOFsSet; dim++) 
+      for(int dim = 0; dim < numDOFsSet; dim++)
       {
         // Your closed form equation here!
         double value = 0.0;
@@ -1414,10 +1412,10 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
  //Robin/Neumann bc for FELIX FO XZ MMS test case
  else if (beta_type == FELIX_XZ_MMS) {
     //parameter values are hard-coded here...
-    MeshScalarT H = 1.0; 
-    double alpha0 = 4.0e-5; 
+    MeshScalarT H = 1.0;
+    double alpha0 = 4.0e-5;
     double beta0 = 1;
-    double rho_g = 910.0*9.8; 
+    double rho_g = 910.0*9.8;
     double s0 = 2.0;
     double A = 1e-4; //CAREFUL! A is hard-coded here, needs to match input file!!
     for(int cell = 0; cell < numCells; cell++) {
@@ -1428,17 +1426,17 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
           MeshScalarT s = s0 - alpha0*x*x;  //s = s0-alpha*x^2
           MeshScalarT phi1 = z - s; //phi1 = z-s
           //phi2 = 4*A*alpha^3*rho^3*g^3*x
-          MeshScalarT phi2 = 4.0*A*pow(alpha0*rho_g, 3)*x;  
+          MeshScalarT phi2 = 4.0*A*pow(alpha0*rho_g, 3)*x;
           //phi3 = 4*x^3*phi1^5*phi2^2
-          MeshScalarT phi3 = 4.0*x*x*x*pow(phi1,5)*phi2*phi2; 
+          MeshScalarT phi3 = 4.0*x*x*x*pow(phi1,5)*phi2*phi2;
           //phi4 = 8*alpha*x^3*phi1^3*phi2 - (2*H*alpha*rho*g)/beta + 3*x*phi2*(phi1^4-H^4)
           MeshScalarT phi4 = 8.0*alpha0*pow(x,3)*pow(phi1,3)*phi2 - 2.0*H*alpha0*rho_g/beta0 + 3.0*x*phi2*(pow(phi1,4) - pow(H,4));
           //phi5 = 56*alpha*x^2*phi1^3*phi2 + 48*alpha^2*x^4*phi1^2*phi2 + 6*phi2*(phi1^4-H^4
-          MeshScalarT phi5 = 56.0*alpha0*x*x*pow(phi1,3)*phi2 + 48.0*alpha0*alpha0*pow(x,4)*phi1*phi1*phi2 
-                           + 6.0*phi2*(pow(phi1,4) - pow(H,4)); 
+          MeshScalarT phi5 = 56.0*alpha0*x*x*pow(phi1,3)*phi2 + 48.0*alpha0*alpha0*pow(x,4)*phi1*phi1*phi2
+                           + 6.0*phi2*(pow(phi1,4) - pow(H,4));
           //mu = 1/2*(A*phi4^2 + A*x*phi1*phi3)^(-1/3) -- this is mu but with A factored out
-           MeshScalarT mu = 0.5*pow(A*phi4*phi4 + A*x*phi1*phi3, -1.0/3.0); 
-           // d(stress)/dn = beta0*u + 4*phi4*mutilde*beta1*nx - 4*phi2*x^2*phi1^3*mutilde*beta2*ny 
+           MeshScalarT mu = 0.5*pow(A*phi4*phi4 + A*x*phi1*phi3, -1.0/3.0);
+           // d(stress)/dn = beta0*u + 4*phi4*mutilde*beta1*nx - 4*phi2*x^2*phi1^3*mutilde*beta2*ny
            //              + (2*H*alpha*rho*g*x - beta0*x^2*phi2*(phi1^4 - H^4)*alpha;
           qp_data_returned(cell, pt, dim) = beta*dof_side(cell,pt,dim)
                                            + 4.0*phi4*mu*alpha*side_normals(cell,pt,0)
@@ -1556,7 +1554,7 @@ calc_dudn_lateral(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
           MeshScalarT y = physPointsSide(cell,pt,1) -y_0;
           MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
           for(int dim = 0; dim < numDOFsSet; dim++)
-            qp_data_returned(cell, pt, dim) *= h; 
+            qp_data_returned(cell, pt, dim) *= h;
         }
       }
     }
@@ -1662,11 +1660,11 @@ template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-//IKT, 5/31/16: I commented out the KOKKOS_UNDER_DEVELOPMENT 
+//IKT, 5/31/16: I commented out the KOKKOS_UNDER_DEVELOPMENT
 //code b/c it does not execute correctly on an OpenMP KokkosNode.
 //This problem shows up for some FELIX cases.
-//It is somewhat of a mystery why this is the case b/c the Jacobian 
-//matrices dumped to matrix market _are_ correct.  This problem needs 
+//It is somewhat of a mystery why this is the case b/c the Jacobian
+//matrices dumped to matrix market _are_ correct.  This problem needs
 //to be looked into.
 //
 //#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -1675,7 +1673,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   //Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   Teuchos::ArrayRCP<ST> fT_nonconstView;
-  if (fT != Teuchos::null) 
+  if (fT != Teuchos::null)
     fT_nonconstView = fT->get1dViewNonConst();
   else
     fT_nonconstView = Teuchos::null;
@@ -1714,7 +1712,7 @@ evaluateFields(typename Traits::EvalData workset)
 
             // Global column
             colT[0] =  nodeID(cell,node_col,eq_col);
-            value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);   
+            value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);
             if (workset.is_adjoint) {
               // Sum Jacobian transposed
               JacT->sumIntoLocalValues(colT[0], rowT(), value());
@@ -1732,7 +1730,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   fT = workset.fT;
   //fT_nonconstView = fT->get1dViewNonConst();
-  if (this->fT != Teuchos::null) 
+  if (this->fT != Teuchos::null)
     fT_nonconstView = fT->get1dViewNonConst();
   else
     fT_nonconstView = Teuchos::null;

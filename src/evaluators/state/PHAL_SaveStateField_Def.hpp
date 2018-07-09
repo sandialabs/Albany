@@ -12,7 +12,7 @@
 
 #include "Albany_StateInfoStruct.hpp"
 
-#if HAVE_STK
+#ifdef ALBANY_STK
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_AbstractSTKFieldContainer.hpp"
 #endif
@@ -201,7 +201,7 @@ saveNodeState(typename Traits::EvalData workset)
   //       must extract entities from the bulk data and use them to access the values
   //       of the stk field.
 
-#if HAVE_STK
+#ifdef ALBANY_STK
   Teuchos::RCP<Albany::AbstractDiscretization> disc = workset.disc;
   TEUCHOS_TEST_FOR_EXCEPTION (disc==Teuchos::null, std::runtime_error, "Error! Discretization is needed to save nodal state.\n");
 

@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "Albany_config.h"
+
 #include <Teuchos_AbstractFactoryStd.hpp>
 #include <Teuchos_TestForException.hpp>
 #include <fstream>

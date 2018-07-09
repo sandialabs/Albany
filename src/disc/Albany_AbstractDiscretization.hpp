@@ -9,7 +9,7 @@
 #ifndef ALBANY_ABSTRACTDISCRETIZATION_HPP
 #define ALBANY_ABSTRACTDISCRETIZATION_HPP
 
-#include "Albany_DiscretizationUtils.hpp"
+#include "Albany_config.h"
 
 #if defined(ALBANY_EPETRA)
 #include "Epetra_Map.h"
@@ -22,6 +22,7 @@
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_NodalDOFManager.hpp"
 #include "Albany_AbstractMeshStruct.hpp"
+#include "Albany_DiscretizationUtils.hpp"
 
 namespace Albany {
 

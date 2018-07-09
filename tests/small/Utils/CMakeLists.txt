@@ -15,7 +15,7 @@ GET_FILENAME_COMPONENT(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 
-IF (ALBANY_HAVE_STK)
+IF (ALBANY_STK)
   IF (ALBANY_PANZER_EXPR_EVAL)
     ADD_TEST(${testName} ${AlbanyT.exe} input_populate_mesh_expr_eval.xml)
   ELSE()

@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: only Epetra is in SG and MP
-
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "PHAL_Utilities.hpp"
@@ -18,7 +16,7 @@ namespace PHAL {
 template<typename EvalT, typename Traits>
 ScatterScalarResponseBase<EvalT, Traits>::
 ScatterScalarResponseBase(const Teuchos::ParameterList& p,
-		    const Teuchos::RCP<Albany::Layouts>& dl)
+        const Teuchos::RCP<Albany::Layouts>& dl)
 {
   setup(p, dl);
 }
@@ -57,10 +55,10 @@ setup(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
   this->addEvaluatedField(*scatter_operation);
 
   //! get and validate parameter list
-  Teuchos::ParameterList* plist = 
+  Teuchos::ParameterList* plist =
     p.get<Teuchos::ParameterList*>("Parameter List");
   if (stand_alone) {
-    Teuchos::RCP<const Teuchos::ParameterList> reflist = 
+    Teuchos::RCP<const Teuchos::ParameterList> reflist =
       this->getValidResponseParameters();
     plist->validateParameters(*reflist,0);
   }
@@ -85,7 +83,7 @@ getValidResponseParameters() const
 template<typename Traits>
 ScatterScalarResponse<PHAL::AlbanyTraits::Residual,Traits>::
 ScatterScalarResponse(const Teuchos::ParameterList& p,
-		const Teuchos::RCP<Albany::Layouts>& dl) 
+    const Teuchos::RCP<Albany::Layouts>& dl)
 {
   this->setup(p,dl);
 }
@@ -113,7 +111,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 template<typename Traits>
 ScatterScalarResponse<PHAL::AlbanyTraits::Tangent, Traits>::
 ScatterScalarResponse(const Teuchos::ParameterList& p,
-		const Teuchos::RCP<Albany::Layouts>& dl) 
+    const Teuchos::RCP<Albany::Layouts>& dl)
 {
   this->setup(p,dl);
 }
@@ -123,7 +121,6 @@ void ScatterScalarResponse<PHAL::AlbanyTraits::Tangent, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response and tangent
-  //Teuchos::RCP<Epetra_MultiVector> gx = workset.dgdx;
   Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
   Teuchos::RCP<Tpetra_MultiVector> gxT = workset.dgdxT;
   Teuchos::RCP<Tpetra_MultiVector> gpT = workset.dgdpT;
@@ -137,12 +134,11 @@ postEvaluate(typename Traits::PostEvalData workset)
     }
     if (gxT != Teuchos::null)
       for (int col=0; col<workset.num_cols_x; col++)
-	gxT->replaceLocalValue(res, col, val.dx(col));
+  gxT->replaceLocalValue(res, col, val.dx(col));
     if (gpT != Teuchos::null)
       for (int col=0; col<workset.num_cols_p; col++)
-	gpT->replaceLocalValue(res, col, val.dx(col+workset.param_offset));
+  gpT->replaceLocalValue(res, col, val.dx(col+workset.param_offset));
   }
 }
 
-}
-
+} // namespace PHAL
