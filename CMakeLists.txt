@@ -10,6 +10,11 @@
 cmake_minimum_required(VERSION 2.7)
 include(CMakeDependentOption)
 
+OPTION (USE_NEW_POLICY_CMP0060 "Flag to turn on new behavior for policy CMP0060" OFF)
+IF (USE_NEW_POLICY_CMP0060)
+  CMAKE_POLICY(SET CMP0060 NEW)
+ENDIF()
+
 if (NOT DEFINED SET_COMPILERS_AUTOMATICALLY)
   set(SET_COMPILERS_AUTOMATICALLY TRUE)
 endif()
