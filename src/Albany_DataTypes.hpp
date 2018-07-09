@@ -10,6 +10,24 @@
 // Get all Albany configuration macros
 #include "Albany_config.h"
 
+#ifdef ALBANY_MPI
+  #define Albany_MPI_Comm MPI_Comm
+  #define Albany_MPI_COMM_WORLD MPI_COMM_WORLD
+  #define Albany_MPI_COMM_NULL MPI_COMM_NULL
+  #if defined(ALBANY_EPETRA)
+    #include "Epetra_MpiComm.h"
+  #endif
+  #include "Teuchos_DefaultMpiComm.hpp"
+#else
+  #define Albany_MPI_Comm int
+  #define Albany_MPI_COMM_WORLD 0  // This is compatible with Dakota
+  #define Albany_MPI_COMM_NULL 99
+  #if defined(ALBANY_EPETRA)
+    #include "Epetra_SerialComm.h"
+  #endif
+  #include "Teuchos_DefaultSerialComm.hpp"
+#endif
+
 //! Data Type Definitions that span the code.
 
 // Include all of our AD types

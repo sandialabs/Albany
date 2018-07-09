@@ -15,25 +15,6 @@
 
 #include <sstream>
 
-#ifdef ALBANY_MPI
-#define Albany_MPI_Comm MPI_Comm
-#define Albany_MPI_COMM_WORLD MPI_COMM_WORLD
-#define Albany_MPI_COMM_NULL MPI_COMM_NULL
-// IKT, FIXME: remove || defined(ALBANY_ATO) below
-#if defined(ALBANY_EPETRA) || defined(ALBANY_ATO)
-#include "Epetra_MpiComm.h"
-#endif
-#include "Teuchos_DefaultMpiComm.hpp"
-#else
-#define Albany_MPI_Comm int
-#define Albany_MPI_COMM_WORLD 0  // This is compatible with Dakota
-#define Albany_MPI_COMM_NULL 99
-// IKT, FIXME: remove || defined(ALBANY_ATO) below
-#if defined(ALBANY_EPETRA) || defined(ALBANY_ATO)
-#include "Epetra_SerialComm.h"
-#endif
-#include "Teuchos_DefaultSerialComm.hpp"
-#endif
 #include "Albany_DataTypes.hpp"
 #include "Teuchos_RCP.hpp"
 
