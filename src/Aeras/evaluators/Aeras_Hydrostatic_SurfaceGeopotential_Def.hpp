@@ -26,7 +26,7 @@ Hydrostatic_SurfaceGeopotential<EvalT, Traits>::
 Hydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   PhiSurf       (p.get<std::string> ("SurfaceGeopotential"), dl->node_scalar),
-  coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->node_3vector), 
+  coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->node_3vector),
   numNodes ( dl->node_scalar          ->dimension(1)),
   numParam(0)
 
@@ -34,25 +34,25 @@ Hydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
 
   // Teuchos::ParameterList* xzhydrostatic_list = p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
   Teuchos::ParameterList* xzhydrostatic_list =
-	  p.isParameter("Hydrostatic Problem") ?
-	  p.get<Teuchos::ParameterList*>("Hydrostatic Problem"):
-	  p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
+    p.isParameter("Hydrostatic Problem") ?
+    p.get<Teuchos::ParameterList*>("Hydrostatic Problem"):
+    p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
 
 
   //std::string topoTypeString = surfGeopList->get<std::string>("Topography Type", "None");
-  
+
   std::string topoTypeString = xzhydrostatic_list->get<std::string> ("Topography Type", "None");
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-  
+
   const bool invalidString = ( (topoTypeString != "None") && (topoTypeString != "Mountain1") && (topoTypeString != "SphereMountain1")
-		                     && (topoTypeString != "AspBaroclinic") );
-  
+                         && (topoTypeString != "AspBaroclinic") );
+
   TEUCHOS_TEST_FOR_EXCEPTION( invalidString,
                              std::logic_error,
                              "Unknown topography type string of " << topoTypeString
                              << " encountered. " << std::endl);
-  
+
   if (topoTypeString == "None"){
     topoType = NONE;
   }
@@ -61,11 +61,11 @@ Hydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
     topoType = SPHERE_MOUNTAIN1;
     numParam = 3;
     Teuchos::Array<double> defaultData(numParam);
-  
+
     defaultData[0] = 2000.0; // height
     defaultData[1] = 2.356194490192345; // width = 3 * pi / 4 (radians)
     defaultData[2] = 0.196349540849362; // halfWidth = pi / 16.0 (radians)
-  
+
     topoData = xzhydrostatic_list->get("Topography Data", defaultData);
     cntrLat = 0.0;
     cntrLon = 4.712388980384690; // 3 * pi / 2
@@ -73,11 +73,11 @@ Hydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
     mtnHeight = topoData[0];
     mtnWidth = topoData[1];
     mtnHalfWidth = topoData[2];
-	
+
     PI = 3.141592653589793;
 
     G = Aeras::ShallowWaterConstants::self().gravity;
-    
+
     TEUCHOS_TEST_FOR_EXCEPTION((topoData.size() != numParam),
                                std::logic_error,
                                "Error! Invalid specification of params for SphereMountain1: incorrect length of " <<
@@ -95,10 +95,10 @@ Hydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
     u0 = 35.0;
     pi = 3.141592653589793;
   }
-  
+
   std::cout << "The topography type is " << topoTypeString << "\n";
 
-  
+
   this->addEvaluatedField(PhiSurf);
   this->addDependentField(coordVec);
 
@@ -123,19 +123,19 @@ KOKKOS_INLINE_FUNCTION
 void Hydrostatic_SurfaceGeopotential<EvalT, Traits>::
 operator() (const Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Tag& tag, const int& cell) const{
   for ( int node = 0; node < numNodes; ++node ) {
-    const double x = coordVec(cell,node,0);
-    const double y = coordVec(cell,node,1);
-    const double z = coordVec(cell,node,2);
-        
+    const double x = Albany::ADValue(coordVec(cell,node,0));
+    const double y = Albany::ADValue(coordVec(cell,node,1));
+    const double z = Albany::ADValue(coordVec(cell,node,2));
+
     const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
     const double lambda = std::atan2( y, x );
 
-    const double radialDist = std::acos( std::sin( cntrLat ) * std::sin( theta ) + 
+    const double radialDist = std::acos( std::sin( cntrLat ) * std::sin( theta ) +
                               std::cos( cntrLat ) * std::cos( theta ) * std::cos( cntrLon - lambda ) );
-            
+
     const double zsurf = radialDist < mtnWidth ? 0.5 * mtnHeight * ( 1.0 + std::cos ( PI * radialDist / mtnWidth ) ) *
                          std::cos( PI * radialDist / mtnHalfWidth ) * std::cos( PI * radialDist / mtnHalfWidth ) : 0.0;
-      
+
     PhiSurf(cell, node) = G * zsurf;
   }
 }
@@ -145,16 +145,16 @@ KOKKOS_INLINE_FUNCTION
 void Hydrostatic_SurfaceGeopotential<EvalT, Traits>::
 operator() (const Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag& tag, const int& cell) const{
   for ( int node = 0; node < numNodes; ++node ) {
-    const double x = coordVec(cell,node,0);
-    const double y = coordVec(cell,node,1);
-    const double z = coordVec(cell,node,2);
+    const double x = Albany::ADValue(coordVec(cell,node,0));
+    const double y = Albany::ADValue(coordVec(cell,node,1));
+    const double z = Albany::ADValue(coordVec(cell,node,2));
 
     const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
 
     const double costmp = u0*std::pow( std::cos( (etas-eta0)*pi*0.5), 1.5);
 
     PhiSurf(cell, node) = ((  -2.*std::pow(std::sin(theta),6.0)*( std::pow(std::cos(theta),2.0) + 1./3.) + 10./63. )*costmp
-                        + ( 8./5.*std::pow( std::cos(theta), 3. ) * ( std::pow(std::sin(theta),2.0) + 2./3. ) - pi/4.)*a*omega)*costmp; 
+                        + ( 8./5.*std::pow( std::cos(theta), 3. ) * ( std::pow(std::sin(theta),2.0) + 2./3. ) - pi/4.)*a*omega)*costmp;
   }
 }
 #endif
@@ -170,16 +170,16 @@ evaluateFields(typename Traits::EvalData workset)
     /*
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
-      
+
         //How to get x coordinate:
         //workset.wsCoords[cell][node][0]
         PhiSurf(cell,node) = 0.0;
-      
+
         //std::cout << "topotype = none" <<std::endl;
-        
+
         //std::cout << "cell="<<cell<<", node="<<node<<", coord x="<<
         //workset.wsCoords[cell][node][0] << std::endl;
-      
+
       }
     }
     */
@@ -191,17 +191,17 @@ evaluateFields(typename Traits::EvalData workset)
         const double x = workset.wsCoords[cell][node][0];
         const double y = workset.wsCoords[cell][node][1];
         const double z = workset.wsCoords[cell][node][2];
-            
+
         const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
         const double lambda = std::atan2( y, x );
-            
 
-        const double radialDist = std::acos( std::sin( cntrLat ) * std::sin( theta ) + 
+
+        const double radialDist = std::acos( std::sin( cntrLat ) * std::sin( theta ) +
                                   std::cos( cntrLat ) * std::cos( theta ) * std::cos( cntrLon - lambda ) );
-                
+
         const double zsurf = radialDist < mtnWidth ? 0.5 * mtnHeight * ( 1.0 + std::cos ( PI * radialDist / mtnWidth ) ) *
                              std::cos( PI * radialDist / mtnHalfWidth ) * std::cos( PI * radialDist / mtnHalfWidth ) : 0.0;
-          
+
         PhiSurf(cell, node) = G * zsurf;
       }
     }
@@ -214,7 +214,7 @@ evaluateFields(typename Traits::EvalData workset)
     a_omega    = a*omega
 
     surface_geopotential = ( (   -2.d0*(SIN(rot_lat))**6 * ( (COS(rot_lat))**2 + 1.d0/3.d0  ) + 10.d0/63.d0)*COS_tmp   &
-	                 + (8.d0/5.d0*(COS(rot_lat))**3 * ((SIN(rot_lat))**2 + 2.d0/3.d0) - pi/4.d0)*a_omega)*COS_tmp
+                   + (8.d0/5.d0*(COS(rot_lat))**3 * ((SIN(rot_lat))**2 + 2.d0/3.d0) - pi/4.d0)*a_omega)*COS_tmp
     */
 
     for ( int cell = 0; cell < workset.numCells; ++cell ) {
@@ -228,7 +228,7 @@ evaluateFields(typename Traits::EvalData workset)
         const double costmp = u0*std::pow( std::cos( (etas-eta0)*pi*0.5), 1.5);
 
         PhiSurf(cell, node) = ((  -2.*std::pow(std::sin(theta),6.0)*( std::pow(std::cos(theta),2.0) + 1./3.) + 10./63. )*costmp
-                            + ( 8./5.*std::pow( std::cos(theta), 3. ) * ( std::pow(std::sin(theta),2.0) + 2./3. ) - pi/4.)*a*omega)*costmp; 
+                            + ( 8./5.*std::pow( std::cos(theta), 3. ) * ( std::pow(std::sin(theta),2.0) + 2./3. ) - pi/4.)*a*omega)*costmp;
       }
     }
   }

@@ -73,7 +73,7 @@ public:
   //! f_incr += f_accum.
   template<typename ad_type>
   void addTo(typename Tensor<ad_type, rank>::type& f_incr) const;
-  //! f_incr += f_accum. 
+  //! f_incr += f_accum.
   template<typename ad_type>
   void addTo(typename Tensor<ad_type, rank>::type& f_incr,
              const std::size_t cell, const std::size_t qp) const;
@@ -84,10 +84,21 @@ private:
 };
 
 //! Transform \c w_grad_bf using F[n-1,0].
+template<typename MeshScalarType>
 void transformWeightedGradientBF(
   const Field<2>& F, const RealType& det_F,
-  const PHX::MDField<RealType const, Cell, Node, QuadPoint, Dim>& w_grad_bf,
-  const int cell, const int pt, const int node, RealType w[3]);
+  const PHX::MDField<MeshScalarType const, Cell, Node, QuadPoint, Dim>& w_grad_bf,
+  const int cell, const int pt, const int node, MeshScalarType w[3])
+{
+  const int nd = w_grad_bf.dimension(3);
+  for (int k = 0; k < nd; ++k) {
+    w[k] = 0;
+    for (int i = 0; i < nd; ++i)
+      w[k] += (w_grad_bf(cell, node, pt, i) * F()(cell, pt, i, k));
+    w[k] /= det_F;
+  }
+}
+
 
 } // namespace rc
 } // namespace AAdapt

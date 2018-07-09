@@ -34,41 +34,41 @@ XZHydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
 
   // Teuchos::ParameterList* xzhydrostatic_list = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
   Teuchos::ParameterList* xzhydrostatic_list =
-	  p.isParameter("XZHydrostatic Problem") ?
-	  p.get<Teuchos::ParameterList*>("XZHydrostatic Problem"):
-	  p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
+    p.isParameter("XZHydrostatic Problem") ?
+    p.get<Teuchos::ParameterList*>("XZHydrostatic Problem"):
+    p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
 
 
   //std::string topoTypeString = surfGeopList->get<std::string>("Topography Type", "None");
-  
+
   std::string topoTypeString = xzhydrostatic_list->get<std::string> ("Topography Type", "None");
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-  
+
   const bool invalidString = ( (topoTypeString != "None") && (topoTypeString != "Mountain1") && (topoTypeString != "SphereMountain1")
-		                     && (topoTypeString != "AspBaroclinic") );
-  
+                         && (topoTypeString != "AspBaroclinic") );
+
   TEUCHOS_TEST_FOR_EXCEPTION( invalidString,
                              std::logic_error,
                              "Unknown topography type string of " << topoTypeString
                              << " encountered. " << std::endl);
-  
+
   if (topoTypeString == "None"){
     topoType = NONE;
   }
 
   else if (topoTypeString == "Mountain1") {
-    
+
     topoType = MOUNTAIN1;
-    
+
     numParam = 3;
-    
+
     Teuchos::Array<double> defaultData(numParam);
-    
+
     defaultData[0] = 150.0;//center
     defaultData[1] = 50.0;//width
     defaultData[2] = 1000.0;//height
-    
+
     topoData = xzhydrostatic_list->get("Topography Data", defaultData);
 
     //these will eventually be grabbed from a constants class
@@ -78,7 +78,7 @@ XZHydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
     center = topoData[0];
     width = topoData[1];
     height = topoData[2];
-    
+
     TEUCHOS_TEST_FOR_EXCEPTION((topoData.size() != numParam),
                                std::logic_error,
                                "Error! Invalid specification of params for Mountain1: incorrect length of " <<
@@ -89,7 +89,7 @@ XZHydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
 
   std::cout << "The topography type is " << topoTypeString << "\n";
 
-  
+
   this->addEvaluatedField(PhiSurf);
   this->addDependentField(coordVec);
 
@@ -114,8 +114,8 @@ KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_SurfaceGeopotential<EvalT, Traits>::
 operator() (const XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag& tag, const int& cell) const{
   for (int node=0; node < numNodes; ++node) {
-    double xcoord = coordVec(cell,node,0);
-    if (std::abs(xcoord - center) <= (width/2.)) {
+    const MeshScalarT xcoord = coordVec(cell,node,0);
+    if (std::abs(Albany::ADValue(xcoord) - center) <= (width/2.)) {
       PhiSurf(cell,node) =
              (std::cos( (xcoord - center)*local_pi*2./width ) + 1.)
              *height/2. ;//*local_gravity;
@@ -138,16 +138,16 @@ evaluateFields(typename Traits::EvalData workset)
     /*
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
-      
+
         //How to get x coordinate:
         //workset.wsCoords[cell][node][0]
         PhiSurf(cell,node) = 0.0;
-      
+
         //std::cout << "topotype = none" <<std::endl;
-        
+
         //std::cout << "cell="<<cell<<", node="<<node<<", coord x="<<
         //workset.wsCoords[cell][node][0] << std::endl;
-      
+
       }
     }
     */
@@ -156,10 +156,10 @@ evaluateFields(typename Traits::EvalData workset)
   else if (topoType == MOUNTAIN1) {
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
-        
+
         //How to get x coordinate:
         //workset.wsCoords[cell][node][0]
-        
+
         double xcoord = workset.wsCoords[cell][node][0];
         if (std::abs(xcoord - center) <= (width/2.)) {
           PhiSurf(cell,node) =
@@ -168,12 +168,12 @@ evaluateFields(typename Traits::EvalData workset)
         }
         else
           PhiSurf(cell,node) = 0.0;
-        
+
         //std::cout << "topotype = mountain1"<<std::endl;
         //std::cout << "center width height"<<center<<" "<<width<<" "<<height<<std::endl;
         //std::cout << "cell="<<cell<<", node="<<node<<", coord x="<<
         //xcoord <<" and f_s="<<PhiSurf(cell,node) << std::endl;
-        
+
       }
     }
   }

@@ -17,8 +17,8 @@
 template<typename EvalT, typename Traits>
 ATO::TensorPNormResponse<EvalT, Traits>::
 TensorPNormResponse(Teuchos::ParameterList& p,
-		    const Teuchos::RCP<Albany::Layouts>& dl,
-		    const Albany::MeshSpecsStruct* meshSpecs) :
+        const Teuchos::RCP<Albany::Layouts>& dl,
+        const Albany::MeshSpecsStruct* meshSpecs) :
   qp_weights ("Weights", dl->qp_scalar),
   BF         ("BF",      dl->node_qp_scalar)
 {
@@ -206,7 +206,7 @@ TensorPNormResponse(Teuchos::ParameterList& p,
 
   this->pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
   this->pStateMgr->registerStateVariable("Effective Stress",
-                                         dl->cell_scalar, dl->dummy, 
+                                         dl->cell_scalar, dl->dummy,
                                          "all", "scalar", 0.0, false, true);
 
   this->addDependentField(qp_weights);
@@ -218,7 +218,7 @@ TensorPNormResponse(Teuchos::ParameterList& p,
   objective_tag =
     Teuchos::rcp(new PHX::Tag<ScalarT>("Tensor PNorm", dl->dummy));
   this->addEvaluatedField(*objective_tag);
-  
+
   std::string responseID = "ATO Tensor PNorm";
   this->setName(responseID);
 
@@ -227,9 +227,9 @@ TensorPNormResponse(Teuchos::ParameterList& p,
 
   int responseSize = 1;
   int worksetSize = dl->qp_scalar->dimension(0);
-  Teuchos::RCP<PHX::DataLayout> 
+  Teuchos::RCP<PHX::DataLayout>
     global_response_layout = Teuchos::rcp(new PHX::MDALayout<Dim>(responseSize));
-  Teuchos::RCP<PHX::DataLayout> 
+  Teuchos::RCP<PHX::DataLayout>
     local_response_layout  = Teuchos::rcp(new PHX::MDALayout<Cell,Dim>(worksetSize, responseSize));
 
   std::string local_response_name  = FName + " Local Response";
@@ -262,7 +262,7 @@ template<typename EvalT, typename Traits>
 void ATO::TensorPNormResponse<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
+  for (typename PHX::MDField<ScalarT>::size_type i=0;
        i<this->global_response_eval.size(); i++)
     this->global_response_eval[i] = 0.0;
 
@@ -277,7 +277,7 @@ void ATO::TensorPNormResponse<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
+  for (typename PHX::MDField<ScalarT>::size_type i=0;
        i<this->local_response_eval.size(); i++)
     this->local_response_eval[i] = 0.0;
 
@@ -314,7 +314,7 @@ evaluateFields(typename Traits::EvalData workset)
   if( size == 4 && numDims == 2 ){
     for(int cell=0; cell<workset.numCells; cell++){
       ScalarT responseAve(0.0);
-      RealType el_weight = 0.0;
+      MeshScalarT el_weight = 0.0;
       for(int qp=0; qp<numQPs; qp++){
         ScalarT topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
@@ -335,7 +335,7 @@ evaluateFields(typename Traits::EvalData workset)
   if( size == 4 && numDims == 3 ){
     for(int cell=0; cell<workset.numCells; cell++){
       ScalarT responseAve(0.0);
-      RealType el_weight = 0.0;
+      MeshScalarT el_weight = 0.0;
       for(int qp=0; qp<numQPs; qp++){
         ScalarT topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
@@ -522,7 +522,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   if(overlapped_dgdpT != Teuchos::null) overlapped_dgdpT->scale(scale);
 #ifndef ALBANY_EPETRA
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-  *out << "\n WARNING: This run is using Distributed Parameters (ATO::TensorPNormResponse) " 
-       << "with Epetra turned OFF.  It is not yet clear if this works correctly, so use at your own risk!\n"; 
+  *out << "\n WARNING: This run is using Distributed Parameters (ATO::TensorPNormResponse) "
+       << "with Epetra turned OFF.  It is not yet clear if this works correctly, so use at your own risk!\n";
 #endif
 }
