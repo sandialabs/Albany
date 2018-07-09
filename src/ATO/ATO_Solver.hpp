@@ -20,7 +20,6 @@
 #include "Albany_ModelEvaluator.hpp"
 #include "Albany_StateManager.hpp"
 #include "Albany_Utils.hpp"
-#include "Piro_Epetra_StokhosNOXObserver.hpp"
 #include "ATO_Types.hpp"
 #include "ATO_Aggregator.hpp"
 #include "ATO_Optimizer.hpp"
@@ -32,10 +31,10 @@ namespace ATO {
   class OptimizationProblem;
   class Topology;
 
-  typedef struct GlobalPoint{ 
+  typedef struct GlobalPoint{
     GlobalPoint();
-    int    gid; 
-    double coords[3]; 
+    int    gid;
+    double coords[3];
   } GlobalPoint;
   bool operator< (GlobalPoint const & a, GlobalPoint const & b);
 
@@ -47,24 +46,24 @@ namespace ATO {
       void buildOperator(
              Teuchos::RCP<Albany::Application> app,
              Teuchos::RCP<const Tpetra_Map>    overlapNodeMapT,
-             Teuchos::RCP<const Tpetra_Map>    localNodeMapT, 
+             Teuchos::RCP<const Tpetra_Map>    localNodeMapT,
              Teuchos::RCP<Tpetra_Import>       importerT,
-             Teuchos::RCP<Tpetra_Export>       exporterT);  
+             Teuchos::RCP<Tpetra_Export>       exporterT);
       Teuchos::RCP<Tpetra_CrsMatrix> FilterOperatorT(){return filterOperatorT;}
-      //IKT, FIXME: remove the following function once Mark Hoemmen 
+      //IKT, FIXME: remove the following function once Mark Hoemmen
       //fixes apply method with TRANS mode in Tpetra::CrsMatrix.
       Teuchos::RCP<Tpetra_CrsMatrix> FilterOperatorTransposeT(){return filterOperatorTransposeT;}
       int getNumIterations(){return iterations;}
     protected:
       void importNeighbors(
              std::map< GlobalPoint, std::set<GlobalPoint> >& neighbors,
-             Teuchos::RCP<Tpetra_Import>       importerT, 
+             Teuchos::RCP<Tpetra_Import>       importerT,
              const Tpetra_Map& localNodeMapT,
-             Teuchos::RCP<Tpetra_Export>       exporterT, 
+             Teuchos::RCP<Tpetra_Export>       exporterT,
              const Tpetra_Map& overlapNodeMapT);
 
       Teuchos::RCP<Tpetra_CrsMatrix> filterOperatorT;
-      //IKT, FIXME: remove the following creation of filterOperatorTransposeT 
+      //IKT, FIXME: remove the following creation of filterOperatorTransposeT
       //once Mark Hoemmen fixes apply method with TRANS mode in Tpetra::CrsMatrix.
       Teuchos::RCP<Tpetra_CrsMatrix> filterOperatorTransposeT;
       int iterations;
@@ -78,9 +77,9 @@ namespace ATO {
 
     virtual void ComputeMeasure(std::string measureType, double& measure)=0;
 
-    virtual void ComputeMeasure(std::string measureType, const double* p, 
+    virtual void ComputeMeasure(std::string measureType, const double* p,
                                 double& measure, double* dmdp, std::string integrationMethod)=0;
-    virtual void ComputeMeasure(std::string measureType, const double* p, 
+    virtual void ComputeMeasure(std::string measureType, const double* p,
                                 double& measure, std::string integrationMethod);
 
     virtual void ComputeMeasure(std::string measureType, const double* p, double& measure);
@@ -99,10 +98,10 @@ namespace ATO {
 
     virtual void ComputeObjective(double* p, double& g, double* dgdp=NULL)=0;
     virtual void ComputeObjective(const double* p, double& g, double* dgdp=NULL)=0;
-    virtual void updateTpetraResponseMaps() = 0; 
+    virtual void updateTpetraResponseMaps() = 0;
     virtual void ComputeVolume(double* p, const double* dfdp, double& v, double threshhold, double minP)=0;
 
-   
+
     /* end legacy */
   };
 
@@ -133,13 +132,13 @@ namespace ATO {
 
     void ComputeObjective(double* p, double& g, double* dgdp=NULL);
     void ComputeObjective(const double* p, double& g, double* dgdp=NULL);
-    void updateTpetraResponseMaps(); 
+    void updateTpetraResponseMaps();
     void writeCurrentDesign();
     void InitializeOptDofs(double* p);
     void getOptDofsLowerBound( Teuchos::Array<double>& b );
     void getOptDofsUpperBound( Teuchos::Array<double>& b );
     void ComputeVolume(double* p, const double* dfdp, double& v, double threshhold, double minP);
-    void ComputeMeasure(std::string measureType, const double* p, 
+    void ComputeMeasure(std::string measureType, const double* p,
                         double& measure, double* dmdp, std::string integrationMethod);
     void ComputeMeasure(std::string measureType, double& measure);
     int GetNumOptDofs();
@@ -186,11 +185,11 @@ namespace ATO {
     Teuchos::RCP<SpatialFilter> _derivativeFilter;
 
 
-    typedef struct HomogenizationSet { 
+    typedef struct HomogenizationSet {
       std::string name;
       std::string type;
       int responseIndex;
-      int homogDim; 
+      int homogDim;
       std::vector<Teuchos::RCP<Teuchos::ParameterList> > homogenizationAppParams;
       std::vector<SolverSubSolver> homogenizationProblems;
     } HomogenizationSet;
@@ -202,7 +201,7 @@ namespace ATO {
 
     OptimizationProblem* _atoProblem;
 
-    Teuchos::RCP<const Teuchos_Comm> _solverComm; 
+    Teuchos::RCP<const Teuchos_Comm> _solverComm;
     Teuchos::RCP<Teuchos::ParameterList> _mainAppParams;
 
     Teuchos::RCP<const Tpetra_Map> overlapNodeMapT;
@@ -239,19 +238,19 @@ namespace ATO {
 
     Teuchos::RCP<const Epetra_Map> get_g_map(int j) const;
 
-    Teuchos::RCP<Teuchos::ParameterList> 
+    Teuchos::RCP<Teuchos::ParameterList>
       createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const;
 
-    SolverSubSolver CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appParams, 
+    SolverSubSolver CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appParams,
                                     const Teuchos::RCP<const Teuchos_Comm>& comm,
-				    const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
+            const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
 
-    Teuchos::RCP<Teuchos::ParameterList> 
-      createHomogenizationInputFile( 
-            const Teuchos::RCP<Teuchos::ParameterList>& appParams, 
-            const Teuchos::ParameterList& homog_subList, 
-            int homogProblemIndex, 
-            int homogSubIndex, 
+    Teuchos::RCP<Teuchos::ParameterList>
+      createHomogenizationInputFile(
+            const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+            const Teuchos::ParameterList& homog_subList,
+            int homogProblemIndex,
+            int homogSubIndex,
             int homogDim) const;
 
     SolverSubSolverData CreateSubSolverData(const ATO::SolverSubSolver& sub) const;
