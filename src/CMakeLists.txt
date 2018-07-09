@@ -4,6 +4,12 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
+# Configure the file containing Albany configuration macros,
+# and add its folder to the include directories
+CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/Albany_config.h.in
+                ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h)
+INCLUDE_DIRECTORIES (${CMAKE_CURRENT_BINARY_DIR})
+
 
 INCLUDE(CheckCXXSourceCompiles)
 set(CMAKE_REQUIRED_INCLUDES ${Trilinos_INCLUDE_DIRS})
@@ -50,6 +56,7 @@ IF(ALBANY_EPETRA)
 ENDIF()
 
 SET(HEADERS
+  Albany_config.h
   Albany_Application.hpp
   Albany_DataTypes.hpp
   Albany_DistributedParameterLibrary.hpp

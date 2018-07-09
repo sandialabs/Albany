@@ -7,8 +7,8 @@
 #ifndef PHAL_DATATYPES
 #define PHAL_DATATYPES
 
-//TODO: this looks suspicious and temporary. remove it soon.
-#define AMB_KOKKOS
+// Get all Albany configuration macros
+#include "Albany_config.h"
 
 //! Data Type Definitions that span the code.
 
