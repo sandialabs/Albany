@@ -8,7 +8,7 @@
 #include "Albany_PUMIMeshStruct.hpp"
 
 #include <gmi_mesh.h>
-#ifdef SCOREC_SIMMODEL
+#ifdef ALBANY_SCOREC_SIMMODEL
 #include <gmi_sim.h>
 #include <SimUtil.h>
 #endif
@@ -72,7 +72,7 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
   if(params->isParameter("Mesh Model Input File Name"))
     model_file = params->get<std::string>("Mesh Model Input File Name");
 
-#ifdef SCOREC_SIMMODEL
+#ifdef ALBANY_SCOREC_SIMMODEL
   if (params->isParameter("Acis Model Input File Name"))
     model_file = params->get<std::string>("Parasolid Model Input File Name");
 

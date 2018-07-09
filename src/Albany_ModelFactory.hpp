@@ -9,6 +9,8 @@
 #ifndef ALBANY_MODELFACTORY_HPP
 #define ALBANY_MODELFACTORY_HPP
 
+#include "Albany_DataTypes.hpp"
+
 #if defined(ALBANY_EPETRA)
 #include "EpetraExt_ModelEvaluator.h"
 #endif
@@ -16,8 +18,6 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
-
-#include "Albany_DataTypes.hpp"
 
 namespace Albany {
 

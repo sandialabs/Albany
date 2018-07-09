@@ -93,7 +93,7 @@ multiplyIntoImpl (
   loopf(i0, 2) loopf(i1, 3) w.f_incr_mt(i0, i1) = f_incr(cell, qp, i0, i1);
   loopf(i0, 2) loopf(i1, 3) w.f_accum_mt(i0, i1) = f_(cell, qp, i0, i1);
   minitensor::Tensor<ad_type> C = minitensor::dot(w.f_incr_mt, w.f_accum_mt);
-  loopf(i0, 2) loopf(i1, 3) f_incr(cell, qp, i0, i1) = C(i0, i1);  
+  loopf(i0, 2) loopf(i1, 3) f_incr(cell, qp, i0, i1) = C(i0, i1);
 }
 } // namespace
 
@@ -108,20 +108,6 @@ template<> template<typename ad_type>
 void Field<2>::multiplyInto (typename Tensor<ad_type, 2>::type& f_incr) const {
   MultiplyWork<ad_type> w(f_.dimension(2));
   loopf(cell, 0) loopf(qp, 1) multiplyIntoImpl(f_, f_incr, cell, qp, w);
-}
-
-void transformWeightedGradientBF (
-  const Field<2>& F, const RealType& F_det,
-  const PHX::MDField<RealType const, Cell, Node, QuadPoint, Dim>& w_grad_bf,
-  const int cell, const int pt, const int node, RealType w[3])
-{
-  const int nd = w_grad_bf.dimension(3);
-  for (int k = 0; k < nd; ++k) {
-    w[k] = 0;
-    for (int i = 0; i < nd; ++i)
-      w[k] += (w_grad_bf(cell, node, pt, i) * F()(cell, pt, i, k));
-    w[k] /= F_det;
-  }
 }
 
 #undef loopf

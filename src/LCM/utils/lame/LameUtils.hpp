@@ -9,6 +9,8 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
+#include "Albany_config.h"
+
 // LAME material model base class
 #ifdef ALBANY_LAME
 #include <models/Material.h>
@@ -44,25 +46,25 @@ namespace LameUtils {
 
       const Teuchos::ParameterEntry entry = lameMaterialParameters.entry(it);
       if(entry.isType<int>()){
-	std::vector<int> propertyVector;
-	propertyVector.push_back(Teuchos::getValue<int>(entry));
-	matProps.insert(name, propertyVector);
+  std::vector<int> propertyVector;
+  propertyVector.push_back(Teuchos::getValue<int>(entry));
+  matProps.insert(name, propertyVector);
       }
       else if(entry.isType<double>()){
-	std::vector<double> propertyVector;
-	propertyVector.push_back(Teuchos::getValue<double>(entry));
-	matProps.insert(name, propertyVector);
+  std::vector<double> propertyVector;
+  propertyVector.push_back(Teuchos::getValue<double>(entry));
+  matProps.insert(name, propertyVector);
       }
       else if(entry.isType<std::string>()){
-	std::vector<std::string> propertyVector;
-	propertyVector.push_back(Teuchos::getValue<std::string>(entry));
-	matProps.insert(name, propertyVector);
+  std::vector<std::string> propertyVector;
+  propertyVector.push_back(Teuchos::getValue<std::string>(entry));
+  matProps.insert(name, propertyVector);
       }
       else if(entry.isType<bool>()){
-	// Flag for reading from xml materials database is a bool -- not sent to Lame
+  // Flag for reading from xml materials database is a bool -- not sent to Lame
       }
       else{
-	TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " parameters for LAME material models must be of type double, int, or string.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " parameters for LAME material models must be of type double, int, or string.\n");
       }
     }
   }
@@ -70,14 +72,14 @@ namespace LameUtils {
   //! Instantiate a lame::MaterialModel given the model name and a set of material parameters.
 //  Teuchos::RCP<LameMaterial> constructLameMaterialModel(const std::string& lameMaterialModelName,
   Teuchos::RCP<LameMaterial> constructLameMaterialModel(const std::string lameMaterialModelName,
- 							const Teuchos::ParameterList& lameMaterialParameters);
+              const Teuchos::ParameterList& lameMaterialParameters);
 
 #ifdef ALBANY_LAMENT
   //! Instantiate a lament::MaterialModel<ADType> given the model name and a set of material parameters.
   template <typename ScalarT>
   inline
   Teuchos::RCP<lament::Material<ScalarT>> constructLamentMaterialModel(const std::string& lameMaterialModelName,
-									const Teuchos::ParameterList& lameMaterialParameters){
+                  const Teuchos::ParameterList& lameMaterialParameters){
 
     // Strings should be all upper case with spaces replaced with underscores
     std::string materialModelName = lameMaterialModelName;
@@ -96,7 +98,7 @@ namespace LameUtils {
       materialModel = Teuchos::rcp(new lament::Neohookean<ScalarT>(props));
     else{
       if(materialModel.is_null())
-	TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " unsupported LAMENT material model: " + lameMaterialModelName + " (" + materialModelName + ")\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, " unsupported LAMENT material model: " + lameMaterialModelName + " (" + materialModelName + ")\n");
     }
 
     return materialModel;

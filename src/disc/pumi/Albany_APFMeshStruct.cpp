@@ -19,7 +19,7 @@
 #if defined(ALBANY_SCOREC) || defined(ALBANY_AMP)
 #include <PCU.h>
 #endif
-#if (defined(ALBANY_SCOREC) && defined(SCOREC_SIMMODEL)) || defined(ALBANY_AMP)
+#if (defined(ALBANY_SCOREC) && defined(ALBANY_SCOREC_SIMMODEL)) || defined(ALBANY_AMP)
 #include <SimUtil.h>
 #include <gmi_sim.h>
 #endif
@@ -553,7 +553,7 @@ Albany::APFMeshStruct::initialize_libraries(int* pargc, char*** pargv)
 #if defined(ALBANY_SCOREC) || defined(ALBANY_AMP)
   PCU_Comm_Init();
 #endif
-#if (defined(ALBANY_SCOREC) && defined(SCOREC_SIMMODEL)) || defined(ALBANY_AMP)
+#if (defined(ALBANY_SCOREC) && defined(ALBANY_SCOREC_SIMMODEL)) || defined(ALBANY_AMP)
   Sim_readLicenseFile(0);
   gmi_sim_start();
   gmi_register_sim();
@@ -578,7 +578,7 @@ Albany::APFMeshStruct::finalize_libraries()
   MS_exit();
   SimPartitionedMesh_stop();
 #endif
-#if (defined(ALBANY_SCOREC) && defined(SCOREC_SIMMODEL)) || defined(ALBANY_AMP)
+#if (defined(ALBANY_SCOREC) && defined(ALBANY_SCOREC_SIMMODEL)) || defined(ALBANY_AMP)
   gmi_sim_stop();
   Sim_unregisterAllKeys();
 #endif

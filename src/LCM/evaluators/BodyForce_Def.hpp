@@ -132,7 +132,7 @@ evaluateFields(typename Traits::EvalData workset)
           f_dir[dim] -= this->rotation_axis_[dim] * dot;
           len2 += f_dir[dim] * f_dir[dim];
         }
-        double len_reciprocal = 1. / sqrt(len2);
+        MeshScalarT len_reciprocal = 1. / sqrt(len2);
         for (std::size_t dim = 0; dim < num_dim_; dim++) {
 
           f_dir[dim] *= len_reciprocal;

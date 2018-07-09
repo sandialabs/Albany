@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: only Epetra is SG and MP 
-
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
@@ -95,29 +93,29 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   bool fillResid = (fT != Teuchos::null);
-  Teuchos::ArrayRCP<ST> fT_nonconstView;                                         
+  Teuchos::ArrayRCP<ST> fT_nonconstView;
   if (fillResid) fT_nonconstView = fT->get1dViewNonConst();
 
   Teuchos::Array<LO> index(1);
-  Teuchos::Array<ST> value(1); 
-  size_t numEntriesT;  
-  value[0] = j_coeff; 
-  Teuchos::Array<ST> matrixEntriesT; 
-  Teuchos::Array<LO> matrixIndicesT; 
+  Teuchos::Array<ST> value(1);
+  size_t numEntriesT;
+  value[0] = j_coeff;
+  Teuchos::Array<ST> matrixEntriesT;
+  Teuchos::Array<LO> matrixIndicesT;
 
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
       int lunk = nsNodes[inode][this->offset];
-      index[0] = lunk; 
+      index[0] = lunk;
       numEntriesT = jacT->getNumEntriesInLocalRow(lunk);
-      matrixEntriesT.resize(numEntriesT); 
-      matrixIndicesT.resize(numEntriesT); 
+      matrixEntriesT.resize(numEntriesT);
+      matrixIndicesT.resize(numEntriesT);
 
-      jacT->getLocalRowCopy(lunk, matrixIndicesT(), matrixEntriesT(), numEntriesT); 
+      jacT->getLocalRowCopy(lunk, matrixIndicesT(), matrixEntriesT(), numEntriesT);
       for (int i=0; i<numEntriesT; i++) matrixEntriesT[i]=0;
-      jacT->replaceLocalValues(lunk, matrixIndicesT(), matrixEntriesT()); 
+      jacT->replaceLocalValues(lunk, matrixIndicesT(), matrixEntriesT());
 
-      jacT->replaceLocalValues(lunk, index(), value()); 
-      
+      jacT->replaceLocalValues(lunk, index(), value());
+
       if (fillResid) {
         GO node_gid = nsNodesGIDs[inode];
         int lfield = fieldDofManager.getLocalDOF(fieldNodeMap->getLocalElement(node_gid),fieldOffset);
@@ -153,11 +151,11 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   Teuchos::RCP<Tpetra_MultiVector> JVT = dirichletWorkset.JVT;
   Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
   Teuchos::RCP<const Tpetra_MultiVector> VxT = dirichletWorkset.VxT;
-  
-  Teuchos::ArrayRCP<const ST> VxT_constView; 
-  Teuchos::ArrayRCP<ST> fT_nonconstView;                                         
+
+  Teuchos::ArrayRCP<const ST> VxT_constView;
+  Teuchos::ArrayRCP<ST> fT_nonconstView;
   if (fT != Teuchos::null) fT_nonconstView = fT->get1dViewNonConst();
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();                                       
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
   const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int> >& nsNodes =
@@ -166,26 +164,26 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
     int lunk = nsNodes[inode][this->offset];
 
-    if (fT != Teuchos::null) { 
+    if (fT != Teuchos::null) {
       GO node_gid = nsNodesGIDs[inode];
       int lfield = fieldDofManager.getLocalDOF(fieldNodeMap->getLocalElement(node_gid),fieldOffset);
       fT_nonconstView[lunk] = xT_constView[lunk] - pT[lfield];
     }
-    
+
     if (JVT != Teuchos::null) {
-      Teuchos::ArrayRCP<ST> JVT_nonconstView; 
+      Teuchos::ArrayRCP<ST> JVT_nonconstView;
       for (int i=0; i<dirichletWorkset.num_cols_x; i++) {
-        JVT_nonconstView = JVT->getDataNonConst(i); 
-        VxT_constView = VxT->getData(i); 
-	      JVT_nonconstView[lunk] = j_coeff*VxT_constView[lunk];
+        JVT_nonconstView = JVT->getDataNonConst(i);
+        VxT_constView = VxT->getData(i);
+        JVT_nonconstView[lunk] = j_coeff*VxT_constView[lunk];
       }
     }
-    
+
     if (fpT != Teuchos::null) {
-      Teuchos::ArrayRCP<ST> fpT_nonconstView;                                         
+      Teuchos::ArrayRCP<ST> fpT_nonconstView;
       for (int i=0; i<dirichletWorkset.num_cols_p; i++) {
-        fpT_nonconstView = fpT->getDataNonConst(i); 
-	      fpT_nonconstView[lunk] = 0;
+        fpT_nonconstView = fpT->getDataNonConst(i);
+        fpT_nonconstView[lunk] = 0;
       }
     }
   }

@@ -16,7 +16,7 @@
 template<typename EvalT, typename Traits>
 ATO::TensorAverageResponse<EvalT, Traits>::
 TensorAverageResponse(Teuchos::ParameterList& p,
-		    const Teuchos::RCP<Albany::Layouts>& dl) :
+        const Teuchos::RCP<Albany::Layouts>& dl) :
   weights ("Weights", dl->qp_scalar),
   BF      ("BF",      dl->node_qp_scalar)
 {
@@ -54,17 +54,17 @@ TensorAverageResponse(Teuchos::ParameterList& p,
   Teuchos::RCP<PHX::DataLayout> field_layout;
   if (fieldType == "Scalar"){
     field_layout = dl->qp_scalar;
-  } else 
+  } else
   if (fieldType == "Vector"){
     field_layout = dl->qp_vector;
-  } else 
+  } else
   if (fieldType == "Tensor"){
     field_layout = dl->qp_tensor;
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(
-      true, 
+      true,
       Teuchos::Exceptions::InvalidParameter,
-      "Invalid field type " << fieldType << ".  Support values are " << 
+      "Invalid field type " << fieldType << ".  Support values are " <<
       "Scalar, Vector, and Tensor." << std::endl);
   }
   field = decltype(field)(field_name, field_layout);
@@ -118,7 +118,7 @@ TensorAverageResponse(Teuchos::ParameterList& p,
   objective_tag =
     Teuchos::rcp(new PHX::Tag<ScalarT>("Field Average", dl->dummy));
   this->addEvaluatedField(*objective_tag);
-  
+
   std::string responseID = "Field Average";
   this->setName(responseID);
 
@@ -155,7 +155,7 @@ template<typename EvalT, typename Traits>
 void ATO::TensorAverageResponse<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
+  for (typename PHX::MDField<ScalarT>::size_type i=0;
        i<this->global_response_eval.size(); i++)
     this->global_response_eval[i] = 0.0;
 
@@ -172,7 +172,7 @@ void ATO::TensorAverageResponse<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
+  for (typename PHX::MDField<ScalarT>::size_type i=0;
        i<this->local_response_eval.size(); i++)
     this->local_response_eval[i] = 0.0;
 
@@ -203,7 +203,7 @@ evaluateFields(typename Traits::EvalData workset)
           this->local_response_eval(cell,idim) += s;
           this->global_response_eval[idim] += s;
         }
-      } else 
+      } else
       if( tensorRank == 2 ){
         int nterms = component0.size();
         for(std::size_t ic=0; ic<nterms; ic++){
@@ -212,7 +212,7 @@ evaluateFields(typename Traits::EvalData workset)
           this->global_response_eval[ic] += s;
         }
       }
-      local_measure += weights(cell,qp);
+      local_measure += Albany::ADValue(weights(cell,qp));
     }
   }
 
@@ -229,7 +229,7 @@ postEvaluate(typename Traits::PostEvalData workset)
     Teuchos::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, 1, &local_measure, &global_measure);
 
     TensorAverageResponseSpec<EvalT,Traits>::postEvaluate(workset);
-    
+
     // Do global scattering
     PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
 }
@@ -279,8 +279,8 @@ postEvaluate(typename Traits::PostEvalData workset)
   if(overlapped_dgdpT != Teuchos::null) overlapped_dgdpT->scale(scale);
 #ifndef ALBANY_EPETRA
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-  *out << "\n WARNING: This run is using Distributed Parameters (ATO::TensorPNormResponse) " 
-       << "with Epetra turned OFF.  It is not yet clear if this works correctly, so use at your own risk!\n"; 
+  *out << "\n WARNING: This run is using Distributed Parameters (ATO::TensorPNormResponse) "
+       << "with Epetra turned OFF.  It is not yet clear if this works correctly, so use at your own risk!\n";
 #endif
 }
 

@@ -9,6 +9,8 @@
 #ifndef ALBANY_ABSTRACTRESPONSEFUNCTION_HPP
 #define ALBANY_ABSTRACTRESPONSEFUNCTION_HPP
 
+#include "Albany_DataTypes.hpp"
+
 #include "Teuchos_Array.hpp"
 #include "Teuchos_RCP.hpp"
 #if defined(ALBANY_EPETRA)
@@ -20,7 +22,6 @@
 #endif
 #include "PHAL_AlbanyTraits.hpp"
 #include "Thyra_ModelEvaluatorBase.hpp"
-#include "Albany_DataTypes.hpp"
 
 namespace Albany {
 
@@ -29,7 +30,7 @@ namespace Albany {
    */
   class AbstractResponseFunction {
   public:
-  
+
     //! Default constructor
     AbstractResponseFunction() {};
 
@@ -47,12 +48,12 @@ namespace Albany {
 #if defined(ALBANY_EPETRA)
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const = 0;
-#endif    
+#endif
 
-    //! Get the map associate with this response - Tpetra version 
+    //! Get the map associate with this response - Tpetra version
     virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const = 0;
 
-    /*! 
+    /*!
      * \brief Is this response function "scalar" valued, i.e., has a replicated
      * local response map.
      */
@@ -80,9 +81,9 @@ namespace Albany {
       const Tpetra_Vector& xT,
       const Teuchos::Array<ParamVec>& p,
       Tpetra_Vector& gT) = 0;
-    
+
     virtual void evaluateTangentT(
-      const double alpha, 
+      const double alpha,
       const double beta,
       const double omega,
       const double current_time,
@@ -128,7 +129,7 @@ namespace Albany {
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp) = 0;
-    
+
 //! Evaluate distributed parameter derivative dg/dp
     virtual void evaluateDistParamDerivT(
       const double current_time,
@@ -144,7 +145,7 @@ namespace Albany {
 
     //! Private to prohibit copying
     AbstractResponseFunction(const AbstractResponseFunction&);
-    
+
     //! Private to prohibit copying
     AbstractResponseFunction& operator=(const AbstractResponseFunction&);
 

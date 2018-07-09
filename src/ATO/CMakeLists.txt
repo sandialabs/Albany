@@ -13,7 +13,6 @@ SET(SOURCES
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TensorAverageResponse.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_HomogenizedConstantsResponse.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_VectorResidual.cpp
-  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ResidualStrain.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Stress.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ScaleVector.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_BodyForce.cpp
@@ -34,17 +33,23 @@ SET(SOURCES
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_TopoTools.cpp
 )
 
+IF (ALBANY_STOKHOS)
+  SET (SOURCES ${SOURCES}
+    ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ResidualStrain.cpp
+  )
+ENDIF()
+
 IF (ALBANY_EPETRA)
-  IF (ALBANY_ATO_SOLVER_EPETRA)  
-    SET(SOURCES ${SOURCES}      
+  IF (ALBANY_ATO_SOLVER_EPETRA)
+    SET(SOURCES ${SOURCES}
       ${CMAKE_SOURCE_DIR}/src/ATO/ATO_SolverEpetra.cpp
     )
-  ELSE() 
-    SET(SOURCES ${SOURCES}      
-      ${CMAKE_SOURCE_DIR}/src/ATO/ATO_Solver.cpp 
+  ELSE()
+    SET(SOURCES ${SOURCES}
+      ${CMAKE_SOURCE_DIR}/src/ATO/ATO_Solver.cpp
     )
   ENDIF()
-  SET(SOURCES ${SOURCES} 
+  SET(SOURCES ${SOURCES}
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Aggregator.cpp
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Optimizer.cpp
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Pareto_Optimizer.cpp
@@ -52,7 +57,7 @@ IF (ALBANY_EPETRA)
   )
 ENDIF()
 
-SET(SOURCES ${SOURCES}       
+SET(SOURCES ${SOURCES}
   ${CMAKE_SOURCE_DIR}/src/ATO/ATOT_Solver.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_Aggregator.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_Optimizer.cpp
@@ -61,7 +66,7 @@ SET(SOURCES ${SOURCES}
 )
 
 IF (ENABLE_DOTK)
-  SET(SOURCES ${SOURCES}       
+  SET(SOURCES ${SOURCES}
   IF (ALBANY_EPETRA)
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_Optimizer.cpp
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_ContinuousOperators.cpp
@@ -72,7 +77,7 @@ IF (ENABLE_DOTK)
 ENDIF()
 
 IF (ENABLE_Cogent)
-  SET(SOURCES ${SOURCES}       
+  SET(SOURCES ${SOURCES}
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ComputeBasisFunctions.cpp
   )
 ENDIF()
@@ -95,8 +100,6 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_HomogenizedConstantsResponse.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_VectorResidual_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_VectorResidual.hpp
-  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ResidualStrain.hpp
-  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ResidualStrain_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Stress_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Stress.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ScaleVector_Def.hpp
@@ -135,17 +138,24 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_PenaltyModel_Def.hpp
 )
 
+IF (ALBANY_STOKHOS)
+  SET (HEADERS ${HEADERS}
+    ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ResidualStrain.hpp
+    ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ResidualStrain_Def.hpp
+  )
+ENDIF()
+
 IF (ALBANY_EPETRA)
-  IF (ALBANY_ATO_SOLVER_EPETRA)  
+  IF (ALBANY_ATO_SOLVER_EPETRA)
     SET (HEADERS
       ${CMAKE_SOURCE_DIR}/src/ATO/ATO_SolverEpetra.hpp
     )
-  ELSE() 
-    SET (HEADERS 
+  ELSE()
+    SET (HEADERS
       ${CMAKE_SOURCE_DIR}/src/ATO/ATO_Solver.hpp
     )
   ENDIF()
-  SET (HEADERS 
+  SET (HEADERS
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Aggregator.hpp
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Optimizer.hpp
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Pareto_Optimizer.hpp
@@ -166,7 +176,7 @@ IF (ENABLE_DOTK)
     IF (ALBANY_EPETRA)
       ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_Optimizer.hpp
       ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_ContinuousOperators.hpp
-    ENDIF() 
+    ENDIF()
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_DOTk_Optimizer.hpp
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_DOTk_ContinuousOperators.hpp
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_vector.hpp
@@ -182,15 +192,15 @@ ENDIF()
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}
-  ${CMAKE_SOURCE_DIR}/src 
+  ${CMAKE_SOURCE_DIR}/src
   ${CMAKE_SOURCE_DIR}/src/evaluators
-  ${CMAKE_SOURCE_DIR}/src/problems 
+  ${CMAKE_SOURCE_DIR}/src/problems
   ${CMAKE_SOURCE_DIR}/src/responses
   ${CMAKE_SOURCE_DIR}/src/LCM/
-  ${CMAKE_SOURCE_DIR}/src/LCM/evaluators 
+  ${CMAKE_SOURCE_DIR}/src/LCM/evaluators
   ${CMAKE_SOURCE_DIR}/src/LCM/utils
   ${CMAKE_SOURCE_DIR}/src/ATO/
-  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators 
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators
   ${CMAKE_SOURCE_DIR}/src/ATO/problems
   ${CMAKE_SOURCE_DIR}/src/ATO/utils
 )

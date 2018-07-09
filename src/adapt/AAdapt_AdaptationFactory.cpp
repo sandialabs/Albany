@@ -8,7 +8,7 @@
 #include <Teuchos_TestForException.hpp>
 
 #include "AAdapt_AdaptationFactory.hpp"
-#if defined(HAVE_STK)
+#if defined(ALBANY_STK)
 #include "AAdapt_CopyRemesh.hpp"
 #if defined(ALBANY_LCM) && defined(ALBANY_BGL)
 #include "AAdapt_TopologyModification.hpp"
@@ -45,7 +45,7 @@ AAdapt::AdaptationFactory::createAdapter() {
   Teuchos::RCP<AAdapt::AbstractAdapter> strategy;
   std::string& method = adapt_params_->get("Method", "");
 
-#if defined(HAVE_STK)
+#if defined(ALBANY_STK)
   if(method == "Copy Remesh") {
     strategy = rcp(new AAdapt::CopyRemesh(adapt_params_,
                                           param_lib_,
@@ -88,7 +88,7 @@ AAdapt::AdaptationFactory::createAdapter() {
 #endif
 #endif
 
-#if defined(HAVE_STK)
+#if defined(ALBANY_STK)
   else 
 #endif
     TEUCHOS_TEST_FOR_EXCEPTION(true,

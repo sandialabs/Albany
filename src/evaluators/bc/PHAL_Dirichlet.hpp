@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: only Epetra is SG and MP
-
 #ifndef PHAL_DIRICHLET_HPP
 #define PHAL_DIRICHLET_HPP
 
@@ -15,9 +13,6 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#if defined(ALBANY_EPETRA)
-#include "Epetra_Vector.h"
-#endif
 
 #include "Sacado_ParameterAccessor.hpp"
 #include "PHAL_AlbanyTraits.hpp"
@@ -41,7 +36,7 @@ class DirichletBase
     public PHX::EvaluatorDerived<EvalT, Traits>,
     public Sacado::ParameterAccessor<EvalT, SPL_Traits>
 {
-     
+
 private:
 
   //typedef typename Traits::Residual::ScalarT ScalarT;

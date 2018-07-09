@@ -22,7 +22,7 @@
 
 #include <apf.h>
 #include <apfMesh2.h>
-#if defined(HAVE_STK) && defined(ALBANY_SEACAS)
+#if defined(ALBANY_STK) && defined(ALBANY_SEACAS)
 #include <apfSTK.h>
 #else
 #include <apfAlbany.h>

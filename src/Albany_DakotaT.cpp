@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "Albany_config.h"
+
 #ifdef ALBANY_DAKOTA
 #include <iostream>
 #include "Albany_DakotaT.hpp"
@@ -65,9 +67,9 @@ int Albany_DakotaT(int argc, char *argv[])
 
   // Construct driver
   TriKota::Driver dakota(dakota_input_file,
-			 dakota_output_file,
-			 dakota_restart_file,
-			 dakota_error_file,
+       dakota_output_file,
+       dakota_restart_file,
+       dakota_error_file,
                          dakRestartIn, dakotaRestartEvals );
 
 

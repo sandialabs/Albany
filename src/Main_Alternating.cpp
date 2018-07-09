@@ -7,6 +7,8 @@
 #include <iostream>
 #include <string>
 
+#include "Albany_config.h"
+
 #if defined(ALBANY_CHECK_FPE)
 #include <math.h>
 #include <xmmintrin.h>

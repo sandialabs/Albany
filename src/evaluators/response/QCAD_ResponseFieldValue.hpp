@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: only Epetra is SG and MP 
-
 #ifndef QCAD_RESPONSEFIELDVALUE_HPP
 #define QCAD_RESPONSEFIELDVALUE_HPP
 

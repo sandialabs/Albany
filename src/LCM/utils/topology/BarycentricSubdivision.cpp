@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "Albany_config.h"
+
 // Define only if LCM is enabled
 #if defined (ALBANY_LCM)
 

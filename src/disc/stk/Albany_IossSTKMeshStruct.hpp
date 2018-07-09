@@ -7,6 +7,8 @@
 #ifndef ALBANY_IOSS_STKMESHSTRUCT_HPP
 #define ALBANY_IOSS_STKMESHSTRUCT_HPP
 
+#include "Albany_config.h"
+
 #ifdef ALBANY_SEACAS
 
 #include "Albany_GenericSTKMeshStruct.hpp"

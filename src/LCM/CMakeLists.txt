@@ -68,7 +68,7 @@ set(evaluator-headers
 
 #LCM model evaluators
 
-IF (ALBANY_HAVE_STK)
+IF (ALBANY_STK)
 set(model-eval-sources
   "${LCM_DIR}/solvers/Schwarz_Alternating.cpp"
   "${LCM_DIR}/solvers/Schwarz_ObserverImpl.cpp"
@@ -91,7 +91,7 @@ set(model-eval-headers
     "${LCM_DIR}/solvers/Schwarz_CoupledJacobian.hpp"
     "${LCM_DIR}/solvers/Schwarz_Coupled.hpp"
   )
-ENDIF(ALBANY_HAVE_STK)
+ENDIF(ALBANY_STK)
 
 # LCM ACE evaluators
 set(ace-sources
@@ -155,7 +155,7 @@ set(bc-headers
   "${LCM_DIR}/evaluators/bc/TorsionBC_Def.hpp"
   "${LCM_DIR}/evaluators/bc/TorsionBC.hpp"
 )
-IF (ALBANY_HAVE_STK)
+IF (ALBANY_STK)
   set(bc-sources ${bc-sources}
     "${LCM_DIR}/evaluators/bc/PDNeighborFitBC.cpp"
     "${LCM_DIR}/evaluators/bc/SchwarzBC.cpp"
@@ -169,7 +169,7 @@ IF (ALBANY_HAVE_STK)
     "${LCM_DIR}/evaluators/bc/StrongSchwarzBC.hpp"
     "${LCM_DIR}/evaluators/bc/StrongSchwarzBC_Def.hpp"
   )
-ENDIF (ALBANY_HAVE_STK)
+ENDIF (ALBANY_STK)
 
 # LCM HMC evaluators
 set(hmc-sources
@@ -582,7 +582,7 @@ set(utils-headers
   "${LCM_DIR}/utils/Projection.hpp"
   "${LCM_DIR}/utils/SolutionSniffer.hpp"
 )
-IF(ALBANY_HAVE_STK)
+IF(ALBANY_STK)
   set(utils-sources ${utils-sources}
     "${LCM_DIR}/utils/LCMPartition.cpp"
     "${LCM_DIR}/utils/MiniLinearSolver.cpp"
@@ -604,10 +604,10 @@ IF(ALBANY_HAVE_STK)
       "${LCM_DIR}/utils/PeridigmManager.hpp"
     )
   ENDIF(ALBANY_PERIDIGM AND ALBANY_EPETRA)
-ENDIF(ALBANY_HAVE_STK)
+ENDIF(ALBANY_STK)
 
 #LCM utils/topology
-IF(ALBANY_HAVE_STK)
+IF(ALBANY_STK)
   set(topology-sources
     "${LCM_DIR}/utils/topology/BarycentricSubdivision.cpp"
     "${LCM_DIR}/utils/topology/MinimumSurface.cpp"

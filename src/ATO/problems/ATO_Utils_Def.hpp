@@ -11,7 +11,6 @@
 #include "ATO_FixedFieldTerm.hpp"
 #include "ATO_NeumannTerm.hpp"
 #include "ATO_DirichletTerm.hpp"
-#include "ATO_ResidualStrain.hpp"
 #include "ATO_CreateField.hpp"
 #include "ATO_TopologyFieldWeighting.hpp"
 #include "ATO_TopologyWeighting.hpp"
@@ -19,6 +18,10 @@
 #include "Albany_Utils.hpp"
 #include "Albany_DataTypes.hpp"
 #include "ElasticityResid.hpp"
+
+#ifdef ALBANY_STOKHOS
+#include "ATO_ResidualStrain.hpp"
+#endif
 
 #include "PHAL_SaveStateField.hpp"
 #include "PHAL_SaveCellStateField.hpp"
@@ -123,7 +126,7 @@ void ATO::Utils<EvalT,Traits>::constructFluxEvaluators(
        const Teuchos::RCP<Teuchos::ParameterList>& params,
        PHX::FieldManager<Traits>& fm0,
        Albany::StateManager& stateMgr,
-       const std::string &elementBlockName, 
+       const std::string &elementBlockName,
        std::string fluxName, std::string gradName)
 {
     using Teuchos::RCP;
@@ -171,13 +174,13 @@ void ATO::Utils<EvalT,Traits>::constructFluxEvaluators(
 
           ev = rcp(new ATO::ScaleVector<EvalT,Traits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-      
+
           // state the strain in the state manager so for ATO
-          p = stateMgr.registerStateVariable(fluxName,dl->qp_vector, dl->dummy, 
+          p = stateMgr.registerStateVariable(fluxName,dl->qp_vector, dl->dummy,
                                              elementBlockName, "scalar", 0.0, false, false);
           ev = rcp(new PHAL::SaveStateField<EvalT,Traits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-      
+
           //if(some input stuff)
           SaveCellStateField(fm0, stateMgr, fluxName, elementBlockName, dl->qp_vector);
 
@@ -202,16 +205,16 @@ void ATO::Utils<EvalT,Traits>::constructFluxEvaluators(
             //Output
             std::string outName = Albany::strint(fluxName, imat);
             pmat->set<std::string>("Output Vector Name", outName);
-  
+
             ev = rcp(new ATO::ScaleVector<EvalT,Traits>(*pmat));
             fm0.template registerEvaluator<EvalT>(ev);
-        
+
             // state the strain in the state manager so for ATO
-            pmat = stateMgr.registerStateVariable(outName,dl->qp_vector, dl->dummy, 
+            pmat = stateMgr.registerStateVariable(outName,dl->qp_vector, dl->dummy,
                                                   elementBlockName, "scalar", 0.0, false, false);
             ev = rcp(new PHAL::SaveStateField<EvalT,Traits>(*pmat));
             fm0.template registerEvaluator<EvalT>(ev);
-        
+
             //if(some input stuff)
             SaveCellStateField(fm0, stateMgr, outName, elementBlockName, dl->qp_vector);
           }
@@ -239,15 +242,15 @@ void ATO::Utils<EvalT,Traits>::constructFluxEvaluators(
 
               // currently only SIMP-type mixture is implemented
               Teuchos::ParameterList& simpParams = fieldParams.sublist(mixtureRule);
- 
-              Teuchos::RCP<ATO::TopologyArray> 
+
+              Teuchos::RCP<ATO::TopologyArray>
                 topologyArray = params->get<Teuchos::RCP<ATO::TopologyArray> >("Topologies");
               p->set<Teuchos::RCP<ATO::TopologyArray> > ("Topologies", topologyArray);
 
               // topology and function indices
-              p->set<Teuchos::Array<int> >("Topology Indices", 
+              p->set<Teuchos::Array<int> >("Topology Indices",
                                            simpParams.get<Teuchos::Array<int> >("Topology Indices"));
-              p->set<Teuchos::Array<int> >("Function Indices", 
+              p->set<Teuchos::Array<int> >("Function Indices",
                                            simpParams.get<Teuchos::Array<int> >("Function Indices"));
 
               // constituent var names
@@ -264,17 +267,17 @@ void ATO::Utils<EvalT,Traits>::constructFluxEvaluators(
                 constituentNames[imat] = constituentName;
               }
               p->set<Teuchos::Array<std::string> >("Constituent Variable Names", constituentNames);
-              
+
               // mixture var name
               p->set<std::string>("Mixture Variable Name",fieldName);
 
               // basis functions
               p->set<std::string>("BF Name", "BF");
-    
+
               TEUCHOS_TEST_FOR_EXCEPTION(topologyArray->size() == 0, std::logic_error, std::endl <<
                                         "Mixture requested with no topologies defined!" << std::endl);
               Teuchos::RCP<ATO::Topology> topology = (*topologyArray)[0];
-     
+
               if( topology->getEntityType() == "Distributed Parameter" ){
                 ev = rcp(new ATO::Mixture_DistParam<EvalT,Traits>(*p,dl));
               } else {
@@ -285,7 +288,7 @@ void ATO::Utils<EvalT,Traits>::constructFluxEvaluators(
           }
         } else
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                                  "'Material' or 'Mixture' not specified for '" 
+                                  "'Material' or 'Mixture' not specified for '"
                                   << elementBlockName << "'");
       }
       TEUCHOS_TEST_FOR_EXCEPTION(!blockFound, std::logic_error,
@@ -300,18 +303,18 @@ void ATO::Utils<EvalT,Traits>::constructFluxEvaluators(
       } else {
         p->set<double>("Coefficient", params->get<double>("Isotropic Modulus"));
       }
-    
+
       //Output
       p->set<std::string>("Output Vector Name", fluxName);
 
       ev = rcp(new ATO::ScaleVector<EvalT,Traits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-  
-      p = stateMgr.registerStateVariable(fluxName,dl->qp_vector, dl->dummy, 
+
+      p = stateMgr.registerStateVariable(fluxName,dl->qp_vector, dl->dummy,
                                          elementBlockName, "scalar", 0.0, false, false);
       ev = rcp(new PHAL::SaveStateField<EvalT,Traits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-  
+
       SaveCellStateField(fm0, stateMgr, fluxName, elementBlockName, dl->qp_vector);
     }
 
@@ -322,7 +325,7 @@ void ATO::Utils<EvalT,Traits>::constructStressEvaluators(
        const Teuchos::RCP<Teuchos::ParameterList>& params,
        PHX::FieldManager<Traits>& fm0,
        Albany::StateManager& stateMgr,
-       const std::string &elementBlockName, 
+       const std::string &elementBlockName,
        std::string stressName, std::string strainName)
 {
     using Teuchos::RCP;
@@ -371,13 +374,13 @@ void ATO::Utils<EvalT,Traits>::constructStressEvaluators(
 
           ev = rcp(new ATO::Stress<EvalT,Traits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-      
+
           // state the strain in the state manager so for ATO
-          p = stateMgr.registerStateVariable(stressName,dl->qp_tensor, dl->dummy, 
+          p = stateMgr.registerStateVariable(stressName,dl->qp_tensor, dl->dummy,
                                              elementBlockName, "scalar", 0.0, false, false);
           ev = rcp(new PHAL::SaveStateField<EvalT,Traits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
-      
+
           //if(some input stuff)
           SaveCellStateField(fm0, stateMgr, stressName, elementBlockName, dl->qp_tensor);
 
@@ -403,16 +406,16 @@ void ATO::Utils<EvalT,Traits>::constructStressEvaluators(
             //Output
             std::string outName = Albany::strint(stressName, imat);
             pmat->set<std::string>("Stress Name", outName);
-  
+
             ev = rcp(new ATO::Stress<EvalT,Traits>(*pmat));
             fm0.template registerEvaluator<EvalT>(ev);
-        
+
             // state the strain in the state manager so for ATO
-            pmat = stateMgr.registerStateVariable(outName,dl->qp_tensor, dl->dummy, 
+            pmat = stateMgr.registerStateVariable(outName,dl->qp_tensor, dl->dummy,
                                                   elementBlockName, "scalar", 0.0, false, false);
             ev = rcp(new PHAL::SaveStateField<EvalT,Traits>(*pmat));
             fm0.template registerEvaluator<EvalT>(ev);
-        
+
             //if(some input stuff)
             SaveCellStateField(fm0, stateMgr, outName, elementBlockName, dl->qp_tensor);
           }
@@ -440,15 +443,15 @@ void ATO::Utils<EvalT,Traits>::constructStressEvaluators(
 
               // currently only SIMP-type mixture is implemented
               Teuchos::ParameterList& simpParams = fieldParams.sublist(mixtureRule);
- 
-              Teuchos::RCP<ATO::TopologyArray> 
+
+              Teuchos::RCP<ATO::TopologyArray>
                 topologyArray = params->get<Teuchos::RCP<ATO::TopologyArray> >("Topologies");
               p->set<Teuchos::RCP<ATO::TopologyArray> > ("Topologies", topologyArray);
 
               // topology and function indices
-              p->set<Teuchos::Array<int> >("Topology Indices", 
+              p->set<Teuchos::Array<int> >("Topology Indices",
                                            simpParams.get<Teuchos::Array<int> >("Topology Indices"));
-              p->set<Teuchos::Array<int> >("Function Indices", 
+              p->set<Teuchos::Array<int> >("Function Indices",
                                            simpParams.get<Teuchos::Array<int> >("Function Indices"));
 
               // constituent var names
@@ -465,7 +468,7 @@ void ATO::Utils<EvalT,Traits>::constructStressEvaluators(
                 constituentNames[imat] = constituentName;
               }
               p->set<Teuchos::Array<std::string> >("Constituent Variable Names", constituentNames);
-              
+
               // mixture var name
               p->set<std::string>("Mixture Variable Name",fieldName);
 
@@ -475,7 +478,7 @@ void ATO::Utils<EvalT,Traits>::constructStressEvaluators(
              TEUCHOS_TEST_FOR_EXCEPTION(topologyArray->size() == 0, std::logic_error, std::endl <<
                                        "Mixture requested with no topologies defined!" << std::endl);
              Teuchos::RCP<ATO::Topology> topology = (*topologyArray)[0];
-    
+
              if( topology->getEntityType() == "Distributed Parameter" ){
                ev = rcp(new ATO::Mixture_DistParam<EvalT,Traits>(*p,dl));
              } else {
@@ -486,7 +489,7 @@ void ATO::Utils<EvalT,Traits>::constructStressEvaluators(
           }
         } else
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                                  "'Material' or 'Mixture' not specified for '" 
+                                  "'Material' or 'Mixture' not specified for '"
                                   << elementBlockName << "'");
       }
       TEUCHOS_TEST_FOR_EXCEPTION(!blockFound, std::logic_error,
@@ -502,19 +505,19 @@ void ATO::Utils<EvalT,Traits>::constructStressEvaluators(
         p->set<double>("Elastic Modulus", params->get<double>("Elastic Modulus"));
         p->set<double>("Poissons Ratio",  params->get<double>("Poissons Ratio"));
       }
-    
+
       //Output
       p->set<std::string>("Stress Name", stressName);
 
       ev = rcp(new ATO::Stress<EvalT,Traits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-  
+
       // state the strain in the state manager so for ATO
-      p = stateMgr.registerStateVariable(stressName,dl->qp_tensor, dl->dummy, 
+      p = stateMgr.registerStateVariable(stressName,dl->qp_tensor, dl->dummy,
                                          elementBlockName, "scalar", 0.0, false, false);
       ev = rcp(new PHAL::SaveStateField<EvalT,Traits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-  
+
       //if(some input stuff)
       SaveCellStateField(fm0, stateMgr, stressName, elementBlockName, dl->qp_tensor);
     }
@@ -526,7 +529,7 @@ void ATO::Utils<EvalT,Traits>::constructBoundaryConditionEvaluators(
        const Teuchos::ParameterList& bcSpec,
        PHX::FieldManager<Traits>& fm0,
        Albany::StateManager& stateMgr,
-       const std::string& boundaryName, 
+       const std::string& boundaryName,
        std::string boundaryForceName)
 {
     using Teuchos::RCP;
@@ -549,13 +552,13 @@ void ATO::Utils<EvalT,Traits>::constructBoundaryConditionEvaluators(
 
       p->set<double>("Penalty Coefficient",dirichletSpec.get<double>("Penalty Coefficient"));
       p->set<std::string>("Variable Name",dirichletSpec.get<std::string>("Variable Name"));
-  
+
       p->set<std::string>("Dirichlet Name", boundaryForceName);
       if(dirichletSpec.get<std::string>("Layout") == "QP Scalar"){
         p->set< RCP<PHX::DataLayout> >("Data Layout", dl->qp_scalar);
         if(dirichletSpec.isType<double>("Scalar")) p->set<double>("Scalar",dirichletSpec.get<double>("Scalar"));
         ev = rcp(new ATO::DirichletScalarTerm<EvalT,Traits>(*p));
-      } else 
+      } else
       if(dirichletSpec.get<std::string>("Layout") == "QP Vector"){
         p->set< RCP<PHX::DataLayout> >("Data Layout", dl->qp_vector);
         if(dirichletSpec.isType<double>("X")) p->set<double>("X",dirichletSpec.get<double>("X"));
@@ -579,7 +582,7 @@ void ATO::Utils<EvalT,Traits>::constructBoundaryConditionEvaluators(
       if(neumannSpec.get<std::string>("Boundary") != boundaryName) continue;
 
       RCP<ParameterList> p = rcp(new ParameterList("Neumann Term"));
-  
+
       p->set<std::string>("Neumann Name", boundaryForceName);
 
       if(neumannSpec.get<std::string>("Layout") == "QP Vector"){
@@ -587,7 +590,7 @@ void ATO::Utils<EvalT,Traits>::constructBoundaryConditionEvaluators(
         p->set<Teuchos::Array<double> >("Vector",
           neumannSpec.get<Teuchos::Array<double> >("Vector"));
         ev = rcp(new ATO::NeumannVectorTerm<EvalT,Traits>(*p));
-      } else 
+      } else
       if(neumannSpec.get<std::string>("Layout") == "QP Scalar"){
         p->set< RCP<PHX::DataLayout> >("Data Layout", dl->qp_scalar);
         p->set<double>("Scalar",neumannSpec.get<double>("Scalar"));
@@ -605,7 +608,7 @@ void ATO::Utils<EvalT,Traits>::constructFixedFieldTermEvaluators(
        const Teuchos::RCP<Teuchos::ParameterList>& params,
        PHX::FieldManager<Traits>& fm0,
        Albany::StateManager& stateMgr,
-       const std::string &elementBlockName, 
+       const std::string &elementBlockName,
        std::string dof_name,
        std::string fixedFieldTermName)
 {
@@ -622,7 +625,7 @@ void ATO::Utils<EvalT,Traits>::constructFixedFieldTermEvaluators(
     p->set<std::string>("Output Name", fixedFieldTermName);
     p->set<std::string>("Field Name", dof_name);
     p->set< RCP<PHX::DataLayout> >("Data Layout", dl->qp_scalar);
-  
+
     Teuchos::ParameterList& ffParams = params->sublist("Fixed Field",false);
 
     p->set<double>("Penalty Coefficient", ffParams.get<double>("Penalty Coefficient"));
@@ -637,7 +640,7 @@ void ATO::Utils<EvalT,Traits>::constructBodyForceEvaluators(
        const Teuchos::RCP<Teuchos::ParameterList>& params,
        PHX::FieldManager<Traits>& fm0,
        Albany::StateManager& stateMgr,
-       const std::string &elementBlockName, 
+       const std::string &elementBlockName,
        std::string bodyForceName)
 {
     if( ! params->isSublist("Body Force") ) return;
@@ -721,15 +724,15 @@ void ATO::Utils<EvalT,Traits>::constructBodyForceEvaluators(
 
               // currently only SIMP-type mixture is implemented
               Teuchos::ParameterList& simpParams = paramParams.sublist(mixtureRule);
- 
-              Teuchos::RCP<ATO::TopologyArray> 
+
+              Teuchos::RCP<ATO::TopologyArray>
                 topologyArray = params->get<Teuchos::RCP<ATO::TopologyArray> >("Topologies");
               p->set<Teuchos::RCP<ATO::TopologyArray> > ("Topologies", topologyArray);
 
               // topology and function indices
-              p->set<Teuchos::Array<int> >("Topology Indices", 
+              p->set<Teuchos::Array<int> >("Topology Indices",
                                            simpParams.get<Teuchos::Array<int> >("Topology Indices"));
-              p->set<Teuchos::Array<int> >("Function Indices", 
+              p->set<Teuchos::Array<int> >("Function Indices",
                                            simpParams.get<Teuchos::Array<int> >("Function Indices"));
 
               // constituent var names
@@ -746,17 +749,17 @@ void ATO::Utils<EvalT,Traits>::constructBodyForceEvaluators(
                 constituentNames[imat] = constituentName;
               }
               p->set<Teuchos::Array<std::string> >("Constituent Variable Names", constituentNames);
-              
+
               // mixture var name
               p->set<std::string>("Mixture Variable Name",paramName);
 
               // basis functions
               p->set<std::string>("BF Name", "BF");
-    
+
               TEUCHOS_TEST_FOR_EXCEPTION(topologyArray->size() == 0, std::logic_error, std::endl <<
                                         "Mixture requested with no topologies defined!" << std::endl);
               Teuchos::RCP<ATO::Topology> topology = (*topologyArray)[0];
-     
+
               if( topology->getEntityType() == "Distributed Parameter" ){
                 ev = rcp(new ATO::Mixture_DistParam<EvalT,Traits>(*p,dl));
               } else {
@@ -767,7 +770,7 @@ void ATO::Utils<EvalT,Traits>::constructBodyForceEvaluators(
           }
         } else
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                                  "'Material' or 'Mixture' not specified for '" 
+                                  "'Material' or 'Mixture' not specified for '"
                                   << elementBlockName << "'");
       }
       TEUCHOS_TEST_FOR_EXCEPTION(!blockFound, std::logic_error,
@@ -786,20 +789,20 @@ void ATO::Utils<EvalT,Traits>::constructBodyForceEvaluators(
 
     { // Body forces
       RCP<ParameterList> p = rcp(new ParameterList("Body Force"));
-  
+
       Teuchos::ParameterList& configParams = params->sublist("Configuration");
       p->set<Teuchos::ParameterList>("Configuration",configParams);
-  
+
       p->set<std::string>("Body Force Name", bodyForceName);
       p->set< RCP<PHX::DataLayout> >("Body Force Data Layout", dl->qp_vector);
 
       p->set<std::string>("Density Field Name", densityName);
       p->set< RCP<PHX::DataLayout> >("Density Field Data Layout", dl->qp_scalar);
-  
+
       Teuchos::ParameterList& bfParams = params->sublist("Body Force",false);
-      p->set<Teuchos::Array<double> >("Body Force Direction", 
+      p->set<Teuchos::Array<double> >("Body Force Direction",
          bfParams.get<Teuchos::Array<double> >("Body Force Direction"));
-      p->set<double>("Body Force Magnitude", 
+      p->set<double>("Body Force Magnitude",
          bfParams.get<double>("Body Force Magnitude"));
 
       ev = rcp(new ATO::BodyForce<EvalT,Traits>(*p));
@@ -814,9 +817,10 @@ void ATO::Utils<EvalT,Traits>::constructResidualStressEvaluators(
        const Teuchos::RCP<Teuchos::ParameterList>& params,
        PHX::FieldManager<Traits>& fm0,
        Albany::StateManager& stateMgr,
-       const std::string &elementBlockName, 
+       const std::string &elementBlockName,
        std::string residForceName)
 {
+#ifdef ALBANY_STOKHOS
 
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -838,17 +842,20 @@ void ATO::Utils<EvalT,Traits>::constructResidualStressEvaluators(
     p->set<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-  
+
     ev = rcp(new ATO::ResidualStrain<EvalT,Traits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
     SaveCellStateField(fm0, stateMgr, residStrain, elementBlockName, dl->qp_tensor);
-    
+
     // compute KL stress from KL strain
     //
     constructStressEvaluators(params, fm0, stateMgr, elementBlockName, residStress, residStrain);
 
     SaveCellStateField(fm0, stateMgr, residStress, elementBlockName, dl->qp_tensor);
+#else
+  TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error, "The evaluator ATO::ResiduaalStrain requires ALBANY_STOKHOS to be defined.\n");
+#endif
 }
 
 template<typename EvalT, typename Traits>
@@ -856,7 +863,7 @@ void ATO::Utils<EvalT,Traits>::constructWeightedFieldEvaluators(
        const Teuchos::RCP<Teuchos::ParameterList>& params,
        PHX::FieldManager<Traits>& fm0,
        Albany::StateManager& stateMgr,
-       const std::string &elementBlockName, 
+       const std::string &elementBlockName,
 //       Teuchos::RCP<PHX::DataLayout> layout,
        std::string layoutName,
        std::string& inputFieldName)
@@ -868,7 +875,7 @@ void ATO::Utils<EvalT,Traits>::constructWeightedFieldEvaluators(
 
     Teuchos::RCP<PHX::Evaluator<Traits> > ev;
 
-    Teuchos::RCP<ATO::TopologyArray> 
+    Teuchos::RCP<ATO::TopologyArray>
       topologyArray = params->get<Teuchos::RCP<ATO::TopologyArray> >("Topologies");
 
     Teuchos::ParameterList& wfParams = params->sublist("Apply Topology Weight Functions");
@@ -895,7 +902,7 @@ void ATO::Utils<EvalT,Traits>::constructWeightedFieldEvaluators(
         ev = Teuchos::rcp(new PHAL::GatherScalarNodalParameter<EvalT,PHAL::AlbanyTraits>(*p, dl) );
         fm0.template registerEvaluator<EvalT>(ev);
       }
-  
+
       Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("TopologyWeighting"));
 
       p->set<Teuchos::RCP<ATO::Topology> >("Topology",topology);

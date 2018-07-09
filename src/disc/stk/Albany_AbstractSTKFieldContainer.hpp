@@ -9,6 +9,8 @@
 #ifndef ALBANY_ABSTRACTSTKFIELDCONT_HPP
 #define ALBANY_ABSTRACTSTKFIELDCONT_HPP
 
+#include "Albany_config.h"
+
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 #if defined(ALBANY_EPETRA)

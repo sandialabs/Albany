@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: no Epetra except SG and MP
-
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
@@ -339,8 +337,8 @@ RealType time = dirichletWorkset.current_time;
       {
         JVT_nonconstView = JVT->getDataNonConst(i);
         VxT_constView = VxT->getData(i);
-	JVT_nonconstView[xlunk] = j_coeff*VxT_constView[xlunk];
-	JVT_nonconstView[ylunk] = j_coeff*VxT_constView[ylunk];
+  JVT_nonconstView[xlunk] = j_coeff*VxT_constView[xlunk];
+  JVT_nonconstView[ylunk] = j_coeff*VxT_constView[ylunk];
       }
     }
 
@@ -349,8 +347,8 @@ RealType time = dirichletWorkset.current_time;
       for (int i=0; i<dirichletWorkset.num_cols_p; i++)
       {
         fpT_nonconstView = fpT->getDataNonConst(i);
-	fpT_nonconstView[xlunk] = -Xval.dx(dirichletWorkset.param_offset+i);
-	fpT_nonconstView[ylunk] = -Yval.dx(dirichletWorkset.param_offset+i);
+  fpT_nonconstView[xlunk] = -Xval.dx(dirichletWorkset.param_offset+i);
+  fpT_nonconstView[ylunk] = -Yval.dx(dirichletWorkset.param_offset+i);
       }
     }
 

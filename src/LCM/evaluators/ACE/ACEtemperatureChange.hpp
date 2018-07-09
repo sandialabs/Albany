@@ -21,7 +21,7 @@ namespace LCM {
 /// Evaluates the temperature change at integration points
 ///
 template <typename EvalT, typename Traits>
-class ACEtemperatureChange 
+class ACEtemperatureChange
    : public PHX::EvaluatorWithBaseImpl<Traits>,
      public PHX::EvaluatorDerived<EvalT, Traits>,
      public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
@@ -50,19 +50,19 @@ class ACEtemperatureChange
   evaluateFields(typename Traits::EvalData workset);
 
  private:
-   
+
   ///
   /// Number of integration points
   ///
   int num_qps_{0};
-  
+
   ///
   /// Number of problem dimensions
   ///
   int num_dims_{0};
-  
+
   // MDField  that aid temperature change calculation
-  PHX::MDField<ScalarT, Cell, QuadPoint> Temperature;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> Temperature;
   PHX::MDField<ScalarT, Cell, QuadPoint> temperature_old_;
   PHX::MDField<bool, Cell, QuadPoint> temp_increasing_;
   PHX::MDField<bool, Cell, QuadPoint> temp_decreasing_;

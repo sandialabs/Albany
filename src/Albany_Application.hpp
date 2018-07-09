@@ -7,6 +7,8 @@
 #ifndef ALBANY_APPLICATION_HPP
 #define ALBANY_APPLICATION_HPP
 
+#include "Albany_config.h"
+
 #include "Teuchos_ArrayRCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
@@ -85,7 +87,7 @@ public:
   Application(
       const Teuchos::RCP<const Teuchos_Comm> &comm,
       const Teuchos::RCP<Teuchos::ParameterList> &params,
-      const Teuchos::RCP<const Tpetra_Vector> &initial_guess = Teuchos::null, 
+      const Teuchos::RCP<const Tpetra_Vector> &initial_guess = Teuchos::null,
       const bool schwarz = false);
 
   //! Constructor
@@ -461,7 +463,7 @@ public:
   //! Routine to get workset (bucket) size info needed by all Evaluation types
   template <typename EvalT>
   void loadWorksetBucketInfo(PHAL::Workset &workset, const int &ws);
-  
+
 #if defined(ALBANY_EPETRA)
   void loadBasicWorksetInfo(PHAL::Workset &workset, double current_time);
 #endif
@@ -669,8 +671,8 @@ private:
 
 protected:
 
-  bool is_schwarz_; 
-  
+  bool is_schwarz_;
+
   bool no_dir_bcs_;
 
   bool requires_sdbcs_;

@@ -7,6 +7,8 @@
 #ifndef MULTISCALE_THERMAL_CONDUCTIVITY_HPP
 #define MULTISCALE_THERMAL_CONDUCTIVITY_HPP
 
+#include "Albany_config.h"
+
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -14,6 +16,7 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Sacado_ParameterAccessor.hpp"
+
 #ifdef ALBANY_STOKHOS
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #endif
@@ -66,7 +69,7 @@ public:
   virtual ~MultiScaleThermalConductivity();
 
   void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+           PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 

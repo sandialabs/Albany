@@ -8,7 +8,7 @@ IF(ALBANY_DTK)
   add_subdirectory(DTKInterp)
 ENDIF()
 
-IF(ALBANY_HAVE_STK)
+IF(ALBANY_STK)
   IF(ALBANY_SEACAS)
     add_subdirectory(CrystalPlasticity)
     # amota: disabled because enters infinite loop

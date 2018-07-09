@@ -5,8 +5,6 @@
 //*****************************************************************//
 
 
-//IK, 9/13/14: only Epetra is SG and MP 
-
 #ifndef PHAL_GATHER_SOLUTION_HPP
 #define PHAL_GATHER_SOLUTION_HPP
 
@@ -18,9 +16,6 @@
 #include "Albany_Layouts.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#if defined(ALBANY_EPETRA)
-#include "Epetra_Vector.h"
-#endif
 
 #include "Kokkos_Vector.hpp"
 
@@ -71,7 +66,7 @@ protected:
   bool enableTransient;
   bool enableAcceleration;
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 protected:
   Albany::AbstractDiscretization::WorksetConn nodeID;
   Kokkos::View<const ST*, PHX::Device> xT_constView, xdotT_constView, xdotdotT_constView;
@@ -110,7 +105,7 @@ private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
   const int numFields;
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
   struct PHAL_GatherSolRank2_Tag{};
   struct PHAL_GatherSolRank2_Transient_Tag{};
@@ -190,8 +185,8 @@ public:
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
   const int numFields;
- 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT 
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
   struct PHAL_GatherJacRank2_Tag{};
   struct PHAL_GatherJacRank2_Transient_Tag{};
@@ -225,7 +220,7 @@ public:
   void operator() (const PHAL_GatherJacRank0_Transient_Tag&, const int& cell) const;
   KOKKOS_INLINE_FUNCTION
   void operator() (const PHAL_GatherJacRank0_Acceleration_Tag&, const int& cell) const;
- 
+
 private:
   int neq, numDim;
   double j_coeff, n_coeff, m_coeff;

@@ -7,6 +7,8 @@
 #ifndef KC_PERMEABILITY_HPP
 #define KC_PERMEABILITY_HPP
 
+#include "Albany_config.h"
+
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -40,7 +42,7 @@ public:
   KCPermeability(Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+           PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
