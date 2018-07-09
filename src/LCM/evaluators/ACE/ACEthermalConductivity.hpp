@@ -55,21 +55,21 @@ class ACEthermalConductivity : public PHX::EvaluatorWithBaseImpl<Traits>,
   getValue(const std::string& n);
 
  private:
-  
+
   ///
   /// Number of integration points
   ///
   int num_qps_{0};
-  
+
   ///
   /// Number of problem dimensions
   ///
   int num_dims_{0};
-  
+
   // MDFields that thermal conductivity depends on
-  PHX::MDField<ScalarT, Cell, QuadPoint> porosity_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> water_saturation_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> porosity_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> ice_saturation_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> water_saturation_;
 
   ///
   /// Contains the mixture model thermal conductivity value

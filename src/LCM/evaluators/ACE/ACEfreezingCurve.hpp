@@ -21,7 +21,7 @@ namespace LCM {
 /// Evaluates the freezing curve at integration points
 ///
 template <typename EvalT, typename Traits>
-class ACEfreezingCurve 
+class ACEfreezingCurve
     : public PHX::EvaluatorWithBaseImpl<Traits>,
       public PHX::EvaluatorDerived<EvalT, Traits>,
       public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
@@ -48,7 +48,7 @@ class ACEfreezingCurve
   ///
   void
   evaluateFields(typename Traits::EvalData workset);
-  
+
   ///
   /// Sacado method to access parameters
   ///
@@ -56,32 +56,32 @@ class ACEfreezingCurve
   getValue(const std::string& n);
 
  private:
-   
+
   ///
   /// Number of integration points
   ///
   int num_qps_{0};
-  
+
   ///
   /// Number of problem dimensions
   ///
   int num_dims_{0};
-  
+
   // MDField  that aid freezing curve calculations
-  PHX::MDField<ScalarT, Cell, QuadPoint> Temperature;
-  PHX::MDField<ScalarT, Cell, QuadPoint> melting_temperature_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> delta_temperature_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> Temperature;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> melting_temperature_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> delta_temperature_;
 
   ///
   /// Contains the evaluated ice saturation
   ///
   PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_evaluated_;
-  
+
   ///
   /// Contains the evaluated freezing curve slope
   ///
   PHX::MDField<ScalarT, Cell, QuadPoint> dfdT_;
-  
+
   ///
   /// Temperature range over which phase change can occur
   ///
