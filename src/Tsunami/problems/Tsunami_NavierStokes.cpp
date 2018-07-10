@@ -49,26 +49,53 @@ variableTypeToString(Tsunami::NavierStokes::NS_VAR_TYPE variableType)
 Tsunami::NavierStokes::
 NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
-             const int numDim_) :
+             const int numDim_, 
+             const bool haveAdvection_, 
+             const bool haveUnsteady_) :
   Albany::AbstractProblem(params_, paramLib_),
   haveFlow(false),
   haveFlowEq(false),
   haveSource(false),
-  havePSPG(false),
+  havePSPG(true),
+  haveSUPG(false),
   numDim(numDim_),
-  use_sdbcs_(false)
+  haveAdvection(haveAdvection_),
+  haveUnsteady(haveUnsteady_),
+  stabType("Shakib-Hughes"),
+  use_sdbcs_(false), 
+  use_params_on_mesh(false), 
+  mu(1.0), 
+  rho(1.0) 
 {
 
   getVariableType(params->sublist("Flow"), "DOF", flowType,
       haveFlow, haveFlowEq);
 
-  if (haveFlowEq) {
-    havePSPG = params->get("Have Pressure Stabilization", true);
+  if (params->isSublist("Tsunami Parameters")) {
+    mu = params->sublist("Tsunami Parameters").get<double>("Viscosity",1.0);
+    if (mu <= 0) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                              "Invalid value of Viscosity in Tsunami Problem = "
+                               << mu <<"!  Viscosity must be >0.");
+    }
+    rho = params->sublist("Tsunami Parameters").get<double>("Density",1.0);
+    if (rho <= 0) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                              "Invalid value of Density in Tsunami Problem = "
+                               << rho <<"!  Density must be >0.");
+    }
+    haveSUPG = params->sublist("Tsunami Parameters").get<bool>("Have SUPG Stabilization", true);
+    use_params_on_mesh = params->sublist("Tsunami Parameters").get<bool>("Use Parameters on Mesh", false);
+    stabType = params->sublist("Tsunami Parameters").get<std::string>("Stabilization Type", "Shakib-Hughes");
+    if ((stabType != "Shakib-Hughes") && (stabType != "Tsunami")) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                              "Invalid Stabilizaton Type = "
+                               << stabType <<"!  Valid types are 'Shakib-Hughes' and 'Tsunami'.");
+    }
   }
 
+  if (haveAdvection == false) haveSUPG = false; 
   haveSource = true;
-
-
 
   // Compute number of equations
   int num_eq = 0;
@@ -85,11 +112,15 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
 
   // Print out a summary of the problem
-  *out << "Stokes problem:" << std::endl
+  *out << "Navier Stokes problem:" << std::endl
        << "\tSpatial dimension:      " << numDim << std::endl
-       << "\tFlow variables:         " << variableTypeToString(flowType)
-       << std::endl
-       << "\tPressure stabilization: " << havePSPG << std::endl;
+       << "\tFlow variables:         " << variableTypeToString(flowType) << std::endl
+       << "\tHave Advection:         " << haveAdvection << std::endl
+       << "\tHave Unsteady:          " << haveUnsteady << std::endl
+       << "\tPSPG stabilization:     " << havePSPG << std::endl
+       << "\tSUPG stabilization:     " << haveSUPG << std::endl
+       << "\tStabilization type:     " << stabType << std::endl
+       << "\tUse Parameters on Mesh: " << use_params_on_mesh << std::endl;
 }
 
 Tsunami::NavierStokes::
@@ -109,6 +140,7 @@ buildProblem(
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1);
   fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  elementBlockName = meshSpecs[0]->ebName;
   buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM,
       Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
@@ -151,6 +183,7 @@ Tsunami::NavierStokes::constructDirichletEvaluators(
                                           this->params, this->paramLib);
    use_sdbcs_ = dirUtils.useSDBCs(); 
    offsets_ = dirUtils.getOffsets();
+   nodeSetIDs_ = dirUtils.getNodeSetIDs();
 }
 
 //Neumann BCs
@@ -236,14 +269,9 @@ Tsunami::NavierStokes::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidStokesParams");
 
-  validPL->set<bool>("Have Pressure Stabilization", true);
-  validPL->sublist("Flow", false, "");
-  validPL->sublist("Density", false, "");
-  validPL->sublist("Viscosity", false, "");
-  validPL->sublist("FELIX Viscosity", false, "");
-  validPL->sublist("Tau M", false, "");
   validPL->sublist("Body Force", false, "");
-  validPL->sublist("FELIX Physical Parameters", false, "");
+  validPL->sublist("Flow", false, "");
+  validPL->sublist("Tsunami Parameters", false, "");
 
   return validPL;
 }

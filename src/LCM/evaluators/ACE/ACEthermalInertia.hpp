@@ -55,21 +55,21 @@ class ACEthermalInertia : public PHX::EvaluatorWithBaseImpl<Traits>,
   getValue(const std::string& n);
 
  private:
-  
+
   ///
   /// Number of integration points
   ///
   int num_qps_{0};
-  
+
   ///
   /// Number of problem dimensions
   ///
   int num_dims_{0};
-  
+
   // MDFields that thermal inertia depends on
-  PHX::MDField<ScalarT, Cell, QuadPoint> density_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> heat_capacity_;
-  PHX::MDField<ScalarT, Cell, QuadPoint> dfdT_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> density_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> heat_capacity_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> dfdT_;
 
   ///
   /// Contains the mixture model thermal inertia value

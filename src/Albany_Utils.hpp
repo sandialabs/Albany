@@ -7,30 +7,14 @@
 #ifndef ALBANY_UTILS_H
 #define ALBANY_UTILS_H
 
+// Get Albany configuration macros
+#include "Albany_config.h"
+
 // For cudaCheckError
 #include <stdexcept>
 
 #include <sstream>
 
-#ifdef ALBANY_MPI
-#define Albany_MPI_Comm MPI_Comm
-#define Albany_MPI_COMM_WORLD MPI_COMM_WORLD
-#define Albany_MPI_COMM_NULL MPI_COMM_NULL
-// IKT, FIXME: remove || defined(ALBANY_ATO) below
-#if defined(ALBANY_EPETRA) || defined(ALBANY_ATO)
-#include "Epetra_MpiComm.h"
-#endif
-#include "Teuchos_DefaultMpiComm.hpp"
-#else
-#define Albany_MPI_Comm int
-#define Albany_MPI_COMM_WORLD 0  // This is compatible with Dakota
-#define Albany_MPI_COMM_NULL 99
-// IKT, FIXME: remove || defined(ALBANY_ATO) below
-#if defined(ALBANY_EPETRA) || defined(ALBANY_ATO)
-#include "Epetra_SerialComm.h"
-#endif
-#include "Teuchos_DefaultSerialComm.hpp"
-#endif
 #include "Albany_DataTypes.hpp"
 #include "Teuchos_RCP.hpp"
 
@@ -52,11 +36,11 @@ cudaError(const char* file, int line) {
 #define cudaCheckError()
 #endif
 
-// NVTX Range creates a colored range which can be viewed on the nvvp timeline 
+// NVTX Range creates a colored range which can be viewed on the nvvp timeline
 // (from Parallel Forall blog)
 #ifdef ALBANY_CUDA_NVTX
 #include "nvToolsExt.h"
-static const uint32_t nvtx_colors[] = { 0x0000ff00, 0x000000ff, 0x00ffff00, 
+static const uint32_t nvtx_colors[] = { 0x0000ff00, 0x000000ff, 0x00ffff00,
     0x00ff00ff, 0x0000ffff, 0x00ff0000, 0x00ffffff };
 static const int num_nvtx_colors = sizeof(nvtx_colors)/sizeof(uint32_t);
 #define PUSH_RANGE(name,cid) { \
@@ -99,8 +83,7 @@ AbsRowSum(
     Teuchos::RCP<Tpetra_Vector>& absRowSumsTpetra,
     const Teuchos::RCP<Tpetra_CrsMatrix> matrix);
 
-// IKT, FIXME: ultimately get ride of || defined (ALBANY_ATO) below
-#if defined(ALBANY_EPETRA) || defined(ALBANY_ATO)
+#if defined(ALBANY_EPETRA)
 
 Albany_MPI_Comm
 getMpiCommFromEpetraComm(const Epetra_Comm& ec);

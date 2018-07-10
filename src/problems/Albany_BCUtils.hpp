@@ -188,6 +188,11 @@ class BCUtils {
   getOffsets() const {
     return offsets_;
   }
+  
+  std::vector<std::string> 
+  getNodeSetIDs() const {
+    return nodeSetIDs_;
+  }
 
   bool useSDBCs() const { return use_sdbcs_; }
 
@@ -265,6 +270,7 @@ class BCUtils {
 
  protected:
    Teuchos::Array<Teuchos::Array<int>> offsets_;
+   std::vector<std::string> nodeSetIDs_;
    bool use_sdbcs_{false};
 };
 

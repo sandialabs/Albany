@@ -16,8 +16,8 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${SEACAS_EXODIFF} ${CMAKE_CURRENT_BINARY_DIR}/exodiff)
 
 # Copy script file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/run_partition.py
-               ${CMAKE_CURRENT_BINARY_DIR}/run_partition.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/run_partition.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/run_partition.cmake COPYONLY)
 
 # Copy the input file to the test directory
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.e
@@ -33,6 +33,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/partition.exodiff
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
-add_test(NAME ${testName} COMMAND "python" "run_partition.py")
 
+SET(OUTFILE  "output.e")
+SET(REF_FILE "partition.gold.e")
+add_test(NAME ${testName}
+         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${PartitionTest.exe}"
+         -DTEST_NAME=partition -DMPIMNP=1
+         -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+         -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/run_partition.cmake)
 ENDIF()

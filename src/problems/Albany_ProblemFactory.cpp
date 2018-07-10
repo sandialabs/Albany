@@ -389,6 +389,9 @@ Albany::ProblemFactory::create()
   }
 #endif
 #ifdef ALBANY_TSUNAMI
+  else if (method == "Tsunami Steady Stokes 2D" ) {
+    strategy = rcp(new Tsunami::NavierStokes(problemParams, paramLib, 2, false, false));
+  }
   else if (method == "Tsunami Navier Stokes 2D" ) {
     strategy = rcp(new Tsunami::NavierStokes(problemParams, paramLib, 2));
   }

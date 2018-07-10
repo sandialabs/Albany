@@ -1,0 +1,151 @@
+#ifndef ALBANY_CONFIG_H
+#define ALBANY_CONFIG_H
+
+// ======================== Albany packages and subpackages macros ============================== //
+
+#cmakedefine ALBANY_AERAS
+#cmakedefine ALBANY_AFRL
+#cmakedefine ALBANY_ANISO
+#cmakedefine ALBANY_APF
+#cmakedefine ALBANY_ATO
+#cmakedefine ALBANY_CATALYST
+#cmakedefine ALBANY_FELIX
+#cmakedefine ALBANY_HYDRIDE
+#cmakedefine ALBANY_LCM
+#cmakedefine ALBANY_MOR
+#cmakedefine ALBANY_PERIDIGM
+#cmakedefine ALBANY_QCAD
+#cmakedefine ALBANY_TSUNAMI
+
+// ===================== Macros to identify packages found in Trilinos ======================= //
+
+#cmakedefine ALBANY_AMESOS2
+#cmakedefine ALBANY_DTK
+#cmakedefine ALBANY_EPETRA
+#cmakedefine ALBANY_IFPACK2
+#cmakedefine ALBANY_MUELU
+#cmakedefine ALBANY_PAMGEN
+#cmakedefine ALBANY_PANZER_EXPR_EVAL
+#cmakedefine ALBANY_RBGEN
+#cmakedefine ALBANY_ROL
+#cmakedefine ALBANY_RYTHMOS
+#cmakedefine ALBANY_SCOREC
+#cmakedefine ALBANY_SCOREC_SIMMODEL
+#cmakedefine ALBANY_SEACAS
+#cmakedefine ALBANY_STOKHOS
+#cmakedefine ALBANY_STK
+#cmakedefine ALBANY_STK_PERCEPT
+#cmakedefine ALBANY_STK_REBALANCE
+#cmakedefine ALBANY_TEKO
+#cmakedefine ALBANY_TEMPUS
+#cmakedefine ALBANY_ZOLTAN
+
+// ========================== General Albany build and capabilities options ============================== //
+
+// Whether Albany was compiled with MPI enabled
+#cmakedefine ALBANY_MPI
+
+// Whether pde examples should be built
+#cmakedefine ALBANY_DEMO_PDES
+
+// Whether mesh and parameters depend on each others and/or solution
+#cmakedefine ALBANY_MESH_DEPENDS_ON_PARAMETERS
+#cmakedefine ALBANY_MESH_DEPENDS_ON_SOLUTION
+#cmakedefine ALBANY_PARAMETERS_DEPEND_ON_SOLUTION
+
+// Whether to use 64bit integers as Global Ordinals
+#cmakedefine ALBANY_64BIT_INT
+
+// Cuda options
+#cmakedefine ALBANY_CUDA_ERROR_CHECK
+#cmakedefine ALBANY_CUDA_NVTX
+
+// Whether this is a nightly test build
+#cmakedefine ALBANY_NIGHTLY_TEST
+
+// Whether Albany output should be verbose
+#cmakedefine ALBANY_VERBOSE
+
+// Whether and how to check floating point exceptions
+#cmakedefine ALBANY_CHECK_FPE
+#cmakedefine ALBANY_STRONG_FPE_CHECK
+
+// Whether to allow deprecated code to compile without warnings
+#cmakedefine ALBANY_ENABLE_DEPRECATED
+
+// Whether we are supporting coupling with Dakota
+#cmakedefine ALBANY_DAKOTA
+
+// I'm not sure what HAVE_CONFIG_H is for, since it does not appear in Albany.
+// Before creating Albany_config.h, however, it was defined together with
+// ALBANY_DAKOTA, so I'm assuming it only matters in that case.
+#ifdef ALBANY_DAKOTA
+#define HAVE_CONFIG_H
+#endif
+
+// Macros for memory analysis
+#cmakedefine ALBANY_HAVE_MALLINFO
+#cmakedefine ALBANY_HAVE_GETRUSAGE
+#cmakedefine ALBANY_HAVE_KERNELGETMEMORYSIZE
+
+// Enable enhanced debugging features
+#cmakedefine ALBANY_DEBUG
+
+// Macro to isolate experimental kokkos development code
+#cmakedefine ALBANY_KOKKOS_UNDER_DEVELOPMENT
+
+// FTZ/DAZ macro
+#cmakedefine ALBANY_FLUSH_DENORMALS
+
+// Static SLFAD data type
+#cmakedefine ALBANY_SLFAD_SIZE ${SLFAD_SIZE}
+
+// ============= Macros used to enable additional code, not limited to a particular package ============== //
+
+#cmakedefine ALBANY_CONTACT
+#cmakedefine ALBANY_OMEGA_H
+#cmakedefine ALBANY_AMP
+#cmakedefine ALBANY_CTM
+#cmakedefine ALBANY_ASCR
+#cmakedefine ALBANY_BGL
+
+// ================ Package-specific macros ================= //
+
+#ifdef ALBANY_AERAS
+  #cmakedefine AERAS_IMPLICIT_HS
+#endif
+
+#ifdef ALBANY_ATO
+  // --- ATO
+  #cmakedefine ATO_USES_ISOLIB
+  #cmakedefine ATO_USES_DOTK
+  #cmakedefine ATO_USES_NLOPT
+  #cmakedefine ATO_USES_COGENT
+  #cmakedefine ALBANY_ATO_SOLVER_EPETRA
+#endif
+
+#ifdef ALBANY_FELIX
+  // --- FELIX
+  #cmakedefine CISM_HAS_FELIX
+  #cmakedefine MPAS_HAS_FELIX
+  #cmakedefine ALBANY_FAST_FELIX
+  #cmakedefine CISM_CHECK_COMPARISONS
+  #cmakedefine REDUCED_COMM
+  #cmakedefine CISM_USE_EPETRA
+  #cmakedefine MPAS_USE_EPETRA
+  #cmakedefine USE_CISM_FLOW_PARAMETERS
+#endif
+
+#ifdef ALBANY_LCM
+  // --- LCM
+  #cmakedefine ALBANY_LAME
+  #cmakedefine ALBANY_LAMENT
+  #cmakedefine LCM_SPECULATIVE
+  #cmakedefine ALBANY_YAML
+#endif
+
+#ifdef ALBANY_QCAD
+  #cmakedefine ALBANY_CI
+#endif
+
+#endif // ALBANY_CONFIG_H

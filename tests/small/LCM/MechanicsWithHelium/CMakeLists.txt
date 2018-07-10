@@ -56,14 +56,59 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHeliumV2.gold.e
                ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHeliumV2.gold.e COPYONLY)
 
 # python runtest file
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
-               ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/runtestT.cmake COPYONLY)
 
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
-  add_test(NAME ${testName} COMMAND "python" "runtestT.py")
+  #test 1: just Mechanics
+  SET(OUTFILE "Mechanics.e")
+  SET(REF_FILE "Mechanics.gold.e")
+  add_test(NAME ${testName}_JustMechanics
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+           -DTEST_NAME=Mechanics -DTEST_ARGS=Mechanics.yaml -DMPIMNP=1
+           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtestT.cmake)
+  #test 2: Mechanics and Hydrogen
+  SET(OUTFILE "MechanicsAndHydrogen.e")
+  SET(REF_FILE "MechanicsAndHydrogen.gold.e")
+  add_test(NAME ${testName}_MechanicsAndHydrogen
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+           -DTEST_NAME=MechanicsAndHydrogen -DTEST_ARGS=MechanicsAndHydrogen.yaml -DMPIMNP=1
+           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtestT.cmake)
+  #test 3: Mechanics and Hydrogen version 2 
+  SET(OUTFILE "MechanicsAndHydrogenV2.e")
+  SET(REF_FILE "MechanicsAndHydrogenV2.gold.e")
+  add_test(NAME ${testName}_MechanicsAndHydrogenV2
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+           -DTEST_NAME=MechanicsAndHydrogenV2 -DTEST_ARGS=MechanicsAndHydrogenV2.yaml -DMPIMNP=1
+           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtestT.cmake)
+  #test 4: Mechanics and Helium
+  SET(OUTFILE "MechanicsAndHelium.e")
+  SET(REF_FILE "MechanicsAndHelium.gold.e")
+  add_test(NAME ${testName}_MechanicsAndHelium
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+           -DTEST_NAME=MechanicsAndHelium -DTEST_ARGS=MechanicsAndHelium.yaml -DMPIMNP=1
+           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtestT.cmake)
+  #test 5: Mechanics and Helium version 2
+  SET(OUTFILE "MechanicsAndHeliumV2.e")
+  SET(REF_FILE "MechanicsAndHeliumV2.gold.e")
+  add_test(NAME ${testName}_MechanicsAndHeliumV2
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+           -DTEST_NAME=MechanicsAndHeliumV2 -DTEST_ARGS=MechanicsAndHeliumV2.yaml -DMPIMNP=1
+           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtestT.cmake)
+
 ENDIF()
 endif(ALBANY_IFPACK2 AND SEACAS_EXODIFF)

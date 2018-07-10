@@ -9,6 +9,9 @@
 #ifndef PHAL_FACTORY_TRAITS_HPP
 #define PHAL_FACTORY_TRAITS_HPP
 
+// Pull in all Albany configuration macros
+#include "Albany_config.h"
+
 // User Defined Evaluator Types
 
 #if defined(ALBANY_LCM)
@@ -20,10 +23,10 @@
 #include "LCM/evaluators/bc/TimeTracBC.hpp"
 #include "LCM/evaluators/bc/TorsionBC.hpp"
 #include "LCM/evaluators/Time.hpp"
-#if defined(HAVE_STK)
+#if defined(ALBANY_STK)
 #include "LCM/evaluators/bc/SchwarzBC.hpp"
 #include "LCM/evaluators/bc/StrongSchwarzBC.hpp"
-#endif // HAVE_STK
+#endif // ALBANY_STK
 #endif // ALBANY_LCM
 
 #ifdef ALBANY_QCAD
@@ -74,7 +77,7 @@ namespace PHAL {
     static const int id_dirichlet_field                =  3;
     static const int id_dirichlet_off_nodeset          =  4; // To handle equations on side set (see PHAL_DirichletOffNodeSet)
     static const int id_qcad_poisson_dirichlet         =  5;
-    static const int id_sdbc                           =  6; 
+    static const int id_sdbc                           =  6;
     static const int id_kfield_bc                      =  7; // Only for LCM probs
     static const int id_eq_concentration_bc            =  8; // Only for LCM probs
     static const int id_timedep_bc                     =  9; // Only for LCM probs
@@ -107,7 +110,7 @@ namespace PHAL {
         LCM::TorsionBC<_, Traits>,                 // 11
         LCM::TimeDepSDBC<_, Traits>               // 12
 #endif
-#if defined(ALBANY_LCM) && defined(HAVE_STK)
+#if defined(ALBANY_LCM) && defined(ALBANY_STK)
         ,
         LCM::SchwarzBC<_, Traits>,                 // 13
         LCM::StrongSchwarzBC<_, Traits>,           // 14

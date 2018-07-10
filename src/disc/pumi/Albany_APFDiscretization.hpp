@@ -8,6 +8,8 @@
 #ifndef ALBANY_APFDISCRETIZATION_HPP
 #define ALBANY_APFDISCRETIZATION_HPP
 
+#include "Albany_AbstractDiscretization.hpp"
+
 #include <vector>
 #include <functional>
 
@@ -17,7 +19,6 @@
 #include "Epetra_Comm.h"
 #endif
 
-#include "Albany_AbstractDiscretization.hpp"
 #include "Albany_APFMeshStruct.hpp"
 #include "Albany_PUMIOutput.hpp"
 
@@ -169,14 +170,14 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void writeAnySolutionToFile(const double time);
     void writeSolutionT(const Tpetra_Vector& soln, const double time, const bool overlapped = false) override;
     void writeSolutionT(const Tpetra_Vector& soln, const Tpetra_Vector &soln_dot, const double time, const bool overlapped = false) override;
-    void writeSolutionT(const Tpetra_Vector& soln, const Tpetra_Vector &soln_dot, 
+    void writeSolutionT(const Tpetra_Vector& soln, const Tpetra_Vector &soln_dot,
                         const Tpetra_Vector& soln_dotdot, const double time, const bool overlapped = false) override;
     void writeSolutionMV(const Tpetra_MultiVector& soln, const double time, const bool overlapped = false) override;
     void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const double time, const bool overlapped = false) override;
-    void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const Tpetra_Vector &soln_dot, 
+    void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const Tpetra_Vector &soln_dot,
                                       const double time, const bool overlapped = false) override;
-    void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const Tpetra_Vector &soln_dot, 
-                                      const Tpetra_Vector& soln_dotdot, 
+    void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const Tpetra_Vector &soln_dot,
+                                      const Tpetra_Vector& soln_dotdot,
                                       const double time, const bool overlapped = false) override;
     void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector& soln, const double time, const bool overlapped = false) override;
     void writeSolutionToFileT(const Tpetra_Vector& soln, const double time, const bool overlapped = false) override;

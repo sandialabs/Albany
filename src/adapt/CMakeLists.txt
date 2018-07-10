@@ -34,7 +34,7 @@ SET(HEADERS
     AAdapt_RC_Projector_impl.hpp
    )
 
-IF(ALBANY_HAVE_STK)
+IF(ALBANY_STK)
   SET(SOURCES ${SOURCES}
     AAdapt_CopyRemeshT.cpp
   )
@@ -59,7 +59,7 @@ IF (ALBANY_EPETRA)
     AAdapt_AdaptiveModelFactory.hpp
     AAdapt_ThyraAdaptiveModelEvaluator.hpp
   )
-  IF(ALBANY_HAVE_STK)
+  IF(ALBANY_STK)
     SET(SOURCES ${SOURCES}
       AAdapt_CopyRemesh.cpp
     )
@@ -71,7 +71,7 @@ ENDIF()
 
 # Random Criterion & Stress Fracture depend on LCM
 # Speculative features and code, currently
-IF(ALBANY_LCM AND LCM_SPECULATIVE AND ALBANY_HAVE_STK)
+IF(ALBANY_LCM AND LCM_SPECULATIVE AND ALBANY_STK)
 
 SET(SOURCES ${SOURCES}
     AAdapt_RandomCriterion.cpp
@@ -94,7 +94,7 @@ ENDIF()
 ENDIF()
 
 # Topology Modification depends on LCM and STK
-IF(ALBANY_LCM AND ALBANY_HAVE_STK AND ALBANY_BGL)
+IF(ALBANY_LCM AND ALBANY_STK AND ALBANY_BGL)
 
 SET(SOURCES ${SOURCES}
     AAdapt_TopologyModificationT.cpp
@@ -117,7 +117,7 @@ ENDIF()
 
 ENDIF()
 
-IF(ALBANY_LCM AND ALBANY_STK_PERCEPT AND ALBANY_HAVE_STK)
+IF(ALBANY_LCM AND ALBANY_STK_PERCEPT AND ALBANY_STK)
 
 SET(SOURCES ${SOURCES}
     AAdapt_STKAdaptT.cpp

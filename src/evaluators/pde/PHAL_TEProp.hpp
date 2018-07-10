@@ -14,34 +14,31 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Sacado_ParameterAccessor.hpp"
-#ifdef ALBANY_STOKHOS
-#include "Stokhos_KL_ExponentialRandomField.hpp"
-#endif
 #include "Teuchos_Array.hpp"
 
 namespace PHAL {
-/** 
+/**
  * \brief Evaluates thermal conductivity, either as a constant or a truncated
  * KL expansion.
  */
 
 template<typename EvalT, typename Traits>
-class TEProp : 
+class TEProp :
   public PHX::EvaluatorWithBaseImpl<Traits>,
   public PHX::EvaluatorDerived<EvalT, Traits>,
   public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-  
+
 public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   TEProp(Teuchos::ParameterList& p);
-  
+
   void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
-  
+           PHX::FieldManager<Traits>& vm);
+
   void evaluateFields(typename Traits::EvalData d);
-  
+
   ScalarT& getValue(const std::string &n);
 
 private:

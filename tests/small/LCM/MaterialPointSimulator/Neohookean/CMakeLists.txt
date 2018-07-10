@@ -8,6 +8,8 @@ if(SEACAS_EXODIFF)
 # Create a symlink to the runtest.py script
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${runtest.py} ${CMAKE_CURRENT_BINARY_DIR}/runtest.py)
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ${MPS.cmake} ${CMAKE_CURRENT_BINARY_DIR}/MPS.cmake)
 
 # Create a symlink to the MPS
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
@@ -16,10 +18,6 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 # Create a symlink to exodiff
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${SEACAS_EXODIFF} ${CMAKE_CURRENT_BINARY_DIR}/exodiff)
-
-# Copy script file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean.py
-               ${CMAKE_CURRENT_BINARY_DIR}/Neohookean.py COPYONLY)
 
 # Copy Input files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-uniaxial.yaml
@@ -58,6 +56,41 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-general.exodiff
 # Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-# Run the "runtest.py" file in the CWD
-add_test(NAME ${testName} COMMAND "python" "Neohookean.py")
+# Run the tests
+#test 1 - uniaxial
+SET(OUTFILE "Neohookean-uniaxial.exo")
+SET(REF_FILE "Neohookean-uniaxial.gold.exo")
+add_test(NAME ${testName}_uniaxial
+         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${MPS.exe}"
+         -DTEST_NAME=Neohookean-uniaxial -DTEST_ARGS=--input=Neohookean-uniaxial.yaml -DMPIMNP=1
+         -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+         -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${MPS.cmake})
+#test 2 - shear
+SET(OUTFILE "Neohookean-shear.exo")
+SET(REF_FILE "Neohookean-shear.gold.exo")
+add_test(NAME ${testName}_shear
+         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${MPS.exe}"
+         -DTEST_NAME=Neohookean-shear -DTEST_ARGS=--input=Neohookean-shear.yaml -DMPIMNP=1
+         -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+         -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${MPS.cmake})
+#test 3 - hydrostatic
+SET(OUTFILE "Neohookean-hydrostatic.exo")
+SET(REF_FILE "Neohookean-hydrostatic.gold.exo")
+add_test(NAME ${testName}_hydrostatic
+         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${MPS.exe}"
+         -DTEST_NAME=Neohookean-hydrostatic -DTEST_ARGS=--input=Neohookean-hydrostatic.yaml -DMPIMNP=1
+         -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+         -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${MPS.cmake})
+#test 4 - general
+SET(OUTFILE "Neohookean-general.exo")
+SET(REF_FILE "Neohookean-general.gold.exo")
+add_test(NAME ${testName}_general
+         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${MPS.exe}"
+         -DTEST_NAME=Neohookean-general -DTEST_ARGS=--input=Neohookean-general.yaml -DMPIMNP=1
+         -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+         -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${MPS.cmake}) 
 endif(SEACAS_EXODIFF)

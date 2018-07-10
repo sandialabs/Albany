@@ -101,6 +101,7 @@ Albany::LaplaceBeltramiProblem::constructDirichletEvaluators(const std::vector<s
                                       this->params, this->paramLib, numDim);
   use_sdbcs_ = bcUtils.useSDBCs(); 
   offsets_ = bcUtils.getOffsets(); 
+  nodeSetIDs_ = bcUtils.getNodeSetIDs();
 }
 
 

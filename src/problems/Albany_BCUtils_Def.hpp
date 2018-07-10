@@ -161,7 +161,10 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
   using PHX::MDALayout;
   using PHAL::AlbanyTraits;
 
-  use_sdbcs_ = false; 
+  use_sdbcs_ = false;
+  nodeSetIDs_.resize(nodeSetIDs.size()); 
+  for (int i=0; i<nodeSetIDs.size(); i++) 
+    nodeSetIDs_[i] = nodeSetIDs[i]; 
 
   if (!haveBCSpecified(
           params)) {  // If the BC sublist is not in the input file,
@@ -866,7 +869,6 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
   }
 
 #endif
-
   ///
   /// SideSet equations case: DBC to handle nodes not on the side set
   ///
@@ -1144,6 +1146,7 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
         string ss = traits_type::constructTimeDepBCName(
             meshSpecs->ssNames[i], bcNames[j], conditions[k]);
 
+        
         // Have a match of the line in input.xml
 
         if (BCparams.isSublist(ss)) {

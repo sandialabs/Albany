@@ -179,6 +179,7 @@ void Hydrology::constructDirichletEvaluators (const Albany::MeshSpecsStruct& mes
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
   offsets_ = dirUtils.getOffsets();
+  nodeSetIDs_ = dirUtils.getNodeSetIDs();
 }
 
 void Hydrology::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)

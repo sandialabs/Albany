@@ -19,7 +19,6 @@
 #include "Albany_ModelEvaluator.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_Utils.hpp"
-#include "Piro_Epetra_StokhosNOXObserver.hpp"
 
 #include "Albany_MaterialDatabase.hpp"
 #include "Petra_Converters.hpp"
@@ -43,8 +42,8 @@ namespace QCAD {
     //@{
 
       CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
-				const Teuchos::RCP<const Epetra_Comm>& comm,
-				const Teuchos::RCP<const Epetra_Vector>& initial_guess);
+        const Teuchos::RCP<const Epetra_Comm>& comm,
+        const Teuchos::RCP<const Epetra_Vector>& initial_guess);
     //@}
 
     ~CoupledPoissonSchrodinger();
@@ -78,22 +77,22 @@ namespace QCAD {
 
   public:  //as public for QCAD::Solver and QCAD::CoupledPSObserver to use -- maybe make these friends and declare private?
     void separateCombinedVector(const Teuchos::RCP<Epetra_Vector>& combinedVector,
-				Teuchos::RCP<Epetra_Vector>& poisson_part,
-				Teuchos::RCP<Epetra_MultiVector>& schrodinger_part) const;
+        Teuchos::RCP<Epetra_Vector>& poisson_part,
+        Teuchos::RCP<Epetra_MultiVector>& schrodinger_part) const;
 
     void separateCombinedVector(const Teuchos::RCP<Epetra_Vector>& combinedVector,
-				Teuchos::RCP<Epetra_Vector>& poisson_part,
-				Teuchos::RCP<Epetra_MultiVector>& schrodinger_part,
-				Teuchos::RCP<Epetra_Vector>& eigenvalue_part) const;
+        Teuchos::RCP<Epetra_Vector>& poisson_part,
+        Teuchos::RCP<Epetra_MultiVector>& schrodinger_part,
+        Teuchos::RCP<Epetra_Vector>& eigenvalue_part) const;
 
     void separateCombinedVector(const Teuchos::RCP<const Epetra_Vector>& combinedVector,
-				Teuchos::RCP<const Epetra_Vector>& poisson_part,
-				Teuchos::RCP<const Epetra_MultiVector>& schrodinger_part) const;
+        Teuchos::RCP<const Epetra_Vector>& poisson_part,
+        Teuchos::RCP<const Epetra_MultiVector>& schrodinger_part) const;
 
     void separateCombinedVector(const Teuchos::RCP<const Epetra_Vector>& combinedVector,
-				Teuchos::RCP<const Epetra_Vector>& poisson_part,
-				Teuchos::RCP<const Epetra_MultiVector>& schrodinger_part,
-				Teuchos::RCP<const Epetra_Vector>& eigenvalue_part) const;
+        Teuchos::RCP<const Epetra_Vector>& poisson_part,
+        Teuchos::RCP<const Epetra_MultiVector>& schrodinger_part,
+        Teuchos::RCP<const Epetra_Vector>& eigenvalue_part) const;
 
 
   private:
@@ -103,8 +102,8 @@ namespace QCAD {
 
     //Solely for testing Jacobian
     //void computeResidual(const Teuchos::RCP<const Epetra_Vector>& x,
-    //			 Teuchos::RCP<Epetra_Vector>& f,
-    //			 Teuchos::RCP<Epetra_CrsMatrix>& massMx) const;
+    //       Teuchos::RCP<Epetra_Vector>& f,
+    //       Teuchos::RCP<Epetra_CrsMatrix>& massMx) const;
 
 
   private:

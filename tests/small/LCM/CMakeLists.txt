@@ -21,7 +21,7 @@ add_subdirectory(UnitTests)
 # amota: Deactivating Catalyst as it is unclear who owns it
 # add_subdirectory(Catalyst)
 
-IF(ALBANY_HAVE_STK)
+IF(ALBANY_STK)
   IF(ALBANY_SEACAS)
     add_subdirectory(BoreDemo)
     add_subdirectory(CohesiveElement)
@@ -61,7 +61,7 @@ IF(ALBANY_HAVE_STK)
       add_subdirectory(PeridigmCoupling)
     ENDIF()
   ENDIF(ALBANY_SEACAS)
-ENDIF(ALBANY_HAVE_STK)
+ENDIF(ALBANY_STK)
 
 IF(ALBANY_LAME)
     add_subdirectory(LameStaticElasticity3D)

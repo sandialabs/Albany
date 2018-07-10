@@ -6,6 +6,8 @@
 #ifndef ALBANY_OBSERVERFACTORY_HPP
 #define ALBANY_OBSERVERFACTORY_HPP
 
+#include "Albany_config.h"
+
 #include "NOX_Epetra_Observer.H"
 #if defined(ALBANY_EPETRA) && defined(ALBANY_RYTHMOS)
 #include "Rythmos_IntegrationObserverBase.hpp"

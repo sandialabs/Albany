@@ -97,6 +97,7 @@ Albany::HydrideProblem::constructDirichletEvaluators(const std::vector<std::stri
                                           this->params, this->paramLib);
    use_sdbcs_ = bcUtils.useSDBCs(); 
    offsets_ = bcUtils.getOffsets(); 
+   nodeSetIDs_ = bcUtils.getNodeSetIDs();
 }
 
 // Neumann BCs

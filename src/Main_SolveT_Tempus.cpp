@@ -258,13 +258,10 @@ int main(int argc, char *argv[]) {
   bool computeSensitivities = true; 
 
   try {
-    RCP<Teuchos::Time> totalTime =
-      Teuchos::TimeMonitor::getNewTimer("Albany: ***Total Time***");
-
-    RCP<Teuchos::Time> setupTime =
-      Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time");
-    Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
-    Teuchos::TimeMonitor setupTimer(*setupTime); //start timer
+    auto totalTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
+        *Teuchos::TimeMonitor::getNewTimer("Albany: Total Time")));
+    auto setupTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
+        *Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")));
 
     RCP<const Teuchos_Comm> comm =
       Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
@@ -279,7 +276,7 @@ int main(int argc, char *argv[]) {
     const RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > solver =
       slvrfctry.createAndGetAlbanyAppT(app, comm, comm);
     
-    setupTimer.~TimeMonitor();
+    setupTimer = Teuchos::null;
 
     Teuchos::ParameterList &appPL = slvrfctry.getParameters();
     // Create debug output object

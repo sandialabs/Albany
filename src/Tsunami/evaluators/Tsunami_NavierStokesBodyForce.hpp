@@ -43,6 +43,7 @@ private:
 
   // Input:  
   PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+  PHX::MDField<const ScalarT,Cell,QuadPoint>          viscosityQP;
   
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
@@ -53,7 +54,8 @@ private:
 
   unsigned int numQPs, numDims;
 
-  double mu; 
+  bool use_params_on_mesh; 
+
 };
 }
 

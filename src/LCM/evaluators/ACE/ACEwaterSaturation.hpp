@@ -55,24 +55,24 @@ class ACEwaterSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
   getValue(const std::string& n);
 
  private:
-   
+
   ///
   /// Number of integration points
   ///
   int num_qps_{0};
-  
+
   ///
   /// Number of problem dimensions
   ///
   int num_dims_{0};
-  
+
   ///
   /// Minimum water saturation
   ///
   ScalarT min_water_saturation_{0.05};
-  
+
   // MDFields that water saturation depends on
-  PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> ice_saturation_;
 
   ///
   /// Contains the water saturation values

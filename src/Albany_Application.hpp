@@ -7,6 +7,8 @@
 #ifndef ALBANY_APPLICATION_HPP
 #define ALBANY_APPLICATION_HPP
 
+#include "Albany_config.h"
+
 #include "Teuchos_ArrayRCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
@@ -85,7 +87,7 @@ public:
   Application(
       const Teuchos::RCP<const Teuchos_Comm> &comm,
       const Teuchos::RCP<Teuchos::ParameterList> &params,
-      const Teuchos::RCP<const Tpetra_Vector> &initial_guess = Teuchos::null, 
+      const Teuchos::RCP<const Tpetra_Vector> &initial_guess = Teuchos::null,
       const bool schwarz = false);
 
   //! Constructor
@@ -205,20 +207,23 @@ public:
   void
   computeGlobalResidualT(const double current_time, const Tpetra_Vector *xdotT,
                          const Tpetra_Vector *xdotdotT, const Tpetra_Vector &xT,
-                         const Teuchos::Array<ParamVec> &p, Tpetra_Vector &fT);
+                         const Teuchos::Array<ParamVec> &p, Tpetra_Vector &fT,
+                         const double dt = 0.0);
 
 private:
   void computeGlobalResidualImplT(
       const double current_time, const Teuchos::RCP<const Tpetra_Vector> &xdotT,
       const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
       const Teuchos::RCP<const Tpetra_Vector> &xT,
-      const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT);
+      const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
+      const double dt = 0.0);
 
   void computeGlobalResidualSDBCsImplT(
       const double current_time, const Teuchos::RCP<const Tpetra_Vector> &xdotT,
       const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
       const Teuchos::RCP<const Tpetra_Vector> &xT,
-      const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT);
+      const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
+      const double dt = 0.0);
 
 public:
 //! Compute global Jacobian
@@ -241,7 +246,8 @@ public:
                               const Tpetra_Vector *xdotdotT,
                               const Tpetra_Vector &xT,
                               const Teuchos::Array<ParamVec> &p,
-                              Tpetra_Vector *fT, Tpetra_CrsMatrix &jacT);
+                              Tpetra_Vector *fT, Tpetra_CrsMatrix &jacT,
+                              const double dt = 0.0);
 
 private:
   void computeGlobalJacobianImplT(
@@ -250,7 +256,8 @@ private:
       const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
       const Teuchos::RCP<const Tpetra_Vector> &xT,
       const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
-      const Teuchos::RCP<Tpetra_CrsMatrix> &jacT);
+      const Teuchos::RCP<Tpetra_CrsMatrix> &jacT,
+      const double dt = 0.0);
 
   void computeGlobalJacobianSDBCsImplT(
       const double alpha, const double beta, const double omega,
@@ -258,7 +265,8 @@ private:
       const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
       const Teuchos::RCP<const Tpetra_Vector> &xT,
       const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
-      const Teuchos::RCP<Tpetra_CrsMatrix> &jacT);
+      const Teuchos::RCP<Tpetra_CrsMatrix> &jacT,
+      const double dt = 0.0);
 
 public:
   //! Compute global Preconditioner
@@ -455,7 +463,7 @@ public:
   //! Routine to get workset (bucket) size info needed by all Evaluation types
   template <typename EvalT>
   void loadWorksetBucketInfo(PHAL::Workset &workset, const int &ws);
-  
+
 #if defined(ALBANY_EPETRA)
   void loadBasicWorksetInfo(PHAL::Workset &workset, double current_time);
 #endif
@@ -663,8 +671,8 @@ private:
 
 protected:
 
-  bool is_schwarz_; 
-  
+  bool is_schwarz_;
+
   bool no_dir_bcs_;
 
   bool requires_sdbcs_;
@@ -813,6 +821,7 @@ protected:
 
   // The following are for Jacobian/residual scaling
   Teuchos::Array<Teuchos::Array<int>> offsets_;
+  std::vector<std::string> nodeSetIDs_;
   Teuchos::RCP<Tpetra_Vector> scaleVec_;
 
   // boolean read from input file telling code whether to compute/print

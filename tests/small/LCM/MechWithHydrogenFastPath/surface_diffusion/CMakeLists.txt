@@ -16,7 +16,17 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surfaceDiffusion.exodiff
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surfaceDiffusion.gold.e
                ${CMAKE_CURRENT_BINARY_DIR}/surfaceDiffusion.gold.e COPYONLY)
 
+# Name the test with the directory name
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(MechWithHydrogenFastPath_surfaceDiffusion python ../run_exodiff_test.py "${SerialAlbanyT.exe}" surfaceDiffusion.yaml)
+ SET(OUTFILE "surfaceDiffusion.e")
+ SET(REF_FILE "surfaceDiffusion.gold.e")
+ add_test(NAME ${testName}_surfaceDiffusion
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+          -DTEST_NAME=surfaceDiffusion -DTEST_ARGS=surfaceDiffusion.yaml -DMPIMNP=1
+          -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+          -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
+
 endif()

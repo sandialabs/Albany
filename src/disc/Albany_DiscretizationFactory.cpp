@@ -7,7 +7,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Albany_DiscretizationFactory.hpp"
-#if defined(HAVE_STK)
+#if defined(ALBANY_STK)
 #include "Albany_STKDiscretization.hpp"
 #ifdef ALBANY_AERAS
 #include "Aeras_SpectralDiscretization.hpp"
@@ -42,7 +42,7 @@
 #include "Albany_Catalyst_Decorator.hpp"
 #endif
 
-#if defined(ALBANY_LCM) && defined(HAVE_STK)
+#if defined(ALBANY_LCM) && defined(ALBANY_STK)
 #include "Topology_Utils.h"
 #endif // ALBANY_LCM
 
@@ -107,7 +107,7 @@ namespace {
             Teuchos::RCP<Teuchos::ParameterList> const & adapt_params,
             Teuchos::RCP<Albany::AbstractMeshStruct> & mesh_struct
             ) {
-#if defined(HAVE_STK) // LCM only uses STK for adaptation here
+#if defined(ALBANY_STK) // LCM only uses STK for adaptation here
         // Top mod uses BGL
         bool const
         do_adaptation = adapt_params.is_null() == false;
@@ -231,13 +231,13 @@ Albany::DiscretizationFactory::createMeshSpecs() {
     // First, create the mesh struct
     meshStruct = createMeshStruct(discParams, adaptParams, commT);
 
-#if defined(ALBANY_LCM) && defined(HAVE_STK)
+#if defined(ALBANY_LCM) && defined(ALBANY_STK)
     // Add an interface block. For now relies on STK, so we force a cast that
     // will fail if the underlying meshStruct is not based on STK.
     createInterfaceParts(adaptParams, meshStruct);
 #endif // ALBANY_LCM
 
-#if defined(ALBANY_AERAS) && defined(HAVE_STK)
+#if defined(ALBANY_AERAS) && defined(ALBANY_STK)
     //IK, 2/9/15: if the method is Ioss Aeras or Exodus Aeras (corresponding to Aeras::SpectralDiscretization,
     //overwrite the meshSpecs of the meshStruct with an enriched one.
     std::string& method = discParams->get("Method", "STK1D");
@@ -266,7 +266,7 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
         Teuchos::RCP<const Teuchos_Comm> comm)
 {
     std::string& method = disc_params->get("Method", "STK1D");
-#if defined(HAVE_STK)
+#if defined(ALBANY_STK)
     if (method == "STK1D" || method == "STK1D Aeras") {
         return Teuchos::rcp(new Albany::TmplSTKMeshStruct<1>(disc_params, adapt_params, comm));
     } else if (method == "STK0D") {
@@ -345,7 +345,7 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
                 "Error: Discretization method " << method
                 << " requested, but no longe supported as of 10/2017" << std::endl);
     } else
-#endif // HAVE_STK
+#endif // ALBANY_STK
         if (method == "PUMI") {
 #ifdef ALBANY_SCOREC
         return Teuchos::rcp(new Albany::PUMIMeshStruct(disc_params, comm));
@@ -465,7 +465,7 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
 
     if (method != "Ioss Aeras" && method != "Exodus Aeras" && method != "STK1D Aeras") {
         switch (meshStruct->meshSpecsType()) {
-#if defined(HAVE_STK)
+#if defined(ALBANY_STK)
             case Albany::AbstractMeshStruct::STK_MS:
             {
                 Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
@@ -497,7 +497,7 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
 #endif
         }
     }
-#if defined(ALBANY_AERAS) && defined(HAVE_STK)
+#if defined(ALBANY_AERAS) && defined(ALBANY_STK)
     else if (method == "Ioss Aeras" || method == "Exodus Aeras" || method == "STK1D Aeras") {
         //IK, 1/8/15: Added construction of Aeras::SpectralDiscretization object.
         //WARNING: meshSpecsType() right now is set to STK_MS even for an Aeras::SpectralDiscretization, b/c that's how

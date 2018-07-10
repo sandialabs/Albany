@@ -13,6 +13,7 @@
     <Parameter name="Required Surface Fields" type="Array(string)" value="{surface_velocity}"/>
     <Parameter name="Basal Side Name"         type="string" value="basalside"/>
     <Parameter name="Surface Side Name"       type="string" value="upperside"/>
+    <Parameter name="Lateral Side Name"       type="string" value="lateralside"/>
 
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
@@ -25,13 +26,17 @@
     </ParameterList>
 
     <ParameterList name="Neumann BCs">
-       <Parameter name="NBC on SS lateralside for DOF all set lateral" type="Array(double)" value="{0.0, 0.0, 0.0, 0.0, 0.0}"/>
-       <Parameter name="Cubature Degree" type="int" value="3"/>
+       <!-- <Parameter name="NBC on SS lateralside for DOF all set lateral" type="Array(double)" value="{0.0, 0.0, 0.0, 0.0, 0.0}"/> -->
+       <!-- <Parameter name="Cubature Degree" type="int" value="3"/> -->
     </ParameterList>
 
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Parameter 0" type="string" value="Glen's Law Homotopy Parameter"/>
+    </ParameterList>
+
+    <ParameterList name="FELIX Lateral BC">
+      <Parameter name="Cubature Degree" type="int" value="3"/>
     </ParameterList>
 
     <ParameterList name="FELIX Physical Parameters">
@@ -301,6 +306,5 @@
     </ParameterList> <!-- NOX -->
 
   </ParameterList> <!-- Piro -->
-
 
 </ParameterList>

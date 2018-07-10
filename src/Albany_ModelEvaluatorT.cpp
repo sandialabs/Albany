@@ -709,10 +709,10 @@ Albany::ModelEvaluatorT::evalModelImpl(
                       inArgsT.get_beta() :
                       1.0;
 
-#if defined(ALBANY_LCM)
   bool const is_dynamic =
       Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT);
 
+#if defined(ALBANY_LCM)
   ST const curr_time = is_dynamic == true ? inArgsT.get_t() : getCurrentTime();
 #else
   const ST curr_time =
@@ -720,6 +720,11 @@ Albany::ModelEvaluatorT::evalModelImpl(
           inArgsT.get_t() :
           0.0;
 #endif  // ALBANY_LCM
+
+  double dt = 0.0; //time step 
+  if (is_dynamic == true) {
+    dt = inArgsT.get_step_size(); 
+  }
 
   for (int l = 0; l < inArgsT.Np(); ++l) {
     const Teuchos::RCP<const Thyra::VectorBase<ST>> p = inArgsT.get_p(l);
@@ -801,7 +806,8 @@ Albany::ModelEvaluatorT::evalModelImpl(
         *xT,
         sacado_param_vec,
         fT_out.get(),
-        *W_op_out_crsT);
+        *W_op_out_crsT,
+        dt);
     f_already_computed = true;
 #ifdef WRITE_MASS_MATRIX_TO_MM_FILE
     // IK, 4/24/15: write mass matrix to matrix market file
@@ -910,7 +916,8 @@ Albany::ModelEvaluatorT::evalModelImpl(
           x_dotdotT.get(),
           *xT,
           sacado_param_vec,
-          *fT_out);
+          *fT_out,
+          dt);
     }
   }
 
@@ -1051,11 +1058,13 @@ Albany::ModelEvaluatorT::createInArgsImpl() const
 
 #if defined(ALBANY_LCM)
   result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_t, true);
+  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_step_size, true);
 #endif
 
   if (supports_xdot) {
     result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x_dot, true);
     result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_t, true);
+    result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_step_size, true);
     result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_alpha, true);
     result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_beta, true);
   }

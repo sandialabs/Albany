@@ -7,15 +7,14 @@
 #if !defined(LCM_StrongSchwarzBC_hpp)
 #define LCM_StrongSchwarzBC_hpp
 
+#include "Albany_config.h"
+
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#if defined(ALBANY_EPETRA)
-#include "Epetra_Vector.h"
-#endif
 
 #include "Sacado_ParameterAccessor.hpp"
 #include "PHAL_AlbanyTraits.hpp"

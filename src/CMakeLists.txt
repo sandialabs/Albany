@@ -4,6 +4,12 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
+# Configure the file containing Albany configuration macros,
+# and add its folder to the include directories
+CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/Albany_config.h.in
+                ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h)
+INCLUDE_DIRECTORIES (${CMAKE_CURRENT_BINARY_DIR})
+
 
 INCLUDE(CheckCXXSourceCompiles)
 set(CMAKE_REQUIRED_INCLUDES ${Trilinos_INCLUDE_DIRS})
@@ -28,9 +34,7 @@ SET(SOURCES
   PHAL_Utilities.cpp
   )
 
-#IKT, FIXME: remove OR ALBANY_ATO from following if when
-#ATO is free of Epetra
-IF (ALBANY_EPETRA OR ALBANY_ATO)
+IF (ALBANY_EPETRA)
   SET(SOURCES ${SOURCES} Albany_ObserverFactory.cpp)
   SET(SOURCES ${SOURCES} Petra_Converters_64.cpp)
 ENDIF()
@@ -50,6 +54,7 @@ IF(ALBANY_EPETRA)
 ENDIF()
 
 SET(HEADERS
+  Albany_config.h
   Albany_Application.hpp
   Albany_DataTypes.hpp
   Albany_DistributedParameterLibrary.hpp
@@ -350,7 +355,7 @@ SET(SOURCES ${SOURCES}
   evaluators/utility/QCAD_MeshRegion.cpp
   )
 
-IF (ALBANY_HAVE_STK)
+IF (ALBANY_STK)
  SET(SOURCES ${SOURCES}
    evaluators/state/PHAL_SaveSideSetStateField.cpp)
 ENDIF()
@@ -525,7 +530,7 @@ SET(HEADERS ${HEADERS}
   evaluators/utility/QCAD_MeshRegion_Def.hpp
   )
 
-IF (ALBANY_HAVE_STK)
+IF (ALBANY_STK)
   SET(HEADERS ${HEADERS}
     evaluators/state/PHAL_SaveSideSetStateField.hpp
     evaluators/state/PHAL_SaveSideSetStateField_Def.hpp)
@@ -921,7 +926,7 @@ set(ALL_LIBRARIES
 add_subdirectory(adapt)
 add_subdirectory(disc)
 
-IF(ALBANY_HAVE_STK)
+IF(ALBANY_STK)
 SET(ALBANY_LIBRARIES albanyLib albanyAdapt albanySTK)
 ELSE()
 SET(ALBANY_LIBRARIES albanyLib albanyAdapt)

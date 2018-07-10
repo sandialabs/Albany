@@ -4,14 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: only Epetra is SG and MP
-
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Tpetra_CrsMatrix.hpp"
 
-#include<set> 
+#include<set>
 
 // **********************************************************************
 // Genereric Template Code for Constructor and PostRegistrationSetup

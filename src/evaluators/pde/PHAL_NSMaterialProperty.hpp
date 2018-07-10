@@ -7,6 +7,8 @@
 #ifndef PHAL_NSMATERIAL_PROPERTY_HPP
 #define PHAL_NSMATERIAL_PROPERTY_HPP
 
+#include "Albany_config.h"
+
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -39,7 +41,7 @@ public:
   NSMaterialProperty(Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+           PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 

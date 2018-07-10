@@ -127,6 +127,12 @@ class AbstractProblem {
   getOffsets() {
     return offsets_;
   }
+  
+  std::vector<std::string>
+  getNodeSetIDs() {
+    return nodeSetIDs_;
+  }
+
 
   //! Return the Null space object used to communicate with MP
   const Teuchos::RCP<Albany::RigidBodyModes>&
@@ -169,6 +175,7 @@ class AbstractProblem {
 
  protected:
   Teuchos::Array<Teuchos::Array<int>> offsets_;
+  std::vector<std::string> nodeSetIDs_;
   //! List of valid problem params common to all problems, as
   //! a starting point for the specific  getValidProblemParameters
   Teuchos::RCP<Teuchos::ParameterList>

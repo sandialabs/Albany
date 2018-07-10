@@ -7,19 +7,6 @@
 #ifndef PETRA_CONVERTERS_H
 #define PETRA_CONVERTERS_H
 
-#ifdef ALBANY_MPI
-  #define Albany_MPI_Comm MPI_Comm
-  #define Albany_MPI_COMM_WORLD MPI_COMM_WORLD
-  #define Albany_MPI_COMM_NULL MPI_COMM_NULL
-  #include "Epetra_MpiComm.h"
-  #include "Teuchos_DefaultMpiComm.hpp"
-#else
-  #define Albany_MPI_Comm int
-  #define Albany_MPI_COMM_WORLD 0  // This is compatible with Dakota
-  #define Albany_MPI_COMM_NULL 99
-  #include "Epetra_SerialComm.h"
-  #include "Teuchos_DefaultSerialComm.hpp"
-#endif
 #include "Teuchos_RCP.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Epetra_Vector.h"

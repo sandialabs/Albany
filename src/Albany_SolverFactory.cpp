@@ -58,7 +58,7 @@
 #include "ATOT_Solver.hpp"
 #endif
 
-#if defined(ALBANY_LCM) && defined(HAVE_STK)
+#if defined(ALBANY_LCM) && defined(ALBANY_STK)
 #include "Schwarz_Alternating.hpp"
 #include "Schwarz_Coupled.hpp"
 #include "Schwarz_PiroObserver.hpp"
@@ -824,7 +824,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   }  // if Aeras HyperViscosity
 #endif
 
-#if defined(ALBANY_LCM) && defined(HAVE_STK)
+#if defined(ALBANY_LCM) && defined(ALBANY_STK)
   bool const is_schwarz = solutionMethod == "Coupled Schwarz" ||
                           solutionMethod == "Schwarz Alternating";
 

@@ -25,18 +25,23 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cubes.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cubes.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-single.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cube-single.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
-               ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/check_comparisons.py
+               ${CMAKE_CURRENT_BINARY_DIR}/check_comparisons.py COPYONLY)
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ${runtest.cmake} ${CMAKE_CURRENT_BINARY_DIR}/runtest.cmake)
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-add_test(NAME Schwarz_${testName} COMMAND "python" "runtestT.py")
 
-IF(ALBANY_DTK)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cubes_matrix-free.yaml
-    ${CMAKE_CURRENT_BINARY_DIR}/cubes_matrix-free.yaml COPYONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT_matrix-free.py
-    ${CMAKE_CURRENT_BINARY_DIR}/runtestT_matrix-free.py COPYONLY)
-  add_test(NAME Schwarz_${testName}_MatrixFree COMMAND "python" "runtestT_matrix-free.py")
-ENDIF()
+#add_test(NAME Schwarz_${testName} COMMAND "python" "runtestT.py")
+
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+#test 1 - Cubes DBC 
+SET(OUTFILE "Cubes_DBC.log")
+SET(PYTHON_FILE "check_comparisons.py") 
+add_test(NAME Schwarz_${testName}
+        COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+        -DTEST_NAME=Cubes -DTEST_ARGS=cubes.yaml -DMPIMNP=1
+        -DLOGFILE=${OUTFILE} -DPY_FILE=${PYTHON_FILE}
+        -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
+

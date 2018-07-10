@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: only Epetra is SG and MP
-
 #ifndef PHAL_DIRICHLET_OFF_SIDE_SET_HPP
 #define PHAL_DIRICHLET_OFF_SIDE_SET_HPP 1
 
@@ -15,9 +13,6 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#if defined(ALBANY_EPETRA)
-#include "Epetra_Vector.h"
-#endif
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dirichlet.hpp"

@@ -122,6 +122,8 @@ struct Workset {
   //amb Nowhere set. We should either set it or remove it.
   double previous_time;
 
+  double time_step; 
+
   // flag indicating whether to sum tangent derivatives, i.e.,
   // compute alpha*df/dxdot*Vxdot + beta*df/dx*Vx + omega*df/dxddotot*Vxdotdot + df/dp*Vp or
   // compute alpha*df/dxdot*Vxdot + beta*df/dx*Vx + omega*df/dxdotdot*Vxdotdot and df/dp*Vp separately

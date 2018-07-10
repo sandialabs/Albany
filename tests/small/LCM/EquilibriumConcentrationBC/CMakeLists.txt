@@ -28,9 +28,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/EqConcentrationBC.exodiff
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/EqConcentrationBC.gold.e
                ${CMAKE_CURRENT_BINARY_DIR}/EqConcentrationBC.gold.e COPYONLY)
 
-# python runtest file
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
-               ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
+# cmake runtest file
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/runtestT.cmake COPYONLY)
 
 # python verification file for plotting in test directory
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plotEqConcentration.py
@@ -41,6 +41,13 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
-  add_test(NAME ${testName} COMMAND "python" "runtestT.py")
+  SET(OUTFILE  "EqConcentrationBC.e") 
+  SET(REF_FILE "EqConcentrationBC.gold.e") 
+   add_test(NAME ${testName}
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+           -DTEST_NAME=EqConcentrationBC -DTEST_ARGS=EqConcentrationBC.yaml -DMPIMNP=1
+           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtestT.cmake)
 ENDIF()
 endif()

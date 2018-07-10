@@ -49,6 +49,7 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint>              muFELIX;
 
   PHX::MDField<const ScalarT,Cell,Node,VecDim>            basalRes;
+  PHX::MDField<const ScalarT,Cell,Node,VecDim>            lateralRes;
   PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim>     coordVec;
 
   enum EQNTYPE {FELIX, POISSON, FELIX_XZ};
@@ -65,6 +66,7 @@ private:
   Teuchos::ParameterList* stereographicMapList;
   bool useStereographicMap;
   bool needsBasalResidual;
+  bool needsLateralResidual;
 
   public:
 

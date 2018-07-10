@@ -17,18 +17,27 @@ namespace PHAL {
 template<typename EvalT, typename Traits>
 ComputeBasisFunctionsSide<EvalT, Traits>::
 ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
-                           const Teuchos::RCP<Albany::Layouts>& dl_side) :
-  sideCoordVec  (p.get<std::string> ("Side Coordinate Vector Name"), dl_side->vertices_vector ),
-  tangents      (p.get<std::string> ("Tangents Name"), dl_side->qp_tensor_cd_sd ),
-  metric        (p.get<std::string> ("Metric Name"), dl_side->qp_tensor ),
-  w_measure     (p.get<std::string> ("Weighted Measure Name"), dl_side->qp_scalar ),
-  inv_metric    (p.get<std::string> ("Inverse Metric Name"), dl_side->qp_tensor ),
-  metric_det    (p.get<std::string> ("Metric Determinant Name"), dl_side->qp_scalar ),
-  BF            (p.get<std::string> ("BF Name"), dl_side->node_qp_scalar),
-  GradBF        (p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient)
+                           const Teuchos::RCP<Albany::Layouts>& dl)
 {
-  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer")) {
     memoizer.enable_memoizer();
+  }
+
+  // Get side set name and side set layouts
+  sideSetName = p.get<std::string>("Side Set Name");
+  TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(),
+                              std::runtime_error, "Error! Layouts for side set '" << sideSetName << "' not found.\n");
+  Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
+
+  // Build output fields
+  sideCoordVec = decltype(sideCoordVec)(p.get<std::string> ("Side Coordinate Vector Name"), dl_side->vertices_vector );
+  tangents     = decltype(tangents    )(p.get<std::string> ("Tangents Name"), dl_side->qp_tensor_cd_sd );
+  metric       = decltype(metric      )(p.get<std::string> ("Metric Name"), dl_side->qp_tensor );
+  w_measure    = decltype(w_measure   )(p.get<std::string> ("Weighted Measure Name"), dl_side->qp_scalar );
+  inv_metric   = decltype(inv_metric  )(p.get<std::string> ("Inverse Metric Name"), dl_side->qp_tensor );
+  metric_det   = decltype(metric_det  )(p.get<std::string> ("Metric Determinant Name"), dl_side->qp_scalar );
+  BF           = decltype(BF          )(p.get<std::string> ("BF Name"), dl_side->node_qp_scalar);
+  GradBF       = decltype(GradBF      )(p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient);
 
   this->addDependentField(sideCoordVec);
   this->addEvaluatedField(tangents);
@@ -39,18 +48,14 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   this->addEvaluatedField(BF);
   this->addEvaluatedField(GradBF);
 
-  compute_normals = p.isParameter("Side Normals Name");
+  compute_normals = p.isParameter("Side Normal Name");
   if(compute_normals) {
-    normals = decltype(normals)(p.get<std::string> ("Side Normals Name"), dl_side->qp_gradient);
-    Teuchos::RCP<Albany::Layouts> dl = p.get<Teuchos::RCP<Albany::Layouts>>("Layout Name");
+    normals  = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_side->qp_vector_spacedim);
     coordVec = decltype(coordVec)(p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector );
     numNodes = dl->node_gradient->dimension(1);
     this->addEvaluatedField(normals);
     this->addEvaluatedField(coordVec);
   }
-
-  sideSetName = p.get<std::string>("Side Set Name");
-
 
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
@@ -242,7 +247,7 @@ evaluateFields(typename Traits::EvalData workset)
       if( numCells_ == 0) continue;
 
       Kokkos::DynRankView<MeshScalarT, PHX::Device> normal_lengths = Kokkos::createDynRankView(sideCoordVec.get_view(),"normal_lengths", numCells_, numSideQPs);
-      Kokkos::DynRankView<MeshScalarT, PHX::Device> normals = Kokkos::createDynRankView(sideCoordVec.get_view(),"normals", numCells_, numSideQPs, numCellDims);
+      Kokkos::DynRankView<MeshScalarT, PHX::Device> normals_view = Kokkos::createDynRankView(sideCoordVec.get_view(),"normals", numCells_, numSideQPs, numCellDims);
       Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobian_side = Kokkos::createDynRankView(sideCoordVec.get_view(),"jacobian_side", numCells_, numSideQPs, numCellDims, numCellDims);
       Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsSide = Kokkos::createDynRankView(sideCoordVec.get_view(),"physPointsSide", numCells_, numSideQPs, numCellDims);
       Kokkos::DynRankView<RealType, PHX::Device> refPointsSide("refPointsSide", numSideQPs, numCellDims);
@@ -266,16 +271,16 @@ evaluateFields(typename Traits::EvalData workset)
 
 
       // for this side in the reference cell, get the components of the normal direction vector
-      Intrepid2::CellTools<PHX::Device>::getPhysicalSideNormals(normals, jacobian_side, side, *cellType);
+      Intrepid2::CellTools<PHX::Device>::getPhysicalSideNormals(normals_view, jacobian_side, side, *cellType);
 
       // scale normals (unity)
-      Intrepid2::RealSpaceTools<PHX::Device>::vectorNorm(normal_lengths, normals, Intrepid2::NORM_TWO);
-      Intrepid2::FunctionSpaceTools<PHX::Device>::scalarMultiplyDataData(normals, normal_lengths, normals, true);
+      Intrepid2::RealSpaceTools<PHX::Device>::vectorNorm(normal_lengths, normals_view, Intrepid2::NORM_TWO);
+      Intrepid2::FunctionSpaceTools<PHX::Device>::scalarMultiplyDataData(normals_view, normal_lengths, normals_view, true);
 
       for (int icoor=0; icoor<numCellDims; ++icoor)
         for (int qp=0; qp<numSideQPs; ++qp)
           for (std::size_t iCell=0; iCell < numCells_; ++iCell)
-            normals(cellVec(iCell),side,qp, icoor) = normals(iCell,qp,icoor);
+            normals(cellVec(iCell),side,qp, icoor) = normals_view(iCell,qp,icoor);
     }
   }
 }

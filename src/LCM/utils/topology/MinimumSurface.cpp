@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "Albany_config.h"
+
 // Define only if ALbany is enabled
 #if defined (ALBANY_LCM)
 
@@ -243,8 +245,8 @@ double Topology::getDistanceNodeAndPoint(
 
 //
 // \brief Returns the coordinates of the points that form a
-// 	equilateral triangle.  This triangle lies on the plane that
-// 	intersects the ellipsoid.
+//  equilateral triangle.  This triangle lies on the plane that
+//  intersects the ellipsoid.
 //
 std::vector<std::vector<double>> Topology::getCoordinatesOfTriangle(
     const std::vector<double> normalToPlane)
@@ -449,7 +451,7 @@ std::vector<double> Topology::getCoordinatesOfMaxAndMin()
 {
   std::vector<stk::mesh::Entity> entities_D0 = getEntitiesByRank(
       get_bulk_data(),
-      stk::topology::NODE_RANK);	// get all the nodes
+      stk::topology::NODE_RANK);  // get all the nodes
 
   // iterator for the nodes
   std::vector<stk::mesh::Entity>::const_iterator i_entities_d0;
@@ -1323,7 +1325,7 @@ std::vector<std::vector<int>> Topology::boundaryVector(
     //than once
     if (count < 2 && temp != 0) {
       std::vector<int> temp1;
-      temp1.push_back(i + 1);	//indexing starts from 1 as required
+      temp1.push_back(i + 1); //indexing starts from 1 as required
       //by the Solver
       temp1.push_back(temp);
       rVector.push_back(temp1);
@@ -1377,7 +1379,7 @@ std::vector<std::vector<int>> Topology::boundaryVectorOuterSurface(
     //than once.
     if (count < 2 && temp != 0) {
       std::vector<int> temp1;
-      temp1.push_back(i + 1);	//indexing starts from 1 as required
+      temp1.push_back(i + 1); //indexing starts from 1 as required
       //by the Solver
       temp1.push_back(temp);
       rVector.push_back(temp1);

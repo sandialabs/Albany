@@ -1,0 +1,10 @@
+Input FEM file                   = vortex_with_fields.exo
+LB file                          = vortex_with_fields.exo.nem
+Parallel Results File Base Name  = vortex_with_fields
+File Extension for Spread Files  = .exo
+Number of Processors             = 4 
+------------------------------------------------------------
+                Parallel I/O section
+------------------------------------------------------------
+Parallel Disk Info= number=1, offset=1, zeros, nosubdirectory
+Parallel file location = root=/home/ikalash/, subdir=.

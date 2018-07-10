@@ -4,6 +4,8 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
                 ${SEACAS_EXODIFF} ${CMAKE_CURRENT_BINARY_DIR}/exodiff)
 
 # Copy Input files from source to binary dir
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ${runtest.cmake} ${CMAKE_CURRENT_BINARY_DIR}/runtest.cmake)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MultiSlipPlaneHard.g
                ${CMAKE_CURRENT_BINARY_DIR}/MultiSlipPlaneHard.g COPYONLY)
@@ -33,8 +35,26 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plot_hard_implicit.py
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/examineCondition.py
                ${CMAKE_CURRENT_BINARY_DIR}/examineCondition.py COPYONLY)
 
+# Name the test with the directory name
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(CrystalPlasticity_MultiSlipPlaneHard_Active_Sets python ../run_exodiff_test.py "${SerialAlbanyT.exe}" MultiSlipPlaneHard_Implicit_Active_Sets.yaml)
-add_test(CrystalPlasticity_MultiSlipPlaneHard_Implicit python ../run_exodiff_test.py "${SerialAlbanyT.exe}" MultiSlipPlaneHard_Implicit.yaml)
+ #test 1 - Implicit Active Sets
+ SET(OUTFILE "MultiSlipPlaneHard_Implicit_Active_Sets.exo")
+ SET(REF_FILE "MultiSlipPlaneHard_Implicit_Active_Sets.gold.exo")
+ add_test(NAME CrystalPlasticity_${testName}_Implicit_Active_Sets
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+          -DTEST_NAME=MultiSlipPlaneHard_Implicit_Active_Sets -DTEST_ARGS=MultiSlipPlaneHard_Implicit_Active_Sets.yaml -DMPIMNP=1
+          -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+          -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
+ #test 2 - Implicit
+ SET(OUTFILE "MultiSlipPlaneHard_Implicit.exo")
+ SET(REF_FILE "MultiSlipPlaneHard_Implicit.gold.exo")
+ add_test(NAME CrystalPlasticity_${testName}_Implicit
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+          -DTEST_NAME=MultiSlipPlaneHard_Implicit -DTEST_ARGS=MultiSlipPlaneHard_Implicit.yaml -DMPIMNP=1
+          -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
+          -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
+          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
 endif()
