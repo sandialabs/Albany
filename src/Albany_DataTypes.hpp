@@ -142,6 +142,7 @@ namespace Albany {
   // Function to get the underlying value out of a scalar type
   template <typename T>
   typename Sacado::ScalarType<T>::type
+  KOKKOS_INLINE_FUNCTION
   ADValue(const T& x) { return Sacado::ScalarValue<T>::eval(x); }
 
   // Function to convert a ScalarType to a different one. This is used to convert
