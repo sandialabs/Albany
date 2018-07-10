@@ -33,15 +33,15 @@ set (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
 set (CTEST_FLAGS "-j8")
 SET (CTEST_BUILD_FLAGS "-j8")
 
-set (CTEST_DROP_METHOD "http")
+#set (CTEST_DROP_METHOD "http")
 
-if (CTEST_DROP_METHOD STREQUAL "http")
-  set (CTEST_DROP_SITE "cdash.sandia.gov")
-  set (CTEST_PROJECT_NAME "Albany")
-  set (CTEST_DROP_LOCATION "/CDash-2-3-0/submit.php?project=Albany")
-  set (CTEST_TRIGGER_SITE "")
-  set (CTEST_DROP_SITE_CDASH TRUE)
-endif ()
+#if (CTEST_DROP_METHOD STREQUAL "http")
+#  set (CTEST_DROP_SITE "cdash.sandia.gov")
+#  set (CTEST_PROJECT_NAME "Albany")
+#  set (CTEST_DROP_LOCATION "/CDash-2-3-0/submit.php?project=Albany")
+#  set (CTEST_TRIGGER_SITE "")
+#  set (CTEST_DROP_SITE_CDASH TRUE)
+#endif ()
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 
@@ -447,7 +447,7 @@ if (BUILD_ALBANY)
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
     "-DALBANY_CTEST_TIMEOUT=500"
     "-DENABLE_CHECK_FPE:BOOL=OFF"
-    "-DALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by core'"
+    "-DALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by ppr:1:core:pe=4'"
     )
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuild")
@@ -516,6 +516,7 @@ if (BUILD_ALBANY)
   # Run Albany tests
   #
 
+if (ALBANY_RUNTESTS)
   set (CTEST_TEST_TIMEOUT 500)
   CTEST_TEST (
     BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
@@ -528,6 +529,6 @@ if (BUILD_ALBANY)
       message ("Cannot submit Albany test results!")
     endif ()
   endif ()
-
+endif ()
 
 endif ()
