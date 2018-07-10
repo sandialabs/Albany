@@ -35,8 +35,6 @@ if (ALBANY_MUELU)
 add_test(${testName}_Steady_Stokes2D ${AlbanyT.exe} input_steadyStokes2DT.yaml)
 endif ()
 if (ALBANY_IFPACK2)
-if (ALBANY_LCM) #Time Dept BC requires LCM currently 
 add_test(${testName}_2D_Unsteady_Vortex_Shedding ${AlbanyT.exe} input_unsteadyNS2DT.yaml)
 add_test(${testName}_2D_Unsteady_Vortex_Shedding_with_Fields ${AlbanyT.exe} input_unsteadyNS2DT_with_fields.yaml)
-endif ()
 endif ()

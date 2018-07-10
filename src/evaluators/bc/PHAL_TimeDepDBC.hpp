@@ -4,23 +4,23 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef TIMEDEPBC_HPP
-#define TIMEDEPBC_HPP
+#ifndef PHAL_TIMEDEPBC_HPP
+#define PHAL_TIMEDEPBC_HPP
 
 #include "PHAL_Dirichlet.hpp"
 #include <vector>
 
-namespace LCM {
+namespace PHAL {
 /** \brief Time Dependent BC Dirichlet evaluator.
  */
 
 template <typename EvalT, typename Traits>
-class TimeDepBC_Base : public PHAL::Dirichlet<EvalT, Traits> {
+class TimeDepDBC_Base : public PHAL::Dirichlet<EvalT, Traits> {
 private:
   typedef typename EvalT::ScalarT ScalarT;
 
 public:
-  TimeDepBC_Base(Teuchos::ParameterList& p);
+  TimeDepDBC_Base(Teuchos::ParameterList& p);
   ScalarT computeVal(RealType time);
 
 protected:
@@ -30,9 +30,9 @@ protected:
 };
 
 template<typename EvalT, typename Traits>
-class TimeDepBC : public TimeDepBC_Base<EvalT, Traits> {
+class TimeDepDBC : public TimeDepDBC_Base<EvalT, Traits> {
 public:
-  TimeDepBC(Teuchos::ParameterList& p);
+  TimeDepDBC(Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename EvalT::ScalarT ScalarT;

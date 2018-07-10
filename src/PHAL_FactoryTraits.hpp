@@ -18,8 +18,6 @@
 #include "LCM/evaluators/bc/EquilibriumConcentrationBC.hpp"
 #include "LCM/evaluators/bc/KfieldBC.hpp"
 #include "LCM/evaluators/bc/PDNeighborFitBC.hpp"
-#include "LCM/evaluators/bc/TimeDepBC.hpp"
-#include "LCM/evaluators/bc/TimeDepSDBC.hpp"
 #include "LCM/evaluators/bc/TimeTracBC.hpp"
 #include "LCM/evaluators/bc/TorsionBC.hpp"
 #include "LCM/evaluators/Time.hpp"
@@ -38,6 +36,8 @@
 
 #include "PHAL_SDirichlet.hpp"
 #include "PHAL_Dirichlet.hpp"
+#include "PHAL_TimeDepDBC.hpp"
+#include "PHAL_TimeDepSDBC.hpp"
 #include "PHAL_DirichletCoordinateFunction.hpp"
 #include "PHAL_DirichletField.hpp"
 #include "PHAL_DirichletOffNodeSet.hpp"
@@ -76,14 +76,14 @@ namespace PHAL {
     static const int id_dirichlet_coordinate_function  =  2;
     static const int id_dirichlet_field                =  3;
     static const int id_dirichlet_off_nodeset          =  4; // To handle equations on side set (see PHAL_DirichletOffNodeSet)
-    static const int id_qcad_poisson_dirichlet         =  5;
-    static const int id_sdbc                           =  6;
-    static const int id_kfield_bc                      =  7; // Only for LCM probs
-    static const int id_eq_concentration_bc            =  8; // Only for LCM probs
-    static const int id_timedep_bc                     =  9; // Only for LCM probs
-    static const int id_time                           = 10; // Only for LCM probs
-    static const int id_torsion_bc                     = 11; // Only for LCM probs
-    static const int id_timedep_sdbc                   = 12; // Only for LCM probs
+    static const int id_timedep_bc                     =  5; // Only for LCM probs
+    static const int id_timedep_sdbc                   =  6; // Only for LCM probs
+    static const int id_qcad_poisson_dirichlet         =  7;
+    static const int id_sdbc                           =  8;
+    static const int id_kfield_bc                      =  9; // Only for LCM probs
+    static const int id_eq_concentration_bc            = 10; // Only for LCM probs
+    static const int id_time                           = 11; // Only for LCM probs
+    static const int id_torsion_bc                     = 12; // Only for LCM probs
     static const int id_schwarz_bc                     = 13; // Only for LCM probs
     static const int id_strong_schwarz_bc              = 14; // Only for LCM probs
     static const int id_pd_neigh_fit_bc                = 15; // Only for LCM-Peridigm coupling
@@ -94,21 +94,21 @@ namespace PHAL {
         PHAL::DirichletCoordFunction<_,Traits>,   //  2
         PHAL::DirichletField<_,Traits>,           //  3
         PHAL::DirichletOffNodeSet<_,Traits>,      //  4
+        PHAL::TimeDepDBC<_, Traits>,              //  5
+        PHAL::TimeDepSDBC<_, Traits>,             //  6
 #ifdef ALBANY_QCAD
-        QCAD::PoissonDirichlet<_,Traits>          //  5
+        QCAD::PoissonDirichlet<_,Traits>          //  7
 #else
-        PHAL::Dirichlet<_,Traits>                 //  5 dummy
+        PHAL::Dirichlet<_,Traits>                 //  7 dummy
 #endif
         ,
-        PHAL::SDirichlet<_, Traits>               //  6
+        PHAL::SDirichlet<_, Traits>               //  8
 #if defined(ALBANY_LCM)
         ,
-        LCM::KfieldBC<_,Traits>,                  //  7
-        LCM::EquilibriumConcentrationBC<_,Traits>, // 8
-        LCM::TimeDepBC<_, Traits>,                //  9
-        LCM::Time<_, Traits>,                     //  10
-        LCM::TorsionBC<_, Traits>,                 // 11
-        LCM::TimeDepSDBC<_, Traits>               // 12
+        LCM::KfieldBC<_,Traits>,                  //  9
+        LCM::EquilibriumConcentrationBC<_,Traits>, // 10
+        LCM::Time<_, Traits>,                     //  11
+        LCM::TorsionBC<_, Traits>                  // 12
 #endif
 #if defined(ALBANY_LCM) && defined(ALBANY_STK)
         ,

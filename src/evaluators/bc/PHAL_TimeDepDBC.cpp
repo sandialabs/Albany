@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "TimeDepBC.hpp"
-#include "TimeDepBC_Def.hpp"
+#include "PHAL_TimeDepDBC.hpp"
+#include "PHAL_TimeDepDBC_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::TimeDepBC)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::TimeDepDBC)
 

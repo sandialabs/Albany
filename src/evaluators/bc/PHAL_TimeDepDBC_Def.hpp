@@ -7,10 +7,10 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-namespace LCM {
+namespace PHAL {
 
 template <typename EvalT, typename Traits>
-TimeDepBC_Base<EvalT, Traits>::TimeDepBC_Base(Teuchos::ParameterList& p)
+TimeDepDBC_Base<EvalT, Traits>::TimeDepDBC_Base(Teuchos::ParameterList& p)
   : offset(p.get<int>("Equation Offset")),
     PHAL::Dirichlet<EvalT, Traits>(p)
 {
@@ -23,8 +23,8 @@ TimeDepBC_Base<EvalT, Traits>::TimeDepBC_Base(Teuchos::ParameterList& p)
 }
 
 template<typename EvalT, typename Traits>
-typename TimeDepBC_Base<EvalT, Traits>::ScalarT
-TimeDepBC_Base<EvalT, Traits>::computeVal(RealType time)
+typename TimeDepDBC_Base<EvalT, Traits>::ScalarT
+TimeDepDBC_Base<EvalT, Traits>::computeVal(RealType time)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
     time > timeValues.back(), Teuchos::Exceptions::InvalidParameter,
@@ -49,16 +49,16 @@ TimeDepBC_Base<EvalT, Traits>::computeVal(RealType time)
 }
 
 template<typename EvalT, typename Traits>
-TimeDepBC<EvalT,Traits>::TimeDepBC(Teuchos::ParameterList& p)
-  : TimeDepBC_Base<EvalT,Traits>(p)
+TimeDepDBC<EvalT,Traits>::TimeDepDBC(Teuchos::ParameterList& p)
+  : TimeDepDBC_Base<EvalT,Traits>(p)
 {}
 
 template<typename EvalT, typename Traits>
-void TimeDepBC<EvalT, Traits>::
+void TimeDepDBC<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   this->value = this->computeVal(workset.current_time);
   PHAL::Dirichlet<EvalT, Traits>::evaluateFields(workset);
 }
 
-} // namespace LCM
+} // namespace PHAL

@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "TimeDepSDBC.hpp"
+#include "PHAL_TimeDepSDBC.hpp"
 #include "Albany_Utils.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -12,7 +12,7 @@
 
 //#define DEBUG
 
-namespace LCM {
+namespace PHAL {
 
 //
 //
@@ -87,4 +87,4 @@ evaluateFields(typename Traits::EvalData workset)
   PHAL::SDirichlet<EvalT, Traits>::evaluateFields(workset);
 }
 
-} // namespace LCM
+} // namespace PHAL

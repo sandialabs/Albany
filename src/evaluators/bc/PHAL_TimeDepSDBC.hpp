@@ -4,14 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_TimeDepSDBC_hpp)
-#define LCM_TimeDepSDBC_hpp
+#if !defined(PHAL_TimeDepSDBC_hpp)
+#define PHAL_TimeDepSDBC_hpp
 
 #include <vector>
 
 #include "PHAL_SDirichlet.hpp"
 
-namespace LCM {
+namespace PHAL {
 
 ///
 /// Time-dependendt, strongly-enforced Dirichlet BC evauator
@@ -54,4 +54,4 @@ private:
 
 }
 
-#endif // LCM_TimeDepSDBC_hpp
+#endif // PHAL_TimeDepSDBC_hpp
