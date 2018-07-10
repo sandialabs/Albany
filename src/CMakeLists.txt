@@ -54,7 +54,6 @@ IF(ALBANY_EPETRA)
 ENDIF()
 
 SET(HEADERS
-  Albany_config.h
   Albany_Application.hpp
   Albany_DataTypes.hpp
   Albany_DistributedParameterLibrary.hpp
@@ -1053,6 +1052,8 @@ IF (INSTALL_ALBANY)
     INSTALL_DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake
     PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR)
   install(FILES ${HEADERS}
+    DESTINATION ${INCLUDE_INSTALL_DIR})
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h
     DESTINATION ${INCLUDE_INSTALL_DIR})
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
     DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake )
