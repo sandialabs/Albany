@@ -44,7 +44,7 @@ L2ProjectedBoundaryLaplacianResidual(Teuchos::ParameterList& p, const Teuchos::R
   w_side_measure     = decltype(w_side_measure)(w_side_measure_name, dl_side->qp_scalar);
   side_tangents      = decltype(side_tangents)(side_tangents_name, dl_side->qp_tensor_cd_sd);
   bdLaplacian_L2Projection_res = decltype(bdLaplacian_L2Projection_res)(residual_name, dl->node_scalar);
-  coordVec = decltype(coordVec)(coords_name, dl->qp_coords);
+  coordVec = decltype(coordVec)(coords_name, dl->vertices_vector);
 
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
@@ -63,9 +63,9 @@ L2ProjectedBoundaryLaplacianResidual(Teuchos::ParameterList& p, const Teuchos::R
   this->addDependentField(gradBF);
   this->addDependentField(w_side_measure);
   this->addDependentField(side_tangents);
+  this->addDependentField(coordVec);
 
   this->addEvaluatedField(bdLaplacian_L2Projection_res);
-  this->addEvaluatedField(coordVec);
 
   this->setName("Boundary Laplacian L2 Projection Residual" + PHX::typeAsString<EvalT>());
 
