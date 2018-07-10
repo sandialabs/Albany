@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace Tsunami {
 /** \brief Finite Element Interpolation Evaluator
@@ -58,8 +59,11 @@ private:
 
   double mu, rho;
  
-  bool use_params_on_mesh; 
+  bool use_params_on_mesh;
 
+  bool enable_memoizer;  
+
+  PHAL::MDFieldMemoizer<Traits> memoizer;
 };
 }
 
