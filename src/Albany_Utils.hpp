@@ -83,8 +83,7 @@ AbsRowSum(
     Teuchos::RCP<Tpetra_Vector>& absRowSumsTpetra,
     const Teuchos::RCP<Tpetra_CrsMatrix> matrix);
 
-// IKT, FIXME: ultimately get ride of || defined (ALBANY_ATO) below
-#if defined(ALBANY_EPETRA) || defined(ALBANY_ATO)
+#if defined(ALBANY_EPETRA)
 
 Albany_MPI_Comm
 getMpiCommFromEpetraComm(const Epetra_Comm& ec);

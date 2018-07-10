@@ -34,9 +34,7 @@ SET(SOURCES
   PHAL_Utilities.cpp
   )
 
-#IKT, FIXME: remove OR ALBANY_ATO from following if when
-#ATO is free of Epetra
-IF (ALBANY_EPETRA OR ALBANY_ATO)
+IF (ALBANY_EPETRA)
   SET(SOURCES ${SOURCES} Albany_ObserverFactory.cpp)
   SET(SOURCES ${SOURCES} Petra_Converters_64.cpp)
 ENDIF()
