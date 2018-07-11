@@ -101,8 +101,11 @@ postRegistrationSetup(typename Traits::SetupData d,
   //etadotdTracer_kokkos.resize(tracerNames.size());
   dedotpiTracerde_kokkos.resize(tracerNames.size());
 
-  b = E.b_kokkos;
-  delta = E.delta_kokkos;
+  b = createDynRankView(b, "b", numLevels+1);
+  delta = createDynRankView(delta, "delta", numLevels);
+
+  E.get_b(b);
+  E.get_delta(delta);
 #endif
 }
 

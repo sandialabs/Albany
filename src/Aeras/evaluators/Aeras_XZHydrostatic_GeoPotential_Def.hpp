@@ -48,10 +48,6 @@ XZHydrostatic_GeoPotential(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Phi);
 
   this->setName("Aeras::XZHydrostatic_GeoPotential" + PHX::typeAsString<EvalT>());
-
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  delta = E.delta_kokkos;
-#endif
 }
 
 //**********************************************************************
@@ -65,6 +61,11 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(Phi      , fm);
   
   this->utils.setFieldData(PhiSurf  , fm);
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  delta = createDynRankView(delta, "delta", numLevels);
+  E.get_delta(delta);
+#endif
 }
 
 //**********************************************************************

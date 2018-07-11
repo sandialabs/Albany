@@ -83,7 +83,8 @@ private:
   bool pureAdvection;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Kokkos::DynRankView<ScalarT, PHX::Device> b, delta;
+  using EtaView = typename Eta<EvalT>::View;
+  EtaView b, delta;
   Kokkos::DynRankView<ScalarT, PHX::Device> etadotpi;
 
 public:

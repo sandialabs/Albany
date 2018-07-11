@@ -48,10 +48,6 @@ XZHydrostatic_SPressureResid(const Teuchos::ParameterList& p,
   sp0 = 0.0;
 
   pureAdvection = xsa_params->get<bool>("Pure Advection", false);
-
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  delta = E.delta_kokkos;
-#endif
 }
 
 //**********************************************************************
@@ -65,6 +61,11 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(divpivelx,fm);
 
   this->utils.setFieldData(Residual, fm);
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  delta = createDynRankView(delta, "delta", numLevels);
+  E.get_delta(delta);
+#endif
 }
 
 //**********************************************************************

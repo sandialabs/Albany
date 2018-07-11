@@ -72,10 +72,6 @@ Hydrostatic_Velocity(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Velocity);
 
   this->setName("Aeras::Hydrostatic_Velocity" + PHX::typeAsString<EvalT>());
-
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  B = E.B_kokkos;
-#endif
 }
 
 //**********************************************************************
@@ -88,6 +84,11 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(sphere_coord, fm);
   this->utils.setFieldData(pressure,     fm);
   this->utils.setFieldData(Velocity,     fm);
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  B = createDynRankView(B, "B", numLevels);
+  E.get_B(B);
+#endif
 }
 
 //**********************************************************************

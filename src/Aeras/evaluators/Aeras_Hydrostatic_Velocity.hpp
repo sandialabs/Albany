@@ -56,7 +56,8 @@ private:
   ScalarT PI, earthRadius, ptop, p0, tau, omega0, k;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Kokkos::DynRankView<ScalarT, PHX::Device> B;
+  using EtaView = typename Eta<EvalT>::View;
+  EtaView B;
 
 public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;

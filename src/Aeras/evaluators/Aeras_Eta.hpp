@@ -45,12 +45,6 @@ public:
   typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Kokkos::DynRankView<ScalarT, PHX::Device> a_kokkos, b_kokkos;
-  Kokkos::DynRankView<ScalarT, PHX::Device> A_kokkos, B_kokkos;
-  Kokkos::DynRankView<ScalarT, PHX::Device> delta_kokkos;
-#endif
-
   static const Eta<EvalT> &self(const ScalarT ptop=0,
                                 const ScalarT p0=0,
                                 const int     L=0) {
@@ -87,6 +81,43 @@ public:
                                                 return  a[lp]; }
   ScalarT     B(const double half_step) const { int lp = int(half_step+0.5);
                                                 return  b[lp]; }
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  using View = Kokkos::DynRankView<ScalarT, PHX::Device>;
+  void get_a (View a_kokkos) const {
+    for (int i=0; i<=numLevels; ++i) {
+      a_kokkos(i) = a[i];
+    }
+  };
+
+  void get_b (View b_kokkos) const {
+    for (int i=0; i<=numLevels; ++i) {
+      b_kokkos(i) = b[i];
+    }
+  };
+
+  void get_A (View A_kokkos) const {
+    for (int level = 0; level < numLevels; level++) {
+      A_kokkos(level) = 0.5*(a[level] + a[level+1]);
+    }
+  }
+
+  void get_B (View B_kokkos) const {
+    for (int level = 0; level < numLevels; level++) {
+      B_kokkos(level) = 0.5*(b[level] + b[level+1]);
+    }
+  }
+
+  void get_delta (View delta_kokkos) const {
+    for (int level = 0; level < numLevels; level++) {
+      const double levelp = level + .5;
+      const double levelm = level - .5;
+      const ScalarT etap = Etatop + (1-Etatop)*(ScalarT(levelp)+.5)/numLevels;
+      const ScalarT etam = Etatop + (1-Etatop)*(ScalarT(levelm)+.5)/numLevels;
+      delta_kokkos(level) = etap - etam;
+    }
+  }
+#endif
 
   Eta(const ScalarT ptop, const ScalarT p0, const int L) :
     P0(p0),
@@ -131,35 +162,6 @@ public:
         
       }
     }
-
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-    // Convert vector of a and b coefficients to views
-    a_kokkos = Kokkos::createDynRankView(a_kokkos, "a", L+1);
-    b_kokkos = Kokkos::createDynRankView(b_kokkos, "b", L+1);
-    for (int i=0; i<=L; ++i) {
-      a_kokkos(i) = a[i];
-      b_kokkos(i) = b[i];
-    }
-
-    // Compute A and B
-    A_kokkos = Kokkos::createDynRankView(A_kokkos, "A", numLevels);
-    B_kokkos = Kokkos::createDynRankView(B_kokkos, "B", numLevels);
-    for (int level = 0; level < numLevels; level++) {
-      A_kokkos(level) = 0.5*(a[level] + a[level+1]);
-      B_kokkos(level) = 0.5*(b[level] + b[level+1]);
-    }
-
-    // Compute delta eta
-    delta_kokkos = Kokkos::createDynRankView(delta_kokkos, "delta", numLevels);
-    for (int level = 0; level < numLevels; level++) {
-      const double levelp = level + .5;
-      const double levelm = level - .5;
-      const ScalarT etap = Etatop + (1-Etatop)*(ScalarT(levelp)+.5)/numLevels;
-      const ScalarT etam = Etatop + (1-Etatop)*(ScalarT(levelm)+.5)/numLevels;
-      delta_kokkos(level) = etap - etam;
-    }
-
-#endif
   }
 
   ~Eta(){}

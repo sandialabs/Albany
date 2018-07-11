@@ -58,7 +58,8 @@ private:
   ScalarT Phi0;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Kokkos::DynRankView<ScalarT, PHX::Device> delta;
+  using EtaView = typename Eta<EvalT>::View;
+  EtaView delta;
 
 public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;

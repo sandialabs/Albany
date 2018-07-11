@@ -47,10 +47,6 @@ XZHydrostatic_Omega(const Teuchos::ParameterList& p,
   this->addEvaluatedField(omega);
 
   this->setName("Aeras::XZHydrostatic_Omega" + PHX::typeAsString<EvalT>());
-
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  delta = E.delta_kokkos;
-#endif
 }
 
 //**********************************************************************
@@ -65,6 +61,11 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(Cpstar    ,   fm);
   this->utils.setFieldData(divpivelx ,   fm);
   this->utils.setFieldData(omega     ,   fm);
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  delta = createDynRankView(delta, "delta", numLevels);
+  E.get_delta(delta);
+#endif
 }
 
 //**********************************************************************

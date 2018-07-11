@@ -42,12 +42,6 @@ XZHydrostatic_Pressure(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Pressure);
   this->addEvaluatedField(Pi);
   this->setName("Aeras::XZHydrostatic_Pressure" + PHX::typeAsString<EvalT>());
-
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  A = E.A_kokkos;
-  B = E.B_kokkos;
-  delta = E.delta_kokkos;
-#endif
 }
 
 //**********************************************************************
@@ -59,6 +53,16 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(Ps       ,fm);
   this->utils.setFieldData(Pressure ,fm);
   this->utils.setFieldData(Pi       ,fm);
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  A = createDynRankView(A, "A", numLevels);
+  B = createDynRankView(B, "B", numLevels);
+  delta = createDynRankView(delta, "delta", numLevels);
+
+  E.get_A(A);
+  E.get_B(B);
+  E.get_delta(delta);
+#endif
 }
 
 //**********************************************************************
