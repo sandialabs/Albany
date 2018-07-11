@@ -24,7 +24,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 if(ALBANY_IFPACK2)
  SET(OUTFILE "channelDiffusion.e")
  SET(REF_FILE "channelDiffusion.gold.e")
- add_test(NAME ${testName}_channelDiffusion
+ add_test(NAME MechWithHydrogenFastPath_${testName}
           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
           -DTEST_NAME=channelDiffusion -DTEST_ARGS=channelDiffusion.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
