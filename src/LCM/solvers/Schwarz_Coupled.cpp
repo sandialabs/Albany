@@ -33,6 +33,7 @@ SchwarzCoupled(
     Teuchos::RCP<Tpetra_Vector const> const & initial_guess,
     Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const &
     lowsfb)
+    : supports_xdot_(false) 
 {
   comm_ = comm;
 
