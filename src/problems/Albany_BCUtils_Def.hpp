@@ -414,8 +414,6 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
     }
   }
 
-#if defined(ALBANY_LCM)
-
   ///
   /// Time dependent BC specific
   ///
@@ -521,6 +519,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
     }
   }
 
+#ifdef ALBANY_LCM
   ///
   /// Torsion BC specific
   ////
