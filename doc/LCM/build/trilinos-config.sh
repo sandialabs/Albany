@@ -113,7 +113,7 @@ cmake \
  -D Trilinos_ENABLE_STKMesh:BOOL=ON \
  -D Trilinos_ENABLE_Sacado:BOOL=ON \
  -D Trilinos_ENABLE_Shards:BOOL=ON \
- -D Trilinos_ENABLE_Stokhos:BOOL=ON \
+ -D Trilinos_ENABLE_Stokhos:BOOL=OFF \
  -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
  -D Trilinos_ENABLE_TESTS:BOOL=OFF \
  -D Trilinos_ENABLE_Teko:BOOL=ON \
