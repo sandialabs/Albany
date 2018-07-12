@@ -111,7 +111,9 @@ UpdateZCoordinateMovingBed(const Teuchos::ParameterList& p,
   coordVecOut(p.get<std::string> ("New Coords Name"), dl->vertices_vector),
   H(p.get<std::string> ("Thickness Name"), dl->node_scalar),
   bedTopo(p.get<std::string> ("Bed Topography Name"), dl->node_scalar),
-  topSurface(p.get<std::string>("Top Surface Name"), dl->node_scalar)
+  bedTopoOut(p.get<std::string> ("Updated Bed Topography Name"), dl->node_scalar),
+  topSurface(p.get<std::string> ("Top Surface Name"), dl->node_scalar),
+  topSurfaceOut(p.get<std::string> ("Updated Top Surface Name"), dl->node_scalar)
 {
   this->addEvaluatedField(coordVecOut);
 
@@ -119,8 +121,9 @@ UpdateZCoordinateMovingBed(const Teuchos::ParameterList& p,
 
   this->addDependentField(H);
   this->addDependentField(bedTopo);
-
   this->addDependentField(topSurface);
+  this->addEvaluatedField(topSurfaceOut);
+  this->addEvaluatedField(bedTopoOut);
 
   minH = p.isParameter("Minimum Thickness") ? p.get<double>("Minimum Thickness") : 1e-4;
   std::vector<PHX::DataLayout::size_type> dims;
@@ -179,8 +182,14 @@ evaluateFields(typename Traits::EvalData workset)
       layeredMeshNumbering.getIndices(lnodeId, base_id,  ilevel);
       MeshScalarT h = H(cell,node);
       MeshScalarT top = topSurface(cell,node);
+      typename PHAL::Ref<MeshScalarT>::type vals = topSurfaceOut(cell,node);
+      typename PHAL::Ref<MeshScalarT>::type valb = bedTopoOut(cell,node);
       MeshScalarT bed = bedTopo(cell,node);
-      top = ((rho_i*h - rho_w*bed) < 0) ? h*(1.0 - rho_i/rho_w) : top; //adjust surface when floating
+      auto floating = ((rho_i*top + (rho_w-rho_i)*bed) < 0.0) && (top > 0.0);
+      top = floating ? h*(1.0 - rho_i/rho_w) : top; //adjust surface when floating
+      vals = top;
+      bed = floating ? bed : top - h;
+      valb = bed;
 
       for(std::size_t icomp=0; icomp< numDims; icomp++) {
         typename PHAL::Ref<MeshScalarT>::type val = coordVecOut(cell,node,icomp);
@@ -193,4 +202,4 @@ evaluateFields(typename Traits::EvalData workset)
   }
 }
 
-}
+} 

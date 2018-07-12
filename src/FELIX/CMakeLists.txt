@@ -62,6 +62,7 @@
        evaluators/FELIX_StokesTauM.cpp
        evaluators/FELIX_Temperature.cpp
        evaluators/FELIX_ThicknessResid.cpp
+       evaluators/FELIX_MapThickness.cpp
        evaluators/FELIX_VerticalVelocity.cpp
        evaluators/FELIX_Viscosity.cpp
        evaluators/FELIX_ViscosityFO.cpp
@@ -217,6 +218,8 @@ ENDIF()
        evaluators/FELIX_Temperature_Def.hpp
        evaluators/FELIX_ThicknessResid_Def.hpp
        evaluators/FELIX_ThicknessResid.hpp
+       evaluators/FELIX_MapThickness_Def.hpp
+       evaluators/FELIX_MapThickness.hpp
        evaluators/FELIX_VerticalVelocity.hpp
        evaluators/FELIX_VerticalVelocity_Def.hpp
        evaluators/FELIX_ViscosityFO.hpp

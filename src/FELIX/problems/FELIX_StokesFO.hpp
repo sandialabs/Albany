@@ -55,6 +55,7 @@
 #include "FELIX_Dissipation.hpp"
 #include "FELIX_IceOverburden.hpp"
 #include "FELIX_UpdateZCoordinate.hpp"
+#include "FELIX_MapThickness.hpp"
 #include "FELIX_GatherVerticallyAveragedVelocity.hpp"
 #include "FELIX_PressureCorrectedTemperature.hpp"
 #include "FELIX_Time.hpp"
@@ -878,7 +879,7 @@ if (basalSideName!="INVALID")
   ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator ("flow_factor",false);
   fm0.template registerEvaluator<EvalT> (ev);
 
-  if(!is_dist_param["ice_thickness"])
+  if(!(is_dist_param["ice_thickness"]||is_dist_param["ice_thickness_param"]))
   {
     //----- Gather Coordinate Vector (general parameters)
     ev = evalUtils.constructGatherCoordinateVectorEvaluator("",enableMemoizer);
@@ -910,13 +911,32 @@ if (basalSideName!="INVALID")
     p->set<std::string>("Old Coords Name",  "Coord Vec Old");
     p->set<std::string>("New Coords Name",  Albany::coord_vec_name);
     p->set<std::string>("Thickness Name",   "ice_thickness");
-    p->set<std::string>("Top Surface Name", "surface_height");
-    p->set<std::string>("Bed Topography Name", "bed_topography");
+    p->set<std::string>("Thickness Lower Bound Name",   "ice_thickness_lowerbound");
+    p->set<std::string>("Thickness Upper Bound Name",   "ice_thickness_upperbound");
+    p->set<std::string>("Top Surface Name", "observed_surface_height");
+    p->set<std::string>("Updated Top Surface Name", "surface_height");
+    p->set<std::string>("Bed Topography Name", "observed_bed_topography");
+    p->set<std::string>("Updated Bed Topography Name", "bed_topography");
     p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("FELIX Physical Parameters"));
 
     ev = Teuchos::rcp(new FELIX::UpdateZCoordinateMovingBed<EvalT,PHAL::AlbanyTraits>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
 #endif
+  }
+
+  {
+    //------ Map Thickness
+    p = Teuchos::rcp(new Teuchos::ParameterList("Map Thickness"));
+
+    p->set<std::string>("Input Thickness Name",  "ice_thickness_param");
+    p->set<std::string>("Output Thickness Name",  "ice_thickness");
+    p->set<std::string>("Thickness Lower Bound Name",   "ice_thickness_lowerbound");
+    p->set<std::string>("Thickness Upper Bound Name",   "ice_thickness_upperbound");
+    p->set<std::string>("Observed Bed Topography Name",   "observed_bed_topography");
+    p->set<std::string>("Observed Thickness Name",   "observed_ice_thickness");
+
+    ev = Teuchos::rcp(new FELIX::MapThickness<EvalT,PHAL::AlbanyTraits>(*p, dl));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   // Map to physical frame
@@ -982,6 +1002,12 @@ if (basalSideName!="INVALID")
 
     // Intepolate bed_topography
     ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("bed_topography", basalSideName);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("bed_topography",basalSideName,"Node Scalar",cellType);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("observed_bed_topography", basalSideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate thickness on QP on side
