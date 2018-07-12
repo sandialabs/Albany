@@ -46,7 +46,6 @@ protected:
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim>  averagedVel;
 
-  std::size_t vecDim;
   std::size_t vecDimFO;
   std::size_t numNodes;
 

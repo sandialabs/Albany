@@ -33,8 +33,7 @@ GatherVerticallyAveragedVelocityBase(const Teuchos::ParameterList& p,
 
   dl->node_vector->dimensions(dims);
   numNodes = dims[1];
-  vecDim = dims[2];
-  vecDimFO = std::min(PHX::DataLayout::size_type(2), dims[2]); //vecDim (dims[2]) can be greater than 2 for coupled problems and = 1 for the problem in the xz plane
+  vecDimFO = dims[2];
 
   if (p.isParameter("Mesh Part"))
     meshPart = p.get<std::string>("Mesh Part");
@@ -140,6 +139,8 @@ evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  
+  int neq = workset.wsElNodeEqID.dimension(2);
 
   if (workset.sideSets == Teuchos::null)
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets defined in input file but not properly specified on the mesh" << std::endl);
@@ -196,7 +197,7 @@ evaluateFields(typename Traits::EvalData workset)
         for(int comp=0; comp<this->vecDimFO; ++comp) {
           this->averagedVel(elem_LID,node,comp) = FadType(this->averagedVel(elem_LID,node,comp).size(), avVel[comp]);
           for(int il=0; il<numLayers+1; ++il)
-            this->averagedVel(elem_LID,node,comp).fastAccessDx(this->vecDim*this->numNodes+numSideNodes*this->vecDim*il+this->vecDim*i+comp) = quadWeights[il]*workset.j_coeff;
+            this->averagedVel(elem_LID,node,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp) = quadWeights[il]*workset.j_coeff;
         }
       }
     }

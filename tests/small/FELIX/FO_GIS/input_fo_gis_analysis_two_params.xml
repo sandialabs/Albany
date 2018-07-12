@@ -12,7 +12,7 @@
     <Parameter name="Extruded Column Coupled in 2D Response" type="bool" value="true"/>
     <Parameter name="Required Fields"         type="Array(string)" value="{temperature}"/>
     <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction, ice_thickness, observed_ice_thickness, observed_ice_thickness_RMS,
-                                                                           temperature, surface_height, bed_topography, surface_mass_balance, surface_mass_balance_RMS}"/>
+                                                                           temperature, observed_surface_height, observed_bed_topography, surface_mass_balance, surface_mass_balance_RMS}"/>
     <Parameter name="Required Surface Fields" type="Array(string)" value="{observed_surface_velocity,observed_surface_velocity_RMS}"/>
     <Parameter name="Basal Side Name"         type="string" value="basalside"/>
     <Parameter name="Surface Side Name"       type="string" value="upperside"/>
@@ -96,6 +96,7 @@
 
   <ParameterList name="Discretization">
     <Parameter name="Method"                                type="string"        value="Extruded"/>
+    <Parameter name="Surface Height Field Name"             type="string"        value="observed_surface_height"/>
     <Parameter name="Number Of Time Derivatives"            type="int"           value="0"/>
     <Parameter name="Cubature Degree"                       type="int"           value="1"/>
     <Parameter name="Exodus Output File Name"               type="string"        value="gis_unstruct_analysis_two_params.exo"/>
@@ -104,7 +105,7 @@
     <Parameter name="NumLayers"                             type="int"           value="5"/>
     <Parameter name="Use Glimmer Spacing"                   type="bool"          value="true"/>
     <Parameter name="Thickness Field Name"                  type="string"        value="ice_thickness"/>
-    <Parameter name="Extrude Basal Node Fields"             type="Array(string)" value="{basal_friction,ice_thickness,surface_height,bed_topography}"/>
+    <Parameter name="Extrude Basal Node Fields"             type="Array(string)" value="{basal_friction,ice_thickness,observed_surface_height,observed_bed_topography}"/>
     <Parameter name="Basal Node Fields Ranks"               type="Array(int)"    value="{1,1,1,1}"/>
     <Parameter name="Interpolate Basal Node Layered Fields" type="Array(string)" value="{temperature}"/>
     <Parameter name="Basal Node Layered Fields Ranks"       type="Array(int)"    value="{1}"/>
@@ -117,7 +118,7 @@
         <Parameter name="Field Origin" type="string" value="Mesh"/>
       </ParameterList>
       <ParameterList name="Field 1">
-        <Parameter name="Field Name"   type="string" value="surface_height"/>
+        <Parameter name="Field Name"   type="string" value="observed_surface_height"/>
         <Parameter name="Field Type"   type="string" value="Node Scalar"/>
         <Parameter name="Field Origin" type="string" value="Mesh"/>
       </ParameterList>
@@ -132,7 +133,7 @@
         <Parameter name="Field Origin" type="string" value="Mesh"/>
       </ParameterList>
       <ParameterList name="Field 4">
-        <Parameter name="Field Name"   type="string" value="bed_topography"/>
+        <Parameter name="Field Name"   type="string" value="observed_bed_topography"/>
         <Parameter name="Field Type"   type="string" value="Node Scalar"/>
         <Parameter name="Field Origin" type="string" value="Mesh"/>
       </ParameterList>
@@ -155,7 +156,7 @@
             <Parameter name="File Name"    type="string" value="../AsciiMeshes/GisUnstructFiles/thickness.ascii"/>
           </ParameterList>
           <ParameterList name="Field 1">
-            <Parameter name="Field Name"   type="string" value="surface_height"/>
+            <Parameter name="Field Name"   type="string" value="observed_surface_height"/>
             <Parameter name="Field Type"   type="string" value="Node Scalar"/>
             <Parameter name="Field Origin" type="string" value="File"/>
             <Parameter name="File Name"    type="string" value="../AsciiMeshes/GisUnstructFiles/surface_height.ascii"/>
@@ -198,7 +199,7 @@
             <Parameter name="File Name"    type="string" value="../AsciiMeshes/GisUnstructFiles/surface_mass_balance_RMS.ascii"/>
           </ParameterList>
           <ParameterList name="Field 8">
-            <Parameter name="Field Name"   type="string" value="bed_topography"/>
+            <Parameter name="Field Name"   type="string" value="observed_bed_topography"/>
             <Parameter name="Field Type"   type="string" value="Node Scalar"/>
             <Parameter name="Field Origin" type="string" value="File"/>
             <Parameter name="File Name"    type="string" value="../AsciiMeshes/GisUnstructFiles/bed_topography.ascii"/>
@@ -231,14 +232,14 @@
 
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{5298.17539761}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{5287.24004363}"/>
     <ParameterList name="Sensitivity Comparisons 0">
       <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{562.631779822}"/>
+      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{560.146504685}"/>
     </ParameterList>
     <ParameterList name="Sensitivity Comparisons 1">
       <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{26198.4541376}"/>
+      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{26195.8936929}"/>
     </ParameterList>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
