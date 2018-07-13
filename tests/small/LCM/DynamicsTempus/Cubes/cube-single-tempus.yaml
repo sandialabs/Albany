@@ -3,6 +3,7 @@
 LCM:
   Scaling:
     Scale: 1.0000000e11
+    Scale BC Dofs: false
   Problem:
     Name: Mechanics 3D
     Phalanx Graph Visualization Detail: 0
