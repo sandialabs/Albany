@@ -34,8 +34,7 @@ namespace Albany {
       const Teuchos::RCP<Application>& app_,
       const std::string& param_name_) :
       app(app_),
-      param_name(param_name_),
-      use_transpose(false) {}
+      param_name(param_name_) {}
 
     //! Destructor
     virtual ~DistributedParameterDerivativeOpT() {}
@@ -56,12 +55,6 @@ namespace Albany {
     //! @name Tpetra_Operator methods
     //@{
 
-    //! If set true, transpose of this operator will be applied.
-    virtual int SetUseTranspose(bool UseTranspose) {
-      use_transpose = UseTranspose;
-      return 0;
-    }
-
     /*!
      * \brief Returns the result of a Tpetra_Operator applied to a
      * Tpetra_MultiVector X in Y.
@@ -70,6 +63,7 @@ namespace Albany {
                       Tpetra_MultiVector& Y,  Teuchos::ETransp  mode = Teuchos::NO_TRANS, 
                       ST alpha = Teuchos::ScalarTraits<ST>::one(), 
                       ST beta = Teuchos::ScalarTraits<ST>::one() ) const {
+      bool use_transpose = (mode == Teuchos::TRANS);
       app->applyGlobalDistParamDerivImplT(time,
                                      xdot,
                                      xdotdot,
@@ -88,7 +82,7 @@ namespace Albany {
     }
 
      virtual bool hasTransposeApply() const {
-       return use_transpose; 
+       return true; 
      }
 
     /*!
@@ -97,8 +91,6 @@ namespace Albany {
      */
     //virtual const Tpetra_Map& OperatorDomainMap() const {
     virtual Teuchos::RCP<const Tpetra_Map> getDomainMap() const {
-      if (use_transpose)
-        return app->getMapT();
       return app->getDistParamLib()->get(param_name)->map();
     }
 
@@ -108,8 +100,6 @@ namespace Albany {
      */
     //virtual const Tpetra_Map& OperatorRangeMap() const {
     virtual Teuchos::RCP<const Tpetra_Map> getRangeMap() const {
-      if (use_transpose)
-        return app->getDistParamLib()->get(param_name)->map();
       return app->getMapT();
     }
 
@@ -122,9 +112,6 @@ namespace Albany {
 
     //! Name of distributed parameter we are differentiating w.r.t.
     std::string param_name;
-
-    //! Whether to apply transpose
-    bool use_transpose;
 
     //! @name Data needed for apply()
     //@{

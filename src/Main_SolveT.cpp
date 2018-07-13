@@ -446,7 +446,7 @@ main(int argc, char *argv[]) {
         response_names[l] = Teuchos::null;
     }
 
-    const Thyra::ModelEvaluatorBase::InArgs<double> nominal =
+    const Thyra::ModelEvaluatorBase::InArgs<ST> nominal =
         solver->getNominalValues();
 
     // Check if parameters are product vectors or regular vectors
@@ -463,9 +463,14 @@ main(int argc, char *argv[]) {
                                       // everything except CoupledSchwarz right
                                       // now)
         for (int i = 0; i < num_p; i++) {
-          Albany::printTpetraVector(
-              *out << "\nParameter vector " << i << ":\n", *param_names[i],
-              ConverterT::getConstTpetraVector(nominal.get_p(i)));
+          if(i < num_param_vecs)
+            Albany::printTpetraVector(
+            *out << "\nParameter vector " << i << ":\n", *param_names[i],
+                            ConverterT::getConstTpetraVector(nominal.get_p(i)));
+          else { //distributed parameter
+            ST norm2 = ConverterT::getConstTpetraVector(nominal.get_p(i))->norm2();
+            *out << "\nDistributed Parameter " << i << ", (two-norm): "  << norm2 << std::endl;
+          }
         }
       } else {  // Thyra product vector case
         for (int i = 0; i < num_p; i++) {
@@ -494,21 +499,38 @@ main(int argc, char *argv[]) {
       if (!app->getResponse(i)->isScalarResponse()) continue;
 
       if (response_names[i] != Teuchos::null) {
-        *out << "\n Response vector " << i << ": " << *response_names[i]
+        *out << "\nResponse vector " << i << ": " << *response_names[i]
              << "\n";
       } else {
-        *out << "\n Response vector " << i << ":\n";
+        *out << "\nResponse vector " << i << ":\n";
       }
       Albany::printTpetraVector(*out, g);
 
-      status += slvrfctry.checkSolveTestResultsT(i, 0, g.get(), NULL);
-
-      for (int j = 0; j < num_p; j++) {
-        const RCP<const Tpetra_MultiVector> dgdp = sensitivities[i][j];
-        if (Teuchos::nonnull(dgdp)) {
-          Albany::printTpetraVector(
-              *out << "\nSensitivities (" << i << "," << j << "):!\n", dgdp);
-          status += slvrfctry.checkSolveTestResultsT(i, j, g.get(), dgdp.get());
+      if (num_p == 0) {
+        status += slvrfctry.checkSolveTestResultsT(i, 0, g.get(), NULL);
+      } else {
+        for (int j=0; j<num_p; j++) {
+          const RCP<const Tpetra_MultiVector> dgdp = sensitivities[i][j];
+          if (Teuchos::nonnull(dgdp)) {
+            if(j < num_param_vecs) {
+              Albany::printTpetraVector(
+                  *out << "\nSensitivities (" << i << "," << j << "):!\n", dgdp);
+                  status += slvrfctry.checkSolveTestResultsT(i, j, g.get(), dgdp.get());
+            }
+            else {
+              const RCP<const Tpetra_Map> serial_map = Teuchos::rcp(new const Tpetra_Map(INVALID, 1, 0, comm));
+              Tpetra_MultiVector norms(serial_map,dgdp->getNumVectors());
+              *out << "\nSensitivities (" << i << "," << j  << ") for Distributed Parameters:  (two-norm)\n";
+              *out << "    ";
+              for(int ir=0; ir<dgdp->getNumVectors(); ++ir) {
+            	auto norm2 = dgdp->getVector(ir)->norm2();
+            	norms.getDataNonConst(ir)[0] = norm2;
+                *out << "    " << norm2;
+              }
+              *out << "\n" << std::endl;
+              status += slvrfctry.checkSolveTestResultsT(i, j, g.get(), &norms);
+            }
+          }
         }
       }
     }
@@ -528,7 +550,7 @@ main(int argc, char *argv[]) {
           debugParams.get("Write Solution to Standard Output", false);
 
       const RCP<const Tpetra_Vector> xfinal = responses.back();
-      double mnv = xfinal->meanValue();
+      auto mnv = xfinal->meanValue();
       *out << "\nMain_Solve: MeanValue of final solution " << mnv << std::endl;
       *out << "\nNumber of Failed Comparisons: " << status << std::endl;
       if (writeToCoutSoln == true) {

@@ -78,54 +78,6 @@ evaluateTangentT(const double alpha,
   }
 }
 
-#if defined(ALBANY_EPETRA)
-void
-Albany::SolutionMinValueResponseFunction::
-evaluateGradient(const double current_time,
-		 const Epetra_Vector* xdot,
-		 const Epetra_Vector* xdotdot,
-		 const Epetra_Vector& x,
-		 const Teuchos::Array<ParamVec>& p,
-		 ParamVec* deriv_p,
-		 Epetra_Vector* g,
-		 Epetra_MultiVector* dg_dx,
-		 Epetra_MultiVector* dg_dxdot,
-		 Epetra_MultiVector* dg_dxdotdot,
-		 Epetra_MultiVector* dg_dp)
-{
-  //OG:This Epetra code could not be not tested so it is not modifiet to have min instead of max.
-  //amb, later: I'm uncommenting this implementation so that the Epetra executable will build but inserting an exception.
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
-                             "This Epetra code has not been tested and so should be considered unimplemented.");
-#if 0
-  int global_index;
-  double mxv;
-  computeMinValue(x, mxv, global_index);
-
-  // Evaluate response g
-  if (g != NULL)
-    (*g)[0] = mxv;
-
-  // Evaluate dg/dx
-  if (dg_dx != NULL) {
-    dg_dx->PutScalar(0.0);
-    int lid = x.Map().LID(global_index);
-    if(lid >= 0) (*dg_dx)[0][lid] = 1.0;
-  }
-
-  // Evaluate dg/dxdot
-  if (dg_dxdot != NULL)
-    dg_dxdot->PutScalar(0.0);
-  if (dg_dxdotdot != NULL)
-    dg_dxdotdot->PutScalar(0.0);
-
-  // Evaluate dg/dp
-  if (dg_dp != NULL)
-    dg_dp->PutScalar(0.0);
-#endif
-}
-#endif
-
 void
 Albany::SolutionMinValueResponseFunction::
 evaluateGradientT(const double current_time,
@@ -193,37 +145,6 @@ evaluateDistParamDerivT(
   }
 }
 
-#if defined(ALBANY_EPETRA)
-/*
-void
-Albany::SolutionMaxValueResponseFunction::
-computeMaxValue(const Epetra_Vector& x, double& global_max, int& global_index)
-{
-  double my_max = -Epetra_MaxDouble;
-  int my_index = -1, index;
-  
-  // Loop over nodes to find max value for equation eq
-  int num_my_nodes = x.MyLength() / neq;
-  for (int node=0; node<num_my_nodes; node++) {
-    if (interleavedOrdering)  index = node*neq+eq;
-    else                      index = node + eq*num_my_nodes;
-    if (x[index] > my_max) {
-      my_max = x[index];
-      my_index = index;
-    }
-  }
-
-  // Get max value across all proc's
-  x.Comm().MaxAll(&my_max, &global_max, 1);
-
-  // Compute min of all global indices equal to max value
-  if (my_max == global_max)
-    my_index = x.Map().GID(my_index);
-  else
-    my_index = x.GlobalLength();
-  x.Comm().MinAll(&my_index, &global_index, 1);
-}*/
-#endif
 
 void
 Albany::SolutionMinValueResponseFunction::

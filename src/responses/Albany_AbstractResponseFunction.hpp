@@ -4,24 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE is off, except SG and MP.
-
 #ifndef ALBANY_ABSTRACTRESPONSEFUNCTION_HPP
 #define ALBANY_ABSTRACTRESPONSEFUNCTION_HPP
 
-#include "Albany_DataTypes.hpp"
-
 #include "Teuchos_Array.hpp"
 #include "Teuchos_RCP.hpp"
-#if defined(ALBANY_EPETRA)
-#include "Epetra_Map.h"
-#include "Epetra_Vector.h"
-#include "Epetra_MultiVector.h"
-#include "EpetraExt_ModelEvaluator.h"
-#include "EpetraExt_MultiComm.h"
-#endif
 #include "PHAL_AlbanyTraits.hpp"
 #include "Thyra_ModelEvaluatorBase.hpp"
+#include "Albany_DataTypes.hpp"
 
 namespace Albany {
 
@@ -37,20 +27,10 @@ namespace Albany {
     //! Destructor
     virtual ~AbstractResponseFunction() {};
 
-#if defined(ALBANY_EPETRA)
-    //! Setup response function
-    virtual void setup() = 0;
-#endif
-
     //! Setup response function
     virtual void setupT() = 0;
 
-#if defined(ALBANY_EPETRA)
-    //! Get the map associate with this response
-    virtual Teuchos::RCP<const Epetra_Map> responseMap() const = 0;
-#endif
-
-    //! Get the map associate with this response - Tpetra version
+    //! Get the map associate with this response - Tpetra version 
     virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const = 0;
 
     /*!
@@ -59,10 +39,6 @@ namespace Albany {
      */
     virtual bool isScalarResponse() const = 0;
 
-#if defined(ALBANY_EPETRA)
-    //! Create operator for gradient (e.g., dg/dx)
-    virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const = 0;
-#endif
     //! Create Tpetra operator for gradient (e.g., dg/dx)
     virtual Teuchos::RCP<Tpetra_Operator> createGradientOpT() const = 0;
 
@@ -100,22 +76,6 @@ namespace Albany {
       Tpetra_Vector* g,
       Tpetra_MultiVector* gx,
       Tpetra_MultiVector* gp) = 0;
-
-#if defined(ALBANY_EPETRA)
-    //! Evaluate derivative dg/dx, dg/dxdot, dg/dp
-    virtual void evaluateDerivative(
-      const double current_time,
-      const Epetra_Vector* xdot,
-      const Epetra_Vector* xdotdot,
-      const Epetra_Vector& x,
-      const Teuchos::Array<ParamVec>& p,
-      ParamVec* deriv_p,
-      Epetra_Vector* g,
-      const EpetraExt::ModelEvaluator::Derivative& dg_dx,
-      const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
-      const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
-      const EpetraExt::ModelEvaluator::Derivative& dg_dp) = 0;
-#endif
 
    virtual void evaluateDerivativeT(
       const double current_time,

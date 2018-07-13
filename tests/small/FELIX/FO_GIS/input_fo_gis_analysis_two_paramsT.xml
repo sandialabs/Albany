@@ -9,6 +9,7 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
+    <Parameter name="Compute Sensitivities" type="bool"  value="true"/>
     <Parameter name="Extruded Column Coupled in 2D Response" type="bool" value="true"/>
     <Parameter name="Required Fields"         type="Array(string)" value="{temperature}"/>
     <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction, ice_thickness, observed_ice_thickness, observed_ice_thickness_RMS,
@@ -454,14 +455,31 @@
                     <Parameter name="Tolerance" type="double" value="1e-6"/>
                   </ParameterList>
                 </ParameterList>
+                <ParameterList name="Belos">
+                  <ParameterList name="VerboseObject">
+                    <Parameter name="Verbosity Level" type="string" value="medium"/>
+                  </ParameterList>
+                  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+                  <ParameterList name="Solver Types">
+                    <ParameterList name="Block GMRES">
+                      <Parameter name="Convergence Tolerance" type="double" value="1e-7"/>
+                      <Parameter name="Output Frequency" type="int" value="10"/>
+                      <Parameter name="Output Style" type="int" value="1"/>
+                      <Parameter name="Maximum Iterations" type="int" value="100"/>
+                      <Parameter name="Block Size" type="int" value="1"/>
+                      <Parameter name="Num Blocks" type="int" value="50"/>
+                      <Parameter name="Flexible Gmres" type="bool" value="0"/>
+                    </ParameterList>                
+                  </ParameterList>                
+                </ParameterList>
               </ParameterList>
-              <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+              <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
               <ParameterList name="Preconditioner Types">
-                <ParameterList name="Ifpack">
+                <ParameterList name="Ifpack2">
                   <Parameter name="Overlap" type="int" value="0"/>
-                  <Parameter name="Prec Type" type="string" value="ILU"/>
-                  <ParameterList name="Ifpack Settings">
-                    <Parameter name="fact: level-of-fill" type="int" value="0"/>
+                  <Parameter name="Prec Type" type="string" value="RILUK"/>
+                  <ParameterList name="Ifpack2 Settings">
+                    <Parameter name="fact: iluk level-of-fill" type="int" value="0"/>
                   </ParameterList>
                 </ParameterList>
                 <ParameterList name="ML">

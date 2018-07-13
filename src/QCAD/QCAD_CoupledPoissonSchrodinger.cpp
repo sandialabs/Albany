@@ -9,7 +9,7 @@
 #include "Piro_Epetra_LOCASolver.hpp"
 
 /* GAH FIXME - Silence warning:
-TRILINOS_DIR/../../../include/pecos_global_defs.hpp:17:0: warning:
+TRILINOS_DIR/../../../include/pecos_global_defs.hpp:17:0: warning: 
         "BOOST_MATH_PROMOTE_DOUBLE_POLICY" redefined [enabled by default]
 Please remove when issue is resolved
 */
@@ -540,11 +540,20 @@ QCAD::CoupledPoissonSchrodinger::create_DgDx_op(int j) const
     std::endl <<
     "Error!  Albany::ModelEvaluator::create_DgDx_op():  " <<
     "Invalid response index j = " << j << std::endl);
-
+  
+  Teuchos::RCP<Tpetra_CrsMatrix> DgDxT;
+  Teuchos::RCP<Epetra_CrsMatrix> DgDx;
   if(j < poissonApp->getNumResponses())
-    return poissonApp->getResponse(j)->createGradientOp();
+    DgDxT = Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(poissonApp->getResponse(j)->createGradientOpT());
   else
-    return schrodingerApp->getResponse(j - poissonApp->getNumResponses())->createGradientOp();
+    DgDxT = Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(schrodingerApp->getResponse(j - poissonApp->getNumResponses())->createGradientOpT());
+
+  if(Teuchos::nonnull(DgDxT)) {
+    Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(DgDxT, *DgDx, commE);
+    DgDx->FillComplete(true);
+  }
+
+  return DgDx;
 }
 
 Teuchos::RCP<Epetra_Operator>
@@ -556,11 +565,20 @@ QCAD::CoupledPoissonSchrodinger::create_DgDx_dot_op(int j) const
     std::endl <<
     "Error!  Albany::ModelEvaluator::create_DgDx_dot_op():  " <<
     "Invalid response index j = " << j << std::endl);
-
+  
+  Teuchos::RCP<Tpetra_CrsMatrix> DgDxT_dot;
+  Teuchos::RCP<Epetra_CrsMatrix> DgDx_dot;
   if(j < poissonApp->getNumResponses())
-    return poissonApp->getResponse(j)->createGradientOp();
+    DgDxT_dot = Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(poissonApp->getResponse(j)->createGradientOpT());
   else
-    return schrodingerApp->getResponse(j - poissonApp->getNumResponses())->createGradientOp();
+    DgDxT_dot = Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(schrodingerApp->getResponse(j - poissonApp->getNumResponses())->createGradientOpT());
+
+  if(Teuchos::nonnull(DgDxT_dot)) {
+    Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(DgDxT_dot, *DgDx_dot, commE);
+    DgDx_dot->FillComplete(true);
+  }
+
+  return DgDx_dot;
 }
 
 
@@ -682,13 +700,24 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
   //
   int disc_nMyElements = disc_map->NumMyElements();
 
+  Teuchos::RCP<const Teuchos_Comm> commT = Albany::createTeuchosCommFromEpetraComm(commE);
   Teuchos::RCP<const Epetra_Vector> x_poisson, xdot_poisson, eigenvals_dist;
+  Teuchos::RCP<const Tpetra_Vector> xT_poisson, xTdot_poisson, xTdot_schrodinger_0;
   Teuchos::RCP<const Epetra_MultiVector> x_schrodinger, xdot_schrodinger;
+  Teuchos::RCP<const Tpetra_MultiVector> xT_schrodinger, xTdot_schrodinger;
   std::vector<const Epetra_Vector*> xdot_schrodinger_vec(nEigenvals);
   separateCombinedVector(x, x_poisson, x_schrodinger, eigenvals_dist);
+  xT_poisson = Petra::EpetraVector_To_TpetraVectorConst(*x_poisson, commT);
+  xT_schrodinger = Petra::EpetraMultiVector_To_TpetraMultiVector(*x_schrodinger, commT);
 
+
+    
   if (x_dot != Teuchos::null) {  //maybe unnecessary - it seems that the coupled PS model evaluator shouldn't support x_dot ...
     separateCombinedVector(x_dot, xdot_poisson, xdot_schrodinger);
+    xTdot_poisson = Petra::EpetraVector_To_TpetraVectorConst(*xdot_poisson, commT);
+    xTdot_schrodinger = Petra::EpetraMultiVector_To_TpetraMultiVector(*xdot_schrodinger, commT);
+    if(nEigenvals>0)
+      xTdot_schrodinger_0 = xTdot_schrodinger->getVector(0);
     for(int i=0; i<nEigenvals; i++) xdot_schrodinger_vec[i] = (*xdot_schrodinger)(i);
   }
   else {
@@ -714,10 +743,14 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
   //
   Teuchos::RCP<Epetra_Vector>   f_poisson, f_norm_local, f_norm_dist;
   Teuchos::RCP<Epetra_MultiVector> f_schrodinger;
+  Teuchos::RCP<Tpetra_MultiVector> fT_schrodinger;
+  Teuchos::RCP<Tpetra_Vector> fT_poisson;
   std::vector<Epetra_Vector*> f_schrodinger_vec(nEigenvals);
 
   if(f_out != Teuchos::null) {
     separateCombinedVector(f_out, f_poisson, f_schrodinger, f_norm_dist);
+    fT_poisson = Petra::EpetraVector_To_TpetraVectorNonConst(*f_poisson, commT);
+    fT_schrodinger = Petra::EpetraMultiVector_To_TpetraMultiVector(*f_schrodinger, commT);
     for(int i=0; i<nEigenvals; i++) f_schrodinger_vec[i] = (*f_schrodinger)(i);
 
     // Create local vector for holding the residual of the normalization equations on each proc.
@@ -775,23 +808,51 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
 
   Teuchos::RCP<Epetra_CrsMatrix> W_out_poisson_crs; //possibly used by preconditioner, so declare here
   Teuchos::RCP<Epetra_CrsMatrix> W_out_schrodinger_crs; //possibly used by preconditioner, so declare here
+  Teuchos::RCP<Tpetra_CrsMatrix> W_out_poisson_crsT; //possibly used by preconditioner, so declare here
+  Teuchos::RCP<Tpetra_CrsMatrix> W_out_schrodinger_crsT; //possibly used by preconditioner, so declare here
 
   // Mass Matrix -- needed even if we don't need to compute the Jacobian, since it enters into the normalization equations
   //   --> Compute mass matrix using schrodinger equation -- independent of eigenvector so can just use 0th
   //       Note: to compute this, we need to evaluate the schrodinger problem as a transient problem, so create a dummy xdot...
   Teuchos::RCP<Epetra_Operator> M_out_schrodinger = schrodingerModel->create_W(); //maybe re-use this and not create it every time?
   Teuchos::RCP<Epetra_CrsMatrix> M_out_schrodinger_crs = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(M_out_schrodinger, true);
-  Teuchos::RCP<const Epetra_Vector> dummy_xdot = schrodingerModel->get_x_dot_init(); // I think this would work as well: Teuchos::rcp(new Epetra_Vector(*disc_map))
-  schrodingerApp->computeGlobalJacobian(1.0, 0.0, 0.0, curr_time, dummy_xdot.get(), NULL, *((*x_schrodinger)(0)),
-              schrodinger_sacado_param_vec, f_schrodinger_vec[0], *M_out_schrodinger_crs);
+  Teuchos::RCP<Tpetra_CrsMatrix> M_out_schrodinger_crsT;
+  if(Teuchos::nonnull(M_out_schrodinger_crs))
+    M_out_schrodinger_crsT = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*M_out_schrodinger_crs, commT);
+
+
+  Teuchos::RCP<const Epetra_Vector> dummy_xdot = schrodingerModel->get_x_dot_init(); // I think this would work as well: Teuchos::rcp(new Epetra_Vector(*disc_map)) 
+  Teuchos::RCP<const Tpetra_Vector> dummy_xTdot;
+  if(Teuchos::nonnull(dummy_xdot))
+    dummy_xTdot = Petra::EpetraVector_To_TpetraVectorConst(*dummy_xdot, commT);
+
+
+
+  Teuchos::RCP<Tpetra_Vector> fT_schrodinger_0;
+  if (Teuchos::nonnull(fT_schrodinger))
+    fT_schrodinger_0 = fT_schrodinger->getVectorNonConst(0);
+
+  schrodingerApp->computeGlobalJacobianT(1.0, 0.0, 0.0, curr_time, dummy_xTdot.get(), NULL, *xT_schrodinger->getVector(0),
+					    schrodinger_sacado_param_vec,  fT_schrodinger_0.get(), *M_out_schrodinger_crsT);
+  if (Teuchos::nonnull(fT_schrodinger_0))
+    Petra::TpetraVector_To_EpetraVector(fT_schrodinger_0, *(f_schrodinger_vec[0]), commE);
+  Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(M_out_schrodinger_crsT, *M_out_schrodinger_crs, commE);
+  M_out_schrodinger_crs->FillComplete(true);
 
 
   // Hamiltionan Matrix -- needed even if we don't need to compute the Jacobian, since this is how we compute the schrodinger residuals
   //   --> Computed as jacobian matrix of schrodinger equation -- independent of eigenvector so can just use 0th
   Teuchos::RCP<Epetra_Operator> J_out_schrodinger = schrodingerModel->create_W(); //maybe re-use this and not create it every time?
   Teuchos::RCP<Epetra_CrsMatrix> J_out_schrodinger_crs = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(J_out_schrodinger, true);
-  schrodingerApp->computeGlobalJacobian(0.0, 1.0, 0.0, curr_time, dummy_xdot.get(), NULL, *((*x_schrodinger)(0)),
-              schrodinger_sacado_param_vec, f_schrodinger_vec[0], *J_out_schrodinger_crs);
+  Teuchos::RCP<Tpetra_CrsMatrix> J_out_schrodinger_crsT;
+  if(Teuchos::nonnull(J_out_schrodinger_crs))
+    J_out_schrodinger_crsT = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*J_out_schrodinger_crs, commT);
+  schrodingerApp->computeGlobalJacobianT(0.0, 1.0, 0.0, curr_time, dummy_xTdot.get(), NULL, *xT_schrodinger->getVector(0),
+					    schrodinger_sacado_param_vec, fT_schrodinger_0.get(), *J_out_schrodinger_crsT);
+  if (Teuchos::nonnull(fT_schrodinger_0))
+    Petra::TpetraVector_To_EpetraVector(fT_schrodinger_0, *(f_schrodinger_vec[0]), commE);
+  Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(J_out_schrodinger_crsT, *J_out_schrodinger_crs, commE);
+  J_out_schrodinger_crs->FillComplete(true);
 
   f_schrodinger_already_computed[0] = true; //residual is not affected by alpha & beta, so both of the above calls compute it.
 
@@ -809,9 +870,16 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
     // Compute poisson Jacobian
     Teuchos::RCP<Epetra_Operator> W_out_poisson = poissonModel->create_W(); //maybe re-use this and not create it every time?
     W_out_poisson_crs = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_out_poisson, true);
+    Teuchos::RCP<Tpetra_CrsMatrix> W_out_poisson_crsT;
+    if(Teuchos::nonnull(W_out_poisson_crs))
+      W_out_poisson_crsT = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*W_out_poisson_crs, commT);
 
-    poissonApp->computeGlobalJacobian(alpha, beta, 0.0, curr_time, xdot_poisson.get(), NULL, *x_poisson,
-              poisson_sacado_param_vec, f_poisson.get(), *W_out_poisson_crs);
+    poissonApp->computeGlobalJacobianT(alpha, beta, 0.0, curr_time, xTdot_poisson.get(), NULL, *xT_poisson,
+				      poisson_sacado_param_vec, fT_poisson.get(), *W_out_poisson_crsT);
+    if (Teuchos::nonnull(fT_poisson))
+      Petra::TpetraVector_To_EpetraVector(fT_poisson, *f_poisson, commE);
+    Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(W_out_poisson_crsT, *W_out_poisson_crs, commE);
+    W_out_poisson_crs->FillComplete(true);
     f_poisson_already_computed = true;
 
 
@@ -826,8 +894,17 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
     else {
       Teuchos::RCP<Epetra_Operator> W_out_schrodinger = schrodingerModel->create_W(); //maybe re-use this and not create it every time?
       W_out_schrodinger_crs = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_out_schrodinger, true);
-      schrodingerApp->computeGlobalJacobian(alpha, beta, 0.0, curr_time, xdot_schrodinger_vec[0], NULL, *((*x_schrodinger)(0)),
-            schrodinger_sacado_param_vec, f_schrodinger_vec[0], *W_out_schrodinger_crs);
+      Teuchos::RCP<Tpetra_CrsMatrix> W_out_poisson_crsT;
+      if(Teuchos::nonnull(W_out_poisson_crs))
+        W_out_poisson_crsT = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*W_out_poisson_crs, commT);
+
+      schrodingerApp->computeGlobalJacobianT(alpha, beta, 0.0, curr_time, xTdot_schrodinger_0.get(), NULL, *xT_schrodinger->getVector(0),
+					  schrodinger_sacado_param_vec, fT_schrodinger_0.get(), *W_out_schrodinger_crsT);
+      if (Teuchos::nonnull(fT_schrodinger_0))
+        Petra::TpetraVector_To_EpetraVector(fT_schrodinger_0, *(f_schrodinger_vec[0]), commE);
+      Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(W_out_schrodinger_crsT, *W_out_schrodinger_crs, commE);
+      W_out_schrodinger_crs->FillComplete(true);
+
       f_schrodinger_already_computed[0] = true;
     }
 
@@ -894,8 +971,17 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
        Extra_W_crs_poisson = Teuchos::rcp( new Epetra_CrsMatrix(*W_out_poisson_crs) ); //Check: does this need to copy?
      else {
        Extra_W_crs_poisson = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(poissonModel->create_W(), true);
-       poissonApp->computeGlobalJacobian(alpha, beta, 0.0, curr_time, xdot_poisson.get(), NULL, *x_poisson,
-           poisson_sacado_param_vec, f_poisson.get(), *Extra_W_crs_poisson);
+       Teuchos::RCP<Tpetra_CrsMatrix> Extra_W_crs_poissonT;
+       if(Teuchos::nonnull(Extra_W_crs_poisson))
+         Extra_W_crs_poissonT = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*Extra_W_crs_poisson, commT);
+
+       poissonApp->computeGlobalJacobianT(alpha, beta, 0.0, curr_time, xTdot_poisson.get(), NULL, *xT_poisson,
+					 poisson_sacado_param_vec, fT_poisson.get(), *Extra_W_crs_poissonT);
+       if (Teuchos::nonnull(fT_poisson))
+         Petra::TpetraVector_To_EpetraVector(fT_poisson, *f_poisson, commE);
+       Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(Extra_W_crs_poissonT, *Extra_W_crs_poisson, commE);
+       Extra_W_crs_poisson->FillComplete(true);
+
        f_poisson_already_computed = true;
      }
 
@@ -944,8 +1030,15 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
        Extra_W_crs_schrodinger = Teuchos::rcp( new Epetra_CrsMatrix(*W_out_schrodinger_crs) ); //Check: does this need to copy?
      else {
        Extra_W_crs_schrodinger = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(schrodingerModel->create_W(), true);
-       schrodingerApp->computeGlobalJacobian(alpha, beta, 0.0, curr_time, xdot_schrodinger_vec[0], NULL, *((*x_schrodinger)(0)),
-               schrodinger_sacado_param_vec, f_schrodinger_vec[0], *Extra_W_crs_schrodinger);
+       Teuchos::RCP<Tpetra_CrsMatrix> Extra_W_crs_schrodingerT;
+       if(Teuchos::nonnull(Extra_W_crs_schrodinger))
+         Extra_W_crs_schrodingerT = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*Extra_W_crs_schrodinger, commT);
+       schrodingerApp->computeGlobalJacobianT(alpha, beta, 0.0, curr_time, xTdot_schrodinger_0.get(), NULL, *xT_schrodinger->getVector(0),
+					     schrodinger_sacado_param_vec, fT_schrodinger_0.get(), *Extra_W_crs_schrodingerT);
+       if (Teuchos::nonnull(fT_schrodinger_0))
+         Petra::TpetraVector_To_EpetraVector(fT_schrodinger_0, *(f_schrodinger_vec[0]), commE);
+       Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(Extra_W_crs_schrodingerT, *Extra_W_crs_schrodinger, commE);
+       Extra_W_crs_schrodinger->FillComplete(true);
        f_schrodinger_already_computed[0] = true;
      }
 
@@ -1037,23 +1130,41 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
 
       // Compute full dfdp by computing non-zero parts and leaving zeros in others
       if (i < num_poisson_param_vecs) {
-  // "Poisson-owned" param vector, so only poisson part of dfdp vector can be nonzero
-  poissonApp->computeGlobalTangent(0.0, 0.0, 0.0, curr_time, false, xdot_poisson.get(), NULL, *x_poisson,
-          poisson_sacado_param_vec, p_vec.get(),
-          NULL, NULL, NULL, NULL, f_poisson.get(), NULL,
-          dfdp_poisson.get());
+        Teuchos::RCP<Tpetra_MultiVector> dfdpT_poisson;
+        dfdpT_poisson = Petra::EpetraMultiVector_To_TpetraMultiVector(*dfdp_poisson, commT);
+	// "Poisson-owned" param vector, so only poisson part of dfdp vector can be nonzero
+	poissonApp->computeGlobalTangentT(0.0, 0.0, 0.0, curr_time, false, xTdot_poisson.get(), NULL, *xT_poisson,
+				  poisson_sacado_param_vec, p_vec.get(),
+				  NULL, NULL, NULL, NULL, fT_poisson.get(), NULL,
+				  dfdpT_poisson.get());
+  if (Teuchos::nonnull(fT_poisson))
+    Petra::TpetraVector_To_EpetraVector(fT_poisson, *f_poisson, commE);
+  if (Teuchos::nonnull(dfdpT_poisson))
+    Petra::TpetraMultiVector_To_EpetraMultiVector(dfdpT_poisson, *dfdp_poisson, commE);
 
   f_poisson_already_computed=true;
       }
       else {
-  // "Schrodinger-owned" param vector, so only schrodinger parts of dfdp vector can be nonzero
-  for(int k=0; k<nEigenvals; k++) {
-    schrodingerApp->computeGlobalTangent(0.0, 0.0, 0.0, curr_time, false, xdot_schrodinger_vec[k], NULL, *((*x_schrodinger)(k)),
-                 schrodinger_sacado_param_vec, p_vec.get(),
-                 NULL, NULL, NULL, NULL, f_schrodinger_vec[k], NULL,
-                 dfdp_schrodinger[k].get());
-    f_schrodinger_already_computed[k]=true;
-  }
+	// "Schrodinger-owned" param vector, so only schrodinger parts of dfdp vector can be nonzero
+  Teuchos::RCP<Tpetra_Vector> fT_schrodinger_k;
+  Teuchos::RCP<const Tpetra_Vector>  xTdot_schrodinger_k;
+  Teuchos::RCP<Tpetra_MultiVector> dfdpT_schrodinger_k;
+	for(int k=0; k<nEigenvals; k++) {
+	  if (Teuchos::nonnull(fT_schrodinger))
+	    fT_schrodinger_k = fT_schrodinger->getVectorNonConst(k);
+    if (Teuchos::nonnull(xTdot_schrodinger))
+      xTdot_schrodinger_k = xTdot_schrodinger->getVector(k);
+    dfdpT_schrodinger_k = Petra::EpetraMultiVector_To_TpetraMultiVector(*dfdp_schrodinger[k], commT);
+	  schrodingerApp->computeGlobalTangentT(0.0, 0.0, 0.0, curr_time, false, xTdot_schrodinger_k.get(), NULL, *xT_schrodinger->getVector(k),
+					       schrodinger_sacado_param_vec, p_vec.get(),
+					       NULL, NULL, NULL, NULL, fT_schrodinger_k.get(), NULL,
+					       dfdpT_schrodinger_k.get());
+    if (Teuchos::nonnull(fT_schrodinger_k))
+      Petra::TpetraVector_To_EpetraVector(fT_schrodinger_k, *(f_schrodinger_vec[k]), commE);
+    if (Teuchos::nonnull(dfdpT_schrodinger_k))
+      Petra::TpetraMultiVector_To_EpetraMultiVector(dfdpT_schrodinger_k, *(dfdp_schrodinger[k]), commE);
+	  f_schrodinger_already_computed[k]=true;
+	}
       }
     }
   }
@@ -1073,10 +1184,12 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
       Epetra_Vector M_vec(*disc_map);  //temp storage for mass matrix times vec -- maybe don't allocate this on the stack??
 
       if(!f_poisson_already_computed) {
-  poissonApp->computeGlobalResidual(curr_time, xdot_poisson.get(), NULL, *x_poisson,
-            poisson_sacado_param_vec, *f_poisson);
-      }
+	poissonApp->computeGlobalResidualT(curr_time, xTdot_poisson.get(), NULL, *xT_poisson,
+					  poisson_sacado_param_vec, *fT_poisson);
+      Petra::TpetraVector_To_EpetraVector(fT_poisson, *f_poisson, commE);
 
+      }
+      
       for(int i=0; i<nEigenvals; i++) {
 
   // Compute Mass_matrix * eigenvector[i]
@@ -1170,42 +1283,59 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
 
     Derivative dgdx_out = outArgs.get_DgDx(i);
     Derivative dgdxdot_out = outArgs.get_DgDx_dot(i);
+    Teuchos::RCP<Thyra::ModelEvaluatorBase::Derivative<ST>> dgdxT_out;
+    Teuchos::RCP<Thyra::ModelEvaluatorBase::Derivative<ST>> dgdxTdot_out;
 
+    Teuchos::RCP<Tpetra_MultiVector> dgdxT_out_vec;
+    Teuchos::RCP<Epetra_MultiVector> dgdx_out_vec = dgdx_out.getMultiVector();
+    if (dgdx_out_vec != Teuchos::null) {
+      dgdxT_out_vec = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdx_out_vec, commT);
+      dgdxT_out = Teuchos::rcp(new Thyra::ModelEvaluatorBase::Derivative<ST>(
+          Thyra::createMultiVector(dgdxT_out_vec), Thyra::convert(dgdx_out.getMultiVectorOrientation())));
+    } else {
+      dgdxT_out = Teuchos::rcp(new Thyra::ModelEvaluatorBase::Derivative<ST>());
+    }
+
+    Teuchos::RCP<Tpetra_MultiVector> dgdxTdot_out_vec;
+    Teuchos::RCP<Epetra_MultiVector> dgdxdot_out_vec = dgdxdot_out.getMultiVector();
+    if (dgdxdot_out_vec != Teuchos::null) {
+      dgdxTdot_out_vec = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdxdot_out_vec, commT);
+      dgdxTdot_out = Teuchos::rcp(new Thyra::ModelEvaluatorBase::Derivative<ST>(
+          Thyra::createMultiVector(dgdxTdot_out_vec), Thyra::convert(dgdxdot_out.getMultiVectorOrientation())));
+    } else {
+      dgdxTdot_out = Teuchos::rcp(new Thyra::ModelEvaluatorBase::Derivative<ST>());
+    }
+        
     //IK, 10/9/14
     //convert g_out to Tpetra for evaluateResponseTangentT calls
-    Teuchos::RCP<const Teuchos_Comm> commT = Albany::createTeuchosCommFromEpetraComm(commE);
-    Teuchos::RCP<Tpetra_Vector> g_outT;
-    if (g_out != Teuchos::null)
-      g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT);
-    //convert xdot_poisson and x_poisson to Tpetra
-    Teuchos::RCP<const Tpetra_Vector> x_poissonT, xdot_poissonT;
-    if (x_poisson != Teuchos::null)
-      x_poissonT  = Petra::EpetraVector_To_TpetraVectorConst(*x_poisson, commT);
-    if (xdot_poisson != Teuchos::null)
-      xdot_poissonT = Petra::EpetraVector_To_TpetraVectorConst(*xdot_poisson, commT);
-    //convert xdot_schrodinger and x_schrodinger to Tpetra
-    Teuchos::RCP<const Tpetra_Vector> x_schrodingerT, xdot_schrodingerT;
-    if (x_schrodinger != Teuchos::null)
-      x_schrodingerT  = Petra::EpetraVector_To_TpetraVectorConst(*((*x_schrodinger)(0)), commT);
-    if (xdot_schrodinger != Teuchos::null)
-      xdot_schrodingerT  = Petra::EpetraVector_To_TpetraVectorConst(*xdot_schrodinger_vec[0], commT);
+
+    Teuchos::RCP<Tpetra_Vector> gT_out;
+    if (g_out != Teuchos::null) 
+      gT_out = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT);
 
     // dg/dx, dg/dxdot
     if (!dgdx_out.isEmpty() || !dgdxdot_out.isEmpty()) {
+      const Thyra::ModelEvaluatorBase::Derivative<ST> dummy_derivT;
       if(i < poissonApp->getNumResponses()) {
-  poissonApp->evaluateResponseDerivative(i, curr_time, xdot_poisson.get(), NULL, *(x_poisson),
+	poissonApp->evaluateResponseDerivativeT(i, curr_time, xTdot_poisson.get(), NULL, *xT_poisson,
                                       poisson_sacado_param_vec, NULL,
-                                      g_out.get(), dgdx_out,
-                                      dgdxdot_out, Derivative(), Derivative());
+                                      gT_out.get(), *dgdxT_out,
+                                      *dgdxTdot_out, dummy_derivT, dummy_derivT);
       }
       else {
-  // take response derivatives using lowest eigenstate only (is there something better??)
-  schrodingerApp->evaluateResponseDerivative(i - poissonApp->getNumResponses(), curr_time, xdot_schrodinger_vec[0], NULL,
-                                      *((*x_schrodinger)(0)),
+	// take response derivatives using lowest eigenstate only (is there something better??)
+	schrodingerApp->evaluateResponseDerivativeT(i - poissonApp->getNumResponses(), curr_time, xTdot_schrodinger_0.get(), NULL,
+                                      *xT_schrodinger->getVector(0),
                                       schrodinger_sacado_param_vec, NULL,
-                                      g_out.get(), dgdx_out,
-                                      dgdxdot_out, Derivative(), Derivative());
+                                      gT_out.get(), *dgdxT_out,
+                                      *dgdxTdot_out, dummy_derivT, dummy_derivT);
       }
+      if (Teuchos::nonnull(g_out))
+        Petra::TpetraVector_To_EpetraVector(gT_out, *g_out, commE);
+      if (Teuchos::nonnull(dgdx_out_vec))
+        Petra::TpetraMultiVector_To_EpetraMultiVector(dgdxT_out_vec, *dgdx_out_vec, commE);
+      if (Teuchos::nonnull(dgdxdot_out_vec))
+        Petra::TpetraMultiVector_To_EpetraMultiVector(dgdxTdot_out_vec, *dgdxdot_out_vec, commE);
       g_computed = true;
     }
 
@@ -1219,9 +1349,9 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
 
         Teuchos::RCP<ParamVec> p_vec;
 
-  Teuchos::Array<ParamVec>& sacado_param_vec =
-    (j < num_poisson_param_vecs) ? poisson_sacado_param_vec : schrodinger_sacado_param_vec;
-  int offset = (j < num_poisson_param_vecs) ? 0 : num_poisson_param_vecs;
+	Teuchos::Array<ParamVec>& sacado_param_vec = 
+	  (j < num_poisson_param_vecs) ? poisson_sacado_param_vec : schrodinger_sacado_param_vec;
+	int offset = (j < num_poisson_param_vecs) ? 0 : num_poisson_param_vecs;
 
         if (p_indexes.size() == 0)
           p_vec = Teuchos::rcp(&sacado_param_vec[j-offset],false);
@@ -1236,34 +1366,34 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
        if (dgdp_out != Teuchos::null)
         dgdp_outT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp_out, commT);
 
-  if(i < poissonApp->getNumResponses() && j < num_poisson_param_vecs) {
-    //both response and param vectors belong to poisson problem
-    poissonApp->evaluateResponseTangentT(i, alpha, beta, 0.0, curr_time, false,
-                xdot_poissonT.get(), NULL, *x_poissonT,
-                poisson_sacado_param_vec, p_vec.get(),
-                NULL, NULL, NULL, NULL, g_outT.get(), NULL,
-                dgdp_outT.get());
-          //convert g_outT to Epetra_Vector g_out
-          Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, commE);
+	if(i < poissonApp->getNumResponses() && j < num_poisson_param_vecs) {
+	  //both response and param vectors belong to poisson problem
+	  poissonApp->evaluateResponseTangentT(i, alpha, beta, 0.0, curr_time, false,
+					      xTdot_poisson.get(), NULL, *xT_poisson,
+					      poisson_sacado_param_vec, p_vec.get(),
+					      NULL, NULL, NULL, NULL, gT_out.get(), NULL,
+					      dgdp_outT.get());
+          //convert gT_out to Epetra_Vector g_out
+          Petra::TpetraVector_To_EpetraVector(gT_out, *g_out, commE);
           //convert dgdp_outT to Epetra_MultiVector dgdp_out
-          Petra::TpetraMultiVector_To_EpetraMultiVector(dgdp_outT, *dgdp_out, commE);
-  }
-  else if(i >= poissonApp->getNumResponses() && j >= num_poisson_param_vecs) {
-    //both response and param vectors belong to schrodinger problem -- evaluate dg/dp using first eigenvector
-    schrodingerApp->evaluateResponseTangentT(i - poissonApp->getNumResponses(), alpha, beta, 0.0, curr_time, false,
-              xdot_schrodingerT.get(), NULL, *x_schrodingerT,
-              schrodinger_sacado_param_vec, p_vec.get(),
-              NULL, NULL, NULL, NULL, g_outT.get(), NULL,
-              dgdp_outT.get());
-          //convert g_outT to Epetra_Vector g_out
-          Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, commE);
+          Petra::TpetraMultiVector_To_EpetraMultiVector(dgdp_outT, *dgdp_out, commE); 	
+	}
+	else if(i >= poissonApp->getNumResponses() && j >= num_poisson_param_vecs) {
+	  //both response and param vectors belong to schrodinger problem -- evaluate dg/dp using first eigenvector
+	  schrodingerApp->evaluateResponseTangentT(i - poissonApp->getNumResponses(), alpha, beta, 0.0, curr_time, false,
+						  xTdot_schrodinger_0.get(), NULL, *xT_schrodinger->getVector(0),
+						  schrodinger_sacado_param_vec, p_vec.get(),
+						  NULL, NULL, NULL, NULL, gT_out.get(), NULL,
+						  dgdp_outT.get());
+          //convert gT_out to Epetra_Vector g_out
+          Petra::TpetraVector_To_EpetraVector(gT_out, *g_out, commE);
           //convert dgdp_outT to Epetra_MultiVector dgdp_out
-          Petra::TpetraMultiVector_To_EpetraMultiVector(dgdp_outT, *dgdp_out, commE);
-  }
-  else {
-    // response and param vectors belong to different sub-problems (Poisson or Schrodinger)
-    dgdp_out->PutScalar(0.0);
-  }
+          Petra::TpetraMultiVector_To_EpetraMultiVector(dgdp_outT, *dgdp_out, commE); 	
+	}
+	else {
+	  // response and param vectors belong to different sub-problems (Poisson or Schrodinger)
+	  dgdp_out->PutScalar(0.0);
+	}
 
         g_computed = true;
       }
@@ -1271,15 +1401,15 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
 
     if (g_out != Teuchos::null && !g_computed) {
       if(i < poissonApp->getNumResponses()) {
-  poissonApp->evaluateResponseT(i, curr_time, xdot_poissonT.get(), NULL, *x_poissonT,
-             poisson_sacado_param_vec, *g_outT);
+	poissonApp->evaluateResponseT(i, curr_time, xTdot_poisson.get(), NULL, *xT_poisson,
+				     poisson_sacado_param_vec, *gT_out);
       }
       else {
-  schrodingerApp->evaluateResponseT(i - poissonApp->getNumResponses(), curr_time, xdot_schrodingerT.get(), NULL,
-                                         *x_schrodingerT, schrodinger_sacado_param_vec, *g_outT);
+	schrodingerApp->evaluateResponseT(i - poissonApp->getNumResponses(), curr_time, xTdot_schrodinger_0.get(), NULL,
+                                         *xT_schrodinger->getVector(0), schrodinger_sacado_param_vec, *gT_out);
       }
-      //convert g_outT to Epetra_Vector g_out
-      Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, commE);
+      //convert gT_out to Epetra_Vector g_out
+      Petra::TpetraVector_To_EpetraVector(gT_out, *g_out, commE);
     }
 
   }

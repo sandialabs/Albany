@@ -12,23 +12,12 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_DataTypes.hpp" 
 
-#if defined(ALBANY_EPETRA)
-class Epetra_BlockMap;
-#endif
-
-
 namespace Albany {
 
 class SolutionCullingStrategyBase {
 public:
-#if defined(ALBANY_EPETRA)
-  virtual void setup() {}
-#endif
   virtual void setupT() {}
 
-#if defined(ALBANY_EPETRA)
-  virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const = 0;
-#endif
   virtual Teuchos::Array<Tpetra_GO> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const = 0;
 
   virtual ~SolutionCullingStrategyBase() {}

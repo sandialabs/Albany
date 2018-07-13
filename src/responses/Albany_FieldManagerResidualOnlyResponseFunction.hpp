@@ -54,21 +54,6 @@ namespace Albany {
 		    Tpetra_Vector* g,
 		    Tpetra_MultiVector* gx,
 		    Tpetra_MultiVector* gp);
-
-#if defined(ALBANY_EPETRA)
-    virtual void 
-    evaluateGradient(const double current_time,
-		     const Epetra_Vector* xdot,
-		     const Epetra_Vector* xdotdot,
-		     const Epetra_Vector& x,
-		     const Teuchos::Array<ParamVec>& p,
-		     ParamVec* deriv_p,
-		     Epetra_Vector* g,
-		     Epetra_MultiVector* dg_dx,
-		     Epetra_MultiVector* dg_dxdot,
-		     Epetra_MultiVector* dg_dxdotdot,
-		     Epetra_MultiVector* dg_dp);
-#endif
     
     virtual void 
     evaluateGradientT(const double current_time,

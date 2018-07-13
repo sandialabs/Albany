@@ -6,10 +6,6 @@
 
 #include "Albany_SolutionCullingStrategy.hpp"
 
-#if defined(ALBANY_EPETRA)
-#include "Epetra_BlockMap.h"
-#include "Epetra_GatherAllV.hpp"
-#endif
 #include "Tpetra_GatherAllV.hpp" 
 #include "Teuchos_CommHelpers.hpp"
 #include "Teuchos_Array.hpp" 
@@ -26,9 +22,6 @@ namespace Albany {
 class UniformSolutionCullingStrategy : public SolutionCullingStrategyBase {
 public:
   explicit UniformSolutionCullingStrategy(int numValues);
-#if defined(ALBANY_EPETRA)
-  virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
-#endif
   virtual Teuchos::Array<Tpetra_GO> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const;
 private:
   int numValues_;
@@ -65,41 +58,11 @@ selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
   return result;
 }
 
-#if defined(ALBANY_EPETRA)
-Teuchos::Array<int>
-Albany::UniformSolutionCullingStrategy::
-selectedGIDs(const Epetra_BlockMap &sourceMap) const
-{
-  Teuchos::Array<int> allGIDs(sourceMap.NumGlobalElements());
-  {
-    const int ierr = Epetra::GatherAllV(
-        sourceMap.Comm(),
-        sourceMap.MyGlobalElements(), sourceMap.NumMyElements(),
-        allGIDs.getRawPtr(), allGIDs.size());
-    TEUCHOS_ASSERT(ierr == 0);
-  }
-  std::sort(allGIDs.begin(), allGIDs.end());
-
-  Teuchos::Array<int> result(numValues_);
-  const int stride = 1 + (allGIDs.size() - 1) / numValues_;
-  for (int i = 0; i < numValues_; ++i) {
-    result[i] = allGIDs[i * stride];
-  }
-  return result;
-}
-#endif
-
-
 #include "Albany_SolutionCullingStrategy.hpp"
 
 #include "Albany_Application.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 
-#if defined(ALBANY_EPETRA)
-#include "Epetra_BlockMap.h"
-#include "Epetra_Comm.h"
-#include "Epetra_GatherAllV.hpp"
-#endif
 #include "Tpetra_GatherAllV.hpp"
 #include "Teuchos_CommHelpers.hpp"
 #include "Teuchos_Array.hpp" 
@@ -119,11 +82,6 @@ public:
       const std::string &nodeSetLabel,
       const Teuchos::RCP<const Application> &app);
 
-#if defined(ALBANY_EPETRA)
-  virtual void setup();
-
-  virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
-#endif
   virtual Teuchos::Array<Tpetra_GO> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const;
   virtual void setupT();
 
@@ -156,63 +114,6 @@ setupT()
   // Release the resource to avoid possible circular references
   app_.reset();
 }
-
-#if defined(ALBANY_EPETRA)
-void
-Albany::NodeSetSolutionCullingStrategy::
-setup()
-{
-  setupT();
-}
-
-Teuchos::Array<int>
-Albany::NodeSetSolutionCullingStrategy::
-selectedGIDs(const Epetra_BlockMap &sourceMap) const
-{
-  Teuchos::Array<int> result;
-  {
-    Teuchos::Array<int> mySelectedGIDs;
-    {
-      const NodeSetList &nodeSets = disc_->getNodeSets();
-
-      const NodeSetList::const_iterator it = nodeSets.find(nodeSetLabel_);
-      if (it != nodeSets.end()) {
-        typedef NodeSetList::mapped_type NodeSetEntryList;
-        const NodeSetEntryList &sampleNodeEntries = it->second;
-
-        for (NodeSetEntryList::const_iterator jt = sampleNodeEntries.begin(); jt != sampleNodeEntries.end(); ++jt) {
-          typedef NodeSetEntryList::value_type NodeEntryList;
-          const NodeEntryList &sampleEntries = *jt;
-          for (NodeEntryList::const_iterator kt = sampleEntries.begin(); kt != sampleEntries.end(); ++kt) {
-            mySelectedGIDs.push_back(sourceMap.GID(*kt));
-          }
-        }
-      }
-    }
-
-    const Epetra_Comm &comm = sourceMap.Comm();
-
-    {
-      int selectedGIDCount;
-      {
-        int mySelectedGIDCount = mySelectedGIDs.size();
-        comm.SumAll(&mySelectedGIDCount, &selectedGIDCount, 1);
-      }
-      result.resize(selectedGIDCount);
-    }
-
-    const int ierr = Epetra::GatherAllV(
-        comm,
-        mySelectedGIDs.getRawPtr(), mySelectedGIDs.size(),
-        result.getRawPtr(), result.size());
-    TEUCHOS_ASSERT(ierr == 0);
-  }
-
-  std::sort(result.begin(), result.end());
-
-  return result;
-}
-#endif
 
 Teuchos::Array<Tpetra_GO>
 Albany::NodeSetSolutionCullingStrategy::
@@ -270,11 +171,6 @@ public:
       const Teuchos::Array<int>& nodeGIDs,
       const Teuchos::RCP<const Application> &app);
 
-#if defined(ALBANY_EPETRA)
-  virtual void setup();
-
-  virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
-#endif
   virtual Teuchos::Array<Tpetra_GO> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const;
   virtual void setupT();
 
@@ -307,51 +203,6 @@ setupT()
   // Release the resource to avoid possible circular references
   app_.reset();
 }
-
-#if defined(ALBANY_EPETRA)
-void
-Albany::NodeGIDsSolutionCullingStrategy::
-setup()
-{
-  setupT();
-}
-
-
-Teuchos::Array<int>
-Albany::NodeGIDsSolutionCullingStrategy::
-selectedGIDs(const Epetra_BlockMap &sourceMap) const
-{
-  Teuchos::Array<int> result;
-  {
-    Teuchos::Array<int> mySelectedGIDs;
-
-    // Subract 1 to convert exodus GIDs to our GIDs
-    for (int i=0; i<nodeGIDs_.size(); i++)
-      if (sourceMap.MyGID(nodeGIDs_[i] -1) ) mySelectedGIDs.push_back(nodeGIDs_[i] - 1);
-
-    const Epetra_Comm &comm = sourceMap.Comm();
-
-    {
-      int selectedGIDCount;
-      {
-        int mySelectedGIDCount = mySelectedGIDs.size();
-        comm.SumAll(&mySelectedGIDCount, &selectedGIDCount, 1);
-      }
-      result.resize(selectedGIDCount);
-    }
-
-    const int ierr = Epetra::GatherAllV(
-        comm,
-        mySelectedGIDs.getRawPtr(), mySelectedGIDs.size(),
-        result.getRawPtr(), result.size());
-    TEUCHOS_ASSERT(ierr == 0);
-  }
-
-  std::sort(result.begin(), result.end());
-
-  return result;
-}
-#endif
 
 Teuchos::Array<Tpetra_GO>
 Albany::NodeGIDsSolutionCullingStrategy::

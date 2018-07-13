@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: Epetra ifdef'ed out except SG and MP when ALBANY_EPETRA_EXE is off.
-
 #include "Albany_KLResponseFunction.hpp"
 #include "Teuchos_Array.hpp"
 #include "Teuchos_VerboseObject.hpp"
@@ -26,30 +24,12 @@ Albany::KLResponseFunction::
 {
 }
 
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<const Epetra_Map>
-Albany::KLResponseFunction::
-responseMap() const
-{
-  return response->responseMap();
-}
-#endif
-
 Teuchos::RCP<const Tpetra_Map>
 Albany::KLResponseFunction::
 responseMapT() const
 {
   return response->responseMapT();
 }
-
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<Epetra_Operator>
-Albany::KLResponseFunction::
-createGradientOp() const
-{
-  return response->createGradientOp();
-}
-#endif
 
 Teuchos::RCP<Tpetra_Operator>
 Albany::KLResponseFunction::
@@ -117,26 +97,6 @@ evaluateDistParamDerivT(
   Tpetra_MultiVector*  dg_dpT){
   response->evaluateDistParamDerivT(current_time, xdotT, xdotdotT, xT, param_array, dist_param_name, dg_dpT);
 }
-
-#if defined(ALBANY_EPETRA)
-void
-Albany::KLResponseFunction::
-evaluateDerivative(const double current_time,
-       const Epetra_Vector* xdot,
-       const Epetra_Vector* xdotdot,
-       const Epetra_Vector& x,
-       const Teuchos::Array<ParamVec>& p,
-       ParamVec* deriv_p,
-       Epetra_Vector* g,
-       const EpetraExt::ModelEvaluator::Derivative& dg_dx,
-       const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
-       const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
-       const EpetraExt::ModelEvaluator::Derivative& dg_dp)
-{
-  response->evaluateDerivative(current_time, xdot, xdotdot, x, p, deriv_p,
-             g, dg_dx, dg_dxdot, dg_dxdotdot, dg_dp);
-}
-#endif
 
 void
 Albany::KLResponseFunction::

@@ -44,7 +44,6 @@ namespace FELIX {
 
     int numSideNodes;
     int numBasalQPs;
-    int numSurfaceQPs;
     int numSideDims;
 
     PHX::MDField<const ScalarT,Cell,Side,QuadPoint>              flux_div;

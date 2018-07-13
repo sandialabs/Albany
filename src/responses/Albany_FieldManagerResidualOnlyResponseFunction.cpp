@@ -57,26 +57,6 @@ evaluateGradientT(const double current_time,
   if (gT) this->evaluateResponseT(current_time, xdotT, xdotdotT, xT, p, *gT);
 }
 
-#if defined(ALBANY_EPETRA)
-void Albany::FieldManagerResidualOnlyResponseFunction:: 
-evaluateGradient(const double current_time,
-                 const Epetra_Vector* xdot,
-                 const Epetra_Vector* xdotdot,
-                 const Epetra_Vector& x,
-                 const Teuchos::Array<ParamVec>& p,
-                 ParamVec* deriv_p,
-                 Epetra_Vector* g,
-                 Epetra_MultiVector* dg_dx,
-                 Epetra_MultiVector* dg_dxdot,
-                 Epetra_MultiVector* dg_dxdotdot,
-                 Epetra_MultiVector* dg_dp)
-{
-  if (g)
-    this->FieldManagerScalarResponseFunction::evaluateGradient(
-      current_time, xdot, xdotdot, x, p, deriv_p, g, dg_dx, dg_dxdot,
-      dg_dxdotdot, dg_dp);
-}
-#endif
 
 void Albany::FieldManagerResidualOnlyResponseFunction::
 evaluateDistParamDerivT(

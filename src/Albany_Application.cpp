@@ -847,15 +847,8 @@ void Albany::Application::finalSetUp(
   }
 
   // Now setup response functions (see note above)
-  if (!TpetraBuild) {
-#if defined(ALBANY_EPETRA)
-    for (int i = 0; i < responses.size(); i++)
-      responses[i]->setup();
-#endif
-  } else {
-    for (int i = 0; i < responses.size(); i++)
-      responses[i]->setupT();
-  }
+  for (int i = 0; i < responses.size(); i++)
+    responses[i]->setupT();
 
   // Set up memory for workset
   fm = problem->getFieldManager();
@@ -1486,78 +1479,6 @@ void Albany::Application::computeGlobalResidualImplT(
     fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
   }
 }
-
-#if defined(ALBANY_EPETRA)
-void Albany::Application::computeGlobalResidual(
-    const double current_time, const Epetra_Vector *xdot,
-    const Epetra_Vector *xdotdot, const Epetra_Vector &x,
-    const Teuchos::Array<ParamVec> &p, Epetra_Vector &f) {
-  // Scatter x and xdot to the overlapped distribution
-  solMgr->scatterX(x, xdot, xdotdot);
-
-  // Create Tpetra copies of Epetra arguments
-  // Names of Tpetra entitied are identified by the suffix T
-  const Teuchos::RCP<const Tpetra_Vector> xT =
-      Petra::EpetraVector_To_TpetraVectorNonConst(x, commT);
-
-  Teuchos::RCP<const Tpetra_Vector> xdotT;
-  if (xdot != NULL && num_time_deriv > 0) {
-    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
-  }
-
-  Teuchos::RCP<const Tpetra_Vector> xdotdotT;
-  if (xdotdot != NULL && num_time_deriv > 1) {
-    xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
-  }
-
-  const Teuchos::RCP<Tpetra_Vector> fT =
-      Petra::EpetraVector_To_TpetraVectorNonConst(f, commT);
-
-  if (problem->useSDBCs() == false) {
-    this->computeGlobalResidualImplT(current_time, xdotT, xdotdotT, xT, p, fT);
-  } else {
-    this->computeGlobalResidualSDBCsImplT(current_time, xdotT, xdotdotT, xT, p,
-                                          fT);
-  }
-
-  // Convert output back from Tpetra to Epetra
-  Petra::TpetraVector_To_EpetraVector(fT, f, comm);
-  Petra::TpetraVector_To_EpetraVector(xT, const_cast<Epetra_Vector &>(x), comm);
-  // std::cout << "Global Soln x\n" << x << std::endl;
-  // std::cout << "Global Resid f\n" << f << std::endl;
-
-  // Debut output
-  if (writeToMatrixMarketRes !=
-      0) {          // If requesting writing to MatrixMarket of residual...
-    char name[100]; // create string for file name
-    if (writeToMatrixMarketRes ==
-        -1) { // write residual to MatrixMarket every time it arises
-      sprintf(name, "rhs%i.mm", countRes);
-      EpetraExt::MultiVectorToMatrixMarketFile(name, f);
-    } else {
-      if (countRes ==
-          writeToMatrixMarketRes) { // write residual only at requested count#
-        sprintf(name, "rhs%i.mm", countRes);
-        EpetraExt::MultiVectorToMatrixMarketFile(name, f);
-      }
-    }
-  }
-  if (writeToCoutRes != 0) {    // If requesting writing of residual to cout...
-    if (writeToCoutRes == -1) { // cout residual time it arises
-      std::cout << "Global Residual #" << countRes << ": " << std::endl;
-      std::cout << f << std::endl;
-    } else {
-      if (countRes == writeToCoutRes) { // cout residual only at requested
-                                        // count#
-        std::cout << "Global Residual #" << countRes << ": " << std::endl;
-        std::cout << f << std::endl;
-      }
-    }
-  }
-  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
-    countRes++; // increment residual counter
-}
-#endif
 
 void Albany::Application::computeGlobalResidualT(
     const double current_time, const Tpetra_Vector *xdotT,
@@ -2269,112 +2190,6 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
                      derivatives_check_);
 }
 
-#if defined(ALBANY_EPETRA)
-void Albany::Application::computeGlobalJacobian(
-    const double alpha, const double beta, const double omega,
-    const double current_time, const Epetra_Vector *xdot,
-    const Epetra_Vector *xdotdot, const Epetra_Vector &x,
-    const Teuchos::Array<ParamVec> &p, Epetra_Vector *f,
-    Epetra_CrsMatrix &jac) {
-  // Scatter x and xdot to the overlapped distribution
-  solMgr->scatterX(x, xdot, xdotdot);
-
-  // Create Tpetra copies of Epetra arguments
-  // Names of Tpetra entitied are identified by the suffix T
-  const Teuchos::RCP<const Tpetra_Vector> xT =
-      Petra::EpetraVector_To_TpetraVectorConst(x, commT);
-
-  Teuchos::RCP<const Tpetra_Vector> xdotT;
-  if (xdot != NULL && num_time_deriv > 0) {
-    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
-  }
-
-  Teuchos::RCP<const Tpetra_Vector> xdotdotT;
-  if (xdotdot != NULL && num_time_deriv > 1) {
-    xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
-  }
-
-  Teuchos::RCP<Tpetra_Vector> fT;
-  if (f != NULL) {
-    fT = Petra::EpetraVector_To_TpetraVectorNonConst(*f, commT);
-  }
-
-  const Teuchos::RCP<Tpetra_CrsMatrix> jacT =
-      Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(jac, commT);
-
-  if (problem->useSDBCs() == false) {
-    this->computeGlobalJacobianImplT(alpha, beta, omega, current_time, xdotT,
-                                     xdotdotT, xT, p, fT, jacT);
-  } else {
-    this->computeGlobalJacobianSDBCsImplT(alpha, beta, omega, current_time,
-                                          xdotT, xdotdotT, xT, p, fT, jacT);
-  }
-
-  // Convert output back from Tpetra to Epetra
-  if (f != NULL) {
-    Petra::TpetraVector_To_EpetraVector(fT, *f, comm);
-  }
-  Petra::TpetraVector_To_EpetraVector(xT, const_cast<Epetra_Vector &>(x), comm);
-  Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(jacT, jac, comm);
-  jac.FillComplete(true);
-  /*std::cout << "Global Soln x\n" << x << std::endl;
-  std::cout << "f "<< std::endl;
-  if (f != NULL)
-    f->Print(std::cout);
-  else
-    std::cout << "NOT SET!!" << std::endl;*/
-  // std::cout << "J " << jac << std::endl;
-
-  // Debut output
-  if (writeToMatrixMarketJac !=
-      0) {          // If requesting writing to MatrixMarket of Jacobian...
-    char name[100]; // create string for file name
-    if (writeToMatrixMarketJac ==
-        -1) { // write jacobian to MatrixMarket every time it arises
-      sprintf(name, "jac%i.mm", countJac);
-      EpetraExt::RowMatrixToMatrixMarketFile(name, jac);
-    } else {
-      if (countJac ==
-          writeToMatrixMarketJac) { // write jacobian only at requested count#
-        sprintf(name, "jac%i.mm", countJac);
-        EpetraExt::RowMatrixToMatrixMarketFile(name, jac);
-      }
-    }
-  }
-  if (writeToCoutJac !=
-      0) { // If requesting writing Jacobian to standard output (cout)...
-    if (writeToCoutJac == -1) { // cout jacobian every time it arises
-      *out << "Global Jacobian #" << countJac << ":\n";
-      *out << jac << "\n";
-    } else {
-      if (countJac == writeToCoutJac) { // cout jacobian only at requested
-                                        // count#
-        *out << "Global Jacobian #" << countJac << ":\n";
-        *out << jac << "\n";
-      }
-    }
-  }
-  if (computeJacCondNum != 0) { // If requesting computation of condition number
-    if (computeJacCondNum ==
-        -1) { // cout jacobian condition # every time it arises
-      double condNum = computeConditionNumber(jac);
-      *out << "Jacobian #" << countJac << " condition number = " << condNum
-           << "\n";
-    } else {
-      if (countJac == computeJacCondNum) { // cout jacobian condition # only at
-                                           // requested count#
-        double condNum = computeConditionNumber(jac);
-        *out << "Jacobian #" << countJac << " condition number = " << condNum
-             << "\n";
-      }
-    }
-  }
-  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0 ||
-      computeJacCondNum != 0)
-    countJac++; // increment Jacobian counter
-}
-#endif
-
 void Albany::Application::computeGlobalJacobianT(
     const double alpha, const double beta, const double omega,
     const double current_time, const Tpetra_Vector *xdotT,
@@ -2749,79 +2564,6 @@ void Albany::Application::computeGlobalTangentImplT(
   }
 }
 
-#if defined(ALBANY_EPETRA)
-void Albany::Application::computeGlobalTangent(
-    const double alpha, const double beta, const double omega,
-    const double current_time, bool sum_derivs, const Epetra_Vector *xdot,
-    const Epetra_Vector *xdotdot, const Epetra_Vector &x,
-    const Teuchos::Array<ParamVec> &par, ParamVec *deriv_par,
-    const Epetra_MultiVector *Vx, const Epetra_MultiVector *Vxdot,
-    const Epetra_MultiVector *Vxdotdot, const Epetra_MultiVector *Vp,
-    Epetra_Vector *f, Epetra_MultiVector *JV, Epetra_MultiVector *fp) {
-  // Scatter x and xdot to the overlapped distribution
-  solMgr->scatterX(x, xdot, xdotdot);
-
-  // Create Tpetra copies of Epetra arguments
-  // Names of Tpetra entitied are identified by the suffix T
-  Teuchos::RCP<const Tpetra_Vector> xT =
-      Petra::EpetraVector_To_TpetraVectorConst(x, commT);
-
-  Teuchos::RCP<const Tpetra_Vector> xdotT;
-  if (xdot != NULL && num_time_deriv > 0) {
-    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
-  }
-  Teuchos::RCP<const Tpetra_Vector> xdotdotT;
-  if (xdotdot != NULL && num_time_deriv > 1) {
-    xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
-  }
-
-  Teuchos::RCP<const Tpetra_MultiVector> VxT;
-  if (Vx != NULL) {
-    VxT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vx, commT);
-  }
-
-  RCP<const Tpetra_MultiVector> VxdotT;
-  if (Vxdot != NULL)
-    VxdotT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vxdot, commT);
-
-  RCP<const Tpetra_MultiVector> VxdotdotT;
-  if (Vxdotdot != NULL)
-    VxdotdotT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vxdotdot, commT);
-
-  RCP<const Tpetra_MultiVector> VpT;
-  if (Vp != NULL)
-    VpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vp, commT);
-
-  Teuchos::RCP<Tpetra_Vector> fT;
-  if (f != NULL)
-    fT = Petra::EpetraVector_To_TpetraVectorNonConst(*f, commT);
-
-  Teuchos::RCP<Tpetra_MultiVector> JVT;
-  if (JV != NULL)
-    JVT = Petra::EpetraMultiVector_To_TpetraMultiVector(*JV, commT);
-
-  RCP<Tpetra_MultiVector> fpT;
-  if (fp != NULL)
-    fpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*fp, commT);
-
-  this->computeGlobalTangentImplT(alpha, beta, omega, current_time, sum_derivs,
-                                  xdotT, xdotdotT, xT, par, deriv_par, VxT,
-                                  VxdotT, VxdotdotT, VpT, fT, JVT, fpT);
-
-  // Convert output back from Tpetra to Epetra
-
-  if (f != NULL) {
-    Petra::TpetraVector_To_EpetraVector(fT, *f, comm);
-  }
-  if (JV != NULL) {
-    Petra::TpetraMultiVector_To_EpetraMultiVector(JVT, *JV, comm);
-  }
-  if (fp != NULL) {
-    Petra::TpetraMultiVector_To_EpetraMultiVector(fpT, *fp, comm);
-  }
-}
-#endif
-
 void Albany::Application::computeGlobalTangentT(
     const double alpha, const double beta, const double omega,
     const double current_time, bool sum_derivs, const Tpetra_Vector *xdotT,
@@ -3044,25 +2786,6 @@ void Albany::Application::evaluateResponseTangentT(
       alpha, beta, omega, this_time, sum_derivs, xdotT, xdotdotT, xT, p,
       deriv_p, VxdotT, VxdotdotT, VxT, VpT, gT, gxT, gpT);
 }
-
-#if defined(ALBANY_EPETRA)
-void Albany::Application::evaluateResponseDerivative(
-    int response_index, const double current_time, const Epetra_Vector *xdot,
-    const Epetra_Vector *xdotdot, const Epetra_Vector &x,
-    const Teuchos::Array<ParamVec> &p, ParamVec *deriv_p, Epetra_Vector *g,
-    const EpetraExt::ModelEvaluator::Derivative &dg_dx,
-    const EpetraExt::ModelEvaluator::Derivative &dg_dxdot,
-    const EpetraExt::ModelEvaluator::Derivative &dg_dxdotdot,
-    const EpetraExt::ModelEvaluator::Derivative &dg_dp) {
-  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Response Gradient");
-  double const
-  this_time = fixTime(current_time);
-
-  responses[response_index]->evaluateDerivative(
-      this_time, xdot, xdotdot, x, p, deriv_p, g, dg_dx, dg_dxdot,
-      dg_dxdotdot, dg_dp);
-}
-#endif
 
 void Albany::Application::evaluateResponseDerivativeT(
     int response_index, const double current_time, const Tpetra_Vector *xdotT,

@@ -21,7 +21,7 @@
 
 //TpetraMap_To_EpetraMap: takes in Tpetra::Map object, converts it to its equivalent Epetra_Map object,
 //and returns an RCP pointer to this Epetra_Map
-Teuchos::RCP<Epetra_Map> Petra::TpetraMap_To_EpetraMap(const Teuchos::RCP<const Tpetra_Map>& tpetraMap_,
+Teuchos::RCP<const Epetra_Map> Petra::TpetraMap_To_EpetraMap(const Teuchos::RCP<const Tpetra_Map>& tpetraMap_,
                                                       const Teuchos::RCP<const Epetra_Comm>& comm_)
 {
   const int numElements = Teuchos::as<int>(tpetraMap_->getNodeNumElements());
@@ -153,7 +153,7 @@ void Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<Tpetra_CrsMatr
   //check if row maps of epetraCrsMatrix_ and tpetraCrsMatrix_ are the same
   const Epetra_BlockMap epetraRowMap_ = epetraCrsMatrix_.RowMap();
   Teuchos::RCP<const Tpetra_Map> tpetraRowMap_ = tpetraCrsMatrix_->getRowMap();
-  Teuchos::RCP<Epetra_Map> tpetraRowMapE_ = TpetraMap_To_EpetraMap(tpetraRowMap_, comm_);
+  Teuchos::RCP<const Epetra_Map> tpetraRowMapE_ = TpetraMap_To_EpetraMap(tpetraRowMap_, comm_);
   bool isRowSame = tpetraRowMapE_->SameAs(epetraRowMap_);
   //if epetraCrsMatrix_ and tpetraCrsMatrix_ do not have the same row map, throw an exception
   if (isRowSame != true)
@@ -168,7 +168,7 @@ void Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<Tpetra_CrsMatr
  //check if column maps of epetraCrsMatrix_ and tpetraCrsMatrix_ are the same
  const Epetra_BlockMap epetraColMap_ = epetraCrsMatrix_.ColMap();
  Teuchos::RCP<const Tpetra_Map> tpetraColMap_ = tpetraCrsMatrix_->getColMap();
- Teuchos::RCP<Epetra_Map> tpetraColMapE_ = TpetraMap_To_EpetraMap(tpetraColMap_, comm_);
+ Teuchos::RCP<const Epetra_Map> tpetraColMapE_ = TpetraMap_To_EpetraMap(tpetraColMap_, comm_);
  bool isColSame = tpetraColMapE_->SameAs(epetraColMap_);
  //if epetraCrsMatrix_ and tpetraCrsMatrix_ do not have the same column map, throw an exception
  TEUCHOS_TEST_FOR_EXCEPTION((isColSame != true),
@@ -214,7 +214,7 @@ void Petra::TpetraVector_To_EpetraVector(const Teuchos::RCP<const Tpetra_Vector>
   if(Teuchos::is_null(epetraVector_)){
 
     Teuchos::RCP<const Tpetra_Map> tpetraMap = tpetraVector_->getMap();
-    Teuchos::RCP<Epetra_Map> emap = TpetraMap_To_EpetraMap(tpetraMap, comm_);
+    Teuchos::RCP<const Epetra_Map> emap = TpetraMap_To_EpetraMap(tpetraMap, comm_);
     epetraVector_ = Teuchos::rcp(new Epetra_Vector(*emap));
 
   }

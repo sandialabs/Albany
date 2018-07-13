@@ -4,18 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Epetra_CombineMode.h"
+#include "PHAL_AlbanyTraits.hpp"
 
-class Epetra_Import;
-class Epetra_MultiVector;
+#include "FELIX_MapThickness.hpp"
+#include "FELIX_MapThickness_Def.hpp"
 
-namespace Epetra {
-
-void
-ImportWithAlternateMap(
-    const Epetra_Import &importer,
-    const Epetra_MultiVector &source,
-    Epetra_MultiVector &target,
-    Epetra_CombineMode mode);
-
-} // namespace Epetra
+PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::MapThickness)

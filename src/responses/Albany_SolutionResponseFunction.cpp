@@ -5,9 +5,6 @@
 //*****************************************************************//
 
 #include "Albany_SolutionResponseFunction.hpp"
-#if defined(ALBANY_EPETRA)
-#include "Epetra_CrsMatrix.h"
-#endif
 #include <algorithm>
 
 Albany::SolutionResponseFunction::
@@ -31,28 +28,6 @@ SolutionResponseFunction(
   }
 }
 
-#if defined(ALBANY_EPETRA)
-void
-Albany::SolutionResponseFunction::
-setup()
-{
-  // Build culled map and importer
-  Teuchos::RCP<const Epetra_Map> x_map = application->getMap();
-  culled_map = buildCulledMap(*x_map, keepDOF);
-  importer = Teuchos::rcp(new Epetra_Import(*culled_map, *x_map));
-
-  // Create graph for gradient operator -- diagonal matrix
-  gradient_graph =
-    Teuchos::rcp(new Epetra_CrsGraph(Copy, *culled_map, 1, true));
-  for (int i=0; i<culled_map->NumMyElements(); i++) {
-    int row = culled_map->GID(i);
-    gradient_graph->InsertGlobalIndices(row, 1, &row);
-  }
-  gradient_graph->FillComplete();
-  gradient_graph->OptimizeStorage();
-
-}
-#endif
 
 void
 Albany::SolutionResponseFunction::
@@ -86,33 +61,12 @@ Albany::SolutionResponseFunction::
 {
 }
 
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<const Epetra_Map>
-Albany::SolutionResponseFunction::
-responseMap() const
-{
-  return culled_map;
-}
-#endif
-
 Teuchos::RCP<const Tpetra_Map>
 Albany::SolutionResponseFunction::
 responseMapT() const
 {
   return culled_mapT;
 }
-
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<Epetra_Operator>
-Albany::SolutionResponseFunction::
-createGradientOp() const
-{
-  Teuchos::RCP<Epetra_CrsMatrix> G =
-    Teuchos::rcp(new Epetra_CrsMatrix(Copy, *gradient_graph));
-  G->FillComplete();
-  return G;
-}
-#endif
 
 Teuchos::RCP<Tpetra_Operator>
 Albany::SolutionResponseFunction::
@@ -173,46 +127,6 @@ evaluateTangentT(const double alpha,
   if (gpT)
     gpT->putScalar(0.0);
 }
-
-#if defined(ALBANY_EPETRA)
-void
-Albany::SolutionResponseFunction::
-evaluateGradient(const double current_time,
-		 const Epetra_Vector* xdot,
-		 const Epetra_Vector* xdotdot,
-		 const Epetra_Vector& x,
-		 const Teuchos::Array<ParamVec>& p,
-		 ParamVec* deriv_p,
-		 Epetra_Vector* g,
-		 Epetra_Operator* dg_dx,
-		 Epetra_Operator* dg_dxdot,
-		 Epetra_Operator* dg_dxdotdot,
-		 Epetra_MultiVector* dg_dp)
-{
-  if (g)
-    cullSolution(x, *g);
-
-  if (dg_dx) {
-    Epetra_CrsMatrix *dg_dx_crs = dynamic_cast<Epetra_CrsMatrix*>(dg_dx);
-    TEUCHOS_TEST_FOR_EXCEPT(dg_dx_crs == NULL);
-    dg_dx_crs->PutScalar(1.0); // matrix only stores the diagonal
-  }
-
-  if (dg_dxdot) {
-    Epetra_CrsMatrix *dg_dxdot_crs = dynamic_cast<Epetra_CrsMatrix*>(dg_dxdot);
-    TEUCHOS_TEST_FOR_EXCEPT(dg_dxdot_crs == NULL);
-    dg_dxdot_crs->PutScalar(0.0); // matrix only stores the diagonal
-  }
-  if (dg_dxdotdot) {
-    Epetra_CrsMatrix *dg_dxdotdot_crs = dynamic_cast<Epetra_CrsMatrix*>(dg_dxdotdot);
-    TEUCHOS_TEST_FOR_EXCEPT(dg_dxdotdot_crs == NULL);
-    dg_dxdotdot_crs->PutScalar(0.0); // matrix only stores the diagonal
-  }
-
-  if (dg_dp)
-    dg_dp->PutScalar(0.0);
-}
-#endif
 
 void
 Albany::SolutionResponseFunction::
@@ -311,40 +225,6 @@ evaluateDistParamDerivT(
     dg_dpT->putScalar(0.0);
 }
 
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<Epetra_Map>
-Albany::SolutionResponseFunction::
-buildCulledMap(const Epetra_Map& x_map,
-	       const Teuchos::Array<int>& keepDOF) const
-{
-  int numKeepDOF = std::accumulate(keepDOF.begin(), keepDOF.end(), 0);
-  int Neqns = keepDOF.size();
-  int N = x_map.NumMyElements(); // x_map is map for solution vector
-
-  TEUCHOS_ASSERT( !(N % Neqns) ); // Assume that all the equations for
-                                  // a given node are on the assigned
-                                  // processor. I.e. need to ensure
-                                  // that N is exactly Neqns-divisible
-
-  int nnodes = N / Neqns;          // number of fem nodes
-  int N_new = nnodes * numKeepDOF; // length of local x_new
-
-  int *gids = x_map.MyGlobalElements(); // Fill local x_map into gids array
-  Teuchos::Array<int> gids_new(N_new);
-  int idx = 0;
-  for ( int inode = 0; inode < N/Neqns ; ++inode) // For every node
-    for ( int ieqn = 0; ieqn < Neqns; ++ieqn )  // Check every dof on the node
-      if ( keepDOF[ieqn] == 1 )  // then want to keep this dof
-	gids_new[idx++] = gids[(inode*Neqns)+ieqn];
-  // end cull
-
-  Teuchos::RCP<Epetra_Map> x_new_map =
-    Teuchos::rcp( new Epetra_Map( -1, N_new, &gids_new[0], 0, x_map.Comm() ) );
-
-  return x_new_map;
-}
-#endif
-
 Teuchos::RCP<const Tpetra_Map>
 Albany::SolutionResponseFunction::
 buildCulledMapT(const Tpetra_Map& x_mapT,
@@ -376,15 +256,6 @@ buildCulledMapT(const Tpetra_Map& x_mapT,
   return x_new_mapT;
 
 }
-
-#if defined(ALBANY_EPETRA)
-void
-Albany::SolutionResponseFunction::
-cullSolution(const Epetra_MultiVector& x, Epetra_MultiVector& x_culled) const
-{
-  x_culled.Import(x, *importer, Insert);
-}
-#endif
 
 void
 Albany::SolutionResponseFunction::
