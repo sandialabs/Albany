@@ -3577,8 +3577,11 @@ void Albany::Application::loadWorksetNodesetInfo(PHAL::Workset &workset) {
 
 void Albany::Application::setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT) 
 {
-  if (scaleBCdofs == true) 
+  if (scaleBCdofs == true) {
+    if (scaleVec_->norm2() == 0.0) 
+      scaleVec_->putScalar(1.0);  
     return; 
+  }
 
   if (scale_type == CONSTANT) { // constant scaling
     scaleVec_->putScalar(1.0 / scale);
