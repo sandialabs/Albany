@@ -53,7 +53,7 @@ set (PNETCDF_PATH $ENV{PNETCDF_ROOT})
 set (BOOST_PATH $ENV{BOOST_ROOT}) 
 set (BLAS_PATH $ENV{OPENBLAS_ROOT}) 
 set (LAPACK_PATH $ENV{OPENBLAS_ROOT}) 
-set (ZLIB_PATH $ENV{ZLIB_ROOT})  
+set (ZLIB_PATH $ENV{ZLIB_DIR})  
 #set (HDF5_PATH /home/projects/arm64-tx2/hdf5/1.10.1/openmpi/2.1.2/gcc/7.2.0)
 #set (NETCDF_PATH /home/projects/arm64-tx2/netcdf-exo/4.4.1.1/openmpi/2.1.2/gcc/7.2.0) 
 #set (PNETCDF_PATH /home/projects/arm64-tx2/pnetcdf-exo/1.8.1/openmpi/2.1.2/gcc/7.2.0) 
@@ -190,7 +190,7 @@ if (BUILD_TRILINOS)
     "-DTeuchos_ENABLE_COMPLEX=ON"
     #
     "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
-    "-DTrilinos_ENABLE_DEBUG:BOOL=OFF"
+    "-DTrilinos_ENABLE_DEBUG:BOOL=ON"
     "-DTPL_FIND_SHARED_LIBS:BOOL=OFF"
     #
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
@@ -199,7 +199,7 @@ if (BUILD_TRILINOS)
     "-DCMAKE_Fortran_COMPILER=mpif90"
     "-DTPL_DLlib_LIBRARIES='dl'"
     "-DTrilinos_ENABLE_INSTALL_CMAKE_CONFIG_FILES:BOOL=ON"
-    "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
+    "-DCMAKE_BUILD_TYPE:STRING=DEBUG"
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
     "-DTrilinos_ENABLE_CHECKED_STL:BOOL=OFF"
     "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
@@ -280,7 +280,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
     "-DTrilinos_ENABLE_GlobiPack:BOOL=ON"
     "-DTrilinos_ENABLE_MOOCHO:BOOL=ON"
-    "-DTrilinos_ENABLE_Stokhos:BOOL=OFF"
+    "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
     "-DTrilinos_ENABLE_Piro:BOOL=ON"
     "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
     "-DTrilinos_ENABLE_Isorropia:BOOL=ON"
@@ -318,7 +318,7 @@ if (BUILD_TRILINOS)
     "-DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF"
     "-DTrilinos_ENABLE_FEI:BOOL=OFF"
     "-DPhalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
-    "-DStokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=OFF"
+    "-DStokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
     "-DStratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
     "-DTrilinos_ENABLE_MueLu:BOOL=ON"
     "-DAmesos2_ENABLE_KLU2:BOOL=ON"
