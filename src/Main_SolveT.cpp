@@ -506,32 +506,32 @@ main(int argc, char *argv[]) {
       }
       Albany::printTpetraVector(*out, g);
 
-      if (num_p == 0) {
-        status += slvrfctry.checkSolveTestResultsT(i, 0, g.get(), NULL);
-      } else {
-        for (int j=0; j<num_p; j++) {
-          const RCP<const Tpetra_MultiVector> dgdp = sensitivities[i][j];
-          if (Teuchos::nonnull(dgdp)) {
-            if(j < num_param_vecs) {
-              Albany::printTpetraVector(
-                  *out << "\nSensitivities (" << i << "," << j << "):!\n", dgdp);
-                  status += slvrfctry.checkSolveTestResultsT(i, j, g.get(), dgdp.get());
+      for (int j=0; j<num_p; j++) {
+        const RCP<const Tpetra_MultiVector> dgdp = sensitivities[i][j];
+        if (Teuchos::nonnull(dgdp)) {
+          if(j < num_param_vecs) {
+            Albany::printTpetraVector(
+                *out << "\nSensitivities (" << i << "," << j << "):!\n", dgdp);
+                //check response and sensitivities for scalar parameters
+                status += slvrfctry.checkSolveTestResultsT(i, j, g.get(), dgdp.get());
+          }
+          else {
+            const RCP<const Tpetra_Map> serial_map = Teuchos::rcp(new const Tpetra_Map(INVALID, 1, 0, comm));
+            Tpetra_MultiVector norms(serial_map,dgdp->getNumVectors());
+            *out << "\nSensitivities (" << i << "," << j  << ") for Distributed Parameters:  (two-norm)\n";
+            *out << "    ";
+            for(int ir=0; ir<dgdp->getNumVectors(); ++ir) {
+            auto norm2 = dgdp->getVector(ir)->norm2();
+            norms.getDataNonConst(ir)[0] = norm2;
+              *out << "    " << norm2;
             }
-            else {
-              const RCP<const Tpetra_Map> serial_map = Teuchos::rcp(new const Tpetra_Map(INVALID, 1, 0, comm));
-              Tpetra_MultiVector norms(serial_map,dgdp->getNumVectors());
-              *out << "\nSensitivities (" << i << "," << j  << ") for Distributed Parameters:  (two-norm)\n";
-              *out << "    ";
-              for(int ir=0; ir<dgdp->getNumVectors(); ++ir) {
-            	auto norm2 = dgdp->getVector(ir)->norm2();
-            	norms.getDataNonConst(ir)[0] = norm2;
-                *out << "    " << norm2;
-              }
-              *out << "\n" << std::endl;
-              status += slvrfctry.checkSolveTestResultsT(i, j, g.get(), &norms);
-            }
+            *out << "\n" << std::endl;
+            //check response and sensitivities for distributed parameters
+            status += slvrfctry.checkSolveTestResultsT(i, j, g.get(), &norms);
           }
         }
+        else //check response only, no sensitivities
+          status += slvrfctry.checkSolveTestResultsT(i, 0, g.get(), NULL);
       }
     }
 
