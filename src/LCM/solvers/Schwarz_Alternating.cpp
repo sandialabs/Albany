@@ -949,9 +949,6 @@ SchwarzLoopDynamics() const
             << subdomain << ".\n";
 #endif
 
-        //IKT: the following is different than the quasistatic case...
-        me.getNominalValues().set_t(current_time);
-
         Teuchos::RCP<Tempus::SolutionHistory<ST> >
         solution_history;
 
