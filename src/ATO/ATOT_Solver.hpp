@@ -155,8 +155,8 @@ int _writeDesignFrequency;
 int  numDims;
 int _num_parameters; // for sensitiviy analysis(?)
 int _num_responses;  //  ditto
-Teuchos::RCP<Tpetra_LocalMap> _tpetra_param_map;
-Teuchos::RCP<Tpetra_LocalMap> _tpetra_response_map;
+// Teuchos::RCP<Tpetra_LocalMap> _tpetra_param_map;
+// Teuchos::RCP<Tpetra_LocalMap> _tpetra_response_map;
 Teuchos::RCP<const Tpetra_Map>      _tpetra_x_map;
 
 int _numPhysics; // number of sub problems

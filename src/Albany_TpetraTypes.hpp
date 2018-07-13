@@ -13,6 +13,9 @@
 // Get the scalar and ordinal types
 #include "Albany_ScalarOrdinalTypes.hpp"
 
+// Phalanx determines the Kokkos node we use for Tpetra types
+#include "Phalanx_KokkosDeviceTypes.hpp"
+
 // Tpetra includes
 #include "TpetraCore_config.h"
 #include "Tpetra_DefaultPlatform.hpp"
@@ -22,9 +25,6 @@
 #include "Tpetra_DistObject.hpp"
 #include "Tpetra_Operator.hpp"
 #include "Tpetra_MultiVector.hpp"
-
-// Phalanx determines the Kokkos node we use for Tpetra types
-#include "Phalanx_KokkosDeviceTypes.hpp"
 
 #ifndef HAVE_TPETRA_INST_DOUBLE
 #error "Albany needs Tpetra to enable double as a Scalar type"
@@ -49,7 +49,6 @@ typedef unsigned long Tpetra_GO;
 typedef Kokkos::Compat::KokkosDeviceWrapperNode<PHX::Device>          KokkosNode;
 
 typedef Tpetra::Map<Tpetra_LO, Tpetra_GO, KokkosNode>                 Tpetra_Map;
-typedef Tpetra::Details::LocalMap<Tpetra_LO, Tpetra_GO, KokkosNode>   Tpetra_LocalMap;
 typedef Tpetra::Export<Tpetra_LO, Tpetra_GO, KokkosNode>              Tpetra_Export;
 typedef Tpetra::Import<Tpetra_LO, Tpetra_GO, KokkosNode>              Tpetra_Import;
 typedef Tpetra::CrsGraph<Tpetra_LO, Tpetra_GO, KokkosNode>            Tpetra_CrsGraph;
