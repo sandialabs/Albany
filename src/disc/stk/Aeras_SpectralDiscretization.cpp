@@ -1046,7 +1046,7 @@ Aeras::SpectralDiscretization::getSolutionField(Epetra_Vector &result,
   // iterating over each bucket.
   stk::mesh::Selector locally_owned = metaData.locally_owned_part();
 
-  Teuchos::RCP<Epetra_Map> node_map =
+  Teuchos::RCP<const Epetra_Map> node_map =
     Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
   container->fillSolnVector(result, locally_owned, node_map);
 }
