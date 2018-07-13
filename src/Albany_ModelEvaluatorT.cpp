@@ -26,6 +26,7 @@ static int mm_counter_jac = 0;
 // for some applications.  Uncomment the following line to turn on.
 //#define WRITE_MASS_MATRIX_TO_MM_FILE
 #ifdef WRITE_MASS_MATRIX_TO_MM_FILE
+#include "MatrixMarket_Tpetra.hpp"
 #include "TpetraExt_MMHelpers.hpp"
 #endif
 
@@ -518,7 +519,6 @@ Albany::ModelEvaluatorT::create_W_prec() const
   Teuchos::RCP<Tpetra_Operator> Extra_W_crs_op =
       Teuchos::nonnull(create_W()) ? ConverterT::getTpetraOperator(create_W()) :
                                      Teuchos::null;
-
   Extra_W_crs =
       Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(Extra_W_crs_op, true);
 
@@ -904,10 +904,10 @@ Albany::ModelEvaluatorT::evalModelImpl(
         sacado_param_vec,
         ftmp.get(),
         *Mass_crs);
-    Tpetra_MatrixMarket_Writer::writeSparseFile("mass.mm", Mass_crs);
-    Tpetra_MatrixMarket_Writer::writeMapFile(
+    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("mass.mm", Mass_crs);
+    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile(
         "rowmap.mm", *Mass_crs->getRowMap());
-    Tpetra_MatrixMarket_Writer::writeMapFile(
+    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile(
         "colmap.mm", *Mass_crs->getColMap());
 #endif
   }

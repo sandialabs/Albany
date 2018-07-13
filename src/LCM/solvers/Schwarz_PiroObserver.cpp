@@ -76,7 +76,7 @@ tpetraFromThyra(Thyra::VectorBase<double> const & v, int n_models)
 
   for (int m = 0; m < n_models; ++m) {
     //Get each Tpetra vector
-    vs[m] = Teuchos::rcp_dynamic_cast<const ThyraVector>(
+    vs[m] = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(
         v_nonowning_rcp->getVectorBlock(m), true)->getConstTpetraVector();
   }
   return vs;

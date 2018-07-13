@@ -9,7 +9,6 @@
 #include "Albany_SolverFactory.hpp"
 #include "Thyra_EpetraModelEvaluator.hpp"
 #include "Piro_PerformAnalysis.hpp"
-#include "Thyra_VectorBase.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"

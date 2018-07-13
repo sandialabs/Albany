@@ -10,10 +10,6 @@
 #include <Teuchos_TestForException.hpp>
 #include <fstream>
 
-#include <Thyra_LinearOpWithSolveBase.hpp>
-#include <Thyra_TpetraLinearOp.hpp>
-#include <Thyra_TpetraMultiVector.hpp>
-#include <Thyra_VectorBase.hpp>
 #ifdef ALBANY_IFPACK2
 #include <Thyra_Ifpack2PreconditionerFactory.hpp>
 #endif

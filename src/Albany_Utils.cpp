@@ -5,6 +5,17 @@
 //*****************************************************************//
 
 #include "Albany_Utils.hpp"
+
+// Include the concrete Epetra Comm's, if needed
+#if defined(ALBANY_EPETRA)
+  #ifdef ALBANY_MPI
+    #include "Epetra_MpiComm.h"
+  #else
+    #include "Epetra_SerialComm.h"
+  #endif
+#endif
+
+#include "MatrixMarket_Tpetra.hpp"
 #include "Teuchos_TestForException.hpp"
 #include <cstdlib>
 #include <stdexcept>
@@ -42,7 +53,7 @@
         }
       }
     }
-    //Tpetra_MatrixMarket_Writer::writeSparseFile("prec.mm", matrix);
+    //Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("prec.mm", matrix);
   }
 
   void 
@@ -301,7 +312,7 @@
     std::string const &
     filename = oss.str();
 
-    Tpetra_MatrixMarket_Writer::writeDenseFile(filename, x);
+    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(filename, x);
 
     return;
   }
@@ -331,7 +342,7 @@
     std::string const &
     filename = oss.str();
 
-    Tpetra_MatrixMarket_Writer::writeSparseFile(filename, A);
+    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(filename, A);
 
     return;
   }

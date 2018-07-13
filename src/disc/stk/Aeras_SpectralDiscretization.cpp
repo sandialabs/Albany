@@ -49,6 +49,8 @@ extern "C"
 #include "Petra_Converters.hpp"
 #endif
 
+#include "MatrixMarket_Tpetra.hpp"
+
 // Albany includes
 #include "Albany_Utils.hpp"
 #include "Albany_NodalGraphUtils.hpp"
@@ -610,10 +612,10 @@ void Aeras::SpectralDiscretization::writeCoordsToMatrixMarket() const
       // Writing of coordinates to MatrixMarket file for Ray
       Teuchos::RCP<Tpetra_Vector> xCoords_serialT = Teuchos::rcp(new Tpetra_Vector(serial_mapT));
       xCoords_serialT->doImport(*xCoordsT, *importOperatorT, Tpetra::INSERT);
-      Tpetra_MatrixMarket_Writer::writeDenseFile("xCoords.mm", xCoords_serialT);
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("xCoords.mm", xCoords_serialT);
     }
     else
-      Tpetra_MatrixMarket_Writer::writeDenseFile("xCoords.mm", xCoordsT);
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("xCoords.mm", xCoordsT);
     if (coordMV->getNumVectors() > 1)
     {
       Teuchos::RCP<Tpetra_Vector> yCoordsT = coordMV->getVector(1);
@@ -621,10 +623,10 @@ void Aeras::SpectralDiscretization::writeCoordsToMatrixMarket() const
       {
         Teuchos::RCP<Tpetra_Vector> yCoords_serialT = Teuchos::rcp(new Tpetra_Vector(serial_mapT));
         yCoords_serialT->doImport(*yCoordsT, *importOperatorT, Tpetra::INSERT);
-        Tpetra_MatrixMarket_Writer::writeDenseFile("yCoords.mm", yCoords_serialT);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("yCoords.mm", yCoords_serialT);
       }
       else
-        Tpetra_MatrixMarket_Writer::writeDenseFile("yCoords.mm", yCoordsT);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("yCoords.mm", yCoordsT);
     }
     if (coordMV->getNumVectors() > 2)
     {
@@ -633,10 +635,10 @@ void Aeras::SpectralDiscretization::writeCoordsToMatrixMarket() const
       {
         Teuchos::RCP<Tpetra_Vector> zCoords_serialT = Teuchos::rcp(new Tpetra_Vector(serial_mapT));
         zCoords_serialT->doImport(*zCoordsT, *importOperatorT, Tpetra::INSERT);
-        Tpetra_MatrixMarket_Writer::writeDenseFile("zCoords.mm", zCoords_serialT);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("zCoords.mm", zCoords_serialT);
       }
       else
-        Tpetra_MatrixMarket_Writer::writeDenseFile("zCoords.mm", zCoordsT);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("zCoords.mm", zCoordsT);
     }
   }
 #endif
@@ -787,7 +789,7 @@ Aeras::SpectralDiscretization::writeSolutionToMeshDatabaseT(
 {
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-  Tpetra_MatrixMarket_Writer::writeDenseFile("solnT.mm", solnT);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("solnT.mm", solnT);
 #endif
   // Put solution as Tpetra_Vector into STK Mesh
   if (!overlapped)
@@ -842,7 +844,7 @@ Aeras::SpectralDiscretization::writeSolutionMVToMeshDatabase(
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-   Tpetra_MatrixMarket_Writer::writeDenseFile("solnT.mm", solnT);
+   Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("solnT.mm", solnT);
 #endif
   // Put solution as Epetra_Vector into STK Mesh
   if (!overlapped)
@@ -3618,8 +3620,8 @@ Aeras::SpectralDiscretization::updateMesh()
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   //write owned maps to matrix market file for debug
-  Tpetra_MatrixMarket_Writer::writeMapFile("mapT.mm", *mapT);
-  Tpetra_MatrixMarket_Writer::writeMapFile("node_mapT.mm", *node_mapT);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("mapT.mm", *mapT);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("node_mapT.mm", *node_mapT);
 #endif
 
   // IK, 1/23/15: I've commented out the guts of this function.  It is
@@ -3634,8 +3636,8 @@ Aeras::SpectralDiscretization::updateMesh()
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   //write overlap maps to matrix market file for debug
-  Tpetra_MatrixMarket_Writer::writeMapFile("overlap_mapT.mm", *overlap_mapT);
-  Tpetra_MatrixMarket_Writer::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("overlap_mapT.mm", *overlap_mapT);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
 #endif
 
     // Note that getCoordinates has not been converted to use the
@@ -3670,11 +3672,11 @@ Aeras::SpectralDiscretization::updateMesh()
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   Teuchos::RCP<Tpetra_CrsMatrix> ImplicitMatrix = Teuchos::rcp(new Tpetra_CrsMatrix(implicit_graphT));
-  Tpetra_MatrixMarket_Writer::writeSparseFile("ImplicitMatrix.mm", ImplicitMatrix);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("ImplicitMatrix.mm", ImplicitMatrix);
   Teuchos::RCP<Tpetra_CrsMatrix> Matrix = Teuchos::rcp(new Tpetra_CrsMatrix(graphT));
-  Tpetra_MatrixMarket_Writer::writeSparseFile("Matrix.mm", Matrix);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("Matrix.mm", Matrix);
   Teuchos::RCP<Tpetra_CrsMatrix> OverlapMatrix = Teuchos::rcp(new Tpetra_CrsMatrix(overlap_graphT));
-  Tpetra_MatrixMarket_Writer::writeSparseFile("OverlapMatrix.mm", OverlapMatrix);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("OverlapMatrix.mm", OverlapMatrix);
 #endif
 
   // IK, 1/23/15, FIXME: to implement -- transform mesh based on new

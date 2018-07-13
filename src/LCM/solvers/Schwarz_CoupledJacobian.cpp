@@ -14,6 +14,7 @@
 //#define WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
+#include "MatrixMarket_Tpetra.hpp"
 static int
 mm_counter = 0;
 #endif // WRITE_TO_MATRIX_MARKET
@@ -55,7 +56,7 @@ const
 
   for (auto i = 0; i < block_dim; ++i) {
     sprintf(name, "Jac%02d_%04d.mm", i, mm_counter);
-    Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs[i]);
+    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(name, jacs[i]);
   }
   mm_counter++;
 #endif // WRITE_TO_MATRIX_MARKET

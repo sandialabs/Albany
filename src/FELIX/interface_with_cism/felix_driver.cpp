@@ -55,6 +55,8 @@
 #ifdef CISM_USE_EPETRA
 #include "EpetraExt_MultiVectorOut.h"
 #include "EpetraExt_BlockMapOut.h"
+#else
+#include "MatrixMarket_Tpetra.hpp"
 #endif
 #endif
 
@@ -807,10 +809,10 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     EpetraExt::BlockMapToMatrixMarketFile("overlap_map.mm", overlapMap);
     EpetraExt::MultiVectorToMatrixMarketFile("solution.mm", *albanyApp->getDiscretization()->getSolutionField());
 #else
-    Tpetra_MatrixMarket_Writer::writeMapFile("node_map.mm", *node_map);
-    Tpetra_MatrixMarket_Writer::writeMapFile("map.mm", *ownedMap);
-    Tpetra_MatrixMarket_Writer::writeMapFile("overlap_map.mm", *overlapMap);
-    Tpetra_MatrixMarket_Writer::writeDenseFile("solution.mm", albanyApp->getDiscretization()->getSolutionFieldT());
+    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("node_map.mm", *node_map);
+    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("map.mm", *ownedMap);
+    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("overlap_map.mm", *overlapMap);
+    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("solution.mm", albanyApp->getDiscretization()->getSolutionFieldT());
 #endif
 #endif
 

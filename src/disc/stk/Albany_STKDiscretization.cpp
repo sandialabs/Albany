@@ -37,6 +37,8 @@
 
 #include <stk_mesh/base/FEMHelpers.hpp>
 
+#include <MatrixMarket_Tpetra.hpp>
+
 #ifdef ALBANY_SEACAS
 #include <Ionit_Initializer.h>
 #include <netcdf.h>
@@ -734,19 +736,19 @@ Albany::STKDiscretization::writeCoordsToMatrixMarket() const
       Teuchos::RCP<Tpetra_Vector> xCoords_serialT =
           Teuchos::rcp(new Tpetra_Vector(serial_mapT));
       xCoords_serialT->doImport(*xCoordsT, *importOperatorT, Tpetra::INSERT);
-      Tpetra_MatrixMarket_Writer::writeDenseFile("xCoords.mm", xCoords_serialT);
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("xCoords.mm", xCoords_serialT);
     } else
-      Tpetra_MatrixMarket_Writer::writeDenseFile("xCoords.mm", xCoordsT);
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("xCoords.mm", xCoordsT);
     if (coordMV->getNumVectors() > 1) {
       Teuchos::RCP<const Tpetra_Vector> yCoordsT = coordMV->getVector(1);
       if (node_mapT->getComm()->getSize() > 1) {
         Teuchos::RCP<Tpetra_Vector> yCoords_serialT =
             Teuchos::rcp(new Tpetra_Vector(serial_mapT));
         yCoords_serialT->doImport(*yCoordsT, *importOperatorT, Tpetra::INSERT);
-        Tpetra_MatrixMarket_Writer::writeDenseFile(
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(
             "yCoords.mm", yCoords_serialT);
       } else
-        Tpetra_MatrixMarket_Writer::writeDenseFile("yCoords.mm", yCoordsT);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("yCoords.mm", yCoordsT);
     }
     if (coordMV->getNumVectors() > 2) {
       Teuchos::RCP<const Tpetra_Vector> zCoordsT = coordMV->getVector(2);
@@ -754,10 +756,10 @@ Albany::STKDiscretization::writeCoordsToMatrixMarket() const
         Teuchos::RCP<Tpetra_Vector> zCoords_serialT =
             Teuchos::rcp(new Tpetra_Vector(serial_mapT));
         zCoords_serialT->doImport(*zCoordsT, *importOperatorT, Tpetra::INSERT);
-        Tpetra_MatrixMarket_Writer::writeDenseFile(
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(
             "zCoords.mm", zCoords_serialT);
       } else
-        Tpetra_MatrixMarket_Writer::writeDenseFile("zCoords.mm", zCoordsT);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("zCoords.mm", zCoordsT);
     }
   }
 }
@@ -3620,8 +3622,8 @@ Albany::STKDiscretization::updateMesh()
 
 #ifdef OUTPUT_TO_SCREEN
   // write owned maps to matrix market file for debug
-  Tpetra_MatrixMarket_Writer::writeMapFile("mapT0.mm", *mapT);
-  Tpetra_MatrixMarket_Writer::writeMapFile("node_mapT0.mm", *node_mapT);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("mapT0.mm", *mapT);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("node_mapT0.mm", *node_mapT);
 #endif
 
   setupMLCoords();

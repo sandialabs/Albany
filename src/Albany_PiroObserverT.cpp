@@ -15,6 +15,7 @@
 
 //#define DEBUG_OUTPUT
 #ifdef DEBUG_OUTPUT
+#include "MatrixMarket_Tpetra.hpp"
 int ah; 
 #endif
 
@@ -177,9 +178,9 @@ Albany::PiroObserverT::observeSolutionImpl(
   std::cout << "IKT observing solution time = " << defaultStamp << std::endl; 
   char name[100];  //create string for file name
   sprintf(name, "solution%i.mm", ah);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(name, solution_tpetra);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, solution_tpetra);
   sprintf(name, "solution_dot%i.mm", ah);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(name, solution_dot_tpetra);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, solution_dot_tpetra);
 #endif
   this->observeTpetraSolutionImpl(
       *solution_tpetra,

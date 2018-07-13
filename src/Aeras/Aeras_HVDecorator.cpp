@@ -122,8 +122,8 @@ Aeras::HVDecorator::HVDecorator(
 //compare the product L*x (L is the Laplace, x is an arbitrary vector)
 //in case of a parallel and serial run.
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
-  Tpetra_MatrixMarket_Writer::writeSparseFile("mass.mm", mass);
-  Tpetra_MatrixMarket_Writer::writeSparseFile("laplace.mm", laplace_);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("mass.mm", mass);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("laplace.mm", laplace_);
 #endif
 }
  
@@ -416,9 +416,9 @@ Aeras::HVDecorator::evalModelImpl(
   //writing to MatrixMarket for debug
   char name[100];  //create string for file name
   sprintf(name, "xT_%i.mm", mm_counter);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(name, xT);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, xT);
   sprintf(name, "xtildeT_%i.mm", mm_counter);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(name, xtildeT);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, xtildeT);
   mm_counter++; 
 #endif  
 

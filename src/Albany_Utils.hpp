@@ -18,6 +18,10 @@
 #include "Albany_DataTypes.hpp"
 #include "Teuchos_RCP.hpp"
 
+#if defined(ALBANY_EPETRA)
+#include "Epetra_Comm.h"
+#endif
+
 // Checks if the previous Kokkos::Cuda kernel has failed
 #ifdef ALBANY_CUDA_ERROR_CHECK
 #define cudaCheckError() \

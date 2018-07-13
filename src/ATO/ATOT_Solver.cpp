@@ -18,6 +18,7 @@ Please remove when issue is resolved
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
+#include "Tpetra_RowMatrixTransposer.hpp"
 
 #include "Albany_SolverFactory.hpp"
 #include "Albany_StateInfoStruct.hpp"
@@ -228,7 +229,7 @@ ATOT::SpatialFilter::buildOperator(
     
     //IKT, FIXME: remove the following creation of filterOperatorTransposeT 
     //once Mark Hoemmen fixes apply method with TRANS mode in Tpetra::CrsMatrix.
-    Tpetra_RowMatrixTransposer transposer(filterOperatorT);
+    Tpetra::RowMatrixTransposer<ST,Tpetra_LO,Tpetra_GO,KokkosNode> transposer(filterOperatorT);
     filterOperatorTransposeT = transposer.createTranspose();
 
   return;
