@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//9/12/14: Not compiled when ALBANY_EPETRA_EXE turned off.
-
 #include <iostream>
 
 #include "Albany_MpasSTKMeshStruct.hpp"

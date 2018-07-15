@@ -199,6 +199,7 @@ SET(SOURCES ${SOURCES}
   responses/Albany_SolutionFileResponseFunction.cpp
   responses/Albany_SolutionMaxValueResponseFunction.cpp
   responses/Albany_SolutionMinValueResponseFunction.cpp
+  responses/Albany_SolutionResponseFunction.cpp
   responses/Albany_SolutionTwoNormResponseFunction.cpp
   responses/Albany_SolutionValuesResponseFunction.cpp
   )
@@ -216,21 +217,11 @@ SET(HEADERS ${HEADERS}
   responses/Albany_SolutionCullingStrategy.hpp
   responses/Albany_SolutionFileResponseFunction.hpp
   responses/Albany_SolutionMaxValueResponseFunction.hpp
+  responses/Albany_SolutionMinValueResponseFunction.cpp
+  responses/Albany_SolutionResponseFunction.hpp
   responses/Albany_SolutionTwoNormResponseFunction.hpp
   responses/Albany_SolutionValuesResponseFunction.hpp
   )
-
-IF(ALBANY_EPETRA)
-
-SET(SOURCES ${SOURCES}
-  responses/Albany_SolutionResponseFunction.cpp
-)
-
-SET(HEADERS ${HEADERS}
-  responses/Albany_SolutionResponseFunction.hpp
-)
-
-ENDIF()
 
 #discretization
 SET(SOURCES ${SOURCES}

@@ -1457,14 +1457,12 @@ if (basalSideName!="INVALID")
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-#ifdef ALBANY_EPETRA
   p = Teuchos::rcp(new Teuchos::ParameterList("Gather Averaged Velocity"));
   p->set<std::string>("Averaged Velocity Name", "Averaged Velocity");
   p->set<std::string>("Mesh Part", "basalside");
   p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
   ev = Teuchos::rcp(new GatherVerticallyAveragedVelocity<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
-#endif
 
   //--- Shared Parameter for Continuation:  ---//
   {

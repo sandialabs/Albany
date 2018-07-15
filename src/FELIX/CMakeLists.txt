@@ -20,6 +20,8 @@
        evaluators/FELIX_EpsilonL1L2.cpp
        evaluators/FELIX_FlowRate.cpp
        evaluators/FELIX_FluxDiv.cpp
+       evaluators/FELIX_Gather2DField.cpp
+       evaluators/FELIX_GatherVerticallyAveragedVelocity.cpp
        evaluators/FELIX_GeoFluxHeat.cpp
        evaluators/FELIX_HydraulicPotential.cpp
        evaluators/FELIX_HydrologyBasalGravitationalWaterPotential.cpp
@@ -35,16 +37,18 @@
        evaluators/FELIX_IceOverburden.cpp
        evaluators/FELIX_IceSoftness.cpp
        evaluators/FELIX_Integral1Dw_Z.cpp
+       evaluators/FELIX_LaplacianRegularizationResidual.cpp
+       evaluators/FELIX_L2ProjectedBoundaryLaplacianResidual.cpp
        evaluators/FELIX_LiquidWaterFraction.cpp
+       evaluators/FELIX_MapThickness.cpp
        evaluators/FELIX_PressureMeltingTemperature.cpp
        evaluators/FELIX_PressureCorrectedTemperature.cpp
        evaluators/FELIX_PressureMeltingEnthalpy.cpp
        evaluators/FELIX_ProlongateVector.cpp
-       evaluators/FELIX_L2ProjectedBoundaryLaplacianResidual.cpp
-       evaluators/FELIX_LaplacianRegularizationResidual.cpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
        evaluators/FELIX_ResponseSMBMismatch.cpp
        evaluators/FELIX_ResponseBoundarySquaredL2Norm.cpp
+       evaluators/FELIX_ScatterResidual2D.cpp
        evaluators/FELIX_SimpleOperationEvaluator.cpp
        evaluators/FELIX_StackFields.cpp
        evaluators/FELIX_StokesMomentumResid.cpp
@@ -56,13 +60,14 @@
        evaluators/FELIX_StokesContravarientMetricTensor.cpp
        evaluators/FELIX_StokesBodyForce.cpp
        evaluators/FELIX_StokesFOBodyForce.cpp
+       evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.cpp
        evaluators/FELIX_StokesL1L2BodyForce.cpp
        evaluators/FELIX_StokesL1L2Resid.cpp
        evaluators/FELIX_StokesRm.cpp
        evaluators/FELIX_StokesTauM.cpp
        evaluators/FELIX_Temperature.cpp
        evaluators/FELIX_ThicknessResid.cpp
-       evaluators/FELIX_MapThickness.cpp
+       evaluators/FELIX_UpdateZCoordinate.cpp
        evaluators/FELIX_VerticalVelocity.cpp
        evaluators/FELIX_Viscosity.cpp
        evaluators/FELIX_ViscosityFO.cpp
@@ -70,27 +75,17 @@
        evaluators/FELIX_w_ZResid.cpp
        evaluators/FELIX_w_Resid.cpp
        evaluators/FELIX_Time.cpp
-       problems/FELIX_ProblemFactory.cpp
        problems/FELIX_Enthalpy.cpp
        problems/FELIX_Hydrology.cpp
+       problems/FELIX_LaplacianSampling.cpp
+       problems/FELIX_ProblemFactory.cpp
        problems/FELIX_SchoofFit.cpp
        problems/FELIX_Stokes.cpp
        problems/FELIX_StokesFO.cpp
-       problems/FELIX_LaplacianSampling.cpp
        problems/FELIX_StokesFOThermoCoupled.cpp
+       problems/FELIX_StokesFOThickness.cpp
        problems/FELIX_StokesL1L2.cpp
    )
-
-IF (ALBANY_EPETRA)
-  SET(SOURCES ${SOURCES}
-       evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.cpp
-       evaluators/FELIX_Gather2DField.cpp
-       evaluators/FELIX_UpdateZCoordinate.cpp
-       evaluators/FELIX_GatherVerticallyAveragedVelocity.cpp
-       evaluators/FELIX_ScatterResidual2D.cpp
-       problems/FELIX_StokesFOThickness.cpp
-   )
-ENDIF()
 
 IF(ENABLE_MPAS_INTERFACE)
    SET(SOURCESMPAS
@@ -134,6 +129,10 @@ ENDIF()
        evaluators/FELIX_FlowRate_Def.hpp
        evaluators/FELIX_FluxDiv.hpp
        evaluators/FELIX_FluxDiv_Def.hpp
+       evaluators/FELIX_Gather2DField.hpp
+       evaluators/FELIX_Gather2DField_Def.hpp
+       evaluators/FELIX_GatherVerticallyAveragedVelocity.hpp
+       evaluators/FELIX_GatherVerticallyAveragedVelocity_Def.hpp
        evaluators/FELIX_GeoFluxHeat.hpp
        evaluators/FELIX_GeoFluxHeat_Def.hpp
        evaluators/FELIX_HydraulicPotential.hpp
@@ -164,8 +163,14 @@ ENDIF()
        evaluators/FELIX_IceSoftness_Def.hpp
        evaluators/FELIX_Integral1Dw_Z.hpp
        evaluators/FELIX_Integral1Dw_Z_Def.hpp
+       evaluators/FELIX_LaplacianRegularizationResidual.hpp
+       evaluators/FELIX_LaplacianRegularizationResidual_Def.hpp
+       evaluators/FELIX_L2ProjectedBoundaryLaplacianResidual.hpp
+       evaluators/FELIX_L2ProjectedBoundaryLaplacianResidual_Def.hpp
        evaluators/FELIX_LiquidWaterFraction.hpp
        evaluators/FELIX_LiquidWaterFraction_Def.hpp
+       evaluators/FELIX_MapThickness_Def.hpp
+       evaluators/FELIX_MapThickness.hpp
        evaluators/FELIX_PressureCorrectedTemperature.hpp
        evaluators/FELIX_PressureCorrectedTemperature_Def.hpp
        evaluators/FELIX_PressureMeltingTemperature.hpp
@@ -174,16 +179,14 @@ ENDIF()
        evaluators/FELIX_PressureMeltingEnthalpy_Def.hpp
        evaluators/FELIX_ProlongateVector.hpp
        evaluators/FELIX_ProlongateVector_Def.hpp
-       evaluators/FELIX_L2ProjectedBoundaryLaplacianResidual.hpp
-       evaluators/FELIX_L2ProjectedBoundaryLaplacianResidual_Def.hpp
-       evaluators/FELIX_LaplacianRegularizationResidual.hpp
-       evaluators/FELIX_LaplacianRegularizationResidual_Def.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
        evaluators/FELIX_ResponseBoundarySquaredL2Norm.hpp
        evaluators/FELIX_ResponseBoundarySquaredL2Norm_Def.hpp
        evaluators/FELIX_ResponseSMBMismatch.hpp
        evaluators/FELIX_ResponseSMBMismatch_Def.hpp
+       evaluators/FELIX_ScatterResidual2D.hpp
+       evaluators/FELIX_ScatterResidual2D_Def.hpp
        evaluators/FELIX_SharedParameter.hpp
        evaluators/FELIX_SimpleOperation.hpp
        evaluators/FELIX_SimpleOperationEvaluator.hpp
@@ -202,6 +205,8 @@ ENDIF()
        evaluators/FELIX_StokesFOLateralResid_Def.hpp
        evaluators/FELIX_StokesFOBasalResid.hpp
        evaluators/FELIX_StokesFOBasalResid_Def.hpp
+       evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.hpp
+       evaluators/FELIX_StokesFOImplicitThicknessUpdateResid_Def.hpp
        evaluators/FELIX_StokesFOResid.hpp
        evaluators/FELIX_StokesFOResid_Def.hpp
        evaluators/FELIX_StokesFOStress.hpp
@@ -218,8 +223,8 @@ ENDIF()
        evaluators/FELIX_Temperature_Def.hpp
        evaluators/FELIX_ThicknessResid_Def.hpp
        evaluators/FELIX_ThicknessResid.hpp
-       evaluators/FELIX_MapThickness_Def.hpp
-       evaluators/FELIX_MapThickness.hpp
+       evaluators/FELIX_UpdateZCoordinate.hpp
+       evaluators/FELIX_UpdateZCoordinate_Def.hpp
        evaluators/FELIX_VerticalVelocity.hpp
        evaluators/FELIX_VerticalVelocity_Def.hpp
        evaluators/FELIX_ViscosityFO.hpp
@@ -232,33 +237,18 @@ ENDIF()
        evaluators/FELIX_w_Resid_Def.hpp
        evaluators/FELIX_Time.hpp
        evaluators/FELIX_Time_Def.hpp
-       problems/FELIX_ProblemFactory.hpp
        problems/FELIX_Enthalpy.hpp
-       problems/FELIX_StokesFOThermoCoupled.hpp
        problems/FELIX_Hydrology.hpp
+       problems/FELIX_LaplacianSampling.hpp
        problems/FELIX_ParamEnum.hpp
+       problems/FELIX_ProblemFactory.hpp
        problems/FELIX_SchoofFit.hpp
        problems/FELIX_Stokes.hpp
        problems/FELIX_StokesFO.hpp
-       problems/FELIX_LaplacianSampling.hpp
+       problems/FELIX_StokesFOThermoCoupled.hpp
+       problems/FELIX_StokesFOThickness.hpp
        problems/FELIX_StokesL1L2.hpp
   )
-
-IF (ALBANY_EPETRA)
-  SET(HEADERS ${HEADERS}
-       evaluators/FELIX_Gather2DField.hpp
-       evaluators/FELIX_Gather2DField_Def.hpp
-       evaluators/FELIX_GatherVerticallyAveragedVelocity.hpp
-       evaluators/FELIX_GatherVerticallyAveragedVelocity_Def.hpp
-       evaluators/FELIX_ScatterResidual2D.hpp
-       evaluators/FELIX_ScatterResidual2D_Def.hpp
-       evaluators/FELIX_UpdateZCoordinate.hpp
-       evaluators/FELIX_UpdateZCoordinate_Def.hpp
-       evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.hpp
-       evaluators/FELIX_StokesFOImplicitThicknessUpdateResid_Def.hpp
-       problems/FELIX_StokesFOThickness.hpp
-  )
-ENDIF()
 
 IF(ENABLE_MPAS_INTERFACE)
   SET(HEADERSMPAS

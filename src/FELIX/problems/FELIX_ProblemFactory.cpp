@@ -14,11 +14,7 @@
 #include "FELIX_Enthalpy.hpp"
 #include "FELIX_StokesFOThermoCoupled.hpp"
 #include "FELIX_LaplacianSampling.hpp"
-
-#ifdef ALBANY_EPETRA
-// #include "FELIX_StokesFOHydrology.hpp"
 #include "FELIX_StokesFOThickness.hpp"
-#endif
 
 namespace FELIX
 {
@@ -80,11 +76,7 @@ ProblemFactory::create() const
     problem = rcp(new FELIX::StokesFO(problemParams, discretizationParams, paramLib, 3));
   }
   else if (method == "FELIX Coupled FO H 3D" ) {
-#ifdef ALBANY_EPETRA
     problem = rcp(new FELIX::StokesFOThickness(problemParams, paramLib, 3));
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** FELIX Coupled FO H requires Epetra, recompile with -DENABLE_ALBANY_EPETRA_EXE ****\n");
-#endif
   }
   else if (method == "FELIX Stokes L1L2 2D") {
     problem = rcp(new FELIX::StokesL1L2(problemParams, paramLib, 2));
