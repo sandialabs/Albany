@@ -138,27 +138,11 @@ bool extract_DBC_data(Teuchos::RCP<Teuchos::ParameterList> myDBCParams, Teuchos:
 	return isComplete;
 }
 
-int main(int argc, char *argv[]) {
+int run_rb_gen(Teuchos::RCP<const Teuchos::Comm<int>> teuchosComm, const std::string& inputFileName) {
   using Teuchos::RCP;
-
-  // Communicators
-  Teuchos::GlobalMPISession mpiSession(&argc, &argv);
-  const Albany_MPI_Comm nativeComm = Albany_MPI_COMM_WORLD;
-  const RCP<const Teuchos::Comm<int> > teuchosComm = Albany::createTeuchosCommFromMpiComm(nativeComm);
-
-  Kokkos::initialize(argc, argv);
 
   // Standard output
   const RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
-
-  // Parse command-line argument for input file
-  const std::string firstArg = (argc > 1) ? argv[1] : "";
-  if (firstArg.empty() || firstArg == "--help") {
-    *out << "AlbanyRBGen input-file-path\n";
-    Kokkos::finalize_all();
-    return 0;
-  }
-  const std::string inputFileName = argv[1];
 
   // Parse XML input file
   const RCP<Teuchos::ParameterList> topLevelParams = Teuchos::createParameterList("Albany Parameters");
@@ -467,5 +451,32 @@ int main(int argc, char *argv[]) {
       baseDisc->writeSolution(outputVector, stamp, /*overlapped =*/ true);
     }
   }
+
+  return 0;
+}
+
+int main(int argc, char *argv[]) {
+  // Communicators
+  Teuchos::GlobalMPISession mpiSession(&argc, &argv);
+  const Albany_MPI_Comm nativeComm = Albany_MPI_COMM_WORLD;
+  const Teuchos::RCP<const Teuchos::Comm<int> > teuchosComm = Albany::createTeuchosCommFromMpiComm(nativeComm);
+  const Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+
+  Kokkos::initialize(argc, argv);
+
+  // Parse command-line argument for input file
+  const std::string firstArg = (argc > 1) ? argv[1] : "";
+  if (firstArg.empty() || firstArg == "--help") {
+    *out << "AlbanyRBGen input-file-path\n";
+    Kokkos::finalize_all();
+    return 0;
+  }
+
+  const std::string inputFileName = argv[1];
+
+  int status = run_rb_gen(teuchosComm,inputFileName);
+
   Kokkos::finalize_all();
+
+  return status;
 }
