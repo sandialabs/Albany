@@ -605,6 +605,12 @@ public:
   bool
   getSchwarzAlternating() const {return is_schwarz_alternating_;}
 
+  void setScaling(const Teuchos::RCP<Teuchos::ParameterList> &params);
+
+  bool isQCADProblem(const Teuchos::RCP<Teuchos::ParameterList> &params) const; 
+ 
+  bool isLCMProblem(const Teuchos::RCP<Teuchos::ParameterList> &params) const;  
+
 private:
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> apps_;
 

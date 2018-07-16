@@ -1488,7 +1488,7 @@ RCP<const ParameterList>
 Albany::SolverFactory::getValidScalingParameters() const
 {
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidScalingParams"));
-  validPL->set<double>("Scale", 1.0, "Value of Scaling to Apply to Jacobian/Residual");
+  validPL->set<double>("Scale", 0.0, "Value of Scaling to Apply to Jacobian/Residual");
   validPL->set<bool>("Scale BC Dofs", false, "Flag to Scale Jacobian/Residual Rows Corresponding to DBC Dofs");
   validPL->set<std::string>("Type", "Constant", "Scaling Type (Constant, Diagonal, AbsRowSum)"); 
   return validPL; 

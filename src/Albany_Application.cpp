@@ -481,46 +481,6 @@ void Albany::Application::initialSetUp(
     //#endif
   }
 
-  // get info from Scaling parameter list (for scaling Jacobian/residual)
-  RCP<Teuchos::ParameterList> scalingParams =
-      Teuchos::sublist(params, "Scaling", true);
-  scale = scalingParams->get("Scale", 1.0);
-  scaleBCdofs = scalingParams->get("Scale BC Dofs", false);
-  std::string scaleType = scalingParams->get("Type", "Constant");
-  if (scaleType == "Constant") {
-    scale_type = CONSTANT;
-  } else if (scaleType == "Diagonal") {
-    scale_type = DIAG;
-    scale = 1.0e1;
-  } else if (scaleType == "Abs Row Sum") {
-    scale_type = ABSROWSUM;
-    scale = 1.0e1;
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::logic_error,
-        "The scaling Type you selected "
-            << scaleType << " is not supported!"
-            << "Supported scaling Types are currently: Constant" << std::endl);
-  }
-  if (scale == 1.0)
-    scaleBCdofs = false;
-  RCP<Teuchos::ParameterList> problemParams =
-      Teuchos::sublist(params, "Problem", true);
-  if ((problemParams->get("Name", "Heat 1D") == "Poisson 1D") ||
-      (problemParams->get("Name", "Heat 1D") == "Poisson 2D") ||
-      (problemParams->get("Name", "Heat 1D") == "Poisson 3D") ||
-      (problemParams->get("Name", "Heat 1D") == "Schrodinger 1D") ||
-      (problemParams->get("Name", "Heat 1D") == "Schrodinger 2D") ||
-      (problemParams->get("Name", "Heat 1D") == "Schrodinger 3D")) {
-    if (scaleBCdofs == true) {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                                 std::endl
-                                     << "Error in Albany::Application: "
-                                     << "Scale BC dofs does not work for QCAD "
-                                        "Poisson or Schrodinger problems. "
-                                     << std::endl);
-    }
-  }
 
   // Create debug output object
   RCP<Teuchos::ParameterList> debugParams =
@@ -730,11 +690,109 @@ void Albany::Application::createDiscretization() {
   explicit_scheme = disc->isExplicitScheme();
 }
 
+void Albany::Application::setScaling(
+    const Teuchos::RCP<Teuchos::ParameterList> &params) 
+{
+  // get info from Scaling parameter list (for scaling Jacobian/residual)
+  RCP<Teuchos::ParameterList> scalingParams =
+      Teuchos::sublist(params, "Scaling", true);
+  scale = scalingParams->get<double>("Scale", 0.0);
+  scaleBCdofs = scalingParams->get<bool>("Scale BC Dofs", false);
+  std::string scaleType = scalingParams->get<std::string>("Type", "Constant");
+
+  if (scale == 0.0) {
+    scale = 1.0;
+    //If LCM problem with no scale specified and not using SDBCs, set scaleBCdofs = true with diagonal scale type 
+    if ((isLCMProblem(params) == true) && (problem->useSDBCs() == false)) {
+      scaleBCdofs = true; 
+      scaleType = "Diagonal"; 
+    }
+  }
+
+  if (scaleType == "Constant") {
+    scale_type = CONSTANT;
+  } else if (scaleType == "Diagonal") {
+    scale_type = DIAG;
+    scale = 1.0e1;
+  } else if (scaleType == "Abs Row Sum") {
+    scale_type = ABSROWSUM;
+    scale = 1.0e1;
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true, std::logic_error,
+        "The scaling Type you selected "
+            << scaleType << " is not supported!"
+            << "Supported scaling Types are currently: Constant" << std::endl);
+  }
+
+  if (scale == 1.0)
+    scaleBCdofs = false;
+
+  if ((isQCADProblem(params) == true) && (scaleBCdofs == true)) {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                               std::endl
+                               << "Error in Albany::Application: "
+                               << "Scale BC dofs does not work for QCAD "
+                                  "Poisson or Schrodinger problems. "
+                               << std::endl);
+  }
+
+}
+
+bool Albany::Application::isLCMProblem(
+    const Teuchos::RCP<Teuchos::ParameterList> &params) const 
+{
+  //FIXME: fill in this function to check if we have LCM problem 
+  return false; 
+  /*RCP<Teuchos::ParameterList> problemParams =
+      Teuchos::sublist(params, "Problem", true);
+  if ((problemParams->get("Name", "Heat 1D") == "Mechanics 2D") ||
+      (problemParams->get("Name", "Heat 1D") == "Mechanics 3D") ||
+      (problemParams->get("Name", "Heat 1D") == "Elasticity 1D") ||
+      (problemParams->get("Name", "Heat 1D") == "Elasticity 2D") ||
+      (problemParams->get("Name", "Heat 1D") == "Elasticity 3D") ||
+      (problemParams->get("Name", "Heat 1D") == "ThermoElasticity 1D") ||
+      (problemParams->get("Name", "Heat 1D") == "ThermoElasticity 2D") ||
+      (problemParams->get("Name", "Heat 1D") == "ThermoElasticity 3D") )
+  { 
+    return true; 
+  }
+  else 
+  {
+    return false; 
+  }*/
+}
+
+bool Albany::Application::isQCADProblem(
+    const Teuchos::RCP<Teuchos::ParameterList> &params) const 
+{
+  
+  RCP<Teuchos::ParameterList> problemParams =
+      Teuchos::sublist(params, "Problem", true);
+  if ((problemParams->get("Name", "Heat 1D") == "Poisson 1D") ||
+      (problemParams->get("Name", "Heat 1D") == "Poisson 2D") ||
+      (problemParams->get("Name", "Heat 1D") == "Poisson 3D") ||
+      (problemParams->get("Name", "Heat 1D") == "Schrodinger 1D") ||
+      (problemParams->get("Name", "Heat 1D") == "Schrodinger 2D") ||
+      (problemParams->get("Name", "Heat 1D") == "Schrodinger 3D"))
+  { 
+    return true; 
+  }
+  else 
+  {
+    return false; 
+  }
+}
+
+
 void Albany::Application::finalSetUp(
     const Teuchos::RCP<Teuchos::ParameterList> &params,
     const Teuchos::RCP<const Tpetra_Vector> &initial_guess) {
 
   bool TpetraBuild = Albany::build_type() == Albany::BuildType::Tpetra;
+
+  setScaling(params); 
+
   /*
    RCP<const Tpetra_Vector> initial_guessT;
    if (Teuchos::nonnull(initial_guess)) {
@@ -3334,12 +3392,10 @@ void Albany::Application::setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT)
 
 void Albany::Application::setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<Tpetra_CrsMatrix> jacT) 
 {
-  //First step: set scaleVec_ to all 1.0s
-  //IKT, FIXME: do we want to reset this to all 1.0s for each new Newton step? 
-  //May be hard to get that information at this level in the code.
-  if (scaleVec_->norm2() == 0.0) { 
+  //First step: set scaleVec_ to all 1.0s if it is all 0s
+  if (scaleVec_->norm2() == 0) 
     scaleVec_->putScalar(1.0);
-  }
+
   //If calling setScaleBCDofs with null Jacobian, don't recompute the scaling
   if (jacT == Teuchos::null) 
     return; 
@@ -3347,7 +3403,7 @@ void Albany::Application::setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<Tp
   //For diagonal or abs row sum scaling, set the scale equal to the maximum magnitude value 
   //of the diagonal / abs row sum (inf-norm).  This way, scaling adjusts throughout 
   //the simulation based on the Jacobian.  
-  Teuchos::RCP<Tpetra_Vector> tmp = Teuchos::rcp(new Tpetra_Vector(scaleVec_->getMap()));  
+  Teuchos::RCP<Tpetra_Vector> tmp = Teuchos::rcp(new Tpetra_Vector(scaleVec_->getMap())); 
   if (scale_type == DIAG) {
     jacT->getLocalDiagCopy(*tmp);
     scale = tmp->normInf(); 
@@ -3356,6 +3412,9 @@ void Albany::Application::setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<Tp
     Albany::AbsRowSum(tmp, jacT);
     scale = tmp->normInf(); 
   }
+
+  if (scale == 0.0) 
+    scale = 1.0; 
 
   for (int ns=0; ns<nodeSetIDs_.size(); ns++) {
     std::string key = nodeSetIDs_[ns]; 
