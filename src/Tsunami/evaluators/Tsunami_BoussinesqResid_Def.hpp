@@ -21,6 +21,8 @@ BoussinesqResid(const Teuchos::ParameterList& p,
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Gradient Data Layout") ),
   EtaUE       (p.get<std::string>                   ("EtaUE QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+  EtaUEDot       (p.get<std::string>                   ("EtaUE Dot QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   EtaUEGrad      (p.get<std::string>                   ("EtaUE Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   out                (Teuchos::VerboseObjectBase::getDefaultOStream()),
@@ -31,6 +33,7 @@ BoussinesqResid(const Teuchos::ParameterList& p,
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
   this->addDependentField(EtaUE);
+  this->addDependentField(EtaUEDot);
   this->addDependentField(EtaUEGrad);
 
   this->addEvaluatedField(Residual);
@@ -59,6 +62,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(EtaUE,fm);
+  this->utils.setFieldData(EtaUEDot,fm);
   this->utils.setFieldData(EtaUEGrad,fm);
   this->utils.setFieldData(Residual,fm);
 }
@@ -68,10 +72,19 @@ template<typename EvalT, typename Traits>
 void BoussinesqResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  //Zero out residual
+  for (int cell=0; cell < workset.numCells; ++cell) 
+    for (int node=0; node < numNodes; ++node) 
+      for (int i=0; i<vecDim; i++) 
+          Residual(cell,node,i) = 0.0; 
+
+  //IKT, FIXME: fill in!
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
       for (int i=0; i<vecDim; i++) {
-        Residual(cell,node,i) = 0.0;
+        for (int qp=0; qp < numQPs; ++qp) {
+          Residual(cell,node,i) += EtaUEDot(cell,qp,i)*wBF(cell,node,qp);
+        }
       }
     }
   }

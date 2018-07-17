@@ -13,46 +13,13 @@
 #include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
-void
-Tsunami::Boussinesq::
-getVariableType(Teuchos::ParameterList& paramList,
-    const std::string& defaultType,
-    Tsunami::Boussinesq::NS_VAR_TYPE& variableType,
-    bool& haveVariable,
-    bool& haveEquation)
-{
-  std::string type = paramList.get("Variable Type", defaultType);
-  if (type == "None")
-    variableType = NS_VAR_TYPE_NONE;
-  else if (type == "Constant")
-    variableType = NS_VAR_TYPE_CONSTANT;
-  else if (type == "DOF")
-    variableType = NS_VAR_TYPE_DOF;
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-           "Unknown variable type " << type << std::endl);
-  haveVariable = (variableType != NS_VAR_TYPE_NONE);
-  haveEquation = (variableType == NS_VAR_TYPE_DOF);
-}
 
-std::string
-Tsunami::Boussinesq::
-variableTypeToString(Tsunami::Boussinesq::NS_VAR_TYPE variableType)
-{
-  if (variableType == NS_VAR_TYPE_NONE)
-    return "None";
-  else if (variableType == NS_VAR_TYPE_CONSTANT)
-    return "Constant";
-  return "DOF";
-}
 
 Tsunami::Boussinesq::
 Boussinesq( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) : 
   Albany::AbstractProblem(params_, paramLib_),
-  haveFlow(false),
-  haveFlowEq(false),
   haveSource(false),
   numDim(numDim_),
   use_sdbcs_(false), 
@@ -61,9 +28,6 @@ Boussinesq( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   rho(1.0),
   neq(5) 
 {
-
-  getVariableType(params->sublist("Flow"), "DOF", flowType,
-      haveFlow, haveFlowEq);
 
   if (params->isSublist("Tsunami Parameters")) {
     mu = params->sublist("Tsunami Parameters").get<double>("Viscosity",1.0);
@@ -83,10 +47,7 @@ Boussinesq( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   haveSource = true;
 
-  // Compute number of equations
-  int num_eq = 0;
-  if (haveFlowEq) num_eq += numDim+1;
-  this->setNumEquations(num_eq);
+  this->setNumEquations(neq);
 
   // Need to allocate a fields in mesh database
   if (params->isParameter("Required Fields"))
@@ -100,7 +61,7 @@ Boussinesq( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // Print out a summary of the problem
   *out << "Navier Stokes problem:" << std::endl
        << "\tSpatial dimension:      " << numDim << std::endl
-       << "\tFlow variables:         " << variableTypeToString(flowType) << std::endl
+       << "\tNumber of Equations:    " << neq << std::endl
        << "\tUse Parameters on Mesh: " << use_params_on_mesh << std::endl;
 }
 
@@ -153,13 +114,11 @@ Tsunami::Boussinesq::constructDirichletEvaluators(
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);
    int index = 0;
-   if (haveFlowEq) {
-     dirichletNames[index++] = "eta";
-     dirichletNames[index++] = "ualpha";
-     dirichletNames[index++] = "valpha";
-     dirichletNames[index++] = "E1";
-     dirichletNames[index++] = "E2";
-   }
+   dirichletNames[index++] = "eta";
+   dirichletNames[index++] = "ualpha";
+   dirichletNames[index++] = "valpha";
+   dirichletNames[index++] = "E1";
+   dirichletNames[index++] = "E2";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
@@ -199,18 +158,16 @@ Tsunami::Boussinesq::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
      Teuchos::rcp(new Teuchos::Array<std::string>);
    Teuchos::Array<Teuchos::Array<int> > offsets;
    int idx = 0;
-   if (haveFlowEq) {
-     nbcNames.push_back("eta");
-     offsets.push_back(Teuchos::Array<int>(1,idx++));
-     nbcNames.push_back("ualpha");
-     offsets.push_back(Teuchos::Array<int>(1,idx++));
-     nbcNames.push_back("valpha");
-     offsets.push_back(Teuchos::Array<int>(1,idx++));
-     nbcNames.push_back("E1");
-     offsets.push_back(Teuchos::Array<int>(1,idx++));
-     nbcNames.push_back("E2");
-     offsets.push_back(Teuchos::Array<int>(1,idx++));
-   }
+   nbcNames.push_back("eta");
+   offsets.push_back(Teuchos::Array<int>(1,idx++));
+   nbcNames.push_back("ualpha");
+   offsets.push_back(Teuchos::Array<int>(1,idx++));
+   nbcNames.push_back("valpha");
+   offsets.push_back(Teuchos::Array<int>(1,idx++));
+   nbcNames.push_back("E1");
+   offsets.push_back(Teuchos::Array<int>(1,idx++));
+   nbcNames.push_back("E2");
+   offsets.push_back(Teuchos::Array<int>(1,idx++));
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
