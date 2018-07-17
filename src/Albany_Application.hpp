@@ -523,6 +523,13 @@ public:
     return this_time;
   }
 #endif // ALBANY_LCM
+  
+  void setScaling(const Teuchos::RCP<Teuchos::ParameterList> &params);
+
+  bool isQCADProblem(const Teuchos::RCP<Teuchos::ParameterList> &params) const; 
+ 
+  bool isLCMProblem(const Teuchos::RCP<Teuchos::ParameterList> &params) const;  
+
 
 #if defined(ALBANY_LCM)
   // Needed for coupled Schwarz
@@ -604,12 +611,6 @@ public:
 
   bool
   getSchwarzAlternating() const {return is_schwarz_alternating_;}
-
-  void setScaling(const Teuchos::RCP<Teuchos::ParameterList> &params);
-
-  bool isQCADProblem(const Teuchos::RCP<Teuchos::ParameterList> &params) const; 
- 
-  bool isLCMProblem(const Teuchos::RCP<Teuchos::ParameterList> &params) const;  
 
 private:
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> apps_;
