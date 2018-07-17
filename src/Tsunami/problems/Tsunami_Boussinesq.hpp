@@ -84,18 +84,14 @@ namespace Tsunami {
 
     int numDim;
     
-    double mu, rho; //viscosity and density
+    double h; //water depth
   
-    bool haveFlow;     //! have flow variables (momentum+continuity)
-
-    bool haveFlowEq;     //! have flow equations (momentum+continuity)
-
     bool haveSource;   //! have source term in heat equation
 
     /// Boolean marking whether SDBCs are used 
     bool use_sdbcs_;
  
-    bool use_params_on_mesh; //boolean to indicate whether to use parameters (viscosity, density) on mesh 
+    bool use_params_on_mesh; //boolean to indicate whether to use parameters (water depth) on mesh 
     
     int neq; 
 
@@ -115,6 +111,7 @@ namespace Tsunami {
 #include "PHAL_DOFVecGradInterpolation.hpp"
 
 #include "Tsunami_BoussinesqResid.hpp"
+#include "Tsunami_BoussinesqParameters.hpp"
 
 
 template <typename EvalT>
@@ -142,6 +139,10 @@ Tsunami::Boussinesq::constructEvaluators(
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
+  
+  //The following, when set to true, will load parameters (water depth) only once at the beginning
+  //of the simulation to save time/computation 
+  const bool enableMemoizer = this->params->get<bool>("Use MDField Memoization", true);
   
   Intrepid2::DefaultCubatureFactory cubFactory;
   RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
@@ -209,6 +210,20 @@ Tsunami::Boussinesq::constructEvaluators(
 
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+  
+   //Declare water depth as nodal field 
+   Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDataToElemNode;
+   {
+     std::string stateName("water_depth");
+     std::string fieldName = "water_depth";
+     RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+     p->set<std::string>("Field Name", fieldName);
+     ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+   // Intepolate water depth from nodes to QPs
+   ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("water_depth");
+   fm0.template registerEvaluator<EvalT> (ev);
 
    { // Specialized DofVecGrad Interpolation for this problem
     
@@ -239,6 +254,21 @@ Tsunami::Boussinesq::constructEvaluators(
      ev = rcp(new PHAL::DOFVecGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
    }
+  
+  { //Parameters
+    RCP<ParameterList> p = rcp(new ParameterList("Parameters"));
+    //Input
+    p->set<std::string>("Water Depth In QP Name", "water_depth");
+    p->set<double>("Water Depth", h); 
+    p->set<bool>("Use Parameters on Mesh", use_params_on_mesh); 
+    p->set<bool>("Enable Memoizer", enableMemoizer);
+
+    //Output
+    p->set<std::string>("Water Depth QP Name", "Water Depth Field");
+
+    ev = rcp(new Tsunami::BoussinesqParameters<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   { // Boussinesq Resid
     RCP<ParameterList> p = rcp(new ParameterList("Boussinesq Resid"));
@@ -255,10 +285,10 @@ Tsunami::Boussinesq::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_vecgradient);
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set< RCP<DataLayout> >("Node QP Gradient Data Layout", dl->node_qp_gradient);
-    //IKT FIXME: add udot term 
+    p->set<std::string>("Water Depth QP Name", "Water Depth Field");
+    //
     //IKT, FIXME?  add body force evaluator
     //p->set<std::string>("Body Force Name", "Body Force");
-    //p->set<std::string>("Fluid Viscosity QP Name", "Viscosity Field");
  
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 

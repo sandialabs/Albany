@@ -4,14 +4,15 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef TSUNAMI_BOUSSINESQRESID_HPP
-#define TSUNAMI_BOUSSINESQRESID_HPP
+#ifndef TSUNAMI_BOUSSINESQPARAMETERS_HPP
+#define TSUNAMI_BOUSSINESQPARAMETERS_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace Tsunami {
 /** \brief Finite Element Interpolation Evaluator
@@ -21,41 +22,41 @@ namespace Tsunami {
 */
 
 template<typename EvalT, typename Traits>
-class BoussinesqResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+class BoussinesqParameters : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  BoussinesqResid(const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl);
+  BoussinesqParameters(const Teuchos::ParameterList& p,
+                  const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
+
 private:
  
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  // Input:
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> EtaUE; 
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> EtaUEDot; 
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim> EtaUEGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim> EtaUEDotGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> force;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> waterDepthQP;
-
+  // Input:  
+  PHX::MDField<const ScalarT,Cell,QuadPoint>    waterdepthQPin;
+  
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
+  PHX::MDField<ScalarT,Cell,QuadPoint>          waterdepthQP;
 
-  unsigned int numQPs, numDims, numNodes, vecDim;
+  unsigned int numQPs, numDims;
+
+  double h;
  
-  Teuchos::RCP<Teuchos::FancyOStream> out;  
+  bool use_params_on_mesh;
+
+  bool enable_memoizer;  
+
+  PHAL::MDFieldMemoizer<Traits> memoizer;
 };
 }
 

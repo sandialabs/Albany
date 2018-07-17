@@ -24,23 +24,16 @@ Boussinesq( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_),
   use_sdbcs_(false), 
   use_params_on_mesh(false), 
-  mu(1.0), 
-  rho(1.0),
+  h(1.0), 
   neq(5) 
 {
 
   if (params->isSublist("Tsunami Parameters")) {
-    mu = params->sublist("Tsunami Parameters").get<double>("Viscosity",1.0);
-    if (mu <= 0) {
+    h = params->sublist("Tsunami Parameters").get<double>("Water Depth",1.0);
+    if (h <= 0) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                              "Invalid value of Viscosity in Tsunami Problem = "
-                               << mu <<"!  Viscosity must be >0.");
-    }
-    rho = params->sublist("Tsunami Parameters").get<double>("Density",1.0);
-    if (rho <= 0) {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                              "Invalid value of Density in Tsunami Problem = "
-                               << rho <<"!  Density must be >0.");
+                              "Invalid value of Water Depth in Tsunami Problem = "
+                               << h <<"!  Wader depth must be >0.");
     }
     use_params_on_mesh = params->sublist("Tsunami Parameters").get<bool>("Use Parameters on Mesh", false);
   }
@@ -175,6 +168,7 @@ Tsunami::Boussinesq::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
 
    // Note that sidesets are only supported for two and 3D currently
    //
+   //IKT, FIXME: the following needs to be changed for Tsunami problem! 
    if(numDim == 2)
     condNames[0] = "(dudx, dudy)";
    else

@@ -28,6 +28,7 @@ BoussinesqResid(const Teuchos::ParameterList& p,
   EtaUEDotGrad      (p.get<std::string>             ("EtaUE Dot Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   out                (Teuchos::VerboseObjectBase::getDefaultOStream()),
+  waterDepthQP        (p.get<std::string> ("Water Depth QP Name"), dl->qp_scalar), 
   Residual   (p.get<std::string>                   ("Residual Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") ) 
 {
@@ -38,6 +39,7 @@ BoussinesqResid(const Teuchos::ParameterList& p,
   this->addDependentField(EtaUEDot);
   this->addDependentField(EtaUEGrad);
   this->addDependentField(EtaUEDotGrad);
+  this->addDependentField(waterDepthQP);
 
   this->addEvaluatedField(Residual);
 
@@ -68,6 +70,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(EtaUEDot,fm);
   this->utils.setFieldData(EtaUEGrad,fm);
   this->utils.setFieldData(EtaUEDotGrad,fm);
+  this->utils.setFieldData(waterDepthQP,fm);
   this->utils.setFieldData(Residual,fm);
 }
 
@@ -82,7 +85,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int i=0; i<vecDim; i++) 
           Residual(cell,node,i) = 0.0; 
 
-  //IKT, FIXME: fill in!
+  //IKT, FIXME, Zhiheng and Xiaoshu: fill in correctly!
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
       for (int i=0; i<vecDim; i++) {
