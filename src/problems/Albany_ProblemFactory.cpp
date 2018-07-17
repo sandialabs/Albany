@@ -89,6 +89,7 @@
 
 #ifdef ALBANY_TSUNAMI
 #include "Tsunami/problems/Tsunami_NavierStokes.hpp"
+#include "Tsunami/problems/Tsunami_Boussinesq.hpp"
 #endif
 
 Albany::ProblemFactory::ProblemFactory(
@@ -397,6 +398,9 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Tsunami Navier Stokes 3D" ) {
     strategy = rcp(new Tsunami::NavierStokes(problemParams, paramLib, 3));
+  }
+  else if (method == "Tsunami Boussinesq 2D" ) {
+    strategy = rcp(new Tsunami::Boussinesq(problemParams, paramLib, 2));
   }
 #endif
   else if (method == "Peridigm Code Coupling" ) {

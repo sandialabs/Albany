@@ -8,6 +8,7 @@
 
   SET(SOURCES
        problems/Tsunami_NavierStokes.cpp
+       problems/Tsunami_Boussinesq.cpp
        evaluators/Tsunami_NavierStokesContravarientMetricTensor.cpp
        evaluators/Tsunami_NavierStokesBodyForce.cpp
        evaluators/Tsunami_NavierStokesRm.cpp
@@ -15,10 +16,12 @@
        evaluators/Tsunami_NavierStokesMomentumResid.cpp
        evaluators/Tsunami_NavierStokesTau.cpp
        evaluators/Tsunami_NavierStokesParameters.cpp
+       evaluators/Tsunami_BoussinesqResid.cpp
    )
 
   SET(HEADERS
        problems/Tsunami_NavierStokes.hpp
+       problems/Tsunami_Boussinesq.hpp
        evaluators/Tsunami_NavierStokesContravarientMetricTensor.hpp
        evaluators/Tsunami_NavierStokesContravarientMetricTensor_Def.hpp
        evaluators/Tsunami_NavierStokesBodyForce.hpp
@@ -33,6 +36,8 @@
        evaluators/Tsunami_NavierStokesTau_Def.hpp
        evaluators/Tsunami_NavierStokesParameters.hpp
        evaluators/Tsunami_NavierStokesParameters_Def.hpp
+       evaluators/Tsunami_BoussinesqResid.hpp
+       evaluators/Tsunami_BoussinesqResid_Def.hpp
   )
 
 
