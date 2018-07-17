@@ -25,6 +25,8 @@ BoussinesqResid(const Teuchos::ParameterList& p,
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   EtaUEGrad      (p.get<std::string>                   ("EtaUE Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+  EtaUEDotGrad      (p.get<std::string>             ("EtaUE Dot Gradient QP Variable Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   out                (Teuchos::VerboseObjectBase::getDefaultOStream()),
   Residual   (p.get<std::string>                   ("Residual Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") ) 
@@ -35,6 +37,7 @@ BoussinesqResid(const Teuchos::ParameterList& p,
   this->addDependentField(EtaUE);
   this->addDependentField(EtaUEDot);
   this->addDependentField(EtaUEGrad);
+  this->addDependentField(EtaUEDotGrad);
 
   this->addEvaluatedField(Residual);
 
@@ -64,6 +67,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(EtaUE,fm);
   this->utils.setFieldData(EtaUEDot,fm);
   this->utils.setFieldData(EtaUEGrad,fm);
+  this->utils.setFieldData(EtaUEDotGrad,fm);
   this->utils.setFieldData(Residual,fm);
 }
 

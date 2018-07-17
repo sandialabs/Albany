@@ -46,6 +46,7 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> EtaUE; 
   PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> EtaUEDot; 
   PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim> EtaUEGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim> EtaUEDotGrad;
   PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> force;
 
   // Output:

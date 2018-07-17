@@ -225,6 +225,21 @@ Tsunami::Boussinesq::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
+   { // Specialized DofVecDotGrad Interpolation for this problem
+    
+     RCP<ParameterList> p = rcp(new ParameterList("DOFVecDotGrad Interpolation "+dof_names_dot[0]));
+     // Input
+     p->set<string>("Variable Name", dof_names_dot[0]);
+     p->set<string>("Gradient BF Name", "Grad BF");
+     p->set<int>("Offset of First DOF", offset);
+     
+     // Output (assumes same Name as input)
+     p->set<string>("Gradient Variable Name", dof_names_dot[0]+" Gradient");
+     
+     ev = rcp(new PHAL::DOFVecGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+
   { // Boussinesq Resid
     RCP<ParameterList> p = rcp(new ParameterList("Boussinesq Resid"));
 
@@ -233,6 +248,7 @@ Tsunami::Boussinesq::constructEvaluators(
     p->set<std::string>("Weighted Gradient BF Name", Albany::weighted_grad_bf_name);
     p->set<std::string>("EtaUE QP Variable Name", "EtaUE");
     p->set<std::string>("EtaUE Gradient QP Variable Name", "EtaUE Gradient");
+    p->set<std::string>("EtaUE Dot Gradient QP Variable Name", "EtaUE_dot Gradient");
     p->set<std::string>("EtaUE Dot QP Variable Name", "EtaUE_dot");
     
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
