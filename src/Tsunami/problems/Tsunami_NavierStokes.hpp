@@ -83,29 +83,7 @@ namespace Tsunami {
 
   protected:
 
-    //! Enumerated type describing how a variable appears
-    enum NS_VAR_TYPE {
-      NS_VAR_TYPE_NONE,      //! Variable does not appear
-      NS_VAR_TYPE_CONSTANT,  //! Variable is a constant
-      NS_VAR_TYPE_DOF        //! Variable is a degree-of-freedom
-    };
-
-    void getVariableType(Teuchos::ParameterList& paramList,
-       const std::string& defaultType,
-       NS_VAR_TYPE& variableType,
-       bool& haveVariable,
-       bool& haveEquation);
-    std::string variableTypeToString(const NS_VAR_TYPE variableType);
-
-  protected:
-
     int numDim;        //! number of spatial dimensions
-
-    NS_VAR_TYPE flowType; //! type of flow variables
-
-    bool haveFlow;     //! have flow variables (momentum+continuity)
-
-    bool haveFlowEq;     //! have flow equations (momentum+continuity)
 
     bool haveSource;   //! have source term in heat equation
     bool havePSPG;     //! have pressure stabilization
@@ -202,53 +180,49 @@ Tsunami::NavierStokes::constructEvaluators(
 
   // Define Field Names
 
-  if (haveFlowEq) {
-    Teuchos::ArrayRCP<std::string> dof_names(1);
-    Teuchos::ArrayRCP<std::string> dof_names_dot(1);
-    Teuchos::ArrayRCP<std::string> resid_names(1);
-    dof_names[0] = "Velocity";
-    dof_names_dot[0] = dof_names[0]+"_dot";
-    resid_names[0] = "Momentum Residual";
-    fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
+  Teuchos::ArrayRCP<std::string> dof_names(1);
+  Teuchos::ArrayRCP<std::string> dof_names_dot(1);
+  Teuchos::ArrayRCP<std::string> resid_names(1);
 
-    fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], offset));
+  //Velocity/momentum field names
+  dof_names[0] = "Velocity";
+  dof_names_dot[0] = dof_names[0]+"_dot";
+  resid_names[0] = "Momentum Residual";
+  fm0.template registerEvaluator<EvalT>
+     (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
 
-    fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0], offset));
+  fm0.template registerEvaluator<EvalT>
+     (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], offset));
 
-    fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0], offset));
+  fm0.template registerEvaluator<EvalT>
+     (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0], offset));
 
-    fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructScatterResidualEvaluator(true, resid_names,offset, "Scatter Momentum"));
-    offset += numDim;
-  }
+  fm0.template registerEvaluator<EvalT>
+     (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0], offset));
 
-  if (haveFlowEq) {
-     Teuchos::ArrayRCP<std::string> dof_names(1);
-     Teuchos::ArrayRCP<std::string> dof_names_dot(1);
-     Teuchos::ArrayRCP<std::string> resid_names(1);
-     dof_names[0] = "Pressure";
-     dof_names_dot[0] = dof_names[0]+"_dot";
-     resid_names[0] = "Continuity Residual";
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot, offset));
+  fm0.template registerEvaluator<EvalT>
+     (evalUtils.constructScatterResidualEvaluator(true, resid_names,offset, "Scatter Momentum"));
+  offset += numDim;
 
-    fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
+  //Pressure/continuity field names 
+  dof_names[0] = "Pressure";
+  dof_names_dot[0] = dof_names[0]+"_dot";
+  resid_names[0] = "Continuity Residual";
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot, offset));
 
-    fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
-    fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
 
-    fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructScatterResidualEvaluator(false, resid_names,offset, "Scatter Continuity"));
-    offset ++;
-  }
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructScatterResidualEvaluator(false, resid_names,offset, "Scatter Continuity"));
+  offset ++;
 
 
   fm0.template registerEvaluator<EvalT>
@@ -306,8 +280,8 @@ Tsunami::NavierStokes::constructEvaluators(
   }
 
 
-
-  if (haveFlowEq) { // Body Force
+  // Body Force
+  {
     RCP<ParameterList> p = rcp(new ParameterList("Body Force"));
 
     //Input
@@ -324,13 +298,9 @@ Tsunami::NavierStokes::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (haveFlowEq) { // Parameters
+  { //Parameters
     RCP<ParameterList> p = rcp(new ParameterList("Parameters"));
-
     //Input
-
-    Teuchos::ParameterList& paramList = params->sublist("Parameters");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
     p->set<std::string>("Fluid Viscosity In QP Name", "viscosity");
     p->set<std::string>("Fluid Density In QP Name", "density");
     p->set<double>("Viscosity", mu); 
@@ -346,7 +316,7 @@ Tsunami::NavierStokes::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (haveFlowEq) { // Rm
+  { // Rm
     RCP<ParameterList> p = rcp(new ParameterList("Rm"));
 
     //Input
@@ -369,7 +339,7 @@ Tsunami::NavierStokes::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (haveFlowEq && havePSPG) { // Tau PSPG/SUPG
+  if (havePSPG) { // Tau PSPG/SUPG
     RCP<ParameterList> p = rcp(new ParameterList("Tau"));
 
     //Input
@@ -394,7 +364,7 @@ Tsunami::NavierStokes::constructEvaluators(
   }
   
 
-  if (haveFlowEq) { // Momentum Resid
+  { // Momentum Resid
     RCP<ParameterList> p = rcp(new ParameterList("Momentum Resid"));
 
     //Input
@@ -422,7 +392,7 @@ Tsunami::NavierStokes::constructEvaluators(
   }
 
 
-  if (haveFlowEq) { // Continuity Resid
+  { // Continuity Resid
     RCP<ParameterList> p = rcp(new ParameterList("Continuity Resid"));
 
     //Input
@@ -445,13 +415,11 @@ Tsunami::NavierStokes::constructEvaluators(
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     Teuchos::RCP<const PHX::FieldTag> ret_tag;
-    if (haveFlowEq) {
-      PHX::Tag<typename EvalT::ScalarT> mom_tag("Scatter Momentum", dl->dummy);
-      fm0.requireField<EvalT>(mom_tag);
-      PHX::Tag<typename EvalT::ScalarT> con_tag("Scatter Continuity", dl->dummy);
-      fm0.requireField<EvalT>(con_tag);
-      ret_tag = mom_tag.clone();
-    }
+    PHX::Tag<typename EvalT::ScalarT> mom_tag("Scatter Momentum", dl->dummy);
+    fm0.requireField<EvalT>(mom_tag);
+    PHX::Tag<typename EvalT::ScalarT> con_tag("Scatter Continuity", dl->dummy);
+    fm0.requireField<EvalT>(con_tag);
+    ret_tag = mom_tag.clone();
     return ret_tag;
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {

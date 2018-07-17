@@ -27,9 +27,6 @@ NavierStokesParameters(const Teuchos::ParameterList& p,
   enable_memoizer    (p.get<bool>("Enable Memoizer"))
 {
 
-  Teuchos::ParameterList* bf_list =
-    p.get<Teuchos::ParameterList*>("Parameter List");
-
   this->addDependentField(viscosityQPin);
   this->addDependentField(densityQPin);
   this->addEvaluatedField(viscosityQP);
