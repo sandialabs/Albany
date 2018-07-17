@@ -703,9 +703,12 @@ x->Print(std::cout);
     app->computeGlobalJacobianT(alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(),*xT,
                                sacado_param_vec, f_outT.get(), *W_out_crsT);
 
-    if (f_out != Teuchos::null)
+    if (f_out != Teuchos::null) {
       Petra::TpetraVector_To_EpetraVector(f_outT, *f_out, comm);
-//    Petra::TpetraVector_To_EpetraVector(xT, const_cast<Epetra_Vector &>(x), comm);
+      f_already_computed=true;
+    }
+
+    Petra::TpetraVector_To_EpetraVector(xT, *Teuchos::rcp_const_cast<Epetra_Vector>(x), comm);
     Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(W_out_crsT, *W_out_crs, comm);
     W_out_crs->FillComplete(true);
 
@@ -724,7 +727,6 @@ x->Print(std::cout);
     EpetraExt::BlockMapToMatrixMarketFile("colmap.mm", Mass->ColMap());
     Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
 #endif
-    f_already_computed=true;
 
     if(test_var != 0) {
       //std::cout << "The current rhs length is: " << f_out->MyLength() << std::endl;
@@ -739,14 +741,15 @@ x->Print(std::cout);
                                    sacado_param_vec, f_outT.get(), *Extra_W_crsT);
 //    app->computeGlobalJacobian(alpha, beta, omega, curr_time, x_dot.get(), x_dotdot.get(), *x,
 //                               sacado_param_vec, f_out.get(), *Extra_W_crs);
-    if (f_out != Teuchos::null)
+    if (f_out != Teuchos::null) {
       Petra::TpetraVector_To_EpetraVector(f_outT, *f_out, comm);
+      f_already_computed=true;
+    }
+
+    Petra::TpetraVector_To_EpetraVector(xT, *Teuchos::rcp_const_cast<Epetra_Vector>(x), comm);
     Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(Extra_W_crsT, *Extra_W_crs, comm);
     Extra_W_crs->FillComplete(true);
 
-
-
-    f_already_computed=true;
 
   if(test_var != 0) {
     //std::cout << "The current rhs length is: " << f_out->MyLength() << std::endl;
@@ -840,6 +843,8 @@ f_out->Print(std::cout);
 
       if (f_out != Teuchos::null)
         Petra::TpetraVector_To_EpetraVector(f_outT, *f_out, comm);
+
+      Petra::TpetraVector_To_EpetraVector(xT, *Teuchos::rcp_const_cast<Epetra_Vector>(x), comm);
 
      // app->computeGlobalResidual(curr_time, x_dot.get(), x_dotdot.get(), *x,
      //                             sacado_param_vec, *f_out);

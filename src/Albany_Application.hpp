@@ -423,10 +423,6 @@ public:
   template <typename EvalT>
   void loadWorksetBucketInfo(PHAL::Workset &workset, const int &ws);
 
-#if defined(ALBANY_EPETRA)
-  void loadBasicWorksetInfo(PHAL::Workset &workset, double current_time);
-#endif
-
   void loadBasicWorksetInfoT(PHAL::Workset &workset, double current_time);
 
   void loadBasicWorksetInfoSDBCsT(PHAL::Workset &workset,
