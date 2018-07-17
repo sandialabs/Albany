@@ -2257,10 +2257,17 @@ void Albany::Application::computeGlobalJacobianT(
 {
   // Create non-owning RCPs to Tpetra objects
   // to be passed to the implementation
-  this->computeGlobalJacobianImplT(
-      alpha, beta, omega, current_time, Teuchos::rcp(xdotT, false),
-      Teuchos::rcp(xdotdotT, false), Teuchos::rcpFromRef(xT), p,
-      Teuchos::rcp(fT, false), Teuchos::rcpFromRef(jacT), dt);
+  if (problem->useSDBCs() == false) {
+    this->computeGlobalJacobianImplT(
+        alpha, beta, omega, current_time, Teuchos::rcp(xdotT, false),
+        Teuchos::rcp(xdotdotT, false), Teuchos::rcpFromRef(xT), p,
+        Teuchos::rcp(fT, false), Teuchos::rcpFromRef(jacT), dt);
+  } else {
+    this->computeGlobalJacobianSDBCsImplT(
+        alpha, beta, omega, current_time, Teuchos::rcp(xdotT, false),
+        Teuchos::rcp(xdotdotT, false), Teuchos::rcpFromRef(xT), p,
+        Teuchos::rcp(fT, false), Teuchos::rcpFromRef(jacT), dt);
+  }
   // Debut output
   if (writeToMatrixMarketJac !=
       0) {          // If requesting writing to MatrixMarket of Jacobian...
@@ -3266,24 +3273,6 @@ void Albany::Application::determinePiroSolver(
     piroParams->set("Solver Type", piroSolverToken);
   }
 }
-
-#if defined(ALBANY_EPETRA)
-void Albany::Application::loadBasicWorksetInfo(PHAL::Workset &workset,
-                                               double current_time) {
-  workset.numEqs = neq;
-  workset.x = solMgr->get_overlapped_x();
-  workset.xdot = solMgr->get_overlapped_xdot();
-  workset.xdotdot = solMgr->get_overlapped_xdotdot();
-  workset.current_time = current_time;
-  workset.distParamLib = distParamLib;
-  workset.disc = disc;
-  // workset.delta_time = delta_time;
-  if (workset.xdot != Teuchos::null)
-    workset.transientTerms = true;
-  if (workset.xdotdot != Teuchos::null)
-    workset.accelerationTerms = true;
-}
-#endif
 
 void Albany::Application::loadBasicWorksetInfoT(PHAL::Workset &workset,
                                                 double current_time) {
