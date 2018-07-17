@@ -43,17 +43,12 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:  
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> coordVec;
   PHX::MDField<const ScalarT,Cell,QuadPoint>          viscosityQPin;
   PHX::MDField<const ScalarT,Cell,QuadPoint>          densityQPin;
   
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint>          viscosityQP;
   PHX::MDField<ScalarT,Cell,QuadPoint>          densityQP;
-
-   //Radom field types
-  enum BFTYPE {NONE, POLY};
-  BFTYPE bf_type;
 
   unsigned int numQPs, numDims;
 

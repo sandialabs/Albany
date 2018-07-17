@@ -12,10 +12,6 @@ ANONYMOUS:
       DBC on NS cylinder for DOF ux: 0.00000000000000000e+00
       DBC on NS cylinder for DOF uy: 0.00000000000000000e+00
       DBC on NS sides for DOF uy: 0.00000000000000000e+00
-    Parameters: 
-      Number: 0
-      Parameter 0: DBC on NS inlet for DOF ux
-      Parameter 1: DBC on NS cylinder for DOF ux
     Response Functions: 
       Number: 1
       Response 0: Solution Max Value
