@@ -22,6 +22,8 @@
 #include "Intrepid2_HGRAD_HEX_C2_FEM.hpp"
 #include "Intrepid2_HGRAD_TET_COMP12_FEM.hpp"
 
+#include "Kokkos_DynRankView.hpp"
+
 /*********************** Helper Functions*********************************/
 
 Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >

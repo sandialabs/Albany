@@ -21,10 +21,14 @@
 
 #include <string>
 #include <vector>
+#include <map>
+
 #include "Intrepid2_Polylib.hpp"
+#include "Phalanx_DataLayout.hpp"
 #include "Shards_Array.hpp"
 #include "Shards_CellTopologyData.h"
 
+#include "Albany_ScalarOrdinalTypes.hpp"
 #include "Adapt_NodalDataBase.hpp"
 
 //! Container for minimal mesh specification info needed to

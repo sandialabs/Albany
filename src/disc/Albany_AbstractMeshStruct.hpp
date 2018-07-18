@@ -9,12 +9,16 @@
 #define ALBANY_ABSTRACTMESHSTRUCT_HPP
 
 #include "Teuchos_ParameterList.hpp"
+#include "Teuchos_ArrayRCP.hpp"
+#include "Teuchos_RCP.hpp"
+
+#include "Albany_CommTypes.hpp"
+
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_AbstractFieldContainer.hpp"
 
 #include "Shards_CellTopology.hpp"
 #include "Albany_Layouts.hpp"
-#include "Albany_ProblemUtils.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Adapt_NodalDataBase.hpp"

@@ -9,6 +9,8 @@
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
+#include "Albany_ProblemUtils.hpp"
+
 namespace PHAL {
 
 //**********************************************************************

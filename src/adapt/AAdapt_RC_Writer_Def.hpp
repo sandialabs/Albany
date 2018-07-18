@@ -6,6 +6,8 @@
 
 #include "AAdapt_RC_Manager.hpp"
 
+#include "Phalanx_DataLayout_MDALayout.hpp"
+
 namespace AAdapt {
 namespace rc {
 

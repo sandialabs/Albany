@@ -7,26 +7,19 @@
 #ifndef ALBANY_PROBLEMUTILS_HPP
 #define ALBANY_PROBLEMUTILS_HPP
 
-#include <vector>
-#include <string>
-
 #include "Teuchos_RCP.hpp"
-#include "Teuchos_VerboseObject.hpp"
+#include "Phalanx_KokkosDeviceTypes.hpp"
 
-#include "Albany_Layouts.hpp"
-
+#include "Albany_ScalarOrdinalTypes.hpp"
 #include "Intrepid2_Basis.hpp"
-#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
-
-#include "Kokkos_DynRankView.hpp"
-
 
 namespace Albany {
 
   //! Helper Factory function to construct Intrepid2 Basis from Shards CellTopologyData
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
   getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet=false);
-}
 
-#endif 
+} // namespace Albany
+
+#endif  // ALBANY_PROBLEMUTILS_HPP

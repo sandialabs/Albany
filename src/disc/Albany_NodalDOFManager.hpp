@@ -4,13 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
 #ifndef ALBANY_NODALDOFMANAGER_HPP
 #define ALBANY_NODALDOFMANAGER_HPP
-#include "Albany_DataTypes.hpp"
+
+#include "Albany_ScalarOrdinalTypes.hpp"
 
 namespace Albany {
-
 
 class NodalDOFManager {
   public:

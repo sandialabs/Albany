@@ -11,11 +11,11 @@
 
 #include <vector>
 #include <string>
+#include <map>
 
-#include "Teuchos_RCP.hpp"
 #include "Teuchos_ArrayRCP.hpp"
 
-#include "Albany_DataTypes.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
 
 namespace AAdapt { namespace rc { class Manager; } }
 

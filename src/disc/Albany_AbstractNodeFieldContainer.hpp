@@ -9,10 +9,9 @@
 #ifndef ALBANY_ABSTRACTNODEFIELDCONT_HPP
 #define ALBANY_ABSTRACTNODEFIELDCONT_HPP
 
+#include "Albany_TpetraTypes.hpp"
 #include "Teuchos_RCP.hpp"
-#include "Albany_DataTypes.hpp"
-
-
+#include <map>
 
 namespace Albany {
 
@@ -35,6 +34,6 @@ class AbstractNodeFieldContainer {
 
 typedef std::map<std::string, Teuchos::RCP<Albany::AbstractNodeFieldContainer> > NodeFieldContainer;
 
-}
+} // namespace Albany
 
 #endif // ALBANY_ABSTRACTNODEFIELDCONT_HPP
