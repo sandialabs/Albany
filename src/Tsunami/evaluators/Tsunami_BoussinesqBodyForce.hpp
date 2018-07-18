@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef TSUNAMI_BOUSSINESQRESID_HPP
-#define TSUNAMI_BOUSSINESQRESID_HPP
+#ifndef TSUNAMI_BOUSSINESQBODYFORCE_HPP
+#define TSUNAMI_BOUSSINESQBODYFORCE_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -21,14 +21,14 @@ namespace Tsunami {
 */
 
 template<typename EvalT, typename Traits>
-class BoussinesqResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+class BoussinesqBodyForce : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  BoussinesqResid(const Teuchos::ParameterList& p,
+  BoussinesqBodyForce(const Teuchos::ParameterList& p,
                       const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -42,26 +42,24 @@ private:
 
   // Input:
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> EtaUE; 
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> EtaUEDot; 
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim> EtaUEGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim> EtaUEDotGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> force;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> coordVec;
   PHX::MDField<const ScalarT,Cell,QuadPoint> waterDepthQP;
   PHX::MDField<const ScalarT,Cell,QuadPoint> betaQP;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> zalphaQP;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
 
-  unsigned int numQPs, numDims, numNodes, vecDim;
+  unsigned int numQPs, numDims, vecDim;
 
   double muSqr, epsilon; 
 
   double C1, C2, C3; 
  
-  Teuchos::RCP<Teuchos::FancyOStream> out;  
+  Teuchos::RCP<Teuchos::FancyOStream> out; 
+ 
+   //Body force types
+  enum BFTYPE {NONE};
+  BFTYPE bf_type;
 };
 }
 

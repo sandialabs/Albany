@@ -20,6 +20,7 @@ BoussinesqParameters(const Teuchos::ParameterList& p,
   waterdepthQPin     (p.get<std::string>("Water Depth In QP Name"),dl->qp_scalar),
   zalphaQPin         (p.get<std::string>("z_alpha In QP Name"),dl->qp_scalar),
   waterdepthQP       (p.get<std::string>("Water Depth QP Name"),dl->qp_scalar),
+  zalphaQP           (p.get<std::string>("z_alpha QP Name"),dl->qp_scalar),
   betaQP             (p.get<std::string>("Beta QP Name"),dl->qp_scalar),
   h                  (p.get<double>("Water Depth")), 
   zAlpha             (p.get<double>("Z_alpha")), 
@@ -31,6 +32,7 @@ BoussinesqParameters(const Teuchos::ParameterList& p,
   this->addDependentField(zalphaQPin);
 
   this->addEvaluatedField(waterdepthQP);
+  this->addEvaluatedField(zalphaQP);
   this->addEvaluatedField(betaQP);
   
   if (enable_memoizer)   
@@ -53,6 +55,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(waterdepthQPin,fm);
   this->utils.setFieldData(zalphaQPin,fm);
   this->utils.setFieldData(waterdepthQP,fm);
+  this->utils.setFieldData(zalphaQP,fm);
   this->utils.setFieldData(betaQP,fm);
 }
 
@@ -68,6 +71,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         waterdepthQP(cell,qp) = ScalarT(h); 
+        zalphaQP(cell,qp) = ScalarT(zAlpha); 
         betaQP(cell,qp) = ScalarT(zAlpha)/ScalarT(h); 
       }
     }
@@ -79,8 +83,13 @@ evaluateFields(typename Traits::EvalData workset)
           TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
            "Invalid value of water depth field!  Water depth must be >0.\n");
         }
+        if (zalphaQPin(cell,qp) > 0) {
+          TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+           "Invalid value of z_alpha field!  z_alpha must be <=0.\n");
+        }
         else {
           waterdepthQP(cell,qp) = waterdepthQPin(cell,qp); 
+          zalphaQP(cell,qp) = zalphaQPin(cell,qp); 
           betaQP(cell,qp) = zalphaQPin(cell,qp)/waterdepthQPin(cell,qp); 
         }
       }

@@ -30,6 +30,7 @@ BoussinesqResid(const Teuchos::ParameterList& p,
   out                (Teuchos::VerboseObjectBase::getDefaultOStream()),
   waterDepthQP        (p.get<std::string> ("Water Depth QP Name"), dl->qp_scalar), 
   betaQP              (p.get<std::string> ("Beta QP Name"), dl->qp_scalar), 
+  zalphaQP              (p.get<std::string> ("z_alpha QP Name"), dl->qp_scalar), 
   muSqr                  (p.get<double>("Mu Squared")), 
   epsilon                (p.get<double>("Epsilon")), 
   Residual   (p.get<std::string>                   ("Residual Name"),
@@ -44,6 +45,7 @@ BoussinesqResid(const Teuchos::ParameterList& p,
   this->addDependentField(EtaUEDotGrad);
   this->addDependentField(waterDepthQP);
   this->addDependentField(betaQP);
+  this->addDependentField(zalphaQP);
 
   this->addEvaluatedField(Residual);
 
@@ -76,6 +78,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(EtaUEDotGrad,fm);
   this->utils.setFieldData(waterDepthQP,fm);
   this->utils.setFieldData(betaQP,fm);
+  this->utils.setFieldData(zalphaQP,fm);
   this->utils.setFieldData(Residual,fm);
 }
 
@@ -91,14 +94,30 @@ evaluateFields(typename Traits::EvalData workset)
           Residual(cell,node,i) = 0.0; 
 
   //IKT, FIXME, Zhiheng and Xiaoshu: fill in correctly!
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int node=0; node < numNodes; ++node) {
-      for (int i=0; i<vecDim; i++) {
-        for (int qp=0; qp < numQPs; ++qp) {
-          Residual(cell,node,i) += EtaUEDot(cell,qp,i)*wBF(cell,node,qp);
+  if (vecDim == 3) {
+    //1D case
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int node=0; node < numNodes; ++node) {
+        for (int i=0; i<vecDim; i++) {
+          for (int qp=0; qp < numQPs; ++qp) {
+            Residual(cell,node,i) += EtaUEDot(cell,qp,i)*wBF(cell,node,qp);
+          }
         }
       }
     }
+  }
+  else if (vecDim == 5) {
+    //2D case
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int node=0; node < numNodes; ++node) {
+        for (int i=0; i<vecDim; i++) {
+          for (int qp=0; qp < numQPs; ++qp) {
+            Residual(cell,node,i) += EtaUEDot(cell,qp,i)*wBF(cell,node,qp);
+          }
+        }
+      }
+    }
+    
   }
 }
 

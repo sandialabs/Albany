@@ -48,6 +48,7 @@ private:
   
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint>          waterdepthQP;
+  PHX::MDField<ScalarT,Cell,QuadPoint>          zalphaQP;
   PHX::MDField<ScalarT,Cell,QuadPoint>          betaQP;
 
   unsigned int numQPs, numDims;

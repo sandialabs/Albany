@@ -2,33 +2,32 @@
 ---
 ANONYMOUS:
   Problem: 
-    Name: Tsunami Boussinesq 2D
+    Name: Tsunami Boussinesq 1D
     Solution Method: Transient Tempus
     Phalanx Graph Visualization Detail: 0
     Initial Condition: 
       Function: Constant
-      Function Data: [0.0, 0.0, 0.0, 0.0, 0.0]
+      Function Data: [0.0, 0.0, 0.0]
     Response Functions: 
       Number: 1
       Response 0: Solution Average
     Dirichlet BCs:
-      DBC on NS NodeSet0 for DOF ualpha: 0.00000000000000000e+00
+      DBC on NS NodeSet1 for DOF eta: 0.00000000000000000e+00
+      DBC on NS NodeSet1 for DOF ualpha: 0.00000000000000000e+00
+      DBC on NS NodeSet1 for DOF E1: 0.00000000000000000e+00
+    #IKT, these are dimensional!
     Tsunami Parameters:
-      Water Depth: 10.0
-      Z_alpha: 0.0 
-      Wave Amplitude a: 1.0 
-      Typical Water Depth h0: 1.0 
-      Typical Wave Number k: 1.0 
+      Water Depth: 1.0
+      Z_alpha: -0.531
   Discretization: 
-    Method: STK2D
-    1D Elements: 10
-    2D Elements: 10
-    1D Scale: 1.0
-    2D Scale: 1.0 
-    Exodus Output File Name: output.exo
+    Method: STK1D
+    1D Elements: 1000
+    #IKT, this is dimensional!  Units are m 
+    1D Scale: 500.0
+    Exodus Output File Name: 1d_solitary_wave.exo
     Workset Size: -1 
   Regression Results: 
-    Number of Comparisons: 1
+    Number of Comparisons: 0
     Test Values: [0.00000000000000000e+00]
     Relative Tolerance: 1.00000000000000006e-01
     Absolute Tolerance: 1.00000000000000006e-01

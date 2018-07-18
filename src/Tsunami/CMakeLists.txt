@@ -17,6 +17,7 @@
        evaluators/Tsunami_NavierStokesTau.cpp
        evaluators/Tsunami_NavierStokesParameters.cpp
        evaluators/Tsunami_BoussinesqResid.cpp
+       evaluators/Tsunami_BoussinesqBodyForce.cpp
        evaluators/Tsunami_BoussinesqParameters.cpp
    )
 
@@ -41,6 +42,8 @@
        evaluators/Tsunami_BoussinesqParameters_Def.hpp
        evaluators/Tsunami_BoussinesqResid.hpp
        evaluators/Tsunami_BoussinesqResid_Def.hpp
+       evaluators/Tsunami_BoussinesqBodyForce.hpp
+       evaluators/Tsunami_BoussinesqBodyForce_Def.hpp
   )
 
 

@@ -399,6 +399,9 @@ Albany::ProblemFactory::create()
   else if (method == "Tsunami Navier Stokes 3D" ) {
     strategy = rcp(new Tsunami::NavierStokes(problemParams, paramLib, 3));
   }
+  else if (method == "Tsunami Boussinesq 1D" ) {
+    strategy = rcp(new Tsunami::Boussinesq(problemParams, paramLib, 1));
+  }
   else if (method == "Tsunami Boussinesq 2D" ) {
     strategy = rcp(new Tsunami::Boussinesq(problemParams, paramLib, 2));
   }

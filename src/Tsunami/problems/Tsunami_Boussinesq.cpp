@@ -28,9 +28,14 @@ Boussinesq( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   zAlpha(1.0), 
   a(1.0),
   h0(1.0), 
-  k(1.0),  
-  neq(5) 
+  k(1.0) 
 {
+
+  if (numDim == 1) neq = 3; 
+  else if (numDim == 2) neq = 5;
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                              "Boussinesq Tsunami Problem is only valid in 1D and 2D!"); 
 
   if (params->isSublist("Tsunami Parameters")) {
     h = params->sublist("Tsunami Parameters").get<double>("Water Depth", 1.0);
@@ -40,13 +45,12 @@ Boussinesq( const Teuchos::RCP<Teuchos::ParameterList>& params_,
                                << h <<"!  'Water Depth' must be >0.");
     }
     zAlpha = params->sublist("Tsunami Parameters").get<double>("Z_alpha", 1.0);
-    if (zAlpha < 0) {
+    if (zAlpha > 0) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                               "Invalid value of 'Z_alpha' in Tsunami Problem = "
-                               << h <<"!  'Z_alpha' must be >=0.");
+                               << h <<"!  'Z_alpha' must be <=0.");
     }
     a = params->sublist("Tsunami Parameters").get<double>("Wave Amplitude a", 1.0);
-    //IKT, FIXME, question: can a = 0? 
     if (a <= 0) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                               "Invalid value of 'Wave Amplitude a' in Tsunami Problem = "
@@ -58,17 +62,16 @@ Boussinesq( const Teuchos::RCP<Teuchos::ParameterList>& params_,
                               "Invalid value of 'Typical Water Depth h0' in Tsunami Problem = "
                                << h <<"!  'Typical Water Depth h0' must be >0.");
     }
-    //IKT, FIXME, question: can k = 0? 
     k = params->sublist("Tsunami Parameters").get<double>("Typical Wave Number k", 1.0);
     if (k <= 0) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                               "Invalid value of 'Typical Wave Number k' in Tsunami Problem = "
                                << h <<"!  'Typical Wave Number k' must be >0.");
     }
-    muSqr = k*k*h0*h0; 
-    epsilon = a/h0; 
     use_params_on_mesh = params->sublist("Tsunami Parameters").get<bool>("Use Parameters on Mesh", false);
   }
+  muSqr = k*k*h0*h0; 
+  epsilon = a/h0; 
 
   haveSource = true;
 
@@ -152,9 +155,11 @@ Tsunami::Boussinesq::constructDirichletEvaluators(
    int index = 0;
    dirichletNames[index++] = "eta";
    dirichletNames[index++] = "ualpha";
-   dirichletNames[index++] = "valpha";
+   if (numDim > 1) 
+     dirichletNames[index++] = "valpha";
    dirichletNames[index++] = "E1";
-   dirichletNames[index++] = "E2";
+   if (numDim > 1) 
+     dirichletNames[index++] = "E2";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
@@ -198,12 +203,16 @@ Tsunami::Boussinesq::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
    offsets.push_back(Teuchos::Array<int>(1,idx++));
    nbcNames.push_back("ualpha");
    offsets.push_back(Teuchos::Array<int>(1,idx++));
-   nbcNames.push_back("valpha");
-   offsets.push_back(Teuchos::Array<int>(1,idx++));
+   if (numDim > 1) {
+     nbcNames.push_back("valpha");
+     offsets.push_back(Teuchos::Array<int>(1,idx++));
+   }
    nbcNames.push_back("E1");
    offsets.push_back(Teuchos::Array<int>(1,idx++));
-   nbcNames.push_back("E2");
-   offsets.push_back(Teuchos::Array<int>(1,idx++));
+   if (numDim > 1) {
+     nbcNames.push_back("E2");
+     offsets.push_back(Teuchos::Array<int>(1,idx++));
+   }
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both

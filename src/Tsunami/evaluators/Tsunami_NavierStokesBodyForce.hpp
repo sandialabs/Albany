@@ -48,7 +48,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
 
-   //Radom field types
+   //Body force types
   enum BFTYPE {NONE, POLY};
   BFTYPE bf_type;
 

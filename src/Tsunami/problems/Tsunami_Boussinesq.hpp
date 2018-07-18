@@ -287,6 +287,7 @@ Tsunami::Boussinesq::constructEvaluators(
 
     //Output
     p->set<std::string>("Water Depth QP Name", "Water Depth Field");
+    p->set<std::string>("z_alpha QP Name", "z_alpha Field");
     p->set<std::string>("Beta QP Name", "Beta Field");
 
     ev = rcp(new Tsunami::BoussinesqParameters<EvalT,AlbanyTraits>(*p,dl));
@@ -309,6 +310,7 @@ Tsunami::Boussinesq::constructEvaluators(
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set< RCP<DataLayout> >("Node QP Gradient Data Layout", dl->node_qp_gradient);
     p->set<std::string>("Water Depth QP Name", "Water Depth Field");
+    p->set<std::string>("z_alpha QP Name", "z_alpha Field");
     p->set<std::string>("Beta QP Name", "Beta Field");
     p->set<double>("Mu Squared", muSqr);
     p->set<double>("Epsilon", epsilon);  
