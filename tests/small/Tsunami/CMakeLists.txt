@@ -26,6 +26,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vortex_with_fields.exo.4.2
                ${CMAKE_CURRENT_BINARY_DIR}/vortex_with_fields.exo.4.2 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vortex_with_fields.exo.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/vortex_with_fields.exo.4.3 COPYONLY)
+if (ALBANY_TEMPUS)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_boussinesq2D_tempus_implT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_boussinesq2DT_tempus_implT.yaml COPYONLY)
+endif()
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
