@@ -13,6 +13,8 @@
 #endif
 #include <MiniTensor.h>
 #include "Intrepid2_DefaultCubatureFactory.hpp"
+#include "Phalanx_DataLayout_MDALayout.hpp"
+
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "Albany_StateManager.hpp"

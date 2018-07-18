@@ -134,8 +134,8 @@ evaluateFields(typename Traits::EvalData workset)
         (this->val)(cell,node) = v;
       }
 
-      if (workset.VpT != Teuchos::null) {
-        const Tpetra_MultiVector& VpT = *(workset.VpT);
+      if (workset.Vp != Teuchos::null) {
+        const Tpetra_MultiVector& VpT = *(ConverterT::getConstTpetraMultiVector(workset.Vp));
         const std::size_t num_cols = VpT.getNumVectors();
 
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp = workset.local_Vp[cell];
@@ -268,8 +268,8 @@ evaluateFields(typename Traits::EvalData workset)
         (this->val)(cell,node) = v;
       }
 
-      if (workset.VpT != Teuchos::null) {
-        const Tpetra_MultiVector& VpT = *(workset.VpT);
+      if (workset.Vp != Teuchos::null) {
+        const Tpetra_MultiVector& VpT = *(ConverterT::getConstTpetraMultiVector(workset.Vp));
         const std::size_t num_cols = VpT.getNumVectors();
 
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp = workset.local_Vp[cell];

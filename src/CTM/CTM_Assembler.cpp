@@ -93,14 +93,14 @@ void Assembler::load_ws_bucket(PHAL::Workset& workset, const int ws) {
 void Assembler::load_ws_basic(
     PHAL::Workset& workset, const double t_new, const double t_old) {
   workset.numEqs = neq;
-  workset.xT = sol_info->ghost->x;
-  workset.xdotT = sol_info->ghost->x_dot;
-  workset.xdotdotT = Teuchos::null;
+  workset.x = Albany::createConstThyraVector(sol_info->ghost->x);
+  workset.xdot = Albany::createConstThyraVector(sol_info->ghost->x_dot);
+  workset.xdotdot = Teuchos::null;
   workset.current_time = t_new;
   workset.previous_time = t_old;
   workset.distParamLib = Teuchos::null;
   workset.disc = disc;
-  workset.transientTerms = Teuchos::nonnull(workset.xdotT);
+  workset.transientTerms = Teuchos::nonnull(workset.xdot);
   workset.accelerationTerms = false;
 }
 
@@ -232,7 +232,7 @@ void Assembler::assemble_system(
   // evaluate the dirichlet fields if needed
   if (Teuchos::nonnull(dfm)) {
     PHAL::Workset workset;
-    workset.xT = owned_x;
+    workset.x = Albany::createConstThyraVector(owned_x);
     workset.transientTerms = Teuchos::nonnull(owned_x_dot);
     workset.accelerationTerms = false;
     workset.fT = owned_f;

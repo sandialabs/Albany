@@ -10,6 +10,7 @@
 #include "Phalanx_TypeStrings.hpp"
 #include "Sacado.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -68,7 +69,7 @@ template<typename Traits>
 void GatherVerticallyAveragedVelocity<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
   Kokkos::deep_copy(this->averagedVel.get_view(), ScalarT(0.0));
@@ -137,7 +138,7 @@ template<typename Traits>
 void GatherVerticallyAveragedVelocity<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
   
   int neq = workset.wsElNodeEqID.dimension(2);
@@ -215,8 +216,8 @@ template<typename Traits>
 void GatherVerticallyAveragedVelocity<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
-  Teuchos::RCP<const Tpetra_MultiVector> VxT = workset.VxT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
+  Teuchos::RCP<const Tpetra_MultiVector> VxT = Albany::getConstTpetraMultiVector(workset.Vx);
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
 
@@ -290,7 +291,7 @@ template<typename Traits>
 void GatherVerticallyAveragedVelocity<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
   Kokkos::deep_copy(this->averagedVel.get_view(), ScalarT(0.0));
@@ -347,5 +348,4 @@ evaluateFields(typename Traits::EvalData workset)
   }
 }
 
-}
-
+} // namespace FELIX

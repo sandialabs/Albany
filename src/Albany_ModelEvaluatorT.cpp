@@ -12,6 +12,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Tpetra_ConfigDefs.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 // uncomment the following to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET
 
@@ -736,13 +738,15 @@ Albany::ModelEvaluatorT::evalModelImpl(
   //
   // Get the input arguments
   //
-  const Teuchos::RCP<const Tpetra_Vector> xT =
-      ConverterT::getConstTpetraVector(inArgsT.get_x());
 
-  const Teuchos::RCP<const Tpetra_Vector> x_dotT =
-      (supports_xdot && Teuchos::nonnull(inArgsT.get_x_dot())) ?
-          ConverterT::getConstTpetraVector(inArgsT.get_x_dot()) :
-          Teuchos::null;
+  // Thyra vectors
+  const Teuchos::RCP<const Thyra_Vector> x = inArgsT.get_x();
+  const Teuchos::RCP<const Thyra_Vector> x_dot =
+      (supports_xdot ? inArgsT.get_x_dot() : Teuchos::null);
+
+  // Tpetra vectors
+  const Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(x);
+  const Teuchos::RCP<const Tpetra_Vector> x_dotT = Albany::getConstTpetraVector(x_dot);
 
   // IKT, 3/30/17: the following logic is meant to support both the Thyra
   // time-integrators in Piro
@@ -763,9 +767,9 @@ Albany::ModelEvaluatorT::evalModelImpl(
     }
     // The following case is for second-order time-integrators in Tempus
     else {
-      if (Teuchos::nonnull(inArgsT.get_x_dot_dot())) {
+      if (inArgsT.supports(Thyra::ModelEvaluatorBase::IN_ARG_x_dot_dot)) {
         Teuchos::RCP<const Tpetra_Vector> x_dotdotT_temp =
-            ConverterT::getConstTpetraVector(inArgsT.get_x_dot_dot());
+            Albany::getConstTpetraVector(inArgsT.get_x_dot_dot());
         x_dotdotT = Teuchos::rcp(new Tpetra_Vector(*x_dotdotT_temp));
       } else {
         x_dotdotT = Teuchos::null;
@@ -776,6 +780,7 @@ Albany::ModelEvaluatorT::evalModelImpl(
     x_dotdotT = Teuchos::null;
     omega     = 0.0;
   }
+  const Teuchos::RCP<const Thyra_Vector> x_dotdot = Albany::createConstThyraVector(x_dotdotT);
 
   const ST alpha = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
                        inArgsT.get_alpha() :
@@ -942,21 +947,21 @@ Albany::ModelEvaluatorT::evalModelImpl(
       const Teuchos::RCP<ParamVec> p_vec =
           Teuchos::rcpFromRef(sacado_param_vec[l]);
 
-      app->computeGlobalTangentT(
+      app->computeGlobalTangent(
           0.0,
           0.0,
           0.0,
           curr_time,
           false,
-          x_dotT.get(),
-          x_dotdotT.get(),
-          *xT,
+          x,
+          x_dot,
+          x_dotdot,
           sacado_param_vec,
           p_vec.get(),
-          NULL,
-          NULL,
-          NULL,
-          NULL,
+          Teuchos::null,
+          Teuchos::null,
+          Teuchos::null,
+          Teuchos::null,
           fT_out.get(),
           NULL,
           dfdp_outT.get());
@@ -1002,11 +1007,11 @@ Albany::ModelEvaluatorT::evalModelImpl(
         dummy_derivT);
   } else {
     if (Teuchos::nonnull(fT_out) && !f_already_computed) {
-      app->computeGlobalResidualT(
+      app->computeGlobalResidual(
           curr_time,
-          x_dotT.get(),
-          x_dotdotT.get(),
-          *xT,
+          x,
+          x_dot,
+          x_dotdot,
           sacado_param_vec,
           *fT_out,
           dt);

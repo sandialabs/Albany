@@ -1822,7 +1822,7 @@ evaluateFields(typename Traits::EvalData workset)
   auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Tpetra_MultiVector> fpVT = workset.fpVT;
   bool trans = workset.transpose_dist_param_deriv;
-  int num_cols = workset.VpT->getNumVectors();
+  int num_cols = workset.Vp->domain()->dim();
 
   // Fill the local "neumann" array with cell contributions
 

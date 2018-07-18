@@ -9,6 +9,8 @@
 #include <algorithm>
 #include "PHAL_Utilities.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 Albany::FieldManagerScalarResponseFunction::
 FieldManagerScalarResponseFunction(
   const Teuchos::RCP<Albany::Application>& application_,
@@ -171,7 +173,11 @@ evaluateResponseT(const double current_time,
 
   // Set data in Workset struct
   PHAL::Workset workset;
-  application->setupBasicWorksetInfoT(workset, current_time, rcp(xdotT, false), rcp(xdotdotT, false), rcpFromRef(xT), p);
+  application->setupBasicWorksetInfo(workset, current_time,
+                                     Albany::createConstThyraVector(rcpFromRef(xT)),
+                                     Albany::createConstThyraVector(rcp(xdotT, false)),
+                                     Albany::createConstThyraVector(rcp(xdotdotT, false)),
+                                     p);
   workset.gT = Teuchos::rcp(&gT,false);
 
   // Perform fill via field manager
@@ -208,9 +214,15 @@ evaluateTangentT(const double alpha,
   
   // Set data in Workset struct
   PHAL::Workset workset;
-  application->setupTangentWorksetInfoT(workset, current_time, sum_derivs, 
-				       rcp(xdotT), rcp(xdotdotT), rcpFromRef(xT), p, 
-				       deriv_p, rcp(VxdotT), rcp(VxdotdotT), rcp(VxT), rcp(VpT));
+  application->setupTangentWorksetInfo(workset, current_time, sum_derivs, 
+               Albany::createConstThyraVector(rcpFromRef(xT)),
+				       Albany::createConstThyraVector(rcp(xdotT)),
+               Albany::createConstThyraVector(rcp(xdotdotT)),
+               p, deriv_p,
+               Albany::createConstThyraMultiVector(rcp(VxT)),
+               Albany::createConstThyraMultiVector(rcp(VxdotT)),
+               Albany::createConstThyraMultiVector(rcp(VxdotdotT)),
+               Albany::createConstThyraMultiVector(rcp(VpT)));
   workset.gT = Teuchos::rcp(gT, false);
   workset.dgdxT = Teuchos::rcp(gxT, false);
   workset.dgdpT = Teuchos::rcp(gpT, false);
@@ -242,7 +254,11 @@ evaluateGradientT(const double current_time,
 
   // Set data in Workset struct
   PHAL::Workset workset;
-  application->setupBasicWorksetInfoT(workset, current_time, rcp(xdotT, false), rcp(xdotdotT, false), rcpFromRef(xT), p);
+  application->setupBasicWorksetInfo(workset, current_time,
+                                     Albany::createConstThyraVector(rcpFromRef(xT)),
+                                     Albany::createConstThyraVector(rcp(xdotT, false)),
+                                     Albany::createConstThyraVector(rcp(xdotdotT, false)),
+                                     p);
   
   workset.gT = Teuchos::rcp(gT, false);
   
@@ -303,7 +319,11 @@ evaluateDistParamDerivT(
   // Set data in Workset struct
   PHAL::Workset workset;
 
-  application->setupBasicWorksetInfoT(workset, current_time, rcp(xdotT, false), rcp(xdotdotT, false), rcpFromRef(xT), param_array);
+  application->setupBasicWorksetInfo(workset, current_time,
+                                     Albany::createConstThyraVector(rcpFromRef(xT)),
+                                     Albany::createConstThyraVector(rcp(xdotT, false)),
+                                     Albany::createConstThyraVector(rcp(xdotdotT, false)),
+                                     param_array);
 
   // Perform fill via field manager (dg/dx)
   if(dg_dpT != NULL) {

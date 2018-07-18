@@ -12,7 +12,6 @@
 #include <list>
 #include <set>
 
-#include "Phalanx_config.hpp" // for std::vector
 #include "Albany_DataTypes.hpp"
 #if defined(ALBANY_LCM)
 #include <set>
@@ -54,29 +53,17 @@ struct Workset {
   unsigned int wsIndex;
   unsigned int numEqs;
 
-#if defined(ALBANY_EPETRA)
-  // These are solution related.
-  Teuchos::RCP<const Epetra_Vector> x;
-  Teuchos::RCP<const Epetra_Vector> xdot;
-  Teuchos::RCP<const Epetra_Vector> xdotdot;
-#endif
-  //Tpetra analogs of x and xdot
-  Teuchos::RCP<const Tpetra_Vector> xT;
-  Teuchos::RCP<const Tpetra_Vector> xdotT;
-  Teuchos::RCP<const Tpetra_Vector> xdotdotT;
+  // Solution vector (and time derivatives)
+  Teuchos::RCP<const Thyra_Vector> x;
+  Teuchos::RCP<const Thyra_Vector> xdot;
+  Teuchos::RCP<const Thyra_Vector> xdotdot;
 
   Teuchos::RCP<ParamVec> params;
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<const Epetra_MultiVector> Vx;
-  Teuchos::RCP<const Epetra_MultiVector> Vxdot;
-  Teuchos::RCP<const Epetra_MultiVector> Vxdotdot;
-  Teuchos::RCP<const Epetra_MultiVector> Vp;
-#endif
-  //Tpetra analogs of Vx, Vxdot, Vxdotdot and Vp
-  Teuchos::RCP<const Tpetra_MultiVector> VxT;
-  Teuchos::RCP<const Tpetra_MultiVector> VxdotT;
-  Teuchos::RCP<const Tpetra_MultiVector> VxdotdotT;
-  Teuchos::RCP<const Tpetra_MultiVector> VpT;
+
+  Teuchos::RCP<const Thyra_MultiVector> Vx;
+  Teuchos::RCP<const Thyra_MultiVector> Vxdot;
+  Teuchos::RCP<const Thyra_MultiVector> Vxdotdot;
+  Teuchos::RCP<const Thyra_MultiVector> Vp;
 
 #if defined(ALBANY_EPETRA)
   // These are residual related.
@@ -258,6 +245,6 @@ struct Workset {
 
 };
 
-}
+} // namespace PHAL
 
-#endif
+#endif // PHAL_WORKSET_HPP

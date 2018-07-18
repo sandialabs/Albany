@@ -17,6 +17,8 @@
 
 #include "Albany_Application.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 namespace Albany {
 
   //! Tpetra_Operator implementing the action of df/dp (transpose)
@@ -64,15 +66,15 @@ namespace Albany {
                       ST alpha = Teuchos::ScalarTraits<ST>::one(), 
                       ST beta = Teuchos::ScalarTraits<ST>::one() ) const {
       bool use_transpose = (mode == Teuchos::TRANS);
-      app->applyGlobalDistParamDerivImplT(time,
-                                     xdot,
-                                     xdotdot,
-                                     x,
-                                     *scalar_params,
-                                     param_name,
-                                     use_transpose,
-                                     Teuchos::rcpFromRef(X),
-                                     Teuchos::rcpFromRef(Y));
+      app->applyGlobalDistParamDerivImpl(time,
+                                         Albany::createConstThyraVector(x),
+                                         Albany::createConstThyraVector(xdot),
+                                         Albany::createConstThyraVector(xdotdot),
+                                         *scalar_params,
+                                         param_name,
+                                         use_transpose,
+                                         Albany::createConstThyraMultiVector(Teuchos::rcpFromRef(X)),
+                                         Teuchos::rcpFromRef(Y));
     }
 
 

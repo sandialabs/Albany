@@ -60,6 +60,8 @@
 #endif
 #endif
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 //FIXME: move static global variables to struct
 //
 //struct Global {...
@@ -224,7 +226,7 @@ void tpetraFromThyra(
       it = it_begin;
       it != it_end;
       ++it) {
-    responses.push_back(Teuchos::nonnull(*it) ? ConverterT::getConstTpetraVector(*it) : Teuchos::null);
+    responses.push_back(Albany::getConstTpetraVector(*it));
   }
 
   sensitivities.clear();
@@ -242,7 +244,7 @@ void tpetraFromThyra(
         jt_end = sens_thyra.end();
         jt != jt_end;
         ++jt) {
-        sens.push_back(Teuchos::nonnull(*jt) ? ConverterT::getConstTpetraMultiVector(*jt) : Teuchos::null);
+        sens.push_back(Albany::getConstTpetraMultiVector(*jt));
     }
     sensitivities.push_back(sens);
   }
@@ -856,7 +858,7 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
       p_init->Print(*out << "\nParameter vector " << i << ":\n");
 #else
       Albany::printTpetraVector(*out << "\nParameter vector " << i << ":\n",
-           ConverterT::getConstTpetraVector(nominal.get_p(i)));
+           Albany::getConstTpetraVector(nominal.get_p(i)));
 #endif
     }
    }

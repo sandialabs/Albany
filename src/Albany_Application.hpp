@@ -198,23 +198,27 @@ public:
 #endif
 
   void
-  computeGlobalResidualT(const double current_time, const Tpetra_Vector *xdotT,
-                         const Tpetra_Vector *xdotdotT, const Tpetra_Vector &xT,
-                         const Teuchos::Array<ParamVec> &p, Tpetra_Vector &fT,
-                         const double dt = 0.0);
+  computeGlobalResidual(const double current_time,
+                        const Teuchos::RCP<const Thyra_Vector>& x,
+                        const Teuchos::RCP<const Thyra_Vector>& x_dot,
+                        const Teuchos::RCP<const Thyra_Vector>& x_dotdot,
+                        const Teuchos::Array<ParamVec> &p, Tpetra_Vector &fT,
+                        const double dt = 0.0);
 
 private:
-  void computeGlobalResidualImplT(
-      const double current_time, const Teuchos::RCP<const Tpetra_Vector> &xdotT,
-      const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
-      const Teuchos::RCP<const Tpetra_Vector> &xT,
+  void computeGlobalResidualImpl(
+      const double current_time,
+      const Teuchos::RCP<const Thyra_Vector> x,
+      const Teuchos::RCP<const Thyra_Vector> x_dot,
+      const Teuchos::RCP<const Thyra_Vector> x_dotdot,
       const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
       const double dt = 0.0);
 
-  void computeGlobalResidualSDBCsImplT(
-      const double current_time, const Teuchos::RCP<const Tpetra_Vector> &xdotT,
-      const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
-      const Teuchos::RCP<const Tpetra_Vector> &xT,
+  void computeGlobalResidualSDBCsImpl(
+      const double current_time,
+      const Teuchos::RCP<const Thyra_Vector>& xT,
+      const Teuchos::RCP<const Thyra_Vector>& xdotT,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdotT,
       const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
       const double dt = 0.0);
 
@@ -264,27 +268,31 @@ public:
                                    const Teuchos::RCP<Epetra_Operator> &prec);
 #endif
 
-  void computeGlobalTangentT(
+  void computeGlobalTangent(
       const double alpha, const double beta, const double omega,
-      const double current_time, bool sum_derivs, const Tpetra_Vector *xdotT,
-      const Tpetra_Vector *xdotdotT, const Tpetra_Vector &xT,
-      const Teuchos::Array<ParamVec> &p, ParamVec *deriv_p,
-      const Tpetra_MultiVector *VxT, const Tpetra_MultiVector *VxdotT,
-      const Tpetra_MultiVector *VxdotdotT, const Tpetra_MultiVector *VpT,
+      const double current_time, bool sum_derivs,
+      const Teuchos::RCP<const Thyra_Vector>& xT,
+      const Teuchos::RCP<const Thyra_Vector>& xdotT,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdotT,
+      const Teuchos::Array<ParamVec> &par, ParamVec *deriv_par,
+      const Teuchos::RCP<const Thyra_MultiVector>& VxT,
+      const Teuchos::RCP<const Thyra_MultiVector>& VxdotT,
+      const Teuchos::RCP<const Thyra_MultiVector>& VxdotdotT,
+      const Teuchos::RCP<const Thyra_MultiVector>& VpT,
       Tpetra_Vector *fT, Tpetra_MultiVector *JVT, Tpetra_MultiVector *fpT);
 
 private:
-  void computeGlobalTangentImplT(
+  void computeGlobalTangentImpl(
       const double alpha, const double beta, const double omega,
       const double current_time, bool sum_derivs,
-      const Teuchos::RCP<const Tpetra_Vector> &xdotT,
-      const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
-      const Teuchos::RCP<const Tpetra_Vector> &xT,
+      const Teuchos::RCP<const Thyra_Vector>& xT,
+      const Teuchos::RCP<const Thyra_Vector>& xdotT,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdotT,
       const Teuchos::Array<ParamVec> &par, ParamVec *deriv_par,
-      const Teuchos::RCP<const Tpetra_MultiVector> &VxT,
-      const Teuchos::RCP<const Tpetra_MultiVector> &VxdotT,
-      const Teuchos::RCP<const Tpetra_MultiVector> &VxdotdotT,
-      const Teuchos::RCP<const Tpetra_MultiVector> &VpT,
+      const Teuchos::RCP<const Thyra_MultiVector>& VxT,
+      const Teuchos::RCP<const Thyra_MultiVector>& VxdotT,
+      const Teuchos::RCP<const Thyra_MultiVector>& VxdotdotT,
+      const Teuchos::RCP<const Thyra_MultiVector>& VpT,
       const Teuchos::RCP<Tpetra_Vector> &fT,
       const Teuchos::RCP<Tpetra_MultiVector> &JVT,
       const Teuchos::RCP<Tpetra_MultiVector> &fpT);
@@ -294,12 +302,16 @@ public:
   /*!
    * Set xdot to NULL for steady-state problems
    */
-  void applyGlobalDistParamDerivImplT(
-      const double current_time, const Teuchos::RCP<const Tpetra_Vector> &xdotT,
-      const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
-      const Teuchos::RCP<const Tpetra_Vector> &xT,
-      const Teuchos::Array<ParamVec> &p, const std::string &dist_param_name,
-      const bool trans, const Teuchos::RCP<const Tpetra_MultiVector> &VT,
+
+  void applyGlobalDistParamDerivImpl(
+      const double current_time,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec> &p,
+      const std::string &dist_param_name,
+      const bool trans,
+      const Teuchos::RCP<const Thyra_MultiVector>& V,
       const Teuchos::RCP<Tpetra_MultiVector> &fpVT);
 
   //! Evaluate response functions
@@ -447,39 +459,23 @@ public:
   void setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT = Teuchos::null);
   void setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<Tpetra_CrsMatrix> jacT = Teuchos::null);
 
-#if defined(ALBANY_EPETRA)
   void setupBasicWorksetInfo(PHAL::Workset &workset, double current_time,
-                             const Epetra_Vector *xdot,
-                             const Epetra_Vector *xdotdot,
-                             const Epetra_Vector *x,
+                             const Teuchos::RCP<const Thyra_Vector>& x,
+                             const Teuchos::RCP<const Thyra_Vector>& xdot,
+                             const Teuchos::RCP<const Thyra_Vector>& xdotdot,
                              const Teuchos::Array<ParamVec> &p);
-#endif
 
-  void setupBasicWorksetInfoT(PHAL::Workset &workset, double current_time,
-                              Teuchos::RCP<const Tpetra_Vector> xdot,
-                              Teuchos::RCP<const Tpetra_Vector> xdotdot,
-                              Teuchos::RCP<const Tpetra_Vector> x,
-                              const Teuchos::Array<ParamVec> &p);
-
-#if defined(ALBANY_EPETRA)
   void setupTangentWorksetInfo(
       PHAL::Workset &workset, double current_time, bool sum_derivs,
-      const Epetra_Vector *xdot, const Epetra_Vector *xdotdot,
-      const Epetra_Vector *x, const Teuchos::Array<ParamVec> &p,
-      ParamVec *deriv_p, const Epetra_MultiVector *Vxdot,
-      const Epetra_MultiVector *Vxdotdot, const Epetra_MultiVector *Vx,
-      const Epetra_MultiVector *Vp);
-#endif
-
-  void setupTangentWorksetInfoT(
-      PHAL::Workset &workset, double current_time, bool sum_derivs,
-      Teuchos::RCP<const Tpetra_Vector> xdotT,
-      Teuchos::RCP<const Tpetra_Vector> xdotdotT,
-      Teuchos::RCP<const Tpetra_Vector> xT, const Teuchos::Array<ParamVec> &p,
-      ParamVec *deriv_p, Teuchos::RCP<const Tpetra_MultiVector> VxdotT,
-      Teuchos::RCP<const Tpetra_MultiVector> VxdotdotT,
-      Teuchos::RCP<const Tpetra_MultiVector> VxT,
-      Teuchos::RCP<const Tpetra_MultiVector> VpT);
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec> &p,
+      ParamVec *deriv_p,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vx,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vp);
 
   void postRegSetup(std::string eval);
 

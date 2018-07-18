@@ -1133,10 +1133,14 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
         Teuchos::RCP<Tpetra_MultiVector> dfdpT_poisson;
         dfdpT_poisson = Petra::EpetraMultiVector_To_TpetraMultiVector(*dfdp_poisson, commT);
 	// "Poisson-owned" param vector, so only poisson part of dfdp vector can be nonzero
-	poissonApp->computeGlobalTangentT(0.0, 0.0, 0.0, curr_time, false, xTdot_poisson.get(), NULL, *xT_poisson,
-				  poisson_sacado_param_vec, p_vec.get(),
-				  NULL, NULL, NULL, NULL, fT_poisson.get(), NULL,
-				  dfdpT_poisson.get());
+	      poissonApp->computeGlobalTangent(0.0, 0.0, 0.0, curr_time, false,
+                                         Albany::createConstThyraVector(xT_poisson),
+                                         Albany::createConstThyraVector(xTdot_poisson),
+                                         Teuchos::null,
+                                 			   poisson_sacado_param_vec, p_vec.get(),
+				                                 Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
+                                         fT_poisson.get(), NULL,
+				                                 dfdpT_poisson.get());
   if (Teuchos::nonnull(fT_poisson))
     Petra::TpetraVector_To_EpetraVector(fT_poisson, *f_poisson, commE);
   if (Teuchos::nonnull(dfdpT_poisson))
@@ -1155,10 +1159,14 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
     if (Teuchos::nonnull(xTdot_schrodinger))
       xTdot_schrodinger_k = xTdot_schrodinger->getVector(k);
     dfdpT_schrodinger_k = Petra::EpetraMultiVector_To_TpetraMultiVector(*dfdp_schrodinger[k], commT);
-	  schrodingerApp->computeGlobalTangentT(0.0, 0.0, 0.0, curr_time, false, xTdot_schrodinger_k.get(), NULL, *xT_schrodinger->getVector(k),
-					       schrodinger_sacado_param_vec, p_vec.get(),
-					       NULL, NULL, NULL, NULL, fT_schrodinger_k.get(), NULL,
-					       dfdpT_schrodinger_k.get());
+	  schrodingerApp->computeGlobalTangent(0.0, 0.0, 0.0, curr_time, false,
+                                         Albany::createConstThyraVector(xT_schrodinger->getVector(k)),
+                                         Albany::createConstThyraVector(xTdot_schrodinger_k),
+                                         Teuchos::null,
+					                               schrodinger_sacado_param_vec, p_vec.get(),
+                                         Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
+                                         fT_schrodinger_k.get(), NULL,
+					                               dfdpT_schrodinger_k.get());
     if (Teuchos::nonnull(fT_schrodinger_k))
       Petra::TpetraVector_To_EpetraVector(fT_schrodinger_k, *(f_schrodinger_vec[k]), commE);
     if (Teuchos::nonnull(dfdpT_schrodinger_k))
@@ -1184,7 +1192,7 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
       Epetra_Vector M_vec(*disc_map);  //temp storage for mass matrix times vec -- maybe don't allocate this on the stack??
 
       if(!f_poisson_already_computed) {
-	poissonApp->computeGlobalResidualT(curr_time, xTdot_poisson.get(), NULL, *xT_poisson,
+	poissonApp->computeGlobalResidual(curr_time, xTdot_poisson.get(), NULL, *xT_poisson,
 					  poisson_sacado_param_vec, *fT_poisson);
       Petra::TpetraVector_To_EpetraVector(fT_poisson, *f_poisson, commE);
 

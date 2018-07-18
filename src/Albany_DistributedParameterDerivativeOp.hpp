@@ -15,6 +15,8 @@
 
 #include "Albany_Application.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 namespace Albany {
 
   //! Epetra_Operator implementing the action of df/dp (transpose)
@@ -86,7 +88,13 @@ namespace Albany {
 
       const Teuchos::RCP<Tpetra_MultiVector> YT = Petra::EpetraMultiVector_To_TpetraMultiVector(Y, app->getComm());
 
-      app->applyGlobalDistParamDerivImplT(time, xdotT, xdotdotT, xT, *scalar_params, param_name, use_transpose, XT, YT);
+      app->applyGlobalDistParamDerivImpl(time,
+                                         Albany::createConstThyraVector(xT),
+                                         Albany::createConstThyraVector(xdotT),
+                                         Albany::createConstThyraVector(xdotdotT),
+                                         *scalar_params, param_name, use_transpose,
+                                         Albany::createConstThyraMultiVector(XT),
+                                         YT);
 
       Petra::TpetraMultiVector_To_EpetraMultiVector(YT, Y, comm);
 

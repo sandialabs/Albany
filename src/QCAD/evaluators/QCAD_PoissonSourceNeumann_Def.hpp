@@ -609,7 +609,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   Teuchos::RCP<Tpetra_MultiVector> fpVT = workset.fpVT;
   bool trans = workset.transpose_dist_param_deriv;
-  int num_cols = workset.VpT->getNumVectors();
+  int num_cols = workset.Vp->domain()->dim();
 
   if (trans) {
     int neq = workset.numEqs;

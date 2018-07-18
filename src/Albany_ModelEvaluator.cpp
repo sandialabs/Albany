@@ -14,6 +14,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Petra_Converters.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 //IK, 7/15/14: adding option to write the mass matrix to matrix market file, which is needed
 //for some applications.  Uncomment the following line to turn on.
 //#define WRITE_MASS_MATRIX_TO_MM_FILE
@@ -781,14 +783,13 @@ x->Print(std::cout);
                           sacado_param_vec[i][p_indexes[j]].baseValue);
       }
 
-      app->computeGlobalTangentT(0.0, 0.0, 0.0, curr_time, false, x_dotT.get(), x_dotdotT.get(), *xT,
+      app->computeGlobalTangent(0.0, 0.0, 0.0, curr_time, false,
+                                Albany::createConstThyraVector(xT),
+                                Albany::createConstThyraVector(x_dotT),
+                                Albany::createConstThyraVector(x_dotdotT),
                                 sacado_param_vec, p_vec.get(),
-                                NULL, NULL, NULL, NULL, f_outT.get(), NULL,
-                                dfdp_outT.get());
- //     app->computeGlobalTangent(0.0, 0.0, 0.0, curr_time, false, x_dot.get(), x_dotdot.get(), *x,
- //                               sacado_param_vec, p_vec.get(),
- //                               NULL, NULL, NULL, NULL, f_out.get(), NULL,
- //                               dfdp_out.get());
+                                Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
+                                f_outT.get(), NULL, dfdp_outT.get());
       if (Teuchos::nonnull(f_out))
         Petra::TpetraVector_To_EpetraVector(f_outT, *f_out, comm);
       if (Teuchos::nonnull(dfdp_out))
@@ -838,16 +839,17 @@ f_out->Print(std::cout);
   }
   else {
     if (f_out != Teuchos::null && !f_already_computed) {
-      app->computeGlobalResidualT(curr_time, x_dotT.get(),
-          x_dotdotT.get(), *xT, sacado_param_vec, *f_outT);
+      app->computeGlobalResidual(curr_time,
+                                 Albany::createConstThyraVector(xT),
+                                 Albany::createConstThyraVector(x_dotT),
+                                 Albany::createConstThyraVector(x_dotdotT),
+                                 sacado_param_vec, *f_outT);
 
       if (f_out != Teuchos::null)
         Petra::TpetraVector_To_EpetraVector(f_outT, *f_out, comm);
 
       Petra::TpetraVector_To_EpetraVector(xT, *Teuchos::rcp_const_cast<Epetra_Vector>(x), comm);
 
-     // app->computeGlobalResidual(curr_time, x_dot.get(), x_dotdot.get(), *x,
-     //                             sacado_param_vec, *f_out);
 if(test_var != 0){
 std::cout << "The current rhs length is: " << f_out->MyLength() << std::endl;
 f_out->Print(std::cout);

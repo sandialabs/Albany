@@ -1090,8 +1090,11 @@ evalModelImpl(
     else {
       if (Teuchos::nonnull(fTs_out[m]) && fs_already_computed[m] == false) {
 
-        apps_[m]->computeGlobalResidualT(
-            curr_time, x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
+        Teuchos::RCP<const Thyra_Vector> x = xT->getVectorBlock(m);
+        Teuchos::RCP<const Thyra_Vector> x_dot = supports_xdot_ ? x_dotT->getVectorBlock(m) : Teuchos::null;
+        Teuchos::RCP<const Thyra_Vector> x_dotdot = Teuchos::null;
+        apps_[m]->computeGlobalResidual(
+            curr_time, x, x_dot, x_dotdot,
             sacado_param_vecs_[m], *fTs_out[m]);
 
       }

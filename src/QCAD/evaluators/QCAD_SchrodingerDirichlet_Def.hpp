@@ -60,7 +60,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
   
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
-  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(dirichletWorkset.x);
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   
@@ -91,7 +91,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
 
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
-  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(dirichletWorkset.x);
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
   Teuchos::RCP<Tpetra_CrsMatrix> jacT = dirichletWorkset.JacT;
 
@@ -151,8 +151,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
   Teuchos::RCP<Tpetra_MultiVector> fpT = dirichletWorkset.fpT;
   Teuchos::RCP<Tpetra_MultiVector> JVT = dirichletWorkset.JVT;
-  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
-  Teuchos::RCP<const Tpetra_MultiVector> VxT = dirichletWorkset.VxT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(dirichletWorkset.x);
+  Teuchos::RCP<const Tpetra_MultiVector> VxT = Albany::getConstTpetraMultiVector(dirichletWorkset.Vx);
 
   Teuchos::ArrayRCP<const ST> VxT_constView; 
   Teuchos::ArrayRCP<ST> fT_nonconstView;                                         
@@ -175,15 +175,15 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
       for (int i=0; i<dirichletWorkset.num_cols_x; i++) {
         JVT_nonconstView = JVT->getDataNonConst(i); 
         VxT_constView = VxT->getData(i); 
-	JVT_nonconstView[lunk] = j_coeff*VxT_constView[lunk];
-       }
-     }
+        JVT_nonconstView[lunk] = j_coeff*VxT_constView[lunk];
+      }
+    }
     
     if (fpT != Teuchos::null) {
       Teuchos::ArrayRCP<ST> fpT_nonconstView; 
       for (int i=0; i<dirichletWorkset.num_cols_p; i++) {
         fpT_nonconstView = fpT->getDataNonConst(i); 
-     	fpT_nonconstView[lunk] = -this->value.dx(dirichletWorkset.param_offset+i);
+        fpT_nonconstView[lunk] = -this->value.dx(dirichletWorkset.param_offset+i);
       }
     }
   }
@@ -220,7 +220,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
       int lunk = nsNodes[inode][this->offset];
   
       for (int i=0; i<num_cols; i++){
-	//(*Vp)[i][lunk] = 0.0;
+        //(*Vp)[i][lunk] = 0.0;
         VpT_nonconstView = VpT->getDataNonConst(i); 
         VpT_nonconstView[lunk] = 0.0; 
       }
@@ -232,8 +232,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
       int lunk = nsNodes[inode][this->offset];
 
       for (int i=0; i<num_cols; i++) {
-  	//(*fpV)[i][lunk] = 0.0;
-  	fpVT_nonconstView = fpVT->getDataNonConst(i); 
+        //(*fpV)[i][lunk] = 0.0;
+        fpVT_nonconstView = fpVT->getDataNonConst(i); 
         fpVT_nonconstView[lunk] = 0.0; 
       }
     }
@@ -264,5 +264,4 @@ SchrodingerDirichletAggregator(Teuchos::ParameterList& p)
 }
 
 // **********************************************************************
-}
-
+} // namespace QCAD

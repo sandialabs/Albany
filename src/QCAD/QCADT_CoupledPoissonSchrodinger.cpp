@@ -1256,7 +1256,11 @@ evalModelImpl(
       //temp storage for mass matrix times vec -- maybe don't allocate this on the stack??
 
       if(!f_poisson_already_computed) {
-	poissonApp->computeGlobalResidualT(curr_time, xdot_poisson.get(), NULL, *x_poisson, 
+	      poissonApp->computeGlobalResidual(
+            curr_time,
+            Albany::createConstTpetraVector(x_poisson), 
+            Albany::createConstTpetraVector(xdot_poisson),
+            NULL,
 					  poisson_sacado_param_vec, *f_poisson);
       }
       

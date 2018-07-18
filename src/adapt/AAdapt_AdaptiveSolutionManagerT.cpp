@@ -33,6 +33,8 @@
 
 #include "Albany_ModelEvaluatorT.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
     const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     const Teuchos::RCP<const Tpetra_Vector>& initial_guessT,
@@ -331,6 +333,7 @@ void AAdapt::AdaptiveSolutionManagerT::resizeMeshDataArrays(
   exporterT = Teuchos::rcp(new Tpetra_Export(overlapMapT, mapT));
 
   overlapped_soln = Teuchos::rcp(new Tpetra_MultiVector(overlapMapT, num_time_deriv + 1, false));
+  overlapped_soln_thyra = Albany::createThyraMultiVector(overlapped_soln);
 
   overlapped_fT = Teuchos::rcp(new Tpetra_Vector(overlapMapT));
   overlapped_jacT = Teuchos::rcp(new Tpetra_CrsMatrix(overlapJacGraphT));
@@ -409,6 +412,82 @@ AAdapt::AdaptiveSolutionManagerT::scatterXT(
 
 }
 
+void
+AAdapt::AdaptiveSolutionManagerT::scatterX(
+       const Teuchos::RCP<const Thyra_Vector> x,
+       const Teuchos::RCP<const Thyra_Vector> x_dot,
+       const Teuchos::RCP<const Thyra_Vector> x_dotdot)
+{
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(x);
+  overlapped_soln->getVectorNonConst(0)->doImport(*xT, *importerT, Tpetra::INSERT);
+
+  if (!x_dot.is_null()){
+    TEUCHOS_TEST_FOR_EXCEPTION(overlapped_soln->getNumVectors() < 2, std::logic_error,
+         "AdaptiveSolutionManager error: x_dotT defined but only a single solution vector is available");
+    Teuchos::RCP<const Tpetra_Vector> x_dotT = Albany::getConstTpetraVector(x_dot);
+    overlapped_soln->getVectorNonConst(1)->doImport(*x_dotT, *importerT, Tpetra::INSERT);
+  }
+
+  if (!x_dotdot.is_null()){
+    TEUCHOS_TEST_FOR_EXCEPTION(overlapped_soln->getNumVectors() < 3, std::logic_error,
+        "AdaptiveSolutionManager error: x_dotdotT defined but xDotDot isn't defined in the multivector");
+    Teuchos::RCP<const Tpetra_Vector> x_dotdotT = Albany::getConstTpetraVector(x_dotdot);
+    overlapped_soln->getVectorNonConst(2)->doImport(*x_dotdotT, *importerT, Tpetra::INSERT);
+
+	  /*OG uncomment this to enable Laplace calculations in Aeras::Hydrostatic
+	 if(overlapped_soln->getNumVectors() == 3)
+	    overlapped_soln->getVectorNonConst(2)->doImport(*x_dotdotT, *importerT, Tpetra::INSERT);
+	    */
+  }
+}
+
+void
+AAdapt::AdaptiveSolutionManagerT::
+combine (const Teuchos::RCP<const Thyra_MultiVector> src,
+         const Teuchos::RCP<Thyra_MultiVector>       dst,
+         const Albany::CombineMode                   CM)
+{
+  auto srcT = ConverterT::getConstTpetraMultiVector(src);
+  auto dstT = ConverterT::getTpetraMultiVector(dst);
+  
+  switch (CM) {
+    case Albany::CombineMode::ADD:
+      dstT->doExport(*srcT,*get_exporterT(),Tpetra::ADD);
+      break;
+    case Albany::CombineMode::INSERT:
+      dstT->doExport(*srcT,*get_exporterT(),Tpetra::INSERT);
+      break;
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,"Error! Unexpected Albany::CombineMode. "
+                                                          "This is an unexpected error. "
+                                                          "Please, contact Albany developers.\n");
+      break;
+  }
+}
+
+void
+AAdapt::AdaptiveSolutionManagerT::
+scatter (const Teuchos::RCP<const Thyra_MultiVector> src,
+         const Teuchos::RCP<Thyra_MultiVector>       dst,
+         const Albany::CombineMode                   CM)
+{
+  auto srcT = ConverterT::getConstTpetraMultiVector(src);
+  auto dstT = ConverterT::getTpetraMultiVector(dst);
+
+  switch (CM) {
+    case Albany::CombineMode::ADD:
+      dstT->doImport(*srcT,*get_importerT(),Tpetra::ADD);
+      break;
+    case Albany::CombineMode::INSERT:
+      dstT->doImport(*srcT,*get_importerT(),Tpetra::INSERT);
+      break;
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,"Error! Unexpected Albany::CombineMode. "
+                                                          "This is an unexpected error. "
+                                                          "Please, contact Albany developers.\n");
+      break;
+  }
+}
 
 Teuchos::RCP<Thyra::MultiVectorBase<double> >
 AAdapt::AdaptiveSolutionManagerT::
