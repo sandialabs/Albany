@@ -227,7 +227,6 @@ SET(HEADERS ${HEADERS}
 SET(SOURCES ${SOURCES}
   disc/Adapt_NodalDataBase.cpp
   disc/Adapt_NodalDataVector.cpp
-  disc/Albany_AbstractMeshStruct.cpp
   disc/Albany_DiscretizationFactory.cpp
   )
 SET(HEADERS ${HEADERS}

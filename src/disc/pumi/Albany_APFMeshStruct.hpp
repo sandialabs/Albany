@@ -104,12 +104,6 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
 
     bool useCompositeTet(){ return compositeTet; }
 
-    const Albany::DynamicDataArray<Albany::CellSpecs>::type& getMeshDynamicData() const
-        { return meshDynamicData; }
-
-    //! Process PUMI mesh for element block specific info
-    void setupMeshBlkInfo();
-
     //! returns true iff the field was found
     bool findOrCreateNodalField(char const* name, int value_type);
     virtual apf::Field* createNodalField(char const* name, int valueType) = 0;
@@ -167,9 +161,6 @@ protected:
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
-
-    // Information that changes when the mesh adapts
-    Albany::DynamicDataArray<Albany::CellSpecs>::type meshDynamicData;
 
     apf::Mesh2* mesh;
     gmi_model* model;

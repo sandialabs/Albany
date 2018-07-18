@@ -484,16 +484,6 @@ Albany::APFMeshStruct::loadSolutionFieldHistory(int step)
   TEUCHOS_TEST_FOR_EXCEPT(step < 0 || step >= solutionFieldHistoryDepth);
 }
 
-void Albany::APFMeshStruct::setupMeshBlkInfo()
-{
-   int nBlocks = this->meshSpecs.size();
-   for(int i = 0; i < nBlocks; i++){
-      const Albany::MeshSpecsStruct &ms = *meshSpecs[i];
-      meshDynamicData[i] = Teuchos::rcp(new Albany::CellSpecs(ms.ctd, ms.worksetSize, ms.cubatureDegree,
-                      numDim, neq, 0, useCompositeTet()));
-   }
-}
-
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::APFMeshStruct::getValidDiscretizationParameters() const
 {
