@@ -24,17 +24,49 @@ Boussinesq( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_),
   use_sdbcs_(false), 
   use_params_on_mesh(false), 
-  h(1.0), 
+  h(1.0),
+  zAlpha(1.0), 
+  a(1.0),
+  h0(1.0), 
+  k(1.0),  
   neq(5) 
 {
 
   if (params->isSublist("Tsunami Parameters")) {
-    h = params->sublist("Tsunami Parameters").get<double>("Water Depth",1.0);
+    h = params->sublist("Tsunami Parameters").get<double>("Water Depth", 1.0);
     if (h <= 0) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                              "Invalid value of Water Depth in Tsunami Problem = "
-                               << h <<"!  Wader depth must be >0.");
+                              "Invalid value of 'Water Depth' in Tsunami Problem = "
+                               << h <<"!  'Water Depth' must be >0.");
     }
+    zAlpha = params->sublist("Tsunami Parameters").get<double>("Z_alpha", 1.0);
+    if (zAlpha < 0) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                              "Invalid value of 'Z_alpha' in Tsunami Problem = "
+                               << h <<"!  'Z_alpha' must be >=0.");
+    }
+    a = params->sublist("Tsunami Parameters").get<double>("Wave Amplitude a", 1.0);
+    //IKT, FIXME, question: can a = 0? 
+    if (a <= 0) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                              "Invalid value of 'Wave Amplitude a' in Tsunami Problem = "
+                               << h <<"!  'Wave Amplitude a' must be >0.");
+    }
+    h0 = params->sublist("Tsunami Parameters").get<double>("Typical Water Depth h0", 1.0);
+    if (h0 <= 0) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                              "Invalid value of 'Typical Water Depth h0' in Tsunami Problem = "
+                               << h <<"!  'Typical Water Depth h0' must be >0.");
+    }
+    //IKT, FIXME, question: can k = 0? 
+    k = params->sublist("Tsunami Parameters").get<double>("Typical Wave Number k", 1.0);
+    if (k <= 0) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                              "Invalid value of 'Typical Wave Number k' in Tsunami Problem = "
+                               << h <<"!  'Typical Wave Number k' must be >0.");
+    }
+    muSqr = k*k*h0*h0; 
+    epsilon = a/h0; 
     use_params_on_mesh = params->sublist("Tsunami Parameters").get<bool>("Use Parameters on Mesh", false);
   }
 
@@ -52,10 +84,21 @@ Boussinesq( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
 
   // Print out a summary of the problem
-  *out << "Navier Stokes problem:" << std::endl
-       << "\tSpatial dimension:      " << numDim << std::endl
-       << "\tNumber of Equations:    " << neq << std::endl
-       << "\tUse Parameters on Mesh: " << use_params_on_mesh << std::endl;
+  *out << "Navier Stokes problem:       " << std::endl
+       << "\tSpatial dimension:         " << numDim << std::endl
+       << "\tNumber of Equations:       " << neq << std::endl
+       << "\tUse Parameters on Mesh:    " << use_params_on_mesh << std::endl;
+  if (use_params_on_mesh == false) {
+    *out << "Using scalar parameters:   " << std::endl
+         << "\tWater depth h:           " << h << std::endl
+         << "\tZ_alpha:                 " << zAlpha << std::endl;
+  }
+  *out << "Misc scalar parameters used: " << std::endl
+         << "\tWave Amplitude a:        " << a << std::endl
+         << "\tTypical Water Depth h0:  " << h0 << std::endl 
+         << "\tTypical Wave Number k:   " << k << std::endl
+         << "\tEpsilon:                 " << epsilon << std::endl
+         << "\tMu Squared:              " << muSqr << std::endl;
 }
 
 Tsunami::Boussinesq::

@@ -85,6 +85,13 @@ namespace Tsunami {
     int numDim;
     
     double h; //water depth
+
+    double zAlpha;
+
+    double a, k, h0; //input scalars: a = wave amplitude, h0 = typical water depth, k = typical wave number
+
+    double muSqr, epsilon; //dimensionless paraleters used by code computed from input scalars  
+    //IKT, Question from Irina: are we running dimensionally  or non-dimensionally??
   
     bool haveSource;   //! have source term in heat equation
 
@@ -225,6 +232,19 @@ Tsunami::Boussinesq::constructEvaluators(
    ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("water_depth");
    fm0.template registerEvaluator<EvalT> (ev);
 
+   //Declare z_alpha as nodal field 
+   {
+     std::string stateName("z_alpha");
+     std::string fieldName = "z_alpha";
+     RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+     p->set<std::string>("Field Name", fieldName);
+     ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+   // Intepolate z_alpha from nodes to QPs
+   ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("z_alpha");
+   fm0.template registerEvaluator<EvalT> (ev);
+
    { // Specialized DofVecGrad Interpolation for this problem
     
      RCP<ParameterList> p = rcp(new ParameterList("DOFVecGrad Interpolation "+dof_names[0]));
@@ -259,12 +279,15 @@ Tsunami::Boussinesq::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Parameters"));
     //Input
     p->set<std::string>("Water Depth In QP Name", "water_depth");
+    p->set<std::string>("z_alpha In QP Name", "z_alpha");
     p->set<double>("Water Depth", h); 
+    p->set<double>("Z_alpha", zAlpha); 
     p->set<bool>("Use Parameters on Mesh", use_params_on_mesh); 
     p->set<bool>("Enable Memoizer", enableMemoizer);
 
     //Output
     p->set<std::string>("Water Depth QP Name", "Water Depth Field");
+    p->set<std::string>("Beta QP Name", "Beta Field");
 
     ev = rcp(new Tsunami::BoussinesqParameters<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -286,6 +309,9 @@ Tsunami::Boussinesq::constructEvaluators(
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set< RCP<DataLayout> >("Node QP Gradient Data Layout", dl->node_qp_gradient);
     p->set<std::string>("Water Depth QP Name", "Water Depth Field");
+    p->set<std::string>("Beta QP Name", "Beta Field");
+    p->set<double>("Mu Squared", muSqr);
+    p->set<double>("Epsilon", epsilon);  
     //
     //IKT, FIXME?  add body force evaluator
     //p->set<std::string>("Body Force Name", "Body Force");

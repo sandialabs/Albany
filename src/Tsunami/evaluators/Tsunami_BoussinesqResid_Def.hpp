@@ -29,6 +29,9 @@ BoussinesqResid(const Teuchos::ParameterList& p,
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
   out                (Teuchos::VerboseObjectBase::getDefaultOStream()),
   waterDepthQP        (p.get<std::string> ("Water Depth QP Name"), dl->qp_scalar), 
+  betaQP              (p.get<std::string> ("Beta QP Name"), dl->qp_scalar), 
+  muSqr                  (p.get<double>("Mu Squared")), 
+  epsilon                (p.get<double>("Epsilon")), 
   Residual   (p.get<std::string>                   ("Residual Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") ) 
 {
@@ -40,6 +43,7 @@ BoussinesqResid(const Teuchos::ParameterList& p,
   this->addDependentField(EtaUEGrad);
   this->addDependentField(EtaUEDotGrad);
   this->addDependentField(waterDepthQP);
+  this->addDependentField(betaQP);
 
   this->addEvaluatedField(Residual);
 
@@ -71,6 +75,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(EtaUEGrad,fm);
   this->utils.setFieldData(EtaUEDotGrad,fm);
   this->utils.setFieldData(waterDepthQP,fm);
+  this->utils.setFieldData(betaQP,fm);
   this->utils.setFieldData(Residual,fm);
 }
 

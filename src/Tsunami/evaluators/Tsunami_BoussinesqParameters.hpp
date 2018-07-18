@@ -44,13 +44,15 @@ private:
 
   // Input:  
   PHX::MDField<const ScalarT,Cell,QuadPoint>    waterdepthQPin;
+  PHX::MDField<const ScalarT,Cell,QuadPoint>    zalphaQPin;
   
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint>          waterdepthQP;
+  PHX::MDField<ScalarT,Cell,QuadPoint>          betaQP;
 
   unsigned int numQPs, numDims;
 
-  double h;
+  double h, zAlpha;
  
   bool use_params_on_mesh;
 

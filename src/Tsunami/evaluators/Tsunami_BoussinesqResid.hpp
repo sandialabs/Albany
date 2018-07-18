@@ -49,11 +49,16 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim> EtaUEDotGrad;
   PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> force;
   PHX::MDField<const ScalarT,Cell,QuadPoint> waterDepthQP;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> betaQP;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
   unsigned int numQPs, numDims, numNodes, vecDim;
+
+  double muSqr, epsilon; 
+
+  double C1, C2, C3; 
  
   Teuchos::RCP<Teuchos::FancyOStream> out;  
 };
