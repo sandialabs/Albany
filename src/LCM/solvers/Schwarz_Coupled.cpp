@@ -713,7 +713,7 @@ Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 SchwarzCoupled::get_g_space(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_responses_total_);
-  
+
   return getThyraResponseSpace(l); 
 
   //IKT, 2/2/18: original code which was giving rise to dangling
@@ -946,14 +946,14 @@ evalModelImpl(
 
   for (auto m = 0; m < num_models_; ++m) {
     //Get each Tpetra vector
-    xTs[m] = Teuchos::rcp_dynamic_cast<const ThyraVector>(
+    xTs[m] = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(
         xT->getVectorBlock(m),
         true)->getConstTpetraVector();
   }
   if (x_dotT != Teuchos::null) {
     for (auto m = 0; m < num_models_; ++m) {
       //Get each Tpetra vector
-      x_dotTs[m] = Teuchos::rcp_dynamic_cast<const ThyraVector>(
+      x_dotTs[m] = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(
           x_dotT->getVectorBlock(m),
           true)->getConstTpetraVector();
     }
@@ -1003,7 +1003,7 @@ evalModelImpl(
       // only the first vector in the Thyra Product MultiVec is correct.
       // Why...?
       Teuchos::RCP<Tpetra_Vector const>
-      pTm = Teuchos::rcp_dynamic_cast<const ThyraVector>(
+      pTm = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(
           pT->getVectorBlock(0), true)->getConstTpetraVector();
 
       Teuchos::ArrayRCP<ST const> pTm_constView = pTm->get1dView();
@@ -1026,7 +1026,7 @@ evalModelImpl(
   if (fT_out != Teuchos::null) {
     for (auto m = 0; m < num_models_; ++m) {
       //Get each Tpetra vector
-      fTs_out[m] = Teuchos::rcp_dynamic_cast<ThyraVector>(
+      fTs_out[m] = Teuchos::rcp_dynamic_cast<Thyra_TpetraVector>(
           fT_out->getNonconstVectorBlock(m),
           true)->getTpetraVector();
     }
@@ -1119,7 +1119,7 @@ evalModelImpl(
           //doesn't overwrite the real residual.
           Teuchos::RCP<Tpetra_Vector> fTtemp;
           if (fT_out != Teuchos::null) {
-            fTtemp = Teuchos::rcp_dynamic_cast<ThyraVector>(
+            fTtemp = Teuchos::rcp_dynamic_cast<Thyra_TpetraVector>(
                 fT_out->getNonconstVectorBlock(m),
                 true)->getTpetraVector();
           }
@@ -1158,7 +1158,7 @@ evalModelImpl(
           //doesn't overwrite the real residual.
           Teuchos::RCP<Tpetra_Vector> fTtemp;
           if (fT_out != Teuchos::null) {
-            fTtemp = Teuchos::rcp_dynamic_cast<ThyraVector>(
+            fTtemp = Teuchos::rcp_dynamic_cast<Thyra_TpetraVector>(
                 fT_out->getNonconstVectorBlock(m),
                 true)->getTpetraVector();
           }
@@ -1268,7 +1268,7 @@ evalModelImpl(
       for (auto m = 0; m < num_models_; ++m) {
         //Get each Tpetra vector
         Teuchos::RCP<Tpetra_Vector>
-        gT_out_m = Teuchos::rcp_dynamic_cast<ThyraVector>(
+        gT_out_m = Teuchos::rcp_dynamic_cast<Thyra_TpetraVector>(
             gT_out->getNonconstVectorBlock(m),
             true)->getTpetraVector();
 

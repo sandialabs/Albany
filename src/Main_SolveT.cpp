@@ -22,6 +22,7 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
+#include "MatrixMarket_Tpetra.hpp"
 
 // Uncomment for run time nan checking
 // This is set in the toplevel CMakeLists.txt file
@@ -485,7 +486,7 @@ main(int argc, char *argv[]) {
           // moment so we cannot
           // allow for different parameters in different models.
           Teuchos::RCP<const Tpetra_Vector> p =
-              Teuchos::rcp_dynamic_cast<const ThyraVector>(
+              Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(
                   pT->getVectorBlock(0), true)
                   ->getConstTpetraVector();
           Albany::printTpetraVector(
@@ -578,13 +579,13 @@ main(int argc, char *argv[]) {
         xfinal_serial->doImport(*xfinal, *importOperator, Tpetra::INSERT);
 
         // writing to MatrixMarket file
-        Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal.mm", xfinal_serial);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("xfinal.mm", xfinal_serial);
       }
       if (writeToMatrixMarketDistrSolnMap == true) {
         // writing to MatrixMarket file
-        Tpetra_MatrixMarket_Writer::writeDenseFile(
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(
             "xfinal_distributed.mm", *xfinal);
-        Tpetra_MatrixMarket_Writer::writeMapFile(
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile(
             "xfinal_distributed_map.mm", *xfinal->getMap());
       }
     }

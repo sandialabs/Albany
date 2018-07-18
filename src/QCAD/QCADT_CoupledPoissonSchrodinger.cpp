@@ -859,14 +859,14 @@ evalModelImpl(
  
    for (int m=0; m < num_models_; ++m) {
     //Get each Tpetra vector 
-    xTs[m] = Teuchos::rcp_dynamic_cast<const ThyraVector>(
+    xTs[m] = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(
         x->getVectorBlock(m),
         true)->getConstTpetraVector();
    }
    if (x_dot != Teuchos::null) {
      for (int m = 0; m < num_models_; ++m) {
         //Get each Tpetra vector 
-        x_dotTs[m] = Teuchos::rcp_dynamic_cast<const ThyraVector>(
+        x_dotTs[m] = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(
             x_dot->getVectorBlock(m),
             true)->getConstTpetraVector();
      }
@@ -889,7 +889,7 @@ evalModelImpl(
     if (pT != Teuchos::null) {
       if(i < num_poisson_param_vecs) {
         //get Poisson parameter vector
-        Teuchos::RCP<Tpetra_Vector const> pT_poisson = Teuchos::rcp_dynamic_cast<const ThyraVector>(
+        Teuchos::RCP<Tpetra_Vector const> pT_poisson = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(
                                           pT->getVectorBlock(0), true)->getConstTpetraVector();
         Teuchos::ArrayRCP<ST const> pT_poisson_constView = pT_poisson->get1dView();
 	for (unsigned int j=0; j<poisson_sacado_param_vec[i].size(); j++) 
@@ -897,7 +897,7 @@ evalModelImpl(
       }
       else {
         //get Schrodinger parameter vector
-        Teuchos::RCP<Tpetra_Vector const> pT_schrodinger = Teuchos::rcp_dynamic_cast<const ThyraVector>(
+        Teuchos::RCP<Tpetra_Vector const> pT_schrodinger = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(
                                           pT->getVectorBlock(1), true)->getConstTpetraVector();
         Teuchos::ArrayRCP<ST const> pT_schrodinger_constView = pT_schrodinger->get1dView();
 	for (unsigned int j=0; j<schrodinger_sacado_param_vec[i-num_poisson_param_vecs].size(); j++)
@@ -972,16 +972,16 @@ evalModelImpl(
 
   if (f_out != Teuchos::null) {
     //First model is Poisson.
-    f_poisson = Teuchos::rcp_dynamic_cast<ThyraVector>(
+    f_poisson = Teuchos::rcp_dynamic_cast<Thyra_TpetraVector>(
         f_out->getNonconstVectorBlock(0),
         true)->getTpetraVector();
     //Next nEigenvals models are Schrodinger
     for (int m=1; m < 1+nEigenvals; ++m) 
-      f_schrodinger_vec[m-1] = Teuchos::rcp_dynamic_cast<ThyraVector>(
+      f_schrodinger_vec[m-1] = Teuchos::rcp_dynamic_cast<Thyra_TpetraVector>(
         f_out->getNonconstVectorBlock(m),
         true)->getTpetraVector().getRawPtr();  
     //Last model is eigenvalue. 
-    f_norm_dist = Teuchos::rcp_dynamic_cast<ThyraVector>(
+    f_norm_dist = Teuchos::rcp_dynamic_cast<Thyra_TpetraVector>(
         f_out->getNonconstVectorBlock(1+nEigenvals), true)->getTpetraVector(); 
     //   (later we sum all procs contributions together and copy into distributed f_norm_dist vector)
     f_norm_local = Teuchos::rcp(new Tpetra_Vector(local_eigenval_map));
@@ -1462,12 +1462,12 @@ evalModelImpl(
     if (g_out != Teuchos::null && !g_computed) {
       //Poisson model:
       Teuchos::RCP<Tpetra_Vector>
-        g_out_poisson = Teuchos::rcp_dynamic_cast<ThyraVector>(
+        g_out_poisson = Teuchos::rcp_dynamic_cast<Thyra_TpetraVector>(
                   g_out->getNonconstVectorBlock(0),
                   true)->getTpetraVector();
       //Schrodinger model:
       Teuchos::RCP<Tpetra_Vector>
-        g_out_schrodinger = Teuchos::rcp_dynamic_cast<ThyraVector>(
+        g_out_schrodinger = Teuchos::rcp_dynamic_cast<Thyra_TpetraVector>(
                   g_out->getNonconstVectorBlock(1),
                   true)->getTpetraVector();
       if(i < poissonApp->getNumResponses()) {

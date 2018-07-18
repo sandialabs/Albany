@@ -12,6 +12,7 @@
 #include "Albany_ResponseFactory.hpp"
 #include "Albany_Utils.hpp"
 #include "Teuchos_TimeMonitor.hpp"
+#include <MatrixMarket_Tpetra.hpp>
 
 #if defined(ALBANY_EPETRA)
 #include "EpetraExt_MultiVectorOut.h"
@@ -1295,7 +1296,7 @@ void checkDerivatives(Albany::Application &app, const double time,
     static int ctr = 0;
     std::stringstream ss;
     ss << "dc" << ctr << ".mm";
-    Tpetra_MatrixMarket_Writer::writeDenseFile(ss.str(), mv);
+    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(ss.str(), mv);
     ++ctr;
   }
 }
@@ -1449,7 +1450,7 @@ void Albany::Application::computeGlobalResidualImplT(
 #ifdef WRITE_TO_MATRIX_MARKET
   char nameResUnscaled[100]; // create string for file name
   sprintf(nameResUnscaled, "resUnscaled%i_residual.mm", countScale);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(nameResUnscaled, fT);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResUnscaled, fT);
 #endif
 
   if (scaleBCdofs == false && scale != 1.0) {
@@ -1459,7 +1460,7 @@ void Albany::Application::computeGlobalResidualImplT(
 #ifdef WRITE_TO_MATRIX_MARKET
   char nameResScaled[100]; // create string for file name
   sprintf(nameResScaled, "resScaled%i_residual.mm", countScale);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(nameResScaled, fT);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResScaled, fT);
 #endif
 
 #if defined(ALBANY_LCM)
@@ -1485,7 +1486,7 @@ void Albany::Application::computeGlobalResidualImplT(
       char nameScale[100]; // create string for file name
       if (commT->getSize() == 1) {
         sprintf(nameScale, "scale%i.mm", countScale);
-        Tpetra_MatrixMarket_Writer::writeDenseFile(nameScale, scaleVec_);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, scaleVec_);
       }
       else {
         // create serial map that puts the whole solution on processor 0
@@ -1503,7 +1504,7 @@ void Albany::Application::computeGlobalResidualImplT(
             Teuchos::rcp(new Tpetra_Vector(serial_map));
         scale_serial->doImport(*scaleVec_, *importOperator, Tpetra::INSERT);
         sprintf(nameScale, "scaleSerial%i.mm", countScale);
-        Tpetra_MatrixMarket_Writer::writeDenseFile(nameScale, scale_serial);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, scale_serial);
       }
 #endif
       countScale++;
@@ -1563,12 +1564,12 @@ void Albany::Application::computeGlobalResidualT(
     if (writeToMatrixMarketRes ==
         -1) { // write residual to MatrixMarket every time it arises
       sprintf(name, "rhs%i.mm", countRes);
-      Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(fT));
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, Teuchos::rcpFromRef(fT));
     } else {
       if (countRes ==
           writeToMatrixMarketRes) { // write residual only at requested count#
         sprintf(name, "rhs%i.mm", countRes);
-        Tpetra_MatrixMarket_Writer::writeDenseFile(name,
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name,
                                                    Teuchos::rcpFromRef(fT));
       }
     }
@@ -1759,11 +1760,11 @@ void Albany::Application::computeGlobalJacobianImplT(
 #ifdef WRITE_TO_MATRIX_MARKET
       char nameJacUnscaled[100]; // create string for file name
       sprintf(nameJacUnscaled, "jacUnscaled%i.mm", countScale);
-      Tpetra_MatrixMarket_Writer::writeSparseFile(nameJacUnscaled, jacT);
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(nameJacUnscaled, jacT);
       if (fT != Teuchos::null) {
         char nameResUnscaled[100]; // create string for file name
         sprintf(nameResUnscaled, "resUnscaled%i.mm", countScale);
-        Tpetra_MatrixMarket_Writer::writeDenseFile(nameResUnscaled, fT);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResUnscaled, fT);
       }
 #endif
       // set the scaling
@@ -1778,15 +1779,15 @@ void Albany::Application::computeGlobalJacobianImplT(
 #ifdef WRITE_TO_MATRIX_MARKET
       char nameJacScaled[100]; // create string for file name
       sprintf(nameJacScaled, "jacScaled%i.mm", countScale);
-      Tpetra_MatrixMarket_Writer::writeSparseFile(nameJacScaled, jacT);
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(nameJacScaled, jacT);
       if (fT != Teuchos::null) {
         char nameResScaled[100]; // create string for file name
         sprintf(nameResScaled, "resScaled%i.mm", countScale);
-        Tpetra_MatrixMarket_Writer::writeDenseFile(nameResScaled, fT);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResScaled, fT);
       }
       char nameScale[100]; // create string for file name
       sprintf(nameScale, "scale%i.mm", countScale);
-      Tpetra_MatrixMarket_Writer::writeDenseFile(nameScale, scaleVec_);
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, scaleVec_);
 #endif
       countScale++;
     }
@@ -1821,7 +1822,7 @@ void Albany::Application::computeGlobalJacobianImplT(
         sprintf(nameScale, "scale%i.mm", countScale);
       }
       else {
-        Tpetra_MatrixMarket_Writer::writeDenseFile(nameScale, scaleVec_);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, scaleVec_);
         // create serial map that puts the whole solution on processor 0
         int numMyElements = (scaleVec_->getMap()->getComm()->getRank() == 0)
                                 ? scaleVec_->getMap()->getGlobalNumElements()
@@ -1837,7 +1838,7 @@ void Albany::Application::computeGlobalJacobianImplT(
             Teuchos::rcp(new Tpetra_Vector(serial_map));
         scale_serial->doImport(*scaleVec_, *importOperator, Tpetra::INSERT);
         sprintf(nameScale, "scaleSerial%i.mm", countScale);
-        Tpetra_MatrixMarket_Writer::writeDenseFile(nameScale, scale_serial);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, scale_serial);
       }
 #endif
       countScale++;
@@ -2275,13 +2276,13 @@ void Albany::Application::computeGlobalJacobianT(
     if (writeToMatrixMarketJac ==
         -1) { // write jacobian to MatrixMarket every time it arises
       sprintf(name, "jac%i.mm", countJac);
-      Tpetra_MatrixMarket_Writer::writeSparseFile(name,
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(name,
                                                   Teuchos::rcpFromRef(jacT));
     } else {
       if (countJac ==
           writeToMatrixMarketJac) { // write jacobian only at requested count#
         sprintf(name, "jac%i.mm", countJac);
-        Tpetra_MatrixMarket_Writer::writeSparseFile(name,
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(name,
                                                     Teuchos::rcpFromRef(jacT));
       }
     }

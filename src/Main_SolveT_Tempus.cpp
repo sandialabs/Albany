@@ -22,6 +22,7 @@
 #include "Teuchos_FancyOStream.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
+#include "MatrixMarket_Tpetra.hpp"
 
 #include "Tempus_IntegratorBasic.hpp" 
 #include "Piro_ObserverToTempusIntegrationObserverAdapter.hpp"
@@ -329,12 +330,12 @@ int main(int argc, char *argv[]) {
         Teuchos::RCP<Tpetra_Vector> x_tpetra_serial = Teuchos::rcp(new Tpetra_Vector(serial_map)); 
         x_tpetra_serial->doImport(*x_tpetra, *importOperator, Tpetra::INSERT);
         //writing to MatrixMarket file
-         Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal_tempus.mm", x_tpetra_serial);
+         Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("xfinal_tempus.mm", x_tpetra_serial);
       }
       if (writeToMatrixMarketDistrSolnMap == true) {
         //writing to MatrixMarket file
-        Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal_tempus_distributed.mm", *x_tpetra);
-        Tpetra_MatrixMarket_Writer::writeMapFile("xfinal_tempus_distributed_map.mm", *x_tpetra->getMap());
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("xfinal_tempus_distributed.mm", *x_tpetra);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("xfinal_tempus_distributed_map.mm", *x_tpetra->getMap());
       }
       *out << "\n Finish Transient Tempus No Piro time integration!\n";
       //End of code to use Tempus to perform time-integration without going through Piro

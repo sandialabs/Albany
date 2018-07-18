@@ -22,6 +22,7 @@
 #include <Tpetra_MultiVectorFiller.hpp>
 #include "Petra_Converters.hpp"
 #include "EpetraExt_RowMatrixOut.h"
+#include "MatrixMarket_Tpetra.hpp"
 
 // for mkdir
 #include <sys/stat.h>
@@ -683,14 +684,14 @@ void ReducedOrderModelEvaluator::printCRSMatrix(std::string filename, const Teuc
 	parOut("ReducedOrderModelEvaluator::evalModel writing file named: " + full_filename);
 	TEUCHOS_TEST_FOR_EXCEPT(CRSM == Teuchos::null)
 	Teuchos::RCP<Tpetra_CrsMatrix> CRSM_T = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*CRSM, app_->getComm());
-	Tpetra_MatrixMarket_Writer::writeSparseFile(full_filename, CRSM_T);
+	Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(full_filename, CRSM_T);
 	/*
-	Tpetra_MatrixMarket_Writer::writeSparseFile(full_filename, CRSM_T, true);
+	Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(full_filename, CRSM_T, true);
 
 	std::string mystr = outdir_ + filename + "_Rmap" + std::to_string(index) + ".mm";
-	Tpetra_MatrixMarket_Writer::writeMapFile(mystr, *CRSM_T->getRowMap());
+	Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile(mystr, *CRSM_T->getRowMap());
 	std::string mystr2 = outdir_ + filename + "_Cmap" + std::to_string(index) + ".mm";
-	Tpetra_MatrixMarket_Writer::writeMapFile(mystr2, *CRSM_T->getColMap());
+	Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile(mystr2, *CRSM_T->getColMap());
 	*/
 }
 
@@ -758,18 +759,18 @@ void ReducedOrderModelEvaluator::printMultiVectorT(std::string filename, const T
 	if (isDist)
 	{
 		Teuchos::RCP<Tpetra_MultiVector> MV_serial = serialVector<Tpetra_MultiVector>(MV);
-		Tpetra_MatrixMarket_Writer::writeDenseFile(full_filename, MV_serial);
+		Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(full_filename, MV_serial);
 	}
 	else
 	{
-		Tpetra_MatrixMarket_Writer::writeDenseFile(full_filename, MV);
+		Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(full_filename, MV);
 	}
 
 	/*
 	std::string mystr = outdir_ + filename + "_map" + std::to_string(index) + ".mm";
-	Tpetra_MatrixMarket_Writer::writeMapFile(mystr, *MV->getMap());
+	Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile(mystr, *MV->getMap());
 	//std::string mystr2 = outdir_ + filename + "_serial_map" + std::to_string(index) + ".mm";
-	//Tpetra_MatrixMarket_Writer::writeMapFile(mystr2, *MV_serial->getMap());
+	//Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile(mystr2, *MV_serial->getMap());
 	*/
 }
 
@@ -1573,7 +1574,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 			EpetraExt::RowMatrixToMatrixMarketFile(full_filename.c_str(), *W_r);
 			//EpetraExt::BlockMapToMatrixMarketFile("JEr_pre_Rmap.mm", W_r->RowMap());
 			//EpetraExt::BlockMapToMatrixMarketFile("JEr_pre_Cmap.mm", W_r->ColMap());
-			//printCRSMatrix("Jr_pre", W_r, count_jacr_pl); // Tpetra_MatrixMarket_Writer::writeSparseFile fails here because the Jacobian is locally replicated (see issue #1021 on GitHub)
+			//printCRSMatrix("Jr_pre", W_r, count_jacr_pl); // Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile fails here because the Jacobian is locally replicated (see issue #1021 on GitHub)
 		}
 
 		DBC_ROM_jac(inArgs,outArgs,SDBC);
@@ -1588,7 +1589,7 @@ void ReducedOrderModelEvaluator::evalModel(const InArgs &inArgs, const OutArgs &
 			EpetraExt::RowMatrixToMatrixMarketFile(full_filename.c_str(), *W_r);
 			//EpetraExt::BlockMapToMatrixMarketFile("JEr_Rmap.mm", W_r->RowMap());
 			//EpetraExt::BlockMapToMatrixMarketFile("JEr_Cmap.mm", W_r->ColMap());
-			//printCRSMatrix("Jr", W_r, count_jacr_pl); // Tpetra_MatrixMarket_Writer::writeSparseFile fails here because the Jacobian is locally replicated (see issue #1021 on GitHub)
+			//printCRSMatrix("Jr", W_r, count_jacr_pl); // Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile fails here because the Jacobian is locally replicated (see issue #1021 on GitHub)
 			count_jacr_pl++;
 		}
 //TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "we'll just stop here...");

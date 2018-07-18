@@ -9,12 +9,16 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Albany_DataTypes.hpp"
+
+#include "Epetra_Comm.h"
 #include "Epetra_Vector.h"
 #include "Epetra_CrsGraph.h"
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Export.h"
 #include "Epetra_Import.h"
 #include "Epetra_LocalMap.h"
+
+#include "Kokkos_DefaultNode.hpp"
 
 namespace Petra {
 //TpetraMap_To_EpetraMap: takes in Tpetra::Map object, converts it to its equivalent Epetra_Map object,
