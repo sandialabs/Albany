@@ -29,7 +29,6 @@
 #include "LandIce_EffectivePressure.hpp"
 #include "LandIce_IceSoftness.hpp"
 #include "LandIce_IceOverburden.hpp"
-#include "LandIce_HydrologyDirichlet.hpp"
 #include "LandIce_HydrologyMeltingRate.hpp"
 #include "LandIce_HydrologyResidualCavitiesEqn.hpp"
 #include "LandIce_HydrologyResidualMassEqn.hpp"
