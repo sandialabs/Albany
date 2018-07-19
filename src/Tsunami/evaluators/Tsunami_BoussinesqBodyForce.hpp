@@ -41,10 +41,10 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> coordVec;
   PHX::MDField<const ScalarT,Cell,QuadPoint> waterDepthQP;
   PHX::MDField<const ScalarT,Cell,QuadPoint> betaQP;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> zalphaQP;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;

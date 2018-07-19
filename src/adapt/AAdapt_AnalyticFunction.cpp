@@ -29,6 +29,11 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Step X")
     F = Teuchos::rcp(new AAdapt::StepX(neq, numDim, data));
 
+#ifdef ALBANY_TSUNAMI
+  else if(name == "Tsunami Boussinesq 1D Solitary Wave")
+    F = Teuchos::rcp(new AAdapt::TsunamiBoussinesq1DSolitaryWave(neq, numDim, data));
+#endif
+
   else if(name == "TemperatureStep")
     F = Teuchos::rcp(new AAdapt::TemperatureStep(neq, numDim, data));
 
@@ -157,7 +162,12 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
  
   else if(name == "Aeras TC4Init")
     F = Teuchos::rcp(new AAdapt::AerasTC4Init(neq, numDim, data));
-  
+
+#ifdef ALBANY_TSUNAMI 
+  else if(name == "Tsunami Boussinesq 1D Solitary Wave")
+    F = Teuchos::rcp(new AAdapt::TsunamiBoussinesq1DSolitaryWave(neq, numDim, data));
+#endif  
+
   else
     TEUCHOS_TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
         std::logic_error,
@@ -211,6 +221,30 @@ void AAdapt::StepX::compute(double* x, const double* X) {
         x[0] = T;
     }
 }
+//*****************************************************************************
+#ifdef ALBANY_TSUNAMI 
+AAdapt::TsunamiBoussinesq1DSolitaryWave::TsunamiBoussinesq1DSolitaryWave(int neq_, int numDim_,
+    Teuchos::Array<double> data_) : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION( (neq != 3 || numDim != 1 || data.size() != 5) ,
+                               std::logic_error,
+                               "Error! Invalid call of TsunamiBoussinesq1DSolitaryWave with " 
+                              << neq << " " << numDim << " " << data.size() << "!\n");
+}
+
+void AAdapt::TsunamiBoussinesq1DSolitaryWave::compute(double* x, const double* X) {
+    double A = data[0];
+    double B = data[1];
+    double A1 = data[2];
+    double A2 = data[3]; 
+    double X0 = data[4]; 
+  
+    //Coordinate x is given by X[0]  
+    //FIXME, FILL IN for Zhiheng and Xiaoshu!
+    //x[0] = initial eta (to fill in)
+    //x[1] = initial ualpha (to fill in)
+    //x[2] = initial E1 (to fill in)
+}
+#endif
 
 //*****************************************************************************
 AAdapt::TemperatureStep::TemperatureStep(int neq_, int numDim_,
@@ -2385,6 +2419,8 @@ AAdapt::AerasTC4Init::AerasTC4Init(int neq_, int spatialDim_, Teuchos::Array<dou
   phi0 = 1.0e5;
 
 }
+
+
 
 void AAdapt::AerasTC4Init::compute(double* solution, const double* X) {
   

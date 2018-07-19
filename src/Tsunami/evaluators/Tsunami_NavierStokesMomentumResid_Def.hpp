@@ -67,7 +67,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(pGrad,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(P,fm);
-  this->utils.setFieldData(force,fm);
   this->utils.setFieldData(Rm,fm);
   this->utils.setFieldData(force,fm);
   this->utils.setFieldData(viscosityQP,fm);

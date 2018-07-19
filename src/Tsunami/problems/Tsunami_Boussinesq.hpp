@@ -118,6 +118,7 @@ namespace Tsunami {
 #include "PHAL_DOFVecGradInterpolation.hpp"
 
 #include "Tsunami_BoussinesqResid.hpp"
+#include "Tsunami_BoussinesqBodyForce.hpp"
 #include "Tsunami_BoussinesqParameters.hpp"
 
 
@@ -293,6 +294,29 @@ Tsunami::Boussinesq::constructEvaluators(
     ev = rcp(new Tsunami::BoussinesqParameters<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+  
+  // Body Force
+  {
+    RCP<ParameterList> p = rcp(new ParameterList("Body Force"));
+
+    //Input
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Water Depth QP Name", "Water Depth Field");
+    p->set<std::string>("z_alpha QP Name", "z_alpha Field");
+    p->set<std::string>("Beta QP Name", "Beta Field");
+    p->set<double>("Mu Squared", muSqr);
+    p->set<double>("Epsilon", epsilon);  
+
+    Teuchos::ParameterList& paramList = params->sublist("Body Force");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    //Output
+    p->set<std::string>("Body Force Name", "Body Force");
+
+    ev = rcp(new Tsunami::BoussinesqBodyForce<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
 
   { // Boussinesq Resid
     RCP<ParameterList> p = rcp(new ParameterList("Boussinesq Resid"));
@@ -305,18 +329,13 @@ Tsunami::Boussinesq::constructEvaluators(
     p->set<std::string>("EtaUE Dot Gradient QP Variable Name", "EtaUE_dot Gradient");
     p->set<std::string>("EtaUE Dot QP Variable Name", "EtaUE_dot");
     
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_vecgradient);
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set< RCP<DataLayout> >("Node QP Gradient Data Layout", dl->node_qp_gradient);
+
     p->set<std::string>("Water Depth QP Name", "Water Depth Field");
     p->set<std::string>("z_alpha QP Name", "z_alpha Field");
     p->set<std::string>("Beta QP Name", "Beta Field");
     p->set<double>("Mu Squared", muSqr);
     p->set<double>("Epsilon", epsilon);  
-    //
-    //IKT, FIXME?  add body force evaluator
-    //p->set<std::string>("Body Force Name", "Body Force");
+    p->set<std::string>("Body Force Name", "Body Force");
  
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 

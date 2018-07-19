@@ -15,26 +15,20 @@ template<typename EvalT, typename Traits>
 BoussinesqResid<EvalT, Traits>::
 BoussinesqResid(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl) :
-  wBF     (p.get<std::string>                   ("Weighted BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
-  wGradBF    (p.get<std::string>                   ("Weighted Gradient BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Gradient Data Layout") ),
-  EtaUE       (p.get<std::string>                   ("EtaUE QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  EtaUEDot       (p.get<std::string>                   ("EtaUE Dot QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  EtaUEGrad      (p.get<std::string>                   ("EtaUE Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  EtaUEDotGrad      (p.get<std::string>             ("EtaUE Dot Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  out                (Teuchos::VerboseObjectBase::getDefaultOStream()),
-  waterDepthQP        (p.get<std::string> ("Water Depth QP Name"), dl->qp_scalar), 
-  betaQP              (p.get<std::string> ("Beta QP Name"), dl->qp_scalar), 
-  zalphaQP              (p.get<std::string> ("z_alpha QP Name"), dl->qp_scalar), 
-  muSqr                  (p.get<double>("Mu Squared")), 
-  epsilon                (p.get<double>("Epsilon")), 
-  Residual   (p.get<std::string>                   ("Residual Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") ) 
+  wBF          (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
+  wGradBF      (p.get<std::string> ("Weighted Gradient BF Name"), dl->node_qp_gradient),
+  EtaUE        (p.get<std::string> ("EtaUE QP Variable Name"), dl->qp_vector),
+  EtaUEDot     (p.get<std::string> ("EtaUE Dot QP Variable Name"), dl->qp_vector),
+  EtaUEGrad    (p.get<std::string> ("EtaUE Gradient QP Variable Name"), dl->qp_vecgradient),
+  EtaUEDotGrad (p.get<std::string> ("EtaUE Dot Gradient QP Variable Name"), dl->qp_vecgradient),
+  out          (Teuchos::VerboseObjectBase::getDefaultOStream()),
+  waterDepthQP (p.get<std::string> ("Water Depth QP Name"), dl->qp_scalar), 
+  betaQP       (p.get<std::string> ("Beta QP Name"), dl->qp_scalar), 
+  zalphaQP     (p.get<std::string> ("z_alpha QP Name"), dl->qp_scalar), 
+  muSqr        (p.get<double>("Mu Squared")), 
+  epsilon      (p.get<double>("Epsilon")), 
+  force        (p.get<std::string> ("Body Force Name"), dl->qp_vector),
+  Residual     (p.get<std::string> ("Residual Name"), dl->node_vector)
 {
 
   this->addDependentField(wBF);
@@ -46,6 +40,7 @@ BoussinesqResid(const Teuchos::ParameterList& p,
   this->addDependentField(waterDepthQP);
   this->addDependentField(betaQP);
   this->addDependentField(zalphaQP);
+  this->addDependentField(force);
 
   this->addEvaluatedField(Residual);
 
@@ -79,6 +74,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(waterDepthQP,fm);
   this->utils.setFieldData(betaQP,fm);
   this->utils.setFieldData(zalphaQP,fm);
+  this->utils.setFieldData(force,fm);
   this->utils.setFieldData(Residual,fm);
 }
 
@@ -100,7 +96,8 @@ evaluateFields(typename Traits::EvalData workset)
       for (int node=0; node < numNodes; ++node) {
         for (int i=0; i<vecDim; i++) {
           for (int qp=0; qp < numQPs; ++qp) {
-            Residual(cell,node,i) += EtaUEDot(cell,qp,i)*wBF(cell,node,qp);
+            Residual(cell,node,i) += EtaUEDot(cell,qp,i)*wBF(cell,node,qp) 
+                                  + force(cell,qp,i)*wBF(cell,node,qp);
           }
         }
       }
@@ -112,7 +109,8 @@ evaluateFields(typename Traits::EvalData workset)
       for (int node=0; node < numNodes; ++node) {
         for (int i=0; i<vecDim; i++) {
           for (int qp=0; qp < numQPs; ++qp) {
-            Residual(cell,node,i) += EtaUEDot(cell,qp,i)*wBF(cell,node,qp);
+            Residual(cell,node,i) += EtaUEDot(cell,qp,i)*wBF(cell,node,qp) 
+                                  + force(cell,qp,i)*wBF(cell,node,qp);
           }
         }
       }

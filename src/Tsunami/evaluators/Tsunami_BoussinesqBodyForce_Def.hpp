@@ -15,20 +15,18 @@ template<typename EvalT, typename Traits>
 BoussinesqBodyForce<EvalT, Traits>::
 BoussinesqBodyForce(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl) :
-  wBF     (p.get<std::string>                   ("Weighted BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
-  out                (Teuchos::VerboseObjectBase::getDefaultOStream()),
-  waterDepthQP        (p.get<std::string> ("Water Depth QP Name"), dl->qp_scalar), 
-  betaQP              (p.get<std::string> ("Beta QP Name"), dl->qp_scalar), 
-  muSqr                  (p.get<double>("Mu Squared")), 
-  epsilon                (p.get<double>("Epsilon")), 
-  force   (p.get<std::string>                   ("Body Force Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ) 
+  out              (Teuchos::VerboseObjectBase::getDefaultOStream()),
+  waterDepthQP     (p.get<std::string> ("Water Depth QP Name"), dl->qp_scalar), 
+  betaQP           (p.get<std::string> ("Beta QP Name"), dl->qp_scalar), 
+  zalphaQP         (p.get<std::string> ("z_alpha QP Name"), dl->qp_scalar), 
+  muSqr            (p.get<double>("Mu Squared")), 
+  epsilon          (p.get<double>("Epsilon")), 
+  force            (p.get<std::string> ("Body Force Name"), dl->qp_vector)
 {
 
-  this->addDependentField(wBF);
   this->addDependentField(waterDepthQP);
   this->addDependentField(betaQP);
+  this->addDependentField(zalphaQP);
 
   this->addEvaluatedField(force);
 
@@ -65,9 +63,9 @@ void BoussinesqBodyForce<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(waterDepthQP,fm);
   this->utils.setFieldData(betaQP,fm);
+  this->utils.setFieldData(zalphaQP,fm);
   this->utils.setFieldData(force,fm);
 }
 
