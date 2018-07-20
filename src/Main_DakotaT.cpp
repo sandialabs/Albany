@@ -9,6 +9,7 @@
 #include "Albany_SolverFactory.hpp"
 #include "Albany_DakotaT.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
+#include "Teuchos_StackedTimer.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
@@ -20,6 +21,10 @@ int main(int argc, char *argv[]) {
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
   Kokkos::initialize(argc, argv);
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+
+  const auto stackedTimer = Teuchos::rcp(
+      new Teuchos::StackedTimer("Albany Stacked Timer"));
+  Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
 
   try {
     Teuchos::RCP<Teuchos::Time> totalTime =
@@ -35,7 +40,12 @@ int main(int argc, char *argv[]) {
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status+=10000;
 
-  Teuchos::TimeMonitor::summarize(std::cout, false, true, false);
+  stackedTimer->stop("Albany Stacked Timer");
+  Teuchos::StackedTimer::OutputOptions options;
+  options.output_fraction = true;
+  options.output_minmax = true;
+  stackedTimer->report(std::cout, Teuchos::DefaultComm<int>::getComm(), options);
+
   Kokkos::finalize_all();
   return status;
 }

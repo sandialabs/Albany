@@ -29,6 +29,7 @@
 #include "Teuchos_FancyOStream.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
 #include "Teuchos_ParameterList.hpp"
+#include "Teuchos_StackedTimer.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
@@ -126,6 +127,10 @@ int main(int ac, char *av[])
 
   cmd.parse_cmdline(ac, av, *fos);
 
+  const auto stackedTimer = Teuchos::rcp(
+      new Teuchos::StackedTimer("Albany Stacked Timer"));
+  Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+
   auto
   totalTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
       *Teuchos::TimeMonitor::getNewTimer("Albany: Total Time")));
@@ -173,7 +178,11 @@ int main(int ac, char *av[])
 
   *fos << "Schwarz alternating method" << std::endl;
 
-  Teuchos::TimeMonitor::summarize(*fos, false, true, false);
+  stackedTimer->stop("Albany Stacked Timer");
+  Teuchos::StackedTimer::OutputOptions options;
+  options.output_fraction = true;
+  options.output_minmax = true;
+  stackedTimer->report(std::cout, Teuchos::DefaultComm<int>::getComm(), options);
 
   Kokkos::finalize_all();
 

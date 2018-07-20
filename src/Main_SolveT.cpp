@@ -290,9 +290,9 @@ main(int argc, char *argv[]) {
   Albany::CmdLineArgs cmd;
   cmd.parse_cmdline(argc, argv, *out);
 
-//  const auto stackedTimer = Teuchos::rcp(
-//      new Teuchos::StackedTimer("Albany Stacked Timer"));
-//  Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+  const auto stackedTimer = Teuchos::rcp(
+      new Teuchos::StackedTimer("Albany Stacked Timer"));
+  Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
 
   try {
     auto totalTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
@@ -593,12 +593,11 @@ main(int argc, char *argv[]) {
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status += 10000;
 
-  Teuchos::TimeMonitor::summarize(*out, false, true, false /*zero timers*/);
-//  stackedTimer->stop("Albany Stacked Timer");
-//  Teuchos::StackedTimer::OutputOptions options;
-//  options.output_fraction = true;
-//  options.output_minmax = true;
-//  stackedTimer->report(std::cout, Teuchos::DefaultComm<int>::getComm(), options);
+  stackedTimer->stop("Albany Stacked Timer");
+  Teuchos::StackedTimer::OutputOptions options;
+  options.output_fraction = true;
+  options.output_minmax = true;
+  stackedTimer->report(std::cout, Teuchos::DefaultComm<int>::getComm(), options);
 
 #ifdef ALBANY_APF
   Albany::APFMeshStruct::finalize_libraries();

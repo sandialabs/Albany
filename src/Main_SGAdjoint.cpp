@@ -11,6 +11,7 @@
 #include "Albany_SolverFactory.hpp"
 #include "Piro_Epetra_StokhosSolver.hpp"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
+#include "Teuchos_StackedTimer.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Petra_Converters.hpp"
@@ -56,6 +57,10 @@ int main(int argc, char *argv[]) {
     *out << argv[0] << ":  must supply at least 2 input files!\n";
     std::exit(1);
   }
+
+  const auto stackedTimer = Teuchos::rcp(
+      new Teuchos::StackedTimer("Albany Stacked Timer"));
+  Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
 
   try {
 
@@ -296,11 +301,15 @@ int main(int argc, char *argv[]) {
     }
 
     totalTimer.~TimeMonitor();
-    Teuchos::TimeMonitor::summarize(std::cout,false,true,false);
-
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status+=10000;
+
+  stackedTimer->stop("Albany Stacked Timer");
+  Teuchos::StackedTimer::OutputOptions options;
+  options.output_fraction = true;
+  options.output_minmax = true;
+  stackedTimer->report(std::cout, Teuchos::DefaultComm<int>::getComm(), options);
 
   return status;
 }
