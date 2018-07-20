@@ -447,6 +447,8 @@ combine (const Teuchos::RCP<const Thyra_MultiVector> src,
          const Teuchos::RCP<Thyra_MultiVector>       dst,
          const Albany::CombineMode                   CM)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION (src.is_null() || dst.is_null(), Teuchos::Exceptions::InvalidArgument,
+                              "Error! Input ptrs to 'AAdapt::AdaptiveSolutionManagerT::combine' must be nonnull.\n");
   auto srcT = ConverterT::getConstTpetraMultiVector(src);
   auto dstT = ConverterT::getTpetraMultiVector(dst);
   
@@ -471,6 +473,8 @@ scatter (const Teuchos::RCP<const Thyra_MultiVector> src,
          const Teuchos::RCP<Thyra_MultiVector>       dst,
          const Albany::CombineMode                   CM)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION (src.is_null() || dst.is_null(), Teuchos::Exceptions::InvalidArgument,
+                              "Error! Input ptrs to 'AAdapt::AdaptiveSolutionManagerT::scatter' must be nonnull.\n");
   auto srcT = ConverterT::getConstTpetraMultiVector(src);
   auto dstT = ConverterT::getTpetraMultiVector(dst);
 
