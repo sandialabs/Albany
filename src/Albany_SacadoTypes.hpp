@@ -20,6 +20,7 @@
 #include "Sacado_ELRCacheFad_DFad.hpp"
 #include "Sacado_Fad_DFad.hpp"
 #include "Sacado_Fad_SLFad.hpp"
+#include "Sacado_Fad_SFad.hpp"
 #include "Sacado_ELRFad_SLFad.hpp"
 #include "Sacado_ELRFad_SFad.hpp"
 #include "Sacado_CacheFad_DFad.hpp"
@@ -33,17 +34,21 @@
 // ******************************************************************
 
 // Switch between dynamic and static FAD types
-#ifdef ALBANY_FAST_FELIX
-  // Code templated on data type need to know if FadType and TanFadType
-  // are the same or different typdefs
-#define ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
-  typedef Sacado::Fad::SLFad<RealType, ALBANY_SLFAD_SIZE> FadType;
+#if defined(ALBANY_FAD_TYPE_SFAD)
+typedef Sacado::Fad::SFad<RealType, ALBANY_SFAD_SIZE> FadType;
+#elif defined(ALBANY_FAD_TYPE_SLFAD)
+typedef Sacado::Fad::SLFad<RealType, ALBANY_SLFAD_SIZE> FadType;
 #else
-#define ALBANY_SFAD_SIZE 300
-  typedef Sacado::Fad::DFad<RealType> FadType;
+typedef Sacado::Fad::DFad<RealType> FadType;
 #endif
 
+#if defined(ALBANY_TAN_FAD_TYPE_SFAD)
+typedef Sacado::Fad::SFad<RealType, ALBANY_TAN_SFAD_SIZE> TanFadType;
+#elif defined(ALBANY_TAN_FAD_TYPE_SLFAD)
+typedef Sacado::Fad::SLFad<RealType, ALBANY_TAN_SLFAD_SIZE> TanFadType;
+#else
 typedef Sacado::Fad::DFad<RealType> TanFadType;
+#endif
 
 struct SPL_Traits {
   template <class T> struct apply {

@@ -1004,21 +1004,56 @@ ENDIF()
 ## Other Albany Template Options here:
 MESSAGE("\nAlbany Templated Data Type Options:")
 
-# Set FAD data type to static SLFAD if requested.
-OPTION(ENABLE_FAST_FELIX "Flag to turn on Code Optimization for FELIX that
-may break other physics" OFF)
-OPTION(ENABLE_SLFAD "Flag to turn on Code Optimization for ALBANY that
-may break other physics" OFF)
-
-SET(SLFAD_SIZE 32 CACHE INT "set Sacado SLFad size")
-
-IF (ENABLE_SLFAD OR ENABLE_FAST_FELIX)
-  SET(ALBANY_FAST_FELIX ON)
-  SET(ALBANY_SLFAD_SIZE ${SLFAD_SIZE})
-  MESSAGE("-- FADType   is SLFAD, compiling with -DALBANY_FAST_FELIX -DALBANY_SLFAD_SIZE=${SLFAD_SIZE}")
-  MESSAGE("---> WARNING: problems with elemental DOFs > ${SLFAD_SIZE} will fail.")
+# Set FAD data type
+SET(ENABLE_FAD_TYPE "DFad" CACHE STRING "Sacado forward mode automatic differentiation data type")
+IF(ENABLE_FAD_TYPE STREQUAL "SFad")
+  SET(ALBANY_FAD_TYPE_SFAD TRUE)
+  SET(ALBANY_SFAD_SIZE 32 CACHE INT "Number of derivative components chosen at compile-time for AD")
+  MESSAGE("-- FAD_TYPE  is SFad, compiling with -DALBANY_FAD_TYPE_SFAD -DALBANY_SFAD_SIZE=${ALBANY_SFAD_SIZE}")
+  MESSAGE("---> WARNING: problems with elemental DOFs > ${ALBANY_SFAD_SIZE} will fail")
+ELSEIF(ENABLE_FAD_TYPE STREQUAL "SLFad")
+  SET(ALBANY_FAD_TYPE_SLFAD TRUE)
+  SET(ALBANY_SLFAD_SIZE 32 CACHE INT "Maximum number of derivative components chosen at compile-time for AD")
+  MESSAGE("-- FAD_TYPE  is SLFad, compiling with -DALBANY_FAD_TYPE_SLFAD -DALBANY_SLFAD_SIZE=${ALBANY_SLFAD_SIZE}")
+  MESSAGE("---> WARNING: problems with elemental DOFs > ${ALBANY_SLFAD_SIZE} will fail")
+ELSEIF(ENABLE_FAD_TYPE STREQUAL "DFad")
+  MESSAGE("-- FAD_TYPE  is DFad (default)")
 ELSE()
-  MESSAGE("-- FADType   is DFAD (default).")
+  MESSAGE(FATAL_ERROR,
+          "\nError: ENABLE_FAD_TYPE = ${ENABLE_FAD_TYPE} is not recognized! Options: SFad, SLFad, DFad (default)")
+ENDIF()
+
+# Set FAD data type for Tangent
+SET(ENABLE_TAN_FAD_TYPE "DFad" CACHE STRING "Sacado forward mode automatic differentiation data type for Tangent")
+IF(ENABLE_TAN_FAD_TYPE STREQUAL "SFad")
+  SET(ALBANY_TAN_FAD_TYPE_SFAD TRUE)
+  SET(ALBANY_TAN_SFAD_SIZE 32 CACHE INT "Number of derivative components chosen at compile-time for Tangent AD")
+  MESSAGE("-- TAN_FAD_TYPE is SFad, compiling with -DALBANY_TAN_FAD_TYPE_SFAD -DALBANY_TAN_SFAD_SIZE=${ALBANY_TAN_SFAD_SIZE}")
+  MESSAGE("---> WARNING: problems with Tangent elemental DOFs > ${ALBANY_TAN_SFAD_SIZE} will fail")
+ELSEIF(ENABLE_TAN_FAD_TYPE STREQUAL "SLFad")
+  SET(ALBANY_TAN_FAD_TYPE_SLFAD TRUE)
+  SET(ALBANY_TAN_SLFAD_SIZE 32 CACHE INT "Maximum number of derivative components chosen at compile-time for Tangent AD")
+  MESSAGE("-- TAN_FAD_TYPE is SLFad, compiling with -DALBANY_TAN_FAD_TYPE_SLFAD -DALBANY_TAN_SLFAD_SIZE=${ALBANY_TAN_SLFAD_SIZE}")
+  MESSAGE("---> WARNING: problems with Tangent elemental DOFs > ${ALBANY_TAN_SLFAD_SIZE} will fail")
+ELSEIF(ENABLE_TAN_FAD_TYPE STREQUAL "DFad")
+  MESSAGE("-- TAN_FAD_TYPE is DFad (default)")
+ELSE()
+  MESSAGE(FATAL_ERROR,
+          "\nError: ENABLE_TAN_FAD_TYPE = ${ENABLE_TAN_FAD_TYPE} is not recognized! Options: SFad, SLFad, DFad (default)")
+ENDIF()
+
+# Check if FAD data type is the same
+IF(ENABLE_FAD_TYPE STREQUAL ENABLE_TAN_FAD_TYPE)
+  IF(ALBANY_FAD_TYPE_SFAD AND NOT ALBANY_SFAD_SIZE EQUAL ALBANY_TAN_SFAD_SIZE)
+    SET(ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE TRUE)
+    MESSAGE("-- SFAD_SIZE is not TAN_SFAD_SIZE, compiling with -DALBANY_FADTYPE_NOTEQUAL_TANFADTYPE")
+  ELSEIF(ALBANY_FAD_TYPE_SLFAD AND NOT ALBANY_SLFAD_SIZE EQUAL ALBANY_TAN_SLFAD_SIZE)
+    SET(ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE TRUE)
+    MESSAGE("-- SLFAD_SIZE is not TAN_SLFAD_SIZE, compiling with -DALBANY_FADTYPE_NOTEQUAL_TANFADTYPE")
+  ENDIF()
+ELSE()
+  SET(ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE TRUE)
+  MESSAGE("-- FAD_TYPE is not TAN_FAD_TYPE, compiling with -DALBANY_FADTYPE_NOTEQUAL_TANFADTYPE")
 ENDIF()
 
 # optionally disable the use of the Trilinos stokhos package
