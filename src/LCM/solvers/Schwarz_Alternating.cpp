@@ -866,6 +866,8 @@ SchwarzAlternating::SchwarzLoopDynamics() const
         piro_tempus_solver.setInitialState(
             current_time, ic_disp_rcp, ic_velo_rcp, ic_acce_rcp);
 
+        piro_tempus_solver.setInitialGuess(prev_disp_[subdomain]);
+
         solver.evalModel(in_args, out_args);
 
         // Allocate current solution vectors
