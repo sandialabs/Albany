@@ -702,7 +702,10 @@ x->Print(std::cout);
 
   // W matrix
   if (W_out != Teuchos::null) {
-    app->computeGlobalJacobianT(alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(),*xT,
+    app->computeGlobalJacobian(alpha, beta, omega, curr_time,
+                               Albany::createConstThyraVector(xT),
+                               Albany::createConstThyraVector(x_dotT),
+                               Albany::createConstThyraVector(x_dotdotT),
                                sacado_param_vec, f_outT.get(), *W_out_crsT);
 
     if (f_out != Teuchos::null) {
@@ -722,7 +725,10 @@ x->Print(std::cout);
     //Warning: to read this in to MATLAB correctly, code must be run in serial.
     //Otherwise Mass will have a distributed Map which would also need to be read in to MATLAB for proper
     //reading in of Mass.
-    app->computeGlobalJacobianT(1.0, 0.0, 0.0, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
+    app->computeGlobalJacobian(1.0, 0.0, 0.0, curr_time,
+                               Albany::createConstThyraVector(xT),
+                               Albany::createConstThyraVector(x_dotT),
+                               Albany::createConstThyraVector(x_dotdotT),
                                sacado_param_vec, ftmpT.get(), *MassT);
     EpetraExt::RowMatrixToMatrixMarketFile("mass.mm", *Mass);
     EpetraExt::BlockMapToMatrixMarketFile("rowmap.mm", Mass->RowMap());
@@ -739,8 +745,11 @@ x->Print(std::cout);
   }
 
   if (WPrec_out != Teuchos::null) {
-    app->computeGlobalJacobianT(alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
-                                   sacado_param_vec, f_outT.get(), *Extra_W_crsT);
+    app->computeGlobalJacobian(alpha, beta, omega, curr_time,
+                               Albany::createConstThyraVector(xT),
+                               Albany::createConstThyraVector(x_dotT),
+                               Albany::createConstThyraVector(x_dotdotT),
+                               sacado_param_vec, f_outT.get(), *Extra_W_crsT);
 //    app->computeGlobalJacobian(alpha, beta, omega, curr_time, x_dot.get(), x_dotdot.get(), *x,
 //                               sacado_param_vec, f_out.get(), *Extra_W_crs);
     if (f_out != Teuchos::null) {
@@ -789,7 +798,7 @@ x->Print(std::cout);
                                 Albany::createConstThyraVector(x_dotdotT),
                                 sacado_param_vec, p_vec.get(),
                                 Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
-                                f_outT.get(), NULL, dfdp_outT.get());
+                                f_outT, Teuchos::null, dfdp_outT);
       if (Teuchos::nonnull(f_out))
         Petra::TpetraVector_To_EpetraVector(f_outT, *f_out, comm);
       if (Teuchos::nonnull(dfdp_out))
@@ -826,7 +835,10 @@ f_out->Print(std::cout);
 
     const Thyra::ModelEvaluatorBase::Derivative<ST> dummy_derivT;
 
-    app->evaluateResponseDerivativeT(response_index, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
+    app->evaluateResponseDerivative(response_index, curr_time,
+                                    Albany::createConstThyraVector(xT),
+                                    Albany::createConstThyraVector(x_dotT),
+                                    Albany::createConstThyraVector(x_dotdotT),
                                     sacado_param_vec, NULL,
                                     NULL, f_derivT, dummy_derivT, dummy_derivT, dummy_derivT);
     if (Teuchos::nonnull(f_out))
@@ -912,7 +924,10 @@ f_out->Print(std::cout);
 
     // dg/dx, dg/dxdot
     if (!dgdx_out.isEmpty() || !dgdxdot_out.isEmpty() || !dgdxdotdot_out.isEmpty() ) {
-      app->evaluateResponseDerivativeT(i, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
+      app->evaluateResponseDerivative(i, curr_time,
+                                      Albany::createConstThyraVector(xT),
+                                      Albany::createConstThyraVector(x_dotT),
+                                      Albany::createConstThyraVector(x_dotdotT),
                                       sacado_param_vec, NULL,
                                       g_outT.get(), *dgdx_outT,
                                       *dgdxdot_outT, *dgdxdotdot_outT, dummy_derivT);
@@ -955,13 +970,16 @@ f_out->Print(std::cout);
         if (g_out != Teuchos::null)
            g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT);
         //create Tpetra copy of dgdp_out, call it dgdp_outT
-        if (dgdp_out != Teuchos::null)
+        if (dgdp_out != Teuchos::null) {
            dgdp_outT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp_out, commT);
-  app->evaluateResponseTangentT(i, alpha, beta, omega, curr_time, false,
-             x_dotT.get(), x_dotdotT.get(), *xT,
-             sacado_param_vec, p_vec.get(),
-             NULL, NULL, NULL, NULL, g_outT.get(), NULL,
-             dgdp_outT.get());
+        }
+        app->evaluateResponseTangent(i, alpha, beta, omega, curr_time, false,
+                                     Albany::createConstThyraVector(xT),
+                                     Albany::createConstThyraVector(x_dotT),
+                                     Albany::createConstThyraVector(x_dotdotT),
+                                     sacado_param_vec, p_vec.get(),
+                                     Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
+                                     g_outT.get(), NULL, dgdp_outT.get());
         //convert g_outT to Epetra_Vector g_out
         if (g_out != Teuchos::null)
           Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, comm);
@@ -979,7 +997,11 @@ f_out->Print(std::cout);
       if (dgdp_out != Teuchos::null) {
         dgdp_outT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp_out, commT);
         dgdp_outT->putScalar(0.);
-        app->evaluateResponseDistParamDerivT(i, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, sacado_param_vec, dist_param_names[j], dgdp_outT.get());
+        app->evaluateResponseDistParamDeriv(i, curr_time,
+                                            Albany::createConstThyraVector(xT),
+                                            Albany::createConstThyraVector(x_dotT),
+                                            Albany::createConstThyraVector(x_dotdotT),
+                                            sacado_param_vec, dist_param_names[j], dgdp_outT.get());
         Petra::TpetraMultiVector_To_EpetraMultiVector(dgdp_outT, *dgdp_out, comm);
       }
     }
@@ -987,11 +1009,13 @@ f_out->Print(std::cout);
     if (g_out != Teuchos::null && !g_computed) {
       //create Tpetra copy of g_out, call it g_outT
       g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT);
-      app->evaluateResponseT(i, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, sacado_param_vec,
-          *g_outT);
+      app->evaluateResponse(i, curr_time,
+                            Albany::createConstThyraVector(xT),
+                            Albany::createConstThyraVector(x_dotT),
+                            Albany::createConstThyraVector(x_dotdotT),
+                            sacado_param_vec, *g_outT);
       //convert g_outT to Epetra_Vector g_out
       Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, comm);
     }
   }
-
 }

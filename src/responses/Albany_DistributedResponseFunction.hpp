@@ -31,11 +31,11 @@ namespace Albany {
     virtual void postRegSetup(){};
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra
-    virtual void evaluateGradientT(
+    virtual void evaluateGradient(
       const double current_time,
-      const Tpetra_Vector* xdotT,
-      const Tpetra_Vector* xdotdotT,
-      const Tpetra_Vector& xT,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       Tpetra_Vector* gT,
@@ -54,11 +54,11 @@ namespace Albany {
     virtual bool isScalarResponse() const { return false; }
 
     //! Evaluate derivative dg/dx, dg/dxdot, dg/dp
-    virtual void evaluateDerivativeT(
+    virtual void evaluateDerivative(
       const double current_time,
-      const Tpetra_Vector* xdotT,
-      const Tpetra_Vector* xdotdotT,
-      const Tpetra_Vector& xT,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       Tpetra_Vector* gT,

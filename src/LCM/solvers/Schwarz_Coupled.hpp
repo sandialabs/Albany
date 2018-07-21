@@ -70,7 +70,7 @@ public:
   create_W_op() const;
 
   /// Create preconditioner operator
-  Teuchos::RCP<Thyra::PreconditionerBase<ST>>
+  Teuchos::RCP<Thyra_Preconditioner>
   create_W_prec() const;
 
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>

@@ -42,6 +42,6 @@ namespace Albany {
 
   };
 
-}
+} // namespace Albany
 
 #endif // ALBANY_SAMPLING_BASED_SCALAR_RESPONSE_FUNCTION_HPP

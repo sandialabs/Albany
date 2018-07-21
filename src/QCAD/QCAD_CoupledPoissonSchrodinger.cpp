@@ -1139,8 +1139,8 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
                                          Teuchos::null,
                                  			   poisson_sacado_param_vec, p_vec.get(),
 				                                 Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
-                                         fT_poisson.get(), NULL,
-				                                 dfdpT_poisson.get());
+                                         fT_poisson, NULL,
+				                                 dfdpT_poisson);
   if (Teuchos::nonnull(fT_poisson))
     Petra::TpetraVector_To_EpetraVector(fT_poisson, *f_poisson, commE);
   if (Teuchos::nonnull(dfdpT_poisson))
@@ -1165,8 +1165,7 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
                                          Teuchos::null,
 					                               schrodinger_sacado_param_vec, p_vec.get(),
                                          Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
-                                         fT_schrodinger_k.get(), NULL,
-					                               dfdpT_schrodinger_k.get());
+                                         fT_schrodinger_k, NULL, dfdpT_schrodinger_k);
     if (Teuchos::nonnull(fT_schrodinger_k))
       Petra::TpetraVector_To_EpetraVector(fT_schrodinger_k, *(f_schrodinger_vec[k]), commE);
     if (Teuchos::nonnull(dfdpT_schrodinger_k))
@@ -1409,12 +1408,20 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
 
     if (g_out != Teuchos::null && !g_computed) {
       if(i < poissonApp->getNumResponses()) {
-	poissonApp->evaluateResponseT(i, curr_time, xTdot_poisson.get(), NULL, *xT_poisson,
+        poissonApp->evaluateResponse(
+             i, curr_time,
+             Albany::createConstThyraVector(xT_poisson),
+             Albany::createConstThyraVector(xTdot_poisson),
+             Teuchos::null,
 				     poisson_sacado_param_vec, *gT_out);
       }
       else {
-	schrodingerApp->evaluateResponseT(i - poissonApp->getNumResponses(), curr_time, xTdot_schrodinger_0.get(), NULL,
-                                         *xT_schrodinger->getVector(0), schrodinger_sacado_param_vec, *gT_out);
+        schrodingerApp->evaluateResponse(
+             i - poissonApp->getNumResponses(), curr_time,
+             Albany::createConstThyraVector(xT_schrodinger->getVector(0)),
+             Albany::createConstThyraVector(xTdot_schrodinger_0),
+             Teuchos::null,
+             schrodinger_sacado_param_vec, *gT_out);
       }
       //convert gT_out to Epetra_Vector g_out
       Petra::TpetraVector_To_EpetraVector(gT_out, *g_out, commE);

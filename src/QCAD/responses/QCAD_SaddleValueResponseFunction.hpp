@@ -119,45 +119,45 @@ namespace QCAD {
     virtual unsigned int numResponses() const;
 
     virtual void 
-    evaluateResponseT(const double current_time,
-		     const Tpetra_Vector* xdot,
-		     const Tpetra_Vector* xdotdot,
-		     const Tpetra_Vector& x,
-		     const Teuchos::Array<ParamVec>& p,
-		     Tpetra_Vector& g);
+    evaluateResponse(const double current_time,
+        const Teuchos::RCP<const Thyra_Vector>& x,
+        const Teuchos::RCP<const Thyra_Vector>& xdot,
+        const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+        const Teuchos::Array<ParamVec>& p,
+        Tpetra_Vector& g);
 
     virtual void 
-    evaluateTangentT(const double alpha, 
+    evaluateTangent(const double alpha, 
 		    const double beta,
 		    const double omega,
 		    const double current_time,
 		    bool sum_derivs,
-		    const Tpetra_Vector* xdot,
-		    const Tpetra_Vector* xdotdot,
-		    const Tpetra_Vector& x,
+        const Teuchos::RCP<const Thyra_Vector>& x,
+        const Teuchos::RCP<const Thyra_Vector>& xdot,
+        const Teuchos::RCP<const Thyra_Vector>& xdotdot,
 		    const Teuchos::Array<ParamVec>& p,
 		    ParamVec* deriv_p,
-		    const Tpetra_MultiVector* Vxdot,
-		    const Tpetra_MultiVector* Vxdotdot,
-		    const Tpetra_MultiVector* Vx,
-		    const Tpetra_MultiVector* Vp,
+		    const Teuchos::RCP<const Thyra_MultiVector>& Vx,
+		    const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
+		    const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
+		    const Teuchos::RCP<const Thyra_MultiVector>& Vp,
 		    Tpetra_Vector* g,
 		    Tpetra_MultiVector* gx,
 		    Tpetra_MultiVector* gp);
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void 
-    evaluateGradientT(const double current_time,
-		     const Tpetra_Vector* xdotT,
-		     const Tpetra_Vector* xdotdotT,
-		     const Tpetra_Vector& xT,
-		     const Teuchos::Array<ParamVec>& p,
-		     ParamVec* deriv_p,
-		     Tpetra_Vector* gT,
-		     Tpetra_MultiVector* dg_dxT,
-		     Tpetra_MultiVector* dg_dxdotT,
-		     Tpetra_MultiVector* dg_dxdotdotT,
-		     Tpetra_MultiVector* dg_dpT);
+    evaluateGradient(const double current_time,
+        const Teuchos::RCP<const Thyra_Vector>& x,
+        const Teuchos::RCP<const Thyra_Vector>& xdot,
+        const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+		    const Teuchos::Array<ParamVec>& p,
+		    ParamVec* deriv_p,
+		    Tpetra_Vector* gT,
+		    Tpetra_MultiVector* dg_dxT,
+		    Tpetra_MultiVector* dg_dxdotT,
+		    Tpetra_MultiVector* dg_dxdotdotT,
+		    Tpetra_MultiVector* dg_dpT);
 
 
 #if defined(ALBANY_EPETRA)
@@ -189,12 +189,6 @@ namespace QCAD {
   private:
 
     //! Helper functions for Nudged Elastic Band (NEB) algorithm, performed in evaluateResponse
-#if defined(ALBANY_EPETRA)
-    void initializeImagePoints(const double current_time, const Epetra_Vector* xdot,
-			       const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
-			       Epetra_Vector& g, int dbMode);
-#endif
-    //Tpetra version of above
     void initializeImagePointsT(const double current_time, const Tpetra_Vector* xdotT,
 			       const Tpetra_Vector& xT, const Teuchos::Array<ParamVec>& p,
 			       Tpetra_Vector& gT, int dbMode);
@@ -221,14 +215,8 @@ namespace QCAD {
 			     const Tpetra_Vector& xT, const Teuchos::Array<ParamVec>& p,
 			     Tpetra_Vector& gT, int dbMode);
 
-#if defined(ALBANY_EPETRA) 
     //! Helper functions for level-set algorithm, performed in evaluateResponse
-    void doLevelSet(const double current_time,  const Epetra_Vector* xdot,
-		    const Epetra_Vector& x,  const Teuchos::Array<ParamVec>& p,
-		    Epetra_Vector& g, int dbMode);
-#endif
-    //Tpetra version of above
-    void doLevelSetT(const double current_time,  const Tpetra_Vector* xdotT,
+    void doLevelSet(const double current_time,  const Tpetra_Vector* xdotT,
 		    const Tpetra_Vector& xT,  const Teuchos::Array<ParamVec>& p,
 		    Tpetra_Vector& gT, int dbMode);
 #if defined(ALBANY_EPETRA) 
@@ -288,10 +276,8 @@ namespace QCAD {
     //! helper function to get the highest image point (the one with the largest value)
     int getHighestPtIndex() const;
 
-#if defined(ALBANY_EPETRA) 
-    //! Epetra Communicator
-    Teuchos::RCP<const Epetra_Comm> comm;
-#endif
+    //! Communicator
+    Teuchos::RCP<const Teuchos_Comm> comm;
 
     //! data used across worksets and processors in saddle point algorithm
     std::size_t numDims;

@@ -383,8 +383,8 @@ Aeras::HVDecorator::evalModelImpl(
           Albany::createConstThyraVector(x_dotT),
           Albany::createConstThyraVector(x_dotdotT),
           sacado_param_vec, p_vec.get(),
-          NULL, NULL, NULL, NULL, fT_out.get(), NULL,
-          dfdp_outT.get());
+          NULL, NULL, NULL, NULL,
+          fT_out, NULL, dfdp_outT);
 
       f_already_computed = true;
     }
@@ -484,12 +484,10 @@ Aeras::HVDecorator::evalModelImpl(
     }
 
     if (Teuchos::nonnull(gT_out)) {
-      app->evaluateResponseT(
-          j, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
+      app->evaluateResponse(
+          j, curr_time,
+          x, x_dot, x_dotdot,
           sacado_param_vec, *gT_out);
     }
   }
 }
-
-
-

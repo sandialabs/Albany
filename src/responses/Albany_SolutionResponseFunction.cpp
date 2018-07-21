@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "Albany_SolutionResponseFunction.hpp"
+#include "Albany_TpetraThyraUtils.hpp"
 #include <algorithm>
 
 Albany::SolutionResponseFunction::
@@ -31,9 +32,8 @@ SolutionResponseFunction(
 
 void
 Albany::SolutionResponseFunction::
-setupT()
+setup()
 {
-
   // Build culled map and importer - Tpetra
   Teuchos::RCP<const Tpetra_Map> x_mapT = application->getMapT();
   Teuchos::RCP<const Teuchos::Comm<int> > commT = application->getComm(); 
@@ -81,68 +81,67 @@ createGradientOpT() const
 
 void
 Albany::SolutionResponseFunction::
-evaluateResponseT(const double current_time,
-		 const Tpetra_Vector* xdotT,
-		 const Tpetra_Vector* xdotdotT,
-		 const Tpetra_Vector& xT,
-		 const Teuchos::Array<ParamVec>& p,
-		 Tpetra_Vector& gT)
+evaluateResponse(const double /*current_time*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+		const Teuchos::Array<ParamVec>& /*p*/,
+		Tpetra_Vector& gT)
 {
-  cullSolutionT(xT, gT);
+  cullSolution(x, gT);
 }
-
 
 void
 Albany::SolutionResponseFunction::
-evaluateTangentT(const double alpha,
+evaluateTangent(const double /*alpha*/,
 		const double beta,
-		const double omega,
-		const double current_time,
-		bool sum_derivs,
-		const Tpetra_Vector* xdotT,
-		const Tpetra_Vector* xdotdotT,
-		const Tpetra_Vector& xT,
-		const Teuchos::Array<ParamVec>& p,
-		ParamVec* deriv_p,
-		const Tpetra_MultiVector* VxdotT,
-		const Tpetra_MultiVector* VxdotdotT,
-		const Tpetra_MultiVector* VxT,
-		const Tpetra_MultiVector* VpT,
+		const double /*omega*/,
+		const double /*current_time*/,
+		bool /*sum_derivs*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+		const Teuchos::Array<ParamVec>& /*p*/,
+		ParamVec* /*deriv_p*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vx,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdot*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdotdot*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vp*/,
 		Tpetra_Vector* gT,
 		Tpetra_MultiVector* gxT,
 		Tpetra_MultiVector* gpT)
 {
   if (gT) {
-    cullSolutionT(xT, *gT);
+    cullSolution(x, *gT);
   }
 
   if (gxT) {
     gxT->putScalar(0.0);
-    if (VxT) {
-      cullSolutionT(*VxT, *gxT);
+    if (!Vx.is_null()) {
+      cullSolution(Vx, *gxT);
       gxT->scale(beta);
     }
   }
 
-  if (gpT)
+  if (gpT) {
     gpT->putScalar(0.0);
+  }
 }
 
 void
 Albany::SolutionResponseFunction::
-evaluateGradientT(const double current_time,
-		 const Tpetra_Vector* xdotT,
-		 const Tpetra_Vector* xdotdotT,
-		 const Tpetra_Vector& xT,
-		 const Teuchos::Array<ParamVec>& p,
-		 ParamVec* deriv_p,
-		 Tpetra_Vector* gT,
-		 Tpetra_Operator* dg_dxT,
-		 Tpetra_Operator* dg_dxdotT,
-		 Tpetra_Operator* dg_dxdotdotT,
-		 Tpetra_MultiVector* dg_dpT)
+evaluateGradient(const double /*current_time*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+		const Teuchos::Array<ParamVec>& /*p*/,
+		ParamVec* /*deriv_p*/,
+		Tpetra_Vector* gT,
+		Tpetra_Operator* dg_dxT,
+		Tpetra_Operator* dg_dxdotT,
+		Tpetra_Operator* dg_dxdotdotT,
+		Tpetra_MultiVector* dg_dpT)
 {
-
 /*
   Note: In the below, Tpetra throws an exception if one tries to "setAllToScalar()" on
   a CrsMatrix that fill is not active on. The if tests check the fill status, if fill is
@@ -152,8 +151,9 @@ evaluateGradientT(const double current_time,
 
   bool callFillComplete = false;
 
-  if (gT)
-    cullSolutionT(xT, *gT);
+  if (gT) {
+    cullSolution(x, *gT);
+  }
 
   if (dg_dxT) {
     Tpetra_CrsMatrix *dg_dx_crsT = dynamic_cast<Tpetra_CrsMatrix*>(dg_dxT);
@@ -206,23 +206,25 @@ evaluateGradientT(const double current_time,
     }
   }
 
-  if (dg_dpT)
+  if (dg_dpT) {
     dg_dpT->putScalar(0.0);
+  }
 }
 
 void
 Albany::SolutionResponseFunction::
-evaluateDistParamDerivT(
-      const double current_time,
-      const Tpetra_Vector* xdotT,
-      const Tpetra_Vector* xdotdotT,
-      const Tpetra_Vector& xT,
-      const Teuchos::Array<ParamVec>& param_array,
-      const std::string& dist_param_name,
-      Tpetra_MultiVector* dg_dpT)
+evaluateDistParamDeriv(
+    const double /*current_time*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*x*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+    const Teuchos::Array<ParamVec>& /*param_array*/,
+    const std::string& /*dist_param_name*/,
+    Tpetra_MultiVector* dg_dpT)
 {
-  if (dg_dpT)
+  if (dg_dpT) {
     dg_dpT->putScalar(0.0);
+  }
 }
 
 Teuchos::RCP<const Tpetra_Map>
@@ -259,7 +261,8 @@ buildCulledMapT(const Tpetra_Map& x_mapT,
 
 void
 Albany::SolutionResponseFunction::
-cullSolutionT(const Tpetra_MultiVector& xT, Tpetra_MultiVector& x_culledT) const
+cullSolution(const Teuchos::RCP<const Thyra_MultiVector>& x, Tpetra_MultiVector& x_culledT) const
 {
-  x_culledT.doImport(xT, *importerT, Tpetra::INSERT);
+  auto xT = Albany::getConstTpetraMultiVector(x);
+  x_culledT.doImport(*xT, *importerT, Tpetra::INSERT);
 }

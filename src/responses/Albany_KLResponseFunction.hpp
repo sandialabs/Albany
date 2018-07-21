@@ -33,7 +33,7 @@ namespace Albany {
     virtual ~KLResponseFunction();
 
     //! Setup response function
-    virtual void setupT() { response->setupT(); }
+    virtual void setup() { response->setup(); }
 
     //! Perform post registration setup (do nothing)
     virtual void postRegSetup(){};
@@ -54,50 +54,50 @@ namespace Albany {
     //@{
 
     //! Evaluate responses 
-    virtual void evaluateResponseT(
+    virtual void evaluateResponse(
       const double current_time,
-      const Tpetra_Vector* xdotT,
-      const Tpetra_Vector* xdotdotT,
-      const Tpetra_Vector& xT,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
       Tpetra_Vector& gT);
     
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
-    virtual void evaluateTangentT(
+    virtual void evaluateTangent(
       const double alpha, 
       const double beta,
       const double omega,
       const double current_time,
       bool sum_derivs,
-      const Tpetra_Vector* xdot,
-      const Tpetra_Vector* xdotdot,
-      const Tpetra_Vector& x,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
-      const Tpetra_MultiVector* Vxdot,
-      const Tpetra_MultiVector* Vxdotdot,
-      const Tpetra_MultiVector* Vx,
-      const Tpetra_MultiVector* Vp,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vx,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vp,
       Tpetra_Vector* g,
       Tpetra_MultiVector* gx,
       Tpetra_MultiVector* gp);
 
     //! Evaluate distributed parameter derivative dg/dp
-    virtual void evaluateDistParamDerivT(
+    virtual void evaluateDistParamDeriv(
       const double current_time,
-      const Tpetra_Vector* xdotT,
-      const Tpetra_Vector* xdotdotT,
-      const Tpetra_Vector& xT,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& param_array,
       const std::string& dist_param_name,
       Tpetra_MultiVector*  dg_dpT);
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
-    virtual void evaluateDerivativeT(
+    virtual void evaluateDerivative(
       const double current_time,
-      const Tpetra_Vector* xdot,
-      const Tpetra_Vector* xdotdot,
-      const Tpetra_Vector& x,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       Tpetra_Vector* g,
@@ -131,6 +131,6 @@ namespace Albany {
 
   };
 
-}
+} // namespace Albany
 
 #endif // ALBANY_KL_RESPONSE_FUNCTION_HPP

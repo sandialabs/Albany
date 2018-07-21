@@ -7,6 +7,8 @@
 
 #include "Albany_SolutionAverageResponseFunction.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 Albany::SolutionAverageResponseFunction::
 SolutionAverageResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& commT) :
   ScalarResponseFunction(commT)
@@ -27,117 +29,138 @@ numResponses() const
 
 void
 Albany::SolutionAverageResponseFunction::
-evaluateResponseT(const double current_time,
-		 const Tpetra_Vector* xdotT,
-		 const Tpetra_Vector* xdotdotT,
-		 const Tpetra_Vector& xT,
-		 const Teuchos::Array<ParamVec>& p,
-		 Tpetra_Vector& gT)
+evaluateResponse(const double /*current_time*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+		const Teuchos::Array<ParamVec>& /*p*/,
+		Tpetra_Vector& gT)
 {
-  ST mean = xT.meanValue();
-  Teuchos::ArrayRCP<ST> gT_nonconstView = gT.get1dViewNonConst();
-  gT_nonconstView[0] = mean; 
+  evaluateResponseImpl(*x,gT);
 }
-
 
 void
 Albany::SolutionAverageResponseFunction::
-evaluateTangentT(const double alpha, 
+evaluateTangent(const double alpha, 
 		const double beta,
-		const double omega,
-		const double current_time,
-		bool sum_derivs,
-		const Tpetra_Vector* xdotT,
-		const Tpetra_Vector* xdotdotT,
-		const Tpetra_Vector& xT,
-		const Teuchos::Array<ParamVec>& p,
-		ParamVec* deriv_p,
-		const Tpetra_MultiVector* VxdotT,
-		const Tpetra_MultiVector* VxdotdotT,
-		const Tpetra_MultiVector* VxT,
-		const Tpetra_MultiVector* VpT,
+		const double /*omega*/,
+		const double /*current_time*/,
+		bool /*sum_derivs*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+		const Teuchos::Array<ParamVec>& /*p*/,
+		ParamVec* /*deriv_p*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vx,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdot*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdotdot*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vp*/,
 		Tpetra_Vector* gT,
 		Tpetra_MultiVector* gxT,
 		Tpetra_MultiVector* gpT)
 {
   // Evaluate response g
   if (gT != NULL) {
-    ST mean = xT.meanValue();
-    Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
-    gT_nonconstView[0] = mean; 
+    evaluateResponseImpl(*x,*gT);
   }
 
   // Evaluate tangent of g = dg/dx*Vx + dg/dxdot*Vxdot + dg/dp*Vp
   // If Vx == NULL, Vx is the identity
   if (gxT != NULL) {
     Teuchos::ArrayRCP<ST> gxT_nonconstView;
-    if (VxT != NULL) {
-       Teuchos::Array<ST> means; 
-       means.resize(VxT->getNumVectors());
-       VxT->meanValue(means());  
-      for (int j=0; j<VxT->getNumVectors(); j++) {  
+    if (!Vx.is_null()) {
+      if (ones.is_null() || ones->domain()->dim()!=Vx->domain()->dim()) {
+        ones = Thyra::createMembers(Vx->range(), Vx->domain()->dim());
+        ones->assign(1.0);
+      }
+      Teuchos::Array<ST> means; 
+      means.resize(Vx->domain()->dim());
+      Vx->dots(*ones,means());
+      for (auto& mean : means) {
+        mean /= Vx->domain()->dim();
+      }
+      for (int j=0; j<Vx->domain()->dim(); j++) {  
         gxT_nonconstView = gxT->getDataNonConst(j); 
         gxT_nonconstView[0] = means[j];  
       }
     }
     else {
-      gxT->putScalar(1.0/xT.getGlobalLength());
+      gxT->putScalar(1.0/x->space()->dim());
     }
     gxT->scale(alpha);
   }
   
-  if (gpT != NULL)
+  if (gpT != NULL) {
     gpT->putScalar(0.0);
+  }
 }
 
 void
 Albany::SolutionAverageResponseFunction::
-evaluateGradientT(const double current_time,
-		 const Tpetra_Vector* xdotT,
-		 const Tpetra_Vector* xdotdotT,
-		 const Tpetra_Vector& xT,
-		 const Teuchos::Array<ParamVec>& p,
-		 ParamVec* deriv_p,
-		 Tpetra_Vector* gT,
-		 Tpetra_MultiVector* dg_dxT,
-		 Tpetra_MultiVector* dg_dxdotT,
-		 Tpetra_MultiVector* dg_dxdotdotT,
-		 Tpetra_MultiVector* dg_dpT)
+evaluateGradient(const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+		const Teuchos::Array<ParamVec>& p,
+		ParamVec* deriv_p,
+		Tpetra_Vector* gT,
+		Tpetra_MultiVector* dg_dxT,
+		Tpetra_MultiVector* dg_dxdotT,
+		Tpetra_MultiVector* dg_dxdotdotT,
+		Tpetra_MultiVector* dg_dpT)
 {
-
   // Evaluate response g
   if (gT != NULL) {
-    ST mean = xT.meanValue();
-    Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
-    gT_nonconstView[0] = mean;
+    evaluateResponseImpl(*x,*gT);
   }
 
   // Evaluate dg/dx
-  if (dg_dxT != NULL)
-    dg_dxT->putScalar(1.0 / xT.getGlobalLength());
+  if (dg_dxT != NULL) {
+    dg_dxT->putScalar(1.0 / x->space()->dim());
+  }
 
   // Evaluate dg/dxdot
-  if (dg_dxdotT != NULL)
+  if (dg_dxdotT != NULL) {
     dg_dxdotT->putScalar(0.0);
-  if (dg_dxdotdotT != NULL)
+  }
+  if (dg_dxdotdotT != NULL) {
     dg_dxdotdotT->putScalar(0.0);
+  }
 
   // Evaluate dg/dp
-  if (dg_dpT != NULL)
+  if (dg_dpT != NULL) {
     dg_dpT->putScalar(0.0);
+  }
 }
 
 void
 Albany::SolutionAverageResponseFunction::
-evaluateDistParamDerivT(
-         const double current_time,
-         const Tpetra_Vector* xdotT,
-         const Tpetra_Vector* xdotdotT,
-         const Tpetra_Vector& xT,
-         const Teuchos::Array<ParamVec>& param_array,
-         const std::string& dist_param_name,
-         Tpetra_MultiVector* dg_dpT) {
+evaluateDistParamDeriv(
+    const double /*current_time*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*x*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+    const Teuchos::Array<ParamVec>& /*param_array*/,
+    const std::string& /*dist_param_name*/,
+    Tpetra_MultiVector* dg_dpT)
+{
   // Evaluate response derivative dg_dp
-  if (dg_dpT != NULL)
+  if (dg_dpT != NULL) {
     dg_dpT->putScalar(0.0);
+  }
+}
+
+void 
+Albany::SolutionAverageResponseFunction::
+evaluateResponseImpl (
+    const Thyra_Vector& x,
+		Tpetra_Vector& gT)
+{
+  if (one.is_null()) {
+    one = Thyra::createMember(x.space());
+    one->assign(1.0);
+  }
+  const ST mean = one->dot(x) / x.space()->dim();
+  Teuchos::ArrayRCP<ST> gT_nonconstView = gT.get1dViewNonConst();
+  gT_nonconstView[0] = mean; 
 }

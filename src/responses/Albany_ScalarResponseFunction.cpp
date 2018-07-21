@@ -38,18 +38,18 @@ createGradientOpT() const
 
 void
 Albany::ScalarResponseFunction::
-evaluateDerivativeT(
-  const double current_time,
-  const Tpetra_Vector* xdotT,
-  const Tpetra_Vector* xdotdotT,
-  const Tpetra_Vector& xT,
-  const Teuchos::Array<ParamVec>& p,
-  ParamVec* deriv_p,
-  Tpetra_Vector* gT,
-  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
-  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
-  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
-  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp)
+evaluateDerivative(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& p,
+    ParamVec* deriv_p,
+    Tpetra_Vector* gT,
+    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
+    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
+    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
+    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp)
 {
 
   const Teuchos::RCP<Tpetra_MultiVector> dg_dxT =
@@ -72,8 +72,7 @@ evaluateDerivativeT(
     ConverterT::getTpetraMultiVector(dg_dp.getMultiVector()) :
     Teuchos::null;
 
-  this->evaluateGradientT(
-    current_time, xdotT, xdotdotT, xT, p, deriv_p, gT,
+  this->evaluateGradient(
+    current_time, x, xdot, xdotdot, p, deriv_p, gT,
     dg_dxT.get(), dg_dxdotT.get(), dg_dxdotdotT.get(), dg_dpT.get());
 }
-

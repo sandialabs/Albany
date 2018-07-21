@@ -807,7 +807,7 @@ Albany::ModelEvaluatorT::evalModelImpl(
   }
 
   for (int l = 0; l < num_param_vecs+num_dist_param_vecs; ++l) {
-    const Teuchos::RCP<const Thyra::VectorBase<ST>> p = inArgsT.get_p(l);
+    const Teuchos::RCP<const Thyra_Vector> p = inArgsT.get_p(l);
     if (Teuchos::nonnull(p)) {
       const Teuchos::RCP<const Tpetra_Vector> pT =
           ConverterT::getConstTpetraVector(p);
@@ -879,14 +879,9 @@ Albany::ModelEvaluatorT::evalModelImpl(
 
   // W matrix
   if (Teuchos::nonnull(W_op_out_crsT)) {
-    app->computeGlobalJacobianT(
-        alpha,
-        beta,
-        omega,
-        curr_time,
-        x_dotT.get(),
-        x_dotdotT.get(),
-        *xT,
+    app->computeGlobalJacobian(
+        alpha, beta, omega, curr_time,
+        x, x_dot, x_dotdot,
         sacado_param_vec,
         fT_out.get(),
         *W_op_out_crsT,
@@ -898,14 +893,9 @@ Albany::ModelEvaluatorT::evalModelImpl(
     // Otherwise Mass will have a distributed Map which would also need to be
     // read in to MATLAB for proper
     // reading in of Mass.
-    app->computeGlobalJacobianT(
-        1.0,
-        0.0,
-        0.0,
-        curr_time,
-        x_dotT.get(),
-        x_dotdotT.get(),
-        *xT,
+    app->computeGlobalJacobian(
+        1.0, 0.0, 0.0, curr_time,
+        x, x_dot, x_dotdot,
         sacado_param_vec,
         ftmp.get(),
         *Mass_crs);
@@ -917,14 +907,9 @@ Albany::ModelEvaluatorT::evalModelImpl(
 #endif
   }
   if (Teuchos::nonnull(WPrec_out)) {
-    app->computeGlobalJacobianT(
-        alpha,
-        beta,
-        omega,
-        curr_time,
-        x_dotT.get(),
-        x_dotdotT.get(),
-        *xT,
+    app->computeGlobalJacobian(
+        alpha, beta, omega, curr_time,
+        x, x_dot, x_dotdot,
         sacado_param_vec,
         fT_out.get(),
         *Extra_W_crs);
@@ -948,23 +933,10 @@ Albany::ModelEvaluatorT::evalModelImpl(
           Teuchos::rcpFromRef(sacado_param_vec[l]);
 
       app->computeGlobalTangent(
-          0.0,
-          0.0,
-          0.0,
-          curr_time,
-          false,
-          x,
-          x_dot,
-          x_dotdot,
-          sacado_param_vec,
-          p_vec.get(),
-          Teuchos::null,
-          Teuchos::null,
-          Teuchos::null,
-          Teuchos::null,
-          fT_out.get(),
-          NULL,
-          dfdp_outT.get());
+          0.0, 0.0, 0.0, curr_time, false,
+          x, x_dot, x_dotdot, sacado_param_vec, p_vec.get(),
+          Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
+          fT_out, Teuchos::null, dfdp_outT);
 
       f_already_computed = true;
     }
@@ -992,12 +964,9 @@ Albany::ModelEvaluatorT::evalModelImpl(
     const Thyra::ModelEvaluatorBase::Derivative<ST> dummy_derivT;
 
     const int response_index = 0;  // need to add capability for sending this in
-    app->evaluateResponseDerivativeT(
-        response_index,
-        curr_time,
-        x_dotT.get(),
-        x_dotdotT.get(),
-        *xT,
+    app->evaluateResponseDerivative(
+        response_index, curr_time,
+        x, x_dot, x_dotdot,
         sacado_param_vec,
         NULL,
         NULL,
@@ -1009,9 +978,7 @@ Albany::ModelEvaluatorT::evalModelImpl(
     if (Teuchos::nonnull(fT_out) && !f_already_computed) {
       app->computeGlobalResidual(
           curr_time,
-          x,
-          x_dot,
-          x_dotdot,
+          x, x_dot, x_dotdot,
           sacado_param_vec,
           *fT_out,
           dt);
@@ -1020,10 +987,8 @@ Albany::ModelEvaluatorT::evalModelImpl(
 
   // Response functions
   for (int j = 0; j < outArgsT.Ng(); ++j) {
-    const Teuchos::RCP<Thyra::VectorBase<ST>> g_out = outArgsT.get_g(j);
-    Teuchos::RCP<Tpetra_Vector>               gT_out =
-        Teuchos::nonnull(g_out) ? ConverterT::getTpetraVector(g_out) :
-                                  Teuchos::null;
+    const Teuchos::RCP<Thyra_Vector> g_out = outArgsT.get_g(j);
+    Teuchos::RCP<Tpetra_Vector> gT_out = Albany::getTpetraVector(g_out);
 
     const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxT_out =
         outArgsT.get_DgDx(j);
@@ -1042,12 +1007,8 @@ Albany::ModelEvaluatorT::evalModelImpl(
     // dg/dx, dg/dxdot
     if (!dgdxT_out.isEmpty() || !dgdxdotT_out.isEmpty()) {
       const Thyra::ModelEvaluatorBase::Derivative<ST> dummy_derivT;
-      app->evaluateResponseDerivativeT(
-          j,
-          curr_time,
-          x_dotT.get(),
-          x_dotdotT.get(),
-          *xT,
+      app->evaluateResponseDerivative(
+          j, curr_time, x, x_dot, x_dotdot,
           sacado_param_vec,
           NULL,
           gT_out.get(),
@@ -1063,30 +1024,15 @@ Albany::ModelEvaluatorT::evalModelImpl(
     for (int l = 0; l < num_param_vecs; ++l) {
       const Teuchos::RCP<Thyra::MultiVectorBase<ST>> dgdp_out =
           outArgsT.get_DgDp(j, l).getMultiVector();
-      const Teuchos::RCP<Tpetra_MultiVector> dgdpT_out =
-          Teuchos::nonnull(dgdp_out) ?
-              ConverterT::getTpetraMultiVector(dgdp_out) :
-              Teuchos::null;
+      const Teuchos::RCP<Tpetra_MultiVector> dgdpT_out = Albany::getTpetraMultiVector(dgdp_out);
 
       if (Teuchos::nonnull(dgdpT_out)) {
         const Teuchos::RCP<ParamVec> p_vec =
             Teuchos::rcpFromRef(sacado_param_vec[l]);
-        app->evaluateResponseTangentT(
-            j,
-            alpha,
-            beta,
-            omega,
-            curr_time,
-            false,
-            x_dotT.get(),
-            x_dotdotT.get(),
-            *xT,
-            sacado_param_vec,
-            p_vec.get(),
-            NULL,
-            NULL,
-            NULL,
-            NULL,
+        app->evaluateResponseTangent(
+            j, alpha, beta, omega, curr_time, false,
+            x, x_dot, x_dotdot, sacado_param_vec, p_vec.get(),
+            Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
             gT_out.get(),
             NULL,
             dgdpT_out.get());
@@ -1098,19 +1044,12 @@ Albany::ModelEvaluatorT::evalModelImpl(
     for (int l = 0; l < num_dist_param_vecs; l++) {
       const Teuchos::RCP<Thyra::MultiVectorBase<ST>> dgdp_out =
           outArgsT.get_DgDp(j, l + num_param_vecs).getMultiVector();
-      const Teuchos::RCP<Tpetra_MultiVector> dgdpT_out =
-          Teuchos::nonnull(dgdp_out) ?
-              ConverterT::getTpetraMultiVector(dgdp_out) :
-              Teuchos::null;
+      const Teuchos::RCP<Tpetra_MultiVector> dgdpT_out = Albany::getTpetraMultiVector(dgdp_out);
 
       if (Teuchos::nonnull(dgdpT_out)) {
         dgdpT_out->putScalar(0.);
-        app->evaluateResponseDistParamDerivT(
-            j,
-            curr_time,
-            x_dotT.get(),
-            x_dotdotT.get(),
-            *xT,
+        app->evaluateResponseDistParamDeriv(
+            j, curr_time, x, x_dot, x_dotdot,
             sacado_param_vec,
             dist_param_names[l],
             dgdpT_out.get());
@@ -1118,14 +1057,7 @@ Albany::ModelEvaluatorT::evalModelImpl(
     }
 
     if (Teuchos::nonnull(gT_out)) {
-      app->evaluateResponseT(
-          j,
-          curr_time,
-          x_dotT.get(),
-          x_dotdotT.get(),
-          *xT,
-          sacado_param_vec,
-          *gT_out);
+      app->evaluateResponse(j, curr_time, x, x_dot, x_dotdot, sacado_param_vec, *gT_out);
     }
   }
 

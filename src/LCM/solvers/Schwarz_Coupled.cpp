@@ -14,6 +14,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 //uncomment the following to write stuff out to matrix market to debug
 //define WRITE_TO_MATRIX_MARKET
 
@@ -771,7 +773,7 @@ SchwarzCoupled::create_W_op() const
   return jac.getThyraCoupledJacobian(jacs_, apps_);
 }
 
-Teuchos::RCP<Thyra::PreconditionerBase<ST>>
+Teuchos::RCP<Thyra_Preconditioner>
 SchwarzCoupled::create_W_prec() const
 {
   Teuchos::RCP<Thyra::DefaultPreconditioner<ST>>
@@ -922,75 +924,46 @@ evalModelImpl(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
 {
-  //Get xT and x_dotT from in_args
-  Teuchos::RCP<const Thyra::ProductVectorBase<ST>>
-  xT = Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST>>(
-      in_args.get_x(), true);
-
-  // Create a Teuchos array of the xT for each model,
-  // casting to Tpetra_Vector
-  Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>>
-  xTs(num_models_);
-
-  Teuchos::RCP<const Thyra::ProductVectorBase<ST>>
-  x_dotT = Teuchos::null;
-  Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>>
-  x_dotTs(num_models_);
-  if (supports_xdot_) {
-    x_dotT =
-        Teuchos::nonnull(in_args.get_x_dot()) ?
-            Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST>>(
-                in_args.get_x_dot(), true) :
-            Teuchos::null;
+  //Get x and x_dot from in_args
+  Teuchos::RCP<const Thyra_ProductVector> x, x_dot, x_dotdot;
+  x = Teuchos::rcp_dynamic_cast<const Thyra_ProductVector>(in_args.get_x(), true);
+  if (supports_xdot_ && !in_args.get_x_dot().is_null()) {
+    x_dot = Teuchos::rcp_dynamic_cast<const Thyra_ProductVector>(in_args.get_x_dot(), true);
   }
 
-  for (auto m = 0; m < num_models_; ++m) {
-    //Get each Tpetra vector
-    xTs[m] = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(
-        xT->getVectorBlock(m),
-        true)->getConstTpetraVector();
-  }
-  if (x_dotT != Teuchos::null) {
-    for (auto m = 0; m < num_models_; ++m) {
-      //Get each Tpetra vector
-      x_dotTs[m] = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(
-          x_dotT->getVectorBlock(m),
-          true)->getConstTpetraVector();
+  // Create a Teuchos array of the x for each model, for both Thyra and Tpetra
+  Teuchos::Array<Teuchos::RCP<const Thyra_Vector>> xs(num_models_), x_dots(num_models_);
+  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector>> xTs(num_models_), x_dotTs(num_models_);
+
+  // x_dotdot not used, so just create a global Tpetra RCP
+  Teuchos::RCP<const Tpetra_Vector> x_dotdotT;
+
+  for (int m=0; m<num_models_; ++m) {
+    //Get each Thyra vector
+    xs[m] = x->getVectorBlock(m);
+    xTs[m] = Albany::getConstTpetraVector(xs[m]);
+
+    if (!x_dot.is_null()) {
+      x_dots[m] = x_dot->getVectorBlock(m);
+      x_dotTs[m] = Albany::getConstTpetraVector(x_dots[m]);
     }
   }
 
-  // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
-  Teuchos::RCP<Tpetra_Vector const> const
-  x_dotdotT = Teuchos::null;
+  double const alpha = (!x_dot.is_null() || !x_dotdot.is_null()) ? in_args.get_alpha() : 0.0;
 
-  double const
-  alpha =
-      (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
-          in_args.get_alpha() : 0.0;
+  double const omega = 0.0;
 
-  // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
-  // const double omega = (Teuchos::nonnull(x_dotT) ||
-  // Teuchos::nonnull(x_dotdotT)) ? in_args.get_omega() : 0.0;
+  double const beta = (!x_dot.is_null() || !x_dotdot.is_null()) ? in_args.get_beta() : 1.0;
 
-  double const
-  omega = 0.0;
-
-  double const beta =
-      (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
-          in_args.get_beta() : 1.0;
-
-  double const curr_time =
-      (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
-          in_args.get_t() : 0.0;
+  double const curr_time = (!x_dot.is_null() || !x_dotdot.is_null()) ? in_args.get_t() : 0.0;
 
   //Get parameters
   for (auto l = 0; l < num_params_total_; ++l) {
     //get p from in_args for each parameter
-    Teuchos::RCP<Thyra::ProductVectorBase<ST> const> pT =
-        Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST>>(
-            in_args.get_p(l), true);
+    Teuchos::RCP<const Thyra_ProductVector> pT =
+        Teuchos::rcp_dynamic_cast<const Thyra_ProductVector>(in_args.get_p(l), true);
     // Don't set it if there is nothing. Avoid null pointer.
-    if (Teuchos::is_null(pT) == true) continue;
+    if (pT.is_null()) { continue; }
 
     for (auto m = 0; m < num_models_; ++m) {
       ParamVec &
@@ -1002,9 +975,7 @@ evalModelImpl(
       // The code does not work if 0 is replaced by m:
       // only the first vector in the Thyra Product MultiVec is correct.
       // Why...?
-      Teuchos::RCP<Tpetra_Vector const>
-      pTm = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(
-          pT->getVectorBlock(0), true)->getConstTpetraVector();
+      Teuchos::RCP<Tpetra_Vector const> pTm = Albany::getConstTpetraVector(pT->getVectorBlock(0));
 
       Teuchos::ArrayRCP<ST const> pTm_constView = pTm->get1dView();
       for (auto k = 0; k < sacado_param_vector.size(); ++k) {
@@ -1015,39 +986,31 @@ evalModelImpl(
   //
   // Get the output arguments
   //
-  Teuchos::RCP<Thyra::ProductVectorBase<ST>> fT_out =
-      Teuchos::nonnull(out_args.get_f()) ?
-          Teuchos::rcp_dynamic_cast<Thyra::ProductVectorBase<ST>>(
-              out_args.get_f(), true) :
-          Teuchos::null;
+  Teuchos::RCP<Thyra_ProductVector> fT_out;
+  if (!out_args.get_f().is_null()) {
+    fT_out = Teuchos::rcp_dynamic_cast<Thyra_ProductVector>(out_args.get_f(), true);
+  }
 
   //Create a Teuchos array of the fT_out for each model.
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector>> fTs_out(num_models_);
   if (fT_out != Teuchos::null) {
     for (auto m = 0; m < num_models_; ++m) {
       //Get each Tpetra vector
-      fTs_out[m] = Teuchos::rcp_dynamic_cast<Thyra_TpetraVector>(
-          fT_out->getNonconstVectorBlock(m),
-          true)->getTpetraVector();
+      fTs_out[m] = Albany::getTpetraVector(fT_out->getNonconstVectorBlock(m));
     }
   }
 
-  Teuchos::RCP<Thyra::LinearOpBase<ST>>
-  W_op_outT = Teuchos::nonnull(out_args.get_W_op()) ?
-      out_args.get_W_op() :
-      Teuchos::null;
+  Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op_outT = out_args.get_W_op();
 
   // Compute the functions
 
-  Teuchos::Array<bool>
-  fs_already_computed(num_models_, false);
+  Teuchos::Array<bool> fs_already_computed(num_models_, false);
 
   // So that the Schwarz BC has the latest solution, we force here a
   // write of the solution to the mesh database. For STK, which we use,
   // the time parameter is ignored.
   for (auto m = 0; m < num_models_; ++m) {
-    double const
-    time = 0.0;
+    double const time = 0.0;
 
     Teuchos::RCP<Albany::AbstractDiscretization> const &
     app_disc = apps_[m]->getDiscretization();
@@ -1059,9 +1022,11 @@ evalModelImpl(
   if (Teuchos::nonnull(W_op_outT) == true) {
     for (auto m = 0; m < num_models_; ++m) {
       //computeGlobalJacobianT sets fTs_out[m] and jacs_[m]
-      apps_[m]->computeGlobalJacobianT(
+      apps_[m]->computeGlobalJacobian(
           alpha, beta, omega, curr_time,
-          x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
+          xs[m],
+          x_dots[m],
+          x_dotdot,
           sacado_param_vecs_[m], fTs_out[m].get(), *jacs_[m]);
       fs_already_computed[m] = true;
     }
@@ -1082,32 +1047,23 @@ evalModelImpl(
       auto const
       response_index = 0;
 
-      apps_[m]->evaluateResponseDerivativeT(
-          response_index, curr_time, x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
+      apps_[m]->evaluateResponseDerivative(
+          response_index, curr_time, xs[m], x_dots[m], x_dotdot,
           sacado_param_vecs_[m], NULL,
           NULL, f_derivT, dummy_derivT, dummy_derivT, dummy_derivT);
     }
     else {
       if (Teuchos::nonnull(fTs_out[m]) && fs_already_computed[m] == false) {
-
-        Teuchos::RCP<const Thyra_Vector> x = xT->getVectorBlock(m);
-        Teuchos::RCP<const Thyra_Vector> x_dot = supports_xdot_ ? x_dotT->getVectorBlock(m) : Teuchos::null;
-        Teuchos::RCP<const Thyra_Vector> x_dotdot = Teuchos::null;
         apps_[m]->computeGlobalResidual(
-            curr_time, x, x_dot, x_dotdot,
+            curr_time, xs[m], x_dots[m], x_dotdot,
             sacado_param_vecs_[m], *fTs_out[m]);
-
       }
     }
   }
 
   //Create preconditioner if w_prec_supports_ are on
   if (w_prec_supports_ == true) {
-    Teuchos::RCP<Thyra::PreconditionerBase<ST>>
-    W_prec_outT =
-        Teuchos::nonnull(out_args.get_W_prec()) ?
-            out_args.get_W_prec() :
-            Teuchos::null;
+    Teuchos::RCP<Thyra_Preconditioner> W_prec_outT = out_args.get_W_prec();
 
     //IKT, 11/16/16: it may be desirable to move the following code into a separate
     //function, especially as we implement more preconditioners.
@@ -1122,12 +1078,10 @@ evalModelImpl(
           //doesn't overwrite the real residual.
           Teuchos::RCP<Tpetra_Vector> fTtemp;
           if (fT_out != Teuchos::null) {
-            fTtemp = Teuchos::rcp_dynamic_cast<Thyra_TpetraVector>(
-                fT_out->getNonconstVectorBlock(m),
-                true)->getTpetraVector();
+            fTtemp = Albany::getTpetraVector(fT_out->getNonconstVectorBlock(m));
           }
-          apps_[m]->computeGlobalJacobianT(alpha, beta, omega, curr_time,
-              x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
+          apps_[m]->computeGlobalJacobian(alpha, beta, omega, curr_time,
+              xs[m], x_dots[m], x_dotdot,
               sacado_param_vecs_[m], fTtemp.get(), *jacs_[m]);
           //Get diagonal of jacs_[m]
           Teuchos::RCP<Tpetra_Vector> diag = Teuchos::rcp(
@@ -1161,12 +1115,10 @@ evalModelImpl(
           //doesn't overwrite the real residual.
           Teuchos::RCP<Tpetra_Vector> fTtemp;
           if (fT_out != Teuchos::null) {
-            fTtemp = Teuchos::rcp_dynamic_cast<Thyra_TpetraVector>(
-                fT_out->getNonconstVectorBlock(m),
-                true)->getTpetraVector();
+            fTtemp = Albany::getTpetraVector(fT_out->getNonconstVectorBlock(m));
           }
-          apps_[m]->computeGlobalJacobianT(alpha, beta, omega, curr_time,
-              x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
+          apps_[m]->computeGlobalJacobian(alpha, beta, omega, curr_time,
+              xs[m], x_dots[m], x_dotdot,
               sacado_param_vecs_[m], fTtemp.get(), *jacs_[m]);
           //Create vector to store absrowsum
           Teuchos::RCP<Tpetra_Vector> absrowsum = Teuchos::rcp(
@@ -1225,14 +1177,12 @@ evalModelImpl(
           precs_[m]->fillComplete();
       }
       Schwarz_CoupledJacobian jac(comm_);
-      Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op =
+      Teuchos::RCP<Thyra_LinearOp> W_op =
           jac.getThyraCoupledJacobian(precs_, apps_);
       Teuchos::RCP<Thyra::DefaultPreconditioner<ST>> W_prec = Teuchos::rcp(
           new Thyra::DefaultPreconditioner<ST>);
       W_prec->initializeRight(W_op);
-      W_prec_outT = Teuchos::rcp_dynamic_cast<Thyra::PreconditionerBase<ST>>(
-          W_prec,
-          true);
+      W_prec_outT = W_prec;
     }
   }
 
@@ -1260,10 +1210,10 @@ evalModelImpl(
 // Response functions
   for (auto j = 0; j < out_args.Ng(); ++j) {
 
-    Teuchos::RCP<Thyra::ProductVectorBase<ST>>
+    Teuchos::RCP<Thyra_ProductVector>
     gT_out =
         Teuchos::nonnull(out_args.get_g(j)) ?
-            Teuchos::rcp_dynamic_cast<Thyra::ProductVectorBase<ST>>(
+            Teuchos::rcp_dynamic_cast<Thyra_ProductVector>(
                 out_args.get_g(j), true) :
             Teuchos::null;
 
@@ -1271,15 +1221,13 @@ evalModelImpl(
       for (auto m = 0; m < num_models_; ++m) {
         //Get each Tpetra vector
         Teuchos::RCP<Tpetra_Vector>
-        gT_out_m = Teuchos::rcp_dynamic_cast<Thyra_TpetraVector>(
-            gT_out->getNonconstVectorBlock(m),
-            true)->getTpetraVector();
+        gT_out_m = Albany::getTpetraVector(gT_out->getNonconstVectorBlock(m));
 
         for (auto l = 0; l < out_args.Np(); ++l) {
           //sets gT_out
-          apps_[m]->evaluateResponseT(
-              l, curr_time, x_dotTs[m].get(), x_dotdotT.get(),
-              *xTs[m], sacado_param_vecs_[m], *gT_out_m);
+          apps_[m]->evaluateResponse(
+              l, curr_time, xs[m], x_dots[m], x_dotdot,
+              sacado_param_vecs_[m], *gT_out_m);
         }
       }
     }

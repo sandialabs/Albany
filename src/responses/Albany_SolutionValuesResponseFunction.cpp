@@ -15,6 +15,8 @@
 
 #include <iostream>
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 //amb Hack for John M.'s work. Replace with an evaluator-based RF later so we
 // can get gradient, etc.
 //   By the way, I could be wrong, but I think NodeGIDsSolutionCullingStrategy
@@ -124,7 +126,7 @@ SolutionValuesResponseFunction(const Teuchos::RCP<const Application>& app,
 
 void
 Albany::SolutionValuesResponseFunction::
-setupT()
+setup()
 {
   cullingStrategy_->setupT();
   this->updateSolutionImporterT();
@@ -141,35 +143,37 @@ numResponses() const
 
 void
 Albany::SolutionValuesResponseFunction::
-evaluateResponseT(const double /*current_time*/,
-		 const Tpetra_Vector* /*xdot*/,
-		 const Tpetra_Vector* /*xdot*/,
-		 const Tpetra_Vector& xT,
-		 const Teuchos::Array<ParamVec>& /*p*/,
-		 Tpetra_Vector& gT)
+evaluateResponse(const double /*current_time*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+		const Teuchos::Array<ParamVec>& /*p*/,
+		Tpetra_Vector& gT)
 {
+  // Until you find out how to do this with Thyra, cast x to Tpetra
+  auto xT = Albany::getConstTpetraVector(x);
   this->updateSolutionImporterT();
-  this->ImportWithAlternateMapT(solutionImporterT_, xT, gT, Tpetra::INSERT);
+  this->ImportWithAlternateMapT(solutionImporterT_, *xT, gT, Tpetra::INSERT);
   if (Teuchos::nonnull(sol_printer_))
     sol_printer_->print(gT, cullingStrategy_->selectedGIDsT(app_->getMapT()));
 }
 
 void
 Albany::SolutionValuesResponseFunction::
-evaluateTangentT(const double /*alpha*/,
+evaluateTangent(const double /*alpha*/,
 		const double beta,
 		const double omega,
 		const double /*current_time*/,
 		bool /*sum_derivs*/,
-		const Tpetra_Vector* /*xdot*/,
-		const Tpetra_Vector* /*xdot*/,
-		const Tpetra_Vector& xT,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& /*p*/,
 		ParamVec* /*deriv_p*/,
-		const Tpetra_MultiVector* /*Vxdot*/,
-		const Tpetra_MultiVector* /*Vxdot*/,
-		const Tpetra_MultiVector* VxT,
-		const Tpetra_MultiVector* /*Vp*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vx,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdot*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdotdot*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vp*/,
 		Tpetra_Vector* gT,
 		Tpetra_MultiVector* gxT,
 		Tpetra_MultiVector* gpT)
@@ -177,13 +181,18 @@ evaluateTangentT(const double /*alpha*/,
   this->updateSolutionImporterT();
 
   if (gT) {
-    this->ImportWithAlternateMapT(solutionImporterT_, xT, *gT, Tpetra::INSERT);
+    // Until you find out how to do stuff with Thyra, cast x to Tpetra
+    auto xT = Albany::getConstTpetraVector(x);
+
+    this->ImportWithAlternateMapT(solutionImporterT_, *xT, *gT, Tpetra::INSERT);
     if (Teuchos::nonnull(sol_printer_))
       sol_printer_->print(*gT, cullingStrategy_->selectedGIDsT(app_->getMapT()));
   }
 
   if (gxT) {
-    TEUCHOS_ASSERT(VxT);
+    // Until you find out how to do stuff with Thyra, cast Vx to Tpetra
+    auto VxT = Albany::getConstTpetraMultiVector(Vx);
+    TEUCHOS_TEST_FOR_EXCEPT(VxT.is_null());
     this->ImportWithAlternateMapT(solutionImporterT_, *VxT, gxT, Tpetra::INSERT);
     if (beta != 1.0) {
       gxT->scale(beta);
@@ -198,38 +207,40 @@ evaluateTangentT(const double /*alpha*/,
 //! Evaluate distributed parameter derivative dg/dp
 void
 Albany::SolutionValuesResponseFunction::
-evaluateDistParamDerivT(
-    const double current_time,
-    const Tpetra_Vector* xdotT,
-    const Tpetra_Vector* xdotdotT,
-    const Tpetra_Vector& xT,
-    const Teuchos::Array<ParamVec>& param_array,
-    const std::string& dist_param_name,
+evaluateDistParamDeriv(
+    const double /*current_time*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*x*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+    const Teuchos::Array<ParamVec>& /*param_array*/,
+    const std::string& /*dist_param_name*/,
     Tpetra_MultiVector* dg_dpT)
 {
   if (dg_dpT) {
-      dg_dpT->putScalar(0.0);
+    dg_dpT->putScalar(0.0);
   }
 }
 
 void
 Albany::SolutionValuesResponseFunction::
-evaluateGradientT(const double /*current_time*/,
-		 const Tpetra_Vector* /*xdot*/,
-		 const Tpetra_Vector* /*xdot*/,
-		 const Tpetra_Vector& xT,
-		 const Teuchos::Array<ParamVec>& /*p*/,
-		 ParamVec* /*deriv_p*/,
-		 Tpetra_Vector* gT,
-		 Tpetra_MultiVector* dg_dxT,
-		 Tpetra_MultiVector* dg_dxdotT,
-		 Tpetra_MultiVector* dg_dxdotdotT,
-		 Tpetra_MultiVector* dg_dpT)
+evaluateGradient(const double /*current_time*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+		const Teuchos::Array<ParamVec>& /*p*/,
+		ParamVec* /*deriv_p*/,
+		Tpetra_Vector* gT,
+		Tpetra_MultiVector* dg_dxT,
+		Tpetra_MultiVector* dg_dxdotT,
+		Tpetra_MultiVector* dg_dxdotdotT,
+		Tpetra_MultiVector* dg_dpT)
 {
   this->updateSolutionImporterT();
 
   if (gT) {
-    this->ImportWithAlternateMapT(solutionImporterT_, xT, *gT, Tpetra::INSERT);
+    // Until you find out how to do stuff with Thyra, cast x to Tpetra
+    auto xT = Albany::getConstTpetraVector(x);
+    this->ImportWithAlternateMapT(solutionImporterT_, *xT, *gT, Tpetra::INSERT);
     if (Teuchos::nonnull(sol_printer_))
       sol_printer_->print(*gT, cullingStrategy_->selectedGIDsT(app_->getMapT()));
   }
@@ -300,4 +311,3 @@ ImportWithAlternateMapT(
   targetT.doImport(sourceT, *importerT, modeT);
   targetT.replaceMap(savedMapT);
 }
-

@@ -910,8 +910,9 @@ void Albany::Application::finalSetUp(
   }
 
   // Now setup response functions (see note above)
-  for (int i = 0; i < responses.size(); i++)
-    responses[i]->setupT();
+  for (int i = 0; i < responses.size(); i++) {
+    responses[i]->setup();
+  }
 
   // Set up memory for workset
   fm = problem->getFieldManager();
@@ -1172,17 +1173,6 @@ void dfm_set(PHAL::Workset &workset,
   workset.accelerationTerms = Teuchos::nonnull(xdd);
 }
 
-void dfm_set(PHAL::Workset &workset, const Teuchos::RCP<const Tpetra_Vector> &x,
-             const Teuchos::RCP<const Tpetra_Vector> &xd,
-             const Teuchos::RCP<const Tpetra_Vector> &xdd,
-             Teuchos::RCP<AAdapt::rc::Manager> &rc_mgr) {
-  workset.x       = Albany::createConstThyraVector(Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(x) : x);
-  workset.xdot    = Albany::createConstThyraVector(Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(xd) : xd);
-  workset.xdotdot = Albany::createConstThyraVector(Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(xdd) : xdd);
-  workset.transientTerms = Teuchos::nonnull(xd);
-  workset.accelerationTerms = Teuchos::nonnull(xdd);
-}
-
 // For the perturbation xd,
 //     f_i(x + xd) = f_i(x) + J_i(x) xd + O(xd' H_i(x) xd),
 // where J_i is the i'th row of the Jacobian matrix and H_i is the Hessian of
@@ -1405,7 +1395,7 @@ void Albany::Application::computeGlobalResidualImpl(
     double const
     this_time = fixTime(current_time);
 
-    loadBasicWorksetInfoT(workset, this_time);
+    loadBasicWorksetInfo(workset, this_time);
 
     workset.time_step = dt; 
 
@@ -1634,11 +1624,12 @@ double Albany::Application::computeConditionNumber(Epetra_CrsMatrix &matrix) {
 }
 #endif
 
-void Albany::Application::computeGlobalJacobianImplT(
+void Albany::Application::computeGlobalJacobianImpl(
     const double alpha, const double beta, const double omega,
-    const double current_time, const Teuchos::RCP<const Tpetra_Vector> &xdotT,
-    const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
-    const Teuchos::RCP<const Tpetra_Vector> &xT,
+    const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
     const Teuchos::RCP<Tpetra_CrsMatrix> &jacT,
     const double dt) {
@@ -1666,7 +1657,7 @@ void Albany::Application::computeGlobalJacobianImplT(
   Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
 
   // Scatter x and xdot to the overlapped distribution
-  solMgrT->scatterXT(*xT, xdotT.get(), xdotdotT.get());
+  solMgrT->scatterX(x, xdot, xdotdot);
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -1708,7 +1699,7 @@ void Albany::Application::computeGlobalJacobianImplT(
     double const
     this_time = fixTime(current_time);
 
-    loadBasicWorksetInfoT(workset, this_time);
+    loadBasicWorksetInfo(workset, this_time);
 
     workset.time_step = dt; 
 
@@ -1836,7 +1827,7 @@ void Albany::Application::computeGlobalJacobianImplT(
     if (beta == 0.0 && perturbBetaForDirichlets > 0.0)
       workset.j_coeff = perturbBetaForDirichlets;
 
-    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
+    dfm_set(workset, x, xdot, xdotdot, rc_mgr);
 
     loadWorksetNodesetInfo(workset);
 
@@ -1901,19 +1892,16 @@ void Albany::Application::computeGlobalJacobianImplT(
   }
 #endif
   if (derivatives_check_ > 0)
-    checkDerivatives(*this, current_time,
-                      Albany::createConstThyraVector(xT),
-                      Albany::createConstThyraVector(xdotT),
-                      Albany::createConstThyraVector(xdotdotT),
-                      p, fT, jacT,
-                      derivatives_check_);
+    checkDerivatives(*this, current_time, x, xdot, xdotdot,
+                      p, fT, jacT, derivatives_check_);
 }
 
-void Albany::Application::computeGlobalJacobianSDBCsImplT(
+void Albany::Application::computeGlobalJacobianSDBCsImpl(
     const double alpha, const double beta, const double omega,
-    const double current_time, const Teuchos::RCP<const Tpetra_Vector> &xdotT,
-    const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
-    const Teuchos::RCP<const Tpetra_Vector> &xT,
+    const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
     const Teuchos::RCP<Tpetra_CrsMatrix> &jacT,
     const double dt) {
@@ -1973,7 +1961,7 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
   Teuchos::RCP<Tpetra_Import> const importerT = solMgrT->get_importerT();
 
   // Scatter x and xdot to the overlapped distribution
-  solMgrT->scatterXT(*xT, xdotT.get(), xdotdotT.get());
+  solMgrT->scatterX(x, xdot, xdotdot);
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -2015,7 +2003,7 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
     double const
     this_time = fixTime(current_time);
 
-    loadBasicWorksetInfoT(workset, this_time);
+    loadBasicWorksetInfo(workset, this_time);
 
     workset.time_step = dt; 
 
@@ -2109,7 +2097,7 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
     if (beta == 0.0 && perturbBetaForDirichlets > 0.0)
       workset.j_coeff = perturbBetaForDirichlets;
 
-    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
+    dfm_set(workset, x, xdot, xdotdot, rc_mgr);
 
     loadWorksetNodesetInfo(workset);
 
@@ -2165,7 +2153,7 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
     double const
     this_time = fixTime(current_time);
 
-    loadBasicWorksetInfoSDBCsT(workset, xT_post_SDBCs, this_time);
+    loadBasicWorksetInfoSDBCs(workset, xT_post_SDBCs, this_time);
 
     workset.fT = overlapped_fT;
     workset.JacT = overlapped_jacT;
@@ -2243,7 +2231,7 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
         workset.j_coeff = perturbBetaForDirichlets;
       }
 
-      dfm_set(workset, xT_post_SDBCs, xdotT, xdotdotT, rc_mgr);
+      dfm_set(workset, Albany::createConstThyraVector(xT_post_SDBCs), xdot, xdotdot, rc_mgr);
 
       loadWorksetNodesetInfo(workset);
 
@@ -2275,32 +2263,28 @@ void Albany::Application::computeGlobalJacobianSDBCsImplT(
   }
 #endif
   if (derivatives_check_ > 0)
-    checkDerivatives(*this, current_time,
-                      Albany::createConstThyraVector(xT),
-                      Albany::createConstThyraVector(xdotT),
-                      Albany::createConstThyraVector(xdotdotT),
-                      p, fT, jacT,
-                      derivatives_check_);
+    checkDerivatives(*this, current_time, x, xdot, xdotdot,
+                      p, fT, jacT, derivatives_check_);
 }
 
-void Albany::Application::computeGlobalJacobianT(
+void Albany::Application::computeGlobalJacobian(
     const double alpha, const double beta, const double omega,
-    const double current_time, const Tpetra_Vector *xdotT,
-    const Tpetra_Vector *xdotdotT, const Tpetra_Vector &xT,
+    const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec> &p, Tpetra_Vector *fT,
     Tpetra_CrsMatrix &jacT, const double dt) 
 {
   // Create non-owning RCPs to Tpetra objects
   // to be passed to the implementation
   if (problem->useSDBCs() == false) {
-    this->computeGlobalJacobianImplT(
-        alpha, beta, omega, current_time, Teuchos::rcp(xdotT, false),
-        Teuchos::rcp(xdotdotT, false), Teuchos::rcpFromRef(xT), p,
+    this->computeGlobalJacobianImpl(
+        alpha, beta, omega, current_time, x, xdot, xdotdot, p,
         Teuchos::rcp(fT, false), Teuchos::rcpFromRef(jacT), dt);
   } else {
-    this->computeGlobalJacobianSDBCsImplT(
-        alpha, beta, omega, current_time, Teuchos::rcp(xdotT, false),
-        Teuchos::rcp(xdotdotT, false), Teuchos::rcpFromRef(xT), p,
+    this->computeGlobalJacobianSDBCsImpl(
+        alpha, beta, omega, current_time, x, xdot, xdotdot, p,
         Teuchos::rcp(fT, false), Teuchos::rcpFromRef(jacT), dt);
   }
   // Debut output
@@ -2424,7 +2408,7 @@ void Albany::Application::computeGlobalPreconditioner(
 }
 #endif
 
-void Albany::Application::computeGlobalTangentImpl(
+void Albany::Application::computeGlobalTangent(
     const double alpha, const double beta, const double omega,
     const double current_time, bool sum_derivs,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -2568,7 +2552,7 @@ void Albany::Application::computeGlobalTangentImpl(
     double const
     this_time = fixTime(current_time);
 
-    loadBasicWorksetInfoT(workset, this_time);
+    loadBasicWorksetInfo(workset, this_time);
 
     workset.params = params;
     workset.Vx = overlapped_Vx;
@@ -2592,7 +2576,7 @@ void Albany::Application::computeGlobalTangentImpl(
 
       // FillType template argument used to specialize Sacado
 #ifdef DEBUG_OUTPUT2
-      std::cout << "calling FM evaluate fields in computeGlobalTangentImpl" << std::endl;
+      std::cout << "calling FM evaluate fields in computeGlobalTangent" << std::endl;
 #endif
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
       if (nfm != Teuchos::null)
@@ -2657,30 +2641,10 @@ void Albany::Application::computeGlobalTangentImpl(
 
     // FillType template argument used to specialize Sacado
 #ifdef DEBUG_OUTPUT2
-    std::cout << "calling DFM evaluate fields in computeGlobalTangentImpl" << std::endl;
+    std::cout << "calling DFM evaluate fields in computeGlobalTangent" << std::endl;
 #endif
     dfm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
   }
-}
-
-void Albany::Application::computeGlobalTangent(
-    const double alpha, const double beta, const double omega,
-    const double current_time, bool sum_derivs,
-    const Teuchos::RCP<const Thyra_Vector>& x,
-    const Teuchos::RCP<const Thyra_Vector>& xdot,
-    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-    const Teuchos::Array<ParamVec> &par, ParamVec *deriv_par,
-    const Teuchos::RCP<const Thyra_MultiVector>& Vx,
-    const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
-    const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
-    const Teuchos::RCP<const Thyra_MultiVector>& Vp,
-    Tpetra_Vector *fT, Tpetra_MultiVector *JVT, Tpetra_MultiVector *fpT)
-{
-  this->computeGlobalTangentImpl(
-      alpha, beta, omega, current_time, sum_derivs, x, xdot, xdotdot,
-      par, deriv_par, Vx, Vxdot, Vxdotdot, Vp,
-      Teuchos::rcp(fT, false), Teuchos::rcp(JVT, false),
-      Teuchos::rcp(fpT, false));
 }
 
 void Albany::Application::applyGlobalDistParamDerivImpl(
@@ -2780,7 +2744,7 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
     double const
     this_time = fixTime(current_time);
 
-    loadBasicWorksetInfoT(workset, this_time);
+    loadBasicWorksetInfo(workset, this_time);
 
     workset.dist_param_deriv_name = dist_param_name;
     workset.Vp = overlapped_V;
@@ -2862,60 +2826,72 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
   }
 }
 
-void Albany::Application::evaluateResponseT(
-    int response_index, const double current_time, const Tpetra_Vector *xdotT,
-    const Tpetra_Vector *xdotdotT, const Tpetra_Vector &xT,
-    const Teuchos::Array<ParamVec> &p, Tpetra_Vector &gT) {
-  double const
-  this_time = fixTime(current_time);
-  responses[response_index]->evaluateResponseT(
-      this_time, xdotT, xdotdotT, xT, p, gT);
+void Albany::Application::evaluateResponse(
+    int response_index, const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec> &p, Tpetra_Vector &gT)
+{
+  double const this_time = fixTime(current_time);
+  responses[response_index]->evaluateResponse(
+      this_time, x, xdot, xdotdot, p, gT);
 }
 
-void Albany::Application::evaluateResponseTangentT(
+void Albany::Application::evaluateResponseTangent(
     int response_index, const double alpha, const double beta,
     const double omega, const double current_time, bool sum_derivs,
-    const Tpetra_Vector *xdotT, const Tpetra_Vector *xdotdotT,
-    const Tpetra_Vector &xT, const Teuchos::Array<ParamVec> &p,
-    ParamVec *deriv_p, const Tpetra_MultiVector *VxdotT,
-    const Tpetra_MultiVector *VxdotdotT, const Tpetra_MultiVector *VxT,
-    const Tpetra_MultiVector *VpT, Tpetra_Vector *gT, Tpetra_MultiVector *gxT,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec> &p,
+    ParamVec *deriv_p,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vx,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vp,
+    Tpetra_Vector *gT, Tpetra_MultiVector *gxT,
     Tpetra_MultiVector *gpT) {
   double const
   this_time = fixTime(current_time);
-  responses[response_index]->evaluateTangentT(
-      alpha, beta, omega, this_time, sum_derivs, xdotT, xdotdotT, xT, p,
-      deriv_p, VxdotT, VxdotdotT, VxT, VpT, gT, gxT, gpT);
+  responses[response_index]->evaluateTangent(
+      alpha, beta, omega, this_time, sum_derivs, x, xdot, xdotdot, p,
+      deriv_p, Vx, Vxdot, Vxdotdot, Vp, gT, gxT, gpT);
 }
 
-void Albany::Application::evaluateResponseDerivativeT(
-    int response_index, const double current_time, const Tpetra_Vector *xdotT,
-    const Tpetra_Vector *xdotdotT, const Tpetra_Vector &xT,
+void Albany::Application::evaluateResponseDerivative(
+    int response_index, const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec> &p, ParamVec *deriv_p, Tpetra_Vector *gT,
     const Thyra::ModelEvaluatorBase::Derivative<ST> &dg_dxT,
     const Thyra::ModelEvaluatorBase::Derivative<ST> &dg_dxdotT,
     const Thyra::ModelEvaluatorBase::Derivative<ST> &dg_dxdotdotT,
-    const Thyra::ModelEvaluatorBase::Derivative<ST> &dg_dpT) {
-  double const
-  this_time = fixTime(current_time);
+    const Thyra::ModelEvaluatorBase::Derivative<ST> &dg_dpT)
+{
+  double const this_time = fixTime(current_time);
 
-  responses[response_index]->evaluateDerivativeT(
-      this_time, xdotT, xdotdotT, xT, p, deriv_p, gT, dg_dxT, dg_dxdotT,
+  responses[response_index]->evaluateDerivative(
+      this_time, x, xdot, xdotdot, p, deriv_p, gT, dg_dxT, dg_dxdotT,
       dg_dxdotdotT, dg_dpT);
 }
 
-void Albany::Application::evaluateResponseDistParamDerivT(
-    int response_index, const double current_time, const Tpetra_Vector *xdot,
-    const Tpetra_Vector *xdotdot, const Tpetra_Vector &x,
+void Albany::Application::evaluateResponseDistParamDeriv(
+    int response_index, const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec> &param_array,
-    const std::string &dist_param_name, Tpetra_MultiVector *dg_dp) {
+    const std::string &dist_param_name, Tpetra_MultiVector *dg_dp)
+{
   TEUCHOS_FUNC_TIME_MONITOR(
       "> Albany Fill: Response Distributed Parameter Derivative");
   double const
   this_time = fixTime(current_time);
 
-  responses[response_index]->evaluateDistParamDerivT(
-      this_time, xdot, xdotdot, x, param_array, dist_param_name, dg_dp);
+  responses[response_index]->evaluateDistParamDeriv(
+      this_time, x, xdot, xdotdot, param_array, dist_param_name, dg_dp);
   if (dg_dp != NULL) {
     std::stringstream sensitivity_name;
     sensitivity_name << dist_param_name << "_sensitivity";
@@ -3025,7 +3001,7 @@ void Albany::Application::evaluateStateFieldManagerT(
 
   // Set data in Workset struct
   PHAL::Workset workset;
-  loadBasicWorksetInfoT(workset, current_time);
+  loadBasicWorksetInfo(workset, current_time);
   workset.fT = overlapped_fT;
 
   // Perform fill via field manager
@@ -3310,7 +3286,7 @@ void Albany::Application::determinePiroSolver(
   }
 }
 
-void Albany::Application::loadBasicWorksetInfoT(PHAL::Workset &workset,
+void Albany::Application::loadBasicWorksetInfo(PHAL::Workset &workset,
                                                 double current_time)
 {
   workset.numEqs = neq;
@@ -3331,7 +3307,7 @@ void Albany::Application::loadBasicWorksetInfoT(PHAL::Workset &workset,
   workset.accelerationTerms = Teuchos::nonnull(workset.xdotdot);
 }
 
-void Albany::Application::loadBasicWorksetInfoSDBCsT(
+void Albany::Application::loadBasicWorksetInfoSDBCs(
     PHAL::Workset &workset, Teuchos::RCP<const Tpetra_Vector> owned_sol,
     double current_time)
 {
@@ -3847,7 +3823,7 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
     double const
     this_time = fixTime(current_time);
 
-    loadBasicWorksetInfoT(workset, this_time);
+    loadBasicWorksetInfo(workset, this_time);
     
     workset.time_step = dt; 
 
@@ -3962,7 +3938,7 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
     double const
     this_time = fixTime(current_time);
 
-    loadBasicWorksetInfoSDBCsT(workset, xT_post_SDBCs, this_time);
+    loadBasicWorksetInfoSDBCs(workset, xT_post_SDBCs, this_time);
 
     workset.fT = overlapped_fT;
 
