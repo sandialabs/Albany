@@ -153,7 +153,7 @@ class ModelEvaluatorT
 
   //@}
 
- private:
+ protected:
   //! Number of parameter vectors
   int num_param_vecs;
 

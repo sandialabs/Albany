@@ -9,10 +9,11 @@
 #endif
 #include "Albany_Utils.hpp"
 #include "QCAD_SaddleValueResponseFunction.hpp"
+#include "QCAD_GreensFunctionTunneling.hpp"
+
 #include "Teuchos_CommHelpers.hpp"
 #include "Tpetra_DistObject.hpp"
 #include "Tpetra_Map.hpp"
-#include "QCAD_GreensFunctionTunneling.hpp"
 #include <fstream>
 #include "Petra_Converters.hpp" 
 
@@ -233,7 +234,7 @@ evaluateResponse(const double current_time,
   // Find saddle point in stages:
  
   //  1) Initialize image points
-  initializeImagePointsT(current_time, x, xdot, p, gT, dbMode);
+  initializeImagePoints(current_time, x, xdot, p, gT, dbMode);
   
   if(maxIterations > 0) {
     //  2) Perform Nudged Elastic Band (NEB) algorithm on image points (iterative)
@@ -388,7 +389,7 @@ initializeImagePoints(const double current_time,
     vGrads.clear();
 
     mode = "Accumulate all field data";
-    Albany::FieldManagerScalarResponseFunction::evaluateResponse(current_time, x, xdotT, Teuchos::null, p, gT);
+    Albany::FieldManagerScalarResponseFunction::evaluateResponse(current_time, x, xdot, Teuchos::null, p, gT);
     //No MPI here - each proc only holds all of it's worksets -- not other procs worksets
   }
 }
@@ -396,8 +397,8 @@ initializeImagePoints(const double current_time,
 void
 QCAD::SaddleValueResponseFunction::
 doNudgedElasticBand(const double current_time,
-		    const Teuchos::RCP<const Tpetra_Vector>& x,
-		    const Teuchos::RCP<const Tpetra_Vector>& xdot,
+		    const Teuchos::RCP<const Thyra_Vector>& x,
+		    const Teuchos::RCP<const Thyra_Vector>& xdot,
 		    const Teuchos::Array<ParamVec>& p,
 		    Tpetra_Vector& gT, int dbMode)
 {
@@ -803,7 +804,7 @@ doLevelSet(const double current_time,
   cutoffFieldVal = maxFieldDifference * fieldCutoffFctr;
   minDepth = minPoolDepthFctr * (currentSaddleValue - minFieldVal) / 2.0; //maxFieldDifference * minPoolDepthFctr;
 
-  result = FindSaddlePoint_LevelSetT(allFieldVals, allCoords, ordering,
+  result = FindSaddlePoint_LevelSet(allFieldVals, allCoords, ordering,
 			   cutoffDistance, cutoffFieldVal, minDepth, dbMode, gT);
   Teuchos::ArrayRCP<const ST> gT_constView = gT.get1dView();
   // result == 0 ==> success: found 2 "deep" pools & saddle pt
@@ -1077,7 +1078,8 @@ double QCAD::SaddleValueResponseFunction::getCurrent
   double I = 0.0; 
 
   // instantiate the GF-CBR solver to compute current
-  QCAD::GreensFunctionTunnelingSolver solver(Ec, pathLen, nGFPts, ptSpacing, effMass, comm, outputFilename); //Teuchos::rcp(comm.Clone())
+  auto commE = Albany::createEpetraCommFromTeuchosComm(comm);
+  QCAD::GreensFunctionTunnelingSolver solver(Ec, pathLen, nGFPts, ptSpacing, effMass, commE, outputFilename); //Teuchos::rcp(comm.Clone())
   
   // set the eigensolver to be used
   bool bUseAnasazi = false; 
@@ -1168,7 +1170,7 @@ evaluateTangent(const double alpha,
 
     mode = "Fill saddle point";
     Albany::FieldManagerScalarResponseFunction::evaluateTangent(
-                alpha, beta, omega, current_time, sum_derivs, x, xdot, xdotdot
+                alpha, beta, omega, current_time, sum_derivs, x, xdot, xdotdot,
   	            p, deriv_p, Vx, Vxdot, Vxdotdot, Vp, gT, gxT, gpT);
   }
   else {
@@ -1179,7 +1181,7 @@ evaluateTangent(const double alpha,
 
 void
 QCAD::SaddleValueResponseFunction::
-evaluateGradientT(const double current_time,
+evaluateGradient(const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
@@ -1213,8 +1215,8 @@ evaluateGradientT(const double current_time,
 void
 QCAD::SaddleValueResponseFunction::
 getImagePointValues(const double current_time,
-		    const Teuchos::RCP<const Tpetra_Vector>& x,
-		    const Teuchos::RCP<const Tpetra_Vector>& xdot,
+		    const Teuchos::RCP<const Thyra_Vector>& x,
+		    const Teuchos::RCP<const Thyra_Vector>& xdot,
 		    const Teuchos::Array<ParamVec>& p,
 		    Tpetra_Vector& gT, 
 		    double* globalPtValues,
@@ -1247,7 +1249,7 @@ getImagePointValues(const double current_time,
     } 
   } else {
     mode = "Collect image point data";
-    Albany::FieldManagerScalarResponseFunction::evaluateResponse(current_time, x, xdot, Teucho::null, p, gT);
+    Albany::FieldManagerScalarResponseFunction::evaluateResponse(current_time, x, xdot, Teuchos::null, p, gT);
   }
 
   //MPI -- sum weights, value, and gradient for each image pt

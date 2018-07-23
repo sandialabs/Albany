@@ -8,6 +8,8 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 // **********************************************************************
 // Genereric Template Code for Constructor and PostRegistrationSetup
 // **********************************************************************

@@ -13,7 +13,7 @@
 #include "Aeras_Dimension.hpp"
 #include "Albany_Utils.hpp"
 
-#include "Albany_TpetraThyraTypes.hpp"
+#include "Albany_TpetraThyraUtils.hpp"
 
 namespace Aeras {
 
@@ -497,7 +497,7 @@ evaluateFields(typename Traits::EvalData workset)
   auto xT_2d = Albany::getConstTpetraVector(workset.x)->template getLocalView<PHX::Device>();
   xT_constView = Kokkos::subview(xT_2d, Kokkos::ALL(), 0);
 
-  auto xdotT_2d = Albany::getConstTpetraVector(workset.x_dot)->template getLocalView<PHX::Device>();
+  auto xdotT_2d = Albany::getConstTpetraVector(workset.xdot)->template getLocalView<PHX::Device>();
   xdotT_constView = Kokkos::subview(xdotT_2d, Kokkos::ALL(), 0);
 
   for (int i =0; i<numFields;i++)
@@ -537,7 +537,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<const Tpetra_Vector>    xT = Albany::getConstTpetraVector(workset.x);
-  Teuchos::RCP<const Tpetra_Vector> xdotT = Albany::getConstTpetraVector(workset.x_dot);
+  Teuchos::RCP<const Tpetra_Vector> xdotT = Albany::getConstTpetraVector(workset.xdot);
   Teuchos::RCP<const Tpetra_MultiVector> VxT    = Albany::getConstTpetraMultiVector(workset.Vx);
   Teuchos::RCP<const Tpetra_MultiVector> VxdotT = Albany::getConstTpetraMultiVector(workset.Vxdot);
 
