@@ -13,6 +13,9 @@ namespace Albany
 // routine that performs the check before calling the Thyra converter.
 
 // ============ Tpetra->Thyra conversion routines ============ //
+Teuchos::RCP<const Thyra_VectorSpace>
+createThyraVectorSpace (const Teuchos::RCP<const Tpetra_Map> map);
+
 Teuchos::RCP<Thyra_Vector>
 createThyraVector (const Teuchos::RCP<Tpetra_Vector> v);
 
@@ -25,7 +28,16 @@ createThyraMultiVector (const Teuchos::RCP<Tpetra_MultiVector> mv);
 Teuchos::RCP<const Thyra_MultiVector>
 createConstThyraMultiVector (const Teuchos::RCP<const Tpetra_MultiVector> mv);
 
+Teuchos::RCP<Thyra_LinearOp>
+createThyraLinearOp (const Teuchos::RCP<Tpetra_Operator> op);
+
+Teuchos::RCP<const Thyra_LinearOp>
+createConstThyraLinearOp (const Teuchos::RCP<const Tpetra_Operator> op);
+
 // ============ Thyra->Tpetra conversion routines ============ //
+Teuchos::RCP<const Tpetra_Map>
+getTpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs);
+
 Teuchos::RCP<Tpetra_Vector>
 getTpetraVector (const Teuchos::RCP<Thyra_Vector> v);
 
@@ -37,6 +49,18 @@ getTpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector> mv);
 
 Teuchos::RCP<const Tpetra_MultiVector>
 getConstTpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv);
+
+Teuchos::RCP<Tpetra_Operator>
+getTpetraOperator (const Teuchos::RCP<Thyra_LinearOp> lop);
+
+Teuchos::RCP<const Tpetra_Operator>
+getConstTpetraOperator (const Teuchos::RCP<const Thyra_LinearOp> lop);
+
+Teuchos::RCP<Tpetra_CrsMatrix>
+getTpetraMatrix (const Teuchos::RCP<Thyra_LinearOp> lop);
+
+Teuchos::RCP<const Tpetra_CrsMatrix>
+getConstTpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop);
 
 } // namespace Albany
 
