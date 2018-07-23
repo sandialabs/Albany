@@ -1,0 +1,95 @@
+<ParameterList>
+  <ParameterList name="Debug Output">
+    <!--Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/-->
+    <Parameter name="Write Solution to MatrixMarket" type="bool" value="false"/>
+  </ParameterList>
+
+  <ParameterList name="Problem">
+    <Parameter name="Solution Method"         type="string" value="Steady"/>
+    <Parameter name="Name"                    type="string" value="Populate Mesh"/>
+  </ParameterList> <!-- Problem -->
+
+  <ParameterList name="Discretization">
+    <Parameter name="Number Of Time Derivatives"  type="int"    value="0"/>
+    <Parameter name="Method"                      type="string" value="Extruded"/>
+    <Parameter name="Cubature Degree"             type="int"    value="0"/>
+    <Parameter name="Element Shape"               type="string" value="Tetrahedron"/>
+    <Parameter name="Columnwise Ordering"         type="bool"   value="true"/>
+    <Parameter name="NumLayers"                   type="int"    value="5"/>
+    <Parameter name="Thickness Field Name"        type="string" value="ice_thickness"/>
+    <Parameter name="Use Glimmer Spacing"         type="bool"   value="true"/>
+    <ParameterList name="Side Set Discretizations">
+      <Parameter name="Side Sets" type="Array(string)" value="{basalside,upperside}"/>
+      <ParameterList name="basalside">
+        <Parameter name="Method"                     type="string" value="Ioss"/>
+        <Parameter name="Number Of Time Derivatives" type="int"    value="0"/>
+        <Parameter name="Use Serial Mesh"            type="bool"   value="true"/>
+        <Parameter name="Exodus Input File Name"     type="string" value="../ExoMeshes/gis_unstruct_2d.exo"/>
+        <Parameter name="Exodus Output File Name"    type="string" value="gis_unstruct_basal_populated.exo"/>
+        <Parameter name="Cubature Degree"            type="int"    value="0"/>
+        <ParameterList name="Required Fields Info">
+          <Parameter name="Number Of Fields" type="int" value="4"/>
+          <ParameterList name="Field 0">
+            <Parameter name="Field Name"   type="string" value="ice_thickness"/>
+            <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+            <Parameter name="Field Origin" type="string" value="File"/>
+            <Parameter name="File Name"    type="string" value="../AsciiMeshes/GisUnstructFiles/thickness.ascii"/>
+          </ParameterList>
+          <ParameterList name="Field 1">
+            <Parameter name="Field Name"   type="string" value="surface_height"/>
+            <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+            <Parameter name="Field Origin" type="string" value="File"/>
+            <Parameter name="File Name"    type="string" value="../AsciiMeshes/GisUnstructFiles/surface_height.ascii"/>
+          </ParameterList>
+          <ParameterList name="Field 2">
+            <Parameter name="Field Name"       type="string" value="temperature"/>
+            <Parameter name="Field Type"       type="string" value="Node Layered Scalar"/>
+            <Parameter name="Number Of Layers" type="int" value="11"/>
+            <Parameter name="Field Origin"     type="string" value="File"/>
+            <Parameter name="File Name"        type="string" value="../AsciiMeshes/GisUnstructFiles/temperature.ascii"/>
+          </ParameterList>
+          <ParameterList name="Field 3">
+            <Parameter name="Field Name"   type="string" value="basal_friction"/>
+            <Parameter name="Field Type"   type="string" value="Node Scalar"/>
+            <Parameter name="Field Origin" type="string" value="File"/>
+            <Parameter name="File Name"    type="string" value="../AsciiMeshes/GisUnstructFiles/basal_friction.ascii"/>
+          </ParameterList>
+        </ParameterList>
+      </ParameterList>
+      <ParameterList name="upperside">
+        <Parameter name="Method"                     type="string" value="SideSetSTK"/>
+        <Parameter name="Number Of Time Derivatives" type="int"    value="0"/>
+        <Parameter name="Exodus Output File Name"    type="string" value="gis_unstruct_surface_populated.exo"/>
+        <Parameter name="Cubature Degree"            type="int"    value="0"/>
+        <ParameterList name="Required Fields Info">
+          <Parameter name="Number Of Fields" type="int" value="2"/>
+          <ParameterList name="Field 0">
+            <Parameter name="Field Name"   type="string" value="observed_surface_velocity"/>
+            <Parameter name="Field Type"   type="string" value="Node Vector"/>
+            <Parameter name="Vector Dim"   type="int"    value="2"/>
+            <Parameter name="Field Origin" type="string" value="File"/>
+            <Parameter name="File Name"    type="string" value="../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii"/>
+          </ParameterList>
+          <ParameterList name="Field 1">
+            <Parameter name="Field Name"   type="string" value="observed_surface_velocity_RMS"/>
+            <Parameter name="Field Type"   type="string" value="Node Vector"/>
+            <Parameter name="Vector Dim"   type="int"    value="2"/>
+            <Parameter name="Field Origin" type="string" value="File"/>
+            <Parameter name="File Name"    type="string" value="../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii"/>
+          </ParameterList>
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
+  </ParameterList> <!--Discretization -->
+
+  <ParameterList name="Piro">
+    <ParameterList name="NOX">
+      <ParameterList name="Printing">
+        <ParameterList name="Output Information">
+          <Parameter name="Details" type="bool" value="0"/>
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>  <!-- NOX -->
+  </ParameterList>    <!-- Piro -->
+
+</ParameterList>
