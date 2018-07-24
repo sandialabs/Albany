@@ -1004,6 +1004,15 @@ ENDIF()
 ## Other Albany Template Options here:
 MESSAGE("\nAlbany Templated Data Type Options:")
 
+# Throw error if using ENABLE_FAST_FELIX
+IF(ENABLE_FAST_FELIX)
+  MESSAGE(FATAL_ERROR
+  "\nError: ENABLE_FAST_FELIX has been removed! Use ENABLE_FAD_TYPE instead.
+  Example for a tetrahedral mesh in FELIX:
+    -D ENABLE_FAD_TYPE:STRING=SFad
+    -D ALBANY_SFAD_SIZE=8")
+ENDIF()
+
 # Set FAD data type
 SET(ENABLE_FAD_TYPE "DFad" CACHE STRING "Sacado forward mode automatic differentiation data type")
 IF(ENABLE_FAD_TYPE STREQUAL "SFad")
@@ -1019,8 +1028,9 @@ ELSEIF(ENABLE_FAD_TYPE STREQUAL "SLFad")
 ELSEIF(ENABLE_FAD_TYPE STREQUAL "DFad")
   MESSAGE("-- FAD_TYPE  is DFad (default)")
 ELSE()
-  MESSAGE(FATAL_ERROR,
-          "\nError: ENABLE_FAD_TYPE = ${ENABLE_FAD_TYPE} is not recognized! Options: SFad, SLFad, DFad (default)")
+  MESSAGE(FATAL_ERROR
+  "\nError: ENABLE_FAD_TYPE = ${ENABLE_FAD_TYPE} is not recognized!
+  Options: SFad, SLFad, DFad (default)")
 ENDIF()
 
 # Set FAD data type for Tangent
@@ -1038,8 +1048,9 @@ ELSEIF(ENABLE_TAN_FAD_TYPE STREQUAL "SLFad")
 ELSEIF(ENABLE_TAN_FAD_TYPE STREQUAL "DFad")
   MESSAGE("-- TAN_FAD_TYPE is DFad (default)")
 ELSE()
-  MESSAGE(FATAL_ERROR,
-          "\nError: ENABLE_TAN_FAD_TYPE = ${ENABLE_TAN_FAD_TYPE} is not recognized! Options: SFad, SLFad, DFad (default)")
+  MESSAGE(FATAL_ERROR
+  "\nError: ENABLE_TAN_FAD_TYPE = ${ENABLE_TAN_FAD_TYPE} is not recognized!
+  Options: SFad, SLFad, DFad")
 ENDIF()
 
 # Check if FAD data type is the same
