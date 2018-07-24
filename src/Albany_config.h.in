@@ -97,8 +97,16 @@
 // FTZ/DAZ macro
 #cmakedefine ALBANY_FLUSH_DENORMALS
 
-// Static SLFAD data type
-#cmakedefine ALBANY_SLFAD_SIZE ${SLFAD_SIZE}
+// FAD data type
+#cmakedefine ALBANY_FAD_TYPE_SFAD
+#cmakedefine ALBANY_SFAD_SIZE ${ALBANY_SFAD_SIZE}
+#cmakedefine ALBANY_FAD_TYPE_SLFAD
+#cmakedefine ALBANY_SLFAD_SIZE ${ALBANY_SLFAD_SIZE}
+#cmakedefine ALBANY_TAN_FAD_TYPE_SFAD
+#cmakedefine ALBANY_TAN_SFAD_SIZE ${ALBANY_TAN_SFAD_SIZE}
+#cmakedefine ALBANY_TAN_FAD_TYPE_SLFAD
+#cmakedefine ALBANY_TAN_SLFAD_SIZE ${ALBANY_TAN_SLFAD_SIZE}
+#cmakedefine ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 
 // ============= Macros used to enable additional code, not limited to a particular package ============== //
 
@@ -128,7 +136,6 @@
   // --- FELIX
   #cmakedefine CISM_HAS_FELIX
   #cmakedefine MPAS_HAS_FELIX
-  #cmakedefine ALBANY_FAST_FELIX
   #cmakedefine CISM_CHECK_COMPARISONS
   #cmakedefine REDUCED_COMM
   #cmakedefine CISM_USE_EPETRA

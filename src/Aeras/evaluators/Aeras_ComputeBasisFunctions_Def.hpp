@@ -113,7 +113,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
 
   std::vector<PHX::index_size_type> ddims_;
-#ifdef  ALBANY_FAST_FELIX
+#ifdef ALBANY_FAD_TYPE_SLFAD
   ddims_.push_back(ALBANY_SLFAD_SIZE);
 #else
   ddims_.push_back(95);
