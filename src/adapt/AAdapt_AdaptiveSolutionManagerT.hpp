@@ -9,6 +9,8 @@
 #include "Albany_DataTypes.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_StateManager.hpp"
+#include "Albany_CombineAndScatterManager.hpp"
+
 #include "AAdapt_InitialCondition.hpp"
 #include "AAdapt_AbstractAdapterT.hpp"
 
@@ -55,11 +57,13 @@ public:
    Teuchos::RCP<Tpetra_Vector> updateAndReturnOverlapSolutionDotDotT(const Tpetra_Vector& solution_dotdotT /*not overlapped*/);
    Teuchos::RCP<const Tpetra_MultiVector> updateAndReturnOverlapSolutionMV(const Tpetra_MultiVector& solutionT /*not overlapped*/);
 
+   Teuchos::RCP<Thyra_Vector> get_overlapped_f() {return overlapped_f;}
    Teuchos::RCP<Tpetra_Vector> get_overlapped_fT() {return overlapped_fT;}
    Teuchos::RCP<Tpetra_CrsMatrix> get_overlapped_jacT() {return overlapped_jacT;}
 
    Teuchos::RCP<Tpetra_Import> get_importerT() {return importerT;}
    Teuchos::RCP<Tpetra_Export> get_exporterT() {return exporterT;}
+   Teuchos::RCP<const Albany::CombineAndScatterManager> get_cas_manager() { return cas_manager; }
 
    Teuchos::RCP<Thyra::MultiVectorBase<double> > getCurrentSolution();
 
@@ -76,18 +80,14 @@ public:
        const Teuchos::RCP<const Thyra_Vector> x_dot,
        const Teuchos::RCP<const Thyra_Vector> x_dotdot);
 
-   void combine (const Teuchos::RCP<const Thyra_MultiVector> src,
-                 const Teuchos::RCP<Thyra_MultiVector>       dst,
-                 const Albany::CombineMode                   CM);
-   void scatter (const Teuchos::RCP<const Thyra_MultiVector> src,
-                 const Teuchos::RCP<Thyra_MultiVector>       dst,
-                 const Albany::CombineMode                   CM);
-
 private:
+
+    Teuchos::RCP<const Albany::CombineAndScatterManager> cas_manager;
 
     Teuchos::RCP<Tpetra_Import> importerT;
     Teuchos::RCP<Tpetra_Export> exporterT;
 
+    Teuchos::RCP<Thyra_Vector> overlapped_f;
     Teuchos::RCP<Tpetra_Vector> overlapped_fT;
     Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT;
 

@@ -28,16 +28,4 @@
 // Teuchos comm typedef
 typedef Teuchos::Comm<int>  Teuchos_Comm;
 
-namespace Albany
-{
-
-// An Albany-owned combine mode enum, so we don't stick to either Tpetra or Epetra
-// (note:: it would be nice if Teuchos provided such enumeration)
-enum class CombineMode {
-  ADD,
-  INSERT
-};
-
-} // namespace Albany
-
 #endif // ALBANY_COMM_TYPES_HPP

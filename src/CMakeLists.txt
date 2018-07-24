@@ -104,6 +104,8 @@ SET(SOURCES ${SOURCES}
   utility/DisplayTable.cpp
   utility/PerformanceContext.cpp
   utility/TimeMonitor.cpp
+  utility/Albany_CombineAndScatterManager.cpp
+  utility/Albany_CombineAndScatterManagerTpetra.cpp
   utility/Albany_TpetraThyraUtils.cpp
   utility/VariableMonitor.cpp
   utility/StaticAllocator.cpp
@@ -117,6 +119,8 @@ SET(HEADERS ${HEADERS}
   utility/string.hpp
   utility/TimeGuard.hpp
   utility/TimeMonitor.hpp
+  utility/Albany_CombineAndScatterManager.hpp
+  utility/Albany_CombineAndScatterManagerTpetra.hpp
   utility/Albany_TpetraThyraUtils.hpp
   utility/VariableMonitor.hpp
   utility/StaticAllocator.hpp
