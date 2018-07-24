@@ -25,7 +25,6 @@
        evaluators/LandIce_GeoFluxHeat.cpp
        evaluators/LandIce_HydraulicPotential.cpp
        evaluators/LandIce_HydrologyBasalGravitationalWaterPotential.cpp
-       evaluators/LandIce_HydrologyDirichlet.cpp
        evaluators/LandIce_HydrologyMeltingRate.cpp
        evaluators/LandIce_HydrologyResidualCavitiesEqn.cpp
        evaluators/LandIce_HydrologyResidualMassEqn.cpp
@@ -139,8 +138,6 @@ ENDIF()
        evaluators/LandIce_HydraulicPotential_Def.hpp
        evaluators/LandIce_HydrologyBasalGravitationalWaterPotential.hpp
        evaluators/LandIce_HydrologyBasalGravitationalWaterPotential_Def.hpp
-       evaluators/LandIce_HydrologyDirichlet.hpp
-       evaluators/LandIce_HydrologyDirichlet_Def.hpp
        evaluators/LandIce_HydrologyMeltingRate.hpp
        evaluators/LandIce_HydrologyMeltingRate_Def.hpp
        evaluators/LandIce_HydrologyResidualCavitiesEqn.hpp

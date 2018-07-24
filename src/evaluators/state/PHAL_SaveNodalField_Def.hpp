@@ -9,6 +9,8 @@
 #include "Adapt_NodalDataVector.hpp"
 #include "Albany_StateManager.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 template<typename EvalT, typename Traits>
 PHAL::SaveNodalFieldBase<EvalT, Traits>::
 SaveNodalFieldBase(Teuchos::ParameterList& p,
@@ -122,11 +124,11 @@ template<typename Traits>
 void PHAL::SaveNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-
   // Here is what we might like to save ...
-  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
-  Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
-  Teuchos::RCP<const Tpetra_Vector> xdotdotT = workset.xdotdotT;
+  // Recall: Albany::get(Const)Tpetra(Multi)Vector returns Teuchos::null if the input is Teuchos::null
+  Teuchos::RCP<const Tpetra_Vector> xT       = Albany::getConstTpetraVector(workset.x);
+  Teuchos::RCP<const Tpetra_Vector> xdotT    = Albany::getConstTpetraVector(workset.xdot);
+  Teuchos::RCP<const Tpetra_Vector> xdotdotT = Albany::getConstTpetraVector(workset.xdotdot);
 
   // Note: we are in postEvaluate so all PEs call this
 

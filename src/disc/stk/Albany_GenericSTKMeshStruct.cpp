@@ -751,20 +751,6 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMeshT(const Teuchos::RCP<Teuc
 
 void Albany::GenericSTKMeshStruct::setupMeshBlkInfo()
 {
-#if 0
-
-   int nBlocks = meshSpecs.size();
-
-   for(int i = 0; i < nBlocks; i++){
-
-      const MeshSpecsStruct &ms = *meshSpecs[i];
-
-      meshDynamicData[i] = Teuchos::rcp(new CellSpecs(ms.ctd, ms.worksetSize, ms.cubatureDegree,
-                      numDim, neq, 0, useCompositeTet()));
-
-   }
-#endif
-
 }
 
 void Albany::GenericSTKMeshStruct::addNodeSetsFromSideSets ()

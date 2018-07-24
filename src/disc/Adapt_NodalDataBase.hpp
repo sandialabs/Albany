@@ -8,11 +8,11 @@
 #define ADAPT_NODALDATABASE_HPP
 
 #include "Teuchos_RCP.hpp"
-#include "Albany_DataTypes.hpp"
-#include "Albany_AbstractNodeFieldContainer.hpp"
-#include "Phalanx_DataLayout.hpp"
 
 #include "Adapt_NodalFieldUtils.hpp"
+#include "Albany_AbstractNodeFieldContainer.hpp"
+
+#include "Albany_TpetraTypes.hpp"
 
 namespace Adapt {
 

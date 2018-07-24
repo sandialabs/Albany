@@ -2151,7 +2151,6 @@ void Aeras::SpectralDiscretization::computeCoordsQuads()
   int deg = np - 1;
 
   // Compute the 1D Gauss-Lobatto quadrature
-std::cout << "AGS -- see if this works??" << std::endl;
   Intrepid2::CubaturePolylib<PHX::Device, RealType, RealType>
     gl1D(2*deg-1, Intrepid2::POLYTYPE_GAUSS_LOBATTO);
 
@@ -2161,7 +2160,6 @@ std::cout << "AGS -- see if this works??" << std::endl;
 //  axes.push_back(gl1D);
 //  axes.push_back(gl1D);
   //Intrepid2::CubatureTensor<PHX::Device> gl2D(axes);
-std::cout << "AGS -- need to uncomment to run -- just trying to compile" << std::endl;
   Intrepid2::CubatureTensor<PHX::Device> gl2D(gl1D, gl1D);
   Field_t refCoords("AAA", np2, 2);
   Field_t refWeights("AAA", np2);

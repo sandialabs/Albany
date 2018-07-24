@@ -45,8 +45,10 @@ public:
    Teuchos::RCP<const Tpetra_MultiVector> getInitialSolution() const { return current_soln; }
 
    Teuchos::RCP<Tpetra_MultiVector> getOverlappedSolution() { return overlapped_soln; }
-
    Teuchos::RCP<const Tpetra_MultiVector> getOverlappedSolution() const { return overlapped_soln; }
+
+   Teuchos::RCP<Thyra_MultiVector> getOverlappedSolution_Thyra() { return overlapped_soln_thyra; }
+   Teuchos::RCP<const Thyra_MultiVector> getOverlappedSolution_Thyra() const { return overlapped_soln_thyra; }
 
    Teuchos::RCP<Tpetra_Vector> updateAndReturnOverlapSolutionT(const Tpetra_Vector& solutionT /*not overlapped*/);
    Teuchos::RCP<Tpetra_Vector> updateAndReturnOverlapSolutionDotT(const Tpetra_Vector& solution_dotT /*not overlapped*/);
@@ -69,6 +71,18 @@ public:
    void scatterXT(
        const Tpetra_MultiVector& soln);
 
+   void scatterX(
+       const Teuchos::RCP<const Thyra_Vector> x,
+       const Teuchos::RCP<const Thyra_Vector> x_dot,
+       const Teuchos::RCP<const Thyra_Vector> x_dotdot);
+
+   void combine (const Teuchos::RCP<const Thyra_MultiVector> src,
+                 const Teuchos::RCP<Thyra_MultiVector>       dst,
+                 const Albany::CombineMode                   CM);
+   void scatter (const Teuchos::RCP<const Thyra_MultiVector> src,
+                 const Teuchos::RCP<Thyra_MultiVector>       dst,
+                 const Albany::CombineMode                   CM);
+
 private:
 
     Teuchos::RCP<Tpetra_Import> importerT;
@@ -80,6 +94,7 @@ private:
     // The solution directly from the discretization class
     Teuchos::RCP<Tpetra_MultiVector> current_soln;
     Teuchos::RCP<Tpetra_MultiVector> overlapped_soln;
+    Teuchos::RCP<Thyra_MultiVector> overlapped_soln_thyra;
 
     // Number of time derivative vectors that we need to support
     const int num_time_deriv;

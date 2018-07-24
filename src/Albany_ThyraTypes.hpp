@@ -16,6 +16,7 @@
 // Thyra includes
 #include "Thyra_MultiVectorBase.hpp"
 #include "Thyra_VectorBase.hpp"
+#include "Thyra_ProductVectorBase.hpp"
 #include "Thyra_VectorSpaceBase.hpp"
 #include "Thyra_ModelEvaluator.hpp"
 #include "Thyra_LinearOpBase.hpp"
@@ -25,6 +26,7 @@
 typedef Thyra::VectorSpaceBase<ST>                Thyra_VectorSpace;
 typedef Thyra::MultiVectorBase<ST>                Thyra_MultiVector;
 typedef Thyra::VectorBase<ST>                     Thyra_Vector;
+typedef Thyra::ProductVectorBase<ST>              Thyra_ProductVector;
 typedef Thyra::LinearOpBase<ST>                   Thyra_LinearOp;
 typedef Thyra::PreconditionerBase<ST>             Thyra_Preconditioner;
 typedef Thyra::LinearOpWithSolveBase<ST>          Thyra_LOWS;

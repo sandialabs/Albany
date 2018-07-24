@@ -961,6 +961,12 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
   return functionalValue;
 }
 
+void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Thyra_Vector>& albanySolutionVector)
+{
+  auto solutionT = ConverterT::getConstTpetraVector(albanySolutionVector);
+  setCurrentTimeAndDisplacement(time,solutionT);
+}
+
 void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector)
 {
   if(hasPeridynamics){

@@ -10,6 +10,7 @@
 #include "Phalanx_TypeStrings.hpp"
 #include "Sacado.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -77,7 +78,7 @@ void Gather2DField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
   const Albany::SideSetList& ssList = *(workset.sideSets);
@@ -122,7 +123,7 @@ void Gather2DField<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
   if (workset.sideSets == Teuchos::null)
@@ -205,7 +206,7 @@ template<typename Traits>
 void GatherExtruded2DField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
@@ -243,7 +244,7 @@ void GatherExtruded2DField<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
@@ -301,5 +302,4 @@ void GatherExtruded2DField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {}
 
-}
-
+} // namespace FELIX

@@ -8,11 +8,11 @@
 
 void
 Albany::DistributedResponseFunction::
-evaluateDerivativeT(
+evaluateDerivative(
   const double current_time,
-  const Tpetra_Vector* xdotT,
-  const Tpetra_Vector* xdotdotT,
-  const Tpetra_Vector& xT,
+  const Teuchos::RCP<const Thyra_Vector>& x,
+  const Teuchos::RCP<const Thyra_Vector>& xdot,
+  const Teuchos::RCP<const Thyra_Vector>& xdotdot,
   const Teuchos::Array<ParamVec>& p,
   ParamVec* deriv_p,
   Tpetra_Vector* gT,
@@ -24,8 +24,7 @@ evaluateDerivativeT(
   Tpetra_Operator* dg_dxp;
   if(dg_dxT.isEmpty()){
     dg_dxp = NULL;
-  }
-  else {
+  } else {
     Teuchos::RCP<Tpetra_Operator> dgdxT = ConverterT::getTpetraOperator(dg_dxT.getLinearOp());
     dg_dxp = dgdxT.get();
   }
@@ -33,8 +32,7 @@ evaluateDerivativeT(
   Tpetra_Operator* dg_dxdotp;
   if(dg_dxdotT.isEmpty()){
     dg_dxdotp = NULL;
-  }
-  else {
+  } else {
     Teuchos::RCP<Tpetra_Operator> dgdxdotT = ConverterT::getTpetraOperator(dg_dxdotT.getLinearOp());
     dg_dxdotp = dgdxdotT.get();
   }
@@ -42,8 +40,7 @@ evaluateDerivativeT(
   Tpetra_Operator* dg_dxdotdotp;
   if(dg_dxdotdotT.isEmpty()){
     dg_dxdotdotp = NULL;
-  }
-  else {
+  } else {
     Teuchos::RCP<Tpetra_Operator> dgdxdotdotT = ConverterT::getTpetraOperator(dg_dxdotdotT.getLinearOp());
     dg_dxdotdotp = dgdxdotdotT.get();
   }
@@ -51,13 +48,12 @@ evaluateDerivativeT(
   Tpetra_MultiVector* dg_dpp;
   if(dg_dpT.isEmpty()){
     dg_dpp = NULL;
-  }
-  else {
+  } else {
     Teuchos::RCP<Tpetra_MultiVector> dgdpT = ConverterT::getTpetraMultiVector(dg_dpT.getMultiVector());
     dg_dpp = dgdpT.get();
   }
 
-  this->evaluateGradientT(
-    current_time, xdotT, xdotdotT, xT, p, deriv_p, gT,
+  this->evaluateGradient(
+    current_time, x, xdot, xdotdot, p, deriv_p, gT,
     dg_dxp, dg_dxdotp, dg_dxdotdotp, dg_dpp);
 }

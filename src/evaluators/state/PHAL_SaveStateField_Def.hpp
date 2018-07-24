@@ -9,8 +9,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
-#include "Albany_StateInfoStruct.hpp"
+#include "Phalanx_DataLayout_MDALayout.hpp"
 
 #ifdef ALBANY_STK
 #include "Albany_AbstractSTKMeshStruct.hpp"

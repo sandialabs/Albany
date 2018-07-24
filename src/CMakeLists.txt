@@ -104,6 +104,7 @@ SET(SOURCES ${SOURCES}
   utility/DisplayTable.cpp
   utility/PerformanceContext.cpp
   utility/TimeMonitor.cpp
+  utility/Albany_TpetraThyraUtils.cpp
   utility/VariableMonitor.cpp
   utility/StaticAllocator.cpp
   )
@@ -116,6 +117,7 @@ SET(HEADERS ${HEADERS}
   utility/string.hpp
   utility/TimeGuard.hpp
   utility/TimeMonitor.hpp
+  utility/Albany_TpetraThyraUtils.hpp
   utility/VariableMonitor.hpp
   utility/StaticAllocator.hpp
   utility/math/Tensor.hpp
@@ -227,7 +229,6 @@ SET(HEADERS ${HEADERS}
 SET(SOURCES ${SOURCES}
   disc/Adapt_NodalDataBase.cpp
   disc/Adapt_NodalDataVector.cpp
-  disc/Albany_AbstractMeshStruct.cpp
   disc/Albany_DiscretizationFactory.cpp
   )
 SET(HEADERS ${HEADERS}
@@ -656,6 +657,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./disc/stk
                      ./adapt
                      ./disc
+                     ./utility
                      ./LCM/
                      ./LCM/evaluators
                      ./LCM/evaluators/ACE

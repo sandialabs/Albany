@@ -28,7 +28,7 @@ namespace Albany {
     virtual ~AbstractResponseFunction() {};
 
     //! Setup response function
-    virtual void setupT() = 0;
+    virtual void setup() = 0;
 
     //! Get the map associate with this response - Tpetra version 
     virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const = 0;
@@ -49,39 +49,38 @@ namespace Albany {
     //@{
 
     //! Evaluate responses
-
-    virtual void evaluateResponseT(
+    virtual void evaluateResponse(
       const double current_time,
-      const Tpetra_Vector* xdotT,
-      const Tpetra_Vector* xdotdotT,
-      const Tpetra_Vector& xT,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
       Tpetra_Vector& gT) = 0;
 
-    virtual void evaluateTangentT(
+    virtual void evaluateTangent(
       const double alpha,
       const double beta,
       const double omega,
       const double current_time,
       bool sum_derivs,
-      const Tpetra_Vector* xdot,
-      const Tpetra_Vector* xdotdot,
-      const Tpetra_Vector& x,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
-      const Tpetra_MultiVector* Vxdot,
-      const Tpetra_MultiVector* Vxdotdot,
-      const Tpetra_MultiVector* Vx,
-      const Tpetra_MultiVector* Vp,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vx,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vp,
       Tpetra_Vector* g,
       Tpetra_MultiVector* gx,
       Tpetra_MultiVector* gp) = 0;
 
-   virtual void evaluateDerivativeT(
+   virtual void evaluateDerivative(
       const double current_time,
-      const Tpetra_Vector* xdotT,
-      const Tpetra_Vector* xdotdotT,
-      const Tpetra_Vector& xT,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       Tpetra_Vector* gT,
@@ -90,12 +89,12 @@ namespace Albany {
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp) = 0;
 
-//! Evaluate distributed parameter derivative dg/dp
-    virtual void evaluateDistParamDerivT(
+    //! Evaluate distributed parameter derivative dg/dp
+    virtual void evaluateDistParamDeriv(
       const double current_time,
-      const Tpetra_Vector* xdotT,
-      const Tpetra_Vector* xdotdotT,
-      const Tpetra_Vector& xT,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& param_array,
       const std::string& dist_param_name,
       Tpetra_MultiVector*  dg_dpT) = 0;
@@ -111,6 +110,6 @@ namespace Albany {
 
   };
 
-}
+} // namespace Albany
 
 #endif // ALBANY_ABSTRACTRESPONSEFUNCTION_HPP

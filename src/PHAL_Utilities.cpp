@@ -5,6 +5,8 @@
 //*****************************************************************//
 
 #include "Albany_Application.hpp"
+#include "Albany_StateInfoStruct.hpp"
+
 #include "PHAL_Utilities.hpp"
 
 namespace PHAL {

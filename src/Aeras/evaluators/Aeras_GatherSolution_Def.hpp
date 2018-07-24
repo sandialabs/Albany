@@ -13,6 +13,8 @@
 #include "Aeras_Dimension.hpp"
 #include "Albany_Utils.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 namespace Aeras {
 
 
@@ -198,8 +200,8 @@ evaluateFields(typename Traits::EvalData workset)
 { 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
-  Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
+  Teuchos::RCP<const Tpetra_Vector> xdotT = Albany::getConstTpetraVector(workset.xdot);
 
   //Get const view of xT and xdotT 
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
@@ -241,10 +243,10 @@ evaluateFields(typename Traits::EvalData workset)
   nodeID = workset.wsElNodeEqID;
 
   // Tpetra getLocalView is needed to obtain a Kokkos View from a specific device
-  auto xT_2d = workset.xT->template getLocalView<PHX::Device>();
+  auto xT_2d = ConverterT::getConstTpetraVector(workset.x)->template getLocalView<PHX::Device>();
   xT_constView = Kokkos::subview(xT_2d, Kokkos::ALL(), 0);
 
-  auto xdotT_2d = workset.xdotT->template getLocalView<PHX::Device>();
+  auto xdotT_2d = Albany::getConstTpetraVector(workset.xdot)->template getLocalView<PHX::Device>();
   xdotT_constView = Kokkos::subview(xdotT_2d, Kokkos::ALL(), 0);
 
   for (int i =0; i<numFields;i++) {
@@ -399,8 +401,8 @@ evaluateFields(typename Traits::EvalData workset)
 {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   auto nodeID = workset.wsElNodeEqID;
-  const Teuchos::RCP<const Tpetra_Vector>    xT = workset.xT;
-  const Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
+  const Teuchos::RCP<const Tpetra_Vector>    xT = Albany::getConstTpetraVector(workset.x);
+  const Teuchos::RCP<const Tpetra_Vector> xdotT = Albany::getConstTpetraVector(workset.x_dot);
 
   //Get const view of xT and xdotT 
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
@@ -492,10 +494,10 @@ evaluateFields(typename Traits::EvalData workset)
   nodeID=workset.wsElNodeEqID;
 
   // Tpetra getLocalView is needed to obtain a Kokkos View from a specific device
-  auto xT_2d = workset.xT->template getLocalView<PHX::Device>();
+  auto xT_2d = Albany::getConstTpetraVector(workset.x)->template getLocalView<PHX::Device>();
   xT_constView = Kokkos::subview(xT_2d, Kokkos::ALL(), 0);
 
-  auto xdotT_2d = workset.xdotT->template getLocalView<PHX::Device>();
+  auto xdotT_2d = Albany::getConstTpetraVector(workset.xdot)->template getLocalView<PHX::Device>();
   xdotT_constView = Kokkos::subview(xdotT_2d, Kokkos::ALL(), 0);
 
   for (int i =0; i<numFields;i++)
@@ -534,10 +536,10 @@ void GatherSolution<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
-  Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
-  Teuchos::RCP<const Tpetra_MultiVector> VxT = workset.VxT;
-  Teuchos::RCP<const Tpetra_MultiVector> VxdotT = workset.VxdotT;
+  Teuchos::RCP<const Tpetra_Vector>    xT = Albany::getConstTpetraVector(workset.x);
+  Teuchos::RCP<const Tpetra_Vector> xdotT = Albany::getConstTpetraVector(workset.xdot);
+  Teuchos::RCP<const Tpetra_MultiVector> VxT    = Albany::getConstTpetraMultiVector(workset.Vx);
+  Teuchos::RCP<const Tpetra_MultiVector> VxdotT = Albany::getConstTpetraMultiVector(workset.Vxdot);
 
   //get const views of xT and xdotT  
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
@@ -660,8 +662,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-
 }
 
-}
-
+} // namespace Aeras

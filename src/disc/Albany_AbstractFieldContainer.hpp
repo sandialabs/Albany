@@ -8,6 +8,9 @@
 #ifndef ALBANY_ABSTRACTFIELDCONT_HPP
 #define ALBANY_ABSTRACTFIELDCONT_HPP
 
+#include <vector>
+#include <string>
+
 namespace Albany {
 
 /*!

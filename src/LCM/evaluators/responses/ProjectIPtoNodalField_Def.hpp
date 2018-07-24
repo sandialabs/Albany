@@ -14,6 +14,8 @@
 #include <Thyra_Ifpack2PreconditionerFactory.hpp>
 #endif
 
+#include <Phalanx_DataLayout_MDALayout.hpp>
+
 #include <Intrepid2_CellTools.hpp>
 #include <Intrepid2_DefaultCubatureFactory.hpp>
 #include <Intrepid2_FunctionSpaceTools.hpp>

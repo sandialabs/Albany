@@ -37,61 +37,61 @@ namespace Albany {
     virtual unsigned int numResponses() const;
 
     //! Setup response function
-    virtual void setupT();
+    virtual void setup();
 
     //! Evaluate responses
     virtual void
-    evaluateResponseT(const double current_time,
-		     const Tpetra_Vector* xdot,
-		     const Tpetra_Vector* xdotdot,
-		     const Tpetra_Vector& x,
-		     const Teuchos::Array<ParamVec>& p,
-		     Tpetra_Vector& g);
+    evaluateResponse(const double current_time,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+		  const Teuchos::Array<ParamVec>& p,
+		  Tpetra_Vector& g);
 
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
     virtual void
-    evaluateTangentT(const double alpha,
-		    const double beta,
-		    const double omega,
-		    const double current_time,
-		    bool sum_derivs,
-		    const Tpetra_Vector* xdot,
-		    const Tpetra_Vector* xdotdot,
-		    const Tpetra_Vector& x,
-		    const Teuchos::Array<ParamVec>& p,
-		    ParamVec* deriv_p,
-		    const Tpetra_MultiVector* Vxdot,
-		    const Tpetra_MultiVector* Vxdotdot,
-		    const Tpetra_MultiVector* Vx,
-		    const Tpetra_MultiVector* Vp,
-		    Tpetra_Vector* g,
-		    Tpetra_MultiVector* gx,
-		    Tpetra_MultiVector* gp);
+    evaluateTangent(const double alpha,
+      const double beta,
+      const double omega,
+      const double current_time,
+      bool sum_derivs,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vx,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vp,
+      Tpetra_Vector* g,
+      Tpetra_MultiVector* gx,
+      Tpetra_MultiVector* gp);
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void
-    evaluateGradientT(const double current_time,
-		     const Tpetra_Vector* xdot,
-		     const Tpetra_Vector* xdotdot,
-		     const Tpetra_Vector& x,
-		     const Teuchos::Array<ParamVec>& p,
-		     ParamVec* deriv_p,
-		     Tpetra_Vector* g,
-		     Tpetra_MultiVector* dg_dx,
-		     Tpetra_MultiVector* dg_dxdot,
-		     Tpetra_MultiVector* dg_dxdotdot,
-		     Tpetra_MultiVector* dg_dp);
+    evaluateGradient(const double current_time,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      Tpetra_Vector* g,
+      Tpetra_MultiVector* dg_dx,
+      Tpetra_MultiVector* dg_dxdot,
+      Tpetra_MultiVector* dg_dxdotdot,
+      Tpetra_MultiVector* dg_dp);
 
     //! Evaluate distributed parameter derivative dg/dp
     virtual void
-    evaluateDistParamDerivT(
-             const double current_time,
-             const Tpetra_Vector* xdotT,
-             const Tpetra_Vector* xdotdotT,
-             const Tpetra_Vector& xT,
-             const Teuchos::Array<ParamVec>& param_array,
-             const std::string& dist_param_name,
-             Tpetra_MultiVector* dg_dpT);
+    evaluateDistParamDeriv(
+      const double current_time,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec>& param_array,
+      const std::string& dist_param_name,
+      Tpetra_MultiVector* dg_dpT);
 
   private:
     //! Private to prohibit copying
@@ -111,22 +111,22 @@ namespace Albany {
 
     void updateSolutionImporterT();
 
-void
-ImportWithAlternateMapT(
-    Teuchos::RCP<const Tpetra_Import> importerT,
-    const Tpetra_MultiVector& sourceT,
-    Tpetra_MultiVector* targetT,
-    Tpetra::CombineMode modeT);
+    void
+    ImportWithAlternateMapT(
+        Teuchos::RCP<const Tpetra_Import> importerT,
+        const Tpetra_MultiVector& sourceT,
+        Tpetra_MultiVector* targetT,
+        Tpetra::CombineMode modeT);
 
-void
-ImportWithAlternateMapT(
-    Teuchos::RCP<const Tpetra_Import> importerT,
-    const Tpetra_Vector& sourceT,
-    Tpetra_Vector& targetT,
-    Tpetra::CombineMode modeT);
+    void
+    ImportWithAlternateMapT(
+        Teuchos::RCP<const Tpetra_Import> importerT,
+        const Tpetra_Vector& sourceT,
+        Tpetra_Vector& targetT,
+        Tpetra::CombineMode modeT);
 
   };
 
-}
+} // namespace Albany
 
 #endif // ALBANY_SOLUTIONVALUESRESPONSEFUNCTION_HPP

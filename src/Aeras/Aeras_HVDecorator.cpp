@@ -10,6 +10,8 @@
 #include "Teuchos_VerboseObject.hpp"
 #include <sstream>
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 //uncomment the following to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET_TO_MM_FILE
 
@@ -150,22 +152,15 @@ Aeras::HVDecorator::createOperator(double alpha, double beta, double omega, bool
     Teuchos::nonnull(Op) ?
     Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(Op, true) :
     Teuchos::null;
-  const Teuchos::RCP<const Tpetra_Vector> xT = ConverterT::getConstTpetraVector(this->getNominalValues().get_x());
-  const Teuchos::RCP<const Tpetra_Vector> x_dotT =
-    Teuchos::nonnull(this->getNominalValues().get_x_dot()) ?
-    ConverterT::getConstTpetraVector(this->getNominalValues().get_x_dot()) :
-    Teuchos::null;
-  //IKT: it's important to make x_dotdotT non-null.  Otherwise 2nd derivative terms defining the laplace operator
-  //will not get set in PHAL_GatherSolution_Def.hpp. 
-
-  //const Teuchos::RCP<const Tpetra_Vector> x_dotdotT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true));
-  Teuchos::RCP<Tpetra_Vector> x_dotdotT = Teuchos::null;
-  if(xdotdot_nonnull)
-     x_dotdotT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true));
+  auto args = this->getNominalValues();
+  const Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(args.get_x());
 
   const Teuchos::RCP<Tpetra_Vector> fT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true)); 
-  app->computeGlobalJacobianT(alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, 
-                               sacado_param_vec, fT.get(), *Op_crs);
+  app->computeGlobalJacobian(alpha, beta, omega, curr_time,
+                             args.get_x(),
+                             (supports_xdot ? args.get_x_dot() : Teuchos::null),
+                             (supports_xdotdot ? args.get_x_dot_dot() : Teuchos::null),
+                             sacado_param_vec, fT.get(), *Op_crs);
   return Op_crs; 
 }
 
@@ -184,27 +179,21 @@ Aeras::HVDecorator::createOperatorDiag(double alpha, double beta, double omega, 
     Teuchos::nonnull(Op) ?
     Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(Op, true) :
     Teuchos::null;
-  const Teuchos::RCP<const Tpetra_Vector> xT = ConverterT::getConstTpetraVector(this->getNominalValues().get_x());
-  const Teuchos::RCP<const Tpetra_Vector> x_dotT =
-    Teuchos::nonnull(this->getNominalValues().get_x_dot()) ?
-    ConverterT::getConstTpetraVector(this->getNominalValues().get_x_dot()) :
-    Teuchos::null;
-  //IKT: it's important to make x_dotdotT non-null.  Otherwise 2nd derivative terms defining the laplace operator
-  //will not get set in PHAL_GatherSolution_Def.hpp. 
-  //const Teuchos::RCP<const Tpetra_Vector> x_dotdotT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true));
 
-  Teuchos::RCP<Tpetra_Vector> x_dotdotT = Teuchos::null;
-  if(xdotdot_nonnull)
-     x_dotdotT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true));
+  auto args = this->getNominalValues();
+  const Teuchos::RCP<const Tpetra_Vector> xT = ConverterT::getConstTpetraVector(args.get_x());
 
   const Teuchos::RCP<Tpetra_Vector> fT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true)); 
-  app->computeGlobalJacobianT(alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, 
-                               sacado_param_vec, fT.get(), *Op_crs);
+  app->computeGlobalJacobian(alpha, beta, omega, curr_time,
+                             args.get_x(),
+                             (supports_xdot ? args.get_x_dot() : Teuchos::null),
+                             (supports_xdotdot ? args.get_x_dot_dot() : Teuchos::null),
+                             sacado_param_vec, fT.get(), *Op_crs);
   return Op_crs; 
 }
 
 //IKT: the following function returns laplace_*mass_^(-1)*laplace_*x_in.  It is to be called 
-//in evalModelImpl after the last computeGlobalResidualT call.
+//in evalModelImpl after the last computeGlobalResidual call.
 //Note that it is more efficient to implement an apply method like is done here, than 
 //to form a sparse CrsMatrix laplace_*mass_^(-1)*laplace_ and store it.  
 void
@@ -276,33 +265,27 @@ Aeras::HVDecorator::evalModelImpl(
   //
   // Get the input arguments
   //
-  const Teuchos::RCP<const Tpetra_Vector> xT =
-    ConverterT::getConstTpetraVector(inArgsT.get_x());
+  // Thyra vectors
+  const Teuchos::RCP<const Thyra_Vector> x = inArgsT.get_x();
+  const Teuchos::RCP<const Thyra_Vector> x_dot =
+      (supports_xdot ? inArgsT.get_x_dot() : Teuchos::null);
+  const Teuchos::RCP<const Thyra_Vector> x_dotdot =
+      (supports_xdotdot ? inArgsT.get_x_dot_dot() : Teuchos::null);
 
-  const Teuchos::RCP<const Tpetra_Vector> x_dotT =
-    Teuchos::nonnull(inArgsT.get_x_dot()) ?
-    ConverterT::getConstTpetraVector(inArgsT.get_x_dot()) :
-    Teuchos::null;
+  // Tpetra vectors
+  const Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(x);
 
+  const double alpha = (Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdot)) ? inArgsT.get_alpha() : 0.0;
   // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
-  //const Teuchos::RCP<const Tpetra_Vector> x_dotdotT =
-  //  Teuchos::nonnull(inArgsT.get_x_dotdot()) ?
-  //  ConverterT::getConstTpetraVector(inArgsT.get_x_dotdot()) :
-  //  Teuchos::null;
-  const Teuchos::RCP<const Tpetra_Vector> x_dotdotT = Teuchos::null;
-
-
-  const double alpha = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ? inArgsT.get_alpha() : 0.0;
-  // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
-  // const double omega = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ? inArgsT.get_omega() : 0.0;
+  // const double omega = (Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdot)) ? inArgsT.get_omega() : 0.0;
   const double omega = 0.0;
-  const double beta = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ? inArgsT.get_beta() : 1.0;
-  const double curr_time = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ? inArgsT.get_t() : 0.0;
+  const double beta = (Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdot)) ? inArgsT.get_beta() : 1.0;
+  const double curr_time = (Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdot)) ? inArgsT.get_t() : 0.0;
 
   for (int l = 0; l < inArgsT.Np(); ++l) {
     const Teuchos::RCP<const Thyra::VectorBase<ST> > p = inArgsT.get_p(l);
     if (Teuchos::nonnull(p)) {
-      const Teuchos::RCP<const Tpetra_Vector> pT = ConverterT::getConstTpetraVector(p);
+      const Teuchos::RCP<const Tpetra_Vector> pT = Albany::getConstTpetraVector(p);
       const Teuchos::ArrayRCP<const ST> pT_constView = pT->get1dView();
 
       ParamVec &sacado_param_vector = sacado_param_vec[l];
@@ -359,8 +342,8 @@ Aeras::HVDecorator::evalModelImpl(
 
   // W matrix
   if (Teuchos::nonnull(W_op_out_crsT)) {
-    app->computeGlobalJacobianT(
-        alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(),  *xT,
+    app->computeGlobalJacobian(
+        alpha, beta, omega, curr_time, x, x_dot, x_dotdot,
         sacado_param_vec, fT_out.get(), *W_op_out_crsT);
     f_already_computed = true;
   }
@@ -378,11 +361,11 @@ Aeras::HVDecorator::evalModelImpl(
     if (Teuchos::nonnull(dfdp_outT)) {
       const Teuchos::RCP<ParamVec> p_vec = Teuchos::rcpFromRef(sacado_param_vec[l]);
 
-      app->computeGlobalTangentT(
-          0.0, 0.0, 0.0, curr_time, false, x_dotT.get(), x_dotdotT.get(), *xT,
+      app->computeGlobalTangent(
+          0.0, 0.0, 0.0, curr_time, false, x, x_dot, x_dotdot,
           sacado_param_vec, p_vec.get(),
-          NULL, NULL, NULL, NULL, fT_out.get(), NULL,
-          dfdp_outT.get());
+          Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
+          fT_out, Teuchos::null, dfdp_outT);
 
       f_already_computed = true;
     }
@@ -397,14 +380,14 @@ Aeras::HVDecorator::evalModelImpl(
     const Thyra::ModelEvaluatorBase::Derivative<ST> dummy_derivT;
 
     const int response_index = 0; // need to add capability for sending this in
-    app->evaluateResponseDerivativeT(
-        response_index, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
+    app->evaluateResponseDerivative(
+        response_index, curr_time, x, x_dot, x_dotdot,
         sacado_param_vec, NULL,
         NULL, f_derivT, dummy_derivT, dummy_derivT, dummy_derivT);
   } else {
     if (Teuchos::nonnull(fT_out) && !f_already_computed) {
-      app->computeGlobalResidualT(
-          curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
+      app->computeGlobalResidual(
+          curr_time, x, x_dot, x_dotdot,
           sacado_param_vec, *fT_out);
     }
   }
@@ -422,7 +405,7 @@ Aeras::HVDecorator::evalModelImpl(
   mm_counter++; 
 #endif  
 
-  if (Teuchos::nonnull(inArgsT.get_x_dot()) && Teuchos::nonnull(fT_out)){
+  if (supports_xdot && Teuchos::nonnull(inArgsT.get_x_dot()) && Teuchos::nonnull(fT_out)){
 #ifdef OUTPUT_TO_SCREEN
     std::cout <<"in the if-statement for the update" <<std::endl;
 #endif
@@ -448,8 +431,8 @@ Aeras::HVDecorator::evalModelImpl(
     // dg/dx, dg/dxdot
     if (!dgdxT_out.isEmpty() || !dgdxdotT_out.isEmpty()) {
       const Thyra::ModelEvaluatorBase::Derivative<ST> dummy_derivT;
-      app->evaluateResponseDerivativeT(
-          j, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
+      app->evaluateResponseDerivative(
+          j, curr_time, x, x_dot, x_dotdot,
           sacado_param_vec, NULL,
           gT_out.get(), dgdxT_out,
           dgdxdotT_out, dgdxdotdotT_out, dummy_derivT);
@@ -468,23 +451,20 @@ Aeras::HVDecorator::evalModelImpl(
 
       if (Teuchos::nonnull(dgdpT_out)) {
         const Teuchos::RCP<ParamVec> p_vec = Teuchos::rcpFromRef(sacado_param_vec[l]);
-        app->evaluateResponseTangentT(
+        app->evaluateResponseTangent(
             j, alpha, beta, omega, curr_time, false,
-            x_dotT.get(), x_dotdotT.get(), *xT,
-            sacado_param_vec, p_vec.get(),
-            NULL, NULL, NULL, NULL, gT_out.get(), NULL,
-            dgdpT_out.get());
+            x, x_dot, x_dotdot, sacado_param_vec, p_vec.get(),
+            Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
+            gT_out.get(), NULL, dgdpT_out.get());
         gT_out = Teuchos::null;
       }
     }
 
     if (Teuchos::nonnull(gT_out)) {
-      app->evaluateResponseT(
-          j, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
+      app->evaluateResponse(
+          j, curr_time,
+          x, x_dot, x_dotdot,
           sacado_param_vec, *gT_out);
     }
   }
 }
-
-
-

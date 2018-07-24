@@ -72,10 +72,13 @@ public:
   Teuchos::RCP<Tpetra_Vector>& get_x();
   //! Initialize x_accum using this nonoverlapping map if x_accum has not
   //  already been initialized.
+  void init_x_if_not(const Teuchos::RCP<const Thyra_VectorSpace>& vs);
   void init_x_if_not(const Teuchos::RCP<const Tpetra_Map>& map);
   //! x += soln, where soln is nonoverlapping.
   void update_x(const Tpetra_Vector& soln_nol);
   //! Return x + a for nonoverlapping a.
+  Teuchos::RCP<const Thyra_Vector> add_x(
+    const Teuchos::RCP<const Thyra_Vector>& a) const;
   Teuchos::RCP<const Tpetra_Vector> add_x(
     const Teuchos::RCP<const Tpetra_Vector>& a) const;
 

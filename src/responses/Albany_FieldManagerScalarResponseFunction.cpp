@@ -9,6 +9,8 @@
 #include <algorithm>
 #include "PHAL_Utilities.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 Albany::FieldManagerScalarResponseFunction::
 FieldManagerScalarResponseFunction(
   const Teuchos::RCP<Albany::Application>& application_,
@@ -155,10 +157,10 @@ evaluate (PHAL::Workset& workset) {
 
 void
 Albany::FieldManagerScalarResponseFunction::
-evaluateResponseT(const double current_time,
-		 const Tpetra_Vector* xdotT,
-		 const Tpetra_Vector* xdotdotT,
-		 const Tpetra_Vector& xT,
+evaluateResponse(const double current_time,
+     const Teuchos::RCP<const Thyra_Vector>& x,
+     const Teuchos::RCP<const Thyra_Vector>& xdot,
+     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
 		 const Teuchos::Array<ParamVec>& p,
 		 Tpetra_Vector& gT)
 {
@@ -171,30 +173,29 @@ evaluateResponseT(const double current_time,
 
   // Set data in Workset struct
   PHAL::Workset workset;
-  application->setupBasicWorksetInfoT(workset, current_time, rcp(xdotT, false), rcp(xdotdotT, false), rcpFromRef(xT), p);
+  application->setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, p);
   workset.gT = Teuchos::rcp(&gT,false);
 
   // Perform fill via field manager
   evaluate<PHAL::AlbanyTraits::Residual>(workset);
 }
 
-
 void
 Albany::FieldManagerScalarResponseFunction::
-evaluateTangentT(const double alpha, 
+evaluateTangent(const double alpha, 
 		const double beta,
 		const double omega,
 		const double current_time,
 		bool sum_derivs,
-		const Tpetra_Vector* xdotT,
-		const Tpetra_Vector* xdotdotT,
-		const Tpetra_Vector& xT,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
 		const Teuchos::Array<ParamVec>& p,
 		ParamVec* deriv_p,
-		const Tpetra_MultiVector* VxdotT,
-		const Tpetra_MultiVector* VxdotdotT,
-		const Tpetra_MultiVector* VxT,
-		const Tpetra_MultiVector* VpT,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vx,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vp,
 		Tpetra_Vector* gT,
 		Tpetra_MultiVector* gxT,
 		Tpetra_MultiVector* gpT)
@@ -208,9 +209,8 @@ evaluateTangentT(const double alpha,
   
   // Set data in Workset struct
   PHAL::Workset workset;
-  application->setupTangentWorksetInfoT(workset, current_time, sum_derivs, 
-				       rcp(xdotT), rcp(xdotdotT), rcpFromRef(xT), p, 
-				       deriv_p, rcp(VxdotT), rcp(VxdotdotT), rcp(VxT), rcp(VpT));
+  application->setupTangentWorksetInfo(workset, current_time, sum_derivs, 
+                x, xdot, xdotdot, p, deriv_p, Vx, Vxdot, Vxdotdot, Vp);
   workset.gT = Teuchos::rcp(gT, false);
   workset.dgdxT = Teuchos::rcp(gxT, false);
   workset.dgdpT = Teuchos::rcp(gpT, false);
@@ -221,17 +221,17 @@ evaluateTangentT(const double alpha,
 
 void
 Albany::FieldManagerScalarResponseFunction::
-evaluateGradientT(const double current_time,
-		 const Tpetra_Vector* xdotT,
-		 const Tpetra_Vector* xdotdotT,
-		 const Tpetra_Vector& xT,
-		 const Teuchos::Array<ParamVec>& p,
-		 ParamVec* deriv_p,
-		 Tpetra_Vector* gT,
-		 Tpetra_MultiVector* dg_dxT,
-		 Tpetra_MultiVector* dg_dxdotT,
-		 Tpetra_MultiVector* dg_dxdotdotT,
-		 Tpetra_MultiVector* dg_dpT)
+evaluateGradient(const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+		const Teuchos::Array<ParamVec>& p,
+		ParamVec* deriv_p,
+		Tpetra_Vector* gT,
+		Tpetra_MultiVector* dg_dxT,
+		Tpetra_MultiVector* dg_dxdotT,
+		Tpetra_MultiVector* dg_dxdotdotT,
+		Tpetra_MultiVector* dg_dpT)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
@@ -242,7 +242,7 @@ evaluateGradientT(const double current_time,
 
   // Set data in Workset struct
   PHAL::Workset workset;
-  application->setupBasicWorksetInfoT(workset, current_time, rcp(xdotT, false), rcp(xdotdotT, false), rcpFromRef(xT), p);
+  application->setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, p);
   
   workset.gT = Teuchos::rcp(gT, false);
   
@@ -286,14 +286,14 @@ evaluateGradientT(const double current_time,
 
 void
 Albany::FieldManagerScalarResponseFunction::
-evaluateDistParamDerivT(
-      const double current_time,
-      const Tpetra_Vector* xdotT,
-      const Tpetra_Vector* xdotdotT,
-      const Tpetra_Vector& xT,
-      const Teuchos::Array<ParamVec>& param_array,
-      const std::string& dist_param_name,
-      Tpetra_MultiVector* dg_dpT)
+evaluateDistParamDeriv(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_name,
+    Tpetra_MultiVector* dg_dpT)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
@@ -303,7 +303,7 @@ evaluateDistParamDerivT(
   // Set data in Workset struct
   PHAL::Workset workset;
 
-  application->setupBasicWorksetInfoT(workset, current_time, rcp(xdotT, false), rcp(xdotdotT, false), rcpFromRef(xT), param_array);
+  application->setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, param_array);
 
   // Perform fill via field manager (dg/dx)
   if(dg_dpT != NULL) {

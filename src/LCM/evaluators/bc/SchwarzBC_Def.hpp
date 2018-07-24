@@ -16,6 +16,8 @@
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #endif
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 //
 // Generic Template Code for Constructor and PostRegistrationSetup
 //
@@ -557,8 +559,7 @@ void
 fillResidual(SchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
 {
   // Solution
-  Teuchos::RCP<Tpetra_Vector const>
-  xT = dirichlet_workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(dirichlet_workset.x);
 
   Teuchos::ArrayRCP<ST const>
   xT_const_view = xT->get1dView();
@@ -707,8 +708,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::RCP<Tpetra_CrsMatrix>
   jacT = dirichlet_workset.JacT;
 
-  Teuchos::RCP<Tpetra_Vector const>
-  xT = dirichlet_workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(dirichlet_workset.x);
 
   Teuchos::ArrayRCP<ST const>
   xT_const_view = xT->get1dView();
@@ -858,11 +858,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::RCP<Tpetra_MultiVector>
   JVT = dirichlet_workset.JVT;
 
-  Teuchos::RCP<Tpetra_Vector const>
-  xT = dirichlet_workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(dirichlet_workset.x);
 
-  Teuchos::RCP<Tpetra_MultiVector const>
-  VxT = dirichlet_workset.VxT;
+  Teuchos::RCP<const Tpetra_MultiVector> VxT = Albany::getConstTpetraMultiVector(dirichlet_workset.Vx);
 
   RealType const
   j_coeff = dirichlet_workset.j_coeff;

@@ -7,4 +7,3 @@
 #include "Albany_SolutionFileResponseFunction_Def.hpp"
 
 SOLFILERESP_INSTANTIATE_TEMPLATE_CLASS(Albany::SolutionFileResponseFunction)
-

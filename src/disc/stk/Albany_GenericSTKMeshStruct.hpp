@@ -48,9 +48,6 @@ namespace Albany {
     //! Process STK mesh for element block specific info
     void setupMeshBlkInfo();
 
-    const Albany::DynamicDataArray<Albany::CellSpecs>::type& getMeshDynamicData() const
-        { return meshDynamicData; }
-
     // This routine builds two maps: side3D_id->cell2D_id, and side3D_node_lid->cell2D_node_lid.
     // These maps are used because the side id may differ from the cell id and the nodes order
     // in a 2D cell may not be the same as in the corresponding 3D side. The second map works
@@ -183,9 +180,6 @@ namespace Albany {
     Teuchos::RCP<Teuchos::ParameterList> adaptParams;
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
-
-    // Information that changes when the mesh adapts
-    Albany::DynamicDataArray<CellSpecs>::type meshDynamicData;
 
 #ifdef ALBANY_STK_PERCEPT
     Teuchos::RCP<stk::percept::PerceptMesh> eMesh;

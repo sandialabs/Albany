@@ -10,12 +10,12 @@
 
 #include "Albany_Layouts.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
 namespace LandIce {
-
-
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -66,7 +66,7 @@ void UpdateZCoordinateMovingTop<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
@@ -156,7 +156,7 @@ void UpdateZCoordinateMovingBed<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();

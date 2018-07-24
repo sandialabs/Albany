@@ -43,11 +43,11 @@ namespace Albany {
     }
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra
-    virtual void evaluateGradientT(
+    virtual void evaluateGradient(
       const double current_time,
-      const Tpetra_Vector* xdotT,
-      const Tpetra_Vector* xdotdotT,
-      const Tpetra_Vector& xT,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       Tpetra_Vector* gT,
@@ -55,13 +55,13 @@ namespace Albany {
       Tpetra_MultiVector* dg_dxdotT,
       Tpetra_MultiVector* dg_dxdotdotT,
       Tpetra_MultiVector* dg_dpT) = 0;
-    
+
 
     //! \name Implementation of AbstractResponseFunction virtual methods
     //@{
 
     //! Setup response function
-    virtual void setupT() {}
+    virtual void setup() {}
 
     /*! 
      * \brief Is this response function "scalar" valued, i.e., has a replicated
@@ -79,11 +79,11 @@ namespace Albany {
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const;
 
-    virtual void evaluateDerivativeT(
+    virtual void evaluateDerivative(
       const double current_time,
-      const Tpetra_Vector* xdot,
-      const Tpetra_Vector* xdotdot,
-      const Tpetra_Vector& x,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       Tpetra_Vector* g,
@@ -91,7 +91,6 @@ namespace Albany {
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp);
-    
 
 
   private:
@@ -109,6 +108,6 @@ namespace Albany {
 
   };
 
-}
+} // namespace Albany
 
 #endif // ALBANY_SCALAR_RESPONSE_FUNCTION_HPP

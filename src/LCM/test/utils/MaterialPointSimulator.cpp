@@ -28,6 +28,8 @@
 
 #include <MiniTensor.h>
 
+#include <Phalanx_DataLayout_MDALayout.hpp>
+
 #include "FieldNameMap.hpp"
 
 #include "SetField.hpp"

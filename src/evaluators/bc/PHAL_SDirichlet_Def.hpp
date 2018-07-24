@@ -8,11 +8,12 @@
 #define PHAL_SDIRICHLET_DEF_HPP
 
 #include "Albany_Application.hpp"
-#include "Albany_Utils.hpp"
 #include "PHAL_SDirichlet.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
+
+#include "Albany_TpetraThyraUtils.hpp"
 
 namespace PHAL {
 
@@ -37,8 +38,7 @@ SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
 {
   Teuchos::RCP<Tpetra_Vector> f = dirichlet_workset.fT;
 
-  Teuchos::RCP<Tpetra_Vector> x =
-      Teuchos::rcpFromRef(const_cast<Tpetra_Vector&>(*dirichlet_workset.xT));
+  Teuchos::RCP<Tpetra_Vector> x = Teuchos::rcp_const_cast<Tpetra_Vector>(Albany::getConstTpetraVector(dirichlet_workset.x));
 
   Teuchos::ArrayRCP<ST> f_view = f->get1dViewNonConst();
 
@@ -84,8 +84,7 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
   auto f = dirichlet_workset.fT;
-  auto x =
-      Teuchos::rcpFromRef(const_cast<Tpetra_Vector&>(*dirichlet_workset.xT));
+  Teuchos::RCP<Tpetra_Vector> x = Teuchos::rcp_const_cast<Tpetra_Vector>(Albany::getConstTpetraVector(dirichlet_workset.x));
   auto J = dirichlet_workset.JacT;
 
   auto row_map = J->getRowMap();

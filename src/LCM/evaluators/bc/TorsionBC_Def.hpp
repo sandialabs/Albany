@@ -8,6 +8,8 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 // **********************************************************************
 // Genereric Template Code for Constructor and PostRegistrationSetup
 // **********************************************************************
@@ -62,7 +64,7 @@ TorsionBC<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
-  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(dirichletWorkset.x);
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
 
@@ -110,7 +112,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
 
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
-  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(dirichletWorkset.x);
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
   Teuchos::RCP<Tpetra_CrsMatrix> jacT = dirichletWorkset.JacT;
 
@@ -195,8 +197,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
   Teuchos::RCP<Tpetra_MultiVector> fpT = dirichletWorkset.fpT;
   Teuchos::RCP<Tpetra_MultiVector> JVT = dirichletWorkset.JVT;
-  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
-  Teuchos::RCP<const Tpetra_MultiVector> VxT = dirichletWorkset.VxT;
+  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(dirichletWorkset.x);
+  Teuchos::RCP<const Tpetra_MultiVector> VxT = Albany::getConstTpetraMultiVector(dirichletWorkset.Vx);
 
   Teuchos::ArrayRCP<const ST> VxT_constView;
   Teuchos::ArrayRCP<ST> fT_nonconstView;

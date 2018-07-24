@@ -14,6 +14,8 @@
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
@@ -78,7 +80,7 @@ template<typename Traits>
 void Integral1Dw_Z<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-    Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+    Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
     Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
     Kokkos::deep_copy(this->int1Dw_z.get_view(), ScalarT(0.0));
@@ -142,7 +144,7 @@ template<typename Traits>
 void Integral1Dw_Z<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-    Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+    Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
     Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
     Kokkos::deep_copy(this->int1Dw_z.get_view(), ScalarT(0.0));

@@ -21,7 +21,7 @@ namespace Albany {
   public:
   
     //! Default constructor
-    SolutionFileResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& commT);
+    SolutionFileResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& comm);
 
     //! Destructor
     virtual ~SolutionFileResponseFunction();
@@ -34,56 +34,56 @@ namespace Albany {
 
     //! Evaluate responses
     virtual void 
-    evaluateResponseT(const double current_time,
-		     const Tpetra_Vector* xdotT,
-		     const Tpetra_Vector* xdotdotT,
-		     const Tpetra_Vector& xT,
-		     const Teuchos::Array<ParamVec>& p,
-		     Tpetra_Vector& gT);
+    evaluateResponse(const double current_time,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+		  const Teuchos::Array<ParamVec>& p,
+		  Tpetra_Vector& gT);
 
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
     virtual void 
-    evaluateTangentT(const double alpha, 
-		    const double beta,
-		    const double omega,
-		    const double current_time,
-		    bool sum_derivs,
-		    const Tpetra_Vector* xdot,
-		    const Tpetra_Vector* xdotdot,
-		    const Tpetra_Vector& x,
-		    const Teuchos::Array<ParamVec>& p,
-		    ParamVec* deriv_p,
-		    const Tpetra_MultiVector* Vxdot,
-		    const Tpetra_MultiVector* Vxdotdot,
-		    const Tpetra_MultiVector* Vx,
-		    const Tpetra_MultiVector* Vp,
-		    Tpetra_Vector* g,
-		    Tpetra_MultiVector* gx,
-		    Tpetra_MultiVector* gp);
+    evaluateTangent(const double alpha, 
+		  const double beta,
+		  const double omega,
+		  const double current_time,
+		  bool sum_derivs,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+		  const Teuchos::Array<ParamVec>& p,
+		  ParamVec* deriv_p,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vx,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
+      const Teuchos::RCP<const Thyra_MultiVector>& Vp,
+		  Tpetra_Vector* g,
+		  Tpetra_MultiVector* gx,
+		  Tpetra_MultiVector* gp);
   
     virtual void 
-    evaluateGradientT(const double current_time,
-		     const Tpetra_Vector* xdotT,
-		     const Tpetra_Vector* xdotdotT,
-		     const Tpetra_Vector& xT,
-		     const Teuchos::Array<ParamVec>& p,
-		     ParamVec* deriv_p,
-		     Tpetra_Vector* gT,
-		     Tpetra_MultiVector* dg_dxT,
-		     Tpetra_MultiVector* dg_dxdotT,
-		     Tpetra_MultiVector* dg_dxdotdotT,
-		     Tpetra_MultiVector* dg_dpT);
+    evaluateGradient(const double current_time,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+		  const Teuchos::Array<ParamVec>& p,
+		  ParamVec* deriv_p,
+		  Tpetra_Vector* gT,
+		  Tpetra_MultiVector* dg_dxT,
+		  Tpetra_MultiVector* dg_dxdotT,
+		  Tpetra_MultiVector* dg_dxdotdotT,
+		  Tpetra_MultiVector* dg_dpT);
 
     //! Evaluate distributed parameter derivative dg/dp
     virtual void
-    evaluateDistParamDerivT(
-        const double current_time,
-        const Tpetra_Vector* xdotT,
-        const Tpetra_Vector* xdotdotT,
-        const Tpetra_Vector& xT,
-        const Teuchos::Array<ParamVec>& param_array,
-        const std::string& dist_param_name,
-        Tpetra_MultiVector* dg_dpT);
+    evaluateDistParamDeriv(
+      const double current_time,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec>& param_array,
+      const std::string& dist_param_name,
+      Tpetra_MultiVector* dg_dpT);
 
   private:
 
@@ -93,38 +93,52 @@ namespace Albany {
     //! Private to prohibit copying
     SolutionFileResponseFunction& operator=(const SolutionFileResponseFunction&);
 
-    //! Reference Vector - Tpetra
-    Tpetra_Vector* RefSolnT;
+    //! Reference Vector - Thyra
+    Teuchos::RCP<Thyra_Vector> RefSoln;
+
+    // A temp vector used in the response. Store it, so we create/destroy it only once.
+    Teuchos::RCP<Thyra_Vector> diff;
 
     bool solutionLoaded;
 
 
-    int MatrixMarketFileToTpetraVector( const char *filename, const Tpetra_Map & map, Tpetra_Vector * & A);
-    int MatrixMarketFileToTpetraMultiVector( const char *filename, const Tpetra_Map & map, Tpetra_MultiVector * & A);
+    int MatrixMarketFileToThyraVector( const char *filename, const Teuchos::RCP<Thyra_Vector>& v);
+    int MatrixMarketFileToTpetraMultiVector( const char *filename, Tpetra_MultiVector& AT);
 
   };
 
-//	namespace SolutionFileResponseFunction {
-	
-	  struct NormTwo {
-	    double NormT(const Tpetra_Vector& vecT){ Teuchos::ScalarTraits<ST>::magnitudeType normT = vecT.norm2(); return normT * normT;}
-	    void NormDerivativeT(const Tpetra_Vector& xT, const Tpetra_Vector& solnT, Tpetra_MultiVector& gradT) {
-	      gradT.update(2.0,xT,-2.0,solnT,0.0);
-	    }
-	  };
-	
-	  struct NormInf {
-	    double NormT(const Tpetra_Vector& vecT){ Teuchos::ScalarTraits<ST>::magnitudeType normT = vecT.normInf(); return normT;}
-	    void NormDerivativeT(const Tpetra_Vector& xT, const Tpetra_Vector& solnT, Tpetra_MultiVector& gradT) {
-	      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
-	        std::endl << "SolutionFileResponseFunction::NormInf::NormDerivativeT is not Implemented yet!"
-	        << std::endl);
-      }
-	
-	  };
-//	}
+  struct NormTwo {
+    static double Norm (const Thyra_Vector& vec)
+    {
+      auto norm = vec.norm_2();
+      return norm * norm;
+    }
 
-}
+    static void NormDerivative(const Thyra_Vector& x, const Thyra_Vector& soln, Thyra_Vector& grad)
+    {
+      Teuchos::Array<ST> coeffs(2);
+      coeffs[0] = 2.0; coeffs[1] = -2.0;
+      Teuchos::Array<Teuchos::Ptr<const Thyra_Vector>> vecs(2);
+      vecs[0] = Teuchos::constPtr(x);
+      vecs[1] = Teuchos::constPtr(soln);
+      grad.linear_combination(coeffs,vecs,0.0);
+    }
+  };
+
+  struct NormInf {
+    static double Norm (const Thyra_Vector& vec)
+    {
+      return vec.norm_inf();
+    }
+
+    static void NormDerivative (const Thyra_Vector& x, const Thyra_Vector& soln, Thyra_Vector& grad)
+    {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
+                                 "SolutionFileResponseFunction::NormInf::NormDerivativeT is not Implemented yet!\n");
+    }
+  };
+
+} // namespace Albany
 
 // Define macro for explicit template instantiation
 #define SOLFILERESP_INSTANTIATE_TEMPLATE_CLASS_NORMTWO(name) \
@@ -132,8 +146,8 @@ namespace Albany {
 #define SOLFILERESP_INSTANTIATE_TEMPLATE_CLASS_NORMINF(name) \
   template class name<Albany::NormInf>;
 
-#define SOLFILERESP_INSTANTIATE_TEMPLATE_CLASS(name) \
-  SOLFILERESP_INSTANTIATE_TEMPLATE_CLASS_NORMTWO(name) \
+#define SOLFILERESP_INSTANTIATE_TEMPLATE_CLASS(name)    \
+  SOLFILERESP_INSTANTIATE_TEMPLATE_CLASS_NORMTWO(name)  \
   SOLFILERESP_INSTANTIATE_TEMPLATE_CLASS_NORMINF(name)
 
 #endif // ALBANY_SOLUTIONFILERESPONSEFUNCTION_HPP

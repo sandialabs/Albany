@@ -675,6 +675,20 @@ getValidParameters (Teuchos::RCP<Teuchos::ParameterList>& valid_pl) {
                       "Send coordinates + solution to SCOREC.");
 }
 
+void Manager::init_x_if_not (const Teuchos::RCP<const Thyra_VectorSpace>& vs) {
+  auto v = Thyra::createMember(vs);
+  auto tv = ConverterT::getTpetraVector(v);
+  TEUCHOS_TEST_FOR_EXCEPTION(tv.is_null(), std::runtime_error,
+                             "Error! The input Thyra_VectorSpace generated a vector not castable "
+                             "to Thyra_TpetraVector. If you are still refactoring to "
+                             "Thyra, this may happen (fix it!). If the refactoring is over, "
+                             "you may have tried to pass a vector space that is not wrapping "
+                             "Tpetra stuff. Perhaps the underlying linear algebra is something "
+                             "else (Epetra?), and you need to add checks here.\n");
+
+  init_x_if_not(tv->getMap());
+}
+
 void Manager::init_x_if_not (const Teuchos::RCP<const Tpetra_Map>& map) {
   if (Teuchos::nonnull(impl_->x_)) return;
   impl_->x_ = Teuchos::rcp(new Tpetra_Vector(map));
@@ -697,6 +711,13 @@ void Manager::update_x (const Tpetra_Vector& soln_nol) {
   const Teuchos::ArrayRCP<double>& x = impl_->x_->get1dViewNonConst();
   const Teuchos::ArrayRCP<const double>& s = soln_nol.get1dView();
   AAdapt::rc::update_x(x, s, impl_->state_mgr_->getDiscretization());
+}
+
+Teuchos::RCP<const Thyra_Vector> Manager::
+add_x (const Teuchos::RCP<const Thyra_Vector>& a) const {
+  auto ta = ConverterT::getConstTpetraVector(a);
+  auto returnT = add_x(ta);
+  return Thyra::createConstVector(returnT);
 }
 
 Teuchos::RCP<const Tpetra_Vector> Manager::

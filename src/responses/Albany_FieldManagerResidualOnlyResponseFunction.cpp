@@ -19,52 +19,57 @@ FieldManagerResidualOnlyResponseFunction (
 {}
 
 void Albany::FieldManagerResidualOnlyResponseFunction::
-evaluateTangentT(const double alpha, 
-                 const double beta,
-                 const double omega,
-                 const double current_time,
-                 bool sum_derivs,
-                 const Tpetra_Vector* xdotT,
-                 const Tpetra_Vector* xdotdotT,
-                 const Tpetra_Vector& xT,
-                 const Teuchos::Array<ParamVec>& p,
-                 ParamVec* deriv_p,
-                 const Tpetra_MultiVector* VxdotT,
-                 const Tpetra_MultiVector* VxdotdotT,
-                 const Tpetra_MultiVector* VxT,
-                 const Tpetra_MultiVector* VpT,
-                 Tpetra_Vector* gT,
-                 Tpetra_MultiVector* gxT,
-                 Tpetra_MultiVector* gpT)
+evaluateTangent(const double /*alpha*/, 
+    const double /*beta*/,
+    const double /*omega*/,
+    const double current_time,
+    bool /*sum_derivs*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& p,
+    ParamVec* /*deriv_p*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vx*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdot*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdotdot*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vp*/,
+    Tpetra_Vector* gT,
+    Tpetra_MultiVector* /*gxT*/,
+    Tpetra_MultiVector* /*gpT*/)
 {
   // Evaluate just the response if it is requested.
-  if (gT) this->evaluateResponseT(current_time, xdotT, xdotdotT, xT, p, *gT);
+  if (gT) {
+    this->evaluateResponse(current_time, x, xdot, xdotdot, p, *gT);
+  }
 }
 
 void Albany::FieldManagerResidualOnlyResponseFunction::
-evaluateGradientT(const double current_time,
-                  const Tpetra_Vector* xdotT,
-                  const Tpetra_Vector* xdotdotT,
-                  const Tpetra_Vector& xT,
-                  const Teuchos::Array<ParamVec>& p,
-                  ParamVec* deriv_p,
-                  Tpetra_Vector* gT,
-                  Tpetra_MultiVector* dg_dxT,
-                  Tpetra_MultiVector* dg_dxdotT,
-                  Tpetra_MultiVector* dg_dxdotdotT,
-                  Tpetra_MultiVector* dg_dpT)
+evaluateGradient(const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& p,
+    ParamVec* /*deriv_p*/,
+    Tpetra_Vector* gT,
+    Tpetra_MultiVector* /*dg_dxT*/,
+    Tpetra_MultiVector* /*dg_dxdotT*/,
+    Tpetra_MultiVector* /*dg_dxdotdotT*/,
+    Tpetra_MultiVector* /*dg_dpT*/)
 {
-  if (gT) this->evaluateResponseT(current_time, xdotT, xdotdotT, xT, p, *gT);
+  if (gT) {
+    this->evaluateResponse(current_time, x, xdot, xdotdot, p, *gT);
+  }
 }
 
-
 void Albany::FieldManagerResidualOnlyResponseFunction::
-evaluateDistParamDerivT(
-  const double current_time,
-  const Tpetra_Vector* xdotT,
-  const Tpetra_Vector* xdotdotT,
-  const Tpetra_Vector& xT,
-  const Teuchos::Array<ParamVec>& param_array,
-  const std::string& dist_param_name,
-  Tpetra_MultiVector* dg_dpT) {}
-
+evaluateDistParamDeriv(
+    const double /*current_time*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*x*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+    const Teuchos::Array<ParamVec>& /*param_array*/,
+    const std::string& /*dist_param_name*/,
+    Tpetra_MultiVector* /*dg_dpT*/)
+{
+  // Do nothing
+}

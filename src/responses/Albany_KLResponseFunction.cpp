@@ -48,71 +48,71 @@ isScalarResponse() const
 
 void
 Albany::KLResponseFunction::
-evaluateResponseT(const double current_time,
-     const Tpetra_Vector* xdotT,
-     const Tpetra_Vector* xdotdotT,
-     const Tpetra_Vector& xT,
-     const Teuchos::Array<ParamVec>& p,
-     Tpetra_Vector& gT)
+evaluateResponse(const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& p,
+    Tpetra_Vector& gT)
 {
-  response->evaluateResponseT(current_time, xdotT, xdotdotT, xT, p, gT);
+  response->evaluateResponse(current_time, x, xdot, xdotdot, p, gT);
 }
 
 
 void
 Albany::KLResponseFunction::
-evaluateTangentT(const double alpha,
+evaluateTangent(const double alpha,
     const double beta,
     const double omega,
     const double current_time,
     bool sum_derivs,
-    const Tpetra_Vector* xdotT,
-    const Tpetra_Vector* xdotdotT,
-    const Tpetra_Vector& xT,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec>& p,
     ParamVec* deriv_p,
-    const Tpetra_MultiVector* VxdotT,
-    const Tpetra_MultiVector* VxdotdotT,
-    const Tpetra_MultiVector* VxT,
-    const Tpetra_MultiVector* VpT,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vx,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vp,
     Tpetra_Vector* gT,
     Tpetra_MultiVector* gxT,
     Tpetra_MultiVector* gpT)
 {
-  response->evaluateTangentT(alpha, beta, omega, current_time, sum_derivs,
-          xdotT, xdotdotT, xT, p, deriv_p, VxdotT, VxdotdotT, VxT, VpT,
+  response->evaluateTangent(alpha, beta, omega, current_time, sum_derivs,
+          x, xdot, xdotdot, p, deriv_p, Vx, Vxdot, Vxdotdot, Vp,
           gT, gxT, gpT);
 }
 
 //! Evaluate distributed parameter derivative dg/dp
 void
 Albany::KLResponseFunction::
-evaluateDistParamDerivT(
-  const double current_time,
-  const Tpetra_Vector* xdotT,
-  const Tpetra_Vector* xdotdotT,
-  const Tpetra_Vector& xT,
-  const Teuchos::Array<ParamVec>& param_array,
-  const std::string& dist_param_name,
-  Tpetra_MultiVector*  dg_dpT){
-  response->evaluateDistParamDerivT(current_time, xdotT, xdotdotT, xT, param_array, dist_param_name, dg_dpT);
+evaluateDistParamDeriv(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_name,
+    Tpetra_MultiVector*  dg_dpT)
+{
+  response->evaluateDistParamDeriv(current_time, x, xdot, xdotdot, param_array, dist_param_name, dg_dpT);
 }
 
 void
 Albany::KLResponseFunction::
-evaluateDerivativeT(const double current_time,
-       const Tpetra_Vector* xdotT,
-       const Tpetra_Vector* xdotdotT,
-       const Tpetra_Vector& xT,
-       const Teuchos::Array<ParamVec>& p,
-       ParamVec* deriv_p,
-       Tpetra_Vector* gT,
-       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxT,
-       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotT,
-       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdotT,
-       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dpT)
+evaluateDerivative(const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& p,
+    ParamVec* deriv_p,
+    Tpetra_Vector* gT,
+    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxT,
+    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotT,
+    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdotT,
+    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dpT)
 {
-  response->evaluateDerivativeT(current_time, xdotT, xdotdotT, xT, p, deriv_p,
+  response->evaluateDerivative(current_time, x, xdot, xdotdot, p, deriv_p,
              gT, dg_dxT, dg_dxdotT, dg_dxdotdotT, dg_dpT);
 }
-

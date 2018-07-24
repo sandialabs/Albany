@@ -4,12 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
 #ifndef ADAPT_NODALFIELDUTILS_HPP
 #define ADAPT_NODALFIELDUTILS_HPP
 
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_RCP.hpp"
+#include <map>
+#include <vector>
 
 namespace Adapt {
 
@@ -26,5 +25,4 @@ namespace Adapt {
 
 }
 
-#endif
-
+#endif // ADAPT_NODALFIELDUTILS_HPP

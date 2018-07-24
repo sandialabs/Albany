@@ -7,14 +7,11 @@
 #ifndef ALBANY_LAYOUTS_HPP
 #define ALBANY_LAYOUTS_HPP
 
-#include <vector>
+#include <map>
 #include <string>
 
 #include "Teuchos_RCP.hpp"
-
-#include "Phalanx_DataLayout_MDALayout.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Albany_DataTypes.hpp"
 
 namespace Albany {
   /*!

@@ -14,6 +14,8 @@
 
 #include "PHAL_SDirichlet_Def.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 namespace LCM {
 
 //
@@ -609,14 +611,9 @@ template<typename StrongSchwarzBC, typename Traits>
 void
 fillResidual(StrongSchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<Tpetra_Vector const>
-  const_disp = dirichlet_workset.xT;
-
-  Teuchos::RCP<Tpetra_Vector const>
-  const_velo = dirichlet_workset.xdotT;
-
-  Teuchos::RCP<Tpetra_Vector const>
-  const_acce = dirichlet_workset.xdotdotT;
+  Teuchos::RCP<const Tpetra_Vector> const_disp = Albany::getConstTpetraVector(dirichlet_workset.x);
+  Teuchos::RCP<const Tpetra_Vector> const_velo = Albany::getConstTpetraVector(dirichlet_workset.xdot);
+  Teuchos::RCP<const Tpetra_Vector> const_acce = Albany::getConstTpetraVector(dirichlet_workset.xdotdot);
 
   bool const
   has_disp = const_disp != Teuchos::null;

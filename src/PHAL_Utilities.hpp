@@ -7,9 +7,17 @@
 #ifndef PHAL_UTILITIES
 #define PHAL_UTILITIES
 
-#include "PHAL_AlbanyTraits.hpp"
+#include "Albany_CommTypes.hpp"
 
-namespace Albany { class Application; }
+#include "Teuchos_RCP.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_DataLayout_MDALayout.hpp"
+
+// Forward declarations
+namespace Albany {
+  class Application;
+  class MeshSpecsStruct;
+}
 
 namespace PHAL {
 

@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
+#include "Albany_TpetraThyraUtils.hpp"
 
 Albany::SolutionTwoNormResponseFunction::
 SolutionTwoNormResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& commT) :
@@ -27,39 +27,39 @@ numResponses() const
 
 void
 Albany::SolutionTwoNormResponseFunction::
-evaluateResponseT(const double current_time,
-		 const Tpetra_Vector* xdotT,
-		 const Tpetra_Vector* xdotdotT,
-		 const Tpetra_Vector& xT,
-		 const Teuchos::Array<ParamVec>& p,
-		 Tpetra_Vector& gT)
+evaluateResponse(const double /*current_time*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+		const Teuchos::Array<ParamVec>& /*p*/,
+		Tpetra_Vector& gT)
 {
-  Teuchos::ScalarTraits<ST>::magnitudeType twonorm = xT.norm2();
+  Teuchos::ScalarTraits<ST>::magnitudeType twonorm = x->norm_2();
   Teuchos::ArrayRCP<ST> gT_nonconstView = gT.get1dViewNonConst(); 
   gT_nonconstView[0] = twonorm;
 }
 
 void
 Albany::SolutionTwoNormResponseFunction::
-evaluateTangentT(const double alpha, 
-		const double beta,
-		const double omega,
-		const double current_time,
-		bool sum_derivs,
-		const Tpetra_Vector* xdotT,
-		const Tpetra_Vector* xdotdotT,
-		const Tpetra_Vector& xT,
-		const Teuchos::Array<ParamVec>& p,
-		ParamVec* deriv_p,
-		const Tpetra_MultiVector* VxdotT,
-		const Tpetra_MultiVector* VxdotdotT,
-		const Tpetra_MultiVector* VxT,
-		const Tpetra_MultiVector* VpT,
+evaluateTangent(const double alpha, 
+		const double /*beta*/,
+		const double /*omega*/,
+		const double /*current_time*/,
+		bool /*sum_derivs*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+		const Teuchos::Array<ParamVec>& /*p*/,
+		ParamVec* /*deriv_p*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vx,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdot*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdotdot*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vp*/,
 		Tpetra_Vector* gT,
 		Tpetra_MultiVector* gxT,
 		Tpetra_MultiVector* gpT)
 {
-  Teuchos::ScalarTraits<ST>::magnitudeType nrm = xT.norm2();
+  Teuchos::ScalarTraits<ST>::magnitudeType nrm = x->norm_2();
 
   // Evaluate response g
   if (gT != NULL) {
@@ -72,31 +72,37 @@ evaluateTangentT(const double alpha,
   Teuchos::ETransp T = Teuchos::TRANS; 
   Teuchos::ETransp N = Teuchos::NO_TRANS; 
   if (gxT != NULL) {
-    if (VxT != NULL)
-      gxT->multiply(T, N, alpha/nrm, xT, *VxT, 0.0);
-    else
-      gxT->update(alpha/nrm, xT, 0.0);
+    // Until you change gxT to Thyra, cast x and Vx to Tpetra
+    auto xT = Albany::getConstTpetraVector(x);
+    if (!Vx.is_null()) {
+      auto VxT = Albany::getConstTpetraMultiVector(Vx);
+      gxT->multiply(T, N, alpha/nrm, *xT, *VxT, 0.0);
+    } else {
+      // Until you change gxT to Thyra, cast x to Tpetra
+      gxT->update(alpha/nrm, *xT, 0.0);
+    }
   }
 
-  if (gpT != NULL)
+  if (gpT != NULL) {
     gpT->putScalar(0.0);
+  }
 }
 
 void
 Albany::SolutionTwoNormResponseFunction::
-evaluateGradientT(const double current_time,
-		 const Tpetra_Vector* xdotT,
-		 const Tpetra_Vector* xdotdotT,
-		 const Tpetra_Vector& xT,
-		 const Teuchos::Array<ParamVec>& p,
-		 ParamVec* deriv_p,
-		 Tpetra_Vector* gT,
-		 Tpetra_MultiVector* dg_dxT,
-		 Tpetra_MultiVector* dg_dxdotT,
-		 Tpetra_MultiVector* dg_dxdotdotT,
-		 Tpetra_MultiVector* dg_dpT)
+evaluateGradient(const double /*current_time*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+		const Teuchos::Array<ParamVec>& /*p*/,
+		ParamVec* /*deriv_p*/,
+		Tpetra_Vector* gT,
+		Tpetra_MultiVector* dg_dxT,
+		Tpetra_MultiVector* dg_dxdotT,
+		Tpetra_MultiVector* dg_dxdotdotT,
+		Tpetra_MultiVector* dg_dpT)
 {
-   Teuchos::ScalarTraits<ST>::magnitudeType nrm = xT.norm2();
+  Teuchos::ScalarTraits<ST>::magnitudeType nrm = x->norm_2();
 
   // Evaluate response g
   Teuchos::ArrayRCP<ST> gT_nonconstView;
@@ -108,37 +114,44 @@ evaluateGradientT(const double current_time,
   // Evaluate dg/dx
   if (dg_dxT != NULL) {
     //double nrm;
-    if (gT != NULL)
+    if (gT != NULL) {
       nrm = gT_nonconstView[0];
-    else 
-      nrm = xT.norm2();
-    dg_dxT->scale(1.0/nrm,xT);
+    } else {
+      // Commented this, since it is already compute at the beginning.
+      //nrm = x->norm_2();
+    }
+    // Until you change gxT to Thyra, cast x to Tpetra
+    auto xT = Albany::getConstTpetraVector(x);
+    dg_dxT->scale(1.0/nrm,*xT);
   }
 
   // Evaluate dg/dxdot
-  if (dg_dxdotT != NULL)
+  if (dg_dxdotT != NULL) {
     dg_dxdotT->putScalar(0.0);
-  if (dg_dxdotdotT != NULL)
+  }
+  if (dg_dxdotdotT != NULL) {
     dg_dxdotdotT->putScalar(0.0);
+  }
 
   // Evaluate dg/dp
-  if (dg_dpT != NULL)
+  if (dg_dpT != NULL) {
     dg_dpT->putScalar(0.0);
-  
+  }
 }
 
 //! Evaluate distributed parameter derivative dg/dp
 void
 Albany::SolutionTwoNormResponseFunction::
-evaluateDistParamDerivT(
-    const double current_time,
-    const Tpetra_Vector* xdotT,
-    const Tpetra_Vector* xdotdotT,
-    const Tpetra_Vector& xT,
-    const Teuchos::Array<ParamVec>& param_array,
-    const std::string& dist_param_name,
+evaluateDistParamDeriv(
+    const double /*current_time*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*x*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+    const Teuchos::Array<ParamVec>& /*param_array*/,
+    const std::string& /*dist_param_name*/,
     Tpetra_MultiVector* dg_dpT)
 {
-  if (dg_dpT != NULL)
+  if (dg_dpT != NULL) {
     dg_dpT->putScalar(0.0);
+  }
 }

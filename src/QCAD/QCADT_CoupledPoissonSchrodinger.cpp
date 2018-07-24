@@ -22,11 +22,14 @@ Please remove when issue is resolved
 
 #include "Teuchos_ParameterList.hpp"
 
+#include "Thyra_SpmdVectorBase.hpp"
+
 #include "Albany_ModelFactory.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_EigendataInfoStructT.hpp"
+#include "Albany_TpetraThyraUtils.hpp"
 
 //For creating discretiation object without a problem object
 #include "Albany_DiscretizationFactory.hpp"
@@ -854,21 +857,17 @@ evalModelImpl(
    // Create a Teuchos array of the xT and x_dotT for each model,
    // casting to Tpetra_Vector
  
-   Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> xTs(num_models_);
-   Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> x_dotTs(num_models_);
+   Teuchos::Array<Teuchos::RCP<const Thyra_Vector>> xs(num_models_);
+   Teuchos::Array<Teuchos::RCP<const Thyra_Vector>> x_dots(num_models_);
  
    for (int m=0; m < num_models_; ++m) {
     //Get each Tpetra vector 
-    xTs[m] = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(
-        x->getVectorBlock(m),
-        true)->getConstTpetraVector();
+    xs[m] = x->getVectorBlock(m);
    }
    if (x_dot != Teuchos::null) {
      for (int m = 0; m < num_models_; ++m) {
         //Get each Tpetra vector 
-        x_dotTs[m] = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(
-            x_dot->getVectorBlock(m),
-            true)->getConstTpetraVector();
+        x_dots[m] = x_dot->getVectorBlock(m);
      }
    }
   double alpha     = 0.0;  // M coeff
@@ -923,35 +922,37 @@ evalModelImpl(
   //
   int disc_nMyElements = disc_map->getNodeNumElements();
 
-  Teuchos::RCP<const Tpetra_Vector> x_poisson, xdot_poisson, eigenvals_dist;
-  Teuchos::RCP<Tpetra_MultiVector> xdot_schrodinger = Teuchos::rcp(new Tpetra_MultiVector(disc_map, nEigenvals));
-  
-  std::vector<const Tpetra_Vector*> xdot_schrodinger_vec(nEigenvals);
+  Teuchos::RCP<const Tpetra_Vector> eigenvals_dist;
+  Teuchos::RCP<const Thyra_Vector> x_poisson, xdot_poisson;
+  Teuchos::RCP<const Thyra_MultiVector> xdot_schrodinger = Thyra::createMembers(Albany::createConstThyraMultiVector(x_schrodinger)->range(),nEigenvals);
+  std::vector<Teuchos::RCP<const Thyra_Vector>> xdot_schrodinger_vec(nEigenvals);
 
   //First model is Poisson.
-  x_poisson = xTs[0];
+  x_poisson = xs[0];
 
   //Next nEigenvals models are Schrodinger
   //IKT, can we accomplish the following with arrayviews?  
   for (int m=1; m < 1+nEigenvals; ++m) {
-    Teuchos::Array<ST> array(xTs[m]->getMap()->getNodeNumElements());
-    xTs[m]->get1dCopy(array);
-    for (std::size_t i=0; i<xTs[m]->getMap()->getNodeNumElements(); ++i)
+    auto x_spmd = Teuchos::rcp_dynamic_cast<const Thyra::SpmdVectorBase<ST>>(xs[m]);
+    TEUCHOS_TEST_FOR_EXCEPTION(x_spmd.is_null(), std::runtime_error, "Error! Something went wrong while casting to SpmdVectorBase.\n");
+    auto local_dim = x_spmd->spmdSpace()->localSubDim();
+    Teuchos::ArrayRCP<const ST> array;
+    x_spmd->getLocalData(Teuchos::ptr(&array));
+    for (std::size_t i=0; i<local_dim; ++i)
        x_schrodinger->replaceLocalValue(i,m-1,array[i]);
   }
  
   //Last model is eigenvalues
-  eigenvals_dist = xTs[1+nEigenvals]; 
+  eigenvals_dist = Albany::getConstTpetraVector(xs[1+nEigenvals]);
   
   if (x_dot != Teuchos::null) {  //maybe unnecessary - it seems that the coupled PS model evaluator shouldn't support x_dot ...
-    xdot_poisson = x_dotTs[0]; 
+    xdot_poisson = x_dots[0]; 
     for (int m=1; m < 1+nEigenvals; ++m) 
-      xdot_schrodinger_vec[m-1] = x_dotTs[m].getRawPtr(); 
-  }
-  else {
+      xdot_schrodinger_vec[m-1] = x_dots[m];
+  } else {
     xdot_poisson = Teuchos::null;
     for(int i=0; i<nEigenvals; i++) 
-      xdot_schrodinger_vec[i] = NULL;
+      xdot_schrodinger_vec[i] = Teuchos::null;
   }
 
   //
@@ -1023,7 +1024,7 @@ evalModelImpl(
   Teuchos::RCP<Tpetra_Vector> ones_vec = Teuchos::rcp(new Tpetra_Vector(disc_overlap_map));
   ones_vec->putScalar(1.0);
   Teuchos::RCP<Tpetra_Vector> overlapped_V0 = overlapped_V->getVectorNonConst(0); 
-  overlapped_V0->doImport( *x_poisson, *overlap_importer, Tpetra::INSERT);
+  overlapped_V0->doImport( *Albany::getConstTpetraVector(x_poisson), *overlap_importer, Tpetra::INSERT);
   overlapped_V0->update(offset_to_CB, *ones_vec, -1.0);
   //std::cout << "DEBUG: Offset to conduction band = " << offset_to_CB << std::endl;
   // set potential for use in schrodinger problem
@@ -1050,10 +1051,10 @@ evalModelImpl(
             Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(M_out_schrodinger, true) :
             Teuchos::null;
 
-  Teuchos::RCP<const Tpetra_Vector> dummy_xdot = 
-      ConverterT::getConstTpetraVector(schrodingerModel->getNominalValues().get_x_dot()); 
-
-  schrodingerApp->computeGlobalJacobianT(1.0, 0.0, 0.0, curr_time, dummy_xdot.get(), NULL, *x_schrodinger->getVector(0), 
+  schrodingerApp->computeGlobalJacobian(1.0, 0.0, 0.0, curr_time,
+              Albany::createConstThyraVector(x_schrodinger->getVector(0)),
+              schrodingerModel->getNominalValues().get_x_dot(),
+              Teuchos::null,
 					    schrodinger_sacado_param_vec, f_schrodinger_vec[0], *M_out_schrodinger_crs);
   
   // Hamiltionan Matrix -- needed even if we don't need to compute the Jacobian, since this is how we compute the schrodinger residuals
@@ -1066,7 +1067,10 @@ evalModelImpl(
         Teuchos::nonnull(J_out_schrodinger) ?
             Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(J_out_schrodinger, true) :
             Teuchos::null;
-  schrodingerApp->computeGlobalJacobianT(0.0, 1.0, 0.0, curr_time, dummy_xdot.get(), NULL, *x_schrodinger->getVector(0), 
+  schrodingerApp->computeGlobalJacobian(0.0, 1.0, 0.0, curr_time,
+              Albany::createConstThyraVector(x_schrodinger->getVector(0)),
+              schrodingerModel->getNominalValues().get_x_dot(),
+              Teuchos::null,
 					    schrodinger_sacado_param_vec, f_schrodinger_vec[0], *J_out_schrodinger_crs);
   
   f_schrodinger_already_computed[0] = true; //residual is not affected by alpha & beta, so both of the above calls compute it.
@@ -1090,7 +1094,8 @@ evalModelImpl(
             Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_out_poisson, true) :
             Teuchos::null;
 
-    poissonApp->computeGlobalJacobianT(alpha, beta, 0.0, curr_time, xdot_poisson.get(), NULL, *x_poisson, 
+    poissonApp->computeGlobalJacobian(alpha, beta, 0.0, curr_time,
+              x_poisson, xdot_poisson, Teuchos::null,
 				      poisson_sacado_param_vec, f_poisson.get(), *W_out_poisson_crs);
     f_poisson_already_computed = true;
 
@@ -1109,8 +1114,10 @@ evalModelImpl(
       Teuchos::RCP<Tpetra_CrsMatrix> W_out_schrodinger_crs =   Teuchos::nonnull(W_out_schrodinger) ?
               Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_out_schrodinger, true) :
               Teuchos::null;
-      schrodingerApp->computeGlobalJacobianT(alpha, beta, 0.0, curr_time, xdot_schrodinger_vec[0], NULL, *x_schrodinger->getVector(0), 
-					  schrodinger_sacado_param_vec, f_schrodinger_vec[0], *W_out_schrodinger_crs);
+      schrodingerApp->computeGlobalJacobian(alpha, beta, 0.0, curr_time,
+                                            Albany::createConstThyraVector(x_schrodinger->getVector(0)),
+                                            xdot_schrodinger_vec[0], Teuchos::null,
+                                					  schrodinger_sacado_param_vec, f_schrodinger_vec[0], *W_out_schrodinger_crs);
       f_schrodinger_already_computed[0] = true;
     }    
     if (W_out != Teuchos::null) {
@@ -1256,58 +1263,57 @@ evalModelImpl(
       //temp storage for mass matrix times vec -- maybe don't allocate this on the stack??
 
       if(!f_poisson_already_computed) {
-	poissonApp->computeGlobalResidualT(curr_time, xdot_poisson.get(), NULL, *x_poisson, 
+	      poissonApp->computeGlobalResidual(
+            curr_time,
+            x_poisson, xdot_poisson, Teuchos::null,
 					  poisson_sacado_param_vec, *f_poisson);
       }
       
       for(int i=0; i<nEigenvals; i++) {
+        // Compute Mass_matrix * eigenvector[i]
+        const Tpetra_Vector& vec = *x_schrodinger->getVector(i);
+        M_out_schrodinger_crs->apply(vec, *M_vec, Teuchos::NO_TRANS, 1.0, 0.0);  
 
-	// Compute Mass_matrix * eigenvector[i]
-	const Tpetra_Vector& vec = *x_schrodinger->getVector(i);
-	M_out_schrodinger_crs->apply(vec, *M_vec, Teuchos::NO_TRANS, 1.0, 0.0);  
 
+        // Compute the schrodinger residual f_schrodinger_vec[i]: H*eigenvector[i] - eigenvalue[i] * M * eigenvector[i]
 
-	// Compute the schrodinger residual f_schrodinger_vec[i]: H*eigenvector[i] - eigenvalue[i] * M * eigenvector[i]
+        if(!f_schrodinger_already_computed[i]) {
 
-	if(!f_schrodinger_already_computed[i]) {
+            //Could call this, but multiply below is faster
+          //schrodingerApp->computeGlobalResidual(curr_time, xdot_schrodinger_vec[i], *((*x_schrodinger)(i)), 
+          //				      schrodinger_sacado_param_vec, *(f_schrodinger_vec[i]) );  // H*evec[i] 
 
-  	  //Could call this, but multiply below is faster
-	  //schrodingerApp->computeGlobalResidual(curr_time, xdot_schrodinger_vec[i], *((*x_schrodinger)(i)), 
-	  //				      schrodinger_sacado_param_vec, *(f_schrodinger_vec[i]) );  // H*evec[i] 
+          // H * Psi - E * M * Psi
+          const Tpetra_CrsMatrix& Hamiltonian_crs =  *J_out_schrodinger_crs;
+           Hamiltonian_crs.apply(vec, *f_schrodinger_vec[i], Teuchos::NO_TRANS, 1.0, 0.0);
+        }
+        /* ---- DEBUG ----
+           double He_norm, Me_norm, H_expect;
+           f_schrodinger_vec[i]->Norm2(&He_norm);
+           M_vec.Norm2(&Me_norm);
+           std::cout << "DEBUG " << i << ": norm(-H*evec) = " << He_norm << ", norm(M*evec) = " << Me_norm 
+           << ", eval = " << (*stdvec_eigenvals)[i] << std::endl;
+           f_schrodinger_vec[i]->Dot(vec, &H_expect);
+        */
 
-	  // H * Psi - E * M * Psi
-	  const Tpetra_CrsMatrix& Hamiltonian_crs =  *J_out_schrodinger_crs;
-	   Hamiltonian_crs.apply(vec, *f_schrodinger_vec[i], Teuchos::NO_TRANS, 1.0, 0.0);
-	}
-	/* ---- DEBUG ----
-	   double He_norm, Me_norm, H_expect;
-	   f_schrodinger_vec[i]->Norm2(&He_norm);
-	   M_vec.Norm2(&Me_norm);
-	   std::cout << "DEBUG " << i << ": norm(-H*evec) = " << He_norm << ", norm(M*evec) = " << Me_norm 
-	   << ", eval = " << (*stdvec_eigenvals)[i] << std::endl;
-	   f_schrodinger_vec[i]->Dot(vec, &H_expect);
-	*/
+        // add -eval[i]*M*evec[i] to H*evec[i] (recall evals are really negative_evals)
+        double eval = (*stdvec_eigenvals)[i];
+        f_schrodinger_vec[i]->update( eval, *M_vec, 1.0); 
 
-	// add -eval[i]*M*evec[i] to H*evec[i] (recall evals are really negative_evals)
-	double eval = (*stdvec_eigenvals)[i];
-	f_schrodinger_vec[i]->update( eval, *M_vec, 1.0); 
-
-        // Compute normalization equation residuals:  f_norm[i] = abs(1 - evec[i] . M . evec[i])
-	ST vec_M_vec;
-        const Teuchos::ArrayView<ST> vec_M_vec_AV = Teuchos::arrayView(&vec_M_vec, 1);
-	vec.dot( *M_vec, vec_M_vec_AV );
-	f_norm_local_nonConstView[i] = 1.0 - vec_M_vec;
-
+              // Compute normalization equation residuals:  f_norm[i] = abs(1 - evec[i] . M . evec[i])
+        ST vec_M_vec;
+              const Teuchos::ArrayView<ST> vec_M_vec_AV = Teuchos::arrayView(&vec_M_vec, 1);
+        vec.dot( *M_vec, vec_M_vec_AV );
+        f_norm_local_nonConstView[i] = 1.0 - vec_M_vec;
       }
 
       // Fill elements of f_norm_dist that belong to this processor, i.e. loop over
       // eigenvalue indices "owned" by the current proc in the combined distributed map
       std::vector<int> eval_global_elements(my_nEigenvals_);
       eval_global_elements[0] = dist_eigenval_map->getGlobalNumElements();
-      for(int i=0; i<my_nEigenvals_; i++)
-	f_norm_dist_nonConstView[i] = f_norm_local_nonConstView[eval_global_elements[i]];
-      
-      
+      for(int i=0; i<my_nEigenvals_; i++) {
+	      f_norm_dist_nonConstView[i] = f_norm_local_nonConstView[eval_global_elements[i]];
+      }
 
       //DEBUG -- print residual in gory detail for debugging
       if(1) {
@@ -1326,7 +1332,9 @@ evalModelImpl(
 	std::cout << std::setprecision(10);
 	if(myComm->getRank() == 0) std::cout << "X Norm & Mean = " << norm << " , " << mean << std::endl;*/
 	
-	norm = x_poisson->norm2(); mean = x_poisson->meanValue();
+  auto one = Thyra::createMember(x_poisson->space());
+  Thyra::assign(one.ptr(),1.0);
+	norm = x_poisson->norm_2(); mean = x_poisson->dot(*one)/x_poisson->space()->dim();
 	if(myComm->getRank() == 0) std::cout << "Poisson-part X Norm & Mean = " << norm << " , " << mean << std::endl;
 	for(int i=0; i<nEigenvals; i++) {
 	  norm = x_schrodinger->getVector(i)->norm2();
@@ -1471,12 +1479,14 @@ evalModelImpl(
                   g_out->getNonconstVectorBlock(1),
                   true)->getTpetraVector();
       if(i < poissonApp->getNumResponses()) {
-	poissonApp->evaluateResponseT(i, curr_time, xdot_poisson.get(), NULL, *x_poisson,
-				     poisson_sacado_param_vec, *g_out_poisson);
-      }
-      else {
-	schrodingerApp->evaluateResponseT(i - poissonApp->getNumResponses(), curr_time, xdot_schrodinger->getVector(0).get(), NULL, 
-                                         *x_schrodinger->getVector(0), schrodinger_sacado_param_vec, *g_out_schrodinger);
+	      poissonApp->evaluateResponse(i, curr_time, x_poisson, xdot_poisson, Teuchos::null,
+				                             poisson_sacado_param_vec, *g_out_poisson);
+      } else {
+	      schrodingerApp->evaluateResponse(i - poissonApp->getNumResponses(), curr_time,
+                                         Albany::createConstThyraVector(x_schrodinger->getVector(0)),
+                                         xdot_schrodinger->col(0),
+                                         Teuchos::null,
+                                         schrodinger_sacado_param_vec, *g_out_schrodinger);
       }
     }
 

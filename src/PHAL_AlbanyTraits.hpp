@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: no Epetra!
-
 #ifndef PHAL_ALBANYTRAITS_HPP
 #define PHAL_ALBANYTRAITS_HPP
 
@@ -18,8 +16,10 @@
 // Include User Data Types
 #include "Phalanx_config.hpp"
 #include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_KokkosDeviceTypes.hpp"
 
-#include "Albany_DataTypes.hpp"
+#include "Albany_SacadoTypes.hpp"
+
 #include "PHAL_Dimension.hpp"
 
 //! PHalanx-ALbany Code base: templated evaluators for Sacado AD

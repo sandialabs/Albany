@@ -4,9 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "Albany_Layouts.hpp"
-#include "Albany_DataTypes.hpp"
 
-#include "PHAL_FactoryTraits.hpp"
+#include "Phalanx_DataLayout_MDALayout.hpp"
+
+#include "PHAL_Dimension.hpp"
 
 /*********************** Helper Functions*********************************/
 
