@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LandIce_INTEGRAL1DW_Z_HPP_
-#define LandIce_INTEGRAL1DW_Z_HPP_
+#ifndef LANDICE_INTEGRAL1DW_Z_HPP_
+#define LANDICE_INTEGRAL1DW_Z_HPP_
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

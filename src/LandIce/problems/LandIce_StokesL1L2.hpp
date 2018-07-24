@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_STOKESL1L2PROBLEM_HPP
-#define LandIce_STOKESL1L2PROBLEM_HPP
+#ifndef LANDICE_STOKESL1L2PROBLEM_HPP
+#define LANDICE_STOKESL1L2PROBLEM_HPP
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -304,4 +304,4 @@ LandIce::StokesL1L2::constructEvaluators(
   return Teuchos::null;
 }
 
-#endif // LandIce_STOKESL1L2PROBLEM_HPP
+#endif // LANDICE_STOKESL1L2PROBLEM_HPP

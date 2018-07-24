@@ -1,5 +1,5 @@
-#ifndef LandIce_HYDROLOGY_SURFACE_WATER_INPUT_HPP
-#define LandIce_HYDROLOGY_SURFACE_WATER_INPUT_HPP
+#ifndef LANDICE_HYDROLOGY_SURFACE_WATER_INPUT_HPP
+#define LANDICE_HYDROLOGY_SURFACE_WATER_INPUT_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -61,4 +61,4 @@ private:
 
 } // Namespace LandIce
 
-#endif // LandIce_HYDROLOGY_SURFACE_WATER_INPUT_HPP
+#endif // LANDICE_HYDROLOGY_SURFACE_WATER_INPUT_HPP

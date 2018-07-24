@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LandIce_HYDROSTATICPRESSURE_HPP_
-#define LandIce_HYDROSTATICPRESSURE_HPP_
+#ifndef LANDICE_HYDROSTATICPRESSURE_HPP_
+#define LANDICE_HYDROSTATICPRESSURE_HPP_
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

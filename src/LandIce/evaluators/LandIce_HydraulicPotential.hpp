@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_HYDRAULIC_POTENTIAL_HPP
-#define LandIce_HYDRAULIC_POTENTIAL_HPP 1
+#ifndef LANDICE_HYDRAULIC_POTENTIAL_HPP
+#define LANDICE_HYDRAULIC_POTENTIAL_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -63,4 +63,4 @@ private:
 
 } // Namespace LandIce
 
-#endif // LandIce_HYDRAULIC_POTENTIAL_HPP
+#endif // LANDICE_HYDRAULIC_POTENTIAL_HPP

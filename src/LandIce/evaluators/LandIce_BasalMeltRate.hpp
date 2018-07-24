@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LandIce_BASALMELTRATE_HPP_
-#define LandIce_BASALMELTRATE_HPP_
+#ifndef LANDICE_BASALMELTRATE_HPP_
+#define LANDICE_BASALMELTRATE_HPP_
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

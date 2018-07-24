@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LandIce_W_RESID_HPP_
-#define LandIce_W_RESID_HPP_
+#ifndef LANDICE_W_RESID_HPP_
+#define LANDICE_W_RESID_HPP_
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

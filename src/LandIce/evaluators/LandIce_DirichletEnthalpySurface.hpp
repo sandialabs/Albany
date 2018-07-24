@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LandIce_DIRICHLETENTHALPYSURFACE_HPP_
-#define LandIce_DIRICHLETENTHALPYSURFACE_HPP_
+#ifndef LANDICE_DIRICHLETENTHALPYSURFACE_HPP_
+#define LANDICE_DIRICHLETENTHALPYSURFACE_HPP_
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

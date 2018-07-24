@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_CISMSURFACEGRADFO_HPP
-#define LandIce_CISMSURFACEGRADFO_HPP
+#ifndef LANDICE_CISMSURFACEGRADFO_HPP
+#define LANDICE_CISMSURFACEGRADFO_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

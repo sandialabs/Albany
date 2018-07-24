@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_VISCOSITY_FO_HPP
-#define LandIce_VISCOSITY_FO_HPP
+#ifndef LANDICE_VISCOSITY_FO_HPP
+#define LANDICE_VISCOSITY_FO_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -150,4 +150,4 @@ public:
 
 } // Namespace LandIce
 
-#endif // LandIce_VISCOSITY_FO_HPP
+#endif // LANDICE_VISCOSITY_FO_HPP

@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_RESPONSE_SURFACE_VELOCITY_MISMATCH_HPP
-#define LandIce_RESPONSE_SURFACE_VELOCITY_MISMATCH_HPP
+#ifndef LANDICE_RESPONSE_SURFACE_VELOCITY_MISMATCH_HPP
+#define LANDICE_RESPONSE_SURFACE_VELOCITY_MISMATCH_HPP
 
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 
@@ -64,4 +64,4 @@ namespace LandIce {
 
 } // Namespace LandIce
 
-#endif // LandIce_RESPONSE_SURFACE_VELOCITY_MISMATCH_HPP
+#endif // LANDICE_RESPONSE_SURFACE_VELOCITY_MISMATCH_HPP

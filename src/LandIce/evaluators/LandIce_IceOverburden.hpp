@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_ICE_OVERBURDEN_HPP
-#define LandIce_ICE_OVERBURDEN_HPP 1
+#ifndef LANDICE_ICE_OVERBURDEN_HPP
+#define LANDICE_ICE_OVERBURDEN_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -59,4 +59,4 @@ private:
 
 } // Namespace LandIce
 
-#endif // LandIce_ICE_OVERBURDEN_HPP
+#endif // LANDICE_ICE_OVERBURDEN_HPP

@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_MAP_THICKNESS_HPP
-#define LandIce_MAP_THICKNESS_HPP 1
+#ifndef LANDICE_MAP_THICKNESS_HPP
+#define LANDICE_MAP_THICKNESS_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -51,4 +51,4 @@ private:
 
 } // Namespace LandIce
 
-#endif // LandIce_SIMPLE_OPERATION_HPP
+#endif // LANDICE_SIMPLE_OPERATION_HPP

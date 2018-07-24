@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_EFFECTIVE_PRESSURE_HPP
-#define LandIce_EFFECTIVE_PRESSURE_HPP 1
+#ifndef LANDICE_EFFECTIVE_PRESSURE_HPP
+#define LANDICE_EFFECTIVE_PRESSURE_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -61,4 +61,4 @@ private:
 
 } // Namespace LandIce
 
-#endif // LandIce_EFFECTIVE_PRESSURE_HPP
+#endif // LANDICE_EFFECTIVE_PRESSURE_HPP

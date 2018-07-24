@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LandIce_GEOFLUXHEAT_HPP_
-#define LandIce_GEOFLUXHEAT_HPP_
+#ifndef LANDICE_GEOFLUXHEAT_HPP_
+#define LANDICE_GEOFLUXHEAT_HPP_
 
 
 #include "Phalanx_config.hpp"

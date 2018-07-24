@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_RESPONSE_BOUNDARY_SQUARED_L2_NORM_HPP
-#define LandIce_RESPONSE_BOUNDARY_SQUARED_L2_NORM_HPP
+#ifndef LANDICE_RESPONSE_BOUNDARY_SQUARED_L2_NORM_HPP
+#define LANDICE_RESPONSE_BOUNDARY_SQUARED_L2_NORM_HPP
 
 //#include "LandIce_MeshRegion.hpp"
 #include "PHAL_SeparableScatterScalarResponse.hpp"
@@ -54,4 +54,4 @@ namespace LandIce {
 
 } // Namespace LandIce
 
-#endif // LandIce_RESPONSE_SURFACE_VELOCITY_MISMATCH_HPP
+#endif // LANDICE_RESPONSE_SURFACE_VELOCITY_MISMATCH_HPP

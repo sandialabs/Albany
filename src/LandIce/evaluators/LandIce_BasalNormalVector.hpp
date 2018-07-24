@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LandIce_BASALNORMALVECTOR_HPP_
-#define LandIce_BASALNORMALVECTOR_HPP_
+#ifndef LANDICE_BASALNORMALVECTOR_HPP_
+#define LANDICE_BASALNORMALVECTOR_HPP_
 
 
 #include "Phalanx_config.hpp"

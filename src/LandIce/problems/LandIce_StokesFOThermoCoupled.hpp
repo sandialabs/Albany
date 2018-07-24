@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_STOKESFOTHERMOCOUPLED_PROBLEM_HPP
-#define LandIce_STOKESFOTHERMOCOUPLED_PROBLEM_HPP 1
+#ifndef LANDICE_STOKESFOTHERMOCOUPLED_PROBLEM_HPP
+#define LANDICE_STOKESFOTHERMOCOUPLED_PROBLEM_HPP 1
 
 #include <type_traits>
 
@@ -2283,4 +2283,4 @@ if (basalSideName!="INVALID")
   return Teuchos::null;
 }
 
-#endif // LandIce_STOKES_FO_PROBLEM_HPP
+#endif // LANDICE_STOKES_FO_PROBLEM_HPP

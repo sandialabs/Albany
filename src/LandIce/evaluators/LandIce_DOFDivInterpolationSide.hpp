@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_DOF_DIV_INTERPOLATION_SIDE_HPP
-#define LandIce_DOF_DIV_INTERPOLATION_SIDE_HPP 1
+#ifndef LANDICE_DOF_DIV_INTERPOLATION_SIDE_HPP
+#define LANDICE_DOF_DIV_INTERPOLATION_SIDE_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -64,4 +64,4 @@ using DOFDivInterpolationSideParam = DOFDivInterpolationSideBase<EvalT,Traits,ty
 
 } // Namespace LandIce
 
-#endif // LandIce_DOF_DIV_INTERPOLATION_SIDE_HPP
+#endif // LANDICE_DOF_DIV_INTERPOLATION_SIDE_HPP

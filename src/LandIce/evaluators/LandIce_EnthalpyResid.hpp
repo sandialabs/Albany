@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LandIce_ENTHALPYRESID_HPP_
-#define LandIce_ENTHALPYRESID_HPP_
+#ifndef LANDICE_ENTHALPYRESID_HPP_
+#define LANDICE_ENTHALPYRESID_HPP_
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

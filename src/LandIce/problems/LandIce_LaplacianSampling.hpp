@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_LAPLACIAN_SAMPLING_PROBLEM_HPP
-#define LandIce_LAPLACIAN_SAMPLING_PROBLEM_HPP 1
+#ifndef LANDICE_LAPLACIAN_SAMPLING_PROBLEM_HPP
+#define LANDICE_LAPLACIAN_SAMPLING_PROBLEM_HPP 1
 
 #include <type_traits>
 
@@ -242,4 +242,4 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
   return Teuchos::null;
 }
 
-#endif // LandIce_STOKES_FO_PROBLEM_HPP
+#endif // LANDICE_STOKES_FO_PROBLEM_HPP

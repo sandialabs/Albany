@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_THICKNESSRESID_HPP
-#define LandIce_THICKNESSRESID_HPP
+#ifndef LANDICE_THICKNESSRESID_HPP
+#define LANDICE_THICKNESSRESID_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

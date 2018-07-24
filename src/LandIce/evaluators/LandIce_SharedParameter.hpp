@@ -1,5 +1,5 @@
-#ifndef LandIce_SHARED_PARAMETER_HPP
-#define LandIce_SHARED_PARAMETER_HPP 1
+#ifndef LANDICE_SHARED_PARAMETER_HPP
+#define LANDICE_SHARED_PARAMETER_HPP 1
 
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -131,4 +131,4 @@ std::string SharedParameter<EvalT,Traits,ParamNameEnum,ParamName>::param_name;
 
 } // Namespace LandIce
 
-#endif // LandIce_SHARED_PARAMETER_HPP
+#endif // LANDICE_SHARED_PARAMETER_HPP

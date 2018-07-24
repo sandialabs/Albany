@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LandIce_PRESSUREMELTINGENTHALPY_HPP_
-#define LandIce_PRESSUREMELTINGENTHALPY_HPP_
+#ifndef LANDICE_PRESSUREMELTINGENTHALPY_HPP_
+#define LANDICE_PRESSUREMELTINGENTHALPY_HPP_
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

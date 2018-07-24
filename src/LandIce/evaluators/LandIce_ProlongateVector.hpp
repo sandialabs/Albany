@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_PROLONGATE_VECTOR_HPP
-#define LandIce_PROLONGATE_VECTOR_HPP
+#ifndef LANDICE_PROLONGATE_VECTOR_HPP
+#define LANDICE_PROLONGATE_VECTOR_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -69,4 +69,4 @@ using ProlongateVectorParam = ProlongateVectorBase<EvalT,Traits,typename EvalT::
 
 } // Namespace LandIce
 
-#endif // LandIce_PROLONGATE_VECTOR_HPP
+#endif // LANDICE_PROLONGATE_VECTOR_HPP

@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_ICE_SOFTNESS_HPP
-#define LandIce_ICE_SOFTNESS_HPP 1
+#ifndef LANDICE_ICE_SOFTNESS_HPP
+#define LANDICE_ICE_SOFTNESS_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -55,4 +55,4 @@ private:
 
 } // Namespace LandIce
 
-#endif // LandIce_ICE_SOFTNESS_HPP
+#endif // LANDICE_ICE_SOFTNESS_HPP

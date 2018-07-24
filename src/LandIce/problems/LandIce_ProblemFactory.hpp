@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_PROBLEM_FACTORY_HPP
-#define LandIce_PROBLEM_FACTORY_HPP
+#ifndef LANDICE_PROBLEM_FACTORY_HPP
+#define LANDICE_PROBLEM_FACTORY_HPP
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
@@ -56,5 +56,5 @@ protected:
 
 } // Namespace LandIce
 
-#endif // LandIce_PROBLEM_FACTORY_HPP
+#endif // LANDICE_PROBLEM_FACTORY_HPP
 

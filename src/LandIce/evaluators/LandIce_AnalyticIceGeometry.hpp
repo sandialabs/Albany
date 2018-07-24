@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_ANALYTIC_ICE_GEOMETRY_HPP
-#define LandIce_ANALYTIC_ICE_GEOMETRY_HPP 1
+#ifndef LANDICE_ANALYTIC_ICE_GEOMETRY_HPP
+#define LANDICE_ANALYTIC_ICE_GEOMETRY_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -57,4 +57,4 @@ private:
 
 } // Namespace LandIce
 
-#endif // LandIce_ANALYTIC_ICE_GEOMETRY_HPP
+#endif // LANDICE_ANALYTIC_ICE_GEOMETRY_HPP

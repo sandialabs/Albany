@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_FLOW_RATE_HPP
-#define LandIce_FLOW_RATE_HPP 1
+#ifndef LANDICE_FLOW_RATE_HPP
+#define LANDICE_FLOW_RATE_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -55,4 +55,4 @@ private:
 
 } // Namespace LandIce
 
-#endif // LandIce_FLOW_RATE_HPP
+#endif // LANDICE_FLOW_RATE_HPP

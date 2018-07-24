@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_BASAL_FRICTION_COEFFICIENT_HPP
-#define LandIce_BASAL_FRICTION_COEFFICIENT_HPP 1
+#ifndef LANDICE_BASAL_FRICTION_COEFFICIENT_HPP
+#define LANDICE_BASAL_FRICTION_COEFFICIENT_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -102,4 +102,4 @@ private:
 
 } // Namespace LandIce
 
-#endif // LandIce_BASAL_FRICTION_COEFFICIENT_HPP
+#endif // LANDICE_BASAL_FRICTION_COEFFICIENT_HPP

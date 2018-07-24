@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_SCATTER_RESIDUAL2D_HPP
-#define LandIce_SCATTER_RESIDUAL2D_HPP
+#ifndef LANDICE_SCATTER_RESIDUAL2D_HPP
+#define LANDICE_SCATTER_RESIDUAL2D_HPP
 
 #include "PHAL_ScatterResidual.hpp"
 

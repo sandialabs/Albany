@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_TIME_HPP
-#define LandIce_TIME_HPP
+#ifndef LANDICE_TIME_HPP
+#define LANDICE_TIME_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

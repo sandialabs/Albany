@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LandIce_BASALFRICTIONHEAT_HPP_
-#define LandIce_BASALFRICTIONHEAT_HPP_
+#ifndef LANDICE_BASALFRICTIONHEAT_HPP_
+#define LANDICE_BASALFRICTIONHEAT_HPP_
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

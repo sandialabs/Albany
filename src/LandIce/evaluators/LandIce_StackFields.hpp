@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_STACK_RESIDUALS_HPP
-#define LandIce_STACK_RESIDUALS_HPP
+#ifndef LANDICE_STACK_RESIDUALS_HPP
+#define LANDICE_STACK_RESIDUALS_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -79,4 +79,4 @@ using StackFieldsParam = StackFieldsBase<EvalT,Traits,typename EvalT::ParamScala
 
 } // Namespace LandIce
 
-#endif // LandIce_STACK_RESIDUALS_HPP
+#endif // LANDICE_STACK_RESIDUALS_HPP

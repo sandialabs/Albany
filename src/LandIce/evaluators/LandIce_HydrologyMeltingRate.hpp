@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_HYDROLOGY_MELTING_RATE_HPP
-#define LandIce_HYDROLOGY_MELTING_RATE_HPP 1
+#ifndef LANDICE_HYDROLOGY_MELTING_RATE_HPP
+#define LANDICE_HYDROLOGY_MELTING_RATE_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -63,4 +63,4 @@ private:
 
 } // Namespace LandIce
 
-#endif // LandIce_HYDROLOGY_MELTING_RATE_HPP
+#endif // LANDICE_HYDROLOGY_MELTING_RATE_HPP

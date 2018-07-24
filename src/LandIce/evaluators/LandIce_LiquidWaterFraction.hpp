@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LandIce_LIQUIDWATERFRACTION_HPP_
-#define LandIce_LIQUIDWATERFRACTION_HPP_
+#ifndef LANDICE_LIQUIDWATERFRACTION_HPP_
+#define LANDICE_LIQUIDWATERFRACTION_HPP_
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

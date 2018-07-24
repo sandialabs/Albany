@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LandIce_BASALNORMALHEATFLUX_HPP_
-#define LandIce_BASALNORMALHEATFLUX_HPP_
+#ifndef LANDICE_BASALNORMALHEATFLUX_HPP_
+#define LANDICE_BASALNORMALHEATFLUX_HPP_
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

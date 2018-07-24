@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_STOKESFOSTRESS_HPP
-#define LandIce_STOKESFOSTRESS_HPP
+#ifndef LANDICE_STOKESFOSTRESS_HPP
+#define LANDICE_STOKESFOSTRESS_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LandIce_VELOCITYZ_HPP_
-#define LandIce_VELOCITYZ_HPP_
+#ifndef LANDICE_VELOCITYZ_HPP_
+#define LANDICE_VELOCITYZ_HPP_
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_SCHOOF_FIT_HPP
-#define LandIce_SCHOOF_FIT_HPP 1
+#ifndef LANDICE_SCHOOF_FIT_HPP
+#define LANDICE_SCHOOF_FIT_HPP 1
 
 #include <type_traits>
 
@@ -455,4 +455,4 @@ LandIce::SchoofFit::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& 
   return Teuchos::null;
 }
 
-#endif // LandIce_SCHOOF_FIT_HPP
+#endif // LANDICE_SCHOOF_FIT_HPP

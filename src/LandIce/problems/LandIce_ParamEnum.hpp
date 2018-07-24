@@ -1,5 +1,5 @@
-#ifndef LandIce_PARAM_ENUM_HPP
-#define LandIce_PARAM_ENUM_HPP
+#ifndef LANDICE_PARAM_ENUM_HPP
+#define LANDICE_PARAM_ENUM_HPP
 
 #include <string>
 
@@ -26,4 +26,4 @@ namespace ParamEnumName
 
 } // Namespace LandIce
 
-#endif // LandIce_PARAM_ENUM_HPP
+#endif // LANDICE_PARAM_ENUM_HPP

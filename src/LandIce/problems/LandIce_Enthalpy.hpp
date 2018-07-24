@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LandIce_ENTHALPY_PROBLEM_HPP
-#define LandIce_ENTHALPY_PROBLEM_HPP
+#ifndef LANDICE_ENTHALPY_PROBLEM_HPP
+#define LANDICE_ENTHALPY_PROBLEM_HPP
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"

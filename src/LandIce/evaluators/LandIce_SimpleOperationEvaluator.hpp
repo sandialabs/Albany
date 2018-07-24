@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_SIMPLE_OPERATION_EVALUATOR_HPP
-#define LandIce_SIMPLE_OPERATION_EVALUATOR_HPP 1
+#ifndef LANDICE_SIMPLE_OPERATION_EVALUATOR_HPP
+#define LANDICE_SIMPLE_OPERATION_EVALUATOR_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -202,4 +202,4 @@ public:
 
 } // Namespace LandIce
 
-#endif // LandIce_SIMPLE_OPERATION_EVALUATOR_HPP
+#endif // LANDICE_SIMPLE_OPERATION_EVALUATOR_HPP

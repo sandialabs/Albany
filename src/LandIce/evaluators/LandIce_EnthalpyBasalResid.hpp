@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LandIce_ENTHALPY_BASAL_RESID_HPP_
-#define LandIce_ENTHALPY_BASAL_RESID_HPP_
+#ifndef LANDICE_ENTHALPY_BASAL_RESID_HPP_
+#define LANDICE_ENTHALPY_BASAL_RESID_HPP_
 
 
 #include "Phalanx_config.hpp"

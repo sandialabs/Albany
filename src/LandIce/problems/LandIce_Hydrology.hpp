@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_HYDROLOGY_PROBLEM_HPP
-#define LandIce_HYDROLOGY_PROBLEM_HPP 1
+#ifndef LANDICE_HYDROLOGY_PROBLEM_HPP
+#define LANDICE_HYDROLOGY_PROBLEM_HPP 1
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
@@ -952,4 +952,4 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
 } // Namespace LandIce
 
-#endif // LandIce_HYDROLOGY_PROBLEM_HPP
+#endif // LANDICE_HYDROLOGY_PROBLEM_HPP

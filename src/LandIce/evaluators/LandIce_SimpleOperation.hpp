@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_SIMPLE_OPERATION_HPP
-#define LandIce_SIMPLE_OPERATION_HPP 1
+#ifndef LANDICE_SIMPLE_OPERATION_HPP
+#define LANDICE_SIMPLE_OPERATION_HPP 1
 
 #include <cmath>
 #include <algorithm>
@@ -182,4 +182,4 @@ struct BandPass
 
 } // namespace LandIce
 
-#endif // LandIce_SIMPLE_OPERATION_HPP
+#endif // LANDICE_SIMPLE_OPERATION_HPP

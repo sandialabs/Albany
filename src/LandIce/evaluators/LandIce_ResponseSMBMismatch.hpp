@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_RESPONSESMBMISMATCH_HPP
-#define LandIce_RESPONSESMBMISMATCH_HPP
+#ifndef LANDICE_RESPONSESMBMISMATCH_HPP
+#define LANDICE_RESPONSESMBMISMATCH_HPP
 
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 #include "Intrepid2_CellTools.hpp"

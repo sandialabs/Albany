@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LandIce_DISSIPATION_HPP_
-#define LandIce_DISSIPATION_HPP_
+#ifndef LANDICE_DISSIPATION_HPP_
+#define LANDICE_DISSIPATION_HPP_
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

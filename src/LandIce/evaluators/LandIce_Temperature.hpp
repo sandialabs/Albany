@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LandIce_TEMPERATURE_HPP_
-#define LandIce_TEMPERATURE_HPP_
+#ifndef LANDICE_TEMPERATURE_HPP_
+#define LANDICE_TEMPERATURE_HPP_
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

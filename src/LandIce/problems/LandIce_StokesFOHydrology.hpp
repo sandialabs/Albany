@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LandIce_STOKES_FO_HYDROLOGY_PROBLEM_HPP
-#define LandIce_STOKES_FO_HYDROLOGY_PROBLEM_HPP 1
+#ifndef LANDICE_STOKES_FO_HYDROLOGY_PROBLEM_HPP
+#define LANDICE_STOKES_FO_HYDROLOGY_PROBLEM_HPP 1
 
 #include <type_traits>
 
@@ -926,4 +926,4 @@ LandIce::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
   return Teuchos::null;
 }
 
-#endif // LandIce_STOKES_FO_HYDROLOGY_PROBLEM_HPP
+#endif // LANDICE_STOKES_FO_HYDROLOGY_PROBLEM_HPP
