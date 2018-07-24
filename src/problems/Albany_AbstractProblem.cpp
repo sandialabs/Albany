@@ -125,7 +125,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      Teuchos::rcp(new Teuchos::ParameterList(listname));;
   validPL->set<std::string>("Name", "", "String to designate Problem Class");
-  //The following is for FELIX problems.
+  //The following is for LandIce problems.
   validPL->set<int>("Number RBMs for ML", 0, "Number of RBMs provided to ML");
   validPL->set<int>("Number of Spatial Processors", -1, "Number of spatial processors in multi-level parallelism");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0,
@@ -153,7 +153,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->set<bool>("Solve Adjoint", false, "");
   validPL->set<int>("Number Of Time Derivatives", 1, "Number of time derivatives in use in the problem");
 
-  validPL->set<bool>("Use MDField Memoization", false, "Use memoizer optimization to avoid recomputing MDFields (currently only works for FELIX)");
+  validPL->set<bool>("Use MDField Memoization", false, "Use memoizer optimization to avoid recomputing MDFields (currently only works for LandIce)");
   validPL->set<bool>("Ignore Residual In Jacobian", false,
                      "Ignore residual calculations while computing the Jacobian (only generally appropriate for linear problems)");
   validPL->set<double>("Perturb Dirichlet", 0.0,

@@ -1,9 +1,0 @@
-Input FEM file                   = gis20km_upn4_in.exo
-LB file                          = gis20km_upn4_in.nem
-File Extension for Spread Files  = .exo
-Number of Processors             = 8 
-------------------------------------------------------------
-                Parallel I/O section
-------------------------------------------------------------
-Parallel Disk Info= number=1, offset=1, zeros, nosubdirectory
-Parallel file location = root=/home/ikalash/Desktop/clean/Albany/examples/FELIX_Stokes/ExoMeshes/, subdir=.

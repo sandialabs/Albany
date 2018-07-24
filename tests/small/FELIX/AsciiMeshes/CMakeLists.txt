@@ -1,5 +1,0 @@
-add_subdirectory(Dome)
-add_subdirectory(DomeEnth)
-add_subdirectory(GisUnstructFiles)
-add_subdirectory(GisUnstructCropped)
-add_subdirectory(Rectangle)

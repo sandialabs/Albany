@@ -160,7 +160,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
       this->registerSacadoParameter(name, paramLib);
 
   }
-  else if(inputConditions == "basal"){ // Basal boundary condition for FELIX
+  else if(inputConditions == "basal"){ // Basal boundary condition for LandIce
       rho = p.get<double>("Ice Density");
       rho_w = p.get<double>("Water Density");
       useGLP = p.get<bool>("Use GLP");
@@ -189,7 +189,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
       }
        dofVec = decltype(dofVec)(p.get<std::string>("DOF Name"),
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
       beta_field = decltype(beta_field)(
         p.get<std::string>("Beta Field Name"), dl->node_scalar);
       thickness_field = decltype(thickness_field)(
@@ -226,19 +226,19 @@ NeumannBase(const Teuchos::ParameterList& p) :
         beta_type = POWERLAW_SCALAR_FIELD;
       else if (betaName == "Exponent Of Scalar Field Times Thickness")
         beta_type = EXP_SCALAR_FIELD_THK;
-      else if (betaName == "FELIX XZ MMS")
-        beta_type = FELIX_XZ_MMS;
+      else if (betaName == "LandIce XZ MMS")
+        beta_type = LANDICE_XZ_MMS;
       else TEUCHOS_TEST_FOR_EXCEPTION(true,Teuchos::Exceptions::InvalidParameter,
         std::endl << "The BetaXY name: \"" << betaName << "\" is not a valid name" << std::endl);
 
       this->addDependentField(dofVec);
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
       this->addDependentField(beta_field);
       this->addDependentField(thickness_field);
       this->addDependentField(bedTopo_field);
 #endif
   }
-  else if(inputConditions == "basal_scalar_field"){ // Basal boundary condition for FELIX, where the basal sliding coefficient is a scalar field
+  else if(inputConditions == "basal_scalar_field"){ // Basal boundary condition for LandIce, where the basal sliding coefficient is a scalar field
       stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
       useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
 
@@ -256,13 +256,13 @@ NeumannBase(const Teuchos::ParameterList& p) :
       dofVec = decltype(dofVec)(p.get<std::string>("DOF Name"),
           p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
       this->addDependentField(dofVec);
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
       beta_field = decltype(beta_field)(
                     p.get<std::string>("Beta Field Name"), dl->node_scalar);
       this->addDependentField(beta_field);
 #endif
   }
-  else if(inputConditions == "lateral"){ // Basal boundary condition for FELIX
+  else if(inputConditions == "lateral"){ // Basal boundary condition for LandIce
        stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
        useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
        if(useStereographicMap)
@@ -294,7 +294,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
         dofVec = decltype(dofVec)(p.get<std::string>("DOF Name"),
              p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
         this->addDependentField(dofVec);
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
         thickness_field = decltype(thickness_field)(
           p.get<std::string>("thickness Field Name"), dl->node_scalar);
         elevation_field = decltype(elevation_field)(
@@ -384,7 +384,7 @@ postRegistrationSetup(typename Traits::SetupData d,
     this->utils.setFieldData(dof,fm);
     dofSide_buffer = Kokkos::createDynRankView(dof.get_view(), "dofSide", numCells*maxNumQpSide);
   }
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
   else if (inputConditions == "basal" || inputConditions == "basal_scalar_field")
   {
     this->utils.setFieldData(dofVec,fm);
@@ -490,19 +490,19 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
          (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
        break;
     case BASAL:
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
        neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
          (dofVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
 #endif
        break;
     case BASAL_SCALAR_FIELD:
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
        neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
          (dofVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
 #endif
        break;
     case LATERAL:
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
        neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
          (dofVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
 #endif
@@ -702,7 +702,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
       for (std::size_t node=0; node < numNodes; ++node)
       {
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
         for (std::size_t iCell=0; iCell < numCells_; ++iCell)
           betaOnCell(iCell,node) = beta_field(cellVec(iCell),node);
         if(bc_type == BASAL) {
@@ -749,7 +749,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       //Intrepid2::FunctionSpaceTools<PHX::Device>::
         //evaluate(dofSide, dofCell, trans_basis_refPointsSide);
     }
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
     else if(bc_type == LATERAL) {
           dofCellVec = Kokkos::createViewWithType<DynRankViewScalarT>(dofCellVec_buffer, dofCellVec_buffer.data(), numCells_, numNodes, numDOFsSet);
           thicknessOnSide = Kokkos::createViewWithType<DynRankViewScalarT>(thicknessOnSide_buffer, thicknessOnSide_buffer.data(), numCells_, numQPsSide);
@@ -825,21 +825,21 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
       case BASAL:
 
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
          calc_dudn_basal(data, physPointsSide, betaOnSide, thicknessOnSide, bedTopoOnSide, dofSideVec, jacobianSide, *cellType, cellDims, side);
 #endif
          break;
 
       case BASAL_SCALAR_FIELD:
 
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
          calc_dudn_basal_scalar_field(data, physPointsSide, betaOnSide, dofSideVec, jacobianSide, *cellType, cellDims, side);
 #endif
          break;
 
       case LATERAL:
 
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
          calc_dudn_lateral(data, physPointsSide, thicknessOnSide, elevationOnSide, dofSideVec, jacobianSide, *cellType, cellDims, side);
 #endif
          break;
@@ -1409,8 +1409,8 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
       }
   }
  }
- //Robin/Neumann bc for FELIX FO XZ MMS test case
- else if (beta_type == FELIX_XZ_MMS) {
+ //Robin/Neumann bc for LandIce FO XZ MMS test case
+ else if (beta_type == LANDICE_XZ_MMS) {
     //parameter values are hard-coded here...
     MeshScalarT H = 1.0;
     double alpha0 = 4.0e-5;
@@ -1662,7 +1662,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
 //IKT, 5/31/16: I commented out the KOKKOS_UNDER_DEVELOPMENT
 //code b/c it does not execute correctly on an OpenMP KokkosNode.
-//This problem shows up for some FELIX cases.
+//This problem shows up for some LandIce cases.
 //It is somewhat of a mystery why this is the case b/c the Jacobian
 //matrices dumped to matrix market _are_ correct.  This problem needs
 //to be looked into.

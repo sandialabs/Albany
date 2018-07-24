@@ -680,8 +680,8 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./LCM/solvers
                      ./LCM/utils
                      ./LCM/utils/topology
-                     ./FELIX/problems
-                     ./FELIX/evaluators
+                     ./LandIce/problems
+                     ./LandIce/evaluators
                      ./Tsunami/problems
                      ./Tsunami/evaluators
                      ./Aeras/problems
@@ -926,9 +926,9 @@ IF (ALBANY_QCAD)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} QCAD)
 ENDIF()
 
-IF (ALBANY_FELIX)
-  add_subdirectory(FELIX)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} FELIX)
+IF (ALBANY_LANDICE)
+  add_subdirectory(LandIce)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} LandIce)
 
   IF (ENABLE_MPAS_INTERFACE)
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} mpasInterface)

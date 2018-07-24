@@ -102,13 +102,13 @@ IF(ALBANY_ATO)
   add_subdirectory(ATO)
 ENDIF()
 
-# FELIX ##################
+# LandIce ##################
 
-IF(ALBANY_FELIX AND ALBANY_SEACAS )
-  add_subdirectory(FELIX)
+IF(ALBANY_LANDICE AND ALBANY_SEACAS )
+  add_subdirectory(LandIce)
 ENDIF()
 
-# FELIX ##################
+# LandIce ##################
 
 IF(ALBANY_TSUNAMI AND ALBANY_SEACAS )
   add_subdirectory(Tsunami)

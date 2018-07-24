@@ -77,18 +77,6 @@ protected:
 
   bool responseOnly; //flag for evaluator being called in response field manager
 
-  //The following are for the basal BC 
-  /*std::string betaName; //name of function betaXY to be used
-  double L;           //length scale for ISMIP-HOM Test cases 
-  MeshScalarT betaXY; //function of x and y to multiply scalar values of beta read from input file
-  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, LATERAL_BACKPRESSURE, FELIX_XZ_MMS};
-  BETAXY_NAME beta_type;*/
- 
-  //The following are for the lateral BC 
-  /*double g; 
-  double rho; 
-  double rho_w;  */
-
  // Should only specify flux vector components (dudx, dudy, dudz), dudn, or pressure P
 
    // dudn for 2D Thomas-Fermi poisson source

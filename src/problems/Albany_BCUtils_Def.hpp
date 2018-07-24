@@ -1027,13 +1027,13 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
             else
               p->set<RCP<DataLayout>>("DOF Data Layout", dl->node_scalar);
           }
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
           else if (conditions[k] == "basal") {
             Teuchos::ParameterList& mapParamList =
                 params->sublist("Stereographic Map");
             p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
             Teuchos::ParameterList& physics_list =
-                params->sublist("FELIX Physical Parameters");
+                params->sublist("LandIce Physical Parameters");
             string betaName = BCparams.get("BetaXY", "Constant");
             double L = BCparams.get("L", 1.0);
             double rho = physics_list.get("Ice Density", 910.0);
@@ -1075,7 +1075,7 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
                 params->sublist("Stereographic Map");
             p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
             Teuchos::ParameterList& physics_list =
-                params->sublist("FELIX Physical Parameters");
+                params->sublist("LandIce Physical Parameters");
             string betaName = BCparams.get("BetaXY", "Constant");
             double g = physics_list.get("Gravity Acceleration", 9.8);
             double rho = physics_list.get("Ice Density", 910.0);
@@ -1254,7 +1254,7 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
     evaluators_to_build[NeuGCV] = p;
   }
 
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
   /*  // Build evaluator for basal_friction
    string NeuGBF="Evaluator for Gather basal_friction";
    {

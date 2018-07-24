@@ -85,9 +85,9 @@ namespace Albany {
 
     virtual bool useCompositeTet() = 0;
 
-    //Flag for transforming STK mesh; currently only needed for FELIX/Aeras problems
+    //Flag for transforming STK mesh; currently only needed for LandIce/Aeras problems
     std::string transformType;
-    //alpha and L are parameters read in from ParameterList for FELIX problems
+    //alpha and L are parameters read in from ParameterList for LandIce problems
     double felixAlpha;
     double felixL;
     //xShift, yShift and zShift are for "Right-shift" transformMesh routine

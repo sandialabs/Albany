@@ -573,14 +573,14 @@ ELSE()
   SET(ALBANY_QCAD FALSE)
 ENDIF()
 
-# Set optional build of FELIX (Land Ice SciDAC project), defaults to Disabled
-OPTION(ENABLE_FELIX "Flag to turn on FELIX Source code" OFF)
-IF (ENABLE_FELIX)
-  MESSAGE("-- FELIX     is Enabled, compiling with -DALBANY_FELIX")
-  SET(ALBANY_FELIX TRUE)
+# Set optional build of LandIce (Land Ice SciDAC project), defaults to Disabled
+OPTION(ENABLE_LANDICE "Flag to turn on LandIce Source code" OFF)
+IF (ENABLE_LANDICE)
+  MESSAGE("-- LandIce     is Enabled, compiling with -DALBANY_LANDICE")
+  SET(ALBANY_LANDICE TRUE)
 ELSE()
-  MESSAGE("-- FELIX     is NOT Enabled.")
-  SET(ALBANY_FELIX FALSE)
+  MESSAGE("-- LandIce     is NOT Enabled.")
+  SET(ALBANY_LANDICE FALSE)
 ENDIF()
 
 OPTION(ENABLE_TSUNAMI "Flag to turn on TSUNAMI Source code" OFF)
@@ -593,16 +593,16 @@ ELSE()
 ENDIF()
 
 
-# Set optional build of CISM Interface for FELIX (Land Ice SciDAC project),
+# Set optional build of CISM Interface for LandIce (Land Ice SciDAC project),
 # defaults to Disabled
 
-OPTION(ENABLE_CISM_INTERFACE "Flag to turn on FELIX Interface to the CISM code" OFF)
+OPTION(ENABLE_CISM_INTERFACE "Flag to turn on LandIce Interface to the CISM code" OFF)
 OPTION(ENABLE_CISM_REDUCED_COMM "Flag to turn on reduced communicator for CISM-Albany runs" ON)
 OPTION(ENABLE_CISM_EPETRA "Flag to turn on Epetra for CISM-Albany" OFF)
 OPTION(ENABLE_CISM_CHECK_COMPARISONS "Flag to turn on comparisons checking for CISM-Albany" OFF)
 
-IF (ENABLE_CISM_INTERFACE AND ENABLE_FELIX)
-  SET(CISM_HAS_FELIX TRUE)
+IF (ENABLE_CISM_INTERFACE AND ENABLE_LANDICE)
+  SET(CISM_HAS_LANDICE TRUE)
   IF (ENABLE_CISM_CHECK_COMPARISONS)
     SET(CISM_CHECK_COMPARISONS TRUE)
     MESSAGE("---> CISM_CHECK_COMPARISONS is Enabled, compiling with -DCISM_CHECK_COMPARISONS.  Error will be thrown if comparisons fail for CISM-Albany run.")
@@ -628,8 +628,8 @@ IF (ENABLE_CISM_INTERFACE AND ENABLE_FELIX)
 Albany was built with LCM, LAME, HYDRIDE or ENABLE_DEMO_PDES.  Turn these off to build
 cism_driver.")
   ENDIF ()
-  MESSAGE("---> CISM_INTERFACE     is Enabled, compiling with -DCISM_HAS_FELIX")
-  SET(CISM_HAS_FELIX TRUE)
+  MESSAGE("---> CISM_INTERFACE     is Enabled, compiling with -DCISM_HAS_LANDICE")
+  SET(CISM_HAS_LANDICE TRUE)
   IF (NOT CISM_INCLUDE_DIR)
     MESSAGE("\nError:  CISM_INCLUDE_DIR not defined\n")
   ELSE()
@@ -640,12 +640,12 @@ cism_driver.")
   ELSE()
     MESSAGE("---> CISM_EXE_DIR ${CISM_EXE_DIR}")
   ENDIF()
-ELSEIF(ENABLE_CISM_INTERFACE AND (NOT ENABLE_FELIX))
-  MESSAGE(FATAL_ERROR "\nError:  ENABLE_CISM_INTERFACE requires ENABLE_FELIX
+ELSEIF(ENABLE_CISM_INTERFACE AND (NOT ENABLE_LANDICE))
+  MESSAGE(FATAL_ERROR "\nError:  ENABLE_CISM_INTERFACE requires ENABLE_LANDICE
 to be ON\n")
 ELSE()
   MESSAGE("---> CISM_INTERFACE     is NOT Enabled.")
-  SET(CISM_HAS_FELIX FALSE)
+  SET(CISM_HAS_LANDICE FALSE)
 ENDIF()
 
 # Set optional build of AFRL MultiScale; defaults to OFF
@@ -700,10 +700,10 @@ ELSE()
   SET(ALBANY_PARAMETERS_DEPEND_ON_SOLUTION FALSE)
 ENDIF()
 
-# Set optional build of MPAS Interface for FELIX (Land Ice SciDAC project),
+# Set optional build of MPAS Interface for LandIce (Land Ice SciDAC project),
 # defaults to Disabled
-OPTION(ENABLE_MPAS_INTERFACE "Flag to turn on FELIX Source code" OFF)
-IF (ENABLE_MPAS_INTERFACE AND ENABLE_FELIX)
+OPTION(ENABLE_MPAS_INTERFACE "Flag to turn on LandIce Source code" OFF)
+IF (ENABLE_MPAS_INTERFACE AND ENABLE_LANDICE)
   IF (ENABLE_ALBANY_EPETRA_EXE)
     IF (ENABLE_MPAS_EPETRA)
       SET(MPAS_USE_EPETRA TRUE)
@@ -712,14 +712,14 @@ IF (ENABLE_MPAS_INTERFACE AND ENABLE_FELIX)
       MESSAGE("---> MPAS_EPETRA     is Disabled, NOT compiling with -DMPAS_USE_EPETRA.  MPAS-Albany will run with Tpetra software stack.")
     ENDIF()
   ENDIF()
-  MESSAGE("-- MPAS_INTERFACE     is Enabled, compiling with -DMPAS_HAS_FELIX")
-  SET(MPAS_HAS_FELIX TRUE)
-ELSEIF(ENABLE_MPAS_INTERFACE AND (NOT ENABLE_FELIX))
-  MESSAGE(FATAL_ERROR "\nError:  ENABLE_MPAS_INTERFACE requires ENABLE_FELIX
+  MESSAGE("-- MPAS_INTERFACE     is Enabled, compiling with -DMPAS_HAS_LANDICE")
+  SET(MPAS_HAS_LANDICE TRUE)
+ELSEIF(ENABLE_MPAS_INTERFACE AND (NOT ENABLE_LANDICE))
+  MESSAGE(FATAL_ERROR "\nError:  ENABLE_MPAS_INTERFACE requires ENABLE_LANDICE
 to be ON\n")
 ELSE()
   MESSAGE("---> MPAS_INTERFACE     is NOT Enabled.")
-  SET(MPAS_HAS_FELIX FALSE)
+  SET(MPAS_HAS_LANDICE FALSE)
 ENDIF()
 
 # set optional dependency of mesh on parameters, defaults to Disabled
@@ -1008,9 +1008,10 @@ MESSAGE("\nAlbany Templated Data Type Options:")
 IF(ENABLE_FAST_FELIX)
   MESSAGE(FATAL_ERROR
   "\nError: ENABLE_FAST_FELIX has been removed! Use ENABLE_FAD_TYPE instead.
-  Example for a tetrahedral mesh in FELIX:
+  Example for a tetrahedral mesh in LandIce:
     -D ENABLE_FAD_TYPE:STRING=SFad
-    -D ALBANY_SFAD_SIZE=8")
+    -D ALBANY_SFAD_SIZE=8
+  For a hexahedral mesh, use ALBANY_SFAD_SIZE=16")
 ENDIF()
 
 # Set FAD data type
@@ -1241,7 +1242,7 @@ ELSE()
   SET(ALBANY_LARGE_TESTS FALSE)
 ENDIF()
 
-#Add option to build libraries but not link any executables (for FELIX uner MPAS)
+#Add option to build libraries but not link any executables (for LandIce uner MPAS)
 OPTION(ALBANY_LIBRARIES_ONLY "Flag to only build libraries and not link executables" OFF)
 IF (ALBANY_LIBRARIES_ONLY)
   MESSAGE("-- ALBANY_LIBRARIES_ONLY is ON")

@@ -83,8 +83,8 @@
 #include "Aeras/problems/Aeras_HydrostaticProblem.hpp"
 #endif
 
-#ifdef ALBANY_FELIX
-#include "FELIX/problems/FELIX_ProblemFactory.hpp"
+#ifdef ALBANY_LANDICE
+#include "LandIce/problems/LandIce_ProblemFactory.hpp"
 #endif
 
 #ifdef ALBANY_TSUNAMI
@@ -360,9 +360,9 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Albany::LaplaceBeltramiProblem(problemParams, paramLib, 3, commT));
   }
 #endif
-#ifdef ALBANY_FELIX
-  else if (FELIX::ProblemFactory::hasProblem(method)) {
-    FELIX::ProblemFactory felix_factory(problemParams,discretizationParams,paramLib);
+#ifdef ALBANY_LANDICE
+  else if (LandIce::ProblemFactory::hasProblem(method)) {
+    LandIce::ProblemFactory felix_factory(problemParams,discretizationParams,paramLib);
     strategy = felix_factory.create();
   }
 #endif

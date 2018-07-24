@@ -936,7 +936,7 @@ MechanicsProblem::constructEvaluators(
     // constructEvaluators gets called multiple times for different
     // specializations.
     // Make sure dirichlet_field gets registered only once via counter.
-    // I don't quite understand why this is needed for LCM but not for FELIX...
+    // I don't quite understand why this is needed for LCM but not for LANDICE...
     // dirichlet_field
     StateStruct::MeshFieldEntity
     entity = StateStruct::NodalDistParameter;

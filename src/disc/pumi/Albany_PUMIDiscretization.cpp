@@ -66,7 +66,7 @@ Albany::PUMIDiscretization::setRestartData()
 }
 
 void
-Albany::PUMIDiscretization::setFELIXData()
+Albany::PUMIDiscretization::setLandIceData()
 {
   assert(meshStruct->qpscalar_states.size() == 0);
   assert(meshStruct->qpvector_states.size() == 0);
@@ -74,7 +74,7 @@ Albany::PUMIDiscretization::setFELIXData()
 
   apf::Mesh2* m = meshStruct->getMesh();
 
-  /* loop over the fields that the FELIX problem wants to exist */
+  /* loop over the fields that the LandIce problem wants to exist */
   for (std::size_t i=0; i < meshStruct->elemnodescalar_states.size(); ++i) {
 
     /* try to find the field on the mesh */

@@ -189,7 +189,7 @@ void Albany::APFMeshStruct::init(
   num_time_deriv = params->get<int>("Number Of Time Derivatives", 0);
   allElementBlocksHaveSamePhysics = true;
   hasRestartSolution = false;
-  shouldLoadFELIXData = false;
+  shouldLoadLandIceData = false;
 
   // No history available by default
   solutionFieldHistoryDepth = 0;
@@ -355,7 +355,7 @@ Albany::APFMeshStruct::setFieldAndBulkData(
     if (meshSpecsType() == AbstractMeshStruct::PUMI_MS) {
       if(hasRestartSolution)
         st.restartDataAvailable = true;
-      if((shouldLoadFELIXData) && (st.entity == StateStruct::NodalDataToElemNode))
+      if((shouldLoadLandIceData) && (st.entity == StateStruct::NodalDataToElemNode))
         st.restartDataAvailable = true;
     }
 #endif
