@@ -1113,8 +1113,8 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
   // Creating the serial and parallel node maps
   const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
-  Teuchos::RCP<const Tpetra_Map> nodes_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode> (nodeIndices, commT, KokkosClassic::Details::getNode<KokkosNode>());
-  Teuchos::RCP<const Tpetra_Map> elems_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode> (elemIndices, commT, KokkosClassic::Details::getNode<KokkosNode>());
+  Teuchos::RCP<const Tpetra_Map> nodes_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode> (nodeIndices, commT);
+  Teuchos::RCP<const Tpetra_Map> elems_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode> (elemIndices, commT);
 
   // Check whether we need the serial map or not. The only scenario where we DO need it is if we are
   // loading a field from an ASCII file. So let's check the fields info to see if that's the case.
@@ -1890,7 +1890,7 @@ Albany::GenericSTKMeshStruct::create_root_map (Teuchos::Array<Tpetra_GO>& nodeEl
   num_global_elems = allElemsToRoot.size();
   Teuchos::broadcast(*commT,0,1,&num_global_elems);
 
-  return Teuchos::rcp (new Tpetra_Map (num_global_elems,allElemsToRoot(),elem_base,commT,KokkosClassic::Details::getNode<KokkosNode>()));
+  return Teuchos::rcp (new Tpetra_Map (num_global_elems,allElemsToRoot(),elem_base,commT));
 }
 
 void
