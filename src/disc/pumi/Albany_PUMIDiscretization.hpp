@@ -31,8 +31,8 @@ class PUMIDiscretization : public APFDiscretization {
     //! Set restart data
     void setRestartData();
 
-    //! Set data for FELIX problems
-    void setFELIXData();
+    //! Set data for LandIce problems
+    void setLandIceData();
 
   private:
 

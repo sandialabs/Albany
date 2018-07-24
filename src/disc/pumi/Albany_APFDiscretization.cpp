@@ -1568,10 +1568,10 @@ Albany::APFDiscretization::initMesh() {
   computeNodeSets();
   computeSideSets();
 
-  // load the FELIX Data and tell the state manager to not initialize
+  // load the LandIce Data and tell the state manager to not initialize
   // these fields
-  if (meshStruct->shouldLoadFELIXData)
-    setFELIXData();
+  if (meshStruct->shouldLoadLandIceData)
+    setLandIceData();
 
   // Tell the nodal data base that the graph changed. We don't create the graph
   // (as STKDiscretization does), but others might (such as

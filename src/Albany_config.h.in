@@ -9,7 +9,7 @@
 #cmakedefine ALBANY_APF
 #cmakedefine ALBANY_ATO
 #cmakedefine ALBANY_CATALYST
-#cmakedefine ALBANY_FELIX
+#cmakedefine ALBANY_LANDICE
 #cmakedefine ALBANY_HYDRIDE
 #cmakedefine ALBANY_LCM
 #cmakedefine ALBANY_MOR
@@ -132,10 +132,10 @@
   #cmakedefine ALBANY_ATO_SOLVER_EPETRA
 #endif
 
-#ifdef ALBANY_FELIX
-  // --- FELIX
-  #cmakedefine CISM_HAS_FELIX
-  #cmakedefine MPAS_HAS_FELIX
+#ifdef ALBANY_LANDICE
+  // --- LandIce
+  #cmakedefine CISM_HAS_LANDICE
+  #cmakedefine MPAS_HAS_LANDICE
   #cmakedefine CISM_CHECK_COMPARISONS
   #cmakedefine REDUCED_COMM
   #cmakedefine CISM_USE_EPETRA

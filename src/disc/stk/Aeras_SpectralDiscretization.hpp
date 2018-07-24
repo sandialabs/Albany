@@ -504,7 +504,7 @@ namespace Aeras
     //! connectivity and nodal coordinates
     void updateMesh();
 
-    //! Function that transforms an STK mesh of a unit cube (for FELIX problems)
+    //! Function that transforms an STK mesh of a unit cube (for LandIce problems)
     void transformMesh();
 
     //! Close current exodus file in stk_io and create a new one for an adapted mesh and new results

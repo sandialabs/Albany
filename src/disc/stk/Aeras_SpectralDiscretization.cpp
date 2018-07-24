@@ -479,7 +479,7 @@ setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm)
 // The function transformMesh() maps a unit cube domain by applying a
 // transformation
 
-// IK, 1/8/15, FIXME: I've removed all the FELIX stuff from
+// IK, 1/8/15, FIXME: I've removed all the LandIce stuff from
 // transformMesh() as this is for now an Aeras-only class.  The
 // setting of the schar mountain transformation needs to be fixed to
 // use the new (enriched) nodes rather than the nodes pulled from STK.

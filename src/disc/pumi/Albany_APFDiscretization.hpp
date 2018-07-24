@@ -218,7 +218,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     // Second, the parameter library is used to set Time on each workset.
     void updateMesh(bool shouldTransferIPData, Teuchos::RCP<ParamLib> paramLib);
 
-    // Function that transforms a mesh of a unit cube (for FELIX problems)
+    // Function that transforms a mesh of a unit cube (for LandIce problems)
     // not supported in PUMI now
     void transformMesh(){}
 
@@ -335,8 +335,8 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     void initTemperatureHack();
 
-    //! Set any FELIX Data
-    virtual void setFELIXData() {}
+    //! Set any LandIce Data
+    virtual void setLandIceData() {}
 
     //! Some evaluators may want access to the underlying apf mesh elements.
     std::vector<std::vector<apf::MeshEntity*> >& getBuckets() {return buckets;}
@@ -397,7 +397,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     double previous_time_label;
 
-    // Transformation types for FELIX problems
+    // Transformation types for LandIce problems
     enum TRANSFORMTYPE {NONE, ISMIP_HOM_TEST_A};
     TRANSFORMTYPE transform_type;
 

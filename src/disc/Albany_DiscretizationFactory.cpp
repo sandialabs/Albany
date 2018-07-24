@@ -23,10 +23,10 @@
 #include "Albany_AsciiSTKMeshStruct.hpp"
 #include "Albany_AsciiSTKMesh2D.hpp"
 #include "Albany_GmshSTKMeshStruct.hpp"
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
 #endif
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
 #include "Albany_STKDiscretizationStokesH.hpp"
 #endif
 #endif
@@ -313,7 +313,7 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
     } else if (method == "Gmsh") {
         return Teuchos::rcp(new Albany::GmshSTKMeshStruct(disc_params, comm));
     }
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
     else if (method == "Extruded") {
         Teuchos::RCP<Albany::AbstractMeshStruct> basalMesh;
         Teuchos::RCP<Teuchos::ParameterList> basal_params;
@@ -338,7 +338,7 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
         basalMesh = createMeshStruct(basal_params, Teuchos::null, comm);
         return Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(disc_params, comm, basalMesh));
     }
-#endif // ALBANY_FELIX
+#endif // ALBANY_LANDICE
     else if (method == "Cubit") {
         TEUCHOS_TEST_FOR_EXCEPTION(method == "Cubit",
                 Teuchos::Exceptions::InvalidParameter,
@@ -469,7 +469,7 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
             case Albany::AbstractMeshStruct::STK_MS:
             {
                 Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
                 if (method == "Extruded")
                     return Teuchos::rcp(new Albany::STKDiscretizationStokesH(discParams, ms, commT, rigidBodyModes));
                 else

@@ -1232,7 +1232,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // in the input exodus mesh.
   if (rm_dir_count == 0){ //constructEvaluators gets called multiple times for different specializations.
                        //Make sure dirichlet_field gets registered only once via counter.
-                       //I don't quite understand why this is needed for LCM but not for FELIX...
+                       //I don't quite understand why this is needed for LCM but not for LandIce...
     //dirichlet_field
     Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
     stateMgr.registerStateVariable("dirichlet_field", dl_->node_vector, eb_name, true, &entity, "");

@@ -45,7 +45,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
   const Teuchos::RCP<const Teuchos::ParameterList> pl = app->getProblemPL();
   if (Teuchos::nonnull(pl)) {
     const std::string problemName = pl->isType<std::string>("Name") ? pl->get<std::string>("Name") : "";
-    if(problemName == "FELIX Coupled FO H 3D")
+    if(problemName == "LandIce Coupled FO H 3D")
     { //all column is coupled
       int side_node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.side[2].topology->node_count;
       int node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.node_count;

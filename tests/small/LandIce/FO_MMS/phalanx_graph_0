@@ -1,0 +1,28 @@
+digraph G {
+0 [fontcolor="", label="Gather Solution<Residual>\n   Evaluates:\n     Velocity : MDA<Cell,Node,Dim>(50,4,2) : double\n   Dependencies: None!"];
+1 [fontcolor="", label="Gather Coordinate Vector<Residual>\n   Evaluates:\n     Coord Vec : MDA<Cell,Vertex,Dim>(50,4,2) : double\n   Dependencies: None!"];
+2 [fontcolor="", label="ComputeBasisFunctions<Residual>\n   Evaluates:\n     Weights : MDA<Cell,QuadPoint>(50,4) : double\n     Jacobian Det : MDA<Cell,QuadPoint>(50,4) : double\n     BF : MDA<Cell,Node,QuadPoint>(50,4,4) : double\n     wBF : MDA<Cell,Node,QuadPoint>(50,4,4) : double\n     Grad BF : MDA<Cell,Node,QuadPoint,Dim>(50,4,4,2) : double\n     wGrad BF : MDA<Cell,Node,QuadPoint,Dim>(50,4,4,2) : double\n   Dependencies:\n     Coord Vec : MDA<Cell,Vertex,Dim>(50,4,2) : double"];
+3 [fontcolor="", label="DOFVecInterpolation<Residual>\n   Evaluates:\n     Velocity : MDA<Cell,QuadPoint,Dim>(50,4,2) : double\n   Dependencies:\n     Velocity : MDA<Cell,Node,Dim>(50,4,2) : double\n     BF : MDA<Cell,Node,QuadPoint>(50,4,4) : double"];
+4 [fontcolor="", label="DOFVecGradInterpolation<Residual>\n   Evaluates:\n     Velocity Gradient : MDA<Cell,QuadPoint,Dim,Dim>(50,4,2,2) : double\n   Dependencies:\n     Velocity : MDA<Cell,Node,Dim>(50,4,2) : double\n     Grad BF : MDA<Cell,Node,QuadPoint,Dim>(50,4,4,2) : double"];
+5 [fontcolor="", label="MapToPhysicalFrame<Residual>\n   Evaluates:\n     Coord Vec : MDA<Cell,QuadPoint,Dim>(50,4,2) : double\n   Dependencies:\n     Coord Vec : MDA<Cell,Vertex,Dim>(50,4,2) : double"];
+6 [fontcolor="", label="ViscosityFO<Residual>\n   Evaluates:\n     LandIce Viscosity : MDA<Cell,QuadPoint>(50,4) : double\n   Dependencies:\n     Velocity Gradient : MDA<Cell,QuadPoint,Dim,Dim>(50,4,2,2) : double\n     Coord Vec : MDA<Cell,QuadPoint,Dim>(50,4,2) : double"];
+7 [fontcolor="", label="StokesFOBodyForce<Residual>\n   Evaluates:\n     Body Force : MDA<Cell,QuadPoint,Dim>(50,4,2) : double\n   Dependencies:\n     LandIce Viscosity : MDA<Cell,QuadPoint>(50,4) : double\n     Coord Vec : MDA<Cell,QuadPoint,Dim>(50,4,2) : double"];
+8 [fontcolor="", label="StokesFOResid<Residual>\n   Evaluates:\n     Stokes Residual : MDA<Cell,Node,Dim>(50,4,2) : double\n   Dependencies:\n     Velocity : MDA<Cell,QuadPoint,Dim>(50,4,2) : double\n     Velocity Gradient : MDA<Cell,QuadPoint,Dim,Dim>(50,4,2,2) : double\n     Body Force : MDA<Cell,QuadPoint,Dim>(50,4,2) : double\n     wBF : MDA<Cell,Node,QuadPoint>(50,4,4) : double\n     wGrad BF : MDA<Cell,Node,QuadPoint,Dim>(50,4,4,2) : double\n     LandIce Viscosity : MDA<Cell,QuadPoint>(50,4) : double"];
+9 [fontcolor="", label="Scatter Stokes<Residual>\n   Evaluates:\n     Scatter Stokes : MDA<Dummy>(0) : double\n   Dependencies:\n     Stokes Residual : MDA<Cell,Node,Dim>(50,4,2) : double"];
+2->1  [label="2:1"];
+3->0  [label="3:0"];
+3->2  [label="3:2"];
+4->0  [label="4:0"];
+4->2  [label="4:2"];
+5->1  [label="5:1"];
+6->4  [label="6:4"];
+6->5  [label="6:5"];
+7->5  [label="7:5"];
+7->6  [label="7:6"];
+8->2  [label="8:2"];
+8->3  [label="8:3"];
+8->4  [label="8:4"];
+8->6  [label="8:6"];
+8->7  [label="8:7"];
+9->8  [label="9:8"];
+}

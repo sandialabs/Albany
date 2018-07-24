@@ -491,7 +491,7 @@ class STKDiscretization : public Albany::AbstractDiscretization {
   void
   updateMesh();
 
-  //! Function that transforms an STK mesh of a unit cube (for FELIX problems)
+  //! Function that transforms an STK mesh of a unit cube (for LandIce problems)
   void
   transformMesh();
 

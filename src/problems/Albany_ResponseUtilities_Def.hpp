@@ -20,10 +20,10 @@
 #include "PHAL_ResponseSquaredL2Difference.hpp"
 #include "PHAL_ResponseSquaredL2DifferenceSide.hpp"
 #include "PHAL_SaveNodalField.hpp"
-#ifdef ALBANY_FELIX
-  #include "FELIX_ResponseSurfaceVelocityMismatch.hpp"
-  #include "FELIX_ResponseSMBMismatch.hpp"
-  #include "FELIX_ResponseBoundarySquaredL2Norm.hpp"
+#ifdef ALBANY_LANDICE
+  #include "LandIce_ResponseSurfaceVelocityMismatch.hpp"
+  #include "LandIce_ResponseSMBMismatch.hpp"
+  #include "LandIce_ResponseBoundarySquaredL2Norm.hpp"
 #endif
 #ifdef ALBANY_QCAD
 #if defined(ALBANY_EPETRA)
@@ -163,18 +163,18 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   {
     res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSMST_TPST<EvalT,Traits>(*p,dl));
   }
-#ifdef ALBANY_FELIX
+#ifdef ALBANY_LANDICE
   else if (responseName == "Surface Velocity Mismatch")
   {
-    res_ev = rcp(new FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits>(*p,dl));
+    res_ev = rcp(new LandIce::ResponseSurfaceVelocityMismatch<EvalT,Traits>(*p,dl));
   }
   else if (responseName == "Surface Mass Balance Mismatch")
   {
-    res_ev = rcp(new FELIX::ResponseSMBMismatch<EvalT,Traits>(*p,dl));
+    res_ev = rcp(new LandIce::ResponseSMBMismatch<EvalT,Traits>(*p,dl));
   }
   else if (responseName == "Boundary Squared L2 Norm")
   {
-    res_ev = rcp(new FELIX::ResponseBoundarySquaredL2Norm<EvalT,Traits>(*p,dl));
+    res_ev = rcp(new LandIce::ResponseBoundarySquaredL2Norm<EvalT,Traits>(*p,dl));
   }
 #endif
   else if (responseName == "Center Of Mass")

@@ -46,7 +46,7 @@ SET(HEADERS
   Albany_TmplSTKMeshStruct_Def.hpp
   )
 
-IF (ALBANY_FELIX)
+IF (ALBANY_LANDICE)
   SET(SOURCES ${SOURCES} Albany_ExtrudedSTKMeshStruct.cpp)
   SET(SOURCES ${SOURCES} Albany_STKDiscretizationStokesH.cpp)
   SET(HEADERS ${HEADERS} Albany_ExtrudedSTKMeshStruct.hpp)

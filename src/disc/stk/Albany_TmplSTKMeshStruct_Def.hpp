@@ -284,8 +284,8 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   //get the type of transformation of STK mesh
   transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh
-  felixAlpha = params->get("FELIX alpha", 0.0); //for FELIX problems
-  felixL = params->get("FELIX L", 1.0); //for FELIX problems
+  felixAlpha = params->get("LandIce alpha", 0.0); //for LandIce problems
+  felixL = params->get("LandIce L", 1.0); //for LandIce problems
   xShift = params->get("x-shift", 0.0);
   yShift = params->get("y-shift", 0.0);
   zShift = params->get("z-shift", 0.0);
