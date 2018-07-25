@@ -36,31 +36,40 @@ createConstThyraLinearOp (const Teuchos::RCP<const Tpetra_Operator> op);
 
 // ============ Thyra->Tpetra conversion routines ============ //
 Teuchos::RCP<const Tpetra_Map>
-getTpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs);
+getTpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
+              const bool throw_on_failure = true);
 
 Teuchos::RCP<Tpetra_Vector>
-getTpetraVector (const Teuchos::RCP<Thyra_Vector> v);
+getTpetraVector (const Teuchos::RCP<Thyra_Vector> v,
+                 const bool throw_on_failure = true);
 
 Teuchos::RCP<const Tpetra_Vector>
-getConstTpetraVector (const Teuchos::RCP<const Thyra_Vector> v);
+getConstTpetraVector (const Teuchos::RCP<const Thyra_Vector> v,
+                      const bool throw_on_failure = true);
 
 Teuchos::RCP<Tpetra_MultiVector>
-getTpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector> mv);
+getTpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector> mv,
+                      const bool throw_on_failure = true);
 
 Teuchos::RCP<const Tpetra_MultiVector>
-getConstTpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv);
+getConstTpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
+                           const bool throw_on_failure = true);
 
 Teuchos::RCP<Tpetra_Operator>
-getTpetraOperator (const Teuchos::RCP<Thyra_LinearOp> lop);
+getTpetraOperator (const Teuchos::RCP<Thyra_LinearOp> lop,
+                   const bool throw_on_failure = true);
 
 Teuchos::RCP<const Tpetra_Operator>
-getConstTpetraOperator (const Teuchos::RCP<const Thyra_LinearOp> lop);
+getConstTpetraOperator (const Teuchos::RCP<const Thyra_LinearOp> lop,
+                        const bool throw_on_failure = true);
 
 Teuchos::RCP<Tpetra_CrsMatrix>
-getTpetraMatrix (const Teuchos::RCP<Thyra_LinearOp> lop);
+getTpetraMatrix (const Teuchos::RCP<Thyra_LinearOp> lop,
+                 const bool throw_on_failure = true);
 
 Teuchos::RCP<const Tpetra_CrsMatrix>
-getConstTpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop);
+getConstTpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop,
+                      const bool throw_on_failure = true);
 
 } // namespace Albany
 
