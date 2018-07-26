@@ -24,7 +24,7 @@ rm CMakeCache.txt
  -D ALBANY_TRILINOS_DIR:FILEPATH=/home/ikalash/Trilinos_Albany/TrilinosTpetra/build/install \
  -D ALBANY_CXX_FLAGS:STRING="-g -fno-var-tracking" \
  -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
- -D ENABLE_FELIX:BOOL=ON \
+ -D ENABLE_LANDICE:BOOL=ON \
  -D ENABLE_DEMO_PDES=OFF \
  -D ENABLE_INSTALL:BOOL=ON \
  -D CMAKE_INSTALL_PREFIX:PATH=/home/ikalash/Desktop/clean/Albany_clean/build_cism/install \

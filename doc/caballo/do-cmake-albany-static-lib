@@ -26,7 +26,7 @@ cmake \
       -D CMAKE_EXE_LINKER_FLAGS="-L${TPLDIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lcurl -ldl" \
       -D ENABLE_LCM:BOOL=ON \
       -D ENABLE_MOR:BOOL=OFF \
-      -D ENABLE_FELIX:BOOL=ON \
+      -D ENABLE_LANDICE:BOOL=ON \
       -D ENABLE_HYDRIDE:BOOL=OFF \
       -D ENABLE_AMP:BOOL=OFF \
       -D ENABLE_ALBANY_EPETRA_EXE=ON \
