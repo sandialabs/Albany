@@ -41,10 +41,11 @@ public:
 private:
  
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT  ParamScalarT; 
 
   // Input:  
-  PHX::MDField<const ScalarT,Cell,QuadPoint>          viscosityQPin;
-  PHX::MDField<const ScalarT,Cell,QuadPoint>          densityQPin;
+  PHX::MDField<const ParamScalarT,Cell,QuadPoint>          viscosityQPin;
+  PHX::MDField<const ParamScalarT,Cell,QuadPoint>          densityQPin;
   
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint>          viscosityQP;

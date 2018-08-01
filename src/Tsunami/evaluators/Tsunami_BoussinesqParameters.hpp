@@ -41,10 +41,11 @@ public:
 private:
  
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT  ParamScalarT; 
 
   // Input:  
-  PHX::MDField<const ScalarT,Cell,QuadPoint>    waterdepthQPin;
-  PHX::MDField<const ScalarT,Cell,QuadPoint>    zalphaQPin;
+  PHX::MDField<const ParamScalarT,Cell,QuadPoint>    waterdepthQPin;
+  PHX::MDField<const ParamScalarT,Cell,QuadPoint>    zalphaQPin;
   
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint>          waterdepthQP;
