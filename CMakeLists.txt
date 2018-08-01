@@ -583,16 +583,6 @@ ELSE()
   SET(ALBANY_LANDICE FALSE)
 ENDIF()
 
-OPTION(ENABLE_TSUNAMI "Flag to turn on TSUNAMI Source code" OFF)
-IF (ENABLE_TSUNAMI)
-  MESSAGE("-- TSUNAMI     is Enabled, compiling with -DALBANY_TSUNAMI")
-  SET(ALBANY_TSUNAMI TRUE)
-ELSE()
-  MESSAGE("-- TSUNAMI     is NOT Enabled.")
-  SET(ALBANY_TSUNAMI FALSE)
-ENDIF()
-
-
 # Set optional build of CISM Interface for LandIce (Land Ice SciDAC project),
 # defaults to Disabled
 
@@ -647,6 +637,19 @@ ELSE()
   MESSAGE("---> CISM_INTERFACE     is NOT Enabled.")
   SET(CISM_HAS_LANDICE FALSE)
 ENDIF()
+
+OPTION(ENABLE_TSUNAMI "Flag to turn on TSUNAMI Source code" OFF)
+IF (ENABLE_TSUNAMI)
+  MESSAGE("-- TSUNAMI     is Enabled, compiling with -DALBANY_TSUNAMI")
+  SET(ALBANY_TSUNAMI TRUE)
+  MESSAGE("---> TSUNAMI requires ENABLE_PARAMETERS_DEPEND_ON_SOLUTION to be on, compiling with -DALBANY_PARAMETERS_DEPEND_ON_SOLUTION")
+  SET(ENABLE_PARAMETERS_DEPEND_ON_SOLUTION TRUE)
+ELSE()
+  MESSAGE("-- TSUNAMI     is NOT Enabled.")
+  SET(ALBANY_TSUNAMI FALSE)
+ENDIF()
+
+
 
 # Set optional build of AFRL MultiScale; defaults to OFF
 OPTION(ENABLE_AFRL "Flag to turn on AFRL Source code" OFF)
