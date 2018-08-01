@@ -11,8 +11,12 @@ EXECUTE_PROCESS(COMMAND ${TEST_PROG} ${TEST_ARGS}
                 RESULT_VARIABLE HAD_ERROR)
 
 if(HAD_ERROR)
-	message(FATAL_ERROR "Albany didn't run: test failed")
+  EXECUTE_PROCESS(COMMAND cat
+          INPUT_FILE ${LOGFILE}
+          RESULT_VARIABLE CAT_ERROR)
+  message(FATAL_ERROR "Albany didn't run: test failed")
 endif()
+
 
 EXECUTE_PROCESS(COMMAND python
                 INPUT_FILE ${PY_FILE}
