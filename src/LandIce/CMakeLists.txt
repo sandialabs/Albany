@@ -268,7 +268,7 @@ IF(ENABLE_CISM_INTERFACE)
                 ${HEADERSCISM} ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.H)
     set_target_properties(cismInterfaceE PROPERTIES PUBLIC_HEADER "${HEADERSCISM}")
     include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-                         ${CISM_INCLUDE_DIR} ${CISM_INCLUDE_DIR}/LandIce
+                         ${CISM_INCLUDE_DIR} ${CISM_INCLUDE_DIR}/FELIX
                          ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators
                          ${Albany_SOURCE_DIR}/src/problems
                          ${Albany_SOURCE_DIR}/src/LandIce/interface_with_cism ${Albany_SOURCE_DIR}/src/responses
@@ -286,7 +286,7 @@ IF(ENABLE_CISM_INTERFACE)
                 ${HEADERSCISM} ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.H)
     set_target_properties(cismInterface PROPERTIES PUBLIC_HEADER "${HEADERSCISM}")
     include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-                         ${CISM_INCLUDE_DIR} ${CISM_INCLUDE_DIR}/LandIce
+                         ${CISM_INCLUDE_DIR} ${CISM_INCLUDE_DIR}/FELIX
                          ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators
                          ${Albany_SOURCE_DIR}/src/problems
                          ${Albany_SOURCE_DIR}/src/LandIce/interface_with_cism ${Albany_SOURCE_DIR}/src/responses

@@ -12,6 +12,7 @@
 #define LandIce_DRIVER
 
 #include "DyCoreModelRegistry.H"
+#include "FelixToGlimmer.H"
 
 class DycoreToGlimmer;
 class FelixToGlimmer;
