@@ -8,7 +8,8 @@ ANONYMOUS:
     Initial Condition: 
       Function: Tsunami Boussinesq 1D Solitary Wave
       #Function Data are: A, B, A1, A2, X0
-      Function Data: [1.0, 1.0, 1.0, 1.0, 0.0]
+#ZW:Function Data for Gaussian are: A1, c, X_0
+      Function Data: [1.0, 2.0, 10.0]
     Response Functions: 
       Number: 1
       Response 0: Solution Average
@@ -20,6 +21,10 @@ ANONYMOUS:
     Tsunami Parameters:
       Water Depth: 1.0
       Z_alpha: -0.531
+#Added ZW: if do non-dimensional. CHANGE VALUES!
+      Wave Amplitude a: 0.1   
+      Typical Water Depth h0: 1.0 
+      Typical Wave Number k: 0.0330033 
     Body Force: 
       Type: None
   Discretization: 
@@ -49,7 +54,7 @@ ANONYMOUS:
           Initial Time: 0.00000000000000000e+00
           Initial Time Index: 0
           Initial Time Step: 1.0000000000000000e-01
-          Final Time: 1.00000000000000000e+00
+          Final Time: 100.00000000000000000e+00 #ZW changed from 1.0 to 100.0
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08

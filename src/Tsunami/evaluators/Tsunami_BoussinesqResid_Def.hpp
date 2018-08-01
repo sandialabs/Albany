@@ -89,16 +89,25 @@ evaluateFields(typename Traits::EvalData workset)
       for (int i=0; i<vecDim; i++) 
           Residual(cell,node,i) = 0.0; 
 
+
   //IKT, FIXME, Zhiheng and Xiaoshu: fill in correctly!
+  //ZW: Dimensional residuals
   if (vecDim == 3) {
     //1D case
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
-        for (int i=0; i<vecDim; i++) {
-          for (int qp=0; qp < numQPs; ++qp) {
-            Residual(cell,node,i) += EtaUEDot(cell,qp,i)*wBF(cell,node,qp) 
-                                  + force(cell,qp,i)*wBF(cell,node,qp);
-          }
+        for (int qp=0; qp < numQPs; ++qp) {
+            Residual(cell,node,0) += EtaUEDot(cell,qp,0)*wBF(cell,node,qp)
+                                    + force(cell,qp,0)*wBF(cell,node,qp)
+                                    - wGradBF(cell,node,qp,0)*(waterDepthQP(cell,qp)+EtaUE(cell,qp,0))*EtaUE(cell,qp,1)
+                                    - wGradBF(cell,node,qp,0)*((0.5*zalphaQP(cell,qp)*zalphaQP(cell,qp) - waterDepthQP(cell,qp)*waterDepthQP(cell,qp)/6)*waterDepthQP(cell,qp) + (zalphaQP(cell,qp)+0.5*waterDepthQP(cell,qp))*waterDepthQP(cell,qp)*waterDepthQP(cell,qp))*EtaUE(cell,qp,2);
+            Residual(cell,node,1) += EtaUEDot(cell,qp,1)*wBF(cell,node,qp)
+                                    + force(cell,qp,1)*wBF(cell,node,qp)
+                                    - wGradBF(cell,node,qp,0)*(0.5*zalphaQP(cell,qp)*zalphaQP(cell,qp)+zalphaQP(cell,qp)*waterDepthQP(cell,qp))*EtaUEDotGrad(cell,qp,1,0)
+                                    - wGradBF(cell,node,qp,0)*(9.8*EtaUE(cell,qp,0)+EtaUE(cell,qp,1)*EtaUE(cell,qp,1));
+            Residual(cell,node,2) += EtaUEDot(cell,qp,2)*wBF(cell,node,qp)
+                                    + force(cell,qp,2)*wBF(cell,node,qp)
+                                    + wGradBF(cell,node,qp,0)*EtaUEGrad(cell,qp,1,0); 
         }
       }
     }
@@ -107,10 +116,83 @@ evaluateFields(typename Traits::EvalData workset)
     //2D case
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
-        for (int i=0; i<vecDim; i++) {
-          for (int qp=0; qp < numQPs; ++qp) {
-            Residual(cell,node,i) += EtaUEDot(cell,qp,i)*wBF(cell,node,qp) 
-                                  + force(cell,qp,i)*wBF(cell,node,qp);
+        for (int qp=0; qp < numQPs; ++qp) {
+          for (std::size_t j=0; j < numDims; ++j) { 
+              Residual(cell,node,0) += EtaUEDot(cell,qp,0)*wBF(cell,node,qp)
+                                    + force(cell,qp,0)*wBF(cell,node,qp)
+                                    - wGradBF(cell,node,qp,j)*(waterDepthQP(cell,qp)+EtaUE(cell,qp,0))*EtaUE(cell,qp,j+1)
+                                    - wGradBF(cell,node,qp,j)*((0.5*zalphaQP(cell,qp)*zalphaQP(cell,qp) - waterDepthQP(cell,qp)*waterDepthQP(cell,qp)/6)*waterDepthQP(cell,qp) + (zalphaQP(cell,qp)+0.5*waterDepthQP(cell,qp))*waterDepthQP(cell,qp)*waterDepthQP(cell,qp))*EtaUE(cell,qp,j+3);
+              Residual(cell,node,1) += EtaUEDot(cell,qp,1)*wBF(cell,node,qp)
+                                    + force(cell,qp,1)*wBF(cell,node,qp)
+                                    - wGradBF(cell,node,qp,0)*(0.5*zalphaQP(cell,qp)*zalphaQP(cell,qp)+zalphaQP(cell,qp)*waterDepthQP(cell,qp))*EtaUEDotGrad(cell,qp,1,0)
+                                    - wGradBF(cell,node,qp,0)*(9.8*EtaUE(cell,qp,0)+(EtaUE(cell,qp,1)*EtaUE(cell,qp,1) + EtaUE(cell,qp,2)*EtaUE(cell,qp,2))+0.5*zalphaQP(cell,qp)*zalphaQP(cell,qp)*EtaUEDotGrad(cell,qp,2,1)+zalphaQP(cell,qp)*EtaUEDotGrad(cell,qp,2,1)*waterDepthQP(cell,qp));
+              Residual(cell,node,2) += EtaUEDot(cell,qp,2)*wBF(cell,node,qp)
+                                    + force(cell,qp,2)*wBF(cell,node,qp)
+                                    - wGradBF(cell,node,qp,1)*(0.5*zalphaQP(cell,qp)*zalphaQP(cell,qp)+zalphaQP(cell,qp)*waterDepthQP(cell,qp))*EtaUEDotGrad(cell,qp,2,1)
+                                    - wGradBF(cell,node,qp,1)*(9.8*EtaUE(cell,qp,0)+(EtaUE(cell,qp,1)*EtaUE(cell,qp,1) + EtaUE(cell,qp,2)*EtaUE(cell,qp,2))+0.5*zalphaQP(cell,qp)*zalphaQP(cell,qp)*EtaUEDotGrad(cell,qp,1,0)+zalphaQP(cell,qp)*EtaUEDotGrad(cell,qp,1,0)*waterDepthQP(cell,qp));
+              Residual(cell,node,3) += EtaUEDot(cell,qp,3)*wBF(cell,node,qp)
+                                    + force(cell,qp,3)*wBF(cell,node,qp)
+                                    + wGradBF(cell,node,qp,0)*(EtaUEGrad(cell,qp,1,0)+EtaUEGrad(cell,qp,2,1));
+              Residual(cell,node,4) += EtaUEDot(cell,qp,4)*wBF(cell,node,qp)
+                                    + force(cell,qp,3)*wBF(cell,node,qp)
+                                    + wGradBF(cell,node,qp,1)*(EtaUEGrad(cell,qp,1,0)+EtaUEGrad(cell,qp,2,1));
+          }
+        }
+      }
+    }
+   
+  }
+}
+
+}
+
+/*
+// Non-dimensional residuals
+  //IKT, FIXME, Zhiheng and Xiaoshu: fill in correctly!
+  if (vecDim == 3) {
+    //1D case
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int node=0; node < numNodes; ++node) {
+        for (int qp=0; qp < numQPs; ++qp) {
+            Residual(cell,node,0) += EtaUEDot(cell,qp,0)*wBF(cell,node,qp)
+                                    + force(cell,qp,0)*wBF(cell,node,qp)
+                                    - wGradBF(cell,node,qp,0)*((waterDepthQP(cell,qp)+epsilon*EtaUE(cell,qp,0))*EtaUE(cell,qp,1)
+                                    + muSqr*((betaQP(cell,qp)*betaQP(cell,qp)*0.5+betaQP(cell,qp)+1/3)*waterDepthQP(cell,qp)*waterDepthQP(cell,qp)*waterDepthQP(cell,qp)*EtaUE(cell,qp,2)));
+            Residual(cell,node,1) += EtaUEDot(cell,qp,1)*wBF(cell,node,qp)
+                                    + force(cell,qp,1)*wBF(cell,node,qp)
+                                    - muSqr*wGradBF(cell,node,qp,0)*betaQP(cell,qp)*(betaQP(cell,qp)*0.5+1)*waterDepthQP(cell,qp)*waterDepthQP(cell,qp)*EtaUEDotGrad(cell,qp,1,0)
+                                    - wGradBF(cell,node,qp,0)*(EtaUE(cell,qp,0)+0.5*epsilon*EtaUE(cell,qp,1)*EtaUE(cell,qp,1));       
+            Residual(cell,node,2) += EtaUEDot(cell,qp,2)*wBF(cell,node,qp)
+                                    + force(cell,qp,2)*wBF(cell,node,qp)
+                                    + wGradBF(cell,node,qp,0)*EtaUEGrad(cell,qp,1,0); 
+        } 
+      }
+    }
+  }
+  else if (vecDim == 5) {
+    //2D case
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int node=0; node < numNodes; ++node) {
+        for (int qp=0; qp < numQPs; ++qp) {
+          for (std::size_t j=0; j < numDims; ++j) { 
+              Residual(cell,node,0) += EtaUEDot(cell,qp,0)*wBF(cell,node,qp) 
+                                    + force(cell,qp,0)*wBF(cell,node,qp)
+                                    - wGradBF(cell,node,qp,j)*((waterDepthQP(cell,qp)+epsilon*EtaUE(cell,qp,0))*EtaUE(cell,qp,j+1)
+                                    + muSqr*((betaQP(cell,qp)*betaQP(cell,qp)*0.5+betaQP(cell,qp)+1/3)*waterDepthQP(cell,qp)*waterDepthQP(cell,qp)*waterDepthQP(cell,qp)*EtaUE(cell,qp,j+3)));
+              Residual(cell,node,1) += EtaUEDot(cell,qp,1)*wBF(cell,node,qp)
+                                    + force(cell,qp,1)*wBF(cell,node,qp)
+                                    - muSqr*wGradBF(cell,node,qp,0)*betaQP(cell,qp)*(betaQP(cell,qp)*0.5+1)*waterDepthQP(cell,qp)*waterDepthQP(cell,qp)*EtaUEDotGrad(cell,qp,1,0)
+                                    - wGradBF(cell,node,qp,0)*(EtaUE(cell,qp,0)+0.5*epsilon*(EtaUE(cell,qp,1)*EtaUE(cell,qp,1) + EtaUE(cell,qp,2)*EtaUE(cell,qp,2))+muSqr*(0.5*betaQP(cell,qp)*betaQP(cell,qp)*waterDepthQP(cell,qp)*waterDepthQP(cell,qp)*EtaUEDotGrad(cell,qp,2,1)+betaQP(cell,qp)*waterDepthQP(cell,qp)*EtaUEDotGrad(cell,qp,2,1)*waterDepthQP(cell,qp)));
+              Residual(cell,node,2) += EtaUEDot(cell,qp,2)*wBF(cell,node,qp)
+                                    + force(cell,qp,2)*wBF(cell,node,qp)
+                                    - muSqr*wGradBF(cell,node,qp,1)*betaQP(cell,qp)*(betaQP(cell,qp)*0.5+1)*waterDepthQP(cell,qp)*waterDepthQP(cell,qp)*EtaUEDotGrad(cell,qp,2,1)
+                                    - wGradBF(cell,node,qp,1)*(EtaUE(cell,qp,0)+0.5*epsilon*(EtaUE(cell,qp,1)*EtaUE(cell,qp,1) + EtaUE(cell,qp,2)*EtaUE(cell,qp,2))+muSqr*(0.5*betaQP(cell,qp)*betaQP(cell,qp)*waterDepthQP(cell,qp)*waterDepthQP(cell,qp)*EtaUEDotGrad(cell,qp,1,1)+betaQP(cell,qp)*waterDepthQP(cell,qp)*EtaUEDotGrad(cell,qp,1,0)*waterDepthQP(cell,qp)));
+              Residual(cell,node,3) += EtaUEDot(cell,qp,3)*wBF(cell,node,qp)
+                                    + force(cell,qp,3)*wBF(cell,node,qp)
+                                    + wGradBF(cell,node,qp,0)*(EtaUEGrad(cell,qp,1,0)+EtaUEGrad(cell,qp,2,1));
+              Residual(cell,node,4) += EtaUEDot(cell,qp,4)*wBF(cell,node,qp)
+                                    + force(cell,qp,3)*wBF(cell,node,qp)
+                                    + wGradBF(cell,node,qp,1)*(EtaUEGrad(cell,qp,1,0)+EtaUEGrad(cell,qp,2,1));
           }
         }
       }
@@ -120,4 +202,4 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 }
-
+*/

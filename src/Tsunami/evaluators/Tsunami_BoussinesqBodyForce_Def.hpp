@@ -74,13 +74,37 @@ template<typename EvalT, typename Traits>
 void BoussinesqBodyForce<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //Zero out body force
-  for (int cell=0; cell < workset.numCells; ++cell) 
-    for (int qp=0; qp < numQPs; ++qp) 
-      for (int i=0; i<vecDim; i++) 
-          force(cell,qp,i) = 0.0; 
+   const RealType time = workset.current_time; //ZW added time 
+   const double A1 = 1.0;//ZW added constant A1(a)
+   const double c = 2.0;//ZW added constant speed c
 
+//ZW: manufactured solution in form of Gaussian
+  //Zero out body force
+ if (bf_type == NONE) {
+   for (int cell=0; cell < workset.numCells; ++cell) 
+     for (int qp=0; qp < numQPs; ++qp) 
+       for (int i=0; i<vecDim; i++) 
+           force(cell,qp,i) = 0.0; 
+ }
+ else {    
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
+        //ScalarT* f = &force(cell,qp,0);
+        //ZW: need to modify from dim to non-dim
+        MeshScalarT X0 = coordVec(cell,qp,0);
+        force(cell,qp,0) = A1*c*exp(-0.5*(X0-c*time)*(X0-c*time))*(X0-c*time)
+			 + (waterDepthQP(cell,qp)+epsilon*A1*exp(-0.5*(X0-c*time)*(X0-c*time)))*(-0.5*A1*exp(-0.25*(X0-c*time)*(X0-c*time))*(X0-c*time));
+			 + muSqr*(0.5*(betaQP(cell,qp)*betaQP(cell,qp)-1/3)+betaQP(cell,qp)+0.5)*waterDepthQP(cell,qp)*waterDepthQP(cell,qp)*waterDepthQP(cell,qp)*(-0.125*A1*exp(-0.25*(X0-c*time)*(X0-c*time))*(X0-c*time)*(c*c*time*time-2*c*time*X0+X0*X0-6));
+        force(cell,qp,1) = (-0.5*A1*c*exp(-0.25*(X0-c*time)*(X0-c*time))*(X0-c*time))
+			 + A1*exp(-0.5*(X0-c*time)*(X0-c*time))*(X0-c*time)
+			 + (0.5*epsilon*(-A1*A1*exp(-0.5*(X0-c*time)*(X0-c*time))*(X0-c*time)))
+			 + muSqr*waterDepthQP(cell,qp)*waterDepthQP(cell,qp)*(betaQP(cell,qp)*betaQP(cell,qp)*0.5+betaQP(cell,qp))*(0.125*A1*c*exp(-0.25*(X0-c*time)*(X0-c*time))*(X0-c*time)*(c*c*time*time-2*c*time*X0+X0*X0-6));
+        force(cell,qp,2) = 0.0; 
+    }
+  }
+ }
 }
+
 
 }
 
