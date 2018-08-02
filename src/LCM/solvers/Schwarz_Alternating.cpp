@@ -1096,11 +1096,22 @@ SchwarzAlternating::SchwarzLoopDynamics() const
         Teuchos::RCP<Tpetra_Vector const>
         disp_rcp_tpetra;
 
+        Teuchos::RCP<Tpetra_Vector const>
+        velo_rcp_tpetra;
+
+        Teuchos::RCP<Tpetra_Vector const>
+        acce_rcp_tpetra;
+
         disp_rcp_tpetra = ConverterT::getConstTpetraVector(ics_disp_[subdomain]);
+        velo_rcp_tpetra = ConverterT::getConstTpetraVector(ics_velo_[subdomain]);
+        acce_rcp_tpetra = ConverterT::getConstTpetraVector(ics_acce_[subdomain]);
         Teuchos::RCP<Albany::AbstractDiscretization> const &
         app_disc = app.getDiscretization();
 
-        app_disc->writeSolutionToMeshDatabaseT(*disp_rcp_tpetra, current_time);
+        app_disc->writeSolutionToMeshDatabaseT(*disp_rcp_tpetra,
+                                               *velo_rcp_tpetra,
+                                               *acce_rcp_tpetra,
+                                               current_time);
       }
 
       // Jump to the beginning of the time-step loop without advancing
