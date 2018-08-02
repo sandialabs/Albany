@@ -12,10 +12,22 @@
 #define LandIce_DRIVER
 
 #include "DyCoreModelRegistry.H"
-#include "FelixToGlimmer.H"
 
 class DycoreToGlimmer;
-class FelixToGlimmer;
+class FelixToGlimmer : public DyCoreToGlimmer
+{
+  private:
+
+  public:
+
+  //DyCoreToGlimmer FelixToGlimmer();
+  int initDyCore(const char * input_fname);
+  // cur_time_yr is updated in place as solution is evolved
+  int runDyCore(double& cur_time_yr, const double time_inc_yr);
+  int deleteDyCore();
+
+};
+
 
 void felix_driver_init(int argc, int exec_mode,  FelixToGlimmer * ftg_ptr, const char * input_fname);
 
