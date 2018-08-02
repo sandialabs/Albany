@@ -595,6 +595,15 @@ public:
   getXdotdot() const { return xdotdot_; }
 
   void
+  setX(Teuchos::RCP<Tpetra_Vector const> const & x) { x_ = x; }
+
+  void
+  setXdot(Teuchos::RCP<Tpetra_Vector const> const & xdot) { xdot_ = xdot; }
+
+  void
+  setXdotdot(Teuchos::RCP<Tpetra_Vector const> const & xdotdot) { xdotdot_ = xdotdot; }
+
+  void
   setSchwarzAlternating(bool const isa) {is_schwarz_alternating_ = isa;}
 
   bool

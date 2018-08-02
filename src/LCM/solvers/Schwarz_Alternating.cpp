@@ -1153,6 +1153,85 @@ SchwarzAlternating::SchwarzLoopDynamics() const
 }
 
 void
+SchwarzAlternating::
+setExplicitUpdateInitialGuessForSchwarz(ST const current_time,
+                                        ST const time_step) const
+{
+  // do an explicit update to form the initial guess for the schwarz
+  // iteration
+  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
+    auto &
+        app = *apps_[subdomain];
+
+    auto &
+        state_mgr = app.getStateMgr();
+    Thyra::VectorBase<ST> &
+        ic_disp = *ics_disp_[subdomain];
+
+    Thyra::VectorBase<ST> &
+        ic_velo = *ics_velo_[subdomain];
+
+    Thyra::VectorBase<ST> &
+        ic_acce = *ics_acce_[subdomain];
+
+    auto &
+        me = dynamic_cast<Albany::ModelEvaluatorT &>
+        (*model_evaluators_[subdomain]);
+    if (current_time == 0) {
+      this_disp_[subdomain] = Thyra::createMember(me.get_x_space());
+      this_velo_[subdomain] = Thyra::createMember(me.get_x_space());
+      this_acce_[subdomain] = Thyra::createMember(me.get_x_space());
+    }
+
+    const ST aConst = time_step * time_step / 2.0;
+    Thyra::V_StVpStV(this_disp_[subdomain].ptr(),
+                     time_step, ic_velo,
+                     aConst, ic_acce);
+    Thyra::Vp_V(this_disp_[subdomain].ptr(), ic_disp, 1.0);
+
+    //This is the initial guess that I want to apply to the subdomains before
+    //the schwarz solver starts
+    auto
+    disp_rcp = this_disp_[subdomain];
+
+    auto
+    velo_rcp = this_velo_[subdomain];
+
+    auto
+    acce_rcp = this_acce_[subdomain];
+
+    Teuchos::RCP<Tpetra_Vector const>
+    disp_rcp_tpetra;
+
+    Teuchos::RCP<Tpetra_Vector const>
+    velo_rcp_tpetra;
+
+    Teuchos::RCP<Tpetra_Vector const>
+    acce_rcp_tpetra;
+
+    disp_rcp_tpetra = ConverterT::getConstTpetraVector(disp_rcp);
+    velo_rcp_tpetra = ConverterT::getConstTpetraVector(velo_rcp);
+    acce_rcp_tpetra = ConverterT::getConstTpetraVector(acce_rcp);
+    // setting the displacement in the albany application
+    app.setX(disp_rcp_tpetra);
+    app.setXdot(velo_rcp_tpetra);
+    app.setXdotdot(acce_rcp_tpetra);
+
+    // in order to get the Schwarz boundary conditions right, we need to set the
+    // state in the discretization
+    Teuchos::RCP<Albany::AbstractDiscretization> const &
+        app_disc = app.getDiscretization();
+
+    app_disc->writeSolutionToMeshDatabaseT(*disp_rcp_tpetra,
+                                           *velo_rcp_tpetra,
+                                           *acce_rcp_tpetra,
+                                           current_time);
+  }
+}
+
+
+void
 SchwarzAlternating::setDynamicICVecsAndDoOutput(ST const time) const
 {
   bool is_initial_time = false;
