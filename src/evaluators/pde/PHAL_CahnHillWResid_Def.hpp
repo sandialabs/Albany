@@ -93,7 +93,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
   else {
 
-   ScalarT diag;
+   RealType diag;
 
     // Lumped mass matrix
    for (std::size_t cell=0; cell < workset.numCells; ++cell) 

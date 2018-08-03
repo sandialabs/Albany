@@ -40,7 +40,7 @@ private:
 
   // Input:
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> BF;
+  PHX::MDField<const RealType,Cell,Node,QuadPoint> BF;
   PHX::MDField<const ScalarT,Cell,QuadPoint> rhoDot;
   PHX::MDField<const ScalarT,Cell,Node> rhoDotNode;
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
