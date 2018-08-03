@@ -25,8 +25,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_perfT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_perfT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupled.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupledT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupledT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled_shape_opt.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupled_shape_opt.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled_shape_optT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupled_shape_optT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_manifold.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_manifold.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_restart.xml
@@ -121,6 +125,11 @@ add_test(${testName}_GisSensSMBwrtBetaTpetra ${AlbanyT.exe} input_fo_gis_beta_sm
   if (ALBANY_MESH_DEPENDS_ON_PARAMETERS)
     add_test(${testName}_GisAdjointSensitivityThicknessTpetra ${AlbanyT.exe} input_fo_gis_adjoint_sensitivity_thicknessT.xml)
     add_test(${testName}_GisAdjointSensitivityTwoParametersTpetra ${AlbanyT.exe} input_fo_gis_analysis_two_paramsT.xml)
+  endif()
+  if (ALBANY_MESH_DEPENDS_ON_SOLUTION)
+  add_test(${testName}_GisCoupledThicknessShapeOptTpetra ${AlbanyT.exe} input_fo_gis_coupled_shape_optT.xml)
+  else()
+    add_test(${testName}_GisCoupledThicknessTpetra ${AlbanyT.exe} input_fo_gis_coupledT.xml)
   endif()
 endif(ALBANY_IOPX)
 endif(ALBANY_IFPACK2)
