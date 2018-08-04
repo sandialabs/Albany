@@ -41,9 +41,9 @@ private:
 
   // Input:
   PHX::MDField<RealType>                                BF;
-  PHX::MDField<RealType>                                GradBF;
-  PHX::MDField<RealType>                                w_measure;
-  PHX::MDField<RealType,Cell,Side,QuadPoint,Dim,Dim>    metric; // Only used in 2D, so we know the layout
+  PHX::MDField<MeshScalarT>                             GradBF;
+  PHX::MDField<MeshScalarT>                             w_measure;
+  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim,Dim> metric; // Only used in 2D, so we know the layout
 
   PHX::MDField<ScalarT>                                 u;
   PHX::MDField<ScalarT>                                 grad_u;
@@ -56,8 +56,6 @@ private:
 
   int spaceDim;
   int gradDim;
-  int numSideNodes;
-  int numSideQPs;
   int numNodes;
   int numQPs;
 

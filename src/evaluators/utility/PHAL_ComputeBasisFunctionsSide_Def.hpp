@@ -54,7 +54,7 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
     coordVec = decltype(coordVec)(p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector );
     numNodes = dl->node_gradient->dimension(1);
     this->addEvaluatedField(normals);
-    this->addEvaluatedField(coordVec);
+    this->addDependentField(coordVec);
   }
 
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");

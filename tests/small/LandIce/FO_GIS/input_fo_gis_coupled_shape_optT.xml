@@ -8,6 +8,7 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <Parameter name="Solution Method"         type="string" value="Steady"/>
     <Parameter name="Name"                    type="string" value="LandIce Coupled FO H 3D"/>
+    <Parameter name="Compute Sensitivities"   type="bool"   value="true"/>
     <Parameter name="Time Step"               type="double" value="0.2"/>
     <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction,ice_thickness,temperature,surface_height}"/>
     <Parameter name="Required Surface Fields" type="Array(string)" value="{observed_surface_velocity,observed_surface_velocity_RMS}"/>
@@ -186,7 +187,8 @@
       <ParameterList name="Step Size">
         <Parameter  name="Initial Step Size" type="double" value="0.2"/>
       </ParameterList>
-    </ParameterList>
+    </ParameterList> <!-- LOCA -->
+
     <ParameterList name="NOX">
       <ParameterList name="Status Tests">
         <Parameter name="Test Type" type="string" value="Combo"/>
@@ -238,33 +240,45 @@
                     <Parameter name="Tolerance" type="double" value="1e-6"/>
                   </ParameterList>
                 </ParameterList>
+                <ParameterList name="Belos">
+                  <ParameterList name="VerboseObject">
+                    <Parameter name="Verbosity Level" type="string" value="medium"/>
+                  </ParameterList>
+                  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+                  <ParameterList name="Solver Types">
+                    <ParameterList name="Block GMRES">
+                      <Parameter name="Convergence Tolerance" type="double" value="1e-7"/>
+                      <Parameter name="Output Frequency" type="int" value="10"/>
+                      <Parameter name="Output Style" type="int" value="1"/>
+                      <Parameter name="Maximum Iterations" type="int" value="100"/>
+                      <Parameter name="Block Size" type="int" value="1"/>
+                      <Parameter name="Num Blocks" type="int" value="50"/>
+                      <Parameter name="Flexible Gmres" type="bool" value="0"/>
+                    </ParameterList>
+                  </ParameterList>                
+                </ParameterList>
               </ParameterList>
-              <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+              <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
               <ParameterList name="Preconditioner Types">
-                <ParameterList name="Ifpack">
+                <ParameterList name="Ifpack2">
                   <Parameter name="Overlap" type="int" value="0"/>
-                  <Parameter name="Prec Type" type="string" value="ILU"/>
-                  <ParameterList name="Ifpack Settings">
-                    <Parameter name="fact: level-of-fill" type="int" value="0"/>
+                  <Parameter name="Prec Type" type="string" value="RILUK"/>
+                  <ParameterList name="Ifpack2 Settings">
+                    <Parameter name="fact: iluk level-of-fill" type="int" value="0"/>
                   </ParameterList>
                 </ParameterList>
                 <ParameterList name="ML">
-                  <Parameter name="Base Method Defaults" type="string"
-                       value="none"/>
+                  <Parameter name="Base Method Defaults" type="string" value="none"/>
                   <ParameterList name="ML Settings">
                     <Parameter name="default values" type="string" value="SA"/>
-                    <Parameter name="smoother: type" type="string"
-                         value="ML symmetric Gauss-Seidel"/>
-                    <Parameter name="smoother: pre or post" type="string"
-                         value="both"/>
-                    <Parameter name="coarse: type" type="string"
-                         value="Amesos-KLU"/>
+                    <Parameter name="smoother: type" type="string" value="ML symmetric Gauss-Seidel"/>
+                    <Parameter name="smoother: pre or post" type="string" value="both"/>
+                    <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
                   </ParameterList>
                 </ParameterList>
               </ParameterList>
             </ParameterList>
-          </ParameterList>
-
+          </ParameterList>  <!-- Stratimikos Linear Solver -->
           <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
         </ParameterList>
       </ParameterList>
