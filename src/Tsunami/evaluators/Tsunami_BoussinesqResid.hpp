@@ -39,6 +39,7 @@ public:
 private:
  
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
@@ -51,6 +52,7 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint> waterDepthQP;
   PHX::MDField<const ScalarT,Cell,QuadPoint> betaQP;
   PHX::MDField<const ScalarT,Cell,QuadPoint> zalphaQP;
+  PHX::MDField<const ParamScalarT,Cell,QuadPoint, Dim> waterDepthGrad;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;

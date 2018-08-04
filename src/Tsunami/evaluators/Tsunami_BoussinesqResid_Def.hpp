@@ -15,20 +15,21 @@ template<typename EvalT, typename Traits>
 BoussinesqResid<EvalT, Traits>::
 BoussinesqResid(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl) :
-  wBF          (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
-  wGradBF      (p.get<std::string> ("Weighted Gradient BF Name"), dl->node_qp_gradient),
-  EtaUE        (p.get<std::string> ("EtaUE QP Variable Name"), dl->qp_vector),
-  EtaUEDot     (p.get<std::string> ("EtaUE Dot QP Variable Name"), dl->qp_vector),
-  EtaUEGrad    (p.get<std::string> ("EtaUE Gradient QP Variable Name"), dl->qp_vecgradient),
-  EtaUEDotGrad (p.get<std::string> ("EtaUE Dot Gradient QP Variable Name"), dl->qp_vecgradient),
-  out          (Teuchos::VerboseObjectBase::getDefaultOStream()),
-  waterDepthQP (p.get<std::string> ("Water Depth QP Name"), dl->qp_scalar), 
-  betaQP       (p.get<std::string> ("Beta QP Name"), dl->qp_scalar), 
-  zalphaQP     (p.get<std::string> ("z_alpha QP Name"), dl->qp_scalar), 
-  muSqr        (p.get<double>("Mu Squared")), 
-  epsilon      (p.get<double>("Epsilon")), 
-  force        (p.get<std::string> ("Body Force Name"), dl->qp_vector),
-  Residual     (p.get<std::string> ("Residual Name"), dl->node_vector)
+  wBF              (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
+  wGradBF          (p.get<std::string> ("Weighted Gradient BF Name"), dl->node_qp_gradient),
+  EtaUE            (p.get<std::string> ("EtaUE QP Variable Name"), dl->qp_vector),
+  EtaUEDot         (p.get<std::string> ("EtaUE Dot QP Variable Name"), dl->qp_vector),
+  EtaUEGrad        (p.get<std::string> ("EtaUE Gradient QP Variable Name"), dl->qp_vecgradient),
+  EtaUEDotGrad     (p.get<std::string> ("EtaUE Dot Gradient QP Variable Name"), dl->qp_vecgradient),
+  out              (Teuchos::VerboseObjectBase::getDefaultOStream()),
+  waterDepthQP     (p.get<std::string> ("Water Depth QP Name"), dl->qp_scalar), 
+  betaQP           (p.get<std::string> ("Beta QP Name"), dl->qp_scalar), 
+  zalphaQP         (p.get<std::string> ("z_alpha QP Name"), dl->qp_scalar), 
+  muSqr            (p.get<double>("Mu Squared")), 
+  epsilon          (p.get<double>("Epsilon")), 
+  force            (p.get<std::string> ("Body Force Name"), dl->qp_vector),
+  waterDepthGrad   (p.get<std::string>("Water Depth Gradient Name"), dl->qp_gradient),
+  Residual         (p.get<std::string> ("Residual Name"), dl->node_vector)
 {
 
   this->addDependentField(wBF);
@@ -40,6 +41,7 @@ BoussinesqResid(const Teuchos::ParameterList& p,
   this->addDependentField(waterDepthQP);
   this->addDependentField(betaQP);
   this->addDependentField(zalphaQP);
+  this->addDependentField(waterDepthGrad);
   this->addDependentField(force);
 
   this->addEvaluatedField(Residual);
@@ -74,6 +76,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(waterDepthQP,fm);
   this->utils.setFieldData(betaQP,fm);
   this->utils.setFieldData(zalphaQP,fm);
+  this->utils.setFieldData(waterDepthGrad,fm);
   this->utils.setFieldData(force,fm);
   this->utils.setFieldData(Residual,fm);
 }

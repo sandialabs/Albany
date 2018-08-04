@@ -230,8 +230,13 @@ Tsunami::Boussinesq::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
    // Intepolate water depth from nodes to QPs
-   ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("water_depth");
+   ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("water_depth", -1, enableMemoizer);
    fm0.template registerEvaluator<EvalT> (ev);
+  
+   // Intepolate surface height gradient
+   ev = evalUtils.getPSTUtils().constructDOFGradInterpolationEvaluator("water_depth", -1, enableMemoizer);
+   fm0.template registerEvaluator<EvalT> (ev);
+
 
    //Declare z_alpha as nodal field 
    {
@@ -243,7 +248,7 @@ Tsunami::Boussinesq::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
    // Intepolate z_alpha from nodes to QPs
-   ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("z_alpha");
+   ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("z_alpha", -1, enableMemoizer);
    fm0.template registerEvaluator<EvalT> (ev);
 
    { // Specialized DofVecGrad Interpolation for this problem
@@ -332,6 +337,7 @@ Tsunami::Boussinesq::constructEvaluators(
 
     p->set<std::string>("Water Depth QP Name", "Water Depth Field");
     p->set<std::string>("z_alpha QP Name", "z_alpha Field");
+    p->set<std::string>("Water Depth Gradient Name", "water_depth Gradient");
     p->set<std::string>("Beta QP Name", "Beta Field");
     p->set<double>("Mu Squared", muSqr);
     p->set<double>("Epsilon", epsilon);  
