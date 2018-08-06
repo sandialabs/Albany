@@ -26,7 +26,7 @@ ANONYMOUS:
       Typical Water Depth h0: 1.0 
       Typical Wave Number k: 0.0330033 
     Body Force: 
-      Type: None
+      Type: 1D Solitary Wave
   Discretization: 
     Method: STK1D
     1D Elements: 1000

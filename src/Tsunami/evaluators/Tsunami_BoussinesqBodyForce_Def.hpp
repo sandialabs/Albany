@@ -21,12 +21,14 @@ BoussinesqBodyForce(const Teuchos::ParameterList& p,
   zalphaQP         (p.get<std::string> ("z_alpha QP Name"), dl->qp_scalar), 
   muSqr            (p.get<double>("Mu Squared")), 
   epsilon          (p.get<double>("Epsilon")), 
+  coordVec         (p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient), 
   force            (p.get<std::string> ("Body Force Name"), dl->qp_vector)
 {
 
   this->addDependentField(waterDepthQP);
   this->addDependentField(betaQP);
   this->addDependentField(zalphaQP);
+  this->addDependentField(coordVec);
 
   this->addEvaluatedField(force);
 
@@ -69,6 +71,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(waterDepthQP,fm);
   this->utils.setFieldData(betaQP,fm);
   this->utils.setFieldData(zalphaQP,fm);
+  this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(force,fm);
 }
 
