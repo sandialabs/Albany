@@ -41,7 +41,7 @@
 #include "LandIce_StokesFOBasalResid.hpp"
 #include "LandIce_StokesFOLateralResid.hpp"
 #include "LandIce_L2ProjectedBoundaryLaplacianResidual.hpp"
-#ifdef CISM_HAS_LandIce
+#ifdef CISM_HAS_LANDICE
 #include "LandIce_CismSurfaceGradFO.hpp"
 #endif
 #include "LandIce_StokesFOBodyForce.hpp"
@@ -1578,7 +1578,7 @@ if (basalSideName!="INVALID")
     }
   }
 
-#ifdef CISM_HAS_LandIce
+#ifdef CISM_HAS_LANDICE
   //--- LandIce surface gradient from CISM ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Surface Gradient"));
 
@@ -1598,7 +1598,7 @@ if (basalSideName!="INVALID")
 
   //Input
   p->set<std::string>("LandIce Viscosity QP Variable Name", "LandIce Viscosity");
-#ifdef CISM_HAS_LandIce
+#ifdef CISM_HAS_LANDICE
   p->set<std::string>("Surface Height Gradient QP Variable Name", "CISM Surface Height Gradient");
 #endif
   p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);

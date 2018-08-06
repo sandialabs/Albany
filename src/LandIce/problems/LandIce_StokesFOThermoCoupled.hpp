@@ -809,7 +809,7 @@ if (basalSideName!="INVALID")
   ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
 
-#ifdef MPAS_HAS_LandIce
+#ifdef MPAS_HAS_LANDICE
   // Dirichelt field
   entity = Albany::StateStruct::NodalDistParameter;
   // Here is how to register the field for dirichlet condition.

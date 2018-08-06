@@ -77,7 +77,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
     }
      bf_type = FO_INTERP_SURF_GRAD;
   }
-#ifdef CISM_HAS_LandIce
+#ifdef CISM_HAS_LANDICE
   else if (type == "FO Surface Grad Provided") {
 #ifdef OUTPUT_TO_SCREEN
     *out << "Surface Grad Provided Source!" << std::endl;
