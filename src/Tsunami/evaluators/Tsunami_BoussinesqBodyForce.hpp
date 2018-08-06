@@ -58,7 +58,7 @@ private:
   Teuchos::RCP<Teuchos::FancyOStream> out; 
  
    //Body force types
-  enum BFTYPE {NONE};
+  enum BFTYPE {NONE, ONED_SOL_WAVE};
   BFTYPE bf_type;
 };
 }

@@ -47,11 +47,14 @@ BoussinesqBodyForce(const Teuchos::ParameterList& p,
   if (type == "None") {
     bf_type = NONE;
   }
+  else if (type == "1D Solitary Wave") {
+    bf_type = ONED_SOL_WAVE; 
+  }
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true, std::logic_error,
         "Error in Tsunami::Boussinesq: Invalid Body Force Type = "
-            << type << "!  Valid types are: 'None'.");
+            << type << "!  Valid types are: 'None, 1D Solitary Wave'.");
   }
 
   this->setName("BoussinesqBodyForce"+PHX::typeAsString<EvalT>());
@@ -74,11 +77,6 @@ template<typename EvalT, typename Traits>
 void BoussinesqBodyForce<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-   const RealType time = workset.current_time; //ZW added time 
-   const double A1 = 1.0;//ZW added constant A1(a)
-   const double c = 2.0;//ZW added constant speed c
-
-//ZW: manufactured solution in form of Gaussian
   //Zero out body force
  if (bf_type == NONE) {
    for (int cell=0; cell < workset.numCells; ++cell) 
@@ -86,9 +84,14 @@ evaluateFields(typename Traits::EvalData workset)
        for (int i=0; i<vecDim; i++) 
            force(cell,qp,i) = 0.0; 
  }
- else {    
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
+//ZW: manufactured solution in form of Gaussian
+ else if (bf_type == ONED_SOL_WAVE) {    
+   const RealType time = workset.current_time; //ZW added time 
+   const double A1 = 1.0;//ZW added constant A1(a)
+   const double c = 2.0;//ZW added constant speed c
+
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (std::size_t qp=0; qp < numQPs; ++qp) {
         //ScalarT* f = &force(cell,qp,0);
         //ZW: need to modify from dim to non-dim
         MeshScalarT X0 = coordVec(cell,qp,0);
