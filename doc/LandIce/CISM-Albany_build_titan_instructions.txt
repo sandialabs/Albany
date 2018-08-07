@@ -6,7 +6,7 @@ This file describes how to build CISM-Albany on Titan, and how to run a few tran
 I will assume you start this process in the directory: ~/ (your home
 directory). 
 
-1.) Get Trilinos, Albany and the felix_interface branch from their
+1.) Get Trilinos, Albany and the ali_interface branch from their
 repositories: 
 
 module load git
@@ -25,7 +25,7 @@ https://help.github.com/articles/generating-ssh-keys .
 More info on Albany on github can be found here:
 https://github.com/gahansen/Albany/wiki .
 
-svn checkout http://oceans11.lanl.gov/svn/PISCEES/branches/felix_interface
+svn checkout http://oceans11.lanl.gov/svn/PISCEES/branches/ali_interface
 
 ***NOTE: If you previously had a software.sandia.gov account but your password
 does not work, you need to have it re-issued due to a migration of software to
@@ -66,7 +66,7 @@ information.
     Edit titan-albany-cism-cmake.  Change at the top of this file TRILINOS_INSTALL_DIR and CISM_INCLUDE_DIR to the paths of your Trilinos install and your CISM 
     libdycore directory.  In this case: 
       TRILINOS_INSTALL_DIR=~/Trilinos/build/install
-      CISM_INCLUDE_DIR=~/felix_interface/libdycore
+      CISM_INCLUDE_DIR=~/ali_interface/libdycore
     source titan-albany-cism-cmake 
 
 (b) Make Albany: 
@@ -81,7 +81,7 @@ you use the cmake in titan_modules.sh .
 
 4.) Build CISM-Albany as follows.
 
-(a) cd ~/felix_interface/builds/titan-gnu-felix
+(a) cd ~/ali_interface/builds/titan-gnu-ali
     (source titan_modules.sh ***only do this if you did not just do this in the same window when you built Trilinos/Albany!)
     Edit titan-gnu-cmake.  Change at the top of this file TRILINOS_INSTALL_DIR and ALBANY_INSTALL_DIR to point to your Trilinos and Albany installs respectively.  In this case: 
       TRILINOS_INSTALL_DIR=~/Trilinos/build/install
@@ -103,7 +103,7 @@ GIS in a transient regime.  You can get them as follows:
    To run Dome: 
    cd problems/Dome
    Open job.pbs and edit the aprun line to point to your simple_glide executable: 
-   ~/felix_interfaces/builds/titan-gnu-felix/example-drivers/simple_glide/src/simple_glide 
+   ~/ali_interfaces/builds/titan-gnu-ali/example-drivers/simple_glide/src/simple_glide 
    in the example here.  Change also the "cp -r /ccs/proj/cli062/cism-albany/cism/problems/Dome" line to "~/problems/Dome" in this case (where you have the Dome problem input data)
    qsub job.pbs 
    You can play with different numbers of cores.  Also you can play with tend in dome.albany.config (make it longer to do a longer-time simulation for example).

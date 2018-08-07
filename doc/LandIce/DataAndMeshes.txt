@@ -1,11 +1,11 @@
-                       Ray's Felix Cheatsheet 
+                       Ray's Albany/LandIce Cheatsheet 
                        ======================
 
   I. Where does data come from, what kind of data do we need, what is the 
      quality of this data?
 
 
-   a) Data needed by Felix to run steady simulation and compute velocities:   
+   a) Data needed by Albany/LandIce to run steady simulation and compute velocities:   
          1) 3d mesh OR 2d mesh + upper surface elevation + thickness of the ice
          2) beta friction field
          3) temperature field
@@ -38,11 +38,11 @@
       Note: usurf-thk gives the lower surface of the ice, which coincides with
             topg where the ice is grounded.
 
-   c) Some data is grabbed from CISM when it is coupled to Felix. My 
+   c) Some data is grabbed from CISM when it is coupled to Albany/LandIce. My 
       understanding is that we often grab CISM data in this coupled mode
       and then export it in a format (e.g., exodus) so that we can run
-      Felix uncoupled from CISM. Other data is perhaps dumped from
-      CISM and read by either Felix or by some optimization procedure:
+      Albany/LandIce uncoupled from CISM. Other data is perhaps dumped from
+      CISM and read by either Albany/LandIce or by some optimization procedure:
 
          1) CISM 3D grid
          2) CISM computed temperature  (5km steady computation)
@@ -55,7 +55,7 @@
       computed via the optimization procedure associated with d).
 
    d) Data used by Mauro/Steve/Georg in generating beta and modified thickness
-      fields needed by Felix:
+      fields needed by Albany/LandIce:
 
          1) netcdf surface mass balance from climate simulation
          3) netcdf 2d geometry + surface elevation + thickness
@@ -126,8 +126,8 @@
         Step iv. gives a truly unstructured mesh while v. provides refinement. 
 
 
-      Mauro generates an ASCII mesh file that can be read by Felix to 
-      produce 2D exo files, which can be partitioned offline. Felix 
+      Mauro generates an ASCII mesh file that can be read by Albany/LandIce to 
+      produce 2D exo files, which can be partitioned offline. Albany/LandIce 
       takes care of extruding, using thickness and surface elevation 
       fields. Extrusion is primarily done in parallel with the exception of
       the the serial import of the ASCII files (e.g., thickness.ascii)
@@ -145,7 +145,7 @@
       I'm not sure how/if we can easily get beta/temperature fields
       with these CISM meshes.  Mauro notes that it should be possible to 
       interpolate the fields obtained with the inverse problem onto the
-      grid that CISM imports, so that perhaps Felix can grab these. In
+      grid that CISM imports, so that perhaps Albany/LandIce can grab these. In
       theory when running CISM-Albany, beta/temp fields could be written to a
       *.nc file that is read into CISM, and could be passed to Albany through
       the CISM-Albany interface.  However, the Greenland problems don't write
@@ -163,10 +163,10 @@
       element connectivity) from raw data in the .nc file.
              
 
-   c) MPAS can also be linked to Felix. MPAS is a finite volume ocean/climate
+   c) MPAS can also be linked to Albany/LandIce. MPAS is a finite volume ocean/climate
       library developed at Los Alamos. It works on Voronoi meshes, which are
-      dual to the Delaunay triangulations that Felix wants. At the present 
-      time Felix can already generate online the Delaunay triangulations (
+      dual to the Delaunay triangulations that Albany/LandIce wants. At the present 
+      time Albany/LandIce can already generate online the Delaunay triangulations (
       and then extrude them) given a GIS in MPAS format. Currently, we don't
       have too many exciting MPAS meshes, just uniform. Some day Mauro dreams
       of taking triangular meshes produced by Triangle and building a Voronoi

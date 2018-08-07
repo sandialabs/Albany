@@ -6,7 +6,7 @@ This file describes how to build CISM-Albany on Hopper.
 I will assume you start this process in the directory: ~/ (your home
 directory). 
 
-1.) Get Trilinos, Albany and the felix_interface branch from their
+1.) Get Trilinos, Albany and the ali_interface branch from their
 repositories: 
 
 git clone software.sandia.gov:/space/git/Trilinos
@@ -20,9 +20,9 @@ https://help.github.com/articles/generating-ssh-keys .
 More info on Albany on github can be found here:
 https://github.com/gahansen/Albany/wiki .
 
-git clone git@github.com:ACME-Climate/cism-piscees.git 
+git clone git@github.com:E3SM-Project/cism-piscees.git 
 cd cism-piscees
-git checkout felix_interface
+git checkout ali_interface
 
 
 2.) Build Trilinos as follows.
@@ -57,7 +57,7 @@ git checkout felix_interface
     Edit hopper-albany-cism-cmake.  Change at the top of this file TRILINOS_INSTALL_DIR and CISM_INCLUDE_DIR to the paths of your Trilinos install and your CISM 
     libdycore directory.  In this case: 
       TRILINOS_INSTALL_DIR=~/Trilinos/build/install
-      CISM_INCLUDE_DIR=~/felix_interface/libdycore
+      CISM_INCLUDE_DIR=~/ali_interface/libdycore
     source hopper-albany-cism-cmake 
 
 (b) Make Albany: 
@@ -69,7 +69,7 @@ git checkout felix_interface
 
 4.) Build CISM-Albany as follows.
 
-(a) cd ~/cism-piscees/builds/hopper-gnu-felix
+(a) cd ~/cism-piscees/builds/hopper-gnu-ali
     cp ~/Albany/doc/nightlyTestHarness/hopper/hopper-cism-albany-cmake
     cp ~/Albany/doc/nightlyTestHarness/hopper/hopper_modules.sh .
     (source hopper_modules.sh ***only do this if you did not just do this in the same window when you built Trilinos/Albany!)
