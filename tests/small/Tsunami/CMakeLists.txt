@@ -31,6 +31,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_boussinesq2D.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_boussinesq2D.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_boussinesq1D_solitary_wave.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_boussinesq1D_solitary_wave.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_boussinesq1D_generate_exo_with_fields.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_boussinesq1D_generate_exo_with_fields.yaml COPYONLY)
 endif()
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)

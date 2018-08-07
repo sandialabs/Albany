@@ -1,0 +1,127 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Tsunami Boussinesq 1D
+    Solution Method: Transient Tempus
+    Phalanx Graph Visualization Detail: 0
+    Initial Condition: 
+      Function: Tsunami Boussinesq 1D Solitary Wave
+      #Function Data are: A, B, A1, A2, X0
+#ZW:Function Data for Gaussian are: A1, c, X_0
+      Function Data: [1.0, 2.0, 10.0]
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+    Dirichlet BCs:
+      DBC on NS NodeSet1 for DOF eta: 0.00000000000000000e+00
+      DBC on NS NodeSet1 for DOF ualpha: 0.00000000000000000e+00
+      DBC on NS NodeSet1 for DOF E1: 0.00000000000000000e+00
+    #IKT, these are dimensional parameters!
+    Tsunami Parameters:
+      Water Depth: 1.0
+      Z_alpha: -0.531
+#Added ZW: if do non-dimensional. CHANGE VALUES!
+      Wave Amplitude a: 0.1   
+      Typical Water Depth h0: 1.0 
+      Typical Wave Number k: 0.0330033 
+    Body Force: 
+      Type: None
+  Discretization: 
+    Method: STK1D
+    1D Elements: 1000
+    #IKT, this is dimensional!  Units are m 
+    1D Scale: 500.0
+    Exodus Output File Name: 1d_boussinesq_exo_with_fields.exo
+    Workset Size: -1 
+  Regression Results: 
+    Number of Comparisons: 0
+    Test Values: [0.00000000000000000e+00]
+    Relative Tolerance: 1.00000000000000006e-01
+    Absolute Tolerance: 1.00000000000000006e-01
+  Piro: 
+    Tempus: 
+      Integrator Name: Tempus Integrator
+      Tempus Integrator: 
+        Integrator Type: Integrator Basic
+        Screen Output Index List: '1'
+        Screen Output Index Interval: 100
+        Stepper Name: Tempus Stepper
+        Solution History: 
+          Storage Type: Unlimited
+          Storage Limit: 20
+        Time Step Control: 
+          Initial Time: 0.00000000000000000e+00
+          Initial Time Index: 0
+          Initial Time Step: 1.0000000000000000e-01
+          Final Time: 0.0 #ZW changed from 1.0 to 100.0
+          Final Time Index: 10000
+          Maximum Absolute Error: 1.00000000000000002e-08
+          Maximum Relative Error: 1.00000000000000002e-08
+          Integrator Step Type: Constant
+          Output Time List: ''
+          Output Index List: ''
+          Output Time Interval: 1.00000000000000000e+01
+          Output Index Interval: 1000
+          Maximum Number of Stepper Failures: 10
+          Maximum Number of Consecutive Stepper Failures: 5
+      Tempus Stepper: 
+        Stepper Type: Backward Euler
+        Solver Name: Demo Solver
+        Predictor Name: None
+        Demo Solver: 
+          NOX: 
+            Direction: 
+              Method: Newton
+              Newton: 
+                Forcing Term Method: Constant
+                Rescue Bad Newton Solve: true
+            Line Search: 
+              Method: Backtrack
+            Nonlinear Solver: Line Search Based
+            Printing: 
+              Output Precision: 3
+              Output Processor: 0
+              Output Information: 
+                Error: true
+                Warning: true
+                Outer Iteration: false
+                Parameters: false
+                Details: false
+                Linear Solver Details: true
+                Stepper Iteration: true
+                Stepper Details: true
+                Stepper Parameters: true
+            Solver Options: 
+              Status Test Check Type: Minimal
+            Status Tests: 
+              Test Type: Combo
+              Combo Type: OR
+              Number of Tests: 2
+              Test 0: 
+                Test Type: NormF
+                Tolerance: 1.00000000000000002e-8
+              Test 1: 
+                Test Type: MaxIters
+                Maximum Iterations: 10
+        Demo Predictor: 
+          Stepper Type: Forward Euler
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Preconditioner Type: Ifpack2
+        Preconditioner Types: 
+          ML: 
+            Base Method Defaults: SA
+            ML Settings: 
+              'aggregation: type': Uncoupled
+              'coarse: max size': 20
+              'coarse: pre or post': post
+              'coarse: sweeps': 1
+              'coarse: type': Amesos-KLU
+              prec type: MGV
+              'smoother: type': Gauss-Seidel
+              'smoother: damping factor': 6.60000000000000031e-01
+              'smoother: pre or post': both
+              'smoother: sweeps': 1
+              ML output: 1
+...
