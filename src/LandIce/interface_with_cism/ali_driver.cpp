@@ -34,7 +34,7 @@
 
 #include <iostream>
 #include <fstream>
-#include "felix_driver.H"
+#include "ali_driver.H"
 #include "Albany_CismSTKMeshStruct.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
@@ -271,10 +271,10 @@ void createReducedMPI(int nLocalEntities, MPI_Comm& reduced_comm_id) {
 }
 
 
-extern "C" void felix_driver_();
+extern "C" void ali_driver_();
 
 //What is exec_mode??
-void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const char * input_fname)
+void ali_driver_init(int argc, int exec_mode, AliToGlimmer * ftg_ptr, const char * input_fname)
 {
 #ifndef CISM_USE_EPETRA
    static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
@@ -307,7 +307,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     debug_output_verbosity = *(ftg_ptr -> getLongVar("debug_output_verbosity","options"));
     use_glissade_surf_height_grad = *(ftg_ptr -> getLongVar("use_glissade_surf_height_grad","options"));
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
-      std::cout << "In felix_driver..." << std::endl;
+      std::cout << "In ali_driver..." << std::endl;
 
 
     // ---------------------------------------------
@@ -321,18 +321,18 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     dew = *(ftg_ptr -> getDoubleVar("dew","numerics"));
     dns = *(ftg_ptr -> getDoubleVar("dns","numerics"));
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
-      std::cout << "In felix_driver: dew, dns = " << dew << "  " << dns << std::endl;
+      std::cout << "In ali_driver: dew, dns = " << dew << "  " << dns << std::endl;
     dimInfoGeom = new int[dimInfo[0]+1];
     for (int i=0;i<=dimInfo[0];i++) dimInfoGeom[i] = dimInfo[i];
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) {
-      std::cout << "DimInfoGeom  in felix_driver: " << std::endl;
+      std::cout << "DimInfoGeom  in ali_driver: " << std::endl;
       for (int i=0;i<=dimInfoGeom[0];i++) std::cout << dimInfoGeom[i] << " ";
       std::cout << std::endl;
     }
     global_ewn = dimInfoGeom[2];
     global_nsn = dimInfoGeom[3];
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) {
-       std::cout << "In felix_driver: global_ewn = " << global_ewn
+       std::cout << "In ali_driver: global_ewn = " << global_ewn
                  << ", global_nsn = " << global_nsn << std::endl;
     }
     ewlb = *(ftg_ptr -> getLongVar("ewlb","geometry"));
@@ -344,7 +344,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     nsn = *(ftg_ptr -> getLongVar("nsn","geometry"));
     upn = *(ftg_ptr -> getLongVar("upn","geometry"));
     if (debug_output_verbosity == 2) {
-      std::cout << "In felix_driver: Proc #" << mpiCommT->getRank()
+      std::cout << "In ali_driver: Proc #" << mpiCommT->getRank()
                 << ", ewn = " << ewn << ", nsn = " << nsn << ", upn = "
                 << upn << ", nhalo = " << nhalo << std::endl;
     }
@@ -375,7 +375,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     // IK, 11/14/13: these things may not be needed in Albany/LandIce...  for now they are passed anyway.
     // ---------------------------------------------
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
-      std::cout << "In felix_driver: grabbing connectivity array pointers from CISM..." << std::endl;
+      std::cout << "In ali_driver: grabbing connectivity array pointers from CISM..." << std::endl;
     //IK, 11/13/13: check that connectivity derived types are transfered over from CISM to Albany/LandIce
     nCellsActive = *(ftg_ptr -> getLongVar("nCellsActive","connectivity"));
     nWestFacesActive = *(ftg_ptr -> getLongVar("nWestFacesActive","connectivity"));
@@ -383,7 +383,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     nSouthFacesActive = *(ftg_ptr -> getLongVar("nSouthFacesActive","connectivity"));
     nNorthFacesActive = *(ftg_ptr -> getLongVar("nNorthFacesActive","connectivity"));
     if (debug_output_verbosity == 2) {
-      std::cout << "In felix_driver: Proc #" << mpiCommT->getRank()
+      std::cout << "In ali_driver: Proc #" << mpiCommT->getRank()
                 << ", nCellsActive = " << nCellsActive
                 << ", nWestFacesActive = " << nWestFacesActive
                 << ", nEastFacesActive = " << nEastFacesActive
@@ -415,14 +415,14 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     dirichlet_node_mask_Ptr = ftg_ptr -> getInt4Var("dirichlet_node_mask","connectivity");
    //get pointers to uvel and vvel from CISM for prescribing Dirichlet BC
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
-      std::cout << "In felix_driver: grabbing pointers to u and v velocities in CISM..." << std::endl;
+      std::cout << "In ali_driver: grabbing pointers to u and v velocities in CISM..." << std::endl;
     uvel_at_nodes_Ptr = ftg_ptr ->getDoubleVar("uvel_at_nodes", "velocity");
     vvel_at_nodes_Ptr = ftg_ptr ->getDoubleVar("vvel_at_nodes", "velocity");
 
 //If requesting to do solve only on procs with > 0 elements, create reduced comm
 #ifdef REDUCED_COMM
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
-      std::cout << "In felix_driver: removing procs with 0 elements from computation (REDUCED_COMM set to ON)." << std::endl;
+      std::cout << "In ali_driver: removing procs with 0 elements from computation (REDUCED_COMM set to ON)." << std::endl;
     keep_proc = nCellsActive > 0;
     createReducedMPI(keep_proc, reducedComm);
 #endif
@@ -446,7 +446,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     // ---------------------------------------------
     // Read input file, the name of which is provided in the Glimmer/CISM .config file.
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
-      std::cout << "In felix_driver: creating Albany mesh struct..." << std::endl;
+      std::cout << "In ali_driver: creating Albany mesh struct..." << std::endl;
     slvrfctry = Teuchos::rcp(new Albany::SolverFactory(input_fname, reducedMpiCommT));
     parameterList = Teuchos::rcp(&slvrfctry->getParameters(),false);
     discParams = Teuchos::sublist(parameterList, "Discretization", true);
@@ -519,7 +519,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
       }
       else {
         TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-          std::endl << "Error in felix_driver: cannot set Dirichlet BC from CISM; pointers to uvel and vvel passed from CISM are null."                    << std::endl);
+          std::endl << "Error in ali_driver: cannot set Dirichlet BC from CISM; pointers to uvel and vvel passed from CISM are null."                    << std::endl);
       }
     }
 
@@ -640,9 +640,9 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     //if (mpiComm->MyPID() == 0) std::cout << "exec mode = " << exec_mode << std::endl;
 }
 
-// The solve is done in the felix_driver_run function, and the solution is passed back to Glimmer-CISM
+// The solve is done in the ali_driver_run function, and the solution is passed back to Glimmer-CISM
 // IK, 12/3/13: time_inc_yr and cur_time_yr are not used here...
-void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc_yr)
+void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc_yr)
 {
 /*#ifndef CISM_USE_EPETRA
    static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
@@ -651,29 +651,29 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) {
-      std::cout << "In felix_driver_run, cur_time, time_inc = " << cur_time_yr
+      std::cout << "In ali_driver_run, cur_time, time_inc = " << cur_time_yr
                 << "   " << time_inc_yr << std::endl;
     }
 
     // ---------------------------------------------
     // get u and v velocity solution from Glimmer-CISM
     // IK, 11/26/13: need to concatenate these into a single solve for initial condition for Albany/LandIce solve
-    // IK, 3/14/14: moved this step to felix_driver_run from felix_driver init, since we still want to grab and u and v velocities for CISM if the mesh hasn't changed,
-    // in which case only felix_driver_run will be called, not felix_driver_init.
+    // IK, 3/14/14: moved this step to ali_driver_run from ali_driver init, since we still want to grab and u and v velocities for CISM if the mesh hasn't changed,
+    // in which case only ali_driver_run will be called, not ali_driver_init.
     // ---------------------------------------------
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
-      std::cout << "In felix_driver_run: grabbing pointers to u and v velocities in CISM..." << std::endl;
+      std::cout << "In ali_driver_run: grabbing pointers to u and v velocities in CISM..." << std::endl;
     uVel_ptr = ftg_ptr ->getDoubleVar("uvel", "velocity");
     vVel_ptr = ftg_ptr ->getDoubleVar("vvel", "velocity");
 
     // ---------------------------------------------
     // Set restart solution to the one passed from CISM
-    // IK, 3/14/14: moved this from felix_driver_init to felix_driver_run.
+    // IK, 3/14/14: moved this from ali_driver_init to ali_driver_run.
     // ---------------------------------------------
 
     if (keep_proc) {
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
-      std::cout << "In felix_driver_run: setting initial condition from CISM..." << std::endl;
+      std::cout << "In ali_driver_run: setting initial condition from CISM..." << std::endl;
     //Check what kind of ordering you have in the solution & create solutionField object.
     interleavedOrdering = meshStruct->getInterleavedOrdering();
     Albany::AbstractSTKFieldContainer::VectorFieldType* solutionField;
@@ -747,7 +747,7 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     // ---------------------------------------------------------------------------------------------------
 
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
-      std::cout << "In felix_driver_run: starting the solve... " << std::endl;
+      std::cout << "In ali_driver_run: starting the solve... " << std::endl;
     //Need to set HasRestart solution such that uvel_Ptr and vvel_Ptr (u and v from Glimmer/CISM) are always set as initial condition?
     meshStruct->setHasRestartSolution(!first_time_step);
 
@@ -940,7 +940,7 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     //std::cout << "node_map: " << *node_map << std::endl;
 
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
-      std::cout << "In felix_driver_run: copying Albany solution to uvel and vvel to send back to CISM... " << std::endl;
+      std::cout << "In ali_driver_run: copying Albany solution to uvel and vvel to send back to CISM... " << std::endl;
 
     //IKT, 10/6/17: the following is towards fixing Albany github issue #187, having to do
     //with the solution passed to the *.nc file not being copied from Albany to CISM
@@ -1066,10 +1066,10 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 
 //Clean up
 //IK, 12/3/13: this is not called anywhere in the interface code...  used to be called (based on old bisicles interface code)?
-void felix_driver_finalize(int ftg_obj_index)
+void ali_driver_finalize(int ftg_obj_index)
 {
   if (debug_output_verbosity != 0 && mpiCommT->getRank() == 0)
-    std::cout << "In felix_driver_finalize: cleaning up..." << std::endl;
+    std::cout << "In ali_driver_finalize: cleaning up..." << std::endl;
 
    //Nothing to do.
 
