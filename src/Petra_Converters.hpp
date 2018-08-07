@@ -46,13 +46,13 @@ Teuchos::RCP<Epetra_CrsGraph> TpetraCrsGraph_To_EpetraCrsGraph(const Teuchos::RC
 
 //TpetraCrsMatrix_To_CrsMatrix: copies Tpetra::CrsMatrix object into its analogous
 //Epetra_CrsMatrix object
-void TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<Tpetra_CrsMatrix>& tpetraCrsMatrix_,
+void TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<const Tpetra_CrsMatrix>& tpetraCrsMatrix_,
                                         Epetra_CrsMatrix& epetraCrsMatrix_,
                                         const Teuchos::RCP<const Epetra_Comm>& comm_);
 
 //TpetraCrsMatrix_To_CrsMatrix: takes in Tpetra::CrsMatrix object, converts it to its equivalent Epetra_CrsMatrix object,
 //and returns an RCP pointer to this Eetra_CrsMatrix
-Teuchos::RCP<Epetra_CrsMatrix> TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<Tpetra_CrsMatrix>& tpetraCrsMatrix,
+Teuchos::RCP<Epetra_CrsMatrix> TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<const Tpetra_CrsMatrix>& tpetraCrsMatrix,
                                                                   const Teuchos::RCP<const Epetra_Comm>& comm);
 
 //TpetraVector_To_EpetraVector: copies Tpetra::Vector object into its analogous
@@ -82,7 +82,7 @@ Teuchos::RCP<Tpetra_MultiVector> EpetraMultiVector_To_TpetraMultiVector(const Ep
                                                                const Teuchos::RCP<const Teuchos::Comm<int> >& commT_);
 
 //EpetraCrsMatrix_To_TpetraCrsMatrix: copies Epetra_CrsMatrix to its analogous Tpetra_CrsMatrix
-Teuchos::RCP<Tpetra_CrsMatrix> EpetraCrsMatrix_To_TpetraCrsMatrix(Epetra_CrsMatrix& epetraMatrix_,
+Teuchos::RCP<Tpetra_CrsMatrix> EpetraCrsMatrix_To_TpetraCrsMatrix(const Epetra_CrsMatrix& epetraMatrix_,
                                                                const Teuchos::RCP<const Teuchos::Comm<int> >& commT_);
 
 
