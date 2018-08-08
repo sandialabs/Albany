@@ -220,6 +220,8 @@ MechanicsProblem::MechanicsProblem(
     }
   }
 
+  // No temperature sources for ACE heat equation.
+
   // the following function returns the problem information required for
   // setting the rigid body modes (RBMs) for elasticity problems (in
   // src/Albany_SolverFactory.cpp) written by IK, Feb. 2012
@@ -480,6 +482,7 @@ MechanicsProblem::constructDirichletEvaluators(
   }
 
   if (have_temperature_eq_) dirichletNames[index++] = "T";
+  if (have_ace_temperature_eq_) dirichletNames[index++] = "T";
 
   if (have_dislocation_density_eq_) {
     for (int i{0}; i < LCM::DislocationDensity::get_num_slip(num_dims_); ++i) {
@@ -573,7 +576,7 @@ MechanicsProblem::constructNeumannEvaluators(
     }
   }
 
-  if (have_temperature_eq_) {
+  if (have_temperature_eq_ || have_ace_temperature_eq_) {
     neumannNames[index] = "T";
     offsets[index] = Teuchos::Array<int>(1, 1);
     index++;
