@@ -402,6 +402,9 @@ MechanicsProblem::constructEvaluators(
   temperature = (*fnm)["Temperature"];
 
   std::string
+  ace_temperature = (*fnm)["ACE Temperature"];
+
+  std::string
   pressure = (*fnm)["Pressure"];
 
   std::string
@@ -662,6 +665,58 @@ MechanicsProblem::constructEvaluators(
     ev = Teuchos::rcp(
         new PHAL::NSMaterialProperty<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  if (have_ace_temperature_eq_) {  // Gather Solution ACE Temperature
+
+    Teuchos::ArrayRCP<std::string> const
+    dof_names(1, "ACE Temperature");
+
+    Teuchos::ArrayRCP<std::string> const
+    dof_names_dot(1, "ACE Temperature Dot");
+
+    Teuchos::ArrayRCP<std::string> const
+    resid_names(1, dof_names[0] + " Residual");
+
+    if (SolutionType == SolutionMethodType::Transient) {
+      fm0.template registerEvaluator<EvalT>(
+          evalUtils.constructGatherSolutionEvaluator_withAcceleration(
+              false, dof_names, dof_names_dot, Teuchos::null, offset));
+    } else {
+      fm0.template registerEvaluator<EvalT>(
+          evalUtils.constructGatherSolutionEvaluator_noTransient(
+              false, dof_names, offset));
+    }
+
+    fm0.template registerEvaluator<EvalT>(
+        evalUtils.constructGatherCoordinateVectorEvaluator());
+
+    if (!surface_element) {
+      fm0.template registerEvaluator<EvalT>(
+          evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
+
+      if (SolutionType == SolutionMethodType::Transient) {
+        fm0.template registerEvaluator<EvalT>(
+            evalUtils.constructDOFInterpolationEvaluator(
+                dof_names_dot[0], offset));
+      }
+
+      fm0.template registerEvaluator<EvalT>(
+          evalUtils.constructDOFGradInterpolationEvaluator(
+              dof_names[0], offset));
+
+      fm0.template registerEvaluator<EvalT>(
+          evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
+
+      fm0.template registerEvaluator<EvalT>(
+          evalUtils.constructComputeBasisFunctionsEvaluator(
+              cellType, intrepidBasis, cubature));
+    }
+
+    fm0.template registerEvaluator<EvalT>(
+        evalUtils.constructScatterResidualEvaluator(
+            false, resid_names, offset, "Scatter ACE Temperature"));
+    offset++;
   }
 
   if (have_stab_pressure_eq_) {  // Gather Stabilized Pressure
@@ -1004,7 +1059,6 @@ MechanicsProblem::constructEvaluators(
     }
   }
 
-  // std::cout << "IN " << __FILE__ << " line " << __LINE__ << std::endl;
   if (have_temperature_eq_ || have_temperature_)
   {
     RealType const
@@ -1016,6 +1070,29 @@ MechanicsProblem::constructEvaluators(
 
     p = stateMgr.registerStateVariable(
         temperature,
+        dl_->qp_scalar,
+        dl_->dummy,
+        eb_name,
+        "scalar",
+        temp,
+        true,
+        true);
+
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  if (have_ace_temperature_eq_ == true)
+  {
+    RealType const
+    temp = material_db_->getElementBlockParam<RealType>(
+          eb_name, "Initial ACE Temperature", 0.0);
+
+    Teuchos::RCP<Teuchos::ParameterList>
+    p = Teuchos::rcp(new Teuchos::ParameterList("Save ACE Temperature"));
+
+    p = stateMgr.registerStateVariable(
+        ace_temperature,
         dl_->qp_scalar,
         dl_->dummy,
         eb_name,
@@ -1173,9 +1250,14 @@ MechanicsProblem::constructEvaluators(
     Teuchos::RCP<Teuchos::ParameterList>
     p = Teuchos::rcp(new Teuchos::ParameterList("Constitutive Model Parameters"));
 
-    if (have_temperature_) {
+    if (have_temperature_ == true) {
       p->set<std::string>("Temperature Name", temperature);
       param_list.set<bool>("Have Temperature", true);
+    }
+
+    if (have_ace_temperature_eq_ == true) {
+      p->set<std::string>("ACE Temperature Name", ace_temperature);
+      param_list.set<bool>("Have ACE Temperature", true);
     }
 
     // optional spatial dependence
@@ -1200,6 +1282,12 @@ MechanicsProblem::constructEvaluators(
     if (have_temperature_) {
       p->set<std::string>("Temperature Name", temperature);
       param_list.set<bool>("Have Temperature", true);
+    }
+
+    param_list.set<bool>("Have ACE Temperature", false);
+    if (have_ace_temperature_eq_ == true) {
+      p->set<std::string>("ACE Temperature Name", ace_temperature);
+      param_list.set<bool>("Have ACE Temperature", true);
     }
 
     param_list.set<bool>("Have Total Concentration", false);
@@ -1294,8 +1382,8 @@ MechanicsProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    if ((have_temperature_eq_ || have_pore_pressure_eq_) ||
-        (have_transport_eq_)) {  // Surface Temperature Jump
+    if (have_temperature_eq_ || have_ace_temperature_eq_ ||
+        have_pore_pressure_eq_ || have_transport_eq_) {  // Temperature Jump
       // SurfaceScalarJump_Def.hpp
       Teuchos::RCP<Teuchos::ParameterList>
       p = Teuchos::rcp(new Teuchos::ParameterList("Surface Scalar Jump"));
@@ -1309,6 +1397,13 @@ MechanicsProblem::constructEvaluators(
         // outputs
         p->set<std::string>("Jump of Temperature Name", "Temperature Jump");
         p->set<std::string>("MidPlane Temperature Name", temperature);
+      }
+
+      if (have_ace_temperature_eq_) {
+        p->set<std::string>("Nodal ACE Temperature Name", "ACE Temperature");
+        // outputs
+        p->set<std::string>("Jump of ACE Temperature Name", "ACE Temperature Jump");
+        p->set<std::string>("MidPlane ACE Temperature Name", temperature);
       }
 
       if (have_transport_eq_) {
@@ -1697,38 +1792,9 @@ MechanicsProblem::constructEvaluators(
         fm0.template registerEvaluator<EvalT>(ev);
       }
 
-      // need J and J_old to perform time integration for poromechanics problem
-      // FIXME: This currently does nothing - CA
       bool const
       j_flag = material_db_->getElementBlockParam<bool>(
         eb_name, "Output J", false);
-      //      if (have_pore_pressure_eq_ || output_flag) {
-      //        p = stateMgr.registerStateVariable(J,
-      //            dl_->qp_scalar,
-      //            dl_->dummy,
-      //            eb_name,
-      //            "scalar",
-      //            1.0,
-      //            true,
-      //            output_flag);
-      //        ev = Teuchos::rcp(
-      //            new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
-      //        fm0.template registerEvaluator<EvalT>(ev);
-      //      } else if (true) // MJJ. Incompatible with pore_pressure_eq. Need
-      //      to fix it.
-      //      {
-      //          p = stateMgr.registerStateVariable(J,
-      //            dl_->qp_scalar,
-      //            dl_->dummy,
-      //            eb_name,
-      //            "scalar",
-      //            1.0,
-      //            true,
-      //            false);
-      //        ev = Teuchos::rcp(
-      //            new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
-      //        fm0.template registerEvaluator<EvalT>(ev);
-      //      }
 
       p = stateMgr.registerStateVariable(
           J, dl_->qp_scalar, dl_->dummy, eb_name, "scalar", 1.0, true, false);
@@ -2605,6 +2671,35 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  // Equation for ACE temperature
+  if (have_ace_temperature_eq_ == true && surface_element == false) {
+
+    Teuchos::RCP<Teuchos::ParameterList>
+    p = Teuchos::rcp(new Teuchos::ParameterList("ACE Thermal Coefficients"));
+
+    p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
+
+    // Input
+    p->set<std::string>("ACE Temperature Name", "ACE Temperature");
+    p->set<std::string>("ACE Temperature Dot Name", "ACE Temperature Dot");
+    if (SolutionType == SolutionMethodType::Continuation) {
+      p->set<std::string>("Solution Method Type", "Continuation");
+    } else {
+      p->set<std::string>("Solution Method Type", "No Continuation");
+    }
+    p->set<std::string>("Delta Time Name", "Delta Time");
+
+    if (have_mech_eq_) {
+      p->set<bool>("Have Mechanics", true);
+      p->set<std::string>("Deformation Gradient Name", defgrad);
+    }
+
+    ev = Teuchos::rcp(
+        new LCM::ThermoMechanicalCoefficients<EvalT, PHAL::AlbanyTraits>(
+            *p, dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   // Transport of the temperature field
   if (have_temperature_eq_ && !surface_element) {
 
@@ -2928,6 +3023,14 @@ MechanicsProblem::constructEvaluators(
 
       fm0.requireField<EvalT>(temperature_tag);
       ret_tag = temperature_tag.clone();
+    }
+    if (have_ace_temperature_eq_) {
+
+      PHX::Tag<typename EvalT::ScalarT>
+      ace_temperature_tag("Scatter ACE Temperature", dl_->dummy);
+
+      fm0.requireField<EvalT>(ace_temperature_tag);
+      ret_tag = ace_temperature_tag.clone();
     }
     if (have_transport_eq_) {
 

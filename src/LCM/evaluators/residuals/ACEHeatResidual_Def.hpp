@@ -15,8 +15,8 @@ namespace LCM {
   //
   //
 template <typename EvalT, typename Traits>
-HeatEqnResidual<EvalT, Traits>::
-HeatEqnResidual(
+ACEHeatResidual<EvalT, Traits>::
+ACEHeatResidual(
     const Teuchos::ParameterList&        p,
     const Teuchos::RCP<Albany::Layouts>& dl)
     : wBF(  // dependent
@@ -42,7 +42,7 @@ HeatEqnResidual(
         p.get<std::string>("Residual Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout")) 
 {
-  Teuchos::ParameterList* heatEqnResidual_list =
+  Teuchos::ParameterList* ACEHeatResidual_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
     
   // List dependent fields
@@ -70,7 +70,7 @@ HeatEqnResidual(
   numQPs = dims[2];
   numDims = dims[3];
 
-  this->setName("HeatEqnResidual");
+  this->setName("ACE Temperature Residual");
 }
 
   //
@@ -78,7 +78,7 @@ HeatEqnResidual(
   //
 template <typename EvalT, typename Traits>
 void
-HeatEqnResidual<EvalT, Traits>::
+ACEHeatResidual<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &fm)
 {
   // List all fields
@@ -107,7 +107,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits> &f
   //
 template <typename EvalT, typename Traits>
 void
-HeatEqnResidual<EvalT, Traits>::
+ACEHeatResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   using FST = Intrepid2::FunctionSpaceTools<PHX::Device>;

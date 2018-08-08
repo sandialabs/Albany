@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(HeatEqnResidual_hpp)
-#define HeatEqnResidual_hpp
+#if !defined(ACEHeatResidual_hpp)
+#define ACEHeatResidual_hpp
 
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -18,7 +18,7 @@ namespace LCM {
 /// Heat equation residual evaluator for ACE-LCM
 ///
 template <typename EvalT, typename Traits>
-class HeatEqnResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
+class ACEHeatResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
                         public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
@@ -28,7 +28,7 @@ public:
   ///
   /// Constructor
   ///
-  HeatEqnResidual(
+  ACEHeatResidual(
       const Teuchos::ParameterList&        p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
@@ -67,4 +67,4 @@ private:
 
 } // namespace LCM
 
-#endif // HeatEqnResidual_hpp
+#endif // ACEHeatResidual_hpp
