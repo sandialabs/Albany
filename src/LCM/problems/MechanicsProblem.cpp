@@ -73,24 +73,6 @@ MechanicsProblem::MechanicsProblem(
     have_sizefield_adaptation_ = (adaptation_method_name == "RPI Albany Size");
   }
 
-#if 0
-  Teuchos::ParameterList
-  types_variable;
-
-  for(const std::string & variable : variables_problem_) {
-
-    types_variable.set(variable, Teuchos::ParameterList())
-
-    std::string const
-    type_variable = params->sublist(variable).get("Variable Type", "DOF");
-
-    if (type_variable == "DOF") {
-
-    }
-    types_variable.sublist(variable).set(variable, type_variable);
-  }
-#endif
-
   getVariableType(
       params->sublist("Displacement"),
       "DOF",

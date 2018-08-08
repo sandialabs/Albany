@@ -7,31 +7,21 @@
 #ifndef MECHANICSPROBLEM_HPP
 #define MECHANICSPROBLEM_HPP
 
-#include "../utils/SolutionSniffer.hpp"
+#include "AAdapt_RC_Manager.hpp"
+#include "Albany_AbstractProblem.hpp"
 #include "Albany_BCUtils.hpp"
+#include "Albany_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_Utils.hpp"
-#include "Albany_MaterialDatabase.hpp"
-#include "Albany_MaterialDatabase.hpp"
-#include "PHAL_AlbanyTraits.hpp"
-
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RCP.hpp"
-
+#include "DislocationDensity.hpp"
 #include "NOX_StatusTest_ModelEvaluatorFlag.h"
-
-#include "Albany_AbstractProblem.hpp"
-
+#include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_Workset.hpp"
-
-#include "AAdapt_RC_Manager.hpp"
-#include "Albany_MaterialDatabase.hpp"
-
-//#include "PhysicsAuxiliary.hpp"
-#include "DislocationDensity.hpp"
-//#include "Temperature.hpp"
+#include "SolutionSniffer.hpp"
 
 static int dir_count = 0;  // counter for registration of dirichlet_field
 
