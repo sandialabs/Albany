@@ -513,7 +513,10 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     i_sat_evaluated = -1.0 * (temperature_(cell, pt) / T_range) + T_high;
   }
 
-  ScalarT dfdT = (i_sat_evaluated - ice_saturation_old_(cell, pt)) / dTemp;
+  ScalarT dfdT = 0.0;
+  if (dTemp > 0.0) {
+    dfdT = (i_sat_evaluated - ice_saturation_old_(cell, pt)) / dTemp;
+  }
 
   // Update the ice saturation
   ice_saturation_(cell, pt) += dfdT * dTemp;
