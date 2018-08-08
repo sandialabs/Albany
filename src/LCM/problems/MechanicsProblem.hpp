@@ -282,8 +282,13 @@ protected:
   bool
   have_temperature_;
 
+  /// Use default "classic" heat conduction equation
   bool
   have_temperature_eq_;
+
+  /// Use ACE heat conduction equation
+  bool
+  have_ace_temperature_eq_;
 
   /// Pore pressure
   bool
