@@ -15,6 +15,7 @@
 
 #include "FieldNameMap.hpp"
 
+#include "ACETemperatureResidual.hpp"
 #include "BodyForce.hpp"
 #include "CurrentCoords.hpp"
 #include "MechanicsResidual.hpp"
@@ -2693,6 +2694,9 @@ MechanicsProblem::constructEvaluators(
       p->set<bool>("Have Mechanics", true);
       p->set<std::string>("Deformation Gradient Name", defgrad);
     }
+    ev = Teuchos::rcp(
+        new LCM::ACETemperatureResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   // Transport of the temperature field

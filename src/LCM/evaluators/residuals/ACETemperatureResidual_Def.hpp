@@ -70,7 +70,7 @@ ACETemperatureResidual(
   numQPs = dims[2];
   numDims = dims[3];
 
-  this->setName("ACE Temperature Residual");
+  this->setName("ACE Temperature Residual" + PHX::typeAsString<EvalT>());
 }
 
   //
