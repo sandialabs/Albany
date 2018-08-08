@@ -23,7 +23,9 @@ MechanicsProblem::MechanicsProblem(
     thermal_source_evaluated_(false),
     num_dims_(num_dims),
     have_mech_eq_(false),
+    have_temperature_(false),
     have_temperature_eq_(false),
+    have_ace_temperature_(false),
     have_ace_temperature_eq_(false),
     have_dislocation_density_(false),
     have_dislocation_density_eq_(false),
@@ -107,7 +109,7 @@ MechanicsProblem::MechanicsProblem(
       params->sublist("ACE Temperature"),
       "None",
       temperature_type_,
-      have_temperature_,
+      have_ace_temperature_,
       have_ace_temperature_eq_);
 
   getVariableType(
@@ -157,11 +159,25 @@ MechanicsProblem::MechanicsProblem(
   num_eq{0};
 
   bool const
+  have_both_temps =
+      (have_temperature_ == true) && (have_ace_temperature_ == true);
+
+  ALBANY_ASSERT(have_both_temps == false,
+      "Cannot have two temperatures");
+
+  bool const
   have_both_temp_eqs =
       (have_temperature_eq_ == true) && (have_ace_temperature_eq_ == true);
 
   ALBANY_ASSERT(have_both_temp_eqs == false,
       "Cannot have two temperature equations");
+
+  bool const
+  have_both_ace =
+      (have_ace_temperature_ = true) && (have_ace_temperature_eq_ == true);
+
+  ALBANY_ASSERT(have_both_ace == true,
+      "Cannot have ACE temperature without its equation");
 
   if (have_mech_eq_) num_eq += num_dims_;
   if (have_temperature_eq_) num_eq++;

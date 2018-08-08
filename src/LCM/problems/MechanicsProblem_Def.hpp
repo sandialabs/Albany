@@ -1255,7 +1255,7 @@ MechanicsProblem::constructEvaluators(
       param_list.set<bool>("Have Temperature", true);
     }
 
-    if (have_ace_temperature_eq_ == true) {
+    if (have_ace_temperature_ == true) {
       p->set<std::string>("ACE Temperature Name", ace_temperature);
       param_list.set<bool>("Have ACE Temperature", true);
     }
@@ -1285,7 +1285,7 @@ MechanicsProblem::constructEvaluators(
     }
 
     param_list.set<bool>("Have ACE Temperature", false);
-    if (have_ace_temperature_eq_ == true) {
+    if (have_ace_temperature_ == true) {
       p->set<std::string>("ACE Temperature Name", ace_temperature);
       param_list.set<bool>("Have ACE Temperature", true);
     }
@@ -2693,11 +2693,6 @@ MechanicsProblem::constructEvaluators(
       p->set<bool>("Have Mechanics", true);
       p->set<std::string>("Deformation Gradient Name", defgrad);
     }
-
-    ev = Teuchos::rcp(
-        new LCM::ThermoMechanicalCoefficients<EvalT, PHAL::AlbanyTraits>(
-            *p, dl_));
-    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   // Transport of the temperature field

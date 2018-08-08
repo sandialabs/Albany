@@ -286,6 +286,10 @@ protected:
   bool
   have_temperature_eq_;
 
+  /// Have ACE temperature (handling is different than temperature above)
+  bool
+  have_ace_temperature_;
+
   /// Use ACE heat conduction equation
   bool
   have_ace_temperature_eq_;
@@ -382,6 +386,7 @@ protected:
   std::vector<std::string>
   variables_auxiliary_ = {
       "Temperature",
+      "ACE Temperature",
       "DislocationDensity",
       "Pore Pressure",
       "Transport",

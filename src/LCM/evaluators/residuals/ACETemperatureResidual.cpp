@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "ACEHeatResidual.hpp"
-#include "ACEHeatResidual_Def.hpp"
+#include "ACETemperatureResidual.hpp"
+#include "ACETemperatureResidual_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ACEHeatResidual)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ACETemperatureResidual)
