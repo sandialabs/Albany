@@ -29,8 +29,8 @@ public:
   /// Constructor
   ///
   ACETemperatureResidual(
-      const Teuchos::ParameterList&        p,
-      const Teuchos::RCP<Albany::Layouts>& dl);
+      Teuchos::ParameterList const &        p,
+      Teuchos::RCP<Albany::Layouts> const & dl);
 
   ///
   /// Phalanx method to allocate space
@@ -48,19 +48,19 @@ public:
 
 private:
   // Input (MDFields):
-  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint> wBF;
-  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> wGradBF;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> Temperature;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> Tdot;
-  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> TGrad;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_conductivity_;
-  PHX::MDField<const ScalarT, Cell, QuadPoint> thermal_inertia_;
+  PHX::MDField<MeshScalarT const, Cell, Node, QuadPoint> wbf_;
+  PHX::MDField<MeshScalarT const, Cell, Node, QuadPoint, Dim> wgradbf_;
+  PHX::MDField<ScalarT const, Cell, QuadPoint> temperature_;
+  PHX::MDField<ScalarT const, Cell, QuadPoint> tdot_;
+  PHX::MDField<ScalarT const, Cell, QuadPoint, Dim> tgrad_;
+  PHX::MDField<ScalarT const, Cell, QuadPoint> thermal_conductivity_;
+  PHX::MDField<ScalarT const, Cell, QuadPoint> thermal_inertia_;
 
   // Output:
-  PHX::MDField<ScalarT, Cell, Node> TResidual;
+  PHX::MDField<ScalarT, Cell, Node> residual_;
 
   // Workspace:
-  unsigned int numQPs, numDims, numNodes, worksetSize;
+  unsigned int num_qp_, num_dims_, num_nodes_, workset_size_;
   Kokkos::DynRankView<ScalarT, PHX::Device> heat_flux_;
   Kokkos::DynRankView<ScalarT, PHX::Device> accumulation_;
 };

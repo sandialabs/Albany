@@ -2676,13 +2676,19 @@ MechanicsProblem::constructEvaluators(
   if (have_ace_temperature_eq_ == true && surface_element == false) {
 
     Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("ACE Thermal Coefficients"));
+    p = Teuchos::rcp(new Teuchos::ParameterList("ACE Temperature Residual"));
 
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
     // Input
+    p->set<std::string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<std::string>("ACE Temperature Name", "ACE Temperature");
     p->set<std::string>("ACE Temperature Dot Name", "ACE Temperature Dot");
+    p->set<std::string>("ACE Temperature Gradient Name", "ACE Temperature Gradient");
+    p->set<std::string>("ACE Thermal Conductivity Name", "ACE Thermal Conductivity");
+    p->set<std::string>("ACE Thermal Inertia Name", "ACE Thermal Inertia");
+    p->set<std::string>("ACE Residual Name", "ACE Temperature Residual");
     if (SolutionType == SolutionMethodType::Continuation) {
       p->set<std::string>("Solution Method Type", "Continuation");
     } else {
