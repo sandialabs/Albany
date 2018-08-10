@@ -52,6 +52,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setDependentField("Poissons Ratio", dl->qp_scalar);
   setDependentField("Yield Strength", dl->qp_scalar);
   setDependentField("Delta Time", dl->workset_scalar);
+  setDependentField("ACE Temperature", dl->qp_scalar);
 
   // Computed incrementally
   setEvaluatedField("ACE Ice Saturation", dl->qp_scalar);
@@ -70,10 +71,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setEvaluatedField(Fp_string, dl->qp_tensor);
   setEvaluatedField(eqps_string, dl->qp_scalar);
   setEvaluatedField(yieldSurface_string, dl->qp_scalar);
-  if (have_temperature_ == true) {
-    setDependentField("Temperature", dl->qp_scalar);
-    setEvaluatedField(source_string, dl->qp_scalar);
-  }
+  setEvaluatedField(source_string, dl->qp_scalar);
 
   // define the state variables
 
@@ -176,6 +174,15 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       false,
       p->get<bool>("ACE Porosity", false));
 
+  // ACE Temperature
+  addStateVariable(
+      "ACE Temperature",
+      dl->qp_scalar,
+      "scalar",
+      T_init_,
+      true,
+      p->get<bool>("Output Temperature", false));
+
   // ACE Temperature Dot
   addStateVariable(
       "ACE Temperature Dot",
@@ -186,23 +193,13 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       p->get<bool>("ACE Temperature Dot", false));
 
   // mechanical source
-  if (have_temperature_ == true) {
-    addStateVariable(
-        "Temperature",
-        dl->qp_scalar,
-        "scalar",
-        T_init_,
-        true,
-        p->get<bool>("Output Temperature", false));
-
-    addStateVariable(
-        source_string,
-        dl->qp_scalar,
-        "scalar",
-        0.0,
-        false,
-        p->get<bool>("Output Mechanical Source", false));
-  }
+  addStateVariable(
+      source_string,
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("Output Mechanical Source", false));
 }
 
 template <typename EvalT, typename Traits>
@@ -227,8 +224,8 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   hardening_modulus_ = *input_fields["Hardening Modulus"];
   poissons_ratio_    = *input_fields["Poissons Ratio"];
   yield_strength_    = *input_fields["Yield Strength"];
-
-  delta_time_ = *input_fields["Delta Time"];
+  delta_time_        = *input_fields["Delta Time"];
+  temperature_       = *input_fields["ACE Temperature"];
 
   stress_     = *output_fields[cauchy_string];
   Fp_         = *output_fields[Fp_string];
@@ -243,16 +240,12 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   water_saturation_ = *output_fields["ACE Water Saturation"];
   porosity_         = *output_fields["ACE Porosity"];
   tdot_             = *output_fields["ACE Temperature Dot"];
-
-  if (have_temperature_ == true) {
-    source_ = *output_fields[source_string];
-    temperature_ = *input_fields["Temperature"];
-  }
+  source_           = *output_fields[source_string];
 
   // get State Variables
   Fp_old_             = (*workset.stateArrayPtr)[Fp_string + "_old"];
   eqps_old_           = (*workset.stateArrayPtr)[eqps_string + "_old"];
-  T_old_              = (*workset.stateArrayPtr)["Temperature_old"];
+  T_old_              = (*workset.stateArrayPtr)["ACE Temperature_old"];
   ice_saturation_old_ = (*workset.stateArrayPtr)["ACE Ice Saturation_old"];
 }
 
@@ -374,12 +367,10 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   F.fill(def_grad_, cell, pt, 0, 0);
 
   // Mechanical deformation gradient
-  auto Fm = Tensor(F);
-  if (have_temperature_) {
-    ScalarT dtemp           = temperature_(cell, pt) - ref_temperature_;
-    ScalarT thermal_stretch = std::exp(expansion_coeff_ * dtemp);
-    Fm /= thermal_stretch;
-  }
+  auto    Fm              = Tensor(F);
+  ScalarT dtemp           = temperature_(cell, pt) - ref_temperature_;
+  ScalarT thermal_stretch = std::exp(expansion_coeff_ * dtemp);
+  Fm /= thermal_stretch;
 
   Tensor Fpn(num_dims_);
 
@@ -440,7 +431,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     eqps_(cell, pt) = alpha;
 
     // mechanical source
-    if (have_temperature_ == true && delta_time_(0) > 0) {
+    if (delta_time_(0) > 0) {
       source_(cell, pt) =
           (SQ23 * dgam / delta_time_(0) * (Y + H + temperature_(cell, pt))) /
           (density_(cell, pt) * heat_capacity_(cell, pt));
@@ -452,19 +443,15 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     Tensor const Fpnew = expA * Fpn;
 
     for (int i{0}; i < num_dims_; ++i) {
-      for (int j{0}; j < num_dims_; ++j) {
-        Fp_(cell, pt, i, j) = Fpnew(i, j);
-      }
+      for (int j{0}; j < num_dims_; ++j) { Fp_(cell, pt, i, j) = Fpnew(i, j); }
     }
   } else {
     eqps_(cell, pt) = eqps_old_(cell, pt);
 
-    if (have_temperature_ == true) source_(cell, pt) = 0.0;
+    source_(cell, pt) = 0.0;
 
     for (int i{0}; i < num_dims_; ++i) {
-      for (int j{0}; j < num_dims_; ++j) {
-        Fp_(cell, pt, i, j) = Fpn(i, j);
-      }
+      for (int j{0}; j < num_dims_; ++j) { Fp_(cell, pt, i, j) = Fpn(i, j); }
     }
   }
 
@@ -504,7 +491,11 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // it seems to be getting used in here already for the source term, and I
   // assume its the current temperature value)
   ScalarT dTemp = temperature_(cell, pt) - T_old_(cell, pt);
-  tdot_(cell, pt) = dTemp / delta_time_(0);
+  if (delta_time_(0) > 0.0) {
+    tdot_(cell, pt) = dTemp / delta_time_(0);
+  } else {
+    tdot_(cell, pt) = 0.0;
+  }
 
   // Calculate the freezing curve function df/dTemp
   ScalarT T_range         = 1.0;
@@ -513,13 +504,9 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT i_sat_evaluated = -1.0;
 
   // completely frozen
-  if (temperature_(cell, pt) <= T_low) {
-    i_sat_evaluated = 1.0;
-  }
+  if (temperature_(cell, pt) <= T_low) { i_sat_evaluated = 1.0; }
   // completely melted
-  if (temperature_(cell, pt) >= T_high) {
-    i_sat_evaluated = 0.0;
-  }
+  if (temperature_(cell, pt) >= T_high) { i_sat_evaluated = 0.0; }
   // in phase change
   if ((temperature_(cell, pt) > T_low) && (temperature_(cell, pt) < T_high)) {
     i_sat_evaluated = -1.0 * (temperature_(cell, pt) / T_range) + T_high;
@@ -563,7 +550,6 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Update the material thermal inertia term
   thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt)) -
                                (ice_density_ * latent_heat_ * dfdT);
-
 }
 
 }  // namespace LCM
