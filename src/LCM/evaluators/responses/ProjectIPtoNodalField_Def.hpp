@@ -428,6 +428,7 @@ ProjectIPtoNodalFieldManager::MassMatrix::create(EMassMatrixType::Enum type)
     case EMassMatrixType::full: return new FullMassMatrix();
     case EMassMatrixType::lumped: return new LumpedMassMatrix();
   }
+  return nullptr;
 }
 
 template <typename Traits>

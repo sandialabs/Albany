@@ -16,8 +16,8 @@ namespace LCM {
 //
 template <typename EvalT, typename Traits>
 ACETemperatureResidual<EvalT, Traits>::ACETemperatureResidual(
-    Teuchos::ParameterList const &        p,
-    Teuchos::RCP<Albany::Layouts> const & dl)
+    Teuchos::ParameterList const&        p,
+    Teuchos::RCP<Albany::Layouts> const& dl)
     : wbf_(  // dependent
           p.get<std::string>("Weighted BF Name"),
           dl->node_qp_scalar),
@@ -63,7 +63,7 @@ ACETemperatureResidual<EvalT, Traits>::ACETemperatureResidual(
   vector_dl->dimensions(dims);
   workset_size_ = dims[0];
   num_nodes_    = dims[1];
-  num_qp_      = dims[2];
+  num_qp_       = dims[2];
   num_dims_     = dims[3];
 
   this->setName("ACE Temperature Residual" + PHX::typeAsString<EvalT>());
@@ -92,9 +92,9 @@ ACETemperatureResidual<EvalT, Traits>::postRegistrationSetup(
 
   // Allocate workspace:
   heat_flux_ = Kokkos::createDynRankView(
-      temperature_.get_view(), "XXX", workset_size_, num_qp_, num_dims_);
+      temperature_.get_view(), "HF", workset_size_, num_qp_, num_dims_);
   accumulation_ = Kokkos::createDynRankView(
-      temperature_.get_view(), "XXX", workset_size_, num_qp_);
+      temperature_.get_view(), "ACC", workset_size_, num_qp_);
 
   return;
 }
@@ -105,16 +105,15 @@ ACETemperatureResidual<EvalT, Traits>::postRegistrationSetup(
 template <typename EvalT, typename Traits>
 void
 ACETemperatureResidual<EvalT, Traits>::evaluateFields(
-    typename Traits::EvalData workset)
+    typename Traits::EvalData)
 {
   using FST = Intrepid2::FunctionSpaceTools<PHX::Device>;
 
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+  for (std::size_t cell = 0; cell < workset_size_; ++cell) {
     for (std::size_t qp = 0; qp < num_qp_; ++qp) {
       // heat flux term:
-      heat_flux_(cell, qp) = 0.0;
       for (std::size_t i = 0; i < num_dims_; ++i) {
-        heat_flux_(cell, qp) +=
+        heat_flux_(cell, qp, i) =
             thermal_conductivity_(cell, qp) * tgrad_(cell, qp, i);
       }
       // accumulation term:

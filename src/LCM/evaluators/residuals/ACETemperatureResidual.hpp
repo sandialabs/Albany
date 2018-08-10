@@ -19,25 +19,26 @@ namespace LCM {
 ///
 template <typename EvalT, typename Traits>
 class ACETemperatureResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
-                        public PHX::EvaluatorDerived<EvalT, Traits> {
-
-public:
-  using ScalarT = typename EvalT::ScalarT;
+                               public PHX::EvaluatorDerived<EvalT, Traits>
+{
+ public:
+  using ScalarT     = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
 
   ///
   /// Constructor
   ///
   ACETemperatureResidual(
-      Teuchos::ParameterList const &        p,
-      Teuchos::RCP<Albany::Layouts> const & dl);
+      Teuchos::ParameterList const&        p,
+      Teuchos::RCP<Albany::Layouts> const& dl);
 
   ///
   /// Phalanx method to allocate space
   ///
   void
-  postRegistrationSetup(typename Traits::SetupData d,
-			PHX::FieldManager<Traits> &vm);
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
   ///
   /// Calculates the heat equation residual
@@ -45,14 +46,13 @@ public:
   void
   evaluateFields(typename Traits::EvalData d);
 
-
-private:
+ private:
   // Input (MDFields):
-  PHX::MDField<MeshScalarT const, Cell, Node, QuadPoint> wbf_;
+  PHX::MDField<MeshScalarT const, Cell, Node, QuadPoint>      wbf_;
   PHX::MDField<MeshScalarT const, Cell, Node, QuadPoint, Dim> wgradbf_;
-  PHX::MDField<ScalarT const, Cell, QuadPoint> temperature_;
-  PHX::MDField<ScalarT const, Cell, QuadPoint> tdot_;
-  PHX::MDField<ScalarT const, Cell, QuadPoint, Dim> tgrad_;
+  PHX::MDField<ScalarT const, Cell, QuadPoint>                temperature_;
+  PHX::MDField<ScalarT const, Cell, QuadPoint>                tdot_;
+  PHX::MDField<ScalarT const, Cell, QuadPoint, Dim>           tgrad_;
   PHX::MDField<ScalarT const, Cell, QuadPoint> thermal_conductivity_;
   PHX::MDField<ScalarT const, Cell, QuadPoint> thermal_inertia_;
 
@@ -65,6 +65,6 @@ private:
   Kokkos::DynRankView<ScalarT, PHX::Device> accumulation_;
 };
 
-} // namespace LCM
+}  // namespace LCM
 
-#endif // ACETemperatureResidual_hpp
+#endif  // ACETemperatureResidual_hpp
