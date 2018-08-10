@@ -47,7 +47,6 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   using BaseKernel::expansion_coeff_;
   using BaseKernel::have_temperature_;
   using BaseKernel::ref_temperature_;
-  using BaseKernel::temperature_;
 
   using BaseKernel::addStateVariable;
   using BaseKernel::setDependentField;
@@ -65,6 +64,7 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   ConstScalarField J_;
   ConstScalarField poissons_ratio_;
   ConstScalarField yield_strength_;
+  ConstScalarField temperature_;
 
   // Output MDFields
   ScalarField density_;
@@ -74,6 +74,7 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   ScalarField thermal_inertia_;
   ScalarField water_saturation_;
   ScalarField porosity_;
+  ScalarField tdot_;
 
   // Mechanical MDFields
   ScalarField eqps_;
@@ -104,6 +105,7 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   RealType latent_heat_{0.0};
   RealType porosity0_{0.0};
   RealType porosityE_{0.0};
+  RealType T_init_{0.0};
 
   // Saturation hardening constraints
   RealType sat_mod_{0.0};

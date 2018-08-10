@@ -63,6 +63,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setEvaluatedField("ACE Thermal Inertia", dl->qp_scalar);
   setEvaluatedField("ACE Water Saturation", dl->qp_scalar);
   setEvaluatedField("ACE Porosity", dl->qp_scalar);
+  setEvaluatedField("ACE Temperature Dot", dl->qp_scalar);
 
   // define the evaluated fields
   setEvaluatedField(cauchy_string, dl->qp_tensor);
@@ -175,6 +176,15 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       false,
       p->get<bool>("ACE Porosity", false));
 
+  // ACE Temperature Dot
+  addStateVariable(
+      "ACE Temperature Dot",
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("ACE Temperature Dot", false));
+
   // mechanical source
   if (have_temperature_ == true) {
     addStateVariable(
@@ -232,6 +242,7 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   thermal_inertia_  = *output_fields["ACE Thermal Inertia"];
   water_saturation_ = *output_fields["ACE Water Saturation"];
   porosity_         = *output_fields["ACE Porosity"];
+  tdot_             = *output_fields["ACE Temperature Dot"];
 
   if (have_temperature_ == true) {
     source_ = *output_fields[source_string];
@@ -493,6 +504,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // it seems to be getting used in here already for the source term, and I
   // assume its the current temperature value)
   ScalarT dTemp = temperature_(cell, pt) - T_old_(cell, pt);
+  tdot_(cell, pt) = dTemp / delta_time_(0);
 
   // Calculate the freezing curve function df/dTemp
   ScalarT T_range         = 1.0;

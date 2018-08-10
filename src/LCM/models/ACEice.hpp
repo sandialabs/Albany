@@ -74,6 +74,7 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ScalarField thermal_inertia_;
   ScalarField water_saturation_;
   ScalarField porosity_;
+  ScalarField tdot_;
 
   // Mechanical MDFields
   ScalarField eqps_;

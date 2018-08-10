@@ -36,6 +36,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   latent_heat_          = p->get<RealType>("ACE Latent Heat", 0.0);
   porosity0_            = p->get<RealType>("ACE Surface Porosity", 0.0);
   porosityE_            = p->get<RealType>("ACE Porosity E-Depth", 0.0);
+  T_init_               = p->get<RealType>("ACE Initial Temperature", 0.0);
 
   // retrieve appropriate field name strings
   std::string const cauchy_string       = field_name_map_["Cauchy_Stress"];
@@ -65,6 +66,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   setEvaluatedField("ACE Thermal Inertia", dl->qp_scalar);
   setEvaluatedField("ACE Water Saturation", dl->qp_scalar);
   setEvaluatedField("ACE Porosity", dl->qp_scalar);
+  setEvaluatedField("ACE Temperature Dot", dl->qp_scalar);
 
   // define the evaluated fields
   setEvaluatedField(cauchy_string, dl->qp_tensor);
@@ -72,7 +74,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   setEvaluatedField(eqps_string, dl->qp_scalar);
   setEvaluatedField(yieldSurface_string, dl->qp_scalar);
   if (have_temperature_ == true) {
-    setEvaluatedField(source_string, dl->qp_scalar);
+   setDependentField("Temperature", dl->qp_scalar);
+   setEvaluatedField(source_string, dl->qp_scalar);
   }
 
   // define the state variables
@@ -176,6 +179,15 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
       false,
       p->get<bool>("ACE Porosity", false));
 
+  // ACE Temperature Dot
+  addStateVariable(
+      "ACE Temperature Dot",
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("ACE Temperature Dot", false));
+
   // mechanical source
   if (have_temperature_ == true) {
     addStateVariable(
@@ -225,9 +237,11 @@ ACEpermafrostMiniKernel<EvalT, Traits>::init(
   thermal_inertia_  = *output_fields["ACE Thermal Inertia"];
   water_saturation_ = *output_fields["ACE Water Saturation"];
   porosity_         = *output_fields["ACE Porosity"];
+  tdot_             = *output_fields["ACE Temperature Dot"];
 
   if (have_temperature_ == true) {
     source_ = *output_fields[source_string];
+    temperature_ = *input_fields["Temperature"];
   }
 
   // get State Variables
@@ -391,7 +405,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // it seems to be getting used in here already for the source term, and I
   // assume its the current temperature value)
   ScalarT dTemp = temperature_(cell, pt) - T_old_(cell, pt);
-  
+  tdot_(cell, pt) = dTemp / delta_time_(0);
+
   // Calculate the freezing curve function df/dTemp
   ScalarT T_range = 1.0;
   ScalarT T_low   = Tmelt - (T_range/2.0);
