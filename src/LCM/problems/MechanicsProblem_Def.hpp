@@ -16,10 +16,10 @@
 #include "FieldNameMap.hpp"
 
 #include "ACETemperatureResidual.hpp"
+#include "AnalyticMassResidual.hpp"
 #include "BodyForce.hpp"
 #include "CurrentCoords.hpp"
 #include "MechanicsResidual.hpp"
-#include "AnalyticMassResidual.hpp"
 #include "SurfaceBasis.hpp"
 #include "SurfaceScalarGradientOperator.hpp"
 #include "SurfaceScalarJump.hpp"
@@ -89,89 +89,83 @@ namespace Albany {
 
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
 MechanicsProblem::buildEvaluators(
-    PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-    MeshSpecsStruct const & meshSpecs,
-    StateManager& stateMgr,
-    FieldManagerChoice fmchoice,
-    Teuchos::RCP<Teuchos::ParameterList> const & responseList) {
-
+    PHX::FieldManager<PHAL::AlbanyTraits>&      fm0,
+    MeshSpecsStruct const&                      meshSpecs,
+    StateManager&                               stateMgr,
+    FieldManagerChoice                          fmchoice,
+    Teuchos::RCP<Teuchos::ParameterList> const& responseList)
+{
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   ConstructEvaluatorsOp<MechanicsProblem> op(
       *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
 
-  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>
-  fe(op);
+  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
 
   return *op.tags;
 }
 
-
-
 //------------------------------------------------------------------------------
 
 Teuchos::RCP<const Teuchos::ParameterList>
-MechanicsProblem::getValidProblemParameters() const {
-
-  Teuchos::RCP<Teuchos::ParameterList>
-  validPL = this->getGenericProblemParams("ValidMechanicsProblemParams");
+MechanicsProblem::getValidProblemParameters() const
+{
+  Teuchos::RCP<Teuchos::ParameterList> validPL =
+      this->getGenericProblemParams("ValidMechanicsProblemParams");
 
   validPL->set<bool>(
       "Register dirichlet_field", true, "Flag to register dirichlet_field");
 
   validPL->set<std::string>(
-      "MaterialDB Filename", "materials.xml",
+      "MaterialDB Filename",
+      "materials.xml",
       "Filename of material database xml file");
 
-  for(const std::string & variable : variables_problem_) {
+  for (const std::string& variable : variables_problem_) {
     validPL->sublist(variable, false, "");
   }
 
-  for(const std::string & variable : variables_auxiliary_) {
+  for (const std::string& variable : variables_auxiliary_) {
     validPL->sublist(variable, false, "");
   }
 
   return validPL;
 }
 
-
-
 //------------------------------------------------------------------------------
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 MechanicsProblem::constructEvaluators(
-    PHX::FieldManager<PHAL::AlbanyTraits> & fm0,
-    MeshSpecsStruct const & meshSpecs,
-    StateManager& stateMgr,
-    FieldManagerChoice fieldManagerChoice,
-    Teuchos::RCP<Teuchos::ParameterList> const & responseList) {
-
-  using Intrepid2Basis = typename
-      Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>;
+    PHX::FieldManager<PHAL::AlbanyTraits>&      fm0,
+    MeshSpecsStruct const&                      meshSpecs,
+    StateManager&                               stateMgr,
+    FieldManagerChoice                          fieldManagerChoice,
+    Teuchos::RCP<Teuchos::ParameterList> const& responseList)
+{
+  using Intrepid2Basis =
+      typename Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>;
 
   // Collect problem-specific response parameters
-  Teuchos::RCP<Teuchos::ParameterList>
-  pFromProb = Teuchos::rcp(
+  Teuchos::RCP<Teuchos::ParameterList> pFromProb = Teuchos::rcp(
       new Teuchos::ParameterList("Response Parameters from Problem"));
 
   // get the name of the current element block
-  std::string const
-  eb_name = meshSpecs.ebName;
+  std::string const eb_name = meshSpecs.ebName;
 
-  std::string const
-  matName = material_db_->getElementBlockParam<std::string>(eb_name, "material");
+  std::string const matName =
+      material_db_->getElementBlockParam<std::string>(eb_name, "material");
 
-  Teuchos::ParameterList &
-  param_list = material_db_->getElementBlockSublist(eb_name, matName);
+  Teuchos::ParameterList& param_list =
+      material_db_->getElementBlockSublist(eb_name, matName);
 
   // get the name of the material model to be used (and make sure there is one)
-  std::string const
-  material_model_name =
+  std::string const material_model_name =
       param_list.sublist("Material Model").get<std::string>("Model Name");
 
   TEUCHOS_TEST_FOR_EXCEPTION(
-      material_model_name.length() == 0, std::logic_error,
+      material_model_name.length() == 0,
+      std::logic_error,
       "A material model must be defined for block: " + eb_name);
 
 #ifdef ALBANY_VERBOSE
@@ -182,63 +176,53 @@ MechanicsProblem::constructEvaluators(
 
   // insert user-defined NOX Status Test for material models that use it
   if (material_model_name == "CrystalPlasticity") {
-
-    Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
-    statusTest = Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(
-        nox_status_test_);
+    Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> statusTest =
+        Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(
+            nox_status_test_);
 
     param_list.set<Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>>(
         "NOX Status Test", statusTest);
   }
 
   // volume averaging flags
-  bool const
-  volume_average_j = material_db_->getElementBlockParam<bool>(
+  bool const volume_average_j = material_db_->getElementBlockParam<bool>(
       eb_name, "Weighted Volume Average J", false);
 
-  bool const
-  volume_average_pressure = material_db_->getElementBlockParam<bool>(
+  bool const volume_average_pressure = material_db_->getElementBlockParam<bool>(
       eb_name, "Volume Average Pressure", false);
 
-  RealType const
-  volume_average_stabilization_param =
+  RealType const volume_average_stabilization_param =
       material_db_->getElementBlockParam<RealType>(
-            eb_name, "Average J Stabilization Parameter", 0.0);
+          eb_name, "Average J Stabilization Parameter", 0.0);
 
   // Check if we are setting the composite tet flag
   composite_ = material_db_->getElementBlockParam<bool>(
       eb_name, "Use Composite Tet 10", false);
 
   pFromProb->set<bool>("Use Composite Tet 10", composite_);
-  
+
   // set flag for small strain option
-  bool
-  small_strain{material_model_name == "Linear Elastic"};
+  bool small_strain{material_model_name == "Linear Elastic"};
 
   if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
     small_strain = true;
   }
 
   // Surface element checking
-  bool const
-  surface_element =
-      material_db_->getElementBlockParam<bool>(eb_name, "Surface Element", false);
+  bool const surface_element = material_db_->getElementBlockParam<bool>(
+      eb_name, "Surface Element", false);
 
-  bool const
-  cohesive_element =
-      material_db_->getElementBlockParam<bool>(eb_name, "Cohesive Element", false);
+  bool const cohesive_element = material_db_->getElementBlockParam<bool>(
+      eb_name, "Cohesive Element", false);
 
-  RealType
-  thickness{0.0};
+  RealType thickness{0.0};
 
-  if (surface_element)
-  {
+  if (surface_element) {
     thickness = material_db_->getElementBlockParam<RealType>(
         eb_name, "Localization thickness parameter", 0.1);
   }
 
-  bool const
-  compute_membrane_forces = material_db_->getElementBlockParam<bool>(
+  bool const compute_membrane_forces = material_db_->getElementBlockParam<bool>(
       eb_name, "Compute Membrane Forces", false);
 
   // FIXME: really need to check for WEDGE_12 topologies
@@ -248,49 +232,47 @@ MechanicsProblem::constructEvaluators(
       "Surface elements are not yet supported with the composite tet");
 
   // Get the intrepid basis for the given cell topology
-  Intrepid2Basis
-  intrepidBasis = getIntrepid2Basis(meshSpecs.ctd, composite_);
+  Intrepid2Basis intrepidBasis = getIntrepid2Basis(meshSpecs.ctd, composite_);
 
   // define cell topologies
-  Teuchos::RCP<shards::CellTopology> const
-  cellType = Teuchos::rcp(new shards::CellTopology(
-      composite_ && meshSpecs.ctd.dimension == 3 && meshSpecs.ctd.node_count == 10 ?
-      shards::getCellTopologyData<shards::Tetrahedron<11>>() :
-      &meshSpecs.ctd));
+  Teuchos::RCP<shards::CellTopology> const cellType =
+      Teuchos::rcp(new shards::CellTopology(
+          composite_ && meshSpecs.ctd.dimension == 3 &&
+                  meshSpecs.ctd.node_count == 10 ?
+              shards::getCellTopologyData<shards::Tetrahedron<11>>() :
+              &meshSpecs.ctd));
 
-  Intrepid2::DefaultCubatureFactory
-  cubFactory;
+  Intrepid2::DefaultCubatureFactory cubFactory;
 
-  Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>
-  cubature = cubFactory.create<PHX::Device, RealType, RealType>(
-      *cellType, meshSpecs.cubatureDegree);
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature =
+      cubFactory.create<PHX::Device, RealType, RealType>(
+          *cellType, meshSpecs.cubatureDegree);
 
   if (composite_) {
-    ALBANY_ASSERT(meshSpecs.cubatureDegree < 4, "\n Cannot use Composite Tet 10 elements + Cubature Degree > 3!  You have "
-                                                << " specified Cubature Degree = " << meshSpecs.cubatureDegree << ".\n");
+    ALBANY_ASSERT(
+        meshSpecs.cubatureDegree < 4,
+        "\n Cannot use Composite Tet 10 elements + Cubature Degree > 3!  You "
+        "have "
+            << " specified Cubature Degree = " << meshSpecs.cubatureDegree
+            << ".\n");
   }
 
   // TODO: this could probably go into the ProblemUtils
   // just like the call to getIntrepid2Basis
-  Intrepid2Basis
-  surfaceBasis;
+  Intrepid2Basis surfaceBasis;
 
-  Teuchos::RCP<shards::CellTopology>
-  surfaceTopology;
+  Teuchos::RCP<shards::CellTopology> surfaceTopology;
 
-  Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>
-  surfaceCubature;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> surfaceCubature;
 
   if (surface_element) {
 #ifdef ALBANY_VERBOSE
     *out << "In Surface Element Logic" << std::endl;
 #endif
 
-    std::string
-    name = meshSpecs.ctd.name;
+    std::string name = meshSpecs.ctd.name;
 
-    if (name == "Triangle_3" || name == "Quadrilateral_4")
-    {
+    if (name == "Triangle_3" || name == "Quadrilateral_4") {
       surfaceBasis =
           Teuchos::rcp(new Intrepid2::Basis_HGRAD_LINE_C1_FEM<PHX::Device>());
       surfaceTopology = Teuchos::rcp(new shards::CellTopology(
@@ -324,8 +306,7 @@ MechanicsProblem::constructEvaluators(
   // Note that these are the volume element quantities
   num_nodes_ = intrepidBasis->getCardinality();
 
-  int const
-  workset_size = meshSpecs.worksetSize;
+  int const workset_size = meshSpecs.worksetSize;
 
 #ifdef ALBANY_VERBOSE
   *out << "Setting num_pts_, surface element is " << surface_element
@@ -355,134 +336,104 @@ MechanicsProblem::constructEvaluators(
       std::logic_error,
       "Data Layout Usage in Mechanics problems assume vecDim = num_dims_");
 
-  EvaluatorUtils<EvalT, PHAL::AlbanyTraits>
-  evalUtils(dl_);
+  EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl_);
 
-  int
-  offset{0};
+  int offset{0};
 
   // Temporary variable used numerous times below
-  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits>>
-  ev;
+  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits>> ev;
 
-  // Have to register Lattice_Orientation in the mesh before the discretization is built
-  auto
-  find_orientation = std::find(
-      this->requirements.begin(), this->requirements.end(), "Lattice_Orientation");
+  // Have to register Lattice_Orientation in the mesh before the discretization
+  // is built
+  auto find_orientation = std::find(
+      this->requirements.begin(),
+      this->requirements.end(),
+      "Lattice_Orientation");
 
-  if (find_orientation != this->requirements.end())
-  {
-    auto
-    entity = StateStruct::ElemData;
+  if (find_orientation != this->requirements.end()) {
+    auto entity = StateStruct::ElemData;
 
     stateMgr.registerStateVariable(
-        "Lattice_Orientation", dl_->cell_tensor, meshSpecs.ebName, false, &entity);
+        "Lattice_Orientation",
+        dl_->cell_tensor,
+        meshSpecs.ebName,
+        false,
+        &entity);
   }
 
   // Define Field Names
   // generate the field name map to deal with outputing surface element info
-  LCM::FieldNameMap
-  field_name_map(surface_element);
+  LCM::FieldNameMap field_name_map(surface_element);
 
-  Teuchos::RCP<std::map<std::string, std::string>>
-  fnm = field_name_map.getMap();
+  Teuchos::RCP<std::map<std::string, std::string>> fnm =
+      field_name_map.getMap();
 
-  std::string
-  cauchy = (*fnm)["Cauchy_Stress"];
+  std::string cauchy = (*fnm)["Cauchy_Stress"];
 
-  std::string
-  firstPK = (*fnm)["FirstPK"];
+  std::string firstPK = (*fnm)["FirstPK"];
 
-  std::string
-  Fp = (*fnm)["Fp"];
+  std::string Fp = (*fnm)["Fp"];
 
-  std::string
-  eqps = (*fnm)["eqps"];
+  std::string eqps = (*fnm)["eqps"];
 
-  std::string
-  temperature = (*fnm)["Temperature"];
+  std::string temperature = (*fnm)["Temperature"];
 
-  std::string
-  ace_temperature = (*fnm)["ACE Temperature"];
+  std::string ace_temperature = (*fnm)["ACE Temperature"];
 
-  std::string
-  pressure = (*fnm)["Pressure"];
+  std::string pressure = (*fnm)["Pressure"];
 
-  std::string
-  mech_source = (*fnm)["Mechanical_Source"];
+  std::string mech_source = (*fnm)["Mechanical_Source"];
 
-  std::string
-  defgrad = (*fnm)["F"];
+  std::string defgrad = (*fnm)["F"];
 
-  std::string
-  J = (*fnm)["J"];
+  std::string J = (*fnm)["J"];
 
   // Poromechanics variables
-  std::string
-  totStress = (*fnm)["Total_Stress"];
+  std::string totStress = (*fnm)["Total_Stress"];
 
-  std::string
-  kcPerm = (*fnm)["KCPermeability"];
+  std::string kcPerm = (*fnm)["KCPermeability"];
 
-  std::string
-  biotModulus = (*fnm)["Biot_Modulus"];
+  std::string biotModulus = (*fnm)["Biot_Modulus"];
 
-  std::string
-  biotCoeff = (*fnm)["Biot_Coefficient"];
+  std::string biotCoeff = (*fnm)["Biot_Coefficient"];
 
-  std::string
-  porosity = (*fnm)["Porosity"];
+  std::string porosity = (*fnm)["Porosity"];
 
-  std::string
-  porePressure = (*fnm)["Pore_Pressure"];
+  std::string porePressure = (*fnm)["Pore_Pressure"];
 
   // Hydrogen diffusion variable
-  std::string
-  transport = (*fnm)["Transport"];
+  std::string transport = (*fnm)["Transport"];
 
-  std::string
-  hydroStress = (*fnm)["HydroStress"];
+  std::string hydroStress = (*fnm)["HydroStress"];
 
-  std::string
-  diffusionCoefficient = (*fnm)["Diffusion_Coefficient"];
+  std::string diffusionCoefficient = (*fnm)["Diffusion_Coefficient"];
 
-  std::string
-  convectionCoefficient = (*fnm)["Tau_Contribution"];
+  std::string convectionCoefficient = (*fnm)["Tau_Contribution"];
 
-  std::string
-  trappedConcentration = (*fnm)["Trapped_Concentration"];
+  std::string trappedConcentration = (*fnm)["Trapped_Concentration"];
 
-  std::string
-  totalConcentration = (*fnm)["Total_Concentration"];
+  std::string totalConcentration = (*fnm)["Total_Concentration"];
 
-  std::string
-  effectiveDiffusivity = (*fnm)["Effective_Diffusivity"];
+  std::string effectiveDiffusivity = (*fnm)["Effective_Diffusivity"];
 
-  std::string
-  trappedSolvent = (*fnm)["Trapped_Solvent"];
+  std::string trappedSolvent = (*fnm)["Trapped_Solvent"];
 
-  std::string
-  strainRateFactor = (*fnm)["Strain_Rate_Factor"];
+  std::string strainRateFactor = (*fnm)["Strain_Rate_Factor"];
 
-  std::string
-  eqilibriumParameter = (*fnm)["Concentration_Equilibrium_Parameter"];
+  std::string eqilibriumParameter =
+      (*fnm)["Concentration_Equilibrium_Parameter"];
 
-  std::string
-  gradient_element_length = (*fnm)["Gradient_Element_Length"];
+  std::string gradient_element_length = (*fnm)["Gradient_Element_Length"];
 
   // Helium bubble evolution
-  std::string
-  he_concentration = (*fnm)["He_Concentration"];
+  std::string he_concentration = (*fnm)["He_Concentration"];
 
-  std::string
-  total_bubble_density = (*fnm)["Total_Bubble_Density"];
+  std::string total_bubble_density = (*fnm)["Total_Bubble_Density"];
 
-  std::string
-  bubble_volume_fraction = (*fnm)["Bubble_Volume_Fraction"];
+  std::string bubble_volume_fraction = (*fnm)["Bubble_Volume_Fraction"];
 
   // Get the solution method type
-  SolutionMethodType
-  SolutionType = getSolutionMethod();
+  SolutionMethodType SolutionType = getSolutionMethod();
 
   TEUCHOS_TEST_FOR_EXCEPTION(
       SolutionType == SolutionMethodType::Unknown,
@@ -491,18 +442,14 @@ MechanicsProblem::constructEvaluators(
       "Continuation, Eigensolve, or Aeras Hyperviscosity");
 
   if (have_mech_eq_) {
+    Teuchos::ArrayRCP<std::string> const dof_names(1, "Displacement");
 
-    Teuchos::ArrayRCP<std::string> const
-    dof_names(1, "Displacement");
+    Teuchos::ArrayRCP<std::string> const dof_names_dot(1, "Velocity");
 
-    Teuchos::ArrayRCP<std::string> const
-    dof_names_dot(1, "Velocity");
+    Teuchos::ArrayRCP<std::string> const dof_names_dotdot(1, "Acceleration");
 
-    Teuchos::ArrayRCP<std::string> const
-    dof_names_dotdot(1, "Acceleration");
-
-    Teuchos::ArrayRCP<std::string> const
-    resid_names(1, dof_names[0] + " Residual");
+    Teuchos::ArrayRCP<std::string> const resid_names(
+        1, dof_names[0] + " Residual");
 
     fm0.template registerEvaluator<EvalT>(
         evalUtils.constructGatherSolutionEvaluator_withAcceleration(
@@ -547,8 +494,8 @@ MechanicsProblem::constructEvaluators(
     offset += num_dims_;
   } else if (have_mech_) {  // constant configuration
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList);
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList);
 
     p->set<std::string>("Material Property Name", "Displacement");
     p->set<Teuchos::RCP<PHX::DataLayout>>("Data Layout", dl_->qp_vector);
@@ -558,12 +505,12 @@ MechanicsProblem::constructEvaluators(
 
     p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
 
-    Teuchos::ParameterList &
-    paramList = params->sublist("Displacement");
+    Teuchos::ParameterList& paramList = params->sublist("Displacement");
 
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    ev = Teuchos::rcp(new PHAL::NSMaterialProperty<EvalT, PHAL::AlbanyTraits>(*p));
+    ev = Teuchos::rcp(
+        new PHAL::NSMaterialProperty<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -582,14 +529,12 @@ MechanicsProblem::constructEvaluators(
 
   if (have_temperature_eq_) {  // Gather Solution Temperature
 
-    Teuchos::ArrayRCP<std::string> const
-    dof_names(1, "Temperature");
+    Teuchos::ArrayRCP<std::string> const dof_names(1, "Temperature");
 
-    Teuchos::ArrayRCP<std::string> const
-    dof_names_dot(1, "Temperature Dot");
+    Teuchos::ArrayRCP<std::string> const dof_names_dot(1, "Temperature Dot");
 
-    Teuchos::ArrayRCP<std::string> const
-    resid_names(1, dof_names[0] + " Residual");
+    Teuchos::ArrayRCP<std::string> const resid_names(
+        1, dof_names[0] + " Residual");
 
     if (SolutionType == SolutionMethodType::Transient) {
       fm0.template registerEvaluator<EvalT>(
@@ -633,8 +578,8 @@ MechanicsProblem::constructEvaluators(
   } else if (
       (!have_temperature_eq_ && have_temperature_) || have_transport_eq_ ||
       have_transport_) {
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList);
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList);
 
     p->set<std::string>("Material Property Name", temperature);
     p->set<Teuchos::RCP<PHX::DataLayout>>("Data Layout", dl_->qp_scalar);
@@ -644,8 +589,7 @@ MechanicsProblem::constructEvaluators(
 
     p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
 
-    Teuchos::ParameterList &
-    paramList = params->sublist("Temperature");
+    Teuchos::ParameterList& paramList = params->sublist("Temperature");
 
     // This evaluator is called to set a constant temperature when
     // "Variable Type" is set to "Constant." It is also called when
@@ -654,8 +598,8 @@ MechanicsProblem::constructEvaluators(
     // let's set "Type" to "Time Dependent" to hopefully make the evaluator call
     // a little more general (GAH)
 
-    std::string const
-    temp_type = paramList.get<std::string>("Variable Type", "None");
+    std::string const temp_type =
+        paramList.get<std::string>("Variable Type", "None");
 
     if (temp_type == "Time Dependent") {
       paramList.set<std::string>("Type", temp_type);
@@ -670,14 +614,13 @@ MechanicsProblem::constructEvaluators(
 
   if (have_ace_temperature_eq_) {  // Gather Solution ACE Temperature
 
-    Teuchos::ArrayRCP<std::string> const
-    dof_names(1, "ACE Temperature");
+    Teuchos::ArrayRCP<std::string> const dof_names(1, "ACE Temperature");
 
-    Teuchos::ArrayRCP<std::string> const
-    dof_names_dot(1, "ACE Temperature Dot");
+    Teuchos::ArrayRCP<std::string> const dof_names_dot(
+        1, "ACE Temperature Dot");
 
-    Teuchos::ArrayRCP<std::string> const
-    resid_names(1, dof_names[0] + " Residual");
+    Teuchos::ArrayRCP<std::string> const resid_names(
+        1, dof_names[0] + " Residual");
 
     if (SolutionType == SolutionMethodType::Transient) {
       fm0.template registerEvaluator<EvalT>(
@@ -722,11 +665,9 @@ MechanicsProblem::constructEvaluators(
 
   if (have_stab_pressure_eq_) {  // Gather Stabilized Pressure
 
-    Teuchos::ArrayRCP<std::string>
-    dof_names(1, "Pressure");
+    Teuchos::ArrayRCP<std::string> dof_names(1, "Pressure");
 
-    Teuchos::ArrayRCP<std::string>
-    resid_names(1, dof_names[0] + " Residual");
+    Teuchos::ArrayRCP<std::string> resid_names(1, dof_names[0] + " Residual");
 
     fm0.template registerEvaluator<EvalT>(
         evalUtils.constructGatherSolutionEvaluator_noTransient(
@@ -759,11 +700,10 @@ MechanicsProblem::constructEvaluators(
 
   if (have_damage_eq_) {  // Damage
 
-    Teuchos::ArrayRCP<std::string> const
-    dof_names(1, "Damage");
+    Teuchos::ArrayRCP<std::string> const dof_names(1, "Damage");
 
-    Teuchos::ArrayRCP<std::string> const
-    resid_names(1, dof_names[0] + " Residual");
+    Teuchos::ArrayRCP<std::string> const resid_names(
+        1, dof_names[0] + " Residual");
 
     fm0.template registerEvaluator<EvalT>(
         evalUtils.constructGatherSolutionEvaluator_noTransient(
@@ -793,9 +733,8 @@ MechanicsProblem::constructEvaluators(
             false, resid_names, offset, "Scatter Damage"));
     offset++;
   } else if (!have_damage_eq_ && have_damage_) {
-
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList);
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList);
 
     p->set<std::string>("Material Property Name", "Damage");
     p->set<Teuchos::RCP<PHX::DataLayout>>("Data Layout", dl_->qp_scalar);
@@ -805,8 +744,7 @@ MechanicsProblem::constructEvaluators(
 
     p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
 
-    Teuchos::ParameterList &
-    paramList = params->sublist("Damage");
+    Teuchos::ParameterList& paramList = params->sublist("Damage");
 
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -816,12 +754,10 @@ MechanicsProblem::constructEvaluators(
   }
 
   if (have_pore_pressure_eq_) {
+    Teuchos::ArrayRCP<std::string> const dof_names(1, "Pore_Pressure");
 
-    Teuchos::ArrayRCP<std::string> const
-    dof_names(1, "Pore_Pressure");
-
-    Teuchos::ArrayRCP<std::string> const
-    resid_names(1, dof_names[0] + " Residual");
+    Teuchos::ArrayRCP<std::string> const resid_names(
+        1, dof_names[0] + " Residual");
 
     fm0.template registerEvaluator<EvalT>(
         evalUtils.constructGatherSolutionEvaluator_noTransient(
@@ -851,8 +787,8 @@ MechanicsProblem::constructEvaluators(
     offset++;
   } else if (have_pore_pressure_) {  // constant Pressure
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList);
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList);
 
     p->set<std::string>("Material Property Name", "Pressure");
     p->set<Teuchos::RCP<PHX::DataLayout>>("Data Layout", dl_->qp_scalar);
@@ -862,8 +798,7 @@ MechanicsProblem::constructEvaluators(
 
     p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
 
-    Teuchos::ParameterList &
-    paramList = params->sublist("Pressure");
+    Teuchos::ParameterList& paramList = params->sublist("Pressure");
 
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -875,11 +810,10 @@ MechanicsProblem::constructEvaluators(
 
   if (have_transport_eq_) {  // Gather solution for transport problem
     // Lattice Concentration
-    Teuchos::ArrayRCP<std::string> const
-    dof_names(1, "Transport");
+    Teuchos::ArrayRCP<std::string> const dof_names(1, "Transport");
 
-    Teuchos::ArrayRCP<std::string> const
-    resid_names(1, dof_names[0] + " Residual");
+    Teuchos::ArrayRCP<std::string> const resid_names(
+        1, dof_names[0] + " Residual");
 
     fm0.template registerEvaluator<EvalT>(
         evalUtils.constructGatherSolutionEvaluator_noTransient(
@@ -908,8 +842,8 @@ MechanicsProblem::constructEvaluators(
     offset++;                    // for lattice concentration
   } else if (have_transport_) {  // Constant transport scalar value
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList);
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList);
 
     p->set<std::string>("Material Property Name", "Transport");
     p->set<Teuchos::RCP<PHX::DataLayout>>("Data Layout", dl_->qp_scalar);
@@ -919,8 +853,7 @@ MechanicsProblem::constructEvaluators(
 
     p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
 
-    Teuchos::ParameterList &
-    paramList = params->sublist("Transport");
+    Teuchos::ParameterList& paramList = params->sublist("Transport");
 
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -931,11 +864,10 @@ MechanicsProblem::constructEvaluators(
 
   if (have_hydrostress_eq_) {  // Gather solution for transport problem
 
-    Teuchos::ArrayRCP<std::string> const
-    dof_names(1, "HydroStress");
+    Teuchos::ArrayRCP<std::string> const dof_names(1, "HydroStress");
 
-    Teuchos::ArrayRCP<std::string> const
-    resid_names(1, dof_names[0] + " Residual");
+    Teuchos::ArrayRCP<std::string> const resid_names(
+        1, dof_names[0] + " Residual");
 
     fm0.template registerEvaluator<EvalT>(
         evalUtils.constructGatherSolutionEvaluator_noTransient(
@@ -963,24 +895,23 @@ MechanicsProblem::constructEvaluators(
     offset++;  // for hydrostatic stress
   }
 
-  Teuchos::RCP<Teuchos::ParameterList>
-  p = Teuchos::rcp(new Teuchos::ParameterList("Time"));
+  Teuchos::RCP<Teuchos::ParameterList> p =
+      Teuchos::rcp(new Teuchos::ParameterList("Time"));
 
   p->set<std::string>("Time Name", "Time");
   p->set<std::string>("Delta Time Name", "Delta Time");
   p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "Workset Scalar Data Layout", dl_->workset_scalar);
+      "Workset Scalar Data Layout", dl_->workset_scalar);
   p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
   p->set<bool>("Disable Transient", true);
   ev = Teuchos::rcp(new LCM::Time<EvalT, PHAL::AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
   p = stateMgr.registerStateVariable(
-        "Time", dl_->workset_scalar, dl_->dummy, eb_name, "scalar", 0.0, true);
+      "Time", dl_->workset_scalar, dl_->dummy, eb_name, "scalar", 0.0, true);
   ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
 
-  bool
-  reg_dir_field{false};
+  bool reg_dir_field{false};
 
   if (params->isParameter("Register dirichlet_field")) {
     reg_dir_field = params->get<bool>("Register dirichlet_field");
@@ -992,10 +923,9 @@ MechanicsProblem::constructEvaluators(
     // constructEvaluators gets called multiple times for different
     // specializations.
     // Make sure dirichlet_field gets registered only once via counter.
-    // I don't quite understand why this is needed for LCM but not for LANDICE...
-    // dirichlet_field
-    StateStruct::MeshFieldEntity
-    entity = StateStruct::NodalDistParameter;
+    // I don't quite understand why this is needed for LCM but not for
+    // LANDICE... dirichlet_field
+    StateStruct::MeshFieldEntity entity = StateStruct::NodalDistParameter;
 
     stateMgr.registerStateVariable(
         "dirichlet_field", dl_->node_vector, eb_name, true, &entity, "");
@@ -1004,8 +934,8 @@ MechanicsProblem::constructEvaluators(
 
   if (have_mech_eq_) {  // Current Coordinates
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("Current Coordinates"));
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("Current Coordinates"));
 
     p->set<std::string>("Reference Coordinates Name", "Coord Vec");
     p->set<std::string>("Displacement Name", "Displacement");
@@ -1018,8 +948,8 @@ MechanicsProblem::constructEvaluators(
 
   if (have_mech_eq_ && have_sizefield_adaptation_) {  // Mesh size field
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("Isotropic Mesh Size Field"));
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("Isotropic Mesh Size Field"));
 
     p->set<std::string>("IsoTropic MeshSizeField Name", "IsoMeshSizeField");
     p->set<std::string>("Current Coordinates Name", "Current Coordinates");
@@ -1027,8 +957,7 @@ MechanicsProblem::constructEvaluators(
         "Cubature", cubature);
 
     // Get the Adaptation list and send to the evaluator
-    Teuchos::ParameterList &
-    paramList = params->sublist("Adaptation");
+    Teuchos::ParameterList& paramList = params->sublist("Adaptation");
 
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -1046,28 +975,32 @@ MechanicsProblem::constructEvaluators(
        MeshSizeField");
     */
 
-    // FIXME: This is unnecessary as written. Should the above code be activated? - CA
-    bool
-    output_flag{true};
+    // FIXME: This is unnecessary as written. Should the above code be
+    // activated? - CA
+    bool output_flag{true};
 
     if (output_flag) {
       p = stateMgr.registerStateVariable(
-          "IsoMeshSizeField", dl_->qp_scalar, dl_->dummy, eb_name, "scalar",
-          1.0, true, output_flag);
+          "IsoMeshSizeField",
+          dl_->qp_scalar,
+          dl_->dummy,
+          eb_name,
+          "scalar",
+          1.0,
+          true,
+          output_flag);
       ev =
           Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
   }
 
-  if (have_temperature_eq_ || have_temperature_)
-  {
-    RealType const
-    temp = material_db_->getElementBlockParam<RealType>(
-          eb_name, "Initial Temperature", 0.0);
+  if (have_temperature_eq_ || have_temperature_) {
+    RealType const temp = material_db_->getElementBlockParam<RealType>(
+        eb_name, "Initial Temperature", 0.0);
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("Save Temperature"));
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("Save Temperature"));
 
     p = stateMgr.registerStateVariable(
         temperature,
@@ -1083,14 +1016,12 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_ace_temperature_eq_ == true)
-  {
-    RealType const
-    temp = material_db_->getElementBlockParam<RealType>(
-          eb_name, "Initial ACE Temperature", 0.0);
+  if (have_ace_temperature_eq_ == true) {
+    RealType const temp = material_db_->getElementBlockParam<RealType>(
+        eb_name, "Initial ACE Temperature", 0.0);
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("Save ACE Temperature"));
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("Save ACE Temperature"));
 
     p = stateMgr.registerStateVariable(
         ace_temperature,
@@ -1107,9 +1038,8 @@ MechanicsProblem::constructEvaluators(
   }
 
   if (have_pore_pressure_eq_ || have_pore_pressure_) {
-
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("Save Pore Pressure"));
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("Save Pore Pressure"));
 
     p = stateMgr.registerStateVariable(
         porePressure,
@@ -1125,38 +1055,40 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_transport_eq_ || have_transport_)
-  {
-    bool const
-    output_flag = material_db_->getElementBlockParam<bool>(
+  if (have_transport_eq_ || have_transport_) {
+    bool const output_flag = material_db_->getElementBlockParam<bool>(
         eb_name, "Output IP" + transport, true);
 
-    RealType const
-    ic = material_db_->getElementBlockParam<double>(
+    RealType const ic = material_db_->getElementBlockParam<double>(
         eb_name, "Initial Concentration", 0.0);
 
-    Teuchos::RCP<Teuchos::ParameterList> const
-    p = stateMgr.registerStateVariable(
-        transport,
-        dl_->qp_scalar,
-        dl_->dummy,
-        eb_name,
-        "scalar",
-        ic,
-        true,
-        output_flag);
+    Teuchos::RCP<Teuchos::ParameterList> const p =
+        stateMgr.registerStateVariable(
+            transport,
+            dl_->qp_scalar,
+            dl_->dummy,
+            eb_name,
+            "scalar",
+            ic,
+            true,
+            output_flag);
 
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_hydrostress_eq_ || have_hydrostress_)
-  {
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("Save HydroStress"));
+  if (have_hydrostress_eq_ || have_hydrostress_) {
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("Save HydroStress"));
 
     p = stateMgr.registerStateVariable(
-        hydroStress, dl_->qp_scalar, dl_->dummy, eb_name, "scalar", 0.0, true,
+        hydroStress,
+        dl_->qp_scalar,
+        dl_->dummy,
+        eb_name,
+        "scalar",
+        0.0,
+        true,
         true);
 
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
@@ -1167,9 +1099,8 @@ MechanicsProblem::constructEvaluators(
 
   if (have_source_ &&
       params->sublist("Source Functions").isSublist("Mechanical Source")) {
-
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList);
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList);
 
     p->set<std::string>("Source Name", "Source");
     p->set<std::string>("Variable Name", "Displacement");
@@ -1178,8 +1109,8 @@ MechanicsProblem::constructEvaluators(
 
     p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
 
-    Teuchos::ParameterList &
-    paramList = params->sublist("Source Functions").sublist("Mechanical Source");
+    Teuchos::ParameterList& paramList =
+        params->sublist("Source Functions").sublist("Mechanical Source");
 
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -1190,9 +1121,8 @@ MechanicsProblem::constructEvaluators(
   // Heat Source in Heat Equation
 
   if (thermal_source_ != SOURCE_TYPE_NONE) {
-
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList);
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList);
 
     p->set<std::string>("Source Name", "Heat Source");
     p->set<std::string>("Variable Name", "Temperature");
@@ -1203,8 +1133,8 @@ MechanicsProblem::constructEvaluators(
 
     if (thermal_source_ == SOURCE_TYPE_INPUT) {  // Thermal source in input file
 
-      Teuchos::ParameterList &
-      paramList = params->sublist("Source Functions").sublist("Thermal Source");
+      Teuchos::ParameterList& paramList =
+          params->sublist("Source Functions").sublist("Thermal Source");
 
       p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -1219,14 +1149,12 @@ MechanicsProblem::constructEvaluators(
       if (material_db_->isElementBlockSublist(
               eb_name, "Source Functions")) {  // Thermal source in matDB
 
-        Teuchos::ParameterList &
-        srcParamList =
+        Teuchos::ParameterList& srcParamList =
             material_db_->getElementBlockSublist(eb_name, "Source Functions");
 
         if (srcParamList.isSublist("Thermal Source")) {
-
-          Teuchos::ParameterList &
-          paramList = srcParamList.sublist("Thermal Source");
+          Teuchos::ParameterList& paramList =
+              srcParamList.sublist("Thermal Source");
 
           p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -1242,14 +1170,15 @@ MechanicsProblem::constructEvaluators(
     } else
 
       TEUCHOS_TEST_FOR_EXCEPTION(
-          true, std::logic_error,
+          true,
+          std::logic_error,
           "Unrecognized thermal source specified in input file");
   }
 
   {  // Constitutive Model Parameters
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("Constitutive Model Parameters"));
+    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+        new Teuchos::ParameterList("Constitutive Model Parameters"));
 
     if (have_temperature_ == true) {
       p->set<std::string>("Temperature Name", temperature);
@@ -1268,15 +1197,15 @@ MechanicsProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
     Teuchos::RCP<LCM::ConstitutiveModelParameters<EvalT, PHAL::AlbanyTraits>>
-    cmpEv = Teuchos::rcp(
-        new LCM::ConstitutiveModelParameters<EvalT, PHAL::AlbanyTraits>(*p, dl_));
+        cmpEv = Teuchos::rcp(
+            new LCM::ConstitutiveModelParameters<EvalT, PHAL::AlbanyTraits>(
+                *p, dl_));
     fm0.template registerEvaluator<EvalT>(cmpEv);
   }
 
   if (have_mech_eq_) {
-
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("Constitutive Model Interface"));
+    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+        new Teuchos::ParameterList("Constitutive Model Interface"));
 
     // TODO: figure out how to do this better
     param_list.set<bool>("Have Temperature", false);
@@ -1306,8 +1235,9 @@ MechanicsProblem::constructEvaluators(
       param_list.set<bool>("Have Bubble Volume Fraction", true);
       param_list.set<bool>("Have Total Bubble Density", true);
       param_list.set<RealType>(
-          "Helium Radius", param_list.sublist("Tritium Coefficients")
-                               .get<RealType>("Helium Radius", 0.0));
+          "Helium Radius",
+          param_list.sublist("Tritium Coefficients")
+              .get<RealType>("Helium Radius", 0.0));
     }
 
     param_list.set<Teuchos::RCP<std::map<std::string, std::string>>>(
@@ -1320,18 +1250,25 @@ MechanicsProblem::constructEvaluators(
     }
 
     Teuchos::RCP<LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits>>
-    cmiEv = Teuchos::rcp(
-        new LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits>(*p, dl_));
+        cmiEv = Teuchos::rcp(
+            new LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits>(
+                *p, dl_));
     fm0.template registerEvaluator<EvalT>(cmiEv);
 
     // register state variables
     for (int sv(0); sv < cmiEv->getNumStateVars(); ++sv) {
       cmiEv->fillStateVariableStruct(sv);
       p = stateMgr.registerStateVariable(
-          cmiEv->getName(), cmiEv->getLayout(), dl_->dummy, eb_name,
-          cmiEv->getInitType(), cmiEv->getInitValue(), cmiEv->getStateFlag(),
+          cmiEv->getName(),
+          cmiEv->getLayout(),
+          dl_->dummy,
+          eb_name,
+          cmiEv->getInitType(),
+          cmiEv->getInitValue(),
+          cmiEv->getStateFlag(),
           cmiEv->getOutputFlag());
-      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+      ev =
+          Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
   }
@@ -1340,8 +1277,8 @@ MechanicsProblem::constructEvaluators(
   if (surface_element) {
     {  // Surface Basis
       // SurfaceBasis_Def.hpp
-      Teuchos::RCP<Teuchos::ParameterList>
-      p = Teuchos::rcp(new Teuchos::ParameterList("Surface Basis"));
+      Teuchos::RCP<Teuchos::ParameterList> p =
+          Teuchos::rcp(new Teuchos::ParameterList("Surface Basis"));
 
       // inputs
       p->set<std::string>("Reference Coordinates Name", "Coord Vec");
@@ -1359,15 +1296,16 @@ MechanicsProblem::constructEvaluators(
       p->set<std::string>("Reference Normal Name", "Reference Normal");
       p->set<std::string>("Current Basis Name", "Current Basis");
 
-      ev = Teuchos::rcp(new LCM::SurfaceBasis<EvalT, PHAL::AlbanyTraits>(*p, dl_));
+      ev = Teuchos::rcp(
+          new LCM::SurfaceBasis<EvalT, PHAL::AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
     if (have_mech_eq_) {  // Surface Jump
       // SurfaceVectorJump_Def.hpp
 
-      Teuchos::RCP<Teuchos::ParameterList>
-      p = Teuchos::rcp(new Teuchos::ParameterList("Surface Vector Jump"));
+      Teuchos::RCP<Teuchos::ParameterList> p =
+          Teuchos::rcp(new Teuchos::ParameterList("Surface Vector Jump"));
 
       // inputs
       p->set<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>(
@@ -1386,8 +1324,8 @@ MechanicsProblem::constructEvaluators(
     if (have_temperature_eq_ || have_ace_temperature_eq_ ||
         have_pore_pressure_eq_ || have_transport_eq_) {  // Temperature Jump
       // SurfaceScalarJump_Def.hpp
-      Teuchos::RCP<Teuchos::ParameterList>
-      p = Teuchos::rcp(new Teuchos::ParameterList("Surface Scalar Jump"));
+      Teuchos::RCP<Teuchos::ParameterList> p =
+          Teuchos::rcp(new Teuchos::ParameterList("Surface Scalar Jump"));
 
       // inputs
       p->set<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>(
@@ -1403,7 +1341,8 @@ MechanicsProblem::constructEvaluators(
       if (have_ace_temperature_eq_) {
         p->set<std::string>("Nodal ACE Temperature Name", "ACE Temperature");
         // outputs
-        p->set<std::string>("Jump of ACE Temperature Name", "ACE Temperature Jump");
+        p->set<std::string>(
+            "Jump of ACE Temperature Name", "ACE Temperature Jump");
         p->set<std::string>("MidPlane ACE Temperature Name", temperature);
       }
 
@@ -1436,22 +1375,11 @@ MechanicsProblem::constructEvaluators(
     if (have_mech_eq_) {  // Surface Gradient
       // SurfaceVectorGradient_Def.hpp
 
-      Teuchos::RCP<Teuchos::ParameterList>
-      p = Teuchos::rcp(new Teuchos::ParameterList("Surface Vector Gradient"));
+      Teuchos::RCP<Teuchos::ParameterList> p =
+          Teuchos::rcp(new Teuchos::ParameterList("Surface Vector Gradient"));
 
       // inputs
       p->set<RealType>("thickness", thickness);
-      // bool WeightedVolumeAverageJ(false);
-      // if (material_db_->isElementBlockParam(eb_name,
-      //     "Weighted Volume Average J"))
-      //   p->set<bool>("Weighted Volume Average J Name",
-      //       material_db_->getElementBlockParam<bool>(eb_name,
-      //           "Weighted Volume Average J"));
-      // if (material_db_->isElementBlockParam(eb_name,
-      //     "Average J Stabilization Parameter"))
-      //   p->set<RealType>("Averaged J Stabilization Parameter Name",
-      //       material_db_->getElementBlockParam<RealType>(eb_name,
-      //           "Average J Stabilization Parameter"));
       p->set<bool>("Weighted Volume Average J", volume_average_j);
       p->set<RealType>(
           "Average J Stabilization Parameter",
@@ -1473,8 +1401,7 @@ MechanicsProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
 
       // optional output of the deformation gradient
-      bool const
-      defgrad_flag = material_db_->getElementBlockParam<bool>(
+      bool const defgrad_flag = material_db_->getElementBlockParam<bool>(
           eb_name, "Output Deformation Gradient", false);
 
       p = stateMgr.registerStateVariable(
@@ -1487,16 +1414,15 @@ MechanicsProblem::constructEvaluators(
           true,
           defgrad_flag);
 
-      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+      ev =
+          Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
 
-      bool const
-      j_flag = material_db_->getElementBlockParam<bool>(
-          eb_name, "Output J", false);
+      bool const j_flag =
+          material_db_->getElementBlockParam<bool>(eb_name, "Output J", false);
 
       // need J and J_old to perform time integration for poromechanics problem
-      if (have_pore_pressure_eq_ || j_flag)
-      {
+      if (have_pore_pressure_eq_ || j_flag) {
         p = stateMgr.registerStateVariable(
             J,
             dl_->qp_scalar,
@@ -1507,17 +1433,17 @@ MechanicsProblem::constructEvaluators(
             true,
             j_flag);
 
-        ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+        ev = Teuchos::rcp(
+            new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
-    } // end if (have_mech_eq_)
+    }  // end if (have_mech_eq_)
 
     // Surface Gradient Operator
     if (have_pore_pressure_eq_) {
       // SurfaceScalarGradientOperator_Def.hpp
 
-      Teuchos::RCP<Teuchos::ParameterList>
-      p = Teuchos::rcp(
+      Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
           new Teuchos::ParameterList("Surface Scalar Gradient Operator"));
 
       // inputs
@@ -1553,8 +1479,7 @@ MechanicsProblem::constructEvaluators(
 
     if (have_transport_eq_) {
       // SurfaceScalarGradientOperator_Def.hpp
-      Teuchos::RCP<Teuchos::ParameterList>
-      p = Teuchos::rcp(
+      Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
           new Teuchos::ParameterList("Surface Scalar Gradient Operator"));
       // inputs
       p->set<RealType>("thickness", thickness);
@@ -1589,8 +1514,7 @@ MechanicsProblem::constructEvaluators(
 
     if (have_hydrostress_eq_) {
       // SurfaceScalarGradientOperator_Def.hpp
-      Teuchos::RCP<Teuchos::ParameterList>
-      p = Teuchos::rcp(
+      Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
           new Teuchos::ParameterList("Surface Scalar Gradient Operator"));
       // inputs
       p->set<RealType>("thickness", thickness);
@@ -1625,8 +1549,8 @@ MechanicsProblem::constructEvaluators(
 
     if (have_mech_eq_) {  // Surface Residual
       // SurfaceVectorResidual_Def.hpp
-      Teuchos::RCP<Teuchos::ParameterList>
-      p = Teuchos::rcp(new Teuchos::ParameterList("Surface Vector Residual"));
+      Teuchos::RCP<Teuchos::ParameterList> p =
+          Teuchos::rcp(new Teuchos::ParameterList("Surface Vector Residual"));
 
       // inputs
       p->set<RealType>("thickness", thickness);
@@ -1638,8 +1562,7 @@ MechanicsProblem::constructEvaluators(
 
       p->set<std::string>("Stress Name", firstPK);
       p->set<std::string>("Current Basis Name", "Current Basis");
-      p->set<std::string>(
-          "Reference Dual Basis Name", "Reference Dual Basis");
+      p->set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
       p->set<std::string>("Reference Normal Name", "Reference Normal");
       p->set<std::string>("Reference Area Name", "Weights");
 
@@ -1663,13 +1586,13 @@ MechanicsProblem::constructEvaluators(
       ev = Teuchos::rcp(
           new LCM::SurfaceVectorResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
-    } // end of coehesive/surface element block
+    }  // end of coehesive/surface element block
 
-  } else { // surface_element == False
+  } else {                // surface_element == False
     if (have_mech_eq_) {  // Kinematics quantities
 
-      Teuchos::RCP<Teuchos::ParameterList>
-      p = Teuchos::rcp(new Teuchos::ParameterList("Kinematics"));
+      Teuchos::RCP<Teuchos::ParameterList> p =
+          Teuchos::rcp(new Teuchos::ParameterList("Kinematics"));
 
       p->set<bool>("Weighted Volume Average J", volume_average_j);
       p->set<RealType>(
@@ -1677,23 +1600,19 @@ MechanicsProblem::constructEvaluators(
           volume_average_stabilization_param);
 
       // strain
-      if (small_strain) {
-        p->set<std::string>("Strain Name", "Strain");
-      }
+      if (small_strain) { p->set<std::string>("Strain Name", "Strain"); }
 
       // set flag for return strain and velocity gradient
-      bool
-      have_velocity_gradient(false);
+      bool have_velocity_gradient(false);
 
-      std::string
-      flag = "Velocity Gradient Flag";
+      std::string flag = "Velocity Gradient Flag";
 
       if (material_db_->isElementBlockParam(eb_name, flag)) {
+        p->set<bool>(
+            flag, material_db_->getElementBlockParam<bool>(eb_name, flag));
 
-        p->set<bool>(flag, material_db_->getElementBlockParam<bool>(eb_name, flag));
-
-        have_velocity_gradient = material_db_->getElementBlockParam<bool>(
-            eb_name, flag);
+        have_velocity_gradient =
+            material_db_->getElementBlockParam<bool>(eb_name, flag);
 
         if (have_velocity_gradient) {
           p->set<std::string>("Velocity Gradient Name", "Velocity Gradient");
@@ -1701,13 +1620,11 @@ MechanicsProblem::constructEvaluators(
       }
 
       // set flag for return strain and plastic velocity gradient
-      bool
-      have_velocity_gradient_plastic{false};
+      bool have_velocity_gradient_plastic{false};
 
       flag = "Plastic Velocity Gradient Flag";
 
       if (material_db_->isElementBlockParam(eb_name, flag)) {
-
         p->set<bool>(
             flag, material_db_->getElementBlockParam<bool>(eb_name, flag));
 
@@ -1736,26 +1653,28 @@ MechanicsProblem::constructEvaluators(
 
       if (Teuchos::nonnull(rc_mgr_)) {
         rc_mgr_->registerField(
-            defgrad, dl_->qp_tensor, AAdapt::rc::Init::identity,
-            AAdapt::rc::Transformation::right_polar_LieR_LieS, p);
+            defgrad,
+            dl_->qp_tensor,
+            AAdapt::rc::Init::identity,
+            AAdapt::rc::Transformation::right_polar_LieR_LieS,
+            p);
         p->set<std::string>("Displacement Name", "Displacement");
       }
 
       // ev = Teuchos::rcp(new LCM::DefGrad<EvalT,PHAL::AlbanyTraits>(*p));
-      ev = Teuchos::rcp(new LCM::Kinematics<EvalT, PHAL::AlbanyTraits>(*p, dl_));
+      ev =
+          Teuchos::rcp(new LCM::Kinematics<EvalT, PHAL::AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
 
       // optional output
-      bool const
-      output_flag = material_db_->getElementBlockParam<bool>(
-            eb_name, "Output Deformation Gradient", false);
+      bool const output_flag = material_db_->getElementBlockParam<bool>(
+          eb_name, "Output Deformation Gradient", false);
 
       // Old values of the deformation gradient
       // optional output
       // FIXME: This currently does nothing - CA
-      bool const
-      old_defgrad_flag = material_db_->getElementBlockParam<bool>(
-            eb_name, "Old Deformation Gradient", false);
+      bool const old_defgrad_flag = material_db_->getElementBlockParam<bool>(
+          eb_name, "Old Deformation Gradient", false);
 
       p = stateMgr.registerStateVariable(
           defgrad,
@@ -1767,17 +1686,16 @@ MechanicsProblem::constructEvaluators(
           true,
           output_flag);
 
-      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+      ev =
+          Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
 
       fm0.template registerEvaluator<EvalT>(ev);
 
       // optional output of the integration weights
-      bool const
-      weights_flag = material_db_->getElementBlockParam<bool>(
-            eb_name, "Output Integration Weights", false);
+      bool const weights_flag = material_db_->getElementBlockParam<bool>(
+          eb_name, "Output Integration Weights", false);
 
-      if (weights_flag)
-      {
+      if (weights_flag) {
         p = stateMgr.registerStateVariable(
             "Weights",
             dl_->qp_scalar,
@@ -1788,28 +1706,27 @@ MechanicsProblem::constructEvaluators(
             false,
             true);
 
-        ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+        ev = Teuchos::rcp(
+            new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
 
         fm0.template registerEvaluator<EvalT>(ev);
       }
 
-      bool const
-      j_flag = material_db_->getElementBlockParam<bool>(
-        eb_name, "Output J", false);
+      bool const j_flag =
+          material_db_->getElementBlockParam<bool>(eb_name, "Output J", false);
 
       p = stateMgr.registerStateVariable(
           J, dl_->qp_scalar, dl_->dummy, eb_name, "scalar", 1.0, true, false);
 
-      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+      ev =
+          Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
 
       fm0.template registerEvaluator<EvalT>(ev);
 
       // Optional output: strain
-      if (small_strain)
-      {
-        bool const
-        output_strain = material_db_->getElementBlockParam<bool>(
-              eb_name, "Output Strain", false);
+      if (small_strain) {
+        bool const output_strain = material_db_->getElementBlockParam<bool>(
+            eb_name, "Output Strain", false);
 
         if (output_flag) {
           p = stateMgr.registerStateVariable(
@@ -1822,20 +1739,18 @@ MechanicsProblem::constructEvaluators(
               false,
               output_strain);
 
-          ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+          ev = Teuchos::rcp(
+              new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
         }
       }
 
       // Optional output: velocity gradient
-      if (have_velocity_gradient)
-      {
-        bool const
-        output_velgrad = material_db_->getElementBlockParam<bool>(
-              eb_name, "Output Velocity Gradient", false);
+      if (have_velocity_gradient) {
+        bool const output_velgrad = material_db_->getElementBlockParam<bool>(
+            eb_name, "Output Velocity Gradient", false);
 
-        if (output_velgrad)
-        {
+        if (output_velgrad) {
           p = stateMgr.registerStateVariable(
               "Velocity Gradient",
               dl_->qp_tensor,
@@ -1854,14 +1769,11 @@ MechanicsProblem::constructEvaluators(
       }
 
       // Optional output:plastic velocity gradient
-      if (have_velocity_gradient_plastic)
-      {
-        bool const
-        output_velgrad_p = material_db_->getElementBlockParam<bool>(
-              eb_name, "Output Plastic Velocity Gradient", false);
+      if (have_velocity_gradient_plastic) {
+        bool const output_velgrad_p = material_db_->getElementBlockParam<bool>(
+            eb_name, "Output Plastic Velocity Gradient", false);
 
-        if (output_velgrad_p)
-        {
+        if (output_velgrad_p) {
           p = stateMgr.registerStateVariable(
               "Plastic Velocity Gradient",
               dl_->qp_tensor,
@@ -1872,44 +1784,42 @@ MechanicsProblem::constructEvaluators(
               false,
               true);
 
-          ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+          ev = Teuchos::rcp(
+              new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
         }
       }
     }
-  
+
     if (have_mech_eq_) {  // Analytic Mass residual
 
-      Teuchos::RCP<Teuchos::ParameterList>
-      p = Teuchos::rcp(new Teuchos::ParameterList("Analytic Mass Residual"));
+      Teuchos::RCP<Teuchos::ParameterList> p =
+          Teuchos::rcp(new Teuchos::ParameterList("Analytic Mass Residual"));
 
       // Input
       p->set<std::string>("Weighted BF Name", "wBF");
       p->set<std::string>("Acceleration Name", "Acceleration");
-      p->set<std::string>("Weights Name",          "Weights");
+      p->set<std::string>("Weights Name", "Weights");
       // Mechanics residual need value of density for transient analysis.
       // Get it from material. Assumed constant in element block.
       if (material_db_->isElementBlockParam(eb_name, "Density")) {
         p->set<RealType>(
-            "Density", 
+            "Density",
             material_db_->getElementBlockParam<RealType>(eb_name, "Density"));
       }
 
-      const bool 
-      resid_using_cub = material_db_->getElementBlockParam<bool>(
-           eb_name, "Residual Computed Using Cubature", false);
+      const bool resid_using_cub = material_db_->getElementBlockParam<bool>(
+          eb_name, "Residual Computed Using Cubature", false);
       p->set<bool>("Residual Computed Using Cubature", resid_using_cub);
 
       p->set<bool>("Use Composite Tet 10", composite_);
 
-      const bool 
-      use_analytic_mass = material_db_->getElementBlockParam<bool>(
-           eb_name, "Use Analytic Mass", false);
+      const bool use_analytic_mass = material_db_->getElementBlockParam<bool>(
+          eb_name, "Use Analytic Mass", false);
       p->set<bool>("Use Analytic Mass", use_analytic_mass);
-      
-      const bool 
-      lump_analytic_mass = material_db_->getElementBlockParam<bool>(
-           eb_name, "Lump Analytic Mass", false);
+
+      const bool lump_analytic_mass = material_db_->getElementBlockParam<bool>(
+          eb_name, "Lump Analytic Mass", false);
       p->set<bool>("Lump Analytic Mass", lump_analytic_mass);
 
       p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
@@ -1918,12 +1828,12 @@ MechanicsProblem::constructEvaluators(
       ev = Teuchos::rcp(
           new LCM::AnalyticMassResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
-    } // end if (have_mech_eq_)  
+    }  // end if (have_mech_eq_)
 
     if (have_mech_eq_) {  // Mechanics Residual
 
-      Teuchos::RCP<Teuchos::ParameterList>
-      p = Teuchos::rcp(new Teuchos::ParameterList("Displacement Residual"));
+      Teuchos::RCP<Teuchos::ParameterList> p =
+          Teuchos::rcp(new Teuchos::ParameterList("Displacement Residual"));
 
       // Input
       p->set<std::string>("Stress Name", firstPK);
@@ -1932,9 +1842,8 @@ MechanicsProblem::constructEvaluators(
       p->set<std::string>("Acceleration Name", "Acceleration");
       p->set<std::string>("Body Force Name", "Body Force");
       p->set<std::string>("Analytic Mass Name", "Analytic Mass Residual");
-      const bool 
-      use_analytic_mass = material_db_->getElementBlockParam<bool>(
-           eb_name, "Use Analytic Mass", false);
+      const bool use_analytic_mass = material_db_->getElementBlockParam<bool>(
+          eb_name, "Use Analytic Mass", false);
       p->set<bool>("Use Analytic Mass", use_analytic_mass);
       if (Teuchos::nonnull(rc_mgr_)) {
         p->set<std::string>("DefGrad Name", defgrad);
@@ -1951,22 +1860,18 @@ MechanicsProblem::constructEvaluators(
       // Mechanics residual need value of density for transient analysis.
       // Get it from material. Assumed constant in element block.
       if (material_db_->isElementBlockParam(eb_name, "Density")) {
-
-        material_density = material_db_->getElementBlockParam<RealType>(eb_name, "Density");
-        p->set<RealType>(
-            "Density",
-            material_density);
-
+        material_density =
+            material_db_->getElementBlockParam<RealType>(eb_name, "Density");
+        p->set<RealType>("Density", material_density);
       }
 
       // Optional body force
       if (material_db_->isElementBlockSublist(eb_name, "Body Force")) {
-
         p->set<bool>("Has Body Force", true);
 
-        Teuchos::ParameterList &
-        eb_param = material_db_->getElementBlockSublist(eb_name, "Body Force");
-        eb_param.set<RealType>( "Density", material_density);
+        Teuchos::ParameterList& eb_param =
+            material_db_->getElementBlockSublist(eb_name, "Body Force");
+        eb_param.set<RealType>("Density", material_density);
 
         ev = Teuchos::rcp(
             new LCM::BodyForce<EvalT, PHAL::AlbanyTraits>(eb_param, dl_));
@@ -1980,14 +1885,14 @@ MechanicsProblem::constructEvaluators(
       ev = Teuchos::rcp(
           new LCM::MechanicsResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
-    } // end if (have_mech_eq_)
-  } // end if(surface_element)
+    }  // end if (have_mech_eq_)
+  }    // end if(surface_element)
 
   if (have_mech_eq_) {
     // convert Cauchy stress to first Piola-Kirchhoff
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("First PK Stress"));
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("First PK Stress"));
 
     // Input
     p->set<std::string>("Stress Name", cauchy);
@@ -2017,14 +1922,12 @@ MechanicsProblem::constructEvaluators(
   }
 
   // Element length in the direction of solution gradient
-  bool const
-  have_pressure_or_transport =
+  bool const have_pressure_or_transport =
       have_stab_pressure_eq_ || have_pore_pressure_eq_ || have_transport_eq_;
 
   if (have_pressure_or_transport) {
-
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("Gradient_Element_Length"));
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("Gradient_Element_Length"));
 
     // Input
     if (!surface_element) {  // bulk element length
@@ -2065,8 +1968,8 @@ MechanicsProblem::constructEvaluators(
 
   if (have_pore_pressure_eq_) {  // Porosity
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList);
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList);
 
     p->set<std::string>("Porosity Name", porosity);
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
@@ -2086,16 +1989,19 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
 
     // Output Porosity
-    bool const
-    porosity_flag = material_db_->getElementBlockParam<bool>(
+    bool const porosity_flag = material_db_->getElementBlockParam<bool>(
         eb_name, "Output " + porosity, false);
 
-    if (porosity_flag)
-    {
+    if (porosity_flag) {
       p = stateMgr.registerStateVariable(
-          porosity, dl_->qp_scalar, dl_->dummy, eb_name, "scalar",
+          porosity,
+          dl_->qp_scalar,
+          dl_->dummy,
+          eb_name,
+          "scalar",
           0.5,  // This is really bad practice. It needs to be fixed
-          false, true);
+          false,
+          true);
       ev =
           Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -2104,8 +2010,8 @@ MechanicsProblem::constructEvaluators(
 
   if (have_pore_pressure_eq_) {  // Biot Coefficient
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList);
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList);
 
     p->set<std::string>("Biot Coefficient Name", biotCoeff);
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
@@ -2126,8 +2032,8 @@ MechanicsProblem::constructEvaluators(
 
   if (have_pore_pressure_eq_) {  // Biot Modulus
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList);
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList);
 
     p->set<std::string>("Biot Modulus Name", biotModulus);
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
@@ -2152,8 +2058,8 @@ MechanicsProblem::constructEvaluators(
 
   if (have_pore_pressure_eq_) {  // Kozeny-Carman Permeaiblity
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList);
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList);
 
     p->set<std::string>("Kozeny-Carman Permeability Name", kcPerm);
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
@@ -2177,12 +2083,10 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
 
     // Output
-    bool const
-    output_kcperm = material_db_->getElementBlockParam<bool>(
+    bool const output_kcperm = material_db_->getElementBlockParam<bool>(
         eb_name, "Output " + kcPerm, false);
 
-    if (output_kcperm)
-    {
+    if (output_kcperm) {
       p = stateMgr.registerStateVariable(
           kcPerm,
           dl_->qp_scalar,
@@ -2193,16 +2097,16 @@ MechanicsProblem::constructEvaluators(
           false,
           true);
 
-      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+      ev =
+          Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
   }
 
   // Pore Pressure Residual (Bulk Element)
   if (have_pore_pressure_eq_ && !surface_element) {
-
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("Pore_Pressure Residual"));
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("Pore_Pressure Residual"));
 
     // Input
 
@@ -2260,8 +2164,7 @@ MechanicsProblem::constructEvaluators(
           "QP Scalar Data Layout", dl_->qp_scalar);
     }
 
-    RealType const
-    stab_param = material_db_->getElementBlockParam<RealType>(
+    RealType const stab_param = material_db_->getElementBlockParam<RealType>(
         eb_name, "Stabilization Parameter", 0.0);
 
     p->set<RealType>("Stabilization Parameter", stab_param);
@@ -2278,9 +2181,8 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
 
     // Output QP pore pressure
-    bool const
-    output_ip = material_db_->getElementBlockParam<bool>(
-          eb_name, "Output IP" + porePressure, false);
+    bool const output_ip = material_db_->getElementBlockParam<bool>(
+        eb_name, "Output IP" + porePressure, false);
 
     p = stateMgr.registerStateVariable(
         porePressure,
@@ -2299,8 +2201,8 @@ MechanicsProblem::constructEvaluators(
   if (have_pore_pressure_eq_ && surface_element) {
     // Pore Pressure Resid for Surface
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("Pore_Pressure Residual"));
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("Pore_Pressure Residual"));
 
     // Input
     p->set<RealType>("thickness", thickness);
@@ -2339,12 +2241,12 @@ MechanicsProblem::constructEvaluators(
 
   if (have_transport_eq_ || have_transport_) {  // Transport Coefficients
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("Transport Coefficients"));
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("Transport Coefficients"));
 
-    Teuchos::ParameterList &
-    param_sublist = material_db_->getElementBlockSublist(eb_name, matName)
-        .sublist("Transport Coefficients");
+    Teuchos::ParameterList& param_sublist =
+        material_db_->getElementBlockSublist(eb_name, matName)
+            .sublist("Transport Coefficients");
 
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_sublist);
 
@@ -2383,12 +2285,10 @@ MechanicsProblem::constructEvaluators(
         new LCM::TransportCoefficients<EvalT, PHAL::AlbanyTraits>(*p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    bool const
-    output_totc = material_db_->getElementBlockParam<bool>(
-          eb_name, "Output " + trappedConcentration, false);
+    bool const output_totc = material_db_->getElementBlockParam<bool>(
+        eb_name, "Output " + trappedConcentration, false);
 
-    if (output_totc)
-    {
+    if (output_totc) {
       p = stateMgr.registerStateVariable(
           trappedConcentration,
           dl_->qp_scalar,
@@ -2399,16 +2299,15 @@ MechanicsProblem::constructEvaluators(
           false,
           true);
 
-      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+      ev =
+          Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    bool const
-    output_trapc = material_db_->getElementBlockParam<bool>(
-          eb_name, "Output " + totalConcentration, false);
+    bool const output_trapc = material_db_->getElementBlockParam<bool>(
+        eb_name, "Output " + totalConcentration, false);
 
-    if (output_trapc)
-    {
+    if (output_trapc) {
       p = stateMgr.registerStateVariable(
           totalConcentration,
           dl_->qp_scalar,
@@ -2419,17 +2318,16 @@ MechanicsProblem::constructEvaluators(
           true,
           true);
 
-      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+      ev =
+          Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
     // Strain Rate Factor
-    bool const
-    output_srfac = material_db_->getElementBlockParam<bool>(
-          eb_name, "Output " + strainRateFactor, false);
+    bool const output_srfac = material_db_->getElementBlockParam<bool>(
+        eb_name, "Output " + strainRateFactor, false);
 
-    if (output_srfac)
-    {
+    if (output_srfac) {
       p = stateMgr.registerStateVariable(
           strainRateFactor,
           dl_->qp_scalar,
@@ -2440,17 +2338,16 @@ MechanicsProblem::constructEvaluators(
           false,
           true);
 
-      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+      ev =
+          Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
     // Convection Coefficient
-    bool const
-    output_conv = material_db_->getElementBlockParam<bool>(
-          eb_name, "Output " + convectionCoefficient, false);
+    bool const output_conv = material_db_->getElementBlockParam<bool>(
+        eb_name, "Output " + convectionCoefficient, false);
 
-    if (output_conv)
-    {
+    if (output_conv) {
       p = stateMgr.registerStateVariable(
           convectionCoefficient,
           dl_->qp_scalar,
@@ -2461,17 +2358,16 @@ MechanicsProblem::constructEvaluators(
           false,
           true);
 
-      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+      ev =
+          Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
     // Diffusion Coefficient
-    bool const
-    output_diff = material_db_->getElementBlockParam<bool>(
-          eb_name, "Output " + diffusionCoefficient, false);
+    bool const output_diff = material_db_->getElementBlockParam<bool>(
+        eb_name, "Output " + diffusionCoefficient, false);
 
-    if (output_diff)
-    {
+    if (output_diff) {
       p = stateMgr.registerStateVariable(
           diffusionCoefficient,
           dl_->qp_scalar,
@@ -2482,17 +2378,16 @@ MechanicsProblem::constructEvaluators(
           false,
           true);
 
-      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+      ev =
+          Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
     // Effective Diffusivity
-    bool const
-    output_effd = material_db_->getElementBlockParam<bool>(
-          eb_name, "Output " + effectiveDiffusivity, false);
+    bool const output_effd = material_db_->getElementBlockParam<bool>(
+        eb_name, "Output " + effectiveDiffusivity, false);
 
-    if (output_effd)
-    {
+    if (output_effd) {
       p = stateMgr.registerStateVariable(
           effectiveDiffusivity,
           dl_->qp_scalar,
@@ -2503,7 +2398,8 @@ MechanicsProblem::constructEvaluators(
           false,
           true);
 
-      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+      ev =
+          Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
   }
@@ -2513,25 +2409,24 @@ MechanicsProblem::constructEvaluators(
     // Get material list prior to establishing a new parameter list
 
     // Check if Tritium Sublist exists. If true, move forward
-    if (param_list.isSublist("Tritium Coefficients"))
-    {
-      Teuchos::RCP<Teuchos::ParameterList>
-      p = Teuchos::rcp(new Teuchos::ParameterList("Helium ODEs"));
+    if (param_list.isSublist("Tritium Coefficients")) {
+      Teuchos::RCP<Teuchos::ParameterList> p =
+          Teuchos::rcp(new Teuchos::ParameterList("Helium ODEs"));
 
       // Rather than combine lists, we choose to invoke multiple parameter
       // lists and stuff them separately into p.
       // All lists need to be reflected in HeliumODEs_Def.hpp
-      Teuchos::ParameterList &
-      transport_param = material_db_->getElementBlockSublist(eb_name, matName)
-          .sublist("Transport Coefficients");
+      Teuchos::ParameterList& transport_param =
+          material_db_->getElementBlockSublist(eb_name, matName)
+              .sublist("Transport Coefficients");
 
-      Teuchos::ParameterList &
-      tritium_param = material_db_->getElementBlockSublist(eb_name, matName)
-          .sublist("Tritium Coefficients");
+      Teuchos::ParameterList& tritium_param =
+          material_db_->getElementBlockSublist(eb_name, matName)
+              .sublist("Tritium Coefficients");
 
-      Teuchos::ParameterList &
-      molar_param = material_db_->getElementBlockSublist(eb_name, matName)
-          .sublist("Molar Volume");
+      Teuchos::ParameterList& molar_param =
+          material_db_->getElementBlockSublist(eb_name, matName)
+              .sublist("Molar Volume");
 
       p->set<Teuchos::ParameterList*>("Transport Parameters", &transport_param);
       p->set<Teuchos::ParameterList*>("Tritium Parameters", &tritium_param);
@@ -2547,7 +2442,8 @@ MechanicsProblem::constructEvaluators(
       p->set<std::string>(
           "Bubble Volume Fraction Name", bubble_volume_fraction);
 
-      ev = Teuchos::rcp(new LCM::HeliumODEs<EvalT, PHAL::AlbanyTraits>(*p, dl_));
+      ev =
+          Teuchos::rcp(new LCM::HeliumODEs<EvalT, PHAL::AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
 
       // Outputting state variables
@@ -2558,12 +2454,10 @@ MechanicsProblem::constructEvaluators(
       //
       // helium concentration
 
-      bool const
-      output_he = material_db_->getElementBlockParam<bool>(
-            eb_name, "Output " + he_concentration, false);
+      bool const output_he = material_db_->getElementBlockParam<bool>(
+          eb_name, "Output " + he_concentration, false);
 
-      if (output_he)
-      {
+      if (output_he) {
         p = stateMgr.registerStateVariable(
             he_concentration,
             dl_->qp_scalar,
@@ -2580,44 +2474,40 @@ MechanicsProblem::constructEvaluators(
         fm0.template registerEvaluator<EvalT>(ev);
       }
       // total bubble density
-      bool const
-      output_bubb_tot = material_db_->getElementBlockParam<bool>(
-            eb_name, "Output " + total_bubble_density, false);
+      bool const output_bubb_tot = material_db_->getElementBlockParam<bool>(
+          eb_name, "Output " + total_bubble_density, false);
 
-      if (output_bubb_tot)
-      {
-        Teuchos::RCP<Teuchos::ParameterList> const
-        p = stateMgr.registerStateVariable(
-            total_bubble_density,
-            dl_->qp_scalar,
-            dl_->dummy,
-            eb_name,
-            "scalar",
-            0.0,
-            true,
-            true);
+      if (output_bubb_tot) {
+        Teuchos::RCP<Teuchos::ParameterList> const p =
+            stateMgr.registerStateVariable(
+                total_bubble_density,
+                dl_->qp_scalar,
+                dl_->dummy,
+                eb_name,
+                "scalar",
+                0.0,
+                true,
+                true);
 
         ev = Teuchos::rcp(
             new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
       // bubble volume fraction
-      bool const
-      output_bubb_frac = material_db_->getElementBlockParam<bool>(
-            eb_name, "Output " + bubble_volume_fraction, false);
+      bool const output_bubb_frac = material_db_->getElementBlockParam<bool>(
+          eb_name, "Output " + bubble_volume_fraction, false);
 
-      if (output_bubb_frac)
-      {
-        Teuchos::RCP<Teuchos::ParameterList> const
-        p = stateMgr.registerStateVariable(
-            bubble_volume_fraction,
-            dl_->qp_scalar,
-            dl_->dummy,
-            eb_name,
-            "scalar",
-            0.0,
-            true,
-            true);
+      if (output_bubb_frac) {
+        Teuchos::RCP<Teuchos::ParameterList> const p =
+            stateMgr.registerStateVariable(
+                bubble_volume_fraction,
+                dl_->qp_scalar,
+                dl_->dummy,
+                eb_name,
+                "scalar",
+                0.0,
+                true,
+                true);
 
         ev = Teuchos::rcp(
             new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
@@ -2628,9 +2518,8 @@ MechanicsProblem::constructEvaluators(
 
   // Transport of the temperature field
   if (have_temperature_eq_ && !surface_element) {
-
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("ThermoMechanical Coefficients"));
+    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+        new Teuchos::ParameterList("ThermoMechanical Coefficients"));
 
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
@@ -2648,11 +2537,9 @@ MechanicsProblem::constructEvaluators(
     p->set<std::string>("Delta Time Name", "Delta Time");
 
     // MJJ: Need this here to compute responses later
-    RealType const
-    heat_capacity = param_list.get<RealType>("Heat Capacity");
+    RealType const heat_capacity = param_list.get<RealType>("Heat Capacity");
 
-    RealType const
-    density = param_list.get<RealType>("Density");
+    RealType const density = param_list.get<RealType>("Density");
 
     pFromProb->set<RealType>("Heat Capacity", heat_capacity);
     pFromProb->set<RealType>("Density", density);
@@ -2674,9 +2561,8 @@ MechanicsProblem::constructEvaluators(
 
   // Equation for ACE temperature
   if (have_ace_temperature_eq_ == true && surface_element == false) {
-
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("ACE Temperature Residual"));
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("ACE Temperature Residual"));
 
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
@@ -2685,8 +2571,10 @@ MechanicsProblem::constructEvaluators(
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<std::string>("ACE Temperature Name", "ACE Temperature");
     p->set<std::string>("ACE Temperature Dot Name", "ACE Temperature Dot");
-    p->set<std::string>("ACE Temperature Gradient Name", "ACE Temperature Gradient");
-    p->set<std::string>("ACE Thermal Conductivity Name", "ACE Thermal Conductivity");
+    p->set<std::string>(
+        "ACE Temperature Gradient Name", "ACE Temperature Gradient");
+    p->set<std::string>(
+        "ACE Thermal Conductivity Name", "ACE Thermal Conductivity");
     p->set<std::string>("ACE Thermal Inertia Name", "ACE Thermal Inertia");
     p->set<std::string>("ACE Residual Name", "ACE Temperature Residual");
     if (SolutionType == SolutionMethodType::Continuation) {
@@ -2707,9 +2595,8 @@ MechanicsProblem::constructEvaluators(
 
   // Transport of the temperature field
   if (have_temperature_eq_ && !surface_element) {
-
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("Temperature Residual"));
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("Temperature Residual"));
 
     // Input
     p->set<std::string>("Scalar Variable Name", "Temperature");
@@ -2744,7 +2631,8 @@ MechanicsProblem::constructEvaluators(
     // Source
     // TODO: Make this more general
     if ((have_mech_ || have_mech_eq_) &&
-        (material_model_name == "J2" || material_model_name == "CrystalPlasticity")) {
+        (material_model_name == "J2" ||
+         material_model_name == "CrystalPlasticity")) {
       p->set<bool>("Have Source", true);
       p->set<std::string>("Source Name", mech_source);
     }
@@ -2767,9 +2655,8 @@ MechanicsProblem::constructEvaluators(
 
   // Hydrogen Transport model proposed in Foulk et al 2014
   if (have_transport_eq_ && !surface_element) {
-
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("Transport Residual"));
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("Transport Residual"));
 
     // Input
     p->set<std::string>("Element Length Name", gradient_element_length);
@@ -2805,8 +2692,7 @@ MechanicsProblem::constructEvaluators(
     p->set<RealType>("Stabilization Parameter", stab_param);
     p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
 
-    RealType
-    decay_constant{0.0};
+    RealType decay_constant{0.0};
 
     // Check if Tritium Sublist exists. If true, move forward
     if (param_list.isSublist("Tritium Coefficients")) {
@@ -2829,8 +2715,8 @@ MechanicsProblem::constructEvaluators(
 
   if (have_transport_eq_ && surface_element) {  // Transport Resid for Surface
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("Transport Residual"));
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("Transport Residual"));
 
     // Input
     p->set<RealType>("thickness", thickness);
@@ -2886,8 +2772,8 @@ MechanicsProblem::constructEvaluators(
   if (have_hydrostress_eq_ && !surface_element) {
     // L2 hydrostatic stress projection
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("HydroStress Residual"));
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("HydroStress Residual"));
 
     // Input
     p->set<std::string>("Weighted BF Name", "wBF");
@@ -2925,8 +2811,8 @@ MechanicsProblem::constructEvaluators(
 
   if (have_hydrostress_eq_ && surface_element) {
     // Hydrostress Projection Resid for Surface
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("HydroStress Residual"));
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("HydroStress Residual"));
 
     // Input
     p->set<RealType>("thickness", thickness);
@@ -2956,9 +2842,8 @@ MechanicsProblem::constructEvaluators(
   }
 
   if (have_stab_pressure_eq_) {
-
-    Teuchos::RCP<Teuchos::ParameterList>
-    p = Teuchos::rcp(new Teuchos::ParameterList("Stabilized Pressure Residual"));
+    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+        new Teuchos::ParameterList("Stabilized Pressure Residual"));
 
     // Input
     p->set<std::string>("Shear Modulus Name", "Shear Modulus");
@@ -2972,8 +2857,7 @@ MechanicsProblem::constructEvaluators(
     p->set<std::string>(
         "Element Characteristic Length Name", gradient_element_length);
 
-    RealType
-    stab_param{0.0};
+    RealType stab_param{0.0};
 
     if (material_db_->isElementBlockParam(eb_name, "Stabilization Parameter")) {
       stab_param = material_db_->getElementBlockParam<RealType>(
@@ -2993,71 +2877,59 @@ MechanicsProblem::constructEvaluators(
   if (Teuchos::nonnull(rc_mgr_)) rc_mgr_->createEvaluators<EvalT>(fm0, dl_);
 
   if (fieldManagerChoice == BUILD_RESID_FM) {
-
-    Teuchos::RCP<const PHX::FieldTag>
-    ret_tag;
+    Teuchos::RCP<const PHX::FieldTag> ret_tag;
 
     if (have_mech_eq_) {
-
-      PHX::Tag<typename EvalT::ScalarT>
-      res_tag("Scatter", dl_->dummy);
+      PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl_->dummy);
 
       fm0.requireField<EvalT>(res_tag);
       ret_tag = res_tag.clone();
     }
     if (have_pore_pressure_eq_) {
-
-      PHX::Tag<typename EvalT::ScalarT>
-      pore_tag("Scatter Pore_Pressure", dl_->dummy);
+      PHX::Tag<typename EvalT::ScalarT> pore_tag(
+          "Scatter Pore_Pressure", dl_->dummy);
 
       fm0.requireField<EvalT>(pore_tag);
       ret_tag = pore_tag.clone();
     }
     if (have_stab_pressure_eq_) {
-
-      PHX::Tag<typename EvalT::ScalarT>
-      pres_tag("Scatter Pressure", dl_->dummy);
+      PHX::Tag<typename EvalT::ScalarT> pres_tag(
+          "Scatter Pressure", dl_->dummy);
 
       fm0.requireField<EvalT>(pres_tag);
       ret_tag = pres_tag.clone();
     }
     if (have_temperature_eq_) {
-
-      PHX::Tag<typename EvalT::ScalarT>
-      temperature_tag("Scatter Temperature", dl_->dummy);
+      PHX::Tag<typename EvalT::ScalarT> temperature_tag(
+          "Scatter Temperature", dl_->dummy);
 
       fm0.requireField<EvalT>(temperature_tag);
       ret_tag = temperature_tag.clone();
     }
     if (have_ace_temperature_eq_) {
-
-      PHX::Tag<typename EvalT::ScalarT>
-      ace_temperature_tag("Scatter ACE Temperature", dl_->dummy);
+      PHX::Tag<typename EvalT::ScalarT> ace_temperature_tag(
+          "Scatter ACE Temperature", dl_->dummy);
 
       fm0.requireField<EvalT>(ace_temperature_tag);
       ret_tag = ace_temperature_tag.clone();
     }
     if (have_transport_eq_) {
-
-      PHX::Tag<typename EvalT::ScalarT>
-      transport_tag("Scatter Transport", dl_->dummy);
+      PHX::Tag<typename EvalT::ScalarT> transport_tag(
+          "Scatter Transport", dl_->dummy);
 
       fm0.requireField<EvalT>(transport_tag);
       ret_tag = transport_tag.clone();
     }
     if (have_hydrostress_eq_) {
-
-      PHX::Tag<typename EvalT::ScalarT>
-      l2projection_tag("Scatter HydroStress", dl_->dummy);
+      PHX::Tag<typename EvalT::ScalarT> l2projection_tag(
+          "Scatter HydroStress", dl_->dummy);
 
       fm0.requireField<EvalT>(l2projection_tag);
       ret_tag = l2projection_tag.clone();
     }
     return ret_tag;
   } else if (fieldManagerChoice == BUILD_RESPONSE_FM) {
-
-    ResponseUtilities<EvalT, PHAL::AlbanyTraits>
-    respUtils(dl_);
+    ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl_);
 
     return respUtils.constructResponses(
         fm0, *responseList, pFromProb, stateMgr, &meshSpecs);
@@ -3065,7 +2937,6 @@ MechanicsProblem::constructEvaluators(
 
   return Teuchos::null;
 
-} // constructEvaluators
+}  // constructEvaluators
 
-} // namespace Albany
-
+}  // namespace Albany
