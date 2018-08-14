@@ -7,29 +7,28 @@
 #if !defined(LCM_SchwarzCoupled_hpp)
 #define LCM_SchwarzCoupled_hpp
 
-#include "Albany_ModelEvaluatorT.hpp"
 #include "Albany_DataTypes.hpp"
+#include "Albany_MaterialDatabase.hpp"
+#include "Albany_ModelEvaluatorT.hpp"
 #include "Schwarz_BoundaryJacobian.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
-#include "Albany_MaterialDatabase.hpp"
 
 namespace LCM {
 
 ///
 /// SchwarzCoupled coupling class
 ///
-class SchwarzCoupled: public Thyra::ModelEvaluatorDefaultBase<ST> {
-
-public:
-
+class SchwarzCoupled : public Thyra::ModelEvaluatorDefaultBase<ST>
+{
+ public:
   /// Constructor
   SchwarzCoupled(
-      Teuchos::RCP<Teuchos::ParameterList> const & app_params,
-      Teuchos::RCP<Teuchos::Comm<int> const> const & comm,
-      Teuchos::RCP<Tpetra_Vector const> const & initial_guessT,
-      Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const &
-      lowsfb);
+      Teuchos::RCP<Teuchos::ParameterList> const&   app_params,
+      Teuchos::RCP<Teuchos::Comm<int> const> const& comm,
+      Teuchos::RCP<Tpetra_Vector const> const&      initial_guessT,
+      Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const&
+          lowsfb);
 
   /// Destructor
   ~SchwarzCoupled();
@@ -82,8 +81,8 @@ public:
 
   void
   reportFinalPoint(
-      Thyra::ModelEvaluatorBase::InArgs<ST> const & final_point,
-      bool const was_solved);
+      Thyra::ModelEvaluatorBase::InArgs<ST> const& final_point,
+      bool const                                   was_solved);
 
   void
   allocateVectors();
@@ -93,7 +92,7 @@ public:
 
   Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
   getThyraDomainSpace() const;
-  
+
   Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
   getThyraResponseSpace(int l) const;
 
@@ -101,21 +100,19 @@ public:
   getThyraParamSpace(int l) const;
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
-  getApps() const {return apps_;}
+  getApps() const
+  {
+    return apps_;
+  }
 
-protected:
+ protected:
+  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>> range_space_;
 
-  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
-  range_space_;
+  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>> domain_space_;
 
-  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
-  domain_space_;
-  
-  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
-  response_space_;
-  
-  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
-  param_space_;
+  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>> response_space_;
+
+  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>> param_space_;
 
   /// Create operator form of dg/dx for distributed responses
   Teuchos::RCP<Thyra::LinearOpBase<ST>>
@@ -132,12 +129,10 @@ protected:
   /// Evaluate model on InArgs
   void
   evalModelImpl(
-      Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
-      Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
+      Thyra::ModelEvaluatorBase::InArgs<ST> const&  in_args,
+      Thyra::ModelEvaluatorBase::OutArgs<ST> const& out_args) const;
 
-
-private:
-
+ private:
   Teuchos::RCP<Teuchos::ParameterList const>
   getValidAppParameters() const;
 
@@ -148,79 +143,68 @@ private:
   createInArgsImpl() const;
 
   /// List of free parameter names
-  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>
-  param_names_;
+  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>> param_names_;
 
   /// RCP to matDB object
-  Teuchos::Array<Teuchos::RCP<Albany::MaterialDatabase>>
-  material_dbs_;
+  Teuchos::Array<Teuchos::RCP<Albany::MaterialDatabase>> material_dbs_;
 
-  Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
-  models_;
+  Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST>>> models_;
 
   /// Own the application parameters.
-  Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>>
-  model_app_params_;
+  Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>> model_app_params_;
 
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
-  apps_;
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> apps_;
 
-  Teuchos::RCP<Teuchos::Comm<int> const>
-  comm_;
+  Teuchos::RCP<Teuchos::Comm<int> const> comm_;
 
   /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
-  Thyra::ModelEvaluatorBase::InArgs<ST>
-  nominal_values_;
+  Thyra::ModelEvaluatorBase::InArgs<ST> nominal_values_;
 
-  Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
-  disc_maps_;
+  Teuchos::Array<Teuchos::RCP<Tpetra_Map const>> disc_maps_;
 
   /// Teuchos array holding main diagonal jacobians (non-coupled models)
-  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
-  jacs_;
+  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> jacs_;
 
   /// Teuchos array holding main diagonal preconditioners (non-coupled models)
-  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
-  precs_;
+  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> precs_;
 
-  int
-  num_models_;
+  int num_models_;
 
   /// Like num_param_vecs
-  int
-  num_params_total_;
+  int num_params_total_;
 
   /// Like dist_param_vecs
-  int
-  num_dist_params_total_;
+  int num_dist_params_total_;
 
   /// Like num_response_vecs
-  int
-  num_responses_total_;
+  int num_responses_total_;
 
   /// For setting get_W_factory()
-  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
-  lowsfb_;
+  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> lowsfb_;
 
   /// Array of Sacado parameter vectors
-  mutable Teuchos::Array<Teuchos::Array<ParamVec>>
-  sacado_param_vecs_;
+  mutable Teuchos::Array<Teuchos::Array<ParamVec>> sacado_param_vecs_;
 
-  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST>>
-  solver_inargs_;
+  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST>> solver_inargs_;
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST>>
-  solver_outargs_;
+      solver_outargs_;
 
   bool w_prec_supports_;
 
   bool supports_xdot_;
 
-  enum MF_PREC_TYPE {NONE, JACOBI, ABS_ROW_SUM, ID};
+  enum MF_PREC_TYPE
+  {
+    NONE,
+    JACOBI,
+    ABS_ROW_SUM,
+    ID
+  };
 
   MF_PREC_TYPE mf_prec_type_;
 };
 
-} // namespace LCM
+}  // namespace LCM
 
-#endif // LCM_SchwarzCoupled_hpp
+#endif  // LCM_SchwarzCoupled_hpp

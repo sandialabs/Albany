@@ -7,191 +7,193 @@
 #if !defined(LCM_Transport_Coefficients_hpp)
 #define LCM_Transport_Coefficients_hpp
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
 namespace LCM {
-  /// \brief
+/// \brief
+///
+/// This evaluator computes various terms required for the
+///  hydrogen diffusion-deformation problem
+///
+template <typename EvalT, typename Traits>
+class TransportCoefficients : public PHX::EvaluatorWithBaseImpl<Traits>,
+                              public PHX::EvaluatorDerived<EvalT, Traits>
+{
+ public:
   ///
-  /// This evaluator computes various terms required for the
- ///  hydrogen diffusion-deformation problem
+  /// Constructor
   ///
-  template<typename EvalT, typename Traits>
-  class TransportCoefficients : public PHX::EvaluatorWithBaseImpl<Traits>,
-                               public PHX::EvaluatorDerived<EvalT, Traits>  {
+  TransportCoefficients(
+      Teuchos::ParameterList&              p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
-  public:
+  ///
+  /// Phalanx method to allocate space
+  ///
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-    ///
-    /// Constructor
-    ///
-    TransportCoefficients(Teuchos::ParameterList& p,
-                         const Teuchos::RCP<Albany::Layouts>& dl);
+  ///
+  /// Implementation of physics
+  ///
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-    ///
-    /// Phalanx method to allocate space
-    ///
-    void postRegistrationSetup(typename Traits::SetupData d,
-                               PHX::FieldManager<Traits>& vm);
+ private:
+  typedef typename EvalT::ScalarT     ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
 
-    ///
-    /// Implementation of physics
-    ///
-    void evaluateFields(typename Traits::EvalData d);
+  ///
+  /// Input: lattice concentration
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint> c_lattice_;
 
-  private:
+  ///
+  /// Input: Temperature
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint> temperature_;
 
-    typedef typename EvalT::ScalarT ScalarT;
-    typedef typename EvalT::MeshScalarT MeshScalarT;
+  ///
+  /// Input: deformation gradient
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> F_;
 
-    ///
-    /// Input: lattice concentration
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> c_lattice_;
+  ///
+  /// Input: determinant of deformation gradient
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint> J_;
 
-    ///
-    /// Input: Temperature
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> temperature_;
+  ///
+  /// Output: concentration equilibrium parameter
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> k_eq_;
 
-    ///
-    /// Input: deformation gradient
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> F_;
+  ///
+  /// Output: number of trap sites
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> n_trap_;
 
-    ///
-    /// Input: determinant of deformation gradient
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> J_;
+  ///
+  /// Output: diffusion coefficient
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> diffusion_coefficient_;
 
-    ///
-    /// Output: concentration equilibrium parameter
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> k_eq_;
+  ///
+  /// Output: convection coefficient
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> convection_coefficient_;
 
-    ///
-    /// Output: number of trap sites
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> n_trap_;
+  ///
+  /// Output: trapped concentration
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> c_trapped_;
 
-    ///
-    /// Output: diffusion coefficient
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> diffusion_coefficient_;
+  ///
+  /// Output: trapped concentration
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> eff_diff_;
 
-    ///
-    /// Output: convection coefficient
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> convection_coefficient_;
+  ///
+  /// Output: strain_rate_factor
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> strain_rate_fac_;
 
-    ///
-    /// Output: trapped concentration
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> c_trapped_;
+  ///
+  /// Output: total concentration
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> total_concentration_;
 
-    ///
-    /// Output: trapped concentration
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> eff_diff_;
+  ///
+  /// Output: Mechanical deformation gradient
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> F_mech_;
 
-    ///
-    /// Output: strain_rate_factor
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> strain_rate_fac_;
+  ///
+  /// Number of integration points
+  ///
+  int num_pts_;
 
-    ///
-    /// Output: total concentration
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> total_concentration_;
+  ///
+  /// Number of dimension
+  ///
+  int num_dims_;
 
-    ///
-    /// Output: Mechanical deformation gradient
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F_mech_;
+  ///
+  /// Number of cell
+  ///
+  int worksetSize;
 
-    ///
-    /// Number of integration points
-    ///
-    int num_pts_;
+  ///
+  /// flag to compute the weighted average of J
+  ///
+  bool weighted_average_;
 
-    ///
-    /// Number of dimension
-    ///
-    int num_dims_;
+  ///
+  /// stabilization parameter for the weighted average
+  ///
+  ScalarT alpha_;
 
-    ///
-    /// Number of cell
-    ///
-    int  worksetSize;
+  ///
+  /// Number of lattice sites
+  ///
+  RealType n_lattice_;
 
-    ///
-    /// flag to compute the weighted average of J
-    ///
-    bool weighted_average_;
+  ///
+  /// Ideal Gas Constant
+  ///
+  RealType ideal_gas_constant_;
 
-    ///
-    /// stabilization parameter for the weighted average
-    ///
-    ScalarT alpha_;
+  ///
+  /// Trap Binding Energy
+  ///
+  RealType trap_binding_energy_;
 
-    ///
-    /// Number of lattice sites
-    ///
-    RealType n_lattice_;
+  ///
+  /// Trapped Solvent Coefficients
+  ///
+  RealType a_, b_, c_, avogadros_num_;
 
-    ///
-    /// Ideal Gas Constant
-    ///
-    RealType ideal_gas_constant_;
+  ///
+  /// Pre-exponential Factor
+  ///
+  RealType pre_exponential_factor_;
 
-    ///
-    /// Trap Binding Energy
-    ///
-    RealType trap_binding_energy_;
+  ///
+  /// Diffusion Activation Enthalpy
+  ///
+  RealType Q_;
 
-    ///
-    /// Trapped Solvent Coefficients
-    ///
-    RealType a_, b_, c_, avogadros_num_;
+  ///
+  /// Partial Molar Volume
+  ///
+  RealType partial_molar_volume_;
 
-    ///
-    /// Pre-exponential Factor
-    ///
-    RealType pre_exponential_factor_;
+  ///
+  /// Partial Molar Volume
+  ///
+  RealType ref_total_concentration_;
 
-    ///
-    /// Diffusion Activation Enthalpy
-    ///
-    RealType Q_;
+  ///
+  /// Lattice Strain Flag
+  ///
+  bool lattice_strain_flag_;
 
-    ///
-    /// Partial Molar Volume
-    ///
-    RealType partial_molar_volume_;
+  ///
+  /// bool to check for equivalent plastic strain
+  ///
+  bool have_eqps_;
 
-    ///
-    /// Partial Molar Volume
-    ///
-    RealType ref_total_concentration_;
-
-    ///
-    /// Lattice Strain Flag
-    ///
-    bool lattice_strain_flag_;
-
-    ///
-    /// bool to check for equivalent plastic strain
-    ///
-    bool have_eqps_;
-
-    ///
-    /// Map of field names
-    ///
-    Teuchos::RCP<std::map<std::string, std::string>> field_name_map_;
-  };
-}
+  ///
+  /// Map of field names
+  ///
+  Teuchos::RCP<std::map<std::string, std::string>> field_name_map_;
+};
+}  // namespace LCM
 
 #endif

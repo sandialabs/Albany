@@ -9,14 +9,12 @@
 
 #include "FerroicCore.hpp"
 
-namespace FM
-{
+namespace FM {
 
-template<typename EvalT>
+template <typename EvalT>
 class FerroicModel
 {
-public:
-
+ public:
   using ScalarT = typename EvalT::ScalarT;
 
   // Constructor
@@ -25,9 +23,7 @@ public:
 
   // Virtual Denstructor
   //
-  ~FerroicModel()
-  {
-  }
+  ~FerroicModel() {}
 
   // Method to compute the state
   //
@@ -35,36 +31,53 @@ public:
   computeState(
       const minitensor::Tensor<ScalarT, FM::THREE_D>& x,
       const minitensor::Vector<ScalarT, FM::THREE_D>& E,
-      const Teuchos::Array<RealType>& oldfractions,
-            minitensor::Tensor<ScalarT, FM::THREE_D>& X,
-            minitensor::Vector<ScalarT, FM::THREE_D>& D,
-            Teuchos::Array<ScalarT>& newfractions);
-
+      const Teuchos::Array<RealType>&                 oldfractions,
+      minitensor::Tensor<ScalarT, FM::THREE_D>&       X,
+      minitensor::Vector<ScalarT, FM::THREE_D>&       D,
+      Teuchos::Array<ScalarT>&                        newfractions);
 
   // Accessors
   //
   minitensor::Tensor<RealType, FM::THREE_D>&
-  getBasis() { return R; }
+  getBasis()
+  {
+    return R;
+  }
 
   Teuchos::Array<RealType>&
-  getInitialBinFractions() { return initialBinFractions; }
+  getInitialBinFractions()
+  {
+    return initialBinFractions;
+  }
 
   Teuchos::Array<Teuchos::RCP<FM::CrystalPhase>>&
-  getCrystalPhases() { return crystalPhases; }
+  getCrystalPhases()
+  {
+    return crystalPhases;
+  }
 
   Teuchos::Array<FM::CrystalVariant>&
-  getCrystalVariants() { return crystalVariants; }
+  getCrystalVariants()
+  {
+    return crystalVariants;
+  }
 
-  Teuchos::Array< FM::Transition >&
-  getTransitions() { return transitions; }
+  Teuchos::Array<FM::Transition>&
+  getTransitions()
+  {
+    return transitions;
+  }
 
   Teuchos::Array<RealType>&
-  getTransitionBarrier() { return tBarriers; }
+  getTransitionBarrier()
+  {
+    return tBarriers;
+  }
 
-  void PostParseInitialize();
+  void
+  PostParseInitialize();
 
-private:
-
+ private:
   ///
   /// Private to prohibit copying
   ///
@@ -73,32 +86,32 @@ private:
   ///
   /// Private to prohibit copying
   ///
-  FerroicModel& operator=(const FerroicModel&);
+  FerroicModel&
+  operator=(const FerroicModel&);
 
   // parameters
   //
-  minitensor::Tensor<RealType, FM::THREE_D>        R;
+  minitensor::Tensor<RealType, FM::THREE_D>      R;
   Teuchos::Array<Teuchos::RCP<FM::CrystalPhase>> crystalPhases;
-  Teuchos::Array<FM::CrystalVariant>              crystalVariants;
-  Teuchos::Array<FM::Transition>                  transitions;
-  Teuchos::Array<RealType>                        tBarriers;
-  Teuchos::Array<RealType>                        initialBinFractions;
-  Kokkos::DynRankView<RealType>                   aMatrix;
+  Teuchos::Array<FM::CrystalVariant>             crystalVariants;
+  Teuchos::Array<FM::Transition>                 transitions;
+  Teuchos::Array<RealType>                       tBarriers;
+  Teuchos::Array<RealType>                       initialBinFractions;
+  Kokkos::DynRankView<RealType>                  aMatrix;
 
   // Solution options
   //
-  IntegrationType       m_integrationType;
-  ExplicitMethod        m_explicitMethod;
-  minitensor::StepType   m_step_type;
+  IntegrationType      m_integrationType;
+  ExplicitMethod       m_explicitMethod;
+  minitensor::StepType m_step_type;
 
-  RealType              m_implicit_nonlinear_solver_relative_tolerance_;
-  RealType              m_implicit_nonlinear_solver_absolute_tolerance_;
-  int                   m_implicit_nonlinear_solver_max_iterations_;
-  int                   m_implicit_nonlinear_solver_min_iterations_;
-
+  RealType m_implicit_nonlinear_solver_relative_tolerance_;
+  RealType m_implicit_nonlinear_solver_absolute_tolerance_;
+  int      m_implicit_nonlinear_solver_max_iterations_;
+  int      m_implicit_nonlinear_solver_min_iterations_;
 };
 
-}
+}  // namespace FM
 
 #include "FerroicModel_Def.hpp"
 

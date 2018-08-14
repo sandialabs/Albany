@@ -27,7 +27,8 @@
 
 namespace LCM {
 
-class ProjectIPtoNodalFieldManager : public Adapt::NodalDataBase::Manager {
+class ProjectIPtoNodalFieldManager : public Adapt::NodalDataBase::Manager
+{
  public:
   // Declare a class hierarchy of mass matrix types. mass_matrix has to be in
   // this specialization, at least for now, because its implementation of fill()
@@ -77,7 +78,8 @@ class ProjectIPtoNodalFieldManager : public Adapt::NodalDataBase::Manager {
 
 typedef Intrepid2::Basis<PHX::Device, RealType, RealType> Intrepid2Basis;
 
-class ProjectIPtoNodalFieldQuadrature {
+class ProjectIPtoNodalFieldQuadrature
+{
   typedef PHAL::AlbanyTraits::Residual::MeshScalarT      MeshScalarT;
   PHX::MDField<RealType, Cell, Node, QuadPoint>          bf_;
   PHX::MDField<const RealType, Cell, Node, QuadPoint>    bf_const_;
@@ -323,7 +325,8 @@ struct EMassMatrixType
 };
 }  // namespace
 
-class ProjectIPtoNodalFieldManager::MassMatrix {
+class ProjectIPtoNodalFieldManager::MassMatrix
+{
  public:
   virtual ~MassMatrix() {}
 
@@ -347,7 +350,8 @@ class ProjectIPtoNodalFieldManager::MassMatrix {
 };
 
 class ProjectIPtoNodalFieldManager::FullMassMatrix
-    : public ProjectIPtoNodalFieldManager::MassMatrix {
+    : public ProjectIPtoNodalFieldManager::MassMatrix
+{
  public:
   virtual void
   fill(
@@ -390,7 +394,8 @@ class ProjectIPtoNodalFieldManager::FullMassMatrix
 };
 
 class ProjectIPtoNodalFieldManager::LumpedMassMatrix
-    : public ProjectIPtoNodalFieldManager::MassMatrix {
+    : public ProjectIPtoNodalFieldManager::MassMatrix
+{
  public:
   virtual void
   fill(

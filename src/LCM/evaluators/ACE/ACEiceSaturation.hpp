@@ -23,7 +23,8 @@ namespace LCM {
 template <typename EvalT, typename Traits>
 class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
                          public PHX::EvaluatorDerived<EvalT, Traits>,
-                         public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+                         public Sacado::ParameterAccessor<EvalT, SPL_Traits>
+{
  public:
   using ScalarT = typename EvalT::ScalarT;
 
@@ -55,12 +56,11 @@ class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
   getValue(const std::string& n);
 
  private:
-   
   ///
   /// Number of integration points
   ///
   int num_qps_{0};
-  
+
   ///
   /// Number of problem dimensions
   ///
@@ -70,7 +70,7 @@ class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
   /// Contains the ice saturation values
   ///
   PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_;
-  
+
   // MDFields that ice saturation depends on
   PHX::MDField<ScalarT, Cell, QuadPoint> delta_temperature_;
   PHX::MDField<ScalarT, Cell, QuadPoint> dfdT_;
@@ -79,7 +79,7 @@ class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
   /// Contains the initial ice saturation value
   ///
   ScalarT ice_saturation_init_{0.95};
-  
+
   ///
   /// Contains the maximum ice saturation value
   ///
@@ -89,7 +89,6 @@ class ACEiceSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
   /// Contains the ice saturation from last timestep
   ///
   PHX::MDField<ScalarT, Cell, QuadPoint> ice_saturation_old_;
-
 };
 }  // namespace LCM
 

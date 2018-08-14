@@ -24,7 +24,8 @@ namespace LCM {
 
 template <typename EvalT, typename Traits>
 class DefGrad : public PHX::EvaluatorWithBaseImpl<Traits>,
-                public PHX::EvaluatorDerived<EvalT, Traits> {
+                public PHX::EvaluatorDerived<EvalT, Traits>
+{
  public:
   DefGrad(const Teuchos::ParameterList& p);
 

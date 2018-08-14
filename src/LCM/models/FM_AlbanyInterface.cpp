@@ -10,4 +10,3 @@
 #include "FM_AlbanyInterface_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::FerroicDriver)
-

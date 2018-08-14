@@ -7,27 +7,25 @@
 #if !defined(LCM_J2FiberModel_hpp)
 #define LCM_J2FiberModel_hpp
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 #include "LCM/models/ConstitutiveModel.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
-namespace LCM
-{
+namespace LCM {
 
 //! \brief Constitutive Model Base Class
-template<typename EvalT, typename Traits>
-class J2FiberModel: public LCM::ConstitutiveModel<EvalT, Traits>
+template <typename EvalT, typename Traits>
+class J2FiberModel : public LCM::ConstitutiveModel<EvalT, Traits>
 {
-public:
-
-  using Base = LCM::ConstitutiveModel<EvalT, Traits>;
+ public:
+  using Base        = LCM::ConstitutiveModel<EvalT, Traits>;
   using DepFieldMap = typename Base::DepFieldMap;
-  using FieldMap = typename Base::FieldMap;
+  using FieldMap    = typename Base::FieldMap;
 
-  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
@@ -38,36 +36,34 @@ public:
   ///
   /// Constructor
   ///
-  J2FiberModel(Teuchos::ParameterList* p,
+  J2FiberModel(
+      Teuchos::ParameterList*              p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
   ///
   /// Virtual Denstructor
   ///
-  virtual
-  ~J2FiberModel()
-  {};
+  virtual ~J2FiberModel(){};
 
   ///
   /// Method to compute the state (e.g. energy, stress, tangent)
   ///
-  virtual
-  void
-  computeState(typename Traits::EvalData workset,
-      DepFieldMap dep_fields,
-      FieldMap eval_fields);
+  virtual void
+  computeState(
+      typename Traits::EvalData workset,
+      DepFieldMap               dep_fields,
+      FieldMap                  eval_fields);
 
-  virtual
-  void
-  computeStateParallel(typename Traits::EvalData workset,
-      DepFieldMap dep_fields,
-      FieldMap eval_fields){
-         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
- }
+  virtual void
+  computeStateParallel(
+      typename Traits::EvalData workset,
+      DepFieldMap               dep_fields,
+      FieldMap                  eval_fields)
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
+  }
 
-
-private:
-
+ private:
   ///
   /// Private to prohibit copying
   ///
@@ -76,7 +72,8 @@ private:
   ///
   /// Private to prohibit copying
   ///
-  J2FiberModel& operator=(const J2FiberModel&);
+  J2FiberModel&
+  operator=(const J2FiberModel&);
 
   ///
   /// Fiber 1 constants
@@ -109,8 +106,7 @@ private:
   std::vector<RealType> ring_center_;
 
   bool local_coord_flag_;
-
 };
-}
+}  // namespace LCM
 
 #endif

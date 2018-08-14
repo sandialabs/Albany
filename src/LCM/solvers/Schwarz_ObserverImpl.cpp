@@ -10,9 +10,9 @@ namespace LCM {
 //
 //
 //
-ObserverImpl::
-ObserverImpl(Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> & apps) :
-    StatelessObserverImpl(apps)
+ObserverImpl::ObserverImpl(
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>& apps)
+    : StatelessObserverImpl(apps)
 {
   return;
 }
@@ -20,24 +20,19 @@ ObserverImpl(Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> & apps) :
 //
 //
 //
-ObserverImpl::
-~ObserverImpl()
-{
-  return;
-}
+ObserverImpl::~ObserverImpl() { return; }
 
 //
 //
 //
 void
-ObserverImpl::
-observeSolutionT(
-    double stamp,
+ObserverImpl::observeSolutionT(
+    double                                            stamp,
     Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> non_overlapped_solution,
-    Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> non_overlapped_solution_dot)
+    Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>>
+        non_overlapped_solution_dot)
 {
   for (int m = 0; m < this->n_models_; m++) {
-
     this->apps_[m]->evaluateStateFieldManagerT(
         stamp,
         non_overlapped_solution_dot[m].ptr(),
@@ -47,9 +42,8 @@ observeSolutionT(
     this->apps_[m]->getStateMgr().updateStates();
   }
 
-  StatelessObserverImpl::
-  observeSolutionT(stamp, non_overlapped_solution, non_overlapped_solution_dot);
+  StatelessObserverImpl::observeSolutionT(
+      stamp, non_overlapped_solution, non_overlapped_solution_dot);
 }
 
-} // namespace LCM
-
+}  // namespace LCM

@@ -7,28 +7,27 @@
 #if !defined(LCM_NeohookeanModel_hpp)
 #define LCM_NeohookeanModel_hpp
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 #include "ConstitutiveModel.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
 namespace LCM {
 
 ///
 /// \brief Neohookean Model
 //
-template<typename EvalT, typename Traits>
-class NeohookeanModel: public LCM::ConstitutiveModel<EvalT, Traits>
+template <typename EvalT, typename Traits>
+class NeohookeanModel : public LCM::ConstitutiveModel<EvalT, Traits>
 {
-public:
-
-  using Base = LCM::ConstitutiveModel<EvalT, Traits>;
+ public:
+  using Base        = LCM::ConstitutiveModel<EvalT, Traits>;
   using DepFieldMap = typename Base::DepFieldMap;
-  using FieldMap = typename Base::FieldMap;
+  using FieldMap    = typename Base::FieldMap;
 
-  using ScalarT = typename EvalT::ScalarT;
+  using ScalarT     = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
 
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
@@ -49,41 +48,37 @@ public:
   /// Constructor
   ///
   NeohookeanModel(
-      Teuchos::ParameterList * p,
-      Teuchos::RCP<Albany::Layouts> const & dl);
+      Teuchos::ParameterList*              p,
+      Teuchos::RCP<Albany::Layouts> const& dl);
 
   ///
   /// Virtual Destructor
   ///
-  virtual
-  ~NeohookeanModel()
-  {};
+  virtual ~NeohookeanModel(){};
 
   ///
   /// Method to compute the state (e.g. energy, stress, tangent)
   ///
-  virtual
-  void
+  virtual void
   computeState(
       typename Traits::EvalData workset,
-      DepFieldMap dep_fields,
-      FieldMap eval_fields);
+      DepFieldMap               dep_fields,
+      FieldMap                  eval_fields);
 
-  virtual
-  void
+  virtual void
   computeStateParallel(
       typename Traits::EvalData workset,
-      DepFieldMap dep_fields,
-      FieldMap eval_fields)
+      DepFieldMap               dep_fields,
+      FieldMap                  eval_fields)
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
   }
 
   // No copy constructor or copy assignment.
-  NeohookeanModel(NeohookeanModel const &) = delete;
-  NeohookeanModel & operator=(NeohookeanModel const &) = delete;
-
+  NeohookeanModel(NeohookeanModel const&) = delete;
+  NeohookeanModel&
+  operator=(NeohookeanModel const&) = delete;
 };
 
-} // namespace LCM
+}  // namespace LCM
 #endif

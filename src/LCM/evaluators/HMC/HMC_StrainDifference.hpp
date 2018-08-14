@@ -7,62 +7,64 @@
 #if !defined(HMC_StrainDifference_hpp)
 #define HMC_StrainDifference_hpp
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
 namespace HMC {
-  template<typename EvalT, typename Traits>
-  class StrainDifference : public PHX::EvaluatorWithBaseImpl<Traits>,
-                               public PHX::EvaluatorDerived<EvalT, Traits>  {
+template <typename EvalT, typename Traits>
+class StrainDifference : public PHX::EvaluatorWithBaseImpl<Traits>,
+                         public PHX::EvaluatorDerived<EvalT, Traits>
+{
+ public:
+  ///
+  /// Constructor
+  ///
+  StrainDifference(
+      const Teuchos::ParameterList&        p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
-  public:
+  ///
+  /// Phalanx method to allocate space
+  ///
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-    ///
-    /// Constructor
-    ///
-    StrainDifference(const Teuchos::ParameterList& p,
-                         const Teuchos::RCP<Albany::Layouts>& dl);
+  ///
+  /// Implementation of physics
+  ///
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-    ///
-    /// Phalanx method to allocate space
-    ///
-    void postRegistrationSetup(typename Traits::SetupData d,
-                               PHX::FieldManager<Traits>& vm);
+ private:
+  typedef typename EvalT::ScalarT     ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
 
-    ///
-    /// Implementation of physics
-    ///
-    void evaluateFields(typename Traits::EvalData d);
+  ///
+  /// Input: displacement gradient
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> macroStrain;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> microStrain;
 
-  private:
+  ///
+  /// Output: strainDifference
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> strainDifference;
 
-    typedef typename EvalT::ScalarT ScalarT;
-    typedef typename EvalT::MeshScalarT MeshScalarT;
+  ///
+  /// Number of integration points
+  ///
+  unsigned int numQPs;
 
-    ///
-    /// Input: displacement gradient
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> macroStrain;
-    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> microStrain;
-
-    ///
-    /// Output: strainDifference
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strainDifference;
-
-    ///
-    /// Number of integration points
-    ///
-    unsigned int numQPs;
-
-    ///
-    /// Number of problem dimensions
-    ///
-    unsigned int numDims;
-  };
-}
+  ///
+  /// Number of problem dimensions
+  ///
+  unsigned int numDims;
+};
+}  // namespace HMC
 
 #endif

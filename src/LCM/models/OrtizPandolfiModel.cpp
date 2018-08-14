@@ -10,4 +10,3 @@
 #include "OrtizPandolfiModel_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::OrtizPandolfiModel)
-

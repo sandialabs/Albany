@@ -13,7 +13,7 @@
 namespace LCM {
 
 //------------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 J2Model<EvalT, Traits>::J2Model(
     Teuchos::ParameterList*              p,
     const Teuchos::RCP<Albany::Layouts>& dl)
@@ -103,7 +103,7 @@ J2Model<EvalT, Traits>::J2Model(
   }
 }
 //------------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 void
 J2Model<EvalT, Traits>::computeState(
     typename Traits::EvalData workset,
@@ -119,13 +119,13 @@ J2Model<EvalT, Traits>::computeState(
   std::string J_string            = (*field_name_map_)["J"];
 
   // extract dependent MDFields
-  auto def_grad         = *dep_fields[F_string];
-  auto J                = *dep_fields[J_string];
-  auto poissons_ratio   = *dep_fields["Poissons Ratio"];
-  auto elastic_modulus  = *dep_fields["Elastic Modulus"];
+  auto def_grad          = *dep_fields[F_string];
+  auto J                 = *dep_fields[J_string];
+  auto poissons_ratio    = *dep_fields["Poissons Ratio"];
+  auto elastic_modulus   = *dep_fields["Elastic Modulus"];
   auto yield_strength    = *dep_fields["Yield Strength"];
   auto hardening_modulus = *dep_fields["Hardening Modulus"];
-  auto delta_time       = *dep_fields["Delta Time"];
+  auto delta_time        = *dep_fields["Delta Time"];
 
   // extract evaluated MDFields
   auto                  stress    = *eval_fields[cauchy_string];
@@ -133,16 +133,14 @@ J2Model<EvalT, Traits>::computeState(
   auto                  eqps      = *eval_fields[eqps_string];
   auto                  yieldSurf = *eval_fields[yieldSurface_string];
   PHX::MDField<ScalarT> source;
-  if (have_temperature_) {
-    source = *eval_fields[source_string];
-  }
+  if (have_temperature_) { source = *eval_fields[source_string]; }
 
   // get State Variables
   Albany::MDArray Fpold   = (*workset.stateArrayPtr)[Fp_string + "_old"];
   Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
 
   //#if !defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) ||
-  //defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  // defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
 
   ScalarT kappa, mu, mubar, K, Y;
   ScalarT Jm23, trace, smag2, smag, f, p, dgam;
@@ -181,7 +179,7 @@ J2Model<EvalT, Traits>::computeState(
         //
         // Le = exp(alpha*dtemp) is the thermal stretch and alpha the
         // coefficient of thermal expansion.
-        ScalarT dtemp = temperature_(cell, pt) - ref_temperature_;
+        ScalarT dtemp           = temperature_(cell, pt) - ref_temperature_;
         ScalarT thermal_stretch = std::exp(expansion_coeff_ * dtemp);
         Fm /= thermal_stretch;
       }
@@ -249,21 +247,10 @@ J2Model<EvalT, Traits>::computeState(
               count == num_max_iter,
               std::runtime_error,
               std::endl
-                  << "Error in return mapping, count = "
-                  << count
-                  << "\nres = "
-                  << res
-                  << "\nrelres  = "
-                  << res / f
-                  << "\nrelres2 = "
-                  << res / Y
-                  << "\ng = "
-                  << F[0]
-                  << "\ndg = "
-                  << dFdX[0]
-                  << "\nalpha = "
-                  << alpha
-                  << std::endl);
+                  << "Error in return mapping, count = " << count
+                  << "\nres = " << res << "\nrelres  = " << res / f
+                  << "\nrelres2 = " << res / Y << "\ng = " << F[0] << "\ndg = "
+                  << dFdX[0] << "\nalpha = " << alpha << std::endl);
         }
 
         solver.computeFadInfo(dFdX, X, F);
@@ -295,12 +282,10 @@ J2Model<EvalT, Traits>::computeState(
           }
         }
       } else {
-        eqps(cell, pt)                          = eqpsold(cell, pt);
+        eqps(cell, pt) = eqpsold(cell, pt);
         if (have_temperature_) source(cell, pt) = 0.0;
         for (int i(0); i < num_dims_; ++i) {
-          for (int j(0); j < num_dims_; ++j) {
-            Fp(cell, pt, i, j) = Fpn(i, j);
-          }
+          for (int j(0); j < num_dims_; ++j) { Fp(cell, pt, i, j) = Fpn(i, j); }
         }
       }
 
@@ -324,7 +309,7 @@ J2Model<EvalT, Traits>::computeState(
 }
 //------------------------------------------------------------------------------
 // computeState parallel function, which calls Kokkos::parallel_for
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 void
 J2Model<EvalT, Traits>::computeStateParallel(
     typename Traits::EvalData workset,
@@ -334,4 +319,4 @@ J2Model<EvalT, Traits>::computeStateParallel(
   return;
 }
 //-------------------------------------------------------------------------------
-}
+}  // namespace LCM

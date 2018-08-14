@@ -17,7 +17,7 @@
 namespace LCM {
 
 //------------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 ConstitutiveModelParameters<EvalT, Traits>::ConstitutiveModelParameters(
     Teuchos::ParameterList&              p,
     const Teuchos::RCP<Albany::Layouts>& dl)
@@ -153,14 +153,12 @@ ConstitutiveModelParameters<EvalT, Traits>::ConstitutiveModelParameters(
     parseParameters(f_exp, p, paramLib);
   }
   // register evaluated fields
-  for (auto& pair : field_map_) {
-    this->addEvaluatedField(pair.second);
-  }
+  for (auto& pair : field_map_) { this->addEvaluatedField(pair.second); }
   this->setName("Constitutive Model Parameters" + PHX::typeAsString<EvalT>());
 }
 
 //------------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 void
 ConstitutiveModelParameters<EvalT, Traits>::postRegistrationSetup(
     typename Traits::SetupData d,
@@ -176,7 +174,7 @@ ConstitutiveModelParameters<EvalT, Traits>::postRegistrationSetup(
   if (have_temperature_) this->utils.setFieldData(temperature_, fm);
 }
 //------------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 void
 ConstitutiveModelParameters<EvalT, Traits>::evaluateFields(
     typename Traits::EvalData workset)
@@ -230,14 +228,12 @@ ConstitutiveModelParameters<EvalT, Traits>::evaluateFields(
   }
 }
 //------------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 typename ConstitutiveModelParameters<EvalT, Traits>::ScalarT&
 ConstitutiveModelParameters<EvalT, Traits>::getValue(const std::string& n)
 {
   for (auto& pair : constant_value_map_) {
-    if (n == pair.first) {
-      return constant_value_map_[pair.first];
-    }
+    if (n == pair.first) { return constant_value_map_[pair.first]; }
   }
   typename std::map<std::string, Teuchos::Array<ScalarT>>::iterator it2;
   for (int i(0); i < rv_map_[it2->first].size(); ++i) {
@@ -256,7 +252,7 @@ ConstitutiveModelParameters<EvalT, Traits>::getValue(const std::string& n)
 }
 
 //------------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 void
 ConstitutiveModelParameters<EvalT, Traits>::parseParameters(
     const std::string&      n,
@@ -314,4 +310,4 @@ ConstitutiveModelParameters<EvalT, Traits>::parseParameters(
 #endif
 }
 //------------------------------------------------------------------------------
-}
+}  // namespace LCM

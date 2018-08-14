@@ -15,4 +15,3 @@
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ParallelSetField)
 
 #endif
-

@@ -28,30 +28,27 @@ namespace LCM {
 // passed back and forth between LCM::StateArrays and Albany::StateArrays
 // whenever we need to reset states.
 //
-using StateArray = std::map<std::string, std::vector<ST>>;
+using StateArray    = std::map<std::string, std::vector<ST>>;
 using StateArrayVec = std::vector<StateArray>;
 
 struct StateArrays
 {
-  StateArrayVec
-  element_state_arrays;
+  StateArrayVec element_state_arrays;
 
-  StateArrayVec
-  node_state_arrays;
+  StateArrayVec node_state_arrays;
 };
 
 ///
 /// SchwarzAlternating coupling class
 ///
-class SchwarzAlternating: public Thyra::ResponseOnlyModelEvaluatorBase<ST> {
-
-public:
-
+class SchwarzAlternating : public Thyra::ResponseOnlyModelEvaluatorBase<ST>
+{
+ public:
   /// Constructor
   SchwarzAlternating(
-      Teuchos::RCP<Teuchos::ParameterList> const & app_params,
-      Teuchos::RCP<Teuchos::Comm<int> const> const & comm,
-      Teuchos::RCP<Tpetra_Vector const> const & initial_guess);
+      Teuchos::RCP<Teuchos::ParameterList> const&   app_params,
+      Teuchos::RCP<Teuchos::Comm<int> const> const& comm,
+      Teuchos::RCP<Tpetra_Vector const> const&      initial_guess);
 
   /// Destructor
   ~SchwarzAlternating();
@@ -106,7 +103,7 @@ public:
   getApps() const;
 
   void
-  set_failed(char const * msg);
+  set_failed(char const* msg);
 
   void
   clear_failed();
@@ -114,8 +111,7 @@ public:
   bool
   get_failed() const;
 
-private:
-
+ private:
   /// Create operator form of dg/dx for distributed responses
   Teuchos::RCP<Thyra::LinearOpBase<ST>>
   create_DgDx_op_impl(int j) const;
@@ -131,8 +127,8 @@ private:
   /// Evaluate model on InArgs
   void
   evalModelImpl(
-      Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
-      Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
+      Thyra::ModelEvaluatorBase::InArgs<ST> const&  in_args,
+      Thyra::ModelEvaluatorBase::OutArgs<ST> const& out_args) const;
 
   Thyra::ModelEvaluatorBase::InArgs<ST>
   createInArgsImpl() const;
@@ -157,148 +153,104 @@ private:
   setDynamicICVecsAndDoOutput(ST const time) const;
 
   void
-  reportFinals(std::ostream & os) const;
+  reportFinals(std::ostream& os) const;
 
-  std::vector<Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>>
-  solvers_;
+  std::vector<Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>> solvers_;
 
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
-  apps_;
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> apps_;
 
-  std::vector<Teuchos::RCP<Albany::AbstractSTKMeshStruct>>
-  stk_mesh_structs_;
+  std::vector<Teuchos::RCP<Albany::AbstractSTKMeshStruct>> stk_mesh_structs_;
 
-  std::vector<Teuchos::RCP<Albany::AbstractDiscretization>>
-  discs_;
+  std::vector<Teuchos::RCP<Albany::AbstractDiscretization>> discs_;
 
-  char const *
-  failure_message_{"No failure detected"};
+  char const* failure_message_{"No failure detected"};
 
-  int
-  num_subdomains_{0};
+  int num_subdomains_{0};
 
-  int
-  min_iters_{0};
+  int min_iters_{0};
 
-  int
-  max_iters_{0};
+  int max_iters_{0};
 
-  ST
-  rel_tol_{0.0};
+  ST rel_tol_{0.0};
 
-  ST
-  abs_tol_{0.0};
+  ST abs_tol_{0.0};
 
-  int
-  maximum_steps_{0};
+  int maximum_steps_{0};
 
-  ST
-  initial_time_{0.0};
+  ST initial_time_{0.0};
 
-  ST
-  final_time_{0.0};
+  ST final_time_{0.0};
 
-  ST
-  initial_time_step_{0.0};
+  ST initial_time_step_{0.0};
 
-  ST
-  min_time_step_{0.0};
+  ST min_time_step_{0.0};
 
-  ST
-  max_time_step_{0.0};
+  ST max_time_step_{0.0};
 
-  ST
-  reduction_factor_{0.0};
+  ST reduction_factor_{0.0};
 
-  ST
-  increase_factor_{0.0};
+  ST increase_factor_{0.0};
 
-  int
-  output_interval_{1};
+  int output_interval_{1};
 
-  mutable bool
-  failed_{false};
+  mutable bool failed_{false};
 
-  mutable bool
-  converged_{false};
+  mutable bool converged_{false};
 
-  mutable int
-  num_iter_{0};
+  mutable int num_iter_{0};
 
-  mutable ST
-  rel_error_{0.0};
+  mutable ST rel_error_{0.0};
 
-  mutable ST
-  abs_error_{0.0};
+  mutable ST abs_error_{0.0};
 
-  mutable ST
-  norm_init_{0.0};
+  mutable ST norm_init_{0.0};
 
-  mutable ST
-  norm_final_{0.0};
+  mutable ST norm_final_{0.0};
 
-  mutable ST
-  norm_diff_{0.0};
+  mutable ST norm_diff_{0.0};
 
-  mutable std::vector<Thyra::ModelEvaluatorBase::InArgs<ST>>
-  sub_inargs_;
+  mutable std::vector<Thyra::ModelEvaluatorBase::InArgs<ST>> sub_inargs_;
 
-  mutable std::vector<Thyra::ModelEvaluatorBase::OutArgs<ST>>
-  sub_outargs_;
+  mutable std::vector<Thyra::ModelEvaluatorBase::OutArgs<ST>> sub_outargs_;
 
   mutable std::vector<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
-  model_evaluators_;
+      model_evaluators_;
+
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const>> curr_disp_;
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const>>
-  curr_disp_;
+      prev_step_disp_;
 
-  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const>>
-  prev_step_disp_;
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> ics_disp_;
 
-  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  ics_disp_;
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> ics_velo_;
 
-  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  ics_velo_;
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> ics_acce_;
 
-  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  ics_acce_;
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> prev_disp_;
 
-  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  prev_disp_;
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> prev_velo_;
 
-  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  prev_velo_;
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> prev_acce_;
 
-  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  prev_acce_;
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> this_disp_;
 
-  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  this_disp_;
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> this_velo_;
 
-  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  this_velo_;
+  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> this_acce_;
 
-  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  this_acce_;
+  mutable std::vector<LCM::StateArrays> internal_states_;
 
-  mutable std::vector<LCM::StateArrays>
-  internal_states_;
+  mutable std::vector<bool> do_outputs_;
 
-  mutable std::vector<bool> 
-  do_outputs_; 
-  
-  mutable std::vector<bool> 
-  do_outputs_init_; 
+  mutable std::vector<bool> do_outputs_init_;
 
   // Used if solving with loca or tempus
-  bool
-  is_static_{false};
+  bool is_static_{false};
 
-  bool
-  is_dynamic_{false};
+  bool is_dynamic_{false};
 };
 
-} // namespace LCM
+}  // namespace LCM
 
-#endif // LCM_SchwarzAlternating_hpp
+#endif  // LCM_SchwarzAlternating_hpp

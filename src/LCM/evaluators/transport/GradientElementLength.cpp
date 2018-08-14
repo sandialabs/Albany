@@ -10,4 +10,3 @@
 #include "GradientElementLength_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::GradientElementLength)
-

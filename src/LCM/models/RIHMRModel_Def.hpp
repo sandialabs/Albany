@@ -5,20 +5,19 @@
 //*****************************************************************//
 
 #include <MiniTensor.h>
-#include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Teuchos_TestForException.hpp"
 
 #include "LocalNonlinearSolver.hpp"
 
-namespace LCM
-{
+namespace LCM {
 
 //----------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
-RIHMRModel<EvalT, Traits>::
-RIHMRModel(Teuchos::ParameterList* p,
-    const Teuchos::RCP<Albany::Layouts>& dl) :
-    LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
+template <typename EvalT, typename Traits>
+RIHMRModel<EvalT, Traits>::RIHMRModel(
+    Teuchos::ParameterList*              p,
+    const Teuchos::RCP<Albany::Layouts>& dl)
+    : LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
       sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
       sat_exp_(p->get<RealType>("Saturation Exponent", 0.0))
 {
@@ -34,9 +33,9 @@ RIHMRModel(Teuchos::ParameterList* p,
       std::make_pair("Recovery Modulus", dl->qp_scalar));
 
   // retrieve appropriate field name strings
-  std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
-  std::string logFp_string = (*field_name_map_)["logFp"];
-  std::string eqps_string = (*field_name_map_)["eqps"];
+  std::string cauchy_string       = (*field_name_map_)["Cauchy_Stress"];
+  std::string logFp_string        = (*field_name_map_)["logFp"];
+  std::string eqps_string         = (*field_name_map_)["eqps"];
   std::string isoHardening_string = (*field_name_map_)["isoHardening"];
 
   // define evaluated fields
@@ -85,38 +84,37 @@ RIHMRModel(Teuchos::ParameterList* p,
   this->state_var_output_flags_.push_back(true);
 }
 //----------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
-void RIHMRModel<EvalT, Traits>::
-computeState(typename Traits::EvalData workset,
-    DepFieldMap dep_fields,
-    FieldMap eval_fields)
+template <typename EvalT, typename Traits>
+void
+RIHMRModel<EvalT, Traits>::computeState(
+    typename Traits::EvalData workset,
+    DepFieldMap               dep_fields,
+    FieldMap                  eval_fields)
 {
   // extract dependent MDFields
-  auto def_grad = *dep_fields["F"];
-  auto J = *dep_fields["J"];
-  auto poissons_ratio = *dep_fields["Poissons Ratio"];
-  auto elastic_modulus = *dep_fields["Elastic Modulus"];
-  auto yield_strength = *dep_fields["Yield Strength"];
+  auto def_grad          = *dep_fields["F"];
+  auto J                 = *dep_fields["J"];
+  auto poissons_ratio    = *dep_fields["Poissons Ratio"];
+  auto elastic_modulus   = *dep_fields["Elastic Modulus"];
+  auto yield_strength    = *dep_fields["Yield Strength"];
   auto hardening_modulus = *dep_fields["Hardening Modulus"];
-  auto recovery_modulus = *dep_fields["Recovery Modulus"];
+  auto recovery_modulus  = *dep_fields["Recovery Modulus"];
 
   // retrieve appropriate field name strings
-  std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
-  std::string logFp_string = (*field_name_map_)["logFp"];
-  std::string eqps_string = (*field_name_map_)["eqps"];
+  std::string cauchy_string       = (*field_name_map_)["Cauchy_Stress"];
+  std::string logFp_string        = (*field_name_map_)["logFp"];
+  std::string eqps_string         = (*field_name_map_)["eqps"];
   std::string isoHardening_string = (*field_name_map_)["isoHardening"];
 
   // extract evaluated MDFields
-  auto stress = *eval_fields[cauchy_string];
-  auto logFp = *eval_fields[logFp_string];
-  auto eqps = *eval_fields[eqps_string];
+  auto stress       = *eval_fields[cauchy_string];
+  auto logFp        = *eval_fields[logFp_string];
+  auto eqps         = *eval_fields[eqps_string];
   auto isoHardening = *eval_fields[isoHardening_string];
 
   // get State Variables
-  Albany::MDArray logFp_old =
-      (*workset.stateArrayPtr)[logFp_string + "_old"];
-  Albany::MDArray eqps_old =
-      (*workset.stateArrayPtr)[eqps_string + "_old"];
+  Albany::MDArray logFp_old = (*workset.stateArrayPtr)[logFp_string + "_old"];
+  Albany::MDArray eqps_old  = (*workset.stateArrayPtr)[eqps_string + "_old"];
   Albany::MDArray isoHardening_old =
       (*workset.stateArrayPtr)[isoHardening_string + "_old"];
 
@@ -141,35 +139,35 @@ computeState(typename Traits::EvalData workset,
   ScalarT Phi, p, dgam, isoH;
   ScalarT sq23 = std::sqrt(2.0 / 3.0);
 
-  //local unknowns and residual vectors
-  std::vector<ScalarT> R(2);
-  std::vector<ScalarT> X(2);
-  std::vector<ScalarT> dRdX(4);
-  ScalarT normR0(0.0), normR(0.0), conv(0.0);
+  // local unknowns and residual vectors
+  std::vector<ScalarT>                R(2);
+  std::vector<ScalarT>                X(2);
+  std::vector<ScalarT>                dRdX(4);
+  ScalarT                             normR0(0.0), normR(0.0), conv(0.0);
   LocalNonlinearSolver<EvalT, Traits> solver;
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int pt = 0; pt < num_pts_; ++pt) {
-
-      //logFp_n.fill(&logFp_old(cell, pt, int(0), int(0)) );
+      // logFp_n.fill(&logFp_old(cell, pt, int(0), int(0)) );
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {
           logFp_n(i, j) = static_cast<ScalarT>(logFp_old(cell, pt, i, j));
-// std::cout << "logFp_n(" << cell << ", " << pt << ", " << i << ", " << j << " ) = " << logFp_n(i, j) << std::endl;
+          // std::cout << "logFp_n(" << cell << ", " << pt << ", " << i << ", "
+          // << j << " ) = " << logFp_n(i, j) << std::endl;
         }
       }
 
-      Fp = minitensor::exp(logFp_n);
+      Fp    = minitensor::exp(logFp_n);
       Fpold = Fp;
-      Cpinv = minitensor::dot(minitensor::inverse(Fp),
+      Cpinv = minitensor::dot(
+          minitensor::inverse(Fp),
           minitensor::transpose(minitensor::inverse(Fp)));
 
-      kappa = elastic_modulus(cell, pt)
-          / (3.0 * (1.0 - 2.0 * poissons_ratio(cell, pt)));
-      mu = elastic_modulus(cell, pt)
-          / (2.0 * (1.0 + poissons_ratio(cell, pt)));
-      K = hardening_modulus(cell, pt);
-      Y = yield_strength(cell, pt);
+      kappa = elastic_modulus(cell, pt) /
+              (3.0 * (1.0 - 2.0 * poissons_ratio(cell, pt)));
+      mu = elastic_modulus(cell, pt) / (2.0 * (1.0 + poissons_ratio(cell, pt)));
+      K  = hardening_modulus(cell, pt);
+      Y  = yield_strength(cell, pt);
       Rd = recovery_modulus(cell, pt);
       Jm23 = std::pow(J(cell, pt), -2.0 / 3.0);
 
@@ -179,34 +177,32 @@ computeState(typename Traits::EvalData workset,
         for (int j = 0; j < num_dims_; ++j)
           for (int p = 0; p < num_dims_; ++p)
             for (int q = 0; q < num_dims_; ++q)
-              be(i, j) += Jm23 * def_grad(cell, pt, i, p) * Cpinv(p, q)
-                  * def_grad(cell, pt, j, q);
+              be(i, j) += Jm23 * def_grad(cell, pt, i, p) * Cpinv(p, q) *
+                          def_grad(cell, pt, j, q);
 
-      trd3 = minitensor::trace(be) / 3.;
+      trd3  = minitensor::trace(be) / 3.;
       mubar = trd3 * mu;
-      s = mu * (be - trd3 * I);
+      s     = mu * (be - trd3 * I);
 
       isoH = isoHardening_old(cell, pt);
 
       // check for yielding
       smag = minitensor::norm(s);
-      Phi = smag - sq23 * (Y + isoH);
+      Phi  = smag - sq23 * (Y + isoH);
 
-      if (Phi > 1e-11) { // plastic yielding
+      if (Phi > 1e-11) {  // plastic yielding
 
         // return mapping algorithm
         bool converged = false;
-        int iter = 0;
-        dgam = 0.0;
+        int  iter      = 0;
+        dgam           = 0.0;
 
         // initialize local unknown vector
         X[0] = dgam;
         X[1] = isoH;
 
         while (!converged) {
-
-          ResidualJacobian(X, R, dRdX, isoH, smag, mubar, mu, kappa, K,
-              Y, Rd);
+          ResidualJacobian(X, R, dRdX, isoH, smag, mubar, mu, kappa, K, Y, Rd);
 
           normR = R[0] * R[0] + R[1] * R[1];
           normR = std::sqrt(normR);
@@ -217,18 +213,23 @@ computeState(typename Traits::EvalData workset,
           else
             conv = normR0;
 
-          //              std::cout << iter << " " << normR << " " << conv << std::endl;
+          //              std::cout << iter << " " << normR << " " << conv <<
+          //              std::endl;
           if (conv < 1.e-11 || normR < 1.e-11) break;
           if (iter > 20) break;
 
-          //            TEUCHOS_TEST_FOR_EXCEPTION( iter > 20, std::runtime_error,
-          //                std::endl << "Error in return mapping, iter = " << iter << "\nres = " << normR << "\nrelres = " << conv << std::endl);
+          //            TEUCHOS_TEST_FOR_EXCEPTION( iter > 20,
+          //            std::runtime_error,
+          //                std::endl << "Error in return mapping, iter = " <<
+          //                iter << "\nres = " << normR << "\nrelres = " << conv
+          //                << std::endl);
 
           solver.solve(dRdX, X, R);
           iter++;
         }
 
-        // compute sensitivity information w.r.t system parameters, and pack back to X
+        // compute sensitivity information w.r.t system parameters, and pack
+        // back to X
         solver.computeFadInfo(dRdX, X, R);
 
         // update
@@ -248,7 +249,7 @@ computeState(typename Traits::EvalData workset,
         eqps(cell, pt) = eqps_old(cell, pt) + sq23 * dgam;
 
         // exponential map to get Fp
-        A = dgam * n;
+        A    = dgam * n;
         expA = minitensor::exp<ScalarT>(A);
 
         for (int i = 0; i < num_dims_; ++i) {
@@ -265,7 +266,7 @@ computeState(typename Traits::EvalData workset,
         isoHardening(cell, pt) = isoHardening_old(cell, pt);
 
         eqps(cell, pt) = eqps_old(cell, pt);
-        Fp = Fpold;
+        Fp             = Fpold;
       }
 
       // store logFp as the state variable
@@ -287,20 +288,28 @@ computeState(typename Traits::EvalData workset,
     }
   }
 
-} // end of compute state
+}  // end of compute state
 //----------------------------------------------------------------------------
 // all local functions for compute state
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 void
-RIHMRModel<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
-    std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX,
-    const ScalarT & isoH, const ScalarT & smag, const ScalarT & mubar,
-    ScalarT & mu, ScalarT & kappa, ScalarT & K, ScalarT & Y, ScalarT & Rd)
+RIHMRModel<EvalT, Traits>::ResidualJacobian(
+    std::vector<ScalarT>& X,
+    std::vector<ScalarT>& R,
+    std::vector<ScalarT>& dRdX,
+    const ScalarT&        isoH,
+    const ScalarT&        smag,
+    const ScalarT&        mubar,
+    ScalarT&              mu,
+    ScalarT&              kappa,
+    ScalarT&              K,
+    ScalarT&              Y,
+    ScalarT&              Rd)
 {
-  ScalarT sq23 = std::sqrt(2.0 / 3.0);
+  ScalarT               sq23 = std::sqrt(2.0 / 3.0);
   std::vector<DFadType> Rfad(2);
   std::vector<DFadType> Xfad(2);
-  std::vector<ScalarT> Xval(2);
+  std::vector<ScalarT>  Xval(2);
 
   // initialize DFadType local unknown vector Xfad
   // Note that since Xfad is a temporary variable
@@ -317,8 +326,8 @@ RIHMRModel<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
 
   DFadType dgam = Xfad[0], isoHfad = Xfad[1];
 
-  //I have to break down these equations, to avoid compile error
-  //Q.Chen.
+  // I have to break down these equations, to avoid compile error
+  // Q.Chen.
   // smagfad = smag - 2.0 * mubar * dgam;
   smagfad = mubar * dgam;
   smagfad = 2.0 * smagfad;
@@ -328,14 +337,15 @@ RIHMRModel<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
   Yfad = Y + isoHfad;
   Yfad = sq23 * Yfad;
 
-  //d_isoH = (K - Rd * isoHfad) * sq23 * dgam;
+  // d_isoH = (K - Rd * isoHfad) * sq23 * dgam;
   d_isoH = Rd * isoHfad;
   d_isoH = K - d_isoH;
   d_isoH = d_isoH * dgam;
   d_isoH = d_isoH * sq23;
 
   // local nonlinear sys of equations
-  Rfad[0] = smagfad - Yfad; // Phi = smag - 2.* mubar * dgam - sq23 * (Y + isoHfad);
+  Rfad[0] =
+      smagfad - Yfad;  // Phi = smag - 2.* mubar * dgam - sq23 * (Y + isoHfad);
   Rfad[1] = isoHfad - isoH - d_isoH;
 
   // get ScalarT residual
@@ -349,4 +359,4 @@ RIHMRModel<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
   dRdX[1 + 2 * 1] = Rfad[1].dx(1);
 }
 //----------------------------------------------------------------------------
-}
+}  // namespace LCM

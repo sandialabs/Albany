@@ -13,7 +13,7 @@ namespace LCM {
 //
 //
 //
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 ConstitutiveModel<EvalT, Traits>::ConstitutiveModel(
     Teuchos::ParameterList*              p,
     Teuchos::RCP<Albany::Layouts> const& dl)
@@ -61,8 +61,9 @@ ConstitutiveModel<EvalT, Traits>::ConstitutiveModel(
 //
 // Kokkos Kernel for computeVolumeAverage
 //
-template<typename ScalarT, class ArrayStress, class ArrayWeights, class ArrayJ>
-class computeVolumeAverageKernel {
+template <typename ScalarT, class ArrayStress, class ArrayWeights, class ArrayJ>
+class computeVolumeAverageKernel
+{
   ArrayStress stress;
 
   ArrayWeights const weights_;
@@ -82,7 +83,10 @@ class computeVolumeAverageKernel {
       ArrayJ const&       j,
       int const           num_pts,
       int const           num_dims)
-      : stress(stress_), weights_(weights), j_(j), num_pts_(num_pts),
+      : stress(stress_),
+        weights_(weights),
+        j_(j),
+        num_pts_(num_pts),
         num_dims_(num_dims)
   {
     return;
@@ -125,7 +129,7 @@ class computeVolumeAverageKernel {
 //
 //
 //
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 void
 ConstitutiveModel<EvalT, Traits>::computeVolumeAverage(
     Workset     workset,
@@ -158,9 +162,7 @@ ConstitutiveModel<EvalT, Traits>::computeVolumeAverage(
       p = (1. / num_dims) * minitensor::trace(sig);
       sig += (pbar - p) * I;
 
-      for (int i = 0; i < num_dims; ++i) {
-        stress(cell, pt, i, i) = sig(i, i);
-      }
+      for (int i = 0; i < num_dims; ++i) { stress(cell, pt, i, i) = sig(i, i); }
     }
   }
 }

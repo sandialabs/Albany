@@ -9,5 +9,5 @@
 // No ETI. Number of template parameters different from what this macro
 // expects.
 
-//PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MiniLinearSolver_Base)
-//PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MiniLinearSolver)
+// PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MiniLinearSolver_Base)
+// PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MiniLinearSolver)

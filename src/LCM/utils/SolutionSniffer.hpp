@@ -17,28 +17,26 @@ namespace LCM {
 ///
 /// Observer that is called at various points in the NOX nonlinear solver
 ///
-class SolutionSniffer : public NOX::Abstract::PrePostOperator {
-
-public:
-
+class SolutionSniffer : public NOX::Abstract::PrePostOperator
+{
+ public:
   /// Constructor.
   SolutionSniffer();
 
   /// Destructor.
-  virtual
-  ~SolutionSniffer();
+  virtual ~SolutionSniffer();
 
   virtual void
-  runPreIterate(NOX::Solver::Generic const & solver);
+  runPreIterate(NOX::Solver::Generic const& solver);
 
   virtual void
-  runPostIterate(NOX::Solver::Generic const & solver);
+  runPostIterate(NOX::Solver::Generic const& solver);
 
   virtual void
-  runPreSolve(NOX::Solver::Generic const & solver);
+  runPreSolve(NOX::Solver::Generic const& solver);
 
   virtual void
-  runPostSolve(NOX::Solver::Generic const & solver);
+  runPostSolve(NOX::Solver::Generic const& solver);
 
   /// Set the status test
   void
@@ -56,27 +54,20 @@ public:
   Teuchos::RCP<NOX::Abstract::Vector>
   getLastSoln();
 
-private:
+ private:
+  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> status_test_{Teuchos::null};
 
-  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
-  status_test_{Teuchos::null};
+  Teuchos::RCP<NOX::Abstract::Vector> soln_init_{Teuchos::null};
 
-  Teuchos::RCP<NOX::Abstract::Vector>
-  soln_init_{Teuchos::null};
+  ST norm_init_{0.0};
 
-  ST
-  norm_init_{0.0};
+  ST norm_final_{0.0};
 
-  ST
-  norm_final_{0.0};
+  ST norm_diff_{0.0};
 
-  ST
-  norm_diff_{0.0};
-
-  Teuchos::RCP<NOX::Abstract::Vector>
-  last_soln_{Teuchos::null};
+  Teuchos::RCP<NOX::Abstract::Vector> last_soln_{Teuchos::null};
 };
 
-} // namespace LCM
+}  // namespace LCM
 
-#endif // LCM_SolutionSniffer_hpp
+#endif  // LCM_SolutionSniffer_hpp

@@ -10,4 +10,3 @@
 #include "AnisotropicViscoplasticModel_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::AnisotropicViscoplasticModel)
-

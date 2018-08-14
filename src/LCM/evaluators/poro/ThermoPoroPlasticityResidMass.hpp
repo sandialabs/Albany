@@ -7,10 +7,10 @@
 #ifndef THERMOPOROPLASTICITYRESIDMASS_HPP
 #define THERMOPOROPLASTICITYRESIDMASS_HPP
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
 #include "Intrepid2_CellTools.hpp"
 #include "Intrepid2_Cubature.hpp"
@@ -22,72 +22,71 @@ namespace LCM {
 
 */
 
-template<typename EvalT, typename Traits>
-class ThermoPoroPlasticityResidMass : public PHX::EvaluatorWithBaseImpl<Traits>,
-				public PHX::EvaluatorDerived<EvalT, Traits>  {
-
-public:
-
+template <typename EvalT, typename Traits>
+class ThermoPoroPlasticityResidMass
+    : public PHX::EvaluatorWithBaseImpl<Traits>,
+      public PHX::EvaluatorDerived<EvalT, Traits>
+{
+ public:
   ThermoPoroPlasticityResidMass(const Teuchos::ParameterList& p);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-  void evaluateFields(typename Traits::EvalData d);
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-private:
-
-  typedef typename EvalT::ScalarT ScalarT;
+ private:
+  typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> porePressure;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> densityPoreFluid;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Temp;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> RefTemp;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> stabParameter;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> ThermalCond;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> kcPermeability;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> porosity;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> biotCoefficient;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> biotModulus;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> young_modulus_;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> poissons_ratio_;
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> TGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> TempGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> alphaMixture;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> alphaPoreFluid;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> alphaSkeleton;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Source;
-  Teuchos::Array<double> convectionVels;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> rhoCp;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Absorption;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> strain;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint>      wBF;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                porePressure;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                densityPoreFluid;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                Temp;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                RefTemp;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                stabParameter;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                ThermalCond;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                kcPermeability;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                porosity;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                biotCoefficient;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                biotModulus;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                young_modulus_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                poissons_ratio_;
+  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> wGradBF;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim>           TGrad;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim>           TempGrad;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                alphaMixture;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                alphaPoreFluid;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                alphaSkeleton;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                Source;
+  Teuchos::Array<double>                                      convectionVels;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                rhoCp;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                Absorption;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim>      strain;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim>      defgrad;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                J;
 
   // stabilization term
-  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
-  Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature;
-  Teuchos::RCP<shards::CellTopology> cellType;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
+  PHX::MDField<const MeshScalarT, Cell, Vertex, Dim> coordVec;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>     cubature;
+  Teuchos::RCP<shards::CellTopology>                 cellType;
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint>   weights;
 
   // Time
-  PHX::MDField<const ScalarT,Dummy> deltaTime;
+  PHX::MDField<const ScalarT, Dummy> deltaTime;
 
-  //Data from previous time step
-  std::string strainName, porePressureName, porosityName,
-              JName, TempName;
+  // Data from previous time step
+  std::string strainName, porePressureName, porosityName, JName, TempName;
 
-
-
-  bool haveSource;
-  bool haveConvection;
-  bool haveAbsorption;
-  bool enableTransient;
-  bool haverhoCp;
+  bool         haveSource;
+  bool         haveConvection;
+  bool         haveAbsorption;
+  bool         enableTransient;
+  bool         haverhoCp;
   unsigned int numNodes;
   unsigned int numQPs;
   unsigned int numDims;
@@ -116,13 +115,9 @@ private:
   ScalarT shearModulus, bulkModulus;
   ScalarT safeFactor;
 
-
-
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> TResidual;
-
-
+  PHX::MDField<ScalarT, Cell, Node> TResidual;
 };
-}
+}  // namespace LCM
 
 #endif

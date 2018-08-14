@@ -21,13 +21,13 @@ namespace LCM {
 /// Evaluates mass meltingTemperature at integration points
 ///
 template <typename EvalT, typename Traits>
-class ACEmeltingTemperature :
-          public PHX::EvaluatorWithBaseImpl<Traits>,
-          public PHX::EvaluatorDerived<EvalT, Traits>,
-          public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+class ACEmeltingTemperature
+    : public PHX::EvaluatorWithBaseImpl<Traits>,
+      public PHX::EvaluatorDerived<EvalT, Traits>,
+      public Sacado::ParameterAccessor<EvalT, SPL_Traits>
+{
  public:
-
-  using ScalarT          = typename EvalT::ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
 
   ///
   /// Constructor
@@ -53,11 +53,10 @@ class ACEmeltingTemperature :
   ///
   /// Sacado method to access parameters
   ///
-  //ScalarT&
-  //getValue(const std::string& n);
+  // ScalarT&
+  // getValue(const std::string& n);
 
  private:
-
   ///
   /// Number of integration points
   ///
@@ -76,7 +75,6 @@ class ACEmeltingTemperature :
   /// Contains the melting temperature value
   ///
   PHX::MDField<ScalarT, Cell, QuadPoint> melting_temperature_;
-
 };
 }  // namespace LCM
 

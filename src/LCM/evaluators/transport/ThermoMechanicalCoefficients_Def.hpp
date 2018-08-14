@@ -88,9 +88,7 @@ ThermoMechanicalCoefficients<EvalT, Traits>::postRegistrationSetup(
   this->utils.setFieldData(thermal_transient_coeff_, fm);
   this->utils.setFieldData(thermal_diffusivity_, fm);
 
-  if (have_mech_) {
-    this->utils.setFieldData(def_grad_, fm);
-  }
+  if (have_mech_) { this->utils.setFieldData(def_grad_, fm); }
 }
 
 //------------------------------------------------------------------------------

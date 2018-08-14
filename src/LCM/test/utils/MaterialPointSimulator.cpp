@@ -32,8 +32,8 @@
 
 #include "FieldNameMap.hpp"
 
-#include "SetField.hpp"
 #include "ParallelSetField.hpp"
+#include "SetField.hpp"
 
 #include "Albany_MaterialDatabase.hpp"
 #include "BifurcationCheck.hpp"
@@ -157,7 +157,7 @@ main(int ac, char* av[])
       workset_size, num_vertices, num_nodes, num_pts, num_dims));
 
   // create field name strings
-  LCM::FieldNameMap field_name_map(false);
+  LCM::FieldNameMap                                field_name_map(false);
   Teuchos::RCP<std::map<std::string, std::string>> fnm =
       field_name_map.getMap();
 
@@ -500,7 +500,7 @@ main(int ac, char* av[])
   discretizationParameterList->set<std::string>(
       "Exodus Output File Name", output_file);
   discretizationParameterList->set<int>("Workset Size", workset_size);
-  Teuchos::RCP<Tpetra_Map> mapT = Teuchos::rcp(new Tpetra_Map(
+  Teuchos::RCP<Tpetra_Map>    mapT = Teuchos::rcp(new Tpetra_Map(
       workset_size * num_dims * num_nodes,
       0,
       commT,
@@ -603,9 +603,7 @@ main(int ac, char* av[])
     // std::cout << "current F\n" << current_F << std::endl;
 
     for (int i = 0; i < 3; ++i) {
-      for (int j = 0; j < 3; ++j) {
-        def_grad[3 * i + j] = current_F(i, j);
-      }
+      for (int j = 0; j < 3; ++j) { def_grad[3 * i + j] = current_F(i, j); }
     }
 
     // jacobian
@@ -617,9 +615,7 @@ main(int ac, char* av[])
                      minitensor::eye<ScalarT>(3);
 
     for (int i = 0; i < 3; ++i) {
-      for (int j = 0; j < 3; ++j) {
-        strain[3 * i + j] = current_strain(i, j);
-      }
+      for (int j = 0; j < 3; ++j) { strain[3 * i + j] = current_strain(i, j); }
     }
     // std::cout << "current strain\n" << current_strain << std::endl;
 
@@ -655,9 +651,7 @@ main(int ac, char* av[])
       // get current minDet(A)
       stateFieldManager.getFieldData<Residual>(minDetA);
 
-      if (istep == 0) {
-        mu_0 = minDetA(0, 0);
-      }
+      if (istep == 0) { mu_0 = minDetA(0, 0); }
 
       if (minDetA(0, 0) <= 0 && !bifurcation_flag) {
         mu_k                  = minDetA(0, 0);

@@ -4,9 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "SolutionSniffer.hpp"
 #include "NOX_Abstract_Group.H"
 #include "NOX_Solver_Generic.H"
-#include "SolutionSniffer.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
 //#define DEBUG
@@ -16,17 +16,18 @@ namespace LCM {
 //
 //
 //
-SolutionSniffer::
-SolutionSniffer()
-{
-  return;
-}
+SolutionSniffer::SolutionSniffer() { return; }
 
 //
 //
 //
-SolutionSniffer::
-~SolutionSniffer()
+SolutionSniffer::~SolutionSniffer() { return; }
+
+//
+//
+//
+void
+SolutionSniffer::runPreIterate(NOX::Solver::Generic const&)
 {
   return;
 }
@@ -35,8 +36,7 @@ SolutionSniffer::
 //
 //
 void
-SolutionSniffer::
-runPreIterate(NOX::Solver::Generic const &)
+SolutionSniffer::runPostIterate(NOX::Solver::Generic const&)
 {
   return;
 }
@@ -45,39 +45,26 @@ runPreIterate(NOX::Solver::Generic const &)
 //
 //
 void
-SolutionSniffer::
-runPostIterate(NOX::Solver::Generic const &)
+SolutionSniffer::runPreSolve(NOX::Solver::Generic const& solver)
 {
-  return;
-}
-
-//
-//
-//
-void
-SolutionSniffer::
-runPreSolve(NOX::Solver::Generic const & solver)
-{
-  if(status_test_.is_null() == false){
-    status_test_->status_ = NOX::StatusTest::Unevaluated;
+  if (status_test_.is_null() == false) {
+    status_test_->status_         = NOX::StatusTest::Unevaluated;
     status_test_->status_message_ = "";
   }
 
-  NOX::Abstract::Vector const &
-  x = solver.getPreviousSolutionGroup().getX();
+  NOX::Abstract::Vector const& x = solver.getPreviousSolutionGroup().getX();
 
   norm_init_ = x.norm();
 
   soln_init_ = x.clone(NOX::DeepCopy);
 
 #if defined(DEBUG)
-  Teuchos::FancyOStream &
-  fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  Teuchos::FancyOStream& fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
 
   fos << "\n*** NOX: Initial solution ***\n";
   x.print(fos);
   fos << "\n*** NOX: Initial solution ***\n";
-#endif //DEBUG
+#endif  // DEBUG
 
   return;
 }
@@ -86,33 +73,27 @@ runPreSolve(NOX::Solver::Generic const & solver)
 //
 //
 void
-SolutionSniffer::
-runPostSolve(NOX::Solver::Generic const & solver)
+SolutionSniffer::runPostSolve(NOX::Solver::Generic const& solver)
 {
-  NOX::Abstract::Vector const &
-  y = solver.getSolutionGroup().getX();
+  NOX::Abstract::Vector const& y = solver.getSolutionGroup().getX();
 
   // Save solution
   last_soln_ = y.clone();
 
   norm_final_ = y.norm();
 
-  NOX::Abstract::Vector const &
-  x = *(soln_init_);
+  NOX::Abstract::Vector const& x = *(soln_init_);
 
-  Teuchos::RCP<NOX::Abstract::Vector>
-  soln_diff = x.clone();
+  Teuchos::RCP<NOX::Abstract::Vector> soln_diff = x.clone();
 
-  NOX::Abstract::Vector &
-  dx = *(soln_diff);
+  NOX::Abstract::Vector& dx = *(soln_diff);
 
   dx.update(1.0, y, -1.0, x, 0.0);
 
   norm_diff_ = dx.norm();
 
 #if defined(DEBUG)
-  Teuchos::FancyOStream &
-  fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  Teuchos::FancyOStream& fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
 
   fos << "\n*** NOX: Final solution ***\n";
   y.print(fos);
@@ -126,8 +107,8 @@ runPostSolve(NOX::Solver::Generic const & solver)
 //
 //
 void
-SolutionSniffer::
-setStatusTest(Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> status_test)
+SolutionSniffer::setStatusTest(
+    Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> status_test)
 {
   status_test_ = status_test;
 }
@@ -136,8 +117,7 @@ setStatusTest(Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> status_test)
 //
 //
 ST
-SolutionSniffer::
-getInitialNorm()
+SolutionSniffer::getInitialNorm()
 {
   return norm_init_;
 }
@@ -146,8 +126,7 @@ getInitialNorm()
 //
 //
 ST
-SolutionSniffer::
-getFinalNorm()
+SolutionSniffer::getFinalNorm()
 {
   return norm_final_;
 }
@@ -156,8 +135,7 @@ getFinalNorm()
 //
 //
 ST
-SolutionSniffer::
-getDifferenceNorm()
+SolutionSniffer::getDifferenceNorm()
 {
   return norm_diff_;
 }
@@ -166,10 +144,9 @@ getDifferenceNorm()
 //
 //
 Teuchos::RCP<NOX::Abstract::Vector>
-SolutionSniffer::
-getLastSoln()
+SolutionSniffer::getLastSoln()
 {
   return last_soln_;
 }
 
-} // namespace LCM
+}  // namespace LCM

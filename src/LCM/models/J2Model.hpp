@@ -17,8 +17,9 @@
 namespace LCM {
 
 //! \brief J2 Plasticity Constitutive Model
-template<typename EvalT, typename Traits>
-class J2Model : public LCM::ConstitutiveModel<EvalT, Traits> {
+template <typename EvalT, typename Traits>
+class J2Model : public LCM::ConstitutiveModel<EvalT, Traits>
+{
  public:
   using Base        = LCM::ConstitutiveModel<EvalT, Traits>;
   using DepFieldMap = typename Base::DepFieldMap;
@@ -82,6 +83,6 @@ class J2Model : public LCM::ConstitutiveModel<EvalT, Traits> {
       DepFieldMap               dep_fields,
       FieldMap                  eval_fields);
 };
-}
+}  // namespace LCM
 
 #endif

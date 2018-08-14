@@ -7,10 +7,10 @@
 #ifndef SCALAR_L2_PROJECTION_RESIDUAL_HPP
 #define SCALAR_L2_PROJECTION_RESIDUAL_HPP
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
 #include "Intrepid2_CellTools.hpp"
 #include "Intrepid2_Cubature.hpp"
@@ -18,37 +18,38 @@
 namespace LCM {
 /** \brief Finite Element Interpolation Evaluator
 
-    This evaluator computes residual of a scalar projection from Gauss points to nodes.
+    This evaluator computes residual of a scalar projection from Gauss points to
+   nodes.
 
 */
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 class ScalarL2ProjectionResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
-				public PHX::EvaluatorDerived<EvalT, Traits>  {
-
-public:
-
+                                   public PHX::EvaluatorDerived<EvalT, Traits>
+{
+ public:
   ScalarL2ProjectionResidual(const Teuchos::ParameterList& p);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-  void evaluateFields(typename Traits::EvalData d);
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-private:
-
-  typedef typename EvalT::ScalarT ScalarT;
+ private:
+  typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim, Dim> DefGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> projectedStress;
-
+  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint>      wBF;
+  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> wGradBF;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim>      DefGrad;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                projectedStress;
 
   // Input for hydro-static stress effect
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> Pstress;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> Pstress;
 
   bool enableTransient;
 
@@ -57,14 +58,11 @@ private:
   unsigned int numDims;
   unsigned int worksetSize;
 
-
   Kokkos::DynRankView<ScalarT, PHX::Device> tauH;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> TResidual;
-
-
+  PHX::MDField<ScalarT, Cell, Node> TResidual;
 };
-}
+}  // namespace LCM
 
 #endif

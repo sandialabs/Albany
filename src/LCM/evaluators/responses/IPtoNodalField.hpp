@@ -23,7 +23,8 @@ class IPtoNodalFieldManager;
 ///
 template <typename EvalT, typename Traits>
 class IPtoNodalFieldBase : public PHX::EvaluatorWithBaseImpl<Traits>,
-                           public PHX::EvaluatorDerived<EvalT, Traits> {
+                           public PHX::EvaluatorDerived<EvalT, Traits>
+{
  public:
   typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
@@ -81,7 +82,8 @@ class IPtoNodalFieldBase : public PHX::EvaluatorWithBaseImpl<Traits>,
 };
 
 template <typename EvalT, typename Traits>
-class IPtoNodalField : public IPtoNodalFieldBase<EvalT, Traits> {
+class IPtoNodalField : public IPtoNodalFieldBase<EvalT, Traits>
+{
  public:
   IPtoNodalField(
       Teuchos::ParameterList&              p,
@@ -119,7 +121,8 @@ class IPtoNodalField : public IPtoNodalFieldBase<EvalT, Traits> {
 
 template <typename Traits>
 class IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>
-    : public IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits> {
+    : public IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>
+{
  public:
   typedef IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits> Base;
   typedef typename Base::ScalarT                                   ScalarT;

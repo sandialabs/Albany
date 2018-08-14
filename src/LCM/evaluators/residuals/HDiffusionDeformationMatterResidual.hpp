@@ -7,10 +7,10 @@
 #ifndef HDIFFUSIONDEFORMATION_MATTER_RESIDUAL_HPP
 #define HDIFFUSIONDEFORMATION_MATTER_RESIDUAL_HPP
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
 #include "Intrepid2_CellTools.hpp"
 #include "Intrepid2_Cubature.hpp"
@@ -23,60 +23,62 @@ namespace LCM {
 
 */
 
-template<typename EvalT, typename Traits>
-class HDiffusionDeformationMatterResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
-				public PHX::EvaluatorDerived<EvalT, Traits>  {
+template <typename EvalT, typename Traits>
+class HDiffusionDeformationMatterResidual
+    : public PHX::EvaluatorWithBaseImpl<Traits>,
+      public PHX::EvaluatorDerived<EvalT, Traits>
+{
+ public:
+  HDiffusionDeformationMatterResidual(
+      Teuchos::ParameterList&              p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
-public:
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-  HDiffusionDeformationMatterResidual(Teuchos::ParameterList& p,
-                                      const Teuchos::RCP<Albany::Layouts>& dl);
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-
-  typedef typename EvalT::ScalarT ScalarT;
+ private:
+  typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim, Dim> DefGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> elementLength;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Dstar;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> DL;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Clattice;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> CLGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> stressGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> stabParameter;
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint>            weights;
+  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint>      wBF;
+  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> wGradBF;
+  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> GradBF;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim>      DefGrad;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                elementLength;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                Dstar;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                DL;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                Clattice;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim>           CLGrad;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim>           stressGrad;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>                stabParameter;
 
   // Input for the strain rate effect
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Ctrapped;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Ntrapped;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> eqps;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> eqpsFactor;
-  std::string eqpsName;
-
+  PHX::MDField<const ScalarT, Cell, QuadPoint> Ctrapped;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> Ntrapped;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> eqps;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> eqpsFactor;
+  std::string                                  eqpsName;
 
   // Input for hydro-static stress effect
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> Pstress;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> tauFactor;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> Pstress;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>           tauFactor;
 
   // Time
-  PHX::MDField<const ScalarT,Dummy> deltaTime;
+  PHX::MDField<const ScalarT, Dummy> deltaTime;
 
-  //Data from previous time step
+  // Data from previous time step
   std::string ClatticeName;
   std::string CLGradName;
 
-  //bool haveSource;
-  //bool haveMechSource;
+  // bool haveSource;
+  // bool haveMechSource;
   bool enableTransient;
 
   bool have_eqps_;
@@ -98,17 +100,14 @@ private:
   Kokkos::DynRankView<ScalarT, PHX::Device> tpterm;
   Kokkos::DynRankView<ScalarT, PHX::Device> CinvTaugrad;
 
-
-  ScalarT CLbar, vol ;
+  ScalarT CLbar, vol;
   ScalarT trialPbar;
 
   RealType stab_param_, t_decay_constant_;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> TResidual;
-
-
+  PHX::MDField<ScalarT, Cell, Node> TResidual;
 };
-}
+}  // namespace LCM
 
 #endif

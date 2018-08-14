@@ -19,7 +19,8 @@ namespace LCM {
 
 template <typename EvalT, typename Traits>
 class SetField : public PHX::EvaluatorWithBaseImpl<Traits>,
-                 public PHX::EvaluatorDerived<EvalT, Traits> {
+                 public PHX::EvaluatorDerived<EvalT, Traits>
+{
  public:
   SetField(const Teuchos::ParameterList& p);
 

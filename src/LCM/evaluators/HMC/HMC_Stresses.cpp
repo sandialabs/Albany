@@ -10,4 +10,3 @@
 #include "HMC_Stresses_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(HMC::Stresses)
-

@@ -7,43 +7,41 @@
 #if !defined(LCM_StabilizedPressure_Residual_hpp)
 #define LCM_StabilizedPressure_Residual_hpp
 
-#include <Phalanx_config.hpp>
-#include <Phalanx_Evaluator_WithBaseImpl.hpp>
 #include <Phalanx_Evaluator_Derived.hpp>
+#include <Phalanx_Evaluator_WithBaseImpl.hpp>
 #include <Phalanx_MDField.hpp>
+#include <Phalanx_config.hpp>
 #include <Sacado_ParameterAccessor.hpp>
 #include "Albany_Layouts.hpp"
 
-namespace LCM
-{
+namespace LCM {
 ///
 /// \brief StabilizedPressure Residual
 ///
 /// This evaluator computes the residual
 /// for the equal order pressure stabilization
 ///
-template<typename EvalT, typename Traits>
-class StabilizedPressureResidual:
-    public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<EvalT, Traits>
+template <typename EvalT, typename Traits>
+class StabilizedPressureResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                   public PHX::EvaluatorDerived<EvalT, Traits>
 {
-
-public:
-
-  typedef typename EvalT::ScalarT ScalarT;
+ public:
+  typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   ///
   /// Constructor
   ///
-  StabilizedPressureResidual(Teuchos::ParameterList& p,
+  StabilizedPressureResidual(
+      Teuchos::ParameterList&              p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
   ///
   /// Phalanx method to allocate space
   ///
   void
-  postRegistrationSetup(typename Traits::SetupData d,
+  postRegistrationSetup(
+      typename Traits::SetupData d,
       PHX::FieldManager<Traits>& vm);
 
   ///
@@ -52,8 +50,7 @@ public:
   void
   evaluateFields(typename Traits::EvalData d);
 
-private:
-
+ private:
   ///
   /// Input: Shear Modulus
   ///
@@ -129,6 +126,6 @@ private:
   ///
   RealType alpha_;
 };
-}
+}  // namespace LCM
 
 #endif

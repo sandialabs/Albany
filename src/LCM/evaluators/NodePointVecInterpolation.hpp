@@ -21,7 +21,8 @@ namespace LCM {
 /// point within the cell.
 template <typename EvalT, typename Traits>
 class NodePointVecInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                  public PHX::EvaluatorDerived<EvalT, Traits> {
+                                  public PHX::EvaluatorDerived<EvalT, Traits>
+{
  public:
   NodePointVecInterpolation(
       Teuchos::ParameterList const&        p,
@@ -60,7 +61,8 @@ class NodePointVecInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
 template <typename Traits>
 class NodePointVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>
     : public PHX::EvaluatorWithBaseImpl<Traits>,
-      public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits> {
+      public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>
+{
  public:
   NodePointVecInterpolation(
       Teuchos::ParameterList const&        p,

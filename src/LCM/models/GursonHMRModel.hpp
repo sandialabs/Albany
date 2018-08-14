@@ -18,8 +18,9 @@
 namespace LCM {
 
 //! \brief Gurson Finite Deformation Model
-template<typename EvalT, typename Traits>
-class GursonHMRModel : public LCM::ConstitutiveModel<EvalT, Traits> {
+template <typename EvalT, typename Traits>
+class GursonHMRModel : public LCM::ConstitutiveModel<EvalT, Traits>
+{
  public:
   using Base        = LCM::ConstitutiveModel<EvalT, Traits>;
   using DepFieldMap = typename Base::DepFieldMap;
@@ -136,6 +137,6 @@ class GursonHMRModel : public LCM::ConstitutiveModel<EvalT, Traits> {
       const ScalarT&               Rd,
       const ScalarT&               jacobian);
 };
-}
+}  // namespace LCM
 
 #endif

@@ -10,4 +10,3 @@
 #include "CapExplicitModel_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::CapExplicitModel)
-

@@ -6,13 +6,12 @@
 #if !defined(LCM_AAAModel_hpp)
 #define LCM_AAAModel_hpp
 
-
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 #include "LCM/models/ConstitutiveModel.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
 namespace LCM {
 /** \brief Nearly Incompressible AAA model
@@ -28,16 +27,15 @@ namespace LCM {
     model given by eg Zhang and Rajagopal, 1992.
  */
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 class AAAModel : public LCM::ConstitutiveModel<EvalT, Traits>
 {
-public:
-
-  using Base = LCM::ConstitutiveModel<EvalT, Traits>;
+ public:
+  using Base        = LCM::ConstitutiveModel<EvalT, Traits>;
   using DepFieldMap = typename Base::DepFieldMap;
-  using FieldMap = typename Base::FieldMap;
+  using FieldMap    = typename Base::FieldMap;
 
-  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
@@ -45,36 +43,34 @@ public:
   using ConstitutiveModel<EvalT, Traits>::field_name_map_;
 
   /// Constructor
-  AAAModel(Teuchos::ParameterList* p,
-	const Teuchos::RCP<Albany::Layouts>& dl);
+  AAAModel(Teuchos::ParameterList* p, const Teuchos::RCP<Albany::Layouts>& dl);
 
   /// Virtual Destructor
-  virtual
-  ~AAAModel()
-  {};
+  virtual ~AAAModel(){};
 
   /// Method to compute the state
-  virtual
-  void
-  computeState(typename Traits::EvalData workset,
-		  DepFieldMap dep_fields,
-		  FieldMap eval_fields);
+  virtual void
+  computeState(
+      typename Traits::EvalData workset,
+      DepFieldMap               dep_fields,
+      FieldMap                  eval_fields);
 
-  virtual
-  void
-  computeStateParallel(typename Traits::EvalData workset,
-                  DepFieldMap dep_fields,
-                  FieldMap eval_fields){
-         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
- }
+  virtual void
+  computeStateParallel(
+      typename Traits::EvalData workset,
+      DepFieldMap               dep_fields,
+      FieldMap                  eval_fields)
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
+  }
 
-private:
-
+ private:
   /// Private to prohibit copying
   AAAModel(const AAAModel&);
 
   /// Private to prohibit copying
-  AAAModel& operator=(const AAAModel&);
+  AAAModel&
+  operator=(const AAAModel&);
 
   /// Material parameters
   RealType alpha_;
@@ -82,6 +78,6 @@ private:
   RealType mult_;
 };
 
-} // namespace LCM
+}  // namespace LCM
 
 #endif /* LCM_AAAmodel_hpp */

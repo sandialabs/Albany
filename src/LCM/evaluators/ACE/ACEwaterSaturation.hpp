@@ -23,7 +23,8 @@ namespace LCM {
 template <typename EvalT, typename Traits>
 class ACEwaterSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
                            public PHX::EvaluatorDerived<EvalT, Traits>,
-                           public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+                           public Sacado::ParameterAccessor<EvalT, SPL_Traits>
+{
  public:
   using ScalarT = typename EvalT::ScalarT;
 
@@ -55,7 +56,6 @@ class ACEwaterSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
   getValue(const std::string& n);
 
  private:
-
   ///
   /// Number of integration points
   ///
@@ -78,7 +78,6 @@ class ACEwaterSaturation : public PHX::EvaluatorWithBaseImpl<Traits>,
   /// Contains the water saturation values
   ///
   PHX::MDField<ScalarT, Cell, QuadPoint> water_saturation_;
-
 };
 }  // namespace LCM
 

@@ -7,10 +7,10 @@
 #ifndef HMC_ELASTICITYRESID_HPP
 #define HMC_ELASTICITYRESID_HPP
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
 namespace HMC {
 /** \brief Finite Element Interpolation Evaluator
@@ -19,41 +19,41 @@ namespace HMC {
 
 */
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 class MicroResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
-		      public PHX::EvaluatorDerived<EvalT, Traits>  {
-
-public:
-
+                      public PHX::EvaluatorDerived<EvalT, Traits>
+{
+ public:
   MicroResidual(const Teuchos::ParameterList& p);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-  void evaluateFields(typename Traits::EvalData d);
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-private:
-
-  typedef typename EvalT::ScalarT ScalarT;
+ private:
+  typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> microStress;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim,Dim> doubleStress;
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim>      microStress;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim, Dim> doubleStress;
+  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> wGradBF;
+  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint>      wBF;
 
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> epsDotDot;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> epsDotDot;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,Dim,Dim> ExResidual;
+  PHX::MDField<ScalarT, Cell, Node, Dim, Dim> ExResidual;
 
   std::size_t numNodes;
   std::size_t numQPs;
   std::size_t numDims;
-  bool enableTransient;
-
+  bool        enableTransient;
 };
-}
+}  // namespace HMC
 
 #endif

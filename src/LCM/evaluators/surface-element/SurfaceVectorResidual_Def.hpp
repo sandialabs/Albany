@@ -16,7 +16,8 @@ namespace LCM {
 //----------------------------------------------------------------------------
 template <typename EvalT, typename Traits>
 SurfaceVectorResidual<EvalT, Traits>::SurfaceVectorResidual(
-    Teuchos::ParameterList& p, Teuchos::RCP<Albany::Layouts> const& dl)
+    Teuchos::ParameterList&              p,
+    Teuchos::RCP<Albany::Layouts> const& dl)
     : thickness_(p.get<double>("thickness")),
 
       cubature_(
@@ -32,20 +33,23 @@ SurfaceVectorResidual<EvalT, Traits>::SurfaceVectorResidual(
       current_basis_(p.get<std::string>("Current Basis Name"), dl->qp_tensor),
 
       ref_dual_basis_(
-          p.get<std::string>("Reference Dual Basis Name"), dl->qp_tensor),
+          p.get<std::string>("Reference Dual Basis Name"),
+          dl->qp_tensor),
 
       ref_normal_(p.get<std::string>("Reference Normal Name"), dl->qp_vector),
 
       ref_area_(p.get<std::string>("Reference Area Name"), dl->qp_scalar),
 
       force_(
-          p.get<std::string>("Surface Vector Residual Name"), dl->node_vector),
+          p.get<std::string>("Surface Vector Residual Name"),
+          dl->node_vector),
 
       use_cohesive_traction_(p.get<bool>("Use Cohesive Traction", false)),
 
       compute_membrane_forces_(p.get<bool>("Compute Membrane Forces", false)),
 
-      have_topmod_adaptation_(p.get<bool>("Use Adaptive Insertion", false)) {
+      have_topmod_adaptation_(p.get<bool>("Use Adaptive Insertion", false))
+{
   this->addDependentField(current_basis_);
   this->addDependentField(ref_dual_basis_);
   this->addDependentField(ref_normal_);
@@ -80,8 +84,8 @@ SurfaceVectorResidual<EvalT, Traits>::SurfaceVectorResidual(
 
   dl->node_vector->dimensions(dims);
   workset_size_ = dims[0];
-  num_nodes_ = dims[1];
-  num_dims_ = dims[2];
+  num_nodes_    = dims[1];
+  num_dims_     = dims[2];
 
   num_qps_ = cubature_->getNumPoints();
 
@@ -93,7 +97,9 @@ SurfaceVectorResidual<EvalT, Traits>::SurfaceVectorResidual(
 template <typename EvalT, typename Traits>
 void
 SurfaceVectorResidual<EvalT, Traits>::postRegistrationSetup(
-    typename Traits::SetupData d, PHX::FieldManager<Traits>& fm) {
+    typename Traits::SetupData d,
+    PHX::FieldManager<Traits>& fm)
+{
   this->utils.setFieldData(current_basis_, fm);
   this->utils.setFieldData(ref_dual_basis_, fm);
   this->utils.setFieldData(ref_normal_, fm);
@@ -129,7 +135,8 @@ SurfaceVectorResidual<EvalT, Traits>::postRegistrationSetup(
 template <typename EvalT, typename Traits>
 void
 SurfaceVectorResidual<EvalT, Traits>::evaluateFields(
-    typename Traits::EvalData workset) {
+    typename Traits::EvalData workset)
+{
   // define and initialize tensors/vectors
   minitensor::Vector<ScalarT> f_plus(0, 0, 0), f_minus(0, 0, 0);
 
@@ -179,13 +186,13 @@ SurfaceVectorResidual<EvalT, Traits>::evaluateFields(
           minitensor::Vector<ScalarT> T(
               minitensor::Source::ARRAY, 3, traction_, cell, pt, 0);
 
-          f_plus = ref_values_(bottom_node, pt) * T;
+          f_plus  = ref_values_(bottom_node, pt) * T;
           f_minus = -ref_values_(bottom_node, pt) * T;
         } else {
           minitensor::Tensor<ScalarT> P(
               minitensor::Source::ARRAY, 3, stress_, cell, pt, 0, 0);
 
-          f_plus = ref_values_(bottom_node, pt) * P * N;
+          f_plus  = ref_values_(bottom_node, pt) * P * N;
           f_minus = -ref_values_(bottom_node, pt) * P * N;
 
           if (compute_membrane_forces_) {
@@ -193,9 +200,9 @@ SurfaceVectorResidual<EvalT, Traits>::evaluateFields(
               for (int i(0); i < num_dims_; ++i) {
                 for (int L(0); L < num_dims_; ++L) {
                   // tmp1 = (1/2) * delta * lambda_{,alpha} * G^{alpha L}
-                  tmp1 =
-                      0.5 * I(m, i) * (ref_grads_(bottom_node, pt, 0) * G0(L) +
-                                       ref_grads_(bottom_node, pt, 1) * G1(L));
+                  tmp1 = 0.5 * I(m, i) *
+                         (ref_grads_(bottom_node, pt, 0) * G0(L) +
+                          ref_grads_(bottom_node, pt, 1) * G1(L));
 
                   // tmp2 = (1/2) * dndxbar * G^{3}
                   dndxbar = 0.0;
@@ -269,4 +276,4 @@ SurfaceVectorResidual<EvalT, Traits>::evaluateFields(
   }
 }
 //----------------------------------------------------------------------------
-}
+}  // namespace LCM

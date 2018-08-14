@@ -9,13 +9,13 @@
 
 #include "Albany_config.h"
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
-#include "Teuchos_ParameterList.hpp"
 #include "Sacado_ParameterAccessor.hpp"
+#include "Teuchos_ParameterList.hpp"
 #ifdef ALBANY_STOKHOS
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #endif
@@ -27,59 +27,58 @@ namespace LCM {
  * KL expansion.
  */
 
-template<typename EvalT, typename Traits>
-class ElasticModulus :
-  public PHX::EvaluatorWithBaseImpl<Traits>,
-  public PHX::EvaluatorDerived<EvalT, Traits>,
-  public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-
-public:
-  typedef typename EvalT::ScalarT ScalarT;
+template <typename EvalT, typename Traits>
+class ElasticModulus : public PHX::EvaluatorWithBaseImpl<Traits>,
+                       public PHX::EvaluatorDerived<EvalT, Traits>,
+                       public Sacado::ParameterAccessor<EvalT, SPL_Traits>
+{
+ public:
+  typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   ElasticModulus(Teuchos::ParameterList& p);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-           PHX::FieldManager<Traits>& vm);
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-  void evaluateFields(typename Traits::EvalData d);
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-  ScalarT& getValue(const std::string &n);
+  ScalarT&
+  getValue(const std::string& n);
 
-private:
-
-  int numQPs;
-  int numDims;
+ private:
+  int                                                   numQPs;
+  int                                                   numDims;
   PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim> coordVec;
-  PHX::MDField<ScalarT, Cell, QuadPoint> elasticModulus;
+  PHX::MDField<ScalarT, Cell, QuadPoint>                elasticModulus;
 
   //! Is Young's modulus constant, or random field
   bool is_constant;
-
 
   //! Constant value
   ScalarT constant_value;
 
   //! Optional dependence on Temperature (E = E_const + dEdT * T)
   PHX::MDField<const ScalarT, Cell, QuadPoint> Temperature;
-  bool isThermoElastic;
-  ScalarT dEdT_value;
-  RealType refTemp;
+  bool                                         isThermoElastic;
+  ScalarT                                      dEdT_value;
+  RealType                                     refTemp;
 
   // ! Optional dependence on porosity (E = E_const *(sqrt(1- porosity))
   PHX::MDField<const ScalarT, Cell, QuadPoint> porosity;
-  bool isPoroElastic;
-
-
+  bool                                         isPoroElastic;
 
 #ifdef ALBANY_STOKHOS
   //! Exponential random field
-  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType>> exp_rf_kl;
+  Teuchos::RCP<Stokhos::KL::ExponentialRandomField<RealType>> exp_rf_kl;
 #endif
 
   //! Values of the random variables
   Teuchos::Array<ScalarT> rv;
 };
-}
+}  // namespace LCM
 
 #endif

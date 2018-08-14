@@ -27,11 +27,12 @@ namespace LCM {
 /// \brief Evaluates a selecltion of Constitutive Model Parameters
 /// Either as a constant or a truncated KL expansion.
 ///
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 class ConstitutiveModelParameters
     : public PHX::EvaluatorWithBaseImpl<Traits>,
       public PHX::EvaluatorDerived<EvalT, Traits>,
-      public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+      public Sacado::ParameterAccessor<EvalT, SPL_Traits>
+{
  public:
   using ScalarT     = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
@@ -141,13 +142,13 @@ class ConstitutiveModelParameters
   ///
   /// Optional dependence on Temperature
   ///
-  bool have_temperature_;
+  bool                                         have_temperature_;
   PHX::MDField<const ScalarT, Cell, QuadPoint> temperature_;
-  std::map<std::string, std::string> temp_type_map_;
-  std::map<std::string, RealType>    dparam_dtemp_map_;
-  std::map<std::string, RealType>    ref_temp_map_;
-  std::map<std::string, RealType>    pre_exp_map_;
-  std::map<std::string, RealType>    exp_param_map_;
+  std::map<std::string, std::string>           temp_type_map_;
+  std::map<std::string, RealType>              dparam_dtemp_map_;
+  std::map<std::string, RealType>              ref_temp_map_;
+  std::map<std::string, RealType>              pre_exp_map_;
+  std::map<std::string, RealType>              exp_param_map_;
 
 #ifdef ALBANY_STOKHOS
   //! map of strings to exponential random fields
@@ -244,6 +245,6 @@ class ConstitutiveModelParameters
   void
   compute_temperature_Arrhenius(const int cell) const;
 };
-}
+}  // namespace LCM
 
 #endif

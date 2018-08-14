@@ -10,11 +10,11 @@
 // Currently disabled until the PHX::MDField interface is fixed
 #if 0
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
 #include <Phalanx_MDField.hpp>
 #include "PHAL_Dimension.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_config.hpp"
 
 namespace LCM {
 /** \brief Sets values in a field, indended for testing.

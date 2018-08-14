@@ -24,9 +24,10 @@ namespace LCM {
 ///  (optional) Velocity Gradient
 ///  (optional) Strain
 ///
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 class Kinematics : public PHX::EvaluatorWithBaseImpl<Traits>,
-                   public PHX::EvaluatorDerived<EvalT, Traits> {
+                   public PHX::EvaluatorDerived<EvalT, Traits>
+{
  public:
   ///
   /// Constructor
@@ -96,5 +97,5 @@ class Kinematics : public PHX::EvaluatorWithBaseImpl<Traits>,
   bool
   check_det(typename Traits::EvalData d, int cell, int pt);
 };
-}
+}  // namespace LCM
 #endif

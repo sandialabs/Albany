@@ -7,11 +7,11 @@
 #include <ctime>
 #include <vector>
 
+#include "Moertel_IntegratorT.hpp"
 #include "Moertel_InterfaceT.hpp"
-#include "Moertel_UtilsT.hpp"
 #include "Moertel_PnodeT.hpp"
 #include "Moertel_SegmentT.hpp"
-#include "Moertel_IntegratorT.hpp"
+#include "Moertel_UtilsT.hpp"
 
 #include "Moertel_Tolerances.hpp"
 
@@ -22,19 +22,19 @@
   |  assemble values from integration                                    |
  *----------------------------------------------------------------------*/
 MOERTEL_TEMPLATE_STATEMENT
-bool 
-MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::Mortar_Assemble(Tpetra::CrsMatrix<ST, LO, GO, N>& D,
+bool MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::Mortar_Assemble(
+    Tpetra::CrsMatrix<ST, LO, GO, N>& D,
     Tpetra::CrsMatrix<ST, LO, GO, N>& M)
 {
-
   //-------------------------------------------------------------------
   // interface needs to be complete
-  if (!IsComplete())
-  {
-    if (gcomm_->getRank()==0)
+  if (!IsComplete()) {
+    if (gcomm_->getRank() == 0)
       std::cout << "***ERR*** MoertelT::InterfaceT::Mortar_Assemble:\n"
-        << "***ERR*** Complete() not called on interface " << Id_ << "\n"
-        << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+                << "***ERR*** Complete() not called on interface " << Id_
+                << "\n"
+                << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__
+                << "\n";
     return false;
   }
 
@@ -44,32 +44,33 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::Mortar_Assemble(Tpetra::CrsMatrix<
 
   //-------------------------------------------------------------------
   // interface needs to have a mortar side assigned
-  if (MortarSide()==-1)
-  {
-    if (gcomm_->getRank()==0)
+  if (MortarSide() == -1) {
+    if (gcomm_->getRank() == 0)
       std::cout << "***ERR*** MoertelT::InterfaceT::Mortar_Assemble:\n"
-        << "***ERR*** mortar side was not assigned on interface " << Id_ << "\n"
-        << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+                << "***ERR*** mortar side was not assigned on interface " << Id_
+                << "\n"
+                << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__
+                << "\n";
     return false;
   }
 
   //-------------------------------------------------------------------
   // interface need to be integrated
-  if (!IsIntegrated())
-  {
-    if (gcomm_->getRank()==0)
+  if (!IsIntegrated()) {
+    if (gcomm_->getRank() == 0)
       std::cout << "***ERR*** MoertelT::InterfaceT::Mortar_Assemble:\n"
-        << "***ERR*** interface " << Id_ << " not integrated\n"
-        << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+                << "***ERR*** interface " << Id_ << " not integrated\n"
+                << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__
+                << "\n";
     return false;
   }
 
   //-------------------------------------------------------------------
   // call assembly of 2D and 3D problems
-  return Assemble_3D(D,M);
+  return Assemble_3D(D, M);
 }
 
-#if 0 // old version
+#if 0  // old version
 /*----------------------------------------------------------------------*
   |  make mortar integration of this interface (2D problem)              |
  *----------------------------------------------------------------------*/
@@ -169,12 +170,12 @@ MoertelT::InterfaceT<OrdinalType>::Mortar_Integrate(Tpetra_CrsMatrix& D,
 /*----------------------------------------------------------------------*
   |  make mortar integration of this interface (2D problem)              |
  *----------------------------------------------------------------------*/
-template<class ST, class LO, class GO, class N > 
-bool 
+template <class ST, class LO, class GO, class N>
+bool
 MoertelT::InterfaceT<2, ST, LO, GO, N>::Mortar_Integrate_2D(
     Teuchos::RCP<Teuchos::ParameterList> intparams)
 {
-  bool ok = false;
+  bool ok    = false;
   intparams_ = intparams;
 
   //-------------------------------------------------------------------
@@ -183,23 +184,25 @@ MoertelT::InterfaceT<2, ST, LO, GO, N>::Mortar_Integrate_2D(
   time.start(true);
 
   //-------------------------------------------------------------------
-  if (!IsOneDimensional())
-  {
-    if (gcomm_->getRank()==0)
+  if (!IsOneDimensional()) {
+    if (gcomm_->getRank() == 0)
       std::cout << "***ERR*** MoertelT::InterfaceT::Mortar_Integrate:\n"
-        << "***ERR*** This is not a 2D problem, we're in the wrong method here!!!\n"
-        << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+                << "***ERR*** This is not a 2D problem, we're in the wrong "
+                   "method here!!!\n"
+                << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__
+                << "\n";
     return false;
   }
 
   //-------------------------------------------------------------------
   // interface needs to be complete
-  if (!IsComplete())
-  {
-    if (gcomm_->getRank()==0)
+  if (!IsComplete()) {
+    if (gcomm_->getRank() == 0)
       std::cout << "***ERR*** MoertelT::InterfaceT::Mortar_Integrate:\n"
-        << "***ERR*** Complete() not called on interface " << Id_ << "\n"
-        << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+                << "***ERR*** Complete() not called on interface " << Id_
+                << "\n"
+                << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__
+                << "\n";
     return false;
   }
 
@@ -209,12 +212,13 @@ MoertelT::InterfaceT<2, ST, LO, GO, N>::Mortar_Integrate_2D(
 
   //-------------------------------------------------------------------
   // interface needs to have a mortar side assigned
-  if (MortarSide()==-1)
-  {
-    if (gcomm_->getRank()==0)
+  if (MortarSide() == -1) {
+    if (gcomm_->getRank() == 0)
       std::cout << "***ERR*** MoertelT::InterfaceT::Mortar_Integrate:\n"
-        << "***ERR*** mortar side was not assigned on interface " << Id_ << "\n"
-        << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+                << "***ERR*** mortar side was not assigned on interface " << Id_
+                << "\n"
+                << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__
+                << "\n";
     return false;
   }
 
@@ -223,23 +227,26 @@ MoertelT::InterfaceT<2, ST, LO, GO, N>::Mortar_Integrate_2D(
   // and two functions on the slave side
   int mside = MortarSide();
   int sside = OtherSide(mside);
-  std::map<int,Teuchos::RCP<Moertel::SEGMENT_TEMPLATE_CLASS(SegmentT) > >::iterator scurr;
-  for (scurr=seg_[mside].begin(); scurr!=seg_[mside].end(); ++scurr)
-    if (scurr->second->Nfunctions() < 1)
-    {
+  std::map<int, Teuchos::RCP<Moertel::SEGMENT_TEMPLATE_CLASS(SegmentT)>>::
+      iterator scurr;
+  for (scurr = seg_[mside].begin(); scurr != seg_[mside].end(); ++scurr)
+    if (scurr->second->Nfunctions() < 1) {
       std::cout << "***ERR*** MoertelT::InterfaceT::Mortar_Integrate:\n"
-        << "***ERR*** interface " << Id_ << ", mortar side\n"
-        << "***ERR*** segment " << scurr->second->Id() << " needs at least 1 function set\n"
-        << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+                << "***ERR*** interface " << Id_ << ", mortar side\n"
+                << "***ERR*** segment " << scurr->second->Id()
+                << " needs at least 1 function set\n"
+                << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__
+                << "\n";
       return false;
     }
-  for (scurr=seg_[sside].begin(); scurr!=seg_[sside].end(); ++scurr)
-    if (scurr->second->Nfunctions() < 2)
-    {
+  for (scurr = seg_[sside].begin(); scurr != seg_[sside].end(); ++scurr)
+    if (scurr->second->Nfunctions() < 2) {
       std::cout << "***ERR*** MoertelT::InterfaceT::Mortar_Integrate:\n"
-        << "***ERR*** interface " << Id_ << ", slave side\n"
-        << "***ERR*** segment " << scurr->second->Id() << " needs at least 2 function set\n"
-        << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+                << "***ERR*** interface " << Id_ << ", slave side\n"
+                << "***ERR*** segment " << scurr->second->Id()
+                << " needs at least 2 function set\n"
+                << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__
+                << "\n";
       return false;
     }
 
@@ -254,10 +261,11 @@ MoertelT::InterfaceT<2, ST, LO, GO, N>::Mortar_Integrate_2D(
 
   //-------------------------------------------------------------------
   // time this process
-  if (OutLevel()>5)
-  {
-    std::cout << "MoertelT::Interface " << Id() << ": Integration on proc " << gcomm_->getRank()
-      << " finished in " << time.totalElapsedTime() << " sec\n"; fflush(stdout);
+  if (OutLevel() > 5) {
+    std::cout << "MoertelT::Interface " << Id() << ": Integration on proc "
+              << gcomm_->getRank() << " finished in " << time.totalElapsedTime()
+              << " sec\n";
+    fflush(stdout);
   }
   return true;
 }
@@ -266,15 +274,15 @@ MoertelT::InterfaceT<2, ST, LO, GO, N>::Mortar_Integrate_2D(
   |  make mortar integration of master/slave side in 2D (1D interface)   |
  *----------------------------------------------------------------------*/
 MOERTEL_TEMPLATE_STATEMENT
-bool 
-MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::Integrate_2D()
+bool MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::Integrate_2D()
 {
-  if (!IsComplete())
-  {
-    if (gcomm_->getRank()==0)
+  if (!IsComplete()) {
+    if (gcomm_->getRank() == 0)
       std::cout << "***ERR*** MoertelT::InterfaceT::Integrate_2D:\n"
-        << "***ERR*** Complete() not called on interface " << Id_ << "\n"
-        << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+                << "***ERR*** Complete() not called on interface " << Id_
+                << "\n"
+                << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__
+                << "\n";
     return false;
   }
   if (lcomm_ == Teuchos::null) return true;
@@ -283,25 +291,24 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::Integrate_2D()
   int mside = MortarSide();
   int sside = OtherSide(mside);
 
-
   // loop over all segments of slave side
-  std::map<int,Teuchos::RCP<MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) > >::iterator scurr;
-  for (scurr=rseg_[sside].begin(); scurr!=rseg_[sside].end(); ++scurr)
-  {
+  std::map<int, Teuchos::RCP<MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)>>::
+      iterator scurr;
+  for (scurr = rseg_[sside].begin(); scurr != rseg_[sside].end(); ++scurr) {
     // the segment to be integrated
-    Teuchos::RCP<MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) > actsseg = scurr->second;
+    Teuchos::RCP<MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)> actsseg =
+        scurr->second;
 
 #if 0
     std::cout << "\nActive sseg id " << actsseg->Id() << "\n\n";
 #endif
 
     // check whether I own at least one of the nodes on this slave segment
-    int nnode = actsseg->Nnode();
+    int nnode                                       = actsseg->Nnode();
     MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)** nodes = actsseg->Nodes();
-    bool foundone = false;
-    for (int i=0; i<nnode; ++i)
-      if (NodePID(nodes[i]->Id()) == lcomm_->getRank())
-      {
+    bool foundone                                   = false;
+    for (int i = 0; i < nnode; ++i)
+      if (NodePID(nodes[i]->Id()) == lcomm_->getRank()) {
         foundone = true;
         break;
       }
@@ -309,10 +316,11 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::Integrate_2D()
     if (!foundone) continue;
 
     // loop over all segments on the master side
-    std::map<int,Teuchos::RCP<MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) > >::iterator mcurr;
-    for (mcurr=rseg_[mside].begin(); mcurr!=rseg_[mside].end(); ++mcurr)
-    {
-      Teuchos::RCP<MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) > actmseg = mcurr->second;
+    std::map<int, Teuchos::RCP<MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)>>::
+        iterator mcurr;
+    for (mcurr = rseg_[mside].begin(); mcurr != rseg_[mside].end(); ++mcurr) {
+      Teuchos::RCP<MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)> actmseg =
+          mcurr->second;
 
 #if 0
       std::cout << "Active mseg id " << actmseg->Id() << std::endl;
@@ -326,14 +334,13 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::Integrate_2D()
         // overlap case found" error. Don't treat this as fatal.
       }
 
-    } // for (mcurr=rseg_[mside].begin(); mcurr!=rseg_[mside].end(); ++mcurr)
-  } // for (scurr=rseg_[sside].begin(); scurr!=rseg_[sside].end(); ++scurr)
+    }  // for (mcurr=rseg_[mside].begin(); mcurr!=rseg_[mside].end(); ++mcurr)
+  }    // for (scurr=rseg_[sside].begin(); scurr!=rseg_[sside].end(); ++scurr)
 
   return true;
 }
 
-
-#if 0 // old version
+#if 0  // old version
 /*----------------------------------------------------------------------*
   |  make mortar integration of master/slave side in 2D (1D interface)   |
  *----------------------------------------------------------------------*/
@@ -404,17 +411,18 @@ bool MoertelT::Interface::Integrate_2D(Tpetra_CrsMatrix& M,
   | of 2 segments (2D version) IF there is an overlap                    |
  *----------------------------------------------------------------------*/
 MOERTEL_TEMPLATE_STATEMENT
-bool 
-MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::Integrate_2D_Section(MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& sseg,
-    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& mseg)
+bool MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::Integrate_2D_Section(
+    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & sseg,
+    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & mseg)
 {
   // if one of the segments is quadratic, we have to do something here
-  if (sseg.Type()!=MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)::seg_Linear1D || mseg.Type()!=MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)::seg_Linear1D)
-  {
+  if (sseg.Type() != MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)::seg_Linear1D ||
+      mseg.Type() != MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)::seg_Linear1D) {
     std::stringstream oss;
     oss << "***ERR*** MoertelT::Interface::Integrate_2D_Section:\n"
-      << "***ERR*** Integration of other than linear segments not yet implemented\n"
-      << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+        << "***ERR*** Integration of other than linear segments not yet "
+           "implemented\n"
+        << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     throw MoertelT::ReportError(oss);
   }
 
@@ -435,161 +443,156 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::Integrate_2D_Section(MoertelT::SEG
 
   overlap = QuickOverlapTest_2D(mseg, sseg);
 
-  if (!overlap)
-    return true;
+  if (!overlap) return true;
 
   // get slave and master's projections of the end points
   MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)** snodes = sseg.Nodes();
   MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)** mnodes = mseg.Nodes();
 
   // determine the overlap of the 2 segments if there is any
-  MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectorT) projector(IsOneDimensional(),OutLevel());
+  MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectorT)
+      projector(IsOneDimensional(), OutLevel());
   // project master nodes onto slave segment
   std::vector<double> mxi(mseg.Nnode());
   std::vector<double> mgap(mseg.Nnode());
   for (int i = 0; i < mseg.Nnode(); ++i) {
     const bool ok = projector.ProjectNodetoSegment_SegmentNormal(
-      *mnodes[i], sseg, &mxi[i], mgap[i]);
-    if ( ! ok) mxi[i] = 10; // Large enough to be out of bounds below.
+        *mnodes[i], sseg, &mxi[i], mgap[i]);
+    if (!ok) mxi[i] = 10;  // Large enough to be out of bounds below.
   }
-  //std::cout << mxi[0] << " " << mxi[1] << std::endl;
+  // std::cout << mxi[0] << " " << mxi[1] << std::endl;
 
   // project slave nodes onto master segment
   std::vector<double> sxi(sseg.Nnode());
   std::vector<double> sgap(sseg.Nnode());
   for (int i = 0; i < sseg.Nnode(); ++i) {
     const bool ok = projector.ProjectNodetoSegment_NodalNormal(
-      *snodes[i], mseg, &sxi[i], sgap[i]);
-    if ( ! ok) sxi[i] = 10; // Large enough to be out of bounds below.
+        *snodes[i], mseg, &sxi[i], sgap[i]);
+    if (!ok) sxi[i] = 10;  // Large enough to be out of bounds below.
   }
-  //std::cout << sxi[0] << " " << sxi[1] << std::endl;
+  // std::cout << sxi[0] << " " << sxi[1] << std::endl;
 
   // Depending on mxi and sxi decide on the overlap
-  bool snode0 = false;
-  bool snode1 = false;
-  bool mnode0 = false;
-  bool mnode1 = false;
-  Teuchos::RCP<MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectedNodeT) > is_spnode0 = Teuchos::null;
-  Teuchos::RCP<MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectedNodeT) > is_spnode1 = Teuchos::null;
-  Teuchos::RCP<MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectedNodeT) > is_mpnode0 = Teuchos::null;
-  Teuchos::RCP<MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectedNodeT) > is_mpnode1 = Teuchos::null;
-  double xi[2]; xi[0] = xi[1] = 0.0;
-  if ( -1.05 <= mxi[0] && mxi[0] <= 1.05)
-  {
-    mnode0 = true;
-    xi[0] = mxi[0];
-    is_mpnode0 = Teuchos::rcp(new MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectedNodeT)(*mnodes[0],xi,&sseg));
+  bool                                                           snode0 = false;
+  bool                                                           snode1 = false;
+  bool                                                           mnode0 = false;
+  bool                                                           mnode1 = false;
+  Teuchos::RCP<MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectedNodeT)> is_spnode0 =
+      Teuchos::null;
+  Teuchos::RCP<MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectedNodeT)> is_spnode1 =
+      Teuchos::null;
+  Teuchos::RCP<MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectedNodeT)> is_mpnode0 =
+      Teuchos::null;
+  Teuchos::RCP<MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectedNodeT)> is_mpnode1 =
+      Teuchos::null;
+  double xi[2];
+  xi[0] = xi[1] = 0.0;
+  if (-1.05 <= mxi[0] && mxi[0] <= 1.05) {
+    mnode0     = true;
+    xi[0]      = mxi[0];
+    is_mpnode0 = Teuchos::rcp(new MoertelT::MOERTEL_TEMPLATE_CLASS(
+        ProjectedNodeT)(*mnodes[0], xi, &sseg));
     mnodes[0]->SetGap(mgap[0]);
   }
-  if ( -1.05 <= mxi[1] && mxi[1] <= 1.05)
-  {
-    mnode1 = true;
-    xi[0] = mxi[1];
-    is_mpnode1 = Teuchos::rcp(new MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectedNodeT)(*mnodes[1],xi,&sseg));
+  if (-1.05 <= mxi[1] && mxi[1] <= 1.05) {
+    mnode1     = true;
+    xi[0]      = mxi[1];
+    is_mpnode1 = Teuchos::rcp(new MoertelT::MOERTEL_TEMPLATE_CLASS(
+        ProjectedNodeT)(*mnodes[1], xi, &sseg));
     mnodes[1]->SetGap(mgap[1]);
   }
-  if ( -1.05 <= sxi[0] && sxi[0] <= 1.05)
-  {
-    snode0 = true;
-    xi[0] = sxi[0];
-    is_spnode0 = Teuchos::rcp(new MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectedNodeT)(*snodes[0],xi,&mseg));
+  if (-1.05 <= sxi[0] && sxi[0] <= 1.05) {
+    snode0     = true;
+    xi[0]      = sxi[0];
+    is_spnode0 = Teuchos::rcp(new MoertelT::MOERTEL_TEMPLATE_CLASS(
+        ProjectedNodeT)(*snodes[0], xi, &mseg));
     snodes[0]->SetGap(sgap[0]);
   }
-  if ( -1.05 <= sxi[1] && sxi[1] <= 1.05)
-  {
-    snode1 = true;
-    xi[0] = sxi[1];
-    is_spnode1 = Teuchos::rcp(new MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectedNodeT)(*snodes[1],xi,&mseg));
+  if (-1.05 <= sxi[1] && sxi[1] <= 1.05) {
+    snode1     = true;
+    xi[0]      = sxi[1];
+    is_spnode1 = Teuchos::rcp(new MoertelT::MOERTEL_TEMPLATE_CLASS(
+        ProjectedNodeT)(*snodes[1], xi, &mseg));
     snodes[1]->SetGap(sgap[1]);
   }
-  //std::cout << mnode0 << "  " << mnode1 << "  " << snode0 << "  " << snode1 << std::endl;
+  // std::cout << mnode0 << "  " << mnode1 << "  " << snode0 << "  " << snode1
+  // << std::endl;
 
   // Make decision upon overlap
   overlap = false;
-  Teuchos::RCP<MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectedNodeT) > nstart = Teuchos::null;
-  Teuchos::RCP<MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectedNodeT) > nend   = Teuchos::null;
-  double sxia=999.0,sxib=999.0;
-  double mxia=999.0,mxib=999.0;
+  Teuchos::RCP<MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectedNodeT)> nstart =
+      Teuchos::null;
+  Teuchos::RCP<MoertelT::MOERTEL_TEMPLATE_CLASS(ProjectedNodeT)> nend =
+      Teuchos::null;
+  double sxia = 999.0, sxib = 999.0;
+  double mxia = 999.0, mxib = 999.0;
 
   // no overlap
-  if (!snode0 && !snode1 && !mnode0 && !mnode1);
+  if (!snode0 && !snode1 && !mnode0 && !mnode1)
+    ;
   // no overlap
-  else if (snode0 && !snode1 && !mnode0 && !mnode1)
-  {
-    if (sxi[0]>-0.95)
+  else if (snode0 && !snode1 && !mnode0 && !mnode1) {
+    if (sxi[0] > -0.95)
       std::cout << "***WRN*** Significant overlap ignored\n"
-        << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+                << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__
+                << "\n";
   }
   // no overlap
-  else if (!snode0 && !snode1 && mnode0 && !mnode1)
-  {
-    if (mxi[0]>-0.95)
+  else if (!snode0 && !snode1 && mnode0 && !mnode1) {
+    if (mxi[0] > -0.95)
       std::cout << "MoertelT: ***WRN*** Significant overlap ignored\n"
-        << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
-  }
-  else if (!snode0 && !snode1 && !mnode0 && mnode1)
-  {
-    if (mxi[1]<0.95)
+                << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__
+                << "\n";
+  } else if (!snode0 && !snode1 && !mnode0 && mnode1) {
+    if (mxi[1] < 0.95)
       std::cout << "MoertelT: ***WRN*** Significant overlap ignored\n"
-        << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
-  }
-  else if (!snode0 && snode1 && !mnode0 && !mnode1)
-  {
-    if (sxi[1]<0.95)
+                << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__
+                << "\n";
+  } else if (!snode0 && snode1 && !mnode0 && !mnode1) {
+    if (sxi[1] < 0.95)
       std::cout << "***WRN*** Significant overlap ignored\n"
-        << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
-  }
-  else if (mnode0 && mnode1)
-  {
+                << "***WRN*** file/line: " << __FILE__ << "/" << __LINE__
+                << "\n";
+  } else if (mnode0 && mnode1) {
     overlap = true;
-    nstart = is_mpnode0;
-    nend   = is_mpnode1;
-    sxia = nend->Xi()[0];
-    sxib = nstart->Xi()[0];
-    mxia = -1.0;
-    mxib = 1.0;
-  }
-  else if (snode0 && snode1)
-  {
+    nstart  = is_mpnode0;
+    nend    = is_mpnode1;
+    sxia    = nend->Xi()[0];
+    sxib    = nstart->Xi()[0];
+    mxia    = -1.0;
+    mxib    = 1.0;
+  } else if (snode0 && snode1) {
     overlap = true;
-    nstart = is_spnode0;
-    nend   = is_spnode1;
-    sxia = -1.0;
-    sxib =  1.0;
-    mxia = nend->Xi()[0];
-    mxib = nstart->Xi()[0];
-  }
-  else if (snode0 && !snode1 && mnode0 && !mnode1)
-  {
+    nstart  = is_spnode0;
+    nend    = is_spnode1;
+    sxia    = -1.0;
+    sxib    = 1.0;
+    mxia    = nend->Xi()[0];
+    mxib    = nstart->Xi()[0];
+  } else if (snode0 && !snode1 && mnode0 && !mnode1) {
     overlap = true;
-    nstart = is_spnode0;
-    nend   = is_mpnode0;
-    sxia = -1.0;
-    sxib = nend->Xi()[0];
-    mxia = -1.0;
-    mxib = nstart->Xi()[0];
-  }
-  else if (snode1 && !snode0 && mnode1 && !mnode0)
-  {
+    nstart  = is_spnode0;
+    nend    = is_mpnode0;
+    sxia    = -1.0;
+    sxib    = nend->Xi()[0];
+    mxia    = -1.0;
+    mxib    = nstart->Xi()[0];
+  } else if (snode1 && !snode0 && mnode1 && !mnode0) {
     overlap = true;
-    nstart = is_mpnode1;
-    nend   = is_spnode1;
-    sxia = nstart->Xi()[0];
-    sxib = 1.0;
-    mxia = nend->Xi()[0];
-    mxib = 1.0;
-  }
-  else
-  {
-
+    nstart  = is_mpnode1;
+    nend    = is_spnode1;
+    sxia    = nstart->Xi()[0];
+    sxib    = 1.0;
+    mxia    = nend->Xi()[0];
+    mxib    = 1.0;
+  } else {
     std::stringstream oss;
     oss << "***ERR*** MoertelT::InterfaceT::Integrate_2D_Section:\n"
-      << "***ERR*** Unknown overlap case found\n"
-      << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+        << "***ERR*** Unknown overlap case found\n"
+        << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     throw MoertelT::ReportError(oss);
   }
-  if (!overlap)
-    return true;
+  if (!overlap) return true;
 
 #if 0
   std::cout << "slave  xi range " << sxia << " - " << sxib << std::endl;
@@ -597,22 +600,24 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::Integrate_2D_Section(MoertelT::SEG
 #endif
 
   // create an integrator instance of some given order
-  MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT) integrator(5,IsOneDimensional(),OutLevel());
+  MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)
+      integrator(5, IsOneDimensional(), OutLevel());
 
   // do the integration of the master side
   Teuchos::SerialDenseMatrix<LO, ST>* Mdense =
-    integrator.Integrate(sseg,sxia,sxib,mseg,mxia,mxib);
+      integrator.Integrate(sseg, sxia, sxib, mseg, mxia, mxib);
 
   // do the integration of the slave side
-  Teuchos::SerialDenseMatrix<LO, ST>* Ddense = integrator.Integrate(sseg,sxia,sxib);
+  Teuchos::SerialDenseMatrix<LO, ST>* Ddense =
+      integrator.Integrate(sseg, sxia, sxib);
 
   // Assemble contributions Mdense into nodes (scalar only)
-  integrator.Assemble(*this,sseg,mseg,*Mdense);
+  integrator.Assemble(*this, sseg, mseg, *Mdense);
 
   // Assemble contributions Ddense into nodes (scalar only)
-  integrator.Assemble(*this,sseg,*Ddense);
+  integrator.Assemble(*this, sseg, *Ddense);
 
-#if 0 // modification for curved interfaces from paper by B. Wohlmuth
+#if 0  // modification for curved interfaces from paper by B. Wohlmuth
 
   if (sseg.Type() == MOERTEL::Segment::seg_Linear1D &&
       mseg.Type() == MOERTEL::Segment::seg_Linear1D)
@@ -730,22 +735,23 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::Integrate_2D_Section(MoertelT::SEG
 
 #endif
 
-  if (Mdense) delete Mdense; Mdense = NULL;
-  if (Ddense) delete Ddense; Ddense = NULL;
+  if (Mdense) delete Mdense;
+  Mdense = NULL;
+  if (Ddense) delete Ddense;
+  Ddense = NULL;
 
   return true;
 }
 
 MOERTEL_TEMPLATE_STATEMENT
-bool 
-MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::QuickOverlapTest_2D(MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& sseg, 
-       MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& mseg)
+bool MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::QuickOverlapTest_2D(
+    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & sseg,
+    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & mseg)
 {
-
   MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)** snode = sseg.Nodes();
   MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)** mnode = mseg.Nodes();
-  const int nsnode = sseg.Nnode();
-  const int nmnode = mseg.Nnode();
+  const int nsnode                                = sseg.Nnode();
+  const int nmnode                                = mseg.Nnode();
 
   double mcen[3], scen[3], mrad[3], srad[3], vec[3], mdiam, sdiam, length;
 
@@ -753,7 +759,7 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::QuickOverlapTest_2D(MoertelT::SEGM
   scen[0] = scen[1] = scen[2] = 0;
   mdiam = sdiam = 0;
 
-  for (int i=0; i<nmnode; ++i){
+  for (int i = 0; i < nmnode; ++i) {
     mcen[0] += mnode[i]->XCoords()[0];
     mcen[1] += mnode[i]->XCoords()[1];
     mcen[2] += mnode[i]->XCoords()[2];
@@ -762,7 +768,7 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::QuickOverlapTest_2D(MoertelT::SEGM
   mcen[1] /= (double)nmnode;
   mcen[2] /= (double)nmnode;
 
-  for (int i=0; i<nsnode; ++i){
+  for (int i = 0; i < nsnode; ++i) {
     scen[0] += snode[i]->XCoords()[0];
     scen[1] += snode[i]->XCoords()[1];
     scen[2] += snode[i]->XCoords()[2];
@@ -771,40 +777,38 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::QuickOverlapTest_2D(MoertelT::SEGM
   scen[1] /= (double)nsnode;
   scen[2] /= (double)nsnode;
 
-  for (int i=0; i<nmnode; ++i){
+  for (int i = 0; i < nmnode; ++i) {
     mrad[0] = mnode[i]->XCoords()[0] - mcen[0];
     mrad[1] = mnode[i]->XCoords()[1] - mcen[1];
     mrad[2] = mnode[i]->XCoords()[2] - mcen[2];
-    length = MoertelT::length(mrad,3);
+    length  = MoertelT::length(mrad, 3);
     if (mdiam < length) mdiam = length;
   }
 
-  for (int i=0; i<nsnode; ++i){
+  for (int i = 0; i < nsnode; ++i) {
     srad[0] = snode[i]->XCoords()[0] - scen[0];
     srad[1] = snode[i]->XCoords()[1] - scen[1];
     srad[2] = snode[i]->XCoords()[2] - scen[2];
-    length = MoertelT::length(srad,3);
+    length  = MoertelT::length(srad, 3);
     if (sdiam < length) sdiam = length;
   }
 
   vec[0] = mcen[0] - scen[0];
   vec[1] = mcen[1] - scen[1];
   vec[2] = mcen[2] - scen[2];
-  length = MoertelT::length(vec,3);
+  length = MoertelT::length(vec, 3);
 
   // Max distance between mseg and sseg for contact purposes
 
-  if (length > MoertelT::Rough_Search_Radius * (sdiam + mdiam)){
-
+  if (length > MoertelT::Rough_Search_Radius * (sdiam + mdiam)) {
     // std::cerr << " test NOT passed\n";
     return false;
   }
 
   return true;
-
 }
 
-#if 0 // old version
+#if 0  // old version
 /*----------------------------------------------------------------------*
   | integrate the master/slave side's contribution from the overlap      |
   | of 2 segments (2D version) IF there is an overlap                    |
@@ -1175,7 +1179,7 @@ bool MoertelT::Interface::Integrate_2D_Section(MOERTEL::Segment& sseg,
   // put results Ddense into Tpetra_CrsMatrix D
   integrator.Assemble(*this,sseg,D,*Ddense);
 
-#if 1 // modification for curved interfaces from paper by B. Wohlmuth
+#if 1  // modification for curved interfaces from paper by B. Wohlmuth
   // do this modification for
   // linear elements
   // vector valued PDE (ndof=2, e.g. elasticity)

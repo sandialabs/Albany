@@ -7,10 +7,10 @@
 #ifndef TLPOROSTRESS_HPP
 #define TLPOROSTRESS_HPP
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
 namespace LCM {
 /** \brief
@@ -21,30 +21,31 @@ namespace LCM {
 
 */
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 class TLPoroStress : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>  {
-
-public:
-
+                     public PHX::EvaluatorDerived<EvalT, Traits>
+{
+ public:
   TLPoroStress(const Teuchos::ParameterList& p);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-  void evaluateFields(typename Traits::EvalData d);
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-private:
-
-  typedef typename EvalT::ScalarT ScalarT;
+ private:
+  typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> defGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> J;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> stress;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> biotCoefficient;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> porePressure;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> defGrad;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>           J;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> stress;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>           biotCoefficient;
+  PHX::MDField<const ScalarT, Cell, QuadPoint>           porePressure;
 
   unsigned int numQPs;
   unsigned int numDims;
@@ -58,12 +59,11 @@ private:
   Kokkos::DynRankView<ScalarT, PHX::Device> JBpF_invT;
 
   // Material Name
-    std::string matModel;
-
+  std::string matModel;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> totstress;
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> totstress;
 };
-}
+}  // namespace LCM
 
 #endif

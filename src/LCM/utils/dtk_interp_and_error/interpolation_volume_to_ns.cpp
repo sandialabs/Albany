@@ -28,22 +28,22 @@
 #include "DTK_STKMeshHelpers.hpp"
 #include "DTK_STKMeshManager.hpp"
 
-#include <Teuchos_GlobalMPISession.hpp>
-#include "Teuchos_CommandLineProcessor.hpp"
-#include "Teuchos_XMLParameterListCoreHelpers.hpp"
-#include "Teuchos_YamlParameterListCoreHelpers.hpp"
 #include <Teuchos_Array.hpp>
 #include <Teuchos_ArrayRCP.hpp>
 #include <Teuchos_CommHelpers.hpp>
 #include <Teuchos_DefaultComm.hpp>
 #include <Teuchos_DefaultMpiComm.hpp>
+#include <Teuchos_GlobalMPISession.hpp>
 #include <Teuchos_OpaqueWrapper.hpp>
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_StandardCatchMacros.hpp>
 #include <Teuchos_TimeMonitor.hpp>
 #include <Teuchos_TypeTraits.hpp>
 #include <Teuchos_VerboseObject.hpp>
+#include "Teuchos_CommandLineProcessor.hpp"
 #include "Teuchos_ParameterList.hpp"
+#include "Teuchos_XMLParameterListCoreHelpers.hpp"
+#include "Teuchos_YamlParameterListCoreHelpers.hpp"
 
 #include <Tpetra_MultiVector.hpp>
 
@@ -73,7 +73,8 @@ template <typename FieldType>
 void
 interpolate(
     Teuchos::RCP<const Teuchos::Comm<int>> comm,
-    Teuchos::RCP<Teuchos::ParameterList> plist) {
+    Teuchos::RCP<Teuchos::ParameterList>   plist)
+{
   Teuchos::RCP<Teuchos::FancyOStream> out =
       Teuchos::fancyOStream(Teuchos::VerboseObjectBase::getDefaultOStream());
   // Read command-line options
@@ -107,13 +108,13 @@ interpolate(
   // SOURCE MESH READ
   // ----------------
   stk::io::StkMeshIoBroker src_broker(parallel_machine);
-  std::size_t src_input_index = src_broker.add_mesh_database(
+  std::size_t              src_input_index = src_broker.add_mesh_database(
       source_mesh_input_file, "exodus", stk::io::READ_MESH);
   src_broker.set_active_mesh(src_input_index);
   src_broker.create_input_mesh();
 
   // number of intervals to divide each input time step into
-  int interpolation_intervals = 1;
+  int                                 interpolation_intervals = 1;
   stk::io::MeshField::TimeMatchOption tmo = stk::io::MeshField::CLOSEST;
   if (interpolation_intervals > 1)
     tmo = stk::io::MeshField::LINEAR_INTERPOLATION;
@@ -123,7 +124,7 @@ interpolate(
   Teuchos::RCP<stk::mesh::BulkData> src_bulk_data =
       Teuchos::rcpFromRef(src_broker.bulk_data());
 
-  stk::util::ParameterList parameters;
+  stk::util::ParameterList   parameters;
   Teuchos::RCP<Ioss::Region> io_region = src_broker.get_input_io_region();
   STKIORequire(!Teuchos::is_null(io_region));
 
@@ -135,14 +136,16 @@ interpolate(
   int step = src_snap_no;
   if (step > timestep_count)
     TEUCHOS_TEST_FOR_EXCEPTION(
-        true, Teuchos::Exceptions::InvalidParameter,
+        true,
+        Teuchos::Exceptions::InvalidParameter,
         std::endl
             << "Invalid value of Source Mesh Snapshot Number = " << src_snap_no
             << " > total number of snapshots in " << source_mesh_input_file
             << " = " << timestep_count << "." << std::endl;);
   if (step <= 0)
     TEUCHOS_TEST_FOR_EXCEPTION(
-        true, Teuchos::Exceptions::InvalidParameter,
+        true,
+        Teuchos::Exceptions::InvalidParameter,
         std::endl
             << "Invalid value of Source Mesh Snapshot Number = " << src_snap_no
             << "; value must be > 0." << std::endl;);
@@ -151,9 +154,9 @@ interpolate(
     double time = io_region->get_state_time(step);
     if (step == timestep_count) interpolation_intervals = 1;
 
-    int step_end = step < timestep_count ? step + 1 : step;
-    double tend = io_region->get_state_time(step_end);
-    double tbeg = time;
+    int    step_end = step < timestep_count ? step + 1 : step;
+    double tend     = io_region->get_state_time(step_end);
+    double tbeg     = time;
     double delta = (tend - tbeg) / static_cast<double>(interpolation_intervals);
 
     for (int interval = 0; interval < interpolation_intervals; interval++) {
@@ -192,7 +195,7 @@ interpolate(
 
   // Load the target mesh.
   stk::io::StkMeshIoBroker tgt_broker(parallel_machine);
-  std::size_t tgt_input_index = tgt_broker.add_mesh_database(
+  std::size_t              tgt_input_index = tgt_broker.add_mesh_database(
       target_mesh_input_file, "exodus", stk::io::READ_MESH);
   tgt_broker.set_active_mesh(tgt_input_index);
   tgt_broker.create_input_mesh();
@@ -206,7 +209,8 @@ interpolate(
          << " found in source mesh file!" << std::endl;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(
-        true, Teuchos::Exceptions::InvalidParameter,
+        true,
+        Teuchos::Exceptions::InvalidParameter,
         std::endl
             << "   Field with name " << source_field_name
             << " NOT found in source mesh file!" << std::endl);
@@ -242,7 +246,8 @@ interpolate(
          << " found in target mesh file!" << std::endl;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(
-        true, Teuchos::Exceptions::InvalidParameter,
+        true,
+        Teuchos::Exceptions::InvalidParameter,
         std::endl
             << "   Field with name " << target_field_name
             << " NOT found in target mesh file!" << std::endl);
@@ -258,14 +263,16 @@ interpolate(
   step = tgt_snap_no;
   if (step > timestep_count)
     TEUCHOS_TEST_FOR_EXCEPTION(
-        true, Teuchos::Exceptions::InvalidParameter,
+        true,
+        Teuchos::Exceptions::InvalidParameter,
         std::endl
             << "Invalid value of Target Mesh Snapshot Number = " << tgt_snap_no
             << " > total number of snapshots in " << target_mesh_input_file
             << " = " << timestep_count << "." << std::endl;);
   if (step <= 0)
     TEUCHOS_TEST_FOR_EXCEPTION(
-        true, Teuchos::Exceptions::InvalidParameter,
+        true,
+        Teuchos::Exceptions::InvalidParameter,
         std::endl
             << "Invalid value of Target Mesh Snapshot Number = " << tgt_snap_no
             << "; value must be > 0." << std::endl;);
@@ -273,9 +280,9 @@ interpolate(
     double time = io_region->get_state_time(step);
     if (step == timestep_count) interpolation_intervals = 1;
 
-    int step_end = step < timestep_count ? step + 1 : step;
-    double tend = io_region->get_state_time(step_end);
-    double tbeg = time;
+    int    step_end = step < timestep_count ? step + 1 : step;
+    double tend     = io_region->get_state_time(step_end);
+    double tbeg     = time;
     double delta = (tend - tbeg) / static_cast<double>(interpolation_intervals);
 
     for (int interval = 0; interval < interpolation_intervals; interval++) {
@@ -293,7 +300,7 @@ interpolate(
   // Create a manager for the target part nodes.
   stk::mesh::Part* tgt_part =
       tgt_broker.meta_data().get_part(target_mesh_part_name);
-  stk::mesh::Selector tgt_stk_selector(*tgt_part);
+  stk::mesh::Selector             tgt_stk_selector(*tgt_part);
   DataTransferKit::STKMeshManager tgt_manager(tgt_bulk_data, tgt_stk_selector);
 
   // Create a solution vector for the source.
@@ -328,7 +335,7 @@ interpolate(
   // Create a map operator. The operator settings are in the
   // "DataTransferKit" parameter list.
   Teuchos::ParameterList& dtk_list = plist->sublist("DataTransferKit");
-  DataTransferKit::MapOperatorFactory op_factory;
+  DataTransferKit::MapOperatorFactory        op_factory;
   Teuchos::RCP<DataTransferKit::MapOperator> map_op =
       op_factory.create(src_vector->getMap(), tgt_vector->getMap(), dtk_list);
 
@@ -349,7 +356,7 @@ interpolate(
   double* tgt_field_data;
   // Copy interpolated solution on the Schwarz nodeset onto the target
   // solution's Schwarz nodeset
-  double* gold_value;  // target_interp_field
+  double*                 gold_value;  // target_interp_field
   stk::mesh::BucketVector tgt_part_buckets =
       tgt_stk_selector.get_buckets(stk::topology::NODE_RANK);
   std::vector<stk::mesh::Entity> tgt_part_nodes;
@@ -376,7 +383,7 @@ interpolate(
   }
   if (write_dirichlet_field) {
     // Copy tgt_field_data into dirichlet_field for output
-    double* dirichlet_data;
+    double*             dirichlet_data;
     stk::mesh::Selector tgt_all_stk_selector =
         stk::mesh::Selector(tgt_broker.meta_data().universal_part());
     stk::mesh::BucketVector tgt_all_buckets =
@@ -418,7 +425,8 @@ interpolate(
 namespace {
 
 std::string
-getFileExtension(std::string const& filename) {
+getFileExtension(std::string const& filename)
+{
   auto const pos = filename.find_last_of(".");
   return filename.substr(pos + 1);
 }
@@ -426,7 +434,8 @@ getFileExtension(std::string const& filename) {
 }  // anonymous namespace
 
 int
-main(int argc, char* argv[]) {
+main(int argc, char* argv[])
+{
   // INITIALIZATION
   // --------------
 
@@ -439,10 +448,11 @@ main(int argc, char* argv[]) {
       Teuchos::DefaultComm<int>::getComm();
 
   // Read in command line options.
-  std::string yaml_input_filename;
+  std::string                   yaml_input_filename;
   Teuchos::CommandLineProcessor clp(false);
   clp.setOption(
-      "yaml-in-file", &yaml_input_filename,
+      "yaml-in-file",
+      &yaml_input_filename,
       "The XML file to read into a parameter list");
   clp.parse(argc, argv);
 
@@ -463,7 +473,7 @@ main(int argc, char* argv[]) {
   }
 
   std::string field_type = plist->get<std::string>("Field Type", "Node Vector");
-  int field_type_num;
+  int         field_type_num;
   if (field_type == "Node Vector")
     field_type_num = 0;
   else if (field_type == "Node Scalar")
@@ -472,11 +482,13 @@ main(int argc, char* argv[]) {
     field_type_num = 2;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(
-        true, Teuchos::Exceptions::InvalidParameter,
+        true,
+        Teuchos::Exceptions::InvalidParameter,
         std::endl
             << "Error in interpolation_volume_to_ns.cpp: invalid field_type = "
-            << field_type << "!  Valid field_types are 'Node Vector', 'Node "
-                             "Scalar' and 'Node Tensor'."
+            << field_type
+            << "!  Valid field_types are 'Node Vector', 'Node "
+               "Scalar' and 'Node Tensor'."
             << std::endl);
 
   switch (field_type_num) {

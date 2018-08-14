@@ -874,9 +874,7 @@ void BifurcationCheck<EvalT, Traits>::projective_newton_raphson(
     }
 
     minitensor::Vector<D2FadType, 3> Xfad2_sub;
-    for (int i = 0; i < 3; ++i) {
-      Xfad2_sub[i] = Xfad2[i];
-    }
+    for (int i = 0; i < 3; ++i) { Xfad2_sub[i] = Xfad2[i]; }
     n = projective_get_normal(Xfad2_sub);
 
     detA = minitensor::det(minitensor::dot2(n, minitensor::dot(tangent, n))) +
@@ -1270,13 +1268,9 @@ typename EvalT::ScalarT BifurcationCheck<EvalT, Traits>::stereographic_pso(
       2.0 * arg_gbest[0], 2.0 * arg_gbest[1], r2 - 1.0);
   n /= (r2 + 1.0);
 
-  for (int i(0); i < 3; ++i) {
-    direction(i) = n(i);
-  }
+  for (int i(0); i < 3; ++i) { direction(i) = n(i); }
 
-  for (int i(0); i < 2; ++i) {
-    arg_minimum(i) = arg_gbest(i);
-  }
+  for (int i(0); i < 2; ++i) { arg_minimum(i) = arg_gbest(i); }
 
   return detA_gbest;
 }

@@ -7,13 +7,13 @@
 #ifndef BIOT_MODULUS_HPP
 #define BIOT_MODULUS_HPP
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
-#include "Teuchos_ParameterList.hpp"
 #include "Sacado_ParameterAccessor.hpp"
+#include "Teuchos_ParameterList.hpp"
 #ifdef ALBANY_STOKHOS
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #endif
@@ -25,31 +25,33 @@ namespace LCM {
  * KL expansion.
  */
 
-template<typename EvalT, typename Traits>
-class BiotModulus :
-  public PHX::EvaluatorWithBaseImpl<Traits>,
-  public PHX::EvaluatorDerived<EvalT, Traits>,
-  public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-
-public:
-  typedef typename EvalT::ScalarT ScalarT;
+template <typename EvalT, typename Traits>
+class BiotModulus : public PHX::EvaluatorWithBaseImpl<Traits>,
+                    public PHX::EvaluatorDerived<EvalT, Traits>,
+                    public Sacado::ParameterAccessor<EvalT, SPL_Traits>
+{
+ public:
+  typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   BiotModulus(Teuchos::ParameterList& p);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-  void evaluateFields(typename Traits::EvalData d);
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-  ScalarT& getValue(const std::string &n);
+  ScalarT&
+  getValue(const std::string& n);
 
-private:
-
-  int numQPs;
-  int numDims;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-  PHX::MDField<ScalarT,Cell,QuadPoint> biotModulus;
+ private:
+  int                                                   numQPs;
+  int                                                   numDims;
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim> coordVec;
+  PHX::MDField<ScalarT, Cell, QuadPoint>                biotModulus;
 
   //! Is conductivity constant, or random field
   bool is_constant;
@@ -58,23 +60,23 @@ private:
   ScalarT constant_value;
 
   //! Optional dependence on Temperature (E = E_const + dEdT * T)
-  //PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> porosity;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> biotCoefficient;
-  //bool isThermoElastic;
+  // PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> porosity;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> biotCoefficient;
+  // bool isThermoElastic;
   bool isPoroElastic;
-  //ScalarT dEdT_value;
+  // ScalarT dEdT_value;
   ScalarT FluidBulkModulus;
   ScalarT GrainBulkModulus;
 
 #ifdef ALBANY_STOKHOS
   //! Exponential random field
-  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType>> exp_rf_kl;
+  Teuchos::RCP<Stokhos::KL::ExponentialRandomField<RealType>> exp_rf_kl;
 #endif
 
   //! Values of the random variables
   Teuchos::Array<ScalarT> rv;
 };
-}
+}  // namespace LCM
 
 #endif

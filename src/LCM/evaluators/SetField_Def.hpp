@@ -48,9 +48,7 @@ SetField<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
   int dim1 = evaluatedFieldDimensions[0];
 
   if (numDimensions == 1) {
-    for (int i = 0; i < dim1; ++i) {
-      evaluatedField(i) = fieldValues[i];
-    }
+    for (int i = 0; i < dim1; ++i) { evaluatedField(i) = fieldValues[i]; }
   } else if (numDimensions == 2) {
     int dim2 = evaluatedFieldDimensions[1];
     TEUCHOS_TEST_FOR_EXCEPT_MSG(

@@ -16,7 +16,8 @@ namespace LCM {
 //
 template <typename EvalT, typename Traits>
 SurfaceBasis<EvalT, Traits>::SurfaceBasis(
-    Teuchos::ParameterList const& p, Teuchos::RCP<Albany::Layouts> const& dl)
+    Teuchos::ParameterList const&        p,
+    Teuchos::RCP<Albany::Layouts> const& dl)
     : need_current_basis_(false),
       reference_coords_(
           p.get<std::string>("Reference Coordinates Name"),
@@ -30,8 +31,10 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
       ref_basis_(p.get<std::string>("Reference Basis Name"), dl->qp_tensor),
       ref_area_(p.get<std::string>("Reference Area Name"), dl->qp_scalar),
       ref_dual_basis_(
-          p.get<std::string>("Reference Dual Basis Name"), dl->qp_tensor),
-      ref_normal_(p.get<std::string>("Reference Normal Name"), dl->qp_vector) {
+          p.get<std::string>("Reference Dual Basis Name"),
+          dl->qp_tensor),
+      ref_normal_(p.get<std::string>("Reference Normal Name"), dl->qp_vector)
+{
   this->addDependentField(reference_coords_);
   this->addEvaluatedField(ref_basis_);
   this->addEvaluatedField(ref_area_);
@@ -61,13 +64,13 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
 
   dl->node_vector->dimensions(dims);
 
-  container_size = dims[0];
-  num_nodes_ = dims[1];
+  container_size  = dims[0];
+  num_nodes_      = dims[1];
   num_surf_nodes_ = num_nodes_ / 2;
 
-  num_qps_ = cubature_->getNumPoints();
+  num_qps_       = cubature_->getNumPoints();
   num_surf_dims_ = cubature_->getDimension();
-  num_dims_ = num_surf_dims_ + 1;
+  num_dims_      = num_surf_dims_ + 1;
 
 #ifdef ALBANY_VERBOSE
   std::cout << "in Surface Basis" << '\n';
@@ -89,7 +92,9 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
 template <typename EvalT, typename Traits>
 void
 SurfaceBasis<EvalT, Traits>::postRegistrationSetup(
-    typename Traits::SetupData d, PHX::FieldManager<Traits>& fm) {
+    typename Traits::SetupData d,
+    PHX::FieldManager<Traits>& fm)
+{
   this->utils.setFieldData(reference_coords_, fm);
   this->utils.setFieldData(ref_area_, fm);
   this->utils.setFieldData(ref_dual_basis_, fm);
@@ -111,11 +116,17 @@ SurfaceBasis<EvalT, Traits>::postRegistrationSetup(
 
   // temp space for midplane coords
   ref_midplane_coords_ = Kokkos::createDynRankView(
-      reference_coords_.get_view(), "XXX", container_size, num_surf_nodes_,
+      reference_coords_.get_view(),
+      "XXX",
+      container_size,
+      num_surf_nodes_,
       num_dims_);
   if (need_current_basis_ == true) {
     current_midplane_coords_ = Kokkos::createDynRankView(
-        current_coords_.get_view(), "XXX", container_size, num_surf_nodes_,
+        current_coords_.get_view(),
+        "XXX",
+        container_size,
+        num_surf_nodes_,
         num_dims_);
   }
 
@@ -131,7 +142,8 @@ SurfaceBasis<EvalT, Traits>::postRegistrationSetup(
 //
 template <typename EvalT, typename Traits>
 void
-SurfaceBasis<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset) {
+SurfaceBasis<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+{
   for (int cell(0); cell < workset.numCells; ++cell) {
     // for the reference geometry
     // compute the mid-plane coordinates
@@ -166,7 +178,8 @@ template <typename ST>
 void
 SurfaceBasis<EvalT, Traits>::computeMidplaneCoords(
     PHX::MDField<const ST, Cell, Vertex, Dim> const coords,
-    Kokkos::DynRankView<ST, PHX::Device>& midplane_coords) {
+    Kokkos::DynRankView<ST, PHX::Device>&           midplane_coords)
+{
   for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
     // compute the mid-plane coordinates
     for (int node(0); node < num_surf_nodes_; ++node) {
@@ -188,7 +201,8 @@ template <typename ST>
 void
 SurfaceBasis<EvalT, Traits>::computeBasisVectors(
     Kokkos::DynRankView<ST, PHX::Device> const& midplane_coords,
-    PHX::MDField<ST, Cell, QuadPoint, Dim, Dim> basis) {
+    PHX::MDField<ST, Cell, QuadPoint, Dim, Dim> basis)
+{
   for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
     // get the midplane coordinates
     std::vector<minitensor::Vector<ST>> midplane_nodes(num_surf_nodes_);
@@ -229,10 +243,11 @@ SurfaceBasis<EvalT, Traits>::computeBasisVectors(
 template <typename EvalT, typename Traits>
 void
 SurfaceBasis<EvalT, Traits>::computeDualBasisVectors(
-    Kokkos::DynRankView<MeshScalarT, PHX::Device> const& midplane_coords,
+    Kokkos::DynRankView<MeshScalarT, PHX::Device> const&       midplane_coords,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
-    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
-    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dual_basis) {
+    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim>            normal,
+    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim>       dual_basis)
+{
   int worksetSize = midplane_coords.dimension(0);
 
   minitensor::Vector<MeshScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
@@ -283,7 +298,8 @@ void
 SurfaceBasis<EvalT, Traits>::computeJacobian(
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const dual_basis,
-    PHX::MDField<MeshScalarT, Cell, QuadPoint> area) {
+    PHX::MDField<MeshScalarT, Cell, QuadPoint>                 area)
+{
   const int worksetSize = basis.dimension(0);
 
   for (int cell(0); cell < worksetSize; ++cell) {

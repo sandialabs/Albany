@@ -36,7 +36,8 @@ ScalarL2ProjectionResidual<EvalT, Traits>::ScalarL2ProjectionResidual(
           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout")),
       TResidual(
           p.get<std::string>("Residual Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout")) {
+          p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout"))
+{
   if (p.isType<bool>("Disable Transient"))
     enableTransient = !p.get<bool>("Disable Transient");
   else
@@ -58,9 +59,9 @@ ScalarL2ProjectionResidual<EvalT, Traits>::ScalarL2ProjectionResidual(
   vector_dl->dimensions(dims);
 
   worksetSize = dims[0];
-  numNodes = dims[1];
-  numQPs = dims[2];
-  numDims = dims[3];
+  numNodes    = dims[1];
+  numQPs      = dims[2];
+  numDims     = dims[3];
 
   this->setName("ScalarL2ProjectionResidual" + PHX::typeAsString<EvalT>());
 }
@@ -69,7 +70,9 @@ ScalarL2ProjectionResidual<EvalT, Traits>::ScalarL2ProjectionResidual(
 template <typename EvalT, typename Traits>
 void
 ScalarL2ProjectionResidual<EvalT, Traits>::postRegistrationSetup(
-    typename Traits::SetupData d, PHX::FieldManager<Traits>& fm) {
+    typename Traits::SetupData d,
+    PHX::FieldManager<Traits>& fm)
+{
   this->utils.setFieldData(wBF, fm);
   this->utils.setFieldData(wGradBF, fm);
   this->utils.setFieldData(projectedStress, fm);
@@ -89,14 +92,15 @@ ScalarL2ProjectionResidual<EvalT, Traits>::postRegistrationSetup(
 template <typename EvalT, typename Traits>
 void
 ScalarL2ProjectionResidual<EvalT, Traits>::evaluateFields(
-    typename Traits::EvalData workset) {
+    typename Traits::EvalData workset)
+{
   ScalarT J(1);
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int qp = 0; qp < numQPs; ++qp) {
       minitensor::Tensor<ScalarT> F(
           minitensor::Source::ARRAY, numDims, DefGrad, cell, qp, 0, 0);
-      J = minitensor::det(F);
+      J              = minitensor::det(F);
       tauH(cell, qp) = 0.0;
       for (int i = 0; i < numDims; i++) {
         tauH(cell, qp) += J * Pstress(cell, qp, i, i) / numDims;
@@ -118,4 +122,4 @@ ScalarL2ProjectionResidual<EvalT, Traits>::evaluateFields(
   }
 }
 //**********************************************************************
-}
+}  // namespace LCM

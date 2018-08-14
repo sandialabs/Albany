@@ -7,32 +7,30 @@
 #if !defined(LCM_LinearPiezoModel_hpp)
 #define LCM_LinearPiezoModel_hpp
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
+#include <MiniTensor.h>
 #include "Albany_Layouts.hpp"
 #include "LCM/models/ConstitutiveModel.hpp"
-#include <MiniTensor.h>
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
 #include "Sacado.hpp"
 
-namespace LCM
-{
+namespace LCM {
 
 //! \brief LinearPiezo model for electromechanics
-template<typename EvalT, typename Traits>
-class LinearPiezoModel: public LCM::ConstitutiveModel<EvalT, Traits>
+template <typename EvalT, typename Traits>
+class LinearPiezoModel : public LCM::ConstitutiveModel<EvalT, Traits>
 {
-public:
-
-  using Base = LCM::ConstitutiveModel<EvalT, Traits>;
+ public:
+  using Base        = LCM::ConstitutiveModel<EvalT, Traits>;
   using DepFieldMap = typename Base::DepFieldMap;
-  using FieldMap = typename Base::FieldMap;
+  using FieldMap    = typename Base::FieldMap;
 
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-  typedef typename Sacado::mpl::apply<FadType,ScalarT>::type DFadType;
+  typedef typename EvalT::ScalarT                             ScalarT;
+  typedef typename EvalT::MeshScalarT                         MeshScalarT;
+  typedef typename Sacado::mpl::apply<FadType, ScalarT>::type DFadType;
 
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
   using ConstitutiveModel<EvalT, Traits>::num_pts_;
@@ -42,38 +40,37 @@ public:
   ///
   /// Constructor
   ///
-  LinearPiezoModel(Teuchos::ParameterList* p,
+  LinearPiezoModel(
+      Teuchos::ParameterList*              p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
   ///
   /// Virtual Destructor
   ///
-  virtual
-  ~LinearPiezoModel()
-  {};
+  virtual ~LinearPiezoModel(){};
 
   ///
   /// Method to compute the state (e.g. energy, stress, tangent)
   ///
-  virtual
-  void
-  computeState(typename Traits::EvalData workset,
-      DepFieldMap dep_fields,
-      FieldMap eval_fields);
+  virtual void
+  computeState(
+      typename Traits::EvalData workset,
+      DepFieldMap               dep_fields,
+      FieldMap                  eval_fields);
 
-  //Kokkos
-  virtual
-  void
-  computeStateParallel(typename Traits::EvalData workset,
-      DepFieldMap dep_fields,
-      FieldMap eval_fields);
+  // Kokkos
+  virtual void
+  computeStateParallel(
+      typename Traits::EvalData workset,
+      DepFieldMap               dep_fields,
+      FieldMap                  eval_fields);
 
-private:
-
+ private:
   ///
   /// Private methods
   ///
-  void initializeConstants();
+  void
+  initializeConstants();
 
   ///
   /// Private to prohibit copying
@@ -83,7 +80,8 @@ private:
   ///
   /// Private to prohibit copying
   ///
-  LinearPiezoModel& operator=(const LinearPiezoModel&);
+  LinearPiezoModel&
+  operator=(const LinearPiezoModel&);
 
   ///
   /// material parameters
@@ -93,8 +91,8 @@ private:
 
   minitensor::Tensor4<ScalarT> C;
   minitensor::Tensor3<ScalarT> e;
-  minitensor::Tensor<ScalarT> eps;
-  minitensor::Tensor<ScalarT> R;
+  minitensor::Tensor<ScalarT>  eps;
+  minitensor::Tensor<ScalarT>  R;
 
   bool test;
 
@@ -109,9 +107,7 @@ private:
   ///
   std::string stressName;
   std::string edispName;
-
-
 };
-}
+}  // namespace LCM
 
 #endif

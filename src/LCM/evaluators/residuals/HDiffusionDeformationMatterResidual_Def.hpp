@@ -19,10 +19,12 @@ namespace LCM {
 template <typename EvalT, typename Traits>
 HDiffusionDeformationMatterResidual<EvalT, Traits>::
     HDiffusionDeformationMatterResidual(
-        Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
+        Teuchos::ParameterList&              p,
+        const Teuchos::RCP<Albany::Layouts>& dl)
     : wBF(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
       wGradBF(
-          p.get<std::string>("Weighted Gradient BF Name"), dl->node_qp_vector),
+          p.get<std::string>("Weighted Gradient BF Name"),
+          dl->node_qp_vector),
       GradBF(p.get<std::string>("Gradient BF Name"), dl->node_qp_vector),
       Dstar(p.get<std::string>("Effective Diffusivity Name"), dl->qp_scalar),
       DL(p.get<std::string>("Diffusion Coefficient Name"), dl->qp_scalar),
@@ -44,7 +46,8 @@ HDiffusionDeformationMatterResidual<EvalT, Traits>::
       deltaTime(p.get<std::string>("Delta Time Name"), dl->workset_scalar),
       TResidual(p.get<std::string>("Residual Name"), dl->node_scalar),
       stab_param_(p.get<RealType>("Stabilization Parameter")),
-      t_decay_constant_(p.get<RealType>("Tritium Decay Constant")) {
+      t_decay_constant_(p.get<RealType>("Tritium Decay Constant"))
+{
   // std::cout << "In Hdiff ctor" << std::endl;
 
   if (p.isType<bool>("Disable Transient"))
@@ -76,7 +79,7 @@ HDiffusionDeformationMatterResidual<EvalT, Traits>::
   have_eqps_ = false;
   if (p.isType<std::string>("Equivalent Plastic Strain Name")) {
     have_eqps_ = true;
-    eqps = decltype(eqps)(
+    eqps       = decltype(eqps)(
         p.get<std::string>("Equivalent Plastic Strain Name"), dl->qp_scalar);
     this->addDependentField(eqps);
     eqpsFactor = decltype(eqpsFactor)(
@@ -87,9 +90,9 @@ HDiffusionDeformationMatterResidual<EvalT, Traits>::
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_qp_vector->dimensions(dims);
   worksetSize = dims[0];
-  numNodes = dims[1];
-  numQPs = dims[2];
-  numDims = dims[3];
+  numNodes    = dims[1];
+  numQPs      = dims[2];
+  numDims     = dims[3];
 
   // Teuchos::RCP<PHX::DataLayout> vector_dl =
   //   p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
@@ -107,7 +110,7 @@ HDiffusionDeformationMatterResidual<EvalT, Traits>::
 
   // Get data from previous converged time step
   ClatticeName = p.get<std::string>("QP Variable Name") + "_old";
-  CLGradName = p.get<std::string>("Gradient QP Variable Name") + "_old";
+  CLGradName   = p.get<std::string>("Gradient QP Variable Name") + "_old";
   if (have_eqps_)
     eqpsName = p.get<std::string>("Equivalent Plastic Strain Name") + "_old";
 
@@ -120,7 +123,9 @@ HDiffusionDeformationMatterResidual<EvalT, Traits>::
 template <typename EvalT, typename Traits>
 void
 HDiffusionDeformationMatterResidual<EvalT, Traits>::postRegistrationSetup(
-    typename Traits::SetupData d, PHX::FieldManager<Traits>& fm) {
+    typename Traits::SetupData d,
+    PHX::FieldManager<Traits>& fm)
+{
   // std::cout << "Hdiff PostRegistrationSetup" << std::endl;
   this->utils.setFieldData(elementLength, fm);
   this->utils.setFieldData(wBF, fm);
@@ -151,7 +156,7 @@ HDiffusionDeformationMatterResidual<EvalT, Traits>::postRegistrationSetup(
   // Allocate workspace for temporary variables
   Hflux = Kokkos::createDynRankView(
       DL.get_view(), "XXX", worksetSize, numQPs, numDims);
-  pterm = Kokkos::createDynRankView(DL.get_view(), "XXX", worksetSize, numQPs);
+  pterm  = Kokkos::createDynRankView(DL.get_view(), "XXX", worksetSize, numQPs);
   tpterm = Kokkos::createDynRankView(
       DL.get_view(), "XXX", worksetSize, numNodes, numQPs);
   artificalDL =
@@ -174,7 +179,8 @@ HDiffusionDeformationMatterResidual<EvalT, Traits>::postRegistrationSetup(
 template <typename EvalT, typename Traits>
 void
 HDiffusionDeformationMatterResidual<EvalT, Traits>::evaluateFields(
-    typename Traits::EvalData workset) {
+    typename Traits::EvalData workset)
+{
   // std::cout << "In evaluator: " << this->getName() << "\n";
 
   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
@@ -200,16 +206,15 @@ HDiffusionDeformationMatterResidual<EvalT, Traits>::evaluateFields(
         temp = elementLength(cell, qp) * elementLength(cell, qp) / 6.0 *
                Dstar(cell, qp) / DL(cell, qp) / dt;
         ScalarT temp2 = ((temp - 1) / DL(cell, qp));
-        if( temp2 < 10.0 && temp2 > -10.0)
+        if (temp2 < 10.0 && temp2 > -10.0)
           artificalDL(cell, qp) =
-            stab_param_ *
-            //  (temp) // temp - DL is closer to the limit ...if lumped mass is
-            //  preferred..
-            std::abs(temp)  // should be 1 but use 0.5 for safety
-            * (0.5 + 0.5 * std::tanh(temp2)) * DL(cell, qp);
-        else if ( temp2 >= 10.0)
-          artificalDL(cell, qp) =
-            stab_param_ * std::abs(temp) * DL(cell, qp);
+              stab_param_ *
+              //  (temp) // temp - DL is closer to the limit ...if lumped mass
+              //  is preferred..
+              std::abs(temp)  // should be 1 but use 0.5 for safety
+              * (0.5 + 0.5 * std::tanh(temp2)) * DL(cell, qp);
+        else if (temp2 >= 10.0)
+          artificalDL(cell, qp) = stab_param_ * std::abs(temp) * DL(cell, qp);
         else
           artificalDL(cell, qp) = 0.0;
       }
@@ -246,7 +251,9 @@ HDiffusionDeformationMatterResidual<EvalT, Traits>::evaluateFields(
     }
   }
   FST::integrate(
-      TResidual.get_view(), Hflux, wGradBF.get_view(),
+      TResidual.get_view(),
+      Hflux,
+      wGradBF.get_view(),
       false);  // this also works
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
@@ -304,7 +311,7 @@ HDiffusionDeformationMatterResidual<EvalT, Traits>::evaluateFields(
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     CLPbar = 0.0;
-    vol = 0.0;
+    vol    = 0.0;
     for (int qp = 0; qp < numQPs; ++qp) {
       CLPbar +=
           weights(cell, qp) * (Clattice(cell, qp) - Clattice_old(cell, qp));
@@ -338,4 +345,4 @@ HDiffusionDeformationMatterResidual<EvalT, Traits>::evaluateFields(
   }
 }
 //**********************************************************************
-}
+}  // namespace LCM

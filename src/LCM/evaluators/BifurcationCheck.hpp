@@ -25,7 +25,8 @@ namespace LCM {
 ///
 template <typename EvalT, typename Traits>
 class BifurcationCheck : public PHX::EvaluatorWithBaseImpl<Traits>,
-                         public PHX::EvaluatorDerived<EvalT, Traits> {
+                         public PHX::EvaluatorDerived<EvalT, Traits>
+{
  public:
   ///
   /// Constructor

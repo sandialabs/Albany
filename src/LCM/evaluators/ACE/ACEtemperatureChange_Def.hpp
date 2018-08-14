@@ -16,25 +16,27 @@ ACEtemperatureChange<EvalT, Traits>::ACEtemperatureChange(
     Teuchos::ParameterList&              p,
     const Teuchos::RCP<Albany::Layouts>& dl)
     : delta_temperature_(  // evaluated
-          p.get<std::string>("ACE Temperature Change"), dl->qp_scalar),
+          p.get<std::string>("ACE Temperature Change"),
+          dl->qp_scalar),
       Temperature(  // dependent
-          p.get<std::string>("Temperature Name"), dl->qp_scalar)
+          p.get<std::string>("Temperature Name"),
+          dl->qp_scalar)
 {
   Teuchos::ParameterList* temperatureChange_list =
-    p.get<Teuchos::ParameterList*>("Parameter List");
+      p.get<Teuchos::ParameterList*>("Parameter List");
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
+      p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   num_qps_  = dims[1];
   num_dims_ = dims[2];
 
   Teuchos::RCP<ParamLib> paramLib =
-    p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
-    
+      p.get<Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
+
   // Read parameter values from input
-  //min_water_saturation_ = 
+  // min_water_saturation_ =
   //    temperatureChange_list->get<double>("Minimum Water Saturation");
 
   // Add temperature change as Sacado-ized parameters
@@ -42,10 +44,10 @@ ACEtemperatureChange<EvalT, Traits>::ACEtemperatureChange(
 
   // List evaluated fields
   this->addEvaluatedField(delta_temperature_);
-  
+
   // List dependent fields
   this->addDependentField(Temperature);
-  
+
   this->setName("ACE Temperature Change" + PHX::typeAsString<EvalT>());
 }
 
@@ -62,31 +64,28 @@ ACEtemperatureChange<EvalT, Traits>::postRegistrationSetup(
   return;
 }
 
-
 // This function updates the temperature change since the last time step.
 template <typename EvalT, typename Traits>
 void
-ACEtemperatureChange<EvalT, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+ACEtemperatureChange<EvalT, Traits>::evaluateFields(
+    typename Traits::EvalData workset)
 {
   int num_cells = workset.numCells;
 
   for (int cell = 0; cell < num_cells; ++cell) {
     for (int qp = 0; qp < num_qps_; ++qp) {
-      delta_temperature_(cell, qp) = 
+      delta_temperature_(cell, qp) =
           Temperature(cell, qp) - temperature_old_(cell, qp);
       // Swap temperatures now
-      temperature_old_(cell, qp) = Temperature(cell, qp);      
+      temperature_old_(cell, qp) = Temperature(cell, qp);
       // set Boolean fields
       if (delta_temperature_(cell, qp) > 0.0) {
         temp_increasing_(cell, qp) = true;
         temp_decreasing_(cell, qp) = false;
-      }
-      else if (delta_temperature_(cell, qp) < 0.0) {
+      } else if (delta_temperature_(cell, qp) < 0.0) {
         temp_increasing_(cell, qp) = false;
         temp_decreasing_(cell, qp) = true;
-      }
-      else {
+      } else {
         temp_increasing_(cell, qp) = false;
         temp_decreasing_(cell, qp) = false;
       }

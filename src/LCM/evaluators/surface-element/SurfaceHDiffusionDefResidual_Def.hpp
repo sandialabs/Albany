@@ -19,7 +19,8 @@ namespace LCM {
 //**********************************************************************
 template <typename EvalT, typename Traits>
 SurfaceHDiffusionDefResidual<EvalT, Traits>::SurfaceHDiffusionDefResidual(
-    const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
+    const Teuchos::ParameterList&        p,
+    const Teuchos::RCP<Albany::Layouts>& dl)
     : thickness(p.get<double>("thickness")),
       cubature(
           p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")),
@@ -28,24 +29,30 @@ SurfaceHDiffusionDefResidual<EvalT, Traits>::SurfaceHDiffusionDefResidual(
               Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>(
               "Intrepid2 Basis")),
       scalarGrad(
-          p.get<std::string>("Surface Transport Gradient Name"), dl->qp_vector),
+          p.get<std::string>("Surface Transport Gradient Name"),
+          dl->qp_vector),
       surface_Grad_BF(
           p.get<std::string>("Surface Scalar Gradient Operator Name"),
           dl->node_qp_gradient),
       refDualBasis(
-          p.get<std::string>("Reference Dual Basis Name"), dl->qp_tensor),
+          p.get<std::string>("Reference Dual Basis Name"),
+          dl->qp_tensor),
       refNormal(p.get<std::string>("Reference Normal Name"), dl->qp_vector),
       refArea(p.get<std::string>("Reference Area Name"), dl->qp_scalar),
       transport_(p.get<std::string>("Transport Name"), dl->qp_scalar),
       nodal_transport_(
-          p.get<std::string>("Nodal Transport Name"), dl->node_scalar),
+          p.get<std::string>("Nodal Transport Name"),
+          dl->node_scalar),
       dL_(p.get<std::string>("Diffusion Coefficient Name"), dl->qp_scalar),
       eff_diff_(
-          p.get<std::string>("Effective Diffusivity Name"), dl->qp_scalar),
+          p.get<std::string>("Effective Diffusivity Name"),
+          dl->qp_scalar),
       convection_coefficient_(
-          p.get<std::string>("Tau Contribution Name"), dl->qp_scalar),
+          p.get<std::string>("Tau Contribution Name"),
+          dl->qp_scalar),
       strain_rate_factor_(
-          p.get<std::string>("Strain Rate Factor Name"), dl->qp_scalar),
+          p.get<std::string>("Strain Rate Factor Name"),
+          dl->qp_scalar),
       hydro_stress_gradient_(
           p.get<std::string>("Surface HydroStress Gradient Name"),
           dl->qp_vector),
@@ -54,7 +61,8 @@ SurfaceHDiffusionDefResidual<EvalT, Traits>::SurfaceHDiffusionDefResidual(
       element_length_(p.get<std::string>("Element Length Name"), dl->qp_scalar),
       transport_residual_(p.get<std::string>("Residual Name"), dl->node_scalar),
       haveMech(false),
-      stab_param_(p.get<RealType>("Stabilization Parameter")) {
+      stab_param_(p.get<RealType>("Stabilization Parameter"))
+{
   this->addDependentField(scalarGrad);
   this->addDependentField(surface_Grad_BF);
   this->addDependentField(refDualBasis);
@@ -90,13 +98,13 @@ SurfaceHDiffusionDefResidual<EvalT, Traits>::SurfaceHDiffusionDefResidual(
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_vector->dimensions(dims);
   worksetSize = dims[0];
-  numNodes = dims[1];
-  numDims = dims[2];
+  numNodes    = dims[1];
+  numDims     = dims[2];
 
   numQPs = cubature->getNumPoints();
 
   numPlaneNodes = numNodes / 2;
-  numPlaneDims = numDims - 1;
+  numPlaneDims  = numDims - 1;
 
 #ifdef ALBANY_VERBOSE
   std::cout << "in Surface Scalar Residual" << std::endl;
@@ -117,7 +125,9 @@ SurfaceHDiffusionDefResidual<EvalT, Traits>::SurfaceHDiffusionDefResidual(
 template <typename EvalT, typename Traits>
 void
 SurfaceHDiffusionDefResidual<EvalT, Traits>::postRegistrationSetup(
-    typename Traits::SetupData d, PHX::FieldManager<Traits>& fm) {
+    typename Traits::SetupData d,
+    PHX::FieldManager<Traits>& fm)
+{
   this->utils.setFieldData(scalarGrad, fm);
   this->utils.setFieldData(surface_Grad_BF, fm);
   this->utils.setFieldData(refDualBasis, fm);
@@ -171,11 +181,12 @@ SurfaceHDiffusionDefResidual<EvalT, Traits>::postRegistrationSetup(
 template <typename EvalT, typename Traits>
 void
 SurfaceHDiffusionDefResidual<EvalT, Traits>::evaluateFields(
-    typename Traits::EvalData workset) {
+    typename Traits::EvalData workset)
+{
   //   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
   //    typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
-  Albany::MDArray transportold = (*workset.stateArrayPtr)[transportName];
+  Albany::MDArray transportold   = (*workset.stateArrayPtr)[transportName];
   Albany::MDArray scalarGrad_old = (*workset.stateArrayPtr)[CLGradName];
   Albany::MDArray eqps_old;
   if (haveMech) { eqps_old = (*workset.stateArrayPtr)[eqpsName]; }
@@ -198,14 +209,12 @@ SurfaceHDiffusionDefResidual<EvalT, Traits>::evaluateFields(
 
         ScalarT temp2 = ((temp - 1.0) / dL_(cell, pt));
 
-        if( temp2 < 10.0 && temp2 > -10.0)
-          artificalDL(cell, pt) =
-            stab_param_ * temp *
-            (0.5 + 0.5 * std::tanh(temp2)) *
-            dL_(cell, pt);
-        else if(temp2 >= 10.0)
-          artificalDL(cell, pt) =
-            stab_param_ * temp * dL_(cell, pt);
+        if (temp2 < 10.0 && temp2 > -10.0)
+          artificalDL(cell, pt) = stab_param_ * temp *
+                                  (0.5 + 0.5 * std::tanh(temp2)) *
+                                  dL_(cell, pt);
+        else if (temp2 >= 10.0)
+          artificalDL(cell, pt) = stab_param_ * temp * dL_(cell, pt);
         else
           artificalDL(cell, pt) = 0.0;
       }
@@ -239,8 +248,8 @@ SurfaceHDiffusionDefResidual<EvalT, Traits>::evaluateFields(
   // Initialize the residual
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int node(0); node < numPlaneNodes; ++node) {
-      int topNode = node + numPlaneNodes;
-      transport_residual_(cell, node) = 0;
+      int topNode                        = node + numPlaneNodes;
+      transport_residual_(cell, node)    = 0;
       transport_residual_(cell, topNode) = 0;
     }
   }
@@ -312,8 +321,12 @@ SurfaceHDiffusionDefResidual<EvalT, Traits>::evaluateFields(
                 minitensor::inverse(C_tensor);
 
             minitensor::Vector<ScalarT> hydro_stress_grad(
-                minitensor::Source::ARRAY, numDims, hydro_stress_gradient_,
-                cell, pt, 0);
+                minitensor::Source::ARRAY,
+                numDims,
+                hydro_stress_gradient_,
+                cell,
+                pt,
+                0);
 
             minitensor::Vector<ScalarT> C_inv_hydro_stress_grad =
                 minitensor::dot(C_inv_tensor, hydro_stress_grad);
@@ -342,7 +355,7 @@ SurfaceHDiffusionDefResidual<EvalT, Traits>::evaluateFields(
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     CLPbar = 0.0;
-    vol = 0.0;
+    vol    = 0.0;
     for (int qp = 0; qp < numQPs; ++qp) {
       CLPbar += refArea(cell, qp) * thickness *
                 (transport_(cell, qp) - transportold(cell, qp));
@@ -372,4 +385,4 @@ SurfaceHDiffusionDefResidual<EvalT, Traits>::evaluateFields(
   }
 }
 //**********************************************************************
-}
+}  // namespace LCM

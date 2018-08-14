@@ -16,13 +16,13 @@
 #include <chrono>
 #endif
 
-//IKT: uncomment to turn on debug output
+// IKT: uncomment to turn on debug output
 //#define DEBUG_OUTPUT
 
 namespace LCM {
 
 //------------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 MechanicsResidual<EvalT, Traits>::MechanicsResidual(
     Teuchos::ParameterList&              p,
     const Teuchos::RCP<Albany::Layouts>& dl)
@@ -36,7 +36,8 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
       have_body_force_(p.isType<bool>("Has Body Force")),
       density_(p.get<RealType>("Density", 1.0))
 {
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  Teuchos::RCP<Teuchos::FancyOStream> out =
+      Teuchos::VerboseObjectBase::getDefaultOStream();
   this->addDependentField(stress_);
   this->addDependentField(w_grad_bf_);
   this->addDependentField(w_bf_);
@@ -80,7 +81,7 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
 }
 
 //------------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 void
 MechanicsResidual<EvalT, Traits>::postRegistrationSetup(
     typename Traits::SetupData d,
@@ -90,9 +91,7 @@ MechanicsResidual<EvalT, Traits>::postRegistrationSetup(
   this->utils.setFieldData(w_grad_bf_, fm);
   this->utils.setFieldData(w_bf_, fm);
   this->utils.setFieldData(residual_, fm);
-  if (have_body_force_) {
-    this->utils.setFieldData(body_force_, fm);
-  }
+  if (have_body_force_) { this->utils.setFieldData(body_force_, fm); }
   if (enable_dynamics_) {
     this->utils.setFieldData(acceleration_, fm);
     if (use_analytic_mass_) this->utils.setFieldData(mass_, fm);
@@ -103,7 +102,7 @@ MechanicsResidual<EvalT, Traits>::postRegistrationSetup(
 // ***************************************************************************
 // Kokkos kernels
 //
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
 MechanicsResidual<EvalT, Traits>::compute_Stress(const int i) const
 {
@@ -124,7 +123,7 @@ MechanicsResidual<EvalT, Traits>::compute_Stress(const int i) const
   }
 }
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
 MechanicsResidual<EvalT, Traits>::compute_BodyForce(const int i) const
 {
@@ -137,7 +136,7 @@ MechanicsResidual<EvalT, Traits>::compute_BodyForce(const int i) const
   }
 }
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
 MechanicsResidual<EvalT, Traits>::compute_Acceleration(const int i) const
 {
@@ -151,7 +150,7 @@ MechanicsResidual<EvalT, Traits>::compute_Acceleration(const int i) const
   }
 }
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
 MechanicsResidual<EvalT, Traits>::operator()(
     const residual_Tag& tag,
@@ -160,7 +159,7 @@ MechanicsResidual<EvalT, Traits>::operator()(
   this->compute_Stress(i);
 }
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
 MechanicsResidual<EvalT, Traits>::operator()(
     const residual_haveBodyForce_Tag& tag,
@@ -170,7 +169,7 @@ MechanicsResidual<EvalT, Traits>::operator()(
   this->compute_BodyForce(i);
 }
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
 MechanicsResidual<EvalT, Traits>::operator()(
     const residual_haveBodyForce_and_dynamic_Tag& tag,
@@ -181,7 +180,7 @@ MechanicsResidual<EvalT, Traits>::operator()(
   this->compute_Acceleration(i);
 }
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
 MechanicsResidual<EvalT, Traits>::operator()(
     const residual_have_dynamic_Tag& tag,
@@ -192,7 +191,7 @@ MechanicsResidual<EvalT, Traits>::operator()(
 }
 
 // ***************************************************************************
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 void
 MechanicsResidual<EvalT, Traits>::evaluateFields(
     typename Traits::EvalData workset)
@@ -243,22 +242,24 @@ MechanicsResidual<EvalT, Traits>::evaluateFields(
 
   // dynamic term
   if (workset.transientTerms && enable_dynamics_) {
-  //If transient problem and not using analytic mass, enable acceleration terms.
-  //This is similar to what is done in Peridigm when mass is passed from peridigm rather than
-  //computed in Albany; see, e.g., albanyIsCreatingMassMatrix-based logic in PeridigmForce_Def.hpp
-    if (!use_analytic_mass_) { //not using analytic mass
+    // If transient problem and not using analytic mass, enable acceleration
+    // terms. This is similar to what is done in Peridigm when mass is passed
+    // from peridigm rather than computed in Albany; see, e.g.,
+    // albanyIsCreatingMassMatrix-based logic in PeridigmForce_Def.hpp
+    if (!use_analytic_mass_) {  // not using analytic mass
       for (int cell = 0; cell < workset.numCells; ++cell) {
         for (int node = 0; node < num_nodes_; ++node) {
           for (int pt = 0; pt < num_pts_; ++pt) {
             for (int dim = 0; dim < num_dims_; ++dim) {
-              residual_(cell, node, dim) +=
-                  density_ * acceleration_(cell, pt, dim) * w_bf_(cell, node, pt);
+              residual_(cell, node, dim) += density_ *
+                                            acceleration_(cell, pt, dim) *
+                                            w_bf_(cell, node, pt);
             }
           }
         }
       }
-    }
-    else { //using analytic mass: add contribution from analytic mass evaluator
+    } else {  // using analytic mass: add contribution from analytic mass
+              // evaluator
       for (int cell = 0; cell < workset.numCells; ++cell) {
         for (int node = 0; node < num_nodes_; ++node) {
           for (int dim = 0; dim < num_dims_; ++dim) {
@@ -269,12 +270,14 @@ MechanicsResidual<EvalT, Traits>::evaluateFields(
     }
   }
 #ifdef DEBUG_OUTPUT
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  Teuchos::RCP<Teuchos::FancyOStream> out =
+      Teuchos::VerboseObjectBase::getDefaultOStream();
   for (int cell = 0; cell < workset.numCells; ++cell) {
     if (cell == 0) {
       for (int node = 0; node < this->num_nodes_; ++node) {
         for (int dim = 0; dim < this->num_dims_; ++dim) {
-          *out << "IKT node, dim, residual = " << node << ", " << dim << ", " << residual_(cell, node, dim) << "\n";
+          *out << "IKT node, dim, residual = " << node << ", " << dim << ", "
+               << residual_(cell, node, dim) << "\n";
         }
       }
     }
@@ -282,4 +285,4 @@ MechanicsResidual<EvalT, Traits>::evaluateFields(
 #endif
 }
 //------------------------------------------------------------------------------
-}
+}  // namespace LCM

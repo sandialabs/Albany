@@ -27,37 +27,30 @@ namespace LCM {
 //
 //
 //
-template<typename EvalT, typename Traits>
-SchwarzBC_Base<EvalT, Traits>::
-SchwarzBC_Base(Teuchos::ParameterList & p) :
-    PHAL::DirichletBase<EvalT, Traits>(p),
-    app_(p.get<Teuchos::RCP<Albany::Application>>(
-        "Application", Teuchos::null)),
-    coupled_apps_(app_->getApplications()),
-    coupled_app_name_(p.get<std::string>("Coupled Application", "SELF")),
-    coupled_block_name_(p.get<std::string>("Coupled Block", "NONE"))
+template <typename EvalT, typename Traits>
+SchwarzBC_Base<EvalT, Traits>::SchwarzBC_Base(Teuchos::ParameterList& p)
+    : PHAL::DirichletBase<EvalT, Traits>(p),
+      app_(p.get<Teuchos::RCP<Albany::Application>>(
+          "Application",
+          Teuchos::null)),
+      coupled_apps_(app_->getApplications()),
+      coupled_app_name_(p.get<std::string>("Coupled Application", "SELF")),
+      coupled_block_name_(p.get<std::string>("Coupled Block", "NONE"))
 {
-  std::string const &
-  nodeset_name = this->nodeSetID;
+  std::string const& nodeset_name = this->nodeSetID;
 
   app_->setCoupledAppBlockNodeset(
-      coupled_app_name_,
-      coupled_block_name_,
-      nodeset_name);
+      coupled_app_name_, coupled_block_name_, nodeset_name);
 
-  std::string const &
-  this_app_name = app_->getAppName();
+  std::string const& this_app_name = app_->getAppName();
 
-  auto const &
-  app_name_index_map = *(app_->getAppNameIndexMap());
+  auto const& app_name_index_map = *(app_->getAppNameIndexMap());
 
-  auto
-  it = app_name_index_map.find(this_app_name);
+  auto it = app_name_index_map.find(this_app_name);
 
   ALBANY_EXPECT(it != app_name_index_map.end());
 
-  auto const
-  this_app_index = it->second;
+  auto const this_app_index = it->second;
 
   setThisAppIndex(this_app_index);
 
@@ -65,8 +58,7 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
 
   ALBANY_EXPECT(it != app_name_index_map.end());
 
-  auto const
-  coupled_app_index = it->second;
+  auto const coupled_app_index = it->second;
 
   setCoupledAppIndex(coupled_app_index);
 }
@@ -74,20 +66,20 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
 //
 //
 //
-template<typename EvalT, typename Traits>
-template<typename T>
+template <typename EvalT, typename Traits>
+template <typename T>
 void
-SchwarzBC_Base<EvalT, Traits>::
-computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
+SchwarzBC_Base<EvalT, Traits>::computeBCs(
+    size_t const ns_node,
+    T&           x_val,
+    T&           y_val,
+    T&           z_val)
 {
-  auto const
-  coupled_app_index = getCoupledAppIndex();
+  auto const coupled_app_index = getCoupledAppIndex();
 
-  Albany::Application const &
-  coupled_app = getApplication(coupled_app_index);
+  Albany::Application const& coupled_app = getApplication(coupled_app_index);
 
-  Teuchos::RCP<Tpetra_Vector const>
-  coupled_solution = coupled_app.getX();
+  Teuchos::RCP<Tpetra_Vector const> coupled_solution = coupled_app.getX();
 
   if (coupled_solution == Teuchos::null) {
     x_val = 0.0;
@@ -96,57 +88,47 @@ computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
     return;
   }
 
-  auto const
-  this_app_index = getThisAppIndex();
+  auto const this_app_index = getThisAppIndex();
 
-  Albany::Application const &
-  this_app = getApplication(this_app_index);
+  Albany::Application const& this_app = getApplication(this_app_index);
 
-  Teuchos::RCP<Albany::AbstractDiscretization>
-  this_disc = this_app.getDiscretization();
+  Teuchos::RCP<Albany::AbstractDiscretization> this_disc =
+      this_app.getDiscretization();
 
-  auto *
-  this_stk_disc = static_cast<Albany::STKDiscretization *>(this_disc.get());
+  auto* this_stk_disc =
+      static_cast<Albany::STKDiscretization*>(this_disc.get());
 
-  Teuchos::RCP<Albany::AbstractDiscretization>
-  coupled_disc = coupled_app.getDiscretization();
+  Teuchos::RCP<Albany::AbstractDiscretization> coupled_disc =
+      coupled_app.getDiscretization();
 
-  auto *
-  coupled_stk_disc =
-      static_cast<Albany::STKDiscretization *>(coupled_disc.get());
+  auto* coupled_stk_disc =
+      static_cast<Albany::STKDiscretization*>(coupled_disc.get());
 
-  auto &
-  coupled_gms = dynamic_cast<Albany::GenericSTKMeshStruct &>
-      (*(coupled_stk_disc->getSTKMeshStruct()));
+  auto& coupled_gms = dynamic_cast<Albany::GenericSTKMeshStruct&>(
+      *(coupled_stk_disc->getSTKMeshStruct()));
 
-  auto const &
-  coupled_ws_eb_names = coupled_disc->getWsEBNames();
+  auto const& coupled_ws_eb_names = coupled_disc->getWsEBNames();
 
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>
-  coupled_mesh_specs = coupled_gms.getMeshSpecs();
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>> coupled_mesh_specs =
+      coupled_gms.getMeshSpecs();
 
   // Get cell topology of the application and block to which this node set
   // is coupled.
-  std::string const &
-  this_app_name = this_app.getAppName();
+  std::string const& this_app_name = this_app.getAppName();
 
-  std::string const &
-  coupled_app_name = coupled_app.getAppName();
+  std::string const& coupled_app_name = coupled_app.getAppName();
 
-  std::string const
-  coupled_block_name = this_app.getCoupledBlockName(coupled_app_index);
+  std::string const coupled_block_name =
+      this_app.getCoupledBlockName(coupled_app_index);
 
-  bool const
-  use_block = coupled_block_name != "NONE";
+  bool const use_block = coupled_block_name != "NONE";
 
-  std::map<std::string, int> const &
-  coupled_block_name_to_index = coupled_gms.ebNameToIndex;
+  std::map<std::string, int> const& coupled_block_name_to_index =
+      coupled_gms.ebNameToIndex;
 
-  auto
-  it = coupled_block_name_to_index.find(coupled_block_name);
+  auto it = coupled_block_name_to_index.find(coupled_block_name);
 
-  bool const
-  missing_block = it == coupled_block_name_to_index.end();
+  bool const missing_block = it == coupled_block_name_to_index.end();
 
   if (use_block == true && missing_block == true) {
     std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
@@ -158,36 +140,30 @@ computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
 
   // When ignoring the block, set the index to zero to get defaults
   // corresponding to the first block.
-  auto const
-  coupled_block_index = use_block == true ? it->second : 0;
+  auto const coupled_block_index = use_block == true ? it->second : 0;
 
-  CellTopologyData const
-  coupled_cell_topology_data = coupled_mesh_specs[coupled_block_index]->ctd;
+  CellTopologyData const coupled_cell_topology_data =
+      coupled_mesh_specs[coupled_block_index]->ctd;
 
-  shards::CellTopology
-  coupled_cell_topology(&coupled_cell_topology_data);
+  shards::CellTopology coupled_cell_topology(&coupled_cell_topology_data);
 
-  auto const
-  coupled_dimension = coupled_cell_topology_data.dimension;
+  auto const coupled_dimension = coupled_cell_topology_data.dimension;
 
-  auto const
-  coupled_node_count = coupled_cell_topology_data.node_count;
+  auto const coupled_node_count = coupled_cell_topology_data.node_count;
 
-  std::string const &
-  coupled_nodeset_name = this_app.getNodesetName(coupled_app_index);
+  std::string const& coupled_nodeset_name =
+      this_app.getNodesetName(coupled_app_index);
 
-  std::vector<double *> const &
-  ns_coord =
+  std::vector<double*> const& ns_coord =
       this_stk_disc->getNodeSetCoords().find(coupled_nodeset_name)->second;
 
-  auto const &
-  ws_elem_to_node_id = coupled_stk_disc->getWsElNodeID();
+  auto const& ws_elem_to_node_id = coupled_stk_disc->getWsElNodeID();
 
-  std::vector<minitensor::Vector<double>>
-  coupled_element_nodes(coupled_node_count);
+  std::vector<minitensor::Vector<double>> coupled_element_nodes(
+      coupled_node_count);
 
-  std::vector<minitensor::Vector<double>>
-  coupled_element_solution(coupled_node_count);
+  std::vector<minitensor::Vector<double>> coupled_element_solution(
+      coupled_node_count);
 
   for (auto i = 0; i < coupled_node_count; ++i) {
     coupled_element_nodes[i].set_dimension(coupled_dimension);
@@ -197,145 +173,112 @@ computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
   // This tolerance is used for geometric approximations. It will be used
   // to determine whether a node of this_app is inside an element of
   // coupled_app within that tolerance.
-  double const
-  tolerance = 5.0e-2;
+  double const tolerance = 5.0e-2;
 
-  auto const
-  parametric_dimension = coupled_dimension;
+  auto const parametric_dimension = coupled_dimension;
 
-  auto const
-  coupled_vertex_count = coupled_cell_topology_data.vertex_count;
+  auto const coupled_vertex_count = coupled_cell_topology_data.vertex_count;
 
-  auto const
-  coupled_element_type =
-        minitensor::find_type(coupled_dimension, coupled_vertex_count);
+  auto const coupled_element_type =
+      minitensor::find_type(coupled_dimension, coupled_vertex_count);
 
-  minitensor::Vector<double>
-  lo(parametric_dimension, minitensor::Filler::ONES);
+  minitensor::Vector<double> lo(parametric_dimension, minitensor::Filler::ONES);
 
-  minitensor::Vector<double>
-  hi(parametric_dimension, minitensor::Filler::ONES);
+  minitensor::Vector<double> hi(parametric_dimension, minitensor::Filler::ONES);
 
   hi = hi * (1.0 + tolerance);
 
-  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
-  basis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>> basis;
 
   switch (coupled_element_type) {
+    default: MT_ERROR_EXIT("Unknown element type"); break;
 
-  default:
-    MT_ERROR_EXIT("Unknown element type");
-    break;
+    case minitensor::ELEMENT::TETRAHEDRAL:
+      basis =
+          Teuchos::rcp(new Intrepid2::Basis_HGRAD_TET_C1_FEM<PHX::Device>());
+      lo = -tolerance * lo;
+      break;
 
-  case minitensor::ELEMENT::TETRAHEDRAL:
-    basis = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TET_C1_FEM<PHX::Device>());
-    lo = - tolerance * lo;
-    break;
-
-  case minitensor::ELEMENT::HEXAHEDRAL:
-    basis = Teuchos::rcp(new Intrepid2::Basis_HGRAD_HEX_C1_FEM<PHX::Device>());
-    lo = - lo * (1.0 + tolerance);
-    break;
+    case minitensor::ELEMENT::HEXAHEDRAL:
+      basis =
+          Teuchos::rcp(new Intrepid2::Basis_HGRAD_HEX_C1_FEM<PHX::Device>());
+      lo = -lo * (1.0 + tolerance);
+      break;
   }
 
-  double * const
-  coord = ns_coord[ns_node];
+  double* const coord = ns_coord[ns_node];
 
-  minitensor::Vector<double>
-  point;
+  minitensor::Vector<double> point;
 
   point.set_dimension(coupled_dimension);
 
   point.fill(coord);
 
   // Determine the element that contains this point.
-  Teuchos::ArrayRCP<double> const &
-  coupled_coordinates = coupled_stk_disc->getCoordinates();
+  Teuchos::ArrayRCP<double> const& coupled_coordinates =
+      coupled_stk_disc->getCoordinates();
 
-  Teuchos::ArrayRCP<ST const>
-  coupled_solution_view = coupled_solution->get1dView();
+  Teuchos::ArrayRCP<ST const> coupled_solution_view =
+      coupled_solution->get1dView();
 
-  Teuchos::RCP<Tpetra_Map const>
-  coupled_overlap_node_map = coupled_stk_disc->getOverlapNodeMapT();
+  Teuchos::RCP<Tpetra_Map const> coupled_overlap_node_map =
+      coupled_stk_disc->getOverlapNodeMapT();
 
   // We do this element by element
-  auto const
-  number_cells = 1;
+  auto const number_cells = 1;
 
   // We do this point by point
-  auto const
-  number_points = 1;
+  auto const number_points = 1;
 
   // Container for the parametric coordinates
-  Kokkos::DynRankView<RealType, PHX::Device>
-  parametric_point(
-      "par_point",
-      number_cells,
-      number_points,
-      parametric_dimension);
+  Kokkos::DynRankView<RealType, PHX::Device> parametric_point(
+      "par_point", number_cells, number_points, parametric_dimension);
 
   for (auto j = 0; j < parametric_dimension; ++j) {
     parametric_point(0, 0, j) = 0.0;
   }
 
   // Container for the physical point
-  Kokkos::DynRankView<RealType, PHX::Device>
-  physical_coordinates(
-      "phys_point",
-      number_cells,
-      number_points,
-      coupled_dimension);
+  Kokkos::DynRankView<RealType, PHX::Device> physical_coordinates(
+      "phys_point", number_cells, number_points, coupled_dimension);
 
   for (auto i = 0; i < coupled_dimension; ++i) {
     physical_coordinates(0, 0, i) = point(i);
   }
 
   // Container for the physical nodal coordinates
-  Kokkos::DynRankView<RealType, PHX::Device>
-  nodal_coordinates(
-      "coords",
-      number_cells,
-      coupled_node_count,
-      coupled_dimension);
+  Kokkos::DynRankView<RealType, PHX::Device> nodal_coordinates(
+      "coords", number_cells, coupled_node_count, coupled_dimension);
 
-  bool
-  found = false;
+  bool found = false;
 
   for (auto workset = 0; workset < ws_elem_to_node_id.size(); ++workset) {
+    std::string const& coupled_element_block = coupled_ws_eb_names[workset];
 
-    std::string const &
-    coupled_element_block = coupled_ws_eb_names[workset];
-
-    bool const
-    block_names_differ = coupled_element_block != coupled_block_name;
+    bool const block_names_differ = coupled_element_block != coupled_block_name;
 
     if (use_block == true && block_names_differ == true) continue;
 
-    auto const
-    elements_per_workset = ws_elem_to_node_id[workset].size();
+    auto const elements_per_workset = ws_elem_to_node_id[workset].size();
 
     for (auto element = 0; element < elements_per_workset; ++element) {
-
       for (auto node = 0; node < coupled_node_count; ++node) {
+        auto const global_node_id = ws_elem_to_node_id[workset][element][node];
 
-        auto const
-        global_node_id = ws_elem_to_node_id[workset][element][node];
-
-        auto const
-        local_node_id =
+        auto const local_node_id =
             coupled_overlap_node_map->getLocalElement(global_node_id);
 
-        double * const
-        pcoord = &(coupled_coordinates[coupled_dimension * local_node_id]);
+        double* const pcoord =
+            &(coupled_coordinates[coupled_dimension * local_node_id]);
 
         coupled_element_nodes[node].fill(pcoord);
 
         for (auto i = 0; i < coupled_dimension; ++i) {
           coupled_element_solution[node](i) =
               coupled_solution_view[coupled_dimension * local_node_id + i];
-        } // dimension loop
+        }  // dimension loop
 
-      } // node loop
+      }  // node loop
 
       for (auto i = 0; i < coupled_node_count; ++i) {
         for (auto j = 0; j < coupled_dimension; ++j) {
@@ -350,13 +293,11 @@ computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
           nodal_coordinates,
           coupled_cell_topology);
 
-      bool
-      in_element = true;
+      bool in_element = true;
 
       for (auto i = 0; i < parametric_dimension; ++i) {
-        auto const
-        xi = parametric_point(0, 0, i);
-        in_element = in_element && lo(i) <= xi && xi <= hi(i);
+        auto const xi = parametric_point(0, 0, i);
+        in_element    = in_element && lo(i) <= xi && xi <= hi(i);
       }
 
       if (in_element == true) {
@@ -364,25 +305,23 @@ computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
         break;
       }
 
-    } // element loop
+    }  // element loop
 
-    if (found == true) {
-      break;
-    }
+    if (found == true) { break; }
 
-  } // workset loop
+  }  // workset loop
 
   ALBANY_EXPECT(found == true);
 
   // Evaluate shape functions at parametric point.
-  Kokkos::DynRankView<RealType, PHX::Device>
-  basis_values("basis", coupled_node_count, number_points);
+  Kokkos::DynRankView<RealType, PHX::Device> basis_values(
+      "basis", coupled_node_count, number_points);
 
   // Another container for the parametric coordinates. Needed because above
   // it is required that parametric_points has rank 3 for mapToReferenceFrame
   // but here basis->getValues requires a rank 2 view :(
-  Kokkos::DynRankView<RealType, PHX::Device>
-  pp_reduced("par_point", number_points, parametric_dimension);
+  Kokkos::DynRankView<RealType, PHX::Device> pp_reduced(
+      "par_point", number_points, parametric_dimension);
 
   for (auto j = 0; j < parametric_dimension; ++j) {
     pp_reduced(0, j) = parametric_point(0, 0, j);
@@ -391,8 +330,8 @@ computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
 
   // Evaluate solution at parametric point using values of shape
   // functions just computed.
-  minitensor::Vector<double>
-  value(coupled_dimension, minitensor::Filler::ZEROS);
+  minitensor::Vector<double> value(
+      coupled_dimension, minitensor::Filler::ZEROS);
 
   for (auto i = 0; i < coupled_node_count; ++i) {
     value += basis_values(i, 0) * coupled_element_solution[i];
@@ -409,136 +348,117 @@ computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
 //
 //
 #if defined(ALBANY_DTK)
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
-SchwarzBC_Base<EvalT, Traits>::
-computeBCsDTK()
+SchwarzBC_Base<EvalT, Traits>::computeBCsDTK()
 {
-  auto const
-  this_app_index = getThisAppIndex();
+  auto const this_app_index = getThisAppIndex();
 
-  auto const
-  coupled_app_index = getCoupledAppIndex();
+  auto const coupled_app_index = getCoupledAppIndex();
 
-  Albany::Application const &
-  this_app = getApplication(this_app_index);
+  Albany::Application const& this_app = getApplication(this_app_index);
 
-  Albany::Application const &
-  coupled_app = getApplication(coupled_app_index);
+  Albany::Application const& coupled_app = getApplication(coupled_app_index);
 
   // neq should be the same for this_app and coupled_app.
   ALBANY_EXPECT(this_app.getNumEquations() == coupled_app.getNumEquations());
 
-  //Get number of equations from this_app
+  // Get number of equations from this_app
   int neq = this_app.getNumEquations();
 
-  //this_disc = target mesh
-  Teuchos::RCP<Albany::AbstractDiscretization>
-  this_disc = this_app.getDiscretization();
+  // this_disc = target mesh
+  Teuchos::RCP<Albany::AbstractDiscretization> this_disc =
+      this_app.getDiscretization();
 
-  auto *
-  this_stk_disc = static_cast<Albany::STKDiscretization *>(this_disc.get());
+  auto* this_stk_disc =
+      static_cast<Albany::STKDiscretization*>(this_disc.get());
 
-  //coupled_disc = source mesh
-  Teuchos::RCP<Albany::AbstractDiscretization>
-  coupled_disc = coupled_app.getDiscretization();
+  // coupled_disc = source mesh
+  Teuchos::RCP<Albany::AbstractDiscretization> coupled_disc =
+      coupled_app.getDiscretization();
 
-  auto *
-  coupled_stk_disc =
-      static_cast<Albany::STKDiscretization *>(coupled_disc.get());
+  auto* coupled_stk_disc =
+      static_cast<Albany::STKDiscretization*>(coupled_disc.get());
 
-  //Source Mesh
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> const
-  coupled_stk_mesh_struct = coupled_stk_disc->getSTKMeshStruct();
+  // Source Mesh
+  Teuchos::RCP<Albany::AbstractSTKMeshStruct> const coupled_stk_mesh_struct =
+      coupled_stk_disc->getSTKMeshStruct();
 
-  //get pointer to metadata from coupled_stk_disc
-  Teuchos::RCP<stk::mesh::MetaData const> const
-  coupled_meta_data = Teuchos::rcpFromRef(coupled_stk_disc->getSTKMetaData());
+  // get pointer to metadata from coupled_stk_disc
+  Teuchos::RCP<stk::mesh::MetaData const> const coupled_meta_data =
+      Teuchos::rcpFromRef(coupled_stk_disc->getSTKMetaData());
 
-  //Get coupled_app parameter list
-  Teuchos::RCP<const Teuchos::ParameterList>
-  coupled_app_params = coupled_app.getAppPL();
+  // Get coupled_app parameter list
+  Teuchos::RCP<const Teuchos::ParameterList> coupled_app_params =
+      coupled_app.getAppPL();
 
-  //Get discretization sublist from coupled_app parameter list
-  Teuchos::ParameterList
-  dtk_params = coupled_app_params->sublist("DataTransferKit");
+  // Get discretization sublist from coupled_app parameter list
+  Teuchos::ParameterList dtk_params =
+      coupled_app_params->sublist("DataTransferKit");
 
-  //Get solution name from Discretization sublist
-  std::string map_name =
-      dtk_params.get("Map Type", "Consistent Interpolation");
+  // Get solution name from Discretization sublist
+  std::string map_name = dtk_params.get("Map Type", "Consistent Interpolation");
 
-  Albany::AbstractSTKFieldContainer::VectorFieldType*
-  coupled_field =
+  Albany::AbstractSTKFieldContainer::VectorFieldType* coupled_field =
       Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
-          coupled_stk_disc->getSTKMeshStruct()->getFieldContainer()
-          )->getSolutionField();
+          coupled_stk_disc->getSTKMeshStruct()->getFieldContainer())
+          ->getSolutionField();
 
-  stk::mesh::Selector
-  coupled_stk_selector =
+  stk::mesh::Selector coupled_stk_selector =
       stk::mesh::Selector(coupled_meta_data->universal_part());
 
-  Teuchos::RCP<stk::mesh::BulkData>
-  coupled_bulk_data = Teuchos::rcpFromRef(coupled_field->get_mesh());
+  Teuchos::RCP<stk::mesh::BulkData> coupled_bulk_data =
+      Teuchos::rcpFromRef(coupled_field->get_mesh());
 
-  //Target Mesh
+  // Target Mesh
 
-  //get pointer to metadata from this_stk_disc
-  Teuchos::RCP<stk::mesh::MetaData const>
-  this_meta_data = Teuchos::rcpFromRef(this_stk_disc->getSTKMetaData());
+  // get pointer to metadata from this_stk_disc
+  Teuchos::RCP<stk::mesh::MetaData const> this_meta_data =
+      Teuchos::rcpFromRef(this_stk_disc->getSTKMetaData());
 
-  Albany::AbstractSTKFieldContainer::VectorFieldType*
-  this_field =
+  Albany::AbstractSTKFieldContainer::VectorFieldType* this_field =
       Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
-          this_stk_disc->getSTKMeshStruct()->getFieldContainer()
-          )->getSolutionFieldDTK();
+          this_stk_disc->getSTKMeshStruct()->getFieldContainer())
+          ->getSolutionFieldDTK();
 
   // Get the part corresponding to this nodeset.
-  std::string const &
-  nodeset_name = this->nodeSetID;
+  std::string const& nodeset_name = this->nodeSetID;
 
-  stk::mesh::Part *
-  this_part = this_meta_data->get_part(nodeset_name);
+  stk::mesh::Part* this_part = this_meta_data->get_part(nodeset_name);
 
-  Teuchos::RCP<stk::mesh::BulkData>
-  this_bulk_data = Teuchos::rcpFromRef(this_field->get_mesh());
+  Teuchos::RCP<stk::mesh::BulkData> this_bulk_data =
+      Teuchos::rcpFromRef(this_field->get_mesh());
 
-  //Solution Transfer Setup
+  // Solution Transfer Setup
 
   // Create a manager for the source part elements.
-  DataTransferKit::STKMeshManager
-  coupled_manager(coupled_bulk_data, coupled_stk_selector);
+  DataTransferKit::STKMeshManager coupled_manager(
+      coupled_bulk_data, coupled_stk_selector);
 
   // Create a manager for the target part nodes.
-  stk::mesh::Selector
-  this_stk_selector(*this_part);
+  stk::mesh::Selector this_stk_selector(*this_part);
 
-  DataTransferKit::STKMeshManager
-  this_manager(this_bulk_data, this_stk_selector);
+  DataTransferKit::STKMeshManager this_manager(
+      this_bulk_data, this_stk_selector);
 
   // Create a solution vector for the source.
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
-  coupled_vector =
-      coupled_manager.createFieldMultiVector <
-          Albany::AbstractSTKFieldContainer::VectorFieldType
-          > (Teuchos::ptr(coupled_field), neq);
+      coupled_vector = coupled_manager.createFieldMultiVector<
+          Albany::AbstractSTKFieldContainer::VectorFieldType>(
+          Teuchos::ptr(coupled_field), neq);
 
   // Create a solution vector for the target.
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
-  this_vector =
-      this_manager.createFieldMultiVector <
-          Albany::AbstractSTKFieldContainer::VectorFieldType
-          > (Teuchos::ptr(this_field), neq);
+      this_vector = this_manager.createFieldMultiVector<
+          Albany::AbstractSTKFieldContainer::VectorFieldType>(
+          Teuchos::ptr(this_field), neq);
 
-  //Solution transfer
+  // Solution transfer
 
-  DataTransferKit::MapOperatorFactory
-  op_factory;
+  DataTransferKit::MapOperatorFactory op_factory;
 
-  Teuchos::RCP < DataTransferKit::MapOperator >
-      map_op =
-      op_factory.create(coupled_vector->getMap(),
-          this_vector->getMap(),
-          dtk_params);
+  Teuchos::RCP<DataTransferKit::MapOperator> map_op = op_factory.create(
+      coupled_vector->getMap(), this_vector->getMap(), dtk_params);
 
   // Setup the map operator. This creates the underlying linear operators.
   map_op->setup(coupled_manager.functionSpace(), this_manager.functionSpace());
@@ -549,69 +469,59 @@ computeBCsDTK()
 
   return this_vector;
 }
-#endif //ALBANY_DTK
+#endif  // ALBANY_DTK
 
 //
 // Fill residual, used in both residual and Jacobian
 //
-template<typename SchwarzBC, typename Traits>
+template <typename SchwarzBC, typename Traits>
 void
-fillResidual(SchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
+fillResidual(SchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
 {
   // Solution
-  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(dirichlet_workset.x);
+  Teuchos::RCP<const Tpetra_Vector> xT =
+      Albany::getConstTpetraVector(dirichlet_workset.x);
 
-  Teuchos::ArrayRCP<ST const>
-  xT_const_view = xT->get1dView();
+  Teuchos::ArrayRCP<ST const> xT_const_view = xT->get1dView();
 
   // Residual
-  Teuchos::RCP<Tpetra_Vector>
-  fT = dirichlet_workset.fT;
+  Teuchos::RCP<Tpetra_Vector> fT = dirichlet_workset.fT;
 
-  Teuchos::ArrayRCP<ST>
-  fT_view = fT->get1dViewNonConst();
+  Teuchos::ArrayRCP<ST> fT_view = fT->get1dViewNonConst();
 
-  std::vector<std::vector<int>> const &
-  ns_dof = dirichlet_workset.nodeSets->find(sbc.nodeSetID)->second;
+  std::vector<std::vector<int>> const& ns_dof =
+      dirichlet_workset.nodeSets->find(sbc.nodeSetID)->second;
 
-  auto const
-  ns_number_nodes = ns_dof.size();
+  auto const ns_number_nodes = ns_dof.size();
 
 #if defined(ALBANY_DTK)
 
   Teuchos::RCP<
-      Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
-  > const
-  schwarz_bcs = sbc.computeBCsDTK();
+      Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
+      schwarz_bcs = sbc.computeBCsDTK();
 
-  Teuchos::RCP<const Teuchos::Comm<int>>
-  commT = schwarz_bcs->getMap()->getComm();
+  Teuchos::RCP<const Teuchos::Comm<int>> commT =
+      schwarz_bcs->getMap()->getComm();
 
-  Teuchos::ArrayRCP<ST const>
-  schwarz_bcs_const_view_x = schwarz_bcs->getData(0);
+  Teuchos::ArrayRCP<ST const> schwarz_bcs_const_view_x =
+      schwarz_bcs->getData(0);
 
-  Teuchos::ArrayRCP<ST const>
-  schwarz_bcs_const_view_y = schwarz_bcs->getData(1);
+  Teuchos::ArrayRCP<ST const> schwarz_bcs_const_view_y =
+      schwarz_bcs->getData(1);
 
-  Teuchos::ArrayRCP<ST const>
-  schwarz_bcs_const_view_z = schwarz_bcs->getData(2);
+  Teuchos::ArrayRCP<ST const> schwarz_bcs_const_view_z =
+      schwarz_bcs->getData(2);
 
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
+    auto const x_dof = ns_dof[ns_node][0];
 
-    auto const
-    x_dof = ns_dof[ns_node][0];
+    auto const y_dof = ns_dof[ns_node][1];
 
-    auto const
-    y_dof = ns_dof[ns_node][1];
+    auto const z_dof = ns_dof[ns_node][2];
 
-    auto const
-    z_dof = ns_dof[ns_node][2];
+    auto const dof = x_dof / 3;
 
-    auto const
-    dof = x_dof / 3;
-
-    std::set<int> const &
-    fixed_dofs = dirichlet_workset.fixed_dofs_;
+    std::set<int> const& fixed_dofs = dirichlet_workset.fixed_dofs_;
 
     if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
       fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
@@ -622,27 +532,20 @@ fillResidual(SchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
     if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
       fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
     }
-
   }
-#else // ALBANY_DTK
+#else   // ALBANY_DTK
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
-
-    ST
-    x_val, y_val, z_val;
+    ST x_val, y_val, z_val;
 
     sbc.computeBCs(ns_node, x_val, y_val, z_val);
 
-    auto const
-    x_dof = ns_dof[ns_node][0];
+    auto const x_dof = ns_dof[ns_node][0];
 
-    auto const
-    y_dof = ns_dof[ns_node][1];
+    auto const y_dof = ns_dof[ns_node][1];
 
-    auto const
-    z_dof = ns_dof[ns_node][2];
+    auto const z_dof = ns_dof[ns_node][2];
 
-    std::set<int> const &
-    fixed_dofs = dirichlet_workset.fixed_dofs_;
+    std::set<int> const& fixed_dofs = dirichlet_workset.fixed_dofs_;
 
     if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
       fT_view[x_dof] = xT_const_view[x_dof] - x_val;
@@ -654,123 +557,102 @@ fillResidual(SchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
       fT_view[z_dof] = xT_const_view[z_dof] - z_val;
     }
 
-  } // node in node set loop
-#endif //ALBANY_DTK
+  }  // node in node set loop
+#endif  // ALBANY_DTK
   return;
 }
 
 //
 // Specialization: Residual
 //
-template<typename Traits>
-SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::
-SchwarzBC(Teuchos::ParameterList & p) :
-    SchwarzBC_Base<PHAL::AlbanyTraits::Residual, Traits>(p)
+template <typename Traits>
+SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::SchwarzBC(
+    Teuchos::ParameterList& p)
+    : SchwarzBC_Base<PHAL::AlbanyTraits::Residual, Traits>(p)
 {
 }
 
 //
 //
 //
-template<typename Traits>
+template <typename Traits>
 void
-SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::
-evaluateFields(typename Traits::EvalData dirichlet_workset)
+SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
+    typename Traits::EvalData dirichlet_workset)
 {
-  fillResidual<SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>, Traits>
-  (*this, dirichlet_workset);
+  fillResidual<SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>, Traits>(
+      *this, dirichlet_workset);
   return;
 }
 
 //
 // Specialization: Jacobian
 //
-template<typename Traits>
-SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::
-SchwarzBC(Teuchos::ParameterList & p) :
-    SchwarzBC_Base<PHAL::AlbanyTraits::Jacobian, Traits>(p)
+template <typename Traits>
+SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::SchwarzBC(
+    Teuchos::ParameterList& p)
+    : SchwarzBC_Base<PHAL::AlbanyTraits::Jacobian, Traits>(p)
 {
 }
 
 //
 //
 //
-template<typename Traits>
-void SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::
-evaluateFields(typename Traits::EvalData dirichlet_workset)
+template <typename Traits>
+void
+SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
+    typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<Tpetra_Vector>
-  fT = dirichlet_workset.fT;
+  Teuchos::RCP<Tpetra_Vector> fT = dirichlet_workset.fT;
 
-  Teuchos::ArrayRCP<ST>
-  fT_view;
+  Teuchos::ArrayRCP<ST> fT_view;
 
-  Teuchos::RCP<Tpetra_CrsMatrix>
-  jacT = dirichlet_workset.JacT;
+  Teuchos::RCP<Tpetra_CrsMatrix> jacT = dirichlet_workset.JacT;
 
-  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(dirichlet_workset.x);
+  Teuchos::RCP<const Tpetra_Vector> xT =
+      Albany::getConstTpetraVector(dirichlet_workset.x);
 
-  Teuchos::ArrayRCP<ST const>
-  xT_const_view = xT->get1dView();
+  Teuchos::ArrayRCP<ST const> xT_const_view = xT->get1dView();
 
-  RealType const
-  j_coeff = dirichlet_workset.j_coeff;
+  RealType const j_coeff = dirichlet_workset.j_coeff;
 
-  std::vector<std::vector<int>> const &
-  ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+  std::vector<std::vector<int>> const& ns_nodes =
+      dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-  Teuchos::Array<LO>
-  index(1);
+  Teuchos::Array<LO> index(1);
 
-  Teuchos::Array<ST>
-  value(1);
+  Teuchos::Array<ST> value(1);
 
   value[0] = j_coeff;
 
-  Teuchos::Array<ST>
-  matrix_entries;
+  Teuchos::Array<ST> matrix_entries;
 
-  Teuchos::Array<LO>
-  matrix_indices;
+  Teuchos::Array<LO> matrix_indices;
 
-  bool const
-  fill_residual = (fT != Teuchos::null);
+  bool const fill_residual = (fT != Teuchos::null);
 
-  if (fill_residual == true) {
-    fT_view = fT->get1dViewNonConst();
-  }
+  if (fill_residual == true) { fT_view = fT->get1dViewNonConst(); }
 
   for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+    auto const x_dof = ns_nodes[ns_node][0];
 
-    auto const
-    x_dof = ns_nodes[ns_node][0];
+    auto const y_dof = ns_nodes[ns_node][1];
 
-    auto const
-    y_dof = ns_nodes[ns_node][1];
+    auto const z_dof = ns_nodes[ns_node][2];
 
-    auto const
-    z_dof = ns_nodes[ns_node][2];
-
-    std::set<int> const &
-    fixed_dofs = dirichlet_workset.fixed_dofs_;
+    std::set<int> const& fixed_dofs = dirichlet_workset.fixed_dofs_;
 
     if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
       // replace jac values for the X dof
-      auto
-      num_entries = jacT->getNumEntriesInLocalRow(x_dof);
+      auto num_entries = jacT->getNumEntriesInLocalRow(x_dof);
 
       matrix_entries.resize(num_entries);
       matrix_indices.resize(num_entries);
 
       jacT->getLocalRowCopy(
-          x_dof,
-          matrix_indices(),
-          matrix_entries(),
-          num_entries);
+          x_dof, matrix_indices(), matrix_entries(), num_entries);
 
-      for (auto i = 0; i < num_entries; ++i) {
-        matrix_entries[i] = 0;
-      }
+      for (auto i = 0; i < num_entries; ++i) { matrix_entries[i] = 0; }
 
       jacT->replaceLocalValues(x_dof, matrix_indices(), matrix_entries());
       index[0] = x_dof;
@@ -779,21 +661,15 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
     if (fixed_dofs.find(y_dof) == fixed_dofs.end()) {
       // replace jac values for the y dof
-      auto
-      num_entries = jacT->getNumEntriesInLocalRow(y_dof);
+      auto num_entries = jacT->getNumEntriesInLocalRow(y_dof);
 
       matrix_entries.resize(num_entries);
       matrix_indices.resize(num_entries);
 
       jacT->getLocalRowCopy(
-          y_dof,
-          matrix_indices(),
-          matrix_entries(),
-          num_entries);
+          y_dof, matrix_indices(), matrix_entries(), num_entries);
 
-      for (auto i = 0; i < num_entries; ++i) {
-        matrix_entries[i] = 0;
-      }
+      for (auto i = 0; i < num_entries; ++i) { matrix_entries[i] = 0; }
 
       jacT->replaceLocalValues(y_dof, matrix_indices(), matrix_entries());
       index[0] = y_dof;
@@ -802,21 +678,15 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
     if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
       // replace jac values for the z dof
-      auto
-      num_entries = jacT->getNumEntriesInLocalRow(z_dof);
+      auto num_entries = jacT->getNumEntriesInLocalRow(z_dof);
 
       matrix_entries.resize(num_entries);
       matrix_indices.resize(num_entries);
 
       jacT->getLocalRowCopy(
-          z_dof,
-          matrix_indices(),
-          matrix_entries(),
-          num_entries);
+          z_dof, matrix_indices(), matrix_entries(), num_entries);
 
-      for (auto i = 0; i < num_entries; ++i) {
-        matrix_entries[i] = 0;
-      }
+      for (auto i = 0; i < num_entries; ++i) { matrix_entries[i] = 0; }
 
       jacT->replaceLocalValues(z_dof, matrix_indices(), matrix_entries());
       index[0] = z_dof;
@@ -825,9 +695,8 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   }
 
   if (fill_residual == true) {
-    fillResidual<
-    SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>, Traits>
-    (*this, dirichlet_workset);
+    fillResidual<SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>, Traits>(
+        *this, dirichlet_workset);
   }
   return;
 }
@@ -835,70 +704,59 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 //
 // Specialization: Tangent
 //
-template<typename Traits>
-SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::
-SchwarzBC(Teuchos::ParameterList & p) :
-    SchwarzBC_Base<PHAL::AlbanyTraits::Tangent, Traits>(p)
+template <typename Traits>
+SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::SchwarzBC(
+    Teuchos::ParameterList& p)
+    : SchwarzBC_Base<PHAL::AlbanyTraits::Tangent, Traits>(p)
 {
 }
 
 //
 //
 //
-template<typename Traits>
-void SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::
-evaluateFields(typename Traits::EvalData dirichlet_workset)
+template <typename Traits>
+void
+SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
+    typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<Tpetra_Vector>
-  fT = dirichlet_workset.fT;
+  Teuchos::RCP<Tpetra_Vector> fT = dirichlet_workset.fT;
 
-  Teuchos::RCP<Tpetra_MultiVector>
-  fpT = dirichlet_workset.fpT;
+  Teuchos::RCP<Tpetra_MultiVector> fpT = dirichlet_workset.fpT;
 
-  Teuchos::RCP<Tpetra_MultiVector>
-  JVT = dirichlet_workset.JVT;
+  Teuchos::RCP<Tpetra_MultiVector> JVT = dirichlet_workset.JVT;
 
-  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(dirichlet_workset.x);
+  Teuchos::RCP<const Tpetra_Vector> xT =
+      Albany::getConstTpetraVector(dirichlet_workset.x);
 
-  Teuchos::RCP<const Tpetra_MultiVector> VxT = Albany::getConstTpetraMultiVector(dirichlet_workset.Vx);
+  Teuchos::RCP<const Tpetra_MultiVector> VxT =
+      Albany::getConstTpetraMultiVector(dirichlet_workset.Vx);
 
-  RealType const
-  j_coeff = dirichlet_workset.j_coeff;
+  RealType const j_coeff = dirichlet_workset.j_coeff;
 
-  std::vector<std::vector<int>> const &
-  ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+  std::vector<std::vector<int>> const& ns_nodes =
+      dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-  Teuchos::ArrayRCP<ST const>
-  VxT_const_view;
+  Teuchos::ArrayRCP<ST const> VxT_const_view;
 
-  Teuchos::ArrayRCP<ST>
-  fT_view;
+  Teuchos::ArrayRCP<ST> fT_view;
 
-  Teuchos::ArrayRCP<ST const>
-  xT_const_view = xT->get1dView();
+  Teuchos::ArrayRCP<ST const> xT_const_view = xT->get1dView();
 
-  if (fT != Teuchos::null) {
-    fT_view = fT->get1dViewNonConst();
-  }
+  if (fT != Teuchos::null) { fT_view = fT->get1dViewNonConst(); }
 
   for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+    auto const x_dof = ns_nodes[ns_node][0];
 
-    auto const
-    x_dof = ns_nodes[ns_node][0];
+    auto const y_dof = ns_nodes[ns_node][1];
 
-    auto const
-    y_dof = ns_nodes[ns_node][1];
-
-    auto const
-    z_dof = ns_nodes[ns_node][2];
+    auto const z_dof = ns_nodes[ns_node][2];
 
     if (JVT != Teuchos::null) {
-      Teuchos::ArrayRCP<ST>
-      JVT_view;
+      Teuchos::ArrayRCP<ST> JVT_view;
 
       for (auto i = 0; i < dirichlet_workset.num_cols_x; ++i) {
-        JVT_view = JVT->getDataNonConst(i);
-        VxT_const_view = VxT->getData(i);
+        JVT_view        = JVT->getDataNonConst(i);
+        VxT_const_view  = VxT->getData(i);
         JVT_view[x_dof] = j_coeff * VxT_const_view[x_dof];
         JVT_view[y_dof] = j_coeff * VxT_const_view[y_dof];
         JVT_view[z_dof] = j_coeff * VxT_const_view[z_dof];
@@ -907,40 +765,32 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   }
 
   if (fT != Teuchos::null || fpT != Teuchos::null) {
-
 #if defined(ALBANY_DTK)
     if (fT != Teuchos::null) {
-
       Teuchos::RCP<
-          Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
-      > const
-      schwarz_bcs = this->computeBCsDTK();
+          Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
+          schwarz_bcs = this->computeBCsDTK();
 
-      Teuchos::RCP<const Teuchos::Comm<int>>
-      commT = schwarz_bcs->getMap()->getComm();
+      Teuchos::RCP<const Teuchos::Comm<int>> commT =
+          schwarz_bcs->getMap()->getComm();
 
-      Teuchos::ArrayRCP<ST const>
-      schwarz_bcs_const_view_x = schwarz_bcs->getData(0);
+      Teuchos::ArrayRCP<ST const> schwarz_bcs_const_view_x =
+          schwarz_bcs->getData(0);
 
-      Teuchos::ArrayRCP<ST const>
-      schwarz_bcs_const_view_y = schwarz_bcs->getData(1);
+      Teuchos::ArrayRCP<ST const> schwarz_bcs_const_view_y =
+          schwarz_bcs->getData(1);
 
-      Teuchos::ArrayRCP<ST const>
-      schwarz_bcs_const_view_z = schwarz_bcs->getData(2);
+      Teuchos::ArrayRCP<ST const> schwarz_bcs_const_view_z =
+          schwarz_bcs->getData(2);
 
       for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+        auto const x_dof = ns_nodes[ns_node][0];
 
-        auto const
-        x_dof = ns_nodes[ns_node][0];
+        auto const y_dof = ns_nodes[ns_node][1];
 
-        auto const
-        y_dof = ns_nodes[ns_node][1];
+        auto const z_dof = ns_nodes[ns_node][2];
 
-        auto const
-        z_dof = ns_nodes[ns_node][2];
-
-        auto const
-        dof = x_dof / 3;
+        auto const dof = x_dof / 3;
 
         fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
         fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
@@ -953,18 +803,13 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     }
 #else
     for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+      auto const x_dof = ns_nodes[ns_node][0];
 
-      auto const
-      x_dof = ns_nodes[ns_node][0];
+      auto const y_dof = ns_nodes[ns_node][1];
 
-      auto const
-      y_dof = ns_nodes[ns_node][1];
+      auto const z_dof = ns_nodes[ns_node][2];
 
-      auto const
-      z_dof = ns_nodes[ns_node][2];
-
-      ScalarT
-      x_val, y_val, z_val;
+      ScalarT x_val, y_val, z_val;
 
       this->computeBCs(ns_node, x_val, y_val, z_val);
 
@@ -974,18 +819,17 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         fT_view[z_dof] = xT_const_view[z_dof] - z_val.val();
       }
       if (fpT != Teuchos::null) {
-        Teuchos::ArrayRCP<ST>
-        fpT_view;
+        Teuchos::ArrayRCP<ST> fpT_view;
 
         for (auto i = 0; i < dirichlet_workset.num_cols_p; ++i) {
-          fpT_view = fpT->getDataNonConst(i);
+          fpT_view        = fpT->getDataNonConst(i);
           fpT_view[x_dof] = -x_val.dx(dirichlet_workset.param_offset + i);
           fpT_view[y_dof] = -y_val.dx(dirichlet_workset.param_offset + i);
           fpT_view[z_dof] = -z_val.dx(dirichlet_workset.param_offset + i);
         }
       }
     }
-#endif //ALBANY_DTK
+#endif  // ALBANY_DTK
   }
   return;
 }
@@ -993,31 +837,28 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 //
 // Specialization: DistParamDeriv
 //
-template<typename Traits>
-SchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-SchwarzBC(Teuchos::ParameterList & p) :
-    SchwarzBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
+template <typename Traits>
+SchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::SchwarzBC(
+    Teuchos::ParameterList& p)
+    : SchwarzBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
 {
 }
 
 //
 //
 //
-template<typename Traits>
-void SchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-evaluateFields(typename Traits::EvalData dirichlet_workset)
+template <typename Traits>
+void
+SchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
+    typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<Tpetra_MultiVector>
-  fpVT = dirichlet_workset.fpVT;
+  Teuchos::RCP<Tpetra_MultiVector> fpVT = dirichlet_workset.fpVT;
 
-  Teuchos::ArrayRCP<ST>
-  fpVT_view;
+  Teuchos::ArrayRCP<ST> fpVT_view;
 
-  bool const
-  trans = dirichlet_workset.transpose_dist_param_deriv;
+  bool const trans = dirichlet_workset.transpose_dist_param_deriv;
 
-  auto const
-  num_cols = fpVT->getNumVectors();
+  auto const num_cols = fpVT->getNumVectors();
 
   //
   // We're currently assuming Dirichlet BC's can't be distributed parameters.
@@ -1025,34 +866,27 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   // so is still here, just commented out for future reference.
   //
 
-  std::vector<std::vector<int>> const &
-  ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+  std::vector<std::vector<int>> const& ns_nodes =
+      dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-  std::vector<double *> const &
-  ns_coord = dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
+  std::vector<double*> const& ns_coord =
+      dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
 
   // For (df/dp)^T*V we zero out corresponding entries in V
   if (trans == true) {
-    Teuchos::RCP<Tpetra_MultiVector>
-    VpT = dirichlet_workset.Vp_bcT;
+    Teuchos::RCP<Tpetra_MultiVector> VpT = dirichlet_workset.Vp_bcT;
 
-    Teuchos::ArrayRCP<ST>
-    VpT_view;
+    Teuchos::ArrayRCP<ST> VpT_view;
 
     for (auto inode = 0; inode < ns_nodes.size(); ++inode) {
+      auto const x_dof = ns_nodes[inode][0];
 
-      auto const
-      x_dof = ns_nodes[inode][0];
+      auto const y_dof = ns_nodes[inode][1];
 
-      auto const
-      y_dof = ns_nodes[inode][1];
-
-      auto const
-      z_dof = ns_nodes[inode][2];
+      auto const z_dof = ns_nodes[inode][2];
 
       for (auto col = 0; col < num_cols; ++col) {
-
-        VpT_view = VpT->getDataNonConst(col);
+        VpT_view        = VpT->getDataNonConst(col);
         VpT_view[x_dof] = 0.0;
         VpT_view[y_dof] = 0.0;
         VpT_view[z_dof] = 0.0;
@@ -1063,19 +897,14 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   // for (df/dp)*V we zero out corresponding entries in df/dp
   else {
     for (auto inode = 0; inode < ns_nodes.size(); ++inode) {
+      auto const x_dof = ns_nodes[inode][0];
 
-      auto const
-      x_dof = ns_nodes[inode][0];
+      auto const y_dof = ns_nodes[inode][1];
 
-      auto const
-      y_dof = ns_nodes[inode][1];
-
-      auto const
-      z_dof = ns_nodes[inode][2];
+      auto const z_dof = ns_nodes[inode][2];
 
       for (auto col = 0; col < num_cols; ++col) {
-
-        fpVT_view = fpVT->getDataNonConst(col);
+        fpVT_view        = fpVT->getDataNonConst(col);
         fpVT_view[x_dof] = 0.0;
         fpVT_view[y_dof] = 0.0;
         fpVT_view[z_dof] = 0.0;
@@ -1084,4 +913,4 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   }
 }
 
-} // namespace LCM
+}  // namespace LCM

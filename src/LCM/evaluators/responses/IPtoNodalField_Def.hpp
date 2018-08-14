@@ -10,7 +10,8 @@
 #include "Albany_Utils.hpp"
 
 namespace LCM {
-class IPtoNodalFieldManager : public Adapt::NodalDataBase::Manager {
+class IPtoNodalFieldManager : public Adapt::NodalDataBase::Manager
+{
  public:
   IPtoNodalFieldManager() : nwrkr_(0), prectr_(0), postctr_(0) {}
 

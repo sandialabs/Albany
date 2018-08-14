@@ -14,7 +14,8 @@ J2MiniKernel<EvalT, Traits>::J2MiniKernel(
     ConstitutiveModel<EvalT, Traits>&    model,
     Teuchos::ParameterList*              p,
     Teuchos::RCP<Albany::Layouts> const& dl)
-    : BaseKernel(model), sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
+    : BaseKernel(model),
+      sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
       sat_exp_(p->get<RealType>("Saturation Exponent", 0.0))
 {
   // retrieve appropriate field name strings
@@ -134,7 +135,7 @@ J2MiniKernel<EvalT, Traits>::init(
   yield_surf_ = *eval_fields[yieldSurface_string];
 
   if (have_temperature_ == true) {
-    source_ = *eval_fields[source_string];
+    source_      = *eval_fields[source_string];
     temperature_ = *dep_fields["Temperature"];
   }
 
@@ -167,8 +168,13 @@ class J2NLS : public minitensor::
       S const& smag,
       S const& mubar,
       S const& Y)
-      : sat_mod_(sat_mod), sat_exp_(sat_exp), eqps_old_(eqps_old), K_(K),
-        smag_(smag), mubar_(mubar), Y_(Y)
+      : sat_mod_(sat_mod),
+        sat_exp_(sat_exp),
+        eqps_old_(eqps_old),
+        K_(K),
+        smag_(smag),
+        mubar_(mubar),
+        Y_(Y)
   {
   }
 
@@ -349,9 +355,7 @@ J2MiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     Tensor const Fpnew = expA * Fpn;
 
     for (int i{0}; i < num_dims_; ++i) {
-      for (int j{0}; j < num_dims_; ++j) {
-        Fp_(cell, pt, i, j) = Fpnew(i, j);
-      }
+      for (int j{0}; j < num_dims_; ++j) { Fp_(cell, pt, i, j) = Fpnew(i, j); }
     }
   } else {
     eqps_(cell, pt) = eqps_old_(cell, pt);
@@ -359,9 +363,7 @@ J2MiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     if (have_temperature_ == true) source_(cell, pt) = 0.0;
 
     for (int i{0}; i < num_dims_; ++i) {
-      for (int j{0}; j < num_dims_; ++j) {
-        Fp_(cell, pt, i, j) = Fpn(i, j);
-      }
+      for (int j{0}; j < num_dims_; ++j) { Fp_(cell, pt, i, j) = Fpn(i, j); }
     }
   }
 

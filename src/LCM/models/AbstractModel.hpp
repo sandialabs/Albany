@@ -7,26 +7,24 @@
 #if !defined(LCM_AbstractModel_hpp)
 #define LCM_AbstractModel_hpp
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
-namespace LCM
-{
+namespace LCM {
 
 ///
 /// Abstract Model Base Class
 ///
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 class AbstractModel
 {
-public:
-
-  using ScalarT = typename EvalT::ScalarT;
+ public:
+  using ScalarT     = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
-  using Workset = typename Traits::EvalData;
+  using Workset     = typename Traits::EvalData;
 
   using FieldMap = std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>;
   using DataLayoutMap = std::map<std::string, Teuchos::RCP<PHX::DataLayout>>;
@@ -35,16 +33,15 @@ public:
   /// Constructor
   ///
   AbstractModel(
-      Teuchos::ParameterList * p,
-      Teuchos::RCP<Albany::Layouts> const & dl)
+      Teuchos::ParameterList*              p,
+      Teuchos::RCP<Albany::Layouts> const& dl)
   {
     // extract number of integration points and dimensions
-    std::vector<PHX::DataLayout::size_type>
-    dims;
+    std::vector<PHX::DataLayout::size_type> dims;
 
     dl->qp_tensor->dimensions(dims);
 
-    num_pts_ = dims[1];
+    num_pts_  = dims[1];
     num_dims_ = dims[2];
 
     field_name_map_ =
@@ -56,32 +53,24 @@ public:
   ///
   /// Virtual Destructor
   ///
-  virtual
-  ~AbstractModel()
-  {
-    return;
-  };
+  virtual ~AbstractModel() { return; };
 
   ///
   /// No copy constructor
   ///
-  AbstractModel(AbstractModel const &) = delete;
+  AbstractModel(AbstractModel const&) = delete;
 
   ///
   /// No copy assignment
   ///
-  AbstractModel &
-  operator=(AbstractModel const &) = delete;
+  AbstractModel&
+  operator=(AbstractModel const&) = delete;
 
   ///
   /// Compute the state (e.g. energy, stress, tangent)
   ///
-  virtual
-  void
-  computeState(
-      Workset workset,
-      FieldMap dep_fields,
-      FieldMap eval_fields) = 0;
+  virtual void
+  computeState(Workset workset, FieldMap dep_fields, FieldMap eval_fields) = 0;
 
   ///
   /// Accessors and mutators
@@ -98,8 +87,7 @@ public:
     return num_pts_;
   }
 
-  virtual
-  int
+  virtual int
   getNumStateVariables() = 0;
 
   ///
@@ -165,65 +153,53 @@ public:
 
   void
   setDependentField(
-      std::string const & field_name,
-      Teuchos::RCP<PHX::DataLayout> const & field)
+      std::string const&                   field_name,
+      Teuchos::RCP<PHX::DataLayout> const& field)
   {
     dep_field_map_.insert(std::make_pair(field_name, field));
   }
 
   void
   setEvaluatedField(
-      std::string const & field_name,
-      Teuchos::RCP<PHX::DataLayout> const & field)
+      std::string const&                   field_name,
+      Teuchos::RCP<PHX::DataLayout> const& field)
   {
     eval_field_map_.insert(std::make_pair(field_name, field));
   }
 
-protected:
-
+ protected:
   ///
   /// Number of dimensions
   ///
-  int
-  num_dims_{0};
+  int num_dims_{0};
 
   ///
   /// Number of integration points
   ///
-  int
-  num_pts_{0};
+  int num_pts_{0};
 
-  std::vector<std::string>
-  state_var_names_;
+  std::vector<std::string> state_var_names_;
 
-  std::vector<Teuchos::RCP<PHX::DataLayout>>
-  state_var_layouts_;
+  std::vector<Teuchos::RCP<PHX::DataLayout>> state_var_layouts_;
 
-  std::vector<std::string>
-  state_var_init_types_;
+  std::vector<std::string> state_var_init_types_;
 
-  std::vector<double>
-  state_var_init_values_;
+  std::vector<double> state_var_init_values_;
 
-  std::vector<bool>
-  state_var_old_state_flags_;
+  std::vector<bool> state_var_old_state_flags_;
 
-  std::vector<bool>
-  state_var_output_flags_;
+  std::vector<bool> state_var_output_flags_;
 
   ///
   /// Map of field names
   ///
-  Teuchos::RCP<std::map<std::string, std::string>>
-  field_name_map_;
+  Teuchos::RCP<std::map<std::string, std::string>> field_name_map_;
 
-  DataLayoutMap
-  dep_field_map_;
+  DataLayoutMap dep_field_map_;
 
-  DataLayoutMap
-  eval_field_map_;
+  DataLayoutMap eval_field_map_;
 };
 
-} // namespace LCM
+}  // namespace LCM
 
-#endif // LCM_AbstractModel_hpp
+#endif  // LCM_AbstractModel_hpp

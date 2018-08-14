@@ -103,8 +103,7 @@ ACETemperatureResidual<EvalT, Traits>::postRegistrationSetup(
 //
 //
 template <typename EvalT, typename Traits>
-void
-ACETemperatureResidual<EvalT, Traits>::evaluateFields(
+void ACETemperatureResidual<EvalT, Traits>::evaluateFields(
     typename Traits::EvalData)
 {
   using FST = Intrepid2::FunctionSpaceTools<PHX::Device>;

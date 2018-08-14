@@ -39,7 +39,8 @@ namespace LCM {
 
 template <typename EvalT, typename Traits>
 class ProjectIPtoNodalFieldBase : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                  public PHX::EvaluatorDerived<EvalT, Traits> {
+                                  public PHX::EvaluatorDerived<EvalT, Traits>
+{
  public:
   ProjectIPtoNodalFieldBase(const Teuchos::RCP<Albany::Layouts>& dl)
   {
@@ -63,7 +64,8 @@ class ProjectIPtoNodalFieldBase : public PHX::EvaluatorWithBaseImpl<Traits>,
 };
 
 template <typename EvalT, typename Traits>
-class ProjectIPtoNodalField : public ProjectIPtoNodalFieldBase<EvalT, Traits> {
+class ProjectIPtoNodalField : public ProjectIPtoNodalFieldBase<EvalT, Traits>
+{
  public:
   ProjectIPtoNodalField(
       Teuchos::ParameterList&              p,
@@ -99,7 +101,8 @@ class ProjectIPtoNodalFieldQuadrature;
 
 template <typename Traits>
 class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>
-    : public ProjectIPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits> {
+    : public ProjectIPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>
+{
  public:
   ProjectIPtoNodalField(
       Teuchos::ParameterList&              p,

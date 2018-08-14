@@ -29,7 +29,8 @@ DefGrad<EvalT, Traits>::DefGrad(const Teuchos::ParameterList& p)
           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout")),
       J(p.get<std::string>("DetDefGrad Name"),
         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
-      weightedAverage(false), alpha(0.05)
+      weightedAverage(false),
+      alpha(0.05)
 {
   if (p.isType<bool>("Weighted Volume Average J"))
     weightedAverage = p.get<bool>("Weighted Volume Average J");
@@ -90,9 +91,7 @@ DefGrad<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
   // values. Leaving this out leads to inversion of 0 tensors.
   for (int cell = workset.numCells; cell < worksetSize; ++cell) {
     for (int qp = 0; qp < numQPs; ++qp) {
-      for (int i = 0; i < numDims; ++i) {
-        defgrad(cell, qp, i, i) = 1.0;
-      }
+      for (int i = 0; i < numDims; ++i) { defgrad(cell, qp, i, i) = 1.0; }
     }
   }
 

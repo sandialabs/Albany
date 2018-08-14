@@ -7,67 +7,68 @@
 #if !defined(LCM_Strain_hpp)
 #define LCM_Strain_hpp
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
 namespace LCM {
-  ///\brief Infinitessimal strain tensor
+///\brief Infinitessimal strain tensor
+///
+/// This evaluator computes the strain
+/// \f$ \epsilon_{ij} = \frac{1}{2}(u_{i,j}+u{j,i})
+///
+template <typename EvalT, typename Traits>
+class Strain : public PHX::EvaluatorWithBaseImpl<Traits>,
+               public PHX::EvaluatorDerived<EvalT, Traits>
+{
+ public:
   ///
-  /// This evaluator computes the strain
-  /// \f$ \epsilon_{ij} = \frac{1}{2}(u_{i,j}+u{j,i})
+  /// Constructor
   ///
-  template<typename EvalT, typename Traits>
-  class Strain : public PHX::EvaluatorWithBaseImpl<Traits>,
-                 public PHX::EvaluatorDerived<EvalT, Traits>  {
+  Strain(
+      const Teuchos::ParameterList&        p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
-  public:
+  ///
+  /// Phalanx method to allocate space
+  ///
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-    ///
-    /// Constructor
-    ///
-    Strain(const Teuchos::ParameterList& p,
-           const Teuchos::RCP<Albany::Layouts>& dl);
+  ///
+  /// Implementation of physics
+  ///
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-    ///
-    /// Phalanx method to allocate space
-    ///
-    void postRegistrationSetup(typename Traits::SetupData d,
-                               PHX::FieldManager<Traits>& vm);
+ private:
+  typedef typename EvalT::ScalarT     ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
 
-    ///
-    /// Implementation of physics
-    ///
-    void evaluateFields(typename Traits::EvalData d);
+  ///
+  /// Input: displacement gradient
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> GradU;
 
-  private:
+  ///
+  /// Output: Strain
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> strain;
 
-    typedef typename EvalT::ScalarT ScalarT;
-    typedef typename EvalT::MeshScalarT MeshScalarT;
+  ///
+  /// Number of integration points
+  ///
+  unsigned int numQPs;
 
-    ///
-    /// Input: displacement gradient
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> GradU;
-
-    ///
-    /// Output: Strain
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
-
-    ///
-    /// Number of integration points
-    ///
-    unsigned int numQPs;
-
-    ///
-    /// Number of problem dimensions
-    ///
-    unsigned int numDims;
-
-  };
-}
+  ///
+  /// Number of problem dimensions
+  ///
+  unsigned int numDims;
+};
+}  // namespace LCM
 
 #endif

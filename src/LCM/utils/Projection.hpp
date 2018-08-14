@@ -19,40 +19,43 @@ namespace LCM {
 
 class Projection
 {
-public:
+ public:
   // Default constructor
   Projection();
 
   // Constructor
   Projection(
-      std::string const & field_name,
-      int const rank,
-      int const number_components,
-      int const number_dimensions);
+      std::string const& field_name,
+      int const          rank,
+      int const          number_components,
+      int const          number_dimensions);
 
   // Returns whether a projection is required
-  bool isProjected()
+  bool
+  isProjected()
   {
     return is_projected_;
   }
 
   // Return the rank of the variable to be projected
-  int getProjectedRank()
+  int
+  getProjectedRank()
   {
     return rank_;
   }
 
   // Return the number of components to be projected
-  int getProjectedComponents();
+  int
+  getProjectedComponents();
 
   // Return the name of the variable to be projected
-  std::string getProjectionName()
+  std::string
+  getProjectionName()
   {
     return field_name_;
   }
 
-private:
-
+ private:
   // Determines whether a projection is required
   bool is_projected_;
 
@@ -70,6 +73,6 @@ private:
 };
 // Class Projection
 
-}// Namespace LCM
+}  // Namespace LCM
 
-#endif // Projection_hpp
+#endif  // Projection_hpp

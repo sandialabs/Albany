@@ -22,8 +22,9 @@ namespace LCM {
 ///
 template <typename EvalT, typename Traits>
 class ACEthermalInertia : public PHX::EvaluatorWithBaseImpl<Traits>,
-                   public PHX::EvaluatorDerived<EvalT, Traits>,
-                   public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+                          public PHX::EvaluatorDerived<EvalT, Traits>,
+                          public Sacado::ParameterAccessor<EvalT, SPL_Traits>
+{
  public:
   using ScalarT = typename EvalT::ScalarT;
 
@@ -55,7 +56,6 @@ class ACEthermalInertia : public PHX::EvaluatorWithBaseImpl<Traits>,
   getValue(const std::string& n);
 
  private:
-
   ///
   /// Number of integration points
   ///
@@ -81,7 +81,6 @@ class ACEthermalInertia : public PHX::EvaluatorWithBaseImpl<Traits>,
   ///
   ScalarT latent_heat_{334.0};
   ScalarT rho_ice_{920.0};
-
 };
 }  // namespace LCM
 

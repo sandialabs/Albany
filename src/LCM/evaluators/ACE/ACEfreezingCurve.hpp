@@ -21,10 +21,10 @@ namespace LCM {
 /// Evaluates the freezing curve at integration points
 ///
 template <typename EvalT, typename Traits>
-class ACEfreezingCurve
-    : public PHX::EvaluatorWithBaseImpl<Traits>,
-      public PHX::EvaluatorDerived<EvalT, Traits>,
-      public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+class ACEfreezingCurve : public PHX::EvaluatorWithBaseImpl<Traits>,
+                         public PHX::EvaluatorDerived<EvalT, Traits>,
+                         public Sacado::ParameterAccessor<EvalT, SPL_Traits>
+{
  public:
   using ScalarT = typename EvalT::ScalarT;
 
@@ -56,7 +56,6 @@ class ACEfreezingCurve
   getValue(const std::string& n);
 
  private:
-
   ///
   /// Number of integration points
   ///
@@ -85,9 +84,7 @@ class ACEfreezingCurve
   ///
   /// Temperature range over which phase change can occur
   ///
-  ScalarT
-  temperature_range_{1.0};
-
+  ScalarT temperature_range_{1.0};
 };
 }  // namespace LCM
 

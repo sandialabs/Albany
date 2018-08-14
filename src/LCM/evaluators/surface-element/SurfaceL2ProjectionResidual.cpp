@@ -4,11 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
 #include "PHAL_AlbanyTraits.hpp"
 
 #include "SurfaceL2ProjectionResidual.hpp"
 #include "SurfaceL2ProjectionResidual_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::SurfaceL2ProjectionResidual)
-

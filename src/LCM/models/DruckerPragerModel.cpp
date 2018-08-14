@@ -10,4 +10,3 @@
 #include "DruckerPragerModel_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::DruckerPragerModel)
-

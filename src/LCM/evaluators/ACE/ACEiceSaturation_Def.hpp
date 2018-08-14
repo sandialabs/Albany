@@ -16,29 +16,32 @@ ACEiceSaturation<EvalT, Traits>::ACEiceSaturation(
     Teuchos::ParameterList&              p,
     const Teuchos::RCP<Albany::Layouts>& dl)
     : ice_saturation_(  // evaluated
-          p.get<std::string>("ACE Ice Saturation"), dl->qp_scalar),
+          p.get<std::string>("ACE Ice Saturation"),
+          dl->qp_scalar),
       delta_temperature_(  // dependent
-          p.get<std::string>("ACE Temperature Change"), dl->qp_scalar),
+          p.get<std::string>("ACE Temperature Change"),
+          dl->qp_scalar),
       dfdT_(  // dependent
-          p.get<std::string>("ACE Freezing Curve Slope"), dl->qp_scalar)
+          p.get<std::string>("ACE Freezing Curve Slope"),
+          dl->qp_scalar)
 {
   Teuchos::ParameterList* iceSaturation_list =
-    p.get<Teuchos::ParameterList*>("Parameter List");
+      p.get<Teuchos::ParameterList*>("Parameter List");
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
+      p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   num_qps_  = dims[1];
   num_dims_ = dims[2];
 
   Teuchos::RCP<ParamLib> paramLib =
-    p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
+      p.get<Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
   // Read initial saturation values
-  ice_saturation_init_ = 
+  ice_saturation_init_ =
       iceSaturation_list->get<double>("Initial Ice Saturation");
-  max_ice_saturation_ = 
+  max_ice_saturation_ =
       iceSaturation_list->get<double>("Maximum Ice Saturation");
 
   // Add ice saturation as Sacado-ized parameters
@@ -46,10 +49,10 @@ ACEiceSaturation<EvalT, Traits>::ACEiceSaturation(
 
   // List evaluated fields
   this->addEvaluatedField(ice_saturation_);
-  
+
   // List dependent fields
-  this->addEvaluatedField(delta_temperature_); 
-  this->addEvaluatedField(dfdT_); 
+  this->addEvaluatedField(delta_temperature_);
+  this->addEvaluatedField(dfdT_);
 
   this->setName("ACE Ice Saturation" + PHX::typeAsString<EvalT>());
 }
@@ -68,28 +71,26 @@ ACEiceSaturation<EvalT, Traits>::postRegistrationSetup(
   return;
 }
 
-
 // This function updates the ice saturation based on the temperature change.
 template <typename EvalT, typename Traits>
 void
-ACEiceSaturation<EvalT, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+ACEiceSaturation<EvalT, Traits>::evaluateFields(
+    typename Traits::EvalData workset)
 {
   int num_cells = workset.numCells;
 
   for (int cell = 0; cell < num_cells; ++cell) {
     for (int qp = 0; qp < num_qps_; ++qp) {
-      
-      ice_saturation_(cell, qp) += 
+      ice_saturation_(cell, qp) +=
           dfdT_(cell, qp) * delta_temperature_(cell, qp);
-          
+
       // check on realistic bounds
       ice_saturation_(cell, qp) = std::max(0.0, ice_saturation_(cell, qp));
-      ice_saturation_(cell, qp) = std::min(
-          max_ice_saturation_, ice_saturation_(cell, qp));
-      
+      ice_saturation_(cell, qp) =
+          std::min(max_ice_saturation_, ice_saturation_(cell, qp));
+
       // swap ice saturations
-      ice_saturation_old_(cell, qp) = ice_saturation_(cell, qp); 
+      ice_saturation_old_(cell, qp) = ice_saturation_(cell, qp);
     }
   }
 
@@ -101,18 +102,12 @@ template <typename EvalT, typename Traits>
 typename ACEiceSaturation<EvalT, Traits>::ScalarT&
 ACEiceSaturation<EvalT, Traits>::getValue(const std::string& n)
 {
-  if (n == "Initial Ice Saturation") {
-    return ice_saturation_init_;
-  }
-  if (n == "Maximum Ice Saturation") {
-    return max_ice_saturation_;
-  }
+  if (n == "Initial Ice Saturation") { return ice_saturation_init_; }
+  if (n == "Maximum Ice Saturation") { return max_ice_saturation_; }
 
-  ALBANY_ASSERT(
-      false, 
-      "Invalid request for value of Ice Saturation Parameter");
+  ALBANY_ASSERT(false, "Invalid request for value of Ice Saturation Parameter");
 
-  return ice_saturation_init_; // does it matter what we return here?
+  return ice_saturation_init_;  // does it matter what we return here?
 }
 
 }  // namespace LCM

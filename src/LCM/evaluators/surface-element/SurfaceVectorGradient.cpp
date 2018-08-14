@@ -10,4 +10,3 @@
 #include "SurfaceVectorGradient_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::SurfaceVectorGradient)
-

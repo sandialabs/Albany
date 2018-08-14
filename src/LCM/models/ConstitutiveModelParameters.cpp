@@ -10,4 +10,3 @@
 #include "ConstitutiveModelParameters_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ConstitutiveModelParameters)
-

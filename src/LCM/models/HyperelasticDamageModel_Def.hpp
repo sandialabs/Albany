@@ -5,18 +5,17 @@
 //*****************************************************************//
 
 #include <MiniTensor.h>
-#include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Teuchos_TestForException.hpp"
 
-namespace LCM
-{
+namespace LCM {
 
 //------------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
-HyperelasticDamageModel<EvalT, Traits>::
-HyperelasticDamageModel(Teuchos::ParameterList* p,
-    const Teuchos::RCP<Albany::Layouts>& dl) :
-    LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
+template <typename EvalT, typename Traits>
+HyperelasticDamageModel<EvalT, Traits>::HyperelasticDamageModel(
+    Teuchos::ParameterList*              p,
+    const Teuchos::RCP<Albany::Layouts>& dl)
+    : LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
       max_damage_(p->get<RealType>("Maximum Damage", 1.0)),
       damage_saturation_(p->get<RealType>("Damage Saturation", 1.0))
 {
@@ -60,35 +59,34 @@ HyperelasticDamageModel(Teuchos::ParameterList* p,
   this->state_var_output_flags_.push_back(true);
 }
 //------------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
-void HyperelasticDamageModel<EvalT, Traits>::
-computeState(typename Traits::EvalData workset,
-    DepFieldMap dep_fields,
-    FieldMap eval_fields)
+template <typename EvalT, typename Traits>
+void
+HyperelasticDamageModel<EvalT, Traits>::computeState(
+    typename Traits::EvalData workset,
+    DepFieldMap               dep_fields,
+    FieldMap                  eval_fields)
 {
   // extract dependent MDFields
-  auto def_grad = *dep_fields["F"];
-  auto J = *dep_fields["J"];
-  auto poissons_ratio = *dep_fields["Poissons Ratio"];
+  auto def_grad        = *dep_fields["F"];
+  auto J               = *dep_fields["J"];
+  auto poissons_ratio  = *dep_fields["Poissons Ratio"];
   auto elastic_modulus = *dep_fields["Elastic Modulus"];
-  auto delta_time = *dep_fields["Delta Time"];
+  auto delta_time      = *dep_fields["Delta Time"];
   // extract evaluated MDFields
-  std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
-  auto stress = *eval_fields[cauchy];
-  auto alpha = *eval_fields["alpha"];
+  std::string           cauchy = (*field_name_map_)["Cauchy_Stress"];
+  auto                  stress = *eval_fields[cauchy];
+  auto                  alpha  = *eval_fields["alpha"];
   PHX::MDField<ScalarT> damage;
-  if (!have_damage_) {
-    damage = *eval_fields["local damage"];
-  }
+  if (!have_damage_) { damage = *eval_fields["local damage"]; }
   PHX::MDField<ScalarT> source = *eval_fields["Damage_Source"];
-  //get state variables
+  // get state variables
   Albany::MDArray alpha_old = (*workset.stateArrayPtr)["alpha_old"];
-  ScalarT kappa;
-  ScalarT mu, mubar;
-  ScalarT Jm53, Jm23;
-  ScalarT smag;
-  ScalarT energy;
-  ScalarT dt = delta_time(0);
+  ScalarT         kappa;
+  ScalarT         mu, mubar;
+  ScalarT         Jm53, Jm23;
+  ScalarT         smag;
+  ScalarT         energy;
+  ScalarT         dt = delta_time(0);
 
   minitensor::Tensor<ScalarT> F(num_dims_), b(num_dims_), sigma(num_dims_);
   minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
@@ -96,13 +94,13 @@ computeState(typename Traits::EvalData workset,
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
-      kappa = elastic_modulus(cell, pt)
-          / (3. * (1. - 2. * poissons_ratio(cell, pt)));
-      mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
+      kappa = elastic_modulus(cell, pt) /
+              (3. * (1. - 2. * poissons_ratio(cell, pt)));
+      mu   = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
       Jm53 = std::pow(J(cell, pt), -5. / 3.);
       Jm23 = Jm53 * J(cell, pt);
 
-      F.fill(def_grad,cell, pt,0,0);
+      F.fill(def_grad, cell, pt, 0, 0);
 
       // Mechanical deformation gradient
       auto Fm = minitensor::Tensor<ScalarT>(F);
@@ -118,38 +116,40 @@ computeState(typename Traits::EvalData workset,
         //
         // Le = exp(alpha*dtemp) is the thermal stretch and alpha the
         // coefficient of thermal expansion.
-        ScalarT dtemp = temperature_(cell, pt) - ref_temperature_;
+        ScalarT dtemp           = temperature_(cell, pt) - ref_temperature_;
         ScalarT thermal_stretch = std::exp(expansion_coeff_ * dtemp);
         Fm /= thermal_stretch;
       }
 
-      b = Fm * transpose(Fm);
+      b     = Fm * transpose(Fm);
       mubar = (1.0 / 3.0) * mu * Jm23 * minitensor::trace(b);
-      sigma = 0.5 * kappa * (J(cell, pt) - 1. / J(cell, pt)) * I
-          + mu * Jm53 * minitensor::dev(b);
+      sigma = 0.5 * kappa * (J(cell, pt) - 1. / J(cell, pt)) * I +
+              mu * Jm53 * minitensor::dev(b);
 
-      energy = 0.5 * kappa
-          * (0.5 * (J(cell, pt) * J(cell, pt) - 1.0) - std::log(J(cell, pt)))
-          + 0.5 * mu * (Jm23 * minitensor::trace(b) - 3.0);
+      energy = 0.5 * kappa *
+                   (0.5 * (J(cell, pt) * J(cell, pt) - 1.0) -
+                    std::log(J(cell, pt))) +
+               0.5 * mu * (Jm23 * minitensor::trace(b) - 3.0);
 
       if (have_temperature_) {
         ScalarT delta_temp = temperature_(cell, pt) - ref_temperature_;
-        energy += heat_capacity_
-            * ((delta_temp) - temperature_(cell, pt)
-                * std::log(temperature_(cell, pt) / ref_temperature_))
-            - 3.0 * kappa * expansion_coeff_ * (J(cell, pt) - 1.0 / J(cell, pt))
-                * delta_temp;
+        energy += heat_capacity_ *
+                      ((delta_temp)-temperature_(cell, pt) *
+                       std::log(temperature_(cell, pt) / ref_temperature_)) -
+                  3.0 * kappa * expansion_coeff_ *
+                      (J(cell, pt) - 1.0 / J(cell, pt)) * delta_temp;
       }
 
-      alpha(cell, pt) = std::max((ScalarT) alpha_old(cell, pt), energy);
+      alpha(cell, pt) = std::max((ScalarT)alpha_old(cell, pt), energy);
 
-      source(cell, pt) = (max_damage_ / damage_saturation_)
-          * std::exp(-alpha(cell, pt) / damage_saturation_)
-          * (alpha(cell, pt) - alpha_old(cell, pt)) / dt;
+      source(cell, pt) = (max_damage_ / damage_saturation_) *
+                         std::exp(-alpha(cell, pt) / damage_saturation_) *
+                         (alpha(cell, pt) - alpha_old(cell, pt)) / dt;
 
       if (!have_damage_) {
-        damage(cell, pt) = max_damage_
-            * (1.0 - std::exp(-alpha(cell, pt) / damage_saturation_));
+        damage(cell, pt) =
+            max_damage_ *
+            (1.0 - std::exp(-alpha(cell, pt) / damage_saturation_));
       }
 
       for (int i = 0; i < num_dims_; ++i) {
@@ -161,5 +161,4 @@ computeState(typename Traits::EvalData workset,
   }
 }
 //------------------------------------------------------------------------------
-}
-
+}  // namespace LCM

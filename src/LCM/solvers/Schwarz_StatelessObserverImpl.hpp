@@ -11,40 +11,37 @@
 
 namespace LCM {
 
-class StatelessObserverImpl {
-public:
+class StatelessObserverImpl
+{
+ public:
+  explicit StatelessObserverImpl(
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>& apps);
 
-  explicit
-  StatelessObserverImpl(
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> & apps);
-
-  virtual
-  ~StatelessObserverImpl();
+  virtual ~StatelessObserverImpl();
 
   RealType
   getTimeParamValueOrDefault(RealType default_value) const;
 
   virtual void
   observeSolutionT(
-      double stamp,
+      double                                            stamp,
       Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> non_overlapped_solution,
-      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> non_overlapped_solution_dot);
+      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>>
+          non_overlapped_solution_dot);
 
-  StatelessObserverImpl(StatelessObserverImpl const &) = delete;
-  StatelessObserverImpl& operator=(StatelessObserverImpl const &) = delete;
+  StatelessObserverImpl(StatelessObserverImpl const&) = delete;
+  StatelessObserverImpl&
+  operator=(StatelessObserverImpl const&) = delete;
 
-protected:
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
-  apps_;
+ protected:
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> apps_;
 
-  int
-  n_models_;
+  int n_models_;
 
-private:
-  Teuchos::RCP<Teuchos::Time>
-  sol_out_time_;
+ private:
+  Teuchos::RCP<Teuchos::Time> sol_out_time_;
 };
 
-} // namespace LCM
+}  // namespace LCM
 
-#endif // LCM_Schwarz_StatelessObserverImpl_hpp
+#endif  // LCM_Schwarz_StatelessObserverImpl_hpp

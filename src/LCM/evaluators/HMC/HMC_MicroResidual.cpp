@@ -10,4 +10,3 @@
 #include "HMC_MicroResidual_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(HMC::MicroResidual)
-

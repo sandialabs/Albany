@@ -8,28 +8,26 @@
 #define RIHMRModel_hpp
 
 #include <MiniTensor.h>
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 #include "LCM/models/ConstitutiveModel.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
-namespace LCM
-{
+namespace LCM {
 
 //! \brief Rate Independent Hardening Minus Recovery (RIHMR) Model
-template<typename EvalT, typename Traits>
-class RIHMRModel: public LCM::ConstitutiveModel<EvalT, Traits>
+template <typename EvalT, typename Traits>
+class RIHMRModel : public LCM::ConstitutiveModel<EvalT, Traits>
 {
-public:
-
-  using Base = LCM::ConstitutiveModel<EvalT, Traits>;
+ public:
+  using Base        = LCM::ConstitutiveModel<EvalT, Traits>;
   using DepFieldMap = typename Base::DepFieldMap;
-  using FieldMap = typename Base::FieldMap;
+  using FieldMap    = typename Base::FieldMap;
 
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ScalarT                             ScalarT;
+  typedef typename EvalT::MeshScalarT                         MeshScalarT;
   typedef typename Sacado::mpl::apply<FadType, ScalarT>::type DFadType;
 
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
@@ -39,35 +37,34 @@ public:
   ///
   /// Constructor
   ///
-  RIHMRModel(Teuchos::ParameterList* p,
+  RIHMRModel(
+      Teuchos::ParameterList*              p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
   ///
   /// Virtual Denstructor
   ///
-  virtual
-  ~RIHMRModel()
-  {};
+  virtual ~RIHMRModel(){};
 
   ///
   /// Method to compute the state (e.g. energy, stress, tangent)
   ///
-  virtual
-  void
-  computeState(typename Traits::EvalData workset,
-      DepFieldMap dep_fields,
-      FieldMap eval_fields);
+  virtual void
+  computeState(
+      typename Traits::EvalData workset,
+      DepFieldMap               dep_fields,
+      FieldMap                  eval_fields);
 
-  virtual
-  void
-  computeStateParallel(typename Traits::EvalData workset,
-      DepFieldMap dep_fields,
-      FieldMap eval_fields){
-         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
- }
+  virtual void
+  computeStateParallel(
+      typename Traits::EvalData workset,
+      DepFieldMap               dep_fields,
+      FieldMap                  eval_fields)
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
+  }
 
-private:
-
+ private:
   ///
   /// Private to prohibit copying
   ///
@@ -76,7 +73,8 @@ private:
   ///
   /// Private to prohibit copying
   ///
-  RIHMRModel& operator=(const RIHMRModel&);
+  RIHMRModel&
+  operator=(const RIHMRModel&);
 
   ///
   /// Saturation hardening constants
@@ -87,11 +85,19 @@ private:
   /// Compute Residual and Local Jacobian
   ///
   void
-  ResidualJacobian(std::vector<ScalarT> & X, std::vector<ScalarT> & R,
-      std::vector<ScalarT> & dRdX, const ScalarT & es, const ScalarT & smag,
-      const ScalarT & mubar, ScalarT & mu, ScalarT & kappa, ScalarT & K,
-      ScalarT & Y, ScalarT & Rd);
+  ResidualJacobian(
+      std::vector<ScalarT>& X,
+      std::vector<ScalarT>& R,
+      std::vector<ScalarT>& dRdX,
+      const ScalarT&        es,
+      const ScalarT&        smag,
+      const ScalarT&        mubar,
+      ScalarT&              mu,
+      ScalarT&              kappa,
+      ScalarT&              K,
+      ScalarT&              Y,
+      ScalarT&              Rd);
 };
-}
+}  // namespace LCM
 
 #endif

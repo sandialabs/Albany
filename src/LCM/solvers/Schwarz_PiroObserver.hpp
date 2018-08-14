@@ -15,51 +15,48 @@
 
 namespace LCM {
 
-class Schwarz_PiroObserver: public Piro::ObserverBase<ST> {
-public:
-  explicit
-  Schwarz_PiroObserver(Teuchos::RCP<SchwarzCoupled> const & cs_model);
+class Schwarz_PiroObserver : public Piro::ObserverBase<ST>
+{
+ public:
+  explicit Schwarz_PiroObserver(Teuchos::RCP<SchwarzCoupled> const& cs_model);
 
   virtual void
-  observeSolution(Thyra::VectorBase<ST> const & solution);
+  observeSolution(Thyra::VectorBase<ST> const& solution);
 
   virtual void
-  observeSolution(Thyra::VectorBase<ST> const & solution, ST const stamp);
+  observeSolution(Thyra::VectorBase<ST> const& solution, ST const stamp);
 
   virtual void
   observeSolution(
-      Thyra::VectorBase<ST> const & solution,
-      Thyra::VectorBase<ST> const & solution_dot,
-      ST const stamp);
+      Thyra::VectorBase<ST> const& solution,
+      Thyra::VectorBase<ST> const& solution_dot,
+      ST const                     stamp);
 
-private:
+ private:
   void
   observeSolutionImpl(
-      Thyra::VectorBase<ST> const & solution,
-      ST const default_stamp);
+      Thyra::VectorBase<ST> const& solution,
+      ST const                     default_stamp);
 
   void
   observeSolutionImpl(
-      Thyra::VectorBase<ST> const & solution,
-      Thyra::VectorBase<ST> const & solution_dot,
-      ST const default_stamp);
+      Thyra::VectorBase<ST> const& solution,
+      Thyra::VectorBase<ST> const& solution_dot,
+      ST const                     default_stamp);
 
   void
   observeTpetraSolutionImpl(
       Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> solutions,
       Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> solutions_dot,
-      ST const default_stamp);
+      ST const                                          default_stamp);
 
-  int
-  n_models_;
+  int n_models_;
 
-  Teuchos::RCP<ObserverImpl>
-  impl_;
+  Teuchos::RCP<ObserverImpl> impl_;
 
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
-  apps_;
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> apps_;
 };
 
-} // namespace LCM
+}  // namespace LCM
 
-#endif // Schwarz_PiroObserver_hpp
+#endif  // Schwarz_PiroObserver_hpp

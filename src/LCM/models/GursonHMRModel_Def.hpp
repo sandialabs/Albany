@@ -13,7 +13,7 @@
 namespace LCM {
 
 //------------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 GursonHMRModel<EvalT, Traits>::GursonHMRModel(
     Teuchos::ParameterList*              p,
     const Teuchos::RCP<Albany::Layouts>& dl)
@@ -116,7 +116,7 @@ GursonHMRModel<EvalT, Traits>::GursonHMRModel(
   this->state_var_output_flags_.push_back(true);
 }
 //------------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 void
 GursonHMRModel<EvalT, Traits>::computeState(
     typename Traits::EvalData workset,
@@ -348,7 +348,7 @@ GursonHMRModel<EvalT, Traits>::computeState(
 
 //------------------------------------------------------------------------------
 // all local functions for compute state
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 typename EvalT::ScalarT
 GursonHMRModel<EvalT, Traits>::YieldFunction(
     minitensor::Tensor<ScalarT> const& s,
@@ -396,7 +396,7 @@ GursonHMRModel<EvalT, Traits>::YieldFunction(
   return Phi;
 }  // end of YieldFunction
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 void
 GursonHMRModel<EvalT, Traits>::ResidualJacobian(
     std::vector<ScalarT>&        X,
@@ -466,9 +466,7 @@ GursonHMRModel<EvalT, Traits>::ResidualJacobian(
   // valid for assumption Ntr = N;
   minitensor::Tensor<DFadType> sfad(num_dims_);
   for (int i = 0; i < num_dims_; ++i) {
-    for (int j = 0; j < num_dims_; ++j) {
-      sfad(i, j) = factor * s(i, j);
-    }
+    for (int j = 0; j < num_dims_; ++j) { sfad(i, j) = factor * s(i, j); }
   }
 
   // currently complaining error in promotion tensor type
@@ -484,9 +482,8 @@ GursonHMRModel<EvalT, Traits>::ResidualJacobian(
   }
 
   if (taue > 0.0)
-    omega = 1.0 -
-            (27.0 * J3 / 2.0 / taue / taue / taue) *
-                (27.0 * J3 / 2.0 / taue / taue / taue);
+    omega = 1.0 - (27.0 * J3 / 2.0 / taue / taue / taue) *
+                      (27.0 * J3 / 2.0 / taue / taue / taue);
 
   DFadType deq(0.0);
   if (smag != 0.0) {
@@ -541,4 +538,4 @@ GursonHMRModel<EvalT, Traits>::ResidualJacobian(
 
 }  // end of ResidualJacobian
 //------------------------------------------------------------------------------
-}
+}  // namespace LCM

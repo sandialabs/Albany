@@ -10,4 +10,3 @@
 #include "LinearHMCModel_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::LinearHMCModel)
-

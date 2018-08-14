@@ -273,8 +273,13 @@ class IceNLS : public minitensor::
       S const& smag,
       S const& mubar,
       S const& Y)
-      : sat_mod_(sat_mod), sat_exp_(sat_exp), eqps_old_(eqps_old), K_(K),
-        smag_(smag), mubar_(mubar), Y_(Y)
+      : sat_mod_(sat_mod),
+        sat_exp_(sat_exp),
+        eqps_old_(eqps_old),
+        K_(K),
+        smag_(smag),
+        mubar_(mubar),
+        Y_(Y)
   {
   }
 

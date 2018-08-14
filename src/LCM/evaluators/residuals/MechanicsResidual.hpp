@@ -23,9 +23,10 @@ namespace LCM {
 /// of linear momentum for infinitesimal and finite deformation,
 /// with or without dynamics
 ///
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 class MechanicsResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
-                          public PHX::EvaluatorDerived<EvalT, Traits> {
+                          public PHX::EvaluatorDerived<EvalT, Traits>
+{
  public:
   using ScalarT     = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
@@ -76,9 +77,10 @@ class MechanicsResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
   /// Input: acceleration
   ///
   PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> acceleration_;
-  
+
   ///
-  /// Input: mass contribution to residual/Jacobian (if not using AD to compute mass matrix)  
+  /// Input: mass contribution to residual/Jacobian (if not using AD to compute
+  /// mass matrix)
   ///
   PHX::MDField<const ScalarT, Cell, Node, Dim> mass_;
 
@@ -120,7 +122,7 @@ class MechanicsResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
   ///
   /// Flag to mark if using mass from AnalyticMassResidual evaluator
   ///
-  bool use_analytic_mass_; 
+  bool use_analytic_mass_;
 
   ///
   /// Input, if RCU.
@@ -176,6 +178,6 @@ class MechanicsResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
   void
   compute_Acceleration(const int cell) const;
 };
-}
+}  // namespace LCM
 
 #endif

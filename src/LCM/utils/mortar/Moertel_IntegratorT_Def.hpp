@@ -5,36 +5,32 @@
 //*****************************************************************//
 
 #include "Moertel_IntegratorT.hpp"
+#include "Moertel_InterfaceT.hpp"
 #include "Moertel_NodeT.hpp"
 #include "Moertel_SegmentT.hpp"
-#include "Moertel_InterfaceT.hpp"
 #include "Moertel_UtilsT.hpp"
 
-#include <iostream>
 #include <fstream>
-
+#include <iostream>
 
 /*----------------------------------------------------------------------*
   |  ctor (public)                                            mwgee 07/05|
  *----------------------------------------------------------------------*/
 MOERTEL_TEMPLATE_STATEMENT
-MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::IntegratorT(int ngp, bool oneD, int outlevel) :
-  oneD_(oneD),
-  ngp_(ngp),
-  outputlevel_(outlevel)
+MoertelT::MOERTEL_TEMPLATE_CLASS(
+    IntegratorT)::IntegratorT(int ngp, bool oneD, int outlevel)
+    : oneD_(oneD), ngp_(ngp), outputlevel_(outlevel)
 {
-  if (oneD)
-  {
+  if (oneD) {
     coords_.resize(ngp_);
     weights_.resize(ngp_);
-    switch (ngp_)
-    {
+    switch (ngp_) {
       case 1:
         coords_[0]  = 0.0;
         weights_[0] = 2.0;
         break;
       case 2:
-        coords_[0]  = -sqrt((1./3.));
+        coords_[0]  = -sqrt((1. / 3.));
         coords_[1]  = -coords_[0];
         weights_[0] = 1.0;
         weights_[1] = 1.0;
@@ -143,20 +139,19 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::IntegratorT(int ngp, bool oneD, i
 
         std::stringstream oss;
         oss << "***ERR*** MoertelT::IntegratorT::IntegratorT:\n"
-          << "***ERR*** given number of gaussian points " << ngp_ << "does not exist\n"
-          << "***ERR*** use 1, 2, 3, 4, 5, 6, 7, 8, 10 instead\n"
-          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+            << "***ERR*** given number of gaussian points " << ngp_
+            << "does not exist\n"
+            << "***ERR*** use 1, 2, 3, 4, 5, 6, 7, 8, 10 instead\n"
+            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
         throw MoertelT::ReportError(oss);
 
         break;
     }
-  } // if (oneD)
-  else
-  {
-    coords_.resize(2*ngp_);
+  }  // if (oneD)
+  else {
+    coords_.resize(2 * ngp_);
     weights_.resize(ngp_);
-    switch (ngp_)
-    {
+    switch (ngp_) {
       case 3:
         coords_[0]  = 0.5;
         coords_[1]  = 0.0;
@@ -164,315 +159,311 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::IntegratorT(int ngp, bool oneD, i
         coords_[3]  = 0.5;
         coords_[4]  = 0.0;
         coords_[5]  = 0.5;
-        weights_[0] = 1./3.;
+        weights_[0] = 1. / 3.;
         weights_[1] = weights_[0];
         weights_[2] = weights_[0];
         break;
       case 6:
-        weights_[0] =  0.05497587 ;
-        weights_[1] =  0.05497587 ;
-        weights_[2] =  0.05497587 ;
-        weights_[3] =  0.1116908  ;
-        weights_[4] =  0.1116908  ;
-        weights_[5] =  0.1116908  ;
+        weights_[0] = 0.05497587;
+        weights_[1] = 0.05497587;
+        weights_[2] = 0.05497587;
+        weights_[3] = 0.1116908;
+        weights_[4] = 0.1116908;
+        weights_[5] = 0.1116908;
 
-        coords_[0 ] =  0.8168476  ;
-        coords_[1 ] =  0.09157621 ;
-        coords_[2 ] =  0.09157621 ;
-        coords_[3 ] =  0.8168476  ;
-        coords_[4 ] =  0.09157621 ;
-        coords_[5 ] =  0.09157621 ;
-        coords_[6 ] =  0.1081030  ;
-        coords_[7 ] =  0.4459485  ;
-        coords_[8 ] =  0.4459485  ;
-        coords_[9 ] =  0.1081030  ;
-        coords_[10] =  0.4459485  ;
-        coords_[11] =  0.4459485  ;
+        coords_[0]  = 0.8168476;
+        coords_[1]  = 0.09157621;
+        coords_[2]  = 0.09157621;
+        coords_[3]  = 0.8168476;
+        coords_[4]  = 0.09157621;
+        coords_[5]  = 0.09157621;
+        coords_[6]  = 0.1081030;
+        coords_[7]  = 0.4459485;
+        coords_[8]  = 0.4459485;
+        coords_[9]  = 0.1081030;
+        coords_[10] = 0.4459485;
+        coords_[11] = 0.4459485;
 
         break;
       case 12:
-        weights_[0 ]  = 0.05839314 ;
-        weights_[1 ]  = 0.05839314 ;
-        weights_[2 ]  = 0.05839314 ;
-        weights_[3 ]  = 0.02542245 ;
-        weights_[4 ]  = 0.02542245 ;
-        weights_[5 ]  = 0.02542245 ;
-        weights_[6 ]  = 0.04142554 ;
-        weights_[7 ]  = 0.04142554 ;
-        weights_[8 ]  = 0.04142554 ;
-        weights_[9 ]  = 0.04142554 ;
-        weights_[10]  = 0.04142554 ;
-        weights_[11]  = 0.04142554 ;
+        weights_[0]  = 0.05839314;
+        weights_[1]  = 0.05839314;
+        weights_[2]  = 0.05839314;
+        weights_[3]  = 0.02542245;
+        weights_[4]  = 0.02542245;
+        weights_[5]  = 0.02542245;
+        weights_[6]  = 0.04142554;
+        weights_[7]  = 0.04142554;
+        weights_[8]  = 0.04142554;
+        weights_[9]  = 0.04142554;
+        weights_[10] = 0.04142554;
+        weights_[11] = 0.04142554;
 
-        coords_[0 ]   = 0.5014265  ;
-        coords_[1 ]   = 0.2492867  ;
-        coords_[2 ]   = 0.2492867  ;
-        coords_[3 ]   = 0.5014265  ;
-        coords_[4 ]   = 0.2492867  ;
-        coords_[5 ]   = 0.2492867  ;
-        coords_[6 ]   = 0.8738220  ;
-        coords_[7 ]   = 0.06308901 ;
-        coords_[8 ]   = 0.06308901 ;
-        coords_[9 ]   = 0.8738220  ;
-        coords_[10]   = 0.06308901 ;
-        coords_[11]   = 0.06308901 ;
-        coords_[12]   = 0.6365025  ;
-        coords_[13]   = 0.05314505 ;
-        coords_[14]   = 0.6365025  ;
-        coords_[15]   = 0.3103525  ;
-        coords_[16]   = 0.05314505 ;
-        coords_[17]   = 0.6365025  ;
-        coords_[18]   = 0.05314505 ;
-        coords_[19]   = 0.3103525  ;
-        coords_[20]   = 0.3103525  ;
-        coords_[21]   = 0.6365025  ;
-        coords_[22]   = 0.3103525  ;
-        coords_[23]   = 0.05314505 ;
-
+        coords_[0]  = 0.5014265;
+        coords_[1]  = 0.2492867;
+        coords_[2]  = 0.2492867;
+        coords_[3]  = 0.5014265;
+        coords_[4]  = 0.2492867;
+        coords_[5]  = 0.2492867;
+        coords_[6]  = 0.8738220;
+        coords_[7]  = 0.06308901;
+        coords_[8]  = 0.06308901;
+        coords_[9]  = 0.8738220;
+        coords_[10] = 0.06308901;
+        coords_[11] = 0.06308901;
+        coords_[12] = 0.6365025;
+        coords_[13] = 0.05314505;
+        coords_[14] = 0.6365025;
+        coords_[15] = 0.3103525;
+        coords_[16] = 0.05314505;
+        coords_[17] = 0.6365025;
+        coords_[18] = 0.05314505;
+        coords_[19] = 0.3103525;
+        coords_[20] = 0.3103525;
+        coords_[21] = 0.6365025;
+        coords_[22] = 0.3103525;
+        coords_[23] = 0.05314505;
 
         break;
       case 13:
-        weights_[0 ]  =-0.07478502 ;
-        weights_[1 ]  = 0.08780763 ;
-        weights_[2 ]  = 0.08780763 ;
-        weights_[3 ]  = 0.08780763 ;
-        weights_[4 ]  = 0.02667362 ;
-        weights_[5 ]  = 0.02667362 ;
-        weights_[6 ]  = 0.02667362 ;
-        weights_[7 ]  = 0.03855688 ;
-        weights_[8 ]  = 0.03855688 ;
-        weights_[9 ]  = 0.03855688 ;
-        weights_[10]  = 0.03855688 ;
-        weights_[11]  = 0.03855688 ;
-        weights_[12]  = 0.03855688 ;
+        weights_[0]  = -0.07478502;
+        weights_[1]  = 0.08780763;
+        weights_[2]  = 0.08780763;
+        weights_[3]  = 0.08780763;
+        weights_[4]  = 0.02667362;
+        weights_[5]  = 0.02667362;
+        weights_[6]  = 0.02667362;
+        weights_[7]  = 0.03855688;
+        weights_[8]  = 0.03855688;
+        weights_[9]  = 0.03855688;
+        weights_[10] = 0.03855688;
+        weights_[11] = 0.03855688;
+        weights_[12] = 0.03855688;
 
-        coords_[0 ]   = 0.3333333  ;
-        coords_[1 ]   = 0.3333333  ;
-        coords_[2 ]   = 0.4793081  ;
-        coords_[3 ]   = 0.2603460  ;
-        coords_[4 ]   = 0.2603460  ;
-        coords_[5 ]   = 0.4793081  ;
-        coords_[6 ]   = 0.2603460  ;
-        coords_[7 ]   = 0.2603460  ;
-        coords_[8 ]   = 0.8697398  ;
-        coords_[9 ]   = 0.06513010 ;
-        coords_[10]   = 0.06513010 ;
-        coords_[11]   = 0.8697398  ;
-        coords_[12]   = 0.06513010 ;
-        coords_[13]   = 0.06513010 ;
-        coords_[14]   = 0.6384442  ;
-        coords_[15]   = 0.04869032 ;
-        coords_[16]   = 0.6384442  ;
-        coords_[17]   = 0.3128655  ;
-        coords_[18]   = 0.04869032 ;
-        coords_[19]   = 0.6384442  ;
-        coords_[20]   = 0.04869032 ;
-        coords_[21]   = 0.3128655  ;
-        coords_[22]   = 0.3128655  ;
-        coords_[23]   = 0.6384442  ;
-        coords_[24]   = 0.3128655  ;
-        coords_[24]   = 0.04869032 ;
-
+        coords_[0]  = 0.3333333;
+        coords_[1]  = 0.3333333;
+        coords_[2]  = 0.4793081;
+        coords_[3]  = 0.2603460;
+        coords_[4]  = 0.2603460;
+        coords_[5]  = 0.4793081;
+        coords_[6]  = 0.2603460;
+        coords_[7]  = 0.2603460;
+        coords_[8]  = 0.8697398;
+        coords_[9]  = 0.06513010;
+        coords_[10] = 0.06513010;
+        coords_[11] = 0.8697398;
+        coords_[12] = 0.06513010;
+        coords_[13] = 0.06513010;
+        coords_[14] = 0.6384442;
+        coords_[15] = 0.04869032;
+        coords_[16] = 0.6384442;
+        coords_[17] = 0.3128655;
+        coords_[18] = 0.04869032;
+        coords_[19] = 0.6384442;
+        coords_[20] = 0.04869032;
+        coords_[21] = 0.3128655;
+        coords_[22] = 0.3128655;
+        coords_[23] = 0.6384442;
+        coords_[24] = 0.3128655;
+        coords_[24] = 0.04869032;
 
         break;
       case 16:
-        weights_[0 ] = 0.07215780 ;
-        weights_[1 ] = 0.04754582 ;
-        weights_[2 ] = 0.04754582 ;
-        weights_[3 ] = 0.04754582 ;
-        weights_[4 ] = 0.01622925 ;
-        weights_[5 ] = 0.01622925 ;
-        weights_[6 ] = 0.01622925 ;
-        weights_[7 ] = 0.05160869 ;
-        weights_[8 ] = 0.05160869 ;
-        weights_[9 ] = 0.05160869 ;
-        weights_[10] = 0.01361516 ;
-        weights_[11] = 0.01361516 ;
-        weights_[12] = 0.01361516 ;
-        weights_[13] = 0.01361516 ;
-        weights_[14] = 0.01361516 ;
-        weights_[15] = 0.01361516 ;
+        weights_[0]  = 0.07215780;
+        weights_[1]  = 0.04754582;
+        weights_[2]  = 0.04754582;
+        weights_[3]  = 0.04754582;
+        weights_[4]  = 0.01622925;
+        weights_[5]  = 0.01622925;
+        weights_[6]  = 0.01622925;
+        weights_[7]  = 0.05160869;
+        weights_[8]  = 0.05160869;
+        weights_[9]  = 0.05160869;
+        weights_[10] = 0.01361516;
+        weights_[11] = 0.01361516;
+        weights_[12] = 0.01361516;
+        weights_[13] = 0.01361516;
+        weights_[14] = 0.01361516;
+        weights_[15] = 0.01361516;
 
-        coords_[0 ]  = 0.3333333  ;
-        coords_[1 ]  = 0.3333333  ;
-        coords_[2 ]  = 0.08141482 ;
-        coords_[3 ]  = 0.4592926  ;
-        coords_[4 ]  = 0.4592926  ;
-        coords_[5 ]  = 0.08141482 ;
-        coords_[6 ]  = 0.4592926  ;
-        coords_[7 ]  = 0.4592926  ;
-        coords_[8 ]  = 0.8989055  ;
-        coords_[9 ]  = 0.05054723 ;
-        coords_[10]  = 0.05054723 ;
-        coords_[11]  = 0.8989055  ;
-        coords_[12]  = 0.05054723 ;
-        coords_[13]  = 0.05054723 ;
-        coords_[14]  = 0.6588614  ;
-        coords_[15]  = 0.1705693  ;
-        coords_[16]  = 0.1705693  ;
-        coords_[17]  = 0.6588614  ;
-        coords_[18]  = 0.1705693  ;
-        coords_[19]  = 0.1705693  ;
-        coords_[20]  = 0.008394777;
-        coords_[21]  = 0.7284924  ;
-        coords_[22]  = 0.008394777;
-        coords_[23]  = 0.2631128  ;
-        coords_[24]  = 0.7284924  ;
-        coords_[25]  = 0.008394777;
-        coords_[26]  = 0.7284924  ;
-        coords_[27]  = 0.2631128  ;
-        coords_[28]  = 0.2631128  ;
-        coords_[29]  = 0.008394777;
-        coords_[30]  = 0.2631128  ;
-        coords_[31]  = 0.7284924  ;
-
+        coords_[0]  = 0.3333333;
+        coords_[1]  = 0.3333333;
+        coords_[2]  = 0.08141482;
+        coords_[3]  = 0.4592926;
+        coords_[4]  = 0.4592926;
+        coords_[5]  = 0.08141482;
+        coords_[6]  = 0.4592926;
+        coords_[7]  = 0.4592926;
+        coords_[8]  = 0.8989055;
+        coords_[9]  = 0.05054723;
+        coords_[10] = 0.05054723;
+        coords_[11] = 0.8989055;
+        coords_[12] = 0.05054723;
+        coords_[13] = 0.05054723;
+        coords_[14] = 0.6588614;
+        coords_[15] = 0.1705693;
+        coords_[16] = 0.1705693;
+        coords_[17] = 0.6588614;
+        coords_[18] = 0.1705693;
+        coords_[19] = 0.1705693;
+        coords_[20] = 0.008394777;
+        coords_[21] = 0.7284924;
+        coords_[22] = 0.008394777;
+        coords_[23] = 0.2631128;
+        coords_[24] = 0.7284924;
+        coords_[25] = 0.008394777;
+        coords_[26] = 0.7284924;
+        coords_[27] = 0.2631128;
+        coords_[28] = 0.2631128;
+        coords_[29] = 0.008394777;
+        coords_[30] = 0.2631128;
+        coords_[31] = 0.7284924;
 
         break;
       case 19:
-        weights_[0 ] = 0.04856790 ;
-        weights_[1 ] = 0.01566735 ;
-        weights_[2 ] = 0.01566735 ;
-        weights_[3 ] = 0.01566735 ;
-        weights_[4 ] = 0.03891377 ;
-        weights_[5 ] = 0.03891377 ;
-        weights_[6 ] = 0.03891377 ;
-        weights_[7 ] = 0.03982387 ;
-        weights_[8 ] = 0.03982387 ;
-        weights_[9 ] = 0.03982387 ;
-        weights_[10] = 0.01278884 ;
-        weights_[11] = 0.01278884 ;
-        weights_[12] = 0.01278884 ;
-        weights_[13] = 0.02164177 ;
-        weights_[14] = 0.02164177 ;
-        weights_[15] = 0.02164177 ;
-        weights_[16] = 0.02164177 ;
-        weights_[17] = 0.02164177 ;
-        weights_[18] = 0.02164177 ;
+        weights_[0]  = 0.04856790;
+        weights_[1]  = 0.01566735;
+        weights_[2]  = 0.01566735;
+        weights_[3]  = 0.01566735;
+        weights_[4]  = 0.03891377;
+        weights_[5]  = 0.03891377;
+        weights_[6]  = 0.03891377;
+        weights_[7]  = 0.03982387;
+        weights_[8]  = 0.03982387;
+        weights_[9]  = 0.03982387;
+        weights_[10] = 0.01278884;
+        weights_[11] = 0.01278884;
+        weights_[12] = 0.01278884;
+        weights_[13] = 0.02164177;
+        weights_[14] = 0.02164177;
+        weights_[15] = 0.02164177;
+        weights_[16] = 0.02164177;
+        weights_[17] = 0.02164177;
+        weights_[18] = 0.02164177;
 
-        coords_[0 ]  = 0.3333333  ;
-        coords_[1 ]  = 0.3333333  ;
-        coords_[2 ]  = 0.02063496 ;
-        coords_[3 ]  = 0.4896825  ;
-        coords_[4 ]  = 0.4896825  ;
-        coords_[5 ]  = 0.02063496 ;
-        coords_[6 ]  = 0.4896825  ;
-        coords_[7 ]  = 0.4896825  ;
-        coords_[8 ]  = 0.1258208  ;
-        coords_[9 ]  = 0.4370896  ;
-        coords_[10]  = 0.4370896  ;
-        coords_[11]  = 0.1258208  ;
-        coords_[12]  = 0.4370896  ;
-        coords_[13]  = 0.4370896  ;
-        coords_[14]  = 0.6235929  ;
-        coords_[15]  = 0.1882035  ;
-        coords_[16]  = 0.1882035  ;
-        coords_[17]  = 0.6235929  ;
-        coords_[18]  = 0.1882035  ;
-        coords_[19]  = 0.1882035  ;
-        coords_[20]  = 0.9105410  ;
-        coords_[21]  = 0.04472951 ;
-        coords_[22]  = 0.04472951 ;
-        coords_[23]  = 0.9105410  ;
-        coords_[24]  = 0.04472951 ;
-        coords_[25]  = 0.04472951 ;
-        coords_[26]  = 0.03683841 ;
-        coords_[27]  = 0.7411986  ;
-        coords_[28]  = 0.03683841 ;
-        coords_[29]  = 0.2219630  ;
-        coords_[30]  = 0.7411986  ;
-        coords_[31]  = 0.03683841 ;
-        coords_[32]  = 0.7411986  ;
-        coords_[33]  = 0.2219630  ;
-        coords_[34]  = 0.2219630  ;
-        coords_[35]  = 0.03683841 ;
-        coords_[36]  = 0.2219630  ;
-        coords_[37]  = 0.7411986  ;
-
+        coords_[0]  = 0.3333333;
+        coords_[1]  = 0.3333333;
+        coords_[2]  = 0.02063496;
+        coords_[3]  = 0.4896825;
+        coords_[4]  = 0.4896825;
+        coords_[5]  = 0.02063496;
+        coords_[6]  = 0.4896825;
+        coords_[7]  = 0.4896825;
+        coords_[8]  = 0.1258208;
+        coords_[9]  = 0.4370896;
+        coords_[10] = 0.4370896;
+        coords_[11] = 0.1258208;
+        coords_[12] = 0.4370896;
+        coords_[13] = 0.4370896;
+        coords_[14] = 0.6235929;
+        coords_[15] = 0.1882035;
+        coords_[16] = 0.1882035;
+        coords_[17] = 0.6235929;
+        coords_[18] = 0.1882035;
+        coords_[19] = 0.1882035;
+        coords_[20] = 0.9105410;
+        coords_[21] = 0.04472951;
+        coords_[22] = 0.04472951;
+        coords_[23] = 0.9105410;
+        coords_[24] = 0.04472951;
+        coords_[25] = 0.04472951;
+        coords_[26] = 0.03683841;
+        coords_[27] = 0.7411986;
+        coords_[28] = 0.03683841;
+        coords_[29] = 0.2219630;
+        coords_[30] = 0.7411986;
+        coords_[31] = 0.03683841;
+        coords_[32] = 0.7411986;
+        coords_[33] = 0.2219630;
+        coords_[34] = 0.2219630;
+        coords_[35] = 0.03683841;
+        coords_[36] = 0.2219630;
+        coords_[37] = 0.7411986;
 
         break;
       case 27:
-        weights_[0 ] = 0.006829866  ;
-        weights_[1 ] = 0.006829866  ;
-        weights_[2 ] = 0.006829866  ;
-        weights_[3 ] = 0.01809227   ;
-        weights_[4 ] = 0.01809227   ;
-        weights_[5 ] = 0.01809227   ;
-        weights_[6 ] = 0.0004635032 ;
-        weights_[7 ] = 0.0004635032 ;
-        weights_[8 ] = 0.0004635032 ;
-        weights_[9 ] = 0.02966149   ;
-        weights_[10] = 0.02966149   ;
-        weights_[11] = 0.02966149   ;
-        weights_[12] = 0.03857477   ;
-        weights_[13] = 0.03857477   ;
-        weights_[14] = 0.03857477   ;
-        weights_[15] = 0.02616856   ;
-        weights_[16] = 0.02616856   ;
-        weights_[17] = 0.02616856   ;
-        weights_[18] = 0.02616856   ;
-        weights_[19] = 0.02616856   ;
-        weights_[20] = 0.02616856   ;
-        weights_[21] = 0.01035383   ;
-        weights_[22] = 0.01035383   ;
-        weights_[23] = 0.01035383   ;
-        weights_[24] = 0.01035383   ;
-        weights_[25] = 0.01035383   ;
-        weights_[26] = 0.01035383   ;
+        weights_[0]  = 0.006829866;
+        weights_[1]  = 0.006829866;
+        weights_[2]  = 0.006829866;
+        weights_[3]  = 0.01809227;
+        weights_[4]  = 0.01809227;
+        weights_[5]  = 0.01809227;
+        weights_[6]  = 0.0004635032;
+        weights_[7]  = 0.0004635032;
+        weights_[8]  = 0.0004635032;
+        weights_[9]  = 0.02966149;
+        weights_[10] = 0.02966149;
+        weights_[11] = 0.02966149;
+        weights_[12] = 0.03857477;
+        weights_[13] = 0.03857477;
+        weights_[14] = 0.03857477;
+        weights_[15] = 0.02616856;
+        weights_[16] = 0.02616856;
+        weights_[17] = 0.02616856;
+        weights_[18] = 0.02616856;
+        weights_[19] = 0.02616856;
+        weights_[20] = 0.02616856;
+        weights_[21] = 0.01035383;
+        weights_[22] = 0.01035383;
+        weights_[23] = 0.01035383;
+        weights_[24] = 0.01035383;
+        weights_[25] = 0.01035383;
+        weights_[26] = 0.01035383;
 
-        coords_[0 ]  = 0.9352701    ;
-        coords_[1 ]  = 0.03236495   ;
-        coords_[2 ]  = 0.03236495   ;
-        coords_[3 ]  = 0.9352701    ;
-        coords_[4 ]  = 0.03236495   ;
-        coords_[5 ]  = 0.03236495   ;
-        coords_[6 ]  = 0.7612982    ;
-        coords_[7 ]  = 0.1193509    ;
-        coords_[8 ]  = 0.1193509    ;
-        coords_[9 ]  = 0.7612982    ;
-        coords_[10]  = 0.1193509    ;
-        coords_[11]  = 0.1193509    ;
-        coords_[12]  =-0.06922210   ;
-        coords_[13]  = 0.5346110    ;
-        coords_[14]  = 0.5346110    ;
-        coords_[15]  =-0.06922210   ;
-        coords_[16]  = 0.5346110    ;
-        coords_[17]  = 0.5346110    ;
-        coords_[18]  = 0.5933802    ;
-        coords_[19]  = 0.2033099    ;
-        coords_[20]  = 0.2033099   ;
-        coords_[21]  = 0.5933802   ;
-        coords_[22]  = 0.2033099   ;
-        coords_[23]  = 0.2033099   ;
-        coords_[24]  = 0.2020614   ;
-        coords_[25]  = 0.3989693   ;
-        coords_[26]  = 0.3989693   ;
-        coords_[27]  = 0.2020614   ;
-        coords_[28]  = 0.3989693   ;
-        coords_[29]  = 0.3989693   ;
-        coords_[30]  = 0.05017814  ;
-        coords_[31]  = 0.5932012   ;
-        coords_[32]  = 0.05017814  ;
-        coords_[33]  = 0.3566206   ;
-        coords_[34]  = 0.5932012   ;
-        coords_[35]  = 0.05017814  ;
-        coords_[36]  = 0.5932012   ;
-        coords_[37]  = 0.3566206   ;
-        coords_[38]  = 0.3566206   ;
-        coords_[39]  = 0.05017814  ;
-        coords_[40]  = 0.3566206   ;
-        coords_[41]  = 0.5932012   ;
-        coords_[42]  = 0.02102202  ;
-        coords_[43]  = 0.8074890   ;
-        coords_[44]  = 0.02102202  ;
-        coords_[45]  = 0.1714890   ;
-        coords_[46]  = 0.8074890   ;
-        coords_[47]  = 0.02102202  ;
-        coords_[48]  = 0.8074890   ;
-        coords_[49]  = 0.1714890   ;
-        coords_[50]  = 0.1714890   ;
-        coords_[51]  = 0.02102202  ;
-        coords_[52]  = 0.1714890   ;
-        coords_[53]  = 0.8074890   ;
+        coords_[0]  = 0.9352701;
+        coords_[1]  = 0.03236495;
+        coords_[2]  = 0.03236495;
+        coords_[3]  = 0.9352701;
+        coords_[4]  = 0.03236495;
+        coords_[5]  = 0.03236495;
+        coords_[6]  = 0.7612982;
+        coords_[7]  = 0.1193509;
+        coords_[8]  = 0.1193509;
+        coords_[9]  = 0.7612982;
+        coords_[10] = 0.1193509;
+        coords_[11] = 0.1193509;
+        coords_[12] = -0.06922210;
+        coords_[13] = 0.5346110;
+        coords_[14] = 0.5346110;
+        coords_[15] = -0.06922210;
+        coords_[16] = 0.5346110;
+        coords_[17] = 0.5346110;
+        coords_[18] = 0.5933802;
+        coords_[19] = 0.2033099;
+        coords_[20] = 0.2033099;
+        coords_[21] = 0.5933802;
+        coords_[22] = 0.2033099;
+        coords_[23] = 0.2033099;
+        coords_[24] = 0.2020614;
+        coords_[25] = 0.3989693;
+        coords_[26] = 0.3989693;
+        coords_[27] = 0.2020614;
+        coords_[28] = 0.3989693;
+        coords_[29] = 0.3989693;
+        coords_[30] = 0.05017814;
+        coords_[31] = 0.5932012;
+        coords_[32] = 0.05017814;
+        coords_[33] = 0.3566206;
+        coords_[34] = 0.5932012;
+        coords_[35] = 0.05017814;
+        coords_[36] = 0.5932012;
+        coords_[37] = 0.3566206;
+        coords_[38] = 0.3566206;
+        coords_[39] = 0.05017814;
+        coords_[40] = 0.3566206;
+        coords_[41] = 0.5932012;
+        coords_[42] = 0.02102202;
+        coords_[43] = 0.8074890;
+        coords_[44] = 0.02102202;
+        coords_[45] = 0.1714890;
+        coords_[46] = 0.8074890;
+        coords_[47] = 0.02102202;
+        coords_[48] = 0.8074890;
+        coords_[49] = 0.1714890;
+        coords_[50] = 0.1714890;
+        coords_[51] = 0.02102202;
+        coords_[52] = 0.1714890;
+        coords_[53] = 0.8074890;
 
         break;
 
@@ -480,15 +471,15 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::IntegratorT(int ngp, bool oneD, i
 
         std::stringstream oss;
         oss << "***ERR*** MoertelT::IntegratorT::IntegratorT:\n"
-          << "***ERR*** given number of gaussian points " << ngp_ << "does not exist\n"
-          << "***ERR*** use 3 6 12 13 16 19 27 instead\n"
-          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+            << "***ERR*** given number of gaussian points " << ngp_
+            << "does not exist\n"
+            << "***ERR*** use 3 6 12 13 16 19 27 instead\n"
+            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
         throw MoertelT::ReportError(oss);
 
         break;
     }
   }
-
 }
 
 /*----------------------------------------------------------------------*
@@ -519,60 +510,61 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::~IntegratorT()
  *----------------------------------------------------------------------*/
 
 MOERTEL_TEMPLATE_STATEMENT
-Teuchos::SerialDenseMatrix<LO, ST>* 
-MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Integrate(MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& sseg,
-    double sxia, double sxib,
-    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& mseg,
-    double mxia, double mxib)
+Teuchos::SerialDenseMatrix<LO, ST>*
+    MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Integrate(
+        MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & sseg,
+        double sxia,
+        double sxib,
+        MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & mseg,
+        double mxia,
+        double mxib)
 {
-  int nrow = sseg.Nnode();
-  int ncol = mseg.Nnode();
-  Teuchos::SerialDenseMatrix<LO, ST>* Mdense = new Teuchos::SerialDenseMatrix<LO, ST>(nrow, ncol, false);
+  int                                 nrow = sseg.Nnode();
+  int                                 ncol = mseg.Nnode();
+  Teuchos::SerialDenseMatrix<LO, ST>* Mdense =
+      new Teuchos::SerialDenseMatrix<LO, ST>(nrow, ncol, false);
 
-  for (int gp=0; gp<Ngp(); ++gp)
-  {
+  for (int gp = 0; gp < Ngp(); ++gp) {
     double eta = Coordinate(gp);
     double wgt = Weight(gp);
 
     // make the transformation for the slave side
-    double sxi = 0.5*(1-eta)*sxia + 0.5*(1+eta)*sxib;
+    double sxi = 0.5 * (1 - eta) * sxia + 0.5 * (1 + eta) * sxib;
 
     // make the transformation for the master side
     // (note master side is xi positiv in the other direction
-    double mxi = 0.5*(1+eta)*mxia + 0.5*(1-eta)*mxib;
+    double mxi = 0.5 * (1 + eta) * mxia + 0.5 * (1 - eta) * mxib;
 
     // compute the Jacobian dsxi / deta on the slave side
-    double dxideta = -0.5*sxia + 0.5*sxib;
+    double dxideta = -0.5 * sxia + 0.5 * sxib;
 
     // evaluate the Jacobian dx / dsxi (metric) on the slave side
-    double dxdsxi = sseg.Metric(&sxi,NULL,NULL);
+    double dxdsxi = sseg.Metric(&sxi, NULL, NULL);
 
     // calculate value wgt*dxideta*dxdsxi
-    double weight = wgt*dxideta*dxdsxi;
+    double weight = wgt * dxideta * dxdsxi;
 
     // evaluate function 1 of the slave side (supposed to be the LM function)
     double sval[4];
-    sseg.EvaluateFunction(1,&sxi,sval,sseg.Nnode(),NULL);
+    sseg.EvaluateFunction(1, &sxi, sval, sseg.Nnode(), NULL);
 
-    // evaluate function 0 of the master side (supposed to be the trace function)
+    // evaluate function 0 of the master side (supposed to be the trace
+    // function)
     double mval[4];
-    mseg.EvaluateFunction(0,&mxi,mval,mseg.Nnode(),NULL);
+    mseg.EvaluateFunction(0, &mxi, mval, mseg.Nnode(), NULL);
 
     // loop over nodes of the slave side
-    for (int slave=0; slave<sseg.Nnode(); ++slave)
-    {
+    for (int slave = 0; slave < sseg.Nnode(); ++slave) {
       // loop over nodes of the master side
-      for (int master=0; master<mseg.Nnode(); ++master)
-      {
+      for (int master = 0; master < mseg.Nnode(); ++master) {
         // multiply functions for node slave and node master
-        double N1N2 = sval[slave]*mval[master];
-        (*Mdense)(slave,master) += (N1N2*weight);
+        double N1N2 = sval[slave] * mval[master];
+        (*Mdense)(slave, master) += (N1N2 * weight);
       }
     }
-  } // for (int gp=0; gp<Ngp(); ++gp)
+  }  // for (int gp=0; gp<Ngp(); ++gp)
 
-
-  //std::cout << *Mdense;
+  // std::cout << *Mdense;
 
   return Mdense;
 }
@@ -581,18 +573,17 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Integrate(MoertelT::SEGMENT_TEMPL
   |  assemble the result -Mdense into M (public)              mwgee 08/05|
  *----------------------------------------------------------------------*/
 MOERTEL_TEMPLATE_STATEMENT
-bool 
-MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble(MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)& inter,
-    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& sseg,
-    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& mseg,
-    Tpetra::CrsMatrix<ST, LO, GO, N>& M,
+bool MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble(
+    MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT) & inter,
+    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & sseg,
+    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & mseg,
+    Tpetra::CrsMatrix<ST, LO, GO, N>&   M,
     Teuchos::SerialDenseMatrix<LO, ST>& Mdense)
 {
   MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)** snodes = sseg.Nodes();
   MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)** mnodes = mseg.Nodes();
 
-  for (int slave=0; slave<sseg.Nnode(); ++slave)
-  {
+  for (int slave = 0; slave < sseg.Nnode(); ++slave) {
     // only do slave node rows that belong to this proc
     if (inter.NodePID(snodes[slave]->Id()) != inter.lComm()->getRank())
       continue;
@@ -608,51 +599,46 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble(MoertelT::MOERTEL_TEMPLA
     if (!snlmdof) continue;
 
     // loop nodes on master segment
-    for (int master=0; master<mseg.Nnode(); ++master)
-    {
+    for (int master = 0; master < mseg.Nnode(); ++master) {
       // do not add a zero from (*Mdense)(slave,master)
-      double val = -(Mdense(slave,master));
-      if (abs(val)<1.e-10) continue;
+      double val = -(Mdense(slave, master));
+      if (abs(val) < 1.e-10) continue;
 
-      int mndof = mnodes[master]->Ndof();
-      const int* mdof = mnodes[master]->Dof();
+      int        mndof = mnodes[master]->Ndof();
+      const int* mdof  = mnodes[master]->Dof();
 
       if (mndof != snlmdof) {
-
         std::stringstream oss;
         oss << "***ERR*** MoertelT::IntegratorT::Assemble:\n"
-          << "***ERR*** mismatch in number of Lagrange multipliers and primal degrees of freedom:\n"
-          << "***ERR*** slave node " << snodes[slave]->Id()
-          << " master node " << mnodes[master]->Id() << "\n"
-          << "***ERR*** # Lagrange multipliers " << snlmdof << " # dofs " << mndof << "\n"
-          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+            << "***ERR*** mismatch in number of Lagrange multipliers and "
+               "primal degrees of freedom:\n"
+            << "***ERR*** slave node " << snodes[slave]->Id() << " master node "
+            << mnodes[master]->Id() << "\n"
+            << "***ERR*** # Lagrange multipliers " << snlmdof << " # dofs "
+            << mndof << "\n"
+            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
         throw MoertelT::ReportError(oss);
-
       }
 
       // loop dofs on slave node and insert a value for each master dof
-      for (int i=0; i<snlmdof; ++i)
-      {
+      for (int i = 0; i < snlmdof; ++i) {
         int row = slmdof[i];
-        GO col = mdof[i];
-        int err = M.sumIntoGlobalValues(row,1,&val,&col);
+        GO  col = mdof[i];
+        int err = M.sumIntoGlobalValues(row, 1, &val, &col);
 
-        if (err)
+        if (err) M.insertGlobalValues(row, 1, &val, &col);
 
-          M.insertGlobalValues(row,1,&val,&col);
-
-        if (err<0) {
-
+        if (err < 0) {
           std::stringstream oss;
           oss << "***ERR*** MoertelT::InterfaceT::Integrate_2D_Section:\n"
-            << "***ERR*** Tpetra_CrsMatrix::InsertGlobalValues returned an error\n"
-            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+              << "***ERR*** Tpetra_CrsMatrix::InsertGlobalValues returned an "
+                 "error\n"
+              << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
           throw MoertelT::ReportError(oss);
-
         }
-      } // for (int i=0; i<snlmdof; ++i)
-    } // for (int master=0; master<mseg.Nnode(); ++master)
-  } // for (int slave=0; slave<sseg.Nnode(); ++slave)
+      }  // for (int i=0; i<snlmdof; ++i)
+    }    // for (int master=0; master<mseg.Nnode(); ++master)
+  }      // for (int slave=0; slave<sseg.Nnode(); ++slave)
   return true;
 }
 
@@ -660,16 +646,15 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble(MoertelT::MOERTEL_TEMPLA
   |  assemble the result Ddense into D (public)               mwgee 08/05|
  *----------------------------------------------------------------------*/
 MOERTEL_TEMPLATE_STATEMENT
-bool 
-MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble(MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)& inter,
-    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& sseg,
-    Tpetra::CrsMatrix<ST, LO, GO, N>& D,
+bool MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble(
+    MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT) & inter,
+    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & sseg,
+    Tpetra::CrsMatrix<ST, LO, GO, N>&   D,
     Teuchos::SerialDenseMatrix<LO, ST>& Ddense)
 {
   MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)** snodes = sseg.Nodes();
 
-  for (int rownode=0; rownode<sseg.Nnode(); ++rownode)
-  {
+  for (int rownode = 0; rownode < sseg.Nnode(); ++rownode) {
     // only insert in rows that I own
     if (inter.NodePID(snodes[rownode]->Id()) != inter.lComm()->getRank())
       continue;
@@ -680,57 +665,51 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble(MoertelT::MOERTEL_TEMPLA
 
     // this slave node might not have a projection and therefore might not
     // carry lagrange multipliers. In this case, do not insert anything
-    if (nlmdof==0) continue;
+    if (nlmdof == 0) continue;
 
     // loop column nodes
-    for (int colnode=0; colnode<sseg.Nnode(); ++colnode)
-    {
+    for (int colnode = 0; colnode < sseg.Nnode(); ++colnode) {
       // do not add a zero from Ddense
-      double val = Ddense(rownode,colnode);
-      if (abs(val)<1.e-10) continue;
+      double val = Ddense(rownode, colnode);
+      if (abs(val) < 1.e-10) continue;
 
-      int ndof = snodes[colnode]->Ndof();
-      const int* dof = snodes[colnode]->Dof();
+      int        ndof = snodes[colnode]->Ndof();
+      const int* dof  = snodes[colnode]->Dof();
 
       if (nlmdof != ndof) {
-
         std::stringstream oss;
         oss << "***ERR*** MoertelT::InterfaceT::Integrate_2D_Section:\n"
-          << "***ERR*** mismatch in number of Lagrange multipliers and primal degrees of freedom:\n"
-          << "***ERR*** slave node " << snodes[rownode]->Id()
-          << "***ERR*** # Lagrange multipliers " << nlmdof << " # dofs " << ndof << "\n"
-          << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+            << "***ERR*** mismatch in number of Lagrange multipliers and "
+               "primal degrees of freedom:\n"
+            << "***ERR*** slave node " << snodes[rownode]->Id()
+            << "***ERR*** # Lagrange multipliers " << nlmdof << " # dofs "
+            << ndof << "\n"
+            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
         throw MoertelT::ReportError(oss);
-
       }
 
       // loop lm dofs and insert a value for each dof
-      for (int i=0; i<nlmdof; ++i)
-      {
+      for (int i = 0; i < nlmdof; ++i) {
         int row = lmdof[i];
-        GO col = dof[i];
-        int err = D.sumIntoGlobalValues(row,1,&val,&col);
+        GO  col = dof[i];
+        int err = D.sumIntoGlobalValues(row, 1, &val, &col);
 
-        if (err)
+        if (err) D.insertGlobalValues(row, 1, &val, &col);
 
-          D.insertGlobalValues(row,1,&val,&col);
-
-        if (err<0) {
-
+        if (err < 0) {
           std::stringstream oss;
           oss << "***ERR*** MoertelT::InterfaceT::Integrate_2D_Section:\n"
-            << "***ERR*** Tpetra_CrsMatrix::SumIntoGlobalValues returned an error\n"
-            << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+              << "***ERR*** Tpetra_CrsMatrix::SumIntoGlobalValues returned an "
+                 "error\n"
+              << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
           throw MoertelT::ReportError(oss);
-
         }
-      } // for (int i=0; i<nlmdof; ++i)
-    } // for (int colnode=0; colnode<sseg.Nnode(); ++colnode)
-  } // for (int rownode=0; rownode<sseg.Nnode(); ++rownode)
+      }  // for (int i=0; i<nlmdof; ++i)
+    }    // for (int colnode=0; colnode<sseg.Nnode(); ++colnode)
+  }      // for (int rownode=0; rownode<sseg.Nnode(); ++rownode)
 
   return true;
 }
-
 
 /*----------------------------------------------------------------------*
   |  integrate a 1D slave segment (public)                    mwgee 07/05|
@@ -741,122 +720,120 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble(MoertelT::MOERTEL_TEMPLA
   | Teuchos::SerialDenseMatrix object                                    |
  *----------------------------------------------------------------------*/
 MOERTEL_TEMPLATE_STATEMENT
-Teuchos::SerialDenseMatrix<LO, ST>* 
-MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Integrate(MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& sseg,
-    double sxia, double sxib)
+Teuchos::SerialDenseMatrix<LO, ST>*
+    MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Integrate(
+        MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & sseg,
+        double sxia,
+        double sxib)
 {
-  int nrow = sseg.Nnode();
-  int ncol = nrow;
-  Teuchos::SerialDenseMatrix<LO, ST>* Ddense = new Teuchos::SerialDenseMatrix<LO, ST>(nrow,ncol);
+  int                                 nrow = sseg.Nnode();
+  int                                 ncol = nrow;
+  Teuchos::SerialDenseMatrix<LO, ST>* Ddense =
+      new Teuchos::SerialDenseMatrix<LO, ST>(nrow, ncol);
 
-  for (int gp=0; gp<Ngp(); ++gp)
-  {
+  for (int gp = 0; gp < Ngp(); ++gp) {
     double eta = Coordinate(gp);
     double wgt = Weight(gp);
 
     // make the coordinate transformation
-    double sxi = 0.5*(1-eta)*sxia + 0.5*(1+eta)*sxib;
+    double sxi = 0.5 * (1 - eta) * sxia + 0.5 * (1 + eta) * sxib;
 
     // compute the Jacobian dsxi / deta
-    double dxideta = -0.5*sxia + 0.5*sxib;
+    double dxideta = -0.5 * sxia + 0.5 * sxib;
 
     // evaluate the Jacobian dx / dsxi (metric)
-    double dxdsxi = sseg.Metric(&sxi,NULL,NULL);
+    double dxdsxi = sseg.Metric(&sxi, NULL, NULL);
 
     // calculate value wgt*dxideta*dxdsxi
-    double weight = wgt*dxideta*dxdsxi;
+    double weight = wgt * dxideta * dxdsxi;
 
     // evaluate function 1 (supposed to be the LM function)
     double lmval[4];
-    sseg.EvaluateFunction(1,&sxi,lmval,sseg.Nnode(),NULL);
+    sseg.EvaluateFunction(1, &sxi, lmval, sseg.Nnode(), NULL);
 
     // evaluate function 0 (supposed to be the trace space function)
     double val[4];
-    sseg.EvaluateFunction(0,&sxi,val,sseg.Nnode(),NULL);
+    sseg.EvaluateFunction(0, &sxi, val, sseg.Nnode(), NULL);
 
     // loop over all nodes (lm loop)
-    for (int lm=0; lm<sseg.Nnode(); ++lm)
-    {
+    for (int lm = 0; lm < sseg.Nnode(); ++lm) {
       // loop over all nodes (dof loop)
-      for (int dof=0; dof<sseg.Nnode(); ++dof)
-      {
+      for (int dof = 0; dof < sseg.Nnode(); ++dof) {
         // multiply the 2 functions
-        double N1N2 = lmval[lm]*val[dof];
-        (*Ddense)(lm,dof) += (N1N2*weight);
+        double N1N2 = lmval[lm] * val[dof];
+        (*Ddense)(lm, dof) += (N1N2 * weight);
       }
     }
-  } // for (int gp=0; gp<Ngp(); ++gp)
+  }  // for (int gp=0; gp<Ngp(); ++gp)
 
-  //std::cout << *Ddense;
+  // std::cout << *Ddense;
 
   return Ddense;
 }
-
-
-
 
 /*----------------------------------------------------------------------*
   |                                            (public)       mwgee 08/05|
   | integrate the modification of the master side                        |
  *----------------------------------------------------------------------*/
 MOERTEL_TEMPLATE_STATEMENT
-Teuchos::SerialDenseMatrix<LO, ST>* 
-MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Integrate_2D_Mmod(
-    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& sseg,
-    double sxia, double sxib,
-    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& mseg,
-    double mxia, double mxib)
+Teuchos::SerialDenseMatrix<LO, ST>*
+    MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Integrate_2D_Mmod(
+        MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & sseg,
+        double sxia,
+        double sxib,
+        MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & mseg,
+        double mxia,
+        double mxib)
 {
-  Teuchos::SerialDenseMatrix<LO, ST>* Mmod = new Teuchos::SerialDenseMatrix<LO, ST>(mseg.Nnode(),1);
+  Teuchos::SerialDenseMatrix<LO, ST>* Mmod =
+      new Teuchos::SerialDenseMatrix<LO, ST>(mseg.Nnode(), 1);
 
-  for (int gp=0; gp < Ngp(); ++gp)
-  {
+  for (int gp = 0; gp < Ngp(); ++gp) {
     double eta = Coordinate(gp);
     double wgt = Weight(gp);
 
     // make the transformation for the slave side
-    double sxi = 0.5*(1-eta)*sxia + 0.5*(1+eta)*sxib;
+    double sxi = 0.5 * (1 - eta) * sxia + 0.5 * (1 + eta) * sxib;
 
     // make the transformation for the master side
     // (note master side is xi positiv in the other direction
-    double mxi = 0.5*(1+eta)*mxia + 0.5*(1-eta)*mxib;
+    double mxi = 0.5 * (1 + eta) * mxia + 0.5 * (1 - eta) * mxib;
 
     // compute the Jacobian dsxi / deta on the slave side
-    double dxideta = -0.5*sxia + 0.5*sxib;
+    double dxideta = -0.5 * sxia + 0.5 * sxib;
 
     // evaluate the Jacobian dx / dsxi (metric) on the slave side
-    double dxdsxi = sseg.Metric(&sxi,NULL,NULL);
+    double dxdsxi = sseg.Metric(&sxi, NULL, NULL);
 
     // calculate value wgt*dxideta*dxdsxi
-    double weight = wgt*dxideta*dxdsxi;
+    double weight = wgt * dxideta * dxdsxi;
 
     // evaluate function 0 of the slave side (supposed to be the trace function)
     double sval[4];
-    sseg.EvaluateFunction(0,&sxi,sval,sseg.Nnode(),NULL);
+    sseg.EvaluateFunction(0, &sxi, sval, sseg.Nnode(), NULL);
 
     // make the delta function phi12 = phi1 - phi2
     double val = sval[0] - sval[1];
 
-    // evaluate function 0 of the master side (supposed to be the trace function)
+    // evaluate function 0 of the master side (supposed to be the trace
+    // function)
     double mval[4];
-    mseg.EvaluateFunction(0,&mxi,mval,mseg.Nnode(),NULL);
+    mseg.EvaluateFunction(0, &mxi, mval, mseg.Nnode(), NULL);
 
     // loop over nodes of the master side
-    for (int master=0; master<mseg.Nnode(); ++master)
-    {
+    for (int master = 0; master < mseg.Nnode(); ++master) {
       // multiply functions for each master node
       double N1N2 = -0.5 * val * mval[master];
-      (*Mmod)(master,0) += (N1N2*weight);
+      (*Mmod)(master, 0) += (N1N2 * weight);
     }
-  } // for (int gp=0; gp<integrator.Ngp(); ++gp)
+  }  // for (int gp=0; gp<integrator.Ngp(); ++gp)
 
-
-  //std::cout << *Mmod;
+  // std::cout << *Mmod;
 
   return Mmod;
 }
 
-#if 0 // old version
+#if 0  // old version
 /*----------------------------------------------------------------------*
   |  assemble the modification -Mmod into M (public)          mwgee 08/05|
  *----------------------------------------------------------------------*/
@@ -929,23 +906,21 @@ MoertelT::IntegratorT<LocalOrdinal, Scalar>::Assemble_2D_Mod(MoertelT::Interface
 }
 #endif
 
-
 /*----------------------------------------------------------------------*
   |  assemble the modification -Mmod into slave nodes (public)mwgee 08/05|
   |  Note that this is not scalar as the other assemble routines         |
  *----------------------------------------------------------------------*/
 MOERTEL_TEMPLATE_STATEMENT
-bool 
-MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble_2D_Mod(MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)& inter,
-    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& sseg,
-    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& mseg,
+bool MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble_2D_Mod(
+    MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT) & inter,
+    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & sseg,
+    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & mseg,
     Teuchos::SerialDenseMatrix<LO, ST>& Mmod)
 {
   MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)** snodes = sseg.Nodes();
   MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)** mnodes = mseg.Nodes();
 
-  for (int slave=0; slave<sseg.Nnode(); ++slave)
-  {
+  for (int slave = 0; slave < sseg.Nnode(); ++slave) {
     // only do slave node rows that belong to this proc
     if (inter.NodePID(snodes[slave]->Id()) != inter.lComm()->getRank())
       continue;
@@ -955,82 +930,78 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble_2D_Mod(MoertelT::MOERTEL
     // get the dofs of slave node snodes[slave];
 
     // what we would like to do is
-    //int        snlmdof = snodes[slave]->Nlmdof();
-    //const int* slmdof  = snodes[slave]->LMDof();
+    // int        snlmdof = snodes[slave]->Nlmdof();
+    // const int* slmdof  = snodes[slave]->LMDof();
 
     // what we temporarily do is
-    int        snlmdof = snodes[slave]->Ndof();
+    int snlmdof = snodes[slave]->Ndof();
     // as we don't know the LMdofs yet, we just know that their number is
     // equal to that of the primary dofs
 
     // this slave node might not have a projection, then the number
     // of lagrange multipliers snlmdof of it is zero
     // in this case, do nothing
-    //if (!snlmdof) continue;
+    // if (!snlmdof) continue;
     // this has to be decided later on
 
     // loop lm dofs on node slave
-    for (int sdof=0; sdof<snlmdof; ++sdof)
-    {
+    for (int sdof = 0; sdof < snlmdof; ++sdof) {
       // loop nodes on master segment
-      for (int master=0; master<mseg.Nnode(); ++master)
-      {
-        int mndof = mnodes[master]->Ndof();
+      for (int master = 0; master < mseg.Nnode(); ++master) {
+        int        mndof = mnodes[master]->Ndof();
         const int* mdofs = mnodes[master]->Dof();
 
         // dofs on node master
-        for (int mdof=0; mdof<mndof; ++mdof)
-        {
+        for (int mdof = 0; mdof < mndof; ++mdof) {
           int col = mdofs[mdof];
 
           // do not add a zero from (*Mdense)(slave,master)
-          double val = -(Mmod(slave*snlmdof+sdof,master*mndof+mdof));
-          if (abs(val)<1.e-9) continue;
+          double val = -(Mmod(slave * snlmdof + sdof, master * mndof + mdof));
+          if (abs(val) < 1.e-9) continue;
 
           // standard assembly for internal nodes
           if (!snodes[slave]->IsOnBoundary())
-            snodes[slave]->AddMmodValue(sdof,val,col);
+            snodes[slave]->AddMmodValue(sdof, val, col);
           // if slave node is on boundary
-          else
-          {
-            std::map<int,MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)*>& suppnodes = snodes[slave]->GetSupportedByNode();
-            double w = 1./(double)(snodes[slave]->NSupportSet());
-            std::map<int,MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)*>::iterator curr;
-            for (curr=suppnodes.begin(); curr!=suppnodes.end(); ++curr)
-              curr->second->AddMmodValue(sdof,w*val,col);
+          else {
+            std::map<int, MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)*>& suppnodes =
+                snodes[slave]->GetSupportedByNode();
+            double w = 1. / (double)(snodes[slave]->NSupportSet());
+            std::map<int, MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)*>::iterator
+                curr;
+            for (curr = suppnodes.begin(); curr != suppnodes.end(); ++curr)
+              curr->second->AddMmodValue(sdof, w * val, col);
           }
 
-        } // for (int mdof=0; mdof<mndof; ++mdof)
-      } // for (int master=0; master<mseg.Nnode(); ++master)
-    } // for (int sdof=0; sdof<snlmdof; ++sdof)
-  } // for (int slave=0; slave<sseg.Nnode(); ++slave)
+        }  // for (int mdof=0; mdof<mndof; ++mdof)
+      }    // for (int master=0; master<mseg.Nnode(); ++master)
+    }      // for (int sdof=0; sdof<snlmdof; ++sdof)
+  }        // for (int slave=0; slave<sseg.Nnode(); ++slave)
   return true;
 }
-
-
 
 /*----------------------------------------------------------------------*
   |  integrate a 2D triangle/quad overlap segment (public)    mwgee 11/05|
   |  contribution from the master/slave side M/D                         |
  *----------------------------------------------------------------------*/
 MOERTEL_TEMPLATE_STATEMENT
-bool 
-MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Integrate(Teuchos::RCP<MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) > actseg,
-    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& sseg,
-    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& mseg,
-    Teuchos::SerialDenseMatrix<LO, ST>** Ddense,
-    Teuchos::SerialDenseMatrix<LO, ST>** Mdense,
-    MoertelT::OverlapT<MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT) >& overlap, double eps,
+bool MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Integrate(
+    Teuchos::RCP<MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)> actseg,
+    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & sseg,
+    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & mseg,
+    Teuchos::SerialDenseMatrix<LO, ST>**                              Ddense,
+    Teuchos::SerialDenseMatrix<LO, ST>**                              Mdense,
+    MoertelT::OverlapT<MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)>& overlap,
+    double                                                            eps,
     bool exactvalues)
 {
   //  static int cnt = 0;
 
   if (oneD_) {
-
     std::stringstream oss;
     oss << "***ERR*** MoertelT::IntegratorT::Integrate:\n"
-      << "***ERR*** IntegratorT was not constructed for 2D integration\n"
-      << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+        << "***ERR*** IntegratorT was not constructed for 2D integration\n"
+        << "***ERR*** file/line: " << __FILE__ << "/" << __LINE__ << "\n";
     throw MoertelT::ReportError(oss);
   }
 
@@ -1038,230 +1009,228 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Integrate(Teuchos::RCP<MoertelT::
   int nrow = sseg.Nnode();
   int ncol = mseg.Nnode();
   // get the points
-  const int np = actseg->Nnode(); // this is an overlap segment - always a triangle
-  const int* nodeid = actseg->NodeIds();
+  const int np =
+      actseg->Nnode();  // this is an overlap segment - always a triangle
+  const int*                     nodeid = actseg->NodeIds();
   std::vector<MoertelT::PointT*> points;
-  overlap.PointView(points,nodeid,np);
-
+  overlap.PointView(points, nodeid, np);
 
   // get the area of the overlap segment
   double area = actseg->Area();
-  if (area<0.0)
-  {
-    if (OutLevel()>3)
-      std::cout << "MoertelT: ***ERR***  MoertelT::IntegratorT::Integrate:\n" << "MoertelT: ***ERR***  overlap segment area is negative: " << area << std::endl
-        << "MoertelT: ***ERR***  skipping....\n"
-        << "MoertelT: ***ERR***  file/line: " << __FILE__ << "/" << __LINE__ << "\n";
+  if (area < 0.0) {
+    if (OutLevel() > 3)
+      std::cout << "MoertelT: ***ERR***  MoertelT::IntegratorT::Integrate:\n"
+                << "MoertelT: ***ERR***  overlap segment area is negative: "
+                << area << std::endl
+                << "MoertelT: ***ERR***  skipping....\n"
+                << "MoertelT: ***ERR***  file/line: " << __FILE__ << "/"
+                << __LINE__ << "\n";
     return false;
   }
 
   // get the area of the slave segment
   double sarea = sseg.Area();
 
-  if (abs(area/sarea)<eps)
-  {
-    if (OutLevel()>10)
-      std::cout << "MoertelT: ***WRN*** Skipping overlap segment with tiny area " << area << std::endl;
+  if (abs(area / sarea) < eps) {
+    if (OutLevel() > 10)
+      std::cout
+          << "MoertelT: ***WRN*** Skipping overlap segment with tiny area "
+          << area << std::endl;
     points.clear();
     return false;
   }
 
   // for all integrations other then 3 its dx*dy = 2A dxi*deta
-  if (Ngp()!=3)
-    area *= 2.0;
+  if (Ngp() != 3) area *= 2.0;
 
-  *Mdense = new Teuchos::SerialDenseMatrix<LO, ST>(nrow,ncol);
-  *Ddense = new Teuchos::SerialDenseMatrix<LO, ST>(nrow,nrow);
+  *Mdense = new Teuchos::SerialDenseMatrix<LO, ST>(nrow, ncol);
+  *Ddense = new Teuchos::SerialDenseMatrix<LO, ST>(nrow, nrow);
 
   //========================================================================
   //========================================================================
   // interpolate values at gaussian points with shape functions from actsseg
-  std::vector< std::vector<double>* > vals;
-  if (!exactvalues)
-  {
+  std::vector<std::vector<double>*> vals;
+  if (!exactvalues) {
     // get the function values at the points
     // slave segment function 0 is vals[point][0][0...np-1]
     // slave segment function 1 is vals[point][1][0...np-1]
     // master segment function 0 is vals[point][2][0...np-1]
     vals.resize(np);
-    for (int i=0; i<np; ++i)
-      vals[i] = points[i]->FunctionValues();
+    for (int i = 0; i < np; ++i) vals[i] = points[i]->FunctionValues();
 
     // loop integration points
-    for (int gp=0; gp<Ngp(); ++gp)
-    {
-      double* eta   = Coordinate(&gp);
-      double weight = area*Weight(gp);
-
+    for (int gp = 0; gp < Ngp(); ++gp) {
+      double* eta    = Coordinate(&gp);
+      double  weight = area * Weight(gp);
 
       // evaluate the linear function 0 of the actseg at gaussian point
       double val[20];
-      actseg->EvaluateFunction(0,eta,val,actseg->Nnode(),NULL);
+      actseg->EvaluateFunction(0, eta, val, actseg->Nnode(), NULL);
 
       // interpolate shape function 0 from sseg
       // interpolate shape function 1 from sseg
       double val_sfunc0[20] = {0.0};
       double val_sfunc1[20] = {0.0};
       double val_mfunc0[20] = {0.0};
-      for (int i=0; i<np; ++i)
-      {
+      for (int i = 0; i < np; ++i) {
         val_sfunc0[i] = 0.0;
         val_sfunc1[i] = 0.0;
         val_mfunc0[i] = 0.0;
       }
-      for (int point=0; point<np; ++point)
-      {
-        for (int i=0; i<nrow; ++i) // could be either 3 or 4 values
+      for (int point = 0; point < np; ++point) {
+        for (int i = 0; i < nrow; ++i)  // could be either 3 or 4 values
         {
-          val_sfunc0[i] += val[point]*vals[point][0][i];
-          val_sfunc1[i] += val[point]*vals[point][1][i];
+          val_sfunc0[i] += val[point] * vals[point][0][i];
+          val_sfunc1[i] += val[point] * vals[point][1][i];
         }
-        for (int i=0; i<ncol; ++i) // could be either 3 or 4 values
-          val_mfunc0[i] += val[point]*vals[point][2][i];
+        for (int i = 0; i < ncol; ++i)  // could be either 3 or 4 values
+          val_mfunc0[i] += val[point] * vals[point][2][i];
       }
 
-      //std::cout << val_sfunc0[0] << " " << val_sfunc0[1] << " " << val_sfunc0[2] << " " << val_sfunc0[3] << std::endl;
-      //std::cout << val_sfunc1[0] << " " << val_sfunc1[1] << " " << val_sfunc1[2] << " " << val_sfunc1[3] << std::endl;
-      //std::cout << val_mfunc0[0] << " " << val_mfunc0[1] << " " << val_mfunc0[2] << " " << val_mfunc0[3] << std::endl;
+      // std::cout << val_sfunc0[0] << " " << val_sfunc0[1] << " " <<
+      // val_sfunc0[2] << " " << val_sfunc0[3] << std::endl; std::cout <<
+      // val_sfunc1[0] << " " << val_sfunc1[1] << " " << val_sfunc1[2] << " " <<
+      // val_sfunc1[3] << std::endl; std::cout << val_mfunc0[0] << " " <<
+      // val_mfunc0[1] << " " << val_mfunc0[2] << " " << val_mfunc0[3] <<
+      // std::endl;
 
       // loop over all nodes (lm loop)
-      for (int lm=0; lm<sseg.Nnode(); ++lm)
-      {
+      for (int lm = 0; lm < sseg.Nnode(); ++lm) {
         // loop over all nodes (dof loop master)
-        for (int dof=0; dof<mseg.Nnode(); ++dof)
-        {
+        for (int dof = 0; dof < mseg.Nnode(); ++dof) {
           // multiply the 2 functions
-          double N1N2 = val_sfunc1[lm]*val_mfunc0[dof];
-          (**Mdense)(lm,dof) += (N1N2*weight);
-          //std::cout << "Adding gausspoint M value M(" << lm << "," << dof << ") += " << val_sfunc1[lm] << " * " << val_mfunc0[dof] << " * " << weight << std::endl;
+          double N1N2 = val_sfunc1[lm] * val_mfunc0[dof];
+          (**Mdense)(lm, dof) += (N1N2 * weight);
+          // std::cout << "Adding gausspoint M value M(" << lm << "," << dof <<
+          // ") += " << val_sfunc1[lm] << " * " << val_mfunc0[dof] << " * " <<
+          // weight << std::endl;
         }
 
         // loop over all nodes (dof loop slave)
-        for (int dof=0; dof<sseg.Nnode(); ++dof)
-        {
+        for (int dof = 0; dof < sseg.Nnode(); ++dof) {
           // multiply the 2 functions
-          double N1N2 = val_sfunc1[lm]*val_sfunc0[dof];
-          (**Ddense)(lm,dof) += (N1N2*weight);
-          //std::cout << "Adding gausspoint D value D(" << lm << "," << dof << ") += " << val_sfunc1[lm] << " * " << val_sfunc0[dof] << " * " << weight << std::endl;
+          double N1N2 = val_sfunc1[lm] * val_sfunc0[dof];
+          (**Ddense)(lm, dof) += (N1N2 * weight);
+          // std::cout << "Adding gausspoint D value D(" << lm << "," << dof <<
+          // ") += " << val_sfunc1[lm] << " * " << val_sfunc0[dof] << " * " <<
+          // weight << std::endl;
         }
       }
 
-    } // for (int gp=0; gp<Ngp(); ++gp)
-    //std::cout << **Ddense;
-    //std::cout << **Mdense;
+    }  // for (int gp=0; gp<Ngp(); ++gp)
+    // std::cout << **Ddense;
+    // std::cout << **Mdense;
 
     vals.clear();
     points.clear();
-  } // if (!exactvalues)
+  }  // if (!exactvalues)
   //========================================================================
   //========================================================================
   // use exact values at gaussian points
   //
-  else { // if(exactvalues)
+  else {  // if(exactvalues)
     // compute local coordinates of actseg's nodes in slave element
     double psxi[3][2];
-    for (int i=0; i<np; ++i)
-    {
+    for (int i = 0; i < np; ++i) {
       psxi[i][0] = points[i]->Xi()[0];
       psxi[i][1] = points[i]->Xi()[1];
-      //std::cout << "psxi[" << i << "] = " << psxi[i][0] << " / " << psxi[i][1] << std::endl;
+      // std::cout << "psxi[" << i << "] = " << psxi[i][0] << " / " <<
+      // psxi[i][1] << std::endl;
     }
     // create a node to use for projection
     double x[3] = {0.0};
     double n[3];
-    int dof[3]; dof[0] = dof[1] = dof[2] = -1;
-    Teuchos::RCP<MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT) > gpnode = 
-         Teuchos::rcp(new MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)(-2,x,3,dof,false,OutLevel()));
+    int    dof[3];
+    dof[0] = dof[1] = dof[2] = -1;
+    Teuchos::RCP<MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)> gpnode =
+        Teuchos::rcp(new MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)(
+            -2, x, 3, dof, false, OutLevel()));
 
     // create a projector to project gaussian points
-    MoertelT::ProjectorT projector(false,OutLevel());
+    MoertelT::ProjectorT projector(false, OutLevel());
 
-    for (int gp=0; gp<Ngp(); ++gp)
-    {
+    for (int gp = 0; gp < Ngp(); ++gp) {
       double* eta    = Coordinate(&gp);
-      double  weight = area*Weight(gp);
+      double  weight = area * Weight(gp);
 
       //-------------------------------------------------------------------
       // compute the local coord of the gaussian point in the slave element
       double val[3];
-      actseg->EvaluateFunction(0,eta,val,actseg->Nnode(),NULL);
+      actseg->EvaluateFunction(0, eta, val, actseg->Nnode(), NULL);
 
-      double sxi[2]; sxi[0] = sxi[1] = 0.0;
-      for (int point=0; point<np; ++point)
-      {
+      double sxi[2];
+      sxi[0] = sxi[1] = 0.0;
+      for (int point = 0; point < np; ++point) {
         sxi[0] += val[point] * psxi[point][0];
         sxi[1] += val[point] * psxi[point][1];
       }
-      //std::cout << "sxi = " << sxi[0] << " / " << sxi[1] << std::endl;
+      // std::cout << "sxi = " << sxi[0] << " / " << sxi[1] << std::endl;
 
       //-------------------------------------------------------------------
       // get shape function values from function 0 and 1 from slave element here
       double val_sfunc0[20];
       double val_sfunc1[20];
-      sseg.EvaluateFunction(0,sxi,val_sfunc0,sseg.Nnode(),NULL);
-      sseg.EvaluateFunction(1,sxi,val_sfunc1,sseg.Nnode(),NULL);
+      sseg.EvaluateFunction(0, sxi, val_sfunc0, sseg.Nnode(), NULL);
+      sseg.EvaluateFunction(1, sxi, val_sfunc1, sseg.Nnode(), NULL);
 
       //-------------------------------------------------------------------
       // compute the global coordinate of the gaussian point and project it
       // to the master element
       x[0] = x[1] = x[2] = 0.0;
       n[0] = n[1] = n[2] = 0.0;
-      for (int point=0; point<np; ++point)
-        for (int j=0; j<3; ++j)
-        {
+      for (int point = 0; point < np; ++point)
+        for (int j = 0; j < 3; ++j) {
           x[j] += val[point] * points[point]->Node()->XCoords()[j];
           n[j] += val[point] * points[point]->Node()->Normal()[j];
         }
-      const double length = MoertelT::length(n,3);
-      for (int j=0; j<3; ++j) n[j] /= length;
-      //std::cout << "x = " << x[0] << " / " << x[1] << " / " << x[2] << std::endl;
-      //std::cout << "n = " << n[0] << " / " << n[1] << " / " << n[2] << std::endl;
+      const double length = MoertelT::length(n, 3);
+      for (int j = 0; j < 3; ++j) n[j] /= length;
+      // std::cout << "x = " << x[0] << " / " << x[1] << " / " << x[2] <<
+      // std::endl; std::cout << "n = " << n[0] << " / " << n[1] << " / " << n[2]
+      // << std::endl;
       gpnode->SetX(x);
       gpnode->SetN(n);
       double mxi[2];
       double gap;
-      bool ok = projector.ProjectNodetoSegment_NodalNormal(*gpnode,mseg,mxi,gap);
+      bool   ok =
+          projector.ProjectNodetoSegment_NodalNormal(*gpnode, mseg, mxi, gap);
       // if we have problems projecting here, we better skip this gauss point
-      if (!ok)
-      {
-        std::cout << "MoertelT: ***WRN***------------------projection failed in integration\n";
+      if (!ok) {
+        std::cout << "MoertelT: ***WRN***------------------projection failed "
+                     "in integration\n";
         fflush(stdout);
         continue;
       }
-      //std::cout << "mxi = " << mxi[0] << " / " << mxi[1] << std::endl;
+      // std::cout << "mxi = " << mxi[0] << " / " << mxi[1] << std::endl;
 
       //-------------------------------------------------------------------
       // get shape function value from mseg
       double val_mfunc0[20];
-      mseg.EvaluateFunction(0,mxi,val_mfunc0,mseg.Nnode(),NULL);
+      mseg.EvaluateFunction(0, mxi, val_mfunc0, mseg.Nnode(), NULL);
 
       //-------------------------------------------------------------------
       // loop over all slave nodes (lm loop)
       //
-      for (int lm=0; lm<sseg.Nnode(); ++lm) {
-
+      for (int lm = 0; lm < sseg.Nnode(); ++lm) {
         // loop over all nodes (dof loop master)
-        for (int dof=0; dof<mseg.Nnode(); ++dof)
-          (**Mdense)(lm,dof) += (weight * val_sfunc1[lm] * val_mfunc0[dof]);
+        for (int dof = 0; dof < mseg.Nnode(); ++dof)
+          (**Mdense)(lm, dof) += (weight * val_sfunc1[lm] * val_mfunc0[dof]);
 
         // loop over all nodes (dof loop slave)
-        for (int dof=0; dof<sseg.Nnode(); ++dof)
+        for (int dof = 0; dof < sseg.Nnode(); ++dof)
 
-          (**Ddense)(lm,dof) += (weight * val_sfunc1[lm] * val_sfunc0[dof]);
+          (**Ddense)(lm, dof) += (weight * val_sfunc1[lm] * val_sfunc0[dof]);
       }
 
-    } // for (int gp=0; gp<Ngp(); ++gp)
+    }  // for (int gp=0; gp<Ngp(); ++gp)
 
     // tidy up
     gpnode = Teuchos::null;
 
-  } // if (exactvalues)
-
-
+  }  // if (exactvalues)
 
   return true;
 }
-
 
 /*----------------------------------------------------------------------*
   |  assemble contributions Ddense into slave nodes (public)  mwgee 11/05|
@@ -1269,13 +1238,13 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Integrate(Teuchos::RCP<MoertelT::
  *----------------------------------------------------------------------*/
 
 MOERTEL_TEMPLATE_STATEMENT
-bool 
-MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble(MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)& inter, 
-    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& sseg,
-    Teuchos::SerialDenseMatrix<LO, ST>& Ddense) {
-
+bool MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble(
+    MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT) & inter,
+    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & sseg,
+    Teuchos::SerialDenseMatrix<LO, ST>& Ddense)
+{
   // get nodes
-  const int nnode       = sseg.Nnode();
+  const int nnode                                 = sseg.Nnode();
   MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)** snode = sseg.Nodes();
 
 #if 0
@@ -1292,48 +1261,42 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble(MoertelT::MOERTEL_TEMPLA
   } // for (int row=0; row<nnode; ++row)
 #endif
 
-
 #if 1
   // set a row of Ddense in each snode
-  for (int row=0; row<nnode; ++row) {
-
+  for (int row = 0; row < nnode; ++row) {
     // assemble only to my own nodes
-    if (inter.NodePID(snode[row]->Id()) != inter.lComm()->getRank())
-      continue;
+    if (inter.NodePID(snode[row]->Id()) != inter.lComm()->getRank()) continue;
 
     // row node is internal node
     if (!snode[row]->IsOnBoundary()) {
-
-      for (int col=0; col<nnode; ++col) {
-
+      for (int col = 0; col < nnode; ++col) {
         // row/col are both internal
         if (!snode[col]->IsOnBoundary())
-          snode[row]->AddDValue(Ddense(row,col),snode[col]->Id());
+          snode[row]->AddDValue(Ddense(row, col), snode[col]->Id());
         // row is internal node, col is boundary node
         // As those entries would ruin the diagonal structure of D they are
         // simply assembled into M (which is not diagonal anyway)
         else
-          snode[row]->AddMValue(Ddense(row,col),snode[col]->Id());
+          snode[row]->AddMValue(Ddense(row, col), snode[col]->Id());
       }
     }
     // row node is a boundary node
     else {
-
-      std::map<int,MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)*>& suppnodes = snode[row]->GetSupportedByNode();
-      double w = 1./(double)(snode[row]->NSupportSet());
-      std::map<int,MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)*>::iterator curr;
-      for (curr=suppnodes.begin(); curr!=suppnodes.end(); ++curr)
-        for (int col=0; col<nnode; ++col)
-        {
+      std::map<int, MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)*>& suppnodes =
+          snode[row]->GetSupportedByNode();
+      double w = 1. / (double)(snode[row]->NSupportSet());
+      std::map<int, MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)*>::iterator curr;
+      for (curr = suppnodes.begin(); curr != suppnodes.end(); ++curr)
+        for (int col = 0; col < nnode; ++col) {
           // col node is internal, assemble into D
           if (!snode[col]->IsOnBoundary())
-            curr->second->AddDValue((w*Ddense(row,col)),snode[col]->Id());
+            curr->second->AddDValue((w * Ddense(row, col)), snode[col]->Id());
           // col node is boundary, assemble into M
           else
-            curr->second->AddMValue((w*Ddense(row,col)),snode[col]->Id());
+            curr->second->AddMValue((w * Ddense(row, col)), snode[col]->Id());
         }
     }
-  } // for (int row=0; row<nnode; ++row)
+  }  // for (int row=0; row<nnode; ++row)
 #endif
 
   return true;
@@ -1344,19 +1307,19 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble(MoertelT::MOERTEL_TEMPLA
  *----------------------------------------------------------------------*/
 
 MOERTEL_TEMPLATE_STATEMENT
-bool 
-MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble(MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)& inter,
-    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& sseg,
-    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT)& mseg,
-    Teuchos::SerialDenseMatrix<LO, ST>& Mdense) {
-
+bool MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble(
+    MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT) & inter,
+    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & sseg,
+    MoertelT::SEGMENT_TEMPLATE_CLASS(SegmentT) & mseg,
+    Teuchos::SerialDenseMatrix<LO, ST>& Mdense)
+{
   // get nodes
-  const int nsnode    = sseg.Nnode();
-  const int nmnode    = mseg.Nnode();
-  MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)** snode  = sseg.Nodes();
-  MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)** mnode  = mseg.Nodes();
+  const int nsnode                                = sseg.Nnode();
+  const int nmnode                                = mseg.Nnode();
+  MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)** snode = sseg.Nodes();
+  MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)** mnode = mseg.Nodes();
 
-#if 0 // the orig version
+#if 0  // the orig version
   // set a row of Mdense in each snode
   for (int row=0; row<nsnode; ++row)
   {
@@ -1371,29 +1334,26 @@ MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Assemble(MoertelT::MOERTEL_TEMPLA
   }
 #endif
 
-#if 1 // the orig version
+#if 1  // the orig version
   // set a row of Mdense in each snode
-  for (int row=0; row<nsnode; ++row) {
-
+  for (int row = 0; row < nsnode; ++row) {
     // assemble only to my own nodes
-    if (inter.NodePID(snode[row]->Id()) != inter.lComm()->getRank())
-      continue;
+    if (inter.NodePID(snode[row]->Id()) != inter.lComm()->getRank()) continue;
 
     // standard assembly for internal nodes
-    if (!snode[row]->IsOnBoundary()){
-      for (int col=0; col<nmnode; ++col)
+    if (!snode[row]->IsOnBoundary()) {
+      for (int col = 0; col < nmnode; ++col)
         // note the sign change here!!!!
-        snode[row]->AddMValue((-Mdense(row,col)),mnode[col]->Id());
-    }
-    else {
-
-      std::map<int,MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)*>& suppnodes = snode[row]->GetSupportedByNode();
+        snode[row]->AddMValue((-Mdense(row, col)), mnode[col]->Id());
+    } else {
+      std::map<int, MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)*>& suppnodes =
+          snode[row]->GetSupportedByNode();
       // note the sign change here!!!!
-      double w = -1./(double)(snode[row]->NSupportSet());
-      std::map<int,MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)*>::iterator curr;
-      for (curr=suppnodes.begin(); curr!=suppnodes.end(); ++curr)
-        for (int col=0; col<nmnode; ++col)
-          curr->second->AddMValue((w*Mdense(row,col)),mnode[col]->Id());
+      double w = -1. / (double)(snode[row]->NSupportSet());
+      std::map<int, MoertelT::MOERTEL_TEMPLATE_CLASS(NodeT)*>::iterator curr;
+      for (curr = suppnodes.begin(); curr != suppnodes.end(); ++curr)
+        for (int col = 0; col < nmnode; ++col)
+          curr->second->AddMValue((w * Mdense(row, col)), mnode[col]->Id());
     }
   }
 #endif

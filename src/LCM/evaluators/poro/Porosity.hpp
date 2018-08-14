@@ -7,181 +7,182 @@
 #if !defined(LCM_Porosity_hpp)
 #define LCM_Porosity_hpp
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
-#include "Teuchos_ParameterList.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 #include "Sacado_ParameterAccessor.hpp"
+#include "Teuchos_ParameterList.hpp"
 #ifdef ALBANY_STOKHOS
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #endif
 #include "Teuchos_Array.hpp"
 
 namespace LCM {
+///
+/// \brief Evaluates porosity, either as a constant or a truncated
+/// KL expansion.
+///
+/// Porosity update is the most important part for the poromechanics
+/// formulation. All poroelasticity parameters (Biot Coefficient,
+/// Biot modulus, permeability, and consistent tangential tensor)
+/// depend on porosity. The definition we used here is from
+/// Coussy's poromechanics p.85.
+///
+template <typename EvalT, typename Traits>
+class Porosity : public PHX::EvaluatorWithBaseImpl<Traits>,
+                 public PHX::EvaluatorDerived<EvalT, Traits>,
+                 public Sacado::ParameterAccessor<EvalT, SPL_Traits>
+{
+ public:
+  typedef typename EvalT::ScalarT     ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+
   ///
-  /// \brief Evaluates porosity, either as a constant or a truncated
-  /// KL expansion.
+  /// Constructor
   ///
-  /// Porosity update is the most important part for the poromechanics
-  /// formulation. All poroelasticity parameters (Biot Coefficient,
-  /// Biot modulus, permeability, and consistent tangential tensor)
-  /// depend on porosity. The definition we used here is from
-  /// Coussy's poromechanics p.85.
+  Porosity(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
+
   ///
-  template<typename EvalT, typename Traits>
-  class Porosity :
-    public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<EvalT, Traits>,
-    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+  /// Phalanx method to allocate space
+  ///
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-  public:
-    typedef typename EvalT::ScalarT ScalarT;
-    typedef typename EvalT::MeshScalarT MeshScalarT;
+  ///
+  /// Implementation of physics
+  ///
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-    ///
-    /// Constructor
-    ///
-    Porosity(Teuchos::ParameterList& p,
-             const Teuchos::RCP<Albany::Layouts>& dl);
+  ///
+  /// Sacado method to access parameters
+  ///
+  ScalarT&
+  getValue(const std::string& n);
 
-    ///
-    /// Phalanx method to allocate space
-    ///
-    void postRegistrationSetup(typename Traits::SetupData d,
-                               PHX::FieldManager<Traits>& vm);
+ private:
+  ///
+  /// Number of integration points
+  ///
+  int numQPs;
 
-    ///
-    /// Implementation of physics
-    ///
-    void evaluateFields(typename Traits::EvalData d);
+  ///
+  /// Number of problem dimensions
+  ///
+  int numDims;
 
-    ///
-    /// Sacado method to access parameters
-    ///
-    ScalarT& getValue(const std::string &n);
+  ///
+  /// Container for coordinates
+  ///
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim> coordVec;
 
-  private:
+  ///
+  /// Container for porosity
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> porosity;
 
-    ///
-    /// Number of integration points
-    ///
-    int numQPs;
+  ///
+  /// Is porosity constant, or random field
+  ///
+  bool is_constant;
 
-    ///
-    /// Number of problem dimensions
-    ///
-    int numDims;
+  ///
+  /// Constant value
+  ///
+  ScalarT constant_value;
 
-    ///
-    /// Container for coordinates
-    ///
-    PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  ///
+  /// Optional dependence on strain and porePressure
+  ///
+  /// porosity holds linear relation to volumetric strain
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> strain;
 
-    ///
-    /// Container for porosity
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
+  ///
+  /// Optional dependence on det(F)
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint> J;
 
-    ///
-    /// Is porosity constant, or random field
-    ///
-    bool is_constant;
+  ///
+  /// flag to indicated usage in poroelastic context
+  ///
+  bool isPoroElastic;
 
-    ///
-    /// Constant value
-    ///
-    ScalarT constant_value;
+  ///
+  /// flag
+  ///
+  bool isCompressibleSolidPhase;
 
-    ///
-    /// Optional dependence on strain and porePressure
-    ///
-    /// porosity holds linear relation to volumetric strain
-    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> strain;
+  ///
+  /// flag
+  ///
+  bool isCompressibleFluidPhase;
 
-    ///
-    /// Optional dependence on det(F)
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> J;
+  ///
+  /// initial state
+  ///
+  ScalarT initialPorosityValue;
 
-    ///
-    /// flag to indicated usage in poroelastic context
-    ///
-    bool isPoroElastic;
+  ///
+  /// For compressible grain
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint> biotCoefficient;
 
-    ///
-    /// flag
-    ///
-    bool isCompressibleSolidPhase;
+  ///
+  /// For compressible grain
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint> porePressure;
 
-    ///
-    /// flag
-    ///
-    bool isCompressibleFluidPhase;
+  ///
+  /// For compressible grain
+  ///
+  ScalarT GrainBulkModulus;
 
-    ///
-    /// initial state
-    ///
-    ScalarT initialPorosityValue;
-
-    ///
-    /// For compressible grain
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> biotCoefficient;
-
-    ///
-    /// For compressible grain
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> porePressure;
-
-    ///
-    /// For compressible grain
-    ///
-    ScalarT GrainBulkModulus;
-
-    ///
-    /// For THM porous media
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> Temperature;
-
-    ///
-   /// For THM porous media
-   ///
-   PHX::MDField<const ScalarT,Cell,QuadPoint> skeletonThermalExpansion;
-
-   ///
+  ///
   /// For THM porous media
   ///
-  PHX::MDField<const ScalarT,Cell,QuadPoint> refTemperature;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> Temperature;
+
+  ///
+  /// For THM porous media
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint> skeletonThermalExpansion;
+
+  ///
+  /// For THM porous media
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint> refTemperature;
 
 #ifdef ALBANY_STOKHOS
-    ///
-    /// Exponential random field
-    ///
-    Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType>> exp_rf_kl;
+  ///
+  /// Exponential random field
+  ///
+  Teuchos::RCP<Stokhos::KL::ExponentialRandomField<RealType>> exp_rf_kl;
 #endif
 
-    ///
-    /// Values of the random variables
-    ///
-    Teuchos::Array<ScalarT> rv;
+  ///
+  /// Values of the random variables
+  ///
+  Teuchos::Array<ScalarT> rv;
 
-    ///
-    /// Strain flag
-    ///
-    bool hasStrain;
+  ///
+  /// Strain flag
+  ///
+  bool hasStrain;
 
-    ///
-    /// J flag
-    ///
-    bool hasJ;
+  ///
+  /// J flag
+  ///
+  bool hasJ;
 
-    ///
-    /// J flag
-    ///
-    bool hasTemp;
-  };
-}
+  ///
+  /// J flag
+  ///
+  bool hasTemp;
+};
+}  // namespace LCM
 
 #endif

@@ -4,18 +4,17 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include <MiniTensor.h>
-#include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
+#include <Teuchos_TestForException.hpp>
 
-namespace LCM
-{
+namespace LCM {
 
 //-----------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
-AAAModel<EvalT, Traits>::
-AAAModel(Teuchos::ParameterList* p,
-    const Teuchos::RCP<Albany::Layouts>& dl) :
-    LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
+template <typename EvalT, typename Traits>
+AAAModel<EvalT, Traits>::AAAModel(
+    Teuchos::ParameterList*              p,
+    const Teuchos::RCP<Albany::Layouts>& dl)
+    : LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
       alpha_(p->get<RealType>("alpha", 0.0)),
       beta_(p->get<RealType>("beta", 0.0)),
       mult_(p->get<RealType>("mult", 0.0))
@@ -39,25 +38,27 @@ AAAModel(Teuchos::ParameterList* p,
 }
 
 //------------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
-void AAAModel<EvalT, Traits>::
-computeState(typename Traits::EvalData workset,
-    DepFieldMap dep_fields,
-    FieldMap eval_fields)
+template <typename EvalT, typename Traits>
+void
+AAAModel<EvalT, Traits>::computeState(
+    typename Traits::EvalData workset,
+    DepFieldMap               dep_fields,
+    FieldMap                  eval_fields)
 {
   // extract dependent MDFields
   auto defGrad = *dep_fields["F"];
-  auto J = *dep_fields["J"];
+  auto J       = *dep_fields["J"];
   // extract evaluated MDFields
   std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
-  auto stress = *eval_fields[cauchy];
+  auto        stress = *eval_fields[cauchy];
 
   minitensor::Tensor<ScalarT> F(num_dims_);
   minitensor::Tensor<ScalarT> S(num_dims_);
-  minitensor::Tensor<ScalarT> B(num_dims_); //left Cauchy-Green deformation tensor
+  minitensor::Tensor<ScalarT> B(
+      num_dims_);  // left Cauchy-Green deformation tensor
   minitensor::Tensor<ScalarT> Id = minitensor::identity<ScalarT>(num_dims_);
 
-  //per Rajagopal and Tao, Journal of Elasticity 28(2) (1992), 165-184
+  // per Rajagopal and Tao, Journal of Elasticity 28(2) (1992), 165-184
   ScalarT mu = 2.0 * (alpha_);
   // Assume that kappa (bulk modulus) =
   //    scalar multiplier (mult) * mu (shear modulus)
@@ -65,22 +66,20 @@ computeState(typename Traits::EvalData workset,
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
-      F.fill(defGrad,cell, pt,0,0);
+      F.fill(defGrad, cell, pt, 0, 0);
       B = F * minitensor::transpose(F);
 
       ScalarT pressure = kappa * (J(cell, pt) - 1.0);
 
       // Cauchy stress
-      S = -pressure * Id
-          + 2.0 * (alpha_ + 2.0 * beta_ * (minitensor::I1(B) - 3.0)) * B;
+      S = -pressure * Id +
+          2.0 * (alpha_ + 2.0 * beta_ * (minitensor::I1(B) - 3.0)) * B;
 
       for (int i(0); i < num_dims_; ++i) {
-        for (int j(0); j < num_dims_; ++j) {
-          stress(cell, pt, i, j) = S(i, j);
-        }
+        for (int j(0); j < num_dims_; ++j) { stress(cell, pt, i, j) = S(i, j); }
       }
     }
   }
 }
 //------------------------------------------------------------------------------
-} //namespace LCM
+}  // namespace LCM

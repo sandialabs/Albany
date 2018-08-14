@@ -7,12 +7,12 @@
 #ifndef SURFACESCALARJUMP_HPP
 #define SURFACESCALARJUMP_HPP
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Intrepid2_CellTools.hpp"
 #include "Intrepid2_Cubature.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
 #include "Albany_Layouts.hpp"
 
@@ -24,23 +24,25 @@ namespace LCM {
 
 **/
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 class SurfaceScalarJump : public PHX::EvaluatorWithBaseImpl<Traits>,
-                          public PHX::EvaluatorDerived<EvalT, Traits>  {
+                          public PHX::EvaluatorDerived<EvalT, Traits>
+{
+ public:
+  SurfaceScalarJump(
+      const Teuchos::ParameterList&        p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
-public:
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-  SurfaceScalarJump(const Teuchos::ParameterList& p,
-		            const Teuchos::RCP<Albany::Layouts>& dl);
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-
-  typedef typename EvalT::ScalarT ScalarT;
+ private:
+  typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
@@ -49,14 +51,13 @@ private:
   //! Finite element basis for the midplane
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>> intrepidBasis;
 
-
   //! Nodal value of scalar
-  PHX::MDField<const ScalarT,Cell,Vertex> scalar;
+  PHX::MDField<const ScalarT, Cell, Vertex> scalar;
 
-  PHX::MDField<const ScalarT,Cell,Vertex> nodalTemperature;
-  PHX::MDField<const ScalarT,Cell,Vertex> nodalTransport;
-  PHX::MDField<const ScalarT,Cell,Vertex> nodalHydroStress;
-  PHX::MDField<const ScalarT,Cell,Vertex> nodalPorePressure;
+  PHX::MDField<const ScalarT, Cell, Vertex> nodalTemperature;
+  PHX::MDField<const ScalarT, Cell, Vertex> nodalTransport;
+  PHX::MDField<const ScalarT, Cell, Vertex> nodalHydroStress;
+  PHX::MDField<const ScalarT, Cell, Vertex> nodalPorePressure;
 
   // Reference Cell Views
   Kokkos::DynRankView<RealType, PHX::Device> refValues;
@@ -65,18 +66,18 @@ private:
   Kokkos::DynRankView<RealType, PHX::Device> refWeights;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint> scalarJump;
-  PHX::MDField<ScalarT,Cell,QuadPoint> scalarAverage;
+  PHX::MDField<ScalarT, Cell, QuadPoint> scalarJump;
+  PHX::MDField<ScalarT, Cell, QuadPoint> scalarAverage;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint> midPlaneTemperature;
-  PHX::MDField<ScalarT,Cell,QuadPoint> midPlaneTransport;
-  PHX::MDField<ScalarT,Cell,QuadPoint> midPlaneHydroStress;
-  PHX::MDField<ScalarT,Cell,QuadPoint> midPlanePorePressure;
+  PHX::MDField<ScalarT, Cell, QuadPoint> midPlaneTemperature;
+  PHX::MDField<ScalarT, Cell, QuadPoint> midPlaneTransport;
+  PHX::MDField<ScalarT, Cell, QuadPoint> midPlaneHydroStress;
+  PHX::MDField<ScalarT, Cell, QuadPoint> midPlanePorePressure;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint> jumpTemperature;
-  PHX::MDField<ScalarT,Cell,QuadPoint> jumpTransport;
-  PHX::MDField<ScalarT,Cell,QuadPoint> jumpHydroStress;
-  PHX::MDField<ScalarT,Cell,QuadPoint> jumpPorePressure;
+  PHX::MDField<ScalarT, Cell, QuadPoint> jumpTemperature;
+  PHX::MDField<ScalarT, Cell, QuadPoint> jumpTransport;
+  PHX::MDField<ScalarT, Cell, QuadPoint> jumpHydroStress;
+  PHX::MDField<ScalarT, Cell, QuadPoint> jumpPorePressure;
 
   bool haveTemperature, haveTransport, haveHydroStress, havePorePressure;
 
@@ -87,6 +88,6 @@ private:
   unsigned int numPlaneNodes;
   unsigned int numPlaneDims;
 };
-}
+}  // namespace LCM
 
 #endif

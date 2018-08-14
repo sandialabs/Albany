@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
 #include "Moertel_ExplicitTemplateInstantiation.hpp"
 
 #ifdef HAVE_MOERTEL_EXPLICIT_INSTANTIATION
@@ -13,8 +12,8 @@
 
 namespace MoertelT {
 
-  MOERTEL_INSTANTIATE_TEMPLATE_CLASS(IntegratorT)
+MOERTEL_INSTANTIATE_TEMPLATE_CLASS(IntegratorT)
 
-} // namespace Moertel
+}  // namespace MoertelT
 
 #endif

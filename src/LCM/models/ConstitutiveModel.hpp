@@ -7,18 +7,20 @@
 #if !defined(LCM_ConstitutiveModel_hpp)
 #define LCM_ConstitutiveModel_hpp
 
+#include "PHAL_AlbanyTraits.hpp"
 #include "Phalanx_MDField.hpp"
 
 namespace LCM {
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 class ParallelKernel;
 
 ///
 /// Constitutive Model Base Class
 ///
-template<typename EvalT, typename Traits>
-class ConstitutiveModel {
+template <typename EvalT, typename Traits>
+class ConstitutiveModel
+{
  public:
   using ScalarT     = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
@@ -438,7 +440,7 @@ class ConstitutiveModel {
   /// Latent Heat
   ///
   RealType latent_heat_{1.0};
-  
+
   ///
   /// Ice and Water Saturation
   ///

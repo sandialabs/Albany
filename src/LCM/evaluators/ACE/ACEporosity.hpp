@@ -23,7 +23,8 @@ namespace LCM {
 template <typename EvalT, typename Traits>
 class ACEporosity : public PHX::EvaluatorWithBaseImpl<Traits>,
                     public PHX::EvaluatorDerived<EvalT, Traits>,
-                    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+                    public Sacado::ParameterAccessor<EvalT, SPL_Traits>
+{
  public:
   using ScalarT = typename EvalT::ScalarT;
 
@@ -48,15 +49,13 @@ class ACEporosity : public PHX::EvaluatorWithBaseImpl<Traits>,
 
   // contains the depth-dependent porosity value
   PHX::MDField<ScalarT, Cell, QuadPoint> porosity_;
-  
+
   // parameters to calculate porosity
   ScalarT surface_porosity_{0.75};
   ScalarT efolding_depth_{10.0};
   ScalarT constant_value_{1.0};
-  
-  bool
-  is_constant_{false};
 
+  bool is_constant_{false};
 };
 }  // namespace LCM
 

@@ -12,34 +12,37 @@
 namespace LCM {
 
 template <typename EvalT, typename Traits>
-ACEthermalInertia<EvalT, Traits>::
-ACEthermalInertia(
+ACEthermalInertia<EvalT, Traits>::ACEthermalInertia(
     Teuchos::ParameterList&              p,
     const Teuchos::RCP<Albany::Layouts>& dl)
     : thermal_inertia_(  // evaluated
-          p.get<std::string>("ACE Thermal Inertia"), dl->qp_scalar),
+          p.get<std::string>("ACE Thermal Inertia"),
+          dl->qp_scalar),
       density_(  // dependent
-          p.get<std::string>("ACE Density"), dl->qp_scalar),
+          p.get<std::string>("ACE Density"),
+          dl->qp_scalar),
       heat_capacity_(  // dependent
-          p.get<std::string>("ACE Heat Capacity"), dl->qp_scalar),
+          p.get<std::string>("ACE Heat Capacity"),
+          dl->qp_scalar),
       dfdT_(  // dependent
-          p.get<std::string>("ACE Freezing Curve Slope"), dl->qp_scalar)
+          p.get<std::string>("ACE Freezing Curve Slope"),
+          dl->qp_scalar)
 {
   Teuchos::ParameterList* thermal_inertia_list =
-    p.get<Teuchos::ParameterList*>("Parameter List");
+      p.get<Teuchos::ParameterList*>("Parameter List");
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
+      p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   num_qps_  = dims[1];
   num_dims_ = dims[2];
 
   Teuchos::RCP<ParamLib> paramLib =
-    p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
+      p.get<Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
   // Read thermal inertia values
-  latent_heat_ = 
+  latent_heat_ =
       thermal_inertia_list->get<double>("ACE Latent Heat of Phase Change");
   rho_ice_ = thermal_inertia_list->get<double>("ACE Ice Density");
 
@@ -48,12 +51,12 @@ ACEthermalInertia(
 
   // List evaluated fields
   this->addEvaluatedField(thermal_inertia_);
-  
+
   // List dependent fields
   this->addDependentField(density_);
   this->addDependentField(heat_capacity_);
   this->addDependentField(dfdT_);
-  
+
   this->setName("ACE Thermal Inertia" + PHX::typeAsString<EvalT>());
 }
 
@@ -84,11 +87,11 @@ ACEthermalInertia<EvalT, Traits>::evaluateFields(
 
   for (int cell = 0; cell < num_cells; ++cell) {
     for (int qp = 0; qp < num_qps_; ++qp) {
-      thermal_inertia_(cell, qp) = 
-          (density_(cell, qp) * heat_capacity_(cell, qp)) - 
+      thermal_inertia_(cell, qp) =
+          (density_(cell, qp) * heat_capacity_(cell, qp)) -
           (rho_ice_ * latent_heat_ * dfdT_(cell, qp));
-      }
     }
+  }
 
   return;
 }
@@ -98,17 +101,13 @@ template <typename EvalT, typename Traits>
 typename ACEthermalInertia<EvalT, Traits>::ScalarT&
 ACEthermalInertia<EvalT, Traits>::getValue(const std::string& n)
 {
-  if (n == "ACE Latent Heat of Phase Change") {
-    return latent_heat_;
-  }
-  if (n == "ACE Ice Density") {
-    return rho_ice_;
-  }
+  if (n == "ACE Latent Heat of Phase Change") { return latent_heat_; }
+  if (n == "ACE Ice Density") { return rho_ice_; }
 
-  ALBANY_ASSERT(false, 
-             "Invalid request for value of ACE Component Thermal Inertia");
+  ALBANY_ASSERT(
+      false, "Invalid request for value of ACE Component Thermal Inertia");
 
-  return latent_heat_; // does it matter what we return here?
+  return latent_heat_;  // does it matter what we return here?
 }
 
 }  // namespace LCM

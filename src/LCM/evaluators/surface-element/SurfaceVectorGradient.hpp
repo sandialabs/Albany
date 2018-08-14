@@ -7,12 +7,12 @@
 #ifndef SURFACEVECTORGRADIENT_HPP
 #define SURFACEVECTORGRADIENT_HPP
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Intrepid2_CellTools.hpp"
 #include "Intrepid2_Cubature.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
 #include "Albany_Layouts.hpp"
 
@@ -23,23 +23,25 @@ namespace LCM {
 
 **/
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 class SurfaceVectorGradient : public PHX::EvaluatorWithBaseImpl<Traits>,
-                          public PHX::EvaluatorDerived<EvalT, Traits>  {
+                              public PHX::EvaluatorDerived<EvalT, Traits>
+{
+ public:
+  SurfaceVectorGradient(
+      Teuchos::ParameterList&              p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
-public:
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-  SurfaceVectorGradient(Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl);
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-
-  typedef typename EvalT::ScalarT ScalarT;
+ private:
+  typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
@@ -48,17 +50,17 @@ private:
   //! Numerical integration rule
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature;
   //! Vector to take the jump of
-  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> vector;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> jump;
+  PHX::MDField<const MeshScalarT, Cell, Vertex, Dim> vector;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim>  jump;
 
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim, Dim> currentBasis;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> refNormal;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim>     currentBasis;
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim, Dim> refDualBasis;
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim>      refNormal;
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint>           weights;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> defGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> defGrad;
+  PHX::MDField<ScalarT, Cell, QuadPoint>           J;
 
   unsigned int worksetSize;
   unsigned int numNodes;
@@ -72,8 +74,7 @@ private:
 
   //! stabilization parameter for the weighted average
   ScalarT alpha;
-
 };
-}
+}  // namespace LCM
 
 #endif

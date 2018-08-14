@@ -21,9 +21,11 @@ namespace LCM {
 /// Evaluates thermal conductivity at integration points
 ///
 template <typename EvalT, typename Traits>
-class ACEthermalConductivity : public PHX::EvaluatorWithBaseImpl<Traits>,
-                   public PHX::EvaluatorDerived<EvalT, Traits>,
-                   public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+class ACEthermalConductivity
+    : public PHX::EvaluatorWithBaseImpl<Traits>,
+      public PHX::EvaluatorDerived<EvalT, Traits>,
+      public Sacado::ParameterAccessor<EvalT, SPL_Traits>
+{
  public:
   using ScalarT = typename EvalT::ScalarT;
 
@@ -55,7 +57,6 @@ class ACEthermalConductivity : public PHX::EvaluatorWithBaseImpl<Traits>,
   getValue(const std::string& n);
 
  private:
-
   ///
   /// Number of integration points
   ///
@@ -81,7 +82,6 @@ class ACEthermalConductivity : public PHX::EvaluatorWithBaseImpl<Traits>,
   ScalarT k_ice_{0.0};
   ScalarT k_wat_{0.0};
   ScalarT k_sed_{0.0};
-
 };
 }  // namespace LCM
 

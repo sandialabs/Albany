@@ -5,24 +5,23 @@
 //*****************************************************************//
 
 #include <MiniTensor.h>
-#include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Teuchos_TestForException.hpp"
 
 namespace LCM {
 
 //
 //
 //
-template<typename EvalT, typename Traits>
-NeohookeanModel<EvalT, Traits>::
-NeohookeanModel(
-    Teuchos::ParameterList* p,
-    const Teuchos::RCP<Albany::Layouts>& dl) :
-    LCM::ConstitutiveModel<EvalT, Traits>(p, dl)
+template <typename EvalT, typename Traits>
+NeohookeanModel<EvalT, Traits>::NeohookeanModel(
+    Teuchos::ParameterList*              p,
+    const Teuchos::RCP<Albany::Layouts>& dl)
+    : LCM::ConstitutiveModel<EvalT, Traits>(p, dl)
 {
   std::string F_string = (*field_name_map_)["F"];
   std::string J_string = (*field_name_map_)["J"];
-  std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
+  std::string cauchy   = (*field_name_map_)["Cauchy_Stress"];
 
   // define the dependent fields
   this->dep_field_map_.insert(std::make_pair(F_string, dl->qp_tensor));
@@ -33,7 +32,8 @@ NeohookeanModel(
   // define the evaluated fields
   this->eval_field_map_.insert(std::make_pair(cauchy, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair("Energy", dl->qp_scalar));
-  this->eval_field_map_.insert(std::make_pair("Material Tangent", dl->qp_tensor4));
+  this->eval_field_map_.insert(
+      std::make_pair("Material Tangent", dl->qp_tensor4));
 
   // define the state variables
   this->num_state_variables_++;
@@ -42,32 +42,33 @@ NeohookeanModel(
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(false);
-  this->state_var_output_flags_.push_back(p->get<bool>("Output Cauchy Stress", false));
+  this->state_var_output_flags_.push_back(
+      p->get<bool>("Output Cauchy Stress", false));
 }
 
 //
 //
 //
-template<typename EvalT, typename Traits>
-void NeohookeanModel<EvalT, Traits>::
-computeState(
+template <typename EvalT, typename Traits>
+void
+NeohookeanModel<EvalT, Traits>::computeState(
     typename Traits::EvalData workset,
-    DepFieldMap dep_fields,
-    FieldMap eval_fields)
+    DepFieldMap               dep_fields,
+    FieldMap                  eval_fields)
 {
   std::string F_string = (*field_name_map_)["F"];
   std::string J_string = (*field_name_map_)["J"];
-  std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
+  std::string cauchy   = (*field_name_map_)["Cauchy_Stress"];
 
   // extract dependent MDFields
-  auto def_grad = *dep_fields[F_string];
-  auto jac_det = *dep_fields[J_string];
-  auto poissons_ratio = *dep_fields["Poissons Ratio"];
+  auto def_grad        = *dep_fields[F_string];
+  auto jac_det         = *dep_fields[J_string];
+  auto poissons_ratio  = *dep_fields["Poissons Ratio"];
   auto elastic_modulus = *dep_fields["Elastic Modulus"];
 
   // extract evaluated MDFields
-  auto stress = *eval_fields[cauchy];
-  auto energy = *eval_fields["Energy"];
+  auto stress  = *eval_fields[cauchy];
+  auto energy  = *eval_fields["Energy"];
   auto tangent = *eval_fields["Material Tangent"];
 
   ScalarT kappa;
@@ -85,14 +86,11 @@ computeState(
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
-      auto const &
-      E = elastic_modulus(cell, pt);
+      auto const& E = elastic_modulus(cell, pt);
 
-      auto const &
-      nu = poissons_ratio(cell, pt);
+      auto const& nu = poissons_ratio(cell, pt);
 
-      auto const &
-      J = jac_det(cell, pt);
+      auto const& J = jac_det(cell, pt);
 
       kappa = E / (3.0 * (1.0 - 2.0 * nu));
 
@@ -120,11 +118,11 @@ computeState(
         //
         // Le = exp(alpha*dtemp) is the thermal stretch and alpha the
         // coefficient of thermal expansion.
-        ScalarT dtemp = temperature_(cell, pt) - ref_temperature_;
+        ScalarT dtemp           = temperature_(cell, pt) - ref_temperature_;
         ScalarT thermal_stretch = std::exp(expansion_coeff_ * dtemp);
         Fm /= thermal_stretch;
       }
-      b = Fm * minitensor::transpose(Fm);
+      b     = Fm * minitensor::transpose(Fm);
       mubar = (1.0 / 3.0) * mu * Jm23 * minitensor::trace(b);
       sigma = 0.5 * kappa * (J - 1.0 / J) * I + mu * Jm53 * minitensor::dev(b);
 
@@ -135,20 +133,19 @@ computeState(
       }
 
       if (compute_energy_ == true) {
-        energy(cell, pt) = 0.5 * kappa * (0.5 * (J * J - 1.0)
-            - std::log(J)) + 0.5 * mu * (Jm23 * minitensor::trace(b) - 3.0);
+        energy(cell, pt) = 0.5 * kappa * (0.5 * (J * J - 1.0) - std::log(J)) +
+                           0.5 * mu * (Jm23 * minitensor::trace(b) - 3.0);
       }
 
       if (compute_tangent_ == true) {
-
-        s = minitensor::dev(sigma);
+        s    = minitensor::dev(sigma);
         smag = minitensor::norm(s);
-        n = s / smag;
+        n    = s / smag;
 
-        dsigmadb =
-            kappa * J * J * I3 - kappa * (J * J - 1.0) * I1 +
-            2.0 * mubar * (I1 - (1.0 / 3.0) * I3) - 2.0 / 3.0 * smag *
-              (minitensor::tensor(n, I) + minitensor::tensor(I, n));
+        dsigmadb = kappa * J * J * I3 - kappa * (J * J - 1.0) * I1 +
+                   2.0 * mubar * (I1 - (1.0 / 3.0) * I3) -
+                   2.0 / 3.0 * smag *
+                       (minitensor::tensor(n, I) + minitensor::tensor(I, n));
 
         for (int i = 0; i < num_dims_; ++i) {
           for (int j = 0; j < num_dims_; ++j) {
@@ -162,7 +159,6 @@ computeState(
       }
     }
   }
-
 }
 
-} // namespace LCM
+}  // namespace LCM

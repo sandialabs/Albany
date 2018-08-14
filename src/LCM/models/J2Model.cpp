@@ -10,4 +10,3 @@
 #include "J2Model_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::J2Model)
-

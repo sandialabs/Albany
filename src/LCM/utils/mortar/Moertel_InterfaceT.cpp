@@ -4,29 +4,34 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
 #include "Moertel_ExplicitTemplateInstantiation.hpp"
 
 #ifdef HAVE_MOERTEL_EXPLICIT_INSTANTIATION
 #include "Moertel_InterfaceT.hpp"
 #include "Moertel_InterfaceT_Complete_Def.hpp"
-#include "Moertel_InterfaceT_Integrate_Def.hpp"
 #include "Moertel_InterfaceT_Integrate3D_Def.hpp"
-#include "Moertel_InterfaceT_Tools_Def.hpp"
+#include "Moertel_InterfaceT_Integrate_Def.hpp"
 #include "Moertel_InterfaceT_Project_Def.hpp"
+#include "Moertel_InterfaceT_Tools_Def.hpp"
 
 namespace MoertelT {
 
-  MOERTEL_INSTANTIATE_TEMPLATE_CLASS(InterfaceT)
+MOERTEL_INSTANTIATE_TEMPLATE_CLASS(InterfaceT)
 
-} // namespace Moertel
+}  // namespace MoertelT
 
 // non-member operators at global scope
 #ifdef HAVE_MOERTEL_INST_DOUBLE_INT_INT
-template std::ostream& operator << (std::ostream& os, const MoertelT::InterfaceT<double, int, int, KokkosNode>& inter);
+template std::ostream&
+operator<<(
+    std::ostream&                                             os,
+    const MoertelT::InterfaceT<double, int, int, KokkosNode>& inter);
 #endif
 #ifdef HAVE_MOERTEL_INST_DOUBLE_INT_LONGLONGINT
-template std::ostream& operator << (std::ostream& os, const MoertelT::InterfaceT<double, int, long long, KokkosNode>& inter);
+template std::ostream&
+operator<<(
+    std::ostream&                                                   os,
+    const MoertelT::InterfaceT<double, int, long long, KokkosNode>& inter);
 #endif
 
 #endif

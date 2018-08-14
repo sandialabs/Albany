@@ -7,44 +7,45 @@
 #if !defined(LCM_ParallelNeohookeanModel_hpp)
 #define LCM_ParallelNeohookeanModel_hpp
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 #include "ParallelConstitutiveModel.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
-namespace LCM
-{
-template<typename EvalT, typename Traits>
+namespace LCM {
+template <typename EvalT, typename Traits>
 struct NeohookeanKernel : public ParallelKernel<EvalT, Traits>
 {
   ///
   /// Constructor
   ///
-  NeohookeanKernel(ConstitutiveModel<EvalT, Traits> &model,
-          Teuchos::ParameterList* p,
+  NeohookeanKernel(
+      ConstitutiveModel<EvalT, Traits>&    model,
+      Teuchos::ParameterList*              p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
   NeohookeanKernel(const NeohookeanKernel&) = delete;
-  NeohookeanKernel& operator=(const NeohookeanKernel&) = delete;
+  NeohookeanKernel&
+  operator=(const NeohookeanKernel&) = delete;
 
-  using ScalarT = typename EvalT::ScalarT;
-  using MeshScalarT = typename EvalT::MeshScalarT;
-  using ScalarField = PHX::MDField<ScalarT>;
+  using ScalarT          = typename EvalT::ScalarT;
+  using MeshScalarT      = typename EvalT::MeshScalarT;
+  using ScalarField      = PHX::MDField<ScalarT>;
   using ConstScalarField = PHX::MDField<const ScalarT>;
-  using BaseKernel = ParallelKernel<EvalT, Traits>;
-  using Workset = typename BaseKernel::Workset;
+  using BaseKernel       = ParallelKernel<EvalT, Traits>;
+  using Workset          = typename BaseKernel::Workset;
 
-  using BaseKernel::num_dims_;
-  using BaseKernel::num_pts_;
-  using BaseKernel::field_name_map_;
   using BaseKernel::compute_energy_;
   using BaseKernel::compute_tangent_;
+  using BaseKernel::field_name_map_;
+  using BaseKernel::num_dims_;
+  using BaseKernel::num_pts_;
 
+  using BaseKernel::addStateVariable;
   using BaseKernel::setDependentField;
   using BaseKernel::setEvaluatedField;
-  using BaseKernel::addStateVariable;
 
   using BaseKernel::nox_status_test_;
 
@@ -59,18 +60,26 @@ struct NeohookeanKernel : public ParallelKernel<EvalT, Traits>
   ScalarField energy;
   ScalarField tangent;
 
-  void init(Workset &workset,
-       FieldMap<const ScalarT> &dep_fields,
-       FieldMap<ScalarT> &eval_fields);
+  void
+  init(
+      Workset&                 workset,
+      FieldMap<const ScalarT>& dep_fields,
+      FieldMap<ScalarT>&       eval_fields);
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (int cell, int pt) const;
+  void
+  operator()(int cell, int pt) const;
 };
 
-template<typename EvalT, typename Traits>
-class ParallelNeohookeanModel : public LCM::ParallelConstitutiveModel<EvalT, Traits, NeohookeanKernel<EvalT, Traits>> {
-public:
-  ParallelNeohookeanModel(Teuchos::ParameterList* p,
+template <typename EvalT, typename Traits>
+class ParallelNeohookeanModel : public LCM::ParallelConstitutiveModel<
+                                    EvalT,
+                                    Traits,
+                                    NeohookeanKernel<EvalT, Traits>>
+{
+ public:
+  ParallelNeohookeanModel(
+      Teuchos::ParameterList*              p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
@@ -118,6 +127,6 @@ protected:
 
 };
 #endif
-}
+}  // namespace LCM
 
 #endif

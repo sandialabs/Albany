@@ -5,21 +5,24 @@
 //*****************************************************************//
 #include <MiniTensor.h>
 
-#include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Teuchos_TestForException.hpp"
 
 namespace LCM {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-SurfaceVectorJump<EvalT, Traits>::
-SurfaceVectorJump(const Teuchos::ParameterList & p,
-    const Teuchos::RCP<Albany::Layouts> & dl) :
-    cubature_(p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")),
-    intrepid_basis_(p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>(
-            "Intrepid2 Basis")),
-    vector_(p.get<std::string>("Vector Name"), dl->node_vector),
-    jump_(p.get<std::string>("Vector Jump Name"), dl->qp_vector)
+template <typename EvalT, typename Traits>
+SurfaceVectorJump<EvalT, Traits>::SurfaceVectorJump(
+    const Teuchos::ParameterList&        p,
+    const Teuchos::RCP<Albany::Layouts>& dl)
+    : cubature_(
+          p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")),
+      intrepid_basis_(
+          p.get<
+              Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>(
+              "Intrepid2 Basis")),
+      vector_(p.get<std::string>("Vector Name"), dl->node_vector),
+      jump_(p.get<std::string>("Vector Jump Name"), dl->qp_vector)
 {
   this->addDependentField(vector_);
 
@@ -30,13 +33,13 @@ SurfaceVectorJump(const Teuchos::ParameterList & p,
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_vector->dimensions(dims);
   workset_size_ = dims[0];
-  num_nodes_ = dims[1];
-  num_dims_ = dims[2];
+  num_nodes_    = dims[1];
+  num_dims_     = dims[2];
 
   num_qps_ = cubature_->getNumPoints();
 
   num_plane_nodes_ = num_nodes_ / 2;
-  num_plane_dims_ = num_dims_ - 1;
+  num_plane_dims_  = num_dims_ - 1;
 
 #ifdef ALBANY_VERBOSE
   std::cout << "in Surface Vector Jump" << '\n';
@@ -51,35 +54,38 @@ SurfaceVectorJump(const Teuchos::ParameterList & p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void SurfaceVectorJump<EvalT, Traits>::postRegistrationSetup(
-    typename Traits::SetupData d, PHX::FieldManager<Traits> & fm)
+template <typename EvalT, typename Traits>
+void
+SurfaceVectorJump<EvalT, Traits>::postRegistrationSetup(
+    typename Traits::SetupData d,
+    PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(vector_, fm);
   this->utils.setFieldData(jump_, fm);
 
   // Allocate Temporary Views
-  ref_values_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", num_plane_nodes_, num_qps_);
-  ref_grads_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", num_plane_nodes_, num_qps_, num_plane_dims_);
-  ref_points_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", num_qps_, num_plane_dims_);
+  ref_values_ = Kokkos::DynRankView<RealType, PHX::Device>(
+      "XXX", num_plane_nodes_, num_qps_);
+  ref_grads_ = Kokkos::DynRankView<RealType, PHX::Device>(
+      "XXX", num_plane_nodes_, num_qps_, num_plane_dims_);
+  ref_points_ = Kokkos::DynRankView<RealType, PHX::Device>(
+      "XXX", num_qps_, num_plane_dims_);
   ref_weights_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", num_qps_);
 
   // Pre-Calculate reference element quantitites
   cubature_->getCubature(ref_points_, ref_weights_);
   intrepid_basis_->getValues(
-      ref_values_,
-      ref_points_,
-      Intrepid2::OPERATOR_VALUE);
+      ref_values_, ref_points_, Intrepid2::OPERATOR_VALUE);
   intrepid_basis_->getValues(ref_grads_, ref_points_, Intrepid2::OPERATOR_GRAD);
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void SurfaceVectorJump<EvalT, Traits>::evaluateFields(
+template <typename EvalT, typename Traits>
+void
+SurfaceVectorJump<EvalT, Traits>::evaluateFields(
     typename Traits::EvalData workset)
 {
-  minitensor::Vector<ScalarT>
-  vecA(0, 0, 0), vecB(0, 0, 0), vecJump(0, 0, 0);
+  minitensor::Vector<ScalarT> vecA(0, 0, 0), vecB(0, 0, 0), vecJump(0, 0, 0);
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int pt = 0; pt < num_qps_; ++pt) {
@@ -96,7 +102,7 @@ void SurfaceVectorJump<EvalT, Traits>::evaluateFields(
             ref_values_(node, pt) * vector_(cell, topNode, 1),
             ref_values_(node, pt) * vector_(cell, topNode, 2));
       }
-      vecJump = vecB - vecA;
+      vecJump            = vecB - vecA;
       jump_(cell, pt, 0) = vecJump(0);
       jump_(cell, pt, 1) = vecJump(1);
       jump_(cell, pt, 2) = vecJump(2);
@@ -105,5 +111,4 @@ void SurfaceVectorJump<EvalT, Traits>::evaluateFields(
 }
 
 //**********************************************************************
-}
-
+}  // namespace LCM

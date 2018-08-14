@@ -7,12 +7,12 @@
 #ifndef SURFACESCALARGRADIENT_HPP
 #define SURFACESCALARGRADIENT_HPP
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Intrepid2_CellTools.hpp"
 #include "Intrepid2_Cubature.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Phalanx_config.hpp"
 
 #include "Albany_Layouts.hpp"
 
@@ -23,27 +23,25 @@ namespace LCM {
 
 **/
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 class SurfaceScalarGradient : public PHX::EvaluatorWithBaseImpl<Traits>,
-                          public PHX::EvaluatorDerived<EvalT, Traits>  {
+                              public PHX::EvaluatorDerived<EvalT, Traits>
+{
+ public:
+  SurfaceScalarGradient(
+      const Teuchos::ParameterList&        p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
-public:
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-
-  SurfaceScalarGradient(const Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-
-
-private:
-
-  typedef typename EvalT::ScalarT ScalarT;
+ private:
+  typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
@@ -55,13 +53,13 @@ private:
   /// for the parallel gradient term
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>> intrepidBasis;
   // nodal value used to construct in-plan gradient
-  PHX::MDField<const ScalarT,Cell,Node> nodalScalar;
+  PHX::MDField<const ScalarT, Cell, Node> nodalScalar;
 
   //! Vector to take the jump of
-  PHX::MDField<const ScalarT,Cell,QuadPoint> jump;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> jump;
 
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> refNormal;
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim, Dim> refDualBasis;
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim>      refNormal;
 
   //! Reference Cell Views
   Kokkos::DynRankView<RealType, PHX::Device> refValues;
@@ -69,7 +67,7 @@ private:
   Kokkos::DynRankView<RealType, PHX::Device> refPoints;
   Kokkos::DynRankView<RealType, PHX::Device> refWeights;
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim> scalarGrad;
 
   unsigned int worksetSize;
   unsigned int numNodes;
@@ -78,6 +76,6 @@ private:
   unsigned int numPlaneNodes;
   unsigned int numPlaneDims;
 };
-}
+}  // namespace LCM
 
 #endif

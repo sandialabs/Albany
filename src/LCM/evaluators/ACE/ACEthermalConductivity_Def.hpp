@@ -12,31 +12,34 @@
 namespace LCM {
 
 template <typename EvalT, typename Traits>
-ACEthermalConductivity<EvalT, Traits>::
-ACEthermalConductivity(
+ACEthermalConductivity<EvalT, Traits>::ACEthermalConductivity(
     Teuchos::ParameterList&              p,
     const Teuchos::RCP<Albany::Layouts>& dl)
     : thermal_conductivity_(  // evaluated
-          p.get<std::string>("ACE Thermal Conductivity"), dl->qp_scalar),
+          p.get<std::string>("ACE Thermal Conductivity"),
+          dl->qp_scalar),
       porosity_(  // dependent
-          p.get<std::string>("ACE Porosity"), dl->qp_scalar),
+          p.get<std::string>("ACE Porosity"),
+          dl->qp_scalar),
       ice_saturation_(  // dependent
-          p.get<std::string>("ACE Ice Saturation"), dl->qp_scalar),
+          p.get<std::string>("ACE Ice Saturation"),
+          dl->qp_scalar),
       water_saturation_(  // dependent
-          p.get<std::string>("ACE Water Saturation"), dl->qp_scalar)
+          p.get<std::string>("ACE Water Saturation"),
+          dl->qp_scalar)
 {
   Teuchos::ParameterList* thermal_conductivity_list =
-    p.get<Teuchos::ParameterList*>("Parameter List");
+      p.get<Teuchos::ParameterList*>("Parameter List");
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
+      p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   num_qps_  = dims[1];
   num_dims_ = dims[2];
 
   Teuchos::RCP<ParamLib> paramLib =
-    p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
+      p.get<Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
   // Read thermal conductivity values
   k_ice_ = thermal_conductivity_list->get<double>("Ice Value");
@@ -48,12 +51,12 @@ ACEthermalConductivity(
 
   // List evaluated fields
   this->addEvaluatedField(thermal_conductivity_);
-  
+
   // List dependent fields
   this->addDependentField(porosity_);
   this->addDependentField(ice_saturation_);
   this->addDependentField(water_saturation_);
-  
+
   this->setName("ACE Thermal Conductivity" + PHX::typeAsString<EvalT>());
 }
 
@@ -81,12 +84,12 @@ ACEthermalConductivity<EvalT, Traits>::evaluateFields(
 
   for (int cell = 0; cell < num_cells; ++cell) {
     for (int qp = 0; qp < num_qps_; ++qp) {
-      thermal_conductivity_(cell, qp) = 
-          pow(k_ice_,(ice_saturation_(cell, qp)*porosity_(cell, qp))) * 
-          pow(k_wat_,(water_saturation_(cell, qp)*porosity_(cell, qp))) *
-          pow(k_sed_,(1.0-porosity_(cell, qp)));
-      }
+      thermal_conductivity_(cell, qp) =
+          pow(k_ice_, (ice_saturation_(cell, qp) * porosity_(cell, qp))) *
+          pow(k_wat_, (water_saturation_(cell, qp) * porosity_(cell, qp))) *
+          pow(k_sed_, (1.0 - porosity_(cell, qp)));
     }
+  }
 
   return;
 }
@@ -96,20 +99,14 @@ template <typename EvalT, typename Traits>
 typename ACEthermalConductivity<EvalT, Traits>::ScalarT&
 ACEthermalConductivity<EvalT, Traits>::getValue(const std::string& n)
 {
-  if (n == "ACE Ice Thermal Conductivity") {
-    return k_ice_;
-  }
-  if (n == "ACE Water Thermal Conductivity") {
-    return k_wat_;
-  }
-  if (n == "ACE Sediment Thermal Conductivity") {
-    return k_sed_;
-  }
+  if (n == "ACE Ice Thermal Conductivity") { return k_ice_; }
+  if (n == "ACE Water Thermal Conductivity") { return k_wat_; }
+  if (n == "ACE Sediment Thermal Conductivity") { return k_sed_; }
 
-  ALBANY_ASSERT(false, 
-             "Invalid request for value of ACE Component Thermal Conductivity");
+  ALBANY_ASSERT(
+      false, "Invalid request for value of ACE Component Thermal Conductivity");
 
-  return k_wat_; // does it matter what we return here?
+  return k_wat_;  // does it matter what we return here?
 }
 
 }  // namespace LCM

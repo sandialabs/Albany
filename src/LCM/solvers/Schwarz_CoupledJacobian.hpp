@@ -25,22 +25,21 @@ namespace LCM {
 /// LCM coupled Schwarz problem
 ///
 
-class Schwarz_CoupledJacobian {
-public:
-  Schwarz_CoupledJacobian(Teuchos::RCP<Teuchos_Comm const> const & comm);
+class Schwarz_CoupledJacobian
+{
+ public:
+  Schwarz_CoupledJacobian(Teuchos::RCP<Teuchos_Comm const> const& comm);
 
   ~Schwarz_CoupledJacobian();
 
   Teuchos::RCP<Thyra::LinearOpBase<ST>>
   getThyraCoupledJacobian(
-      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> jacs,
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> const & ca) const;
+      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>              jacs,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> const& ca) const;
 
-private:
-
-  Teuchos::RCP<Teuchos_Comm const>
-  comm_;
+ private:
+  Teuchos::RCP<Teuchos_Comm const> comm_;
 };
 
-} //namespace LCM
-#endif // LCM_SchwarzCoupledJacobian_hpp
+}  // namespace LCM
+#endif  // LCM_SchwarzCoupledJacobian_hpp

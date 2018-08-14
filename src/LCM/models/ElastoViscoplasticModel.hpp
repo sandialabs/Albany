@@ -7,24 +7,22 @@
 #if !defined(LCM_ElastoViscoplasticModel_hpp)
 #define LCM_ElastoViscoplasticModel_hpp
 
-#include "ElastoViscoplasticCore.hpp"
 #include "ConstitutiveModel.hpp"
+#include "ElastoViscoplasticCore.hpp"
 
-namespace LCM
-{
+namespace LCM {
 
 //! \brief Elasto Viscoplastic Constitutive Model
-template<typename EvalT, typename Traits>
-class ElastoViscoplasticModel: public LCM::ConstitutiveModel<EvalT, Traits>
+template <typename EvalT, typename Traits>
+class ElastoViscoplasticModel : public LCM::ConstitutiveModel<EvalT, Traits>
 {
-public:
-
-  using Base = LCM::ConstitutiveModel<EvalT, Traits>;
+ public:
+  using Base        = LCM::ConstitutiveModel<EvalT, Traits>;
   using DepFieldMap = typename Base::DepFieldMap;
-  using FieldMap = typename Base::FieldMap;
+  using FieldMap    = typename Base::FieldMap;
 
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ScalarT             ScalarT;
+  typedef typename EvalT::MeshScalarT         MeshScalarT;
   typedef typename Sacado::Fad::DFad<ScalarT> Fad;
 
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
@@ -48,36 +46,34 @@ public:
   ///
   /// Constructor
   ///
-  ElastoViscoplasticModel(Teuchos::ParameterList* p,
+  ElastoViscoplasticModel(
+      Teuchos::ParameterList*              p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
   ///
   /// Virtual Denstructor
   ///
-  virtual
-  ~ElastoViscoplasticModel()
-  {};
+  virtual ~ElastoViscoplasticModel(){};
 
   ///
   /// Method to compute the state (e.g. energy, stress, tangent)
   ///
-  virtual
-  void
-  computeState(typename Traits::EvalData workset,
-      DepFieldMap dep_fields,
-      FieldMap eval_fields);
+  virtual void
+  computeState(
+      typename Traits::EvalData workset,
+      DepFieldMap               dep_fields,
+      FieldMap                  eval_fields);
 
-  virtual
-  void
-  computeStateParallel(typename Traits::EvalData workset,
-      DepFieldMap dep_fields,
-      FieldMap eval_fields){
-         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
- }
+  virtual void
+  computeStateParallel(
+      typename Traits::EvalData workset,
+      DepFieldMap               dep_fields,
+      FieldMap                  eval_fields)
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
+  }
 
-
-private:
-
+ private:
   ///
   /// Private to prohibit copying
   ///
@@ -86,7 +82,8 @@ private:
   ///
   /// Private to prohibit copying
   ///
-  ElastoViscoplasticModel& operator=(const ElastoViscoplasticModel&);
+  ElastoViscoplasticModel&
+  operator=(const ElastoViscoplasticModel&);
 
   ///
   /// compute stresses
@@ -101,7 +98,7 @@ private:
 
   ///
   /// Initial Void Volume
-  ///xs
+  /// xs
   RealType f0_;
 
   ///
@@ -142,14 +139,13 @@ private:
   ///
   /// Solution options
   ///
-  bool apply_slip_predictor_;
+  bool                 apply_slip_predictor_;
   minitensor::StepType step_type_;
 
   RealType implicit_nonlinear_solver_relative_tolerance_;
   RealType implicit_nonlinear_solver_absolute_tolerance_;
-  int implicit_nonlinear_solver_max_iterations_;
-  int implicit_nonlinear_solver_min_iterations_;
-
+  int      implicit_nonlinear_solver_max_iterations_;
+  int      implicit_nonlinear_solver_min_iterations_;
 
   ///
   /// flag to print convergence
@@ -159,11 +155,10 @@ private:
   ///
   /// Compute effective void volume fraction
   ///
-  template<typename T>
+  template <typename T>
   T
   compute_fstar(T f, RealType fc, RealType ff, RealType q1);
-
 };
-}
+}  // namespace LCM
 
 #endif

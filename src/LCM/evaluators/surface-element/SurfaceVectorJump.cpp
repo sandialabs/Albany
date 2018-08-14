@@ -10,4 +10,3 @@
 #include "SurfaceVectorJump_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::SurfaceVectorJump)
-

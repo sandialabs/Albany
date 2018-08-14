@@ -10,4 +10,3 @@
 #include "ScalarL2ProjectionResidual_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ScalarL2ProjectionResidual)
-

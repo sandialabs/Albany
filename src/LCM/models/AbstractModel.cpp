@@ -9,4 +9,3 @@
 #include "AbstractModel.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::AbstractModel)
-

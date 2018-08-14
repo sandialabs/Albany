@@ -53,9 +53,7 @@ template <typename EvalT, typename Traits>
 typename Density<EvalT, Traits>::ScalarT&
 Density<EvalT, Traits>::getValue(const std::string& n)
 {
-  if (n == "Density") {
-    return constant_value;
-  }
+  if (n == "Density") { return constant_value; }
 
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,

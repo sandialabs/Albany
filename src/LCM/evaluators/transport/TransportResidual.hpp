@@ -7,160 +7,160 @@
 #if !defined(LCM_TransportResidual_hpp)
 #define LCM_TransportResidual_hpp
 
-#include <Phalanx_config.hpp>
-#include <Phalanx_Evaluator_WithBaseImpl.hpp>
 #include <Phalanx_Evaluator_Derived.hpp>
+#include <Phalanx_Evaluator_WithBaseImpl.hpp>
 #include <Phalanx_MDField.hpp>
+#include <Phalanx_config.hpp>
 
 #include "Albany_Layouts.hpp"
 
 namespace LCM {
-  /// \brief
+/// \brief
+///
+///  This evaluator computes the residual for the transport equation
+///
+template <typename EvalT, typename Traits>
+class TransportResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
+                          public PHX::EvaluatorDerived<EvalT, Traits>
+{
+ public:
   ///
-  ///  This evaluator computes the residual for the transport equation
+  /// Constructor
   ///
-  template<typename EvalT, typename Traits>
-  class TransportResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
-                            public PHX::EvaluatorDerived<EvalT, Traits>  {
+  TransportResidual(
+      Teuchos::ParameterList&              p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
-  public:
+  ///
+  /// Phalanx method to allocate space
+  ///
+  void
+  postRegistrationSetup(
+      typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-    ///
-    /// Constructor
-    ///
-    TransportResidual(Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl);
+  ///
+  /// Implementation of physics
+  ///
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-    ///
-    /// Phalanx method to allocate space
-    ///
-    void postRegistrationSetup(typename Traits::SetupData d,
-                               PHX::FieldManager<Traits>& vm);
+ private:
+  typedef typename EvalT::ScalarT     ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
 
-    ///
-    /// Implementation of physics
-    ///
-    void evaluateFields(typename Traits::EvalData d);
+  ///
+  /// Stress field
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> stress_;
 
-  private:
+  // velocity gradient (Lagrangian)
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> vel_grad_;
 
-    typedef typename EvalT::ScalarT ScalarT;
-    typedef typename EvalT::MeshScalarT MeshScalarT;
+  // Temporal container used to store P : F_dot
+  Kokkos::DynRankView<ScalarT, PHX::Device> term1_;
 
+  ///
+  /// Scalar field for transport variable
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint> scalar_;
 
-    ///
-    /// Stress field
-    ///
-    PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> stress_;
+  ///
+  /// Scalar dot field for transport variable
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint> scalar_dot_;
 
-    // velocity gradient (Lagrangian)
-    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> vel_grad_;
+  ///
+  /// Input: time step
+  ///
+  PHX::MDField<const ScalarT, Dummy> delta_time_;
 
-    // Temporal container used to store P : F_dot
-    Kokkos::DynRankView<ScalarT, PHX::Device> term1_;
+  ///
+  /// Scalar field for transport variable
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> scalar_grad_;
 
-    ///
-    /// Scalar field for transport variable
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> scalar_;
+  ///
+  /// Integrations weights
+  ///
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint> weights_;
 
-    ///
-    /// Scalar dot field for transport variable
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> scalar_dot_;
+  ///
+  /// Weighted basis functions
+  ///
+  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint> w_bf_;
 
-    ///
-    /// Input: time step
-    ///
-    PHX::MDField<const ScalarT,Dummy> delta_time_;
+  ///
+  /// Weighted gradients of basis functions
+  ///
+  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> w_grad_bf_;
 
-    ///
-    /// Scalar field for transport variable
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint, Dim> scalar_grad_;
+  ///
+  /// Source term(s)
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint> source_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> second_source_;
 
-    ///
-    /// Integrations weights
-    ///
-    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights_;
+  ///
+  /// M operator for contact
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint> M_operator_;
 
-    ///
-    /// Weighted basis functions
-    ///
-    PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> w_bf_;
+  ///
+  /// Scalar coefficient on the transient transport term
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint> transient_coeff_;
 
-    ///
-    /// Weighted gradients of basis functions
-    ///
-    PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> w_grad_bf_;
+  ///
+  /// Tensor diffusivity
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> diffusivity_;
 
-    ///
-    /// Source term(s)
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> source_;
-    PHX::MDField<const ScalarT,Cell,QuadPoint> second_source_;
+  ///
+  /// Vector convection term
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> convection_vector_;
 
-    ///
-    /// M operator for contact
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> M_operator_;
+  ///
+  /// Species coupling term
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint> species_coupling_;
 
-    ///
-    /// Scalar coefficient on the transient transport term
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> transient_coeff_;
+  ///
+  /// Stabilization term
+  ///
+  PHX::MDField<const ScalarT, Cell, QuadPoint> stabilization_;
 
-    ///
-    /// Tensor diffusivity
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> diffusivity_;
+  ///
+  /// Output residual
+  ///
+  PHX::MDField<ScalarT, Cell, Node> residual_;
 
-    ///
-    /// Vector convection term
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> convection_vector_;
+  ///
+  ///  Feature flags
+  ///
+  bool have_source_;
+  bool have_second_source_;
+  bool have_transient_;
+  bool have_diffusion_;
+  bool have_convection_;
+  bool have_species_coupling_;
+  bool have_stabilization_;
+  bool have_contact_;
+  bool have_mechanics_;
 
-    ///
-    /// Species coupling term
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> species_coupling_;
+  std::string SolutionType_;
 
-    ///
-    /// Stabilization term
-    ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> stabilization_;
+  ///
+  /// Data structure dimensions
+  ///
+  int num_cells_, num_nodes_, num_pts_, num_dims_;
 
-    ///
-    /// Output residual
-    ///
-    PHX::MDField<ScalarT,Cell,Node> residual_;
-
-    ///
-    ///  Feature flags
-    ///
-    bool have_source_;
-    bool have_second_source_;
-    bool have_transient_;
-    bool have_diffusion_;
-    bool have_convection_;
-    bool have_species_coupling_;
-    bool have_stabilization_;
-    bool have_contact_;
-    bool have_mechanics_;
-
-    std::string SolutionType_;
-
-    ///
-    /// Data structure dimensions
-    ///
-    int num_cells_, num_nodes_, num_pts_, num_dims_;
-
-    ///
-    /// Scalar name
-    ///
-    std::string scalar_name_;
-
-  };
-}
+  ///
+  /// Scalar name
+  ///
+  std::string scalar_name_;
+};
+}  // namespace LCM
 
 #endif

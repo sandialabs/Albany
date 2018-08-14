@@ -16,7 +16,7 @@
 namespace LCM {
 
 //----------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 Kinematics<EvalT, Traits>::Kinematics(
     Teuchos::ParameterList&              p,
     const Teuchos::RCP<Albany::Layouts>& dl)
@@ -26,7 +26,8 @@ Kinematics<EvalT, Traits>::Kinematics(
       j_(p.get<std::string>("DetDefGrad Name"), dl->qp_scalar),
       weighted_average_(p.get<bool>("Weighted Volume Average J", false)),
       alpha_(p.get<RealType>("Average J Stabilization Parameter", 0.0)),
-      needs_vel_grad_(false), needs_strain_(false)
+      needs_vel_grad_(false),
+      needs_strain_(false)
 {
   if (p.isType<bool>("Velocity Gradient Flag"))
     needs_vel_grad_ = p.get<bool>("Velocity Gradient Flag");
@@ -65,7 +66,7 @@ Kinematics<EvalT, Traits>::Kinematics(
 }
 
 //----------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 void
 Kinematics<EvalT, Traits>::postRegistrationSetup(
     typename Traits::SetupData d,
@@ -82,7 +83,7 @@ Kinematics<EvalT, Traits>::postRegistrationSetup(
 }
 
 //----------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 bool
 Kinematics<EvalT, Traits>::check_det(
     typename Traits::EvalData workset,
@@ -105,7 +106,7 @@ Kinematics<EvalT, Traits>::check_det(
   return neg_det;
 }
 
-template<typename EvalT, typename Traits>
+template <typename EvalT, typename Traits>
 void
 Kinematics<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
@@ -117,7 +118,7 @@ Kinematics<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
         gradu.fill(grad_u_, cell, pt, 0, 0);
-        F = I + gradu;
+        F            = I + gradu;
         j_(cell, pt) = minitensor::det(F);
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
@@ -200,4 +201,4 @@ Kinematics<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
   }
 }
 //----------------------------------------------------------------------------
-}
+}  // namespace LCM

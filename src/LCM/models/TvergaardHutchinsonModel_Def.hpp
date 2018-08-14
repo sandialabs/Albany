@@ -18,7 +18,8 @@ namespace LCM {
 //------------------------------------------------------------------------------
 template <typename EvalT, typename Traits>
 TvergaardHutchinsonModel<EvalT, Traits>::TvergaardHutchinsonModel(
-    Teuchos::ParameterList* p, const Teuchos::RCP<Albany::Layouts>& dl)
+    Teuchos::ParameterList*              p,
+    const Teuchos::RCP<Albany::Layouts>& dl)
     : LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
       delta_1(p->get<RealType>("delta_1", 0.5)),
       delta_2(p->get<RealType>("delta_2", 0.5)),
@@ -26,7 +27,8 @@ TvergaardHutchinsonModel<EvalT, Traits>::TvergaardHutchinsonModel(
       sigma_c(p->get<RealType>("sigma_c", 1.0)),
       beta_0(p->get<RealType>("beta_0", 1.0)),
       beta_1(p->get<RealType>("beta_1", 1.0)),
-      beta_2(p->get<RealType>("beta_2", 1.0)) {
+      beta_2(p->get<RealType>("beta_2", 1.0))
+{
   // define the dependent fields
   this->dep_field_map_.insert(std::make_pair("Vector Jump", dl->qp_vector));
   this->dep_field_map_.insert(std::make_pair("Current Basis", dl->qp_tensor));
@@ -97,18 +99,20 @@ TvergaardHutchinsonModel<EvalT, Traits>::TvergaardHutchinsonModel(
 template <typename EvalT, typename Traits>
 void
 TvergaardHutchinsonModel<EvalT, Traits>::computeState(
-    typename Traits::EvalData workset, DepFieldMap dep_fields,
-    FieldMap eval_fields) {
+    typename Traits::EvalData workset,
+    DepFieldMap               dep_fields,
+    FieldMap                  eval_fields)
+{
   // extract dependent MDFields
-  auto jump = *dep_fields["Vector Jump"];
+  auto jump  = *dep_fields["Vector Jump"];
   auto basis = *dep_fields["Current Basis"];
 
   // extract evaluated MDFields
-  auto traction = *eval_fields["Cohesive_Traction"];
+  auto traction        = *eval_fields["Cohesive_Traction"];
   auto traction_normal = *eval_fields["Normal_Traction"];
-  auto traction_shear = *eval_fields["Shear_Traction"];
-  auto jump_normal = *eval_fields["Normal_Jump"];
-  auto jump_shear = *eval_fields["Shear_Jump"];
+  auto traction_shear  = *eval_fields["Shear_Traction"];
+  auto jump_normal     = *eval_fields["Normal_Jump"];
+  auto jump_shear      = *eval_fields["Shear_Jump"];
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
@@ -211,11 +215,11 @@ TvergaardHutchinsonModel<EvalT, Traits>::computeState(
 
       // update state variables
       traction_normal(cell, pt) = traction_local(2);
-      traction_shear(cell, pt) = TractionShear;
-      jump_normal(cell, pt) = JumpNormal;
-      jump_shear(cell, pt) = JumpShear;
+      traction_shear(cell, pt)  = TractionShear;
+      jump_normal(cell, pt)     = JumpNormal;
+      jump_shear(cell, pt)      = JumpShear;
     }
   }
 }
 //------------------------------------------------------------------------------
-}
+}  // namespace LCM

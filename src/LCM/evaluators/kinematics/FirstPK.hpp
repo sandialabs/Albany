@@ -7,43 +7,39 @@
 #if !defined(LCM_FirstPK_hpp)
 #define LCM_FirstPK_hpp
 
-#include <Phalanx_config.hpp>
-#include <Phalanx_Evaluator_WithBaseImpl.hpp>
 #include <Phalanx_Evaluator_Derived.hpp>
+#include <Phalanx_Evaluator_WithBaseImpl.hpp>
 #include <Phalanx_MDField.hpp>
+#include <Phalanx_config.hpp>
 #include <Sacado_ParameterAccessor.hpp>
 #include "Albany_Layouts.hpp"
 
-namespace LCM
-{
+namespace LCM {
 ///
 /// \brief First Piola-Kirchhoff Stress
 ///
 /// This evaluator computes the first PK stress from the deformation gradient
 /// and Cauchy stress, and optionally volume averages the pressure
 ///
-template<typename EvalT, typename Traits>
-class FirstPK:
-    public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<EvalT, Traits>
+template <typename EvalT, typename Traits>
+class FirstPK : public PHX::EvaluatorWithBaseImpl<Traits>,
+                public PHX::EvaluatorDerived<EvalT, Traits>
 {
-
-public:
-
-  typedef typename EvalT::ScalarT ScalarT;
+ public:
+  typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   ///
   /// Constructor
   ///
-  FirstPK(Teuchos::ParameterList& p,
-      const Teuchos::RCP<Albany::Layouts>& dl);
+  FirstPK(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
 
   ///
   /// Phalanx method to allocate space
   ///
   void
-  postRegistrationSetup(typename Traits::SetupData d,
+  postRegistrationSetup(
+      typename Traits::SetupData d,
       PHX::FieldManager<Traits>& vm);
 
   ///
@@ -52,8 +48,7 @@ public:
   void
   evaluateFields(typename Traits::EvalData d);
 
-private:
-
+ private:
   ///
   /// Input: Cauchy Stress
   ///
@@ -112,28 +107,44 @@ private:
   ///
   bool small_strain_;
 
-public: // Kokkos
-  struct have_stab_pressure_Tag {};
-  struct have_pore_pressure_Tag {};
-  struct small_strain_Tag {};
-  struct no_small_strain_Tag {};
+ public:  // Kokkos
+  struct have_stab_pressure_Tag
+  {
+  };
+  struct have_pore_pressure_Tag
+  {
+  };
+  struct small_strain_Tag
+  {
+  };
+  struct no_small_strain_Tag
+  {
+  };
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
-  typedef Kokkos::RangePolicy<ExecutionSpace,have_stab_pressure_Tag> have_stab_pressure_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,have_pore_pressure_Tag> have_pore_pressure_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,small_strain_Tag> small_strain_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,no_small_strain_Tag> no_small_strain_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, have_stab_pressure_Tag>
+      have_stab_pressure_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, have_pore_pressure_Tag>
+      have_pore_pressure_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, small_strain_Tag>
+      small_strain_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, no_small_strain_Tag>
+      no_small_strain_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const have_stab_pressure_Tag& tag, const int& i) const;
+  void
+  operator()(const have_stab_pressure_Tag& tag, const int& i) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const have_pore_pressure_Tag& tag, const int& i) const;
+  void
+  operator()(const have_pore_pressure_Tag& tag, const int& i) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const small_strain_Tag& tag, const int& i) const;
+  void
+  operator()(const small_strain_Tag& tag, const int& i) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const no_small_strain_Tag& tag, const int& i) const;
+  void
+  operator()(const no_small_strain_Tag& tag, const int& i) const;
 };
-}
+}  // namespace LCM
 
 #endif

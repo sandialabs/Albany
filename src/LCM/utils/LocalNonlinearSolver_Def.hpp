@@ -4,12 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-namespace LCM
-{
+namespace LCM {
 
-template<typename EvalT, typename Traits>
-LocalNonlinearSolver_Base<EvalT, Traits>::LocalNonlinearSolver_Base() :
-    lapack()
+template <typename EvalT, typename Traits>
+LocalNonlinearSolver_Base<EvalT, Traits>::LocalNonlinearSolver_Base() : lapack()
 {
 }
 
@@ -20,44 +18,47 @@ LocalNonlinearSolver_Base<EvalT, Traits>::LocalNonlinearSolver_Base() :
 // -----------------------------------------------------------------------------
 // Residual
 // -----------------------------------------------------------------------------
-template<typename Traits>
-LocalNonlinearSolver<PHAL::AlbanyTraits::Residual, Traits>::LocalNonlinearSolver() :
-    LocalNonlinearSolver_Base<PHAL::AlbanyTraits::Residual, Traits>()
+template <typename Traits>
+LocalNonlinearSolver<PHAL::AlbanyTraits::Residual, Traits>::
+    LocalNonlinearSolver()
+    : LocalNonlinearSolver_Base<PHAL::AlbanyTraits::Residual, Traits>()
 {
 }
 
-template<typename Traits>
-void
-inline
-LocalNonlinearSolver<PHAL::AlbanyTraits::Residual, Traits>::
-solve(
-    std::vector<ScalarT> & A,
-    std::vector<ScalarT> & X,
-    std::vector<ScalarT> & B)
+template <typename Traits>
+void inline LocalNonlinearSolver<PHAL::AlbanyTraits::Residual, Traits>::solve(
+    std::vector<ScalarT>& A,
+    std::vector<ScalarT>& X,
+    std::vector<ScalarT>& B)
 {
   // system size
   int numLocalVars = B.size();
 
   // data for the LAPACK call below
-  int info(0);
+  int              info(0);
   std::vector<int> IPIV(numLocalVars);
 
   // call LAPACK
-  this->lapack.GESV(numLocalVars, 1, &A[0], numLocalVars, &IPIV[0], &B[0],
-      numLocalVars, &info);
+  this->lapack.GESV(
+      numLocalVars,
+      1,
+      &A[0],
+      numLocalVars,
+      &IPIV[0],
+      &B[0],
+      numLocalVars,
+      &info);
 
   // increment the solution
-  for (int i(0); i < numLocalVars; ++i)
-    X[i] -= B[i];
+  for (int i(0); i < numLocalVars; ++i) X[i] -= B[i];
 }
 
-template<typename Traits>
+template <typename Traits>
 void
-LocalNonlinearSolver<PHAL::AlbanyTraits::Residual, Traits>::
-computeFadInfo(
-    std::vector<ScalarT> & A,
-    std::vector<ScalarT> & X,
-    std::vector<ScalarT> & B)
+LocalNonlinearSolver<PHAL::AlbanyTraits::Residual, Traits>::computeFadInfo(
+    std::vector<ScalarT>& A,
+    std::vector<ScalarT>& X,
+    std::vector<ScalarT>& B)
 {
   // no-op
 }
@@ -65,65 +66,70 @@ computeFadInfo(
 // -----------------------------------------------------------------------------
 // Jacobian
 // -----------------------------------------------------------------------------
-template<typename Traits>
-LocalNonlinearSolver<PHAL::AlbanyTraits::Jacobian, Traits>::LocalNonlinearSolver() :
-    LocalNonlinearSolver_Base<PHAL::AlbanyTraits::Jacobian, Traits>()
+template <typename Traits>
+LocalNonlinearSolver<PHAL::AlbanyTraits::Jacobian, Traits>::
+    LocalNonlinearSolver()
+    : LocalNonlinearSolver_Base<PHAL::AlbanyTraits::Jacobian, Traits>()
 {
 }
 
-template<typename Traits>
+template <typename Traits>
 void
-LocalNonlinearSolver<PHAL::AlbanyTraits::Jacobian, Traits>::
-solve(
-    std::vector<ScalarT> & A,
-    std::vector<ScalarT> & X,
-    std::vector<ScalarT> & B)
+LocalNonlinearSolver<PHAL::AlbanyTraits::Jacobian, Traits>::solve(
+    std::vector<ScalarT>& A,
+    std::vector<ScalarT>& X,
+    std::vector<ScalarT>& B)
 {
   // system size
   int numLocalVars = B.size();
 
   // data for the LAPACK call below
-  int info(0);
+  int              info(0);
   std::vector<int> IPIV(numLocalVars);
 
   // fill B and dBdX
   std::vector<RealType> F(numLocalVars);
   std::vector<RealType> dFdX(numLocalVars * numLocalVars);
-  for (int i(0); i < numLocalVars; ++i)
-      {
+  for (int i(0); i < numLocalVars; ++i) {
     F[i] = B[i].val();
-    for (int j(0); j < numLocalVars; ++j)
-        {
+    for (int j(0); j < numLocalVars; ++j) {
       dFdX[i + numLocalVars * j] = A[i + numLocalVars * j].val();
     }
   }
 
   // call LAPACK
-  this->lapack.GESV(numLocalVars, 1, &dFdX[0], numLocalVars, &IPIV[0], &F[0],
-      numLocalVars, &info);
+  this->lapack.GESV(
+      numLocalVars,
+      1,
+      &dFdX[0],
+      numLocalVars,
+      &IPIV[0],
+      &F[0],
+      numLocalVars,
+      &info);
 
   // increment the solution
-  for (int i(0); i < numLocalVars; ++i)
-    X[i].val() -= F[i];
-
+  for (int i(0); i < numLocalVars; ++i) X[i].val() -= F[i];
 }
 
-template<typename Traits>
+template <typename Traits>
 void
-LocalNonlinearSolver<PHAL::AlbanyTraits::Jacobian, Traits>::
-computeFadInfo(
-    std::vector<ScalarT> & A,
-    std::vector<ScalarT> & X,
-    std::vector<ScalarT> & B)
+LocalNonlinearSolver<PHAL::AlbanyTraits::Jacobian, Traits>::computeFadInfo(
+    std::vector<ScalarT>& A,
+    std::vector<ScalarT>& X,
+    std::vector<ScalarT>& B)
 {
   // local system size
-  int numLocalVars = B.size();
+  int numLocalVars  = B.size();
   int numGlobalVars = B[0].size();
-  TEUCHOS_TEST_FOR_EXCEPTION(numGlobalVars == 0, std::logic_error,
-      "In LocalNonlinearSolver<Jacobian> the numGLobalVars is zero where it should be positive\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      numGlobalVars == 0,
+      std::logic_error,
+      "In LocalNonlinearSolver<Jacobian> the numGLobalVars is zero where it "
+      "should be positive\n");
 
   // data for the LAPACK call below
-  int info(0);
+  int              info(0);
   std::vector<int> IPIV(numLocalVars);
 
   // extract sensitivities of objective function(s) wrt p
@@ -142,15 +148,20 @@ computeFadInfo(
     }
   }
   // call LAPACK to simultaneously solve for all dXdP
-  this->lapack.GESV(numLocalVars, numGlobalVars, &dBdX[0], numLocalVars,
-      &IPIV[0], &dBdP[0], numLocalVars, &info);
+  this->lapack.GESV(
+      numLocalVars,
+      numGlobalVars,
+      &dBdX[0],
+      numLocalVars,
+      &IPIV[0],
+      &dBdP[0],
+      numLocalVars,
+      &info);
 
   // unpack into globalX (recall that LAPACK stores dXdP in dBdP)
-  for (int i(0); i < numLocalVars; ++i)
-      {
+  for (int i(0); i < numLocalVars; ++i) {
     X[i].resize(numGlobalVars);
-    for (int j(0); j < numGlobalVars; ++j)
-        {
+    for (int j(0); j < numGlobalVars; ++j) {
       X[i].fastAccessDx(j) = -dBdP[i + numLocalVars * j];
     }
   }
@@ -159,64 +170,70 @@ computeFadInfo(
 // -----------------------------------------------------------------------------
 // Tangent
 // -----------------------------------------------------------------------------
-template<typename Traits>
-LocalNonlinearSolver<PHAL::AlbanyTraits::Tangent, Traits>::LocalNonlinearSolver() :
-    LocalNonlinearSolver_Base<PHAL::AlbanyTraits::Tangent, Traits>()
+template <typename Traits>
+LocalNonlinearSolver<PHAL::AlbanyTraits::Tangent, Traits>::
+    LocalNonlinearSolver()
+    : LocalNonlinearSolver_Base<PHAL::AlbanyTraits::Tangent, Traits>()
 {
 }
 
-template<typename Traits>
+template <typename Traits>
 void
-LocalNonlinearSolver<PHAL::AlbanyTraits::Tangent, Traits>::
-solve(
-    std::vector<ScalarT> & A,
-    std::vector<ScalarT> & X,
-    std::vector<ScalarT> & B)
+LocalNonlinearSolver<PHAL::AlbanyTraits::Tangent, Traits>::solve(
+    std::vector<ScalarT>& A,
+    std::vector<ScalarT>& X,
+    std::vector<ScalarT>& B)
 {
   // system size
   int numLocalVars = B.size();
 
   // data for the LAPACK call below
-  int info(0);
+  int              info(0);
   std::vector<int> IPIV(numLocalVars);
 
   // fill B and dBdX
   std::vector<RealType> F(numLocalVars);
   std::vector<RealType> dFdX(numLocalVars * numLocalVars);
-  for (int i(0); i < numLocalVars; ++i)
-      {
+  for (int i(0); i < numLocalVars; ++i) {
     F[i] = B[i].val();
-    for (int j(0); j < numLocalVars; ++j)
-        {
+    for (int j(0); j < numLocalVars; ++j) {
       dFdX[i + numLocalVars * j] = A[i + numLocalVars * j].val();
     }
   }
 
   // call LAPACK
-  this->lapack.GESV(numLocalVars, 1, &dFdX[0], numLocalVars, &IPIV[0], &F[0],
-      numLocalVars, &info);
+  this->lapack.GESV(
+      numLocalVars,
+      1,
+      &dFdX[0],
+      numLocalVars,
+      &IPIV[0],
+      &F[0],
+      numLocalVars,
+      &info);
 
   // increment the solution
-  for (int i(0); i < numLocalVars; ++i)
-    X[i].val() -= F[i];
+  for (int i(0); i < numLocalVars; ++i) X[i].val() -= F[i];
 }
 
-template<typename Traits>
+template <typename Traits>
 void
-LocalNonlinearSolver<PHAL::AlbanyTraits::Tangent, Traits>::
-computeFadInfo(
-    std::vector<ScalarT> & A,
-    std::vector<ScalarT> & X,
-    std::vector<ScalarT> & B)
+LocalNonlinearSolver<PHAL::AlbanyTraits::Tangent, Traits>::computeFadInfo(
+    std::vector<ScalarT>& A,
+    std::vector<ScalarT>& X,
+    std::vector<ScalarT>& B)
 {
   // local system size
-  int numLocalVars = B.size();
+  int numLocalVars  = B.size();
   int numGlobalVars = B[0].size();
-  TEUCHOS_TEST_FOR_EXCEPTION(numGlobalVars == 0, std::logic_error,
-      "In LocalNonlinearSolver<Tangent, Traits> the numGLobalVars is zero where it should be positive\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      numGlobalVars == 0,
+      std::logic_error,
+      "In LocalNonlinearSolver<Tangent, Traits> the numGLobalVars is zero "
+      "where it should be positive\n");
 
   // data for the LAPACK call below
-  int info(0);
+  int              info(0);
   std::vector<int> IPIV(numLocalVars);
 
   // extract sensitivites of objective function(s) wrt p
@@ -236,15 +253,20 @@ computeFadInfo(
   }
 
   // call LAPACK to simultaneously solve for all dXdP
-  this->lapack.GESV(numLocalVars, numGlobalVars, &dBdX[0], numLocalVars,
-      &IPIV[0], &dBdP[0], numLocalVars, &info);
+  this->lapack.GESV(
+      numLocalVars,
+      numGlobalVars,
+      &dBdX[0],
+      numLocalVars,
+      &IPIV[0],
+      &dBdP[0],
+      numLocalVars,
+      &info);
 
   // unpack into globalX (recall that LAPACK stores dXdP in dBdP)
-  for (int i(0); i < numLocalVars; ++i)
-      {
+  for (int i(0); i < numLocalVars; ++i) {
     X[i].resize(numGlobalVars);
-    for (int j(0); j < numGlobalVars; ++j)
-        {
+    for (int j(0); j < numGlobalVars; ++j) {
       X[i].fastAccessDx(j) = -dBdP[i + numLocalVars * j];
     }
   }
@@ -253,64 +275,71 @@ computeFadInfo(
 // -----------------------------------------------------------------------------
 // DistParamDeriv
 // -----------------------------------------------------------------------------
-template<typename Traits>
-LocalNonlinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits>::LocalNonlinearSolver() :
-    LocalNonlinearSolver_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>()
+template <typename Traits>
+LocalNonlinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+    LocalNonlinearSolver()
+    : LocalNonlinearSolver_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>()
 {
 }
 
-template<typename Traits>
+template <typename Traits>
 void
-LocalNonlinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-solve(
-    std::vector<ScalarT> & A,
-    std::vector<ScalarT> & X,
-    std::vector<ScalarT> & B)
+LocalNonlinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits>::solve(
+    std::vector<ScalarT>& A,
+    std::vector<ScalarT>& X,
+    std::vector<ScalarT>& B)
 {
   // system size
   int numLocalVars = B.size();
 
   // data for the LAPACK call below
-  int info(0);
+  int              info(0);
   std::vector<int> IPIV(numLocalVars);
 
   // fill B and dBdX
   std::vector<RealType> F(numLocalVars);
   std::vector<RealType> dFdX(numLocalVars * numLocalVars);
-  for (int i(0); i < numLocalVars; ++i)
-      {
+  for (int i(0); i < numLocalVars; ++i) {
     F[i] = B[i].val();
-    for (int j(0); j < numLocalVars; ++j)
-        {
+    for (int j(0); j < numLocalVars; ++j) {
       dFdX[i + numLocalVars * j] = A[i + numLocalVars * j].val();
     }
   }
 
   // call LAPACK
-  this->lapack.GESV(numLocalVars, 1, &dFdX[0], numLocalVars, &IPIV[0], &F[0],
-      numLocalVars, &info);
+  this->lapack.GESV(
+      numLocalVars,
+      1,
+      &dFdX[0],
+      numLocalVars,
+      &IPIV[0],
+      &F[0],
+      numLocalVars,
+      &info);
 
   // increment the solution
-  for (int i(0); i < numLocalVars; ++i)
-    X[i].val() -= F[i];
+  for (int i(0); i < numLocalVars; ++i) X[i].val() -= F[i];
 }
 
-template<typename Traits>
+template <typename Traits>
 void
 LocalNonlinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-computeFadInfo(
-    std::vector<ScalarT> & A,
-    std::vector<ScalarT> & X,
-    std::vector<ScalarT> & B)
+    computeFadInfo(
+        std::vector<ScalarT>& A,
+        std::vector<ScalarT>& X,
+        std::vector<ScalarT>& B)
 {
   // local system size
-  int numLocalVars = B.size();
+  int numLocalVars  = B.size();
   int numGlobalVars = B[0].size();
-  TEUCHOS_TEST_FOR_EXCEPTION(numGlobalVars == 0, std::logic_error,
-      "In LocalNonlinearSolver<Tangent, Traits> the numGLobalVars is zero where it should be positive\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      numGlobalVars == 0,
+      std::logic_error,
+      "In LocalNonlinearSolver<Tangent, Traits> the numGLobalVars is zero "
+      "where it should be positive\n");
 
   // data for the LAPACK call below
-  int info(0);
+  int              info(0);
   std::vector<int> IPIV(numLocalVars);
 
   // extract sensitivites of objective function(s) wrt p
@@ -330,20 +359,24 @@ computeFadInfo(
   }
 
   // call LAPACK to simultaneously solve for all dXdP
-  this->lapack.GESV(numLocalVars, numGlobalVars, &dBdX[0], numLocalVars,
-      &IPIV[0], &dBdP[0], numLocalVars, &info);
+  this->lapack.GESV(
+      numLocalVars,
+      numGlobalVars,
+      &dBdX[0],
+      numLocalVars,
+      &IPIV[0],
+      &dBdP[0],
+      numLocalVars,
+      &info);
 
   // unpack into globalX (recall that LAPACK stores dXdP in dBdP)
-  for (int i(0); i < numLocalVars; ++i)
-      {
+  for (int i(0); i < numLocalVars; ++i) {
     X[i].resize(numGlobalVars);
-    for (int j(0); j < numGlobalVars; ++j)
-        {
+    for (int j(0); j < numGlobalVars; ++j) {
       X[i].fastAccessDx(j) = -dBdP[i + numLocalVars * j];
     }
   }
 }
 
 // -----------------------------------------------------------------------------
-}
-
+}  // namespace LCM
