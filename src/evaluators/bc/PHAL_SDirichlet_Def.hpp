@@ -38,11 +38,18 @@ void
 SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<Thyra_Vector> x = Teuchos::rcp_const_cast<Thyra_Vector>(dirichlet_workset.x);
+  // NOTE: you may be tempted to const_cast away the const here. However,
+  //       consider the case where x is a Thyra::TpetraVector object. The
+  //       actual Tpetra_Vector is stored as a Teuchos::ConstNonconstObjectContainer,
+  //       which (most likely) happens to be created from a const RCP, and therefore
+  //       when calling getTpetraVector (from Thyra::TpetraVector), the container
+  //       will throw.
+  //       Instead, keep the const correctness until the very last moment.
+  Teuchos::RCP<const Thyra_Vector> x = dirichlet_workset.x;
   Teuchos::RCP<Thyra_Vector> f = dirichlet_workset.f;
 
   Teuchos::ArrayRCP<ST> f_view = Albany::getNonconstLocalData(f);
-  Teuchos::ArrayRCP<ST> x_view = Albany::getNonconstLocalData(x);
+  Teuchos::ArrayRCP<ST> x_view = Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x));
 
   // Grab the vector of node GIDs for this Node Set ID
   std::vector<std::vector<int>> const& ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
@@ -79,8 +86,15 @@ void
 SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
+  // NOTE: you may be tempted to const_cast away the const here. However,
+  //       consider the case where x is a Thyra::TpetraVector object. The
+  //       actual Tpetra_Vector is stored as a Teuchos::ConstNonconstObjectContainer,
+  //       which (most likely) happens to be created from a const RCP, and therefore
+  //       when calling getTpetraVector (from Thyra::TpetraVector), the container
+  //       will throw.
+  //       Instead, keep the const correctness until the very last moment.
+  Teuchos::RCP<const Thyra_Vector> x = dirichlet_workset.x;
   Teuchos::RCP<Thyra_Vector> f = dirichlet_workset.f;
-  Teuchos::RCP<Thyra_Vector> x = Teuchos::rcp_const_cast<Thyra_Vector>(dirichlet_workset.x);
 
   // TODO: abstract away the tpetra interface
   Teuchos::RCP<Tpetra_CrsMatrix> J = Albany::getTpetraMatrix(dirichlet_workset.Jac);
@@ -96,7 +110,7 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   bool const fill_residual = f != Teuchos::null;
 
   auto f_view = fill_residual ? Albany::getNonconstLocalData(f) : Teuchos::null;
-  auto x_view = fill_residual ? Albany::getNonconstLocalData(x) : Teuchos::null;
+  auto x_view = fill_residual ? Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x)) : Teuchos::null;
 
   Teuchos::Array<Tpetra_GO> global_index(1);
 

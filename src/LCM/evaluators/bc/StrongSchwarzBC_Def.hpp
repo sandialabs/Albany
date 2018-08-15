@@ -12,8 +12,7 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
 
-#include "PHAL_SDirichlet_Def.hpp"
-
+#include "Albany_ThyraUtils.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
 
 namespace LCM {
