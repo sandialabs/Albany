@@ -94,7 +94,7 @@ namespace Albany {
                                          Albany::createConstThyraVector(xdotdotT),
                                          *scalar_params, param_name, use_transpose,
                                          Albany::createConstThyraMultiVector(XT),
-                                         YT);
+                                         Albany::createThyraMultiVector(YT));
 
       Petra::TpetraMultiVector_To_EpetraMultiVector(YT, Y, comm);
 

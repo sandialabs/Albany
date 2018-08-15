@@ -4,16 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: this has Epetra but does not get compiled if ALBANY_EPETRA_EXE is turned off.
-
-#include "Albany_Utils.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#if defined(ALBANY_EPETRA)
-#include "Epetra_Export.h"
-#include "Petra_Converters.hpp"
-#endif
 #include "PHAL_Utilities.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 // **********************************************************************
 // Base Class Generic Implemtation
@@ -34,8 +28,9 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(local_response,fm);
-  if (!this->stand_alone)
+  if (!this->stand_alone) {
     this->utils.setFieldData(local_response_eval,fm);
+  }
 }
 
 template<typename EvalT, typename Traits>
@@ -74,19 +69,18 @@ void SeparableScatterScalarResponse<PHAL::AlbanyTraits::Jacobian, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
   // Initialize derivatives
-  Teuchos::RCP<Tpetra_MultiVector> dgdxT = workset.dgdxT;
-  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxT = workset.overlapped_dgdxT;
-  if (dgdxT != Teuchos::null) {
-    dgdxT->putScalar(0.0);
-    overlapped_dgdxT->putScalar(0.0);
+  Teuchos::RCP<Thyra_MultiVector> dgdx = workset.dgdx;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_dgdx = workset.overlapped_dgdx;
+  if (dgdx != Teuchos::null) {
+    dgdx->assign(0.0);
+    overlapped_dgdx->assign(0.0);
   }
 
-  Teuchos::RCP<Tpetra_MultiVector> dgdxdotT = workset.dgdxdotT;
-  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxdotT =
-    workset.overlapped_dgdxdotT;
-  if (dgdxdotT != Teuchos::null) {
-    dgdxdotT->putScalar(0.0);
-    overlapped_dgdxdotT->putScalar(0.0);
+  Teuchos::RCP<Thyra_MultiVector> dgdxdot = workset.dgdxdot;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_dgdxdot = workset.overlapped_dgdxdot;
+  if (dgdxdot != Teuchos::null) {
+    dgdxdot->assign(0.0);
+    overlapped_dgdxdot->assign(0.0);
   }
 }
 
@@ -96,13 +90,16 @@ evaluateFields(typename Traits::EvalData workset)
 {
   // Here we scatter the *local* response derivative
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<Tpetra_MultiVector> dgdxT = workset.overlapped_dgdxT;
-  Teuchos::RCP<Tpetra_MultiVector> dgdxdotT = workset.overlapped_dgdxdotT;
-  Teuchos::RCP<Tpetra_MultiVector> dgT;
-  if (dgdxT != Teuchos::null)
-    dgT = dgdxT;
-  else
-    dgT = dgdxdotT;
+  Teuchos::RCP<Thyra_MultiVector> dgdx = workset.overlapped_dgdx;
+  Teuchos::RCP<Thyra_MultiVector> dgdxdot = workset.overlapped_dgdxdot;
+  Teuchos::RCP<Thyra_MultiVector> dg;
+  if (dgdx != Teuchos::null) {
+    dg = dgdx;
+  } else {
+    dg = dgdxdot;
+  }
+
+  auto dg_data = Albany::getNonconstLocalData(dg);
 
   // Loop over cells in workset
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -125,7 +122,8 @@ evaluateFields(typename Traits::EvalData workset)
           int dof = nodeID(cell,node_dof,eq_dof);
 
           // Set dg/dx
-          dgT->sumIntoLocalValue(dof, res, val.dx(deriv));
+          // NOTE: mv local data is in column major
+          dg_data[res][dof] += val.dx(deriv);
 
         } // column equations
       } // column nodes
@@ -139,13 +137,15 @@ void SeparableScatterScalarResponse<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData workset, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo)
 {
   // Here we scatter the *local* response derivative
-  Teuchos::RCP<Tpetra_MultiVector> dgdxT = workset.overlapped_dgdxT;
-  Teuchos::RCP<Tpetra_MultiVector> dgdxdotT = workset.overlapped_dgdxdotT;
-  Teuchos::RCP<Tpetra_MultiVector> dgT;
-  if (dgdxT != Teuchos::null)
-    dgT = dgdxT;
-  else
-    dgT = dgdxdotT;
+  Teuchos::RCP<Thyra_MultiVector> dgdx = workset.overlapped_dgdx;
+  Teuchos::RCP<Thyra_MultiVector> dgdxdot = workset.overlapped_dgdxdot;
+  Teuchos::RCP<Thyra_MultiVector> dg;
+  if (dgdx != Teuchos::null) {
+    dg = dgdx;
+  } else {
+    dg = dgdxdot;
+  }
+  auto dg_data = Albany::getNonconstLocalData(dg);
 
   const int neq = workset.wsElNodeEqID.dimension(2);
   const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
@@ -183,7 +183,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
             for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
               LO dof = solDOFManager.getLocalDOF(inode, eq_col);
               int deriv = neq *this->numNodes+il_col*neq*numSideNodes + neq*i + eq_col;
-              dgT->sumIntoLocalValue(dof, res, val.dx(deriv));
+              dg_data[res][dof] += val.dx(deriv);
             }
           }
         }
@@ -197,25 +197,26 @@ void SeparableScatterScalarResponse<PHAL::AlbanyTraits::Jacobian, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response
-  Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
-  if (gT != Teuchos::null) {
-    Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
+  Teuchos::RCP<Thyra_Vector> g = workset.g;
+  if (g != Teuchos::null) {
+    Teuchos::ArrayRCP<ST> g_nonconstView = Albany::getNonconstLocalData(g);
     for (PHAL::MDFieldIterator<const ScalarT> gr(this->global_response);
          ! gr.done(); ++gr)
-      gT_nonconstView[gr.idx()] = gr.ref().val();
+      g_nonconstView[gr.idx()] = gr.ref().val();
   }
 
   // Here we scatter the *global* response derivatives
-  Teuchos::RCP<Tpetra_MultiVector> dgdxT = workset.dgdxT;
-  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxT = workset.overlapped_dgdxT;
-  if (dgdxT != Teuchos::null)
-    dgdxT->doExport(*overlapped_dgdxT, *workset.x_importerT, Tpetra::ADD);
+  Teuchos::RCP<Thyra_MultiVector> dgdx = workset.dgdx;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_dgdx = workset.overlapped_dgdx;
+  if (dgdx != Teuchos::null) {
+    workset.x_cas_manager->combine(overlapped_dgdx, dgdx, Albany::CombineMode::ADD);
+  }
 
-  Teuchos::RCP<Tpetra_MultiVector> dgdxdotT = workset.dgdxdotT;
-  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxdotT =
-    workset.overlapped_dgdxdotT;
-  if (dgdxdotT != Teuchos::null)
-    dgdxdotT->doExport(*overlapped_dgdxdotT, *workset.x_importerT, Tpetra::ADD);
+  Teuchos::RCP<Thyra_MultiVector> dgdxdot = workset.dgdxdot;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_dgdxdot = workset.overlapped_dgdxdot;
+  if (dgdxdot != Teuchos::null) {
+    workset.x_cas_manager->combine(overlapped_dgdxdot, dgdxdot, Albany::CombineMode::ADD);
+  }
 }
 
 // **********************************************************************
@@ -236,12 +237,14 @@ preEvaluate(typename Traits::PreEvalData workset)
   //IKT, FIXME, 1/24/17: replace workset.dgdp below with workset.dgdpT 
   //once ATO:Constraint_2D_adj test passes with this change.  Remove ifdef guards 
   //when this is done. 
-  Teuchos::RCP<Tpetra_MultiVector> dgdpT = workset.dgdpT;
-  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT = workset.overlapped_dgdpT;
-  if (dgdpT != Teuchos::null)
-    dgdpT->putScalar(0.0);
-  if (overlapped_dgdpT != Teuchos::null)
-    overlapped_dgdpT->putScalar(0.0);
+  Teuchos::RCP<Thyra_MultiVector> dgdp = workset.dgdp;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_dgdp = workset.overlapped_dgdp;
+  if (dgdp != Teuchos::null) {
+    dgdp->assign(0.0);
+  }
+  if (overlapped_dgdp != Teuchos::null) {
+    overlapped_dgdp->assign(0.0);
+  }
 }
 
 template<typename Traits>
@@ -249,10 +252,13 @@ void SeparableScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv, Traits>:
 evaluateFields(typename Traits::EvalData workset)
 {
   // Here we scatter the *local* response derivative
-  Teuchos::RCP<Tpetra_MultiVector> dgdpT = workset.overlapped_dgdpT;
+  Teuchos::RCP<Thyra_MultiVector> dgdp = workset.overlapped_dgdp;
 
-  if (dgdpT == Teuchos::null)
+  if (dgdp.is_null()) {
     return;
+  }
+
+  auto dgdp_data = Albany::getNonconstLocalData(dgdp);
 
   int num_deriv = numNodes;
 
@@ -271,9 +277,8 @@ evaluateFields(typename Traits::EvalData workset)
 
           // Set dg/dp
         if(row >=0){
-          dgdpT->sumIntoLocalValue(row, res, (this->local_response(cell, res)).dx(deriv));
-          }
-
+          dgdp_data[res][row] += this->local_response(cell, res).dx(deriv);
+        }
       } // deriv
     } // response
   } // cell
@@ -283,21 +288,20 @@ template<typename Traits>
 void SeparableScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
-  if (gT != Teuchos::null) {
-    Teuchos::ArrayRCP<double> gT_nonconstView = gT->get1dViewNonConst(); 
+  Teuchos::RCP<Thyra_Vector> g = workset.g;
+  if (g != Teuchos::null) {
+    Teuchos::ArrayRCP<double> g_nonconstView = Albany::getNonconstLocalData(g);
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      gT_nonconstView[res] = this->global_response[res].val();
+      g_nonconstView[res] = this->global_response[res].val();
     }
   }
 
-  Teuchos::RCP<Tpetra_MultiVector> dgdpT = workset.dgdpT;
-  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT = workset.overlapped_dgdpT;
-  if ((dgdpT != Teuchos::null)&&(overlapped_dgdpT != Teuchos::null)) {
-    Tpetra_Export exporterT(overlapped_dgdpT->getMap(), dgdpT->getMap());
-    dgdpT->doExport(*overlapped_dgdpT, exporterT, Tpetra::ADD);
+  Teuchos::RCP<Thyra_MultiVector> dgdp = workset.dgdp;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_dgdp = workset.overlapped_dgdp;
+  if (!dgdp.is_null() && !overlapped_dgdp.is_null()) {
+
+    workset.p_cas_manager->combine(overlapped_dgdp, dgdp, Albany::CombineMode::ADD);
   }
 }
 
-}
-
+} // namespace PHAL

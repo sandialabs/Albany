@@ -48,7 +48,7 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
-      Tpetra_Vector& gT);
+      const Teuchos::RCP<Thyra_Vector>& g);
     
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
     virtual void evaluateTangent(
@@ -66,9 +66,9 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vp,
-      Tpetra_Vector* g,
-      Tpetra_MultiVector* gx,
-      Tpetra_MultiVector* gp);
+      const Teuchos::RCP<Thyra_Vector>& g,
+      const Teuchos::RCP<Thyra_MultiVector>& gx,
+      const Teuchos::RCP<Thyra_MultiVector>& gp);
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra
     virtual void evaluateGradient(
@@ -78,11 +78,11 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
-      Tpetra_Vector* gT,
-      Tpetra_Operator* dg_dxT,
-      Tpetra_Operator* dg_dxdotT,
-      Tpetra_Operator* dg_dxdotdotT,
-      Tpetra_MultiVector* dg_dpT);
+      const Teuchos::RCP<Thyra_Vector>& g,
+      const Teuchos::RCP<Thyra_LinearOp>& dg_dx,
+      const Teuchos::RCP<Thyra_LinearOp>& dg_dxdot,
+      const Teuchos::RCP<Thyra_LinearOp>& dg_dxdotdot,
+      const Teuchos::RCP<Thyra_MultiVector>& dg_dp);
 
     //! Evaluate distributed parameter derivative = dg/dp
     virtual void
@@ -93,7 +93,7 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& param_array,
       const std::string& dist_param_name,
-      Tpetra_MultiVector* dg_dpT);
+      const Teuchos::RCP<Thyra_MultiVector>& dg_dp);
     //@}
 
   private:
@@ -107,13 +107,14 @@ namespace Albany {
   protected:
     
     Teuchos::RCP<const Tpetra_Map> 
-    buildCulledMapT(const Tpetra_Map& x_mapT, 
-		   const Teuchos::Array<int>& keepDOF) const;
+    buildCulledMapT(
+      const Tpetra_Map& x_mapT, 
+		  const Teuchos::Array<int>& keepDOF) const;
     
     //Tpetra version of above function
     void cullSolution(
-        const Teuchos::RCP<const Thyra_MultiVector>& x, 
-		    Tpetra_MultiVector& x_culledT) const;
+      const Teuchos::RCP<const Thyra_MultiVector>& x, 
+      const Teuchos::RCP<Thyra_MultiVector>& x_culledT) const;
 
   protected:
 

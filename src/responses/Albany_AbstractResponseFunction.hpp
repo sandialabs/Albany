@@ -33,6 +33,11 @@ namespace Albany {
     //! Get the map associate with this response - Tpetra version 
     virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const = 0;
 
+    //! Get the vector space associated with this response.
+    // NOTE: To make life easier during Thyra refactor, simply wrap responseMapT.
+    //       If derived classes can do better, override (e.g., see AggregateScalarResponseFunction)
+    virtual Teuchos::RCP<const Thyra_VectorSpace> responseVectorSpace() const { return createThyraVectorSpace(responseMapT()); }
+
     /*!
      * \brief Is this response function "scalar" valued, i.e., has a replicated
      * local response map.
@@ -55,7 +60,7 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
-      Tpetra_Vector& gT) = 0;
+      const Teuchos::RCP<Thyra_Vector>& g) = 0;
 
     virtual void evaluateTangent(
       const double alpha,
@@ -72,9 +77,9 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vp,
-      Tpetra_Vector* g,
-      Tpetra_MultiVector* gx,
-      Tpetra_MultiVector* gp) = 0;
+      const Teuchos::RCP<Thyra_Vector>& g,
+      const Teuchos::RCP<Thyra_MultiVector>& gx,
+      const Teuchos::RCP<Thyra_MultiVector>& gp) = 0;
 
    virtual void evaluateDerivative(
       const double current_time,
@@ -83,7 +88,7 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
-      Tpetra_Vector* gT,
+      const Teuchos::RCP<Thyra_Vector>& gT,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
@@ -97,7 +102,7 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& param_array,
       const std::string& dist_param_name,
-      Tpetra_MultiVector*  dg_dpT) = 0;
+      const Teuchos::RCP<Thyra_MultiVector>& dg_dp) = 0;
     //@}
 
   private:

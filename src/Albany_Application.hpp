@@ -118,6 +118,9 @@ public:
   //! Get Tpetra DOF map
   Teuchos::RCP<const Tpetra_Map> getMapT() const;
 
+  //! Get Thyra DOF vector space 
+  Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace() const;
+
 #if defined(ALBANY_EPETRA)
   //! Get Jacobian graph
   Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const;
@@ -183,21 +186,14 @@ public:
   //! Return whether problem wants to use its own preconditioner
   bool suppliesPreconditioner() const;
 
-//! Compute global residual
-/*!
- * Set xdot to NULL for steady-state problems
- */
-#if defined(ALBANY_EPETRA)
-  double computeConditionNumber(Epetra_CrsMatrix &matrix);
-#endif
-
-  void
-  computeGlobalResidual(const double current_time,
-                        const Teuchos::RCP<const Thyra_Vector>& x,
-                        const Teuchos::RCP<const Thyra_Vector>& x_dot,
-                        const Teuchos::RCP<const Thyra_Vector>& x_dotdot,
-                        const Teuchos::Array<ParamVec> &p, Tpetra_Vector &fT,
-                        const double dt = 0.0);
+  void computeGlobalResidual(
+      const double current_time,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& x_dot,
+      const Teuchos::RCP<const Thyra_Vector>& x_dotdot,
+      const Teuchos::Array<ParamVec> &p,
+      const Teuchos::RCP<Thyra_Vector>& f,
+      const double dt = 0.0);
 
 private:
   void computeGlobalResidualImpl(
@@ -205,7 +201,8 @@ private:
       const Teuchos::RCP<const Thyra_Vector> x,
       const Teuchos::RCP<const Thyra_Vector> x_dot,
       const Teuchos::RCP<const Thyra_Vector> x_dotdot,
-      const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
+      const Teuchos::Array<ParamVec> &p,
+      const Teuchos::RCP<Thyra_Vector>& f,
       const double dt = 0.0);
 
   void computeGlobalResidualSDBCsImpl(
@@ -213,7 +210,8 @@ private:
       const Teuchos::RCP<const Thyra_Vector>& x,
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-      const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
+      const Teuchos::Array<ParamVec> &p,
+      const Teuchos::RCP<Thyra_Vector>& f,
       const double dt = 0.0);
 
 public:
@@ -221,14 +219,16 @@ public:
 /*!
  * Set xdot to NULL for steady-state problems
  */
-  void computeGlobalJacobian(const double alpha, const double beta,
-                             const double omega, const double current_time,
-                             const Teuchos::RCP<const Thyra_Vector>& x,
-                             const Teuchos::RCP<const Thyra_Vector>& xdot,
-                             const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-                             const Teuchos::Array<ParamVec> &p,
-                             Tpetra_Vector *fT, Tpetra_CrsMatrix &jacT,
-                             const double dt = 0.0);
+  void computeGlobalJacobian(
+      const double alpha, const double beta,
+      const double omega, const double current_time,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec> &p,
+      const Teuchos::RCP<Thyra_Vector>& f,
+      const Teuchos::RCP<Thyra_LinearOp>& jac,
+      const double dt = 0.0);
 
 private:
   void computeGlobalJacobianImpl(
@@ -237,8 +237,9 @@ private:
       const Teuchos::RCP<const Thyra_Vector>& x,
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-      const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
-      const Teuchos::RCP<Tpetra_CrsMatrix> &jacT,
+      const Teuchos::Array<ParamVec> &p,
+      const Teuchos::RCP<Thyra_Vector>& f,
+      const Teuchos::RCP<Thyra_LinearOp>& jac,
       const double dt = 0.0);
 
   void computeGlobalJacobianSDBCsImpl(
@@ -247,8 +248,9 @@ private:
       const Teuchos::RCP<const Thyra_Vector>& x,
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-      const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
-      const Teuchos::RCP<Tpetra_CrsMatrix> &jacT,
+      const Teuchos::Array<ParamVec> &p,
+      const Teuchos::RCP<Thyra_Vector>& f,
+      const Teuchos::RCP<Thyra_LinearOp>& jac,
       const double dt = 0.0);
 
 public:
@@ -275,9 +277,9 @@ public:
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vp,
-      const Teuchos::RCP<Tpetra_Vector> &fT,
-      const Teuchos::RCP<Tpetra_MultiVector> &JVT,
-      const Teuchos::RCP<Tpetra_MultiVector> &fpT);
+      const Teuchos::RCP<Thyra_Vector>& f,
+      const Teuchos::RCP<Thyra_MultiVector>& JV,
+      const Teuchos::RCP<Thyra_MultiVector>& fp);
 
 public:
   //! Compute df/dp*V or (df/dp)^T*V for distributed parameter p
@@ -294,17 +296,19 @@ public:
       const std::string &dist_param_name,
       const bool trans,
       const Teuchos::RCP<const Thyra_MultiVector>& V,
-      const Teuchos::RCP<Tpetra_MultiVector> &fpVT);
+      const Teuchos::RCP<Thyra_MultiVector>& fpV);
 
   //! Evaluate response functions
   /*!
    * Set xdot to NULL for steady-state problems
    */
-  void evaluateResponse(int response_index, const double current_time,
-                        const Teuchos::RCP<const Thyra_Vector>& x,
-                        const Teuchos::RCP<const Thyra_Vector>& xdot,
-                        const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-                        const Teuchos::Array<ParamVec> &p, Tpetra_Vector &gT);
+  void evaluateResponse(
+      int response_index, const double current_time,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec> &p,
+      const Teuchos::RCP<Thyra_Vector>& g);
 
   //! Evaluate tangent = alpha*dg/dx*Vx + beta*dg/dxdot*Vxdot + dg/dp*Vp
   /*!
@@ -322,8 +326,9 @@ public:
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vp,
-      Tpetra_Vector *gT, Tpetra_MultiVector *gxT,
-      Tpetra_MultiVector *gpT);
+      const Teuchos::RCP<Thyra_Vector>& g,
+      const Teuchos::RCP<Thyra_MultiVector>& gx,
+      const Teuchos::RCP<Thyra_MultiVector>& gp);
 
 //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
 /*!
@@ -334,11 +339,12 @@ public:
       const Teuchos::RCP<const Thyra_Vector>& x,
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-      const Teuchos::Array<ParamVec> &p, ParamVec *deriv_p, Tpetra_Vector *gT,
-      const Thyra::ModelEvaluatorBase::Derivative<ST> &dg_dxT,
-      const Thyra::ModelEvaluatorBase::Derivative<ST> &dg_dxdotT,
-      const Thyra::ModelEvaluatorBase::Derivative<ST> &dg_dxdotdotT,
-      const Thyra::ModelEvaluatorBase::Derivative<ST> &dg_dpT);
+      const Teuchos::Array<ParamVec> &p, ParamVec *deriv_p,
+      const Teuchos::RCP<Thyra_Vector>& g,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp);
 
   void evaluateResponseDistParamDeriv(
       int response_index, const double current_time,
@@ -346,7 +352,8 @@ public:
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec> &param_array,
-      const std::string &dist_param_name, Tpetra_MultiVector *dg_dp);
+      const std::string &dist_param_name,
+      const Teuchos::RCP<Thyra_MultiVector>& dg_dp);
 
   //! Provide access to shapeParameters -- no AD
   PHAL::AlbanyTraits::Residual::ScalarT &getValue(const std::string &n);
@@ -430,11 +437,11 @@ public:
   void loadBasicWorksetInfo(PHAL::Workset &workset, double current_time);
 
   void loadBasicWorksetInfoSDBCs(PHAL::Workset &workset,
-                                 Teuchos::RCP<const Tpetra_Vector> owned_sol,
-                                 double current_time);
+                                 const Teuchos::RCP<const Thyra_Vector>& owned_sol,
+                                 const double current_time);
 
-  void loadWorksetJacobianInfo(PHAL::Workset &workset, const double &alpha,
-                               const double &beta, const double &omega);
+  void loadWorksetJacobianInfo(PHAL::Workset &workset, const double alpha,
+                               const double beta, const double omega);
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>
   getEnrichedMeshSpecs() const {
@@ -448,8 +455,8 @@ public:
   void loadWorksetSidesetInfo(PHAL::Workset &workset, const int ws);
 
   //! Routines for setting a scaling to be applied to the Jacobian/resdiual
-  void setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT = Teuchos::null);
-  void setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<Tpetra_CrsMatrix> jacT = Teuchos::null);
+  void setScale(Teuchos::RCP<const Thyra_LinearOp> jac = Teuchos::null);
+  void setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<const Thyra_LinearOp> jac = Teuchos::null);
 
   void setupBasicWorksetInfo(PHAL::Workset &workset, double current_time,
                              const Teuchos::RCP<const Thyra_Vector>& x,
@@ -767,7 +774,7 @@ protected:
   // The following are for Jacobian/residual scaling
   Teuchos::Array<Teuchos::Array<int>> offsets_;
   std::vector<std::string> nodeSetIDs_;
-  Teuchos::RCP<Tpetra_Vector> scaleVec_;
+  Teuchos::RCP<Thyra_Vector> scaleVec_;
 
   // boolean read from input file telling code whether to compute/print
   // responses every step

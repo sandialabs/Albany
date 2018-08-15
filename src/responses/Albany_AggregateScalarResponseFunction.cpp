@@ -7,9 +7,9 @@
 
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_Application.hpp"
+#include "Albany_ThyraUtils.hpp"
 
-using Teuchos::RCP;
-using Teuchos::rcp;
+#include "Thyra_DefaultProductVectorSpace.hpp"
 
 Albany::AggregateScalarResponseFunction::
 AggregateScalarResponseFunction(
@@ -18,6 +18,12 @@ AggregateScalarResponseFunction(
   SamplingBasedScalarResponseFunction(commT),
   responses(responses_)
 {
+  Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> vss(responses.size());
+  for (int i=0; i<responses.size(); ++i) {
+    vss[i] = responses[i]->responseVectorSpace();
+  }
+
+  productVectorSpace = Thyra::productVectorSpace(vss());
 }
 
 void
@@ -62,33 +68,45 @@ evaluateResponse(const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
 		const Teuchos::Array<ParamVec>& p,
-		Tpetra_Vector& gT)
+    const Teuchos::RCP<Thyra_Vector>& g)
 {
+  if (g.is_null()) {
+    return;
+  }
+
+  // NOTE: You CANNOT use ProduceVector's if you want to maintain support for EpetraExt::ModelEvaluator,
+  //       since that class has no knowledge of vector spaces, and would try to build a monolithic map
+  //       for the aggregate response. For now, stick with monolithic responses and manual copies (eww)
+
+  /*
+   * // Cast response to product vector
+   * auto g_prod = getProductVector(g);
+   * 
+   * for (unsigned int i=0; i<responses.size(); i++) {
+   *   // Evaluate response function
+   *   responses[i]->evaluateResponse(current_time, x, xdot, xdotdot, p, g_prod->getNonconstVectorBlock(i));
+   * }
+   */
+
+  Teuchos::ArrayRCP<ST> g_data = getNonconstLocalData(g); // We already checked g is not null
+  Teuchos::ArrayRCP<const ST> gi_data;
+
   unsigned int offset = 0;
   for (unsigned int i=0; i<responses.size(); i++) {
-
-    // Create Tpetra_Map for response function
-    unsigned int num_responses = responses[i]->numResponses();
-    Teuchos::RCP<const Teuchos::Comm<int> > commT = responses[i]->getComm(); 
-    Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
-    Teuchos::RCP<Tpetra_Map> local_response_map = Teuchos::rcp(new Tpetra_Map(num_responses, 0, commT, lg));
-    
-    // Create Tpetra_Vector for response function
-    Teuchos::RCP<Tpetra_Vector> local_gT = Teuchos::rcp(new Tpetra_Vector(local_response_map));
-  
+    // Create Thyra_Vector for response function
+    Teuchos::RCP<Thyra_Vector> g_i = Thyra::createMember(productVectorSpace->getBlock(i));
+    gi_data = getLocalData(g_i.getConst());
+ 
     // Evaluate response function
-    responses[i]->evaluateResponse(current_time, x, xdot, xdotdot, p, *local_gT);
-    
-    //get views of g and local_g for element access
-    Teuchos::ArrayRCP<const ST> local_gT_constView = local_gT->get1dView();
-    Teuchos::ArrayRCP<ST> gT_nonconstView = gT.get1dViewNonConst();
+    responses[i]->evaluateResponse(current_time, x, xdot, xdotdot, p, g_i);
 
-    // Copy result into combined result
-    for (unsigned int j=0; j<num_responses; j++)
-      gT_nonconstView[offset+j] = local_gT_constView[j];
+    // Copy into the monolithic vector
+    for (unsigned int j=0; j<responses[i]->numResponses(); ++j) {
+      g_data[offset+j] = gi_data[j];
+    }
 
-    // Increment offset in combined result
-    offset += num_responses;
+    // Update offset
+    offset += responses[i]->numResponses();
   }
 }
 
@@ -108,70 +126,96 @@ evaluateTangent(const double alpha,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
     const Teuchos::RCP<const Thyra_MultiVector>& Vp,
-		Tpetra_Vector* gT,
-		Tpetra_MultiVector* gxT,
-		Tpetra_MultiVector* gpT)
+		const Teuchos::RCP<Thyra_Vector>& g,
+		const Teuchos::RCP<Thyra_MultiVector>& gx,
+		const Teuchos::RCP<Thyra_MultiVector>& gp)
 {
+  // NOTE: You CANNOT use ProduceVector's if you want to maintain support for EpetraExt::ModelEvaluator,
+  //       since that class has no knowledge of vector spaces, and would try to build a monolithic map
+  //       for the aggregate response. For now, stick with monolithic responses and manual copies (eww)
+
+/*
+ *   // Cast response (and derivs) to product (multi)vector
+ *   auto g_prod = getProductVector(g);
+ *   auto gx_prod = getProductMultiVector(gx);
+ *   auto gp_prod = getProductMultiVector(gp);
+ * 
+ *   for (unsigned int i=0; i<responses.size(); i++) {
+ *     // Create Thyra_(Multi)Vector's for response function
+ *     Teuchos::RCP<Thyra_Vector> g_i;
+ *     Teuchos::RCP<Thyra_MultiVector> gx_i, gp_i;
+ *     if (!g.is_null()) {
+ *       g_i = g_prod->getNonconstVectorBlock(i);
+ *     }
+ *     if (!gx.is_null()) {
+ *       gx_i = gx_prod->getNonconstMultiVectorBlock(i);
+ *     }
+ *     if (!gp.is_null()) {
+ *       gp_i = gp_prod->getNonconstMultiVectorBlock(i);
+ *     }
+ * 
+ *     // Evaluate response function
+ *     responses[i]->evaluateTangent(alpha, beta, omega, current_time, sum_derivs,
+ *           x, xdot, xdotdot, p, deriv_p, Vx, Vxdot, Vxdotdot, Vp, 
+ *           g_i, gx_i, gp_i);
+ *   }
+ */
+
+  Teuchos::ArrayRCP<ST> g_data;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> gx_data, gp_data;
+
+  if (!g.is_null())  { g_data  = getNonconstLocalData(g);  }
+  if (!gx.is_null()) { gx_data = getNonconstLocalData(gx); }
+  if (!gp.is_null()) { gp_data = getNonconstLocalData(gp); }
+
+  Teuchos::ArrayRCP<const ST> gi_data;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> gxi_data, gpi_data;
+
   unsigned int offset = 0;
   for (unsigned int i=0; i<responses.size(); i++) {
+    auto vs_i = productVectorSpace->getBlock(i);
 
-    // Create Tpetra_Map for response function
-    unsigned int num_responses = responses[i]->numResponses();
-    Teuchos::RCP<const Teuchos::Comm<int> > commT = responses[i]->getComm(); 
-    Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
-    Teuchos::RCP<Tpetra_Map> local_response_map = Teuchos::rcp(new Tpetra_Map(num_responses, 0, commT, lg));
+    // Create Thyra_(Multi)Vector's for response function
+    Teuchos::RCP<Thyra_Vector> g_i;
+    Teuchos::RCP<Thyra_MultiVector> gx_i, gp_i;
 
-    // Create Tpetra_Vectors for response function
-    RCP<Tpetra_Vector> local_gT;
-    RCP<Tpetra_MultiVector> local_gxT, local_gpT;
-    if (gT != NULL)
-      local_gT = rcp(new Tpetra_Vector(local_response_map));
-    if (gxT != NULL)
-      local_gxT = rcp(new Tpetra_MultiVector(local_response_map, 
-					    gxT->getNumVectors()));
-    if (gpT != NULL)
-      local_gpT = rcp(new Tpetra_MultiVector(local_response_map, 
-					    gpT->getNumVectors()));
-
+    if (!g.is_null()) {
+      g_i = Thyra::createMember(vs_i);
+      gi_data = getLocalData(g_i.getConst());
+    }
+    if (!gx.is_null()) {
+      gx_i = Thyra::createMembers(vs_i,gx->domain()->dim());
+      gxi_data = getLocalData(gx_i.getConst());
+    }
+    if (!gp.is_null()) {
+      gp_i = Thyra::createMembers(vs_i,gp->domain()->dim());
+      gpi_data = getLocalData(gp_i.getConst());
+    }
+ 
     // Evaluate response function
     responses[i]->evaluateTangent(alpha, beta, omega, current_time, sum_derivs,
-				  x, xdot, xdotdot, p, deriv_p, Vx, Vxdot, Vxdotdot, Vp, 
-				  local_gT.get(), local_gxT.get(), 
-				  local_gpT.get());
+          x, xdot, xdotdot, p, deriv_p, Vx, Vxdot, Vxdotdot, Vp, 
+          g_i, gx_i, gp_i);
 
-    Teuchos::ArrayRCP<const ST> local_gT_constView;
-    Teuchos::ArrayRCP<ST> gT_nonconstView;
-    if (gT != NULL) { 
-      local_gT_constView = local_gT->get1dView();
-      gT_nonconstView = gT->get1dViewNonConst();
-    }
-
-    // Copy results into combined result
-    for (unsigned int j=0; j<num_responses; j++) {
-      if (gT != NULL)
-        gT_nonconstView[offset+j] = local_gT_constView[j];
-      if (gxT != NULL) {
-        Teuchos::ArrayRCP<ST> gxT_nonconstView;
-        Teuchos::ArrayRCP<const ST> local_gxT_constView;
-	for (int k=0; k<gxT->getNumVectors(); k++) {
-          gxT_nonconstView = gxT->getDataNonConst(k); 
-          local_gxT_constView = local_gxT->getData(k); 
-	  gxT_nonconstView[offset+j] = local_gxT_constView[j];
-         }
+    // Copy into the monolithic (multi)vectors
+    for (unsigned int j=0; j<responses[i]->numResponses(); ++j) {
+      if (!g.is_null()) {
+        g_data[offset+j] = gi_data[j];
       }
-      if (gpT != NULL) {
-        Teuchos::ArrayRCP<ST> gpT_nonconstView;
-        Teuchos::ArrayRCP<const ST> local_gpT_constView;
-	for (int k=0; k<gpT->getNumVectors(); k++) {
-          gpT_nonconstView = gpT->getDataNonConst(k); 
-          local_gpT_constView = local_gpT->getData(k); 
-	  gpT_nonconstView[offset+j] = local_gpT_constView[j];
+      if (!gx.is_null()) {
+        for (int col=0; col<gx->domain()->dim(); ++col) {
+          gx_data[col][offset+j] = gxi_data[col][j];
+        }
+      }
+      if (!gp.is_null()) {
+        for (int col=0; col<gp->domain()->dim(); ++col) {
+          gp_data[col][offset+j] = gpi_data[col][j];
         }
       }
     }
 
-    // Increment offset in combined result
-    offset += num_responses; 
+    // Update the offset
+    offset += vs_i->dim();
   }
 }
 
@@ -183,80 +227,67 @@ evaluateGradient(const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
 		const Teuchos::Array<ParamVec>& p,
 		ParamVec* deriv_p,
-		Tpetra_Vector* gT,
-		Tpetra_MultiVector* dg_dxT,
-		Tpetra_MultiVector* dg_dxdotT,
-		Tpetra_MultiVector* dg_dxdotdotT,
-		Tpetra_MultiVector* dg_dpT)
+		const Teuchos::RCP<Thyra_Vector>& g,
+		const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
+		const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
+		const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
+		const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
+  // NOTE: You CANNOT use ProduceVector's if you want to maintain support for EpetraExt::ModelEvaluator,
+  //       since that class has no knowledge of vector spaces, and would try to build a monolithic map
+  //       for the aggregate response. For now, stick with monolithic responses and manual copies (eww)
+
+  /*
+   * // Cast response (and param deriv) to product (multi)vector
+   * auto g_prod     = getProductVector(g);
+   */
+
+  Teuchos::ArrayRCP<ST> g_data;
+  Teuchos::ArrayRCP<const ST> gi_data;
+  if (!g.is_null()) {
+    g_data = getNonconstLocalData(g);
+  }
+
   unsigned int offset = 0;
   for (unsigned int i=0; i<responses.size(); i++) {
+    auto vs_i = productVectorSpace->getBlock(i);
 
-    // Create Tpetra_Map for response function
-    unsigned int num_responses = responses[i]->numResponses();
-    Teuchos::RCP<const Teuchos::Comm<int> > commT = responses[i]->getComm(); 
-    Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
-    Teuchos::RCP<Tpetra_Map> local_response_map = Teuchos::rcp(new Tpetra_Map(num_responses, 0, commT, lg));
+    // dg_dx, dg_dxdot, and dg_dxdotdot for the i-th response are simply
+    // a subview of the columns of the corresponding input MV's, at the proper offset
+    Teuchos::Range1D colRange(offset, offset+vs_i->dim()-1);
 
-    // Create Epetra_Vectors for response function
-    RCP<Tpetra_Vector> local_gT;
-    if (gT != NULL)
-      local_gT = rcp(new Tpetra_Vector(local_response_map));
-    RCP<Tpetra_MultiVector> local_dgdxT;
-    if (dg_dxT != NULL)
-      local_dgdxT = rcp(new Tpetra_MultiVector(dg_dxT->getMap(), num_responses));
-    RCP<Tpetra_MultiVector> local_dgdxdotT;
-    if (dg_dxdotT != NULL)
-      local_dgdxdotT = rcp(new Tpetra_MultiVector(dg_dxdotT->getMap(), 
-						 num_responses));
-    RCP<Tpetra_MultiVector> local_dgdxdotdotT;
-    if (dg_dxdotdotT != NULL)
-      local_dgdxdotdotT = rcp(new Tpetra_MultiVector(dg_dxdotdotT->getMap(), num_responses));
-    RCP<Tpetra_MultiVector> local_dgdpT;
-    if (dg_dpT != NULL)
-      local_dgdpT = rcp(new Tpetra_MultiVector(local_response_map, 
-					      dg_dpT->getNumVectors()));
+    // Create Thyra_(Multi)Vector's for response function
+    Teuchos::RCP<Thyra_Vector> g_i;
+    Teuchos::RCP<Thyra_MultiVector> dg_dx_i, dg_dxdot_i, dg_dxdotdot_i, dg_dp_i;
+    if (!g.is_null()) {
+      g_i = Thyra::createMember(vs_i);
+    }
+    if (!dg_dx.is_null()) {
+      dg_dx_i = dg_dx->subView(colRange);
+    }
+    if (!dg_dxdot.is_null()) {
+      dg_dxdot_i = dg_dxdot->subView(colRange);
+    }
+    if (!dg_dxdotdot.is_null()) {
+      dg_dxdotdot_i = dg_dxdotdot->subView(colRange);
+    }
+    if (!dg_dp.is_null()) {
+      dg_dp_i = dg_dp->subView(colRange);
+    }
 
     // Evaluate response function
     responses[i]->evaluateGradient(current_time, x, xdot, xdotdot, p, deriv_p, 
-				   local_gT.get(), local_dgdxT.get(), 
-				   local_dgdxdotT.get(), local_dgdxdotdotT.get(), local_dgdpT.get());
+                                   g_i, dg_dx_i, dg_dxdot_i, dg_dxdotdot_i, dg_dp_i);
 
-    // Copy results into combined result
-    for (unsigned int j=0; j<num_responses; j++) {
-      if (gT != NULL) {
-        const Teuchos::ArrayRCP<const ST> local_gT_constView = local_gT->get1dView();
-        const Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
-        gT_nonconstView[offset+j] = local_gT_constView[j];
-      }
-      if (dg_dxT != NULL) {
-        Teuchos::RCP<Tpetra_Vector> dg_dxT_vec = dg_dxT->getVectorNonConst(offset+j); 
-        Teuchos::RCP<const Tpetra_Vector> local_dgdxT_vec = local_dgdxT->getVector(j);
-        dg_dxT_vec->update(1.0, *local_dgdxT_vec, 0.0);  
-      }
-      if (dg_dxdotT != NULL) {
-        Teuchos::RCP<Tpetra_Vector> dg_dxdotT_vec = dg_dxdotT->getVectorNonConst(offset+j); 
-        Teuchos::RCP<const Tpetra_Vector> local_dgdxdotT_vec = local_dgdxdotT->getVector(j);
-        dg_dxdotT_vec->update(1.0, *local_dgdxdotT_vec, 0.0);  
-        }
-      if (dg_dxdotdotT != NULL){
-        Teuchos::RCP<Tpetra_Vector> dg_dxdotdotT_vec = dg_dxdotdotT->getVectorNonConst(offset+j); 
-        Teuchos::RCP<const Tpetra_Vector> local_dgdxdotdotT_vec = local_dgdxdotdotT->getVector(j);
-        dg_dxdotdotT_vec->update(1.0, *local_dgdxdotdotT_vec, 0.0);  
-      }
-      if (dg_dpT != NULL) {
-        Teuchos::ArrayRCP<ST> dg_dpT_nonconstView;
-        Teuchos::ArrayRCP<const ST> local_dgdpT_constView;
-	for (int k=0; k<dg_dpT->getNumVectors(); k++) {
-          local_dgdpT_constView = local_dgdpT->getData(k); 
-          dg_dpT_nonconstView = dg_dpT->getDataNonConst(k); 
-	  dg_dpT_nonconstView[offset+j] = local_dgdpT_constView[j];
-        }
+    if (!g.is_null()) {
+      gi_data = getLocalData(g_i.getConst());
+      for (unsigned int j=0; j<responses[i]->numResponses(); ++j) {
+        g_data[offset+j] = gi_data[j];
       }
     }
 
-    // Increment offset in combined result
-    offset += num_responses;
+    // Update the offset
+    offset += vs_i->dim();
   }
 }
 
@@ -269,39 +300,33 @@ evaluateDistParamDeriv(
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec>& param_array,
     const std::string& dist_param_name,
-    Tpetra_MultiVector* dg_dpT)
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
-  if (dg_dpT != NULL) {
-    dg_dpT->putScalar(0);
+  if (dg_dp.is_null()) {
+    return;
   }
 
   unsigned int offset = 0;
   for (unsigned int i=0; i<responses.size(); i++) {
+    auto vs_i = productVectorSpace->getBlock(i);
 
-    // Create Epetra_Map for response function
-    int num_responses = responses[i]->numResponses();
+    // dg_dp for the i-th response is simply a subview of the columns
+    // of the corresponding input MV, at the proper offset
+    Teuchos::Range1D colRange(offset, offset+vs_i->dim()-1);
 
-    // Create Epetra_MultiVectors for response derivative function
-    RCP<Tpetra_MultiVector> aggregated_dgdpT;
-    if (dg_dpT != NULL) {
-      aggregated_dgdpT = rcp(new Tpetra_MultiVector(dg_dpT->getMap(),num_responses));
+    // Create Thyra_MultiVector for response function
+    Teuchos::RCP<Thyra_MultiVector> dg_dp_i;
+    if (!dg_dp.is_null()) {
+      dg_dp_i = dg_dp->subView(colRange);
     }
 
-    // Evaluate response function
+    // Evaluate response derivative
     responses[i]->evaluateDistParamDeriv(
             current_time, x, xdot, xdotdot,
             param_array, dist_param_name,
-            aggregated_dgdpT.get());
+            dg_dp_i);
 
-    // Copy results into combined result
-    if (dg_dpT != NULL) {
-      Teuchos::ArrayRCP<ST> dg_dpT_nonconstView;
-      Teuchos::ArrayRCP<const ST> local_aggregated_dgdpT_constView;
-      for (int k=0; k<num_responses; k++)
-        dg_dpT->getVectorNonConst(offset+k)->assign(*aggregated_dgdpT->getVector(k));
-
-    }
-    // Increment offset in combined result
-    offset += num_responses;
+    // Update the offset
+    offset += vs_i->dim();
   }
 }

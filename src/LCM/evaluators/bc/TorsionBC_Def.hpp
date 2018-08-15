@@ -4,11 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
-#include "Teuchos_TestForException.hpp"
 
-#include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 // **********************************************************************
 // Genereric Template Code for Constructor and PostRegistrationSetup
@@ -17,68 +17,67 @@
 namespace LCM {
 
 template <typename EvalT, typename Traits>
-TorsionBC_Base<EvalT, Traits>::TorsionBC_Base(Teuchos::ParameterList& p)
-    : PHAL::DirichletBase<EvalT, Traits>(p),
-      thetaDot(p.get<RealType>("Theta Dot")),
-      X0(p.get<RealType>("X0")),
-      Y0(p.get<RealType>("Y0"))
+TorsionBC_Base<EvalT, Traits>::
+TorsionBC_Base(Teuchos::ParameterList& p) :
+  PHAL::DirichletBase<EvalT, Traits>(p),
+  thetaDot(p.get<RealType>("Theta Dot")),
+  X0(p.get<RealType>("X0")),
+  Y0(p.get<RealType>("Y0"))
 {
 }
 
 // **********************************************************************
-template <typename EvalT, typename Traits>
+template<typename EvalT, typename Traits>
 void
-TorsionBC_Base<EvalT, Traits>::computeBCs(
-    double*        coord,
-    ScalarT&       Xval,
-    ScalarT&       Yval,
-    const RealType time)
+TorsionBC_Base<EvalT, Traits>::
+computeBCs(double* coord, ScalarT& Xval, ScalarT& Yval,
+           const RealType time)
 {
   RealType X(coord[0]);
   RealType Y(coord[1]);
-  RealType theta(thetaDot * time);
+  RealType theta(thetaDot*time);
 
   // compute displace Xval and Yval. (X0,Y0) is the center of rotation/torsion
-  Xval = X0 + (X - X0) * std::cos(theta) - (Y - Y0) * std::sin(theta) - X;
-  Yval = Y0 + (X - X0) * std::sin(theta) + (Y - Y0) * std::cos(theta) - Y;
+  Xval = X0 + (X-X0) * std::cos(theta) - (Y-Y0) * std::sin(theta) - X;
+  Yval = Y0 + (X-X0) * std::sin(theta) + (Y-Y0) * std::cos(theta) - Y;
 
   // a different set of bc, for comparison with analytical solution
-  // RealType L = 2.0;
-  // Xval = -theta * L * Y;
-  // Yval = theta * L * X;
+  //RealType L = 2.0;
+  //Xval = -theta * L * Y;
+  //Yval = theta * L * X;
 }
 
 // **********************************************************************
 // Specialization: Residual
 // **********************************************************************
-template <typename Traits>
-TorsionBC<PHAL::AlbanyTraits::Residual, Traits>::TorsionBC(
-    Teuchos::ParameterList& p)
-    : TorsionBC_Base<PHAL::AlbanyTraits::Residual, Traits>(p)
+template<typename Traits>
+TorsionBC<PHAL::AlbanyTraits::Residual, Traits>::
+TorsionBC(Teuchos::ParameterList& p) :
+  TorsionBC_Base<PHAL::AlbanyTraits::Residual, Traits>(p)
 {
 }
 
 // **********************************************************************
-template <typename Traits>
+template<typename Traits>
 void
-TorsionBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
-    typename Traits::EvalData dirichletWorkset)
+TorsionBC<PHAL::AlbanyTraits::Residual, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Tpetra_Vector>       fT = dirichletWorkset.fT;
-  Teuchos::RCP<const Tpetra_Vector> xT =
-      Albany::getConstTpetraVector(dirichletWorkset.x);
-  Teuchos::ArrayRCP<const ST> xT_constView    = xT->get1dView();
-  Teuchos::ArrayRCP<ST>       fT_nonconstView = fT->get1dViewNonConst();
+  Teuchos::RCP<const Thyra_Vector> x = dirichletWorkset.x;
+  Teuchos::RCP<Thyra_Vector>       f = dirichletWorkset.f;
+
+  Teuchos::ArrayRCP<const ST> x_constView    = Albany::getLocalData(x);
+  Teuchos::ArrayRCP<ST>       f_nonconstView = Albany::getNonconstLocalData(f);
 
   // Grab the vector off node GIDs for this Node Set ID from the std::map
   const std::vector<std::vector<int>>& nsNodes =
-      dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   const std::vector<double*>& nsNodeCoords =
-      dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
+    dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
   RealType time = dirichletWorkset.current_time;
 
-  int     xlunk, ylunk;  // global and local indicies into unknown vector
+  int xlunk, ylunk; // global and local indicies into unknown vector
   double* coord;
   ScalarT Xval, Yval;
 
@@ -89,8 +88,8 @@ TorsionBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
 
     this->computeBCs(coord, Xval, Yval, time);
 
-    fT_nonconstView[xlunk] = xT_constView[xlunk] - Xval;
-    fT_nonconstView[ylunk] = xT_constView[ylunk] - Yval;
+    f_nonconstView[xlunk] = x_constView[xlunk] - Xval;
+    f_nonconstView[ylunk] = x_constView[ylunk] - Yval;
 
     // Record DOFs to avoid setting Schwarz BCs on them.
     dirichletWorkset.fixed_dofs_.insert(xlunk);
@@ -101,48 +100,52 @@ TorsionBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
 // **********************************************************************
 // Specialization: Jacobian
 // **********************************************************************
-template <typename Traits>
-TorsionBC<PHAL::AlbanyTraits::Jacobian, Traits>::TorsionBC(
-    Teuchos::ParameterList& p)
-    : TorsionBC_Base<PHAL::AlbanyTraits::Jacobian, Traits>(p)
+template<typename Traits>
+TorsionBC<PHAL::AlbanyTraits::Jacobian, Traits>::
+TorsionBC(Teuchos::ParameterList& p) :
+  TorsionBC_Base<PHAL::AlbanyTraits::Jacobian, Traits>(p)
 {
 }
 // **********************************************************************
-template <typename Traits>
-void
-TorsionBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
-    typename Traits::EvalData dirichletWorkset)
+template<typename Traits>
+void TorsionBC<PHAL::AlbanyTraits::Jacobian, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Tpetra_Vector>       fT = dirichletWorkset.fT;
-  Teuchos::RCP<const Tpetra_Vector> xT =
-      Albany::getConstTpetraVector(dirichletWorkset.x);
-  Teuchos::ArrayRCP<const ST>    xT_constView = xT->get1dView();
-  Teuchos::RCP<Tpetra_CrsMatrix> jacT         = dirichletWorkset.JacT;
+  Teuchos::RCP<const Thyra_Vector> x   = dirichletWorkset.x;
+  Teuchos::RCP<Thyra_Vector>       f   = dirichletWorkset.f;
+  Teuchos::RCP<Thyra_LinearOp>     jac = dirichletWorkset.Jac;
 
-  const RealType                       j_coeff = dirichletWorkset.j_coeff;
+  Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(x);
+  Teuchos::ArrayRCP<ST>       f_nonconstView;
+
+
+  const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int>>& nsNodes =
-      dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   const std::vector<double*>& nsNodeCoords =
-      dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
+    dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
-  bool                  fillResid = (fT != Teuchos::null);
-  Teuchos::ArrayRCP<ST> fT_nonconstView;
-  if (fillResid) fT_nonconstView = fT->get1dViewNonConst();
+  bool fillResid = (f != Teuchos::null);
+  if (fillResid) {
+    f_nonconstView = Albany::getNonconstLocalData(f);
+  }
 
   RealType time = dirichletWorkset.current_time;
 
-  int     xlunk, ylunk;  // local indicies into unknown vector
+  int xlunk, ylunk; // local indicies into unknown vector
   double* coord;
   ScalarT Xval, Yval;
 
   Teuchos::Array<LO> index(1);
   Teuchos::Array<ST> value(1);
-  size_t             numEntriesT;
+  size_t numEntries;
   value[0] = j_coeff;
-  Teuchos::Array<ST> matrixEntriesT;
-  Teuchos::Array<LO> matrixIndicesT;
+  Teuchos::Array<ST> matrixEntries;
+  Teuchos::Array<LO> matrixIndices;
 
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
+  {
     xlunk = nsNodes[inode][0];
     ylunk = nsNodes[inode][1];
     coord = nsNodeCoords[inode];
@@ -150,32 +153,23 @@ TorsionBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
     this->computeBCs(coord, Xval, Yval, time);
 
     // replace jac values for the X dof
-    numEntriesT = jacT->getNumEntriesInLocalRow(xlunk);
-    matrixEntriesT.resize(numEntriesT);
-    matrixIndicesT.resize(numEntriesT);
-    jacT->getLocalRowCopy(
-        xlunk, matrixIndicesT(), matrixEntriesT(), numEntriesT);
-    for (int i = 0; i < numEntriesT; i++) matrixEntriesT[i] = 0;
-    jacT->replaceLocalValues(xlunk, matrixIndicesT(), matrixEntriesT());
-
+    Albany::getLocalRowValues(jac, xlunk, matrixIndices, matrixEntries);
+    for (auto& val : matrixEntries) { val = 0.0; }
+    Albany::setLocalRowValues(jac, xlunk, matrixIndices(), matrixEntries());
     index[0] = xlunk;
-    jacT->replaceLocalValues(xlunk, index(), value());
+    Albany::setLocalRowValues(jac, xlunk, index(), value());
 
     // replace jac values for the y dof
-    numEntriesT = jacT->getNumEntriesInLocalRow(ylunk);
-    matrixEntriesT.resize(numEntriesT);
-    matrixIndicesT.resize(numEntriesT);
-    jacT->getLocalRowCopy(
-        ylunk, matrixIndicesT(), matrixEntriesT(), numEntriesT);
-    for (int i = 0; i < numEntriesT; i++) matrixEntriesT[i] = 0;
-    jacT->replaceLocalValues(ylunk, matrixIndicesT(), matrixEntriesT());
-
+    Albany::getLocalRowValues(jac, ylunk, matrixIndices, matrixEntries);
+    for (auto& val : matrixEntries) { val = 0.0; }
+    Albany::setLocalRowValues(jac, ylunk, matrixIndices(), matrixEntries());
     index[0] = ylunk;
-    jacT->replaceLocalValues(ylunk, index(), value());
+    Albany::setLocalRowValues(jac, ylunk, index(), value());
 
-    if (fillResid) {
-      fT_nonconstView[xlunk] = xT_constView[xlunk] - Xval.val();
-      fT_nonconstView[ylunk] = xT_constView[ylunk] - Yval.val();
+    if (fillResid)
+    {
+      f_nonconstView[xlunk] = x_constView[xlunk] - Xval.val();
+      f_nonconstView[ylunk] = x_constView[ylunk] - Yval.val();
     }
   }
 }
@@ -183,94 +177,102 @@ TorsionBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
 // **********************************************************************
 // Specialization: Tangent
 // **********************************************************************
-template <typename Traits>
-TorsionBC<PHAL::AlbanyTraits::Tangent, Traits>::TorsionBC(
-    Teuchos::ParameterList& p)
-    : TorsionBC_Base<PHAL::AlbanyTraits::Tangent, Traits>(p)
+template<typename Traits>
+TorsionBC<PHAL::AlbanyTraits::Tangent, Traits>::
+TorsionBC(Teuchos::ParameterList& p) :
+  TorsionBC_Base<PHAL::AlbanyTraits::Tangent, Traits>(p)
 {
 }
 // **********************************************************************
-template <typename Traits>
-void
-TorsionBC<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
-    typename Traits::EvalData dirichletWorkset)
+template<typename Traits>
+void TorsionBC<PHAL::AlbanyTraits::Tangent, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Tpetra_Vector>       fT  = dirichletWorkset.fT;
-  Teuchos::RCP<Tpetra_MultiVector>  fpT = dirichletWorkset.fpT;
-  Teuchos::RCP<Tpetra_MultiVector>  JVT = dirichletWorkset.JVT;
-  Teuchos::RCP<const Tpetra_Vector> xT =
-      Albany::getConstTpetraVector(dirichletWorkset.x);
-  Teuchos::RCP<const Tpetra_MultiVector> VxT =
-      Albany::getConstTpetraMultiVector(dirichletWorkset.Vx);
+  Teuchos::RCP<const Thyra_Vector>       x = dirichletWorkset.x;
+  Teuchos::RCP<const Thyra_MultiVector> Vx = dirichletWorkset.Vx;
+  Teuchos::RCP<Thyra_Vector>       f = dirichletWorkset.f;
+  Teuchos::RCP<Thyra_MultiVector> fp = dirichletWorkset.fp;
+  Teuchos::RCP<Thyra_MultiVector> JV = dirichletWorkset.JV;
 
-  Teuchos::ArrayRCP<const ST> VxT_constView;
-  Teuchos::ArrayRCP<ST>       fT_nonconstView;
-  if (fT != Teuchos::null) fT_nonconstView = fT->get1dViewNonConst();
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(x);
+  Teuchos::ArrayRCP<ST>       f_nonconstView;
 
-  const RealType                       j_coeff = dirichletWorkset.j_coeff;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> Vx_const2dView;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>       JV_nonconst2dView;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>       fp_nonconst2dView;
+
+  if (f != Teuchos::null) {
+    f_nonconstView = Albany::getNonconstLocalData(f);
+  }
+  if (JV != Teuchos::null) {
+    Vx_const2dView    = Albany::getLocalData(Vx);
+    JV_nonconst2dView = Albany::getNonconstLocalData(JV);
+  }
+  if (fp != Teuchos::null) {
+    fp_nonconst2dView = Albany::getNonconstLocalData(fp);
+  }
+
+  const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int>>& nsNodes =
-      dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   const std::vector<double*>& nsNodeCoords =
-      dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
+    dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
   RealType time = dirichletWorkset.current_time;
 
-  int     xlunk, ylunk;  // global and local indicies into unknown vector
+  int xlunk, ylunk; // global and local indicies into unknown vector
   double* coord;
   ScalarT Xval, Yval;
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
+  {
     xlunk = nsNodes[inode][0];
     ylunk = nsNodes[inode][1];
     coord = nsNodeCoords[inode];
 
     this->computeBCs(coord, Xval, Yval, time);
 
-    if (fT != Teuchos::null) {
-      fT_nonconstView[xlunk] = xT_constView[xlunk] - Xval.val();
-      fT_nonconstView[ylunk] = xT_constView[ylunk] - Yval.val();
+    if (f != Teuchos::null)
+    {
+      f_nonconstView[xlunk] = x_constView[xlunk] - Xval.val();
+      f_nonconstView[ylunk] = x_constView[ylunk] - Yval.val();
     }
 
-    if (JVT != Teuchos::null) {
-      Teuchos::ArrayRCP<ST> JVT_nonconstView;
-      for (int i = 0; i < dirichletWorkset.num_cols_x; i++) {
-        JVT_nonconstView        = JVT->getDataNonConst(i);
-        VxT_constView           = VxT->getData(i);
-        JVT_nonconstView[xlunk] = j_coeff * VxT_constView[xlunk];
-        JVT_nonconstView[ylunk] = j_coeff * VxT_constView[ylunk];
+    if (JV != Teuchos::null) {
+      for (int i=0; i<dirichletWorkset.num_cols_x; i++)
+      {
+        JV_nonconst2dView[i][xlunk] = j_coeff*Vx_const2dView[i][xlunk];
+        JV_nonconst2dView[i][ylunk] = j_coeff*Vx_const2dView[i][ylunk];
       }
     }
 
-    if (fpT != Teuchos::null) {
-      Teuchos::ArrayRCP<ST> fpT_nonconstView;
-      for (int i = 0; i < dirichletWorkset.num_cols_p; i++) {
-        fpT_nonconstView        = fpT->getDataNonConst(i);
-        fpT_nonconstView[xlunk] = -Xval.dx(dirichletWorkset.param_offset + i);
-        fpT_nonconstView[ylunk] = -Yval.dx(dirichletWorkset.param_offset + i);
+    if (fp != Teuchos::null) {
+      for (int i=0; i<dirichletWorkset.num_cols_p; i++)
+      {
+        fp_nonconst2dView[i][xlunk] = -Xval.dx(dirichletWorkset.param_offset+i);
+        fp_nonconst2dView[i][ylunk] = -Yval.dx(dirichletWorkset.param_offset+i);
       }
     }
+
   }
 }
 
 // **********************************************************************
 // Specialization: DistParamDeriv
 // **********************************************************************
-template <typename Traits>
-TorsionBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::TorsionBC(
-    Teuchos::ParameterList& p)
-    : TorsionBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
+template<typename Traits>
+TorsionBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+TorsionBC(Teuchos::ParameterList& p) :
+  TorsionBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
 {
 }
 // **********************************************************************
-template <typename Traits>
-void
-TorsionBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
-    typename Traits::EvalData dirichletWorkset)
+template<typename Traits>
+void TorsionBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Tpetra_MultiVector> fpVT = dirichletWorkset.fpVT;
-  Teuchos::ArrayRCP<ST>            fpVT_nonconstView;
-  bool trans    = dirichletWorkset.transpose_dist_param_deriv;
-  int  num_cols = fpVT->getNumVectors();
+  Teuchos::RCP<Thyra_MultiVector> fpV = dirichletWorkset.fpV;
+  bool trans = dirichletWorkset.transpose_dist_param_deriv;
+  int num_cols = fpV->domain()->dim();
 
   //
   // We're currently assuming Dirichlet BC's can't be distributed parameters.
@@ -279,55 +281,54 @@ TorsionBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
   //
 
   const std::vector<std::vector<int>>& nsNodes =
-      dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   const std::vector<double*>& nsNodeCoords =
-      dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
+    dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
   // RealType time = dirichletWorkset.current_time;
 
-  int xlunk, ylunk;  // global and local indicies into unknown vector
+  int xlunk, ylunk; // global and local indicies into unknown vector
   // double* coord;
   // ScalarT Xval, Yval;
 
-  // For (df/dp)^T*V we zero out corresponding entries in V
   if (trans) {
-    Teuchos::RCP<Tpetra_MultiVector> VpT = dirichletWorkset.Vp_bcT;
-    Teuchos::ArrayRCP<ST>            VpT_nonconstView;
-    for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+    // For (df/dp)^T*V we zero out corresponding entries in V
+    Teuchos::RCP<Thyra_MultiVector> Vp = dirichletWorkset.Vp_bc;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> Vp_nonconst2dView = Albany::getNonconstLocalData(Vp);
+    for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
+    {
       xlunk = nsNodes[inode][0];
       ylunk = nsNodes[inode][1];
       // coord = nsNodeCoords[inode];
 
       // this->computeBCs(coord, Xval, Yval, time);
 
-      for (int col = 0; col < num_cols; ++col) {
+      for (int col=0; col<num_cols; ++col) {
         //(*Vp)[col][xlunk] = 0.0;
         //(*Vp)[col][ylunk] = 0.0;
-        VpT_nonconstView        = VpT->getDataNonConst(col);
-        VpT_nonconstView[xlunk] = 0.0;
-        VpT_nonconstView[ylunk] = 0.0;
+        Vp_nonconst2dView[col][xlunk] = 0.0;
+        Vp_nonconst2dView[col][ylunk] = 0.0;
       }
     }
-  }
-
-  // for (df/dp)*V we zero out corresponding entries in df/dp
-  else {
-    for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+  } else {
+    // for (df/dp)*V we zero out corresponding entries in df/dp
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> fpV_nonconst2dView = Albany::getNonconstLocalData(fpV);
+    for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
+    {
       xlunk = nsNodes[inode][0];
       ylunk = nsNodes[inode][1];
       // coord = nsNodeCoords[inode];
 
       // this->computeBCs(coord, Xval, Yval, time);
 
-      for (int col = 0; col < num_cols; ++col) {
+      for (int col=0; col<num_cols; ++col) {
         //(*fpV)[col][xlunk] = 0.0;
         //(*fpV)[col][ylunk] = 0.0;
-        fpVT_nonconstView        = fpVT->getDataNonConst(col);
-        fpVT_nonconstView[xlunk] = 0.0;
-        fpVT_nonconstView[ylunk] = 0.0;
+        fpV_nonconst2dView[col][xlunk] = 0.0;
+        fpV_nonconst2dView[col][ylunk] = 0.0;
       }
     }
   }
 }
 
-}  // namespace LCM
+} // namespace LCM

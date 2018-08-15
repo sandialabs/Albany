@@ -8,6 +8,8 @@
 #include "Phalanx_DataLayout.hpp"
 #include "PHAL_Utilities.hpp"
 
+#include "Albany_ThyraUtils.hpp"
+
 // **********************************************************************
 // Base Class Generic Implemtation
 // **********************************************************************
@@ -93,15 +95,13 @@ void ScatterScalarResponse<PHAL::AlbanyTraits::Residual, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response
-  Teuchos::RCP<Tpetra_Vector> gT = workset.gT; //Tpetra version
-  Teuchos::ArrayRCP<ST> gT_nonconstView;
-  if (gT != Teuchos::null) {
-    gT_nonconstView = gT->get1dViewNonConst();
+  Teuchos::RCP<Thyra_Vector> g = workset.g; //Tpetra version
+  if (g != Teuchos::null) {
+    Teuchos::ArrayRCP<ST> g_nonconstView = Albany::getNonconstLocalData(g);
+    for (PHAL::MDFieldIterator<const ScalarT> gr(this->global_response); !gr.done(); ++gr) {
+      g_nonconstView[gr.idx()] = *gr;
+    }
   }
-  if (Teuchos::nonnull(gT))
-    for (PHAL::MDFieldIterator<const ScalarT> gr(this->global_response);
-         ! gr.done(); ++gr)
-      gT_nonconstView[gr.idx()] = *gr;
 }
 
 // **********************************************************************
@@ -121,23 +121,45 @@ void ScatterScalarResponse<PHAL::AlbanyTraits::Tangent, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response and tangent
-  Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
-  Teuchos::RCP<Tpetra_MultiVector> gxT = workset.dgdxT;
-  Teuchos::RCP<Tpetra_MultiVector> gpT = workset.dgdpT;
+  Teuchos::RCP<Thyra_Vector> g = workset.g;
+  Teuchos::RCP<Thyra_MultiVector> gx = workset.dgdx;
+  Teuchos::RCP<Thyra_MultiVector> gp = workset.dgdp;
+
+  Teuchos::ArrayRCP<ST> g_nonconstView;
+  if (g != Teuchos::null){
+    g_nonconstView = Albany::getNonconstLocalData(g);
+  }
+
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> gx_nonconst2dView;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> gp_nonconst2dView;
+
+  if (gx != Teuchos::null) {
+    gx_nonconst2dView = Albany::getNonconstLocalData(gx);
+  }
+  if (gp != Teuchos::null) {
+    gp_nonconst2dView = Albany::getNonconstLocalData(gp);
+  }
+
   for (PHAL::MDFieldIterator<const ScalarT> gr(this->global_response);
        ! gr.done(); ++gr) {
     auto val = *gr;
     const int res = gr.idx();
-    if (gT != Teuchos::null){
-      Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
-      gT_nonconstView[res] = val.val();
+
+    if (g != Teuchos::null){
+      g_nonconstView[res] = val.val();
     }
-    if (gxT != Teuchos::null)
-      for (int col=0; col<workset.num_cols_x; col++)
-  gxT->replaceLocalValue(res, col, val.dx(col));
-    if (gpT != Teuchos::null)
-      for (int col=0; col<workset.num_cols_p; col++)
-  gpT->replaceLocalValue(res, col, val.dx(col+workset.param_offset));
+
+    if (gx != Teuchos::null) {
+      for (int col=0; col<workset.num_cols_x; col++) {
+        gx_nonconst2dView[col][res] = val.dx(col);
+      }
+    }
+
+    if (gp != Teuchos::null) {
+      for (int col=0; col<workset.num_cols_p; col++) {
+        gp_nonconst2dView[col][res] = val.dx(col+workset.param_offset);
+      }
+    }
   }
 }
 

@@ -4,218 +4,221 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Phalanx_DataLayout.hpp"
 #include "Teuchos_TestForException.hpp"
+#include "Phalanx_DataLayout.hpp"
 
-#include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 namespace LCM {
 
 template <typename EvalT, typename Traits>
-EquilibriumConcentrationBC_Base<EvalT, Traits>::EquilibriumConcentrationBC_Base(
-    Teuchos::ParameterList& p)
-    : coffset_(p.get<int>("Equation Offset")),
-      poffset_(p.get<int>("Pressure Offset")),
-      PHAL::DirichletBase<EvalT, Traits>(p),
-      applied_conc_(p.get<RealType>("Applied Concentration")),
-      pressure_fac_(p.get<RealType>("Pressure Factor"))
+EquilibriumConcentrationBC_Base<EvalT, Traits>::
+EquilibriumConcentrationBC_Base(Teuchos::ParameterList& p) :
+  coffset_(p.get<int>("Equation Offset")),
+  poffset_(p.get<int>("Pressure Offset")),
+  PHAL::DirichletBase<EvalT, Traits>(p),
+  applied_conc_(p.get<RealType>("Applied Concentration")),
+  pressure_fac_(p.get<RealType>("Pressure Factor"))
 {
 }
 //------------------------------------------------------------------------------
 //
-template <typename EvalT, typename Traits>
+template<typename EvalT, typename Traits>
 void
-EquilibriumConcentrationBC_Base<EvalT, Traits>::computeBCs(
-    ScalarT& pressure,
-    ScalarT& Cval)
+EquilibriumConcentrationBC_Base<EvalT, Traits>::
+computeBCs(ScalarT& pressure, ScalarT& Cval)
 {
   Cval = applied_conc_ * std::exp(pressure_fac_ * pressure);
 }
 //------------------------------------------------------------------------------
 // Specialization: Residual
 //
-template <typename Traits>
+template<typename Traits>
 EquilibriumConcentrationBC<PHAL::AlbanyTraits::Residual, Traits>::
-    EquilibriumConcentrationBC(Teuchos::ParameterList& p)
-    : EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::Residual, Traits>(p)
+EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
+  EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::Residual, Traits>(p)
 {
 }
 //------------------------------------------------------------------------------
 //
-template <typename Traits>
+template<typename Traits>
 void
 EquilibriumConcentrationBC<PHAL::AlbanyTraits::Residual, Traits>::
-    evaluateFields(typename Traits::EvalData dirichletWorkset)
+evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Tpetra_Vector>       fT = dirichletWorkset.fT;
-  Teuchos::RCP<const Tpetra_Vector> xT =
-      Albany::getConstTpetraVector(dirichletWorkset.x);
-  Teuchos::ArrayRCP<const ST> xT_constView    = xT->get1dView();
-  Teuchos::ArrayRCP<ST>       fT_nonconstView = fT->get1dViewNonConst();
+  Teuchos::RCP<const Thyra_Vector> x = dirichletWorkset.x;
+  Teuchos::RCP<Thyra_Vector>       f = dirichletWorkset.f;
+
+  Teuchos::ArrayRCP<const ST> x_constView    = Albany::getLocalData(x);
+  Teuchos::ArrayRCP<ST>       f_nonconstView = Albany::getNonconstLocalData(f);
 
   // Grab the vector of node GIDs for this Node Set ID from the std::map
   const std::vector<std::vector<int>>& nsNodes =
-      dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
-  int     cunk, punk;
+  int cunk, punk;
   ScalarT Cval;
   ScalarT pressure;
 
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-    cunk     = nsNodes[inode][this->coffset_];
-    punk     = nsNodes[inode][this->poffset_];
-    pressure = xT_constView[punk];
+    cunk = nsNodes[inode][this->coffset_];
+    punk = nsNodes[inode][this->poffset_];
+    pressure = x_constView[punk];
     this->computeBCs(pressure, Cval);
 
-    fT_nonconstView[cunk] = xT_constView[cunk] - Cval;
+    f_nonconstView[cunk] = x_constView[cunk] - Cval;
   }
 }
 //------------------------------------------------------------------------------
 // Specialization: Jacobian
 //
-template <typename Traits>
+template<typename Traits>
 EquilibriumConcentrationBC<PHAL::AlbanyTraits::Jacobian, Traits>::
-    EquilibriumConcentrationBC(Teuchos::ParameterList& p)
-    : EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::Jacobian, Traits>(p)
+EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
+  EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::Jacobian, Traits>(p)
 {
 }
 //------------------------------------------------------------------------------
-template <typename Traits>
-void
-EquilibriumConcentrationBC<PHAL::AlbanyTraits::Jacobian, Traits>::
-    evaluateFields(typename Traits::EvalData dirichletWorkset)
+template<typename Traits>
+void EquilibriumConcentrationBC<PHAL::AlbanyTraits::Jacobian, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Tpetra_Vector>       fT = dirichletWorkset.fT;
-  Teuchos::RCP<const Tpetra_Vector> xT =
-      Albany::getConstTpetraVector(dirichletWorkset.x);
-  Teuchos::ArrayRCP<const ST>    xT_constView = xT->get1dView();
-  Teuchos::RCP<Tpetra_CrsMatrix> jacT         = dirichletWorkset.JacT;
+  Teuchos::RCP<const Thyra_Vector> x   = dirichletWorkset.x;
+  Teuchos::RCP<Thyra_Vector>       f   = dirichletWorkset.f;
+  Teuchos::RCP<Thyra_LinearOp>     jac = dirichletWorkset.Jac;
 
-  const RealType                       j_coeff = dirichletWorkset.j_coeff;
+  Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(x);
+  Teuchos::ArrayRCP<ST>       f_nonconstView;
+
+  const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int>>& nsNodes =
-      dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
-  bool                  fillResid = (fT != Teuchos::null);
-  Teuchos::ArrayRCP<ST> fT_nonconstView;
-  if (fillResid) fT_nonconstView = fT->get1dViewNonConst();
+  bool fillResid = (f != Teuchos::null);
+  if (fillResid) {
+    f_nonconstView = Albany::getNonconstLocalData(f);
+  }
 
-  int     cunk, punk;
+  int cunk, punk;
   ScalarT Cval;
   ScalarT pressure;
 
   Teuchos::Array<LO> index(1);
   Teuchos::Array<ST> value(1);
-  size_t             numEntriesT;
   value[0] = j_coeff;
-  Teuchos::Array<ST> matrixEntriesT;
-  Teuchos::Array<LO> matrixIndicesT;
+  Teuchos::Array<ST> matrixEntries;
+  Teuchos::Array<LO> matrixIndices;
 
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-    cunk     = nsNodes[inode][this->coffset_];
-    punk     = nsNodes[inode][this->poffset_];
-    pressure = xT_constView[punk];
+
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
+  {
+    cunk = nsNodes[inode][this->coffset_];
+    punk = nsNodes[inode][this->poffset_];
+    pressure = x_constView[punk];
     this->computeBCs(pressure, Cval);
 
     // replace jac values for the C dof
-    numEntriesT = jacT->getNumEntriesInLocalRow(cunk);
-    matrixEntriesT.resize(numEntriesT);
-    matrixIndicesT.resize(numEntriesT);
-    jacT->getLocalRowCopy(
-        cunk, matrixIndicesT(), matrixEntriesT(), numEntriesT);
-    for (int i = 0; i < numEntriesT; i++) matrixEntriesT[i] = 0;
-    jacT->replaceLocalValues(cunk, matrixIndicesT(), matrixEntriesT());
-
+    Albany::getLocalRowValues(jac, cunk, matrixIndices, matrixEntries);
+    for (auto& val : matrixEntries) { val = 0.0; }
+    Albany::setLocalRowValues(jac, cunk, matrixIndices(), matrixEntries());
     index[0] = cunk;
-    jacT->replaceLocalValues(cunk, index(), value());
+    Albany::setLocalRowValues(jac, cunk, index(), value());
 
-    if (fillResid) { fT_nonconstView[cunk] = xT_constView[cunk] - Cval.val(); }
+    if (fillResid)
+    {
+      f_nonconstView[cunk] = x_constView[cunk] - Cval.val();
+    }
   }
 }
 //------------------------------------------------------------------------------
 // Specialization: Tangent
 //
-template <typename Traits>
+template<typename Traits>
 EquilibriumConcentrationBC<PHAL::AlbanyTraits::Tangent, Traits>::
-    EquilibriumConcentrationBC(Teuchos::ParameterList& p)
-    : EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::Tangent, Traits>(p)
+EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
+  EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::Tangent, Traits>(p)
 {
 }
 //------------------------------------------------------------------------------
-template <typename Traits>
-void
-EquilibriumConcentrationBC<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
-    typename Traits::EvalData dirichletWorkset)
+template<typename Traits>
+void EquilibriumConcentrationBC<PHAL::AlbanyTraits::Tangent, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Tpetra_Vector>       fT  = dirichletWorkset.fT;
-  Teuchos::RCP<Tpetra_MultiVector>  fpT = dirichletWorkset.fpT;
-  Teuchos::RCP<Tpetra_MultiVector>  JVT = dirichletWorkset.JVT;
-  Teuchos::RCP<const Tpetra_Vector> xT =
-      Albany::getConstTpetraVector(dirichletWorkset.x);
-  Teuchos::RCP<const Tpetra_MultiVector> VxT =
-      Albany::getConstTpetraMultiVector(dirichletWorkset.Vx);
+  Teuchos::RCP<const Thyra_Vector>       x = dirichletWorkset.x;
+  Teuchos::RCP<const Thyra_MultiVector> Vx = dirichletWorkset.Vx;
+  Teuchos::RCP<Thyra_Vector>             f = dirichletWorkset.f;
+  Teuchos::RCP<Thyra_MultiVector>       fp = dirichletWorkset.fp;
+  Teuchos::RCP<Thyra_MultiVector>       JV = dirichletWorkset.JV;
 
-  Teuchos::ArrayRCP<const ST> VxT_constView;
-  Teuchos::ArrayRCP<ST>       fT_nonconstView;
-  if (fT != Teuchos::null) fT_nonconstView = fT->get1dViewNonConst();
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(x);
+  Teuchos::ArrayRCP<ST>       f_nonconstView;
 
-  const RealType                       j_coeff = dirichletWorkset.j_coeff;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> Vx_const2dView;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>       JV_nonconst2dView;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>       fp_nonconst2dView;
+
+  if (f != Teuchos::null) {
+    f_nonconstView = Albany::getNonconstLocalData(f);
+  }
+  if (JV != Teuchos::null) {
+    JV_nonconst2dView = Albany::getNonconstLocalData(JV);
+    Vx_const2dView    = Albany::getLocalData(Vx);
+  }
+  if (fp != Teuchos::null) {
+    fp_nonconst2dView = Albany::getNonconstLocalData(fp);
+  }
+
+  const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int>>& nsNodes =
-      dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
-  int     cunk, punk;
+  int cunk, punk;
   ScalarT Cval;
   ScalarT pressure;
 
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-    cunk     = nsNodes[inode][this->coffset_];
-    punk     = nsNodes[inode][this->poffset_];
-    pressure = xT_constView[punk];
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
+  {
+    cunk = nsNodes[inode][this->coffset_];
+    punk = nsNodes[inode][this->poffset_];
+    pressure = x_constView[punk];
     this->computeBCs(pressure, Cval);
 
-    if (fT != Teuchos::null) {
-      fT_nonconstView[cunk] = xT_constView[cunk] - Cval.val();
+    if (f != Teuchos::null)
+    {
+      f_nonconstView[cunk] = x_constView[cunk] - Cval.val();
     }
 
-    if (JVT != Teuchos::null) {
-      Teuchos::ArrayRCP<ST> JVT_nonconstView;
-      for (int i = 0; i < dirichletWorkset.num_cols_x; i++) {
-        JVT_nonconstView       = JVT->getDataNonConst(i);
-        VxT_constView          = VxT->getData(i);
-        JVT_nonconstView[cunk] = j_coeff * VxT_constView[cunk];
+    if (JV != Teuchos::null) {
+      for (int i=0; i<dirichletWorkset.num_cols_x; i++) {
+	      JV_nonconst2dView[i][cunk] = j_coeff*Vx_const2dView[i][cunk];
       }
     }
 
-    if (fpT != Teuchos::null) {
-      Teuchos::ArrayRCP<ST> fpT_nonconstView;
-      for (int i = 0; i < dirichletWorkset.num_cols_p; i++) {
-        fpT_nonconstView       = fpT->getDataNonConst(i);
-        fpT_nonconstView[cunk] = -Cval.dx(dirichletWorkset.param_offset + i);
+    if (fp != Teuchos::null) {
+      for (int i=0; i<dirichletWorkset.num_cols_p; i++) {
+        fp_nonconst2dView[i][cunk] = -Cval.dx(dirichletWorkset.param_offset+i);
       }
     }
+
   }
 }
 //------------------------------------------------------------------------------
 // Specialization: DistParamDeriv
 //
-template <typename Traits>
+template<typename Traits>
 EquilibriumConcentrationBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-    EquilibriumConcentrationBC(Teuchos::ParameterList& p)
-    : EquilibriumConcentrationBC_Base<
-          PHAL::AlbanyTraits::DistParamDeriv,
-          Traits>(p)
+EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
+  EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
 {
 }
 //------------------------------------------------------------------------------
-template <typename Traits>
-void
-EquilibriumConcentrationBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-    evaluateFields(typename Traits::EvalData dirichletWorkset)
+template<typename Traits>
+void EquilibriumConcentrationBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Tpetra_MultiVector> fpVT = dirichletWorkset.fpVT;
-  Teuchos::ArrayRCP<ST>            fpVT_nonconstView;
-  bool trans    = dirichletWorkset.transpose_dist_param_deriv;
-  int  num_cols = fpVT->getNumVectors();
+  Teuchos::RCP<Thyra_MultiVector> fpV = dirichletWorkset.fpV;
+  bool trans = dirichletWorkset.transpose_dist_param_deriv;
+  int num_cols = fpV->domain()->dim();
 
   //
   // We're currently assuming Dirichlet BC's can't be distributed parameters.
@@ -224,36 +227,35 @@ EquilibriumConcentrationBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
   //
 
   const std::vector<std::vector<int>>& nsNodes =
-      dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
-  int cunk;  // global and local indicies into unknown vector
+  int cunk; // global and local indicies into unknown vector
 
-  // For (df/dp)^T*V we zero out corresponding entries in V
   if (trans) {
-    for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-      Teuchos::RCP<Tpetra_MultiVector> VpT = dirichletWorkset.Vp_bcT;
-      Teuchos::ArrayRCP<ST>            VpT_nonconstView;
+    // For (df/dp)^T*V we zero out corresponding entries in V
+    Teuchos::RCP<Thyra_MultiVector> Vp = dirichletWorkset.Vp_bc;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> Vp_nonconst2dView = Albany::getNonconstLocalData(Vp);
+    for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
+    {
       cunk = nsNodes[inode][this->coffset_];
 
-      for (int col = 0; col < num_cols; ++col) {
-        VpT_nonconstView       = VpT->getDataNonConst(col);
-        VpT_nonconstView[cunk] = 0.0;
+      for (int col=0; col<num_cols; ++col) {
+        Vp_nonconst2dView[col][cunk] = 0.0;
       }
     }
-  }
-
-  // for (df/dp)*V we zero out corresponding entries in df/dp
-  else {
-    for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+  } else {
+    // for (df/dp)*V we zero out corresponding entries in df/dp
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> fpV_nonconst2dView = Albany::getNonconstLocalData(fpV);
+    for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
+    {
       cunk = nsNodes[inode][this->coffset_];
 
-      for (int col = 0; col < num_cols; ++col) {
-        fpVT_nonconstView       = fpVT->getDataNonConst(col);
-        fpVT_nonconstView[cunk] = 0.0;
+      for (int col=0; col<num_cols; ++col) {
+        fpV_nonconst2dView[col][cunk] = 0.0;
       }
     }
   }
 }
 
 //------------------------------------------------------------------------------
-}  // namespace LCM
+} // namespace LCM

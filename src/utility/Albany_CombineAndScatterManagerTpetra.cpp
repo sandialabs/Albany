@@ -28,12 +28,11 @@ namespace Albany
 CombineAndScatterManagerTpetra::
 CombineAndScatterManagerTpetra(const Teuchos::RCP<const Thyra_VectorSpace>& owned,
                                const Teuchos::RCP<const Thyra_VectorSpace>& overlapped)
+ : owned_vs      (owned)
+ , overlapped_vs (overlapped)
 {
   auto ownedT = Albany::getTpetraMap(owned);
   auto overlappedT = Albany::getTpetraMap(overlapped);
-
-  TEUCHOS_TEST_FOR_EXCEPTION(ownedT.is_null(), std::runtime_error, "Error! Could not cast owned vector space to Tpetra type.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION(overlappedT.is_null(), std::runtime_error, "Error! Could not cast overlapped vector space to Tpetra type.\n");
 
   importer = Teuchos::rcp( new Tpetra_Import(ownedT, overlappedT) );
 }
@@ -47,8 +46,6 @@ combine (const Teuchos::RCP<const Thyra_Vector>& src,
   auto srcT = Albany::getConstTpetraVector(src);
   auto dstT = Albany::getTpetraVector(dst);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(srcT.is_null(), std::runtime_error, "Error! Could not cast src vector to Tpetra type.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION(dstT.is_null(), std::runtime_error, "Error! Could not cast dst vector to Tpetra type.\n");
 #ifdef ALBANY_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION(!srcT->getMap()->isSameAs(*importer->getTargetMap()), std::runtime_error,
                              "Error! The map of the input src vector does not match the importer's target map.\n");
@@ -68,8 +65,6 @@ combine (const Teuchos::RCP<const Thyra_MultiVector>& src,
   auto srcT = Albany::getConstTpetraMultiVector(src);
   auto dstT = Albany::getTpetraMultiVector(dst);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(srcT.is_null(), std::runtime_error, "Error! Could not cast src multi vector to Tpetra type.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION(dstT.is_null(), std::runtime_error, "Error! Could not cast dst multi vector to Tpetra type.\n");
 #ifdef ALBANY_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION(!srcT->getMap()->isSameAs(*importer->getTargetMap()), std::runtime_error,
                              "Error! The map of the input src multi vector does not match the importer's target map.\n");
@@ -81,11 +76,22 @@ combine (const Teuchos::RCP<const Thyra_MultiVector>& src,
 }
 
 void CombineAndScatterManagerTpetra::
-combine (const Teuchos::RCP<const Thyra_LinearOp>& /* src */,
-         const Teuchos::RCP<Thyra_LinearOp>& /* dst */,
-         const CombineMode /* CM */) const
+combine (const Teuchos::RCP<const Thyra_LinearOp>& src,
+         const Teuchos::RCP<Thyra_LinearOp>& dst,
+         const CombineMode CM) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Combine for linear operators not implemented yet.\n");
+  auto cmT = combineModeT(CM);
+  auto srcT = Albany::getConstTpetraMatrix(src);
+  auto dstT = Albany::getTpetraMatrix(dst);
+
+#ifdef ALBANY_DEBUG
+  TEUCHOS_TEST_FOR_EXCEPTION(!srcT->getMap()->isSameAs(*importer->getSourceMap()), std::runtime_error,
+                             "Error! The row map of the input src matrix does not match the importer's source map.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(!dstT->getMap()->isSameAs(*importer->getTargetMap()), std::runtime_error,
+                             "Error! The row map of the input dst matrix does not match the importer's target map.\n");
+#endif
+
+  dstT->doExport(*srcT,*importer,cmT);
 }
 
 // Scatter methods
@@ -98,8 +104,6 @@ scatter (const Teuchos::RCP<const Thyra_Vector>& src,
   auto srcT = Albany::getConstTpetraVector(src);
   auto dstT = Albany::getTpetraVector(dst);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(srcT.is_null(), std::runtime_error, "Error! Could not cast src vector to Tpetra type.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION(dstT.is_null(), std::runtime_error, "Error! Could not cast dst vector to Tpetra type.\n");
 #ifdef ALBANY_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION(!srcT->getMap()->isSameAs(*importer->getSourceMap()), std::runtime_error,
                              "Error! The map of the input src vector does not match the importer's source map.\n");
@@ -119,8 +123,6 @@ scatter (const Teuchos::RCP<const Thyra_MultiVector>& src,
   auto srcT = Albany::getConstTpetraMultiVector(src);
   auto dstT = Albany::getTpetraMultiVector(dst);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(srcT.is_null(), std::runtime_error, "Error! Could not cast src multi vector to Tpetra type.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION(dstT.is_null(), std::runtime_error, "Error! Could not cast dst multi vector to Tpetra type.\n");
 #ifdef ALBANY_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION(!srcT->getMap()->isSameAs(*importer->getSourceMap()), std::runtime_error,
                              "Error! The map of the input src multi vector does not match the importer's source map.\n");
@@ -132,11 +134,22 @@ scatter (const Teuchos::RCP<const Thyra_MultiVector>& src,
 }
 
 void CombineAndScatterManagerTpetra::
-scatter (const Teuchos::RCP<const Thyra_LinearOp>& /* src */,
-              const Teuchos::RCP<Thyra_LinearOp>& /* dst */,
-              const CombineMode /* CM */) const
+scatter (const Teuchos::RCP<const Thyra_LinearOp>& src,
+              const Teuchos::RCP<Thyra_LinearOp>& dst,
+              const CombineMode CM) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Scatter for linear operators not implemented yet.\n");
+  auto cmT  = combineModeT(CM);
+  auto srcT = Albany::getConstTpetraMatrix(src);
+  auto dstT = Albany::getTpetraMatrix(dst);
+
+#ifdef ALBANY_DEBUG
+  TEUCHOS_TEST_FOR_EXCEPTION(!srcT->getMap()->isSameAs(*importer->getSourceMap()), std::runtime_error,
+                             "Error! The row map of the input src matrix does not match the importer's source map.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(!dstT->getMap()->isSameAs(*importer->getTargetMap()), std::runtime_error,
+                             "Error! The row map of the input dst matrix does not match the importer's target map.\n");
+#endif
+
+  dstT->doImport(*srcT,*importer,cmT);
 }
 
 } // namespace Albany

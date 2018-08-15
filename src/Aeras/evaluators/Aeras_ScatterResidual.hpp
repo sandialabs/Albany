@@ -11,12 +11,12 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
-#include "Aeras_Layouts.hpp"
-
 #include "Teuchos_ParameterList.hpp"
-
 #include "Kokkos_Vector.hpp"
+
+#include "PHAL_AlbanyTraits.hpp"
+#include "Albany_AbstractDiscretization.hpp"
+#include "Aeras_Layouts.hpp"
 
 namespace Aeras {
 /** \brief Gathers Coordinates values from the Newton coordinates vector into 
@@ -60,7 +60,7 @@ protected:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 protected:
   Albany::AbstractDiscretization::WorksetConn nodeID; 
-  Kokkos::View<ST*, PHX::Device> fT_kokkos;
+  Albany::DeviceView1d<ST> f_kokkos;
   Kokkos::vector<Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device> val_kokkos;
 
 #endif
@@ -97,7 +97,7 @@ public:
 private:
   typedef ScatterResidualBase<PHAL::AlbanyTraits::Residual, Traits> Base;
   using Base::nodeID;
-  using Base::fT_kokkos;
+  using Base::f_kokkos;
   using Base::val_kokkos;
 
   typename Kokkos::vector<Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device>::t_dev d_val_kokkos;
@@ -135,11 +135,11 @@ public:
 
 private:
   int neq, nunk;
-  Tpetra_CrsMatrix::local_matrix_type JacT_kokkos;
+  Albany::DeviceLocalMatrix<ST> Jac_kokkos;
 
   typedef ScatterResidualBase<PHAL::AlbanyTraits::Jacobian, Traits> Base;
   using Base::nodeID;
-  using Base::fT_kokkos;
+  using Base::f_kokkos;
   using Base::val_kokkos;
 
   typename Kokkos::vector<Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device>::t_dev d_val_kokkos;

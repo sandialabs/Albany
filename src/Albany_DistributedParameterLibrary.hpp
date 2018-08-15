@@ -15,6 +15,8 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_TestForException.hpp"
 
+#include "Albany_CombineAndScatterManager.hpp"
+
 namespace Albany {
 
   //! Traits class for extracting information out of a distributed parameter
@@ -84,6 +86,9 @@ namespace Albany {
     //! Export vector from overlap to owned maps, CombineMode = Add
     virtual void export_add(multi_vector_type& dst,
                             const multi_vector_type& src) const =0;
+
+    //! Get the CombineAndScatterManager for this parameter
+    virtual Teuchos::RCP<const CombineAndScatterManager> get_cas_manager () const = 0;
   };
 
   template <typename Vector, typename MultiVector, typename IDArray>

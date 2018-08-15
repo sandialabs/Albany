@@ -46,10 +46,12 @@ Teuchos::RCP<Tpetra_CrsMatrix> alloc (const Teuchos::RCP<Tpetra_CrsMatrix>& A) {
   return B;
 }
 
-Teuchos::RCP<Tpetra_CrsMatrix> getOnlyNonzeros (const Teuchos::RCP<Tpetra_CrsMatrix>& A) {
+Teuchos::RCP<Thyra_LinearOp> getOnlyNonzeros (const Teuchos::RCP<Thyra_LinearOp>& A_op) {
   using Teuchos::RCP;
   using Teuchos::Array;
   using Teuchos::ArrayView;
+
+  auto A = Albany::getTpetraMatrix(A_op);
 
   TEUCHOS_ASSERT(A->hasColMap());
   TEUCHOS_ASSERT(A->isLocallyIndexed());
@@ -76,7 +78,7 @@ Teuchos::RCP<Tpetra_CrsMatrix> getOnlyNonzeros (const Teuchos::RCP<Tpetra_CrsMat
   }
   B->fillComplete();
   
-  return B;
+  return Albany::createThyraLinearOp(B);
 }
 } // namespace
 
@@ -91,33 +93,23 @@ Aeras::HVDecorator::HVDecorator(
   std::cout << "In HVDecorator app name: " << app->getProblemPL()->get("Name", "") << std::endl;
 #endif
 
-  std::string appname = app->getProblemPL()->get("Name", "");
-  const bool SW_app = (appname == "Aeras Shallow Water 3D");
-  const bool Hydro_app = (appname == "Aeras Hydrostatic");
-
   // Create and store mass and Laplacian operators (in CrsMatrix form). 
-  Teuchos::RCP<Tpetra_CrsMatrix> mass;
-  if(SW_app)
-	  mass = createOperatorDiag(1.0, 0.0, 0.0, true);
-  if(Hydro_app)
-	  mass = createOperatorDiag(1.0, 0.0, 0.0, false);
-  Teuchos::RCP<Tpetra_CrsMatrix> laplace;
-  if(SW_app)
-      laplace = createOperator(0.0, 0.0, 1.0, true);
-  if(Hydro_app)
-      laplace = createOperator(0.0, 0.0, 1.0, false);
+  Teuchos::RCP<Tpetra_CrsMatrix> mass = Albany::getTpetraMatrix(createOperatorDiag(1.0, 0.0, 0.0));
+  Teuchos::RCP<Thyra_LinearOp> laplace = createOperator(0.0, 0.0, 1.0);
+
+  Teuchos::RCP<const Thyra_VectorSpace> mass_vs = Albany::createThyraVectorSpace(mass->getRowMap());
 
   // Do some preprocessing to speed up subsequent residual calculations.
   // 1. Store the lumped mass diag reciprocal.
-  inv_mass_diag_ = Teuchos::rcp(new Tpetra_Vector(mass->getRowMap(), true)); 
-  mass->getLocalDiagCopy(*inv_mass_diag_);
-  inv_mass_diag_->reciprocal(*inv_mass_diag_);
+  inv_mass_diag_ = Thyra::createMember(mass_vs);
+  mass->getLocalDiagCopy(*Albany::getTpetraVector(inv_mass_diag_));
+  Thyra::reciprocal(*inv_mass_diag_,inv_mass_diag_.ptr());
   // 2. Create a work vector in advance.
-  wrk_ = Teuchos::rcp(new Tpetra_Vector(mass->getRowMap()));
-  // 3. Remove the structural nonzeros, numerical zeros, from the Laplace
+  wrk_ = Thyra::createMember(mass_vs);
+  // 3. Remove the structural zeros, numerical zeros, from the Laplace
   // operator.
   laplace_ = getOnlyNonzeros(laplace);
-  xtildeT = Teuchos::rcp(new Tpetra_Vector(mass->getRowMap())); 
+  xtilde = Thyra::createMember(mass_vs);
 
 //OG In case of a parallel run by some reason laplace.mm file contains indices
 //out of range with non-trivial entries. I haven't debugged this yet. AB suggested to
@@ -125,7 +117,7 @@ Aeras::HVDecorator::HVDecorator(
 //in case of a parallel and serial run.
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("mass.mm", mass);
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("laplace.mm", laplace_);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("laplace.mm", Albany::getTpetraMatrix(laplace_));
 #endif
 }
  
@@ -133,8 +125,8 @@ Aeras::HVDecorator::HVDecorator(
 //stored as a member function and used in evalModelImpl to perform the update for the auxiliary 
 //utilde/htilde variables when integrating the hyperviscosity system in time using 
 //an explicit scheme. 
-Teuchos::RCP<Tpetra_CrsMatrix> 
-Aeras::HVDecorator::createOperator(double alpha, double beta, double omega, bool xdotdot_nonnull)
+Teuchos::RCP<Thyra_LinearOp> 
+Aeras::HVDecorator::createOperator(double alpha, double beta, double omega)
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
@@ -144,52 +136,37 @@ Aeras::HVDecorator::createOperator(double alpha, double beta, double omega, bool
   Teuchos::RCP<const Tpetra_CrsGraph> implicit_graphT = 
     app->getDiscretization()->getImplicitJacobianGraphT();  
   //Define operator Op from implicit_graphT
-  const Teuchos::RCP<Tpetra_Operator> Op =
+  const Teuchos::RCP<Thyra_LinearOp> Op =
     Teuchos::nonnull(implicit_graphT) ? 
-    Teuchos::rcp(new Tpetra_CrsMatrix(implicit_graphT)) :
+    Albany::createThyraLinearOp(Teuchos::rcp(new Tpetra_CrsMatrix(implicit_graphT))) :
     Teuchos::null; 
-  const Teuchos::RCP<Tpetra_CrsMatrix> Op_crs =
-    Teuchos::nonnull(Op) ?
-    Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(Op, true) :
-    Teuchos::null;
   auto args = this->getNominalValues();
-  const Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(args.get_x());
-
-  const Teuchos::RCP<Tpetra_Vector> fT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true)); 
+  auto f = Thyra::createMember(args.get_x()->space());
   app->computeGlobalJacobian(alpha, beta, omega, curr_time,
                              args.get_x(),
                              (supports_xdot ? args.get_x_dot() : Teuchos::null),
                              (supports_xdotdot ? args.get_x_dot_dot() : Teuchos::null),
-                             sacado_param_vec, fT.get(), *Op_crs);
-  return Op_crs; 
+                             sacado_param_vec, f, Op);
+  return Op; 
 }
 
-Teuchos::RCP<Tpetra_CrsMatrix> 
-Aeras::HVDecorator::createOperatorDiag(double alpha, double beta, double omega, bool xdotdot_nonnull)
+Teuchos::RCP<Thyra_LinearOp> 
+Aeras::HVDecorator::createOperatorDiag(double alpha, double beta, double omega)
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   double curr_time = 0.0;
-  const Teuchos::RCP<Tpetra_Operator> Op =
-    Teuchos::nonnull(this->create_W_op()) ?
-    ConverterT::getTpetraOperator(this->create_W_op()) :
-    Teuchos::null;
-  const Teuchos::RCP<Tpetra_CrsMatrix> Op_crs =
-    Teuchos::nonnull(Op) ?
-    Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(Op, true) :
-    Teuchos::null;
+  const Teuchos::RCP<Thyra_LinearOp> op = this->create_W_op();
 
   auto args = this->getNominalValues();
-  const Teuchos::RCP<const Tpetra_Vector> xT = ConverterT::getConstTpetraVector(args.get_x());
-
-  const Teuchos::RCP<Tpetra_Vector> fT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true)); 
+  auto f = Thyra::createMember(args.get_x()->space());
   app->computeGlobalJacobian(alpha, beta, omega, curr_time,
                              args.get_x(),
                              (supports_xdot ? args.get_x_dot() : Teuchos::null),
                              (supports_xdotdot ? args.get_x_dot_dot() : Teuchos::null),
-                             sacado_param_vec, fT.get(), *Op_crs);
-  return Op_crs; 
+                             sacado_param_vec, f, op);
+  return op; 
 }
 
 //IKT: the following function returns laplace_*mass_^(-1)*laplace_*x_in.  It is to be called 
@@ -197,7 +174,7 @@ Aeras::HVDecorator::createOperatorDiag(double alpha, double beta, double omega, 
 //Note that it is more efficient to implement an apply method like is done here, than 
 //to form a sparse CrsMatrix laplace_*mass_^(-1)*laplace_ and store it.  
 void
-Aeras::HVDecorator::applyLinvML(Teuchos::RCP<const Tpetra_Vector> x_in, Teuchos::RCP<Tpetra_Vector> x_out)
+Aeras::HVDecorator::applyLinvML(Teuchos::RCP<const Thyra_Vector> x_in, Teuchos::RCP<Thyra_Vector> x_out)
 const
 {
 #ifdef OUTPUT_TO_SCREEN
@@ -205,11 +182,13 @@ const
 #endif
 
   // x_out = laplace_ * x_in
-  laplace_->apply(*x_in, *x_out, Teuchos::NO_TRANS, 1.0, 0.0); 
-  // wrk_ = inv(M) * x_out
-  wrk_->elementWiseMultiply(1.0, *inv_mass_diag_, *x_out, 0.0);
+  laplace_->apply(Thyra::NOTRANS, *x_in, wrk_.ptr(), 1.0, 0.0);
+
+  // x_out = inv(M) * x_out
+  Thyra::ele_wise_scale(*inv_mass_diag_, wrk_.ptr());
+
   // x_out = laplace*wrk_ = laplace * inv(M) * laplace * x_in
-  laplace_->apply(*wrk_, *x_out, Teuchos::NO_TRANS, 1.0, 0.0);
+  laplace_->apply(Thyra::NOTRANS, *wrk_, x_out.ptr(), 1.0, 0.0);
 
   //Teuchos::ArrayRCP<const ST> inv_mass_diag_constView = inv_mass_diag->get1dView(); 
   /*//create CrsMatrix for Mass^(-1)
@@ -243,9 +222,10 @@ namespace {
 // problem to determine why the problem occurs only there, but the solution is
 // nonetheless quite suggestive: sanitize v before calling update. I do this at
 // the highest level, here, rather than in the responses.
-void sanitize_nans (const Thyra::ModelEvaluatorBase::Derivative<ST>& v) {
-  if ( ! v.isEmpty() && Teuchos::nonnull(v.getMultiVector()))
-    ConverterT::getTpetraMultiVector(v.getMultiVector())->putScalar(0.0);
+void sanitize_nans (const Thyra_Derivative& v) {
+  if ( ! v.isEmpty() && Teuchos::nonnull(v.getMultiVector())) {
+    v.getMultiVector()->assign(0.0);
+  }
 }
 } // namespace
 
@@ -272,9 +252,6 @@ Aeras::HVDecorator::evalModelImpl(
   const Teuchos::RCP<const Thyra_Vector> x_dotdot =
       (supports_xdotdot ? inArgsT.get_x_dot_dot() : Teuchos::null);
 
-  // Tpetra vectors
-  const Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(x);
-
   const double alpha = (Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdot)) ? inArgsT.get_alpha() : 0.0;
   // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
   // const double omega = (Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdot)) ? inArgsT.get_omega() : 0.0;
@@ -283,7 +260,7 @@ Aeras::HVDecorator::evalModelImpl(
   const double curr_time = (Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdot)) ? inArgsT.get_t() : 0.0;
 
   for (int l = 0; l < inArgsT.Np(); ++l) {
-    const Teuchos::RCP<const Thyra::VectorBase<ST> > p = inArgsT.get_p(l);
+    const Teuchos::RCP<const Thyra_Vector> p = inArgsT.get_p(l);
     if (Teuchos::nonnull(p)) {
       const Teuchos::RCP<const Tpetra_Vector> pT = Albany::getConstTpetraVector(p);
       const Teuchos::ArrayRCP<const ST> pT_constView = pT->get1dView();
@@ -298,42 +275,8 @@ Aeras::HVDecorator::evalModelImpl(
   //
   // Get the output arguments
   //
-  const Teuchos::RCP<Tpetra_Vector> fT_out =
-    Teuchos::nonnull(outArgsT.get_f()) ?
-    ConverterT::getTpetraVector(outArgsT.get_f()) :
-    Teuchos::null;
-
-  const Teuchos::RCP<Tpetra_Operator> W_op_outT =
-    Teuchos::nonnull(outArgsT.get_W_op()) ?
-    ConverterT::getTpetraOperator(outArgsT.get_W_op()) :
-    Teuchos::null;
-
-#ifdef WRITE_MASS_MATRIX_TO_MM_FILE
-  //IK, 4/24/15: adding object to hold mass matrix to be written to matrix market file
-  const Teuchos::RCP<Tpetra_Operator> Mass =
-    Teuchos::nonnull(outArgsT.get_W_op()) ?
-    ConverterT::getTpetraOperator(outArgsT.get_W_op()) :
-    Teuchos::null;
-  //IK, 4/24/15: needed for writing mass matrix out to matrix market file
-  const Teuchos::RCP<Tpetra_Vector> ftmp =
-    Teuchos::nonnull(outArgsT.get_f()) ?
-    ConverterT::getTpetraVector(outArgsT.get_f()) :
-    Teuchos::null;
-#endif
-
-  // Cast W to a CrsMatrix, throw an exception if this fails
-  const Teuchos::RCP<Tpetra_CrsMatrix> W_op_out_crsT =
-    Teuchos::nonnull(W_op_outT) ?
-    Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_op_outT, true) :
-    Teuchos::null;
-
-#ifdef WRITE_MASS_MATRIX_TO_MM_FILE
-  //IK, 4/24/15: adding object to hold mass matrix to be written to matrix market file
-  const Teuchos::RCP<Tpetra_CrsMatrix> Mass_crs =
-    Teuchos::nonnull(Mass) ?
-    Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(Mass, true) :
-    Teuchos::null;
-#endif
+  auto f    = outArgsT.get_f();
+  auto W_op = outArgsT.get_W_op();
 
   //
   // Compute the functions
@@ -341,31 +284,25 @@ Aeras::HVDecorator::evalModelImpl(
   bool f_already_computed = false;
 
   // W matrix
-  if (Teuchos::nonnull(W_op_out_crsT)) {
+  if (Teuchos::nonnull(W_op)) {
     app->computeGlobalJacobian(
         alpha, beta, omega, curr_time, x, x_dot, x_dotdot,
-        sacado_param_vec, fT_out.get(), *W_op_out_crsT);
+        sacado_param_vec, f, W_op);
     f_already_computed = true;
   }
 
   // df/dp
   for (int l = 0; l < outArgsT.Np(); ++l) {
-    const Teuchos::RCP<Thyra::MultiVectorBase<ST> > dfdp_out =
-      outArgsT.get_DfDp(l).getMultiVector();
+    const Teuchos::RCP<Thyra_MultiVector> df_dp = outArgsT.get_DfDp(l).getMultiVector();
 
-    const Teuchos::RCP<Tpetra_MultiVector> dfdp_outT =
-      Teuchos::nonnull(dfdp_out) ?
-      ConverterT::getTpetraMultiVector(dfdp_out) :
-      Teuchos::null;
-
-    if (Teuchos::nonnull(dfdp_outT)) {
+    if (Teuchos::nonnull(df_dp)) {
       const Teuchos::RCP<ParamVec> p_vec = Teuchos::rcpFromRef(sacado_param_vec[l]);
 
       app->computeGlobalTangent(
           0.0, 0.0, 0.0, curr_time, false, x, x_dot, x_dotdot,
           sacado_param_vec, p_vec.get(),
           Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
-          fT_out, Teuchos::null, dfdp_outT);
+          f, Teuchos::null, df_dp);
 
       f_already_computed = true;
     }
@@ -373,98 +310,88 @@ Aeras::HVDecorator::evalModelImpl(
 
   // f
   if (app->is_adjoint) {
-    const Thyra::ModelEvaluatorBase::Derivative<ST> f_derivT(
-        outArgsT.get_f(),
-        Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW);
-
-    const Thyra::ModelEvaluatorBase::Derivative<ST> dummy_derivT;
+    const Thyra_Derivative f_deriv(f, Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW);
+    const Thyra_Derivative dummy_deriv;
 
     const int response_index = 0; // need to add capability for sending this in
     app->evaluateResponseDerivative(
         response_index, curr_time, x, x_dot, x_dotdot,
         sacado_param_vec, NULL,
-        NULL, f_derivT, dummy_derivT, dummy_derivT, dummy_derivT);
+        Teuchos::null, f_deriv, dummy_deriv, dummy_deriv, dummy_deriv);
   } else {
-    if (Teuchos::nonnull(fT_out) && !f_already_computed) {
+    if (Teuchos::nonnull(f) && !f_already_computed) {
       app->computeGlobalResidual(
           curr_time, x, x_dot, x_dotdot,
-          sacado_param_vec, *fT_out);
+          sacado_param_vec, f);
     }
   }
 
-  //compute xtildeT 
-  applyLinvML(xT, xtildeT); 
+  //compute xtilde 
+  applyLinvML(x, xtilde); 
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   //writing to MatrixMarket for debug
   char name[100];  //create string for file name
   sprintf(name, "xT_%i.mm", mm_counter);
+  const Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(x);
   Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, xT);
   sprintf(name, "xtildeT_%i.mm", mm_counter);
+  const Teuchos::RCP<const Tpetra_Vector> xtildeT = Albany::getConstTpetraVector(xtilde);
   Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, xtildeT);
   mm_counter++; 
 #endif  
 
-  if (supports_xdot && Teuchos::nonnull(inArgsT.get_x_dot()) && Teuchos::nonnull(fT_out)){
+  if (supports_xdot && Teuchos::nonnull(inArgsT.get_x_dot()) && Teuchos::nonnull(f)){
 #ifdef OUTPUT_TO_SCREEN
     std::cout <<"in the if-statement for the update" <<std::endl;
 #endif
-    fT_out->update(1.0, *xtildeT, 1.0);
+    f->update(1.0,*xtilde);
   }
 
   // Response functions
   for (int j = 0; j < outArgsT.Ng(); ++j) {
-    const Teuchos::RCP<Thyra::VectorBase<ST> > g_out = outArgsT.get_g(j);
-    Teuchos::RCP<Tpetra_Vector> gT_out =
-      Teuchos::nonnull(g_out) ?
-      ConverterT::getTpetraVector(g_out) :
-      Teuchos::null;
+    Teuchos::RCP<Thyra_Vector> g = outArgsT.get_g(j);
 
-    const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxT_out = outArgsT.get_DgDx(j);
-    const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotT_out = outArgsT.get_DgDx_dot(j);
+    const Thyra_Derivative dg_dx = outArgsT.get_DgDx(j);
+    const Thyra_Derivative dg_dxdot = outArgsT.get_DgDx_dot(j);
     // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
-    const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotdotT_out;
-    sanitize_nans(dgdxT_out);
-    sanitize_nans(dgdxdotT_out);
-    sanitize_nans(dgdxdotdotT_out);
+    const Thyra_Derivative dg_dxdotdot;
+    sanitize_nans(dg_dx);
+    sanitize_nans(dg_dxdot);
+    sanitize_nans(dg_dxdotdot);
 
     // dg/dx, dg/dxdot
-    if (!dgdxT_out.isEmpty() || !dgdxdotT_out.isEmpty()) {
-      const Thyra::ModelEvaluatorBase::Derivative<ST> dummy_derivT;
+    if (!dg_dx.isEmpty() || !dg_dxdot.isEmpty()) {
+      const Thyra_Derivative dummy_deriv;
       app->evaluateResponseDerivative(
           j, curr_time, x, x_dot, x_dotdot,
           sacado_param_vec, NULL,
-          gT_out.get(), dgdxT_out,
-          dgdxdotT_out, dgdxdotdotT_out, dummy_derivT);
-      // Set gT_out to null to indicate that g_out was evaluated.
-      gT_out = Teuchos::null;
+          g, dg_dx, dg_dxdot, dg_dxdotdot, dummy_deriv);
+      // Set g to null to indicate the response was evaluated.
+      g= Teuchos::null;
     }
 
     // dg/dp
     for (int l = 0; l < outArgsT.Np(); ++l) {
-      const Teuchos::RCP<Thyra::MultiVectorBase<ST> > dgdp_out =
-        outArgsT.get_DgDp(j, l).getMultiVector();
-      const Teuchos::RCP<Tpetra_MultiVector> dgdpT_out =
-        Teuchos::nonnull(dgdp_out) ?
-        ConverterT::getTpetraMultiVector(dgdp_out) :
-        Teuchos::null;
+      const Teuchos::RCP<Thyra_MultiVector> dg_dp =  outArgsT.get_DgDp(j, l).getMultiVector();
 
-      if (Teuchos::nonnull(dgdpT_out)) {
+      if (Teuchos::nonnull(dg_dp)) {
         const Teuchos::RCP<ParamVec> p_vec = Teuchos::rcpFromRef(sacado_param_vec[l]);
         app->evaluateResponseTangent(
             j, alpha, beta, omega, curr_time, false,
             x, x_dot, x_dotdot, sacado_param_vec, p_vec.get(),
             Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
-            gT_out.get(), NULL, dgdpT_out.get());
-        gT_out = Teuchos::null;
+            g, Teuchos::null, dg_dp);
+        g = Teuchos::null;
       }
     }
 
-    if (Teuchos::nonnull(gT_out)) {
+    // If response was not yet evaluated, do it now.
+    if (Teuchos::nonnull(g)) {
       app->evaluateResponse(
           j, curr_time,
           x, x_dot, x_dotdot,
-          sacado_param_vec, *gT_out);
+          sacado_param_vec, g);
     }
   }
 }

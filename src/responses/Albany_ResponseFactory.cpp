@@ -153,6 +153,7 @@ createResponseFunction(
      name == "Modal Objective" ||
      name == "PHAL Field Integral" ||
      name == "PHAL Field IntegralT" ||
+     name == "PHAL Thermal Energy" ||
      name == "PHAL Thermal EnergyT" ||
      name == "AMP Energy") {
     responseParams.set("Name", name);

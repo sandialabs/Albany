@@ -22,6 +22,9 @@ enum class CombineMode {
 class CombineAndScatterManager
 {
 public:
+  virtual Teuchos::RCP<const Thyra_VectorSpace> getOwnedVectorSpace () const = 0;
+  virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlappedVectorSpace () const = 0;
+
   // Combine methods
   virtual void combine (const Teuchos::RCP<const Thyra_Vector>& src,
                         const Teuchos::RCP<Thyra_Vector>& dst,

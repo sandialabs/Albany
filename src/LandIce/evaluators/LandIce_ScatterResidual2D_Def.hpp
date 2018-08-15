@@ -32,7 +32,6 @@ ScatterResidual2D(const Teuchos::ParameterList& p,
   : ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>(p,dl),
     numFields(ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::numFieldsBase)
 {
-
   cell_topo = p.get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
   if (p.isType<int>("Field Level"))
     fieldLevel = p.get<int>("Field Level");
@@ -49,8 +48,8 @@ void ScatterResidual2D<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
-  Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
+  Teuchos::RCP<Tpetra_Vector>    fT   = Albany::getTpetraVector(workset.f);
+  Teuchos::RCP<Tpetra_CrsMatrix> JacT = Albany::getTpetraMatrix(workset.Jac);
   const bool loadResid = Teuchos::nonnull(fT);
   Teuchos::Array<LO> colT;
   const int neq = nodeID.dimension(2);
@@ -64,11 +63,11 @@ evaluateFields(typename Traits::EvalData workset)
   fieldLevel = (fieldLevel < 0) ? numLayers : fieldLevel;
   colT.reserve(neq*this->numNodes*(numLayers+1));
 
-
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
-  if (workset.sideSets == Teuchos::null)
+  if (workset.sideSets == Teuchos::null) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets not properly specified on the mesh" << std::endl);
+  }
 
   const Albany::SideSetList& ssList = *(workset.sideSets);
   Albany::SideSetList::const_iterator it = ssList.find(meshPart);
@@ -184,8 +183,8 @@ void ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
-  Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
+  Teuchos::RCP<Tpetra_Vector>    fT   = Albany::getTpetraVector(workset.f);
+  Teuchos::RCP<Tpetra_CrsMatrix> JacT = Albany::getTpetraMatrix(workset.Jac);
   const bool loadResid = Teuchos::nonnull(fT);
   const int neq = nodeID.dimension(2);
   unsigned int nunk = this->numNodes*(neq-1);
@@ -302,4 +301,4 @@ ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
 {
 }
 
-}
+} // namespace PHAL

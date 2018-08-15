@@ -10,7 +10,9 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Aeras_Layouts.hpp"
+
 #include "Albany_Utils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 namespace Aeras {
 
@@ -110,12 +112,10 @@ evaluateFields(typename Traits::EvalData workset)
 //Then the values of these matrices need to be scattered into the global Jacobian.
 
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<Tpetra_Vector>      fT = workset.fT;
-  Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
-  const bool loadResid = (fT != Teuchos::null);
-  LO rowT; 
-  Teuchos::Array<LO> colT; 
+  LO row; 
+  Teuchos::Array<LO> col(1); 
+  Teuchos::Array<ST> val(1); 
 
   //std::cout << "DEBUG in SW_ComputeAndScatterJac::EvaluateFields: " << __PRETTY_FUNCTION__ << "\n";
   //std::cout << "LOAD RESIDUAL? " << loadResid << "\n";
@@ -143,15 +143,14 @@ evaluateFields(typename Traits::EvalData workset)
       for (int node = 0; node < this->numNodes; ++node) {
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-          rowT = nodeID(cell,node,n);
-          RealType val2 = mc * this -> wBF(cell, node, node);
-          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
+          col[0] = row = nodeID(cell,node,n);
+          val[0] = mc * Albany::ADValue(this->wBF(cell, node, node));
+          Albany::addToLocalRowValues (workset.Jac,row,col(),val());
         }
         eq += this->numNodeVar;
       }
     }
   }
-
 }
 
-}
+} // namespace Aeras

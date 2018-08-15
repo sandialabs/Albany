@@ -598,10 +598,10 @@ fillResidual(StrongSchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
   Teuchos::ArrayRCP<ST> acce_view =
       has_acce == true ? acce->get1dViewNonConst() : Teuchos::null;
 
-  // Residual
-  Teuchos::RCP<Tpetra_Vector> f = dirichlet_workset.fT;
+  //Residual
+  Teuchos::RCP<Thyra_Vector> f = dirichlet_workset.f;
 
-  Teuchos::ArrayRCP<ST> f_view = f->get1dViewNonConst();
+  Teuchos::ArrayRCP<ST> f_view = Albany::getNonconstLocalData(f);
 
   std::vector<std::vector<int>> const& ns_nodes =
       dirichlet_workset.nodeSets->find(sbc.nodeSetID)->second;
@@ -767,7 +767,7 @@ StrongSchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   PHAL::SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
       dirichlet_workset);
 
-  if (dirichlet_workset.fT != Teuchos::null) {
+  if (dirichlet_workset.f != Teuchos::null) {
     fillResidual<StrongSchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>, Traits>(
         *this, dirichlet_workset);
   }

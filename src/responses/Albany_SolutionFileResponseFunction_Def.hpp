@@ -37,11 +37,11 @@ template<class Norm>
 void
 Albany::SolutionFileResponseFunction<Norm>::
 evaluateResponse(const double /*current_time*/,
-		 const Teuchos::RCP<const Thyra_Vector>& x,
-		 const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
-		 const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
-		 const Teuchos::Array<ParamVec>& /*p*/,
-		 Tpetra_Vector& gT)
+		const Teuchos::RCP<const Thyra_Vector>& x,
+		const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+		const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+		const Teuchos::Array<ParamVec>& /*p*/,
+    const Teuchos::RCP<Thyra_Vector>& g)
 {
   int MMFileStatus = 0;
 
@@ -74,7 +74,7 @@ evaluateResponse(const double /*current_time*/,
   diff->linear_combination(coeffs,vecs,0.0);
 
   // Get the norm
-  gT.getDataNonConst()[0] = Norm::Norm(*diff);
+  g->assign(Norm::Norm(*diff));
 }
 
 template<class Norm>
@@ -95,9 +95,9 @@ evaluateTangent(
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdot*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdotdot*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vp*/,
-		Tpetra_Vector* /*g*/,
-		Tpetra_MultiVector* /*gx*/,
-		Tpetra_MultiVector* /*gp*/)
+		const Teuchos::RCP<Thyra_Vector>& /*g*/,
+		const Teuchos::RCP<Thyra_MultiVector>& /*gx*/,
+		const Teuchos::RCP<Thyra_MultiVector>& /*gp*/)
 {
   // Do nothing
 }
@@ -111,11 +111,11 @@ evaluateGradient(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& /*p*/,
 		ParamVec* /*deriv_p*/,
-		Tpetra_Vector* gT,
-		Tpetra_MultiVector* dg_dxT,
-		Tpetra_MultiVector* dg_dxdotT,
-		Tpetra_MultiVector* dg_dxdotdotT,
-		Tpetra_MultiVector* dg_dpT)
+    const Teuchos::RCP<Thyra_Vector>& g,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
   int MMFileStatus = 0;
   if (!solutionLoaded) {
@@ -129,7 +129,7 @@ evaluateGradient(const double /*current_time*/,
     solutionLoaded = true;
   }
 
-  if (gT != NULL) {
+  if (!g.is_null()) {
     if (diff.is_null()) {
       // Build a vector to hold the difference between the actual and reference solutions
       diff = Thyra::createMember(x->space());
@@ -144,28 +144,28 @@ evaluateGradient(const double /*current_time*/,
     diff->linear_combination(coeffs,vecs,0.0);
 
     // Get the norm
-    gT->getDataNonConst()[0] = Norm::Norm(*diff);
+    g->assign(Norm::Norm(*diff));
   }
 
   // Evaluate dg/dx
-  if (dg_dxT != NULL) {
-    // TODO: remove this cast after you port responses (derivatives) to thyra 
-    auto dg_dx = Albany::createThyraMultiVector(Teuchos::rcp(dg_dxT,false));
+  if (!dg_dx.is_null()) {
     TEUCHOS_TEST_FOR_EXCEPTION(dg_dx->domain()->dim()!=1, std::logic_error, "Error! dg_dx has more than one column.\n");
     Norm::NormDerivative(*x, *RefSoln, *dg_dx->col(0));
   }
 
   // Evaluate dg/dxdot
-  if (dg_dxdotT != NULL) {
-    dg_dxdotT->putScalar(0.0);
+  if (!dg_dxdot.is_null()) {
+    dg_dxdot->assign(0.0);
   }
-  if (dg_dxdotdotT != NULL) {
-    dg_dxdotdotT->putScalar(0.0);
+
+  // Evaluate dg/dxdotdot
+  if (!dg_dxdotdot.is_null()) {
+    dg_dxdotdot->assign(0.0);
   }
 
   // Evaluate dg/dp
-  if (dg_dpT != NULL) {
-    dg_dpT->putScalar(0.0);
+  if (!dg_dp.is_null()) {
+    dg_dp->assign(0.0);
   }
 }
 
@@ -180,10 +180,10 @@ evaluateDistParamDeriv(
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
     const Teuchos::Array<ParamVec>& /*param_array*/,
     const std::string& /*dist_param_name*/,
-    Tpetra_MultiVector* dg_dpT)
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
-  if (dg_dpT != NULL) {
-    dg_dpT->putScalar(0.0);
+  if (!dg_dp.is_null()) {
+    dg_dp->assign(0.0);
   }
 }
 

@@ -1493,7 +1493,12 @@ bool
 LCM::PeridigmManager::copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(
     Teuchos::RCP<Tpetra_CrsMatrix> jacT)
 {
-  if (!peridigm->hasTangentStiffnessMatrix()) return false;
+  if(!peridigm->hasTangentStiffnessMatrix()) {
+    return false;
+  }
+
+  // TODO: generalize to generic Thyra interface
+  auto jacT = Albany::getTpetraMatrix(jac);
 
   jacT->globalAssemble();
   evaluateTangentStiffnessMatrix();

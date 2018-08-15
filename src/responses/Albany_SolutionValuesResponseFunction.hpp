@@ -10,12 +10,11 @@
 #include "Albany_SamplingBasedScalarResponseFunction.hpp"
 
 #include "Albany_Application.hpp"
+#include "Albany_CombineAndScatterManager.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Albany_Utils.hpp"
-
-#include "Tpetra_CombineMode.hpp"
 
 namespace Albany {
 
@@ -46,7 +45,7 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
 		  const Teuchos::Array<ParamVec>& p,
-		  Tpetra_Vector& g);
+		  const Teuchos::RCP<Thyra_Vector>& g);
 
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
     virtual void
@@ -64,9 +63,9 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vp,
-      Tpetra_Vector* g,
-      Tpetra_MultiVector* gx,
-      Tpetra_MultiVector* gp);
+		  const Teuchos::RCP<Thyra_Vector>& g,
+      const Teuchos::RCP<Thyra_MultiVector>& gx,
+      const Teuchos::RCP<Thyra_MultiVector>& gp);
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void
@@ -76,11 +75,11 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
-      Tpetra_Vector* g,
-      Tpetra_MultiVector* dg_dx,
-      Tpetra_MultiVector* dg_dxdot,
-      Tpetra_MultiVector* dg_dxdotdot,
-      Tpetra_MultiVector* dg_dp);
+		  const Teuchos::RCP<Thyra_Vector>& g,
+      const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
+      const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
+      const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
+      const Teuchos::RCP<Thyra_MultiVector>& dg_dp);
 
     //! Evaluate distributed parameter derivative dg/dp
     virtual void
@@ -91,7 +90,7 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& param_array,
       const std::string& dist_param_name,
-      Tpetra_MultiVector* dg_dpT);
+      const Teuchos::RCP<Thyra_MultiVector>& dg_dp);
 
   private:
     //! Private to prohibit copying
@@ -111,16 +110,12 @@ namespace Albany {
 
     void updateSolutionImporterT();
 
-    void
-    ImportWithAlternateMapT(
-        Teuchos::RCP<const Tpetra_Import> importerT,
+    void ImportWithAlternateMapT(
         const Tpetra_MultiVector& sourceT,
-        Tpetra_MultiVector* targetT,
+        Tpetra_MultiVector& targetT,
         Tpetra::CombineMode modeT);
 
-    void
-    ImportWithAlternateMapT(
-        Teuchos::RCP<const Tpetra_Import> importerT,
+    void ImportWithAlternateMapT(
         const Tpetra_Vector& sourceT,
         Tpetra_Vector& targetT,
         Tpetra::CombineMode modeT);

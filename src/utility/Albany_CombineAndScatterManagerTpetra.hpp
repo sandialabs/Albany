@@ -15,6 +15,9 @@ namespace Albany
 class CombineAndScatterManagerTpetra : public CombineAndScatterManager
 {
 public:
+  Teuchos::RCP<const Thyra_VectorSpace> getOwnedVectorSpace () const { return owned_vs; }
+  Teuchos::RCP<const Thyra_VectorSpace> getOverlappedVectorSpace () const { return overlapped_vs; }
+
   CombineAndScatterManagerTpetra(const Teuchos::RCP<const Thyra_VectorSpace>& owned,
                                  const Teuchos::RCP<const Thyra_VectorSpace>& overlapped);
 
@@ -41,6 +44,9 @@ public:
                 const CombineMode CM) const;
 
 private:
+
+  Teuchos::RCP<const Thyra_VectorSpace>   owned_vs;
+  Teuchos::RCP<const Thyra_VectorSpace>   overlapped_vs;
 
   Teuchos::RCP<Tpetra_Import>   importer;
 };

@@ -12,6 +12,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_Dimension.hpp"
 #include "Aeras_Layouts.hpp"
 
 #include "Teuchos_ParameterList.hpp"
@@ -83,7 +85,8 @@ template<typename Traits>
 class SW_ComputeAndScatterJac<PHAL::AlbanyTraits::Jacobian,Traits>
   : public SW_ComputeAndScatterJacBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
 public:
-  typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
+  typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT      ScalarT;
+  typedef typename PHAL::AlbanyTraits::Jacobian::MeshScalarT  MeshScalarT;
   SW_ComputeAndScatterJac(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Aeras::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d); 

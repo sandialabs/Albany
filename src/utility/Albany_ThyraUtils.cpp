@@ -2,7 +2,13 @@
 #include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_Utils.hpp"
 
+#include "Petra_Converters.hpp"
+
 #include "Thyra_VectorStdOps.hpp"
+
+#if defined(ALBANY_EPETRA)
+#include "AztecOO_ConditionNumber.h"
+#endif
 
 namespace Albany
 {
@@ -12,13 +18,15 @@ namespace Albany
 bool isFillActive (const Teuchos::RCP<const Thyra_LinearOp>& lop)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getTpetraMatrix(lop,false);
-  if (!tlop.is_null()) {
+  auto tmat = getConstTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
     return tmat->isFillActive();
   }
 
+  // TODO: add epetra
+
   // If all the tries above are not successful, throw an error.
-  TEUCHOST_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
 
   // Dummy return value, to silence compiler warnings
   return false;
@@ -28,39 +36,57 @@ void resumeFill (const Teuchos::RCP<Thyra_LinearOp>& lop)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
-  if (!tlop.is_null()) {
+  if (!tmat.is_null()) {
     tmat->resumeFill();
     return;
   }
 
+  // TODO: add epetra
+
   // If all the tries above are not successful, throw an error.
-  TEUCHOST_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
 }
 
 void fillComplete (const Teuchos::RCP<Thyra_LinearOp>& lop)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
-  if (!tlop.is_null()) {
+  if (!tmat.is_null()) {
     tmat->fillComplete();
     return;
   }
 
+  // TODO: add epetra
+
   // If all the tries above are not successful, throw an error.
-  TEUCHOST_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
 }
 
 void assign (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST value)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
-  if (!tlop.is_null()) {
+  if (!tmat.is_null()) {
+    // Tpetra throws when trying to set scalars in an already filled matrix
+    bool callFillComplete = false;
+    if(!tmat->isFillActive()){
+       tmat->resumeFill();
+       callFillComplete = true;
+    }
+
     tmat->setAllToScalar(value);
+
+    if(callFillComplete){
+      tmat->fillComplete();
+    }
+
     return;
   }
 
+  // TODO: add epetra
+
   // If all the tries above are not successful, throw an error.
-  TEUCHOST_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
 }
 
 void getDiagonalCopy (const Teuchos::RCP<const Thyra_LinearOp>& lop,
@@ -69,7 +95,7 @@ void getDiagonalCopy (const Teuchos::RCP<const Thyra_LinearOp>& lop,
   // Diagonal makes sense only for (globally) square operators.
   // From Thyra, we can't check the global ids of the range/domain vector spaces,
   // but at least we can check that they have the same (global) dimension.
-  TEUCHOST_TEST_FOR_EXCEPTION(lop->range()->dim()!=lop->domain()->dim(), std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(lop->range()->dim()!=lop->domain()->dim(), std::logic_error,
                               "Error! Attempt to take the diagonal of a non-square operator.\n");
 
   // If diag is not created, do it.
@@ -78,32 +104,183 @@ void getDiagonalCopy (const Teuchos::RCP<const Thyra_LinearOp>& lop,
   }
 
   // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getTpetraMatrix(lop,false);
-  if (!tlop.is_null()) {
+  auto tmat = getConstTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
     tmat->getLocalDiagCopy(*Albany::getTpetraVector(diag,true));
     return;
   }
 
+  // TODO: add epetra
+
   // If all the tries above are not successful, throw an error.
-  TEUCHOST_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+}
+
+void getLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                        const LO lrow,
+                        Teuchos::Array<LO>& indices,
+                        Teuchos::Array<ST>& values)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmat = getConstTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    auto numEntries = tmat->getNumEntriesInLocalRow(lrow);
+    indices.resize(numEntries);
+    values.resize(numEntries);
+    tmat->getLocalRowCopy(lrow,indices,values,numEntries);
+    return;
+  }
+
+  // TODO: add epetra
+
+  // If all the tries above are not successful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+}
+
+void addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                          const LO lrow,
+                          const Teuchos::ArrayView<const LO> indices,
+                          const Teuchos::ArrayView<const ST> values)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmat = getTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    tmat->sumIntoLocalValues(lrow,indices,values);
+    return;
+  }
+
+  // TODO: add epetra
+
+  // If all the tries above are not successful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+}
+
+void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                        const LO lrow,
+                        const Teuchos::ArrayView<const LO> indices,
+                        const Teuchos::ArrayView<const ST> values)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmat = getTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    tmat->replaceLocalValues(lrow,indices,values);
+    return;
+  }
+
+  // TODO: add epetra
+
+  // If all the tries above are not successful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+}
+
+double computeConditionNumber (const Teuchos::RCP<const Thyra_LinearOp>& lop)
+{
+#ifdef ALBANY_EPETRA
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmat = getConstTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    Petra::Converter converter(tmat->getComm());
+
+    auto emat = Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(tmat,converter.commE_);
+    AztecOOConditionNumber conditionEstimator;
+    conditionEstimator.initialize(*emat);
+    int maxIters = 40000;
+    double tol = 1e-10;
+    int status = conditionEstimator.computeConditionNumber(maxIters, tol);
+    if (status != 0) {
+      auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+      *out << "WARNING: AztecOO::ConditionNumber::computeConditionNumber returned "
+           << "non-zero status = " << status
+           << ".  Condition number estimate may be wrong!\n";
+    }
+    double condest = conditionEstimator.getConditionNumber();
+    return condest;
+  }
+
+  // TODO: add epetra
+
+  // If all the tries above are not successful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+#else
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Condition number estimation requires ALBANY_EPETRA.\n");
+  // Suppress compiler warning for unused argument
+  (void) lop;
+#endif
+
+  // Dummy return value to silence compiler warning
+  return 0.0;
+}
+
+DeviceLocalMatrix<const ST> getDeviceData (const Teuchos::RCP<const Thyra_LinearOp>& lop)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmat = getConstTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    // Get the local matrix from tpetra.
+    DeviceLocalMatrix<const ST> data = tmat->getLocalMatrix();
+    return data;
+  }
+
+  // TODO: to add epetra, create device matrix, get values view, create host copy, extract data
+  //       from matrix into values host view, deep copy to device. We could otherwise ENFORCE
+  //       PHX::Device to be a host exec space for Epetra.
+
+  // If all the tries above are not successful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
+
+  // Dummy return value, to silence compiler warnings
+  DeviceLocalMatrix<const ST> dummy;
+  return dummy;
+}
+
+DeviceLocalMatrix<ST> getNonconstDeviceData (const Teuchos::RCP<Thyra_LinearOp>& lop)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmat = getTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    // Get the local matrix from tpetra.
+    DeviceLocalMatrix<ST> data = tmat->getLocalMatrix();
+    return data;
+  }
+
+  // TODO: to add epetra, create device matrix, get values view, create host copy, extract data
+  //       from matrix into values host view, deep copy to device. We could otherwise ENFORCE
+  //       PHX::Device to be a host exec space for Epetra.
+
+  // If all the tries above are not successful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
+
+  // Dummy return value, to silence compiler warnings
+  DeviceLocalMatrix<ST> dummy;
+  return dummy;
 }
 
 // ========= Thyra_Vector utilities ========== //
+
+// TODO: probably we should do something like
+//
+//  spmd_v = cast_to_spmd_vector(v);
+//  ArrayRCP<ST> a;
+//  spmd_v->getLocalData(Teuchos::outarg(a));
+//  return a;
+//
+// This would work for ALL concrete impl of Thyra_Vector,
+// provided that they inherit from SpmdVectorBase, which
+// is a reasonable assumption (hold for both Tpetra and Epetra)
 
 Teuchos::ArrayRCP<ST> getNonconstLocalData (const Teuchos::RCP<Thyra_Vector>& v)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tv = getTpetraVector(v,false);
   if (!tv.is_null()) {
-    auto view = tv->getLocalView<Kokkos::HostSpace>();
-    tv->modify<Kokkos::HostSpace>();
-    Teuchos::ArrayRCP<impl_scalar_type> dataAsArcp =
-        Kokkos::Compat::persistingView (X_lcl);
-    return Teuchos::arcp_reinterpret_cast<Scalar> (dataAsArcp);
+    // (and should not) mark the data as modified.
+    return tv->get1dViewNonConst();
   }
 
+  // TODO: add epetra
+
   // If all the tries above are not successful, throw an error.
-  TEUCHOST_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
 
   // Dummy return value, to silence compiler warnings
   Teuchos::ArrayRCP<ST> dummy;
@@ -120,11 +297,77 @@ Teuchos::ArrayRCP<const ST> getLocalData (const Teuchos::RCP<const Thyra_Vector>
     return tv->get1dView();
   }
 
+  // TODO: add epetra
+
   // If all the tries above are not successful, throw an error.
-  TEUCHOST_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
 
   // Dummy return value, to silence compiler warnings
   Teuchos::ArrayRCP<const ST> dummy;
+  return dummy;
+}
+
+Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>
+getNonconstLocalData (const Teuchos::RCP<Thyra_MultiVector>& mv)
+{
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> data(mv->domain()->dim());
+  for (int i=0; i<mv->domain()->dim(); ++i) {
+    data[i] = getNonconstLocalData(mv->col(i));
+  }
+  return data;
+}
+
+Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>>
+getLocalData (const Teuchos::RCP<const Thyra_MultiVector>& mv)
+{
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> data(mv->domain()->dim());
+  for (int i=0; i<mv->domain()->dim(); ++i) {
+    data[i] = getLocalData(mv->col(i));
+  }
+  return data;
+}
+
+DeviceView1d<const ST> getDeviceData (const Teuchos::RCP<const Thyra_Vector>& v)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tv = getConstTpetraVector(v,false);
+  if (!tv.is_null()) {
+    auto data2d = tv->getLocalView<KokkosNode::execution_space>();
+    DeviceView1d<const ST> data = Kokkos::subview(data2d, Kokkos::ALL(), 0);
+    return data;
+  }
+
+  // TODO: to add epetra, create device view, create host copy, extract data
+  //       into host view, deep copy to device. We could otherwise ENFORCE
+  //       PHX::Device to be a host exec space for Epetra.
+
+  // If all the tries above are not successful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
+
+  // Dummy return value, to silence compiler warnings
+  DeviceView1d<const ST> dummy;
+  return dummy;
+}
+
+DeviceView1d<ST> getNonconstDeviceData (const Teuchos::RCP<Thyra_Vector>& v)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tv = getTpetraVector(v,false);
+  if (!tv.is_null()) {
+    auto data2d = tv->getLocalView<KokkosNode::execution_space>();
+    DeviceView1d<ST> data = Kokkos::subview(data2d, Kokkos::ALL(), 0);
+    return data;
+  }
+
+  // TODO: to add epetra, create device view, create host copy, extract data
+  //       into host view, deep copy to device. We could otherwise ENFORCE
+  //       PHX::Device to be a host exec space for Epetra.
+
+  // If all the tries above are not successful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
+
+  // Dummy return value, to silence compiler warnings
+  DeviceView1d<ST> dummy;
   return dummy;
 }
 
@@ -134,94 +377,117 @@ void scale_and_update (const Teuchos::RCP<Thyra_Vector> y, const ST y_coeff,
   Thyra::V_StVpStV(y.ptr(),x_coeff,*x,y_coeff,*y);
 }
 
-// ========= Matrix Market utilities ========== //
+// ======== Object printing utilities ========= //
 
-void
-writeMatrixMarket(
-    const Teuchos::RCP<const Thyra_Vector>& v, std::string const& prefix,
-    int const counter)
+template<>
+void describe<Thyra_Vector> (const Teuchos::RCP<const Thyra_Vector>& v,
+                             Teuchos::FancyOStream& out,
+                             const Teuchos::EVerbosityLevel verbLevel)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tv = getConstTpetraVector(v,false);
   if (!tv.is_null()) {
-    writeMatrixMarket(tv,prefix,counter);
+    tv->describe(out,verbLevel);
     return;
   }
 
+  // TODO: add epetra
+
   // If all the tries above are not successful, throw an error.
-  TEUCHOST_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
 }
 
-void
-writeMatrixMarket(
-    const Teuchos::Array<Teuchos::RCP<const Thyra_Vector>>& vs,
-    const std::string& prefix, int const counter = -1)
+template<>
+void describe<Thyra_LinearOp> (const Teuchos::RCP<const Thyra_LinearOp>& op,
+                               Teuchos::FancyOStream& out,
+                               const Teuchos::EVerbosityLevel verbLevel)
 {
-  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector>> tvs(vs.size());
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto top = getConstTpetraOperator(op,false);
+  if (!top.is_null()) {
+    top->describe(out,verbLevel);
+    return;
+  }
 
-  bool first_vector = true;
-  bool successful_cast = false;
-  for (int i=0; i<vs.size(); ++i) {
-    // Allow failure at first vector, since we don't know what the underlying linear algebra is
-    // If the first one goes through, however, we want the next ones to go through as well (no mixed types!)
-    tvs[i] = getConstTpetraVector(vs[i],!first_vector);
-    if (tvs[i].is_null()) {
-      TEUCHOS_TEST_FOR_EXCEPTION(!first_vector, std::logic_error, "Error! I was able to cast one Thyra_Vector to Tpetra_Vector, but not the rest.\n");
-      break;
-    }
-    first_vector = false;
-    successful_cast = true;
-  }
-  if (successful_cast) {
-    writeMatrixMarket(tvs,prefix,counter);
-  }
+  // TODO: add epetra
 
   // If all the tries above are not successful, throw an error.
-  TEUCHOST_TEST_FOR_EXCEPTION (!successful_cast, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
 }
 
+// ========= Matrix Market utilities ========== //
+
+// These routines implement a specialization of the template functions declared in Albany_Utils.hpp
+template<>
 void
-writeMatrixMarket(
-    const Teuchos::RCP<const Thyra_LinearOp>& A, std::string const& prefix,
-    int const counter)
+writeMatrixMarket<Thyra_MultiVector>(
+    const Teuchos::RCP<const Thyra_MultiVector>& mv,
+    const std::string& prefix,
+    const int counter)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmv = getConstTpetraMultiVector(mv,false);
+  if (!tmv.is_null()) {
+    writeMatrixMarket(tmv,prefix,counter);
+    return;
+  }
+
+  // TODO: add epetra
+
+  // If all the tries above are not successful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
+}
+
+template<>
+void
+writeMatrixMarket<Thyra_LinearOp>(
+    const Teuchos::RCP<const Thyra_LinearOp>& A,
+    const std::string& prefix,
+    const int counter)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tA = getConstTpetraMatrix(A,false);
-  if (!tv.is_null()) {
+  if (!tA.is_null()) {
     writeMatrixMarket(tA,prefix,counter);
     return;
   }
 
+  // TODO: add epetra
+
   // If all the tries above are not successful, throw an error.
-  TEUCHOST_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
 }
 
+// These routines implement a specialization of the template functions declared in Albany_Utils.hpp
+template<>
 void
-writeMatrixMarket(
-    const Teuchos::Array<Teuchos::RCP<const Thyra_LinearOp>>& As,
-    const std::string& prefix, int const counter = -1)
+writeMatrixMarket<Thyra_VectorSpace>(
+    const Teuchos::RCP<const Thyra_VectorSpace>& vs,
+    const std::string& prefix,
+    const int counter)
 {
-  Teuchos::Array<Teuchos::RCP<const Tpetra_CrsMatrix>> tAs(As.size());
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tm = getTpetraMap(vs,false);
+  if (!tm.is_null()) {
+    writeMatrixMarket(tm,prefix,counter);
+    return;
+  }
 
-  bool first_op = true;
-  bool successful_cast = false;
-  for (int i=0; i<As.size(); ++i) {
-    // Allow failure at first operator, since we don't know what the underlying linear algebra is
-    // If the first one goes through, however, we want the next ones to go through as well (no mixed types!)
-    tAs[i] = getConstTpetraMatrix(As[i],!first_op);
-    if (tAs[i].is_null()) {
-      TEUCHOS_TEST_FOR_EXCEPTION(!first_op, std::logic_error, "Error! I was able to cast one Thyra_LinearOp to Tpetra_CrsMatrix, but not the rest.\n");
-      break;
-    }
-    first_op = false;
-    successful_cast = true;
-  }
-  if (successful_cast) {
-    writeMatrixMarket(tAs,prefix,counter);
-  }
+  // TODO: add epetra
 
   // If all the tries above are not successful, throw an error.
-  TEUCHOST_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
+}
+
+// ========= Thyra_SpmdXYZ utilities ========== //
+
+Teuchos::RCP<const Thyra_SpmdVectorSpace>
+getSpmdVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace> vs,
+                    const bool throw_on_failure)
+{
+  Teuchos::RCP<const Thyra_SpmdVectorSpace> spmd_vs;
+  spmd_vs = Teuchos::rcp_dynamic_cast<const Thyra_SpmdVectorSpace>(vs,throw_on_failure);
+  return spmd_vs;
 }
 
 // ========= Thyra_ProductXYZ utilities ========== //
@@ -231,7 +497,7 @@ getProductVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace> vs,
                        const bool throw_on_failure)
 {
   Teuchos::RCP<const Thyra_ProductVectorSpace> pvs;
-  pvs = Teuchos::rcp_dynamic_cast<const Thyra_ProductVectorSpace>(vs,throw_on_failure)
+  pvs = Teuchos::rcp_dynamic_cast<const Thyra_ProductVectorSpace>(vs,throw_on_failure);
   return pvs;
 }
 
@@ -241,7 +507,7 @@ getProductVector (const Teuchos::RCP<Thyra_Vector> v,
 {
   Teuchos::RCP<Thyra_ProductVector> pv;
   pv = Teuchos::rcp_dynamic_cast<Thyra_ProductVector>(v,throw_on_failure);
-  return sv;
+  return pv;
 }
 
 Teuchos::RCP<const Thyra_ProductVector>
@@ -259,7 +525,7 @@ getProductMultiVector (const Teuchos::RCP<Thyra_MultiVector> mv,
 {
   Teuchos::RCP<Thyra_ProductMultiVector> pmv;
   pmv = Teuchos::rcp_dynamic_cast<Thyra_ProductMultiVector>(mv,throw_on_failure);
-  return pvs;
+  return pmv;
 }
 
 Teuchos::RCP<const Thyra_ProductMultiVector>
@@ -268,7 +534,7 @@ getConstProductMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
 {
   Teuchos::RCP<const Thyra_ProductMultiVector> pmv;
   pmv = Teuchos::rcp_dynamic_cast<const Thyra_ProductMultiVector>(mv,throw_on_failure);
-  return pvs;
+  return pmv;
 }
 
 } // namespace Albany

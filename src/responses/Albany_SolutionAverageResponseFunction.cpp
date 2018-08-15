@@ -34,9 +34,9 @@ evaluateResponse(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& /*p*/,
-		Tpetra_Vector& gT)
+		const Teuchos::RCP<Thyra_Vector>& g)
 {
-  evaluateResponseImpl(*x,gT);
+  evaluateResponseImpl(*x,*g);
 }
 
 void
@@ -55,19 +55,19 @@ evaluateTangent(const double alpha,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdot*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdotdot*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vp*/,
-		Tpetra_Vector* gT,
-		Tpetra_MultiVector* gxT,
-		Tpetra_MultiVector* gpT)
+		const Teuchos::RCP<Thyra_Vector>& g,
+		const Teuchos::RCP<Thyra_MultiVector>& gx,
+		const Teuchos::RCP<Thyra_MultiVector>& gp)
 {
   // Evaluate response g
-  if (gT != NULL) {
-    evaluateResponseImpl(*x,*gT);
+  if (!g.is_null()) {
+    evaluateResponseImpl(*x,*g);
   }
 
-  // Evaluate tangent of g = dg/dx*Vx + dg/dxdot*Vxdot + dg/dp*Vp
-  // If Vx == NULL, Vx is the identity
-  if (gxT != NULL) {
-    Teuchos::ArrayRCP<ST> gxT_nonconstView;
+  // Evaluate tangent of g: dg/dx*Vx + dg/dxdot*Vxdot + dg/dp*Vp
+  //                      =    gx    +       0        +    gp
+  // If Vx is null, Vx is the identity
+  if (!gx.is_null()) {
     if (!Vx.is_null()) {
       if (ones.is_null() || ones->domain()->dim()!=Vx->domain()->dim()) {
         ones = Thyra::createMembers(Vx->range(), Vx->domain()->dim());
@@ -80,18 +80,17 @@ evaluateTangent(const double alpha,
         mean /= Vx->domain()->dim();
       }
       for (int j=0; j<Vx->domain()->dim(); j++) {  
-        gxT_nonconstView = gxT->getDataNonConst(j); 
-        gxT_nonconstView[0] = means[j];  
+        gx->col(j)->assign(means[j]);
       }
     }
     else {
-      gxT->putScalar(1.0/x->space()->dim());
+      gx->assign(1.0/x->space()->dim());
     }
-    gxT->scale(alpha);
+    gx->scale(alpha);
   }
   
-  if (gpT != NULL) {
-    gpT->putScalar(0.0);
+  if (!gp.is_null()) {
+    gp->assign(0.0);
   }
 }
 
@@ -103,33 +102,35 @@ evaluateGradient(const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& p,
 		ParamVec* deriv_p,
-		Tpetra_Vector* gT,
-		Tpetra_MultiVector* dg_dxT,
-		Tpetra_MultiVector* dg_dxdotT,
-		Tpetra_MultiVector* dg_dxdotdotT,
-		Tpetra_MultiVector* dg_dpT)
+		const Teuchos::RCP<Thyra_Vector>& g,
+		const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
+		const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
+		const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
+		const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
   // Evaluate response g
-  if (gT != NULL) {
-    evaluateResponseImpl(*x,*gT);
+  if (!g.is_null()) {
+    evaluateResponseImpl(*x,*g);
   }
 
   // Evaluate dg/dx
-  if (dg_dxT != NULL) {
-    dg_dxT->putScalar(1.0 / x->space()->dim());
+  if (!dg_dx.is_null()) {
+    dg_dx->assign(1.0 / x->space()->dim());
   }
 
   // Evaluate dg/dxdot
-  if (dg_dxdotT != NULL) {
-    dg_dxdotT->putScalar(0.0);
+  if (!dg_dxdot.is_null()) {
+    dg_dxdot->assign(0.0);
   }
-  if (dg_dxdotdotT != NULL) {
-    dg_dxdotdotT->putScalar(0.0);
+
+  // Evaluate dg/dxdotdot
+  if (!dg_dxdotdot.is_null()) {
+    dg_dxdotdot->assign(0.0);
   }
 
   // Evaluate dg/dp
-  if (dg_dpT != NULL) {
-    dg_dpT->putScalar(0.0);
+  if (!dg_dp.is_null()) {
+    dg_dp->assign(0.0);
   }
 }
 
@@ -142,11 +143,11 @@ evaluateDistParamDeriv(
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
     const Teuchos::Array<ParamVec>& /*param_array*/,
     const std::string& /*dist_param_name*/,
-    Tpetra_MultiVector* dg_dpT)
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
   // Evaluate response derivative dg_dp
-  if (dg_dpT != NULL) {
-    dg_dpT->putScalar(0.0);
+  if (!dg_dp.is_null()) {
+    dg_dp->assign(0.0);
   }
 }
 
@@ -154,13 +155,12 @@ void
 Albany::SolutionAverageResponseFunction::
 evaluateResponseImpl (
     const Thyra_Vector& x,
-		Tpetra_Vector& gT)
+		Thyra_Vector& g)
 {
   if (one.is_null()) {
     one = Thyra::createMember(x.space());
     one->assign(1.0);
   }
   const ST mean = one->dot(x) / x.space()->dim();
-  Teuchos::ArrayRCP<ST> gT_nonconstView = gT.get1dViewNonConst();
-  gT_nonconstView[0] = mean; 
+  g.assign(mean);
 }

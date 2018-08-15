@@ -61,16 +61,21 @@ SET(HEADERS
   Albany_DistributedParameterLibrary_Tpetra.hpp
   Albany_DummyParameterAccessor.hpp
   Albany_EigendataInfoStructT.hpp
+  Albany_KokkosTypes.hpp
   Albany_Memory.hpp
   Albany_ModelFactory.hpp
   Albany_ModelEvaluatorT.hpp
   Albany_NullSpaceUtils.hpp
   Albany_ObserverImpl.hpp
   Albany_PiroObserverT.hpp
+  Albany_ScalarOrdinalTypes.hpp
   Albany_SolverFactory.hpp
   Albany_StateManager.hpp
   Albany_StateInfoStruct.hpp
   Albany_StatelessObserverImpl.hpp
+  Albany_TpetraThyraTypes.hpp
+  Albany_TpetraTypes.hpp
+  Albany_ThyraTypes.hpp
   Albany_Utils.hpp
   PHAL_AlbanyTraits.hpp
   PHAL_Dimension.hpp
@@ -303,10 +308,9 @@ SET(SOURCES ${SOURCES}
   evaluators/pde/PHAL_SideLaplacianResidual.cpp
   evaluators/pde/PHAL_ThermalConductivity.cpp
   evaluators/response/PHAL_ResponseFieldIntegral.cpp
-  evaluators/response/PHAL_ResponseFieldIntegralT.cpp
   evaluators/response/PHAL_ResponseSquaredL2Difference.cpp
   evaluators/response/PHAL_ResponseSquaredL2DifferenceSide.cpp
-  evaluators/response/PHAL_ResponseThermalEnergyT.cpp
+  evaluators/response/PHAL_ResponseThermalEnergy.cpp
   evaluators/response/QCAD_ResponseCenterOfMass.cpp
   evaluators/response/QCAD_ResponseFieldAverage.cpp
   evaluators/response/QCAD_ResponseFieldIntegral.cpp
@@ -315,7 +319,6 @@ SET(SOURCES ${SOURCES}
   evaluators/scatter/PHAL_ScatterScalarNodalParameter.cpp
   evaluators/scatter/PHAL_ScatterScalarResponse.cpp
   evaluators/scatter/PHAL_SeparableScatterScalarResponse.cpp
-  evaluators/scatter/PHAL_SeparableScatterScalarResponseT.cpp
   evaluators/state/PHAL_LoadSideSetStateField.cpp
   evaluators/state/PHAL_LoadStateField.cpp
   evaluators/state/PHAL_SaveCellStateField.cpp
@@ -452,14 +455,14 @@ SET(HEADERS ${HEADERS}
   evaluators/pde/PHAL_SideLaplacianResidual_Def.hpp
   evaluators/pde/PHAL_ThermalConductivity.hpp
   evaluators/pde/PHAL_ThermalConductivity_Def.hpp
-  evaluators/response/PHAL_ResponseFieldIntegralT.hpp
-  evaluators/response/PHAL_ResponseFieldIntegralT_Def.hpp
+  evaluators/response/PHAL_ResponseFieldIntegral.hpp
+  evaluators/response/PHAL_ResponseFieldIntegral_Def.hpp
   evaluators/response/PHAL_ResponseSquaredL2Difference.hpp
   evaluators/response/PHAL_ResponseSquaredL2DifferenceSide.hpp
   evaluators/response/PHAL_ResponseSquaredL2DifferenceSide_Def.hpp
   evaluators/response/PHAL_ResponseSquaredL2Difference_Def.hpp
-  evaluators/response/PHAL_ResponseThermalEnergyT.hpp
-  evaluators/response/PHAL_ResponseThermalEnergyT_Def.hpp
+  evaluators/response/PHAL_ResponseThermalEnergy.hpp
+  evaluators/response/PHAL_ResponseThermalEnergy_Def.hpp
   evaluators/response/QCAD_ResponseCenterOfMass.hpp
   evaluators/response/QCAD_ResponseCenterOfMass_Def.hpp
   evaluators/response/QCAD_ResponseFieldAverage.hpp
@@ -474,8 +477,6 @@ SET(HEADERS ${HEADERS}
   evaluators/scatter/PHAL_ScatterScalarNodalParameter_Def.hpp
   evaluators/scatter/PHAL_ScatterScalarResponse.hpp
   evaluators/scatter/PHAL_ScatterScalarResponse_Def.hpp
-  evaluators/scatter/PHAL_SeparableScatterScalarResponseT.hpp
-  evaluators/scatter/PHAL_SeparableScatterScalarResponseT_Def.hpp
   evaluators/state/PHAL_LoadSideSetStateField.hpp
   evaluators/state/PHAL_LoadSideSetStateField_Def.hpp
   evaluators/state/PHAL_LoadStateField.hpp
@@ -536,8 +537,6 @@ IF (ALBANY_EPETRA)
     evaluators/gather/PHAL_GatherEigenvectors_Def.hpp
     evaluators/gather/PHAL_GatherEigenData.hpp
     evaluators/gather/PHAL_GatherEigenData_Def.hpp
-    evaluators/response/PHAL_ResponseFieldIntegral.hpp
-    evaluators/response/PHAL_ResponseFieldIntegral_Def.hpp
     evaluators/scatter/PHAL_SeparableScatterScalarResponse.hpp
     evaluators/scatter/PHAL_SeparableScatterScalarResponse_Def.hpp
   )

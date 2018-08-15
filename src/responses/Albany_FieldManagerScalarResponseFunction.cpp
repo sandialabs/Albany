@@ -158,11 +158,11 @@ evaluate (PHAL::Workset& workset) {
 void
 Albany::FieldManagerScalarResponseFunction::
 evaluateResponse(const double current_time,
-     const Teuchos::RCP<const Thyra_Vector>& x,
-     const Teuchos::RCP<const Thyra_Vector>& xdot,
-     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-		 const Teuchos::Array<ParamVec>& p,
-		 Tpetra_Vector& gT)
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+		const Teuchos::Array<ParamVec>& p,
+    const Teuchos::RCP<Thyra_Vector>& g)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
@@ -174,7 +174,7 @@ evaluateResponse(const double current_time,
   // Set data in Workset struct
   PHAL::Workset workset;
   application->setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, p);
-  workset.gT = Teuchos::rcp(&gT,false);
+  workset.g = g;
 
   // Perform fill via field manager
   evaluate<PHAL::AlbanyTraits::Residual>(workset);
@@ -196,9 +196,9 @@ evaluateTangent(const double alpha,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
     const Teuchos::RCP<const Thyra_MultiVector>& Vp,
-		Tpetra_Vector* gT,
-		Tpetra_MultiVector* gxT,
-		Tpetra_MultiVector* gpT)
+    const Teuchos::RCP<Thyra_Vector>& g,
+    const Teuchos::RCP<Thyra_MultiVector>& gx,
+    const Teuchos::RCP<Thyra_MultiVector>& gp)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
@@ -211,9 +211,9 @@ evaluateTangent(const double alpha,
   PHAL::Workset workset;
   application->setupTangentWorksetInfo(workset, current_time, sum_derivs, 
                 x, xdot, xdotdot, p, deriv_p, Vx, Vxdot, Vxdotdot, Vp);
-  workset.gT = Teuchos::rcp(gT, false);
-  workset.dgdxT = Teuchos::rcp(gxT, false);
-  workset.dgdpT = Teuchos::rcp(gpT, false);
+  workset.g = g;
+  workset.dgdx = gx;
+  workset.dgdp = gp;
   
   // Perform fill via field manager
   evaluate<PHAL::AlbanyTraits::Tangent>(workset);
@@ -227,11 +227,11 @@ evaluateGradient(const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
 		const Teuchos::Array<ParamVec>& p,
 		ParamVec* deriv_p,
-		Tpetra_Vector* gT,
-		Tpetra_MultiVector* dg_dxT,
-		Tpetra_MultiVector* dg_dxdotT,
-		Tpetra_MultiVector* dg_dxdotdotT,
-		Tpetra_MultiVector* dg_dpT)
+    const Teuchos::RCP<Thyra_Vector>& g,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
@@ -244,42 +244,39 @@ evaluateGradient(const double current_time,
   PHAL::Workset workset;
   application->setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, p);
   
-  workset.gT = Teuchos::rcp(gT, false);
+  workset.g = g;
   
   // Perform fill via field manager (dg/dx)
-  if (dg_dxT != NULL) {
+  if (!dg_dx.is_null()) {
     workset.m_coeff = 0.0;
     workset.j_coeff = 1.0;
     workset.n_coeff = 0.0;
-    workset.dgdxT = Teuchos::rcp(dg_dxT, false);
-    workset.overlapped_dgdxT = 
-      Teuchos::rcp(new Tpetra_MultiVector(workset.x_importerT->getTargetMap(),
-					  dg_dxT->getNumVectors()));
+    workset.dgdx = dg_dx;
+    workset.overlapped_dgdx = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),dg_dx->domain()->dim());
     evaluate<PHAL::AlbanyTraits::Jacobian>(workset);
   }
 
   // Perform fill via field manager (dg/dxdot)
-  if (dg_dxdotT != NULL) {
+  if (!dg_dxdot.is_null()) {
     workset.m_coeff = 1.0;
     workset.j_coeff = 0.0;
     workset.n_coeff = 0.0;
-    workset.dgdxT = Teuchos::null;
-    workset.dgdxdotT = Teuchos::rcp(dg_dxdotT, false);
-    workset.overlapped_dgdxdotT = 
-      Teuchos::rcp(new Tpetra_MultiVector(workset.x_importerT->getTargetMap(),
-					  dg_dxdotT->getNumVectors()));
+    // LB: WHY?!?! 
+    workset.dgdx = Teuchos::null;
+    workset.dgdxdot = dg_dxdot;
+    workset.overlapped_dgdxdot = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),dg_dxdot->domain()->dim());
     evaluate<PHAL::AlbanyTraits::Jacobian>(workset);
   }  
   // Perform fill via field manager (dg/dxdotdot)
-  if (dg_dxdotdotT != NULL) {
+  if (!dg_dxdotdot.is_null()) {
     workset.m_coeff = 0.0;
     workset.j_coeff = 0.0;
     workset.n_coeff = 1.0;
-    workset.dgdxT = Teuchos::null;
-    workset.dgdxdotdotT = Teuchos::rcp(dg_dxdotdotT, false);
-    workset.overlapped_dgdxdotdotT = 
-      Teuchos::rcp(new Tpetra_MultiVector(workset.x_importerT->getTargetMap(),
-					  dg_dxdotdotT->getNumVectors()));
+    // LB: WHY?!?! 
+    workset.dgdx = Teuchos::null;
+    workset.dgdxdot = Teuchos::null;
+    workset.dgdxdotdot = dg_dxdotdot;
+    workset.overlapped_dgdxdotdot = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),dg_dxdotdot->domain()->dim());
     evaluate<PHAL::AlbanyTraits::Jacobian>(workset);
   }  
 }
@@ -293,7 +290,7 @@ evaluateDistParamDeriv(
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec>& param_array,
     const std::string& dist_param_name,
-    Tpetra_MultiVector* dg_dpT)
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
@@ -306,16 +303,11 @@ evaluateDistParamDeriv(
   application->setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, param_array);
 
   // Perform fill via field manager (dg/dx)
-  if(dg_dpT != NULL) {
+  if(!dg_dp.is_null()) {
     workset.dist_param_deriv_name = dist_param_name;
-    workset.dgdpT = Teuchos::rcp(dg_dpT, false);
-    {
-      Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT = Teuchos::rcp(
-        new Tpetra_MultiVector(
-          workset.distParamLib->get(dist_param_name)->overlap_map(),
-          dg_dpT->getNumVectors()));
-      workset.overlapped_dgdpT = overlapped_dgdpT;
-    }
+    workset.p_cas_manager = workset.distParamLib->get(dist_param_name)->get_cas_manager();
+    workset.dgdp = dg_dp;
+    workset.overlapped_dgdp = Thyra::createMembers(workset.p_cas_manager->getOverlappedVectorSpace(),dg_dp->domain()->dim());
     evaluate<PHAL::AlbanyTraits::DistParamDeriv>(workset);
   }
 }

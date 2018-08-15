@@ -29,11 +29,14 @@
 #include <cstdio>
 #include <cstdarg>
 
+namespace Albany
+{
+
 // Start of Utils to do with Communicators
 #ifdef ALBANY_MPI
 
   void
-  Albany::ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
+  ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
                                  const Teuchos::RCP<Tpetra_Vector>& diag) {
     Teuchos::ArrayRCP<const ST> diag_constView = diag->get1dView();
     for (auto i=0; i<matrix->getNodeNumRows(); i++) {
@@ -57,7 +60,7 @@
   }
 
   void 
-  Albany::InvAbsRowSum(Teuchos::RCP<Tpetra_Vector>& invAbsRowSumsTpetra, const Teuchos::RCP<Tpetra_CrsMatrix> matrix) {
+  InvAbsRowSum(Teuchos::RCP<Tpetra_Vector>& invAbsRowSumsTpetra, const Teuchos::RCP<Tpetra_CrsMatrix> matrix) {
     //Check that invAbsRowSumsTpetra and matrix have same map 
     ALBANY_ASSERT(invAbsRowSumsTpetra->getMap()->isSameAs(*(matrix->getRowMap())), 
 			 "Error in Albany::InvAbsRowSum!  "
@@ -77,7 +80,7 @@
   }
 
   void 
-  Albany::AbsRowSum(Teuchos::RCP<Tpetra_Vector>& absRowSumsTpetra, const Teuchos::RCP<Tpetra_CrsMatrix> matrix) {
+  AbsRowSum(Teuchos::RCP<Tpetra_Vector>& absRowSumsTpetra, const Teuchos::RCP<Tpetra_CrsMatrix> matrix) {
     //Check that absRowSumsTpetra and matrix have same map 
     ALBANY_ASSERT(absRowSumsTpetra->getMap()->isSameAs(*(matrix->getRowMap())), 
 			 "Error in Albany::AbsRowSum!  "
@@ -98,48 +101,48 @@
 
 
 #if defined(ALBANY_EPETRA)  
-  Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) {
+  Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec) {
     const Epetra_MpiComm& emc = dynamic_cast<const Epetra_MpiComm&>(ec);
     return emc.Comm();
   }
 
-  Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(Epetra_Comm& ec) {
+  Albany_MPI_Comm getMpiCommFromEpetraComm(Epetra_Comm& ec) {
     Epetra_MpiComm& emc = dynamic_cast<Epetra_MpiComm&>(ec);
     return emc.Comm();
   }
 
-  Teuchos::RCP<Epetra_Comm> Albany::createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc) {
+  Teuchos::RCP<Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Epetra_MpiComm(mc));
   }
 
-  Teuchos::RCP<Epetra_Comm> Albany::createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc) {
+  Teuchos::RCP<Epetra_Comm> createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc) {
     const Teuchos::Ptr<const Teuchos::MpiComm<int> > mpiComm =
                Teuchos::ptr_dynamic_cast<const Teuchos::MpiComm<int> >(Teuchos::ptrFromRef(*tc));
-    return  Albany::createEpetraCommFromMpiComm(*mpiComm->getRawMpiComm()());
+    return  createEpetraCommFromMpiComm(*mpiComm->getRawMpiComm()());
   }
 
-  Teuchos::RCP<Teuchos_Comm> Albany::createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec) {
+  Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec) {
     const Teuchos::Ptr<const Epetra_MpiComm> mpiComm =
                Teuchos::ptr_dynamic_cast<const Epetra_MpiComm>(Teuchos::ptrFromRef(*ec));
-    return  Albany::createTeuchosCommFromMpiComm(mpiComm->Comm());
+    return  createTeuchosCommFromMpiComm(mpiComm->Comm());
   }
 
-  Teuchos::RCP<Teuchos_Comm> Albany::createTeuchosCommFromEpetraComm(const Epetra_Comm& ec) {
+  Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromEpetraComm(const Epetra_Comm& ec) {
     const Epetra_MpiComm *mpiComm =
                dynamic_cast<const Epetra_MpiComm *>(&ec);
-    return  Albany::createTeuchosCommFromMpiComm(mpiComm->Comm());
+    return  createTeuchosCommFromMpiComm(mpiComm->Comm());
   }
 #endif
 
 
-  Albany_MPI_Comm Albany::getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc) {
+  Albany_MPI_Comm getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc) {
     Teuchos::Ptr<const Teuchos::MpiComm<int> > mpiComm =
                Teuchos::ptr_dynamic_cast<const Teuchos::MpiComm<int> >(Teuchos::ptrFromRef(*tc));
     return *mpiComm->getRawMpiComm();
 
   }
 
-  Teuchos::RCP<Teuchos::Comm<int> > Albany::createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
+  Teuchos::RCP<Teuchos::Comm<int> > createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Teuchos::MpiComm<int>(Teuchos::opaqueWrapper(mc)));
   }
 
@@ -147,24 +150,24 @@
 
 #if defined(ALBANY_EPETRA)
 
-  Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) { return 1; }
+  Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec) { return 1; }
 
-  Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(Epetra_Comm& ec) { return 1; }
+  Albany_MPI_Comm getMpiCommFromEpetraComm(Epetra_Comm& ec) { return 1; }
 
-  Teuchos::RCP<Epetra_Comm> Albany::createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc) {
+  Teuchos::RCP<Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Epetra_SerialComm);
   }
 
-  Teuchos::RCP<Epetra_Comm> Albany::createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc) {
+  Teuchos::RCP<Epetra_Comm> createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc) {
     return Teuchos::rcp(new Epetra_SerialComm);
   }
 
-  Teuchos::RCP<Teuchos_Comm> Albany::createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec) {
+  Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec) {
     return Teuchos::rcp(new Teuchos::SerialComm<int>());
   }
 #endif
 
-  Teuchos::RCP<Teuchos::Comm<int> > Albany::createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
+  Teuchos::RCP<Teuchos::Comm<int> > createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Teuchos::SerialComm<int>());
   }
 
@@ -172,13 +175,13 @@
 
   // End of Utils to do with Communicators
 
-  std::string Albany::strint(const std::string s, const int i, const char delim) {
+  std::string strint(const std::string s, const int i, const char delim) {
       std::ostringstream ss;
       ss << s << delim << i;
       return ss.str();
     }
 
-  bool Albany::isValidInitString(const std::string& initString) {
+  bool isValidInitString(const std::string& initString) {
 
     // Make sure the first part of the string has the correct verbiage
     std::string verbiage("initial value ");
@@ -199,14 +202,14 @@
     return true;
   }
 
-  std::string Albany::doubleToInitString(double val) {
+  std::string doubleToInitString(double val) {
     std::string verbiage("initial value ");
     std::stringstream ss;
     ss << verbiage << val;
     return ss.str();
   }
 
-  double Albany::initStringToDouble(const std::string& initString) {
+  double initStringToDouble(const std::string& initString) {
     ALBANY_ASSERT(isValidInitString(initString),
 			       " initStringToDouble() called with invalid initialization string: " << initString);
     std::string verbiage("initial value ");
@@ -214,7 +217,7 @@
     return std::atof(valueString.c_str());
   }
 
-  void Albany::splitStringOnDelim(const std::string &s, char delim, std::vector<std::string> &elems) {
+  void splitStringOnDelim(const std::string &s, char delim, std::vector<std::string> &elems) {
     std::stringstream ss(s);
     std::string item;
     while(std::getline(ss, item, delim)) {
@@ -223,13 +226,13 @@
   }
 
   std::string
-  Albany::getFileExtension(std::string const & filename)
+  getFileExtension(std::string const & filename)
   {
     auto const pos = filename.find_last_of(".");
     return filename.substr(pos + 1);
   }
 
-  void Albany::printTpetraVector(std::ostream &os, const Teuchos::RCP<const Tpetra_Vector>& vec){
+  void printTpetraVector(std::ostream &os, const Teuchos::RCP<const Tpetra_Vector>& vec){
 
     Teuchos::ArrayRCP<const double> vv = vec->get1dView();
 
@@ -241,7 +244,7 @@
 
   }
 
-  void Albany::printTpetraVector(std::ostream &os, const Teuchos::Array<std::string>& names,
+  void printTpetraVector(std::ostream &os, const Teuchos::Array<std::string>& names,
         const Teuchos::RCP<const Tpetra_Vector>& vec){
 
     Teuchos::ArrayRCP<const double> vv = vec->get1dView();
@@ -255,7 +258,7 @@
 
   }
 
-  void Albany::printTpetraVector(std::ostream &os, const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >& names,
+  void printTpetraVector(std::ostream &os, const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >& names,
         const Teuchos::RCP<const Tpetra_MultiVector>& vec){
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double> > mvv = vec->get2dView();
@@ -272,7 +275,7 @@
 
   }
 
-  void Albany::printTpetraVector(std::ostream &os, const Teuchos::RCP<const Tpetra_MultiVector>& vec){
+  void printTpetraVector(std::ostream &os, const Teuchos::RCP<const Tpetra_MultiVector>& vec){
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double> > mvv = vec->get2dView();
 
@@ -290,210 +293,111 @@
   //
   //
   //
+  template<>
   void
-  Albany::writeMatrixMarket(
-      Teuchos::RCP<Tpetra_Vector const> const & x,
-      std::string const & prefix,
+  writeMatrixMarket<Tpetra_Map>(
+      const Teuchos::RCP<const Tpetra_Map>& map,
+      const std::string& prefix,
       int const counter)
   {
-    if (x == Teuchos::null) return;
+    if (map.is_null()) {
+      return;
+    }
 
-    std::ostringstream
-    oss;
-
+    std::ostringstream oss;
     oss << prefix;
-
     if (counter >= 0) {
       oss << '-' << std::setfill('0') << std::setw(3) << counter;
     }
-
     oss << ".mm";
 
-    std::string const &
-    filename = oss.str();
+    const std::string& filename = oss.str();
 
-    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(filename, x);
-
-    return;
+    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile(filename, *map);
   }
 
   //
   //
   //
+  template<>
   void
-  Albany::writeMatrixMarket(
-      Teuchos::RCP<Tpetra_CrsMatrix const> const & A,
-      std::string const & prefix,
+  writeMatrixMarket<Tpetra_Vector>(
+      const Teuchos::RCP<const Tpetra_Vector>& v,
+      const std::string& prefix,
       int const counter)
   {
-    if (A == Teuchos::null) return;
+    if (v.is_null()) {
+      return;
+    }
 
-    std::ostringstream
-    oss;
+    std::ostringstream oss;
 
     oss << prefix;
-
     if (counter >= 0) {
       oss << '-' << std::setfill('0') << std::setw(3) << counter;
     }
-
     oss << ".mm";
 
-    std::string const &
-    filename = oss.str();
+    const std::string& filename = oss.str();
+
+    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(filename, v);
+  }
+
+  //
+  //
+  //
+  template<>
+  void
+  writeMatrixMarket<Tpetra_MultiVector>(
+      const Teuchos::RCP<const Tpetra_MultiVector>& mv,
+      const std::string& prefix,
+      int const counter)
+  {
+    if (mv.is_null()) {
+      return;
+    }
+
+    std::ostringstream oss;
+
+    oss << prefix;
+    if (counter >= 0) {
+      oss << '-' << std::setfill('0') << std::setw(3) << counter;
+    }
+    oss << ".mm";
+
+    const std::string& filename = oss.str();
+
+    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(filename, mv);
+  }
+
+  //
+  //
+  //
+  template<>
+  void
+  writeMatrixMarket<Tpetra_CrsMatrix>(
+      const Teuchos::RCP<const Tpetra_CrsMatrix>& A,
+      const std::string& prefix,
+      int const counter)
+  {
+    if (A.is_null()) {
+      return;
+    }
+
+    std::ostringstream oss;
+
+    oss << prefix;
+    if (counter >= 0) {
+      oss << '-' << std::setfill('0') << std::setw(3) << counter;
+    }
+    oss << ".mm";
+
+    const std::string& filename = oss.str();
 
     Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(filename, A);
-
-    return;
   }
 
-  //
-  //
-  //
-  void
-  Albany::writeMatrixMarket(
-      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> const & x,
-      std::string const & prefix,
-      int const counter)
-  {
-    for (auto i = 0; i < x.size(); ++i) {
-      std::ostringstream
-      oss;
-
-      oss << prefix;
-
-      oss << '-' << std::setfill('0') << std::setw(2) << i;
-
-      std::string const &
-      new_prefix = oss.str();
-
-      writeMatrixMarket(x[i], new_prefix, counter);
-    }
-
-    return;
-  }
-
-  //
-  //
-  //
-  void
-  Albany::writeMatrixMarket(
-      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix const>> const & A,
-      std::string const & prefix,
-      int counter)
-  {
-    for (auto i = 0; i < A.size(); ++i) {
-      std::ostringstream
-      oss;
-
-      oss << prefix;
-
-      oss << '-' << std::setfill('0') << std::setw(2) << i;
-
-      std::string const &
-      new_prefix = oss.str();
-
-      writeMatrixMarket(A[i], new_prefix, counter);
-    }
-
-    return;
-  }
-
-  //
-  //
-  //
-  void
-  Albany::writeMatrixMarket(
-      Teuchos::RCP<Tpetra_Vector> const & x,
-      std::string const & prefix,
-      int const counter)
-  {
-    Teuchos::RCP<Tpetra_Vector const> const &
-    y = static_cast<Teuchos::RCP<Tpetra_Vector const> const &>(x);
-
-    writeMatrixMarket(y, prefix, counter);
-
-    return;
-  }
-
-  //
-  //
-  //
-  void
-  Albany::writeMatrixMarket(
-      Teuchos::RCP<Tpetra_CrsMatrix> const & A,
-      std::string const & prefix,
-      int const counter)
-  {
-    Teuchos::RCP<Tpetra_CrsMatrix const> const &
-    B = static_cast<Teuchos::RCP<Tpetra_CrsMatrix const> const &>(A);
-
-    writeMatrixMarket(B, prefix, counter);
-
-    return;
-  }
-
-  //
-  //
-  //
-  void
-  Albany::writeMatrixMarket(
-      Teuchos::Array<Teuchos::RCP<Tpetra_Vector>> const & x,
-      std::string const & prefix,
-      int const counter)
-  {
-    for (auto i = 0; i < x.size(); ++i) {
-
-      Teuchos::RCP<Tpetra_Vector const> const &
-      y = static_cast<Teuchos::RCP<Tpetra_Vector const> const &>(x[i]);
-
-      std::ostringstream
-      oss;
-
-      oss << prefix;
-
-      oss << '-' << std::setfill('0') << std::setw(2) << i;
-
-      std::string const &
-      new_prefix = oss.str();
-
-      writeMatrixMarket(y, new_prefix, counter);
-    }
-
-    return;
-  }
-
-  //
-  //
-  //
-  void
-  Albany::writeMatrixMarket(
-      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> const & A,
-      std::string const & prefix,
-      int counter)
-  {
-    for (auto i = 0; i < A.size(); ++i) {
-
-      Teuchos::RCP<Tpetra_CrsMatrix const> const &
-      B = static_cast<Teuchos::RCP<Tpetra_CrsMatrix const> const &>(A[i]);
-
-      std::ostringstream
-      oss;
-
-      oss << prefix;
-
-      oss << '-' << std::setfill('0') << std::setw(2) << i;
-
-      std::string const &
-      new_prefix = oss.str();
-
-      writeMatrixMarket(B, new_prefix, counter);
-    }
-
-    return;
-  }
-
-  Albany::CmdLineArgs::CmdLineArgs(const std::string& default_xml_filename,
+  CmdLineArgs::CmdLineArgs(const std::string& default_xml_filename,
                                    const std::string& default_xml_filename2,
                                    const std::string& default_xml_filename3) :
     xml_filename(default_xml_filename),
@@ -504,7 +408,7 @@
     has_third_xml_file(false),
     vtune(false) {}
 
-  void Albany::CmdLineArgs::parse_cmdline(int argc , char ** argv,
+  void CmdLineArgs::parse_cmdline(int argc , char ** argv,
                                           std::ostream& os) {
     bool found_first_xml_file = false;
     bool found_second_xml_file = false;
@@ -535,7 +439,7 @@
     }
   }
 
-  void Albany::connect_vtune(const int p_rank) {
+  void connect_vtune(const int p_rank) {
     std::stringstream cmd;
     pid_t my_os_pid=getpid();
     const std::string vtune_loc = "amplxe-cl";
@@ -549,7 +453,7 @@
     safe_system("sleep 10");
   }
 
-  void Albany::do_stack_trace() {
+  void do_stack_trace() {
 
         void* callstack[128];
         int i, frames = backtrace(callstack, 128);
@@ -560,7 +464,7 @@
         free(strs);
   }
 
-void Albany::safe_fscanf(int nitems, FILE* file, const char* format, ...) {
+void safe_fscanf(int nitems, FILE* file, const char* format, ...) {
   va_list ap;
   va_start(ap, format);
   int ret = vfscanf(file, format, ap);
@@ -569,7 +473,7 @@ void Albany::safe_fscanf(int nitems, FILE* file, const char* format, ...) {
       ret<<"=safe_fscanf("<<nitems<<", "<<file<<", \""<<format<<"\")");
 }
 
-void Albany::safe_sscanf(int nitems, const char* str, const char* format, ...) {
+void safe_sscanf(int nitems, const char* str, const char* format, ...) {
   va_list ap;
   va_start(ap, format);
   int ret = vsscanf(str, format, ap);
@@ -578,24 +482,22 @@ void Albany::safe_sscanf(int nitems, const char* str, const char* format, ...) {
       ret<<"=safe_sscanf("<<nitems<<", \""<<str<<"\", \""<<format<<"\")");
 }
 
-void Albany::safe_fgets(char* str, int size, FILE* stream) {
+void safe_fgets(char* str, int size, FILE* stream) {
   char* ret = fgets(str, size, stream);
   ALBANY_ASSERT(ret == str,
       ret<<"=safe_fgets("<<static_cast<void*>(str)<<", "<<size<<", "<<stream<<")");
 }
 
-void Albany::safe_system(char const* str) {
+void safe_system(char const* str) {
   ALBANY_ASSERT(str, "safe_system called with null command string\n");
   int ret = system(str);
   ALBANY_ASSERT(str, ret<<"=safe_system(\""<<str<<"\")");
 }
 
-void Albany::assert_fail(std::string const& msg) {
+void assert_fail(std::string const& msg) {
   std::cerr << msg;
   abort();
 }
-
-namespace Albany {
 
 BuildType build_type(const BuildType value)
 {

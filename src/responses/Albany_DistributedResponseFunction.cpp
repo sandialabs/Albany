@@ -15,45 +15,21 @@ evaluateDerivative(
   const Teuchos::RCP<const Thyra_Vector>& xdotdot,
   const Teuchos::Array<ParamVec>& p,
   ParamVec* deriv_p,
-  Tpetra_Vector* gT,
-  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxT,
-  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotT,
-  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdotT,
-  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dpT)
+  const Teuchos::RCP<Thyra_Vector>& g,
+  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
+  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
+  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
+  const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp)
 {
-  Tpetra_Operator* dg_dxp;
-  if(dg_dxT.isEmpty()){
-    dg_dxp = NULL;
-  } else {
-    Teuchos::RCP<Tpetra_Operator> dgdxT = ConverterT::getTpetraOperator(dg_dxT.getLinearOp());
-    dg_dxp = dgdxT.get();
-  }
+  // Get the stored operator pointers (note: they may be null)
+  const Teuchos::RCP<Thyra_LinearOp> dg_dx_op = dg_dx.getLinearOp();
+  const Teuchos::RCP<Thyra_LinearOp> dg_dxdot_op = dg_dxdot.getLinearOp();
+  const Teuchos::RCP<Thyra_LinearOp> dg_dxdotdot_op = dg_dxdotdot.getLinearOp();
 
-  Tpetra_Operator* dg_dxdotp;
-  if(dg_dxdotT.isEmpty()){
-    dg_dxdotp = NULL;
-  } else {
-    Teuchos::RCP<Tpetra_Operator> dgdxdotT = ConverterT::getTpetraOperator(dg_dxdotT.getLinearOp());
-    dg_dxdotp = dgdxdotT.get();
-  }
-
-  Tpetra_Operator* dg_dxdotdotp;
-  if(dg_dxdotdotT.isEmpty()){
-    dg_dxdotdotp = NULL;
-  } else {
-    Teuchos::RCP<Tpetra_Operator> dgdxdotdotT = ConverterT::getTpetraOperator(dg_dxdotdotT.getLinearOp());
-    dg_dxdotdotp = dgdxdotdotT.get();
-  }
-
-  Tpetra_MultiVector* dg_dpp;
-  if(dg_dpT.isEmpty()){
-    dg_dpp = NULL;
-  } else {
-    Teuchos::RCP<Tpetra_MultiVector> dgdpT = ConverterT::getTpetraMultiVector(dg_dpT.getMultiVector());
-    dg_dpp = dgdpT.get();
-  }
+  // Get the stored multivector pointer (note: it may be null)
+  const Teuchos::RCP<Thyra_MultiVector>& dg_dp_mv = dg_dp.getMultiVector();
 
   this->evaluateGradient(
-    current_time, x, xdot, xdotdot, p, deriv_p, gT,
-    dg_dxp, dg_dxdotp, dg_dxdotdotp, dg_dpp);
+    current_time, x, xdot, xdotdot, p, deriv_p, g,
+    dg_dx_op, dg_dxdot_op, dg_dxdotdot_op, dg_dp_mv);
 }

@@ -319,9 +319,13 @@ void AAdapt::AdaptiveSolutionManagerT::resizeMeshDataArrays(
   overlapped_soln = Teuchos::rcp(new Tpetra_MultiVector(overlapMapT, num_time_deriv + 1, false));
   overlapped_soln_thyra = Albany::createThyraMultiVector(overlapped_soln);
 
-  overlapped_f = Thyra::createMember(overlapped_vs);
+  // TODO: ditch the overlapped_*T and keep only overlapped_*.
+  //       You need to figure out how to pass the graph in a Tpetra-free way though...
   overlapped_fT = Teuchos::rcp(new Tpetra_Vector(overlapMapT));
   overlapped_jacT = Teuchos::rcp(new Tpetra_CrsMatrix(overlapJacGraphT));
+
+  overlapped_f   = Albany::createThyraVector(overlapped_fT);
+  overlapped_jac = Albany::createThyraLinearOp(overlapped_jacT);
 
   // This call allocates the non-overlapped MV
   current_soln = disc_->getSolutionMV();

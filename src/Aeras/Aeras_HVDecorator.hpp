@@ -28,13 +28,13 @@ public:
       const Teuchos::RCP<Albany::Application>& app,
       const Teuchos::RCP<Teuchos::ParameterList>& appParams);
 
-  Teuchos::RCP<Tpetra_CrsMatrix> createOperator(double alpha, double beta, double omega, bool xdotdot_nonnull);
+  Teuchos::RCP<Thyra_LinearOp> createOperator(double alpha, double beta, double omega);
   
   //IKT, 1/20/16: added the following function for the mass matrix.  createOperator returns a non-diagonal 
   //matrix, namely the Laplace, whereas the mass matrix should be diagonal. 
-  Teuchos::RCP<Tpetra_CrsMatrix> createOperatorDiag(double alpha, double beta, double omega, bool xdotdot_nonnull);
+  Teuchos::RCP<Thyra_LinearOp> createOperatorDiag(double alpha, double beta, double omega);
 
-  void applyLinvML(Teuchos::RCP<const Tpetra_Vector> x_in, Teuchos::RCP<Tpetra_Vector> x_out) const; 
+  void applyLinvML(Teuchos::RCP<const Thyra_Vector> x_in, Teuchos::RCP<Thyra_Vector> x_out) const; 
 
 protected:
 
@@ -44,10 +44,11 @@ protected:
       const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgs) const;
 
 private: 
+
   //Mass and Laplace operators
-  Teuchos::RCP<Tpetra_CrsMatrix> laplace_; 
-  Teuchos::RCP<Tpetra_Vector> inv_mass_diag_, wrk_;
-  Teuchos::RCP<Tpetra_Vector> xtildeT; 
+  Teuchos::RCP<Thyra_LinearOp> laplace_; 
+  Teuchos::RCP<Thyra_Vector>   inv_mass_diag_, wrk_;
+  Teuchos::RCP<Thyra_Vector>   xtilde; 
 };
 
 }

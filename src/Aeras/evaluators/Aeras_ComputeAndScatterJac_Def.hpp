@@ -11,6 +11,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Aeras_Layouts.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 namespace Aeras {
 
@@ -98,38 +99,40 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ComputeAndScatterJac<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const ComputeAndScatterJac_buildMass_Tag& tag, const int& cell) const{
+  ST val;
+  LO row;
   for (int node = 0; node < this->numNodes; ++node) {
     int n = 0, eq = 0;
     for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-      LO rowT = nodeID(cell, node, n);
-      RealType val2 = mc * this->wBF(cell, node, node);
-      jacobian.sumIntoValues(rowT, &rowT, 1, &val2, false, true);
+      row = nodeID(cell, node, n);
+      val = mc * Albany::ADValue(this->wBF(cell, node, node));
+      jacobian.sumIntoValues(row, &row, 1, &val, false, true);
     }
 
     eq += this->numNodeVar;
     for (int level = 0; level < this->numLevels; level++) {
       for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
         for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-          LO rowT = nodeID(cell, node, n);
-          RealType val2 = mc * this->wBF(cell, node, node);
-          jacobian.sumIntoValues(rowT, &rowT, 1, &val2, false, true);
+          row = nodeID(cell, node, n);
+          val = mc * Albany::ADValue(this->wBF(cell, node, node));
+          jacobian.sumIntoValues(row, &row, 1, &val, false, true);
         }
       }
 
       for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-        LO rowT = nodeID(cell, node, n);
-        RealType val2 = mc * this->wBF(cell, node, node);
-        jacobian.sumIntoValues(rowT, &rowT, 1, &val2, false, true);
+        row = nodeID(cell, node, n);
+        val = mc * Albany::ADValue(this->wBF(cell, node, node));
+        jacobian.sumIntoValues(row, &row, 1, &val, false, true);
       }
     }
 
     eq += this->numVectorLevelVar+this->numScalarLevelVar;
     for (int level = 0; level < this->numLevels; ++level) {
       for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-        LO rowT = nodeID(cell, node, n);
+        row = nodeID(cell, node, n);
         //Minus!
-        RealType val2 = mc * this->wBF(cell, node, node);
-        jacobian.sumIntoValues(rowT, &rowT, 1, &val2, false, true);
+        val = mc * Albany::ADValue(this->wBF(cell, node, node));
+        jacobian.sumIntoValues(row, &row, 1, &val, false, true);
       }
     }
     eq += this->numTracerVar;
@@ -146,7 +149,6 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& c
       colT(cell, neq * node_col + eq_col) =  nodeID(cell,node_col,eq_col);
     }
   }
-
   //Build a submatrix (local matrix) for Laplace. For any particular cell:
   //The matrix acts on vector (u1 v1 u2 v2 u3 v3 ... uNumNodes vNumNodes)
   //and returns (WGrad(u1) WGrad(v1) WGrad(u2) WGrad(v2) ...), that is, the output vector is ordered
@@ -164,8 +166,8 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& c
   //The biggest effort is to find how to insert values of the local matrix to the big matrix.
   RealType KK[numn*3][numn*2] = {0};
   for (int node=0; node<this->numNodes; node++) {
-    RealType lam = this->lambda_nodal(cell, node),
-             th  = this->theta_nodal(cell, node);
+    RealType lam = Albany::ADValue(this->lambda_nodal(cell, node)),
+             th  = Albany::ADValue(this->theta_nodal(cell, node));
     const RealType k11 = -sin(lam),
                    k12 = -sin(th)*cos(lam),
                    k21 =  cos(lam),
@@ -179,12 +181,13 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& c
   }
 
   RealType GR[numn*3][numn*3] = {0};
+  RealType val;
   for (int no = 0; no < this->numNodes; no++) {
     for (int mo = 0; mo< this->numNodes; mo++) {
-      RealType val = 0;
+      val = 0;
       for (int qp = 0; qp < this->numNodes; qp++) {
-        val += this->GradBF(cell,no,qp,0)*this->GradBF(cell,mo,qp,0)*this->wBF(cell,qp,qp)
-            +  this->GradBF(cell,no,qp,1)*this->GradBF(cell,mo,qp,1)*this->wBF(cell,qp,qp);
+        val += Albany::ADValue(this->GradBF(cell,no,qp,0)*this->GradBF(cell,mo,qp,0)*this->wBF(cell,qp,qp)
+                            +  this->GradBF(cell,no,qp,1)*this->GradBF(cell,mo,qp,1)*this->wBF(cell,qp,qp));
       }
       GR[no*3][mo*3] = val;
       GR[no*3+1][mo*3+1] = val;
@@ -211,18 +214,20 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& c
     }
   }
 
+  LO row;
+  int col;
   for (int node = 0; node < this->numNodes; ++node) {
     int n = 0, eq = 0;
     //dealing with surf pressure
     for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
       /*
       //OG Disabling Laplace for surface pressure.
-      //rowT is LID in row map for vector x=all variables
-      //so rowT here is a row index corresponding to pressure eqn at (node, cell)
-      rowT = nodeID(cell,node,n);
+      //row is LID in row map for vector x=all variables
+      //so row here is a row index corresponding to pressure eqn at (node, cell)
+      row = nodeID(cell,node,n);
       //loop over nodes on the same level
       for (unsigned int m=0; m< this->numNodes; m++) {
-        const int col_ = colT[m*neq];//= nodeID(cell,m,n);
+        const int col_ = col[m*neq];//= nodeID(cell,m,n);
         //at this point we know node, cell, m
         RealType val = 0;
         for (int qp = 0; qp < this->numNodes; qp++) {
@@ -230,7 +235,7 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& c
               +  this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp);
         }
         val *= this->sqrtHVcoef;
-        JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col_,1), Teuchos::arrayView(&val,1));
+        JacT->sumIntoLocalValues(row, Teuchos::arrayView(&col_,1), Teuchos::arrayView(&val,1));
       }
       */
     }
@@ -240,32 +245,32 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& c
       //dealing with velocity
       for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
         for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-          LO rowT = nodeID(cell, node, n);
+          row = nodeID(cell, node, n);
           for (unsigned int m=0; m< this->numNodes; m++) {
             //filling u values
             if (dim == 0) {
               //filling dependency on u values
-              const int col1_ = nodeID(cell, m, n);
-              RealType val = this->sqrtHVcoef * KTGRKK[node*2][m*2];
-              jacobian.sumIntoValues(rowT, &col1_, 1, &val, false, true);
+              col = nodeID(cell, m, n);
+              val = this->sqrtHVcoef * KTGRKK[node*2][m*2];
+              jacobian.sumIntoValues(row, &col, 1, &val, false, true);
 
               //filling dependency on v values, so, it is eqn n+1
-              const int col2_ = nodeID(cell, m, n+1);
+              col = nodeID(cell, m, n+1);
               val = this->sqrtHVcoef * KTGRKK[node*2][m*2+1];
-              jacobian.sumIntoValues(rowT, &col2_, 1, &val, false, true);
+              jacobian.sumIntoValues(row, &col, 1, &val, false, true);
             }
 
             //filling v values
             if (dim == 1) {
               //filling dependencies on u values. The current eqn is n, so, we need to look at n-1 level IDs.
-              const int col1_ = nodeID(cell, m, n-1);
-              RealType val = this->sqrtHVcoef * KTGRKK[node*2+1][m*2];
-              jacobian.sumIntoValues(rowT, &col1_, 1, &val, false, true);
+              col = nodeID(cell, m, n-1);
+              val = this->sqrtHVcoef * KTGRKK[node*2+1][m*2];
+              jacobian.sumIntoValues(row, &col, 1, &val, false, true);
 
               //filling dependencies on v values.
-              const int col2_ = nodeID(cell, m, n);
+              col = nodeID(cell, m, n);
               val = this->sqrtHVcoef * KTGRKK[node*2+1][m*2+1];
-              jacobian.sumIntoValues(rowT, &col2_, 1, &val, false, true);
+              jacobian.sumIntoValues(row, &col, 1, &val, false, true);
             }
           }
         }//dim loop
@@ -273,18 +278,18 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& c
 
       //dealing with temperature
       for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-        LO rowT = nodeID(cell, node, n);
+        row = nodeID(cell, node, n);
 
         //loop over nodes on the same level
         for (unsigned int m=0; m< this->numNodes; m++) {
-          const int col_ = nodeID(cell, m, n);
-          RealType val = 0;
+          col = nodeID(cell, m, n);
+          val = 0;
           for (int qp = 0; qp < this->numNodes; qp++) {
-            val += this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
-                +  this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp);
+            val += Albany::ADValue(this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
+                                +  this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp));
           }
           val *= this->sqrtHVcoef;
-          jacobian.sumIntoValues(rowT, &col_, 1, &val, false, true);
+          jacobian.sumIntoValues(row, &col, 1, &val, false, true);
         }
       }
     }//end of level loop for velocity and temperature
@@ -293,18 +298,18 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& c
     for (int level = 0; level < this->numLevels; ++level) {
       //dealing with tracers
       for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-        LO rowT = nodeID(cell, node, n);
+        row = nodeID(cell, node, n);
 
         //loop over nodes on the same level
         for (unsigned int m=0; m< this->numNodes; m++) {
-          const int col_ = nodeID(cell, m, n);
-          RealType val = 0;
+          col = nodeID(cell, m, n);
+          val = 0;
           for (int qp = 0; qp < this->numNodes; qp++) {
-            val += this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
-                +  this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp);
+            val += Albany::ADValue(this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
+                                +  this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp));
           }
           val *= this->sqrtHVcoef;
-          jacobian.sumIntoValues(rowT, &col_, 1, &val, false, true);
+          jacobian.sumIntoValues(row, &col, 1, &val, false, true);
         }
       }
     }//end of level loop for tracers
@@ -343,12 +348,13 @@ evaluateFields(typename Traits::EvalData workset)
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<Tpetra_Vector>      fT = workset.fT;
-  Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
+  Teuchos::RCP<Thyra_Vector>     f = workset.f;
+  Teuchos::RCP<Thyra_LinearOp> Jac = workset.Jac;
 
-  const bool loadResid = (fT != Teuchos::null);
-  LO rowT; 
-  Teuchos::Array<LO> colT; 
+  const bool loadResid = (f != Teuchos::null);
+  LO row; 
+  Teuchos::Array<LO> col(1); 
+  Teuchos::Array<ST> val(1); 
 
   //std::cout << "DEBUG in ComputeAndScatterJac::EvaluateFields: " << __PRETTY_FUNCTION__ << "\n";
   //std::cout << "LOAD RESIDUAL? " << loadResid << "\n";
@@ -381,32 +387,32 @@ evaluateFields(typename Traits::EvalData workset)
       for (int node = 0; node < this->numNodes; ++node) {
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-          rowT = nodeID(cell,node,n);
-          RealType val2 = mc * this -> wBF(cell, node, node);
-          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
+          col[0] = row = nodeID(cell,node,n);
+          val[0] = mc * Albany::ADValue(this -> wBF(cell, node, node));
+          Albany::addToLocalRowValues(Jac, row, col(), val());
         }
         eq += this->numNodeVar;
         for (int level = 0; level < this->numLevels; level++) {
           for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
             for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-              rowT = nodeID(cell,node,n);
-              RealType val2 = mc * this -> wBF(cell, node, node);
-              JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
+              col[0] = row = nodeID(cell,node,n);
+              val[0] = mc * Albany::ADValue(this -> wBF(cell, node, node));
+              Albany::addToLocalRowValues(Jac, row, col(), val());
             }
           }
           for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-            rowT = nodeID(cell,node,n);
-            RealType val2 = mc *  this -> wBF(cell, node, node);
-            JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
+            col[0] = row = nodeID(cell,node,n);
+            val[0] = mc * Albany::ADValue(this -> wBF(cell, node, node));
+            Albany::addToLocalRowValues(Jac, row, col(), val());
           }
         }
         eq += this->numVectorLevelVar+this->numScalarLevelVar;
         for (int level = 0; level < this->numLevels; ++level) {
           for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-            rowT = nodeID(cell,node,n);
+            col[0] = row = nodeID(cell,node,n);
             //Minus!
-            RealType val2 = mc * this -> wBF(cell, node, node);
-            JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
+            val[0] = mc * Albany::ADValue(this -> wBF(cell, node, node));
+            Albany::addToLocalRowValues(Jac, row, col(), val());
           }
         }
         eq += this->numTracerVar;
@@ -426,10 +432,10 @@ evaluateFields(typename Traits::EvalData workset)
     Kokkos::DynRankView<RealType, PHX::Device>  KTGRKK("KK", numn*2,numn*2); 
     for (int cell=0; cell < workset.numCells; ++cell ) {
       const int neq = nodeID.dimension(2);
-      colT.resize(neq * this->numNodes);
+      col.resize(neq * this->numNodes);
       for (int node=0; node<this->numNodes; node++){
         for (int eq_col=0; eq_col<neq; eq_col++) {
-          colT[neq * node + eq_col] =  nodeID(cell,node,eq_col);
+          col[neq * node + eq_col] =  nodeID(cell,node,eq_col);
         }
       }
 
@@ -452,12 +458,12 @@ evaluateFields(typename Traits::EvalData workset)
       Kokkos::deep_copy(GR, 0.0);
       for (int node=0; node<this->numNodes; node++) {
         RealType lam = this -> lambda_nodal(cell, node),
-	    th = this -> theta_nodal(cell, node);
+	               th = this -> theta_nodal(cell, node);
         const RealType k11 = -sin(lam),
-	         k12 = -sin(th)*cos(lam),
-	         k21 =  cos(lam),
-	         k22 = -sin(th)*sin(lam),
-	         k32 =  cos(th);
+                       k12 = -sin(th)*cos(lam),
+                       k21 =  cos(lam),
+                       k22 = -sin(th)*sin(lam),
+                       k32 =  cos(th);
         KK(node*3, node*2) = k11;
         KK(node*3, node*2+1) = k12;
         KK(node*3+1, node*2) = k21;
@@ -468,13 +474,13 @@ evaluateFields(typename Traits::EvalData workset)
       for (int no = 0; no < this->numNodes; no++) {
         for (int mo = 0; mo< this->numNodes; mo++) {
           RealType val = 0;
-	  for (int qp = 0; qp < this->numNodes; qp++) {
-	    val += this->GradBF(cell,no,qp,0)*this->GradBF(cell,mo,qp,0)*this->wBF(cell,qp,qp)
-	        +  this->GradBF(cell,no,qp,1)*this->GradBF(cell,mo,qp,1)*this->wBF(cell,qp,qp);
-	  }
-	  GR(no*3,mo*3) = val;
-	  GR(no*3+1,mo*3+1) = val;
-	  GR(no*3+2,mo*3+2) = val;
+          for (int qp = 0; qp < this->numNodes; qp++) {
+            val += this->GradBF(cell,no,qp,0)*this->GradBF(cell,mo,qp,0)*this->wBF(cell,qp,qp)
+                +  this->GradBF(cell,no,qp,1)*this->GradBF(cell,mo,qp,1)*this->wBF(cell,qp,qp);
+          }
+          GR(no*3,mo*3) = val;
+          GR(no*3+1,mo*3+1) = val;
+          GR(no*3+2,mo*3+2) = val;
         }
       }
 
@@ -496,12 +502,12 @@ evaluateFields(typename Traits::EvalData workset)
         for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
           /*
 	  //OG Disabling Laplace for surface pressure.
-	  //rowT is LID in row map for vector x=all variables
-	  //so rowT here is a row index corresponding to pressure eqn at (node, cell)
-	  rowT = nodeID(cell,node,n);
+	  //row is LID in row map for vector x=all variables
+	  //so row here is a row index corresponding to pressure eqn at (node, cell)
+	  row = nodeID(cell,node,n);
           //loop over nodes on the same level
 	  for (unsigned int m=0; m< this->numNodes; m++) {
-            const int col_ = colT[m*neq];//= nodeID(cell,m,n);
+            const int col_ = col[m*neq];//= nodeID(cell,m,n);
 	    //at this point we know node, cell, m
             RealType val = 0;
 	    for (int qp = 0; qp < this->numNodes; qp++) {
@@ -509,7 +515,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  	  + this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp);
             }
 	    val *= this->sqrtHVcoef;
-	    JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col_,1), Teuchos::arrayView(&val,1));
+	    JacT->sumIntoLocalValues(row, Teuchos::arrayView(&col_,1), Teuchos::arrayView(&val,1));
 	  }
 	  */
         }
@@ -517,51 +523,51 @@ evaluateFields(typename Traits::EvalData workset)
 
         for (int level = 0; level < this->numLevels; level++) {
           //dealing with velocity
-	  for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
-	    for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-	      rowT = nodeID(cell,node,n);
-	      for (unsigned int m=0; m< this->numNodes; m++) {
-	        //filling u values
-	        if (dim == 0) {
-	          //filling dependency on u values
-	          const int col1_ = nodeID(cell,m,n);
-	          RealType val = this->sqrtHVcoef * KTGRKK(node*2,m*2);
-	          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col1_,1), Teuchos::arrayView(&val,1));
-   	          //filling dependency on v values, so, it is eqn n+1
-	          const int col2_ = nodeID(cell,m,n+1);
-	          val = this->sqrtHVcoef * KTGRKK(node*2,m*2+1);
-	          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col2_,1), Teuchos::arrayView(&val,1));
+	        for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
+	          for (int dim = 0; dim < this->numDims; ++dim, ++n) {
+	            row = nodeID(cell,node,n);
+	            for (unsigned int m=0; m< this->numNodes; m++) {
+	              //filling u values
+	              if (dim == 0) {
+	                //filling dependency on u values
+	                col[0] = nodeID(cell,m,n);
+	                val[0] = this->sqrtHVcoef * KTGRKK(node*2,m*2);
+                  Albany::addToLocalRowValues(Jac, row, col(), val());
+                  //filling dependency on v values, so, it is eqn n+1
+	                col[0] = nodeID(cell,m,n+1);
+	                val[0] = this->sqrtHVcoef * KTGRKK(node*2,m*2+1);
+                  Albany::addToLocalRowValues(Jac, row, col(), val());
+	              }
+	              //filling v values
+	              if (dim == 1) {
+	                //filling dependencies on u values. The current eqn is n, so, we need to look at n-1 level IDs.
+	                col[0] = nodeID(cell,m,n-1);
+	                val[0] = this->sqrtHVcoef * KTGRKK(node*2+1,m*2);
+                  Albany::addToLocalRowValues(Jac, row, col(), val());
+	                //filling dependencies on v values.
+	                col[0] = nodeID(cell,m,n);
+	                val[0] = this->sqrtHVcoef * KTGRKK(node*2+1,m*2+1);
+                  Albany::addToLocalRowValues(Jac, row, col(), val());
+	              }
+	            }
+	          }//dim loop
 	        }
-	        //filling v values
-	        if (dim == 1) {
-	          //filling dependencies on u values. The current eqn is n, so, we need to look at n-1 level IDs.
-	          const int col1_ = nodeID(cell,m,n-1);
-	          RealType val = this->sqrtHVcoef * KTGRKK(node*2+1,m*2);
-	          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col1_,1), Teuchos::arrayView(&val,1));
-	          //filling dependencies on v values.
-	          const int col2_ = nodeID(cell,m,n);
-	          val = this->sqrtHVcoef * KTGRKK(node*2+1,m*2+1);
-	          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col2_,1), Teuchos::arrayView(&val,1));
-	        }
-	      }
-	    }//dim loop
-	  }
-	  //dealing with temperature
-	  for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-	    rowT = nodeID(cell,node,n);
-	    //loop over nodes on the same level
-	    for (unsigned int m=0; m< this->numNodes; m++) {
-     	      const int col_ = nodeID(cell,m,n);
-	      //const int row_ = nodeID(cell,node,n);
-	      //at this point we know node, cell, m
-    	      RealType val = 0;
-	      for (int qp = 0; qp < this->numNodes; qp++) {
-	        val += this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
-	            + this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp);
+	        //dealing with temperature
+	        for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
+	          row = nodeID(cell,node,n);
+	          //loop over nodes on the same level
+	          for (unsigned int m=0; m< this->numNodes; m++) {
+           	  col[0] = nodeID(cell,m,n);
+	            //const int row_ = nodeID(cell,node,n);
+	            //at this point we know node, cell, m
+              val[0] = 0;
+	            for (int qp = 0; qp < this->numNodes; qp++) {
+	              val[0] += this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
+	                     + this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp);
               }
-	      val *= this->sqrtHVcoef;
-	      JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col_,1), Teuchos::arrayView(&val,1));
-	    }
+	            val[0] *= this->sqrtHVcoef;
+              Albany::addToLocalRowValues(Jac, row, col(), val());
+	          }
           }
         }//end of level loop for velocity and temperature
 
@@ -569,20 +575,20 @@ evaluateFields(typename Traits::EvalData workset)
         for (int level = 0; level < this->numLevels; ++level) {
           //dealing with tracers
           for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-     	    rowT = nodeID(cell,node,n);
-	    //loop over nodes on the same level
-	    for (unsigned int m=0; m< this->numNodes; m++) {
-    	      const int col_ = nodeID(cell,m,n);
-	      //const int row_ = nodeID(cell,node,n);
-	      //at this point we know node, cell, m
-    	      RealType val = 0;
-	      for (int qp = 0; qp < this->numNodes; qp++) {
-	        val += this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
-	            + this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp);
-	      }
-	      val *= this->sqrtHVcoef;
-	      JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col_,1), Teuchos::arrayView(&val,1));
-	    }
+          row = nodeID(cell,node,n);
+          //loop over nodes on the same level
+            for (unsigned int m=0; m< this->numNodes; m++) {
+              col[0] = nodeID(cell,m,n);
+              //const int row_ = nodeID(cell,node,n);
+              //at this point we know node, cell, m
+              val[0] = 0;
+              for (int qp = 0; qp < this->numNodes; qp++) {
+                val[0] += this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
+                       + this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp);
+              }
+              val[0] *= this->sqrtHVcoef;
+              Albany::addToLocalRowValues(Jac, row, col(), val());
+            }
           }
         }//end of level loop for tracers
         eq += this->numTracerVar;
@@ -590,8 +596,8 @@ evaluateFields(typename Traits::EvalData workset)
     }//end of loop over cells
   }//end of if buildLaplace
 
-#else
-  jacobian = workset.JacT->getLocalMatrix();
+#else // ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  jacobian = Albany::getNonconstDeviceData(workset.Jac);
   mc = workset.m_coeff;
   neq = workset.wsElNodeEqID.dimension(2);
   nodeID = workset.wsElNodeEqID;
@@ -605,7 +611,7 @@ evaluateFields(typename Traits::EvalData workset)
   bool buildLaplace = ( workset.j_coeff == 0.0 )&&( workset.m_coeff == 0.0 )&&( workset.n_coeff == 1.0 );
   if ( buildLaplace ) {
     // Temporary data structure
-    colT   = Kokkos::DynRankView<LO, PHX::Device>("colT", workset.numCells, neq*this->numNodes);
+    colT = Kokkos::DynRankView<LO, PHX::Device>("col", workset.numCells, neq*this->numNodes);
 
     // numNodes must be known at compile time in order to construct static arrays inside kernel
     switch (this->numNodes) {
@@ -647,7 +653,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-#endif
+#endif // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 }
 
-}
+} // namespace Aeras

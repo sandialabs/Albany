@@ -51,14 +51,12 @@
 #include "PeridigmManager.hpp"
 #endif
 #endif
-#if defined(ALBANY_EPETRA)
-#include "AztecOO_ConditionNumber.h"
-#endif
 
 #if defined(ALBANY_LCM)
 #include "SolutionSniffer.hpp"
 #endif // ALBANY_LCM
 
+#include "Albany_ThyraUtils.hpp"
 // TODO: remove this if/when the thyra refactor is 100% complete,
 //       and there is no more any Tpetra stuff in this class
 #include "Albany_TpetraThyraUtils.hpp"
@@ -974,6 +972,11 @@ RCP<const Tpetra_Map> Albany::Application::getMapT() const {
   return disc->getMapT();
 }
 
+Teuchos::RCP<const Thyra_VectorSpace> Albany::Application::getVectorSpace() const
+{
+  return disc->getVectorSpace();
+}
+
 #if defined(ALBANY_EPETRA)
 RCP<const Epetra_CrsGraph> Albany::Application::getJacobianGraph() const {
   return disc->getJacobianGraph();
@@ -1153,35 +1156,33 @@ void checkDerivatives(Albany::Application &app, const double time,
                       const Teuchos::RCP<const Thyra_Vector>& xdot,
                       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
                       const Teuchos::Array<ParamVec> &p,
-                      const Teuchos::RCP<const Tpetra_Vector> &fi,
-                      const Teuchos::RCP<const Tpetra_CrsMatrix> &jacobian,
+                      const Teuchos::RCP<const Thyra_Vector>& fi,
+                      const Teuchos::RCP<const Thyra_LinearOp>& jacobian,
                       const int check_lvl) {
   if (check_lvl <= 0) {
     return;
   }
 
-  auto xT       = Albany::getConstTpetraVector(x);
-  auto xdotT    = Albany::getConstTpetraVector(xdot);
-  auto xdotdotT = Albany::getConstTpetraVector(xdotdot);
-
   // Work vectors. x's map is compatible with f's, so don't distinguish among
   // maps in this function.
-  Tpetra_Vector w1(xT->getMap()), w2(xT->getMap()), w3(xT->getMap());
+  Teuchos::RCP<Thyra_Vector> w1 = Thyra::createMember(x->space());
+  Teuchos::RCP<Thyra_Vector> w2 = Thyra::createMember(x->space());
+  Teuchos::RCP<Thyra_Vector> w3 = Thyra::createMember(x->space());
 
-  Teuchos::RCP<Tpetra_MultiVector> mv;
+  Teuchos::RCP<Thyra_MultiVector> mv;
   if (check_lvl > 1) {
-    mv = Teuchos::rcp(new Tpetra_MultiVector(xT->getMap(), 5));
+    mv = Thyra::createMembers(x->space(), 5);
   }
 
   // Construct a perturbation.
   const double delta = 1e-7;
-  Tpetra_Vector &xd = w1;
-  xd.randomize();
-  Tpetra_Vector &xpd = w2;
+  Teuchos::RCP<Thyra_Vector> xd = w1;
+  xd->randomize(-Teuchos::ScalarTraits<ST>::rmax(),Teuchos::ScalarTraits<ST>::rmax());
+  Teuchos::RCP<Thyra_Vector> xpd = w2;
   {
-    const Teuchos::ArrayRCP<const RealType> x_d = xT->getData();
-    const Teuchos::ArrayRCP<RealType> xd_d = xd.getDataNonConst(),
-                                      xpd_d = xpd.getDataNonConst();
+    const Teuchos::ArrayRCP<const RealType> x_d = Albany::getLocalData(x);
+    const Teuchos::ArrayRCP<RealType> xd_d = Albany::getNonconstLocalData(xd);
+    const Teuchos::ArrayRCP<RealType> xpd_d = Albany::getNonconstLocalData(xpd);
     for (size_t i = 0; i < x_d.size(); ++i) {
       xd_d[i] = 2 * xd_d[i] - 1;
       const double xdi = xd_d[i];
@@ -1205,46 +1206,50 @@ void checkDerivatives(Albany::Application &app, const double time,
     }
   }
   if (Teuchos::nonnull(mv)) {
-    mv->getVectorNonConst(0)->update(1, *xT, 0);
-    mv->getVectorNonConst(1)->update(1, xd, 0);
+    Albany::scale_and_update(mv->col(0),0.0,x,1.0);
+    Albany::scale_and_update(mv->col(1),0.0,xd,1.0);
   }
 
   // If necessary, compute f(x).
-  Teuchos::RCP<const Tpetra_Vector> f;
+  Teuchos::RCP<const Thyra_Vector> f;
   if (fi.is_null()) {
-    Teuchos::RCP<Tpetra_Vector> w =
-        Teuchos::rcp(new Tpetra_Vector(xT->getMap()));
-    app.computeGlobalResidual(time, x, xdot, xdotdot, p, *w);
-    f = w;
+    Teuchos::RCP<Thyra_Vector> tmp = Thyra::createMember(x->space());
+    app.computeGlobalResidual(time, x, xdot, xdotdot, p, tmp);
+    f = tmp;
   } else {
     f = fi;
   }
-  if (Teuchos::nonnull(mv))
-    mv->getVectorNonConst(2)->update(1, *f, 0);
+  if (Teuchos::nonnull(mv)) {
+    Albany::scale_and_update(mv->col(2),0.0,f,1.0);
+  }
 
   // fpd = f(xpd).
-  Tpetra_Vector &fpd = w3;
-  app.computeGlobalResidual(time, Albany::createConstThyraVector(Teuchos::rcpFromRef(xpd)), xdot, xdotdot, p, fpd);
+  Teuchos::RCP<Thyra_Vector> fpd = w3;
+  app.computeGlobalResidual(time, xpd, xdot, xdotdot, p, fpd);
 
   // fd = fpd - f.
-  Tpetra_Vector &fd = fpd;
-  fd.update(-1, *f, 1);
-  if (Teuchos::nonnull(mv))
-    mv->getVectorNonConst(3)->update(1, fd, 0);
+  Teuchos::RCP<Thyra_Vector> fd = fpd;
+  Albany::scale_and_update(fpd,1.0,f,-1.0);
+  if (Teuchos::nonnull(mv)) {
+    Albany::scale_and_update(mv->col(3),0.0,fd,1.0);
+  }
 
   // Jxd = J xd.
-  Tpetra_Vector &Jxd = w2;
-  jacobian->apply(xd, Jxd);
+  Teuchos::RCP<Thyra_Vector> Jxd = w2;
+  jacobian->apply(Thyra::NOTRANS,*xd, Jxd.ptr(),1.0,0.0);
 
   // Norms.
-  const double fdn = fd.normInf(), Jxdn = Jxd.normInf(), xdn = xd.normInf();
+  const ST fdn = fd->norm_inf();
+  const ST Jxdn = Jxd->norm_inf();
+  const ST xdn = xd->norm_inf();
   // d = norm(fd - Jxd).
-  Tpetra_Vector &d = fd;
-  d.update(-1, Jxd, 1);
-  if (Teuchos::nonnull(mv))
-    mv->getVectorNonConst(4)->update(1, d, 0);
-  const double dn = d.normInf();
-
+  Teuchos::RCP<Thyra_Vector> d = fd;
+  Albany::scale_and_update(d,1.0,Jxd,-1.0);
+  if (Teuchos::nonnull(mv)) {
+    Albany::scale_and_update(mv->col(4),0.0,d,1.0);
+  }
+  const double dn = d->norm_inf();
+ 
   // Assess.
   const double den = std::max(fdn, Jxdn), e = dn / den;
   *Teuchos::VerboseObjectBase::getDefaultOStream()
@@ -1256,7 +1261,7 @@ void checkDerivatives(Albany::Application &app, const double time,
     static int ctr = 0;
     std::stringstream ss;
     ss << "dc" << ctr << ".mm";
-    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(ss.str(), mv);
+    Albany::writeMatrixMarket(mv.getConst(),"dc",ctr);
     ++ctr;
   }
 }
@@ -1267,7 +1272,8 @@ void Albany::Application::computeGlobalResidualImpl(
     const Teuchos::RCP<const Thyra_Vector> x,
     const Teuchos::RCP<const Thyra_Vector> x_dot,
     const Teuchos::RCP<const Thyra_Vector> x_dotdot,
-    Teuchos::Array<ParamVec> const &p, Teuchos::RCP<Tpetra_Vector> const &fT,
+    Teuchos::Array<ParamVec> const &p,
+    const Teuchos::RCP<Thyra_Vector>& f,
     double dt) {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
   postRegSetup("Residual");
@@ -1280,13 +1286,9 @@ void Albany::Application::computeGlobalResidualImpl(
 
   int const numWorksets = wsElNodeEqID.size();
 
-  Teuchos::RCP<Tpetra_Vector> const overlapped_fT =
-      solMgrT->get_overlapped_fT();
+  const Teuchos::RCP<Thyra_Vector> overlapped_f = solMgrT->get_overlapped_f();
 
   Teuchos::RCP<const CombineAndScatterManager> cas_manager = solMgrT->get_cas_manager();
-  Teuchos::RCP<Tpetra_Export> const exporterT = solMgrT->get_exporterT();
-
-  Teuchos::RCP<Tpetra_Import> const importerT = solMgrT->get_importerT();
 
   // Scatter x and xdot to the overlapped distrbution
   solMgrT->scatterX(x, x_dot, x_dotdot);
@@ -1319,8 +1321,8 @@ void Albany::Application::computeGlobalResidualImpl(
 #endif // ALBANY_LCM
 
   // Zero out overlapped residual - Tpetra
-  overlapped_fT->putScalar(0.0);
-  fT->putScalar(0.0);
+  overlapped_f->assign(0.0);
+  f->assign(0.0);
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
@@ -1348,7 +1350,7 @@ void Albany::Application::computeGlobalResidualImpl(
 
     workset.time_step = dt; 
 
-    workset.fT = overlapped_fT;
+    workset.f = overlapped_f;
 
     for (int ws = 0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
@@ -1356,7 +1358,7 @@ void Albany::Application::computeGlobalResidualImpl(
 #ifdef DEBUG_OUTPUT
       *out << "IKT countRes = " << countRes
            << ", computeGlobalResid workset.x = \n ";
-      Albany::getConstTpetraVector(workset.x)->describe(*out, Teuchos::VERB_EXTREME);
+      describe(workset.x.getConst(),*out, Teuchos::VERB_EXTREME);
 #endif
 
       // FillType template argument used to specialize Sacado
@@ -1390,17 +1392,17 @@ void Albany::Application::computeGlobalResidualImpl(
   }
 
   // Assemble the residual into a non-overlapping vector
-  fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+  cas_manager->combine(overlapped_f,f,CombineMode::ADD);
 
   // Allocate scaleVec_
 #ifdef ALBANY_MPI
   if (scale != 1.0) {
     if (scaleVec_ == Teuchos::null) {
-      scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap()));
+      scaleVec_ = Thyra::createMember(f->space());
       setScale();
-    } else if (Teuchos::nonnull(fT)) {
-      if (scaleVec_->getGlobalLength() != fT->getGlobalLength()) {
-        scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap()));
+    } else if (Teuchos::nonnull(f)) {
+      if (scaleVec_->space()->dim() != f->space()->dim()) {
+        scaleVec_ = Thyra::createMember(f->space());
         setScale();
       }
     }
@@ -1412,25 +1414,25 @@ void Albany::Application::computeGlobalResidualImpl(
 #ifdef WRITE_TO_MATRIX_MARKET
   char nameResUnscaled[100]; // create string for file name
   sprintf(nameResUnscaled, "resUnscaled%i_residual.mm", countScale);
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResUnscaled, fT);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResUnscaled, Albany::getConstTpetraVector(f));
 #endif
 
   if (scaleBCdofs == false && scale != 1.0) {
-    fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
+    Thyra::ele_wise_scale(*scaleVec_,f.ptr());
   }
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char nameResScaled[100]; // create string for file name
   sprintf(nameResScaled, "resScaled%i_residual.mm", countScale);
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResScaled, fT);
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResScaled, Albany::getConstTpetraVector(f));
 #endif
 
 #if defined(ALBANY_LCM)
   // Push the assembled residual values back into the overlap vector
-  overlapped_fT->doImport(*fT, *importerT, Tpetra::INSERT);
+  cas_manager->scatter(f,overlapped_f,CombineMode::INSERT);
   // Write the residual to the discretization, which will later (optionally)
   // be written to the output file
-  disc->setResidualFieldT(*overlapped_fT);
+  disc->setResidualField(overlapped_f);
 #endif // ALBANY_LCM
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -1438,7 +1440,7 @@ void Albany::Application::computeGlobalResidualImpl(
   if (dfm != Teuchos::null) {
     PHAL::Workset workset;
 
-    workset.fT = fT;
+    workset.f = f;
 
     loadWorksetNodesetInfo(workset);
 
@@ -1448,25 +1450,31 @@ void Albany::Application::computeGlobalResidualImpl(
       char nameScale[100]; // create string for file name
       if (commT->getSize() == 1) {
         sprintf(nameScale, "scale%i.mm", countScale);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, scaleVec_);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, Albany::getConstTpetraVector(scaleVec_));
       }
       else {
-        // create serial map that puts the whole solution on processor 0
-        int numMyElements = (scaleVec_->getMap()->getComm()->getRank() == 0)
-                                  ? scaleVec_->getMap()->getGlobalNumElements()
-                                  : 0;
-        Teuchos::RCP<const Tpetra_Map> serial_map =
-              Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, commT));
-
-        // create importer from parallel map to serial map and populate serial
-        // solution scale_serial
-        Teuchos::RCP<Tpetra_Import> importOperator =
-            Teuchos::rcp(new Tpetra_Import(scaleVec_->getMap(), serial_map));
-        Teuchos::RCP<Tpetra_Vector> scale_serial =
-            Teuchos::rcp(new Tpetra_Vector(serial_map));
-        scale_serial->doImport(*scaleVec_, *importOperator, Tpetra::INSERT);
+        // LB 7/24/18: is the conversion to serial really needed? Tpetra can handle distributed vectors in the output.
+        //             Besides, the serial map has GIDs from 0 to num_global_elements-1. This *may not* be the same
+        //             set of GIDs as in the solution map (this may really become an issue when we start tackling
+        //             block discretizations)
+/*
+ *        // create serial map that puts the whole solution on processor 0
+ *        int numMyElements = (scaleVec_->getMap()->getComm()->getRank() == 0)
+ *                                  ? scaleVec_->getMap()->getGlobalNumElements()
+ *                                  : 0;
+ *        Teuchos::RCP<const Tpetra_Map> serial_map =
+ *              Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, commT));
+ *
+ *        // create importer from parallel map to serial map and populate serial
+ *        // solution scale_serial
+ *        Teuchos::RCP<Tpetra_Import> importOperator =
+ *            Teuchos::rcp(new Tpetra_Import(scaleVec_->getMap(), serial_map));
+ *        Teuchos::RCP<Tpetra_Vector> scale_serial =
+ *            Teuchos::rcp(new Tpetra_Vector(serial_map));
+ *        scale_serial->doImport(*scaleVec_, *importOperator, Tpetra::INSERT);
+ */
         sprintf(nameScale, "scaleSerial%i.mm", countScale);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, scale_serial);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, Albany::getConstTpetraVector(scaleVec_));
       }
 #endif
       countScale++;
@@ -1497,7 +1505,7 @@ void Albany::Application::computeGlobalResidualImpl(
 
   // scale residual by scaleVec_ if scaleBCdofs is on
   if (scaleBCdofs == true) {
-    fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
+    Thyra::ele_wise_scale(*scaleVec_,f.ptr());
   }
 }
 
@@ -1506,7 +1514,8 @@ void Albany::Application::computeGlobalResidual(
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& x_dot,
     const Teuchos::RCP<const Thyra_Vector>& x_dotdot,
-    const Teuchos::Array<ParamVec> &p, Tpetra_Vector &fT,
+    const Teuchos::Array<ParamVec> &p,
+    const Teuchos::RCP<Thyra_Vector>& f,
     const double dt) 
 {
   // Create non-owning RCPs to Tpetra objects
@@ -1514,12 +1523,12 @@ void Albany::Application::computeGlobalResidual(
   if (problem->useSDBCs() == false) {
     this->computeGlobalResidualImpl(
         current_time, x, x_dot, x_dotdot,
-        p, Teuchos::rcpFromRef(fT), dt);
+        p, f, dt);
   } else {
     // Temporary, while we refactor
     this->computeGlobalResidualSDBCsImpl(
         current_time, x, x_dot, x_dotdot,
-        p, Teuchos::rcpFromRef(fT), dt);
+        p, f, dt);
   }
 
   // Debut output
@@ -1529,25 +1538,24 @@ void Albany::Application::computeGlobalResidual(
     if (writeToMatrixMarketRes ==
         -1) { // write residual to MatrixMarket every time it arises
       sprintf(name, "rhs%i.mm", countRes);
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, Teuchos::rcpFromRef(fT));
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, Albany::getConstTpetraVector(f));
     } else {
       if (countRes ==
           writeToMatrixMarketRes) { // write residual only at requested count#
         sprintf(name, "rhs%i.mm", countRes);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name,
-                                                   Teuchos::rcpFromRef(fT));
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, Albany::getConstTpetraVector(f));
       }
     }
   }
   if (writeToCoutRes != 0) {    // If requesting writing of residual to cout...
     if (writeToCoutRes == -1) { // cout residual time it arises
       std::cout << "Global Residual #" << countRes << ": " << std::endl;
-      fT.describe(*out, Teuchos::VERB_EXTREME);
+      describe(f.getConst(),*out, Teuchos::VERB_EXTREME);
     } else {
       if (countRes == writeToCoutRes) { // cout residual only at requested
                                         // count#
         std::cout << "Global Residual #" << countRes << ": " << std::endl;
-        fT.describe(*out, Teuchos::VERB_EXTREME);
+        describe(f.getConst(),*out, Teuchos::VERB_EXTREME);
       }
     }
   }
@@ -1556,31 +1564,15 @@ void Albany::Application::computeGlobalResidual(
   }
 }
 
-#if defined(ALBANY_EPETRA)
-double Albany::Application::computeConditionNumber(Epetra_CrsMatrix &matrix) {
-  AztecOOConditionNumber conditionEstimator;
-  conditionEstimator.initialize(matrix);
-  int maxIters = 40000;
-  double tol = 1e-10;
-  int status = conditionEstimator.computeConditionNumber(maxIters, tol);
-  if (status != 0)
-    *out
-        << "WARNING: AztecOO::ConditionNumber::computeConditionNumber returned "
-        << "non-zero status = " << status
-        << ".  Condition number estimate may be wrong!\n";
-  double condest = conditionEstimator.getConditionNumber();
-  return condest;
-}
-#endif
-
 void Albany::Application::computeGlobalJacobianImpl(
     const double alpha, const double beta, const double omega,
     const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-    const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
-    const Teuchos::RCP<Tpetra_CrsMatrix> &jacT,
+    const Teuchos::Array<ParamVec> &p,
+    const Teuchos::RCP<Thyra_Vector>& f,
+    const Teuchos::RCP<Thyra_LinearOp>& jac,
     const double dt) {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian");
 
@@ -1594,16 +1586,13 @@ void Albany::Application::computeGlobalJacobianImpl(
 
   int numWorksets = wsElNodeEqID.size();
 
-  // Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
-  Teuchos::RCP<Tpetra_Vector> overlapped_fT;
-  if (Teuchos::nonnull(fT)) {
-    overlapped_fT = solMgrT->get_overlapped_fT();
-  } else {
-    overlapped_fT = Teuchos::null;
+  Teuchos::RCP<Thyra_Vector> overlapped_f;
+  if (Teuchos::nonnull(f)) {
+    overlapped_f = solMgrT->get_overlapped_f();
   }
-  Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT =
-      solMgrT->get_overlapped_jacT();
-  Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
+
+  Teuchos::RCP<Thyra_LinearOp> overlapped_jac =solMgrT->get_overlapped_jac();
+  auto cas_manager = solMgrT->get_cas_manager();
 
   // Scatter x and xdot to the overlapped distribution
   solMgrT->scatterX(x, xdot, xdotdot);
@@ -1617,28 +1606,28 @@ void Albany::Application::computeGlobalJacobianImpl(
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
   // Zero out overlapped residual
-  if (Teuchos::nonnull(fT)) {
-    overlapped_fT->putScalar(0.0);
-    fT->putScalar(0.0);
+  if (Teuchos::nonnull(f)) {
+    overlapped_f->assign(0.0);
+    f->assign(0.0);
   }
 
   // Zero out Jacobian
-  jacT->resumeFill();
-  jacT->setAllToScalar(0.0);
+  resumeFill(jac);
+  assign(jac,0.0);
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  if (!overlapped_jacT->isFillActive())
-    overlapped_jacT->resumeFill();
-#endif
-  overlapped_jacT->setAllToScalar(0.0);
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  if (overlapped_jacT->isFillActive()) {
-    // Makes getLocalMatrix() valid.
-    overlapped_jacT->fillComplete();
+  if (!isFillActive(overlapped_jac)) {
+    resumeFill(overlapped_jac);
   }
-  if (!overlapped_jacT->isFillActive())
-    overlapped_jacT->resumeFill();
-
+#endif
+  assign(overlapped_jac,0.0);
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if (isFillActive(overlapped_jac)) {
+    fillComplete(overlapped_jac);
+  }
+  if (!isFillActive(overlapped_jac)) {
+    resumeFill(overlapped_jac);
+  }
 #endif
 
   // Set data in Workset struct, and perform fill via field manager
@@ -1655,11 +1644,11 @@ void Albany::Application::computeGlobalJacobianImpl(
 #ifdef DEBUG_OUTPUT
     *out << "IKT countJac = " << countJac
          << ", computeGlobalJacobian workset.x = \n";
-    Albany::getConstTpetraVector(workset.x)->describe(*out, Teuchos::VERB_EXTREME);
+    describe(workset.x.getConst(),*out, Teuchos::VERB_EXTREME);
 #endif
 
-    workset.fT = overlapped_fT;
-    workset.JacT = overlapped_jacT;
+    workset.f   = overlapped_f;
+    workset.Jac = overlapped_jac;
     loadWorksetJacobianInfo(workset, alpha, beta, omega);
 
     // fill Jacobian derivative dimensions:
@@ -1698,62 +1687,65 @@ void Albany::Application::computeGlobalJacobianImpl(
     // Allocate and populate scaleVec_
     if (scale != 1.0) {
       if (scaleVec_ == Teuchos::null ||
-          scaleVec_->getGlobalLength() != jacT->getGlobalNumCols()) {
-        scaleVec_ = Teuchos::rcp(new Tpetra_Vector(jacT->getRowMap()));
+          scaleVec_->space()->dim() != jac->domain()->dim()) {
+        scaleVec_ = Thyra::createMember(jac->range());
         setScale();
       }
     }
 
     // Assemble global residual
-    if (Teuchos::nonnull(fT))
-      fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-
+    if (Teuchos::nonnull(f)) {
+      cas_manager->combine(overlapped_f,f,CombineMode::ADD);
+    }
     // Assemble global Jacobian
-    jacT->doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
+    cas_manager->combine(overlapped_jac,jac,CombineMode::ADD);
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
     if (Teuchos::nonnull(LCM::PeridigmManager::self())) {
       LCM::PeridigmManager::self()
-          ->copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(jacT);
+          ->copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(jac);
     }
 #endif
 #endif
 
     // scale Jacobian
     if (scaleBCdofs == false && scale != 1.0) {
-      jacT->fillComplete();
+      fillComplete(jac);
 #ifdef WRITE_TO_MATRIX_MARKET
       char nameJacUnscaled[100]; // create string for file name
       sprintf(nameJacUnscaled, "jacUnscaled%i.mm", countScale);
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(nameJacUnscaled, jacT);
-      if (fT != Teuchos::null) {
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(nameJacUnscaled, getConstTpetraMatrix(jac));
+      if (f != Teuchos::null) {
         char nameResUnscaled[100]; // create string for file name
         sprintf(nameResUnscaled, "resUnscaled%i.mm", countScale);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResUnscaled, fT);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResUnscaled, getConstTpetraVector(f));
       }
 #endif
       // set the scaling
-      setScale(jacT);
+      setScale(jac);
+
       // scale Jacobian
-      jacT->leftScale(*scaleVec_);
-      jacT->resumeFill();
+      // We MUST be able to cast jac to ScaledLinearOpBase in order to left scale it.
+      auto jac_scaled_lop = Teuchos::rcp_dynamic_cast<Thyra::ScaledLinearOpBase<ST>>(jac,true);
+      jac_scaled_lop->scaleLeft(*scaleVec_);
+      resumeFill(jac);
       // scale residual
-      if (Teuchos::nonnull(fT)) {
-        fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
+      if (Teuchos::nonnull(f)) {
+        Thyra::ele_wise_scale(*scaleVec_,f.ptr());
       }
 #ifdef WRITE_TO_MATRIX_MARKET
       char nameJacScaled[100]; // create string for file name
       sprintf(nameJacScaled, "jacScaled%i.mm", countScale);
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(nameJacScaled, jacT);
-      if (fT != Teuchos::null) {
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(nameJacScaled, getConstTpetraMatrix(jac));
+      if (f != Teuchos::null) {
         char nameResScaled[100]; // create string for file name
         sprintf(nameResScaled, "resScaled%i.mm", countScale);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResScaled, fT);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResScaled, getConstTpetraVector(f));
       }
       char nameScale[100]; // create string for file name
       sprintf(nameScale, "scale%i.mm", countScale);
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, scaleVec_);
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, getConstTpetraVector(scaleVec_));
 #endif
       countScale++;
     }
@@ -1762,8 +1754,8 @@ void Albany::Application::computeGlobalJacobianImpl(
   if (Teuchos::nonnull(dfm)) {
     PHAL::Workset workset;
 
-    workset.fT = fT;
-    workset.JacT = jacT;
+    workset.f = f;
+    workset.Jac = jac;
     workset.m_coeff = alpha;
     workset.n_coeff = omega;
     workset.j_coeff = beta;
@@ -1781,30 +1773,36 @@ void Albany::Application::computeGlobalJacobianImpl(
     loadWorksetNodesetInfo(workset);
 
     if (scaleBCdofs == true) {
-      setScaleBCDofs(workset, jacT);
+      setScaleBCDofs(workset, jac);
 #ifdef WRITE_TO_MATRIX_MARKET
       char nameScale[100]; // create string for file name
       if (commT->getSize() == 1) {
         sprintf(nameScale, "scale%i.mm", countScale);
       }
       else {
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, scaleVec_);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, getConstTpetraVector(scaleVec_));
+        // LB 7/24/18: is the conversion to serial really needed? Tpetra can handle distributed vectors in the output.
+        //             Besides, the serial map has GIDs from 0 to num_global_elements-1. This *may not* be the same
+        //             set of GIDs as in the solution map (this may really become an issue when we start tackling
+        //             block discretizations)
         // create serial map that puts the whole solution on processor 0
-        int numMyElements = (scaleVec_->getMap()->getComm()->getRank() == 0)
-                                ? scaleVec_->getMap()->getGlobalNumElements()
-                                : 0;
-        Teuchos::RCP<const Tpetra_Map> serial_map =
-            Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, commT));
-
-        // create importer from parallel map to serial map and populate serial
-        // solution scale_serial
-        Teuchos::RCP<Tpetra_Import> importOperator =
-            Teuchos::rcp(new Tpetra_Import(scaleVec_->getMap(), serial_map));
-        Teuchos::RCP<Tpetra_Vector> scale_serial =
-            Teuchos::rcp(new Tpetra_Vector(serial_map));
-        scale_serial->doImport(*scaleVec_, *importOperator, Tpetra::INSERT);
+/*
+ *         int numMyElements = (scaleVec_->getMap()->getComm()->getRank() == 0)
+ *                                 ? scaleVec_->getMap()->getGlobalNumElements()
+ *                                 : 0;
+ *         Teuchos::RCP<const Tpetra_Map> serial_map =
+ *             Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, commT));
+ * 
+ *         // create importer from parallel map to serial map and populate serial
+ *         // solution scale_serial
+ *         Teuchos::RCP<Tpetra_Import> importOperator =
+ *             Teuchos::rcp(new Tpetra_Import(scaleVec_->getMap(), serial_map));
+ *         Teuchos::RCP<Tpetra_Vector> scale_serial =
+ *             Teuchos::rcp(new Tpetra_Vector(serial_map));
+ *         scale_serial->doImport(*scaleVec_, *importOperator, Tpetra::INSERT);
+ */
         sprintf(nameScale, "scaleSerial%i.mm", countScale);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, scale_serial);
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, getConstTpetraVector(scaleVec_));
       }
 #endif
       countScale++;
@@ -1825,24 +1823,28 @@ void Albany::Application::computeGlobalJacobianImpl(
 #endif
     dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
   }
-  jacT->fillComplete();
+  fillComplete(jac);
 
   // Apply scaling to residual and Jacobian
   if (scaleBCdofs == true) {
-    if (Teuchos::nonnull(fT))
-      fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
-    jacT->leftScale(*scaleVec_);
+    if (Teuchos::nonnull(f)) {
+      Thyra::ele_wise_scale(*scaleVec_, f.ptr());
+    }
+    // We MUST be able to cast jac to ScaledLinearOpBase in order to left scale it.
+    auto jac_scaled_lop = Teuchos::rcp_dynamic_cast<Thyra::ScaledLinearOpBase<ST>>(jac,true);
+    jac_scaled_lop->scaleLeft(*scaleVec_);
   }
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  if (overlapped_jacT->isFillActive()) {
+  if (isFillActive(overlapped_jac)) {
     // Makes getLocalMatrix() valid.
-    overlapped_jacT->fillComplete();
+    fillComplete(overlapped_jac);
   }
 #endif
-  if (derivatives_check_ > 0)
+  if (derivatives_check_ > 0) {
     checkDerivatives(*this, current_time, x, xdot, xdotdot,
-                      p, fT, jacT, derivatives_check_);
+                      p, f, jac, derivatives_check_);
+  }
 }
 
 void Albany::Application::computeGlobalJacobianSDBCsImpl(
@@ -1851,8 +1853,9 @@ void Albany::Application::computeGlobalJacobianSDBCsImpl(
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-    const Teuchos::Array<ParamVec> &p, const Teuchos::RCP<Tpetra_Vector> &fT,
-    const Teuchos::RCP<Tpetra_CrsMatrix> &jacT,
+    const Teuchos::Array<ParamVec> &p,
+    const Teuchos::RCP<Thyra_Vector>& f,
+    const Teuchos::RCP<Thyra_LinearOp>& jac,
     const double dt) {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian");
 
@@ -1896,18 +1899,12 @@ void Albany::Application::computeGlobalJacobianSDBCsImpl(
 
   int numWorksets = wsElNodeEqID.size();
 
-  // Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
-  Teuchos::RCP<Tpetra_Vector> overlapped_fT;
-  if (Teuchos::nonnull(fT)) {
-    overlapped_fT = solMgrT->get_overlapped_fT();
-  } else {
-    overlapped_fT = Teuchos::null;
-  }
-  Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT =
-      solMgrT->get_overlapped_jacT();
-  Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
+  // The combine-and-scatter manager
+  auto cas_manager = solMgrT->get_cas_manager();
 
-  Teuchos::RCP<Tpetra_Import> const importerT = solMgrT->get_importerT();
+
+  Teuchos::RCP<Thyra_Vector> overlapped_f = solMgrT->get_overlapped_f();
+  Teuchos::RCP<Thyra_LinearOp> overlapped_jac = solMgrT->get_overlapped_jac();
 
   // Scatter x and xdot to the overlapped distribution
   solMgrT->scatterX(x, xdot, xdotdot);
@@ -1916,33 +1913,34 @@ void Albany::Application::computeGlobalJacobianSDBCsImpl(
   distParamLib->scatter();
 
   // Set parameters
-  for (int i = 0; i < p.size(); i++)
-    for (unsigned int j = 0; j < p[i].size(); j++)
+  for (int i = 0; i < p.size(); i++) {
+    for (unsigned int j = 0; j < p[i].size(); j++) {
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
+  }}
 
-  // Zero out overlapped residual
-  if (Teuchos::nonnull(fT)) {
-    overlapped_fT->putScalar(0.0);
-    fT->putScalar(0.0);
+  // Zero out overlapped residual (if present)
+  if (Teuchos::nonnull(f)) {
+    overlapped_f->assign(0.0);
+    f->assign(0.0);
   }
 
   // Zero out Jacobian
-  jacT->resumeFill();
-  jacT->setAllToScalar(0.0);
+  resumeFill(jac);
+  assign(jac,0.0);
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  if (!overlapped_jacT->isFillActive())
-    overlapped_jacT->resumeFill();
-#endif
-  overlapped_jacT->setAllToScalar(0.0);
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  if (overlapped_jacT->isFillActive()) {
-    // Makes getLocalMatrix() valid.
-    overlapped_jacT->fillComplete();
+  if (!isFillActive(overlapped_jac)) {
+    resumeFill(overlapped_jac);
   }
-  if (!overlapped_jacT->isFillActive())
-    overlapped_jacT->resumeFill();
-
+#endif
+  assign(overlapped_jac,0.0);
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if (isFillActive(overlapped_jac)) {
+    fillComplete(overlapped_jac);
+  }
+  if (!isFillActive(overlapped_jac)) {
+    resumeFill(overlapped_jac);
+  }
 #endif
 
   // Set data in Workset struct, and perform fill via field manager
@@ -1959,7 +1957,7 @@ void Albany::Application::computeGlobalJacobianSDBCsImpl(
 #ifdef DEBUG_OUTPUT
     *out << "IKT countJac = " << countJac
          << ", computeGlobalJacobian workset.x = \n";
-    Albany::getConstTpetraVector(workset.x)->describe(*out, Teuchos::VERB_EXTREME);
+    describe(workset.x.getConst(),*out, Teuchos::VERB_EXTREME);
     *out << "IKT previous_time, this_time = " << prev_times_[app_no] << ", "
          << this_time << "\n";
 #endif
@@ -1968,8 +1966,8 @@ void Albany::Application::computeGlobalJacobianSDBCsImpl(
     if (prev_times_[app_no] != this_time)
       begin_time_step = true;
 
-    workset.fT = overlapped_fT;
-    workset.JacT = overlapped_jacT;
+    workset.f = overlapped_f;
+    workset.Jac = overlapped_jac;
     loadWorksetJacobianInfo(workset, alpha, beta, omega);
 
     // fill Jacobian derivative dimensions:
@@ -2011,29 +2009,30 @@ void Albany::Application::computeGlobalJacobianSDBCsImpl(
     TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian Export");
 
     // Assemble global residual
-    if (Teuchos::nonnull(fT))
-      fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+    if (Teuchos::nonnull(f)) {
+      cas_manager->combine(overlapped_f,f,CombineMode::ADD);
+    }
 
     // Assemble global Jacobian
-    jacT->doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
+    cas_manager->combine(overlapped_jac,jac,CombineMode::ADD);
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
     if (Teuchos::nonnull(LCM::PeridigmManager::self())) {
       LCM::PeridigmManager::self()
-          ->copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(jacT);
+          ->copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(getTpetraOperator(jac));
     }
 #endif
 #endif
   } // End timer
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
-  Teuchos::RCP<Tpetra_Vector> xT_post_SDBCs;
+  Teuchos::RCP<Thyra_Vector> x_post_SDBCs;
   if (Teuchos::nonnull(dfm)) {
     PHAL::Workset workset;
 
-    workset.fT = fT;
-    workset.JacT = jacT;
+    workset.f = f;
+    workset.Jac = jac;
     workset.m_coeff = alpha;
     workset.n_coeff = omega;
     workset.j_coeff = beta;
@@ -2064,9 +2063,9 @@ void Albany::Application::computeGlobalJacobianSDBCsImpl(
     std::cout << "calling DFM evaluate fields in computeGlobalJacobianSDBCsImplT" << std::endl;
 #endif
     dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
-    xT_post_SDBCs = Teuchos::rcp(new Tpetra_Vector(*Albany::getConstTpetraVector(workset.x)));
+    x_post_SDBCs = workset.x->clone_v();
   }
-  jacT->fillComplete();
+  fillComplete(jac);
 
 #ifdef DEBUG_OUTPUT
   *out << "IKT begin_time_step? " << begin_time_step << "\n";
@@ -2074,38 +2073,39 @@ void Albany::Application::computeGlobalJacobianSDBCsImpl(
   if (begin_time_step == true) {
     // if (countRes == 0) {
     // Zero out overlapped residual - Tpetra
-    if (Teuchos::nonnull(fT)) {
-      overlapped_fT->putScalar(0.0);
-      fT->putScalar(0.0);
+    if (Teuchos::nonnull(f)) {
+      overlapped_f->assign(0.0);
+      f->assign(0.0);
     }
     PHAL::Workset workset;
 
     // Zero out Jacobian
-    jacT->resumeFill();
-    jacT->setAllToScalar(0.0);
+    resumeFill(jac);
+    assign(jac,0.0);
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-    if (!overlapped_jacT->isFillActive())
-      overlapped_jacT->resumeFill();
-#endif
-    overlapped_jacT->setAllToScalar(0.0);
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-    if (overlapped_jacT->isFillActive()) {
-      // Makes getLocalMatrix() valid.
-      overlapped_jacT->fillComplete();
+    if (!isFillActive(overlapped_jac)) {
+      resumeFill(overlapped_jac);
     }
-    if (!overlapped_jacT->isFillActive())
-      overlapped_jacT->resumeFill();
+#endif
+    assign(overlapped_jac,0.0);
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+    if (isFillActive(overlapped_jac)) {
+      // Makes getLocalMatrix() valid.
+      fillComplete(overlapped_jac);
+    }
+    if (!isFillActive(overlapped_jac)) {
+      resumeFill(overlapped_jac);
+    }
 
 #endif
 
-    double const
-    this_time = fixTime(current_time);
+    const double this_time = fixTime(current_time);
 
-    loadBasicWorksetInfoSDBCs(workset, xT_post_SDBCs, this_time);
+    loadBasicWorksetInfoSDBCs(workset, x_post_SDBCs, this_time);
 
-    workset.fT = overlapped_fT;
-    workset.JacT = overlapped_jacT;
+    workset.f = overlapped_f;
+    workset.Jac = overlapped_jac;
     loadWorksetJacobianInfo(workset, alpha, beta, omega);
 
     // fill Jacobian derivative dimensions:
@@ -2122,7 +2122,7 @@ void Albany::Application::computeGlobalJacobianSDBCsImpl(
 #ifdef DEBUG_OUTPUT
       *out << "IKT countRes = " << countRes
            << ", computeGlobalResid workset.x = \n ";
-      Albany::getConstTpetraVector(workset.x)->describe(*out, Teuchos::VERB_EXTREME);
+      describe(workset.x.getConst(),*out, Teuchos::VERB_EXTREME);
 #endif
 
       // FillType template argument used to specialize Sacado
@@ -2147,17 +2147,18 @@ void Albany::Application::computeGlobalJacobianSDBCsImpl(
     }
 
     // Assemble the residual into a non-overlapping vector
-    if (Teuchos::nonnull(fT))
-      fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+    if (Teuchos::nonnull(f)) {
+      cas_manager->combine(overlapped_f,f,CombineMode::ADD);
+    }
 
     // Assemble global Jacobian
-    jacT->doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
+    cas_manager->combine(overlapped_jac,jac,CombineMode::ADD);
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
     if (Teuchos::nonnull(LCM::PeridigmManager::self())) {
       LCM::PeridigmManager::self()
-          ->copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(jacT);
+          ->copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(getTpetraOperator(jac));
     }
 #endif
 #endif
@@ -2165,14 +2166,13 @@ void Albany::Application::computeGlobalJacobianSDBCsImpl(
 
       PHAL::Workset workset;
 
-      workset.fT = fT;
-      workset.JacT = jacT;
+      workset.f = f;
+      workset.Jac = jac;
       workset.m_coeff = alpha;
       workset.n_coeff = omega;
       workset.j_coeff = beta;
 
-      double const
-      this_time = fixTime(current_time);
+      const double this_time = fixTime(current_time);
 
       workset.current_time = this_time;
 
@@ -2180,7 +2180,7 @@ void Albany::Application::computeGlobalJacobianSDBCsImpl(
         workset.j_coeff = perturbBetaForDirichlets;
       }
 
-      dfm_set(workset, Albany::createConstThyraVector(xT_post_SDBCs), xdot, xdotdot, rc_mgr);
+      dfm_set(workset, x_post_SDBCs, xdot, xdotdot, rc_mgr);
 
       loadWorksetNodesetInfo(workset);
 
@@ -2201,19 +2201,20 @@ void Albany::Application::computeGlobalJacobianSDBCsImpl(
         dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
       }
     }
-    jacT->fillComplete();
+    fillComplete(jac);
   } // endif (begin_time_step == true)
   previous_app = current_app;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  if (overlapped_jacT->isFillActive()) {
+  if (isFillActive(overlapped_jac)) {
     // Makes getLocalMatrix() valid.
-    overlapped_jacT->fillComplete();
+    fillComplete(overlapped_jac);
   }
 #endif
-  if (derivatives_check_ > 0)
+  if (derivatives_check_ > 0) {
     checkDerivatives(*this, current_time, x, xdot, xdotdot,
-                      p, fT, jacT, derivatives_check_);
+                      p, f, jac, derivatives_check_);
+  }
 }
 
 void Albany::Application::computeGlobalJacobian(
@@ -2222,84 +2223,61 @@ void Albany::Application::computeGlobalJacobian(
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-    const Teuchos::Array<ParamVec> &p, Tpetra_Vector *fT,
-    Tpetra_CrsMatrix &jacT, const double dt) 
+    const Teuchos::Array<ParamVec> &p,
+    const Teuchos::RCP<Thyra_Vector>& f,
+    const Teuchos::RCP<Thyra_LinearOp>& jac,
+    const double dt) 
 {
   // Create non-owning RCPs to Tpetra objects
   // to be passed to the implementation
   if (problem->useSDBCs() == false) {
-    this->computeGlobalJacobianImpl(
-        alpha, beta, omega, current_time, x, xdot, xdotdot, p,
-        Teuchos::rcp(fT, false), Teuchos::rcpFromRef(jacT), dt);
+    this->computeGlobalJacobianImpl(alpha, beta, omega, current_time, x, xdot, xdotdot, p, f, jac, dt);
   } else {
-    this->computeGlobalJacobianSDBCsImpl(
-        alpha, beta, omega, current_time, x, xdot, xdotdot, p,
-        Teuchos::rcp(fT, false), Teuchos::rcpFromRef(jacT), dt);
+    this->computeGlobalJacobianSDBCsImpl(alpha, beta, omega, current_time, x, xdot, xdotdot, p, f, jac, dt);
   }
   // Debut output
-  if (writeToMatrixMarketJac !=
-      0) {          // If requesting writing to MatrixMarket of Jacobian...
-    char name[100]; // create string for file name
-    if (writeToMatrixMarketJac ==
-        -1) { // write jacobian to MatrixMarket every time it arises
-      sprintf(name, "jac%i.mm", countJac);
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(name,
-                                                  Teuchos::rcpFromRef(jacT));
-    } else {
-      if (countJac ==
-          writeToMatrixMarketJac) { // write jacobian only at requested count#
-        sprintf(name, "jac%i.mm", countJac);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(name,
-                                                    Teuchos::rcpFromRef(jacT));
-      }
+  if (writeToMatrixMarketJac != 0) {
+    // If requesting writing to MatrixMarket of Jacobian...
+    if (writeToMatrixMarketJac == -1) {
+      // write jacobian to MatrixMarket every time it arises
+      writeMatrixMarket(jac.getConst(),"jac",countJac);
+    } else if (countJac == writeToMatrixMarketJac) {
+      // write jacobian only at requested count#
+      writeMatrixMarket(jac.getConst(),"jac",countJac);
     }
   }
-  if (writeToCoutJac !=
-      0) { // If requesting writing Jacobian to standard output (cout)...
+  if (writeToCoutJac != 0) {
+    // If requesting writing Jacobian to standard output (cout)...
     if (writeToCoutJac == -1) { // cout jacobian every time it arises
       *out << "Global Jacobian #" << countJac << ":\n";
-      jacT.describe(*out, Teuchos::VERB_EXTREME);
-    } else {
-      if (countJac == writeToCoutJac) { // cout jacobian only at requested
-                                        // count#
-        *out << "Global Jacobian #" << countJac << ":\n";
-        jacT.describe(*out, Teuchos::VERB_EXTREME);
-      }
+      describe(jac.getConst(),*out, Teuchos::VERB_EXTREME);
+    } else if (countJac == writeToCoutJac) {
+      // cout jacobian only at requested count#
+      *out << "Global Jacobian #" << countJac << ":\n";
+      describe(jac.getConst(),*out, Teuchos::VERB_EXTREME);
     }
   }
   if (computeJacCondNum != 0) { // If requesting computation of condition number
 #if defined(ALBANY_EPETRA)
-    Teuchos::RCP<Epetra_CrsMatrix> jac =
-        Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(Teuchos::rcpFromRef(jacT),
-                                                  comm);
-    if (computeJacCondNum ==
-        -1) { // cout jacobian condition # every time it arises
-      double condNum = computeConditionNumber(*jac);
-      *out << "Jacobian #" << countJac << " condition number = " << condNum
-           << "\n";
-    } else {
-      if (countJac == computeJacCondNum) { // cout jacobian condition # only at
-                                           // requested count#
-        double condNum = computeConditionNumber(*jac);
-        *out << "Jacobian #" << countJac << " condition number = " << condNum
-             << "\n";
-      }
+    if (computeJacCondNum == -1) {
+      // cout jacobian condition # every time it arises
+      double condNum = computeConditionNumber(jac);
+      *out << "Jacobian #" << countJac << " condition number = " << condNum << "\n";
+    } else if (countJac == computeJacCondNum) { 
+      // cout jacobian condition # only at requested count#
+      double condNum = computeConditionNumber(jac);
+      *out << "Jacobian #" << countJac << " condition number = " << condNum << "\n";
     }
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(
         true, std::logic_error,
-        "Error in Albany::Application: Compute Jacobian Condition Number debug "
-        "option "
-            << " currently relies on an Epetra-based routine in AztecOO.  To "
-               "use this option, please "
-            << " rebuild Albany with ENABLE_ALBANY_EPETRA_EXE=ON.  You will "
-               "then be able to have Albany "
-            << " output the Jacobian condition number when running either the "
-               "Albany or AlbanyT executable.\n");
+        "Error in Albany::Application: Compute Jacobian Condition Number debug option "
+        "currently relies on an Epetra-based routine in AztecOO.  To use this option, please "
+        "rebuild Albany with ENABLE_ALBANY_EPETRA_EXE=ON.  You will then be able to have Albany "
+        "output the Jacobian condition number when running either the Albany or AlbanyT executable.\n");
 #endif
   }
-  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0 ||
-      computeJacCondNum != 0) {
+  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0 || computeJacCondNum != 0) {
     countJac++; // increment Jacobian counter
   }
 }
@@ -2368,9 +2346,10 @@ void Albany::Application::computeGlobalTangent(
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
     const Teuchos::RCP<const Thyra_MultiVector>& Vp,
-    const Teuchos::RCP<Tpetra_Vector> &fT,
-    const Teuchos::RCP<Tpetra_MultiVector> &JVT,
-    const Teuchos::RCP<Tpetra_MultiVector> &fpT) {
+    const Teuchos::RCP<Thyra_Vector>& f,
+    const Teuchos::RCP<Thyra_MultiVector>& JV,
+    const Teuchos::RCP<Thyra_MultiVector>& fp)
+{
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Tangent");
 
   postRegSetup("Tangent");
@@ -2383,9 +2362,10 @@ void Albany::Application::computeGlobalTangent(
 
   int numWorksets = wsElNodeEqID.size();
 
-  Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
-  Teuchos::RCP<Tpetra_Import> importerT = solMgrT->get_importerT();
-  Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
+  Teuchos::RCP<Thyra_Vector> overlapped_f = solMgrT->get_overlapped_f();
+
+  // The combine-and-scatter manager
+  auto cas_manager = solMgrT->get_cas_manager();
 
   // Scatter x and xdot to the overlapped distrbution
   solMgrT->scatterX(x, xdot, xdotdot);
@@ -2397,72 +2377,74 @@ void Albany::Application::computeGlobalTangent(
   RCP<Thyra_MultiVector> overlapped_Vx;
   if (Teuchos::nonnull(Vx)) {
     overlapped_Vx = Thyra::createMembers(disc->getOverlapVectorSpace(),Vx->domain()->dim());
-    solMgrT->get_cas_manager()->scatter(Vx,overlapped_Vx,Albany::CombineMode::INSERT);
+    cas_manager->scatter(Vx,overlapped_Vx,Albany::CombineMode::INSERT);
   }
 
   // Scatter Vxdot to the overlapped distribution
   RCP<Thyra_MultiVector> overlapped_Vxdot;
   if (Teuchos::nonnull(Vxdot)) {
     overlapped_Vxdot = Thyra::createMembers(disc->getOverlapVectorSpace(),Vxdot->domain()->dim());
-    solMgrT->get_cas_manager()->scatter(Vxdot,overlapped_Vxdot,Albany::CombineMode::INSERT);
+    cas_manager->scatter(Vxdot,overlapped_Vxdot,Albany::CombineMode::INSERT);
   }
   RCP<Thyra_MultiVector> overlapped_Vxdotdot;
   if (Teuchos::nonnull(Vxdotdot)) {
     overlapped_Vxdotdot = Thyra::createMembers(disc->getOverlapVectorSpace(),Vxdotdot->domain()->dim());
-    solMgrT->get_cas_manager()->scatter(Vxdotdot,overlapped_Vxdotdot,Albany::CombineMode::INSERT);
+    cas_manager->scatter(Vxdotdot,overlapped_Vxdotdot,Albany::CombineMode::INSERT);
   }
 
   // Set parameters
-  for (int i = 0; i < par.size(); i++)
-    for (unsigned int j = 0; j < par[i].size(); j++)
+  for (int i = 0; i < par.size(); i++) {
+    for (unsigned int j = 0; j < par[i].size(); j++) {
       par[i][j].family->setRealValueForAllTypes(par[i][j].baseValue);
+  }}
 
   RCP<ParamVec> params = rcp(deriv_par, false);
 
   // Zero out overlapped residual
-  if (Teuchos::nonnull(fT)) {
-    overlapped_fT->putScalar(0.0);
-    fT->putScalar(0.0);
+  if (Teuchos::nonnull(f)) {
+    overlapped_f->assign(0.0);
+    f->assign(0.0);
   }
 
-  RCP<Tpetra_MultiVector> overlapped_JVT;
-  if (Teuchos::nonnull(JVT)) {
-    overlapped_JVT = rcp(
-        new Tpetra_MultiVector(disc->getOverlapMapT(), JVT->getNumVectors()));
-    overlapped_JVT->putScalar(0.0);
-    JVT->putScalar(0.0);
+  RCP<Thyra_MultiVector> overlapped_JV;
+  if (Teuchos::nonnull(JV)) {
+    overlapped_JV = Thyra::createMembers(disc->getOverlapVectorSpace(), JV->domain()->dim());
+    overlapped_JV->assign(0.0);
+    JV->assign(0.0);
   }
 
-  RCP<Tpetra_MultiVector> overlapped_fpT;
-  if (Teuchos::nonnull(fpT)) {
-    overlapped_fpT = rcp(
-        new Tpetra_MultiVector(disc->getOverlapMapT(), fpT->getNumVectors()));
-    overlapped_fpT->putScalar(0.0);
-    fpT->putScalar(0.0);
+  RCP<Thyra_MultiVector> overlapped_fp;
+  if (Teuchos::nonnull(fp)) {
+    overlapped_fp = Thyra::createMembers(disc->getOverlapVectorSpace(), fp->domain()->dim());
+    overlapped_fp->assign(0.0);
+    fp->assign(0.0);
   }
 
   // Number of x & xdot tangent directions
   int num_cols_x = 0;
-  if (Teuchos::nonnull(Vx))
+  if (Teuchos::nonnull(Vx)) {
     num_cols_x = Vx->domain()->dim();
-  else if (Teuchos::nonnull(Vxdot))
+  } else if (Teuchos::nonnull(Vxdot)) {
     num_cols_x = Vxdot->domain()->dim();
-  else if (Teuchos::nonnull(Vxdotdot))
+  } else if (Teuchos::nonnull(Vxdotdot)) {
     num_cols_x = Vxdotdot->domain()->dim();
+  }
 
   // Number of parameter tangent directions
   int num_cols_p = 0;
   if (Teuchos::nonnull(params)) {
     if (Teuchos::nonnull(Vp)) {
       num_cols_p = Vp->domain()->dim();
-    } else
+    } else {
       num_cols_p = params->size();
+    }
   }
 
   // Whether x and param tangent components are added or separate
   int param_offset = 0;
-  if (!sum_derivs)
+  if (!sum_derivs) {
     param_offset = num_cols_x; // offset of parameter derivs in deriv array
+  }
 
   TEUCHOS_TEST_FOR_EXCEPTION(
       sum_derivs && (num_cols_x != 0) && (num_cols_p != 0) &&
@@ -2472,21 +2454,19 @@ void Albany::Application::computeGlobalTangent(
           << " of columns when sum_derivs is true and both are "
           << "non-null!" << std::endl);
 
-  // TODO: Find a way to abstract this chunk away from Tpetra
   // Initialize
   if (Teuchos::nonnull(params)) {
     TanFadType p;
     int num_cols_tot = param_offset + num_cols_p;
     for (unsigned int i = 0; i < params->size(); i++) {
       p = TanFadType(num_cols_tot, (*params)[i].baseValue);
-      auto VpT = Albany::getConstTpetraMultiVector(Vp);
-      if (Teuchos::nonnull(VpT)) {
+      if (Teuchos::nonnull(Vp)) {
         // ArrayRCP for const view of Vp's vectors
-        Teuchos::ArrayRCP<const ST> VpT_constView;
+        Teuchos::ArrayRCP<const ST> Vp_constView;
         for (int k = 0; k < num_cols_p; k++) {
-          VpT_constView = VpT->getData(k);
+          Vp_constView = getLocalData(Vp->col(k));
           p.fastAccessDx(param_offset + k) =
-              VpT_constView[i]; // CHANGE TO TPETRA!
+              Vp_constView[i];
         }
       } else
         p.fastAccessDx(param_offset + i) = 1.0;
@@ -2509,9 +2489,9 @@ void Albany::Application::computeGlobalTangent(
     workset.Vxdotdot = overlapped_Vxdotdot;
     workset.Vp = Vp;
 
-    workset.fT = overlapped_fT;
-    workset.JVT = overlapped_JVT;
-    workset.fpT = overlapped_fpT;
+    workset.f = overlapped_f;
+    workset.JV = overlapped_JV;
+    workset.fp = overlapped_fp;
     workset.j_coeff = beta;
     workset.m_coeff = alpha;
     workset.n_coeff = omega;
@@ -2544,16 +2524,16 @@ void Albany::Application::computeGlobalTangent(
   params = Teuchos::null;
 
   // Assemble global residual
-  if (Teuchos::nonnull(fT)) {
-    fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+  if (Teuchos::nonnull(f)) {
+    cas_manager->combine(overlapped_f,f,CombineMode::ADD);
   }
 
   // Assemble derivatives
-  if (Teuchos::nonnull(JVT)) {
-    JVT->doExport(*overlapped_JVT, *exporterT, Tpetra::ADD);
+  if (Teuchos::nonnull(JV)) {
+    cas_manager->combine(overlapped_JV,JV,CombineMode::ADD);
   }
-  if (Teuchos::nonnull(fpT)) {
-    fpT->doExport(*overlapped_fpT, *exporterT, Tpetra::ADD);
+  if (Teuchos::nonnull(fp)) {
+    cas_manager->combine(overlapped_fp,fp,CombineMode::ADD);
   }
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -2564,9 +2544,9 @@ void Albany::Application::computeGlobalTangent(
     workset.num_cols_p = num_cols_p;
     workset.param_offset = param_offset;
 
-    workset.fT = fT;
-    workset.fpT = fpT;
-    workset.JVT = JVT;
+    workset.f = f;
+    workset.fp = fp;
+    workset.JV = JV;
     workset.j_coeff = beta;
     workset.n_coeff = omega;
     workset.Vx = Vx;
@@ -2605,7 +2585,8 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
     const std::string &dist_param_name,
     const bool trans,
     const Teuchos::RCP<const Thyra_MultiVector>& V,
-    const Teuchos::RCP<Tpetra_MultiVector> &fpVT) {
+    const Teuchos::RCP<Thyra_MultiVector>& fpV)
+{
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Distributed Parameter Derivative");
 
   postRegSetup("Distributed Parameter Derivative");
@@ -2618,7 +2599,8 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
 
   int numWorksets = wsElNodeEqID.size();
 
-  Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
+  // The combin-and-scatter manager
+  auto cas_manager = solMgrT->get_cas_manager();
 
   // Scatter x and xdot to the overlapped distribution
   solMgrT->scatterX(x, xdot, xdotdot);
@@ -2627,33 +2609,32 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
   distParamLib->scatter();
 
   // Set parameters
-  for (int i = 0; i < p.size(); i++)
-    for (unsigned int j = 0; j < p[i].size(); j++)
+  for (int i = 0; i < p.size(); i++) {
+    for (unsigned int j = 0; j < p[i].size(); j++) {
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
+  }}
 
-  RCP<Tpetra_MultiVector> overlapped_fpVT;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_fpV;
   if (trans) {
-    overlapped_fpVT = rcp(new Tpetra_MultiVector(
-        distParamLib->get(dist_param_name)->overlap_map(),
-        V->domain()->dim()));
+    auto vs = Thyra::createVectorSpace<ST>(distParamLib->get(dist_param_name)->overlap_map());
+    overlapped_fpV = Thyra::createMembers(vs,V->domain()->dim());
   } else {
-    overlapped_fpVT = rcp(
-        new Tpetra_MultiVector(disc->getOverlapMapT(), fpVT->getNumVectors()));
+    overlapped_fpV = Thyra::createMembers(disc->getOverlapVectorSpace(), fpV->domain()->dim());
   }
-  overlapped_fpVT->putScalar(0.0);
-  fpVT->putScalar(0.0);
+  overlapped_fpV->assign(0.0);
+  fpV->assign(0.0);
 
-  RCP<const Thyra_MultiVector> V_bc = V;
+  Teuchos::RCP<const Thyra_MultiVector> V_bc = V;
 
   // For (df/dp)^T*V, we have to evaluate Dirichlet BC's first
   if (trans && dfm != Teuchos::null) {
-    RCP<Tpetra_MultiVector> V_bc_ncT = rcp(new Tpetra_MultiVector(*Albany::getConstTpetraMultiVector(V)));
-    V_bc = Albany::createConstThyraMultiVector(V_bc_ncT);
+    Teuchos::RCP<Thyra_MultiVector> V_bc_nonconst = V->clone_mv();
+    V_bc = V_bc_nonconst;
 
     PHAL::Workset workset;
 
-    workset.fpVT = fpVT;
-    workset.Vp_bcT = V_bc_ncT;
+    workset.fpV = fpV;
+    workset.Vp_bc = V_bc_nonconst;
     workset.transpose_dist_param_deriv = trans;
     workset.dist_param_deriv_name = dist_param_name;
     workset.disc = disc;
@@ -2678,12 +2659,11 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
   RCP<Thyra_MultiVector> overlapped_V;
   if (trans) {
     overlapped_V = Thyra::createMembers(disc->getOverlapVectorSpace(), V_bc->domain()->dim());
-    solMgrT->get_cas_manager()->scatter(V_bc,overlapped_V,Albany::CombineMode::INSERT);
+    cas_manager->scatter(V_bc,overlapped_V,Albany::CombineMode::INSERT);
   } else {
     Teuchos::RCP<const Thyra_VectorSpace> vs = Thyra::tpetraVectorSpace<ST>(distParamLib->get(dist_param_name)->overlap_map());
     overlapped_V = Thyra::createMembers(vs, V_bc->domain()->dim());
-
-    solMgrT->get_cas_manager()->scatter(V_bc,overlapped_V,Albany::CombineMode::INSERT);
+    cas_manager->scatter(V_bc,overlapped_V,Albany::CombineMode::INSERT);
   }
 
   // Set data in Workset struct, and perform fill via field manager
@@ -2697,7 +2677,7 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
 
     workset.dist_param_deriv_name = dist_param_name;
     workset.Vp = overlapped_V;
-    workset.fpVT = overlapped_fpVT;
+    workset.fpV = overlapped_fpV;
     workset.transpose_dist_param_deriv = trans;
 
     for (int ws = 0; ws < numWorksets; ws++) {
@@ -2732,21 +2712,21 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
         "> Albany Fill: Distributed Parameter Derivative Export");
     // Assemble global df/dp*V
     if (trans) {
-      Tpetra_MultiVector temp(*fpVT, Teuchos::Copy);
-      distParamLib->get(dist_param_name)->export_add(*fpVT, *overlapped_fpVT);
-      fpVT->update(1.0, temp, 1.0); // fpTV += temp;
+      // TODO: make DistParamLib Thyra
+      Teuchos::RCP<const Thyra_MultiVector> temp = fpV->clone_mv();
+      distParamLib->get(dist_param_name)->export_add(*getTpetraMultiVector(fpV),
+                                                     *getConstTpetraMultiVector(overlapped_fpV));
+      fpV->update(1.0, *temp); // fpV += temp;
 
       std::stringstream sensitivity_name;
       sensitivity_name << dist_param_name << "_sensitivity";
       if (distParamLib->has(sensitivity_name.str())) {
-        distParamLib->get(sensitivity_name.str())->vector()->putScalar(0);
-        distParamLib->get(sensitivity_name.str())
-            ->vector()
-            ->update(1.0, *fpVT->getVector(0), 1.0);
+        auto sens_vec = createThyraVector(distParamLib->get(sensitivity_name.str())->vector());
+        scale_and_update(sens_vec,0.0,fpV->col(0),1.0);
         distParamLib->get(sensitivity_name.str())->scatter();
       }
     } else {
-      fpVT->doExport(*overlapped_fpVT, *exporterT, Tpetra::ADD);
+      cas_manager->combine(overlapped_fpV,fpV,CombineMode::ADD);
     }
   } // End timer
 
@@ -2754,7 +2734,7 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
   if (!trans && dfm != Teuchos::null) {
     PHAL::Workset workset;
 
-    workset.fpVT = fpVT;
+    workset.fpV = fpV;
     workset.Vp = V_bc;
     workset.transpose_dist_param_deriv = trans;
 
@@ -2780,11 +2760,12 @@ void Albany::Application::evaluateResponse(
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-    const Teuchos::Array<ParamVec> &p, Tpetra_Vector &gT)
+    const Teuchos::Array<ParamVec> &p,
+    const Teuchos::RCP<Thyra_Vector>& g)
 {
   double const this_time = fixTime(current_time);
   responses[response_index]->evaluateResponse(
-      this_time, x, xdot, xdotdot, p, gT);
+      this_time, x, xdot, xdotdot, p, g);
 }
 
 void Albany::Application::evaluateResponseTangent(
@@ -2799,13 +2780,15 @@ void Albany::Application::evaluateResponseTangent(
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
     const Teuchos::RCP<const Thyra_MultiVector>& Vp,
-    Tpetra_Vector *gT, Tpetra_MultiVector *gxT,
-    Tpetra_MultiVector *gpT) {
+    const Teuchos::RCP<Thyra_Vector>& g,
+    const Teuchos::RCP<Thyra_MultiVector>& gx,
+    const Teuchos::RCP<Thyra_MultiVector>& gp)
+{
   double const
   this_time = fixTime(current_time);
   responses[response_index]->evaluateTangent(
       alpha, beta, omega, this_time, sum_derivs, x, xdot, xdotdot, p,
-      deriv_p, Vx, Vxdot, Vxdotdot, Vp, gT, gxT, gpT);
+      deriv_p, Vx, Vxdot, Vxdotdot, Vp, g, gx, gp);
 }
 
 void Albany::Application::evaluateResponseDerivative(
@@ -2813,17 +2796,18 @@ void Albany::Application::evaluateResponseDerivative(
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-    const Teuchos::Array<ParamVec> &p, ParamVec *deriv_p, Tpetra_Vector *gT,
-    const Thyra::ModelEvaluatorBase::Derivative<ST> &dg_dxT,
-    const Thyra::ModelEvaluatorBase::Derivative<ST> &dg_dxdotT,
-    const Thyra::ModelEvaluatorBase::Derivative<ST> &dg_dxdotdotT,
-    const Thyra::ModelEvaluatorBase::Derivative<ST> &dg_dpT)
+    const Teuchos::Array<ParamVec> &p, ParamVec *deriv_p,
+    const Teuchos::RCP<Thyra_Vector>& g,
+    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
+    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
+    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
+    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp)
 {
   double const this_time = fixTime(current_time);
 
   responses[response_index]->evaluateDerivative(
-      this_time, x, xdot, xdotdot, p, deriv_p, gT, dg_dxT, dg_dxdotT,
-      dg_dxdotdotT, dg_dpT);
+      this_time, x, xdot, xdotdot, p, deriv_p, g, dg_dx, dg_dxdot,
+      dg_dxdotdot, dg_dp);
 }
 
 void Albany::Application::evaluateResponseDistParamDeriv(
@@ -2832,22 +2816,23 @@ void Albany::Application::evaluateResponseDistParamDeriv(
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec> &param_array,
-    const std::string &dist_param_name, Tpetra_MultiVector *dg_dp)
+    const std::string &dist_param_name,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
   TEUCHOS_FUNC_TIME_MONITOR(
       "> Albany Fill: Response Distributed Parameter Derivative");
   double const
   this_time = fixTime(current_time);
 
-  responses[response_index]->evaluateDistParamDeriv(
-      this_time, x, xdot, xdotdot, param_array, dist_param_name, dg_dp);
-  if (dg_dp != NULL) {
+  responses[response_index]->evaluateDistParamDeriv(this_time, x, xdot, xdotdot, param_array, dist_param_name, dg_dp);
+
+  if (!dg_dp.is_null()) {
     std::stringstream sensitivity_name;
     sensitivity_name << dist_param_name << "_sensitivity";
+    // TODO: make distParamLib Thyra
     if (distParamLib->has(sensitivity_name.str())) {
-      distParamLib->get(sensitivity_name.str())
-          ->vector()
-          ->update(1.0, *dg_dp, 1.0);
+      auto sensitivity_vec = createThyraVector(distParamLib->get(sensitivity_name.str())->vector());
+      sensitivity_vec->update(1.0, *dg_dp);
       distParamLib->get(sensitivity_name.str())->scatter();
     }
   }
@@ -2932,7 +2917,7 @@ void Albany::Application::evaluateStateFieldManagerT(
     }
   }
 
-  Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
+  Teuchos::RCP<Thyra_Vector> overlapped_f = solMgrT->get_overlapped_f();
 
   // Load connectivity map and coordinates
   const auto &wsElNodeEqID = disc->getWsElNodeEqID();
@@ -2951,7 +2936,7 @@ void Albany::Application::evaluateStateFieldManagerT(
   // Set data in Workset struct
   PHAL::Workset workset;
   loadBasicWorksetInfo(workset, current_time);
-  workset.fT = overlapped_fT;
+  workset.f = overlapped_f;
 
   // Perform fill via field manager
   if (Teuchos::nonnull(rc_mgr))
@@ -3238,16 +3223,14 @@ void Albany::Application::determinePiroSolver(
 void Albany::Application::loadBasicWorksetInfo(PHAL::Workset &workset,
                                                 double current_time)
 {
+  auto overlapped_MV = solMgrT->getOverlappedSolution_Thyra();
+  auto numVectors = overlapped_MV->domain()->dim();
+
+  workset.x = overlapped_MV->col(0);
+  workset.xdot = numVectors > 1 ? overlapped_MV->col(1) : Teuchos::null;
+  workset.xdotdot = numVectors > 2 ? overlapped_MV->col(2) : Teuchos::null;
+
   workset.numEqs = neq;
-  Teuchos::RCP<Tpetra_MultiVector> overlapped_MV =
-      solMgrT->getOverlappedSolution();
-  workset.x = Thyra::createConstVector(overlapped_MV->getVector(0));
-  workset.xdot = (overlapped_MV->getNumVectors() > 1)
-                      ? Thyra::createConstVector(overlapped_MV->getVector(1))
-                      : Teuchos::null;
-  workset.xdotdot = (overlapped_MV->getNumVectors() > 2)
-                         ? Thyra::createConstVector(overlapped_MV->getVector(2))
-                         : Teuchos::null;
   workset.current_time = current_time;
   workset.distParamLib = distParamLib;
   workset.disc = disc;
@@ -3257,23 +3240,21 @@ void Albany::Application::loadBasicWorksetInfo(PHAL::Workset &workset,
 }
 
 void Albany::Application::loadBasicWorksetInfoSDBCs(
-    PHAL::Workset &workset, Teuchos::RCP<const Tpetra_Vector> owned_sol,
-    double current_time)
+    PHAL::Workset &workset,
+    const Teuchos::RCP<const Thyra_Vector>& owned_sol,
+    const double current_time)
 {
+  // Scatter owned solution into the overlapped one
+  auto overlapped_MV = solMgrT->getOverlappedSolution_Thyra();
+  auto overlapped_sol = Thyra::createMember(overlapped_MV->range());
+  solMgrT->get_cas_manager()->scatter(owned_sol,overlapped_sol,CombineMode::INSERT);
+
+  auto numVectors = overlapped_MV->domain()->dim();
+  workset.x = overlapped_sol;
+  workset.xdot = numVectors > 1 ? overlapped_MV->col(1) : Teuchos::null;
+  workset.xdotdot = numVectors > 2 ? overlapped_MV->col(2) : Teuchos::null;
+
   workset.numEqs = neq;
-  Teuchos::RCP<const Tpetra_MultiVector> overlapped_MV =
-      solMgrT->getOverlappedSolution();
-  Teuchos::RCP<Tpetra_Vector> overlapped_sol =
-      Teuchos::rcp(new Tpetra_Vector(overlapped_MV->getMap()));
-  overlapped_sol->doImport(*owned_sol, *(solMgrT->get_importerT()),
-                           Tpetra::INSERT);
-  workset.x = Thyra::createConstVector(Teuchos::RCP<const Tpetra_Vector>(overlapped_sol));
-  workset.xdot = (overlapped_MV->getNumVectors() > 1)
-                      ? Thyra::createConstVector(overlapped_MV->getVector(1))
-                      : Teuchos::null;
-  workset.xdotdot = (overlapped_MV->getNumVectors() > 2)
-                         ? Thyra::createConstVector(overlapped_MV->getVector(2))
-                         : Teuchos::null;
   workset.current_time = current_time;
   workset.distParamLib = distParamLib;
   workset.disc = disc;
@@ -3283,9 +3264,9 @@ void Albany::Application::loadBasicWorksetInfoSDBCs(
 }
 
 void Albany::Application::loadWorksetJacobianInfo(PHAL::Workset &workset,
-                                                  const double &alpha,
-                                                  const double &beta,
-                                                  const double &omega) {
+                                                  const double alpha,
+                                                  const double beta,
+                                                  const double omega) {
   workset.m_coeff = alpha;
   workset.n_coeff = omega;
   workset.j_coeff = beta;
@@ -3298,66 +3279,75 @@ void Albany::Application::loadWorksetNodesetInfo(PHAL::Workset &workset) {
   workset.nodeSetCoords = Teuchos::rcpFromRef(disc->getNodeSetCoords());
 }
 
-void Albany::Application::setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT) 
+void Albany::Application::setScale(Teuchos::RCP<const Thyra_LinearOp> jac) 
 {
   if (scaleBCdofs == true) {
-    if (scaleVec_->norm2() == 0.0) 
-      scaleVec_->putScalar(1.0);  
+    if (scaleVec_->norm_2() == 0.0) { 
+      scaleVec_->assign(1.0);  
+    }
     return; 
   }
 
   if (scale_type == CONSTANT) { // constant scaling
-    scaleVec_->putScalar(1.0 / scale);
+    scaleVec_->assign(1.0 / scale);
   } else if (scale_type == DIAG) { // diagonal scaling
-    if (jacT == Teuchos::null) {
-      scaleVec_->putScalar(1.0);
+    if (jac == Teuchos::null) {
+      scaleVec_->assign(1.0);
     } else {
-      jacT->getLocalDiagCopy(*scaleVec_);
-      // std::cout << "scaleVec_ noninv: " <<std::endl;
-      // scaleVec_->describe(*out, Teuchos::VERB_EXTREME);
-      scaleVec_->reciprocal(*scaleVec_);
+      getDiagonalCopy(jac,scaleVec_);
+      Thyra::reciprocal(*scaleVec_,scaleVec_.ptr());
     }
-  }
-  // std::cout << "countScale: " << countScale << std::endl;
-  // std::cout << "scaleVec_: " <<std::endl;
-  // scaleVec_->describe(*out, Teuchos::VERB_EXTREME);
-
-  else if (scale_type == ABSROWSUM) { // absolute value of row sum scaling
-    if (jacT == Teuchos::null) {
-      scaleVec_->putScalar(1.0);
+  } else if (scale_type == ABSROWSUM) { // absolute value of row sum scaling
+    if (jac == Teuchos::null) {
+      scaleVec_->assign(1.0);
     } else {
-      scaleVec_->putScalar(0.0);
-      Albany::InvAbsRowSum(scaleVec_, jacT);
+      scaleVec_->assign(0.0);
+      // We MUST be able to cast the linear op to RowStatLinearOpBase, in order to get row informations
+      auto jac_row_stat = Teuchos::rcp_dynamic_cast<const Thyra::RowStatLinearOpBase<ST>>(jac,true);
+
+      // Compute the inverse of the absolute row sum
+      jac_row_stat->getRowStat(Thyra::RowStatLinearOpBaseUtils::ROW_STAT_INV_ROW_SUM,scaleVec_.ptr());
     }
   }
 }
 
-void Albany::Application::setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<Tpetra_CrsMatrix> jacT) 
+void Albany::Application::setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<const Thyra_LinearOp> jac) 
 {
   //First step: set scaleVec_ to all 1.0s if it is all 0s
-  if (scaleVec_->norm2() == 0) 
-    scaleVec_->putScalar(1.0);
+  if (scaleVec_->norm_2() == 0) { 
+    scaleVec_->assign(1.0);
+  }
 
   //If calling setScaleBCDofs with null Jacobian, don't recompute the scaling
-  if (jacT == Teuchos::null) 
-    return; 
+  if (jac == Teuchos::null) {
+    return;
+  }
 
   //For diagonal or abs row sum scaling, set the scale equal to the maximum magnitude value 
   //of the diagonal / abs row sum (inf-norm).  This way, scaling adjusts throughout 
   //the simulation based on the Jacobian.  
-  Teuchos::RCP<Tpetra_Vector> tmp = Teuchos::rcp(new Tpetra_Vector(scaleVec_->getMap())); 
+  Teuchos::RCP<Thyra_Vector> tmp = Thyra::createMember(scaleVec_->space());
   if (scale_type == DIAG) {
-    jacT->getLocalDiagCopy(*tmp);
-    scale = tmp->normInf(); 
-  }
-  else if (scale_type == ABSROWSUM) {
-    Albany::AbsRowSum(tmp, jacT);
-    scale = tmp->normInf(); 
+    getDiagonalCopy(jac,tmp);
+    scale = tmp->norm_inf(); 
+  } else if (scale_type == ABSROWSUM) {
+    // We MUST be able to cast the linear op to RowStatLinearOpBase, in order to get row informations
+    auto jac_row_stat = Teuchos::rcp_dynamic_cast<const Thyra::RowStatLinearOpBase<ST>>(jac,true);
+
+    // Compute the absolute row sum
+    jac_row_stat->getRowStat(Thyra::RowStatLinearOpBaseUtils::ROW_STAT_ROW_SUM,scaleVec_.ptr());
+    scale = tmp->norm_inf(); 
   }
 
-  if (scale == 0.0) 
+  if (scale == 0.0) {
     scale = 1.0; 
+  }
 
+  // TODO: cast scaleVec_ to SpmdVectorBase, and get the local data.
+  //       Right now, the getNonconstLocalData in SpmdVectorBase does not work correctly
+  //       for Tpetra, since the Tpetra host view is not marked as modified (see Trilinos issue #3180)
+  //       Therefore, for now we ASSUME the underlying vector
+  auto scaleVecLocalData = getNonconstLocalData(scaleVec_);
   for (int ns=0; ns<nodeSetIDs_.size(); ns++) {
     std::string key = nodeSetIDs_[ns]; 
     //std::cout << "IKTIKT key = " << key << std::endl; 
@@ -3366,10 +3356,7 @@ void Albany::Application::setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<Tp
       //std::cout << "IKTIKT ns, offsets size: " << ns << ", " << offsets_[ns].size() << "\n";
       for (unsigned j = 0; j < offsets_[ns].size(); j++) {
         int lunk = nsNodes[i][offsets_[ns][j]];
-        /*std::cout << "IKTIKT ns, j, i, offsets_: " << ns << ", " << j << ", " << i <<
-             ", " << offsets_[ns][j] << "\n";  
-        std::cout << "IKTIKT lunk = " << lunk << "\n";*/
-        scaleVec_->replaceLocalValue(lunk, scale);
+        scaleVecLocalData[lunk] = scale;
       }
     }
   } 
@@ -3435,16 +3422,12 @@ void Albany::Application::setupBasicWorksetInfo(
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec> &p)
 {
-  Teuchos::RCP<const Thyra_MultiVector> overlapped_MV =
-      solMgrT->getOverlappedSolution_Thyra();
-  Teuchos::RCP<const Thyra_Vector> overlapped_x =
-      overlapped_MV->col(0);
-  Teuchos::RCP<const Thyra_Vector> overlapped_xdot =
-      (overlapped_MV->domain()->dim() > 1) ? overlapped_MV->col(1)
-                                           : Teuchos::null;
-  Teuchos::RCP<const Thyra_Vector> overlapped_xdotdot =
-      (overlapped_MV->domain()->dim() > 2) ? overlapped_MV->col(2)
-                                           : Teuchos::null;
+  Teuchos::RCP<const Thyra_MultiVector> overlapped_MV = solMgrT->getOverlappedSolution_Thyra();
+  auto numVectors = overlapped_MV->domain()->dim();
+
+  Teuchos::RCP<const Thyra_Vector> overlapped_x = overlapped_MV->col(0);
+  Teuchos::RCP<const Thyra_Vector> overlapped_xdot = numVectors > 1 ? overlapped_MV->col(1) : Teuchos::null;
+  Teuchos::RCP<const Thyra_Vector> overlapped_xdotdot = numVectors > 2 ? overlapped_MV->col(2) : Teuchos::null;
 
   // Scatter xT and xdotT to the overlapped distrbution
   solMgrT->scatterX(x, xdot, xdotdot);
@@ -3453,9 +3436,10 @@ void Albany::Application::setupBasicWorksetInfo(
   distParamLib->scatter();
 
   // Set parameters
-  for (int i = 0; i < p.size(); i++)
-    for (unsigned int j = 0; j < p[i].size(); j++)
+  for (int i = 0; i < p.size(); i++) {
+    for (unsigned int j = 0; j < p[i].size(); j++) {
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
+  }}
 
   workset.x = overlapped_x;
   workset.xdot = overlapped_xdot;
@@ -3463,8 +3447,7 @@ void Albany::Application::setupBasicWorksetInfo(
   workset.distParamLib = distParamLib;
   workset.disc = disc;
 
-  double const
-  this_time = fixTime(current_time);
+  const double this_time = fixTime(current_time);
 
   workset.current_time = this_time;
 
@@ -3473,8 +3456,7 @@ void Albany::Application::setupBasicWorksetInfo(
 
   workset.comm = commT;
 
-  workset.x_importerT = solMgrT->get_importerT();
-
+  workset.x_cas_manager = solMgrT->get_cas_manager();
 }
 
 void Albany::Application::setupTangentWorksetInfo(
@@ -3656,7 +3638,8 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-    Teuchos::Array<ParamVec> const &p, Teuchos::RCP<Tpetra_Vector> const &fT,
+    Teuchos::Array<ParamVec> const &p,
+    const Teuchos::RCP<Thyra_Vector>& f,
     double const dt) {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
   postRegSetup("Residual");
@@ -3698,12 +3681,8 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
 
   int const numWorksets = wsElNodeEqID.size();
 
-  Teuchos::RCP<Tpetra_Vector> const overlapped_fT =
-      solMgrT->get_overlapped_fT();
-
-  Teuchos::RCP<Tpetra_Export> const exporterT = solMgrT->get_exporterT();
-
-  Teuchos::RCP<Tpetra_Import> const importerT = solMgrT->get_importerT();
+  const Teuchos::RCP<Thyra_Vector> overlapped_f = solMgrT->get_overlapped_f();
+  const auto cas_manager = solMgrT->get_cas_manager();
 
   // Scatter x and xdot to the overlapped distrbution
   solMgrT->scatterX(x, xdot, xdotdot);
@@ -3739,8 +3718,8 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
 #endif // ALBANY_LCM
 
   // Zero out overlapped residual - Tpetra
-  overlapped_fT->putScalar(0.0);
-  fT->putScalar(0.0);
+  overlapped_f->assign(0.0);
+  f->assign(0.0);
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
@@ -3776,7 +3755,7 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
     // start  of a new time step, so we set boolean parameter to true.
     begin_time_step = prev_times_[app_no] != this_time;
 
-    workset.fT = overlapped_fT;
+    workset.f = overlapped_f;
 
     for (int ws = 0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
@@ -3784,7 +3763,7 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
 #ifdef DEBUG_OUTPUT
       *out << "IKT countRes = " << countRes
            << ", computeGlobalResid workset.x = \n ";
-      Albany::getConstTpetraVector(workset.x)->describe(*out, Teuchos::VERB_EXTREME);
+      describe(workset.x.getConst(),*out,Teuchos::VERB_EXTREME);
 #endif
 
       // FillType template argument used to specialize Sacado
@@ -3822,22 +3801,22 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
   }
 
   // Assemble the residual into a non-overlapping vector
-  fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+  cas_manager->combine(overlapped_f,f,CombineMode::ADD);
 
 #ifdef ALBANY_LCM
   // Push the assembled residual values back into the overlap vector
-  overlapped_fT->doImport(*fT, *importerT, Tpetra::INSERT);
+  cas_manager->scatter(f,overlapped_f,CombineMode::INSERT);
   // Write the residual to the discretization, which will later (optionally)
   // be written to the output file
-  disc->setResidualFieldT(*overlapped_fT);
+  disc->setResidualField(overlapped_f);
 #endif // ALBANY_LCM
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
-  Teuchos::RCP<Tpetra_Vector> xT_post_SDBCs;
+  Teuchos::RCP<Thyra_Vector> x_post_SDBCs;
   if (dfm != Teuchos::null) {
     PHAL::Workset workset;
 
-    workset.fT = fT;
+    workset.f = f;
 
     loadWorksetNodesetInfo(workset);
 
@@ -3862,7 +3841,7 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
     std::cout << "calling DFM evaluate fields in computeGlobalResidualSDBCsImplT" << std::endl;
 #endif
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-    xT_post_SDBCs = Teuchos::rcp(new Tpetra_Vector(*Albany::getConstTpetraVector(workset.x)));
+    x_post_SDBCs = Thyra::createMember(workset.x->space());
   }
 
 #ifdef DEBUG_OUTPUT
@@ -3872,16 +3851,16 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
   if (begin_time_step == true) {
     // if (countRes == 0) {
     // Zero out overlapped residual - Tpetra
-    overlapped_fT->putScalar(0.0);
-    fT->putScalar(0.0);
+    overlapped_f->assign(0.0);
+    f->assign(0.0);
     PHAL::Workset workset;
 
     double const
     this_time = fixTime(current_time);
 
-    loadBasicWorksetInfoSDBCs(workset, xT_post_SDBCs, this_time);
+    loadBasicWorksetInfoSDBCs(workset, x_post_SDBCs, this_time);
 
-    workset.fT = overlapped_fT;
+    workset.f = overlapped_f;
 
     for (int ws = 0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
@@ -3889,7 +3868,7 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
 #ifdef DEBUG_OUTPUT
       *out << "IKT countRes = " << countRes
            << ", computeGlobalResid workset.x = \n ";
-      Albany::getConstTpetraVector(workset.x)->describe(*out, Teuchos::VERB_EXTREME);
+      describe(workset.x.getConst(),*out,Teuchos::VERB_EXTREME);
 #endif
 
       // FillType template argument used to specialize Sacado
@@ -3922,24 +3901,24 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
     }
 
     // Assemble the residual into a non-overlapping vector
-    fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+    cas_manager->combine(overlapped_f,f,CombineMode::ADD);
 
 #ifdef ALBANY_LCM
     // Push the assembled residual values back into the overlap vector
-    overlapped_fT->doImport(*fT, *importerT, Tpetra::INSERT);
+    cas_manager->scatter(f,overlapped_f,CombineMode::INSERT);
     // Write the residual to the discretization, which will later (optionally)
     // be written to the output file
-    disc->setResidualFieldT(*overlapped_fT);
+    disc->setResidualField(overlapped_f);
 #endif // ALBANY_LCM
     if (dfm != Teuchos::null) {
 
       PHAL::Workset workset;
 
-      workset.fT = fT;
+      workset.f = f;
 
       loadWorksetNodesetInfo(workset);
 
-      dfm_set(workset, Albany::createConstThyraVector(xT_post_SDBCs), xdot, xdotdot, rc_mgr);
+      dfm_set(workset, x_post_SDBCs, xdot, xdotdot, rc_mgr);
 
       double const
       this_time = fixTime(current_time);

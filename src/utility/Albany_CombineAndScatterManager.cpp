@@ -1,7 +1,7 @@
 #include "Albany_CombineAndScatterManager.hpp"
 
 #include "Albany_CombineAndScatterManagerTpetra.hpp"
-#include "Albany_Utils.hpp"
+#include "Albany_TpetraThyraUtils.hpp"
 
 namespace Albany
 {
@@ -12,23 +12,19 @@ Teuchos::RCP<CombineAndScatterManager>
 createCombineAndScatterManager (const Teuchos::RCP<const Thyra_VectorSpace>& owned,
                                 const Teuchos::RCP<const Thyra_VectorSpace>& overlapped)
 {
-  const BuildType bt = build_type();
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tvs = getTpetraMap(owned,false);
+  if (!tvs.is_null()) {
+    // Check that the second vs is also of tpetra type. This time, throw if cast fails.
+    tvs = getTpetraMap(overlapped,true);
 
-  Teuchos::RCP<CombineAndScatterManager> manager;
-  switch (bt) {
-    case BuildType::Tpetra:
-      manager = Teuchos::rcp( new CombineAndScatterManagerTpetra(owned,overlapped) );
-      break;
-    case BuildType::Epetra:
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Misssing an Epetra implementation for CombineAndScatterManager.\n");
-      break;
-    case BuildType::None:
-      break;
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Albany build type is set to None. Initialize Albany build type first.\n");
-    default:
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Unknown Albany build type. Please, contact developers.\n");
+    return Teuchos::rcp( new CombineAndScatterManagerTpetra(owned,overlapped) );
   }
 
+  // TODO: add Epetra implementation
+
+  // Dummy return value to silence compiler warning
+  Teuchos::RCP<CombineAndScatterManager> manager;
   return manager;
 }
 
