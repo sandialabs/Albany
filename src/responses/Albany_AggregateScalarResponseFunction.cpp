@@ -18,12 +18,6 @@ AggregateScalarResponseFunction(
   SamplingBasedScalarResponseFunction(commT),
   responses(responses_)
 {
-  Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> vss(responses.size());
-  for (int i=0; i<responses.size(); ++i) {
-    vss[i] = responses[i]->responseVectorSpace();
-  }
-
-  productVectorSpace = Thyra::productVectorSpace(vss());
 }
 
 void
@@ -34,6 +28,14 @@ setup()
   for (ResponseArray::iterator it = responses.begin(), it_end = responses.end(); it != it_end; ++it) {
     (*it)->setup();
   }
+
+  // Now that all responses are setup, build the product vector space
+  Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> vss(responses.size());
+  for (int i=0; i<responses.size(); ++i) {
+    vss[i] = responses[i]->responseVectorSpace();
+  }
+
+  productVectorSpace = Thyra::productVectorSpace(vss());
 }
 
 void
