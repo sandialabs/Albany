@@ -40,8 +40,7 @@ SchwarzCoupled::SchwarzCoupled(
 
   lowsfb_ = lowsfb;
 
-  // IK, 2/11/15: I am assuming for now we don't have any distributed
-  // parameters.
+  //IK, 2/11/15: I am assuming for now we don't have any distributed parameters.
   num_dist_params_total_ = 0;
 
   // Get "Coupled Schwarz" parameter sublist
@@ -291,14 +290,14 @@ SchwarzCoupled::SchwarzCoupled(
                       Albany::strint("Response Vector", l))),
                   false);
 
-      auto const num_parameters =
+      auto const num_params =
           p_list->get<int>("Number") == true ? p_list->get<int>("Number") : 0;
 
-      if (num_parameters > 0) {
+      if (num_params > 0) {
         response_names[l] =
-            Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
+            Teuchos::rcp(new Teuchos::Array<std::string>(num_params));
 
-        for (auto k = 0; k < num_parameters; ++k) {
+        for (auto k = 0; k < num_params; ++k) {
           (*response_names[l])[k] =
               p_list->get<std::string>(Albany::strint("Response", k));
         }
@@ -688,7 +687,7 @@ SchwarzCoupled::get_p_names(int l) const
 }
 
 Teuchos::ArrayView<const std::string>
-SchwarzCoupled::get_g_names(int l) const
+SchwarzCoupled::get_g_names(int /* l */) const
 {
   ALBANY_ASSERT(false, "not implemented");
   return Teuchos::ArrayView<const std::string>();
@@ -726,7 +725,7 @@ SchwarzCoupled::create_W_prec() const
   Teuchos::RCP<Thyra::DefaultPreconditioner<ST>> W_prec =
       Teuchos::rcp(new Thyra::DefaultPreconditioner<ST>);
 
-  ALBANY_ASSERT(w_prec_supports_ == true);
+  ALBANY_ASSERT(w_prec_supports_ == true, "Error! W_prec is not supported.");
 
   Schwarz_CoupledJacobian jac(comm_);
   for (auto m = 0; m < num_models_; m++) {
@@ -753,8 +752,8 @@ SchwarzCoupled::createInArgs() const
 
 void
 SchwarzCoupled::reportFinalPoint(
-    Thyra::ModelEvaluatorBase::InArgs<ST> const& final_point,
-    bool const                                   was_solved)
+    Thyra::ModelEvaluatorBase::InArgs<ST> const& /* final_point */,
+    bool const                                   /* was_solved */)
 {
   ALBANY_ASSERT(false, "Calling reportFinalPoint");
 }
@@ -817,6 +816,7 @@ SchwarzCoupled::create_DgDx_op_impl(int j) const
 {
   ALBANY_EXPECT(0 <= j && j < num_responses_total_);
   // FIX ME: re-implement using product vectors!
+  (void)j;
   return Teuchos::null;
 }
 
@@ -826,6 +826,7 @@ SchwarzCoupled::create_DgDx_dot_op_impl(int j) const
 {
   ALBANY_EXPECT(0 <= j && j < num_responses_total_);
   // FIXME: re-implement using product vectors!
+  (void)j;
   return Teuchos::null;
 }
 
@@ -895,12 +896,11 @@ SchwarzCoupled::evalModelImpl(
 
   // Get parameters
   for (auto l = 0; l < num_params_total_; ++l) {
-    // get p from in_args for each parameter
-    Teuchos::RCP<const Thyra_ProductVector> pT =
-        Teuchos::rcp_dynamic_cast<const Thyra_ProductVector>(
-            in_args.get_p(l), true);
+    //get p from in_args for each parameter. Throw if cast fails.
+    auto p = Albany::getConstProductVector(in_args.get_p(l),true);
+
     // Don't set it if there is nothing. Avoid null pointer.
-    if (pT.is_null()) { continue; }
+    if (p.is_null()) { continue; }
 
     for (auto m = 0; m < num_models_; ++m) {
       ParamVec& sacado_param_vector = sacado_param_vecs_[m][l];
@@ -911,12 +911,9 @@ SchwarzCoupled::evalModelImpl(
       // The code does not work if 0 is replaced by m:
       // only the first vector in the Thyra Product MultiVec is correct.
       // Why...?
-      Teuchos::RCP<Tpetra_Vector const> pTm =
-          Albany::getConstTpetraVector(pT->getVectorBlock(0));
-
-      Teuchos::ArrayRCP<ST const> pTm_constView = pTm->get1dView();
-      for (auto k = 0; k < sacado_param_vector.size(); ++k) {
-        sacado_param_vector[k].baseValue = pTm_constView[k];
+      auto pm_constView = Albany::getLocalData(p->getVectorBlock(0));
+      for (unsigned int k = 0; k < sacado_param_vector.size(); ++k) {
+        sacado_param_vector[k].baseValue = pm_constView[k];
       }
     }
   }
@@ -1022,7 +1019,8 @@ SchwarzCoupled::evalModelImpl(
     // separate function, especially as we implement more preconditioners.
     if (!W_prec_out.is_null()) {
       for (auto m = 0; m < num_models_; ++m) {
-        if (!precs_[m]->isFillActive()) precs_[m]->resumeFill();
+        if (!precs_[m]->isFillActive())
+          precs_[m]->resumeFill();
         if (mf_prec_type_ == JACOBI) {
           // With matrix-free, W_op_out is null, so computeJacobian does not
           // get called earlier.  We need to call it here to get the Jacobians.
@@ -1050,7 +1048,7 @@ SchwarzCoupled::evalModelImpl(
           precs_[m]->resumeFill();
           precs_[m]->scale(0.0);
           // Create Jacobi preconditioner
-          for (auto i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
+          for (size_t i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
             GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
             Teuchos::Array<ST>        matrixEntriesT(1);
             Teuchos::Array<Tpetra_GO> matrixIndicesT(1);
@@ -1080,14 +1078,14 @@ SchwarzCoupled::evalModelImpl(
           Teuchos::ArrayRCP<ST> absrowsum_nonconstView =
               absrowsum->get1dViewNonConst();
           // Compute abs sum of each row and store in absrowsum vector
-          for (auto i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
+          for (std::size_t i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
             std::size_t NumEntries = jacs_[m]->getNumEntriesInLocalRow(i);
             Teuchos::Array<LO> Indices(NumEntries);
             Teuchos::Array<ST> Values(NumEntries);
             // Get local row
             jacs_[m]->getLocalRowCopy(i, Indices(), Values(), NumEntries);
             // Compute abs row rum
-            for (auto j = 0; j < NumEntries; j++)
+            for (std::size_t j = 0; j < NumEntries; j++)
               absrowsum_nonconstView[i] += std::abs(Values[j]);
           }
           // Invert absrowsum
@@ -1100,9 +1098,9 @@ SchwarzCoupled::evalModelImpl(
           precs_[m]->resumeFill();
           precs_[m]->scale(0.0);
           // Create diagonal abs row sum preconditioner
-          for (auto i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
+          for (std::size_t i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
             GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
-            Teuchos::Array<ST>        matrixEntriesT(1);
+            Teuchos::Array<ST> matrixEntriesT(1);
             Teuchos::Array<Tpetra_GO> matrixIndicesT(1);
             matrixEntriesT[0] = invabsrowsum_constView[i];
             matrixIndicesT[0] = global_row;
@@ -1111,9 +1109,9 @@ SchwarzCoupled::evalModelImpl(
           }
         } else if (mf_prec_type_ == ID) {
           // Create Identity
-          for (auto i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
+          for (std::size_t i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
             GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
-            Teuchos::Array<ST>        matrixEntriesT(1);
+            Teuchos::Array<ST> matrixEntriesT(1);
             Teuchos::Array<Tpetra_GO> matrixIndicesT(1);
             matrixEntriesT[0] = 1.0;
             matrixIndicesT[0] = global_row;
@@ -1121,9 +1119,10 @@ SchwarzCoupled::evalModelImpl(
                 global_row, matrixIndicesT(), matrixEntriesT());
           }
         }
-        if (precs_[m]->isFillActive()) precs_[m]->fillComplete();
+        if (precs_[m]->isFillActive())
+          precs_[m]->fillComplete();
       }
-      Schwarz_CoupledJacobian      jac(comm_);
+      Schwarz_CoupledJacobian jac(comm_);
       Teuchos::RCP<Thyra_LinearOp> W_op =
           jac.getThyraCoupledJacobian(precs_, apps_);
       Teuchos::RCP<Thyra::DefaultPreconditioner<ST>> W_prec =

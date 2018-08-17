@@ -56,9 +56,9 @@ ENDIF()
 SET(HEADERS
   Albany_Application.hpp
   Albany_DataTypes.hpp
+  Albany_DistributedParameter.hpp
   Albany_DistributedParameterLibrary.hpp
-  Albany_DistributedParameterDerivativeOpT.hpp
-  Albany_DistributedParameterLibrary_Tpetra.hpp
+  Albany_DistributedParameterDerivativeOp.hpp
   Albany_DummyParameterAccessor.hpp
   Albany_EigendataInfoStructT.hpp
   Albany_KokkosTypes.hpp

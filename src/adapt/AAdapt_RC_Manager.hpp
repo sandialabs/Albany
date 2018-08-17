@@ -10,7 +10,7 @@
 #include "AAdapt_RC_DataTypes.hpp"
 
 // Forward declarations.
-namespace Albany { class StateManager; }
+namespace Albany { class StateManager; class Layouts; }
 namespace PHAL { struct AlbanyTraits; class Workset; }
 namespace PHX { template<typename T> class FieldManager; }
 

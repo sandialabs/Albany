@@ -4,6 +4,9 @@
 // Get basic Thyra types
 #include "Albany_ThyraTypes.hpp"
 
+// Get Teuchos_Comm type
+#include "Albany_CommTypes.hpp"
+
 // Get Kokkos types (for the 1d device view)
 #include "Albany_KokkosTypes.hpp"
 
@@ -25,6 +28,9 @@ typedef Thyra::ProductVectorBase<ST>        Thyra_ProductVector;
 
 namespace Albany
 {
+
+Teuchos::RCP<const Thyra_VectorSpace>
+createLocallyReplicatedVectorSpace (const int size, const Teuchos::RCP<const Teuchos_Comm> comm);
 
 // ========= Thyra_LinearOp utilities ========= //
 

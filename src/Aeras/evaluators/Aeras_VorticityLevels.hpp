@@ -15,6 +15,9 @@
 #include "Aeras_Layouts.hpp"
 #include "Aeras_Dimension.hpp"
 
+#include "Intrepid2_Basis.hpp"
+#include "Intrepid2_Cubature.hpp"
+
 namespace Aeras {
 /** \brief Finite Element Interpolation Evaluator
 

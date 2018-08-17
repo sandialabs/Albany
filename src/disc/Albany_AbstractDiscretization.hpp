@@ -27,11 +27,6 @@
 #include "Albany_ThyraTypes.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
 
-// This is only needed for the tpetraVectorSpace function, which is only used during
-// the refactor. Once the Tpetra stuff is fully removed, the get(Overlap)VectorSpace method
-// will become purely virtual, and the tpetraVectorSpace call will disappear
-#include "Thyra_TpetraVectorSpace.hpp"
-
 namespace Albany {
 
 #ifdef ALBANY_CONTACT
@@ -40,6 +35,13 @@ namespace Albany {
 
 class AbstractDiscretization {
   public:
+
+    // LB 8/17/18: I moved these out of AbstractDiscretization, so if one only needs these types,
+    //             he/she can include this small file rather than Albany_AbstractDiscretization.hpp,
+    //             which has tons of dependencies. However, in some places you find
+    //             AbstractDiscretization::[Workset]Conn, so these using directives let those uses be still valid.
+    using WorksetConn = Albany::WorksetConn;
+    using Conn = Albany::Conn;
 
     typedef std::map<std::string,Teuchos::RCP<Albany::AbstractDiscretization> > SideSetDiscretizationsType;
 
@@ -61,7 +63,7 @@ class AbstractDiscretization {
     //! Get DOF vector space.
     //! Note: derived classes may want to perhaps store the vector space ptr rather than building it on the fly.
     //!       Besides, upon completion of the refactor, we may foresee eliminating all the Tpetra_Map getters.
-    virtual Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace() const { return Thyra::tpetraVectorSpace<ST>(getMapT()); }
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace() const { return createThyraVectorSpace(getMapT()); }
 
 #if defined(ALBANY_EPETRA)
     //! Get Epetra overlapped DOF map
@@ -76,7 +78,7 @@ class AbstractDiscretization {
     //! Get DOF vector space.
     //! Note: derived classes may want to perhaps store the vector space ptr rather than building it on the fly.
     //!       Besides, upon completion of the refactor, we may foresee eliminating all the Tpetra_Map getters.
-    virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace() const { return Thyra::tpetraVectorSpace<ST>(getOverlapMapT()); }
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace() const { return createThyraVectorSpace(getOverlapMapT()); }
 
 #if defined(ALBANY_EPETRA)
     //! Get Epetra Jacobian graph
@@ -84,6 +86,9 @@ class AbstractDiscretization {
 #endif
     //! Get Tpetra Jacobian graph
     virtual Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const = 0;
+
+    //! Create a Jacobian operator
+    virtual Teuchos::RCP<Thyra_LinearOp> createJacobianOp () const = 0;
 
 #ifdef ALBANY_AERAS
     //! Get implicit Tpetra Jacobian graph (for Aeras hyperviscosity)
@@ -96,6 +101,9 @@ class AbstractDiscretization {
 #endif
     //! Get Tpetra overlap Jacobian graph
     virtual Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const = 0;
+
+    //! Create an overlapped Jacobian operator
+    virtual Teuchos::RCP<Thyra_LinearOp> createOverlapJacobianOp () const = 0;
 #ifdef ALBANY_AERAS
     //! Get implicit Tpetra Jacobian graph (for Aeras hyperviscosity)
     virtual Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const = 0;
@@ -109,8 +117,14 @@ class AbstractDiscretization {
     //! Get Tpetra Node map
     virtual Teuchos::RCP<const Tpetra_Map> getNodeMapT() const = 0;
 
+    //! Get node vector space
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace() const { return createThyraVectorSpace(getNodeMapT()); }
+
     //! Get Field Node map
     virtual Teuchos::RCP<const Tpetra_Map> getNodeMapT(const std::string& field_name) const = 0;
+
+    //! Get Field Node vector space
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace(const std::string& field_name) const { return createThyraVectorSpace(getNodeMapT(field_name)); }
 
 #if defined(ALBANY_EPETRA)
     //! Get overlapped Node map
@@ -126,6 +140,12 @@ class AbstractDiscretization {
     //! Get Field Node map
     virtual Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT(const std::string& field_name) const = 0;
 
+    //! Get overlapped node vector space
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace() const { return createThyraVectorSpace(getOverlapNodeMapT()); }
+
+    //! Get overlapped Field Node vector space
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace(const std::string& field_name) const { return createThyraVectorSpace(getOverlapNodeMapT(field_name)); }
+
     //! Get Node set lists
     virtual const NodeSetList& getNodeSets() const = 0;
     virtual const NodeSetGIDsList& getNodeSetGIDs() const = 0;
@@ -133,9 +153,6 @@ class AbstractDiscretization {
 
     //! Get Side set lists
     virtual const SideSetList& getSideSets(const int ws) const = 0;
-
-    using WorksetConn = Kokkos::View<LO***, Kokkos::LayoutRight, PHX::Device>;
-    using Conn = typename Albany::WorksetArray<WorksetConn>::type;
 
     //! Get map from (Ws, El, Local Node, Eq) -> unkLID
     virtual const Conn& getWsElNodeEqID() const = 0;
@@ -218,6 +235,11 @@ class AbstractDiscretization {
     virtual Teuchos::RCP<Tpetra_MultiVector> getSolutionMV(bool overlapped=false) const = 0;
 
     virtual void getFieldT(Tpetra_Vector &field_vector, const std::string& field_name) const = 0;
+    // TODO: remove the method above, and make the one below abstract
+    virtual void getField (const Teuchos::RCP<Thyra_Vector>& field_vector, const std::string& field_name) const {
+      auto field_vectorT = getTpetraVector(field_vector);
+      getFieldT(*field_vectorT,field_name);
+    }
 
     //! Flag if solution has a restart values -- used in Init Cond
     virtual bool hasRestartSolution() const = 0;
@@ -236,6 +258,12 @@ class AbstractDiscretization {
 
     //! Set the field vector into mesh database
     virtual void setFieldT(const Tpetra_Vector &field_vector, const std::string& field_name, bool overlapped) = 0;
+
+    // TODO: remove the method above, and make the one below abstract
+    virtual void setField(const Teuchos::RCP<const Thyra_Vector>& field_vector, const std::string& field_name, bool overlapped) {
+      auto field_vectorT = getConstTpetraVector(field_vector);
+      setFieldT(*field_vectorT,field_name,overlapped);
+    }
 
     //! Set the residual field for output - Tpetra version
     virtual void setResidualFieldT(const Tpetra_Vector& residual) = 0;

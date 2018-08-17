@@ -115,8 +115,7 @@ class SolverFactory {
 #if defined(ALBANY_EPETRA)
   Teuchos::RCP<EpetraExt::ModelEvaluator>
   createModel(
-      const Teuchos::RCP<Application>&        albanyApp,
-      const Teuchos::RCP<const Teuchos_Comm>& appCommT);
+      const Teuchos::RCP<Application>& albanyApp);
 #endif
 
   Teuchos::ParameterList&

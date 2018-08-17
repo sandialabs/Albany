@@ -16,30 +16,31 @@
 #if defined(ALBANY_LCM)
 #include <set>
 #endif
-#if defined(ALBANY_EPETRA)
-#include "Albany_EigendataInfoStruct.hpp"
-#endif
-#include "Albany_AbstractDiscretization.hpp"
-#include "Albany_EigendataInfoStructT.hpp"
-#include "Albany_DistributedParameterLibrary.hpp"
-#include "Albany_DistributedParameterLibrary_Tpetra.hpp"
-#include "Kokkos_ViewFactory.hpp"
 
-#include "Albany_CombineAndScatterManager.hpp"
+#include "Albany_DiscretizationUtils.hpp"
+#include "Albany_StateInfoStruct.hpp"
+
+#include "Kokkos_ViewFactory.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Comm.hpp"
 
-typedef Albany::DistributedParameterLibrary<Tpetra_Vector, Tpetra_MultiVector, Albany::IDArray> DistParamLib;
-typedef Albany::DistributedParameter<Tpetra_Vector, Tpetra_MultiVector, Albany::IDArray> DistParam;
-
-#if defined(ALBANY_LCM)
-// Forward declaration needed for Schwarz coupling
+// Forward declarations
 namespace Albany {
-class Application;
-} // namespace Albany
+  class AbstractDiscretization;
+  class CombineAndScatterManager;
+  class DistributedParameterLibrary;
+#if defined(ALBANY_LCM)
+  // Forward declaration needed for Schwarz coupling
+  class Application;
 #endif
-
+#if defined(ALBANY_EPETRA)
+  struct EigendataStruct;
+#endif
+} // namespace Albany
+#if defined(ALBANY_EPETRA)
+  class Epetra_MultiVector;
+#endif
 
 namespace PHAL {
 
@@ -99,7 +100,7 @@ struct Workset {
   int param_offset;
 
   // Distributed parameter derivatives
-  Teuchos::RCP<DistParamLib> distParamLib;
+  Teuchos::RCP<Albany::DistributedParameterLibrary> distParamLib;
   std::string dist_param_deriv_name;
   bool transpose_dist_param_deriv;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > local_Vp;
@@ -107,7 +108,7 @@ struct Workset {
   std::vector<PHX::index_size_type> Jacobian_deriv_dims;
   std::vector<PHX::index_size_type> Tangent_deriv_dims;
 
-  Albany::AbstractDiscretization::WorksetConn wsElNodeEqID;
+  Albany::WorksetConn wsElNodeEqID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
   Teuchos::ArrayRCP<double>  wsSphereVolume;

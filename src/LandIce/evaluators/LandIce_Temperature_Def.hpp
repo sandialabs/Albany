@@ -11,6 +11,9 @@
 #include "Phalanx_TypeStrings.hpp"
 #include "Shards_CellTopology.hpp"
 
+#include "Albany_ScalarOrdinalTypes.hpp"
+#include "Albany_AbstractDiscretization.hpp"
+
 #include "LandIce_Temperature.hpp"
 
 namespace LandIce

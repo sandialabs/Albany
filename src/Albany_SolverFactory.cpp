@@ -340,7 +340,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
   } else
     app = albanyApp;
 
-  const RCP<EpetraExt::ModelEvaluator> model = createModel(app, appCommT);
+  const RCP<EpetraExt::ModelEvaluator> model = createModel(app);
 
   const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
 
@@ -435,7 +435,7 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
       app = albanyApp;
 
     // Creates the Albany::ModelEvaluator
-    const RCP<EpetraExt::ModelEvaluator> model = createModel(app, appCommT);
+    const RCP<EpetraExt::ModelEvaluator> model = createModel(app);
 
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
     linearSolverBuilder.setParameterList(
@@ -501,8 +501,6 @@ enableIfpack2(Stratimikos::DefaultLinearSolverBuilder& linearSolverBuilder)
 
 void
 enableMueLu(
-    Teuchos::RCP<Albany::Application>&          albanyApp,
-    const Teuchos::RCP<Teuchos::ParameterList>& stratList,
     Stratimikos::DefaultLinearSolverBuilder&    linearSolverBuilder)
 {
 #ifdef ALBANY_MUELU
@@ -597,7 +595,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       // Setup linear solver
       Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
       enableIfpack2(linearSolverBuilder);
-      enableMueLu(albanyApp, stratList, linearSolverBuilder);
+      enableMueLu(linearSolverBuilder);
       linearSolverBuilder.setParameterList(stratList);
       const RCP<Thyra::LinearOpWithSolveFactoryBase<ST>> lowsFactory =
           createLinearSolveStrategy(linearSolverBuilder);
@@ -653,7 +651,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     // Setup linear solver
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
     enableIfpack2(linearSolverBuilder);
-    enableMueLu(albanyApp, stratList, linearSolverBuilder);
+    enableMueLu(linearSolverBuilder);
 
 #if defined(ALBANY_TEKO)
     Teko::addTekoToStratimikosBuilder(linearSolverBuilder, "Teko");
@@ -714,7 +712,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     // Setup linear solver
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
     enableIfpack2(linearSolverBuilder);
-    enableMueLu(albanyApp, stratList, linearSolverBuilder);
+    enableMueLu(linearSolverBuilder);
 #ifdef ALBANY_TEKO
     Teko::addTekoToStratimikosBuilder(linearSolverBuilder, "Teko");
 #endif
@@ -776,13 +774,11 @@ Albany::SolverFactory::createAlbanyAppAndModel(
   albanyApp = rcp(
       new Albany::Application(appCommT, appParams, initial_guess, is_schwarz_));
 
-  return createModel(albanyApp, appCommT);
+  return createModel(albanyApp);
 }
 
 Teuchos::RCP<EpetraExt::ModelEvaluator>
-Albany::SolverFactory::createModel(
-    const Teuchos::RCP<Albany::Application>& albanyApp,
-    const Teuchos::RCP<const Teuchos_Comm>&  appCommT)
+Albany::SolverFactory::createModel(const Teuchos::RCP<Albany::Application>& albanyApp)
 {
   // Validate Response list: may move inside individual Problem class
   const RCP<ParameterList> problemParams =

@@ -5,6 +5,7 @@
  *      Author: abarone
  */
 
+#include "Shards_CellTopology.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"

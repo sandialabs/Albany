@@ -166,7 +166,7 @@ public:
   Teuchos::RCP<ParamLib> getParamLib() const;
 
   //! Get distributed parameter library
-  Teuchos::RCP<DistParamLib> getDistParamLib() const;
+  Teuchos::RCP<DistributedParameterLibrary> getDistributedParameterLibrary() const;
 
   //! Get solution method
   SolutionMethod getSolutionMethod() const { return solMethod; }
@@ -654,7 +654,7 @@ protected:
   Teuchos::RCP<ParamLib> paramLib;
 
   //! Distributed parameter library
-  Teuchos::RCP<DistParamLib> distParamLib;
+  Teuchos::RCP<DistributedParameterLibrary> distParamLib;
 
 #if defined(ALBANY_EPETRA)
   //! Solution memory manager

@@ -73,7 +73,7 @@ class AbstractProblem {
   AbstractProblem(
       const Teuchos::RCP<Teuchos::ParameterList>& params_,
       const Teuchos::RCP<ParamLib>& paramLib_,
-      // const Teuchos::RCP<DistParamLib>& distParamLib_,
+      // const Teuchos::RCP<DistributedParameterLibrary>& distParamLib_,
       const int neq_ = 0);
 
   //! Destructor
@@ -204,7 +204,7 @@ class AbstractProblem {
   Teuchos::RCP<ParamLib> paramLib;
 
   //! Distributed parameter library
-  // Teuchos::RCP<DistParamLib> distParamLib;
+  // Teuchos::RCP<DistributedParameterLibrary> distParamLib;
 
   //! Field manager for Volumetric Fill
   Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> fm;

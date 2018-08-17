@@ -5,7 +5,7 @@
 namespace Albany
 {
 
-// ============ Tpetra->Thyra conversion routines ============ //
+// ============ Epetra->Thyra conversion routines ============ //
 
 Teuchos::RCP<const Thyra_VectorSpace>
 createThyraVectorSpace (const Teuchos::RCP<const Epetra_Map> map)
@@ -23,7 +23,7 @@ createThyraVector (const Teuchos::RCP<Epetra_Vector> v)
 {
   Teuchos::RCP<Thyra_Vector> v_thyra = Teuchos::null;
   if (!v.is_null()) {
-    v_thyra = Thyra::createVector(v);
+    v_thyra = Thyra::create_Vector(v);
   }
 
   return v_thyra;
@@ -34,7 +34,7 @@ createConstThyraVector (const Teuchos::RCP<const Epetra_Vector> v)
 {
   Teuchos::RCP<const Thyra_Vector> v_thyra = Teuchos::null;
   if (!v.is_null()) {
-    v_thyra = Thyra::createConstVector(v);
+    v_thyra = Thyra::create_Vector(v);
   }
 
   return v_thyra;
@@ -45,7 +45,7 @@ createThyraMultiVector (const Teuchos::RCP<Epetra_MultiVector> mv)
 {
   Teuchos::RCP<Thyra_MultiVector> mv_thyra = Teuchos::null;
   if (!mv.is_null()) {
-    mv_thyra = Thyra::createMultiVector(mv);
+    mv_thyra = Thyra::create_MultiVector(mv);
   }
 
   return mv_thyra;
@@ -56,7 +56,7 @@ createConstThyraMultiVector (const Teuchos::RCP<const Epetra_MultiVector> mv)
 {
   Teuchos::RCP<const Thyra_MultiVector> mv_thyra = Teuchos::null;
   if (!mv.is_null()) {
-    mv_thyra = Thyra::createConstMultiVector(mv);
+    mv_thyra = Thyra::create_MultiVector(mv);
   }
 
   return mv_thyra;
@@ -67,7 +67,7 @@ createThyraLinearOp (const Teuchos::RCP<Epetra_Operator> op)
 {
   Teuchos::RCP<Thyra_LinearOp> lop;
   if (!op.is_null()) {
-    lop = Thyra::createLinearOp(op);
+    lop = Thyra::nonconstEpetraLinearOp(op);
   }
 
   return lop;
@@ -78,13 +78,13 @@ createConstThyraLinearOp (const Teuchos::RCP<const Epetra_Operator> op)
 {
   Teuchos::RCP<const Thyra_LinearOp> lop;
   if (!op.is_null()) {
-    lop = Thyra::createConstLinearOp(op);
+    lop = Thyra::epetraLinearOp(op);
   }
 
   return lop;
 }
 
-// ============ Thyra->Tpetra conversion routines ============ //
+// ============ Thyra->Epetra conversion routines ============ //
 
 Teuchos::RCP<const Epetra_Map>
 getEpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
@@ -92,10 +92,15 @@ getEpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
 {
   Teuchos::RCP<const Epetra_Map> map;
   if (!vs.is_null()) {
-    // There is no way to access the tpetra map in the Thyra_TpetraVectorSpace class,
-    // so create a vector, grab the Epetra_Vector, then grab the map from it
-    auto v = Thyra::createMember(vs);
-    map = getConstTpetraVector(v,throw_on_failure)->getMap();
+    if (throw_on_failure) {
+      map = Thyra::get_Epetra_Map(vs);
+    } else {
+      try {
+        map = Thyra::get_Epetra_Map(vs);
+      } catch (...) {
+        // Do nothing
+      }
+    }
   }
 
   return map;
@@ -105,61 +110,81 @@ Teuchos::RCP<Epetra_Vector>
 getEpetraVector (const Teuchos::RCP<Thyra_Vector> v,
                  const bool throw_on_failure)
 {
-  Teuchos::RCP<Epetra_Vector> v_tpetra;
+  Teuchos::RCP<Epetra_Vector> v_epetra;
   if (!v.is_null()) {
-    auto tmp = Teuchos::rcp_dynamic_cast<Thyra_TpetraVector>(v,throw_on_failure);
-    if (!tmp.is_null()) {
-      v_tpetra = tmp->getEpetraVector();
+    if (throw_on_failure) {
+      v_epetra = Thyra::get_Epetra_Vector(v);
+    } else {
+      try {
+        v_epetra = Thyra::get_Epetra_Vector(v);
+      } catch (...) {
+        // Do nothing
+      }
     }
   }
 
-  return v_tpetra;
+  return v_epetra;
 }
 
 Teuchos::RCP<const Epetra_Vector>
-getConstTpetraVector (const Teuchos::RCP<const Thyra_Vector> v,
+getConstEpetraVector (const Teuchos::RCP<const Thyra_Vector> v,
                       const bool throw_on_failure)
 
 {
-  Teuchos::RCP<const Epetra_Vector> v_tpetra;
+  Teuchos::RCP<const Epetra_Vector> v_epetra;
   if (!v.is_null()) {
-    auto tmp = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(v,throw_on_failure);
-    if (!tmp.is_null()) {
-      v_tpetra = tmp->getConstTpetraVector();
+    if (throw_on_failure) {
+      v_epetra = Thyra::get_Epetra_Vector(v);
+    } else {
+      try {
+        v_epetra = Thyra::get_Epetra_Vector(v);
+      } catch (...) {
+        // Do nothing
+      }
     }
   }
 
-  return v_tpetra;
+  return v_epetra;
 }
 
 Teuchos::RCP<Epetra_MultiVector>
 getEpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector> mv,
                       const bool throw_on_failure)
 {
-  Teuchos::RCP<Epetra_MultiVector> mv_tpetra;
+  Teuchos::RCP<Epetra_MultiVector> mv_epetra;
   if (!mv.is_null()) {
-    auto tmp = Teuchos::rcp_dynamic_cast<Thyra_TpetraMultiVector>(mv,throw_on_failure);
-    if (!tmp.is_null()) {
-      mv_tpetra = tmp->getEpetraMultiVector();
+    if (throw_on_failure) {
+      mv_epetra = Thyra::get_Epetra_MultiVector(mv);
+    } else {
+      try {
+        mv_epetra = Thyra::get_Epetra_MultiVector(mv);
+      } catch (...) {
+        // Do nothing
+      }
     }
   }
 
-  return mv_tpetra;
+  return mv_epetra;
 }
 
 Teuchos::RCP<const Epetra_MultiVector>
-getConstTpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
+getConstEpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
                            const bool throw_on_failure)
 {
-  Teuchos::RCP<const Epetra_MultiVector> mv_tpetra;
+  Teuchos::RCP<const Epetra_MultiVector> mv_epetra;
   if (!mv.is_null()) {
-    auto tmp = Teuchos::rcp_dynamic_cast<const Thyra_TpetraMultiVector>(mv,throw_on_failure);
-    if (!tmp.is_null()) {
-      mv_tpetra = tmp->getConstTpetraMultiVector();
+    if (throw_on_failure) {
+      mv_epetra = Thyra::get_Epetra_MultiVector(mv);
+    } else {
+      try {
+        mv_epetra = Thyra::get_Epetra_MultiVector(mv);
+      } catch (...) {
+        // Do nothing
+      }
     }
   }
 
-  return mv_tpetra;
+  return mv_epetra;
 }
 
 Teuchos::RCP<Epetra_Operator>
@@ -168,9 +193,9 @@ getEpetraOperator (const Teuchos::RCP<Thyra_LinearOp> lop,
 {
   Teuchos::RCP<Epetra_Operator> op;
   if (!lop.is_null()) {
-    auto tmp = Teuchos::rcp_dynamic_cast<Thyra_TpetraLinearOp>(lop,throw_on_failure);
+    auto tmp = Teuchos::rcp_dynamic_cast<Thyra::EpetraLinearOp>(lop,throw_on_failure);
     if (!tmp.is_null()) {
-      op = tmp->getEpetraOperator();
+      op = tmp->epetra_op();
     }
   }
 
@@ -178,14 +203,14 @@ getEpetraOperator (const Teuchos::RCP<Thyra_LinearOp> lop,
 }
 
 Teuchos::RCP<const Epetra_Operator>
-getConstTpetraOperator (const Teuchos::RCP<const Thyra_LinearOp> lop,
+getConstEpetraOperator (const Teuchos::RCP<const Thyra_LinearOp> lop,
                         const bool throw_on_failure)
 {
   Teuchos::RCP<const Epetra_Operator> op;
   if (!lop.is_null()) {
-    auto tmp = Teuchos::rcp_dynamic_cast<const Thyra_TpetraLinearOp>(lop,throw_on_failure);
+    auto tmp = Teuchos::rcp_dynamic_cast<Thyra::EpetraLinearOp>(lop,throw_on_failure);
     if (!tmp.is_null()) {
-      op = tmp->getConstTpetraOperator();
+      op = tmp->epetra_op();
     }
   }
 
@@ -198,7 +223,7 @@ getEpetraMatrix (const Teuchos::RCP<Thyra_LinearOp> lop,
 {
   Teuchos::RCP<Epetra_CrsMatrix> mat;
   if (!lop.is_null()) {
-    auto op = getEpetraOperator(lop);
+    auto op = getEpetraOperator(lop,throw_on_failure);
     mat = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(op,throw_on_failure);
   }
 
@@ -206,12 +231,12 @@ getEpetraMatrix (const Teuchos::RCP<Thyra_LinearOp> lop,
 }
 
 Teuchos::RCP<const Epetra_CrsMatrix>
-getConstTpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop,
+getConstEpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop,
                       const bool throw_on_failure)
 {
   Teuchos::RCP<const Epetra_CrsMatrix> mat;
   if (!lop.is_null()) {
-    auto op = getEpetraOperator(lop);
+    auto op = getEpetraOperator(lop,throw_on_failure);
     mat = Teuchos::rcp_dynamic_cast<const Epetra_CrsMatrix>(op,throw_on_failure);
   }
 

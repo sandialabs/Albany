@@ -13,6 +13,8 @@
 #include "Phalanx_MDField.hpp"
 #include "Aeras_Layouts.hpp"
 
+#include "Albany_DiscretizationUtils.hpp"
+
 #include "Teuchos_ParameterList.hpp"
 
 #include "Kokkos_Vector.hpp"
@@ -114,7 +116,7 @@ public:
 private: 
   const int numFields;
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Albany::AbstractDiscretization::WorksetConn nodeID;
+  Albany::WorksetConn nodeID;
   Kokkos::View<const ST*, PHX::Device> xT_constView, xdotT_constView;
 
   typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
@@ -167,7 +169,7 @@ private:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   bool ignore_residual;
   double j_coeff, m_coeff;
-  Albany::AbstractDiscretization::WorksetConn nodeID;
+  Albany::WorksetConn nodeID;
   Kokkos::View<const ST*, PHX::Device> xT_constView, xdotT_constView;
 
   typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;

@@ -9,8 +9,9 @@ namespace Albany
 // An Albany-owned combine mode enum, so we don't stick to either Tpetra or Epetra
 // (note:: it would be nice if Teuchos provided such enumeration)
 enum class CombineMode {
-  ADD,
-  INSERT
+  ADD,    // Add remote contributions to local ones
+  INSERT, // Replace local contributions with remote ones (beware of race conditions!)
+  ZERO    // Ignore remote contributions
 };
 
 // This class is intended to hide the implementation details regarding

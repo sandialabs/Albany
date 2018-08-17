@@ -163,6 +163,46 @@ Albany::APFDiscretization::getJacobianGraphT() const
 return graphT;
 }
 
+Teuchos::RCP<Thyra_LinearOp> createJacobianOp () const
+{
+  BuildType bt = build_type();
+  Teuchos::RCP<Thyra_LinearOp> jac_op;
+  switch (bt) {
+    case BuildType::Epetra:
+      jac_op = createThyraLinearOp(Teuchos::rcp( new Epetra_CrsMatrix(::Copy, *getJacobianGraph()) ));
+      break;
+    case BuildType::Tpetra:
+      jac_op = createThyraLinearOp(Teuchos::rcp( new Tpetra_CrsMatrix(getJacobianGraphT()) ));
+      break;
+    case BuildType::None:
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Albany build type is 'None'. Please, initialize build type first.\n");
+      break;
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Unknown Albany build type.\n");
+  }
+  return jac_op;
+}
+
+Teuchos::RCP<Thyra_LinearOp> createOverlapJacobianOp () const
+{
+  BuildType bt = build_type();
+  Teuchos::RCP<Thyra_LinearOp> ov_jac_op;
+  switch (bt) {
+    case BuildType::Epetra:
+      ov_jac_op = createThyraLinearOp(Teuchos::rcp( new Epetra_CrsMatrix(::Copy, *getOverlapJacobianGraph()) ));
+      break;
+    case BuildType::Tpetra:
+      ov_jac_op = createThyraLinearOp(Teuchos::rcp( new Tpetra_CrsMatrix(getOverlapJacobianGraphT()) ));
+      break;
+    case BuildType::None:
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Albany build type is 'None'. Please, initialize build type first.\n");
+      break;
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Unknown Albany build type.\n");
+  }
+  return ov_jac_op;
+}
+
 Teuchos::RCP<const Tpetra_CrsGraph>
 Albany::APFDiscretization::getOverlapJacobianGraphT() const
 {

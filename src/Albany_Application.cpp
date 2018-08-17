@@ -7,6 +7,7 @@
 
 #include "Albany_Application.hpp"
 #include "AAdapt_RC_Manager.hpp"
+#include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_ResponseFactory.hpp"
@@ -139,7 +140,7 @@ void Albany::Application::initialSetUp(
     const RCP<Teuchos::ParameterList> &params) {
   // Create parameter libraries
   paramLib = rcp(new ParamLib);
-  distParamLib = rcp(new DistParamLib);
+  distParamLib = rcp(new DistributedParameterLibrary);
 
 #ifdef ALBANY_DEBUG
 #if defined(ALBANY_EPETRA)
@@ -700,7 +701,7 @@ void Albany::Application::setScaling(
 }
 
 bool Albany::Application::isLCMProblem(
-    const Teuchos::RCP<Teuchos::ParameterList> &params) const 
+    const Teuchos::RCP<Teuchos::ParameterList> &/* params */) const 
 {
   //FIXME: fill in this function to check if we have LCM problem 
   return false; 
@@ -780,38 +781,40 @@ void Albany::Application::finalSetUp(
       // Get name of distributed parameter
       const std::string &param_name = distParamSIS[is]->name;
 
-      // Get parameter maps and build parameter vector
-      Teuchos::RCP<Tpetra_Vector> dist_paramT, dist_param_lowerboundT, dist_param_upperboundT;
-      Teuchos::RCP<const Tpetra_Map> node_mapT, overlap_node_mapT;
-      node_mapT = disc->getMapT(
-          param_name); // Petra::EpetraMap_To_TpetraMap(node_map, commT);
-      overlap_node_mapT = disc->getOverlapMapT(
-          param_name); // Petra::EpetraMap_To_TpetraMap(overlap_node_map,
-                       // commT);
-      dist_paramT = Teuchos::rcp(new Tpetra_Vector(node_mapT));
-      dist_param_lowerboundT = Teuchos::rcp(new Tpetra_Vector(node_mapT));
-      dist_param_upperboundT = Teuchos::rcp(new Tpetra_Vector(node_mapT));
+      // Get parameter vector spaces and build parameter vector
+      // Create distributed parameter and set workset_elem_dofs
+      Teuchos::RCP<DistributedParameter> parameter(
+          new DistributedParameter(param_name, disc->getNodeVectorSpace(param_name), disc->getOverlapNodeVectorSpace(param_name)));
+      parameter->set_workset_elem_dofs(
+          Teuchos::rcpFromRef(disc->getElNodeEqID(param_name)));
+
+      // Get the vector and lower/upper bounds, and fill them with available data
+      Teuchos::RCP<Thyra_Vector> dist_param = parameter->vector();
+      Teuchos::RCP<Thyra_Vector> dist_param_lowerbound = parameter->lower_bounds_vector();
+      Teuchos::RCP<Thyra_Vector> dist_param_upperbound = parameter->upper_bounds_vector();
+
       std::stringstream lowerbound_name, upperbound_name;
       lowerbound_name << param_name << "_lowerbound";
       upperbound_name << param_name << "_upperbound";
 
       // Initialize parameter with data stored in the mesh
-      disc->getFieldT(*dist_paramT, param_name);
+      disc->getField(dist_param, param_name);
       const auto& nodal_param_states = disc->getNodalParameterSIS();
       bool has_lowerbound(false), has_upperbound(false);
-      for (int is = 0; is < nodal_param_states.size(); is++) {
-        has_lowerbound = has_lowerbound || (nodal_param_states[is]->name == lowerbound_name.str());
-        has_upperbound = has_upperbound || (nodal_param_states[is]->name == upperbound_name.str());
+      for (int ist = 0; ist < static_cast<int>(nodal_param_states.size()); ist++) {
+        has_lowerbound = has_lowerbound || (nodal_param_states[ist]->name == lowerbound_name.str());
+        has_upperbound = has_upperbound || (nodal_param_states[ist]->name == upperbound_name.str());
       }
-      if(has_lowerbound)
-        disc->getFieldT(*dist_param_lowerboundT, lowerbound_name.str() );
-      else
-        dist_param_lowerboundT->putScalar(std::numeric_limits<ST>::lowest());
-      if(has_upperbound)
-        disc->getFieldT(*dist_param_upperboundT, upperbound_name.str());
-      else
-        dist_param_upperboundT->putScalar(std::numeric_limits<ST>::max());
-
+      if(has_lowerbound) {
+        disc->getField(dist_param_lowerbound, lowerbound_name.str() );
+      } else {
+        dist_param_lowerbound->assign(std::numeric_limits<ST>::lowest());
+      }
+      if(has_upperbound) {
+        disc->getField(dist_param_upperbound, upperbound_name.str());
+      } else {
+        dist_param_upperbound->assign(std::numeric_limits<ST>::max());
+      }
       // JR: for now, initialize to constant value from user input if requested.
       // This needs to be generalized.
       if (params->sublist("Problem").isType<Teuchos::ParameterList>(
@@ -824,17 +827,10 @@ void Albany::Application::finalSetUp(
                   "Distributed Parameter" &&
               topoParams.get<std::string>("Topology Name") == param_name) {
             double initVal = topoParams.get<double>("Initial Value");
-            dist_paramT->putScalar(initVal);
+            dist_param->assign(initVal);
           }
         }
       }
-
-      // Create distributed parameter and set workset_elem_dofs
-      Teuchos::RCP<TpetraDistributedParameter> parameter(
-          new TpetraDistributedParameter(param_name, dist_paramT, dist_param_lowerboundT, dist_param_upperboundT,
-                                         node_mapT, overlap_node_mapT));
-      parameter->set_workset_elem_dofs(
-          Teuchos::rcpFromRef(disc->getElNodeEqID(param_name)));
 
       // Add parameter to the distributed parameter library
       distParamLib->add(parameter->name(), parameter);
@@ -1056,7 +1052,7 @@ RCP<const Epetra_Vector> Albany::Application::getInitialSolutionDotDot() const {
 
 RCP<ParamLib> Albany::Application::getParamLib() const { return paramLib; }
 
-RCP<DistParamLib> Albany::Application::getDistParamLib() const {
+RCP<Albany::DistributedParameterLibrary> Albany::Application::getDistributedParameterLibrary() const {
   return distParamLib;
 }
 
@@ -1166,7 +1162,6 @@ void checkDerivatives(Albany::Application &app, const double time,
     const Teuchos::ArrayRCP<RealType> xpd_d = Albany::getNonconstLocalData(xpd);
     for (size_t i = 0; i < x_d.size(); ++i) {
       xd_d[i] = 2 * xd_d[i] - 1;
-      const double xdi = xd_d[i];
       if (x_d[i] == 0) {
         // No scalar-level way to get the magnitude of x_i, so just go with
         // something:
@@ -1339,8 +1334,6 @@ void Albany::Application::computeGlobalResidualImpl(
 
   // Load connectivity map and coordinates
   const auto &wsElNodeEqID = disc->getWsElNodeEqID();
-  const auto &coords = disc->getCoords();
-  const auto &wsEBNames = disc->getWsEBNames();
   const auto &wsPhysIndex = disc->getWsPhysIndex();
 
   int const numWorksets = wsElNodeEqID.size();
@@ -1592,8 +1585,6 @@ void Albany::Application::computeGlobalJacobianImpl(
 
   // Load connectivity map and coordinates
   const auto &wsElNodeEqID = disc->getWsElNodeEqID();
-  const auto &coords = disc->getCoords();
-  const auto &wsEBNames = disc->getWsEBNames();
   const auto &wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
@@ -2246,7 +2237,7 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
 
   Teuchos::RCP<Thyra_MultiVector> overlapped_fpV;
   if (trans) {
-    auto vs = Thyra::createVectorSpace<ST>(distParamLib->get(dist_param_name)->overlap_map());
+    const auto& vs = distParamLib->get(dist_param_name)->overlap_vector_space();
     overlapped_fpV = Thyra::createMembers(vs,V->domain()->dim());
   } else {
     overlapped_fpV = Thyra::createMembers(disc->getOverlapVectorSpace(), fpV->domain()->dim());
@@ -2289,7 +2280,7 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
     overlapped_V->assign(0.0);
     cas_manager->scatter(V_bc,overlapped_V,Albany::CombineMode::INSERT);
   } else {
-    Teuchos::RCP<const Thyra_VectorSpace> vs = Thyra::tpetraVectorSpace<ST>(distParamLib->get(dist_param_name)->overlap_map());
+    const auto& vs = distParamLib->get(dist_param_name)->overlap_vector_space();
     overlapped_V = Thyra::createMembers(vs, V_bc->domain()->dim());
     overlapped_V->assign(0.0);
     cas_manager->scatter(V_bc,overlapped_V,Albany::CombineMode::INSERT);
@@ -2338,17 +2329,17 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
         "> Albany Fill: Distributed Parameter Derivative Export");
     // Assemble global df/dp*V
     if (trans) {
-      // TODO: make DistParamLib Thyra
       Teuchos::RCP<const Thyra_MultiVector> temp = fpV->clone_mv();
-      distParamLib->get(dist_param_name)->export_add(*getTpetraMultiVector(fpV),
-                                                     *getConstTpetraMultiVector(overlapped_fpV));
+
+      distParamLib->get(dist_param_name)->get_cas_manager()->combine(overlapped_fpV,fpV,CombineMode::ADD);
+
       fpV->update(1.0, *temp); // fpV += temp;
 
       std::stringstream sensitivity_name;
       sensitivity_name << dist_param_name << "_sensitivity";
       if (distParamLib->has(sensitivity_name.str())) {
-        auto sens_vec = createThyraVector(distParamLib->get(sensitivity_name.str())->vector());
-        sens_vec->update(1.0, *fpV->col(0));
+        auto sens_vec = distParamLib->get(sensitivity_name.str())->vector();
+        scale_and_update(sens_vec,0.0,fpV->col(0),1.0);
         distParamLib->get(sensitivity_name.str())->scatter();
       }
     } else {
@@ -2454,8 +2445,7 @@ void Albany::Application::evaluateResponseDistParamDeriv(
     sensitivity_name << dist_param_name << "_sensitivity";
     // TODO: make distParamLib Thyra
     if (distParamLib->has(sensitivity_name.str())) {
-      auto sensitivity_vec = createThyraVector(distParamLib->get(sensitivity_name.str())->vector());
-      // sensitivity_vec = dg_dp->col(0).
+      auto sensitivity_vec = distParamLib->get(sensitivity_name.str())->vector();
       // FIXME This is not correct if the part of sensitivity due to the Lagrange multiplier (fpV) is computed first.
       scale_and_update(sensitivity_vec,0.0,dg_dp->col(0),1.0);
       distParamLib->get(sensitivity_name.str())->scatter();
@@ -2546,8 +2536,6 @@ void Albany::Application::evaluateStateFieldManagerT(
 
   // Load connectivity map and coordinates
   const auto &wsElNodeEqID = disc->getWsElNodeEqID();
-  const auto &coords = disc->getCoords();
-  const auto &wsEBNames = disc->getWsEBNames();
   const auto &wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();

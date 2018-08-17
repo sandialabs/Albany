@@ -6,6 +6,9 @@
 
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
+#include "Shards_CellTopology.hpp"
+
+#include "PHAL_SideLaplacianResidual.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 #define OUTPUT_TO_SCREEN

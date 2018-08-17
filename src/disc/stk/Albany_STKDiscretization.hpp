@@ -159,6 +159,10 @@ class STKDiscretization : public Albany::AbstractDiscretization {
   Teuchos::RCP<const Tpetra_CrsGraph>
   getJacobianGraphT() const;
 
+  //! Create a Jacobian operator
+  Teuchos::RCP<Thyra_LinearOp>
+  createJacobianOp () const;
+
 #ifdef ALBANY_AERAS
   //! Get Tpetra implicit Jacobian graph (for Aeras)
   Teuchos::RCP<const Tpetra_CrsGraph>
@@ -173,6 +177,11 @@ class STKDiscretization : public Albany::AbstractDiscretization {
   //! Get Tpetra overlap Jacobian graph
   Teuchos::RCP<const Tpetra_CrsGraph>
   getOverlapJacobianGraphT() const;
+
+  //! Create an overlapped Jacobian operator
+  Teuchos::RCP<Thyra_LinearOp>
+  createOverlapJacobianOp () const;
+
 #ifdef ALBANY_AERAS
   //! Get Tpetra implicit overlap Jacobian graph (for Aeras)
   Teuchos::RCP<const Tpetra_CrsGraph>

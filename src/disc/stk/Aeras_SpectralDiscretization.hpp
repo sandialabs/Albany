@@ -239,6 +239,9 @@ namespace Aeras
     //! Get Tpetra Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const override;
 
+    //! Create a Jacobian operator
+    Teuchos::RCP<Thyra_LinearOp> createJacobianOp () const override;
+
     //! Get Tpetra implicit Jacobian graph (non-diagonal)
     Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const override;
 
@@ -248,6 +251,9 @@ namespace Aeras
 #endif
     //! Get Tpetra overlap Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const override;
+
+    //! Create an overlapped Jacobian operator
+    Teuchos::RCP<Thyra_LinearOp> createOverlapJacobianOp () const override;
 
     //! Get Tpetra overlap implicit Jacobian graph (non-diagonal)
     Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const override;

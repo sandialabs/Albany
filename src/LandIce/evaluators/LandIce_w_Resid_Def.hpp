@@ -9,6 +9,12 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
+#include "Shards_CellTopology.hpp"
+
+#include "Albany_SacadoTypes.hpp"
+#include "Albany_DiscretizationUtils.hpp"
+
+#include "LandIce_w_Resid.hpp"
 
 namespace LandIce
 {
@@ -74,7 +80,7 @@ namespace LandIce
 
   template<typename EvalT, typename Traits, typename VelocityType>
   void w_Resid<EvalT,Traits,VelocityType>::
-  postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+  postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Traits>& fm)
   {
     this->utils.setFieldData(GradVelocity,fm);
     this->utils.setFieldData(basalMeltRate,fm);
@@ -115,14 +121,4 @@ namespace LandIce
       }
     }
   }
-
-
 }
-
-
-
-
-
-
-
-

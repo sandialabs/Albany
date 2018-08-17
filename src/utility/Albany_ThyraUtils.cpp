@@ -5,6 +5,8 @@
 #include "Petra_Converters.hpp"
 
 #include "Thyra_VectorStdOps.hpp"
+#include "Thyra_DefaultSpmdVectorSpace.hpp"
+#include "Thyra_DefaultSpmdVector.hpp"
 
 #if defined(ALBANY_EPETRA)
 #include "AztecOO_ConditionNumber.h"
@@ -12,6 +14,13 @@
 
 namespace Albany
 {
+
+Teuchos::RCP<const Thyra_VectorSpace>
+createLocallyReplicatedVectorSpace(const int size, const Teuchos::RCP<const Teuchos_Comm> comm)
+{
+  auto comm_thyra = Thyra::convertTpetraToThyraComm(comm);
+  return Thyra::locallyReplicatedDefaultSpmdVectorSpace<ST>(comm_thyra,size);
+}
 
 // ========= Thyra_LinearOp utilities ========= //
 
@@ -279,6 +288,13 @@ Teuchos::ArrayRCP<ST> getNonconstLocalData (const Teuchos::RCP<Thyra_Vector>& v)
 
   // TODO: add epetra
 
+  // If the vector was created from a vs which was created with createLocallyReplicatedVectorSpace
+  // (see above), then the vector is a DefaultSpmdVector
+  auto dsv = Teuchos::rcp_dynamic_cast<Thyra::DefaultSpmdVector<ST>>(v);
+  if (!dsv.is_null()) {
+    return dsv->getRCPtr();
+  }
+
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
 
@@ -298,6 +314,13 @@ Teuchos::ArrayRCP<const ST> getLocalData (const Teuchos::RCP<const Thyra_Vector>
   }
 
   // TODO: add epetra
+
+  // If the vector was created from a vs which was created with createLocallyReplicatedVectorSpace
+  // (see above), then the vector is a DefaultSpmdVector
+  auto dsv = Teuchos::rcp_dynamic_cast<const Thyra::DefaultSpmdVector<ST>>(v);
+  if (!dsv.is_null()) {
+    return dsv->getRCPtr();
+  }
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");

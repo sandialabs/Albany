@@ -20,6 +20,7 @@ Please remove when issue is resolved
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Tpetra_RowMatrixTransposer.hpp"
 
+#include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Adapt_NodalDataVector.hpp"
@@ -701,7 +702,7 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
   Teuchos::RCP<Albany::Application> app = subSolver.app;
   Albany::StateManager& stateMgr = app->getStateMgr();
 
-  Teuchos::RCP<DistParamLib> distParams = app->getDistParamLib();
+  Teuchos::RCP<Albany::DistributedParameterLibrary> distParams = app->getDistributedParameterLibrary();
 
   const Albany::WorksetArray<std::string>::type& wsEBNames = stateMgr.getDiscretization()->getWsEBNames();
 

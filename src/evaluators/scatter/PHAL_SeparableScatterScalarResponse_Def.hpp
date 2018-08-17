@@ -6,8 +6,14 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+
 #include "PHAL_Utilities.hpp"
+#include "PHAL_SeparableScatterScalarResponse.hpp"
+
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_AbstractDiscretization.hpp"
+#include "Albany_CombineAndScatterManager.hpp"
+#include "Albany_DistributedParameterLibrary.hpp"
 
 // **********************************************************************
 // Base Class Generic Implemtation
@@ -24,7 +30,7 @@ SeparableScatterScalarResponseBase(const Teuchos::ParameterList& p,
 
 template<typename EvalT, typename Traits>
 void SeparableScatterScalarResponseBase<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(local_response,fm);
@@ -36,7 +42,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 void
 SeparableScatterScalarResponseBase<EvalT, Traits>::
-setup(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
+setup(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& /* dl */)
 {
   this->stand_alone = p.get<bool>("Stand-alone Evaluator");
 
@@ -164,7 +170,6 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
 
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
-      const int elem_GID = sideSet[iSide].elem_GID;
       const int elem_LID = sideSet[iSide].elem_LID;
       const int elem_side = sideSet[iSide].side_local_id;
       const CellTopologyData_Subcell& side =  cellTopo->side[elem_side];

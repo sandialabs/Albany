@@ -11,10 +11,10 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
 #include "Teuchos_ParameterList.hpp"
 
-#include "Albany_ProblemUtils.hpp"
+#include "PHAL_AlbanyTraits.hpp"
+
 #include "Albany_Layouts.hpp"
 
 namespace PHAL {
@@ -37,7 +37,7 @@ public:
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm);
 
-  void evaluateFields(typename Traits::EvalData d) {}
+  void evaluateFields(typename Traits::EvalData /* d */) {}
 
   //! Get tag for response field (to determine the number of responses)
   Teuchos::RCP<const PHX::FieldTag>

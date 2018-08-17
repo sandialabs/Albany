@@ -15,7 +15,7 @@
 Albany::HeatProblem::
 HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
-             //const Teuchos::RCP<DistParamLib>& distParamLib_,
+             //const Teuchos::RCP<DistributedParameterLibrary>& distParamLib_,
              const int numDim_,
              Teuchos::RCP<const Teuchos::Comm<int> >& commT_) :
   Albany::AbstractProblem(params_, paramLib_/*, distParamLib_*/),

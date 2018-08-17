@@ -10,6 +10,7 @@
 #include "PHAL_Utilities.hpp"
 
 #include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_DistributedParameterLibrary.hpp"
 
 Albany::FieldManagerScalarResponseFunction::
 FieldManagerScalarResponseFunction(

@@ -6,8 +6,8 @@
 
 //IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off.
 
-#ifndef ALBANY_DISCRETIZATIONUTILS_HPP
-#define ALBANY_DISCRETIZATIONUTILS_HPP
+#ifndef ALBANY_DISCRETIZATION_UTILS_HPP
+#define ALBANY_DISCRETIZATION_UTILS_HPP
 
 #include <vector>
 #include <string>
@@ -16,6 +16,7 @@
 #include "Teuchos_ArrayRCP.hpp"
 
 #include "Albany_ScalarOrdinalTypes.hpp"
+#include "Albany_KokkosTypes.hpp"
 
 namespace AAdapt { namespace rc { class Manager; } }
 
@@ -55,6 +56,12 @@ struct WorksetArray {
    typedef Teuchos::ArrayRCP<T> type;
 };
 
+// LB 8/17/18: I moved these out of AbstractDiscretization, so if one only needs these types,
+//             he/she can include this small file rather than Albany_AbstractDiscretization.hpp,
+//             which has tons of dependencies.
+using WorksetConn = Kokkos::View<LO***, Kokkos::LayoutRight, PHX::Device>;
+using Conn        = WorksetArray<WorksetConn>::type;
+
 } // namespace Albany
 
-#endif // ALBANY_DISCRETIZATIONUTILS_HPP
+#endif // ALBANY_DISCRETIZATION_UTILS_HPP

@@ -3,9 +3,12 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "ACEice.hpp"
-#include "Albany_Utils.hpp"
+
 #include "MiniNonlinearSolver.h"
+
+#include "Albany_Utils.hpp"
+
+#include "ACEice.hpp"
 
 namespace LCM {
 

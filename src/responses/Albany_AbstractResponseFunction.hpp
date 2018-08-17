@@ -9,9 +9,11 @@
 
 #include "Teuchos_Array.hpp"
 #include "Teuchos_RCP.hpp"
-#include "PHAL_AlbanyTraits.hpp"
 #include "Thyra_ModelEvaluatorBase.hpp"
+
+#include "PHAL_AlbanyTraits.hpp"
 #include "Albany_DataTypes.hpp"
+#include "Albany_TpetraThyraUtils.hpp"
 
 namespace Albany {
 
@@ -36,7 +38,7 @@ namespace Albany {
     //! Get the vector space associated with this response.
     // NOTE: To make life easier during Thyra refactor, simply wrap responseMapT.
     //       If derived classes can do better, override (e.g., see AggregateScalarResponseFunction)
-    virtual Teuchos::RCP<const Thyra_VectorSpace> responseVectorSpace() const { return createThyraVectorSpace(responseMapT()); }
+    virtual Teuchos::RCP<const Thyra_VectorSpace> responseVectorSpace() const { return createThyraVectorSpace(this->responseMapT()); }
 
     /*!
      * \brief Is this response function "scalar" valued, i.e., has a replicated

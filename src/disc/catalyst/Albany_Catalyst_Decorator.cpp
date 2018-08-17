@@ -69,6 +69,10 @@ Teuchos::RCP<const Tpetra_CrsGraph> Decorator::getJacobianGraphT() const {
   return discretization->getJacobianGraphT();
 }
 
+Teuchos::RCP<Thyra_LinearOp> Decorator::createJacobianOp () const {
+  return discretization->createJacobianOp();
+}
+
 #ifdef ALBANY_AERAS 
 Teuchos::RCP<const Tpetra_CrsGraph> Decorator::getImplicitJacobianGraphT() const {
   return discretization->getImplicitJacobianGraphT();
@@ -83,6 +87,10 @@ Decorator::getOverlapJacobianGraph() const
 
 Teuchos::RCP<const Tpetra_CrsGraph> Decorator::getOverlapJacobianGraphT() const {
   return discretization->getOverlapJacobianGraphT();
+}
+
+Teuchos::RCP<Thyra_LinearOp> Decorator::createOverlapJacobianOp () const {
+  return discretization->createOverlapJacobianOp();
 }
 
 #ifdef ALBANY_AERAS 
