@@ -9,7 +9,6 @@
 namespace bopt = boost::program_options;
 
 #include <Teuchos_StandardCatchMacros.hpp>
-#include <Tpetra_DefaultPlatform.hpp>
 
 #include <apf.h>
 #include <PCU.h>
@@ -66,7 +65,7 @@ public:
 };
 
 Environment::Environment () {
-  comm_ = Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
+  comm_ = Tpetra::getDefaultComm();
 }
 
 bool parse_cmd_line (int argc, char** argv, Input& in) {

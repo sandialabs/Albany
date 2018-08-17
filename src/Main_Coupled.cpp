@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
     RCP<Epetra_Comm> coupledComm = 
       Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
     RCP<const Teuchos_Comm> comm =
-      Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
+      Tpetra::getDefaultComm();
     // Connect vtune for performance profiling
     if (cmd.vtune) {
       Albany::connect_vtune(comm->getRank());

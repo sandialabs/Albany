@@ -301,7 +301,7 @@ main(int argc, char *argv[]) {
         *Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")));
 
     RCP<const Teuchos_Comm> comm =
-        Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
+        Tpetra::getDefaultComm();
 
     // Connect vtune for performance profiling
     if (cmd.vtune) { Albany::connect_vtune(comm->getRank()); }

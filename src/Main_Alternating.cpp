@@ -139,7 +139,7 @@ int main(int ac, char *av[])
       *Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")));
 
   auto
-  comm = Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
+  comm = Tpetra::getDefaultComm();
 
   // Connect vtune for performance profiling
   if (cmd.vtune == true) {

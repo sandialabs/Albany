@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
   Teuchos::GlobalMPISession mpiSession(&argc, &argv, NULL);
   Kokkos::initialize(argc, argv);
   Albany::APFMeshStruct::initialize_libraries(&argc, &argv);
-  auto comm = Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
+  auto comm = Tpetra::getDefaultComm();
 
   assert(argc == 2);
   auto input = argv[1];

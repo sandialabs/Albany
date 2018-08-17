@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<Epetra_Comm> globalComm =
       Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
     Teuchos::RCP<const Teuchos_Comm> tcomm =
-      Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
+      Tpetra::getDefaultComm();
 
     // Connect vtune for performance profiling
     if (cmd.vtune) {
