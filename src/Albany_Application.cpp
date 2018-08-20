@@ -1903,7 +1903,7 @@ void Albany::Application::computeGlobalJacobianSDBCsImpl(
   auto cas_manager = solMgrT->get_cas_manager();
 
 
-  Teuchos::RCP<Thyra_Vector> overlapped_f = solMgrT->get_overlapped_f();
+  Teuchos::RCP<Thyra_Vector> overlapped_f = Teuchos::nonnull(f) ? solMgrT->get_overlapped_f() : Teuchos::null;
   Teuchos::RCP<Thyra_LinearOp> overlapped_jac = solMgrT->get_overlapped_jac();
 
   // Scatter x and xdot to the overlapped distribution
@@ -3841,7 +3841,7 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
     std::cout << "calling DFM evaluate fields in computeGlobalResidualSDBCsImplT" << std::endl;
 #endif
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-    x_post_SDBCs = Thyra::createMember(workset.x->space());
+    x_post_SDBCs = workset.x->clone_v();
   }
 
 #ifdef DEBUG_OUTPUT

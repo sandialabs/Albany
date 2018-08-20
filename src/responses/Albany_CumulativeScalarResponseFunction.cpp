@@ -130,7 +130,7 @@ evaluateTangent(const double alpha,
     if (!gx.is_null()) {
       gx_i = Thyra::createMembers(vs_i,gx->domain()->dim());
     }
-    if (gp.is_null()) {
+    if (!gp.is_null()) {
       gp_i = Thyra::createMembers(vs_i,gp->domain()->dim());
     }
 
@@ -146,7 +146,7 @@ evaluateTangent(const double alpha,
     if (!gx.is_null()) {
       gx->update(1.0, *gx_i);
     }
-    if (gp.is_null()) {
+    if (!gp.is_null()) {
       gp->update(1.0, *gp_i);
     }
   }

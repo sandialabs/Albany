@@ -420,7 +420,7 @@ AAdapt::AdaptiveSolutionManagerT::scatterX(
   if (!x_dotdot.is_null()){
     TEUCHOS_TEST_FOR_EXCEPTION(overlapped_soln_thyra->domain()->dim() < 3, std::logic_error,
         "AdaptiveSolutionManager error: x_dotdot defined but only two solution vectors are available");
-    cas_manager->scatter(x_dotdot,overlapped_soln_thyra->col(1),Albany::CombineMode::INSERT);
+    cas_manager->scatter(x_dotdot,overlapped_soln_thyra->col(2),Albany::CombineMode::INSERT);
   }
 }
 
