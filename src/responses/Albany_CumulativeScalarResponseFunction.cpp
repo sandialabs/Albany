@@ -126,12 +126,15 @@ evaluateTangent(const double alpha,
 
     if (!g.is_null()) {
       g_i = Thyra::createMember(vs_i);
+      g_i->assign(0.0);
     }
     if (!gx.is_null()) {
       gx_i = Thyra::createMembers(vs_i,gx->domain()->dim());
+      gx_i->assign(0.0);
     }
     if (!gp.is_null()) {
       gp_i = Thyra::createMembers(vs_i,gp->domain()->dim());
+      gp_i->assign(0.0);
     }
 
     // Evaluate response function

@@ -1220,7 +1220,8 @@ void checkDerivatives(Albany::Application &app, const double time,
     f = fi;
   }
   if (Teuchos::nonnull(mv)) {
-    Albany::scale_and_update(mv->col(2),0.0,f,1.0);
+    mv->col(2)->assign(0);
+    mv->col(2)->update(1.0,*f);
   }
 
   // fpd = f(xpd).
@@ -1399,10 +1400,12 @@ void Albany::Application::computeGlobalResidualImpl(
   if (scale != 1.0) {
     if (scaleVec_ == Teuchos::null) {
       scaleVec_ = Thyra::createMember(f->space());
+      scaleVec_->assign(0.0);
       setScale();
     } else if (Teuchos::nonnull(f)) {
       if (scaleVec_->space()->dim() != f->space()->dim()) {
         scaleVec_ = Thyra::createMember(f->space());
+        scaleVec_->assign(0.0);
         setScale();
       }
     }
@@ -1689,6 +1692,7 @@ void Albany::Application::computeGlobalJacobianImpl(
       if (scaleVec_ == Teuchos::null ||
           scaleVec_->space()->dim() != jac->domain()->dim()) {
         scaleVec_ = Thyra::createMember(jac->range());
+        scaleVec_->assign(0.0);
         setScale();
       }
     }
@@ -2377,6 +2381,7 @@ void Albany::Application::computeGlobalTangent(
   RCP<Thyra_MultiVector> overlapped_Vx;
   if (Teuchos::nonnull(Vx)) {
     overlapped_Vx = Thyra::createMembers(disc->getOverlapVectorSpace(),Vx->domain()->dim());
+    overlapped_Vx->assign(0.0);
     cas_manager->scatter(Vx,overlapped_Vx,Albany::CombineMode::INSERT);
   }
 
@@ -2384,11 +2389,13 @@ void Albany::Application::computeGlobalTangent(
   RCP<Thyra_MultiVector> overlapped_Vxdot;
   if (Teuchos::nonnull(Vxdot)) {
     overlapped_Vxdot = Thyra::createMembers(disc->getOverlapVectorSpace(),Vxdot->domain()->dim());
+    overlapped_Vxdot->assign(0.0);
     cas_manager->scatter(Vxdot,overlapped_Vxdot,Albany::CombineMode::INSERT);
   }
   RCP<Thyra_MultiVector> overlapped_Vxdotdot;
   if (Teuchos::nonnull(Vxdotdot)) {
     overlapped_Vxdotdot = Thyra::createMembers(disc->getOverlapVectorSpace(),Vxdotdot->domain()->dim());
+    overlapped_Vxdotdot->assign(0.0);
     cas_manager->scatter(Vxdotdot,overlapped_Vxdotdot,Albany::CombineMode::INSERT);
   }
 
@@ -2659,10 +2666,12 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
   RCP<Thyra_MultiVector> overlapped_V;
   if (trans) {
     overlapped_V = Thyra::createMembers(disc->getOverlapVectorSpace(), V_bc->domain()->dim());
+    overlapped_V->assign(0.0);
     cas_manager->scatter(V_bc,overlapped_V,Albany::CombineMode::INSERT);
   } else {
     Teuchos::RCP<const Thyra_VectorSpace> vs = Thyra::tpetraVectorSpace<ST>(distParamLib->get(dist_param_name)->overlap_map());
     overlapped_V = Thyra::createMembers(vs, V_bc->domain()->dim());
+    overlapped_V->assign(0.0);
     cas_manager->scatter(V_bc,overlapped_V,Albany::CombineMode::INSERT);
   }
 
@@ -3247,6 +3256,7 @@ void Albany::Application::loadBasicWorksetInfoSDBCs(
   // Scatter owned solution into the overlapped one
   auto overlapped_MV = solMgrT->getOverlappedSolution_Thyra();
   auto overlapped_sol = Thyra::createMember(overlapped_MV->range());
+  overlapped_sol->assign(0.0);
   solMgrT->get_cas_manager()->scatter(owned_sol,overlapped_sol,CombineMode::INSERT);
 
   auto numVectors = overlapped_MV->domain()->dim();
@@ -3335,7 +3345,7 @@ void Albany::Application::setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<co
     auto jac_row_stat = Teuchos::rcp_dynamic_cast<const Thyra::RowStatLinearOpBase<ST>>(jac,true);
 
     // Compute the absolute row sum
-    jac_row_stat->getRowStat(Thyra::RowStatLinearOpBaseUtils::ROW_STAT_ROW_SUM,scaleVec_.ptr());
+    jac_row_stat->getRowStat(Thyra::RowStatLinearOpBaseUtils::ROW_STAT_ROW_SUM,tmp.ptr());
     scale = tmp->norm_inf(); 
   }
 
@@ -3477,6 +3487,7 @@ void Albany::Application::setupTangentWorksetInfo(
   RCP<Thyra_MultiVector> overlapped_Vx;
   if (Vx != Teuchos::null) {
     overlapped_Vx = Thyra::createMembers(disc->getOverlapVectorSpace(),Vx->domain()->dim());
+    overlapped_Vx->assign(0.0);
     solMgrT->get_cas_manager()->scatter(Vx,overlapped_Vx,Albany::CombineMode::INSERT);
   }
 
@@ -3484,11 +3495,13 @@ void Albany::Application::setupTangentWorksetInfo(
   RCP<Thyra_MultiVector> overlapped_Vxdot;
   if (Vxdot != Teuchos::null) {
     overlapped_Vxdot = Thyra::createMembers(disc->getOverlapVectorSpace(),Vxdot->domain()->dim());
+    overlapped_Vxdot->assign(0.0);
     solMgrT->get_cas_manager()->scatter(Vxdot,overlapped_Vxdot,Albany::CombineMode::INSERT);
   }
   RCP<Thyra_MultiVector> overlapped_Vxdotdot;
   if (Vxdotdot != Teuchos::null) {
     overlapped_Vxdotdot = Thyra::createMembers(disc->getOverlapVectorSpace(),Vxdotdot->domain()->dim());
+    overlapped_Vxdotdot->assign(0.0);
     solMgrT->get_cas_manager()->scatter(Vxdotdot,overlapped_Vxdotdot,Albany::CombineMode::INSERT);
   }
 

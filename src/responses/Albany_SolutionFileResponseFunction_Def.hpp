@@ -63,6 +63,7 @@ evaluateResponse(const double /*current_time*/,
   if (diff.is_null()) {
     // Build a vector to hold the difference between the actual and reference solutions
     diff = Thyra::createMember(x->space());
+    diff->assign(0.0);
   }
 
   // Thyra vectors do not support update method with 2 vectors, so we need to use 'linear_combination'
@@ -133,6 +134,7 @@ evaluateGradient(const double /*current_time*/,
     if (diff.is_null()) {
       // Build a vector to hold the difference between the actual and reference solutions
       diff = Thyra::createMember(x->space());
+      diff->assign(0.0);
     }
 
     // Thyra vectors do not support update method with 2 vectors, so we need to use 'linear_combination'
