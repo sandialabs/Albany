@@ -1,3 +1,4 @@
-30 01 * * 1-7  cd /home/projects/albany/nightlyCDashAlbany; rm -rf out* bash -l -c "source mayer_arm_modules.sh >& modules.out; bash nightly_cron_script_albany_mayer.sh"
+00 19 * * 1-7  cd /home/projects/albany/nightlyCDashTrilinos; rm -rf *out*; bash -l -c "source mayer_arm_modules.sh >& modules.out; bash nightly_cron_script_trilinos_mayer.sh"
+00 22 * * 1-7  cd /home/projects/albany/nightlyCDashAlbany; rm -rf *out*; bash -l -c "source mayer_arm_modules.sh >& modules.out; bash nightly_cron_script_albany_mayer.sh"
 05 06 * * 1-7 chgrp wg-albany -R /home/projects/albany/*
 07 06 * * 1-7 chmod ug+rwX -R /home/projects/albany/*
