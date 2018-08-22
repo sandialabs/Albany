@@ -13,7 +13,7 @@
 #include <vector>
 #include <string>
 
-#include <stk_util/environment/ReportHandler.hpp>
+#include <stk_util/util/ReportHandler.hpp>
 #include <stk_util/parallel/ParallelReduce.hpp>
 
 #include <stk_mesh/base/BulkData.hpp>

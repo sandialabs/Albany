@@ -20,7 +20,7 @@
 #include <stk_mesh/base/Field.hpp>
 //#include <stk_mesh/base/FieldData.hpp>
 
-#include <stk_util/environment/ReportHandler.hpp>
+#include <stk_util/util/ReportHandler.hpp>
 
 #include <stk_util/parallel/Parallel.hpp>
 
