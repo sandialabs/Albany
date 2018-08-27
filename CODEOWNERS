@@ -15,11 +15,11 @@
 src/AFRL/*     @gahansen @tjcorona
 src/AMP/*      @ibaned
 src/ANISO/*    @ibaned
-src/ATO/*      @ikalash
+src/ATO/*      @jrobbin
 src/Aeras/*    @ikalash
 src/CTM/*      @bgranzow
 src/LCM/*      @lxmota
 src/LandIce/*  @mperego
-src/MOR/*      @ikalash
-src/QCAD/*     @ikalash
+src/MOR/*      @plindsa @jfike
+src/QCAD/*     @enielse
 src/Tsunami/*  @ikalash
