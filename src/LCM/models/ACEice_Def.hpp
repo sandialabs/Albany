@@ -355,9 +355,10 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   using Tensor = minitensor::Tensor<ScalarT, MAX_DIM>;
 
-  Tensor       F(num_dims_);
   Tensor const I(minitensor::eye<ScalarT, MAX_DIM>(num_dims_));
-  Tensor       sigma(num_dims_);
+
+  Tensor F(num_dims_);
+  Tensor sigma(num_dims_);
 
   ScalarT const E     = elastic_modulus_(cell, pt);
   ScalarT const nu    = poissons_ratio_(cell, pt);
@@ -367,13 +368,19 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const Y     = yield_strength_(cell, pt);
   ScalarT const J1    = J_(cell, pt);
   ScalarT const Jm23  = 1.0 / std::cbrt(J1 * J1);
+  ScalarT const Tcurr = temperature_(cell, pt);
+  ScalarT const Told  = T_old_(cell, pt);
+  ScalarT const iold  = ice_saturation_old_(cell, pt);
+
+  ScalarT icurr = ice_saturation_(cell, pt);
+  ScalarT wcurr = water_saturation_(cell, pt);
 
   // fill local tensors
   F.fill(def_grad_, cell, pt, 0, 0);
 
   // Mechanical deformation gradient
   auto    Fm              = Tensor(F);
-  ScalarT dtemp           = temperature_(cell, pt) - ref_temperature_;
+  ScalarT dtemp           = Tcurr - ref_temperature_;
   ScalarT thermal_stretch = std::exp(expansion_coeff_ * dtemp);
   Fm /= thermal_stretch;
 
@@ -437,9 +444,8 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
     // mechanical source
     if (delta_time_(0) > 0) {
-      source_(cell, pt) =
-          (SQ23 * dgam / delta_time_(0) * (Y + H + temperature_(cell, pt))) /
-          (density_(cell, pt) * heat_capacity_(cell, pt));
+      source_(cell, pt) = (SQ23 * dgam / delta_time_(0) * (Y + H + Tcurr)) /
+                          (density_(cell, pt) * heat_capacity_(cell, pt));
     }
 
     // exponential map to get Fpnew
@@ -482,12 +488,15 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Calculate the depth-dependent porosity
   // Note: The porosity does not change in time so this calculation only needs
   //       to be done once, at the beginning of the simulation.
-  porosity_(cell, pt) =
+  ScalarT const porosity =
       porosity0_ * std::exp(-pressure / (porosityE_ * 9.81 * 1500.0));
+
+  porosity_(cell, pt) = porosity;
 
   // Calculate melting temperature
   ScalarT sal   = 0.10;  // note: this should come from chemical part of model
   ScalarT sal15 = std::sqrt(sal * sal * sal);
+  // Tmelt is in Kelvin:
   ScalarT Tmelt = (-0.057 * sal) + (0.00170523 * sal15) -
                   (0.0002154996 * sal * sal) -
                   ((0.000753 / 10000.0) * pressure) + 273.15;
@@ -495,7 +504,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Calculate temperature change (not sure where temperature_ comes from, but
   // it seems to be getting used in here already for the source term, and I
   // assume its the current temperature value)
-  ScalarT dTemp = temperature_(cell, pt) - T_old_(cell, pt);
+  ScalarT dTemp = Tcurr - Told;
   if (delta_time_(0) > 0.0) {
     tdot_(cell, pt) = dTemp / delta_time_(0);
   } else {
@@ -509,52 +518,47 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT i_sat_evaluated = -1.0;
 
   // completely frozen
-  if (temperature_(cell, pt) <= T_low) { i_sat_evaluated = 1.0; }
+  if (Tcurr <= T_low) { i_sat_evaluated = 1.0; }
   // completely melted
-  if (temperature_(cell, pt) >= T_high) { i_sat_evaluated = 0.0; }
+  if (Tcurr >= T_high) { i_sat_evaluated = 0.0; }
   // in phase change
-  if ((temperature_(cell, pt) > T_low) && (temperature_(cell, pt) < T_high)) {
-    i_sat_evaluated = -1.0 * (temperature_(cell, pt) / T_range) + T_high;
+  if ((Tcurr > T_low) && (Tcurr < T_high)) {
+    i_sat_evaluated = -1.0 * (Tcurr / T_range) + T_high;
   }
 
   ScalarT dfdT = 0.0;
-  if (dTemp > 0.0) {
-    dfdT = (i_sat_evaluated - ice_saturation_old_(cell, pt)) / dTemp;
-  }
+  if (dTemp > 0.0) { dfdT = (i_sat_evaluated - iold) / dTemp; }
 
   // Update the ice saturation
-  ice_saturation_(cell, pt) += dfdT * dTemp;
-  ice_saturation_(cell, pt) = std::max(0.0, ice_saturation_(cell, pt));
-  ice_saturation_(cell, pt) =
-      std::min(ice_saturation_max_, ice_saturation_(cell, pt));
+  icurr = iold + dfdT * dTemp;
+  icurr = std::max(0.0, icurr);
+  icurr = std::min(ice_saturation_max_, icurr);
 
   // Update the water saturation
-  water_saturation_(cell, pt) = 1.0 - ice_saturation_(cell, pt);
-  water_saturation_(cell, pt) =
-      std::max(water_saturation_min_, water_saturation_(cell, pt));
-  water_saturation_(cell, pt) = std::min(1.0, water_saturation_(cell, pt));
+  wcurr = 1.0 - icurr;
+  wcurr = std::max(water_saturation_min_, wcurr);
+  wcurr = std::min(1.0, wcurr);
 
   // Update the effective material density
   density_(cell, pt) =
-      porosity_(cell, pt) * (ice_density_ * ice_saturation_(cell, pt) +
-                             water_density_ * water_saturation_(cell, pt));
+      porosity * (ice_density_ * icurr + water_density_ * wcurr);
 
   // Update the effective material heat capacity
   heat_capacity_(cell, pt) =
-      porosity_(cell, pt) *
-      (ice_heat_capacity_ * ice_saturation_(cell, pt) +
-       water_heat_capacity_ * water_saturation_(cell, pt));
+      porosity * (ice_heat_capacity_ * icurr + water_heat_capacity_ * wcurr);
 
   // Update the effective material thermal conductivity
-  thermal_cond_(cell, pt) =
-      pow(ice_thermal_cond_,
-          (ice_saturation_(cell, pt) * porosity_(cell, pt))) *
-      pow(water_thermal_cond_,
-          (water_saturation_(cell, pt) * porosity_(cell, pt)));
+  thermal_cond_(cell, pt) = pow(ice_thermal_cond_, (icurr * porosity)) *
+                            pow(water_thermal_cond_, (wcurr * porosity));
 
   // Update the material thermal inertia term
   thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt)) -
                                (ice_density_ * latent_heat_ * dfdT);
+
+  ice_saturation_(cell, pt)   = icurr;
+  water_saturation_(cell, pt) = wcurr;
+
+  return;
 }
 
 }  // namespace LCM
