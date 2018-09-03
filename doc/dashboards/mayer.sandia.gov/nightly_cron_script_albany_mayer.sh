@@ -1,6 +1,6 @@
 #!/bin/csh
 
-BASE_DIR=/home/projects/albany/nightlyCDashAlbany
+BASE_DIR=.
 cd $BASE_DIR
 
 rm -rf build
@@ -12,9 +12,9 @@ rm -rf ctest_nightly.cmake
 unset http_proxy
 unset https_proxy
 
-export OMP_NUM_THREADS=4
-export OMP_PLACES=threads
-export OMP_PROC_BIND=spread
+#export OMP_NUM_THREADS=4
+#export OMP_PLACES=threads
+#export OMP_PROC_BIND=spread
 
 cat albany ctest_nightly.cmake.frag >& ctest_nightly.cmake  
 

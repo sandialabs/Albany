@@ -185,15 +185,15 @@ if (BUILD_TRILINOS)
   set_property (GLOBAL PROPERTY Label IKTMayerARMTrilinos)
 
   set (CONFIGURE_OPTIONS
-    "-DTrilinos_ENABLE_OpenMP=ON"
     "-DKokkos_ENABLE_Pthread=OFF"
-    "-DTeuchos_ENABLE_COMPLEX=ON"
+    "-DKokkos_ENABLE_Serial:BOOL=ON"
+    "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
     #
     "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
     "-DTrilinos_ENABLE_DEBUG:BOOL=ON"
     "-DTPL_FIND_SHARED_LIBS:BOOL=OFF"
     #
-    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DCMAKE_INSTALL_PREFIX:PATH=/mscratch/albany/nightlyCDashTrilinos/build/TrilinosInstall"
     "-DCMAKE_C_COMPILER=mpicc"
     "-DCMAKE_CXX_COMPILER=mpicxx"
     "-DCMAKE_Fortran_COMPILER=mpif90"
@@ -336,10 +336,10 @@ if (BUILD_TRILINOS)
     #
     "-DTrilinos_ENABLE_Kokkos:BOOL=ON"
     "-DTrilinos_ENABLE_KokkosCore:BOOL=ON"
-    "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING='OPENMP'"
+    "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING='SERIAL'"
     "-DPhalanx_INDEX_SIZE_TYPE:STRING='INT'"
     "-DPhalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
-    "-DTrilinos_ENABLE_OpenMP:BOOL=ON"
+    "-DTrilinos_ENABLE_OpenMP:BOOL=OFF"
     "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
     "-DTPL_ENABLE_HWLOC:STRING=OFF"
     "-DTrilinos_ENABLE_ThreadPool:BOOL=ON"
@@ -427,11 +427,11 @@ if (BUILD_ALBANY)
   set_property (GLOBAL PROPERTY Label IKTMayerARMAlbany)
   
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinos/build/TrilinosInstall"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=/mscratch/albany/nightlyCDashTrilinos/build/TrilinosInstall"
     "-DENABLE_LCM:BOOL=ON"
     "-DENABLE_MOR:BOOL=ON"
     "-DENABLE_GOAL:BOOL=OFF"
-    "-DENABLE_LANDICE:BOOL=ON"
+    "-DENABLE_FELIX:BOOL=ON"
     "-DENABLE_HYDRIDE:BOOL=ON"
     "-DENABLE_AMP:BOOL=OFF"
     "-DENABLE_ATO:BOOL=ON"
