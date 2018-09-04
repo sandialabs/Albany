@@ -167,11 +167,6 @@ if (BUILD_TRILINOS)
     "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     #
     "-DCMAKE_CXX_COMPILER:FILEPATH=${NVCC_WRAPPER}"
-    "-DCMAKE_CXX_FLAGS:STRING=-fopenmp -mcpu=power8 -lgfortran -arch=sm_60"
-    "-DCMAKE_C_FLAGS:STRING=-fopenmp -mcpu=power8 -lgfortran" 
-    "-DCMAKE_Fortran_FLAGS:STRING=-lgfortran -fopenmp -mcpu=power8"
-    "-DCMAKE_EXE_LINKER_FLAGS=-fopenmp -mcpu=power8 -ldl -lgfortran"
-    "-DTrilinos_EXTRA_LINK_FLAGS:STRING=-fopenmp -mcpu=power8 -ldl -lgfortran"
     "-DCMAKE_SKIP_RULE_DEPENDENCY=ON"
     "-DTPL_ENABLE_MPI:BOOL=ON"
     #
@@ -198,7 +193,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
     "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
     "-DTrilinos_ENABLE_CXX11:BOOL=ON"
-    "-DTrilinos_CXX11_FLAGS:STRING='-std=c++11 --expt-extended-lambda'"
     "-DTrilinos_ENABLE_EXAMPLES:BOOL=OFF"
     "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
     "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
@@ -213,6 +207,7 @@ if (BUILD_TRILINOS)
     "-DKokkos_ENABLE_Pthread:BOOL=OFF"
     "-DKokkos_ENABLE_Serial:BOOL=ON"
     "-DKokkos_ENABLE_TESTS:BOOL=ON"
+    "-DKOKKOS_ARCH:STRING='Power8;Pascal60'"
     "-DTPL_ENABLE_Thrust:BOOL=ON"
     "-DTPL_ENABLE_CUDA:BOOL=ON"
     "-DTPL_ENABLE_CUSPARSE:BOOL=ON"
@@ -227,7 +222,7 @@ if (BUILD_TRILINOS)
     "-DTeuchos_ENABLE_COMPLEX:BOOL=ON"
     "-DTpetra_ENABLE_Kokkos_Refactor:BOOL=ON"
     "-DKokkos_ENABLE_Cuda_Lambda:BOOL=ON"
-    "-DTpetra_ASSUME_CUDA_AWARE_MPI:BOOL=ON"
+    "-DTpetra_ASSUME_CUDA_AWARE_MPI:BOOL=OFF"
     "-DTpetra_INST_INT_LONG_LONG:BOOL=ON"
     "-DTpetra_INST_INT_INT:BOOL=OFF"
     #
