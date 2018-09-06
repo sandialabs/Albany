@@ -10,7 +10,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "fedora25-gcc6.3.1-${CTEST_BUILD_CONFIGURATION}")
+set (CTEST_BUILD_NAME "fedora28-gcc8.1.1-${CTEST_BUILD_CONFIGURATION}")
 set (CTEST_BINARY_NAME build)
 
 
@@ -547,7 +547,7 @@ if (BUILD_CISM_PISCEES)
   set_property (GLOBAL PROPERTY Label IKTCismAlbany)
 
   set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
-  set (NETCDF_DIR /usr/local/netcdf-fortran-4.4.1) 
+  set (NETCDF_DIR /usr/local/netcdf-fortran-fedora28) 
 
   set (CONFIGURE_OPTIONS
     "-DCISM_USE_TRILINOS:BOOL=ON"
@@ -662,7 +662,7 @@ if (BUILD_CISM_PISCEES_EPETRA)
   set_property (GLOBAL PROPERTY Label IKTCismAlbanyEpetra)
 
   set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
-  set (NETCDF_DIR /usr/local/netcdf-fortran-4.4.1) 
+  set (NETCDF_DIR /usr/local/netcdf-fortran-fedora28) 
 
   set (CONFIGURE_OPTIONS
     "-DCISM_USE_TRILINOS:BOOL=ON"
