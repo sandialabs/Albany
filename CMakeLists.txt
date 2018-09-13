@@ -33,6 +33,8 @@ IF (DEFINED ALBANY_TRILINOS_DIR)
 ENDIF()
 FIND_PACKAGE(Trilinos REQUIRED)
 
+OPTION (ALBANY_SUPPRESS_TRILINOS_WARNINGS "Whether or not Trilinos headers should be treated as 'system' headers (hence, without issuing warnings)" OFF)
+
 # Trilinos_BIN_DIRS probably should be defined in the Trilinos config. Until it is, set it here.
 # This is needed to find SEACAS tools used during testing (epu, etc).
 
