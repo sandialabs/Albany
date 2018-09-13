@@ -1,0 +1,13 @@
+This folder used to contain the HYDRIDE physics code
+The HYDRIDE package has been discontinued due to the lack
+of resources to maintain it. You can retrieve it by
+checking out the HYDRIDE_support_end tag:
+
+git checkout tags/Hydride_support_end
+
+You can find information on the trilinos revision to use
+in the tag comment. Simply do
+
+git tag -v Hydride_support_end
+
+to visualize information.

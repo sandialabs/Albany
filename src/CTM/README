@@ -1,0 +1,13 @@
+This folder used to contain the CTM physics code
+The CTM package has been discontinued due to the lack
+of resources to maintain it. You can retrieve it by
+checking out the CTM_support_end tag:
+
+git checkout tags/CTM_support_end
+
+You can find information on the trilinos revision to use
+in the tag comment. Simply do
+
+git tag -v CTM_support_end
+
+to visualize information.

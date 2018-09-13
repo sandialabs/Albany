@@ -175,12 +175,6 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->set<bool>("Stochastic", false, "Deprecated; Unused; Run using AlbanySG executable and specify SG parameters under \"Piro\"");
   validPL->sublist("Stochastic Galerkin", false, "Deprecated; Unused; Run using AlbanySG executable and specify SG parameters under \"Piro\"");
 
-  // Add "Schottky Barrier" for QCAD (Suzey Gao, 4/30/2015)
-  validPL->sublist("Schottky Barrier", false, "");
-
-  // Add "Interface Traps" for QCAD (Suzey Gao, 12/22/2015)
-  validPL->sublist("Interface Traps", false, "");
-
   // NOX status test that allows constutive models to cut the global time step
   // needed at the Problem scope when running Schwarz coupling
   validPL->set<Teuchos::RCP<NOX::StatusTest::Generic>>("Constitutive Model NOX Status Test", Teuchos::RCP<NOX::StatusTest::Generic>(), "NOX status test that facilitates communication between a ModelEvaluator and a NOX solver");

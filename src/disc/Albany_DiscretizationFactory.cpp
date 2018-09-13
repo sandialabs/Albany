@@ -34,10 +34,6 @@
 #include "Albany_PUMIDiscretization.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
 #endif
-#ifdef ALBANY_AMP
-#include "Albany_SimDiscretization.hpp"
-#include "Albany_SimMeshStruct.hpp"
-#endif
 #ifdef ALBANY_CATALYST
 #include "Albany_Catalyst_Decorator.hpp"
 #endif
@@ -355,15 +351,6 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
                 "Error: Discretization method " << method
                 << " requested, but not compiled in" << std::endl);
 #endif
-    } else if (method == "Sim") {
-#ifdef ALBANY_AMP
-        return Teuchos::rcp(new Albany::SimMeshStruct(disc_params, comm));
-#else
-        TEUCHOS_TEST_FOR_EXCEPTION(method == "Sim",
-                Teuchos::Exceptions::InvalidParameter,
-                "Error: Discretization method " << method
-                << " requested, but not compiled in" << std::endl);
-#endif
     } 
 
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
@@ -486,15 +473,6 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
             }
                 break;
 #endif
-
-#ifdef ALBANY_AMP
-            case Albany::AbstractMeshStruct::SIM_MS:
-            {
-                Teuchos::RCP<Albany::SimMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::SimMeshStruct>(meshStruct);
-                return Teuchos::rcp(new Albany::SimDiscretization(ms, commT, rigidBodyModes));
-            }
-                break;
-#endif
         }
     }
 #if defined(ALBANY_AERAS) && defined(ALBANY_STK)
@@ -515,14 +493,3 @@ void
 Albany::DiscretizationFactory::setDiscretizationParameters(Teuchos::RCP<Teuchos::ParameterList> disc_params) {
     discParams = disc_params;
 }
-
-#ifdef ALBANY_AMP
-/* This function overwrite previous number of equations in mesh structure */
-void
-Albany::DiscretizationFactory::setNumberOfEquations(int neq) {
-    // Get discretization
-    Teuchos::RCP<Albany::APFMeshStruct> apf_ms =
-            Teuchos::rcp_dynamic_cast<Albany::APFMeshStruct>(meshStruct);
-    apf_ms->neq = neq;
-}
-#endif

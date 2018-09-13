@@ -177,12 +177,6 @@ include_directories(${ALBANY_PUMI_INCLUDE_DIRS} ${PUMI_INCLUDE_DIR})
 
 ENDIF()
 
-IF(ALBANY_AMP)
-SET(SOURCES ${SOURCES} AAdapt_SimAdapt.cpp AAdapt_SimLayerAdapt.cpp)
-SET(HEADERS ${HEADERS} AAdapt_SimAdapt.hpp AAdapt_SimLayerAdapt.hpp)
-include_directories(${ALBANY_PUMI_INCLUDE_DIRS})
-ENDIF()
-
 include_directories(${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                     ${Albany_SOURCE_DIR} / src ${Albany_SOURCE_DIR} / src / evaluators
                     ${Albany_SOURCE_DIR} / src / problems ${Albany_SOURCE_DIR} / src / responses
@@ -190,7 +184,6 @@ include_directories(${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                     ${Albany_SOURCE_DIR} / src / utility 
                     ${Albany_SOURCE_DIR} / src / disc / stk ${Albany_SOURCE_DIR} / src / LCM /
                     ${Albany_SOURCE_DIR} / src / LCM / evaluators ${Albany_SOURCE_DIR} / src / LCM / utils
-                    ${Albany_SOURCE_DIR}/src/AMP/responses
                    )
 
 add_library(albanyAdapt ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})

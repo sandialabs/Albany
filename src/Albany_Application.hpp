@@ -515,8 +515,6 @@ public:
 #endif // ALBANY_LCM
   
   void setScaling(const Teuchos::RCP<Teuchos::ParameterList> &params);
-
-  bool isQCADProblem(const Teuchos::RCP<Teuchos::ParameterList> &params) const; 
  
   bool isLCMProblem(const Teuchos::RCP<Teuchos::ParameterList> &params) const;  
 

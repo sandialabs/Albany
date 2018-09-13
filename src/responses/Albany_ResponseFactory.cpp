@@ -23,12 +23,6 @@
 #include "Albany_SolutionResponseFunction.hpp"
 #include "Albany_KLResponseFunction.hpp"
 
-#ifdef ALBANY_QCAD
-#if defined(ALBANY_EPETRA)
-#include "QCAD_SaddleValueResponseFunction.hpp"
-#endif
-#endif
-
 #include "Teuchos_TestForException.hpp"
 
 void
@@ -191,14 +185,10 @@ createResponseFunction(
         rcp(new Albany::FieldManagerResidualOnlyResponseFunction(
               app, prob, meshSpecs[i], stateMgr, responseParams)));
     }
-  }
-
-  else if (name == "Solution") {
+  } else if (name == "Solution") {
     responses.push_back(
       rcp(new Albany::SolutionResponseFunction(app, responseParams)));
-  }
-
-  else if (name == "KL") {
+  } else if (name == "KL") {
     Array< RCP<AbstractResponseFunction> > base_responses;
     std::string name = responseParams.get<std::string>("Response");
     createResponseFunction(name, responseParams.sublist("ResponseParams"),
@@ -206,22 +196,7 @@ createResponseFunction(
     for (int i=0; i<base_responses.size(); i++)
       responses.push_back(
   rcp(new Albany::KLResponseFunction(base_responses[i], responseParams)));
-  }
-
-#ifdef ALBANY_QCAD
-#if defined(ALBANY_EPETRA)
-  else if (name == "Saddle Value") {
-    responseParams.set("Name", name);
-    for (int i=0; i<meshSpecs.size(); i++) {
-      responses.push_back(
-  rcp(new QCAD::SaddleValueResponseFunction(
-        app, prob, meshSpecs[i], stateMgr, responseParams)));
-    }
-  }
-#endif
-#endif
-
-  else {
+  } else {
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,
       std::endl << "Error!  Unknown response function " << name <<
