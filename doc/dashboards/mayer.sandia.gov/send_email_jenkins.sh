@@ -8,7 +8,7 @@ TTTTT=`grep "Timeout" /home/projects/albany/nightlyCDashAlbanyJenkins/results_ar
 TT=`grep "...   Passed" /home/projects/albany/nightlyCDashAlbanyJenkins/results_arm -c`
 
 
-echo "Subject: Albany (master, OpenMP KokkosNode, ARM): $TT tests passed, $TTT tests failed, $TTTT tests not run, $TTTTT timeouts" >& a
+echo "Subject: Albany (master, Serial KokkosNode, ARM): $TT tests passed, $TTT tests failed, $TTTT tests not run, $TTTTT timeouts" >& a
 echo "" >& b
 cat a b >& c
 cat c results_arm >& d
