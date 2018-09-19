@@ -751,6 +751,7 @@ Albany::ModelEvaluatorT::evalModelImpl(
   // IKT, 3/30/17: the following logic is meant to support both the Thyra
   // time-integrators in Piro
   //(e.g., trapezoidal rule) and the second order time-integrators in Tempus.
+  Teuchos::RCP<Thyra_Vector> x_dotdot; 
   Teuchos::RCP<Tpetra_Vector> x_dotdotT;
   ST                          omega;
   if (supports_xdotdot == true) {
@@ -758,9 +759,11 @@ Albany::ModelEvaluatorT::evalModelImpl(
     // The following case is to support second order time-integrators in Piro
     if (std::abs(omega) < 1.0e-14) {
       if (Teuchos::nonnull(this->get_x_dotdot())) {
-        x_dotdotT = ConverterT::getTpetraVector(this->get_x_dotdot());
+        x_dotdot  =  Teuchos::rcpFromRef(const_cast<Thyra_Vector&>(*(this->get_x_dotdot()))); 
+        x_dotdotT = ConverterT::getTpetraVector(x_dotdot);
         omega     = this->get_omega();
       } else {
+        x_dotdot  = Teuchos::null; 
         x_dotdotT = Teuchos::null;
         omega     = 0.0;
       }
@@ -768,19 +771,28 @@ Albany::ModelEvaluatorT::evalModelImpl(
     // The following case is for second-order time-integrators in Tempus
     else {
       if (inArgsT.supports(Thyra::ModelEvaluatorBase::IN_ARG_x_dot_dot)) {
-        Teuchos::RCP<const Tpetra_Vector> x_dotdotT_temp =
-            Albany::getConstTpetraVector(inArgsT.get_x_dot_dot());
-        x_dotdotT = Teuchos::rcp(new Tpetra_Vector(*x_dotdotT_temp));
+        //x_dotdot = inArgsT.get_x_dot_dot(); 
+        x_dotdot  =  Teuchos::rcpFromRef(const_cast<Thyra_Vector&>(*(inArgsT.get_x_dot_dot())));
+        if (x_dotdot != Teuchos::null) { 
+          Teuchos::RCP<const Tpetra_Vector> x_dotdotT_temp =
+              Albany::getConstTpetraVector(x_dotdot);
+          x_dotdotT = Teuchos::rcp(new Tpetra_Vector(*x_dotdotT_temp));
+        }
+        else {
+          x_dotdotT = Teuchos::null; 
+          omega     = 0.0;
+        }
       } else {
+        x_dotdot  = Teuchos::null; 
         x_dotdotT = Teuchos::null;
         omega     = 0.0;
       }
     }
   } else {
+    x_dotdot  = Teuchos::null; 
     x_dotdotT = Teuchos::null;
     omega     = 0.0;
   }
-  const Teuchos::RCP<const Thyra_Vector> x_dotdot = Albany::createConstThyraVector(x_dotdotT);
 
   const ST alpha = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
                        inArgsT.get_alpha() :
