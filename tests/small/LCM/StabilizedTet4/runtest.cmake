@@ -25,8 +25,8 @@ endif()
 EXECUTE_PROCESS(
     COMMAND ${EXODIFF} -stat -f ${TESTNAME}.exodiff
     ${TESTNAME}.gold.e ${TESTNAME}.e
-    OUTPUT_FILE "exodiff.out"
-    ERROR_FILE "exodiff.err"
+    #OUTPUT_FILE "exodiff.out"
+    #ERROR_FILE "exodiff.err"
     RESULT_VARIABLE HAD_ERROR)
 
 if(HAD_ERROR)
