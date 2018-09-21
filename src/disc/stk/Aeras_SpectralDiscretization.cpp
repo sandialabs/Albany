@@ -1330,8 +1330,9 @@ stk::mesh::EntityId
 Aeras::SpectralDiscretization::getMaximumID(const stk::mesh::EntityRank rank) const
 {
   // Get the local maximum ID
+  bulkData.begin_entities(rank);
   stk::mesh::EntityId last_entity =
-    (--bulkData.end_entities(rank))->first.id();
+     (--bulkData.end_entities(rank))->first.id();
 
   // Use a parallel MAX reduction to obtain the global maximum ID
   stk::mesh::EntityId result;
