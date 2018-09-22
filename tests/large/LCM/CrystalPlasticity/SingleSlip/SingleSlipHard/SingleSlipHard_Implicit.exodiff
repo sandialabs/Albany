@@ -36,78 +36,78 @@ NODAL VARIABLES relative 1.e-6 floor 0.0
 	force_z         absolute 1.0e-12
 
 ELEMENT VARIABLES relative 1.e-6 floor 1.0e-10
-	Cauchy_Stress_01      absolute 4.207019400000e-05    # min:               0 @ t1,b1,e1	max:       42.070194 @ t21,b1,e1
-	Cauchy_Stress_02      absolute 1.0e-12
-	Cauchy_Stress_03      absolute 1.0e-12
-	Cauchy_Stress_04      absolute 1.0e-12
-	Cauchy_Stress_05      absolute 1.0e-12
-	Cauchy_Stress_06      absolute 1.0e-12
-	Cauchy_Stress_07      absolute 1.0e-12
-	Cauchy_Stress_08      absolute 1.0e-12
-	Cauchy_Stress_09      absolute 1.0e-12
-	Cauchy_Stress_10      absolute 4.207019400000e-05    # min:               0 @ t1,b1,e1	max:       42.070194 @ t21,b1,e1
-	Cauchy_Stress_11      absolute 1.0e-12
-	Cauchy_Stress_12      absolute 1.0e-12
-	Cauchy_Stress_13      absolute 1.0e-12
-	Cauchy_Stress_14      absolute 1.0e-12
-	Cauchy_Stress_15      absolute 1.0e-12
-	Cauchy_Stress_16      absolute 1.0e-12
-	Cauchy_Stress_17      absolute 1.0e-12
-	Cauchy_Stress_18      absolute 1.0e-12
-	Cauchy_Stress_19      absolute 4.207019400000e-05    # min:               0 @ t1,b1,e1	max:       42.070194 @ t21,b1,e1
-	Cauchy_Stress_20      absolute 1.0e-12
-	Cauchy_Stress_21      absolute 1.0e-12
-	Cauchy_Stress_22      absolute 1.0e-12
-	Cauchy_Stress_23      absolute 1.0e-12
-	Cauchy_Stress_24      absolute 1.0e-12
-	Cauchy_Stress_25      absolute 1.0e-12
-	Cauchy_Stress_26      absolute 1.0e-12
-	Cauchy_Stress_27      absolute 1.0e-12
-	Cauchy_Stress_28      absolute 4.207019400000e-05    # min:               0 @ t1,b1,e1	max:       42.070194 @ t21,b1,e1
-	Cauchy_Stress_29      absolute 1.0e-12
-	Cauchy_Stress_30      absolute 1.0e-12
-	Cauchy_Stress_31      absolute 1.0e-12
-	Cauchy_Stress_32      absolute 1.0e-12
-	Cauchy_Stress_33      absolute 1.0e-12
-	Cauchy_Stress_34      absolute 1.0e-12
-	Cauchy_Stress_35      absolute 1.0e-12
-	Cauchy_Stress_36      absolute 1.0e-12
-	Cauchy_Stress_37      absolute 4.207019400000e-05    # min:               0 @ t1,b1,e1	max:       42.070194 @ t21,b1,e1
-	Cauchy_Stress_38      absolute 1.0e-12
-	Cauchy_Stress_39      absolute 1.0e-12
-	Cauchy_Stress_40      absolute 1.0e-12
-	Cauchy_Stress_41      absolute 1.0e-12
-	Cauchy_Stress_42      absolute 1.0e-12
-	Cauchy_Stress_43      absolute 1.0e-12
-	Cauchy_Stress_44      absolute 1.0e-12
-	Cauchy_Stress_45      absolute 1.0e-12
-	Cauchy_Stress_46      absolute 4.207019400000e-05    # min:               0 @ t1,b1,e1	max:       42.070194 @ t21,b1,e1
-	Cauchy_Stress_47      absolute 1.0e-12
-	Cauchy_Stress_48      absolute 1.0e-12
-	Cauchy_Stress_49      absolute 1.0e-12
-	Cauchy_Stress_50      absolute 1.0e-12
-	Cauchy_Stress_51      absolute 1.0e-12
-	Cauchy_Stress_52      absolute 1.0e-12
-	Cauchy_Stress_53      absolute 1.0e-12
-	Cauchy_Stress_54      absolute 1.0e-12
-	Cauchy_Stress_55      absolute 4.207019400000e-05    # min:               0 @ t1,b1,e1	max:       42.070194 @ t21,b1,e1
-	Cauchy_Stress_56      absolute 1.0e-12
-	Cauchy_Stress_57      absolute 1.0e-12
-	Cauchy_Stress_58      absolute 1.0e-12
-	Cauchy_Stress_59      absolute 1.0e-12
-	Cauchy_Stress_60      absolute 1.0e-12
-	Cauchy_Stress_61      absolute 1.0e-12
-	Cauchy_Stress_62      absolute 1.0e-12
-	Cauchy_Stress_63      absolute 1.0e-12
-	Cauchy_Stress_64      absolute 4.207019400000e-05    # min:               0 @ t1,b1,e1	max:       42.070194 @ t21,b1,e1
-	Cauchy_Stress_65      absolute 1.0e-12
-	Cauchy_Stress_66      absolute 1.0e-12
-	Cauchy_Stress_67      absolute 1.0e-12
-	Cauchy_Stress_68      absolute 1.0e-12
-	Cauchy_Stress_69      absolute 1.0e-12
-	Cauchy_Stress_70      absolute 1.0e-12
-	Cauchy_Stress_71      absolute 1.0e-12
-	Cauchy_Stress_72      absolute 1.0e-12
+	Cauchy_Stress_1_01      absolute 4.207019400000e-05    # min:               0 @ t1,b1,e1	max:       42.070194 @ t21,b1,e1
+	Cauchy_Stress_2_01      absolute 1.0e-12
+	Cauchy_Stress_3_01      absolute 1.0e-12
+	Cauchy_Stress_1_02      absolute 1.0e-12
+	Cauchy_Stress_2_02      absolute 1.0e-12
+	Cauchy_Stress_3_02      absolute 1.0e-12
+	Cauchy_Stress_1_03      absolute 1.0e-12
+	Cauchy_Stress_2_03      absolute 1.0e-12
+	Cauchy_Stress_3_03      absolute 1.0e-12
+	Cauchy_Stress_1_04      absolute 4.207019400000e-05    # min:               0 @ t1,b1,e1	max:       42.070194 @ t21,b1,e1
+	Cauchy_Stress_2_04      absolute 1.0e-12
+	Cauchy_Stress_3_04      absolute 1.0e-12
+	Cauchy_Stress_1_05      absolute 1.0e-12
+	Cauchy_Stress_2_05      absolute 1.0e-12
+	Cauchy_Stress_3_05      absolute 1.0e-12
+	Cauchy_Stress_1_06      absolute 1.0e-12
+	Cauchy_Stress_2_06      absolute 1.0e-12
+	Cauchy_Stress_3_06      absolute 1.0e-12
+	Cauchy_Stress_1_07      absolute 4.207019400000e-05    # min:               0 @ t1,b1,e1	max:       42.070194 @ t21,b1,e1
+	Cauchy_Stress_2_07      absolute 1.0e-12
+	Cauchy_Stress_3_07      absolute 1.0e-12
+	Cauchy_Stress_1_08      absolute 1.0e-12
+	Cauchy_Stress_2_08      absolute 1.0e-12
+	Cauchy_Stress_3_08      absolute 1.0e-12
+	Cauchy_Stress_1_09      absolute 1.0e-12
+	Cauchy_Stress_2_09      absolute 1.0e-12
+	Cauchy_Stress_3_09      absolute 1.0e-12
+	Cauchy_Stress_1_10      absolute 4.207019400000e-05    # min:               0 @ t1,b1,e1	max:       42.070194 @ t21,b1,e1
+	Cauchy_Stress_2_10      absolute 1.0e-12
+	Cauchy_Stress_3_10      absolute 1.0e-12
+	Cauchy_Stress_1_11      absolute 1.0e-12
+	Cauchy_Stress_2_11      absolute 1.0e-12
+	Cauchy_Stress_3_11      absolute 1.0e-12
+	Cauchy_Stress_1_12      absolute 1.0e-12
+	Cauchy_Stress_2_12      absolute 1.0e-12
+	Cauchy_Stress_3_12      absolute 1.0e-12
+	Cauchy_Stress_1_13      absolute 4.207019400000e-05    # min:               0 @ t1,b1,e1	max:       42.070194 @ t21,b1,e1
+	Cauchy_Stress_2_13      absolute 1.0e-12
+	Cauchy_Stress_3_13      absolute 1.0e-12
+	Cauchy_Stress_1_14      absolute 1.0e-12
+	Cauchy_Stress_2_14      absolute 1.0e-12
+	Cauchy_Stress_3_14      absolute 1.0e-12
+	Cauchy_Stress_1_15      absolute 1.0e-12
+	Cauchy_Stress_2_15      absolute 1.0e-12
+	Cauchy_Stress_3_15      absolute 1.0e-12
+	Cauchy_Stress_1_16      absolute 4.207019400000e-05    # min:               0 @ t1,b1,e1	max:       42.070194 @ t21,b1,e1
+	Cauchy_Stress_2_16      absolute 1.0e-12
+	Cauchy_Stress_3_16      absolute 1.0e-12
+	Cauchy_Stress_1_17      absolute 1.0e-12
+	Cauchy_Stress_2_17      absolute 1.0e-12
+	Cauchy_Stress_3_17      absolute 1.0e-12
+	Cauchy_Stress_1_18      absolute 1.0e-12
+	Cauchy_Stress_2_18      absolute 1.0e-12
+	Cauchy_Stress_3_18      absolute 1.0e-12
+	Cauchy_Stress_1_19      absolute 4.207019400000e-05    # min:               0 @ t1,b1,e1	max:       42.070194 @ t21,b1,e1
+	Cauchy_Stress_2_19      absolute 1.0e-12
+	Cauchy_Stress_3_19      absolute 1.0e-12
+	Cauchy_Stress_1_20      absolute 1.0e-12
+	Cauchy_Stress_2_20      absolute 1.0e-12
+	Cauchy_Stress_3_20      absolute 1.0e-12
+	Cauchy_Stress_1_21      absolute 1.0e-12
+	Cauchy_Stress_2_21      absolute 1.0e-12
+	Cauchy_Stress_3_21      absolute 1.0e-12
+	Cauchy_Stress_1_22      absolute 4.207019400000e-05    # min:               0 @ t1,b1,e1	max:       42.070194 @ t21,b1,e1
+	Cauchy_Stress_2_22      absolute 1.0e-12
+	Cauchy_Stress_3_22      absolute 1.0e-12
+	Cauchy_Stress_1_23      absolute 1.0e-12
+	Cauchy_Stress_2_23      absolute 1.0e-12
+	Cauchy_Stress_3_23      absolute 1.0e-12
+	Cauchy_Stress_1_24      absolute 1.0e-12
+	Cauchy_Stress_2_24      absolute 1.0e-12
+	Cauchy_Stress_3_24      absolute 1.0e-12
 	CP_Residual_1         absolute 5.443190000000e-14    # min:               0 @ t1,b1,e1	max:     5.44319e-08 @ t3,b2,e2
 	CP_Residual_2         absolute 5.443190000000e-14    # min:               0 @ t1,b1,e1	max:     5.44319e-08 @ t3,b2,e2
 	CP_Residual_3         absolute 5.443190000000e-14    # min:               0 @ t1,b1,e1	max:     5.44319e-08 @ t3,b2,e2
@@ -116,78 +116,78 @@ ELEMENT VARIABLES relative 1.e-6 floor 1.0e-10
 	CP_Residual_6         absolute 5.443189900000e-14    # min:               0 @ t1,b1,e1	max:   5.4431899e-08 @ t3,b2,e2
 	CP_Residual_7         absolute 5.443189400000e-14    # min:               0 @ t1,b1,e1	max:   5.4431894e-08 @ t3,b2,e2
 	CP_Residual_8         absolute 5.443189500000e-14    # min:               0 @ t1,b1,e1	max:   5.4431895e-08 @ t3,b2,e2
-	Fp_01                 absolute 1.203163900000e-06    # min:               1 @ t1,b1,e1	max:       1.2031639 @ t21,b2,e2
-	Fp_02                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
-	Fp_03                 absolute 1.0e-16
-	Fp_04                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
-	Fp_05                 absolute 1.000000000000e-06    # min:      0.79683607 @ t21,b2,e2	max:               1 @ t1,b1,e1
-	Fp_06                 absolute 1.0e-16
-	Fp_07                 absolute 1.0e-16
-	Fp_08                 absolute 1.0e-16
-	Fp_09                 absolute 1.000000000000e-06    # min:               1 @ t11,b2,e2	max:               1 @ t1,b1,e1
-	Fp_10                 absolute 1.203163900000e-06    # min:               1 @ t1,b1,e1	max:       1.2031639 @ t21,b2,e2
-	Fp_11                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
-	Fp_12                 absolute 1.0e-16
-	Fp_13                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
-	Fp_14                 absolute 1.000000000000e-06    # min:      0.79683607 @ t21,b2,e2	max:               1 @ t1,b1,e1
-	Fp_15                 absolute 1.0e-16
-	Fp_16                 absolute 1.0e-16
-	Fp_17                 absolute 1.0e-16
-	Fp_18                 absolute 1.000000000000e-06    # min:               1 @ t11,b2,e2	max:               1 @ t1,b1,e1
-	Fp_19                 absolute 1.203163900000e-06    # min:               1 @ t1,b1,e1	max:       1.2031639 @ t21,b2,e2
-	Fp_20                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
-	Fp_21                 absolute 1.0e-16
-	Fp_22                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
-	Fp_23                 absolute 1.000000000000e-06    # min:      0.79683607 @ t21,b2,e2	max:               1 @ t1,b1,e1
-	Fp_24                 absolute 1.0e-16
-	Fp_25                 absolute 1.0e-16
-	Fp_26                 absolute 1.0e-16
-	Fp_27                 absolute 1.000000000000e-06    # min:               1 @ t11,b2,e2	max:               1 @ t1,b1,e1
-	Fp_28                 absolute 1.203163900000e-06    # min:               1 @ t1,b1,e1	max:       1.2031639 @ t21,b2,e2
-	Fp_29                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
-	Fp_30                 absolute 1.0e-16
-	Fp_31                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
-	Fp_32                 absolute 1.000000000000e-06    # min:      0.79683607 @ t21,b2,e2	max:               1 @ t1,b1,e1
-	Fp_33                 absolute 1.0e-16
-	Fp_34                 absolute 1.0e-16
-	Fp_35                 absolute 1.0e-16
-	Fp_36                 absolute 1.000000000000e-06    # min:               1 @ t11,b2,e2	max:               1 @ t1,b1,e1
-	Fp_37                 absolute 1.203163900000e-06    # min:               1 @ t1,b1,e1	max:       1.2031639 @ t21,b2,e2
-	Fp_38                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
-	Fp_39                 absolute 1.0e-16
-	Fp_40                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
-	Fp_41                 absolute 1.000000000000e-06    # min:      0.79683607 @ t21,b2,e2	max:               1 @ t1,b1,e1
-	Fp_42                 absolute 1.0e-16
-	Fp_43                 absolute 1.0e-16
-	Fp_44                 absolute 1.0e-16
-	Fp_45                 absolute 1.000000000000e-06    # min:               1 @ t11,b2,e2	max:               1 @ t1,b1,e1
-	Fp_46                 absolute 1.203163900000e-06    # min:               1 @ t1,b1,e1	max:       1.2031639 @ t21,b2,e2
-	Fp_47                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
-	Fp_48                 absolute 1.0e-16
-	Fp_49                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
-	Fp_50                 absolute 1.000000000000e-06    # min:      0.79683607 @ t21,b2,e2	max:               1 @ t1,b1,e1
-	Fp_51                 absolute 1.0e-16
-	Fp_52                 absolute 1.0e-16
-	Fp_53                 absolute 1.0e-16
-	Fp_54                 absolute 1.000000000000e-06    # min:               1 @ t11,b2,e2	max:               1 @ t1,b1,e1
-	Fp_55                 absolute 1.203163900000e-06    # min:               1 @ t1,b1,e1	max:       1.2031639 @ t21,b2,e2
-	Fp_56                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
-	Fp_57                 absolute 1.0e-16
-	Fp_58                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
-	Fp_59                 absolute 1.000000000000e-06    # min:      0.79683607 @ t21,b2,e2	max:               1 @ t1,b1,e1
-	Fp_60                 absolute 1.0e-16
-	Fp_61                 absolute 1.0e-16
-	Fp_62                 absolute 1.0e-16
-	Fp_63                 absolute 1.000000000000e-06    # min:               1 @ t11,b2,e2	max:               1 @ t1,b1,e1
-	Fp_64                 absolute 1.203163900000e-06    # min:               1 @ t1,b1,e1	max:       1.2031639 @ t21,b2,e2
-	Fp_65                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
-	Fp_66                 absolute 1.0e-16
-	Fp_67                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
-	Fp_68                 absolute 1.000000000000e-06    # min:      0.79683607 @ t21,b2,e2	max:               1 @ t1,b1,e1
-	Fp_69                 absolute 1.0e-16
-	Fp_70                 absolute 1.0e-16
-	Fp_71                 absolute 1.0e-16
-	Fp_72                 absolute 1.000000000000e-06    # min:               1 @ t11,b2,e2	max:               1 @ t1,b1,e1
+	Fp_1_01                 absolute 1.203163900000e-06    # min:               1 @ t1,b1,e1	max:       1.2031639 @ t21,b2,e2
+	Fp_2_01                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
+	Fp_3_01                 absolute 1.0e-16
+	Fp_1_02                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
+	Fp_2_02                 absolute 1.000000000000e-06    # min:      0.79683607 @ t21,b2,e2	max:               1 @ t1,b1,e1
+	Fp_3_02                 absolute 1.0e-16
+	Fp_1_03                 absolute 1.0e-16
+	Fp_2_03                 absolute 1.0e-16
+	Fp_3_03                 absolute 1.000000000000e-06    # min:               1 @ t11,b2,e2	max:               1 @ t1,b1,e1
+	Fp_1_04                 absolute 1.203163900000e-06    # min:               1 @ t1,b1,e1	max:       1.2031639 @ t21,b2,e2
+	Fp_2_04                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
+	Fp_3_04                 absolute 1.0e-16
+	Fp_1_05                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
+	Fp_2_05                 absolute 1.000000000000e-06    # min:      0.79683607 @ t21,b2,e2	max:               1 @ t1,b1,e1
+	Fp_3_05                 absolute 1.0e-16
+	Fp_1_06                 absolute 1.0e-16
+	Fp_2_06                 absolute 1.0e-16
+	Fp_3_06                 absolute 1.000000000000e-06    # min:               1 @ t11,b2,e2	max:               1 @ t1,b1,e1
+	Fp_1_07                 absolute 1.203163900000e-06    # min:               1 @ t1,b1,e1	max:       1.2031639 @ t21,b2,e2
+	Fp_2_07                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
+	Fp_3_07                 absolute 1.0e-16
+	Fp_1_08                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
+	Fp_2_08                 absolute 1.000000000000e-06    # min:      0.79683607 @ t21,b2,e2	max:               1 @ t1,b1,e1
+	Fp_3_08                 absolute 1.0e-16
+	Fp_1_09                 absolute 1.0e-16
+	Fp_2_09                 absolute 1.0e-16
+	Fp_3_09                 absolute 1.000000000000e-06    # min:               1 @ t11,b2,e2	max:               1 @ t1,b1,e1
+	Fp_1_10                 absolute 1.203163900000e-06    # min:               1 @ t1,b1,e1	max:       1.2031639 @ t21,b2,e2
+	Fp_2_10                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
+	Fp_3_10                 absolute 1.0e-16
+	Fp_1_11                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
+	Fp_2_11                 absolute 1.000000000000e-06    # min:      0.79683607 @ t21,b2,e2	max:               1 @ t1,b1,e1
+	Fp_3_11                 absolute 1.0e-16
+	Fp_1_12                 absolute 1.0e-16
+	Fp_2_12                 absolute 1.0e-16
+	Fp_3_12                 absolute 1.000000000000e-06    # min:               1 @ t11,b2,e2	max:               1 @ t1,b1,e1
+	Fp_1_13                 absolute 1.203163900000e-06    # min:               1 @ t1,b1,e1	max:       1.2031639 @ t21,b2,e2
+	Fp_2_13                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
+	Fp_3_13                 absolute 1.0e-16
+	Fp_1_14                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
+	Fp_2_14                 absolute 1.000000000000e-06    # min:      0.79683607 @ t21,b2,e2	max:               1 @ t1,b1,e1
+	Fp_3_14                 absolute 1.0e-16
+	Fp_1_15                 absolute 1.0e-16
+	Fp_2_15                 absolute 1.0e-16
+	Fp_3_15                 absolute 1.000000000000e-06    # min:               1 @ t11,b2,e2	max:               1 @ t1,b1,e1
+	Fp_1_16                 absolute 1.203163900000e-06    # min:               1 @ t1,b1,e1	max:       1.2031639 @ t21,b2,e2
+	Fp_2_16                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
+	Fp_3_16                 absolute 1.0e-16
+	Fp_1_17                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
+	Fp_2_17                 absolute 1.000000000000e-06    # min:      0.79683607 @ t21,b2,e2	max:               1 @ t1,b1,e1
+	Fp_3_17                 absolute 1.0e-16
+	Fp_1_18                 absolute 1.0e-16
+	Fp_2_18                 absolute 1.0e-16
+	Fp_3_18                 absolute 1.000000000000e-06    # min:               1 @ t11,b2,e2	max:               1 @ t1,b1,e1
+	Fp_1_19                 absolute 1.203163900000e-06    # min:               1 @ t1,b1,e1	max:       1.2031639 @ t21,b2,e2
+	Fp_2_19                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
+	Fp_3_19                 absolute 1.0e-16
+	Fp_1_20                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
+	Fp_2_20                 absolute 1.000000000000e-06    # min:      0.79683607 @ t21,b2,e2	max:               1 @ t1,b1,e1
+	Fp_3_20                 absolute 1.0e-16
+	Fp_1_21                 absolute 1.0e-16
+	Fp_2_21                 absolute 1.0e-16
+	Fp_3_21                 absolute 1.000000000000e-06    # min:               1 @ t11,b2,e2	max:               1 @ t1,b1,e1
+	Fp_1_22                 absolute 1.203163900000e-06    # min:               1 @ t1,b1,e1	max:       1.2031639 @ t21,b2,e2
+	Fp_2_22                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
+	Fp_3_22                 absolute 1.0e-16
+	Fp_1_23                 absolute 2.031639300000e-07    # min:               0 @ t1,b1,e1	max:      0.20316393 @ t21,b2,e2
+	Fp_2_23                 absolute 1.000000000000e-06    # min:      0.79683607 @ t21,b2,e2	max:               1 @ t1,b1,e1
+	Fp_3_23                 absolute 1.0e-16
+	Fp_1_24                 absolute 1.0e-16
+	Fp_2_24                 absolute 1.0e-16
+	Fp_3_24                 absolute 1.000000000000e-06    # min:               1 @ t11,b2,e2	max:               1 @ t1,b1,e1
 	gamma_1_1             absolute 4.063278600000e-07    # min:               0 @ t1,b1,e1	max:      0.40632786 @ t21,b2,e2
 	gamma_1_2             absolute 4.063278600000e-07    # min:               0 @ t1,b1,e1	max:      0.40632786 @ t21,b2,e2
 	gamma_1_3             absolute 4.063278600000e-07    # min:               0 @ t1,b1,e1	max:      0.40632786 @ t21,b2,e2
@@ -212,78 +212,78 @@ ELEMENT VARIABLES relative 1.e-6 floor 1.0e-10
 	tau_hard_1_6          absolute 4.063278600000e-06    # min:               0 @ t1,b1,e1	max:       4.0632786 @ t21,b2,e2
 	tau_hard_1_7          absolute 4.063278600000e-06    # min:               0 @ t1,b1,e1	max:       4.0632786 @ t21,b2,e2
 	tau_hard_1_8          absolute 4.063278600000e-06    # min:               0 @ t1,b1,e1	max:       4.0632786 @ t21,b2,e2
-	Velocity_Gradient_Plastic_01  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_02  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_03  absolute 1.0e-16
-	Velocity_Gradient_Plastic_04  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_05  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_06  absolute 1.0e-16
-	Velocity_Gradient_Plastic_07  absolute 1.0e-16
-	Velocity_Gradient_Plastic_08  absolute 1.0e-16
-	Velocity_Gradient_Plastic_09  absolute 1.0e-16
-	Velocity_Gradient_Plastic_10  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_11  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_12  absolute 1.0e-16
-	Velocity_Gradient_Plastic_13  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_14  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_15  absolute 1.0e-16
-	Velocity_Gradient_Plastic_16  absolute 1.0e-16
-	Velocity_Gradient_Plastic_17  absolute 1.0e-16
-	Velocity_Gradient_Plastic_18  absolute 1.0e-16
-	Velocity_Gradient_Plastic_19  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_20  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_21  absolute 1.0e-16
-	Velocity_Gradient_Plastic_22  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_23  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_24  absolute 1.0e-16
-	Velocity_Gradient_Plastic_25  absolute 1.0e-16
-	Velocity_Gradient_Plastic_26  absolute 1.0e-16
-	Velocity_Gradient_Plastic_27  absolute 1.0e-16
-	Velocity_Gradient_Plastic_28  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_29  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_30  absolute 1.0e-16
-	Velocity_Gradient_Plastic_31  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_32  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_33  absolute 1.0e-16
-	Velocity_Gradient_Plastic_34  absolute 1.0e-16
-	Velocity_Gradient_Plastic_35  absolute 1.0e-16
-	Velocity_Gradient_Plastic_36  absolute 1.0e-16
-	Velocity_Gradient_Plastic_37  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_38  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_39  absolute 1.0e-16
-	Velocity_Gradient_Plastic_40  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_41  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_42  absolute 1.0e-16
-	Velocity_Gradient_Plastic_43  absolute 1.0e-16
-	Velocity_Gradient_Plastic_44  absolute 1.0e-16
-	Velocity_Gradient_Plastic_45  absolute 1.0e-16
-	Velocity_Gradient_Plastic_46  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_47  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_48  absolute 1.0e-16
-	Velocity_Gradient_Plastic_49  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_50  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_51  absolute 1.0e-16
-	Velocity_Gradient_Plastic_52  absolute 1.0e-16
-	Velocity_Gradient_Plastic_53  absolute 1.0e-16
-	Velocity_Gradient_Plastic_54  absolute 1.0e-16
-	Velocity_Gradient_Plastic_55  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_56  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_57  absolute 1.0e-16
-	Velocity_Gradient_Plastic_58  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_59  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_60  absolute 1.0e-16
-	Velocity_Gradient_Plastic_61  absolute 1.0e-16
-	Velocity_Gradient_Plastic_62  absolute 1.0e-16
-	Velocity_Gradient_Plastic_63  absolute 1.0e-16
-	Velocity_Gradient_Plastic_64  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_65  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_66  absolute 1.0e-16
-	Velocity_Gradient_Plastic_67  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_68  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
-	Velocity_Gradient_Plastic_69  absolute 1.0e-16
-	Velocity_Gradient_Plastic_70  absolute 1.0e-16
-	Velocity_Gradient_Plastic_71  absolute 1.0e-16
-	Velocity_Gradient_Plastic_72  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_01  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_2_01  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_3_01  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_02  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_2_02  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_3_02  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_03  absolute 1.0e-16
+	Velocity_Gradient_Plastic_2_03  absolute 1.0e-16
+	Velocity_Gradient_Plastic_3_03  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_04  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_2_04  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_3_04  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_05  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_2_05  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_3_05  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_06  absolute 1.0e-16
+	Velocity_Gradient_Plastic_2_06  absolute 1.0e-16
+	Velocity_Gradient_Plastic_3_06  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_07  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_2_07  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_3_07  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_08  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_2_08  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_3_08  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_09  absolute 1.0e-16
+	Velocity_Gradient_Plastic_2_09  absolute 1.0e-16
+	Velocity_Gradient_Plastic_3_09  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_10  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_2_10  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_3_10  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_11  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_2_11  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_3_11  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_12  absolute 1.0e-16
+	Velocity_Gradient_Plastic_2_12  absolute 1.0e-16
+	Velocity_Gradient_Plastic_3_12  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_13  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_2_13  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_3_13  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_14  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_2_14  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_3_14  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_15  absolute 1.0e-16
+	Velocity_Gradient_Plastic_2_15  absolute 1.0e-16
+	Velocity_Gradient_Plastic_3_15  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_16  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_2_16  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_3_16  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_17  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_2_17  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_3_17  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_18  absolute 1.0e-16
+	Velocity_Gradient_Plastic_2_18  absolute 1.0e-16
+	Velocity_Gradient_Plastic_3_18  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_19  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_2_19  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_3_19  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_20  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_2_20  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_3_20  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_21  absolute 1.0e-16
+	Velocity_Gradient_Plastic_2_21  absolute 1.0e-16
+	Velocity_Gradient_Plastic_3_21  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_22  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_2_22  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_3_22  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_23  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_2_23  absolute 1.142383300000e-08    # min:               0 @ t1,b1,e1	max:     0.011423833 @ t4,b2,e2
+	Velocity_Gradient_Plastic_3_23  absolute 1.0e-16
+	Velocity_Gradient_Plastic_1_24  absolute 1.0e-16
+	Velocity_Gradient_Plastic_2_24  absolute 1.0e-16
+	Velocity_Gradient_Plastic_3_24  absolute 1.0e-16
 
 # No NODESET VARIABLES
 
