@@ -36,44 +36,44 @@ NODAL VARIABLES relative 1.e-6 floor 1.0e-12
 	solution_z  # min:               0 @ t1,n1	max:               0 @ t1,n1
 
 ELEMENT VARIABLES relative 1.e-6 floor 1.0e-12
-	Cauchy_Stress_1  # min:               0 @ t1,b1,e1	max:       2063.6263 @ t11,b1,e1
-	Cauchy_Stress_2  # min:               0 @ t1,b1,e1	max:       72.463173 @ t11,b1,e1
-	Cauchy_Stress_3  # min:               0 @ t1,b1,e1	max:       210.37377 @ t11,b1,e1
-	Cauchy_Stress_4  # min:               0 @ t1,b1,e1	max:       72.463173 @ t11,b1,e1
-	Cauchy_Stress_5  # min:               0 @ t1,b1,e1	max:       1823.4362 @ t11,b1,e1
-	Cauchy_Stress_6  # min:               0 @ t1,b1,e1	max:        99.34528 @ t11,b1,e1
-	Cauchy_Stress_7  # min:               0 @ t1,b1,e1	max:       210.37377 @ t11,b1,e1
-	Cauchy_Stress_8  # min:               0 @ t1,b1,e1	max:        99.34528 @ t11,b1,e1
-	Cauchy_Stress_9  # min:               0 @ t1,b1,e1	max:       905.09651 @ t11,b1,e1
+	Cauchy_Stress_1_1  # min:               0 @ t1,b1,e1	max:       2063.6263 @ t11,b1,e1
+	Cauchy_Stress_2_1  # min:               0 @ t1,b1,e1	max:       72.463173 @ t11,b1,e1
+	Cauchy_Stress_3_1  # min:               0 @ t1,b1,e1	max:       210.37377 @ t11,b1,e1
+	Cauchy_Stress_1_2  # min:               0 @ t1,b1,e1	max:       72.463173 @ t11,b1,e1
+	Cauchy_Stress_2_2  # min:               0 @ t1,b1,e1	max:       1823.4362 @ t11,b1,e1
+	Cauchy_Stress_3_2  # min:               0 @ t1,b1,e1	max:        99.34528 @ t11,b1,e1
+	Cauchy_Stress_1_3  # min:               0 @ t1,b1,e1	max:       210.37377 @ t11,b1,e1
+	Cauchy_Stress_2_3  # min:               0 @ t1,b1,e1	max:        99.34528 @ t11,b1,e1
+	Cauchy_Stress_3_3  # min:               0 @ t1,b1,e1	max:       905.09651 @ t11,b1,e1
 	CP_Residual      # min:               0 @ t1,b1,e1	max:   7.3520057e-11 @ t10,b1,e1
-	F_1              # min:               1 @ t1,b1,e1	max:            1.01 @ t11,b1,e1
-	F_2              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	F_3              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	F_4              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	F_5              # min:               1 @ t1,b1,e1	max:               1 @ t1,b1,e1
-	F_6              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	F_7              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	F_8              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	F_9              # min:               1 @ t1,b1,e1	max:               1 @ t1,b1,e1
-	Fp_1             # min:               1 @ t1,b1,e1	max:       1.0040738 @ t11,b1,e1
-	Fp_2             # min:               0 @ t1,b1,e1	max:    0.0040738161 @ t11,b1,e1
-	Fp_3             # min:               0 @ t1,b1,e1	max:   9.5944018e-19 @ t11,b1,e1
-	Fp_4             # min:               0 @ t1,b1,e1	max:    0.0040738161 @ t11,b1,e1
-	Fp_5             # min:      0.99592618 @ t11,b1,e1	max:               1 @ t1,b1,e1
-	Fp_6             # min:               0 @ t1,b1,e1	max:   9.5944018e-19 @ t11,b1,e1
-	Fp_7             # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	Fp_8             # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	Fp_9             # min:               1 @ t1,b1,e1	max:               1 @ t5,b1,e1
+	F_1_1              # min:               1 @ t1,b1,e1	max:            1.01 @ t11,b1,e1
+	F_2_1              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	F_3_1              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	F_1_2              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	F_2_2              # min:               1 @ t1,b1,e1	max:               1 @ t1,b1,e1
+	F_3_2              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	F_1_3              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	F_2_3              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	F_3_3              # min:               1 @ t1,b1,e1	max:               1 @ t1,b1,e1
+	Fp_1_1             # min:               1 @ t1,b1,e1	max:       1.0040738 @ t11,b1,e1
+	Fp_2_1             # min:               0 @ t1,b1,e1	max:    0.0040738161 @ t11,b1,e1
+	Fp_3_1             # min:               0 @ t1,b1,e1	max:   9.5944018e-19 @ t11,b1,e1
+	Fp_1_2             # min:               0 @ t1,b1,e1	max:    0.0040738161 @ t11,b1,e1
+	Fp_2_2             # min:      0.99592618 @ t11,b1,e1	max:               1 @ t1,b1,e1
+	Fp_3_2             # min:               0 @ t1,b1,e1	max:   9.5944018e-19 @ t11,b1,e1
+	Fp_1_3             # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Fp_2_3             # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Fp_3_3             # min:               1 @ t1,b1,e1	max:               1 @ t5,b1,e1
 	gamma_1          # min:               0 @ t1,b1,e1	max:    0.0081476321 @ t11,b1,e1
-	Strain_1         # min:               0 @ t1,b1,e1	max:            0.01 @ t11,b1,e1
-	Strain_2         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	Strain_3         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	Strain_4         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	Strain_5         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	Strain_6         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	Strain_7         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	Strain_8         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	Strain_9         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Strain_1_1         # min:               0 @ t1,b1,e1	max:            0.01 @ t11,b1,e1
+	Strain_2_1         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Strain_3_1         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Strain_1_2         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Strain_2_2         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Strain_3_2         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Strain_1_3         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Strain_2_3         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Strain_3_3         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 	tau_1            # min:               0 @ t1,b1,e1	max:       122.02578 @ t7,b1,e1
 	tau_hard_1       # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 

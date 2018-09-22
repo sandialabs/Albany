@@ -36,18 +36,18 @@ NODAL VARIABLES relative 1.e-6 floor 0.0
 	FINT_Z  # min:               0 @ t1,n1	max:               0 @ t1,n1
 
 ELEMENT VARIABLES relative 1.e-6 floor 0.0
-	TRACTION_X_1  # min:   2.7755576e-18 @ t1,b1,e1	max:   2.7755576e-18 @ t1,b1,e1
-	TRACTION_Y_1  # min:             0.2 @ t1,b1,e1	max:             0.2 @ t1,b1,e1
-	TRACTION_Z_1  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	TRACTION_X_2  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	TRACTION_Y_2  # min:             0.2 @ t1,b1,e1	max:             0.2 @ t1,b1,e1
-	TRACTION_Z_2  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	TRACTION_X_3  # min:   2.7755576e-18 @ t1,b1,e1	max:   2.7755576e-18 @ t1,b1,e1
-	TRACTION_Y_3  # min:             0.2 @ t1,b1,e1	max:             0.2 @ t1,b1,e1
-	TRACTION_Z_3  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	TRACTION_X_4  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	TRACTION_Y_4  # min:             0.2 @ t1,b1,e1	max:             0.2 @ t1,b1,e1
-	TRACTION_Z_4  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	COHESIVE_TRACTION_1_1  # min:   2.7755576e-18 @ t1,b1,e1	max:   2.7755576e-18 @ t1,b1,e1
+	COHESIVE_TRACTION_2_1  # min:             0.2 @ t1,b1,e1	max:             0.2 @ t1,b1,e1
+	COHESIVE_TRACTION_3_1  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	COHESIVE_TRACTION_1_2  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	COHESIVE_TRACTION_2_2  # min:             0.2 @ t1,b1,e1	max:             0.2 @ t1,b1,e1
+	COHESIVE_TRACTION_3_2  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	COHESIVE_TRACTION_1_3  # min:   2.7755576e-18 @ t1,b1,e1	max:   2.7755576e-18 @ t1,b1,e1
+	COHESIVE_TRACTION_2_3  # min:             0.2 @ t1,b1,e1	max:             0.2 @ t1,b1,e1
+	COHESIVE_TRACTION_3_3  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	COHESIVE_TRACTION_1_4  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	COHESIVE_TRACTION_2_4  # min:             0.2 @ t1,b1,e1	max:             0.2 @ t1,b1,e1
+	COHESIVE_TRACTION_3_4  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 
 # No NODESET VARIABLES
 
