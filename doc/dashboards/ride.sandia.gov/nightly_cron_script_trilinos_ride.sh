@@ -1,6 +1,6 @@
 #!/bin/csh
 
-BASE_DIR=/home/projects/albany/
+BASE_DIR=/home/projects/albany/ride
 cd $BASE_DIR
 
 unset http_proxy

@@ -391,7 +391,7 @@ if (BUILD_ALBANY)
 
   CTEST_CONFIGURE(
     BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
-    SOURCE "/home/projects/albany/repos/Albany"
+    SOURCE "/home/projects/albany/ride/repos/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )

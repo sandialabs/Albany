@@ -1,6 +1,8 @@
 #!/bin/bash -lxe
 
-cd /home/projects/albany
+#!/bin/bash -lxe
+
+cd /home/projects/albany/ride
 
 rm -rf * 
 
@@ -10,18 +12,18 @@ cd repos
 cp -r ${WORKSPACE}/repos/Albany .
 cp -r ${WORKSPACE}/repos/Trilinos .
 
-export jenkins_albany_dir=/home/projects/albany/repos/Albany
-export jenkins_trilinos_dir=/home/projects/albany/repos/Trilinos
+export jenkins_albany_dir=/home/projects/albany/ride/repos/Albany
+export jenkins_trilinos_dir=/home/projects/albany/ride/repos/Trilinos
 
 cd ..
 
 cp repos/Albany/doc/dashboards/ride.sandia.gov/* .
 
-bsub -Is -x -n 8 -W 23:55 -J $BUILD_TAG -q rhel7G ./run_all_lsf.sh
+bsub -Is -x -n 8 -W 23:55 -J $BUILD_TAG -q rhel7G /home/projects/albany/ride/run_all_lsf.sh
 
 echo "Sending email..."
 bash send_email_ctest.sh
 echo "...done"
 
-chgrp wg-albany -R /home/projects/albany/* 
-chmod ug+rwX -R /home/projects/albany/*
+chgrp wg-albany -R /home/projects/albany/ride/*
+chmod ug+rwX -R /home/projects/albany/ride/*
