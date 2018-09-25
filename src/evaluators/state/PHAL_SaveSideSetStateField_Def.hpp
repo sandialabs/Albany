@@ -11,6 +11,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Albany_AbstractSTKMeshStruct.hpp"
+#include "Albany_SideSetSTKMeshStruct.hpp"
 #include "Albany_AbstractSTKFieldContainer.hpp"
 
 namespace PHAL
@@ -321,10 +322,16 @@ saveNodeState(typename Traits::EvalData workset)
 
   // Notice: in the following, we retrieve the id of the stk node using the 3d mesh, since it's easier.
   //         However, the node id in the 3d mesh is guaranteed to coincide with the node id in the 2d
-  //         mesh always EXCEPT for layered meshes with column-wise ordering. Therefore, we distinguish
-  //         the two cases.
+  //         mesh for SideSetSTKMeshStruct. If the ss mesh type is not SideSetSTKMeshStruct, then the
+  //         side mesh was not extracted from the 3d one; it's either the basal mesh of an extruded mesh,
+  //         or the basal and volume meshes were loaded separately. Either way, we check if the mesh is
+  //         layered (it will be for extruded meshes): if not, 2d and 3d ids will coincide; if yes, they
+  //         will coincide if the ordering is LAYER, and won't coincide if the ordering is COLUMN.
+  //         In the latter case, we need to use the LayeredMeshNumbering structure to determine the id
+  //         of the 2d node given that of the 3d node.
 
-  if (layeredMeshNumbering==Teuchos::null || layeredMeshNumbering->ordering==Albany::LayeredMeshOrdering::LAYER)
+  if (Teuchos::rcp_dynamic_cast<Albany::SideSetSTKMeshStruct>(mesh)!=Teuchos::null ||
+      layeredMeshNumbering==Teuchos::null || layeredMeshNumbering->ordering==Albany::LayeredMeshOrdering::LAYER)
   {
     // Either not a layered mesh or layered but not column-wise. Either way, the GID of the side-set's
     // nodes will coincide with the GID of the 3D mesh nodes.
