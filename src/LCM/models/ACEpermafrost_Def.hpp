@@ -260,7 +260,7 @@ static RealType const SQ23{std::sqrt(2.0 / 3.0)};
 }  // anonymous namespace
 
 //
-// ACE ice nonlinear system
+// ACE permafrost nonlinear system
 //
 template <typename EvalT, minitensor::Index M = 1>
 class PermNLS : public minitensor::
@@ -371,6 +371,12 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const Y     = yield_strength_(cell, pt);
   ScalarT const J1    = J_(cell, pt);
   ScalarT const Jm23  = 1.0 / std::cbrt(J1 * J1);
+  ScalarT const Tcurr = temperature_(cell, pt);
+  ScalarT const Told  = T_old_(cell, pt);
+  ScalarT const iold  = ice_saturation_old_(cell, pt);
+
+  ScalarT icurr = ice_saturation_(cell, pt);
+  ScalarT wcurr = water_saturation_(cell, pt);
 
   // fill local tensors
   F.fill(def_grad_, cell, pt, 0, 0);
@@ -389,94 +395,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     }
   }
 
-  // Calculate the pressure
-  ScalarT pressure = 101325.0;  // [Pa]
-  // pressure = (1.0/3.0)*minitensor::trace(stress_(cell, pt));
-
-  // Calculate the depth-dependent porosity
-  // Note: The porosity does not change in time so this calculation only needs
-  //       to be done once, at the beginning of the simulation.
-  // porosity_(cell, pt) = porosity0_ *
-  // std::exp(-pressure/(porosityE_*9.81*1500.0))
-  porosity_(cell, pt) = 0.70;
-
-  // Calculate melting temperature
-  ScalarT sal   = 0.10;  // note: this should come from chemical part of model
-  ScalarT sal15 = std::sqrt(sal * sal * sal);
-  ScalarT Tmelt = (-0.057 * sal) + (0.00170523 * sal15) -
-                  (0.0002154996 * sal * sal) -
-                  ((0.000753 / 10000.0) * pressure);
-
-  // Calculate temperature change (not sure where temperature_ comes from, but
-  // it seems to be getting used in here already for the source term, and I
-  // assume its the current temperature value)
-  ScalarT dTemp = temperature_(cell, pt) - T_old_(cell, pt);
-  if (delta_time_(0) > 0.0) {
-    tdot_(cell, pt) = dTemp / delta_time_(0);
-  } else {
-    tdot_(cell, pt) = 0.0;
-  }
-
-  // Calculate the freezing curve function df/dTemp
-  ScalarT T_range = 1.0;
-  ScalarT T_low   = Tmelt - (T_range / 2.0);
-  ScalarT T_high  = Tmelt + (T_range / 2.0);
-  ScalarT i_sat_evaluated;
-
-  // completely frozen
-  if (temperature_(cell, pt) <= T_low) { i_sat_evaluated = 1.0; }
-  // completely melted
-  if (temperature_(cell, pt) >= T_high) { i_sat_evaluated = 0.0; }
-  // in phase change
-  if ((temperature_(cell, pt) > T_low) && (temperature_(cell, pt) < T_high)) {
-    i_sat_evaluated = -1.0 * (temperature_(cell, pt) / T_range) + T_high;
-  }
-
-  ScalarT dfdT = (i_sat_evaluated - ice_saturation_old_(cell, pt)) / dTemp;
-
-  // Update the ice saturation
-  ice_saturation_(cell, pt) += dfdT * dTemp;
-  ice_saturation_(cell, pt) = std::max(0.0, ice_saturation_(cell, pt));
-  ice_saturation_(cell, pt) =
-      std::min(ice_saturation_max_, ice_saturation_(cell, pt));
-
-  // Update the water saturation
-  water_saturation_(cell, pt) = 1.0 - ice_saturation_(cell, pt);
-  water_saturation_(cell, pt) =
-      std::max(water_saturation_min_, water_saturation_(cell, pt));
-  water_saturation_(cell, pt) = std::min(1.0, water_saturation_(cell, pt));
-
-  // Update the effective material density
-  density_(cell, pt) =
-      porosity_(cell, pt) * (ice_density_ * ice_saturation_(cell, pt) +
-                             water_density_ * water_saturation_(cell, pt)) +
-      (1.0 - porosity_(cell, pt)) * sediment_density_;
-
-  // Update the effective material heat capacity
-  heat_capacity_(cell, pt) =
-      porosity_(cell, pt) *
-          (ice_heat_capacity_ * ice_saturation_(cell, pt) +
-           water_heat_capacity_ * water_saturation_(cell, pt)) +
-      (1.0 - porosity_(cell, pt)) * sediment_heat_capacity_;
-
-  // Update the effective material thermal conductivity
-  thermal_cond_(cell, pt) =
-      pow(ice_thermal_cond_,
-          (ice_saturation_(cell, pt) * porosity_(cell, pt))) *
-      pow(water_thermal_cond_,
-          (water_saturation_(cell, pt) * porosity_(cell, pt))) *
-      pow(sediment_thermal_cond_, (1.0 - porosity_(cell, pt)));
-
-  // Update the material thermal inertia term
-  thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt)) -
-                               (ice_density_ * latent_heat_ * dfdT);
-
-  // Swap for old variables
-  // these cause compiler errors!!
-  // ice_saturation_old_(cell, pt) = ice_saturation_(cell, pt);
-  // T_old_(cell, pt) = temperature_(cell, pt);
-
-  // compute trial state
+    // compute trial state
   Tensor const  Fpinv = minitensor::inverse(Fpn);
   Tensor const  Cpinv = Fpinv * minitensor::transpose(Fpinv);
   Tensor const  be    = Jm23 * Fm * Cpinv * minitensor::transpose(Fm);
@@ -567,5 +486,88 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
       stress_(cell, pt, i, j) = sigma(i, j);
     }
   }
+
+  // Calculate the depth-dependent porosity
+  // NOTE: The porosity does not change in time so this calculation only needs
+  //       to be done once, at the beginning of the simulation.
+  ScalarT const porosity = porosity0_;
+  // NOTE: Can't let this keep getting updated! So commenting out for now.
+  // porosity0_ * std::exp(-pressure / (porosityE_ * 9.81 * 1500.0));
+
+  porosity_(cell, pt) = porosity;
+
+  // Calculate melting temperature
+  ScalarT sal   = 0.10;  // note: this should come from chemical part of model
+  ScalarT sal15 = std::sqrt(sal * sal * sal);
+  ScalarT pressure_fixed = 1.0;
+  // Tmelt is in Kelvin.
+  // NOTE: Tmelt is not currently used. Right now it is assumed to be 0C.
+  //       Once salinity is calculated, Tmelt should be used to shift the
+  //       dfdT function defined below.
+  ScalarT Tmelt = (-0.057 * sal) + (0.00170523 * sal15) -
+                  (0.0002154996 * sal * sal) -
+                  ((0.000753 / 10000.0) * pressure_fixed) + 273.15;
+
+  // Calculate temperature change
+  ScalarT dTemp = Tcurr - Told;
+  if (delta_time_(0) > 0.0) {
+    tdot_(cell, pt) = dTemp / delta_time_(0);
+  } else {
+    tdot_(cell, pt) = 0.0;
+  }
+
+  // Calculate the freezing curve function df/dTemp
+  // W term sets the width of the freezing curve.
+  ScalarT W = 0.8;
+ 
+  // dfdT is a smooth function, but only valid for T <= 0C.
+  // NOTE: If phase change should occur symetrically about Tmelt, then 
+  //       the function can be shifted.
+  ScalarT dfdT = 0.0;
+  if ((Tcurr-273.15) <= 0.0) {
+    dfdT = ((1.9*(Tcurr-273.15))/(W*W))*(exp(-((Tcurr-273.15)*(Tcurr-273.15)))/(W*W));
+  }
+
+  // Update the ice saturation
+  icurr = iold + dfdT * dTemp;
+  icurr = std::max(0.0, icurr);
+  icurr = std::min(ice_saturation_max_, icurr);
+
+  // Update the water saturation
+  wcurr = 1.0 - icurr;
+  wcurr = std::max(water_saturation_min_, wcurr);
+  wcurr = std::min(1.0, wcurr);
+
+  // Update the effective material density
+  density_(cell, pt) =
+      (porosity * (ice_density_ * icurr + water_density_ * wcurr)) +
+      ((1.0 - porosity) * sediment_density_);
+
+  // Update the effective material heat capacity
+  heat_capacity_(cell, pt) =
+      (porosity * (ice_heat_capacity_ * icurr + water_heat_capacity_ * wcurr)) +
+      ((1.0 - porosity) * sediment_heat_capacity_);
+
+  // Update the effective material thermal conductivity
+  thermal_cond_(cell, pt) =
+      pow(ice_thermal_cond_, (icurr * porosity)) *
+      pow(water_thermal_cond_, (wcurr * porosity)) *
+      pow(sediment_thermal_cond_, (1.0 - porosity));
+
+  // Update the material thermal inertia term
+  thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt)) -
+                               (ice_density_ * latent_heat_ * dfdT);
+
+  ScalarT const TI = thermal_inertia_(cell, pt);
+  ScalarT const RCp = (density_(cell, pt) * heat_capacity_(cell, pt));
+  ScalarT const RLdfdT = (ice_density_ * latent_heat_ * dfdT);
+
+  // Return values
+  ice_saturation_(cell, pt)   = icurr;
+  water_saturation_(cell, pt) = wcurr;
+
+  return;
+
 }
+
 }  // namespace LCM
