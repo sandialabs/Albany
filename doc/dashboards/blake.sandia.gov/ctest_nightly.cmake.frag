@@ -459,6 +459,25 @@ if (BUILD_ALBANY_SERIAL)
   if (BUILD_LIBS_NUM_ERRORS GREATER 0)
     message ("Encountered build errors in Albany build. Exiting!")
   endif ()
+  #
+  # Run Albany tests
+  #
+  set (CTEST_TEST_TIMEOUT 600)
+
+  CTEST_TEST(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerial"
+    RETURN_VALUE  HAD_ERROR
+    )
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Test
+      RETURN_VALUE  S_HAD_ERROR
+      )
+
+    if (S_HAD_ERROR)
+      message(FATAL_ERROR "Cannot submit Albany test results!")
+    endif ()
+  endif ()
 endif ()
 
 
@@ -757,27 +776,23 @@ if (BUILD_ALBANY_OPENMP)
   #
   # Run Albany tests
   #
-
-if (ALBANY_RUNTESTS)
   set (CTEST_TEST_TIMEOUT 500)
-  if (BUILD_ALBANY_SERIAL)
-    CTEST_TEST (
-      BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerial"
-      RETURN_VALUE HAD_ERROR)
-  endif()
-  if (BUILD_ALBANY_OPENMP) 
-    CTEST_TEST (
-      BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildOpenMP"
-      RETURN_VALUE HAD_ERROR)
-  endif()
+
+  CTEST_TEST(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildOpenMP"
+    RETURN_VALUE  HAD_ERROR
+    )
 
   if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Test RETURN_VALUE S_HAD_ERROR)
+    ctest_submit (PARTS Test
+      RETURN_VALUE  S_HAD_ERROR
+      )
 
     if (S_HAD_ERROR)
-      message ("Cannot submit Albany test results!")
+      message(FATAL_ERROR "Cannot submit Albany test results!")
     endif ()
   endif ()
-endif ()
+
 
 endif ()
+
