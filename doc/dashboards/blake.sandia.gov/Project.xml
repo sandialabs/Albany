@@ -1,0 +1,10 @@
+<Project name="Albany">
+  <SubProject name="IKTBlakeTrilinosSerial">
+  </SubProject>
+  <SubProject name="IKTBlakeTrilinosOpenMP">
+  </SubProject>
+  <SubProject name="IKTBlakeAlbanySerial">
+  </SubProject>
+  <SubProject name="IKTBlakeAlbanyOpenMP">
+  </SubProject>
+</Project>
