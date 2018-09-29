@@ -486,24 +486,27 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   }
 
   // Calculate the depth-dependent porosity
-  // Note: The porosity does not change in time so this calculation only needs
+  // NOTE: The porosity does not change in time so this calculation only needs
   //       to be done once, at the beginning of the simulation.
-  ScalarT const porosity =
-      porosity0_ * std::exp(-pressure / (porosityE_ * 9.81 * 1500.0));
+  ScalarT const porosity = porosity0_;
+  // NOTE: Can't let this keep getting updated! So commenting out for now.
+  // porosity0_ * std::exp(-pressure / (porosityE_ * 9.81 * 1500.0));
 
   porosity_(cell, pt) = porosity;
 
   // Calculate melting temperature
   ScalarT sal   = 0.10;  // note: this should come from chemical part of model
   ScalarT sal15 = std::sqrt(sal * sal * sal);
-  // Tmelt is in Kelvin:
+  ScalarT pressure_fixed = 1.0;
+  // Tmelt is in Kelvin.
+  // NOTE: Tmelt is not currently used. Right now it is assumed to be 0C.
+  //       Once salinity is calculated, Tmelt should be used to shift the
+  //       dfdT function defined below.
   ScalarT Tmelt = (-0.057 * sal) + (0.00170523 * sal15) -
                   (0.0002154996 * sal * sal) -
-                  ((0.000753 / 10000.0) * pressure) + 273.15;
+                  ((0.000753 / 10000.0) * pressure_fixed) + 273.15;
 
-  // Calculate temperature change (not sure where temperature_ comes from, but
-  // it seems to be getting used in here already for the source term, and I
-  // assume its the current temperature value)
+  // Calculate temperature change
   ScalarT dTemp = Tcurr - Told;
   if (delta_time_(0) > 0.0) {
     tdot_(cell, pt) = dTemp / delta_time_(0);
@@ -511,23 +514,16 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     tdot_(cell, pt) = 0.0;
   }
 
-  // Calculate the freezing curve function df/dTemp
-  ScalarT T_range         = 1.0;
-  ScalarT T_low           = Tmelt - (T_range / 2.0);
-  ScalarT T_high          = Tmelt + (T_range / 2.0);
-  ScalarT i_sat_evaluated = -1.0;
-
-  // completely frozen
-  if (Tcurr <= T_low) { i_sat_evaluated = 1.0; }
-  // completely melted
-  if (Tcurr >= T_high) { i_sat_evaluated = 0.0; }
-  // in phase change
-  if ((Tcurr > T_low) && (Tcurr < T_high)) {
-    i_sat_evaluated = -1.0 * (Tcurr / T_range) + T_high;
-  }
-
+  // W term sets the width of the freezing curve.
+  ScalarT W               = 0.8;
+ 
+  // dfdT is a smooth function, but only valid for T <= 0C.
+  // NOTE: If phase change should occur symetrically about Tmelt, then 
+  //       the function can be shifted.
   ScalarT dfdT = 0.0;
-  if (dTemp > 0.0) { dfdT = (i_sat_evaluated - iold) / dTemp; }
+  if ((Tcurr-273.15) <= 0.0) {
+    dfdT = ((1.9*(Tcurr-273.15))/(W*W))*(exp(-((Tcurr-273.15)*(Tcurr-273.15)))/(W*W));
+  }
 
   // Update the ice saturation
   icurr = iold + dfdT * dTemp;
@@ -554,7 +550,11 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Update the material thermal inertia term
   thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt)) -
                                (ice_density_ * latent_heat_ * dfdT);
+  ScalarT const TI = thermal_inertia_(cell, pt);
+  ScalarT const RCp = (density_(cell, pt) * heat_capacity_(cell, pt));
+  ScalarT const RLdfdT = (ice_density_ * latent_heat_ * dfdT);
 
+  // Return values
   ice_saturation_(cell, pt)   = icurr;
   water_saturation_(cell, pt) = wcurr;
 
