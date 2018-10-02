@@ -15,7 +15,7 @@ unset https_proxy
 
 source blake_intel_modules.sh >& modules.out  
 
-export OMP_DISPLAY_ENV=TRUE
+#export OMP_DISPLAY_ENV=TRUE
 export OMP_NUM_THREADS=2
 export OMP_PLACES=threads
 export OMP_PROC_BIND=spread
