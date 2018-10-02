@@ -15,9 +15,10 @@
 #include <stk_mesh/base/GetEntities.hpp>
 #include "Albany_MaterialDatabase.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_ProblemUtils.hpp"
 #include "PHAL_Dimension.hpp"
 #include "Peridigm_ProximitySearch.hpp"
-#include "Phalanx_DataLayout.hpp"
+#include "Phalanx_DataLayout_MDALayout.hpp"
 #include "Phalanx_KokkosViewFactory.hpp"
 #include "Phalanx_MDField.hpp"
 
