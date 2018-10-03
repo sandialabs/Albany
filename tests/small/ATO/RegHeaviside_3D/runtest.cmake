@@ -50,7 +50,7 @@ message("${EXODIFF_TEST}")
 
 EXECUTE_PROCESS(
     COMMAND ${EXODIFF_TEST}
-    OUTPUT_FILE exodiff.out
+   # OUTPUT_FILE exodiff.out
     RESULT_VARIABLE HAD_ERROR)
 
 if(HAD_ERROR)
