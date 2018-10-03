@@ -565,16 +565,6 @@ ELSE()
   SET(ALBANY_PERIDIGM FALSE)
 ENDIF()
 
-# Set optional build of QCAD (Quantum Device Modeling and Design) defaults to OFF
-OPTION(ENABLE_QCAD "Flag to turn on QCAD Source code" OFF)
-IF (ENABLE_QCAD)
-  MESSAGE("-- QCAD      is Enabled, compiling with -DALBANY_QCAD")
-  SET(ALBANY_QCAD TRUE)
-ELSE()
-  MESSAGE("-- QCAD      is NOT Enabled.")
-  SET(ALBANY_QCAD FALSE)
-ENDIF()
-
 # Set optional build of LandIce (Land Ice SciDAC project), defaults to Disabled
 OPTION(ENABLE_LANDICE "Flag to turn on LandIce Source code" OFF)
 IF (ENABLE_LANDICE)
@@ -615,9 +605,9 @@ IF (ENABLE_CISM_INTERFACE AND ENABLE_LANDICE)
   ELSE()
     MESSAGE("---> CISM_EPETRA     is Disabled, NOT compiling with -DCISM_USE_EPETRA.  CISM-Albany will run with Tpetra software stack.")
   ENDIF()
-  IF (ENABLE_LCM OR ENABLE_LAME OR ENABLE_HYDRIDE OR ENABLE_DEMO_PDES)
+  IF (ENABLE_LCM OR ENABLE_LAME OR ENABLE_DEMO_PDES)
      MESSAGE("-- WARNING: cism_driver will not link properly when built if
-Albany was built with LCM, LAME, HYDRIDE or ENABLE_DEMO_PDES.  Turn these off to build
+Albany was built with LCM, LAME, or ENABLE_DEMO_PDES.  Turn these off to build
 cism_driver.")
   ENDIF ()
   MESSAGE("---> CISM_INTERFACE     is Enabled, compiling with -DCISM_HAS_LANDICE")
@@ -647,27 +637,6 @@ IF (ENABLE_TSUNAMI)
 ELSE()
   MESSAGE("-- TSUNAMI     is NOT Enabled.")
   SET(ALBANY_TSUNAMI FALSE)
-ENDIF()
-
-
-
-# Set optional build of AFRL MultiScale; defaults to OFF
-OPTION(ENABLE_AFRL "Flag to turn on AFRL Source code" OFF)
-IF (ENABLE_AFRL)
-  SET(ALBANY_AFRL TRUE)
-  SET(ENABLE_LCM ON)
-  MESSAGE("-- AFRL      is Enabled, compiling with -DALBANY_AFRL")
-  LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
-  FIND_PACKAGE(OpenSSL REQUIRED)
-  OPTION(AFRL_USE_RABBITMQ "Flag to use RabbitMQ in AFRL Source code" ON)
-  IF (AFRL_USE_RABBITMQ)
-    FIND_PACKAGE(RabbitMQ REQUIRED)
-  ELSE()
-    FIND_PACKAGE(ZeroMQ 3.0 REQUIRED)
-  ENDIF()
-ELSE()
-  MESSAGE("-- AFRL      is NOT Enabled.")
-  SET(ALBANY_AFRL FALSE)
 ENDIF()
 
 # set optional dependency of mesh on parameters, defaults to Disabled
@@ -812,116 +781,6 @@ IF (ENABLE_ASCR)
 ELSE()
   MESSAGE("-- ASCR      is NOT Enabled.")
   SET(ALBANY_ASCR FALSE)
-ENDIF()
-
-# Add option for Hydride work, defaults to disabled
-OPTION(ENABLE_HYDRIDE "Flag to turn on Hydride source code" OFF)
-IF (ENABLE_HYDRIDE)
-  IF (NOT ENABLE_LCM)
-    MESSAGE("-- HYDRIDE  requires LCM... compiling with -DALBANY_LCM")
-    SET(ALBANY_LCM TRUE)
-  ENDIF()
-  MESSAGE("-- HYDRIDE   is Enabled, compiling with -DALBANY_HYDRIDE")
-  SET(ALBANY_HYDRIDE TRUE)
-ELSE()
-  MESSAGE("-- HYDRIDE   is NOT Enabled.")
-  SET(ALBANY_HYDRIDE FALSE)
-ENDIF()
-
-# Set optional dependency on AMP, defaults to Disabled
-OPTION(ENABLE_AMP "Flag to turn on AMP (additive manufacturing processes) source code" OFF)
-IF (ENABLE_AMP)
-  SET(ALBANY_APF TRUE)
-  MESSAGE("-- AMP       is Enabled, compiling with -DALBANY_AMP")
-  SET(ALBANY_AMP TRUE)
-ELSE()
-  MESSAGE("-- AMP       is NOT Enabled.")
-  SET(ALBANY_AMP FALSE)
-ENDIF()
-
-# set optional dependency on CTM, defaults to Disabled
-OPTION(ENABLE_CTM "Flag to turn on CTM, coupled thermomechanics source code" OFF)
-IF(ENABLE_CTM)
-  IF(NOT ENABLE_LCM)
-    MESSAGE(FATAL_ERROR "CTM requires -DALBANY_LCM to be turned ON")
-  ENDIF()
-  IF(NOT ALBANY_APF)
-    MESSAGE(FATAL_ERROR "CTM requires -DALBANY_APF to be turned ON")
-  ENDIF()
-  MESSAGE("-- CTM       is Enabled, compiling with -DALBANY_CTM")
-  SET(ALBANY_CTM TRUE)
-ELSE()
-  MESSAGE("-- CTM       is NOT Enabled.")
-  SET(ALBANY_CTM FALSE)
-ENDIF()
-
-OPTION(ENABLE_ANISO "Flag to turn on anisotropic adaptive example" OFF)
-IF (ENABLE_ANISO)
-  SET(ALBANY_ANISO TRUE)
-  MESSAGE("-- ANISO     is Enabled, compiling with -DALBANY_ANISO")
-  LIST (FIND Trilinos_LIBRARIES pamgen Pamgen_List_ID)
-  IF (NOT Pamgen_List_ID GREATER -1)
-    MESSAGE(FATAL_ERROR "\nError: ANISO option requires Pamgen\n")
-  ENDIF()
-ELSE()
-  MESSAGE("-- ANISO     is NOT Enabled.")
-  SET(ALBANY_ANISO FALSE)
-ENDIF()
-
-# Set optional build of MOR (Model Order Reduction) defaults to OFF
-OPTION(ENABLE_MOR "Flag to turn on MOR Source code" OFF)
-IF (ENABLE_MOR)
-  MESSAGE("-- MOR       is Enabled, compiling with -DALBANY_MOR")
-  #Check if RBGen library has been built as a part of Anasazi.
-  #If not, throw fatal error - MOR requires RBGen.
-  LIST(FIND Trilinos_LIBRARIES rbgen rbgen_List_ID)
-  IF (rbgen_List_ID GREATER -1)
-    MESSAGE("-- Looking for rbgen library: -- Found, compiling with -DALBANY_RBGEN!  Continuing.")
-    #Check if kokkostsqr library has been built
-    #If not, throw fatal error - MOR requires kokkossqr
-    LIST(FIND Trilinos_LIBRARIES kokkostsqr tsqr_List_ID)
-    IF (tsqr_List_ID GREATER -1)
-      MESSAGE("-- Looking for kokkostqr library: -- Found.")
-    ELSE(tsqr_List_ID GREATER -1)
-      MESSAGE("---- Looking for kokkostsqr library: -- NOT found!")
-      MESSAGE(FATAL_ERROR "\nError:  MOR requires kokkostsqr library.  \n"
-              "To turn on, rebuild Trilinos with Trilinos_ENABLE_TpetraTSQR turned ON!")
-    ENDIF(tsqr_List_ID GREATER -1)
-    SET(ALBANY_RBGEN TRUE)
-    SET(ALBANY_MOR TRUE)
-  ELSE()
-    MESSAGE("---- Looking for rbgen library: -- NOT found!")
-    MESSAGE(FATAL_ERROR "\nError:  MOR requires RBGen library.  \n"
-            "To turn on, rebuild Trilinos with Anasazi_ENABLE_RBGen turned ON!")
-  ENDIF()
-ELSE()
-  MESSAGE("-- MOR       is NOT Enabled.")
-  SET(ALBANY_MOR FALSE)
-  SET(ALBANY_RBGEN FALSE)
-ENDIF()
-
-# Set optional build of ALBANY_CI Configuration Interaction, defaults to Disabled
-OPTION(ENABLE_ALBANY_CI "Flag to turn on Configuration Interaction" OFF)
-IF (ENABLE_ALBANY_CI)
-  IF(NOT ENABLE_QCAD)
-    MESSAGE(FATAL_ERROR "\nError:  ALBANY_CI requires ENABLE_QCAD to be ON\n")
-  ENDIF()
-  SET(ALBANY_CI TRUE)
-  MESSAGE("-- AlbanyCI  is Enabled, compiling with -DALBANY_CI")
-
-  IF(NOT ALBANY_CI_INCLUDE_DIR)
-    MESSAGE("\nError:  ALBANY_CI_INCLUDE_DIR not defined\n")
-  ELSE()
-    MESSAGE("-- ALBANY_CI_INCLUDE_DIR ${ALBANY_CI_INCLUDE_DIR}")
-  ENDIF()
-  IF(NOT ALBANY_CI_LIBRARY_DIR)
-    MESSAGE("\nError:  ALBANY_CI_LIBRARY_DIR not defined\n")
-  ELSE()
-    MESSAGE("-- ALBANY_CI_LIBRARY_DIR ${ALBANY_CI_LIBRARY_DIR}")
-  ENDIF()
-ELSE()
-  MESSAGE("-- AlbanyCI  is NOT Enabled.")
-  SET(ALBANY_CI FALSE)
 ENDIF()
 
 # Set optional dependency on SCOREC PUMI,  optional adaptivity
@@ -1297,14 +1156,6 @@ IF (ENABLE_MESHDB_TOOLS)
   MESSAGE("-- Mesh database tools       are Enabled.")
   SET(ALBANY_MESHDB_TOOLS TRUE)
 ENDIF()
-
-IF (ENABLE_QCAD AND (NOT ENABLE_ALBANY_EPETRA_EXE))
-  MESSAGE("-- WARNING: QCAD               is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
-ENDIF(ENABLE_QCAD AND (NOT ENABLE_ALBANY_EPETRA_EXE))
-
-IF (ENABLE_MOR AND (NOT ENABLE_ALBANY_EPETRA_EXE))
-  MESSAGE("-- WARNING: MOR               is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
-ENDIF(ENABLE_MOR AND (NOT ENABLE_ALBANY_EPETRA_EXE))
 
 # Repeat this warning.
 IF (ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE))

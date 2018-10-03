@@ -1,6 +1,0 @@
-element block square 1
-2 9
-node set left 1
-1 4
-node set right 1
-1 6

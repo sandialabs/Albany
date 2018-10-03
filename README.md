@@ -69,3 +69,13 @@ maintained inside the Albany repository at:
 The LaTeX Developer's Guide is located at:
 
 	/doc/developersGuide
+
+
+## Note on unsupported code
+
+A few folders (e.g., QCAD, MOR) are empty, containing only a README file.
+These folders refer to Albany packages that, due to a lack of resources, were
+not possible to be maintained anymore. On the README files, you can find information
+on how to rewind git history to a version where the package was supported and
+fully functioning (to the best of our knowledge), together with a sha for the
+trilinos revision to use. 
