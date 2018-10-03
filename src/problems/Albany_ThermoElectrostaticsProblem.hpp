@@ -95,11 +95,9 @@ namespace Albany {
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
 
-#ifdef ALBANY_QCAD
 #include "PHAL_TEProp.hpp"
 #include "PHAL_JouleHeating.hpp"
-#include "QCAD_PoissonResid.hpp"
-#endif
+#include "PHAL_PoissonResid.hpp"
 #include "PHAL_HeatEqResid.hpp"
 
 
@@ -256,7 +254,7 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
     //Output
     p->set<string>("Residual Name", "Potential Residual");
 
-    ev = rcp(new QCAD::PoissonResid<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new PHAL::PoissonResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

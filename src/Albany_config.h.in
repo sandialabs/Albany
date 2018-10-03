@@ -4,17 +4,13 @@
 // ======================== Albany packages and subpackages macros ============================== //
 
 #cmakedefine ALBANY_AERAS
-#cmakedefine ALBANY_AFRL
-#cmakedefine ALBANY_ANISO
 #cmakedefine ALBANY_APF
 #cmakedefine ALBANY_ATO
 #cmakedefine ALBANY_CATALYST
 #cmakedefine ALBANY_LANDICE
 #cmakedefine ALBANY_HYDRIDE
 #cmakedefine ALBANY_LCM
-#cmakedefine ALBANY_MOR
 #cmakedefine ALBANY_PERIDIGM
-#cmakedefine ALBANY_QCAD
 #cmakedefine ALBANY_TSUNAMI
 
 // ===================== Macros to identify packages found in Trilinos ======================= //
@@ -112,8 +108,6 @@
 
 #cmakedefine ALBANY_CONTACT
 #cmakedefine ALBANY_OMEGA_H
-#cmakedefine ALBANY_AMP
-#cmakedefine ALBANY_CTM
 #cmakedefine ALBANY_ASCR
 #cmakedefine ALBANY_BGL
 
@@ -149,10 +143,6 @@
   #cmakedefine ALBANY_LAMENT
   #cmakedefine LCM_SPECULATIVE
   #cmakedefine ALBANY_YAML
-#endif
-
-#ifdef ALBANY_QCAD
-  #cmakedefine ALBANY_CI
 #endif
 
 #endif // ALBANY_CONFIG_H

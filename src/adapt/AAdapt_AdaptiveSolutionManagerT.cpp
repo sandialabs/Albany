@@ -20,11 +20,7 @@
 #ifdef ALBANY_SCOREC
 #include "AAdapt_MeshAdapt.hpp"
 #endif
-#ifdef ALBANY_AMP
-#include "AAdapt_SimAdapt.hpp"
-#include "AAdapt_SimLayerAdapt.hpp"
-#endif
-#if (defined(ALBANY_SCOREC) || defined(ALBANY_AMP))
+#if defined(ALBANY_SCOREC)
 #include "Albany_APFDiscretization.hpp"
 #endif
 #include "AAdapt_RC_Manager.hpp"
@@ -157,7 +153,7 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
 
     }
   }
-#if (defined(ALBANY_SCOREC) || defined(ALBANY_AMP))
+#if defined(ALBANY_SCOREC)
   {
     const Teuchos::RCP< Albany::APFDiscretization > apf_disc =
       Teuchos::rcp_dynamic_cast< Albany::APFDiscretization >(disc_);
@@ -209,23 +205,6 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
     adapter_ = Teuchos::rcp(
       new AAdapt::MeshAdapt(adaptParams_, paramLib_, stateMgr_, rc_mgr,
                              commT_));
-  } else
-#endif
-#ifdef ALBANY_AMP
-  if (method == "Sim") {
-    bool add_layer = false;
-    if (adaptParams_->isType<bool>("Add Layer"))
-      add_layer = adaptParams_->get<bool>("Add Layer");
-    if (add_layer) { // add layer
-      *out << "************************" << std::endl;
-      *out << "    ADDING LAYER ON     " << std::endl;
-      *out << "************************" << std::endl;
-      adapter_ = Teuchos::rcp(
-          new AAdapt::SimLayerAdapt(adaptParams_, paramLib_, stateMgr_, commT_));
-    } else { // do not add layer
-      adapter_ = Teuchos::rcp(
-          new AAdapt::SimAdapt(adaptParams_, paramLib_, stateMgr_, commT_));
-    }
   } else
 #endif
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)

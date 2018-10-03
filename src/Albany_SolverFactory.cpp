@@ -39,17 +39,6 @@
 #include "Teko_StratimikosFactory.hpp"
 #endif
 
-#ifdef ALBANY_QCAD
-#if defined(ALBANY_EPETRA)
-#include "QCADT_Solver.hpp"
-#include "QCAD_CoupledPSObserver.hpp"
-#include "QCAD_CoupledPoissonSchrodinger.hpp"
-#include "QCAD_GenEigensolver.hpp"
-#include "QCAD_Solver.hpp"
-#endif
-#include "QCADT_CoupledPoissonSchrodinger.hpp"
-#endif
-
 #include "Albany_ModelEvaluatorT.hpp"
 #ifdef ALBANY_ATO
 #if defined(ALBANY_EPETRA)
@@ -219,13 +208,12 @@ Albany::SolverFactory::SolverFactory(
         inputFile, appParams.ptr(), *tcomm);
   }
 
-  // do not set default solver parameters for QCAD::Solver or ATO::Solver
+  // do not set default solver parameters for ATO::Solver
   // problems,
   // ... as they handle this themselves
   std::string solution_method =
       appParams->sublist("Problem").get("Solution Method", "Steady");
-  if (solution_method != "QCAD Multi-Problem" &&
-      solution_method != "ATO Problem") {
+  if (solution_method != "ATO Problem") {
     RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
     setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
     appParams->setParametersNotAlreadySet(*defaultSolverParams);
@@ -248,13 +236,12 @@ Albany::SolverFactory::SolverFactory(
     : appParams(input_appParams),
       out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
-  // do not set default solver parameters for QCAD::Solver or ATO::Solver
+  // do not set default solver parameters for ATO::Solver
   // problems,
   // ... as they handle this themselves
   std::string solution_method =
       appParams->sublist("Problem").get("Solution Method", "Steady");
-  if (solution_method != "QCAD Multi-Problem" &&
-      solution_method != "ATO Problem") {
+  if (solution_method != "ATO Problem") {
     RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
     setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
     appParams->setParametersNotAlreadySet(*defaultSolverParams);
@@ -322,79 +309,6 @@ Albany::SolverFactory::createAndGetAlbanyApp(
   const Teuchos::RCP<const Epetra_Comm> solverComm =
       Albany::createEpetraCommFromTeuchosComm(solverCommT);
 
-  if (solutionMethod == "QCAD Multi-Problem") {
-#ifdef ALBANY_QCAD
-    RCP<Epetra_Vector> initial_guessE;
-    if (Teuchos::nonnull(initial_guess))
-      Petra::TpetraVector_To_EpetraVector(
-          initial_guess, *initial_guessE, appComm);
-    return rcp(new QCAD::Solver(appParams, solverComm, initial_guessE));
-#else  /* ALBANY_QCAD */
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
-#endif /* ALBANY_QCAD */
-  }
-
-  if (solutionMethod == "QCAD Poisson-Schrodinger") {
-#ifdef ALBANY_QCAD
-    RCP<Epetra_Vector> initial_guessE;
-    if (Teuchos::nonnull(initial_guess))
-      Petra::TpetraVector_To_EpetraVector(
-          initial_guess, *initial_guessE, appComm);
-    const RCP<QCAD::CoupledPoissonSchrodinger> ps_model =
-        rcp(new QCAD::CoupledPoissonSchrodinger(
-            appParams, solverComm, initial_guessE));
-    const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
-
-    // Create and setup the Piro solver factory
-    Piro::Epetra::SolverFactory piroEpetraFactory;
-    {
-      // Do we need: Observers for output from time-stepper ??
-      const RCP<Piro::ProviderBase<NOX::Epetra::Observer>> noxObserverProvider =
-          rcp(new QCAD::CoupledPS_NOXObserverConstructor(ps_model));
-      //  rcp(new NOXObserverConstructor(poisson_app));
-      piroEpetraFactory.setSource<NOX::Epetra::Observer>(noxObserverProvider);
-
-      // LOCA auxiliary objects -- needed?
-    }
-    // Piro::Epetra::SolverFactory
-    return piroEpetraFactory.createSolver(piroParams, ps_model);
-
-#else  /* ALBANY_QCAD */
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
-#endif /* ALBANY_QCAD */
-  }
-
-  if (solutionMethod == "Eigensolve") {
-#ifdef ALBANY_QCAD
-
-    RCP<Albany::Application> app;
-    if (createAlbanyApp) {
-      app       = rcp(new Albany::Application(
-          appCommT, appParams, initial_guess, is_schwarz_));
-      albanyApp = app;
-    } else
-      app = albanyApp;
-
-    const RCP<EpetraExt::ModelEvaluator> model = createModel(app, appCommT);
-
-    // QCAD::GenEigensolver uses a state manager as an observer (for now)
-    RCP<Albany::StateManager> observer = rcp(&(app->getStateMgr()), false);
-
-    // Currently, QCAD eigensolver just uses LOCA's eigensolver list under Piro
-    // -- maybe give it it's own list
-    //   outside of Piro?
-    const RCP<ParameterList> eigensolveParams = rcp(
-        &(appParams->sublist("Piro").sublist("LOCA").sublist("Stepper").sublist(
-            "Eigensolver")),
-        false);
-    const RCP<QCAD::GenEigensolver> es_model = rcp(new QCAD::GenEigensolver(
-        eigensolveParams, model, observer, solverComm));
-    return es_model;
-
-#else  /* ALBANY_QCAD */
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
-#endif /* ALBANY_QCAD */
-  }
 #if defined(ALBANY_LCM)
   bool const is_schwarz = solutionMethod == "Coupled Schwarz" ||
                           solutionMethod == "Alternating Schwarz";
@@ -530,10 +444,8 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     const RCP<Thyra::LinearOpWithSolveFactoryBase<double>> lowsFactory =
         createLinearSolveStrategy(linearSolverBuilder);
 
-    if (solutionMethod == "QCAD Multi-Problem" ||
-        solutionMethod == "QCAD Poisson-Schrodinger" ||
-        solutionMethod == "ATO Problem") {
-      // These QCAD and ATO solvers do not contain a primary Albany::Application
+    if (solutionMethod == "ATO Problem") {
+      // This ATO solver does not contain a primary Albany::Application
       // instance and so albanyApp is null.
       // For now, do not resize the response vectors. FIXME sort out this issue.
       const RCP<Thyra::ModelEvaluator<double>> thyraModel =
@@ -563,9 +475,7 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
       this->createAndGetAlbanyApp(
           albanyApp, appCommT, solverCommT, initial_guess, createAlbanyApp);
 
-  if (solutionMethod == "QCAD Multi-Problem" ||
-      solutionMethod == "QCAD Poisson-Schrodinger" ||
-      solutionMethod == "ATO Problem") {
+  if (solutionMethod == "ATO Problem") {
     return Thyra::epetraModelEvaluator(epetraSolver, Teuchos::null);
   } else {
     //    const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory =
@@ -615,110 +525,6 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       problemParams->get("Solution Method", "Steady");
 
   bool TpetraBuild = Albany::build_type() == Albany::BuildType::Tpetra;
-
-  if (solutionMethod == "QCAD Multi-Problem") {
-#ifdef ALBANY_QCAD
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::logic_error,
-        "QCAD Multi-Problem does not work with AlbanyT executable!  "
-        "QCAD::Solver class needs to be implemented with Thyra::ModelEvaluator "
-        "instead of EpetraExt. \n");
-// IK, 7/25/17: need to finish implementing QCADT::Solver class that returns
-// Thyra::ModelEvaluator instead of EpetraExt one
-// and takes in Tpetra objects.
-// return rcp(new QCADT::Solver(appParams, solverComm, initial_guess));
-#else  /* ALBANY_QCAD */
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
-#endif /* ALBANY_QCAD */
-  }
-
-  if (solutionMethod == "QCAD Poisson-Schrodinger") {
-#ifdef ALBANY_QCAD
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::logic_error,
-        "QCAD Poisson-Schrodinger does not work with AlbanyT executable!  "
-        "QCAD::CoupledPoissonSchrodinger class needs to be implemented with "
-        "Thyra::ModelEvaluator instead of EpetraExt. \n");
-    std::cout
-        << "In Albany_SolverFactory: solutionMethod = QCAD Poisson-Schrodinger!"
-        << std::endl;
-    const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
-    const Teuchos::RCP<Teuchos::ParameterList> stratList =
-        Piro::extractStratimikosParams(piroParams);
-    // Create and setup the Piro solver factory
-    Piro::SolverFactory piroFactory;
-    // Setup linear solver
-    Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
-    // FIXME, IKT, 5/22/15: inject Ifpack2, MueLu, Teko into Stratimikos.
-    linearSolverBuilder.setParameterList(stratList);
-    const RCP<Thyra::LinearOpWithSolveFactoryBase<ST>> lowsFactory =
-        createLinearSolveStrategy(linearSolverBuilder);
-    const RCP<QCADT::CoupledPoissonSchrodinger> ps_model =
-        rcp(new QCADT::CoupledPoissonSchrodinger(
-            appParams, solverComm, initial_guess, lowsFactory));
-    // FIXME, IKT, 5/22/15: add observer!
-    // const RCP<QCAD::CoupledPoissonSchrodinger> ps_model = rcp(new
-    // QCAD::CoupledPoissonSchrodinger(appParams, solverComm, initial_guess));
-    // const RCP<ParameterList> piroParams = Teuchos::sublist(appParams,
-    // "Piro");
-
-    // Create and setup the Piro solver factory -- need to convert to not be
-    // based on Epetra!
-    // Piro::Epetra::SolverFactory piroFactory;
-    // Replace above with Piro::SolverFactory piroFactory; ?
-    /*{
-      // Do we need: Observers for output from time-stepper ??
-       const RCP<Piro::ProviderBase<NOX::Epetra::Observer> > noxObserverProvider
-      =
-        rcp(new QCAD::CoupledPS_NOXObserverConstructor(ps_model));
-        //  rcp(new NOXObserverConstructor(poisson_app));
-        piroFactory.setSource<NOX::Epetra::Observer>(noxObserverProvider);
-
-      // LOCA auxiliary objects -- needed?
-       }
-    */
-    // Piro::SolverFactory
-    //      return piroFactory.createSolver<ST>(piroParams, ps_model);
-    RCP<Thyra::AdaptiveSolutionManager> solMgrT = Teuchos::null;
-    return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
-        piroParams, ps_model, solMgrT, Teuchos::null /* observer */);
-
-#else  /* ALBANY_QCAD */
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
-#endif /* ALBANY_QCAD */
-  }
-
-  if (solutionMethod == "Eigensolve") {
-#ifdef ALBANY_QCAD
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::logic_error,
-        "Eigensolve does not work with AlbanyT executable!  "
-        "QCAD::GenEigensolver class needs to be implemented with "
-        "Thyra::ModelEvaluator instead of EpetraExt. \n");
-
-    // RCP<Albany::Application> app;
-    // const RCP<Thyra::ModelEvaluator<ST> > modelT_ =
-    // createAlbanyAppAndModelT(app, appComm, initial_guess); albanyApp = app;
-
-    // QCAD::GenEigensolver uses a state manager as an observer (for now)
-    // RCP<Albany::StateManager> observer = rcp( &(app->getStateMgr()), false);
-
-    // Currently, QCAD eigensolver just uses LOCA's eigensolver list under Piro
-    // -- maybe give it it's own list outside of Piro? const RCP<ParameterList>
-    // eigensolveParams =
-    // rcp(&(appParams->sublist("Piro").sublist("LOCA").sublist("Stepper").sublist("Eigensolver")),
-    // false);
-    // const RCP<QCAD::GenEigensolver> es_model = rcp(new
-    // QCAD::GenEigensolver(eigensolveParams, modelT_, observer, solverComm));
-    // return es_model;
-
-#else  /* ALBANY_QCAD */
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
-#endif /* ALBANY_QCAD */
-  }
 
   if (solutionMethod == "ATO Problem") {
 #ifdef ALBANY_ATO
@@ -1475,12 +1281,6 @@ Albany::SolverFactory::getValidDebugParameters() const
   validPL->set<bool>("Write Distributed Solution and Map to MatrixMarket", false, "Flag to Write Distributed Solution and Map to MatrixMarket"); 
   validPL->set<bool>("Write Solution to Standard Output", false, "Flag to Write Sotion to Standard Output");
   validPL->set<bool>("Analyze Memory", false, "Flag to Analyze Memory");
-#ifdef ALBANY_QCAD
-  validPL->set<std::string>("Poisson XML Input", "debugInput.xml", "Debug PL for QCAD Poisson problem"); 
-  validPL->set<std::string>("Schrodinger XML Input", "debugInput.xml", "Debug PL for QCAD Schrodinger problem");
-  validPL->set<std::string>("Poisson Exodus Output", "debug_poisson.exo", "Debug Exo File for QCAD Poisson problem"); 
-  validPL->set<std::string>("Schrodinger Exodus Output", "debug_schrodinger.exo", "Debug Exo File for QCAD Schrodinger problem"); 
-#endif
   return validPL; 
 }
 

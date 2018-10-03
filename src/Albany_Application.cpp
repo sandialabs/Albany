@@ -733,15 +733,6 @@ void Albany::Application::setScaling(
   if (scale == 1.0)
     scaleBCdofs = false;
 
-  if ((isQCADProblem(params) == true) && (scaleBCdofs == true)) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                               std::endl
-                               << "Error in Albany::Application: "
-                               << "Scale BC dofs does not work for QCAD "
-                                  "Poisson or Schrodinger problems. "
-                               << std::endl);
-  }
-
 }
 
 bool Albany::Application::isLCMProblem(
@@ -767,28 +758,6 @@ bool Albany::Application::isLCMProblem(
     return false; 
   }*/
 }
-
-bool Albany::Application::isQCADProblem(
-    const Teuchos::RCP<Teuchos::ParameterList> &params) const 
-{
-  
-  RCP<Teuchos::ParameterList> problemParams =
-      Teuchos::sublist(params, "Problem", true);
-  if ((problemParams->get("Name", "Heat 1D") == "Poisson 1D") ||
-      (problemParams->get("Name", "Heat 1D") == "Poisson 2D") ||
-      (problemParams->get("Name", "Heat 1D") == "Poisson 3D") ||
-      (problemParams->get("Name", "Heat 1D") == "Schrodinger 1D") ||
-      (problemParams->get("Name", "Heat 1D") == "Schrodinger 2D") ||
-      (problemParams->get("Name", "Heat 1D") == "Schrodinger 3D"))
-  { 
-    return true; 
-  }
-  else 
-  {
-    return false; 
-  }
-}
-
 
 void Albany::Application::finalSetUp(
     const Teuchos::RCP<Teuchos::ParameterList> &params,

@@ -143,6 +143,7 @@ SET(SOURCES ${SOURCES}
   problems/Albany_ProblemUtils.cpp
   problems/Albany_ResponseUtilities.cpp
   problems/Albany_SideLaplacianProblem.cpp
+  problems/Albany_ThermoElectrostaticsProblem.cpp
   problems/Albany_MaterialDatabase.cpp
   )
 SET(PDE_SRCS
@@ -171,6 +172,7 @@ SET(HEADERS ${HEADERS}
   problems/Albany_ResponseUtilities.hpp
   problems/Albany_ResponseUtilities_Def.hpp
   problems/Albany_SideLaplacianProblem.hpp
+  problems/Albany_ThermoElectrostaticsProblem.hpp
   problems/Albany_MaterialDatabase.hpp
   )
 SET(PDE_HDRS
@@ -593,41 +595,6 @@ IF(ALBANY_ASCR AND ALBANY_EPETRA)
     )
 ENDIF()
 
-IF(ALBANY_HYDRIDE AND (NOT ALBANY_DEMO_PDES))
-  SET(SOURCES ${SOURCES}
-    evaluators/utility/PHAL_LangevinNoiseTerm.cpp
-    )
-  SET(HEADERS ${HEADERS}
-    evaluators/utility/PHAL_LangevinNoiseTerm.hpp
-    evaluators/utility/PHAL_LangevinNoiseTerm_Def.hpp
-    )
-ENDIF()
-
-
-if (ALBANY_MOR AND ALBANY_EPETRA)
-  include_directories (./MOR)
-
-  set (MOR_ALBANY_HEADERS
-    MOR/Albany_DiscretizationDofListProvider.hpp
-    MOR/Albany_MORDiscretizationUtils.hpp
-    MOR/Albany_MORFacade.hpp
-    MOR/Albany_MORFacadeImpl.hpp
-    MOR/Albany_StkEpetraMVSource.hpp
-    MOR/Albany_StkNodalBasisSource.hpp
-    )
-
-  set (MOR_ALBANY_SOURCES
-    MOR/Albany_DiscretizationDofListProvider.cpp
-    MOR/Albany_MORDiscretizationUtils.cpp
-    MOR/Albany_MORFacadeImpl.cpp
-    MOR/Albany_StkEpetraMVSource.cpp
-    MOR/Albany_StkNodalBasisSource.cpp
-    )
-
-  set(SOURCES ${SOURCES} ${MOR_ALBANY_SOURCES})
-  set(HEADERS ${HEADERS} ${MOR_ALBANY_HEADERS})
-endif ()
-
 IF (ALBANY_SCOREC_STANDALONE)
   SET(SCOREC_LIB SCOREC::core)
 ENDIF()
@@ -696,21 +663,6 @@ include_directories (${ALBANY_PUMI_INCLUDE_DIRS}
                      ./Tsunami/evaluators
                      ./Aeras/problems
                      ./Aeras/evaluators
-                     ./Hydride/problems
-                     ./Hydride/evaluators
-         ./AFRL/
-         ./AFRL/problems
-         ./AFRL/evaluators
-         ./AFRL/communicators
-                     ./AMP/
-                     ./AMP/problems
-                     ./AMP/evaluators
-                     ./AMP/responses
-                     ./ANISO
-                     ./QCAD
-                     ./QCAD/problems
-                     ./QCAD/evaluators
-                     ./QCAD/responses
                      ./ATO
                      ./ATO/problems
                      ./ATO/evaluators
@@ -796,15 +748,6 @@ ELSE()
   set(Peridigm_LIBRARIES )
 ENDIF()
 
-# Albany CI (Configuration Interaction)
-IF(ALBANY_CI)
-  include_directories (${ALBANY_CI_INCLUDE_DIR})
-  link_directories (${ALBANY_CI_LIBRARY_DIR})
-  set(ALBANY_CI_LIB albanyCILib)
-ELSE()
-  set(ALBANY_CI_LIB )
-ENDIF()
-
 # RPI APF mesh interface
 IF(ALBANY_APF)
   SET(ALBANY_PUMI_INCLUDE_DIRS ./disc/pumi)
@@ -863,19 +806,6 @@ IF (ALBANY_DAKOTA)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakotaT)
 ENDIF ()
 
-IF (ALBANY_MOR AND ALBANY_EPETRA)
-  IF (ALBANY_RBGEN)
-    add_executable(AlbanyRBGen MOR/Main_RBGen.cpp)
-    SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyRBGen)
-  ENDIF ()
-  IF (ALBANY_SEACAS)
-    add_executable(AlbanyMeshSample MOR/Main_MeshSample.cpp)
-    SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMeshSample)
-  ENDIF ()
-  add_executable(AlbanyRomPostProcess MOR/Main_RomPostProcess.cpp)
-  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyRomPostProcess)
-ENDIF ()
-
 IF (ALBANY_EPETRA)
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
@@ -926,16 +856,6 @@ IF(ALBANY_DEMO_PDES)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPDEs)
 ENDIF()
 
-IF (ALBANY_MOR AND ALBANY_EPETRA)
-  add_subdirectory(MOR)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} MOR)
-ENDIF()
-
-IF (ALBANY_QCAD)
-  add_subdirectory(QCAD)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} QCAD)
-ENDIF()
-
 IF (ALBANY_LANDICE)
   add_subdirectory(LandIce)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} LandIce)
@@ -968,21 +888,6 @@ IF(ALBANY_APF)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPUMI)
 ENDIF()
 
-IF (ALBANY_AFRL)
-  add_subdirectory(AFRL)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AFRL)
-ENDIF()
-
-IF (ALBANY_AMP)
-  add_subdirectory(AMP)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AMP)
-ENDIF()
-
-IF (ALBANY_ANISO)
-  add_subdirectory(ANISO)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ANISO)
-ENDIF()
-
 IF(ALBANY_CATALYST)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyCatalyst)
 endif()
@@ -993,16 +898,6 @@ IF (ALBANY_ATO)
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ATO)
     # iso library uses stk
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ISOLIB_LIB})
-ENDIF()
-
-IF (ALBANY_HYDRIDE)
-  # Hydride requires LCM. However, LCM builds several excecutables. If shared
-  # libraries are used, then all symbols must be defined. Hence
-  # add_subdirectory(Hydride) must be called before, not after,
-  # add_subdirectory(LCM) so that LCM/CMakeLists.txt knows about the Hydride
-  # shared lib.
-  add_subdirectory(Hydride)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} hydride)
 ENDIF()
 
 IF (ALBANY_LCM)
@@ -1019,10 +914,6 @@ endif()
 
 # Repeat libraries twice to catch circular dependencies
 SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
-
-IF (ALBANY_CTM)
-  add_subdirectory(CTM)
-ENDIF()
 
 MESSAGE("-- Albany Executables to link: ${ALBANY_EXECUTABLES}")
 

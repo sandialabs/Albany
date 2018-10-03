@@ -89,13 +89,6 @@ ENDIF()
 
 IF(ALBANY_STK)
 
-# QCAD ##################
-
-IF(ALBANY_QCAD AND ALBANY_SEACAS)
-  add_subdirectory(QCAD)
-  add_subdirectory(ThermoElectrostatics2D)
-ENDIF()
-
 # ATO ##################
 
 IF(ALBANY_ATO)
@@ -113,18 +106,6 @@ ENDIF()
 IF(ALBANY_TSUNAMI AND ALBANY_SEACAS )
   add_subdirectory(Tsunami)
 ENDIF()
-
-# MOR   ##################
-
-IF(ALBANY_MOR AND ALBANY_EPETRA)
-  add_subdirectory(MOR)
-ENDIF()
-
-# ANISO #################
-
-IF(ALBANY_ANISO)
-  add_subdirectory(ANISO)
-ENDIF(ALBANY_ANISO)
 
 ENDIF(ALBANY_STK)
 
