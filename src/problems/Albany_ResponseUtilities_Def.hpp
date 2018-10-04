@@ -21,9 +21,9 @@
 #include "PHAL_ResponseSquaredL2DifferenceSide.hpp"
 #include "PHAL_SaveNodalField.hpp"
 #ifdef ALBANY_LANDICE
-  #include "LandIce_ResponseSurfaceVelocityMismatch.hpp"
-  #include "LandIce_ResponseSMBMismatch.hpp"
-  #include "LandIce_ResponseBoundarySquaredL2Norm.hpp"
+#include "LandIce_ResponseSurfaceVelocityMismatch.hpp"
+#include "LandIce_ResponseSMBMismatch.hpp"
+#include "LandIce_ResponseBoundarySquaredL2Norm.hpp"
 #endif
 #if defined(ALBANY_LCM)
 #include "IPtoNodalField.hpp"
@@ -178,18 +178,6 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 
     res_ev = rcp(new QCAD::ResponseSaveField<EvalT,Traits>(*p, dl));
   }
-  else if (responseName == "Region Boundary")
-  {
-#if defined(ALBANY_EPETRA)
-    res_ev = rcp(new QCAD::ResponseRegionBoundary<EvalT,Traits>(*p, dl));
-#else
-  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                                  std::endl << "Error in Albany::ResponseUtilities:  " <<
-                                  "Region Boundary Response not available if ALBANY_EPETRA_EXE is OFF " << std::endl);
-#endif
-  }
-#endif
-
   else if (responseName == "PHAL Field Integral")
   {
 #if defined(ALBANY_EPETRA)

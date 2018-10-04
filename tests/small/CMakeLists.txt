@@ -55,6 +55,7 @@ IF(ALBANY_DEMO_PDES)
   add_subdirectory(ReactDiffSystem)
   add_subdirectory(ComprNS)
   add_subdirectory(ODE)
+  add_subdirectory(ThermoElectrostatics2D)
   add_subdirectory(TekoPrec)
 
   # These require exodus, Ioss, stk_io, to read meshes

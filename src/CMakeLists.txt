@@ -355,6 +355,7 @@ SET(PDE_SRCS ${PDE_SRCS}
   evaluators/pde/PHAL_ComprNSResid.cpp
   evaluators/pde/PHAL_ComprNSViscosity.cpp
   evaluators/pde/PHAL_HelmholtzResid.cpp
+  evaluators/pde/PHAL_JouleHeating.cpp
   evaluators/pde/PHAL_LinComprNSBodyForce.cpp
   evaluators/pde/PHAL_LinComprNSResid.cpp
   evaluators/pde/PHAL_NSBodyForce.cpp
@@ -369,7 +370,9 @@ SET(PDE_SRCS ${PDE_SRCS}
   evaluators/pde/PHAL_NSTauT.cpp
   evaluators/pde/PHAL_NSThermalEqResid.cpp
   evaluators/pde/PHAL_ODEResid.cpp
+  evaluators/pde/PHAL_PoissonResid.cpp
   evaluators/pde/PHAL_Permittivity.cpp
+  evaluators/pde/PHAL_TEProp.cpp
   evaluators/pde/PNP_ConcentrationResid.cpp
   evaluators/pde/PNP_PotentialResid.cpp
   )
@@ -551,6 +554,8 @@ SET(PDE_HDRS ${PDE_HDRS}
   evaluators/pde/PHAL_ComprNSViscosity_Def.hpp
   evaluators/pde/PHAL_HelmholtzResid.hpp
   evaluators/pde/PHAL_HelmholtzResid_Def.hpp
+  evaluators/pde/PHAL_JouleHeating.hpp
+  evaluators/pde/PHAL_JouleHeating_Def.hpp
   evaluators/pde/PHAL_LinComprNSBodyForce.hpp
   evaluators/pde/PHAL_LinComprNSBodyForce_Def.hpp
   evaluators/pde/PHAL_LinComprNSResid.hpp
@@ -579,6 +584,12 @@ SET(PDE_HDRS ${PDE_HDRS}
   evaluators/pde/PHAL_NSThermalEqResid_Def.hpp
   evaluators/pde/PHAL_ODEResid.hpp
   evaluators/pde/PHAL_ODEResid_Def.hpp
+  evaluators/pde/PHAL_PoissonResid.hpp
+  evaluators/pde/PHAL_PoissonResid_Def.hpp
+  evaluators/pde/PHAL_Permittivity.hpp
+  evaluators/pde/PHAL_Permittivity_Def.hpp
+  evaluators/pde/PHAL_TEProp.hpp
+  evaluators/pde/PHAL_TEProp_Def.hpp
   evaluators/pde/PNP_ConcentrationResid.hpp
   evaluators/pde/PNP_ConcentrationResid_Def.hpp
   evaluators/pde/PNP_PotentialResid.hpp

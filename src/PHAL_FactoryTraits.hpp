@@ -124,7 +124,7 @@ namespace PHAL {
        PHAL::GatherCoordinateVector<_,Traits>,    //  2
        PHAL::GatherSolution<_,Traits>,            //  3
        PHAL::LoadStateField<_,Traits>,            //  4
-       PHAL::GatherScalarNodalParameter<_,Traits>,//  5
+       PHAL::GatherScalarNodalParameter<_,Traits> //  5
 #if defined(ALBANY_LCM)
        , LCM::TimeTracBC<_, Traits>               //  6
 #endif

@@ -22,6 +22,7 @@
 #include "Albany_ComprNSProblem.hpp"
 #include "Albany_ODEProblem.hpp"
 #include "Albany_PNPProblem.hpp"
+#include "Albany_ThermoElectrostaticsProblem.hpp"
 #endif
 
 #ifdef ALBANY_ATO
@@ -164,7 +165,6 @@ Albany::ProblemFactory::create()
   else if (method == "PNP 3D") {
     strategy = rcp(new Albany::PNPProblem(problemParams, paramLib, 3));
   }
-#endif
   else if (method == "ThermoElectrostatics 1D") {
     strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 1));
   }
@@ -174,6 +174,7 @@ Albany::ProblemFactory::create()
   else if (method == "ThermoElectrostatics 3D") {
     strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 3));
   }
+#endif
 #if defined(ALBANY_LCM)
   else if (method == "LAME" || method == "Lame" || method == "lame") {
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
