@@ -81,13 +81,16 @@ end
 using LinearAlgebra
 
 function write_vtk(filename, coord, conn, u, v)
+    num_cells = size(conn, 1)
+    num_nodes = size(coord, 1)
+    nodes_per_cell = size(conn, 2) - 1
+    cell_type = ones(Int, num_cells, 1) * 12
     theta = zeros(num_nodes)
     phi = zeros(num_nodes)
     for i = 1 : num_nodes
         theta[i] = norm(u[i, :])
         phi[i] = norm(v[i, :])
     end
-    cell_type = ones(Int, num_cells, 1) * 12
     open(filename, "w") do file
         print(file, "# vtk DataFile Version 3.0\n")
         print(file, "LGR\n")

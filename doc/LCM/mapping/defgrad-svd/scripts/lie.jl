@@ -439,7 +439,7 @@ function RVcontin(old, last)
     unit = normalize(vec(old))
     if (norm_old > 0.0)
         diff = last - old
-        proj = vecdot(unit, diff)
+        proj = dot(unit, diff)
     else
         unit = normalize(vec(last))
         proj = norm(last)
