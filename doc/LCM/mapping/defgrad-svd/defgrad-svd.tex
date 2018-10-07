@@ -1,0 +1,343 @@
+\documentclass{article}
+
+\usepackage{algpseudocode}
+\usepackage{alltt}
+\usepackage{amsbsy}
+\usepackage{amscd}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{boldtensors}
+\usepackage{booktabs}
+\usepackage{color}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{float}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage{multirow}
+\usepackage{siunitx}
+\usepackage{supertabular}
+\usepackage{times}
+% Has to go before tikz
+\usepackage[dvipsnames]{xcolor}
+\usepackage{tikz}
+\usepackage{tikz-3dplot}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{xspace}
+
+\usepackage[nomessages]{fp}
+\usepackage[english]{babel}
+\usepackage[boxed]{algorithm}
+\usepackage[FIGBOTCAP,TABTOPCAP,bf,tight]{subfigure}
+\usepackage[T1]{fontenc}
+\usepackage{ae,aecompl}
+\usepackage[abs]{overpic}
+\usepackage[normalem]{ulem}
+\usepackage[font=footnotesize]{caption}
+
+% cleveref must appear after hyperref to avoid conflicts
+\usepackage[colorlinks]{hyperref}
+\usepackage{cleveref}
+
+\usepackage[backend=bibtex,maxcitenames=2]{biblatex}
+\addbibresource{defgrad-svd.bib}
+
+\usetikzlibrary{arrows,calc,decorations.markings,math,arrows.meta}
+\usetikzlibrary{shapes.geometric,patterns}
+
+\input{notation-defs.tex}
+
+\newcommand{\lx}[2]{{\color{blue}{#1}} {\color{blue}{#2}}}
+
+\newcommand{\alexa}{\textsc{Alexa}}
+\newcommand{\minitensor}{\textsc{MiniTensor}}
+\newcommand{\svd}{\textsc{SVD}}
+\newcommand{\trilinos}{\textsc{Trilinos}}
+
+\newcommand{\diag}{\op{diag}}
+\renewcommand{\skew}{\op{skew}}
+
+\providecommand{\keywords}[1]{\textbf{Keywords:} #1}
+
+\begin{document}
+
+\pagestyle{fancyplain}
+
+\lhead [\fancyplain{}{\emph{A. Mota}}]
+{\fancyplain{}{\emph{A. Mota}}}
+
+\rhead
+[\fancyplain{}{\emph{Update and map deformation gradient via SVD}}]
+{\fancyplain{}{\emph{Update and map deformation gradient via SVD}}}
+
+\title{Update and map deformation gradient via SVD}
+
+\author{\Large Alejandro Mota$^1$\thanks{Email: amota@sandia.gov}
+  \\
+  \\
+  $^1$Mechanics of Materials\\
+  Sandia National Laboratories\\
+  Livermore, CA 94550, USA\\
+}
+
+\date{\today}
+
+\maketitle
+
+\begin{abstract}
+  We advocate the use of the singular value decomposition (\svd{}) for
+  the storage, update, and mapping of the deformation gradient for
+  solid mechanics problems with extremely large deformations.
+\end{abstract}
+
+\keywords{mapping, internal variables, kinematics, deformation
+  gradient, singular value decomposition}
+
+\section{Introduction}
+\label{sec:intro}
+
+Our previous work on mapping and updating internal variables via $L_2$
+projections and Lie group interpolations did not contemplate the case
+of extremely large deformation \autocite{Mota.etal:2013}. When very
+large deformation is involved, the deformation gradient $~F$ may have
+a rotation component that has an angle of rotation
+$\theta \approx n \pi$, where $n \in {"Z}_{\ge 0}$. In that situation,
+algorithms to compute the principal logarithm of $~F$ may fail or
+require the use of complex arithmetic. This is undesirable. On the
+other hand, \textcite{Mota.etal:2013} advocate the use of the polar
+decomposition of the deformation gradient $~F = ~R ~U$, compute the
+logarithm of the rotation $~R$ and stretch $~U$ separately, map, and
+then reconstitute the deformation gradient field by means of the
+exponential map. This method requires the use of five tensor
+algorithms: polar decomposition; logarithmic map for rotations;
+logarithmic map for symmetric positive definite tensors; exponential
+map for symmetrc tensors; and the exponential map for rotations. The
+use of specialized algorithms for rotations and symmetric tensors
+seeks to exploit their structure to minimize floating point
+operations.
+
+Herein, we advocate the use of the singular value decomposition
+(\svd{}) to adress the case of very large deformation. An additional
+benefit is the reduction of storage and decrease of the number of
+tensor algorithms from five to three, as follows. First compute the
+\svd{} of the deformation gradient $~F = ~U ~S ~V^{\text{T}}$, then
+compute the logarithmic map of each of the components, map, apply the
+exponential map, and reconstitute the mapped deformation
+gradient. Since the logarithm of each of the components of the \svd{}
+requires three scalars, the amount of storage is the same as for the
+deformation gradient $~F$ or its principal logarithm $\log
+~F$. Furthermore, the required logarithmic and exponential maps are
+those corresponding to either scalars or proper
+rotations. Additionally, provided that the deformation gradient is
+non-singular, the singular values are guaranteed to be positive. This
+is all described in detail in \Cref{alg:defgrad-svd}.
+
+\begin{algorithm}[htbp]
+  \footnotesize
+  \begin{algorithmic}[1]
+
+    \State
+    $~u \gets ~0, ~s \gets ~0, ~v \gets ~0$
+    \Comment
+    Rotation pseudovectors of initial $~U=~I, ~V=~I$,
+    Lie algebra vector of initial $~S=~I$
+
+    \State $t \gets 0$
+
+    \Repeat
+    \Comment{Time integration loop}
+
+    \State \label{alg:skew-diag}
+    $~U \gets \exp \skew ~u, \enspace ~S \gets \diag \exp ~s, \enspace
+    ~V \gets \exp \skew ~v$
+
+    \State
+    $~F \gets ~U ~S ~V^\text{T}$
+    
+    \State
+    Compute increment of deformation gradient $\triangle ~F$
+
+    \State \label{alg:svd}
+    $\left(\triangle ~U, \triangle ~S, \triangle ~V\right)
+    \gets \svd(\triangle ~F)$
+
+    \State 
+    $~U \gets \triangle ~U \cdot ~U,
+    \enspace
+    ~S \gets \triangle ~S \cdot ~S,
+    \enspace
+    ~V \gets \triangle ~V \cdot ~V$
+    
+    \State 
+    $~u \gets \skew \log ~U,
+    \enspace
+    ~s \gets \log \diag ~S,
+    \enspace
+    ~v \gets \skew \log ~V$
+    
+    \If{mapping required}
+    
+    \State
+    Map $~u, ~s, ~v$ as vectors, using additive (Lie algebra) interpolation.
+    
+    \EndIf
+
+    \State
+    Compute time step $\triangle t$
+
+    \State $t \gets t + \triangle t$
+
+    \Until{$t \ge T_{\text{final}}$}
+
+  \end{algorithmic}
+  \caption{Mapping algorithm for the deformation gradient $~F$ via the
+    \svd{}.}
+  \label{alg:defgrad-svd}
+\end{algorithm}
+
+The crucial assumption in this algorithm is that the angles of
+rotation of $\triangle ~U$ and $\triangle ~V$ in \Cref{alg:svd},
+corresponding to the \svd{} of the incremental deformation gradient
+$\triangle ~F$, are less than $\pi$.
+
+\section{Tensor operators}
+\label{sec:tensor-operators}
+
+The steps outlined in \Cref{alg:defgrad-svd} require the computation
+of several tensor operators. The skew symmetric operator in
+\Cref{alg:skew-diag} is defined in such a way that if applied to a
+vector $~v \in {"R}^3$, it returns a skew symmetric tensor
+$\check{~v} \in so(3)$, and if applied to a skew symmetric tensor
+$\check{~v} \in so(3)$, it returns a vector $~v \in {"R}^3$. In both
+cases, the operator is constructed such that
+$\check{\bv} \cdot \bu \equiv \bv \times \bu \ \forall \ \bu \in
+{"R}^3$, that is
+\begin{equation} \label{eq:skew}
+  ~v = \skew \check{~v}
+  \quad
+  \Leftrightarrow
+  \quad
+  \check{~v} = \skew ~v
+  \quad
+  \Leftrightarrow
+  \quad
+  ~v =
+  \begin{pmatrix}
+    v_0 \\ v_1 \\ v_2
+  \end{pmatrix}
+  \quad
+  \Leftrightarrow
+  \quad
+  \check{~v} =
+  \begin{pmatrix}
+    0 & -v_2 & v_1
+    \\
+    v_2 & 0 & -v_0
+    \\
+    -v_1 & v_0 & 0
+  \end{pmatrix}.
+\end{equation}
+The diagonal operator also in \Cref{alg:skew-diag} is defined in a
+similar fashion as
+\begin{equation} \label{eq:diag}
+  ~v = \diag \hat{~v}
+  \quad
+  \Leftrightarrow
+  \quad
+  \hat{~v} = \diag ~v
+  \quad
+  \Leftrightarrow
+  \quad
+  ~v =
+  \begin{pmatrix}
+    v_0 \\ v_1 \\ v_2
+  \end{pmatrix}
+  \quad
+  \Leftrightarrow
+  \quad
+  \check{~v} =
+  \begin{pmatrix}
+    v_0 & 0 & 0
+    \\
+    0 & v_1 & 0
+    \\
+    0 & 0 & v_2
+  \end{pmatrix}.
+\end{equation}
+The exponential and logarithmic maps for a vector corresponding to a
+diagonal tensor are trivial; they only require the logarithm and
+exponential of each of the vector entries as scalars. For the
+logarithmic map of the rotation, there exist explicit formulas
+\autocite{Park.Ravani:1997}. The angle of rotation is given by
+\begin{equation}
+  \theta := \cos^{-1} \left[  \tfrac{1}{2} (\tr ~R - 1) \right],
+  \quad
+  ~R \in SO(3),
+  \quad
+  \theta \in [0, \pi],
+\end{equation}
+and the logarithm of the rotation is determined by
+\begin{equation} \label{eq:log-rotation}
+  \begin{split}
+    \begin{aligned}
+      \log ~R =
+      \begin{cases}
+        ~0 \in so(3),
+        &
+        \text{ if }\theta = 0;
+        \\[0.4em]
+        \displaystyle{
+          \frac{\theta}{2 \sin \theta} (~R - ~R^\text{T}) \in so(3),
+        }
+        &
+        \text{ if }\theta \in (0, \pi);
+        \\[0.7em]
+        \pm \pi \check{~w} \in so(3),
+        &
+        \text{ if }\theta = \pi;
+      \end{cases}
+    \end{aligned}
+  \end{split}
+\end{equation}
+in which $\check{~w} \in so(3)$ is the skew-symmetric tensor such that
+$~w = \skew \check{~w}$ is the eigenvector corresponding to the
+eigenvalue of 1 of $~R$, and the sign is selected according to
+continuity conditions from the field in the
+neighborhood. Nevertheless, since the assumption is that the angle of
+rotation $\theta \in [0, \pi)$, the case $\theta = \pi$ is best
+handled as an exception. For the exponential map of the rotation, define
+\begin{equation} \label{eq:angle-as-norm-skew}
+  \theta := ||~w||
+\end{equation}
+as the angle of rotation for the rotation pseudovector $~w$. Then the
+exponential map for the skew-symmetric tensor $\check{~w} := \skew ~w$
+is given by the expression
+\begin{equation} \label{eq:Rodrigues-formula}
+  \begin{split}
+    \begin{aligned}
+      \exp \check{~w} =
+      \begin{cases}
+        ~I \in SO(3),
+        &
+        \text{ if }\theta = 0;
+        \\
+        \displaystyle{
+          ~I + \frac{\sin \theta}{\theta} \check{~w} +
+          \frac{(1 - \cos \theta)}{\theta^2} \check{~w}^2 \in SO(3),
+        }
+        &
+        \text{ if }\theta > 0;
+      \end{cases}
+    \end{aligned}
+  \end{split}
+\end{equation}
+which is often accredited to Rodrigues \autocite{Gallier:2011}. This
+completes the description of the algorithm.
+
+\printbibliography
+
+\end{document}
