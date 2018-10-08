@@ -125,7 +125,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D ZOLTAN_BUILD_ZFDRIVE:BOOL=OFF \
       -D Zoltan2_ENABLE_Experimental:BOOL=ON\
       -D Trilinos_ENABLE_DEBUG:BOOL=OFF \
-      -D Trilinos_ENABLE_SECONDARY_STABLE_CODE:BOOL=ON \
 \
       -D Phalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
       -D Stokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
@@ -155,7 +154,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D BUILD_SHARED_LIBS:BOOL=ON \
       -D Trilinos_LINK_SEARCH_START_STATIC:BOOL=OFF \
       -D MPI_EXEC=mpiexec \
-      -D Intrepid2_ENABLE_KokkosDynRankView:BOOL=ON \
 \
       -D TPL_ENABLE_yaml-cpp:BOOL=ON \
       -D yaml-cpp_INCLUDE_DIRS:PATH=/usr/include \

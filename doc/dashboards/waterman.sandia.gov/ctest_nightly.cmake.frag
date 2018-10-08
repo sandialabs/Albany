@@ -199,8 +199,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="
     #
     "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
-    "-DKokkos_ENABLE_CXX11:BOOL=ON"
-    "-DKokkos_ENABLE_Cuda_LAMBDA:BOOL=ON"
     "-DKokkos_ENABLE_Cuda_UVM:BOOL=ON"
     "-DKokkos_ENABLE_EXAMPLES:BOOL=OFF"
     "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
@@ -269,7 +267,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
     "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
     "-DTrilinos_ENABLE_SEACASAprepro_lib:BOOL=ON"
-    "-DTrilinos_ENABLE_STKClassic:BOOL=OFF"
     "-DTrilinos_ENABLE_STKDoc_tests:BOOL=OFF"
     "-DTrilinos_ENABLE_STKIO:BOOL=ON"
     "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
@@ -285,10 +282,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Tpetra:BOOL=ON"
     "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
     "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
-    "-DIntrepid2_ENABLE_KokkosDynRankView:BOOL=ON"
-    "-DTrilinos_ENABLE_Tempus:BOOL=OFF"
-    "-DTempus_ENABLE_TESTS:BOOL=OFF"
-    "-DTempus_ENABLE_EXAMPLES:BOOL=OFF"
+    "-DTrilinos_ENABLE_Tempus:BOOL=ON"
     "-DTempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
   )
 
