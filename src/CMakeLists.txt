@@ -143,7 +143,6 @@ SET(SOURCES ${SOURCES}
   problems/Albany_ProblemUtils.cpp
   problems/Albany_ResponseUtilities.cpp
   problems/Albany_SideLaplacianProblem.cpp
-  problems/Albany_ThermoElectrostaticsProblem.cpp
   problems/Albany_MaterialDatabase.cpp
   )
 SET(PDE_SRCS
@@ -156,6 +155,7 @@ SET(PDE_SRCS
   problems/Albany_ODEProblem.cpp
   problems/Albany_NavierStokes.cpp
   problems/Albany_PNPProblem.cpp
+  problems/Albany_ThermoElectrostaticsProblem.cpp
   )
 SET(HEADERS ${HEADERS}
   problems/Albany_AbstractProblem.hpp
@@ -172,7 +172,6 @@ SET(HEADERS ${HEADERS}
   problems/Albany_ResponseUtilities.hpp
   problems/Albany_ResponseUtilities_Def.hpp
   problems/Albany_SideLaplacianProblem.hpp
-  problems/Albany_ThermoElectrostaticsProblem.hpp
   problems/Albany_MaterialDatabase.hpp
   )
 SET(PDE_HDRS
@@ -185,6 +184,7 @@ SET(PDE_HDRS
   problems/Albany_NavierStokes.hpp
   problems/Albany_ODEProblem.hpp
   problems/Albany_PNPProblem.hpp
+  problems/Albany_ThermoElectrostaticsProblem.hpp
   )
 
 #responses
