@@ -7,6 +7,6 @@ unload("intel/16.0")
 
 -- /usr/bin/python is 2.7.5, good enough
 -- /usr/bin/git is 2.7.4, good enough
-load("cmake/3.8")
+load("cmake/3.11.1")
 
 conflict("lcm-fedora", "lcm-sems")
