@@ -340,7 +340,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_OpenMP:BOOL=OFF"
     "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
     "-DTPL_ENABLE_HWLOC:STRING=OFF"
-    "-DTrilinos_ENABLE_ThreadPool:BOOL=ON"
+    "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
     "-DKOKKOS_ARCH:STRING=ARMv81"
     #
     "-DTrilinos_ENABLE_Panzer:BOOL=OFF"

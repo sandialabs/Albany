@@ -335,7 +335,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_OpenMP:BOOL=ON"
     "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
     "-DTPL_ENABLE_HWLOC:STRING=OFF"
-    "-DTrilinos_ENABLE_ThreadPool:BOOL=ON"
+    "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
     #
     "-DTrilinos_ENABLE_Panzer:BOOL=OFF"
     "-DPanzer_ENABLE_TESTS:BOOL=ON"
