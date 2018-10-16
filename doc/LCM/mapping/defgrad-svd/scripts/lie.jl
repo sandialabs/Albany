@@ -51,17 +51,17 @@ end
 # Computing the Baker-Campbell-Hausdorff series and the Zassenhaus
 # product, Weyrauch, Michael and Scholz, Daniel, COMPUTER PHYSICS
 # COMMUNICATIONS, 2009, 180:9,1558-1565.
-# 
+#
 function BCH(x, y)
-    
+
     z1 = x+y
-    
+
     z2 = 0.5*(x*y - y*x)
-    
+
     z3 = x*x*y/12 - x*y*x/6 + x*y*y/12 + y*x*x/12 - y*x*y/6 + y*y*x/12
-    
+
     z4 = x*x*y*y/24 - x*y*x*y/12 + y*x*y*x/12 - y*y*x*x/24
-    
+
     z5 = -x*x*x*x*y/720 + x*x*x*y*x/180 + x*x*x*y*y/180 - x*x*y*x*x/120 -
     x*x*y*x*y/120 - x*x*y*y*x/120 + x*x*y*y*y/180 + x*y*x*x*x/180 -
     x*y*x*x*y/120 + x*y*x*y*x/30 - x*y*x*y*y/120 - x*y*y*x*x/120 - x*y*y*x*y/120
@@ -120,7 +120,7 @@ function BCH(x, y)
     y*y*y*x*y*y*x/5040 - y*y*y*x*y*y*y/1512 + y*y*y*y*x*x*x/3780 +
     y*y*y*y*x*x*y/2016 + y*y*y*y*x*y*x/2016 + y*y*y*y*x*y*y/2016 -
     y*y*y*y*y*x*x/5040 - y*y*y*y*y*x*y/5040 + y*y*y*y*y*y*x/30240
-    
+
     z8 = x*x*x*x*x*x*y*y/60480 - x*x*x*x*x*y*x*y/10080 - x*x*x*x*x*y*y*y/10080 +
     x*x*x*x*y*x*x*y/4032 + x*x*x*x*y*x*y*y/4032 + x*x*x*x*y*y*x*y/4032 +
     23*x*x*x*x*y*y*y*y/120960 - x*x*x*y*x*x*x*y/3024 - x*x*x*y*x*x*y*y/10080 -
@@ -410,46 +410,46 @@ end
 #
 # RVcontin
 #
-# This function takes as input two rotation pseudo- vectors, "old" and
-# "last". The function returns a pseudo-vector which maps into the
-# same rotation tensor as "old", while being as close to "last" as
-# possible.  "last" is strictly a parameter (read-only).
+# This function takes as input two rotation pseudo-vectors, "old" and
+# "prev". The function returns a pseudo-vector which maps into the
+# same rotation tensor as "old", while being as close to "prev" as
+# possible.  "prev" is strictly a parameter (read-only).
 #
 # Vectors that map into the same rotation as "old" are parallel to it
 # and differ in length by integer multiples of TWO_PI.  The one
-# closest to "last" is also closest to the projection of "last" along
+# closest to "prev" is also closest to the projection of "prev" along
 # "old", since the perpendicular component is common to all.
 #
-# NOTE: This routine has no way of knowing how much the rotation
-# pseudo-vector should have changed from its last value.  The outside
-# code has to enforce any necessary limits on the size of rotation
-# increments.
+# NOTE: This function has no way of knowing how much the rotation
+# pseudo-vector should have changed from its previous value.  The
+# outside code has to enforce any necessary limits on the size of
+# rotation increments.
 #
 # Compute the "unit" vector along "old" and its dot product with
-# "last" ( "proj * unit" is the projection of "last" along "old).
-# Round "proj" to the closest multiple of TWO_PI and add to it the
+# "prev" ( "proj * unit" is the projection of "prev" along "old).
+# Round "proj" to the closest multiple of 2 pi and add to it the
 # "norm" of "old".  It is obvious that "proj * unit" (which overwrites
 # "old") is the required continuation vector (rotation-equivalent to
-# the original "old" and closest to "last").  If "old" is zero, the
-# continuation vector should be the closest multiple of TWO_PI along
-# "last"; hence "proj" and "unit" must satisfy "last == proj * unit".
+# the original "old" and closest to "prev").  If "old" is zero, the
+# continuation vector should be the closest multiple of 2 pi along
+# "prev"; hence "proj" and "unit" must satisfy "prev == proj * unit".
 #
-function RVcontin(old, last)
+function RVcontin(old, prev)
     norm_old = norm(old)
-    unit = normalize(vec(old))
-    if (norm_old > 0.0)
-        diff = last - old
+    if norm_old > 0.0
+        unit = normalize(vec(old))
+        diff = prev - old
         proj = dot(unit, diff)
     else
-        unit = normalize(vec(last))
-        proj = norm(last)
+        unit = normalize(vec(prev))
+        proj = norm(prev)
     end
-    if (proj == 0.0)
+    if proj == 0.0
         # No change required
         return old
     end
-    kk = ceil(0.5 * proj / pi - 0.5)
-    if (kk == 0.0)
+    kk = round(0.5 * proj / pi)
+    if kk == 0.0
         # No change required
         return old
     end
