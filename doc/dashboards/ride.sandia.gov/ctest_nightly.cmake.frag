@@ -220,7 +220,7 @@ if (BUILD_TRILINOS)
     "-DTeuchos_ENABLE_COMPLEX:BOOL=ON"
     "-DTpetra_ENABLE_Kokkos_Refactor:BOOL=ON"
     "-DKokkos_ENABLE_Cuda_Lambda:BOOL=ON"
-    "-DTpetra_ASSUME_CUDA_AWARE_MPI:BOOL=OFF"
+    "-DTpetra_ASSUME_CUDA_AWARE_MPI:BOOL=ON"
     "-DTpetra_INST_INT_LONG_LONG:BOOL=ON"
     "-DTpetra_INST_INT_INT:BOOL=OFF"
     #
