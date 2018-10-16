@@ -47,6 +47,8 @@ SchwarzAlternating::SchwarzAlternating(
   increase_factor_  = alt_system_params.get<ST>("Increase Factor", 1.0);
   output_interval_  = alt_system_params.get<int>("Exodus Write Interval", 1);
 
+  use_default_ig_newton_ = alt_system_params.get<bool>("Use Default Newton Initial Guess", false);
+
   // Firewalls
   ALBANY_ASSERT(min_iters_ >= 1);
   ALBANY_ASSERT(max_iters_ >= 1);
@@ -866,7 +868,8 @@ SchwarzAlternating::SchwarzLoopDynamics() const
         piro_tempus_solver.setInitialState(
             current_time, ic_disp_rcp, ic_velo_rcp, ic_acce_rcp);
 
-        piro_tempus_solver.setInitialGuess(prev_disp_[subdomain]);
+        if (use_default_ig_newton_ == false) 
+          piro_tempus_solver.setInitialGuess(prev_disp_[subdomain]);
 
         solver.evalModel(in_args, out_args);
 

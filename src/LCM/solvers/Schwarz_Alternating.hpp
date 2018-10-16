@@ -253,6 +253,8 @@ class SchwarzAlternating : public Thyra::ResponseOnlyModelEvaluatorBase<ST>
   bool is_static_{false};
 
   bool is_dynamic_{false};
+
+  bool use_default_ig_newton_{false}; 
 };
 
 }  // namespace LCM
