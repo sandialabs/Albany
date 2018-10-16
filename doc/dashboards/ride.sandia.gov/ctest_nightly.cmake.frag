@@ -277,7 +277,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
     "-DTrilinos_ENABLE_Teko:BOOL=ON"
     "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
-    "-DTrilinos_ENABLE_ThreadPool:BOOL=ON"
+    "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
     "-DTrilinos_ENABLE_Thyra:BOOL=ON"
     "-DTrilinos_ENABLE_Tpetra:BOOL=ON"
     "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
