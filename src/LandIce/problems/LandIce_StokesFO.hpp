@@ -1542,7 +1542,7 @@ if (basalSideName!="INVALID")
       p->set("Weights Layout", dl->qp_scalar);
       p->set("Field Layout", dl->cell_scalar2);
       p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
-      ev = Teuchos::rcp(new PHAL::SaveCellStateField<EvalT,PHAL::AlbanyTraits>(*p));
+      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
     if (fieldManagerChoice == Albany::BUILD_RESID_FM)
@@ -1560,15 +1560,18 @@ if (basalSideName!="INVALID")
   if(params->get<bool>("Print Stress Tensor", false))
   {
     {
+      ev = evalUtils.constructQuadPointsToCellInterpolationEvaluator("Stress Tensor", dl->qp_tensor, dl->cell_tensor);
+      fm0.template registerEvaluator<EvalT> (ev);
+    }
+
+    {
       std::string stateName = "Stress Tensor";
       entity = Albany::StateStruct::ElemData;
       p = stateMgr.registerStateVariable(stateName, dl->cell_tensor, elementBlockName, true, &entity);
-      p->set<std::string>("Weights Name", Albany::weights_name);
-      p->set< Teuchos::RCP<PHX::DataLayout> >("Weights Layout",dl->qp_scalar);
-      p->set< Teuchos::RCP<PHX::DataLayout> >("Field Layout",dl->qp_tensor);
+      p->set< Teuchos::RCP<PHX::DataLayout> >("State Field Layout",dl->cell_tensor);
       p->set<std::string>("Field Name", "Stress Tensor");
       p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
-      ev = Teuchos::rcp(new PHAL::SaveCellStateField<EvalT,PHAL::AlbanyTraits>(*p));
+      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
     if (fieldManagerChoice == Albany::BUILD_RESID_FM)
