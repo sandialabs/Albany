@@ -1536,7 +1536,7 @@ if (basalSideName!="INVALID")
 //         fm0.template registerEvaluator<EvalT> (evalUtils.constructNodesToCellInterpolationEvaluator("melting temp",false));
 
       std::string stateName = "dissipation_heat";
-      p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
+      p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, elementBlockName, true, &entity);
       p->set<std::string>("Field Name", "LandIce Dissipation");
       p->set<std::string>("Weights Name","Weights");
       p->set("Weights Layout", dl->qp_scalar);
@@ -1561,7 +1561,11 @@ if (basalSideName!="INVALID")
   {
     {
       std::string stateName = "Stress Tensor";
-      p = stateMgr.registerStateVariable(stateName, dl->cell_tensor, dl->dummy, elementBlockName, "tensor", 0.0, /* save state = */ false, /* write output = */ true);
+      entity = Albany::StateStruct::ElemData;
+      p = stateMgr.registerStateVariable(stateName, dl->cell_tensor, elementBlockName, true, &entity);
+      p->set<std::string>("Weights Name", Albany::weights_name);
+      p->set< Teuchos::RCP<PHX::DataLayout> >("Weights Layout",dl->qp_scalar);
+      p->set< Teuchos::RCP<PHX::DataLayout> >("Field Layout",dl->qp_tensor);
       p->set<std::string>("Field Name", "Stress Tensor");
       p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
       ev = Teuchos::rcp(new PHAL::SaveCellStateField<EvalT,PHAL::AlbanyTraits>(*p));
