@@ -2338,24 +2338,6 @@ Albany::STKDiscretization::computeWorksetInfo()
       MDArray ar                                      = array;
       stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
     }
-#ifdef ALBANY_MOR
-    // AlbanyRBGen requires scalarValue_states to contain a string, not a
-    // pointer to a string, in order to avoid a seqfault
-    for (ScalarValueState::iterator svs = scalarValue_states.begin();
-         svs != scalarValue_states.end();
-         ++svs) {
-      const int size = 1;
-      shards::Array<double, shards::NaturalOrder, Cell> array(
-          &time[*svs], size);
-      MDArray ar = array;
-      // Debug
-      // std::cout << "Buck.size(): " << buck.size() << " SVState dim[0]: " <<
-      // array.dimension(0) << std::endl;
-      // std::cout << "SV Name: " << *svs << " address : " << &array <<
-      // std::endl;
-      stateArrays.elemStateArrays[b][*svs] = ar;
-    }
-#else
     //    for (ScalarValueState::iterator svs = scalarValue_states.begin();
     //              svs != scalarValue_states.end(); ++svs){
     for (int i = 0; i < scalarValue_states.size(); i++) {
@@ -2370,7 +2352,6 @@ Albany::STKDiscretization::computeWorksetInfo()
       // std::endl;
       stateArrays.elemStateArrays[b][*scalarValue_states[i]] = ar;
     }
-#endif
   }
 
   // Process node data sets if present
