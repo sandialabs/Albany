@@ -205,7 +205,7 @@ if (BUILD_TRILINOS)
     "-DKokkos_ENABLE_Pthread:BOOL=OFF"
     "-DKokkos_ENABLE_Serial:BOOL=ON"
     "-DKokkos_ENABLE_TESTS:BOOL=ON"
-    "-DKOKKOS_ARCH:STRING=Power8;Pascal60"
+    "-DKOKKOS_ARCH:STRING='Power8\\;Pascal60'"
     "-DTPL_ENABLE_Thrust:BOOL=ON"
     "-DTPL_ENABLE_CUDA:BOOL=ON"
     "-DTPL_ENABLE_CUSPARSE:BOOL=ON"
