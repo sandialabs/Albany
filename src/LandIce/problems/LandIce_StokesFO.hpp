@@ -1536,6 +1536,7 @@ if (basalSideName!="INVALID")
 //         fm0.template registerEvaluator<EvalT> (evalUtils.constructNodesToCellInterpolationEvaluator("melting temp",false));
 
       std::string stateName = "dissipation_heat";
+      entity = Albany::StateStruct::ElemData;
       p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, elementBlockName, true, &entity);
       p->set<std::string>("Field Name", "LandIce Dissipation");
       p->set<std::string>("Weights Name","Weights");
