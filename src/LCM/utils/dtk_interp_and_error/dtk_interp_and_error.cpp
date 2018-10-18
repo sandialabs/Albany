@@ -147,7 +147,7 @@ interp_and_calc_error(
     tmo = stk::io::MeshField::LINEAR_INTERPOLATION;
   }
 
-  src_broker.add_all_mesh_fields_as_input_fields(tmo);
+  src_broker.add_all_mesh_fields_as_input_field_on_meshs(tmo);
   src_broker.populate_bulk_data();
 
   Teuchos::RCP<stk::mesh::BulkData> src_bulk_data =
@@ -195,7 +195,7 @@ interp_and_calc_error(
       target_mesh_input_file, "exodus", stk::io::READ_MESH);
   tgt_broker.set_active_mesh(tgt_input_index);
   tgt_broker.create_input_mesh();
-  tgt_broker.add_all_mesh_fields_as_input_fields(tmo);
+  tgt_broker.add_all_mesh_fields_as_input_field_on_meshs(tmo);
 
   // Put fields on target mesh
   // Add a nodal field to the interpolated target part.
@@ -203,24 +203,24 @@ interp_and_calc_error(
       tgt_broker.meta_data().declare_field<FieldType>(
           stk::topology::NODE_RANK, tgt_interp_field_name);
 
-  stk::mesh::put_field(
-      target_interp_field, tgt_broker.meta_data().universal_part(), neq);
+  stk::mesh::put_field_on_mesh(
+      target_interp_field, tgt_broker.meta_data().universal_part(), neq, nullptr);
 
   // Add a absolute error nodal field to the target part.
   FieldType& target_abs_error_field =
       tgt_broker.meta_data().declare_field<FieldType>(
           stk::topology::NODE_RANK, abs_err_field_name);
 
-  stk::mesh::put_field(
-      target_abs_error_field, tgt_broker.meta_data().universal_part(), neq);
+  stk::mesh::put_field_on_mesh(
+      target_abs_error_field, tgt_broker.meta_data().universal_part(), neq, nullptr);
 
   // Add a relative error nodal field to the target part.
   FieldType& target_rel_error_field =
       tgt_broker.meta_data().declare_field<FieldType>(
           stk::topology::NODE_RANK, rel_err_field_name);
 
-  stk::mesh::put_field(
-      target_rel_error_field, tgt_broker.meta_data().universal_part(), neq);
+  stk::mesh::put_field_on_mesh(
+      target_rel_error_field, tgt_broker.meta_data().universal_part(), neq, nullptr);
 
   // Create the target bulk data.
   tgt_broker.populate_bulk_data();
@@ -392,7 +392,7 @@ interp_and_calc_error(
 
     for (int interval = 0; interval < interpolation_intervals; interval++) {
       time = tbeg + delta * static_cast<double>(interval);
-      src_broker.read_defined_input_fields(time);
+      src_broker.read_defined_input_field_on_meshs(time);
     }
 
     time = tgt_io_region->get_state_time(tgt_time_step_indices[index]);
@@ -409,7 +409,7 @@ interp_and_calc_error(
 
     for (int interval = 0; interval < interpolation_intervals; interval++) {
       time = tbeg + delta * static_cast<double>(interval);
-      tgt_broker.read_defined_input_fields(time);
+      tgt_broker.read_defined_input_field_on_meshs(time);
     }
 
     // SOLUTION TRANSFER SETUP
@@ -680,7 +680,7 @@ interp_and_calc_error(
 #endif
     // Write step
     tgt_broker.begin_output_step(tgt_output_index, state_time);
-    tgt_broker.write_defined_output_fields(tgt_output_index);
+    tgt_broker.write_defined_output_field_on_meshs(tgt_output_index);
     tgt_broker.end_output_step(tgt_output_index);
   }
 }

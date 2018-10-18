@@ -2256,7 +2256,6 @@ Albany::STKDiscretization::computeWorksetInfo()
   typedef Albany::AbstractSTKFieldContainer::QPScalarState    QPScalarState;
   typedef Albany::AbstractSTKFieldContainer::QPVectorState    QPVectorState;
   typedef Albany::AbstractSTKFieldContainer::QPTensorState    QPTensorState;
-  typedef Albany::AbstractSTKFieldContainer::QPTensor3State   QPTensor3State;
 
   typedef Albany::AbstractSTKFieldContainer::ScalarState ScalarState;
   typedef Albany::AbstractSTKFieldContainer::VectorState VectorState;
@@ -2275,7 +2274,6 @@ Albany::STKDiscretization::computeWorksetInfo()
   QPScalarState&    qpscalar_states    = container.getQPScalarStates();
   QPVectorState&    qpvector_states    = container.getQPVectorStates();
   QPTensorState&    qptensor_states    = container.getQPTensorStates();
-  QPTensor3State&   qptensor3_states   = container.getQPTensor3States();
   std::map<std::string, double>& time = container.getTime();
 
   for (std::size_t b = 0; b < buckets.size(); b++) {
@@ -2337,16 +2335,6 @@ Albany::STKDiscretization::computeWorksetInfo()
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPTFT dim[3]: " <<
       // array.dimension(3) << std::endl;
-      MDArray ar                                      = array;
-      stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
-    }
-    for (auto qpts = qptensor3_states.begin(); qpts != qptensor3_states.end();
-         ++qpts) {
-      BucketArray<Albany::AbstractSTKFieldContainer::QPTensor3FieldType> array(
-          **qpts, buck);
-      // Debug
-      // std::cout << "Buck.size(): " << buck.size() << " QPT3FT dim[4]: " <<
-      // array.dimension(4) << std::endl;
       MDArray ar                                      = array;
       stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
     }

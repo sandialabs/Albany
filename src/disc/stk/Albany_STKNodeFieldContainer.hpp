@@ -89,12 +89,12 @@ buildSTKNodeField(const std::string& name, const std::vector<PHX::DataLayout::si
 
     enum { size = 1 }; // One array dimension tag (Node), store type T values
     typedef stk::mesh::Field<T> field_type ;
-    static field_type* createField(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim,
+    static field_type* createField(const std::string& name, const std::vector<PHX::DataLayout::size_type>& /* dim */,
                                    stk::mesh::MetaData* metaData){
 
         field_type *fld = & metaData->declare_field<field_type>(stk::topology::NODE_RANK, name);
         // Multi-dim order is Fortran Ordering, so reversed here
-        stk::mesh::put_field(*fld , metaData->universal_part());
+        stk::mesh::put_field_on_mesh(*fld , metaData->universal_part(), nullptr);
 
         return fld; // Address is held by stk
 
@@ -137,7 +137,7 @@ buildSTKNodeField(const std::string& name, const std::vector<PHX::DataLayout::si
 
         field_type *fld = & metaData->declare_field<field_type>(stk::topology::NODE_RANK, name);
         // Multi-dim order is Fortran Ordering, so reversed here
-        stk::mesh::put_field(*fld , metaData->universal_part(), dim[1]);
+        stk::mesh::put_field_on_mesh(*fld , metaData->universal_part(), dim[1], nullptr);
 
         return fld; // Address is held by stk
 
@@ -186,7 +186,7 @@ buildSTKNodeField(const std::string& name, const std::vector<PHX::DataLayout::si
 
         field_type *fld = & metaData->declare_field<field_type>(stk::topology::NODE_RANK, name);
         // Multi-dim order is Fortran Ordering, so reversed here
-        stk::mesh::put_field(*fld , metaData->universal_part(), dim[2], dim[1]);
+        stk::mesh::put_field_on_mesh(*fld , metaData->universal_part(), dim[2], dim[1], nullptr);
 
         return fld; // Address is held by stk
 

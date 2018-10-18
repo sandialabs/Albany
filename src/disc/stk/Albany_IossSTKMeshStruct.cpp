@@ -121,7 +121,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     if (!stk::io::is_part_io_part(newNodeSet)) {
       stk::mesh::Field<double> * const distrFactorfield = metaData->get_field<stk::mesh::Field<double> >(stk::topology::NODE_RANK, "distribution_factors");
       if (distrFactorfield != NULL){
-        stk::mesh::put_field(*distrFactorfield, newNodeSet);
+        stk::mesh::put_field_on_mesh(*distrFactorfield, newNodeSet, nullptr);
       }
       stk::io::put_io_part_attribute(newNodeSet);
     }

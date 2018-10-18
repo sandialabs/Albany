@@ -2634,7 +2634,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
   typedef Albany::AbstractSTKFieldContainer::QPScalarState    QPScalarState;
   typedef Albany::AbstractSTKFieldContainer::QPVectorState    QPVectorState;
   typedef Albany::AbstractSTKFieldContainer::QPTensorState    QPTensorState;
-  typedef Albany::AbstractSTKFieldContainer::QPTensor3State   QPTensor3State;
   typedef Albany::AbstractSTKFieldContainer::ScalarState      ScalarState;
   typedef Albany::AbstractSTKFieldContainer::VectorState      VectorState;
   typedef Albany::AbstractSTKFieldContainer::TensorState      TensorState;
@@ -2646,7 +2645,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
   QPScalarState qpscalar_states = stkMeshStruct->getFieldContainer()->getQPScalarStates();
   QPVectorState qpvector_states = stkMeshStruct->getFieldContainer()->getQPVectorStates();
   QPTensorState qptensor_states = stkMeshStruct->getFieldContainer()->getQPTensorStates();
-  QPTensor3State qptensor3_states = stkMeshStruct->getFieldContainer()->getQPTensor3States();
   std::map<std::string, double>& time = stkMeshStruct->getFieldContainer()->getTime();
 
   for (std::size_t b = 0; b < buckets.size(); ++b)
@@ -2680,16 +2678,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPTFT dim[3]: "
       //           << array.dimension(3) << std::endl;
-      Albany::MDArray ar = array;
-      stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
-    }
-    for (QPTensor3State::iterator qpts = qptensor3_states.begin();
-              qpts != qptensor3_states.end(); ++qpts)
-    {
-      Albany::BucketArray<Albany::AbstractSTKFieldContainer::QPTensor3FieldType> array(**qpts, buck);
-      // Debug
-      // std::cout << "Buck.size(): " << buck.size() << " QPT3FT dim[4]: "
-      //           << array.dimension(4) << std::endl;
       Albany::MDArray ar = array;
       stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
     }
