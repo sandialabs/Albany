@@ -150,8 +150,9 @@ class SchwarzAlternating : public Thyra::ResponseOnlyModelEvaluatorBase<ST>
   doQuasistaticOutput(ST const time) const;
 
   void
-  setExplicitUpdateInitialGuessForSchwarz(ST const current_time,
-                                          ST const time_step) const;
+  setExplicitUpdateInitialGuessForSchwarz(
+      ST const current_time,
+      ST const time_step) const;
 
   void
   setDynamicICVecsAndDoOutput(ST const time) const;
@@ -254,7 +255,7 @@ class SchwarzAlternating : public Thyra::ResponseOnlyModelEvaluatorBase<ST>
 
   bool is_dynamic_{false};
 
-  bool use_default_ig_newton_{false}; 
+  bool std_init_guess_{false};
 };
 
 }  // namespace LCM
