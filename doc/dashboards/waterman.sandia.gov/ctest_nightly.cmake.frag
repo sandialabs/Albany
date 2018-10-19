@@ -204,7 +204,7 @@ if (BUILD_TRILINOS)
     "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
     "-DKokkos_ENABLE_Pthread:BOOL=OFF"
     "-DKokkos_ENABLE_Serial:BOOL=ON"
-    "-DKokkos_ENABLE_TESTS:BOOL=ON"
+    "-DKokkos_ENABLE_TESTS:BOOL=OFF"
     "-DKOKKOS_ARCH:STRING='Power9\\;Volta70'"
     "-DTPL_ENABLE_Thrust:BOOL=ON"
     "-DTPL_ENABLE_CUDA:BOOL=ON"
