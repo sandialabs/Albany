@@ -861,7 +861,7 @@ void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::
       // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
       typedef AbstractSTKFieldContainer::IntScalarFieldType ISFT;
       ISFT* side_to_cell_map = &this->sideSetMeshStructs[ss_name]->metaData->declare_field<ISFT> (stk::topology::ELEM_RANK, "side_to_cell_map");
-      stk::mesh::put_field(*side_to_cell_map, this->sideSetMeshStructs[ss_name]->metaData->universal_part(), 1);
+      stk::mesh::put_field_on_mesh(*side_to_cell_map, this->sideSetMeshStructs[ss_name]->metaData->universal_part(), 1, nullptr);
 #ifdef ALBANY_SEACAS
       stk::io::set_field_role(*side_to_cell_map, Ioss::Field::TRANSIENT);
 #endif
@@ -869,7 +869,7 @@ void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::
       const int num_nodes = sideSetMeshStructs[ss_name]->getMeshSpecs()[0]->ctd.node_count;
       typedef AbstractSTKFieldContainer::IntVectorFieldType IVFT;
       IVFT* side_nodes_ids = &this->sideSetMeshStructs[ss_name]->metaData->declare_field<IVFT> (stk::topology::ELEM_RANK, "side_nodes_ids");
-      stk::mesh::put_field(*side_nodes_ids, this->sideSetMeshStructs[ss_name]->metaData->universal_part(), num_nodes);
+      stk::mesh::put_field_on_mesh(*side_nodes_ids, this->sideSetMeshStructs[ss_name]->metaData->universal_part(), num_nodes, nullptr);
 #ifdef ALBANY_SEACAS
       stk::io::set_field_role(*side_nodes_ids, Ioss::Field::TRANSIENT);
 #endif

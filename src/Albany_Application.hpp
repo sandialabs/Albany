@@ -56,12 +56,6 @@
 
 #endif
 
-#if defined(ALBANY_MOR)
-#if defined(ALBANY_EPETRA)
-#include "MOR/Albany_MORFacade.hpp"
-#endif
-#endif
-
 // Forward declarations.
 namespace AAdapt {
 namespace rc {
@@ -477,12 +471,6 @@ public:
 
   void postRegSetup(std::string eval);
 
-#ifdef ALBANY_MOR
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<MORFacade> getMorFacade();
-#endif
-#endif
-
 #if defined(ALBANY_LCM)
   double
   fixTime(double const current_time) const
@@ -771,12 +759,6 @@ protected:
 
   void determinePiroSolver(
       const Teuchos::RCP<Teuchos::ParameterList> &topLevelParams);
-
-#ifdef ALBANY_MOR
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<MORFacade> morFacade;
-#endif
-#endif
 
   int derivatives_check_;
 

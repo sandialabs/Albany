@@ -234,21 +234,6 @@ void Albany::Application::initialSetUp(
     tangent_deriv_dim = 1;
   }
 
-#ifdef ALBANY_EPETRA
-#ifdef ALBANY_MOR
-  bool MOR_problem = problemParams->isSublist("Model Order Reduction");
-  if (MOR_problem)
-  {
-    bool MOR_problem_named = Teuchos::sublist(problemParams, "Model Order Reduction")->isSublist("Reduced-Order Model");
-    if (MOR_problem_named)
-    {
-      Teuchos::RCP<Teuchos::ParameterList> morParams = Teuchos::sublist(Teuchos::sublist(problemParams, "Model Order Reduction", true), "Reduced-Order Model",true);
-      MOR_apply_bcs_ = morParams->get<bool>("Apply BCs", true);
-    }
-  }
-#endif //ALBANY_MOR
-#endif //ALBANY_EPETRA
-
   // Pull the number of solution vectors out of the problem and send them to the
   // discretization list, if the user specifies this in the problem
   Teuchos::ParameterList &discParams = params->sublist("Discretization");
@@ -927,12 +912,6 @@ void Albany::Application::finalSetUp(
     solveParams.get(sensitivityToken, *oldSensitivityFlag);
   }
 
-#ifdef ALBANY_MOR
-#if defined(ALBANY_EPETRA)
-  if (disc->supportsMOR())
-    morFacade = createMORFacade(disc, problemParams);
-#endif
-#endif
   // MPerego: Preforming post registration setup here to make sure that the
   // discretization is already created, so that  derivative dimensions are known.
   // Cannot do post registration right before the evaluate , as done for other
@@ -3594,14 +3573,6 @@ void Albany::Application::setupTangentWorksetInfo(
   workset.num_cols_p = num_cols_p;
   workset.param_offset = param_offset;
 }
-
-#ifdef ALBANY_MOR
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<Albany::MORFacade> Albany::Application::getMorFacade() {
-  return morFacade;
-}
-#endif
-#endif
 
 void Albany::Application::removeEpetraRelatedPLs(
     const Teuchos::RCP<Teuchos::ParameterList> &params) {

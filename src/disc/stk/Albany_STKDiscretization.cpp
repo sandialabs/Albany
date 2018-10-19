@@ -2256,7 +2256,6 @@ Albany::STKDiscretization::computeWorksetInfo()
   typedef Albany::AbstractSTKFieldContainer::QPScalarState    QPScalarState;
   typedef Albany::AbstractSTKFieldContainer::QPVectorState    QPVectorState;
   typedef Albany::AbstractSTKFieldContainer::QPTensorState    QPTensorState;
-  typedef Albany::AbstractSTKFieldContainer::QPTensor3State   QPTensor3State;
 
   typedef Albany::AbstractSTKFieldContainer::ScalarState ScalarState;
   typedef Albany::AbstractSTKFieldContainer::VectorState VectorState;
@@ -2275,7 +2274,6 @@ Albany::STKDiscretization::computeWorksetInfo()
   QPScalarState&    qpscalar_states    = container.getQPScalarStates();
   QPVectorState&    qpvector_states    = container.getQPVectorStates();
   QPTensorState&    qptensor_states    = container.getQPTensorStates();
-  QPTensor3State&   qptensor3_states   = container.getQPTensor3States();
   std::map<std::string, double>& time = container.getTime();
 
   for (std::size_t b = 0; b < buckets.size(); b++) {
@@ -2340,34 +2338,6 @@ Albany::STKDiscretization::computeWorksetInfo()
       MDArray ar                                      = array;
       stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
     }
-    for (auto qpts = qptensor3_states.begin(); qpts != qptensor3_states.end();
-         ++qpts) {
-      BucketArray<Albany::AbstractSTKFieldContainer::QPTensor3FieldType> array(
-          **qpts, buck);
-      // Debug
-      // std::cout << "Buck.size(): " << buck.size() << " QPT3FT dim[4]: " <<
-      // array.dimension(4) << std::endl;
-      MDArray ar                                      = array;
-      stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
-    }
-#ifdef ALBANY_MOR
-    // AlbanyRBGen requires scalarValue_states to contain a string, not a
-    // pointer to a string, in order to avoid a seqfault
-    for (ScalarValueState::iterator svs = scalarValue_states.begin();
-         svs != scalarValue_states.end();
-         ++svs) {
-      const int size = 1;
-      shards::Array<double, shards::NaturalOrder, Cell> array(
-          &time[*svs], size);
-      MDArray ar = array;
-      // Debug
-      // std::cout << "Buck.size(): " << buck.size() << " SVState dim[0]: " <<
-      // array.dimension(0) << std::endl;
-      // std::cout << "SV Name: " << *svs << " address : " << &array <<
-      // std::endl;
-      stateArrays.elemStateArrays[b][*svs] = ar;
-    }
-#else
     //    for (ScalarValueState::iterator svs = scalarValue_states.begin();
     //              svs != scalarValue_states.end(); ++svs){
     for (int i = 0; i < scalarValue_states.size(); i++) {
@@ -2382,7 +2352,6 @@ Albany::STKDiscretization::computeWorksetInfo()
       // std::endl;
       stateArrays.elemStateArrays[b][*scalarValue_states[i]] = ar;
     }
-#endif
   }
 
   // Process node data sets if present
