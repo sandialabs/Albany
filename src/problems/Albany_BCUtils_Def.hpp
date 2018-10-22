@@ -1019,7 +1019,6 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
 
           if (conditions[k] == "robin" || conditions[k] == "radiate") {
             p->set<string>("DOF Name", dof_names[j]);
-
             p->set<bool>("Vector Field", isVectorField);
 
             if (isVectorField)
@@ -1027,94 +1026,27 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
             else
               p->set<RCP<DataLayout>>("DOF Data Layout", dl->node_scalar);
           }
-#ifdef ALBANY_LANDICE
-          else if (conditions[k] == "basal") {
-            Teuchos::ParameterList& mapParamList =
-                params->sublist("Stereographic Map");
-            p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
-            Teuchos::ParameterList& physics_list =
-                params->sublist("LandIce Physical Parameters");
-            string betaName = BCparams.get("BetaXY", "Constant");
-            double L = BCparams.get("L", 1.0);
-            double rho = physics_list.get("Ice Density", 910.0);
-            double rho_w = physics_list.get("Water Density", 1028.0);
-            p->set<double>("Ice Density", rho);
-            p->set<double>("Water Density", rho_w);
-            p->set<string>("BetaXY", betaName);
-            p->set<string>("Beta Field Name", "basal_friction");
-            p->set<string>("thickness Field Name", "ice_thickness");
-            p->set<string>("BedTopo Field Name", "bed_topography");
-            p->set<bool>(
-                "Use GLP",
-                physics_list.get("Use GLP", false));  // Do not use GLP
-                                                      // (Grounding line
-                                                      // parametrization) unless
-                                                      // actively enabled
 
-            p->set<double>("L", L);
-            p->set<string>("DOF Name", dof_names[0]);
-            p->set<bool>("Vector Field", isVectorField);
-            if (isVectorField)
-              p->set<RCP<DataLayout>>("DOF Data Layout", dl->node_vector);
-            else
-              p->set<RCP<DataLayout>>("DOF Data Layout", dl->node_scalar);
-          } else if (conditions[k] == "basal_scalar_field") {
-            Teuchos::ParameterList& mapParamList =
-                params->sublist("Stereographic Map");
-            p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
-            p->set<string>("Beta Field Name", "basal_friction");
-            p->set<string>("DOF Name", dof_names[0]);
-            p->set<bool>("Vector Field", isVectorField);
-            p->set<string>("thickness Field Name", "ice_thickness");
-            if (isVectorField)
-              p->set<RCP<DataLayout>>("DOF Data Layout", dl->node_vector);
-            else
-              p->set<RCP<DataLayout>>("DOF Data Layout", dl->node_scalar);
-          } else if (conditions[k] == "lateral") {
-            Teuchos::ParameterList& mapParamList =
-                params->sublist("Stereographic Map");
-            p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
-            Teuchos::ParameterList& physics_list =
-                params->sublist("LandIce Physical Parameters");
-            string betaName = BCparams.get("BetaXY", "Constant");
-            double g = physics_list.get("Gravity Acceleration", 9.8);
-            double rho = physics_list.get("Ice Density", 910.0);
-            double rho_w = physics_list.get("Water Density", 1028.0);
-            p->set<double>("Gravity Acceleration", g);
-            p->set<double>("Ice Density", rho);
-            p->set<double>("Water Density", rho_w);
-            p->set<string>("thickness Field Name", "ice_thickness");
-            p->set<string>("Elevation Field Name", "surface_height");
-            p->set<string>("DOF Name", dof_names[0]);
-            p->set<bool>("Vector Field", isVectorField);
-            if (isVectorField)
-              p->set<RCP<DataLayout>>("DOF Data Layout", dl->node_vector);
-            else
-              p->set<RCP<DataLayout>>("DOF Data Layout", dl->node_scalar);
-          }
-#endif
           // Pass the input file line
           p->set<string>("Neumann Input String", ss);
           p->set<Teuchos::Array<double>>(
               "Neumann Input Value", BCparams.get<Teuchos::Array<double>>(ss));
           p->set<string>("Neumann Input Conditions", conditions[k]);
 
-          // Enable Memoizer
-          if (enableMemoizer && conditions[k] == "lateral")
-            p->set<bool>("Enable Memoizer", enableMemoizer);
+          // If we are doing a Neumann internal boundary with a "scaled jump",
+          // the material DB database needs to be passed to the BC object
+          // Note: 'robin' is a very generic name. It is ok to allow some 'complex'
+          //       robin conditions (with a scaled jump), but we should allow one
+          //       to use 'robin' bc for the classic du/dn + alpha*u = g,
+          //       which means the user should not have to specify a material DB
 
-          // If we are doing a Neumann internal boundary with a "scaled jump"
-          // (includes "robin" too)
-          // The material DB database needs to be passed to the BC object
-
-          if (conditions[k] == "scaled jump" || conditions[k] == "robin" || conditions[k] == "radiate") {
+          if (conditions[k] == "scaled jump" || conditions[k] == "radiate") {
             TEUCHOS_TEST_FOR_EXCEPTION(
                 materialDB == Teuchos::null,
                 Teuchos::Exceptions::InvalidParameter,
                 "This BC needs a material database specified");
-
-            p->set<RCP<Albany::MaterialDatabase>>("MaterialDB", materialDB);
           }
+          p->set<RCP<Albany::MaterialDatabase>>("MaterialDB", materialDB);
 
           // Inputs: X, Y at nodes, Cubature, and Basis
           // p->set<string>("Node Variable Name", "Neumann");
@@ -1199,16 +1131,6 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
               p->set<RCP<DataLayout>>("DOF Data Layout", dl->node_scalar);
           }
 
-          else if (conditions[k] == "basal") {
-            p->set<string>("DOF Name", dof_names[0]);
-            p->set<bool>("Vector Field", isVectorField);
-
-            if (isVectorField)
-              p->set<RCP<DataLayout>>("DOF Data Layout", dl->node_vector);
-            else
-              p->set<RCP<DataLayout>>("DOF Data Layout", dl->node_scalar);
-          }
-
           // Pass the input file line
           p->set<string>("Neumann Input String", ss);
           p->set<Teuchos::Array<double>>(
@@ -1253,97 +1175,6 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
 
     evaluators_to_build[NeuGCV] = p;
   }
-
-#ifdef ALBANY_LANDICE
-  /*  // Build evaluator for basal_friction
-   string NeuGBF="Evaluator for Gather basal_friction";
-   {
-   string paramName = "basal_friction";
-   RCP<ParameterList> p = rcp(new ParameterList());
-   std::stringstream key; key<< paramName <<  "Is Distributed Parameter";
-   if(params->get<int>(key.str(),0) == 1) {
-   p->set<int>("Type", traits_type::typeSNP);
-   p->set< RCP<Albany::Layouts>>("Layouts Struct", dl);
-   p->set< string >("Parameter Name", paramName);
-   }
-   else {
-   p->set<int>("Type", traits_type::typeSF);
-   p->set< RCP<DataLayout>>  ("State Field Layout",  dl->node_scalar);
-   p->set< string >("State Name", paramName);
-   p->set< string >("Field Name", paramName);
-   }
-
-   evaluators_to_build[NeuGBF] = p;
-   }
-   */
-  // Build evaluator for thickness
-  string NeuGBF = "Evaluator for Gather basal_friction";
-  {
-    const string paramName = "basal_friction";
-    RCP<ParameterList> p = rcp(new ParameterList());
-    p->set<int>("Type", traits_type::typeSF);
-
-    // for new way
-    p->set<RCP<DataLayout>>("State Field Layout", dl->node_scalar);
-    p->set<string>("State Name", paramName);
-    p->set<std::string>("Field Name", paramName);
-
-    evaluators_to_build[NeuGBF] = p;
-  }
-
-  // Build evaluator for basal_friction
-  string NeuGBT = "Evaluator for Gather bed_topography";
-  {
-    const string paramName = "bed_topography";
-    RCP<ParameterList> p = rcp(new ParameterList());
-    std::stringstream key;
-    key << paramName << "Is Distributed Parameter";
-    if (params->get<int>(key.str(), 0) == 1) {
-      p->set<int>("Type", traits_type::typeSF);
-      p->set<RCP<Albany::Layouts>>("Layouts Struct", dl);
-      p->set<string>("Parameter Name", paramName);
-    } else {
-      p->set<int>("Type", traits_type::typeSF);
-      p->set<RCP<DataLayout>>("State Field Layout", dl->node_scalar);
-      p->set<string>("State Name", paramName);
-      p->set<string>("Field Name", paramName);
-    }
-
-    evaluators_to_build[NeuGBT] = p;
-  }
-
-  // Build evaluator for thickness
-  string NeuGT = "Evaluator for Gather thickness";
-  {
-    const string paramName = "ice_thickness";
-    RCP<ParameterList> p = rcp(new ParameterList());
-    p->set<int>("Type", traits_type::typeSF);
-
-    // for new way
-    p->set<RCP<DataLayout>>("State Field Layout", dl->node_scalar);
-    p->set<string>("State Name", paramName);
-    p->set<std::string>("Field Name", paramName);
-
-    if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
-
-    evaluators_to_build[NeuGT] = p;
-  }
-
-  string NeuGSH = "Evaluator for Gather surface_height";
-  {
-    RCP<ParameterList> p = rcp(new ParameterList());
-    p->set<int>("Type", traits_type::typeSF);
-
-    // for new way
-    p->set<RCP<DataLayout>>("State Field Layout", dl->node_scalar);
-    p->set<string>("State Name", "surface_height");
-    p->set<string>("Field Name", "surface_height");
-
-    if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
-
-    evaluators_to_build[NeuGSH] = p;
-  }
-#endif
 
   // Build evaluator for Gather Solution
   string NeuGS = "Evaluator for Gather Solution";
@@ -1537,9 +1368,7 @@ Albany::NeumannTraits::getValidBCParameters(
     }
   }
 
-  validPL->set<std::string>("BetaXY", "Constant", "Function Type for Basal BC");
   validPL->set<int>("Cubature Degree", 3, "Cubature Degree for Neumann BC");
-  validPL->set<double>("L", 1, "Length Scale for ISMIP-HOM Tests");
   return validPL;
 }
 

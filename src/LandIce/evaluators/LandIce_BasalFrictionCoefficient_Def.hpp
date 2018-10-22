@@ -10,7 +10,9 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Layouts.hpp"
 
-#include <algorithm>
+#include "LandIce_BasalFrictionCoefficient.hpp"
+
+#include <string.hpp> // for 'upper_case' (comes from src/utility; not to be confused with <string>)
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -35,8 +37,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   Teuchos::ParameterList& beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
   zero_on_floating = beta_list.get<bool> ("Zero Beta On Floating Ice", false);
 
-  std::string betaType = (beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "Given Field");
-  std::transform(betaType.begin(), betaType.end(),betaType.begin(), ::toupper);
+  std::string betaType = util::upper_case((beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "Given Field"));
 
   if (IsStokes)
   {

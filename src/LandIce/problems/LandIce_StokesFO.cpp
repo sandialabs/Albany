@@ -310,7 +310,7 @@ LandIce::StokesFO::constructDirichletEvaluators(
 {
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);
-   for (int i=0; i<vecDimFO; i++) {
+   for (unsigned int i=0; i<vecDimFO; i++) {
      std::stringstream s; s << "U" << i;
      dirichletNames[i] = s.str();
    }
@@ -371,7 +371,7 @@ void LandIce::StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::M
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
-   std::vector<std::string> condNames(6); //(dCdx, dCdy, dCdz), dCdn, basal, P, lateral, basal_scalar_field
+   std::vector<std::string> condNames(4); //(dCdx, dCdy, dCdz), dCdn, P, natural
    Teuchos::ArrayRCP<std::string> dof_names(1);
      dof_names[0] = "Velocity";
 
@@ -385,10 +385,8 @@ void LandIce::StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::M
        std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
 
    condNames[1] = "dFluxdn";
-   condNames[2] = "basal";
-   condNames[3] = "P";
-   condNames[4] = "lateral";
-   condNames[5] = "basal_scalar_field";
+   condNames[2] = "P";
+   condNames[3] = "natural"; // This string could be anything, since it is caught by the last 'else' in PHAL_Neumann
 
    nfm.resize(1); // LandIce problem only has one element block
 

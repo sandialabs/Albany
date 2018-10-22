@@ -143,7 +143,7 @@ protected:
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > surfaceSideBasis;
 
   int numDim;
-  int vecDimFO;
+  unsigned int vecDimFO;
   Teuchos::RCP<Albany::Layouts> dl, dl_scalar, dl_side_scalar, dl_basal, dl_surface, dl_lateral;
 
   //! Discretization parameters
