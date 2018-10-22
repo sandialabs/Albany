@@ -9,21 +9,15 @@
 #ifndef ALBANY_STATEINFOSTRUCT
 #define ALBANY_STATEINFOSTRUCT
 
-// This file containts two structs that are containers for the
-// Albany::Problem to interface to STK::Mesh.
-// (1) The MeshSpecsStruct holds information that is loaded mostly
-//     from STK::metaData, which is needed to create an Albany::Problem.
-//     This includes worksetSize, CellTopologyData, etc.
-// (2) The StateInfoStruct contains information from the Problem
-//     (via the State Manager) that is used by STK to define Fields.
-//     This includes name, number of quantitites (scalar,vector,tensor),
-//     Element vs Node lcoation, etc.
+// The StateInfoStruct contains information from the Problem
+// (via the State Manager) that is used by STK to define Fields.
+// This includes name, number of quantitites (scalar,vector,tensor),
+// Element vs Node lcoation, etc.
 
 #include <string>
 #include <vector>
 #include <map>
 
-#include "Intrepid2_Polylib.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Shards_Array.hpp"
 #include "Shards_CellTopologyData.h"
@@ -58,63 +52,6 @@ struct StateArrays
   StateArrayVec nodeStateArrays;
 };
 
-struct MeshSpecsStruct
-{
-  MeshSpecsStruct(
-      const CellTopologyData&  ctd_,
-      int                      numDim_,
-      int                      cubatureDegree_,
-      std::vector<std::string> nsNames_,
-      std::vector<std::string> ssNames_,
-      int                      worksetSize_,
-      const std::string        ebName_,
-      std::map<std::string, int>& ebNameToIndex_,
-      bool                       interleavedOrdering_,
-      const bool                 sepEvalsByEB_ = false,
-      const Intrepid2::EPolyType cubatureRule_ = Intrepid2::POLYTYPE_GAUSS)
-      : ctd(ctd_),
-        numDim(numDim_),
-        cubatureDegree(cubatureDegree_),
-        nsNames(nsNames_),
-        ssNames(ssNames_),
-        worksetSize(worksetSize_),
-        ebName(ebName_),
-        ebNameToIndex(ebNameToIndex_),
-        interleavedOrdering(interleavedOrdering_),
-        sepEvalsByEB(sepEvalsByEB_),
-        cubatureRule(cubatureRule_)
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (cubatureDegree<0, Teuchos::Exceptions::InvalidArgument,
-                                "Error! Invalid cubature degree on element block '" << ebName << "'.\n");
-  }
-
-  // nonconst to allow replacement when the mesh adapts
-  CellTopologyData ctd;
-  int              numDim;
-  int              cubatureDegree;
-  // Node Sets Names
-  std::vector<std::string> nsNames;
-  // Side Sets Names
-  std::vector<std::string> ssNames;
-  int                      worksetSize;
-  // Element block name for the EB that this struct corresponds to
-  std::string ebName;
-  std::map<std::string, int>& ebNameToIndex;
-  bool interleavedOrdering;
-  // Records "Separate Evaluators by Element Block". This says whether there
-  // are as many MeshSpecsStructs as there are element blocks. If there is
-  // only one element block in the problem, then the value of this boolean
-  // doesn't matter. It is intended that interface blocks (LCM) don't count,
-  // but the user must enforce this intention.
-  bool                       sepEvalsByEB;
-  const Intrepid2::EPolyType cubatureRule;
-  std::map<std::string, Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>>>
-      sideSetMeshSpecs;
-
-  // We store the side meshes names so we have a way to index them with a number
-  std::vector<std::string> sideSetMeshNames;
-};
-
 //! Container to get state info from StateManager to STK. Made into a struct so
 //  the information can continue to evolve without changing the interfaces.
 
@@ -134,14 +71,14 @@ struct StateStruct
 
   StateStruct(const std::string& name_, MeshFieldEntity ent)
       : name(name_),
+        entity(ent),
         responseIDtoRequire(""),
         output(true),
         restartDataAvailable(false),
         saveOldState(false),
+        layered(false),
         meshPart(""),
-        pParentStateStruct(NULL),
-        entity(ent),
-        layered(false)
+        pParentStateStruct(NULL)
   {
   }
 
@@ -153,17 +90,17 @@ struct StateStruct
       const std::string& meshPart_ = "",
       const std::string& ebName_   = "")
       : name(name_),
+        dim(dims),
+        entity(ent),
+        initType(type),
         responseIDtoRequire(""),
         output(true),
-        dim(dims),
-        initType(type),
         restartDataAvailable(false),
         saveOldState(false),
+        layered(false),
         meshPart(meshPart_),
         ebName(ebName_),
-        pParentStateStruct(NULL),
-        entity(ent),
-        layered(false)
+        pParentStateStruct(NULL)
   {
   }
 
@@ -283,5 +220,7 @@ class StateInfoStruct {
   std::vector<Teuchos::RCP<StateStruct>> sis;
   Teuchos::RCP<Adapt::NodalDataBase>     nodal_data_base;
 };
-}
-#endif
+
+} // namespace Albany
+
+#endif // ALBANY_STATEINFOSTRUCT

@@ -28,12 +28,19 @@ Albany::STK3DPointStruct::STK3DPointStruct(const Teuchos::RCP<Teuchos::Parameter
   int worksetSize = 1;
 
   std::cout << "--- creating a new MeshSpecsStruct ---" << std::endl;
+  std::map<std::string,int> ebNameToIndex;
+  ebNameToIndex[partVec[0]->name()] = 0;
   this->meshSpecs[0] =
     Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cubDegree,
                                              nsNames, ssNames, worksetSize, partVec[0]->name(),
-                                             ebNameToIndex, this->interleavedOrdering));
+                                             ebNameToIndex,
+                                             this->interleavedOrdering));
   std::cout << "---3DPoint constructor done---" << std::endl;
 
+  // Create a mesh specs object for EACH side set
+  this->initializeSideSetMeshSpecs(commT);
+
+  // Initialize the requested sideset mesh struct in the mesh
   this->initializeSideSetMeshStructs(commT);
 }
 

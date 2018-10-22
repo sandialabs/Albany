@@ -66,6 +66,7 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
   //just creating 1 element block.  May want to change later...
   std::string ebn="Element Block 0";
   partVec[0] = & metaData->declare_part(ebn, stk::topology::ELEMENT_RANK );
+  std::map<std::string,int> ebNameToIndex;
   ebNameToIndex[ebn] = 0;
   std::vector<std::string> nsNames;
   std::vector<std::string> ssNames;
@@ -103,7 +104,11 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
                              nsNames, ssNames, worksetSize, partVec[0]->name(),
                              ebNameToIndex, this->interleavedOrdering));
 
+  // Create a mesh specs object for EACH side set
+  this->initializeSideSetMeshSpecs(commT);
 
+  // Initialize the requested sideset mesh struct in the mesh
+  this->initializeSideSetMeshStructs(commT);
 }
 
 Aeras::SpectralOutputSTKMeshStruct::~SpectralOutputSTKMeshStruct()

@@ -322,6 +322,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
 
   std::string ebn="Element Block 0";
   partVec[0] = & metaData->declare_part(ebn, stk::topology::ELEMENT_RANK );
+  std::map<std::string,int> ebNameToIndex;
   ebNameToIndex[ebn] = 0;
 
 #ifdef ALBANY_SEACAS
@@ -397,7 +398,11 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
                              ebNameToIndex, this->interleavedOrdering));
 
 
-  this->initializeSideSetMeshStructs (commT);
+  // Create a mesh specs object for EACH side set
+  this->initializeSideSetMeshSpecs(commT);
+
+  // Initialize the requested sideset mesh struct in the mesh
+  this->initializeSideSetMeshStructs(commT);
 }
 
 Albany::AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
@@ -411,7 +416,7 @@ Albany::AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
 void
 Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
               const Teuchos::RCP<const Teuchos_Comm>& commT,
-              const Teuchos::RCP<Teuchos::ParameterList>& params,
+              const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
               const unsigned int neq_,
               const AbstractFieldContainer::FieldContainerRequirements& req,
               const Teuchos::RCP<Albany::StateInfoStruct>& sis,

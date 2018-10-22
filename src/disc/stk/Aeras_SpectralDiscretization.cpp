@@ -2437,7 +2437,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
       wsPhysIndex[i] = 0;
   else
     for (int i = 0; i < numBuckets; ++i)
-      wsPhysIndex[i] = stkMeshStruct->ebNameToIndex[wsEBNames[i]];
+      wsPhysIndex[i] = stkMeshStruct->getMeshSpecs()[0]->ebNameToIndex[wsEBNames[i]];
 
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
 

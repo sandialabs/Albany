@@ -107,7 +107,6 @@ namespace Albany {
 
     // Info to map element block to physics set
     bool allElementBlocksHaveSamePhysics;
-    std::map<std::string, int> ebNameToIndex;
 
     // Info for periodic BCs -- only for hand-coded STK meshes
     struct PeriodicBCStruct PBCStruct;

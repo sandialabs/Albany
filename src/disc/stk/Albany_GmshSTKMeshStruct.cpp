@@ -96,6 +96,7 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
 
   std::string ebn = "Element Block 0";
   partVec[0] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
+  std::map<std::string,int> ebNameToIndex;
   ebNameToIndex[ebn] = 0;
 
 #ifdef ALBANY_SEACAS
@@ -202,8 +203,8 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
   cullSubsetParts(ssNames, ssPartVec);
   this->meshSpecs[0] = Teuchos::rcp (
       new Albany::MeshSpecsStruct (ctd, numDim, cub, nsNames, ssNames,
-                                   worksetSize, partVec[0]->name(), ebNameToIndex,
-                                   this->interleavedOrdering));
+                                   worksetSize, partVec[0]->name(),
+                                   ebNameToIndex, this->interleavedOrdering));
 
   this->initializeSideSetMeshStructs(commT);
 }
