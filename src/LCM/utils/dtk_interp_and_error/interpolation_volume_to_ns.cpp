@@ -119,7 +119,7 @@ interpolate(
   if (interpolation_intervals > 1)
     tmo = stk::io::MeshField::LINEAR_INTERPOLATION;
 
-  src_broker.add_all_mesh_fields_as_input_field_on_meshs(tmo);
+  src_broker.add_all_mesh_fields_as_input_fields(tmo);
   src_broker.populate_bulk_data();
   Teuchos::RCP<stk::mesh::BulkData> src_bulk_data =
       Teuchos::rcpFromRef(src_broker.bulk_data());
@@ -161,7 +161,7 @@ interpolate(
 
     for (int interval = 0; interval < interpolation_intervals; interval++) {
       time = tbeg + delta * static_cast<double>(interval);
-      src_broker.read_defined_input_field_on_meshs(time);
+      src_broker.read_defined_input_fields(time);
     }
   }
 
@@ -199,7 +199,7 @@ interpolate(
       target_mesh_input_file, "exodus", stk::io::READ_MESH);
   tgt_broker.set_active_mesh(tgt_input_index);
   tgt_broker.create_input_mesh();
-  tgt_broker.add_all_mesh_fields_as_input_field_on_meshs(tmo);
+  tgt_broker.add_all_mesh_fields_as_input_fields(tmo);
 
   // Get source_field from source mesh
   FieldType* source_field = src_broker.meta_data().get_field<FieldType>(
@@ -287,7 +287,7 @@ interpolate(
 
     for (int interval = 0; interval < interpolation_intervals; interval++) {
       time = tbeg + delta * static_cast<double>(interval);
-      tgt_broker.read_defined_input_field_on_meshs(time);
+      tgt_broker.read_defined_input_fields(time);
     }
   }
 
@@ -418,7 +418,7 @@ interpolate(
   else
     tgt_broker.add_field(tgt_output_index, dirichlet_field);
   tgt_broker.begin_output_step(tgt_output_index, 0.0);
-  tgt_broker.write_defined_output_field_on_meshs(tgt_output_index);
+  tgt_broker.write_defined_output_fields(tgt_output_index);
   tgt_broker.end_output_step(tgt_output_index);
 }
 
