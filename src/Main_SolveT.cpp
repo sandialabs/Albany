@@ -22,6 +22,7 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
+#include "Tpetra_Core.hpp"
 #include "MatrixMarket_Tpetra.hpp"
 
 // Uncomment for run time nan checking
