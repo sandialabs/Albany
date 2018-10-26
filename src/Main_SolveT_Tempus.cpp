@@ -24,6 +24,7 @@
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
 #include "MatrixMarket_Tpetra.hpp"
+#include "Tpetra_Core.hpp"
 
 #include "Tempus_IntegratorBasic.hpp" 
 #include "Piro_ObserverToTempusIntegrationObserverAdapter.hpp"
