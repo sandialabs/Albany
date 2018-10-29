@@ -1,0 +1,78 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Coupled System: 
+    Model XML Files: [pipe.yaml, reactor.yaml]
+    Network Model: Reactor Network
+  Piro: 
+    Network Coupling Parameter Indices: [0, 0]
+    Network Coupling Response Indices: [0, 0]
+    Solver Type: NOX
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.00000000000000002e-08
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 9.99999999999999955e-07
+            Relative Tolerance: 9.99999999999999955e-07
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+      Direction: 
+        Method: Newton
+        Newton: 
+          Linear Solver: 
+            Max Iterations: 1000
+            Tolerance: 9.99999999999999980e-13
+            Write Linear System: false
+          Forcing Term Method: Constant
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 30
+                      Output Frequency: 20
+                    Max Iterations: 250
+                    Tolerance: 9.99999999999999980e-13
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Prec Type: Amesos
+                  Overlap: 4
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+  Regression Results: 
+    Number of Comparisons: 4
+    Test Values: [2.23169000000000004e+01, -1.77710000000000008e+02, 1.77710000000000008e+02, -2.23169000000000004e+01]
+    Number of Sensitivity Comparisons: 0
+    Number of Dakota Comparisons: 0
+    Absolute Tolerance: 1.00000000000000008e-05
+    Relative Tolerance: 1.00000000000000002e-03
+...

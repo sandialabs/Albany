@@ -1,0 +1,156 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Phalanx Graph Visualization Detail: 1
+    Name: LinComprNS 2D
+    Solution Method: Transient
+    Number of PDE Equations: 3
+    Dirichlet BCs: { }
+    Body Force: 
+      Type: Unsteady Euler MMS
+    Equation Set: 
+      Type: Euler
+      Base Flow Data: [0.00000000000000000e+00, 0.00000000000000000e+00, 1.00000000000000000e+00, 7.14285700000000023e-01]
+    Initial Condition: 
+      Function: Sin-Cos
+    Parameters: 
+      Number: 0
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    Periodic_x BC: true
+    Periodic_y BC: true
+    1D Elements: 20
+    2D Elements: 20
+    1D Scale: 2.00000000000000000e+00
+    2D Scale: 2.00000000000000000e+00
+    Method: STK2D
+    Exodus Output File Name: lincomprns2D_unsteadyMMS_out.exo
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [1.00000000000000003e-13]
+    Relative Tolerance: 1.00000000000000005e-04
+  Piro: 
+    Rythmos Solver: 
+      Rythmos: 
+        Integrator Settings: 
+          Final Time: 1.00000000000000000e+00
+        Stepper Settings: 
+          Stepper Selection: 
+            Stepper Type: Backward Euler
+        Integration Control Strategy Selection: 
+          Integration Control Strategy Type: Simple Integration Control Strategy
+          Simple Integration Control Strategy: 
+            Take Variable Steps: false
+            Number of Time Steps: 60
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          AztecOO: 
+            Forward Solve: 
+              AztecOO Settings: 
+                Aztec Solver: GMRES
+                Convergence Test: r0
+                Size of Krylov Subspace: 200
+              Max Iterations: 200
+              Tolerance: 1.00000000000000002e-08
+            Output Every RHS: true
+          Belos: 
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 1.00000000000000002e-08
+                Output Frequency: 1
+                Output Style: 1
+                Verbosity: 0
+                Maximum Iterations: 200
+                Block Size: 1
+                Num Blocks: 200
+                Flexible Gmres: false
+        Preconditioner Type: Ifpack
+        Preconditioner Types: 
+          Ifpack: 
+            Prec Type: ILU
+            Overlap: 1
+            Ifpack Settings: 
+              'fact: level-of-fill': 1
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 9.99999999999999980e-13
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.00000000000000005e-04
+            Relative Tolerance: 1.00000000000000002e-08
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 20
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 20
+                    Max Iterations: 200
+                    Tolerance: 9.99999999999999955e-07
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 0
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: level-of-fill': 0
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    'smoother: type': ML symmetric Gauss-Seidel
+                    'smoother: pre or post': both
+                    'coarse: type': Amesos-KLU
+                    PDE equations: 4
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

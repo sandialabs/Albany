@@ -1,0 +1,163 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Phalanx Graph Visualization Detail: 1
+    Name: LinComprNS 2D
+    Solution Method: Transient
+    Number of PDE Equations: 4
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF qFluct0: 0.00000000000000000e+00
+      DBC on NS NodeSet1 for DOF qFluct0: 0.00000000000000000e+00
+      DBC on NS NodeSet2 for DOF qFluct1: 0.00000000000000000e+00
+      DBC on NS NodeSet3 for DOF qFluct1: 0.00000000000000000e+00
+    Body Force: 
+      Type: None
+    Equation Set: 
+      Type: Navier-Stokes
+      Base Flow Data: [0.00000000000000000e+00, 0.00000000000000000e+00, 1.00000000000000000e+00, 1.00000000000000000e+00]
+      Viscosity mu: 0.00000000000000000e+00
+      Diffusivity kappa: 0.00000000000000000e+00
+    Initial Condition: 
+      Function: Gaussian Pressure
+      Function Data: [9.55233927970380002e-03, 1.00000000000000000e+01, 1.00000000000000000e+00, 1.00000000000000000e+00]
+    Parameters: 
+      Number: 0
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    Periodic_x BC: true
+    Periodic_y BC: true
+    1D Elements: 20
+    2D Elements: 20
+    1D Scale: 2.00000000000000000e+00
+    2D Scale: 2.00000000000000000e+00
+    Method: STK2D
+    Exodus Output File Name: lincomprns2Dns_unsteady_out.exo
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [1.86463840499999996e-04]
+    Relative Tolerance: 1.00000000000000005e-04
+  Piro: 
+    Rythmos: 
+      Num Time Steps: 9
+      Final Time: 3.46229999999999993e+00
+      Max State Error: 5.00000000000000028e-02
+      Alpha: 0.00000000000000000e+00
+      Rythmos Stepper: 
+        VerboseObject: 
+          Verbosity Level: low
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          AztecOO: 
+            Forward Solve: 
+              AztecOO Settings: 
+                Aztec Solver: GMRES
+                Convergence Test: r0
+                Size of Krylov Subspace: 200
+              Max Iterations: 200
+              Tolerance: 1.00000000000000002e-08
+            Output Every RHS: true
+          Belos: 
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 1.00000000000000002e-08
+                Output Frequency: 1
+                Output Style: 1
+                Verbosity: 0
+                Maximum Iterations: 200
+                Block Size: 1
+                Num Blocks: 200
+                Flexible Gmres: false
+        Preconditioner Type: Ifpack
+        Preconditioner Types: 
+          Ifpack: 
+            Prec Type: ILU
+            Overlap: 1
+            Ifpack Settings: 
+              'fact: level-of-fill': 1
+      Rythmos Integration Control: { }
+      Rythmos Integrator: 
+        VerboseObject: 
+          Verbosity Level: low
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 9.99999999999999980e-13
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.00000000000000005e-04
+            Relative Tolerance: 1.00000000000000002e-08
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 20
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 20
+                    Max Iterations: 200
+                    Tolerance: 9.99999999999999955e-07
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 0
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: level-of-fill': 0
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    'smoother: type': ML symmetric Gauss-Seidel
+                    'smoother: pre or post': both
+                    'coarse: type': Amesos-KLU
+                    PDE equations: 4
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

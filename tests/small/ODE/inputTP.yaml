@@ -1,0 +1,71 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: ODE
+    Solution Method: Transient
+    Dirichlet BCs: { }
+    Initial Condition: 
+      Function: Constant
+      Function Data: [1.00000000000000000e+00, 1.00000000000000000e+00]
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Two Norm
+    Parameters: 
+      Number: 0
+  Discretization: 
+    Method: STK0D
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [1.93303699999999995e-01]
+    Relative Tolerance: 1.00000000000000002e-03
+    Absolute Tolerance: 1.00000000000000008e-05
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [3.05378999999999998e-02, 3.30262109999999998e-01]
+  Piro: 
+    Rythmos: 
+      Nonlinear Solver Type: Rythmos
+      Final Time: 1.00000000000000000e+00
+      Max State Error: 5.00000000000000028e-02
+      Alpha: 0.00000000000000000e+00
+      Rythmos Stepper: 
+        VerboseObject: 
+          Verbosity Level: low
+      Rythmos Integration Control: 
+        Take Variable Steps: false
+        Number of Time Steps: 200
+      Rythmos Integrator: 
+        VerboseObject: 
+          Verbosity Level: none
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          Belos: 
+            VerboseObject: 
+              Verbosity Level: low
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 9.99999999999999955e-08
+                Output Frequency: 1
+                Output Style: 1
+                Verbosity: 0
+                Maximum Iterations: 1200
+                Block Size: 20
+                Num Blocks: 200
+                Flexible Gmres: true
+                Orthogonalization: DGKS
+                Implicit Residual Scaling: Norm of Preconditioned Initial Residual
+                Explicit Residual Scaling: Norm of RHS
+        Preconditioner Type: Ifpack2
+        Preconditioner Types: 
+          Ifpack2: 
+            Prec Type: RILUK
+            Ifpack2 Settings: 
+              'fact: drop tolerance': 0.00000000000000000e+00
+              'fact: iluk level-of-fill': 0
+              'fact: ilut level-of-fill': 0.00000000000000000e+00
+              'schwarz: filter singletons': true
+              'schwarz: use reordering': true
+              'schwarz: overlap level': 0
+...

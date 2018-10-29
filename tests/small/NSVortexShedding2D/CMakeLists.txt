@@ -1,8 +1,8 @@
 
 
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vortex.exo
                ${CMAKE_CURRENT_BINARY_DIR}/vortex.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vortex.exo.4.0
@@ -20,18 +20,18 @@ if (ALBANY_EPETRA)
 add_test(${testName} ${Albany.exe})
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputBlocked.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputBlocked.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputBlocked.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputBlocked.yaml COPYONLY)
 
 if (ALBANY_EPETRA) 
-add_test(${testName}_Blocked ${Albany.exe} inputBlocked.xml)
+add_test(${testName}_Blocked ${Albany.exe} inputBlocked.yaml)
 endif()
 
 if (ALBANY_EPETRA)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTransientRK.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputTransientRK.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTransientRK.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputTransientRK.yaml COPYONLY)
 
-add_test(${testName}_TransIRK ${Albany.exe} inputTransientRK.xml)
+add_test(${testName}_TransIRK ${Albany.exe} inputTransientRK.yaml)
 endif(ALBANY_EPETRA)
 if (ALBANY_IFPACK2)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTransientRKT.yaml

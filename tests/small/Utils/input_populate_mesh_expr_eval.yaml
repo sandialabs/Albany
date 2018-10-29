@@ -1,0 +1,49 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output: 
+    Write Solution to MatrixMarket: false
+  Problem: 
+    Solution Method: Steady
+    Name: Populate Mesh
+  Discretization: 
+    Number Of Time Derivatives: 0
+    Method: STK2D
+    Cubature Degree: 1
+    Workset Size: 10
+    Exodus Output File Name: ./populated_mesh.exo
+    1D Elements: 2
+    2D Elements: 2
+    1D Scale: 1.00000000000000000e+00
+    2D Scale: 1.00000000000000000e+00
+    Cell Topology: Quad
+    Required Fields Info: 
+      Number Of Fields: 4
+      Field 0: 
+        Field Name: field_0
+        Field Type: Node Scalar
+        Field Origin: File
+        File Name: ./dummy_field.ascii
+      Field 1: 
+        Field Name: field_1
+        Field Type: Elem Vector
+        Field Origin: File
+        Vector Dim: 3
+        Field Value: [1.23399999999999996e-01, 5.67889999999999961e+00, -1.00000000000000000e+00]
+      Field 2: 
+        Field Name: field_2
+        Field Type: Node Scalar
+        Field Origin: File
+        Random Value: ['true']
+      Field 3: 
+        Field Name: field_3
+        Field Type: Node Vector
+        Field Origin: File
+        Vector Dim: 2
+        Field Expression: ['a=1.1', 'b=2.1', 'c=3.1', 'a*x^2+b*y^2+c', 'a*sin(x*b)*cos(y*c)']
+  Piro: 
+    NOX: 
+      Printing: 
+        Output Information: 
+          Details: false
+...

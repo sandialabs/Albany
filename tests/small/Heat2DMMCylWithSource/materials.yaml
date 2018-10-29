@@ -1,0 +1,31 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Reference Material: INERT
+  ElementBlocks: 
+    fuel: 
+      material: UO2
+    clad: 
+      material: ZR4
+    environ: 
+      material: INERT
+  Materials: 
+    UO2: 
+      Category: UraniumDioxide
+      Thermal Conductivity: 
+        Name: Constant
+        Value: 4.98439999999999994e+00
+      Source Functions: 
+        Constant: 
+          Value: 2.00950000000000000e+04
+    ZR4: 
+      Category: Zircalloy
+      Thermal Conductivity: 
+        Name: Constant
+        Value: 1.70330000000000013e+01
+    INERT: 
+      Category: Cask plus He
+      Thermal Conductivity: 
+        Name: Constant
+        Value: 4.00000000000000019e-04
+...
