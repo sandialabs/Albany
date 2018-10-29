@@ -1,0 +1,47 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Heat 1D
+    Periodic BC: true
+    Solution Method: Transient
+    Dirichlet BCs: { }
+    Initial Condition: 
+      Function: 1D Gauss-Cos
+      Function Data: [0.00000000000000000e+00]
+    Source Functions: 
+      Quadratic: 
+        Nonlinear Factor: 0.00000000000000000e+00
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+    Parameters: 
+      Number: 1
+      Parameter 0: Quadratic Nonlinear Factor
+  Discretization: 
+    1D Elements: 200
+    Method: STK1D
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [1.00069000000000008e+00]
+    Relative Tolerance: 1.00000000000000005e-04
+    Number of Sensitivity Comparisons: 1
+    Sensitivity Test Values 0: [5.62650000000000025e-02]
+  Piro: 
+    Rythmos: 
+      Num Time Steps: 500
+      Final Time: 5.00000000000000028e-02
+      Max State Error: 1.00000000000000002e-03
+      Alpha: 0.00000000000000000e+00
+      Name: 1D Gauss-Cos
+      Rythmos Stepper: 
+        VerboseObject: 
+          Verbosity Level: medium
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Preconditioner Type: Ifpack
+      Rythmos Integration Control: { }
+      Rythmos Integrator: 
+        VerboseObject: 
+          Verbosity Level: medium
+...
