@@ -1,0 +1,119 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Phalanx Graph Visualization Detail: 1
+    Name: LandIce Stokes 2D
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF ux: 0.00000000000000000e+00
+      DBC on NS NodeSet1 for DOF ux: 0.00000000000000000e+00
+      DBC on NS NodeSet2 for DOF ux: 0.00000000000000000e+00
+      DBC on NS NodeSet3 for DOF ux: 0.00000000000000000e+00
+      DBC on NS NodeSet0 for DOF uy: 0.00000000000000000e+00
+      DBC on NS NodeSet1 for DOF uy: 0.00000000000000000e+00
+      DBC on NS NodeSet2 for DOF uy: 0.00000000000000000e+00
+      DBC on NS NodeSet3 for DOF uy: 0.00000000000000000e+00
+      DBC on NS NodeSet99 for DOF p: 4.16129999999999978e+00
+    Body Force: 
+      Type: PolySacado
+    LandIce Viscosity: 
+      Type: Constant
+    Parameters: 
+      Number: 0
+      Parameter 0: DBC on NS NodeSet1 for DOF ux
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Max Value
+      ResponseParams 0: 
+        Equation: 0
+  Discretization: 
+    1D Elements: 200
+    2D Elements: 200
+    1D Scale: 1.00000000000000000e+00
+    2D Scale: 1.00000000000000000e+00
+    Method: STK2D
+    Exodus Output File Name: ns_out.exo
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [1.20229269999999999e-01]
+    Relative Tolerance: 1.00000000000000008e-05
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [1.35470000000000002e+00]
+    Number of Dakota Comparisons: 0
+  Piro: 
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 9.99999999999999955e-08
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.00000000000000002e-03
+            Relative Tolerance: 1.00000000000000002e-03
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 250
+                      Output Frequency: 10
+                    Max Iterations: 250
+                    Tolerance: 9.99999999999999955e-07
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 9.99999999999999955e-07
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 0
+                      Maximum Iterations: 250
+                      Block Size: 1
+                      Num Blocks: 250
+                      Flexible Gmres: false
+              Preconditioner Type: ML
+              Preconditioner Types: 
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    'smoother: type': ML symmetric Gauss-Seidel
+                    'smoother: pre or post': both
+                    'coarse: type': Amesos-KLU
+                    PDE equations: 4
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

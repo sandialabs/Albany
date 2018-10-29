@@ -1,0 +1,211 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Phalanx Graph Visualization Detail: 2
+    Solution Method: Continuation
+    Name: LandIce Enthalpy 3D
+    Basal Side Name: basalside
+    Required Basal Fields: [basal_friction]
+    Needs Dissipation: true
+    Needs Basal Friction: true
+    Constant Geothermal Flux: false
+    Dirichlet BCs: 
+      DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
+    LandIce Viscosity: 
+      Extract Strain Rate Sq: true
+      Type: 'Glen''s Law'
+      'Glen''s Law Homotopy Parameter': 1.00000000000000006e-01
+      Continuous Homotopy With Constant Initial Viscosity: true
+      Coefficient For Continuous Homotopy: 8.00000000000000000e+00
+      'Glen''s Law A': 1.00000000000000005e-04
+      'Glen''s Law n': 3.00000000000000000e+00
+      Flow Rate Type: Temperature Based
+    LandIce Physical Parameters: 
+      Conductivity of ice: 2.10000000000000009e+00
+      Diffusivity temperate ice: 0.00000000000000000e+00
+      Heat capacity of ice: 2.00900000000000000e+03
+      Water Density: 1.02800000000000000e+03
+      Ice Density: 9.16000000000000000e+02
+      Gravity Acceleration: 9.80000000000000071e+00
+      Reference Temperature: 2.65000000000000000e+02
+      Clausius-Clapeyron Coefficient: 7.90000000000000060e-08
+      Latent heat of fusion: 3.34000000000000000e+05
+      Permeability factor: 9.99999999999999980e-13
+      Viscosity of water: 1.79999999999999995e-03
+      Omega exponent alpha: 2.00000000000000000e+00
+      Diffusivity homotopy exponent: -1.00000000000000006e-01
+    LandIce Enthalpy Regularization: 
+      Enthalpy Flux Regularization: 
+        alpha: 1.00000000000000006e-01
+        beta: 7.50000000000000000e+00
+      Enthalpy Basal Melting Regularization: 
+        alpha: 1.00000000000000000e+00
+        beta: 1.00000000000000000e+01
+    LandIce Enthalpy Stabilization: 
+      Type: Streamline Upwind
+      Parameter Delta: 1.00000000000000000e+00
+    Parameters: 
+      Number: 1
+      Parameter 0: 'Glen''s Law Homotopy Parameter'
+    Response Functions: 
+      Number: 2
+      Response 0: Solution Max Value
+      ResponseParams 0: 
+        Equation: 0
+      Response 1: Solution Max Value
+      ResponseParams 1: 
+        Equation: 1
+      Response 2: Solution Average
+  Discretization: 
+    Method: Exodus
+    Number Of Time Derivatives: 0
+    Cubature Degree: 3
+    Exodus Output File Name: gis_enthalpy.exo
+    Exodus Input File Name: ../ExoMeshes/gis_struct_enth.exo
+    Restart Index: 1
+    Use Serial Mesh: true
+    Interleaved Ordering: true
+    Side Set Discretizations: 
+      Side Sets: [basalside]
+      basalside: 
+        Method: Exodus
+        Number Of Time Derivatives: 0
+        Exodus Input File Name: ../ExoMeshes/gis_struct_enth_basal.exo
+        Exodus Output File Name: gis_enthalpy_basal.exo
+        Cubature Degree: 3
+        Restart Index: 1
+        Use Serial Mesh: true
+        Required Fields Info: 
+          Number Of Fields: 1
+          Field 0: 
+            Field Name: basal_friction
+            Field Type: Node Scalar
+            Field Origin: Mesh
+  Regression Results: 
+    Number of Comparisons: 2
+    Test Values: [2.21240269082999994e+01, 7.28622636010999969e+00]
+    Relative Tolerance: 1.00000000000000002e-02
+    Number of Sensitivity Comparisons: 0
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Initial Value: 0.00000000000000000e+00
+        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
+        Continuation Method: Natural
+        Max Steps: 10
+        Max Value: 1.00000000000000000e+00
+        Min Value: 0.00000000000000000e+00
+      Step Size: 
+        Initial Step Size: 1.00000000000000006e-01
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 1
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 9.99999999999999955e-08
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.00000000000000005e-04
+            Relative Tolerance: 9.99999999999999955e-08
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 25
+      Nonlinear Solver: Line Search Based
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 20
+                    Max Iterations: 200
+                    Tolerance: 1.00000000000000002e-08
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000000000002e-08
+                      Output Frequency: 20
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: ML
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 0
+                  Prec Type: Amesos
+                  Ifpack Settings: 
+                    'fact: level-of-fill': 0
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    ML output: 0
+                    'repartition: enable': 1
+                    'repartition: max min ratio': 1.32699999999999996e+00
+                    'repartition: min per proc': 600
+                    'repartition: Zoltan dimensions': 2
+                    'repartition: start level': 4
+                    'semicoarsen: number of levels': 2
+                    'semicoarsen: coarsen rate': 12
+                    'smoother: sweeps': 4
+                    'smoother: type': Chebyshev
+                    'smoother: Chebyshev eig boost': 1.19999999999999996e+00
+                    'smoother: sweeps (level 0)': 1
+                    'smoother: sweeps (level 1)': 4
+                    'smoother: type (level 0)': line Jacobi
+                    'smoother: type (level 1)': line Jacobi
+                    'smoother: damping factor': 5.50000000000000044e-01
+                    'smoother: pre or post': both
+                    'coarse: type': Amesos-KLU
+                    'coarse: pre or post': pre
+                    'coarse: sweeps': 4
+                    max levels: 7
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Backtrack
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

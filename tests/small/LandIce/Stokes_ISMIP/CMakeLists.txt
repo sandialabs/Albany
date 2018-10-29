@@ -6,9 +6,9 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 #3. Tests
 #  First test 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_ismip-hom_testA.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_ismip-hom_testA.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_ismip-hom_testA.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_ismip-hom_testA.yaml COPYONLY)
 if (ALBANY_EPETRA) 
-add_test(${testName}_TestA ${Albany.exe} input_ismip-hom_testA.xml)
+add_test(${testName}_TestA ${Albany.exe} input_ismip-hom_testA.yaml)
 endif()
 
