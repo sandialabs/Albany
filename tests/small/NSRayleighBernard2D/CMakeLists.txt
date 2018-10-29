@@ -19,7 +19,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ns-m4-bKL.par.4.3
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 if (ALBANY_EPETRA) 
-add_test(${testName} ${Albany.exe})
+add_test(${testName} ${Albany.exe} input.yaml)
 endif()
 
 # 5. Repeat process for Dakota problems if "dakota.in" exists
