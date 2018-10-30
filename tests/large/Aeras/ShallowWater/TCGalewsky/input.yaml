@@ -9,7 +9,6 @@ ANONYMOUS:
     Dirichlet BCs: { }
     Initial Condition: 
       Function: Aeras TCGalewskyInit
-      Function Data: []
     Response Functions: 
       Number: 3
       Response 0: Solution Average
