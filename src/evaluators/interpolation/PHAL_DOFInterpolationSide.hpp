@@ -13,7 +13,9 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
 #include "PHAL_Utilities.hpp"
+#include "PHAL_Dimension.hpp"
 
 namespace PHAL {
 /** \brief Finite Element InterpolationSide Evaluator

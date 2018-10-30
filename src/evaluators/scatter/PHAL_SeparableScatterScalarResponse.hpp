@@ -10,6 +10,7 @@
 #define PHAL_SEPARABLE_SCATTER_SCALAR_RESPONSE_HPP
 
 #include "PHAL_ScatterScalarResponse.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 
 namespace PHAL {
 
@@ -158,6 +159,6 @@ private:
 };
 
 // **************************************************************
-}
+} // namespace PHAL
 
-#endif
+#endif // PHAL_SEPARABLE_SCATTER_SCALAR_RESPONSE_HPP
