@@ -55,6 +55,7 @@
        evaluators/LandIce_StokesFOLateralResid.cpp
        evaluators/LandIce_StokesFOResid.cpp
        evaluators/LandIce_StokesFOStress.cpp
+       evaluators/LandIce_StokesFOSynteticTestBC.cpp
        evaluators/LandIce_StokesContinuityResid.cpp
        evaluators/LandIce_StokesContravarientMetricTensor.cpp
        evaluators/LandIce_StokesBodyForce.cpp
@@ -208,6 +209,8 @@ ENDIF()
        evaluators/LandIce_StokesFOResid_Def.hpp
        evaluators/LandIce_StokesFOStress.hpp
        evaluators/LandIce_StokesFOStress_Def.hpp
+       evaluators/LandIce_StokesFOSynteticTestBC.hpp
+       evaluators/LandIce_StokesFOSynteticTestBC_Def.hpp
        evaluators/LandIce_StokesL1L2Resid_Def.hpp
        evaluators/LandIce_StokesL1L2Resid.hpp
        evaluators/LandIce_StokesMomentumResid.hpp
