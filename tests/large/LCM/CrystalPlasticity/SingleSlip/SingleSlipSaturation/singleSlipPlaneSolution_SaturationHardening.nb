@@ -21,7 +21,7 @@ Notebook[{
 
 Cell[CellGroupData[{
 Cell["\<\
-Testing singleSlipPlaneSolution.xml with Saturation Hardening\
+Testing singleSlipPlaneSolution.yaml with Saturation Hardening\
 \>", "Title",
  CellChangeTimes->{{3.6361189492461967`*^9, 3.636118963678875*^9}, {
   3.656258822816071*^9, 3.6562588245525217`*^9}, {3.690038130939653*^9, 

@@ -25,7 +25,7 @@ Cell[BoxData["\t"], "Input",
 Cell[CellGroupData[{
 
 Cell["\<\
-Testing singleSlipPlaneSolution.xml with Dislocation Density Hardening\
+Testing singleSlipPlaneSolution.yaml with Dislocation Density Hardening\
 \>", "Title",
  CellChangeTimes->{{3.6361189492461967`*^9, 3.636118963678875*^9}, {
   3.656258822816071*^9, 3.6562588245525217`*^9}, {3.690038130939653*^9, 
