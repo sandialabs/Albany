@@ -1,0 +1,481 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Solution Method: ATO Problem
+    Number of Subproblems: 6
+    Verbose Output: true
+    Objective Aggregator: 
+      Output Value Name: F
+      Output Derivative Name: dFdRho
+      Values: [R0, R1, R2, R3, R4, R5]
+      Derivatives: [dR0dRho, dR1dRho, dR2dRho, dR3dRho, dR4dRho, dR5dRho]
+      Weighting: Scaled
+      Weights: [9.74999999999999978e-01, 5.00000000000000010e-03, 5.00000000000000010e-03, 5.00000000000000010e-03, 5.00000000000000010e-03, 5.00000000000000010e-03]
+    Spatial Filters: 
+      Number of Filters: 1
+      Filter 0: 
+        Filter Radius: 7.49999999999999972e-02
+        Iterations: 1
+    Topological Optimization: 
+      Package: NLopt
+      Method: MMA
+      Convergence Tests: 
+        Maximum Iterations: 10
+        Combo Type: OR
+      Measure Enforcement: 
+        Measure: Volume
+        Maximum Iterations: 120
+        Convergence Tolerance: 9.99999999999999955e-07
+        Target: 5.00000000000000000e-01
+      Objective: Aggregator
+      Constraint: Measure
+    Topologies: 
+      Number of Topologies: 1
+      Topology 0: 
+        Topology Name: Rho
+        Entity Type: Distributed Parameter
+        Bounds: [9.99999999999999924e-25, 1.00000000000000000e+00]
+        Initial Value: 5.00000000000000000e-01
+        Functions: 
+          Number of Functions: 2
+          Function 0: 
+            Function Type: SIMP
+            Minimum: 1.00000000000000002e-03
+            Penalization Parameter: 3.00000000000000000e+00
+          Function 1: 
+            Function Type: SIMP
+            Minimum: 0.00000000000000000e+00
+            Penalization Parameter: 1.00000000000000000e+00
+        Spatial Filter: 0
+    Configuration: 
+      Element Blocks: 
+        Number of Element Blocks: 1
+        Element Block 0: 
+          Name: block_1
+          Material: 
+            Elastic Modulus: 1.00000000000000000e+09
+            Poissons Ratio: 3.30000000000000016e-01
+            Density: 2.70000000000000000e+03
+      Linear Measures: 
+        Number of Linear Measures: 1
+        Linear Measure 0: 
+          Linear Measure Name: Volume
+          Linear Measure Type: Volume
+          Volume: 
+            Topology Index: 0
+            Function Index: 1
+    Physics Problem 0: 
+      Name: LinearElasticity 2D
+      Dirichlet BCs: 
+        DBC on NS nodelist_1 for DOF X: 0.00000000000000000e+00
+        DBC on NS nodelist_1 for DOF Y: 0.00000000000000000e+00
+      Neumann BCs: 
+        'NBC on SS surface_1 for DOF all set (t_x, t_y)': [0.00000000000000000e+00, -4.50000000000000000e+02]
+      Apply Topology Weight Functions: 
+        Number of Fields: 1
+        Field 0: 
+          Name: Stress
+          Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+      Response Functions: 
+        Number of Response Vectors: 1
+        Response Vector 0: 
+          Name: Internal Energy Objective
+          Gradient Field Name: Strain
+          Gradient Field Layout: QP Tensor
+          Work Conjugate Name: Stress
+          Work Conjugate Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+          Response Name: R0
+          Response Derivative Name: dR0dRho
+    Physics Problem 1: 
+      Name: LinearElasticity 2D
+      Residual Strain: 
+        Shear XY: 
+          Number of KL Terms: 8
+          Mean: 0.00000000000000000e+00
+          KL Random Variable 0: 9.88847696148000005e-05
+          KL Random Variable 1: 5.48993963435999999e-05
+          KL Random Variable 2: -7.42253656464000004e-06
+          KL Random Variable 3: -8.04399801365999947e-06
+          KL Random Variable 4: 1.05301352226999995e-04
+          KL Random Variable 5: 2.51476343902000006e-05
+          KL Random Variable 6: -6.90858220213999981e-05
+          KL Random Variable 7: -1.04979743243999995e-04
+          Standard Deviation: 1.00000000000000005e-04
+          Domain Lower Bounds: '{0.0, 0.0}'
+          Domain Upper Bounds: '{1.5, 1.0}'
+          Correlation Lengths: '{0.05, 0.05, 0.05}'
+        Volumetric: 
+          Number of KL Terms: 8
+          Mean: 0.00000000000000000e+00
+          KL Random Variable 0: -3.02127248953000019e-06
+          KL Random Variable 1: 3.97955671927000009e-05
+          KL Random Variable 2: 5.38075130164999968e-05
+          KL Random Variable 3: 4.79556485028000010e-05
+          KL Random Variable 4: 3.40597009207000009e-05
+          KL Random Variable 5: 1.54428110597999989e-04
+          KL Random Variable 6: 5.03384451597000006e-05
+          KL Random Variable 7: -1.19385967704000004e-04
+          Standard Deviation: 1.00000000000000005e-04
+          Domain Lower Bounds: '{0.0, 0.0}'
+          Domain Upper Bounds: '{1.5, 1.0}'
+          Correlation Lengths: '{0.05, 0.05, 0.05}'
+      Dirichlet BCs: 
+        DBC on NS nodelist_1 for DOF X: 0.00000000000000000e+00
+        DBC on NS nodelist_1 for DOF Y: 0.00000000000000000e+00
+      Apply Topology Weight Functions: 
+        Number of Fields: 2
+        Field 0: 
+          Name: Stress
+          Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+        Field 1: 
+          Name: Residual Stress
+          Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+      Response Functions: 
+        Number of Response Vectors: 1
+        Response Vector 0: 
+          Name: Internal Energy Objective
+          Gradient Field Name: Strain
+          Gradient Field Layout: QP Tensor
+          Work Conjugate Name: Stress
+          Work Conjugate Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+          Response Name: R1
+          Response Derivative Name: dR1dRho
+    Physics Problem 2: 
+      Name: LinearElasticity 2D
+      Residual Strain: 
+        Shear XY: 
+          Number of KL Terms: 8
+          Mean: 0.00000000000000000e+00
+          KL Random Variable 0: -9.76738581646999986e-05
+          KL Random Variable 1: 8.38420930938999946e-05
+          KL Random Variable 2: -1.65578847517000013e-04
+          KL Random Variable 3: -7.40166981690999976e-05
+          KL Random Variable 4: -1.08160853165000000e-04
+          KL Random Variable 5: 2.37153966423000007e-05
+          KL Random Variable 6: 1.01885755908000003e-04
+          KL Random Variable 7: 7.33655555788999969e-05
+          Standard Deviation: 1.00000000000000005e-04
+          Domain Lower Bounds: '{0.0, 0.0}'
+          Domain Upper Bounds: '{1.5, 1.0}'
+          Correlation Lengths: '{0.05, 0.05, 0.05}'
+        Volumetric: 
+          Number of KL Terms: 8
+          Mean: 0.00000000000000000e+00
+          KL Random Variable 0: -8.31636019827000059e-05
+          KL Random Variable 1: -9.05341347475999977e-05
+          KL Random Variable 2: 8.22910967281999961e-05
+          KL Random Variable 3: -5.79526285645999971e-05
+          KL Random Variable 4: -5.54979093251000007e-05
+          KL Random Variable 5: -2.50502315998999999e-05
+          KL Random Variable 6: -5.28917994462000003e-05
+          KL Random Variable 7: -1.03407731451000008e-06
+          Standard Deviation: 1.00000000000000005e-04
+          Domain Lower Bounds: '{0.0, 0.0}'
+          Domain Upper Bounds: '{1.5, 1.0}'
+          Correlation Lengths: '{0.05, 0.05, 0.05}'
+      Dirichlet BCs: 
+        DBC on NS nodelist_1 for DOF X: 0.00000000000000000e+00
+        DBC on NS nodelist_1 for DOF Y: 0.00000000000000000e+00
+      Apply Topology Weight Functions: 
+        Number of Fields: 2
+        Field 0: 
+          Name: Stress
+          Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+        Field 1: 
+          Name: Residual Stress
+          Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+      Response Functions: 
+        Number of Response Vectors: 1
+        Response Vector 0: 
+          Name: Internal Energy Objective
+          Gradient Field Name: Strain
+          Gradient Field Layout: QP Tensor
+          Work Conjugate Name: Stress
+          Work Conjugate Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+          Response Name: R2
+          Response Derivative Name: dR2dRho
+    Physics Problem 3: 
+      Name: LinearElasticity 2D
+      Residual Strain: 
+        Shear XY: 
+          Number of KL Terms: 8
+          Mean: 0.00000000000000000e+00
+          KL Random Variable 0: -7.45793804108999973e-05
+          KL Random Variable 1: -9.25941455110000064e-05
+          KL Random Variable 2: -7.87069218073999989e-05
+          KL Random Variable 3: 1.81678430932000000e-06
+          KL Random Variable 4: 1.88516526786000003e-04
+          KL Random Variable 5: -8.38154636519000050e-05
+          KL Random Variable 6: -6.25912477872999940e-05
+          KL Random Variable 7: 7.79030042611999975e-05
+          Standard Deviation: 1.00000000000000005e-04
+          Domain Lower Bounds: '{0.0, 0.0}'
+          Domain Upper Bounds: '{1.5, 1.0}'
+          Correlation Lengths: '{0.05, 0.05, 0.05}'
+        Volumetric: 
+          Number of KL Terms: 8
+          Mean: 0.00000000000000000e+00
+          KL Random Variable 0: 4.16205433568999988e-05
+          KL Random Variable 1: 4.67925057082000019e-05
+          KL Random Variable 2: -9.59485760442999985e-06
+          KL Random Variable 3: 9.94709623594999999e-05
+          KL Random Variable 4: 3.65278374174999993e-05
+          KL Random Variable 5: -1.44252551973999992e-05
+          KL Random Variable 6: 9.74250090136999933e-05
+          KL Random Variable 7: 9.67313914908000028e-05
+          Standard Deviation: 1.00000000000000005e-04
+          Domain Lower Bounds: '{0.0, 0.0}'
+          Domain Upper Bounds: '{1.5, 1.0}'
+          Correlation Lengths: '{0.05, 0.05, 0.05}'
+      Dirichlet BCs: 
+        DBC on NS nodelist_1 for DOF X: 0.00000000000000000e+00
+        DBC on NS nodelist_1 for DOF Y: 0.00000000000000000e+00
+      Apply Topology Weight Functions: 
+        Number of Fields: 2
+        Field 0: 
+          Name: Stress
+          Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+        Field 1: 
+          Name: Residual Stress
+          Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+      Response Functions: 
+        Number of Response Vectors: 1
+        Response Vector 0: 
+          Name: Internal Energy Objective
+          Gradient Field Name: Strain
+          Gradient Field Layout: QP Tensor
+          Work Conjugate Name: Stress
+          Work Conjugate Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+          Response Name: R3
+          Response Derivative Name: dR3dRho
+    Physics Problem 4: 
+      Name: LinearElasticity 2D
+      Residual Strain: 
+        Shear XY: 
+          Number of KL Terms: 8
+          Mean: 0.00000000000000000e+00
+          KL Random Variable 0: -8.76719735096000048e-06
+          KL Random Variable 1: -4.87182031998999962e-06
+          KL Random Variable 2: 3.04409519276999993e-05
+          KL Random Variable 3: -8.59988341215000055e-05
+          KL Random Variable 4: 3.52923640499000011e-05
+          KL Random Variable 5: -8.45570385347999953e-05
+          KL Random Variable 6: -1.48332359910000012e-04
+          KL Random Variable 7: -1.44289456898000012e-04
+          Standard Deviation: 1.00000000000000005e-04
+          Domain Lower Bounds: '{0.0, 0.0}'
+          Domain Upper Bounds: '{1.5, 1.0}'
+          Correlation Lengths: '{0.05, 0.05, 0.05}'
+        Volumetric: 
+          Number of KL Terms: 8
+          Mean: 0.00000000000000000e+00
+          KL Random Variable 0: 1.08989806325999997e-04
+          KL Random Variable 1: -3.31578565625000006e-05
+          KL Random Variable 2: -2.23702864430000013e-04
+          KL Random Variable 3: 9.16890451471999933e-05
+          KL Random Variable 4: 8.89583286317000027e-05
+          KL Random Variable 5: 5.15130362707000034e-06
+          KL Random Variable 6: 4.92892723610999974e-05
+          KL Random Variable 7: 2.07506343198999996e-04
+          Standard Deviation: 1.00000000000000005e-04
+          Domain Lower Bounds: '{0.0, 0.0}'
+          Domain Upper Bounds: '{1.5, 1.0}'
+          Correlation Lengths: '{0.05, 0.05, 0.05}'
+      Dirichlet BCs: 
+        DBC on NS nodelist_1 for DOF X: 0.00000000000000000e+00
+        DBC on NS nodelist_1 for DOF Y: 0.00000000000000000e+00
+      Apply Topology Weight Functions: 
+        Number of Fields: 2
+        Field 0: 
+          Name: Stress
+          Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+        Field 1: 
+          Name: Residual Stress
+          Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+      Response Functions: 
+        Number of Response Vectors: 1
+        Response Vector 0: 
+          Name: Internal Energy Objective
+          Gradient Field Name: Strain
+          Gradient Field Layout: QP Tensor
+          Work Conjugate Name: Stress
+          Work Conjugate Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+          Response Name: R4
+          Response Derivative Name: dR4dRho
+    Physics Problem 5: 
+      Name: LinearElasticity 2D
+      Residual Strain: 
+        Shear XY: 
+          Number of KL Terms: 8
+          Mean: 0.00000000000000000e+00
+          KL Random Variable 0: 3.36259731317000021e-05
+          KL Random Variable 1: 1.24299815640999996e-04
+          KL Random Variable 2: 2.79795060696999984e-05
+          KL Random Variable 3: 1.02094400633999997e-05
+          KL Random Variable 4: -2.49434727995999994e-05
+          KL Random Variable 5: -1.60389775361000006e-05
+          KL Random Variable 6: 1.93562087944999991e-05
+          KL Random Variable 7: -9.24082350882000057e-05
+          Standard Deviation: 1.00000000000000005e-04
+          Domain Lower Bounds: '{0.0, 0.0}'
+          Domain Upper Bounds: '{1.5, 1.0}'
+          Correlation Lengths: '{0.05, 0.05, 0.05}'
+        Volumetric: 
+          Number of KL Terms: 8
+          Mean: 0.00000000000000000e+00
+          KL Random Variable 0: -2.19789756876000004e-05
+          KL Random Variable 1: -6.94726602014999973e-05
+          KL Random Variable 2: 1.05980525550000002e-05
+          KL Random Variable 3: 8.44400538440999936e-05
+          KL Random Variable 4: 1.31109101913999993e-04
+          KL Random Variable 5: 5.94732512890999999e-05
+          KL Random Variable 6: 1.26086278880000011e-04
+          KL Random Variable 7: 9.65850258442000009e-05
+          Standard Deviation: 1.00000000000000005e-04
+          Domain Lower Bounds: '{0.0, 0.0}'
+          Domain Upper Bounds: '{1.5, 1.0}'
+          Correlation Lengths: '{0.05, 0.05, 0.05}'
+      Dirichlet BCs: 
+        DBC on NS nodelist_1 for DOF X: 0.00000000000000000e+00
+        DBC on NS nodelist_1 for DOF Y: 0.00000000000000000e+00
+      Apply Topology Weight Functions: 
+        Number of Fields: 2
+        Field 0: 
+          Name: Stress
+          Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+        Field 1: 
+          Name: Residual Stress
+          Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+      Response Functions: 
+        Number of Response Vectors: 1
+        Response Vector 0: 
+          Name: Internal Energy Objective
+          Gradient Field Name: Strain
+          Gradient Field Layout: QP Tensor
+          Work Conjugate Name: Stress
+          Work Conjugate Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+          Response Name: R5
+          Response Derivative Name: dR5dRho
+  Discretization: 
+    Method: Ioss
+    Exodus Input File Name: mitchell.gen
+    Exodus Output File Name: mitchell.exo
+    Separate Evaluators by Element Block: true
+  Piro: 
+    Sensitivity Method: Adjoint
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 3
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000000000004e-10
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+        Test 2: 
+          Test Type: NormUpdate
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000000000004e-10
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000000000004e-10
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 9.99999999999999980e-13
+                      Output Frequency: 2
+                      Output Style: 1
+                      Verbosity: 0
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 2
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.00000000000000000e+00
+                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: level-of-fill': 0
+                  VerboseObject: 
+                    Verbosity Level: medium
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

@@ -1,0 +1,152 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Solution Method: ATO Problem
+    Number of Subproblems: 2
+    Verbose Output: true
+    Objective Aggregator: 
+      Objective Name: F
+      dFdTopology Name: dFdRho
+      Objectives: [R0, R1]
+      Objective Derivatives: [dR0dRho, dR1dRho]
+      Weighting: Uniform
+    Topological Optimization: 
+      Package: NLopt
+      Method: MMA
+      Optimization Maximum Iterations: 3
+      Optimization Convergence Tolerance: 9.99999999999999955e-07
+      Volume Enforcement Convergence Tolerance: 9.99999999999999955e-07
+      Minimum Density: 5.00000000000000028e-02
+      Objective Name: F
+      Volume Fraction Constraint: 5.00000000000000000e-01
+      dFdTopology Name: dFdRho
+    Topology: 
+      Centering: Element
+      Topology Name: Rho
+      Entity Type: State Variable
+      Penalization: SIMP
+      Update Algorithm: OC
+      Initial Value: 5.00000000000000000e-01
+      SIMP: 
+        Penalization Parameter: 3.00000000000000000e+00
+    Physics Problem 0: 
+      Name: LinearElasticity 2D
+      Dirichlet BCs: 
+        DBC on NS nodelist_1 for DOF X: 0.00000000000000000e+00
+        DBC on NS nodelist_1 for DOF Y: 0.00000000000000000e+00
+      Neumann BCs: 
+        NBC on SS surface_1 for DOF sig_y set dudn: [4.50000000000000000e+04]
+      Elastic Modulus: 1.00000000000000000e+09
+      Poissons Ratio: 3.30000000000000016e-01
+      Response Functions: 
+        Number: 1
+        Response 0: Stiffness Objective
+        ResponseParams 0: 
+          Gradient Field Name: Strain
+          Gradient Field Layout: QP Tensor
+          Work Conjugate Name: Stress
+          Work Conjugate Layout: QP Tensor
+          Response Name: R0
+          Response Derivative Name: dR0dRho
+    Physics Problem 1: 
+      Name: LinearElasticity 2D
+      Dirichlet BCs: 
+        DBC on NS nodelist_1 for DOF X: 0.00000000000000000e+00
+        DBC on NS nodelist_1 for DOF Y: 0.00000000000000000e+00
+      Neumann BCs: 
+        NBC on SS surface_1 for DOF sig_x set dudn: [4.50000000000000000e+04]
+      Elastic Modulus: 1.00000000000000000e+09
+      Poissons Ratio: 3.30000000000000016e-01
+      Response Functions: 
+        Number: 1
+        Response 0: Stiffness Objective
+        ResponseParams 0: 
+          Gradient Field Name: Strain
+          Gradient Field Layout: QP Tensor
+          Work Conjugate Name: Stress
+          Work Conjugate Layout: QP Tensor
+          Response Name: R1
+          Response Derivative Name: dR1dRho
+  Discretization: 
+    Method: Ioss
+    Exodus Input File Name: mitchell.gen
+    Exodus Output File Name: mitchell.exo
+    Separate Evaluators by Element Block: true
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000000000004e-10
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000000000004e-10
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 9.99999999999999980e-13
+                      Output Frequency: 2
+                      Output Style: 1
+                      Verbosity: 0
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 2
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.00000000000000000e+00
+                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: level-of-fill': 0
+                  VerboseObject: 
+                    Verbosity Level: medium
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

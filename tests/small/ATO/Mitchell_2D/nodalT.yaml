@@ -1,0 +1,181 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Solution Method: ATO Problem
+    Number of Subproblems: 1
+    Verbose Output: true
+    Objective Aggregator: 
+      Output Value Name: F
+      Output Derivative Name: dFdRho
+      Values: [R0]
+      Derivatives: [dR0dRho]
+      Weighting: Uniform
+      Spatial Filter: 0
+    Spatial Filters: 
+      Number of Filters: 1
+      Filter 0: 
+        Filter Radius: 7.49999999999999972e-02
+        Iterations: 2
+    Topological Optimization: 
+      Package: OC
+      Stabilization Parameter: 5.00000000000000000e-01
+      Move Limiter: 1.00000000000000000e+00
+      Convergence Tests: 
+        Maximum Iterations: 25
+        Combo Type: OR
+        Relative Topology Change: 5.00000000000000010e-03
+        Relative Objective Change: 1.00000000000000005e-04
+      Measure Enforcement: 
+        Measure: Volume
+        Maximum Iterations: 120
+        Convergence Tolerance: 9.99999999999999955e-07
+        Target: 5.00000000000000000e-01
+      Objective: Aggregator
+      Constraint: Measure
+    Topologies: 
+      Number of Topologies: 1
+      Topology 0: 
+        Topology Name: Rho
+        Entity Type: State Variable
+        Bounds: [0.00000000000000000e+00, 1.00000000000000000e+00]
+        Initial Value: 5.00000000000000000e-01
+        Functions: 
+          Number of Functions: 2
+          Function 0: 
+            Function Type: SIMP
+            Minimum: 1.00000000000000002e-03
+            Penalization Parameter: 3.00000000000000000e+00
+          Function 1: 
+            Function Type: SIMP
+            Minimum: 0.00000000000000000e+00
+            Penalization Parameter: 1.00000000000000000e+00
+        Spatial Filter: 0
+    Configuration: 
+      Element Blocks: 
+        Number of Element Blocks: 1
+        Element Block 0: 
+          Name: block_1
+          Material: 
+            Elastic Modulus: 1.00000000000000000e+09
+            Poissons Ratio: 3.30000000000000016e-01
+      Linear Measures: 
+        Number of Linear Measures: 1
+        Linear Measure 0: 
+          Linear Measure Name: Volume
+          Linear Measure Type: Volume
+          Volume: 
+            Topology Index: 0
+            Function Index: 1
+    Physics Problem 0: 
+      Name: LinearElasticity 2D
+      Dirichlet BCs: 
+        DBC on NS nodelist_1 for DOF X: 0.00000000000000000e+00
+        DBC on NS nodelist_1 for DOF Y: 0.00000000000000000e+00
+      Neumann BCs: 
+        NBC on SS surface_1 for DOF sig_y set dudn: [4.50000000000000000e+00]
+      Apply Topology Weight Functions: 
+        Number of Fields: 1
+        Field 0: 
+          Name: Stress
+          Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+      Response Functions: 
+        Number of Response Vectors: 1
+        Response Vector 0: 
+          Name: Stiffness Objective
+          Gradient Field Name: Strain
+          Gradient Field Layout: QP Tensor
+          Work Conjugate Name: Stress
+          Work Conjugate Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+          Response Name: R0
+          Response Derivative Name: dR0dRho
+  Discretization: 
+    Method: Ioss
+    Exodus Input File Name: mitchell.gen
+    Exodus Output File Name: mitchellT.exo
+    Separate Evaluators by Element Block: true
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 3
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000000000002e-08
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+        Test 2: 
+          Test Type: NormUpdate
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000000000002e-08
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000000000004e-10
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 9.99999999999999980e-13
+                      Output Frequency: 2
+                      Output Style: 1
+                      Verbosity: 0
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000000000000e+00
+                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                  VerboseObject: 
+                    Verbosity Level: medium
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

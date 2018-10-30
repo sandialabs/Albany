@@ -1,11 +1,11 @@
 # 
 # 1. Copy input file from source to binary dir
 IF (ALBANY_EPETRA) 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nlopt_input.xml ${CMAKE_CURRENT_BINARY_DIR}/nlopt_input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nlopt_input.yaml ${CMAKE_CURRENT_BINARY_DIR}/nlopt_input.yaml COPYONLY)
 ENDIF() 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nlopt_inputT.xml ${CMAKE_CURRENT_BINARY_DIR}/nlopt_inputT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nlopt_inputT.yaml ${CMAKE_CURRENT_BINARY_DIR}/nlopt_inputT.yaml COPYONLY)
 # 2. Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/modal.gen ${CMAKE_CURRENT_BINARY_DIR}/modal.gen COPYONLY)
 
