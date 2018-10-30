@@ -8,26 +8,31 @@ ANONYMOUS:
     Solution Method: Steady
     Name: LandIce Coupled FO H 3D
     Time Step: 2.00000000000000011e-01
-    Required Basal Fields: [basal_friction, ice_thickness, temperature, surface_height]
-    Required Surface Fields: [observed_surface_velocity, observed_surface_velocity_RMS]
     Basal Side Name: basalside
     Surface Side Name: upperside
-    Lateral Side Name: lateralside
-    Layered Data Length: 11
     Response Functions: 
       Number: 1
       Response 0: Surface Velocity Mismatch
     Dirichlet BCs: { }
     Neumann BCs: { }
+    LandIce BCs:
+      Number : 2
+      BC 0:
+        Type: Basal Friction
+        Cubature Degree: 3
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Given Field
+          Given Field Variable Name: basal_friction
+      BC 1:
+        Type: Lateral
+        Cubature Degree: 3
+        Side Set Name: lateralside
     Parameters: 
       Number: 1
       Parameter 0: 'Glen''s Law Homotopy Parameter'
     Distributed Parameters: 
       Number of Parameter Vectors: 0
-    Parameter Fields: 
-      Register Surface Mass Balance: 1
-    LandIce Lateral BC: 
-      Cubature Degree: 3
     LandIce Physical Parameters: 
       Water Density: 1.02800000000000000e+03
       Ice Density: 9.10000000000000000e+02
@@ -39,8 +44,6 @@ ANONYMOUS:
       'Glen''s Law A': 1.00000000000000005e-04
       'Glen''s Law n': 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
-    LandIce Basal Friction Coefficient: 
-      Type: Given Field
     Body Force: 
       Type: FO INTERP SURF GRAD
   Discretization: 
@@ -97,6 +100,7 @@ ANONYMOUS:
             Field Name: temperature
             Field Type: Node Layered Scalar
             Field Origin: File
+            Number Of Layers: 11
             File Name: ../AsciiMeshes/GisUnstructFiles/temperature.ascii
           Field 3: 
             Field Name: basal_friction

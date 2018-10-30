@@ -8,11 +8,8 @@ ANONYMOUS:
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D
     Required Fields: [temperature]
-    Required Basal Fields: [basal_friction, ice_thickness, temperature, surface_height, stiffening_factor]
-    Required Surface Fields: [observed_surface_velocity, observed_surface_velocity_RMS]
     Basal Side Name: basalside
     Surface Side Name: upperside
-    Lateral Side Name: lateralside
     Response Functions: 
       Number: 1
       Response 0: Surface Velocity Mismatch
@@ -23,6 +20,19 @@ ANONYMOUS:
         Scaling Coefficient: 5.88239999999999979e-07
     Dirichlet BCs: { }
     Neumann BCs: { }
+    LandIce BCs:
+      Number : 2
+      BC 0:
+        Type: Basal Friction
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Exponent Of Given Field
+          Given Field Variable Name: basal_friction
+          Zero Beta On Floating Ice: true
+      BC 1:
+        Type: Lateral
+        Cubature Degree: 3
+        Side Set Name: lateralside
     Parameters: 
       Number: 0
       Parameter 0: 'Glen''s Law Homotopy Parameter'
@@ -39,8 +49,6 @@ ANONYMOUS:
         Lower Bound: -5.00000000000000000e+00
         Upper Bound: 5.00000000000000000e+00
         Mesh Part: bottom
-    LandIce Lateral BC: 
-      Cubature Degree: 3
     LandIce Physical Parameters: 
       Water Density: 1.02800000000000000e+03
       Ice Density: 9.10000000000000000e+02
@@ -53,10 +61,6 @@ ANONYMOUS:
       'Glen''s Law A': 1.00000000000000005e-04
       'Glen''s Law n': 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
-    LandIce Basal Friction Coefficient: 
-      Basal Side Name: basalside
-      Type: Exponent Of Given Field
-      Zero Beta On Floating Ice: true
     Body Force: 
       Type: FO INTERP SURF GRAD
   Discretization: 

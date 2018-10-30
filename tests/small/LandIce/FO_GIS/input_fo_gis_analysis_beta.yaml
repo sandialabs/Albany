@@ -7,11 +7,20 @@ ANONYMOUS:
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D
     Required Fields: [temperature]
-    Required Basal Fields: [basal_friction, ice_thickness, temperature, surface_height]
-    Required Surface Fields: [observed_surface_velocity, observed_surface_velocity_RMS]
     Basal Side Name: basalside
     Surface Side Name: upperside
-    Lateral Side Name: lateralside
+    LandIce BCs:
+      Number : 2
+      BC 0:
+        Type: Basal Friction
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Exponent Of Given Field
+          Given Field Variable Name: basal_friction
+      BC 1:
+        Type: Lateral
+        Cubature Degree: 3
+        Side Set Name: lateralside
     Equation Set: 
       Type: LandIce
       Num Equations: 3
@@ -39,8 +48,6 @@ ANONYMOUS:
         Lower Bound: -1.20000000000000000e+01
         Upper Bound: 1.20000000000000000e+01
         Mesh Part: bottom
-    LandIce Lateral BC: 
-      Cubature Degree: 3
     LandIce Physical Parameters: 
       Water Density: 1.02800000000000000e+03
       Ice Density: 9.10000000000000000e+02
@@ -52,9 +59,6 @@ ANONYMOUS:
       'Glen''s Law A': 1.00000000000000005e-04
       'Glen''s Law n': 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
-    LandIce Basal Friction Coefficient: 
-      Basal Side Name: basalside
-      Type: Exponent Of Given Field
     LandIce L2 Projected Boundary Laplacian: 
       Mass Coefficient: 1.00000000000000006e-01
       Laplacian Coefficient: 1.00000000000000000e+01

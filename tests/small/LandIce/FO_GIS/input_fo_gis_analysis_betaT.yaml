@@ -8,8 +8,6 @@ ANONYMOUS:
     Compute Sensitivities: true
     Name: LandIce Stokes First Order 3D
     Required Fields: [temperature]
-    Required Basal Fields: [basal_friction, ice_thickness, temperature, surface_height]
-    Required Surface Fields: [observed_surface_velocity, observed_surface_velocity_RMS]
     Basal Side Name: basalside
     Surface Side Name: upperside
     Equation Set: 
@@ -28,9 +26,18 @@ ANONYMOUS:
         Asinh Scaling: 1.00000000000000000e+01
         Scaling Coefficient: 5.88239999999999979e-07
     Dirichlet BCs: { }
-    Neumann BCs: 
-      NBC on SS lateralside for DOF all set lateral: [0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
-      Cubature Degree: 3
+    LandIce BCs:
+      Number : 2
+      BC 0:
+        Type: Basal Friction
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Exponent Of Given Field
+          Given Field Variable Name: basal_friction
+      BC 1:
+        Type: Lateral
+        Cubature Degree: 3
+        Side Set Name: lateralside
     Parameters: 
       Number: 0
       Parameter 0: 'Glen''s Law Homotopy Parameter'
@@ -52,9 +59,6 @@ ANONYMOUS:
       'Glen''s Law A': 1.00000000000000005e-04
       'Glen''s Law n': 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
-    LandIce Basal Friction Coefficient: 
-      Basal Side Name: basalside
-      Type: Exponent Of Given Field
     LandIce L2 Projected Boundary Laplacian: 
       Mass Coefficient: 1.00000000000000006e-01
       Laplacian Coefficient: 1.00000000000000000e+01

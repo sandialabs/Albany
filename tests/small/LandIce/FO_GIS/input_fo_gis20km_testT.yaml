@@ -5,9 +5,15 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 1
     Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
-    Neumann BCs: 
-      NBC on SS basal for DOF U0 set basal: [1.00000000000000000e+07, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
-      NBC on SS basal for DOF U1 set basal: [1.00000000000000000e+07, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
+    LandIce BCs:
+      Number : 1
+      BC 0:
+        Type: Basal Friction
+        Cubature Degree: 3
+        Side Set Name: basal
+        Basal Friction Coefficient:
+          Type: Given Constant
+          Constant Given Beta Value: 1e7
     Parameters: 
       Number: 1
       Parameter 0: 'Glen''s Law Homotopy Parameter'
