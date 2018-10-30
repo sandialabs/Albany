@@ -1,0 +1,144 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Phalanx Graph Visualization Detail: 0
+    Solution Method: Steady
+    Name: LandIce Stokes First Order 3D
+    Parameters: 
+      Number: 1
+      Parameter 0: 'Glen''s Law Homotopy Parameter'
+    LandIce Viscosity: 
+      Type: 'Glen''s Law'
+      'Glen''s Law Homotopy Parameter': 2.00000000000000011e-01
+      'Glen''s Law A': 1.00000000000000005e-04
+      'Glen''s Law n': 3.00000000000000000e+00
+      Flow Rate Type: From CISM
+    Response Functions: 
+      Number: 3
+      Response 0: Solution Max Value
+      ResponseParams 0: 
+        Equation: 0
+        Num Equations: 2
+      Response 1: Solution Max Value
+      ResponseParams 1: 
+        Equation: 1
+        Num Equations: 2
+      Response 2: Solution Average
+  Discretization: 
+    Exodus Output File Name: greenland_cism-albanyT.exo
+  Regression Results: 
+    Number of Comparisons: 0
+    Test Values: [6.48302564641000032e+01, 6.48302564640000014e+01, 3.88251275992999998e-13]
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [-2.18369170532000012e-10]
+    Sensitivity Test Values 1: [-2.18369170031999989e-10]
+    Sensitivity Test Values 2: [9.15618446798000076e-19]
+    Relative Tolerance: 1.00000000000000005e-04
+    Absolute Tolerance: 1.00000000000000005e-04
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Initial Value: 0.00000000000000000e+00
+        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
+        Continuation Method: Natural
+        Max Steps: 10
+        Max Value: 1.00000000000000000e+00
+        Min Value: 0.00000000000000000e+00
+      Step Size: 
+        Initial Step Size: 5.00000000000000028e-02
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 1
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 9.99999999999999955e-08
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.00000000000000002e-03
+            Relative Tolerance: 9.99999999999999955e-07
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 100
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 0
+                    Max Iterations: 200
+                    Tolerance: 9.99999999999999955e-07
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 9.99999999999999955e-07
+                      Output Frequency: 1
+                      Output Style: 1
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+                      Verbosity: 33
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                ML: 
+                  Base Method Defaults: SA
+                  ML Settings: 
+                    'aggregation: damping factor': 1.33299999999999996e+00
+                    'aggregation: local aggregates': 4
+                    'aggregation: nodes per aggregate': 27
+                    'coarse: max size': 220
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000000000000e+00
+                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: level-of-fill': 1
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

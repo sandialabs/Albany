@@ -1,0 +1,12 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Solution Method: Steady
+    Name: Populate Mesh
+  Discretization: 
+    Method: Ascii2D
+    Exodus Output File Name: albanyMesh/greenland_2d.exo
+    Ascii Input Mesh File Name: albanyMesh/greenland_2d.quad.msh
+    Use Serial Mesh: true
+...

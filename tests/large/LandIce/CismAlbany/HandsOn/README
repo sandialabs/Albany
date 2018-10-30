@@ -28,10 +28,10 @@ $ cd ..
 
 #create 2d exodus file for Greenland.
 #Warning! this part this can be extremely slow with large files, unless trilinos is compiled with the nodebug option -D CMAKE_CXX_FLAGS:STRING="-O3 -fPIC -fno-var-tracking -DNDEBUG".
-$ path-to-albany-excecutables/AlbanyT inputFiles/create2dExo.xml
+$ path-to-albany-excecutables/AlbanyT inputFiles/create2dExo.yaml
 
 #run standalone Albany simultion
-$ path-to-albany-excecutables/AlbanyT inputFiles/input_standalone-albanyT.xml 
+$ path-to-albany-excecutables/AlbanyT inputFiles/input_standalone-albanyT.yaml 
 
 # [optional] if you run the above on multiple processors, you need to merge the exodus files into one:
 $ path-to-trilinos-install/bin/epu --auto greenland_cism-albanyT.exo.4.
