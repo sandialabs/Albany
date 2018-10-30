@@ -1,0 +1,171 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Mechanics 3D
+    Solution Method: Continuation
+    Phalanx Graph Visualization Detail: 0
+    MaterialDB Filename: MechanicsWithTemperatureMaterials.yaml
+    Temperature: 
+      Variable Type: DOF
+    Dirichlet BCs: 
+      DBC on NS z_fixed for DOF Z: 0.00000000000000000e+00
+      DBC on NS z_fixeda for DOF Z: 0.00000000000000000e+00
+      DBC on NS z_fixedb for DOF Z: 0.00000000000000000e+00
+      DBC on NS x_fixed for DOF X: 0.00000000000000000e+00
+      DBC on NS x_fixeda for DOF X: 0.00000000000000000e+00
+      DBC on NS x_fixedb for DOF X: 0.00000000000000000e+00
+      DBC on NS y_fixed for DOF Y: 0.00000000000000000e+00
+      Time Dependent DBC on NS temp_bottom for DOF T: 
+        Time Values: [0.00000000000000000e+00, 9.85200000000000045e+02, 3.60000000000000000e+03]
+        BC Values: [3.00000000000000000e+02, 8.00000000000000000e+02, 8.00000000000000000e+02]
+    Neumann BCs: 
+      Time Dependent NBC on SS tube_inside for DOF all set P: 
+        Time Values: [0.00000000000000000e+00, 2.00000000000000000e+02, 3.60000000000000000e+03]
+        BC Values: [[0.00000000000000000e+00], [7.15248332000000030e+06], [2.61357490399999991e+07]]
+    Initial Condition: 
+      Function: Constant
+      Function Data: [0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 3.00000000000000000e+02]
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions: 
+      Number: 0
+      Response 0: Solution Average
+      Response 1: Project IP to Nodal Field
+      ResponseParams 1: 
+        Number of Fields: 2
+        IP Field Name 0: Cauchy_Stress
+        IP Field Layout 0: Tensor
+        IP Field Name 1: eqps
+        IP Field Layout 1: Scalar
+        Output to File: true
+        Mass Matrix Type: Full
+    Adaptation: 
+      Method: RPI UnifRef Size
+      Remesh Step Number: [1]
+      Element Size Scaling: 5.00000000000000000e-01
+      Max Number of Mesh Adapt Iterations: 1
+  Discretization: 
+    Method: PUMI
+    Workset Size: 50
+    Mesh Model Input File Name: can_b.dmg
+    PUMI Input File Name: can.smb
+    PUMI Output File Name: can_b_out.vtk
+    Solution Vector Components: [disp, V, temp, S]
+    Element Block Associations: [['1', '2', '3'], [lid, wall, base]]
+    Side Set Associations: [['15'], [tube_inside]]
+    Node Set Associations: [['10', '18', '24', '12', '16', '26', '13', '25'], [z_fixed, z_fixeda, z_fixedb, x_fixed, x_fixeda, x_fixedb, y_fixed, temp_bottom]]
+    Separate Evaluators by Element Block: true
+    2nd Order Mesh: true
+    Cubature Degree: 2
+  Regression Results: 
+    Number of Comparisons: 0
+    Test Values: [7.92789980000000014e+01]
+    Relative Tolerance: 1.00000000000000005e-04
+    Absolute Tolerance: 1.00000000000000005e-04
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Continuation Method: Arc Length
+        Initial Value: 0.00000000000000000e+00
+        Continuation Parameter: Time
+        Max Steps: 120
+        Max Value: 6.00000000000000000e+02
+        Min Value: 0.00000000000000000e+00
+        Compute Eigenvalues: false
+      Step Size: 
+        Initial Step Size: 5.00000000000000000e+00
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Linear Solver: 
+            Tolerance: 9.99999999999999955e-07
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: low
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Maximum Iterations: 1200
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Block Size: 1
+                      Num Blocks: 1200
+                      Flexible Gmres: false
+              Preconditioner Type: MueLu
+              Preconditioner Types: 
+                MueLu: 
+                  verbosity: none
+                  'coarse: max size': 20
+                  multigrid algorithm: sa
+                  'aggregation: type': uncoupled
+                  'aggregation: drop scheme': classical
+                  'smoother: type': CHEBYSHEV
+                  'smoother: params': 
+                    'chebyshev: degree': 5
+                    'chebyshev: ratio eigenvalue': 7.00000000000000000e+00
+                    'chebyshev: min eigenvalue': 1.00000000000000000e+00
+                    'chebyshev: zero starting solution': true
+                  'repartition: enable': true
+                  'repartition: partitioner': zoltan
+                  'repartition: start level': 1
+                  'repartition: min rows per proc': 40
+                  'repartition: max imbalance': 1.01000000000000001e+00
+                  'repartition: remap parts': true
+      Line Search: 
+        Method: Backtrack
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Complete
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 5
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 9.99999999999999955e-07
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 100
+        Test 2: 
+          Test Type: NormF
+          Scale Type: Unscaled
+          Tolerance: 9.99999999999999955e-08
+        Test 3: 
+          Test Type: NormUpdate
+          Scale Type: Unscaled
+          Tolerance: 9.99999999999999955e-08
+        Test 4: 
+          Test Type: FiniteValue
+...

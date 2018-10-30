@@ -1,0 +1,114 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Aeras Shallow Water 3D
+    Phalanx Graph Visualization Detail: 1
+    Solution Method: Transient Tempus
+    Shallow Water Problem: 
+      Use Prescribed Velocity: false
+      Rotation Angle: 0.00000000000000000e+00
+    Dirichlet BCs: { }
+    Initial Condition: 
+      Function: Aeras TC3Init
+      Function Data: [0.00000000000000000e+00]
+    Response Functions: 
+      Number: 3
+      Response 0: Solution Average
+      Response 1: Solution Max Value
+      Response 2: Solution Two Norm
+    Parameters: 
+      Number: 0
+      Parameter 0: DBC on NS NodeSet0 for DOF Depth
+      Parameter 1: Gravity
+  Discretization: 
+    Method: Exodus Aeras
+    Exodus Input File Name: ../../grids/QUAD4/uniform_10_quad4.g
+    Element Degree: 2
+    Workset Size: -1
+    Exodus Output File Name: spectral_uniform_10_tempus_out.exo
+    Exodus Write Interval: 1
+  Regression Results: 
+    Number of Comparisons: 3
+    Test Values: [9.32482466370999987e+02, 2.99846301240999992e+03, 1.37651103705999994e+05]
+    Relative Tolerance: 1.00000000000000008e-05
+    Absolute Tolerance: 1.00000000000000002e-03
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [4.23961574999999979e-01, 3.56569929999999997e-03]
+  Piro: 
+    Tempus: 
+      Invert Mass Matrix: true
+      Lump Mass Matrix: true
+      Integrator Name: Tempus Integrator
+      Tempus Integrator: 
+        Integrator Type: Integrator Basic
+        Screen Output Index List: '1'
+        Screen Output Index Interval: 100
+        Stepper Name: Tempus Stepper
+        Solution History: 
+          Storage Type: Unlimited
+          Storage Limit: 20
+        Time Step Control: 
+          Initial Time: 0.00000000000000000e+00
+          Initial Time Index: 0
+          Initial Time Step: 9.00000000000000000e+02
+          Initial Order: 0
+          Final Time: 1.80000000000000000e+03
+          Final Time Index: 10000
+          Maximum Absolute Error: 1.00000000000000002e-08
+          Maximum Relative Error: 1.00000000000000002e-08
+          Integrator Step Type: Constant
+          Output Time List: ''
+          Output Index List: ''
+          Output Time Interval: 1.00000000000000000e+01
+          Output Index Interval: 1000
+          Maximum Number of Stepper Failures: 10
+          Maximum Number of Consecutive Stepper Failures: 5
+      Tempus Stepper: 
+        Stepper Type: General ERK
+        Tableau: 
+          A: |-
+            0.000000000000000  0.000000000000000  0.000000000000000 0.000000000000000;
+                                 0.500000000000000  0.000000000000000  0.000000000000000 0.000000000000000;
+                                 0.000000000000000  0.500000000000000  0.000000000000000 0.000000000000000;
+                                 0.000000000000000  0.000000000000000  1.000000000000000 0.000000000000000
+          b: 0.166666666666667  0.333333333333333  0.333333333333333 0.166666666666667
+          c: 0.000000000000000  0.500000000000000  0.500000000000000 1.000000000000000
+          order: 4
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          Belos: 
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 1.00000000000000008e-05
+                Output Frequency: 10
+                Output Style: 1
+                Verbosity: 0
+                Maximum Iterations: 100
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: false
+        Preconditioner Type: Ifpack2
+        Preconditioner Types: 
+          Ifpack2: 
+            Prec Type: ILUT
+            Overlap: 1
+            Ifpack2 Settings: 
+              'fact: ilut level-of-fill': 1.00000000000000000e+00
+          ML: 
+            Base Method Defaults: SA
+            ML Settings: 
+              'aggregation: type': Uncoupled
+              'coarse: max size': 20
+              'coarse: pre or post': post
+              'coarse: sweeps': 1
+              'coarse: type': Amesos-KLU
+              prec type: MGV
+              'smoother: type': Gauss-Seidel
+              'smoother: damping factor': 6.60000000000000031e-01
+              'smoother: pre or post': both
+              'smoother: sweeps': 1
+              ML output: 1
+...

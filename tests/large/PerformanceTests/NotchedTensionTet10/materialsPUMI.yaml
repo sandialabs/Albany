@@ -1,0 +1,78 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    eb1: 
+      material: TestMat2
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000000000000e+00
+      Volume Average Pressure: true
+      Use Composite Tet 10: false
+    eb2: 
+      material: TestMat2
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000000000000e+00
+      Volume Average Pressure: true
+      Use Composite Tet 10: false
+    eb3: 
+      material: TestMat2
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000000000000e+00
+      Volume Average Pressure: true
+      Use Composite Tet 10: false
+    eb4: 
+      material: TestMat2
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000000000000e+00
+      Volume Average Pressure: true
+      Use Composite Tet 10: false
+    eb5: 
+      material: TestMat2
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000000000000e+00
+      Volume Average Pressure: true
+      Use Composite Tet 10: false
+    eb6: 
+      material: TestMat2
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000000000000e+00
+      Volume Average Pressure: true
+      Use Composite Tet 10: false
+    eb7: 
+      material: TestMat2
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000000000000e+00
+      Volume Average Pressure: true
+      Use Composite Tet 10: false
+    eb8: 
+      material: TestMat2
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000000000000e+00
+      Volume Average Pressure: true
+      Use Composite Tet 10: false
+  Materials: 
+    TestMat: 
+      Material Model: 
+        Model Name: Neohookean
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1.00000000000000000e+03
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 2.50000000000000000e-01
+    TestMat2: 
+      Material Model: 
+        Model Name: J2
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1.00000000000000000e+03
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 2.50000000000000000e-01
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 1.00000000000000000e+02
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 1.00000000000000000e+01
+...

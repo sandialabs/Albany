@@ -1,0 +1,180 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Mechanics 3D
+    Solution Method: Continuation
+    MaterialDB Filename: materialsPUMI.yaml
+    Dirichlet BCs: 
+      DBC on NS z1 for DOF Z: 0.00000000000000000e+00
+      DBC on NS z2 for DOF Z: 0.00000000000000000e+00
+      DBC on NS y1 for DOF Y: 0.00000000000000000e+00
+      DBC on NS y2 for DOF Y: 0.00000000000000000e+00
+      DBC on NS y3 for DOF Y: 0.00000000000000000e+00
+      DBC on NS y4 for DOF Y: 0.00000000000000000e+00
+      DBC on NS y5 for DOF Y: 0.00000000000000000e+00
+      DBC on NS y6 for DOF Y: 0.00000000000000000e+00
+      DBC on NS y7 for DOF Y: 0.00000000000000000e+00
+      DBC on NS y8 for DOF Y: 0.00000000000000000e+00
+      DBC on NS x1 for DOF X: 0.00000000000000000e+00
+      DBC on NS x2 for DOF X: 0.00000000000000000e+00
+      DBC on NS x3 for DOF X: 0.00000000000000000e+00
+      DBC on NS x4 for DOF X: 0.00000000000000000e+00
+      DBC on NS x5 for DOF X: 0.00000000000000000e+00
+      DBC on NS x6 for DOF X: 0.00000000000000000e+00
+      DBC on NS x7 for DOF X: 0.00000000000000000e+00
+      DBC on NS x8 for DOF X: 0.00000000000000000e+00
+      Time Dependent DBC on NS z3 for DOF Z: 
+        Number of points: 2
+        Time Values: [0.00000000000000000e+00, 1.00000000000000000e+00]
+        BC Values: [0.00000000000000000e+00, 2.00000000000000004e-03]
+      Time Dependent DBC on NS z4 for DOF Z: 
+        Number of points: 2
+        Time Values: [0.00000000000000000e+00, 1.00000000000000000e+00]
+        BC Values: [0.00000000000000000e+00, 2.00000000000000004e-03]
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions: 
+      Number: 0
+      Response 0: Solution Average
+  Discretization: 
+    Method: PUMI
+    Call serial global partition: false
+    Cubature Degree: 2
+    PUMI Input File Name: notched_curved.smb
+    Acis Model Input File Name: notched_curved.sat
+    PUMI Output File Name: output_notched_tensile_tet10.vtk
+    Element Block Associations: [['1', '2', '3', '4', '5', '6', '7', '8'], [eb1, eb2, eb3, eb4, eb5, eb6, eb7, eb8]]
+    Node Set Associations: [['10', '1', '28', '37', '25', '17', '21', '34', '9', '4', '35', '26', '15', '24', '33', '19', '2', '8', '38', '29'], [z1, z2, y1, y2, y3, y4, y5, y6, y7, y8, x1, x2, x3, x4, x5, x6, x7, x8, z3, z4]]
+    Separate Evaluators by Element Block: true
+    2nd Order Mesh: true
+  Regression Results: 
+    Number of Comparisons: 0
+    Test Values: [3.08246275759800021e-05]
+    Relative Tolerance: 1.00000000000000008e-05
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [0.00000000000000000e+00]
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Tangent
+      Stepper: 
+        Initial Value: 0.00000000000000000e+00
+        Continuation Parameter: Time
+        Max Steps: 1
+        Max Value: 1.00000000000000006e-01
+        Min Value: 0.00000000000000000e+00
+        Compute Eigenvalues: false
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 0
+      Step Size: 
+        Initial Step Size: 1.00000000000000006e-01
+        Method: Constant
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000000000008e-05
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: medium
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 1248
+                      Flexible Gmres: false
+                      Maximum Iterations: 500
+                      Convergence Tolerance: 9.99999999999999955e-07
+                    Block CG: 
+                      Output Frequency: 1
+              Preconditioner Type: ML
+              Preconditioner Types: 
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    prec type: full-MGV
+                    max levels: 4
+                    'repartition: enable': 1
+                    'repartition: Zoltan dimensions': 3
+                    'repartition: min per proc': 1000
+                    'smoother: type': Chebyshev
+                    'smoother: sweeps': 3
+                    'smoother: Chebyshev alpha': 5.00000000000000000e+01
+                    'smoother: pre or post': both
+                    'coarse: max size': 1500
+                    PDE equations: 3
+                Ifpack: 
+                  Overlap: 2
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.00000000000000000e+00
+                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Backtrack: 
+          Full Step: 1.00000000000000000e+00
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: true
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Complete
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NStep
+            Number of Nonlinear Iterations: 0
+          Test 1: 
+            Test Type: NormF
+            Scale Type: Unscaled
+            Tolerance: 9.99999999999999955e-08
+        Test 1: 
+          Test Type: Combo
+          Combo Type: OR
+          Number of Tests: 2
+          Test 0: 
+            Test Type: MaxIters
+            Maximum Iterations: 15
+          Test 1: 
+            Test Type: FiniteValue
+...

@@ -1,0 +1,29 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    eb_1: 
+      material: SS304L
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 5.00000000000000028e-02
+      Use Composite Tet 10: true
+  Materials: 
+    SS304L: 
+      Material Model: 
+        Model Name: RIHMR
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 2.80000000000000000e+07
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 2.70000000000000018e-01
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 2.86614000000000000e+05
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 5.00000000000000000e+04
+      Recovery Modulus: 
+        Recovery Modulus Type: Constant
+        Value: 1.50000000000000000e+00
+...

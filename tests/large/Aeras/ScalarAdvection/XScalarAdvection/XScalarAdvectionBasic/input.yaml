@@ -1,0 +1,121 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Aeras X Scalar Advection
+    Solution Method: Transient
+    XScalarAdvection Problem: 
+      Reynolds Number: 2.00000000000000004e-02
+      Number of Vertical Levels: 8
+      Tracers: [T_0, T_1, T_2, T_3, T_4]
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF rho_0: 1.00000000000000000e+00
+      DBC on NS NodeSet0 for DOF rho_1: 1.10000000000000009e+00
+      DBC on NS NodeSet0 for DOF rho_2: 1.19999999999999996e+00
+      DBC on NS NodeSet0 for DOF rho_3: 1.30000000000000004e+00
+      DBC on NS NodeSet0 for DOF rho_4: 1.39999999999999991e+00
+      DBC on NS NodeSet0 for DOF rho_5: 1.50000000000000000e+00
+      DBC on NS NodeSet0 for DOF rho_6: 1.60000000000000009e+00
+      DBC on NS NodeSet0 for DOF rho_7: 1.69999999999999996e+00
+      DBC on NS NodeSet0 for DOF T_0_0: 1.00000000000000000e+00
+      DBC on NS NodeSet0 for DOF T_1_0: 1.10000000000000009e+00
+      DBC on NS NodeSet0 for DOF T_2_0: 1.19999999999999996e+00
+      DBC on NS NodeSet0 for DOF T_3_0: 1.30000000000000004e+00
+      DBC on NS NodeSet0 for DOF T_4_0: 1.39999999999999991e+00
+      DBC on NS NodeSet0 for DOF T_0_1: 1.01000000000000001e+00
+      DBC on NS NodeSet0 for DOF T_1_1: 1.11000000000000010e+00
+      DBC on NS NodeSet0 for DOF T_2_1: 1.20999999999999996e+00
+      DBC on NS NodeSet0 for DOF T_3_1: 1.31000000000000005e+00
+      DBC on NS NodeSet0 for DOF T_4_1: 1.40999999999999992e+00
+      DBC on NS NodeSet0 for DOF T_0_2: 1.02000000000000002e+00
+      DBC on NS NodeSet0 for DOF T_1_2: 1.12000000000000011e+00
+      DBC on NS NodeSet0 for DOF T_2_2: 1.21999999999999997e+00
+      DBC on NS NodeSet0 for DOF T_3_2: 1.32000000000000006e+00
+      DBC on NS NodeSet0 for DOF T_4_2: 1.41999999999999993e+00
+      DBC on NS NodeSet0 for DOF T_0_3: 1.03000000000000003e+00
+      DBC on NS NodeSet0 for DOF T_1_3: 1.12999999999999989e+00
+      DBC on NS NodeSet0 for DOF T_2_3: 1.22999999999999998e+00
+      DBC on NS NodeSet0 for DOF T_3_3: 1.33000000000000007e+00
+      DBC on NS NodeSet0 for DOF T_4_3: 1.42999999999999994e+00
+      DBC on NS NodeSet0 for DOF T_0_4: 1.04000000000000004e+00
+      DBC on NS NodeSet0 for DOF T_1_4: 1.13999999999999990e+00
+      DBC on NS NodeSet0 for DOF T_2_4: 1.23999999999999999e+00
+      DBC on NS NodeSet0 for DOF T_3_4: 1.34000000000000008e+00
+      DBC on NS NodeSet0 for DOF T_4_4: 1.43999999999999995e+00
+      DBC on NS NodeSet0 for DOF T_0_5: 1.05000000000000004e+00
+      DBC on NS NodeSet0 for DOF T_1_5: 1.14999999999999991e+00
+      DBC on NS NodeSet0 for DOF T_2_5: 1.25000000000000000e+00
+      DBC on NS NodeSet0 for DOF T_3_5: 1.35000000000000009e+00
+      DBC on NS NodeSet0 for DOF T_4_5: 1.44999999999999996e+00
+      DBC on NS NodeSet0 for DOF T_0_6: 1.06000000000000005e+00
+      DBC on NS NodeSet0 for DOF T_1_6: 1.15999999999999992e+00
+      DBC on NS NodeSet0 for DOF T_2_6: 1.26000000000000001e+00
+      DBC on NS NodeSet0 for DOF T_3_6: 1.36000000000000010e+00
+      DBC on NS NodeSet0 for DOF T_4_6: 1.45999999999999996e+00
+      DBC on NS NodeSet0 for DOF T_0_7: 1.07000000000000006e+00
+      DBC on NS NodeSet0 for DOF T_1_7: 1.16999999999999993e+00
+      DBC on NS NodeSet0 for DOF T_2_7: 1.27000000000000002e+00
+      DBC on NS NodeSet0 for DOF T_3_7: 1.37000000000000011e+00
+      DBC on NS NodeSet0 for DOF T_4_7: 1.46999999999999997e+00
+    Initial Condition: 
+      Function: Aeras X Scalar Advection
+      Function Data: [0.00000000000000000e+00]
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    Method: STK1D
+    1D Elements: 300
+    1D Scale: 3.00000000000000000e+02
+    Workset Size: 300
+    Exodus Output File Name: schar1d.exo
+  Piro: 
+    Rythmos: 
+      Num Time Steps: 500
+      Final Time: 1.00000000000000000e+04
+      Max State Error: 5.00000000000000028e-02
+      Alpha: 0.00000000000000000e+00
+      Rythmos Stepper: 
+        VerboseObject: 
+          Verbosity Level: low
+      Rythmos Integration Control: { }
+      Rythmos Integrator: 
+        VerboseObject: 
+          Verbosity Level: none
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          Belos: 
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 1.00000000000000008e-05
+                Output Frequency: 10
+                Output Style: 1
+                Verbosity: 33
+                Maximum Iterations: 100
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: false
+        Preconditioner Type: Ifpack
+        Preconditioner Types: 
+          Ifpack: 
+            Prec Type: ILU
+            Overlap: 0
+            Ifpack Settings: 
+              'fact: level-of-fill': 0
+          ML: 
+            Base Method Defaults: SA
+            ML Settings: 
+              'aggregation: type': Uncoupled
+              'coarse: max size': 20
+              'coarse: pre or post': post
+              'coarse: sweeps': 1
+              'coarse: type': Amesos-KLU
+              prec type: MGV
+              'smoother: type': Gauss-Seidel
+              'smoother: damping factor': 6.60000000000000031e-01
+              'smoother: pre or post': both
+              'smoother: sweeps': 1
+              ML output: 1
+...

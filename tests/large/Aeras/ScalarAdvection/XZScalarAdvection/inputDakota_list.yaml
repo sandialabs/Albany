@@ -1,0 +1,91 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Aeras XZ Scalar Advection
+    Solution Method: Transient
+    XZScalarAdvection Problem: 
+      Reynolds Number: 2.00000000000000004e-02
+      Number of Vertical Levels: 50
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF rho: 0.00000000000000000e+00
+    Initial Condition: 
+      Function: Aeras Schar Density
+      Function Data: [0.00000000000000000e+00]
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+    Parameters: 
+      Number: 1
+      Parameter 0: Reynolds Number
+    Compute Sensitivities: false
+  Discretization: 
+    Method: STK2D
+    1D Elements: 300
+    2D Elements: 50
+    1D Scale: 3.00000000000000000e+02
+    2D Scale: 2.50000000000000000e+01
+    Workset Size: 50
+    Transform Type: Aeras Schar Mountain
+  Regression Results: 
+    Number of Comparisons: 0
+    Relative Tolerance: 1.00000000000000008e-05
+    Absolute Tolerance: 1.00000000000000002e-03
+    Number of Sensitivity Comparisons: 0
+  Piro: 
+    Dakota: 
+      Input File: dakota_list.in
+      Output File: dakota_list.out
+      Restart File: dakota.res
+      Error File: dakota.err
+      Parameter Vector Index: 0
+      Response Vector Index: 0
+    Rythmos: 
+      Num Time Steps: 1
+      Final Time: 5.00000000000000000e+03
+      Max State Error: 5.00000000000000028e-02
+      Alpha: 0.00000000000000000e+00
+      Rythmos Stepper: 
+        VerboseObject: 
+          Verbosity Level: low
+      Rythmos Integration Control: { }
+      Rythmos Integrator: 
+        VerboseObject: 
+          Verbosity Level: none
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          Belos: 
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 1.00000000000000008e-05
+                Output Frequency: 10
+                Output Style: 1
+                Verbosity: 33
+                Maximum Iterations: 100
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: false
+        Preconditioner Type: None
+        Preconditioner Types: 
+          Ifpack: 
+            Prec Type: ILU
+            Overlap: 0
+            Ifpack Settings: 
+              'fact: level-of-fill': 0
+          ML: 
+            Base Method Defaults: SA
+            ML Settings: 
+              'aggregation: type': Uncoupled
+              'coarse: max size': 20
+              'coarse: pre or post': post
+              'coarse: sweeps': 1
+              'coarse: type': Amesos-KLU
+              prec type: MGV
+              'smoother: type': Gauss-Seidel
+              'smoother: damping factor': 6.60000000000000031e-01
+              'smoother: pre or post': both
+              'smoother: sweeps': 1
+              ML output: 1
+...
