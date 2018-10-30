@@ -9,7 +9,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 if (ALBANY_EPETRA) 
-add_test(Aeras_${testName}_BackwardEuler ${Albany.exe})
+add_test(Aeras_${testName}_BackwardEuler ${Albany.exe} input.yaml)
 endif()
 add_test(Aeras_${testName}_T_BackwardEuler ${AlbanyT.exe} inputT.yaml)
 

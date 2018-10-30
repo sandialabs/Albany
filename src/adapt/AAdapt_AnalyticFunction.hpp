@@ -481,14 +481,13 @@ class AerasZonalFlow : public AnalyticFunction {
 };
 class AerasTC5Init : public AnalyticFunction {
   public:
-     AerasTC5Init(int neq_, int spatialDim_, Teuchos::Array<double> data_);
+     AerasTC5Init(int neq_, int spatialDim_);
     void compute(double* x, const double* X);
 
   private:
     int spatialDim; // size of coordinate vector X
     int neq;    // size of solution vector x
 
-    Teuchos::Array<double> data;
 };
 
 //------------------------------------------------------------------------------

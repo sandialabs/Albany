@@ -16,7 +16,6 @@ ANONYMOUS:
       Type: Mountain
     Initial Condition: 
       Function: Aeras TC5Init
-      Function Data: []
     Response Functions: 
       Number: 7
       Response 0: Solution Min Value
