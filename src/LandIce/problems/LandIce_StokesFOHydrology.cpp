@@ -332,7 +332,6 @@ LandIce::StokesFOHydrology::getValidProblemParameters () const
   validPL->sublist("Body Force", false, "");
   validPL->sublist("LandIce Physical Parameters", false, "");
   validPL->sublist("LandIce Noise", false, "");
-  validPL->sublist("Parameter Fields", false, "Parameter Fields to be registered");
 
   return validPL;
 }

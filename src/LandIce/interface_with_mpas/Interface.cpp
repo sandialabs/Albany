@@ -356,7 +356,9 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
 
   MPAS_dt = Teuchos::rcp(new double(0.0));
   if (paramList->sublist("Problem").get<std::string>("Name") == "LandIce Coupled FO H 3D") {
-    paramList->sublist("Problem").sublist("Parameter Fields").set("Register Surface Mass Balance", 1);
+    auto& arr = paramList->sublist("Problem").get<Teuchos::Array<std::string>>("Required Fields");
+    arr.push_back("surface_mass_balance");
+    // paramList->sublist("Problem").sublist("Parameter Fields").set("Register Surface Mass Balance", 1);
     *MPAS_dt = paramList->sublist("Problem").get("Time Step", 0.0);
     paramList->sublist("Problem").set("Time Step Ptr", MPAS_dt); //if it is not there set it to zero.
   }

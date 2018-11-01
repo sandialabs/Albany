@@ -82,6 +82,7 @@
        problems/LandIce_SchoofFit.cpp
        problems/LandIce_Stokes.cpp
        problems/LandIce_StokesFO.cpp
+       problems/LandIce_StokesFOBase.cpp
        problems/LandIce_StokesFOThermoCoupled.cpp
        problems/LandIce_StokesFOThickness.cpp
        problems/LandIce_StokesL1L2.cpp
@@ -244,6 +245,7 @@ ENDIF()
        problems/LandIce_ProblemFactory.hpp
        problems/LandIce_SchoofFit.hpp
        problems/LandIce_Stokes.hpp
+       problems/LandIce_StokesFOBase.hpp
        problems/LandIce_StokesFO.hpp
        problems/LandIce_StokesFOThermoCoupled.hpp
        problems/LandIce_StokesFOThickness.hpp

@@ -1194,7 +1194,7 @@ if (basalSideName!="INVALID")
     p->set<Teuchos::ParameterList*>("Stereographic Map",&params->sublist("Stereographic Map"));
 
     // Output
-    p->set<std::string>("Lateral Residual Variable Name", "Lateral Residual");
+    p->set<std::string>("Residual Variable Name", "Velocity Residual");
 
     ev = Teuchos::rcp( new LandIce::StokesFOLateralResid<EvalT,PHAL::AlbanyTraits,false>(*p,dl) );
     fm0.template registerEvaluator<EvalT>(ev);
@@ -1215,7 +1215,7 @@ if (basalSideName!="INVALID")
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Basal Friction Coefficient"));
 
     //Output
-    p->set<std::string>("Basal Residual Variable Name", "Basal Residual");
+    p->set<std::string>("Residual Variable Name", "Velocity Residual");
 
     ev = Teuchos::rcp(new LandIce::StokesFOBasalResid<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
