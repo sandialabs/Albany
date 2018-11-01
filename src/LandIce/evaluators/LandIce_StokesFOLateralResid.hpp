@@ -11,7 +11,10 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
 #include "Albany_Layouts.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
+#include "PHAL_Dimension.hpp"
 
 namespace LandIce
 {
@@ -54,7 +57,7 @@ private:
   PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>       w_measure;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,VecDim>                    lateralResid;
+  PHX::MDField<ScalarT,Cell,Node,VecDim>                    residual;
 
   std::vector<std::vector<int> >  sideNodes;
   std::string                     lateralSideName;
@@ -70,7 +73,6 @@ private:
   bool immerse_ratio_provided;
   bool use_stereographic_map;
 
-  int numCellNodes;
   int numSideNodes;
   int numSideQPs;
   int vecDimFO;

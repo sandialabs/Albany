@@ -9,10 +9,10 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
 
+#include "LandIce_StokesFOResid.hpp"
+
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
-
-
 
 namespace LandIce {
 
@@ -68,19 +68,6 @@ StokesFOResid(const Teuchos::ParameterList& p,
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
   this->addDependentField(muLandIce);
-
-  needsBasalResidual = p.get<bool>("Needs Basal Residual");
-  if (needsBasalResidual)
-  {
-    basalRes  = decltype(basalRes)(p.get<std::string> ("Basal Residual Variable Name"), dl->node_vector);
-    this->addDependentField(basalRes);
-  }
-  needsLateralResidual = p.get<bool>("Needs Lateral Residual");
-  if (needsLateralResidual)
-  {
-    lateralRes  = decltype(lateralRes)(p.get<std::string> ("Lateral Residual Variable Name"), dl->node_vector);
-    this->addDependentField(lateralRes);
-  }
 
   stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
   useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
@@ -140,12 +127,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(muLandIce,fm);
-  if (needsBasalResidual) {
-    this->utils.setFieldData(basalRes,fm);
-  }
-  if (needsLateralResidual) {
-    this->utils.setFieldData(lateralRes,fm);
-  }
   if(useStereographicMap) {
     this->utils.setFieldData(coordVec, fm);
   }
@@ -159,30 +140,9 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const LandIce_3D_Tag& tag, const int& cell) const{
 
-  if (needsBasalResidual) {
-    if (needsLateralResidual) {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=lateralRes(cell,node,0) + basalRes(cell,node,0);
-        Residual(cell,node,1)=lateralRes(cell,node,1) + basalRes(cell,node,1);
-      }
-    } else {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=basalRes(cell,node,0);
-        Residual(cell,node,1)=basalRes(cell,node,1);
-      }
-    }
-  } else {
-    if (needsLateralResidual) {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=lateralRes(cell,node,0);
-        Residual(cell,node,1)=lateralRes(cell,node,1);
-      }
-    } else {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=0.;
-        Residual(cell,node,1)=0.;
-      }
-    }
+  for (int node=0; node<numNodes; ++node){
+    Residual(cell,node,0)=0.;
+    Residual(cell,node,1)=0.;
   }
 
   if(useStereographicMap) {
@@ -267,30 +227,9 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const POISSON_3D_Tag& tag, const int& cell) const{
 
-  if (needsBasalResidual) {
-    if (needsLateralResidual) {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=lateralRes(cell,node,0) + basalRes(cell,node,0);
-        Residual(cell,node,1)=lateralRes(cell,node,1) + basalRes(cell,node,1);
-      }
-    } else {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=basalRes(cell,node,0);
-        Residual(cell,node,1)=basalRes(cell,node,1);
-      }
-    }
-  } else {
-    if (needsLateralResidual) {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=lateralRes(cell,node,0);
-        Residual(cell,node,1)=lateralRes(cell,node,1);
-      }
-    } else {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=0.;
-        Residual(cell,node,1)=0.;
-      }
-    }
+  for (int node=0; node<numNodes; ++node){
+    Residual(cell,node,0)=0.;
+    Residual(cell,node,1)=0.;
   }
 
   for (int node=0; node < numNodes; ++node) {
@@ -308,30 +247,9 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const LandIce_2D_Tag& tag, const int& cell) const{
 
-  if (needsBasalResidual) {
-    if (needsLateralResidual) {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=lateralRes(cell,node,0) + basalRes(cell,node,0);
-        Residual(cell,node,1)=lateralRes(cell,node,1) + basalRes(cell,node,1);
-      }
-    } else {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=basalRes(cell,node,0);
-        Residual(cell,node,1)=basalRes(cell,node,1);
-      }
-    }
-  } else {
-    if (needsLateralResidual) {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=lateralRes(cell,node,0);
-        Residual(cell,node,1)=lateralRes(cell,node,1);
-      }
-    } else {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=0.;
-        Residual(cell,node,1)=0.;
-      }
-    }
+  for (int node=0; node<numNodes; ++node){
+    Residual(cell,node,0)=0.;
+    Residual(cell,node,1)=0.;
   }
 
   for (int node=0; node < numNodes; ++node) {
@@ -350,30 +268,9 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const LandIce_XZ_2D_Tag& tag, const int& cell) const{
 
-  if (needsBasalResidual) {
-    if (needsLateralResidual) {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=lateralRes(cell,node,0) + basalRes(cell,node,0);
-        Residual(cell,node,1)=lateralRes(cell,node,1) + basalRes(cell,node,1);
-      }
-    } else {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=basalRes(cell,node,0);
-        Residual(cell,node,1)=basalRes(cell,node,1);
-      }
-    }
-  } else {
-    if (needsLateralResidual) {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=lateralRes(cell,node,0);
-        Residual(cell,node,1)=lateralRes(cell,node,1);
-      }
-    } else {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=0.;
-        Residual(cell,node,1)=0.;
-      }
-    }
+  for (int node=0; node<numNodes; ++node){
+    Residual(cell,node,0)=0.;
+    Residual(cell,node,1)=0.;
   }
 
   for (int node=0; node < numNodes; ++node) {
@@ -392,30 +289,9 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const POISSON_2D_Tag& tag, const int& cell) const{
 
-  if (needsBasalResidual) {
-    if (needsLateralResidual) {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=lateralRes(cell,node,0) + basalRes(cell,node,0);
-        Residual(cell,node,1)=lateralRes(cell,node,1) + basalRes(cell,node,1);
-      }
-    } else {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=basalRes(cell,node,0);
-        Residual(cell,node,1)=basalRes(cell,node,1);
-      }
-    }
-  } else {
-    if (needsLateralResidual) {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=lateralRes(cell,node,0);
-        Residual(cell,node,1)=lateralRes(cell,node,1);
-      }
-    } else {
-      for (int node=0; node<numNodes; ++node){
-        Residual(cell,node,0)=0.;
-        Residual(cell,node,1)=0.;
-      }
-    }
+  for (int node=0; node<numNodes; ++node){
+    Residual(cell,node,0)=0.;
+    Residual(cell,node,1)=0.;
   }
 
   for (int node=0; node < numNodes; ++node) {
@@ -462,5 +338,4 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 //**********************************************************************
-}
-
+} // namespace LandIce

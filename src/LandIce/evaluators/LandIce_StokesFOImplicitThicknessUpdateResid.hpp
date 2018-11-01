@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LANDICE_STOKESFOIPLICITTHICKNESSUPDATERESID_HPP
-#define LANDICE_STOKESFOIPLICITTHICKNESSUPDATERESID_HPP
+#ifndef LANDICE_STOKES_FO_IMPLICIT_THICKNESS_UPDATE_RESID_HPP
+#define LANDICE_STOKES_FO_IMPLICIT_THICKNESS_UPDATE_RESID_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -28,8 +28,7 @@ class StokesFOImplicitThicknessUpdateResid : public PHX::EvaluatorWithBaseImpl<T
 public:
 
   StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl_full,
-                const Teuchos::RCP<Albany::Layouts>& dl_ice);
+                const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
            PHX::FieldManager<Traits>& vm);
@@ -46,7 +45,6 @@ private:
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> gradBF;
   PHX::MDField<const ScalarT,Cell,Node> dH;
   PHX::MDField<const ScalarT,Cell,Node> H0;
-  PHX::MDField<const ScalarT,Cell,Node,VecDim> InputResidual;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
@@ -56,7 +54,7 @@ private:
   std::size_t numVecDims;
   std::size_t numCells;
 
-  double rho, g;
+  double rho_g;
 
   Kokkos::DynRankView<ScalarT, PHX::Device> Res;
 
@@ -68,8 +66,8 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const StokesFOImplicitThicknessUpdateResid_Tag& tag, const int& cell) const;
-
 };
-}
 
-#endif
+} // namespace LandIce
+
+#endif // LANDICE_STOKES_FO_IMPLICIT_THICKNESS_UPDATE_RESID_HPP

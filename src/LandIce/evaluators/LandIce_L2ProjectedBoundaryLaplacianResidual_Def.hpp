@@ -8,7 +8,9 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_CommHelpers.hpp"
+
 #include "PHAL_Utilities.hpp"
+#include "LandIce_L2ProjectedBoundaryLaplacianResidual.hpp"
 
 template<typename EvalT, typename Traits>
 LandIce::L2ProjectedBoundaryLaplacianResidual<EvalT, Traits>::
@@ -86,7 +88,7 @@ L2ProjectedBoundaryLaplacianResidual(Teuchos::ParameterList& p, const Teuchos::R
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void LandIce::L2ProjectedBoundaryLaplacianResidual<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Traits>& fm)
 {
 
   this->utils.setFieldData(solution, fm);

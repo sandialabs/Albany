@@ -11,11 +11,10 @@
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
 #include "Albany_ProblemUtils.hpp"
+#include "LandIce_ThicknessResid.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
-
-
 
 namespace LandIce {
 
@@ -302,5 +301,4 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 //**********************************************************************
-}
-
+} // namespace LandIce

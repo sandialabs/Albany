@@ -11,7 +11,9 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
 #include "Albany_Layouts.hpp"
+#include "PHAL_Dimension.hpp"
 
 namespace LandIce {
 /** \brief Finite Element Interpolation Evaluator
@@ -48,8 +50,6 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim>   Ugrad;
   PHX::MDField<const ScalarT,Cell,QuadPoint>              muLandIce;
 
-  PHX::MDField<const ScalarT,Cell,Node,VecDim>            basalRes;
-  PHX::MDField<const ScalarT,Cell,Node,VecDim>            lateralRes;
   PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim>     coordVec;
 
   enum EQNTYPE {LandIce, POISSON, LandIce_XZ};

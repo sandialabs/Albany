@@ -11,7 +11,10 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
 #include "Albany_Layouts.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
+#include "PHAL_Dimension.hpp"
 
 namespace LandIce
 {
@@ -60,7 +63,7 @@ private:
 
   // Input:
   PHX::MDField<const RealType>      BF;
-  PHX::MDField<const RealType>      GradBF;
+  PHX::MDField<const MeshScalarT>   GradBF;
   PHX::MDField<const MeshScalarT>   w_measure;
   PHX::MDField<const ScalarT>       q;
   PHX::MDField<const ScalarT>       m;

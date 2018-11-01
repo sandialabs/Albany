@@ -13,13 +13,18 @@
 #include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include <string>
+#include <string.hpp> // For util::upper_case (do not confuse this with <string>! string.hpp is an Albany file)
 
+// Uncomment for some setup output
+#define OUTPUT_TO_SCREEN
 
 LandIce::StokesFOThickness::
 StokesFOThickness( const Teuchos::RCP<Teuchos::ParameterList>& params_,
+             const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
+  discParams(discParams_),
   numDim(numDim_),
   use_sdbcs_(false)
 {
@@ -39,51 +44,51 @@ StokesFOThickness( const Teuchos::RCP<Teuchos::ParameterList>& params_,
       this->requirements.push_back(req[i]);
   }
 
-  basalSideName   = params->isParameter("Basal Side Name")   ? params->get<std::string>("Basal Side Name")   : "INVALID";
-  surfaceSideName = params->isParameter("Surface Side Name") ? params->get<std::string>("Surface Side Name") : "INVALID";
-  lateralSideName = params->isParameter("Lateral Side Name") ? params->get<std::string>("Lateral Side Name") : "INVALID";
-  basalEBName = "INVALID";
-  surfaceEBName = "INVALID";
-  sliding = params->isSublist("LandIce Basal Friction Coefficient");
-  lateral_resid = params->isSublist("LandIce Lateral BC");
-  TEUCHOS_TEST_FOR_EXCEPTION (sliding && basalSideName=="INVALID", std::logic_error,
-                              "Error! With sliding, you need to provide a valid 'Basal Side Name',\n" );
-  TEUCHOS_TEST_FOR_EXCEPTION (lateral_resid && lateralSideName=="INVALID", std::logic_error,
-                              "Error! With lateral BC, you need to provide a valid 'Lateral Side Name',\n" );
+  // Parsing the LandIce boundary conditions sublist
+  auto landice_bcs_params = Teuchos::sublist(params,"LandIce BCs");
+  int num_bcs = landice_bcs_params->get<int>("Number",0);
+  for (int i=0; i<num_bcs; ++i) {
+    auto this_bc = Teuchos::sublist(landice_bcs_params,Albany::strint("BC",i));
+    std::string type_str = util::upper_case(this_bc->get<std::string>("Type"));
 
-  // Loading basal requirements (if any)
-  if (params->isParameter("Required Basal Fields"))
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (basalSideName=="INVALID", std::logic_error, "Error! In order to specify basal requirements, you must also specify a valid 'Basal Side Name'.\n");
-
-    // Need to allocate a fields in basal mesh database
-    Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Basal Fields");
-    this->ss_requirements[basalSideName].reserve(req.size()); // Note: this is not for performance, but to guarantee
-    for (int i(0); i<req.size(); ++i)                         //       that ss_requirements.at(basalSideName) does not
-      this->ss_requirements[basalSideName].push_back(req[i]); //       throw, even if it's empty...
+    LandIceBC type;
+    if (type_str=="BASAL FRICTION") {
+      type = LandIceBC::BasalFriction;
+    } else if (type_str=="LATERAL") {
+      type = LandIceBC::Lateral;
+    } else if (type_str=="SYNTETIC TEST") {
+      type = LandIceBC::SynteticTest;
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
+                                  "Error! Unknown LandIce bc '" + type_str + "'.\n");
+    }
+    landice_bcs[type].push_back(this_bc);
   }
 
-  // Loading surface requirements (if any)
-  if (params->isParameter("Required Surface Fields"))
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (surfaceSideName=="INVALID", std::logic_error, "Error! In order to specify surface requirements, you must also specify a valid 'Surface Side Name'.\n");
 
-    Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Surface Fields");
-    this->ss_requirements[surfaceSideName].reserve(req.size()); // Note: same motivation as for the basal side
-    for (int i(0); i<req.size(); ++i)
-      this->ss_requirements[surfaceSideName].push_back(req[i]);
-  }
+  // Surface side, where velocity diagnostics are computed (e.g., velocity mismatch)
+  surfaceSideName = params->isParameter("Surface Side Name") ? params->get<std::string>("Surface Side Name") : "__INVALID__";
 
-  if (basalSideName!="INVALID")
+  // Basal side, where thickness-related diagnostics are computed (e.g., SMB)
+  basalSideName   = params->isParameter("Basal Side Name")   ? params->get<std::string>("Basal Side Name")   : "__INVALID__";
+
+  if (basalSideName!="__INVALID__")
   {
     // Defining the thickness equation only in 2D (basal side)
     sideSetEquations[2].push_back(basalSideName);
   }
-}
 
-LandIce::StokesFOThickness::
-~StokesFOThickness()
-{
+  dof_names.resize(2);
+  dof_names[0] = "Velocity";
+  dof_names[1] = "Thickness";
+
+  resid_names.resize(2);
+  resid_names[0] = "StokesFO Residual";
+  resid_names[1] = "Thickness Residual";
+
+  scatter_names.resize(2);
+  scatter_names[0] = "Scatter " + resid_names[0];
+  scatter_names[1] = "Scatter " + resid_names[1];
 }
 
 void
@@ -102,8 +107,6 @@ buildProblem(
   Intrepid2::DefaultCubatureFactory cubFactory;
   cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs[0]->cubatureDegree);
 
-  elementBlockName = meshSpecs[0]->ebName;
-
   const int worksetSize     = meshSpecs[0]->worksetSize;
   vecDimFO                  = std::min((int)neq,(int)2);
   const int numCellSides    = cellType->getFaceCount();
@@ -112,21 +115,43 @@ buildProblem(
   const int numCellQPs      = cellCubature->getNumPoints();
 
   dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim,vecDimFO));
-  dl_full = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim, neq));
-
-  int numSurfaceSideVertices = -1;
-  int numSurfaceSideNodes    = -1;
-  int numSurfaceSideQPs      = -1;
-  int numBasalSideVertices   = -1;
-  int numBasalSideNodes      = -1;
-  int numBasalSideQPs        = -1;
-  int numLateralSideVertices = -1;
-  int numLateralSideNodes    = -1;
-  int numLateralSideQPs      = -1;
+  // dl_full = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim, neq));
 
   int sideDim = numDim-1;
+  for (auto it : landice_bcs) {
+    for (auto pl: it.second) {
+      std::string ssName = pl->get<std::string>("Side Set Name");
+      TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(ssName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
+                                  "Error! Either the side set name is wrong or something went wrong while building the side mesh specs.\n");
+      const Albany::MeshSpecsStruct& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(ssName)[0];
 
-  if (basalSideName!="INVALID")
+      // Building also side structures
+      const CellTopologyData * const side_top = &sideMeshSpecs.ctd;
+      sideBasis[ssName] = Albany::getIntrepid2Basis(*side_top);
+      sideType[ssName] = rcp(new shards::CellTopology (side_top));
+
+      // If there's no side discretiation, then sideMeshSpecs.cubatureDegree will be -1, and the user need to specify a cubature degree somewhere else
+      int sideCubDegree = sideMeshSpecs.cubatureDegree;
+      if (pl->isParameter("Cubature Degree")) {
+        sideCubDegree = pl->get<int>("Cubature Degree");
+      }
+      TEUCHOS_TEST_FOR_EXCEPTION (sideCubDegree<0, std::runtime_error, "Error! Missing cubature degree information on side '" << ssName << ".\n"
+                                                                       "       Either add a side discretization, or specify 'Cubature Degree' in sublist '" + pl->name() + "'.\n");
+      sideCubature[ssName] = cubFactory.create<PHX::Device, RealType, RealType>(*sideType[ssName], sideCubDegree);
+
+      int numSideVertices = sideType[ssName]->getNodeCount();
+      int numSideNodes    = sideBasis[ssName]->getCardinality();
+      int numSideQPs      = sideCubature[ssName]->getNumPoints();
+
+      dl->side_layouts[ssName] = rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes,
+                                                         numSideQPs,sideDim,numDim,numCellSides,vecDimFO));
+
+      // dl_full->side_layouts[ssName] = rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes,
+                                                              // numSideQPs,sideDim,numDim,numCellSides,neq));
+    }
+  }
+
+  if (basalSideName!="__INVALID__" && dl->side_layouts.find(basalSideName)==dl->side_layouts.end())
   {
     TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(basalSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
                                 "Error! Either 'Basal Side Name' is wrong or something went wrong while building the side mesh specs.\n");
@@ -134,19 +159,19 @@ buildProblem(
 
     // Building also basal side structures
     const CellTopologyData * const side_top = &basalMeshSpecs.ctd;
-    basalSideBasis = Albany::getIntrepid2Basis(*side_top);
-    basalSideType = rcp(new shards::CellTopology (side_top));
+    sideBasis[basalSideName] = Albany::getIntrepid2Basis(*side_top);
+    sideType[basalSideName] = rcp(new shards::CellTopology (side_top));
 
-    basalEBName   = basalMeshSpecs.ebName;
-    basalCubature = cubFactory.create<PHX::Device, RealType, RealType>(*basalSideType, basalMeshSpecs.cubatureDegree);
+    sideCubature[basalSideName] = cubFactory.create<PHX::Device, RealType, RealType>(*sideType.at(basalSideName), basalMeshSpecs.cubatureDegree);
 
-    numBasalSideVertices = basalSideType->getNodeCount();
-    numBasalSideNodes    = basalSideBasis->getCardinality();
-    numBasalSideQPs      = basalCubature->getNumPoints();
+    int numBasalSideVertices = sideType.at(basalSideName)->getNodeCount();
+    int numBasalSideNodes    = sideBasis.at(basalSideName)->getCardinality();
+    int numBasalSideQPs      = sideCubature.at(basalSideName)->getNumPoints();
 
-    dl_basal = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,
-                                       numBasalSideQPs,sideDim,numDim,numCellSides,neq));
-    dl_full->side_layouts[basalSideName] = dl_basal;
+    dl->side_layouts[basalSideName] = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,
+                                                              numBasalSideQPs,sideDim,numDim,numCellSides,vecDimFO));
+    // dl_full->side_layouts[basalSideName] = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,
+                                                                   // numBasalSideQPs,sideDim,numDim,numCellSides,neq));
   }
 
   if (surfaceSideName!="INVALID")
@@ -158,99 +183,44 @@ buildProblem(
 
     // Building also surface side structures
     const CellTopologyData * const side_top = &surfaceMeshSpecs.ctd;
-    surfaceSideBasis = Albany::getIntrepid2Basis(*side_top);
-    surfaceSideType = rcp(new shards::CellTopology (side_top));
+    sideBasis[surfaceSideName] = Albany::getIntrepid2Basis(*side_top);
+    sideType[surfaceSideName] = rcp(new shards::CellTopology (side_top));
 
-    surfaceEBName   = surfaceMeshSpecs.ebName;
-    surfaceCubature = cubFactory.create<PHX::Device, RealType, RealType>(*surfaceSideType, surfaceMeshSpecs.cubatureDegree);
+    sideCubature[surfaceSideName] = cubFactory.create<PHX::Device, RealType, RealType>(*sideType.at(basalSideName), surfaceMeshSpecs.cubatureDegree);
 
-    numSurfaceSideVertices = surfaceSideType->getNodeCount();
-    numSurfaceSideNodes    = surfaceSideBasis->getCardinality();
-    numSurfaceSideQPs      = surfaceCubature->getNumPoints();
+    int numSurfaceSideVertices = sideType.at(surfaceSideName)->getNodeCount();
+    int numSurfaceSideNodes    = sideBasis.at(surfaceSideName)->getCardinality();
+    int numSurfaceSideQPs      = sideCubature.at(surfaceSideName)->getNumPoints();
 
-    dl_surface = rcp(new Albany::Layouts(worksetSize,numSurfaceSideVertices,numSurfaceSideNodes,
-                                         numSurfaceSideQPs,sideDim,numDim,numCellSides,vecDimFO));
-    dl->side_layouts[surfaceSideName] = dl_surface;
+    dl->side_layouts[surfaceSideName] = rcp(new Albany::Layouts(worksetSize,numSurfaceSideVertices,numSurfaceSideNodes,
+                                                                numSurfaceSideQPs,sideDim,numDim,numCellSides,vecDimFO));
+    // dl_full->side_layouts[surfaceSideName] = rcp(new Albany::Layouts(worksetSize,numSurfaceSideVertices,numSurfaceSideNodes,
+                                                                     // numSurfaceSideQPs,sideDim,numDim,numCellSides,neq));
   }
 
-  if (lateralSideName!="INVALID") {
-    // For lateral bc, we want to give the option of not creating a whole discretization, since
-    // it would just be needed to setup the lateral bc. If the user does not specify a lateral
-    // discretization, we build the information we need ourself. The user can specify the quadrature
-    // degree for the lateral bc in the 'LandIce Lateral BC' sublist. This would also be used to
-    // override the specs of the lateral discretization (if present).
+#ifdef OUTPUT_TO_SCREEN
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+  int commRank = Teuchos::GlobalMPISession::getRank();
+  int commSize = Teuchos::GlobalMPISession::getNProc();
+  out->setProcRankAndSize(commRank, commSize);
+  out->setOutputToRootOnly(0);
 
-    const CellTopologyData* side_top = nullptr;
-    int lateralCubDegree = -1;
-
-    auto ss_ms = meshSpecs[0]->sideSetMeshSpecs;
-    auto it = ss_ms.find(lateralSideName);
-    if (it!=ss_ms.end()) {
-      // The user specified a lateral side discretization. Just get the topology from the lateral side mesh specs
-      side_top = &it->second[0]->ctd;
-      lateralCubDegree = it->second[0]->cubatureDegree;
-    } else {
-      // The user did not specify a lateral side discretization. We need to create a topology from
-      // the cell topology. We need to check what's the cell topology: if tetra/tria/quad/hexa, then
-      // all sides have the same topology, so any side of the cell topology works. But if we have wedges,
-      // then lateral side is the quadrilateral. As of this writing, the quad sides of a wedge are the first
-      // three. However, for safety, we loop through all sides and check their node count, and pick the first
-      // side with 4 nodes.
-      std::string cell_top_name (cell_top->base->name);
-      if (cell_top_name=="Wedge_6") {
-        for (int i=0; i<cellType->getSubcellCount(sideDim); ++i) {
-          std::string tmp (cellType->getCellTopologyData(sideDim,i)->base->name);
-          if (tmp=="Quadrilateral_4") {
-            // Found the lateral side. Get topology and break
-            side_top = cellType->getCellTopologyData(sideDim,i);
-            break;
-          }
-        }
-      } else {
-        // All sides have the same topology. Just pick the first
-        side_top = cellType->getCellTopologyData(sideDim,0);
-      }
-    }
-    TEUCHOS_TEST_FOR_EXCEPTION (side_top==nullptr, std::runtime_error, "Error! Something went wrong while detecting lateral side topology.\n");
-
-    if (params->sublist("LandIce Lateral BC").isParameter("Cubature Degree")) {
-      lateralCubDegree = params->sublist("LandIce Lateral BC").get<int>("Cubature Degree");
-    }
-    TEUCHOS_TEST_FOR_EXCEPTION (lateralCubDegree<0, std::runtime_error, "Error! Missing cubature degree information on side '" << lateralSideName << ".\n");
-
-    lateralSideBasis = Albany::getIntrepid2Basis(*side_top);
-    lateralSideType = rcp(new shards::CellTopology (side_top));
-
-    lateralCubature = cubFactory.create<PHX::Device, RealType, RealType>(*lateralSideType, lateralCubDegree);
-
-    numLateralSideVertices = lateralSideType->getNodeCount();
-    numLateralSideNodes    = lateralSideBasis->getCardinality();
-    numLateralSideQPs      = lateralCubature->getNumPoints();
-
-    dl_lateral = rcp(new Albany::Layouts(worksetSize,numLateralSideVertices,numLateralSideNodes,
-                                         numLateralSideQPs,sideDim,numDim,numCellSides,neq));
-    dl_full->side_layouts[lateralSideName] = dl_lateral;
+  *out << "=== Field Dimensions ===\n"
+       << " Volume:\n"
+       << "   Workset     = " << worksetSize << "\n"
+       << "   Vertices    = " << numCellVertices << "\n"
+       << "   CellNodes   = " << numCellNodes << "\n"
+       << "   CellQuadPts = " << numCellQPs << "\n"
+       << "   Dim         = " << numDim << "\n"
+       << "   VecDim      = " << neq << "\n"
+       << "   VecDimFO    = " << vecDimFO << "\n";
+  for (auto it : dl->side_layouts) {
+    *out << " Side Set '" << it.first << "':\n" 
+         << "  Vertices   = " << it.second->vertices_vector->dimension(1) << "\n"
+         << "  Nodes      = " << it.second->node_scalar->dimension(1) << "\n"
+         << "  QuadPts    = " << it.second->qp_scalar->dimension(1) << "\n";
   }
-
-//#ifdef OUTPUT_TO_SCREEN
-  *out << "Field Dimensions: \n"
-       << "  Workset             = " << worksetSize << "\n"
-       << "  Vertices            = " << numCellVertices << "\n"
-       << "  CellNodes           = " << numCellNodes << "\n"
-       << "  CellQuadPts         = " << numCellQPs << "\n"
-       << "  Dim                 = " << numDim << "\n"
-       << "  VecDim              = " << neq << "\n"
-       << "  VecDimFO            = " << vecDimFO << "\n"
-       << "  BasalSideVertices   = " << numBasalSideVertices << "\n"
-       << "  BasalSideNodes      = " << numBasalSideNodes << "\n"
-       << "  BasalSideQuadPts    = " << numBasalSideQPs << "\n"
-       << "  SurfaceSideVertices = " << numSurfaceSideVertices << "\n"
-       << "  SurfaceSideNodes    = " << numSurfaceSideNodes << "\n"
-       << "  SurfaceSideQuadPts  = " << numSurfaceSideQPs << "\n"
-       << "  LateralSideVertices = " << numLateralSideVertices << "\n"
-       << "  LateralSideNodes    = " << numLateralSideNodes << "\n"
-       << "  LateralSideQuadPts  = " << numLateralSideQPs << std::endl;
-//#endif
+#endif
 
  /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
@@ -354,7 +324,7 @@ LandIce::StokesFOThickness::constructNeumannEvaluators(const Teuchos::RCP<Albany
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
-   std::vector<std::string> condNames(6); //(dCdx, dCdy, dCdz), dCdn, basal, P, lateral, basal_scalar_field
+   std::vector<std::string> condNames(3); //(dCdx, dCdy, dCdz), dCdn, P
    Teuchos::ArrayRCP<std::string> dof_names(2);
      dof_names[0] = "Velocity";
      dof_names[1] = "Thickness";
@@ -369,10 +339,7 @@ LandIce::StokesFOThickness::constructNeumannEvaluators(const Teuchos::RCP<Albany
        std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
 
    condNames[1] = "dFluxdn";
-   condNames[2] = "basal";
-   condNames[3] = "P";
-   condNames[4] = "lateral";
-   condNames[5] = "basal_scalar_field";
+   condNames[2] = "P";
 
    nfm.resize(1); // LandIce problem only has one element block
 
@@ -394,12 +361,10 @@ LandIce::StokesFOThickness::getValidProblemParameters() const
   validPL->sublist("LandIce Physical Parameters", false, "");
   validPL->set<double>("Time Step", 1.0, "Time step for divergence flux ");
   validPL->set<Teuchos::RCP<double> >("Time Step Ptr", Teuchos::null, "Time step ptr for divergence flux ");
-  validPL->sublist("LandIce Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");
+  validPL->sublist("LandIce BCs", false, "Specify boundary conditions specific to LandIce (bypass usual Neumann/Dirichlet classes)");
   validPL->sublist("Parameter Fields", false, "Parameter Fields to be registered");
   validPL->set<std::string> ("Basal Side Name", "", "Name of the basal side set");
   validPL->set<std::string> ("Surface Side Name", "", "Name of the surface side set");
-  validPL->set<std::string> ("Lateral Side Name", "", "Name of the lateral side set");
-  validPL->sublist("LandIce Lateral BC", false, "Specify parameters to use for the lateral BC");
   validPL->set<Teuchos::Array<std::string> > ("Required Fields", Teuchos::Array<std::string>(), "");
   validPL->set<Teuchos::Array<std::string> > ("Required Basal Fields", Teuchos::Array<std::string>(), "");
   validPL->set<Teuchos::Array<std::string> > ("Required Surface Fields", Teuchos::Array<std::string>(), "");

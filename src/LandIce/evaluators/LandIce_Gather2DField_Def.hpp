@@ -11,6 +11,7 @@
 #include "Sacado.hpp"
 
 #include "Albany_TpetraThyraUtils.hpp"
+#include "LandIce_Gather2DField.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN

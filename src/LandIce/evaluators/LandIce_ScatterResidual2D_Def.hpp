@@ -7,6 +7,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
+#include "LandIce_ScatterResidual2D.hpp"
+
 namespace PHAL {
 
 // **********************************************************************
