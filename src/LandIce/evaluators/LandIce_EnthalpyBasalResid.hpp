@@ -41,7 +41,7 @@ namespace LandIce
 
     // Input:
     PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>       geoFlux;     // [W m^{-2}] = [Pa m s^{-1}]
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>       beta; // [kPa m / yr]
+    PHX::MDField<const ScalarT,Cell,Side,QuadPoint>            beta; // [kPa m / yr]
     PHX::MDField<const ScalarT,Cell,Side,QuadPoint>            basal_dTdz; // [K  km^{-1}]
     PHX::MDField<const ScalarT,Cell,Side, QuadPoint>           enthalpy;  //[MW s m^{-3}]
     PHX::MDField<const ParamScalarT,Cell, Side, QuadPoint>     enthalpyHs;  //[MW s m^{-3}]
