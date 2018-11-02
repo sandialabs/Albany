@@ -296,7 +296,7 @@ void StokesFO::constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate velocity gradient on QP on side
-    ev = evalUtils.constructDOFGradInterpolationSideEvaluator(field_name_side, ssName);
+    ev = evalUtils.getPSTUtils().constructDOFGradInterpolationSideEvaluator(field_name_side, ssName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     // -------------------------------- LandIce evaluators ------------------------- //
@@ -322,7 +322,7 @@ void StokesFO::constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits
     //Output
     p->set<std::string>("L2 Projected Boundary Laplacian Residual Name", "L2 Projected Boundary Laplacian Residual");
 
-    ev = Teuchos::rcp(new LandIce::L2ProjectedBoundaryLaplacianResidual<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    ev = Teuchos::rcp(new LandIce::L2ProjectedBoundaryLaplacianResidualParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
     if (fieldManagerChoice == Albany::BUILD_RESID_FM) {

@@ -12,9 +12,9 @@
 #include "PHAL_Utilities.hpp"
 #include "LandIce_L2ProjectedBoundaryLaplacianResidual.hpp"
 
-template<typename EvalT, typename Traits>
-LandIce::L2ProjectedBoundaryLaplacianResidual<EvalT, Traits>::
-L2ProjectedBoundaryLaplacianResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
+template<typename EvalT, typename Traits, typename FieldScalarT>
+LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScalarT>::
+L2ProjectedBoundaryLaplacianResidualBase(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
 {
 
   laplacian_coeff = p.get<double>("Laplacian Coefficient");
@@ -86,8 +86,8 @@ L2ProjectedBoundaryLaplacianResidual(Teuchos::ParameterList& p, const Teuchos::R
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits>
-void LandIce::L2ProjectedBoundaryLaplacianResidual<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename FieldScalarT>
+void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScalarT>::
 postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Traits>& fm)
 {
 
@@ -103,8 +103,8 @@ postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Trai
 
 
 // **********************************************************************
-template<typename EvalT, typename Traits>
-void LandIce::L2ProjectedBoundaryLaplacianResidual<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+template<typename EvalT, typename Traits, typename FieldScalarT>
+void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScalarT>::evaluateFields(typename Traits::EvalData workset)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::logic_error,
                               "Side sets defined in input file but not properly specified on the mesh" << std::endl);
