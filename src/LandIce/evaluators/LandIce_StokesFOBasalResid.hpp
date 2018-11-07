@@ -11,7 +11,10 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
 #include "Albany_Layouts.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
+#include "PHAL_Dimension.hpp"
 
 namespace LandIce
 {
@@ -52,12 +55,11 @@ private:
   PHX::MDField<const ScalarT,Dim> homotopy;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,VecDim>            basalResid;
+  PHX::MDField<ScalarT,Cell,Node,VecDim>            residual;
 
   std::vector<std::vector<int> >  sideNodes;
   std::string                     basalSideName;
 
-  int numCellNodes;
   int numSideNodes;
   int numSideQPs;
   int sideDim;

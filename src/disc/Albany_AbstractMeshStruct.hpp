@@ -16,6 +16,7 @@
 
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_AbstractFieldContainer.hpp"
+#include "Albany_MeshSpecs.hpp"
 
 #include "Shards_CellTopology.hpp"
 #include "Albany_Layouts.hpp"

@@ -144,11 +144,6 @@ constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpec
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
        std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
 
-//   condNames[1] = "dFluxdn";
-//   condNames[2] = "basal";
-//   condNames[3] = "P";
-//   condNames[4] = "lateral";
-
    nfm.resize(1); // Aeras X-Z scalar advection problem only has one
                   // element block
 

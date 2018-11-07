@@ -10,11 +10,8 @@ ANONYMOUS:
     Compute Sensitivities: true
     Extruded Column Coupled in 2D Response: true
     Required Fields: [temperature]
-    Required Basal Fields: [basal_friction, ice_thickness, observed_ice_thickness, observed_ice_thickness_RMS, temperature, observed_surface_height, observed_bed_topography, surface_mass_balance, surface_mass_balance_RMS]
-    Required Surface Fields: [observed_surface_velocity, observed_surface_velocity_RMS]
     Basal Side Name: basalside
     Surface Side Name: upperside
-    Lateral Side Name: lateralside
     Response Functions: 
       Collection Method: Sum Responses
       Number: 2
@@ -35,6 +32,18 @@ ANONYMOUS:
         Field Name: Velocity
     Dirichlet BCs: { }
     Neumann BCs: { }
+    LandIce BCs:
+      Number : 2
+      BC 0:
+        Type: Basal Friction
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Exponent Of Given Field
+          Given Field Variable Name: basal_friction
+      BC 1:
+        Type: Lateral
+        Cubature Degree: 3
+        Side Set Name: lateralside
     Parameters: 
       Number: 0
       Parameter 0: 'Glen''s Law Homotopy Parameter'
@@ -51,8 +60,6 @@ ANONYMOUS:
         Upper Bound: 4.00000000000000000e+00
         Mesh Part: bottom
         Extruded: true
-    LandIce Lateral BC: 
-      Cubature Degree: 3
     LandIce Physical Parameters: 
       Water Density: 1.02800000000000000e+03
       Ice Density: 9.10000000000000000e+02
@@ -64,10 +71,6 @@ ANONYMOUS:
       'Glen''s Law A': 1.00000000000000005e-04
       'Glen''s Law n': 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
-    LandIce Basal Friction Coefficient: 
-      Basal Side Name: basalside
-      Type: Exponent Of Given Field
-      Side Cubature Degree: 3
     Body Force: 
       Type: FO INTERP SURF GRAD
   Discretization: 

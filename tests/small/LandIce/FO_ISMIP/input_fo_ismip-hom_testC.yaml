@@ -6,11 +6,28 @@ ANONYMOUS:
     Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
     Dirichlet BCs: { }
-    Neumann BCs: 
-      NBC on SS SideSet4 for DOF U0 set basal: [1.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
-      NBC on SS SideSet4 for DOF U1 set basal: [1.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
-      BetaXY: ISMIP-HOM Test C
-      L: 5.00000000000000000e+00
+    LandIce BCs: 
+      Number: 2
+      BC 0:
+        Type: Syntetic Test
+        Side Set Name: SideSet4
+        Cubature Degree: 3
+        BC Params:
+          Type: ISMIP-HOM Test C
+          Components: [0]
+          alpha: 0.0
+          beta: 1.0
+          L: 5.0
+      BC 1:
+        Type: Syntetic Test
+        Side Set Name: SideSet4
+        Cubature Degree: 3
+        BC Params:
+          Type: ISMIP-HOM Test C
+          Components: [1]
+          alpha: 0.0
+          beta: 1.0
+          L: 5.0
     Parameters: 
       Number: 1
       Parameter 0: 'Glen''s Law Homotopy Parameter'

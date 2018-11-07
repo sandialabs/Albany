@@ -35,7 +35,6 @@
 Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
                                         const Teuchos::RCP<const Teuchos_Comm>& commT) :
   GenericSTKMeshStruct (params, Teuchos::null, 2),
-  out                  (Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic             (false)
 {
   xyz  = 0;
@@ -115,6 +114,7 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
 
   std::string ebn = "Element Block 0";
   partVec[0] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
+  std::map<std::string,int> ebNameToIndex;
   ebNameToIndex[ebn] = 0;
 
 #ifdef ALBANY_SEACAS
@@ -159,22 +159,22 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
   {
     int tag = bdTagsArray[k];
 
-    std::stringstream nsn,ssn;
-    nsn << "boundary_node_set_" << tag;
-    ssn << "boundary_side_set_"  << tag;
+    std::stringstream nsn_ss,ssn_ss;
+    nsn_ss << "boundary_node_set_" << tag;
+    ssn_ss << "boundary_side_set_"  << tag;
 
-    bdTagToNodeSetName[tag] = nsn.str();
-    bdTagToSideSetName[tag] = ssn.str();
+    bdTagToNodeSetName[tag] = nsn_ss.str();
+    bdTagToSideSetName[tag] = ssn_ss.str();
 
-    nsNames.push_back(nsn.str());
-    ssNames.push_back(ssn.str());
+    nsNames.push_back(nsn_ss.str());
+    ssNames.push_back(ssn_ss.str());
 
-    nsPartVec[nsn.str()] = &metaData->declare_part(nsn.str(), stk::topology::NODE_RANK);
-    ssPartVec[ssn.str()] = &metaData->declare_part(ssn.str(), metaData->side_rank());
+    nsPartVec[nsn_ss.str()] = &metaData->declare_part(nsn_ss.str(), stk::topology::NODE_RANK);
+    ssPartVec[ssn_ss.str()] = &metaData->declare_part(ssn_ss.str(), metaData->side_rank());
 
 #ifdef ALBANY_SEACAS
-    stk::io::put_io_part_attribute(*nsPartVec[nsn.str()]);
-    stk::io::put_io_part_attribute(*ssPartVec[ssn.str()]);
+    stk::io::put_io_part_attribute(*nsPartVec[nsn_ss.str()]);
+    stk::io::put_io_part_attribute(*ssPartVec[ssn_ss.str()]);
 
 #endif
   }
@@ -202,6 +202,10 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
                                    worksetSize, partVec[0]->name(), ebNameToIndex,
                                    this->interleavedOrdering));
 
+  // Create a mesh specs object for EACH side set
+  this->initializeSideSetMeshSpecs(commT);
+
+  // Initialize the requested sideset mesh struct in the mesh
   this->initializeSideSetMeshStructs(commT);
 }
 
@@ -236,7 +240,6 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
   {
     stk::mesh::PartVector singlePartVec(1);
     unsigned int ebNo = 0; //element block #???
-    int sideID = 0;
 
     AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field =
         fieldContainer->getProcRankField();
@@ -290,8 +293,8 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
       singlePartVec[0] = nsPartVec[partName];
 
       edgeMap.insert(std::pair<std::pair<int, int>, int>(std::make_pair(be[i][0], be[i][1]), i + 1));
-      stk::mesh::Entity node1 = bulkData->declare_entity(stk::topology::NODE_RANK,be[i][0],singlePartVec);
-      stk::mesh::Entity node2 = bulkData->declare_entity(stk::topology::NODE_RANK,be[i][1],singlePartVec);
+      /* stk::mesh::Entity node1 = */ bulkData->declare_entity(stk::topology::NODE_RANK,be[i][0],singlePartVec);
+      /* stk::mesh::Entity node2 = */ bulkData->declare_entity(stk::topology::NODE_RANK,be[i][1],singlePartVec);
     }
 
     *out << "done!\n";

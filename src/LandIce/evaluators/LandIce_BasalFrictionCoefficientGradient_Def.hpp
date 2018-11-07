@@ -8,10 +8,15 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
+
+#include "Albany_DiscretizationUtils.hpp"
 #include "Albany_Layouts.hpp"
+
+#include "LandIce_BasalFrictionCoefficientGradient.hpp"
 #include "LandIce_SharedParameter.hpp"
 #include "LandIce_ParamEnum.hpp"
 
+#include <string.hpp> // for 'upper_case' (comes from src/utility; not to be confused with <string>)
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
@@ -30,38 +35,39 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 
   Teuchos::ParameterList& beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
 
-  std::string betaType = (beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "From File");
+  std::string betaType = util::upper_case((beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "Given Field"));
 
   numSideQPs = dl->qp_gradient->dimension(2);
   sideDim    = dl->qp_gradient->dimension(3);
 
   basalSideName = p.get<std::string>("Side Set Name");
-  if (betaType == "Given Constant")
+  if (betaType == "GIVEN CONSTANT")
   {
 #ifdef OUTPUT_TO_SCREEN
     *output << "Constant and uniform beta, loaded from xml input file.\n";
 #endif
     beta_type = GIVEN_CONSTANT;
   }
-  else if ((betaType == "Given Field") || (betaType == "Exponent Of Given Field") || (betaType == "Galerkin Projection Of Exponent Of Given Field"))
+  else if ((betaType == "GIVEN FIELD") || (betaType == "EXPONENT OF GIVEN FIELD") || (betaType == "GALERKIN PROJECTION OF EXPONENT OF GIVEN FIELD"))
   {
 #ifdef OUTPUT_TO_SCREEN
     *output << "Constant beta, loaded from file.\n";
 #endif
     beta_type = GIVEN_FIELD;
 
-    beta_given = PHX::MDField<ParamScalarT,Cell,Side,Node>(beta_list.get<std::string> ("Beta Given Variable Name"), dl->node_scalar);
+    std::string given_field_name = beta_list.get<std::string> ("Given Field Variable Name") + "_" + basalSideName;;
+    given_field = PHX::MDField<ParamScalarT,Cell,Side,Node>(given_field_name, dl->node_scalar);
     GradBF     = PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Variable Name"), dl->node_qp_gradient);
 
-    this->addDependentField (beta_given);
+    this->addDependentField (given_field);
     this->addDependentField (GradBF);
 
     numSideNodes = dl->node_qp_gradient->dimension(2);
   }
-  else if (betaType == "Regularized Coulomb")
+  else if (betaType == "REGULARIZED COULOMB")
   {
 #ifdef OUTPUT_TO_SCREEN
-    *output << "Constant beta, loaded from file.\n";
+    *output << "Regularized Coulomb (Schoof's sliding law).\n";
 #endif
     beta_type = REGULARIZED_COULOMB;
 
@@ -128,7 +134,7 @@ postRegistrationSetup (typename Traits::SetupData d,
   if (beta_type==GIVEN_FIELD)
   {
     this->utils.setFieldData(GradBF,fm);
-    this->utils.setFieldData(beta_given,fm);
+    this->utils.setFieldData(given_field,fm);
   }
   else if (beta_type==REGULARIZED_COULOMB)
   {
@@ -192,7 +198,7 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
             grad_beta(cell,side,qp,dim) = 0.;
             for (int node=0; node<numSideNodes; ++node)
             {
-              grad_beta(cell,side,qp,dim) += GradBF(cell,side,node,qp,dim)*beta_given(cell,side,node);
+              grad_beta(cell,side,qp,dim) += GradBF(cell,side,node,qp,dim)*given_field(cell,side,node);
             }
           }
         }

@@ -9,7 +9,8 @@ ANONYMOUS:
     Dirichlet BCs: 
       DBC on NS nodelist_1 for DOF T: 0.00000000000000000e+00
     Neumann BCs: 
-      NBC on SS surface_1 for DOF T set robin: [1.00000000000000000e+00, 1.00000000000000000e+01, -1.00000000000000000e+00]
+      NBC on SS surface_1 for DOF T set robin: [1.00000000000000000e+00, 1.00000000000000000e+01]
+      NBC on SS surface_1 for DOF T set scaled jump: [-2.00000000000000000e+00]
     Thermal Conductivity: 
       Thermal Conductivity Type: Constant
       Value: 1.00000000000000000e+00

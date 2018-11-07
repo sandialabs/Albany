@@ -19,9 +19,16 @@ ANONYMOUS:
       Water Density: 1.00000000000000000e+03
       Ice Density: 9.10000000000000000e+02
       Gravity Acceleration: 9.80000000000000071e+00
-    LandIce Basal Friction Coefficient: 
-      Type: Given Constant
-      Constant Given Beta Value: 1.00000000000000000e+07
+      Clausius-Clapeyron Coefficient: 0.0
+    LandIce BCs:
+      Number: 1
+      BC 0:
+        Type: Basal Friction
+        Cubature Degree: 3
+        Side Set Name: Basal
+        Basal Friction Coefficient: 
+          Type: Given Constant
+          Constant Given Beta Value: 1.00000000000000000e+07
     Body Force: 
       Type: FO INTERP SURF GRAD
     Response Functions: 

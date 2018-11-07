@@ -6,6 +6,10 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Shards_CellTopology.hpp"
+
+#include "Albany_DiscretizationUtils.hpp"
+#include "PHAL_DOFCellToSideQP.hpp"
 
 namespace PHAL {
 
@@ -18,6 +22,10 @@ DOFCellToSideQPBase(const Teuchos::ParameterList& p,
 {
   TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
                               "Error! Layout for side set " << sideSetName << " not found.\n");
+
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer")) {
+    memoizer.enable_memoizer();
+  }
 
   Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
   std::string layout_str = p.get<std::string>("Data Layout");
@@ -99,7 +107,7 @@ DOFCellToSideQPBase(const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
 void DOFCellToSideQPBase<EvalT, Traits, ScalarT>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(val_cell,fm);
@@ -117,6 +125,10 @@ void DOFCellToSideQPBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
+    return;
+  }
+
+  if (memoizer.have_stored_data(workset)) {
     return;
   }
 

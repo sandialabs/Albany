@@ -41,6 +41,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 
   std::string ebn = "Element Block 0";
   partVec[0] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
+  std::map<std::string,int> ebNameToIndex;
   ebNameToIndex[ebn] = 0;
 
 #ifdef ALBANY_SEACAS
@@ -165,7 +166,10 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   if (params->get<bool>("Set All Parts IO", false))
     this->setAllPartsIO();
 
-  // Initialize the (possible) other side set meshes
+  // Create a mesh specs object for EACH side set
+  this->initializeSideSetMeshSpecs(comm);
+
+  // Initialize the requested sideset mesh struct in the mesh
   this->initializeSideSetMeshStructs(comm);
 }
 
@@ -246,16 +250,19 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
   stk::mesh::Selector select_overlap_in_part = stk::mesh::Selector(metaData2D.universal_part()) & (stk::mesh::Selector(metaData2D.locally_owned_part()) | stk::mesh::Selector(metaData2D.globally_shared_part()));
 
-  stk::mesh::Selector select_sides = stk::mesh::Selector(*metaData2D.get_part("LateralSide")) & (stk::mesh::Selector(metaData2D.locally_owned_part()) | stk::mesh::Selector(metaData2D.globally_shared_part()));
-
   std::vector<stk::mesh::Entity> cells2D;
   stk::mesh::get_selected_entities(select_overlap_in_part, bulkData2D.buckets(stk::topology::ELEMENT_RANK), cells2D);
 
   std::vector<stk::mesh::Entity> nodes2D;
   stk::mesh::get_selected_entities(select_overlap_in_part, bulkData2D.buckets(stk::topology::NODE_RANK), nodes2D);
 
+  // For sides, use the 'select_owned_in_part', since boundary sides should belong to just one rank.
+  // This for sure eliminate the risk of finding a side with only one element connected, but that is
+  // on an 'internal' sideset, which happens to be at the interface of 2 ranks.
+  // Note: I'm not 100% sure those internal interface sides would return 1 as the number of connected
+  //       elements (they may return 2, storing the ghost), but just in case.
   std::vector<stk::mesh::Entity> sides2D;
-  stk::mesh::get_selected_entities(select_sides, bulkData2D.buckets(metaData2D.side_rank()), sides2D);
+  stk::mesh::get_selected_entities(select_owned_in_part, bulkData2D.buckets(metaData2D.side_rank()), sides2D);
 
   //std::cout << "Num Global Elements: " << maxGlobalElements2D<< " " << maxGlobalVertices2dId<< " " << maxGlobalSides2D << std::endl;
 
@@ -530,6 +537,14 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     // if(!isBoundaryside[ib]) continue; //WARNING: assuming that all the edges stored are boundary edges!!
 
     stk::mesh::Entity side2d = sides2D[ib];
+
+    // We are extracting *all* sides in the basal mesh that are owned by this rank. It could happen that
+    // the basal mesh also stores some 'internal' sides. We need to skip those, so check how many elements
+    // is this side connected to.
+    if (bulkData2D.num_elements(side2d)>1) {
+      continue;
+    }
+
     stk::mesh::Entity const* rel = bulkData2D.begin_elements(side2d);
     stk::mesh::ConnectivityOrdinal const* ordinals = bulkData2D.begin_element_ordinals(side2d);
 
@@ -540,54 +555,54 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     stk::mesh::EntityId basalElemId = bulkData2D.identifier(elem2d) - 1;
     stk::mesh::EntityId side2dId = bulkData2D.identifier(side2d) - 1;
     switch (ElemShape) {
-    case Tetrahedron: {
-      rel = bulkData2D.begin_nodes(elem2d);
-      for (int j = 0; j < NumBaseElemeNodes; j++) {
-        stk::mesh::EntityId node2dId = bulkData2D.identifier(rel[j]) - 1;
-        prismMpasIds[j] = vertexLayerShift * node2dId;
+      case Tetrahedron: {
+        rel = bulkData2D.begin_nodes(elem2d);
+        for (int j = 0; j < NumBaseElemeNodes; j++) {
+          stk::mesh::EntityId node2dId = bulkData2D.identifier(rel[j]) - 1;
+          prismMpasIds[j] = vertexLayerShift * node2dId;
+        }
+        int minIndex;
+        int pType = prismType(&prismMpasIds[0], minIndex);
+        stk::mesh::EntityId tetraId = 3 * il * elemColumnShift + 3 * elemLayerShift * basalElemId;
+
+        stk::mesh::Entity elem0 = bulkData->get_entity(stk::topology::ELEMENT_RANK, tetraId + tetraAdjacentToPrismLateralFace[minIndex][pType][sideLID][0] + 1);
+        stk::mesh::Entity elem1 = bulkData->get_entity(stk::topology::ELEMENT_RANK, tetraId + tetraAdjacentToPrismLateralFace[minIndex][pType][sideLID][1] + 1);
+
+        stk::mesh::Entity side0 = bulkData->declare_entity(metaData->side_rank(), 2 * sideColumnShift * il +  2 * side2dId * sideLayerShift + upperBasalOffset + 1, singlePartVec);
+        stk::mesh::Entity side1 = bulkData->declare_entity(metaData->side_rank(), 2 * sideColumnShift * il +  2 * side2dId * sideLayerShift + upperBasalOffset + 1 + 1, singlePartVec);
+
+        bulkData->declare_relation(elem0, side0, tetraFaceIdOnPrismFaceId[minIndex][sideLID]);
+        bulkData->declare_relation(elem1, side1, tetraFaceIdOnPrismFaceId[minIndex][sideLID]);
+
+        stk::mesh::Entity const* rel_elemNodes0 = bulkData->begin_nodes(elem0);
+        stk::mesh::Entity const* rel_elemNodes1 = bulkData->begin_nodes(elem1);
+        for (int j = 0; j < 3; j++) {
+       //   std::cout << j <<", " << sideLID << ", " << minIndex << ", " << tetraFaceIdOnPrismFaceId[minIndex][edgeLID] << ","  << std::endl;
+          stk::mesh::Entity node0 = rel_elemNodes0[this->meshSpecs[0]->ctd.side[tetraFaceIdOnPrismFaceId[minIndex][sideLID]].node[j]];
+          bulkData->declare_relation(side0, node0, j);
+          bulkData->change_entity_parts(node0, singlePartVecLateral);
+          stk::mesh::Entity node1 = rel_elemNodes1[this->meshSpecs[0]->ctd.side[tetraFaceIdOnPrismFaceId[minIndex][sideLID]].node[j]];
+          bulkData->declare_relation(side1, node1, j);
+          bulkData->change_entity_parts(node1, singlePartVecLateral);
+        }
       }
-      int minIndex;
-      int pType = prismType(&prismMpasIds[0], minIndex);
-      stk::mesh::EntityId tetraId = 3 * il * elemColumnShift + 3 * elemLayerShift * basalElemId;
 
-      stk::mesh::Entity elem0 = bulkData->get_entity(stk::topology::ELEMENT_RANK, tetraId + tetraAdjacentToPrismLateralFace[minIndex][pType][sideLID][0] + 1);
-      stk::mesh::Entity elem1 = bulkData->get_entity(stk::topology::ELEMENT_RANK, tetraId + tetraAdjacentToPrismLateralFace[minIndex][pType][sideLID][1] + 1);
+        break;
+      case Wedge:
+      case Hexahedron: {
+        stk::mesh::EntityId prismId = il * elemColumnShift + elemLayerShift * basalElemId;
+        stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId + 1);
+        stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), sideColumnShift * il + side2dId * sideLayerShift + upperBasalOffset + 1, singlePartVec);
+        bulkData->declare_relation(elem, side, sideLID);
 
-      stk::mesh::Entity side0 = bulkData->declare_entity(metaData->side_rank(), 2 * sideColumnShift * il +  2 * side2dId * sideLayerShift + upperBasalOffset + 1, singlePartVec);
-      stk::mesh::Entity side1 = bulkData->declare_entity(metaData->side_rank(), 2 * sideColumnShift * il +  2 * side2dId * sideLayerShift + upperBasalOffset + 1 + 1, singlePartVec);
-
-      bulkData->declare_relation(elem0, side0, tetraFaceIdOnPrismFaceId[minIndex][sideLID]);
-      bulkData->declare_relation(elem1, side1, tetraFaceIdOnPrismFaceId[minIndex][sideLID]);
-
-      stk::mesh::Entity const* rel_elemNodes0 = bulkData->begin_nodes(elem0);
-      stk::mesh::Entity const* rel_elemNodes1 = bulkData->begin_nodes(elem1);
-      for (int j = 0; j < 3; j++) {
-     //   std::cout << j <<", " << sideLID << ", " << minIndex << ", " << tetraFaceIdOnPrismFaceId[minIndex][edgeLID] << ","  << std::endl;
-        stk::mesh::Entity node0 = rel_elemNodes0[this->meshSpecs[0]->ctd.side[tetraFaceIdOnPrismFaceId[minIndex][sideLID]].node[j]];
-        bulkData->declare_relation(side0, node0, j);
-        bulkData->change_entity_parts(node0, singlePartVecLateral);
-        stk::mesh::Entity node1 = rel_elemNodes1[this->meshSpecs[0]->ctd.side[tetraFaceIdOnPrismFaceId[minIndex][sideLID]].node[j]];
-        bulkData->declare_relation(side1, node1, j);
-        bulkData->change_entity_parts(node1, singlePartVecLateral);
+        stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
+        for (int j = 0; j < 4; j++) {
+          stk::mesh::Entity node = rel_elemNodes[this->meshSpecs[0]->ctd.side[sideLID].node[j]];
+          bulkData->declare_relation(side, node, j);
+          bulkData->change_entity_parts(node, singlePartVecLateral);
+        }
       }
-    }
-
       break;
-    case Wedge:
-    case Hexahedron: {
-      stk::mesh::EntityId prismId = il * elemColumnShift + elemLayerShift * basalElemId;
-      stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId + 1);
-      stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), sideColumnShift * il + side2dId * sideLayerShift + upperBasalOffset + 1, singlePartVec);
-      bulkData->declare_relation(elem, side, sideLID);
-
-      stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
-      for (int j = 0; j < 4; j++) {
-        stk::mesh::Entity node = rel_elemNodes[this->meshSpecs[0]->ctd.side[sideLID].node[j]];
-        bulkData->declare_relation(side, node, j);
-        bulkData->change_entity_parts(node, singlePartVecLateral);
-      }
-    }
-    break;
     }
   }
 

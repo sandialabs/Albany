@@ -10,10 +10,10 @@
 #include "Phalanx_TypeStrings.hpp"
 #include "PHAL_Utilities.hpp"
 
+#include "LandIce_StokesFOImplicitThicknessUpdateResid.hpp"
+
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
-
-
 
 namespace LandIce {
 
@@ -21,26 +21,24 @@ namespace LandIce {
 template<typename EvalT, typename Traits>
 StokesFOImplicitThicknessUpdateResid<EvalT, Traits>::
 StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
-                                     const Teuchos::RCP<Albany::Layouts>& dl_full,
-                                     const Teuchos::RCP<Albany::Layouts>& dl_ice) :
-  wBF           (p.get<std::string> ("Weighted BF Name"), dl_full->node_qp_scalar),
-  gradBF        (p.get<std::string> ("Gradient BF Name"),dl_full->node_qp_gradient),
-  dH            (p.get<std::string> ("Thickness Increment Variable Name"), dl_full->node_scalar),
-  InputResidual (p.get<std::string> ("Input Residual Name"), dl_ice->node_vector),
-  Residual      (p.get<std::string> ("Residual Name"), dl_full->node_vector)
+                                     const Teuchos::RCP<Albany::Layouts>& dl) :
+  wBF           (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
+  gradBF        (p.get<std::string> ("Gradient BF Name"),dl->node_qp_gradient),
+  dH            (p.get<std::string> ("Thickness Increment Variable Name"), dl->node_scalar),
+  Residual      (p.get<std::string> ("Residual Name"), dl->node_vector)
 {
   Teuchos::ParameterList* p_list = p.get<Teuchos::ParameterList*>("Physical Parameter List");
 
-  g = p_list->get<double>("Gravity Acceleration");
-  rho = p_list->get<double>("Ice Density");
+  double g = p_list->get<double>("Gravity Acceleration");
+  double rho = p_list->get<double>("Ice Density");
+  rho_g = rho*g;
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   this->addDependentField(dH);
   this->addDependentField(wBF);
   this->addDependentField(gradBF);
-  this->addDependentField(InputResidual);
-  this->addEvaluatedField(Residual);
+  this->addContributedField(Residual);
 
 
   this->setName("StokesFOImplicitThicknessUpdateResid"+PHX::typeAsString<EvalT>());
@@ -51,8 +49,7 @@ StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
   numQPs   = dims[2];
   numCells = dims[0] ;
 
-  dl_full->node_vector->dimensions(dims);
-  numVecDims  =dims[2];
+  numVecDims  = Residual.fieldTag().dataLayout().dimension(2);
 
 #ifdef OUTPUT_TO_SCREEN
 *out << " in LandIce StokesFOImplicitThicknessUpdate residual! " << std::endl;
@@ -64,13 +61,12 @@ StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void StokesFOImplicitThicknessUpdateResid<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(dH,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(gradBF,fm);
-  this->utils.setFieldData(InputResidual,fm);
   this->utils.setFieldData(Residual,fm);
 
   Res = createDynRankView(Residual.get_view(), "Residual", numCells, numNodes,2);
@@ -80,18 +76,16 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void StokesFOImplicitThicknessUpdateResid<EvalT, Traits>::
-operator() (const StokesFOImplicitThicknessUpdateResid_Tag& tag, const int& cell) const
+operator() (const StokesFOImplicitThicknessUpdateResid_Tag&, const int& cell) const
 {
-  double rho_g=rho*g;
-
   for (int node=0; node < numNodes; ++node){
     Res(cell,node,0)=0.0;
     Res(cell,node,1)=0.0;
   }
 
   for (int qp=0; qp < numQPs; ++qp) {
-    ScalarT dHdiffdx = 0;//Ugrad(cell,qp,2,0);
-    ScalarT dHdiffdy = 0;//Ugrad(cell,qp,2,1);
+    ScalarT dHdiffdx = 0;
+    ScalarT dHdiffdy = 0;
     for (int node=0; node < numNodes; ++node) {
       dHdiffdx += dH(cell,node) * gradBF(cell,node, qp,0);
       dHdiffdy += dH(cell,node) * gradBF(cell,node, qp,1);
@@ -102,10 +96,8 @@ operator() (const StokesFOImplicitThicknessUpdateResid_Tag& tag, const int& cell
     }
   }
   for (int node=0; node < numNodes; ++node) {
-    Residual(cell,node,0) = InputResidual(cell,node,0)+Res(cell,node,0);
-    Residual(cell,node,1) = InputResidual(cell,node,1)+Res(cell,node,1);
-    if(numVecDims==3)
-      Residual(cell,node,2) = InputResidual(cell,node,2);
+    Residual(cell,node,0) += Res(cell,node,0);
+    Residual(cell,node,1) += Res(cell,node,1);
   }
 }
 
@@ -117,6 +109,4 @@ evaluateFields(typename Traits::EvalData workset)
   Kokkos::parallel_for(StokesFOImplicitThicknessUpdateResid_Policy(0,workset.numCells),*this);
 }
 
-//**********************************************************************
-}
-
+} // namespace LandIce

@@ -41,7 +41,9 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
 
   std::string ebn = "Element Block 0";
   partVec[0] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
+  std::map<std::string,int> ebNameToIndex;
   ebNameToIndex[ebn] = 0;
+
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*partVec[0]);
 #endif
@@ -156,7 +158,7 @@ void SideSetSTKMeshStruct::setFieldAndBulkData (
   stk::mesh::Entity node;
   stk::mesh::EntityId nodeId;
   singlePartVec[0] = nsPartVec["all_nodes"];
-  for (int inode(0); inode<nodes.size(); ++inode)
+  for (size_t inode(0); inode<nodes.size(); ++inode)
   {
     // Adding the node (same Id)
     nodeId = inputBulkData.identifier(nodes[inode]);
@@ -165,7 +167,7 @@ void SideSetSTKMeshStruct::setFieldAndBulkData (
     // Setting the coordinates_field
     double* coord = stk::mesh::field_data(coordinates_field, node);
     double const* p_coord = stk::mesh::field_data(parent_coordinates_field, nodes[inode]);
-    for (int idim=0; idim<metaData->spatial_dimension(); ++idim)
+    for (size_t idim=0; idim<metaData->spatial_dimension(); ++idim)
       coord[idim] = p_coord[idim];
 
     // Setting the coordinates_field3d (since this is a side mesh, for sure numDim<3)
@@ -177,7 +179,7 @@ void SideSetSTKMeshStruct::setFieldAndBulkData (
     // Checking for shared node
     std::vector<int> sharing_procs;
     inputBulkData.comm_shared_procs( inputBulkData.entity_key(nodes[inode]), sharing_procs );
-    for(int iproc(0); iproc<sharing_procs.size(); ++iproc)
+    for(size_t iproc(0); iproc<sharing_procs.size(); ++iproc)
       bulkData->add_node_sharing(node, sharing_procs[iproc]);
   }
 
@@ -185,7 +187,7 @@ void SideSetSTKMeshStruct::setFieldAndBulkData (
   stk::mesh::Entity elem;
   stk::mesh::EntityId elemId;
   singlePartVec[0] = partVec[0];
-  for (int iside(0); iside<sides.size(); ++iside)
+  for (size_t iside(0); iside<sides.size(); ++iside)
   {
     // Adding the element (same Id as the side)
     elemId = inputBulkData.identifier(sides[iside]);
@@ -211,6 +213,7 @@ void SideSetSTKMeshStruct::setFieldAndBulkData (
 Teuchos::RCP<const Teuchos::ParameterList> SideSetSTKMeshStruct::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = this->getValidGenericSTKParameters("Valid SideSetSTK DiscParams");
+  validPL->set("Build Mesh", true, "If false, does not build the internal mesh, just the mesh specs.\n");
 
   return validPL;
 }

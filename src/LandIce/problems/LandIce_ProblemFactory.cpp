@@ -76,7 +76,7 @@ ProblemFactory::create() const
     problem = rcp(new LandIce::StokesFO(problemParams, discretizationParams, paramLib, 3));
   }
   else if (method == "LandIce Coupled FO H 3D" ) {
-    problem = rcp(new LandIce::StokesFOThickness(problemParams, paramLib, 3));
+    problem = rcp(new LandIce::StokesFOThickness(problemParams, discretizationParams, paramLib, 3));
   }
   else if (method == "LandIce Stokes L1L2 2D") {
     problem = rcp(new LandIce::StokesL1L2(problemParams, paramLib, 2));

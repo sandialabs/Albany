@@ -8,8 +8,7 @@
 #define LANDICE_SCATTER_RESIDUAL2D_HPP
 
 #include "PHAL_ScatterResidual.hpp"
-
-
+#include "PHAL_AlbanyTraits.hpp"
 
 namespace PHAL {
 /** \brief Scatters result from the residual fields into the

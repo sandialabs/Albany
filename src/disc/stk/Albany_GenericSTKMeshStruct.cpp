@@ -77,9 +77,9 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params_,
     const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
     int numDim_)
-    : params(params_),
+    : buildEMesh(false),
+      params(params_),
       adaptParams(adaptParams_),
-      buildEMesh(false),
       uniformRefinementInitialized(false)
 //      , out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
@@ -809,6 +809,49 @@ void Albany::GenericSTKMeshStruct::checkNodeSetsFromSideSetsIntegrity ()
   }
 }
 
+void Albany::GenericSTKMeshStruct::initializeSideSetMeshSpecs (const Teuchos::RCP<const Teuchos_Comm>& commT) {
+  // Loop on all mesh specs
+  for (auto ms: this->getMeshSpecs() ) {
+    // Loop on all side sets of the mesh
+    for (auto ssName : ms->ssNames) {
+      // Get the part
+      stk::mesh::Part* part = metaData->get_part(ssName);
+      TEUCHOS_TEST_FOR_EXCEPTION (part==nullptr, std::runtime_error, "Error! One of the stored meshSpecs claims to have sideset " + ssName +
+                                                                     " which, however, is not a part of the mesh.\n");
+
+      const auto* ctd = metaData->get_cell_topology(*part).getCellTopologyData();;
+
+      auto& ss_ms = ms->sideSetMeshSpecs[ssName];
+
+      // At this point, we cannot assume there will be a discretization on this side set, so we use cubature degree=-1,
+      // and the workset size of this mesh. If the user *does* add a discretization (in the Side Set Discretizations sublist),
+      // he/she can specify cubature and workset size there. The method initializeSideSetMeshStructs will overwrite
+      // this mesh specs anyways.
+      // Note: it *may* be that the user need no cubature on this side (only node/cell fields).
+      //       But if the user *does* nned cubature, we want to set a *very wrong* number, so that
+      //       the code will crash somewhere, and he/sh can realize he/she needs to set cubature info somewhere
+
+      // We allow a null ctd here, and we simply do not store the side mesh specs.
+      // The reason is that we _may_ be loading a mesh that stores some empty side sets.
+      // If we are using the sideset, we will probably run into some sort of errors later,
+      // unless we are specifying a side discretization (which will be created _after_ this function call).
+      if (ctd==nullptr) {
+        Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+        out->setProcRankAndSize(commT->getRank(), commT->getSize());
+        out->setOutputToRootOnly(0);
+        *out << "Warning! Side set '" << ssName << "' does not store a valid cell topology.\n";
+
+        continue;
+      }
+      
+      ss_ms.resize(1);
+      ss_ms[0] = Teuchos::rcp( new MeshSpecsStruct() );
+      ss_ms[0]->ctd = *ctd;
+      ss_ms[0]->numDim = this->numDim-1;
+    }
+  }
+}
+
 void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
   if (params->isSublist ("Side Set Discretizations"))
@@ -834,9 +877,7 @@ void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::
                                     "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
 
         this->sideSetMeshStructs[ss_name] = Teuchos::rcp(new Albany::SideSetSTKMeshStruct(*this->meshSpecs[0], params_ss, commT));
-      }
-      else
-      {
+      } else {
         // We must check whether a side mesh was already created elsewhere.
         // If the mesh already exists, we do nothing, and we ASSUME it is a valid mesh
         // This happens, for instance, for the basal mesh for extruded meshes.

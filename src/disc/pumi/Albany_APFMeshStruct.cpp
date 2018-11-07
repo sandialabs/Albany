@@ -170,9 +170,10 @@ void Albany::APFMeshStruct::init(
   std::vector<int> el_blocks;
   getEBSizes(mesh, sets, el_blocks);
 
+  std::map<std::string,int> ebNameToIndex;
   for (int eb=0; eb < numEB; eb++){
     apf::StkModel* set = sets.models[d][eb];
-    this->ebNameToIndex[set->stkName] = eb;
+    ebNameToIndex[set->stkName] = eb;
   }
 
   // Set defaults for cubature and workset size, overridden in input file
@@ -216,7 +217,7 @@ void Albany::APFMeshStruct::init(
         new Albany::MeshSpecsStruct(
           *ctd, numDim, cubatureDegree,
           nsNames, ssNames, worksetSize, EB_name,
-          this->ebNameToIndex, this->interleavedOrdering));
+          ebNameToIndex, this->interleavedOrdering));
   }
   else
   {
@@ -229,7 +230,7 @@ void Albany::APFMeshStruct::init(
       std::string EB_name = sets.models[d][eb]->stkName;
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(
           *ctd, numDim, cubatureDegree, nsNames, ssNames, worksetSize, EB_name,
-          this->ebNameToIndex, this->interleavedOrdering, true));
+          ebNameToIndex, this->interleavedOrdering, true));
     } // for
   } // else
 

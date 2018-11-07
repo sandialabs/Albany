@@ -10,6 +10,9 @@
 #include "Teuchos_CommHelpers.hpp"
 #include "PHAL_Utilities.hpp"
 
+#include "Albany_GeneralPurposeFieldsNames.hpp"
+#include "LandIce_ResponseSurfaceVelocityMismatch.hpp"
+
 template<typename EvalT, typename Traits>
 LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::
 ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
@@ -68,26 +71,30 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 
   if (alpha!=0)
   {
-    // Setting up the fields required by the regularizations
-    basalSideName = paramList->get<std::string> ("Basal Side Name");
+    beta_reg_params = *paramList->get<std::vector<Teuchos::RCP<Teuchos::ParameterList>>*>("Basal Regularization Params");
 
-    TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(basalSideName)==dl->side_layouts.end(), std::runtime_error,
-                                "Error! Basal side data layout not found.\n");
-    Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
+    for (auto pl : beta_reg_params) {
+      // Setting up the fields required by the regularizations
+      std::string ssName = paramList->get<std::string> ("Basal Side Name");
 
-    const std::string& grad_beta_name       = paramList->get<std::string>("Basal Friction Coefficient Gradient Name");
-    const std::string& w_measure_basal_name = paramList->get<std::string>("Weighted Measure Basal Name");
-    const std::string& metric_basal_name    = paramList->get<std::string>("Metric Basal Name");
+      TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(ssName)==dl->side_layouts.end(), std::runtime_error,
+                                  "Error! Basal side data layout not found.\n");
+      Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(ssName);
 
-    grad_beta       = decltype(grad_beta)(grad_beta_name, dl_basal->qp_gradient);
-    w_measure_basal = decltype(w_measure_basal)(w_measure_basal_name, dl_basal->qp_scalar);
-    metric_basal    = decltype(metric_basal)(metric_basal_name, dl_basal->qp_tensor);
+      const std::string& grad_beta_name       = paramList->get<std::string>("Basal Friction Coefficient Name") + "_" + ssName + " Gradient";
+      const std::string& w_measure_basal_name = Albany::weighted_measure_name + " " + ssName;
+      const std::string& metric_basal_name    = Albany::metric_name + " " + ssName;
 
-    numBasalQPs = dl_basal->qp_scalar->dimension(2);
+      grad_beta_vec.emplace_back(grad_beta_name, dl_basal->qp_gradient);
+      w_measure_beta_vec.emplace_back(w_measure_basal_name, dl_basal->qp_scalar);
+      metric_beta_vec.emplace_back(metric_basal_name, dl_basal->qp_tensor);
 
-    this->addDependentField(w_measure_basal);
-    this->addDependentField(metric_basal);
-    this->addDependentField(grad_beta);
+      numBasalQPs = dl_basal->qp_scalar->dimension(2);
+
+      this->addDependentField(w_measure_beta_vec.back());
+      this->addDependentField(metric_beta_vec.back());
+      this->addDependentField(grad_beta_vec.back());
+    }
   }
 
   if (alpha_stiffening!=0)
@@ -216,30 +223,38 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
 
   // --------------- Regularization term on the basal side ----------------- //
 
-  if (workset.sideSets->find(basalSideName) != workset.sideSets->end() && alpha!=0)
-  {
-    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
-    for (auto const& it_side : sideSet)
-    {
-      // Get the local data of side and cell
-      const int cell = it_side.elem_LID;
-      const int side = it_side.side_local_id;
-      ScalarT t = 0;
-      for (int qp=0; qp<numBasalQPs; ++qp)
-      {
-        ScalarT sum=0;
-        for (int idim=0; idim<numSideDims; ++idim)
-          for (int jdim=0; jdim<numSideDims; ++jdim)
-            sum += grad_beta(cell,side,qp,idim)*metric_basal(cell,side,qp,idim,jdim)*grad_beta(cell,side,qp,jdim);
+  if (alpha!=0) {
+    for (size_t i=0; i<beta_reg_params.size(); ++i) {
+      Teuchos::RCP<Teuchos::ParameterList> pl = beta_reg_params[i];
+      std::string ssName = pl->get<std::string>("Side Set Name","");
 
-        t += sum * w_measure_basal(cell,side,qp);
+      auto grad_beta = grad_beta_vec[i];
+      auto metric = metric_beta_vec[i];
+      auto w_measure = w_measure_beta_vec[i];
+      if (workset.sideSets->find(ssName) != workset.sideSets->end()) {
+        const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(ssName);
+        for (auto const& it_side : sideSet)
+        {
+          // Get the local data of side and cell
+          const int cell = it_side.elem_LID;
+          const int side = it_side.side_local_id;
+          ScalarT t = 0;
+          for (int qp=0; qp<numBasalQPs; ++qp)
+          {
+            ScalarT sum=0;
+            for (int idim=0; idim<numSideDims; ++idim)
+              for (int jdim=0; jdim<numSideDims; ++jdim)
+                sum += grad_beta(cell,side,qp,idim)*metric(cell,side,qp,idim,jdim)*grad_beta(cell,side,qp,jdim);
+
+            t += sum * w_measure(cell,side,qp);
+          }
+          this->local_response_eval(cell, 0) += t*scaling*alpha;//*50.0;
+          this->global_response_eval(0) += t*scaling*alpha;//*50.0;
+          p_reg += t*scaling*alpha;
+        }
       }
-      this->local_response_eval(cell, 0) += t*scaling*alpha;//*50.0;
-      this->global_response_eval(0) += t*scaling*alpha;//*50.0;
-      p_reg += t*scaling*alpha;
     }
   }
-
 
   if (workset.sideSets->find(basalSideName) != workset.sideSets->end() && alpha_stiffening!=0)
   {

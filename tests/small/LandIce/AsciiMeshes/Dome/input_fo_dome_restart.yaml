@@ -5,10 +5,6 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 1
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D
-    Neumann BCs: 
-      NBC on SS basal for DOF U0 set basal: [0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
-      NBC on SS basal for DOF U1 set basal: [0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
-      BetaXY: Scalar Field
     Parameters: 
       Number: 1
       Parameter 0: 'Glen''s Law Homotopy Parameter'

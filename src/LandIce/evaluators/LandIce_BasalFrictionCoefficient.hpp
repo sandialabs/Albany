@@ -13,7 +13,9 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
 #include "PHAL_Utilities.hpp"
+#include "PHAL_Dimension.hpp"
 
 namespace LandIce
 {
@@ -59,10 +61,10 @@ private:
   ScalarT printedLambda;
   ScalarT printedQ;
 
-  double beta_given_val;  // Constant value (for CONSTANT only)
+  double given_val;  // Constant value (for CONSTANT only)
 
   // Input:
-  PHX::MDField<const ParamScalarT>      beta_given_field;
+  PHX::MDField<const ParamScalarT>      given_field;
   PHX::MDField<const RealType>          BF;
   PHX::MDField<const IceScalarT>        u_norm;
   PHX::MDField<const ParamScalarT>      lambdaField;

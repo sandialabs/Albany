@@ -20,6 +20,7 @@
 #include "PHAL_FactoryTraits.hpp"
 
 #include "Albany_MaterialDatabase.hpp"
+#include "Albany_MeshSpecs.hpp"
 
 
 namespace Albany {

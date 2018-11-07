@@ -5,8 +5,15 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 1
     Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
-    Required Basal Fields: [surface_height]
     Basal Side Name: basal
+    LandIce BCs:
+      Number : 1
+      BC 0:
+        Type: Basal Friction
+        Side Set Name: basal
+        Basal Friction Coefficient:
+          Type: Given Constant
+          Constant Given Beta Value: 1e7
     Parameters: 
       Number: 1
       Parameter 0: 'Glen''s Law Homotopy Parameter'
@@ -21,9 +28,6 @@ ANONYMOUS:
       'Glen''s Law n': 3.00000000000000000e+00
     Body Force: 
       Type: FO INTERP SURF GRAD
-    LandIce Basal Friction Coefficient: 
-      Type: Given Constant
-      Constant Given Beta Value: 1.00000000000000000e+07
     Response Functions: 
       Number: 3
       Response 0: Solution Max Value

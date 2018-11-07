@@ -171,10 +171,17 @@ class StateManager {
   importStateData(Albany::StateArrays& statesToCopyFrom);
 
   /// Method to get the Names of the state variables
-  std::map<std::string, RegisteredStates>&
-  getRegisteredStates()
+  const std::map<std::string, RegisteredStates>&
+  getRegisteredStates() const
   {
     return statesToStore;
+  }
+
+  /// Method to get the Names of the state variables
+  const std::map<std::string, std::map<std::string, RegisteredStates>>&
+  getRegisteredSideSetStates() const
+  {
+    return sideSetStatesToStore;
   }
 
   /// Method to get the ResponseIDs for states which have been registered and

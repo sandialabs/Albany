@@ -6,6 +6,10 @@
 
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
+#include "Shards_CellTopology.hpp"
+
+#include "Albany_DiscretizationUtils.hpp"
+#include "LandIce_StokesFOLateralResid.hpp"
 
 namespace LandIce {
 
@@ -42,8 +46,8 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
   }
 
   // Create evaluated field
-  lateralResid = decltype(lateralResid)(p.get<std::string> ("Lateral Residual Variable Name"),dl->node_vector);
-  this->addEvaluatedField(lateralResid);
+  residual = decltype(residual)(p.get<std::string> ("Residual Variable Name"),dl->node_vector);
+  this->addContributedField(residual);
 
   // Get stereographic map info
   Teuchos::ParameterList* stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
@@ -71,7 +75,6 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
   numSideNodes = dims[2];
   numSideQPs   = dims[3];
   dl->node_vector->dimensions(dims);
-  numCellNodes = dims[1];
   vecDimFO     = std::min((int)dims[2],2);
 
   // Index of the nodes on the sides in the numeration of the cell
@@ -107,16 +110,13 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
 
   // Output
-  this->utils.setFieldData(lateralResid,fm);
+  this->utils.setFieldData(residual,fm);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits, bool ThicknessCoupling>
 void StokesFOLateralResid<EvalT, Traits, ThicknessCoupling>::evaluateFields (typename Traits::EvalData workset)
 {
-  // Zero out, to avoid leaving stuff from previous workset!
-  Kokkos::deep_copy(lateralResid.get_view(),ScalarT(0.0));
-
   if (workset.sideSets->find(lateralSideName)==workset.sideSets->end()) {
     return;
   }
@@ -161,7 +161,7 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessCoupling>::evaluate_with_compu
         // NOTE: we are RELYING on the fact that the lateral side is vertical, so that u*n = ux*nx+uy*ny.
         const ScalarT w_normal_stress_bf = w_normal_stress * BF(cell,side,node,qp);
         for (int dim=0; dim<vecDimFO; ++dim) {
-          lateralResid(cell,sideNode,dim) += w_normal_stress_bf * normals(cell,side,qp,dim);
+          residual(cell,sideNode,dim) += w_normal_stress_bf * normals(cell,side,qp,dim);
         }
       }
     }
@@ -192,7 +192,7 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessCoupling>::evaluate_with_given
         // NOTE: we are RELYING on the fact that the lateral side is vertical, so that u*n = ux*nx+uy*ny.
         const ScalarT w_normal_stress_bf = w_normal_stress * BF(cell,side,node,qp);
         for (int dim=0; dim<vecDimFO; ++dim) {
-          lateralResid(cell,sideNode,dim) += w_normal_stress_bf * normals(cell,side,qp,dim);
+          residual(cell,sideNode,dim) += w_normal_stress_bf * normals(cell,side,qp,dim);
         }
       }
     }

@@ -11,7 +11,9 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
 #include "Albany_Layouts.hpp"
+#include "PHAL_Dimension.hpp"
 
 namespace LandIce
 {
@@ -49,7 +51,7 @@ private:
   typedef typename EvalT::ParamScalarT  ParamScalarT;
 
   // Input:
-  PHX::MDField<const ParamScalarT,Cell,Side,Node>               beta_given;
+  PHX::MDField<const ParamScalarT,Cell,Side,Node>               given_field;
   PHX::MDField<const MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  GradBF;
   PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>          N;
   PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim>           U;

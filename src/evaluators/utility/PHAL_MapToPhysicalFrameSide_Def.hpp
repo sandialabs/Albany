@@ -9,6 +9,8 @@
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
+#include "PHAL_MapToPhysicalFrameSide.hpp"
+#include "Albany_DiscretizationUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
 namespace PHAL {
@@ -23,6 +25,10 @@ MapToPhysicalFrameSide(const Teuchos::ParameterList& p,
 
   TEUCHOS_TEST_FOR_EXCEPTION (!dl_side->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                               "Error! The layouts structure does not appear to be that of a side set.\n");
+
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer")) {
+    memoizer.enable_memoizer();
+  }
 
   coords_side_vertices = decltype(coords_side_vertices)(
       p.get<std::string>("Coordinate Vector Vertex Name"), dl_side->vertices_vector);
@@ -64,7 +70,7 @@ MapToPhysicalFrameSide(const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void MapToPhysicalFrameSide<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(coords_side_vertices,fm);
@@ -74,8 +80,13 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 void MapToPhysicalFrameSide<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
+  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
     return;
+  }
+
+  if (memoizer.have_stored_data(workset)) {
+    return;
+  }
 
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
   for (auto const& it_side : sideSet)

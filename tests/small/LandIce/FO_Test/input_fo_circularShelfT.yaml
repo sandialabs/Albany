@@ -8,9 +8,16 @@ ANONYMOUS:
     Dirichlet BCs: 
       DBC on NS middle for DOF U0: 0.00000000000000000e+00
       DBC on NS middle for DOF U1: 0.00000000000000000e+00
-    Neumann BCs: 
-      NBC on SS lateralss for DOF all set basal: [-8.91800000000000000e+03, 1.00743999999999996e+04, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
-      BetaXY: Circular Shelf
+    LandIce BCs: 
+      Number: 1
+      BC 0:
+        Type: Syntetic Test
+        Side Set Name: lateralss
+        Cubature Degree: 3
+        BC Params:
+          Type: Circular Shelf
+          alpha: 10074.4
+          beta: -8918.0
     Parameters: 
       Number: 1
       Parameter 0: 'Glen''s Law Homotopy Parameter'

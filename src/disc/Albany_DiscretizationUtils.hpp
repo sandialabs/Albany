@@ -55,7 +55,6 @@ struct WorksetArray {
    typedef Teuchos::ArrayRCP<T> type;
 };
 
-
-}
+} // namespace Albany
 
 #endif // ALBANY_DISCRETIZATIONUTILS_HPP

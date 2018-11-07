@@ -9,6 +9,9 @@
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
+#include "PHAL_DOFGradInterpolationSide.hpp"
+#include "Albany_DiscretizationUtils.hpp"
+
 namespace PHAL {
 
 //**********************************************************************
@@ -21,6 +24,10 @@ DOFGradInterpolationSideBase(const Teuchos::ParameterList& p,
   gradBF      (p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient),
   grad_qp      (p.get<std::string> ("Gradient Variable Name"), dl_side->qp_gradient )
 {
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer")) {
+    memoizer.enable_memoizer();
+  }
+
   TEUCHOS_TEST_FOR_EXCEPTION (!dl_side->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                               "Error! The layouts structure does not appear to be that of a side set.\n");
 

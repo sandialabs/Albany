@@ -13,7 +13,7 @@ ANONYMOUS:
       DBC on NS NodeSet3 for DOF U0: 0.00000000000000000e+00
       DBC on NS NodeSet3 for DOF U1: 0.00000000000000000e+00
     Neumann BCs: 
-      NBC on SS SideSet2 for DOF U1 set basal: [0.00000000000000000e+00, -2.55915400000000005e+02, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
+      NBC on SS SideSet2 for DOF U1 set neumann: [ -2.55915400000000005e+02]
     Parameters: 
       Number: 1
       Parameter 0: 'Glen''s Law Homotopy Parameter'

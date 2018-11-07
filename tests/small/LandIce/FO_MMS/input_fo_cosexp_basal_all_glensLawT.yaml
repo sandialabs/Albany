@@ -9,13 +9,48 @@ ANONYMOUS:
       DBC on NS nodeset99 for DOF U1: 1.00000000000000000e+00
       DBC on NS nodeset2 for DOF U0: 0.00000000000000000e+00
       DBC on NS nodeset3 for DOF U0: 0.00000000000000000e+00
-    Neumann BCs: 
-      NBC on SS sideset0 for DOF U0 set basal: [-8.56639999999999979e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
-      NBC on SS sideset0 for DOF U1 set basal: [7.28319999999999990e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
-      NBC on SS sideset1 for DOF U0 set basal: [8.56639999999999979e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
-      NBC on SS sideset1 for DOF U1 set basal: [-7.28319999999999990e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
-      BetaXY: ExpTrig
-      L: 3.00000000000000000e+00
+    LandIce BCs: 
+      Number: 4
+      BC 0:
+        Type: Syntetic Test
+        Side Set Name: sideset0
+        Cubature Degree: 3
+        BC Params:
+          Type: ExpTrig
+          Components: [0]
+          alpha: 0.0
+          beta: -8.5664
+          n: 3.0
+      BC 1:
+        Type: Syntetic Test
+        Side Set Name: sideset0
+        Cubature Degree: 3
+        BC Params:
+          Type: ExpTrig
+          Components: [1]
+          alpha: 0.0
+          beta: 7.2832
+          n: 3.0
+      BC 2:
+        Type: Syntetic Test
+        Side Set Name: sideset1
+        Cubature Degree: 3
+        BC Params:
+          Type: ExpTrig
+          Components: [0]
+          alpha: 0.0
+          beta: 8.5664
+          n: 3.0
+      BC 3:
+        Type: Syntetic Test
+        Side Set Name: sideset1
+        Cubature Degree: 3
+        BC Params:
+          Type: ExpTrig
+          Components: [1]
+          alpha: 0.0
+          beta: -7.2832
+          n: 3.0
     Parameters: 
       Number: 1
       Parameter 0: 'Glen''s Law Homotopy Parameter'

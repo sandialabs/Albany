@@ -12,6 +12,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_Dimension.hpp"
 #include "Albany_Layouts.hpp"
 
 #include "Teuchos_ParameterList.hpp"
