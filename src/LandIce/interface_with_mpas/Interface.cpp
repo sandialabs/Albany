@@ -363,26 +363,30 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
     paramList->sublist("Problem").set("Time Step Ptr", MPAS_dt); //if it is not there set it to zero.
   }
 
-  Teuchos::ParameterList& neumannBcList = paramList->sublist("Problem").sublist("Neumann BCs");
-  std::string neumannStr = neumannBcList.currentParametersString();
+  if(paramList->isSublist("LandIce BCs")) {
+    std::cout<<"\nWARNING: Using LandIce BCs provided in Albany input file. In order to use boundary conditions provided by MPAS, remove \"LandIce BCs\" sublist from Albany input file.\n"<<std::endl;
+  }
+
   int cub_degree = physParamList.get<bool>("Use GLP") ? 8 : 3;
-  if(neumannBcList.isParameter("Cubature Degree"))
-    std::cout<<"\nWARNING: Using Cubature Degeree of Neumann BCs provided in Albany input file. In order to use boundary conditions provided by MPAS, remove \"Neumann BCs\" sublist from Albany input file.\n"<<std::endl;
 
-  neumannBcList.set("Cubature Degree", neumannBcList.get("Cubature Degree", cub_degree));
+  // ---- Setting parameters for LandIce BCs ---- //
+  Teuchos::ParameterList& landiceBcList = paramList->sublist("Problem").sublist("LandIce BCs");
+  landiceBcList.set<int>("Number",2);
 
-  if (neumannStr.find("NBC on SS") == std::string::npos) {
-    Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (5, 0.0));
-    neumannBcList.set("NBC on SS basalside for DOF all set basal", neumannBcList.get("NBC on SS basalside for DOF all set basal", *inputArrayBasal));
-    neumannBcList.set("BetaXY", neumannBcList.get("BetaXY", "Scalar Field"));
+  // Basal Friction BC
+  auto& basalParams = landiceBcList.sublist("BC 0");
+  basalParams.set<int>("Cubature Degree",cub_degree);
+  basalParams.set("Side Set Name", "basalside");
+  basalParams.set("Type", "Basal Friction");
+  auto& basalFrictionParams = basalParams.sublist("Basal Friction Coefficient");
+  basalFrictionParams.set("Type","Given Field");
+  basalFrictionParams.set("Given Field Variable Name","basal_friction");
 
-    //Lateral floating ice BCs
-    Teuchos::RCP<Teuchos::Array<double> >inputArrayLateral = Teuchos::rcp(new Teuchos::Array<double> (1, rho_ice/rho_seawater));
-    neumannBcList.set("NBC on SS floatinglateralside for DOF all set lateral", neumannBcList.get("NBC on SS floatinglateralside for DOF all set lateral", *inputArrayLateral));
-  }
-  else {
-    std::cout<<"\nWARNING: Using basal and floating Neumann BCs options provided in Albany input file. In order to use boundary conditions provided by MPAS, remove \"Neumann BCs\" sublist from Albany input file.\n"<<std::endl;
-  }
+  //Lateral floating ice BCs
+  auto& lateralParams = landiceBcList.sublist("BC 1");
+  lateralParams.set<int>("Cubature Degree",cub_degree);
+  lateralParams.set("Side Set Name", "basalside");
+  lateralParams.set("Type", "Lateral");
 
   //! temporary fix: basal friction needs to be a distributed parameter
 /*    paramList->sublist("Problem").sublist("Distributed Parameters").set("Number of Parameter Vectors",1);
