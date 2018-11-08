@@ -93,7 +93,8 @@ protected:
                                         Albany::FieldManagerChoice fieldManagerChoice,
                                         std::map<std::string, int>& extruded_params_levels,
                                         std::map<std::string,bool>& is_dist_param,
-                                        std::map<std::string,bool>&& has_input = {});
+                                        std::map<std::string,bool>&& has_input = {},
+                                        std::map<std::string,std::map<std::string,bool>>&& has_ss_input = {});
 
   template <typename EvalT>
   void constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -101,7 +102,8 @@ protected:
                                   Albany::StateManager& stateMgr,
                                   std::map<std::string, int>& extruded_params_levels,
                                   std::map<std::string,bool>& is_dist_param,
-                                  std::map<std::string,bool>& has_input);
+                                  std::map<std::string,bool>& has_input,
+                                  std::map<std::string,std::map<std::string,bool>>& has_ss_input);
 
   template <typename EvalT>
   void constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -113,7 +115,8 @@ protected:
   template <typename EvalT>
   void constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                    std::map<std::string,bool>& is_dist_param,
-                                   std::map<std::string,bool>& has_input);
+                                   std::map<std::string,bool>& has_input,
+                                   std::map<std::string,std::map<std::string,bool>>& has_ss_input);
 
   template <typename EvalT>
   void constructLateralBCEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
@@ -193,10 +196,11 @@ constructStokesFOBaseEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                  Albany::FieldManagerChoice fieldManagerChoice,
                                  std::map<std::string, int>& extruded_params_levels,
                                  std::map<std::string,bool>& is_dist_param,
-                                 std::map<std::string,bool>&& has_input)
+                                 std::map<std::string,bool>&& has_input,
+                                 std::map<std::string,std::map<std::string,bool>>&& has_ss_input)
 {
   // --- States/parameters --- //
-  constructStatesEvaluators<EvalT> (fm0, meshSpecs, stateMgr, extruded_params_levels, is_dist_param, has_input);
+  constructStatesEvaluators<EvalT> (fm0, meshSpecs, stateMgr, extruded_params_levels, is_dist_param, has_input, has_ss_input);
 
   // --- Velocity evaluators --- //
   constructVelocityEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice, is_dist_param);
@@ -205,7 +209,7 @@ constructStokesFOBaseEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   constructLateralBCEvaluators<EvalT> (fm0);
 
   // --- Basal BC evaluators (if needed) --- //
-  constructBasalBCEvaluators<EvalT> (fm0, is_dist_param, has_input);
+  constructBasalBCEvaluators<EvalT> (fm0, is_dist_param, has_input, has_ss_input);
 }
 
 template <typename EvalT>
@@ -214,7 +218,8 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
                                               Albany::StateManager& stateMgr,
                                               std::map<std::string, int>& extruded_params_levels,
                                               std::map<std::string,bool>& is_dist_param,
-                                              std::map<std::string,bool>& has_input)
+                                              std::map<std::string,bool>& has_input,
+                                              std::map<std::string,std::map<std::string,bool>>& has_ss_input)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
@@ -292,8 +297,9 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
     stateName  = fieldName = thisFieldList.get<std::string>("Field Name");
     fieldUsage = thisFieldList.get<std::string>("Field Usage","Input"); // WARNING: assuming Input if not specified
 
-    if (fieldUsage == "Unused")
+    if (fieldUsage == "Unused") {
       continue;
+    }
 
     fieldType  = thisFieldList.get<std::string>("Field Type");
 
@@ -352,6 +358,7 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
         ev = evalUtils.constructGatherScalarNodalParameter(stateName,fieldName);
         fm0.template registerEvaluator<EvalT>(ev);
       }
+      has_input[fieldName] = true;
     }
     else if (fieldUsage == "Input" || fieldUsage == "Input-Output")
     {
@@ -359,6 +366,7 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
       p->set<std::string>("Field Name", fieldName);
       ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
+      has_input[fieldName] = true;
     }
   }
 
@@ -387,8 +395,9 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
       fieldName = stateName + "_" + ss_name;
       fieldUsage = thisFieldList.get<std::string>("Field Usage","Input"); // WARNING: assuming Input if not specified
 
-      if (fieldUsage == "Unused")
+      if (fieldUsage == "Unused") {
         continue;
+      }
 
       //meshPart = is_dist_param[stateName] ? dist_params_name_to_mesh_part[stateName] : "";
       meshPart = ""; // Distributed parameters are defined either on the whole volume mesh or on a whole side mesh. Either way, here we want "" as part (the whole mesh).
@@ -474,6 +483,7 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
           ev = evalUtils.constructGatherScalarNodalParameter(stateName,fieldName);
           fm0.template registerEvaluator<EvalT>(ev);
         }
+        has_ss_input[ss_name][stateName] = true;
       }
       else if (fieldUsage == "Input" || fieldUsage == "Input-Output")
       {
@@ -481,6 +491,7 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
         p->set<std::string>("Field Name", fieldName);
         ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
+        has_ss_input[ss_name][stateName] = true;
       }
     }
   }
@@ -777,7 +788,8 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 template <typename EvalT>
 void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                                std::map<std::string,bool>& is_dist_param,
-                                               std::map<std::string,bool>& has_input)
+                                               std::map<std::string,bool>& has_input,
+                                               std::map<std::string,std::map<std::string,bool>>& has_ss_input)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
@@ -858,14 +870,6 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     ev = evalUtils.getPSTUtils().constructDOFGradInterpolationSideEvaluator(ice_thickness_side, ssName, enableMemoizer);
     fm0.template registerEvaluator<EvalT>(ev);
 
-    //---- Interpolate effective pressure gradient on QP on side
-    ev = evalUtils.getPSTUtils().constructDOFGradInterpolationSideEvaluator(effective_pressure_side, ssName, enableMemoizer);
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    //---- Restrict surface height from cell-based to cell-side-based
-    ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("surface_height",ssName,"Node Scalar",cellType,surface_height_side);
-    fm0.template registerEvaluator<EvalT> (ev);
-
     //---- Interpolate surface height on QP on side
     ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator(surface_height_side, ssName);
     fm0.template registerEvaluator<EvalT>(ev);
@@ -879,22 +883,26 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator(bed_roughness_side, ssName);
     fm0.template registerEvaluator<EvalT>(ev);
 
-    // Parameters are loaded as 3D fields. If any field needed on basal side is a parameter, we must project it on side
-    if (is_dist_param["basal_friction"])
+    if (!has_ss_input[ssName]["surface_height"]) {
+      //---- Restrict surface height from cell-based to cell-side-based
+      ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("surface_height",ssName,"Node Scalar",cellType,surface_height_side);
+      fm0.template registerEvaluator<EvalT> (ev);
+    }
+
+    if (is_dist_param["ice_thickness"] || !has_ss_input[ssName][ice_thickness_side] ) {
+      //---- Restrict ice thickness from cell-based to cell-side-based
+      ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("ice_thickness",ssName,"Node Scalar",cellType,ice_thickness_side);
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    if (is_dist_param["basal_friction"] || !has_ss_input[ssName]["basal_friction"])
     {
-      // Interpolate the 3D state on the side (the BasalFrictionCoefficient evaluator needs a side field)
+      //---- Restrict basal friction from cell-based to cell-side-based
       ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("basal_friction",ssName,"Node Scalar",cellType,basal_friction_side);
       fm0.template registerEvaluator<EvalT> (ev);
     }
 
-    if (is_dist_param["ice_thickness"])
-    {
-      //---- Restrict ice thickness from cell-based to cell-side-based
-      ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("ice_thickness",ssName,"Node Scalar",cellType,ice_thickness_side);
-      fm0.template registerEvaluator<EvalT> (ev);
-    }
-
-    if (is_dist_param["bed_roughness"])
+    if (is_dist_param["bed_roughness"] || !has_ss_input[ssName]["bed_roughness"])
     {
       // Interpolate the 3D state on the side (the BasalFrictionCoefficient evaluator needs a side field)
       ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("bed_roughness",ssName,"Node Scalar",cellType,bed_roughness_side);
