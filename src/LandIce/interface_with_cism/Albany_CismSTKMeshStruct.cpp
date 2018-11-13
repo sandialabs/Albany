@@ -315,6 +315,8 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
                              nsNames, ssNames, worksetSize, partVec[0]->name(),
                              ebNameToIndex, this->interleavedOrdering));
 
+  // Create a mesh specs object for EACH side set
+  this->initializeSideSetMeshSpecs(commT);
 }
 
 
