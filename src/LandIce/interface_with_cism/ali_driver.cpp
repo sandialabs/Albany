@@ -512,20 +512,21 @@ void ali_driver_init(int argc, int exec_mode, AliToGlimmer * ftg_ptr, const char
 
     parameterList->sublist("Problem").sublist("LandIce BCs").set("Number",numLandIceBCs);
 
+    // Basal friction sliding bc
+    parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").set<std::string>("Type","Basal Friction");
+    parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").set<std::string>("Side Set Name","Basal");
+    parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").set<int>("Cubature Degree",3);
+    parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").sublist("Basal Friction Coefficient").set<std::string>("Type","Given Field");
+    parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").sublist("Basal Friction Coefficient").set<std::string>("Given Field Variable Name", "basal_friction");
+
     //Lateral floating ice BCs.
     if ((global_west_face_conn_active_Ptr != NULL || global_east_face_conn_active_Ptr != NULL || global_north_face_conn_active_Ptr != NULL || global_south_face_conn_active_Ptr != NULL) && (nWestFacesActive > 0 || nEastFacesActive > 0 || nSouthFacesActive > 0 || nNorthFacesActive > 0)) {
-      parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").set<std::string>("Type","Lateral");
-      parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").set<std::string>("Side Set Name","Lateral");
-      parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").set<int>("Cubature Degree",3);
-      parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").set<double>("Immersed Ratio",rho_ice/rho_seawater);
+      parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 1").set<std::string>("Type","Lateral");
+      parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 1").set<std::string>("Side Set Name","Lateral");
+      parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 1").set<int>("Cubature Degree",3);
+      parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 1").set<double>("Immersed Ratio",rho_ice/rho_seawater);
     }
 
-    // Basal friction sliding bc
-    parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 1").set<std::string>("Type","Basal Friction");
-    parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 1").set<std::string>("Side Set Name","Basal");
-    parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 1").set<int>("Cubature Degree",3);
-    parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 1").sublist("Basal Friction Coefficient").set<std::string>("Type","Given Field");
-    parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 1").sublist("Basal Friction Coefficient").set<std::string>("Given Field Variable Name", "basal_friction");
 
     //Dirichlet BCs
     if (dirichlet_node_mask_Ptr != NULL) {
