@@ -146,6 +146,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
                              nsNames, ssNames, worksetSize, partVec[0]->name(),
                              ebNameToIndex, this->interleavedOrdering));
 
+  this->initializeSideSetMeshSpecs(commT);
   this->initializeSideSetMeshStructs(commT);
 
 
@@ -197,6 +198,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 
   std::string ebn="Element Block 0";
   partVec[0] = & metaData->declare_part(ebn, stk::topology::ELEMENT_RANK );
+  std::map<std::string,int> ebNameToIndex;
   ebNameToIndex[ebn] = 0;
 
 #ifdef ALBANY_SEACAS
@@ -269,6 +271,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
                              nsNames, ssNames, worksetSize, partVec[0]->name(),
                              ebNameToIndex, this->interleavedOrdering));
 
+  this->initializeSideSetMeshSpecs(commT);
   this->initializeSideSetMeshStructs(commT);
 
 

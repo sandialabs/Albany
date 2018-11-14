@@ -841,7 +841,7 @@ evaluateFields(typename Traits::EvalData workset)
 //
 //#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   auto nodeID = workset.wsElNodeEqID;
-  fT = workset.fT;
+  auto fT = workset.fT;
 
   //Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   Teuchos::ArrayRCP<ST> fT_nonconstView;
@@ -850,7 +850,7 @@ evaluateFields(typename Traits::EvalData workset)
   else
     fT_nonconstView = Teuchos::null;
 
-  JacT = workset.JacT;
+  auto JacT = workset.JacT;
 
 
   // Fill in "neumann" array
