@@ -909,6 +909,13 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
       fm0.template registerEvaluator<EvalT> (ev);
     }
 
+    if (is_dist_param["bed_topography"] || !has_ss_input[ssName]["bed_topography"])
+    {
+      // Interpolate the 3D state on the side (the BasalFrictionCoefficient evaluator needs a side field)
+      ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("bed_topography",ssName,"Node Scalar",cellType,bed_topography_side);
+      fm0.template registerEvaluator<EvalT> (ev);
+    }
+
     // -------------------------------- LandIce evaluators ------------------------- //
 
     // --- Basal Residual --- //

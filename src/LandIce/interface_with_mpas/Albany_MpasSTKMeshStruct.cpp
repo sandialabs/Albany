@@ -146,6 +146,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
                              nsNames, ssNames, worksetSize, partVec[0]->name(),
                              ebNameToIndex, this->interleavedOrdering));
 
+  this->initializeSideSetMeshSpecs(commT);
   this->initializeSideSetMeshStructs(commT);
 
 
@@ -270,6 +271,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
                              nsNames, ssNames, worksetSize, partVec[0]->name(),
                              ebNameToIndex, this->interleavedOrdering));
 
+  this->initializeSideSetMeshSpecs(commT);
   this->initializeSideSetMeshStructs(commT);
 
 
