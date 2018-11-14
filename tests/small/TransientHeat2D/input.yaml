@@ -1,0 +1,95 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Heat 2D
+    Solution Method: Transient
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF T: 0.00000000000000000e+00
+      DBC on NS NodeSet1 for DOF T: 0.00000000000000000e+00
+      DBC on NS NodeSet2 for DOF T: 0.00000000000000000e+00
+      DBC on NS NodeSet3 for DOF T: 0.00000000000000000e+00
+    Initial Condition: 
+      Function: Constant
+      Function Data: [1.00000000000000000e+00]
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+    Parameters: 
+      Number: 2
+      Parameter 0: DBC on NS NodeSet0 for DOF T
+      Parameter 1: DBC on NS NodeSet2 for DOF T
+  Discretization: 
+    1D Elements: 60
+    2D Elements: 60
+    1D Scale: 1.00000000000000000e+01
+    2D Scale: 1.00000000000000000e+00
+    Workset Size: 50
+    Method: STK2D
+    Exodus Output File Name: tran2d.exo
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [2.78399999999999981e-01]
+    Relative Tolerance: 1.00000000000000002e-03
+    Absolute Tolerance: 1.00000000000000008e-05
+    Number of Sensitivity Comparisons: 1
+    Sensitivity Test Values 0: [3.05378999999999998e-02, 3.30262109999999998e-01]
+  Piro: 
+    Rythmos: 
+      Num Time Steps: 20
+      Final Time: 1.00000000000000006e-01
+      Max State Error: 5.00000000000000028e-02
+      Alpha: 0.00000000000000000e+00
+      Rythmos Stepper: 
+        VerboseObject: 
+          Verbosity Level: low
+      Rythmos Integration Control: { }
+      Rythmos Integrator: 
+        VerboseObject: 
+          Verbosity Level: none
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          AztecOO: 
+            Forward Solve: 
+              AztecOO Settings: 
+                Aztec Solver: GMRES
+                Convergence Test: r0
+                Size of Krylov Subspace: 200
+              Max Iterations: 200
+              Tolerance: 1.00000000000000002e-08
+            Output Every RHS: true
+          Belos: 
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 1.00000000000000008e-05
+                Output Frequency: 10
+                Output Style: 1
+                Verbosity: 33
+                Maximum Iterations: 100
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: false
+        Preconditioner Type: ML
+        Preconditioner Types: 
+          Ifpack: 
+            Prec Type: ILU
+            Overlap: 1
+            Ifpack Settings: 
+              'fact: level-of-fill': 1
+          ML: 
+            Base Method Defaults: SA
+            ML Settings: 
+              'aggregation: type': Uncoupled
+              'coarse: max size': 20
+              'coarse: pre or post': post
+              'coarse: sweeps': 1
+              'coarse: type': Amesos-KLU
+              prec type: MGV
+              'smoother: type': Gauss-Seidel
+              'smoother: damping factor': 6.60000000000000031e-01
+              'smoother: pre or post': both
+              'smoother: sweeps': 1
+              ML output: 1
+...

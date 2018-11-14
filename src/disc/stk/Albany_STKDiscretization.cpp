@@ -79,16 +79,16 @@ Albany::STKDiscretization::STKDiscretization(
     const std::map<int, std::vector<std::string>>& sideSetEquations_)
     :
 
-      out(Teuchos::VerboseObjectBase::getDefaultOStream()),
       previous_time_label(-1.0e32),
-      discParams(discParams_),
+      out(Teuchos::VerboseObjectBase::getDefaultOStream()),
       metaData(*stkMeshStruct_->metaData),
       bulkData(*stkMeshStruct_->bulkData),
       commT(commT_),
-      rigidBodyModes(rigidBodyModes_),
       neq(stkMeshStruct_->neq),
-      stkMeshStruct(stkMeshStruct_),
       sideSetEquations(sideSetEquations_),
+      rigidBodyModes(rigidBodyModes_),
+      stkMeshStruct(stkMeshStruct_),
+      discParams(discParams_),
       interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
 #if defined(ALBANY_EPETRA)
@@ -111,7 +111,7 @@ Albany::STKDiscretization::~STKDiscretization()
   }
 #endif
 
-  for (int i = 0; i < toDelete.size(); i++) delete[] toDelete[i];
+  for (size_t i = 0; i < toDelete.size(); i++) delete[] toDelete[i];
 }
 
 void
@@ -1967,7 +1967,7 @@ Albany::STKDiscretization::computeWorksetInfo()
     for (int i = 0; i < numBuckets; i++) wsPhysIndex[i] = 0;
   else
     for (int i       = 0; i < numBuckets; i++)
-      wsPhysIndex[i] = stkMeshStruct->ebNameToIndex[wsEBNames[i]];
+      wsPhysIndex[i] = stkMeshStruct->getMeshSpecs()[0]->ebNameToIndex[wsEBNames[i]];
 
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
   wsElNodeEqID.resize(numBuckets);
@@ -2256,7 +2256,6 @@ Albany::STKDiscretization::computeWorksetInfo()
   typedef Albany::AbstractSTKFieldContainer::QPScalarState    QPScalarState;
   typedef Albany::AbstractSTKFieldContainer::QPVectorState    QPVectorState;
   typedef Albany::AbstractSTKFieldContainer::QPTensorState    QPTensorState;
-  typedef Albany::AbstractSTKFieldContainer::QPTensor3State   QPTensor3State;
 
   typedef Albany::AbstractSTKFieldContainer::ScalarState ScalarState;
   typedef Albany::AbstractSTKFieldContainer::VectorState VectorState;
@@ -2275,7 +2274,6 @@ Albany::STKDiscretization::computeWorksetInfo()
   QPScalarState&    qpscalar_states    = container.getQPScalarStates();
   QPVectorState&    qpvector_states    = container.getQPVectorStates();
   QPTensorState&    qptensor_states    = container.getQPTensorStates();
-  QPTensor3State&   qptensor3_states   = container.getQPTensor3States();
   std::map<std::string, double>& time = container.getTime();
 
   for (std::size_t b = 0; b < buckets.size(); b++) {
@@ -2340,34 +2338,6 @@ Albany::STKDiscretization::computeWorksetInfo()
       MDArray ar                                      = array;
       stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
     }
-    for (auto qpts = qptensor3_states.begin(); qpts != qptensor3_states.end();
-         ++qpts) {
-      BucketArray<Albany::AbstractSTKFieldContainer::QPTensor3FieldType> array(
-          **qpts, buck);
-      // Debug
-      // std::cout << "Buck.size(): " << buck.size() << " QPT3FT dim[4]: " <<
-      // array.dimension(4) << std::endl;
-      MDArray ar                                      = array;
-      stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
-    }
-#ifdef ALBANY_MOR
-    // AlbanyRBGen requires scalarValue_states to contain a string, not a
-    // pointer to a string, in order to avoid a seqfault
-    for (ScalarValueState::iterator svs = scalarValue_states.begin();
-         svs != scalarValue_states.end();
-         ++svs) {
-      const int size = 1;
-      shards::Array<double, shards::NaturalOrder, Cell> array(
-          &time[*svs], size);
-      MDArray ar = array;
-      // Debug
-      // std::cout << "Buck.size(): " << buck.size() << " SVState dim[0]: " <<
-      // array.dimension(0) << std::endl;
-      // std::cout << "SV Name: " << *svs << " address : " << &array <<
-      // std::endl;
-      stateArrays.elemStateArrays[b][*svs] = ar;
-    }
-#else
     //    for (ScalarValueState::iterator svs = scalarValue_states.begin();
     //              svs != scalarValue_states.end(); ++svs){
     for (int i = 0; i < scalarValue_states.size(); i++) {
@@ -2382,7 +2352,6 @@ Albany::STKDiscretization::computeWorksetInfo()
       // std::endl;
       stateArrays.elemStateArrays[b][*scalarValue_states[i]] = ar;
     }
-#endif
   }
 
   // Process node data sets if present
@@ -2489,7 +2458,7 @@ Albany::STKDiscretization::computeSideSets()
       sStruct.side_local_id = determine_local_side_id(elem, sidee);
 
       // Save the index of the element block that this elem lives in
-      sStruct.elem_ebIndex = stkMeshStruct->ebNameToIndex[wsEBNames[workset]];
+      sStruct.elem_ebIndex = stkMeshStruct->getMeshSpecs()[0]->ebNameToIndex[wsEBNames[workset]];
 
       SideSetList& ssList =
           sideSets[workset];  // Get a ref to the side set map for this ws
@@ -3603,7 +3572,7 @@ Albany::STKDiscretization::updateMesh()
       stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
   nodalDOFsStructContainer.addEmptyDOFsStruct("ordinary_solution", "", neq);
   nodalDOFsStructContainer.addEmptyDOFsStruct("mesh_nodes", "", 1);
-  for (int is = 0; is < nodal_param_states.size(); is++) {
+  for (size_t is = 0; is < nodal_param_states.size(); is++) {
     const Albany::StateStruct&            param_state = *nodal_param_states[is];
     const Albany::StateStruct::FieldDims& dim         = param_state.dim;
     int                                   numComps    = 1;
@@ -3666,7 +3635,7 @@ Albany::STKDiscretization::updateMesh()
     for (auto it : stkMeshStruct->sideSetMeshStructs) {
       Teuchos::RCP<STKDiscretization> side_disc =
           Teuchos::rcp(new STKDiscretization(discParams, it.second, commT));
-      side_disc->updateMesh();
+      // side_disc->updateMesh();
       sideSetDiscretizations.insert(std::make_pair(it.first, side_disc));
       sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
 

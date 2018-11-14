@@ -1,0 +1,52 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Reference Material: clay
+  ElementBlocks: 
+    ClayRock: 
+      material: clay
+    CementLiner: 
+      material: cement
+    BufferLayer2: 
+      material: buffer2
+    BufferLayer1: 
+      material: buffer1
+    WastePackage: 
+      material: package
+    Cannister: 
+      material: UO2
+  Materials: 
+    UO2: 
+      Category: UraniumDioxide
+      Thermal Conductivity: 
+        Name: Constant
+        Value: 4.98439999999999994e+00
+      Source Functions: 
+        Table: 
+          Filename: qdot.dat
+    package: 
+      Category: Steel
+      Thermal Conductivity: 
+        Name: Constant
+        Value: 4.60000000000000000e+01
+    buffer1: 
+      Category: bentonite/graphite
+      Thermal Conductivity: 
+        Name: Constant
+        Value: 3.29999999999999982e+00
+    buffer2: 
+      Category: dry_bentonite
+      Thermal Conductivity: 
+        Name: Constant
+        Value: 5.99999999999999978e-01
+    cement: 
+      Category: cement
+      Thermal Conductivity: 
+        Name: Constant
+        Value: 1.69999999999999996e+00
+    clay: 
+      Category: rock
+      Thermal Conductivity: 
+        Name: Constant
+        Value: 4.25000000000000000e+00
+...

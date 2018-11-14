@@ -1,0 +1,237 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output: 
+    Write Solution to MatrixMarket: false
+  Problem: 
+    Phalanx Graph Visualization Detail: 1
+    Solution Method: Steady
+    Name: LandIce Stokes First Order 3D
+    Required Fields: [temperature]
+    Basal Side Name: basalside
+    Surface Side Name: upperside
+    Response Functions: 
+      Number: 1
+      Response 0: Surface Velocity Mismatch
+      ResponseParams 0: 
+        Regularization Coefficient: 1.00000000000000000e+00
+    Dirichlet BCs: { }
+    Neumann BCs: { }
+    LandIce BCs:
+      Number : 2
+      BC 0:
+        Type: Basal Friction
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Given Field
+          Given Field Variable Name: basal_friction
+      BC 1:
+        Type: Lateral
+        Cubature Degree: 4
+        Side Set Name: lateralside
+    Parameters: 
+      Number: 1
+      Parameter 0: 'Glen''s Law Homotopy Parameter'
+    Distributed Parameters: 
+      Number of Parameter Vectors: 1
+      Distributed Parameter 0: 
+        Name: basal_friction
+        Mesh Part: bottom
+    LandIce Physical Parameters: 
+      Water Density: 1.02800000000000000e+03
+      Ice Density: 9.10000000000000000e+02
+      Gravity Acceleration: 9.80000000000000071e+00
+      Clausius-Clapeyron Coefficient: 0.00000000000000000e+00
+    LandIce Viscosity: 
+      Type: 'Glen''s Law'
+      'Glen''s Law Homotopy Parameter': 1.00000000000000006e-01
+      'Glen''s Law A': 1.00000000000000005e-04
+      'Glen''s Law n': 3.00000000000000000e+00
+      Flow Rate Type: Temperature Based
+    Body Force: 
+      Type: FO INTERP SURF GRAD
+  Discretization: 
+    Method: Extruded
+    Number Of Time Derivatives: 0
+    Cubature Degree: 4
+    Exodus Output File Name: gis_wedge_adjoint_sensitivity.exo
+    Element Shape: Wedge
+    Columnwise Ordering: true
+    NumLayers: 5
+    Thickness Field Name: ice_thickness
+    Use Glimmer Spacing: true
+    Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction]
+    Basal Node Fields Ranks: [1, 1, 1]
+    Interpolate Basal Node Layered Fields: [temperature]
+    Basal Node Layered Fields Ranks: [1]
+    Required Fields Info: 
+      Number Of Fields: 4
+      Field 0: 
+        Field Name: temperature
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 1: 
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 2: 
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 3: 
+        Field Name: basal_friction
+        Field Type: Node Scalar
+        Field Origin: Mesh
+    Side Set Discretizations: 
+      Side Sets: [basalside, upperside]
+      basalside: 
+        Method: Ioss
+        Number Of Time Derivatives: 0
+        Use Serial Mesh: true
+        Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
+        Exodus Output File Name: gis_wedge_adjoint_sensitivity_basal.exo
+        Cubature Degree: 3
+        Required Fields Info: 
+          Number Of Fields: 4
+          Field 0: 
+            Field Name: ice_thickness
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/thickness.ascii
+          Field 1: 
+            Field Name: surface_height
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/surface_height.ascii
+          Field 2: 
+            Field Name: temperature
+            Field Type: Node Layered Scalar
+            Number Of Layers: 11
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/temperature.ascii
+          Field 3: 
+            Field Name: basal_friction
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/basal_friction.ascii
+      upperside: 
+        Method: SideSetSTK
+        Number Of Time Derivatives: 0
+        Exodus Output File Name: gis_wedge_adjoint_sensitivity_surface.exo
+        Cubature Degree: 3
+        Required Fields Info: 
+          Number Of Fields: 2
+          Field 0: 
+            Field Name: observed_surface_velocity
+            Field Type: Node Vector
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii
+          Field 1: 
+            Field Name: observed_surface_velocity_RMS
+            Field Type: Node Vector
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [1.09753212191000000e+08]
+    Sensitivity Comparisons 0: 
+      Number of Sensitivity Comparisons: 1
+      Sensitivity Test Values 0: [1.82856042311000004e+07]
+    Sensitivity Comparisons 1: 
+      Number of Sensitivity Comparisons: 1
+      Sensitivity Test Values 0: [1.99641006376999989e+06]
+    Relative Tolerance: 1.00000000000000005e-04
+    Absolute Tolerance: 1.00000000000000005e-04
+  Piro: 
+    Sensitivity Method: Adjoint
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Initial Value: 1.00000000000000006e-01
+        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
+        Continuation Method: Natural
+        Max Steps: 10
+        Max Value: 1.00000000000000000e+00
+        Min Value: 0.00000000000000000e+00
+      Step Size: 
+        Initial Step Size: 2.00000000000000011e-01
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: OR
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.00000000000000008e-05
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.00000000000000008e-05
+            Relative Tolerance: 1.00000000000000002e-03
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 50
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 20
+                    Max Iterations: 200
+                    Tolerance: 9.99999999999999955e-07
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 0
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: level-of-fill': 0
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    'smoother: type': ML symmetric Gauss-Seidel
+                    'smoother: pre or post': both
+                    'coarse: type': Amesos-KLU
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

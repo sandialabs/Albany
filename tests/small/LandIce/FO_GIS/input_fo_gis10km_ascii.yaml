@@ -1,0 +1,146 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Phalanx Graph Visualization Detail: 1
+    Solution Method: Continuation
+    Name: LandIce Stokes First Order 3D
+    Neumann BCs: 
+      NBC on SS Basal for DOF U0 set basal: [1.00000000000000000e+07, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
+      NBC on SS Basal for DOF U1 set basal: [1.00000000000000000e+07, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
+    Parameters: 
+      Number: 1
+      Parameter 0: 'Glen''s Law Homotopy Parameter'
+    LandIce Viscosity: 
+      Type: 'Glen''s Law'
+      'Glen''s Law Homotopy Parameter': 2.99999999999999989e-01
+      'Glen''s Law A': 1.00000000000000005e-04
+      'Glen''s Law n': 3.00000000000000000e+00
+    Body Force: 
+      Type: FO INTERP SURF GRAD
+    Response Functions: 
+      Number: 3
+      Response 0: Solution Max Value
+      ResponseParams 0: 
+        Equation: 0
+      Response 1: Solution Max Value
+      ResponseParams 1: 
+        Equation: 1
+      Response 2: Solution Average
+  Discretization: 
+    Method: Ascii
+    Exodus Output File Name: gis10km_ascii_out.exo
+  Regression Results: 
+    Number of Comparisons: 3
+    Test Values: [7.79162527533000002e+01, 7.79162527533000002e+01, 0.00000000000000000e+00]
+    Number of Sensitivity Comparisons: 3
+    Sensitivity Test Values 0: [-1.51812255710000003e-03]
+    Sensitivity Test Values 1: [-1.51815276739999993e-03]
+    Sensitivity Test Values 2: [0.00000000000000000e+00]
+    Relative Tolerance: 1.00000000000000005e-04
+    Absolute Tolerance: 1.00000000000000005e-04
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Initial Value: 0.00000000000000000e+00
+        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
+        Continuation Method: Natural
+        Max Steps: 10
+        Max Value: 1.00000000000000000e+00
+        Min Value: 0.00000000000000000e+00
+      Step Size: 
+        Initial Step Size: 5.00000000000000028e-02
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 9.99999999999999955e-07
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.00000000000000002e-03
+            Relative Tolerance: 9.99999999999999955e-07
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 100
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 20
+                    Max Iterations: 200
+                    Tolerance: 9.99999999999999955e-07
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 9.99999999999999955e-07
+                      Output Frequency: 20
+                      Output Style: 1
+                      Verbosity: 0
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 0
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: level-of-fill': 0
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    'smoother: type': ML symmetric Gauss-Seidel
+                    'smoother: pre or post': both
+                    'coarse: type': Amesos-KLU
+                    PDE equations: 4
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

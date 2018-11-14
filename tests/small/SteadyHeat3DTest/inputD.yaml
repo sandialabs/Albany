@@ -8,7 +8,7 @@ ANONYMOUS:
     Dirichlet BCs: 
       DBC on NS nodelist_1 for DOF T: 0.00000000000000000e+00
     Neumann BCs: 
-      NBC on SS surface_3 for DOF T set radiate: [6.00000000000000000e+02, 3.7257824143070044e-8, 0.00000000000000000e+00]
+      NBC on SS surface_3 for DOF T set radiate: [6.00000000000000000e+02, 3.7257824143070044e-8]
     Thermal Conductivity: 
       Thermal Conductivity Type: Constant
       Value: 5.00000000000000000e+01

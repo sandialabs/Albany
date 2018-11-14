@@ -1,8 +1,8 @@
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/data.perf
                ${CMAKE_CURRENT_BINARY_DIR}/data.perf COPYONLY)
 

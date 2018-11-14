@@ -1,0 +1,44 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: CahnHill 2D
+    Solution Method: Transient
+    Phalanx Graph Visualization Detail: 0
+    Initial Condition: 
+      Function: EBPerturb
+      block_1: [0.00000000000000000e+00, 0.00000000000000000e+00]
+      Perturb IC: [1.00000000000000006e-01, 0.00000000000000000e+00]
+    b: 2.00000000000000011e-01
+    gamma: 1.00000000000000005e-04
+    Lump Mass: true
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    Method: Ioss
+    Exodus Input File Name: domain.exo
+    Exodus Output File Name: domain_out.exo
+    Use Serial Mesh: true
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [0.00000000000000000e+00]
+    Relative Tolerance: 1.00000000000000006e-01
+    Absolute Tolerance: 1.00000000000000006e-01
+  Piro: 
+    Rythmos: 
+      Num Time Steps: 10
+      Final Time: 1.00000000000000006e-01
+      Max State Error: 1.00000000000000002e-03
+      Alpha: 0.00000000000000000e+00
+      Rythmos Stepper: 
+        VerboseObject: 
+          Verbosity Level: none
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Preconditioner Type: Ifpack
+      Rythmos Integration Control: { }
+      Rythmos Integrator: 
+        VerboseObject: 
+          Verbosity Level: low
+...

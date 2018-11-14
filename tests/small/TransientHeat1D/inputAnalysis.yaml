@@ -1,0 +1,90 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Heat 1D
+    Solution Method: Transient
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF T: 1.00000000000000006e-01
+      DBC on NS NodeSet1 for DOF T: 2.00000000000000000e+00
+    Initial Condition: 
+      Function: 1D Gauss-Sin
+      Function Data: [0.00000000000000000e+00]
+    Source Functions: 
+      Quadratic: 
+        Nonlinear Factor: 1.00000000000000000e+00
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Two Norm
+    Parameters: 
+      Number: 1
+      Parameter 0: DBC on NS NodeSet1 for DOF T
+  Discretization: 
+    1D Elements: 100
+    Method: STK1D
+  Regression Results: 
+    Number of Piro Analysis Comparisons: 1
+    Piro Analysis Test Values: [-4.95669999999999999e-02]
+    Relative Tolerance: 1.00000000000000002e-02
+    Absolute Tolerance: 1.00000000000000005e-04
+  Piro: 
+    Rythmos: 
+      Num Time Steps: 10
+      Final Time: 1.00000000000000000e+01
+      Max State Error: 5.00000000000000028e-02
+      Alpha: 0.00000000000000000e+00
+      Name: 1D Gauss-Sin
+      Rythmos Stepper: 
+        VerboseObject: 
+          Verbosity Level: medium
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          AztecOO: 
+            Forward Solve: 
+              AztecOO Settings: 
+                Aztec Solver: GMRES
+                Convergence Test: r0
+                Size of Krylov Subspace: 200
+              Max Iterations: 200
+              Tolerance: 1.00000000000000002e-08
+            Output Every RHS: true
+          Belos: 
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 1.00000000000000002e-08
+                Output Frequency: 1
+                Output Style: 1
+                Verbosity: 0
+                Maximum Iterations: 200
+                Block Size: 1
+                Num Blocks: 200
+                Flexible Gmres: false
+        Preconditioner Type: Ifpack
+        Preconditioner Types: 
+          Ifpack: 
+            Prec Type: ILU
+            Overlap: 1
+            Ifpack Settings: 
+              'fact: level-of-fill': 1
+      Rythmos Integration Control: { }
+      Rythmos Integrator: 
+        VerboseObject: 
+          Verbosity Level: medium
+    Analysis: 
+      Analysis Package: OptiPack
+      Dakota: 
+        Input File: dak.in
+        Output File: dak.out
+        Restart File: dak.res
+        Error File: dak.err
+      MOOCHO: { }
+      OptiPack: 
+        Max Num Iterations: 6
+        Objective Gradient Tol: 1.00000000000000002e-03
+        Solver Type: FR
+      GlobiPack: 
+        Minimize: 
+          Max Iterations: 5
+...

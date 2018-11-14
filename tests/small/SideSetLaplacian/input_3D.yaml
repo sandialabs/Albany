@@ -1,0 +1,115 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output: 
+    Write Solution to MatrixMarket: false
+  Problem: 
+    Phalanx Graph Visualization Detail: 0
+    Solution Method: Steady
+    Name: Side Laplacian 3D
+    Solve As Side Set Equation: true
+    Side Set Name: SideSet2
+    Response Functions: 
+      Number of Response Vectors: 1
+      Response Vector 0: 
+        Name: Squared L2 Difference Side Source ST Target PST
+        Side Set Name: SideSet2
+        Field Rank: Scalar
+        Source Field Name: u
+        Target Field Name: ZERO
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF U: 0.00000000000000000e+00
+      DBC on NS NodeSet1 for DOF U: 0.00000000000000000e+00
+      DBC on NS NodeSet4 for DOF U: 0.00000000000000000e+00
+      DBC on NS NodeSet5 for DOF U: 0.00000000000000000e+00
+      DBC off NS SideSet2 for DOF U: 0.00000000000000000e+00
+  Discretization: 
+    Method: STK3D
+    Cubature Degree: 2
+    1D Elements: 2
+    2D Elements: 2
+    3D Elements: 2
+    Build Node Sets From Side Sets: true
+    Cell Topology: Quad
+    Side Set Discretizations: 
+      Side Sets: [SideSet2]
+      SideSet2: 
+        Method: SideSetSTK
+        Exodus Output File Name: side_laplacian_3d.exo
+        Cubature Degree: 2
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [9.76562500000000000e-04]
+    Number of Sensitivity Comparisons: 0
+    Relative Tolerance: 1.00000000000000005e-04
+    Absolute Tolerance: 1.00000000000000005e-04
+  Piro: 
+    NOX: 
+      Nonlinear Solver: Line Search Based
+      Solver Options: 
+        Status Test Check Type: Minimal
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Unscaled
+          Tolerance: 1.00000000000000008e-05
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 50
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Preconditioner Type: Ifpack
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 20
+                    Max Iterations: 200
+                    Tolerance: 9.99999999999999955e-07
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 0
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: level-of-fill': 0
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    'smoother: type': ML symmetric Gauss-Seidel
+                    'smoother: pre or post': both
+                    'coarse: type': Amesos-KLU
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Backtrack
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+...

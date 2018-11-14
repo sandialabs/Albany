@@ -1,0 +1,51 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Heat 1D
+    Solution Method: Transient
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF T: 0.00000000000000000e+00
+      DBC on NS NodeSet1 for DOF T: 0.00000000000000000e+00
+    Initial Condition: 
+      Function: 1D Gauss-Sin
+      Function Data: [7.50000000000000000e-01]
+    Source Functions: 
+      Quadratic: 
+        Nonlinear Factor: 7.50000000000000000e-01
+        Constant: true
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+    Parameters: 
+      Number: 2
+      Parameter 0: DBC on NS NodeSet0 for DOF T
+      Parameter 1: DBC on NS NodeSet1 for DOF T
+      Parameter 2: Quadratic Nonlinear Factor
+  Discretization: 
+    1D Elements: 1600
+    Method: STK1D
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [1.17236000000000007e-01]
+    Relative Tolerance: 1.00000000000000005e-04
+    Number of Sensitivity Comparisons: 1
+    Sensitivity Test Values 0: [4.65129000000000015e-01, 4.65129000000000015e-01]
+  Piro: 
+    Rythmos: 
+      Num Time Steps: 200
+      Final Time: 2.50000000000000000e-01
+      Max State Error: 1.00000000000000002e-03
+      Alpha: 7.50000000000000000e-01
+      Name: 1D Gauss-Sin
+      Rythmos Stepper: 
+        VerboseObject: 
+          Verbosity Level: none
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Preconditioner Type: Ifpack
+      Rythmos Integration Control: { }
+      Rythmos Integrator: 
+        VerboseObject: 
+          Verbosity Level: low
+...

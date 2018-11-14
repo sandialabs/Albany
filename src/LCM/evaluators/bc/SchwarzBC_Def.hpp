@@ -124,7 +124,7 @@ SchwarzBC_Base<EvalT, Traits>::computeBCs(
   bool const use_block = coupled_block_name != "NONE";
 
   std::map<std::string, int> const& coupled_block_name_to_index =
-      coupled_gms.ebNameToIndex;
+      coupled_gms.getMeshSpecs()[0]->ebNameToIndex;
 
   auto it = coupled_block_name_to_index.find(coupled_block_name);
 

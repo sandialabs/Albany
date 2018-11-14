@@ -8,9 +8,13 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
+
+#include "Albany_DiscretizationUtils.hpp"
 #include "Albany_Layouts.hpp"
 
-#include <algorithm>
+#include "LandIce_BasalFrictionCoefficient.hpp"
+
+#include <string.hpp> // for 'upper_case' (comes from src/utility; not to be confused with <string>)
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -35,8 +39,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   Teuchos::ParameterList& beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
   zero_on_floating = beta_list.get<bool> ("Zero Beta On Floating Ice", false);
 
-  std::string betaType = (beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "Given Field");
-  std::transform(betaType.begin(), betaType.end(),betaType.begin(), ::toupper);
+  std::string betaType = util::upper_case((beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "Given Field"));
 
   if (IsStokes)
   {
@@ -70,9 +73,9 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   if (betaType == "GIVEN CONSTANT")
   {
     beta_type = GIVEN_CONSTANT;
-    beta_given_val = beta_list.get<double>("Constant Given Beta Value");
+    given_val = beta_list.get<double>("Constant Given Beta Value");
 #ifdef OUTPUT_TO_SCREEN
-    *output << "Given constant and uniform beta, value = " << beta_given_val << " (loaded from xml input file).\n";
+    *output << "Given constant and uniform beta, value = " << given_val << " (loaded from xml input file).\n";
 #endif
   }
   else if ((betaType == "GIVEN FIELD")|| (betaType == "EXPONENT OF GIVEN FIELD") || (betaType == "GALERKIN PROJECTION OF EXPONENT OF GIVEN FIELD"))
@@ -92,15 +95,19 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       beta_type = EXP_GIVEN_FIELD;
     }
 
+    std::string given_field_name = beta_list.get<std::string> ("Given Field Variable Name");
+    if (IsStokes) {
+      given_field_name += "_" + basalSideName;
+    }
     if(beta_type == GAL_PROJ_EXP_GIVEN_FIELD) {
-      beta_given_field = PHX::MDField<const ParamScalarT>(beta_list.get<std::string> ("Beta Given Variable Name"), dl->node_scalar);
-      this->addDependentField (beta_given_field);
+      given_field = PHX::MDField<const ParamScalarT>(given_field_name, dl->node_scalar);
+      this->addDependentField (given_field);
       BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
       this->addDependentField (BF);
     }
     else {
-      beta_given_field = PHX::MDField<const ParamScalarT>(beta_list.get<std::string> ("Beta Given Variable Name"), layout);
-      this->addDependentField (beta_given_field);
+      given_field = PHX::MDField<const ParamScalarT>(given_field_name, layout);
+      this->addDependentField (given_field);
     }
   }
   else if (betaType == "POWER LAW")
@@ -212,15 +219,15 @@ postRegistrationSetup (typename Traits::SetupData d,
   switch (beta_type)
   {
     case GIVEN_CONSTANT:
-      beta.deep_copy(ScalarT(beta_given_val));
+      beta.deep_copy(ScalarT(given_val));
       break;
     case GIVEN_FIELD:
     case EXP_GIVEN_FIELD:
-      this->utils.setFieldData(beta_given_field,fm);
+      this->utils.setFieldData(given_field,fm);
       break;
     case GAL_PROJ_EXP_GIVEN_FIELD:
       this->utils.setFieldData(BF,fm);
-      this->utils.setFieldData(beta_given_field,fm);
+      this->utils.setFieldData(given_field,fm);
       break;
     case POWER_LAW:
     case REGULARIZED_COULOMB:
@@ -361,7 +368,7 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
       case GIVEN_FIELD:
         for (int ipt=0; ipt<dim; ++ipt)
         {
-          beta(cell,side,ipt) = beta_given_field(cell,side,ipt);
+          beta(cell,side,ipt) = given_field(cell,side,ipt);
         }
         break;
 
@@ -383,7 +390,7 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
       case EXP_GIVEN_FIELD:
         for (int ipt=0; ipt<dim; ++ipt)
         {
-          beta(cell,side,ipt) = std::exp(beta_given_field(cell,side,ipt));
+          beta(cell,side,ipt) = std::exp(given_field(cell,side,ipt));
         }
         break;
 
@@ -392,7 +399,7 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
         {
           beta(cell,side,qp) = 0;
           for (int node=0; node<numNodes; ++node)
-            beta(cell,side,qp) += std::exp(beta_given_field(cell,side,node))*BF(cell,side,node,qp);
+            beta(cell,side,qp) += std::exp(given_field(cell,side,node))*BF(cell,side,node,qp);
         }
       break;
     }
@@ -432,7 +439,7 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
     case GIVEN_FIELD:
       for (int cell=0; cell<workset.numCells; ++cell)
         for (int ipt=0; ipt<dim; ++ipt)
-            beta(cell,ipt) = beta_given_field(cell,ipt);
+            beta(cell,ipt) = given_field(cell,ipt);
       break;
 
     case POWER_LAW:
@@ -482,7 +489,7 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
       for (int cell=0; cell<workset.numCells; ++cell)
         for (int ipt=0; ipt<dim; ++ipt)
         {
-          beta(cell,ipt) = std::exp(beta_given_field(cell,ipt));
+          beta(cell,ipt) = std::exp(given_field(cell,ipt));
         }
       break;
 
@@ -492,7 +499,7 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
         {
           beta(cell,ipt) = 0;
           for (int node=0; node<numNodes; ++node)
-            beta(cell,ipt) += std::exp(beta_given_field(cell,node))*BF(cell,node,ipt);
+            beta(cell,ipt) += std::exp(given_field(cell,node))*BF(cell,node,ipt);
         }
   }
 

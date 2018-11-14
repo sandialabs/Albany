@@ -5,9 +5,9 @@ set(testName ${testDirName})
 # 
 # 1. Copy input file from source to binary dir
 IF (ALBANY_EPETRA) 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell3D.xml ${CMAKE_CURRENT_BINARY_DIR}/mitchell3D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell3D.yaml ${CMAKE_CURRENT_BINARY_DIR}/mitchell3D.yaml COPYONLY)
 ENDIF() 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell3DT.xml ${CMAKE_CURRENT_BINARY_DIR}/mitchell3DT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell3DT.yaml ${CMAKE_CURRENT_BINARY_DIR}/mitchell3DT.yaml COPYONLY)
 # 2. Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/padded.gen     ${CMAKE_CURRENT_BINARY_DIR}/padded.gen COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/padded.gen.4.0 ${CMAKE_CURRENT_BINARY_DIR}/padded.gen.4.0 COPYONLY)
@@ -25,13 +25,13 @@ IF (SEACAS_EPU AND SEACAS_EXODIFF)
 IF (ALBANY_EPETRA) 
 add_test(NAME ATO:${testName} 
          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
-         -DTEST_NAME=${testName} -DTEST_ARGS=mitchell3D.xml -DMPIMNP=${MPIMNP} 
+         -DTEST_NAME=${testName} -DTEST_ARGS=mitchell3D.yaml -DMPIMNP=${MPIMNP} 
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
 ENDIF() 
 add_test(NAME ATOT:${testName} 
          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
-         -DTEST_NAME=${testName} -DTEST_ARGS=mitchell3DT.xml -DMPIMNP=${MPIMNP} 
+         -DTEST_NAME=${testName} -DTEST_ARGS=mitchell3DT.yaml -DMPIMNP=${MPIMNP} 
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtestT.cmake)
 ENDIF()

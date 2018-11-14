@@ -9,5 +9,4 @@
 #include "LandIce_L2ProjectedBoundaryLaplacianResidual.hpp"
 #include "LandIce_L2ProjectedBoundaryLaplacianResidual_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::L2ProjectedBoundaryLaplacianResidual)
-
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(LandIce::L2ProjectedBoundaryLaplacianResidualBase)

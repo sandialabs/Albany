@@ -1001,7 +1001,7 @@ void Albany::APFDiscretization::computeWorksetInfo()
   if (meshStruct->allElementBlocksHaveSamePhysics)
     for (int i=0; i<numBuckets; i++) wsPhysIndex[i]=0;
   else
-    for (int i=0; i<numBuckets; i++) wsPhysIndex[i]=meshStruct->ebNameToIndex[wsEBNames[i]];
+    for (int i=0; i<numBuckets; i++) wsPhysIndex[i]=meshStruct->getMeshSpecs()[0]->ebNameToIndex[wsEBNames[i]];
 
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
 
@@ -1276,7 +1276,7 @@ void Albany::APFDiscretization::computeSideSets()
     sstruct.elem_GID = apf::getNumber(elementNumbering, apf::Node(elem, 0));
     int workset = elemGIDws[sstruct.elem_GID].ws; // workset ID that this element lives in
     sstruct.elem_LID = elemGIDws[sstruct.elem_GID].LID; // local element id in this workset
-    sstruct.elem_ebIndex = meshStruct->ebNameToIndex[wsEBNames[workset]]; // element block that workset lives in
+    sstruct.elem_ebIndex = meshStruct->getMeshSpecs()[0]->ebNameToIndex[wsEBNames[workset]]; // element block that workset lives in
     sstruct.side_local_id = apf::getLocalSideId(m, elem, side);
 
     Albany::SideSetList& ssList = sideSets[workset]; // Get a ref to the side set map for this ws

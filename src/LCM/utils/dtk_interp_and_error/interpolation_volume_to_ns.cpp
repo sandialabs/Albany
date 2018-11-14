@@ -225,12 +225,12 @@ interpolate(
   FieldType& target_interp_field =
       tgt_broker.meta_data().declare_field<FieldType>(
           stk::topology::NODE_RANK, tgt_interp_field_name);
-  stk::mesh::put_field(
-      target_interp_field, tgt_broker.meta_data().universal_part(), neq);
+  stk::mesh::put_field_on_mesh(
+      target_interp_field, tgt_broker.meta_data().universal_part(), neq, nullptr);
   FieldType& dirichlet_field = tgt_broker.meta_data().declare_field<FieldType>(
       stk::topology::NODE_RANK, "dirichlet_field");
-  stk::mesh::put_field(
-      dirichlet_field, tgt_broker.meta_data().universal_part(), neq);
+  stk::mesh::put_field_on_mesh(
+      dirichlet_field, tgt_broker.meta_data().universal_part(), neq, nullptr);
 
   // Create the target bulk data.
   tgt_broker.populate_bulk_data();

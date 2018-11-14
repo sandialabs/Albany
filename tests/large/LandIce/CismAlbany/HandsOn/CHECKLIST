@@ -1,16 +1,16 @@
-1. Make sure to use same physical parameters (g, rho_i, rho_w) in both cism-albanyT.config and in input_standalone-albanyT.xml input files.
+1. Make sure to use same physical parameters (g, rho_i, rho_w) in both cism-albanyT.config and in input_standalone-albanyT.yaml input files.
 
 2. make sure that the "ice_limit" value is the same in the cism-albany.confing and in the scripts
     build_cism_msh_from_nc.m and print_exo_fields_into_nc.m
 
 2. set to zero the use_glissade_surf_height_grad option in cism-albanyT.config file.
 
-3. Check whether that "use_lateral_bcs" in cism-albanyT.config is compatible with what b.c. is selected in input_standalone-albanyT.xml
+3. Check whether that "use_lateral_bcs" in cism-albanyT.config is compatible with what b.c. is selected in input_standalone-albanyT.yaml
 
 4. make sure that the number of levels/layers in albany-cism.config is the same to the ones in 
-print_exo_fields_into_nc.m, compare_exos.nc and the one in the input_standalone-albanyT.xml  (note, in albany and matlab scripts, num_levels := num layers+1).
+print_exo_fields_into_nc.m, compare_exos.nc and the one in the input_standalone-albanyT.yaml  (note, in albany and matlab scripts, num_levels := num layers+1).
 
-5. The values of the following options should be the same in input_cism-albanyT.xml and input_standalone-albanyT.xml:
+5. The values of the following options should be the same in input_cism-albanyT.yaml and input_standalone-albanyT.yaml:
    - parameter name="Solution Method" in "Problem" sublist.
    - parameter name="Glen's Law Homotopy Parameter" in "LandIce Viscosity" sublist in "Problem" sublist.
    

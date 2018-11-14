@@ -188,23 +188,25 @@ LandIce::Stokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
    if (haveFlowEq) {
      nbcNames.push_back("ux");
      offsets.push_back(Teuchos::Array<int>(1,idx++));
+     dof_names->push_back("Velocity");
      if (numDim>=2) {
        nbcNames.push_back("uy");
        offsets.push_back(Teuchos::Array<int>(1,idx++));
+       dof_names->push_back("Velocity");
      }
      if (numDim==3) {
        nbcNames.push_back("uz");
        offsets.push_back(Teuchos::Array<int>(1,idx++));
+       dof_names->push_back("Velocity");
      }
      nbcNames.push_back("p");
      offsets.push_back(Teuchos::Array<int>(1,idx++));
-     dof_names->push_back("Velocity");
      dof_names->push_back("Pressure");
    }
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
-   std::vector<std::string> condNames(3); //dudx, dudy, dudz, dudn, basal
+   std::vector<std::string> condNames(3); //dudx, dudy, dudz, dudn, robin
 
    // Note that sidesets are only supported for two and 3D currently
    //
@@ -218,7 +220,7 @@ LandIce::Stokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
 
    condNames[1] = "dudn";
 
-   condNames[2] = "basal";
+   condNames[2] = "robin";
 
    nfm.resize(1);
 
@@ -242,6 +244,7 @@ LandIce::Stokes::getValidProblemParameters() const
   validPL->sublist("Density", false, "");
   validPL->sublist("Viscosity", false, "");
   validPL->sublist("LandIce Viscosity", false, "");
+  validPL->sublist("LandIce BCs", false, "Specify boundary conditions specific to LandIce (bypass usual Neumann/Dirichlet classes)");
   validPL->sublist("Tau M", false, "");
   validPL->sublist("Body Force", false, "");
   validPL->sublist("LandIce Physical Parameters", false, "");

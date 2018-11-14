@@ -75,6 +75,9 @@ StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   needsDiss = params->get<bool> ("Needs Dissipation",true);
   needsBasFric = params->get<bool> ("Needs Basal Friction",true);
   isGeoFluxConst = params->get<bool> ("Constant Geothermal Flux",true);
+
+  TEUCHOS_TEST_FOR_EXCEPTION (needsBasFric && basalSideName=="INVALID", std::logic_error,
+                              "Error! If 'Needs Basal Friction' is true, you need a valid 'Basal Side Name'.\n");
 }
 
 LandIce::StokesFOThermoCoupled::
@@ -132,7 +135,14 @@ void LandIce::StokesFOThermoCoupled::buildProblem (Teuchos::ArrayRCP<Teuchos::RC
     basalSideType = rcp(new shards::CellTopology (side_top));
 
     basalEBName   = basalMeshSpecs.ebName;
-    basalCubature = cubFactory.create<PHX::Device, RealType, RealType>(*basalSideType, basalMeshSpecs.cubatureDegree);
+    // If there's no side discretiation, then lateralMeshSpecs will be -1, and the user need to specify a cubature degree somewhere else
+    int basalCubDegree = basalMeshSpecs.cubatureDegree;
+    if (params->sublist("LandIce Basal Friction Coefficient").isParameter("Cubature Degree")) {
+      basalCubDegree = params->sublist("LandIce Basal Friction Coefficient").get<int>("Cubature Degree");
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION (basalCubDegree<0, std::runtime_error, "Error! Missing cubature degree information on side '" << basalSideName << ".\n"
+                                                                      "       Either add a side discretization, or specify 'Cubature Degree' in sublist 'LandIce Basal Friction Coefficient'.\n");
+    basalCubature = cubFactory.create<PHX::Device, RealType, RealType>(*basalSideType, basalCubDegree);
 
     numBasalSideVertices = basalSideType->getNodeCount();
     numBasalSideNodes    = basalSideBasis->getCardinality();
@@ -172,52 +182,22 @@ void LandIce::StokesFOThermoCoupled::buildProblem (Teuchos::ArrayRCP<Teuchos::RC
   }
 
   if (lateralSideName!="INVALID") {
-    // For lateral bc, we want to give the option of not creating a whole discretization, since
-    // it would just be needed to setup the lateral bc. If the user does not specify a lateral
-    // discretization, we build the information we need ourself. The user can specify the quadrature
-    // degree for the lateral bc in the 'LandIce Lateral BC' sublist. This would also be used to
-    // override the specs of the lateral discretization (if present).
+    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(lateralSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
+                                "Error! Either 'Lateral Side Name' is wrong or something went wrong while building the side mesh specs.\n");
+    const Albany::MeshSpecsStruct& lateralMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(lateralSideName)[0];
 
+    // Building also basal side structures
     const CellTopologyData* side_top = nullptr;
-    int lateralCubDegree = -1;
+    lateralSideBasis = Albany::getIntrepid2Basis(*side_top);
+    lateralSideType = rcp(new shards::CellTopology (side_top));
 
-    auto ss_ms = meshSpecs[0]->sideSetMeshSpecs;
-    auto it = ss_ms.find(lateralSideName);
-    if (it!=ss_ms.end()) {
-      // The user specified a lateral side discretization. Just get the topology from the lateral side mesh specs
-      side_top = &it->second[0]->ctd;
-      lateralCubDegree = it->second[0]->cubatureDegree;
-    } else {
-      // The user did not specify a lateral side discretization. We need to create a topology from
-      // the cell topology. We need to check what's the cell topology: if tetra/tria/quad/hexa, then
-      // all sides have the same topology, so any side of the cell topology works. But if we have wedges,
-      // then lateral side is the quadrilateral. As of this writing, the quad sides of a wedge are the first
-      // three. However, for safety, we loop through all sides and check their node count, and pick the first
-      // side with 4 nodes.
-      std::string cell_top_name (cell_top->base->name);
-      if (cell_top_name=="Wedge_6") {
-        for (int i=0; i<cellType->getSubcellCount(sideDim); ++i) {
-          std::string tmp (cellType->getCellTopologyData(sideDim,i)->base->name);
-          if (tmp=="Quadrilateral_4") {
-            // Found the lateral side. Get topology and break
-            side_top = cellType->getCellTopologyData(sideDim,i);
-            break;
-          }
-        }
-      } else {
-        // All sides have the same topology. Just pick the first
-        side_top = cellType->getCellTopologyData(sideDim,0);
-      }
-    }
-    TEUCHOS_TEST_FOR_EXCEPTION (side_top==nullptr, std::runtime_error, "Error! Something went wrong while detecting lateral side topology.\n");
-
+    // If there's no side discretiation, then lateralMeshSpecs will be -1, and the user need to specify a cubature degree somewhere else
+    int lateralCubDegree = lateralMeshSpecs.cubatureDegree;
     if (params->sublist("LandIce Lateral BC").isParameter("Cubature Degree")) {
       lateralCubDegree = params->sublist("LandIce Lateral BC").get<int>("Cubature Degree");
     }
-    TEUCHOS_TEST_FOR_EXCEPTION (lateralCubDegree<0, std::runtime_error, "Error! Missing cubature degree information on side '" << lateralSideName << ".\n");
-
-    lateralSideBasis = Albany::getIntrepid2Basis(*side_top);
-    lateralSideType = rcp(new shards::CellTopology (side_top));
+    TEUCHOS_TEST_FOR_EXCEPTION (lateralCubDegree<0, std::runtime_error, "Error! Missing cubature degree information on side '" << lateralSideName << ".\n"
+                                                                        "       Either add a side discretization, or specify 'Cubature Degree' in sublist 'LandIce Lateral BC'.\n");
 
     lateralCubature = cubFactory.create<PHX::Device, RealType, RealType>(*lateralSideType, lateralCubDegree);
 
@@ -408,7 +388,6 @@ LandIce::StokesFOThermoCoupled::getValidProblemParameters () const
   validPL->sublist("LandIce Field Norm", false, "");
   validPL->sublist("LandIce Physical Parameters", false, "");
   validPL->sublist("LandIce Noise", false, "");
-  validPL->sublist("Parameter Fields", false, "Parameter Fields to be registered");
   validPL->set<bool>("Use Time Parameter", false, "Solely to use Solver Method = Continuation");
   validPL->set<bool>("Print Stress Tensor", false, "Whether to save stress tensor in the mesh");
 

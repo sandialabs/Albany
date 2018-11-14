@@ -12,16 +12,16 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/flwa
                ${CMAKE_CURRENT_BINARY_DIR}/flwa COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/beta
                ${CMAKE_CURRENT_BINARY_DIR}/beta COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome_ascii.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_dome_ascii.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome_restart.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_dome_restart.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome_ascii.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_dome_ascii.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome_restart.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_dome_restart.yaml COPYONLY)
 
 if (ALBANY_EPETRA)
-add_test(LandIce_FO_Dome_Ascii ${SerialAlbany.exe} input_fo_dome_ascii.xml)
+add_test(LandIce_FO_Dome_Ascii ${SerialAlbany.exe} input_fo_dome_ascii.yaml)
 
 IF (ALBANY_SEACSAS)
-  add_test(LandIce_FO_Dome_Restart ${SerialAlbany.exe} input_fo_dome_restart.xml)
+  add_test(LandIce_FO_Dome_Restart ${SerialAlbany.exe} input_fo_dome_restart.yaml)
   set_tests_properties(LandIce_FO_Dome_Restart  PROPERTIES DEPENDS LandIce_FO_Dome_Ascii)
 ENDIF()
 

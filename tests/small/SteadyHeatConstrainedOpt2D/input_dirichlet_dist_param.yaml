@@ -1,0 +1,181 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Heat 2D
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF T prescribe Field: dirichlet_field
+      DBC on NS NodeSet1 for DOF T: -1.00000000000000000e+00
+    Parameters: { }
+    Distributed Parameters: 
+      Number of Parameter Vectors: 1
+      Distributed Parameter 0: 
+        Name: dirichlet_field
+        Lower Bound: -1.00000000000000000e+00
+        Upper Bound: 2.00000000000000000e+00
+        Initial Uniform Value: -5.00000000000000000e-01
+        Mesh Part: NodeSet0
+    Response Functions: 
+      Collection Method: Sum Responses
+      Number: 1
+      Response 0: Squared L2 Difference Source ST Target PST
+      ResponseParams 0: 
+        Field Rank: Scalar
+        Source Field Name: Temperature
+        Target Field Name: ZERO
+  Discretization: 
+    1D Elements: 40
+    2D Elements: 40
+    Method: STK2D
+    Exodus Output File Name: steady2d.exo
+    Cubature Degree: 9
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [5.83333333332999970e-01]
+    Relative Tolerance: 1.00000000000000002e-03
+    Sensitivity Comparisons 0: 
+      Number of Sensitivity Comparisons: 1
+      Sensitivity Test Values 0: [1.04748375675000005e-01]
+  Piro: 
+    Sensitivity Method: Adjoint
+    Analysis: 
+      Analysis Package: ROL
+      ROL: 
+        Check Gradient: false
+        Gradient Tolerance: 1.00000000000000008e-05
+        Step Tolerance: 1.00000000000000005e-04
+        Max Iterations: 50
+        Print Output: true
+        Parameter Initial Guess Type: From Model Evaluator
+        Uniform Parameter Guess: 0.00000000000000000e+00
+        Min And Max Of Random Parameter Guess: [-1.00000000000000000e+00, 2.00000000000000000e+00]
+        Bound Constrained: true
+        bound_eps: 1.00000000000000006e-01
+        ROL Options: 
+          General: 
+            Variable Objective Function: false
+            Scale for Epsilon Active Sets: 1.00000000000000000e+00
+            Inexact Objective Function: true
+            Inexact Gradient: true
+            Inexact Hessian-Times-A-Vector: true
+            Projected Gradient Criticality Measure: false
+            Secant: 
+              Type: Limited-Memory BFGS
+              Use as Preconditioner: false
+              Use as Hessian: false
+              Maximum Storage: 50
+              Barzilai-Borwein Type: 1
+            Krylov: 
+              Type: Conjugate Gradients
+              Absolute Tolerance: 1.00000000000000005e-04
+              Relative Tolerance: 1.00000000000000002e-02
+              Iteration Limit: 100
+          Step: 
+            Line Search: 
+              Function Evaluation Limit: 60
+              Sufficient Decrease Tolerance: 9.99999999999999945e-21
+              Initial Step Size: 1.00000000000000000e+00
+              User Defined Initial Step Size: false
+              Accept Linesearch Minimizer: false
+              Accept Last Alpha: false
+              Descent Method: 
+                Type: Newton-Krylov
+                Nonlinear CG Type: Hestenes-Stiefel
+              Curvature Condition: 
+                Type: Strong Wolfe Conditions
+                General Parameter: 9.00000000000000022e-01
+                Generalized Wolfe Parameter: 5.99999999999999978e-01
+              Line-Search Method: 
+                Type: Cubic Interpolation
+                Backtracking Rate: 5.00000000000000000e-01
+                Bracketing Tolerance: 1.00000000000000002e-08
+                Path-Based Target Level: 
+                  Target Relaxation Parameter: 1.00000000000000000e+00
+                  Upper Bound on Path Length: 1.00000000000000000e+00
+            Trust Region: 
+              Subproblem Solver: Truncated CG
+              Initial Radius: 1.00000000000000000e+01
+              Maximum Radius: 5.00000000000000000e+03
+              Step Acceptance Threshold: 5.00000000000000028e-02
+              Radius Shrinking Threshold: 5.00000000000000028e-02
+              Radius Growing Threshold: 9.00000000000000022e-01
+              Radius Shrinking Rate (Negative rho): 6.25000000000000000e-02
+              Radius Shrinking Rate (Positive rho): 2.50000000000000000e-01
+              Radius Growing Rate: 2.50000000000000000e+00
+              Safeguard Size: 1.00000000000000000e+08
+              Inexact: 
+                Value: 
+                  Tolerance Scaling: 1.00000000000000006e-01
+                  Exponent: 9.00000000000000022e-01
+                  Forcing Sequence Initial Value: 1.00000000000000000e+00
+                  Forcing Sequence Update Frequency: 10
+                  Forcing Sequence Reduction Factor: 1.00000000000000006e-01
+                Gradient: 
+                  Tolerance Scaling: 1.00000000000000006e-01
+                  Relative Tolerance: 2.00000000000000000e+00
+          Status Test: 
+            Gradient Tolerance: 1.00000000000000004e-10
+            Constraint Tolerance: 1.00000000000000004e-10
+            Step Tolerance: 9.99999999999999999e-15
+            Iteration Limit: 1000
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 9.99999999999999955e-08
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 9.99999999999999955e-08
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 100
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 1
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.00000000000000000e+00
+                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

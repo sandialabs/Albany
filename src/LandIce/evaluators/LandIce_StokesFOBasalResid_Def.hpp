@@ -6,9 +6,17 @@
 
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
+#include "Shards_CellTopology.hpp"
+
+#include "Albany_DiscretizationUtils.hpp"
+#include "LandIce_StokesFOBasalResid.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+// #define OUTPUT_TO_SCREEN
+
+#ifdef OUTPUT_TO_SCREEN
+#include "Teuchos_VerboseObject.hpp"
+#endif
 
 namespace LandIce {
 
@@ -16,7 +24,7 @@ namespace LandIce {
 template<typename EvalT, typename Traits, typename BetaScalarT>
 StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teuchos::ParameterList& p,
                                            const Teuchos::RCP<Albany::Layouts>& dl) :
-  basalResid (p.get<std::string> ("Basal Residual Variable Name"),dl->node_vector)
+  residual (p.get<std::string> ("Residual Variable Name"),dl->node_vector)
 {
   basalSideName = p.get<std::string>("Side Set Name");
 
@@ -35,14 +43,13 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
   this->addDependentField(BF);
   this->addDependentField(w_measure);
 
-  this->addEvaluatedField(basalResid);
+  this->addContributedField(residual);
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl_basal->node_qp_gradient->dimensions(dims);
   int numSides = dims[1];
   numSideNodes = dims[2];
   numSideQPs   = dims[3];
-  numCellNodes = basalResid.fieldTag().dataLayout().dimension(1);
 
   dl->node_vector->dimensions(dims);
   vecDimFO     = std::min((int)dims[2],2);
@@ -79,7 +86,7 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
 //**********************************************************************
 template<typename EvalT, typename Traits, typename BetaScalarT>
 void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(u,fm);
@@ -89,7 +96,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (regularized)
     this->utils.setFieldData(homotopyParam,fm);
 
-  this->utils.setFieldData(basalResid,fm);
+  this->utils.setFieldData(residual,fm);
 }
 
 //**********************************************************************
@@ -107,14 +114,9 @@ void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::evaluateFields (typename Tr
     }
 #endif
 
-  // Zero out, to avoid leaving stuff from previous workset!
-  for (int cell=0; cell<workset.numCells; ++cell)
-    for (int node=0; node<numCellNodes; ++node)
-      for (int dim=0; dim<vecDim; ++dim)
-        basalResid(cell,node,dim) = 0;
-
-  if (workset.sideSets->find(basalSideName)==workset.sideSets->end())
+  if (workset.sideSets->find(basalSideName)==workset.sideSets->end()) {
     return;
+  }
 
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
 
@@ -130,7 +132,7 @@ void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::evaluateFields (typename Tr
       {
         for (int qp=0; qp<numSideQPs; ++qp)
         {
-          basalResid(cell,sideNodes[side][node],dim) += (ff + beta(cell,side,qp)*u(cell,side,qp,dim))*BF(cell,side,node,qp)*w_measure(cell,side,qp);
+          residual(cell,sideNodes[side][node],dim) += (ff + beta(cell,side,qp)*u(cell,side,qp,dim))*BF(cell,side,node,qp)*w_measure(cell,side,qp);
         }
       }
     }

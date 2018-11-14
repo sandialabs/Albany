@@ -1,0 +1,92 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Aeras XZ Hydrostatic
+    Solution Method: Transient
+    XZHydrostatic Problem: 
+      Number of Vertical Levels: 100
+      Tracers: [Vaper, Rain, Cloud]
+      P0: 1.01325000000000000e+05
+      Ptop: 1.01325000000000003e+02
+      Compute Cloud Physics: false
+      Viscosity: 1.00000000000000000e+04
+    Initial Condition: 
+      Function: Aeras XZ Hydrostatic Gaussian Velocity Bubble
+      Function Data: [1.00000000000000000e+02, 3.00000000000000000e+00, 1.01325000000000000e+05, 0.00000000000000000e+00, 2.88000000000000000e+02, 1.00000000000000006e-01, 2.00000000000000000e+04, 5.00000000000000000e+01, 4.00000000000000000e+03, 1.00000000000000000e+01, 1.11000000000000001e-01, 3.33000000000000018e-01, 5.55000000000000049e-01]
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    Method: STK1D
+    1D Elements: 100
+    1D Scale: 4.00000000000000000e+04
+    Workset Size: 1000
+    Periodic_x BC: true
+    Cubature Degree: 4
+    Cubature Rule: GAUSS_LOBATTO
+    Exodus Output File Name: xzhydrostatic.exo
+  Piro: 
+    Rythmos Solver: 
+      Invert Mass Matrix: true
+      Lump Mass Matrix: true
+      NonLinear Solver: 
+        VerboseObject: 
+          Verbosity Level: low
+      Rythmos: 
+        Integrator Settings: 
+          Final Time: 4.00000000000000000e+02
+          Integrator Selection: 
+            Integrator Type: Default Integrator
+            Default Integrator: 
+              VerboseObject: 
+                Verbosity Level: low
+        Stepper Settings: 
+          Stepper Selection: 
+            Stepper Type: Explicit RK
+          Runge Kutta Butcher Tableau Selection: 
+            Runge Kutta Butcher Tableau Type: Explicit Trapezoidal
+        Integration Control Strategy Selection: 
+          Integration Control Strategy Type: Simple Integration Control Strategy
+          Simple Integration Control Strategy: 
+            Take Variable Steps: false
+            Fixed dt: 1.00000000000000006e-01
+            VerboseObject: 
+              Verbosity Level: low
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          Belos: 
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 1.00000000000000008e-05
+                Output Frequency: 10
+                Output Style: 1
+                Verbosity: 0
+                Maximum Iterations: 100
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: false
+        Preconditioner Type: ML
+        Preconditioner Types: 
+          Ifpack: 
+            Prec Type: ILU
+            Overlap: 1
+            Ifpack Settings: 
+              'fact: level-of-fill': 1
+          ML: 
+            Base Method Defaults: SA
+            ML Settings: 
+              'aggregation: type': Uncoupled
+              'coarse: max size': 20
+              'coarse: pre or post': post
+              'coarse: sweeps': 1
+              'coarse: type': Amesos-KLU
+              prec type: MGV
+              'smoother: type': Gauss-Seidel
+              'smoother: damping factor': 6.60000000000000031e-01
+              'smoother: pre or post': both
+              'smoother: sweeps': 1
+              ML output: 1
+...

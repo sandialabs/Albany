@@ -1,0 +1,319 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Solution Method: ATO Problem
+    Number of Subproblems: 2
+    Verbose Output: true
+    Objective Aggregator: 
+      Output Value Name: F
+      Output Derivative Name: dFdRho
+      Values: [R0, R1]
+      Derivatives: [dR0dRho, dR1dRho]
+      Weighting: Uniform
+    Spatial Filters: 
+      Number of Filters: 1
+      Filter 0: 
+        Filter Radius: 1.20000000000000000e+01
+        Iterations: 2
+    Topological Optimization: 
+      Package: OC
+      Stabilization Parameter: 5.00000000000000000e-01
+      Move Limiter: 5.00000000000000000e-01
+      Convergence Tests: 
+        Maximum Iterations: 2
+        Combo Type: OR
+        Relative Topology Change: 5.00000000000000010e-04
+        Relative Objective Change: 1.00000000000000008e-05
+      Measure Enforcement: 
+        Measure: Volume
+        Maximum Iterations: 120
+        Convergence Tolerance: 9.99999999999999955e-07
+        Target: 2.00000000000000011e-01
+      Objective: Aggregator
+      Constraint: Measure
+    Topologies: 
+      Read From Restart: false
+      Number of Topologies: 1
+      Topology 0: 
+        Topology Name: Rho
+        Entity Type: State Variable
+        Bounds: [0.00000000000000000e+00, 1.00000000000000000e+00]
+        Initial Value: 5.00000000000000000e-01
+        Functions: 
+          Number of Functions: 2
+          Function 0: 
+            Function Type: SIMP
+            Minimum: 1.00000000000000002e-03
+            Penalization Parameter: 3.00000000000000000e+00
+          Function 1: 
+            Function Type: SIMP
+            Minimum: 0.00000000000000000e+00
+            Penalization Parameter: 1.00000000000000000e+00
+        Spatial Filter: 0
+    Configuration: 
+      Nonconformal: true
+      Element Blocks: 
+        Number of Element Blocks: 4
+        Element Block 0: 
+          Name: block_0
+          Material: 
+            Elastic Modulus: 1.00000000000000000e+09
+            Isotropic Modulus: 1.00000000000000000e+09
+            Poissons Ratio: 3.30000000000000016e-01
+          Geometry Construction: 
+            Geometry Type: Body
+            Model Type: Non-parameterized
+            Error Checking: 0
+            Projection Order: 2
+            Uniform Quadrature: true
+            Number of Subdomains: 4
+            Level Set Names: [LS0_SURF0, LS0_SURF1, LS0_SURF2, LS0_SURF3, LS0_SURF4, LS0_SURF5, LS1_SURF0, LS2_SURF0, LS3_SURF0]
+            Subdomain 0: 
+              Operation: Add
+              Level Set Indices: [0, 1, 2, 3, 4, 5]
+            Subdomain 1: 
+              Operation: Subtract
+              Level Set Indices: [6, 4, 5]
+            Subdomain 2: 
+              Operation: Subtract
+              Level Set Indices: [7, 4, 5]
+            Subdomain 3: 
+              Operation: Subtract
+              Level Set Indices: [8, 4, 5]
+        Element Block 1: 
+          Name: block_100
+          Geometry Construction: 
+            Geometry Type: Boundary
+            Model Type: Non-parameterized
+            Error Checking: 0
+            Projection Order: 2
+            Uniform Quadrature: true
+            Number of Subdomains: 1
+            Level Set Names: [LS1_SURF0, LS1_SURF1, LS1_SURF2]
+            Surface Level Set Index: 0
+            Subdomain 0: 
+              Operation: Add
+              Level Set Indices: [0, 1, 2]
+        Element Block 2: 
+          Name: block_200
+          Geometry Construction: 
+            Geometry Type: Boundary
+            Model Type: Non-parameterized
+            Error Checking: 0
+            Projection Order: 2
+            Uniform Quadrature: true
+            Number of Subdomains: 1
+            Level Set Names: [LS2_SURF0, LS2_SURF1, LS2_SURF2]
+            Surface Level Set Index: 0
+            Subdomain 0: 
+              Operation: Add
+              Level Set Indices: [0, 1, 2]
+        Element Block 3: 
+          Name: block_300
+          Geometry Construction: 
+            Projection Order: 2
+            Uniform Quadrature: true
+            Geometry Type: Boundary
+            Model Type: Non-parameterized
+            Error Checking: 0
+            Level Set Names: [LS3_SURF0, LS3_SURF1, LS3_SURF2]
+            Surface Level Set Index: 0
+            Number of Subdomains: 1
+            Subdomain 0: 
+              Operation: Add
+              Level Set Indices: [0, 1, 2]
+      Linear Measures: 
+        Number of Linear Measures: 1
+        Linear Measure 0: 
+          Linear Measure Name: Volume
+          Linear Measure Type: Volume
+          Blocks: [block_0]
+          Volume: 
+            Topology Index: 0
+            Function Index: 1
+    Physics Problem 0: 
+      Name: LinearElasticity 3D
+      Implicit Boundary Conditions: 
+        Number of Dirichlet BCs: 2
+        Dirichlet BC 0: 
+          Block: block_100
+          Variable Name: Displacement
+          Layout: QP Vector
+          X: 0.00000000000000000e+00
+          Y: 0.00000000000000000e+00
+          Z: 0.00000000000000000e+00
+          Penalty Coefficient: 1.00000000000000000e+07
+        Dirichlet BC 1: 
+          Block: block_200
+          Variable Name: Displacement
+          Layout: QP Vector
+          X: 0.00000000000000000e+00
+          Y: 0.00000000000000000e+00
+          Z: 0.00000000000000000e+00
+          Penalty Coefficient: 1.00000000000000000e+07
+        Number of Neumann BCs: 1
+        Neumann BC 0: 
+          Block: block_300
+          Layout: QP Vector
+          Vector: [0.00000000000000000e+00, -4.50000000000000000e+05, 0.00000000000000000e+00]
+      Apply Topology Weight Functions: 
+        Number of Fields: 2
+        Field 0: 
+          Name: Stress
+          Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+        Field 1: 
+          Name: Boundary Force
+          Type: Boundary
+          Layout: QP Vector
+          Topology Index: 0
+          Function Index: 0
+      Response Functions: 
+        Number of Response Vectors: 1
+        Response Vector 0: 
+          Name: Stiffness Objective
+          Blocks: [block_0]
+          Gradient Field Name: Strain
+          Gradient Field Layout: QP Tensor
+          Work Conjugate Name: Stress
+          Work Conjugate Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+          Response Name: R0
+          Response Derivative Name: dR0dRho
+    Physics Problem 1: 
+      Name: Poissons Equation 3D
+      Implicit Boundary Conditions: 
+        Number of Dirichlet BCs: 2
+        Dirichlet BC 0: 
+          Block: block_100
+          Variable Name: Phi
+          Layout: QP Scalar
+          Scalar: 0.00000000000000000e+00
+          Penalty Coefficient: 1.00000000000000000e+06
+        Dirichlet BC 1: 
+          Block: block_200
+          Variable Name: Phi
+          Layout: QP Scalar
+          Scalar: 0.00000000000000000e+00
+          Penalty Coefficient: 1.00000000000000000e+06
+        Number of Neumann BCs: 1
+        Neumann BC 0: 
+          Block: block_300
+          Layout: QP Scalar
+          Scalar: 5.00000000000000000e+04
+      Apply Topology Weight Functions: 
+        Number of Fields: 2
+        Field 0: 
+          Name: kinVar
+          Layout: QP Vector
+          Topology Index: 0
+          Function Index: 0
+        Field 1: 
+          Name: Boundary Value
+          Type: Boundary
+          Layout: QP Scalar
+          Topology Index: 0
+          Function Index: 0
+      Response Functions: 
+        Number of Response Vectors: 1
+        Response Vector 0: 
+          Name: Stiffness Objective
+          Blocks: [block_0]
+          Gradient Field Name: Phi Gradient
+          Gradient Field Layout: QP Vector
+          Work Conjugate Name: kinVar
+          Work Conjugate Layout: QP Vector
+          Topology Index: 0
+          Function Index: 0
+          Response Name: R1
+          Response Derivative Name: dR1dRho
+  Discretization: 
+    Method: Ioss
+    Exodus Input File Name: mitchell.gen
+    Exodus Output File Name: mitchellT.exo
+    Separate Evaluators by Element Block: true
+    Restart Index: 1
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 3
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000000000002e-08
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+        Test 2: 
+          Test Type: NormUpdate
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000000000002e-08
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 100
+                    Max Iterations: 2000
+                    Tolerance: 1.00000000000000004e-10
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 9.99999999999999980e-13
+                      Output Frequency: 2
+                      Output Style: 1
+                      Verbosity: 0
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: MueLu
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000000000000e+00
+                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                  VerboseObject: 
+                    Verbosity Level: medium
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

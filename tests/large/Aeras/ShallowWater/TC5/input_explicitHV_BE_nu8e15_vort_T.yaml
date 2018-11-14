@@ -1,0 +1,117 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Aeras Shallow Water 3D
+    Phalanx Graph Visualization Detail: 1
+    Solution Method: Aeras Hyperviscosity
+    Shallow Water Problem: 
+      Use Prescribed Velocity: false
+      Use Explicit Hyperviscosity: true
+      Hyperviscosity Type: Constant
+      Hyperviscosity Tau: 8.00000000000000000e+15
+      Plot Vorticity: true
+    Dirichlet BCs: { }
+    Aeras Surface Height: 
+      Type: Mountain
+    Initial Condition: 
+      Function: Aeras TC5Init
+    Response Functions: 
+      Number: 7
+      Response 0: Solution Min Value
+      ResponseParams 0: 
+        Equation: 1
+      Response 1: Solution Max Value
+      ResponseParams 1: 
+        Equation: 1
+      Response 2: Solution Min Value
+      ResponseParams 2: 
+        Equation: 2
+      Response 3: Solution Max Value
+      ResponseParams 3: 
+        Equation: 2
+      Response 4: Solution Min Value
+      ResponseParams 4: 
+        Equation: 3
+      Response 5: Solution Max Value
+      ResponseParams 5: 
+        Equation: 3
+      Response 6: Aeras Shallow Water L2 Norm
+    Parameters: 
+      Number: 0
+      Parameter 0: Mountain Height
+  Discretization: 
+    Method: Exodus Aeras
+    Exodus Input File Name: ../../grids/QUAD4/uniform_16_quad4.g
+    Element Degree: 2
+    Workset Size: -1
+    Exodus Output File Name: explicit_BE_nu8e15_vort.exo
+    Exodus Write Interval: 20
+    Number Of Time Derivatives: 2
+  Regression Results: 
+    Number of Comparisons: 7
+    Test Values: [-1.59670329987000002e-02, 2.13987511159000015e+01, -6.72803703746000004e+00, 2.32111455896000018e+00, -6.27216089200999993e-06, 1.25212234895999996e-05, 1.27141817923000000e+11]
+    Relative Tolerance: 1.00000000000000008e-05
+    Absolute Tolerance: 1.00000000000000002e-03
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [4.23961574999999979e-01, 3.56569929999999997e-03]
+  Piro: 
+    Solver Type: Rythmos
+    Rythmos: 
+      Nonlinear Solver Type: Rythmos
+      Final Time: 2.40000000000000000e+04
+      Rythmos Stepper: 
+        VerboseObject: 
+          Verbosity Level: low
+      Rythmos Integration Control: 
+        Take Variable Steps: false
+        Number of Time Steps: 20
+      Rythmos Integrator: 
+        VerboseObject: 
+          Verbosity Level: none
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          AztecOO: 
+            Forward Solve: 
+              AztecOO Settings: 
+                Aztec Solver: GMRES
+                Convergence Test: r0
+                Size of Krylov Subspace: 200
+              Max Iterations: 200
+              Tolerance: 1.00000000000000002e-08
+            Output Every RHS: true
+          Belos: 
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 1.00000000000000008e-05
+                Output Frequency: 10
+                Output Style: 1
+                Verbosity: 33
+                Maximum Iterations: 100
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: false
+        Preconditioner Type: Ifpack2
+        Preconditioner Types: 
+          Ifpack2: 
+            Prec Type: ILUT
+            Overlap: 1
+            Ifpack2 Settings: 
+              'fact: ilut level-of-fill': 1.00000000000000000e+00
+          ML: 
+            Base Method Defaults: SA
+            ML Settings: 
+              'aggregation: type': Uncoupled
+              'coarse: max size': 20
+              'coarse: pre or post': post
+              'coarse: sweeps': 1
+              'coarse: type': Amesos-KLU
+              prec type: MGV
+              'smoother: type': Gauss-Seidel
+              'smoother: damping factor': 6.60000000000000031e-01
+              'smoother: pre or post': both
+              'smoother: sweeps': 1
+              ML output: 1
+...

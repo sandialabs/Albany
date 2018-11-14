@@ -45,7 +45,6 @@ namespace Albany {
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
 
-    Teuchos::RCP<Teuchos::FancyOStream> out;
     bool periodic;
     int NumElemNodes; //number of nodes per element (e.g. 3 for Triangles)
     int NumNodes; //number of nodes

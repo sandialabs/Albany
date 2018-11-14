@@ -1,0 +1,70 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    wire: 
+      material: wire_mat
+    plate: 
+      material: plate_mat
+    surroundings: 
+      material: sur_mat
+  Materials: 
+    wire_mat: 
+      Material Model: 
+        Model Name: Linear Elastic
+      Thermal Conductivity: 
+        Thermal Conductivity Type: Constant
+        Value: 4.50000000000000000e+01
+        Linear Temperature Coefficient: 0.00000000000000000e+00
+      Reference Temperature: 1.00000000000000000e+02
+      Thermal Expansion Coefficient: 1.00000000000000002e-03
+      Density: 7.80000000000000036e-09
+      Heat Capacity: 4.60000000000000000e+08
+      Thermal Transient Coefficient: 0.00000000000000000e+00
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1.00000000000000000e+10
+        Linear Temperature Coefficient: 0.00000000000000000e+00
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 2.99999999999999989e-01
+        Linear Temperature Coefficient: 0.00000000000000000e+00
+    plate_mat: 
+      Material Model: 
+        Model Name: Linear Elastic
+      Thermal Conductivity: 
+        Thermal Conductivity Type: Constant
+        Value: 4.50000000000000000e+01
+      Reference Temperature: 1.00000000000000000e+02
+      Thermal Transient Coefficient: 0.00000000000000000e+00
+      Thermal Expansion Coefficient: 0.00000000000000000e+00
+      Density: 7.80000000000000036e-09
+      Heat Capacity: 4.60000000000000020e-01
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1.00000000000000000e+08
+        Linear Temperature Coefficient: 0.00000000000000000e+00
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 2.99999999999999989e-01
+        Linear Temperature Coefficient: 0.00000000000000000e+00
+    sur_mat: 
+      Material Model: 
+        Model Name: Linear Elastic
+      Thermal Conductivity: 
+        Thermal Conductivity Type: Constant
+        Value: 4.50000000000000000e+01
+      Reference Temperature: 1.00000000000000000e+02
+      Thermal Transient Coefficient: 0.00000000000000000e+00
+      Thermal Expansion Coefficient: 0.00000000000000000e+00
+      Density: 7.80000000000000036e-09
+      Heat Capacity: 4.60000000000000020e-01
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1.00000000000000000e+00
+        Linear Temperature Coefficient: 0.00000000000000000e+00
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 5.00000000000000000e-01
+        Linear Temperature Coefficient: 0.00000000000000000e+00
+...

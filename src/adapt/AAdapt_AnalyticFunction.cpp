@@ -152,13 +152,13 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
       F = Teuchos::rcp(new AAdapt::AerasRossbyHaurwitzWave(neq, numDim, data));
 
   else if(name == "Aeras TC5Init")
-    F = Teuchos::rcp(new AAdapt::AerasTC5Init(neq, numDim, data));
+    F = Teuchos::rcp(new AAdapt::AerasTC5Init(neq, numDim));
     
   else if(name == "Aeras TC3Init")
     F = Teuchos::rcp(new AAdapt::AerasTC3Init(neq, numDim, data));
     
   else if(name == "Aeras TCGalewskyInit")
-      F = Teuchos::rcp(new AAdapt::AerasTCGalewskyInit(neq, numDim, data));
+      F = Teuchos::rcp(new AAdapt::AerasTCGalewskyInit(neq, numDim));
  
   else if(name == "Aeras TC4Init")
     F = Teuchos::rcp(new AAdapt::AerasTC4Init(neq, numDim, data));
@@ -2220,14 +2220,14 @@ void AAdapt::AerasZonalFlow::compute(double* solution, const double* X) {
 
 //**********************************************************
 //TC5
-AAdapt::AerasTC5Init::AerasTC5Init(int neq_, int spatialDim_, Teuchos::Array<double> data_)
-  : spatialDim(spatialDim_), neq(neq_), data(data_) {
+AAdapt::AerasTC5Init::AerasTC5Init(int neq_, int spatialDim_)
+  : spatialDim(spatialDim_), neq(neq_) {
   bool error = true; 
   if (neq == 3 || neq == 6 || neq == 4 || neq == 7) error = false;
-  TEUCHOS_TEST_FOR_EXCEPTION( ( error || spatialDim!=3 || data.size()!=0) ,
+  TEUCHOS_TEST_FOR_EXCEPTION( ( error || spatialDim!=3),
                              std::logic_error,
                              "Error! Invalid call of Aeras ZonalFlow with " << neq
-                             << " " << spatialDim <<  " "<< data.size()<< std::endl);
+                             << " " << spatialDim << std::endl);
 
 
 }
@@ -2293,12 +2293,12 @@ void AAdapt::AerasTC5Init::compute(double* solution, const double* X) {
 //*****************************************************************************
 //TC Galewsky
 
-AAdapt::AerasTCGalewskyInit::AerasTCGalewskyInit(int neq_, int spatialDim_, Teuchos::Array<double> data_)
-: spatialDim(spatialDim_), neq(neq_), data(data_) {
-    TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=0) ,
+AAdapt::AerasTCGalewskyInit::AerasTCGalewskyInit(int neq_, int spatialDim_)
+: spatialDim(spatialDim_), neq(neq_) {
+    TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3) ,
                                std::logic_error,
                                "Error! Invalid call of Aeras TCGalewskyInit with " << neq
-                               << " " << spatialDim <<  " "<< data.size()<< std::endl);
+                               << " " << spatialDim << std::endl);
     myPi = Aeras::ShallowWaterConstants::self().pi;
     gravity = Aeras::ShallowWaterConstants::self().gravity;
     earthRadius = Aeras::ShallowWaterConstants::self().earthRadius;

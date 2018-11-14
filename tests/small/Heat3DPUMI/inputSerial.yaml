@@ -1,0 +1,81 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Heat 3D
+    Dirichlet BCs: 
+      DBC on NS Node_Set_1 for DOF T: 1.00000000000000000e+00
+      DBC on NS Node_Set_2 for DOF T: 0.00000000000000000e+00
+    Parameters: 
+      Number: 0
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    Method: PUMI
+    PUMI Input File Name: serial_coarse_cube.smb
+    Mesh Model Input File Name: coarse_cube_model.dmg
+    PUMI Output File Name: serial_coarse_cube_out.vtk
+    Element Block Associations: [['98', '198'], [Element_Block_98, Element_Block_198]]
+    Node Set Associations: [['1', '192'], [Node_Set_1, Node_Set_2]]
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [5.09523809524000004e-01]
+    Relative Tolerance: 1.00000000000000005e-04
+    Absolute Tolerance: 1.00000000000000008e-05
+    Number of Sensitivity Comparisons: 0
+    Number of Dakota Comparisons: 0
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Linear Solver: 
+        Tolerance: 1.00000000000000002e-08
+      Direction: 
+        Method: Newton
+        Newton: 
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: low
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Output Frequency: 1
+                      Output Style: 1
+                      Verbosity: 39
+                      Maximum Iterations: 100
+                      Block Size: 1
+                      Num Blocks: 30
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 1
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000000000000e+00
+                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Single Step
+      Printing: 
+        Output Information: 127
+        Output Precision: 3
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

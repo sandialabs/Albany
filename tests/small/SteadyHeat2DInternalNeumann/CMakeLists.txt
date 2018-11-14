@@ -1,12 +1,12 @@
 
 
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mesh.exo
                ${CMAKE_CURRENT_BINARY_DIR}/mesh.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mesh.exo.4.0
@@ -25,9 +25,9 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
 if (ALBANY_EPETRA) 
-add_test(${testName} ${Albany.exe})
+add_test(${testName} ${Albany.exe} input.yaml)
 endif()
 
 if (ALBANY_IFPACK2)
-  add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+  add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.yaml)
 endif ()

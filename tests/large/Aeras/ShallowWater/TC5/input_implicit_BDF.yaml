@@ -1,0 +1,111 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Aeras Shallow Water 3D
+    Solution Method: Transient
+    Shallow Water Problem: 
+      Use Prescribed Velocity: false
+      SourceType: TC2
+    Dirichlet BCs: { }
+    Aeras Surface Height: 
+      Type: Mountain
+    Initial Condition: 
+      Function: Aeras TC5Init
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+    Parameters: 
+      Number: 0
+      Parameter 0: Mountain Height
+      Parameter 1: Gravity
+  Discretization: 
+    Method: Exodus
+    Exodus Input File Name: uniform_16_quad9.g
+    Exodus Output File Name: sphere10_implicit.exo
+    Cubature Rule: GAUSS_LOBATTO
+    Exodus Write Interval: 1
+  Regression Results: 
+    Number of Comparisons: 0
+    Test Values: [3.90568124999999988e-01]
+    Relative Tolerance: 1.00000000000000008e-05
+    Absolute Tolerance: 1.00000000000000002e-03
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [4.23961574999999979e-01, 3.56569929999999997e-03]
+  Piro: 
+    Rythmos Solver: 
+      NonLinear Solver: 
+        VerboseObject: 
+          Verbosity Level: low
+      Rythmos: 
+        Integrator Settings: 
+          Final Time: 2.70000000000000000e+03
+          Integrator Selection: 
+            Integrator Type: Default Integrator
+            Default Integrator: 
+              VerboseObject: 
+                Verbosity Level: low
+        Stepper Settings: 
+          Stepper Selection: 
+            Stepper Type: Implicit BDF
+          Step Control Settings: 
+            Step Control Strategy Selection: 
+              Implicit BDF Stepper Step Control Strategy: 
+                minOrder: 2
+                maxOrder: 2
+          Runge Kutta Butcher Tableau Selection: 
+            Runge Kutta Butcher Tableau Type: Singly Diagonal IRK 2 Stage 3rd order
+        Integration Control Strategy Selection: 
+          Integration Control Strategy Type: Simple Integration Control Strategy
+          Simple Integration Control Strategy: 
+            Take Variable Steps: false
+            Fixed dt: 9.00000000000000000e+01
+            VerboseObject: 
+              Verbosity Level: low
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          AztecOO: 
+            VerboseObject: 
+              Verbosity Level: none
+            Forward Solve: 
+              AztecOO Settings: 
+                Aztec Solver: GMRES
+                Convergence Test: r0
+                Size of Krylov Subspace: 200
+                Output Frequency: 10
+              Max Iterations: 200
+              Tolerance: 1.00000000000000004e-10
+          Belos: 
+            VerboseObject: 
+              Verbosity Level: high
+              Output File: BelosSolver.out
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 9.99999999999999955e-07
+                Output Frequency: 1
+                Output Style: 1
+                Verbosity: 33
+                Maximum Iterations: 200
+                Block Size: 1
+                Num Blocks: 200
+                Flexible Gmres: false
+        Preconditioner Type: Ifpack
+        Preconditioner Types: 
+          Ifpack: 
+            Overlap: 0
+            Prec Type: ILU
+            Ifpack Settings: 
+              'fact: drop tolerance': 0.00000000000000000e+00
+              'fact: ilut level-of-fill': 0.00000000000000000e+00
+              'fact: level-of-fill': 0
+          ML: 
+            Base Method Defaults: none
+            ML Settings: 
+              default values: SA
+              'smoother: type': ML symmetric Gauss-Seidel
+              'smoother: pre or post': both
+              'coarse: type': Amesos-KLU
+              PDE equations: 2
+...

@@ -265,6 +265,7 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
 
   std::string ebn="Element Block 0";
   partVec[0] = & metaData->declare_part(ebn, stk::topology::ELEMENT_RANK );
+  std::map<std::string, int> ebNameToIndex;
   ebNameToIndex[ebn] = 0;
 
 #ifdef ALBANY_SEACAS
@@ -314,6 +315,8 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
                              nsNames, ssNames, worksetSize, partVec[0]->name(),
                              ebNameToIndex, this->interleavedOrdering));
 
+  // Create a mesh specs object for EACH side set
+  this->initializeSideSetMeshSpecs(commT);
 }
 
 

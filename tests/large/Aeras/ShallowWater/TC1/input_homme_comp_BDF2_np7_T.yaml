@@ -1,0 +1,87 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Aeras Shallow Water 3D
+    Solution Method: Transient
+    Shallow Water Problem: 
+      Use Prescribed Velocity: true
+    Dirichlet BCs: { }
+    Initial Condition: 
+      Function: Aeras CosineBell
+      Function Data: [1.57079630000000003e+00]
+    Response Functions: 
+      Number: 3
+      Response 0: Solution Average
+      Response 1: Solution Max Value
+      Response 2: Solution Two Norm
+    Parameters: 
+      Number: 0
+      Parameter 0: DBC on NS NodeSet0 for DOF Depth
+      Parameter 1: Gravity
+  Debug Output: { }
+  Discretization: 
+    Method: Exodus Aeras
+    Exodus Input File Name: ../../grids/QUAD4/uniform_10_quad4.g
+    Element Degree: 6
+    Workset Size: -1
+    Exodus Output File Name: spectral_uniform_10_out.exo
+    Exodus Write Interval: 1
+  Regression Results: 
+    Number of Comparisons: 0
+    Test Values: [1.14804660602999995e+01, 1.32630107690000000e+03, 1.06760230819999997e+04]
+    Relative Tolerance: 1.00000000000000008e-05
+    Absolute Tolerance: 1.00000000000000002e-03
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [4.23961574999999979e-01, 3.56569929999999997e-03]
+  Piro: 
+    Rythmos: 
+      Nonlinear Solver Type: Rythmos
+      Final Time: 8.64000000000000000e+04
+      Rythmos Stepper: 
+        VerboseObject: 
+          Verbosity Level: low
+      Stepper Type: BDF
+      Rythmos Integration Control: 
+        Take Variable Steps: false
+        Fixed dt: 3.60000000000000000e+03
+      Rythmos Integrator: 
+        VerboseObject: 
+          Verbosity Level: none
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          Belos: 
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 1.00000000000000008e-05
+                Output Frequency: 10
+                Output Style: 1
+                Verbosity: 0
+                Maximum Iterations: 100
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: false
+        Preconditioner Type: Ifpack2
+        Preconditioner Types: 
+          Ifpack2: 
+            Prec Type: ILUT
+            Overlap: 1
+            Ifpack2 Settings: 
+              'fact: ilut level-of-fill': 1.00000000000000000e+00
+          ML: 
+            Base Method Defaults: SA
+            ML Settings: 
+              'aggregation: type': Uncoupled
+              'coarse: max size': 20
+              'coarse: pre or post': post
+              'coarse: sweeps': 1
+              'coarse: type': Amesos-KLU
+              prec type: MGV
+              'smoother: type': Gauss-Seidel
+              'smoother: damping factor': 6.60000000000000031e-01
+              'smoother: pre or post': both
+              'smoother: sweeps': 1
+              ML output: 1
+...

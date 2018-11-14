@@ -112,7 +112,7 @@ namespace Aeras
       // but with a different node_count, vertex_count and name.
       CellTopologyData new_ctd = orig_ctd;
       //overwrite node_count, vertex_count and name of the original ctd.
-      int np;
+      int np = -1;
       if (orig_name == "ShellQuadrilateral" || orig_name == "Quadrilateral")
         np = points_per_edge*points_per_edge;
       else if (orig_name == "Line")

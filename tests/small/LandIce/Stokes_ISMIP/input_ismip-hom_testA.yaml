@@ -1,0 +1,163 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Phalanx Graph Visualization Detail: 0
+    Solution Method: Continuation
+    Name: LandIce Stokes 3D
+    Dirichlet BCs: 
+      DBC on NS NodeSet99 for DOF p: 0.00000000000000000e+00
+      DBC on NS NodeSet4 for DOF ux: 0.00000000000000000e+00
+      DBC on NS NodeSet4 for DOF uy: 0.00000000000000000e+00
+      DBC on NS NodeSet4 for DOF uz: 0.00000000000000000e+00
+    Body Force: 
+      Type: Gravity
+    LandIce Viscosity: 
+      Type: 'Glen''s Law'
+      'Glen''s Law Homotopy Parameter': 2.99999999999999989e-01
+      'Glen''s Law A': 1.00000000000000005e-04
+      'Glen''s Law n': 3.00000000000000000e+00
+    Tau M: 
+      Delta: 1.00000000000000006e-01
+    Initial Condition: 
+      Function: Constant
+      Function Data: [5.00000000000000000e-01, 5.00000000000000000e-01, 5.00000000000000000e-01, 5.00000000000000000e-01]
+    Parameters: 
+      Number: 1
+      Parameter 0: 'Glen''s Law Homotopy Parameter'
+    Response Functions: 
+      Number: 5
+      Response 0: Solution Max Value
+      ResponseParams 0: 
+        Equation: 0
+      Response 1: Solution Max Value
+      ResponseParams 1: 
+        Equation: 1
+      Response 2: Solution Max Value
+      ResponseParams 2: 
+        Equation: 2
+      Response 3: Solution Max Value
+      ResponseParams 3: 
+        Equation: 3
+      Response 4: Solution Average
+  Discretization: 
+    Periodic_x BC: true
+    Periodic_y BC: true
+    Workset Size: 100
+    1D Elements: 20
+    2D Elements: 20
+    3D Elements: 5
+    1D Scale: 1.00000000000000000e+00
+    2D Scale: 1.00000000000000000e+00
+    3D Scale: 1.00000000000000000e+00
+    Transform Type: ISMIP-HOM Test A
+    LandIce alpha: 5.00000000000000000e-01
+    LandIce L: 5.00000000000000000e+00
+    Method: STK3D
+    Exodus Output File Name: ismip-hom_testA_out.exo
+  Regression Results: 
+    Number of Comparisons: 5
+    Test Values: [1.22592303461000000e+02, 9.67586809538999972e+01, 1.22408836692999998e+02, 1.33791879566999996e+04, 1.11624077822999993e+03]
+    Relative Tolerance: 1.00000000000000002e-03
+    Absolute Tolerance: 1.00000000000000002e-03
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [1.00000000000000000e+00]
+    Sensitivity Test Values 1: [3.33330000000000015e-01]
+    Number of Dakota Comparisons: 0
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Initial Value: 0.00000000000000000e+00
+        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
+        Continuation Method: Natural
+        Max Steps: 10
+        Max Value: 1.00000000000000000e+00
+        Min Value: 0.00000000000000000e+00
+      Step Size: 
+        Initial Step Size: 1.00000000000000006e-01
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.00000000000000002e-08
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.00000000000000002e-03
+            Relative Tolerance: 1.00000000000000002e-03
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 250
+                      Output Frequency: 10
+                    Max Iterations: 250
+                    Tolerance: 9.99999999999999955e-07
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 9.99999999999999955e-07
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 0
+                      Maximum Iterations: 250
+                      Block Size: 1
+                      Num Blocks: 250
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 1
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: level-of-fill': 1
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

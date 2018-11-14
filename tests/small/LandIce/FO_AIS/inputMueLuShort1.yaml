@@ -1,0 +1,211 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output: { }
+  Problem: 
+    Number RBMs for ML: 3
+    Phalanx Graph Visualization Detail: 0
+    Solution Method: Continuation
+    Name: LandIce Stokes First Order 3D
+    Required Fields: [temperature]
+    Basal Side Name: basalside
+    Surface Side Name: upperside
+    Response Functions: 
+      Number: 0
+      Response 0: Surface Velocity Mismatch
+    Dirichlet BCs: { }
+    Neumann BCs: { }
+    LandIce BCs:
+      Number : 2
+      BC 0:
+        Type: Basal Friction
+        Cubature Degree: 3
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Given Field
+          Given Field Variable Name: basal_friction
+      BC 1:
+        Type: Lateral
+        Cubature Degree: 3
+        Side Set Name: lateralside
+    Parameters: 
+      Number: 1
+      Parameter 0: 'Glen''s Law Homotopy Parameter'
+    LandIce Physical Parameters: 
+      Water Density: 1.02800000000000000e+03
+      Ice Density: 9.10000000000000000e+02
+      Gravity Acceleration: 9.80000000000000071e+00
+      Clausius-Clapeyron Coefficient: 0.00000000000000000e+00
+    LandIce Viscosity: 
+      Type: 'Glen''s Law'
+      'Glen''s Law Homotopy Parameter': 0.00000000000000000e+00
+      'Glen''s Law A': 5.00000000000000024e-05
+      'Glen''s Law n': 3.00000000000000000e+00
+      Flow Rate Type: Temperature Based
+    Body Force: 
+      Type: FO INTERP SURF GRAD
+  Discretization: 
+    Columnwise Ordering: false
+    Number Of Time Derivatives: 0
+    Method: Extruded
+    Cubature Degree: 3
+    Exodus Output File Name: antarctica_muelu_out.exo
+    Element Shape: Hexahedron
+    NumLayers: 5
+    Extrude Basal Node Fields: [thickness, surface_height, basal_friction]
+    Basal Node Fields Ranks: [1, 1, 1]
+    Interpolate Basal Node Layered Fields: [temperature]
+    Basal Node Layered Fields Ranks: [1]
+    Use Glimmer Spacing: true
+    Required Fields Info: 
+      Number Of Fields: 1
+      Field 0: 
+        Field Name: temperature
+        Field Type: Node Scalar
+        Field Origin: Output
+    Side Set Discretizations: 
+      Side Sets: [basalside, upperside]
+      basalside: 
+        Method: Ioss
+        Number Of Time Derivatives: 0
+        Use Serial Mesh: false
+        Exodus Input File Name: antarctica_2d.exo
+        Cubature Degree: 3
+        Required Fields Info: 
+          Number Of Fields: 4
+          Field 0: 
+            Field Name: thickness
+            Field Type: Node Scalar
+            File Name: thickness.ascii
+          Field 1: 
+            Field Name: surface_height
+            Field Type: Node Scalar
+            File Name: surface_height.ascii
+          Field 2: 
+            Field Name: temperature
+            Field Type: Node Layered Scalar
+            Number Of Layers: 10
+            File Name: temperature.ascii
+          Field 3: 
+            Field Name: basal_friction
+            Field Type: Node Scalar
+            File Name: basal_friction_reg.ascii
+      upperside: 
+        Method: SideSetSTK
+        Number Of Time Derivatives: 0
+        Cubature Degree: 3
+        Required Fields Info: 
+          Number Of Fields: 1
+          Field 0: 
+            Field Name: surface_velocity
+            Field Type: Node Vector
+            File Name: surface_velocity.ascii
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [1.09129452686000004e+08]
+    Number of Sensitivity Comparisons: 1
+    Sensitivity Test Values 0: [2.07802016563000008e+07]
+    Relative Tolerance: 1.00000000000000005e-04
+    Absolute Tolerance: 1.00000000000000005e-04
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Initial Value: 0.00000000000000000e+00
+        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
+        Continuation Method: Natural
+        Max Steps: 15
+        Max Value: 1.00000000000000000e+00
+        Min Value: 0.00000000000000000e+00
+      Step Size: 
+        Initial Step Size: 1.00000000000000006e-01
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.00000000000000008e-05
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.00000000000000002e-02
+            Relative Tolerance: 9.99999999999999955e-08
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 40
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 20
+                    Max Iterations: 400
+                    Tolerance: 9.99999999999999955e-07
+              Preconditioner Type: MueLu
+              Preconditioner Types: 
+                MueLu: 
+                  verbosity: extreme
+                  'repartition: enable': true
+                  'repartition: partitioner': zoltan
+                  'repartition: max imbalance': 1.32699999999999996e+00
+                  'repartition: min rows per proc': 600
+                  'repartition: start level': 4
+                  'semicoarsen: number of levels': 2
+                  'semicoarsen: coarsen rate': 14
+                  'linedetection: orientation': coordinates
+                  'smoother: type': LINESMOOTHING_BANDED_RELAXATION
+                  'smoother: params': 
+                    'relaxation: sweeps': 1
+                    'relaxation: type': Jacobi
+                    'relaxation: damping factor': 2.50000000000000000e-01
+                  'coarse: type': RELAXATION
+                  'coarse: params': 
+                    'relaxation: sweeps': 4
+                    'relaxation: type': Jacobi
+                    'relaxation: damping factor': 8.00000000000000044e-01
+                  max levels: 5
+                  number of equations: 4
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

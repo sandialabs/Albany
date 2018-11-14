@@ -1,0 +1,89 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    wall: 
+      material: 304-tube
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000000000000e+00
+      Volume Average Pressure: true
+    lid: 
+      material: 304-lid
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000000000000e+00
+      Volume Average Pressure: true
+    base: 
+      material: 304-lid
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000000000000e+00
+      Volume Average Pressure: true
+  Materials: 
+    304-tube: 
+      Output Cauchy Stress: true
+      Output eqps: true
+      Material Model: 
+        Model Name: J2
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1.70300000000000000e+11
+        Reference Temperature: 2.93000000000000000e+02
+        Linear Temperature Coefficient: -1.00000000000000002e-02
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 3.20000000000000007e-01
+        Reference Temperature: 2.93000000000000000e+02
+        Linear Temperature Coefficient: 0.00000000000000000e+00
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 8.29374000000000000e+07
+        Reference Temperature: 2.93000000000000000e+02
+        Linear Temperature Coefficient: -2.00000000000000004e-03
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 1.08782000000000000e+09
+        Reference Temperature: 2.93000000000000000e+02
+        Linear Temperature Coefficient: -2.00000000000000004e-03
+      Thermal Conductivity: 
+        Thermal Conductivity Type: Constant
+        Value: 4.50000000000000000e+01
+      Density: 7.92000000000000000e+03
+      Reference Temperature: 2.93000000000000000e+02
+      Initial Temperature: 3.00000000000000000e+02
+      Thermal Transient Coefficient: 1.00000000000000000e+00
+      Thermal Expansion Coefficient: 1.00000000000000008e-05
+      Heat Capacity: 4.60000000000000000e+08
+    304-lid: 
+      Output Cauchy Stress: true
+      Output eqps: true
+      Material Model: 
+        Model Name: J2
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1.10300000000000000e+11
+        Reference Temperature: 2.93000000000000000e+02
+        Linear Temperature Coefficient: -1.00000000000000002e-02
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 3.20000000000000007e-01
+        Reference Temperature: 2.93000000000000000e+02
+        Linear Temperature Coefficient: 0.00000000000000000e+00
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 8.80200000000000000e+07
+        Reference Temperature: 2.93000000000000000e+02
+        Linear Temperature Coefficient: -2.00000000000000004e-03
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 2.32800000000000000e+08
+        Reference Temperature: 2.93000000000000000e+02
+        Linear Temperature Coefficient: -2.00000000000000004e-03
+      Thermal Conductivity: 
+        Thermal Conductivity Type: Constant
+        Value: 4.50000000000000000e+01
+      Density: 7.92000000000000000e+03
+      Reference Temperature: 2.93000000000000000e+02
+      Initial Temperature: 3.00000000000000000e+02
+      Thermal Transient Coefficient: 1.00000000000000000e+00
+      Thermal Expansion Coefficient: 1.00000000000000008e-05
+      Heat Capacity: 4.60000000000000000e+08
+...

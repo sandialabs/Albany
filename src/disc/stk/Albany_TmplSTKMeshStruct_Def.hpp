@@ -339,7 +339,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->getNodeNumElements() * (triangles ? 2 : 1));
 
   // Build a map to get the EB name given the index
-
+  std::map<std::string,int> ebNameToIndex;
   for (unsigned int eb=0; eb<numEB; eb++)
 
     ebNameToIndex[partVec[eb]->name()] = eb;
@@ -352,8 +352,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                                nsNames, ssNames, worksetSize, partVec[0]->name(),
                                ebNameToIndex, this->interleavedOrdering, false, cub_rule));
-  }
-  else {
+  } else {
 
     meshSpecs.resize(numEB);
 
@@ -377,6 +376,10 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
     this->addNodeSetsFromSideSets ();
   }
 
+  // Create a mesh specs object for EACH side set
+  this->initializeSideSetMeshSpecs(commT);
+
+  // Initialize the requested sideset mesh struct in the mesh
   this->initializeSideSetMeshStructs(commT);
 }
 

@@ -1,0 +1,330 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output: { }
+  Problem: 
+    Phalanx Graph Visualization Detail: 1
+    Solution Method: Steady
+    Name: LandIce Stokes First Order 3D
+    Required Fields: [temperature]
+    Basal Side Name: basalside
+    Surface Side Name: upperside
+    LandIce BCs:
+      Number : 2
+      BC 0:
+        Type: Basal Friction
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Exponent Of Given Field
+          Given Field Variable Name: basal_friction
+      BC 1:
+        Type: Lateral
+        Cubature Degree: 3
+        Side Set Name: lateralside
+    Equation Set: 
+      Type: LandIce
+      Num Equations: 3
+    Response Functions: 
+      Collection Method: Sum Responses
+      Number: 2
+      Response 0: Boundary Squared L2 Norm
+      ResponseParams 0: 
+        Scaling Coefficient: 5.88239999999999979e-05
+        Field Name: L2 Projected Boundary Laplacian
+      Response 1: Surface Velocity Mismatch
+      ResponseParams 1: 
+        Regularization Coefficient: 0.00000000000000000e+00
+        Asinh Scaling: 1.00000000000000000e+01
+        Scaling Coefficient: 5.88239999999999979e-07
+    Dirichlet BCs: { }
+    Neumann BCs: { }
+    Parameters: 
+      Number: 0
+      Parameter 0: 'Glen''s Law Homotopy Parameter'
+    Distributed Parameters: 
+      Number of Parameter Vectors: 1
+      Distributed Parameter 0: 
+        Name: basal_friction
+        Lower Bound: -1.20000000000000000e+01
+        Upper Bound: 1.20000000000000000e+01
+        Mesh Part: bottom
+    LandIce Physical Parameters: 
+      Water Density: 1.02800000000000000e+03
+      Ice Density: 9.10000000000000000e+02
+      Gravity Acceleration: 9.80000000000000071e+00
+      Clausius-Clapeyron Coefficient: 0.00000000000000000e+00
+    LandIce Viscosity: 
+      Type: 'Glen''s Law'
+      'Glen''s Law Homotopy Parameter': 1.00000000000000006e-01
+      'Glen''s Law A': 1.00000000000000005e-04
+      'Glen''s Law n': 3.00000000000000000e+00
+      Flow Rate Type: Temperature Based
+    LandIce L2 Projected Boundary Laplacian: 
+      Mass Coefficient: 1.00000000000000006e-01
+      Laplacian Coefficient: 1.00000000000000000e+01
+      Robin Coefficient: 1.00000000000000000e+00
+      Boundary Edges Set Name: lateralside
+    Body Force: 
+      Type: FO INTERP SURF GRAD
+  Discretization: 
+    Method: Extruded
+    Number Of Time Derivatives: 0
+    Cubature Degree: 1
+    Exodus Output File Name: gis_analysis_beta.exo
+    Element Shape: Tetrahedron
+    Columnwise Ordering: true
+    NumLayers: 5
+    Use Glimmer Spacing: true
+    Thickness Field Name: ice_thickness
+    Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction]
+    Basal Node Fields Ranks: [1, 1, 1]
+    Interpolate Basal Node Layered Fields: [temperature]
+    Basal Node Layered Fields Ranks: [1]
+    Required Fields Info: 
+      Number Of Fields: 4
+      Field 0: 
+        Field Name: temperature
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 1: 
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 2: 
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 3: 
+        Field Name: basal_friction
+        Field Type: Node Scalar
+        Field Origin: Mesh
+    Side Set Discretizations: 
+      Side Sets: [basalside, upperside]
+      basalside: 
+        Method: Ioss
+        Number Of Time Derivatives: 0
+        Exodus Output File Name: gis_analysis_basal.exo
+        Cubature Degree: 3
+        Use Serial Mesh: true
+        Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
+        Required Fields Info: 
+          Number Of Fields: 4
+          Field 0: 
+            Field Name: basal_friction
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/basal_friction_log.ascii
+          Field 1: 
+            Field Name: ice_thickness
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/thickness.ascii
+          Field 2: 
+            Field Name: surface_height
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/surface_height.ascii
+          Field 3: 
+            Field Name: temperature
+            Field Type: Node Layered Scalar
+            Number Of Layers: 11
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/temperature.ascii
+      upperside: 
+        Method: SideSetSTK
+        Number Of Time Derivatives: 0
+        Exodus Output File Name: gis_analysis_surface.exo
+        Cubature Degree: 3
+        Required Fields Info: 
+          Number Of Fields: 2
+          Field 0: 
+            Field Name: observed_surface_velocity
+            Field Type: Node Vector
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii
+          Field 1: 
+            Field Name: observed_surface_velocity_RMS
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/velocity_Magnitude_RMS.ascii
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [1.13523015029099994e+02]
+    Sensitivity Comparisons 0: 
+      Number of Sensitivity Comparisons: 1
+      Sensitivity Test Values 0: [4.53304824162499997e+00]
+    Relative Tolerance: 1.00000000000000005e-04
+    Absolute Tolerance: 1.00000000000000005e-04
+  Piro: 
+    Sensitivity Method: Adjoint
+    Analysis: 
+      Analysis Package: ROL
+      ROL: 
+        Check Gradient: true
+        Gradient Tolerance: 1.00000000000000005e-04
+        Step Tolerance: 1.00000000000000005e-04
+        Max Iterations: 10
+        Print Output: true
+        Parameter Initial Guess Type: Uniform Vector
+        Uniform Parameter Guess: 2.00000000000000000e+00
+        Min And Max Of Random Parameter Guess: [1.00000000000000000e+00, 2.00000000000000000e+00]
+        Bound Constrained: true
+        bound_eps: 1.00000000000000006e-01
+        ROL Options: 
+          General: 
+            Variable Objective Function: false
+            Scale for Epsilon Active Sets: 1.00000000000000000e+00
+            Inexact Objective Function: false
+            Inexact Gradient: false
+            Inexact Hessian-Times-A-Vector: false
+            Projected Gradient Criticality Measure: false
+            Secant: 
+              Type: Limited-Memory BFGS
+              Use as Preconditioner: false
+              Use as Hessian: false
+              Maximum Storage: 50
+              Barzilai-Borwein Type: 1
+            Krylov: 
+              Type: Conjugate Gradients
+              Absolute Tolerance: 1.00000000000000005e-04
+              Relative Tolerance: 1.00000000000000002e-02
+              Iteration Limit: 100
+          Step: 
+            Line Search: 
+              Function Evaluation Limit: 60
+              Sufficient Decrease Tolerance: 9.99999999999999945e-21
+              Initial Step Size: 1.00000000000000000e+00
+              User Defined Initial Step Size: false
+              Accept Linesearch Minimizer: false
+              Accept Last Alpha: false
+              Descent Method: 
+                Type: Quasi-Newton
+                Nonlinear CG Type: Hestenes-Stiefel
+              Curvature Condition: 
+                Type: Strong Wolfe Conditions
+                General Parameter: 9.00000000000000022e-01
+                Generalized Wolfe Parameter: 5.99999999999999978e-01
+              Line-Search Method: 
+                Type: Cubic Interpolation
+                Backtracking Rate: 5.00000000000000000e-01
+                Bracketing Tolerance: 1.00000000000000002e-08
+                Path-Based Target Level: 
+                  Target Relaxation Parameter: 1.00000000000000000e+00
+                  Upper Bound on Path Length: 1.00000000000000000e+00
+            Trust Region: 
+              Subproblem Solver: Truncated CG
+              Initial Radius: 1.00000000000000000e+01
+              Maximum Radius: 5.00000000000000000e+03
+              Step Acceptance Threshold: 5.00000000000000028e-02
+              Radius Shrinking Threshold: 5.00000000000000028e-02
+              Radius Growing Threshold: 9.00000000000000022e-01
+              Radius Shrinking Rate (Negative rho): 6.25000000000000000e-02
+              Radius Shrinking Rate (Positive rho): 2.50000000000000000e-01
+              Radius Growing Rate: 2.50000000000000000e+00
+              Safeguard Size: 1.00000000000000000e+08
+              Inexact: 
+                Value: 
+                  Tolerance Scaling: 1.00000000000000006e-01
+                  Exponent: 9.00000000000000022e-01
+                  Forcing Sequence Initial Value: 1.00000000000000000e+00
+                  Forcing Sequence Update Frequency: 10
+                  Forcing Sequence Reduction Factor: 1.00000000000000006e-01
+                Gradient: 
+                  Tolerance Scaling: 1.00000000000000006e-01
+                  Relative Tolerance: 2.00000000000000000e+00
+          Status Test: 
+            Gradient Tolerance: 1.00000000000000004e-10
+            Constraint Tolerance: 1.00000000000000004e-10
+            Step Tolerance: 9.99999999999999999e-15
+            Iteration Limit: 1000
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Initial Value: 1.00000000000000006e-01
+        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
+        Continuation Method: Natural
+        Max Steps: 10
+        Max Value: 1.00000000000000000e+00
+        Min Value: 0.00000000000000000e+00
+      Step Size: 
+        Initial Step Size: 2.00000000000000011e-01
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: OR
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.00000000000000008e-05
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.00000000000000008e-05
+            Relative Tolerance: 1.00000000000000002e-03
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 50
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 20
+                    Max Iterations: 200
+                    Tolerance: 9.99999999999999955e-07
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 0
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: level-of-fill': 0
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    'smoother: type': ML symmetric Gauss-Seidel
+                    'smoother: pre or post': both
+                    'coarse: type': Amesos-KLU
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

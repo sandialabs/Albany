@@ -18,7 +18,6 @@
 
 // Tpetra includes
 #include "TpetraCore_config.h"
-#include "Tpetra_DefaultPlatform.hpp"
 #include "Tpetra_Map.hpp"
 #include "Tpetra_CrsGraph.hpp"
 #include "Tpetra_CrsMatrix.hpp"

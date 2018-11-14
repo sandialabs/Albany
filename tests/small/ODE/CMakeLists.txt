@@ -1,36 +1,36 @@
  
 
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_EPETRA)
-  add_test(${testName}_SERIAL ${SerialAlbany.exe})
+  add_test(${testName}_SERIAL ${SerialAlbany.exe} input.yaml)
 ENDIF()
 
 # 1'. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTP.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputTP.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTP.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputTP.yaml COPYONLY)
 # 2'. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Tpetra NAME)
 # 3'. Create the test with this name and standard executable
 if (NOT (ALBANY_CHECK_FPE OR ALBANY_STRONG_FPE_CHECK))
 # Fails with FPE if FPE checking is enabled
-  add_test(${testName}_SERIAL_Tpetra ${SerialAlbanyT.exe} inputT.xml)
+  add_test(${testName}_SERIAL_Tpetra ${SerialAlbanyT.exe} inputT.yaml)
 endif ()
-add_test(${testName}_SERIAL_Tpetra_Ifpack2 ${SerialAlbanyT.exe} inputTP.xml)
+add_test(${testName}_SERIAL_Tpetra_Ifpack2 ${SerialAlbanyT.exe} inputTP.yaml)
 
 # 5. Repeat process for Dakota problems if "dakota.in" exists
 if (ALBANY_DAKOTA)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
                  ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
   if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data
                    ${CMAKE_CURRENT_BINARY_DIR}/dakota_nls.data COPYONLY)
@@ -40,10 +40,10 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
 endif()
 
-# 6. Repeat process for Analysis problems if "inputAnalysis.xml" exists
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis.xml COPYONLY)
+# 6. Repeat process for Analysis problems if "inputAnalysis.yaml" exists
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis.yaml COPYONLY)
 
   if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
@@ -57,4 +57,4 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
 
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
   add_test(${testName} ${AlbanyAnalysis.exe})
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
+endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml)

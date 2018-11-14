@@ -203,24 +203,24 @@ interp_and_calc_error(
       tgt_broker.meta_data().declare_field<FieldType>(
           stk::topology::NODE_RANK, tgt_interp_field_name);
 
-  stk::mesh::put_field(
-      target_interp_field, tgt_broker.meta_data().universal_part(), neq);
+  stk::mesh::put_field_on_mesh(
+      target_interp_field, tgt_broker.meta_data().universal_part(), neq, nullptr);
 
   // Add a absolute error nodal field to the target part.
   FieldType& target_abs_error_field =
       tgt_broker.meta_data().declare_field<FieldType>(
           stk::topology::NODE_RANK, abs_err_field_name);
 
-  stk::mesh::put_field(
-      target_abs_error_field, tgt_broker.meta_data().universal_part(), neq);
+  stk::mesh::put_field_on_mesh(
+      target_abs_error_field, tgt_broker.meta_data().universal_part(), neq, nullptr);
 
   // Add a relative error nodal field to the target part.
   FieldType& target_rel_error_field =
       tgt_broker.meta_data().declare_field<FieldType>(
           stk::topology::NODE_RANK, rel_err_field_name);
 
-  stk::mesh::put_field(
-      target_rel_error_field, tgt_broker.meta_data().universal_part(), neq);
+  stk::mesh::put_field_on_mesh(
+      target_rel_error_field, tgt_broker.meta_data().universal_part(), neq, nullptr);
 
   // Create the target bulk data.
   tgt_broker.populate_bulk_data();

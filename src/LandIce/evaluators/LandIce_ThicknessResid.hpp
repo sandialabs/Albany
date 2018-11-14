@@ -4,17 +4,19 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LANDICE_THICKNESSRESID_HPP
-#define LANDICE_THICKNESSRESID_HPP
+#ifndef LANDICE_THICKNESS_RESID_HPP
+#define LANDICE_THICKNESS_RESID_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Albany_Layouts.hpp"
-
 #include "Intrepid2_CellTools.hpp"
 #include "Intrepid2_Cubature.hpp"
+
+#include "PHAL_Dimension.hpp"
+#include "Albany_Layouts.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
 
 namespace LandIce {
 /** \brief Finite Element Interpolation Evaluator
@@ -73,30 +75,11 @@ private:
 
   // Temporary Views
   Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsCell;
-  Kokkos::DynRankView<ScalarT, PHX::Device> dofCell;
-  Kokkos::DynRankView<ScalarT, PHX::Device> dofCellVec;
-
-  Kokkos::DynRankView<RealType, PHX::Device> cubPointsSide;
-  Kokkos::DynRankView<RealType, PHX::Device> refPointsSide;
-  Kokkos::DynRankView<RealType, PHX::Device> cubWeightsSide;
-  Kokkos::DynRankView<RealType, PHX::Device> basis_refPointsSide;
-  Kokkos::DynRankView<RealType, PHX::Device> basisGrad_refPointsSide;
-
-  Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsSide;
-  Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobianSide;
-  Kokkos::DynRankView<MeshScalarT, PHX::Device> invJacobianSide;
-  Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobianSide_det;
-  Kokkos::DynRankView<MeshScalarT, PHX::Device> weighted_measure;
-  Kokkos::DynRankView<MeshScalarT, PHX::Device> trans_basis_refPointsSide;
-  Kokkos::DynRankView<MeshScalarT, PHX::Device> trans_gradBasis_refPointsSide;
-  Kokkos::DynRankView<MeshScalarT, PHX::Device> weighted_trans_basis_refPointsSide;
-
-  Kokkos::DynRankView<ScalarT, PHX::Device> dofSide;
-  Kokkos::DynRankView<ScalarT, PHX::Device> dofSideVec;
 
   std::string sideSetID;
 
 };
-}
 
-#endif
+} // namespace LandIce
+
+#endif // LANDICE_THICKNESS_RESID_HPP

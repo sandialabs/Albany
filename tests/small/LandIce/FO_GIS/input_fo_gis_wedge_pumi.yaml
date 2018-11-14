@@ -1,0 +1,168 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output: 
+    Write Solution to MatrixMarket: false
+  Problem: 
+    Phalanx Graph Visualization Detail: 2
+    Solution Method: Continuation
+    Name: LandIce Stokes First Order 3D
+    Use Time Parameter: true
+    Response Functions: 
+      Number: 0
+      Response 0: Surface Velocity Mismatch
+    Dirichlet BCs: { }
+    Neumann BCs: 
+      NBC on SS basalside for DOF all set basal_scalar_field: [1.00000000000000000e+00]
+      Cubature Degree: 3
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+      Parameter 1: 'Glen''s Law Homotopy Parameter'
+    Distributed Parameters: 
+      Number of Parameter Vectors: 0
+    LandIce Physical Parameters: 
+      Water Density: 1.02800000000000000e+03
+      Ice Density: 9.10000000000000000e+02
+      Gravity Acceleration: 9.80000000000000071e+00
+    LandIce Viscosity: 
+      Type: 'Glen''s Law'
+      'Glen''s Law Homotopy Parameter': 1.00000000000000006e-01
+      'Glen''s Law A': 1.00000000000000005e-04
+      'Glen''s Law n': 3.00000000000000000e+00
+    Body Force: 
+      Type: FO INTERP SURF GRAD
+    Adaptation: 
+      Method: RPI Extruded
+      Remesh Strategy: Continuous
+      Max Number of Mesh Adapt Iterations: 1
+      Error Bound: 2.00000000000000011e-01
+      Minimum Part Density: 2.50000000000000000e+03
+      Write Adapted SMB Files: true
+      Equilibrate: false
+  Discretization: 
+    Method: PUMI
+    Mesh Model Input File Name: greenland.dmg
+    PUMI Input File Name: greenland-wedge-restart.smb
+    Element Block Associations: [['1'], [eb_1]]
+    Side Set Associations: [['1', '2', '3'], [upperside, basalside, lateralside]]
+    PUMI Output File Name: greenland.vtk
+    PUMI Write Interval: 1
+    Load LandIce Data: true
+    2nd Order Mesh: false
+    Cubature Degree: 4
+    Number Of Time Derivatives: 0
+    PUMI Restart Time: 0.00000000000000000e+00
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [1.09129452686000004e+08]
+    Number of Sensitivity Comparisons: 1
+    Sensitivity Test Values 0: [2.07802016563000008e+07]
+    Relative Tolerance: 1.00000000000000005e-04
+    Absolute Tolerance: 1.00000000000000005e-04
+  Piro: 
+    Rythmos: 
+      Num Time Steps: 100
+      Final Time: 1.00000000000000000e+00
+      Max State Error: 1.00000000000000005e-04
+      Alpha: 0.00000000000000000e+00
+      Rythmos Stepper: 
+        VerboseObject: 
+          Verbosity Level: low
+      Rythmos Integration Control: { }
+      Rythmos Integrator: 
+        VerboseObject: 
+          Verbosity Level: none
+      Stratimikos: { }
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Initial Value: 1.00000000000000006e-01
+        Continuation Parameter: Time
+        Continuation Method: Natural
+        Max Steps: 2
+        Max Value: 1.00000000000000000e+00
+        Min Value: 0.00000000000000000e+00
+      Step Size: 
+        Method: Constant
+        Initial Step Size: 1.00000000000000006e-01
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: OR
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.00000000000000008e-05
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.00000000000000008e-05
+            Relative Tolerance: 1.00000000000000002e-03
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 50
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 20
+                    Max Iterations: 200
+                    Tolerance: 9.99999999999999955e-07
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 0
+                  Prec Type: ILUT
+                  Ifpack Settings: 
+                    'fact: level-of-fill': 0
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    'smoother: type': ML symmetric Gauss-Seidel
+                    'smoother: pre or post': both
+                    'coarse: type': Amesos-KLU
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

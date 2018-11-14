@@ -1,0 +1,125 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Solution Method: Steady
+    Name: Heat 2D
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF T: 1.50000000000000000e+00
+      DBC on NS NodeSet1 for DOF T: 1.00000000000000000e+00
+      DBC on NS NodeSet2 for DOF T: 1.00000000000000000e+00
+      DBC on NS NodeSet3 for DOF T: 1.00000000000000000e+00
+    Source Functions: 
+      Quadratic: 
+        Nonlinear Factor: 2.50000000000000000e-01
+    Thermal Conductivity: 
+      Thermal Conductivity Type: Constant
+      Value: 2.00000000000000011e-01
+    Parameters: 
+      Number: 1
+      Parameter 0: Thermal Conductivity
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    1D Elements: 20
+    2D Elements: 20
+    Method: STK2D
+    Exodus Output File Name: steady2d.exo
+  Regression Results: 
+    Number of Comparisons: 0
+    Number of Sensitivity Comparisons: 0
+    Number of Dakota Comparisons: 0
+    Relative Tolerance: 1.00000000000000002e-03
+  Piro: 
+    Dakota: 
+      Input File: dakota_uniform.in
+      Output File: dakota_uniform.out
+      Restart File: dakota.res
+      Error File: dakota.err
+      Parameter Vector Index: 0
+      Response Vector Index: 0
+    Solver Type: NOX
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.00000000000000002e-08
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 9.99999999999999955e-07
+            Relative Tolerance: 9.99999999999999955e-07
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 30
+                      Output Frequency: 20
+                    Max Iterations: 250
+                    Tolerance: 1.00000000000000005e-04
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000000000005e-04
+                      Output Frequency: 20
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 250
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+                    GCRODR: 
+                      Orthogonalization Parameters: { }
+                      Convergence Tolerance: 1.00000000000000005e-04
+                      Maximum Iterations: 250
+                      Num Blocks: 30
+                      Block Size: 1
+                      Output Frequency: 20
+                      Output Style: 1
+                  VerboseObject: 
+                    Verbosity Level: medium
+              Preconditioner Type: ML
+              Preconditioner Types: 
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    'smoother: type': ML symmetric Gauss-Seidel
+                    'smoother: pre or post': both
+                    'coarse: type': Amesos-KLU
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

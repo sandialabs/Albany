@@ -16,7 +16,7 @@ macro(do_peridigm)
     "-DCMAKE_C_COMPILER:STRING=mpicc"
     "-DCMAKE_CXX_COMPILER:STRING=mpicxx"
     "-DCMAKE_CXX_FLAGS:STRING='-O3 -std=c++11 -march=native'"
-    "-DCMAKE_CXX_LINK_FLAGS:STRING='-L${PREFIX_DIR}/lib -lhdf5_hl -lnetcdf -lboost_timer -lboost_chrono -Wl,-rpath,${PREFIX_DIR}/lib:${MKL_PATH}:${INTEL_DIR}/lib/intel64'"
+    "-DCMAKE_CXX_LINK_FLAGS:STRING='-L${PREFIX_DIR}/lib -lhdf5_hl -lnetcdf -lboost_timer -lboost_chrono -Wl,-rpath,${PREFIX_DIR}/lib:${MKLHOME}:${INTEL_DIR}/lib/intel64'"
     )
 
 # Clean up build area

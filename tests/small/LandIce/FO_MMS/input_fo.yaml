@@ -1,0 +1,160 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Phalanx Graph Visualization Detail: 1
+    Name: LandIce Stokes First Order 3D
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF U0: 1.00000000000000000e+00
+      DBC on NS NodeSet1 for DOF U0: 1.00000000000000000e+00
+      DBC on NS NodeSet2 for DOF U0: 1.00000000000000000e+00
+      DBC on NS NodeSet3 for DOF U0: 1.00000000000000000e+00
+      DBC on NS NodeSet4 for DOF U0: 1.00000000000000000e+00
+      DBC on NS NodeSet5 for DOF U0: 1.00000000000000000e+00
+      DBC on NS NodeSet0 for DOF U1: 0.00000000000000000e+00
+      DBC on NS NodeSet1 for DOF U1: 0.00000000000000000e+00
+      DBC on NS NodeSet2 for DOF U1: 0.00000000000000000e+00
+      DBC on NS NodeSet3 for DOF U1: 0.00000000000000000e+00
+      DBC on NS NodeSet4 for DOF U1: 0.00000000000000000e+00
+      DBC on NS NodeSet5 for DOF U1: 0.00000000000000000e+00
+    Parameters: 
+      Number: 0
+      Parameter 0: DBC on NS cylinder for DOF U0
+      Parameter 1: DBC on NS cylinder for DOF U1
+      Parameter 2: DBC on NS cylinder for DOF U2
+    Response Functions: 
+      Number: 0
+      Response 0: Solution Average
+  Discretization: 
+    Workset Size: 100
+    1D Elements: 10
+    2D Elements: 10
+    3D Elements: 10
+    1D Scale: 1.00000000000000000e+00
+    2D Scale: 1.00000000000000000e+00
+    3D Scale: 1.00000000000000000e+00
+    Method: STK3D
+    Exodus Output File Name: felix_stokes_fo_out.exo
+  Regression Results: 
+    Number of Comparisons: 0
+    Test Values: [5.06826662824999996e-01]
+    Relative Tolerance: 1.00000000000000005e-04
+    Number of Sensitivity Comparisons: 1
+    Sensitivity Test Values 0: [2.08812026833999992e-01, 2.43439246662000008e-01, 5.45756230980999971e-02]
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Tangent
+      Stepper: 
+        Initial Value: 1.00000000000000000e+00
+        Continuation Method: Natural
+        Continuation Parameter: DBC on NS cylinder for DOF U0
+        Max Steps: 1
+        Max Value: 4.50000000000000000e+01
+        Min Value: 5.00000000000000000e-01
+        Compute Eigenvalues: true
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Cayley
+          Num Blocks: 100
+          Num Eigenvalues: 1
+          Save Eigenvectors: 1
+          Block Size: 1
+          Maximum Restarts: 0
+          Cayley Pole: 1.00000000000000000e+01
+          Cayley Zero: -1.00000000000000000e+01
+          Normalize Eigenvectors with Mass Matrix: false
+      Step Size: 
+        Initial Step Size: 2.00000000000000000e+00
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 9.99999999999999980e-13
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.00000000000000005e-04
+            Relative Tolerance: 1.00000000000000002e-08
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 20
+                    Max Iterations: 200
+                    Tolerance: 9.99999999999999955e-07
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 9.99999999999999955e-07
+                      Output Frequency: 20
+                      Output Style: 1
+                      Verbosity: 0
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 1
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: level-of-fill': 2
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    'smoother: type': ML symmetric Gauss-Seidel
+                    'smoother: pre or post': both
+                    'coarse: type': Amesos-KLU
+                    PDE equations: 4
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

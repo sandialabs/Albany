@@ -1,0 +1,148 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Phalanx Graph Visualization Detail: 0
+    Name: NavierStokes 1D
+    Flow: 
+      Variable Type: None
+    Heat: 
+      Variable Type: DOF
+    Neutronics: 
+      Variable Type: DOF
+    Neutron Diffusion Coefficient: 
+      Type: Transport Mean Free Path
+    Absorption Cross Section: 
+      Type: invSQRT Temperature Dependent
+      Reference Value: 1.55999999999999993e-02
+      Reference Temperature: 3.00000000000000000e+02
+    Fission Cross Section: 
+      Type: invSQRT Temperature Dependent
+      Reference Value: 1.11000000000000005e-02
+      Reference Temperature: 3.00000000000000000e+02
+    Scattering Cross Section: 
+      Type: Constant
+      Value: 7.63199999999999990e-01
+    Neutrons per Fission: 
+      Type: Constant
+      Value: 2.20000000000000018e+00
+    Neutron Source: 
+      Truncated KL Expansion: 
+        Number of KL Terms: 2
+        Mean: 1.00000000000000000e+01
+        Standard Deviation: 1.00000000000000000e+00
+        Domain Lower Bounds: '{0.0}'
+        Domain Upper Bounds: '{10.0}'
+        Correlation Lengths: '{4.0}'
+    Energy Released per Fission: 
+      Type: Constant
+      Value: 3.20434999999999981e+00
+    Source Functions: 
+      Neutron Fission: { }
+    Thermal Conductivity: 
+      Type: Truncated KL Expansion
+      Number of KL Terms: 2
+      Mean: 1.00000000000000000e+01
+      Standard Deviation: 1.00000000000000000e+00
+      Domain Lower Bounds: '{0.0}'
+      Domain Upper Bounds: '{10.0}'
+      Correlation Lengths: '{6.0}'
+    Have Pressure Stabilization: false
+    Have SUPG Stabilization: false
+    Solution Method: Steady
+    Initial Condition: 
+      Function: Constant
+      Function Data: [3.00000000000000000e+02, 2.00000000000000000e+02]
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF phi: 0.00000000000000000e+00
+      DBC on NS NodeSet1 for DOF phi: 0.00000000000000000e+00
+      DBC on NS NodeSet0 for DOF T: 3.00000000000000000e+02
+      DBC on NS NodeSet1 for DOF T: 3.00000000000000000e+02
+    Parameters: 
+      Number: 0
+      Parameter 0: Thermal Conductivity KL Random Variable 0
+      Parameter 1: Thermal Conductivity KL Random Variable 1
+    Response Functions: 
+      Number: 2
+      Response 0: Field Integral
+      ResponseParams 0: 
+        Field Name: Temperature
+      Response 1: Field Integral
+      ResponseParams 1: 
+        Field Name: Neutron Flux
+  Discretization: 
+    1D Elements: 100
+    1D Scale: 1.00000000000000000e+01
+    Method: STK1D
+  Regression Results: 
+    Number of Comparisons: 2
+    Test Values: [3.08499999999999996e-01, 2.44100000000000011e-01]
+    Number of Sensitivity Comparisons: 0
+    Number of Dakota Comparisons: 0
+    Relative Tolerance: 1.00000000000000002e-03
+  Piro: 
+    Solver Type: NOX
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.00000000000000002e-08
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 9.99999999999999955e-07
+            Relative Tolerance: 9.99999999999999955e-07
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+      Direction: 
+        Method: Newton
+        Newton: 
+          Linear Solver: 
+            Max Iterations: 1000
+            Tolerance: 9.99999999999999980e-13
+          Forcing Term Method: Constant
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 30
+                      Output Frequency: 20
+                    Max Iterations: 250
+                    Tolerance: 9.99999999999999980e-13
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    'smoother: type': ML symmetric Gauss-Seidel
+                    'smoother: pre or post': both
+                    'coarse: type': Amesos-KLU
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

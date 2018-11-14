@@ -1,18 +1,18 @@
 
 
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputRefine.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputRefine.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input2Refine.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input2Refine.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputEnrich.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputEnrich.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputConvert.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputConvert.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputRefine.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputRefine.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input2Refine.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input2Refine.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputEnrich.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputEnrich.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputConvert.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputConvert.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadOut.exo
                ${CMAKE_CURRENT_BINARY_DIR}/quadOut.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadOut.exo.4.0
@@ -29,22 +29,22 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 ###add_test(${testName} ${Albany.exe})
 if (ALBANY_EPETRA) 
-add_test(${testName} ${Albany.exe})
+add_test(${testName} ${Albany.exe} input.yaml)
 endif()
 # 3'. Create the test with this name and standard executable
 if (ALBANY_IFPACK2)
-add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.yaml)
 endif ()
 
 # Refine the quads
 IF(ALBANY_STK_PERCEPT)
 if (ALBANY_EPETRA) 
-add_test(${testName}_Refine ${Albany.exe} inputRefine.xml)
-add_test(${testName}_2Refine ${Albany.exe} input2Refine.xml)
+add_test(${testName}_Refine ${Albany.exe} inputRefine.yaml)
+add_test(${testName}_2Refine ${Albany.exe} input2Refine.yaml)
 endif()
 # Enrich and convert both still have bugs
-#add_test(${testName}_Enrich ${Albany.exe} inputEnrich.xml)
-#add_test(${testName}_Convert ${Albany.exe} inputConvert.xml)
+#add_test(${testName}_Enrich ${Albany.exe} inputEnrich.yaml)
+#add_test(${testName}_Convert ${Albany.exe} inputConvert.yaml)
 ENDIF()
 
 # 5. Repeat process for Dakota problems if "dakota.in" exists
@@ -52,8 +52,8 @@ if (ALBANY_DAKOTA)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
                  ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
   if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data
                    ${CMAKE_CURRENT_BINARY_DIR}/dakota_nls.data COPYONLY)
@@ -63,10 +63,10 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
 endif()
 
-# 6. Repeat process for Analysis problems if "inputAnalysis.xml" exists
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis.xml COPYONLY)
+# 6. Repeat process for Analysis problems if "inputAnalysis.yaml" exists
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis.yaml COPYONLY)
 
   if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
@@ -80,4 +80,4 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
 
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
   add_test(${testName} ${AlbanyAnalysis.exe})
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
+endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml)

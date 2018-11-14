@@ -1,14 +1,14 @@
 
 
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
 # 1'. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
 # 2. Copy materials file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials.yaml COPYONLY)
 
 # 3. Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fuel_volume.exo
@@ -49,7 +49,8 @@ target_link_libraries(CylHeatProfile  ${Trilinos_EXTRA_LD_FLAGS})
 
 if (ALBANY_EPETRA) 
 add_test(NAME ${testName}
-     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=
+     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}"
+     "-DTEST_ARGS=input.yaml"
      "-DAUX_ENV=${ALBANY_PRETEST_EXEC}"
      "-DAUX_PROG=${CMAKE_CURRENT_BINARY_DIR}/CylHeatProfile" -P
      ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake
@@ -59,7 +60,7 @@ endif()
 if (ALBANY_IFPACK2)
 add_test(NAME ${testName}_Tpetra
      COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${AlbanyT.exe}"
-     "-DTEST_ARGS=inputT.xml"
+     "-DTEST_ARGS=inputT.yaml"
      "-DAUX_ENV=${ALBANY_PRETEST_EXEC}"
      "-DAUX_PROG=${CMAKE_CURRENT_BINARY_DIR}/CylHeatProfile" -P
      ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake

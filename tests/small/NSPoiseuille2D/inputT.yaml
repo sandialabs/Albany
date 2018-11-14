@@ -1,0 +1,110 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Phalanx Graph Visualization Detail: 0
+    Name: NavierStokes 2D
+    Dirichlet BCs: 
+      DBC on NS nodelist_1 for DOF ux: 1.00000000000000000e+00
+      DBC on NS nodelist_2 for DOF ux: 0.00000000000000000e+00
+      DBC on NS nodelist_4 for DOF ux: 0.00000000000000000e+00
+      DBC on NS nodelist_1 for DOF uy: 0.00000000000000000e+00
+      DBC on NS nodelist_2 for DOF uy: 0.00000000000000000e+00
+      DBC on NS nodelist_4 for DOF uy: 0.00000000000000000e+00
+    Parameters: 
+      Number: 1
+      Parameter 0: DBC on NS nodelist_1 for DOF ux
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Max Value
+      ResponseParams 0: 
+        Equation: 0
+  Discretization: 
+    Method: Ioss
+    Workset Size: 1
+    Exodus Input File Name: ns-m4-bKL.par
+    Exodus Output File Name: ns_out_tpetra.exo
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [1.37102561000000001e+00]
+    Relative Tolerance: 1.00000000000000002e-03
+    Number of Sensitivity Comparisons: 1
+    Sensitivity Test Values 0: [1.35421554999999993e+00]
+    Number of Dakota Comparisons: 0
+  Piro: 
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 9.99999999999999955e-08
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.00000000000000002e-03
+            Relative Tolerance: 1.00000000000000002e-03
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 50
+                      Output Frequency: 20
+                    Max Iterations: 250
+                    Tolerance: 9.99999999999999955e-07
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 9.99999999999999955e-07
+                      Output Frequency: 20
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 250
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    'smoother: type': ML symmetric Gauss-Seidel
+                    'smoother: pre or post': both
+                    'coarse: type': Amesos-KLU
+                    PDE equations: 4
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

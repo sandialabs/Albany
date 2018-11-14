@@ -1,0 +1,21 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Reference Material: MatA
+  ElementBlocks: 
+    MatA: 
+      material: Metal
+    MatB: 
+      material: Insulator
+  Materials: 
+    Insulator: 
+      Category: Fiberglass
+      Thermal Conductivity: 
+        Name: Constant
+        Value: 1.00000000000000002e-02
+    Metal: 
+      Category: Non-ferrous
+      Thermal Conductivity: 
+        Name: Constant
+        Value: 1.00000000000000000e+01
+...

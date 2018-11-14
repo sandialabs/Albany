@@ -1,0 +1,137 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Phalanx Graph Visualization Detail: 0
+    Name: NavierStokes 2D
+    Heat: 
+      Variable Type: DOF
+    Thermal Conductivity: 
+      Type: Constant
+      Value: 1.00000000000000006e-01
+    Dirichlet BCs: 
+      DBC on NS top for DOF ux: 0.00000000000000000e+00
+      DBC on NS top for DOF uy: 0.00000000000000000e+00
+      DBC on NS top for DOF T: 0.00000000000000000e+00
+      DBC on NS bottom for DOF ux: 0.00000000000000000e+00
+      DBC on NS bottom for DOF uy: 0.00000000000000000e+00
+      DBC on NS bottom for DOF T: 0.00000000000000000e+00
+      DBC on NS inlet for DOF ux: 1.00000000000000000e+02
+      DBC on NS inlet for DOF uy: 0.00000000000000000e+00
+      DBC on NS outlet for DOF uy: 0.00000000000000000e+00
+    Neumann BCs: 
+      NBC on SS inlet_ss for DOF T set dudn: [-7.00000000000000000e+00]
+      NBC on SS outlet_ss for DOF T set dudn: [3.70000000000000000e+01]
+    Parameters: 
+      Number: 2
+      Parameter 0: NBC on SS inlet_ss for DOF T set dudn
+      Parameter 1: NBC on SS outlet_ss for DOF T set dudn
+    Response Functions: 
+      Number of Response Vectors: 1
+      Response Vector 0: 
+        Name: Aggregate Responses
+        Number: 2
+        Response 0: PHAL Field Integral
+        ResponseParams 0: 
+          Field Name: Temperature
+          x min: 0.00000000000000000e+00
+          x max: 1.00000000000000006e-01
+          y min: 4.50000000000000011e-01
+          y max: 5.50000000000000044e-01
+          Length Scaling: 1.00000000000000000e+01
+        Response 1: PHAL Field Integral
+        ResponseParams 1: 
+          Field Name: Temperature
+          x min: 9.00000000000000022e-01
+          x max: 1.00000000000000000e+00
+          y min: 4.50000000000000011e-01
+          y max: 5.50000000000000044e-01
+          Length Scaling: 1.00000000000000000e+01
+  Discretization: 
+    Method: Ioss
+    Workset Size: 10
+    Exodus Input File Name: pipe_coarse.exo
+    Exodus Output File Name: pipe_coarse-out.exo
+  Regression Results: 
+    Number of Comparisons: 2
+    Test Values: [-4.32207000000000008e+00, -1.62006999999999990e+00]
+    Number of Sensitivity Comparisons: 2
+    Sensitivity Test Values 0: [6.17438999999999960e-01, 0.00000000000000000e+00]
+    Sensitivity Test Values 1: [2.36918999999999991e-01, 1.03669999999999999e-03]
+    Number of Dakota Comparisons: 0
+    Relative Tolerance: 1.00000000000000002e-03
+    Absolute Tolerance: 1.00000000000000008e-05
+  Piro: 
+    Print Convergence Stats: false
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 9.99999999999999955e-08
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.00000000000000002e-03
+            Relative Tolerance: 1.00000000000000002e-03
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 50
+                      Output Frequency: 20
+                    Max Iterations: 500
+                    Tolerance: 9.99999999999999955e-07
+                  VerboseObject: 
+                    Verbosity Level: none
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    'smoother: type': ML symmetric Gauss-Seidel
+                    'smoother: pre or post': both
+                    'coarse: type': Amesos-KLU
+                    PDE equations: 4
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: false
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

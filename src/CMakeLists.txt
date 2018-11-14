@@ -232,6 +232,7 @@ SET(SOURCES ${SOURCES}
   disc/Adapt_NodalDataBase.cpp
   disc/Adapt_NodalDataVector.cpp
   disc/Albany_DiscretizationFactory.cpp
+  disc/Albany_MeshSpecs.cpp
   )
 SET(HEADERS ${HEADERS}
   disc/Adapt_NodalDataBase.hpp
@@ -243,6 +244,7 @@ SET(HEADERS ${HEADERS}
   disc/Albany_AbstractMeshStruct.hpp
   disc/Albany_AbstractNodeFieldContainer.hpp
   disc/Albany_DiscretizationFactory.hpp
+  disc/Albany_MeshSpecs.hpp
   disc/Albany_NodalDOFManager.hpp
   )
 

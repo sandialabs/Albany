@@ -1,0 +1,104 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output: 
+    Compute Jacobian Condition Number: -1
+    Write Jacobian to MatrixMarket: -1
+  Problem: 
+    Name: Heat 2D
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF T: 1.50000000000000000e+00
+      DBC on NS NodeSet1 for DOF T: 1.00000000000000000e+00
+      DBC on NS NodeSet2 for DOF T: 1.00000000000000000e+00
+      DBC on NS NodeSet3 for DOF T: 1.00000000000000000e+00
+    Source Functions: 
+      Quadratic: 
+        Nonlinear Factor: 3.39999999999999991e+00
+    Parameters: 
+      Number: 5
+      Parameter 0: DBC on NS NodeSet0 for DOF T
+      Parameter 1: DBC on NS NodeSet1 for DOF T
+      Parameter 2: DBC on NS NodeSet2 for DOF T
+      Parameter 3: DBC on NS NodeSet3 for DOF T
+      Parameter 4: Quadratic Nonlinear Factor
+    Response Functions: 
+      Number: 2
+      Response 0: Solution Average
+      Response 1: Solution Two Norm
+  Discretization: 
+    1D Elements: 40
+    2D Elements: 40
+    Method: STK2D
+    Exodus Output File Name: steady2d.exo
+    Cubature Degree: 9
+  Regression Results: 
+    Number of Comparisons: 2
+    Test Values: [1.39149999999999996e+00, 5.79341999999999970e+01]
+    Relative Tolerance: 1.00000000000000002e-03
+    Number of Sensitivity Comparisons: 2
+    Sensitivity Test Values 0: [4.51417000000000013e-01, 4.26205999999999974e-01, 4.36869000000000007e-01, 4.36869000000000007e-01, 1.72225999999999990e-01]
+    Sensitivity Test Values 1: [2.04623999999999988e+01, 1.72040000000000006e+01, 1.81322000000000010e+01, 1.81322000000000010e+01, 7.71400000000000041e+00]
+    Number of Dakota Comparisons: 1
+    Dakota Test Values: [1.72755999999999998e+00]
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000000000008e-05
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000000000008e-05
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 100
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 1
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.00000000000000000e+00
+                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

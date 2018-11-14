@@ -53,10 +53,6 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     typedef stk::mesh::Field<int, stk::mesh::Cartesian>   IntVectorFieldType ;
 
     typedef stk::mesh::Cartesian QPTag; // need to invent shards::ArrayDimTag
-    // Tensor3 per QP   - (Cell, QP, Dim, Dim, Dim)
-    typedef stk::mesh::Field<double, QPTag, stk::mesh::Cartesian,
-                             stk::mesh::Cartesian,
-                             stk::mesh::Cartesian> QPTensor3FieldType ;
     // Tensor per QP   - (Cell, QP, Dim, Dim)
     typedef stk::mesh::Field<double, QPTag, stk::mesh::Cartesian, stk::mesh::Cartesian> QPTensorFieldType ;
     // Vector per QP   - (Cell, QP, Dim)
@@ -65,15 +61,10 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     typedef stk::mesh::Field<double, QPTag>                      QPScalarFieldType ;
     typedef stk::mesh::Field<double, stk::mesh::Cartesian3d>     SphereVolumeFieldType ;
 
-#ifdef ALBANY_MOR
-    typedef std::vector<std::string> ScalarValueState;  //required to avoid segfault in Albany_RBGen executable
-#else
     typedef std::vector<const std::string*> ScalarValueState;
-#endif
     typedef std::vector<QPScalarFieldType*> QPScalarState;
     typedef std::vector<QPVectorFieldType*> QPVectorState;
     typedef std::vector<QPTensorFieldType*> QPTensorState;
-    typedef std::vector<QPTensor3FieldType*> QPTensor3State;
 
     typedef std::vector<ScalarFieldType*> ScalarState;
     typedef std::vector<VectorFieldType*> VectorState;
@@ -114,7 +105,6 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     QPScalarState& getQPScalarStates(){return qpscalar_states;}
     QPVectorState& getQPVectorStates(){return qpvector_states;}
     QPTensorState& getQPTensorStates(){return qptensor_states;}
-    QPTensor3State& getQPTensor3States(){return qptensor3_states;}
     const StateInfoStruct& getNodalSIS() const {return nodal_sis;}
     const StateInfoStruct& getNodalParameterSIS() const {return nodal_parameter_sis;}
 
@@ -180,7 +170,6 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     QPScalarState          qpscalar_states;
     QPVectorState          qpvector_states;
     QPTensorState          qptensor_states;
-    QPTensor3State         qptensor3_states;
 
     StateInfoStruct nodal_sis;
     StateInfoStruct nodal_parameter_sis;

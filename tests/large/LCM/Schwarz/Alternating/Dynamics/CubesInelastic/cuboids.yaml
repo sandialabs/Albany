@@ -10,7 +10,7 @@ LCM:
     Final Time: 1.0
     Initial Time Step: 1.0
     Exodus Write Interval: 1
-    Use Default Newton Initial Guess: true
+    Standard Initial Guess: true
   # MODEL DECLARATION, Look in the Problem directory
   Problem:
     # Transient or Steady (Quasi-Static) or Continuation (load steps)

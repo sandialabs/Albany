@@ -1,0 +1,17 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Reference Material: Block_0
+  ElementBlocks: 
+    block_1: 
+      material: Plastic
+    block_2: 
+      material: Metal
+  Materials: 
+    Plastic: 
+      Category: Urethane
+      Flux Scale: 5.00000000000000000e-01
+    Metal: 
+      Category: Non-ferrous
+      Flux Scale: 5.00000000000000000e-01
+...

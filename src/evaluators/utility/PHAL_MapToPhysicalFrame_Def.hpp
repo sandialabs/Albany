@@ -8,6 +8,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
+#include "PHAL_MapToPhysicalFrame.hpp"
 
 namespace PHAL {
 
@@ -16,14 +17,15 @@ template<typename EvalT, typename Traits>
 MapToPhysicalFrame<EvalT, Traits>::
 MapToPhysicalFrame(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
-  coords_vertices  (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_vector),
-  cubature         (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
-  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
-  cellType         (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
-  coords_qp        (p.get<std::string>  ("Coordinate Vector Name"), dl->qp_gradient)
+  coords_vertices  (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector),
+  cubature         (p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature")),
+  intrepidBasis    (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
+  cellType         (p.get<Teuchos::RCP<shards::CellTopology> > ("Cell Type")),
+  coords_qp        (p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient)
 {
-  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
+  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer")) {
     memoizer.enable_memoizer();
+  }
 
   this->addDependentField(coords_vertices.fieldTag());
   this->addEvaluatedField(coords_qp);
@@ -41,7 +43,7 @@ MapToPhysicalFrame(const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void MapToPhysicalFrame<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(coords_vertices,fm);
@@ -51,27 +53,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   refPoints = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs, numDim);
   refWeights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
   cubature->getCubature(refPoints, refWeights); 
-}
-//**********************************************************************
-template <class Scalar, class ArrayPhysPoint, class ArrayRefPoint, class ArrayCell>
-void mapToPhysicalFrame(ArrayPhysPoint      &        physPoints,
-                                           const ArrayRefPoint &        refPoints,
-                                           const ArrayCell     &        cellWorkset,
-                                           const shards::CellTopology & cellTopo,
-                                           const int &                  whichCell)
-{
-  int spaceDim  = (int)cellTopo.getDimension();
-  int numCells  = cellWorkset.dimension(0);
-  //points can be rank-2 (P,D), or rank-3 (C,P,D)
-  int numPoints = (refPoints.rank() == 2) ? refPoints.dimension(0) : refPoints.dimension(1);
-
-  // Initialize physPoints
-  for(int i = 0; i < physPoints.dimentions(0); i++)
-    for(int j = 0; j < physPoints.dimentions(1); j++)  
-      for(int k = 0; k < physPoints.dimentions(2); k++)
-         physPoints(i,j,k) = 0.0;
-  
-
 }
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -92,5 +73,4 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 //**********************************************************************
-}
-
+} // namespace PHAL

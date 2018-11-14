@@ -16,6 +16,9 @@
 #include "Intrepid2_Cubature.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
+#include "PHAL_Utilities.hpp"
+#include "PHAL_Dimension.hpp"
 
 namespace PHAL {
 /** \brief Compute Side Quad points coordinates
@@ -51,6 +54,8 @@ private:
   int numDim;
   int numSideQPs;
   std::string sideSetName;
+
+  MDFieldMemoizer<Traits> memoizer;
 
   // Input:
   //! Values at vertices

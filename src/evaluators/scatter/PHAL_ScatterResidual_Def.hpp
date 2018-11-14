@@ -6,9 +6,12 @@
 #ifdef ALBANY_TIMER
 #include <chrono>
 #endif
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+
 #include "Albany_Utils.hpp"
+#include "PHAL_ScatterResidual.hpp"
 
 // **********************************************************************
 // Base Class Generic Implemtation
@@ -28,9 +31,15 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
   scatter_operation = Teuchos::rcp(new PHX::Tag<ScalarT>
     (fieldName, dl->dummy));
 
-  const Teuchos::ArrayRCP<std::string>& names =
-    p.get< Teuchos::ArrayRCP<std::string> >("Residual Names");
-
+  Teuchos::ArrayRCP<std::string> names;
+  if (p.isType<Teuchos::ArrayRCP<std::string>>("Residual Names")) {
+    names = p.get< Teuchos::ArrayRCP<std::string> >("Residual Names");
+  } else if (p.isType<std::string>("Residual Name")) {
+    names = Teuchos::ArrayRCP<std::string>(1,p.get<std::string>("Residual Name"));
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! You must specify either the std::string 'Residual Name', "
+                                                          "or the Teuchos::ArrayRCP<std::string> 'Residual Names'.\n");
+  }
 
   tensorRank = p.get<int>("Tensor Rank");
 

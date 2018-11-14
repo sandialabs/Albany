@@ -1,0 +1,183 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Solution Method: ATO Problem
+    Number of Subproblems: 1
+    Verbose Output: true
+    Objective Aggregator: 
+      Output Value Name: F
+      Output Derivative Name: dFdRho
+      Values: [R0]
+      Derivatives: [dR0dRho]
+      Weighting: Uniform
+    Spatial Filters: 
+      Number of Filters: 1
+      Filter 0: 
+        Filter Radius: 7.49999999999999972e-02
+        Iterations: 1
+    Topological Optimization: 
+      Package: NLopt
+      Method: MMA
+      Convergence Tests: 
+        Maximum Iterations: 70
+        Combo Type: OR
+      Measure Enforcement: 
+        Measure: Volume
+        Maximum Iterations: 120
+        Convergence Tolerance: 9.99999999999999955e-07
+        Target: 5.00000000000000000e-01
+      Objective: Aggregator
+      Constraint: Measure
+    Topologies: 
+      Number of Topologies: 1
+      Topology 0: 
+        Topology Name: Rho
+        Entity Type: Distributed Parameter
+        Bounds: [9.99999999999999924e-25, 1.00000000000000000e+00]
+        Initial Value: 5.00000000000000000e-01
+        Functions: 
+          Number of Functions: 2
+          Function 0: 
+            Function Type: SIMP
+            Minimum: 1.00000000000000002e-03
+            Penalization Parameter: 3.00000000000000000e+00
+          Function 1: 
+            Function Type: SIMP
+            Minimum: 0.00000000000000000e+00
+            Penalization Parameter: 1.00000000000000000e+00
+        Spatial Filter: 0
+    Configuration: 
+      Element Blocks: 
+        Number of Element Blocks: 1
+        Element Block 0: 
+          Name: block_1
+          Material: 
+            Elastic Modulus: 1.00000000000000000e+09
+            Poissons Ratio: 3.30000000000000016e-01
+            Density: 2.70000000000000000e+03
+      Linear Measures: 
+        Number of Linear Measures: 1
+        Linear Measure 0: 
+          Linear Measure Name: Volume
+          Linear Measure Type: Volume
+          Volume: 
+            Topology Index: 0
+            Function Index: 1
+    Physics Problem 0: 
+      Name: LinearElasticity 2D
+      Body Force: 
+        Body Force Direction: [0.00000000000000000e+00, -1.00000000000000000e+00]
+        Body Force Magnitude: 9.80000000000000071e+00
+      Dirichlet BCs: 
+        DBC on NS nodelist_1 for DOF X: 0.00000000000000000e+00
+        DBC on NS nodelist_1 for DOF Y: 0.00000000000000000e+00
+      Neumann BCs: 
+        'NBC on SS surface_1 for DOF all set (t_x, t_y)': [0.00000000000000000e+00, -4.50000000000000000e+04]
+      Apply Topology Weight Functions: 
+        Number of Fields: 2
+        Field 0: 
+          Name: Stress
+          Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+        Field 1: 
+          Name: Body Force
+          Layout: QP Vector
+          Topology Index: 0
+          Function Index: 1
+      Response Functions: 
+        Number of Response Vectors: 1
+        Response Vector 0: 
+          Name: Internal Energy Objective
+          Gradient Field Name: Strain
+          Gradient Field Layout: QP Tensor
+          Work Conjugate Name: Stress
+          Work Conjugate Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+          Response Name: R0
+          Response Derivative Name: dR0dRho
+  Discretization: 
+    Method: Ioss
+    Exodus Input File Name: mitchell.gen
+    Exodus Output File Name: mitchell.exo
+    Separate Evaluators by Element Block: true
+  Piro: 
+    Sensitivity Method: Adjoint
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000000000004e-10
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000000000004e-10
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 9.99999999999999980e-13
+                      Output Frequency: 2
+                      Output Style: 1
+                      Verbosity: 0
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 2
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.00000000000000000e+00
+                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: level-of-fill': 0
+                  VerboseObject: 
+                    Verbosity Level: medium
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

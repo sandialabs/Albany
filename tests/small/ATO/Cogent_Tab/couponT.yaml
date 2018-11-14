@@ -1,0 +1,180 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: LinearElasticity 3D
+    Configuration: 
+      Nonconformal: true
+      Element Blocks: 
+        Number of Element Blocks: 3
+        Element Block 0: 
+          Name: block_0
+          Material: 
+            Elastic Modulus: 1.00000000000000000e+09
+            Poissons Ratio: 3.30000000000000016e-01
+          Geometry Construction: 
+            Error Checking: 0
+            Projection Order: 2
+            Uniform Quadrature: true
+            Body: 
+              Model Type: Non-parameterized
+              Number of Subdomains: 5
+              Level Set Names: [LS0_SURF0, LS0_SURF1, LS0_SURF2, LS0_SURF3, LS0_SURF4, LS0_SURF5, LS1_SURF0, LS2_SURF0, LS3_SURF0, LS4_SURF0]
+              Subdomain 0: 
+                Operation: Add
+                Level Set Indices: [0, 1, 2, 3, 4, 5]
+              Subdomain 1: 
+                Operation: Add
+                Level Set Indices: [6, 4, 5]
+              Subdomain 2: 
+                Operation: Add
+                Level Set Indices: [7, 4, 5]
+              Subdomain 3: 
+                Operation: Subtract
+                Level Set Indices: [8, 4, 5]
+              Subdomain 4: 
+                Operation: Subtract
+                Level Set Indices: [9, 4, 5]
+        Element Block 1: 
+          Name: block_100
+          Geometry Construction: 
+            Error Checking: 0
+            Uniform Quadrature: true
+            Projection Order: 2
+            Number of Boundaries: 1
+            Boundary 0: 
+              Boundary Name: Bolt Hole 0
+              Model Type: Non-parameterized
+              Number of Subdomains: 1
+              Level Set Names: [LS3_SURF0, LS3_SURF1, LS3_SURF2]
+              Surface Level Set Index: 0
+              Subdomain 0: 
+                Operation: Add
+                Level Set Indices: [0, 1, 2]
+        Element Block 2: 
+          Name: block_200
+          Geometry Construction: 
+            Projection Order: 2
+            Uniform Quadrature: true
+            Error Checking: 0
+            Geometry Type: Boundary
+            Number of Boundaries: 1
+            Boundary 0: 
+              Boundary Name: Bolt Hole 1
+              Model Type: Non-parameterized
+              Level Set Names: [LS4_SURF0, LS4_SURF1, LS4_SURF2]
+              Surface Level Set Index: 0
+              Number of Subdomains: 1
+              Subdomain 0: 
+                Operation: Add
+                Level Set Indices: [0, 1, 2]
+      Linear Measures: 
+        Number of Linear Measures: 1
+        Linear Measure 0: 
+          Linear Measure Name: Volume
+          Linear Measure Type: Volume
+          Volume: 
+            Topology Index: 0
+            Function Index: 1
+    Implicit Boundary Conditions: 
+      Number of Dirichlet BCs: 1
+      Dirichlet BC 0: 
+        Variable Name: Displacement
+        Boundary: Bolt Hole 0
+        Layout: QP Vector
+        X: 0.00000000000000000e+00
+        Y: 0.00000000000000000e+00
+        Z: 0.00000000000000000e+00
+        Penalty Coefficient: 1.00000000000000000e+08
+      Number of Neumann BCs: 1
+      Neumann BC 0: 
+        Vector: [4.50000000000000000e+05, 0.00000000000000000e+00, 0.00000000000000000e+00]
+        Boundary: Bolt Hole 1
+        Layout: QP Vector
+  Discretization: 
+    Method: Ioss
+    Exodus Input File Name: coupon.gen
+    Exodus Output File Name: couponT.exo
+    Separate Evaluators by Element Block: true
+    Restart Index: 1
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 3
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000000000002e-08
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+        Test 2: 
+          Test Type: NormUpdate
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000000000002e-08
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 200
+                    Max Iterations: 2000
+                    Tolerance: 1.00000000000000002e-08
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 9.99999999999999980e-13
+                      Output Frequency: 2
+                      Output Style: 1
+                      Verbosity: 0
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: MueLu
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000000000000e+00
+                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                  VerboseObject: 
+                    Verbosity Level: medium
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

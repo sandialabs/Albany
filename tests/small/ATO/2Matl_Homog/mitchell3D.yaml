@@ -1,0 +1,381 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Solution Method: ATO Problem
+    Number of Subproblems: 3
+    Number of Homogenization Problems: 2
+    Verbose Output: true
+    Objective Aggregator: 
+      Output Value Name: F
+      Output Derivative Name: dFdTopo
+      Values: [R0, R1, R2]
+      Derivatives: [dR0dTopo, dR1dTopo, dR2dTopo]
+      Weighting: Scaled
+      Weights: [5.00000000000000000e-01, 3.75000000000000000e-01, 1.25000000000000000e-01]
+      Spatial Filter: 0
+    Spatial Filters: 
+      Number of Filters: 1
+      Filter 0: 
+        Iterations: 2
+        Filter Radius: 1.20000000000000002e-02
+        Blocks: [block_1]
+    Topological Optimization: 
+      Package: OC
+      Stabilization Parameter: 5.00000000000000000e-01
+      Move Limiter: 1.00000000000000000e+00
+      Convergence Tests: 
+        Maximum Iterations: 4
+        Combo Type: OR
+        Relative Topology Change: 5.00000000000000024e-05
+        Relative Objective Change: 9.99999999999999955e-07
+      Measure Enforcement: 
+        Measure: Mass
+        Maximum Iterations: 120
+        Convergence Tolerance: 9.99999999999999955e-07
+        Target: 7.49999999999999972e-02
+      Objective: Aggregator
+      Constraint: Measure
+    Topologies: 
+      Number of Topologies: 2
+      Topology 0: 
+        Topology Name: Rho0
+        Entity Type: State Variable
+        Bounds: [0.00000000000000000e+00, 1.00000000000000000e+00]
+        Fixed Blocks: [block_2]
+        Initial Value: 5.00000000000000000e-01
+        Functions: 
+          Number of Functions: 2
+          Function 0: 
+            Function Type: SIMP
+            Minimum: 1.00000000000000002e-03
+            Penalization Parameter: 3.00000000000000000e+00
+          Function 1: 
+            Function Type: SIMP
+            Minimum: 0.00000000000000000e+00
+            Penalization Parameter: 1.00000000000000000e+00
+        Spatial Filter: 0
+      Topology 1: 
+        Topology Name: Rho1
+        Entity Type: State Variable
+        Bounds: [0.00000000000000000e+00, 1.00000000000000000e+00]
+        Fixed Blocks: [block_2]
+        Initial Value: 5.00000000000000000e-01
+        Functions: 
+          Number of Functions: 2
+          Function 0: 
+            Function Type: SIMP
+            Minimum: 0.00000000000000000e+00
+            Penalization Parameter: 3.00000000000000000e+00
+          Function 1: 
+            Function Type: SIMP
+            Minimum: 0.00000000000000000e+00
+            Penalization Parameter: 1.00000000000000000e+00
+        Spatial Filter: 0
+    Configuration: 
+      Element Blocks: 
+        Number of Element Blocks: 2
+        Element Block 0: 
+          Name: block_1
+          Mixture: 
+            Number of Materials: 2
+            Material 0: 
+              Elastic Modulus: 1.13800000000000000e+11
+              Poissons Ratio: 3.42000000000000026e-01
+              Isotropic Modulus: 6.70000000000000018e+00
+              Density: 4.43000000000000000e+03
+            Material 1: 
+              Homogenized Constants: 
+                Stiffness Name: Stiffness Tensor
+                Conduction Name: Conduction Tensor
+              Density: 8.86000000000000000e+02
+            Mixed Parameters: 
+              Number of Mixed Parameters: 1
+              Mixed Parameter 0: 
+                Parameter Name: Density
+                Rule Type: Voigt
+                Voigt: 
+                  Material Indices: [0, 1]
+                  Topology Indices: [1]
+                  Function Indices: [1]
+            Mixed Fields: 
+              Number of Mixed Fields: 2
+              Mixed Field 0: 
+                Field Name: Stress
+                Field Layout: QP Tensor
+                Rule Type: Voigt
+                Voigt: 
+                  Material Indices: [0, 1]
+                  Topology Indices: [1]
+                  Function Indices: [0]
+              Mixed Field 1: 
+                Field Name: kinVar
+                Field Layout: QP Vector
+                Rule Type: Voigt
+                Voigt: 
+                  Material Indices: [0, 1]
+                  Topology Indices: [1]
+                  Function Indices: [0]
+        Element Block 1: 
+          Name: block_2
+          Material: 
+            Elastic Modulus: 1.13800000000000000e+11
+            Poissons Ratio: 3.42000000000000026e-01
+            Isotropic Modulus: 6.70000000000000018e+00
+            Density: 4.43000000000000000e+03
+      Linear Measures: 
+        Number of Linear Measures: 2
+        Linear Measure 0: 
+          Linear Measure Name: Mass
+          Linear Measure Type: Topology Weighted Integral
+          Topology Weighted Integral: 
+            Parameter Name: Density
+            Topology Index: 0
+            Function Index: 1
+        Linear Measure 1: 
+          Linear Measure Name: Volume
+          Linear Measure Type: Volume
+          Volume: 
+            Topology Index: 0
+            Function Index: 1
+    Homogenization Problem 0: 
+      Number of Spatial Dimensions: 3
+      Problem: 
+        Name: LinearElasticity 3D
+        Configuration: 
+          Element Blocks: 
+            Number of Element Blocks: 1
+            Element Block 0: 
+              Name: block_1
+              Material: 
+                Elastic Modulus: 1.13800000000000000e+11
+                Poissons Ratio: 3.42000000000000026e-01
+                Density: 4.43000000000000000e+03
+        Response Functions: 
+          Number of Response Vectors: 1
+          Response Vector 0: 
+            Name: Homogenized Constants Response
+            Field Name: Stress
+            Field Type: Tensor
+            Homogenized Constants Name: Stiffness Tensor
+            Homogenized Constants Type: 4th Rank Voigt
+      Discretization: 
+        Method: Ioss
+        Exodus Input File Name: cube.gen
+        Exodus Output File Name: cube.exo
+        Separate Evaluators by Element Block: true
+      Cell BCs: 
+        DOF Names: [X, Y, Z]
+        DOF Type: Vector
+        Negative X Face: 1
+        Positive X Face: 2
+        Negative Y Face: 3
+        Positive Y Face: 4
+        Negative Z Face: 5
+        Positive Z Face: 6
+    Homogenization Problem 1: 
+      Number of Spatial Dimensions: 3
+      Problem: 
+        Name: Poissons Equation 3D
+        Isotropic Modulus: 6.70000000000000018e+00
+        Response Functions: 
+          Number of Response Vectors: 1
+          Response Vector 0: 
+            Name: Homogenized Constants Response
+            Field Name: kinVar
+            Field Type: Vector
+            Homogenized Constants Name: Conduction Tensor
+            Homogenized Constants Type: 2nd Rank Tensor
+      Discretization: 
+        Method: Ioss
+        Exodus Input File Name: cube.gen
+        Exodus Output File Name: cube.exo
+      Cell BCs: 
+        DOF Names: [P]
+        DOF Type: Scalar
+        Negative X Face: 1
+        Positive X Face: 2
+        Negative Y Face: 3
+        Positive Y Face: 4
+        Negative Z Face: 5
+        Positive Z Face: 6
+    Physics Problem 0: 
+      Name: Poissons Equation 3D
+      Dirichlet BCs: 
+        DBC on NS nodelist_1 for DOF P: 0.00000000000000000e+00
+        DBC on NS nodelist_2 for DOF P: 0.00000000000000000e+00
+        DBC on NS nodelist_3 for DOF P: 0.00000000000000000e+00
+      Neumann BCs: 
+        'NBC on SS surface_1 for DOF P set (dudx, dudy, dudz)': [5.00000000000000000e+03, 0.00000000000000000e+00, 0.00000000000000000e+00]
+      Apply Topology Weight Functions: 
+        Number of Fields: 1
+        Field 0: 
+          Name: kinVar
+          Layout: QP Vector
+          Topology Index: 0
+          Function Index: 0
+      Response Functions: 
+        Number of Response Vectors: 1
+        Response Vector 0: 
+          Name: Stiffness Objective
+          Gradient Field Name: Phi Gradient
+          Gradient Field Layout: QP Vector
+          Work Conjugate Name: kinVar
+          Work Conjugate Layout: QP Vector
+          Topology Index: 0
+          Function Index: 0
+          Response Name: R0
+          Response Derivative Name: dR0dTopo
+    Physics Problem 1: 
+      Name: LinearElasticity 3D
+      Dirichlet BCs: 
+        DBC on NS nodelist_1 for DOF X: 0.00000000000000000e+00
+        DBC on NS nodelist_1 for DOF Y: 0.00000000000000000e+00
+        DBC on NS nodelist_1 for DOF Z: 0.00000000000000000e+00
+        DBC on NS nodelist_2 for DOF X: 0.00000000000000000e+00
+        DBC on NS nodelist_2 for DOF Y: 0.00000000000000000e+00
+        DBC on NS nodelist_2 for DOF Z: 0.00000000000000000e+00
+        DBC on NS nodelist_3 for DOF X: 0.00000000000000000e+00
+        DBC on NS nodelist_3 for DOF Y: 0.00000000000000000e+00
+        DBC on NS nodelist_3 for DOF Z: 0.00000000000000000e+00
+      Neumann BCs: 
+        'NBC on SS surface_1 for DOF all set (t_x, t_y, t_z)': [0.00000000000000000e+00, -4.50000000000000000e+08, 0.00000000000000000e+00]
+      Apply Topology Weight Functions: 
+        Number of Fields: 1
+        Field 0: 
+          Name: Stress
+          Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+      Response Functions: 
+        Number of Response Vectors: 1
+        Response Vector 0: 
+          Name: Stiffness Objective
+          Gradient Field Name: Strain
+          Gradient Field Layout: QP Tensor
+          Work Conjugate Name: Stress
+          Work Conjugate Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+          Response Name: R1
+          Response Derivative Name: dR1dTopo
+    Physics Problem 2: 
+      Name: LinearElasticity 3D
+      Dirichlet BCs: 
+        DBC on NS nodelist_1 for DOF X: 0.00000000000000000e+00
+        DBC on NS nodelist_1 for DOF Y: 0.00000000000000000e+00
+        DBC on NS nodelist_1 for DOF Z: 0.00000000000000000e+00
+        DBC on NS nodelist_2 for DOF X: 0.00000000000000000e+00
+        DBC on NS nodelist_2 for DOF Y: 0.00000000000000000e+00
+        DBC on NS nodelist_2 for DOF Z: 0.00000000000000000e+00
+        DBC on NS nodelist_3 for DOF X: 0.00000000000000000e+00
+        DBC on NS nodelist_3 for DOF Y: 0.00000000000000000e+00
+        DBC on NS nodelist_3 for DOF Z: 0.00000000000000000e+00
+      Neumann BCs: 
+        'NBC on SS surface_1 for DOF all set (t_x, t_y, t_z)': [0.00000000000000000e+00, 0.00000000000000000e+00, -4.50000000000000000e+08]
+      Apply Topology Weight Functions: 
+        Number of Fields: 1
+        Field 0: 
+          Name: Stress
+          Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+      Response Functions: 
+        Number of Response Vectors: 1
+        Response Vector 0: 
+          Name: Stiffness Objective
+          Gradient Field Name: Strain
+          Gradient Field Layout: QP Tensor
+          Work Conjugate Name: Stress
+          Work Conjugate Layout: QP Tensor
+          Topology Index: 0
+          Function Index: 0
+          Response Name: R2
+          Response Derivative Name: dR2dTopo
+  Discretization: 
+    Method: Ioss
+    Exodus Input File Name: padded.gen
+    Exodus Output File Name: padded.exo
+    Workset Size: 50
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 3
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 9.99999999999999955e-07
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+        Test 2: 
+          Test Type: NormUpdate
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 9.99999999999999955e-07
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 50
+                    Max Iterations: 200
+                    Tolerance: 1.00000000000000004e-10
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 9.99999999999999980e-13
+                      Output Frequency: 2
+                      Output Style: 1
+                      Verbosity: 0
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: ML
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 2
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.00000000000000000e+00
+                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: level-of-fill': 0
+                  VerboseObject: 
+                    Verbosity Level: medium
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

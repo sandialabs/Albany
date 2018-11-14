@@ -73,6 +73,15 @@ namespace Albany {
        Teuchos::ArrayRCP<std::string> dof_names_dot,
        int offsetToFirstDOF=0) const;
 
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructGatherSolutionEvaluator(
+       bool isVectorField,
+       const std::string& dof_name,
+       const std::string& dof_name_dot,
+       int offsetToFirstDOF=0) const {
+      return constructGatherSolutionEvaluator(isVectorField,arcp_str(dof_name),arcp_str(dof_name_dot),offsetToFirstDOF);
+    }
+
     //! Function to create parameter list for construction of GatherSolution
     //! evaluator with standard Field names.
     //! Tensor rank of solution variable is 0, 1, or 2
@@ -113,6 +122,14 @@ namespace Albany {
        Teuchos::ArrayRCP<std::string> dof_names,
        int offsetToFirstDOF=0) const;
 
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructGatherSolutionEvaluator_noTransient(
+       bool isVectorField,
+       const std::string& dof_name,
+       int offsetToFirstDOF=0) const {
+      return constructGatherSolutionEvaluator_noTransient(isVectorField,arcp_str(dof_name),offsetToFirstDOF);
+    }
+
     //! Same as above, but no ability to gather time dependent x_dot field
     //! Tensor rank of solution variable is 0, 1, or 2
     Teuchos::RCP< PHX::Evaluator<Traits> >
@@ -121,6 +138,14 @@ namespace Albany {
        Teuchos::ArrayRCP<std::string> dof_names,
        int offsetToFirstDOF=0) const;
 
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructGatherSolutionEvaluator_noTransient(
+       int tensorRank,
+       const std::string& dof_name,
+       int offsetToFirstDOF=0) const {
+      return constructGatherSolutionEvaluator_noTransient(tensorRank,Teuchos::ArrayRCP<std::string>(1,dof_name),offsetToFirstDOF);
+    }
+
     //! Function to create parameter list for construction of ScatterResidual
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> >
@@ -128,6 +153,14 @@ namespace Albany {
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> resid_names,
        int offsetToFirstDOF=0, std::string scatterName="Scatter") const;
+
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructScatterResidualEvaluator(
+       bool isVectorField,
+       const std::string& resid_name,
+       int offsetToFirstDOF=0, std::string scatterName="Scatter") const {
+      return constructScatterResidualEvaluator (isVectorField,arcp_str(resid_name),offsetToFirstDOF,scatterName);
+    }
 
     //! Function to create parameter list for construction of ScatterResidual
     //! evaluator with standard Field names
@@ -138,6 +171,15 @@ namespace Albany {
        Teuchos::RCP<std::map<std::string, int> > extruded_params_levels,
        int offsetToFirstDOF=0, std::string scatterName="Scatter") const;
 
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructScatterResidualEvaluatorWithExtrudedParams(
+       bool isVectorField,
+       const std::string& resid_name,
+       Teuchos::RCP<std::map<std::string, int> > extruded_params_levels,
+       int offsetToFirstDOF=0, std::string scatterName="Scatter") const {
+      return constructScatterResidualEvaluatorWithExtrudedParams (isVectorField,arcp_str(resid_name),extruded_params_levels,offsetToFirstDOF,scatterName);
+    }
+
     //! Function to create parameter list for construction of ScatterResidual
     //! evaluator with standard Field names
     //! Tensor rank of solution variable is 0, 1, or 2
@@ -146,6 +188,14 @@ namespace Albany {
        int tensorRank,
        Teuchos::ArrayRCP<std::string> resid_names,
        int offsetToFirstDOF=0, std::string scatterName="Scatter") const;
+
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructScatterResidualEvaluator(
+       int tensorRank,
+       const std::string& resid_name,
+       int offsetToFirstDOF=0, std::string scatterName="Scatter") const {
+      return constructScatterResidualEvaluator(tensorRank,arcp_str(resid_name),offsetToFirstDOF,scatterName);
+    }
 
 #ifdef ALBANY_CONTACT
     //! Function to create parameter list for construction of MortarContactResidual
@@ -232,19 +282,22 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFVecInterpolationSideEvaluator(
        const std::string& dof_names,
-       const std::string& sideSetName) const;
+       const std::string& sideSetName,
+       const bool enableMemoizer = false) const;
 
     //! Interpolation functions for gradient of quantities defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFGradInterpolationSideEvaluator(
       const std::string& dof_names,
-      const std::string& sideSetName) const;
+      const std::string& sideSetName,
+      const bool enableMemoizer = false) const;
 
     //! Interpolation functions for gradient of vector quantities defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFVecGradInterpolationSideEvaluator(
       const std::string& dof_names,
-      const std::string& sideSetName) const;
+      const std::string& sideSetName,
+      const bool enableMemoizer = false) const;
 
     //! Function to create parameter list for construction of GatherCoordinateVector
     //! evaluator with standard Field names
@@ -268,7 +321,8 @@ namespace Albany {
     constructMapToPhysicalFrameSideEvaluator(
       const Teuchos::RCP<shards::CellTopology>& cellType,
       const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature,
-      const std::string& sideSetName) const;
+      const std::string& sideSetName,
+      const bool enableMemoizer = false) const;
 
     //! Function to create evaluator for restriction to side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
@@ -287,7 +341,8 @@ namespace Albany {
        const std::string& sideSetName,
        const std::string& layout,
        const Teuchos::RCP<shards::CellTopology>& cellType = Teuchos::null,
-       const std::string& side_dof_name = "") const;
+       const std::string& side_dof_name = "",
+       const bool enableMemoizer = false) const;
 
     //! Function to create evaluator for prolongation to cell
     Teuchos::RCP< PHX::Evaluator<Traits> >
@@ -342,10 +397,14 @@ namespace Albany {
 
   private:
 
+    Teuchos::ArrayRCP<std::string> arcp_str(const std::string& s) const {
+      return Teuchos::ArrayRCP<std::string>(1,s);
+    }
+
     //! Evaluator Utils with different ScalarType
     Teuchos::RCP<EvaluatorUtilsBase<EvalT,Traits,MeshScalarT>>    utils_MST;
     Teuchos::RCP<EvaluatorUtilsBase<EvalT,Traits,ParamScalarT>>   utils_PST;
-    Teuchos::RCP<EvaluatorUtilsBase<EvalT,Traits,RealType>>   utils_RT;
+    Teuchos::RCP<EvaluatorUtilsBase<EvalT,Traits,RealType>>       utils_RT;
 
     //! Struct of PHX::DataLayout objects defined all together.
     Teuchos::RCP<Albany::Layouts> dl;

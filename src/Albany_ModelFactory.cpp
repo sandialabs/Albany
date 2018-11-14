@@ -14,13 +14,6 @@
 #endif
 #include "Albany_ModelEvaluatorT.hpp"
 
-
-#ifdef ALBANY_MOR
-#if defined(ALBANY_EPETRA)
-#include "MOR_ReducedOrderModelFactory.hpp"
-#endif
-#endif
-
 namespace Albany {
 
 using Teuchos::RCP;
@@ -42,14 +35,6 @@ RCP<EpetraExt::ModelEvaluator> ModelFactory::create() const
   // Wrap a decorator around the original model when an adaptive computation is requested.
 //  const RCP<AAdapt::AdaptiveModelFactory> adaptMdlFactory = app_->getAdaptSolMgr()->modelFactory();
 //  model = adaptMdlFactory->create(model);
-
-#ifdef ALBANY_MOR
-  if(app_->getDiscretization()->supportsMOR()){
-    // Wrap a decorator around the original model when a reduced-order computation is requested.
-    const RCP<MOR::ReducedOrderModelFactory> romFactory = app_->getMorFacade()->modelFactory();
-    model = romFactory->create(model);
-  }
-#endif
 
   return model;
 }

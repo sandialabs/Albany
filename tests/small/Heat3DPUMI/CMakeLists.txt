@@ -6,12 +6,12 @@
 
 
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSerial.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputSerial.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputRegressFail.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputRegressFail.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSerial.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputSerial.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputRegressFail.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputRegressFail.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/test_non_man.xmt_txt
                ${CMAKE_CURRENT_BINARY_DIR}/test_non_man.xmt_txt COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse_cube_model.dmg
@@ -38,10 +38,10 @@ add_test(NAME ${testName}_Tpetra
 
 IF(NOT ALBANY_PARALLEL_ONLY)
   add_test(NAME ${testName}_SERIAL_Tpetra
-     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${SerialAlbanyT.exe}" -DTEST_ARGS=inputSerial.xml
+     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${SerialAlbanyT.exe}" -DTEST_ARGS=inputSerial.yaml
      "-DFILENAME=serial_coarse_cube_out.pvd" -P
      ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
   add_test(NAME ${testName}_Tpetra_RegressFail
-     COMMAND ${SerialAlbanyT.exe} inputRegressFail.xml)
+     COMMAND ${SerialAlbanyT.exe} inputRegressFail.yaml)
   set_tests_properties(${testName}_Tpetra_RegressFail PROPERTIES WILL_FAIL TRUE)
 ENDIF()

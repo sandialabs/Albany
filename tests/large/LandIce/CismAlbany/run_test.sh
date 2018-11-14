@@ -40,11 +40,11 @@ cd ..
 
 #create 2d exodus file for Greenland.
 #Warning!! this part is very hacky, you'll get a runtime error, but the correct *.exo will be saved in the albanyMesh folder. Also, this can be extremely slow with large files, unless trilinos is compiled with the nodebug option -D CMAKE_CXX_FLAGS:STRING="-O3 -fPIC -fno-var-tracking -DNDEBUG".
-mpirun -np 8 AlbanyT inputFiles/create2dExo.xml
+mpirun -np 8 AlbanyT inputFiles/create2dExo.yaml
 
 
 #run standalone Albany simulation
-mpirun -np 8 AlbanyT inputFiles/input_standalone-albanyT.xml 
+mpirun -np 8 AlbanyT inputFiles/input_standalone-albanyT.yaml 
 cd albanyMesh
 epu --auto greenland_2d.exo.8.0
 cd ..

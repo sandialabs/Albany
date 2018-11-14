@@ -1,0 +1,68 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Aeras Shallow Water 3D
+    Solution Method: Transient
+    Shallow Water Problem: 
+      Use Prescribed Velocity: false
+    Dirichlet BCs: { }
+    Aeras Surface Height: 
+      Type: Mountain
+    Initial Condition: 
+      Function: Aeras TC5Init
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+      Response 1: Solution Max Value
+      Response 2: Solution Two Norm
+    Parameters: 
+      Number: 1
+      Parameter 0: Mountain Height
+    Compute Sensitivities: false
+  Discretization: 
+    Method: Exodus
+    Exodus Input File Name: ../../grids/QUAD9/uniform_16_quad9.g
+    Cubature Rule: GAUSS_LOBATTO
+  Regression Results: 
+    Number of Comparisons: 0
+    Test Values: [1.87903016191000006e+03, 5.96000179016000038e+03, 4.41330137683000008e+05]
+    Relative Tolerance: 1.00000000000000008e-05
+    Absolute Tolerance: 1.00000000000000002e-03
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [4.23961574999999979e-01, 3.56569929999999997e-03]
+  Piro: 
+    Dakota: 
+      Input File: dakota_uniform.in
+      Output File: dakota_uniform.out
+      Restart File: dakota.res
+      Error File: dakota.err
+      Parameter Vector Index: 0
+      Response Vector Index: 0
+    Rythmos Solver: 
+      Invert Mass Matrix: true
+      Lump Mass Matrix: true
+      NonLinear Solver: 
+        VerboseObject: 
+          Verbosity Level: low
+      Rythmos: 
+        Integrator Settings: 
+          Final Time: 2.70000000000000000e+02
+          Integrator Selection: 
+            Integrator Type: Default Integrator
+            Default Integrator: 
+              VerboseObject: 
+                Verbosity Level: low
+        Stepper Settings: 
+          Stepper Selection: 
+            Stepper Type: Explicit RK
+          Runge Kutta Butcher Tableau Selection: 
+            Runge Kutta Butcher Tableau Type: Explicit 2 Stage 2nd order by Runge
+        Integration Control Strategy Selection: 
+          Integration Control Strategy Type: Simple Integration Control Strategy
+          Simple Integration Control Strategy: 
+            Take Variable Steps: false
+            Fixed dt: 9.00000000000000000e+01
+            VerboseObject: 
+              Verbosity Level: low
+...

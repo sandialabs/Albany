@@ -38,7 +38,7 @@ class NeumannBase :
 
 public:
 
-  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, BASAL, BASAL_SCALAR_FIELD, TRACTION, LATERAL, CLOSED_FORM, STEFAN_BOLTZMANN};
+  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, TRACTION, CLOSED_FORM, STEFAN_BOLTZMANN};
   enum SIDE_TYPE {OTHER, LINE, TRI, QUAD}; // to calculate areas for pressure bc
 
   typedef typename EvalT::ScalarT ScalarT;
@@ -63,118 +63,42 @@ protected:
   Teuchos::Array<int> offset;
   int numDOFsSet;
 
-  //The following are for the basal BC
-  std::string betaName; //name of function betaXY to be used
-  double L;           //length scale for ISMIP-HOM Test cases
-  MeshScalarT betaXY; //function of x and y to multiply scalar values of beta read from input file
-  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, EXP_SCALAR_FIELD, POWERLAW_SCALAR_FIELD, EXP_SCALAR_FIELD_THK, LATERAL_BACKPRESSURE, LANDICE_XZ_MMS};
-  BETAXY_NAME beta_type;
+  // Should only specify flux vector components (dudx, dudy, dudz), dudn, or pressure P
 
-  //The following are for the lateral BC
-  double g;
-  double rho;
-  double rho_w;
-  bool useGLP;
-  Teuchos::ParameterList* stereographicMapList;
-  bool useStereographicMap;
-
- // Should only specify flux vector components (dudx, dudy, dudz), dudn, or pressure P
-
-   // dudn scaled
+  // dudn scaled
   void calc_dudn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
-                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
-                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
-                          const shards::CellTopology & celltopo,
-                          const int cellDims,
-                          int local_side_id,
-                          ScalarT scale = 1.0);
+                          ScalarT scale = 1.0) const ;
 
   // robin (also uses flux scaling)
   void calc_dudn_robin (Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
-                        const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
-                        const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
-                        const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
-                        const shards::CellTopology & celltopo,
-                        const int cellDims,
-                        int local_side_id,
-                        ScalarT scale,
-                        const ScalarT* robin_param_values);
+                        const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side) const;
 
   // Stefan-Boltzmann (also uses flux scaling)
   void calc_dudn_radiate (Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
-                        const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
-                        const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
-                        const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
-                        const shards::CellTopology & celltopo,
-                        const int cellDims,
-                        int local_side_id,
-                        ScalarT scale,
-                        const ScalarT* robin_param_values);
+                        const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side) const;
 
    // (dudx, dudy, dudz)
   void calc_gradu_dotn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
-                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
                           const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
-                          const int cellDims,
-                          int local_side_id);
+                          int local_side_id) const;
 
    // (t_x, t_y, t_z)
-  void calc_traction_components(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
-                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
-                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
-                          const shards::CellTopology & celltopo,
-                          const int cellDims,
-                          int local_side_id);
+  void calc_traction_components(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned) const ;
 
    // Pressure P
   void calc_press(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
-                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
                           const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
-                          const int cellDims,
-                          int local_side_id);
+                          int local_side_id) const;
 
   // closed_from bc assignment
   void calc_closed_form(Kokkos::DynRankView<ScalarT, PHX::Device> &    qp_data_returned,
                         const Kokkos::DynRankView<MeshScalarT, PHX::Device>& physPointsSide,
                         const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                         const shards::CellTopology & celltopo,
-                        const int cellDims,
                         int local_side_id,
-                        typename Traits::EvalData workset);
-
-  //Basal bc
-  void calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
-                       const Kokkos::DynRankView<MeshScalarT, PHX::Device>& physPointsSide,
-             const Kokkos::DynRankView<ScalarT, PHX::Device>& basalFriction_side,
-             const Kokkos::DynRankView<ScalarT, PHX::Device>& thickness_side,
-            const Kokkos::DynRankView<ScalarT, PHX::Device>& bedTopo_side,
-             const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
-                       const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
-                       const shards::CellTopology & celltopo,
-                       const int cellDims,
-                       int local_side_id);
-
-  void calc_dudn_basal_scalar_field(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
-                       const Kokkos::DynRankView<MeshScalarT, PHX::Device>& physPointsSide,
-                            const Kokkos::DynRankView<ScalarT, PHX::Device>& basalFriction_side,
-                            const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
-                                const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
-                                const shards::CellTopology & celltopo,
-                                const int cellDims,
-                                int local_side_id);
-
-  //Lateral bc
-  void calc_dudn_lateral(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
-                       const Kokkos::DynRankView<MeshScalarT, PHX::Device>& physPointsSide,
-                     const Kokkos::DynRankView<ScalarT, PHX::Device>& thickness_side,
-                     const Kokkos::DynRankView<ScalarT, PHX::Device>& elevation_side,
-                     const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
-                         const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
-                         const shards::CellTopology & celltopo,
-                         const int cellDims,
-                         int local_side_id);
+                        typename Traits::EvalData workset) const;
 
    // Do the side integration
   void evaluateNeumannContribution(typename Traits::EvalData d);
@@ -182,13 +106,8 @@ protected:
   // Input:
   //! Coordinate vector at vertices
   PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
-  PHX::MDField<const ScalarT,Cell,Node> dof;
-  PHX::MDField<const ScalarT,Cell,Node,VecDim> dofVec;
-  PHX::MDField<const ParamScalarT,Cell,Node> beta_field;
-  PHX::MDField<const ParamScalarT,Cell,Node> roughness_field;
-  PHX::MDField<const ParamScalarT,Cell,Node> thickness_field;
-  PHX::MDField<const ParamScalarT,Cell,Node> elevation_field;
-  PHX::MDField<const ParamScalarT,Cell,Node> bedTopo_field;
+  PHX::MDField<const ScalarT> dof;
+
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::ArrayRCP<Teuchos::RCP<shards::CellTopology> > sideType;
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureCell;
@@ -218,26 +137,17 @@ protected:
   Kokkos::DynRankView<MeshScalarT, PHX::Device> side_normals_buffer;
   Kokkos::DynRankView<MeshScalarT, PHX::Device> normal_lengths_buffer;
 
-  Kokkos::DynRankView<ScalarT, PHX::Device> betaOnSide_buffer;
-  Kokkos::DynRankView<ScalarT, PHX::Device> thicknessOnSide_buffer;
-  Kokkos::DynRankView<ScalarT, PHX::Device> bedTopoOnSide_buffer;
-  Kokkos::DynRankView<ScalarT, PHX::Device> elevationOnSide_buffer;
   Kokkos::DynRankView<ScalarT, PHX::Device> dofSide_buffer;
   Kokkos::DynRankView<ScalarT, PHX::Device> dofSideVec_buffer;
-  Kokkos::DynRankView<ScalarT, PHX::Device> betaOnCell;
-  Kokkos::DynRankView<ScalarT, PHX::Device> thicknessOnCell;
-  Kokkos::DynRankView<ScalarT, PHX::Device> elevationOnCell;
-  Kokkos::DynRankView<ScalarT, PHX::Device> bedTopoOnCell;
 
   Kokkos::DynRankView<MeshScalarT, PHX::Device> temporary_buffer;
   Kokkos::DynRankView<ScalarT, PHX::Device> data_buffer;
-
-  Kokkos::DynRankView<ScalarT, PHX::Device> data;
 
   // Output:
   Kokkos::DynRankView<ScalarT, PHX::Device> neumann;
 
   int numSidesOnElem;
+  bool vectorDOF;
 
   std::string sideSetID;
   Teuchos::Array<RealType> inputValues;
@@ -293,7 +203,6 @@ private:
 public:
 
  Teuchos::RCP<Tpetra_Vector> fT;
- Teuchos::ArrayRCP<ST> fT_nonconstView;
  Teuchos::RCP<Tpetra_CrsMatrix> JacT;
 
  typedef typename Tpetra_CrsMatrix::local_matrix_type  LocalMatrixType;
@@ -356,10 +265,10 @@ public:
 
   NeumannAggregator(const Teuchos::ParameterList& p);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-                             PHX::FieldManager<Traits>& vm) {};
+  void postRegistrationSetup(typename Traits::SetupData /* d */,
+                             PHX::FieldManager<Traits>& /* vm */) {};
 
-  void evaluateFields(typename Traits::EvalData d) {};
+  void evaluateFields(typename Traits::EvalData /* d */) {};
 
 };
 

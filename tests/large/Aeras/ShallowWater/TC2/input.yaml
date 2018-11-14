@@ -1,0 +1,103 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Aeras Shallow Water 3D
+    Solution Method: Transient
+    Shallow Water Problem: 
+      Use Prescribed Velocity: false
+      SourceType: None
+    Dirichlet BCs: { }
+    Initial Condition: 
+      Function: Aeras ZonalFlow
+      Function Data: [2.94000000000000000e+04]
+    Response Functions: 
+      Number: 4
+      Response 0: Solution Average
+      Response 1: Solution Max Value
+      Response 2: Solution Two Norm
+      Response 3: Aeras Shallow Water L2 Error
+      ResponseParams 3: 
+        Reference Solution Name: TC2
+        Reference Solution Data: 2.94000000000000000e+04
+    Parameters: 
+      Number: 0
+      Parameter 0: DBC on NS NodeSet0 for DOF Depth
+      Parameter 1: Gravity
+  Discretization: 
+    Method: Exodus
+    Exodus Input File Name: ../../grids/QUAD9/uniform_10_quad9.g
+    Exodus Output File Name: sphere10_quad9.exo
+    Cubature Rule: GAUSS_LOBATTO
+    Exodus Write Interval: 5
+  Regression Results: 
+    Number of Comparisons: 6
+    Test Values: [7.98369327462000001e+02, 2.99816908254000009e+03, 1.18958023247000005e+05, 2.41983072593999982e+00, 1.78368205520999996e+05, 1.35664913982999996e-05]
+    Relative Tolerance: 1.00000000000000008e-05
+    Absolute Tolerance: 1.00000000000000002e-03
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [4.23961574999999979e-01, 3.56569929999999997e-03]
+  Piro: 
+    Rythmos Solver: 
+      Invert Mass Matrix: true
+      Lump Mass Matrix: false
+      NonLinear Solver: 
+        VerboseObject: 
+          Verbosity Level: low
+      Rythmos: 
+        Integrator Settings: 
+          Final Time: 8.64000000000000000e+02
+          Integrator Selection: 
+            Integrator Type: Default Integrator
+            Default Integrator: 
+              VerboseObject: 
+                Verbosity Level: low
+        Stepper Settings: 
+          Stepper Selection: 
+            Stepper Type: Explicit RK
+          Runge Kutta Butcher Tableau Selection: 
+            Runge Kutta Butcher Tableau Type: Explicit 2 Stage 2nd order by Runge
+        Integration Control Strategy Selection: 
+          Integration Control Strategy Type: Simple Integration Control Strategy
+          Simple Integration Control Strategy: 
+            Take Variable Steps: false
+            Fixed dt: 9.00000000000000000e+02
+            VerboseObject: 
+              Verbosity Level: low
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          Belos: 
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 1.00000000000000008e-05
+                Output Frequency: 10
+                Output Style: 1
+                Verbosity: 0
+                Maximum Iterations: 100
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: false
+        Preconditioner Type: ML
+        Preconditioner Types: 
+          Ifpack: 
+            Prec Type: ILU
+            Overlap: 1
+            Ifpack Settings: 
+              'fact: level-of-fill': 1
+          ML: 
+            Base Method Defaults: SA
+            ML Settings: 
+              'aggregation: type': Uncoupled
+              'coarse: max size': 20
+              'coarse: pre or post': post
+              'coarse: sweeps': 1
+              'coarse: type': Amesos-KLU
+              prec type: MGV
+              'smoother: type': Gauss-Seidel
+              'smoother: damping factor': 6.60000000000000031e-01
+              'smoother: pre or post': both
+              'smoother: sweeps': 1
+              ML output: 1
+...

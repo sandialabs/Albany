@@ -1,0 +1,134 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Phalanx Graph Visualization Detail: 0
+    Name: NavierStokes 2D
+    Solution Method: Continuation
+    Dirichlet BCs: 
+      DBC on NS inlet for DOF ux: 1.00000000000000000e+00
+      DBC on NS inlet for DOF uy: 0.00000000000000000e+00
+      DBC on NS cylinder for DOF ux: 0.00000000000000000e+00
+      DBC on NS cylinder for DOF uy: 0.00000000000000000e+00
+      DBC on NS sides for DOF uy: 0.00000000000000000e+00
+    Parameters: 
+      Number: 1
+      Parameter 0: DBC on NS inlet for DOF ux
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Max Value
+      ResponseParams 0: 
+        Equation: 0
+  Discretization: 
+    Method: Exodus
+    Exodus Input File Name: vortexFine.exo
+    Exodus Output File Name: vortexFine-out.exo
+  Regression Results: 
+    Number of Comparisons: 0
+    Test Values: [1.35800000000000010e+00]
+    Relative Tolerance: 1.00000000000000002e-03
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [1.35800000000000010e+00]
+  LOCA: 
+    Bifurcation: { }
+    Constraints: { }
+    Predictor: 
+      Method: Tangent
+    Stepper: 
+      Initial Value: 4.10000000000000000e+01
+      Continuation Method: Natural
+      Continuation Parameter: DBC on NS inlet for DOF ux
+      Max Steps: 4
+      Max Value: 4.50000000000000000e+01
+      Min Value: 5.00000000000000000e-01
+      Compute Eigenvalues: true
+      Eigensolver: 
+        Method: Anasazi
+        Operator: Cayley
+        Num Blocks: 100
+        Num Eigenvalues: 2
+        Block Size: 1
+        Maximum Restarts: 0
+        Cayley Pole: 1.00000000000000000e+01
+        Cayley Zero: -1.00000000000000000e+01
+        Normalize Eigenvectors with Mass Matrix: false
+    Step Size: 
+      Initial Step Size: 1.00000000000000000e+00
+  NOX: 
+    Status Tests: 
+      Test Type: Combo
+      Combo Type: OR
+      Number of Tests: 2
+      Test 0: 
+        Test Type: Combo
+        Combo Type: AND
+        Number of Tests: 2
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 9.99999999999999980e-13
+        Test 1: 
+          Test Type: NormWRMS
+          Absolute Tolerance: 1.00000000000000005e-04
+          Relative Tolerance: 1.00000000000000002e-08
+      Test 1: 
+        Test Type: MaxIters
+        Maximum Iterations: 10
+    Direction: 
+      Method: Newton
+      Newton: 
+        Forcing Term Method: Constant
+        Linear Solver: 
+          Write Linear System: false
+        Stratimikos Linear Solver: 
+          NOX Stratimikos Options: { }
+          Stratimikos: 
+            Linear Solver Type: AztecOO
+            Linear Solver Types: 
+              AztecOO: 
+                Forward Solve: 
+                  AztecOO Settings: 
+                    Aztec Solver: GMRES
+                    Convergence Test: r0
+                    Size of Krylov Subspace: 200
+                    Output Frequency: 20
+                  Max Iterations: 200
+                  Tolerance: 9.99999999999999955e-07
+            Preconditioner Type: Ifpack
+            Preconditioner Types: 
+              Ifpack: 
+                Overlap: 1
+                Prec Type: ILU
+                Ifpack Settings: 
+                  'fact: level-of-fill': 2
+              ML: 
+                Base Method Defaults: none
+                ML Settings: 
+                  default values: SA
+                  'smoother: type': ML symmetric Gauss-Seidel
+                  'smoother: pre or post': both
+                  'coarse: type': Amesos-KLU
+                  PDE equations: 4
+        Rescue Bad Newton Solve: true
+    Line Search: 
+      Full Step: 
+        Full Step: 1.00000000000000000e+00
+      Method: Full Step
+    Nonlinear Solver: Line Search Based
+    Printing: 
+      Output Precision: 3
+      Output Processor: 0
+      Output Information: 
+        Error: true
+        Warning: true
+        Outer Iteration: true
+        Parameters: false
+        Details: false
+        Linear Solver Details: false
+        Stepper Iteration: true
+        Stepper Details: true
+        Stepper Parameters: true
+    Solver Options: 
+      Status Test Check Type: Minimal
+...

@@ -75,7 +75,7 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
  
   //Start STK stuff
   this->coordinates_field = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK, "coordinates");
-  stk::mesh::put_field(*this->coordinates_field , metaData_->universal_part(), numDim_);
+  stk::mesh::put_field_on_mesh(*this->coordinates_field , metaData_->universal_part(), numDim_, nullptr);
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->coordinates_field, Ioss::Field::MESH);
 #endif
@@ -86,7 +86,7 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   else
   {
     this->coordinates_field3d = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK, "coordinates3d");
-    stk::mesh::put_field(*this->coordinates_field3d , metaData_->universal_part(), 3);
+    stk::mesh::put_field_on_mesh(*this->coordinates_field3d , metaData_->universal_part(), 3, nullptr);
 #ifdef ALBANY_SEACAS
     stk::io::set_field_role(*this->coordinates_field3d, Ioss::Field::MESH);
 #endif
@@ -100,13 +100,13 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
     solution_field[num_vecs] = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK,
                                     params_->get<std::string>(sol_tag_name[num_vecs], sol_id_name[num_vecs]));
 
-    stk::mesh::put_field(*solution_field[num_vecs] , metaData_->universal_part(), neq_);
+    stk::mesh::put_field_on_mesh(*solution_field[num_vecs] , metaData_->universal_part(), neq_, nullptr);
 
 #if defined(ALBANY_DTK)
     if (output_dtk_field == true) { 
       solution_field_dtk[num_vecs] = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK,
                                       params_->get<std::string>(sol_dtk_tag_name[num_vecs], sol_dtk_id_name[num_vecs]));
-      stk::mesh::put_field(*solution_field_dtk[num_vecs] , metaData_->universal_part() , neq_);
+      stk::mesh::put_field_on_mesh(*solution_field_dtk[num_vecs] , metaData_->universal_part() , neq_, nullptr);
    }
 #endif
 
@@ -123,7 +123,7 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 #if defined(ALBANY_LCM)
   residual_field = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK,
                                     params_->get<std::string>(res_tag_name[0], res_id_name[0]));
-  stk::mesh::put_field(*residual_field, metaData_->universal_part() , neq_);
+  stk::mesh::put_field_on_mesh(*residual_field, metaData_->universal_part() , neq_, nullptr);
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
 #endif
@@ -167,13 +167,15 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
     & this->metaData->template declare_field< ISFT >(stk::topology::ELEMENT_RANK, "refine_field");
 
   // Processor rank field, a scalar
-  stk::mesh::put_field(
+  stk::mesh::put_field_on_mesh(
       *this->proc_rank_field,
-      this->metaData->universal_part());
+      this->metaData->universal_part(),
+      nullptr);
 
-  stk::mesh::put_field(
+  stk::mesh::put_field_on_mesh(
       *this->refine_field,
-      this->metaData->universal_part());
+      this->metaData->universal_part(),
+      nullptr);
 
 #if defined(ALBANY_LCM)
   // Fracture state used for adaptive insertion.
@@ -181,10 +183,10 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
   for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK; rank < stk::topology::ELEMENT_RANK; ++rank) {
     this->fracture_state[rank] = & this->metaData->template declare_field< ISFT >(rank, "fracture_state");
 
-    stk::mesh::put_field(
+    stk::mesh::put_field_on_mesh(
         *this->fracture_state[rank],
-        this->metaData->universal_part());
-
+        this->metaData->universal_part(),
+        nullptr);
   }
 #endif // ALBANY_LCM
 

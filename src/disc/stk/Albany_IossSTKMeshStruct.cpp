@@ -121,7 +121,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     if (!stk::io::is_part_io_part(newNodeSet)) {
       stk::mesh::Field<double> * const distrFactorfield = metaData->get_field<stk::mesh::Field<double> >(stk::topology::NODE_RANK, "distribution_factors");
       if (distrFactorfield != NULL){
-        stk::mesh::put_field(*distrFactorfield, newNodeSet);
+        stk::mesh::put_field_on_mesh(*distrFactorfield, newNodeSet, nullptr);
       }
       stk::io::put_io_part_attribute(newNodeSet);
     }
@@ -157,8 +157,27 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       else if ( part->primary_entity_rank() == metaData->side_rank()) {
         //print(*out, "Found side_rank entity:\n", *part);
         ssPartVec[part->name()]=part;
+
       }
     }
+  }
+
+  // the method 'initializesidesetmeshspecs' requires that ss parts store a valid stk topology.
+  // therefore, we try to retrieve the topology of this part using stk stuff.
+  auto r = mesh_data->get_input_io_region();
+  auto& sss = r->get_sidesets();
+  for (auto ss : sss) {
+    auto& ssb = ss->get_side_blocks();
+    if (ssb.size()==0) { continue; }
+    TEUCHOS_TEST_FOR_EXCEPTION(ssb.size()==0, std::runtime_error, "Error! There is a sideset (" + ss->name() + ") in the input mesh with zero side sets.\n");
+
+    const auto* ioss_topo = ssb[0]->topology();
+    TEUCHOS_TEST_FOR_EXCEPTION(ioss_topo==nullptr, std::runtime_error, "I give up. No topology in the input mesh for side set " + ss->name() << ".\n");
+
+    auto stk_topo = stk::io::map_ioss_topology_to_stk(ioss_topo, metaData->spatial_dimension());
+
+    auto part = metaData->get_part(ss->name());
+    stk::mesh::set_topology(*part,stk_topo);
   }
 
   cullSubsetParts(ssNames, ssPartVec); // Eliminate sidesets that are subsets of other sidesets
@@ -205,10 +224,10 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMax);
 
   // Build a map to get the EB name given the index
-
-  for (int eb=0; eb<numEB; eb++)
-
-    this->ebNameToIndex[partVec[eb]->name()] = eb;
+  std::map<std::string,int> ebNameToIndex;
+  for (int eb=0; eb<numEB; eb++) {
+    ebNameToIndex[partVec[eb]->name()] = eb;
+  }
 
   // Construct MeshSpecsStruct
   if (!params->get("Separate Evaluators by Element Block",false)) {
@@ -216,10 +235,9 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(
         ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(),
-        this->ebNameToIndex, this->interleavedOrdering, false, cub_rule));
+        ebNameToIndex, this->interleavedOrdering, false, cub_rule));
 
-  }
-  else {
+  } else {
 
     *out << "MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? " << std::endl;
     this->allElementBlocksHaveSamePhysics=false;
@@ -228,8 +246,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[eb]).getCellTopologyData();
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(
           ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[eb]->name(),
-          this->ebNameToIndex, this->interleavedOrdering, true, cub_rule));
-      //std::cout << "el_block_size[" << eb << "] = " << el_blocks[eb] << "   name  " << partVec[eb]->name() << std::endl;
+          ebNameToIndex, this->interleavedOrdering, true, cub_rule));
     }
 
   }
@@ -249,7 +266,10 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   if (params->get<bool>("Set All Parts IO", false))
     this->setAllPartsIO();
 
-  // Initialize the (possible) other side set meshes
+  // Create a mesh specs object for EACH side set
+  this->initializeSideSetMeshSpecs(commT);
+
+  // Initialize the requested sideset mesh struct in the mesh
   this->initializeSideSetMeshStructs(commT);
 }
 

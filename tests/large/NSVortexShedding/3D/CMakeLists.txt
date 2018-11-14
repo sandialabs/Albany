@@ -1,6 +1,6 @@
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTransientRK.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputTransientRK.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTransientRK.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputTransientRK.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vortex3D.exo
                ${CMAKE_CURRENT_BINARY_DIR}/vortex3D.exo COPYONLY)
 #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/data.perf

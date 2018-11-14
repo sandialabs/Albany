@@ -29,7 +29,7 @@ namespace Albany {
 
   class GenericSTKMeshStruct : public AbstractSTKMeshStruct {
 
-    public:
+  public:
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
     const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() const;
 
@@ -56,7 +56,7 @@ namespace Albany {
                                          std::map<GO,GO>& sideMap,
                                          std::map<GO,std::vector<int>>& sideNodeMap);
 
-    protected:
+  protected:
     GenericSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<Teuchos::ParameterList>& adaptParams,
@@ -99,6 +99,9 @@ namespace Albany {
 
     //! Checks the integrity of the nodesets created from sidesets
     void checkNodeSetsFromSideSetsIntegrity ();
+
+    //! Creates empty mesh structs if required (and not already present)
+    void initializeSideSetMeshSpecs (const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     //! Creates empty mesh structs if required (and not already present)
     void initializeSideSetMeshStructs (const Teuchos::RCP<const Teuchos_Comm>& commT);
