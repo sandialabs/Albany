@@ -54,7 +54,7 @@ macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
   "-DCMAKE_CXX_COMPILER:STRING=${MPI_BIN_DIR}/mpiicpc"
   "-DCMAKE_C_COMPILER:STRING=${MPI_BIN_DIR}/mpiicc"
   "-DCMAKE_Fortran_COMPILER:STRING=${MPI_BIN_DIR}/mpiifort"
-  "-DTrilinos_EXTRA_LINK_FLAGS='-L${INTEL_PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lifcore -lz -Wl,-rpath,$ENV{LIBRARY_DIR}'"
+  "-DTrilinos_EXTRA_LINK_FLAGS='-L${INTEL_PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lifcore -lz -Wl,-rpath,${INTEL_PREFIX_DIR}/lib'"
   "-DCMAKE_AR:FILEPATH=xiar"
   "-DCMAKE_LINKER:FILEPATH=xild"
   "-DFC_FN_CASE=LOWER"

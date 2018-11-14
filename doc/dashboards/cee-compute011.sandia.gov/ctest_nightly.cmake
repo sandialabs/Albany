@@ -456,7 +456,7 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
   #
   #
-  "-DTPL_BLAS_LIBRARIES:STRING='-L$ENV{LIBRARY_PATH} -L$ENV{MKLHOME}/../compiler/lib/intel64 -lmkl_intel_lp64 -lmkl_blas95_lp64 -lmkl_core -lmkl_sequential -lmkl_core -lirc -limf -lsvml -lintlc'"
+  "-DTPL_BLAS_LIBRARIES:STRING='-L$ENV{LIBRARY_PATH} -L$ENV{MKLHOME}/../lib/intel64 -lmkl_intel_lp64 -lmkl_blas95_lp64 -lmkl_core -lmkl_sequential -lmkl_core -lirc -limf -lsvml -lintlc'"
   "-DTPL_LAPACK_LIBRARIES:STRING='-L$ENV{LIBRARY_PATH} -lmkl_lapack95_lp64'"
   #
   "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
@@ -561,7 +561,7 @@ if (BUILD_TRILINOS)
     "-DCMAKE_Fortran_COMPILER:STRING=${GCC_MPI_DIR}/bin/mpifort"
     "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
 #
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,$ENV{LIBRARY_PATH}'"
+    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/lib:$ENV{LIBRARY_PATH}:$ENV{MKLHOME}/../lib/intel64'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
     "-DBoost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
     "-DBoost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
@@ -697,7 +697,7 @@ if (BUILD_TRILINOSCLANG)
 #    "-DMDS_ID_TYPE:STRING='long long int'"
     "-DMDS_ID_TYPE:STRING='long int'"
     "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/clang/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/clang/lib:$ENV{LIBRARY_PATH}:$ENV{MKLHOME}/../compiler/lib/intel64'"
+    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/clang/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/clang/lib:$ENV{LIBRARY_PATH}:$ENV{MKLHOME}/../lib/intel64'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
     "-DBUILD_SHARED_LIBS:BOOL=OFF"
     "-DAmesos2_ENABLE_KLU2:BOOL=ON"
@@ -789,7 +789,7 @@ if (BUILD_TRILINOSDBG)
     "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
     "-DMDS_ID_TYPE:STRING='long int'"
     "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/lib:$ENV{LIBRARY_PATH}'"
+    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/lib:$ENV{LIBRARY_PATH}:$ENV{MKLHOME}/../lib/intel64'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
     "-DBUILD_SHARED_LIBS:BOOL=OFF"
     "-DAmesos2_ENABLE_KLU2:BOOL=ON"
