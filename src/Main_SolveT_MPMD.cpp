@@ -25,6 +25,7 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
+#include <Tpetra_MpiPlatform.hpp>
 
 #include "ATO_TopoTools.hpp"
 

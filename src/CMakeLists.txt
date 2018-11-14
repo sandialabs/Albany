@@ -700,9 +700,8 @@ ELSE()
 ENDIF()
 
 IF ( ENABLE_Cogent )
-  include_directories (${Cogent_INCLUDE_DIR})
-  link_directories (${Cogent_LIBRARY_DIR})
-  set(Cogent_LIB Cogent)
+  include_directories (${PlatoEngine_INSTALL_DIR}/include)
+  set(Cogent_LIB ${PlatoEngine_INSTALL_DIR}/lib/libPlatoGeometryCogent.a)
 ELSE()
   set(Cogent_LIB )
 ENDIF()
@@ -839,11 +838,11 @@ set(ALL_LIBRARIES
   ${ALBANY_CI_LIB}
   ${PlatoEngine_LIB}
   ${PlatoEngine_LIB}
+  ${Cogent_LIB}
   ${ALB_TRILINOS_LIBS}
   ${LAME_LIB}
   ${MATH_TOOLKIT_LIB}
   ${NLOPT_LIB}
-  ${Cogent_LIB}
   ${DOTK_LIB}
   ${LAMENT_LIB}
   ${Trilinos_EXTRA_LD_FLAGS}
