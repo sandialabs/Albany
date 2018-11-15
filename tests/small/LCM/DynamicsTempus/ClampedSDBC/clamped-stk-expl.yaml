@@ -24,16 +24,17 @@ LCM:
     Response Functions:
       Observe Responses: true
       Responses Observation Frequency: 100
-      Number: 4
-      Response 0: Project IP to Nodal Field
+      #Number: 4
+      Number: 3
+      Response 0: Solution Average
+      Response 1: Solution Max Value
+      Response 2: Solution Min Value
+      #Response 3: Project IP to Nodal Field
       ResponseParams 0:
         Number of Fields: 1
         IP Field Name 0: Cauchy_Stress
         IP Field Layout 0: Tensor
         Output to File: true
-      Response 1: Solution Average
-      Response 2: Solution Max Value
-      Response 3: Solution Min Value
   Discretization:
     Method: STK3D
     1D Elements: 1
