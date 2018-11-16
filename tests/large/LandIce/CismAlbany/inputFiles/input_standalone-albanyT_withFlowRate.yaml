@@ -8,12 +8,8 @@ ANONYMOUS:
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D
     Required Fields: [flow_rate, temperature]
-    Required Basal Fields: [basal_friction, thickness, flow_factor, temperature, surface_height]
-    Required Surface Fields: []
     Basal Side Name: basalside
     Surface Side Name: upperside
-    Layered Data Length: 12
-    importCellTemperatureFromMesh: 1
     Response Functions: 
       Number: 0
       Response 0: Surface Velocity Mismatch
@@ -32,8 +28,15 @@ ANONYMOUS:
       'Glen''s Law A': 1.00000000000000005e-04
       'Glen''s Law n': 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
-    LandIce Basal Friction Coefficient: 
-      Type: Given Field
+    LandIce BCs:
+      Number : 1
+      BC 0:
+        Type: Basal Friction
+        Cubature Degree: 3
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Given Field
+          Given Field Variable Name: basal_friction
     Body Force: 
       Type: FO INTERP SURF GRAD
   Discretization: 
