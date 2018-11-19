@@ -16,6 +16,7 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Teuchos_StackedTimer.hpp"
+#include "Tpetra_Core.hpp"
 
 #include "Petra_Converters.hpp"
 

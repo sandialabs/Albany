@@ -35,6 +35,7 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
+#include "Tpetra_Core.hpp"
 
 using ThyraResponses =
   Teuchos::Array<Teuchos::RCP<Thyra::VectorBase<ST> const>>;

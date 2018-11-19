@@ -20,6 +20,7 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
+#include "Tpetra_Core.hpp"
 #include "Epetra_Map.h"  //Needed for serial, somehow
 
 //This header is for debug output -- writing of solution (xfinal) to MatrixMarket file

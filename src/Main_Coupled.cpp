@@ -22,6 +22,7 @@
 #include "Epetra_Import.h"
 
 #include "Albany_Networks.hpp"
+#include "Tpetra_Core.hpp"
 
 int main(int argc, char *argv[]) {
 

@@ -16,6 +16,7 @@
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Petra_Converters.hpp"
 #include "Albany_Utils.hpp"
+#include "Tpetra_Core.hpp"
 
 /* GAH FIXME - Silence warning:
 TRILINOS_DIR/../../../include/pecos_global_defs.hpp:17:0: warning:

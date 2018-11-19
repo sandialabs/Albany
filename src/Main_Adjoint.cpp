@@ -17,6 +17,7 @@
 #include "Epetra_Map.h"  //Needed for serial, somehow
 #include "Petra_Converters.hpp"
 #include "Albany_Utils.hpp"
+#include "Tpetra_Core.hpp"
 
 int main(int argc, char *argv[]) {
 
