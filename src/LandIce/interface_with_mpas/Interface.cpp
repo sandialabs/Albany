@@ -125,6 +125,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
   ScalarFieldType* stiffeningFactorField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "stiffening_factor");
   ScalarFieldType* effectivePressureField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "effective_pressure");
 
+  bool nonEmptyEffectivePressure = effectivePressureData.size()>0;
   for (UInt j = 0; j < numVertices3D; ++j) {
     int ib = (ordering == 0) * (j % lVertexColumnShift)
         + (ordering == 1) * (j / vertexLayerShift);
@@ -146,7 +147,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     stiffeningFactor[0] = std::log(stiffeningFactorData[ib]);
     double* effectivePressure = stk::mesh::field_data(*effectivePressureField, node);
 
-    if(effectivePressure != NULL)
+    if(nonEmptyEffectivePressure && (effectivePressure != NULL))
       effectivePressure[0] = effectivePressureData[ib];
     
     if(smbField != NULL) {
@@ -347,8 +348,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
     const std::vector<int>& dirichletNodesIds,
     const std::vector<int>& floating2dEdgesIds) {
 
-  slvrfctry = Teuchos::rcp(
-      new Albany::SolverFactory("albany_input.xml", mpiCommT));
+  slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.yaml", mpiCommT));
   paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
 
   Teuchos::Array<std::string> arrayRequiredFields(9);
