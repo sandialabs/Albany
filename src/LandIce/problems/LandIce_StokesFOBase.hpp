@@ -547,10 +547,6 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator ("temperature",false);
   fm0.template registerEvaluator<EvalT> (ev);
 
-//  // Interpolate ice softness (aka, flow_factor) from nodes to cell
-//  ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator ("flow_factor",false);
-//  fm0.template registerEvaluator<EvalT> (ev);
-
   // Get coordinate of cell baricenter
   ev = evalUtils.getMSTUtils().constructQuadPointsToCellInterpolationEvaluator(Albany::coord_vec_name, dl->qp_gradient, dl->cell_gradient);
   fm0.template registerEvaluator<EvalT> (ev);
@@ -628,24 +624,32 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   fm0.template registerEvaluator<EvalT>(ev);
 
   //--- LandIce Flow Rate ---//
-  p = Teuchos::rcp(new Teuchos::ParameterList("LandIce FlowRate"));
 
-  //Input
-  if (params->sublist("LandIce Physical Parameters").isParameter("Clausius-Clapeyron Coefficient") &&
-      params->sublist("LandIce Physical Parameters").get<double>("Clausius-Clapeyron Coefficient")!=0.0) {
-    p->set<std::string>("Temperature Variable Name", "corrected temperature");
-  } else {
-    // Avoid pointless calculation, and use original temperature in viscosity calculation
-    p->set<std::string>("Temperature Variable Name", "temperature");
+  if(params->sublist("LandIce Viscosity").isParameter("Flow Rate Type")) {
+    if(params->sublist("LandIce Viscosity").get<std::string>("Flow Rate Type") == "From File") {
+      // Interpolate ice softness (aka, flow_factor) from nodes to cell
+      ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator ("flow_factor",false);
+      fm0.template registerEvaluator<EvalT> (ev);
+    } else {
+      p = Teuchos::rcp(new Teuchos::ParameterList("LandIce FlowRate"));
+
+      //Input
+      if (params->sublist("LandIce Physical Parameters").isParameter("Clausius-Clapeyron Coefficient") &&
+          params->sublist("LandIce Physical Parameters").get<double>("Clausius-Clapeyron Coefficient")!=0.0) {
+        p->set<std::string>("Temperature Variable Name", "corrected temperature");
+      } else {
+        // Avoid pointless calculation, and use original temperature in viscosity calculation
+        p->set<std::string>("Temperature Variable Name", "temperature");
+      }
+      p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Viscosity"));
+
+      //Output
+      p->set<std::string>("Flow Rate Variable Name", "flow_factor");
+
+      ev = Teuchos::rcp(new LandIce::FlowRate<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
-  p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Viscosity"));
-
-  //Output
-  p->set<std::string>("Flow Rate Variable Name", "flow_factor");
-
-  ev = Teuchos::rcp(new LandIce::FlowRate<EvalT,PHAL::AlbanyTraits>(*p,dl));
-  fm0.template registerEvaluator<EvalT>(ev);
-
 
 
   //--- LandIce viscosity ---//
