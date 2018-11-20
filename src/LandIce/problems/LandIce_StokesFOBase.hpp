@@ -30,6 +30,7 @@
 #include "LandIce_BasalFrictionCoefficientGradient.hpp"
 #include "LandIce_DOFDivInterpolationSide.hpp"
 #include "LandIce_EffectivePressure.hpp"
+#include "LandIce_FlowRate.hpp"
 #include "LandIce_PressureCorrectedTemperature.hpp"
 #include "LandIce_GatherVerticallyAveragedVelocity.hpp"
 #include "LandIce_FluxDiv.hpp"
@@ -546,10 +547,6 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator ("temperature",false);
   fm0.template registerEvaluator<EvalT> (ev);
 
-  // Interpolate ice softness (aka, flow_factor) from nodes to cell
-  ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator ("flow_factor",false);
-  fm0.template registerEvaluator<EvalT> (ev);
-
   // Get coordinate of cell baricenter
   ev = evalUtils.getMSTUtils().constructQuadPointsToCellInterpolationEvaluator(Albany::coord_vec_name, dl->qp_gradient, dl->cell_gradient);
   fm0.template registerEvaluator<EvalT> (ev);
@@ -625,6 +622,35 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   ev = Teuchos::rcp(new LandIce::PressureCorrectedTemperature<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
+
+  //--- LandIce Flow Rate ---//
+
+  if(params->sublist("LandIce Viscosity").isParameter("Flow Rate Type")) {
+    if(params->sublist("LandIce Viscosity").get<std::string>("Flow Rate Type") == "From File") {
+      // Interpolate ice softness (aka, flow_factor) from nodes to cell
+      ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator ("flow_factor",false);
+      fm0.template registerEvaluator<EvalT> (ev);
+    } else {
+      p = Teuchos::rcp(new Teuchos::ParameterList("LandIce FlowRate"));
+
+      //Input
+      if (params->sublist("LandIce Physical Parameters").isParameter("Clausius-Clapeyron Coefficient") &&
+          params->sublist("LandIce Physical Parameters").get<double>("Clausius-Clapeyron Coefficient")!=0.0) {
+        p->set<std::string>("Temperature Variable Name", "corrected temperature");
+      } else {
+        // Avoid pointless calculation, and use original temperature in viscosity calculation
+        p->set<std::string>("Temperature Variable Name", "temperature");
+      }
+      p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Viscosity"));
+
+      //Output
+      p->set<std::string>("Flow Rate Variable Name", "flow_factor");
+
+      ev = Teuchos::rcp(new LandIce::FlowRate<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+  }
+
 
   //--- LandIce viscosity ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Viscosity"));
@@ -819,6 +845,7 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     std::string effective_pressure_side = "effective_pressure_" + ssName;
     std::string bed_roughness_side = "bed_roughness_" + ssName;
     std::string bed_topography_side = "bed_topography_" + ssName;
+    std::string flow_factor_side = "flow_factor_" + ssName;
 
     // ------------------- Interpolations and utilities ------------------ //
 
@@ -860,6 +887,10 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
 
     // Intepolate bed_topography
     ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator(bed_topography_side, ssName, enableMemoizer);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    // Intepolate effective_pressure
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator(effective_pressure_side, ssName, enableMemoizer);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate thickness on QP on side
@@ -913,6 +944,20 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     {
       // Interpolate the 3D state on the side (the BasalFrictionCoefficient evaluator needs a side field)
       ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("bed_topography",ssName,"Node Scalar",cellType,bed_topography_side);
+      fm0.template registerEvaluator<EvalT> (ev);
+    }
+
+    if (is_dist_param["effective_pressure"] || !has_ss_input[ssName]["effective_pressure"])
+    {
+      // Interpolate the 3D state on the side (the BasalFrictionCoefficient evaluator needs a side field)
+      ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("effective_pressure",ssName,"Node Scalar",cellType,effective_pressure_side);
+      fm0.template registerEvaluator<EvalT> (ev);
+    }
+
+    if (is_dist_param["flow_factor"] || !has_ss_input[ssName]["flow_factor"])
+    {
+      // Interpolate the 3D state on the side (the BasalFrictionCoefficient evaluator needs a side field)
+      ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("flow_factor",ssName,"Cell Scalar",cellType,flow_factor_side);
       fm0.template registerEvaluator<EvalT> (ev);
     }
 
@@ -1053,13 +1098,16 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     p->set<std::string>("Sliding Velocity Variable Name", sliding_velocity_side);
     p->set<std::string>("BF Variable Name", Albany::bf_name + " " + ssName);
     p->set<std::string>("Effective Pressure QP Variable Name", effective_pressure_side);
+    p->set<std::string>("Ice Softness Variable Name", flow_factor_side);
     p->set<std::string>("Bed Roughness Variable Name", bed_roughness_side);
     p->set<std::string>("Side Set Name", ssName);
     p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name + " " + ssName);
     p->set<Teuchos::ParameterList*>("Parameter List", &pl->sublist("Basal Friction Coefficient"));
     p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
+    p->set<Teuchos::ParameterList*>("Viscosity Parameter List", &params->sublist("LandIce Viscosity"));
     p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
     p->set<std::string>("Bed Topography Variable Name", bed_topography_side);
+    p->set<std::string>("Effective Pressure Variable Name", effective_pressure_side);
     p->set<std::string>("Ice Thickness Variable Name", ice_thickness_side);
 
     //Output
