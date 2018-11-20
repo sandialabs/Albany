@@ -120,8 +120,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
       "ACE Ice Saturation",
       dl->qp_scalar,
       "scalar",
-      1.0,
-      false,
+      ice_saturation_init_,
+      true,
       p->get<bool>("Output ACE Ice Saturation", false));
 
   // ACE Density
