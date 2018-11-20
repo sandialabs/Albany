@@ -188,6 +188,10 @@ class SchwarzAlternating : public Thyra::ResponseOnlyModelEvaluatorBase<ST>
 
   ST initial_time_step_{0.0};
 
+  ST tol_factor_vel_{0.0};
+
+  ST tol_factor_acc_{0.0};
+
   ST min_time_step_{0.0};
 
   ST max_time_step_{0.0};

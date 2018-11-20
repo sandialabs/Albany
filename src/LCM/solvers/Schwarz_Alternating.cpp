@@ -39,8 +39,12 @@ SchwarzAlternating::SchwarzAlternating(
   final_time_        = alt_system_params.get<ST>("Final Time", 0.0);
   initial_time_step_ = alt_system_params.get<ST>("Initial Time Step", 1.0);
 
-  ST const dt = initial_time_step_;
+  auto const dt  = initial_time_step_;
+  auto const dt2 = dt * dt;
 
+  tol_factor_vel_ = alt_system_params.get<ST>("Tolerance Factor Velocity", dt);
+  tol_factor_acc_ =
+      alt_system_params.get<ST>("Tolerance Factor Acceleration", dt2);
   min_time_step_    = alt_system_params.get<ST>("Minimum Time Step", dt);
   max_time_step_    = alt_system_params.get<ST>("Maximum Time Step", dt);
   reduction_factor_ = alt_system_params.get<ST>("Reduction Factor", 1.0);
@@ -986,13 +990,13 @@ SchwarzAlternating::SchwarzLoopDynamics() const
         norms_final(subdomain) = Thyra::norm(*this_disp_[subdomain]);
         norms_diff(subdomain)  = Thyra::norm(*disp_diff_rcp);
 
-        auto const dt = time_step;
+        auto const dt = tol_factor_vel_;
 
         norms_init(subdomain) += dt * Thyra::norm(*prev_velo_[subdomain]);
         norms_final(subdomain) += dt * Thyra::norm(*this_velo_[subdomain]);
         norms_diff(subdomain) += dt * Thyra::norm(*velo_diff_rcp);
 
-        auto const dt2 = dt * dt;
+        auto const dt2 = tol_factor_acc_;
 
         norms_init(subdomain) += dt2 * Thyra::norm(*prev_acce_[subdomain]);
         norms_final(subdomain) += dt2 * Thyra::norm(*this_acce_[subdomain]);
