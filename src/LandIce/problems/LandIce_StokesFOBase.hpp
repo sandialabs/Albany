@@ -626,7 +626,8 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //--- LandIce Flow Rate ---//
 
   if(params->sublist("LandIce Viscosity").isParameter("Flow Rate Type")) {
-    if(params->sublist("LandIce Viscosity").get<std::string>("Flow Rate Type") == "From File") {
+    if((params->sublist("LandIce Viscosity").get<std::string>("Flow Rate Type") == "From File") ||
+       (params->sublist("LandIce Viscosity").get<std::string>("Flow Rate Type") == "From CISM")) {
       // Interpolate ice softness (aka, flow_factor) from nodes to cell
       ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator ("flow_factor",false);
       fm0.template registerEvaluator<EvalT> (ev);
