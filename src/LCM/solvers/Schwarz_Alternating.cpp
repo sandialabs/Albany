@@ -648,7 +648,7 @@ SchwarzAlternating::updateConvergenceCriterion() const
 
   bool const converged_relative = rel_error_ <= rel_tol_;
 
-  converged_ = converged_absolute || converged_relative;
+  converged_ = converged_absolute && converged_relative;
 
   return;
 }
