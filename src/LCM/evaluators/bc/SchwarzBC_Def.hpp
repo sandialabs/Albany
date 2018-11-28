@@ -524,13 +524,13 @@ fillResidual(SchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
     std::set<int> const& fixed_dofs = dirichlet_workset.fixed_dofs_;
 
     if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
-      fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
+      f_view[x_dof] = x_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
     }
     if (fixed_dofs.find(y_dof) == fixed_dofs.end()) {
-      fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
+      f_view[y_dof] = x_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
     }
     if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
-      fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
+      f_view[z_dof] = x_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
     }
   }
 #else   // ALBANY_DTK
