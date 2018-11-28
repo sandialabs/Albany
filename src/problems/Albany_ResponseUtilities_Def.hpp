@@ -11,11 +11,8 @@
 #include "QCAD_ResponseFieldAverage.hpp"
 #include "QCAD_ResponseSaveField.hpp"
 #include "QCAD_ResponseCenterOfMass.hpp"
-#if defined(ALBANY_EPETRA)
 #include "PHAL_ResponseFieldIntegral.hpp"
-#endif
-#include "PHAL_ResponseFieldIntegralT.hpp"
-#include "PHAL_ResponseThermalEnergyT.hpp"
+#include "PHAL_ResponseThermalEnergy.hpp"
 #include "Adapt_ElementSizeField.hpp"
 #include "PHAL_ResponseSquaredL2Difference.hpp"
 #include "PHAL_ResponseSquaredL2DifferenceSide.hpp"
@@ -180,21 +177,23 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   }
   else if (responseName == "PHAL Field Integral")
   {
-#if defined(ALBANY_EPETRA)
     res_ev = rcp(new PHAL::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
-#else
-  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                                  std::endl << "Error in Albany::ResponseUtilities:  " <<
-                                  "PHAL Field Integral is not available if ALBANY_EPETRA_EXE is OFF; Try PHAL Field IntegralT Instead " << std::endl);
-#endif
   }
   else if (responseName == "PHAL Field IntegralT")
   {
-    res_ev = rcp(new PHAL::ResponseFieldIntegralT<EvalT,Traits>(*p, dl));
+    // Leave this for backward compatibility
+    std::cout << "WARNING: 'PHAL Field IntegralT' is deprecated. You can just use 'PHAL Field Integral' (no T at the end).\n";
+    res_ev = rcp(new PHAL::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
+  }
+  else if (responseName == "PHAL Thermal Energy")
+  {
+    res_ev = rcp(new PHAL::ResponseThermalEnergy<EvalT,Traits>(*p, dl));
   }
   else if (responseName == "PHAL Thermal EnergyT")
   {
-    res_ev = rcp(new PHAL::ResponseThermalEnergyT<EvalT,Traits>(*p, dl));
+    // Leave this for backward compatibility
+    std::cout << "WARNING: 'PHAL Thermal EnergyT' is deprecated. You can just use 'PHAL Thermal Energy' (no T at the end).\n";
+    res_ev = rcp(new PHAL::ResponseThermalEnergy<EvalT,Traits>(*p, dl));
   }
 
 #ifdef ALBANY_AERAS

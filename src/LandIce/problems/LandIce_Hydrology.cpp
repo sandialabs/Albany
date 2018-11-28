@@ -232,6 +232,7 @@ Hydrology::getValidProblemParameters () const
 
   validPL->sublist("LandIce Hydrology", false, "");
   validPL->sublist("LandIce Field Norm", false, "");
+  validPL->sublist("LandIce Viscosity", false, "");
   validPL->sublist("LandIce Physical Parameters", false, "");
   validPL->sublist("LandIce Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");
 

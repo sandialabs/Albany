@@ -38,11 +38,11 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
-      Tpetra_Vector* gT,
-      Tpetra_Operator* dg_dxT,
-      Tpetra_Operator* dg_dxdotT,
-      Tpetra_Operator* dg_dxdotdotT,
-      Tpetra_MultiVector* dg_dpT) = 0;
+      const Teuchos::RCP<Thyra_Vector>& g,
+      const Teuchos::RCP<Thyra_LinearOp>& dg_dx,
+      const Teuchos::RCP<Thyra_LinearOp>& dg_dxdot,
+      const Teuchos::RCP<Thyra_LinearOp>& dg_dxdotdot,
+      const Teuchos::RCP<Thyra_MultiVector>& dg_dp) = 0;
 
     //! \name Implementation of AbstractResponseFunction virtual methods
     //@{
@@ -61,7 +61,7 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
-      Tpetra_Vector* gT,
+      const Teuchos::RCP<Thyra_Vector>& g,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,

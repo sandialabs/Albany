@@ -12,7 +12,11 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_Dimension.hpp"
 #include "Aeras_Layouts.hpp"
+
+#include "Albany_KokkosTypes.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 
@@ -87,14 +91,14 @@ template<typename Traits>
 class ComputeAndScatterJac<PHAL::AlbanyTraits::Jacobian,Traits>
   : public ComputeAndScatterJacBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
 public:
-  typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
+  typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT      ScalarT;
+  typedef typename PHAL::AlbanyTraits::Jacobian::MeshScalarT  MeshScalarT;
   ComputeAndScatterJac(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Aeras::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d); 
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  typedef typename Tpetra_CrsMatrix::local_matrix_type  LocalMatrixType;
-  LocalMatrixType jacobian;
+  Albany::DeviceLocalMatrix<ST> jacobian;
   RealType mc;
   int neq;
 
@@ -122,7 +126,7 @@ public:
 private:
   Kokkos::DynRankView<LO, PHX::Device> colT;
 
-#endif
+#endif // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 };
 
 // **************************************************************
@@ -136,7 +140,7 @@ public:
   ComputeAndScatterJac(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Aeras::Layouts>& dl) : 
     ComputeAndScatterJacBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p,dl){}
-  void evaluateFields(typename Traits::EvalData d)
+  void evaluateFields(typename Traits::EvalData /* d */)
     {throw "Aeras::GatherSolution not implemented for all tempate specializations";};
 };
 
@@ -154,10 +158,10 @@ public:
       : ComputeAndScatterJacBase<EvalT,Traits>(p,dl)
     {
     };
-  void evaluateFields(typename Traits::EvalData d)
+  void evaluateFields(typename Traits::EvalData /* d */)
     {throw "Aeras::GatherSolution not implemented for all tempate specializations";};
 };
 
-}
+} // namespace Aeras
 
-#endif
+#endif // AERAS_COMPUTE_AND_SCATTER_JAC_HPP

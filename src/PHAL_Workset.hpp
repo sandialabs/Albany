@@ -17,9 +17,6 @@
 #include <set>
 #endif
 #if defined(ALBANY_EPETRA)
-#include "Epetra_Vector.h"
-#include "Epetra_CrsMatrix.h"
-#include "Epetra_Import.h"
 #include "Albany_EigendataInfoStruct.hpp"
 #endif
 #include "Albany_AbstractDiscretization.hpp"
@@ -27,6 +24,8 @@
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_DistributedParameterLibrary_Tpetra.hpp"
 #include "Kokkos_ViewFactory.hpp"
+
+#include "Albany_CombineAndScatterManager.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Comm.hpp"
@@ -60,39 +59,20 @@ struct Workset {
 
   Teuchos::RCP<ParamVec> params;
 
+  // Component of Tangent vector direction along x, xdot, xdotdot, and p.
+  // These are used to compute df/dx*Vx + df/dxdot*Vxdot + df/dxdotdot*Vxdotdot + df/dp*Vp.
   Teuchos::RCP<const Thyra_MultiVector> Vx;
   Teuchos::RCP<const Thyra_MultiVector> Vxdot;
   Teuchos::RCP<const Thyra_MultiVector> Vxdotdot;
   Teuchos::RCP<const Thyra_MultiVector> Vp;
 
-#if defined(ALBANY_EPETRA)
   // These are residual related.
-  Teuchos::RCP<Epetra_Vector> f;
-#endif
-  //Tpetra analog of f
-  Teuchos::RCP<Tpetra_Vector> fT;
-
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<Epetra_CrsMatrix> Jac;
-#endif
-  //Tpetra analog of Jac
-  Teuchos::RCP<Tpetra_CrsMatrix> JacT;
-
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<Epetra_MultiVector> JV;
-  Teuchos::RCP<Epetra_MultiVector> fp;
-#endif
-  //Tpetra analogs of JV and fp
-  Teuchos::RCP<Tpetra_MultiVector> JVT;
-  Teuchos::RCP<Tpetra_MultiVector> fpT;
-
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<Epetra_MultiVector> fpV;
-  Teuchos::RCP<Epetra_MultiVector> Vp_bc;
-#endif
-  //Tpetra analogs of fpV and Vp_bc
-  Teuchos::RCP<Tpetra_MultiVector> fpVT;
-  Teuchos::RCP<Tpetra_MultiVector> Vp_bcT;
+  Teuchos::RCP<Thyra_Vector> f;
+  Teuchos::RCP<Thyra_LinearOp> Jac;
+  Teuchos::RCP<Thyra_MultiVector> JV;
+  Teuchos::RCP<Thyra_MultiVector> fp;
+  Teuchos::RCP<Thyra_MultiVector> fpV;
+  Teuchos::RCP<Thyra_MultiVector> Vp_bc;
 
   Teuchos::RCP<const Albany::NodeSetList> nodeSets;
   Teuchos::RCP<const Albany::NodeSetCoordList> nodeSetCoords;
@@ -178,34 +158,24 @@ struct Workset {
 
   // New field manager response stuff
   Teuchos::RCP<const Teuchos::Comm<int> > comm;
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<const Epetra_Import> x_importer;
-#endif
-  Teuchos::RCP<const Tpetra_Import> x_importerT;
-  //Tpetra version of response vector g
-  Teuchos::RCP<Tpetra_Vector> gT;
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<Epetra_MultiVector> dgdx;
-  Teuchos::RCP<Epetra_MultiVector> dgdxdot;
-  Teuchos::RCP<Epetra_MultiVector> dgdxdotdot;
-#endif
-  //Tpetra analogs of dgdx and dgdxdot
-  Teuchos::RCP<Tpetra_MultiVector> dgdxT;
-  Teuchos::RCP<Tpetra_MultiVector> dgdxdotT;
-  Teuchos::RCP<Tpetra_MultiVector> dgdxdotdotT;
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdx;
-  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdxdot;
-  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdxdotdot;
-#endif
-  //Tpetra analogs of overlapped_dgdx and overlapped_dgdxdot
-  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxT;
-  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxdotT;
-  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxdotdotT;
 
-  //Tpetra analog of dgdp
-  Teuchos::RCP<Tpetra_MultiVector> dgdpT;
-  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT;
+  // Combine and Scatter manager (for import-export of responses derivatives),
+  // for both solution (x) and distributed parameter (p)
+  Teuchos::RCP<const Albany::CombineAndScatterManager> x_cas_manager;
+  Teuchos::RCP<const Albany::CombineAndScatterManager> p_cas_manager;
+
+  // Response vector g and its derivatives
+  Teuchos::RCP<Thyra_Vector>      g;
+  Teuchos::RCP<Thyra_MultiVector> dgdx;
+  Teuchos::RCP<Thyra_MultiVector> dgdxdot;
+  Teuchos::RCP<Thyra_MultiVector> dgdxdotdot;
+  Teuchos::RCP<Thyra_MultiVector> dgdp;
+
+  // Overlapped version of response derivatives
+  Teuchos::RCP<Thyra_MultiVector> overlapped_dgdx;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_dgdxdot;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_dgdxdotdot;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_dgdp;
 
   // Meta-function class encoding T<EvalT::ScalarT> given EvalT
   // where T is any lambda expression (typically a placeholder expression)

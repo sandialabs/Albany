@@ -11,6 +11,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Aeras_Layouts.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 namespace Aeras {
 
@@ -96,24 +97,24 @@ operator() (const Aeras_ScatterRes_Tag&, const int& cell) const{
   for (int node = 0; node < this->numNodes; ++node) {
     int n = 0, eq = 0;
     for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-       Kokkos::atomic_fetch_add(&fT_kokkos[nodeID(cell,node,n)], d_val_kokkos[j](cell,node));
+       Kokkos::atomic_fetch_add(&f_kokkos[nodeID(cell,node,n)], d_val_kokkos[j](cell,node));
     }
     eq += this->numNodeVar;
     for (int level = 0; level < this->numLevels; level++) {
       for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
         for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-            Kokkos::atomic_fetch_add(&fT_kokkos[nodeID(cell,node,n)], d_val_kokkos[j](cell,node,level,dim));
+            Kokkos::atomic_fetch_add(&f_kokkos[nodeID(cell,node,n)], d_val_kokkos[j](cell,node,level,dim));
         }
       }
       for (int j = eq+this->numVectorLevelVar;
                j < eq+this->numVectorLevelVar + this->numScalarLevelVar; ++j, ++n) {
-              Kokkos::atomic_fetch_add(&fT_kokkos[nodeID(cell,node,n)], d_val_kokkos[j](cell,node,level));
+              Kokkos::atomic_fetch_add(&f_kokkos[nodeID(cell,node,n)], d_val_kokkos[j](cell,node,level));
       }
     }
     eq += this->numVectorLevelVar + this->numScalarLevelVar;
     for (int level = 0; level < this->numLevels; ++level) {
       for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          Kokkos::atomic_fetch_add(&fT_kokkos[nodeID(cell,node,n)], d_val_kokkos[j](cell,node,level));
+          Kokkos::atomic_fetch_add(&f_kokkos[nodeID(cell,node,n)], d_val_kokkos[j](cell,node,level));
       }
     }
     eq += this->numTracerVar;
@@ -129,33 +130,32 @@ evaluateFields(typename Traits::EvalData workset)
 {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
 
-  //get non-const view of fT 
-  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
+  //get non-const view of residual 
+  Teuchos::ArrayRCP<ST> f_nonconstView = Albany::getNonconstLocalData(workset.f);
 
   for (int cell=0; cell < workset.numCells; ++cell ) {
     for (int node = 0; node < this->numNodes; ++node) {
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-        fT_nonconstView[nodeID(cell,node,n)] += (this->val[j])(cell,node);
+        f_nonconstView[nodeID(cell,node,n)] += (this->val[j])(cell,node);
       }
       eq += this->numNodeVar;
       for (int level = 0; level < this->numLevels; level++) { 
         for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-            fT_nonconstView[nodeID(cell,node,n)] += (this->val[j])(cell,node,level,dim);
+            f_nonconstView[nodeID(cell,node,n)] += (this->val[j])(cell,node,level,dim);
           }
         }
         for (int j = eq+this->numVectorLevelVar; 
                  j < eq+this->numVectorLevelVar + this->numScalarLevelVar; ++j, ++n) {
-          fT_nonconstView[nodeID(cell,node,n)] += (this->val[j])(cell,node,level);
+          f_nonconstView[nodeID(cell,node,n)] += (this->val[j])(cell,node,level);
         }
       }
       eq += this->numVectorLevelVar + this->numScalarLevelVar;
       for (int level = 0; level < this->numLevels; ++level) { 
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          fT_nonconstView[nodeID(cell,node,n)] += (this->val[j])(cell,node,level);
+          f_nonconstView[nodeID(cell,node,n)] += (this->val[j])(cell,node,level);
         }
       }
       eq += this->numTracerVar;
@@ -167,8 +167,7 @@ evaluateFields(typename Traits::EvalData workset)
   nodeID = workset.wsElNodeEqID;
 
   // Get Tpetra vector view from a specific device
-  auto fT_2d = workset.fT->template getLocalView<PHX::Device>();
-  fT_kokkos = Kokkos::subview(fT_2d, Kokkos::ALL(), 0);
+  f_kokkos = Albany::getNonconstDeviceData(workset.f);
 
   // Get MDField views from std::vector
   for (int i = 0; i < this->numFields; i++) {
@@ -200,24 +199,24 @@ operator() (const Aeras_ScatterRes_Tag&, const int& cell) const{
   for (int node = 0; node < this->numNodes; ++node) {
     int n = 0, eq = 0;
     for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-       Kokkos::atomic_fetch_add(&fT_kokkos[nodeID(cell,node,n)], (d_val_kokkos[j](cell,node)).val());
+       Kokkos::atomic_fetch_add(&f_kokkos[nodeID(cell,node,n)], (d_val_kokkos[j](cell,node)).val());
     }
     eq += this->numNodeVar;
     for (int level = 0; level < this->numLevels; level++) {
       for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
         for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-            Kokkos::atomic_fetch_add(&fT_kokkos[nodeID(cell,node,n)], (d_val_kokkos[j](cell,node,level,dim)).val());
+            Kokkos::atomic_fetch_add(&f_kokkos[nodeID(cell,node,n)], (d_val_kokkos[j](cell,node,level,dim)).val());
         }
       }
       for (int j = eq+this->numVectorLevelVar;
                j < eq+this->numVectorLevelVar + this->numScalarLevelVar; ++j, ++n) {
-              Kokkos::atomic_fetch_add(&fT_kokkos[nodeID(cell,node,n)], (d_val_kokkos[j](cell,node,level)).val());
+              Kokkos::atomic_fetch_add(&f_kokkos[nodeID(cell,node,n)], (d_val_kokkos[j](cell,node,level)).val());
       }
     }
     eq += this->numVectorLevelVar + this->numScalarLevelVar;
     for (int level = 0; level < this->numLevels; ++level) {
       for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          Kokkos::atomic_fetch_add(&fT_kokkos[nodeID(cell,node,n)], (d_val_kokkos[j](cell,node,level)).val());
+          Kokkos::atomic_fetch_add(&f_kokkos[nodeID(cell,node,n)], (d_val_kokkos[j](cell,node,level)).val());
       }
     }
     eq += this->numTracerVar;
@@ -228,17 +227,19 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const Aeras_ScatterJac_Adjoint_Tag&, const int& cell) const{
+  LO col, row;
+  ST val;
   for (int node = 0; node < this->numNodes; ++node) {
     int n = 0, eq = 0;
     for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
       auto valptr = d_val_kokkos[j](cell,node);
-      const LO rowT = nodeID(cell,node,n);
+      row = nodeID(cell,node,n);
       for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
         for (int eq_col=0; eq_col<neq; eq_col++, i++) {
-          const LO colT = nodeID(cell,node_col,eq_col);
-          const ST val = valptr.fastAccessDx(i);
+          col = nodeID(cell,node_col,eq_col);
+          val = valptr.fastAccessDx(i);
           if (val != 0) 
-            JacT_kokkos.sumIntoValues(colT, &rowT,  1, &val, false, true);
+            Jac_kokkos.sumIntoValues(col, &row,  1, &val, false, true);
         }
       }
     }
@@ -248,13 +249,13 @@ operator() (const Aeras_ScatterJac_Adjoint_Tag&, const int& cell) const{
       for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
         for (int dim = 0; dim < this->numDims; ++dim, ++n) {
           auto valptr = d_val_kokkos[j](cell,node,level,dim);
-          const LO rowT = nodeID(cell,node,n);
+          row = nodeID(cell,node,n);
           for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
             for (int eq_col=0; eq_col<neq; eq_col++, i++) {
-              const LO colT = nodeID(cell,node_col,eq_col);
-              const ST val = valptr.fastAccessDx(i);
+              col = nodeID(cell,node_col,eq_col);
+              val = valptr.fastAccessDx(i);
               if (val != 0) 
-                JacT_kokkos.sumIntoValues(colT, &rowT,  1, &val, false, true);
+                Jac_kokkos.sumIntoValues(col, &row,  1, &val, false, true);
             }
           }
         }
@@ -262,13 +263,13 @@ operator() (const Aeras_ScatterJac_Adjoint_Tag&, const int& cell) const{
         for (int j = eq+this->numVectorLevelVar;
              j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
           auto valptr = d_val_kokkos[j](cell,node,level);
-          const LO rowT = nodeID(cell,node,n);
+          row = nodeID(cell,node,n);
           for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
             for (int eq_col=0; eq_col<neq; eq_col++, i++) {
-              const LO colT = nodeID(cell,node_col,eq_col);
-              const ST val = valptr.fastAccessDx(i);
+              col = nodeID(cell,node_col,eq_col);
+              val = valptr.fastAccessDx(i);
               if (val != 0) 
-                JacT_kokkos.sumIntoValues(colT, &rowT,  1, &val, false, true);
+                Jac_kokkos.sumIntoValues(col, &row,  1, &val, false, true);
             }
           }
         }
@@ -279,13 +280,13 @@ operator() (const Aeras_ScatterJac_Adjoint_Tag&, const int& cell) const{
     for (int level = 0; level < this->numLevels; ++level) {
       for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
         auto valptr = d_val_kokkos[j](cell,node,level);
-        const LO rowT = nodeID(cell,node,n);
+        row = nodeID(cell,node,n);
         for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
           for (int eq_col=0; eq_col<neq; eq_col++, i++) {
-            const LO colT = nodeID(cell,node_col,eq_col);
-            const ST val = valptr.fastAccessDx(i);
+            col = nodeID(cell,node_col,eq_col);
+            val = valptr.fastAccessDx(i);
             if (val != 0) 
-              JacT_kokkos.sumIntoValues(colT, &rowT,  1, &val, false, true);
+              Jac_kokkos.sumIntoValues(col, &row,  1, &val, false, true);
           }
         }
       }
@@ -298,17 +299,19 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const Aeras_ScatterJac_Tag&, const int& cell) const{
+  LO row, col;
+  ST val;
   for (int node = 0; node < this->numNodes; ++node) {
     int n = 0, eq = 0;
     for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
       auto valptr = d_val_kokkos[j](cell,node);
-      const LO rowT = nodeID(cell,node,n);
+      row = nodeID(cell,node,n);
       for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
         for (int eq_col=0; eq_col<neq; eq_col++, i++) {
-          const LO colT = nodeID(cell,node_col,eq_col);
-          const ST val = valptr.fastAccessDx(i);
+          col = nodeID(cell,node_col,eq_col);
+          val = valptr.fastAccessDx(i);
           if (val != 0) 
-            JacT_kokkos.sumIntoValues(rowT, &colT,  1, &val, false, true);
+            Jac_kokkos.sumIntoValues(row, &col,  1, &val, false, true);
         }
       }
     }
@@ -318,13 +321,13 @@ operator() (const Aeras_ScatterJac_Tag&, const int& cell) const{
       for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
         for (int dim = 0; dim < this->numDims; ++dim, ++n) {
           auto valptr = d_val_kokkos[j](cell,node,level,dim);
-          const LO rowT = nodeID(cell,node,n);
+          row = nodeID(cell,node,n);
           for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
             for (int eq_col=0; eq_col<neq; eq_col++, i++) {
-              const LO colT = nodeID(cell,node_col,eq_col);
-              const ST val = valptr.fastAccessDx(i);
+              col = nodeID(cell,node_col,eq_col);
+              val = valptr.fastAccessDx(i);
               if (val != 0) 
-                JacT_kokkos.sumIntoValues(rowT, &colT,  1, &val, false, true);
+                Jac_kokkos.sumIntoValues(row, &col,  1, &val, false, true);
             }
           }
         }
@@ -332,13 +335,13 @@ operator() (const Aeras_ScatterJac_Tag&, const int& cell) const{
         for (int j = eq+this->numVectorLevelVar;
              j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
           auto valptr = d_val_kokkos[j](cell,node,level);
-          const LO rowT = nodeID(cell,node,n);
+          row = nodeID(cell,node,n);
           for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
             for (int eq_col=0; eq_col<neq; eq_col++, i++) {
-              const LO colT = nodeID(cell,node_col,eq_col);
-              const ST val = valptr.fastAccessDx(i);
+              col = nodeID(cell,node_col,eq_col);
+              val = valptr.fastAccessDx(i);
               if (val != 0) 
-                JacT_kokkos.sumIntoValues(rowT, &colT,  1, &val, false, true);
+                Jac_kokkos.sumIntoValues(row, &col,  1, &val, false, true);
             }
           }
         }
@@ -349,13 +352,13 @@ operator() (const Aeras_ScatterJac_Tag&, const int& cell) const{
     for (int level = 0; level < this->numLevels; ++level) {
       for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
         auto valptr = d_val_kokkos[j](cell,node,level);
-        const LO rowT = nodeID(cell,node,n);
+        row = nodeID(cell,node,n);
         for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
           for (int eq_col=0; eq_col<neq; eq_col++, i++) {
-            const LO colT = nodeID(cell,node_col,eq_col);
-            const ST val = valptr.fastAccessDx(i);
+            col = nodeID(cell,node_col,eq_col);
+            val = valptr.fastAccessDx(i);
             if (val != 0) 
-              JacT_kokkos.sumIntoValues(rowT, &colT,  1, &val, false, true);
+              Jac_kokkos.sumIntoValues(row, &col,  1, &val, false, true);
           }
         }
       }
@@ -373,48 +376,47 @@ evaluateFields(typename Traits::EvalData workset)
 {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<Tpetra_Vector>      fT = workset.fT;
-  Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
+  Teuchos::RCP<Thyra_Vector>     f = workset.f;
+  Teuchos::RCP<Thyra_LinearOp> Jac = workset.Jac;
 
-  const bool loadResid = (fT != Teuchos::null);
-  LO rowT; 
-  Teuchos::Array<LO> colT; 
+  auto f_view = Albany::getNonconstLocalData(workset.f);
+
+  const bool loadResid = (f != Teuchos::null);
+  LO row; 
+  Teuchos::Array<LO> cols; 
+  Teuchos::Array<ST> vals; 
 
   for (int cell=0; cell < workset.numCells; ++cell ) {
     const int neq = nodeID.dimension(2);
-    colT.resize(neq * this->numNodes);
+    cols.resize(neq * this->numNodes);
+    vals.resize(neq * this->numNodes);
     
     for (int node=0; node<this->numNodes; node++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
-        colT[neq * node + eq_col] =  nodeID(cell,node,eq_col);
+        cols[neq * node + eq_col] =  nodeID(cell,node,eq_col);
       }
     }
     for (int node = 0; node < this->numNodes; ++node) {
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
         auto valptr = (this->val[j])(cell,node);
-        rowT = nodeID(cell,node,n);
-        if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
+        row = nodeID(cell,node,n);
+        if (loadResid) {
+          f_view[row] += valptr.val();
+        }
         if (valptr.hasFastAccess()) {
           if (workset.is_adjoint) {
             // Sum Jacobian transposed
-            for (unsigned int i=0; i<colT.size(); ++i) {
-              ST val = valptr.fastAccessDx(i); 
-              if (val != 0.0) { 
-                JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
-              }
+            for (unsigned int i=0; i<col.size(); ++i) {
+              vals[0] = valptr.fastAccessDx(i); 
+              Albany::addToLocalRowValues(Jac, col[i], Teuchos::arrayView(&row,1), vals.view(0,1));
             }
-          } 
-          else {
-            //Sum Jacobian entries 
-            for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-              ST val = valptr.fastAccessDx(i);
-              if (val != 0.0) {
-                JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
-              }
-            }
+          } else {
             // Sum Jacobian entries all at once
-            // JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
+            for (unsigned int i=0; i<neq*this->numNodes; ++i) {
+              vals[i] = valptr.fastAccessDx(i);
+            }
+            Albany::addToLocalRowValues(Jac, row, cols(), vals());
           }
         } // has fast access
       }
@@ -423,28 +425,23 @@ evaluateFields(typename Traits::EvalData workset)
         for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
             auto valptr = (this->val[j])(cell,node,level,dim);
-            rowT = nodeID(cell,node,n);
-            if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
+            row = nodeID(cell,node,n);
+            if (loadResid) {
+              f_view[row] += valptr.val();
+            }
             if (valptr.hasFastAccess()) {
               if (workset.is_adjoint) {
                 // Sum Jacobian transposed
-                for (int i=0; i<colT.size(); ++i) {
-                  ST val = valptr.fastAccessDx(i); 
-                  if (val != 0.0) { 
-                    JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
-                  }
+                for (int i=0; i<col.size(); ++i) {
+                  vals[0] = valptr.fastAccessDx(i); 
+                  Albany::addToLocalRowValues(Jac, col[i], Teuchos::arrayView(&row,1), vals.view(0,1));
                 }
-              } 
-              else {
-                //Sum Jacobian entries 
-                for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-                  ST val = valptr.fastAccessDx(i);
-                  if (val != 0.0) {
-                    JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
-                  }
-                }
+              } else {
                 // Sum Jacobian entries all at once
-                //JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
+                for (unsigned int i=0; i<neq*this->numNodes; ++i) {
+                  vals[i] = valptr.fastAccessDx(i);
+                }
+                Albany::addToLocalRowValues(Jac, row, cols(), vals());
               }
             }
           }
@@ -452,28 +449,23 @@ evaluateFields(typename Traits::EvalData workset)
         for (int j = eq+this->numVectorLevelVar;
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
           auto valptr = (this->val[j])(cell,node,level);
-          rowT = nodeID(cell,node,n);
-          if (loadResid) fT->sumIntoLocalValue(nodeID(cell,node,n), valptr.val());
+          row = nodeID(cell,node,n);
+          if (loadResid) {
+            f_view[nodeID(cell,node,n)] += valptr.val();
+          }
           if (valptr.hasFastAccess()) {
             if (workset.is_adjoint) {
               // Sum Jacobian transposed
               for (unsigned int i=0; i<colT.size(); ++i) {
-                ST val = valptr.fastAccessDx(i); 
-                if (val != 0.0) { 
-                  JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
-                }
+                vals[0] = valptr.fastAccessDx(i); 
+                Albany::addToLocalRowValues(Jac, col[i], Teuchos::arrayView(&row,1), vals.view(0,1));
               }
-            } 
-            else {
-                //Sum Jacobian entries 
-                for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-                  ST val = valptr.fastAccessDx(i);
-                  if (val != 0.0) {
-                    JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
-                  }
-                }
+            } else {
               // Sum Jacobian entries all at once
-              //JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
+              for (unsigned int i=0; i<neq*this->numNodes; ++i) {
+                vals[i] = valptr.fastAccessDx(i);
+              }
+              Albany::addToLocalRowValues(Jac, row, cols(), vals());
             }
           } // has fast access
         }
@@ -482,28 +474,23 @@ evaluateFields(typename Traits::EvalData workset)
       for (int level = 0; level < this->numLevels; ++level) {
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
           auto valptr = (this->val[j])(cell,node,level);
-          rowT = nodeID(cell,node,n);
-          if (loadResid) fT->sumIntoLocalValue(nodeID(cell,node,n), valptr.val());
+          row = nodeID(cell,node,n);
+          if (loadResid) {
+            f_view[nodeID(cell,node,n)] += valptr.val();
+          }
           if (valptr.hasFastAccess()) {
             if (workset.is_adjoint) {
               // Sum Jacobian transposed
               for (unsigned int i=0; i<colT.size(); ++i) {
-                ST val = valptr.fastAccessDx(i); 
-                if (val != 0.0) { 
-                  JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
-                }
+                vals[0] = valptr.fastAccessDx(i); 
+                Albany::addToLocalRowValues(Jac, col[i], Teuchos::arrayView(&row,1), vals.view(0,1));
               }
-            } 
-            else {
-              //Sum Jacobian entries 
-                for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-                  ST val = valptr.fastAccessDx(i);
-                  if (val != 0.0) {
-                    JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
-                  }
-                }
+            } else {
               // Sum Jacobian entries all at once
-              //JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
+              for (unsigned int i=0; i<neq*this->numNodes; ++i) {
+                val[i] = valptr.fastAccessDx(i);
+              }
+              Albany::addToLocalRowValues(Jac, row, cols(), vals());
             }
           } // has fast access
         }
@@ -521,16 +508,15 @@ evaluateFields(typename Traits::EvalData workset)
   nunk = neq*this->numNodes;
 
   // Get Tpetra vector view and local matrix
-  const bool loadResid = Teuchos::nonnull(workset.fT);
+  const bool loadResid = Teuchos::nonnull(workset.f);
   if (loadResid) {
-    auto fT_2d = workset.fT->template getLocalView<PHX::Device>();
-    fT_kokkos = Kokkos::subview(fT_2d, Kokkos::ALL(), 0);
+    f_kokkos = Albany::getNonconstDeviceData(workset.f);
   }
 
-  Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
-  if (!JacT->isFillComplete())
-    JacT->fillComplete();
-  JacT_kokkos = JacT->getLocalMatrix();
+  if (Albany::isFillActive(workset.Jac)) {
+    Albany::fillComplete(workset.Jac);
+  }
+  Jac_kokkos = Albany::getNonconstDeviceData(workset.Jac);
 
   // Get MDField views from std::vector
   for (int i = 0; i < this->numFields; i++) {
@@ -551,8 +537,9 @@ evaluateFields(typename Traits::EvalData workset)
     cudaCheckError();
   }
 
-  if (JacT->isFillComplete())
-    JacT->resumeFill();
+  if (!Albany::isFillActive(workset.Jac)) {
+    Albany::resumeFill(workset.Jac);
+  }
 
 #endif
 }
@@ -574,11 +561,25 @@ void ScatterResidual<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<Tpetra_Vector>       fT = workset.fT;
-  Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
-  Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
+  Teuchos::RCP<Thyra_Vector>       f = workset.f;
+  Teuchos::RCP<Thyra_MultiVector> JV = workset.JV;
+  Teuchos::RCP<Thyra_MultiVector> fp = workset.fp;
 
-  int rowT; 
+  Teuchos::ArrayRCP<ST> f_view;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> JV_view;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> fp_view;
+
+  if (!f.is_null()) {
+    f_view = Albany::getNonconstLocalData(f);
+  }
+  if (!JV.is_null()) {
+    JV_view = Albany::getNonconstLocalData(JV);
+  }
+  if (!fp.is_null()) {
+    fp_view = Albany::getNonconstLocalData(fp);
+  }
+  
+  int row; 
 
   //IK, 6/27/14: I think you don't actually need row_map here the way this function is written right now...
   //const Epetra_BlockMap *row_map = NULL;
@@ -586,64 +587,89 @@ evaluateFields(typename Traits::EvalData workset)
   //else if (JV != Teuchos::null) row_map = &(JV->Map());
   //else if (fp != Teuchos::null) row_map = &(fp->Map());
   //else
-  if ((fT == Teuchos::null) & (JVT == Teuchos::null) & (fpT == Teuchos::null)) {  
+  if (f.is_null() && JV.is_null() && fp.is_null()) {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                      "One of f, JV, or fp must be non-null! " << std::endl);
   }
+
   for (int cell=0; cell < workset.numCells; ++cell ) {
     for (int node = 0; node < this->numNodes; ++node) {
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
         auto valptr = (this->val[j])(cell,node);
-        rowT = nodeID(cell,node,n);
-        if (fT != Teuchos::null) fT->sumIntoLocalValue(rowT, valptr.val());
-        if (JVT != Teuchos::null)
-          for (int col=0; col<workset.num_cols_x; col++)
-            JVT->sumIntoLocalValue(rowT, col, valptr.dx(col));
-        if (fpT != Teuchos::null)
-          for (int col=0; col<workset.num_cols_p; col++)
-            fpT->sumIntoLocalValue(rowT, col, valptr.dx(col+workset.param_offset));
+        row = nodeID(cell,node,n);
+        if (f != Teuchos::null) {
+          f_view[row] += valptr.val();
+        }
+        if (JV != Teuchos::null) {
+          for (int col=0; col<workset.num_cols_x; col++) {
+            JV_view[col][row] += valptr.dx(col);
+          }
+        }
+        if (fp != Teuchos::null) {
+          for (int col=0; col<workset.num_cols_p; col++) {
+            fp_view[col][row] += valptr.dx(col+workset.param_offset);
+          }
+        }
       }
       eq += this->numNodeVar;
       for (int level = 0; level < this->numLevels; level++) {
         for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
             auto valptr = (this->val[j])(cell,node,level,dim);
-            rowT = nodeID(cell,node,n);
-            if (fT != Teuchos::null) fT->sumIntoLocalValue(rowT, valptr.val());
-            if (JVT != Teuchos::null)
-              for (int col=0; col<workset.num_cols_x; col++)
-                JVT->sumIntoLocalValue(rowT, col, valptr.dx(col));
-            if (fpT != Teuchos::null)
-              for (int col=0; col<workset.num_cols_p; col++)
-                fpT->sumIntoLocalValue(rowT, col, valptr.dx(col+workset.param_offset));
+            row = nodeID(cell,node,n);
+            if (f != Teuchos::null) {
+              f_view[row] += valptr.val();
+            }
+            if (JV != Teuchos::null) {
+              for (int col=0; col<workset.num_cols_x; col++) {
+                JV_view[col][row] += valptr.dx(col);
+              }
+            }
+            if (fp != Teuchos::null) {
+              for (int col=0; col<workset.num_cols_p; col++) {
+                fp_view[col][row] += valptr.dx(col+workset.param_offset);
+              }
+            }
           }
         }
         for (int j = eq+this->numVectorLevelVar;
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j,++n) {
           auto valptr = (this->val[j])(cell,node,level);
-          rowT = nodeID(cell,node,n);
-          if (fT != Teuchos::null) fT->sumIntoLocalValue(rowT, valptr.val());
-          if (JVT != Teuchos::null)
-            for (int col=0; col<workset.num_cols_x; col++)
-              JVT->sumIntoLocalValue(rowT, col, valptr.dx(col));
-          if (fpT != Teuchos::null)
-            for (int col=0; col<workset.num_cols_p; col++)
-              fpT->sumIntoLocalValue(rowT, col, valptr.dx(col+workset.param_offset));
+          row = nodeID(cell,node,n);
+          if (f != Teuchos::null) {
+            f_view[row] += valptr.val();
+          }
+          if (JV != Teuchos::null) {
+            for (int col=0; col<workset.num_cols_x; col++) {
+              JV_view[col][row] += valptr.dx(col);
+            }
+          }
+          if (fp != Teuchos::null) {
+            for (int col=0; col<workset.num_cols_p; col++) {
+              fp_view[col][row] += valptr.dx(col+workset.param_offset);
+            }
+          }
         }
       }
      eq += this->numVectorLevelVar+this->numScalarLevelVar;
       for (int level = 0; level < this->numLevels; ++level) {
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
           auto valptr = (this->val[j])(cell,node,level);
-          rowT = nodeID(cell,node,n);
-          if (fT != Teuchos::null) fT->sumIntoLocalValue(rowT, valptr.val());
-          if (JVT != Teuchos::null)
-            for (int col=0; col<workset.num_cols_x; col++)
-              JVT->sumIntoLocalValue(rowT, col, valptr.dx(col));
-          if (fpT != Teuchos::null)
-            for (int col=0; col<workset.num_cols_p; col++)
-              fpT->sumIntoLocalValue(rowT, col, valptr.dx(col+workset.param_offset));
+          row = nodeID(cell,node,n);
+          if (f != Teuchos::null) {
+            f_view[row] += valptr.val();
+          }
+          if (JV != Teuchos::null) {
+            for (int col=0; col<workset.num_cols_x; col++) {
+              JV_view[col][row] += valptr.dx(col);
+            }
+          }
+          if (fp != Teuchos::null) {
+            for (int col=0; col<workset.num_cols_p; col++) {
+              fp_view[col][row] += valptr.dx(col+workset.param_offset);
+            }
+          }
         }
       }
       eq += this->numTracerVar;
@@ -651,4 +677,4 @@ evaluateFields(typename Traits::EvalData workset)
   } 
 }
 
-}
+} // namespace Aeras

@@ -26,6 +26,7 @@
 typedef Thyra::VectorSpaceBase<ST>                Thyra_VectorSpace;
 typedef Thyra::MultiVectorBase<ST>                Thyra_MultiVector;
 typedef Thyra::VectorBase<ST>                     Thyra_Vector;
+typedef Thyra::ProductVectorSpaceBase<ST>         Thyra_ProductVectorSpace;
 typedef Thyra::ProductVectorBase<ST>              Thyra_ProductVector;
 typedef Thyra::LinearOpBase<ST>                   Thyra_LinearOp;
 typedef Thyra::PreconditionerBase<ST>             Thyra_Preconditioner;
@@ -35,5 +36,6 @@ typedef Thyra::LinearOpWithSolveFactoryBase<ST>   Thyra_LOWS_Factory;
 typedef Thyra::ModelEvaluator<ST>                 Thyra_ModelEvaluator;
 typedef Thyra_ModelEvaluator::InArgs<ST>          Thyra_InArgs;
 typedef Thyra_ModelEvaluator::OutArgs<ST>         Thyra_OutArgs;
+typedef Thyra_ModelEvaluator::Derivative<ST>      Thyra_Derivative;
 
 #endif // ALBANY_THYRA_TYPES_HPP

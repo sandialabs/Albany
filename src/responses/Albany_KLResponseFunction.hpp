@@ -60,7 +60,7 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
-      Tpetra_Vector& gT);
+      const Teuchos::RCP<Thyra_Vector>& g);
     
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
     virtual void evaluateTangent(
@@ -78,9 +78,9 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vp,
-      Tpetra_Vector* g,
-      Tpetra_MultiVector* gx,
-      Tpetra_MultiVector* gp);
+      const Teuchos::RCP<Thyra_Vector>& g,
+      const Teuchos::RCP<Thyra_MultiVector>& gx,
+      const Teuchos::RCP<Thyra_MultiVector>& gp);
 
     //! Evaluate distributed parameter derivative dg/dp
     virtual void evaluateDistParamDeriv(
@@ -90,7 +90,7 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& param_array,
       const std::string& dist_param_name,
-      Tpetra_MultiVector*  dg_dpT);
+      const Teuchos::RCP<Thyra_MultiVector>& dg_dp);
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void evaluateDerivative(
@@ -100,7 +100,7 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
-      Tpetra_Vector* g,
+      const Teuchos::RCP<Thyra_Vector>& g,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,

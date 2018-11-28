@@ -17,6 +17,8 @@
 #include "AAdapt_RC_Projector_impl.hpp"
 #include "AAdapt_RC_Manager.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 #define loop(a, i, dim)                                                 \
   for (PHX::MDField<RealType>::size_type i = 0; i < a.dimension(dim); ++i)
 
@@ -676,17 +678,16 @@ getValidParameters (Teuchos::RCP<Teuchos::ParameterList>& valid_pl) {
 }
 
 void Manager::init_x_if_not (const Teuchos::RCP<const Thyra_VectorSpace>& vs) {
-  auto v = Thyra::createMember(vs);
-  auto tv = ConverterT::getTpetraVector(v);
-  TEUCHOS_TEST_FOR_EXCEPTION(tv.is_null(), std::runtime_error,
-                             "Error! The input Thyra_VectorSpace generated a vector not castable "
-                             "to Thyra_TpetraVector. If you are still refactoring to "
-                             "Thyra, this may happen (fix it!). If the refactoring is over, "
-                             "you may have tried to pass a vector space that is not wrapping "
-                             "Tpetra stuff. Perhaps the underlying linear algebra is something "
+  auto tm = Albany::getTpetraMap(vs);
+  TEUCHOS_TEST_FOR_EXCEPTION(tm.is_null(), std::runtime_error,
+                             "Error! The input Thyra_VectorSpace does not wrap a Tpetra_Map. "
+                             "If you are still refactoring to Thyra, this may happen (fix it!). "
+                             "If the refactoring is over, you may have tried to pass a vector "
+                             "space that is not wrapping Tpetra stuff. "
+                             "Perhaps the underlying linear algebra is something "
                              "else (Epetra?), and you need to add checks here.\n");
 
-  init_x_if_not(tv->getMap());
+  init_x_if_not(tm);
 }
 
 void Manager::init_x_if_not (const Teuchos::RCP<const Tpetra_Map>& map) {

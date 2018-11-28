@@ -723,7 +723,7 @@ AnalyticMassResidualBase<EvalT, Traits>::computeElementVolume(
     const int cell) const
 {
   RealType elt_vol = 0.0;
-  for (int pt = 0; pt < num_pts_; ++pt) { elt_vol += weights_(cell, pt); }
+  for (int pt = 0; pt < num_pts_; ++pt) { elt_vol += Albany::ADValue(weights_(cell, pt)); }
 #ifdef DEBUG_OUTPUT
   if (cell == 0) *out_ << "  IKT elt_vol = " << elt_vol << "\n";
 #endif

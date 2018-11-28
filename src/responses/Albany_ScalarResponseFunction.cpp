@@ -45,34 +45,14 @@ evaluateDerivative(
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec>& p,
     ParamVec* deriv_p,
-    Tpetra_Vector* gT,
+    const Teuchos::RCP<Thyra_Vector>& g,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp)
 {
-
-  const Teuchos::RCP<Tpetra_MultiVector> dg_dxT =
-    Teuchos::nonnull(dg_dx.getMultiVector()) ?
-    ConverterT::getTpetraMultiVector(dg_dx.getMultiVector()) :
-    Teuchos::null;
-
-  const Teuchos::RCP<Tpetra_MultiVector> dg_dxdotT =
-    Teuchos::nonnull(dg_dxdot.getMultiVector()) ?
-    ConverterT::getTpetraMultiVector(dg_dxdot.getMultiVector()) :
-    Teuchos::null;
-
-  const Teuchos::RCP<Tpetra_MultiVector> dg_dxdotdotT =
-    Teuchos::nonnull(dg_dxdotdot.getMultiVector()) ?
-    ConverterT::getTpetraMultiVector(dg_dxdotdot.getMultiVector()) :
-    Teuchos::null;
-
-  const Teuchos::RCP<Tpetra_MultiVector> dg_dpT =
-    Teuchos::nonnull(dg_dp.getMultiVector()) ?
-    ConverterT::getTpetraMultiVector(dg_dp.getMultiVector()) :
-    Teuchos::null;
-
   this->evaluateGradient(
-    current_time, x, xdot, xdotdot, p, deriv_p, gT,
-    dg_dxT.get(), dg_dxdotT.get(), dg_dxdotdotT.get(), dg_dpT.get());
+    current_time, x, xdot, xdotdot, p, deriv_p, g,
+    dg_dx.getMultiVector(), dg_dxdot.getMultiVector(),
+    dg_dxdotdot.getMultiVector(), dg_dp.getMultiVector());
 }

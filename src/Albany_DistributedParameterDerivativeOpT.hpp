@@ -28,7 +28,7 @@ namespace Albany {
    * residual vector, p is a distributed parameter vector, and v is a given
    * vector.
    */
-  class DistributedParameterDerivativeOpT : public Tpetra_Operator {
+  class DistributedParameterDerivativeOpT : public Thyra_LinearOp {
   public:
 
     // Constructor
@@ -43,9 +43,9 @@ namespace Albany {
 
     //! Set values needed for apply()
     void set(const double time_,
-             const Teuchos::RCP<const Tpetra_Vector>& xdot_,
-             const Teuchos::RCP<const Tpetra_Vector>& xdotdot_,
-             const Teuchos::RCP<const Tpetra_Vector>& x_,
+             const Teuchos::RCP<const Thyra_Vector>& x_,
+             const Teuchos::RCP<const Thyra_Vector>& xdot_,
+             const Teuchos::RCP<const Thyra_Vector>& xdotdot_,
              const Teuchos::RCP<Teuchos::Array<ParamVec> >& scalar_params_) {
       time = time_;
       xdot = xdot_;
@@ -54,60 +54,40 @@ namespace Albany {
       scalar_params = scalar_params_;
     }
 
-    //! @name Tpetra_Operator methods
-    //@{
-
-    /*!
-     * \brief Returns the result of a Tpetra_Operator applied to a
-     * Tpetra_MultiVector X in Y.
-     */
-    virtual void apply(const Tpetra_MultiVector& X,
-                      Tpetra_MultiVector& Y,  Teuchos::ETransp  mode = Teuchos::NO_TRANS, 
-                      ST alpha = Teuchos::ScalarTraits<ST>::one(), 
-                      ST beta = Teuchos::ScalarTraits<ST>::one() ) const {
-      bool use_transpose = (mode == Teuchos::TRANS);
-      app->applyGlobalDistParamDerivImpl(time,
-                                         Albany::createConstThyraVector(x),
-                                         Albany::createConstThyraVector(xdot),
-                                         Albany::createConstThyraVector(xdotdot),
-                                         *scalar_params,
-                                         param_name,
-                                         use_transpose,
-                                         Albany::createConstThyraMultiVector(Teuchos::rcpFromRef(X)),
-                                         Teuchos::rcpFromRef(Y));
+    //! Overrides Thyra::LinearOpBase purely virtual method
+    Teuchos::RCP<const Thyra_VectorSpace> domain() const {
+      return Thyra::createVectorSpace<ST>(app->getDistParamLib()->get(param_name)->map());
     }
 
-
-    //! Returns a character string describing the operator
-    virtual const char * Label() const {
-      return "DistributedParameterDerivativeOpT";
-    }
-
-     virtual bool hasTransposeApply() const {
-       return true; 
-     }
-
-    /*!
-     * \brief Returns the Tpetra_Map object associated with the domain of
-     * this operator.
-     */
-    //virtual const Tpetra_Map& OperatorDomainMap() const {
-    virtual Teuchos::RCP<const Tpetra_Map> getDomainMap() const {
-      return app->getDistParamLib()->get(param_name)->map();
-    }
-
-    /*!
-     * \brief Returns the Tpetra_Map object associated with the range of
-     * this operator.
-     */
-    //virtual const Tpetra_Map& OperatorRangeMap() const {
-    virtual Teuchos::RCP<const Tpetra_Map> getRangeMap() const {
-      return app->getMapT();
+    //! Overrides Thyra::LinearOpBase purely virtual method
+    Teuchos::RCP<const Thyra_VectorSpace> range() const {
+      return Thyra::createVectorSpace<ST>(app->getMapT());
     }
 
     //@}
 
   protected:
+    //! Overrides Thyra::LinearOpBase purely virtual method
+    bool opSupportedImpl(Thyra::EOpTransp /*M_trans*/) const {
+      // The underlying scalar type is not complex, and we support transpose, so we support everything.
+      return true;
+    }
+
+    //! Overrides Thyra::LinearOpBase purely virtual method
+    void applyImpl (const Thyra::EOpTransp M_trans,
+                    const Thyra_MultiVector& X,
+                    const Teuchos::Ptr<Thyra_MultiVector>& Y,
+                    const ST alpha,
+                    const ST beta) const {
+
+      bool use_transpose = (M_trans == Thyra::TRANS);
+      app->applyGlobalDistParamDerivImpl(time, x, xdot, xdotdot,
+                                         *scalar_params,
+                                         param_name,
+                                         use_transpose,
+                                         Teuchos::rcpFromRef(X),
+                                         Teuchos::rcpFromPtr(Y));
+    }
 
     //! Albany applications
     Teuchos::RCP<Application> app;
@@ -122,13 +102,13 @@ namespace Albany {
     double time;
 
     //! Velocity vector
-    Teuchos::RCP<const Tpetra_Vector> xdot;
+    Teuchos::RCP<const Thyra_Vector> xdot;
 
     //! Acceleration vector
-    Teuchos::RCP<const Tpetra_Vector> xdotdot;
+    Teuchos::RCP<const Thyra_Vector> xdotdot;
 
     //! Solution vector
-    Teuchos::RCP<const Tpetra_Vector> x;
+    Teuchos::RCP<const Thyra_Vector> x;
 
     //! Scalar parameters
     Teuchos::RCP<Teuchos::Array<ParamVec> > scalar_params;
@@ -139,4 +119,4 @@ namespace Albany {
 
 } // namespace Albany
 
-#endif // ALBANY_DISTRIBUTED_PARAMETER_DERIVATIVE_OP_HPP
+#endif // ALBANY_DISTRIBUTED_PARAMETER_DERIVATIVE_OP_T_HPP

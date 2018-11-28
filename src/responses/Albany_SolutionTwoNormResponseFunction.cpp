@@ -5,7 +5,8 @@
 //*****************************************************************//
 
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
-#include "Albany_TpetraThyraUtils.hpp"
+
+#include "Thyra_VectorStdOps.hpp"
 
 Albany::SolutionTwoNormResponseFunction::
 SolutionTwoNormResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& commT) :
@@ -32,11 +33,10 @@ evaluateResponse(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& /*p*/,
-		Tpetra_Vector& gT)
+		const Teuchos::RCP<Thyra_Vector>& g)
 {
   Teuchos::ScalarTraits<ST>::magnitudeType twonorm = x->norm_2();
-  Teuchos::ArrayRCP<ST> gT_nonconstView = gT.get1dViewNonConst(); 
-  gT_nonconstView[0] = twonorm;
+  g->assign(twonorm);
 }
 
 void
@@ -55,36 +55,35 @@ evaluateTangent(const double alpha,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdot*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdotdot*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vp*/,
-		Tpetra_Vector* gT,
-		Tpetra_MultiVector* gxT,
-		Tpetra_MultiVector* gpT)
+    const Teuchos::RCP<Thyra_Vector>& g,
+    const Teuchos::RCP<Thyra_MultiVector>& gx,
+    const Teuchos::RCP<Thyra_MultiVector>& gp)
 {
   Teuchos::ScalarTraits<ST>::magnitudeType nrm = x->norm_2();
 
   // Evaluate response g
-  if (gT != NULL) {
-    Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst(); 
-    gT_nonconstView[0] = nrm; 
+  if (!g.is_null()) {
+    g->assign(nrm);
   }
 
   // Evaluate tangent of g = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
   // dg/dx = 1/||x|| * x^T
-  Teuchos::ETransp T = Teuchos::TRANS; 
-  Teuchos::ETransp N = Teuchos::NO_TRANS; 
-  if (gxT != NULL) {
-    // Until you change gxT to Thyra, cast x and Vx to Tpetra
-    auto xT = Albany::getConstTpetraVector(x);
+  if (!gx.is_null()) {
     if (!Vx.is_null()) {
-      auto VxT = Albany::getConstTpetraMultiVector(Vx);
-      gxT->multiply(T, N, alpha/nrm, *xT, *VxT, 0.0);
+      // compute gx = x' * Vx. x is a vector, Vx a multivector,
+      // so gx is a MV with range->dim()=1, each column being
+      // the dot product x->dot(*Vx->col(j))
+      for (int j=0; j<Vx->domain()->dim(); ++j) {
+        gx->col(j)->assign(x->dot(*Vx->col(j)));
+      }
     } else {
-      // Until you change gxT to Thyra, cast x to Tpetra
-      gxT->update(alpha/nrm, *xT, 0.0);
+      // V_StV stands for V_out = Scalar * V_in
+      Thyra::V_StV(gx->col(0).ptr(),alpha/nrm,*x);
     }
   }
 
-  if (gpT != NULL) {
-    gpT->putScalar(0.0);
+  if (!gp.is_null()) {
+    gp->assign(0.0);
   }
 }
 
@@ -96,46 +95,38 @@ evaluateGradient(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& /*p*/,
 		ParamVec* /*deriv_p*/,
-		Tpetra_Vector* gT,
-		Tpetra_MultiVector* dg_dxT,
-		Tpetra_MultiVector* dg_dxdotT,
-		Tpetra_MultiVector* dg_dxdotdotT,
-		Tpetra_MultiVector* dg_dpT)
+		const Teuchos::RCP<Thyra_Vector>& g,
+		const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
+		const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
+		const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
+		const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
   Teuchos::ScalarTraits<ST>::magnitudeType nrm = x->norm_2();
 
   // Evaluate response g
-  Teuchos::ArrayRCP<ST> gT_nonconstView;
-  if (gT != NULL) {
-    gT_nonconstView = gT->get1dViewNonConst();
-    gT_nonconstView[0] = nrm;
+  if (!g.is_null()) {
+    g->assign(nrm);
   }
   
   // Evaluate dg/dx
-  if (dg_dxT != NULL) {
-    //double nrm;
-    if (gT != NULL) {
-      nrm = gT_nonconstView[0];
-    } else {
-      // Commented this, since it is already compute at the beginning.
-      //nrm = x->norm_2();
-    }
-    // Until you change gxT to Thyra, cast x to Tpetra
-    auto xT = Albany::getConstTpetraVector(x);
-    dg_dxT->scale(1.0/nrm,*xT);
+  if (!dg_dx.is_null()) {
+    // V_StV stands for V_out = Scalar * V_in
+    Thyra::V_StV(dg_dx->col(0).ptr(),1.0/nrm,*x);
   }
 
   // Evaluate dg/dxdot
-  if (dg_dxdotT != NULL) {
-    dg_dxdotT->putScalar(0.0);
+  if (!dg_dxdot.is_null()) {
+    dg_dxdot->assign(0.0);
   }
-  if (dg_dxdotdotT != NULL) {
-    dg_dxdotdotT->putScalar(0.0);
+
+  // Evaluate dg/dxdot
+  if (!dg_dxdotdot.is_null()) {
+    dg_dxdotdot->assign(0.0);
   }
 
   // Evaluate dg/dp
-  if (dg_dpT != NULL) {
-    dg_dpT->putScalar(0.0);
+  if (!dg_dp.is_null()) {
+    dg_dp->assign(0.0);
   }
 }
 
@@ -149,9 +140,9 @@ evaluateDistParamDeriv(
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
     const Teuchos::Array<ParamVec>& /*param_array*/,
     const std::string& /*dist_param_name*/,
-    Tpetra_MultiVector* dg_dpT)
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
-  if (dg_dpT != NULL) {
-    dg_dpT->putScalar(0.0);
+  if (!dg_dp.is_null()) {
+    dg_dp->assign(0.0);
   }
 }

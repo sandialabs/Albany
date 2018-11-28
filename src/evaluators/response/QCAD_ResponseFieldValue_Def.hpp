@@ -9,6 +9,8 @@
 #include "Teuchos_CommHelpers.hpp"
 #include "PHAL_Utilities.hpp"
 
+#include "Albany_ThyraUtils.hpp"
+
 // **********************************************************************
 // Specialization: Jacobian
 // **********************************************************************
@@ -19,32 +21,31 @@ QCAD::FieldValueScatterScalarResponse<PHAL::AlbanyTraits::Jacobian, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response
-  Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
-  if (gT != Teuchos::null) {
-    Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
+  Teuchos::RCP<Thyra_Vector> g = workset.g;
+  if (g != Teuchos::null) {
+    Teuchos::ArrayRCP<ST> g_nonconstView = Albany::getNonconstLocalData(g);
     for (int res = 0; res < this->field_components.size(); res++) {
-      gT_nonconstView[res] = this->global_response(this->field_components[res]).val();
+      g_nonconstView[res] = this->global_response(this->field_components[res]).val();
   }
   }
 
-  Teuchos::RCP<Tpetra_MultiVector> dgdxT = workset.dgdxT;
-  Teuchos::RCP<Tpetra_MultiVector> dgdxdotT = workset.dgdxdotT;
-  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxT = workset.overlapped_dgdxT;
-  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxdotT =
-    workset.overlapped_dgdxdotT;
-  Teuchos::RCP<Tpetra_MultiVector> dgT, overlapped_dgT;
-  if (dgdxT != Teuchos::null) {
-    dgT = dgdxT;
-    overlapped_dgT = overlapped_dgdxT;
-  }
-  else {
-    dgT = dgdxdotT;
-    overlapped_dgT = overlapped_dgdxdotT;
+  Teuchos::RCP<Thyra_MultiVector> dgdx = workset.dgdx;
+  Teuchos::RCP<Thyra_MultiVector> dgdxdot = workset.dgdxdot;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_dgdx = workset.overlapped_dgdx;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_dgdxdot = workset.overlapped_dgdxdot;
+  Teuchos::RCP<Thyra_MultiVector> dg, overlapped_dg;
+  if (dgdx != Teuchos::null) {
+    dg = dgdx;
+    overlapped_dg = overlapped_dgdx;
+  } else {
+    dg = dgdxdot;
+    overlapped_dg = overlapped_dgdxdot;
   }
 
-  dgT->putScalar(0.0);
-  overlapped_dgT->putScalar(0.0);
+  dg->assign(0.0);
+  overlapped_dg->assign(0.0);
 
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> overlapped_dg_nonconst2dView = Albany::getNonconstLocalData(overlapped_dg);
   // Extract derivatives for the cell corresponding to nodeID
   auto nodeID = workset.wsElNodeEqID;
   if (max_cell != -1) {
@@ -67,14 +68,15 @@ postEvaluate(typename Traits::PostEvalData workset)
           int dof = nodeID(max_cell,node_dof,eq_dof);
 
           // Set dg/dx
-          overlapped_dgT->replaceLocalValue(dof, res, (this->global_response(this->field_components[res])).dx(deriv));
+          // NOTE: 2d views are in column major
+          overlapped_dg_nonconst2dView[res][dof] = this->global_response(this->field_components[res]).dx(deriv);
 
         } // column equations
       } // column nodes
     } // response
   } // cell belongs to this proc
 
-  dgT->doExport(*overlapped_dgT, *workset.x_importerT, Tpetra::ADD);
+  workset.x_cas_manager->combine(overlapped_dg, dg, Albany::CombineMode::ADD);
 }
 
 // **********************************************************************

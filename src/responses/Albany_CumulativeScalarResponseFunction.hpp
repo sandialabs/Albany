@@ -44,7 +44,7 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
 		  const Teuchos::Array<ParamVec>& p,
-		  Tpetra_Vector& gT); 
+		  const Teuchos::RCP<Thyra_Vector>& g); 
 
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
     virtual void 
@@ -62,9 +62,9 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vp,
-		  Tpetra_Vector* g,
-		  Tpetra_MultiVector* gx,
-		  Tpetra_MultiVector* gp);
+      const Teuchos::RCP<Thyra_Vector>& g,
+      const Teuchos::RCP<Thyra_MultiVector>& gx,
+      const Teuchos::RCP<Thyra_MultiVector>& gp);
     
     virtual void 
     evaluateGradient(const double current_time,
@@ -73,11 +73,11 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
 		  const Teuchos::Array<ParamVec>& p,
 		  ParamVec* deriv_p,
-		  Tpetra_Vector* gT,
-		  Tpetra_MultiVector* dg_dxT,
-		  Tpetra_MultiVector* dg_dxdotT,
-		  Tpetra_MultiVector* dg_dxdotdotT,
-		  Tpetra_MultiVector* dg_dpT);
+		  const Teuchos::RCP<Thyra_Vector>& g,
+		  const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
+		  const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
+		  const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
+		  const Teuchos::RCP<Thyra_MultiVector>& dg_dp);
 
   private:
 
@@ -90,7 +90,7 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>& param_array,
       const std::string& dist_param_name,
-      Tpetra_MultiVector* dg_dpT);
+		  const Teuchos::RCP<Thyra_MultiVector>& dg_dp);
 
   private:
 

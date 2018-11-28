@@ -49,56 +49,6 @@ bool balance_comm_spec_domain( Partition * partition,
   return rebalancingHasOccurred;
 }
 
-
-void get_entities_through_relations(stk::mesh::BulkData& bulk_data,
-                                    percept::MyPairIterRelation& rel ,
-  const std::vector<stk::mesh::Entity>::const_iterator i_beg ,
-  const std::vector<stk::mesh::Entity>::const_iterator i_end ,
-  std::vector<stk::mesh::Entity> & entities_related )
-{
-  for (unsigned ii=0; ii < rel.size(); ++ii) {
-    //for ( ; rel.first != rel.second ; ++rel.first ) {
-
-    // Do all input entities have a relation to this entity ?
-
-    stk::mesh::Entity   e = rel[ii].entity();
-
-    std::vector<stk::mesh::Entity>::const_iterator i = i_beg ;
-
-    for ( ; i != i_end ; ++i ) {
-      percept::MyPairIterRelation r (bulk_data, (*i), bulk_data.entity_rank(e));
-      unsigned j=0;
-      while ( j < r.size() && e != r[j].entity()) {
-        ++j;
-      }
-      if (j == r.size()-1) { break; }
-    }
-
-    if ( i == i_end ) {
-      entities_related.push_back( e );
-    }
-  }
-}
-
-
-void get_entities_through_relations(stk::mesh::BulkData& bulk_data,
-                                    const std::vector<stk::mesh::Entity> & entities ,
-        stk::mesh::EntityRank               entities_related_rank ,
-        std::vector<stk::mesh::Entity> & entities_related )
-{
-  entities_related.clear();
-
-  if ( ! entities.empty() ) {
-          std::vector<stk::mesh::Entity>::const_iterator i = entities.begin();
-    const std::vector<stk::mesh::Entity>::const_iterator j = entities.end();
-
-    percept::MyPairIterRelation rel ( bulk_data, (*i), entities_related_rank );
-    ++i;
-
-    get_entities_through_relations(bulk_data, rel , i , j , entities_related );
-  }
-}
-
 /*
  * Traversing the migrating elements in reverse order produces a simplistic
  * attempt at lowest-rank element proc greedy partitioning of dependents

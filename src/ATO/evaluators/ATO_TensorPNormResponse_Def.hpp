@@ -501,11 +501,11 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   this->global_response_eval[0] = pow(this->global_response_eval[0],1.0/pVal);
 
-  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxT = workset.overlapped_dgdxT;
-  if (overlapped_dgdxT != Teuchos::null) overlapped_dgdxT->scale(scale);
+  Teuchos::RCP<Thyra_MultiVector> overlapped_dgdx = workset.overlapped_dgdx;
+  if (overlapped_dgdx != Teuchos::null) { overlapped_dgdx->scale(scale); }
 
-  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxdotT = workset.overlapped_dgdxdotT;
-  if (overlapped_dgdxdotT != Teuchos::null) overlapped_dgdxdotT->scale(scale);
+  Teuchos::RCP<Thyra_MultiVector> overlapped_dgdxdot = workset.overlapped_dgdxdot;
+  if (overlapped_dgdxdot != Teuchos::null) { overlapped_dgdxdot->scale(scale); }
 }
 
 // **********************************************************************
@@ -518,8 +518,8 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   this->global_response_eval[0] = pow(this->global_response_eval[0],1.0/pVal);
 
-  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT = workset.overlapped_dgdpT;
-  if(overlapped_dgdpT != Teuchos::null) overlapped_dgdpT->scale(scale);
+  Teuchos::RCP<Thyra_MultiVector> overlapped_dgdp = workset.overlapped_dgdp;
+  if(overlapped_dgdp != Teuchos::null) { overlapped_dgdp->scale(scale); }
 #ifndef ALBANY_EPETRA
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   *out << "\n WARNING: This run is using Distributed Parameters (ATO::TensorPNormResponse) "

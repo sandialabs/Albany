@@ -6,8 +6,8 @@
 
 //IK, 9/12/14: no Epetra!
 
-#ifndef ALBANY_DISTRIBUTED_PARAMETER_LIBRARY_TPETRA_HPP
-#define ALBANY_DISTRIBUTED_PARAMETER_LIBRARY_TPETRA_HPP
+#ifndef ALBANY_DISTRIBUTED_PARAMETER_LIBRARY_THYRA_HPP
+#define ALBANY_DISTRIBUTED_PARAMETER_LIBRARY_THYRA_HPP
 
 #include "Albany_DistributedParameterLibrary.hpp"
 
@@ -50,9 +50,6 @@ namespace Albany {
       importer = Teuchos::rcp(new Tpetra_Import(owned_map, overlapped_map));
       exporter = Teuchos::rcp(new Tpetra_Export(overlapped_map, owned_map));
       overlapped_vec = Teuchos::rcp(new Tpetra_Vector(overlapped_map, false));
-
-      cas_manager = createCombineAndScatterManager(Thyra::createVectorSpace<ST>(owned_map),
-                                                   Thyra::createVectorSpace<ST>(overlapped_map));
     }
 
     //! Destructor
@@ -118,9 +115,6 @@ namespace Albany {
       overlapped_vec->doImport(*vec, *importer, Tpetra::INSERT);
     }
 
-    //! Get the CombineAndScatterManager for this parameter
-    virtual Teuchos::RCP<const CombineAndScatterManager> get_cas_manager () const { return cas_manager; }
-
   protected:
 
     //! Name of parameter
@@ -147,9 +141,6 @@ namespace Albany {
 
     //! Exporter from overlap to owned maps
     Teuchos::RCP<const Tpetra_Export> exporter;
-
-    //! Manager for combine/scatter operations
-    Teuchos::RCP<const CombineAndScatterManager> cas_manager;
 
     //! vector over worksets, containing DOF's map from (elem, node, nComp) into local id
     Teuchos::RCP<const id_array_vec_type> ws_elem_dofs;

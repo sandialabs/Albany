@@ -25,6 +25,7 @@
 #include "Albany_DiscretizationUtils.hpp"
 
 #include "Albany_ThyraTypes.hpp"
+#include "Albany_TpetraThyraUtils.hpp"
 
 // This is only needed for the tpetraVectorSpace function, which is only used during
 // the refactor. Once the Tpetra stuff is fully removed, the get(Overlap)VectorSpace method
@@ -238,6 +239,7 @@ class AbstractDiscretization {
 
     //! Set the residual field for output - Tpetra version
     virtual void setResidualFieldT(const Tpetra_Vector& residual) = 0;
+    virtual void setResidualField(const Teuchos::RCP<const Thyra_Vector>& residual) { setResidualFieldT(*Albany::getConstTpetraVector(residual)); }
 
 #if defined(ALBANY_EPETRA)
     //! Write the solution to the output file
@@ -264,6 +266,8 @@ class AbstractDiscretization {
                                               const Tpetra_Vector &solution_dotdotT,
                                               const double time, const bool overlapped = false) = 0;
     virtual void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false) = 0;
+    virtual void writeSolutionToMeshDatabase(const Teuchos::RCP<const Thyra_Vector>& solution, const double time, const bool overlapped = false) {
+      writeSolutionToMeshDatabaseT(*getConstTpetraVector(solution),time,overlapped); }
     //! Write the solution to file. Must call writeSolutionT first.
     virtual void writeSolutionToFileT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
     virtual void writeSolutionMVToFile(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false) = 0;

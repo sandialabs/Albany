@@ -13,8 +13,8 @@
 // Get the scalar and ordinal types
 #include "Albany_ScalarOrdinalTypes.hpp"
 
-// Phalanx determines the Kokkos node we use for Tpetra types
-#include "Phalanx_KokkosDeviceTypes.hpp"
+// Get the kokkos types
+#include "Albany_KokkosTypes.hpp"
 
 // Tpetra includes
 #include "TpetraCore_config.h"
@@ -43,9 +43,6 @@ typedef unsigned long Tpetra_GO;
 #else
 #error "Albany needs a 64-bit GlobalOrdinal enabled in Tpetra"
 #endif
-
-// The Kokkos node is determined from the Phalanx Device
-typedef Kokkos::Compat::KokkosDeviceWrapperNode<PHX::Device>          KokkosNode;
 
 typedef Tpetra::Map<Tpetra_LO, Tpetra_GO, KokkosNode>                 Tpetra_Map;
 typedef Tpetra::Export<Tpetra_LO, Tpetra_GO, KokkosNode>              Tpetra_Export;

@@ -4,10 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef PHAL_RESPONSE_THERMAL_ENERGYT_HPP
-#define PHAL_RESPONSE_THERMAL_ENERGYT_HPP
+#ifndef PHAL_RESPONSE_THERMAL_ENERGY_HPP
+#define PHAL_RESPONSE_THERMAL_ENERGY_HPP
 
-#include "PHAL_SeparableScatterScalarResponseT.hpp"
+#include "PHAL_SeparableScatterScalarResponse.hpp"
 
 namespace PHAL {
 /** 
@@ -17,14 +17,14 @@ namespace PHAL {
  * temperature. 
  */
   template<typename EvalT, typename Traits>
-  class ResponseThermalEnergyT : 
-    public PHAL::SeparableScatterScalarResponseT<EvalT,Traits>
+  class ResponseThermalEnergy : 
+    public PHAL::SeparableScatterScalarResponse<EvalT,Traits>
   {
   public:
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
-    ResponseThermalEnergyT(Teuchos::ParameterList& p,
+    ResponseThermalEnergy(Teuchos::ParameterList& p,
 			  const Teuchos::RCP<Albany::Layouts>& dl);
   
     void postRegistrationSetup(typename Traits::SetupData d,
@@ -56,8 +56,8 @@ namespace PHAL {
     // specific heat : assumed constant element block
     ScalarT heat_capacity;
 
-      };
+  };
 	
-}
+} // namespace PHAL
 
-#endif
+#endif // PHAL_RESPONSE_THERMAL_ENERGY_HPP

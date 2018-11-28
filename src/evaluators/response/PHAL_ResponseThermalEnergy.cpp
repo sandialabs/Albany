@@ -6,8 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "PHAL_SeparableScatterScalarResponseT.hpp"
-#include "PHAL_SeparableScatterScalarResponseT_Def.hpp"
+#include "PHAL_ResponseThermalEnergy.hpp"
+#include "PHAL_ResponseThermalEnergy_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::SeparableScatterScalarResponseT)
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::SeparableScatterScalarResponseBaseT)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ResponseThermalEnergy)

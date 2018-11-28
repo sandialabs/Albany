@@ -83,7 +83,7 @@ operator() (const PHAL_MortarContactResRank0_Tag&, const int& cell) const
   for (std::size_t node = 0; node < this->numNodes; node++)
     for (std::size_t eq = 0; eq < numFields; eq++) {
       const LO id = nodeID(cell,node,this->offset + eq);
-      Kokkos::atomic_fetch_add(&fT_kokkos(id), val_kokkos[eq](cell,node));
+      Kokkos::atomic_fetch_add(&f_kokkos(id), val_kokkos[eq](cell,node));
     }
 }
 
@@ -95,7 +95,7 @@ operator() (const PHAL_MortarContactResRank1_Tag&, const int& cell) const
   for (std::size_t node = 0; node < this->numNodes; node++)
     for (std::size_t eq = 0; eq < numFields; eq++) {
       const LO id = nodeID(cell,node,this->offset + eq);
-      Kokkos::atomic_fetch_add(&fT_kokkos(id), this->valVec(cell,node,eq));
+      Kokkos::atomic_fetch_add(&f_kokkos(id), this->valVec(cell,node,eq));
     }
 }
 
@@ -108,7 +108,7 @@ operator() (const PHAL_MortarContactResRank2_Tag&, const int& cell) const
     for (std::size_t i = 0; i < numDims; i++)
       for (std::size_t j = 0; j < numDims; j++) {
         const LO id = nodeID(cell,node,this->offset + i*numDims + j);
-        Kokkos::atomic_fetch_add(&fT_kokkos(id), this->valTensor(cell,node,i,j)); 
+        Kokkos::atomic_fetch_add(&f_kokkos(id), this->valTensor(cell,node,i,j)); 
       }
 }
 #endif
@@ -119,12 +119,12 @@ void MortarContactResidual<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
+  Teuchos::RCP<Thyra_Vector> f = workset.f;
   Teuchos::RCP<const Albany::ContactManager> contactManager =
 	workset.disc->getContactManager();
 
-  //get nonconst (read and write) view of fT
-  Teuchos::ArrayRCP<ST> f_nonconstView = fT->get1dViewNonConst();
+  //get nonconst (read and write) view of f
+  Teuchos::ArrayRCP<ST> f_nonconstView = Albany::getNonconstLocalData(f);
 
   contactManager->fillInMortarResidual(workset.wsIndex, f_nonconstView);
 
@@ -135,16 +135,16 @@ evaluateFields(typename Traits::EvalData workset)
   // Get map for local data structures
   nodeID = workset.wsElNodeEqID;
 
-  // Get Tpetra vector view from a specific device
-  auto fT_2d = workset.fT->template getLocalView<PHX::Device>();
-  fT_kokkos = Kokkos::subview(fT_2d, Kokkos::ALL(), 0);
+  // Get device view from thyra vector
+  f_kokkos = Albany::getNonconstDeviceData(workset.f);
 
-    // Get MDField views from std::vector
-    for (int i = 0; i < numFields; i++)
-      val_kokkos[i] = this->val[i].get_view();
+  // Get MDField views from std::vector
+  for (int i = 0; i < numFields; i++) {
+    val_kokkos[i] = this->val[i].get_view();
+  }
 
-    Kokkos::parallel_for(PHAL_MortarContactResRank0_Policy(0,workset.numCells),*this);
-    cudaCheckError();
+  Kokkos::parallel_for(PHAL_MortarContactResRank0_Policy(0,workset.numCells),*this);
+  cudaCheckError();
 
 #ifdef ALBANY_TIMER
   PHX::Device::fence();
@@ -178,7 +178,7 @@ operator() (const PHAL_MortarContactResRank0_Tag&, const int& cell) const
   for (std::size_t node = 0; node < this->numNodes; node++)
     for (std::size_t eq = 0; eq < numFields; eq++) {
       const LO id = nodeID(cell,node,this->offset + eq);
-      Kokkos::atomic_fetch_add(&fT_kokkos(id), (val_kokkos[eq](cell,node)).val());
+      Kokkos::atomic_fetch_add(&f_kokkos(id), (val_kokkos[eq](cell,node)).val());
     }
 }
 
@@ -209,7 +209,7 @@ operator() (const PHAL_MortarContactJacRank0_Adjoint_Tag&, const int& cell) cons
       auto valptr = val_kokkos[eq](cell,node);
       for (int lunk=0; lunk<nunk; lunk++) {
         ST val = valptr.fastAccessDx(lunk);
-        JacT_kokkos.sumIntoValues(colT[lunk], &rowT, 1, &val, false, true); 
+        Jac_kokkos.sumIntoValues(colT[lunk], &rowT, 1, &val, false, true); 
       }
     }
   }
@@ -243,7 +243,7 @@ operator() (const PHAL_MortarContactJacRank0_Tag&, const int& cell) const
       rowT = nodeID(cell,node,this->offset + eq);
       auto valptr = val_kokkos[eq](cell,node);
       for (int i = 0; i < nunk; ++i) vals[i] = valptr.fastAccessDx(i);
-      JacT_kokkos.sumIntoValues(rowT, colT, nunk, vals, false, true);
+      Jac_kokkos.sumIntoValues(rowT, colT, nunk, vals, false, true);
     }
   }
 }
@@ -256,7 +256,7 @@ operator() (const PHAL_MortarContactResRank1_Tag&, const int& cell) const
   for (std::size_t node = 0; node < this->numNodes; node++)
     for (std::size_t eq = 0; eq < numFields; eq++) {
       const LO id = nodeID(cell,node,this->offset + eq);
-      Kokkos::atomic_fetch_add(&fT_kokkos(id), (this->valVec(cell,node,eq)).val());
+      Kokkos::atomic_fetch_add(&f_kokkos(id), (this->valVec(cell,node,eq)).val());
     }
 }
 
@@ -289,7 +289,7 @@ operator() (const PHAL_MortarContactJacRank1_Adjoint_Tag&, const int& cell) cons
       if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
         for (int lunk=0; lunk<nunk; lunk++){
           ST val = ((this->valVec)(cell,node,eq)).fastAccessDx(lunk);
-          JacT_kokkos.sumIntoValues(colT[lunk], &rowT, 1, &val, false, true);
+          Jac_kokkos.sumIntoValues(colT[lunk], &rowT, 1, &val, false, true);
         }
       }//has fast access
     }
@@ -324,7 +324,7 @@ operator() (const PHAL_MortarContactJacRank1_Tag&, const int& cell) const
       rowT = nodeID(cell,node,this->offset + eq);
       if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
         for (int i = 0; i < nunk; ++i) vals[i] = (this->valVec)(cell,node,eq).fastAccessDx(i);
-        JacT_kokkos.sumIntoValues(rowT, colT, nunk, vals, false, true);
+        Jac_kokkos.sumIntoValues(rowT, colT, nunk, vals, false, true);
       }
     }
   }
@@ -339,7 +339,7 @@ operator() (const PHAL_MortarContactResRank2_Tag&, const int& cell) const
     for (std::size_t i = 0; i < numDims; i++)
       for (std::size_t j = 0; j < numDims; j++) {
         const LO id = nodeID(cell,node,this->offset + i*numDims + j);
-        Kokkos::atomic_fetch_add(&fT_kokkos(id), (this->valTensor(cell,node,i,j)).val()); 
+        Kokkos::atomic_fetch_add(&f_kokkos(id), (this->valTensor(cell,node,i,j)).val()); 
       }
 }
 
@@ -370,7 +370,7 @@ operator() (const PHAL_MortarContactJacRank2_Adjoint_Tag&, const int& cell) cons
       if (((this->valTensor)(cell,node, eq/numDims, eq%numDims)).hasFastAccess()) {
         for (int lunk=0; lunk<nunk; lunk++) {
           ST val = ((this->valTensor)(cell,node, eq/numDims, eq%numDims)).fastAccessDx(lunk);
-          JacT_kokkos.sumIntoValues (colT[lunk], &rowT, 1, &val, false, true);
+          Jac_kokkos.sumIntoValues (colT[lunk], &rowT, 1, &val, false, true);
         }
       }//has fast access
     }
@@ -405,7 +405,7 @@ operator() (const PHAL_MortarContactJacRank2_Tag&, const int& cell) const
       rowT = nodeID(cell,node,this->offset + eq);
       if (((this->valTensor)(cell,node, eq/numDims, eq%numDims)).hasFastAccess()) {
         for (int i = 0; i < nunk; ++i) vals[i] = (this->valTensor)(cell,node, eq/numDims, eq%numDims).fastAccessDx(i);
-        JacT_kokkos.sumIntoValues(rowT, colT, nunk,  vals, false, true);
+        Jac_kokkos.sumIntoValues(rowT, colT, nunk,  vals, false, true);
       }
     }
   }
@@ -473,12 +473,11 @@ evaluateFields(typename Traits::EvalData workset)
   nunk = neq*this->numNodes;
 
   // Get Tpetra vector view and local matrix
-  const bool loadResid = Teuchos::nonnull(workset.fT);
+  const bool loadResid = Teuchos::nonnull(workset.f);
   if (loadResid) {
-    auto fT_2d = workset.fT->template getLocalView<PHX::Device>();
-    fT_kokkos = Kokkos::subview(fT_2d, Kokkos::ALL(), 0);
+    f_kokkos = Albany::getNonconstDeviceData(workset.f);
   }
-  JacT_kokkos = workset.JacT->getLocalMatrix();
+  Jac_kokkos = Albany::getNonconstDeviceData(workset.Jac);
 
     // Get MDField views from std::vector
     for (int i = 0; i < numFields; i++)

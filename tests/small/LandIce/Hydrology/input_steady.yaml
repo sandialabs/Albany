@@ -37,6 +37,8 @@ ANONYMOUS:
       sliding_velocity: 
         Regularization Type: Given Value
         Regularization Value: 1.00000000000000004e-10
+    LandIce Viscosity: 
+      Glen's Law n: 3.00000000000000000e+00
     LandIce Hydrology: 
       Cavities Equation Nodal: true
       Lump Mass In Mass Equation: false
@@ -45,9 +47,9 @@ ANONYMOUS:
       Use Melting In Cavities Equation: false
       Regularize With Continuation: true
       Creep Closure Coefficient: 4.00000000000000008e-02
-      'Darcy Law: Water Thickness Exponent': 1.00000000000000000e+00
-      'Darcy Law: Potential Gradient Norm Exponent': 2.00000000000000000e+00
-      'Darcy Law: Transmissivity': 1.00000000000000005e-04
+      Darcy Law Water Thickness Exponent: 1.00000000000000000e+00
+      Darcy Law Potential Gradient Norm Exponent: 2.00000000000000000e+00
+      Darcy Law Transmissivity: 1.00000000000000005e-04
       Bed Bumps Height: 1.00000000000000000e+00
       Bed Bumps Length: 2.00000000000000000e+00
       Surface Water Input: 

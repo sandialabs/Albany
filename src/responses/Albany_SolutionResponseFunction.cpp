@@ -5,8 +5,11 @@
 //*****************************************************************//
 
 #include "Albany_SolutionResponseFunction.hpp"
-#include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
 #include <algorithm>
+
+// TODO: remove this include once you figured out how to abstract away from Tpetra
+#include "Albany_TpetraThyraUtils.hpp"
 
 Albany::SolutionResponseFunction::
 SolutionResponseFunction(
@@ -86,9 +89,9 @@ evaluateResponse(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& /*p*/,
-		Tpetra_Vector& gT)
+    const Teuchos::RCP<Thyra_Vector>& g)
 {
-  cullSolution(x, gT);
+  cullSolution(x, g);
 }
 
 void
@@ -107,24 +110,24 @@ evaluateTangent(const double /*alpha*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdot*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdotdot*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vp*/,
-		Tpetra_Vector* gT,
-		Tpetra_MultiVector* gxT,
-		Tpetra_MultiVector* gpT)
+    const Teuchos::RCP<Thyra_Vector>& g,
+    const Teuchos::RCP<Thyra_MultiVector>& gx,
+    const Teuchos::RCP<Thyra_MultiVector>& gp)
 {
-  if (gT) {
-    cullSolution(x, *gT);
+  if (!g.is_null()) {
+    cullSolution(x, g);
   }
 
-  if (gxT) {
-    gxT->putScalar(0.0);
+  if (!gx.is_null()) {
+    gx->assign(0.0);
     if (!Vx.is_null()) {
-      cullSolution(Vx, *gxT);
-      gxT->scale(beta);
+      cullSolution(Vx, gx);
+      gx->scale(beta);
     }
   }
 
-  if (gpT) {
-    gpT->putScalar(0.0);
+  if (!gp.is_null()) {
+    gp->assign(0.0);
   }
 }
 
@@ -136,78 +139,32 @@ evaluateGradient(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& /*p*/,
 		ParamVec* /*deriv_p*/,
-		Tpetra_Vector* gT,
-		Tpetra_Operator* dg_dxT,
-		Tpetra_Operator* dg_dxdotT,
-		Tpetra_Operator* dg_dxdotdotT,
-		Tpetra_MultiVector* dg_dpT)
+    const Teuchos::RCP<Thyra_Vector>& g,
+    const Teuchos::RCP<Thyra_LinearOp>& dg_dx,
+    const Teuchos::RCP<Thyra_LinearOp>& dg_dxdot,
+    const Teuchos::RCP<Thyra_LinearOp>& dg_dxdotdot,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
-/*
-  Note: In the below, Tpetra throws an exception if one tries to "setAllToScalar()" on
-  a CrsMatrix that fill is not active on. The if tests check the fill status, if fill is
-  not active "resumeFill()" is called prior to "setAllToScalar()", then "fillComplete()"
-  is called to put the CsrMatrix in its original state.
-*/
-
   bool callFillComplete = false;
 
-  if (gT) {
-    cullSolution(x, *gT);
+  if (!g.is_null()) {
+    cullSolution(x, g);
   }
 
-  if (dg_dxT) {
-    Tpetra_CrsMatrix *dg_dx_crsT = dynamic_cast<Tpetra_CrsMatrix*>(dg_dxT);
-    TEUCHOS_TEST_FOR_EXCEPT(dg_dx_crsT == NULL);
-
-    if(!dg_dx_crsT->isFillActive()){
-       dg_dx_crsT->resumeFill();
-       callFillComplete = true;
-    }
-
-    dg_dx_crsT->setAllToScalar(1.0); // matrix only stores the diagonal
-
-    if(callFillComplete){
-      callFillComplete = false;
-      dg_dx_crsT->fillComplete();
-    }
+  if (!dg_dx.is_null()) {
+    assign(dg_dx, 1.0); // matrix only stores the diagonal
   }
 
-  if (dg_dxdotT) {
-    Tpetra_CrsMatrix *dg_dxdot_crsT = dynamic_cast<Tpetra_CrsMatrix*>(dg_dxdotT);
-    TEUCHOS_TEST_FOR_EXCEPT(dg_dxdot_crsT == NULL);
-
-    if(!dg_dxdot_crsT->isFillActive()){
-       dg_dxdot_crsT->resumeFill();
-       callFillComplete = true;
-    }
-
-    dg_dxdot_crsT->setAllToScalar(0.0); // matrix only stores the diagonal
-
-    if(callFillComplete){
-      callFillComplete = false;
-      dg_dxdot_crsT->fillComplete();
-    }
+  if (!dg_dxdot.is_null()) {
+    assign(dg_dxdot,0.0); // matrix only stores the diagonal
   }
 
-  if (dg_dxdotdotT) {
-    Tpetra_CrsMatrix *dg_dxdotdot_crsT = dynamic_cast<Tpetra_CrsMatrix*>(dg_dxdotdotT);
-    TEUCHOS_TEST_FOR_EXCEPT(dg_dxdotdot_crsT == NULL);
-
-    if(!dg_dxdotdot_crsT->isFillActive()){
-       dg_dxdotdot_crsT->resumeFill();
-       callFillComplete = true;
-    }
-
-    dg_dxdotdot_crsT->setAllToScalar(0.0); // matrix only stores the diagonal
-
-    if(callFillComplete){
-      callFillComplete = false;
-      dg_dxdotdot_crsT->fillComplete();
-    }
+  if (!dg_dxdotdot.is_null()) {
+    assign(dg_dxdotdot, 0.0); // matrix only stores the diagonal
   }
 
-  if (dg_dpT) {
-    dg_dpT->putScalar(0.0);
+  if (!dg_dp.is_null()) {
+    dg_dp->assign(0.0);
   }
 }
 
@@ -220,10 +177,10 @@ evaluateDistParamDeriv(
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
     const Teuchos::Array<ParamVec>& /*param_array*/,
     const std::string& /*dist_param_name*/,
-    Tpetra_MultiVector* dg_dpT)
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
-  if (dg_dpT) {
-    dg_dpT->putScalar(0.0);
+  if (!dg_dp.is_null()) {
+    dg_dp->assign(0.0);
   }
 }
 
@@ -261,8 +218,9 @@ buildCulledMapT(const Tpetra_Map& x_mapT,
 
 void
 Albany::SolutionResponseFunction::
-cullSolution(const Teuchos::RCP<const Thyra_MultiVector>& x, Tpetra_MultiVector& x_culledT) const
+cullSolution(const Teuchos::RCP<const Thyra_MultiVector>& x, const Teuchos::RCP<Thyra_MultiVector>& x_culled) const
 {
   auto xT = Albany::getConstTpetraMultiVector(x);
-  x_culledT.doImport(*xT, *importerT, Tpetra::INSERT);
+  auto x_culledT = Albany::getTpetraMultiVector(x_culled);
+  x_culledT->doImport(*xT, *importerT, Tpetra::INSERT);
 }

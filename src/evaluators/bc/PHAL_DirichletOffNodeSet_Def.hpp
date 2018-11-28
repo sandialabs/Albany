@@ -7,9 +7,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
-#include "Tpetra_CrsMatrix.hpp"
 
-#include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 #include <set>
 
@@ -47,17 +46,19 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     }
   }
 
-  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
-  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(dirichletWorkset.x);
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
-  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
+  Teuchos::RCP<const Thyra_Vector> x = dirichletWorkset.x;
+  Teuchos::RCP<Thyra_Vector> f = dirichletWorkset.f;
+
+  Teuchos::ArrayRCP<const ST> x_constView    = Albany::getLocalData(x);
+  Teuchos::ArrayRCP<ST>       f_nonconstView = Albany::getNonconstLocalData(f);
 
   // Loop on all local dofs and set the BC on those not in nodeSetsRows
-  LO num_local_dofs = fT->getMap()->getNodeNumElements();
+  LO num_local_dofs = Albany::getSpmdVectorSpace(f->space())->localSubDim();
   for (LO row=0; row<num_local_dofs; ++row)
   {
-    if (nodeSetsRows.find(row)==nodeSetsRows.end())
-      fT_nonconstView[row] = xT_constView[row] - this->value;
+    if (nodeSetsRows.find(row)==nodeSetsRows.end()) {
+      f_nonconstView[row] = x_constView[row] - this->value;
+    }
   }
 }
 
@@ -88,49 +89,43 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     }
   }
 
-  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
-  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(dirichletWorkset.x);
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
-  Teuchos::RCP<Tpetra_CrsMatrix> jacT = dirichletWorkset.JacT;
+  Teuchos::RCP<const Thyra_Vector> x   = dirichletWorkset.x;
+  Teuchos::RCP<Thyra_Vector>       f   = dirichletWorkset.f;
+  Teuchos::RCP<Thyra_LinearOp>     jac = dirichletWorkset.Jac;
+
+  Teuchos::ArrayRCP<const ST> x_constView;
+  Teuchos::ArrayRCP<ST>       f_nonconstView;
 
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  bool fillResid = (fT != Teuchos::null);
-  Teuchos::ArrayRCP<ST> fT_nonconstView;
+  bool fillResid = (f != Teuchos::null);
 
   if (fillResid) {
-    fT_nonconstView = fT->get1dViewNonConst();
+    x_constView = Albany::getLocalData(x);
+    f_nonconstView = Albany::getNonconstLocalData(f);
   }
 
   Teuchos::Array<LO> index(1);
   Teuchos::Array<ST> value(1);
-  size_t numEntriesT;
   value[0] = j_coeff;
-  Teuchos::Array<ST> matrixEntriesT;
-  Teuchos::Array<LO> matrixIndicesT;
+  Teuchos::Array<ST> matrixEntries;
+  Teuchos::Array<LO> matrixIndices;
 
   // Loop on all local dofs and set the BC on those not in nodeSetsRows
-  LO num_local_dofs = jacT->getRangeMap()->getNodeNumElements();
-  for (LO row=0; row<num_local_dofs; ++row)
-  {
-    if (nodeSetsRows.find(row)==nodeSetsRows.end())
-    {
+  LO num_local_dofs = Albany::getSpmdVectorSpace(jac->range())->localSubDim();
+  for (LO row=0; row<num_local_dofs; ++row) {
+    if (nodeSetsRows.find(row)==nodeSetsRows.end()) {
       // It's a row not on the given node sets
       index[0] = row;
 
-      numEntriesT = jacT->getNumEntriesInLocalRow(row);
-      matrixEntriesT.resize(numEntriesT);
-      matrixIndicesT.resize(numEntriesT);
+      // Extract the row, zero it out, then put j_coeff on diagonal
+      Albany::getLocalRowValues(jac,row,matrixIndices,matrixEntries);
+      for (auto& val : matrixEntries) { val = 0.0; }
+      Albany::setLocalRowValues(jac, row, matrixIndices(), matrixEntries());
+      Albany::setLocalRowValues(jac, row, index(), value());
 
-      jacT->getLocalRowCopy(row, matrixIndicesT(), matrixEntriesT(), numEntriesT);
-
-      for (int i=0; i<numEntriesT; i++)
-        matrixEntriesT[i]=0;
-
-      jacT->replaceLocalValues(row, matrixIndicesT(), matrixEntriesT());
-      jacT->replaceLocalValues(row, index(), value());
-
-      if (fillResid)
-        fT_nonconstView[row] = xT_constView[row] - this->value.val();
+      if (fillResid) {
+        f_nonconstView[row] = x_constView[row] - this->value.val();
+      }
     }
   }
 }
@@ -162,49 +157,53 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     }
   }
 
-  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
-  Teuchos::RCP<Tpetra_MultiVector> fpT = dirichletWorkset.fpT;
-  Teuchos::RCP<Tpetra_MultiVector> JVT = dirichletWorkset.JVT;
-  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(dirichletWorkset.x);
-  Teuchos::RCP<const Tpetra_MultiVector> VxT = Albany::getConstTpetraMultiVector(dirichletWorkset.Vx);
+  Teuchos::RCP<const Thyra_Vector>       x = dirichletWorkset.x;
+  Teuchos::RCP<const Thyra_MultiVector> Vx = dirichletWorkset.Vx;
+  Teuchos::RCP<Thyra_Vector>             f = dirichletWorkset.f;
+  Teuchos::RCP<Thyra_MultiVector>       fp = dirichletWorkset.fp;
+  Teuchos::RCP<Thyra_MultiVector>       JV = dirichletWorkset.JV;
 
-  Teuchos::ArrayRCP<const ST> VxT_constView;
-  Teuchos::ArrayRCP<ST> fT_nonconstView;
-  if (fT != Teuchos::null)
-    fT_nonconstView = fT->get1dViewNonConst();
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::ArrayRCP<const ST> x_constView;
+  Teuchos::ArrayRCP<ST>       f_nonconstView;
+
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> Vx_const2dView;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>       fp_nonconst2dView;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>       JV_nonconst2dView;
+
+  if (f != Teuchos::null) {
+    f_nonconstView = Albany::getNonconstLocalData(f);
+    x_constView = Albany::getLocalData(x);
+  }
+  if (JV != Teuchos::null) {
+    JV_nonconst2dView = Albany::getNonconstLocalData(JV);
+    Vx_const2dView    = Albany::getLocalData(Vx);
+  }
+
+  if (fp != Teuchos::null) {
+    fp_nonconst2dView = Albany::getNonconstLocalData(fp);
+  }
 
   const RealType j_coeff = dirichletWorkset.j_coeff;
   // Loop on all local dofs and set the BC on those not in nodeSetsRows
-  LO num_local_dofs = fpT!=Teuchos::null ? fpT->getMap()->getNodeNumElements() :
-                     (JVT!=Teuchos::null ? JVT->getMap()->getNodeNumElements() :
-                     (fT!=Teuchos::null ? fT->getMap()->getNodeNumElements() : 0));
-  for (LO row=0; row<num_local_dofs; ++row)
-  {
-    if (nodeSetsRows.find(row)==nodeSetsRows.end())
-    {
+  LO num_local_dofs = fp!=Teuchos::null ? Albany::getSpmdVectorSpace(fp->range())->localSubDim() :
+                     (JV!=Teuchos::null ? Albany::getSpmdVectorSpace(JV->range())->localSubDim() :
+                     (f !=Teuchos::null ? Albany::getSpmdVectorSpace(f->space())->localSubDim() : 0));
+  for (LO row=0; row<num_local_dofs; ++row) {
+    if (nodeSetsRows.find(row)==nodeSetsRows.end()) {
       // It's a row not on the given node sets
-      if (fT != Teuchos::null)
-        fT_nonconstView[row] = xT_constView[row] - this->value.val();
+      if (f != Teuchos::null) {
+        f_nonconstView[row] = x_constView[row] - this->value.val();
+      }
 
-      if (JVT != Teuchos::null)
-      {
-        Teuchos::ArrayRCP<ST> JVT_nonconstView;
-        for (int i=0; i<dirichletWorkset.num_cols_x; i++)
-        {
-          JVT_nonconstView = JVT->getDataNonConst(i);
-          VxT_constView = VxT->getData(i);
-          JVT_nonconstView[row] = j_coeff*VxT_constView[row];
+      if (JV != Teuchos::null) {
+        for (int i=0; i<dirichletWorkset.num_cols_x; i++) {
+          JV_nonconst2dView[i][row] = j_coeff*Vx_const2dView[i][row];
         }
       }
 
-      if (fpT != Teuchos::null)
-      {
-        Teuchos::ArrayRCP<ST> fpT_nonconstView;
-        for (int i=0; i<dirichletWorkset.num_cols_p; i++)
-        {
-          fpT_nonconstView = fpT->getDataNonConst(i);
-          fpT_nonconstView[row] = -this->value.dx(dirichletWorkset.param_offset+i);
+      if (fp != Teuchos::null) {
+        for (int i=0; i<dirichletWorkset.num_cols_p; i++) {
+          fp_nonconst2dView[i][row] = -this->value.dx(dirichletWorkset.param_offset+i);
         }
       }
     }
@@ -228,60 +227,43 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
   // Gather all node IDs from all the stored nodesets
   std::set<int> nodeSetsRows;
-  for (int ins(0); ins<nodeSets.size(); ++ins)
-  {
+  for (int ins(0); ins<nodeSets.size(); ++ins) {
     const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(nodeSets[ins])->second;
-    for (int inode=0; inode<nsNodes.size(); ++inode)
-    {
+    for (int inode=0; inode<nsNodes.size(); ++inode) {
       nodeSetsRows.insert(nsNodes[inode][this->offset]);
     }
   }
 
-  Teuchos::RCP<Tpetra_MultiVector> fpVT = dirichletWorkset.fpVT;
-  //non-const view of fpVT
-  Teuchos::ArrayRCP<ST> fpVT_nonconstView;
+  Teuchos::RCP<Thyra_MultiVector> fpV = dirichletWorkset.fpV;
   bool trans = dirichletWorkset.transpose_dist_param_deriv;
-  int num_cols = fpVT->getNumVectors();
-  LO num_local_dofs = fpVT->getMap()->getNodeNumElements();
+  int num_cols = fpV->domain()->dim();
 
-  // For (df/dp)^T*V we zero out corresponding entries in V
-  if (trans)
-  {
-    Teuchos::RCP<Tpetra_MultiVector> VpT = dirichletWorkset.Vp_bcT;
-    //non-const view of VpT
-    Teuchos::ArrayRCP<ST> VpT_nonconstView;
+  LO num_local_dofs = Albany::getSpmdVectorSpace(fpV->range())->localSubDim();
+  if (trans) {
+    // For (df/dp)^T*V we zero out corresponding entries in V
+    Teuchos::RCP<Thyra_MultiVector> Vp = dirichletWorkset.Vp_bc;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> Vp_nonconst2dView = Albany::getNonconstLocalData(Vp);
 
     // Loop on all local dofs and set the BC on those not in nodeSetsRows
-    for (LO row=0; row<num_local_dofs; ++row)
-    {
-      if (nodeSetsRows.find(row)==nodeSetsRows.end())
-      {
+    for (LO row=0; row<num_local_dofs; ++row) {
+      if (nodeSetsRows.find(row)==nodeSetsRows.end()) {
         // It's a row not on the given node sets
-
-        for (int col=0; col<num_cols; ++col)
-        {
+        for (int col=0; col<num_cols; ++col) {
           //(*Vp)[col][row] = 0.0;
-          VpT_nonconstView = VpT->getDataNonConst(col);
-          VpT_nonconstView[row] = 0.0;
+          Vp_nonconst2dView[col][row] = 0.0;
         }
       }
     }
-  }
-  // for (df/dp)*V we zero out corresponding entries in df/dp
-  else
-  {
+  } else {
+    // for (df/dp)*V we zero out corresponding entries in df/dp
     // Loop on all local dofs and set the BC on those not in nodeSetsRows
-    for (LO row=0; row<num_local_dofs; ++row)
-    {
-      if (nodeSetsRows.find(row)==nodeSetsRows.end())
-      {
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> fpV_nonconst2dView = Albany::getNonconstLocalData(fpV);
+    for (LO row=0; row<num_local_dofs; ++row) {
+      if (nodeSetsRows.find(row)==nodeSetsRows.end()) {
         // It's a row not on the given node sets
-
-        for (int col=0; col<num_cols; ++col)
-        {
+        for (int col=0; col<num_cols; ++col) {
           //(*fpV)[col][row] = 0.0;
-          fpVT_nonconstView = fpVT->getDataNonConst(col);
-          fpVT_nonconstView[row] = 0.0;
+          fpV_nonconst2dView[col][row] = 0.0;
         }
       }
     }

@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
-#include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 #include "Teuchos_CommHelpers.hpp"
 #include "Tpetra_DistObject.hpp"
@@ -42,10 +42,10 @@ evaluateResponse(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& /*p*/,
-		Tpetra_Vector& gT)
+    const Teuchos::RCP<Thyra_Vector>& g)
 {
-  Teuchos::ArrayRCP<ST> gT_nonconstView = gT.get1dViewNonConst();
-  computeMaxValue(x, gT_nonconstView[0]);
+  Teuchos::ArrayRCP<ST> g_nonconstView = Albany::getNonconstLocalData(g);
+  computeMaxValue(x, g_nonconstView[0]);
 }
 
 void
@@ -64,21 +64,24 @@ evaluateTangent(const double alpha,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdot*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdotdot*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vp*/,
-		Tpetra_Vector* gT,
-		Tpetra_MultiVector* gxT,
-		Tpetra_MultiVector* gpT)
+    const Teuchos::RCP<Thyra_Vector>& g,
+    const Teuchos::RCP<Thyra_MultiVector>& gx,
+    const Teuchos::RCP<Thyra_MultiVector>& gp)
 {
 
-  if (gxT != NULL || gpT != NULL) {
-    evaluateGradient(current_time, x, xdot, xdotdot, p, deriv_p, gT, gxT, NULL, NULL, gpT);
+  if (!gx.is_null() || !gp.is_null()) {
+    evaluateGradient(current_time, x, xdot, xdotdot, p, deriv_p, g, gx, Teuchos::null, Teuchos::null, gp);
   }
 
-  if (gxT != NULL && !Vx.is_null()) {
-    Teuchos::RCP<Tpetra_MultiVector> dgdxT = Teuchos::rcp(new Tpetra_MultiVector(*gxT)); //is this needed? 
-    Teuchos::ETransp T = Teuchos::TRANS; 
-    Teuchos::ETransp N = Teuchos::NO_TRANS; 
-    auto VxT = Albany::getConstTpetraMultiVector(Vx);
-    gxT->multiply(T, N, alpha, *dgdxT, *VxT, 0.0);
+  if (!gx.is_null() && !Vx.is_null()) {
+    // compute gx = gx' * Vx.
+    // Note: to avoid overwrite gx, we need to copy gx
+    Teuchos::RCP<Thyra_MultiVector> gx_copy = gx->clone_mv();
+    for (int i=0; i<Vx->domain()->dim(); ++i) {
+      for (int j=0; j<Vx->domain()->dim(); ++j) {
+        gx->col(i)->assign(gx_copy->col(i)->dot(*Vx->col(j)));
+      }
+    }
   }
 }
 
@@ -90,53 +93,47 @@ evaluateGradient(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& /*p*/,
 		ParamVec* /*deriv_p*/,
-		Tpetra_Vector* gT,
-		Tpetra_MultiVector* dg_dxT,
-		Tpetra_MultiVector* dg_dxdotT,
-		Tpetra_MultiVector* dg_dxdotdotT,
-		Tpetra_MultiVector* dg_dpT)
+		const Teuchos::RCP<Thyra_Vector>& g,
+		const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
+		const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
+		const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
+		const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
   ST max_val;
   computeMaxValue(x, max_val);
   
   // Evaluate response g
-  if (gT != NULL) {
-    Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
-    gT_nonconstView[0] = max_val;
+  if (!g.is_null()) {
+    Teuchos::ArrayRCP<ST> g_nonconstView = Albany::getNonconstLocalData(g);
+    g_nonconstView[0] = max_val;
   }
 
   // Evaluate dg/dx
-  if (dg_dxT != NULL) {
-    // In order to loop throught the vector entries, we must assume
-    // the thyra vector concrete type inherits from Thyra::SpmdMultiVectorBase,
-    // which is the interface for distributed memory thyra vectors.
-    using SpmdVector = Thyra::SpmdVectorBase<ST>;
-    auto xspmd = Teuchos::rcp_dynamic_cast<const SpmdVector>(x);
-    TEUCHOS_TEST_FOR_EXCEPTION (xspmd.is_null(), std::runtime_error, "Error! Could not cast to Spmd vector.\n");
-
-    auto x_local = xspmd->getLocalSubVector();
-    Teuchos::ArrayRCP<ST> dg_dxT_nonconstView;
-    for (int i=0; i<xspmd->spmdSpace()->localSubDim(); ++i) {
-      dg_dxT_nonconstView = dg_dxT->getDataNonConst(0); 
-      if (x_local[i] == max_val) {
-        dg_dxT_nonconstView[i] = 1.0;
+  if (!dg_dx.is_null()) {
+    Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(x);
+    Teuchos::ArrayRCP<ST> dg_dx_nonconstView = Albany::getNonconstLocalData(dg_dx->col(0));
+    for (int i=0; i<x_constView.size(); ++i) {
+      if (x_constView[i] == max_val) {
+        dg_dx_nonconstView[i] = 1.0;
       } else {
-        dg_dxT_nonconstView[i] = 0.0;
+        dg_dx_nonconstView[i] = 0.0;
       }
     }
   }
 
   // Evaluate dg/dxdot
-  if (dg_dxdotT != NULL) {
-    dg_dxdotT->putScalar(0.0);
+  if (!dg_dxdot.is_null()) {
+    dg_dxdot->assign(0.0);
   }
-  if (dg_dxdotdotT != NULL) {
-    dg_dxdotdotT->putScalar(0.0);
+
+  // Evaluate dg/dxdotdot
+  if (!dg_dxdotdot.is_null()) {
+    dg_dxdotdot->assign(0.0);
   }
 
   // Evaluate dg/dp
-  if (dg_dpT != NULL) {
-    dg_dpT->putScalar(0.0);
+  if (!dg_dp.is_null()) {
+    dg_dp->assign(0.0);
   }
 }
 
@@ -150,10 +147,10 @@ evaluateDistParamDeriv(
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
     const Teuchos::Array<ParamVec>& /*param_array*/,
     const std::string& /*dist_param_name*/,
-    Tpetra_MultiVector* dg_dpT)
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
-  if (dg_dpT) {
-    dg_dpT->putScalar(0.0);
+  if (!dg_dp.is_null()) {
+    dg_dp->assign(0.0);
   }
 }
 
@@ -161,16 +158,10 @@ void
 Albany::SolutionMaxValueResponseFunction::
 computeMaxValue(const Teuchos::RCP<const Thyra_Vector>& x, ST& global_max)
 {
-  // In order to loop throught the vector entries, we must assume
-  // the thyra vector concrete type inherits from Thyra::SpmdMultiVectorBase,
-  // which is the interface for distributed memory thyra vectors.
-  using SpmdVector = Thyra::SpmdVectorBase<ST>;
-  auto xspmd = Teuchos::rcp_dynamic_cast<const SpmdVector>(x);
-  TEUCHOS_TEST_FOR_EXCEPTION (xspmd.is_null(), std::runtime_error, "Error! Could not cast to Spmd vector.\n");
-  auto x_local = xspmd->getLocalSubVector();
+  auto x_local = Albany::getLocalData(x);
   
   // Loop over nodes to find max value for equation eq
-  int num_my_nodes = xspmd->spmdSpace()->localSubDim() / neq;
+  int num_my_nodes = x_local.size() / neq;
   int index;
   ST my_max = std::numeric_limits<ST>::lowest();
   for (int node=0; node<num_my_nodes; node++) {
@@ -189,7 +180,7 @@ computeMaxValue(const Teuchos::RCP<const Thyra_Vector>& x, ST& global_max)
   //     forced to be on the same process, in which case neq may not divide the local
   //     dimension. I also believe Albany makes sure this does not happen, so I *think*
   //     these lines *should* be safe to remove...
-  if (num_my_nodes*neq+eq < xspmd->spmdSpace()->localSubDim()) {
+  if (num_my_nodes*neq+eq < x_local.size()) {
     if (interleavedOrdering) {
       index = num_my_nodes*neq+eq;
     } else {

@@ -7,12 +7,14 @@
 #ifndef PHAL_SDIRICHLET_DEF_HPP
 #define PHAL_SDIRICHLET_DEF_HPP
 
-#include "Albany_Application.hpp"
 #include "PHAL_SDirichlet.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
+// TODO: remove this include when you manage to abstract away from Tpetra the Jacobian impl.
 #include "Albany_TpetraThyraUtils.hpp"
 
 namespace PHAL {
@@ -36,17 +38,21 @@ void
 SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<Tpetra_Vector> f = dirichlet_workset.fT;
+  // NOTE: you may be tempted to const_cast away the const here. However,
+  //       consider the case where x is a Thyra::TpetraVector object. The
+  //       actual Tpetra_Vector is stored as a Teuchos::ConstNonconstObjectContainer,
+  //       which (most likely) happens to be created from a const RCP, and therefore
+  //       when calling getTpetraVector (from Thyra::TpetraVector), the container
+  //       will throw.
+  //       Instead, keep the const correctness until the very last moment.
+  Teuchos::RCP<const Thyra_Vector> x = dirichlet_workset.x;
+  Teuchos::RCP<Thyra_Vector> f = dirichlet_workset.f;
 
-  Teuchos::RCP<Tpetra_Vector> x = Teuchos::rcp_const_cast<Tpetra_Vector>(Albany::getConstTpetraVector(dirichlet_workset.x));
-
-  Teuchos::ArrayRCP<ST> f_view = f->get1dViewNonConst();
-
-  Teuchos::ArrayRCP<ST> x_view = x->get1dViewNonConst();
+  Teuchos::ArrayRCP<ST> f_view = Albany::getNonconstLocalData(f);
+  Teuchos::ArrayRCP<ST> x_view = Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x));
 
   // Grab the vector of node GIDs for this Node Set ID
-  std::vector<std::vector<int>> const& ns_nodes =
-      dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+  std::vector<std::vector<int>> const& ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
   for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
     int const dof = ns_nodes[ns_node][this->offset];
@@ -59,8 +65,6 @@ SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     dirichlet_workset.fixed_dofs_.insert(dof);
 #endif
   }
-
-  return;
 }
 
 //
@@ -72,7 +76,6 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::SDirichlet(
     : PHAL::DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits>(p)
 {
   scale = p.get<RealType>("SDBC Scaling", 1.0);  
-  return;
 }
 
 //
@@ -83,9 +86,18 @@ void
 SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
-  auto f = dirichlet_workset.fT;
-  Teuchos::RCP<Tpetra_Vector> x = Teuchos::rcp_const_cast<Tpetra_Vector>(Albany::getConstTpetraVector(dirichlet_workset.x));
-  auto J = dirichlet_workset.JacT;
+  // NOTE: you may be tempted to const_cast away the const here. However,
+  //       consider the case where x is a Thyra::TpetraVector object. The
+  //       actual Tpetra_Vector is stored as a Teuchos::ConstNonconstObjectContainer,
+  //       which (most likely) happens to be created from a const RCP, and therefore
+  //       when calling getTpetraVector (from Thyra::TpetraVector), the container
+  //       will throw.
+  //       Instead, keep the const correctness until the very last moment.
+  Teuchos::RCP<const Thyra_Vector> x = dirichlet_workset.x;
+  Teuchos::RCP<Thyra_Vector> f = dirichlet_workset.f;
+
+  // TODO: abstract away the tpetra interface
+  Teuchos::RCP<Tpetra_CrsMatrix> J = Albany::getTpetraMatrix(dirichlet_workset.Jac);
 
   auto row_map = J->getRowMap();
   auto col_map = J->getColMap();
@@ -97,8 +109,8 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
 
   bool const fill_residual = f != Teuchos::null;
 
-  auto f_view = fill_residual == true ? f->get1dViewNonConst() : Teuchos::null;
-  auto x_view = fill_residual == true ? x->get1dViewNonConst() : Teuchos::null;
+  auto f_view = fill_residual ? Albany::getNonconstLocalData(f) : Teuchos::null;
+  auto x_view = fill_residual ? Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x)) : Teuchos::null;
 
   Teuchos::Array<Tpetra_GO> global_index(1);
 

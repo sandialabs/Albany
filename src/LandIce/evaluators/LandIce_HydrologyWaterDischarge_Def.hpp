@@ -55,9 +55,9 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   // Setting parameters
   Teuchos::ParameterList& hydrology = *p.get<Teuchos::ParameterList*>("LandIce Hydrology");
 
-  k_0   = hydrology.get<double>("Darcy Law: Transmissivity");
-  alpha = hydrology.get<double>("Darcy Law: Water Thickness Exponent");
-  beta  = hydrology.get<double>("Darcy Law: Potential Gradient Norm Exponent");
+  k_0   = hydrology.get<double>("Darcy Law Transmissivity");
+  alpha = hydrology.get<double>("Darcy Law Water Thickness Exponent");
+  beta  = hydrology.get<double>("Darcy Law Potential Gradient Norm Exponent");
 
   TEUCHOS_TEST_FOR_EXCEPTION (beta<=1, Teuchos::Exceptions::InvalidParameter, "Error! 'Darcy Law: Potential Gradient Norm Exponent' must be larger than 1.0.\n");
 

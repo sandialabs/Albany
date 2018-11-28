@@ -15,7 +15,7 @@
 
 #include <iostream>
 
-#include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 //amb Hack for John M.'s work. Replace with an evaluator-based RF later so we
 // can get gradient, etc.
@@ -46,16 +46,16 @@ public:
     return Teuchos::null;
   }
 
-  void print (const Tpetra_Vector& g, const Teuchos::Array<Tpetra_GO>& eq_gids) {
-    print(Teuchos::arrayView(&g.get1dView()[0], g.getLocalLength()), eq_gids);
+  void print (const Teuchos::RCP<const Thyra_Vector>& g, const Teuchos::Array<Tpetra_GO>& eq_gids) {
+    do_print(Albany::getLocalData(g), eq_gids);
   }
 
 private:
   struct Point { ST p[3]; };
 
   template<typename gid_type>
-  void print (const Teuchos::ArrayView<const ST>& g,
-              const Teuchos::Array<gid_type>& eq_gids) {
+  void do_print (const Teuchos::ArrayRCP<const ST>& g,
+                 const Teuchos::Array<gid_type>& eq_gids) {
     TEUCHOS_TEST_FOR_EXCEPTION(g.size() != eq_gids.size(), std::logic_error,
                                "g.size() != eq_gids.size()");
 
@@ -148,14 +148,14 @@ evaluateResponse(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& /*p*/,
-		Tpetra_Vector& gT)
+    const Teuchos::RCP<Thyra_Vector>& g)
 {
-  // Until you find out how to do this with Thyra, cast x to Tpetra
-  auto xT = Albany::getConstTpetraVector(x);
   this->updateSolutionImporterT();
-  this->ImportWithAlternateMapT(solutionImporterT_, *xT, gT, Tpetra::INSERT);
-  if (Teuchos::nonnull(sol_printer_))
-    sol_printer_->print(gT, cullingStrategy_->selectedGIDsT(app_->getMapT()));
+  this->ImportWithAlternateMapT(*Albany::getConstTpetraVector(x), *Albany::getTpetraVector(g), Tpetra::CombineMode::INSERT);
+  if (Teuchos::nonnull(sol_printer_)) {
+    // TODO: abstract away the map from the app
+    sol_printer_->print(g, cullingStrategy_->selectedGIDsT(app_->getMapT()));
+  }
 }
 
 void
@@ -174,33 +174,30 @@ evaluateTangent(const double /*alpha*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdot*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdotdot*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vp*/,
-		Tpetra_Vector* gT,
-		Tpetra_MultiVector* gxT,
-		Tpetra_MultiVector* gpT)
+    const Teuchos::RCP<Thyra_Vector>& g,
+    const Teuchos::RCP<Thyra_MultiVector>& gx,
+    const Teuchos::RCP<Thyra_MultiVector>& gp)
 {
+  // TODO: abstract away the map from the app
   this->updateSolutionImporterT();
 
-  if (gT) {
-    // Until you find out how to do stuff with Thyra, cast x to Tpetra
-    auto xT = Albany::getConstTpetraVector(x);
-
-    this->ImportWithAlternateMapT(solutionImporterT_, *xT, *gT, Tpetra::INSERT);
-    if (Teuchos::nonnull(sol_printer_))
-      sol_printer_->print(*gT, cullingStrategy_->selectedGIDsT(app_->getMapT()));
-  }
-
-  if (gxT) {
-    // Until you find out how to do stuff with Thyra, cast Vx to Tpetra
-    auto VxT = Albany::getConstTpetraMultiVector(Vx);
-    TEUCHOS_TEST_FOR_EXCEPT(VxT.is_null());
-    this->ImportWithAlternateMapT(solutionImporterT_, *VxT, gxT, Tpetra::INSERT);
-    if (beta != 1.0) {
-      gxT->scale(beta);
+  if (!g.is_null()) {
+    this->ImportWithAlternateMapT(*Albany::getConstTpetraVector(x), *Albany::getTpetraVector(g), Tpetra::CombineMode::INSERT);
+    if (Teuchos::nonnull(sol_printer_)) {
+      sol_printer_->print(g, cullingStrategy_->selectedGIDsT(app_->getMapT()));
     }
   }
 
-  if (gpT) {
-    gpT->putScalar(0.0);
+  if (!gx.is_null()) {
+    TEUCHOS_TEST_FOR_EXCEPT(Vx.is_null());
+    this->ImportWithAlternateMapT(*Albany::getConstTpetraMultiVector(Vx), *Albany::getTpetraMultiVector(gx), Tpetra::CombineMode::INSERT);
+    if (beta != 1.0) {
+      gx->scale(beta);
+    }
+  }
+
+  if (!gp.is_null()) {
+    gp->assign(0.0);
   }
 }
 
@@ -214,10 +211,10 @@ evaluateDistParamDeriv(
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
     const Teuchos::Array<ParamVec>& /*param_array*/,
     const std::string& /*dist_param_name*/,
-    Tpetra_MultiVector* dg_dpT)
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
-  if (dg_dpT) {
-    dg_dpT->putScalar(0.0);
+  if (!dg_dp.is_null()) {
+    dg_dp->assign(0.0);
   }
 }
 
@@ -229,45 +226,47 @@ evaluateGradient(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& /*p*/,
 		ParamVec* /*deriv_p*/,
-		Tpetra_Vector* gT,
-		Tpetra_MultiVector* dg_dxT,
-		Tpetra_MultiVector* dg_dxdotT,
-		Tpetra_MultiVector* dg_dxdotdotT,
-		Tpetra_MultiVector* dg_dpT)
+		const Teuchos::RCP<Thyra_Vector>& g,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
   this->updateSolutionImporterT();
 
-  if (gT) {
-    // Until you find out how to do stuff with Thyra, cast x to Tpetra
-    auto xT = Albany::getConstTpetraVector(x);
-    this->ImportWithAlternateMapT(solutionImporterT_, *xT, *gT, Tpetra::INSERT);
+  if (!g.is_null()) {
+    this->ImportWithAlternateMapT(*Albany::getConstTpetraVector(x), *Albany::getTpetraVector(g), Tpetra::CombineMode::INSERT);
     if (Teuchos::nonnull(sol_printer_))
-      sol_printer_->print(*gT, cullingStrategy_->selectedGIDsT(app_->getMapT()));
+      // TODO: abstract away the map from the app
+      sol_printer_->print(g, cullingStrategy_->selectedGIDsT(app_->getMapT()));
   }
 
-  if (dg_dxT) {
-    dg_dxT->putScalar(0.0);
+  if (!dg_dx.is_null()) {
+    dg_dx->assign(0.0);
 
+    // TODO: think about how to abstract away tpetra here. Idea: introduce generic
+    //       interfaces in Albany_ThyraUtils.*pp, to recover local/global elements.
     Teuchos::RCP<const Tpetra_Map> replicatedMapT = solutionImporterT_->getTargetMap();
-    Teuchos::RCP<const Tpetra_Map> derivMapT = dg_dxT->getMap();
-    const int colCount = dg_dxT->getNumVectors();
+    Teuchos::RCP<const Tpetra_Map> derivMapT = Albany::getTpetraMap(dg_dx->range());
+    const int colCount = dg_dx->domain()->dim();
     for (int icol = 0; icol < colCount; ++icol) {
       const int lid = derivMapT->getLocalElement(replicatedMapT->getGlobalElement(icol));
       if (lid != -1) {
-        dg_dxT->replaceLocalValue(lid, icol, 1.0);
+        auto dg_dx_localview = Albany::getNonconstLocalData(dg_dx->col(icol));
+        dg_dx_localview[lid] = 1.0;
       }
     }
   }
 
-  if (dg_dxdotT) {
-    dg_dxdotT->putScalar(0.0);
+  if (!dg_dxdot.is_null()) {
+    dg_dxdot->assign(0.0);
   }
-  if (dg_dxdotdotT) {
-    dg_dxdotdotT->putScalar(0.0);
+  if (!dg_dxdotdot.is_null()) {
+    dg_dxdotdot->assign(0.0);
   }
 
-  if (dg_dpT) {
-    dg_dpT->putScalar(0.0);
+  if (!dg_dp.is_null()) {
+    dg_dp->assign(0.0);
   }
 }
 
@@ -275,6 +274,7 @@ void
 Albany::SolutionValuesResponseFunction::
 updateSolutionImporterT()
 {
+  // TODO: abstract away the tpetra stuff
   const Teuchos::RCP<const Tpetra_Map> solutionMapT = app_->getMapT();
   if (Teuchos::is_null(solutionImporterT_) || !solutionMapT->isSameAs(*solutionImporterT_->getSourceMap())) {
     const Teuchos::Array<Tpetra_GO> selectedGIDsT = cullingStrategy_->selectedGIDsT(solutionMapT);
@@ -287,27 +287,25 @@ updateSolutionImporterT()
 void
 Albany::SolutionValuesResponseFunction::
 ImportWithAlternateMapT(
-    Teuchos::RCP<const Tpetra_Import> importerT,
     const Tpetra_MultiVector& sourceT,
-    Tpetra_MultiVector* targetT,
+    Tpetra_MultiVector& targetT,
     Tpetra::CombineMode modeT)
 {
-  Teuchos::RCP<const Tpetra_Map> savedMapT = targetT->getMap();
-  targetT->replaceMap(importerT->getTargetMap());
-  targetT->doImport(sourceT, *importerT, modeT);
-  targetT->replaceMap(savedMapT);
+  Teuchos::RCP<const Tpetra_Map> savedMapT = targetT.getMap();
+  targetT.replaceMap(solutionImporterT_->getTargetMap());
+  targetT.doImport(sourceT, *solutionImporterT_, modeT);
+  targetT.replaceMap(savedMapT);
 }
 
 void
 Albany::SolutionValuesResponseFunction::
 ImportWithAlternateMapT(
-    Teuchos::RCP<const Tpetra_Import> importerT,
     const Tpetra_Vector& sourceT,
     Tpetra_Vector& targetT,
     Tpetra::CombineMode modeT)
 {
   Teuchos::RCP<const Tpetra_Map> savedMapT = targetT.getMap();
-  targetT.replaceMap(importerT->getTargetMap());
-  targetT.doImport(sourceT, *importerT, modeT);
+  targetT.replaceMap(solutionImporterT_->getTargetMap());
+  targetT.doImport(sourceT, *solutionImporterT_, modeT);
   targetT.replaceMap(savedMapT);
 }

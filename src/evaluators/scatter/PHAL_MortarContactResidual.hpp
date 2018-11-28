@@ -58,7 +58,7 @@ protected:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 protected:
   Albany::AbstractDiscretization::WorksetConn nodeID;
-  Kokkos::View<ST*, PHX::Device> fT_kokkos;
+  Albany::DeviceView1d<ST> f_kokkos;
   Kokkos::vector<Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device> val_kokkos;
 
 #endif
@@ -106,7 +106,7 @@ private:
 
   typedef MortarContactResidualBase<PHAL::AlbanyTraits::Residual, Traits> Base;
   using Base::nodeID;
-  using Base::fT_kokkos;
+  using Base::f_kokkos;
   using Base::val_kokkos;
 
   typedef typename PHX::Device::execution_space ExecutionSpace;
@@ -167,11 +167,11 @@ public:
 
 private:
   int neq, nunk, numDims;
-  Tpetra_CrsMatrix::local_matrix_type JacT_kokkos;
+  Albany::DeviceLocalMatrix<ST> Jac_kokkos;
 
   typedef MortarContactResidualBase<PHAL::AlbanyTraits::Jacobian, Traits> Base;
   using Base::nodeID;
-  using Base::fT_kokkos;
+  using Base::f_kokkos;
   using Base::val_kokkos;
 
   typedef typename PHX::Device::execution_space ExecutionSpace;
