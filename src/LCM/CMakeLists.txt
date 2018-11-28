@@ -93,42 +93,6 @@ set(model-eval-headers
   )
 ENDIF(ALBANY_STK)
 
-# LCM ACE evaluators
-set(ace-sources
-  "${LCM_DIR}/evaluators/ACE/ACEdensity.cpp"
-  "${LCM_DIR}/evaluators/ACE/ACEfreezingCurve.cpp"
-  "${LCM_DIR}/evaluators/ACE/ACEheatCapacity.cpp"
-  "${LCM_DIR}/evaluators/ACE/ACEiceSaturation.cpp"
-  "${LCM_DIR}/evaluators/ACE/ACEmeltingTemperature.cpp"
-  "${LCM_DIR}/evaluators/ACE/ACEporosity.cpp"
-  "${LCM_DIR}/evaluators/ACE/ACEtemperatureChange.cpp"
-  "${LCM_DIR}/evaluators/ACE/ACEthermalConductivity.cpp"
-  "${LCM_DIR}/evaluators/ACE/ACEthermalInertia.cpp"
-  "${LCM_DIR}/evaluators/ACE/ACEwaterSaturation.cpp"
-)
-set(ace-headers
-  "${LCM_DIR}/evaluators/ACE/ACEdensity.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEdensity_Def.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEfreezingCurve.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEfreezingCurve_Def.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEheatCapacity.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEheatCapacity_Def.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEiceSaturation.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEiceSaturation_Def.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEmeltingTemperature.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEmeltingTemperature_Def.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEporosity.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEporosity_Def.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEtemperatureChange.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEtemperatureChange_Def.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEthermalConductivity.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEthermalConductivity_Def.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEthermalInertia.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEthermalInertia_Def.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEwaterSaturation.hpp"
-  "${LCM_DIR}/evaluators/ACE/ACEwaterSaturation_Def.hpp"
-)
-
 # LCM special boundary conditions
 set(bc-sources
   "${LCM_DIR}/evaluators/bc/EquilibriumConcentrationBC.cpp"
@@ -703,7 +667,6 @@ set(INCLUDE_DIRS
   ${Albany_SOURCE_DIR}/src/adapt
   ${LCM_DIR}/problems
   ${LCM_DIR}/evaluators
-  ${LCM_DIR}/evaluators/ACE
   ${LCM_DIR}/evaluators/bc
   ${LCM_DIR}/evaluators/HMC
   ${LCM_DIR}/evaluators/kinematics
