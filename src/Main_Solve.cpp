@@ -53,6 +53,8 @@
 #endif
 
 #include "Thyra_EpetraThyraWrappers.hpp"
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_EpetraThyraUtils.hpp"
 
 Teuchos::RCP<const Epetra_Vector>
 epetraVectorFromThyra(
@@ -228,6 +230,7 @@ int main(int argc, char *argv[]) {
 
     for (int i=0; i<num_g-1; i++) {
       const RCP<const Epetra_Vector> g = responses[i];
+      const RCP<const Thyra_Vector> gT = Albany::createConstThyraVector(g);
       bool is_scalar = true;
 
       if (app != Teuchos::null)
@@ -238,29 +241,30 @@ int main(int argc, char *argv[]) {
 
         if (num_p == 0) {
           // Just calculate regression data
-          status += slvrfctry.checkSolveTestResults(i, 0, g.get(), NULL);
+          status += slvrfctry.checkSolveTestResults(i, 0, gT, Teuchos::null);
         } else {
           for (int j=0; j<num_p; j++) {
             const RCP<const Epetra_MultiVector> dgdp = sensitivities[i][j];
+            const RCP<const Thyra_MultiVector> dgdpT = Albany::createConstThyraMultiVector(dgdp);
             if (Teuchos::nonnull(dgdp)) {
               if(j < num_param_vecs) {
                 dgdp->Print(*out << "\nSensitivities (" << i << "," << j << "): \n");
-                status += slvrfctry.checkSolveTestResults(i, j, g.get(), dgdp.get());
+                status += slvrfctry.checkSolveTestResults(i, j, gT, dgdpT);
               }
               else {
-                const Epetra_Map serial_map(-1, 1, 0, dgdp.get()->Comm());
-                Epetra_MultiVector norms(serial_map,dgdp->NumVectors());
-              //  RCP<Albany::ScalarResponseFunction> response = rcp_dynamic_cast<Albany::ScalarResponseFunction>(app->getResponse(i));
-               // int numResponses = response->numResponses();
+                auto small_vs = dgdpT->domain()->smallVecSpcFcty()->createVecSpc(1);
+                auto norms = Thyra::createMembers(small_vs,dgdpT->domain()->dim());
+                auto norms_vals = Albany::getNonconstLocalData(norms);
                 *out << "\nSensitivities (" << i << "," << j  << ") for Distributed Parameters:  (two-norm)\n";
                 *out << "    ";
-                for(int ir=0; ir<dgdp->NumVectors(); ++ir) {
-                  (*dgdp)(ir)->Norm2(&norm2);
-                  (*norms(ir))[0] = norm2;
-                  *out << "    " << norm2;
+                for(int ir=0; ir<dgdpT->domain()->dim(); ++ir) {
+                  norm2 = dgdpT->col(ir)->norm_2();
+                  norms_vals[ir][0] = norm2;
+                    *out << "    " << norm2;
                 }
                 *out << "\n" << std::endl;
-                status += slvrfctry.checkSolveTestResults(i, j, g.get(), &norms);
+                //check response and sensitivities for distributed parameters
+                status += slvrfctry.checkSolveTestResults(i, j, gT, norms);
               }
             }
           }

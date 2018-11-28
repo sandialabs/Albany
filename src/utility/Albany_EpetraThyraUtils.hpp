@@ -3,7 +3,7 @@
 
 #include "Albany_ThyraTypes.hpp"
 
-#include "Epetra_Map.h"
+#include "Epetra_BlockMap.h"
 #include "Epetra_Vector.h"
 #include "Epetra_MultiVector.h"
 #include "Epetra_CrsMatrix.h"
@@ -18,7 +18,7 @@ namespace Albany
 
 // ============ Epetra->Thyra conversion routines ============ //
 Teuchos::RCP<const Thyra_VectorSpace>
-createThyraVectorSpace (const Teuchos::RCP<const Epetra_Map> map);
+createThyraVectorSpace (const Teuchos::RCP<const Epetra_BlockMap> map);
 
 Teuchos::RCP<Thyra_Vector>
 createThyraVector (const Teuchos::RCP<Epetra_Vector> v);
@@ -39,7 +39,7 @@ Teuchos::RCP<const Thyra_LinearOp>
 createConstThyraLinearOp (const Teuchos::RCP<const Epetra_Operator> op);
 
 // ============ Thyra->Epetra conversion routines ============ //
-Teuchos::RCP<const Epetra_Map>
+Teuchos::RCP<const Epetra_BlockMap>
 getEpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
               const bool throw_on_failure = true);
 

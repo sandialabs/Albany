@@ -9,10 +9,16 @@ namespace Albany
 // ============ Epetra->Thyra conversion routines ============ //
 
 Teuchos::RCP<const Thyra_VectorSpace>
-createThyraVectorSpace (const Teuchos::RCP<const Epetra_Map> map)
+createThyraVectorSpace (const Teuchos::RCP<const Epetra_BlockMap> bmap)
 {
   Teuchos::RCP<const Thyra_VectorSpace> vs;
-  if (!map.is_null()) {
+  if (!bmap.is_null()) {
+    // Note: the fugly reinterpret_cast is safe, since Epetra_Map does
+    //       not add ANYTHING to the interface of Epetra_BlockMap.
+    //       You may wonder 'why do we have Epetra_Map then?'. Well, my friend,
+    //       if you find the answer to that question, let me know.
+    const Epetra_Map* ptr = reinterpret_cast<const Epetra_Map*>(bmap.get());
+    Teuchos::RCP<const Epetra_Map> map (ptr,false);
     vs = Thyra::create_VectorSpace(map);
   }
 
@@ -24,7 +30,8 @@ createThyraVector (const Teuchos::RCP<Epetra_Vector> v)
 {
   Teuchos::RCP<Thyra_Vector> v_thyra = Teuchos::null;
   if (!v.is_null()) {
-    v_thyra = Thyra::create_Vector(v);
+    auto vs = createThyraVectorSpace(Teuchos::rcpFromRef(v->Map()));
+    v_thyra = Thyra::create_Vector(v,vs);
   }
 
   return v_thyra;
@@ -35,7 +42,8 @@ createConstThyraVector (const Teuchos::RCP<const Epetra_Vector> v)
 {
   Teuchos::RCP<const Thyra_Vector> v_thyra = Teuchos::null;
   if (!v.is_null()) {
-    v_thyra = Thyra::create_Vector(v);
+    auto vs = createThyraVectorSpace(Teuchos::rcpFromRef(v->Map()));
+    v_thyra = Thyra::create_Vector(v,vs);
   }
 
   return v_thyra;
@@ -46,7 +54,8 @@ createThyraMultiVector (const Teuchos::RCP<Epetra_MultiVector> mv)
 {
   Teuchos::RCP<Thyra_MultiVector> mv_thyra = Teuchos::null;
   if (!mv.is_null()) {
-    mv_thyra = Thyra::create_MultiVector(mv);
+    auto vs = createThyraVectorSpace(Teuchos::rcpFromRef(mv->Map()));
+    mv_thyra = Thyra::create_MultiVector(mv,vs);
   }
 
   return mv_thyra;
@@ -57,7 +66,8 @@ createConstThyraMultiVector (const Teuchos::RCP<const Epetra_MultiVector> mv)
 {
   Teuchos::RCP<const Thyra_MultiVector> mv_thyra = Teuchos::null;
   if (!mv.is_null()) {
-    mv_thyra = Thyra::create_MultiVector(mv);
+    auto vs = createThyraVectorSpace(Teuchos::rcpFromRef(mv->Map()));
+    mv_thyra = Thyra::create_MultiVector(mv,vs);
   }
 
   return mv_thyra;
@@ -87,7 +97,7 @@ createConstThyraLinearOp (const Teuchos::RCP<const Epetra_Operator> op)
 
 // ============ Thyra->Epetra conversion routines ============ //
 
-Teuchos::RCP<const Epetra_Map>
+Teuchos::RCP<const Epetra_BlockMap>
 getEpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
               const bool throw_on_failure)
 {

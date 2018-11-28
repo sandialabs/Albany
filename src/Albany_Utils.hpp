@@ -150,30 +150,41 @@ splitStringOnDelim(
 std::string
 getFileExtension(std::string const& filename);
 
-//! Nicely prints out a Tpetra Vector
-void
-printTpetraVector(
-    std::ostream& os, const Teuchos::RCP<const Tpetra_Vector>& vec);
-void
-printTpetraVector(
-    std::ostream& os, const Teuchos::Array<std::string>& names,
-    const Teuchos::RCP<const Tpetra_Vector>& vec);
+//! Nicely prints out a Thyra Vector
+void printThyraVector(std::ostream& os,
+                      const Teuchos::RCP<const Thyra_Vector>& vec);
+void printThyraVector(std::ostream& os,
+                      const Teuchos::Array<std::string>& names,
+                      const Teuchos::RCP<const Thyra_Vector>& vec);
 
-//! Nicely prints out a Tpetra MultiVector
-void
-printTpetraVector(
-    std::ostream& os, const Teuchos::RCP<const Tpetra_MultiVector>& vec);
-void
-printTpetraVector(
-    std::ostream& os,
-    const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>& names,
-    const Teuchos::RCP<const Tpetra_MultiVector>& vec);
+//! Inlined product version
+inline void printThyraVector(std::ostream& os,
+                             const Teuchos::RCP<const Thyra_ProductVector>& vec) {
+  for (int i=0; i<vec->productSpace()->numBlocks(); ++i) {
+    printThyraVector(os,vec->getVectorBlock(i));
+  }
+}
+
+//! Nicely prints out a Thyra MultiVector
+void printThyraVector(std::ostream& os,
+                      const Teuchos::RCP<const Thyra_MultiVector>& vec);
+void printThyraVector(std::ostream& os,
+                      const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>& names,
+                      const Teuchos::RCP<const Thyra_MultiVector>& vec);
+
+//! Inlined product version
+inline void printThyraVector(std::ostream& os,
+                             const Teuchos::RCP<const Thyra_ProductMultiVector>& vec) {
+  for (int i=0; i<vec->productSpace()->numBlocks(); ++i) {
+    printThyraVector(os,vec->getMultiVectorBlock(i));
+  }
+}
 
 /// Write to matrix market format a vector, matrix or map.
 template<typename LinearAlgebraObjectType>
 void
 writeMatrixMarket(
-    const Teuchos::RCP<const LinearAlgebraObjectType>& A,
+    const Teuchos::RCP<LinearAlgebraObjectType>& A,
     const std::string& prefix,
     int const counter = -1);
 

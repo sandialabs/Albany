@@ -6,6 +6,8 @@
 
 #include "Albany_Utils.hpp"
 
+#include "Albany_ThyraUtils.hpp"
+
 // Include the concrete Epetra Comm's, if needed
 #if defined(ALBANY_EPETRA)
   #ifdef ALBANY_MPI
@@ -232,42 +234,49 @@ namespace Albany
     return filename.substr(pos + 1);
   }
 
-  void printTpetraVector(std::ostream &os, const Teuchos::RCP<const Tpetra_Vector>& vec){
-
-    Teuchos::ArrayRCP<const double> vv = vec->get1dView();
+  void printThyraVector(std::ostream& os,
+                        const Teuchos::RCP<const Thyra_Vector>& vec) {
+    Teuchos::ArrayRCP<const ST> vv = Albany::getLocalData(vec);
+    const int localLength = vv.size();
 
     os <<  std::setw(10) << std::endl;
-    for(std::size_t i = 0; i < vec->getLocalLength(); i++){
+    for(int i = 0; i < localLength; ++i){
        os.width(20);
        os << "             " << std::left << vv[i] << std::endl;
     }
 
   }
 
-  void printTpetraVector(std::ostream &os, const Teuchos::Array<std::string>& names,
-        const Teuchos::RCP<const Tpetra_Vector>& vec){
+  void printThyraVector(std::ostream& os,
+                        const Teuchos::Array<std::string>& names,
+                        const Teuchos::RCP<const Thyra_Vector>& vec) {
 
-    Teuchos::ArrayRCP<const double> vv = vec->get1dView();
+    Teuchos::ArrayRCP<const ST> vv = Albany::getLocalData(vec);
+    const int localLength = vv.size();
+
+    TEUCHOS_TEST_FOR_EXCEPTION (names.size()!=localLength, std::logic_error, "Error! names and mvec length do not match.\n");
 
     os <<  std::setw(10) << std::endl;
-    for(std::size_t i = 0; i < names.size(); i++){
+    for(int i = 0; i < localLength; ++i){
        os.width(20);
-//       os << "             " << std::left << vv[i] << std::endl;
        os << "   " << std::left << names[i] << "\t" << vv[i] << std::endl;
     }
 
   }
 
-  void printTpetraVector(std::ostream &os, const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >& names,
-        const Teuchos::RCP<const Tpetra_MultiVector>& vec){
+  void printThyraVector(std::ostream& os,
+                        const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>& names,
+                        const Teuchos::RCP<const Thyra_MultiVector>& mvec) {
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double> > mvv = vec->get2dView();
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST> > mvv = Albany::getLocalData(mvec);
+    const int numVecs = mvec->domain()->dim();
+    const int localLength = mvv.size()>0 ? mvv[0].size() : 0;
+    TEUCHOS_TEST_FOR_EXCEPTION (names.size()!=localLength, std::logic_error, "Error! names and mvec length do not match.\n");
 
     os <<  std::setw(10) << std::endl;
-    for(std::size_t row = 0; row < names.size(); row++){
-      for(std::size_t col = 0; col < vec->getNumVectors(); col++){
+    for(int row = 0; row < localLength; ++row){
+      for(int col = 0; col < numVecs; ++col){
          os.width(20);
-//         os << "             " << std::left << mvv[col][row] ;
          os << "   " << std::left << (*names[col])[row] << "\t" << mvv[col][row] << std::endl;
       }
       os << std::endl;
@@ -275,19 +284,20 @@ namespace Albany
 
   }
 
-  void printTpetraVector(std::ostream &os, const Teuchos::RCP<const Tpetra_MultiVector>& vec){
+  void printThyraVector(std::ostream& os,
+                        const Teuchos::RCP<const Thyra_MultiVector>& mvec) {
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST> > mvv = Albany::getLocalData(mvec);
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double> > mvv = vec->get2dView();
-
+    const int numVecs = mvec->domain()->dim();
+    const int localLength = mvv.size()>0 ? mvv[0].size() : 0;
     os <<  std::setw(10) << std::endl;
-    for(std::size_t row = 0; row < vec->getLocalLength(); row++){
-      for(std::size_t col = 0; col < vec->getNumVectors(); col++){
+    for(int row = 0; row < localLength; ++row){
+      for(int col = 0; col < numVecs; ++col){
          os.width(20);
          os << "             " << std::left << mvv[col][row] ;
       }
       os << std::endl;
     }
-
   }
 
   //
@@ -295,7 +305,7 @@ namespace Albany
   //
   template<>
   void
-  writeMatrixMarket<Tpetra_Map>(
+  writeMatrixMarket<const Tpetra_Map>(
       const Teuchos::RCP<const Tpetra_Map>& map,
       const std::string& prefix,
       int const counter)
@@ -321,7 +331,7 @@ namespace Albany
   //
   template<>
   void
-  writeMatrixMarket<Tpetra_Vector>(
+  writeMatrixMarket<const Tpetra_Vector>(
       const Teuchos::RCP<const Tpetra_Vector>& v,
       const std::string& prefix,
       int const counter)
@@ -348,7 +358,7 @@ namespace Albany
   //
   template<>
   void
-  writeMatrixMarket<Tpetra_MultiVector>(
+  writeMatrixMarket<const Tpetra_MultiVector>(
       const Teuchos::RCP<const Tpetra_MultiVector>& mv,
       const std::string& prefix,
       int const counter)
@@ -375,7 +385,7 @@ namespace Albany
   //
   template<>
   void
-  writeMatrixMarket<Tpetra_CrsMatrix>(
+  writeMatrixMarket<const Tpetra_CrsMatrix>(
       const Teuchos::RCP<const Tpetra_CrsMatrix>& A,
       const std::string& prefix,
       int const counter)

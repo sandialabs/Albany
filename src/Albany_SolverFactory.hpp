@@ -170,22 +170,12 @@ class SolverFactory {
   operator=(const SolverFactory&);
 
  public:
-#if defined(ALBANY_EPETRA)
-  /** \brief Function that does regression testing for problem solves. */
   int
   checkSolveTestResults(
-      int                       response_index,
-      int                       parameter_index,
-      const Epetra_Vector*      g,
-      const Epetra_MultiVector* dgdp) const;
-#endif
-
-  int
-  checkSolveTestResultsT(
-      int                       response_index,
-      int                       parameter_index,
-      const Tpetra_Vector*      g,
-      const Tpetra_MultiVector* dgdp) const;
+      int                                           response_index,
+      int                                           parameter_index,
+      const Teuchos::RCP<const Thyra_Vector>&       g,
+      const Teuchos::RCP<const Thyra_MultiVector>&  dgdp) const;
 
   /** \brief Function that does regression testing for Dakota runs. */
   int

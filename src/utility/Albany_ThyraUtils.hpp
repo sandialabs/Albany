@@ -89,7 +89,13 @@ DeviceView1d<ST>       getNonconstDeviceData (const Teuchos::RCP<Thyra_Vector>& 
 void scale_and_update (const Teuchos::RCP<Thyra_Vector> y, const ST y_coeff,
                        const Teuchos::RCP<const Thyra_Vector> x, const ST x_coeff);
 
-// ======== Object printing utilities ========= //
+// Thyra does not offer a 'mean' method in its (multi)vector interface.
+// The method 'sum' in Thyra_VectorStdOps already does the sum,
+// so here we simply scale by the vector (global) length.
+ST mean (const Teuchos::RCP<const Thyra_Vector>& v);
+Teuchos::Array<ST> means (const Teuchos::RCP<const Thyra_MultiVector>& mv);
+
+// ======== I/O utilities ========= //
 
 template<typename ThyraObjectType>
 void describe (const Teuchos::RCP<const ThyraObjectType>& obj,

@@ -71,6 +71,8 @@
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
 
+#include "Albany_ThyraUtils.hpp"
+
 #if defined(ALBANY_EPETRA)
 namespace Albany {
 
@@ -109,7 +111,7 @@ class NOXStatelessObserverConstructor
   }
 
   virtual Teuchos::RCP<NOX::Epetra::Observer>
-  getInstance(const Teuchos::RCP<Teuchos::ParameterList>& params)
+  getInstance(const Teuchos::RCP<Teuchos::ParameterList>& /* params */)
   {
     if (Teuchos::is_null(instance_)) instance_ = factory_.createInstance();
     return instance_;
@@ -859,11 +861,12 @@ Albany::SolverFactory::createAlbanyAppAndModelT(
 }
 
 int
-Albany::SolverFactory::checkSolveTestResultsT(
-    int                       response_index,
-    int                       parameter_index,
-    const Tpetra_Vector*      g,
-    const Tpetra_MultiVector* dgdp) const
+Albany::SolverFactory::
+checkSolveTestResults(
+    int                                           response_index,
+    int                                           parameter_index,
+    const Teuchos::RCP<const Thyra_Vector>&       g,
+    const Teuchos::RCP<const Thyra_MultiVector>&  dgdp) const
 {
   ParameterList* testParams = getTestParameters(response_index);
 
@@ -876,13 +879,13 @@ Albany::SolverFactory::checkSolveTestResultsT(
   const int numResponseTests = testParams->get<int>("Number of Comparisons");
   if (numResponseTests > 0) {
     ALBANY_ASSERT(
-        g != nullptr,
+        g != Teuchos::null,
         "There are Response Tests but the response vector is null!");
     ALBANY_ASSERT(
-        numResponseTests <= g->getGlobalLength(),
+        numResponseTests <= g->space()->dim(),
         "Number of Response Tests (" << numResponseTests
                                      << ") greater than number of responses ("
-                                     << g->getGlobalLength() << ") !");
+                                     << g->space()->dim() << ") !");
     Teuchos::Array<double> testValues =
         testParams->get<Teuchos::Array<double>>("Test Values");
 
@@ -892,10 +895,10 @@ Albany::SolverFactory::checkSolveTestResultsT(
                                      << ") != number of Test Values ("
                                      << testValues.size() << ") !");
 
-    Teuchos::ArrayRCP<const double> gv = g->get1dView();
+    Teuchos::ArrayRCP<const ST> g_view = Albany::getLocalData(g);
     for (int i = 0; i < testValues.size(); i++) {
       auto s = std::string("Response Test ") + std::to_string(i);
-      failures += scaledCompare(gv[i], testValues[i], relTol, absTol, s);
+      failures += scaledCompare(g_view[i], testValues[i], relTol, absTol, s);
       comparisons++;
     }
   }
@@ -915,32 +918,32 @@ Albany::SolverFactory::checkSolveTestResultsT(
   }
   if (numSensTests > 0) {
     ALBANY_ASSERT(
-        dgdp != nullptr,
+        dgdp != Teuchos::null,
         "There are Sensitivity Tests but the sensitivity vector ("
             << response_index << ", " << parameter_index << ") is null!");
     ALBANY_ASSERT(
-        numSensTests <= dgdp->getGlobalLength(),
+        numSensTests <= dgdp->range()->dim(),
         "Number of sensitivity tests ("
             << numSensTests << ") != number of sensitivities ["
             << response_index << "][" << parameter_index << "] ("
-            << dgdp->getGlobalLength() << ") !");
+            << dgdp->range()->dim() << ") !");
   }
   for (int i = 0; i < numSensTests; i++) {
+    const int numVecs = dgdp->domain()->dim();
     Teuchos::Array<double> testSensValues =
         sensitivityParams->get<Teuchos::Array<double>>(
             Albany::strint("Sensitivity Test Values", i));
     ALBANY_ASSERT(
-        dgdp->getNumVectors() == testSensValues.size(),
+        numVecs== testSensValues.size(),
         "Number of Sensitivity Test Values ("
             << testSensValues.size() << " != number of sensitivity vectors ("
-            << dgdp->getNumVectors() << ") !");
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double>> dgdpv =
-        dgdp->get2dView();
-    for (int j = 0; j < dgdp->getNumVectors(); j++) {
+            << numVecs << ") !");
+    auto dgdp_view = Albany::getLocalData(dgdp);
+    for (int jvec = 0; jvec < numVecs; jvec++) {
       auto s = std::string("Sensitivity Test ") + std::to_string(i) + "," +
-               std::to_string(j);
+               std::to_string(jvec);
       failures +=
-          scaledCompare(dgdpv[j][i], testSensValues[j], relTol, absTol, s);
+          scaledCompare(dgdp_view[jvec][i], testSensValues[jvec], relTol, absTol, s);
       comparisons++;
     }
   }
@@ -949,97 +952,6 @@ Albany::SolverFactory::checkSolveTestResultsT(
 
   return failures;
 }
-
-#if defined(ALBANY_EPETRA)
-int
-Albany::SolverFactory::checkSolveTestResults(
-    int                       response_index,
-    int                       parameter_index,
-    const Epetra_Vector*      g,
-    const Epetra_MultiVector* dgdp) const
-{
-  ParameterList* testParams = getTestParameters(response_index);
-
-  int          failures    = 0;
-  int          comparisons = 0;
-  const double relTol      = testParams->get<double>("Relative Tolerance");
-  const double absTol      = testParams->get<double>("Absolute Tolerance");
-
-  // Get number of responses (g) to test
-  const int numResponseTests = testParams->get<int>("Number of Comparisons");
-  if (numResponseTests > 0) {
-    ALBANY_ASSERT(
-        g != nullptr,
-        "There are Response Tests but the response vector is null!");
-    ALBANY_ASSERT(
-        numResponseTests <= g->MyLength(),
-        "Number of Response Tests (" << numResponseTests
-                                     << ") greater than number of responses ("
-                                     << g->MyLength() << ") !");
-    Teuchos::Array<double> testValues =
-        testParams->get<Teuchos::Array<double>>("Test Values");
-
-    ALBANY_ASSERT(
-        numResponseTests == testValues.size(),
-        "Number of Response Tests (" << numResponseTests
-                                     << ") != number of Test Values ("
-                                     << testValues.size() << ") !");
-
-    for (int i = 0; i < testValues.size(); i++) {
-      auto s = std::string("Response Test ") + std::to_string(i);
-      failures += scaledCompare((*g)[i], testValues[i], relTol, absTol, s);
-      comparisons++;
-    }
-  }
-
-  // Repeat comparisons for sensitivities
-  Teuchos::ParameterList* sensitivityParams = 0;
-  std::string             sensitivity_sublist_name =
-      Albany::strint("Sensitivity Comparisons", parameter_index);
-  if (parameter_index == 0 && !testParams->isSublist(sensitivity_sublist_name))
-    sensitivityParams = testParams;
-  else if (testParams->isSublist(sensitivity_sublist_name))
-    sensitivityParams = &(testParams->sublist(sensitivity_sublist_name));
-  int numSensTests = 0;
-  if (sensitivityParams != 0) {
-    numSensTests =
-        sensitivityParams->get<int>("Number of Sensitivity Comparisons", 0);
-  }
-  if (numSensTests > 0) {
-    ALBANY_ASSERT(
-        dgdp != nullptr,
-        "There are Sensitivity Tests but the sensitivity vector ("
-            << response_index << ", " << parameter_index << ") is null!");
-    ALBANY_ASSERT(
-        numSensTests <= dgdp->MyLength(),
-        "Number of sensitivity tests ("
-            << numSensTests << ") != number of sensitivities ["
-            << response_index << "][" << parameter_index << "] ("
-            << dgdp->MyLength() << ") !");
-  }
-  for (int i = 0; i < numSensTests; i++) {
-    Teuchos::Array<double> testSensValues =
-        sensitivityParams->get<Teuchos::Array<double>>(
-            Albany::strint("Sensitivity Test Values", i));
-    ALBANY_ASSERT(
-        dgdp->NumVectors() == testSensValues.size(),
-        "Number of Sensitivity Test Values ("
-            << testSensValues.size() << " != number of sensitivity vectors ("
-            << dgdp->NumVectors() << ") !");
-    for (int j = 0; j < dgdp->NumVectors(); j++) {
-      auto s = std::string("Sensitivity Test ") + std::to_string(i) + "," +
-               std::to_string(j);
-      failures +=
-          scaledCompare((*dgdp)[j][i], testSensValues[j], relTol, absTol, s);
-      comparisons++;
-    }
-  }
-
-  storeTestResults(testParams, failures, comparisons);
-
-  return failures;
-}
-#endif
 
 int
 Albany::SolverFactory::checkDakotaTestResults(
