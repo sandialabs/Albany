@@ -1,6 +1,7 @@
 #include "Albany_EpetraThyraUtils.hpp"
 
 #include "Thyra_EpetraThyraWrappers.hpp"
+#include "Thyra_EpetraLinearOp.hpp"
 
 namespace Albany
 {
@@ -208,7 +209,7 @@ getConstEpetraOperator (const Teuchos::RCP<const Thyra_LinearOp> lop,
 {
   Teuchos::RCP<const Epetra_Operator> op;
   if (!lop.is_null()) {
-    auto tmp = Teuchos::rcp_dynamic_cast<Thyra::EpetraLinearOp>(lop,throw_on_failure);
+    auto tmp = Teuchos::rcp_dynamic_cast<const Thyra::EpetraLinearOp>(lop,throw_on_failure);
     if (!tmp.is_null()) {
       op = tmp->epetra_op();
     }
@@ -236,7 +237,7 @@ getConstEpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop,
 {
   Teuchos::RCP<const Epetra_CrsMatrix> mat;
   if (!lop.is_null()) {
-    auto op = getEpetraOperator(lop,throw_on_failure);
+    auto op = getConstEpetraOperator(lop,throw_on_failure);
     mat = Teuchos::rcp_dynamic_cast<const Epetra_CrsMatrix>(op,throw_on_failure);
   }
 
