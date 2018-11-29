@@ -29,13 +29,11 @@ ThicknessResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl) :
   dH        (p.get<std::string> ("Thickness Increment Variable Name"), dl->node_scalar),
   H0       (p.get<std::string> ("Past Thickness Name"), dl->node_scalar),
-  V        (p.get<std::string> ("Averaged Velocity Variable Name"), dl->node_vector),
   coordVec (p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector),
   Residual (p.get<std::string> ("Residual Name"), dl->node_scalar)
 {
   this->addDependentField(dH);
   this->addDependentField(H0);
-  this->addDependentField(V);
   this->addDependentField(coordVec);
   if(p.isParameter("SMB Name")) {
    SMB = decltype(SMB)(p.get<std::string> ("SMB Name"), dl->node_scalar);
@@ -48,15 +46,17 @@ ThicknessResid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
   dt = p.get<Teuchos::RCP<double> >("Time Step Ptr");
+  meshPart = p.get<std::string>("Mesh Part");
 
-  if (p.isType<const std::string>("Mesh Part")) {
-    meshPart = p.get<const std::string>("Mesh Part");
-  } else {
-    meshPart = "upperside";
-  }
   Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecs = p.get<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct");
 
+  std::string sideSetName  = p.get<std::string> ("Side Set Name");
+  TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
+                              "Error! Layout for side set " << sideSetName << " not found.\n");
+  Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
 
+  V = decltype(V)(p.get<std::string>("Averaged Velocity Variable Name"), dl_side->node_vector);
+  this->addDependentField(V);
 
   this->setName("ThicknessResid"+PHX::typeAsString<EvalT>());
 
@@ -90,15 +90,6 @@ void ThicknessResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(dH,fm);
-  this->utils.setFieldData(H0,fm);
-  this->utils.setFieldData(V,fm);
-  this->utils.setFieldData(coordVec, fm);
-  if(have_SMB)
-    this->utils.setFieldData(SMB, fm);
-
-  this->utils.setFieldData(Residual,fm);
-
   physPointsCell = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, cellDims);
 }
 
@@ -160,8 +151,8 @@ evaluateFields(typename Traits::EvalData workset)
       int numSideNodes = sideType->getNodeCount();
       Intrepid2::DefaultCubatureFactory cubFactory;
       cubatureSide = cubFactory.create<PHX::Device, RealType, RealType>(*sideType, cubatureDegree);
-      sideDims = sideType->getDimension();
-      numQPsSide = cubatureSide->getNumPoints();
+      int sideDims = sideType->getDimension();
+      int numQPsSide = cubatureSide->getNumPoints();
 
       // Allocate Temporary Views
       cubPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsSide, sideDims);
@@ -243,7 +234,7 @@ evaluateFields(typename Traits::EvalData workset)
         H0_Cell(node) = H0(elem_LID, node);
         SMB_Cell(node) = have_SMB ? SMB(elem_LID, node) : ScalarT(0.0);
         for (std::size_t dim = 0; dim < numVecFODims; ++dim)
-          V_Cell(node, dim) = V(elem_LID, node, dim);
+          V_Cell(node, dim) = V(elem_LID, elem_side, i, dim);
       }
 
       // This is needed, since evaluate currently sums into

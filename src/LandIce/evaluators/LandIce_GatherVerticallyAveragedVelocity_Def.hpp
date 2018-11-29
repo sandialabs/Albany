@@ -22,12 +22,9 @@ namespace LandIce {
 template<typename EvalT, typename Traits>
 GatherVerticallyAveragedVelocityBase<EvalT, Traits>::
 GatherVerticallyAveragedVelocityBase(const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl) :
-  averagedVel(p.get<std::string>("Averaged Velocity Name"), dl->node_vector)
+                  const Teuchos::RCP<Albany::Layouts>& dl)
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-
-  this->addEvaluatedField(averagedVel);
   cell_topo = p.get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
 
   std::vector<PHX::DataLayout::size_type> dims;
@@ -36,10 +33,15 @@ GatherVerticallyAveragedVelocityBase(const Teuchos::ParameterList& p,
   numNodes = dims[1];
   vecDimFO = dims[2];
 
-  if (p.isParameter("Mesh Part"))
-    meshPart = p.get<std::string>("Mesh Part");
-  else
-    meshPart = "upperside";
+  meshPart = p.get<std::string>("Mesh Part");
+
+  std::string sideSetName  = p.get<std::string> ("Side Set Name");
+  TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
+                              "Error! Layout for side set " << sideSetName << " not found.\n");
+  Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
+
+  averagedVel = decltype(averagedVel)(p.get<std::string>("Averaged Velocity Name"), dl_side->node_vector);
+  this->addEvaluatedField(averagedVel);
 
   this->setName("GatherVerticallyAveragedVelocity"+PHX::typeAsString<EvalT>());
 }
@@ -120,7 +122,7 @@ evaluateFields(typename Traits::EvalData workset)
             avVel[comp] += xT_constView[solDOFManager.getLocalDOF(inode, comp)]*quadWeights[il];
         }
         for(int comp=0; comp<this->vecDimFO; ++comp)
-          this->averagedVel(elem_LID,node,comp) = avVel[comp];
+          this->averagedVel(elem_LID,elem_side,i,comp) = avVel[comp];
       }
     }
   }
@@ -196,9 +198,9 @@ evaluateFields(typename Traits::EvalData workset)
         }
 
         for(int comp=0; comp<this->vecDimFO; ++comp) {
-          this->averagedVel(elem_LID,node,comp) = FadType(this->averagedVel(elem_LID,node,comp).size(), avVel[comp]);
+          this->averagedVel(elem_LID,elem_side,i,comp) = FadType(this->averagedVel(elem_LID,elem_side,i,comp).size(), avVel[comp]);
           for(int il=0; il<numLayers+1; ++il)
-            this->averagedVel(elem_LID,node,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp) = quadWeights[il]*workset.j_coeff;
+            this->averagedVel(elem_LID,elem_side,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp) = quadWeights[il]*workset.j_coeff;
         }
       }
     }
@@ -269,7 +271,7 @@ evaluateFields(typename Traits::EvalData workset)
             avVel[comp] += xT_constView[solDOFManager.getLocalDOF(inode, comp)]*quadWeights[il];
         }
         for(int comp=0; comp<this->vecDimFO; ++comp) {
-          this->averagedVel(elem_LID,node,comp) = avVel[comp];
+          this->averagedVel(elem_LID,elem_side,i,comp) = avVel[comp];
           if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
             TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not Implemented yet" << std::endl);
           }
@@ -342,7 +344,7 @@ evaluateFields(typename Traits::EvalData workset)
             avVel[comp] += xT_constView[solDOFManager.getLocalDOF(inode, comp)]*quadWeights[il];
         }
         for(int comp=0; comp<this->vecDimFO; ++comp)
-          this->averagedVel(elem_LID,node,comp) = avVel[comp];
+          this->averagedVel(elem_LID,elem_side,i,comp) = avVel[comp];
       }
     }
   }

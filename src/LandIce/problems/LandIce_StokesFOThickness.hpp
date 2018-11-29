@@ -118,6 +118,7 @@ StokesFOThickness::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   //Input
   p->set<std::string>("Residual Name", resid_names[0]);
   p->set<int>("Tensor Rank", 1); 
+  p->set<int>("Field Level", 0);
   p->set<int>("Offset of First DOF", offsetVelocity); 
   p->set<int>("Offset 2D Field", offsetThickness); 
 
@@ -185,15 +186,21 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  //--- LandIce Gather Vertically Averaged Velocity ---//
-  p = Teuchos::rcp(new Teuchos::ParameterList("Gather Averaged Velocity"));
+  if (surfaceSideName!="__INVALID__")
+  {
+    //--- LandIce Gather Vertically Averaged Velocity ---//
+    p = Teuchos::rcp(new Teuchos::ParameterList("Gather Averaged Velocity"));
+    //Input
+    p->set<std::string>("Averaged Velocity Name", "Averaged Velocity");
+    p->set<std::string>("Mesh Part", "upperside");
+    p->set<std::string>("Side Set Name", surfaceSideName);
+    p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
 
-  //Input
-  p->set<std::string>("Averaged Velocity Name", "Averaged Velocity");
-  p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
+    ev = Teuchos::rcp(new LandIce::GatherVerticallyAveragedVelocity<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
-  ev = Teuchos::rcp(new LandIce::GatherVerticallyAveragedVelocity<EvalT,PHAL::AlbanyTraits>(*p,dl));
-  fm0.template registerEvaluator<EvalT>(ev);
+
 
   //--- LandIce Gather 2D Field (Thickness) ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("Gather Thickness"));
@@ -241,6 +248,8 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   p->set<std::string>("Averaged Velocity Variable Name", "Averaged Velocity");
   p->set<std::string>("Thickness Increment Variable Name", dof_names[1]);
   p->set<std::string>("Past Thickness Name", "ice_thickness");
+  p->set<std::string>("Side Set Name", surfaceSideName);
+  p->set<std::string>("Mesh Part", "upperside");
   p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
   p->set<int>("Cubature Degree",3);
   if (std::find(requirements.begin(),requirements.end(),"surface_mass_balance")!=requirements.end()) {
@@ -308,6 +317,8 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   //Input
   p->set< Teuchos::ArrayRCP<std::string> >("Residual Names", resid_names.persistingView(1,1));
   p->set<int>("Tensor Rank", 0);
+  p->set<int>("Field Level", discParams->get<int>("NumLayers"));
+  p->set<std::string>("Mesh Part", "upperside");
   p->set<int>("Offset of First DOF", offsetThickness);
   p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
 

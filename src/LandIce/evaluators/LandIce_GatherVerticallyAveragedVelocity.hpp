@@ -44,7 +44,7 @@ protected:
   typedef typename EvalT::ScalarT ScalarT;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,VecDim>  averagedVel;
+  PHX::MDField<ScalarT,Side,Cell,Node,VecDim>  averagedVel;
 
   std::size_t vecDimFO;
   std::size_t numNodes;
