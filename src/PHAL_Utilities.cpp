@@ -19,7 +19,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
     const bool extrudedColumnCoupled = pl->isParameter("Extruded Column Coupled in 2D Response") ? pl->get<bool>("Extruded Column Coupled in 2D Response") : false;
     if(extrudedColumnCoupled)
       { //all column is coupled
-        int side_node_count = ms->ctd.side[2].topology->node_count;
+        int side_node_count = ms->ctd.side[3].topology->node_count;
         int node_count = ms->ctd.node_count;
         int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
         return app->getNumEquations()*(node_count + side_node_count*numLevels);
@@ -49,7 +49,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
     const std::string problemName = pl->isType<std::string>("Name") ? pl->get<std::string>("Name") : "";
     if(problemName == "LandIce Coupled FO H 3D")
     { //all column is coupled
-      int side_node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.side[2].topology->node_count;
+      int side_node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.side[3].topology->node_count;
       int node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.node_count;
       int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
       return app->getNumEquations()*(node_count + side_node_count*numLevels);
