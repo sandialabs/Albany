@@ -8,6 +8,7 @@ ANONYMOUS:
     Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
     Extruded Column Coupled in 2D Response: true
+    Adjust Bed Topography to Account for Thickness Changes: true
     Required Fields: [temperature, ice_thickness, surface_height]
     Basal Side Name: basalside
     Surface Side Name: upperside

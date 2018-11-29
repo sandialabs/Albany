@@ -141,32 +141,63 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = evalUtils.constructGatherCoordinateVectorEvaluator();
     fm0.template registerEvaluator<EvalT> (ev);
 #else
+    bool adjustBedTopo = params->get("Adjust Bed Topography to Account for Thickness Changes", false);
+    bool adjustSurfaceHeight = params->get("Adjust Surface Height to Account for Thickness Changes", false);
 
-    //----- Gather Coordinate Vector (ad hoc parameters)
-    p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
+    if(adjustBedTopo && !adjustSurfaceHeight) {
+      //----- Gather Coordinate Vector (ad hoc parameters)
+      p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
 
-    // Output:: Coordindate Vector at vertices
-    p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
+      // Output:: Coordindate Vector at vertices
+      p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
 
-    ev = Teuchos::rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+      ev = Teuchos::rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
 
-    //------ Update Z Coordinate
-    p = Teuchos::rcp(new Teuchos::ParameterList("Update Z Coordinate"));
+      //------ Update Z Coordinate
+      p = Teuchos::rcp(new Teuchos::ParameterList("Update Z Coordinate"));
 
-    p->set<std::string>("Old Coords Name",  "Coord Vec Old");
-    p->set<std::string>("New Coords Name",  Albany::coord_vec_name);
-    p->set<std::string>("Thickness Name",   "ice_thickness");
-    p->set<std::string>("Thickness Lower Bound Name",   "ice_thickness_lowerbound");
-    p->set<std::string>("Thickness Upper Bound Name",   "ice_thickness_upperbound");
-    p->set<std::string>("Top Surface Name", "observed_surface_height");
-    p->set<std::string>("Updated Top Surface Name", "surface_height");
-    p->set<std::string>("Bed Topography Name", "observed_bed_topography");
-    p->set<std::string>("Updated Bed Topography Name", "bed_topography");
-    p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
+      p->set<std::string>("Old Coords Name",  "Coord Vec Old");
+      p->set<std::string>("New Coords Name",  Albany::coord_vec_name);
+      p->set<std::string>("Thickness Name",   "ice_thickness");
+      p->set<std::string>("Thickness Lower Bound Name",   "ice_thickness_lowerbound");
+      p->set<std::string>("Thickness Upper Bound Name",   "ice_thickness_upperbound");
+      p->set<std::string>("Top Surface Name", "observed_surface_height");
+      p->set<std::string>("Updated Top Surface Name", "surface_height");
+      p->set<std::string>("Bed Topography Name", "observed_bed_topography");
+      p->set<std::string>("Updated Bed Topography Name", "bed_topography");
+      p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
 
-    ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingBed<EvalT,PHAL::AlbanyTraits>(*p, dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+      ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingBed<EvalT,PHAL::AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+    else if(adjustSurfaceHeight && !adjustBedTopo) {
+      //----- Gather Coordinate Vector (ad hoc parameters)
+      p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
+
+      // Output:: Coordindate Vector at vertices
+      p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
+
+      ev = Teuchos::rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      //------ Update Z Coordinate
+      p = Teuchos::rcp(new Teuchos::ParameterList("Update Z Coordinate"));
+
+      p->set<std::string>("Old Coords Name",  "Coord Vec Old");
+      p->set<std::string>("New Coords Name",  Albany::coord_vec_name);
+      p->set<std::string>("Thickness Name",   "ice_thickness");
+      p->set<std::string>("Top Surface Name", "surface_height");
+      p->set<std::string>("Bed Topography Name", "observed_bed_topography");
+      p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
+
+      ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingTop<EvalT,PHAL::AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION(adjustBedTopo == adjustSurfaceHeight, std::logic_error, "Error! When the ice thickness is a parameter,\n "
+          "either 'Adjust Bed Topography to Account for Thickness Changes' or\n"
+          " 'Adjust Surface Height to Account for Thickness Changes' needs to be true.\n");
+    }
 #endif
   }
 

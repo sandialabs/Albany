@@ -222,6 +222,8 @@ LandIce::StokesFOBase::getStokesFOBaseProblemParameters () const
   validPL->sublist("LandIce Noise", false, "");
   validPL->set<bool>("Use Time Parameter", false, "Solely to use Solver Method = Continuation");
   validPL->set<bool>("Print Stress Tensor", false, "Whether to save stress tensor in the mesh");
+  validPL->set<bool>("Adjust Bed Topography to Account for Thickness Changes", false, "");
+  validPL->set<bool>("Adjust Surface Height to Account for Thickness Changes", false, "");
 
   return validPL;
 }
