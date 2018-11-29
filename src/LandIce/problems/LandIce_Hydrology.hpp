@@ -892,12 +892,12 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //--- Shared Parameter for basal friction coefficient: mu ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: mu"));
 
-  param_name = ParamEnumName::Mu;
+  param_name = ParamEnumName::MuCoulomb;
   p->set<std::string>("Parameter Name", param_name);
   p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 
-  Teuchos::RCP<LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Mu>> ptr_mu;
-  ptr_mu = Teuchos::rcp(new LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Mu>(*p,dl));
+  Teuchos::RCP<LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::MuCoulomb>> ptr_mu;
+  ptr_mu = Teuchos::rcp(new LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::MuCoulomb>(*p,dl));
   ptr_mu->setNominalValue(params->sublist("Parameters"),params->sublist("LandIce Basal Friction Coefficient").get<double>(param_name,-1.0));
   fm0.template registerEvaluator<EvalT>(ptr_mu);
 
