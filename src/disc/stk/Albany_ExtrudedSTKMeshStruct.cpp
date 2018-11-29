@@ -55,12 +55,6 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn = "internal";
-  nsNames.push_back(nsn);
-  nsPartVec[nsn] = &metaData->declare_part(nsn, stk::topology::NODE_RANK);
-#ifdef ALBANY_SEACAS
-  stk::io::put_io_part_attribute(*nsPartVec[nsn]);
-#endif
   nsn = "bottom";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = &metaData->declare_part(nsn, stk::topology::NODE_RANK);
@@ -82,17 +76,42 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   ssNames.push_back(ssnLat);
   ssNames.push_back(ssnBottom);
   ssNames.push_back(ssnTop);
-  ssPartVec[ssnLat] = &metaData->declare_part(ssnLat, metaData->side_rank());
+  std::map<std::string, stk::mesh::Part*> ssPartVecLateral;
+  ssPartVecLateral[ssnLat] = &metaData->declare_part(ssnLat, metaData->side_rank());
   ssPartVec[ssnBottom] = &metaData->declare_part(ssnBottom, metaData->side_rank());
   ssPartVec[ssnTop] = &metaData->declare_part(ssnTop, metaData->side_rank());
 #ifdef ALBANY_SEACAS
-  stk::io::put_io_part_attribute(*ssPartVec[ssnLat]);
+  stk::io::put_io_part_attribute(*ssPartVecLateral[ssnLat]);
   stk::io::put_io_part_attribute(*ssPartVec[ssnBottom]);
   stk::io::put_io_part_attribute(*ssPartVec[ssnTop]);
 #endif
 
   basalMeshStruct = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(inputBasalMesh,false);
   TEUCHOS_TEST_FOR_EXCEPTION (basalMeshStruct==Teuchos::null, std::runtime_error, "Error! Could not cast basal mesh to AbstractSTKMeshStruct.\n");
+
+  stk::mesh::MetaData& metaData2D = *basalMeshStruct->metaData; //bulkData2D.mesh_meta_data();
+  auto partvec = metaData2D.get_mesh_parts();
+  for (auto part:partvec) {
+    if(part->primary_entity_rank() == metaData2D.side_rank()) {
+      std::string partName = "extruded_"+part->name();
+      ssNames.push_back(partName);
+      ssPartVecLateral[partName] = &metaData->declare_part(partName, metaData->side_rank());
+#ifdef ALBANY_SEACAS
+      stk::io::put_io_part_attribute(*ssPartVecLateral[partName]);
+#endif
+    }
+    if(part->primary_entity_rank() == stk::topology::NODE_RANK) {
+      std::string partName = "extruded_"+part->name();
+      nsNames.push_back(partName);
+      nsPartVec[partName] = &metaData->declare_part(partName, stk::topology::NODE_RANK);
+#ifdef ALBANY_SEACAS
+      stk::io::put_io_part_attribute(*nsPartVec[partName]);
+#endif
+    }
+  }
+
+  for(auto it:ssPartVecLateral)
+    ssPartVec[it.first] = it.second;
 
   sideSetMeshStructs["basalside"] = basalMeshStruct;
 
@@ -123,21 +142,24 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
     stk::mesh::set_cell_topology<shards::Tetrahedron<4> >(*partVec[0]);
     stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnBottom]);
     stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnTop]);
-    stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnLat]);
+    for (auto it:ssPartVecLateral)
+      stk::mesh::set_cell_topology<shards::Triangle<3> >(*it.second);
     NumBaseElemeNodes = 3;
     break;
   case Wedge:
     stk::mesh::set_cell_topology<shards::Wedge<6> >(*partVec[0]);
     stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnBottom]);
     stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnTop]);
-    stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssnLat]);
+    for (auto it:ssPartVecLateral)
+      stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*it.second);
     NumBaseElemeNodes = 3;
     break;
   case Hexahedron:
     stk::mesh::set_cell_topology<shards::Hexahedron<8> >(*partVec[0]);
     stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssnBottom]);
     stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssnTop]);
-    stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssnLat]);
+    for (auto it:ssPartVecLateral)
+      stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*it.second);
     NumBaseElemeNodes = 4;
     break;
   }
@@ -561,6 +583,11 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
           stk::mesh::EntityId node2dId = bulkData2D.identifier(rel[j]) - 1;
           prismMpasIds[j] = vertexLayerShift * node2dId;
         }
+
+        stk::mesh::EntityId sideId = 2 * sideColumnShift * il +  2 * side2dId * sideLayerShift + upperBasalOffset + 1;
+        stk::mesh::Entity side0 = bulkData->declare_entity(metaData->side_rank(), sideId, singlePartVec);
+        stk::mesh::Entity side1 = bulkData->declare_entity(metaData->side_rank(), sideId + 1, singlePartVec);
+
         int minIndex;
         int pType = prismType(&prismMpasIds[0], minIndex);
         stk::mesh::EntityId tetraId = 3 * il * elemColumnShift + 3 * elemLayerShift * basalElemId;
@@ -568,16 +595,12 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
         stk::mesh::Entity elem0 = bulkData->get_entity(stk::topology::ELEMENT_RANK, tetraId + tetraAdjacentToPrismLateralFace[minIndex][pType][sideLID][0] + 1);
         stk::mesh::Entity elem1 = bulkData->get_entity(stk::topology::ELEMENT_RANK, tetraId + tetraAdjacentToPrismLateralFace[minIndex][pType][sideLID][1] + 1);
 
-        stk::mesh::Entity side0 = bulkData->declare_entity(metaData->side_rank(), 2 * sideColumnShift * il +  2 * side2dId * sideLayerShift + upperBasalOffset + 1, singlePartVec);
-        stk::mesh::Entity side1 = bulkData->declare_entity(metaData->side_rank(), 2 * sideColumnShift * il +  2 * side2dId * sideLayerShift + upperBasalOffset + 1 + 1, singlePartVec);
-
         bulkData->declare_relation(elem0, side0, tetraFaceIdOnPrismFaceId[minIndex][sideLID]);
         bulkData->declare_relation(elem1, side1, tetraFaceIdOnPrismFaceId[minIndex][sideLID]);
 
         stk::mesh::Entity const* rel_elemNodes0 = bulkData->begin_nodes(elem0);
         stk::mesh::Entity const* rel_elemNodes1 = bulkData->begin_nodes(elem1);
         for (int j = 0; j < 3; j++) {
-       //   std::cout << j <<", " << sideLID << ", " << minIndex << ", " << tetraFaceIdOnPrismFaceId[minIndex][edgeLID] << ","  << std::endl;
           stk::mesh::Entity node0 = rel_elemNodes0[this->meshSpecs[0]->ctd.side[tetraFaceIdOnPrismFaceId[minIndex][sideLID]].node[j]];
           bulkData->declare_relation(side0, node0, j);
           bulkData->change_entity_parts(node0, singlePartVecLateral);
@@ -590,9 +613,11 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
         break;
       case Wedge:
       case Hexahedron: {
+        stk::mesh::EntityId sideId = sideColumnShift * il + side2dId * sideLayerShift + upperBasalOffset + 1;
+        stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), sideId, singlePartVec);
+
         stk::mesh::EntityId prismId = il * elemColumnShift + elemLayerShift * basalElemId;
         stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId + 1);
-        stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), sideColumnShift * il + side2dId * sideLayerShift + upperBasalOffset + 1, singlePartVec);
         bulkData->declare_relation(elem, side, sideLID);
 
         stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
@@ -603,6 +628,58 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
         }
       }
       break;
+    }
+  }
+
+  auto partvec = metaData2D.get_mesh_parts();
+  for (auto part:partvec) {
+    if(part->primary_entity_rank() != metaData2D.side_rank())
+      continue;
+    stk::mesh::get_selected_entities(stk::mesh::Selector(*part), bulkData2D.buckets(metaData2D.side_rank()), sides2D);
+    singlePartVec[0] = ssPartVec["extruded_"+part->name()];
+    int num_sides = sides2D.size() * numLayers;
+    for (int i = 0; i < num_sides; i++) {
+      int ib = (Ordering == LAYER) * (i % lsideColumnShift) + (Ordering == COLUMN) * (i / sideLayerShift);
+      int il = (Ordering == LAYER) * (i / lsideColumnShift) + (Ordering == COLUMN) * (i % sideLayerShift);
+      stk::mesh::EntityId side2dId = bulkData2D.identifier(sides2D[ib]) - 1;
+      switch (ElemShape) {
+        case Tetrahedron: {
+          stk::mesh::EntityId sideId = 2 * sideColumnShift * il +  2 * side2dId * sideLayerShift + upperBasalOffset + 1;
+          stk::mesh::Entity side0 = bulkData->get_entity(metaData->side_rank(), sideId);
+          stk::mesh::Entity side1 = bulkData->get_entity(metaData->side_rank(), sideId + 1);
+          bulkData->change_entity_parts(side0, singlePartVec);
+          bulkData->change_entity_parts(side1, singlePartVec);
+        }
+        break;
+        case Wedge:
+        case Hexahedron: {
+          stk::mesh::EntityId sideId = sideColumnShift * il + side2dId * sideLayerShift + upperBasalOffset + 1;
+          stk::mesh::Entity side = bulkData->get_entity(metaData->side_rank(), sideId);
+          bulkData->change_entity_parts(side, singlePartVec);
+        }
+        break;
+      }
+    }
+  }
+  auto lateralNodesSelector = stk::mesh::Selector(*singlePartVecLateral[0]);
+  auto nodepartvec = metaData2D.get_mesh_parts();
+  std::vector<stk::mesh::Entity> boundaryNodes2D;
+  std::vector<stk::mesh::Entity> nodes;
+  for (auto part:nodepartvec) {
+    if(part->primary_entity_rank() != stk::topology::NODE_RANK)
+      continue;
+    stk::mesh::get_selected_entities(stk::mesh::Selector(*part), bulkData2D.buckets(stk::topology::NODE_RANK), boundaryNodes2D);
+    singlePartVecLateral[0] = nsPartVec["extruded_"+part->name()];
+
+    int num_nodes = (numLayers + 1) * boundaryNodes2D.size();
+    for (int i = 0; i < num_nodes; i++) {
+      int ib = (Ordering == LAYER) * (i % lVertexColumnShift) + (Ordering == COLUMN) * (i / vertexLayerShift);
+      int il = (Ordering == LAYER) * (i / lVertexColumnShift) + (Ordering == COLUMN) * (i % vertexLayerShift);
+      stk::mesh::EntityId node2dId = bulkData2D.identifier(boundaryNodes2D[ib]) - 1;
+      GO nodeId = il * vertexColumnShift + vertexLayerShift * node2dId + 1;
+      stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, nodeId);
+      if(node != stk::mesh::Entity::InvalidEntity )
+        bulkData->change_entity_parts(node, singlePartVecLateral);
     }
   }
 
