@@ -1348,14 +1348,15 @@ if (basalSideName!="INVALID")
 
     ev = Teuchos::rcp(new LandIce::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,true,true>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
-  }
 
-  p = Teuchos::rcp(new Teuchos::ParameterList("Gather Averaged Velocity"));
-  p->set<std::string>("Averaged Velocity Name", "Averaged Velocity");
-  p->set<std::string>("Mesh Part", "basalside");
-  p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
-  ev = Teuchos::rcp(new GatherVerticallyAveragedVelocity<EvalT,PHAL::AlbanyTraits>(*p,dl));
-  fm0.template registerEvaluator<EvalT>(ev);
+    p = Teuchos::rcp(new Teuchos::ParameterList("Gather Averaged Velocity"));
+    p->set<std::string>("Averaged Velocity Name", "Averaged Velocity");
+    p->set<std::string>("Mesh Part", "basalside");
+    p->set<std::string>("Side Set Name", basalSideName);
+    p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
+    ev = Teuchos::rcp(new GatherVerticallyAveragedVelocity<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   //--- Shared Parameter for Continuation:  ---//
   {
