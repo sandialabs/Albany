@@ -1068,17 +1068,29 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     ptr_lambda->setNominalValue(params->sublist("Parameters"),pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
     fm0.template registerEvaluator<EvalT>(ptr_lambda);
 
-    //--- Shared Parameter for basal friction coefficient: mu ---//
-    p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: mu"));
+    //--- Shared Parameter for basal friction coefficient: muCoulomb ---//
+    p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: muCoulomb"));
 
     param_name = "Coulomb Friction Coefficient";
     p->set<std::string>("Parameter Name", param_name);
     p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 
-    Teuchos::RCP<LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Mu>> ptr_mu;
-    ptr_mu = Teuchos::rcp(new LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Mu>(*p,dl));
-    ptr_mu->setNominalValue(params->sublist("Parameters"),pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
-    fm0.template registerEvaluator<EvalT>(ptr_mu);
+    Teuchos::RCP<LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::MuCoulomb>> ptr_muC;
+    ptr_muC = Teuchos::rcp(new LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::MuCoulomb>(*p,dl));
+    ptr_muC->setNominalValue(params->sublist("Parameters"),pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
+    fm0.template registerEvaluator<EvalT>(ptr_muC);
+
+    //--- Shared Parameter for basal friction coefficient: muPowerLaw ---//
+    p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: muPowerLaw"));
+
+    param_name = "Power Law Coefficient";
+    p->set<std::string>("Parameter Name", param_name);
+    p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+
+    Teuchos::RCP<LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::MuPowerLaw>> ptr_muP;
+    ptr_muP = Teuchos::rcp(new LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::MuPowerLaw>(*p,dl));
+    ptr_muP->setNominalValue(params->sublist("Parameters"),pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
+    fm0.template registerEvaluator<EvalT>(ptr_muP);
 
     //--- Shared Parameter for basal friction coefficient: power ---//
     p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: power"));
