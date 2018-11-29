@@ -79,6 +79,7 @@ public:
   GatherScalarExtruded2DNodalParameter(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
     GatherScalarNodalParameterBase<EvalT, Traits>(p, dl) {
     fieldLevel = p.get<int>("Field Level");
+    this->setName("Gather Extruded 2D Nodal Parameter" );
   }
 
   void evaluateFields(typename Traits::EvalData d);
