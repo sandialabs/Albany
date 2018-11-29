@@ -42,14 +42,17 @@ private:
 
   // Input:
   PHX::MDField<const MeshScalarT, Cell, Node,Dim> coordVecIn;
-  PHX::MDField<const MeshScalarT, Cell, Node> dH;
-  PHX::MDField<const MeshScalarT, Cell, Node> topSurface;
+  PHX::MDField<const MeshScalarT, Cell, Node> bedTopo;
+  PHX::MDField<const MeshScalarT, Cell, Node> H;
   PHX::MDField<const MeshScalarT, Cell, Node> H0;
+  PHX::MDField<const MeshScalarT, Cell, Node> dH;
+  PHX::MDField<MeshScalarT, Cell, Node> topSurface;
 
   // Output:
   PHX::MDField<MeshScalarT, Cell, Node, Dim> coordVecOut;
 
-  double minH;
+  bool haveThickness;
+  double minH, rho_i, rho_w;
   unsigned int numDims, numNodes;
 };
 

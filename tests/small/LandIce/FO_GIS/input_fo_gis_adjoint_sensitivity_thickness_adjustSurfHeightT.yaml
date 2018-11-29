@@ -9,7 +9,7 @@ ANONYMOUS:
     Name: LandIce Stokes First Order 3D
     Compute Sensitivities: true
     Extruded Column Coupled in 2D Response: true
-    Adjust Bed Topography to Account for Thickness Changes: true
+    Adjust Surface Height to Account for Thickness Changes: true
     Required Fields: [temperature]
     Basal Side Name: basalside
     Surface Side Name: upperside
@@ -169,10 +169,10 @@ ANONYMOUS:
             File Name: ../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii
   Regression Results: 
     Number of Comparisons: 1
-    Test Values: [3.84916158675999966e+01]
+    Test Values: [7.296804392367e-01]
     Sensitivity Comparisons 0: 
       Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [2.34701347967999993e+02]
+      Sensitivity Test Values 0: [1.046203575608e+00]
     Relative Tolerance: 1.00000000000000005e-04
     Absolute Tolerance: 1.00000000000000005e-04
   Piro: 

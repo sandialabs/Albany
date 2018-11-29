@@ -47,6 +47,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_thic
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_thickness.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_thicknessT.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_thicknessT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_thickness_adjustSurfHeightT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_thickness_adjustSurfHeightT.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_stiffening.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_stiffening.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_stiffeningT.yaml
@@ -124,6 +126,7 @@ add_test(${testName}_GisAdjointSensitivityStiffeningBasalFrictionTpetra ${Albany
 add_test(${testName}_GisSensSMBwrtBetaTpetra ${AlbanyT.exe} input_fo_gis_beta_smbT.yaml)
   if (ALBANY_MESH_DEPENDS_ON_PARAMETERS)
     add_test(${testName}_GisAdjointSensitivityThicknessTpetra ${AlbanyT.exe} input_fo_gis_adjoint_sensitivity_thicknessT.yaml)
+    add_test(${testName}_GisAdjointSensitivityThicknessMoveSurfHeightTpetra ${AlbanyT.exe} input_fo_gis_adjoint_sensitivity_thickness_adjustSurfHeightT.yaml)
     add_test(${testName}_GisAdjointSensitivityTwoParametersTpetra ${AlbanyT.exe} input_fo_gis_analysis_two_paramsT.yaml)
   endif()
   if (ALBANY_MESH_DEPENDS_ON_SOLUTION)

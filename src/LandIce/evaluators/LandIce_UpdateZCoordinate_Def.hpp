@@ -24,24 +24,37 @@ UpdateZCoordinateMovingTop(const Teuchos::ParameterList& p,
             const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVecIn (p.get<std::string> ("Old Coords Name"), dl->vertices_vector),
   coordVecOut(p.get<std::string> ("New Coords Name"), dl->vertices_vector),
-  H0(p.get<std::string> ("Past Thickness Name"), dl->node_scalar),
   topSurface(p.get<std::string>("Top Surface Name"), dl->node_scalar),
-  dH(p.get<std::string> ("Thickness Increment Name"), dl->node_scalar)
+  bedTopo(p.get<std::string> ("Bed Topography Name"), dl->node_scalar)
 {
-  this->addEvaluatedField(coordVecOut);
-
   this->addDependentField(coordVecIn);
-  this->addDependentField(H0);
-  this->addDependentField(dH);
+  this->addDependentField(bedTopo);
+  if(p.isParameter("Thickness Name")) {
+    H = decltype(H)(p.get<std::string> ("Thickness Name"), dl->node_scalar);
+    this->addDependentField(H);
+    haveThickness = true;
+  }
+  else {
+    H0 = decltype(H0)(p.get<std::string> ("Past Thickness Name"), dl->node_scalar);
+    dH = decltype(dH)(p.get<std::string> ("Thickness Increment Name"), dl->node_scalar);
+    this->addDependentField(H0);
+    this->addDependentField(dH);
+    haveThickness = false;
+  }
 
-  this->addDependentField(topSurface);
+  this->addEvaluatedField(coordVecOut);
+  this->addEvaluatedField(topSurface);
 
-  minH = p.isParameter("Minimum Thickness") ? p.get<double>("Minimum Thickness") : 1e-4;
+  minH = p.isParameter("Minimum Thickness") ? p.get<double>("Minimum Thickness") : 1e-5;
   std::vector<PHX::DataLayout::size_type> dims;
   dl->vertices_vector->dimensions(dims);
   numNodes = dims[1];
   numDims = dims[2];
   this->setName("Update Z Coordinate Moving Top");
+
+  Teuchos::ParameterList* p_list = p.get<Teuchos::ParameterList*>("Physical Parameter List");
+  rho_i = p_list->get<double>("Ice Density");
+  rho_w = p_list->get<double>("Water Density");
 }
 
 //**********************************************************************
@@ -50,11 +63,6 @@ void UpdateZCoordinateMovingTop<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(coordVecIn,fm);
-  this->utils.setFieldData(coordVecOut,fm);
-  this->utils.setFieldData(H0, fm);
-  this->utils.setFieldData(dH,fm);
-  this->utils.setFieldData(topSurface,fm);
 }
 
 //**********************************************************************
@@ -89,14 +97,22 @@ evaluateFields(typename Traits::EvalData workset)
       LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
       LO base_id, ilevel;
       layeredMeshNumbering.getIndices(lnodeId, base_id,  ilevel);
-      MeshScalarT h = H0(cell,node)+dH(cell,node);
-      MeshScalarT bed = topSurface(cell,node)- H0(cell,node);
+      MeshScalarT h;
+      if(haveThickness)
+        h = std::max(H(cell,node), MeshScalarT(minH));
+      else
+        h = std::max(H0(cell,node) + dH(cell,node), MeshScalarT(minH));
+      MeshScalarT bed = bedTopo(cell,node);
+      auto floating = (rho_i*h + rho_w*bed < 0.0);// && (h+bed > 0.0);
+
+      MeshScalarT lowSurf = floating ? -h*rho_i/rho_w : bed;
+      typename PHAL::Ref<MeshScalarT>::type vals = topSurface(cell,node);
+      vals = lowSurf+h;
+
       for(std::size_t icomp=0; icomp< numDims; icomp++) {
         typename PHAL::Ref<MeshScalarT>::type val = coordVecOut(cell,node,icomp);
-        val = (icomp==2) ?
-            (h>minH) ? MeshScalarT(bed + sigmaLevel[ ilevel]*h)
-                    : MeshScalarT(bed + sigmaLevel[ ilevel]*minH)
-           : coordVecIn(cell,node,icomp);
+        val = (icomp==2) ? MeshScalarT(lowSurf + sigmaLevel[ ilevel]*h)
+                         : coordVecIn(cell,node,icomp);
       }
     }
   }
@@ -180,6 +196,7 @@ evaluateFields(typename Traits::EvalData workset)
       LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
       LO base_id, ilevel;
       layeredMeshNumbering.getIndices(lnodeId, base_id,  ilevel);
+//      MeshScalarT h = std::max(H(cell,node), MeshScalarT(minH));
       MeshScalarT h = H(cell,node);
       MeshScalarT top = topSurface(cell,node);
       typename PHAL::Ref<MeshScalarT>::type vals = topSurfaceOut(cell,node);
@@ -187,6 +204,8 @@ evaluateFields(typename Traits::EvalData workset)
       MeshScalarT bed = bedTopo(cell,node);
       auto floating = ((rho_i*top + (rho_w-rho_i)*bed) < 0.0) && (top > 0.0);
       top = floating ? h*(1.0 - rho_i/rho_w) : top; //adjust surface when floating
+//      auto floating = (rho_i*h + rho_w*bed < 0.0) && (h+bed > 0.0);
+//      top = floating ? h*(1.0 - rho_i/rho_w) : MeshScalarT(h+bed); //adjust surface when floating
       vals = top;
       bed = floating ? bed : top - h;
       valb = bed;
@@ -197,6 +216,8 @@ evaluateFields(typename Traits::EvalData workset)
             (h>minH) ? MeshScalarT(top - (1- sigmaLevel[ ilevel])*h)
                     : MeshScalarT(top - (1-sigmaLevel[ ilevel])*minH)
            : coordVecIn(cell,node,icomp);
+//        val = (icomp==2) ? MeshScalarT(top - (1- sigmaLevel[ ilevel])*h)
+//                         : coordVecIn(cell,node,icomp);
       }
     }
   }
