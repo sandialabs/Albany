@@ -2,6 +2,8 @@
 #define ALBANY_EPETRA_THYRA_UTILS_HPP
 
 #include "Albany_ThyraTypes.hpp"
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_CommTypes.hpp"
 
 #include "Epetra_BlockMap.h"
 #include "Epetra_Vector.h"
@@ -17,7 +19,11 @@ namespace Albany
 // routine that performs the check before calling the Thyra converter.
 
 // ============ Epetra->Thyra conversion routines ============ //
-Teuchos::RCP<const Thyra_VectorSpace>
+
+Teuchos::RCP<const Teuchos_Comm>
+createTeuchosComm (const Epetra_Comm& comm);
+
+Teuchos::RCP<const Thyra_SpmdVectorSpace>
 createThyraVectorSpace (const Teuchos::RCP<const Epetra_BlockMap> map);
 
 Teuchos::RCP<Thyra_Vector>

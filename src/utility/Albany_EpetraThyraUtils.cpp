@@ -1,25 +1,42 @@
 #include "Albany_EpetraThyraUtils.hpp"
+#include "Albany_CommTypes.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
-#include "Thyra_EpetraThyraWrappers.hpp"
+// We only use Thyra's Epetra wrapper for the linear op.
+// For vec/mvec, we rely on spmd interface
 #include "Thyra_EpetraLinearOp.hpp"
+
+#include "Thyra_DefaultSpmdVectorSpace.hpp"
+#include "Thyra_DefaultSpmdMultiVector.hpp"
+#include "Thyra_DefaultSpmdVector.hpp"
+#include "Thyra_ScalarProdVectorSpaceBase.hpp"
+
+// To convert Teuchos_Comm to Thyra's comm
+#include "Thyra_TpetraThyraWrappers.hpp"
 
 namespace Albany
 {
 
 // ============ Epetra->Thyra conversion routines ============ //
 
-Teuchos::RCP<const Thyra_VectorSpace>
+Teuchos::RCP<const Teuchos_Comm>
+createTeuchosComm (const Epetra_Comm& comm) {
+  return createTeuchosCommFromEpetraComm(comm);
+}
+
+Teuchos::RCP<const Thyra_SpmdVectorSpace>
 createThyraVectorSpace (const Teuchos::RCP<const Epetra_BlockMap> bmap)
 {
-  Teuchos::RCP<const Thyra_VectorSpace> vs;
+  Teuchos::RCP<const Thyra_SpmdVectorSpace> vs;
   if (!bmap.is_null()) {
-    // Note: the fugly reinterpret_cast is safe, since Epetra_Map does
-    //       not add ANYTHING to the interface of Epetra_BlockMap.
-    //       You may wonder 'why do we have Epetra_Map then?'. Well, my friend,
-    //       if you find the answer to that question, let me know.
-    const Epetra_Map* ptr = reinterpret_cast<const Epetra_Map*>(bmap.get());
-    Teuchos::RCP<const Epetra_Map> map (ptr,false);
-    vs = Thyra::create_VectorSpace(map);
+
+    auto comm = createTeuchosCommFromEpetraComm(bmap->Comm());
+    vs = Thyra::defaultSpmdVectorSpace<ST>(Thyra::convertTpetraToThyraComm(comm), bmap->NumMyElements(), bmap->NumGlobalElements64(), !bmap->DistributedGlobal());
+
+    // Attach the two new RCP's to the map ptr
+    Teuchos::set_extra_data(bmap, "Teuchos_Comm", inoutArg(comm));
+    Teuchos::set_extra_data(bmap, "Epetra_BlockMap", inoutArg(vs) );
   }
 
   return vs;
@@ -31,7 +48,12 @@ createThyraVector (const Teuchos::RCP<Epetra_Vector> v)
   Teuchos::RCP<Thyra_Vector> v_thyra = Teuchos::null;
   if (!v.is_null()) {
     auto vs = createThyraVectorSpace(Teuchos::rcpFromRef(v->Map()));
-    v_thyra = Thyra::create_Vector(v,vs);
+    ST* vals;
+    v->ExtractView(&vals);
+    v_thyra = Teuchos::rcp( new Thyra::DefaultSpmdVector<ST>(vs,Teuchos::arcp(vals,0,v->MyLength()),1) );
+
+    // Attach the new RCP to the vector ptr
+    Teuchos::set_extra_data(v, "Epetra_Vector", inoutArg(v_thyra));
   }
 
   return v_thyra;
@@ -43,7 +65,12 @@ createConstThyraVector (const Teuchos::RCP<const Epetra_Vector> v)
   Teuchos::RCP<const Thyra_Vector> v_thyra = Teuchos::null;
   if (!v.is_null()) {
     auto vs = createThyraVectorSpace(Teuchos::rcpFromRef(v->Map()));
-    v_thyra = Thyra::create_Vector(v,vs);
+    ST* vals;
+    v->ExtractView(&vals);
+    v_thyra = Teuchos::rcp( new Thyra::DefaultSpmdVector<ST>(vs,Teuchos::arcp(vals,0,v->MyLength()),1) );
+
+    // Attach the new RCP to the vector ptr
+    Teuchos::set_extra_data(v, "Epetra_Vector", inoutArg(v_thyra));
   }
 
   return v_thyra;
@@ -54,8 +81,17 @@ createThyraMultiVector (const Teuchos::RCP<Epetra_MultiVector> mv)
 {
   Teuchos::RCP<Thyra_MultiVector> mv_thyra = Teuchos::null;
   if (!mv.is_null()) {
-    auto vs = createThyraVectorSpace(Teuchos::rcpFromRef(mv->Map()));
-    mv_thyra = Thyra::create_MultiVector(mv,vs);
+    Teuchos::RCP<const Thyra_SpmdVectorSpace> range  = createThyraVectorSpace(Teuchos::rcpFromRef(mv->Map()));
+    // LB: I have NO IDEA why the rcp_implicit_cast is needed (RCP should already be polymorphic). Yet, the compiler complains without it.
+    Teuchos::RCP<const Thyra::ScalarProdVectorSpaceBase<ST>> domain =
+      Thyra::createSmallScalarProdVectorSpaceBase(Teuchos::rcp_implicit_cast<const Thyra_VectorSpace>(range),mv->NumVectors());
+
+    Teuchos::ArrayRCP<ST> vals(mv->Values(),0,mv->MyLength(),false);
+    // Teuchos::ArrayRCP<ST> vals(mv->Values(),Teuchos::as<Teuchos::Ordinal>(0),Teuchos::as<Teuchos::Ordinal>(mv->MyLength()),false);
+    mv_thyra = Thyra::defaultSpmdMultiVector<ST>(range,domain,vals);
+
+    // Attach the new RCP to the vector ptr
+    Teuchos::set_extra_data(mv_thyra, "Epetra_MultiVector", inoutArg(mv_thyra));
   }
 
   return mv_thyra;
@@ -66,8 +102,16 @@ createConstThyraMultiVector (const Teuchos::RCP<const Epetra_MultiVector> mv)
 {
   Teuchos::RCP<const Thyra_MultiVector> mv_thyra = Teuchos::null;
   if (!mv.is_null()) {
-    auto vs = createThyraVectorSpace(Teuchos::rcpFromRef(mv->Map()));
-    mv_thyra = Thyra::create_MultiVector(mv,vs);
+    Teuchos::RCP<const Thyra_SpmdVectorSpace> range  = createThyraVectorSpace(Teuchos::rcpFromRef(mv->Map()));
+    // LB: I have NO IDEA why the rcp_implicit_cast is needed (RCP should already be polymorphic). Yet, the compiler complains without it.
+    Teuchos::RCP<const Thyra::ScalarProdVectorSpaceBase<ST>> domain =
+      Thyra::createSmallScalarProdVectorSpaceBase(Teuchos::rcp_implicit_cast<const Thyra_VectorSpace>(range),mv->NumVectors());
+
+    Teuchos::ArrayRCP<ST> vals(mv->Values(),Teuchos::as<Teuchos::Ordinal>(0),Teuchos::as<Teuchos::Ordinal>(mv->MyLength()),false);
+    mv_thyra = Teuchos::rcp( new Thyra::DefaultSpmdMultiVector<ST>(range,domain,vals) );
+
+    // Attach the new RCP to the vector ptr
+    Teuchos::set_extra_data(mv_thyra, "Epetra_MultiVector", inoutArg(mv_thyra));
   }
 
   return mv_thyra;
@@ -101,16 +145,13 @@ Teuchos::RCP<const Epetra_BlockMap>
 getEpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
               const bool throw_on_failure)
 {
-  Teuchos::RCP<const Epetra_Map> map;
+  Teuchos::RCP<const Epetra_BlockMap> map;
   if (!vs.is_null()) {
-    if (throw_on_failure) {
-      map = Thyra::get_Epetra_Map(vs);
-    } else {
-      try {
-        map = Thyra::get_Epetra_Map(vs);
-      } catch (...) {
-        // Do nothing
-      }
+    auto data = Teuchos::get_optional_extra_data<Teuchos::RCP<const Epetra_BlockMap>>(vs,"Epetra_BlockMap");
+    TEUCHOS_TEST_FOR_EXCEPTION (throw_on_failure && data.is_null(), std::runtime_error,
+                                "Error! Could not extract Epetra_BlockMap from Thyra_VectorSpace.\n");
+    if (!data.is_null()) {
+      map = *data;
     }
   }
 
@@ -123,14 +164,12 @@ getEpetraVector (const Teuchos::RCP<Thyra_Vector> v,
 {
   Teuchos::RCP<Epetra_Vector> v_epetra;
   if (!v.is_null()) {
-    if (throw_on_failure) {
-      v_epetra = Thyra::get_Epetra_Vector(v);
-    } else {
-      try {
-        v_epetra = Thyra::get_Epetra_Vector(v);
-      } catch (...) {
-        // Do nothing
-      }
+    auto data = Teuchos::get_optional_extra_data<Teuchos::RCP<Epetra_Vector>>(v,"Epetra_Vector");
+
+    TEUCHOS_TEST_FOR_EXCEPTION (throw_on_failure && data.is_null(), std::runtime_error,
+                                "Error! Could not extract Epetra_Vector from Thyra_Vector.\n");
+    if (!data.is_null()) {
+      v_epetra = *data;
     }
   }
 
@@ -144,14 +183,17 @@ getConstEpetraVector (const Teuchos::RCP<const Thyra_Vector> v,
 {
   Teuchos::RCP<const Epetra_Vector> v_epetra;
   if (!v.is_null()) {
-    if (throw_on_failure) {
-      v_epetra = Thyra::get_Epetra_Vector(v);
-    } else {
-      try {
-        v_epetra = Thyra::get_Epetra_Vector(v);
-      } catch (...) {
-        // Do nothing
-      }
+    // The thyra vector may have been originally created from a non-const Epetra_Vector,
+    // so we need to check both const and nonconst
+    auto data_const    = Teuchos::get_optional_extra_data<Teuchos::RCP<const Epetra_Vector>>(v,"Epetra_Vector");
+    auto data_nonconst = Teuchos::get_optional_extra_data<Teuchos::RCP<Epetra_Vector>>(v,"Epetra_Vector");
+
+    TEUCHOS_TEST_FOR_EXCEPTION (throw_on_failure && data_const.is_null() && data_nonconst.is_null(), std::runtime_error,
+                                "Error! Could not extract Epetra_Vector from Thyra_Vector.\n");
+    if (!data_const.is_null()) {
+      v_epetra = *data_const;
+    } else if (!data_nonconst.is_null()) {
+      v_epetra = *data_nonconst;
     }
   }
 
@@ -164,14 +206,12 @@ getEpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector> mv,
 {
   Teuchos::RCP<Epetra_MultiVector> mv_epetra;
   if (!mv.is_null()) {
-    if (throw_on_failure) {
-      mv_epetra = Thyra::get_Epetra_MultiVector(mv);
-    } else {
-      try {
-        mv_epetra = Thyra::get_Epetra_MultiVector(mv);
-      } catch (...) {
-        // Do nothing
-      }
+    auto data = Teuchos::get_optional_extra_data<Teuchos::RCP<Epetra_MultiVector>>(mv,"Epetra_MultiVector");
+
+    TEUCHOS_TEST_FOR_EXCEPTION (throw_on_failure && data.is_null(), std::runtime_error,
+                                "Error! Could not extract Epetra_MultiVector from Thyra_MultiVector.\n");
+    if (!data.is_null()) {
+      mv_epetra = *data;
     }
   }
 
@@ -184,14 +224,17 @@ getConstEpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
 {
   Teuchos::RCP<const Epetra_MultiVector> mv_epetra;
   if (!mv.is_null()) {
-    if (throw_on_failure) {
-      mv_epetra = Thyra::get_Epetra_MultiVector(mv);
-    } else {
-      try {
-        mv_epetra = Thyra::get_Epetra_MultiVector(mv);
-      } catch (...) {
-        // Do nothing
-      }
+    // The thyra vector may have been originally created from a non-const Epetra_Vector,
+    // so we need to check both const and nonconst
+    auto data_const    = Teuchos::get_optional_extra_data<Teuchos::RCP<const Epetra_MultiVector>>(mv,"Epetra_MVector");
+    auto data_nonconst = Teuchos::get_optional_extra_data<Teuchos::RCP<Epetra_MultiVector>>(mv,"Epetra_MultiVector");
+
+    TEUCHOS_TEST_FOR_EXCEPTION (throw_on_failure && data_const.is_null() && data_nonconst.is_null(), std::runtime_error,
+                                "Error! Could not extract Epetra_MultiVector from Thyra_MultiVector.\n");
+    if (!data_const.is_null()) {
+      mv_epetra = *data_const;
+    } else if (!data_nonconst.is_null()) {
+      mv_epetra = *data_nonconst;
     }
   }
 
