@@ -16,42 +16,39 @@ namespace PHAL {
 ///
 /// Time-dependendt, strongly-enforced Dirichlet BC evauator
 ///
-template<typename EvalT, typename Traits>
-class TimeDepSDBC_Base: public PHAL::SDirichlet<EvalT, Traits>
+template <typename EvalT, typename Traits>
+class TimeDepSDBC_Base : public PHAL::SDirichlet<EvalT, Traits>
 {
-private:
+ private:
   using ScalarT = typename EvalT::ScalarT;
 
-public:
-  TimeDepSDBC_Base(Teuchos::ParameterList & p);
+ public:
+  TimeDepSDBC_Base(Teuchos::ParameterList& p);
 
   ScalarT
   computeVal(RealType time);
 
-protected:
-  int const
-  offset_;
+ protected:
+  int const offset_;
 
-  std::vector<RealType>
-  times_;
+  std::vector<RealType> times_;
 
-  std::vector<RealType>
-  values_;
+  std::vector<RealType> values_;
 };
 
-template<typename EvalT, typename Traits>
-class TimeDepSDBC: public TimeDepSDBC_Base<EvalT, Traits>
+template <typename EvalT, typename Traits>
+class TimeDepSDBC : public TimeDepSDBC_Base<EvalT, Traits>
 {
-public:
-  TimeDepSDBC(Teuchos::ParameterList & p);
+ public:
+  TimeDepSDBC(Teuchos::ParameterList& p);
 
   void
   evaluateFields(typename Traits::EvalData d);
 
-private:
+ private:
   using ScalarT = typename EvalT::ScalarT;
 };
 
-}
+}  // namespace PHAL
 
-#endif // PHAL_TimeDepSDBC_hpp
+#endif  // PHAL_TimeDepSDBC_hpp

@@ -23,8 +23,8 @@ LCM:
       SDBC on NS nodelist_3 for DOF Y: 0.0
       SDBC on NS nodelist_5 for DOF Z: 0.0
       Time Dependent SDBC on NS nodelist_6 for DOF Z:
-        Time Values: [0.0, 2.0]
-        BC Values: [0.0, 2.0]
+        Time File: 'time.dat'
+        BC File: 'bc.dat'
     Response Functions:
       Number: 4
       Response 0: Project IP to Nodal Field

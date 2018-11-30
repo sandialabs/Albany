@@ -10,4 +10,3 @@
 #include "PHAL_TimeDepSDBC_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::TimeDepSDBC)
-

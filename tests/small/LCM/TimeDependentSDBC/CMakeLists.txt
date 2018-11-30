@@ -9,8 +9,16 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cube.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube_sdbc.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/finer_cube_sdbc.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube_sdbc_file.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/finer_cube_sdbc_file.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube_dbc.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/finer_cube_dbc.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube_dbc_file.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/finer_cube_dbc_file.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/time.dat
+               ${CMAKE_CURRENT_BINARY_DIR}/time.dat COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bc.dat
+               ${CMAKE_CURRENT_BINARY_DIR}/bc.dat COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/material.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/material.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.g
@@ -33,7 +41,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube.g.2.1
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-if (ALBANY_IFPACK2)
+add_test(${testName} ${AlbanyT.exe} finer_cube_dbc.yaml)
+add_test(${testName} ${AlbanyT.exe} finer_cube_dbc_file.yaml)
 add_test(${testName} ${AlbanyT.exe} finer_cube_sdbc.yaml)
-endif ()
-
+add_test(${testName} ${AlbanyT.exe} finer_cube_sdbc_file.yaml)
