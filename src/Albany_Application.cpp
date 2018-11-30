@@ -2214,8 +2214,6 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
 
   // Load connectivity map and coordinates
   const auto &wsElNodeEqID = disc->getWsElNodeEqID();
-  const auto &coords = disc->getCoords();
-  const auto &wsEBNames = disc->getWsEBNames();
   const auto &wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();

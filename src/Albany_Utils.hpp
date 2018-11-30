@@ -94,13 +94,13 @@ getMpiCommFromEpetraComm(const Epetra_Comm& ec);
 
 Albany_MPI_Comm
 getMpiCommFromEpetraComm(Epetra_Comm& ec);
-Teuchos::RCP<Epetra_Comm>
+Teuchos::RCP<const Epetra_Comm>
 createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc);
-Teuchos::RCP<Epetra_Comm>
+Teuchos::RCP<const Epetra_Comm>
 createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc);
-Teuchos::RCP<Teuchos_Comm>
+Teuchos::RCP<const Teuchos_Comm>
 createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec);
-Teuchos::RCP<Teuchos_Comm>
+Teuchos::RCP<const Teuchos_Comm>
 createTeuchosCommFromEpetraComm(const Epetra_Comm& ec);
 
 #endif
@@ -166,17 +166,17 @@ inline void printThyraVector(std::ostream& os,
 }
 
 //! Nicely prints out a Thyra MultiVector
-void printThyraVector(std::ostream& os,
-                      const Teuchos::RCP<const Thyra_MultiVector>& vec);
-void printThyraVector(std::ostream& os,
-                      const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>& names,
-                      const Teuchos::RCP<const Thyra_MultiVector>& vec);
+void printThyraMultiVector(std::ostream& os,
+                           const Teuchos::RCP<const Thyra_MultiVector>& vec);
+void printThyraMultiVector(std::ostream& os,
+                           const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>& names,
+                           const Teuchos::RCP<const Thyra_MultiVector>& vec);
 
 //! Inlined product version
 inline void printThyraVector(std::ostream& os,
                              const Teuchos::RCP<const Thyra_ProductMultiVector>& vec) {
   for (int i=0; i<vec->productSpace()->numBlocks(); ++i) {
-    printThyraVector(os,vec->getMultiVectorBlock(i));
+    printThyraMultiVector(os,vec->getMultiVectorBlock(i));
   }
 }
 

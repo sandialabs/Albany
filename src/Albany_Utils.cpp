@@ -113,23 +113,23 @@ namespace Albany
     return emc.Comm();
   }
 
-  Teuchos::RCP<Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc) {
+  Teuchos::RCP<const Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Epetra_MpiComm(mc));
   }
 
-  Teuchos::RCP<Epetra_Comm> createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc) {
+  Teuchos::RCP<const Epetra_Comm> createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc) {
     const Teuchos::Ptr<const Teuchos::MpiComm<int> > mpiComm =
                Teuchos::ptr_dynamic_cast<const Teuchos::MpiComm<int> >(Teuchos::ptrFromRef(*tc));
     return  createEpetraCommFromMpiComm(*mpiComm->getRawMpiComm()());
   }
 
-  Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec) {
+  Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec) {
     const Teuchos::Ptr<const Epetra_MpiComm> mpiComm =
                Teuchos::ptr_dynamic_cast<const Epetra_MpiComm>(Teuchos::ptrFromRef(*ec));
     return  createTeuchosCommFromMpiComm(mpiComm->Comm());
   }
 
-  Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromEpetraComm(const Epetra_Comm& ec) {
+  Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromEpetraComm(const Epetra_Comm& ec) {
     const Epetra_MpiComm *mpiComm =
                dynamic_cast<const Epetra_MpiComm *>(&ec);
     return  createTeuchosCommFromMpiComm(mpiComm->Comm());
@@ -156,20 +156,20 @@ namespace Albany
 
   Albany_MPI_Comm getMpiCommFromEpetraComm(Epetra_Comm& ec) { return 1; }
 
-  Teuchos::RCP<Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc) {
+  Teuchos::RCP<const Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Epetra_SerialComm);
   }
 
-  Teuchos::RCP<Epetra_Comm> createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc) {
+  Teuchos::RCP<const Epetra_Comm> createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc) {
     return Teuchos::rcp(new Epetra_SerialComm);
   }
 
-  Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec) {
+  Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec) {
     return Teuchos::rcp(new Teuchos::SerialComm<int>());
   }
 #endif
 
-  Teuchos::RCP<Teuchos::Comm<int> > createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
+  Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Teuchos::SerialComm<int>());
   }
 
@@ -264,9 +264,9 @@ namespace Albany
 
   }
 
-  void printThyraVector(std::ostream& os,
-                        const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>& names,
-                        const Teuchos::RCP<const Thyra_MultiVector>& mvec) {
+  void printThyraMultiVector(std::ostream& os,
+                             const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>& names,
+                             const Teuchos::RCP<const Thyra_MultiVector>& mvec) {
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST> > mvv = Albany::getLocalData(mvec);
     const int numVecs = mvec->domain()->dim();
@@ -284,8 +284,8 @@ namespace Albany
 
   }
 
-  void printThyraVector(std::ostream& os,
-                        const Teuchos::RCP<const Thyra_MultiVector>& mvec) {
+  void printThyraMultiVector(std::ostream& os,
+                             const Teuchos::RCP<const Thyra_MultiVector>& mvec) {
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST> > mvv = Albany::getLocalData(mvec);
 
     const int numVecs = mvec->domain()->dim();

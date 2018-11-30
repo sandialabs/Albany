@@ -7,7 +7,6 @@
 #include <iostream>
 #include <string>
 
-
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Albany_Memory.hpp"
@@ -21,11 +20,6 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Tpetra_Core.hpp"
-#include "Epetra_Map.h"  //Needed for serial, somehow
-
-//This header is for debug output -- writing of solution (xfinal) to MatrixMarket file
-#include "EpetraExt_MultiVectorOut.h"
-#include "EpetraExt_BlockMapOut.h"
 
 #include "Kokkos_Core.hpp"
 
@@ -52,74 +46,7 @@
 #include <pmmintrin.h>
 #endif
 
-#include "Thyra_EpetraThyraWrappers.hpp"
 #include "Albany_ThyraUtils.hpp"
-#include "Albany_EpetraThyraUtils.hpp"
-
-Teuchos::RCP<const Epetra_Vector>
-epetraVectorFromThyra(
-  const Teuchos::RCP<const Epetra_Comm> &comm,
-  const Teuchos::RCP<const Thyra::VectorBase<double> > &thyra)
-{
-  Teuchos::RCP<const Epetra_Vector> result;
-  if (Teuchos::nonnull(thyra)) {
-    const Teuchos::RCP<const Epetra_Map> epetra_map = Thyra::get_Epetra_Map(*thyra->space(), comm);
-    result = Thyra::get_Epetra_Vector(*epetra_map, thyra);
-  }
-  return result;
-}
-
-Teuchos::RCP<const Epetra_MultiVector>
-epetraMultiVectorFromThyra(
-  const Teuchos::RCP<const Epetra_Comm> &comm,
-  const Teuchos::RCP<const Thyra::MultiVectorBase<double> > &thyra)
-{
-  Teuchos::RCP<const Epetra_MultiVector> result;
-  if (Teuchos::nonnull(thyra)) {
-    const Teuchos::RCP<const Epetra_Map> epetra_map = Thyra::get_Epetra_Map(*thyra->range(), comm);
-    result = Thyra::get_Epetra_MultiVector(*epetra_map, thyra);
-  }
-  return result;
-}
-
-void epetraFromThyra(
-  const Teuchos::RCP<const Epetra_Comm> &comm,
-  const Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > &thyraResponses,
-  const Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > &thyraSensitivities,
-  Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > &responses,
-  Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > &sensitivities)
-{
-  responses.clear();
-  responses.reserve(thyraResponses.size());
-  typedef Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > ThyraResponseArray;
-  for (ThyraResponseArray::const_iterator it_begin = thyraResponses.begin(),
-      it_end = thyraResponses.end(),
-      it = it_begin;
-      it != it_end;
-      ++it) {
-    responses.push_back(epetraVectorFromThyra(comm, *it));
-  }
-
-  sensitivities.clear();
-  sensitivities.reserve(thyraSensitivities.size());
-  typedef Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > ThyraSensitivityArray;
-  for (ThyraSensitivityArray::const_iterator it_begin = thyraSensitivities.begin(),
-      it_end = thyraSensitivities.end(),
-      it = it_begin;
-      it != it_end;
-      ++it) {
-    ThyraSensitivityArray::const_reference sens_thyra = *it;
-    Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > sens;
-    sens.reserve(sens_thyra.size());
-    for (ThyraSensitivityArray::value_type::const_iterator jt = sens_thyra.begin(),
-        jt_end = sens_thyra.end();
-        jt != jt_end;
-        ++jt) {
-        sens.push_back(epetraMultiVectorFromThyra(comm, *jt));
-    }
-    sensitivities.push_back(sens);
-  }
-}
 
 int main(int argc, char *argv[]) {
 
@@ -201,10 +128,6 @@ int main(int argc, char *argv[]) {
     else
       Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
 
-    Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
-    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
-    epetraFromThyra(appComm, thyraResponses, thyraSensitivities, responses, sensitivities);
-
     const int num_p = solver->Np(); // Number of *vectors* of parameters
     const int num_g = solver->Ng(); // Number of *vectors* of responses
 
@@ -219,52 +142,52 @@ int main(int argc, char *argv[]) {
     const Thyra::ModelEvaluatorBase::InArgs<double> nominal = solver->getNominalValues();
     double norm2;
     for (int i=0; i<num_p; i++) {
-      const Teuchos::RCP<const Epetra_Vector> p_init = epetraVectorFromThyra(appComm, nominal.get_p(i));
-      if(i < num_param_vecs)
-        p_init->Print(*out << "\nParameter vector " << i << ":\n");
-      else { //distributed parameters, we print only 2-norm
-        p_init->Norm2(&norm2);
+      if(i < num_param_vecs) {
+        *out << "\nParameter vector " << i << ":\n";
+        Albany::printThyraVector(*out,nominal.get_p(i));
+      } else { //distributed parameters, we print only 2-norm
+        norm2 = nominal.get_p(i)->norm_2();
         *out << "\nDistributed Parameter " << i << ":  " << norm2 << " (two-norm)\n" << std::endl;
       }
     }
 
     for (int i=0; i<num_g-1; i++) {
-      const RCP<const Epetra_Vector> g = responses[i];
-      const RCP<const Thyra_Vector> gT = Albany::createConstThyraVector(g);
+      const RCP<const Thyra_Vector> g = thyraResponses[i];
       bool is_scalar = true;
 
       if (app != Teuchos::null)
         is_scalar = app->getResponse(i)->isScalarResponse();
 
       if (is_scalar) {
-        g->Print(*out << "\nResponse vector " << i << ":\n");
+        *out << "\nResponse vector " << i << ":\n";
+        Albany::printThyraVector(*out,g);
 
         if (num_p == 0) {
           // Just calculate regression data
-          status += slvrfctry.checkSolveTestResults(i, 0, gT, Teuchos::null);
+          status += slvrfctry.checkSolveTestResults(i, 0, g, Teuchos::null);
         } else {
           for (int j=0; j<num_p; j++) {
-            const RCP<const Epetra_MultiVector> dgdp = sensitivities[i][j];
-            const RCP<const Thyra_MultiVector> dgdpT = Albany::createConstThyraMultiVector(dgdp);
+            const RCP<const Thyra_MultiVector> dgdp = thyraSensitivities[i][j];
             if (Teuchos::nonnull(dgdp)) {
               if(j < num_param_vecs) {
-                dgdp->Print(*out << "\nSensitivities (" << i << "," << j << "): \n");
-                status += slvrfctry.checkSolveTestResults(i, j, gT, dgdpT);
+                *out << "\nSensitivities (" << i << "," << j << "): \n";
+                Albany::printThyraMultiVector(*out,dgdp);
+                status += slvrfctry.checkSolveTestResults(i, j, g, dgdp);
               }
               else {
-                auto small_vs = dgdpT->domain()->smallVecSpcFcty()->createVecSpc(1);
-                auto norms = Thyra::createMembers(small_vs,dgdpT->domain()->dim());
+                auto small_vs = dgdp->domain()->smallVecSpcFcty()->createVecSpc(1);
+                auto norms = Thyra::createMembers(small_vs,dgdp->domain()->dim());
                 auto norms_vals = Albany::getNonconstLocalData(norms);
                 *out << "\nSensitivities (" << i << "," << j  << ") for Distributed Parameters:  (two-norm)\n";
                 *out << "    ";
-                for(int ir=0; ir<dgdpT->domain()->dim(); ++ir) {
-                  norm2 = dgdpT->col(ir)->norm_2();
+                for(int ir=0; ir<dgdp->domain()->dim(); ++ir) {
+                  norm2 = dgdp->col(ir)->norm_2();
                   norms_vals[ir][0] = norm2;
                     *out << "    " << norm2;
                 }
                 *out << "\n" << std::endl;
                 //check response and sensitivities for distributed parameters
-                status += slvrfctry.checkSolveTestResults(i, j, gT, norms);
+                status += slvrfctry.checkSolveTestResults(i, j, g, norms);
               }
             }
           }
@@ -280,34 +203,25 @@ int main(int argc, char *argv[]) {
     bool writeToCoutSoln = debugParams.get("Write Solution to Standard Output", false);
 
 
-    const RCP<const Epetra_Vector> xfinal = responses.back();
-    double mnv; xfinal->MeanValue(&mnv);
+    const RCP<const Thyra_Vector> xfinal = thyraResponses.back();
+    double mnv = Albany::mean( xfinal );
     *out << "Main_Solve: MeanValue of final solution " << mnv << std::endl;
     *out << "\nNumber of Failed Comparisons: " << status << std::endl;
-    if (writeToCoutSoln == true) 
-       std::cout << "xfinal: " << *xfinal << std::endl;
+    if (writeToCoutSoln == true) {
+       std::cout << "xfinal: \n";
+       Albany::printThyraVector(std::cout,xfinal);
+    }
 
-    if (debugParams.get<bool>("Analyze Memory", false))
+    if (debugParams.get<bool>("Analyze Memory", false)) {
       Albany::printMemoryAnalysis(std::cout, comm);
+    }
 
     if (writeToMatrixMarketSoln == true) { 
-
-      //create serial map that puts the whole solution on processor 0
-      int numMyElements = (xfinal->Comm().MyPID() == 0) ? app->getDiscretization()->getMap()->NumGlobalElements() : 0;
-      const Epetra_Map serial_map(-1, numMyElements, 0, xfinal->Comm());
-
-      //create importer from parallel map to serial map and populate serial solution xfinal_serial
-      Epetra_Import importOperator(serial_map, *app->getDiscretization()->getMap());
-      Epetra_Vector xfinal_serial(serial_map);
-      xfinal_serial.Import(*app->getDiscretization()->getSolutionField(), importOperator, Insert);
-
-      //writing to MatrixMarket file
-      EpetraExt::MultiVectorToMatrixMarketFile("xfinal.mm", xfinal_serial);
+      Albany::writeMatrixMarket(xfinal, "xfinal");
     }
     if (writeToMatrixMarketDistrSolnMap == true) {
-      //writing to MatrixMarket file
-      EpetraExt::MultiVectorToMatrixMarketFile("xfinal_distributed.mm", *xfinal);
-      EpetraExt::BlockMapToMatrixMarketFile("xfinal_distributed_map.mm", *app->getDiscretization()->getMap());
+      Albany::writeMatrixMarket(xfinal, "xfinal");
+      Albany::writeMatrixMarket(xfinal->space(), "xfinal_distributed_map");
     }
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);

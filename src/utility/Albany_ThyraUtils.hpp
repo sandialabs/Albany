@@ -12,6 +12,8 @@
 
 // Get Spmd Thyra types
 #include "Thyra_SpmdVectorSpaceBase.hpp"
+#include "Thyra_SpmdMultiVectorBase.hpp"
+#include "Thyra_SpmdVectorBase.hpp"
 
 // Get Product Thyra types
 #include "Thyra_ProductVectorSpaceBase.hpp"
@@ -20,6 +22,8 @@
 
 // Spmd types
 typedef Thyra::SpmdVectorSpaceBase<ST>      Thyra_SpmdVectorSpace;
+typedef Thyra::SpmdMultiVectorBase<ST>      Thyra_SpmdMultiVector;
+typedef Thyra::SpmdVectorBase<ST>           Thyra_SpmdVector;
 
 // Product types
 typedef Thyra::ProductVectorSpaceBase<ST>   Thyra_ProductVectorSpace;

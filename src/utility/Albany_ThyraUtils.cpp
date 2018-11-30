@@ -472,8 +472,12 @@ writeMatrixMarket<const Thyra_Vector>(
     writeMatrixMarket(tv,prefix,counter);
     return;
   }
-
-  // TODO: add epetra
+  auto ev = getConstEpetraVector(v,false);
+  if (!ev.is_null()) {
+    // TODO: avoid petra conversion, and call EpetraExt I/O directly
+    tv = Petra::EpetraVector_To_TpetraVectorConst(*ev,createTeuchosComm(ev->Comm()));
+    writeMatrixMarket(tv,prefix,counter);
+  }
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
@@ -503,7 +507,12 @@ writeMatrixMarket<const Thyra_MultiVector>(
     return;
   }
 
-  // TODO: add epetra
+  auto emv = getConstEpetraMultiVector(mv,false);
+  if (!emv.is_null()) {
+    // TODO: avoid petra conversion, and call EpetraExt I/O directly
+    tmv = Petra::EpetraMultiVector_To_TpetraMultiVector(*emv,createTeuchosComm(emv->Comm()));
+    writeMatrixMarket(tmv,prefix,counter);
+  }
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
@@ -533,7 +542,12 @@ writeMatrixMarket<const Thyra_LinearOp>(
     return;
   }
 
-  // TODO: add epetra
+  auto eA = getConstEpetraMatrix(A,false);
+  if (!eA.is_null()) {
+    // TODO: avoid petra conversion, and call EpetraExt I/O directly
+    tA = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*eA,createTeuchosComm(eA->Comm()));
+    writeMatrixMarket(tA,prefix,counter);
+  }
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
@@ -564,7 +578,12 @@ writeMatrixMarket<const Thyra_VectorSpace>(
     return;
   }
 
-  // TODO: add epetra
+  auto em = getEpetraMap(vs,false);
+  if (!em.is_null()) {
+    // TODO: avoid petra conversion, and call EpetraExt I/O directly
+    tm = Petra::EpetraMap_To_TpetraMap(*em,createTeuchosComm(em->Comm()));
+    writeMatrixMarket(tm,prefix,counter);
+  }
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");

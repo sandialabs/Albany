@@ -500,11 +500,11 @@ main(int argc, char *argv[]) {
       if (num_p == 0)  
           status += slvrfctry.checkSolveTestResults(i, 0, g, Teuchos::null);
       for (int j=0; j<num_p; j++) {
-        auto dgdp = thyraSensitivities[i][j];
+        Teuchos::RCP<const Thyra_MultiVector> dgdp = thyraSensitivities[i][j];
         if (Teuchos::nonnull(dgdp)) {
           if(j < num_param_vecs) {
-            Albany::printThyraVector(
-                *out << "\nSensitivities (" << i << "," << j << "):!\n", dgdp);
+            Albany::printThyraMultiVector(
+                *out << "\nSensitivities (" << i << "," << j << "):\n", dgdp);
                 //check response and sensitivities for scalar parameters
                 status += slvrfctry.checkSolveTestResults(i, j, g, dgdp);
           }
