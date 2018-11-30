@@ -74,7 +74,7 @@ namespace Albany {
                     const ST /* alpha */,
                     const ST /* beta */) const {
 
-      bool use_transpose = (M_trans == Thyra::TRANS);
+      bool use_transpose = (Thyra::real_trans(M_trans) == Thyra::TRANS);
       app->applyGlobalDistParamDerivImpl(time, x, xdot, xdotdot,
                                          *scalar_params,
                                          param_name,

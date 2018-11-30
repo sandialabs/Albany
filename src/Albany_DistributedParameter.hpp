@@ -33,8 +33,8 @@ public:
       param_name(param_name_)
   {
     // Sanity checks
-    TEUCHOS_TEST_FOR_EXCEPTION(!owned_vs_.is_null(), std::runtime_error, "Error! Owned vector space is null.\n");
-    TEUCHOS_TEST_FOR_EXCEPTION(!overlapped_vs_.is_null(), std::runtime_error, "Error! Overlapped vector space is null.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(owned_vs_.is_null(), std::runtime_error, "Error! Owned vector space is null.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(overlapped_vs_.is_null(), std::runtime_error, "Error! Overlapped vector space is null.\n");
 
     owned_vec = Thyra::createMember(owned_vs_);
     overlapped_vec = Thyra::createMember(overlapped_vs_);
