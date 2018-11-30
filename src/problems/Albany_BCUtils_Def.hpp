@@ -540,9 +540,6 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
           std::istringstream       iss(buffer.str());
           Teuchos::Array<RealType> time_values;
           iss >> time_values;
-          for (auto i = 0; i < time_values.size(); ++i) {
-            std::cout << "*** TIME VALUE *** : " << time_values[i] << '\n';
-          }
           p->set<Teuchos::Array<RealType>>("Time Values", time_values);
         } else {
           p->set<Teuchos::Array<RealType>>(
@@ -561,9 +558,6 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
           std::istringstream       iss(buffer.str());
           Teuchos::Array<RealType> bc_values;
           iss >> bc_values;
-          for (auto i = 0; i < bc_values.size(); ++i) {
-            std::cout << "*** BC VALUE *** : " << bc_values[i] << '\n';
-          }
           p->set<Teuchos::Array<RealType>>("BC Values", bc_values);
         } else {
           p->set<Teuchos::Array<RealType>>(
