@@ -111,6 +111,18 @@ class SchwarzAlternating : public Thyra::ResponseOnlyModelEvaluatorBase<ST>
   bool
   get_failed() const;
 
+  enum class ConvergenceCriterion
+  {
+    ABSOLUTE,
+    RELATIVE,
+    BOTH
+  };
+  enum class ConvergenceLogicalOperator
+  {
+    AND,
+    OR
+  };
+
  private:
   /// Create operator form of dg/dx for distributed responses
   Teuchos::RCP<Thyra::LinearOpBase<ST>>
@@ -161,104 +173,64 @@ class SchwarzAlternating : public Thyra::ResponseOnlyModelEvaluatorBase<ST>
   reportFinals(std::ostream& os) const;
 
   std::vector<Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>> solvers_;
-
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> apps_;
-
-  std::vector<Teuchos::RCP<Albany::AbstractSTKMeshStruct>> stk_mesh_structs_;
-
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>                 apps_;
+  std::vector<Teuchos::RCP<Albany::AbstractSTKMeshStruct>>  stk_mesh_structs_;
   std::vector<Teuchos::RCP<Albany::AbstractDiscretization>> discs_;
 
-  char const* failure_message_{"No failure detected"};
-
-  int num_subdomains_{0};
-
-  int min_iters_{0};
-
-  int max_iters_{0};
-
-  ST rel_tol_{0.0};
-
-  ST abs_tol_{0.0};
-
-  int maximum_steps_{0};
-
-  ST initial_time_{0.0};
-
-  ST final_time_{0.0};
-
-  ST initial_time_step_{0.0};
-
-  ST tol_factor_vel_{0.0};
-
-  ST tol_factor_acc_{0.0};
-
-  ST min_time_step_{0.0};
-
-  ST max_time_step_{0.0};
-
-  ST reduction_factor_{0.0};
-
-  ST increase_factor_{0.0};
-
-  int output_interval_{1};
-
+  char const*  failure_message_{"No failure detected"};
+  int          num_subdomains_{0};
+  int          min_iters_{0};
+  int          max_iters_{0};
+  ST           rel_tol_{0.0};
+  ST           abs_tol_{0.0};
+  int          maximum_steps_{0};
+  ST           initial_time_{0.0};
+  ST           final_time_{0.0};
+  ST           initial_time_step_{0.0};
+  ST           tol_factor_vel_{0.0};
+  ST           tol_factor_acc_{0.0};
+  ST           min_time_step_{0.0};
+  ST           max_time_step_{0.0};
+  ST           reduction_factor_{0.0};
+  ST           increase_factor_{0.0};
+  int          output_interval_{1};
   mutable bool failed_{false};
-
   mutable bool converged_{false};
+  mutable int  num_iter_{0};
+  mutable ST   rel_error_{0.0};
+  mutable ST   abs_error_{0.0};
+  mutable ST   norm_init_{0.0};
+  mutable ST   norm_final_{0.0};
+  mutable ST   norm_diff_{0.0};
 
-  mutable int num_iter_{0};
-
-  mutable ST rel_error_{0.0};
-
-  mutable ST abs_error_{0.0};
-
-  mutable ST norm_init_{0.0};
-
-  mutable ST norm_final_{0.0};
-
-  mutable ST norm_diff_{0.0};
-
-  mutable std::vector<Thyra::ModelEvaluatorBase::InArgs<ST>> sub_inargs_;
-
-  mutable std::vector<Thyra::ModelEvaluatorBase::OutArgs<ST>> sub_outargs_;
-
-  mutable std::vector<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
-      model_evaluators_;
+  mutable ConvergenceCriterion       criterion_{ConvergenceCriterion::BOTH};
+  mutable ConvergenceLogicalOperator operator_{ConvergenceLogicalOperator::AND};
 
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const>> curr_disp_;
-
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const>>
       prev_step_disp_;
 
+  mutable std::vector<Thyra::ModelEvaluatorBase::InArgs<ST>>  sub_inargs_;
+  mutable std::vector<Thyra::ModelEvaluatorBase::OutArgs<ST>> sub_outargs_;
+  mutable std::vector<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
+                                                           model_evaluators_;
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> ics_disp_;
-
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> ics_velo_;
-
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> ics_acce_;
-
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> prev_disp_;
-
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> prev_velo_;
-
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> prev_acce_;
-
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> this_disp_;
-
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> this_velo_;
-
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>> this_acce_;
 
   mutable std::vector<LCM::StateArrays> internal_states_;
-
-  mutable std::vector<bool> do_outputs_;
-
-  mutable std::vector<bool> do_outputs_init_;
+  mutable std::vector<bool>             do_outputs_;
+  mutable std::vector<bool>             do_outputs_init_;
 
   // Used if solving with loca or tempus
   bool is_static_{false};
-
   bool is_dynamic_{false};
-
   bool std_init_guess_{false};
 };
 

@@ -42,9 +42,6 @@ SchwarzAlternating::SchwarzAlternating(
   auto const dt  = initial_time_step_;
   auto const dt2 = dt * dt;
 
-  tol_factor_vel_ = alt_system_params.get<ST>("Tolerance Factor Velocity", dt);
-  tol_factor_acc_ =
-      alt_system_params.get<ST>("Tolerance Factor Acceleration", dt2);
   min_time_step_    = alt_system_params.get<ST>("Minimum Time Step", dt);
   max_time_step_    = alt_system_params.get<ST>("Maximum Time Step", dt);
   reduction_factor_ = alt_system_params.get<ST>("Reduction Factor", 1.0);
@@ -52,6 +49,46 @@ SchwarzAlternating::SchwarzAlternating(
   output_interval_  = alt_system_params.get<int>("Exodus Write Interval", 1);
   std_init_guess_ =
       alt_system_params.get<bool>("Standard Initial Guess", false);
+
+  tol_factor_vel_ = alt_system_params.get<ST>("Tolerance Factor Velocity", dt);
+  tol_factor_acc_ =
+      alt_system_params.get<ST>("Tolerance Factor Acceleration", dt2);
+
+  std::string convergence_str =
+      alt_system_params.get<std::string>("Convergence Criterion", "BOTH");
+
+  std::transform(
+      convergence_str.begin(),
+      convergence_str.end(),
+      convergence_str.begin(),
+      ::toupper);
+
+  if (convergence_str == "ABSOLUTE") {
+    criterion_ = ConvergenceCriterion::ABSOLUTE;
+  } else if (convergence_str == "RELATIVE") {
+    criterion_ = ConvergenceCriterion::RELATIVE;
+  } else if (convergence_str == "BOTH") {
+    criterion_ = ConvergenceCriterion::BOTH;
+  } else {
+    ALBANY_ASSERT(false, "Unknown Convergence Criterion");
+  }
+
+  std::string operator_str =
+      alt_system_params.get<std::string>("Convergence Operator", "AND");
+
+  std::transform(
+      operator_str.begin(),
+      operator_str.end(),
+      operator_str.begin(),
+      ::toupper);
+
+  if (operator_str == "AND") {
+    operator_ = ConvergenceLogicalOperator::AND;
+  } else if (operator_str == "OR") {
+    operator_ = ConvergenceLogicalOperator::OR;
+  } else {
+    ALBANY_ASSERT(false, "Unknown Convergence Logical Operator");
+  }
 
   // Firewalls
   ALBANY_ASSERT(min_iters_ >= 1);
@@ -645,10 +682,26 @@ SchwarzAlternating::updateConvergenceCriterion() const
   rel_error_ = norm_final_ > 0.0 ? norm_diff_ / norm_final_ : norm_diff_;
 
   bool const converged_absolute = abs_error_ <= abs_tol_;
-
   bool const converged_relative = rel_error_ <= rel_tol_;
 
-  converged_ = converged_absolute && converged_relative;
+  switch (criterion_) {
+    default: ALBANY_ASSERT(false, "Unknown Convergence Criterion"); break;
+    case ConvergenceCriterion::ABSOLUTE: converged_ = converged_absolute; break;
+    case ConvergenceCriterion::RELATIVE: converged_ = converged_relative; break;
+    case ConvergenceCriterion::BOTH:
+      switch (operator_) {
+        default:
+          ALBANY_ASSERT(false, "Unknown Convergence Logical Operator");
+          break;
+        case ConvergenceLogicalOperator::AND:
+          converged_ = converged_absolute && converged_relative;
+          break;
+        case ConvergenceLogicalOperator::OR:
+          converged_ = converged_absolute || converged_relative;
+          break;
+      }
+      break;
+  }
 
   return;
 }
