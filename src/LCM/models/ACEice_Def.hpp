@@ -360,20 +360,21 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   Tensor F(num_dims_);
   Tensor sigma(num_dims_);
 
+  ScalarT icurr = ice_saturation_(cell, pt);
+  ScalarT wcurr = water_saturation_(cell, pt);
+
   ScalarT const E     = elastic_modulus_(cell, pt);
   ScalarT const nu    = poissons_ratio_(cell, pt);
   ScalarT const kappa = E / (3.0 * (1.0 - 2.0 * nu));
   ScalarT const mu    = E / (2.0 * (1.0 + nu));
   ScalarT const K     = hardening_modulus_(cell, pt);
   ScalarT const Y     = yield_strength_(cell, pt);
+  // ScalarT const Y     = yield_strength_(cell, pt) * icurr;
   ScalarT const J1    = J_(cell, pt);
   ScalarT const Jm23  = 1.0 / std::cbrt(J1 * J1);
   ScalarT const Tcurr = temperature_(cell, pt);
   ScalarT const Told  = T_old_(cell, pt);
   ScalarT const iold  = ice_saturation_old_(cell, pt);
-
-  ScalarT icurr = ice_saturation_(cell, pt);
-  ScalarT wcurr = water_saturation_(cell, pt);
 
   // fill local tensors
   F.fill(def_grad_, cell, pt, 0, 0);
@@ -473,8 +474,6 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // compute pressure
   ScalarT const pressure = 0.5 * kappa * (J_(cell, pt) - 1. / (J_(cell, pt)));
-  // Add calculation of hydrostatic pressure. Assume
-  // p_hyd = pressure * rho_water / rho_soil
 
   // compute stress
   sigma = pressure * I + s / J_(cell, pt);
@@ -514,15 +513,17 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     tdot_(cell, pt) = 0.0;
   }
 
+  // Calculate the freezing curve function df/dTemp
   // W term sets the width of the freezing curve.
-  ScalarT W               = 0.8;
- 
+  ScalarT W = 0.8;
+
   // dfdT is a smooth function, but only valid for T <= 0C.
-  // NOTE: If phase change should occur symetrically about Tmelt, then 
+  // NOTE: If phase change should occur symetrically about Tmelt, then
   //       the function can be shifted.
   ScalarT dfdT = 0.0;
-  if ((Tcurr-273.15) <= 0.0) {
-    dfdT = ((1.9*(Tcurr-273.15))/(W*W))*(exp(-((Tcurr-273.15)*(Tcurr-273.15)))/(W*W));
+  if ((Tcurr - 273.15) <= 0.0) {
+    dfdT = ((1.9 * (Tcurr - 273.15)) / (W * W)) *
+           (exp(-((Tcurr - 273.15) * (Tcurr - 273.15))) / (W * W));
   }
 
   // Update the ice saturation
@@ -550,8 +551,8 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Update the material thermal inertia term
   thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt)) -
                                (ice_density_ * latent_heat_ * dfdT);
-  ScalarT const TI = thermal_inertia_(cell, pt);
-  ScalarT const RCp = (density_(cell, pt) * heat_capacity_(cell, pt));
+  ScalarT const TI     = thermal_inertia_(cell, pt);
+  ScalarT const RCp    = (density_(cell, pt) * heat_capacity_(cell, pt));
   ScalarT const RLdfdT = (ice_density_ * latent_heat_ * dfdT);
 
   // Return values

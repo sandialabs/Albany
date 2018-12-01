@@ -38,6 +38,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   porosity0_            = p->get<RealType>("ACE Surface Porosity", 0.0);
   porosityE_            = p->get<RealType>("ACE Porosity E-Depth", 0.0);
   T_init_               = p->get<RealType>("ACE Initial Temperature", 0.0);
+  min_yield_strength_   = p->get<RealType>("ACE Minimum Yield Strength", 0.0);
 
   // retrieve appropriate field name strings
   std::string const cauchy_string       = field_name_map_["Cauchy_Stress"];
@@ -359,9 +360,13 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   using Tensor = minitensor::Tensor<ScalarT, MAX_DIM>;
 
-  Tensor       F(num_dims_);
   Tensor const I(minitensor::eye<ScalarT, MAX_DIM>(num_dims_));
-  Tensor       sigma(num_dims_);
+
+  Tensor F(num_dims_);
+  Tensor sigma(num_dims_);
+
+  ScalarT icurr = ice_saturation_(cell, pt);
+  ScalarT wcurr = water_saturation_(cell, pt);
 
   ScalarT const E     = elastic_modulus_(cell, pt);
   ScalarT const nu    = poissons_ratio_(cell, pt);
@@ -369,14 +374,13 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const mu    = E / (2.0 * (1.0 + nu));
   ScalarT const K     = hardening_modulus_(cell, pt);
   ScalarT const Y     = yield_strength_(cell, pt);
+  // ScalarT const Y     = yield_strength_(cell, pt) * icurr +
+  // (1.0 - icurr) * min_yield_strength_;
   ScalarT const J1    = J_(cell, pt);
   ScalarT const Jm23  = 1.0 / std::cbrt(J1 * J1);
   ScalarT const Tcurr = temperature_(cell, pt);
   ScalarT const Told  = T_old_(cell, pt);
   ScalarT const iold  = ice_saturation_old_(cell, pt);
-
-  ScalarT icurr = ice_saturation_(cell, pt);
-  ScalarT wcurr = water_saturation_(cell, pt);
 
   // fill local tensors
   F.fill(def_grad_, cell, pt, 0, 0);
@@ -395,7 +399,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     }
   }
 
-    // compute trial state
+  // compute trial state
   Tensor const  Fpinv = minitensor::inverse(Fpn);
   Tensor const  Cpinv = Fpinv * minitensor::transpose(Fpinv);
   Tensor const  be    = Jm23 * Fm * Cpinv * minitensor::transpose(Fm);
@@ -476,10 +480,10 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
       sat_mod_ * (1. - std::exp(-sat_exp_ * eqps_(cell, pt)));
 
   // compute pressure
-  ScalarT const p = 0.5 * kappa * (J_(cell, pt) - 1. / (J_(cell, pt)));
+  ScalarT const pressure = 0.5 * kappa * (J_(cell, pt) - 1. / (J_(cell, pt)));
 
   // compute stress
-  sigma = p * I + s / J_(cell, pt);
+  sigma = pressure * I + s / J_(cell, pt);
 
   for (int i(0); i < num_dims_; ++i) {
     for (int j(0); j < num_dims_; ++j) {
@@ -519,13 +523,14 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Calculate the freezing curve function df/dTemp
   // W term sets the width of the freezing curve.
   ScalarT W = 0.8;
- 
+
   // dfdT is a smooth function, but only valid for T <= 0C.
-  // NOTE: If phase change should occur symetrically about Tmelt, then 
+  // NOTE: If phase change should occur symetrically about Tmelt, then
   //       the function can be shifted.
   ScalarT dfdT = 0.0;
-  if ((Tcurr-273.15) <= 0.0) {
-    dfdT = ((1.9*(Tcurr-273.15))/(W*W))*(exp(-((Tcurr-273.15)*(Tcurr-273.15)))/(W*W));
+  if ((Tcurr - 273.15) <= 0.0) {
+    dfdT = ((1.9 * (Tcurr - 273.15)) / (W * W)) *
+           (exp(-((Tcurr - 273.15) * (Tcurr - 273.15))) / (W * W));
   }
 
   // Update the ice saturation
@@ -549,17 +554,16 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
       ((1.0 - porosity) * sediment_heat_capacity_);
 
   // Update the effective material thermal conductivity
-  thermal_cond_(cell, pt) =
-      pow(ice_thermal_cond_, (icurr * porosity)) *
-      pow(water_thermal_cond_, (wcurr * porosity)) *
-      pow(sediment_thermal_cond_, (1.0 - porosity));
+  thermal_cond_(cell, pt) = pow(ice_thermal_cond_, (icurr * porosity)) *
+                            pow(water_thermal_cond_, (wcurr * porosity)) *
+                            pow(sediment_thermal_cond_, (1.0 - porosity));
 
   // Update the material thermal inertia term
   thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt)) -
                                (ice_density_ * latent_heat_ * dfdT);
 
-  ScalarT const TI = thermal_inertia_(cell, pt);
-  ScalarT const RCp = (density_(cell, pt) * heat_capacity_(cell, pt));
+  ScalarT const TI     = thermal_inertia_(cell, pt);
+  ScalarT const RCp    = (density_(cell, pt) * heat_capacity_(cell, pt));
   ScalarT const RLdfdT = (ice_density_ * latent_heat_ * dfdT);
 
   // Return values
@@ -567,7 +571,6 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   water_saturation_(cell, pt) = wcurr;
 
   return;
-
 }
 
 }  // namespace LCM
