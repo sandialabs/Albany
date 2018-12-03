@@ -25,6 +25,7 @@ ANONYMOUS:
     1D Elements: 100
     Method: STK1D
     Exodus Output File Name: th1d_tpetra.exo
+    Workset Size: -1
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [3.41879999999999986e-05]

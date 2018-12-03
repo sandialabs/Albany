@@ -63,6 +63,7 @@ ANONYMOUS:
     LandIce L: 5.00000000000000000e+00
     Method: STK3D
     Exodus Output File Name: felix_stokes_fo_ismip-hom_testC_out_tpetra.exo
+    Workset Size: -1 
     Required Fields Info: 
       Number Of Fields: 1
       Field 0: 

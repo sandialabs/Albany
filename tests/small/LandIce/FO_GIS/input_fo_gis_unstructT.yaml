@@ -60,6 +60,7 @@ ANONYMOUS:
     Basal Node Fields Ranks: [1, 1]
     Interpolate Basal Node Layered Fields: [temperature]
     Basal Node Layered Fields Ranks: [1]
+    Workset Size: -1
     Required Fields Info: 
       Number Of Fields: 3
       Field 0: 

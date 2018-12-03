@@ -34,6 +34,7 @@ ANONYMOUS:
     2D Scale: 2.00000000000000000e+00
     Method: STK2D
     Exodus Output File Name: lincomprns2D_unsteady_out.exo
+    Workset Size: -1
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [2.50074505978999996e-04]

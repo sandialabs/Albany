@@ -25,6 +25,7 @@ ANONYMOUS:
     Method: Exodus
     Exodus Input File Name: vortex.exo
     Exodus Output File Name: vortex-transientT.exo
+    Workset Size: -1
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [7.26888316626999966e+01]
