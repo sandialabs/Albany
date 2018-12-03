@@ -32,7 +32,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
 add_test(NAME ${testName}_Tpetra
-   COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${AlbanyT.exe}" -DTEST_ARGS=
+   COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${AlbanyT.exe}" -DTEST_ARGS=input.yaml
    "-DFILENAME=coarse_cube_out.pvd" -P
    ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
 
