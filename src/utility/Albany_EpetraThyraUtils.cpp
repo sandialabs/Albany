@@ -48,9 +48,8 @@ createThyraVector (const Teuchos::RCP<Epetra_Vector> v)
   Teuchos::RCP<Thyra_Vector> v_thyra = Teuchos::null;
   if (!v.is_null()) {
     auto vs = createThyraVectorSpace(Teuchos::rcpFromRef(v->Map()));
-    ST* vals;
-    v->ExtractView(&vals);
-    v_thyra = Teuchos::rcp( new Thyra::DefaultSpmdVector<ST>(vs,Teuchos::arcp(vals,0,v->MyLength()),1) );
+    Teuchos::ArrayRCP<ST> vals(v->Values(),0,v->MyLength(),false);
+    v_thyra = Teuchos::rcp( new Thyra::DefaultSpmdVector<ST>(vs,vals,1) );
 
     // Attach the new RCP to the vector ptr
     Teuchos::set_extra_data(v, "Epetra_Vector", inoutArg(v_thyra));
@@ -65,9 +64,8 @@ createConstThyraVector (const Teuchos::RCP<const Epetra_Vector> v)
   Teuchos::RCP<const Thyra_Vector> v_thyra = Teuchos::null;
   if (!v.is_null()) {
     auto vs = createThyraVectorSpace(Teuchos::rcpFromRef(v->Map()));
-    ST* vals;
-    v->ExtractView(&vals);
-    v_thyra = Teuchos::rcp( new Thyra::DefaultSpmdVector<ST>(vs,Teuchos::arcp(vals,0,v->MyLength()),1) );
+    Teuchos::ArrayRCP<ST> vals(v->Values(),0,v->MyLength(),false);
+    v_thyra = Teuchos::rcp( new Thyra::DefaultSpmdVector<ST>(vs,vals,1) );
 
     // Attach the new RCP to the vector ptr
     Teuchos::set_extra_data(v, "Epetra_Vector", inoutArg(v_thyra));
@@ -107,7 +105,7 @@ createConstThyraMultiVector (const Teuchos::RCP<const Epetra_MultiVector> mv)
     Teuchos::RCP<const Thyra::ScalarProdVectorSpaceBase<ST>> domain =
       Thyra::createSmallScalarProdVectorSpaceBase(Teuchos::rcp_implicit_cast<const Thyra_VectorSpace>(range),mv->NumVectors());
 
-    Teuchos::ArrayRCP<ST> vals(mv->Values(),Teuchos::as<Teuchos::Ordinal>(0),Teuchos::as<Teuchos::Ordinal>(mv->MyLength()),false);
+    Teuchos::ArrayRCP<ST> vals(mv->Values(),0,mv->MyLength(),false);
     mv_thyra = Teuchos::rcp( new Thyra::DefaultSpmdMultiVector<ST>(range,domain,vals) );
 
     // Attach the new RCP to the vector ptr

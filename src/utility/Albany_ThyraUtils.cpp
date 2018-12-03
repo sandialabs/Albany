@@ -274,27 +274,20 @@ Teuchos::ArrayRCP<ST> getNonconstLocalData (const Teuchos::RCP<Thyra_Vector>& v)
   Teuchos::ArrayRCP<ST> vals;
 
   // Allow failure, since we don't know what the underlying linear algebra is
+  // Note: we do tpetra separately since it need to handle device/copy sync.
+  //       everything else, we assume it inherits from SpmdVectorBase.
   auto tv = getTpetraVector(v,false);
   if (!tv.is_null()) {
     // Tpetra
     vals = tv->get1dViewNonConst();
   } else {
-    auto ev = getEpetraVector(v,false);
-    if (!ev.is_null()) {
-      // Epetra
-      ST* ptr;
-      ev->ExtractView(&ptr);
-      vals = Teuchos::arcp(ptr,0,ev->MyLength(),/*owns_mem = */ false);
-      Teuchos::set_extra_data(ev,"RCP<Epetra_Vector>",Teuchos::outArg(ev));
+    // Thyra::SpmdVectorBase
+    auto spmd_v = Teuchos::rcp_dynamic_cast<Thyra::SpmdVectorBase<ST>>(v);
+    if (!spmd_v.is_null()) {
+      spmd_v->getNonconstLocalData(Teuchos::outArg(vals));
     } else {
-      auto spmd_v = Teuchos::rcp_dynamic_cast<Thyra::SpmdVectorBase<ST>>(v);
-      if (!spmd_v.is_null()) {
-        // Thyra::SpmdVectorBase
-        spmd_v->getNonconstLocalData(Teuchos::outArg(vals));
-      } else {
-        // If all the tries above are not successful, throw an error.
-        TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
-      }
+      // If all the tries above are not successful, throw an error.
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
     }
   }
 
@@ -306,27 +299,20 @@ Teuchos::ArrayRCP<const ST> getLocalData (const Teuchos::RCP<const Thyra_Vector>
   Teuchos::ArrayRCP<const ST> vals;
 
   // Allow failure, since we don't know what the underlying linear algebra is
+  // Note: we do tpetra separately since it need to handle device/copy sync.
+  //       everything else, we assume it inherits from SpmdVectorBase.
   auto tv = getConstTpetraVector(v,false);
   if (!tv.is_null()) {
     // Tpetra
     vals = tv->get1dView();
   } else {
-    auto ev = getConstEpetraVector(v,false);
-    if (!ev.is_null()) {
-      // Epetra
-      ST* ptr;
-      ev->ExtractView(&ptr);
-      vals = Teuchos::arcp(ptr,0,ev->MyLength(),/*owns_mem = */ false);
-      Teuchos::set_extra_data(ev,"RCP<Epetra_Vector>",Teuchos::outArg(ev));
+    // Thyra::SpmdVectorBase
+    auto spmd_v = Teuchos::rcp_dynamic_cast<const Thyra::SpmdVectorBase<ST>>(v);
+    if (!spmd_v.is_null()) {
+      spmd_v->getLocalData(Teuchos::outArg(vals));
     } else {
-      auto spmd_v = Teuchos::rcp_dynamic_cast<const Thyra::SpmdVectorBase<ST>>(v);
-      if (!spmd_v.is_null()) {
-        // Thyra::SpmdVectorBase
-        spmd_v->getLocalData(Teuchos::outArg(vals));
-      } else {
-        // If all the tries above are not successful, throw an error.
-        TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
-      }
+      // If all the tries above are not successful, throw an error.
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
     }
   }
 
