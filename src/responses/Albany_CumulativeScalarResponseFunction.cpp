@@ -7,6 +7,7 @@
 
 #include "Albany_CumulativeScalarResponseFunction.hpp"
 #include "Albany_Application.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 using Teuchos::RCP;
 using Teuchos::rcp;
@@ -113,7 +114,7 @@ evaluateTangent(const double alpha,
   if (!gx.is_null()) {
     gx->assign(0);
   }
-  if (gp.is_null()) {
+  if (!gp.is_null()) {
     gp->assign(0);
   }
 
@@ -122,19 +123,18 @@ evaluateTangent(const double alpha,
     Teuchos::RCP<Thyra_Vector> g_i;
     Teuchos::RCP<Thyra_MultiVector> gx_i, gp_i; 
 
+    // Note: all vector spaces should be the same, so you could just
+    // always use response[0]->responseVectorSpace()
     auto vs_i = responses[i]->responseVectorSpace();
 
     if (!g.is_null()) {
       g_i = Thyra::createMember(vs_i);
-      g_i->assign(0.0);
     }
     if (!gx.is_null()) {
       gx_i = Thyra::createMembers(vs_i,gx->domain()->dim());
-      gx_i->assign(0.0);
     }
     if (!gp.is_null()) {
       gp_i = Thyra::createMembers(vs_i,gp->domain()->dim());
-      gp_i->assign(0.0);
     }
 
     // Evaluate response function
@@ -186,6 +186,8 @@ evaluateGradient(const double current_time,
   }
 
   for (unsigned int i=0; i<responses.size(); i++) {
+    // Note: all vector spaces should be the same, so you could just
+    // always use response[0]->responseVectorSpace()
     auto vs_i = responses[i]->responseVectorSpace();
 
     // Create Thyra_Vectors for response function

@@ -78,7 +78,7 @@ evaluateResponse(const double current_time,
 
   // NOTE: You CANNOT use ProduceVector's if you want to maintain support for EpetraExt::ModelEvaluator,
   //       since that class has no knowledge of vector spaces, and would try to build a monolithic map
-  //       for the aggregate response. For now, stick with monolithic responses and manual copies (eww)
+  //       for the aggregate response. For now, stick with monolithic responses and manual copies
 
   /*
    * // Cast response to product vector
@@ -134,7 +134,7 @@ evaluateTangent(const double alpha,
 {
   // NOTE: You CANNOT use ProduceVector's if you want to maintain support for EpetraExt::ModelEvaluator,
   //       since that class has no knowledge of vector spaces, and would try to build a monolithic map
-  //       for the aggregate response. For now, stick with monolithic responses and manual copies (eww)
+  //       for the aggregate response. For now, stick with monolithic responses and manual copies
 
 /*
  *   // Cast response (and derivs) to product (multi)vector
@@ -237,7 +237,7 @@ evaluateGradient(const double current_time,
 {
   // NOTE: You CANNOT use ProduceVector's if you want to maintain support for EpetraExt::ModelEvaluator,
   //       since that class has no knowledge of vector spaces, and would try to build a monolithic map
-  //       for the aggregate response. For now, stick with monolithic responses and manual copies (eww)
+  //       for the aggregate response. For now, stick with monolithic responses and manual copies
 
   /*
    * // Cast response (and param deriv) to product (multi)vector
@@ -245,10 +245,13 @@ evaluateGradient(const double current_time,
    */
 
   Teuchos::ArrayRCP<ST> g_data;
-  Teuchos::ArrayRCP<const ST> gi_data;
-  if (!g.is_null()) {
-    g_data = getNonconstLocalData(g);
-  }
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> dgdp_data;
+
+  if (!g.is_null())     { g_data    = getNonconstLocalData(g);     }
+  if (!dg_dp.is_null()) { dgdp_data = getNonconstLocalData(dg_dp); }
+
+  Teuchos::ArrayRCP<const ST> g_i_data;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> dgdp_i_data;
 
   unsigned int offset = 0;
   for (unsigned int i=0; i<responses.size(); i++) {
@@ -260,31 +263,38 @@ evaluateGradient(const double current_time,
 
     // Create Thyra_(Multi)Vector's for response function
     Teuchos::RCP<Thyra_Vector> g_i;
-    Teuchos::RCP<Thyra_MultiVector> dg_dx_i, dg_dxdot_i, dg_dxdotdot_i, dg_dp_i;
+    Teuchos::RCP<Thyra_MultiVector> dgdx_i, dgdxdot_i, dgdxdotdot_i, dgdp_i;
     if (!g.is_null()) {
       g_i = Thyra::createMember(vs_i);
+      g_i_data = getLocalData(g_i.getConst());
     }
     if (!dg_dx.is_null()) {
-      dg_dx_i = dg_dx->subView(colRange);
+      dgdx_i = dg_dx->subView(colRange);
     }
     if (!dg_dxdot.is_null()) {
-      dg_dxdot_i = dg_dxdot->subView(colRange);
+      dgdxdot_i = dg_dxdot->subView(colRange);
     }
     if (!dg_dxdotdot.is_null()) {
-      dg_dxdotdot_i = dg_dxdotdot->subView(colRange);
+      dgdxdotdot_i = dg_dxdotdot->subView(colRange);
     }
     if (!dg_dp.is_null()) {
-      dg_dp_i = dg_dp->subView(colRange);
+      dgdp_i = Thyra::createMembers(vs_i,dg_dp->domain()->dim());
+      dgdp_i_data = getLocalData(dgdp_i.getConst());
     }
 
     // Evaluate response function
     responses[i]->evaluateGradient(current_time, x, xdot, xdotdot, p, deriv_p, 
-                                   g_i, dg_dx_i, dg_dxdot_i, dg_dxdotdot_i, dg_dp_i);
+                                   g_i, dgdx_i, dgdxdot_i, dgdxdotdot_i, dgdp_i);
 
-    if (!g.is_null()) {
-      gi_data = getLocalData(g_i.getConst());
-      for (unsigned int j=0; j<responses[i]->numResponses(); ++j) {
-        g_data[offset+j] = gi_data[j];
+    // Copy into the monolithic (multi)vectors
+    for (unsigned int j=0; j<responses[i]->numResponses(); ++j) {
+      if (!g.is_null()) {
+        g_data[offset+j] = g_i_data[j];
+      }
+      if (!dg_dp.is_null()) {
+        for (int col=0; col<dg_dp->domain()->dim(); ++col) {
+          dgdp_data[col][offset+j] = dgdp_i_data[col][j];
+        }
       }
     }
 
