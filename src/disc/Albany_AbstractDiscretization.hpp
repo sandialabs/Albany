@@ -65,6 +65,8 @@ class AbstractDiscretization {
     //!       Besides, upon completion of the refactor, we may foresee eliminating all the Tpetra_Map getters.
     virtual Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace() const { return createThyraVectorSpace(getMapT()); }
 
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace(const std::string& field_name) const { return createThyraVectorSpace(getMapT(field_name)); }
+
 #if defined(ALBANY_EPETRA)
     //! Get Epetra overlapped DOF map
     virtual Teuchos::RCP<const Epetra_Map> getOverlapMap() const = 0;
@@ -79,6 +81,7 @@ class AbstractDiscretization {
     //! Note: derived classes may want to perhaps store the vector space ptr rather than building it on the fly.
     //!       Besides, upon completion of the refactor, we may foresee eliminating all the Tpetra_Map getters.
     virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace() const { return createThyraVectorSpace(getOverlapMapT()); }
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace(const std::string& field_name) const { return createThyraVectorSpace(getOverlapMapT(field_name)); }
 
 #if defined(ALBANY_EPETRA)
     //! Get Epetra Jacobian graph

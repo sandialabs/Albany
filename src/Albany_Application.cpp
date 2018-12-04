@@ -784,7 +784,7 @@ void Albany::Application::finalSetUp(
       // Get parameter vector spaces and build parameter vector
       // Create distributed parameter and set workset_elem_dofs
       Teuchos::RCP<DistributedParameter> parameter(
-          new DistributedParameter(param_name, disc->getNodeVectorSpace(param_name), disc->getOverlapNodeVectorSpace(param_name)));
+          new DistributedParameter(param_name, disc->getVectorSpace(param_name), disc->getOverlapVectorSpace(param_name)));
       parameter->set_workset_elem_dofs(
           Teuchos::rcpFromRef(disc->getElNodeEqID(param_name)));
 
