@@ -46,7 +46,6 @@ ANONYMOUS:
       Type: FO INTERP SURF GRAD
   Discretization: 
     Method: Extruded
-    Workset Size: 10000
     Number Of Time Derivatives: 0
     Cubature Degree: 3
     Exodus Output File Name: antarctica_muelu_out.exo

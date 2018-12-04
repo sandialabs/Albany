@@ -51,7 +51,6 @@ ANONYMOUS:
   Discretization: 
     Periodic_x BC: true
     Periodic_y BC: true
-    Workset Size: 100
     1D Elements: 20
     2D Elements: 20
     3D Elements: 5
