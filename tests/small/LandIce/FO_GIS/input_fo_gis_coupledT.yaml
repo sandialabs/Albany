@@ -51,7 +51,7 @@ ANONYMOUS:
     Number Of Time Derivatives: 0
     Cubature Degree: 1
     Exodus Output File Name: gis_coupled.exo
-    Workset Size: -1
+    Workset Size: 5000
     Columnwise Ordering: false
     Interleaved Ordering: true
     Element Shape: Tetrahedron
