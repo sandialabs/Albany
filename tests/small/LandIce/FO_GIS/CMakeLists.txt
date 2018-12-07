@@ -86,13 +86,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km_testT.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis20km_testT.yaml COPYONLY)
 if (ALBANY_EPETRA) 
 add_test(${testName}_Gis20km ${Albany.exe} input_fo_gis20km_test.yaml)
+set_tests_properties(${testName}_Gis20km  PROPERTIES LABELS CUDA_TEST)
 ENDIF()
 if (ALBANY_IOPX)
 add_test(${testName}_GisPopulateMeshes ${AlbanyT.exe} input_fo_gis_populate_meshes.yaml)
 ELSE()
-add_test(NAME ${testName}_GisPopulateMeshes
+add_test(NAME ${testName}_GisPopulateMeshes_DecompMesh
              COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
-             -DTEST_NAME=GisPopulateMeshes -DTEST_ARGS=input_fo_gis_populate_meshes.yaml -DMPIMNP=4
+             -DTEST_NAME=GisPopulateMeshes_DecompMesh -DTEST_ARGS=input_fo_gis_populate_meshes.yaml -DMPIMNP=4
              -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
 ENDIF()
 if (ALBANY_EPETRA)
@@ -119,7 +120,83 @@ set_tests_properties(${testName}_GisSensSMBwrtBetaRestart  PROPERTIES DEPENDS ${
     add_test(${testName}_GisAdjointSensitivityTwoParameters ${Albany.exe} input_fo_gis_analysis_two_params.yaml)
   endif()
 set_tests_properties(${testName}_GisRestartUnstructured  PROPERTIES DEPENDS ${testName}_GisUnstructured)
-set_tests_properties(${testName}_Gis20km  PROPERTIES LABELS CUDA_TEST)
+else()
+add_test(NAME ${testName}_GisUnstructured_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+             -DTEST_NAME=GisUnstructured_DecompMesh -DTEST_ARGS=input_fo_gis_unstruct.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+set_tests_properties(${testName}_GisUnstructured_DecompMesh PROPERTIES DEPENDS ${testName}_GisPopulateMeshes_DecompMesh)
+if (ALBANY_MESH_DEPENDS_ON_SOLUTION)
+add_test(NAME ${testName}_GisCoupledThicknessShapeOpt_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+             -DTEST_NAME=GisCoupledThicknessShapeOpt_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_coupled_shape_opt.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+else()
+add_test(NAME ${testName}_GisCoupledThickness_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+             -DTEST_NAME=GisCoupledThickness_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_coupled.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+endif()
+add_test(NAME ${testName}_GisManifold_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+             -DTEST_NAME=GisManifold_DecompMesh -DTEST_ARGS=input_fo_gis_manifold.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+add_test(NAME ${testName}_GisRestartUnstructured_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+             -DTEST_NAME=GisRestartUnstructured_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_unstruct_restart.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+add_test(NAME ${testName}_GisAdjointSensitivity_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+             -DTEST_NAME=GisAdjointSensitivity_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_adjoint_sensitivity.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+add_test(NAME ${testName}_GisWedgeAdjointSensitivity_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+             -DTEST_NAME=GisWedgeAdjointSensitivity_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_wedge_adjoint_sensitivity.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+add_test(NAME ${testName}_GisAdjointSensitivityBasalFriction_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+             -DTEST_NAME=GisAdjointSensitivityBasalFriction_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_analysis_beta.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+add_test(NAME ${testName}_GisAdjointSensitivityStiffeningBasalFriction_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+             -DTEST_NAME=GisAdjointSensitivityStiffeningBasalFriction_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_analysis_stiffening.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+add_test(NAME ${testName}_GisLaplacianPriorSampling_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+             -DTEST_NAME=GisLaplacianPriorSampling_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_sampling.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+add_test(NAME ${testName}_GisSensSMBwrtBeta_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+             -DTEST_NAME=GisSensSMBwrtBeta_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_beta_smb.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+add_test(NAME ${testName}_GisSensSMBwrtBetaRestart_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+             -DTEST_NAME=GisSensSMBwrtBetaRestart_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_beta_smb_restart.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+set_tests_properties(${testName}_GisSensSMBwrtBetaRestart_DecompMesh  PROPERTIES DEPENDS ${testName}_GisSensSMBwrtBeta_DecompMesh)
+  if (ALBANY_MESH_DEPENDS_ON_PARAMETERS)
+    add_test(NAME ${testName}_GisAdjointSensitivityThickness_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+             -DTEST_NAME=GisAdjointSensitivityThickness_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_adjoint_sensitivity_thickness.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+    add_test(NAME ${testName}_GisAdjointSensitivityTwoParameters_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+             -DTEST_NAME=GisAdjointSensitivityTwoParameters_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_analysis_two_params.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+  endif()
+set_tests_properties(${testName}_GisRestartUnstructured_DecompMesh  PROPERTIES DEPENDS ${testName}_GisUnstructured_DecompMesh)
 endif()
 endif()
 if(ALBANY_IFPACK2)
