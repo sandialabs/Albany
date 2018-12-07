@@ -54,6 +54,16 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/square_quad9.jou
                ${CMAKE_CURRENT_BINARY_DIR}/square_quad9.jou COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gis_unstruct_2d.exo
                ${CMAKE_CURRENT_BINARY_DIR}/gis_unstruct_2d.exo COPYONLY)
+if (NOT ALBANY_IOPX)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gis_unstruct_2d.exo.4.0
+               ${CMAKE_CURRENT_BINARY_DIR}/gis_unstruct_2d.exo.4.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gis_unstruct_2d.exo.4.1
+               ${CMAKE_CURRENT_BINARY_DIR}/gis_unstruct_2d.exo.4.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gis_unstruct_2d.exo.4.2
+               ${CMAKE_CURRENT_BINARY_DIR}/gis_unstruct_2d.exo.4.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gis_unstruct_2d.exo.4.3
+               ${CMAKE_CURRENT_BINARY_DIR}/gis_unstruct_2d.exo.4.3 COPYONLY)
+endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gis_struct_enth.exo
                ${CMAKE_CURRENT_BINARY_DIR}/gis_struct_enth.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gis_struct_enth_basal.exo
