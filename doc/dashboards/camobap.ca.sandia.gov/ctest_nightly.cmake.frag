@@ -759,7 +759,7 @@ if (BUILD_ALBANY_FPE)
   set_property (GLOBAL PROPERTY SubProject IKTAlbanyFPECheck)
   set_property (GLOBAL PROPERTY Label IKTAlbanyFPECheck)
 
-  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
+  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build-debug/install")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
@@ -852,7 +852,7 @@ if (BUILD_ALBANY_FPE)
   # Run Albany tests
   #
   
-  set (CTEST_TEST_TIMEOUT 600)
+  set (CTEST_TEST_TIMEOUT 1200)
 
   CTEST_TEST(
     BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheck"
