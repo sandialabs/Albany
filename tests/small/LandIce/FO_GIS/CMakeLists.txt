@@ -220,5 +220,68 @@ add_test(${testName}_GisSensSMBwrtBetaTpetra ${AlbanyT.exe} input_fo_gis_beta_sm
   else()
     add_test(${testName}_GisCoupledThicknessTpetra ${AlbanyT.exe} input_fo_gis_coupledT.yaml)
   endif()
+else()
+  add_test(NAME ${testName}_GisUnstructuredPerformanceTpetra_DecompMesh
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+             -DTEST_NAME=GisUnstructuredPerformanceTpetra_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_unstruct_perfT.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+  set_tests_properties(${testName}_GisUnstructuredPerformanceTpetra_DecompMesh PROPERTIES DEPENDS ${testName}_GisPopulateMeshes_DecompMesh)
+  add_test(NAME ${testName}_GisUnstructuredTpetra_DecompMesh
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+             -DTEST_NAME=GisUnstructuredTpetra_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_unstructT.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+  set_tests_properties(${testName}_GisUnstructuredTpetra_DecompMesh PROPERTIES DEPENDS ${testName}_GisPopulateMeshes_DecompMesh)
+  add_test(NAME ${testName}_GisAdjointSensitivityTpetra_DecompMesh
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+             -DTEST_NAME=GisAdjointSensitivityTpetra_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_adjoint_sensitivityT.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+  add_test(NAME ${testName}_GisAdjointSensitivityBasalFrictionTpetra_DecompMesh
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+             -DTEST_NAME=GisAdjointSensitivityBasalFrictionTpetra_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_analysis_betaT.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+  add_test(NAME ${testName}_GisAdjointSensitivityStiffeningBasalFrictionTpetra_DecompMesh
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+             -DTEST_NAME=GisAdjointSensitivityStiffeningBasalFrictionTpetra_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_analysis_stiffeningT.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+  add_test(NAME ${testName}_GisSensSMBwrtBetaTpetra_DecompMesh
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+             -DTEST_NAME=GisSensSMBwrtBetaTpetra_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_beta_smbT.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+  if (ALBANY_MESH_DEPENDS_ON_PARAMETERS)
+    add_test(NAME ${testName}_GisAdjointSensitivityThicknessTpetra_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+             -DTEST_NAME=GisAdjointSensitivityThicknessTpetra_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_adjoint_sensitivity_thicknessT.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+    add_test(NAME ${testName}_GisAdjointSensitivityThicknessMoveSurfHeightTpetra_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+             -DTEST_NAME=GisAdjointSensitivityThicknessMoveSurfHeightTpetra_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_adjoint_sensitivity_thickness_adjustSurfHeightT.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+    add_test(NAME ${testName}_GisAdjointSensitivityTwoParametersTpetra_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+             -DTEST_NAME=GisAdjointSensitivityTwoParametersTpetra_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_analysis_two_paramsT.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+  endif()
+  if (ALBANY_MESH_DEPENDS_ON_SOLUTION)
+    add_test(NAME ${testName}_GisCoupledThicknessShapeOptTpetra_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+             -DTEST_NAME=GisCoupledThicknessShapeOptTpetra_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_coupled_shape_optT.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+  else()
+    add_test(NAME ${testName}_GisCoupledThicknessTpetra_DecompMesh
+             COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+             -DTEST_NAME=GisCoupledThicknessTpetra_DecompMesh 
+             -DTEST_ARGS=input_fo_gis_coupledT.yaml -DMPIMNP=4
+             -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+  endif()
 endif(ALBANY_IOPX)
 endif(ALBANY_IFPACK2)
