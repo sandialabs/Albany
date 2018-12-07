@@ -68,7 +68,7 @@ ANONYMOUS:
     Method: Extruded
     Cubature Degree: 1
     Exodus Output File Name: gis_beta_smb.exo
-    Workset Size: -1 
+    Workset Size: 5000
     Element Shape: Tetrahedron
     NumLayers: 5
     Use Glimmer Spacing: true
