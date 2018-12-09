@@ -25,31 +25,27 @@
 # Albany automatically queries the Trilinos build to 
 # know if these capabilities are enabled or disabled.
 #
+# It is important you edit your ~/.bashrc to be as follows: 
+# LD_LIBRARY_PATH=/ha_cluster/global/opt/gcc/4.8.1/snos/lib:$LD_LIBRARY_PATH:/ha_cluster/home/projects/mpc/1.0.1/lib
+# export LD_LIBRARY_PATH
 #
-# All paths must me changed for your build (search "agsalin")
-#
-rm -f CMakeCache.txt
-rm -rf CMakeFiles
-NETCDFDIR=/usr/local/netcdf
+# To run: 
+# First need to allocate a job:
+# salloc -n 4 -N 4 -p stella
+# Then just do ctest and Albany tests should run (make sure cmake module is loaded first).
 
+rm -rf CMake*
 
 BUILD_DIR=`pwd`
 
+NETCDFDIR=/usr/local/netcdf
+
 cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
-      -D CMAKE_BUILD_TYPE:STRING=DEBUG \
-      -D CMAKE_CXX_FLAGS:STRING="-std=gnu++11 -g" \
+      -D CMAKE_BUILD_TYPE:STRING=RELEASE \
       -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3 \
       -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3 \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
-\
-      -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDFDIR}/include \
-      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDFDIR}/lib \
-\
-      -D TPL_ENABLE_HDF5:BOOL=OFF \
-\
-      -D Amesos2_ENABLE_KLU2:BOOL=ON \
 \
       -D TPL_ENABLE_Boost:BOOL=ON \
       -D TPL_ENABLE_BoostLib:BOOL=ON \
@@ -58,108 +54,101 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D BoostLib_INCLUDE_DIRS:FILEPATH=/usr/include \
       -D BoostLib_LIBRARY_DIRS:FILEPATH=/usr/lib64 \
 \
-      -D Trilinos_ENABLE_TESTS:BOOL=OFF \
-      -D Piro_ENABLE_TESTS:BOOL=OFF \
-      -D Rythmos_ENABLE_TESTS:BOOL=OFF \
-      -D ROL_ENABLE_TESTS:BOOL=OFF \
-      -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
-      -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
-      -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+      -D Trilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF \
       -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
-      -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+      -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+      -D Trilinos_ENABLE_CXX11:BOOL=ON \
+      -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
+      -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
       -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
-      -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=OFF \
+      -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
 \
-      -D Trilinos_ENABLE_Amesos:BOOL=ON \
+      -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
+      -D Kokkos_ENABLE_Cuda_UVM:BOOL=OFF \
+      -D Kokkos_ENABLE_EXAMPLES:BOOL=OFF \
+      -D Kokkos_ENABLE_OpenMP:BOOL=ON \
+      -D Kokkos_ENABLE_Pthread:BOOL=OFF \
+      -D Kokkos_ENABLE_Serial:BOOL=ON \
+      -D Kokkos_ENABLE_TESTS:BOOL=ON \
+      -D TPL_ENABLE_Thrust:BOOL=OFF \
+      -D TPL_ENABLE_CUDA:BOOL=OFF \
+      -D TPL_ENABLE_CUSPARSE:BOOL=OFF \
+\
+      -D Amesos2_ENABLE_KLU2:BOOL=ON \
+      -D EpetraExt_USING_HDF5:BOOL=OFF \
+      -D Intrepid_ENABLE_TESTS:BOOL=OFF \
+      -D Intrepid2_ENABLE_TESTS:BOOL=OFF \
+      -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
+      -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="OPENMP" \
+      -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
+      -D Sacado_ENABLE_COMPLEX:BOOL=ON \
+      -D Teuchos_ENABLE_COMPLEX:BOOL=ON \
+      -D Tpetra_ENABLE_Kokkos_Refactor:BOOL=ON \
+      -D TPL_ENABLE_HWLOC:STRING=OFF \
+\
+      -D TPL_ENABLE_HDF5:BOOL=OFF \
+      -D TPL_ENABLE_Matio:BOOL=OFF \
+      -D TPL_ENABLE_Netcdf:BOOL=ON \
+      -D TPL_Netcdf_PARALLEL:BOOL=OFF \
+      -D TPL_ENABLE_X11:BOOL=OFF \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDFDIR}/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDFDIR}/lib \
+\
       -D Trilinos_ENABLE_Amesos2:BOOL=ON \
+      -D Trilinos_ENABLE_Amesos:BOOL=ON \
       -D Trilinos_ENABLE_Anasazi:BOOL=ON \
       -D Trilinos_ENABLE_AztecOO:BOOL=ON \
       -D Trilinos_ENABLE_Belos:BOOL=ON \
-      -D Teuchos_ENABLE_COMPLEX:BOOL=OFF \
-      -D Teuchos_ENABLE_LONG_LONG_INT:BOOL=ON \
+      -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
       -D Trilinos_ENABLE_Epetra:BOOL=ON \
       -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
-      -D Trilinos_ENABLE_FEI:BOOL=OFF\
-      -D Trilinos_ENABLE_Ifpack:BOOL=ON \
       -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
+      -D Trilinos_ENABLE_Ifpack:BOOL=ON \
       -D Trilinos_ENABLE_Intrepid:BOOL=ON \
       -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
       -D Trilinos_ENABLE_Kokkos:BOOL=ON \
-      -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosAlgorithms:BOOL=ON \
       -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
-      -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
-      -D Kokkos_ENABLE_Serial:BOOL=ON \
-      -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
-      -D Kokkos_ENABLE_Pthread:BOOL=OFF \
-      -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
+      -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosExample:BOOL=OFF \
       -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
       -D Trilinos_ENABLE_ML:BOOL=ON \
+      -D Trilinos_ENABLE_OpenMP:BOOL=ON \
       -D Trilinos_ENABLE_MueLu:BOOL=ON \
       -D Trilinos_ENABLE_NOX:BOOL=ON \
-      -D Trilinos_ENABLE_OptiPack:BOOL=ON \
       -D Trilinos_ENABLE_Pamgen:BOOL=ON \
       -D Trilinos_ENABLE_Phalanx:BOOL=ON \
       -D Trilinos_ENABLE_Piro:BOOL=ON \
-      -D Anasazi_ENABLE_RBGen:BOOL=OFF \
       -D Trilinos_ENABLE_ROL:BOOL=ON \
       -D Trilinos_ENABLE_Rythmos:BOOL=ON \
-      -D Trilinos_ENABLE_Sacado:BOOL=ON \
-      -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
-      -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
+      -D Trilinos_ENABLE_SEACAS:BOOL=ON \
       -D Trilinos_ENABLE_SEACASAprepro_lib:BOOL=ON \
-      -D Trilinos_ENABLE_Shards:BOOL=ON \
-      -D Trilinos_ENABLE_STKUnit_tests:BOOL=ON \
+      -D Trilinos_ENABLE_STKDoc_tests:BOOL=OFF \
       -D Trilinos_ENABLE_STKIO:BOOL=ON \
       -D Trilinos_ENABLE_STKMesh:BOOL=ON \
+      -D Trilinos_ENABLE_Sacado:BOOL=ON \
+      -D Trilinos_ENABLE_Shards:BOOL=ON \
       -D Trilinos_ENABLE_Stokhos:BOOL=ON \
       -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
+      -D Trilinos_ENABLE_TriKota:BOOL=OFF \
+      -D Trilinos_ENABLE_TESTS:BOOL=OFF \
       -D Trilinos_ENABLE_Teko:BOOL=ON \
       -D Trilinos_ENABLE_Teuchos:BOOL=ON \
       -D Trilinos_ENABLE_ThreadPool:BOOL=ON \
       -D Trilinos_ENABLE_Thyra:BOOL=ON \
-      -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
       -D Trilinos_ENABLE_Tpetra:BOOL=ON \
-      -D Trilinos_ENABLE_TrilinosCouplings:BOOL=ON \
-      -D Trilinos_ENABLE_TriKota:BOOL=OFF \
-      -D Trilinos_ENABLE_Zoltan:BOOL=ON\
-      -D Trilinos_ENABLE_Zoltan2:BOOL=ON\
-      -D Zoltan_ENABLE_ULONG_IDS:BOOL=ON \
-      -D ZOLTAN_BUILD_ZFDRIVE:BOOL=OFF \
-      -D Zoltan2_ENABLE_Experimental:BOOL=ON\
-      -D Trilinos_ENABLE_DEBUG:BOOL=OFF \
-\
-      -D Phalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
-      -D Stokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
-      -D Stratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
-      -D Tempus_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
-      -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
-      -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
-      -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
-\
-      -D Trilinos_EXTRA_REPOSITORIES="DataTransferKit" \
-      -D Trilinos_ENABLE_DataTransferKit:BOOL=ON \
-      -D DataTransferKit_ENABLE_DBC:BOOL=ON \
-      -D DataTransferKit_ENABLE_TESTS:BOOL=OFF \
-      -D DataTransferKit_ENABLE_EXAMPLES:BOOL=OFF \
+      -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
+      -D Trilinos_ENABLE_Zoltan:BOOL=ON \
 \
       -D Trilinos_ENABLE_Tempus:BOOL=ON \
       -D Tempus_ENABLE_TESTS:BOOL=OFF \
-      -D Tempus_ENABLE_EXAMPLES:BOOL=OFF \
+      -D Tempus_ENABLE_EXAMPLES:BOOL=ON \
       -D Tempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
-\
-      -D TPL_ENABLE_MOAB:BOOL=OFF \
-      -D TPL_ENABLE_Libmesh:BOOL=OFF \
-      -D TPL_Netcdf_PARALLEL:BOOL=OFF \
-\
-      -D Trilinos_ENABLE_CXX11:BOOL=ON \
-      -D TPL_FIND_SHARED_LIBS:BOOL=ON \
-      -D BUILD_SHARED_LIBS:BOOL=ON \
-      -D Trilinos_LINK_SEARCH_START_STATIC:BOOL=OFF \
-      -D MPI_EXEC=mpiexec \
 \
       -D TPL_ENABLE_yaml-cpp:BOOL=ON \
       -D yaml-cpp_INCLUDE_DIRS:PATH=/usr/include \
       -D yaml-cpp_LIBRARY_DIRS:PATH=/usr/lib64/ \
+\
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \

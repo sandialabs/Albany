@@ -4,7 +4,7 @@
 #  
 # Prototype script to checkout, compile Trilinos
 #
-# This script is executed from run_master.sh
+# This script is executed from run_tpetra.sh
 # 
 # ToDo:
 #        convert to Cmake
@@ -48,10 +48,14 @@ cd $TRILDIR/packages/TriKota
 export https_proxy="https://wwwproxy.ca.sandia.gov:80"
 export http_proxy="http://wwwproxy.ca.sandia.gov:80"
 #wget -nv --no-check-certificate https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-6.2-public.src.tar.gz -v
-wget -nv --no-check-certificate https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-6.5-public.src.tar.gz -v
-tar -zxvf dakota-6.5-public.src.tar.gz 
-rm -rf dakota-6.5-public.src.tar.gz 
-mv dakota-6.5.0.src Dakota
+#wget -nv --no-check-certificate https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-6.5-public.src.tar.gz -v
+wget -nv --no-check-certificate https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-6.8-release-public.src.tar.gz -v
+#tar -zxvf dakota-6.5-public.src.tar.gz 
+tar -zxvf dakota-6.8-release-public.src.tar.gz
+#rm -rf dakota-6.5-public.src.tar.gz 
+rm -rf dakota-6.8-release-public.src.tar.gz 
+#mv dakota-6.5.0.src Dakota
+mv dakota-6.8.0.src Dakota
 #apply Brian Adams' 11/17 patch
 cd Dakota/src
 cp /home/ikalash/nightlyAlbanyTests/dakota_data_types.hpp .
@@ -67,9 +71,7 @@ cp -r /home/ikalash/nightlyAlbanyTests/DataTransferKit-2.0.0 DataTransferKit
 #git clone git@github.com:ORNL-CEES/DTKData.git
 echo; echo "   ...finished DTK copy into Trilinos."
 
-
-
-#echo; echo "   Starting SCOREC checkout..."
-#git clone git@github.com:SCOREC/core.git SCOREC > $TRILOUTDIR/scorec_checkout.out 2>&1
-#cd $TRILDIR/SCOREC
-#echo; echo "   ...finished SCOREC checkout."
+echo; echo "   Starting SCOREC checkout..."
+git clone git@github.com:SCOREC/core.git SCOREC > $TRILOUTDIR/scorec_checkout.out 2>&1
+cd $TRILDIR/SCOREC
+echo; echo "   ...finished SCOREC checkout."
