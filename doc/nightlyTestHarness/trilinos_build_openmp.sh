@@ -13,7 +13,7 @@ echo "    Starting Trilinos cmake" ; date
 if [ $MPI_BUILD ] ; then
   cp $ALBDIR/doc/nightlyTestHarness/do-cmake-trilinos-mpi-openmp-camobap .
   source ./do-cmake-trilinos-mpi-openmp-camobap > $TRILOUTDIR/trilinos_openmp_cmake.out 2>&1
-else
+#else
 #  cp $ALBDIR/doc/nightlyTestHarness/do-cmake-trilinos-tpetra .
 #  source ./do-cmake-trilinos-tpetra-no-scorec > $TRILOUTDIR/trilinos_openmp_cmake.out 2>&1
 fi
