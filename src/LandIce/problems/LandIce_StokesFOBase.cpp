@@ -510,8 +510,20 @@ void StokesFOBase::setupEvaluatorRequests ()
       ss_build_interp_ev[ssName][bfc.get<std::string>("Given Field Variable Name")][InterpolationRequest::CELL_TO_SIDE] = true;
     }
 
+    bool has_GLF_resp = false;
+    if(this->params->isSublist("Response Functions")) {
+      auto resp = this->params->sublist("Response Functions",true);
+      int num_resps = resp.get("Number", 0);
+      for(int i=0; i<num_resps; i++) {
+        if(resp.get<std::string>(Albany::strint("Response", i)) == "Grounding Line Flux") {
+          has_GLF_resp = true;
+          break;
+        }
+      }
+    }
+
     // If zero on floating, we also need bed topography and thickness
-    if (bfc.get<bool>("Zero Beta On Floating Ice", false)) {
+    if (bfc.get<bool>("Zero Beta On Floating Ice", false) || has_GLF_resp) {
       ss_build_interp_ev[ssName][bed_topography_name][InterpolationRequest::QP_VAL      ] = true;
       ss_build_interp_ev[ssName][bed_topography_name][InterpolationRequest::CELL_TO_SIDE] = true;
 

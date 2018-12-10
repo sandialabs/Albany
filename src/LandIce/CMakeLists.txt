@@ -46,6 +46,7 @@
        evaluators/LandIce_ProlongateVector.cpp
        evaluators/LandIce_ResponseSurfaceVelocityMismatch.cpp
        evaluators/LandIce_ResponseSMBMismatch.cpp
+       evaluators/LandIce_ResponseGLFlux.cpp
        evaluators/LandIce_ResponseBoundarySquaredL2Norm.cpp
        evaluators/LandIce_ScatterResidual2D.cpp
        evaluators/LandIce_SimpleOperationEvaluator.cpp
@@ -184,6 +185,8 @@ ENDIF()
        evaluators/LandIce_ResponseBoundarySquaredL2Norm_Def.hpp
        evaluators/LandIce_ResponseSMBMismatch.hpp
        evaluators/LandIce_ResponseSMBMismatch_Def.hpp
+       evaluators/LandIce_ResponseGLFlux.hpp
+       evaluators/LandIce_ResponseGLFlux_Def.hpp
        evaluators/LandIce_ScatterResidual2D.hpp
        evaluators/LandIce_ScatterResidual2D_Def.hpp
        evaluators/LandIce_SharedParameter.hpp
