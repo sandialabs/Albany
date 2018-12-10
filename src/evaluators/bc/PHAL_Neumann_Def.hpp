@@ -670,6 +670,8 @@ calc_press(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
                           int local_side_id) const {
 
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
+  int numCells = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
+  int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
 
   using DynRankViewMeshScalarT = Kokkos::DynRankView<MeshScalarT, PHX::Device>;
   DynRankViewMeshScalarT side_normals = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells, numPoints, cellDims);
