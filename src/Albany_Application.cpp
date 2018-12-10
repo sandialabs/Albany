@@ -2731,7 +2731,7 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
       sensitivity_name << dist_param_name << "_sensitivity";
       if (distParamLib->has(sensitivity_name.str())) {
         auto sens_vec = createThyraVector(distParamLib->get(sensitivity_name.str())->vector());
-        scale_and_update(sens_vec,0.0,fpV->col(0),1.0);
+        sens_vec->update(1.0, *fpV->col(0));
         distParamLib->get(sensitivity_name.str())->scatter();
       }
     } else {
@@ -2841,7 +2841,9 @@ void Albany::Application::evaluateResponseDistParamDeriv(
     // TODO: make distParamLib Thyra
     if (distParamLib->has(sensitivity_name.str())) {
       auto sensitivity_vec = createThyraVector(distParamLib->get(sensitivity_name.str())->vector());
-      sensitivity_vec->update(1.0, *dg_dp);
+      // sensitivity_vec = dg_dp->col(0).
+      // FIXME This is not correct if the part of sensitivity due to the Lagrange multiplier (fpV) is computed first.
+      scale_and_update(sensitivity_vec,0.0,dg_dp->col(0),1.0);
       distParamLib->get(sensitivity_name.str())->scatter();
     }
   }
