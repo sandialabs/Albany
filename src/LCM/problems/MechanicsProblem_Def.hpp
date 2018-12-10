@@ -546,9 +546,6 @@ MechanicsProblem::constructEvaluators(
               false, dof_names, offset));
     }
 
-    fm0.template registerEvaluator<EvalT>(
-        evalUtils.constructGatherCoordinateVectorEvaluator());
-
     if (!surface_element) {
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
@@ -562,13 +559,6 @@ MechanicsProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFGradInterpolationEvaluator(
               dof_names[0], offset));
-
-      fm0.template registerEvaluator<EvalT>(
-          evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
-
-      fm0.template registerEvaluator<EvalT>(
-          evalUtils.constructComputeBasisFunctionsEvaluator(
-              cellType, intrepidBasis, cubature));
     }
 
     fm0.template registerEvaluator<EvalT>(
@@ -632,9 +622,6 @@ MechanicsProblem::constructEvaluators(
               false, dof_names, offset));
     }
 
-    fm0.template registerEvaluator<EvalT>(
-        evalUtils.constructGatherCoordinateVectorEvaluator());
-
     if (!surface_element) {
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
@@ -648,13 +635,6 @@ MechanicsProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFGradInterpolationEvaluator(
               dof_names[0], offset));
-
-      fm0.template registerEvaluator<EvalT>(
-          evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
-
-      fm0.template registerEvaluator<EvalT>(
-          evalUtils.constructComputeBasisFunctionsEvaluator(
-              cellType, intrepidBasis, cubature));
     }
 
     fm0.template registerEvaluator<EvalT>(
@@ -673,9 +653,6 @@ MechanicsProblem::constructEvaluators(
         evalUtils.constructGatherSolutionEvaluator_noTransient(
             false, dof_names, offset));
 
-    fm0.template registerEvaluator<EvalT>(
-        evalUtils.constructGatherCoordinateVectorEvaluator());
-
     if (!surface_element) {
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
@@ -683,13 +660,6 @@ MechanicsProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFGradInterpolationEvaluator(
               dof_names[0], offset));
-
-      fm0.template registerEvaluator<EvalT>(
-          evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
-
-      fm0.template registerEvaluator<EvalT>(
-          evalUtils.constructComputeBasisFunctionsEvaluator(
-              cellType, intrepidBasis, cubature));
     }
 
     fm0.template registerEvaluator<EvalT>(
@@ -709,9 +679,6 @@ MechanicsProblem::constructEvaluators(
         evalUtils.constructGatherSolutionEvaluator_noTransient(
             false, dof_names, offset));
 
-    fm0.template registerEvaluator<EvalT>(
-        evalUtils.constructGatherCoordinateVectorEvaluator());
-
     if (!surface_element) {
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
@@ -719,13 +686,6 @@ MechanicsProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFGradInterpolationEvaluator(
               dof_names[0], offset));
-
-      fm0.template registerEvaluator<EvalT>(
-          evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
-
-      fm0.template registerEvaluator<EvalT>(
-          evalUtils.constructComputeBasisFunctionsEvaluator(
-              cellType, intrepidBasis, cubature));
     }
 
     fm0.template registerEvaluator<EvalT>(
@@ -762,8 +722,6 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(
         evalUtils.constructGatherSolutionEvaluator_noTransient(
             false, dof_names, offset));
-    fm0.template registerEvaluator<EvalT>(
-        evalUtils.constructGatherCoordinateVectorEvaluator());
 
     if (!surface_element) {
       fm0.template registerEvaluator<EvalT>(
@@ -772,13 +730,6 @@ MechanicsProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFGradInterpolationEvaluator(
               dof_names[0], offset));
-
-      fm0.template registerEvaluator<EvalT>(
-          evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
-
-      fm0.template registerEvaluator<EvalT>(
-          evalUtils.constructComputeBasisFunctionsEvaluator(
-              cellType, intrepidBasis, cubature));
     }
 
     fm0.template registerEvaluator<EvalT>(
@@ -826,13 +777,6 @@ MechanicsProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFGradInterpolationEvaluator(
               dof_names[0], offset));
-
-      fm0.template registerEvaluator<EvalT>(
-          evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
-
-      fm0.template registerEvaluator<EvalT>(
-          evalUtils.constructComputeBasisFunctionsEvaluator(
-              cellType, intrepidBasis, cubature));
     }
 
     fm0.template registerEvaluator<EvalT>(
@@ -880,13 +824,6 @@ MechanicsProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFGradInterpolationEvaluator(
               dof_names[0], offset));
-
-      fm0.template registerEvaluator<EvalT>(
-          evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
-
-      fm0.template registerEvaluator<EvalT>(
-          evalUtils.constructComputeBasisFunctionsEvaluator(
-              cellType, intrepidBasis, cubature));
     }
 
     fm0.template registerEvaluator<EvalT>(
@@ -2181,7 +2118,12 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
 
     // Output QP pore pressure
-    bool const output_ip = material_db_->getElementBlockParam<bool>(
+    // IKT: commenting this out b/c it is a duplicate of earlier writing of porePressure
+    // to the output.  The current DAG rules in Trilinos as of 12/6/2018 do 
+    // not allow for such duplicates.  If Pore_Pressure at IPs is needed,
+    // one needs to create a different name for this field and uncomment code below.
+
+    /*bool const output_ip = material_db_->getElementBlockParam<bool>(
         eb_name, "Output IP" + porePressure, false);
 
     p = stateMgr.registerStateVariable(
@@ -2195,7 +2137,7 @@ MechanicsProblem::constructEvaluators(
         output_ip);
 
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.template registerEvaluator<EvalT>(ev);*/
   }
 
   if (have_pore_pressure_eq_ && surface_element) {
