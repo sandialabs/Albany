@@ -157,7 +157,7 @@ evaluateResponseImpl (
     const Thyra_Vector& x,
 		Thyra_Vector& g)
 {
-  if (one.is_null()) {
+  if (one.is_null() || (one->space()->dim() != x.space()->dim())) {
     one = Thyra::createMember(x.space());
     one->assign(1.0);
   }
