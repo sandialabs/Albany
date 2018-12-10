@@ -53,9 +53,9 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   this->addDependentField(Pi);
   this->addDependentField(Temperature);
   this->addDependentField(Velocity);
+  this->addDependentField(etadot);
 
   this->addEvaluatedField(etadotdT);
-  this->addEvaluatedField(etadot);
   this->addEvaluatedField(etadotdVelx);
   this->addEvaluatedField(Pidot);
 
