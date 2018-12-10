@@ -172,10 +172,12 @@ Aeras::ShallowWaterProblemNoAD::constructEvaluators(
    // Define Field Names
 
   Teuchos::ArrayRCP<std::string> dof_names(1);
+  Teuchos::ArrayRCP<std::string> dof_names_dummy(1);
   Teuchos::ArrayRCP<std::string> dof_names_dot(1);
   Teuchos::ArrayRCP<std::string> dof_names_dotdot(1);
   Teuchos::ArrayRCP<std::string> resid_names(1);
   dof_names[0] = "Flow State";
+  dof_names_dummy[0] = "Flow State Dummy";
   dof_names_dot[0] = dof_names[0]+"_dot";
   dof_names_dotdot[0] = dof_names[0]+"_dotdot";
   resid_names[0] = "ShallowWater Residual";
@@ -191,7 +193,7 @@ Aeras::ShallowWaterProblemNoAD::constructEvaluators(
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot));
   if (explicitHV) fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructGatherSolutionEvaluator_withAcceleration(true, dof_names, Teuchos::null, dof_names_dotdot));
+     (evalUtils.constructGatherSolutionEvaluator_withAcceleration(true, dof_names_dummy, Teuchos::null, dof_names_dotdot));
    
   if (explicitHV) fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dotdot[0]));
