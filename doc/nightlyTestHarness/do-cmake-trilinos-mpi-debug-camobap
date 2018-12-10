@@ -124,7 +124,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_TriKota:BOOL=OFF \
       -D Trilinos_ENABLE_Zoltan:BOOL=ON\
       -D Trilinos_ENABLE_Zoltan2:BOOL=ON\
-      -D Zoltan_ENABLE_ULONG_IDS:BOOL=ON \
+      -D Zoltan_ENABLE_ULONG_IDS:BOOL=OFF \
       -D ZOLTAN_BUILD_ZFDRIVE:BOOL=OFF \
       -D Zoltan2_ENABLE_Experimental:BOOL=ON\
       -D Trilinos_ENABLE_DEBUG:BOOL=OFF \
@@ -162,10 +162,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D BUILD_SHARED_LIBS:BOOL=ON \
       -D Trilinos_LINK_SEARCH_START_STATIC:BOOL=OFF \
       -D MPI_EXEC=mpiexec \
-\
-      -D TPL_ENABLE_yaml-cpp:BOOL=ON \
-      -D yaml-cpp_INCLUDE_DIRS:PATH=/usr/include \
-      -D yaml-cpp_LIBRARY_DIRS:PATH=/usr/lib64/ \
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \

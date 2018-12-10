@@ -144,11 +144,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Tempus_ENABLE_TESTS:BOOL=OFF \
       -D Tempus_ENABLE_EXAMPLES:BOOL=ON \
       -D Tempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
-\
-      -D TPL_ENABLE_yaml-cpp:BOOL=ON \
-      -D yaml-cpp_INCLUDE_DIRS:PATH=/usr/include \
-      -D yaml-cpp_LIBRARY_DIRS:PATH=/usr/lib64/ \
-\
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \
