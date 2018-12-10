@@ -546,6 +546,11 @@ MechanicsProblem::constructEvaluators(
               false, dof_names, offset));
     }
 
+    if (have_mech_eq_ == false) { 
+       fm0.template registerEvaluator<EvalT>(
+          evalUtils.constructGatherCoordinateVectorEvaluator());
+    }
+
     if (!surface_element) {
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
@@ -559,6 +564,13 @@ MechanicsProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFGradInterpolationEvaluator(
               dof_names[0], offset));
+
+      if (have_mech_eq_ == false) { 
+        fm0.template registerEvaluator<EvalT>(
+            evalUtils.constructComputeBasisFunctionsEvaluator(
+                cellType, intrepidBasis, cubature));
+      }
+
     }
 
     fm0.template registerEvaluator<EvalT>(
