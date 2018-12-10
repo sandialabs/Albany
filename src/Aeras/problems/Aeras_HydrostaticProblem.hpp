@@ -863,17 +863,6 @@ Aeras::HydrostaticProblem::constructEvaluators(
   for (int t=0; t<numTracers; ++t) {
     RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic Tracer Resid"));
    
-    {
-      RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation "+dof_names_tracers[t]));
-      // Input
-      p->set<string>("Variable Name", dof_names_tracers[t]);
-      p->set<string>("Gradient BF Name", "Grad BF");
-      p->set<string>("Gradient Variable Name", dof_names_tracers_gradient[t]);
-    
-      ev = rcp(new Aeras::DOFGradInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
-
     {//Level u*Tracer
       RCP<ParameterList> p = rcp(new ParameterList("UTracer"));
       p->set<string>("Velocity",    "Velocity");
