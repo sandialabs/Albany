@@ -188,7 +188,7 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<std::string>("New Coords Name",  Albany::coord_vec_name);
       p->set<std::string>("Thickness Name",   "ice_thickness");
       p->set<std::string>("Top Surface Name", "surface_height");
-      p->set<std::string>("Bed Topography Name", "observed_bed_topography");
+      p->set<std::string>("Bed Topography Name", "bed_topography");
       p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
 
       ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingTop<EvalT,PHAL::AlbanyTraits>(*p, dl));

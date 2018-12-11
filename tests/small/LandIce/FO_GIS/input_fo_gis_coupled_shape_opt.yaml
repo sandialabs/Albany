@@ -57,12 +57,12 @@ ANONYMOUS:
     NumLayers: 5
     Thickness Field Name: ice_thickness
     Use Glimmer Spacing: true
-    Extrude Basal Node Fields: [ice_thickness, surface_height]
-    Basal Node Fields Ranks: [1, 1]
+    Extrude Basal Node Fields: [ice_thickness, surface_height, bed_topography]
+    Basal Node Fields Ranks: [1, 1, 1]
     Interpolate Basal Node Layered Fields: [temperature]
     Basal Node Layered Fields Ranks: [1]
     Required Fields Info: 
-      Number Of Fields: 3
+      Number Of Fields: 4
       Field 0: 
         Field Name: ice_thickness
         Field Type: Node Scalar
@@ -75,6 +75,10 @@ ANONYMOUS:
         Field Name: temperature
         Field Type: Node Scalar
         Field Origin: Mesh
+      Field 3: 
+        Field Name: bed_topography
+        Field Type: Node Scalar
+        Field Origin: Mesh
     Side Set Discretizations: 
       Side Sets: [basalside, upperside]
       basalside: 
@@ -85,7 +89,7 @@ ANONYMOUS:
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Use Serial Mesh: true
         Required Fields Info: 
-          Number Of Fields: 4
+          Number Of Fields: 5
           Field 0: 
             Field Name: ice_thickness
             Field Type: Node Scalar
@@ -107,6 +111,11 @@ ANONYMOUS:
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/basal_friction.ascii
+          Field 4: 
+            Field Name: bed_topography
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/thickness.ascii
       upperside: 
         Method: SideSetSTK
         Number Of Time Derivatives: 0
@@ -126,9 +135,10 @@ ANONYMOUS:
             File Name: ../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii
   Regression Results: 
     Number of Comparisons: 1
-    Test Values: [1.07403987796000004e+08]
-    Number of Sensitivity Comparisons: 1
-    Sensitivity Test Values 0: [1.86804953865999989e+07]
+    Test Values: [1.075217738043e+08]
+    Sensitivity Comparisons 0: 
+      Number of Sensitivity Comparisons: 1
+      Sensitivity Test Values 0: [1.870353747777e+07]
     Relative Tolerance: 1.00000000000000005e-04
     Absolute Tolerance: 1.00000000000000005e-04
   Piro: 
