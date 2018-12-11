@@ -293,6 +293,8 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   p->set<std::string>("Thickness Increment Name", "Extruded " + dof_names[1]);
   p->set<std::string>("Past Thickness Name", "ice_thickness");
   p->set<std::string>("Top Surface Name", "surface_height");
+  p->set<std::string>("Bed Topography Name", "bed_topography");
+  p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
 
   ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingTop<EvalT,PHAL::AlbanyTraits>(*p, dl));
   fm0.template registerEvaluator<EvalT>(ev);
@@ -306,7 +308,9 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   p->set<std::string>("Thickness Lower Bound Name",   "ice_thickness_lowerbound");
   p->set<std::string>("Thickness Upper Bound Name",   "ice_thickness_upperbound");
   p->set<std::string>("Observed Bed Topography Name",   "observed_bed_topography");
+  p->set<std::string>("Updated Bed Topography Name", "bed_topography");
   p->set<std::string>("Observed Thickness Name",   "observed_ice_thickness");
+  p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
 
   ev = Teuchos::rcp(new LandIce::MapThickness<EvalT,PHAL::AlbanyTraits>(*p, dl));
   fm0.template registerEvaluator<EvalT>(ev);

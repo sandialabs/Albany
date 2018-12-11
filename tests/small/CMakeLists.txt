@@ -63,7 +63,9 @@ IF(ALBANY_DEMO_PDES)
     add_subdirectory(CahnHillElast2D)
     add_subdirectory(NSPoiseuille2D)
     add_subdirectory(NSRayleighBernard2D)
-    add_subdirectory(NSVortexShedding2D)
+    IF(NOT Kokkos_ENABLE_Cuda) # Currently takes too long to run on Ride
+      add_subdirectory(NSVortexShedding2D)
+    ENDIF()
     add_subdirectory(PNP)
   ENDIF(ALBANY_SEACAS)
 

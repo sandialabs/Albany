@@ -71,7 +71,7 @@ ANONYMOUS:
     NumLayers: 5
     Use Glimmer Spacing: true
     Thickness Field Name: ice_thickness
-    Extrude Basal Node Fields: [ice_thickness, observed_surface_height, observed_bed_topography]
+    Extrude Basal Node Fields: [ice_thickness, observed_surface_height, bed_topography]
     Basal Node Fields Ranks: [1, 1, 1]
     Interpolate Basal Node Layered Fields: [temperature]
     Basal Node Layered Fields Ranks: [1]
@@ -90,7 +90,7 @@ ANONYMOUS:
         Field Type: Node Scalar
         Field Origin: Mesh
       Field 3: 
-        Field Name: observed_bed_topography
+        Field Name: bed_topography
         Field Type: Node Scalar
         Field Origin: Mesh
     Side Set Discretizations: 
@@ -146,7 +146,7 @@ ANONYMOUS:
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/surface_mass_balance_RMS.ascii
           Field 8: 
-            Field Name: observed_bed_topography
+            Field Name: bed_topography
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/bed_topography.ascii
