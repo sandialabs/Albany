@@ -654,13 +654,19 @@ calc_dudn_radiate(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
 
   const ScalarT& dof_value = robin_vals[0];
+  auto dof_value4 = dof_value*dof_value*dof_value*dof_value; 
   const ScalarT& coeff = robin_vals[1];
   const ScalarT& jump = robin_vals[2];
 
-  for(int cell = 0; cell < numCells; cell++)
-    for(int pt = 0; pt < numPoints; pt++)
-      for(int dim = 0; dim < numDOFsSet; dim++)
-        qp_data_returned(cell, pt, dim) = coeff*(std::pow(dof_side(cell,pt,dim),4) - std::pow(dof_value,4));
+  for(int cell = 0; cell < numCells; cell++) {
+    for(int pt = 0; pt < numPoints; pt++) {
+      for(int dim = 0; dim < numDOFsSet; dim++) {
+        auto val = dof_side(cell,pt,dim); 
+        auto val4 = val*val*val*val; 
+        qp_data_returned(cell, pt, dim) = coeff*(val4 - dof_value4);
+      }
+    }
+  }
 }
 
 
