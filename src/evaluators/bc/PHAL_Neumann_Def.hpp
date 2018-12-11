@@ -556,6 +556,8 @@ void NeumannBase<EvalT, Traits>::
 calc_traction_components(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned) const {
 
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
+  int numCells = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
+
   for(int cell = 0; cell < numCells; cell++)
     for(int pt = 0; pt < numPoints; pt++)
       for(int dim = 0; dim < numDOFsSet; dim++)
