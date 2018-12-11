@@ -157,7 +157,18 @@ evaluateResponseImpl (
     const Thyra_Vector& x,
 		Thyra_Vector& g)
 {
-  if (one.is_null() || (one->space()->dim() != x.space()->dim())) {
+  //IKT, 12/11/19: I had to add these conversions to TpetraVectors b/c I do 
+  //not believe there is a method equivalent to getLocalLength in Thyra.
+  //The checks done here with the local length are needed for problems
+  //where the mesh can adapt. 
+  int one_ll = 0; 
+  if (!one.is_null()) {
+    auto oneTpetraVector = ConverterT::getConstTpetraVector(one); 
+    one_ll = oneTpetraVector->getLocalLength(); 
+  }
+  auto xTpetraVector = ConverterT::getConstTpetraVector(Teuchos::rcpFromRef(x)); 
+  int x_ll = xTpetraVector->getLocalLength(); 
+  if (one.is_null() || (x_ll != one_ll)) {
     one = Thyra::createMember(x.space());
     one->assign(1.0);
   }
