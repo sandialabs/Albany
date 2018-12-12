@@ -38,8 +38,8 @@ LCM:
     Number Of Time Derivatives: 2
     Exodus Write Interval: 100
   Regression Results:
-    Number of Comparisons: 4
-    Test Values: [0.000000000000e+00, 2.220446049250e-19, 5.024914413594e-03, -5.024914413594e-03]
+    Number of Comparisons: 3
+    Test Values: [2.220446049250e-19, 5.024914413594e-03, -5.024914413594e-03]
     Relative Tolerance: 1.0e-8
     Absolute Tolerance: 1.0e-8
   Piro:

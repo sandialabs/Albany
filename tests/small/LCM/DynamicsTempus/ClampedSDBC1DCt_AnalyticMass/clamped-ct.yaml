@@ -44,8 +44,8 @@ ANONYMOUS:
     Number Of Time Derivatives: 2
     Exodus Write Interval: 10
   Regression Results: 
-    Number of Comparisons: 4
-    Test Values: [ 0.000000000000e+00, 1.670250391234e-04, 5.597639713741e-08, -6.671399005845e-08]
+    Number of Comparisons: 3
+    Test Values: [1.670250391234e-04, 5.597639713741e-08, -6.671399005845e-08]
     Relative Tolerance: 1.0e-7
     Absolute Tolerance: 1.0e-7
   Piro:
