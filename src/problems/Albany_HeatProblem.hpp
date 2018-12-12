@@ -275,8 +275,9 @@ Albany::HeatProblem::constructEvaluators(
     ev = evalUtils.constructGatherScalarNodalParameter(stateName,fieldName);
     fm0.template registerEvaluator<EvalT>(ev);
 
-    //Scalar Nodal parameter is stored as a ParamScalarT, while the residual evaluator expect a ScalarT, hence we need to convert the field into a ScalarT 
-    if(typeid(typename EvalT::ScalarT)!=typeid(typename EvalT::ParamScalarT)) {
+    // Scalar Nodal parameter is stored as a ParamScalarT, while the residual evaluator expect a ScalarT.
+    // Hence, if ScalarT!=ParamScalarT, we need to convert the field into a ScalarT 
+    if(!std::is_same<typename EvalT::ScalarT,typename EvalT::ParamScalarT>::value) {
       p->set<Teuchos::RCP<PHX::DataLayout> >("Data Layout", dl->node_scalar);
       p->set<std::string>("Field Name", fieldName);
       ev = Teuchos::rcp(new PHAL::ConvertFieldTypePSTtoST<EvalT,PHAL::AlbanyTraits>(*p));
