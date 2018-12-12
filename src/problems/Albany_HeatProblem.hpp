@@ -276,16 +276,17 @@ Albany::HeatProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
 
     //Scalar Nodal parameter is stored as a ParamScalarT, while the residual evaluator expect a ScalarT, hence we need to convert the field into a ScalarT 
-    p->set<Teuchos::RCP<PHX::DataLayout> >("Data Layout", dl->node_scalar);
-    p->set<std::string>("Field Name", fieldName);
-    ev = Teuchos::rcp(new PHAL::ConvertFieldTypePSTtoST<EvalT,PHAL::AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
+    if(typeid(typename EvalT::ScalarT)!=typeid(typename EvalT::ParamScalarT)) {
+      p->set<Teuchos::RCP<PHX::DataLayout> >("Data Layout", dl->node_scalar);
+      p->set<std::string>("Field Name", fieldName);
+      ev = Teuchos::rcp(new PHAL::ConvertFieldTypePSTtoST<EvalT,PHAL::AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
 
     fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator(fieldName));
 
     stateName = "thermal_conductivity_sensitivity";
     p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
-    fm0.template registerEvaluator<EvalT>(ev);
   }
 
 // Check and see if a source term is specified for this problem in the main input file.
