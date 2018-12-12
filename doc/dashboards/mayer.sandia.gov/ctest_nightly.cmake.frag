@@ -427,6 +427,7 @@ if (BUILD_ALBANY)
     "-DALBANY_TRILINOS_DIR:FILEPATH=/mscratch/albany/nightlyCDashTrilinos/build/TrilinosInstall"
     "-DENABLE_LCM:BOOL=ON"
     "-DENABLE_ATO:BOOL=ON"
+    "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_SCOREC:BOOL=OFF"
     "-DENABLE_ASCR:BOOL=OFF"
     "-DENABLE_AERAS:BOOL=ON"
