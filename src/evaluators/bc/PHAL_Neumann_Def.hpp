@@ -400,44 +400,37 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     cubatureSide[side]->getCubature(cubPointsSide, cubWeightsSide);
 
     // Copy the coordinate data over to a temp container
-    for (std::size_t node=0; node < numNodes; ++node)
-      for (std::size_t dim=0; dim < cellDims; ++dim)
-        for (std::size_t iCell=0; iCell < numCells_; ++iCell)
+    for (std::size_t iCell=0; iCell < numCells_; ++iCell) {
+      for (std::size_t node=0; node < numNodes; ++node) {
+        for (std::size_t dim=0; dim < cellDims; ++dim) {
           physPointsCell(iCell, node, dim) = coordVec(cellVec(iCell),node,dim);
+    }}}
 
     // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
-    Intrepid2::CellTools<PHX::Device>::mapToReferenceSubcell
-      (refPointsSide, cubPointsSide, sideDims, side, *cellType);
+    ICT::mapToReferenceSubcell(refPointsSide, cubPointsSide, sideDims, side, *cellType);
 
     // Calculate side geometry
-    Intrepid2::CellTools<PHX::Device>::setJacobian
-       (jacobianSide, refPointsSide, physPointsCell, *cellType);
+    ICT::setJacobian(jacobianSide, refPointsSide, physPointsCell, *cellType);
 
-    Intrepid2::CellTools<PHX::Device>::setJacobianDet(jacobianSide_det, jacobianSide);
+    ICT::setJacobianDet(jacobianSide_det, jacobianSide);
 
     if (sideDims < 2) { //for 1 and 2D, get weighted edge measure
-      Intrepid2::FunctionSpaceTools<PHX::Device>::computeEdgeMeasure
-        (weighted_measure, jacobianSide, cubWeightsSide, side, *cellType, temporary_buffer);
-    }
-    else { //for 3D, get weighted face measure
-      Intrepid2::FunctionSpaceTools<PHX::Device>::computeFaceMeasure
-        (weighted_measure, jacobianSide, cubWeightsSide, side, *cellType, temporary_buffer);
+      IFST::computeEdgeMeasure(weighted_measure, jacobianSide, cubWeightsSide, side, *cellType, temporary_buffer);
+    } else { //for 3D, get weighted face measure
+      IFST::computeFaceMeasure(weighted_measure, jacobianSide, cubWeightsSide, side, *cellType, temporary_buffer);
     }
 
     // Values of the basis functions at side cubature points, in the reference parent cell domain
     intrepidBasis->getValues(basis_refPointsSide, refPointsSide, Intrepid2::OPERATOR_VALUE);
 
     // Transform values of the basis functions
-    Intrepid2::FunctionSpaceTools<PHX::Device>::HGRADtransformVALUE
-      (trans_basis_refPointsSide, basis_refPointsSide);
+    IFST::HGRADtransformVALUE(trans_basis_refPointsSide, basis_refPointsSide);
 
     // Multiply with weighted measure
-    Intrepid2::FunctionSpaceTools<PHX::Device>::multiplyMeasure
-      (weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
+    IFST::multiplyMeasure(weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
     // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
-    Intrepid2::CellTools<PHX::Device>::mapToPhysicalFrame
-      (physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
+    ICT::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
 
 
     // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
@@ -446,21 +439,24 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       dofSide = Kokkos::createViewWithType<DynRankViewScalarT>(dofSide_buffer, dofSide_buffer.data(), numCells_, numQPsSide, numDOFsSet);
 
       Kokkos::deep_copy(dofCell, 0.0);
-      for (std::size_t node=0; node < numNodes; ++node)
-        for (std::size_t iCell=0; iCell < numCells_; ++iCell)
-          for (std::size_t icomp=0; icomp < numDOFsSet; ++icomp)
+      for (std::size_t iCell=0; iCell < numCells_; ++iCell) {
+        for (std::size_t node=0; node < numNodes; ++node) {
+          for (std::size_t icomp=0; icomp < numDOFsSet; ++icomp) {
             if (vectorDOF) {
               dofCell(iCell, node, icomp) = dof(cellVec(iCell), node, this->offset[icomp]);
             } else {
               dofCell(iCell, node, icomp) = dof(cellVec(iCell), node);
             }
+      }}}
 
       // This is needed, since evaluate currently sums into
       Kokkos::deep_copy(dofSide, 0.0);
 
-      // Get dof at cubature points of appropriate side (see DOFInterpolation evaluator)
-      Intrepid2::FunctionSpaceTools<PHX::Device>::
-        evaluate(dofSide, dofCell, trans_basis_refPointsSide);
+      for (std::size_t icomp=0; icomp < numDOFsSet; ++icomp) {
+        IFST::evaluate(Kokkos::subview(dofSide,Kokkos::ALL(),Kokkos::ALL(),icomp),
+                       Kokkos::subview(dofCell,Kokkos::ALL(),Kokkos::ALL(),icomp),
+                       trans_basis_refPointsSide);
+      }
     }
 
     // Transform the given BC data to the physical space QPs in each side (elem_side)
@@ -556,9 +552,9 @@ void NeumannBase<EvalT, Traits>::
 calc_traction_components(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned) const {
 
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
-  int numCells = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
+  int numCells_ = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
 
-  for(int cell = 0; cell < numCells; cell++)
+  for(int cell = 0; cell < numCells_; cell++)
     for(int pt = 0; pt < numPoints; pt++)
       for(int dim = 0; dim < numDOFsSet; dim++)
         qp_data_returned(cell, pt, dim) = -dudx[dim];
@@ -593,16 +589,14 @@ calc_gradu_dotn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_return
         grad_T(side, pt, dim) = dudx[dim]; // k grad T in the x direction goes in the x spot, and so on
 
   // for this side in the reference cell, get the components of the normal direction vector
-  Intrepid2::CellTools<PHX::Device>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
-    local_side_id, celltopo);
+  ICT::getPhysicalSideNormals(side_normals, jacobian_side_refcell,local_side_id, celltopo);
 
   // scale normals (unity)
-  Intrepid2::RealSpaceTools<PHX::Device>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
-  Intrepid2::FunctionSpaceTools<PHX::Device>::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
-    side_normals, true);
+  IRST::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
+  IFST::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths, side_normals, true);
 
   // take grad_T dotted with the unit normal
-//  Intrepid2::FunctionSpaceTools<PHX::Device>::dotMultiplyDataData(qp_data_returned,
+//  IFST::dotMultiplyDataData(qp_data_returned,
 //    grad_T, side_normals);
   for(int cell = 0; cell < numCells; cell++)
     for(int pt = 0; pt < numPoints; pt++)
@@ -652,19 +646,22 @@ calc_dudn_radiate(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
                 const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side) const {
 
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
+  int numCells_ = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
 
   const ScalarT& dof_value = robin_vals[0];
   const ScalarT dof_value4 = dof_value*dof_value*dof_value*dof_value; 
   const ScalarT& coeff = robin_vals[1];
+  const ScalarT& jump = robin_vals[2];
 
-  for (int cell = 0; cell < numCells; cell++) {
-    for (int pt = 0; pt < numPoints; pt++) {
-      for (int dim = 0; dim < numDOFsSet; dim++) {
-        qp_data_returned(cell, pt, dim) = coeff*(dof_side(cell,pt,dim)*dof_side(cell,pt,dim)*dof_side(cell,pt,dim)*dof_side(cell,pt,dim) - dof_value4);
+  for(int cell = 0; cell < numCells_; cell++) {
+    for(int pt = 0; pt < numPoints; pt++) {
+      for(int dim = 0; dim < numDOFsSet; dim++) {
+        auto val = dof_side(cell,pt,dim); 
+        auto val4 = val*val*val*val; 
+        qp_data_returned(cell, pt, dim) = coeff*(val4 - dof_value4);
       }
     }
   }
-
 }
 
 
@@ -676,24 +673,20 @@ calc_press(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
                           int local_side_id) const {
 
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
-  int numCells = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
-  int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
+  int numCells_ = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
 
   using DynRankViewMeshScalarT = Kokkos::DynRankView<MeshScalarT, PHX::Device>;
   DynRankViewMeshScalarT side_normals = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells, numPoints, cellDims);
   DynRankViewMeshScalarT normal_lengths = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
-  Intrepid2::CellTools<PHX::Device>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
-    local_side_id, celltopo);
-
+  ICT::getPhysicalSideNormals(side_normals, jacobian_side_refcell, local_side_id, celltopo);
 
   // scale normals (unity)
-  Intrepid2::RealSpaceTools<PHX::Device>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
-  Intrepid2::FunctionSpaceTools<PHX::Device>::scalarMultiplyDataData(side_normals, normal_lengths,
-    side_normals, true);
+  IRST::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
+  IFST::scalarMultiplyDataData(side_normals, normal_lengths, side_normals, true);
 
-  for(int cell = 0; cell < numCells; cell++)
+  for(int cell = 0; cell < numCells_; cell++)
     for(int pt = 0; pt < numPoints; pt++)
       for(int dim = 0; dim < numDOFsSet; dim++)
         qp_data_returned(cell, pt, dim) = const_val * side_normals(cell, pt, dim);
@@ -711,22 +704,21 @@ calc_closed_form(       Kokkos::DynRankView<ScalarT, PHX::Device>    & qp_data_r
 {
   // How many QPs per cell?
   int numPoints = qp_data_returned.dimension( 1);
+  int numCells_ = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
 
   using DynRankViewMeshScalarT = Kokkos::DynRankView<MeshScalarT, PHX::Device>;
   DynRankViewMeshScalarT side_normals =
-          Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells, numPoints, cellDims);
+          Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells_, numPoints, cellDims);
   DynRankViewMeshScalarT normal_lengths =
-          Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells, numPoints);
+          Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells_, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
-  Intrepid2::CellTools<PHX::Device>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
-    local_side_id, celltopo);
+  ICT::getPhysicalSideNormals(side_normals, jacobian_side_refcell, local_side_id, celltopo);
   // scale normals (unity)
-  Intrepid2::RealSpaceTools<PHX::Device>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
-  Intrepid2::FunctionSpaceTools<PHX::Device>::scalarMultiplyDataData(side_normals, normal_lengths,
-    side_normals, true);
+  IRST::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
+  IFST::scalarMultiplyDataData(side_normals, normal_lengths,side_normals, true);
 
-  for(int cell = 0; cell < numCells; cell++)
+  for(int cell = 0; cell < numCells_; cell++)
   {
     for(int pt = 0; pt < numPoints; pt++)
     {

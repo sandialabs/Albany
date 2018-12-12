@@ -56,6 +56,10 @@ public:
 
 protected:
 
+  using ICT = Intrepid2::CellTools<PHX::Device>;
+  using IRST = Intrepid2::RealSpaceTools<PHX::Device>;
+  using IFST = Intrepid2::FunctionSpaceTools<PHX::Device>;
+
   const Teuchos::RCP<Albany::Layouts>& dl;
   const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs;
 
