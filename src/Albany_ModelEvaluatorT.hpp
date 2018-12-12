@@ -151,6 +151,9 @@ class ModelEvaluatorT
   //! Whether the problem supplies its own preconditioner
   bool supplies_prec;
 
+  //! Boolean marking whether Tempus is used 
+  bool use_tempus{false}; 
+
   //@}
 
  protected:

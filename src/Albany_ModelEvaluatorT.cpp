@@ -47,6 +47,9 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
   Teuchos::ParameterList& problemParams   = appParams->sublist("Problem");
   Teuchos::ParameterList& parameterParams = problemParams.sublist("Parameters");
 
+  const std::string soln_method = problemParams.get("Solution Method", "Steady"); 
+  if (soln_method == "Transient Tempus") use_tempus = true; 
+
   num_param_vecs = parameterParams.get("Number of Parameter Vectors", 0);
   bool using_old_parameter_list = false;
   if (parameterParams.isType<int>("Number")) {
@@ -742,9 +745,10 @@ Albany::ModelEvaluatorT::evalModelImpl(
   //(e.g., trapezoidal rule) and the second order time-integrators in Tempus.
   Teuchos::RCP<Thyra_Vector> x_dotdot; 
   Teuchos::RCP<Tpetra_Vector> x_dotdotT;
-  ST                          omega;
+  ST                          omega = 0.0;
   if (supports_xdotdot == true) {
-    omega = inArgsT.get_W_x_dot_dot_coeff();
+    if (use_tempus == true) 
+      omega = inArgsT.get_W_x_dot_dot_coeff();
     // The following case is to support second order time-integrators in Piro
     if (std::abs(omega) < 1.0e-14) {
       if (Teuchos::nonnull(this->get_x_dotdot())) {
