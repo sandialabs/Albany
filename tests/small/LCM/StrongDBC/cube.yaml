@@ -24,19 +24,19 @@ LCM:
       SDBC on NS nodelist_5 for DOF Z: 0.0
       SDBC on NS nodelist_6 for DOF Z: 1.0
     Response Functions:
-      Number: 4
-      Response 0: Project IP to Nodal Field
+      Number: 3
+      Response 0: Solution Average
+      Response 1: Solution Max Value
+      Response 2: Solution Min Value
+      Response 3: Project IP to Nodal Field
       ResponseParams 0:
         Number of Fields: 1
         IP Field Name 0: Cauchy_Stress
         IP Field Layout 0: Tensor
         Output to File: true
-      Response 1: Solution Average
-      Response 2: Solution Max Value
-      Response 3: Solution Min Value
   Regression Results:
-    Number of Comparisons: 4
-    Test Values: [0.000000000000e+00, 1.149197794509e-01, 0.000000000000e+00, -1.552406616474e-01]
+    Number of Comparisons: 3
+    Test Values: [1.149197794509e-01, 0.000000000000e+00, -1.552406616474e-01]
     Relative Tolerance: 1.0e-7
     Absolute Tolerance: 1.0e-7
   Discretization:
