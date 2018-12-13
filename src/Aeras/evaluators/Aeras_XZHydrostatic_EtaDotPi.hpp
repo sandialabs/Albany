@@ -42,17 +42,17 @@ public:
 
 private:
   // Input:
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Level>      divpivelx;
-  PHX::MDField<const ScalarT,Cell,Node>            pdotP0;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Level>      Pi;
-  PHX::MDField<const ScalarT,Cell,Node,Level>      Temperature;
-  PHX::MDField<const ScalarT,Cell,Node,Level,Dim>  Velocity;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level>    divpivelx;
+  PHX::MDField<const ScalarT,Cell,Node>               pdotP0;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level>    Pi;
+  PHX::MDField<const ScalarT,Cell,Node,Level>         Temperature;
+  PHX::MDField<const ScalarT,Cell,Node,Level,Dim>     Velocity;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level>    etadot;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      etadotdT;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      etadot;
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  etadotdVelx;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Pidot;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>          etadotdT;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim>           etadotdVelx;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>          Pidot;
 
   std::map<std::string, PHX::MDField<const ScalarT,Cell,QuadPoint,Level> > Tracer;
   //std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > etadotdTracer;

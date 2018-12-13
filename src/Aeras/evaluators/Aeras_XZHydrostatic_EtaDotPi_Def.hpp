@@ -18,6 +18,8 @@
 #include "Aeras_Eta.hpp"
 #include "Kokkos_Vector.hpp"
 
+#include "Aeras_XZHydrostatic_EtaDotPi.hpp"
+
 namespace Aeras {
 
 //**********************************************************************
