@@ -61,6 +61,9 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   offsetVelocity = 0;
   vecDimFO       = std::min((int)neq,(int)2);
+
+  // In case we build interpolation evaluators for the dof, store its dimension
+  field_dim[dof_names[0]] = vecDimFO;
 }
 
 void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
@@ -112,6 +115,27 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 
       dl->side_layouts[ssName] = rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes,
                                                          numSideQPs,sideDim,numDim,numCellSides,vecDimFO));
+
+      if (it.first==LandIceBC::BasalFriction) {
+        // BasalFriction BC needs velocity on the side
+        ss_build_interp_ev[ssName][dof_names[0]][CELL_TO_SIDE] = true;
+        ss_build_interp_ev[ssName][dof_names[0]][QP_VAL] = true;
+
+        // And BFs/coords
+        ss_utils_needed[ssName][BFS] = true;
+        ss_utils_needed[ssName][QP_COORDS] = true;  // Only really needed if stereographic map is used.
+
+        // And if we compute grad beta, we may even need the velocity gradient and the effective pressure gradient
+        // (which, if it is a dist param, needs to be projected to the side)
+        ss_build_interp_ev[ssName][dof_names[0]][GRAD_QP_VAL] = true;
+        ss_build_interp_ev[ssName]["effective_pressure"][GRAD_QP_VAL] = true;
+        ss_build_interp_ev[ssName]["effective_pressure"][CELL_TO_SIDE] = is_dist_param["effective_pressure"];;
+
+      } else if (it.first==LandIceBC::Lateral) {
+        // Lateral bc needs BFs (including normals)
+        ss_utils_needed[ssName][BFS] = true;
+        ss_utils_needed[ssName][NORMALS] = true;
+      }
     }
   }
 
@@ -136,9 +160,16 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 
     dl->side_layouts[surfaceSideName] = rcp(new Albany::Layouts(worksetSize,numSurfaceSideVertices,numSurfaceSideNodes,
                                                                 numSurfaceSideQPs,sideDim,numDim,numCellSides,vecDimFO));
+
+    // Surface velocity diagnostic requires dof at qps on surface side
+    ss_build_interp_ev[surfaceSideName][dof_names[0]][CELL_TO_SIDE] = true;
+    ss_build_interp_ev[surfaceSideName][dof_names[0]][QP_VAL] = true;
+
+    // ... and BFs
+    ss_utils_needed[surfaceSideName][BFS] = true;
   }
 
-  // If we have thickness diagnostics, we need basal side stuff
+  // If we have thickness or surface velocity diagnostics, we may need basal side stuff
   if (basalSideName!="__INVALID__" && dl->side_layouts.find(basalSideName)==dl->side_layouts.end())
   {
     TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(basalSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
@@ -159,6 +190,18 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 
     dl->side_layouts[basalSideName] = rcp(new Albany::Layouts(worksetSize,numbasalSideVertices,numbasalSideNodes,
                                                               numbasalSideQPs,sideDim,numDim,numCellSides,vecDimFO));
+    // Needs BFs
+    ss_utils_needed[basalSideName][BFS] = true;
+
+    // SMB evaluators may need velocity and averaged velocity
+    ss_build_interp_ev[basalSideName][dof_names[0]][CELL_TO_SIDE] = true;
+    ss_build_interp_ev[basalSideName][dof_names[0]][QP_VAL] = true;
+    ss_build_interp_ev[basalSideName]["Averaged Velocity"][QP_VAL] = true;
+
+    ss_build_interp_ev[basalSideName]["ice_thickness"][QP_VAL] = true;
+
+    // Project thickness to side if it's a parameter.
+    ss_build_interp_ev[basalSideName]["ice_thickness"][CELL_TO_SIDE] = is_dist_param["ice_thickness"];
   }
 
 #ifdef OUTPUT_TO_SCREEN

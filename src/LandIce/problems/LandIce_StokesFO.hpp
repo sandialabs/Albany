@@ -51,7 +51,7 @@ public:
             const int numDim_);
 
   //! Destructor
-  ~StokesFO();
+  ~StokesFO() = default;
 
   // Build evaluators
   virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
@@ -63,6 +63,10 @@ public:
 
   //! Each problem must generate it's list of valide parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
+
+  //! Build the PDE instantiations, boundary conditions, and initial solution
+  void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+                     Albany::StateManager& stateMgr);
 
 private:
 
@@ -87,8 +91,7 @@ public:
 
   template <typename EvalT>
   void constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                    Albany::FieldManagerChoice FieldManagerChoice,
-                                    Teuchos::RCP<std::map<std::string, int> > extruded_params_levels);
+                                    Albany::FieldManagerChoice FieldManagerChoice);
 
 protected:
 
@@ -106,25 +109,22 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                Albany::FieldManagerChoice fieldManagerChoice,
                                const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-  Teuchos::RCP<std::map<std::string, int> > extruded_params_levels = Teuchos::rcp(new std::map<std::string, int> ());
   std::map<std::string,bool> is_dist_param;
-  Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+  Albany::EvaluatorUtilsImpl<EvalT, PHAL::AlbanyTraits,typename EvalT::ScalarT> evalUtils(dl);
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
 
   int offsetVelocity = 0;
 
   // --- States/parameters --- //
-  constructStokesFOBaseEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice, *extruded_params_levels, is_dist_param);
-
-  // --- Geometry --- //
+  constructStokesFOBaseEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice);
 
   // Gather solution field
   ev = evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names[0], offsetVelocity);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Scatter residual
-  ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(true, resid_names[0], extruded_params_levels, offsetVelocity, scatter_names[0]);
+  ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(true, resid_names[0], Teuchos::rcpFromRef(extruded_params_levels), offsetVelocity, scatter_names[0]);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Gather thickness, depending on whether it is a parameter and on whether mesh depends on parameters
@@ -205,10 +205,10 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   constructSynteticTestBCEvaluators<EvalT> (fm0);
 
   // --- ProjectedLaplacian-related evaluators (if needed) --- //
-  constructProjLaplEvaluators<EvalT> (fm0, fieldManagerChoice, extruded_params_levels);
+  constructProjLaplEvaluators<EvalT> (fm0, fieldManagerChoice);
 
   // Finally, construct responses, and return the tags
-  return constructStokesFOBaseResponsesEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice, is_dist_param, responseList);
+  return constructStokesFOBaseResponsesEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice, responseList);
 }
 
 template <typename EvalT>
@@ -228,7 +228,7 @@ void StokesFO::constructSynteticTestBCEvaluators (PHX::FieldManager<PHAL::Albany
     // We may have more than 1 basal side set. The layout of all the side fields is the
     // same, so we need to differentiate them by name (just like we do for the basis functions already).
 
-    std::string velocity_side = "velocity_" + ssName;
+    std::string velocity_side = dof_names[0] + "_" + ssName;
     std::string sliding_velocity_side = "sliding_velocity_" + ssName;
     std::string basal_friction_side = "basal_friction_" + ssName;
     std::string beta_side = "beta_" + ssName;
@@ -291,11 +291,10 @@ void StokesFO::constructSynteticTestBCEvaluators (PHX::FieldManager<PHAL::Albany
 
 template <typename EvalT>
 void StokesFO::constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                            Albany::FieldManagerChoice fieldManagerChoice,
-                                            Teuchos::RCP<std::map<std::string, int> > extruded_params_levels)
+                                            Albany::FieldManagerChoice fieldManagerChoice)
 {
   // Only do something if the number of equations is larger than the FO equations
-  if(neq > vecDimFO) {
+  if(neq > static_cast<unsigned>(vecDimFO)) {
     Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
     Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
     Teuchos::RCP<Teuchos::ParameterList> p;
@@ -319,7 +318,7 @@ void StokesFO::constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits
     fm0.template registerEvaluator<EvalT> (ev);
 
     // Scatter residual
-    ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(false, resid_name_auxiliary, extruded_params_levels, vecDimFO, aux_resid_scatter_tag);
+    ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(false, resid_name_auxiliary, Teuchos::rcpFromRef(extruded_params_levels), vecDimFO, aux_resid_scatter_tag);
     fm0.template registerEvaluator<EvalT> (ev);
 
     // Project to side

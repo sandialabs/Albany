@@ -19,7 +19,9 @@
 // Uncomment for some setup output
 // #define OUTPUT_TO_SCREEN
 
-LandIce::StokesFO::
+namespace LandIce {
+
+StokesFO::
 StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
           const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
           const Teuchos::RCP<ParamLib>& paramLib_,
@@ -55,15 +57,24 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
 }
 
-LandIce::StokesFO::
-~StokesFO()
+void StokesFO::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+                             Albany::StateManager& stateMgr)
 {
-  // Nothing to be done here
+  // Surface velocity diagnostic may require gradient of beta, which requires gradient of effective_pressure
+  for (const auto& pl : landice_bcs[LandIceBC::BasalFriction]) {
+    std::string ssName  = pl->get<std::string>("Side Set Name");
+
+    // If effective pressure is a dist param, we also need to project it.
+    ss_build_interp_ev[ssName]["effective_pressure"][CELL_TO_SIDE] = is_dist_param["effective_pressure"];
+  }
+
+  // Note: the base class call must be last, since it calls the buildEvaluators method,
+  //       which needs all the input/requirements maps to be set.
+  StokesFOBase::buildProblem(meshSpecs,stateMgr);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-LandIce::StokesFO::
-buildEvaluators(
+StokesFO::buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
   Albany::StateManager& stateMgr,
@@ -78,8 +89,7 @@ buildEvaluators(
   return *op.tags;
 }
 
-void
-LandIce::StokesFO::constructDirichletEvaluators(
+void StokesFO::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
@@ -99,7 +109,7 @@ LandIce::StokesFO::constructDirichletEvaluators(
 }
 
 // Neumann BCs
-void LandIce::StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+void StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
 
    // Note: we only enter this function if sidesets are defined in the mesh file
@@ -172,7 +182,7 @@ void LandIce::StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::M
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-LandIce::StokesFO::getValidProblemParameters () const
+StokesFO::getValidProblemParameters () const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = StokesFOBase::getStokesFOBaseProblemParameters();
 
@@ -181,3 +191,5 @@ LandIce::StokesFO::getValidProblemParameters () const
 
   return validPL;
 }
+
+} // namespace LandIce

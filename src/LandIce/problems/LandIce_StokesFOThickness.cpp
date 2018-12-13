@@ -15,11 +15,13 @@
 // Uncomment for some setup output
 #define OUTPUT_TO_SCREEN
 
-LandIce::StokesFOThickness::
-StokesFOThickness( const Teuchos::RCP<Teuchos::ParameterList>& params_,
-             const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
-             const Teuchos::RCP<ParamLib>& paramLib_,
-             const int numDim_) :
+namespace LandIce {
+
+StokesFOThickness::StokesFOThickness(
+            const Teuchos::RCP<Teuchos::ParameterList>& params_,
+            const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
+            const Teuchos::RCP<ParamLib>& paramLib_,
+            const int numDim_) :
   StokesFOBase(params_, discParams_, paramLib_, numDim_)
 {
   //Set # of PDEs per node.
@@ -45,11 +47,38 @@ StokesFOThickness( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   scatter_names[1] = "Scatter " + resid_names[1];
 
   offsetThickness = vecDimFO;
+
+  field_dim[dof_names[1]] = 0;
+}
+
+void StokesFOThickness::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+                                 Albany::StateManager& stateMgr)
+{
+  if (basalSideName!="__INVALID__") {
+    // We need BF on the basal side
+    ss_utils_needed[basalSideName][BFS] = true;
+
+    // We need to restrict and interpolate velocity, thickness and surface height
+    ss_build_interp_ev[basalSideName][dof_names[0]][CELL_TO_SIDE] = true;
+    ss_build_interp_ev[basalSideName]["ice_thickness"][CELL_TO_SIDE] = true;
+    ss_build_interp_ev[basalSideName]["surface_height"][CELL_TO_SIDE] = true;
+
+    ss_build_interp_ev[basalSideName][dof_names[0]][QP_VAL] = true;
+    ss_build_interp_ev[basalSideName]["ice_thickness"][QP_VAL] = true;
+    ss_build_interp_ev[basalSideName]["surface_height"][QP_VAL] = true;
+
+    ss_field_dim[basalSideName][dof_names[0]] = 0;
+    ss_field_dim[basalSideName]["ice_thickness"] = 0;
+    ss_field_dim[basalSideName]["surface_height"] = 0;
+  }
+
+  // Note: the base class call must be last, since it calls the buildEvaluators method,
+  //       which needs all the input/requirements maps to be set.
+  StokesFOBase::buildProblem(meshSpecs,stateMgr);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-LandIce::StokesFOThickness::
-buildEvaluators(
+StokesFOThickness::buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
   Albany::StateManager& stateMgr,
@@ -67,9 +96,7 @@ buildEvaluators(
   return *op.tags;
 }
 
-void
-LandIce::StokesFOThickness::constructDirichletEvaluators(
-        const Albany::MeshSpecsStruct& meshSpecs)
+void StokesFOThickness::constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);
@@ -160,7 +187,7 @@ LandIce::StokesFOThickness::constructNeumannEvaluators(const Teuchos::RCP<Albany
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-LandIce::StokesFOThickness::getValidProblemParameters() const
+StokesFOThickness::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = StokesFOBase::getStokesFOBaseProblemParameters();
 
@@ -172,3 +199,4 @@ LandIce::StokesFOThickness::getValidProblemParameters() const
   return validPL;
 }
 
+} // namespace LandIce
