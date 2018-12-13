@@ -915,7 +915,7 @@ void
 STKDiscretization::setupMLCoords()
 {
   if (rigidBodyModes.is_null()) { return; }
-  if (!rigidBodyModes->isMLUsed() && !rigidBodyModes->isMueLuUsed()) { return; }
+  if (!rigidBodyModes->isMLUsed() && !rigidBodyModes->isMueLuUsed() && !rigidBodyModes->isFROSchUsed()) { return; }
 
   const int                                   numDim = stkMeshStruct->numDim;
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field =
@@ -930,7 +930,7 @@ STKDiscretization::setupMLCoords()
     for (int j = 0; j < numDim; j++) { coordMV_data[j][node_lid] = X[j]; }
   }
 
-  rigidBodyModes->setCoordinatesAndNullspace(coordMV, m_vs);
+  rigidBodyModes->setCoordinatesAndNullspace(coordMV, m_vs, m_overlap_vs);
 
   // Some optional matrix-market output was tagged on here; keep that
   // functionality.
@@ -942,7 +942,7 @@ STKDiscretization::writeCoordsToMatrixMarket() const
 {
   // if user wants to write the coordinates to matrix market file, write them to
   // matrix market file
-  if ((rigidBodyModes->isMLUsed() || rigidBodyModes->isMueLuUsed()) &&
+  if ((rigidBodyModes->isMLUsed() || rigidBodyModes->isMueLuUsed() || rigidBodyModes->isFROSchUsed()) &&
       stkMeshStruct->writeCoordsToMMFile) {
     if (comm->getRank() == 0) {
       std::cout << "Writing mesh coordinates to Matrix Market file."

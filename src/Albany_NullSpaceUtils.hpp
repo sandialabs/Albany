@@ -30,7 +30,7 @@ public:
   void setPiroPL(const Teuchos::RCP<Teuchos::ParameterList>& piroParams);
 
   //! Update the parameter list.
-  void updatePL(const Teuchos::RCP<Teuchos::ParameterList>& mlParams);
+  void updatePL(const Teuchos::RCP<Teuchos::ParameterList>& precParams);
 
   //! Is ML used on this problem?
   bool isMLUsed() const { return mlUsed; }
@@ -38,20 +38,24 @@ public:
   //! Is MueLu used on this problem?
   bool isMueLuUsed() const { return mueLuUsed; }
 
-  //! Pass coordinates and, if numElasticityDim > 0, the null space to ML or
-  //! MueLu. The data accessed through getCoordArrays must have been
-  //! set. soln_map must be set only if using MueLu and numElasticityDim >
+  //! Is FROSch used on this problem?
+  bool isFROSchUsed() const { return froschUsed; }
+
+  //! Pass coordinates and, if numElasticityDim > 0, the null space to ML,
+  //! MueLu or FROSch. The data accessed through getCoordArrays must have
+  //! been set. soln_map must be set only if using MueLu and numElasticityDim >
   //! 0. Both maps are nonoverlapping.
   void setCoordinatesAndNullspace(
     const Teuchos::RCP<Thyra_MultiVector> &coordMV,
-    const Teuchos::RCP<const Thyra_VectorSpace>& soln_vs = Teuchos::null);
+    const Teuchos::RCP<const Thyra_VectorSpace>& soln_vs = Teuchos::null,
+    const Teuchos::RCP<const Thyra_VectorSpace>& soln_overlap_vs = Teuchos::null);
 
   //! Pass only the coordinates.
   void setCoordinates(const Teuchos::RCP<Thyra_MultiVector> &coordMV);
 
 private:
   int numPDEs, numElasticityDim, numScalar, nullSpaceDim;
-  bool mlUsed, mueLuUsed, setNonElastRBM;
+  bool mlUsed, mueLuUsed, froschUsed, setNonElastRBM;
 
   Teuchos::RCP<Teuchos::ParameterList> plist;
 
