@@ -1392,7 +1392,7 @@ MechanicsProblem::constructEvaluators(
     }  // end if (have_mech_eq_)
 
     // Surface Gradient Operator
-    if (have_pore_pressure_eq_) {
+    if (have_pore_pressure_eq_ && surface_element) {
       // SurfaceScalarGradientOperatorPorePressure_Def.hpp
 
       Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
@@ -1409,8 +1409,7 @@ MechanicsProblem::constructEvaluators(
       // NOTE: NOT surf_Pore_Pressure here
       // NOTE: If you need to compute gradient for more than one scalar field,
       // that could cause trouble
-      if (have_pore_pressure_eq_ == true)
-        p->set<std::string>("Nodal Scalar Name", "Pore_Pressure");
+      p->set<std::string>("Nodal Scalar Name", "Pore_Pressure");
 
       // outputs
       p->set<std::string>(
@@ -1429,7 +1428,7 @@ MechanicsProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    if (have_transport_eq_) {
+    if (have_transport_eq_ && surface_element) {
       // SurfaceScalarGradientOperatorTransport_Def.hpp
       Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
           new Teuchos::ParameterList("Surface Scalar Gradient Operator Transport"));
@@ -1452,8 +1451,7 @@ MechanicsProblem::constructEvaluators(
           "Surface Scalar Gradient Operator Transport");
       p->set<Teuchos::RCP<PHX::DataLayout>>(
           "Node QP Vector Data Layout", dl_->node_qp_vector);
-      if (have_transport_eq_ == true)
-        p->set<std::string>(
+      p->set<std::string>(
             "Surface Scalar Gradient Name", "Surface Transport Gradient");
       p->set<Teuchos::RCP<PHX::DataLayout>>(
           "QP Vector Data Layout", dl_->qp_vector);
@@ -1464,7 +1462,7 @@ MechanicsProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    if (have_hydrostress_eq_) {
+    if (have_hydrostress_eq_ && surface_element) {
       // SurfaceScalarGradientOperatorHydroStress_Def.hpp
       Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
           new Teuchos::ParameterList("Surface Scalar Gradient Operator HydroStress"));
