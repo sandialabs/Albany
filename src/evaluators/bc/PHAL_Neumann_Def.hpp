@@ -569,12 +569,12 @@ calc_gradu_dotn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_return
                           int local_side_id) const {
 
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
-  int numSides = qp_data_returned.dimension(0);
+  int numCells_ = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
 
-  Kokkos::DynRankView<ScalarT, PHX::Device> grad_T =  Kokkos::createDynRankView(qp_data_returned, "grad_T", numCells, numPoints, cellDims);
+  Kokkos::DynRankView<ScalarT, PHX::Device> grad_T =  Kokkos::createDynRankView(qp_data_returned, "grad_T", numCells_, numPoints, cellDims);
   using DynRankViewMeshScalarT = Kokkos::DynRankView<MeshScalarT, PHX::Device>;
-  DynRankViewMeshScalarT side_normals = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells, numPoints, cellDims);
-  DynRankViewMeshScalarT normal_lengths = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells, numPoints);
+  DynRankViewMeshScalarT side_normals = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells_, numPoints, cellDims);
+  DynRankViewMeshScalarT normal_lengths = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells_, numPoints);
 
 /*
   double kdTdx[3];
@@ -583,10 +583,11 @@ calc_gradu_dotn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_return
   kdTdx[2] = 0.0; // Neumann component in the z direction
 */
 
-  for(int side = 0; side < numSides; side++)
-    for(int pt = 0; pt < numPoints; pt++)
-      for(int dim = 0; dim < cellDims; dim++)
+  for(int side = 0; side < numCells_; side++) {
+    for(int pt = 0; pt < numPoints; pt++) {
+      for(int dim = 0; dim < cellDims; dim++) {
         grad_T(side, pt, dim) = dudx[dim]; // k grad T in the x direction goes in the x spot, and so on
+  }}}
 
   // for this side in the reference cell, get the components of the normal direction vector
   ICT::getPhysicalSideNormals(side_normals, jacobian_side_refcell,local_side_id, celltopo);
@@ -596,13 +597,11 @@ calc_gradu_dotn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_return
   IFST::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths, side_normals, true);
 
   // take grad_T dotted with the unit normal
-//  IFST::dotMultiplyDataData(qp_data_returned,
-//    grad_T, side_normals);
-  for(int cell = 0; cell < numCells; cell++)
-    for(int pt = 0; pt < numPoints; pt++)
-      for(int dim = 0; dim < numDOFsSet; dim++)
-        qp_data_returned(cell, pt, dim) = grad_T(cell, pt, dim) * side_normals(cell, pt, dim);
-
+  IFST::dotMultiplyDataData(qp_data_returned, grad_T, side_normals);
+  // for(int cell = 0; cell < numCells; cell++)
+  //   for(int pt = 0; pt < numPoints; pt++)
+  //     for(int dim = 0; dim < numDOFsSet; dim++)
+  //       qp_data_returned(cell, pt, dim) = grad_T(cell, pt, dim) * side_normals(cell, pt, dim);
 }
 
 template<typename EvalT, typename Traits>
@@ -610,12 +609,12 @@ void NeumannBase<EvalT, Traits>::
 calc_dudn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
                 ScalarT scale) const {
 
+  int numCells_ = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
-  int numSides = qp_data_returned.dimension(0);
 
   //std::cout << "DEBUG: applying const dudn to sideset " << this->sideSetID << ": " << (const_val * scale) << std::endl;
 
-  for(int side = 0; side < numSides; side++) {
+  for(int side = 0; side < numCells_; side++) {
     for(int pt = 0; pt < numPoints; pt++) {
       for(int dim = 0; dim < numDOFsSet; dim++) {
         qp_data_returned(side, pt, dim) = -const_val * scale; // User directly specified dTdn, just use it
@@ -627,13 +626,13 @@ void NeumannBase<EvalT, Traits>::
 calc_dudn_robin(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
                 const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side) const {
 
+  int numCells_ = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
-  int numSides = qp_data_returned.dimension(0);
 
   const ScalarT& dof_value = robin_vals[0];
   const ScalarT& coeff = robin_vals[1];
 
-  for(int side = 0; side < numSides; side++) {
+  for(int side = 0; side < numCells_; side++) {
     for(int pt = 0; pt < numPoints; pt++) {
       for(int dim = 0; dim < numDOFsSet; dim++) {
         qp_data_returned(side, pt, dim) = coeff*(dof_side(side,pt,dim) - dof_value);
@@ -671,12 +670,12 @@ calc_press(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
                           const shards::CellTopology & celltopo,
                           int local_side_id) const {
 
-  int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
   int numCells_ = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
+  int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
 
   using DynRankViewMeshScalarT = Kokkos::DynRankView<MeshScalarT, PHX::Device>;
-  DynRankViewMeshScalarT side_normals = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells, numPoints, cellDims);
-  DynRankViewMeshScalarT normal_lengths = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells, numPoints);
+  DynRankViewMeshScalarT side_normals = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells_, numPoints, cellDims);
+  DynRankViewMeshScalarT normal_lengths = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells_, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
   ICT::getPhysicalSideNormals(side_normals, jacobian_side_refcell, local_side_id, celltopo);
@@ -702,8 +701,8 @@ calc_closed_form(       Kokkos::DynRankView<ScalarT, PHX::Device>    & qp_data_r
                typename Traits::EvalData       workset) const
 {
   // How many QPs per cell?
-  int numPoints = qp_data_returned.dimension( 1);
   int numCells_ = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
+  int numPoints = qp_data_returned.dimension( 1);
 
   using DynRankViewMeshScalarT = Kokkos::DynRankView<MeshScalarT, PHX::Device>;
   DynRankViewMeshScalarT side_normals =
@@ -745,8 +744,6 @@ Neumann(Teuchos::ParameterList& p)
 {
 }
 
-
-
 template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
@@ -777,6 +774,7 @@ Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::Jacobian,Traits>(p)
 {
 }
+
 // **********************************************************************
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename Traits>
@@ -784,7 +782,6 @@ KOKKOS_INLINE_FUNCTION
 void Neumann<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const Neumann_Tag& , const int& cell) const
 {
-
   LO colT[1];
   LO rowT;
   ST value[1];
@@ -792,8 +789,7 @@ operator()(const Neumann_Tag& , const int& cell) const
   const int neq = Index.dimension(2);
   const int nunk = neq*this->numNodes;
 
-
-  for (std::size_t node = 0; node < this->numNodes; ++node)
+  for (std::size_t node = 0; node < this->numNodes; ++node) {
     for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
       int dim2=this->offset[dim];
@@ -826,9 +822,10 @@ operator()(const Neumann_Tag& , const int& cell) const
         } // column nodes
       } // has fast access
     }
-
- }
+  }
+}
 #endif
+
 // **********************************************************************
 template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::Jacobian, Traits>::
@@ -851,7 +848,6 @@ evaluateFields(typename Traits::EvalData workset)
   if (f != Teuchos::null) {
     f_nonconstView = Albany::getNonconstLocalData(f);
   }
-
 
   // Fill in "neumann" array
   this->evaluateNeumannContribution(workset);
