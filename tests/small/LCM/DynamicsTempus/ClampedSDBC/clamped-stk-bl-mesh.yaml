@@ -50,7 +50,7 @@ LCM:
     Exodus Write Interval: 10
   Regression Results:
     Number of Comparisons: 3
-    Test Values: [-8.626010507059e-05, 0.000000000000e+00, 0.000000000000e+00]
+    Test Values: [8.903049489215e-05, 0.000000000000e+00, 0.000000000000e+00]
     Relative Tolerance: 1.0e-7
     Absolute Tolerance: 1.0e-7
   Piro:
@@ -66,7 +66,7 @@ LCM:
           Storage Limit: 2000
         Time Step Control:
           Initial Time: 0.0
-          Final Time: 1.0e-3
+          Final Time: 1.0e-4
           Initial Time Index: 0
           Final Time Index: 1000000
           Initial Time Step: 1.0e-06

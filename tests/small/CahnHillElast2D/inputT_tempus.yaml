@@ -43,7 +43,7 @@ ANONYMOUS:
           Initial Time Index: 0
           Initial Time Step: 1.00000000000000006e-01
           Initial Order: 0
-          Final Time: 1.00000000000000000e+00
+          Final Time: 5.00000000000000000e-01
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08

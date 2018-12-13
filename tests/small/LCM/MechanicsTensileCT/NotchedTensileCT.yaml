@@ -28,13 +28,13 @@ LCM:
     Method: Exodus
     Exodus Input File Name: notched_tensile.g
     Exodus Output File Name: notched_tensile.e
-    Use Serial Mesh: true
+    Use Serial Mesh: false
     Cubature Degree: 2
     Exodus Solution Name: disp
     Exodus Residual Name: resid
   Regression Results:
     Number of Comparisons: 1
-    Test Values: [0.00003068]
+    Test Values: [3.042761921755e-05]
     Relative Tolerance: 1.00000000e-03
     Number of Sensitivity Comparisons: 0
     Sensitivity Test Values 0: [0.00000000e+00]
@@ -62,6 +62,8 @@ LCM:
       Direction:
         Method: Newton
         Newton:
+          Linear Solver:
+            Tolerance: 1.0e-3
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
           Stratimikos Linear Solver:
@@ -80,13 +82,13 @@ LCM:
                     Tolerance: 1.00000000e-05
                 Belos:
                   VerboseObject:
-                    Verbosity Level: medium
+                    Verbosity Level: none
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
                       Output Frequency: 10
                       Output Style: 1
-                      Verbosity: 1248
+                      Verbosity: 0
                       Flexible Gmres: false
                       Maximum Iterations: 500
                       Convergence Tolerance: 1.00000000e-06
@@ -96,6 +98,7 @@ LCM:
               Preconditioner Types:
                 MueLu:
                   multigrid algorithm: sa
+                  verbosity: none
                   cycle type: V
                   max levels: 4
                   'repartition: enable': true
@@ -141,7 +144,7 @@ LCM:
           Test 1:
             Test Type: NormF
             Scale Type: Unscaled
-            Tolerance: 1.00000000e-07
+            Tolerance: 1.00000000e-05
         Test 1:
           Test Type: Combo
           Combo Type: OR
