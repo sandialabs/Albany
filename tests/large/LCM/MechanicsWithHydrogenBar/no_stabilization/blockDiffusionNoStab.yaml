@@ -4,7 +4,7 @@ LCM:
   Problem:
     Name: Mechanics 3D
     Solution Method: Continuation
-    Phalanx Graph Visualization Detail: 1
+    Phalanx Graph Visualization Detail: 0
     MaterialDB Filename: materialsScaledPlasticity.yaml
     Transport:
       Variable Type: DOF
@@ -67,6 +67,8 @@ LCM:
         Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
+          Linear Solver:
+            Tolerance: 1.0e-4
           Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
             Stratimikos:
@@ -83,22 +85,23 @@ LCM:
                     Tolerance: 1.00000000e-06
                 Belos:
                   VerboseObject:
-                    Verbosity Level: medium
+                    Verbosity Level: low
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 1.00000000e-06
+                      Convergence Tolerance: 1.00000000e-03
                       Output Frequency: 10
                       Output Style: 1
                       Verbosity: 33
                       Maximum Iterations: 500
+                      Maximum Restarts: 0
                       Block Size: 1
                       Num Blocks: 1000
                       Flexible Gmres: false
               Preconditioner Type: Ifpack2
               Preconditioner Types:
                 Ifpack2:
-                  Overlap: 2
+                  Overlap: 0
                   Prec Type: ILUT
                   Ifpack2 Settings:
                     'fact: drop tolerance': 0.00000000e+00
@@ -136,7 +139,7 @@ LCM:
           Maximum Iterations: 15
         Test 2:
           Test Type: Combo
-          Combo Type: AND
+          Combo Type: OR
           Number of Tests: 2
           Test 0:
             Test Type: NStep
