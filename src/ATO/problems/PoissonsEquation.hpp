@@ -366,7 +366,6 @@ Albany::PoissonsEquationProblem::constructEvaluators(
 
     // Apply user defined weighting 
     atoUtils.constructWeightedFieldEvaluators( params, fm0, stateMgr, elementBlockName, "QP Vector", kinVarName);
-    atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName, elementBlockName, dl->qp_vector);
 
     {
       RCP<ParameterList> p = rcp(new ParameterList("Residual"));
