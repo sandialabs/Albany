@@ -48,8 +48,8 @@ ANONYMOUS:
     Exodus Output File Name: implicit_BE_nu8e15_vort.exo
     Exodus Write Interval: 20
   Regression Results: 
-    Number of Comparisons: 7
-    Test Values: [-2.89578149040000017e-02, 2.28132980146999991e+01, -1.14486037771000007e+01, 5.49365702962999958e+00, -9.27810469992000012e-06, 2.33138510713999983e-05, 1.27141844720000000e+11]
+    Number of Comparisons: 10
+    Test Values: [-1.597159486430e-02, 2.139875793343e+01, -6.728046157275e+00, 2.321113303831e+00, -6.272161729874e-06, 1.252122328281e-05, 1.271418179952e+11, 3.688386277785e+08, 1.120764555202e+07, 1.271423534888e+11]
     Relative Tolerance: 1.00000000000000008e-05
     Absolute Tolerance: 1.00000000000000002e-03
     Number of Sensitivity Comparisons: 0
@@ -57,13 +57,13 @@ ANONYMOUS:
   Piro: 
     Rythmos: 
       Nonlinear Solver Type: Rythmos
-      Final Time: 4.80000000000000000e+04
+      Final Time: 2.40000000000000000e+04
       Rythmos Stepper: 
         VerboseObject: 
           Verbosity Level: low
       Rythmos Integration Control: 
         Take Variable Steps: false
-        Number of Time Steps: 40
+        Number of Time Steps: 20
       Rythmos Integrator: 
         VerboseObject: 
           Verbosity Level: none
