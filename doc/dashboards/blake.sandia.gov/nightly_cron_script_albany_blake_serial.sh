@@ -15,6 +15,8 @@ unset https_proxy
 
 source blake_intel_modules.sh >& modules.out  
 
+export OMP_NUM_THREADS=1
+
 cat albany_serial ctest_nightly.cmake.frag >& ctest_nightly.cmake  
 
 now=$(date +"%m_%d_%Y-%H_%M")

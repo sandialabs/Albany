@@ -13,6 +13,8 @@ rm -rf modules.out
 unset http_proxy
 unset https_proxy
 
+export OMP_NUM_THREADS=1
+
 source blake_intel_modules.sh >& modules.out  
 
 cat trilinos_serial ctest_nightly.cmake.frag >& ctest_nightly.cmake  
