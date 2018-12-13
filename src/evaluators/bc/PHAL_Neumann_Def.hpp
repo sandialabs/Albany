@@ -656,14 +656,13 @@ calc_dudn_radiate(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
   for(int cell = 0; cell < numCells_; cell++) {
     for(int pt = 0; pt < numPoints; pt++) {
       for(int dim = 0; dim < numDOFsSet; dim++) {
-        auto val = dof_side(cell,pt,dim); 
-        auto val4 = val*val*val*val; 
+        const ScalarT val = dof_side(cell,pt,dim); 
+        const ScalarT val4 = val*val*val*val;
         qp_data_returned(cell, pt, dim) = coeff*(val4 - dof_value4);
       }
     }
   }
 }
-
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
