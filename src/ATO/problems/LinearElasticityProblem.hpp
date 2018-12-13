@@ -362,6 +362,10 @@ Albany::LinearElasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  // Pre-create the GatherScalarNodalParameters evaluators for all topologies
+  if(params->isType<Teuchos::RCP<ATO::TopologyArray>>("Topologies")) {
+    atoUtils.constructGatherScalarParamEvaluators(params->get<Teuchos::RCP<ATO::TopologyArray> >("Topologies"),fm0);
+  }
 
   if( blockHasBody )
   {

@@ -868,7 +868,8 @@ void ATO::Utils<EvalT,Traits>::constructWeightedFieldEvaluators(
        std::string layoutName,
        std::string& inputFieldName)
 {
-
+  // If we call this method for different fields, we should NOT try to recreate
+  // the GatherScalarNodalParameter evaluators. Hence, keep a static set.
 
   if(params->isType<Teuchos::RCP<ATO::TopologyArray> >("Topologies"))
   {
@@ -894,14 +895,6 @@ void ATO::Utils<EvalT,Traits>::constructWeightedFieldEvaluators(
       int functionIndex      = fieldParams.get<int>("Function Index");
 
       Teuchos::RCP<ATO::Topology> topology = (*topologyArray)[topoIndex];
-
-      // Get distributed parameter
-      if( topology->getEntityType() == "Distributed Parameter" ){
-        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Distributed Parameter"));
-        p->set<std::string>("Parameter Name", topology->getName());
-        ev = Teuchos::rcp(new PHAL::GatherScalarNodalParameter<EvalT,PHAL::AlbanyTraits>(*p, dl) );
-        fm0.template registerEvaluator<EvalT>(ev);
-      }
 
       Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("TopologyWeighting"));
 
@@ -930,4 +923,18 @@ void ATO::Utils<EvalT,Traits>::constructWeightedFieldEvaluators(
     // error out.  Topology weighting requested without defining topology.
   }
 
+}
+
+template<typename EvalT, typename Traits>
+void ATO::Utils<EvalT,Traits>::constructGatherScalarParamEvaluators(
+   const Teuchos::RCP<ATO::TopologyArray>& topologies,
+   PHX::FieldManager<Traits>& fm0)
+{
+  Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Distributed Parameter"));
+  Teuchos::RCP<PHX::Evaluator<Traits> > ev;
+  for (const auto& topo : *topologies) {
+    p->set<std::string>("Parameter Name", topo->getName());
+    ev = Teuchos::rcp(new PHAL::GatherScalarNodalParameter<EvalT,PHAL::AlbanyTraits>(*p, dl) );
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 }

@@ -12,16 +12,16 @@
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ParameterList.hpp>
+#include "Teuchos_VerboseObject.hpp"
 
 #include <Phalanx_FieldManager.hpp>
 
+#include "PHAL_AlbanyTraits.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Albany_Layouts.hpp"
 #include "Albany_StateManager.hpp"
-#include "PHAL_AlbanyTraits.hpp"
 
-#include "Teuchos_VerboseObject.hpp"
-
+#include "ATO_TopoTools.hpp"
 
 namespace ATO {
   /*!
@@ -101,6 +101,11 @@ namespace ATO {
        std::string layoutName,
        std::string& inputFieldName);
 
+    void 
+    constructGatherScalarParamEvaluators(
+       const Teuchos::RCP<ATO::TopologyArray>& topologies,
+       PHX::FieldManager<Traits>& fm0);
+
   private:
 
     Teuchos::RCP<Albany::Layouts> dl;
@@ -109,4 +114,4 @@ namespace ATO {
   };
 }
 
-#endif 
+#endif // ATO_UTILS_HPP

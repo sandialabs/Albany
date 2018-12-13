@@ -7,6 +7,8 @@
 #ifndef POISSONSEQUATIONPROBLEM_HPP
 #define POISSONSEQUATIONPROBLEM_HPP
 
+#include <iostream>
+
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
@@ -166,9 +168,9 @@ Albany::PoissonsEquationProblem::constructEvaluators(
 
    bool blockHasBody = true;
    int numBoundaries = 0;
-
 #ifdef ATO_USES_COGENT
    bool isNonconformal = false;
+
    Teuchos::ParameterList geomSpec, blockSpec;
    if(params->isSublist("Configuration")){
      if(params->sublist("Configuration").isType<bool>("Nonconformal"))
@@ -229,7 +231,7 @@ Albany::PoissonsEquationProblem::constructEvaluators(
    Intrepid2::DefaultCubatureFactory cubFactory;
    RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubatureDegree);
 
-   const int numDim = cubature->getDimension();
+   const int numCubDim = cubature->getDimension();
    const int numQPts = cubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();
 
@@ -237,14 +239,14 @@ Albany::PoissonsEquationProblem::constructEvaluators(
         << ", Vertices= " << numVertices
         << ", Nodes= " << numNodes
         << ", QuadPts= " << numQPts
-        << ", Dim= " << numDim << std::endl;
+        << ", Dim= " << numCubDim << std::endl;
 
 
    // Construct standard FEM evaluators with standard field names                              
-   dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+   dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numCubDim));
 
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   ATO::Utils<EvalT, PHAL::AlbanyTraits> atoUtils(dl,numDim);
+   ATO::Utils<EvalT, PHAL::AlbanyTraits> atoUtils(dl,numCubDim);
 
    // Temporary variable used numerous times below
    Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
@@ -349,6 +351,11 @@ Albany::PoissonsEquationProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  // Pre-create the GatherScalarNodalParameters evaluators for all topologies
+  if(params->isType<Teuchos::RCP<ATO::TopologyArray>>("Topologies")) {
+    atoUtils.constructGatherScalarParamEvaluators(params->get<Teuchos::RCP<ATO::TopologyArray> >("Topologies"),fm0);
+  }
+
   if( blockHasBody )
   { 
     std::string kinVarName("kinVar");
@@ -358,7 +365,7 @@ Albany::PoissonsEquationProblem::constructEvaluators(
     atoUtils.constructFluxEvaluators( params, fm0, stateMgr, elementBlockName, kinVarName, gradPhiName );
 
     // Apply user defined weighting 
-    atoUtils.constructWeightedFieldEvaluators( params, fm0, stateMgr, elementBlockName, "QP Vector", kinVarName );
+    atoUtils.constructWeightedFieldEvaluators( params, fm0, stateMgr, elementBlockName, "QP Vector", kinVarName);
     atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName, elementBlockName, dl->qp_vector);
 
     {
@@ -384,7 +391,7 @@ Albany::PoissonsEquationProblem::constructEvaluators(
 
       atoUtils.constructFixedFieldTermEvaluators( params, fm0, stateMgr, elementBlockName, dof_names[0], fixedFieldName);
 
-      atoUtils.constructWeightedFieldEvaluators( params, fm0, stateMgr, elementBlockName, "QP Scalar", fixedFieldName );
+      atoUtils.constructWeightedFieldEvaluators( params, fm0, stateMgr, elementBlockName, "QP Scalar", fixedFieldName);
       atoUtils.SaveCellStateField(fm0, stateMgr, fixedFieldName, elementBlockName, dl->qp_scalar);
 
   
