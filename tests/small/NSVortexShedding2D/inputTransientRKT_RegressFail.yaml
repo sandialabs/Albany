@@ -35,7 +35,7 @@ ANONYMOUS:
           Verbosity Level: low
       Rythmos: 
         Integrator Settings: 
-          Final Time: 5.00000000000000000e+00
+          Final Time: 2.50000000000000000e+00
           Integrator Selection: 
             Integrator Type: Default Integrator
             Default Integrator: 
@@ -50,7 +50,7 @@ ANONYMOUS:
           Integration Control Strategy Type: Simple Integration Control Strategy
           Simple Integration Control Strategy: 
             Take Variable Steps: false
-            Number of Time Steps: 300
+            Number of Time Steps: 150
             VerboseObject: 
               Verbosity Level: low
       Stratimikos: 
