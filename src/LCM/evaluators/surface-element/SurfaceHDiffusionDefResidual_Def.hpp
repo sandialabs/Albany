@@ -32,7 +32,7 @@ SurfaceHDiffusionDefResidual<EvalT, Traits>::SurfaceHDiffusionDefResidual(
           p.get<std::string>("Surface Transport Gradient Name"),
           dl->qp_vector),
       surface_Grad_BF(
-          p.get<std::string>("Surface Scalar Gradient Operator Name"),
+          p.get<std::string>("Surface Scalar Gradient Operator Transport Name"),
           dl->node_qp_gradient),
       refDualBasis(
           p.get<std::string>("Reference Dual Basis Name"),

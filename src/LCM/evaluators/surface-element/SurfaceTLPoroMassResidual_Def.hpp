@@ -28,7 +28,7 @@ SurfaceTLPoroMassResidual<EvalT, Traits>::SurfaceTLPoroMassResidual(
               "Intrepid2 Basis")),
       scalarGrad(p.get<std::string>("Scalar Gradient Name"), dl->qp_vector),
       surface_Grad_BF(
-          p.get<std::string>("Surface Scalar Gradient Operator Name"),
+          p.get<std::string>("Surface Scalar Gradient Operator Pore Pressure Name"),
           dl->node_qp_gradient),
       refDualBasis(
           p.get<std::string>("Reference Dual Basis Name"),

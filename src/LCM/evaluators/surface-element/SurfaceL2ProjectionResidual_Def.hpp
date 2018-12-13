@@ -28,7 +28,7 @@ SurfaceL2ProjectionResidual<EvalT, Traits>::SurfaceL2ProjectionResidual(
               Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>(
               "Intrepid2 Basis")),
       surface_Grad_BF(
-          p.get<std::string>("Surface Scalar Gradient Operator Name"),
+          p.get<std::string>("Surface Scalar Gradient Operator HydroStress Name"),
           dl->node_qp_gradient),
       refDualBasis(
           p.get<std::string>("Reference Dual Basis Name"),

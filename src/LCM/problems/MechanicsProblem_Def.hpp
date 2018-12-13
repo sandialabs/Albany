@@ -21,7 +21,10 @@
 #include "CurrentCoords.hpp"
 #include "MechanicsResidual.hpp"
 #include "SurfaceBasis.hpp"
-#include "SurfaceScalarGradientOperator.hpp"
+//#include "SurfaceScalarGradientOperator.hpp"
+#include "SurfaceScalarGradientOperatorPorePressure.hpp"
+#include "SurfaceScalarGradientOperatorTransport.hpp"
+#include "SurfaceScalarGradientOperatorHydroStress.hpp"
 #include "SurfaceScalarJump.hpp"
 #include "SurfaceVectorGradient.hpp"
 #include "SurfaceVectorJump.hpp"
@@ -1390,10 +1393,10 @@ MechanicsProblem::constructEvaluators(
 
     // Surface Gradient Operator
     if (have_pore_pressure_eq_) {
-      // SurfaceScalarGradientOperator_Def.hpp
+      // SurfaceScalarGradientOperatorPorePressure_Def.hpp
 
       Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
-          new Teuchos::ParameterList("Surface Scalar Gradient Operator"));
+          new Teuchos::ParameterList("Surface Scalar Gradient Operator Pore Pressure"));
 
       // inputs
       p->set<RealType>("thickness", thickness);
@@ -1411,8 +1414,8 @@ MechanicsProblem::constructEvaluators(
 
       // outputs
       p->set<std::string>(
-          "Surface Scalar Gradient Operator Name",
-          "Surface Scalar Gradient Operator");
+          "Surface Scalar Gradient Operator Pore Pressure Name",
+          "Surface Scalar Gradient Operator Pore Pressure");
       p->set<Teuchos::RCP<PHX::DataLayout>>(
           "Node QP Vector Data Layout", dl_->node_qp_vector);
       p->set<std::string>(
@@ -1421,15 +1424,15 @@ MechanicsProblem::constructEvaluators(
           "QP Vector Data Layout", dl_->qp_vector);
 
       ev = Teuchos::rcp(
-          new LCM::SurfaceScalarGradientOperator<EvalT, PHAL::AlbanyTraits>(
+          new LCM::SurfaceScalarGradientOperatorPorePressure<EvalT, PHAL::AlbanyTraits>(
               *p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
     if (have_transport_eq_) {
-      // SurfaceScalarGradientOperator_Def.hpp
+      // SurfaceScalarGradientOperatorTransport_Def.hpp
       Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
-          new Teuchos::ParameterList("Surface Scalar Gradient Operator"));
+          new Teuchos::ParameterList("Surface Scalar Gradient Operator Transport"));
       // inputs
       p->set<RealType>("thickness", thickness);
       p->set<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>(
@@ -1445,8 +1448,8 @@ MechanicsProblem::constructEvaluators(
 
       // outputs
       p->set<std::string>(
-          "Surface Scalar Gradient Operator Name",
-          "Surface Scalar Gradient Operator");
+          "Surface Scalar Gradient Operator Transport Name",
+          "Surface Scalar Gradient Operator Transport");
       p->set<Teuchos::RCP<PHX::DataLayout>>(
           "Node QP Vector Data Layout", dl_->node_qp_vector);
       if (have_transport_eq_ == true)
@@ -1456,15 +1459,15 @@ MechanicsProblem::constructEvaluators(
           "QP Vector Data Layout", dl_->qp_vector);
 
       ev = Teuchos::rcp(
-          new LCM::SurfaceScalarGradientOperator<EvalT, PHAL::AlbanyTraits>(
+          new LCM::SurfaceScalarGradientOperatorTransport<EvalT, PHAL::AlbanyTraits>(
               *p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
     if (have_hydrostress_eq_) {
-      // SurfaceScalarGradientOperator_Def.hpp
+      // SurfaceScalarGradientOperatorHydroStress_Def.hpp
       Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
-          new Teuchos::ParameterList("Surface Scalar Gradient Operator"));
+          new Teuchos::ParameterList("Surface Scalar Gradient Operator HydroStress"));
       // inputs
       p->set<RealType>("thickness", thickness);
       p->set<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>(
@@ -1481,8 +1484,8 @@ MechanicsProblem::constructEvaluators(
 
       // outputs
       p->set<std::string>(
-          "Surface Scalar Gradient Operator Name",
-          "Surface Scalar Gradient Operator");
+          "Surface Scalar Gradient Operator HydroStress Name",
+          "Surface Scalar Gradient Operator HydroStress");
       p->set<Teuchos::RCP<PHX::DataLayout>>(
           "Node QP Vector Data Layout", dl_->node_qp_vector);
       p->set<std::string>(
@@ -1491,7 +1494,7 @@ MechanicsProblem::constructEvaluators(
           "QP Vector Data Layout", dl_->qp_vector);
 
       ev = Teuchos::rcp(
-          new LCM::SurfaceScalarGradientOperator<EvalT, PHAL::AlbanyTraits>(
+          new LCM::SurfaceScalarGradientOperatorHydroStress<EvalT, PHAL::AlbanyTraits>(
               *p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -1902,8 +1905,14 @@ MechanicsProblem::constructEvaluators(
         p->set<std::string>(
             "Unit Gradient QP Variable Name", "surf_Pressure Gradient");
       }
+      //p->set<std::string>(
+      //    "Gradient BF Name", "Surface Scalar Gradient Operator");
       p->set<std::string>(
-          "Gradient BF Name", "Surface Scalar Gradient Operator");
+          "Gradient BF Name", "Surface Scalar Gradient Operator Pore Pressure");
+      p->set<std::string>(
+          "Gradient BF Name", "Surface Scalar Gradient Operator Transport");
+      p->set<std::string>(
+          "Gradient BF Name", "Surface Scalar Gradient Operator HydroStress");
       //   p->set<std::string>("Gradient BF Name", "Grad BF");
     }
 
@@ -2164,8 +2173,8 @@ MechanicsProblem::constructEvaluators(
         "Cubature", surfaceCubature);
     p->set<Intrepid2Basis>("Intrepid2 Basis", surfaceBasis);
     p->set<std::string>(
-        "Surface Scalar Gradient Operator Name",
-        "Surface Scalar Gradient Operator");
+        "Surface Scalar Gradient Operator Pore Pressure Name",
+        "Surface Scalar Gradient Operator Pore Pressure");
     p->set<std::string>("Scalar Gradient Name", "Surface Pressure Gradient");
     p->set<std::string>("Current Basis Name", "Current Basis");
     p->set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
@@ -2678,8 +2687,8 @@ MechanicsProblem::constructEvaluators(
         "Cubature", surfaceCubature);
     p->set<Intrepid2Basis>("Intrepid2 Basis", surfaceBasis);
     p->set<std::string>(
-        "Surface Scalar Gradient Operator Name",
-        "Surface Scalar Gradient Operator");
+        "Surface Scalar Gradient Operator Transport Name",
+        "Surface Scalar Gradient Operator Transport");
     p->set<std::string>(
         "Surface Transport Gradient Name", "Surface Transport Gradient");
     p->set<std::string>("Current Basis Name", "Current Basis");
@@ -2774,8 +2783,8 @@ MechanicsProblem::constructEvaluators(
         "Cubature", surfaceCubature);
     p->set<Intrepid2Basis>("Intrepid2 Basis", surfaceBasis);
     p->set<std::string>(
-        "Surface Scalar Gradient Operator Name",
-        "Surface Scalar Gradient Operator");
+        "Surface Scalar Gradient Operator HydroStress Name",
+        "Surface Scalar Gradient Operator HydroStress");
     p->set<std::string>("Current Basis Name", "Current Basis");
     p->set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
     p->set<std::string>("Reference Normal Name", "Reference Normal");
