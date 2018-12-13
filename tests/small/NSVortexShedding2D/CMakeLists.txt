@@ -36,6 +36,11 @@ endif(ALBANY_EPETRA)
 if (ALBANY_IFPACK2)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTransientRKT.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/inputTransientRKT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTransientRKT_RegressFail.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputTransientRKT_RegressFail.yaml COPYONLY)
 
 add_test(${testName}_TransIRK_Tpetra ${AlbanyT.exe} inputTransientRKT.yaml)
+add_test(NAME ${testName}_TransIRK_Tpetra_RegressFail
+   COMMAND ${AlbanyT.exe} inputTransientRKT_RegressFail.yaml)
+set_tests_properties(${testName}_TransIRK_Tpetra_RegressFail PROPERTIES WILL_FAIL TRUE)
 endif(ALBANY_IFPACK2)
