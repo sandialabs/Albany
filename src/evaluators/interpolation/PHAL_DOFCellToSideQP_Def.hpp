@@ -29,47 +29,37 @@ DOFCellToSideQPBase(const Teuchos::ParameterList& p,
 
   Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
   std::string layout_str = p.get<std::string>("Data Layout");
+  std::string cell_field_name = p.get<std::string> ("Cell Variable Name");
+  std::string side_field_name = p.get<std::string> ("Side Variable Name");
 
   if (layout_str=="Cell Scalar") {
-    val_cell = decltype(val_cell)(p.get<std::string> ("Cell Variable Name"),
-        dl->cell_scalar2);
-    val_side_qp = decltype(val_side_qp)(p.get<std::string> ("Side Variable Name"),
-        dl_side->qp_scalar);
+    val_cell    = decltype(val_cell)(cell_field_name, dl->cell_scalar2);
+    val_side_qp = decltype(val_side_qp)(side_field_name, dl_side->qp_scalar);
 
     layout = CELL_SCALAR;
   } else if (layout_str=="Cell Vector") {
-    val_cell = decltype(val_cell)(p.get<std::string> ("Cell Variable Name"),
-        dl->cell_vector);
-    val_side_qp = decltype(val_side_qp)(p.get<std::string> ("Side Variable Name"),
-        dl_side->qp_vector);
+    val_cell    = decltype(val_cell)(cell_field_name, dl->cell_vector);
+    val_side_qp = decltype(val_side_qp)(side_field_name, dl_side->qp_vector);
 
     layout = CELL_VECTOR;
   } else if (layout_str=="Cell Tensor") {
-    val_cell = decltype(val_cell)(p.get<std::string> ("Cell Variable Name"),
-        dl->cell_tensor);
-    val_side_qp = decltype(val_side_qp)(p.get<std::string> ("Side Variable Name"),
-        dl_side->qp_tensor);
+    val_cell    = decltype(val_cell)(cell_field_name, dl->cell_tensor);
+    val_side_qp = decltype(val_side_qp)(side_field_name, dl_side->qp_tensor);
 
     layout = CELL_TENSOR;
   } else if (layout_str=="Node Scalar") {
-    val_cell = decltype(val_cell)(p.get<std::string> ("Cell Variable Name"),
-        dl->node_scalar);
-    val_side_qp = decltype(val_side_qp)(p.get<std::string> ("Side Variable Name"),
-        dl_side->qp_scalar);
+    val_cell    = decltype(val_cell)(cell_field_name, dl->node_scalar);
+    val_side_qp = decltype(val_side_qp)(side_field_name, dl_side->qp_scalar);
 
     layout = NODE_SCALAR;
   } else if (layout_str=="Node Vector") {
-    val_cell = decltype(val_cell)(p.get<std::string> ("Cell Variable Name"),
-        dl->node_vector);
-    val_side_qp = decltype(val_side_qp)(p.get<std::string> ("Side Variable Name"),
-        dl_side->qp_vector);
+    val_cell    = decltype(val_cell)(cell_field_name, dl->node_vector);
+    val_side_qp = decltype(val_side_qp)(side_field_name, dl_side->qp_vector);
 
     layout = NODE_VECTOR;
   } else if (layout_str=="Node Tensor") {
-    val_cell = decltype(val_cell)(p.get<std::string> ("Cell Variable Name"),
-        dl->node_tensor);
-    val_side_qp = decltype(val_side_qp)(p.get<std::string> ("Side Variable Name"),
-        dl_side->qp_tensor);
+    val_cell    = decltype(val_cell)(cell_field_name, dl->node_tensor);
+    val_side_qp = decltype(val_side_qp)(side_field_name, dl_side->qp_tensor);
 
     layout = NODE_TENSOR;
   } else {
