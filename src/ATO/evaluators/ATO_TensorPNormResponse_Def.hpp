@@ -447,7 +447,28 @@ TransformResponse(int Cell, int QP, ScalarT& response_eff)
   ScalarT Spp3 = (Hpp1 + 2.0*sqrt(Hpp1*Hpp1+Hpp2)*cos((Thetapp+2.0*acos(-1.0))/3.0));
 
   //Apply the Barlat yield function to get effective response.
-  response_eff = pow((pow(Sp1-Spp1,R)+pow(Sp1-Spp2,R)+pow(Sp1-Spp3,R)+pow(Sp2-Spp1,R)+pow(Sp2-Spp2,R)+pow(Sp2-Spp3,R)+pow(Sp3-Spp1,R)+pow(Sp3-Spp2,R)+pow(Sp3-Spp3,R)) / 4.0 , 1.0/R);
+  ScalarT val1 = 1.0; 
+  ScalarT val2 = 1.0; 
+  ScalarT val3 = 1.0; 
+  ScalarT val4 = 1.0; 
+  ScalarT val5 = 1.0; 
+  ScalarT val6 = 1.0; 
+  ScalarT val7 = 1.0; 
+  ScalarT val8 = 1.0; 
+  ScalarT val9 = 1.0; 
+  for (int i=0; i<R; i++)  {
+    val1 *= (Sp1-Spp1); 
+    val2 *= (Sp1-Spp2); 
+    val3 *= (Sp1-Spp3); 
+    val4 *= (Sp2-Spp1); 
+    val5 *= (Sp2-Spp2); 
+    val6 *= (Sp2-Spp3); 
+    val7 *= (Sp3-Spp1); 
+    val8 *= (Sp3-Spp2); 
+    val9 *= (Sp3-Spp3); 
+  }
+  ScalarT val = (val1 + val2 + val3 + val4 + val5 + val6 + val7 + val8 + val9)/4.0;  
+  response_eff = pow(val , 1.0/R);
 }
 
 // **********************************************************************
