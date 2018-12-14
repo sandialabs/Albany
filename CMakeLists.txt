@@ -1003,6 +1003,38 @@ IF(NOT DEFINED Kokkos_ENABLE_Cuda)
   ENDIF(EXISTS "${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h")
 ENDIF(NOT DEFINED Kokkos_ENABLE_Cuda)
 
+# It is not currently possible to determine the status of "Kokkos_ENABLE_Cuda" from Albany. So we will deduce it
+# from ${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h
+IF(NOT DEFINED Kokkos_ENABLE_OpenMP)
+  SET(Kokkos_ENABLE_OpenMP OFF)
+  IF(EXISTS "${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h")
+    FILE(READ ${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h CURRENT_CONFIG)
+    STRING(REGEX MATCH "\#define KOKKOS_ENABLE_OPENMP" KOKKOS_OPENMP_IS_SET ${CURRENT_CONFIG})
+    IF("#define KOKKOS_ENABLE_OPENMP" STREQUAL "${KOKKOS_OPENMP_IS_SET}")
+      MESSAGE("-- Kokkos is configured to use OpenMP, Albany will also.")
+      SET(Kokkos_ENABLE_OpenMP ON)
+    ELSE("#define KOKKOS_ENABLE_OPENMP" STREQUAL "${KOKKOS_OpenMP_IS_SET}")
+      MESSAGE("-- Kokkos is not configured to use OpenMP, Albany will NOT be compiled for OpenMP.")
+    ENDIF("#define KOKKOS_ENABLE_OPENMP" STREQUAL "${KOKKOS_OPENMP_IS_SET}")
+  ENDIF(EXISTS "${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h")
+ENDIF(NOT DEFINED Kokkos_ENABLE_OpenMP)
+
+# set optional dependency on the BGL, defaults to Enabled
+# This option is added due to issued with compiling BGL with the intel compilers
+# see Trilinos bugzilla bug #6343
+#
+OPTION(ENABLE_BGL "Flag to turn on the Phalanx graphviz capabilities (dependent on BGL)" ON)
+IF (ENABLE_BGL)
+    MESSAGE("-- BGL       is Enabled, compiling with -DALBANY_BGL")
+    SET(ALBANY_BGL TRUE)
+ELSE()
+  MESSAGE("-- BGL       is NOT Enabled. Graph visualization in Phalanx will not be available!")
+  SET(ALBANY_BGL FALSE)
+ENDIF()
+
+# Add option to check for hardware floating point exceptions using SSE, defaults to disabled
+OPTION(ENABLE_CHECK_FPE "Flag to turn on floating point exception (NAN) checking" OFF)
+
 # set optional dependency on the BGL, defaults to Enabled
 # This option is added due to issued with compiling BGL with the intel compilers
 # see Trilinos bugzilla bug #6343
