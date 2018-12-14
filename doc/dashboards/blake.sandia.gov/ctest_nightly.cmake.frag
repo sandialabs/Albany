@@ -378,7 +378,7 @@ if (BUILD_ALBANY_SERIAL)
     "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build/TrilinosSerialInstall"
     "-DENABLE_LCM:BOOL=ON"
     "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_ATO:BOOL=ON"
+    "-DENABLE_ATO:BOOL=OFF"
     "-DENABLE_SCOREC:BOOL=OFF"
     "-DENABLE_ASCR:BOOL=OFF"
     "-DENABLE_TSUNAMI:BOOL=ON"
