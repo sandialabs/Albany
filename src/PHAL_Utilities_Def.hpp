@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include <Kokkos_DynRankView.hpp>
+#include "PHAL_AlbanyTraits.hpp"
 
 namespace PHAL {
 
