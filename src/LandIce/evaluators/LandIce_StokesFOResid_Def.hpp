@@ -21,13 +21,20 @@ template<typename EvalT, typename Traits>
 StokesFOResid<EvalT, Traits>::
 StokesFOResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl) :
-  wBF      (p.get<std::string> ("Weighted BF Variable Name"), dl->node_qp_scalar),
-  wGradBF  (p.get<std::string> ("Weighted Gradient BF Variable Name"),dl->node_qp_gradient),
-  U        (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
-  Ugrad    (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
-  force    (p.get<std::string> ("Body Force Variable Name"), dl->qp_vector),
-  muLandIce  (p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
-  Residual (p.get<std::string> ("Residual Variable Name"), dl->node_vector)
+  numNodes  (dl->node_qp_gradient->dimension(1)),
+  numQPs    (dl->node_qp_gradient->dimension(2)),
+  numDims   (dl->node_qp_gradient->dimension(3)),
+  useStereographicMap (p.get<Teuchos::ParameterList*>("Stereographic Map")->get("Use Stereographic Map", false)),
+  R2 (std::pow(p.get<Teuchos::ParameterList*>("Stereographic Map")->get<RealType>("Earth Radius", 6371),2)),
+  x_0 (p.get<Teuchos::ParameterList*>("Stereographic Map")->get<RealType>("X_0", 0)),//-136)),
+  y_0 (p.get<Teuchos::ParameterList*>("Stereographic Map")->get<RealType>("Y_0", 0)),//-2040)),
+  wBF       (p.get<std::string> ("Weighted BF Variable Name"), dl->node_qp_scalar),
+  wGradBF   (p.get<std::string> ("Weighted Gradient BF Variable Name"),dl->node_qp_gradient),
+  U         (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
+  Ugrad     (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
+  force     (p.get<std::string> ("Body Force Variable Name"), dl->qp_vector),
+  muLandIce (p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
+  Residual  (p.get<std::string> ("Residual Variable Name"), dl->node_vector)
 {
 #ifdef OUTPUT_TO_SCREEN
   Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -44,20 +51,20 @@ StokesFOResid(const Teuchos::ParameterList& p,
 
   if (type == "LandIce") {
 #ifdef OUTPUT_TO_SCREEN
-    *out << "setting LandIce FO model physics" << std::endl;
+    *output << "setting LandIce FO model physics" << std::endl;
 #endif
     eqn_type = LandIce;
   }
   //LandIce FO x-z MMS test case
   else if (type == "LandIce X-Z") {
 #ifdef OUTPUT_TO_SCREEN
-    *out << "setting LandIce FO X-Z model physics" << std::endl;
+    *output << "setting LandIce FO X-Z model physics" << std::endl;
 #endif
   eqn_type = LandIce_XZ;
   }
   else if (type == "Poisson") { //temporary addition of Poisson operator for debugging of Neumann BC
 #ifdef OUTPUT_TO_SCREEN
-    *out << "setting Poisson (Laplace) operator" << std::endl;
+    *output << "setting Poisson (Laplace) operator" << std::endl;
 #endif
     eqn_type = POISSON;
   }
@@ -69,8 +76,6 @@ StokesFOResid(const Teuchos::ParameterList& p,
   this->addDependentField(wGradBF);
   this->addDependentField(muLandIce);
 
-  stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
-  useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
   if(useStereographicMap)
   {
     coordVec = decltype(coordVec)(p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
@@ -81,21 +86,14 @@ StokesFOResid(const Teuchos::ParameterList& p,
 
   this->setName("StokesFOResid"+PHX::typeAsString<EvalT>());
 
-  std::vector<PHX::Device::size_type> dims;
-  wGradBF.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-  numQPs   = dims[2];
-  numDims  = dims[3];
-
-  U.fieldTag().dataLayout().dimensions(dims);
-  vecDimFO = (numDims < 2) ? numDims : 2;
+  int vecDimFO = (numDims < 2) ? numDims : 2;
 
 #ifdef OUTPUT_TO_SCREEN
-  *out << " in LandIce Stokes FO residual! " << std::endl;
-  *out << " vecDimFO = " << vecDimFO << std::endl;
-  *out << " numDims = " << numDims << std::endl;
-  *out << " numQPs = " << numQPs << std::endl;
-  *out << " numNodes = " << numNodes << std::endl;
+  *output << " in LandIce Stokes FO residual! " << std::endl;
+  *output << " vecDimFO = " << vecDimFO << std::endl;
+  *output << " numDims = " << numDims << std::endl;
+  *output << " numQPs = " << numQPs << std::endl;
+  *output << " numNodes = " << numNodes << std::endl;
 #endif
 
   TEUCHOS_TEST_FOR_EXCEPTION (vecDimFO != 2 && eqn_type == LandIce, Teuchos::Exceptions::InvalidParameter,
@@ -133,6 +131,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   this->utils.setFieldData(Residual,fm);
 }
+
 //**********************************************************************
 //Kokkos functors
 template<typename EvalT, typename Traits>
@@ -146,10 +145,6 @@ operator() (const LandIce_3D_Tag& tag, const int& cell) const{
   }
 
   if(useStereographicMap) {
-    double R = stereographicMapList->get<double>("Earth Radius", 6371);
-    double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
-    double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
-    double R2 = std::pow(R,2);
     for (int qp=0; qp < numQPs; ++qp) {
       //evaluate non-linear viscosity, given by Glen's law, at quadrature points
       ScalarT mu = muLandIce(cell,qp);
@@ -309,7 +304,7 @@ void StokesFOResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #ifdef OUTPUT_TO_SCREEN
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   int procRank = Teuchos::GlobalMPISession::getRank();
   int numProcs = Teuchos::GlobalMPISession::getNProc();
