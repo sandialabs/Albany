@@ -29,6 +29,12 @@ inline std::string bc2str (const LandIceBC bc) {
   return str;
 }
 
+constexpr const char* INVALID_STR = "__INVALID__";
+
+inline bool isInvalid (const std::string& str) {
+  return str==INVALID_STR;
+}
+
 } // namespace LandIce
 
 #endif // LANDICE_PROBLEM_UTILS_HPP
