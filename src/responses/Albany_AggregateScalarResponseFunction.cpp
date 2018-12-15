@@ -8,6 +8,7 @@
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_Application.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Thyra_VectorBase.hpp"
 
 #include "Thyra_DefaultProductVectorSpace.hpp"
 
@@ -97,9 +98,11 @@ evaluateResponse(const double current_time,
   for (unsigned int i=0; i<responses.size(); i++) {
     // Create Thyra_Vector for response function
     Teuchos::RCP<Thyra_Vector> g_i = Thyra::createMember(productVectorSpace->getBlock(i));
+    g_i->assign(0.0); 
+    
     gi_data = getLocalData(g_i.getConst());
- 
-    // Evaluate response function
+
+     // Evaluate response function
     responses[i]->evaluateResponse(current_time, x, xdot, xdotdot, p, g_i);
 
     // Copy into the monolithic vector
