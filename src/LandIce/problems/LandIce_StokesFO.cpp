@@ -66,6 +66,12 @@ void StokesFO::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStr
 
     // If effective pressure is a dist param, we also need to project it.
     ss_build_interp_ev[ssName]["effective_pressure"][CELL_TO_SIDE] = is_dist_param["effective_pressure"];
+    ss_field_scalar_type[ssName]["effective_pressure"] = FieldScalarType::ParamScalar;
+  }
+
+  // Set scalar type of thickness
+  if (!isInvalid(basalSideName)) {
+    ss_field_scalar_type[basalSideName]["ice_thickness"] = FieldScalarType::ParamScalar;
   }
 
   // Note: the base class call must be last, since it calls the buildEvaluators method,

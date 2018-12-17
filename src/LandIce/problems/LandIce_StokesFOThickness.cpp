@@ -48,7 +48,9 @@ StokesFOThickness::StokesFOThickness(
 
   offsetThickness = vecDimFO;
 
-  field_dim[dof_names[1]] = 0;
+  field_rank[dof_names[1]] = 0;
+  field_location[dof_names[1]] = FieldLocation::Node;
+  field_scalar_type[dof_names[1]] = FieldScalarType::Scalar;
 }
 
 void StokesFOThickness::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
@@ -67,9 +69,7 @@ void StokesFOThickness::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::Mes
     ss_build_interp_ev[basalSideName]["ice_thickness"][QP_VAL] = true;
     ss_build_interp_ev[basalSideName]["surface_height"][QP_VAL] = true;
 
-    ss_field_dim[basalSideName][dof_names[0]] = 0;
-    ss_field_dim[basalSideName]["ice_thickness"] = 0;
-    ss_field_dim[basalSideName]["surface_height"] = 0;
+    ss_field_rank[basalSideName][dof_names[0]] = 0;
   }
 
   // Note: the base class call must be last, since it calls the buildEvaluators method,

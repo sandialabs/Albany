@@ -1,4 +1,5 @@
 #include "LandIce_StokesFOBase.hpp"
+#include "Teuchos_CompilerCodeTweakMacros.hpp"
 
 #include <string.hpp> // For util::upper_case (do not confuse this with <string>! string.hpp is an Albany file)
 
@@ -45,10 +46,10 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
 
   // Surface side, where velocity diagnostics are computed (e.g., velocity mismatch)
-  surfaceSideName = params->isParameter("Surface Side Name") ? params->get<std::string>("Surface Side Name") : "__INVALID__";
+  surfaceSideName = params->isParameter("Surface Side Name") ? params->get<std::string>("Surface Side Name") : INVALID_STR;
 
   // Basal side, where thickness-related diagnostics are computed (e.g., SMB)
-  basalSideName = params->isParameter("Basal Side Name") ? params->get<std::string>("Basal Side Name") : "__INVALID__";
+  basalSideName = params->isParameter("Basal Side Name") ? params->get<std::string>("Basal Side Name") : INVALID_STR;
 
   // Setup velocity dof and resid names. Derived classes should _append_ to these
   dof_names.resize(1);
@@ -62,8 +63,10 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   offsetVelocity = 0;
   vecDimFO       = std::min((int)neq,(int)2);
 
-  // In case we build interpolation evaluators for the dof, store its dimension
-  field_dim[dof_names[0]] = vecDimFO;
+  // Properties of solution field
+  field_rank[dof_names[0]] = 1;
+  field_location[dof_names[0]] = FieldLocation::Node;
+  field_scalar_type[dof_names[0]] = FieldScalarType::Scalar;
 }
 
 void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
@@ -126,11 +129,17 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
         ss_utils_needed[ssName][QP_COORDS] = true;  // Only really needed if stereographic map is used.
 
         // And if we compute grad beta, we may even need the velocity gradient and the effective pressure gradient
-        // (which, if it is a dist param, needs to be projected to the side)
+        // (which, if effevtive_pressure is a dist param, needs to be projected to the side)
         ss_build_interp_ev[ssName][dof_names[0]][GRAD_QP_VAL] = true;
         ss_build_interp_ev[ssName]["effective_pressure"][GRAD_QP_VAL] = true;
         ss_build_interp_ev[ssName]["effective_pressure"][CELL_TO_SIDE] = is_dist_param["effective_pressure"];;
 
+        // Set properties of effective_pressure.
+        // Note: we don't set scalar_type, since we still don't know it.
+        // Subproblems will have to set it. E.g., StokesFO will set ParamScalar,
+        // while StokesFOHydrology will set Scalar
+        ss_field_rank[ssName]["effective_pressure"] = 0;
+        ss_field_location[ssName]["effective_pressure"] = FieldLocation::Node;
       } else if (it.first==LandIceBC::Lateral) {
         // Lateral bc needs BFs (including normals)
         ss_utils_needed[ssName][BFS] = true;
@@ -140,7 +149,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   }
 
   // If we have velocity diagnostics, we need surface side stuff
-  if (surfaceSideName!="__INVALID__" && dl->side_layouts.find(surfaceSideName)==dl->side_layouts.end())
+  if (!isInvalid(surfaceSideName) && dl->side_layouts.find(surfaceSideName)==dl->side_layouts.end())
   {
     TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(surfaceSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
                                   "Error! Either 'Surface Side Name' is wrong or something went wrong while building the side mesh specs.\n");
@@ -170,7 +179,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   }
 
   // If we have thickness or surface velocity diagnostics, we may need basal side stuff
-  if (basalSideName!="__INVALID__" && dl->side_layouts.find(basalSideName)==dl->side_layouts.end())
+  if (!isInvalid(basalSideName) && dl->side_layouts.find(basalSideName)==dl->side_layouts.end())
   {
     TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(basalSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
                                   "Error! Either 'Basal Side Name' is wrong or something went wrong while building the side mesh specs.\n");
@@ -193,16 +202,33 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     // Needs BFs
     ss_utils_needed[basalSideName][BFS] = true;
 
-    // SMB evaluators may need velocity and averaged velocity
+    // SMB evaluators may need velocity, averaged velocity, and thickness
+    // NOTE: do NOT set thickness scalar type, since derived classes may want different types.
     ss_build_interp_ev[basalSideName][dof_names[0]][CELL_TO_SIDE] = true;
     ss_build_interp_ev[basalSideName][dof_names[0]][QP_VAL] = true;
+
     ss_build_interp_ev[basalSideName]["Averaged Velocity"][QP_VAL] = true;
+    ss_field_rank[basalSideName]["Averaged Velocity"] = 1;
+    ss_field_location[basalSideName]["Averaged Velocity"] = FieldLocation::Node;
+    ss_field_scalar_type[basalSideName]["Averaged Velocity"] = FieldScalarType::Scalar;
 
     ss_build_interp_ev[basalSideName]["ice_thickness"][QP_VAL] = true;
-
-    // Project thickness to side if it's a parameter.
+    ss_build_interp_ev[basalSideName]["ice_thickness"][GRAD_QP_VAL] = true;
     ss_build_interp_ev[basalSideName]["ice_thickness"][CELL_TO_SIDE] = is_dist_param["ice_thickness"];
+    ss_field_rank[basalSideName]["ice_thickness"] = 0;
+    ss_field_location[basalSideName]["ice_thickness"] = FieldLocation::Node;
   }
+
+  // Volume required interpolations
+  build_interp_ev[dof_names[0]][QP_VAL] = true;
+  build_interp_ev[dof_names[0]][GRAD_QP_VAL] = true;
+#ifndef CISM_HAS_LANDICE
+  // If not coupled with cism, we may have to compute the surface gradient ourselves
+  build_interp_ev["surface_height"][GRAD_QP_VAL] = true;
+  field_rank["surface_height"] = 0;
+  field_location["surface_height"] = FieldLocation::Node;
+  field_scalar_type["surface_height"] = FieldScalarType::ParamScalar;
+#endif
 
 #ifdef OUTPUT_TO_SCREEN
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
@@ -246,7 +272,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 }
 
 Teuchos::RCP<Teuchos::ParameterList>
-LandIce::StokesFOBase::getStokesFOBaseProblemParameters () const
+StokesFOBase::getStokesFOBaseProblemParameters () const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams("ValidStokesFOProblemParams");
 
@@ -269,6 +295,39 @@ LandIce::StokesFOBase::getStokesFOBaseProblemParameters () const
   validPL->set<bool>("Adjust Surface Height to Account for Thickness Changes", false, "");
 
   return validPL;
+}
+
+std::string StokesFOBase::e2str (const FieldScalarType e) const {
+  switch (e) {
+    case FieldScalarType::Scalar:       return "Scalar";
+    case FieldScalarType::MeshScalar:   return "MeshScalar";
+    case FieldScalarType::ParamScalar:  return "ParamScalar";
+    case FieldScalarType::Real:         return "Real";
+    default:                            return INVALID_STR;
+  }
+
+  TEUCHOS_UNREACHABLE_RETURN("");
+}
+
+std::string StokesFOBase::e2str (const FieldLocation e) const {
+  switch (e) {
+    case FieldLocation::Node:   return "Node";
+    case FieldLocation::Cell:   return "Cell";
+    default:                    return INVALID_STR;
+  }
+
+  TEUCHOS_UNREACHABLE_RETURN("");
+}
+
+std::string StokesFOBase::rank2str (const int rank) const {
+  switch (rank) {
+    case 0:   return "Scalar";
+    case 1:   return "Vector";
+    case 2:   return "Tensor";
+    default:  return INVALID_STR;
+  }
+
+  TEUCHOS_UNREACHABLE_RETURN("");
 }
 
 } // namespace LandIce
