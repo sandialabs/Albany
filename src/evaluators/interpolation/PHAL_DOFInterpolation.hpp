@@ -52,6 +52,16 @@ private:
   std::size_t numQPs;
 
   MDFieldMemoizer<Traits> memoizer;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct DOFInterpolationBase_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFInterpolationBase_Tag> DOFInterpolationBase_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFInterpolationBase_Tag& tag, const int& cell) const;
 };
 
 // Some shortcut names
