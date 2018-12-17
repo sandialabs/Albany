@@ -14,5 +14,5 @@ cat a b >& c
 cat c results_serial >& d
 mv d results_serial
 rm a b c
-cat results_serial | /usr/lib/sendmail -F ikalash@blake.sandia.gov -t "ikalash@sandia.gov, gahanse@sandia.gov, daibane@sandia.gov, tjfulle@sandia.gov, amota@sandia.gov, jwatkin@sandia.gov"
+cat results_serial | /usr/lib/sendmail -F ikalash@blake.sandia.gov -t "ikalash@sandia.gov, daibane@sandia.gov, tjfulle@sandia.gov, amota@sandia.gov, jwatkin@sandia.gov"
 
