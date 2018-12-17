@@ -47,10 +47,6 @@ StokesFOThickness::StokesFOThickness(
   scatter_names[1] = "Scatter " + resid_names[1];
 
   offsetThickness = vecDimFO;
-
-  field_rank[dof_names[1]] = 0;
-  field_location[dof_names[1]] = FieldLocation::Node;
-  field_scalar_type[dof_names[1]] = FieldScalarType::Scalar;
 }
 
 void StokesFOThickness::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
@@ -58,18 +54,24 @@ void StokesFOThickness::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::Mes
 {
   if (basalSideName!="__INVALID__") {
     // We need BF on the basal side
-    ss_utils_needed[basalSideName][BFS] = true;
+    ss_utils_needed[basalSideName][UtilityRequest::BFS] = true;
 
     // We need to restrict and interpolate velocity, thickness and surface height
-    ss_build_interp_ev[basalSideName][dof_names[0]][CELL_TO_SIDE] = true;
-    ss_build_interp_ev[basalSideName]["ice_thickness"][CELL_TO_SIDE] = true;
-    ss_build_interp_ev[basalSideName]["surface_height"][CELL_TO_SIDE] = true;
+    requestSideSetInterpolationEvaluator(basalSideName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::CELL_TO_SIDE);
+    requestSideSetInterpolationEvaluator(basalSideName, "surface_height", 0, FieldLocation::Node, FieldScalarType::MeshScalar, InterpolationRequest::CELL_TO_SIDE);
+    requestSideSetInterpolationEvaluator(basalSideName, "ice_thickness", 0, FieldLocation::Node, FieldScalarType::MeshScalar, InterpolationRequest::CELL_TO_SIDE);
 
-    ss_build_interp_ev[basalSideName][dof_names[0]][QP_VAL] = true;
-    ss_build_interp_ev[basalSideName]["ice_thickness"][QP_VAL] = true;
-    ss_build_interp_ev[basalSideName]["surface_height"][QP_VAL] = true;
+    requestSideSetInterpolationEvaluator(basalSideName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::QP_VAL);
+    requestSideSetInterpolationEvaluator(basalSideName, "surface_height", 0, FieldLocation::Node, FieldScalarType::MeshScalar, InterpolationRequest::QP_VAL);
+    requestSideSetInterpolationEvaluator(basalSideName, "ice_thickness", 0, FieldLocation::Node, FieldScalarType::MeshScalar, InterpolationRequest::QP_VAL);
+  }
 
-    ss_field_rank[basalSideName][dof_names[0]] = 0;
+  // Pre-set the scalar type to MeshScalar.
+  field_scalar_type["ice_thickness"] = FieldScalarType::MeshScalar;
+  field_scalar_type["surface_height"] = FieldScalarType::MeshScalar;
+  for (auto& it : ss_field_scalar_type) {
+    it.second["ice_thickness"] = FieldScalarType::MeshScalar;
+    it.second["surface_height"] = FieldScalarType::MeshScalar;
   }
 
   // Note: the base class call must be last, since it calls the buildEvaluators method,

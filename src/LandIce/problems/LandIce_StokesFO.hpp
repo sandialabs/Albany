@@ -64,10 +64,6 @@ public:
   //! Each problem must generate it's list of valide parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
-  //! Build the PDE instantiations, boundary conditions, and initial solution
-  void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-                     Albany::StateManager& stateMgr);
-
 private:
 
   //! Private to prohibit copying
@@ -94,6 +90,8 @@ public:
                                     Albany::FieldManagerChoice FieldManagerChoice);
 
 protected:
+
+  void setupEvaluatorRequests ();
 
   void constructDirichletEvaluators (const Albany::MeshSpecsStruct& meshSpecs);
   void constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);

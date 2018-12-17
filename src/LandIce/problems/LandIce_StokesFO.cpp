@@ -57,28 +57,6 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
 }
 
-void StokesFO::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-                             Albany::StateManager& stateMgr)
-{
-  // Surface velocity diagnostic may require gradient of beta, which requires gradient of effective_pressure
-  for (const auto& pl : landice_bcs[LandIceBC::BasalFriction]) {
-    std::string ssName  = pl->get<std::string>("Side Set Name");
-
-    // If effective pressure is a dist param, we also need to project it.
-    ss_build_interp_ev[ssName]["effective_pressure"][CELL_TO_SIDE] = is_dist_param["effective_pressure"];
-    ss_field_scalar_type[ssName]["effective_pressure"] = FieldScalarType::ParamScalar;
-  }
-
-  // Set scalar type of thickness
-  if (!isInvalid(basalSideName)) {
-    ss_field_scalar_type[basalSideName]["ice_thickness"] = FieldScalarType::ParamScalar;
-  }
-
-  // Note: the base class call must be last, since it calls the buildEvaluators method,
-  //       which needs all the input/requirements maps to be set.
-  StokesFOBase::buildProblem(meshSpecs,stateMgr);
-}
-
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
 StokesFO::buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -196,6 +174,10 @@ StokesFO::getValidProblemParameters () const
   validPL->sublist("Equation Set", false, "");
 
   return validPL;
+}
+
+void StokesFO::setupEvaluatorRequests () {
+  StokesFOBase::setupEvaluatorRequests();
 }
 
 } // namespace LandIce
