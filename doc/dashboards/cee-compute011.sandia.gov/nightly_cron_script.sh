@@ -14,11 +14,11 @@ if [ -z "$BUILD_OPT" ]; then
    exit 1;
 
 fi
-SCRIPT_DIR=/ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov
+SCRIPT_DIR=/projects/albany/nightlyAlbanyCDash
 # Install directory holds final installed versions of the build. This is cross-mounted usually.
-INSTALL_DIR=/projects/AppComp/nightly_gahanse/cee-compute011
+INSTALL_DIR=/projects/albany/nightlyAlbanyCDash
 # The build area where the nightly products are built
-SCRATCH_DIR=/scratch/gahanse
+SCRATCH_DIR=/scratch/albany
 
 export LM_LICENSE_FILE=7500@sitelicense.sandia.gov
 
@@ -32,6 +32,7 @@ if [ "$BUILD_OPT" = "intel" ]; then
   module purge
   module load sierra-git/2.6.1
   module load sierra-devel/intel-18.0.3-intelmpi-5.1
+  module load sparc-cmake
 
 #   . /sierra/sntools/SDK/compilers/intel/composer_xe_2018.1.163/compilers_and_libraries/linux/bin/compilervars.sh intel64
 
@@ -51,6 +52,7 @@ elif [ "$BUILD_OPT" = "debug" ]; then
   module load sierra-devel/gcc-8.1.0-openmpi-1.10.2
 #  module load sierra-mkl/18.0-2018.1.163
   module load sierra-mkl/19.0-2019.0.117
+  module load sparc-cmake
 
 elif [ "$BUILD_OPT" = "clang" ]; then
 
@@ -64,6 +66,7 @@ elif [ "$BUILD_OPT" = "clang" ]; then
   module load sierra-devel/clang-7.0-openmpi-1.10.2
 #  module load sierra-mkl/18.0-2018.1.163
   module load sierra-mkl/19.0-2019.0.117
+  module load sparc-cmake
 
 #  export PATH=/projects/albany/bin:/projects/albany/trilinos/MPI_REL/bin:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/bin:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/bin:/projects/sierra/linux_rh6/install/git/2.6.1/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/sbin
 
@@ -82,6 +85,7 @@ else
   module load sierra-devel/gcc-8.1.0-openmpi-1.10.2
 #  module load sierra-mkl/18.0-2018.1.163
   module load sierra-mkl/19.0-2019.0.117
+  module load sparc-cmake
 
 #  export PATH=/projects/albany/bin:/projects/albany/trilinos/MPI_REL/bin:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/bin:/projects/sierra/linux_rh6/SDK/mpi/openmpi/1.10.2-gcc-5.4.0-RHEL6/bin:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/bin:/projects/sierra/linux_rh6/install/git/2.6.1/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/sbin
 
@@ -116,7 +120,7 @@ LOG_FILE=$SCRATCH_DIR/nightly_log_$BUILD_OPT.txt
 
 echo "Date and time is $now" > $LOG_FILE
 
-eval "env BUILD_OPTION=$BUILD_OPT DO_SUBMIT=$SUBMIT_RESULTS TEST_TYPE=$THE_TEST_TYPE INSTALL_DIRECTORY=$INSTALL_DIR SCRATCH_DIRECTORY=$SCRATCH_DIR SCRIPT_DIRECTORY=$SCRIPT_DIR /projects/albany/bin/ctest -VV -S /ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov/ctest_nightly.cmake" > $LOG_FILE 2>&1
+eval "env BUILD_OPTION=$BUILD_OPT DO_SUBMIT=$SUBMIT_RESULTS TEST_TYPE=$THE_TEST_TYPE INSTALL_DIRECTORY=$INSTALL_DIR SCRATCH_DIRECTORY=$SCRATCH_DIR SCRIPT_DIRECTORY=$SCRIPT_DIR ctest -VV -S /projects/albany/nightlyAlbanyCDash/ctest_nightly.cmake" > $LOG_FILE 2>&1
 
 # Copy a basic installation to /projects/albany for those who like a nightly
 # build.
