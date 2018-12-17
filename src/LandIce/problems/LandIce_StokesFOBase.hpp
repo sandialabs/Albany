@@ -1453,13 +1453,9 @@ StokesFOBase::constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::
 
     // Figure out if observed surface velocity RMS is scalar (if present at all)
     if (!isInvalid(surfaceSideName)) {
-      auto it1 = stateMgr.getRegisteredSideSetStates().find(surfaceSideName);
-      if (it1!=stateMgr.getRegisteredSideSetStates().end()) {
-        std::string surfEBName = meshSpecs.sideSetMeshSpecs.at(surfaceSideName)[0]->ebName;
-        auto it2 = it1->second.find(surfEBName);
-        if (it2!=it1->second.end()) {
-          auto where = it2->second.find("observed_surface_velocity_RMS");
-          paramList->set<bool>("Scalar RMS",where!=it2->second.end() && where->second->rank()==3);
+      if (is_ss_input_field[surfaceSideName]["observed_surface_velocity_RMS"]) {
+        if (ss_field_rank[surfaceSideName].at("observed_surface_velocity_RMS")==0) {
+          paramList->set<bool>("Scalar RMS",true);
         }
       }
     }
@@ -1475,7 +1471,7 @@ StokesFOBase::constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::
     paramList->set<std::string>("Thickness Side QP Variable Name","ice_thickness_" + basalSideName);
     paramList->set<std::string>("Thickness Side Variable Name","ice_thickness_" + basalSideName);
     paramList->set<std::string>("Bed Topography Side Variable Name","bed_topography_" + basalSideName);
-    paramList->set<std::string>("Surface Velocity Side QP Variable Name","surface_velocity");
+    paramList->set<std::string>("Surface Velocity Side QP Variable Name",dof_names[0] + "_" + surfaceSideName);
     paramList->set<std::string>("Averaged Vertical Velocity Side Variable Name","Averaged Velocity");
     paramList->set<std::string>("SMB Side QP Variable Name","surface_mass_balance_" + basalSideName);
     paramList->set<std::string>("SMB RMS Side QP Variable Name","surface_mass_balance_RMS_" + basalSideName);

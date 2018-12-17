@@ -174,6 +174,11 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     ss_build_interp_ev[surfaceSideName][dof_names[0]][CELL_TO_SIDE] = true;
     ss_build_interp_ev[surfaceSideName][dof_names[0]][QP_VAL] = true;
 
+    // ... and observed surface velocity ...
+    // NOTE: RMS could be either scalar or vector. But don't worry, the states registration phase will figure it out
+    ss_build_interp_ev[surfaceSideName]["observed_surface_velocity"][QP_VAL] = true;
+    ss_build_interp_ev[surfaceSideName]["observed_surface_velocity_RMS"][QP_VAL] = true;
+
     // ... and BFs
     ss_utils_needed[surfaceSideName][BFS] = true;
   }
