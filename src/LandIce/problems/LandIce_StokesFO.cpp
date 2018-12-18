@@ -178,6 +178,19 @@ StokesFO::getValidProblemParameters () const
 
 void StokesFO::setupEvaluatorRequests () {
   StokesFOBase::setupEvaluatorRequests();
+
+  // In addition to the StokesFOBase stuff, add the syntetic tests bc needs
+  for (auto pl : landice_bcs[LandIceBC::SynteticTest]) {
+    const std::string& ssName = pl->get<std::string>("Side Set Name");
+
+    requestSideSetInterpolationEvaluator(ssName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::CELL_TO_SIDE); 
+    requestSideSetInterpolationEvaluator(ssName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::QP_VAL); 
+    requestSideSetInterpolationEvaluator(ssName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::GRAD_QP_VAL); 
+
+    ss_utils_needed[ssName][UtilityRequest::BFS] = true;
+    ss_utils_needed[ssName][UtilityRequest::QP_COORDS] = true;
+    ss_utils_needed[ssName][UtilityRequest::NORMALS] = true;
+  }
 }
 
 } // namespace LandIce

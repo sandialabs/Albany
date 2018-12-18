@@ -52,6 +52,8 @@
 #include "LandIce_Dissipation.hpp"
 #include "LandIce_UpdateZCoordinate.hpp"
 
+#include <string.hpp> // For util::upper_case (do not confuse this with <string>! string.hpp is an Albany file)
+
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
@@ -211,6 +213,15 @@ protected:
 
   // Track the utility evaluators needed by each side set
   std::map<std::string,std::map<UtilityRequest,bool>>  ss_utils_needed;
+
+
+  // Name of common variables (constructor provides defaults)
+  std::string surface_height_name;
+  std::string ice_thickness_name;
+  std::string bed_topography_name;
+  std::string temperature_name;
+  std::string flow_factor_name;
+  std::string stiffening_factor_name;
 };
 
 template <typename EvalT>
@@ -782,10 +793,10 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p = Teuchos::rcp(new Teuchos::ParameterList("Stokes Stress"));
 
   //Input
-  p->set<std::string>("Velocity QP Variable Name", "Velocity");
-  p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
+  p->set<std::string>("Velocity QP Variable Name", dof_names[0]);
+  p->set<std::string>("Velocity Gradient QP Variable Name", dof_names[0] + " Gradient");
   p->set<std::string>("Viscosity QP Variable Name", "LandIce Viscosity");
-  p->set<std::string>("Surface Height QP Name", "surface_height");
+  p->set<std::string>("Surface Height QP Name", surface_height_name);
   p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
   p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
@@ -802,8 +813,8 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Input
   p->set<std::string>("Weighted BF Variable Name", Albany::weighted_bf_name);
   p->set<std::string>("Weighted Gradient BF Variable Name", Albany::weighted_grad_bf_name);
-  p->set<std::string>("Velocity QP Variable Name", "Velocity");
-  p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
+  p->set<std::string>("Velocity QP Variable Name", dof_names[0]);
+  p->set<std::string>("Velocity Gradient QP Variable Name", dof_names[0] + " Gradient");
   p->set<std::string>("Body Force Variable Name", "Body Force");
   p->set<std::string>("Viscosity QP Variable Name", "LandIce Viscosity");
   p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
@@ -832,10 +843,10 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Pressure Corrected Temperature"));
 
   //Input
-  p->set<std::string>("Surface Height Variable Name", "surface_height");
+  p->set<std::string>("Surface Height Variable Name", surface_height_name);
   p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
-  p->set<std::string>("Temperature Variable Name", "temperature");
+  p->set<std::string>("Temperature Variable Name", temperature_name);
   p->set<bool>("Enable Memoizer", enableMemoizer);
 
   //Output
@@ -861,7 +872,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         p->set<std::string>("Temperature Variable Name", "corrected temperature");
       } else {
         // Avoid pointless calculation, and use original temperature in viscosity calculation
-        p->set<std::string>("Temperature Variable Name", "temperature");
+        p->set<std::string>("Temperature Variable Name", temperature_name);
       }
       p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Viscosity"));
 
@@ -878,14 +889,14 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //Input
   p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
-  p->set<std::string>("Velocity QP Variable Name", "Velocity");
-  p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
+  p->set<std::string>("Velocity QP Variable Name", dof_names[0]);
+  p->set<std::string>("Velocity Gradient QP Variable Name", dof_names[0] + " Gradient");
   if (params->sublist("LandIce Physical Parameters").isParameter("Clausius-Clapeyron Coefficient") &&
       params->sublist("LandIce Physical Parameters").get<double>("Clausius-Clapeyron Coefficient")!=0.0) {
     p->set<std::string>("Temperature Variable Name", "corrected temperature");
   } else {
     // Avoid pointless calculation, and use original temperature in viscosity calculation
-    p->set<std::string>("Temperature Variable Name", "temperature");
+    p->set<std::string>("Temperature Variable Name", temperature_name);
   }
   p->set<std::string>("Ice Softness Variable Name", "flow_factor");
   p->set<std::string>("Stiffening Factor QP Name", "stiffening_factor");
@@ -993,8 +1004,8 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Surface Height Gradient QP Variable Name", "CISM Surface Height Gradient");
 #endif
   p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
-  p->set<std::string>("Surface Height Gradient Name", "surface_height Gradient");
-  p->set<std::string>("Surface Height Name", "surface_height");
+  p->set<std::string>("Surface Height Gradient Name", surface_height_name + " Gradient");
+  p->set<std::string>("Surface Height Name", surface_height_name);
   p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("Body Force"));
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
   p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
@@ -1052,15 +1063,15 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     // We may have more than 1 basal side set. The layout of all the side fields is the
     // same, so we need to differentiate them by name (just like we do for the basis functions already).
 
-    std::string velocity_side = dof_names[0] + "_" + ssName;
-    std::string sliding_velocity_side = "sliding_velocity_" + ssName;
-    std::string beta_side = "beta_" + ssName;
-    std::string ice_thickness_side = "ice_thickness_" + ssName;
-    std::string ice_overburden_side = "ice_overburden_" + ssName;
-    std::string effective_pressure_side = "effective_pressure_" + ssName;
-    std::string bed_roughness_side = "bed_roughness_" + ssName;
-    std::string bed_topography_side = "bed_topography_" + ssName;
-    std::string flow_factor_side = "flow_factor_" + ssName;
+    std::string velocity_side_name = dof_names[0] + "_" + ssName;
+    std::string sliding_velocity_side_name = "sliding_velocity_" + ssName;
+    std::string beta_side_name = "beta_" + ssName;
+    std::string ice_thickness_side_name = ice_thickness_name + "_" + ssName;
+    std::string ice_overburden_side_name = "ice_overburden_" + ssName;
+    std::string effective_pressure_side_name = "effective_pressure_" + ssName;
+    std::string bed_roughness_side_name = "bed_roughness_" + ssName;
+    std::string bed_topography_side_name = bed_topography_name + "_" + ssName;
+    std::string flow_factor_side_name = "flow_factor_" + ssName;
 
     // -------------------------------- LandIce evaluators ------------------------- //
 
@@ -1070,8 +1081,8 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     //Input
     p->set<std::string>("BF Side Name", Albany::bf_name + " "+ssName);
     p->set<std::string>("Weighted Measure Name", Albany::weighted_measure_name + " "+ssName);
-    p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", beta_side);
-    p->set<std::string>("Velocity Side QP Variable Name", velocity_side);
+    p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", beta_side_name);
+    p->set<std::string>("Velocity Side QP Variable Name", velocity_side_name);
     p->set<std::string>("Side Set Name", ssName);
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<Teuchos::ParameterList*>("Parameter List", &pl->sublist("Basal Friction Coefficient"));
@@ -1086,13 +1097,13 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Velocity Norm"));
 
     // Input
-    p->set<std::string>("Field Name",velocity_side);
+    p->set<std::string>("Field Name",velocity_side_name);
     p->set<std::string>("Field Layout","Cell Side Node Vector");
     p->set<std::string>("Side Set Name", ssName);
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Field Norm"));
 
     // Output
-    p->set<std::string>("Field Norm Name",sliding_velocity_side);
+    p->set<std::string>("Field Norm Name",sliding_velocity_side_name);
 
     ev = Teuchos::rcp(new PHAL::FieldFrobeniusNorm<EvalT,PHAL::AlbanyTraits>(*p,dl_side));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -1108,11 +1119,11 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     // Input
     p->set<bool>("Nodal",false);
     p->set<std::string>("Side Set Name", ssName);
-    p->set<std::string>("Ice Thickness Variable Name", ice_thickness_side);
+    p->set<std::string>("Ice Thickness Variable Name", ice_thickness_side_name);
     p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
 
     // Output
-    p->set<std::string>("Ice Overburden Variable Name", ice_overburden_side);
+    p->set<std::string>("Ice Overburden Variable Name", ice_overburden_side_name);
 
     ev = Teuchos::rcp(new LandIce::IceOverburden<EvalT,PHAL::AlbanyTraits,true>(*p,dl_side));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -1130,10 +1141,10 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
       // Input
       p->set<bool>("Nodal",false);
       p->set<std::string>("Side Set Name", ssName);
-      p->set<std::string>("Ice Overburden Variable Name", ice_overburden_side);
+      p->set<std::string>("Ice Overburden Variable Name", ice_overburden_side_name);
 
       // Output
-      p->set<std::string>("Effective Pressure Variable Name", effective_pressure_side);
+      p->set<std::string>("Effective Pressure Variable Name", effective_pressure_side_name);
 
       ev = Teuchos::rcp(new LandIce::EffectivePressure<EvalT,PHAL::AlbanyTraits,true,true>(*p,dl_side));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -1208,25 +1219,32 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Basal Friction Coefficient"));
 
     //Input
-    p->set<std::string>("Sliding Velocity Variable Name", sliding_velocity_side);
+    p->set<std::string>("Sliding Velocity Variable Name", sliding_velocity_side_name);
     p->set<std::string>("BF Variable Name", Albany::bf_name + " " + ssName);
-    p->set<std::string>("Effective Pressure QP Variable Name", effective_pressure_side);
-    p->set<std::string>("Ice Softness Variable Name", flow_factor_side);
-    p->set<std::string>("Bed Roughness Variable Name", bed_roughness_side);
+    p->set<std::string>("Effective Pressure QP Variable Name", effective_pressure_side_name);
+    p->set<std::string>("Ice Softness Variable Name", flow_factor_side_name);
+    p->set<std::string>("Bed Roughness Variable Name", bed_roughness_side_name);
     p->set<std::string>("Side Set Name", ssName);
     p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name + " " + ssName);
     p->set<Teuchos::ParameterList*>("Parameter List", &pl->sublist("Basal Friction Coefficient"));
     p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
     p->set<Teuchos::ParameterList*>("Viscosity Parameter List", &params->sublist("LandIce Viscosity"));
     p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
-    p->set<std::string>("Bed Topography Variable Name", bed_topography_side);
-    p->set<std::string>("Effective Pressure Variable Name", effective_pressure_side);
-    p->set<std::string>("Ice Thickness Variable Name", ice_thickness_side);
+    p->set<std::string>("Bed Topography Variable Name", bed_topography_side_name);
+    p->set<std::string>("Effective Pressure Variable Name", effective_pressure_side_name);
+    p->set<std::string>("Ice Thickness Variable Name", ice_thickness_side_name);
 
     //Output
-    p->set<std::string>("Basal Friction Coefficient Variable Name", beta_side);
+    p->set<std::string>("Basal Friction Coefficient Variable Name", beta_side_name);
 
-    basalMemoizer = enableMemoizer ? (!is_dist_param["basal_friction"] ? true : false) : false;
+    std::string bft = util::upper_case(pl->sublist("Basal Friction Coefficient").get<std::string>("Type"));
+    if (bft=="GIVEN FIELD" || bft=="EXPONENT OF GIVEN FIELD" || bft=="GALERKIN PROJECTION OF EXPONENT OF GIVEN FIELD") {
+      const std::string& bfname = pl->sublist("Basal Friction Coefficient").get<std::string>("Given Field Variable Name");
+      basalMemoizer = enableMemoizer && !is_dist_param[bfname];
+    } else {
+      basalMemoizer = false;
+    }
+
     if (basalMemoizer) {
       p->set<bool>("Enable Memoizer", basalMemoizer);
     }
@@ -1254,8 +1272,8 @@ void StokesFOBase::constructLateralBCEvaluators (PHX::FieldManager<PHAL::AlbanyT
     // We may have more than 1 lateral side set. The layout of all the side fields is the
     // same, so we need to differentiate them by name (just like we do for the basis functions already).
 
-    std::string ice_thickness_side = "ice_thickness_" + ssName;
-    std::string surface_height_side = "surface_height_" + ssName;
+    std::string ice_thickness_side_name = ice_thickness_name + "_" + ssName;
+    std::string surface_height_side_name = surface_height_name + "_" + ssName;
 
     // -------------------------------- LandIce evaluators ------------------------- //
 
@@ -1263,8 +1281,8 @@ void StokesFOBase::constructLateralBCEvaluators (PHX::FieldManager<PHAL::AlbanyT
     p = Teuchos::rcp( new Teuchos::ParameterList("Lateral Residual") );
 
     // Input
-    p->set<std::string>("Ice Thickness Variable Name", ice_thickness_side);
-    p->set<std::string>("Ice Surface Elevation Variable Name", surface_height_side);
+    p->set<std::string>("Ice Thickness Variable Name", ice_thickness_side_name);
+    p->set<std::string>("Ice Surface Elevation Variable Name", surface_height_side_name);
     p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name + " " + ssName);
     p->set<std::string>("BF Side Name", Albany::bf_name + " " + ssName);
     p->set<std::string>("Weighted Measure Name", Albany::weighted_measure_name + " " + ssName);
@@ -1315,14 +1333,13 @@ void StokesFOBase::constructSurfaceVelocityEvaluators (PHX::FieldManager<PHAL::A
     for (auto pl : landice_bcs[LandIceBC::BasalFriction]) {
       std::string ssName  = pl->get<std::string>("Side Set Name");
 
-      std::string velocity_side = dof_names[0] + "_" + ssName;
-      std::string velocity_gradient_side = dof_names[0] + "_" + ssName  + " Gradient";
-      std::string sliding_velocity_side = "sliding_velocity_" + ssName;
-      std::string basal_friction_side = "basal_friction_" + ssName;
-      std::string beta_side = "beta_" + ssName;
-      std::string beta_gradient_side = "beta_" + ssName + " Gradient";
-      std::string effective_pressure_side = "effective_pressure_" + ssName;
-      std::string effective_pressure_gradient_side = "effective_pressure_" + ssName + " Gradient";
+      std::string velocity_side_name = dof_names[0] + "_" + ssName;
+      std::string velocity_gradient_side_name = dof_names[0] + "_" + ssName  + " Gradient";
+      std::string sliding_velocity_side_name = "sliding_velocity_" + ssName;
+      std::string beta_side_name = "beta_" + ssName;
+      std::string beta_gradient_side_name = "beta_" + ssName + " Gradient";
+      std::string effective_pressure_side_name = "effective_pressure_" + ssName;
+      std::string effective_pressure_gradient_side_name = "effective_pressure_" + ssName + " Gradient";
 
       //--- LandIce basal friction coefficient gradient ---//
       p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Basal Friction Coefficient Gradient"));
@@ -1330,17 +1347,17 @@ void StokesFOBase::constructSurfaceVelocityEvaluators (PHX::FieldManager<PHAL::A
       // Input
       p->set<std::string>("Gradient BF Side Variable Name", Albany::grad_bf_name + " "+ssName);
       p->set<std::string>("Side Set Name", ssName);
-      p->set<std::string>("Effective Pressure QP Name", effective_pressure_side);
-      p->set<std::string>("Effective Pressure Gradient QP Name", effective_pressure_gradient_side);
-      p->set<std::string>("Basal Velocity QP Name", velocity_side);
-      p->set<std::string>("Basal Velocity Gradient QP Name", velocity_gradient_side);
-      p->set<std::string>("Sliding Velocity QP Name", sliding_velocity_side);
+      p->set<std::string>("Effective Pressure QP Name", effective_pressure_side_name);
+      p->set<std::string>("Effective Pressure Gradient QP Name", effective_pressure_gradient_side_name);
+      p->set<std::string>("Basal Velocity QP Name", velocity_side_name);
+      p->set<std::string>("Basal Velocity Gradient QP Name", velocity_gradient_side_name);
+      p->set<std::string>("Sliding Velocity QP Name", sliding_velocity_side_name);
       p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name +" "+ssName);
       p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
       p->set<Teuchos::ParameterList*>("Parameter List", &pl->sublist("Basal Friction Coefficient"));
   
       // Output
-      p->set<std::string>("Basal Friction Coefficient Gradient Name",beta_gradient_side);
+      p->set<std::string>("Basal Friction Coefficient Gradient Name",beta_gradient_side_name);
   
       ev = Teuchos::rcp(new LandIce::BasalFrictionCoefficientGradient<EvalT,PHAL::AlbanyTraits>(*p,dl->side_layouts.at(ssName)));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -1365,15 +1382,14 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
     // only some of the sub-sidesets of 'basalSideName'. The layout of all the side fields is the
     // same, so we need to differentiate them by name (just like we do for the basis functions already).
 
-    std::string velocity_side = dof_names[0] + "_" + basalSideName;
-    std::string basal_friction_side = "basal_friction_" + basalSideName;
-    std::string ice_thickness_side = "ice_thickness_" + basalSideName;
-    std::string surface_height_side = "surface_height_" + basalSideName;
-    std::string surface_mass_balance_side = "surface_mass_balance_" + basalSideName;
-    std::string surface_mass_balance_RMS_side = "surface_mass_balance_RMS_" + basalSideName;
-    std::string stiffening_factor_side = "stiffenting_factor_" + basalSideName;
-    std::string effective_pressure_side = "effective_pressure_" + basalSideName;
-    std::string bed_roughness_side = "bed_roughness_" + basalSideName;
+    std::string velocity_side_name = dof_names[0] + "_" + basalSideName;
+    std::string ice_thickness_side_name = ice_thickness_name + "_" + basalSideName;
+    std::string surface_height_side_name = surface_height_name + "_" + basalSideName;
+    std::string surface_mass_balance_side_name = "surface_mass_balance_" + basalSideName;
+    std::string surface_mass_balance_RMS_side_name = "surface_mass_balance_RMS_" + basalSideName;
+    std::string stiffening_factor_side_name = stiffening_factor_name + "_" + basalSideName;
+    std::string effective_pressure_side_name = "effective_pressure_" + basalSideName;
+    std::string bed_roughness_side_name = "bed_roughness_" + basalSideName;
 
     // ------------------- Interpolations and utilities ------------------ //
 
@@ -1381,10 +1397,10 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
     ev = evalUtils.constructSideQuadPointsToSideInterpolationEvaluator("flux_divergence",basalSideName,false);
     fm0.template registerEvaluator<EvalT> (ev);
 
-    if (is_dist_param["ice_thickness"])
+    if (is_dist_param[ice_thickness_name])
     {
       //---- Restrict ice thickness from cell-based to cell-side-based
-      ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("ice_thickness",basalSideName,"Node Scalar",cellType,ice_thickness_side);
+      ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator(ice_thickness_name,basalSideName,"Node Scalar",cellType,ice_thickness_side_name);
       fm0.template registerEvaluator<EvalT> (ev);
     }
 
@@ -1407,8 +1423,8 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
     //Input
     p->set<std::string>("Averaged Velocity Side QP Variable Name", "averaged_velocity_" + basalSideName);
     p->set<std::string>("Averaged Velocity Side QP Divergence Name", "averaged_velocity_" + basalSideName + " Divergence");
-    p->set<std::string>("Thickness Side QP Variable Name", ice_thickness_side);
-    p->set<std::string>("Thickness Gradient Name", ice_thickness_side + " Gradient");
+    p->set<std::string>("Thickness Side QP Variable Name", ice_thickness_side_name);
+    p->set<std::string>("Thickness Gradient Name", ice_thickness_side_name + " Gradient");
     p->set<std::string>("Side Tangents Name", Albany::tangents_name + " " + basalSideName);
 
     p->set<std::string>("Field Name",  "flux_divergence");
@@ -1466,14 +1482,14 @@ StokesFOBase::constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::
     paramList->set<Teuchos::ParameterList>("LandIce Physical Parameters List", params->sublist("LandIce Physical Parameters"));
     paramList->set<std::string>("Coordinate Vector Side Variable Name", Albany::coord_vec_name + " " + basalSideName);
     paramList->set<std::string>("Basal Friction Coefficient Name","beta");
-    paramList->set<std::string>("Stiffening Factor Gradient Name","stiffening_factor_" + basalSideName + " Gradient");
-    paramList->set<std::string>("Stiffening Factor Name", "stiffening_factor_" + basalSideName);
-    paramList->set<std::string>("Thickness Gradient Name", "ice_thickness_" + basalSideName + " Gradient");
-    paramList->set<std::string>("Thickness Side QP Variable Name","ice_thickness_" + basalSideName);
-    paramList->set<std::string>("Thickness Side Variable Name","ice_thickness_" + basalSideName);
-    paramList->set<std::string>("Bed Topography Side Variable Name","bed_topography_" + basalSideName);
+    paramList->set<std::string>("Stiffening Factor Gradient Name",stiffening_factor_name + "_" + basalSideName + " Gradient");
+    paramList->set<std::string>("Stiffening Factor Name", stiffening_factor_name + "_" + basalSideName);
+    paramList->set<std::string>("Thickness Gradient Name", ice_thickness_name + "_" + basalSideName + " Gradient");
+    paramList->set<std::string>("Thickness Side QP Variable Name",ice_thickness_name + "_" + basalSideName);
+    paramList->set<std::string>("Thickness Side Variable Name",ice_thickness_name + "_" + basalSideName);
+    paramList->set<std::string>("Bed Topography Side Variable Name",bed_topography_name + "_" + basalSideName);
     paramList->set<std::string>("Surface Velocity Side QP Variable Name",dof_names[0] + "_" + surfaceSideName);
-    paramList->set<std::string>("Averaged Vertical Velocity Side Variable Name","Averaged Velocity");
+    paramList->set<std::string>("Averaged Vertical Velocity Side Variable Name","averaged_velocity_" + basalSideName);
     paramList->set<std::string>("SMB Side QP Variable Name","surface_mass_balance_" + basalSideName);
     paramList->set<std::string>("SMB RMS Side QP Variable Name","surface_mass_balance_RMS_" + basalSideName);
     paramList->set<std::string>("Flux Divergence Side QP Variable Name","flux_divergence");
