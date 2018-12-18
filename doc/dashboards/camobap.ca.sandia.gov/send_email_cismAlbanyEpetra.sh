@@ -9,4 +9,4 @@ TT=`grep "...   Passed" /home/ikalash/nightlyCDash/nightly_log_cismAlbanyEpetra.
 
 
 #/bin/mail -s "Albany ($ALBANY_BRANCH): $TTT" "albany-regression@software.sandia.gov" < $ALBOUTDIR/albany_runtests.out
-/bin/mail -s "cism-piscees (ali_interface, epetra): $TT tests passed, $TTT tests failed, $TTTT tests not run, $TTTTT timeouts" "ikalash@sandia.gov, lbertag@sandia.gov, mperego@sandia.gov" < /home/ikalash/nightlyCDash/results_cismAlbanyEpetra
+/bin/mail -s "IKTCismAlbanyEpetra: $TT tests passed, $TTT tests failed, $TTTT tests not run, $TTTTT timeouts" "ikalash@sandia.gov, lbertag@sandia.gov, mperego@sandia.gov" < /home/ikalash/nightlyCDash/results_cismAlbanyEpetra
