@@ -8,7 +8,7 @@ TTTTT=`grep "Timeout" results_arm -c`
 TT=`grep "...   Passed" results_arm -c`
 
 
-echo "Subject: Albany (master, Serial KokkosNode, ARM): $TT tests passed, $TTT tests failed, $TTTT tests not run, $TTTTT timeouts" >& a
+echo "Subject: Albany, mayer (KokkosNode=Serial): $TT tests passed, $TTT tests failed, $TTTT tests not run, $TTTTT timeouts" >& a
 echo "" >& b
 cat a b >& c
 cat c results_arm >& d
