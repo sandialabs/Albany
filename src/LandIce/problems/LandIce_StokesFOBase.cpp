@@ -355,8 +355,7 @@ void StokesFOBase::setupEvaluatorRequests ()
     // ... and observed surface velocity ...
     // NOTE: RMS could be either scalar or vector. The states registration should have figure it out (if the field is listed as input).
     requestSideSetInterpolationEvaluator(surfaceSideName, "observed_surface_velocity", 1, FieldLocation::Node, FieldScalarType::ParamScalar, InterpolationRequest::QP_VAL); 
-    auto it = ss_field_rank[surfaceSideName].find("observed_surface_velocity_RMS");
-    const int obs_vel_rms_rank = (it==ss_field_rank[surfaceSideName].end() ? -1 : it->second);
+    const int obs_vel_rms_rank = ss_field_rank[surfaceSideName]["observed_surface_velocity_RMS"];
     requestSideSetInterpolationEvaluator(surfaceSideName, "observed_surface_velocity_RMS", obs_vel_rms_rank, FieldLocation::Node, FieldScalarType::ParamScalar, InterpolationRequest::QP_VAL); 
 
     // ... and BFs
