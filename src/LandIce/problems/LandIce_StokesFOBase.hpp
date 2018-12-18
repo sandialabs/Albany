@@ -523,6 +523,12 @@ void StokesFOBase::
 constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+
+  std::map<FieldScalarType,Teuchos::RCP<const Albany::EvaluatorUtilsBase<PHAL::AlbanyTraits>>> utils_map;
+  utils_map[FieldScalarType::Scalar]      = Teuchos::rcpFromRef(evalUtils.getSTUtils());
+  utils_map[FieldScalarType::ParamScalar] = Teuchos::rcpFromRef(evalUtils.getPSTUtils());
+  utils_map[FieldScalarType::MeshScalar]  = Teuchos::rcpFromRef(evalUtils.getMSTUtils());
+
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   const bool enableMemoizer = this->params->get<bool>("Use MDField Memoization", false);
 
@@ -533,10 +539,7 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 
     // Get the right evaluator utils for this field.
     const FieldScalarType st = field_scalar_type[fname];
-
-    const auto& utils =  st==FieldScalarType::Scalar ? evalUtils :
-                        (st==FieldScalarType::MeshScalar ? evalUtils.getMSTUtils() :
-                        (st==FieldScalarType::ParamScalar ? evalUtils.getPSTUtils() : evalUtils.getRTUtils()));
+    const auto& utils = *utils_map.at(st);
 
     // Check whether we can use memoization for this field. Criteria:
     //  - need to have memoization enabled
@@ -657,9 +660,8 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
         useMemoization &= !Albany::mesh_depends_on_solution() && !Albany::mesh_depends_on_parameters();
       }
 
-      const auto& utils =  st==FieldScalarType::Scalar ? evalUtils :
-                          (st==FieldScalarType::MeshScalar ? evalUtils.getMSTUtils() :
-                          (st==FieldScalarType::ParamScalar ? evalUtils.getPSTUtils() : evalUtils.getRTUtils()));
+      // Get the right evaluator utils for this field.
+      const auto& utils = *utils_map.at(st);
 
       if (entity==FieldLocation::Node) {
         // If they are nodal, interpolate at qps and to cell.

@@ -373,20 +373,33 @@ namespace Albany {
 
   };
 
-  template<typename EvalT, typename Traits, typename ScalarT>
+  template<typename EvalT, typename Traits, typename ScalarType>
   class EvaluatorUtilsImpl : public EvaluatorUtilsBase<Traits> {
 
    public:
 
+    typedef typename EvalT::ScalarT       ScalarT;
     typedef typename EvalT::MeshScalarT   MeshScalarT;
     typedef typename EvalT::ParamScalarT  ParamScalarT;
 
     EvaluatorUtilsImpl(Teuchos::RCP<Albany::Layouts> dl);
 
     const EvaluatorUtilsBase<Traits>&
+    getSTUtils() const
+    {
+      if (std::is_same<ScalarType,ScalarT>::value) {
+        return *this;
+      } else if (utils_ST==Teuchos::null)
+        utils_ST = Teuchos::rcp(new EvaluatorUtilsImpl<EvalT,Traits,ScalarT>(dl));
+      return *utils_ST;
+    }
+
+    const EvaluatorUtilsBase<Traits>&
     getMSTUtils() const
     {
-      if (utils_MST==Teuchos::null)
+      if (std::is_same<ScalarType,MeshScalarT>::value) {
+        return *this;
+      } else if (utils_MST==Teuchos::null)
         utils_MST = Teuchos::rcp(new EvaluatorUtilsImpl<EvalT,Traits,MeshScalarT>(dl));
       return *utils_MST;
     }
@@ -394,18 +407,20 @@ namespace Albany {
     const EvaluatorUtilsBase<Traits>&
     getPSTUtils() const
     {
-      if (utils_PST==Teuchos::null)
+      if (std::is_same<ScalarType,ParamScalarT>::value) {
+        return *this;
+      } else if (utils_PST==Teuchos::null)
         utils_PST = Teuchos::rcp(new EvaluatorUtilsImpl<EvalT,Traits,ParamScalarT>(dl));
       return *utils_PST;
     }
 
-    const EvaluatorUtilsBase<Traits>&
-    getRTUtils() const
-    {
-      if (utils_RT==Teuchos::null)
-        utils_RT = Teuchos::rcp(new EvaluatorUtilsImpl<EvalT,Traits,RealType>(dl));
-      return *utils_RT;
-    }
+    // const EvaluatorUtilsBase<Traits>&
+    // getRTUtils() const
+    // {
+    //   if (utils_RT==Teuchos::null)
+    //     utils_RT = Teuchos::rcp(new EvaluatorUtilsImpl<EvalT,Traits,RealType>(dl));
+    //   return *utils_RT;
+    // }
 
     // Do not hide base class inlined methods
     using EvaluatorUtilsBase<Traits>::constructGatherSolutionEvaluator;
@@ -696,10 +711,10 @@ namespace Albany {
 
   private:
 
-    //! Evaluator Utils with different ScalarType
+    //! Evaluator Utils with different ScalarType. Mutable, so we can have getters with JIT build.
+    mutable Teuchos::RCP<EvaluatorUtilsBase<Traits>>   utils_ST;
     mutable Teuchos::RCP<EvaluatorUtilsBase<Traits>>   utils_MST;
     mutable Teuchos::RCP<EvaluatorUtilsBase<Traits>>   utils_PST;
-    mutable Teuchos::RCP<EvaluatorUtilsBase<Traits>>   utils_RT;
 
     //! Struct of PHX::DataLayout objects defined all together.
     Teuchos::RCP<Albany::Layouts> dl;
