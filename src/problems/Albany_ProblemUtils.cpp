@@ -24,10 +24,13 @@
 
 #include "Kokkos_DynRankView.hpp"
 
+namespace Albany
+{
+
 /*********************** Helper Functions*********************************/
 
 Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
-Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
+getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
 {
    typedef Kokkos::DynRankView<RealType, PHX::Device> Field_t;
    using Teuchos::rcp;
@@ -213,3 +216,29 @@ Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
 
    return intrepidBasis;
 }
+
+bool mesh_depends_on_solution () {
+#ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool mesh_depends_on_parameters () {
+#ifdef ALBANY_MESH_DEPENDS_ON_PARAMETERS
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool params_depend_on_solution () {
+#ifdef ALBANY_PARAMETERS_DEPEND_ON_SOLUTION
+  return true;
+#else
+  return false;
+#endif
+}
+
+} // namespace Albany
