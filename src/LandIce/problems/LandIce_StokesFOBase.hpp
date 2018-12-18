@@ -22,6 +22,7 @@
 #include "PHAL_SaveStateField.hpp"
 
 #include "Albany_AbstractProblem.hpp"
+#include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_GeneralPurposeFieldsNames.hpp"
 #include "Albany_ResponseUtilities.hpp"
@@ -531,7 +532,29 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
     const std::string& fname = it.first;
 
     // Get the right evaluator utils for this field.
-    const auto& utils = is_input_field[fname] ? evalUtils.getPSTUtils() : evalUtils;
+    const FieldScalarType st = field_scalar_type[fname];
+
+    const auto& utils =  st==FieldScalarType::Scalar ? evalUtils :
+                        (st==FieldScalarType::MeshScalar ? evalUtils.getMSTUtils() :
+                        (st==FieldScalarType::ParamScalar ? evalUtils.getPSTUtils() : evalUtils.getRTUtils()));
+
+    // Check whether we can use memoization for this field. Criteria:
+    //  - need to have memoization enabled
+    //  - cannot be a solution-dependent field
+    //  - cannot be a distributed parameter
+    //  - if param scalar, params must not depend on solution
+    //  - if mesh scalar, mesh must not depend on solution/parameters
+    // Note: if a field depends on a distributed parameter (and not on the solution), it would pass these tests,
+    //       but memoization would be wrong. Therefore, we actually enable memoization if there are NO dist params.
+    //       A better choice would be to track dependencies, but we cannot do this easily. We should probably
+    //       have our own Albany::FieldManager (and Albany::Evaluator), which checks that all evaluators that
+    //       try to use memoization actually can do it (i.e., they do not depend on fields that cannot be memoized).
+    bool useMemoization = enableMemoizer && (is_dist_param.size()==0) && st!=FieldScalarType::Scalar;
+    if (st==FieldScalarType::ParamScalar) {
+      useMemoization &= !Albany::params_depend_on_solution();
+    } else if (st==FieldScalarType::MeshScalar) {
+      useMemoization &= !Albany::mesh_depends_on_solution() && !Albany::mesh_depends_on_parameters();
+    }
 
     // Get the needs of this field
     auto& needs = it.second;
@@ -539,57 +562,56 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
     if (field_location.at(fname)==FieldLocation::Node) {
       // If they are nodal, interpolate at qps and to cell.
       // Don't worry about creating more evs than needed; PHX will toss unneeded evs.
-      if (field_rank.at(fname)==0) {
+      switch(field_rank.at(fname)) {
+        case 0:
+          if (needs[InterpolationRequest::QP_VAL]) {
+            // Intepolate scalar at qps
+            ev = utils.constructDOFInterpolationEvaluator(fname, -1, useMemoization);
+            fm0.template registerEvaluator<EvalT> (ev);
+          }
+          if (needs[InterpolationRequest::GRAD_QP_VAL]) {
+            // Intepolate gradient  at qps
+            ev = utils.constructDOFGradInterpolationEvaluator(fname, -1, useMemoization);
+            fm0.template registerEvaluator<EvalT> (ev);
+          }
+          if (needs[InterpolationRequest::CELL_VAL]) {
+            // Intepolate field at cell
+            ev = utils.constructNodesToCellInterpolationEvaluator (fname, /*isVectorField = */ false, useMemoization);
+            fm0.template registerEvaluator<EvalT> (ev);
+          }
+          break;
+        case 1:
+          if (needs[InterpolationRequest::QP_VAL]) {
+            // Intepolate vector at qps
+            ev = utils.constructDOFVecInterpolationEvaluator(fname);
+            fm0.template registerEvaluator<EvalT> (ev);
+          }
+          if (needs[InterpolationRequest::GRAD_QP_VAL]) {
+            // Intepolate gradient  at qps
+            ev = utils.constructDOFVecGradInterpolationEvaluator(fname);
+            fm0.template registerEvaluator<EvalT> (ev);
+          }
+          if (needs[InterpolationRequest::CELL_VAL]) {
+            // Intepolate field at cell
+            ev = utils.constructNodesToCellInterpolationEvaluator (fname, /*isVectorField = */ true);
+            fm0.template registerEvaluator<EvalT> (ev);
+          }
+          break;
+        case 2:
+          if (needs[InterpolationRequest::QP_VAL]) {
+            // Intepolate tensor at qps
+            ev = utils.constructDOFTensorInterpolationEvaluator(fname);
+            fm0.template registerEvaluator<EvalT> (ev);
+          }
 
-        if (needs[InterpolationRequest::QP_VAL]) {
-          // Intepolate scalar at qps
-          ev = utils.constructDOFInterpolationEvaluator(fname);
-          fm0.template registerEvaluator<EvalT> (ev);
-        }
-
-        if (needs[InterpolationRequest::GRAD_QP_VAL]) {
-          // Intepolate gradient  at qps
-          ev = utils.constructDOFGradInterpolationEvaluator(fname);
-          fm0.template registerEvaluator<EvalT> (ev);
-        }
-
-        if (needs[InterpolationRequest::CELL_VAL]) {
-          // Intepolate field at cell
-          ev = utils.constructNodesToCellInterpolationEvaluator (fname, /*isVectorField = */ false);
-          fm0.template registerEvaluator<EvalT> (ev);
-        }
-      } else if (field_rank.at(fname)==1){
-        if (needs[InterpolationRequest::QP_VAL]) {
-          // Intepolate vector at qps
-          ev = utils.constructDOFVecInterpolationEvaluator(fname);
-          fm0.template registerEvaluator<EvalT> (ev);
-        }
-
-        if (needs[InterpolationRequest::GRAD_QP_VAL]) {
-          // Intepolate gradient  at qps
-          ev = utils.constructDOFVecGradInterpolationEvaluator(fname);
-          fm0.template registerEvaluator<EvalT> (ev);
-        }
-
-        if (needs[InterpolationRequest::CELL_VAL]) {
-          // Intepolate field at cell
-          ev = utils.constructNodesToCellInterpolationEvaluator (fname, /*isVectorField = */ true);
-          fm0.template registerEvaluator<EvalT> (ev);
-        }
-      } else if (field_rank.at(fname)==2) {
-        if (needs[InterpolationRequest::QP_VAL]) {
-          // Intepolate tensor at qps
-          ev = utils.constructDOFTensorInterpolationEvaluator(fname);
-          fm0.template registerEvaluator<EvalT> (ev);
-        }
-
-        if (needs[InterpolationRequest::GRAD_QP_VAL]) {
-          // Intepolate gradient  at qps
-          ev = utils.constructDOFTensorGradInterpolationEvaluator(fname);
-          fm0.template registerEvaluator<EvalT> (ev);
-        }
-      } else {
-        TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Unsupported dimension for input field '" + fname + "'.\n");
+          if (needs[InterpolationRequest::GRAD_QP_VAL]) {
+            // Intepolate gradient  at qps
+            ev = utils.constructDOFTensorGradInterpolationEvaluator(fname);
+            fm0.template registerEvaluator<EvalT> (ev);
+          }
+          break;
+        default:
+          TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Unsupported dimension for input field '" + fname + "'.\n");
       }
     }
   }
@@ -617,6 +639,24 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       const std::string layout = e2str(entity) + " " + rank2str(rank);
       const FieldScalarType st = ss_field_scalar_type[ss_name][fname];
 
+      // Check whether we can use memoization for this field. Criteria:
+      //  - need to have memoization enabled
+      //  - cannot be a solution-dependent field
+      //  - cannot be a distributed parameter
+      //  - if param scalar, params must not depend on solution
+      //  - if mesh scalar, mesh must not depend on solution/parameters
+      // Note: if a field depends on a distributed parameter (and not on the solution), it would pass these tests,
+      //       but memoization would be wrong. Therefore, we actually enable memoization if there are NO dist params.
+      //       A better choice would be to track dependencies, but we cannot do this easily. We should probably
+      //       have our own Albany::FieldManager (and Albany::Evaluator), which checks that all evaluators that
+      //       try to use memoization actually can do it (i.e., they do not depend on fields that cannot be memoized).
+      bool useMemoization = enableMemoizer && (is_dist_param.size()==0) && st!=FieldScalarType::Scalar;
+      if (st==FieldScalarType::ParamScalar) {
+        useMemoization &= !Albany::params_depend_on_solution();
+      } else if (st==FieldScalarType::MeshScalar) {
+        useMemoization &= !Albany::mesh_depends_on_solution() && !Albany::mesh_depends_on_parameters();
+      }
+
       const auto& utils =  st==FieldScalarType::Scalar ? evalUtils :
                           (st==FieldScalarType::MeshScalar ? evalUtils.getMSTUtils() :
                           (st==FieldScalarType::ParamScalar ? evalUtils.getPSTUtils() : evalUtils.getRTUtils()));
@@ -627,9 +667,9 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
         if (needs[InterpolationRequest::QP_VAL]) {
           // Intepolate field at qps
           if (rank==0) {
-            ev = utils.constructDOFInterpolationSideEvaluator (fname_side, ss_name, enableMemoizer);
+            ev = utils.constructDOFInterpolationSideEvaluator (fname_side, ss_name, useMemoization);
           } else {
-            ev = utils.constructDOFVecInterpolationSideEvaluator (fname_side, ss_name, enableMemoizer);
+            ev = utils.constructDOFVecInterpolationSideEvaluator (fname_side, ss_name, useMemoization);
           }
           fm0.template registerEvaluator<EvalT> (ev);
         }
@@ -637,9 +677,9 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
         if (needs[InterpolationRequest::GRAD_QP_VAL]) {
           // Intepolate gradient at qps
           if (rank==0) {
-            ev = utils.constructDOFGradInterpolationSideEvaluator (fname_side, ss_name, enableMemoizer);
+            ev = utils.constructDOFGradInterpolationSideEvaluator (fname_side, ss_name, useMemoization);
           } else {
-            ev = utils.constructDOFVecGradInterpolationSideEvaluator (fname_side, ss_name, enableMemoizer);
+            ev = utils.constructDOFVecGradInterpolationSideEvaluator (fname_side, ss_name, useMemoization);
           }
           fm0.template registerEvaluator<EvalT> (ev);
         }
@@ -656,13 +696,13 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       if (needs[InterpolationRequest::CELL_TO_SIDE] ||
           (needs[InterpolationRequest::CELL_TO_SIDE_IF_DIST_PARAM] && is_dist_param[fname])) {
         // Project from cell to side
-        ev = utils.constructDOFCellToSideEvaluator(fname, ss_name, layout, cellType, fname_side, enableMemoizer);
+        ev = utils.constructDOFCellToSideEvaluator(fname, ss_name, layout, cellType, fname_side, useMemoization);
         fm0.template registerEvaluator<EvalT> (ev);
       }
 
       if (needs[InterpolationRequest::SIDE_TO_CELL]) {
         // Project from cell to side
-        ev = utils.constructDOFCellToSideEvaluator(fname_side, ss_name, layout, cellType, fname);
+        ev = utils.constructDOFSideToCellEvaluator(fname_side, ss_name, layout, cellType, fname);
         fm0.template registerEvaluator<EvalT> (ev);
       }
     }
