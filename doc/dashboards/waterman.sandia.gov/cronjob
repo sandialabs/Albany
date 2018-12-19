@@ -1,4 +1,4 @@
-01 00 * * 1-5  cd /home/projects/albany/waterman; bash -l -c "source waterman_modules_cuda.sh >& modules_waterman.out; bash nightly_cron_script_trilinos_waterman.sh; bash nightly_cron_script_albany_waterman_clone.sh; bsub -Is -x -n 40 -q rhel7W -R "span[ptile=40]" /home/projects/albany/waterman/run_albany_lsf.sh; bash send_email_ctest.sh"
+01 00 * * 1-5  cd /home/projects/albany/waterman; bash -l -c "bsub -Is -x -n 40 -q rhel7W -R "span[ptile=40]" /home/projects/albany/waterman/run_all_lsf.sh; bash send_email_ctest.sh"
 05 06 * * 1-5 chgrp wg-albany -R /home/projects/albany/*
 07 06 * * 1-5 chmod ug+rwX -R /home/projects/albany/*
 
