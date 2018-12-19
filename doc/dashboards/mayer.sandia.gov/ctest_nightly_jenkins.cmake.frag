@@ -45,7 +45,7 @@ SET (CTEST_BUILD_FLAGS "-j8")
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 
-set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
+set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (HDF5_PATH $ENV{HDF5_ROOT})
 set (NETCDF_PATH $ENV{NETCDF_ROOT}) 
