@@ -14,7 +14,7 @@ for PACKAGE in $PACKAGES; do
 	    ;;
 	albany)
 	    PACKAGE_NAME="Albany"
-	    REPO="git@github.com:gahansen/Albany.git"
+	    REPO="git@github.com:SNLComputation/Albany.git"
             BRANCH="master"
 	    ;;
 	*)
@@ -41,7 +41,7 @@ fi
 if [ -d "Albany.wiki" ]; then
     rm "Albany.wiki" -rf
 fi
-git clone git@github.com:gahansen/Albany.wiki.git
+git clone git@github.com:SNLComputation/Albany.git
 
 ./clean-config-build-test-dash-all.sh
 
