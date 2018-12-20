@@ -1,0 +1,4 @@
+01 00 * * 1-5 cd /ascldap/users/ikalash/LCM; bash -l -c "./clone-build-test-dash.sh"
+05 07 * * 1-7 chgrp wg-albany -R /ascldap/users/ikalash/LCM/*
+07 07 * * 1-7 chmod ug+rwX -R /ascldap/users/ikalash/LCM/*
+
