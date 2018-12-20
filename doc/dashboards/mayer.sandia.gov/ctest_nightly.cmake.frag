@@ -45,7 +45,7 @@ SET (CTEST_BUILD_FLAGS "-j8")
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 
-set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
+set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (HDF5_PATH $ENV{HDF5_ROOT})
 set (NETCDF_PATH $ENV{NETCDF_ROOT}) 
@@ -347,6 +347,8 @@ if (BUILD_TRILINOS)
     "-DMPI_EXEC=mpirun"
     "-DMPI_EXEC_MAX_NUMPROCS:STRING='4'"
     "-DMPI_EXEC_NUMPROCS_FLAG:STRING='-np'"
+    #
+    "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=OFF"
   )
     
   #"-DMPI_EXEC_POST_NUMPROCS_FLAGS:STRING='-bind-to;numa;-map-by;numa;'"

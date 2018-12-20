@@ -300,6 +300,7 @@ if (BUILD_TRILINOS_SERIAL)
       "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
       "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
       "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
+      "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=OFF"
   )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuildSerial")
@@ -605,6 +606,7 @@ if (BUILD_TRILINOS_OPENMP)
       "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
       "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
       "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
+      "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=OFF"
   )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuildOpenMP")

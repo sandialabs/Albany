@@ -161,6 +161,8 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D BUILD_SHARED_LIBS:BOOL=ON \
       -D Trilinos_LINK_SEARCH_START_STATIC:BOOL=OFF \
       -D MPI_EXEC=mpiexec \
+\
+      -D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=OFF \
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \
