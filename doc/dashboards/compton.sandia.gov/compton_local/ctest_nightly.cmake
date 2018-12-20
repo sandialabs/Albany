@@ -72,7 +72,7 @@ find_program(CTEST_GIT_COMMAND NAMES git)
 #SET(Trilinos_REPOSITORY_LOCATION software.sandia.gov:/git/Trilinos)
 SET(Trilinos_REPOSITORY_LOCATION https://github.com/trilinos/Trilinos.git)
 SET(SCOREC_REPOSITORY_LOCATION https://github.com/SCOREC/core.git)
-SET(Albany_REPOSITORY_LOCATION https://github.com/gahansen/Albany.git)
+SET(Albany_REPOSITORY_LOCATION https://github.com/SNLComputation/Albany.git)
 
 SET(TRILINOS_HOME "${CTEST_SOURCE_DIRECTORY}/Trilinos")
 

@@ -78,7 +78,7 @@ find_program(CTEST_GIT_COMMAND NAMES git)
 # Point at the public Repo
 SET(Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 SET(SCOREC_REPOSITORY_LOCATION git@github.com:SCOREC/core.git)
-SET(Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
+SET(Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
 
 SET(TRILINOS_HOME "${CTEST_SOURCE_DIRECTORY}/Trilinos")
 
