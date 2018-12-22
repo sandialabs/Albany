@@ -855,7 +855,7 @@ if (BUILD_ALBANY_FPE)
   # Run Albany tests
   #
   
-  set (CTEST_TEST_TIMEOUT 1200)
+  set (CTEST_TEST_TIMEOUT 2400)
 
   CTEST_TEST(
     BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg"
