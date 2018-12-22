@@ -347,6 +347,8 @@ if (BUILD_TRILINOS)
     "-DMPI_EXEC=mpirun"
     "-DMPI_EXEC_MAX_NUMPROCS:STRING='4'"
     "-DMPI_EXEC_NUMPROCS_FLAG:STRING='-np'"
+    #
+    "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
   )
     
   #"-DMPI_EXEC_POST_NUMPROCS_FLAGS:STRING='-bind-to;numa;-map-by;numa;'"
