@@ -63,7 +63,7 @@ extern "C" {
 #endif
 #endif
 
-#define IKT_DEBUG
+//#define IKT_DEBUG
 
 const double pi = 3.1415926535897932385;
 

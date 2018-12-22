@@ -16,7 +16,7 @@
 
 #include <Shards_Array.hpp>
 
-#define IKT_DEBUG
+//#define IKT_DEBUG
 
 namespace Albany {
 
@@ -59,9 +59,6 @@ public:
 
   BucketArray( const field_type & f , const stk::mesh::Bucket & k )
   {
-#ifdef IKT_DEBUG
-    std::cout << "IKT BucketArray constructor1" << std::endl; 
-#endif
     if (k.field_data_is_allocated(f)) {
       array_type::assign( (ScalarType*)( k.field_data_location(f) ) ,
                           k.size() );
@@ -144,8 +141,15 @@ public:
           stride[2] = stk::mesh::field_scalars_per_entity(f, b);
         } 
         else { 
-          stride[0] = get_size<Tag1>(b); //dim0;
-          stride[1] = get_size<Tag2>(b) * stride[0]; //dim0;
+          //IKT, 12/20/18: this changes the way the qp_tensor field 
+          //for 1D and 3D problems appears in the output exodus field.
+          //Fields appear like: Cauchy_Stress_1_1, ...  Cauchy_Stress_8_9,
+          //instead of Cauchy_Stress_1_01 .. Cauchy_Stress_3_24 to make it 
+          //more clear which entry corresponds to which component/quad point.
+          //I believe for 2D problems the original layout is correct, hence
+          //the if statement above here.  
+          stride[0] = get_size<Tag1>(b); 
+          stride[1] = get_size<Tag2>(b) * stride[0]; 
           stride[2] = stk::mesh::field_scalars_per_entity(f, b);
         }
 #ifdef IKT_DEBUG

@@ -7,7 +7,7 @@
 #include "Albany_Utils.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
-#define IKT_DEBUG
+//#define IKT_DEBUG
 
 // IKT, 2/7/18: uncomment the following to show verbose
 // debug output pertaining to internal states
