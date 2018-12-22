@@ -137,10 +137,17 @@ public:
         std::cout << "IKT size tag1 = " << get_size<Tag1>(b) << std::endl; 
         std::cout << "IKT size tag2 = " << get_size<Tag2>(b) << std::endl; 
         std::cout << "IKT size tag3 = " << get_size<Tag3>(b) << std::endl;
-#endif 
-        stride[0] = get_size<Tag1>(b); //dim0;
-        stride[1] = get_size<Tag2>(b) * stride[0]; //dim0;
-        stride[2] = stk::mesh::field_scalars_per_entity(f, b);
+#endif
+        if (dim0 == 4) {
+          stride[0] = dim0;
+          stride[1] = get_size<Tag2>(b) * dim0;
+          stride[2] = stk::mesh::field_scalars_per_entity(f, b);
+        } 
+        else { 
+          stride[0] = get_size<Tag1>(b); //dim0;
+          stride[1] = get_size<Tag2>(b) * stride[0]; //dim0;
+          stride[2] = stk::mesh::field_scalars_per_entity(f, b);
+        }
 #ifdef IKT_DEBUG
         std::cout << "IKT stride0, stride1, stride2 = " << stride[0] << ", " << stride[1] << ", " << stride[2] << std::endl;
 #endif 

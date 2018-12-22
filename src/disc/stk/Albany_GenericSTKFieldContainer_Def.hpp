@@ -143,13 +143,17 @@ Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RC
         else if(dim.size() == 4){ // Tensor at QPs
           qptensor_states.push_back(& metaData->declare_field< QPTFT >(stk::topology::ELEMENT_RANK, st.name));
           // Multi-dim order is Fortran Ordering, so reversed here
-          //stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
-          //                 metaData->universal_part(), dim[3], dim[2], dim[1], nullptr);
-          stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
-                           metaData->universal_part(), dim[1], dim[2], dim[3], nullptr);
           //Debug
-          //      cout << "Allocating qpt field name " << qptensor_states.back()->name() <<
-          //            " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ", " << dim[3] << ")" <<endl;
+          std::cout << "Allocating qpt field name " << qptensor_states.back()->name() <<
+                      " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ", " << dim[3] << ")" << std::endl;
+          if (dim[1] == 4) {
+            stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
+                           metaData->universal_part(), dim[3], dim[2], dim[1], nullptr);
+          }
+          else {
+            stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
+                             metaData->universal_part(), dim[1], dim[2], dim[3], nullptr);
+          }
 #ifdef ALBANY_SEACAS
           stk::io::set_field_role(*qptensor_states.back(), role_type(st.output));
 #endif
