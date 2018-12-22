@@ -168,8 +168,9 @@ void LandIce::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits
 
           for (int idim=0; idim<2; ++idim)
             sum += grad_thickness_tmp[idim] * grad_thickness_tmp[idim];
-          tr += sum * w_measure_2d(cell,side,qp);;
-          tH += (pow((obs_thickness(cell,side,qp)-thickness(cell,side,qp))/thicknessRMS(cell,side,qp),2)) * w_measure_2d(cell,side,qp);
+          tr += sum * w_measure_2d(cell,side,qp);
+          auto val = (obs_thickness(cell,side,qp)-thickness(cell,side,qp))/thicknessRMS(cell,side,qp); 
+          tH += val*val*w_measure_2d(cell,side,qp);
         }
 
         this->local_response_eval(cell, 0) += (tr*alpha + tH*alphaH)*scaling;//*50.0;
