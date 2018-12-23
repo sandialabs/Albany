@@ -139,8 +139,10 @@ void LandIce::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits
 
 
       ScalarT t = 0;
-      for (int qp=0; qp<numBasalQPs; ++qp)
-        t += pow((flux_div(cell,side,qp)-SMB(cell,side,qp))/SMBRMS(cell,side,qp),2) * w_measure_2d(cell,side,qp);
+      for (int qp=0; qp<numBasalQPs; ++qp) {
+        ScalarT val = (flux_div(cell,side,qp)-SMB(cell,side,qp))/SMBRMS(cell,side,qp);
+        t += val*val*w_measure_2d(cell,side,qp);
+      }
 
       this->local_response_eval(cell, 0) += t*scaling*alphaSMB;
       //std::cout << this->local_response(cell, 0) << std::endl;
@@ -169,7 +171,7 @@ void LandIce::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits
           for (int idim=0; idim<2; ++idim)
             sum += grad_thickness_tmp[idim] * grad_thickness_tmp[idim];
           tr += sum * w_measure_2d(cell,side,qp);
-          auto val = (obs_thickness(cell,side,qp)-thickness(cell,side,qp))/thicknessRMS(cell,side,qp); 
+          ScalarT val = (obs_thickness(cell,side,qp)-thickness(cell,side,qp))/thicknessRMS(cell,side,qp); 
           tH += val*val*w_measure_2d(cell,side,qp);
         }
 
