@@ -38,222 +38,222 @@ NODAL VARIABLES relative 1.e-6 floor 0.0
 	force_z	 absolute 1.5175e-06	# min: 0 @ t1,n1 max: 0.15175 @ t11,n2
 
 ELEMENT VARIABLES relative 1.e-6 floor 1.e-14
-	Cauchy_Stress_1_01	 absolute 2.12342e-05	# min: 0 @ t1,b1,e1 max: 2.12342 @ t11,b1,e1
-	Cauchy_Stress_2_01	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
-	Cauchy_Stress_3_01			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_1_02	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
-	Cauchy_Stress_2_02	 absolute 8.42e-06	# min: 0 @ t1,b1,e1 max: 0.842 @ t11,b1,e1
-	Cauchy_Stress_3_02			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_1_03			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_2_03			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_3_03	 absolute 6.07e-06	# min: 0 @ t1,b1,e1 max: 0.607 @ t11,b1,e1
-	Cauchy_Stress_1_04	 absolute 2.12342e-05	# min: 0 @ t1,b1,e1 max: 2.12342 @ t11,b1,e1
-	Cauchy_Stress_2_04	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
-	Cauchy_Stress_3_04			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_1_05	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
-	Cauchy_Stress_2_05	 absolute 8.42e-06	# min: 0 @ t1,b1,e1 max: 0.842 @ t11,b1,e1
-	Cauchy_Stress_3_05			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_1_06			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_2_06			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_3_06	 absolute 6.07e-06	# min: 0 @ t1,b1,e1 max: 0.607 @ t11,b1,e1
-	Cauchy_Stress_1_07	 absolute 2.12342e-05	# min: 0 @ t1,b1,e1 max: 2.12342 @ t11,b1,e1
-	Cauchy_Stress_2_07	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
-	Cauchy_Stress_3_07			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_1_08	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
-	Cauchy_Stress_2_08	 absolute 8.42e-06	# min: 0 @ t1,b1,e1 max: 0.842 @ t11,b1,e1
-	Cauchy_Stress_3_08			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_1_09			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_2_09			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_3_09	 absolute 6.07e-06	# min: 0 @ t1,b1,e1 max: 0.607 @ t11,b1,e1
-	Cauchy_Stress_1_10	 absolute 2.12342e-05	# min: 0 @ t1,b1,e1 max: 2.12342 @ t11,b1,e1
-	Cauchy_Stress_2_10	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
-	Cauchy_Stress_3_10			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_1_11	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
-	Cauchy_Stress_2_11	 absolute 8.42e-06	# min: 0 @ t1,b1,e1 max: 0.842 @ t11,b1,e1
-	Cauchy_Stress_3_11			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_1_12			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_2_12			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_3_12	 absolute 6.07e-06	# min: 0 @ t1,b1,e1 max: 0.607 @ t11,b1,e1
-	Cauchy_Stress_1_13	 absolute 2.12342e-05	# min: 0 @ t1,b1,e1 max: 2.12342 @ t11,b1,e1
-	Cauchy_Stress_2_13	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
-	Cauchy_Stress_3_13			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_1_14	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
-	Cauchy_Stress_2_14	 absolute 8.42e-06	# min: 0 @ t1,b1,e1 max: 0.842 @ t11,b1,e1
-	Cauchy_Stress_3_14			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_1_15			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_2_15			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_3_15	 absolute 6.07e-06	# min: 0 @ t1,b1,e1 max: 0.607 @ t11,b1,e1
-	Cauchy_Stress_1_16	 absolute 2.12342e-05	# min: 0 @ t1,b1,e1 max: 2.12342 @ t11,b1,e1
-	Cauchy_Stress_2_16	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
-	Cauchy_Stress_3_16			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_1_17	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
-	Cauchy_Stress_2_17	 absolute 8.42e-06	# min: 0 @ t1,b1,e1 max: 0.842 @ t11,b1,e1
-	Cauchy_Stress_3_17			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_1_18			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_2_18			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_3_18	 absolute 6.07e-06	# min: 0 @ t1,b1,e1 max: 0.607 @ t11,b1,e1
-	Cauchy_Stress_1_19	 absolute 2.12342e-05	# min: 0 @ t1,b1,e1 max: 2.12342 @ t11,b1,e1
-	Cauchy_Stress_2_19	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
-	Cauchy_Stress_3_19			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_1_20	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
-	Cauchy_Stress_2_20	 absolute 8.42e-06	# min: 0 @ t1,b1,e1 max: 0.842 @ t11,b1,e1
-	Cauchy_Stress_3_20			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_1_21			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_2_21			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_3_21	 absolute 6.07e-06	# min: 0 @ t1,b1,e1 max: 0.607 @ t11,b1,e1
-	Cauchy_Stress_1_22	 absolute 2.12342e-05	# min: 0 @ t1,b1,e1 max: 2.12342 @ t11,b1,e1
-	Cauchy_Stress_2_22	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
-	Cauchy_Stress_3_22			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_1_23	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
-	Cauchy_Stress_2_23	 absolute 8.42e-06	# min: 0 @ t1,b1,e1 max: 0.842 @ t11,b1,e1
-	Cauchy_Stress_3_23			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_1_24			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_2_24			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Cauchy_Stress_3_24	 absolute 6.07e-06	# min: 0 @ t1,b1,e1 max: 0.607 @ t11,b1,e1
-	Fp_1_01	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_2_01			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_3_01			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_1_02			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_2_02	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_3_02			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_1_03			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_2_03			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_3_03	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_1_04	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_2_04			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_3_04			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_1_05			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_2_05	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_3_05			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_1_06			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_2_06			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_3_06	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_1_07	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_2_07			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_3_07			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_1_08			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_2_08	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_3_08			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_1_09			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_2_09			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_3_09	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_1_10	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_2_10			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_3_10			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_1_11			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_2_11	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_3_11			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_1_12			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_2_12			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_3_12	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_1_13	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_2_13			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_3_13			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_1_14			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_2_14	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_3_14			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_1_15			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_2_15			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_3_15	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_1_16	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_2_16			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_3_16			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_1_17			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_2_17	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_3_17			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_1_18			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_2_18			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_3_18	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_1_19	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_2_19			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_3_19			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_1_20			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_2_20	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_3_20			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_1_21			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_2_21			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_3_21	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_1_22	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_2_22			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_3_22			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_1_23			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_2_23	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Fp_3_23			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_1_24			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_2_24			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Fp_3_24	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_01			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_01			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_01			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_02			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_02			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_02			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_03			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_03			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_03			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_04			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_04			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_04			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_05			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_05			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_05			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_06			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_06			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_06			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_07			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_07			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_07			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_08			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_08			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_08			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_09			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_09			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_09			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_10			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_10			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_10			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_11			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_11			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_11			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_12			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_12			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_12			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_13			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_13			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_13			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_14			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_14			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_14			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_15			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_15			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_15			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_16			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_16			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_16			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_17			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_17			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_17			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_18			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_18			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_18			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_19			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_19			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_19			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_20			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_20			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_20			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_21			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_21			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_21			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_22			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_22			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_22			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_23			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_23			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_23			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_1_24			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_2_24			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Velocity_Gradient_Plastic_3_24			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_1_1	 absolute 2.12342e-05	# min: 0 @ t1,b1,e1 max: 2.12342 @ t11,b1,e1
+	Cauchy_Stress_2_1	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
+	Cauchy_Stress_3_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_4_1	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
+	Cauchy_Stress_5_1	 absolute 8.42e-06	# min: 0 @ t1,b1,e1 max: 0.842 @ t11,b1,e1
+	Cauchy_Stress_6_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_7_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_8_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_1_2	 absolute 6.07e-06	# min: 0 @ t1,b1,e1 max: 0.607 @ t11,b1,e1
+	Cauchy_Stress_2_2	 absolute 2.12342e-05	# min: 0 @ t1,b1,e1 max: 2.12342 @ t11,b1,e1
+	Cauchy_Stress_3_2	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
+	Cauchy_Stress_4_2			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_5_2	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
+	Cauchy_Stress_6_2	 absolute 8.42e-06	# min: 0 @ t1,b1,e1 max: 0.842 @ t11,b1,e1
+	Cauchy_Stress_7_2			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_8_2			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_1_3			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_2_3	 absolute 6.07e-06	# min: 0 @ t1,b1,e1 max: 0.607 @ t11,b1,e1
+	Cauchy_Stress_3_3	 absolute 2.12342e-05	# min: 0 @ t1,b1,e1 max: 2.12342 @ t11,b1,e1
+	Cauchy_Stress_4_3	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
+	Cauchy_Stress_5_3			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_6_3	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
+	Cauchy_Stress_7_3	 absolute 8.42e-06	# min: 0 @ t1,b1,e1 max: 0.842 @ t11,b1,e1
+	Cauchy_Stress_8_3			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_1_4			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_2_4			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_3_4	 absolute 6.07e-06	# min: 0 @ t1,b1,e1 max: 0.607 @ t11,b1,e1
+	Cauchy_Stress_4_4	 absolute 2.12342e-05	# min: 0 @ t1,b1,e1 max: 2.12342 @ t11,b1,e1
+	Cauchy_Stress_5_4	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
+	Cauchy_Stress_6_4			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_7_4	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
+	Cauchy_Stress_8_4	 absolute 8.42e-06	# min: 0 @ t1,b1,e1 max: 0.842 @ t11,b1,e1
+	Cauchy_Stress_1_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_2_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_3_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_4_5	 absolute 6.07e-06	# min: 0 @ t1,b1,e1 max: 0.607 @ t11,b1,e1
+	Cauchy_Stress_5_5	 absolute 2.12342e-05	# min: 0 @ t1,b1,e1 max: 2.12342 @ t11,b1,e1
+	Cauchy_Stress_6_5	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
+	Cauchy_Stress_7_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_8_5	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
+	Cauchy_Stress_1_6	 absolute 8.42e-06	# min: 0 @ t1,b1,e1 max: 0.842 @ t11,b1,e1
+	Cauchy_Stress_2_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_3_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_4_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_5_6	 absolute 6.07e-06	# min: 0 @ t1,b1,e1 max: 0.607 @ t11,b1,e1
+	Cauchy_Stress_6_6	 absolute 2.12342e-05	# min: 0 @ t1,b1,e1 max: 2.12342 @ t11,b1,e1
+	Cauchy_Stress_7_6	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
+	Cauchy_Stress_8_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_1_7	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
+	Cauchy_Stress_2_7	 absolute 8.42e-06	# min: 0 @ t1,b1,e1 max: 0.842 @ t11,b1,e1
+	Cauchy_Stress_3_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_4_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_5_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_6_7	 absolute 6.07e-06	# min: 0 @ t1,b1,e1 max: 0.607 @ t11,b1,e1
+	Cauchy_Stress_7_7	 absolute 2.12342e-05	# min: 0 @ t1,b1,e1 max: 2.12342 @ t11,b1,e1
+	Cauchy_Stress_8_7	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
+	Cauchy_Stress_1_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_2_8	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
+	Cauchy_Stress_3_8	 absolute 8.42e-06	# min: 0 @ t1,b1,e1 max: 0.842 @ t11,b1,e1
+	Cauchy_Stress_4_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_5_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_6_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_7_8	 absolute 6.07e-06	# min: 0 @ t1,b1,e1 max: 0.607 @ t11,b1,e1
+	Cauchy_Stress_8_8	 absolute 2.12342e-05	# min: 0 @ t1,b1,e1 max: 2.12342 @ t11,b1,e1
+	Cauchy_Stress_1_9	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
+	Cauchy_Stress_2_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_3_9	 absolute 7.6242e-05	# min: 0 @ t1,b1,e1 max: 7.6242 @ t11,b1,e1
+	Cauchy_Stress_4_9	 absolute 8.42e-06	# min: 0 @ t1,b1,e1 max: 0.842 @ t11,b1,e1
+	Cauchy_Stress_5_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_6_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_7_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Cauchy_Stress_8_9	 absolute 6.07e-06	# min: 0 @ t1,b1,e1 max: 0.607 @ t11,b1,e1
+	Fp_1_1	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_2_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_3_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_4_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_5_1	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_6_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_7_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_8_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_1_2	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_2_2	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_3_2			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_4_2			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_5_2			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_6_2	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_7_2			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_8_2			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_1_3			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_2_3	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_3_3	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_4_3			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_5_3			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_6_3			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_7_3	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_8_3			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_1_4			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_2_4			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_3_4	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_4_4	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_5_4			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_6_4			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_7_4			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_8_4	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_1_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_2_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_3_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_4_5	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_5_5	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_6_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_7_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_8_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_1_6	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_2_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_3_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_4_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_5_6	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_6_6	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_7_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_8_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_1_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_2_7	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_3_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_4_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_5_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_6_7	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_7_7	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_8_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_1_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_2_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_3_8	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_4_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_5_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_6_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_7_8	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_8_8	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_1_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_2_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_3_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_4_9	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Fp_5_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_6_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_7_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Fp_8_9	 absolute 1e-05	# min: 1 @ t1,b1,e1 max: 1 @ t1,b1,e1
+	Velocity_Gradient_Plastic_1_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_2_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_3_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_4_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_5_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_6_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_7_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_8_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_1_2			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_2_2			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_3_2			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_4_2			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_5_2			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_6_2			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_7_2			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_8_2			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_1_3			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_2_3			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_3_3			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_4_3			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_5_3			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_6_3			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_7_3			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_8_3			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_1_4			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_2_4			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_3_4			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_4_4			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_5_4			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_6_4			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_7_4			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_8_4			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_1_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_2_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_3_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_4_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_5_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_6_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_7_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_8_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_1_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_2_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_3_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_4_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_5_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_6_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_7_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_8_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_1_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_2_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_3_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_4_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_5_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_6_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_7_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_8_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_1_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_2_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_3_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_4_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_5_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_6_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_7_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_8_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_1_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_2_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_3_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_4_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_5_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_6_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_7_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	Velocity_Gradient_Plastic_8_9			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
 
 # No NODESET VARIABLES
 

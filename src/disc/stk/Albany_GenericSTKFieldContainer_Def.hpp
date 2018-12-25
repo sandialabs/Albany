@@ -20,6 +20,8 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
+//#define IKT_DEBUG
+
 template<bool Interleaved>
 Albany::GenericSTKFieldContainer<Interleaved>::GenericSTKFieldContainer(
   const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -143,11 +145,26 @@ Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RC
         else if(dim.size() == 4){ // Tensor at QPs
           qptensor_states.push_back(& metaData->declare_field< QPTFT >(stk::topology::ELEMENT_RANK, st.name));
           // Multi-dim order is Fortran Ordering, so reversed here
-          stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
-                           metaData->universal_part(), dim[3], dim[2], dim[1], nullptr);
+#ifdef IKT_DEBUG 
           //Debug
-          //      cout << "Allocating qpt field name " << qptensor_states.back()->name() <<
-          //            " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ", " << dim[3] << ")" <<endl;
+          std::cout << "Allocating qpt field name " << qptensor_states.back()->name() <<
+                      " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ", " << dim[3] << ")" << std::endl;
+#endif
+          if (dim[1] == 4) {
+            stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
+                           metaData->universal_part(), dim[3], dim[2], dim[1], nullptr);
+          }
+          else {
+            //IKT, 12/20/18: this changes the way the qp_tensor field 
+            //for 1D and 3D problems appears in the output exodus field.
+            //Fields appear like: Cauchy_Stress_1_1, ...  Cauchy_Stress_8_9,
+            //instead of Cauchy_Stress_1_01 .. Cauchy_Stress_3_24 to make it 
+            //more clear which entry corresponds to which component/quad point.
+            //I believe for 2D problems the original layout is correct, hence
+            //the if statement above here.  
+            stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
+                             metaData->universal_part(), dim[1], dim[2], dim[3], nullptr);
+          }
 #ifdef ALBANY_SEACAS
           stk::io::set_field_role(*qptensor_states.back(), role_type(st.output));
 #endif

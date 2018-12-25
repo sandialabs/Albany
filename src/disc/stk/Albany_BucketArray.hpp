@@ -16,6 +16,8 @@
 
 #include <Shards_Array.hpp>
 
+//#define IKT_DEBUG
+
 namespace Albany {
 
 struct EntityDimension : public shards::ArrayDimTag {
@@ -124,10 +126,35 @@ public:
         stride[1] = stk::mesh::field_scalars_per_entity(f, b);
       }
       else if (f.field_array_rank() == 3) {
+#ifdef IKT_DEBUG
+        std::cout << "IKT field arry rank = 3" << std::endl; 
+#endif
         int dim0 = stk::mesh::find_restriction(f, b.entity_rank(), b.supersets()).dimension();
-        stride[0] = dim0;
-        stride[1] = get_size<Tag2>(b) * dim0;
-        stride[2] = stk::mesh::field_scalars_per_entity(f, b);
+#ifdef IKT_DEBUG
+        std::cout << "IKT size tag1 = " << get_size<Tag1>(b) << std::endl; 
+        std::cout << "IKT size tag2 = " << get_size<Tag2>(b) << std::endl; 
+        std::cout << "IKT size tag3 = " << get_size<Tag3>(b) << std::endl;
+#endif
+        if (dim0 == 4) {
+          stride[0] = dim0;
+          stride[1] = get_size<Tag2>(b) * dim0;
+          stride[2] = stk::mesh::field_scalars_per_entity(f, b);
+        } 
+        else { 
+          //IKT, 12/20/18: this changes the way the qp_tensor field 
+          //for 1D and 3D problems appears in the output exodus field.
+          //Fields appear like: Cauchy_Stress_1_1, ...  Cauchy_Stress_8_9,
+          //instead of Cauchy_Stress_1_01 .. Cauchy_Stress_3_24 to make it 
+          //more clear which entry corresponds to which component/quad point.
+          //I believe for 2D problems the original layout is correct, hence
+          //the if statement above here.  
+          stride[0] = get_size<Tag1>(b); 
+          stride[1] = get_size<Tag2>(b) * stride[0]; 
+          stride[2] = stk::mesh::field_scalars_per_entity(f, b);
+        }
+#ifdef IKT_DEBUG
+        std::cout << "IKT stride0, stride1, stride2 = " << stride[0] << ", " << stride[1] << ", " << stride[2] << std::endl;
+#endif 
       }
       else if (f.field_array_rank() == 4) {
         int dim0 = stk::mesh::find_restriction(f, b.entity_rank(), b.supersets()).dimension();

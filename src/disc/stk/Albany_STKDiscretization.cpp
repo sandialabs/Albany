@@ -63,6 +63,8 @@ extern "C" {
 #endif
 #endif
 
+//#define IKT_DEBUG
+
 const double pi = 3.1415926535897932385;
 
 const Tpetra::global_size_t INVALID =
@@ -1918,6 +1920,9 @@ Albany::STKDiscretization::insertPeridigmNonzerosIntoGraph()
 void
 Albany::STKDiscretization::computeWorksetInfo()
 {
+#ifdef IKT_DEBUG
+  std::cout << "IKT computeWorksetInfo()" << std::endl; 
+#endif
   stk::mesh::Selector select_owned_in_part =
       stk::mesh::Selector(metaData.universal_part()) &
       stk::mesh::Selector(metaData.locally_owned_part());
@@ -2330,8 +2335,14 @@ Albany::STKDiscretization::computeWorksetInfo()
     }
     for (auto qpts = qptensor_states.begin(); qpts != qptensor_states.end();
          ++qpts) {
+#ifdef IKT_DEBUG
+      std::cout << "IKT inside QPTFT loop!  Before BucketArray, state name = " << (*qpts)->name() << std::endl;
+#endif
       BucketArray<Albany::AbstractSTKFieldContainer::QPTensorFieldType> array(
           **qpts, buck);
+#ifdef IKT_DEBUG
+      std::cout << "IKT After BucketArray" << std::endl;
+#endif
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPTFT dim[3]: " <<
       // array.dimension(3) << std::endl;
