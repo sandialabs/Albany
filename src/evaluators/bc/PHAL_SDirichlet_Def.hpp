@@ -222,17 +222,15 @@ SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::SDirichlet(
     Teuchos::ParameterList& p)
     : PHAL::DirichletBase<PHAL::AlbanyTraits::Tangent, Traits>(p)
 {
-  return;
+  scale = p.get<RealType>("SDBC Scaling", 1.0);
 }
 
-//
-//
-//
 template<typename Traits>
 void
 SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
+
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
       Teuchos::Exceptions::InvalidParameter,
@@ -240,6 +238,62 @@ SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
           << "Error!  Tangent specialization for PHAL::SDirichlet "
              "is not implemented!\n");
   return;
+
+/* Draft of implementation  
+  Teuchos::RCP<const Thyra_Vector>       x  = dirichlet_workset.x;
+  Teuchos::RCP<const Thyra_MultiVector> Vx = dirichlet_workset.Vx;
+  Teuchos::RCP<Thyra_Vector>             f  = dirichlet_workset.f;
+  Teuchos::RCP<Thyra_MultiVector>       fp = dirichlet_workset.fp;
+  Teuchos::RCP<Thyra_MultiVector>       JV = dirichlet_workset.JV;
+
+  Teuchos::ArrayRCP<const ST> x_constView;
+  Teuchos::ArrayRCP<ST>       f_nonconstView;
+
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> Vx_const2dView;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>       JV_nonconst2dView;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>       fp_nonconst2dView;
+  Teuchos::RCP<Tpetra_Vector>                    jac_diag;
+
+  if (f != Teuchos::null) {
+    x_constView    = Albany::getLocalData(x);
+    f_nonconstView = Albany::getNonconstLocalData(f);
+  }
+  if (JV != Teuchos::null) {
+    JV_nonconst2dView = Albany::getNonconstLocalData(JV);
+    Vx_const2dView    = Albany::getLocalData(Vx);
+    Teuchos::RCP<Tpetra_CrsMatrix> J = Albany::getTpetraMatrix(dirichlet_workset.Jac);
+    jac_diag = Teuchos::rcp(new Tpetra_Vector(J->getRowMap()));
+    J->getLocalDiagCopy(*jac_diag);
+  }
+  if (fp != Teuchos::null) {
+    // TODO: abstract away the tpetra interface
+    fp_nonconst2dView = Albany::getNonconstLocalData(fp);
+  }
+
+  const RealType j_coeff = dirichlet_workset.j_coeff;
+  const std::vector<std::vector<int> >& nsNodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+    int lunk = nsNodes[inode][this->offset];
+
+    if (dirichlet_workset.f != Teuchos::null) {
+      f_nonconstView[lunk] = 0;
+    }
+
+    if (JV != Teuchos::null) {
+      for (int i=0; i<dirichlet_workset.num_cols_x; i++) {
+        //TODO make sure that jac has not been already updated, otherwise we must not multiply by scale.
+        JV_nonconst2dView[i][lunk] = scale*jac_diag->getData()[lunk]*Vx_const2dView[i][lunk];
+      }
+    }
+
+    if (fp != Teuchos::null) {
+      for (int i=0; i<dirichlet_workset.num_cols_p; i++) {
+        fp_nonconst2dView[i][lunk] = 0;
+      }
+    }
+  }
+  */
 }
 
 //
@@ -261,13 +315,40 @@ void
 SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      true,
-      Teuchos::Exceptions::InvalidParameter,
-      std::endl
-          << "Error!  DistParamDeriv specialization for PHAL::SDirichlet "
-             "is not implemented!\n");
-  return;
+return;
+  Teuchos::RCP<Thyra_MultiVector> fpV =  dirichlet_workset.fpV;
+
+  bool trans = dirichlet_workset.transpose_dist_param_deriv;
+  int num_cols = fpV->domain()->dim();
+
+  const std::vector<std::vector<int> >& nsNodes =
+      dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+
+  if (trans) {
+    // For (df/dp)^T*V we zero out corresponding entries in V
+    Teuchos::RCP<Thyra_MultiVector> Vp = dirichlet_workset.Vp_bc;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> Vp_nonconst2dView = Albany::getNonconstLocalData(Vp);
+
+    for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+      int lunk = nsNodes[inode][this->offset];
+
+      for (int col=0; col<num_cols; ++col) {
+        //(*Vp)[col][lunk] = 0.0;
+        Vp_nonconst2dView[col][lunk] = 0.0;
+       }
+    }
+  } else {
+    // for (df/dp)*V we zero out corresponding entries in df/dp
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> fpV_nonconst2dView = Albany::getNonconstLocalData(fpV);
+    for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+      int lunk = nsNodes[inode][this->offset];
+
+      for (int col=0; col<num_cols; ++col) {
+        //(*fpV)[col][lunk] = 0.0;
+        fpV_nonconst2dView[col][lunk] = 0.0;
+      }
+    }
+  }
 }
 
 }  // namespace PHAL
