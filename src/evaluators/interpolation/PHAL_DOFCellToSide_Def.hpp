@@ -7,6 +7,8 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Phalanx_DataLayout.hpp"
 
+#include "PHAL_DOFCellToSide.hpp"
+
 namespace PHAL {
 
 //**********************************************************************

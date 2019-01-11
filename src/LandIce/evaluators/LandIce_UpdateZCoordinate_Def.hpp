@@ -9,8 +9,12 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Albany_Layouts.hpp"
-
 #include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_AbstractMeshStruct.hpp"
+#include "Albany_NodalDOFManager.hpp"
+#include "PHAL_AlbanyTraits.hpp"
+
+#include "LandIce_UpdateZCoordinate.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -20,8 +24,8 @@ namespace LandIce {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 UpdateZCoordinateMovingTop<EvalT, Traits>::
-UpdateZCoordinateMovingTop(const Teuchos::ParameterList& p,
-            const Teuchos::RCP<Albany::Layouts>& dl) :
+UpdateZCoordinateMovingTop (const Teuchos::ParameterList& p,
+                            const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVecIn (p.get<std::string> ("Old Coords Name"), dl->vertices_vector),
   coordVecOut(p.get<std::string> ("New Coords Name"), dl->vertices_vector),
   topSurface(p.get<std::string>("Top Surface Name"), dl->node_scalar),
@@ -60,17 +64,6 @@ UpdateZCoordinateMovingTop(const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void UpdateZCoordinateMovingTop<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
-{
-}
-
-//**********************************************************************
-//Kokkos functors
-
-//**********************************************************************
-template<typename EvalT, typename Traits>
-void UpdateZCoordinateMovingTop<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
@@ -78,7 +71,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
+  // const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
 
   int numLayers = layeredMeshNumbering.numLayers;
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
@@ -90,8 +83,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-    const int neq = nodeID.dimension(2);
-    const std::size_t num_dof = neq * this->numNodes;
+    // const int neq = nodeID.dimension(2);
+    // const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
@@ -121,8 +114,8 @@ evaluateFields(typename Traits::EvalData workset)
 //**********************************************************************
 template<typename EvalT, typename Traits>
 UpdateZCoordinateMovingBed<EvalT, Traits>::
-UpdateZCoordinateMovingBed(const Teuchos::ParameterList& p,
-            const Teuchos::RCP<Albany::Layouts>& dl) :
+UpdateZCoordinateMovingBed (const Teuchos::ParameterList& p,
+                            const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVecIn (p.get<std::string> ("Old Coords Name"), dl->vertices_vector),
   coordVecOut(p.get<std::string> ("New Coords Name"), dl->vertices_vector),
   H(p.get<std::string> ("Thickness Name"), dl->node_scalar),
@@ -156,14 +149,6 @@ UpdateZCoordinateMovingBed(const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void UpdateZCoordinateMovingBed<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
-{
-}
-
-//**********************************************************************
 //Kokkos functors
 
 //**********************************************************************
@@ -176,7 +161,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
+  // const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
 
   int numLayers = layeredMeshNumbering.numLayers;
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
@@ -188,9 +173,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-    const int neq = nodeID.dimension(2); 
-    const std::size_t num_dof = neq * this->numNodes;
-
+    // const int neq = nodeID.dimension(2); 
+    // const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
@@ -223,4 +207,4 @@ evaluateFields(typename Traits::EvalData workset)
   }
 }
 
-} 
+}  // namespace LandIce

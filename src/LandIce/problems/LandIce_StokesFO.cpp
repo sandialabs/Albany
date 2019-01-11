@@ -19,7 +19,9 @@
 // Uncomment for some setup output
 // #define OUTPUT_TO_SCREEN
 
-LandIce::StokesFO::
+namespace LandIce {
+
+StokesFO::
 StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
           const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
           const Teuchos::RCP<ParamLib>& paramLib_,
@@ -55,15 +57,8 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
 }
 
-LandIce::StokesFO::
-~StokesFO()
-{
-  // Nothing to be done here
-}
-
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-LandIce::StokesFO::
-buildEvaluators(
+StokesFO::buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
   Albany::StateManager& stateMgr,
@@ -78,8 +73,7 @@ buildEvaluators(
   return *op.tags;
 }
 
-void
-LandIce::StokesFO::constructDirichletEvaluators(
+void StokesFO::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
@@ -99,7 +93,7 @@ LandIce::StokesFO::constructDirichletEvaluators(
 }
 
 // Neumann BCs
-void LandIce::StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+void StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
 
    // Note: we only enter this function if sidesets are defined in the mesh file
@@ -172,7 +166,7 @@ void LandIce::StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::M
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-LandIce::StokesFO::getValidProblemParameters () const
+StokesFO::getValidProblemParameters () const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = StokesFOBase::getStokesFOBaseProblemParameters();
 
@@ -181,3 +175,22 @@ LandIce::StokesFO::getValidProblemParameters () const
 
   return validPL;
 }
+
+void StokesFO::setupEvaluatorRequests () {
+  StokesFOBase::setupEvaluatorRequests();
+
+  // In addition to the StokesFOBase stuff, add the syntetic tests bc needs
+  for (auto pl : landice_bcs[LandIceBC::SynteticTest]) {
+    const std::string& ssName = pl->get<std::string>("Side Set Name");
+
+    requestSideSetInterpolationEvaluator(ssName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::CELL_TO_SIDE); 
+    requestSideSetInterpolationEvaluator(ssName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::QP_VAL); 
+    requestSideSetInterpolationEvaluator(ssName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::GRAD_QP_VAL); 
+
+    ss_utils_needed[ssName][UtilityRequest::BFS] = true;
+    ss_utils_needed[ssName][UtilityRequest::QP_COORDS] = true;
+    ss_utils_needed[ssName][UtilityRequest::NORMALS] = true;
+  }
+}
+
+} // namespace LandIce

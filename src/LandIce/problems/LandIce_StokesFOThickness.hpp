@@ -55,6 +55,10 @@ public:
   StokesFOThickness (const StokesFOThickness&) = delete;
   StokesFOThickness& operator= (const StokesFOThickness&) = delete;
 
+  //! Build the PDE instantiations, boundary conditions, and initial solution
+  void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+                     Albany::StateManager& stateMgr);
+
   // Build evaluators
   Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
   buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -97,8 +101,6 @@ StokesFOThickness::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
                                         Albany::FieldManagerChoice fieldManagerChoice,
                                         const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-  Teuchos::RCP<std::map<std::string, int> > extruded_params_levels = Teuchos::rcp(new std::map<std::string, int> ());
-  std::map<std::string,bool> is_dist_param;
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
@@ -106,7 +108,7 @@ StokesFOThickness::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   int offsetVelocity = 0;
 
   // --- StokesFOBase evaluators --- //
-  constructStokesFOBaseEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice, *extruded_params_levels, is_dist_param);
+  constructStokesFOBaseEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice);
 
   // Gather velocity field
   ev = evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names[0], offsetVelocity);
@@ -133,7 +135,7 @@ StokesFOThickness::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
 
   // Finally, construct responses, and return the tags
-  return constructStokesFOBaseResponsesEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice, is_dist_param, responseList);
+  return constructStokesFOBaseResponsesEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice, responseList);
 }
 
 template<typename EvalT>
@@ -144,47 +146,6 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
-
-  if (basalSideName!="__INVALID__")
-  {
-    // -------------------- Special evaluators for side handling ----------------- //
-
-    //---- Restrict coordinate vector from cell-based to cell-side-based
-    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,basalSideName,"Vertex Vector",cellType,"Coord Vec " + basalSideName);
-    fm0.template registerEvaluator<EvalT> (ev);
-
-    //---- Compute side basis functions
-    ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, sideBasis.at(basalSideName), sideCubature.at(basalSideName), basalSideName);
-    fm0.template registerEvaluator<EvalT> (ev);
-
-    //---- Restrict velocity from cell-based to cell-side-based
-    ev = evalUtils.constructDOFCellToSideEvaluator(dof_names[0],basalSideName,"Node Vector",cellType,"velocity_" + basalSideName);
-    fm0.template registerEvaluator<EvalT> (ev);
-
-    //---- Restrict ice thickness from cell-based to cell-side-based
-    ev = evalUtils.constructDOFCellToSideEvaluator("ice_thickness",basalSideName,"Node Scalar",cellType,"ice_thickness_" + basalSideName);
-    fm0.template registerEvaluator<EvalT> (ev);
-
-    //---- Restrict surface height from cell-based to cell-side-based
-    ev = evalUtils.constructDOFCellToSideEvaluator("surface_height",basalSideName,"Node Scalar",cellType,"surface_height_" + basalSideName);
-    fm0.template registerEvaluator<EvalT> (ev);
-
-    //---- Interpolate velocity on QP on side
-    ev = evalUtils.constructDOFVecInterpolationSideEvaluator("velocity_" + basalSideName, basalSideName);
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    //---- Interpolate thickness on QP on side
-    ev = evalUtils.constructDOFInterpolationSideEvaluator("ice_thickness_" + basalSideName, basalSideName);
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    //---- Interpolate basal_friction on QP on side
-    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("basal_friction_" + basalSideName, basalSideName);
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    //---- Interpolate surface height on QP on side
-    ev = evalUtils.constructDOFInterpolationSideEvaluator("surface_height_" + basalSideName, basalSideName);
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
 
   if (surfaceSideName!="__INVALID__")
   {
@@ -199,8 +160,6 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
     ev = Teuchos::rcp(new LandIce::GatherVerticallyAveragedVelocity<EvalT,PHAL::AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-
-
 
   //--- LandIce Gather 2D Field (Thickness) ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("Gather Thickness"));
