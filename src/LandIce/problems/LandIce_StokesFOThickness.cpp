@@ -15,11 +15,13 @@
 // Uncomment for some setup output
 #define OUTPUT_TO_SCREEN
 
-LandIce::StokesFOThickness::
-StokesFOThickness( const Teuchos::RCP<Teuchos::ParameterList>& params_,
-             const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
-             const Teuchos::RCP<ParamLib>& paramLib_,
-             const int numDim_) :
+namespace LandIce {
+
+StokesFOThickness::StokesFOThickness(
+            const Teuchos::RCP<Teuchos::ParameterList>& params_,
+            const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
+            const Teuchos::RCP<ParamLib>& paramLib_,
+            const int numDim_) :
   StokesFOBase(params_, discParams_, paramLib_, numDim_)
 {
   //Set # of PDEs per node.
@@ -47,9 +49,38 @@ StokesFOThickness( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   offsetThickness = vecDimFO;
 }
 
+void StokesFOThickness::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+                                 Albany::StateManager& stateMgr)
+{
+  if (basalSideName!="__INVALID__") {
+    // We need BF on the basal side
+    ss_utils_needed[basalSideName][UtilityRequest::BFS] = true;
+
+    // We need to restrict and interpolate velocity, thickness and surface height
+    requestSideSetInterpolationEvaluator(basalSideName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::CELL_TO_SIDE);
+    requestSideSetInterpolationEvaluator(basalSideName, "surface_height", 0, FieldLocation::Node, FieldScalarType::MeshScalar, InterpolationRequest::CELL_TO_SIDE);
+    requestSideSetInterpolationEvaluator(basalSideName, "ice_thickness", 0, FieldLocation::Node, FieldScalarType::MeshScalar, InterpolationRequest::CELL_TO_SIDE);
+
+    requestSideSetInterpolationEvaluator(basalSideName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::QP_VAL);
+    requestSideSetInterpolationEvaluator(basalSideName, "surface_height", 0, FieldLocation::Node, FieldScalarType::MeshScalar, InterpolationRequest::QP_VAL);
+    requestSideSetInterpolationEvaluator(basalSideName, "ice_thickness", 0, FieldLocation::Node, FieldScalarType::MeshScalar, InterpolationRequest::QP_VAL);
+  }
+
+  // Pre-set the scalar type to MeshScalar.
+  field_scalar_type["ice_thickness"] = FieldScalarType::MeshScalar;
+  field_scalar_type["surface_height"] = FieldScalarType::MeshScalar;
+  for (auto& it : ss_field_scalar_type) {
+    it.second["ice_thickness"] = FieldScalarType::MeshScalar;
+    it.second["surface_height"] = FieldScalarType::MeshScalar;
+  }
+
+  // Note: the base class call must be last, since it calls the buildEvaluators method,
+  //       which needs all the input/requirements maps to be set.
+  StokesFOBase::buildProblem(meshSpecs,stateMgr);
+}
+
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-LandIce::StokesFOThickness::
-buildEvaluators(
+StokesFOThickness::buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
   Albany::StateManager& stateMgr,
@@ -67,9 +98,7 @@ buildEvaluators(
   return *op.tags;
 }
 
-void
-LandIce::StokesFOThickness::constructDirichletEvaluators(
-        const Albany::MeshSpecsStruct& meshSpecs)
+void StokesFOThickness::constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);
@@ -160,7 +189,7 @@ LandIce::StokesFOThickness::constructNeumannEvaluators(const Teuchos::RCP<Albany
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-LandIce::StokesFOThickness::getValidProblemParameters() const
+StokesFOThickness::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = StokesFOBase::getStokesFOBaseProblemParameters();
 
@@ -172,3 +201,4 @@ LandIce::StokesFOThickness::getValidProblemParameters() const
   return validPL;
 }
 
+} // namespace LandIce

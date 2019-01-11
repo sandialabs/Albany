@@ -8,7 +8,10 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_CommHelpers.hpp"
+
 #include "PHAL_Utilities.hpp"
+
+#include "LandIce_ResponseSMBMismatch.hpp"
 
 template<typename EvalT, typename Traits>
 LandIce::ResponseSMBMismatch<EvalT, Traits>::

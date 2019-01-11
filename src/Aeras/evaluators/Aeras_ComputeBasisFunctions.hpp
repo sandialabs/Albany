@@ -4,19 +4,20 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_COMPUTEBASISFUNCTIONS_HPP
-#define AERAS_COMPUTEBASISFUNCTIONS_HPP
+#ifndef AERAS_COMPUTE_BASIS_FUNCTIONS_HPP
+#define AERAS_COMPUTE_BASIS_FUNCTIONS_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
-#include "Aeras_Layouts.hpp"
-#include "PHAL_Utilities.hpp"
-
 #include "Intrepid2_CellTools.hpp"
 #include "Intrepid2_Cubature.hpp"
+
+#include "Albany_ScalarOrdinalTypes.hpp"
+#include "PHAL_Dimension.hpp"
+#include "PHAL_Utilities.hpp"
+#include "Aeras_Layouts.hpp"
 
 namespace Albany { class StateManager; }
 
@@ -30,15 +31,14 @@ namespace Aeras {
 
 template<typename EvalT, typename Traits>
 class ComputeBasisFunctions : public PHX::EvaluatorWithBaseImpl<Traits>,
- 			 public PHX::EvaluatorDerived<EvalT, Traits>  {
-
+ 			                        public PHX::EvaluatorDerived<EvalT, Traits>  {
 public:
 
   ComputeBasisFunctions(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Aeras::Layouts>& dl);
+                        const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+                             PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -135,10 +135,9 @@ public:
   
   KOKKOS_INLINE_FUNCTION
   void compute_lambda_and_theta_nodal (const int cell) const;
-
-
-#endif
+#endif // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 };
-}
 
-#endif
+} // namespace Aeras
+
+#endif // AERAS_COMPUTE_BASIS_FUNCTIONS_HPP

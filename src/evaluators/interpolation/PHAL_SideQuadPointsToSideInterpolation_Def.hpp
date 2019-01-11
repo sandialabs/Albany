@@ -7,6 +7,9 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
 
+#include "PHAL_SideQuadPointsToSideInterpolation.hpp"
+#include "Albany_DiscretizationUtils.hpp"
+
 namespace PHAL {
 
 //**********************************************************************
@@ -48,7 +51,7 @@ SideQuadPointsToSideInterpolationBase (const Teuchos::ParameterList& p,
 
 template<typename EvalT, typename Traits, typename ScalarT>
 void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData (field_qp,fm);

@@ -41,17 +41,16 @@
 
 /********************  Problem Utils Class  ******************************/
 
-template<typename EvalT, typename Traits, typename ScalarT>
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::EvaluatorUtilsBase(
+template<typename EvalT, typename Traits, typename ScalarType>
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::EvaluatorUtilsImpl(
      Teuchos::RCP<Albany::Layouts> dl_) :
      dl(dl_)
 {
 }
 
-
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionEvaluator(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> dof_names,
        Teuchos::ArrayRCP<std::string> dof_names_dot,
@@ -77,9 +76,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluat
 }
 
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionEvaluator(
        int tensorRank,
        Teuchos::ArrayRCP<std::string> dof_names,
        Teuchos::ArrayRCP<std::string> dof_names_dot,
@@ -102,9 +101,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluat
 }
 
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluator_withAcceleration(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionEvaluator_withAcceleration(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> dof_names,
        Teuchos::ArrayRCP<std::string> dof_names_dot,
@@ -139,9 +138,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluat
     return rcp(new PHAL::GatherSolution<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluator_withAcceleration(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionEvaluator_withAcceleration(
        int tensorRank,
        Teuchos::ArrayRCP<std::string> dof_names,
        Teuchos::ArrayRCP<std::string> dof_names_dot,
@@ -174,9 +173,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluat
 }
 
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluator_noTransient(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionEvaluator_noTransient(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> dof_names,
        int offsetToFirstDOF) const
@@ -200,9 +199,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluat
     return rcp(new PHAL::GatherSolution<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluator_noTransient(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionEvaluator_noTransient(
        int tensorRank,
        Teuchos::ArrayRCP<std::string> dof_names,
        int offsetToFirstDOF) const
@@ -223,9 +222,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluat
     return rcp(new PHAL::GatherSolution<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherScalarNodalParameter(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherScalarNodalParameter(
        const std::string& param_name,
        const std::string& field_name) const
 {
@@ -244,9 +243,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherScalarNodalPara
     return rcp(new PHAL::GatherScalarNodalParameter<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterScalarNodalParameter(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterScalarNodalParameter(
        const std::string& param_name,
        const std::string& field_name) const
 {
@@ -266,9 +265,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterScalarNodalPar
     return rcp(new PHAL::ScatterScalarNodalParameter<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherScalarExtruded2DNodalParameter(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherScalarExtruded2DNodalParameter(
        const std::string& param_name,
        const std::string& field_name) const
 {
@@ -288,9 +287,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherScalarExtruded2
     return rcp(new PHAL::GatherScalarExtruded2DNodalParameter<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterScalarExtruded2DNodalParameter(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterScalarExtruded2DNodalParameter(
        const std::string& param_name,
        const std::string& field_name) const
 {
@@ -311,9 +310,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterScalarExtruded
     return rcp(new PHAL::ScatterScalarExtruded2DNodalParameter<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterResidualEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterResidualEvaluator(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> resid_names,
        int offsetToFirstDOF, std::string scatterName) const
@@ -337,9 +336,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterResidualEvalua
     return rcp(new PHAL::ScatterResidual<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterResidualEvaluatorWithExtrudedParams(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterResidualEvaluatorWithExtrudedParams(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> resid_names,
        Teuchos::RCP<std::map<std::string, int> > extruded_params_levels,
@@ -365,9 +364,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterResidualEvalua
     return rcp(new PHAL::ScatterResidualWithExtrudedParams<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterResidualEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterResidualEvaluator(
        int tensorRank,
        Teuchos::ArrayRCP<std::string> resid_names,
        int offsetToFirstDOF, std::string scatterName) const
@@ -389,9 +388,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterResidualEvalua
 }
 
 #ifdef ALBANY_CONTACT
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructMortarContactResidualEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructMortarContactResidualEvaluator(
        Teuchos::ArrayRCP<std::string> resid_names,
        int offsetToFirstDOF) const
 {
@@ -409,9 +408,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructMortarContactResidual
 }
 #endif
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherCoordinateVectorEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherCoordinateVectorEvaluator(
     std::string strCurrentDisp, const bool enableMemoizer) const
 {
     using Teuchos::RCP;
@@ -435,9 +434,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherCoordinateVecto
     return rcp(new PHAL::GatherCoordinateVector<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructMapToPhysicalFrameEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructMapToPhysicalFrameEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
     const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature,
     const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis,
@@ -464,9 +463,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructMapToPhysicalFrameEva
     return rcp(new PHAL::MapToPhysicalFrame<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructMapToPhysicalFrameSideEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructMapToPhysicalFrameSideEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
     const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature,
     const std::string& sideSetName,
@@ -494,9 +493,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructMapToPhysicalFrameSid
     return rcp(new PHAL::MapToPhysicalFrameSide<EvalT,Traits>(*p,dl->side_layouts.at(sideSetName)));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructComputeBasisFunctionsEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructComputeBasisFunctionsEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
     const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis,
     const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature,
@@ -532,9 +531,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructComputeBasisFunctions
     return rcp(new PHAL::ComputeBasisFunctions<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructComputeBasisFunctionsSideEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructComputeBasisFunctionsSideEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
     const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasisSide,
     const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureSide,
@@ -577,9 +576,9 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructComputeBasisFunctions
     return rcp(new PHAL::ComputeBasisFunctionsSide<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFCellToSideEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFCellToSideEvaluator(
     const std::string& cell_dof_name,
     const std::string& sideSetName,
     const std::string& layout,
@@ -607,12 +606,12 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFCellToSideEvaluato
 
     p->set<bool>("Enable Memoizer", enableMemoizer);
 
-    return rcp(new PHAL::DOFCellToSideBase<EvalT,Traits,ScalarT>(*p,dl));
+    return rcp(new PHAL::DOFCellToSideBase<EvalT,Traits,ScalarType>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFCellToSideQPEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFCellToSideQPEvaluator(
        const std::string& cell_dof_name,
        const std::string& sideSetName,
        const std::string& layout,
@@ -641,12 +640,12 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFCellToSideQPEvalua
     else
       p->set<std::string>("Side Variable Name", cell_dof_name);
 
-    return rcp(new PHAL::DOFCellToSideQPBase<EvalT,Traits,ScalarT>(*p,dl));
+    return rcp(new PHAL::DOFCellToSideQPBase<EvalT,Traits,ScalarType>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFSideToCellEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFSideToCellEvaluator(
        const std::string& side_dof_name,
        const std::string& sideSetName,
        const std::string& layout,
@@ -671,12 +670,12 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFSideToCellEvaluato
     else
       p->set<std::string>("Cell Variable Name", side_dof_name);
 
-    return rcp(new PHAL::DOFSideToCellBase<EvalT,Traits,ScalarT>(*p,dl));
+    return rcp(new PHAL::DOFSideToCellBase<EvalT,Traits,ScalarType>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFGradInterpolationEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFGradInterpolationEvaluator(
     const std::string& dof_name, int offsetToFirstDOF, const bool enableMemoizer) const
 {
     using Teuchos::RCP;
@@ -695,15 +694,15 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFGradInterpolationE
     if(offsetToFirstDOF == -1)
     {
       if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
-      return rcp(new PHAL::DOFGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+      return rcp(new PHAL::DOFGradInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
     }
     else  //works only for solution or a set of solution components
-      return rcp(new PHAL::FastSolutionGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+      return rcp(new PHAL::FastSolutionGradInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFGradInterpolationSideEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFGradInterpolationSideEvaluator(
        const std::string& dof_name,
        const std::string& sideSetName,
        const bool enableMemoizer) const
@@ -727,12 +726,12 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFGradInterpolationS
     // Output (assumes same Name as input)
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
-    return rcp(new PHAL::DOFGradInterpolationSideBase<EvalT,Traits,ScalarT>(*p,dl->side_layouts.at(sideSetName)));
+    return rcp(new PHAL::DOFGradInterpolationSideBase<EvalT,Traits,ScalarType>(*p,dl->side_layouts.at(sideSetName)));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFInterpolationEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFInterpolationEvaluator(
     const std::string& dof_name, int offsetToFirstDOF, const bool enableMemoizer) const
 {
     using Teuchos::RCP;
@@ -750,12 +749,12 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFInterpolationEvalu
 
     p->set<bool>("Enable Memoizer", enableMemoizer);
 
-    return rcp(new PHAL::DOFInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+    return rcp(new PHAL::DOFInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFInterpolationSideEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFInterpolationSideEvaluator(
     const std::string& dof_name, const std::string& sideSetName, const bool enableMemoizer) const
 {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
@@ -776,12 +775,12 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFInterpolationSideE
 
     p->set<bool>("Enable Memoizer", enableMemoizer);
 
-    return rcp(new PHAL::DOFInterpolationSideBase<EvalT,Traits,ScalarT>(*p,dl->side_layouts.at(sideSetName)));
+    return rcp(new PHAL::DOFInterpolationSideBase<EvalT,Traits,ScalarType>(*p,dl->side_layouts.at(sideSetName)));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFTensorInterpolationEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFTensorInterpolationEvaluator(
        const std::string& dof_name,
        int offsetToFirstDOF) const
 {
@@ -797,14 +796,14 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFTensorInterpolatio
 
     // Output (assumes same Name as input)
     if(offsetToFirstDOF == -1)
-      return rcp(new PHAL::DOFTensorInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+      return rcp(new PHAL::DOFTensorInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
     else  //works only for solution or a set of solution components
-      return rcp(new PHAL::FastSolutionTensorInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+      return rcp(new PHAL::FastSolutionTensorInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFTensorGradInterpolationEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFTensorGradInterpolationEvaluator(
        const std::string& dof_name,
        int offsetToFirstDOF) const
 {
@@ -822,15 +821,15 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFTensorGradInterpol
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
     if(offsetToFirstDOF == -1)
-      return rcp(new PHAL::DOFTensorGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+      return rcp(new PHAL::DOFTensorGradInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
     else  //works only for solution or a set of solution components
-      return rcp(new PHAL::FastSolutionTensorGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+      return rcp(new PHAL::FastSolutionTensorGradInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
 
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecGradInterpolationEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFVecGradInterpolationEvaluator(
        const std::string& dof_name,
        int offsetToFirstDOF) const
 {
@@ -848,14 +847,14 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecGradInterpolati
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
     if(offsetToFirstDOF == -1)
-      return rcp(new PHAL::DOFVecGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+      return rcp(new PHAL::DOFVecGradInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
     else  //works only for solution or a set of solution components
-      return rcp(new PHAL::FastSolutionVecGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+      return rcp(new PHAL::FastSolutionVecGradInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecGradInterpolationSideEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFVecGradInterpolationSideEvaluator(
        const std::string& dof_name,
        const std::string& sideSetName,
        const bool enableMemoizer) const
@@ -879,12 +878,12 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecGradInterpolati
     // Output (assumes same Name as input)
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
-    return rcp(new PHAL::DOFVecGradInterpolationSideBase<EvalT,Traits,ScalarT>(*p,dl->side_layouts.at(sideSetName)));
+    return rcp(new PHAL::DOFVecGradInterpolationSideBase<EvalT,Traits,ScalarType>(*p,dl->side_layouts.at(sideSetName)));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecInterpolationEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFVecInterpolationEvaluator(
        const std::string& dof_name,
        int offsetToFirstDOF) const
 {
@@ -900,14 +899,14 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecInterpolationEv
 
     // Output (assumes same Name as input)
     if(offsetToFirstDOF == -1)
-      return rcp(new PHAL::DOFVecInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+      return rcp(new PHAL::DOFVecInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
     else  //works only for solution or a set of solution components
-      return rcp(new PHAL::FastSolutionVecInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+      return rcp(new PHAL::FastSolutionVecInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecInterpolationSideEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFVecInterpolationSideEvaluator(
        const std::string& dof_name,
        const std::string& sideSetName,
        const bool enableMemoizer) const
@@ -930,12 +929,12 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecInterpolationSi
 
     // Output (assumes same Name as input)
 
-    return rcp(new PHAL::DOFVecInterpolationSideBase<EvalT,Traits,ScalarT>(*p,dl->side_layouts.at(sideSetName)));
+    return rcp(new PHAL::DOFVecInterpolationSideBase<EvalT,Traits,ScalarType>(*p,dl->side_layouts.at(sideSetName)));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructNodesToCellInterpolationEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructNodesToCellInterpolationEvaluator(
     const std::string& dof_name, bool isVectorField, const bool enableMemoizer) const
 {
   Teuchos::RCP<Teuchos::ParameterList> p;
@@ -952,12 +951,12 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructNodesToCellInterpolat
 
   if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
 
-  return Teuchos::rcp(new PHAL::NodesToCellInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+  return Teuchos::rcp(new PHAL::NodesToCellInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructQuadPointsToCellInterpolationEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructQuadPointsToCellInterpolationEvaluator(
     const std::string& dof_name, const Teuchos::RCP<PHX::DataLayout> qp_layout,
     const Teuchos::RCP<PHX::DataLayout> cell_layout, const bool enableMemoizer) const
 {
@@ -974,17 +973,17 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructQuadPointsToCellInter
   if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
 
   if((qp_layout == Teuchos::null)&&(cell_layout == Teuchos::null))
-    return Teuchos::rcp(new PHAL::QuadPointsToCellInterpolationBase<EvalT,Traits,ScalarT>(*p,dl, dl->qp_scalar, dl->cell_scalar2));
+    return Teuchos::rcp(new PHAL::QuadPointsToCellInterpolationBase<EvalT,Traits,ScalarType>(*p,dl, dl->qp_scalar, dl->cell_scalar2));
   else
-    return Teuchos::rcp(new PHAL::QuadPointsToCellInterpolationBase<EvalT,Traits,ScalarT>(*p,dl, qp_layout, cell_layout));
+    return Teuchos::rcp(new PHAL::QuadPointsToCellInterpolationBase<EvalT,Traits,ScalarType>(*p,dl, qp_layout, cell_layout));
 }
 
-template<typename EvalT, typename Traits, typename ScalarT>
+template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructSideQuadPointsToSideInterpolationEvaluator(
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructSideQuadPointsToSideInterpolationEvaluator(
   const std::string& dof_name,
   const std::string& sideSetName,
-  bool isVectorField) const
+  const int fieldDim) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
                               "Error! The layout structure for side set " << sideSetName << " was not found.\n");
@@ -996,10 +995,10 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructSideQuadPointsToSideI
   p->set<std::string>("Field QP Name", dof_name);
   p->set<std::string>("Weighted Measure Name", "Weighted Measure "+sideSetName);
   p->set<std::string>("Side Set Name", sideSetName);
-  p->set<bool>("Is Vector Field", isVectorField);
+  p->set<int>("Field Dimension", fieldDim);
 
   // Output
   p->set<std::string>("Field Side Name", dof_name);
 
-  return Teuchos::rcp(new PHAL::SideQuadPointsToSideInterpolationBase<EvalT,Traits,ScalarT>(*p,dl->side_layouts.at(sideSetName)));
+  return Teuchos::rcp(new PHAL::SideQuadPointsToSideInterpolationBase<EvalT,Traits,ScalarType>(*p,dl->side_layouts.at(sideSetName)));
 }

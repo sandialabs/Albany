@@ -7,12 +7,8 @@
 #ifndef AERAS_LAYOUTS_HPP
 #define AERAS_LAYOUTS_HPP
 
-#include <vector>
-#include <string>
-
 #include "Teuchos_RCP.hpp"
 
-#include "Albany_DataTypes.hpp"
 #include "Albany_Layouts.hpp"
 
 namespace Aeras {
@@ -36,4 +32,4 @@ namespace Aeras {
   };
 }
 
-#endif 
+#endif // AERAS_LAYOUTS_HPP
