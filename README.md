@@ -1,4 +1,4 @@
-<img src="https://github.com/gahansen/Albany/wiki/images/albany5.png" width="300">
+<img src="https://github.com/SNLComputation/Albany/wiki/images/albany5.png" width="300">
 
 # Albany
 
@@ -9,13 +9,13 @@ mechanics (elasticity and plasticity), ice-sheet flow,
 [quantum device modeling](http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6242832), and many other applications.
 
 The Albany web page is located at
-[http://gahansen.github.io/Albany](http://gahansen.github.io/Albany)
+[http://SNLComputation.github.io/Albany](http://SNLComputation.github.io/Albany)
 
 ## Features
 
 ### Analysis of complex multiphysics problems
 
-![von Karman Vortex Street](https://github.com/gahansen/Albany/wiki/images/vonKarman.png)
+![von Karman Vortex Street](https://github.com/SNLComputation/Albany/wiki/images/vonKarman.png)
 
 Illustration of a von Karman vortex street that forms around a heated tube bundle under certain conditions
 
@@ -38,7 +38,7 @@ to [Dakota](https://dakota.sandia.gov) using the Trilinos TriKota package.
 ## Building Albany
 
 Detailed build instructions for both Trilinos and Albany are maintained on the Albany wiki at
-[https://github.com/gahansen/Albany/wiki/Building-Albany-and-supporting-tools](https://github.com/gahansen/Albany/wiki/Building-Albany-and-supporting-tools)
+[https://github.com/SNLComputation/Albany/wiki/Building-Albany-and-supporting-tools](https://github.com/SNLComputation/Albany/wiki/Building-Albany-and-supporting-tools)
 
 ## Nightly Build and Test Results
 
@@ -61,7 +61,7 @@ sub-directory. Many Albany tests run in parallel using up to 4 MPI ranks.
 
 ## Documentation
 
-The [HTML user guide](http://gahansen.github.io/Albany/user-guide/guide.html) is 
+The [HTML user guide](http://SNLComputation.github.io/Albany/user-guide/guide.html) is 
 maintained inside the Albany repository at:
 
 	/doc/user-guide/guide.html

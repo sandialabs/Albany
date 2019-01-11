@@ -45,7 +45,7 @@ SET (CTEST_BUILD_FLAGS "-j8")
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 
-set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
+set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (MPI_PATH $ENV{MPI_ROOT})  
 set (MKL_PATH $ENV{MKL_ROOT})  
@@ -300,6 +300,7 @@ if (BUILD_TRILINOS_SERIAL)
       "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
       "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
       "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
+      "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
   )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuildSerial")
@@ -389,6 +390,7 @@ if (BUILD_ALBANY_SERIAL)
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
     "-DALBANY_CTEST_TIMEOUT=500"
     "-DENABLE_CHECK_FPE:BOOL=OFF"
+    "-DDISABLE_LCM_EXODIFF_SENSITIVE_TESTS:BOOL=ON"
     )
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildSerial")
@@ -605,6 +607,7 @@ if (BUILD_TRILINOS_OPENMP)
       "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
       "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
       "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
+      "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
   )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuildOpenMP")
@@ -699,6 +702,7 @@ if (BUILD_ALBANY_OPENMP)
     "-DALBANY_CTEST_TIMEOUT=500"
     "-DENABLE_CHECK_FPE:BOOL=OFF"
     "-DALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by ppr:1:core:pe=2'"
+    "-DDISABLE_LCM_EXODIFF_SENSITIVE_TESTS:BOOL=ON"
     )
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildOpenMP")

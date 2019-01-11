@@ -46,7 +46,7 @@ endif ()
 find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
 
-set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
+set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
 set (cism-piscees_REPOSITORY_LOCATION  git@github.com:ACME-Climate/cism-piscees.git)
 
 if (CLEAN_BUILD)

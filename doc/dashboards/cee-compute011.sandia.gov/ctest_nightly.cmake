@@ -187,7 +187,7 @@ find_program (CTEST_SVN_COMMAND NAMES svn)
 
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (SCOREC_REPOSITORY_LOCATION git@github.com:SCOREC/core.git)
-set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
+set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
 set (Peridigm_REPOSITORY_LOCATION git@github.com:peridigm/peridigm) #ssh://software.sandia.gov/git/peridigm)
 
 #if (CLEAN_BUILD)
@@ -533,6 +533,8 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DKokkos_ENABLE_Pthread:BOOL=OFF"
   #
   "-DTrilinos_ENABLE_Tempus:BOOL=ON"
+  #
+  "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
   )
 
 if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
@@ -663,6 +665,7 @@ if (BUILD_ALB64)
     "-DENABLE_64BIT_INT:BOOL=ON"
 #    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
     "-DENABLE_LCM:BOOL=ON"
+    "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
     "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
     )
@@ -734,10 +737,12 @@ if (BUILD_TRILINOSCLANG)
     "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
   #
     "-DTPL_ENABLE_SuperLU:BOOL=ON"
+    #"-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/SuperLU_4.3/include"
     "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
     "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/SuperLU_4.3/lib"
     "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
     "-DCMAKE_INSTALL_RPATH:STRING=${PREFIX_DIR}/clang/lib"
+    "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
 )
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
@@ -756,7 +761,8 @@ if (BUILD_ALB64CLANG)
     "-DENABLE_64BIT_INT:BOOL=ON"
 # Run even the epetra tests
 #    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
-    "-DENABLE_LCM:BOOL=ON"
+    "-DENABLE_LCM:BOOL=OFF"
+    "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
     "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
     )
@@ -849,6 +855,7 @@ if (BUILD_ALB64DBG)
     "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
     "-DENABLE_CONTACT:BOOL=OFF"
     "-DENABLE_LCM:BOOL=ON"
+    "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
     "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
     )

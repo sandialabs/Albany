@@ -1,6 +1,8 @@
 <Project name="Albany">
   <SubProject name="IKTAlbany">
   </SubProject>
+  <SubProject name="IKTAlbanyFPECheckDbg">
+  </SubProject>
   <SubProject name="IKTAlbanyNoEpetra">
   </SubProject>
   <SubProject name="IKTAlbanyFunctorOpenMP">

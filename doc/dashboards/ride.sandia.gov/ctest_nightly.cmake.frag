@@ -45,7 +45,7 @@ endif ()
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 
-set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
+set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 
 #set (NVCC_WRAPPER "$ENV{jenkins_trilinos_dir}/packages/kokkos/config/nvcc_wrapper")
@@ -285,6 +285,8 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
     "-DTrilinos_ENABLE_Tempus:BOOL=ON"
     "-DTempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
+    #
+    "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
   )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")
@@ -441,7 +443,7 @@ if (BUILD_ALBANY)
   # Run Albany tests
   #
 
-  set (CTEST_TEST_TIMEOUT 2100)
+  set (CTEST_TEST_TIMEOUT 2400)
   CTEST_TEST (
     BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
     RETURN_VALUE HAD_ERROR)

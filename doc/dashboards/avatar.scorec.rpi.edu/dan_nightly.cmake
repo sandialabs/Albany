@@ -38,7 +38,7 @@ find_program(CTEST_GIT_COMMAND NAMES git)
 # Point at the public Repo
 SET(Trilinos_REPOSITORY_LOCATION https://software.sandia.gov/trilinos/repositories/publicTrilinos)
 SET(SCOREC_REPOSITORY_LOCATION https://github.com/SCOREC/core.git)
-SET(Albany_REPOSITORY_LOCATION https://github.com/gahansen/Albany.git)
+SET(Albany_REPOSITORY_LOCATION https://github.com/SNLComputation/Albany.git)
 
 # Initial cache info
 set( CACHE_CONTENTS "

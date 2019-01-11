@@ -68,7 +68,7 @@ find_program(CTEST_SVN_COMMAND NAMES svn)
 SET(Trilinos_REPOSITORY_LOCATION https://github.com/trilinos/trilinos.git)
 
 SET(SCOREC_REPOSITORY_LOCATION https://github.com/SCOREC/core.git)
-SET(Albany_REPOSITORY_LOCATION https://github.com/gahansen/Albany.git)
+SET(Albany_REPOSITORY_LOCATION https://github.com/SNLComputation/Albany.git)
 
 IF (CLEAN_BUILD)
 
