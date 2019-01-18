@@ -51,7 +51,7 @@ else
   (cd Trilinos; git pull)
 fi
 if [ ! -d Albany ]; then
-  git clone git@github.com:gahansen/Albany.git Albany
+  git clone git@github.com:SNLComputation/Albany.git Albany
 else
   echo ">>> Albany exists, freshening it <<<"
   (cd Albany; git pull)
