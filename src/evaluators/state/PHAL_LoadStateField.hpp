@@ -21,7 +21,7 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits, typename ScalarType = RealType>
+template<typename EvalT, typename Traits, typename ScalarType>
 class LoadStateFieldBase : public PHX::EvaluatorWithBaseImpl<Traits>,
                            public PHX::EvaluatorDerived<EvalT, Traits>  {
 public:

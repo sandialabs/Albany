@@ -11,10 +11,11 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
 #include "Sacado.hpp"
-
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
 #include "Albany_TpetraThyraUtils.hpp"
+
+#include "LandIce_Integral1Dw_Z.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -26,7 +27,7 @@ template<typename EvalT, typename Traits>
 Integral1Dw_ZBase<EvalT, Traits>::
 Integral1Dw_ZBase(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl) :
-  basal_velocity (p.get<std::string>("Basal Velocity Variable Name"), dl->node_scalar),
+  basal_velocity (p.get<std::string>("Basal Vertical Velocity Variable Name"), dl->node_scalar),
   thickness       (p.get<std::string>("Thickness Variable Name"), dl->node_scalar),
   int1Dw_z        (p.get<std::string>("Integral1D w_z Variable Name"), dl->node_scalar)
 {

@@ -14,6 +14,7 @@
 
 #include "Albany_Layouts.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
+#include "Albany_SacadoTypes.hpp"
 #include "PHAL_Dimension.hpp"
 
 namespace LandIce

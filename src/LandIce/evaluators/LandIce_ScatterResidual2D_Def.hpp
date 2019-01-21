@@ -73,7 +73,6 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
-      const int elem_GID = sideSet[iSide].elem_GID;
       const int elem_LID = sideSet[iSide].elem_LID;
       const int elem_side = sideSet[iSide].side_local_id;
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
@@ -216,7 +215,6 @@ evaluateFields(typename Traits::EvalData workset)
 
             }
             else {
-              double two=2;
               // Sum Jacobian entries all at once
               for (unsigned int lunk = 0; lunk < nunk; lunk++) {
                 JacT->sumIntoLocalValues( rowT, Teuchos::arrayView(&colT[lunk],1),
@@ -231,7 +229,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  int numLayers = layeredMeshNumbering.numLayers;
   colT.resize(this->numNodes);
 
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
@@ -240,7 +237,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     Teuchos::ArrayRCP<LO> basalIds(this->numNodes);
     LO base_id, ilayer;
-    for (unsigned int node_col=0, i=0; node_col<this->numNodes; node_col++){
+    for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
       LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node_col]);
       layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
       LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);

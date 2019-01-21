@@ -9,6 +9,8 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "PHAL_AlbanyTraits.hpp"
+#include "LandIce_ViscosityFO.hpp"
 #include "LandIce_ViscosityFO.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
@@ -179,7 +181,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 void ViscosityFO<EvalT, Traits, VelT, TemprT>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(Ugrad,fm);
@@ -214,14 +216,14 @@ TemperatureT ViscosityFO<EvalT,Traits,VelT,TemprT>::flowRate (const TemperatureT
 //Kokkos functors
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
-void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_CONSTANT_Tag& tag, const int& cell) const{
+void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_CONSTANT_Tag&, const int& cell) const{
   for (int qp=0; qp < numQPs; ++qp)
           mu(cell,qp) = 1.0;
 }
 
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
-void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_EXPTRIG_Tag& tag, const int& cell) const
+void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_EXPTRIG_Tag&, const int& cell) const
 {
   double a = 1.0;
   for (int qp=0; qp < numQPs; ++qp)
@@ -239,7 +241,6 @@ KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFactorVec, const int& cell) const
 {
   double power = 0.5*(1.0/n - 1.0);
-  double a = 1.0;
   //ScalarT scale = std::pow(1.0-homotopyParam(0),8);
   ScalarT scale = performContinuousHomotopy ? std::pow(1.0-homotopyParam(0),expCoeff) : ScalarT(0);
   if (0)//homotopyParam(0) == 0.0)
@@ -347,7 +348,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
 
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
-void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_UNIFORM_Tag& tag, const int& cell) const{
+void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_UNIFORM_Tag&, const int& cell) const{
   TemprT flowFactorVec;
   flowFactorVec = 1.0/2.0*pow(A, -1.0/n);
   glenslaw(flowFactorVec,cell);
@@ -355,7 +356,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GL
 
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
-void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_TEMPERATUREBASED_Tag& tag, const int& cell) const
+void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_TEMPERATUREBASED_Tag&, const int& cell) const
 {
   ScalarT flowFactorVec;
   flowFactorVec =1.0/2.0*pow(flowRate<TemprT>(temperature(cell)), -1.0/n);
@@ -365,7 +366,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GL
 
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
-void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_FROMFILE_Tag& tag, const int& cell) const
+void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_FROMFILE_Tag&, const int& cell) const
 {
    TemprT flowFactorVec;
    flowFactorVec =1.0/2.0*pow(flowFactorA(cell), -1.0/n);
@@ -378,7 +379,6 @@ KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw_xz (const TemprT &flowFactorVec, const int& cell) const
 {
   double power = 0.5*(1.0/n - 1.0);
-  double a = 1.0;
   ScalarT scale = performContinuousHomotopy ? std::pow(1.0-homotopyParam(0),expCoeff) : ScalarT(0);
   if (0)//homotopyParam(0) == 0.0)
   {
@@ -422,7 +422,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw_xz (const TemprT &flowFa
 
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
-void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_XZ_UNIFORM_Tag& tag, const int& cell) const
+void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_XZ_UNIFORM_Tag&, const int& cell) const
 {
   TemprT flowFactorVec;
   flowFactorVec = 1.0/2.0*pow(A, -1.0/n);
@@ -431,7 +431,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GL
 
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
-void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_XZ_TEMPERATUREBASED_Tag& tag, const int& cell) const
+void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_XZ_TEMPERATUREBASED_Tag&, const int& cell) const
 {
   TemprT flowFactorVec;
   flowFactorVec =1.0/2.0*pow(flowRate<TemprT>(temperature(cell)), -1.0/n);
@@ -440,7 +440,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GL
 
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
-void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_XZ_FROMFILE_Tag& tag, const int& cell) const
+void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_XZ_FROMFILE_Tag&, const int& cell) const
 {
    TemprT flowFactorVec;
    flowFactorVec =1.0/2.0*pow(flowFactorA(cell), -1.0/n);
@@ -449,7 +449,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GL
 
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
-void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_XZ_FROMCISM_Tag& tag, const int& cell) const
+void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_XZ_FROMCISM_Tag&, const int&) const
 {
 
 }

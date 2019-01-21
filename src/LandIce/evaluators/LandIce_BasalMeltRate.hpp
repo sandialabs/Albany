@@ -12,7 +12,9 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
 #include "Albany_Layouts.hpp"
+#include "PHAL_Dimension.hpp"
 
 namespace LandIce
 {
@@ -71,7 +73,6 @@ namespace LandIce
     double basalMelt_reg_beta;
   };
 
-}
-
+} // namespace LandIce
 
 #endif /* LandIce_BASALMELTRATE_HPP_ */
