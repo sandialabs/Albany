@@ -24,7 +24,7 @@ namespace LandIce {
 
 template<typename EvalT, typename Traits>
 class StokesFOBodyForce : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits> {
+		                      public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
@@ -42,13 +42,12 @@ public:
 private:
  
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:  
   PHX::MDField<const ScalarT,Cell,QuadPoint> muLandIce;
   PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> coordVec;
-  PHX::MDField<const ParamScalarT,Cell,QuadPoint, Dim> surfaceGrad;
-  PHX::MDField<const ParamScalarT,Cell,QuadPoint> surface;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> surfaceGrad;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint> surface;
   Teuchos::Array<double> gravity;
 
   // Output:
@@ -134,6 +133,7 @@ private:
   double rho_g_kernel;
 
 };
-}
 
-#endif
+} // namespace LandIce
+
+#endif // LANDICE_STOKESFOBODYFORCE_HPP

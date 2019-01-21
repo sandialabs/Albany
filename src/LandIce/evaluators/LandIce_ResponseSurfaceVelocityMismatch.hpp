@@ -43,11 +43,11 @@ namespace LandIce {
     int numSurfaceQPs;
     int numSideDims;
 
-    PHX::MDField<const ScalarT,Cell,Side,QuadPoint,VecDim>       velocity;
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint,VecDim>  observedVelocity;
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint,VecDim>  observedVelocityRMS;
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         observedVelocityMagnitudeRMS;
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>          w_measure_surface;
+    PHX::MDField<const ScalarT,Cell,Side,QuadPoint,VecDim>      velocity;
+    PHX::MDField<const RealType,Cell,Side,QuadPoint,VecDim>     observedVelocity;
+    PHX::MDField<const RealType,Cell,Side,QuadPoint,VecDim>     observedVelocityRMS;
+    PHX::MDField<const RealType,Cell,Side,QuadPoint>            observedVelocityMagnitudeRMS;
+    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>         w_measure_surface;
 
     //PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  metric_surface;
 

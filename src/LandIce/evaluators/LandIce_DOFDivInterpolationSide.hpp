@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "Albany_SacadoTypes.hpp"
 
 namespace LandIce {
 
@@ -33,6 +34,7 @@ public:
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename Albany::StrongestScalarType<ScalarT,MeshScalarT>::type OutputScalarT;
 
   std::string sideSetName;
 
@@ -45,7 +47,7 @@ private:
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint> val_qp;
+  PHX::MDField<OutputScalarT,Cell,Side,QuadPoint> val_qp;
 
   int numSideNodes;
   int numSideQPs;

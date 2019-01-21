@@ -12,7 +12,9 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
 #include "Albany_Layouts.hpp"
+#include "Albany_SacadoTypes.hpp"
 
 namespace LandIce
 {
@@ -40,12 +42,14 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
+  typedef typename Albany::StrongestScalarType<Type,MeshScalarT>::type OutputScalarT;
+
   // Input:
   PHX::MDField<const MeshScalarT,Cell,Node,Dim> z;
   PHX::MDField<const Type,Cell,Node> s; //surface height
 
   // Output:
-  PHX::MDField<Type,Cell,Node> pressure;
+  PHX::MDField<OutputScalarT,Cell,Node> pressure;
 
   int numNodes;
 

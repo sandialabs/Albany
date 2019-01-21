@@ -27,7 +27,7 @@ template<typename EvalT, typename Traits>
 ThicknessResid<EvalT, Traits>::
 ThicknessResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl) :
-  dH        (p.get<std::string> ("Thickness Increment Variable Name"), dl->node_scalar),
+  dH       (p.get<std::string> ("Thickness Increment Variable Name"), dl->node_scalar),
   H0       (p.get<std::string> ("Past Thickness Name"), dl->node_scalar),
   coordVec (p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector),
   Residual (p.get<std::string> ("Residual Name"), dl->node_scalar)

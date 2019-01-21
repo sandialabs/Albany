@@ -25,7 +25,7 @@ namespace LandIce
     This evaluator evaluates the residual of the Lateral bc for the StokesFO problem
 */
 
-template<typename EvalT, typename Traits, bool ThicknessCoupling>
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
 class StokesFOLateralResid : public PHX::EvaluatorWithBaseImpl<Traits>,
                              public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -33,8 +33,6 @@ public:
 
   typedef typename EvalT::ScalarT       ScalarT;
   typedef typename EvalT::MeshScalarT   MeshScalarT;
-  typedef typename EvalT::ParamScalarT  ParamScalarT;
-  typedef typename std::conditional<ThicknessCoupling,ScalarT,ParamScalarT>::type   ThicknessScalarT;
 
   StokesFOLateralResid (const Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl);
@@ -46,19 +44,21 @@ public:
 
 private:
 
+  typedef typename Albany::StrongestScalarType<ScalarT,MeshScalarT>::type OutputScalarT;
+
   void evaluate_with_given_immersed_ratio(typename Traits::EvalData d);
   void evaluate_with_computed_immersed_ratio(typename Traits::EvalData d);
 
   // Input:
   PHX::MDField<const MeshScalarT,Cell,Side,Node,Dim>        coords_qp;
   PHX::MDField<const ThicknessScalarT,Cell,Side,QuadPoint>  thickness;
-  PHX::MDField<const ThicknessScalarT,Cell,Side,QuadPoint>  elevation;
+  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>       elevation;
   PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>     BF;
   PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>   normals;
   PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>       w_measure;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,VecDim>                    residual;
+  PHX::MDField<OutputScalarT,Cell,Node,VecDim>              residual;
 
   std::vector<std::vector<int> >  sideNodes;
   std::string                     lateralSideName;

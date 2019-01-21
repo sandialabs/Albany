@@ -268,11 +268,11 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
         MeshScalarT invh_x = x/2.0/R2;
         MeshScalarT invh_y = y/2.0/R2;
 
-        VelT eps00 = Ugrad(cell,qp,0,0)/h-invh_y*U(cell,qp,1); //epsilon_xx
-        VelT eps01 = (Ugrad(cell,qp,0,1)/h+invh_x*U(cell,qp,0)+Ugrad(cell,qp,1,0)/h+invh_y*U(cell,qp,1))/2.0; //epsilon_xy
-        VelT eps02 = Ugrad(cell,qp,0,2)/2.0; //epsilon_xz
-        VelT eps11 = Ugrad(cell,qp,1,1)/h-invh_x*U(cell,qp,0); //epsilon_yy
-        VelT eps12 = Ugrad(cell,qp,1,2)/2.0; //epsilon_yz
+        OutputScalarT eps00 = Ugrad(cell,qp,0,0)/h-invh_y*U(cell,qp,1); //epsilon_xx
+        OutputScalarT eps01 = (Ugrad(cell,qp,0,1)/h+invh_x*U(cell,qp,0)+Ugrad(cell,qp,1,0)/h+invh_y*U(cell,qp,1))/2.0; //epsilon_xy
+        OutputScalarT eps02 = Ugrad(cell,qp,0,2)/2.0; //epsilon_xz
+        OutputScalarT eps11 = Ugrad(cell,qp,1,1)/h-invh_x*U(cell,qp,0); //epsilon_yy
+        OutputScalarT eps12 = Ugrad(cell,qp,1,2)/2.0; //epsilon_yz
 
         epsilonEqpSq = eps00*eps00 + eps11*eps11 + eps00*eps11 + eps01*eps01 + eps02*eps02 + eps12*eps12;
         epsilonSq(cell,qp) = epsilonEqpSq;
@@ -290,11 +290,11 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
           MeshScalarT invh_x = x/2.0/R2;
           MeshScalarT invh_y = y/2.0/R2;
 
-          VelT eps00 = Ugrad(cell,qp,0,0)/h-invh_y*U(cell,qp,1); //epsilon_xx
-          VelT eps01 = (Ugrad(cell,qp,0,1)/h+invh_x*U(cell,qp,0)+Ugrad(cell,qp,1,0)/h+invh_y*U(cell,qp,1))/2.0; //epsilon_xy
-          VelT eps02 = Ugrad(cell,qp,0,2)/2.0; //epsilon_xz
-          VelT eps11 = Ugrad(cell,qp,1,1)/h-invh_x*U(cell,qp,0); //epsilon_yy
-          VelT eps12 = Ugrad(cell,qp,1,2)/2.0; //epsilon_yz
+          OutputScalarT eps00 = Ugrad(cell,qp,0,0)/h-invh_y*U(cell,qp,1); //epsilon_xx
+          OutputScalarT eps01 = (Ugrad(cell,qp,0,1)/h+invh_x*U(cell,qp,0)+Ugrad(cell,qp,1,0)/h+invh_y*U(cell,qp,1))/2.0; //epsilon_xy
+          OutputScalarT eps02 = Ugrad(cell,qp,0,2)/2.0; //epsilon_xz
+          OutputScalarT eps11 = Ugrad(cell,qp,1,1)/h-invh_x*U(cell,qp,0); //epsilon_yy
+          OutputScalarT eps12 = Ugrad(cell,qp,1,2)/2.0; //epsilon_yz
 
           epsilonEqpSq = eps00*eps00 + eps11*eps11 + eps00*eps11 + eps01*eps01 + eps02*eps02 + eps12*eps12;
           epsilonEqpSq += ff; //add regularization "fudge factor"

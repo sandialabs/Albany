@@ -14,8 +14,8 @@
 namespace LandIce {
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool ThicknessCoupling>
-StokesFOLateralResid<EvalT, Traits, ThicknessCoupling>::
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
+StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::
 StokesFOLateralResid (const Teuchos::ParameterList& p,
                       const Teuchos::RCP<Albany::Layouts>& dl)
 {
@@ -95,8 +95,8 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool ThicknessCoupling>
-void StokesFOLateralResid<EvalT, Traits, ThicknessCoupling>::
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
+void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -114,8 +114,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool ThicknessCoupling>
-void StokesFOLateralResid<EvalT, Traits, ThicknessCoupling>::evaluateFields (typename Traits::EvalData workset)
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
+void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
   if (workset.sideSets->find(lateralSideName)==workset.sideSets->end()) {
     return;
@@ -128,14 +128,14 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessCoupling>::evaluateFields (typ
   }
 }
 
-template<typename EvalT, typename Traits, bool ThicknessCoupling>
-void StokesFOLateralResid<EvalT, Traits, ThicknessCoupling>::evaluate_with_computed_immersed_ratio (typename Traits::EvalData workset)
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
+void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_computed_immersed_ratio (typename Traits::EvalData workset)
 {
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(lateralSideName);
 
-  const ThicknessScalarT zero (0.0);
+  const OutputScalarT zero (0.0);
   const ThicknessScalarT threshold (1e-8);
-  const ThicknessScalarT one (1.0);
+  const OutputScalarT one (1.0);
 
   for (auto const& it_side : sideSet) {
     // Get the local data of side and cell
@@ -144,9 +144,9 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessCoupling>::evaluate_with_compu
 
     for (int qp=0; qp<numSideQPs; ++qp) {
       const ThicknessScalarT H = thickness(cell,side,qp);
-      const ThicknessScalarT s = elevation(cell,side,qp);
-      const ThicknessScalarT immersed_ratio = H>threshold ? std::max(zero,std::min(one,1-s/H)) : zero;
-      ScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*immersed_ratio*immersed_ratio) * w_measure(cell,side,qp);
+      const MeshScalarT      s = elevation(cell,side,qp);
+      const OutputScalarT immersed_ratio = H>threshold ? std::max(zero,std::min(one,1-s/H)) : zero;
+      OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*immersed_ratio*immersed_ratio) * w_measure(cell,side,qp);
       if (use_stereographic_map) {
         const MeshScalarT x = coords_qp(cell,side,qp,0) - X_0;
         const MeshScalarT y = coords_qp(cell,side,qp,1) - Y_0;
@@ -159,7 +159,7 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessCoupling>::evaluate_with_compu
         // If s<=0, it is 1, since the top is already under water. If 0<s<H it is somewhere in (0,1), since the top is above the sea level,
         // but the bottom is s-H<0, which is below the sea level.
         // NOTE: we are RELYING on the fact that the lateral side is vertical, so that u*n = ux*nx+uy*ny.
-        const ScalarT w_normal_stress_bf = w_normal_stress * BF(cell,side,node,qp);
+        const OutputScalarT w_normal_stress_bf = w_normal_stress * BF(cell,side,node,qp);
         for (int dim=0; dim<vecDimFO; ++dim) {
           residual(cell,sideNode,dim) += w_normal_stress_bf * normals(cell,side,qp,dim);
         }
@@ -168,8 +168,8 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessCoupling>::evaluate_with_compu
   }
 }
 
-template<typename EvalT, typename Traits, bool ThicknessCoupling>
-void StokesFOLateralResid<EvalT, Traits, ThicknessCoupling>::evaluate_with_given_immersed_ratio (typename Traits::EvalData workset)
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
+void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_given_immersed_ratio (typename Traits::EvalData workset)
 {
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(lateralSideName);
 
@@ -180,7 +180,7 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessCoupling>::evaluate_with_given
 
     for (int qp=0; qp<numSideQPs; ++qp) {
       const ThicknessScalarT H = thickness(cell,side,qp);
-      ScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*given_immersed_ratio*given_immersed_ratio) * w_measure(cell,side,qp);
+      OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*given_immersed_ratio*given_immersed_ratio) * w_measure(cell,side,qp);
       if (use_stereographic_map) {
         const MeshScalarT x = coords_qp(cell,side,qp,0) - X_0;
         const MeshScalarT y = coords_qp(cell,side,qp,1) - Y_0;
@@ -190,7 +190,7 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessCoupling>::evaluate_with_given
       for (int node=0; node<numSideNodes; ++node) {
         int sideNode = sideNodes[side][node];
         // NOTE: we are RELYING on the fact that the lateral side is vertical, so that u*n = ux*nx+uy*ny.
-        const ScalarT w_normal_stress_bf = w_normal_stress * BF(cell,side,node,qp);
+        const OutputScalarT w_normal_stress_bf = w_normal_stress * BF(cell,side,node,qp);
         for (int dim=0; dim<vecDimFO; ++dim) {
           residual(cell,sideNode,dim) += w_normal_stress_bf * normals(cell,side,qp,dim);
         }
