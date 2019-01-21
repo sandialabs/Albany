@@ -3,7 +3,9 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
 #include "Albany_ProblemUtils.hpp"
+#include "Albany_config.h"
 
 ////#include "Intrepid2_HGRAD_LINE_Cn_FEM.hpp"
 //#include "Intrepid2_HGRAD_TRI_Cn_FEM.hpp"
