@@ -12,12 +12,14 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Shards_CellTopology.hpp"
 
+#include "PHAL_LoadSideSetStateField.hpp"
+
 namespace PHAL
 {
 
-template<typename EvalT, typename Traits>
-LoadSideSetStateField<EvalT, Traits>::
-LoadSideSetStateField (const Teuchos::ParameterList& p)
+template<typename EvalT, typename Traits, typename ScalarType>
+LoadSideSetStateFieldBase<EvalT, Traits, ScalarType>::
+LoadSideSetStateFieldBase (const Teuchos::ParameterList& p)
 {
   if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
     memoizer.enable_memoizer();
@@ -27,7 +29,7 @@ LoadSideSetStateField (const Teuchos::ParameterList& p)
   fieldName = p.get<std::string>("Field Name");
   stateName = p.get<std::string>("State Name");
 
-  field  = PHX::MDField<ParamScalarT>(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("Field Layout") );
+  field  = PHX::MDField<ScalarType>(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("Field Layout") );
 
   this->addEvaluatedField (field);
 
@@ -36,16 +38,16 @@ LoadSideSetStateField (const Teuchos::ParameterList& p)
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits>
-void LoadSideSetStateField<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+template<typename EvalT, typename Traits, typename ScalarType>
+void LoadSideSetStateFieldBase<EvalT, Traits, ScalarType>::
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(field,fm);
 }
 
-template<typename EvalT, typename Traits>
-void LoadSideSetStateField<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarType>
+void LoadSideSetStateFieldBase<EvalT, Traits, ScalarType>::
 evaluateFields(typename Traits::EvalData workset)
 {
   if (memoizer.have_stored_data(workset)) return;
