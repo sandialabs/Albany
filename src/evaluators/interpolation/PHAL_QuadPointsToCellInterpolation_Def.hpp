@@ -51,7 +51,7 @@ void QuadPointsToCellInterpolationBase<EvalT, Traits, ScalarT>::evaluateFields (
 {
   if (memoizer.have_stored_data(workset)) return;
 
-  ScalarT meas;
+  MeshScalarT meas;
   int numQPs = qp_dims[1];
 
   for (int cell=0; cell<workset.numCells; ++cell)
