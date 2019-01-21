@@ -414,13 +414,13 @@ namespace Albany {
       return *utils_PST;
     }
 
-    // const EvaluatorUtilsBase<Traits>&
-    // getRTUtils() const
-    // {
-    //   if (utils_RT==Teuchos::null)
-    //     utils_RT = Teuchos::rcp(new EvaluatorUtilsImpl<EvalT,Traits,RealType>(dl));
-    //   return *utils_RT;
-    // }
+    const EvaluatorUtilsBase<Traits>&
+    getRTUtils() const
+    {
+      if (utils_RT==Teuchos::null)
+        utils_RT = Teuchos::rcp(new EvaluatorUtilsImpl<EvalT,Traits,RealType>(dl));
+      return *utils_RT;
+    }
 
     // Do not hide base class inlined methods
     using EvaluatorUtilsBase<Traits>::constructGatherSolutionEvaluator;
@@ -712,9 +712,11 @@ namespace Albany {
   private:
 
     //! Evaluator Utils with different ScalarType. Mutable, so we can have getters with JIT build.
+    //! NOTE: we CAN'T create them in the constructor, since we would have a never-ending construction.
     mutable Teuchos::RCP<EvaluatorUtilsBase<Traits>>   utils_ST;
     mutable Teuchos::RCP<EvaluatorUtilsBase<Traits>>   utils_MST;
     mutable Teuchos::RCP<EvaluatorUtilsBase<Traits>>   utils_PST;
+    mutable Teuchos::RCP<EvaluatorUtilsBase<Traits>>   utils_RT;
 
     //! Struct of PHX::DataLayout objects defined all together.
     Teuchos::RCP<Albany::Layouts> dl;
