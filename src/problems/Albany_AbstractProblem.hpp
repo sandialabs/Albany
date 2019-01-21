@@ -150,10 +150,10 @@ class AbstractProblem {
   getAllocatedStates(
       Teuchos::ArrayRCP<Teuchos::ArrayRCP<
           Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>>
-          oldState_,
+          /* oldState_ */,
       Teuchos::ArrayRCP<Teuchos::ArrayRCP<
           Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>>
-          newState_) const {};
+          /* newState_ */) const {};
 
   //! Get a list of the Special fields needed to implement the problem
   const AbstractFieldContainer::FieldContainerRequirements
@@ -171,7 +171,7 @@ class AbstractProblem {
   //! custom status test.
   virtual void
   applyProblemSpecificSolverSettings(
-      Teuchos::RCP<Teuchos::ParameterList> params) {}
+      Teuchos::RCP<Teuchos::ParameterList> ) {}
 
  protected:
   Teuchos::Array<Teuchos::Array<int>> offsets_;

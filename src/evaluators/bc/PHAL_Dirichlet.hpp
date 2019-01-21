@@ -52,7 +52,7 @@ public:
   // This function will be overloaded with template specialized code
   void evaluateFields(typename Traits::EvalData d)=0;
 
-  virtual ScalarT& getValue(const std::string &n) { return value; }
+  virtual ScalarT& getValue(const std::string &/* n */) { return value; }
 
 protected:
   const int offset;
@@ -129,12 +129,13 @@ public:
 
   DirichletAggregator(Teuchos::ParameterList& p);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-                             PHX::FieldManager<Traits>& vm) {};
+  void postRegistrationSetup(typename Traits::SetupData /* d */,
+                             PHX::FieldManager<Traits>& /* vm */) {};
 
   // This function will be overloaded with template specialized code
-  void evaluateFields(typename Traits::EvalData d) {};
+  void evaluateFields(typename Traits::EvalData /* d */) {};
 };
-}
 
-#endif
+} // namespace PHAL
+
+#endif // PHAL_DIRICHLET_HPP

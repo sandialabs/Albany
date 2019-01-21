@@ -202,9 +202,9 @@ struct Workset {
     os << "\tEB name : " << EBName << std::endl;
     os << "\tnumCells : " << numCells << std::endl;
     os << "\twsElNodeEqID : " << std::endl;
-    for(int i = 0; i < wsElNodeEqID.dimension(0); i++)
-      for(int j = 0; j < wsElNodeEqID.dimension(1); j++)
-        for(int k = 0; k < wsElNodeEqID.dimension(2); k++)
+    for(unsigned int i = 0; i < wsElNodeEqID.dimension(0); i++)
+      for(unsigned int j = 0; j < wsElNodeEqID.dimension(1); j++)
+        for(unsigned int k = 0; k < wsElNodeEqID.dimension(2); k++)
           os << "\t\twsElNodeEqID(" << i << "," << j << "," << k << ") = " <<
             wsElNodeEqID(i,j,k) << std::endl;
     os << "\twsCoords : " << std::endl;
