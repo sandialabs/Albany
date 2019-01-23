@@ -1,0 +1,386 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output: 
+    Write Solution to MatrixMarket: false
+  Problem: 
+    Phalanx Graph Visualization Detail: 1
+    Extruded Column Coupled in 2D Response: false
+    Solution Method: Steady
+    Name: LandIce Stokes First Order 3D
+    Required Fields: [temperature, basal_friction, bed_topography, stiffening_factor]
+    Basal Side Name: basalside
+    Surface Side Name: upperside
+    Equation Set: 
+      Type: LandIce
+      Num Equations: 3
+    Response Functions: 
+      Collection Method: Sum Responses
+      Number: 2
+      Response 1: Boundary Squared L2 Norm
+      ResponseParams 1: 
+        Scaling Coefficient: 7.2e-05
+        Field Name: L2 Projected Boundary Laplacian
+      Response 0: Surface Velocity Mismatch
+      ResponseParams 0: 
+        Regularization Coefficient: 0.0
+        Regularization Coefficient Stiffening: 1.0e+03
+        Asinh Scaling: 1.0e+01
+        Scaling Coefficient: 7.2e-08
+      Response 2: Surface Mass Balance Mismatch
+      ResponseParams 2: 
+        Regularization Coefficient: 1.0
+        H Coefficient: 1.0
+        SMB Coefficient: 1.0e+01
+        Scaling Coefficient: 7.2e-08
+        Cubature Degree: 3
+        Field Name: Velocity
+    Dirichlet BCs: { }
+    Parameters: 
+      Number: 0
+      Parameter 0: 'Glen''s Law Homotopy Parameter'
+    Distributed Parameters: 
+      Number of Parameter Vectors: 2
+      Distributed Parameter 0: 
+        Name: basal_friction
+        Lower Bound: -1.5e+01
+        Upper Bound: 1.5e+01
+        Mesh Part: bottom
+      Distributed Parameter 1: 
+        Name: stiffening_factor
+        Lower Bound: -2.0
+        Upper Bound: 2.0
+        Mesh Part: bottom
+        Extruded: true
+      Distributed Parameter 2: 
+        Name: ice_thickness
+        Mesh Part: bottom
+        Extruded: true
+    LandIce Physical Parameters: 
+      Water Density: 1028
+      Ice Density: 910
+      Gravity Acceleration: 9.81
+      Clausius-Clapeyron Coefficient: 7.9e-08
+    LandIce Viscosity: 
+      Continuous Homotopy With Constant Initial Viscosity: false
+      Coefficient For Continuous Homotopy: 7.0
+      Type: 'Glen''s Law'
+      'Glen''s Law Homotopy Parameter': 3.0e-01
+      'Glen''s Law A': 5.0e-05
+      'Glen''s Law n': 3.0
+      Flow Rate Type: Temperature Based
+      Use Stiffening Factor: true
+    LandIce BCs: 
+      Number: 2
+      BC 0: 
+        Side Set Name: basalside
+        Type: Basal Friction
+        Basal Friction Coefficient: 
+          Type: Galerkin Projection Of Exponent Of Given Field
+          Given Field Variable Name: basal_friction
+          Zero Beta On Floating Ice: true
+      BC 1: 
+        Cubature Degree: 4
+        Side Set Name: lateralside
+        Type: Lateral
+    LandIce L2 Projected Boundary Laplacian: 
+      Mass Coefficient: 5.0e-03
+      Laplacian Coefficient: 2.0e+00
+      Robin Coefficient: 5.0e-02
+      Boundary Edges Set Name: lateralside
+    Body Force: 
+      Type: FO INTERP SURF GRAD
+  Discretization: 
+    Columnwise Ordering: true
+    Method: Extruded
+    Number Of Time Derivatives: 0
+    Cubature Degree: 4
+    Exodus Output File Name: antarctica_stiff2.exo
+    Element Shape: Tetrahedron
+    NumLayers: 10
+    Thickness Field Name: ice_thickness
+    Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction, bed_topography, stiffening_factor]
+    Basal Node Fields Ranks: [1, 1, 1, 1, 1]
+    Interpolate Basal Elem Layered Fields: [temperature]
+    Basal Elem Layered Fields Ranks: [1]
+    Use Glimmer Spacing: true
+    Required Fields Info: 
+      Number Of Fields: 6
+      Field 0: 
+        Field Name: temperature
+        Field Type: Elem Scalar
+        Field Origin: Mesh
+      Field 1: 
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 2: 
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 3: 
+        Field Name: basal_friction
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 4: 
+        Field Name: bed_topography
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 5: 
+        Field Name: stiffening_factor
+        Field Type: Node Scalar
+        Field Origin: Mesh
+    Side Set Discretizations: 
+      Side Sets: [basalside, upperside]
+      basalside: 
+        Method: Ioss
+        Number Of Time Derivatives: 0
+        Use Serial Mesh: true
+        Exodus Input File Name: mesh/antarctica_2d.exo
+        Exodus Output File Name: antactica_basal2.exo
+        Cubature Degree: 5
+        Required Fields Info: 
+          Number Of Fields: 7
+          Field 0: 
+            Field Name: basal_friction
+            File Name: mesh/basal_friction_log.ascii
+            Field Type: Node Scalar
+            Field Origin: File
+          Field 1: 
+            Field Name: ice_thickness
+            Field Type: Node Scalar
+            File Name: mesh/thickness.ascii
+            Field Origin: File
+          Field 2: 
+            Field Name: surface_height
+            Field Type: Node Scalar
+            File Name: mesh/surface_height.ascii
+            Field Origin: File
+          Field 3: 
+            Field Name: temperature
+            Field Type: Elem Layered Scalar
+            Number Of Layers: 10
+            File Name: mesh/temperature.ascii
+            Field Origin: File
+          Field 4: 
+            Field Name: basal_friction_sensitivity
+            Field Type: Node Scalar
+            Field Origin: Mesh
+          Field 5: 
+            Field Name: bed_topography
+            Field Type: Node Scalar
+            File Name: mesh/bed_topography.ascii
+            Field Origin: File
+          Field 6: 
+            Field Name: stiffening_factor
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: mesh/stiffening_factor.ascii
+      upperside: 
+        Method: SideSetSTK
+        Number Of Time Derivatives: 0
+        Exodus Output File Name: antactica_surface2.exo
+        Cubature Degree: 3
+        Required Fields Info: 
+          Number Of Fields: 2
+          Field 0: 
+            Field Name: observed_surface_velocity
+            Field Type: Node Vector
+            File Name: mesh/surface_velocity.ascii
+            Field Origin: File
+          Field 1: 
+            Field Name: observed_surface_velocity_RMS
+            Field Type: Node Scalar
+            File Name: mesh/surface_velocity_uncertainty.ascii
+            Field Origin: File
+  Piro: 
+    Sensitivity Method: Adjoint
+    Write Only Converged Solution: false
+    Analysis: 
+      Analysis Package: ROL
+      ROL: 
+        Number of Parameters: 2
+        Check Gradient: false
+        Gradient Tolerance: 1.0e-04
+        Step Tolerance: 0.0
+        Max Iterations: 30
+        Print Output: true
+        Parameter Initial Guess Type: From Model Evaluator
+        Uniform Parameter Guess: 0.0
+        Min And Max Of Random Parameter Guess: [1.0, 2.0]
+        Bound Constrained: true
+        bound_eps: 1.0e-01
+        ROL Options: 
+          General: 
+            Variable Objective Function: false
+            Scale for Epsilon Active Sets: 1.0
+            Inexact Objective Function: false
+            Inexact Gradient: true
+            Inexact Hessian-Times-A-Vector: true
+            Projected Gradient Criticality Measure: false
+            Secant: 
+              Type: Limited-Memory BFGS
+              Use as Preconditioner: false
+              Use as Hessian: false
+              Maximum Storage: 200
+              Barzilai-Borwein Type: 1
+            Krylov: 
+              Type: Conjugate Gradients
+              Absolute Tolerance: 1.0e-04
+              Relative Tolerance: 1.0e-02
+              Iteration Limit: 100
+          Step: 
+            Line Search: 
+              Function Evaluation Limit: 15
+              Sufficient Decrease Tolerance: 1.0e-12
+              Initial Step Size: 1.0
+              User Defined Initial Step Size: false
+              Accept Linesearch Minimizer: true
+              Accept Last Alpha: true
+              Descent Method: 
+                Type: Quasi-Newton
+              Curvature Condition: 
+                Type: Strong Wolfe Conditions
+                General Parameter: 9.0e-01
+                Generalized Wolfe Parameter: 6.0e-01
+              Line-Search Method: 
+                Type: Cubic Interpolation
+                Backtracking Rate: 5.0e-01
+                Bracketing Tolerance: 1.0e-08
+                Path-Based Target Level: 
+                  Target Relaxation Parameter: 1.0e+00
+                  Upper Bound on Path Length: 1.0e+00
+            Trust Region: 
+              Subproblem Solver: Truncated CG
+              Initial Radius: 1.0e+01
+              Maximum Radius: 5.0e+03
+              Step Acceptance Threshold: 5.0e-02
+              Radius Shrinking Threshold: 5.0e-02
+              Radius Growing Threshold: 9.0e-01
+              Radius Shrinking Rate (Negative rho): 6.25e-02
+              Radius Shrinking Rate (Positive rho): 2.5e-01
+              Radius Growing Rate: 2.5e+00
+              Safeguard Size: 1.0e+08
+              Inexact: 
+                Value: 
+                  Tolerance Scaling: 1.0e-01
+                  Exponent: 9.0e-01
+                  Forcing Sequence Initial Value: 1.0e+00
+                  Forcing Sequence Update Frequency: 10
+                  Forcing Sequence Reduction Factor: 1.0e-01
+                Gradient: 
+                  Tolerance Scaling: 1.0e-01
+                  Relative Tolerance: 2.0e+00
+          Status Test: 
+            Gradient Tolerance: 1.0e-10
+            Constraint Tolerance: 1.0e-10
+            Step Tolerance: 1.0e-14
+            Iteration Limit: 1000
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Initial Value: 0.0
+        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
+        Continuation Method: Natural
+        Max Steps: 10
+        Max Value: 1.0
+        Min Value: 0.0
+      Step Size: 
+        Initial Step Size: 2.0e-01
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: OR
+          Number of Tests: 1
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.0e-05
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.0e-05
+            Relative Tolerance: 1.0e-03
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 50
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 20
+                    Max Iterations: 200
+                    Tolerance: 1.0e-06
+              Preconditioner Type: ML
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 0
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: level-of-fill': 0
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    ML output: 0
+                    'repartition: enable': 1
+                    'repartition: max min ratio': 1.327
+                    'repartition: min per proc': 600
+                    'repartition: Zoltan dimensions': 2
+                    'repartition: start level': 4
+                    'semicoarsen: number of levels': 2
+                    'semicoarsen: coarsen rate': 14
+                    'smoother: sweeps': 2
+                    'smoother: type': Gauss-Seidel
+                    'smoother: Chebyshev eig boost': 1.2
+                    'smoother: sweeps (level 0)': 1
+                    'smoother: type (level 0)': line Gauss-Seidel
+                    'smoother: damping factor': 1.0
+                    'smoother: pre or post': both
+                    'coarse: type': Gauss-Seidel
+                    'coarse: sweeps': 4
+                    'coarse: max size': 2000
+                    'coarse: pre or post': pre
+                    max levels: 7
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.0
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

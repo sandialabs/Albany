@@ -1,0 +1,6 @@
+For the time being this option is needed for Albany to work properly (see issue 399):
+-D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON
+
+
+
+
