@@ -55,14 +55,29 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 #endif
     beta_type = GIVEN_FIELD;
 
-    std::string given_field_name = beta_list.get<std::string> ("Given Field Variable Name") + "_" + basalSideName;;
-    given_field = PHX::MDField<ParamScalarT,Cell,Side,Node>(given_field_name, dl->node_scalar);
-    GradBF     = PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Variable Name"), dl->node_qp_gradient);
+    auto is_dist_param = p.isParameter("Dist Param Query Map") ? p.get<Teuchos::RCP<std::map<std::string,bool>>>("Dist Param Query Map") : Teuchos::null;
+    std::string given_field_name = beta_list.get<std::string> ("Given Field Variable Name");
+    is_given_field_param = is_dist_param.is_null() ? false : (*is_dist_param)[given_field_name];
 
-    this->addDependentField (given_field);
+    given_field_name += "_" + basalSideName;;
+
+    if (is_given_field_param) {
+      given_field_param = PHX::MDField<const ParamScalarT,Cell,Side,Node>(given_field_name, dl->node_scalar);
+      this->addDependentField (given_field_param);
+    } else {
+      given_field = PHX::MDField<const RealType,Cell,Side,Node>(given_field_name, dl->node_scalar);
+      this->addDependentField (given_field);
+    }
+    GradBF     = PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Variable Name"), dl->node_qp_gradient);
     this->addDependentField (GradBF);
 
     numSideNodes = dl->node_qp_gradient->dimension(2);
+  }
+  else if ((betaType == "GALERKIN PROJECTION OF EXPONENT OF GIVEN FIELD"))
+  {
+    // This is not supported. However, this evaluator may be created 'just in case we need' it,
+    // and then be thrown away during the PHX DAG reorganization. We will throw in postRegistrationSetup
+    beta_type = INVALID;
   }
   else if (betaType == "REGULARIZED COULOMB")
   {
@@ -101,6 +116,7 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
   }
   else
   {
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Unrecognized basal friction condition coefficient type.\n");
     beta_type = INVALID;
   }
 
@@ -121,34 +137,6 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
   }
 
   this->setName("BasalFrictionCoefficientGradient"+PHX::typeAsString<EvalT>());
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits>
-void BasalFrictionCoefficientGradient<EvalT, Traits>::
-postRegistrationSetup (typename Traits::SetupData d,
-                       PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(grad_beta,fm);
-
-  if (beta_type==GIVEN_FIELD)
-  {
-    this->utils.setFieldData(GradBF,fm);
-    this->utils.setFieldData(given_field,fm);
-  }
-  else if (beta_type==REGULARIZED_COULOMB)
-  {
-    this->utils.setFieldData(N,fm);
-    this->utils.setFieldData(U,fm);
-    this->utils.setFieldData(gradN,fm);
-    this->utils.setFieldData(gradU,fm);
-    this->utils.setFieldData(u_norm,fm);
-    this->utils.setFieldData(muParam,fm);
-    this->utils.setFieldData(lambdaParam,fm);
-    this->utils.setFieldData(powerParam,fm);
-  }
-  if (use_stereographic_map)
-    this->utils.setFieldData(coordVec,fm);
 }
 
 //**********************************************************************
@@ -189,18 +177,21 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
             grad_beta(cell,side,qp,dim) = 0.;
         }
         break;
-
       case GIVEN_FIELD:
-        for (int qp=0; qp<numSideQPs; ++qp)
-        {
-          for (int dim=0; dim<sideDim; ++dim)
-          {
-            grad_beta(cell,side,qp,dim) = 0.;
-            for (int node=0; node<numSideNodes; ++node)
-            {
-              grad_beta(cell,side,qp,dim) += GradBF(cell,side,node,qp,dim)*given_field(cell,side,node);
-            }
-          }
+        if (is_given_field_param) {
+          for (int qp=0; qp<numSideQPs; ++qp) {
+            for (int dim=0; dim<sideDim; ++dim) {
+              grad_beta(cell,side,qp,dim) = 0.;
+              for (int node=0; node<numSideNodes; ++node) {
+                grad_beta(cell,side,qp,dim) += GradBF(cell,side,node,qp,dim)*given_field_param(cell,side,node);
+          }}}
+        } else {
+          for (int qp=0; qp<numSideQPs; ++qp) {
+            for (int dim=0; dim<sideDim; ++dim) {
+              grad_beta(cell,side,qp,dim) = 0.;
+              for (int node=0; node<numSideNodes; ++node) {
+                grad_beta(cell,side,qp,dim) += GradBF(cell,side,node,qp,dim)*given_field(cell,side,node);
+          }}}
         }
         break;
       case REGULARIZED_COULOMB:

@@ -24,8 +24,8 @@ Type distance (const Type& x0, const Type& x1, const Type& x2,
                    std::pow(x2-y2,2));
 }
 
-template<typename EvalT, typename Traits, typename VelocityType>
-EnthalpyResid<EvalT,Traits,VelocityType>::
+template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
+EnthalpyResid<EvalT,Traits,VelocityST,MeltTempST>::
 EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
   wBF      		 (p.get<std::string> ("Weighted BF Variable Name"), dl->node_qp_scalar),
   wGradBF  		 (p.get<std::string> ("Weighted Gradient BF Variable Name"),dl->node_qp_gradient),
@@ -146,8 +146,8 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   flux_reg_beta = flux_reg_list.get<double>("beta");
 }
 
-template<typename EvalT, typename Traits, typename VelocityType>
-void EnthalpyResid<EvalT,Traits,VelocityType>::
+template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
+void EnthalpyResid<EvalT,Traits,VelocityST,MeltTempST>::
 postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(Enthalpy,fm);
@@ -185,8 +185,8 @@ postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Trai
   this->utils.setFieldData(Residual,fm);
 }
 
-template<typename EvalT, typename Traits, typename VelocityType>
-void EnthalpyResid<EvalT,Traits,VelocityType>::
+template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
+void EnthalpyResid<EvalT,Traits,VelocityST,MeltTempST>::
 evaluateFields(typename Traits::EvalData d)
 {
   const double scyr (3.1536e7);  // [s/yr];
@@ -267,8 +267,8 @@ evaluateFields(typename Traits::EvalData d)
 
         Residual(cell,node) += (Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
                 Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + verticalVel(cell,qp)*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp)/scyr ;
-//          Residual(cell,node) += (Albany::ADValue(Velocity(cell,qp,0))*EnthalpyGrad(cell,qp,0) +
-//                  Albany::ADValue(Velocity(cell,qp,1))*EnthalpyGrad(cell,qp,1) + verticalVel(cell,qp)*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp)/scyr ;
+//         Residual(cell,node) += (Albany::ADValue(Velocity(cell,qp,0))*EnthalpyGrad(cell,qp,0) +
+//                 Albany::ADValue(Velocity(cell,qp,1))*EnthalpyGrad(cell,qp,1) + verticalVel(cell,qp)*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp)/scyr ;
 
         Residual(cell,node) += powm9*(1 - scale)*(k_i + rho_i*c_i*nu) * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
             meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
@@ -285,7 +285,7 @@ evaluateFields(typename Traits::EvalData d)
 
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
     {
-      VelocityType  vmax_xy = 1e-3; //set to a minimum threshold
+      VelocityST  vmax_xy = 1e-3; //set to a minimum threshold
       ScalarT vmax = 1e-3, vmax_z=1e-5; //set to a minimum threshold
       ParamScalarT diam = 0.0, diam_xy = 0.0, diam_z = 0.0;
       ScalarT wSUPG = 0.0;

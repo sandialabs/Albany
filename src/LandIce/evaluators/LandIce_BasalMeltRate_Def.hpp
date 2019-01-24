@@ -16,19 +16,19 @@
 namespace LandIce
 {
 
-template<typename EvalT, typename Traits, typename VelocityType>
-BasalMeltRate<EvalT,Traits,VelocityType>::
-BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl_basal):
-  phi               (p.get<std::string> ("Water Content Side Variable Name"),dl_basal->node_scalar),
-  geoFluxHeat       (p.get<std::string> ("Geothermal Flux Side Variable Name"),dl_basal->node_scalar),
-  velocity          (p.get<std::string> ("Velocity Side Variable Name"),dl_basal->node_vector),
-  beta              (p.get<std::string> ("Basal Friction Coefficient Side Variable Name"),dl_basal->node_scalar),
-  EnthalpyHs        (p.get<std::string> ("Enthalpy Hs Side Variable Name"),dl_basal->node_scalar),
-  Enthalpy          (p.get<std::string> ("Enthalpy Side Variable Name"),dl_basal->node_scalar),
-  basal_dTdz        (p.get<std::string> ("Basal dTdz Variable Name"),dl_basal->node_scalar),
-  basalMeltRate     (p.get<std::string> ("Basal Melt Rate Variable Name"),dl_basal->node_scalar),
-  basalVertVelocity (p.get<std::string> ("Basal Vertical Velocity Variable Name"),dl_basal->node_scalar),
-  homotopy          (p.get<std::string> ("Continuation Parameter Name"),dl_basal->shared_param)
+template<typename EvalT, typename Traits, typename VelocityST, typename MeltEnthST>
+BasalMeltRate<EvalT,Traits,VelocityST,MeltEnthST>::
+BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl_basal)
+ : phi               (p.get<std::string> ("Water Content Side Variable Name"),dl_basal->node_scalar)
+ , beta              (p.get<std::string> ("Basal Friction Coefficient Side Variable Name"),dl_basal->node_scalar)
+ , velocity          (p.get<std::string> ("Velocity Side Variable Name"),dl_basal->node_vector)
+ , geoFluxHeat       (p.get<std::string> ("Geothermal Flux Side Variable Name"),dl_basal->node_scalar)
+ , Enthalpy          (p.get<std::string> ("Enthalpy Side Variable Name"),dl_basal->node_scalar)
+ , EnthalpyHs        (p.get<std::string> ("Enthalpy Hs Side Variable Name"),dl_basal->node_scalar)
+ // , basal_dTdz        (p.get<std::string> ("Basal dTdz Variable Name"),dl_basal->node_scalar)
+ , homotopy          (p.get<std::string> ("Continuation Parameter Name"),dl_basal->shared_param)
+ , basalMeltRate     (p.get<std::string> ("Basal Melt Rate Variable Name"),dl_basal->node_scalar)
+ , basalVertVelocity (p.get<std::string> ("Basal Vertical Velocity Variable Name"),dl_basal->node_scalar)
 {
   this->addDependentField(phi);
   this->addDependentField(geoFluxHeat);
@@ -37,11 +37,10 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   this->addDependentField(EnthalpyHs);
   this->addDependentField(Enthalpy);
   this->addDependentField(homotopy);
-  this->addDependentField(basal_dTdz);
+  // this->addDependentField(basal_dTdz);
 
   this->addEvaluatedField(basalMeltRate);
   this->addEvaluatedField(basalVertVelocity);
-  this->setName("Basal Melt Rate");
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl_basal->node_qp_gradient->dimensions(dims);
@@ -73,10 +72,12 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   flux_reg_beta = flux_reg_list.get<double>("beta");
   basalMelt_reg_alpha = basalMelt_reg_list.get<double>("alpha");
   basalMelt_reg_beta = basalMelt_reg_list.get<double>("beta");
+
+  this->setName("Basal Melt Rate" + PHX::typeAsString<EvalT>());
 }
 
-template<typename EvalT, typename Traits, typename VelocityType>
-void BasalMeltRate<EvalT,Traits,VelocityType>::
+template<typename EvalT, typename Traits, typename VelocityST, typename MeltEnthST>
+void BasalMeltRate<EvalT,Traits,VelocityST,MeltEnthST>::
 postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(phi,fm);
@@ -85,14 +86,14 @@ postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Trai
   this->utils.setFieldData(beta,fm);
   this->utils.setFieldData(EnthalpyHs,fm);
   this->utils.setFieldData(Enthalpy,fm);
-  this->utils.setFieldData(basal_dTdz,fm);
+  // this->utils.setFieldData(basal_dTdz,fm);
   this->utils.setFieldData(homotopy,fm);
   this->utils.setFieldData(basalMeltRate,fm);
   this->utils.setFieldData(basalVertVelocity,fm);
 }
 
-template<typename EvalT, typename Traits, typename VelocityType>
-void BasalMeltRate<EvalT,Traits,VelocityType>::
+template<typename EvalT, typename Traits, typename VelocityST, typename MeltEnthST>
+void BasalMeltRate<EvalT,Traits,VelocityST,MeltEnthST>::
 evaluateFields(typename Traits::EvalData d)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (d.sideSets==Teuchos::null, std::runtime_error,

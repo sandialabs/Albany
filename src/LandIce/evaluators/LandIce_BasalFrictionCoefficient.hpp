@@ -66,7 +66,8 @@ private:
   double given_val;  // Constant value (for CONSTANT only)
 
   // Input:
-  PHX::MDField<const ParamScalarT>      given_field;     // [KPa yr m^{-1}]
+  PHX::MDField<const RealType>          given_field;        // [KPa yr m^{-1}]
+  PHX::MDField<const ParamScalarT>      given_field_param;  // [KPa yr m^{-1}]
   PHX::MDField<const RealType>          BF;
   PHX::MDField<const IceScalarT>        u_norm;          // [m yr^{-1}]
   PHX::MDField<const ParamScalarT>      lambdaField;     // [km],  q is the power in the Regularized Coulomb Friction and n is the Glen's law exponent
@@ -75,8 +76,9 @@ private:
 
   PHX::MDField<const TempScalarT>       ice_softness;    // [(kPa)^{-n} (kyr)^{-1}]
 
-  PHX::MDField<const ParamScalarT>      bed_topo_field;  // [km]
-  PHX::MDField<const ParamScalarT>      thickness_field; // [km]
+  PHX::MDField<const MeshScalarT>       bed_topo_field;  // [km]
+  PHX::MDField<const MeshScalarT>       thickness_field; // [km]
+  PHX::MDField<const ParamScalarT>      thickness_param_field; // [km]
 
   // Output:
   PHX::MDField<ScalarT>       beta;     // [kPa yr m^{-1}]
@@ -97,6 +99,8 @@ private:
   bool logParameters;
   bool distributedLambda; // [km]
   bool nodal;
+  bool is_thickness_param;
+  bool is_given_field_param;
 
   enum BETA_TYPE {GIVEN_CONSTANT, GIVEN_FIELD, EXP_GIVEN_FIELD, GAL_PROJ_EXP_GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
   BETA_TYPE beta_type;

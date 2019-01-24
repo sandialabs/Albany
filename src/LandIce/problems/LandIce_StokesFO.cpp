@@ -172,8 +172,29 @@ StokesFO::getValidProblemParameters () const
 
   validPL->sublist("LandIce L2 Projected Boundary Laplacian", false, "Parameters needed to compute the L2 Projected Boundary Laplacian");
   validPL->sublist("Equation Set", false, "");
+  validPL->set<bool>("Adjust Bed Topography to Account for Thickness Changes", false, "");
+  validPL->set<bool>("Adjust Surface Height to Account for Thickness Changes", false, "");
 
   return validPL;
+}
+
+void StokesFO::setFieldsProperties () {
+  StokesFOBase::setFieldsProperties();
+
+  if (Albany::mesh_depends_on_parameters() && is_dist_param[ice_thickness_name]) {
+    adjustBedTopo = params->get("Adjust Bed Topography to Account for Thickness Changes", false);
+    adjustSurfaceHeight = params->get("Adjust Surface Height to Account for Thickness Changes", false);
+    TEUCHOS_TEST_FOR_EXCEPTION(adjustBedTopo == adjustSurfaceHeight, std::logic_error, "Error! When the ice thickness is a parameter,\n "
+        "either 'Adjust Bed Topography to Account for Thickness Changes' or\n"
+        " 'Adjust Surface Height to Account for Thickness Changes' needs to be true.\n");
+
+    if (adjustSurfaceHeight) {
+      is_computed_field[surface_height_name] = true;
+    } else if (adjustBedTopo) {
+      is_computed_field[surface_height_name] = true;
+      is_computed_field[bed_topography_name] = true;
+    }
+  }
 }
 
 void StokesFO::setupEvaluatorRequests () {
@@ -183,9 +204,9 @@ void StokesFO::setupEvaluatorRequests () {
   for (auto pl : landice_bcs[LandIceBC::SynteticTest]) {
     const std::string& ssName = pl->get<std::string>("Side Set Name");
 
-    requestSideSetInterpolationEvaluator(ssName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::CELL_TO_SIDE); 
-    requestSideSetInterpolationEvaluator(ssName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::QP_VAL); 
-    requestSideSetInterpolationEvaluator(ssName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::GRAD_QP_VAL); 
+    requestSideSetInterpolationEvaluator(ssName, dof_names[0], FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE); 
+    requestSideSetInterpolationEvaluator(ssName, dof_names[0], FieldLocation::Node, InterpolationRequest::QP_VAL); 
+    requestSideSetInterpolationEvaluator(ssName, dof_names[0], FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL); 
 
     ss_utils_needed[ssName][UtilityRequest::BFS] = true;
     ss_utils_needed[ssName][UtilityRequest::QP_COORDS] = true;

@@ -23,8 +23,8 @@
 namespace LandIce
 {
 
-template<typename EvalT, typename Traits>
-Integral1Dw_ZBase<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
+Integral1Dw_ZBase<EvalT, Traits, ThicknessScalarT>::
 Integral1Dw_ZBase(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl) :
   basal_velocity (p.get<std::string>("Basal Vertical Velocity Variable Name"), dl->node_scalar),
@@ -59,9 +59,9 @@ Integral1Dw_ZBase(const Teuchos::ParameterList& p,
   this->setName("Integral1Dw_Z"+PHX::typeAsString<EvalT>());
 }
 
-template<typename EvalT, typename Traits>
-void Integral1Dw_ZBase<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
+void Integral1Dw_ZBase<EvalT, Traits, ThicknessScalarT>::
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
     this->utils.setFieldData(basal_velocity,fm);
@@ -70,15 +70,15 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 // Specialization for AlbanyTraits::Residual
-template<typename Traits>
-Integral1Dw_Z<PHAL::AlbanyTraits::Residual, Traits>::
+template<typename Traits, typename ThicknessScalarT>
+Integral1Dw_Z<PHAL::AlbanyTraits::Residual, Traits, ThicknessScalarT>::
 Integral1Dw_Z(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
-          : Integral1Dw_ZBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl)
+          : Integral1Dw_ZBase<PHAL::AlbanyTraits::Residual, Traits, ThicknessScalarT>(p,dl)
             {}
 
-template<typename Traits>
-void Integral1Dw_Z<PHAL::AlbanyTraits::Residual, Traits>::
+template<typename Traits, typename ThicknessScalarT>
+void Integral1Dw_Z<PHAL::AlbanyTraits::Residual, Traits, ThicknessScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
     Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
@@ -91,7 +91,6 @@ evaluateFields(typename Traits::EvalData workset)
     const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
     const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
-    int numLayers = layeredMeshNumbering.numLayers;
     LO baseId, ilayer;
     std::map<LO,std::pair<std::size_t,std::size_t> > basalCellsMap;
 
@@ -134,15 +133,15 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 // Specialization for AlbanyTraits::Jacobian
-template<typename Traits>
-Integral1Dw_Z<PHAL::AlbanyTraits::Jacobian, Traits>::
+template<typename Traits, typename ThicknessScalarT>
+Integral1Dw_Z<PHAL::AlbanyTraits::Jacobian, Traits, ThicknessScalarT>::
 Integral1Dw_Z(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
-          : Integral1Dw_ZBase<PHAL::AlbanyTraits::Jacobian, Traits>(p,dl)
+          : Integral1Dw_ZBase<PHAL::AlbanyTraits::Jacobian, Traits, ThicknessScalarT>(p,dl)
             {}
 
-template<typename Traits>
-void Integral1Dw_Z<PHAL::AlbanyTraits::Jacobian, Traits>::
+template<typename Traits, typename ThicknessScalarT>
+void Integral1Dw_Z<PHAL::AlbanyTraits::Jacobian, Traits, ThicknessScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
     Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
@@ -156,7 +155,6 @@ evaluateFields(typename Traits::EvalData workset)
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
 
     const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
-    int numLayers = layeredMeshNumbering.numLayers;
 
     LO baseId, ilevel, baseId_curr, ilevel_curr;
     std::map<LO,std::pair<std::size_t,std::size_t> > basalCellsMap;
@@ -223,31 +221,5 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
 }
-
-// Specialization for AlbanyTraits::Tangent
-template<typename Traits>
-Integral1Dw_Z<PHAL::AlbanyTraits::Tangent, Traits>::
-Integral1Dw_Z(const Teuchos::ParameterList& p,
-          const Teuchos::RCP<Albany::Layouts>& dl)
-          : Integral1Dw_ZBase<PHAL::AlbanyTraits::Tangent, Traits>(p,dl)
-            {}
-
-template<typename Traits>
-void Integral1Dw_Z<PHAL::AlbanyTraits::Tangent, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{}
-
-// Specialization for AlbanyTraits::Tangent
-template<typename Traits>
-Integral1Dw_Z<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-Integral1Dw_Z(const Teuchos::ParameterList& p,
-          const Teuchos::RCP<Albany::Layouts>& dl)
-          : Integral1Dw_ZBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p,dl)
-            {}
-
-template<typename Traits>
-void Integral1Dw_Z<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{}
 
 } //end LandIce namespace
