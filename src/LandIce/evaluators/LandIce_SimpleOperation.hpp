@@ -107,6 +107,15 @@ struct Scale
 };
 
 template<typename ScalarT>
+struct Sum
+{
+  void setup (const Teuchos::ParameterList& /*p*/) {}
+  ScalarT operator() (const ScalarT& x, const ScalarT& y) const {
+    return y;
+  }
+};
+
+template<typename ScalarT>
 struct Log
 {
   void setup (const Teuchos::ParameterList& /*p*/) {}
