@@ -195,6 +195,10 @@ void StokesFO::setFieldsProperties () {
       is_computed_field[bed_topography_name] = true;
     }
   }
+
+  // UpdateZCoordinate expects the (observed) bed topography and (observed) surface height to have scalar type MeshScalarT.
+  field_scalar_type["observed_bed_topography"] = FieldScalarType::MeshScalar;
+  field_scalar_type["observed_surface_height"] = FieldScalarType::MeshScalar;
 }
 
 void StokesFO::setupEvaluatorRequests () {
