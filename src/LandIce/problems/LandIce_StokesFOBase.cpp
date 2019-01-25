@@ -463,6 +463,11 @@ void StokesFOBase::setFieldsProperties ()
                                                   field_scalar_type[surface_height_name];  //       If derived class changes the type of temp or surf height, need to adjust this too.
   field_scalar_type[bed_topography_name] |= FieldScalarType::MeshScalar;
 
+  // If the flow rate is given from file, we could just use RealType, but then we would need
+  // to template ViscosityFO on 3 scalar types. For simplicity, we set it to be the same
+  // of the temperature in ViscosityFO.
+  field_scalar_type[flow_factor_name] |= FieldScalarType::MeshScalar | field_scalar_type[(viscosity_use_corrected_temperature ? corrected_temperature_name : temperature_name)];
+
   // Set ranks of known fields
   // Note: we only care about fields that MAY not be parsed among the inputs.
   field_rank[dof_names[0]] = 1;
