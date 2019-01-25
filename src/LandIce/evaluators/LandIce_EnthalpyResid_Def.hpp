@@ -287,7 +287,7 @@ evaluateFields(typename Traits::EvalData d)
     {
       VelocityST  vmax_xy = 1e-3; //set to a minimum threshold
       ScalarT vmax = 1e-3, vmax_z=1e-5; //set to a minimum threshold
-      ParamScalarT diam = 0.0, diam_xy = 0.0, diam_z = 0.0;
+      MeshScalarT diam = 0.0, diam_xy = 0.0, diam_z = 0.0;
       ScalarT wSUPG = 0.0;
       for (std::size_t qp = 0; qp < numQPs; ++qp) {
         //ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
@@ -305,10 +305,10 @@ evaluateFields(typename Traits::EvalData d)
       {
         for (std::size_t j = i + 1; j < numNodes; ++j)
         {
-          diam = std::max(diam,distance<ParamScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
+          diam = std::max(diam,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
                                                       coordVec(cell,j,0),coordVec(cell,j,1),coordVec(cell,j,2)));
-          diam_xy = std::max(diam_xy,distance<ParamScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),0,
-                                                                coordVec(cell,j,0),coordVec(cell,j,1),0));
+          // diam_xy = std::max(diam_xy,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),MeshScalarT(0.0),
+          //                                                       coordVec(cell,j,0),coordVec(cell,j,1),MeshScalarT(0.0)));
           diam_z = std::max(diam_z,std::fabs(coordVec(cell,i,2) - coordVec(cell,j,2)));
         }
       }
