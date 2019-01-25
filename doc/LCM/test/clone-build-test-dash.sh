@@ -41,7 +41,7 @@ fi
 if [ -d "Albany.wiki" ]; then
     rm "Albany.wiki" -rf
 fi
-git clone git@github.com:SNLComputation/Albany.git
+git clone git@github.com:SNLComputation/Albany.wiki.git
 
 ./clean-config-build-test-dash-all.sh
 
