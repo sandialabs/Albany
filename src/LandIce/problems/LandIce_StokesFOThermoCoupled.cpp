@@ -16,240 +16,70 @@
 #include "Albany_ProblemUtils.hpp"
 #include "LandIce_StokesFOThermoCoupled.hpp"
 
-LandIce::StokesFOThermoCoupled::
+namespace LandIce
+{
+
+StokesFOThermoCoupled::
 StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
                        const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                        const Teuchos::RCP<ParamLib>& paramLib_,
                        const int numDim_) :
-                       Albany::AbstractProblem(params_, paramLib_, numDim_),
-                       numDim(numDim_),
-                       discParams(discParams_),
-                       use_sdbcs_(false)
+  StokesFOBase(params_, discParams_, paramLib_, numDim_)
 {
   // 2 eqns for Stokes FO + 1 eqn. for enthalpy + 1 eqn. for w_z
   this->setNumEquations(4);
-
-  // Need to allocate a fields in mesh database
-  if (params->isParameter("Required Fields"))
-  {
-    // Need to allocate a fields in mesh database
-    Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Fields");
-    for (int i(0); i<req.size(); ++i)
-      this->requirements.push_back(req[i]);
-  }
-
-  basalSideName   = params->isParameter("Basal Side Name")   ? params->get<std::string>("Basal Side Name")   : "INVALID";
-  surfaceSideName = params->isParameter("Surface Side Name") ? params->get<std::string>("Surface Side Name") : "INVALID";
-  lateralSideName = params->isParameter("Lateral Side Name") ? params->get<std::string>("Lateral Side Name") : "INVALID";
-  basalEBName = "INVALID";
-  surfaceEBName = "INVALID";
-  lateral_resid = params->isSublist("LandIce Lateral BC");
-  sliding = params->isSublist("LandIce Basal Friction Coefficient");
-  TEUCHOS_TEST_FOR_EXCEPTION (sliding && basalSideName=="INVALID", std::logic_error,
-                              "Error! With sliding, you need to provide a valid 'Basal Side Name',\n" );
-  TEUCHOS_TEST_FOR_EXCEPTION (lateral_resid && lateralSideName=="INVALID", std::logic_error,
-                              "Error! With lateral BC, you need to provide a valid 'Lateral Side Name',\n" );
-
-  if (params->isParameter("Required Basal Fields"))
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (basalSideName=="INVALID", std::logic_error, "Error! In order to specify basal requirements, you must also specify a valid 'Basal Side Name'.\n");
-
-    // Need to allocate a fields in basal mesh database
-    Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Basal Fields");
-    this->ss_requirements[basalSideName].reserve(req.size()); // Note: this is not for performance, but to guarantee
-    for (int i(0); i<req.size(); ++i)                         //       that ss_requirements.at(basalSideName) does not
-      this->ss_requirements[basalSideName].push_back(req[i]); //       throw, even if it's empty...
-  }
-  if (params->isParameter("Required Surface Fields"))
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (surfaceSideName=="INVALID", std::logic_error, "Error! In order to specify surface requirements, you must also specify a valid 'Surface Side Name'.\n");
-
-    Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Surface Fields");
-    this->ss_requirements[surfaceSideName].reserve(req.size()); // Note: same motivation as for the basal side
-    for (int i(0); i<req.size(); ++i)
-      this->ss_requirements[surfaceSideName].push_back(req[i]);
-  }
 
   //Teuchos::ParameterList SUPG_list = params->get<Teuchos::ParameterList>("SUPG Settings");
   //haveSUPG = SUPG_list.get("Have SUPG Stabilization",false);
   needsDiss = params->get<bool> ("Needs Dissipation",true);
   needsBasFric = params->get<bool> ("Needs Basal Friction",true);
   isGeoFluxConst = params->get<bool> ("Constant Geothermal Flux",true);
+  compute_w = params->get<bool>("Compute W",false);
 
   TEUCHOS_TEST_FOR_EXCEPTION (needsBasFric && basalSideName=="INVALID", std::logic_error,
                               "Error! If 'Needs Basal Friction' is true, you need a valid 'Basal Side Name'.\n");
-}
-
-LandIce::StokesFOThermoCoupled::
-~StokesFOThermoCoupled()
-{
-  // Nothing to be done here
-}
-
-void LandIce::StokesFOThermoCoupled::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-                                                 Albany::StateManager& stateMgr)
-{
-  using Teuchos::rcp;
-
-  // Building cell basis and cubature
-  const CellTopologyData * const cell_top = &meshSpecs[0]->ctd;
-  cellBasis = Albany::getIntrepid2Basis(*cell_top);
-  cellType = rcp(new shards::CellTopology (cell_top));
-
-  Intrepid2::DefaultCubatureFactory cubFactory;
-  cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs[0]->cubatureDegree);
-
-  elementBlockName = meshSpecs[0]->ebName;
-
-  const int worksetSize     = meshSpecs[0]->worksetSize;
-  vecDimFO                  = std::min((int)neq,(int)2);
-  const int numCellSides    = cellType->getFaceCount();
-  const int numCellVertices = cellType->getNodeCount();
-  const int numCellNodes    = cellBasis->getCardinality();
-  const int numCellQPs      = cellCubature->getNumPoints();
-
-  dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim,vecDimFO));
-  dl_scalar = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim, 1));
-
-  int numSurfaceSideVertices = -1;
-  int numSurfaceSideNodes    = -1;
-  int numSurfaceSideQPs      = -1;
-  int numBasalSideVertices   = -1;
-  int numBasalSideNodes      = -1;
-  int numBasalSideQPs        = -1;
-  int numLateralSideVertices = -1;
-  int numLateralSideNodes    = -1;
-  int numLateralSideQPs      = -1;
-
-  int sideDim = numDim-1;
-
-  if (basalSideName!="INVALID")
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(basalSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
-                                "Error! Either 'Basal Side Name' is wrong or something went wrong while building the side mesh specs.\n");
-    const Albany::MeshSpecsStruct& basalMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(basalSideName)[0];
-
-    // Building also basal side structures
-    const CellTopologyData * const side_top = &basalMeshSpecs.ctd;
-    basalSideBasis = Albany::getIntrepid2Basis(*side_top);
-    basalSideType = rcp(new shards::CellTopology (side_top));
-
-    basalEBName   = basalMeshSpecs.ebName;
-    // If there's no side discretiation, then lateralMeshSpecs will be -1, and the user need to specify a cubature degree somewhere else
-    int basalCubDegree = basalMeshSpecs.cubatureDegree;
-    if (params->sublist("LandIce Basal Friction Coefficient").isParameter("Cubature Degree")) {
-      basalCubDegree = params->sublist("LandIce Basal Friction Coefficient").get<int>("Cubature Degree");
+  if (needsBasFric) {
+    // We must have a BasalFriction landice bc on ss basalSideName
+    bool found = false;
+    for (auto it : this->landice_bcs[LandIceBC::BasalFriction]) {
+      if (it->get<std::string>("Side Set Name")==basalSideName) {
+        found = true;
+      }
     }
-    TEUCHOS_TEST_FOR_EXCEPTION (basalCubDegree<0, std::runtime_error, "Error! Missing cubature degree information on side '" << basalSideName << ".\n"
-                                                                      "       Either add a side discretization, or specify 'Cubature Degree' in sublist 'LandIce Basal Friction Coefficient'.\n");
-    basalCubature = cubFactory.create<PHX::Device, RealType, RealType>(*basalSideType, basalCubDegree);
-
-    numBasalSideVertices = basalSideType->getNodeCount();
-    numBasalSideNodes    = basalSideBasis->getCardinality();
-    numBasalSideQPs      = basalCubature->getNumPoints();
-
-    dl_basal = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,
-                                       numBasalSideQPs,sideDim,numDim,numCellSides,neq));
-    dl_side_scalar = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,
-                                             numBasalSideQPs,sideDim,numDim,numCellSides,1));
-    dl->side_layouts[basalSideName] = dl_basal;
-
-    dl_scalar->side_layouts[basalSideName] = dl_side_scalar;
+    TEUCHOS_TEST_FOR_EXCEPTION(!found, std::logic_error, "Error! If 'Needs Basal Friction' is true, there must be a 'Basal Friction' bc on Basal Side Set.\n");
   }
 
-  if (surfaceSideName!="INVALID")
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(surfaceSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
-                                "Error! Either 'Surface Side Name' is wrong or something went wrong while building the side mesh specs.\n");
+  compute_dissipation &= needsDiss;
 
-    const Albany::MeshSpecsStruct& surfaceMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(surfaceSideName)[0];
+  dof_names.resize(3);
+  dof_names[1] = compute_w ? "W" : "W_z";
+  dof_names[2] = "Enthalpy";
 
-    // Building also surface side structures
-    const CellTopologyData * const side_top = &surfaceMeshSpecs.ctd;
-    surfaceSideBasis = Albany::getIntrepid2Basis(*side_top);
-    surfaceSideType = rcp(new shards::CellTopology (side_top));
+  resid_names.resize(3);
+  resid_names[1] = dof_names[1] + " Residual";
+  resid_names[2] = dof_names[2] + " Residual";
 
-    surfaceEBName   = surfaceMeshSpecs.ebName;
-    surfaceCubature = cubFactory.create<PHX::Device, RealType, RealType>(*surfaceSideType, surfaceMeshSpecs.cubatureDegree);
+  scatter_names.resize(3);
+  scatter_names[1] = "Scatter " + resid_names[1];
+  scatter_names[2] = "Scatter " + resid_names[2];
 
-    numSurfaceSideVertices = surfaceSideType->getNodeCount();
-    numSurfaceSideNodes    = surfaceSideBasis->getCardinality();
-    numSurfaceSideQPs      = surfaceCubature->getNumPoints();
+  dof_offsets.resize(3);
+  dof_offsets[1] = vecDimFO;
+  dof_offsets[2] = dof_offsets[1]+1;
 
-    dl_surface = rcp(new Albany::Layouts(worksetSize,numSurfaceSideVertices,numSurfaceSideNodes,
-                                         numSurfaceSideQPs,numDim-1,numDim,numCellSides,vecDimFO));
-    dl->side_layouts[surfaceSideName] = dl_surface;
-  }
+  // We *always* use corrected temperature in this problem
+  viscosity_use_corrected_temperature = true;
 
-  if (lateralSideName!="INVALID") {
-    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(lateralSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
-                                "Error! Either 'Lateral Side Name' is wrong or something went wrong while building the side mesh specs.\n");
-    const Albany::MeshSpecsStruct& lateralMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(lateralSideName)[0];
-
-    // Building also basal side structures
-    const CellTopologyData* side_top = nullptr;
-    lateralSideBasis = Albany::getIntrepid2Basis(*side_top);
-    lateralSideType = rcp(new shards::CellTopology (side_top));
-
-    // If there's no side discretiation, then lateralMeshSpecs will be -1, and the user need to specify a cubature degree somewhere else
-    int lateralCubDegree = lateralMeshSpecs.cubatureDegree;
-    if (params->sublist("LandIce Lateral BC").isParameter("Cubature Degree")) {
-      lateralCubDegree = params->sublist("LandIce Lateral BC").get<int>("Cubature Degree");
-    }
-    TEUCHOS_TEST_FOR_EXCEPTION (lateralCubDegree<0, std::runtime_error, "Error! Missing cubature degree information on side '" << lateralSideName << ".\n"
-                                                                        "       Either add a side discretization, or specify 'Cubature Degree' in sublist 'LandIce Lateral BC'.\n");
-
-    lateralCubature = cubFactory.create<PHX::Device, RealType, RealType>(*lateralSideType, lateralCubDegree);
-
-    numLateralSideVertices = lateralSideType->getNodeCount();
-    numLateralSideNodes    = lateralSideBasis->getCardinality();
-    numLateralSideQPs      = lateralCubature->getNumPoints();
-
-    dl_lateral = rcp(new Albany::Layouts(worksetSize,numLateralSideVertices,numLateralSideNodes,
-                                         numLateralSideQPs,sideDim,numDim,numCellSides,vecDimFO));
-    dl->side_layouts[lateralSideName] = dl_lateral;
-  }
-
-#ifdef OUTPUT_TO_SCREEN
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
-  int commRank = Teuchos::GlobalMPISession::getRank();
-  int commSize = Teuchos::GlobalMPISession::getNProc();
-  out->setProcRankAndSize(commRank, commSize);
-  out->setOutputToRootOnly(0);
-
-  *out << "Field Dimensions: \n"
-      << "  Workset             = " << worksetSize << "\n"
-      << "  Vertices            = " << numCellVertices << "\n"
-      << "  CellNodes           = " << numCellNodes << "\n"
-      << "  CellQuadPts         = " << numCellQPs << "\n"
-      << "  Dim                 = " << numDim << "\n"
-      << "  VecDim              = " << neq << "\n"
-      << "  VecDimFO            = " << vecDimFO << "\n"
-      << "  BasalSideVertices   = " << numBasalSideVertices << "\n"
-      << "  BasalSideNodes      = " << numBasalSideNodes << "\n"
-      << "  BasalSideQuadPts    = " << numBasalQPs << "\n"
-      << "  SurfaceSideVertices = " << numSurfaceSideVertices << "\n"
-      << "  SurfaceSideNodes    = " << numSurfaceSideNodes << "\n"
-      << "  SurfaceSideQuadPts  = " << numSurfaceSideQPs << "\n"
-      << "  LateralSideVertices = " << numLateralSideVertices << "\n"
-      << "  LateralSideNodes    = " << numLateralSideNodes << "\n"
-      << "  LateralSideQuadPts  = " << numLateralSideQPs << std::endl;
-#endif
-
-  /* Construct All Phalanx Evaluators */
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
-  fm.resize(1);
-  fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM,Teuchos::null);
-  constructDirichletEvaluators(*meshSpecs[0]);
-
-  if(meshSpecs[0]->ssNames.size() > 0) // Build a sideset evaluator if sidesets are present
-    constructNeumannEvaluators(meshSpecs[0]);
+  hydrostatic_pressure_name = params->sublist("Variables Names").get<std::string>("Hydrostatic Pressure Name","hydrostatic_pressure");
+  melting_enthalpy_name     = params->sublist("Variables Names").get<std::string>("Melting Enthalpy Name","melting_enthalpy");
+  melting_temperature_name  = params->sublist("Variables Names").get<std::string>("Melting Temperature Name","melting_temperature");
+  surface_enthalpy_name     = params->sublist("Variables Names").get<std::string>("Surface Enthalpy Name","surface_enthalpy");
+  water_content_name        = params->sublist("Variables Names").get<std::string>("Water Content Name","phi");
+  geothermal_flux_name      = params->sublist("Variables Names").get<std::string>("Geothermal Flux Name","heat_flux");
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-LandIce::StokesFOThermoCoupled::
-buildEvaluators(
+StokesFOThermoCoupled::buildEvaluators(
     PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     const Albany::MeshSpecsStruct& meshSpecs,
     Albany::StateManager& stateMgr,
@@ -260,13 +90,13 @@ buildEvaluators(
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   Albany::ConstructEvaluatorsOp<StokesFOThermoCoupled> op(
       *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
+
   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
+
   return *op.tags;
 }
 
-void
-LandIce::StokesFOThermoCoupled::constructDirichletEvaluators(
-    const Albany::MeshSpecsStruct& meshSpecs)
+void StokesFOThermoCoupled::constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
   std::vector<std::string> dirichletNames(neq);
@@ -285,9 +115,8 @@ LandIce::StokesFOThermoCoupled::constructDirichletEvaluators(
 }
 
 // Neumann BCs
-void LandIce::StokesFOThermoCoupled::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+void StokesFOThermoCoupled::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
-
   // Note: we only enter this function if sidesets are defined in the mesh file
   // i.e. meshSpecs.ssNames.size() > 0
 
@@ -298,7 +127,6 @@ void LandIce::StokesFOThermoCoupled::constructNeumannEvaluators (const Teuchos::
   if(!nbcUtils.haveBCSpecified(this->params)) {
     return;
   }
-
 
   // Construct BC evaluators for all side sets and names
   // Note that the string index sets up the equation offset, so ordering is important
@@ -360,36 +188,123 @@ void LandIce::StokesFOThermoCoupled::constructNeumannEvaluators (const Teuchos::
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-LandIce::StokesFOThermoCoupled::getValidProblemParameters () const
+StokesFOThermoCoupled::getValidProblemParameters () const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-      this->getGenericProblemParams("ValidStokesFOProblemParams");
+  Teuchos::RCP<Teuchos::ParameterList> validPL = StokesFOBase::getStokesFOBaseProblemParameters();
 
-  validPL->set<bool> ("Extruded Column Coupled in 2D Response", false, "Boolean describing whether the extruded column is coupled in 2D response");
-  validPL->set<int> ("Layered Data Length", 0, "Number of layers in input layered data files.");
   validPL->set<int> ("importCellTemperatureFromMesh", 0, "");
-  validPL->set<Teuchos::Array<std::string> > ("Required Fields", Teuchos::Array<std::string>(), "");
-  validPL->set<Teuchos::Array<std::string> > ("Required Basal Fields", Teuchos::Array<std::string>(), "");
-  validPL->set<Teuchos::Array<std::string> > ("Required Surface Fields", Teuchos::Array<std::string>(), "");
-  validPL->set<std::string> ("Basal Side Name", "", "Name of the basal side set");
-  validPL->set<std::string> ("Surface Side Name", "", "Name of the surface side set");
-  validPL->sublist("Stereographic Map", false, "");
-  validPL->sublist("LandIce Viscosity", false, "");
-  validPL->sublist("LandIce Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");
-  validPL->sublist("LandIce L2 Projected Boundary Laplacian", false, "Parameters needed to compute the L2 Projected Boundary Laplacian");
-  validPL->sublist("LandIce Surface Gradient", false, "");
-  validPL->sublist("Equation Set", false, "");
-  validPL->sublist("Body Force", false, "");
   validPL->set<bool> ("Needs Dissipation", true, "Boolean describing whether we take into account the heat generated by dissipation");
   validPL->set<bool> ("Needs Basal Friction", true, "Boolean describing whether we take into account the heat generated by basal friction");
+  validPL->set<bool> ("Compute W", false, "Boolean describing whether we compute vertical velocity or not");
   validPL->set<bool> ("Constant Geothermal Flux", true, "Boolean describing whether the geothermal flux is constant");
   validPL->sublist("LandIce Enthalpy Stabilization", false, "Stabilization used for Enthalpy equation. Options: Streamline Upwind, SUPG, None");
   validPL->sublist("LandIce Enthalpy Regularization", false, "Regularization used for Enthalpy equation");
-  validPL->sublist("LandIce Field Norm", false, "");
-  validPL->sublist("LandIce Physical Parameters", false, "");
-  validPL->sublist("LandIce Noise", false, "");
-  validPL->set<bool>("Use Time Parameter", false, "Solely to use Solver Method = Continuation");
-  validPL->set<bool>("Print Stress Tensor", false, "Whether to save stress tensor in the mesh");
 
   return validPL;
 }
+
+void StokesFOThermoCoupled::setupEvaluatorRequests ()
+{
+  // Add all the StokesFO needs
+  StokesFOBase::setupEvaluatorRequests();
+
+  // Volume required interpolations
+  requestInterpolationEvaluator(dof_names[1], FieldLocation::Node, InterpolationRequest::QP_VAL);
+  requestInterpolationEvaluator(dof_names[2], FieldLocation::Node, InterpolationRequest::QP_VAL);
+  requestInterpolationEvaluator(dof_names[2], FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL);
+  if (!compute_w) {
+    requestInterpolationEvaluator("W", FieldLocation::Node, InterpolationRequest::QP_VAL); 
+  }
+  requestInterpolationEvaluator(temperature_name,           FieldLocation::Node, InterpolationRequest::CELL_VAL);
+  requestInterpolationEvaluator(corrected_temperature_name, FieldLocation::Node, InterpolationRequest::CELL_VAL);
+  requestInterpolationEvaluator(stiffening_factor_name,     FieldLocation::Node, InterpolationRequest::QP_VAL);
+  requestInterpolationEvaluator(surface_height_name,        FieldLocation::Node, InterpolationRequest::QP_VAL);
+  requestInterpolationEvaluator(surface_height_name,        FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL);
+  requestInterpolationEvaluator(water_content_name,         FieldLocation::Node, InterpolationRequest::QP_VAL);
+  requestInterpolationEvaluator(water_content_name,         FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL);
+  requestInterpolationEvaluator(melting_temperature_name,   FieldLocation::Node, InterpolationRequest::QP_VAL);
+  requestInterpolationEvaluator(melting_temperature_name,   FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL);
+  requestInterpolationEvaluator(melting_enthalpy_name,      FieldLocation::Node, InterpolationRequest::QP_VAL);
+  requestInterpolationEvaluator(melting_enthalpy_name,      FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL);
+  if(!isGeoFluxConst)
+  {
+    requestInterpolationEvaluator("Geo Flux Heat",      FieldLocation::Node, InterpolationRequest::QP_VAL);
+    requestInterpolationEvaluator("Geo Flux Heat SUPG", FieldLocation::Node, InterpolationRequest::QP_VAL);
+  }
+
+  // Side set required interpolations
+  if (basalSideName!=INVALID_STR) {
+    requestSideSetInterpolationEvaluator(basalSideName, dof_names[2],             FieldLocation::Node, InterpolationRequest::QP_VAL);
+    requestSideSetInterpolationEvaluator(basalSideName, dof_names[2],             FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE);
+    requestSideSetInterpolationEvaluator(basalSideName, "W",                      FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE);
+    requestSideSetInterpolationEvaluator(basalSideName, "W",                      FieldLocation::Node, InterpolationRequest::QP_VAL);
+    requestSideSetInterpolationEvaluator(basalSideName, "basal_melt_rate",        FieldLocation::Node, InterpolationRequest::QP_VAL);
+    requestSideSetInterpolationEvaluator(basalSideName, "basal_dTdz",             FieldLocation::Node, InterpolationRequest::QP_VAL);
+    requestSideSetInterpolationEvaluator(basalSideName, melting_temperature_name, FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL);
+    requestSideSetInterpolationEvaluator(basalSideName, melting_temperature_name, FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE);
+    requestSideSetInterpolationEvaluator(basalSideName, melting_enthalpy_name,    FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE);
+    requestSideSetInterpolationEvaluator(basalSideName, melting_enthalpy_name,    FieldLocation::Node, InterpolationRequest::QP_VAL);
+    requestSideSetInterpolationEvaluator(basalSideName, water_content_name,       FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE);
+    requestSideSetInterpolationEvaluator(basalSideName, "basal_vert_velocity",    FieldLocation::Node, InterpolationRequest::QP_VAL);
+    requestSideSetInterpolationEvaluator(basalSideName, "basal_vert_velocity",    FieldLocation::Node, InterpolationRequest::SIDE_TO_CELL);
+
+    if(needsBasFric)
+    {
+      requestSideSetInterpolationEvaluator(basalSideName, "Basal Heat",      FieldLocation::Node, InterpolationRequest::QP_VAL);
+      requestSideSetInterpolationEvaluator(basalSideName, "Basal Heat SUPG", FieldLocation::Node, InterpolationRequest::QP_VAL);
+    }
+
+    if(!isGeoFluxConst)
+    {
+      requestSideSetInterpolationEvaluator(basalSideName, geothermal_flux_name, FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE);
+      requestSideSetInterpolationEvaluator(basalSideName, geothermal_flux_name, FieldLocation::Node, InterpolationRequest::QP_VAL);
+    }
+
+    ss_utils_needed[basalSideName][UtilityRequest::BFS] = true;
+    ss_utils_needed[basalSideName][UtilityRequest::QP_COORDS] = true;
+  }
+}
+
+void StokesFOThermoCoupled::setFieldsProperties () {
+  StokesFOBase::setFieldsProperties();
+
+  // Set ranks
+  field_rank[dof_names[1]] = 0;
+  field_rank[dof_names[2]] = 0;
+  field_rank[surface_enthalpy_name] = 0;
+  field_rank[flow_factor_name] = 0;
+  field_rank["basal_melt_rate"] = 0;
+  field_rank["Geo Flux Heat"] = 0;
+  field_rank["Geo Flux Heat SUPG"] = 0;
+  field_rank["W"] = 0;  // If compute_w=true, this is the same as dof_names[2]
+  field_rank[corrected_temperature_name] = 0;
+  field_rank[melting_enthalpy_name] = 0;
+  field_rank[melting_temperature_name] = 0;
+  field_rank[water_content_name] = 0;
+  field_rank[geothermal_flux_name] = 0;
+  field_rank["basal_vert_velocity"] = 0;
+
+  // Set Scalar types
+  field_scalar_type[surface_enthalpy_name]      = FieldScalarType::ParamScalar;
+  field_scalar_type["Geo Flux Heat"]            = FieldScalarType::Scalar;
+  field_scalar_type["Geo Flux Heat SUPG"]       = FieldScalarType::Scalar;
+  field_scalar_type["W"]                        = FieldScalarType::Scalar;
+  field_scalar_type["basal_melt_rate"]          = FieldScalarType::Scalar;
+  field_scalar_type[corrected_temperature_name] = FieldScalarType::Scalar;
+  field_scalar_type[flow_factor_name]           = FieldScalarType::Scalar;
+  field_scalar_type[geothermal_flux_name]       = FieldScalarType::ParamScalar;
+  field_scalar_type[melting_temperature_name]   = FieldScalarType::MeshScalar;
+  field_scalar_type[melting_enthalpy_name]      = field_scalar_type[melting_temperature_name];
+  field_scalar_type[hydrostatic_pressure_name]  = FieldScalarType::ParamScalar;
+  field_scalar_type[water_content_name]         = FieldScalarType::Scalar;
+  field_scalar_type["basal_vert_velocity"]      = FieldScalarType::Scalar;
+
+  // Declare computed fields
+  // NOTE: not *always* necessary, but it is sometimes (see StokesFOBase, towards the end of constructInterpolationEvaluators)
+  is_computed_field[surface_enthalpy_name] = true; // Surface Enthalpy is the prescribed field for dirichlet bc, and it's computed
+  is_computed_field[melting_enthalpy_name] = true;
+  is_computed_field[water_content_name] = true;
+  is_computed_field["basal_melt_rate"] = true;
+}
+
+} // namespace LandIce

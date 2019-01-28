@@ -52,7 +52,7 @@ Gather2DFieldBase(const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void Gather2DFieldBase<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
     this->utils.setFieldData(field2D,fm);
@@ -88,12 +88,9 @@ evaluateFields(typename Traits::EvalData workset)
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
-    const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
-
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
 
       // Get the data that corresponds to the side
-      const int elem_GID = sideSet[iSide].elem_GID;
       const int elem_LID = sideSet[iSide].elem_LID;
       const int elem_side = sideSet[iSide].side_local_id;
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
@@ -130,8 +127,6 @@ evaluateFields(typename Traits::EvalData workset)
   if (workset.sideSets == Teuchos::null)
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
-
-  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   int numLayers = workset.disc->getLayeredMeshNumbering()->numLayers;
   this->fieldLevel = (this->fieldLevel < 0) ? numLayers : this->fieldLevel;
 
@@ -143,19 +138,13 @@ evaluateFields(typename Traits::EvalData workset)
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
     // Loop over the sides that form the boundary condition
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-    const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
-
-     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
+    for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
 
       // Get the data that corresponds to the side
-      const int elem_GID = sideSet[iSide].elem_GID;
       const int elem_LID = sideSet[iSide].elem_LID;
       const int elem_side = sideSet[iSide].side_local_id;
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
       int numSideNodes = side.topology->node_count;
-
-      const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
 
       for (int i = 0; i < numSideNodes; ++i){
         std::size_t node = side.node[i];
@@ -176,7 +165,7 @@ Gather2DField(const Teuchos::ParameterList& p,
 
 template<typename Traits>
 void Gather2DField<PHAL::AlbanyTraits::Tangent, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+evaluateFields(typename Traits::EvalData /* workset */)
 {}
 
 template<typename Traits>
@@ -188,7 +177,7 @@ Gather2DField(const Teuchos::ParameterList& p,
 
 template<typename Traits>
 void Gather2DField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+evaluateFields(typename Traits::EvalData /* workset */)
 {}
 
 
@@ -259,7 +248,6 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     const int neq = nodeID.dimension(2);
-    const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstunk = neq * node + this->offset;
@@ -287,7 +275,7 @@ GatherExtruded2DField(const Teuchos::ParameterList& p,
 
 template<typename Traits>
 void GatherExtruded2DField<PHAL::AlbanyTraits::Tangent, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+evaluateFields(typename Traits::EvalData /* workset */)
 {}
 
 template<typename Traits>
@@ -300,7 +288,7 @@ GatherExtruded2DField(const Teuchos::ParameterList& p,
 
 template<typename Traits>
 void GatherExtruded2DField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+evaluateFields(typename Traits::EvalData /* workset */)
 {}
 
 } // namespace FELIX

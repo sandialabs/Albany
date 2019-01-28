@@ -126,6 +126,14 @@ public:
 };
 
 template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
+class BinarySumOp : public SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::Sum>
+{
+public:
+  BinarySumOp (const Teuchos::ParameterList& p,
+               const Teuchos::RCP<Albany::Layouts>& dl);
+};
+
+template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
 class BinaryLogOp : public SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::Log>
 {
 public:

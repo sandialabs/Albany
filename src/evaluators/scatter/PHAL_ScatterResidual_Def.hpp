@@ -90,7 +90,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void ScatterResidualBase<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   if (tensorRank == 0) {
@@ -308,7 +308,7 @@ operator() (const PHAL_ScatterJacRank0_Tag&, const int& cell) const
 
   if (nunk>500) Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
 
-  for (int node_col=0, i=0; node_col<this->numNodes; node_col++) {
+  for (int node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
       col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
     }
@@ -347,11 +347,10 @@ operator() (const PHAL_ScatterJacRank1_Adjoint_Tag&, const int& cell) const
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO col[500];
   LO row;
-  ST vals[500];
 
   if (nunk>500) Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
 
-  for (int node_col=0, i=0; node_col<this->numNodes; node_col++) {
+  for (int node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
       col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
     }
@@ -384,7 +383,7 @@ operator() (const PHAL_ScatterJacRank1_Tag&, const int& cell) const
 
   if (nunk>500) Kokkos::abort ("ERROR (ScatterResidual): nunk > 500");
 
-  for (int node_col=0, i=0; node_col<this->numNodes; node_col++) {
+  for (int node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
       col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
     }
@@ -427,7 +426,7 @@ operator() (const PHAL_ScatterJacRank2_Adjoint_Tag&, const int& cell) const
 
   if (nunk>500) Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
 
-  for (int node_col=0, i=0; node_col<this->numNodes; node_col++) {
+  for (int node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
       col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
     }
@@ -460,7 +459,7 @@ operator() (const PHAL_ScatterJacRank2_Tag&, const int& cell) const
 
   if (nunk>500) Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
 
-  for (int node_col=0, i=0; node_col<this->numNodes; node_col++) {
+  for (int node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
       col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
     }
@@ -794,10 +793,8 @@ evaluateFields(typename Traits::EvalData workset)
     const int neq = nodeID.dimension(2);
     const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
-    int numLayers = layeredMeshNumbering.numLayers;
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
-    const Albany::IDArray&  wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =

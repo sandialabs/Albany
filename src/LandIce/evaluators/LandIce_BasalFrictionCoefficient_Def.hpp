@@ -75,6 +75,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   printedLambda  = -9999.999;
   printedQ       = -9999.999;
 
+  auto is_dist_param = p.isParameter("Dist Param Query Map") ? p.get<Teuchos::RCP<std::map<std::string,bool>>>("Dist Param Query Map") : Teuchos::null;
   if (betaType == "GIVEN CONSTANT")
   {
     beta_type = GIVEN_CONSTANT;
@@ -101,17 +102,19 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     }
 
     std::string given_field_name = beta_list.get<std::string> ("Given Field Variable Name");
+    is_given_field_param = is_dist_param.is_null() ? false : (*is_dist_param)[given_field_name];
     if (IsStokes) {
       given_field_name += "_" + basalSideName;
     }
     if(beta_type == GAL_PROJ_EXP_GIVEN_FIELD) {
-      given_field = PHX::MDField<const ParamScalarT>(given_field_name, dl->node_scalar);
-      this->addDependentField (given_field);
       BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
       this->addDependentField (BF);
     }
-    else {
-      given_field = PHX::MDField<const ParamScalarT>(given_field_name, layout);
+    if (is_given_field_param) {
+      given_field_param = PHX::MDField<const ParamScalarT>(given_field_name, layout);
+      this->addDependentField (given_field_param);
+    } else {
+      given_field = PHX::MDField<const RealType>(given_field_name, layout);
       this->addDependentField (given_field);
     }
   }
@@ -178,13 +181,19 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   }
 
   if(zero_on_floating) {
-    bed_topo_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Bed Topography Variable Name"), layout);
-    thickness_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), layout);
+    bed_topo_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Bed Topography Variable Name"), layout);
+    is_thickness_param = is_dist_param.is_null() ? false : (*is_dist_param)[p.get<std::string>("Ice Thickness Variable Name")];
+    if (is_thickness_param) {
+      thickness_param_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), layout);
+      this->addDependentField (thickness_param_field);
+    } else {
+      thickness_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), layout);
+      this->addDependentField (thickness_field);
+    }
     Teuchos::ParameterList& phys_param_list = *p.get<Teuchos::ParameterList*>("Physical Parameter List");
     rho_i = phys_param_list.get<double> ("Ice Density");
     rho_w = phys_param_list.get<double> ("Water Density");
     this->addDependentField (bed_topo_field);
-    this->addDependentField (thickness_field);
   }
 
   auto& stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
@@ -342,9 +351,14 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
         return;   // We can save ourself some useless iterations
 
       case GIVEN_FIELD:
-        for (int ipt=0; ipt<dim; ++ipt)
-        {
-          beta(cell,side,ipt) = given_field(cell,side,ipt);
+        if (is_given_field_param) {
+          for (int ipt=0; ipt<dim; ++ipt) {
+            beta(cell,side,ipt) = given_field_param(cell,side,ipt);
+          }
+        } else {
+          for (int ipt=0; ipt<dim; ++ipt) {
+            beta(cell,side,ipt) = given_field(cell,side,ipt);
+          }
         }
         break;
 
@@ -364,27 +378,46 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
         break;
 
       case EXP_GIVEN_FIELD:
-        for (int ipt=0; ipt<dim; ++ipt)
-        {
-          beta(cell,side,ipt) = std::exp(given_field(cell,side,ipt));
+        if (is_given_field_param) {
+          for (int ipt=0; ipt<dim; ++ipt) {
+            beta(cell,side,ipt) = std::exp(given_field_param(cell,side,ipt));
+          }
+        } else {
+          for (int ipt=0; ipt<dim; ++ipt) {
+            beta(cell,side,ipt) = std::exp(given_field(cell,side,ipt));
+          }
         }
         break;
 
       case GAL_PROJ_EXP_GIVEN_FIELD:
-        for (int qp=0; qp<numQPs; ++qp)
-        {
-          beta(cell,side,qp) = 0;
-          for (int node=0; node<numNodes; ++node)
-            beta(cell,side,qp) += std::exp(given_field(cell,side,node))*BF(cell,side,node,qp);
+        if (is_given_field_param) {
+          for (int qp=0; qp<numQPs; ++qp) {
+            beta(cell,side,qp) = 0;
+            for (int node=0; node<numNodes; ++node)
+              beta(cell,side,qp) += std::exp(given_field_param(cell,side,node))*BF(cell,side,node,qp);
+          }
+        } else {
+          for (int qp=0; qp<numQPs; ++qp) {
+            beta(cell,side,qp) = 0;
+            for (int node=0; node<numNodes; ++node)
+              beta(cell,side,qp) += std::exp(given_field(cell,side,node))*BF(cell,side,node,qp);
+          }
         }
       break;
     }
 
     if(zero_on_floating)
     {
-      for (int ipt=0; ipt<dim; ++ipt) {
-        ParamScalarT isGrounded = rho_i*thickness_field(cell,side,ipt) > -rho_w*bed_topo_field(cell,side,ipt);
-        beta(cell,side,ipt) *=  isGrounded;
+      if (is_thickness_param) {
+        for (int ipt=0; ipt<dim; ++ipt) {
+          ParamScalarT isGrounded = rho_i*thickness_param_field(cell,side,ipt) > -rho_w*bed_topo_field(cell,side,ipt);
+          beta(cell,side,ipt) *=  isGrounded;
+        }
+      } else {
+        for (int ipt=0; ipt<dim; ++ipt) {
+          ParamScalarT isGrounded = rho_i*thickness_field(cell,side,ipt) > -rho_w*bed_topo_field(cell,side,ipt);
+          beta(cell,side,ipt) *=  isGrounded;
+        }
       }
     }
 
@@ -413,9 +446,15 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
       break;   // We don't have anything to do
 
     case GIVEN_FIELD:
-      for (int cell=0; cell<workset.numCells; ++cell)
-        for (int ipt=0; ipt<dim; ++ipt)
+      if (is_given_field_param) {
+        for (int cell=0; cell<workset.numCells; ++cell)
+          for (int ipt=0; ipt<dim; ++ipt)
+            beta(cell,ipt) = given_field_param(cell,ipt);
+      } else {
+        for (int cell=0; cell<workset.numCells; ++cell)
+          for (int ipt=0; ipt<dim; ++ipt)
             beta(cell,ipt) = given_field(cell,ipt);
+      }
       break;
 
     case POWER_LAW:
@@ -462,21 +501,35 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
       break;
 
     case EXP_GIVEN_FIELD:
-      for (int cell=0; cell<workset.numCells; ++cell)
-        for (int ipt=0; ipt<dim; ++ipt)
-        {
-          beta(cell,ipt) = std::exp(given_field(cell,ipt));
-        }
+      if (is_given_field_param) {
+        for (int cell=0; cell<workset.numCells; ++cell)
+          for (int ipt=0; ipt<dim; ++ipt) {
+            beta(cell,ipt) = std::exp(given_field_param(cell,ipt));
+          }
+      } else {
+        for (int cell=0; cell<workset.numCells; ++cell)
+          for (int ipt=0; ipt<dim; ++ipt) {
+            beta(cell,ipt) = std::exp(given_field(cell,ipt));
+          }
+      }
       break;
 
     case GAL_PROJ_EXP_GIVEN_FIELD:
-      for (int cell=0; cell<workset.numCells; ++cell)
-        for (int ipt=0; ipt<dim; ++ipt)
-        {
-          beta(cell,ipt) = 0;
-          for (int node=0; node<numNodes; ++node)
-            beta(cell,ipt) += std::exp(given_field(cell,node))*BF(cell,node,ipt);
-        }
+      if (is_given_field_param) {
+        for (int cell=0; cell<workset.numCells; ++cell)
+          for (int ipt=0; ipt<dim; ++ipt) {
+            beta(cell,ipt) = 0;
+            for (int node=0; node<numNodes; ++node)
+              beta(cell,ipt) += std::exp(given_field_param(cell,node))*BF(cell,node,ipt);
+          }
+      } else {
+        for (int cell=0; cell<workset.numCells; ++cell)
+          for (int ipt=0; ipt<dim; ++ipt) {
+            beta(cell,ipt) = 0;
+            for (int node=0; node<numNodes; ++node)
+              beta(cell,ipt) += std::exp(given_field(cell,node))*BF(cell,node,ipt);
+          }
+      }
   }
 
   // Correct the value if we are using a stereographic map

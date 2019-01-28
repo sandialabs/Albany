@@ -11,7 +11,10 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
+#include "PHAL_Dimension.hpp"
 #include "Albany_Layouts.hpp"
+#include "Albany_SacadoTypes.hpp"
 
 namespace LandIce {
 /** \brief Finite Element Interpolation Evaluator
@@ -29,7 +32,7 @@ public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
   typedef typename EvalT::ParamScalarT ParamScalarT;
-
+  typedef typename Albany::StrongestScalarType<ScalarT,MeshScalarT>::type OutputScalarT;
 
   ViscosityFO(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl);
@@ -75,8 +78,8 @@ private:
 
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint> mu;  // [k^2 Pa yr], k=1000
-  PHX::MDField<ScalarT,Cell,QuadPoint> epsilonSq; // [(k yr)^{-2}], k=1000
+  PHX::MDField<OutputScalarT,Cell,QuadPoint> mu;  // [k^2 Pa yr], k=1000
+  PHX::MDField<OutputScalarT,Cell,QuadPoint> epsilonSq; // [(k yr)^{-2}], k=1000
 
   ScalarT printedFF;
 

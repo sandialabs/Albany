@@ -144,6 +144,12 @@ BinaryScaleOp (const Teuchos::ParameterList& p,
   SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::Scale>(p,dl) {}
 
 template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
+BinarySumOp<EvalT, Traits, InOutScalarT, FieldScalarT>::
+BinarySumOp (const Teuchos::ParameterList& p,
+             const Teuchos::RCP<Albany::Layouts>& dl) :
+  SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::Sum>(p,dl) {}
+
+template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
 BinaryLogOp<EvalT, Traits, InOutScalarT, FieldScalarT>::
 BinaryLogOp (const Teuchos::ParameterList& p,
              const Teuchos::RCP<Albany::Layouts>& dl) :

@@ -28,6 +28,7 @@
 #include "LandIce_StokesFOBase.hpp"
 
 #include "LandIce_StokesFOSynteticTestBC.hpp"
+#include "LandIce_PressureCorrectedTemperature.hpp"
 #include "LandIce_L2ProjectedBoundaryLaplacianResidual.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
@@ -81,10 +82,14 @@ public:
 
 protected:
 
+  void setFieldsProperties();
   void setupEvaluatorRequests ();
 
   void constructDirichletEvaluators (const Albany::MeshSpecsStruct& meshSpecs);
   void constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
+
+  bool adjustBedTopo;
+  bool adjustSurfaceHeight;
 };
 
 // ================================ IMPLEMENTATION ============================ //
@@ -101,37 +106,21 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
 
-  int offsetVelocity = 0;
-
   // --- States/parameters --- //
   constructStokesFOBaseEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice);
 
   // Gather solution field
-  ev = evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names[0], offsetVelocity);
+  ev = evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names[0], dof_offsets[0]);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Scatter residual
-  ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(true, resid_names[0], Teuchos::rcpFromRef(extruded_params_levels), offsetVelocity, scatter_names[0]);
+  ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(true, resid_names[0], Teuchos::rcpFromRef(extruded_params_levels), dof_offsets[0], scatter_names[0]);
   fm0.template registerEvaluator<EvalT> (ev);
 
-  // Gather thickness, depending on whether it is a parameter and on whether mesh depends on parameters
-  if(!(is_dist_param["ice_thickness"]||is_dist_param["ice_thickness_param"]))
-  {
-    //----- Gather Coordinate Vector (general parameters)
-    ev = evalUtils.constructGatherCoordinateVectorEvaluator();
-    fm0.template registerEvaluator<EvalT> (ev);
-  }
-  else
-  {
-#ifndef ALBANY_MESH_DEPENDS_ON_PARAMETERS
-    //----- Gather Coordinate Vector (general parameters)
-    ev = evalUtils.constructGatherCoordinateVectorEvaluator();
-    fm0.template registerEvaluator<EvalT> (ev);
-#else
-    bool adjustBedTopo = params->get("Adjust Bed Topography to Account for Thickness Changes", false);
-    bool adjustSurfaceHeight = params->get("Adjust Surface Height to Account for Thickness Changes", false);
-
-    if(adjustBedTopo && !adjustSurfaceHeight) {
+  // If the mesh depends on parameters AND the thickness is a parameter,
+  // after gathering the coordinates, we modify the z coordinate of the mesh.
+  if (Albany::mesh_depends_on_parameters() && is_dist_param[ice_thickness_name]) {
+    if(adjustBedTopo) {
       //----- Gather Coordinate Vector (ad hoc parameters)
       p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
 
@@ -146,7 +135,7 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       p->set<std::string>("Old Coords Name",  "Coord Vec Old");
       p->set<std::string>("New Coords Name",  Albany::coord_vec_name);
-      p->set<std::string>("Thickness Name",   "ice_thickness");
+      p->set<std::string>("Thickness Name",   ice_thickness_name);
       p->set<std::string>("Thickness Lower Bound Name",   ice_thickness_name + "_lowerbound");
       p->set<std::string>("Thickness Upper Bound Name",   ice_thickness_name + "_upperbound");
       p->set<std::string>("Top Surface Name", "observed_surface_height");
@@ -157,8 +146,7 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingBed<EvalT,PHAL::AlbanyTraits>(*p, dl));
       fm0.template registerEvaluator<EvalT>(ev);
-    }
-    else if(adjustSurfaceHeight && !adjustBedTopo) {
+    } else if(adjustSurfaceHeight) {
       //----- Gather Coordinate Vector (ad hoc parameters)
       p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
 
@@ -180,12 +168,31 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingTop<EvalT,PHAL::AlbanyTraits>(*p, dl));
       fm0.template registerEvaluator<EvalT>(ev);
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION(adjustBedTopo == adjustSurfaceHeight, std::logic_error, "Error! When the ice thickness is a parameter,\n "
-          "either 'Adjust Bed Topography to Account for Thickness Changes' or\n"
-          " 'Adjust Surface Height to Account for Thickness Changes' needs to be true.\n");
     }
-#endif
+  } else {
+    //----- Gather Coordinate Vector (general parameters)
+    ev = evalUtils.constructGatherCoordinateVectorEvaluator();
+    fm0.template registerEvaluator<EvalT> (ev);
+  }
+
+  if (viscosity_use_corrected_temperature) {
+    // --- LandIce pressure-melting temperature
+    // Note: this CAN'T go in StokesFOBase, since StokesFOThermoCoupled uses LandIce::Temperature
+    //       to compute both temperature and corrected temperature
+    p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Pressure Corrected Temperature"));
+
+    //Input
+    p->set<std::string>("Surface Height Variable Name", surface_height_name);
+    p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
+    p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
+    p->set<std::string>("Temperature Variable Name", temperature_name);
+    p->set<bool>("Enable Memoizer", this->params->get<bool>("Use MDField Memoization", false));
+
+    //Output
+    p->set<std::string>("Corrected Temperature Variable Name", "corrected " + temperature_name);
+
+    ev = createEvaluatorWithTwoScalarTypes<LandIce::PressureCorrectedTemperature,EvalT>(p,dl,field_scalar_type[temperature_name],field_scalar_type[surface_height_name]);
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   // --- Syntetic test BC evaluators (if needed) --- //
@@ -204,8 +211,6 @@ void StokesFO::constructSynteticTestBCEvaluators (PHX::FieldManager<PHAL::Albany
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
-
-  const bool enableMemoizer = this->params->get<bool>("Use MDField Memoization", false);
 
   std::string param_name;
 

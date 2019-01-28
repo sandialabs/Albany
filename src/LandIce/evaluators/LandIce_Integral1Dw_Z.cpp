@@ -11,8 +11,4 @@
 
 #include "LandIce_Integral1Dw_Z_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::Integral1Dw_Z)
-
-
-
-
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(LandIce::Integral1Dw_Z)

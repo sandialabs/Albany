@@ -7,6 +7,8 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
 
+#include "LandIce_FlowRate.hpp"
+
 namespace LandIce {
 
 //**********************************************************************

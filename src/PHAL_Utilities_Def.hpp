@@ -231,7 +231,7 @@ inline
 typename std::enable_if<
   Kokkos::is_dynrankview_fad<Kokkos::DynRankView<T,P...>>::value,
   typename Kokkos::DynRankView<T,P...>::non_const_type >::type
-create_copy( const std::string& name,
+create_copy( const std::string& /* name */,
     const Kokkos::DynRankView<T,P...> & src )
 {
   using Src = Kokkos::DynRankView<T,P...>;

@@ -34,7 +34,7 @@ public:
     this->setName("Shared Parameter " + param_name + PHX::typeAsString<EvalT>());
   }
 
-  void postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+  void postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Traits>& fm)
   {
     this->utils.setFieldData(param_as_field,fm);
   }

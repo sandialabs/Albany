@@ -9,5 +9,4 @@
 #include "LandIce_ResponseSMBMismatch.hpp"
 #include "LandIce_ResponseSMBMismatch_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::ResponseSMBMismatch)
-
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(LandIce::ResponseSMBMismatch)

@@ -102,6 +102,21 @@ namespace Albany
     return ScalarConversionHelper<ToST,FromST>::apply(x);
   }
 
+  // Get the strongest type between ST1 and ST2, meaning the type that can
+  // be constructed from the other. If no conversion is possible, return void.
+  template<typename ST1, typename ST2>
+  struct StrongestScalarType {
+  private:
+    static constexpr bool st2_from_st1 = std::is_constructible<ST2,ST1>::value;
+    static constexpr bool st1_from_st2 = std::is_constructible<ST1,ST2>::value;
+  public:
+    using type =  typename std::conditional<
+                    st2_from_st1,
+                    ST2,
+                    typename std::conditional<st1_from_st2, ST1, void>::type
+                  >::type;
+  };
+
 } // namespace Albany
 
 #endif // ALBANY_SACADO_TYPES_HPP

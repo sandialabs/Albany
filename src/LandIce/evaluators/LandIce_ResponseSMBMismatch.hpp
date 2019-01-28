@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LANDICE_RESPONSESMBMISMATCH_HPP
-#define LANDICE_RESPONSESMBMISMATCH_HPP
+#ifndef LANDICE_RESPONSE_SMB_MISMATCH_HPP
+#define LANDICE_RESPONSE_SMB_MISMATCH_HPP
 
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 #include "Intrepid2_CellTools.hpp"
@@ -15,7 +15,7 @@ namespace LandIce {
 /**
  * \brief Response Description
  */
-  template<typename EvalT, typename Traits>
+  template<typename EvalT, typename Traits, typename ThicknessScalarType>
   class ResponseSMBMismatch :
     public PHAL::SeparableScatterScalarResponse<EvalT,Traits>
   {
@@ -46,15 +46,15 @@ namespace LandIce {
     int numBasalQPs;
     int numSideDims;
 
-    PHX::MDField<const ScalarT,Cell,Side,QuadPoint>              flux_div;
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         SMB;
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         SMBRMS;
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         obs_thickness;
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         thickness;
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         thicknessRMS;
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint,Dim>     grad_thickness;
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>          w_measure_2d;
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  tangents;
+    PHX::MDField<const ScalarT,Cell,Side,QuadPoint>                   flux_div;
+    PHX::MDField<const RealType,Cell,Side,QuadPoint>                  SMB;
+    PHX::MDField<const RealType,Cell,Side,QuadPoint>                  SMBRMS;
+    PHX::MDField<const RealType,Cell,Side,QuadPoint>                  obs_thickness;
+    PHX::MDField<const RealType,Cell,Side,QuadPoint>                  thicknessRMS;
+    PHX::MDField<const ThicknessScalarType,Cell,Side,QuadPoint>       thickness;
+    PHX::MDField<const ThicknessScalarType,Cell,Side,QuadPoint,Dim>   grad_thickness;
+    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>               w_measure_2d;
+    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>       tangents;
 
     ScalarT p_resp, p_reg, resp, reg, p_misH, misH;
     double scaling, alpha, alphaH, alphaSMB, asinh_scaling;
@@ -62,6 +62,6 @@ namespace LandIce {
     Teuchos::RCP<const CellTopologyData> cell_topo;
   };
 
-}
+} // namespace LandIce
 
-#endif
+#endif // LANDICE_RESPONSE_SMB_MISMATCH_HPP

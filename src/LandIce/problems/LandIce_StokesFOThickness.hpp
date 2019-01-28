@@ -24,7 +24,9 @@
 #include "LandIce_MapThickness.hpp"
 #include "LandIce_Gather2DField.hpp"
 #include "LandIce_GatherVerticallyAveragedVelocity.hpp"
+#include "LandIce_PressureCorrectedTemperature.hpp"
 #include "LandIce_ScatterResidual2D.hpp"
+#include "LandIce_SimpleOperationEvaluator.hpp"
 #include "LandIce_UpdateZCoordinate.hpp"
 #include "LandIce_ThicknessResid.hpp"
 #include "LandIce_StokesFOImplicitThicknessUpdateResid.hpp"
@@ -55,10 +57,6 @@ public:
   StokesFOThickness (const StokesFOThickness&) = delete;
   StokesFOThickness& operator= (const StokesFOThickness&) = delete;
 
-  //! Build the PDE instantiations, boundary conditions, and initial solution
-  void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-                     Albany::StateManager& stateMgr);
-
   // Build evaluators
   Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
   buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -81,7 +79,6 @@ public:
 
 protected:
 
-
   template <typename EvalT>
   void constructThicknessEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0, 
                                      const Albany::MeshSpecsStruct& meshSpecs,
@@ -90,7 +87,9 @@ protected:
   void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
   void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
 
-  int offsetThickness;
+  void setFieldsProperties ();
+
+  std::string initial_ice_thickness_name;
 };
 
 template <typename EvalT>
@@ -105,14 +104,31 @@ StokesFOThickness::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
 
-  int offsetVelocity = 0;
-
   // --- StokesFOBase evaluators --- //
   constructStokesFOBaseEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice);
 
   // Gather velocity field
-  ev = evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names[0], offsetVelocity);
+  ev = evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names[0], dof_offsets[0]);
   fm0.template registerEvaluator<EvalT> (ev);
+
+  // --- LandIce pressure-melting temperature
+  // Note: this CAN'T go in StokesFOBase, since StokesFOThermoCoupled uses LandIce::Temperature
+  //       to compute both temperature and corrected temperature
+  p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Pressure Corrected Temperature"));
+
+  //Input
+  p->set<std::string>("Surface Height Variable Name", surface_height_name);
+  p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
+  p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
+  p->set<std::string>("Temperature Variable Name", temperature_name);
+  p->set<bool>("Enable Memoizer", this->params->get<bool>("Use MDField Memoization", false));
+
+  //Output
+  p->set<std::string>("Corrected Temperature Variable Name", "corrected " + temperature_name);
+
+  // The input temperature has been interpolated with NodesToCell, which means we added a MeshScalar st to the initial temperature scalar type
+  ev = createEvaluatorWithTwoScalarTypes<LandIce::PressureCorrectedTemperature,EvalT>(p,dl,FieldScalarType::MeshScalar | field_scalar_type[temperature_name],field_scalar_type[surface_height_name]);
+  fm0.template registerEvaluator<EvalT>(ev);
 
   //--- Scatter LandIce Stokes FO Residual With Extruded Field ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("Scatter StokesFO"));
@@ -121,8 +137,8 @@ StokesFOThickness::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   p->set<std::string>("Residual Name", resid_names[0]);
   p->set<int>("Tensor Rank", 1); 
   p->set<int>("Field Level", 0);
-  p->set<int>("Offset of First DOF", offsetVelocity); 
-  p->set<int>("Offset 2D Field", offsetThickness); 
+  p->set<int>("Offset of First DOF", dof_offsets[0]); 
+  p->set<int>("Offset 2D Field", dof_offsets[1]); 
 
   //Output
   p->set<std::string>("Scatter Field Name", scatter_names[0]);
@@ -166,7 +182,7 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
 
   //Input
   p->set<std::string>("2D Field Name", dof_names[1]);
-  p->set<int>("Offset of First DOF", offsetThickness);
+  p->set<int>("Offset of First DOF", dof_offsets[1]);
   p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
 
   ev = Teuchos::rcp(new LandIce::Gather2DField<EvalT,PHAL::AlbanyTraits>(*p,dl));
@@ -177,7 +193,7 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
 
   //Input
   p->set<std::string>("2D Field Name", "Extruded " + dof_names[1]);
-  p->set<int>("Offset of First DOF", offsetThickness);
+  p->set<int>("Offset of First DOF", dof_offsets[1]);
   p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
 
   ev = Teuchos::rcp(new LandIce::GatherExtruded2DField<EvalT,PHAL::AlbanyTraits>(*p,dl));
@@ -206,7 +222,7 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   //Input
   p->set<std::string>("Averaged Velocity Variable Name", "Averaged Velocity");
   p->set<std::string>("Thickness Increment Variable Name", dof_names[1]);
-  p->set<std::string>("Past Thickness Name", "ice_thickness");
+  p->set<std::string>("Past Thickness Name", initial_ice_thickness_name);
   p->set<std::string>("Side Set Name", surfaceSideName);
   p->set<std::string>("Mesh Part", "upperside");
   p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
@@ -228,61 +244,59 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   ev = Teuchos::rcp(new LandIce::ThicknessResid<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
-#ifndef ALBANY_MESH_DEPENDS_ON_SOLUTION
-  //---- Gather coordinates
-  ev = evalUtils.constructGatherCoordinateVectorEvaluator();
-  fm0.template registerEvaluator<EvalT> (ev);
-#else
+  if (Albany::mesh_depends_on_solution()) {
+    //--- Gather Coordinates ---//
+    p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
 
-  //--- Gather Coordinates ---//
-  p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
+    // Output:: Coordindate Vector at vertices
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
 
-  // Output:: Coordindate Vector at vertices
-  p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
+    ev =  Teuchos::rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
 
-  ev =  Teuchos::rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
-  fm0.template registerEvaluator<EvalT>(ev);
+    //--- Update Z Coordinate ---//
+    p = Teuchos::rcp(new Teuchos::ParameterList("Update Z Coordinate"));
 
-  //--- Update Z Coordinate ---//
-  p = Teuchos::rcp(new Teuchos::ParameterList("Update Z Coordinate"));
+    // Input
+    p->set<std::string>("Old Coords Name", "Coord Vec Old");
+    p->set<std::string>("New Coords Name", Albany::coord_vec_name);
+    p->set<std::string>("Thickness Increment Name", "Extruded " + dof_names[1]);
+    p->set<std::string>("Past Thickness Name", initial_ice_thickness_name);
+    p->set<std::string>("Top Surface Name", surface_height_name);
+    p->set<std::string>("Bed Topography Name", bed_topography_name);
+    p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
+
+    ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingTop<EvalT,PHAL::AlbanyTraits>(*p, dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  } else {
+    //---- Gather coordinates
+    ev = evalUtils.constructGatherCoordinateVectorEvaluator();
+    fm0.template registerEvaluator<EvalT> (ev);
+  }
+
+  //--- Compute actual thickness --- //
+  p = Teuchos::rcp(new Teuchos::ParameterList("Update Thickness"));
 
   // Input
-  p->set<std::string>("Old Coords Name", "Coord Vec Old");
-  p->set<std::string>("New Coords Name", Albany::coord_vec_name);
-  p->set<std::string>("Thickness Increment Name", "Extruded " + dof_names[1]);
-  p->set<std::string>("Past Thickness Name", "ice_thickness");
-  p->set<std::string>("Top Surface Name", "surface_height");
-  p->set<std::string>("Bed Topography Name", "bed_topography");
-  p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
+  p->set<std::string> ("Input Field Name",dof_names[1]);
+  p->set<std::string> ("Parameter Field 1",initial_ice_thickness_name);
+  p->set<Teuchos::RCP<PHX::DataLayout>> ("Field Layout",dl->node_scalar);
 
-  ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingTop<EvalT,PHAL::AlbanyTraits>(*p, dl));
-  fm0.template registerEvaluator<EvalT>(ev);
-#endif
+  // Output
+  p->set<std::string> ("Output Field Name",ice_thickness_name);
 
-  //------ Map Thickness
-  p = Teuchos::rcp(new Teuchos::ParameterList("Map Thickness"));
-
-  p->set<std::string>("Input Thickness Name",  "ice_thickness_param");
-  p->set<std::string>("Output Thickness Name",  "ice_thickness");
-  p->set<std::string>("Thickness Lower Bound Name",   "ice_thickness_lowerbound");
-  p->set<std::string>("Thickness Upper Bound Name",   "ice_thickness_upperbound");
-  p->set<std::string>("Observed Bed Topography Name",   "observed_bed_topography");
-  p->set<std::string>("Updated Bed Topography Name", "bed_topography");
-  p->set<std::string>("Observed Thickness Name",   "observed_ice_thickness");
-  p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
-
-  ev = Teuchos::rcp(new LandIce::MapThickness<EvalT,PHAL::AlbanyTraits>(*p, dl));
+  ev = Teuchos::rcp(new LandIce::BinarySumOp<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT, RealType>(*p, dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   //--- LandIce Stokes FO Residual Thickness ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("Scatter ResidualH"));
 
   //Input
-  p->set< Teuchos::ArrayRCP<std::string> >("Residual Names", resid_names.persistingView(1,1));
+  p->set<std::string>("Residual Name", resid_names[1]);
   p->set<int>("Tensor Rank", 0);
   p->set<int>("Field Level", discParams->get<int>("NumLayers"));
-  p->set<std::string>("Mesh Part", "upperside");
-  p->set<int>("Offset of First DOF", offsetThickness);
+  p->set<std::string>("Mesh Part", surfaceSideName);
+  p->set<int>("Offset of First DOF", dof_offsets[1]);
   p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
 
   //Output

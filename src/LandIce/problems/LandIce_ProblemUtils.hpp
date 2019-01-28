@@ -4,8 +4,13 @@
 #include <string>
 #include <type_traits>
 
+#include "Teuchos_RCP.hpp"
 #include "Teuchos_CompilerCodeTweakMacros.hpp"
 #include "Teuchos_TestForException.hpp"
+#include "Phalanx_Evaluator.hpp"
+
+#include "Albany_Layouts.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 
 namespace LandIce {
 
@@ -53,10 +58,10 @@ inline std::string bc2str (const LandIceBC bc) {
 
 // Enums used to indicate some properties of a field (used in automatic interpolation evalutors construction)
 enum class FieldScalarType : int {
-  Real = 0,
-  MeshScalar = 1,
+  Real        = 0,
+  MeshScalar  = 1,
   ParamScalar = 2,
-  Scalar = 3
+  Scalar      = 3
 };
 
 inline FieldScalarType& operator|= (FieldScalarType& st1,
@@ -78,14 +83,22 @@ inline FieldScalarType& operator|= (FieldScalarType& st1,
 
 inline std::string e2str (const FieldScalarType e) {
   switch (e) {
-    case FieldScalarType::Scalar:       return "Scalar";
-    case FieldScalarType::MeshScalar:   return "MeshScalar";
-    case FieldScalarType::ParamScalar:  return "ParamScalar";
-    case FieldScalarType::Real:         return "Real";
+    case FieldScalarType::Scalar:       return "Scalar";      break;
+    case FieldScalarType::MeshScalar:   return "MeshScalar";  break;
+    case FieldScalarType::ParamScalar:  return "ParamScalar"; break;
+    case FieldScalarType::Real:         return "Real";        break;
     default:                            return INVALID_STR;
   }
 
   TEUCHOS_UNREACHABLE_RETURN("");
+}
+
+inline FieldScalarType operator| (const FieldScalarType& st1,
+                                  const FieldScalarType& st2)
+{
+  FieldScalarType st3 = st1;
+  st3 |= st2;
+  return st3;
 }
 
 // Mesh entity where a field is located
@@ -121,9 +134,22 @@ enum class InterpolationRequest {
   GRAD_QP_VAL,
   CELL_VAL,
   CELL_TO_SIDE,
-  CELL_TO_SIDE_IF_DIST_PARAM,
   SIDE_TO_CELL
 };
+
+inline std::string e2str (const InterpolationRequest e) {
+  switch (e) {
+    case InterpolationRequest::QP_VAL:        return "QP_VAL";
+    case InterpolationRequest::GRAD_QP_VAL:   return "GRAD_QP_VAL";
+    case InterpolationRequest::CELL_VAL:      return "CELL_VAL";
+    case InterpolationRequest::CELL_TO_SIDE:  return "CELL_TO_SIDE";
+    case InterpolationRequest::SIDE_TO_CELL:  return "SIDE_TO_CELL";
+    default:                    return INVALID_STR;
+  }
+
+  TEUCHOS_UNREACHABLE_RETURN("");
+}
+
 
 // Enum used to request utility evaluators
 enum class UtilityRequest {
@@ -131,6 +157,91 @@ enum class UtilityRequest {
   NORMALS,
   QP_COORDS
 };
+
+template<template <typename,typename,typename...> class Evaluator, typename EvalT>
+Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> >
+createEvaluatorWithOneScalarType (Teuchos::RCP<Teuchos::ParameterList> p,
+                                  Teuchos::RCP<Albany::Layouts>        dl,
+                                  FieldScalarType                      st)
+{
+  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
+  if (st==FieldScalarType::Scalar) {
+    ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
+  } else if (st==FieldScalarType::ParamScalar) {
+    ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+  } else if (st==FieldScalarType::MeshScalar) {
+    ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT>(*p,dl));
+  } else if (st==FieldScalarType::Real) {
+    ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType>(*p,dl));
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized scalar type.\n");
+  }
+
+  return ev;
+}
+
+template<template <typename,typename,typename,typename...> class Evaluator, typename EvalT>
+Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> >
+createEvaluatorWithTwoScalarTypes (Teuchos::RCP<Teuchos::ParameterList> p,
+                                   Teuchos::RCP<Albany::Layouts>        dl,
+                                   FieldScalarType                      st1,
+                                   FieldScalarType                      st2)
+{
+  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
+  if (st1==FieldScalarType::Scalar) {
+    if (st2==FieldScalarType::Scalar) {
+      ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ScalarT>(*p,dl));
+    } else if (st2==FieldScalarType::ParamScalar) {
+      ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ParamScalarT>(*p,dl));
+    } else if (st2==FieldScalarType::MeshScalar) {
+      ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::MeshScalarT>(*p,dl));
+    } else if (st2==FieldScalarType::Real) {
+      ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,RealType>(*p,dl));
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized second scalar type.\n");
+    }
+  } else if (st1==FieldScalarType::ParamScalar) {
+    if (st2==FieldScalarType::Scalar) {
+      ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ScalarT>(*p,dl));
+    } else if (st2==FieldScalarType::ParamScalar) {
+      ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ParamScalarT>(*p,dl));
+    } else if (st2==FieldScalarType::MeshScalar) {
+      ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::MeshScalarT>(*p,dl));
+    } else if (st2==FieldScalarType::Real) {
+      ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,RealType>(*p,dl));
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized second scalar type.\n");
+    }
+  } else if (st1==FieldScalarType::MeshScalar) {
+    if (st2==FieldScalarType::Scalar) {
+      ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,typename EvalT::ScalarT>(*p,dl));
+    } else if (st2==FieldScalarType::ParamScalar) {
+      ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,typename EvalT::ParamScalarT>(*p,dl));
+    } else if (st2==FieldScalarType::MeshScalar) {
+      ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,typename EvalT::MeshScalarT>(*p,dl));
+    } else if (st2==FieldScalarType::Real) {
+      ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,RealType>(*p,dl));
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized second scalar type.\n");
+    }
+  } else if (st1==FieldScalarType::Real) {
+    if (st2==FieldScalarType::Scalar) {
+      ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,typename EvalT::ScalarT>(*p,dl));
+    } else if (st2==FieldScalarType::ParamScalar) {
+      ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,typename EvalT::ParamScalarT>(*p,dl));
+    } else if (st2==FieldScalarType::MeshScalar) {
+      ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,typename EvalT::MeshScalarT>(*p,dl));
+    } else if (st2==FieldScalarType::Real) {
+      ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,RealType>(*p,dl));
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized second scalar type.\n");
+    }
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized first scalar type.\n");
+  }
+
+  return ev;
+}
 
 } // namespace LandIce
 

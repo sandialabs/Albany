@@ -56,8 +56,9 @@ ANONYMOUS:
     Element Shape: Tetrahedron
     NumLayers: 5
     Thickness Field Name: ice_thickness
+    Surface Height Field Name: initial_surface_height
     Use Glimmer Spacing: true
-    Extrude Basal Node Fields: [ice_thickness, surface_height, bed_topography]
+    Extrude Basal Node Fields: [ice_thickness, initial_surface_height, bed_topography]
     Basal Node Fields Ranks: [1, 1, 1]
     Interpolate Basal Node Layered Fields: [temperature]
     Basal Node Layered Fields Ranks: [1]
@@ -68,7 +69,7 @@ ANONYMOUS:
         Field Type: Node Scalar
         Field Origin: Mesh
       Field 1: 
-        Field Name: surface_height
+        Field Name: initial_surface_height
         Field Type: Node Scalar
         Field Origin: Mesh
       Field 2: 
@@ -96,7 +97,7 @@ ANONYMOUS:
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/thickness.ascii
           Field 1: 
-            Field Name: surface_height
+            Field Name: initial_surface_height
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/surface_height.ascii

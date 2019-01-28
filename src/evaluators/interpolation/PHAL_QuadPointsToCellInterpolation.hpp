@@ -11,8 +11,10 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
 #include "Albany_Layouts.hpp"
 #include "PHAL_Utilities.hpp"
+#include "Albany_SacadoTypes.hpp"
 
 namespace PHAL
 {
@@ -42,17 +44,18 @@ public:
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename Albany::StrongestScalarType<ScalarT,MeshScalarT>::type OutputScalarT;
 
   std::vector<PHX::DataLayout::size_type> qp_dims;
 
   MDFieldMemoizer<Traits> memoizer;
 
   // Input:
-  PHX::MDField<const ScalarT>                    field_qp;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint> w_measure;
+  PHX::MDField<const ScalarT>                     field_qp;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint>  w_measure;
 
   // Output:
-  PHX::MDField<ScalarT>     field_cell;
+  PHX::MDField<OutputScalarT>                     field_cell;
 };
 
 // Some shortcut names

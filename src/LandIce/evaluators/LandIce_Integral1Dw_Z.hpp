@@ -5,8 +5,8 @@
  *      Author: abarone
  */
 
-#ifndef LANDICE_INTEGRAL1DW_Z_HPP_
-#define LANDICE_INTEGRAL1DW_Z_HPP_
+#ifndef LANDICE_INTEGRAL_1D_W_Z_HPP
+#define LANDICE_INTEGRAL_1D_W_Z_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -15,6 +15,7 @@
 #include "Albany_Layouts.hpp"
 
 #include "PHAL_AlbanyTraits.hpp"
+#include "Albany_SacadoTypes.hpp"
 
 namespace LandIce {
 /** \brief Integral 1D w_Z
@@ -22,10 +23,9 @@ namespace LandIce {
     This evaluator computes the integral int1d_b^z of w_z
 */
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
 class Integral1Dw_ZBase : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits> {
-
+                  		    public PHX::EvaluatorDerived<EvalT, Traits> {
 public:
 
 	Integral1Dw_ZBase(const Teuchos::ParameterList& p,
@@ -36,19 +36,23 @@ public:
 	void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
 
-	virtual void evaluateFields(typename Traits::EvalData d) = 0;
+	virtual void evaluateFields(typename Traits::EvalData /* d */) {}
 
 protected:
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
+  // This only helps to let ETI machinery work. In a real problem,
+  // ScalarT should always be constructible from a ThicknessScalarT
+  typedef typename Albany::StrongestScalarType<ThicknessScalarT,ScalarT>::type OutputScalarT;
+
   // Input
-  PHX::MDField<const ScalarT,Cell,Node>  basal_velocity;
-  PHX::MDField<const ParamScalarT,Cell,Node>  thickness;
+  PHX::MDField<const ScalarT,Cell,Node>           basal_velocity;
+  PHX::MDField<const ThicknessScalarT,Cell,Node>  thickness;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node>  int1Dw_z;
+  PHX::MDField<OutputScalarT,Cell,Node>  int1Dw_z;
 
   std::size_t numNodes;
 
@@ -59,12 +63,18 @@ protected:
   int offset, neq;
 };
 
-template<typename EvalT, typename Traits> class Integral1Dw_Z;
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
+class Integral1Dw_Z : public Integral1Dw_ZBase<EvalT,Traits,ThicknessScalarT> {
+public:
+	  Integral1Dw_Z(const Teuchos::ParameterList& p,
+                  const Teuchos::RCP<Albany::Layouts>& dl) :
+      Integral1Dw_ZBase<EvalT,Traits,ThicknessScalarT>(p,dl) {}
+};
 
 
-template<typename Traits>
-class Integral1Dw_Z<PHAL::AlbanyTraits::Residual,Traits>
-    : public Integral1Dw_ZBase<PHAL::AlbanyTraits::Residual,Traits> {
+template<typename Traits, typename ThicknessScalarT>
+class Integral1Dw_Z<PHAL::AlbanyTraits::Residual,Traits,ThicknessScalarT>
+    : public Integral1Dw_ZBase<PHAL::AlbanyTraits::Residual,Traits,ThicknessScalarT> {
 
 public:
 
@@ -73,16 +83,13 @@ public:
 
 	  void evaluateFields(typename Traits::EvalData d);
 
-	  KOKKOS_INLINE_FUNCTION
-	  void operator () (const int i) const;
-
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
 };
 
-template<typename Traits>
-class Integral1Dw_Z<PHAL::AlbanyTraits::Jacobian,Traits>
-    : public Integral1Dw_ZBase<PHAL::AlbanyTraits::Jacobian,Traits> {
+template<typename Traits, typename ThicknessScalarT>
+class Integral1Dw_Z<PHAL::AlbanyTraits::Jacobian,Traits,ThicknessScalarT>
+    : public Integral1Dw_ZBase<PHAL::AlbanyTraits::Jacobian,Traits,ThicknessScalarT> {
 
 public:
 
@@ -91,49 +98,10 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
-
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
 };
 
-template<typename Traits>
-class Integral1Dw_Z<PHAL::AlbanyTraits::Tangent,Traits>
-    : public Integral1Dw_ZBase<PHAL::AlbanyTraits::Tangent,Traits> {
-
-public:
-
-	Integral1Dw_Z(const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl);
-
-    void evaluateFields(typename Traits::EvalData d);
-
-    KOKKOS_INLINE_FUNCTION
-    void operator () (const int i) const;
-
-private:
-  typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
-};
-
-template<typename Traits>
-class Integral1Dw_Z<PHAL::AlbanyTraits::DistParamDeriv,Traits>
-    : public Integral1Dw_ZBase<PHAL::AlbanyTraits::DistParamDeriv,Traits> {
-
-public:
-
-	Integral1Dw_Z(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
-
-    void evaluateFields(typename Traits::EvalData d);
-
-    KOKKOS_INLINE_FUNCTION
-    void operator () (const int i) const;
-
-private:
-  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
-};
-
 }
 
-#endif /* LandIce_INTEGRAL1DW_Z_HPP_ */
+#endif // LANDICE_INTEGRAL_1D_W_Z_HPP

@@ -13,58 +13,61 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
 #include "Albany_Layouts.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
+#include "PHAL_Dimension.hpp"
 
 namespace LandIce
 {
 
-  /** \brief Geotermal Flux Heat Evaluator
+/** \brief Geotermal Flux Heat Evaluator
 
-    This evaluator evaluates the production of heat coming from the earth
-   */
+  This evaluator evaluates the production of heat coming from the earth
+ */
 
-  template<typename EvalT, typename Traits, typename Type>
-  class GeoFluxHeat : public PHX::EvaluatorWithBaseImpl<Traits>,
-  public PHX::EvaluatorDerived<EvalT, Traits>
-  {
-  public:
-    GeoFluxHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
+template<typename EvalT, typename Traits, typename Type>
+class GeoFluxHeat : public PHX::EvaluatorWithBaseImpl<Traits>,
+public PHX::EvaluatorDerived<EvalT, Traits>
+{
+public:
+  GeoFluxHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
 
-    void postRegistrationSetup (typename Traits::SetupData d, PHX::FieldManager<Traits>& fm);
+  void postRegistrationSetup (typename Traits::SetupData d, PHX::FieldManager<Traits>& fm);
 
-    void evaluateFields(typename Traits::EvalData d);
+  void evaluateFields(typename Traits::EvalData d);
 
-  private:
-    typedef typename EvalT::ScalarT ScalarT;
-    typedef typename EvalT::MeshScalarT MeshScalarT;
-    typedef typename EvalT::ParamScalarT ParamScalarT;
+private:
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
-    // Input:
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>    	 geoFlux;     // [W m^{-2}] = [Pa m s^{-1}]
-    PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>   	 BF;          // []
-    PHX::MDField<const RealType,Cell,Side,Node,QuadPoint,Dim>  GradBF;      // [km^{-1}
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>     	 w_measure;   // [km^2]
-    PHX::MDField<const Type,Cell,Side,QuadPoint,VecDim>        velocity;    // [m y^{-1}]
-    PHX::MDField<const ScalarT,Cell,Side,QuadPoint>        	   verticalVel; // [m y^{-1}]
+  // Input:
+  PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>    	    geoFlux;     // [W m^{-2}] = [Pa m s^{-1}]
+  PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>   	    BF;          // []
+  PHX::MDField<const MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  GradBF;      // [km^{-1}
+  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>     	    w_measure;   // [km^2]
+  PHX::MDField<const Type,Cell,Side,QuadPoint,VecDim>           velocity;    // [m y^{-1}]
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>        	      verticalVel; // [m y^{-1}]
 
-    // Output:
-    PHX::MDField<ScalarT,Cell,Node> geoFluxHeat;      // [MW] = [k^{-2} kPa s^{-1} km^3]
-    PHX::MDField<ScalarT,Cell,Node> geoFluxHeatSUPG;  // [MW s^{-1}] = [k^{-2} kPa s^{-2} km^3]
+  // Output:
+  PHX::MDField<ScalarT,Cell,Node> geoFluxHeat;      // [MW] = [k^{-2} kPa s^{-1} km^3]
+  PHX::MDField<ScalarT,Cell,Node> geoFluxHeatSUPG;  // [MW s^{-1}] = [k^{-2} kPa s^{-2} km^3]
 
-    double uniformGeoFluxValue; // [W m^{-2}]
+  double uniformGeoFluxValue; // [W m^{-2}]
 
-    std::vector<std::vector<int> >  sideNodes;
-    std::string                     basalSideName;
+  std::vector<std::vector<int> >  sideNodes;
+  std::string                     basalSideName;
 
-    int numCellNodes;
-    int numSideNodes;
-    int numSideQPs;
-    int sideDim;
-    int vecDimFO;
+  int numCellNodes;
+  int numSideNodes;
+  int numSideQPs;
+  int sideDim;
+  int vecDimFO;
 
-    bool haveSUPG;
-    bool isGeoFluxConst;
-  };
+  bool haveSUPG;
+  bool isGeoFluxConst;
+};
 
 }	// end namespace LandIce
 

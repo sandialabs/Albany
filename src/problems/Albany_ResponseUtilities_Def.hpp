@@ -158,7 +158,22 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   }
   else if (responseName == "Surface Mass Balance Mismatch")
   {
-    res_ev = rcp(new LandIce::ResponseSMBMismatch<EvalT,Traits>(*p,dl));
+    auto thickness_st = paramsFromProblem->get<std::string>("Ice Thickness Scalar Type","Real");
+    if (thickness_st=="Scalar") {
+      res_ev = rcp(new LandIce::ResponseSMBMismatch<EvalT,Traits,typename EvalT::ScalarT>(*p,dl));
+    }
+    else if (thickness_st=="MeshScalar") {
+      res_ev = rcp(new LandIce::ResponseSMBMismatch<EvalT,Traits,typename EvalT::MeshScalarT>(*p,dl));
+    }
+    else if (thickness_st=="ParamScalar") {
+      res_ev = rcp(new LandIce::ResponseSMBMismatch<EvalT,Traits,typename EvalT::ParamScalarT>(*p,dl));
+    }
+    else if (thickness_st=="Real") {
+      res_ev = rcp(new LandIce::ResponseSMBMismatch<EvalT,Traits,RealType>(*p,dl));
+    }
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Invalid scalar type for Ice Thickness.\n");
+    }
   }
   else if (responseName == "Boundary Squared L2 Norm")
   {
