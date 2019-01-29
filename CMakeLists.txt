@@ -610,11 +610,6 @@ IF (ENABLE_CISM_INTERFACE AND ENABLE_LANDICE)
   ELSE()
     MESSAGE("---> CISM_EPETRA     is Disabled, NOT compiling with -DCISM_USE_EPETRA.  CISM-Albany will run with Tpetra software stack.")
   ENDIF()
-  IF (ENABLE_LCM OR ENABLE_LAME OR ENABLE_DEMO_PDES)
-     MESSAGE("-- WARNING: cism_driver will not link properly when built if
-Albany was built with LCM, LAME, or ENABLE_DEMO_PDES.  Turn these off to build
-cism_driver.")
-  ENDIF ()
   MESSAGE("---> CISM_INTERFACE     is Enabled, compiling with -DCISM_HAS_LANDICE")
   SET(CISM_HAS_LANDICE TRUE)
   IF (NOT CISM_INCLUDE_DIR)
