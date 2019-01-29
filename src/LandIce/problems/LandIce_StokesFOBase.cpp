@@ -527,10 +527,8 @@ void StokesFOBase::setupEvaluatorRequests ()
   requestInterpolationEvaluator(dof_names[0], FieldLocation::Node, InterpolationRequest::QP_VAL); 
   requestInterpolationEvaluator(dof_names[0], FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL); 
   requestInterpolationEvaluator(surface_height_name, FieldLocation::Node, InterpolationRequest::QP_VAL); 
-#ifndef CISM_HAS_LANDICE
   // If not coupled with cism, we may have to compute the surface gradient ourselves
   requestInterpolationEvaluator(surface_height_name, FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL); 
-#endif
   if (is_input_field[temperature_name]) {
     requestInterpolationEvaluator(temperature_name, FieldLocation::Node, InterpolationRequest::CELL_VAL); 
   }
