@@ -209,58 +209,58 @@ void StokesFOThermoCoupled::setupEvaluatorRequests ()
   StokesFOBase::setupEvaluatorRequests();
 
   // Volume required interpolations
-  requestInterpolationEvaluator(dof_names[1], FieldLocation::Node, InterpolationRequest::QP_VAL);
-  requestInterpolationEvaluator(dof_names[2], FieldLocation::Node, InterpolationRequest::QP_VAL);
-  requestInterpolationEvaluator(dof_names[2], FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL);
+  build_interp_ev[dof_names[1]][InterpolationRequest::QP_VAL     ] = true;
+  build_interp_ev[dof_names[2]][InterpolationRequest::QP_VAL     ] = true;
+  build_interp_ev[dof_names[2]][InterpolationRequest::GRAD_QP_VAL] = true;
   if (!compute_w) {
-    requestInterpolationEvaluator("W", FieldLocation::Node, InterpolationRequest::QP_VAL); 
+    build_interp_ev["W"][InterpolationRequest::QP_VAL] = true;
   }
-  requestInterpolationEvaluator(temperature_name,           FieldLocation::Node, InterpolationRequest::CELL_VAL);
-  requestInterpolationEvaluator(corrected_temperature_name, FieldLocation::Node, InterpolationRequest::CELL_VAL);
-  requestInterpolationEvaluator(stiffening_factor_name,     FieldLocation::Node, InterpolationRequest::QP_VAL);
-  requestInterpolationEvaluator(surface_height_name,        FieldLocation::Node, InterpolationRequest::QP_VAL);
-  requestInterpolationEvaluator(surface_height_name,        FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL);
-  requestInterpolationEvaluator(water_content_name,         FieldLocation::Node, InterpolationRequest::QP_VAL);
-  requestInterpolationEvaluator(water_content_name,         FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL);
-  requestInterpolationEvaluator(melting_temperature_name,   FieldLocation::Node, InterpolationRequest::QP_VAL);
-  requestInterpolationEvaluator(melting_temperature_name,   FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL);
-  requestInterpolationEvaluator(melting_enthalpy_name,      FieldLocation::Node, InterpolationRequest::QP_VAL);
-  requestInterpolationEvaluator(melting_enthalpy_name,      FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL);
+  build_interp_ev[temperature_name          ][InterpolationRequest::CELL_VAL   ] = true;
+  build_interp_ev[corrected_temperature_name][InterpolationRequest::CELL_VAL   ] = true;
+  build_interp_ev[stiffening_factor_name    ][InterpolationRequest::QP_VAL     ] = true;
+  build_interp_ev[surface_height_name       ][InterpolationRequest::QP_VAL     ] = true;
+  build_interp_ev[surface_height_name       ][InterpolationRequest::GRAD_QP_VAL] = true;
+  build_interp_ev[water_content_name        ][InterpolationRequest::QP_VAL     ] = true;
+  build_interp_ev[water_content_name        ][InterpolationRequest::GRAD_QP_VAL] = true;
+  build_interp_ev[melting_temperature_name  ][InterpolationRequest::QP_VAL     ] = true;
+  build_interp_ev[melting_temperature_name  ][InterpolationRequest::GRAD_QP_VAL] = true;
+  build_interp_ev[melting_enthalpy_name     ][InterpolationRequest::QP_VAL     ] = true;
+  build_interp_ev[melting_enthalpy_name     ][InterpolationRequest::GRAD_QP_VAL] = true;
   if(!isGeoFluxConst)
   {
-    requestInterpolationEvaluator("Geo Flux Heat",      FieldLocation::Node, InterpolationRequest::QP_VAL);
-    requestInterpolationEvaluator("Geo Flux Heat SUPG", FieldLocation::Node, InterpolationRequest::QP_VAL);
+    build_interp_ev["Geo Flux Heat"     ][InterpolationRequest::QP_VAL] = true;
+    build_interp_ev["Geo Flux Heat SUPG"][InterpolationRequest::QP_VAL] = true;
   }
 
   // Side set required interpolations
   if (basalSideName!=INVALID_STR) {
-    requestSideSetInterpolationEvaluator(basalSideName, dof_names[2],             FieldLocation::Node, InterpolationRequest::QP_VAL);
-    requestSideSetInterpolationEvaluator(basalSideName, dof_names[2],             FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE);
-    requestSideSetInterpolationEvaluator(basalSideName, "W",                      FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE);
-    requestSideSetInterpolationEvaluator(basalSideName, "W",                      FieldLocation::Node, InterpolationRequest::QP_VAL);
-    requestSideSetInterpolationEvaluator(basalSideName, "basal_melt_rate",        FieldLocation::Node, InterpolationRequest::QP_VAL);
-    requestSideSetInterpolationEvaluator(basalSideName, "basal_dTdz",             FieldLocation::Node, InterpolationRequest::QP_VAL);
-    requestSideSetInterpolationEvaluator(basalSideName, melting_temperature_name, FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL);
-    requestSideSetInterpolationEvaluator(basalSideName, melting_temperature_name, FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE);
-    requestSideSetInterpolationEvaluator(basalSideName, melting_enthalpy_name,    FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE);
-    requestSideSetInterpolationEvaluator(basalSideName, melting_enthalpy_name,    FieldLocation::Node, InterpolationRequest::QP_VAL);
-    requestSideSetInterpolationEvaluator(basalSideName, water_content_name,       FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE);
-    requestSideSetInterpolationEvaluator(basalSideName, "basal_vert_velocity",    FieldLocation::Node, InterpolationRequest::QP_VAL);
-    requestSideSetInterpolationEvaluator(basalSideName, "basal_vert_velocity",    FieldLocation::Node, InterpolationRequest::SIDE_TO_CELL);
+    ss_build_interp_ev[basalSideName][dof_names[2]            ][InterpolationRequest::QP_VAL      ] = true;
+    ss_build_interp_ev[basalSideName][dof_names[2]            ][InterpolationRequest::CELL_TO_SIDE] = true;
+    ss_build_interp_ev[basalSideName]["W"                     ][InterpolationRequest::CELL_TO_SIDE] = true;
+    ss_build_interp_ev[basalSideName]["W"                     ][InterpolationRequest::QP_VAL      ] = true;
+    ss_build_interp_ev[basalSideName]["basal_melt_rate"       ][InterpolationRequest::QP_VAL      ] = true;
+    ss_build_interp_ev[basalSideName]["basal_dTdz"            ][InterpolationRequest::QP_VAL      ] = true;
+    ss_build_interp_ev[basalSideName][melting_temperature_name][InterpolationRequest::GRAD_QP_VAL ] = true;
+    ss_build_interp_ev[basalSideName][melting_temperature_name][InterpolationRequest::CELL_TO_SIDE] = true;
+    ss_build_interp_ev[basalSideName][melting_enthalpy_name   ][InterpolationRequest::CELL_TO_SIDE] = true;
+    ss_build_interp_ev[basalSideName][melting_enthalpy_name   ][InterpolationRequest::QP_VAL      ] = true;
+    ss_build_interp_ev[basalSideName][water_content_name      ][InterpolationRequest::CELL_TO_SIDE] = true;
+    ss_build_interp_ev[basalSideName]["basal_vert_velocity"   ][InterpolationRequest::QP_VAL      ] = true;
+    ss_build_interp_ev[basalSideName]["basal_vert_velocity"   ][InterpolationRequest::SIDE_TO_CELL] = true;
 
     if(needsBasFric)
     {
-      requestSideSetInterpolationEvaluator(basalSideName, "Basal Heat",      FieldLocation::Node, InterpolationRequest::QP_VAL);
-      requestSideSetInterpolationEvaluator(basalSideName, "Basal Heat SUPG", FieldLocation::Node, InterpolationRequest::QP_VAL);
+      ss_build_interp_ev[basalSideName]["Basal Heat"     ][InterpolationRequest::QP_VAL] = true;
+      ss_build_interp_ev[basalSideName]["Basal Heat SUPG"][InterpolationRequest::QP_VAL] = true;
     }
 
     if(!isGeoFluxConst)
     {
-      requestSideSetInterpolationEvaluator(basalSideName, geothermal_flux_name, FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE);
-      requestSideSetInterpolationEvaluator(basalSideName, geothermal_flux_name, FieldLocation::Node, InterpolationRequest::QP_VAL);
+      ss_build_interp_ev[basalSideName][geothermal_flux_name][InterpolationRequest::CELL_TO_SIDE] = true;
+      ss_build_interp_ev[basalSideName][geothermal_flux_name][InterpolationRequest::QP_VAL      ] = true;
     }
 
-    ss_utils_needed[basalSideName][UtilityRequest::BFS] = true;
+    ss_utils_needed[basalSideName][UtilityRequest::BFS      ] = true;
     ss_utils_needed[basalSideName][UtilityRequest::QP_COORDS] = true;
   }
 }
@@ -268,41 +268,30 @@ void StokesFOThermoCoupled::setupEvaluatorRequests ()
 void StokesFOThermoCoupled::setFieldsProperties () {
   StokesFOBase::setFieldsProperties();
 
-  // Set ranks
-  field_rank[dof_names[1]] = 0;
-  field_rank[dof_names[2]] = 0;
-  field_rank[surface_enthalpy_name] = 0;
-  field_rank[flow_factor_name] = 0;
-  field_rank["basal_melt_rate"] = 0;
-  field_rank["Geo Flux Heat"] = 0;
-  field_rank["Geo Flux Heat SUPG"] = 0;
-  field_rank["W"] = 0;  // If compute_w=true, this is the same as dof_names[2]
-  field_rank[corrected_temperature_name] = 0;
-  field_rank[melting_enthalpy_name] = 0;
-  field_rank[melting_temperature_name] = 0;
-  field_rank[water_content_name] = 0;
-  field_rank[geothermal_flux_name] = 0;
-  field_rank["basal_vert_velocity"] = 0;
+  // All dofs have scalar type Scalar (i.e., they depend on the solution)
+  setSingleFieldProperties(dof_names[1], 0, FieldScalarType::Scalar, FieldLocation::Node);  // Vertical velocity
+  setSingleFieldProperties(dof_names[2], 0, FieldScalarType::Scalar, FieldLocation::Node);  // Enthalpy
 
-  // Set Scalar types
-  field_scalar_type[surface_enthalpy_name]      = FieldScalarType::ParamScalar;
-  field_scalar_type["Geo Flux Heat"]            = FieldScalarType::Scalar;
-  field_scalar_type["Geo Flux Heat SUPG"]       = FieldScalarType::Scalar;
-  field_scalar_type["W"]                        = FieldScalarType::Scalar;
-  field_scalar_type["basal_melt_rate"]          = FieldScalarType::Scalar;
-  field_scalar_type[corrected_temperature_name] = FieldScalarType::Scalar;
-  field_scalar_type[flow_factor_name]           = FieldScalarType::Scalar;
-  field_scalar_type[geothermal_flux_name]       = FieldScalarType::ParamScalar;
-  field_scalar_type[melting_temperature_name]   = FieldScalarType::MeshScalar;
-  field_scalar_type[melting_enthalpy_name]      = field_scalar_type[melting_temperature_name];
-  field_scalar_type[hydrostatic_pressure_name]  = FieldScalarType::ParamScalar;
-  field_scalar_type[water_content_name]         = FieldScalarType::Scalar;
-  field_scalar_type["basal_vert_velocity"]      = FieldScalarType::Scalar;
+  setSingleFieldProperties(surface_enthalpy_name     , 0, FieldScalarType::ParamScalar, FieldLocation::Node);
+  setSingleFieldProperties(flow_factor_name          , 0, FieldScalarType::Scalar     , FieldLocation::Cell); // Already processed in StokesFOBase, but need to adjust scalar type
+  setSingleFieldProperties("basal_melt_rate"         , 0, FieldScalarType::Scalar     , FieldLocation::Node);
+  setSingleFieldProperties("Geo Flux Heat"           , 0, FieldScalarType::Scalar     , FieldLocation::Node);
+  setSingleFieldProperties("Geo Flux Heat SUPG"      , 0, FieldScalarType::Scalar     , FieldLocation::Node);
+  setSingleFieldProperties("W"                       , 0, FieldScalarType::Scalar     , FieldLocation::Node); // If compute_w=true, this is the same as dof_names[2]
+  setSingleFieldProperties(geothermal_flux_name      , 0, FieldScalarType::ParamScalar, FieldLocation::Node);
+  setSingleFieldProperties(water_content_name        , 0, FieldScalarType::Scalar     , FieldLocation::Node);
+  setSingleFieldProperties(temperature_name          , 0, FieldScalarType::Scalar     , FieldLocation::Node);
+  setSingleFieldProperties(corrected_temperature_name, 0, FieldScalarType::Scalar     , FieldLocation::Node); // Already processed in StokesFOBase, but need to adjust scalar type
+  setSingleFieldProperties(melting_temperature_name  , 0, FieldScalarType::MeshScalar , FieldLocation::Node);
+  setSingleFieldProperties(melting_enthalpy_name     , 0, field_scalar_type[melting_temperature_name] , FieldLocation::Node);
+  setSingleFieldProperties(hydrostatic_pressure_name , 0, FieldScalarType::ParamScalar, FieldLocation::Node);
+  setSingleFieldProperties("basal_vert_velocity"     , 0, FieldScalarType::Scalar     , FieldLocation::Node);
 
   // Declare computed fields
   // NOTE: not *always* necessary, but it is sometimes (see StokesFOBase, towards the end of constructInterpolationEvaluators)
   is_computed_field[surface_enthalpy_name] = true; // Surface Enthalpy is the prescribed field for dirichlet bc, and it's computed
   is_computed_field[melting_enthalpy_name] = true;
+  is_computed_field[temperature_name] = true;
   is_computed_field[water_content_name] = true;
   is_computed_field["basal_melt_rate"] = true;
 }

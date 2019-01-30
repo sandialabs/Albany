@@ -299,6 +299,9 @@ void StokesFOBase::parseInputFields ()
       dist_params_name_to_mesh_part[param_name+"_upperbound"] = dist_params_name_to_mesh_part[param_name];
       is_dist[param_name+"_lowerbound"] = true;
       dist_params_name_to_mesh_part[param_name+"_lowerbound"] = dist_params_name_to_mesh_part[param_name];
+
+      // set hte scalar type already to ParamScalar
+      field_scalar_type[param_name] = FieldScalarType::ParamScalar;
     }
   }
 
@@ -365,7 +368,7 @@ void StokesFOBase::parseInputFields ()
     //       for the Residual.
     field_rank[stateName] = scalar_state ? 0 : 1;
     field_location[stateName] = nodal_state ? FieldLocation::Node : FieldLocation::Cell;
-    field_scalar_type[stateName] |= is_dist_param[stateName] ? FieldScalarType::ParamScalar : FieldScalarType::Real;
+    field_scalar_type[stateName] |= FieldScalarType::Real;
   }
 
   // Side set requirements
@@ -428,112 +431,54 @@ void StokesFOBase::parseInputFields ()
       }
 
       field_rank[stateName] = scalar_state ? 0 : 1;
-      ss_field_location[ss_name][stateName] = nodal_state ? FieldLocation::Node : FieldLocation::Cell;
+      field_location[stateName] = nodal_state ? FieldLocation::Node : FieldLocation::Cell;
+      field_scalar_type[stateName] |= FieldScalarType::Real;
     }
   }
 }
 
 void StokesFOBase::setFieldsProperties ()
 {
-  // All dofs have scalar type Scalar (i.e., they depend on the solution)
-  // and are computed.
+  // All dofs are computed
   for (auto it : dof_names) {
-    field_scalar_type[it] = FieldScalarType::Scalar;
     is_computed_field[it] = true;
   }
 
-  // All volume input fields are Real or ParamScalar (if they are dist params)
-  for (auto it : is_input_field) {
-    field_scalar_type[it.first] = is_dist_param[it.first] ? FieldScalarType::ParamScalar : FieldScalarType::Real;
-  }
+  // All dofs have scalar type Scalar. Note: we can't set field props for all dofs, since we don't know the rank
+  setSingleFieldProperties(dof_names[0], 1, FieldScalarType::Scalar, FieldLocation::Node);
 
-  // All side inputs are Real (there are no side dist params)
-  for (auto it : is_ss_input_field) {
-    for (auto it2 : it.second) {
-      field_scalar_type[it2.first] = FieldScalarType::Real;
-    }
-  }
-
-  // Set scalar types of known fields. For ice_thickness and surface_height, the scalar type should be at least MeshScalar.
-  // If things are different in derived classes, then adjust.
-  field_scalar_type[ice_thickness_name] |= FieldScalarType::MeshScalar;   // Note: use |= operator, so we keep the strongest.
-  field_scalar_type[surface_height_name] |= FieldScalarType::MeshScalar;  //       If they are dist param, the st will remain ParamScalar
-  field_scalar_type[vertically_averaged_velocity_name] = FieldScalarType::Scalar;
-  field_scalar_type[corrected_temperature_name] = field_scalar_type[temperature_name] |    // Note: corr temp is built from temp and surf height. Combine their scalar types.
-                                                  field_scalar_type[surface_height_name];  //       If derived class changes the type of temp or surf height, need to adjust this too.
-  field_scalar_type[bed_topography_name] |= FieldScalarType::MeshScalar;
+  // Set properties of known fields. If things are different in derived classes, then adjust.
+  setSingleFieldProperties(ice_thickness_name,  0, FieldScalarType::MeshScalar, FieldLocation::Node);
+  setSingleFieldProperties(surface_height_name, 0, FieldScalarType::MeshScalar, FieldLocation::Node);
+  setSingleFieldProperties(vertically_averaged_velocity_name, 1, FieldScalarType::Scalar, FieldLocation::Node);
+  // Note: corr temp is built from temp and surf height. Combine their scalar types.
+  //       If derived class changes the type of temp or surf height, need to adjust this too.
+  setSingleFieldProperties(corrected_temperature_name, 0, field_scalar_type[temperature_name] | field_scalar_type[surface_height_name], FieldLocation::Cell);
+  setSingleFieldProperties(bed_topography_name, 0, FieldScalarType::MeshScalar, FieldLocation::Node);
 
   // If the flow rate is given from file, we could just use RealType, but then we would need
   // to template ViscosityFO on 3 scalar types. For simplicity, we set it to be the same
   // of the temperature in ViscosityFO.
-  field_scalar_type[flow_factor_name] |= FieldScalarType::MeshScalar | field_scalar_type[(viscosity_use_corrected_temperature ? corrected_temperature_name : temperature_name)];
-
-  // Set ranks of known fields
-  // Note: we only care about fields that MAY not be parsed among the inputs.
-  field_rank[dof_names[0]] = 1;
-  field_rank[ice_thickness_name]   = 0;
-  field_rank[surface_height_name]  = 0;
-  field_rank[effective_pressure_name] = 0;
-  field_rank[vertically_averaged_velocity_name]  = 1;
-  field_rank[temperature_name] = 0;
-  field_rank[corrected_temperature_name] = 0;
-  field_rank[stiffening_factor_name] = 0;
-}
-
-void StokesFOBase::requestInterpolationEvaluator (
-    const std::string& fname,
-    // const int rank,
-    const FieldLocation location,
-    // const FieldScalarType scalar_type,
-    const InterpolationRequest request)
-{
-  // TEUCHOS_TEST_FOR_EXCEPTION (field_rank.find(fname)!=field_rank.end() && field_rank[fname]!=rank, std::logic_error, 
-  //                             "Error! Attempt to mark field '" + fname + " with rank " + std::to_string(rank) +
-  //                             ", when it was previously marked as of rank " + std::to_string(field_rank[fname]) + ".\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (field_location.find(fname)!=field_location.end() && field_location[fname]!=location, std::logic_error, 
-                              "Error! Attempt to mark field '" + fname + " as located at " + e2str(location) +
-                              ", when it was previously marked as located at " + e2str(field_location[fname]) + ".\n");
-
-  build_interp_ev[fname][request] = true;
-  // field_rank[fname] = rank;
-  field_location[fname] = location;
-  // field_scalar_type[fname] |= scalar_type;
-}
-
-void StokesFOBase::requestSideSetInterpolationEvaluator (
-    const std::string& ss_name,
-    const std::string& fname,
-    // const int rank,
-    const FieldLocation location,
-    // const FieldScalarType scalar_type,
-    const InterpolationRequest request)
-{
-  // TEUCHOS_TEST_FOR_EXCEPTION (field_rank.find(fname)!=field_rank.end() && field_rank[fname]!=rank, std::logic_error, 
-                              // "Error! Attempt to mark field '" + fname + " with rank " + std::to_string(rank) +
-                              // ", when it was previously marked as of rank " + std::to_string(field_rank[fname]) + ".\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (ss_field_location[ss_name].find(fname)!=ss_field_location[ss_name].end() && ss_field_location[ss_name][fname]!=location, std::logic_error, 
-                              "Error! Attempt to mark field '" + fname + " as located at " + e2str(location) +
-                              ", when it was previously marked as located at " + e2str(ss_field_location[ss_name][fname]) + ".\n");
-
-  ss_build_interp_ev[ss_name][fname][request] = true;
-  // field_rank[fname] = rank;
-  ss_field_location[ss_name][fname] = location;
-  // field_scalar_type[fname] |= scalar_type;
+  if (viscosity_use_corrected_temperature) {
+    setSingleFieldProperties(flow_factor_name, 0, FieldScalarType::MeshScalar | field_scalar_type[corrected_temperature_name], FieldLocation::Cell);
+  } else {
+    setSingleFieldProperties(flow_factor_name, 0, FieldScalarType::MeshScalar | field_scalar_type[temperature_name], FieldLocation::Cell);
+  }
 }
 
 void StokesFOBase::setupEvaluatorRequests ()
 {
   // Volume required interpolations
-  requestInterpolationEvaluator(dof_names[0], FieldLocation::Node, InterpolationRequest::QP_VAL); 
-  requestInterpolationEvaluator(dof_names[0], FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL); 
-  requestInterpolationEvaluator(surface_height_name, FieldLocation::Node, InterpolationRequest::QP_VAL); 
+  build_interp_ev[dof_names[0]][InterpolationRequest::QP_VAL] = true; 
+  build_interp_ev[dof_names[0]][InterpolationRequest::GRAD_QP_VAL] = true; 
+  build_interp_ev[surface_height_name][InterpolationRequest::QP_VAL] = true; 
   // If not coupled with cism, we may have to compute the surface gradient ourselves
-  requestInterpolationEvaluator(surface_height_name, FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL); 
+  build_interp_ev[surface_height_name][InterpolationRequest::GRAD_QP_VAL] = true; 
   if (is_input_field[temperature_name]) {
-    requestInterpolationEvaluator(temperature_name, FieldLocation::Node, InterpolationRequest::CELL_VAL); 
+    build_interp_ev[temperature_name][InterpolationRequest::CELL_VAL] = true;
   }
   if (is_input_field[stiffening_factor_name]) {
-    requestInterpolationEvaluator(stiffening_factor_name, FieldLocation::Node, InterpolationRequest::QP_VAL); 
+    build_interp_ev[stiffening_factor_name][InterpolationRequest::QP_VAL] = true; 
   }
 
   // Basal Friction BC requests
@@ -546,29 +491,27 @@ void StokesFOBase::setupEvaluatorRequests ()
     ss_utils_needed[ssName][UtilityRequest::BFS] = true;
     ss_utils_needed[ssName][UtilityRequest::QP_COORDS] = true;  // Only really needed if stereographic map is used.
 
-    requestSideSetInterpolationEvaluator(ssName, dof_names[0], FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE); 
-    requestSideSetInterpolationEvaluator(ssName, dof_names[0], FieldLocation::Node, InterpolationRequest::QP_VAL); 
-    requestSideSetInterpolationEvaluator(ssName, dof_names[0], FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL); 
-    requestSideSetInterpolationEvaluator(ssName, effective_pressure_name, FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL); 
-    requestSideSetInterpolationEvaluator(ssName, effective_pressure_name, FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE); 
+    ss_build_interp_ev[ssName][dof_names[0]][InterpolationRequest::CELL_TO_SIDE] = true; 
+    ss_build_interp_ev[ssName][dof_names[0]][InterpolationRequest::QP_VAL      ] = true; 
+    ss_build_interp_ev[ssName][dof_names[0]][InterpolationRequest::GRAD_QP_VAL ] = true; 
+    ss_build_interp_ev[ssName][effective_pressure_name][InterpolationRequest::GRAD_QP_VAL ] = true; 
+    ss_build_interp_ev[ssName][effective_pressure_name][InterpolationRequest::CELL_TO_SIDE] = true; 
 
     // For "Given Field" and "Exponent of Given Field" we also need to interpolate the given field at the quadrature points
     auto& bfc = it->sublist("Basal Friction Coefficient");
     const auto type = util::upper_case(bfc.get<std::string>("Type"));
     if (type=="GIVEN FIELD" || type=="EXPONENT OF GIVEN FIELD") {
-      requestSideSetInterpolationEvaluator(ssName, bfc.get<std::string>("Given Field Variable Name"),
-                                           FieldLocation::Node, InterpolationRequest::QP_VAL);
-      requestSideSetInterpolationEvaluator(ssName, bfc.get<std::string>("Given Field Variable Name"),
-                                           FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE);
+      ss_build_interp_ev[ssName][bfc.get<std::string>("Given Field Variable Name")][InterpolationRequest::QP_VAL      ] = true;
+      ss_build_interp_ev[ssName][bfc.get<std::string>("Given Field Variable Name")][InterpolationRequest::CELL_TO_SIDE] = true;
     }
 
     // If zero on floating, we also need bed topography and thickness
     if (bfc.get<bool>("Zero Beta On Floating Ice", false)) {
-      requestSideSetInterpolationEvaluator(ssName, bed_topography_name, FieldLocation::Node, InterpolationRequest::QP_VAL);
-      requestSideSetInterpolationEvaluator(ssName, bed_topography_name, FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE);
+      ss_build_interp_ev[ssName][bed_topography_name][InterpolationRequest::QP_VAL      ] = true;
+      ss_build_interp_ev[ssName][bed_topography_name][InterpolationRequest::CELL_TO_SIDE] = true;
 
-      requestSideSetInterpolationEvaluator(ssName, ice_thickness_name, FieldLocation::Node, InterpolationRequest::QP_VAL);
-      requestSideSetInterpolationEvaluator(ssName, ice_thickness_name, FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE);
+      ss_build_interp_ev[ssName][ice_thickness_name][InterpolationRequest::QP_VAL      ] = true;
+      ss_build_interp_ev[ssName][ice_thickness_name][InterpolationRequest::CELL_TO_SIDE] = true;
     }
   }
 
@@ -577,32 +520,33 @@ void StokesFOBase::setupEvaluatorRequests ()
     std::string ssName = it->get<std::string>("Side Set Name");
 
     // Lateral bc needs thickness ...
-    requestSideSetInterpolationEvaluator(ssName, ice_thickness_name, FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE); 
-    requestSideSetInterpolationEvaluator(ssName, ice_thickness_name, FieldLocation::Node, InterpolationRequest::QP_VAL); 
+    ss_build_interp_ev[ssName][ice_thickness_name][InterpolationRequest::CELL_TO_SIDE] = true; 
+    ss_build_interp_ev[ssName][ice_thickness_name][InterpolationRequest::QP_VAL      ] = true; 
 
     // ... possibly surface height ...
-    requestSideSetInterpolationEvaluator(ssName, surface_height_name, FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE);
-    requestSideSetInterpolationEvaluator(ssName, surface_height_name, FieldLocation::Node, InterpolationRequest::QP_VAL); 
+    ss_build_interp_ev[ssName][surface_height_name][InterpolationRequest::CELL_TO_SIDE] = true;
+    ss_build_interp_ev[ssName][surface_height_name][InterpolationRequest::QP_VAL      ] = true; 
 
     // ... and BFs (including normals)
-    ss_utils_needed[ssName][UtilityRequest::BFS] = true;
-    ss_utils_needed[ssName][UtilityRequest::NORMALS] = true;
+    ss_utils_needed[ssName][UtilityRequest::BFS      ] = true;
+    ss_utils_needed[ssName][UtilityRequest::NORMALS  ] = true;
     ss_utils_needed[ssName][UtilityRequest::QP_COORDS] = true;
   }
 
   // Surface diagnostics
   if (!isInvalid(surfaceSideName)) {
     // Surface velocity diagnostic requires dof at qps on surface side
-    requestSideSetInterpolationEvaluator(surfaceSideName, dof_names[0], FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE); 
-    requestSideSetInterpolationEvaluator(surfaceSideName, dof_names[0], FieldLocation::Node, InterpolationRequest::QP_VAL); 
+    ss_build_interp_ev[surfaceSideName][dof_names[0]][InterpolationRequest::CELL_TO_SIDE] = true; 
+    ss_build_interp_ev[surfaceSideName][dof_names[0]][InterpolationRequest::QP_VAL      ] = true; 
 
     // ... and observed surface velocity ...
     // NOTE: RMS could be either scalar or vector. The states registration should have figure it out (if the field is listed as input).
+    // Note: for input fields, do not specify location, since it should be already set
     if (is_ss_input_field[surfaceSideName]["observed_surface_velocity"]) {
-      requestSideSetInterpolationEvaluator(surfaceSideName, "observed_surface_velocity", FieldLocation::Node, InterpolationRequest::QP_VAL);
+      ss_build_interp_ev[surfaceSideName]["observed_surface_velocity"][InterpolationRequest::QP_VAL] = true;
     }
     if (is_ss_input_field[surfaceSideName]["observed_surface_velocity_RMS"]) {
-      requestSideSetInterpolationEvaluator(surfaceSideName, "observed_surface_velocity_RMS", FieldLocation::Node, InterpolationRequest::QP_VAL); 
+      ss_build_interp_ev[surfaceSideName]["observed_surface_velocity_RMS"][InterpolationRequest::QP_VAL] = true; 
     }
 
     // ... and BFs
@@ -610,9 +554,9 @@ void StokesFOBase::setupEvaluatorRequests ()
 
     if (!isInvalid(basalSideName) && is_input_field[stiffening_factor_name]) {
       // Surface velocity diagnostics *may* add a basal side regularization
-      requestSideSetInterpolationEvaluator(basalSideName, stiffening_factor_name, FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE); 
-      requestSideSetInterpolationEvaluator(basalSideName, stiffening_factor_name, FieldLocation::Node, InterpolationRequest::QP_VAL); 
-      requestSideSetInterpolationEvaluator(basalSideName, stiffening_factor_name, FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL); 
+      ss_build_interp_ev[basalSideName][stiffening_factor_name][InterpolationRequest::CELL_TO_SIDE] = true; 
+      ss_build_interp_ev[basalSideName][stiffening_factor_name][InterpolationRequest::QP_VAL      ] = true; 
+      ss_build_interp_ev[basalSideName][stiffening_factor_name][InterpolationRequest::GRAD_QP_VAL ] = true; 
 
       ss_utils_needed[basalSideName][UtilityRequest::BFS] = true;
     }
@@ -624,25 +568,39 @@ void StokesFOBase::setupEvaluatorRequests ()
     ss_utils_needed[basalSideName][UtilityRequest::BFS] = true;
 
     // SMB evaluators may need velocity, averaged velocity, and thickness
-    requestSideSetInterpolationEvaluator(basalSideName, dof_names[0], FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE); 
-    requestSideSetInterpolationEvaluator(basalSideName, dof_names[0], FieldLocation::Node, InterpolationRequest::QP_VAL); 
-    requestSideSetInterpolationEvaluator(basalSideName, vertically_averaged_velocity_name, FieldLocation::Node, InterpolationRequest::QP_VAL); 
-    requestSideSetInterpolationEvaluator(basalSideName, ice_thickness_name, FieldLocation::Node, InterpolationRequest::QP_VAL); 
-    requestSideSetInterpolationEvaluator(basalSideName, ice_thickness_name, FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL); 
-    requestSideSetInterpolationEvaluator(basalSideName, ice_thickness_name, FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE); 
+    ss_build_interp_ev[basalSideName][dof_names[0]][InterpolationRequest::CELL_TO_SIDE] = true; 
+    ss_build_interp_ev[basalSideName][dof_names[0]][InterpolationRequest::QP_VAL      ] = true; 
+    ss_build_interp_ev[basalSideName][vertically_averaged_velocity_name][InterpolationRequest::QP_VAL] = true; 
+    ss_build_interp_ev[basalSideName][ice_thickness_name][InterpolationRequest::QP_VAL      ] = true; 
+    ss_build_interp_ev[basalSideName][ice_thickness_name][InterpolationRequest::GRAD_QP_VAL ] = true; 
+    ss_build_interp_ev[basalSideName][ice_thickness_name][InterpolationRequest::CELL_TO_SIDE] = true; 
     if (is_ss_input_field[basalSideName]["surface_mass_balance"]) {
-      requestSideSetInterpolationEvaluator(basalSideName, "surface_mass_balance", FieldLocation::Node, InterpolationRequest::QP_VAL); 
+      ss_build_interp_ev[basalSideName]["surface_mass_balance"][InterpolationRequest::QP_VAL] = true; 
     }
     if (is_ss_input_field[basalSideName]["surface_mass_balance_RMS"]) {
-      requestSideSetInterpolationEvaluator(basalSideName, "surface_mass_balance_RMS", FieldLocation::Node, InterpolationRequest::QP_VAL); 
+      ss_build_interp_ev[basalSideName]["surface_mass_balance_RMS"][InterpolationRequest::QP_VAL] = true; 
     }
     if (is_ss_input_field[basalSideName]["observed_ice_thickness"]) {
-      requestSideSetInterpolationEvaluator(basalSideName, "observed_ice_thickness", FieldLocation::Node, InterpolationRequest::QP_VAL); 
+      ss_build_interp_ev[basalSideName]["observed_ice_thickness"][InterpolationRequest::QP_VAL] = true; 
     }
     if (is_ss_input_field[basalSideName]["observed_ice_thickness_RMS"]) {
-      requestSideSetInterpolationEvaluator(basalSideName, "observed_ice_thickness_RMS", FieldLocation::Node, InterpolationRequest::QP_VAL); 
+      ss_build_interp_ev[basalSideName]["observed_ice_thickness_RMS"][InterpolationRequest::QP_VAL] = true;
     }
   }
+}
+
+void StokesFOBase::setSingleFieldProperties (const std::string& fname,
+                                             const int rank,
+                                             const FieldScalarType st,
+                                             const FieldLocation location)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (field_rank.find(fname)!=field_rank.end() && field_rank[fname]!=rank, std::logic_error, 
+                              "Error! Attempt to mark field '" + fname + " with rank " + std::to_string(rank) +
+                              ", when it was previously marked as of rank " + std::to_string(field_rank[fname]) + ".\n");
+
+  field_rank[fname] = rank;
+  field_location[fname] = location;
+  field_scalar_type[fname] |= st; // Use logic or, so that if the props of a field are set multiple times (in base and derived), we keep the strongest
 }
 
 } // namespace LandIce

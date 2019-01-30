@@ -137,13 +137,10 @@ protected:
   Teuchos::RCP<Teuchos::ParameterList>
   getStokesFOBaseProblemParameters () const;
 
-  // Request interpolation evaluators (volume and side set versions)
-  void requestInterpolationEvaluator (const std::string& fname, //const int rank,
-                                      const FieldLocation location, // const FieldScalarType scalar_type,
-                                      const InterpolationRequest request) ;
-  void requestSideSetInterpolationEvaluator (const std::string& ss_name, const std::string& fname, // const int rank,
-                                             const FieldLocation location, //const FieldScalarType scalar_type,
-                                             const InterpolationRequest request);
+  void setSingleFieldProperties (const std::string& fname,
+                                 const int rank,
+                                 const FieldScalarType st,
+                                 const FieldLocation location);
 
   void parseInputFields ();
 
@@ -215,9 +212,8 @@ protected:
   std::map<std::string,bool> save_sensitivities;
   std::map<std::string,std::string> dist_params_name_to_mesh_part;
 
-  std::map<std::string, std::map<std::string,bool>>             is_ss_input_field;
-  std::map<std::string, std::map<std::string,bool>>             is_ss_computed_field;
-  std::map<std::string, std::map<std::string,FieldLocation>>    ss_field_location;
+  std::map<std::string, std::map<std::string,bool>>   is_ss_input_field;
+  std::map<std::string, std::map<std::string,bool>>   is_ss_computed_field;
 
   std::map<std::string,bool>  is_dist_param;
   std::map<std::string,bool>  is_extruded_param;
@@ -524,14 +520,6 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
   for (auto& it : build_interp_ev) {
     // Get the field name
     const std::string& fname = it.first;
-//////////
-      if (field_rank.find(fname)==field_rank.end()) {
-        std::cout << "missing field rank for field " << fname << "\n";
-      }
-      if (field_scalar_type.find(fname)==field_scalar_type.end()) {
-        std::cout << "missing field scalar type for field " << fname << "\n";
-      }
-/////////////
 
     // If there's no information about this field, we assume it is not needed, so we skip it.
     // If it WAS indeed needed, Phalanx DAG will miss a node, and an exception will be thrown.
@@ -569,7 +557,9 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
     auto dof_it = std::find(dof_names.begin(),dof_names.end(),fname);
     int offset = dof_it==dof_names.end() ? -1 : dof_offsets[std::distance(dof_names.begin(),dof_it)];
 
+    const FieldLocation entity = field_location.at(fname);
     if (needs[InterpolationRequest::QP_VAL]) {
+      TEUCHOS_TEST_FOR_EXCEPTION(entity==FieldLocation::Cell, std::logic_error, "Error! Cannot interpolate a field not defined on nodes.\n");
       if (rank==0) {
         ev = utils.constructDOFInterpolationEvaluator(fname, offset, useMemoization);
       } else if (rank==1) {
@@ -583,6 +573,7 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
     }
 
     if (needs[InterpolationRequest::GRAD_QP_VAL]) {
+      TEUCHOS_TEST_FOR_EXCEPTION(entity==FieldLocation::Cell, std::logic_error, "Error! Cannot interpolate a field not defined on nodes.\n");
       if (rank==0) {
         ev = utils.constructDOFGradInterpolationEvaluator(fname, offset, useMemoization);
       } else if (rank==1) {
@@ -595,7 +586,7 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       fm0.template registerEvaluator<EvalT> (ev);
     }
 
-    if (needs[InterpolationRequest::CELL_VAL]) {
+    if (needs[InterpolationRequest::CELL_VAL] && entity==FieldLocation::Node) {
       if (rank==0) {
         ev = utils.constructNodesToCellInterpolationEvaluator (fname, /*isVectorField = */ false, useMemoization);
       } else if (rank==1) {
@@ -622,24 +613,13 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       auto& needs = it.second;
 
       // Get location, rank, and scalar type of the field.
-//////////
-      if (ss_field_location.at(ss_name).find(fname)==ss_field_location.at(ss_name).end()) {
-        std::cout << "missing field location for field " << fname << " on ss " << ss_name << "\n";
-      }
-      if (field_rank.find(fname)==field_rank.end()) {
-        std::cout << "missing field rank for field " << fname << " on ss " << ss_name << "\n";
-      }
-      if (field_scalar_type.find(fname)==field_scalar_type.end()) {
-        std::cout << "missing field scalar type for field " << fname << " on ss " << ss_name << "\n";
-      }
-/////////////
       // If we are missing some information about this field, we assume it is not needed, so we skip it.
       // If it WAS indeed needed, Phalanx DAG will miss a node, and an exception will be thrown.
       if (field_scalar_type.find(fname)==field_scalar_type.end()) {
         continue;
       }
 
-      const FieldLocation entity = ss_field_location.at(ss_name).at(fname);
+      const FieldLocation entity = field_location.at(fname);
       const int rank = field_rank.at(fname);
 
       TEUCHOS_TEST_FOR_EXCEPTION (rank<0 || rank>1, std::logic_error, "Error! Interpolation on side only available for scalar and vector fields.\n");

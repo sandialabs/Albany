@@ -196,9 +196,20 @@ void StokesFO::setFieldsProperties () {
     }
   }
 
+  // If we don't have effective pressure as input, we *may* be computing a surrogate on a side, so set the resulting scalar type
+  bool has_eff_press = is_input_field[effective_pressure_name];
+  if (!has_eff_press) {
+    for (auto it : is_ss_input_field) {
+      if (!it.second[effective_pressure_name]) {
+        setSingleFieldProperties(effective_pressure_name, 0, field_scalar_type[ice_thickness_name] | field_scalar_type[surface_height_name], FieldLocation::Node);
+        is_ss_computed_field[it.first][effective_pressure_name] = true;
+      }
+    }
+  }
+
   // UpdateZCoordinate expects the (observed) bed topography and (observed) surface height to have scalar type MeshScalarT.
-  field_scalar_type["observed_bed_topography"] = FieldScalarType::MeshScalar;
-  field_scalar_type["observed_surface_height"] = FieldScalarType::MeshScalar;
+  setSingleFieldProperties("observed_bed_topography", 0, FieldScalarType::MeshScalar, FieldLocation::Node);
+  setSingleFieldProperties("observed_surface_height", 0, FieldScalarType::MeshScalar, FieldLocation::Node);
 }
 
 void StokesFO::setupEvaluatorRequests () {
@@ -208,13 +219,13 @@ void StokesFO::setupEvaluatorRequests () {
   for (auto pl : landice_bcs[LandIceBC::SynteticTest]) {
     const std::string& ssName = pl->get<std::string>("Side Set Name");
 
-    requestSideSetInterpolationEvaluator(ssName, dof_names[0], FieldLocation::Node, InterpolationRequest::CELL_TO_SIDE); 
-    requestSideSetInterpolationEvaluator(ssName, dof_names[0], FieldLocation::Node, InterpolationRequest::QP_VAL); 
-    requestSideSetInterpolationEvaluator(ssName, dof_names[0], FieldLocation::Node, InterpolationRequest::GRAD_QP_VAL); 
+    ss_build_interp_ev[ssName][dof_names[0]][InterpolationRequest::CELL_TO_SIDE] = true; 
+    ss_build_interp_ev[ssName][dof_names[0]][InterpolationRequest::QP_VAL      ] = true; 
+    ss_build_interp_ev[ssName][dof_names[0]][InterpolationRequest::GRAD_QP_VAL ] = true; 
 
-    ss_utils_needed[ssName][UtilityRequest::BFS] = true;
+    ss_utils_needed[ssName][UtilityRequest::BFS      ] = true;
     ss_utils_needed[ssName][UtilityRequest::QP_COORDS] = true;
-    ss_utils_needed[ssName][UtilityRequest::NORMALS] = true;
+    ss_utils_needed[ssName][UtilityRequest::NORMALS  ] = true;
   }
 }
 
