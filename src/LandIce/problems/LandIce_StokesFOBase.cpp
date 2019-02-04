@@ -480,6 +480,9 @@ void StokesFOBase::setupEvaluatorRequests ()
   if (is_input_field[stiffening_factor_name]) {
     build_interp_ev[stiffening_factor_name][InterpolationRequest::QP_VAL] = true; 
   }
+  if (viscosity_use_corrected_temperature && is_input_field[surface_height_name]) {
+    build_interp_ev[surface_height_name][InterpolationRequest::CELL_VAL] = true;
+  }
 
   // Basal Friction BC requests
   for (auto it : landice_bcs[LandIceBC::BasalFriction]) {
@@ -494,6 +497,8 @@ void StokesFOBase::setupEvaluatorRequests ()
     ss_build_interp_ev[ssName][dof_names[0]][InterpolationRequest::CELL_TO_SIDE] = true; 
     ss_build_interp_ev[ssName][dof_names[0]][InterpolationRequest::QP_VAL      ] = true; 
     ss_build_interp_ev[ssName][dof_names[0]][InterpolationRequest::GRAD_QP_VAL ] = true; 
+    if (is_input_field["effective_pressure"])
+      ss_build_interp_ev[ssName][effective_pressure_name][InterpolationRequest::QP_VAL ] = true;
     ss_build_interp_ev[ssName][effective_pressure_name][InterpolationRequest::GRAD_QP_VAL ] = true; 
     ss_build_interp_ev[ssName][effective_pressure_name][InterpolationRequest::CELL_TO_SIDE] = true; 
 

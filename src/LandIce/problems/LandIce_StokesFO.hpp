@@ -189,7 +189,7 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<bool>("Enable Memoizer", this->params->get<bool>("Use MDField Memoization", false));
 
     //Output
-    p->set<std::string>("Corrected Temperature Variable Name", "corrected " + temperature_name);
+    p->set<std::string>("Corrected Temperature Variable Name", corrected_temperature_name);
 
     ev = createEvaluatorWithTwoScalarTypes<LandIce::PressureCorrectedTemperature,EvalT>(p,dl,field_scalar_type[temperature_name],field_scalar_type[surface_height_name]);
     fm0.template registerEvaluator<EvalT>(ev);

@@ -278,7 +278,7 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
 
   // ---------------------------- Registering state variables ------------------------- //
 
-  std::string stateName, fieldName, param_name;
+  std::string stateName, fieldName;
 
   // Volume mesh requirements
   Teuchos::ParameterList& req_fields_info = discParams->sublist("Required Fields Info");
@@ -312,7 +312,7 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
       scalar_state = true;
     } else if(fieldType == "Node Scalar") {
       entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
-      if(is_dist[stateName] && save_sensitivities[param_name]) {
+      if(is_dist[stateName] && save_sensitivities[stateName]) {
         p = stateMgr.registerStateVariable(stateName + "_sensitivity", dl->node_scalar, meshSpecs.ebName, true, &entity, meshPart);
       }
       p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, meshPart);
@@ -829,7 +829,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       //Input
       if (viscosity_use_corrected_temperature) {
-        p->set<std::string>("Temperature Variable Name", "corrected temperature");
+        p->set<std::string>("Temperature Variable Name", "corrected_temperature_name");
       } else {
         // Avoid pointless calculation, and use original temperature in viscosity calculation
         p->set<std::string>("Temperature Variable Name", temperature_name);
