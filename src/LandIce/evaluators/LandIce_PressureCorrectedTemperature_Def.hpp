@@ -14,12 +14,7 @@ namespace LandIce
 {
 
 template<typename EvalT, typename Traits, typename TempST, typename SurfHeightST>
-PressureCorrectedTemperature<EvalT,Traits, TempST, SurfHeightST,
-                                   typename std::enable_if<
-                                              std::is_convertible<SurfHeightST, TempST>::value &&
-                                              std::is_convertible<typename EvalT::MeshScalarT,TempST>::value,
-                                              typename EvalT::MeshScalarT
-                                            >::type>::
+PressureCorrectedTemperature<EvalT,Traits, TempST, SurfHeightST>::
 PressureCorrectedTemperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
   sHeight (p.get<std::string> ("Surface Height Variable Name"), dl->cell_scalar2),
   temp (p.get<std::string> ("Temperature Variable Name"), dl->cell_scalar2),
@@ -46,12 +41,7 @@ PressureCorrectedTemperature(const Teuchos::ParameterList& p, const Teuchos::RCP
 }
 
 template<typename EvalT, typename Traits, typename TempST, typename SurfHeightST>
-void PressureCorrectedTemperature<EvalT,Traits, TempST, SurfHeightST,
-                                  typename std::enable_if<
-                                             std::is_convertible<SurfHeightST, TempST>::value &&
-                                             std::is_convertible<typename EvalT::MeshScalarT,TempST>::value,
-                                             typename EvalT::MeshScalarT
-                                           >::type>::
+void PressureCorrectedTemperature<EvalT,Traits, TempST, SurfHeightST>::
 evaluateFields(typename Traits::EvalData d)
 {
   if (memoizer.have_stored_data(d)) return;
