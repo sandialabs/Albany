@@ -202,6 +202,39 @@ namespace PHX {
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   TanFadType>; \
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType>;
 
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_RESIDUAL(name) \
+  template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits, RealType, RealType, RealType>;
+
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_JACOBIAN(name) \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, RealType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, RealType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, FadType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, FadType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, RealType, FadType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, RealType, FadType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, FadType, FadType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, FadType, FadType>;
+
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_TANGENT(name) \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, RealType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, RealType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, TanFadType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, TanFadType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, RealType, TanFadType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, RealType, TanFadType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, TanFadType, TanFadType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, TanFadType, TanFadType>;
+
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_DISTPARAMDERIV(name)                                                         \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   RealType, RealType>;   \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, RealType, RealType>;   \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   TanFadType, RealType>; \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType, RealType>; \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   RealType, TanFadType>;   \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, RealType, TanFadType>;   \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   TanFadType, TanFadType>; \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType, TanFadType>;
+
 // 4. Input-output scalar type case: similar to the above one with two scalar types.
 //    However, the output scalar type MUST be constructible from the input one, so
 //    certain combinations are not allowed.
@@ -242,6 +275,12 @@ namespace PHX {
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_JACOBIAN(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_TANGENT(name)          \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_DISTPARAMDERIV(name)
+
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES(name)            \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_RESIDUAL(name)         \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_JACOBIAN(name)         \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_TANGENT(name)          \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_DISTPARAMDERIV(name)
 
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_RESIDUAL(name)         \
