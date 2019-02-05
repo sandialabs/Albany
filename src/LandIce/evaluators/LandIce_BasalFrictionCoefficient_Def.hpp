@@ -22,8 +22,8 @@
 namespace LandIce
 {
 
-template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes, bool ThermoCoupled>
-BasalFrictionCoefficient<EvalT, Traits, IsHydrology, IsStokes, ThermoCoupled>::
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 BasalFrictionCoefficient (const Teuchos::ParameterList& p,
                           const Teuchos::RCP<Albany::Layouts>& dl)
 {
@@ -42,7 +42,9 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
   std::string betaType = util::upper_case((beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "Given Field"));
 
-  if (IsStokes)
+  is_side_equation = p.isParameter("Side Set Name");
+
+  if (is_side_equation)
   {
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
@@ -103,7 +105,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
     std::string given_field_name = beta_list.get<std::string> ("Given Field Variable Name");
     is_given_field_param = is_dist_param.is_null() ? false : (*is_dist_param)[given_field_name];
-    if (IsStokes) {
+    if (is_side_equation) {
       given_field_name += "_" + basalSideName;
     }
     if(beta_type == GAL_PROJ_EXP_GIVEN_FIELD) {
@@ -129,8 +131,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
             << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
-    N              = PHX::MDField<const HydroScalarT>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
-    u_norm         = PHX::MDField<const IceScalarT>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
+    N              = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
+    u_norm         = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
     muPowerLaw     = PHX::MDField<const ScalarT,Dim>("Power Law Coefficient", dl->shared_param);
     powerParam     = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
 
@@ -150,11 +152,11 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 #endif
 
     n            = p.get<Teuchos::ParameterList*>("Viscosity Parameter List")->get<double>("Glen's Law n");
-    N            = PHX::MDField<const HydroScalarT>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
-    u_norm       = PHX::MDField<const IceScalarT>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
+    N            = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
+    u_norm       = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
     muCoulomb    = PHX::MDField<const ScalarT,Dim>("Coulomb Friction Coefficient", dl->shared_param);
     powerParam   = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
-    ice_softness = PHX::MDField<const TempScalarT>(p.get<std::string>("Ice Softness Variable Name"), dl->cell_scalar2);
+    ice_softness = PHX::MDField<const TemperatureST>(p.get<std::string>("Ice Softness Variable Name"), dl->cell_scalar2);
 
     this->addDependentField (muCoulomb);
     this->addDependentField (powerParam);
@@ -220,8 +222,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes, bool ThermoCoupled>
-void BasalFrictionCoefficient<EvalT, Traits, IsHydrology, IsStokes, ThermoCoupled>::
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 postRegistrationSetup (typename Traits::SetupData d,
                        PHX::FieldManager<Traits>& fm)
 {
@@ -230,8 +232,8 @@ postRegistrationSetup (typename Traits::SetupData d,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes, bool ThermoCoupled>
-void BasalFrictionCoefficient<EvalT, Traits, IsHydrology, IsStokes, ThermoCoupled>::
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 evaluateFields (typename Traits::EvalData workset)
 {
   if (memoizer.have_stored_data(workset)) return;
@@ -323,14 +325,14 @@ evaluateFields (typename Traits::EvalData workset)
                                 "\nError in LandIce::BasalFrictionCoefficient: \"Bed Roughness\" must be >= 0.\n");
   }
 
-  if (IsStokes)
+  if (is_side_equation)
     evaluateFieldsSide(workset,mu,lambda,power);
   else
     evaluateFieldsCell(workset,mu,lambda,power);
 }
 
-template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes, bool ThermoCoupled>
-void BasalFrictionCoefficient<EvalT, Traits, IsHydrology, IsStokes, ThermoCoupled>::
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambda, ScalarT power)
 {
   if (workset.sideSets->find(basalSideName)==workset.sideSets->end())
@@ -435,8 +437,8 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
   }
 }
 
-template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes, bool ThermoCoupled>
-void BasalFrictionCoefficient<EvalT, Traits, IsHydrology, IsStokes, ThermoCoupled>::
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambda, ScalarT power)
 {
   const int dim = nodal ? numNodes : numQPs;

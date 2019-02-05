@@ -9,11 +9,4 @@
 #include "LandIce_BasalFrictionCoefficient.hpp"
 #include "LandIce_BasalFrictionCoefficient_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::BasalFrictionCoefficient,true,true,true)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::BasalFrictionCoefficient,true,true,false)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::BasalFrictionCoefficient,true,false,true)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::BasalFrictionCoefficient,true,false,false)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::BasalFrictionCoefficient,false,true,true)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::BasalFrictionCoefficient,false,true,false)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::BasalFrictionCoefficient,false,false,true)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::BasalFrictionCoefficient,false,false,false)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES(LandIce::BasalFrictionCoefficient)

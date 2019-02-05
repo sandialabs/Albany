@@ -39,6 +39,7 @@
 #include "LandIce_ParamEnum.hpp"
 #include "LandIce_SharedParameter.hpp"
 #include "LandIce_SimpleOperationEvaluator.hpp"
+#include "LandIce_ProblemUtils.hpp"
 
 namespace LandIce
 {
@@ -731,12 +732,12 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string>("Basal Friction Coefficient Variable Name", beta_name);
 
-  ev = Teuchos::rcp(new LandIce::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,true,false,false>(*p,dl));
+  ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl, FieldScalarType::Scalar, FieldScalarType::ParamScalar,FieldScalarType::ParamScalar);
   fm0.template registerEvaluator<EvalT>(ev);
 
   //--- LandIce basal friction coefficient nodal (for output in the mesh, if needed) ---//
   p->set<bool>("Nodal",true);
-  ev = Teuchos::rcp(new LandIce::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,true,false,false>(*p,dl));
+  ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl, FieldScalarType::Scalar, FieldScalarType::ParamScalar,FieldScalarType::ParamScalar);
   fm0.template registerEvaluator<EvalT>(ev);
 
   // ------- Hydrology Residual Mass Eqn-------- //

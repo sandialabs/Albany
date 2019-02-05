@@ -243,6 +243,231 @@ createEvaluatorWithTwoScalarTypes (Teuchos::RCP<Teuchos::ParameterList> p,
   return ev;
 }
 
+template<template <typename,typename,typename,typename...> class Evaluator, typename EvalT>
+Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> >
+createEvaluatorWithThreeScalarTypes (Teuchos::RCP<Teuchos::ParameterList> p,
+                                   Teuchos::RCP<Albany::Layouts>        dl,
+                                   FieldScalarType                      st1,
+                                   FieldScalarType                      st2,
+                                   FieldScalarType                      st3)
+{
+  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
+  if (st1==FieldScalarType::Scalar) {
+    if (st2==FieldScalarType::Scalar) {
+      if (st3==FieldScalarType::Scalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ScalarT,typename EvalT::ScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::ParamScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ScalarT,typename EvalT::ParamScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::MeshScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ScalarT,typename EvalT::MeshScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::Real) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ScalarT,RealType>(*p,dl));
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized third scalar type.\n");
+      }
+    } else if (st2==FieldScalarType::ParamScalar) {
+      if (st3==FieldScalarType::Scalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ParamScalarT,typename EvalT::ScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::ParamScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ParamScalarT,typename EvalT::ParamScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::MeshScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ParamScalarT,typename EvalT::MeshScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::Real) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ParamScalarT,RealType>(*p,dl));
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized third scalar type.\n");
+      }
+    } else if (st2==FieldScalarType::MeshScalar) {
+      if (st3==FieldScalarType::Scalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::MeshScalarT,typename EvalT::ScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::ParamScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::MeshScalarT,typename EvalT::ParamScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::MeshScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::MeshScalarT,typename EvalT::MeshScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::Real) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::MeshScalarT,RealType>(*p,dl));
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized third scalar type.\n");
+      }
+    } else if (st2==FieldScalarType::Real) {
+      if (st3==FieldScalarType::Scalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,RealType,typename EvalT::ScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::ParamScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,RealType,typename EvalT::ParamScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::MeshScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,RealType,typename EvalT::MeshScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::Real) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,RealType,RealType>(*p,dl));
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized third scalar type.\n");
+      }
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized second scalar type.\n");
+    }
+  } else if (st1==FieldScalarType::ParamScalar) {
+    if (st2==FieldScalarType::Scalar) {
+      if (st3==FieldScalarType::Scalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ScalarT,typename EvalT::ScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::ParamScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ScalarT,typename EvalT::ParamScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::MeshScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ScalarT,typename EvalT::MeshScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::Real) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ScalarT,RealType>(*p,dl));
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized third scalar type.\n");
+      }
+    } else if (st2==FieldScalarType::ParamScalar) {
+      if (st3==FieldScalarType::Scalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ParamScalarT,typename EvalT::ScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::ParamScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ParamScalarT,typename EvalT::ParamScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::MeshScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ParamScalarT,typename EvalT::MeshScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::Real) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ParamScalarT,RealType>(*p,dl));
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized third scalar type.\n");
+      }
+    } else if (st2==FieldScalarType::MeshScalar) {
+      if (st3==FieldScalarType::Scalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::MeshScalarT,typename EvalT::ScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::ParamScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::MeshScalarT,typename EvalT::ParamScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::MeshScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::MeshScalarT,typename EvalT::MeshScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::Real) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::MeshScalarT,RealType>(*p,dl));
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized third scalar type.\n");
+      }
+    } else if (st2==FieldScalarType::Real) {
+      if (st3==FieldScalarType::Scalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,RealType,typename EvalT::ScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::ParamScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,RealType,typename EvalT::ParamScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::MeshScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,RealType,typename EvalT::MeshScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::Real) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,RealType,RealType>(*p,dl));
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized third scalar type.\n");
+      }
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized second scalar type.\n");
+    }
+  } else if (st1==FieldScalarType::MeshScalar) {
+    if (st2==FieldScalarType::Scalar) {
+      if (st3==FieldScalarType::Scalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,typename EvalT::ScalarT,typename EvalT::ScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::ParamScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,typename EvalT::ScalarT,typename EvalT::ParamScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::MeshScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,typename EvalT::ScalarT,typename EvalT::MeshScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::Real) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,typename EvalT::ScalarT,RealType>(*p,dl));
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized third scalar type.\n");
+      }
+    } else if (st2==FieldScalarType::ParamScalar) {
+      if (st3==FieldScalarType::Scalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,typename EvalT::ParamScalarT,typename EvalT::ScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::ParamScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,typename EvalT::ParamScalarT,typename EvalT::ParamScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::MeshScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,typename EvalT::ParamScalarT,typename EvalT::MeshScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::Real) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,typename EvalT::ParamScalarT,RealType>(*p,dl));
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized third scalar type.\n");
+      }
+    } else if (st2==FieldScalarType::MeshScalar) {
+      if (st3==FieldScalarType::Scalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,typename EvalT::MeshScalarT,typename EvalT::ScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::ParamScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,typename EvalT::MeshScalarT,typename EvalT::ParamScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::MeshScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,typename EvalT::MeshScalarT,typename EvalT::MeshScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::Real) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,typename EvalT::MeshScalarT,RealType>(*p,dl));
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized third scalar type.\n");
+      }
+    } else if (st2==FieldScalarType::Real) {
+      if (st3==FieldScalarType::Scalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,RealType,typename EvalT::ScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::ParamScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,RealType,typename EvalT::ParamScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::MeshScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,RealType,typename EvalT::MeshScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::Real) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT,RealType,RealType>(*p,dl));
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized third scalar type.\n");
+      }
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized second scalar type.\n");
+    }
+  } else if (st1==FieldScalarType::Real) {
+    if (st2==FieldScalarType::Scalar) {
+      if (st3==FieldScalarType::Scalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,typename EvalT::ScalarT,typename EvalT::ScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::ParamScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,typename EvalT::ScalarT,typename EvalT::ParamScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::MeshScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,typename EvalT::ScalarT,typename EvalT::MeshScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::Real) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,typename EvalT::ScalarT,RealType>(*p,dl));
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized third scalar type.\n");
+      }
+    } else if (st2==FieldScalarType::ParamScalar) {
+      if (st3==FieldScalarType::Scalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,typename EvalT::ParamScalarT,typename EvalT::ScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::ParamScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,typename EvalT::ParamScalarT,typename EvalT::ParamScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::MeshScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,typename EvalT::ParamScalarT,typename EvalT::MeshScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::Real) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,typename EvalT::ParamScalarT,RealType>(*p,dl));
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized third scalar type.\n");
+      }
+    } else if (st2==FieldScalarType::MeshScalar) {
+      if (st3==FieldScalarType::Scalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,typename EvalT::MeshScalarT,typename EvalT::ScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::ParamScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,typename EvalT::MeshScalarT,typename EvalT::ParamScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::MeshScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,typename EvalT::MeshScalarT,typename EvalT::MeshScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::Real) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,typename EvalT::MeshScalarT,RealType>(*p,dl));
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized third scalar type.\n");
+      }
+    } else if (st2==FieldScalarType::Real) {
+      if (st3==FieldScalarType::Scalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,RealType,typename EvalT::ScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::ParamScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,RealType,typename EvalT::ParamScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::MeshScalar) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,RealType,typename EvalT::MeshScalarT>(*p,dl));
+      } else if (st3==FieldScalarType::Real) {
+        ev = Teuchos::rcp(new Evaluator<EvalT,PHAL::AlbanyTraits,RealType,RealType,RealType>(*p,dl));
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized third scalar type.\n");
+      }
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized second scalar type.\n");
+    }
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION  (true, std::runtime_error, "Error! Unrecognized first scalar type.\n");
+  }
+
+  return ev;
+}
+
+
 } // namespace LandIce
 
 #endif // LANDICE_PROBLEM_UTILS_HPP

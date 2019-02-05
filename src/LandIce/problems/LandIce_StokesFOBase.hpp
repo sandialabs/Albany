@@ -1214,15 +1214,15 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
 
     if (temperature_coupled) {
       if (hydrology_coupled) {
-        ev = Teuchos::rcp(new LandIce::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,true,true,true>(*p,dl_side));
+        ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl_side, FieldScalarType::Scalar, FieldScalarType::Scalar,FieldScalarType::Scalar);
       } else {
-        ev = Teuchos::rcp(new LandIce::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,true,true>(*p,dl_side));
+        ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl_side, FieldScalarType::ParamScalar, FieldScalarType::Scalar,FieldScalarType::Scalar);
       }
     } else {
       if (hydrology_coupled) {
-        ev = Teuchos::rcp(new LandIce::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,true,true,false>(*p,dl_side));
+        ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl_side, FieldScalarType::Scalar, FieldScalarType::Scalar,FieldScalarType::ParamScalar);
       } else {
-        ev = Teuchos::rcp(new LandIce::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,true,false>(*p,dl_side));
+        ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl_side, FieldScalarType::Real, FieldScalarType::Scalar,FieldScalarType::ParamScalar);
       }
     }
     fm0.template registerEvaluator<EvalT>(ev);
@@ -1231,15 +1231,15 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     p->set<bool>("Nodal",true);
     if (temperature_coupled) {
       if (hydrology_coupled) {
-        ev = Teuchos::rcp(new LandIce::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,true,true,true>(*p,dl_side));
+        ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl_side, FieldScalarType::Scalar, FieldScalarType::Scalar,FieldScalarType::Scalar);
       } else {
-        ev = Teuchos::rcp(new LandIce::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,true,true>(*p,dl_side));
+        ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl_side, FieldScalarType::ParamScalar, FieldScalarType::Scalar,FieldScalarType::Scalar);
       }
     } else {
       if (hydrology_coupled) {
-        ev = Teuchos::rcp(new LandIce::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,true,true,false>(*p,dl_side));
+        ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl_side, FieldScalarType::Scalar, FieldScalarType::Scalar,FieldScalarType::ParamScalar);
       } else {
-        ev = Teuchos::rcp(new LandIce::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,true,false>(*p,dl_side));
+        ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl_side, FieldScalarType::Real, FieldScalarType::Scalar,FieldScalarType::ParamScalar);
       }
     }
     fm0.template registerEvaluator<EvalT>(ev);

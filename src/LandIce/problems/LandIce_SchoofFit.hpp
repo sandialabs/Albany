@@ -35,6 +35,7 @@
 #include "PHAL_DummyResidual.hpp"
 #include "PHAL_FieldFrobeniusNorm.hpp"
 #include "LandIce_BasalFrictionCoefficient.hpp"
+#include "LandIce_ProblemUtils.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -397,15 +398,14 @@ LandIce::SchoofFit::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& 
 
   //Output
   p->set<std::string>("Basal Friction Coefficient Variable Name", "beta");
-
-  ev = Teuchos::rcp(new LandIce::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,false,false>(*p,dl));
+  ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl, FieldScalarType::ParamScalar, FieldScalarType::ParamScalar,FieldScalarType::ParamScalar);
   fm0.template registerEvaluator<EvalT>(ev);
 
   if (save_state["beta"])
   {
     //--- LandIce basal friction coefficient at nodes ---//
     p->set<bool>("Nodal",true);
-    ev = Teuchos::rcp(new LandIce::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,false,false>(*p,dl));
+    ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl, FieldScalarType::ParamScalar, FieldScalarType::ParamScalar,FieldScalarType::ParamScalar);
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
