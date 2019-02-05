@@ -1095,7 +1095,7 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     fm0.template registerEvaluator<EvalT>(ev);
 
     // If we are given an effective pressure field, we don't need a surrogate model for it
-    if (!is_input_field["effective_pressure"]) {
+    if (!(is_input_field["effective_pressure"] || is_ss_input_field[ssName]["effective_pressure"])) {
       //--- Effective pressure surrogate (QPs) ---//
       p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Effective Pressure Surrogate"));
 

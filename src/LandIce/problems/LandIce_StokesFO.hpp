@@ -120,7 +120,7 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // If the mesh depends on parameters AND the thickness is a parameter,
   // after gathering the coordinates, we modify the z coordinate of the mesh.
   if (Albany::mesh_depends_on_parameters() && is_dist_param[ice_thickness_name]) {
-    if(adjustBedTopo) {
+    if(adjustBedTopo && !adjustSurfaceHeight) {
       //----- Gather Coordinate Vector (ad hoc parameters)
       p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
 
@@ -146,7 +146,7 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingBed<EvalT,PHAL::AlbanyTraits>(*p, dl));
       fm0.template registerEvaluator<EvalT>(ev);
-    } else if(adjustSurfaceHeight) {
+    } else if(adjustSurfaceHeight && !adjustBedTopo) {
       //----- Gather Coordinate Vector (ad hoc parameters)
       p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
 
@@ -168,6 +168,10 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingTop<EvalT,PHAL::AlbanyTraits>(*p, dl));
       fm0.template registerEvaluator<EvalT>(ev);
+    } else {
+          TEUCHOS_TEST_FOR_EXCEPTION(adjustBedTopo == adjustSurfaceHeight, std::logic_error, "Error! When the ice thickness is a parameter,\n "
+              "either 'Adjust Bed Topography to Account for Thickness Changes' or\n"
+              " 'Adjust Surface Height to Account for Thickness Changes' needs to be true.\n");
     }
   } else {
     //----- Gather Coordinate Vector (general parameters)
