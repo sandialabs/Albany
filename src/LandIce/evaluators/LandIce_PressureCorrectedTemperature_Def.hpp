@@ -21,10 +21,6 @@ PressureCorrectedTemperature(const Teuchos::ParameterList& p, const Teuchos::RCP
   correctedTemp (p.get<std::string> ("Corrected Temperature Variable Name"), dl->cell_scalar2),
   coord (p.get<std::string> ("Coordinate Vector Variable Name"), dl->cell_gradient)
 {
-  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer")) {
-    memoizer.enable_memoizer();
-  }
-
 	this->addDependentField(sHeight);
 	this->addDependentField(coord);
 	this->addDependentField(temp);
@@ -40,13 +36,24 @@ PressureCorrectedTemperature(const Teuchos::ParameterList& p, const Teuchos::RCP
   coeff = beta * 1000.0 * rho_i * g;
 }
 
+//**********************************************************************
+template<typename EvalT, typename Traits, typename TempST, typename SurfHeightST>
+void PressureCorrectedTemperature<EvalT, Traits, TempST, SurfHeightST>::
+postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& fm)
+{
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
+}
+
+//**********************************************************************
 template<typename EvalT, typename Traits, typename TempST, typename SurfHeightST>
 void PressureCorrectedTemperature<EvalT,Traits, TempST, SurfHeightST>::
-evaluateFields(typename Traits::EvalData d)
+evaluateFields(typename Traits::EvalData workset)
 {
-  if (memoizer.have_stored_data(d)) return;
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  for (std::size_t cell = 0; cell < d.numCells; ++cell)
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell)
     correctedTemp(cell) = std::min(temp(cell) +coeff * (sHeight(cell) - coord(cell,2)), 273.15);
 }
 

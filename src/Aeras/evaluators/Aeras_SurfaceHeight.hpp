@@ -60,7 +60,7 @@ private:
 
   enum SURFHEIGHTTYPE {NONE, MOUNTAIN};
   SURFHEIGHTTYPE hs_type;
-  PHAL::MDFieldMemoizer<Traits> memoizer_;
+  PHAL::MDFieldMemoizer<Traits> memoizer;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:

@@ -136,7 +136,12 @@ postRegSetup()
         application.get(), meshSpecs.get()));
     rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
       derivative_dimensions); }
-  rfm->postRegistrationSetup("");
+  rfm->postRegistrationSetup(*application->getPhxSetup());
+  application->getPhxSetup()->check_fields(rfm->getFieldTagsForSizing<PHAL::AlbanyTraits::Residual>());
+  application->getPhxSetup()->check_fields(rfm->getFieldTagsForSizing<PHAL::AlbanyTraits::Jacobian>());
+  application->getPhxSetup()->check_fields(rfm->getFieldTagsForSizing<PHAL::AlbanyTraits::Tangent>());
+  application->getPhxSetup()->check_fields(rfm->getFieldTagsForSizing<PHAL::AlbanyTraits::DistParamDeriv>());
+  application->getPhxSetup()->update_unsaved_fields();
   performedPostRegSetup = true;
 }
 

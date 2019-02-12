@@ -21,7 +21,6 @@ GatherCoordinateVector(const Teuchos::ParameterList& p,
 {  
   this->addEvaluatedField(coordVec);
   this->setName("Aeras::GatherCoordinateVector"+PHX::typeAsString<EvalT>());
-  memoizer_.enable_memoizer();
 }
 
 // **********************************************************************
@@ -38,13 +37,15 @@ void GatherCoordinateVector<EvalT, Traits>::postRegistrationSetup(typename Trait
   numNodes = dims[1];
   numCoords = dims[2];
 
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 { 
-  if (memoizer_.have_stored_data(workset)) return;
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   unsigned int numCells = workset.numCells;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords = workset.wsCoords;

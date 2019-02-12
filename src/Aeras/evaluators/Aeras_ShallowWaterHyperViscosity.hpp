@@ -60,7 +60,7 @@ private:
 
   std::size_t numQPs, numDims, numNodes, vecDim, spatialDim;
 
-  PHAL::MDFieldMemoizer<Traits> memoizer_;
+  PHAL::MDFieldMemoizer<Traits> memoizer;
           
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:

@@ -35,8 +35,8 @@ public:
   PressureCorrectedTemperature (const Teuchos::ParameterList& p,
                                 const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData ,
-                              PHX::FieldManager<Traits>& ) {}
+  void postRegistrationSetup (typename Traits::SetupData d,
+                              PHX::FieldManager<Traits>& fm);
 
   void evaluateFields(typename Traits::EvalData d);
 

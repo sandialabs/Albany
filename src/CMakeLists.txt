@@ -22,6 +22,7 @@ SET(SOURCES
   Albany_Utils.cpp
   PHAL_AlbanyTraits.cpp
   PHAL_Dimension.cpp
+  PHAL_Setup.cpp
   Albany_Application.cpp
   Albany_Memory.cpp
   Albany_ModelFactory.cpp
@@ -80,6 +81,7 @@ SET(HEADERS
   PHAL_AlbanyTraits.hpp
   PHAL_Dimension.hpp
   PHAL_FactoryTraits.hpp
+  PHAL_Setup.hpp
   PHAL_TypeKeyMap.hpp
   PHAL_Utilities.hpp
   PHAL_Utilities_Def.hpp
