@@ -229,6 +229,7 @@ postRegistrationSetup (typename Traits::SetupData d,
 {
   if (beta_type == GIVEN_CONSTANT)
     beta.deep_copy(ScalarT(given_val));
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************

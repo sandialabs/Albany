@@ -34,10 +34,11 @@ LoadStateFieldBase(const Teuchos::ParameterList& p)
 
 // **********************************************************************
 template<typename EvalT, typename Traits, typename ScalarType>
-void LoadStateFieldBase<EvalT, Traits, ScalarType>::postRegistrationSetup(typename Traits::SetupData /* d */,
+void LoadStateFieldBase<EvalT, Traits, ScalarType>::postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(data,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 // **********************************************************************
@@ -79,6 +80,7 @@ void LoadStateField<EvalT, Traits>::postRegistrationSetup(typename Traits::Setup
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(data,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 // **********************************************************************

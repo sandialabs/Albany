@@ -117,6 +117,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(val_cell,fm);
   this->utils.setFieldData(val_side,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 
   val_side.dimensions(dims);
 }

@@ -244,6 +244,26 @@ public:
 
     return stored;
   }
+
+  bool have_saved_data (const typename Traits::EvalData workset,
+      const std::vector<Teuchos::RCP<PHX::FieldTag>>& evalFields) {
+    if (!_enableMemoizer) return false;
+
+    // Check workset index
+    bool saved = false;
+    if (workset.wsIndex == _prevWorksetIndex) {
+      // Check if MDField is saved
+      for (const auto & evalField: evalFields) {
+        if (workset.savedMDFields->count(evalField->identifier()) > 0) {
+          saved = true;
+          break;
+        }
+      }
+    }
+    _prevWorksetIndex = workset.wsIndex;
+
+    return saved;
+  }
 };
 
 } // namespace PHAL

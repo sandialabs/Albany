@@ -40,10 +40,11 @@ LoadSideSetStateFieldBase (const Teuchos::ParameterList& p)
 // **********************************************************************
 template<typename EvalT, typename Traits, typename ScalarType>
 void LoadSideSetStateFieldBase<EvalT, Traits, ScalarType>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
+postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(field,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 template<typename EvalT, typename Traits, typename ScalarType>

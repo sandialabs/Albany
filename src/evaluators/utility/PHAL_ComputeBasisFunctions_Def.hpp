@@ -26,9 +26,6 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   GradBF        (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient),
   wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient)
 {
-  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
-    memoizer.enable_memoizer();
-
   this->addDependentField(coordVec.fieldTag());
   this->addEvaluatedField(weighted_measure);
   this->addEvaluatedField(jacobian_det);
@@ -82,6 +79,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   intrepidBasis->getValues(val_at_cub_points, refPoints, Intrepid2::OPERATOR_VALUE);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 //**********************************************************************
@@ -89,7 +88,7 @@ template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (memoizer.have_stored_data(workset)) return;
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   /** The allocated size of the Field Containers must currently
     * match the full workset size of the allocated PHX Fields,

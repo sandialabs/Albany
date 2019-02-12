@@ -102,6 +102,7 @@ postRegistrationSetup(typename Traits::SetupData d,
     this->utils.setFieldData(normals,fm);
     this->utils.setFieldData(coordVec, fm);
   }
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 
   // Allocate Temporary Kokkos Views
   cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numSideQPs,numSideDims);

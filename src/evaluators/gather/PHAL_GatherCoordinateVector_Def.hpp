@@ -57,6 +57,7 @@ void GatherCoordinateVector<EvalT, Traits>::postRegistrationSetup(typename Trait
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(coordVec,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 
   typename std::vector< typename PHX::template MDField<MeshScalarT,Cell,Vertex,Dim>::size_type > dims;
   coordVec.dimensions(dims); //get dimensions

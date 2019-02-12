@@ -135,7 +135,8 @@ postRegSetup()
         application.get(), meshSpecs.get()));
     rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
       derivative_dimensions); }
-  rfm->postRegistrationSetup("");
+  PHAL::Setup phxSetup;
+  rfm->postRegistrationSetup(phxSetup);
   performedPostRegSetup = true;
 }
 

@@ -181,7 +181,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 void ViscosityFO<EvalT, Traits, VelT, TemprT>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
+postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(Ugrad,fm);
@@ -201,6 +201,7 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
     this->utils.setFieldData(coordVec,fm);
   }
   this->utils.setFieldData(homotopyParam, fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************
