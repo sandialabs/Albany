@@ -9,7 +9,9 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+
 #include "PHAL_Utilities.hpp"
+#include "PHAL_LoadStateField.hpp"
 
 namespace PHAL {
 
@@ -32,7 +34,7 @@ LoadStateFieldBase(const Teuchos::ParameterList& p)
 
 // **********************************************************************
 template<typename EvalT, typename Traits, typename ScalarType>
-void LoadStateFieldBase<EvalT, Traits, ScalarType>::postRegistrationSetup(typename Traits::SetupData d,
+void LoadStateFieldBase<EvalT, Traits, ScalarType>::postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(data,fm);
@@ -53,8 +55,6 @@ void LoadStateFieldBase<EvalT, Traits, ScalarType>::evaluateFields(typename Trai
     *d = stateToLoad[i];
   for ( ; ! d.done(); ++d) *d = 0.;
 }
-
-
 
 template<typename EvalT, typename Traits>
 LoadStateField<EvalT, Traits>::
@@ -97,6 +97,4 @@ void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData wor
   for ( ; ! d.done(); ++d) *d = 0.;
 }
 
-// **********************************************************************
-}
-
+} // namespace PHAL

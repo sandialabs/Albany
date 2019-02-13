@@ -24,38 +24,32 @@ namespace LandIce
     This evaluator computes the pressure-melting temperature Tm(p) via the hydrostatic approximation of the pressure.
 */
 
-template<typename EvalT, typename Traits, typename Type, typename enable=void>
-class PressureCorrectedTemperature{};
-
-
-template<typename EvalT, typename Traits, typename Type>
-class PressureCorrectedTemperature<EvalT, Traits, Type, typename std::enable_if<std::is_convertible<typename EvalT::ParamScalarT, Type>::value>::type>: public PHX::EvaluatorWithBaseImpl<Traits>,
-                                   public PHX::EvaluatorDerived<EvalT, Traits>
+template<typename EvalT, typename Traits, typename TempST, typename SurfHeightST>
+class PressureCorrectedTemperature: public PHX::EvaluatorWithBaseImpl<Traits>,
+                              public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  typedef typename EvalT::ParamScalarT ParamScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  //typedef typename  Sacado::Promote<ParamScalarT, Type>::type type;
 
   PressureCorrectedTemperature (const Teuchos::ParameterList& p,
-                       	   	  const Teuchos::RCP<Albany::Layouts>& dl);
+                                const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
+  void postRegistrationSetup (typename Traits::SetupData ,
+                              PHX::FieldManager<Traits>& ) {}
 
   void evaluateFields(typename Traits::EvalData d);
 
 private:
   // Input:
-  PHX::MDField<const ParamScalarT,Cell> sHeight;
-  PHX::MDField<const Type,Cell> temp;
+  typedef typename Albany::StrongestScalarType<typename Albany::StrongestScalarType<TempST,MeshScalarT>::type, SurfHeightST>::type OutputScalarT;
+  PHX::MDField<const SurfHeightST,Cell> sHeight;
+  PHX::MDField<const TempST,Cell> temp;
   PHX::MDField<const MeshScalarT,Cell,Dim> coord;
 
   // Output:
-  PHX::MDField<Type,Cell> correctedTemp;
+  PHX::MDField<OutputScalarT,Cell> correctedTemp;
 
-  const Teuchos::ParameterList& physicsList;
   double beta, rho_i, g, coeff;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;

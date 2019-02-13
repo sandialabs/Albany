@@ -13,8 +13,8 @@
 
 #include "LandIce_ResponseSMBMismatch.hpp"
 
-template<typename EvalT, typename Traits>
-LandIce::ResponseSMBMismatch<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ThicknessScalarType>
+LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::
 ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
 {
   // get and validate Response parameter list
@@ -94,8 +94,8 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits>
-void LandIce::ResponseSMBMismatch<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+template<typename EvalT, typename Traits, typename ThicknessScalarType>
+void LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(flux_div, fm);
   this->utils.setFieldData(SMB, fm);
@@ -111,8 +111,8 @@ void LandIce::ResponseSMBMismatch<EvalT, Traits>::postRegistrationSetup(typename
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits>
-void LandIce::ResponseSMBMismatch<EvalT, Traits>::preEvaluate(typename Traits::PreEvalData workset) {
+template<typename EvalT, typename Traits, typename ThicknessScalarType>
+void LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::preEvaluate(typename Traits::PreEvalData workset) {
   PHAL::set(this->global_response_eval, 0.0);
 
   p_resp = p_reg = p_misH =0;
@@ -122,8 +122,8 @@ void LandIce::ResponseSMBMismatch<EvalT, Traits>::preEvaluate(typename Traits::P
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits>
-void LandIce::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+template<typename EvalT, typename Traits, typename ThicknessScalarType>
+void LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::evaluateFields(typename Traits::EvalData workset)
 {
   if (workset.sideSets == Teuchos::null)
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets defined in input file but not properly specified on the mesh" << std::endl);
@@ -192,8 +192,8 @@ void LandIce::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits>
-void LandIce::ResponseSMBMismatch<EvalT, Traits>::postEvaluate(typename Traits::PostEvalData workset) {
+template<typename EvalT, typename Traits, typename ThicknessScalarType>
+void LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::postEvaluate(typename Traits::PostEvalData workset) {
 #if 0
   // Add contributions across processors
   Teuchos::RCP<Teuchos::ValueTypeSerializer<int, ScalarT> > serializer = workset.serializerManager.template getValue<EvalT>();
@@ -252,8 +252,9 @@ void LandIce::ResponseSMBMismatch<EvalT, Traits>::postEvaluate(typename Traits::
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits>
-Teuchos::RCP<const Teuchos::ParameterList> LandIce::ResponseSMBMismatch<EvalT, Traits>::getValidResponseParameters() const {
+template<typename EvalT, typename Traits, typename ThicknessScalarType>
+Teuchos::RCP<const Teuchos::ParameterList>
+LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::getValidResponseParameters() const {
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("Valid ResponseSMBMismatch Params"));
   Teuchos::RCP<const Teuchos::ParameterList> baseValidPL = PHAL::SeparableScatterScalarResponse<EvalT, Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);

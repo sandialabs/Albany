@@ -36,7 +36,8 @@
 #include "LandIce_ViscosityFO.hpp"
 #include "PHAL_FieldFrobeniusNorm.hpp"
 #include "LandIce_BasalFrictionCoefficient.hpp"
-#include "LandIce_BasalFrictionCoefficientNode.hpp"
+//#include "LandIce_BasalFrictionCoefficientNode.hpp"
+#include "LandIce_ProblemUtils.hpp"
 #include "LandIce_HydrologyWaterDischarge.hpp"
 #include "LandIce_HydrologyResidualPotentialEqn.hpp"
 #include "LandIce_HydrologyResidualThicknessEqn.hpp"
@@ -673,7 +674,8 @@ LandIce::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
   //Output
   p->set<std::string>("Basal Friction Coefficient Variable Name", "beta");
 
-  ev = Teuchos::rcp(new LandIce::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,true,true>(*p,dl_basal));
+  p->set<bool>("Nodal",false);
+  ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl_basal, FieldScalarType::Scalar, FieldScalarType::Scalar,FieldScalarType::ParamScalar);
   fm0.template registerEvaluator<EvalT>(ev);
 
   //--- Shared Parameter for basal friction coefficient: lambda ---//
@@ -724,8 +726,8 @@ LandIce::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
 
   //Output
   p->set<std::string>("Basal Friction Coefficient Variable Name", "Beta");
-
-  ev = Teuchos::rcp(new LandIce::BasalFrictionCoefficientNode<EvalT,PHAL::AlbanyTraits,false,true>(*p,dl_basal));
+  p->set<bool>("Nodal",true);
+  ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl_basal, FieldScalarType::Scalar, FieldScalarType::Scalar,FieldScalarType::ParamScalar);
   fm0.template registerEvaluator<EvalT>(ev);
 
   //--- Sliding velocity at nodes calculation ---//

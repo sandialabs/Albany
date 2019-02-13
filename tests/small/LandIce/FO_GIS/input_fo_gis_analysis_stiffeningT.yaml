@@ -15,10 +15,10 @@ ANONYMOUS:
       Number: 1
       Response 0: Surface Velocity Mismatch
       ResponseParams 0: 
-        Regularization Coefficient: 1.00000000000000000e+00
-        Regularization Coefficient Stiffening: 1.50000000000000000e+00
-        Asinh Scaling: 1.00000000000000000e+01
-        Scaling Coefficient: 5.88239999999999979e-07
+        Regularization Coefficient: 1.0e+00
+        Regularization Coefficient Stiffening: 1.5e+00
+        Asinh Scaling: 1.0e+01
+        Scaling Coefficient: 5.8824e-07
     Dirichlet BCs: { }
     Neumann BCs: { }
     LandIce BCs:
@@ -140,7 +140,8 @@ ANONYMOUS:
           Field 5: 
             Field Name: bed_topography
             Field Type: Node Scalar
-            Field Origin: Mesh
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/bed_topography.ascii
       upperside: 
         Method: SideSetSTK
         Number Of Time Derivatives: 0
@@ -160,15 +161,15 @@ ANONYMOUS:
             File Name: ../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii
   Regression Results: 
     Number of Comparisons: 1
-    Test Values: [6.14474737852999979e+01]
+    Test Values: [6.14131581607e+01]
     Sensitivity Comparisons 0: 
       Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [1.05999393562000011e+00]
+      Sensitivity Test Values 0: [1.06024176845e+00]
     Sensitivity Comparisons 1: 
       Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [2.14380524678999995e+00]
-    Relative Tolerance: 1.00000000000000005e-04
-    Absolute Tolerance: 1.00000000000000005e-04
+      Sensitivity Test Values 0: [2.14378015139e+00]
+    Relative Tolerance: 1.0e-05
+    Absolute Tolerance: 1.0e-05
   Piro: 
     Sensitivity Method: Adjoint
     Analysis: 

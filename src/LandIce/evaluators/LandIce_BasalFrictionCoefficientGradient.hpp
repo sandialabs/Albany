@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
 #include "PHAL_Dimension.hpp"
 
 namespace LandIce
@@ -36,8 +37,8 @@ public:
 
   virtual ~BasalFrictionCoefficientGradient () {}
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& vm);
+  void postRegistrationSetup (typename Traits::SetupData,
+                              PHX::FieldManager<Traits>&) {}
 
   void evaluateFields (typename Traits::EvalData d);
 
@@ -51,7 +52,8 @@ private:
   typedef typename EvalT::ParamScalarT  ParamScalarT;
 
   // Input:
-  PHX::MDField<const ParamScalarT,Cell,Side,Node>               given_field;
+  PHX::MDField<const RealType,Cell,Side,Node>                   given_field;
+  PHX::MDField<const ParamScalarT,Cell,Side,Node>               given_field_param;
   PHX::MDField<const MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  GradBF;
   PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>          N;
   PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim>           U;
@@ -75,11 +77,12 @@ private:
   int vecDim;
 
   double A;
-
-  bool use_stereographic_map;
   double x_0;
   double y_0;
   double R2;
+
+  bool use_stereographic_map;
+  bool is_given_field_param;
 
   enum BETA_TYPE {INVALID, GIVEN_CONSTANT, GIVEN_FIELD, REGULARIZED_COULOMB};
   BETA_TYPE beta_type;

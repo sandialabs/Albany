@@ -173,7 +173,10 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
           if(it_bdEdge.elem_GID == side_gid) {
             unsigned int side_nodes[2] = {sideType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,0),sideType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,1)};
             int cell_nodes[2] = {sideNodes[side][side_nodes[0]],sideNodes[side][side_nodes[1]]};
-            MeshScalarT bdEdge_measure = std::sqrt(std::pow(coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0),2)+std::pow(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1),2));
+            auto bdEdge_measure_sqr = (coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))*(coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))+(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1))*(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1));
+            MeshScalarT bdEdge_measure = 0.0; 
+            if (bdEdge_measure_sqr > 0.0) 
+              bdEdge_measure = std::sqrt(bdEdge_measure_sqr); 
             for(int i=0; i<2; ++i) {
               bdLaplacian_L2Projection_res(cell,cell_nodes[i]) -= robin_coeff*field(cell,side,side_nodes[i])*bdEdge_measure/2.0;
             }

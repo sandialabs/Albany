@@ -30,8 +30,8 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 set (CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "cmake")
 set (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
-set (CTEST_FLAGS "-j8")
-SET (CTEST_BUILD_FLAGS "-j8")
+set (CTEST_FLAGS "-j4")
+SET (CTEST_BUILD_FLAGS "-j4")
 
 #set (CTEST_DROP_METHOD "http")
 

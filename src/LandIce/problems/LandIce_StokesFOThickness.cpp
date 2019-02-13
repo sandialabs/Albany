@@ -26,13 +26,12 @@ StokesFOThickness::StokesFOThickness(
 {
   //Set # of PDEs per node.
   std::string eqnSet = params_->sublist("Equation Set").get<std::string>("Type", "LandIce");
-  neq = 3; //LandIce FO Stokes system is a system of 2 PDEs
+  neq = 3; //LandIce FO Stokes system is a system of 2 PDEs; add one for the thickness.
 
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);
 
-  if (basalSideName!="__INVALID__")
-  {
+  if (basalSideName!="__INVALID__") {
     // Defining the thickness equation only in 2D (basal side)
     sideSetEquations[2].push_back(basalSideName);
   }
@@ -46,37 +45,12 @@ StokesFOThickness::StokesFOThickness(
   scatter_names.resize(2);
   scatter_names[1] = "Scatter " + resid_names[1];
 
-  offsetThickness = vecDimFO;
-}
+  dof_offsets.resize(2);
+  dof_offsets[1] = vecDimFO;
 
-void StokesFOThickness::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-                                 Albany::StateManager& stateMgr)
-{
-  if (basalSideName!="__INVALID__") {
-    // We need BF on the basal side
-    ss_utils_needed[basalSideName][UtilityRequest::BFS] = true;
-
-    // We need to restrict and interpolate velocity, thickness and surface height
-    requestSideSetInterpolationEvaluator(basalSideName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::CELL_TO_SIDE);
-    requestSideSetInterpolationEvaluator(basalSideName, "surface_height", 0, FieldLocation::Node, FieldScalarType::MeshScalar, InterpolationRequest::CELL_TO_SIDE);
-    requestSideSetInterpolationEvaluator(basalSideName, "ice_thickness", 0, FieldLocation::Node, FieldScalarType::MeshScalar, InterpolationRequest::CELL_TO_SIDE);
-
-    requestSideSetInterpolationEvaluator(basalSideName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::QP_VAL);
-    requestSideSetInterpolationEvaluator(basalSideName, "surface_height", 0, FieldLocation::Node, FieldScalarType::MeshScalar, InterpolationRequest::QP_VAL);
-    requestSideSetInterpolationEvaluator(basalSideName, "ice_thickness", 0, FieldLocation::Node, FieldScalarType::MeshScalar, InterpolationRequest::QP_VAL);
-  }
-
-  // Pre-set the scalar type to MeshScalar.
-  field_scalar_type["ice_thickness"] = FieldScalarType::MeshScalar;
-  field_scalar_type["surface_height"] = FieldScalarType::MeshScalar;
-  for (auto& it : ss_field_scalar_type) {
-    it.second["ice_thickness"] = FieldScalarType::MeshScalar;
-    it.second["surface_height"] = FieldScalarType::MeshScalar;
-  }
-
-  // Note: the base class call must be last, since it calls the buildEvaluators method,
-  //       which needs all the input/requirements maps to be set.
-  StokesFOBase::buildProblem(meshSpecs,stateMgr);
+  // We have two values for ice_thickness: the initial one, and the updated one.
+  initial_ice_thickness_name = ice_thickness_name;
+  ice_thickness_name += "_computed";
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
@@ -199,6 +173,23 @@ StokesFOThickness::getValidProblemParameters() const
   validPL->set<Teuchos::RCP<double> >("Time Step Ptr", Teuchos::null, "Time step ptr for divergence flux ");
 
   return validPL;
+}
+
+void StokesFOThickness::setFieldsProperties () {
+  StokesFOBase::setFieldsProperties();
+
+  // Fix the scalar type of ice_thickness_name, since in StokesFOThickness it depends on the solution.
+  field_scalar_type[ice_thickness_name] = FieldScalarType::Scalar;
+
+  // Mark the thickness increment and initial_thickness+increment as computed
+  is_computed_field[ice_thickness_name] = true;
+  if (Albany::mesh_depends_on_solution()) {
+    // With a moving mesh, the surface height is an output variable
+    is_computed_field[surface_height_name] = true;
+  }
+
+  field_rank[ice_thickness_name]     = 0;
+  field_rank[surface_height_name]    = 0;
 }
 
 } // namespace LandIce

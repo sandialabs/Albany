@@ -5,14 +5,17 @@
  *      Author: abarone
  */
 
-#ifndef LANDICE_HYDROSTATICPRESSURE_HPP_
-#define LANDICE_HYDROSTATICPRESSURE_HPP_
+#ifndef LANDICE_HYDROSTATIC_PRESSURE_HPP
+#define LANDICE_HYDROSTATIC_PRESSURE_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
+#include "PHAL_Dimension.hpp"
 #include "Albany_Layouts.hpp"
+#include "Albany_SacadoTypes.hpp"
 
 namespace LandIce
 {
@@ -22,7 +25,7 @@ namespace LandIce
     This evaluator evaluates the hydrostatic approximation of the pressure to compute the pressure-melting point Tm(p)
 */
 
-template<typename EvalT, typename Traits, typename Type>
+template<typename EvalT, typename Traits, typename SurfHeightST>
 class HydrostaticPressure : public PHX::EvaluatorWithBaseImpl<Traits>,
                             public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -40,12 +43,15 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
+  // This is just to allow ETI machinery to work. In a real setting, ScalarT should always be constructible from TemperatureST.
+  typedef typename Albany::StrongestScalarType<MeshScalarT,SurfHeightST>::type OutputST;
+
   // Input:
   PHX::MDField<const MeshScalarT,Cell,Node,Dim> z;
-  PHX::MDField<const Type,Cell,Node> s; //surface height
+  PHX::MDField<const SurfHeightST,Cell,Node>     s; //surface height
 
   // Output:
-  PHX::MDField<Type,Cell,Node> pressure;
+  PHX::MDField<OutputST,Cell,Node> pressure;
 
   int numNodes;
 
@@ -54,6 +60,6 @@ private:
   double p_atm;
 };
 
-} // Namespace LandIce
+} // namespace LandIce
 
-#endif /* LandIce_HYDROSTATICPRESSURE_HPP_ */
+#endif // LANDICE_HYDROSTATIC_PRESSURE_HPP

@@ -60,8 +60,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_CXX11:BOOL=ON \
       -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
       -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
-      -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
-      -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
 \
       -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
       -D Kokkos_ENABLE_Cuda_UVM:BOOL=OFF \
@@ -83,7 +81,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
       -D Sacado_ENABLE_COMPLEX:BOOL=ON \
       -D Teuchos_ENABLE_COMPLEX:BOOL=OFF \
-      -D Tpetra_ENABLE_Kokkos_Refactor:BOOL=ON \
       -D TPL_ENABLE_HWLOC:STRING=OFF \
 \
       -D TPL_ENABLE_HDF5:BOOL=OFF \
@@ -106,9 +103,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_Intrepid:BOOL=ON \
       -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
       -D Trilinos_ENABLE_Kokkos:BOOL=ON \
-      -D Trilinos_ENABLE_KokkosAlgorithms:BOOL=ON \
-      -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
-      -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
       -D Trilinos_ENABLE_KokkosExample:BOOL=OFF \
       -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
       -D Trilinos_ENABLE_ML:BOOL=ON \

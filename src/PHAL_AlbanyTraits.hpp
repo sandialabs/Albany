@@ -136,7 +136,9 @@ namespace PHX {
 #undef DECLARE_EVAL_SCALAR_TYPES
 }
 
-// Define macro for explicit template instantiation
+// Define macros for explicit template instantiation
+
+// 1. Basic cases: depend only on EvalT and Traits
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_JACOBIAN(name) \
@@ -146,6 +148,7 @@ namespace PHX {
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_DISTPARAMDERIV(name) \
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits>;
 
+// 2. Versatile cases: after EvalT and Traits, accept any number of args
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_RESIDUAL(name,...) \
   template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits,__VA_ARGS__>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_JACOBIAN(name,...) \
@@ -161,115 +164,100 @@ namespace PHX {
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_MPJACOBIAN(name,...) \
   template class name<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits,__VA_ARGS__>;
 
+// 3. Scalar dependent cases: after EvalT and Traits, accept one or two scalar types
+//    NOTE: *always* allow RealType for the scalar type(s)
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_RESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits, RealType>;
 
-#if defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
-#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_JACOBIAN(name) \
-  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType>;
-#else
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_JACOBIAN(name) \
   template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType>; \
   template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType>;
-#endif
 
-
-#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
-#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_TANGENT(name) \
-  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType>;
-#else
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_TANGENT(name) \
   template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType>; \
   template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType>;
-#endif
 
-#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
-#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_DISTPARAMDERIV(name) \
-  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType>;
-#else
-#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_DISTPARAMDERIV(name)                                                         \
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_DISTPARAMDERIV(name)          \
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType>; \
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType>;
-#endif
-
 
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_RESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits, RealType, RealType>;
 
-#if defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
-#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_JACOBIAN(name) \
-  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, FadType>;
-#else
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_JACOBIAN(name) \
   template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, RealType>; \
   template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, RealType>; \
   template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, FadType>; \
   template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, FadType>;
-#endif
 
-
-#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
-#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_TANGENT(name) \
-  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, TanFadType>;
-#else
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_TANGENT(name) \
   template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, RealType>; \
   template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, RealType>; \
   template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, TanFadType>; \
   template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, TanFadType>;
-#endif
 
-#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
-#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_DISTPARAMDERIV(name) \
-  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType>;
-#else
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_DISTPARAMDERIV(name)                                                         \
-  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, RealType>; \
-  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType, RealType>; \
-  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType>; \
-  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType, TanFadType>;
-#endif
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   RealType>;   \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, RealType>;   \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   TanFadType>; \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType>;
 
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_RESIDUAL(name) \
+  template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits, RealType, RealType, RealType>;
 
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_JACOBIAN(name) \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, RealType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, RealType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, FadType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, FadType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, RealType, FadType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, RealType, FadType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, FadType, FadType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, FadType, FadType>;
 
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_TANGENT(name) \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, RealType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, RealType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, TanFadType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, TanFadType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, RealType, TanFadType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, RealType, TanFadType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, TanFadType, TanFadType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, TanFadType, TanFadType>;
 
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_DISTPARAMDERIV(name)                                                         \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   RealType, RealType>;   \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, RealType, RealType>;   \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   TanFadType, RealType>; \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType, RealType>; \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   RealType, TanFadType>;   \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, RealType, TanFadType>;   \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   TanFadType, TanFadType>; \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType, TanFadType>;
 
+// 4. Input-output scalar type case: similar to the above one with two scalar types.
+//    However, the output scalar type MUST be constructible from the input one, so
+//    certain combinations are not allowed.
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_RESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits, RealType, RealType>;
 
-#if defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
-#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_JACOBIAN(name) \
-  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, FadType>;
-#else
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_JACOBIAN(name) \
   template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, RealType>; \
-  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, FadType>; \
-  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, FadType>;
-#endif
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, FadType>;  \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType,  FadType>;
 
-
-#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_TANGENT(name) \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType,   RealType>;   \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType,   TanFadType>; \
   template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, TanFadType>;
-#else
-#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_TANGENT(name) \
-  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, RealType>; \
-  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, TanFadType>; \
-  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, TanFadType>;
-#endif
 
-#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
-#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_DISTPARAMDERIV(name) \
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_DISTPARAMDERIV(name)                    \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   RealType>;    \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   TanFadType>;  \
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType>;
-#else
-#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_DISTPARAMDERIV(name)                                                         \
-  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType, RealType>; \
-  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType>; \
-  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType, TanFadType>;
-#endif
 
-
-
+// 5. General macros: you should call these in your cpp files,
+//    which in turn will call the ones above.
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_JACOBIAN(name)         \
@@ -287,6 +275,12 @@ namespace PHX {
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_JACOBIAN(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_TANGENT(name)          \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_DISTPARAMDERIV(name)
+
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES(name)            \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_RESIDUAL(name)         \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_JACOBIAN(name)         \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_TANGENT(name)          \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_DISTPARAMDERIV(name)
 
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_RESIDUAL(name)         \

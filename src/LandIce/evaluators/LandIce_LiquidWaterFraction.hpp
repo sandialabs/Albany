@@ -5,56 +5,62 @@
  *      Author: abarone
  */
 
-#ifndef LANDICE_LIQUIDWATERFRACTION_HPP_
-#define LANDICE_LIQUIDWATERFRACTION_HPP_
+#ifndef LANDICE_LIQUID_WATER_FRACTION_HPP
+#define LANDICE_LIQUID_WATER_FRACTION_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
+#include "Albany_SacadoTypes.hpp"
 #include "Albany_Layouts.hpp"
+#include "PHAL_Dimension.hpp"
 
 namespace LandIce
 {
 
-  /** \brief Liquid Water Fraction
+/** \brief Liquid Water Fraction
 
-    This evaluator computes the liquid water fraction in temperate ice
-   */
+  This evaluator computes the liquid water fraction in temperate ice
+ */
 
-  template<typename EvalT, typename Traits, typename Type>
-  class LiquidWaterFraction: public PHX::EvaluatorWithBaseImpl<Traits>,
-  public PHX::EvaluatorDerived<EvalT, Traits>
-  {
-  public:
+template<typename EvalT, typename Traits, typename Type>
+class LiquidWaterFraction: public PHX::EvaluatorWithBaseImpl<Traits>,
+                           public PHX::EvaluatorDerived<EvalT, Traits>
+{
+public:
 
-    typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::ScalarT ScalarT;
 
-    LiquidWaterFraction (const Teuchos::ParameterList& p,
-                         const Teuchos::RCP<Albany::Layouts>& dl);
+  LiquidWaterFraction (const Teuchos::ParameterList& p,
+                       const Teuchos::RCP<Albany::Layouts>& dl);
 
-    void postRegistrationSetup (typename Traits::SetupData d,
-                                PHX::FieldManager<Traits>& fm);
+  void postRegistrationSetup (typename Traits::SetupData d,
+                              PHX::FieldManager<Traits>& fm);
 
-    void evaluateFields(typename Traits::EvalData d);
+  void evaluateFields(typename Traits::EvalData d);
 
-  private:
-    // Input:
-    PHX::MDField<const Type,Cell,Node> 		enthalpyHs;  //[MW s m^{-3}]
-    PHX::MDField<const ScalarT,Cell,Node> 	enthalpy;  //[MW s m^{-3}]
+private:
+  // This is just to allow ETI machinery to work. In a real setting, ScalarT should always be constructible from Type
+  typedef typename Albany::StrongestScalarType<Type,ScalarT>::type OutputScalarT;
 
-    // Output:
-    PHX::MDField<ScalarT,Cell,Node> phi;         //[adim]
+  // Input:
+  PHX::MDField<const Type,Cell,Node> 		  enthalpyHs;  //[MW s m^{-3}]
+  PHX::MDField<const ScalarT,Cell,Node> 	enthalpy;  //[MW s m^{-3}]
 
-    int numNodes;
+  // Output:
+  PHX::MDField<OutputScalarT,Cell,Node>   phi;         //[adim]
 
-    double L;      //[J kg^{-1}] = [ m^2 s^{-2}]
-    double rho_w;  //[kg m^{-3}]
+  int numNodes;
 
-    ScalarT printedAlpha;
+  double L;      //[J kg^{-1}] = [ m^2 s^{-2}]
+  double rho_w;  //[kg m^{-3}]
 
-  };
+  ScalarT printedAlpha;
+
+};
 
 } // Namespace LandIce
 
-#endif /* LandIce_LIQUIDWATERFRACTION_HPP_ */
+#endif // LandIce_LIQUID_WATER_FRACTION_HPP

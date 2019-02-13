@@ -21,14 +21,13 @@ namespace LandIce
     This evaluator evaluates the norm of a field
 */
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
 class FluxDiv : public PHX::EvaluatorWithBaseImpl<Traits>,
                 public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::ParamScalarT ParamScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   FluxDiv (const Teuchos::ParameterList& p,
@@ -48,8 +47,8 @@ private:
   PHX::MDField<const ScalarT> field;
   PHX::MDField<const ScalarT,Cell,Side,QuadPoint,VecDim>       averaged_velocity;
   PHX::MDField<const ScalarT,Cell,Side,QuadPoint>              div_averaged_velocity;
-  PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         thickness;
-  PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint,Dim>     grad_thickness;
+  PHX::MDField<const ThicknessScalarT,Cell,Side,QuadPoint>     thickness;
+  PHX::MDField<const ThicknessScalarT,Cell,Side,QuadPoint,Dim> grad_thickness;
   PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  side_tangents;
 
   // Output:

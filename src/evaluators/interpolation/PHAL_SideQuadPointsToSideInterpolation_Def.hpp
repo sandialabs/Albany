@@ -64,13 +64,6 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
 template<typename EvalT, typename Traits, typename ScalarT>
 void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
-  // Note: since only required sides are processed by the evaluator,
-  //       if we don't zero out the values from the previous workset
-  //       we may save this field using old values and make a mess!
-
-  ScalarT zero = 0.;
-  field_side.deep_copy (zero);
-
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
     return;
 

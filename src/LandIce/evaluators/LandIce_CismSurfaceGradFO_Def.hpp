@@ -10,13 +10,12 @@
 #include "Sacado_ParameterRegistration.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "LandIce_CismSurfaceGradFO.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
 namespace LandIce {
-
-const double pi = 3.1415926535897932385;
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -47,20 +46,13 @@ CismSurfaceGradFO(const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void CismSurfaceGradFO<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(dsdx_node,fm);
   this->utils.setFieldData(dsdy_node,fm);
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(gradS_qp,fm);
-}
-
-template<typename EvalT,typename Traits>
-typename CismSurfaceGradFO<EvalT,Traits>::ScalarT&
-CismSurfaceGradFO<EvalT,Traits>::getValue(const std::string &n)
-{
-  return dummyParam;
 }
 
 //**********************************************************************

@@ -172,8 +172,44 @@ StokesFO::getValidProblemParameters () const
 
   validPL->sublist("LandIce L2 Projected Boundary Laplacian", false, "Parameters needed to compute the L2 Projected Boundary Laplacian");
   validPL->sublist("Equation Set", false, "");
+  validPL->set<bool>("Adjust Bed Topography to Account for Thickness Changes", false, "");
+  validPL->set<bool>("Adjust Surface Height to Account for Thickness Changes", false, "");
 
   return validPL;
+}
+
+void StokesFO::setFieldsProperties () {
+  StokesFOBase::setFieldsProperties();
+
+  if (Albany::mesh_depends_on_parameters() && is_dist_param[ice_thickness_name]) {
+    adjustBedTopo = params->get("Adjust Bed Topography to Account for Thickness Changes", false);
+    adjustSurfaceHeight = params->get("Adjust Surface Height to Account for Thickness Changes", false);
+    TEUCHOS_TEST_FOR_EXCEPTION(adjustBedTopo == adjustSurfaceHeight, std::logic_error, "Error! When the ice thickness is a parameter,\n "
+        "either 'Adjust Bed Topography to Account for Thickness Changes' or\n"
+        " 'Adjust Surface Height to Account for Thickness Changes' needs to be true.\n");
+
+    if (adjustSurfaceHeight) {
+      is_computed_field[surface_height_name] = true;
+    } else if (adjustBedTopo) {
+      is_computed_field[surface_height_name] = true;
+      is_computed_field[bed_topography_name] = true;
+    }
+  }
+
+  // If we don't have effective pressure as input, we *may* be computing a surrogate on a side, so set the resulting scalar type
+  bool has_eff_press = is_input_field[effective_pressure_name];
+  if (!has_eff_press) {
+    for (auto it : is_ss_input_field) {
+      if (!it.second[effective_pressure_name]) {
+        setSingleFieldProperties(effective_pressure_name, 0, field_scalar_type[ice_thickness_name] | field_scalar_type[surface_height_name], FieldLocation::Node);
+        is_ss_computed_field[it.first][effective_pressure_name] = true;
+      }
+    }
+  }
+
+  // UpdateZCoordinate expects the (observed) bed topography and (observed) surface height to have scalar type MeshScalarT.
+  setSingleFieldProperties("observed_bed_topography", 0, FieldScalarType::MeshScalar, FieldLocation::Node);
+  setSingleFieldProperties("observed_surface_height", 0, FieldScalarType::MeshScalar, FieldLocation::Node);
 }
 
 void StokesFO::setupEvaluatorRequests () {
@@ -183,13 +219,13 @@ void StokesFO::setupEvaluatorRequests () {
   for (auto pl : landice_bcs[LandIceBC::SynteticTest]) {
     const std::string& ssName = pl->get<std::string>("Side Set Name");
 
-    requestSideSetInterpolationEvaluator(ssName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::CELL_TO_SIDE); 
-    requestSideSetInterpolationEvaluator(ssName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::QP_VAL); 
-    requestSideSetInterpolationEvaluator(ssName, dof_names[0], 1, FieldLocation::Node, FieldScalarType::Scalar, InterpolationRequest::GRAD_QP_VAL); 
+    ss_build_interp_ev[ssName][dof_names[0]][InterpolationRequest::CELL_TO_SIDE] = true; 
+    ss_build_interp_ev[ssName][dof_names[0]][InterpolationRequest::QP_VAL      ] = true; 
+    ss_build_interp_ev[ssName][dof_names[0]][InterpolationRequest::GRAD_QP_VAL ] = true; 
 
-    ss_utils_needed[ssName][UtilityRequest::BFS] = true;
+    ss_utils_needed[ssName][UtilityRequest::BFS      ] = true;
     ss_utils_needed[ssName][UtilityRequest::QP_COORDS] = true;
-    ss_utils_needed[ssName][UtilityRequest::NORMALS] = true;
+    ss_utils_needed[ssName][UtilityRequest::NORMALS  ] = true;
   }
 }
 

@@ -9,4 +9,4 @@
 #include "LandIce_FluxDiv.hpp"
 #include "LandIce_FluxDiv_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::FluxDiv)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(LandIce::FluxDiv)

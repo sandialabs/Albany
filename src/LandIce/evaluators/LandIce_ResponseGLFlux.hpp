@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LANDICE_RESPONSE_SMB_MISMATCH_HPP
-#define LANDICE_RESPONSE_SMB_MISMATCH_HPP
+#ifndef LANDICE_RESPONSEGLFLUX_HPP
+#define LANDICE_RESPONSEGLFLUX_HPP
 
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 #include "Intrepid2_CellTools.hpp"
@@ -15,8 +15,8 @@ namespace LandIce {
 /**
  * \brief Response Description
  */
-  template<typename EvalT, typename Traits, typename ThicknessScalarType>
-  class ResponseSMBMismatch :
+  template<typename EvalT, typename Traits>
+  class ResponseGLFlux :
     public PHAL::SeparableScatterScalarResponse<EvalT,Traits>
   {
   public:
@@ -24,7 +24,7 @@ namespace LandIce {
     typedef typename EvalT::MeshScalarT MeshScalarT;
     typedef typename EvalT::ParamScalarT ParamScalarT;
 
-    ResponseSMBMismatch(Teuchos::ParameterList& p,
+    ResponseGLFlux(Teuchos::ParameterList& p,
        const Teuchos::RCP<Albany::Layouts>& dl);
 
     void postRegistrationSetup(typename Traits::SetupData d,
@@ -39,29 +39,24 @@ namespace LandIce {
   private:
     Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
-    std::string surfaceSideName;
     std::string basalSideName;
 
     int numSideNodes;
-    int numBasalQPs;
     int numSideDims;
 
-    PHX::MDField<const ScalarT,Cell,Side,QuadPoint>                   flux_div;
-    PHX::MDField<const RealType,Cell,Side,QuadPoint>                  SMB;
-    PHX::MDField<const RealType,Cell,Side,QuadPoint>                  SMBRMS;
-    PHX::MDField<const RealType,Cell,Side,QuadPoint>                  obs_thickness;
-    PHX::MDField<const RealType,Cell,Side,QuadPoint>                  thicknessRMS;
-    PHX::MDField<const ThicknessScalarType,Cell,Side,QuadPoint>       thickness;
-    PHX::MDField<const ThicknessScalarType,Cell,Side,QuadPoint,Dim>   grad_thickness;
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>               w_measure_2d;
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>       tangents;
+    PHX::MDField<const ScalarT,Cell,Side,Node,Dim>          avg_vel;
+    PHX::MDField<const ParamScalarT,Cell,Side,Node>         thickness;
+    PHX::MDField<const ParamScalarT,Cell,Side,Node>         bed;
+    PHX::MDField<const MeshScalarT,Cell,Side,Node,Dim>      coords;
+    Kokkos::DynRankView<ParamScalarT, PHX::Device>          gl_func,H,x,y;
+    Kokkos::DynRankView<ScalarT, PHX::Device>               velx,vely;
 
-    ScalarT p_resp, p_reg, resp, reg, p_misH, misH;
-    double scaling, alpha, alphaH, alphaSMB, asinh_scaling;
+    double rho_i, rho_w;
+    double scaling;
 
     Teuchos::RCP<const CellTopologyData> cell_topo;
   };
 
-} // namespace LandIce
+}
 
-#endif // LANDICE_RESPONSE_SMB_MISMATCH_HPP
+#endif

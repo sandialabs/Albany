@@ -25,7 +25,7 @@ namespace LandIce
     This evaluator computes the friction coefficient beta for basal natural BC
 */
 
-template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes, bool ThermoCoupled>
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
 class BasalFrictionCoefficient : public PHX::EvaluatorWithBaseImpl<Traits>,
                                  public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -34,10 +34,6 @@ public:
   typedef typename EvalT::ScalarT       ScalarT;
   typedef typename EvalT::MeshScalarT   MeshScalarT;
   typedef typename EvalT::ParamScalarT  ParamScalarT;
-
-  typedef typename std::conditional<IsStokes,ScalarT,ParamScalarT>::type       IceScalarT;
-  typedef typename std::conditional<IsHydrology,ScalarT,ParamScalarT>::type    HydroScalarT;
-  typedef typename std::conditional<ThermoCoupled,ScalarT,ParamScalarT>::type  TempScalarT;
 
   BasalFrictionCoefficient (const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl);
@@ -66,22 +62,24 @@ private:
   double given_val;  // Constant value (for CONSTANT only)
 
   // Input:
-  PHX::MDField<const ParamScalarT>      given_field;     // [KPa yr m^{-1}]
+  PHX::MDField<const RealType>          given_field;        // [KPa yr m^{-1}]
+  PHX::MDField<const ParamScalarT>      given_field_param;  // [KPa yr m^{-1}]
   PHX::MDField<const RealType>          BF;
-  PHX::MDField<const IceScalarT>        u_norm;          // [m yr^{-1}]
+  PHX::MDField<const VelocityST>        u_norm;          // [m yr^{-1}]
   PHX::MDField<const ParamScalarT>      lambdaField;     // [km],  q is the power in the Regularized Coulomb Friction and n is the Glen's law exponent
-  PHX::MDField<const HydroScalarT>      N;               // [kPa]
+  PHX::MDField<const EffPressureST>     N;               // [kPa]
   PHX::MDField<const MeshScalarT>       coordVec;        // [km]
 
-  PHX::MDField<const TempScalarT>       ice_softness;    // [(kPa)^{-n} (kyr)^{-1}]
+  PHX::MDField<const TemperatureST>     ice_softness;    // [(kPa)^{-n} (kyr)^{-1}]
 
-  PHX::MDField<const ParamScalarT>      bed_topo_field;  // [km]
-  PHX::MDField<const ParamScalarT>      thickness_field; // [km]
+  PHX::MDField<const MeshScalarT>       bed_topo_field;  // [km]
+  PHX::MDField<const MeshScalarT>       thickness_field; // [km]
+  PHX::MDField<const ParamScalarT>      thickness_param_field; // [km]
 
   // Output:
   PHX::MDField<ScalarT>       beta;     // [kPa yr m^{-1}]
 
-  std::string                 basalSideName;  // Only if IsStokes=true
+  std::string                 basalSideName;  // Only if is_side_equation=true
 
   bool use_stereographic_map, zero_on_floating;
 
@@ -97,6 +95,9 @@ private:
   bool logParameters;
   bool distributedLambda; // [km]
   bool nodal;
+  bool is_side_equation;
+  bool is_thickness_param;
+  bool is_given_field_param;
 
   enum BETA_TYPE {GIVEN_CONSTANT, GIVEN_FIELD, EXP_GIVEN_FIELD, GAL_PROJ_EXP_GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
   BETA_TYPE beta_type;

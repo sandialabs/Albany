@@ -5,14 +5,16 @@
  *      Author: abarone
  */
 
-#ifndef LANDICE_PRESSUREMELTINGTEMPERATURE_HPP_
-#define LANDICE_PRESSUREMELTINGTEMPERATURE_HPP_
+#ifndef LANDICE_PRESSURE_MELTING_TEMPERATURE_HPP
+#define LANDICE_PRESSURE_MELTING_TEMPERATURE_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
 #include "Albany_Layouts.hpp"
+#include "PHAL_Dimension.hpp"
 
 namespace LandIce
 {
@@ -24,7 +26,7 @@ namespace LandIce
 
 template<typename EvalT, typename Traits, typename Type>
 class PressureMeltingTemperature: public PHX::EvaluatorWithBaseImpl<Traits>,
-                                   public PHX::EvaluatorDerived<EvalT, Traits>
+                                  public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
@@ -53,4 +55,4 @@ private:
 
 } // Namespace LandIce
 
-#endif /* LandIce_PRESSUREMELTINGTEMPERATURE_HPP_ */
+#endif // LANDICE_PRESSURE_MELTING_TEMPERATURE_HPP

@@ -75,6 +75,9 @@ class SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>
 
   void
   evaluateFields(typename Traits::EvalData d);
+
+ protected:
+  double scale;
 };
 
 //

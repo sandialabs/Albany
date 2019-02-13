@@ -16,7 +16,7 @@
 // Forward declarations
 namespace Albany {
   class Application;
-  class MeshSpecsStruct;
+  struct MeshSpecsStruct;
 }
 
 namespace PHAL {

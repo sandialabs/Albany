@@ -8,10 +8,11 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_CommHelpers.hpp"
+
 #include "PHAL_Utilities.hpp"
 
-template<typename EvalT, typename Traits>
-LandIce::FluxDiv<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
+LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::
 FluxDiv (const Teuchos::ParameterList& p,
          const Teuchos::RCP<Albany::Layouts>& dl_basal)
 {
@@ -53,8 +54,8 @@ FluxDiv (const Teuchos::ParameterList& p,
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits>
-void LandIce::FluxDiv<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
+void LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(averaged_velocity, fm);
   this->utils.setFieldData(div_averaged_velocity, fm);
@@ -65,8 +66,8 @@ void LandIce::FluxDiv<EvalT, Traits>::postRegistrationSetup(typename Traits::Set
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits>
-void LandIce::FluxDiv<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
+void LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::evaluateFields(typename Traits::EvalData workset)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::runtime_error,
                               "Side sets defined in input file but not properly specified on the mesh.\n");

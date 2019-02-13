@@ -11,6 +11,3 @@
 #include "LandIce_HydrostaticPressure_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(LandIce::HydrostaticPressure)
-
-
-

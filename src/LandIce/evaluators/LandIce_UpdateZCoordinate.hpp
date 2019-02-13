@@ -41,7 +41,7 @@ private:
   PHX::MDField<const MeshScalarT, Cell, Node,Dim>   coordVecIn;
   PHX::MDField<const MeshScalarT, Cell, Node>       bedTopo;
   PHX::MDField<const MeshScalarT, Cell, Node>       H;
-  PHX::MDField<const MeshScalarT, Cell, Node>       H0;
+  PHX::MDField<const RealType, Cell, Node>          H0;
   PHX::MDField<const MeshScalarT, Cell, Node>       dH;
 
   // Output:

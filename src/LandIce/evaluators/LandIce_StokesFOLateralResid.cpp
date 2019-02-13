@@ -9,5 +9,4 @@
 #include "LandIce_StokesFOLateralResid.hpp"
 #include "LandIce_StokesFOLateralResid_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::StokesFOLateralResid,true)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::StokesFOLateralResid,false)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(LandIce::StokesFOLateralResid)

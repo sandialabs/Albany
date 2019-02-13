@@ -15,6 +15,7 @@
 #include "Albany_Layouts.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_Utilities.hpp"
+#include "Albany_SacadoTypes.hpp"
 
 namespace PHAL {
 /** \brief Finite Element InterpolationSide Evaluator
@@ -40,6 +41,7 @@ public:
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename Albany::StrongestScalarType<ScalarT,MeshScalarT>::type OutputScalarT;
 
   std::string sideSetName;
 
@@ -51,7 +53,7 @@ private:
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim> grad_qp;
+  PHX::MDField<OutputScalarT,Cell,Side,QuadPoint,Dim> grad_qp;
 
   int numSideNodes;
   int numSideQPs;
