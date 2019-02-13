@@ -142,7 +142,7 @@ function(lcm_do_trilinos)
   if (EXISTS "${SOURCE_DIR}/DataTransferKit")
     set(EXTRA_REPOS ${EXTRA_REPOS} DataTransferKit)
     set(CONFIG_OPTS ${CONFIG_OPTS}
-      "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=OFF"
+      "-DTpetra_INST_INT_UNSIGNED_LONG:BOOL=ON"
       "-DTrilinos_ENABLE_DataTransferKit:BOOL=ON"
       "-DDataTransferKit_ENABLE_DBC:BOOL=ON"
       "-DDataTransferKit_ENABLE_TESTS:BOOL=OFF"
