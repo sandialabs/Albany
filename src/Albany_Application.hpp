@@ -628,6 +628,7 @@ private:
   std::vector<double> prev_times_;
   bool MOR_apply_bcs_{true};
 
+public:
   //! Get Phalanx postRegistration data
   Teuchos::RCP<PHAL::Setup> getPhxSetup() { return phxSetup; }
 
