@@ -80,8 +80,6 @@ ShallowWaterSource(const Teuchos::ParameterList& p,
   
   ALFA =  -0.03*(PHI0/(2.*Omega*sin(myPi/4.)));
   SIGMA = (2.*earthRadius/1.0e6)*(2.*earthRadius/1.0e6);
-
-  memoizer_.enable_memoizer();
 }
 
 //**********************************************************************
@@ -92,6 +90,9 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(source,fm);
   this->utils.setFieldData(sphere_coord,fm);
+
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 //**********************************************************************
@@ -203,7 +204,7 @@ template<typename EvalT, typename Traits>
 void ShallowWaterSource<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (memoizer_.have_stored_data(workset)) return;
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (sourceType == NONE) {

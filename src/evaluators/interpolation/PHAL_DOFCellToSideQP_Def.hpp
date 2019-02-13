@@ -23,10 +23,6 @@ DOFCellToSideQPBase(const Teuchos::ParameterList& p,
   TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
                               "Error! Layout for side set " << sideSetName << " not found.\n");
 
-  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer")) {
-    memoizer.enable_memoizer();
-  }
-
   Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
   std::string layout_str = p.get<std::string>("Data Layout");
   std::string cell_field_name = p.get<std::string> ("Cell Variable Name");
@@ -97,7 +93,7 @@ DOFCellToSideQPBase(const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
 void DOFCellToSideQPBase<EvalT, Traits, ScalarT>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
+postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(val_cell,fm);
@@ -107,6 +103,9 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   }
 
   val_side_qp.dimensions(dims_side);
+
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 //**********************************************************************
@@ -118,9 +117,7 @@ evaluateFields(typename Traits::EvalData workset)
     return;
   }
 
-  if (memoizer.have_stored_data(workset)) {
-    return;
-  }
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
   for (auto const& it_side : sideSet) {

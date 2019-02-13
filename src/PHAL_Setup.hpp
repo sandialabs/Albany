@@ -32,7 +32,7 @@ public:
   //! Pass problem parameters into Setup to access during postRegistrationSetup
   void init_problem_params(const Teuchos::RCP<Teuchos::ParameterList> problemParams);
 
-  //! Used to determing if memoization is activated
+  //! Check if memoization is activated
   bool memoizer_active() const;
 
   //! Insert Eval (e.g. Residual, Jacobian)

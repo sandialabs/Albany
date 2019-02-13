@@ -2910,6 +2910,9 @@ void Albany::Application::evaluateStateFieldManagerT(
             ->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
                 derivative_dimensions);
         sfm[ps]->postRegistrationSetup(*phxSetup);
+        phxSetup->check_fields(sfm[ps]->getFieldTagsForSizing<PHAL::AlbanyTraits::Residual>());
+        phxSetup->check_fields(sfm[ps]->getFieldTagsForSizing<PHAL::AlbanyTraits::Jacobian>());
+        phxSetup->update_unsaved_fields();
       }
       // visualize state field manager
       if (stateGraphVisDetail > 0) {
@@ -2928,6 +2931,9 @@ void Albany::Application::evaluateStateFieldManagerT(
               pg.str(), detail, detail);
         }
         stateGraphVisDetail = -1;
+
+        // Print phalanx field info
+        phxSetup->print_field_dependencies();
       }
     }
   }
@@ -3017,12 +3023,15 @@ void Albany::Application::postRegSetup(std::string eval) {
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>(*phxSetup);
       phxSetup->check_fields(fm[ps]->getFieldTagsForSizing<PHAL::AlbanyTraits::Residual>());
     }
-    if (dfm != Teuchos::null)
+    if (dfm != Teuchos::null) {
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>(*phxSetup);
+      phxSetup->check_fields(dfm->getFieldTagsForSizing<PHAL::AlbanyTraits::Residual>());
+    }
     if (nfm != Teuchos::null)
-      for (int ps = 0; ps < nfm.size(); ps++)
-        nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>(
-            *phxSetup);
+      for (int ps = 0; ps < nfm.size(); ps++) {
+        nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>(*phxSetup);
+        phxSetup->check_fields(nfm[ps]->getFieldTagsForSizing<PHAL::AlbanyTraits::Residual>());
+      }
   } else if (eval == "Jacobian") {
     for (int ps = 0; ps < fm.size(); ps++) {
       std::vector<PHX::index_size_type> derivative_dimensions;
@@ -3037,8 +3046,8 @@ void Albany::Application::postRegSetup(std::string eval) {
         nfm[ps]
             ->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
                 derivative_dimensions);
-        nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(
-            *phxSetup);
+        nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(*phxSetup);
+        phxSetup->check_fields(nfm[ps]->getFieldTagsForSizing<PHAL::AlbanyTraits::Jacobian>());
       }
     }
     if (dfm != Teuchos::null) {
@@ -3051,6 +3060,7 @@ void Albany::Application::postRegSetup(std::string eval) {
       dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
           derivative_dimensions);
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(*phxSetup);
+      phxSetup->check_fields(dfm->getFieldTagsForSizing<PHAL::AlbanyTraits::Jacobian>());
     }
   } else if (eval == "Tangent") {
     for (int ps = 0; ps < fm.size(); ps++) {
@@ -3060,12 +3070,13 @@ void Albany::Application::postRegSetup(std::string eval) {
       fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(
           derivative_dimensions);
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(*phxSetup);
+      phxSetup->check_fields(fm[ps]->getFieldTagsForSizing<PHAL::AlbanyTraits::Tangent>());
       if (nfm != Teuchos::null && ps < nfm.size()) {
         nfm[ps]
             ->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(
                 derivative_dimensions);
-        nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(
-            *phxSetup);
+        nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(*phxSetup);
+        phxSetup->check_fields(nfm[ps]->getFieldTagsForSizing<PHAL::AlbanyTraits::Tangent>());
       }
     }
     if (dfm != Teuchos::null) {
@@ -3077,6 +3088,7 @@ void Albany::Application::postRegSetup(std::string eval) {
       dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(
           derivative_dimensions);
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(*phxSetup);
+      phxSetup->check_fields(dfm->getFieldTagsForSizing<PHAL::AlbanyTraits::Tangent>());
     }
   } else if (eval == "Distributed Parameter Derivative") { //!!!
     for (int ps = 0; ps < fm.size(); ps++) {
@@ -3087,8 +3099,8 @@ void Albany::Application::postRegSetup(std::string eval) {
       fm[ps]
           ->setKokkosExtendedDataTypeDimensions<
               PHAL::AlbanyTraits::DistParamDeriv>(derivative_dimensions);
-      fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(
-          *phxSetup);
+      fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(*phxSetup);
+      phxSetup->check_fields(fm[ps]->getFieldTagsForSizing<PHAL::AlbanyTraits::DistParamDeriv>());
     }
     if (dfm != Teuchos::null) {
       std::vector<PHX::index_size_type> derivative_dimensions;
@@ -3097,8 +3109,8 @@ void Albany::Application::postRegSetup(std::string eval) {
               this, 0));
       dfm->setKokkosExtendedDataTypeDimensions<
           PHAL::AlbanyTraits::DistParamDeriv>(derivative_dimensions);
-      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(
-          *phxSetup);
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(*phxSetup);
+      phxSetup->check_fields(dfm->getFieldTagsForSizing<PHAL::AlbanyTraits::DistParamDeriv>());
     }
     if (nfm != Teuchos::null)
       for (int ps = 0; ps < nfm.size(); ps++) {
@@ -3112,6 +3124,7 @@ void Albany::Application::postRegSetup(std::string eval) {
         nfm[ps]
             ->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(
                 *phxSetup);
+        phxSetup->check_fields(nfm[ps]->getFieldTagsForSizing<PHAL::AlbanyTraits::DistParamDeriv>());
       }
   } else
     TEUCHOS_TEST_FOR_EXCEPTION(

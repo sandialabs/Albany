@@ -31,9 +31,6 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   n(3.0),
   alpha(0.0)
 {
-  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
-    memoizer.enable_memoizer();
-
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   Teuchos::ParameterList* bf_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
@@ -443,7 +440,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
 
   this->utils.setFieldData(force,fm);
+
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 //**********************************************************************
@@ -451,14 +450,14 @@ template<typename EvalT, typename Traits>
 void StokesFOBodyForce<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+
   rho_g_kernel=rho_g;
 
   if (bf_type == NONE) {
     force.deep_copy(0.0);
   }
   else if (bf_type == FO_INTERP_SURF_GRAD || bf_type == FO_SURF_GRAD_PROVIDED) {
-    if (memoizer.have_stored_data(workset)) return;
-
     R = stereographicMapList->get<double>("Earth Radius", 6371);
     x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
     y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);

@@ -55,7 +55,7 @@ private:
   std::size_t numNodes;
   std::size_t numCoords;
 
-  PHAL::MDFieldMemoizer<Traits> memoizer_;
+  PHAL::MDFieldMemoizer<Traits> memoizer;
 };
 }
 
