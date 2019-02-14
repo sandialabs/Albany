@@ -35,6 +35,16 @@ SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::SDirichlet(
 //
 template<typename Traits>
 void
+SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
+    typename Traits::EvalData dirichlet_workset)
+{
+}
+
+//
+//
+//
+template<typename Traits>
+void
 SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
@@ -83,19 +93,19 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::SDirichlet(
 //
 template<typename Traits>
 void
-SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
+SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::preEvaluate(
     typename Traits::EvalData dirichlet_workset)
 {
-  // NOTE: you may be tempted to const_cast away the const here. However,
-  //       consider the case where x is a Thyra::TpetraVector object. The
-  //       actual Tpetra_Vector is stored as a Teuchos::ConstNonconstObjectContainer,
-  //       which (most likely) happens to be created from a const RCP, and therefore
-  //       when calling getTpetraVector (from Thyra::TpetraVector), the container
-  //       will throw.
-  //       Instead, keep the const correctness until the very last moment.
-  Teuchos::RCP<const Thyra_Vector> x = dirichlet_workset.x;
-  Teuchos::RCP<Thyra_Vector> f = dirichlet_workset.f;
+}
 
+//
+//
+//
+template<typename Traits>
+void
+SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
+    typename Traits::EvalData dirichlet_workset) 
+{
   // TODO: abstract away the tpetra interface
   Teuchos::RCP<Tpetra_CrsMatrix> J = Albany::getTpetraMatrix(dirichlet_workset.Jac);
 
@@ -104,28 +114,12 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   // we make this assumption, which lets us use both local row and column
   // indices into a single is_dbc vector
   ALBANY_ASSERT(col_map->isLocallyFitted(*row_map));
-
+  
   auto& ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
-
-  bool const fill_residual = f != Teuchos::null;
-
-  auto f_view = fill_residual ? Albany::getNonconstLocalData(f) : Teuchos::null;
-  auto x_view = fill_residual ? Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x)) : Teuchos::null;
-
-  Teuchos::Array<Tpetra_GO> global_index(1);
-
-  Teuchos::Array<LO> index(1);
-
-  Teuchos::Array<ST> entry(1);
-
-  Teuchos::Array<ST> entries;
-
-  Teuchos::Array<LO> indices;
-
+  
   using IntVec = Tpetra::Vector<int, Tpetra_LO, Tpetra_GO, KokkosNode>;
   using Import = Tpetra::Import<Tpetra_LO, Tpetra_GO, KokkosNode>;
   Teuchos::RCP<const Import> import;
-
   auto domain_map = row_map;  // we are assuming this!
 
   // in theory we should use the importer from the CRS graph, although
@@ -136,9 +130,8 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   // this construction is expensive!
   import = Teuchos::rcp(new Import(domain_map, col_map));
   //}
-
-  IntVec row_is_dbc(row_map);
-  IntVec col_is_dbc(col_map);
+  row_is_dbc_ = Teuchos::rcp(new IntVec(row_map));
+  col_is_dbc_ = Teuchos::rcp(new IntVec(col_map));
 
   int const spatial_dimension = dirichlet_workset.spatial_dimension_;
 
@@ -146,10 +139,10 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   auto const& fixed_dofs = dirichlet_workset.fixed_dofs_;
 #endif
 
-  row_is_dbc.template modify<Kokkos::HostSpace>();
+  row_is_dbc_->template modify<Kokkos::HostSpace>();
   {
     auto row_is_dbc_data =
-        row_is_dbc.template getLocalView<Kokkos::HostSpace>();
+        row_is_dbc_->template getLocalView<Kokkos::HostSpace>();
     ALBANY_ASSERT(row_is_dbc_data.extent(1) == 1);
 #if defined(ALBANY_LCM)
     if (dirichlet_workset.is_schwarz_bc_ == false) {  // regular SDBC
@@ -171,12 +164,55 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
     }
 #endif
   }
-  col_is_dbc.doImport(row_is_dbc, *import, Tpetra::ADD);
-  auto col_is_dbc_data = col_is_dbc.template getLocalView<Kokkos::HostSpace>();
+  col_is_dbc_->doImport(*row_is_dbc_, *import, Tpetra::ADD);
+}
+
+//
+//
+//
+template<typename Traits>
+void
+SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
+    typename Traits::EvalData dirichlet_workset)
+{
+  // NOTE: you may be tempted to const_cast away the const here. However,
+  //       consider the case where x is a Thyra::TpetraVector object. The
+  //       actual Tpetra_Vector is stored as a Teuchos::ConstNonconstObjectContainer,
+  //       which (most likely) happens to be created from a const RCP, and therefore
+  //       when calling getTpetraVector (from Thyra::TpetraVector), the container
+  //       will throw.
+  //       Instead, keep the const correctness until the very last moment.
+  Teuchos::RCP<const Thyra_Vector> x = dirichlet_workset.x;
+  Teuchos::RCP<Thyra_Vector> f = dirichlet_workset.f;
+
+  // TODO: abstract away the tpetra interface
+  Teuchos::RCP<Tpetra_CrsMatrix> J = Albany::getTpetraMatrix(dirichlet_workset.Jac);
+
+  bool const fill_residual = f != Teuchos::null;
+
+  auto f_view = fill_residual ? Albany::getNonconstLocalData(f) : Teuchos::null;
+  auto x_view = fill_residual ? Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x)) : Teuchos::null;
+
+  Teuchos::Array<Tpetra_GO> global_index(1);
+
+  Teuchos::Array<LO> index(1);
+
+  Teuchos::Array<ST> entry(1);
+
+  Teuchos::Array<ST> entries;
+
+  Teuchos::Array<LO> indices;
+
+#if defined(ALBANY_LCM)
+  auto const& fixed_dofs = dirichlet_workset.fixed_dofs_;
+#endif
+
+  this->set_row_and_col_is_dbc(dirichlet_workset); 
+  auto col_is_dbc_data = col_is_dbc_->template getLocalView<Kokkos::HostSpace>();
 
   size_t const num_local_rows = J->getNodeNumRows();
-  auto         min_local_row  = row_map->getMinLocalIndex();
-  auto         max_local_row  = row_map->getMaxLocalIndex();
+  auto         min_local_row  = J->getRowMap()->getMinLocalIndex();
+  auto         max_local_row  = J->getRowMap()->getMaxLocalIndex();
   for (auto local_row = min_local_row; local_row <= max_local_row;
        ++local_row) {
     auto num_row_entries = J->getNumEntriesInLocalRow(local_row);
@@ -202,8 +238,8 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
         entries[row_entry] *= scale;   
       }
       if (is_diagonal_entry) continue;
-      ALBANY_ASSERT(local_col >= col_map->getMinLocalIndex());
-      ALBANY_ASSERT(local_col <= col_map->getMaxLocalIndex());
+      ALBANY_ASSERT(local_col >= J->getColMap()->getMinLocalIndex());
+      ALBANY_ASSERT(local_col <= J->getColMap()->getMaxLocalIndex());
       auto col_is_dbc = col_is_dbc_data(local_col, 0) > 0;
       if (row_is_dbc || col_is_dbc) {
         entries[row_entry] = 0.0;
@@ -223,6 +259,16 @@ SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::SDirichlet(
     : PHAL::DirichletBase<PHAL::AlbanyTraits::Tangent, Traits>(p)
 {
   scale = p.get<RealType>("SDBC Scaling", 1.0);
+}
+
+//
+//
+//
+template<typename Traits>
+void
+SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::preEvaluate(
+    typename Traits::EvalData dirichlet_workset)
+{
 }
 
 template<typename Traits>
@@ -305,6 +351,16 @@ SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::SDirichlet(
     : PHAL::DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
 {
   return;
+}
+
+//
+//
+//
+template<typename Traits>
+void
+SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::preEvaluate(
+    typename Traits::EvalData dirichlet_workset)
+{
 }
 
 //
