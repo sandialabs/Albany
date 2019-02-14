@@ -99,7 +99,7 @@ TEUCHOS_UNIT_TEST(LameStress_elastic, Instantiation)
     fieldManager.requireField<PHAL::AlbanyTraits::Residual>(**it);
 
   // Call postRegistrationSetup on the evaluators
-  PHAL::AlbanyTraits::SetupData setupData = "Test String";
+  PHAL::Setup setupData;
   fieldManager.postRegistrationSetup(setupData);
 
   // Create a state manager with required fields

@@ -457,7 +457,7 @@ main(int ac, char* av[])
   stateFieldManager.registerEvaluator<Residual>(ev);
   //---------------------------------------------------------------------------
   //
-  Traits::SetupData setupData = "Test String";
+  PHAL::Setup setupData;
   // std::cout << "Calling postRegistrationSetup" << std::endl;
   fieldManager.postRegistrationSetup(setupData);
 
@@ -475,7 +475,7 @@ main(int ac, char* av[])
     stateFieldManager.requireField<PHAL::AlbanyTraits::Residual>(
         res_response_tag);
   }
-  stateFieldManager.postRegistrationSetup("");
+  stateFieldManager.postRegistrationSetup(setupData);
 
   // std::cout << "Process using 'dot -Tpng -O <name>'\n";
   fieldManager.writeGraphvizFile<Residual>("FM", true, true);

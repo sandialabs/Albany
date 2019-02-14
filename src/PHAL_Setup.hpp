@@ -63,7 +63,7 @@ private:
   const Teuchos::RCP<StringSet> _setupEvals;
   const Teuchos::RCP<StringMap> _dep2EvalFields;
   const Teuchos::RCP<StringSet> _savedFields, _unsavedFields;
-  Teuchos::RCP<Teuchos::ParameterList> _problemParams;
+  bool _enableMemoization;
 };
 
 } // namespace PHAL

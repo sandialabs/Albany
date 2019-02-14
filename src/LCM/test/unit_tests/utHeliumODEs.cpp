@@ -222,8 +222,7 @@ TEUCHOS_UNIT_TEST(HeliumODEs, test1)
 
   //--------------------------------------------------------------------------
   // Call postRegistrationSetup on the evaluators
-  // JTO - I don't know what "Test String" is meant for...
-  PHAL::AlbanyTraits::SetupData setupData = "Test String";
+  PHAL::Setup setupData;
   field_manager.postRegistrationSetup(setupData);
 
   Teuchos::RCP<PHX::DataLayout> dummy =
@@ -238,7 +237,7 @@ TEUCHOS_UNIT_TEST(HeliumODEs, test1)
     state_field_manager.requireField<PHAL::AlbanyTraits::Residual>(
         res_response_tag);
   }
-  state_field_manager.postRegistrationSetup("");
+  state_field_manager.postRegistrationSetup(setupData);
 
   // std::cout << "Process using 'dot -Tpng -O <name>'\n";
   field_manager.writeGraphvizFile<Residual>("FM", true, true);

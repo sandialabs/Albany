@@ -15,20 +15,19 @@ Setup::Setup() :
     _setupEvals(Teuchos::rcp(new StringSet())),
     _dep2EvalFields(Teuchos::rcp(new StringMap())),
     _savedFields(Teuchos::rcp(new StringSet())),
-    _unsavedFields(Teuchos::rcp(new StringSet()))
+    _unsavedFields(Teuchos::rcp(new StringSet())),
+    _enableMemoization(false)
 {
 }
 
 void Setup::init_problem_params(const Teuchos::RCP<Teuchos::ParameterList> problemParams)
 {
-  _problemParams = problemParams;
+  _enableMemoization = problemParams->get<bool>("Use MDField Memoization", false);
 }
 
 bool Setup::memoizer_active() const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(_problemParams.is_null(),
-      std::logic_error, "PHAL::Setup _problemParams has not been initialized!\n");
-  return _problemParams->get<bool>("Use MDField Memoization", false);
+  return _enableMemoization;
 }
 
 void Setup::insert_eval(const std::string& eval)
