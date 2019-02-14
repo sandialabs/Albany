@@ -17,6 +17,8 @@
 
 namespace LCM {
 
+#define DEBUG_OUTPUT
+
 //
 //
 //
@@ -735,6 +737,20 @@ StrongSchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::StrongSchwarzBC(
 //
 template <typename Traits>
 void
+StrongSchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
+    typename Traits::EvalData dirichlet_workset)
+{
+#ifdef DEBUG_OUTPUT
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "IKT StrongSchwarzBC preEvaluate Residual\n"; 
+#endif
+}
+
+//
+//
+//
+template <typename Traits>
+void
 StrongSchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
@@ -758,11 +774,27 @@ StrongSchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::StrongSchwarzBC(
 //
 template <typename Traits>
 void
+StrongSchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::preEvaluate(
+    typename Traits::EvalData dirichlet_workset)
+{
+#ifdef DEBUG_OUTPUT
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "IKT StrongSchwarzBC preEvaluate Jacobian\n";
+#endif 
+}
+
+//
+//
+//
+template <typename Traits>
+void
 StrongSchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
   dirichlet_workset.is_schwarz_bc_     = true;
   dirichlet_workset.spatial_dimension_ = this->app_->getSpatialDimension();
+  PHAL::SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::preEvaluate(
+      dirichlet_workset);
   PHAL::SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
       dirichlet_workset);
 
@@ -789,6 +821,17 @@ StrongSchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::StrongSchwarzBC(
 //
 template <typename Traits>
 void
+StrongSchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::preEvaluate(
+    typename Traits::EvalData dirichlet_workset)
+{
+  return; 
+}
+
+//
+//
+//
+template <typename Traits>
+void
 StrongSchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
@@ -804,6 +847,17 @@ StrongSchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::StrongSchwarzBC(
     : StrongSchwarzBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
 {
   return;
+}
+
+//
+//
+//
+template <typename Traits>
+void
+StrongSchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::preEvaluate(
+    typename Traits::EvalData dirichlet_workset)
+{
+  return; 
 }
 
 //

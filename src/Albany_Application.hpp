@@ -243,17 +243,6 @@ private:
       const Teuchos::RCP<Thyra_LinearOp>& jac,
       const double dt = 0.0);
 
-  void computeGlobalJacobianSDBCsImpl(
-      const double alpha, const double beta, const double omega,
-      const double current_time,
-      const Teuchos::RCP<const Thyra_Vector>& x,
-      const Teuchos::RCP<const Thyra_Vector>& xdot,
-      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-      const Teuchos::Array<ParamVec> &p,
-      const Teuchos::RCP<Thyra_Vector>& f,
-      const Teuchos::RCP<Thyra_LinearOp>& jac,
-      const double dt = 0.0);
-
 public:
   //! Compute global Preconditioner
   /*!
@@ -626,7 +615,6 @@ private:
 #endif // ALBANY_LCM
 
   std::vector<double> prev_times_;
-  bool MOR_apply_bcs_{true};
 
 public:
   //! Get Phalanx postRegistration data
