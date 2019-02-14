@@ -3576,12 +3576,10 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
 #endif // ALBANY_LCM
 
       // FillType template argument used to specialize Sacado
-      //if (MOR_apply_bcs_){
 #ifdef DEBUG_OUTPUT2
         std::cout << "calling DFM evaluate fields AGAIN in computeGlobalResidualSDBCsImplT" << std::endl;
 #endif
         dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-      //}
     }
   } // endif (begin_time_step == true)
   previous_app = current_app;
