@@ -1821,6 +1821,10 @@ void Albany::Application::computeGlobalJacobianImpl(
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif // ALBANY_LCM
 
+//#ifdef DEBUG_OUTPUT2
+    std::cout << "calling DFM preEvaluate in computeGlobalJacobianImplT" << std::endl;
+//#endif
+    dfm->preEvaluate<PHAL::AlbanyTraits::Jacobian>(workset);
     // FillType template argument used to specialize Sacado
 #ifdef DEBUG_OUTPUT2
     std::cout << "calling DFM evaluate fields in computeGlobalJacobianImplT" << std::endl;

@@ -17,6 +17,8 @@
 // TODO: remove this include when you manage to abstract away from Tpetra the Jacobian impl.
 #include "Albany_TpetraThyraUtils.hpp"
 
+#define DEBUG_OUTPUT
+
 namespace PHAL {
 
 //
@@ -38,6 +40,10 @@ void
 SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
     typename Traits::EvalData dirichlet_workset)
 {
+#ifdef DEBUG_OUTPUT
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "IKT SDirichlet preEvaluate Residual\n"; 
+#endif
 }
 
 //
@@ -96,6 +102,11 @@ void
 SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::preEvaluate(
     typename Traits::EvalData dirichlet_workset)
 {
+#ifdef DEBUG_OUTPUT
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "IKT SDirichlet preEvaluate Jacobian\n"; 
+#endif
+  this->set_row_and_col_is_dbc(dirichlet_workset); 
 }
 
 //
@@ -207,7 +218,6 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   auto const& fixed_dofs = dirichlet_workset.fixed_dofs_;
 #endif
 
-  this->set_row_and_col_is_dbc(dirichlet_workset); 
   auto col_is_dbc_data = col_is_dbc_->template getLocalView<Kokkos::HostSpace>();
 
   size_t const num_local_rows = J->getNodeNumRows();
@@ -269,6 +279,7 @@ void
 SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::preEvaluate(
     typename Traits::EvalData dirichlet_workset)
 {
+  return;  
 }
 
 template<typename Traits>
@@ -361,6 +372,10 @@ void
 SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::preEvaluate(
     typename Traits::EvalData dirichlet_workset)
 {
+#ifdef DEBUG_OUTPUT
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "IKT SDirichlet preEvaluate DistParamDeriv\n"; 
+#endif
 }
 
 //
