@@ -21,6 +21,7 @@
 #include "Piro_PerformSolve.hpp"
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #include "Albany_STKDiscretization.hpp"
+#include "Thyra_DetachedVectorView.hpp"
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
@@ -228,6 +229,15 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
       Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
   Piro::PerformSolveBase(*solver, solveParams, thyraResponses,
       thyraSensitivities);
+
+  // Printing responses
+  const int num_g = solver->Ng();
+  for (int i=0; i<num_g-1; i++) {
+    if (albanyApp->getResponse(i)->isScalarResponse()) {
+      Thyra::ConstDetachedVectorView<double> g(thyraResponses[i]);
+      std::cout << "\nResponse " << i << ": " << g[0] << std::endl;
+    }
+  }
 
   overlapMap = albanyApp->getDiscretization()->getOverlapMapT();
   Teuchos::RCP<Tpetra_Import> import = Teuchos::rcp(new Tpetra_Import(albanyApp->getDiscretization()->getMapT(), overlapMap));
