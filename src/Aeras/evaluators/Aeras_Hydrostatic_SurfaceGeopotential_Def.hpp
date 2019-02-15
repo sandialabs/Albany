@@ -113,6 +113,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(PhiSurf      , fm);
   this->utils.setFieldData(coordVec      , fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************

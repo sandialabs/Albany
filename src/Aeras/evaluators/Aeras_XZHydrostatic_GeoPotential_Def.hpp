@@ -66,6 +66,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   delta = createDynRankView(delta, "delta", numLevels);
   E.get_delta(delta);
 #endif
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************

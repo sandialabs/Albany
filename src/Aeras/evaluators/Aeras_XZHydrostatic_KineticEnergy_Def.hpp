@@ -45,6 +45,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(u,fm);
   this->utils.setFieldData(ke,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************

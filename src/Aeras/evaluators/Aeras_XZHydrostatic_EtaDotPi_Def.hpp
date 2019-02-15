@@ -109,6 +109,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   E.get_b(b);
   E.get_delta(delta);
 #endif
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************

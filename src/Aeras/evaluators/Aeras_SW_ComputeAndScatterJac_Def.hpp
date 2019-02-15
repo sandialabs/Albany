@@ -69,6 +69,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   //this->utils.setFieldData(wGradBF,fm);
   //this->utils.setFieldData(lambda_nodal,fm);
   //this->utils.setFieldData(theta_nodal,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 
@@ -87,7 +88,6 @@ template<typename Traits>
 void SW_ComputeAndScatterJac<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
 //std::cout << "IKT in evaluateFields!" << std::endl; 
 //First, we need to compute the local mass and laplacian matrices 
 //(checking the n_coeff flag for whether the laplacian is needed) as follows: 

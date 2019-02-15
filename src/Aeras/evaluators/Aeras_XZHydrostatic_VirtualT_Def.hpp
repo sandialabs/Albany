@@ -70,6 +70,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(temperature,fm);
   this->utils.setFieldData(Pi,fm);
   if (vapor) this->utils.setFieldData(qv,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************

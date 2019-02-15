@@ -40,6 +40,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(Velx,   fm);
   this->utils.setFieldData(Velocity,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************
