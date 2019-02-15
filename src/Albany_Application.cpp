@@ -63,7 +63,6 @@
 
 //#define WRITE_TO_MATRIX_MARKET
 //#define DEBUG_OUTPUT
-//#define DEBUG_OUTPUT2
 
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
@@ -1363,9 +1362,6 @@ void Albany::Application::computeGlobalResidualImpl(
 #endif
 
       // FillType template argument used to specialize Sacado
-#ifdef DEBUG_OUTPUT2
-      std::cout << "calling FM evaluate fields in computeGlobalResidualImpl" << std::endl;
-#endif
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(
           workset);
       if (nfm != Teuchos::null) {
@@ -1500,9 +1496,6 @@ void Albany::Application::computeGlobalResidualImpl(
     workset.disc = disc;
 
     // FillType template argument used to specialize Sacado
-#ifdef DEBUG_OUTPUT2
-    std::cout << "calling DFM evaluate fields in computeGlobalResidualImplT" << std::endl;
-#endif
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
 
@@ -1665,9 +1658,6 @@ void Albany::Application::computeGlobalJacobianImpl(
     for (int ws = 0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(workset, ws);
       // FillType template argument used to specialize Sacado
-#ifdef DEBUG_OUTPUT2
-      std::cout << "calling FM evaluate fields in computeGlobalJacobianImplT" << std::endl;
-#endif
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(
           workset);
       if (Teuchos::nonnull(nfm))
@@ -1821,14 +1811,7 @@ void Albany::Application::computeGlobalJacobianImpl(
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif // ALBANY_LCM
 
-//#ifdef DEBUG_OUTPUT2
-    std::cout << "calling DFM preEvaluate in computeGlobalJacobianImplT" << std::endl;
-//#endif
-    dfm->preEvaluate<PHAL::AlbanyTraits::Jacobian>(workset);
     // FillType template argument used to specialize Sacado
-#ifdef DEBUG_OUTPUT2
-    std::cout << "calling DFM evaluate fields in computeGlobalJacobianImplT" << std::endl;
-#endif
     dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
   }
   fillComplete(jac);
@@ -2141,9 +2124,6 @@ void Albany::Application::computeGlobalTangent(
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Tangent>(workset, ws);
 
       // FillType template argument used to specialize Sacado
-#ifdef DEBUG_OUTPUT2
-      std::cout << "calling FM evaluate fields in computeGlobalTangent" << std::endl;
-#endif
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
       if (nfm != Teuchos::null)
         deref_nfm(nfm, wsPhysIndex, ws)
@@ -2206,9 +2186,6 @@ void Albany::Application::computeGlobalTangent(
 #endif // ALBANY_LCM
 
     // FillType template argument used to specialize Sacado
-#ifdef DEBUG_OUTPUT2
-    std::cout << "calling DFM evaluate fields in computeGlobalTangent" << std::endl;
-#endif
     dfm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
   }
 }
@@ -2286,9 +2263,6 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
     loadWorksetNodesetInfo(workset);
 
     // FillType template argument used to specialize Sacado
-#ifdef DEBUG_OUTPUT2
-    std::cout << "calling DFM evaluate fields in applyGlobalDistParamDerivImpl" << std::endl;
-#endif
     dfm->evaluateFields<PHAL::AlbanyTraits::DistParamDeriv>(workset);
   }
 
@@ -2323,9 +2297,6 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
       loadWorksetBucketInfo<PHAL::AlbanyTraits::DistParamDeriv>(workset, ws);
 
       // FillType template argument used to specialize Sacado
-#ifdef DEBUG_OUTPUT2
-      std::cout << "calling FM evaluate fields in applyGlobalDistParamDerivImpl" << std::endl;
-#endif
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::DistParamDeriv>(
           workset);
       if (nfm != Teuchos::null)
@@ -2387,9 +2358,6 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
     loadWorksetNodesetInfo(workset);
 
     // FillType template argument used to specialize Sacado
-#ifdef DEBUG_OUTPUT2
-    std::cout << "calling DFM evaluate fields AGAIN in applyGlobalDistParamDerivImpl" << std::endl;
-#endif
     dfm->evaluateFields<PHAL::AlbanyTraits::DistParamDeriv>(workset);
   }
 }
@@ -3412,9 +3380,6 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
 #endif
 
       // FillType template argument used to specialize Sacado
-#ifdef DEBUG_OUTPUT2
-      std::cout << "calling FM evaluate fields in computeGlobalResidualSDBCsImplT" << std::endl;
-#endif
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(
           workset);
       if (nfm != Teuchos::null) {
@@ -3482,9 +3447,6 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
 #endif // ALBANY_LCM
 
     // FillType template argument used to specialize Sacado
-#ifdef DEBUG_OUTPUT2
-    std::cout << "calling DFM evaluate fields in computeGlobalResidualSDBCsImplT" << std::endl;
-#endif
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     x_post_SDBCs = workset.x->clone_v();
   }
@@ -3517,9 +3479,6 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
 #endif
 
       // FillType template argument used to specialize Sacado
-#ifdef DEBUG_OUTPUT2
-      std::cout << "calling FM evaluate fields AGAIN in computeGlobalResidualSDBCsImplT" << std::endl;
-#endif
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(
           workset);
       if (nfm != Teuchos::null) {
@@ -3580,9 +3539,6 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
 #endif // ALBANY_LCM
 
       // FillType template argument used to specialize Sacado
-#ifdef DEBUG_OUTPUT2
-        std::cout << "calling DFM evaluate fields AGAIN in computeGlobalResidualSDBCsImplT" << std::endl;
-#endif
         dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     }
   } // endif (begin_time_step == true)
