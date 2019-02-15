@@ -51,7 +51,7 @@ ResponseGLFlux(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& d
   this->addDependentField(bed);
   this->addDependentField(coords);
 
-  this->setName("Response Surface Mass Balance Mismatch" + PHX::typeAsString<EvalT>());
+  this->setName("Response Grounding Line Flux" + PHX::typeAsString<EvalT>());
 
   using PHX::MDALayout;
 
@@ -60,8 +60,8 @@ ResponseGLFlux(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& d
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
-  std::string local_response_name = "Local Response SMB Mismatch";
-  std::string global_response_name = "Global SMB Mismatch";
+  std::string local_response_name = "Local Response GL Flux";
+  std::string global_response_name = "Global Response GL Flux";
   int worksetSize = dl_basal->node_scalar->dimension(0);
   int responseSize = 1;
   auto local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
@@ -108,6 +108,7 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
 
   if (workset.sideSets->find(basalSideName) != workset.sideSets->end())
   {
+    double coeff = rho_i*1e6*scaling; //to convert volume flux [km^2 m yr^{-1}] in a mass flux [kg yr^{-1}]
     const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
     for (auto const& it_side : sideSet)
     {
@@ -126,16 +127,13 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
       if(!isGLCell)
         continue;
 
-      ParamScalarT maxTheta(0);
-      int maxTheta_index, maxTheta_counter;
-
       int node_plus, node_minus;
       for (int inode=0, counter=0; (inode<numSideNodes) && (counter<2); ++inode) {
         int inode1 = (inode+1)%numSideNodes;
-        ParamScalarT gl0 = gl_func(inode), gl1 = gl_func(inode1);
+        MeshScalarT gl0 = gl_func(inode), gl1 = gl_func(inode1);
         if(gl0*gl1 <= 0) {
           TEUCHOS_TEST_FOR_EXCEPTION(gl0 == gl1, std::runtime_error, "Error! The corner case where the GL is aligned with an element edge is not handled at the moment\n");
-          ParamScalarT theta = gl0/(gl0-gl1);
+          MeshScalarT theta = gl0/(gl0-gl1);
           H(counter) = thickness(cell,side,inode1)*theta + thickness(cell,side,inode)*(1-theta);
           x(counter) = coords(cell,side,inode1,0)*theta + coords(cell,side,inode,0)*(1-theta);
           y(counter) = coords(cell,side,inode1,1)*theta + coords(cell,side,inode,1)*(1-theta);
@@ -155,8 +153,8 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
       bool positive_sign = (y[1]-y[0])*(coords(cell,side,node_minus,0)-coords(cell,side,node_plus,0))-(x[1]-x[0])*(coords(cell,side,node_minus,1)-coords(cell,side,node_plus,1)) > 0;
       if(!positive_sign) t = -t;
 
-      this->local_response_eval(cell, 0) += t*scaling;
-      this->global_response_eval(0) += t*scaling;
+      this->local_response_eval(cell, 0) += t*coeff;
+      this->global_response_eval(0) += t*coeff;
     }
   }
 
