@@ -214,6 +214,13 @@ private:
       const Teuchos::RCP<Thyra_Vector>& f,
       const double dt = 0.0);
 
+  PHAL::Workset set_dfm_workset(double const current_time,
+      const Teuchos::RCP<const Thyra_Vector> x,
+      const Teuchos::RCP<const Thyra_Vector> x_dot,
+      const Teuchos::RCP<const Thyra_Vector> x_dotdot,
+      const Teuchos::RCP<Thyra_Vector>& f,
+      const Teuchos::RCP<const Thyra_Vector>& x_post_SDBCs = Teuchos::null);  
+
 public:
 //! Compute global Jacobian
 /*!

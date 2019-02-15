@@ -1267,6 +1267,79 @@ void checkDerivatives(Albany::Application &app, const double time,
 }
 } // namespace
 
+
+PHAL::Workset Albany::Application::set_dfm_workset(double const current_time,
+    const Teuchos::RCP<const Thyra_Vector> x,
+    const Teuchos::RCP<const Thyra_Vector> x_dot,
+    const Teuchos::RCP<const Thyra_Vector> x_dotdot,
+    const Teuchos::RCP<Thyra_Vector>& f, 
+    const Teuchos::RCP<const Thyra_Vector>& x_post_SDBCs)
+{
+  PHAL::Workset workset;
+
+  workset.f = f;
+
+  loadWorksetNodesetInfo(workset);
+
+  if (scaleBCdofs == true) {
+    setScaleBCDofs(workset);
+#ifdef WRITE_TO_MATRIX_MARKET
+    char nameScale[100]; // create string for file name
+    if (commT->getSize() == 1) {
+      sprintf(nameScale, "scale%i.mm", countScale);
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, Albany::getConstTpetraVector(scaleVec_));
+    }
+    else {
+        // LB 7/24/18: is the conversion to serial really needed? Tpetra can handle distributed vectors in the output.
+        //             Besides, the serial map has GIDs from 0 to num_global_elements-1. This *may not* be the same
+        //             set of GIDs as in the solution map (this may really become an issue when we start tackling
+        //             block discretizations)
+/*
+ *        // create serial map that puts the whole solution on processor 0
+ *        int numMyElements = (scaleVec_->getMap()->getComm()->getRank() == 0)
+ *                                  ? scaleVec_->getMap()->getGlobalNumElements()
+ *                                  : 0;
+ *        Teuchos::RCP<const Tpetra_Map> serial_map =
+ *              Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, commT));
+ *
+ *        // create importer from parallel map to serial map and populate serial
+ *        // solution scale_serial
+ *        Teuchos::RCP<Tpetra_Import> importOperator =
+ *            Teuchos::rcp(new Tpetra_Import(scaleVec_->getMap(), serial_map));
+ *        Teuchos::RCP<Tpetra_Vector> scale_serial =
+ *            Teuchos::rcp(new Tpetra_Vector(serial_map));
+ *        scale_serial->doImport(*scaleVec_, *importOperator, Tpetra::INSERT);
+ */
+      sprintf(nameScale, "scaleSerial%i.mm", countScale);
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, Albany::getConstTpetraVector(scaleVec_));
+    }
+#endif
+    countScale++;
+  }
+
+  if (x_post_SDBCs == Teuchos::null) 
+    dfm_set(workset, x, x_dot, x_dotdot, rc_mgr);
+  else 
+    dfm_set(workset, x_post_SDBCs, x_dot, x_dotdot, rc_mgr);
+
+
+  double const
+  this_time = fixTime(current_time);
+
+  workset.current_time = this_time;
+
+#if defined(ALBANY_LCM)
+  // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
+  workset.apps_ = apps_;
+  workset.current_app_ = Teuchos::rcp(this, false);
+#endif // ALBANY_LCM
+
+  workset.distParamLib = distParamLib;
+  workset.disc = disc;
+
+  return workset; 
+}
+
 void Albany::Application::computeGlobalResidualImpl(
     double const current_time,
     const Teuchos::RCP<const Thyra_Vector> x,
@@ -1437,63 +1510,7 @@ void Albany::Application::computeGlobalResidualImpl(
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
 
   if (dfm != Teuchos::null) {
-    PHAL::Workset workset;
-
-    workset.f = f;
-
-    loadWorksetNodesetInfo(workset);
-
-    if (scaleBCdofs == true) {
-      setScaleBCDofs(workset);
-#ifdef WRITE_TO_MATRIX_MARKET
-      char nameScale[100]; // create string for file name
-      if (commT->getSize() == 1) {
-        sprintf(nameScale, "scale%i.mm", countScale);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, Albany::getConstTpetraVector(scaleVec_));
-      }
-      else {
-        // LB 7/24/18: is the conversion to serial really needed? Tpetra can handle distributed vectors in the output.
-        //             Besides, the serial map has GIDs from 0 to num_global_elements-1. This *may not* be the same
-        //             set of GIDs as in the solution map (this may really become an issue when we start tackling
-        //             block discretizations)
-/*
- *        // create serial map that puts the whole solution on processor 0
- *        int numMyElements = (scaleVec_->getMap()->getComm()->getRank() == 0)
- *                                  ? scaleVec_->getMap()->getGlobalNumElements()
- *                                  : 0;
- *        Teuchos::RCP<const Tpetra_Map> serial_map =
- *              Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, commT));
- *
- *        // create importer from parallel map to serial map and populate serial
- *        // solution scale_serial
- *        Teuchos::RCP<Tpetra_Import> importOperator =
- *            Teuchos::rcp(new Tpetra_Import(scaleVec_->getMap(), serial_map));
- *        Teuchos::RCP<Tpetra_Vector> scale_serial =
- *            Teuchos::rcp(new Tpetra_Vector(serial_map));
- *        scale_serial->doImport(*scaleVec_, *importOperator, Tpetra::INSERT);
- */
-        sprintf(nameScale, "scaleSerial%i.mm", countScale);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, Albany::getConstTpetraVector(scaleVec_));
-      }
-#endif
-      countScale++;
-    }
-
-    dfm_set(workset, x, x_dot, x_dotdot, rc_mgr);
-
-    double const
-    this_time = fixTime(current_time);
-
-    workset.current_time = this_time;
-
-#if defined(ALBANY_LCM)
-    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-    workset.apps_ = apps_;
-    workset.current_app_ = Teuchos::rcp(this, false);
-#endif // ALBANY_LCM
-
-    workset.distParamLib = distParamLib;
-    workset.disc = disc;
+    PHAL::Workset workset = set_dfm_workset(current_time, x, x_dot, x_dotdot, f);
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
@@ -3424,28 +3441,7 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   Teuchos::RCP<Thyra_Vector> x_post_SDBCs;
   if (dfm != Teuchos::null) {
-    PHAL::Workset workset;
-
-    workset.f = f;
-
-    loadWorksetNodesetInfo(workset);
-
-    dfm_set(workset, x, xdot, xdotdot, rc_mgr);
-
-    double const
-    this_time = fixTime(current_time);
-
-    workset.current_time = this_time;
-
-    workset.distParamLib = distParamLib;
-    workset.disc = disc;
-
-#if defined(ALBANY_LCM)
-    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-    workset.apps_ = apps_;
-    workset.current_app_ = Teuchos::rcp(this, false);
-#endif // ALBANY_LCM
-
+    PHAL::Workset workset = set_dfm_workset(current_time, x, xdot, xdotdot, f);
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     x_post_SDBCs = workset.x->clone_v();
@@ -3515,31 +3511,9 @@ void Albany::Application::computeGlobalResidualSDBCsImpl(
     disc->setResidualField(overlapped_f);
 #endif // ALBANY_LCM
     if (dfm != Teuchos::null) {
-
-      PHAL::Workset workset;
-
-      workset.f = f;
-
-      loadWorksetNodesetInfo(workset);
-
-      dfm_set(workset, x_post_SDBCs, xdot, xdotdot, rc_mgr);
-
-      double const
-      this_time = fixTime(current_time);
-
-      workset.current_time = this_time;
-
-      workset.distParamLib = distParamLib;
-      workset.disc = disc;
-
-#if defined(ALBANY_LCM)
-      // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-      workset.apps_ = apps_;
-      workset.current_app_ = Teuchos::rcp(this, false);
-#endif // ALBANY_LCM
-
+      PHAL::Workset workset = set_dfm_workset(current_time, x_post_SDBCs, xdot, xdotdot, f);
       // FillType template argument used to specialize Sacado
-        dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+      dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     }
   } // endif (begin_time_step == true)
   previous_app = current_app;
