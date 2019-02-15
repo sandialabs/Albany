@@ -43,41 +43,41 @@ bool Setup::contain_eval(const std::string& eval) const
 void Setup::fill_field_dependencies(const std::vector<Teuchos::RCP<PHX::FieldTag>>& depFields,
     const std::vector<Teuchos::RCP<PHX::FieldTag>>& evalFields, const bool saved)
 {
-  // Fill dependencies as Dependency -> list of Evaluated
-  for (const auto & depField: depFields)
-    for (const auto & evalField: evalFields)
-    {
-      auto && dep2EvalFields = *_dep2EvalFields;
-      dep2EvalFields[depField->identifier()].insert(evalField->identifier());
-    }
+  if (_enableMemoization) {
+    // Fill dependencies as Dependency -> list of Evaluated
+    for (const auto & depField: depFields)
+      for (const auto & evalField: evalFields) {
+        auto && dep2EvalFields = *_dep2EvalFields;
+        dep2EvalFields[depField->identifier()].insert(evalField->identifier());
+      }
 
-  // Fill MDField lists based on whether it should be saved/unsaved
-  auto fields = saved ? _savedFields : _unsavedFields;
-  for (const auto & evalField: evalFields)
-    fields->insert(evalField->identifier());
+    // Fill MDField lists based on whether it should be saved/unsaved
+    auto fields = saved ? _savedFields : _unsavedFields;
+    for (const auto & evalField: evalFields)
+      fields->insert(evalField->identifier());
+  }
 }
 
 void Setup::update_unsaved_fields()
 {
-  // Start with list of unsaved fields
-  std::stack<std::string> unsavedStack;
-  for (const auto & unsavedField: *_unsavedFields)
-    unsavedStack.push(unsavedField);
+  if (_enableMemoization) {
+    // Start with list of unsaved fields
+    std::stack<std::string> unsavedStack;
+    for (const auto & unsavedField: *_unsavedFields)
+      unsavedStack.push(unsavedField);
 
-  // Continue until all unsaved fields have been removed
-  while(!unsavedStack.empty())
-  {
-    const auto iter = _dep2EvalFields->find(unsavedStack.top());
-    unsavedStack.pop();
+    // Continue until all unsaved fields have been removed
+    while(!unsavedStack.empty()) {
+      const auto iter = _dep2EvalFields->find(unsavedStack.top());
+      unsavedStack.pop();
 
-    // If unsaved field is used to evaluate fields, add evaluated fields to list of unsaved
-    if (iter != _dep2EvalFields->end())
-    {
-      for (const auto & evalField: iter->second)
-      {
-        _savedFields->erase(evalField);
-        _unsavedFields->insert(evalField);
-        unsavedStack.push(evalField);
+      // If unsaved field is used to evaluate fields, add evaluated fields to list of unsaved
+      if (iter != _dep2EvalFields->end()) {
+        for (const auto & evalField: iter->second) {
+          _savedFields->erase(evalField);
+          _unsavedFields->insert(evalField);
+          unsavedStack.push(evalField);
+        }
       }
     }
   }
@@ -90,41 +90,45 @@ Teuchos::RCP<const StringSet> Setup::get_saved_fields() const
 
 void Setup::check_fields(const std::vector<Teuchos::RCP<PHX::FieldTag>>& fields) const
 {
-  for (const auto & field: fields) {
-    const auto & fieldId = field->identifier();
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        _savedFields->count(fieldId) == 0 &&
-        _unsavedFields->count(fieldId) == 0,
-        std::logic_error, fieldId + " could not be found!\n");
+  if (_enableMemoization) {
+    for (const auto & field: fields) {
+      const auto & fieldId = field->identifier();
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          _savedFields->count(fieldId) == 0 &&
+          _unsavedFields->count(fieldId) == 0,
+          std::logic_error, fieldId + " could not be found!\n");
+    }
   }
 }
 
 void Setup::print_field_dependencies() const
 {
-  std::cout << "******************************************" << std::endl;
-  std::cout << "Phalanx MDField dependencies: " << std::endl;
-  std::cout << "Eval:";
-  for (const auto & eval: *_setupEvals)
-    std::cout << " " << eval;
-  std::cout << std::endl;
+  if (_enableMemoization) {
+    std::cout << "******************************************" << std::endl;
+    std::cout << "Phalanx MDField dependencies: " << std::endl;
+    std::cout << "Eval:";
+    for (const auto & eval: *_setupEvals)
+      std::cout << " " << eval;
+    std::cout << std::endl;
 
-  std::cout << "Saved fields:" << std::endl;
-  for (const auto & savedField: *_savedFields)
-    std::cout << "  " << savedField << std::endl;
-  std::cout << std::endl;
+    std::cout << "Saved fields:" << std::endl;
+    for (const auto & savedField: *_savedFields)
+      std::cout << "  " << savedField << std::endl;
+    std::cout << std::endl;
 
-  std::cout << "Unsaved fields:" << std::endl;
-  for (const auto & unsavedField: *_unsavedFields)
-    std::cout << "  " << unsavedField << std::endl;
-  std::cout << std::endl;
+    std::cout << "Unsaved fields:" << std::endl;
+    for (const auto & unsavedField: *_unsavedFields)
+      std::cout << "  " << unsavedField << std::endl;
+    std::cout << std::endl;
 
-  std::cout << "Field dependencies:" << std::endl;
-  for (const auto & depField: *_dep2EvalFields) {
-    std::cout << "  " << depField.first << " is a dependency of:" << std::endl;
-    for (const auto & evalField: depField.second)
-      std::cout << "    " << evalField << std::endl;
+    std::cout << "Field dependencies:" << std::endl;
+    for (const auto & depField: *_dep2EvalFields) {
+      std::cout << "  " << depField.first << " is a dependency of:" << std::endl;
+      for (const auto & evalField: depField.second)
+        std::cout << "    " << evalField << std::endl;
+    }
+    std::cout << "******************************************" << std::endl;
   }
-  std::cout << "******************************************" << std::endl;
 }
 
 } // namespace PHAL
