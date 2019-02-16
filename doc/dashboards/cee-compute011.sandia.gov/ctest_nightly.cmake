@@ -685,17 +685,20 @@ if (BUILD_TRILINOSCLANG)
 
   set (CONFIGURE_OPTIONS
     "${COMMON_CONFIGURE_OPTIONS}"
-    "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
+    "-DCMAKE_BUILD_TYPE:STRING=DEBUG"
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/clang"
     #
     "-DCMAKE_CXX_COMPILER:STRING=/projects/albany/clang/bin/mpicxx"
 #    "-DCMAKE_CXX_FLAGS:STRING='-msoft-float -march=native -O3 -Wno-inconsistent-missing-override -DNDEBUG ${extra_cxx_flags}'"
-    "-DCMAKE_CXX_FLAGS:STRING='-march=native -O3 -DNDEBUG -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
+    #"-DCMAKE_CXX_FLAGS:STRING='-march=native -O3 -DNDEBUG -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
+    "-DCMAKE_CXX_FLAGS:STRING='-march=native -g -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
     "-DCMAKE_C_COMPILER:STRING=/projects/albany/clang/bin/mpicc"
-    "-DCMAKE_C_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
+    #"-DCMAKE_C_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
+    "-DCMAKE_C_FLAGS:STRING='-march=native -g'"
     "-DCMAKE_Fortran_COMPILER:STRING=/projects/albany/clang/bin/mpifort"
-    "-DCMAKE_Fortran_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
+    #"-DCMAKE_Fortran_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
+    "-DCMAKE_Fortran_FLAGS:STRING='-march=native -g'"
     "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
 #    "-DMDS_ID_TYPE:STRING='long long int'"
     "-DMDS_ID_TYPE:STRING='long int'"
@@ -759,6 +762,7 @@ if (BUILD_ALB64CLANG)
   set (CONF_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11"
     "-DENABLE_64BIT_INT:BOOL=ON"
+    "-DCMAKE_BUILD_TYPE:STRING=DEBUG"
 # Run even the epetra tests
 #    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
     "-DENABLE_LCM:BOOL=OFF"
