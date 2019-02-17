@@ -99,19 +99,6 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::SDirichlet(
   scale = p.get<RealType>("SDBC Scaling", 1.0);  
 }
 
-//
-//
-//
-template<typename Traits>
-void
-SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::preEvaluate(
-    typename Traits::EvalData dirichlet_workset)
-{
-#ifdef DEBUG_OUTPUT
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << "IKT SDirichlet preEvaluate Jacobian\n"; 
-#endif
-}
 
 //
 //
@@ -279,13 +266,6 @@ SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::SDirichlet(
 //
 //
 //
-template<typename Traits>
-void
-SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::preEvaluate(
-    typename Traits::EvalData dirichlet_workset)
-{
-  return;  
-}
 
 template<typename Traits>
 void
@@ -367,20 +347,6 @@ SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::SDirichlet(
     : PHAL::DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
 {
   return;
-}
-
-//
-//
-//
-template<typename Traits>
-void
-SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::preEvaluate(
-    typename Traits::EvalData dirichlet_workset)
-{
-#ifdef DEBUG_OUTPUT
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << "IKT SDirichlet preEvaluate DistParamDeriv\n"; 
-#endif
 }
 
 //

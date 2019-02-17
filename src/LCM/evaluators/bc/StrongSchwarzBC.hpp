@@ -191,8 +191,6 @@ class StrongSchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>
   StrongSchwarzBC(Teuchos::ParameterList& p);
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
   void
-  preEvaluate(typename Traits::EvalData d);
-  void
   evaluateFields(typename Traits::EvalData d);
 };
 
@@ -207,8 +205,6 @@ class StrongSchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>
   StrongSchwarzBC(Teuchos::ParameterList& p);
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
   void
-  preEvaluate(typename Traits::EvalData d);
-  void
   evaluateFields(typename Traits::EvalData d);
 };
 
@@ -222,8 +218,6 @@ class StrongSchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>
  public:
   StrongSchwarzBC(Teuchos::ParameterList& p);
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
-  void
-  preEvaluate(typename Traits::EvalData d);
   void
   evaluateFields(typename Traits::EvalData d);
 };
