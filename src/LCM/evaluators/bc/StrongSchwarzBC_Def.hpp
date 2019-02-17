@@ -551,6 +551,167 @@ StrongSchwarzBC_Base<EvalT, Traits>::doDTKInterpolation(
 #endif  // ALBANY_DTK
 
 //
+// Fill solution with Dirichlet values 
+//
+template <typename StrongSchwarzBC, typename Traits>
+void
+fillSolution(StrongSchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
+{
+  Teuchos::RCP<const Tpetra_Vector> const_disp =
+      Albany::getConstTpetraVector(dirichlet_workset.x);
+  Teuchos::RCP<const Tpetra_Vector> const_velo =
+      Albany::getConstTpetraVector(dirichlet_workset.xdot);
+  Teuchos::RCP<const Tpetra_Vector> const_acce =
+      Albany::getConstTpetraVector(dirichlet_workset.xdotdot);
+
+  bool const has_disp = const_disp != Teuchos::null;
+
+  bool const has_velo = const_velo != Teuchos::null;
+
+  bool const has_acce = const_acce != Teuchos::null;
+
+  ALBANY_ASSERT(has_disp == true);
+
+  // Displacement
+  Teuchos::RCP<Tpetra_Vector> disp =
+      has_disp == true ?
+          Teuchos::rcpFromRef(const_cast<Tpetra_Vector&>(*const_disp)) :
+          Teuchos::null;
+
+  Teuchos::ArrayRCP<ST> disp_view =
+      has_disp == true ? disp->get1dViewNonConst() : Teuchos::null;
+
+  // Velocity
+  Teuchos::RCP<Tpetra_Vector> velo =
+      has_velo == true ?
+          Teuchos::rcpFromRef(const_cast<Tpetra_Vector&>(*const_velo)) :
+          Teuchos::null;
+
+  Teuchos::ArrayRCP<ST> velo_view =
+      has_velo == true ? velo->get1dViewNonConst() : Teuchos::null;
+
+  // Acceleration
+  Teuchos::RCP<Tpetra_Vector> acce =
+      has_acce == true ?
+          Teuchos::rcpFromRef(const_cast<Tpetra_Vector&>(*const_acce)) :
+          Teuchos::null;
+
+  Teuchos::ArrayRCP<ST> acce_view =
+      has_acce == true ? acce->get1dViewNonConst() : Teuchos::null;
+
+  std::vector<std::vector<int>> const& ns_nodes =
+      dirichlet_workset.nodeSets->find(sbc.nodeSetID)->second;
+
+  auto const ns_number_nodes = ns_nodes.size();
+
+#if defined(ALBANY_DTK)
+
+  Teuchos::Array<Teuchos::RCP<
+      Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>>
+      bcs_array = sbc.computeBCsDTK();
+
+  ALBANY_ASSERT(has_velo == false || bcs_array.length() >= 2);
+  ALBANY_ASSERT(has_acce == false || bcs_array.length() >= 3);
+
+  // Displacement
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
+      bcs_disp = bcs_array[0];
+
+  Teuchos::RCP<const Teuchos::Comm<int>> commT = bcs_disp->getMap()->getComm();
+
+  Teuchos::ArrayRCP<ST const> bcs_disp_const_view_x = bcs_disp->getData(0);
+
+  Teuchos::ArrayRCP<ST const> bcs_disp_const_view_y = bcs_disp->getData(1);
+
+  Teuchos::ArrayRCP<ST const> bcs_disp_const_view_z = bcs_disp->getData(2);
+
+  // Velocity
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
+      bcs_velo{Teuchos::null};
+
+  Teuchos::ArrayRCP<ST const> bcs_velo_const_view_x;
+  Teuchos::ArrayRCP<ST const> bcs_velo_const_view_y;
+  Teuchos::ArrayRCP<ST const> bcs_velo_const_view_z;
+
+  if (bcs_array.length() > 1) {
+    bcs_velo              = bcs_array[1];
+    bcs_velo_const_view_x = bcs_velo->getData(0);
+    bcs_velo_const_view_y = bcs_velo->getData(1);
+    bcs_velo_const_view_z = bcs_velo->getData(2);
+  }
+
+  // Acceleration
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
+      bcs_acce{Teuchos::null};
+
+  Teuchos::ArrayRCP<ST const> bcs_acce_const_view_x;
+  Teuchos::ArrayRCP<ST const> bcs_acce_const_view_y;
+  Teuchos::ArrayRCP<ST const> bcs_acce_const_view_z;
+
+  if (bcs_array.length() > 2) {
+    bcs_acce              = bcs_array[2];
+    bcs_acce_const_view_x = bcs_acce->getData(0);
+    bcs_acce_const_view_y = bcs_acce->getData(1);
+    bcs_acce_const_view_z = bcs_acce->getData(2);
+  }
+
+  for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
+    auto const x_dof = ns_nodes[ns_node][0];
+
+    auto const y_dof = ns_nodes[ns_node][1];
+
+    auto const z_dof = ns_nodes[ns_node][2];
+
+    auto const dof = x_dof / 3;
+
+    std::set<int> const& fixed_dofs = dirichlet_workset.fixed_dofs_;
+
+    if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
+      disp_view[x_dof] = bcs_disp_const_view_x[dof];
+      if (has_velo) { velo_view[x_dof] = bcs_velo_const_view_x[dof]; }
+      if (has_acce) { acce_view[x_dof] = bcs_acce_const_view_x[dof]; }
+    }
+    if (fixed_dofs.find(y_dof) == fixed_dofs.end()) {
+      disp_view[y_dof] = bcs_disp_const_view_y[dof];
+      if (has_velo) { velo_view[y_dof] = bcs_velo_const_view_y[dof]; }
+      if (has_acce) { acce_view[y_dof] = bcs_acce_const_view_y[dof]; }
+    }
+    if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
+      disp_view[z_dof] = bcs_disp_const_view_z[dof];
+      if (has_velo) { velo_view[z_dof] = bcs_velo_const_view_z[dof]; }
+      if (has_acce) { acce_view[z_dof] = bcs_acce_const_view_z[dof]; }
+    }
+  }
+#else   // ALBANY_DTK
+  for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
+    ST x_val, y_val, z_val;
+
+    sbc.computeBCs(ns_node, x_val, y_val, z_val);
+
+    auto const x_dof = ns_nodes[ns_node][0];
+
+    auto const y_dof = ns_nodes[ns_node][1];
+
+    auto const z_dof = ns_nodes[ns_node][2];
+
+    std::set<int> const& fixed_dofs = dirichlet_workset.fixed_dofs_;
+
+    if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
+      disp_view[x_dof] = x_val;
+    }
+    if (fixed_dofs.find(y_dof) == fixed_dofs.end()) {
+      disp_view[y_dof] = y_val;
+    }
+    if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
+      disp_view[z_dof] = z_val;
+    }
+
+  }  // node in node set loop
+#endif  // ALBANY_DTK
+  return;
+}
+
+//
 // Fill residual, used in both residual and Jacobian
 //
 template <typename StrongSchwarzBC, typename Traits>
@@ -744,6 +905,9 @@ StrongSchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
   *out << "IKT StrongSchwarzBC preEvaluate Residual\n"; 
 #endif
+  fillSolution<StrongSchwarzBC<PHAL::AlbanyTraits::Residual, Traits>, Traits>(
+      *this, dirichlet_workset);
+  return;
 }
 
 //

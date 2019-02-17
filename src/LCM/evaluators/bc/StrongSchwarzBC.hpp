@@ -130,6 +130,10 @@ class StrongSchwarzBC_Base : public PHAL::SDirichlet<EvalT, Traits>
 
   template <typename SBC, typename T>
   friend void
+  fillSolution(SBC& sbc, typename T::EvalData d);
+
+  template <typename SBC, typename T>
+  friend void
   fillResidual(SBC& sbc, typename T::EvalData d);
 
  protected:
@@ -145,6 +149,13 @@ class StrongSchwarzBC_Base : public PHAL::SDirichlet<EvalT, Traits>
 
   int coupled_app_index_{-1};
 };
+
+//
+// Fill solution with Dirichlet values 
+//
+template <typename StrongSchwarzBC, typename Traits>
+void
+fillSolution(StrongSchwarzBC& sbc, typename Traits::EvalData d);
 
 //
 // Fill residual, used in both residual and Jacobian
