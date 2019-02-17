@@ -59,9 +59,6 @@ class SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>
   SDirichlet(Teuchos::ParameterList& p);
   
   void
-  preEvaluate(typename Traits::EvalData d);
-
-  void
   evaluateFields(typename Traits::EvalData d);
 
   void 
@@ -86,9 +83,6 @@ class SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>
   SDirichlet(Teuchos::ParameterList& p);
 
   void
-  preEvaluate(typename Traits::EvalData d);
-
-  void
   evaluateFields(typename Traits::EvalData d);
 
  protected:
@@ -105,9 +99,6 @@ class SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>
   using ScalarT = typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT;
 
   SDirichlet(Teuchos::ParameterList& p);
-
-  void
-  preEvaluate(typename Traits::EvalData d);
 
   void
   evaluateFields(typename Traits::EvalData d);

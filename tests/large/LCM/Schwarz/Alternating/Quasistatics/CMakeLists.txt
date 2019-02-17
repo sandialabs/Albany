@@ -38,7 +38,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 SET(OUTFILE "cuboid.log")
 SET(PYTHON_FILE "check_convergence.py") 
-add_test(NAME Schwarz_Alternating_Dynamics_${testName}
+add_test(NAME Schwarz_Alternating_${testName}
         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
         -DTEST_NAME=Cubes -DTEST_ARGS=cuboids.yaml -DMPIMNP=1
         -DLOGFILE=${OUTFILE} -DPY_FILE=${PYTHON_FILE}

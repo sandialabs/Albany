@@ -75,8 +75,6 @@ using Teuchos::rcpFromRef;
 int countJac; // counter which counts instances of Jacobian (for debug output)
 int countRes; // counter which counts instances of residual (for debug output)
 int countScale;
-int previous_app;
-int current_app;
 
 const Tpetra::global_size_t INVALID =
     Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
@@ -98,19 +96,6 @@ Albany::Application::Application(const RCP<const Teuchos_Comm> &comm_,
   buildProblem();
   createDiscretization();
   finalSetUp(params, initial_guess);
-  prev_times_.resize(1);
-#ifdef ALBANY_LCM
-  int num_apps = apps_.size();
-  if (num_apps == 0) {
-    num_apps = 1;
-  }
-  prev_times_.resize(num_apps);
-  for (int i = 0; i < num_apps; ++i) {
-    prev_times_[i] = -1.0;
-  }
-  previous_app = 0;
-  current_app = 0;
-#endif
 }
 
 Albany::Application::Application(const RCP<const Teuchos_Comm> &comm_)
@@ -121,16 +106,6 @@ Albany::Application::Application(const RCP<const Teuchos_Comm> &comm_)
       requires_orig_dbcs_(false) {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
-#endif
-#ifdef ALBANY_LCM
-  int num_apps = apps_.size();
-  if (num_apps == 0)
-    num_apps = 1;
-  prev_times_.resize(num_apps);
-  for (int i = 0; i < num_apps; ++i)
-    prev_times_[i] = -1.0;
-  previous_app = 0;
-  current_app = 0;
 #endif
 }
 
@@ -714,6 +689,13 @@ void Albany::Application::setScaling(
 
   if (scale == 1.0)
     scaleBCdofs = false;
+  
+  if ((scale != 1.0) && (problem->useSDBCs() == true)) {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                               "'Scaling' sublist not recognized when using SDBCs. \n" <<
+                               "To use scaling with SDBCs, specify 'Scaled SDBC' and/or \n" <<
+                               "'SDBC Scaling' in 'Dirichlet BCs' sublist."); 
+  }
 
 }
 
@@ -1267,6 +1249,79 @@ void checkDerivatives(Albany::Application &app, const double time,
 }
 } // namespace
 
+
+PHAL::Workset Albany::Application::set_dfm_workset(double const current_time,
+    const Teuchos::RCP<const Thyra_Vector> x,
+    const Teuchos::RCP<const Thyra_Vector> x_dot,
+    const Teuchos::RCP<const Thyra_Vector> x_dotdot,
+    const Teuchos::RCP<Thyra_Vector>& f, 
+    const Teuchos::RCP<const Thyra_Vector>& x_post_SDBCs)
+{
+  PHAL::Workset workset;
+
+  workset.f = f;
+
+  loadWorksetNodesetInfo(workset);
+
+  if (scaleBCdofs == true) {
+    setScaleBCDofs(workset);
+#ifdef WRITE_TO_MATRIX_MARKET
+    char nameScale[100]; // create string for file name
+    if (commT->getSize() == 1) {
+      sprintf(nameScale, "scale%i.mm", countScale);
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, Albany::getConstTpetraVector(scaleVec_));
+    }
+    else {
+        // LB 7/24/18: is the conversion to serial really needed? Tpetra can handle distributed vectors in the output.
+        //             Besides, the serial map has GIDs from 0 to num_global_elements-1. This *may not* be the same
+        //             set of GIDs as in the solution map (this may really become an issue when we start tackling
+        //             block discretizations)
+/*
+ *        // create serial map that puts the whole solution on processor 0
+ *        int numMyElements = (scaleVec_->getMap()->getComm()->getRank() == 0)
+ *                                  ? scaleVec_->getMap()->getGlobalNumElements()
+ *                                  : 0;
+ *        Teuchos::RCP<const Tpetra_Map> serial_map =
+ *              Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, commT));
+ *
+ *        // create importer from parallel map to serial map and populate serial
+ *        // solution scale_serial
+ *        Teuchos::RCP<Tpetra_Import> importOperator =
+ *            Teuchos::rcp(new Tpetra_Import(scaleVec_->getMap(), serial_map));
+ *        Teuchos::RCP<Tpetra_Vector> scale_serial =
+ *            Teuchos::rcp(new Tpetra_Vector(serial_map));
+ *        scale_serial->doImport(*scaleVec_, *importOperator, Tpetra::INSERT);
+ */
+      sprintf(nameScale, "scaleSerial%i.mm", countScale);
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, Albany::getConstTpetraVector(scaleVec_));
+    }
+#endif
+    countScale++;
+  }
+
+  if (x_post_SDBCs == Teuchos::null) 
+    dfm_set(workset, x, x_dot, x_dotdot, rc_mgr);
+  else 
+    dfm_set(workset, x_post_SDBCs, x_dot, x_dotdot, rc_mgr);
+
+
+  double const
+  this_time = fixTime(current_time);
+
+  workset.current_time = this_time;
+
+#if defined(ALBANY_LCM)
+  // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
+  workset.apps_ = apps_;
+  workset.current_app_ = Teuchos::rcp(this, false);
+#endif // ALBANY_LCM
+
+  workset.distParamLib = distParamLib;
+  workset.disc = disc;
+
+  return workset; 
+}
+
 void Albany::Application::computeGlobalResidualImpl(
     double const current_time,
     const Teuchos::RCP<const Thyra_Vector> x,
@@ -1274,7 +1329,11 @@ void Albany::Application::computeGlobalResidualImpl(
     const Teuchos::RCP<const Thyra_Vector> x_dotdot,
     Teuchos::Array<ParamVec> const &p,
     const Teuchos::RCP<Thyra_Vector>& f,
-    double dt) {
+    double dt) 
+{
+ 
+//#define DEBUG_OUTPUT
+
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
   postRegSetup("Residual");
 
@@ -1347,6 +1406,27 @@ void Albany::Application::computeGlobalResidualImpl(
     this_time = fixTime(current_time);
 
     loadBasicWorksetInfo(workset, this_time);
+  
+    Teuchos::RCP<Thyra_Vector> x_post_SDBCs;
+    if ((dfm != Teuchos::null) && (problem->useSDBCs() == true) ) {
+#ifdef DEBUG_OUTPUT
+      *out << "IKT before preEvaluate countRes = " << countRes
+           << ", computeGlobalResid workset.x = \n ";
+      describe(workset.x.getConst(),*out, Teuchos::VERB_EXTREME);
+#endif
+      workset = set_dfm_workset(current_time, x, x_dot, x_dotdot, f);
+
+      // FillType template argument used to specialize Sacado
+      dfm->preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
+      x_post_SDBCs = workset.x->clone_v();
+#ifdef DEBUG_OUTPUT
+      *out << "IKT after preEvaluate countRes = " << countRes
+           << ", computeGlobalResid workset.x = \n ";
+      describe(workset.x.getConst(),*out, Teuchos::VERB_EXTREME);
+#endif
+      loadBasicWorksetInfoSDBCs(workset, x_post_SDBCs, this_time);
+    }
+    
 
     workset.time_step = dt; 
 
@@ -1354,16 +1434,15 @@ void Albany::Application::computeGlobalResidualImpl(
 
     for (int ws = 0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
-
+      // FillType template argument used to specialize Sacado
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(
+          workset);
 #ifdef DEBUG_OUTPUT
-      *out << "IKT countRes = " << countRes
+      *out << "IKT after fm evaluateFields countRes = " << countRes
            << ", computeGlobalResid workset.x = \n ";
       describe(workset.x.getConst(),*out, Teuchos::VERB_EXTREME);
 #endif
 
-      // FillType template argument used to specialize Sacado
-      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(
-          workset);
       if (nfm != Teuchos::null) {
 #ifdef ALBANY_PERIDIGM
         // DJL this is a hack to avoid running a block with sphere elements
@@ -1437,63 +1516,7 @@ void Albany::Application::computeGlobalResidualImpl(
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
 
   if (dfm != Teuchos::null) {
-    PHAL::Workset workset;
-
-    workset.f = f;
-
-    loadWorksetNodesetInfo(workset);
-
-    if (scaleBCdofs == true) {
-      setScaleBCDofs(workset);
-#ifdef WRITE_TO_MATRIX_MARKET
-      char nameScale[100]; // create string for file name
-      if (commT->getSize() == 1) {
-        sprintf(nameScale, "scale%i.mm", countScale);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, Albany::getConstTpetraVector(scaleVec_));
-      }
-      else {
-        // LB 7/24/18: is the conversion to serial really needed? Tpetra can handle distributed vectors in the output.
-        //             Besides, the serial map has GIDs from 0 to num_global_elements-1. This *may not* be the same
-        //             set of GIDs as in the solution map (this may really become an issue when we start tackling
-        //             block discretizations)
-/*
- *        // create serial map that puts the whole solution on processor 0
- *        int numMyElements = (scaleVec_->getMap()->getComm()->getRank() == 0)
- *                                  ? scaleVec_->getMap()->getGlobalNumElements()
- *                                  : 0;
- *        Teuchos::RCP<const Tpetra_Map> serial_map =
- *              Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, commT));
- *
- *        // create importer from parallel map to serial map and populate serial
- *        // solution scale_serial
- *        Teuchos::RCP<Tpetra_Import> importOperator =
- *            Teuchos::rcp(new Tpetra_Import(scaleVec_->getMap(), serial_map));
- *        Teuchos::RCP<Tpetra_Vector> scale_serial =
- *            Teuchos::rcp(new Tpetra_Vector(serial_map));
- *        scale_serial->doImport(*scaleVec_, *importOperator, Tpetra::INSERT);
- */
-        sprintf(nameScale, "scaleSerial%i.mm", countScale);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, Albany::getConstTpetraVector(scaleVec_));
-      }
-#endif
-      countScale++;
-    }
-
-    dfm_set(workset, x, x_dot, x_dotdot, rc_mgr);
-
-    double const
-    this_time = fixTime(current_time);
-
-    workset.current_time = this_time;
-
-#if defined(ALBANY_LCM)
-    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-    workset.apps_ = apps_;
-    workset.current_app_ = Teuchos::rcp(this, false);
-#endif // ALBANY_LCM
-
-    workset.distParamLib = distParamLib;
-    workset.disc = disc;
+    PHAL::Workset workset = set_dfm_workset(current_time, x, x_dot, x_dotdot, f);
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
@@ -1516,16 +1539,9 @@ void Albany::Application::computeGlobalResidual(
 {
   // Create non-owning RCPs to Tpetra objects
   // to be passed to the implementation
-  if (problem->useSDBCs() == false) {
-    this->computeGlobalResidualImpl(
+  this->computeGlobalResidualImpl(
         current_time, x, x_dot, x_dotdot,
         p, f, dt);
-  } else {
-    // Temporary, while we refactor
-    this->computeGlobalResidualSDBCsImpl(
-        current_time, x, x_dot, x_dotdot,
-        p, f, dt);
-  }
 
   // Debut output
   if (writeToMatrixMarketRes !=
@@ -3245,302 +3261,3 @@ void Albany::Application::setCoupledAppBlockNodeset(
   coupled_app_index_block_nodeset_names_map_.insert(app_index_block_names);
 }
 #endif
-
-void Albany::Application::computeGlobalResidualSDBCsImpl(
-    double const current_time,
-    const Teuchos::RCP<const Thyra_Vector>& x,
-    const Teuchos::RCP<const Thyra_Vector>& xdot,
-    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-    Teuchos::Array<ParamVec> const &p,
-    const Teuchos::RCP<Thyra_Vector>& f,
-    double const dt) {
-  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
-  postRegSetup("Residual");
-
-  if (scale != 1.0) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                               "'Scaling' sublist not recognized when using SDBCs. \n" <<
-                               "To use scaling with SDBCs, specify 'Scaled SDBC' and/or \n" <<
-                               "'SDBC Scaling' in 'Dirichlet BCs' sublist."); 
-  }
-
-//#define DEBUG_OUTPUT
-
-#ifdef DEBUG_OUTPUT
-  *out << "IKT prev_times_ size = " << prev_times_.size() << '\n';
-#endif
-  int app_no = 0;
-#ifdef ALBANY_LCM
-  if (app_index_ < 0)
-    app_no = 0;
-  else
-    app_no = app_index_;
-#endif
-
-  bool begin_time_step = false;
-#ifdef ALBANY_LCM
-  current_app = app_index_;
-#ifdef DEBUG_OUTPUT
-  *out << " IKT current_app, previous_app = " << current_app << ", "
-       << previous_app << '\n';
-#endif
-#endif
-
-  // Load connectivity map and coordinates
-  const auto &wsElNodeEqID = disc->getWsElNodeEqID();
-  const auto &coords = disc->getCoords();
-  const auto &wsEBNames = disc->getWsEBNames();
-  const auto &wsPhysIndex = disc->getWsPhysIndex();
-
-  int const numWorksets = wsElNodeEqID.size();
-
-  const Teuchos::RCP<Thyra_Vector> overlapped_f = solMgrT->get_overlapped_f();
-  const auto cas_manager = solMgrT->get_cas_manager();
-
-  // Scatter x and xdot to the overlapped distrbution
-  solMgrT->scatterX(x, xdot, xdotdot);
-
-  // Scatter distributed parameters
-  distParamLib->scatter();
-
-  // Set parameters
-  for (int i = 0; i < p.size(); i++) {
-    for (unsigned int j = 0; j < p[i].size(); j++) {
-      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
-    }
-  }
-
-#if defined(ALBANY_LCM)
-  // Store pointers to solution and time derivatives.
-  // Needed for Schwarz coupling.
-  if (x != Teuchos::null) {
-    x_ = Teuchos::rcp(new Tpetra_Vector(*Albany::getConstTpetraVector(x)));
-  } else {
-    x_ = Teuchos::null;
-  }
-  if (xdot != Teuchos::null) {
-    xdot_ = Teuchos::rcp(new Tpetra_Vector(*Albany::getConstTpetraVector(xdot)));
-  } else {
-    xdot_ = Teuchos::null;
-  }
-  if (xdotdot != Teuchos::null) {
-    xdotdot_ = Teuchos::rcp(new Tpetra_Vector(*Albany::getConstTpetraVector(xdotdot)));
-  } else {
-    xdotdot_ = Teuchos::null;
-  }
-#endif // ALBANY_LCM
-
-  // Zero out overlapped residual - Tpetra
-  overlapped_f->assign(0.0);
-  f->assign(0.0);
-
-#ifdef ALBANY_PERIDIGM
-#if defined(ALBANY_EPETRA)
-  const Teuchos::RCP<LCM::PeridigmManager> &peridigmManager =
-      LCM::PeridigmManager::self();
-  if (Teuchos::nonnull(peridigmManager)) {
-    peridigmManager->setCurrentTimeAndDisplacement(current_time, Albany::getConstTpetraVector(x));
-    peridigmManager->evaluateInternalForce();
-  }
-#endif
-#endif
-
-  // Set data in Workset struct, and perform fill via field manager
-  {
-    if (Teuchos::nonnull(rc_mgr)) {
-      rc_mgr->init_x_if_not(x->space());
-    }
-
-    PHAL::Workset workset;
-
-    double const
-    this_time = fixTime(current_time);
-
-    loadBasicWorksetInfo(workset, this_time);
-    
-    workset.time_step = dt; 
-
-#ifdef DEBUG_OUTPUT
-    *out << "IKT previous_time, this_time = " << prev_times_[app_no] << ", "
-         << this_time << "\n";
-#endif
-    // Check if previous_time is same as current time.  If not, we are at the
-    // start  of a new time step, so we set boolean parameter to true.
-    begin_time_step = prev_times_[app_no] != this_time;
-
-    workset.f = overlapped_f;
-
-    for (int ws = 0; ws < numWorksets; ws++) {
-      loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
-
-#ifdef DEBUG_OUTPUT
-      *out << "IKT countRes = " << countRes
-           << ", computeGlobalResid workset.x = \n ";
-      describe(workset.x.getConst(),*out,Teuchos::VERB_EXTREME);
-#endif
-
-      // FillType template argument used to specialize Sacado
-      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(
-          workset);
-      if (nfm != Teuchos::null) {
-#ifdef ALBANY_PERIDIGM
-        // DJL this is a hack to avoid running a block with sphere elements
-        // through a Neumann field manager that was constructed for a non-sphere
-        // element topology.  The root cause is that Albany currently supports
-        // only a single Neumann field manager.  The history on that is murky.
-        // The single field manager is created for a specific element topology,
-        // and it fails if applied to worksets with a different element
-        // topology. The Peridigm use case is a discretization that contains
-        // blocks with sphere elements and blocks with standard FEM solid
-        // elements, and we want to apply Neumann BC to the standard solid
-        // elements.
-        if (workset.sideSets->size() != 0) {
-          deref_nfm(nfm, wsPhysIndex, ws)
-              ->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-        }
-#else
-        deref_nfm(nfm, wsPhysIndex, ws)
-            ->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-#endif
-      }
-    }
-    prev_times_[app_no] = this_time;
-    if (previous_app != current_app) {
-      begin_time_step = true;
-    }
-  }
-
-  // Assemble the residual into a non-overlapping vector
-  cas_manager->combine(overlapped_f,f,CombineMode::ADD);
-
-#ifdef ALBANY_LCM
-  // Push the assembled residual values back into the overlap vector
-  cas_manager->scatter(f,overlapped_f,CombineMode::INSERT);
-  // Write the residual to the discretization, which will later (optionally)
-  // be written to the output file
-  disc->setResidualField(overlapped_f);
-#endif // ALBANY_LCM
-
-  // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
-  Teuchos::RCP<Thyra_Vector> x_post_SDBCs;
-  if (dfm != Teuchos::null) {
-    PHAL::Workset workset;
-
-    workset.f = f;
-
-    loadWorksetNodesetInfo(workset);
-
-    dfm_set(workset, x, xdot, xdotdot, rc_mgr);
-
-    double const
-    this_time = fixTime(current_time);
-
-    workset.current_time = this_time;
-
-    workset.distParamLib = distParamLib;
-    workset.disc = disc;
-
-#if defined(ALBANY_LCM)
-    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-    workset.apps_ = apps_;
-    workset.current_app_ = Teuchos::rcp(this, false);
-#endif // ALBANY_LCM
-
-    // FillType template argument used to specialize Sacado
-    dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-    x_post_SDBCs = workset.x->clone_v();
-  }
-
-#ifdef DEBUG_OUTPUT
-  *out << "IKT begin_time_step? " << begin_time_step << "\n";
-#endif
-
-  if (begin_time_step == true) {
-    // if (countRes == 0) {
-    // Zero out overlapped residual - Tpetra
-    overlapped_f->assign(0.0);
-    f->assign(0.0);
-    PHAL::Workset workset;
-
-    double const
-    this_time = fixTime(current_time);
-
-    loadBasicWorksetInfoSDBCs(workset, x_post_SDBCs, this_time);
-
-    workset.f = overlapped_f;
-
-    for (int ws = 0; ws < numWorksets; ws++) {
-      loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
-
-#ifdef DEBUG_OUTPUT
-      *out << "IKT countRes = " << countRes
-           << ", computeGlobalResid workset.x = \n ";
-      describe(workset.x.getConst(),*out,Teuchos::VERB_EXTREME);
-#endif
-
-      // FillType template argument used to specialize Sacado
-      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(
-          workset);
-      if (nfm != Teuchos::null) {
-#ifdef ALBANY_PERIDIGM
-        // DJL this is a hack to avoid running a block with sphere elements
-        // through a Neumann field manager that was constructed for a non-sphere
-        // element topology.  The root cause is that Albany currently supports
-        // only a single Neumann field manager.  The history on that is murky.
-        // The single field manager is created for a specific element topology,
-        // and it fails if applied to worksets with a different element
-        // topology. The Peridigm use case is a discretization that contains
-        // blocks with sphere elements and blocks with standard FEM solid
-        // elements, and we want to apply Neumann BC to the standard solid
-        // elements.
-        if (workset.sideSets->size() != 0) {
-          deref_nfm(nfm, wsPhysIndex, ws)
-              ->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-        }
-#else
-        deref_nfm(nfm, wsPhysIndex, ws)
-            ->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-#endif
-      }
-    }
-
-    // Assemble the residual into a non-overlapping vector
-    cas_manager->combine(overlapped_f,f,CombineMode::ADD);
-
-#ifdef ALBANY_LCM
-    // Push the assembled residual values back into the overlap vector
-    cas_manager->scatter(f,overlapped_f,CombineMode::INSERT);
-    // Write the residual to the discretization, which will later (optionally)
-    // be written to the output file
-    disc->setResidualField(overlapped_f);
-#endif // ALBANY_LCM
-    if (dfm != Teuchos::null) {
-
-      PHAL::Workset workset;
-
-      workset.f = f;
-
-      loadWorksetNodesetInfo(workset);
-
-      dfm_set(workset, x_post_SDBCs, xdot, xdotdot, rc_mgr);
-
-      double const
-      this_time = fixTime(current_time);
-
-      workset.current_time = this_time;
-
-      workset.distParamLib = distParamLib;
-      workset.disc = disc;
-
-#if defined(ALBANY_LCM)
-      // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-      workset.apps_ = apps_;
-      workset.current_app_ = Teuchos::rcp(this, false);
-#endif // ALBANY_LCM
-
-      // FillType template argument used to specialize Sacado
-        dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-    }
-  } // endif (begin_time_step == true)
-  previous_app = current_app;
-}

@@ -44,6 +44,14 @@ SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
   *out << "IKT SDirichlet preEvaluate Residual\n"; 
 #endif
+  Teuchos::RCP<const Thyra_Vector> x = dirichlet_workset.x;
+  Teuchos::ArrayRCP<ST> x_view = Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x));
+  // Grab the vector of node GIDs for this Node Set ID
+  std::vector<std::vector<int>> const& ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+  for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
+    int const dof = ns_nodes[ns_node][this->offset];
+    x_view[dof] = this->value;
+  }
 }
 
 //
@@ -61,11 +69,9 @@ SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
   //       when calling getTpetraVector (from Thyra::TpetraVector), the container
   //       will throw.
   //       Instead, keep the const correctness until the very last moment.
-  Teuchos::RCP<const Thyra_Vector> x = dirichlet_workset.x;
   Teuchos::RCP<Thyra_Vector> f = dirichlet_workset.f;
 
   Teuchos::ArrayRCP<ST> f_view = Albany::getNonconstLocalData(f);
-  Teuchos::ArrayRCP<ST> x_view = Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x));
 
   // Grab the vector of node GIDs for this Node Set ID
   std::vector<std::vector<int>> const& ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
@@ -74,7 +80,6 @@ SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     int const dof = ns_nodes[ns_node][this->offset];
 
     f_view[dof] = 0.0;
-    x_view[dof] = this->value;
 
 #if defined(ALBANY_LCM)
     // Record DOFs to avoid setting Schwarz BCs on them.
@@ -94,19 +99,6 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::SDirichlet(
   scale = p.get<RealType>("SDBC Scaling", 1.0);  
 }
 
-//
-//
-//
-template<typename Traits>
-void
-SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::preEvaluate(
-    typename Traits::EvalData dirichlet_workset)
-{
-#ifdef DEBUG_OUTPUT
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << "IKT SDirichlet preEvaluate Jacobian\n"; 
-#endif
-}
 
 //
 //
@@ -274,13 +266,6 @@ SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::SDirichlet(
 //
 //
 //
-template<typename Traits>
-void
-SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::preEvaluate(
-    typename Traits::EvalData dirichlet_workset)
-{
-  return;  
-}
 
 template<typename Traits>
 void
@@ -362,20 +347,6 @@ SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::SDirichlet(
     : PHAL::DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
 {
   return;
-}
-
-//
-//
-//
-template<typename Traits>
-void
-SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::preEvaluate(
-    typename Traits::EvalData dirichlet_workset)
-{
-#ifdef DEBUG_OUTPUT
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << "IKT SDirichlet preEvaluate DistParamDeriv\n"; 
-#endif
 }
 
 //
