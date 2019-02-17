@@ -957,8 +957,6 @@ StrongSchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
 {
   dirichlet_workset.is_schwarz_bc_     = true;
   dirichlet_workset.spatial_dimension_ = this->app_->getSpatialDimension();
-  PHAL::SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::preEvaluate(
-      dirichlet_workset);
   PHAL::SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
       dirichlet_workset);
 
