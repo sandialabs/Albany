@@ -1347,7 +1347,11 @@ void Albany::Application::computeGlobalResidualImpl(
     const Teuchos::RCP<const Thyra_Vector> x_dotdot,
     Teuchos::Array<ParamVec> const &p,
     const Teuchos::RCP<Thyra_Vector>& f,
-    double dt) {
+    double dt) 
+{
+ 
+//#define DEBUG_OUTPUT
+
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
   postRegSetup("Residual");
 
@@ -1420,6 +1424,27 @@ void Albany::Application::computeGlobalResidualImpl(
     this_time = fixTime(current_time);
 
     loadBasicWorksetInfo(workset, this_time);
+  
+    Teuchos::RCP<Thyra_Vector> x_post_SDBCs;
+    if ((dfm != Teuchos::null) && (problem->useSDBCs() == true) ) {
+#ifdef DEBUG_OUTPUT
+      *out << "IKT before preEvaluate countRes = " << countRes
+           << ", computeGlobalResid workset.x = \n ";
+      describe(workset.x.getConst(),*out, Teuchos::VERB_EXTREME);
+#endif
+      workset = set_dfm_workset(current_time, x, x_dot, x_dotdot, f);
+
+      // FillType template argument used to specialize Sacado
+      dfm->preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
+      x_post_SDBCs = workset.x->clone_v();
+#ifdef DEBUG_OUTPUT
+      *out << "IKT after preEvaluate countRes = " << countRes
+           << ", computeGlobalResid workset.x = \n ";
+      describe(workset.x.getConst(),*out, Teuchos::VERB_EXTREME);
+#endif
+      loadBasicWorksetInfoSDBCs(workset, x_post_SDBCs, this_time);
+    }
+    
 
     workset.time_step = dt; 
 
@@ -1427,16 +1452,15 @@ void Albany::Application::computeGlobalResidualImpl(
 
     for (int ws = 0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
-
+      // FillType template argument used to specialize Sacado
+      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(
+          workset);
 #ifdef DEBUG_OUTPUT
-      *out << "IKT countRes = " << countRes
+      *out << "IKT after fm evaluateFields countRes = " << countRes
            << ", computeGlobalResid workset.x = \n ";
       describe(workset.x.getConst(),*out, Teuchos::VERB_EXTREME);
 #endif
 
-      // FillType template argument used to specialize Sacado
-      fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(
-          workset);
       if (nfm != Teuchos::null) {
 #ifdef ALBANY_PERIDIGM
         // DJL this is a hack to avoid running a block with sphere elements
@@ -1533,16 +1557,16 @@ void Albany::Application::computeGlobalResidual(
 {
   // Create non-owning RCPs to Tpetra objects
   // to be passed to the implementation
-  if (problem->useSDBCs() == false) {
+  //if (problem->useSDBCs() == false) {
     this->computeGlobalResidualImpl(
         current_time, x, x_dot, x_dotdot,
         p, f, dt);
-  } else {
+  /*} else {
     // Temporary, while we refactor
     this->computeGlobalResidualSDBCsImpl(
         current_time, x, x_dot, x_dotdot,
         p, f, dt);
-  }
+  }*/
 
   // Debut output
   if (writeToMatrixMarketRes !=

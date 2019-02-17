@@ -43,6 +43,9 @@ class TimeDepSDBC : public TimeDepSDBC_Base<EvalT, Traits>
   TimeDepSDBC(Teuchos::ParameterList& p);
 
   void
+  preEvaluate(typename Traits::EvalData d);
+
+  void
   evaluateFields(typename Traits::EvalData d);
 
  private:
