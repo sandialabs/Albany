@@ -10,7 +10,7 @@ log_file_name = name + ".log"
 result = 0
 
 with open(log_file_name, 'r') as log_file:
-    print log_file.read()
+    print(log_file.read())
 
 converged = False
 
@@ -26,11 +26,11 @@ if converged == False:
   result = result + 1
 
 with open(log_file_name, 'r') as log_file:
-    print log_file.read()
+    print(log_file.read())
 
 if result != 0:
-    print "result is %s" % result
-    print "%s test has failed" % name
+    print("result is %s" % result)
+    print("%s test has failed" % name)
 
 
 sys.exit(result)

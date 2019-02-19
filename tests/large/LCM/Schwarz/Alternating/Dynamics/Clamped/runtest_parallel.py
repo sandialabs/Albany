@@ -9,7 +9,7 @@ name = "clamped_parallel"
 log_file_name = name + ".log"
 result = 0
 
-print "test 1 - Schwarz Alternating Parallel"
+print("test 1 - Schwarz Alternating Parallel")
 
 if os.path.exists(log_file_name):
     os.remove(log_file_name)
@@ -22,7 +22,7 @@ p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 
 with open(log_file_name, 'r') as log_file:
-    print log_file.read()
+    print(log_file.read())
 
 if return_code != 0:
     result = return_code
@@ -41,11 +41,11 @@ if converged == False:
   result = result + 1
 
 with open(log_file_name, 'r') as log_file:
-    print log_file.read()
+    print(log_file.read())
 
 if result != 0:
-    print "result is %s" % result
-    print "%s test has failed" % name
+    print("result is %s" % result)
+    print("%s test has failed" % name)
 
 
 sys.exit(result)

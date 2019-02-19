@@ -11,7 +11,7 @@ result = 0
 ######################
 # Test 1
 ######################
-print "test 1 - DTKInterp Volume to NS Notched Cyl"
+print("test 1 - DTKInterp Volume to NS Notched Cyl")
 name = "DTKInterpVolumeToNsNotchedCyl"
 log_file_name = name + ".log"
 if os.path.exists(log_file_name):
@@ -27,12 +27,12 @@ if return_code != 0:
     result = return_code
 
 if result != 0:
-    print "result is %s" % result
-    print "%s test has failed" % name
+    print("result is %s" % result)
+    print("%s test has failed" % name)
     sys.exit(result)
 
 with open(log_file_name, 'r') as log_file:
-    print log_file.read()
+    print(log_file.read())
 
 
 sys.exit(result)

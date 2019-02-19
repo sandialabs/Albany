@@ -11,7 +11,7 @@ name = "DTKInterpNotchedCyl"
 log_file_name = name + ".log"
 
 with open(log_file_name, 'r') as log_file:
-    print log_file.read()
+    print(log_file.read())
 
 #specify tolerance to determine test failure / passing
 tolerance = 1.0e-16;
@@ -22,13 +22,13 @@ for line in open(log_file_name):
     s = line
     s = line[42:]
     d = float(s)
-    print d
+    print(d) 
     if (d > relerr + tolerance or d < relerr - tolerance):
       result = result+1
 
 if result != 0:
-    print "result is %s" % result
-    print "%s test has failed" % name
+    print("result is %s" % result)
+    print("%s test has failed" % name)
     sys.exit(result)
 
 
