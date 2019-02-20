@@ -549,6 +549,7 @@ if (BUILD_CISM_PISCEES)
     "-DBUILD_SHARED_LIBS:BOOL=ON"
     "-DCMAKE_Fortran_FLAGS='-O2 -ffree-line-length-none -fPIC -fno-range-check'"
     "-DCMAKE_VERBOSE_MAKEFILE=OFF"
+    "-DPYTHON_EXE=/usr/bin/python2.7"
   )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany")
@@ -665,6 +666,7 @@ if (BUILD_CISM_PISCEES_EPETRA)
     "-DCISM_NETCDF_LIBS='netcdff'"
     "-DCMAKE_Fortran_FLAGS='-O2 -ffree-line-length-none -fPIC -fno-range-check'"
     "-DCMAKE_VERBOSE_MAKEFILE=OFF"
+    "-DPYTHON_EXE=/usr/bin/python2.7"
   )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTCismAlbanyEpetra")
