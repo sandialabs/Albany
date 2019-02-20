@@ -535,6 +535,7 @@ if (BUILD_CISM_PISCEES)
   set (NETCDF_DIR /usr/local/netcdf-fortran-fedora28) 
 
   set (CONFIGURE_OPTIONS
+    "-Wno-dev"
     "-DCISM_USE_TRILINOS:BOOL=ON"
     "-DCISM_TRILINOS_DIR=${TRILINSTALLDIR}"
     "-DCISM_MPI_MODE:BOOL=ON"
@@ -650,6 +651,7 @@ if (BUILD_CISM_PISCEES_EPETRA)
   set (NETCDF_DIR /usr/local/netcdf-fortran-fedora28) 
 
   set (CONFIGURE_OPTIONS
+    "-Wno-dev"
     "-DCISM_USE_TRILINOS:BOOL=ON"
     "-DCISM_TRILINOS_DIR=${TRILINSTALLDIR}"
     "-DCISM_MPI_MODE:BOOL=ON"
