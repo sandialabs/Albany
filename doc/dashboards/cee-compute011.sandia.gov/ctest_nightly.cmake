@@ -691,11 +691,14 @@ if (BUILD_TRILINOSCLANG)
     #
     "-DCMAKE_CXX_COMPILER:STRING=/projects/albany/clang/bin/mpicxx"
 #    "-DCMAKE_CXX_FLAGS:STRING='-msoft-float -march=native -O3 -Wno-inconsistent-missing-override -DNDEBUG ${extra_cxx_flags}'"
-    "-DCMAKE_CXX_FLAGS:STRING='-march=native -O3 -DNDEBUG -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
+#    "-DCMAKE_CXX_FLAGS:STRING='-march=native -O3 -DNDEBUG -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
+    "-DCMAKE_CXX_FLAGS:STRING='-march=native -g -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
     "-DCMAKE_C_COMPILER:STRING=/projects/albany/clang/bin/mpicc"
-    "-DCMAKE_C_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
+    #"-DCMAKE_C_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
+    "-DCMAKE_C_FLAGS:STRING='-march=native -g'"
     "-DCMAKE_Fortran_COMPILER:STRING=/projects/albany/clang/bin/mpifort"
-    "-DCMAKE_Fortran_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
+    #"-DCMAKE_Fortran_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
+    "-DCMAKE_Fortran_FLAGS:STRING='-march=native -g'"
     "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
 #    "-DMDS_ID_TYPE:STRING='long long int'"
     "-DMDS_ID_TYPE:STRING='long int'"
@@ -766,6 +769,7 @@ if (BUILD_ALB64CLANG)
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
     "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
     "-DENABLE_MESH_DEPENDS_ON_PARAMETERS:BOOL=ON"
+    "-DCMAKE_CXX_FLAGS:STRING='-std=gnu++11 -g'"
     )
   if (BUILD_SCOREC)
     set (CONF_OPTIONS ${CONF_OPTIONS}
