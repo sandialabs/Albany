@@ -90,9 +90,6 @@ class AbstractDiscretization {
     //! Get Tpetra Jacobian graph
     virtual Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const = 0;
 
-    //! Create a Jacobian operator
-    virtual Teuchos::RCP<Thyra_LinearOp> createJacobianOp () const = 0;
-
 #ifdef ALBANY_AERAS
     //! Get implicit Tpetra Jacobian graph (for Aeras hyperviscosity)
     virtual Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const = 0;
@@ -105,8 +102,6 @@ class AbstractDiscretization {
     //! Get Tpetra overlap Jacobian graph
     virtual Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const = 0;
 
-    //! Create an overlapped Jacobian operator
-    virtual Teuchos::RCP<Thyra_LinearOp> createOverlapJacobianOp () const = 0;
 #ifdef ALBANY_AERAS
     //! Get implicit Tpetra Jacobian graph (for Aeras hyperviscosity)
     virtual Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const = 0;
