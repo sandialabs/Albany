@@ -9,7 +9,7 @@ BUILD_OPT="$1"
 
 if [ -z "$BUILD_OPT" ]; then
 
-   echo "Please supply an argument: base, debug, clang, or intel"
+   echo "Please supply an argument: base, debug, clang, clangdbg or intel"
 
    exit 1;
 
@@ -54,7 +54,7 @@ elif [ "$BUILD_OPT" = "debug" ]; then
   module load sierra-mkl/19.0-2019.0.117
   module load sparc-cmake
 
-elif [ "$BUILD_OPT" = "clang" ]; then
+elif [ "$BUILD_OPT" = "clang" ] || [ "$BUILD_OPT" = "clangdbg" ]; then
 
   # Need a gcc for stuff associated with clang
   if [ "${MODULESHOME:-}" = "" ]; then
