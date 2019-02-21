@@ -4,7 +4,11 @@ set (CTEST_SITE "camobap.ca.sandia.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
-set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
+IF (BUILD_ALBANY_FPE) 
+set (CTEST_BUILD_CONFIGURATION Debug) # What type of build do you want ?
+ELSE()
+set (CTEST_BUILD_CONFIGURATION Release) # What type of build do you want ?
+ENDIF() 
 
 set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
