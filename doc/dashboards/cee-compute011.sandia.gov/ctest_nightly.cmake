@@ -561,6 +561,7 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Tempus:BOOL=ON"
   #
   "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
+  "-DSTK_HIDE_DEPRECATED_CODE:BOOL=OFF"
   )
 
 if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
@@ -771,7 +772,6 @@ if (BUILD_TRILINOSCLANG)
     "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/SuperLU_4.3/lib"
     "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
     "-DCMAKE_INSTALL_RPATH:STRING=${PREFIX_DIR}/clang/lib"
-    "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
 )
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)

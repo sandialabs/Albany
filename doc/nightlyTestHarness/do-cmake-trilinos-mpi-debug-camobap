@@ -112,7 +112,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
       -D Trilinos_ENABLE_Teko:BOOL=ON \
       -D Trilinos_ENABLE_Teuchos:BOOL=ON \
-      -D Trilinos_ENABLE_ThreadPool:BOOL=ON \
       -D Trilinos_ENABLE_Thyra:BOOL=ON \
       -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
       -D Trilinos_ENABLE_Tpetra:BOOL=ON \
@@ -161,6 +160,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D MPI_EXEC=mpiexec \
 \
       -D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON \
+      -D STK_HIDE_DEPRECATED_CODE:BOOL=OFF \
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \
