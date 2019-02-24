@@ -4,12 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <vector>
-#include <string>
-
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
+#include "PHAL_SaveSideSetStateField.hpp"
+#include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_SideSetSTKMeshStruct.hpp"
 #include "Albany_AbstractSTKFieldContainer.hpp"
@@ -19,8 +18,8 @@ namespace PHAL
 
 template<typename EvalT, typename Traits>
 SaveSideSetStateField<EvalT, Traits>::
-SaveSideSetStateField (const Teuchos::ParameterList& p,
-                       const Teuchos::RCP<Albany::Layouts>& dl)
+SaveSideSetStateField (const Teuchos::ParameterList& /* p */,
+                       const Teuchos::RCP<Albany::Layouts>& /* dl */)
 {
   // States Not Saved for Generic Type, only Specializations
   this->setName("Save Side Set State Field"+PHX::typeAsString<EvalT>());
@@ -29,15 +28,15 @@ SaveSideSetStateField (const Teuchos::ParameterList& p,
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void SaveSideSetStateField<EvalT, Traits>::
-postRegistrationSetup (typename Traits::SetupData d,
-                       PHX::FieldManager<Traits>& fm)
+postRegistrationSetup (typename Traits::SetupData /* d */,
+                       PHX::FieldManager<Traits>& /* fm */)
 {
   // States Not Saved for Generic Type, only Specializations
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void SaveSideSetStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+void SaveSideSetStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData /* workset */)
 {
   // States Not Saved for Generic Type, only Specializations
 }
@@ -94,7 +93,7 @@ SaveSideSetStateField (const Teuchos::ParameterList& p,
 // **********************************************************************
 template<typename Traits>
 void SaveSideSetStateField<PHAL::AlbanyTraits::Residual, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(field,fm);
@@ -157,9 +156,8 @@ saveElemState(typename Traits::EvalData workset)
   // Establishing the kind of field layout
   std::vector<PHX::DataLayout::size_type> dims;
   field.dimensions(dims);
-  int size = dims.size();
-  const std::string& tag2 = size>2 ? field.fieldTag().dataLayout().name(2) : "";
-  TEUCHOS_TEST_FOR_EXCEPTION (size>2 && tag2!="Node" && tag2!="Dim" && tag2!="VecDim", std::logic_error,
+  const std::string& tag2 = dims.size()>2 ? field.fieldTag().dataLayout().name(2) : "";
+  TEUCHOS_TEST_FOR_EXCEPTION (dims.size()>2 && tag2!="Node" && tag2!="Dim" && tag2!="VecDim", std::logic_error,
                               "Error! Invalid field layout in SaveSideSetStateField.\n");
 
   // Loop on the sides of this sideSet that are in this workset
@@ -196,7 +194,6 @@ saveElemState(typename Traits::EvalData workset)
     // Now we have the two arrays: 3D and 2D. We need to take the part we need from the 3D
     // and put it in the 2D one
 
-    std::vector<PHX::DataLayout::size_type> dims;
     field.dimensions(dims);
     int size = dims.size();
 
@@ -215,9 +212,7 @@ saveElemState(typename Traits::EvalData workset)
           {
             state(ss_cell,nodeMap[node]) = field(cell,side,node);
           }
-        }
-        else
-        {
+        } else {
           // side set cell vector/gradient
           for (int idim=0; idim<dims[2]; ++idim)
           {
@@ -292,13 +287,9 @@ saveNodeState(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION (ss_maps.find(sideSetName)==ss_maps.end(), std::logic_error,
                               "Error! Something is off: the mesh has side discretization but no sideId-to-sideSetElemId map.\n");
 
-  const std::map<GO,GO>& ss_map = ss_maps.at(sideSetName);
-
   // Get side_node->side_set_cell_node map from discretization
   TEUCHOS_TEST_FOR_EXCEPTION (disc->getSideNodeNumerationMap().find(sideSetName)==disc->getSideNodeNumerationMap().end(),
                               std::logic_error, "Error! Sideset " << sideSetName << " has no sideNodeNumeration map.\n");
-  const std::map<GO,std::vector<int>>& sideNodeNumerationMap = disc->getSideNodeNumerationMap().at(sideSetName);
-  Albany::WsLIDList& elemGIDws2D = ss_disc->getElemGIDws();
 
   Teuchos::RCP<Albany::AbstractSTKMeshStruct> mesh = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(ss_disc->getMeshStruct());
   TEUCHOS_TEST_FOR_EXCEPTION (mesh==Teuchos::null, std::runtime_error, "Error! Save nodal states available only for stk meshes.\n");
@@ -341,7 +332,6 @@ saveNodeState(typename Traits::EvalData workset)
     for (auto const& it_side : sideSet)
     {
       // Get the data that corresponds to the side
-      const int side_GID = it_side.side_GID;
       const int cell     = it_side.elem_LID;
       const int side     = it_side.side_local_id;
 
@@ -392,13 +382,8 @@ saveNodeState(typename Traits::EvalData workset)
     for (auto const& it_side : sideSet)
     {
       // Get the data that corresponds to the side
-      const int side_GID = it_side.side_GID;
       const int cell     = it_side.elem_LID;
       const int side     = it_side.side_local_id;
-
-      int ss_cell_GID = ss_map.at(side_GID);
-      int wsIndex2D = elemGIDws2D[ss_cell_GID].ws;
-      int ss_cell = elemGIDws2D[ss_cell_GID].LID;
 
       switch (dims.size())
       {

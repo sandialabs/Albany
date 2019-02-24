@@ -4,23 +4,23 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <vector>
-#include <string>
-
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_DataLayout_MDALayout.hpp"
+
+#include "PHAL_SaveStateField.hpp"
 
 #ifdef ALBANY_STK
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_AbstractSTKFieldContainer.hpp"
 #endif
+#include "Albany_AbstractDiscretization.hpp"
 
 namespace PHAL {
 
 template<typename EvalT, typename Traits>
 SaveStateField<EvalT, Traits>::
-SaveStateField(const Teuchos::ParameterList& p)
+SaveStateField(const Teuchos::ParameterList& /* p */)
 {
   // States Not Saved for Generic Type, only Specializations
   this->setName("Save State Field" );
@@ -28,15 +28,15 @@ SaveStateField(const Teuchos::ParameterList& p)
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void SaveStateField<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
+void SaveStateField<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData /* d */,
+                      PHX::FieldManager<Traits>& /* fm */)
 {
   // States Not Saved for Generic Type, only Specializations
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void SaveStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+void SaveStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData /* workset */)
 {
   // States Not Saved for Generic Type, only Specializations
 }
@@ -76,7 +76,7 @@ SaveStateField(const Teuchos::ParameterList& p)
 // **********************************************************************
 template<typename Traits>
 void SaveStateField<PHAL::AlbanyTraits::Residual, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(field,fm);

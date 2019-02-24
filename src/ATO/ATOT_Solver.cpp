@@ -4,11 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "ATOT_Solver.hpp"
-#include "ATO_OptimizationProblem.hpp"
-#include "ATO_TopoTools.hpp"
-#include "ATO_Types.hpp"
-
 /* GAH FIXME - Silence warning:
 TRILINOS_DIR/../../../include/pecos_global_defs.hpp:17:0: warning: 
         "BOOST_MATH_PROMOTE_DOUBLE_POLICY" redefined [enabled by default]
@@ -20,11 +15,17 @@ Please remove when issue is resolved
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Tpetra_RowMatrixTransposer.hpp"
 
+#include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Adapt_NodalDataVector.hpp"
 #include "Petra_Converters.hpp"
 #include "AztecOO.h"
+
+#include "ATOT_Solver.hpp"
+#include "ATO_OptimizationProblem.hpp"
+#include "ATO_TopoTools.hpp"
+#include "ATO_Types.hpp"
 
 #ifdef ATO_USES_ISOLIB
 #include "Albany_STKDiscretization.hpp"
@@ -1161,7 +1162,7 @@ ATOT::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSo
   Teuchos::RCP<Albany::Application> app = subSolver.app;
   Albany::StateManager& stateMgr = app->getStateMgr();
 
-  Teuchos::RCP<DistParamLib> distParams = app->getDistParamLib();
+  Teuchos::RCP<Albany::DistributedParameterLibrary> distParamLib = app->getDistributedParameterLibrary();
 
   const Albany::WorksetArray<std::string>::type& wsEBNames = stateMgr.getDiscretization()->getWsEBNames();
 
@@ -1172,7 +1173,7 @@ ATOT::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSo
     const Teuchos::Array<std::string>& fixedBlocks = topology->getFixedBlocks();
 
     const std::vector<Albany::IDArray>& 
-      wsElDofs = distParams->get(topology->getName())->workset_elem_dofs();
+      wsElDofs = distParamLib->get(topology->getName())->workset_elem_dofs();
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
       wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();

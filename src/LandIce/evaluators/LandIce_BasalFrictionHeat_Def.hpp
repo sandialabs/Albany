@@ -10,6 +10,8 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
 
+#include "Shards_CellTopology.hpp"
+
 namespace LandIce
 {
 

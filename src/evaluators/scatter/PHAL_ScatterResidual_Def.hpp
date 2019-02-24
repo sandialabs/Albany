@@ -10,10 +10,11 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Albany_Utils.hpp"
 #include "PHAL_ScatterResidual.hpp"
-
+#include "Albany_Utils.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_AbstractDiscretization.hpp"
+#include "Albany_DistributedParameterLibrary.hpp"
 
 // **********************************************************************
 // Base Class Generic Implemtation
@@ -457,7 +458,7 @@ operator() (const PHAL_ScatterJacRank2_Tag&, const int& cell) const
   LO row;
   ST vals[500];
 
-  if (nunk>500) Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
+  if (nunk>500) { Kokkos::abort("ERROR (ScatterResidual): nunk > 500"); }
 
   for (int node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -475,7 +476,7 @@ operator() (const PHAL_ScatterJacRank2_Tag&, const int& cell) const
     }
   }
 }
-#endif
+#endif // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
 // **********************************************************************
 template<typename Traits>
@@ -526,8 +527,7 @@ evaluateFields(typename Traits::EvalData workset)
               Albany::addToLocalRowValues(Jac,
                 col[lunk], Teuchos::arrayView(&row, 1),
                 Teuchos::arrayView(&(valptr.fastAccessDx(lunk)), 1));
-          }
-          else {
+          } else {
             // Sum Jacobian entries all at once
             Albany::addToLocalRowValues(Jac,
               row, col, Teuchos::arrayView(&(valptr.fastAccessDx(0)), nunk));
@@ -568,13 +568,11 @@ evaluateFields(typename Traits::EvalData workset)
     if (workset.is_adjoint) {
       Kokkos::parallel_for(PHAL_ScatterJacRank0_Adjoint_Policy(0,workset.numCells),*this);  
       cudaCheckError();
-    }
-    else {
+    } else {
       Kokkos::parallel_for(PHAL_ScatterJacRank0_Policy(0,workset.numCells),*this);
       cudaCheckError();
     }
-  }
-  else  if (this->tensorRank == 1) {
+  } else  if (this->tensorRank == 1) {
     if (loadResid) {
       Kokkos::parallel_for(PHAL_ScatterResRank1_Policy(0,workset.numCells),*this);
       cudaCheckError();
@@ -583,13 +581,11 @@ evaluateFields(typename Traits::EvalData workset)
     if (workset.is_adjoint) {
       Kokkos::parallel_for(PHAL_ScatterJacRank1_Adjoint_Policy(0,workset.numCells),*this);
       cudaCheckError();
-    }
-    else {
+    } else {
       Kokkos::parallel_for(PHAL_ScatterJacRank1_Policy(0,workset.numCells),*this);
       cudaCheckError();
     }
-  }
-  else if (this->tensorRank == 2) {
+  } else if (this->tensorRank == 2) {
     numDims = this->valTensor.dimension(2);
 
     if (loadResid) {
@@ -710,7 +706,7 @@ evaluateFields(typename Traits::EvalData workset)
   bool trans = workset.transpose_dist_param_deriv;
   int num_cols = workset.Vp->domain()->dim();
 
-  if(workset.local_Vp[0].size() == 0) return; //In case the parameter has not been gathered, e.g. parameter is used only in Dirichlet conditions.
+  if(workset.local_Vp[0].size() == 0) { return; } //In case the parameter has not been gathered, e.g. parameter is used only in Dirichlet conditions.
 
   int numDims= (this->tensorRank==2) ? this->valTensor.dimension(2) : 0;
 
@@ -740,8 +736,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     }
-  }
-  else {
+  } else {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
         workset.local_Vp[cell];
@@ -772,8 +767,7 @@ template<typename Traits>
 void ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
- 
-  if(workset.local_Vp[0].size() == 0) return; //In case the parameter has not been gathered, e.g. parameter is used only in Dirichlet conditions.
+  if(workset.local_Vp[0].size() == 0) { return; } //In case the parameter has not been gathered, e.g. parameter is used only in Dirichlet conditions.
 
   auto level_it = extruded_params_levels->find(workset.dist_param_deriv_name);
   if(level_it == extruded_params_levels->end()) //if parameter is not extruded use usual scatter.
@@ -795,6 +789,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
+    auto overlap_map = Albany::getTpetraMap(workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_vector_space());
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
@@ -818,15 +813,14 @@ evaluateFields(typename Traits::EvalData workset)
               val += valref.dx(i)*local_Vp[node*neq+eq+this->offset][col];  //numField can be less then neq
             }
           }
-          const LO row = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_map()->getLocalElement(ginode);
+          const LO row = overlap_map->getLocalElement(ginode);
           if(row >=0) {
             fpV_nonconst2dView[col][row] += val;
           }
         }
       }
     }
-  }
-  else {
+  } else {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
         workset.local_Vp[cell];
@@ -851,5 +845,4 @@ evaluateFields(typename Traits::EvalData workset)
   }
 }
 
-}
-
+} // namespace PHAL

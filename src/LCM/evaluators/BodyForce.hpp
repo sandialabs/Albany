@@ -8,6 +8,8 @@
 #define BODY_FORCE_HPP
 
 #include "PHAL_AlbanyTraits.hpp"
+#include "Albany_Layouts.hpp"
+
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_MDField.hpp"

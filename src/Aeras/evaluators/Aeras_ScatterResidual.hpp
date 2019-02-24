@@ -15,7 +15,7 @@
 #include "Kokkos_Vector.hpp"
 
 #include "PHAL_AlbanyTraits.hpp"
-#include "Albany_AbstractDiscretization.hpp"
+#include "Albany_DiscretizationUtils.hpp"
 #include "Aeras_Layouts.hpp"
 
 namespace Aeras {
@@ -59,7 +59,7 @@ protected:
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 protected:
-  Albany::AbstractDiscretization::WorksetConn nodeID; 
+  Albany::WorksetConn nodeID; 
   Albany::DeviceView1d<ST> f_kokkos;
   Kokkos::vector<Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device> val_kokkos;
 

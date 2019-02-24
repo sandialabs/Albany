@@ -11,10 +11,11 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
-#include "Albany_Layouts.hpp"
-
 #include "Teuchos_ParameterList.hpp"
+
+#include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_Dimension.hpp"
+#include "Albany_Layouts.hpp"
 
 namespace PHAL {
 /** \brief Gathers parameter values from distributed vectors into
@@ -132,6 +133,6 @@ private:
   int fieldLevel;
 };
 
-}
+} // namespace PHAL
 
-#endif
+#endif // PHAL_GATHER_SCALAR_NODAL_PARAMETER_HPP

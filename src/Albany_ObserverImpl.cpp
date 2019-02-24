@@ -5,6 +5,7 @@
 //*****************************************************************//
 #include "Albany_ObserverImpl.hpp"
 
+#include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #if defined(ALBANY_EPETRA)
 # include "AAdapt_AdaptiveSolutionManager.hpp"
@@ -63,12 +64,12 @@ void ObserverImpl::observeSolution (
   }
 
   //! update distributed parameters in the mesh
-  Teuchos::RCP<DistParamLib> distParamLib = app_->getDistParamLib();
+  Teuchos::RCP<DistributedParameterLibrary> distParamLib = app_->getDistributedParameterLibrary();
   distParamLib->scatter();
-  DistParamLib::const_iterator it;
+  DistributedParameterLibrary::const_iterator it;
   Teuchos::RCP<const Epetra_Comm> comm = app_->getEpetraComm();
   for(it = distParamLib->begin(); it != distParamLib->end(); ++it) {
-    app_->getDiscretization()->setFieldT(*it->second->overlapped_vector(), it->second->name(),
+    app_->getDiscretization()->setField(it->second->overlapped_vector(), it->second->name(),
                                         /*overlapped*/ true);
   }
 

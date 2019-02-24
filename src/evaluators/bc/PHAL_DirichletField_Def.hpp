@@ -9,6 +9,11 @@
 #include "Sacado_ParameterRegistration.hpp"
 
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_NodalDOFManager.hpp"
+#include "Albany_DistributedParameterLibrary.hpp"
+#include "Albany_AbstractDiscretization.hpp"
+
+#include "PHAL_DirichletField.hpp"
 
 // **********************************************************************
 // Genereric Template Code for Constructor and PostRegistrationSetup
@@ -40,7 +45,6 @@ void
 DirichletField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
-
   const Albany::NodalDOFManager& fieldDofManager = dirichletWorkset.disc->getDOFManager(this->field_name);
   //MP: If the parameter is scalar, then the parameter offset is seto to zero. Otherwise the parameter offset is the same of the solution's one.
   Teuchos::RCP<const Tpetra_Map> fieldNodeMap = dirichletWorkset.disc->getNodeMapT(this->field_name);
@@ -48,8 +52,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   int fieldOffset = isFieldScalar ? 0 : this->offset;
   const std::vector<GO>& nsNodesGIDs = dirichletWorkset.disc->getNodeSetGIDs().find(this->nodeSetID)->second;
 
-  Teuchos::RCP<Tpetra_Vector> pvecT = dirichletWorkset.distParamLib->get(this->field_name)->vector();
-  Teuchos::ArrayRCP<const ST> pT = pvecT->get1dView();
+  Teuchos::RCP<const Thyra_Vector> pvec = dirichletWorkset.distParamLib->get(this->field_name)->vector();
+  Teuchos::ArrayRCP<const ST> p_constView = Albany::getLocalData(pvec);
 
   Teuchos::RCP<const Thyra_Vector> x = dirichletWorkset.x;
   Teuchos::RCP<Thyra_Vector>       f = dirichletWorkset.f;
@@ -62,7 +66,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
       int lunk = nsNodes[inode][this->offset];
       GO node_gid = nsNodesGIDs[inode];
       int lfield = fieldDofManager.getLocalDOF(fieldNodeMap->getLocalElement(node_gid),fieldOffset);
-      f_nonconstView[lunk] = x_constView[lunk] - pT[lfield];
+      f_nonconstView[lunk] = x_constView[lunk] - p_constView[lfield];
   }
 }
 
@@ -85,8 +89,9 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   bool isFieldScalar = (fieldNodeMap->getNodeNumElements() == dirichletWorkset.disc->getMapT(this->field_name)->getNodeNumElements());
   int fieldOffset = isFieldScalar ? 0 : this->offset;
   const std::vector<GO>& nsNodesGIDs = dirichletWorkset.disc->getNodeSetGIDs().find(this->nodeSetID)->second;
-  Teuchos::RCP<Tpetra_Vector> pvecT = dirichletWorkset.distParamLib->get(this->field_name)->vector();
-  Teuchos::ArrayRCP<const ST> pT = pvecT->get1dView();
+
+  Teuchos::RCP<const Thyra_Vector> pvec = dirichletWorkset.distParamLib->get(this->field_name)->vector();
+  Teuchos::ArrayRCP<const ST> p_constView = Albany::getLocalData(pvec);
 
   Teuchos::RCP<const Thyra_Vector> x   = dirichletWorkset.x;
   Teuchos::RCP<Thyra_Vector>       f   = dirichletWorkset.f;
@@ -123,7 +128,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
     if (fillResid) {
       GO node_gid = nsNodesGIDs[inode];
       int lfield = fieldDofManager.getLocalDOF(fieldNodeMap->getLocalElement(node_gid),fieldOffset);
-      f_nonconstView[lunk] = x_constView[lunk] - pT[lfield];
+      f_nonconstView[lunk] = x_constView[lunk] - p_constView[lfield];
     }
   }
 }
@@ -148,8 +153,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   int fieldOffset = isFieldScalar ? 0 : this->offset;
   const std::vector<GO>& nsNodesGIDs = dirichletWorkset.disc->getNodeSetGIDs().find(this->nodeSetID)->second;
 
-  Teuchos::RCP<Tpetra_Vector> pvecT = dirichletWorkset.distParamLib->get(this->field_name)->vector();
-  Teuchos::ArrayRCP<const ST> pT = pvecT->get1dView();
+  Teuchos::RCP<const Thyra_Vector> pvec = dirichletWorkset.distParamLib->get(this->field_name)->vector();
+  Teuchos::ArrayRCP<const ST> p_constView = Albany::getLocalData(pvec);
 
   Teuchos::RCP<const Thyra_Vector> x = dirichletWorkset.x;
   Teuchos::RCP<Thyra_Vector>       f = dirichletWorkset.f;
@@ -187,7 +192,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
     if (f != Teuchos::null) {
       GO node_gid = nsNodesGIDs[inode];
       int lfield = fieldDofManager.getLocalDOF(fieldNodeMap->getLocalElement(node_gid),fieldOffset);
-      f_nonconstView[lunk] = x_constView[lunk] - pT[lfield];
+      f_nonconstView[lunk] = x_constView[lunk] - p_constView[lfield];
     }
 
     if (JV != Teuchos::null) {

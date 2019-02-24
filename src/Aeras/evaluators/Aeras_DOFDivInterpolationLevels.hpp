@@ -11,6 +11,8 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Intrepid2_Basis.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 #include "Aeras_Layouts.hpp"
 #include "Aeras_Dimension.hpp"

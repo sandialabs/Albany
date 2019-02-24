@@ -5,11 +5,15 @@
 //*****************************************************************//
 
 #include <fstream>
+
 #include "Teuchos_TestForException.hpp"
-#include "Phalanx_DataLayout.hpp"
 #include "Teuchos_CommHelpers.hpp"
+#include "Phalanx_DataLayout.hpp"
 
 #include "PHAL_Utilities.hpp"
+
+#include "Albany_AbstractDiscretization.hpp"
+
 #include "LandIce_L2ProjectedBoundaryLaplacianResidual.hpp"
 
 template<typename EvalT, typename Traits, typename FieldScalarT>

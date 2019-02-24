@@ -7,7 +7,8 @@
 #ifndef LANDICE_L2_PROJECTED_BOUNDARY_LAPLACIAN_RESIDUAL_HPP
 #define LANDICE_L2_PROJECTED_BOUNDARY_LAPLACIAN_RESIDUAL_HPP
 
-//#include "LandIce_MeshRegion.hpp"
+#include "Shards_CellTopology.hpp"
+
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 
 namespace LandIce {

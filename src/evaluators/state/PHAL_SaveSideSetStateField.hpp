@@ -5,14 +5,16 @@
 //*****************************************************************//
 
 #ifndef PHAL_SAVE_SIDE_SET_STATE_FIELD_HPP
-#define PHAL_SAVE_SIDE_SET_STATE_FIELD_HPP 1
+#define PHAL_SAVE_SIDE_SET_STATE_FIELD_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
 #include "Teuchos_ParameterList.hpp"
+
+#include "PHAL_AlbanyTraits.hpp"
+#include "Albany_Layouts.hpp"
 
 namespace PHAL
 {

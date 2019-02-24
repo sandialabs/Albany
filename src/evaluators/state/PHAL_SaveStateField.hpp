@@ -11,8 +11,9 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
 #include "Teuchos_ParameterList.hpp"
+
+#include "PHAL_AlbanyTraits.hpp"
 
 namespace PHAL {
 /** \brief SaveStateField

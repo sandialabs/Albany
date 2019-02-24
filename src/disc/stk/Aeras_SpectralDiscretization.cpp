@@ -52,6 +52,8 @@ extern "C"
 #include "MatrixMarket_Tpetra.hpp"
 
 // Albany includes
+#include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_EpetraThyraUtils.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_NodalGraphUtils.hpp"
 #include "Albany_STKNodeFieldContainer.hpp"

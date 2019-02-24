@@ -2,8 +2,10 @@
 #define ALBANY_EPETRA_THYRA_UTILS_HPP
 
 #include "Albany_ThyraTypes.hpp"
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_CommTypes.hpp"
 
-#include "Epetra_Map.h"
+#include "Epetra_BlockMap.h"
 #include "Epetra_Vector.h"
 #include "Epetra_MultiVector.h"
 #include "Epetra_CrsMatrix.h"
@@ -11,14 +13,18 @@
 namespace Albany
 {
 
-// The wrappers in thyra throw if the input Thyra/Tpetra pointer is null
+// The wrappers in thyra throw if the input Thyra/Epetra pointer is null
 // These routines are here to handle that case, and simply return a
 // Teuchos::null if the input RCP is null. They are just a convenience
 // routine that performs the check before calling the Thyra converter.
 
-// ============ Tpetra->Thyra conversion routines ============ //
-Teuchos::RCP<const Thyra_VectorSpace>
-createThyraVectorSpace (const Teuchos::RCP<const Epetra_Map> map);
+// ============ Epetra->Thyra conversion routines ============ //
+
+Teuchos::RCP<const Teuchos_Comm>
+createTeuchosComm (const Epetra_Comm& comm);
+
+Teuchos::RCP<const Thyra_SpmdVectorSpace>
+createThyraVectorSpace (const Teuchos::RCP<const Epetra_BlockMap> map);
 
 Teuchos::RCP<Thyra_Vector>
 createThyraVector (const Teuchos::RCP<Epetra_Vector> v);
@@ -38,8 +44,8 @@ createThyraLinearOp (const Teuchos::RCP<Epetra_Operator> op);
 Teuchos::RCP<const Thyra_LinearOp>
 createConstThyraLinearOp (const Teuchos::RCP<const Epetra_Operator> op);
 
-// ============ Thyra->Tpetra conversion routines ============ //
-Teuchos::RCP<const Epetra_Map>
+// ============ Thyra->Epetra conversion routines ============ //
+Teuchos::RCP<const Epetra_BlockMap>
 getEpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
               const bool throw_on_failure = true);
 
@@ -48,7 +54,7 @@ getEpetraVector (const Teuchos::RCP<Thyra_Vector> v,
                  const bool throw_on_failure = true);
 
 Teuchos::RCP<const Epetra_Vector>
-getConstTpetraVector (const Teuchos::RCP<const Thyra_Vector> v,
+getConstEpetraVector (const Teuchos::RCP<const Thyra_Vector> v,
                       const bool throw_on_failure = true);
 
 Teuchos::RCP<Epetra_MultiVector>
@@ -56,7 +62,7 @@ getEpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector> mv,
                       const bool throw_on_failure = true);
 
 Teuchos::RCP<const Epetra_MultiVector>
-getConstTpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
+getConstEpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
                            const bool throw_on_failure = true);
 
 Teuchos::RCP<Epetra_Operator>
@@ -64,7 +70,7 @@ getEpetraOperator (const Teuchos::RCP<Thyra_LinearOp> lop,
                    const bool throw_on_failure = true);
 
 Teuchos::RCP<const Epetra_Operator>
-getConstTpetraOperator (const Teuchos::RCP<const Thyra_LinearOp> lop,
+getConstEpetraOperator (const Teuchos::RCP<const Thyra_LinearOp> lop,
                         const bool throw_on_failure = true);
 
 Teuchos::RCP<Epetra_CrsMatrix>
@@ -72,7 +78,7 @@ getEpetraMatrix (const Teuchos::RCP<Thyra_LinearOp> lop,
                  const bool throw_on_failure = true);
 
 Teuchos::RCP<const Epetra_CrsMatrix>
-getConstTpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop,
+getConstEpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop,
                       const bool throw_on_failure = true);
 
 } // namespace Albany

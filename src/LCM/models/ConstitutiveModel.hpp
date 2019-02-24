@@ -7,8 +7,12 @@
 #if !defined(LCM_ConstitutiveModel_hpp)
 #define LCM_ConstitutiveModel_hpp
 
-#include "PHAL_AlbanyTraits.hpp"
+#include <map>
+
 #include "Phalanx_MDField.hpp"
+
+#include "PHAL_AlbanyTraits.hpp"
+#include "Albany_Layouts.hpp"
 
 namespace LCM {
 

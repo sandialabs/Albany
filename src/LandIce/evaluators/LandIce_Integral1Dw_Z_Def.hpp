@@ -6,6 +6,8 @@
  */
 
 
+#include "Albany_AbstractDiscretization.hpp"
+
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"

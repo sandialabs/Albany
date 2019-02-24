@@ -56,9 +56,9 @@ ENDIF()
 SET(HEADERS
   Albany_Application.hpp
   Albany_DataTypes.hpp
+  Albany_DistributedParameter.hpp
   Albany_DistributedParameterLibrary.hpp
-  Albany_DistributedParameterDerivativeOpT.hpp
-  Albany_DistributedParameterLibrary_Tpetra.hpp
+  Albany_DistributedParameterDerivativeOp.hpp
   Albany_DummyParameterAccessor.hpp
   Albany_EigendataInfoStructT.hpp
   Albany_KokkosTypes.hpp
@@ -111,6 +111,7 @@ SET(SOURCES ${SOURCES}
   utility/TimeMonitor.cpp
   utility/Albany_CombineAndScatterManager.cpp
   utility/Albany_CombineAndScatterManagerTpetra.cpp
+  utility/Albany_EpetraThyraUtils.cpp
   utility/Albany_ThyraUtils.cpp
   utility/Albany_TpetraThyraUtils.cpp
   utility/VariableMonitor.cpp
@@ -127,6 +128,7 @@ SET(HEADERS ${HEADERS}
   utility/TimeMonitor.hpp
   utility/Albany_CombineAndScatterManager.hpp
   utility/Albany_CombineAndScatterManagerTpetra.hpp
+  utility/Albany_EpetraThyraUtils.hpp
   utility/Albany_ThyraUtils.hpp
   utility/Albany_TpetraThyraUtils.hpp
   utility/VariableMonitor.hpp

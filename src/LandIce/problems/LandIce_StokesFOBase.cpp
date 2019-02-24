@@ -1,7 +1,8 @@
 #include "LandIce_StokesFOBase.hpp"
 #include "Teuchos_CompilerCodeTweakMacros.hpp"
 
-#include <string.hpp> // For util::upper_case (do not confuse this with <string>! string.hpp is an Albany file)
+#include <string.hpp>               // For util::upper_case (do not confuse this with <string>! string.hpp is an Albany file)
+#include <Albany_ProblemUtils.hpp>  // For 'getIntrepidwBasis'
 
 namespace LandIce {
 

@@ -12,19 +12,16 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
-
-#include "Albany_DataTypes.hpp"
-#include "PHAL_AlbanyTraits.hpp"
-
 #include "Teuchos_VerboseObject.hpp"
-
-#include "Albany_ProblemUtils.hpp"
 
 #include "Intrepid2_Basis.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include <Phalanx_Evaluator.hpp>
+
+#include "Albany_ScalarOrdinalTypes.hpp"
+#include "Albany_Layouts.hpp"
 
 namespace Albany {
   /*!
