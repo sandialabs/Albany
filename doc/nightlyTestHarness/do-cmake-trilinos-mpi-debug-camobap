@@ -160,7 +160,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D MPI_EXEC=mpiexec \
 \
       -D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON \
-      -D STK_HIDE_DEPRECATED_CODE:BOOL=OFF \
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \
