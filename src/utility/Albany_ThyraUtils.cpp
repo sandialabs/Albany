@@ -1,6 +1,5 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
-#include "Albany_EpetraThyraUtils.hpp"
 #include "Albany_Utils.hpp"
 
 #include "Petra_Converters.hpp"
@@ -10,6 +9,7 @@
 #include "Thyra_DefaultSpmdVector.hpp"
 
 #if defined(ALBANY_EPETRA)
+#include "Albany_EpetraThyraUtils.hpp"
 #include "AztecOO_ConditionNumber.h"
 #endif
 
@@ -33,7 +33,9 @@ bool isFillActive (const Teuchos::RCP<const Thyra_LinearOp>& lop)
     return tmat->isFillActive();
   }
 
+#ifdef ALBANY_EPETRA
   // TODO: add epetra
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
@@ -51,7 +53,9 @@ void resumeFill (const Teuchos::RCP<Thyra_LinearOp>& lop)
     return;
   }
 
+#ifdef ALBANY_EPETRA
   // TODO: add epetra
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
@@ -66,7 +70,9 @@ void fillComplete (const Teuchos::RCP<Thyra_LinearOp>& lop)
     return;
   }
 
+#ifdef ALBANY_EPETRA
   // TODO: add epetra
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
@@ -93,7 +99,9 @@ void assign (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST value)
     return;
   }
 
+#ifdef ALBANY_EPETRA
   // TODO: add epetra
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
@@ -120,7 +128,9 @@ void getDiagonalCopy (const Teuchos::RCP<const Thyra_LinearOp>& lop,
     return;
   }
 
+#ifdef ALBANY_EPETRA
   // TODO: add epetra
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
@@ -141,7 +151,9 @@ void getLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
     return;
   }
 
+#ifdef ALBANY_EPETRA
   // TODO: add epetra
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
@@ -159,7 +171,9 @@ void addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
     return;
   }
 
+#ifdef ALBANY_EPETRA
   // TODO: add epetra
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
@@ -177,7 +191,9 @@ void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
     return;
   }
 
+#ifdef ALBANY_EPETRA
   // TODO: add epetra
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
@@ -233,9 +249,11 @@ DeviceLocalMatrix<const ST> getDeviceData (const Teuchos::RCP<const Thyra_Linear
     return data;
   }
 
+#ifdef ALBANY_EPETRA
   // TODO: to add epetra, create device matrix, get values view, create host copy, extract data
   //       from matrix into values host view, deep copy to device. We could otherwise ENFORCE
   //       PHX::Device to be a host exec space for Epetra.
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
@@ -255,9 +273,11 @@ DeviceLocalMatrix<ST> getNonconstDeviceData (const Teuchos::RCP<Thyra_LinearOp>&
     return data;
   }
 
+#ifdef ALBANY_EPETRA
   // TODO: to add epetra, create device matrix, get values view, create host copy, extract data
   //       from matrix into values host view, deep copy to device. We could otherwise ENFORCE
   //       PHX::Device to be a host exec space for Epetra.
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
@@ -349,9 +369,11 @@ DeviceView1d<const ST> getDeviceData (const Teuchos::RCP<const Thyra_Vector>& v)
     return data;
   }
 
+#ifdef ALBANY_EPETRA
   // TODO: to add epetra, create device view, create host copy, extract data
   //       into host view, deep copy to device. We could otherwise ENFORCE
   //       PHX::Device to be a host exec space for Epetra.
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
@@ -371,9 +393,11 @@ DeviceView1d<ST> getNonconstDeviceData (const Teuchos::RCP<Thyra_Vector>& v)
     return data;
   }
 
+#ifdef ALBANY_EPETRA
   // TODO: to add epetra, create device view, create host copy, extract data
   //       into host view, deep copy to device. We could otherwise ENFORCE
   //       PHX::Device to be a host exec space for Epetra.
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
@@ -417,7 +441,9 @@ void describe<Thyra_Vector> (const Teuchos::RCP<const Thyra_Vector>& v,
     return;
   }
 
+#ifdef ALBANY_EPETRA
   // TODO: add epetra
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
@@ -435,7 +461,9 @@ void describe<Thyra_LinearOp> (const Teuchos::RCP<const Thyra_LinearOp>& op,
     return;
   }
 
+#ifdef ALBANY_EPETRA
   // TODO: add epetra
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
@@ -458,12 +486,14 @@ writeMatrixMarket<const Thyra_Vector>(
     writeMatrixMarket(tv,prefix,counter);
     return;
   }
+#ifdef ALBANY_EPETRA
   auto ev = getConstEpetraVector(v,false);
   if (!ev.is_null()) {
     // TODO: avoid petra conversion, and call EpetraExt I/O directly
     tv = Petra::EpetraVector_To_TpetraVectorConst(*ev,createTeuchosComm(ev->Comm()));
     writeMatrixMarket(tv,prefix,counter);
   }
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
@@ -493,12 +523,14 @@ writeMatrixMarket<const Thyra_MultiVector>(
     return;
   }
 
+#ifdef ALBANY_EPETRA
   auto emv = getConstEpetraMultiVector(mv,false);
   if (!emv.is_null()) {
     // TODO: avoid petra conversion, and call EpetraExt I/O directly
     tmv = Petra::EpetraMultiVector_To_TpetraMultiVector(*emv,createTeuchosComm(emv->Comm()));
     writeMatrixMarket(tmv,prefix,counter);
   }
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
@@ -528,12 +560,14 @@ writeMatrixMarket<const Thyra_LinearOp>(
     return;
   }
 
+#ifdef ALBANY_EPETRA
   auto eA = getConstEpetraMatrix(A,false);
   if (!eA.is_null()) {
     // TODO: avoid petra conversion, and call EpetraExt I/O directly
     tA = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*eA,createTeuchosComm(eA->Comm()));
     writeMatrixMarket(tA,prefix,counter);
   }
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
@@ -564,12 +598,14 @@ writeMatrixMarket<const Thyra_VectorSpace>(
     return;
   }
 
+#ifdef ALBANY_EPETRA
   auto em = getEpetraMap(vs,false);
   if (!em.is_null()) {
     // TODO: avoid petra conversion, and call EpetraExt I/O directly
     tm = Petra::EpetraMap_To_TpetraMap(*em,createTeuchosComm(em->Comm()));
     writeMatrixMarket(tm,prefix,counter);
   }
+#endif
 
   // If all the tries above are not successful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");

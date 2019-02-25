@@ -111,7 +111,6 @@ SET(SOURCES ${SOURCES}
   utility/TimeMonitor.cpp
   utility/Albany_CombineAndScatterManager.cpp
   utility/Albany_CombineAndScatterManagerTpetra.cpp
-  utility/Albany_EpetraThyraUtils.cpp
   utility/Albany_ThyraUtils.cpp
   utility/Albany_TpetraThyraUtils.cpp
   utility/VariableMonitor.cpp
@@ -128,7 +127,6 @@ SET(HEADERS ${HEADERS}
   utility/TimeMonitor.hpp
   utility/Albany_CombineAndScatterManager.hpp
   utility/Albany_CombineAndScatterManagerTpetra.hpp
-  utility/Albany_EpetraThyraUtils.hpp
   utility/Albany_ThyraUtils.hpp
   utility/Albany_TpetraThyraUtils.hpp
   utility/VariableMonitor.hpp
@@ -138,6 +136,15 @@ SET(HEADERS ${HEADERS}
   utility/math/TensorDetail.hpp
   utility/math/TensorImpl.hpp
   )
+
+IF (${ALBANY_EPETRA})
+  SET(SOURCES ${SOURCES}
+    utility/Albany_EpetraThyraUtils.cpp
+  )
+  SET(HEADERS ${HEADERS}
+    utility/Albany_EpetraThyraUtils.hpp
+  )
+ENDIF()
 
 add_executable(xml2yaml utility/xml2yaml.cpp)
 add_executable(yaml2xml utility/yaml2xml.cpp)
