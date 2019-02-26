@@ -280,6 +280,8 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
     "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
     "-DTrilinos_ENABLE_Thyra:BOOL=ON"
+    "-DTrilinos_ENABLE_ThyraEpetraAdapters:BOOL=ON"
+    "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
     "-DTrilinos_ENABLE_Tpetra:BOOL=ON"
     "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
     "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
