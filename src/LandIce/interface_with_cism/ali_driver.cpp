@@ -872,22 +872,26 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
 
    if (debug_output_verbosity != 0) {
     for (int i=0; i<num_p; i++) {
-#ifdef CISM_USE_EPETRA
+/*#ifdef CISM_USE_EPETRA
       const Teuchos::RCP<const Epetra_Vector> p_init = epetraVectorFromThyra(mpiComm, nominal.get_p(i));
       p_init->Print(*out << "\nParameter vector " << i << ":\n");
 #else
       Albany::printTpetraVector(*out << "\nParameter vector " << i << ":\n",
            Albany::getConstTpetraVector(nominal.get_p(i)));
-#endif
+#endif*/
+      Albany::printThyraVector(*out << "\nParameter vector " << i << ":\n", nominal.get_p(i));
     }
    }
 
     for (int i=0; i<num_g-1; i++) {
-#ifdef CISM_USE_EPETRA
+/*#ifdef CISM_USE_EPETRA
       const Teuchos::RCP<const Epetra_Vector> g = responses[i];
 #else
       const Teuchos::RCP<const Tpetra_Vector> g = responses[i];
 #endif
+*/
+      const Teuchos::RCP<const Thyra_Vector> g = thyraResponses[i];
+
       bool is_scalar = true;
 
       if (albanyApp != Teuchos::null)
@@ -895,42 +899,48 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
 
       if (is_scalar) {
         if (debug_output_verbosity != 0) {
-#ifdef CISM_USE_EPETRA
+/*#ifdef CISM_USE_EPETRA
          g->Print(*out << "\nResponse vector " << i << ":\n");
 #else
          Albany::printTpetraVector(*out << "\nResponse vector " << i << ":\n", g);
-#endif
+#endif*/
+          Albany::printThyraVector(*out << "\nResponse vector " << i << ":\n", g);
         }
 
         if (num_p == 0 && cur_time_yr == final_time) {
           // Just calculate regression data -- only if in final time step
-#ifdef CISM_USE_EPETRA
-          status += slvrfctry->checkSolveTestResults(i, 0, g.get(), NULL);
+/*#ifdef CISM_USE_EPETRA
+          status += slvrfctry->checkSolveTestResults(i, 0, g, Teuchos::null);
 #else
-          status += slvrfctry->checkSolveTestResultsT(i, 0, g.get(), NULL);
-#endif
+          status += slvrfctry->checkSolveTestResultsT(i, 0, g, Teuchos::null);
+#endif*/
+          status += slvrfctry->checkSolveTestResults(i, 0, g, Teuchos::null);
         } else {
           for (int j=0; j<num_p; j++) {
-#ifdef CISM_USE_EPETRA
+/*#ifdef CISM_USE_EPETRA
             const Teuchos::RCP<const Epetra_MultiVector> dgdp = sensitivities[i][j];
 #else
             const Teuchos::RCP<const Tpetra_MultiVector> dgdp = sensitivities[i][j];
-#endif
+#endif */
+            Teuchos::RCP<const Thyra_MultiVector> dgdp = thyraSensitivities[i][j];
+
             if (debug_output_verbosity != 0) {
               if (Teuchos::nonnull(dgdp)) {
-#ifdef CISM_USE_EPETRA
+/*#ifdef CISM_USE_EPETRA
                 dgdp->Print(*out << "\nSensitivities (" << i << "," << j << "):!\n");
 #else
                 Albany::printTpetraVector(*out << "\nSensitivities (" << i << "," << j << "):!\n", dgdp);
-#endif
+#endif*/
+                Albany::printThyraMultiVector(*out <<"\nSensitivities (" << i << ", " << j << "):\n", dgdp); 
               }
             }
             if (cur_time_yr == final_time) {
-#ifdef CISM_USE_EPETRA
-              status += slvrfctry->checkSolveTestResults(i, j, g.get(), dgdp.get());
+/*#ifdef CISM_USE_EPETRA
+              status += slvrfctry->checkSolveTestResults(i, j, g, dgdp);
 #else
-              status += slvrfctry->checkSolveTestResultsT(i, j, g.get(), dgdp.get());
-#endif
+              status += slvrfctry->checkSolveTestResultsT(i, j, g, dgdp);
+#endif*/
+              status += slvrfctry->checkSolveTestResults(i, j, g, dgdp);
             }
           }
         }
