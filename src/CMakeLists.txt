@@ -137,7 +137,7 @@ SET(HEADERS ${HEADERS}
   utility/math/TensorImpl.hpp
   )
 
-IF (${ALBANY_EPETRA})
+IF (ALBANY_EPETRA)
   SET(SOURCES ${SOURCES}
     utility/Albany_EpetraThyraUtils.cpp
   )
