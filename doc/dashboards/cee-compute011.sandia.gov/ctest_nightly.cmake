@@ -440,6 +440,7 @@ set (COMMON_CONFIGURE_OPTIONS
   "-Wno-dev"
   #
   "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
+  "-DTrilinos_ENABLE_ThyraEpetraAdapters:BOOL=ON"
   "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
   "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
   "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
