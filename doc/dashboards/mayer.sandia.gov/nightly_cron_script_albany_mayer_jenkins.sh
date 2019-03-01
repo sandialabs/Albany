@@ -1,6 +1,6 @@
 #!/bin/csh
 
-BASE_DIR=.
+BASE_DIR=/mscratch/albany/nightlyCDashJenkins
 cd $BASE_DIR
 
 unset http_proxy
