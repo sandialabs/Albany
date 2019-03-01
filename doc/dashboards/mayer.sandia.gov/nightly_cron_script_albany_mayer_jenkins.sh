@@ -11,7 +11,7 @@ export OMP_NUM_THREADS=1
 #export OMP_PLACES=threads
 #export OMP_PROC_BIND=spread
 
-cat albany ctest_nightly_jenkins.cmake.frag >& ctest_nightly.cmake  
+cat albany_jenkins ctest_nightly_jenkins.cmake.frag >& ctest_nightly.cmake  
 
 now=$(date +"%m_%d_%Y-%H_%M")
 LOG_FILE=$BASE_DIR/nightly_log_mayerAlbany.txt
