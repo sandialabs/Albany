@@ -38,6 +38,12 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   private:
 
+  // Looks through ifile for the line containing the
+  // line_of_interest.
+  void swallow_lines_until( std::ifstream& ifile, 
+                            std::string&   line, 
+                            std::string    line_of_interest);
+
   Teuchos::RCP<const Teuchos::ParameterList> getValidDiscretizationParameters() const;
 
   // The version of the gmsh msh file

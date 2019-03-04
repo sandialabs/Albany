@@ -409,9 +409,7 @@ void Albany::GmshSTKMeshStruct::loadLegacyMesh (const std::string& fname)
 
   // Start reading nodes
   std::string line;
-  while (std::getline (ifile, line) && line != "$NOD") {
-    // Keep swallowing lines...
-  }
+  swallow_lines_until( ifile, line, "$NOD");
   TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Nodes section not found.\n");
 
   // Read the number of nodes
@@ -428,9 +426,7 @@ void Albany::GmshSTKMeshStruct::loadLegacyMesh (const std::string& fname)
 
   // Start reading elements (cells and sides)
   ifile.seekg (0, std::ios::beg);
-  while (std::getline (ifile, line) && line != "$ELM") {
-    // Keep swallowing lines...
-  }
+  swallow_lines_until( ifile, line, "$ELM");
   TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Element section not found.\n");
 
   // Read the number of entities
@@ -527,9 +523,7 @@ void Albany::GmshSTKMeshStruct::loadLegacyMesh (const std::string& fname)
 
   // Reset the stream to the beginning of the element section
   ifile.seekg (0, std::ios::beg);
-  while (std::getline (ifile, line) && line != "$ELM") {
-    // Keep swallowing lines...
-  }
+  swallow_lines_until( ifile, line, "$ELM");
   TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Element section not found; however, it was found earlier. This may be a bug.\n");
   std::getline(ifile,line); // Skip line with number of elements
 
@@ -578,6 +572,15 @@ void Albany::GmshSTKMeshStruct::loadLegacyMesh (const std::string& fname)
   ifile.close();
 }
 
+void Albany::GmshSTKMeshStruct::swallow_lines_until( std::ifstream& ifile, std::string& line, std::string line_of_interest)
+{
+  while (std::getline (ifile, line) && line != line_of_interest) {
+    // Keep swallowing lines...
+  }
+
+  return;
+}
+
 void Albany::GmshSTKMeshStruct::loadAsciiMesh (const std::string& fname)
 {
   std::ifstream ifile;
@@ -588,9 +591,7 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh (const std::string& fname)
 
   // Start reading nodes
   std::string line;
-  while (std::getline (ifile, line) && line != "$Nodes") {
-    // Keep swallowing lines...
-  }
+  swallow_lines_until( ifile, line, "$Nodes");
   TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Nodes section not found.\n");
 
   // Read the number of nodes
@@ -607,9 +608,7 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh (const std::string& fname)
 
   // Start reading elements (cells and sides)
   ifile.seekg (0, std::ios::beg);
-  while (std::getline (ifile, line) && line != "$Elements") {
-    // Keep swallowing lines...
-  }
+  swallow_lines_until( ifile, line, "$Elements");
   TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Element section not found.\n");
 
   // Read the number of entities
@@ -706,9 +705,7 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh (const std::string& fname)
 
   // Reset the stream to the beginning of the element section
   ifile.seekg (0, std::ios::beg);
-  while (std::getline (ifile, line) && line != "$Elements") {
-    // Keep swallowing lines...
-  }
+  swallow_lines_until( ifile, line, "$Elements");
   TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Element section not found; however, it was found earlier. This may be a bug.\n");
   std::getline(ifile,line); // Skip line with number of elements
 
@@ -787,9 +784,7 @@ void Albany::GmshSTKMeshStruct::loadBinaryMesh (const std::string& fname)
 
   // Start reading nodes
   ifile.seekg (0, std::ios::beg);
-  while (std::getline (ifile, line) && line != "$Nodes") {
-    // Keep swallowing lines...
-  }
+  swallow_lines_until( ifile, line, "$Nodes");
   TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Nodes section not found.\n");
 
   // Read the number of nodes
@@ -807,9 +802,7 @@ void Albany::GmshSTKMeshStruct::loadBinaryMesh (const std::string& fname)
 
   // Start reading elements (cells and sides)
   ifile.seekg (0, std::ios::beg);
-  while (std::getline (ifile, line) && line != "$Elements") {
-    // Keep swallowing lines...
-  }
+  swallow_lines_until( ifile, line, "$Elements");
   TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Element section not found.\n");
 
   // Read the number of entities
@@ -938,9 +931,7 @@ void Albany::GmshSTKMeshStruct::loadBinaryMesh (const std::string& fname)
 
   // Reset the stream to the beginning of the element section
   ifile.seekg (0, std::ios::beg);
-  while (std::getline (ifile, line) && line != "$Elements") {
-    // Keep swallowing lines...
-  }
+  swallow_lines_until( ifile, line, "$Elements");
   std::getline(ifile,line); // Skip line with number of elements
 
   entities_found = 0;
