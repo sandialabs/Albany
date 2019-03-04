@@ -63,7 +63,6 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
       std::getline (ifile, line);
       std::stringstream iss (line);
 
-      float version;
       int doublesize;
       iss >> version >> binary >> doublesize;
 

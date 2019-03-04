@@ -40,6 +40,9 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   Teuchos::RCP<const Teuchos::ParameterList> getValidDiscretizationParameters() const;
 
+  // The version of the gmsh msh file
+  float version;
+
   void loadLegacyMesh (const std::string& fname);
   void loadAsciiMesh (const std::string& fname);
   void loadBinaryMesh (const std::string& fname);
