@@ -183,6 +183,7 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
     stk::io::put_io_part_attribute(*ssPartVec[ssn_i.str()]);
 #endif
   }
+  delete[] bdTagsArray;
 
   switch (this->numDim) {
     case 2:
