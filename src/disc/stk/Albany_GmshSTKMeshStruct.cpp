@@ -975,9 +975,6 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
 {
   if( version == (float)2.2)
   {
-    std::cout << "The version is 2.2 and I am here" << std::endl;
-    // Version 2.2 was limited to integer boundary tags
-
     // Counting boundaries (only proc 0 has any stored, so far)
     std::set<int> bdTags;
     for (int i(0); i<NumSides; ++i) 
@@ -1033,7 +1030,9 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
 
 void Albany::GmshSTKMeshStruct::set_allowable_gmsh_versions()
 {
+  // Add new allowable versions here!
   allowable_gmsh_versions.insert( 2.2);
+  allowable_gmsh_versions.insert( 4.0);
 
   return;
 }
@@ -1041,23 +1040,25 @@ void Albany::GmshSTKMeshStruct::set_allowable_gmsh_versions()
 
 void Albany::GmshSTKMeshStruct::check_version( std::ifstream& ifile)
 {
-    // Tell user what gmsh version we're reading
-    Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
-    *out << "The gmsh version is: "
-         << version
-         << std::endl;
+  // Tell user what gmsh version we're reading
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+  *out << "The gmsh version is: "
+       << version
+       << std::endl;
 
-    // Check if we know how to read this gmsh version.
-    // Return an error if we do not.
-    set_allowable_gmsh_versions();
-    if( allowable_gmsh_versions.find( version) == allowable_gmsh_versions.end())
+  // Check if we know how to read this gmsh version.
+  // Return an error if we do not.
+  set_allowable_gmsh_versions();
+  if( allowable_gmsh_versions.find( version) == allowable_gmsh_versions.end())
+  {
+    *out << "Allowable gmsh *.msh file versions are: " << std::endl;
+    for( std::set<float>::iterator it = allowable_gmsh_versions.begin(); it != allowable_gmsh_versions.end(); it++)
     {
-      *out << "Allowable gmsh *.msh file versions are: " << std::endl;
-      for( std::set<float>::iterator it = allowable_gmsh_versions.begin(); it != allowable_gmsh_versions.end(); it++)
-      {
-        *out << *it << std::endl;
-      }
-
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Cannot read this version of gmsh *.msh file!");
+      *out << *it << std::endl;
     }
+
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Cannot read this version of gmsh *.msh file!");
+  }
+
+  return;
 }
