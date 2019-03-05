@@ -176,7 +176,7 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
           if(it_bdEdge.elem_GID == side_gid) {
             unsigned int side_nodes[2] = {sideType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,0),sideType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,1)};
             int cell_nodes[2] = {sideNodes[side][side_nodes[0]],sideNodes[side][side_nodes[1]]};
-            auto bdEdge_measure_sqr = (coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))*(coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))+(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1))*(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1));
+            MeshScalarT bdEdge_measure_sqr = (coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))*(coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))+(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1))*(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1));
             MeshScalarT bdEdge_measure = 0.0; 
             if (bdEdge_measure_sqr > 0.0) 
               bdEdge_measure = std::sqrt(bdEdge_measure_sqr); 
