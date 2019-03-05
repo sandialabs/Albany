@@ -60,7 +60,12 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   Teuchos::RCP<const Teuchos::ParameterList> getValidDiscretizationParameters() const;
 
   // Gets the physical name-tag pairs for v 4.0 meshes
-  std::map<std::string, int>  get_physical_names();
+  void get_physical_names( std::map<std::string, int>&  physical_names);
+
+  // Opens the gmsh msh file. Variable `fname` must be set.
+  // Don't forget to close when done!
+  // Uses Teuchos test to check if file is open.
+  std::ifstream open_fname();
 
   // The version of the gmsh msh file
   float version;
