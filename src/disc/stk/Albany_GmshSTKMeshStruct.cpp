@@ -34,7 +34,7 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
                                               const Teuchos::RCP<const Teuchos_Comm>& commT) :
   GenericSTKMeshStruct (params, Teuchos::null)
 {
-  std::string fname = params->get("Gmsh Input Mesh File Name", "mesh.msh");
+  fname = params->get("Gmsh Input Mesh File Name", "mesh.msh");
 
   // Init counters to 0
   NumSides = NumNodes = NumSides = 0;
@@ -61,7 +61,6 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
       legacy = true;
     } else if (line=="$MeshFormat") {
 
-
       std::getline (ifile, line);
       std::stringstream iss (line);
 
@@ -76,11 +75,11 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
     ifile.close();
 
     if (legacy) {
-      loadLegacyMesh (fname);
+      loadLegacyMesh ();
     } else if (binary) {
-      loadBinaryMesh (fname);
+      loadBinaryMesh ();
     } else {
-      loadAsciiMesh (fname);
+      loadAsciiMesh ();
     }
   }
 
@@ -347,7 +346,7 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::GmshSTKMeshStruct::getValidDi
 
 // -------------------------------- Read methos ---------------------------- //
 
-void Albany::GmshSTKMeshStruct::loadLegacyMesh (const std::string& fname)
+void Albany::GmshSTKMeshStruct::loadLegacyMesh ()
 {
   std::ifstream ifile;
   ifile.open(fname.c_str());
@@ -529,7 +528,7 @@ void Albany::GmshSTKMeshStruct::swallow_lines_until( std::ifstream& ifile, std::
   return;
 }
 
-void Albany::GmshSTKMeshStruct::loadAsciiMesh (const std::string& fname)
+void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
 {
   std::ifstream ifile;
   ifile.open(fname.c_str());
@@ -709,7 +708,7 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh (const std::string& fname)
   ifile.close();
 }
 
-void Albany::GmshSTKMeshStruct::loadBinaryMesh (const std::string& fname)
+void Albany::GmshSTKMeshStruct::loadBinaryMesh ()
 {
   std::ifstream ifile;
   ifile.open(fname.c_str());
