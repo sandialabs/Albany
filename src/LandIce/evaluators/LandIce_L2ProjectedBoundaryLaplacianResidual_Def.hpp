@@ -55,7 +55,6 @@ L2ProjectedBoundaryLaplacianResidualBase(Teuchos::ParameterList& p, const Teucho
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
   // Get Dimensions
-  numCells  = dl->node_scalar->dimension(0);
   numNodes  = dl->node_scalar->dimension(1);
 
   numSideNodes  = dl_side->node_scalar->dimension(2);
@@ -114,7 +113,7 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
                               "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
 
-  for (int cell=0; cell<numCells; ++cell)
+  for (int cell=0; cell<workset.numCells; ++cell)
     for (int inode=0; inode<numNodes; ++inode)
       bdLaplacian_L2Projection_res(cell,inode) = solution(cell,inode);
 

@@ -37,7 +37,6 @@ private:
   std::vector<std::vector<int> >  sideNodes;
   Teuchos::RCP<shards::CellTopology> cellType;
 
-  int numCells;
   int numNodes;
 
   int numSideNodes;
