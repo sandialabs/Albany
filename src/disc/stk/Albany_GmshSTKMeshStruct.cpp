@@ -60,33 +60,15 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
     if (line=="$NOD") {
       legacy = true;
     } else if (line=="$MeshFormat") {
+
+
       std::getline (ifile, line);
       std::stringstream iss (line);
 
       int doublesize;
       iss >> version >> binary >> doublesize;
 
-      // Tell user what gmsh version we're reading
-      Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
-      *out << "The gmsh version is: "
-           << version
-           << std::endl;
-
-      // Check if we know how to read this gmsh version.
-      // Return an error if we do not.
-      std::set<float> allowable_gmsh_versions;
-      allowable_gmsh_versions.insert( 2.2);
-      if( allowable_gmsh_versions.find( version) == allowable_gmsh_versions.end())
-      {
-        *out << "Allowable gmsh *.msh file versions are: " << std::endl;
-        for( std::set<float>::iterator it = allowable_gmsh_versions.begin(); it != allowable_gmsh_versions.end(); it++)
-        {
-          *out << *it << std::endl;
-        }
-
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Cannot read this version of gmsh *.msh file!");
-      }
-
+      check_version( ifile);
 
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Mesh format not recognized.\n");
@@ -232,6 +214,8 @@ Albany::GmshSTKMeshStruct::~GmshSTKMeshStruct()
   delete[] hexas;
   delete[] quads;
   delete[] lines;
+
+  allowable_gmsh_versions.clear();
 }
 
 void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
@@ -1045,4 +1029,35 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
   }
 
   return;
+}
+
+void Albany::GmshSTKMeshStruct::set_allowable_gmsh_versions()
+{
+  allowable_gmsh_versions.insert( 2.2);
+
+  return;
+}
+
+
+void Albany::GmshSTKMeshStruct::check_version( std::ifstream& ifile)
+{
+    // Tell user what gmsh version we're reading
+    Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+    *out << "The gmsh version is: "
+         << version
+         << std::endl;
+
+    // Check if we know how to read this gmsh version.
+    // Return an error if we do not.
+    set_allowable_gmsh_versions();
+    if( allowable_gmsh_versions.find( version) == allowable_gmsh_versions.end())
+    {
+      *out << "Allowable gmsh *.msh file versions are: " << std::endl;
+      for( std::set<float>::iterator it = allowable_gmsh_versions.begin(); it != allowable_gmsh_versions.end(); it++)
+      {
+        *out << *it << std::endl;
+      }
+
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Cannot read this version of gmsh *.msh file!");
+    }
 }

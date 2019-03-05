@@ -44,6 +44,13 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
                        std::vector<std::string>&               ssNames,
                        std::vector<std::string>&               nsNames);
 
+  // Check the version of the input msh file
+  void check_version( std::ifstream& ifile);
+
+  // Sets the set of allowable gmsh versions; i.e., 
+  // versions we know how to read
+  void set_allowable_gmsh_versions();
+
   // Looks through ifile for the line containing the
   // line_of_interest.
   void swallow_lines_until( std::ifstream& ifile, 
@@ -54,6 +61,9 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   // The version of the gmsh msh file
   float version;
+
+  // The set of versions we know how to read
+  std::set<float> allowable_gmsh_versions;
 
   void loadLegacyMesh (const std::string& fname);
   void loadAsciiMesh (const std::string& fname);
