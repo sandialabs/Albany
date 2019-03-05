@@ -38,6 +38,12 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   private:
 
+  // Set boundary information.
+  // Includes sideset and nodeset names and counts.
+  void set_boundaries( const Teuchos::RCP<const Teuchos_Comm>& commT,
+                       std::vector<std::string>&               ssNames,
+                       std::vector<std::string>&               nsNames);
+
   // Looks through ifile for the line containing the
   // line_of_interest.
   void swallow_lines_until( std::ifstream& ifile, 
