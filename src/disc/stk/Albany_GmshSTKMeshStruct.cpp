@@ -607,7 +607,7 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
 
   // Read the number of entities
   std::getline (ifile, line);
-  int num_entities = std::atoi (line.c_str() );
+  num_entities = std::atoi (line.c_str() );
   TEUCHOS_TEST_FOR_EXCEPTION (num_entities<=0, Teuchos::Exceptions::InvalidParameter, "Error! Invalid number of mesh elements.\n");
 
   // Gmsh lists elements and sides (and some points) all toghether, and does not specify beforehand what kind of elements

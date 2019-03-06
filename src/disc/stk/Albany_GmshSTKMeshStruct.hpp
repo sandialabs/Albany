@@ -86,6 +86,9 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   void loadAsciiMesh ();
   void loadBinaryMesh ();
 
+  // The number of entities, both elements and cells
+  int num_entities;
+
   int NumElemNodes; // Number of nodes per element (e.g. 3 for Triangles)
   int NumSideNodes; // Number of nodes per side (e.g. 2 for a Line)
   int NumNodes; //number of nodes
