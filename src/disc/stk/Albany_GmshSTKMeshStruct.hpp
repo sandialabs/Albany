@@ -79,6 +79,9 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Sets the number of each type of element
   void set_specific_num_of_each_elements( std::ifstream& ifile);
 
+  // Increments the element type counter based on the type number
+  void increment_element_type( int e_type);
+
   // The version of the gmsh msh file
   float version;
 
