@@ -82,6 +82,12 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Increments the element type counter based on the type number
   void increment_element_type( int e_type);
 
+  // Allocates memory for element pointers below
+  void size_all_element_pointers();
+
+  // Set mesh info like dimension, number of elements, sides, etc.
+  void set_generic_mesh_info();
+
   // The version of the gmsh msh file
   float version;
 

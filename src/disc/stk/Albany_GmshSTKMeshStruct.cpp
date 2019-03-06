@@ -693,6 +693,90 @@ void Albany::GmshSTKMeshStruct::set_specific_num_of_each_elements( std::ifstream
   return;
 }
 
+void Albany::GmshSTKMeshStruct::size_all_element_pointers()
+{
+  lines = new int*[3];
+  tetra = new int*[5];
+  trias = new int*[4];
+  hexas = new int*[9];
+  quads = new int*[5];
+  for (int i(0); i<5; ++i) 
+  {
+    tetra[i] = new int[nb_tetra];
+  }
+  for (int i(0); i<5; ++i) 
+  {
+    trias[i] = new int[nb_trias];
+  }
+  for (int i(0); i<9; ++i) 
+  {
+    hexas[i] = new int[nb_hexas];
+  }
+  for (int i(0); i<5; ++i) 
+  {
+    quads[i] = new int[nb_quads];
+  }
+  for (int i(0); i<3; ++i) 
+  {
+    lines[i] = new int[nb_lines];
+  }
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::set_generic_mesh_info()
+{
+  if (nb_tetra>0) 
+  {
+    this->numDim = 3;
+
+    NumElems = nb_tetra;
+    NumSides = nb_trias;
+    NumElemNodes = 4;
+    NumSideNodes = 3;
+    elems = tetra;
+    sides = trias;
+  } 
+  else if (nb_hexas>0) 
+  {
+    this->numDim = 3;
+
+    NumElems = nb_hexas;
+    NumSides = nb_quads;
+    NumElemNodes = 8;
+    NumSideNodes = 4;
+    elems = hexas;
+    sides = quads;
+  } 
+  else if (nb_trias>0) 
+  {
+    this->numDim = 2;
+
+    NumElems = nb_trias;
+    NumSides = nb_lines;
+    NumElemNodes = 3;
+    NumSideNodes = 2;
+    elems = trias;
+    sides = lines;
+  } 
+  else if (nb_quads>0) 
+  {
+    this->numDim = 2;
+
+    NumElems = nb_quads;
+    NumSides = nb_lines;
+    NumElemNodes = 4;
+    NumSideNodes = 2;
+    elems = quads;
+    sides = lines;
+  } 
+  else 
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Invalid mesh dimension.\n");
+  }
+  return;
+}
+
 void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
 {
   std::ifstream ifile = open_fname();
@@ -706,71 +790,10 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
   set_num_entities( ifile);
   set_specific_num_of_each_elements( ifile);
 
-// ****
-
-  lines = new int*[3];
-  tetra = new int*[5];
-  trias = new int*[4];
-  hexas = new int*[9];
-  quads = new int*[5];
-  for (int i(0); i<5; ++i) {
-    tetra[i] = new int[nb_tetra];
-  }
-  for (int i(0); i<5; ++i) {
-    trias[i] = new int[nb_trias];
-  }
-  for (int i(0); i<9; ++i) {
-    hexas[i] = new int[nb_hexas];
-  }
-  for (int i(0); i<5; ++i) {
-    quads[i] = new int[nb_quads];
-  }
-  for (int i(0); i<3; ++i) {
-    lines[i] = new int[nb_lines];
-  }
-
-  if (nb_tetra>0) {
-    this->numDim = 3;
-
-    NumElems = nb_tetra;
-    NumSides = nb_trias;
-    NumElemNodes = 4;
-    NumSideNodes = 3;
-    elems = tetra;
-    sides = trias;
-  } else if (nb_hexas>0) {
-    this->numDim = 3;
-
-    NumElems = nb_hexas;
-    NumSides = nb_quads;
-    NumElemNodes = 8;
-    NumSideNodes = 4;
-    elems = hexas;
-    sides = quads;
-  } else if (nb_trias>0) {
-    this->numDim = 2;
-
-    NumElems = nb_trias;
-    NumSides = nb_lines;
-    NumElemNodes = 3;
-    NumSideNodes = 2;
-    elems = trias;
-    sides = lines;
-  } else if (nb_quads>0) {
-    this->numDim = 2;
-
-    NumElems = nb_quads;
-    NumSides = nb_lines;
-    NumElemNodes = 4;
-    NumSideNodes = 2;
-    elems = quads;
-    sides = lines;
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Invalid mesh dimension.\n");
-  }
-
-//  ****
-
+  // Size the element pointers to handle the element information
+  size_all_element_pointers();
+  set_generic_mesh_info();
+  
   // Reset the stream to the beginning of the element section
   std::string line;
   ifile.seekg (0, std::ios::beg);
