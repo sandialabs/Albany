@@ -389,16 +389,7 @@ void Albany::GmshSTKMeshStruct::loadLegacyMesh ()
     std::stringstream ss(line);
     ss >> id >> e_type;
 
-    switch (e_type) {
-      case 1: ++nb_lines;  break;
-      case 2: ++nb_trias;  break;
-      case 3: ++nb_quads;  break;
-      case 4: ++nb_tetra; break;
-      case 5: ++nb_hexas;  break;
-      case 15: /*point*/  break;
-      default:
-        TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Element type not supported.\n");
-    }
+    increment_element_type( e_type);
   }
 
   TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra*nb_hexas!=0, std::logic_error, "Error! Cannot mix tetrahedra and hexahedra.\n");
