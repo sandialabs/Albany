@@ -549,9 +549,42 @@ void Albany::GmshSTKMeshStruct::set_NumNodes( std::ifstream& ifile)
 
 void Albany::GmshSTKMeshStruct::load_node_data( std::ifstream& ifile)
 {
-  int id = 0;
-  for (int i=0; i<NumNodes; ++i) {
-    ifile >> id >> pts[i][0] >> pts[i][1] >> pts[i][2];
+  if( version == (float)2.2)
+  {
+    int id = 0;
+    for (int i=0; i<NumNodes; ++i) 
+    {
+      ifile >> id >> pts[i][0] >> pts[i][1] >> pts[i][2];
+    }
+  }
+  else if( version == (float) 4.1)
+  {
+    int accounted_nodes = 0;
+    while( accounted_nodes < NumNodes)
+    {
+      int entity_dim     = 0; 
+      int entity_tag     = 0;
+      int parametric     = 0;
+      int num_node_block = 0;
+      ifile >> entity_dim >> entity_tag >> parametric >> num_node_block;
+
+      // First get the node id's
+      int* node_IDs = new int[num_node_block];
+      for( int i = 0; i < num_node_block; i++)
+      {
+        ifile >> node_IDs[i];
+      }
+
+      // Put node coordinates into proper ID place
+      for( int i = 0; i < num_node_block; i++)
+      {
+        // Get this node's unique ID (minus one to index by 0, not 1)
+        int this_id = node_IDs[i] -1;
+        ifile >> pts[this_id][0] >> pts[this_id][1] >> pts[this_id][2];
+        accounted_nodes++;
+      }
+      delete[] node_IDs;
+    }
   }
 
   return;
@@ -1107,8 +1140,6 @@ void Albany::GmshSTKMeshStruct::get_physical_names( std::map<std::string, int>& 
   std::getline( ifile, line);
   std::stringstream iss (line);
   iss >> num_physical_names;
-
-  std::cout << "num_physical_names = " << num_physical_names << std::endl;
 
   // Add each physical name pair to the map
   for( size_t i = 0; i < num_physical_names; i++)
