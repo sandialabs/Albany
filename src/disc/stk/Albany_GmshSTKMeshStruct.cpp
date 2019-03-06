@@ -532,13 +532,15 @@ void Albany::GmshSTKMeshStruct::set_NumNodes( std::ifstream& ifile)
     std::getline (ifile, line);
     NumNodes = std::atoi (line.c_str() );
   }
-  else if( version == (float)4.0)
+  else if( version == (float)4.1)
   {
     int num_entity_blocks = 0;
+    int min_node_tag      = 0;
+    int max_node_tag      = 0;
 
-    std::getline (ifile, line);
-    std::stringstream ss (line);
-    ss >> num_entity_blocks >> NumNodes;
+    std::getline( ifile, line);
+    std::stringstream ss( line);
+    ss >> num_entity_blocks >> NumNodes >> min_node_tag >> max_node_tag;
   }
 
   TEUCHOS_TEST_FOR_EXCEPTION (NumNodes<=0, Teuchos::Exceptions::InvalidParameter, "Error! Invalid number of nodes.\n");
@@ -1032,7 +1034,7 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
 
     delete[] bdTagsArray;
   }
-  else if( version == (float)4.0)
+  else if( version == (float)4.1)
   {
     // Map has format: "name",  physical_tag
     std::map<std::string, int> physical_names; 
@@ -1048,7 +1050,7 @@ void Albany::GmshSTKMeshStruct::set_allowable_gmsh_versions()
 {
   // Add new allowable versions here!
   allowable_gmsh_versions.insert( 2.2);
-  allowable_gmsh_versions.insert( 4.0);
+  allowable_gmsh_versions.insert( 4.1);
 
   return;
 }
