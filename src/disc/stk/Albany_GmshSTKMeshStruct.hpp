@@ -59,15 +59,32 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   Teuchos::RCP<const Teuchos::ParameterList> getValidDiscretizationParameters() const;
 
+  // Gets the physical name-tag pairs for version 4.1 meshes
+  void get_physical_names( std::map<std::string, int>&  physical_names);
+
+  // Opens the gmsh msh file. Variable `fname` must be set.
+  // Don't forget to close when done!
+  // Uses Teuchos test to check if file is open.
+  std::ifstream open_fname();
+
+  // Sets NumNodes for ascii msh files
+  void set_NumNodes( std::ifstream& ifile);
+
+  // Reads in the node data
+  void load_node_data( std::ifstream& ifile);
+
   // The version of the gmsh msh file
   float version;
+
+  // The file name of the msh file
+  std::string fname;
 
   // The set of versions we know how to read
   std::set<float> allowable_gmsh_versions;
 
-  void loadLegacyMesh (const std::string& fname);
-  void loadAsciiMesh (const std::string& fname);
-  void loadBinaryMesh (const std::string& fname);
+  void loadLegacyMesh ();
+  void loadAsciiMesh ();
+  void loadBinaryMesh ();
 
   int NumElemNodes; // Number of nodes per element (e.g. 3 for Triangles)
   int NumSideNodes; // Number of nodes per side (e.g. 2 for a Line)

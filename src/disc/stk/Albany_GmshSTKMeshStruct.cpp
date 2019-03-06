@@ -34,7 +34,7 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
                                               const Teuchos::RCP<const Teuchos_Comm>& commT) :
   GenericSTKMeshStruct (params, Teuchos::null)
 {
-  std::string fname = params->get("Gmsh Input Mesh File Name", "mesh.msh");
+  fname = params->get("Gmsh Input Mesh File Name", "mesh.msh");
 
   // Init counters to 0
   NumSides = NumNodes = NumSides = 0;
@@ -44,12 +44,9 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
   tetra = hexas = trias = quads = lines = nullptr;
 
   // Reading the mesh on proc 0
-  if (commT->getRank() == 0) {
-    std::ifstream ifile;
-    ifile.open(fname.c_str());
-    if (!ifile.is_open()) {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Error! Cannot open mesh file '" << fname << "'.\n");
-    }
+  if (commT->getRank() == 0) 
+  {
+    std::ifstream ifile = open_fname();
 
     std::string line;
     std::getline (ifile, line);
@@ -60,7 +57,6 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
     if (line=="$NOD") {
       legacy = true;
     } else if (line=="$MeshFormat") {
-
 
       std::getline (ifile, line);
       std::stringstream iss (line);
@@ -76,11 +72,11 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
     ifile.close();
 
     if (legacy) {
-      loadLegacyMesh (fname);
+      loadLegacyMesh ();
     } else if (binary) {
-      loadBinaryMesh (fname);
+      loadBinaryMesh ();
     } else {
-      loadAsciiMesh (fname);
+      loadAsciiMesh ();
     }
   }
 
@@ -347,13 +343,9 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::GmshSTKMeshStruct::getValidDi
 
 // -------------------------------- Read methos ---------------------------- //
 
-void Albany::GmshSTKMeshStruct::loadLegacyMesh (const std::string& fname)
+void Albany::GmshSTKMeshStruct::loadLegacyMesh ()
 {
-  std::ifstream ifile;
-  ifile.open(fname.c_str());
-  if (!ifile.is_open()) {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Error! Cannot open mesh file '" << fname << "'.\n");
-  }
+  std::ifstream ifile = open_fname();
 
   // Start reading nodes
   std::string line;
@@ -529,33 +521,87 @@ void Albany::GmshSTKMeshStruct::swallow_lines_until( std::ifstream& ifile, std::
   return;
 }
 
-void Albany::GmshSTKMeshStruct::loadAsciiMesh (const std::string& fname)
+void Albany::GmshSTKMeshStruct::set_NumNodes( std::ifstream& ifile)
 {
-  std::ifstream ifile;
-  ifile.open(fname.c_str());
-  if (!ifile.is_open()) {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Error! Cannot open mesh file '" << fname << "'.\n");
-  }
-
-  // Start reading nodes
   std::string line;
   swallow_lines_until( ifile, line, "$Nodes");
   TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Nodes section not found.\n");
 
-  // Read the number of nodes
-  std::getline (ifile, line);
-  NumNodes = std::atoi (line.c_str() );
-  TEUCHOS_TEST_FOR_EXCEPTION (NumNodes<=0, Teuchos::Exceptions::InvalidParameter, "Error! Invalid number of nodes.\n");
-  pts = new double [NumNodes][3];
-
-  // Read the nodes
-  int id;
-  for (int i=0; i<NumNodes; ++i) {
-    ifile >> id >> pts[i][0] >> pts[i][1] >> pts[i][2];
+  if( version == (float)2.2)
+  {
+    std::getline (ifile, line);
+    NumNodes = std::atoi (line.c_str() );
   }
+  else if( version == (float)4.1)
+  {
+    int num_entity_blocks = 0;
+    int min_node_tag      = 0;
+    int max_node_tag      = 0;
+
+    std::getline( ifile, line);
+    std::stringstream ss( line);
+    ss >> num_entity_blocks >> NumNodes >> min_node_tag >> max_node_tag;
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION (NumNodes<=0, Teuchos::Exceptions::InvalidParameter, "Error! Invalid number of nodes.\n");
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::load_node_data( std::ifstream& ifile)
+{
+  if( version == (float)2.2)
+  {
+    int id = 0;
+    for (int i=0; i<NumNodes; ++i) 
+    {
+      ifile >> id >> pts[i][0] >> pts[i][1] >> pts[i][2];
+    }
+  }
+  else if( version == (float) 4.1)
+  {
+    int accounted_nodes = 0;
+    while( accounted_nodes < NumNodes)
+    {
+      int entity_dim     = 0; 
+      int entity_tag     = 0;
+      int parametric     = 0;
+      int num_node_block = 0;
+      ifile >> entity_dim >> entity_tag >> parametric >> num_node_block;
+
+      // First get the node id's
+      int* node_IDs = new int[num_node_block];
+      for( int i = 0; i < num_node_block; i++)
+      {
+        ifile >> node_IDs[i];
+      }
+
+      // Put node coordinates into proper ID place
+      for( int i = 0; i < num_node_block; i++)
+      {
+        // Get this node's unique ID (minus one to index by 0, not 1)
+        int this_id = node_IDs[i] -1;
+        ifile >> pts[this_id][0] >> pts[this_id][1] >> pts[this_id][2];
+        accounted_nodes++;
+      }
+      delete[] node_IDs;
+    }
+  }
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
+{
+  std::ifstream ifile = open_fname();
+
+  // Start reading nodes
+  set_NumNodes( ifile);
+  pts = new double [NumNodes][3];
+  load_node_data( ifile);
 
   // Start reading elements (cells and sides)
   ifile.seekg (0, std::ios::beg);
+  std::string line;
   swallow_lines_until( ifile, line, "$Elements");
   TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Element section not found.\n");
 
@@ -569,6 +615,7 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh (const std::string& fname)
   // linear Tetrahedra/Hexahedra in 3D and linear Triangle/Quads in 2D
 
   int nb_tetra(0), nb_hexa(0), nb_tria(0), nb_quad(0), nb_line(0), e_type(0);
+  int id = 0;
   for (int i(0); i<num_entities; ++i) {
     std::getline(ifile,line);
     std::stringstream ss(line);
@@ -709,9 +756,9 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh (const std::string& fname)
   ifile.close();
 }
 
-void Albany::GmshSTKMeshStruct::loadBinaryMesh (const std::string& fname)
+void Albany::GmshSTKMeshStruct::loadBinaryMesh ()
 {
-  std::ifstream ifile;
+  std::ifstream ifile = open_fname();
   ifile.open(fname.c_str());
   if (!ifile.is_open()) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Error! Cannot open mesh file '" << fname << "'.\n");
@@ -975,9 +1022,6 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
 {
   if( version == (float)2.2)
   {
-    std::cout << "The version is 2.2 and I am here" << std::endl;
-    // Version 2.2 was limited to integer boundary tags
-
     // Counting boundaries (only proc 0 has any stored, so far)
     std::set<int> bdTags;
     for (int i(0); i<NumSides; ++i) 
@@ -1023,8 +1067,12 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
 
     delete[] bdTagsArray;
   }
-  else if( version == (float)4.0)
+  else if( version == (float)4.1)
   {
+    // Map has format: "name",  physical_tag
+    std::map<std::string, int> physical_names; 
+    get_physical_names( physical_names);
+
     // TODO
   }
 
@@ -1033,7 +1081,9 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
 
 void Albany::GmshSTKMeshStruct::set_allowable_gmsh_versions()
 {
+  // Add new allowable versions here!
   allowable_gmsh_versions.insert( 2.2);
+  allowable_gmsh_versions.insert( 4.1);
 
   return;
 }
@@ -1041,23 +1091,70 @@ void Albany::GmshSTKMeshStruct::set_allowable_gmsh_versions()
 
 void Albany::GmshSTKMeshStruct::check_version( std::ifstream& ifile)
 {
-    // Tell user what gmsh version we're reading
-    Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
-    *out << "The gmsh version is: "
-         << version
-         << std::endl;
+  // Tell user what gmsh version we're reading
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+  *out << "The gmsh version is: "
+       << version
+       << std::endl;
 
-    // Check if we know how to read this gmsh version.
-    // Return an error if we do not.
-    set_allowable_gmsh_versions();
-    if( allowable_gmsh_versions.find( version) == allowable_gmsh_versions.end())
+  // Check if we know how to read this gmsh version.
+  // Return an error if we do not.
+  set_allowable_gmsh_versions();
+  if( allowable_gmsh_versions.find( version) == allowable_gmsh_versions.end())
+  {
+    *out << "Allowable gmsh *.msh file versions are: " << std::endl;
+    for( std::set<float>::iterator it = allowable_gmsh_versions.begin(); it != allowable_gmsh_versions.end(); it++)
     {
-      *out << "Allowable gmsh *.msh file versions are: " << std::endl;
-      for( std::set<float>::iterator it = allowable_gmsh_versions.begin(); it != allowable_gmsh_versions.end(); it++)
-      {
-        *out << *it << std::endl;
-      }
-
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Cannot read this version of gmsh *.msh file!");
+      *out << *it << std::endl;
     }
+
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Cannot read this version of gmsh *.msh file!");
+  }
+
+  return;
+}
+
+std::ifstream Albany::GmshSTKMeshStruct::open_fname()
+{
+  std::ifstream ifile;
+  ifile.open(fname.c_str());
+  if (!ifile.is_open()) 
+  {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Error! Cannot open mesh file '" << fname << "'.\n");
+  }
+  
+  return ifile;
+}
+  
+
+void Albany::GmshSTKMeshStruct::get_physical_names( std::map<std::string, int>&  physical_names)
+{
+  std::ifstream ifile = open_fname();
+
+  // Advance to the PhysicalNames section
+  std::string line;
+  swallow_lines_until( ifile, line, "$PhysicalNames");
+
+  // Get number of Physical Names
+  int num_physical_names = 0;
+  std::getline( ifile, line);
+  std::stringstream iss (line);
+  iss >> num_physical_names;
+
+  // Add each physical name pair to the map
+  for( size_t i = 0; i < num_physical_names; i++)
+  {
+    std::string name;
+    int         tag;
+    int         dim;
+    
+    std::getline( ifile, line);
+    std::stringstream ss (line);
+    ss >> dim >> tag >> name;
+
+    physical_names.insert( std::make_pair( name, tag));
+  }
+
+  ifile.close();
+  return;
 }
