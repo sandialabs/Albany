@@ -67,6 +67,9 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Uses Teuchos test to check if file is open.
   std::ifstream open_fname();
 
+  // Sets NumNodes for ascii msh files
+  void set_NumNodes( std::ifstream& ifile);
+
   // The version of the gmsh msh file
   float version;
 

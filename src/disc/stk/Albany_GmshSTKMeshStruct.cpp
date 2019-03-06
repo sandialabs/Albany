@@ -521,19 +521,36 @@ void Albany::GmshSTKMeshStruct::swallow_lines_until( std::ifstream& ifile, std::
   return;
 }
 
+void Albany::GmshSTKMeshStruct::set_NumNodes( std::ifstream& ifile)
+{
+  std::string line;
+  swallow_lines_until( ifile, line, "$Nodes");
+  TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Nodes section not found.\n");
+
+  if( version == (float)2.2)
+  {
+    std::getline (ifile, line);
+    NumNodes = std::atoi (line.c_str() );
+  }
+  else if( version == (float)4.0)
+  {
+    int num_entity_blocks = 0;
+
+    std::getline (ifile, line);
+    std::stringstream ss (line);
+    ss >> num_entity_blocks >> NumNodes;
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION (NumNodes<=0, Teuchos::Exceptions::InvalidParameter, "Error! Invalid number of nodes.\n");
+  return;
+}
+
 void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
 {
   std::ifstream ifile = open_fname();
 
   // Start reading nodes
-  std::string line;
-  swallow_lines_until( ifile, line, "$Nodes");
-  TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Nodes section not found.\n");
-
-  // Read the number of nodes
-  std::getline (ifile, line);
-  NumNodes = std::atoi (line.c_str() );
-  TEUCHOS_TEST_FOR_EXCEPTION (NumNodes<=0, Teuchos::Exceptions::InvalidParameter, "Error! Invalid number of nodes.\n");
+  set_NumNodes( ifile);
   pts = new double [NumNodes][3];
 
   // Read the nodes
@@ -544,6 +561,7 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
 
   // Start reading elements (cells and sides)
   ifile.seekg (0, std::ios::beg);
+  std::string line;
   swallow_lines_until( ifile, line, "$Elements");
   TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Element section not found.\n");
 
@@ -1070,6 +1088,34 @@ std::ifstream Albany::GmshSTKMeshStruct::open_fname()
 
 void Albany::GmshSTKMeshStruct::get_physical_names( std::map<std::string, int>&  physical_names)
 {
+  std::ifstream ifile = open_fname();
 
+  // Advance to the PhysicalNames section
+  std::string line;
+  swallow_lines_until( ifile, line, "$PhysicalNames");
+
+  // Get number of Physical Names
+  int num_physical_names = 0;
+  std::getline( ifile, line);
+  std::stringstream iss (line);
+  iss >> num_physical_names;
+
+  std::cout << "num_physical_names = " << num_physical_names << std::endl;
+
+  // Add each physical name pair to the map
+  for( size_t i = 0; i < num_physical_names; i++)
+  {
+    std::string name;
+    int         tag;
+    int         dim;
+    
+    std::getline( ifile, line);
+    std::stringstream ss (line);
+    ss >> dim >> tag >> name;
+
+    physical_names.insert( std::make_pair( name, tag));
+  }
+
+  ifile.close();
   return;
 }
