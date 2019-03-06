@@ -38,6 +38,11 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
 
   // Init counters to 0
   NumSides = NumNodes = NumSides = 0;
+  nb_hexas = 0;
+  nb_tetra = 0;
+  nb_quads = 0;
+  nb_trias = 0;
+  nb_lines = 0;
 
   // Init ptrs to nullptr
   pts = nullptr;
@@ -378,27 +383,27 @@ void Albany::GmshSTKMeshStruct::loadLegacyMesh ()
   // the mesh has. Hence, we need to scan the entity list once to establish what kind of elements we have. We support
   // linear Tetrahedra/Hexahedra in 3D and linear Triangle/Quads in 2D
 
-  int nb_tetra(0), nb_hexa(0), nb_tria(0), nb_quad(0), nb_line(0), e_type(0);
+  int e_type(0);
   for (int i(0); i<num_entities; ++i) {
     std::getline(ifile,line);
     std::stringstream ss(line);
     ss >> id >> e_type;
 
     switch (e_type) {
-      case 1: ++nb_line;  break;
-      case 2: ++nb_tria;  break;
-      case 3: ++nb_quad;  break;
+      case 1: ++nb_lines;  break;
+      case 2: ++nb_trias;  break;
+      case 3: ++nb_quads;  break;
       case 4: ++nb_tetra; break;
-      case 5: ++nb_hexa;  break;
+      case 5: ++nb_hexas;  break;
       case 15: /*point*/  break;
       default:
         TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Element type not supported.\n");
     }
   }
 
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra*nb_hexa!=0, std::logic_error, "Error! Cannot mix tetrahedra and hexahedra.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_tria*nb_quad!=0, std::logic_error, "Error! Cannot mix triangles and quadrilaterals.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra+nb_hexa+nb_tria+nb_quad==0, std::logic_error, "Error! Can only handle 2D and 3D geometries.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra*nb_hexas!=0, std::logic_error, "Error! Cannot mix tetrahedra and hexahedra.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (nb_trias*nb_quads!=0, std::logic_error, "Error! Cannot mix triangles and quadrilaterals.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra+nb_hexas+nb_trias+nb_quads==0, std::logic_error, "Error! Can only handle 2D and 3D geometries.\n");
 
   lines = new int*[3];
   tetra = new int*[5];
@@ -409,50 +414,50 @@ void Albany::GmshSTKMeshStruct::loadLegacyMesh ()
     tetra[i] = new int[nb_tetra];\
   }
   for (int i(0); i<5; ++i) {
-    trias[i] = new int[nb_tria];
+    trias[i] = new int[nb_trias];
   }
   for (int i(0); i<9; ++i) {
-    hexas[i] = new int[nb_hexa];
+    hexas[i] = new int[nb_hexas];
   }
   for (int i(0); i<5; ++i) {
-    quads[i] = new int[nb_quad];
+    quads[i] = new int[nb_quads];
   }
   for (int i(0); i<3; ++i) {
-    lines[i] = new int[nb_line];
+    lines[i] = new int[nb_lines];
   }
 
   if (nb_tetra>0) {
     this->numDim = 3;
 
     NumElems = nb_tetra;
-    NumSides = nb_tria;
+    NumSides = nb_trias;
     NumElemNodes = 4;
     NumSideNodes = 3;
     elems = tetra;
     sides = trias;
-  } else if (nb_hexa>0) {
+  } else if (nb_hexas>0) {
     this->numDim = 3;
 
-    NumElems = nb_hexa;
-    NumSides = nb_quad;
+    NumElems = nb_hexas;
+    NumSides = nb_quads;
     NumElemNodes = 8;
     NumSideNodes = 4;
     elems = hexas;
     sides = quads;
-  } else if (nb_tria>0) {
+  } else if (nb_trias>0) {
     this->numDim = 2;
 
-    NumElems = nb_tria;
-    NumSides = nb_line;
+    NumElems = nb_trias;
+    NumSides = nb_lines;
     NumElemNodes = 3;
     NumSideNodes = 2;
     elems = trias;
     sides = lines;
-  } else if (nb_quad>0) {
+  } else if (nb_quads>0) {
     this->numDim = 2;
 
-    NumElems = nb_quad;
-    NumSides = nb_line;
+    NumElems = nb_quads;
+    NumSides = nb_lines;
     NumElemNodes = 4;
     NumSideNodes = 2;
     elems = quads;
@@ -622,6 +627,12 @@ void Albany::GmshSTKMeshStruct::set_num_entities( std::ifstream& ifile)
   return;
 }
 
+void Albany::GmshSTKMeshStruct::set_specific_num_of_each_elements( std::ifstream& ifile)
+{
+
+  return;
+}
+
 void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
 {
   std::ifstream ifile = open_fname();
@@ -633,14 +644,15 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
 
   // Start reading elements (cells and sides)
   set_num_entities( ifile);
+  set_specific_num_of_each_elements( ifile);
 
 // ****
   // Gmsh lists elements and sides (and some points) all toghether, and does not specify beforehand what kind of elements
   // the mesh has. Hence, we need to scan the entity list once to establish what kind of elements we have. We support
   // linear Tetrahedra/Hexahedra in 3D and linear Triangle/Quads in 2D
 
-  int nb_tetra(0), nb_hexa(0), nb_tria(0), nb_quad(0), nb_line(0), e_type(0);
   int id = 0;
+  int e_type = 0;
   std::string line;
   for (int i(0); i<num_entities; ++i) {
     std::getline(ifile,line);
@@ -648,20 +660,20 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
     ss >> id >> e_type;
 
     switch (e_type) {
-      case 1: ++nb_line;  break;
-      case 2: ++nb_tria;  break;
-      case 3: ++nb_quad;  break;
+      case 1: ++nb_lines;  break;
+      case 2: ++nb_trias;  break;
+      case 3: ++nb_quads;  break;
       case 4: ++nb_tetra; break;
-      case 5: ++nb_hexa;  break;
+      case 5: ++nb_hexas;  break;
       case 15: /*point*/  break;
       default:
         TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Element type not supported.\n");
     }
   }
 
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra*nb_hexa!=0, std::logic_error, "Error! Cannot mix tetrahedra and hexahedra.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_tria*nb_quad!=0, std::logic_error, "Error! Cannot mix triangles and quadrilaterals.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra+nb_hexa+nb_tria+nb_quad==0, std::logic_error, "Error! Can only handle 2D and 3D geometries.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra*nb_hexas!=0, std::logic_error, "Error! Cannot mix tetrahedra and hexahedra.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (nb_trias*nb_quads!=0, std::logic_error, "Error! Cannot mix triangles and quadrilaterals.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra+nb_hexas+nb_trias+nb_quads==0, std::logic_error, "Error! Can only handle 2D and 3D geometries.\n");
 
   lines = new int*[3];
   tetra = new int*[5];
@@ -672,50 +684,50 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
     tetra[i] = new int[nb_tetra];
   }
   for (int i(0); i<5; ++i) {
-    trias[i] = new int[nb_tria];
+    trias[i] = new int[nb_trias];
   }
   for (int i(0); i<9; ++i) {
-    hexas[i] = new int[nb_hexa];
+    hexas[i] = new int[nb_hexas];
   }
   for (int i(0); i<5; ++i) {
-    quads[i] = new int[nb_quad];
+    quads[i] = new int[nb_quads];
   }
   for (int i(0); i<3; ++i) {
-    lines[i] = new int[nb_line];
+    lines[i] = new int[nb_lines];
   }
 
   if (nb_tetra>0) {
     this->numDim = 3;
 
     NumElems = nb_tetra;
-    NumSides = nb_tria;
+    NumSides = nb_trias;
     NumElemNodes = 4;
     NumSideNodes = 3;
     elems = tetra;
     sides = trias;
-  } else if (nb_hexa>0) {
+  } else if (nb_hexas>0) {
     this->numDim = 3;
 
-    NumElems = nb_hexa;
-    NumSides = nb_quad;
+    NumElems = nb_hexas;
+    NumSides = nb_quads;
     NumElemNodes = 8;
     NumSideNodes = 4;
     elems = hexas;
     sides = quads;
-  } else if (nb_tria>0) {
+  } else if (nb_trias>0) {
     this->numDim = 2;
 
-    NumElems = nb_tria;
-    NumSides = nb_line;
+    NumElems = nb_trias;
+    NumSides = nb_lines;
     NumElemNodes = 3;
     NumSideNodes = 2;
     elems = trias;
     sides = lines;
-  } else if (nb_quad>0) {
+  } else if (nb_quads>0) {
     this->numDim = 2;
 
-    NumElems = nb_quad;
-    NumSides = nb_line;
+    NumElems = nb_quads;
+    NumSides = nb_lines;
     NumElemNodes = 4;
     NumSideNodes = 2;
     elems = quads;
@@ -837,7 +849,7 @@ void Albany::GmshSTKMeshStruct::loadBinaryMesh ()
   // the mesh has. Hence, we need to scan the entity list once to establish what kind of elements we have. We support
   // linear Tetrahedra/Hexahedra in 3D and linear Triangle/Quads in 2D
   std::vector<int> tmp;
-  int nb_tetra(0), nb_hexa(0), nb_tria(0), nb_quad(0), nb_line(0), n_tags(0), e_type(0), entities_found(0);
+  int n_tags(0), e_type(0), entities_found(0);
   while (entities_found<num_entities) {
     int header[3];
     ifile.read(reinterpret_cast<char*> (header), 3*sizeof(int));
@@ -855,31 +867,31 @@ void Albany::GmshSTKMeshStruct::loadBinaryMesh ()
         length = 1+n_tags+2; // id, tags, points
         tmp.resize(header[1]*length);
         ifile.read (reinterpret_cast<char*> (&tmp[0]), header[1]*length*sizeof(int));
-        nb_line += header[1];
+        nb_lines += header[1];
         break;
       case 2: // 3-pt Triangle
         length = 1+n_tags+3; // id, tags, points
         tmp.resize(header[1]*length);
         ifile.read (reinterpret_cast<char*> (&tmp[0]), header[1]*length*sizeof(int));
-        nb_tria += header[1];
+        nb_trias += header[1];
         break;
       case 3: // 4-pt Quad
         length = 1+n_tags+4; // id, tags, points
         tmp.resize(header[1]*length);
         ifile.read (reinterpret_cast<char*> (&tmp[0]), header[1]*length*sizeof(int));
-        nb_quad += header[1];
+        nb_quads += header[1];
         break;
       case 4: // 4-pt Tetra
         length = 1+n_tags+4; // id, tags, points
         tmp.resize(header[1]*length);
         ifile.read (reinterpret_cast<char*> (&tmp[0]), header[1]*length*sizeof(int));
-        nb_quad += header[1];
+        nb_quads += header[1];
         break;
       case 5: // 8-pt Hexa
         length = 1+n_tags+8; // id, tags, points
         tmp.resize(header[1]*length);
         ifile.read (reinterpret_cast<char*> (&tmp[0]), header[1]*length*sizeof(int));
-        nb_quad += header[1];
+        nb_quads += header[1];
         break;
       case 15: // Point
         break;
@@ -887,9 +899,9 @@ void Albany::GmshSTKMeshStruct::loadBinaryMesh ()
         TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Element type not supported.\n");
     }
   }
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra*nb_hexa!=0, std::logic_error, "Error! Cannot mix tetrahedra and hexahedra.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_tria*nb_quad!=0, std::logic_error, "Error! Cannot mix triangles and quadrilaterals.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra+nb_hexa+nb_tria+nb_quad==0, std::logic_error, "Error! Can only handle 2D and 3D geometries.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra*nb_hexas!=0, std::logic_error, "Error! Cannot mix tetrahedra and hexahedra.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (nb_trias*nb_quads!=0, std::logic_error, "Error! Cannot mix triangles and quadrilaterals.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra+nb_hexas+nb_trias+nb_quads==0, std::logic_error, "Error! Can only handle 2D and 3D geometries.\n");
 
   lines = new int*[3];
   tetra = new int*[5];
@@ -900,50 +912,50 @@ void Albany::GmshSTKMeshStruct::loadBinaryMesh ()
     tetra[i] = new int[nb_tetra];
   }
   for (int i(0); i<5; ++i) {
-    trias[i] = new int[nb_tria];
+    trias[i] = new int[nb_trias];
   }
   for (int i(0); i<9; ++i) {
-    hexas[i] = new int[nb_hexa];
+    hexas[i] = new int[nb_hexas];
   }
   for (int i(0); i<5; ++i) {
-    quads[i] = new int[nb_quad];
+    quads[i] = new int[nb_quads];
   }
   for (int i(0); i<3; ++i) {
-    lines[i] = new int[nb_line];
+    lines[i] = new int[nb_lines];
   }
 
   if (nb_tetra>0) {
     this->numDim = 3;
 
     NumElems = nb_tetra;
-    NumSides = nb_tria;
+    NumSides = nb_trias;
     NumElemNodes = 4;
     NumSideNodes = 3;
     elems = tetra;
     sides = trias;
-  } else if (nb_hexa>0) {
+  } else if (nb_hexas>0) {
     this->numDim = 3;
 
-    NumElems = nb_hexa;
-    NumSides = nb_quad;
+    NumElems = nb_hexas;
+    NumSides = nb_quads;
     NumElemNodes = 8;
     NumSideNodes = 4;
     elems = hexas;
     sides = quads;
-  } else if (nb_tria>0) {
+  } else if (nb_trias>0) {
     this->numDim = 2;
 
-    NumElems = nb_tria;
-    NumSides = nb_line;
+    NumElems = nb_trias;
+    NumSides = nb_lines;
     NumElemNodes = 3;
     NumSideNodes = 2;
     elems = trias;
     sides = lines;
-  } else if (nb_quad>0) {
+  } else if (nb_quads>0) {
     this->numDim = 2;
 
-    NumElems = nb_quad;
-    NumSides = nb_line;
+    NumElems = nb_quads;
+    NumSides = nb_lines;
     NumElemNodes = 4;
     NumSideNodes = 2;
     elems = quads;

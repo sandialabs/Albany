@@ -76,6 +76,9 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Sets the number of entities, elements and cells
   void set_num_entities( std::ifstream& ifile);
 
+  // Sets the number of each type of element
+  void set_specific_num_of_each_elements( std::ifstream& ifile);
+
   // The version of the gmsh msh file
   float version;
 
@@ -108,6 +111,13 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   int** quads;
   int** trias;
   int** lines;
+
+  // Number of each of the above element types
+  int nb_hexas;
+  int nb_tetra;
+  int nb_quads;
+  int nb_trias;
+  int nb_lines;
 
   // These pointers will be set equal to two of the previous group, depending on dimension
   // NOTE: do not call delete on these pointers! Delete the previous ones only!
