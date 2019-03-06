@@ -142,15 +142,12 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D DataTransferKit_ENABLE_DBC:BOOL=ON \
       -D DataTransferKit_ENABLE_TESTS:BOOL=OFF \
       -D DataTransferKit_ENABLE_EXAMPLES:BOOL=OFF \
-      -D Tpetra_INST_INT_UNSIGNED_LONG:BOOL=ON \
 \
       -D Trilinos_ENABLE_Tempus:BOOL=ON \
       -D Tempus_ENABLE_TESTS:BOOL=OFF \
       -D Tempus_ENABLE_EXAMPLES:BOOL=OFF \
       -D Tempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
 \
-      -D TPL_ENABLE_MOAB:BOOL=OFF \
-      -D TPL_ENABLE_Libmesh:BOOL=OFF \
       -D TPL_Netcdf_PARALLEL:BOOL=OFF \
 \
       -D Trilinos_ENABLE_CXX11:BOOL=ON \
