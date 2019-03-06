@@ -128,11 +128,18 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
         continue;
 
       int node_plus, node_minus;
-      for (int inode=0, counter=0; (inode<numSideNodes) && (counter<2); ++inode) {
+      bool skip_edge = false, edge_on_GL=false;
+      MeshScalarT gl_sum=0;
+
+      int counter=0;
+      for (int inode=0; (inode<numSideNodes) && (counter<2); ++inode) {
         int inode1 = (inode+1)%numSideNodes;
         MeshScalarT gl0 = gl_func(inode), gl1 = gl_func(inode1);
+        gl_sum += gl0;
         if(gl0*gl1 <= 0) {
-          TEUCHOS_TEST_FOR_EXCEPTION(gl0 == gl1, std::runtime_error, "Error! The corner case where the GL is aligned with an element edge is not handled at the moment\n");
+          if(gl0 == gl1) {edge_on_GL = true; continue;}
+          if(skip_edge) {skip_edge = false; continue;} //we want at most to select one edge having vertices
+          skip_edge = (gl1 == 0);
           MeshScalarT theta = gl0/(gl0-gl1);
           H(counter) = thickness(cell,side,inode1)*theta + thickness(cell,side,inode)*(1-theta);
           x(counter) = coords(cell,side,inode1,0)*theta + coords(cell,side,inode,0)*(1-theta);
@@ -146,6 +153,10 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
           ++counter;
         }
       }
+
+      //skip when a grounding line intersect the element in one vertex only (counter<1)
+      //also, when an edge is on grounding line, consider only the grounded element to avoid double-counting.
+      if(counter<2 || (edge_on_GL && gl_sum<0)) continue;  
 
       //we consider the direction [(y[1]-y[0]), -(x[1]-x[0])] orthogonal to the GL segment and compute the flux along that direction.
       //we then compute the sign of the of the flux by looking at the sign of the dot-product between the GL segment and an edge crossed by the grounding line
