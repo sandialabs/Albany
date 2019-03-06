@@ -545,6 +545,16 @@ void Albany::GmshSTKMeshStruct::set_NumNodes( std::ifstream& ifile)
   return;
 }
 
+void Albany::GmshSTKMeshStruct::load_node_data( std::ifstream& ifile)
+{
+  int id = 0;
+  for (int i=0; i<NumNodes; ++i) {
+    ifile >> id >> pts[i][0] >> pts[i][1] >> pts[i][2];
+  }
+
+  return;
+}
+
 void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
 {
   std::ifstream ifile = open_fname();
@@ -552,12 +562,7 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
   // Start reading nodes
   set_NumNodes( ifile);
   pts = new double [NumNodes][3];
-
-  // Read the nodes
-  int id;
-  for (int i=0; i<NumNodes; ++i) {
-    ifile >> id >> pts[i][0] >> pts[i][1] >> pts[i][2];
-  }
+  load_node_data( ifile);
 
   // Start reading elements (cells and sides)
   ifile.seekg (0, std::ios::beg);
@@ -575,6 +580,7 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
   // linear Tetrahedra/Hexahedra in 3D and linear Triangle/Quads in 2D
 
   int nb_tetra(0), nb_hexa(0), nb_tria(0), nb_quad(0), nb_line(0), e_type(0);
+  int id = 0;
   for (int i(0); i<num_entities; ++i) {
     std::getline(ifile,line);
     std::stringstream ss(line);

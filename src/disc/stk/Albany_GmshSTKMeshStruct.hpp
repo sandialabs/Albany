@@ -70,6 +70,9 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Sets NumNodes for ascii msh files
   void set_NumNodes( std::ifstream& ifile);
 
+  // Reads in the node data
+  void load_node_data( std::ifstream& ifile);
+
   // The version of the gmsh msh file
   float version;
 
