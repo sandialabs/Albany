@@ -590,6 +590,38 @@ void Albany::GmshSTKMeshStruct::load_node_data( std::ifstream& ifile)
   return;
 }
 
+void Albany::GmshSTKMeshStruct::set_num_entities( std::ifstream& ifile)
+{
+  std::string line;
+  ifile.seekg (0, std::ios::beg);
+  swallow_lines_until( ifile, line, "$Elements");
+  TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Element section not found.\n");
+
+  // Read the number of entities
+  std::getline (ifile, line);
+
+  if( version == (float)2.2)
+  {
+    num_entities = std::atoi (line.c_str() );
+  }
+  else if( version == (float)4.1)
+  {
+    int num_entity_blocks = 0;
+    int num_elements      = 0;
+    int min_elem_tag      = 0;
+    int max_elem_tag      = 0;
+
+    std::stringstream iss (line);
+    iss >> num_entity_blocks >> num_elements >> min_elem_tag >> max_elem_tag;
+
+    num_entities = num_elements;
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION (num_entities<=0, Teuchos::Exceptions::InvalidParameter, "Error! Invalid number of mesh elements.\n");
+
+  return;
+}
+
 void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
 {
   std::ifstream ifile = open_fname();
@@ -600,22 +632,16 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
   load_node_data( ifile);
 
   // Start reading elements (cells and sides)
-  ifile.seekg (0, std::ios::beg);
-  std::string line;
-  swallow_lines_until( ifile, line, "$Elements");
-  TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Element section not found.\n");
+  set_num_entities( ifile);
 
-  // Read the number of entities
-  std::getline (ifile, line);
-  num_entities = std::atoi (line.c_str() );
-  TEUCHOS_TEST_FOR_EXCEPTION (num_entities<=0, Teuchos::Exceptions::InvalidParameter, "Error! Invalid number of mesh elements.\n");
-
+// ****
   // Gmsh lists elements and sides (and some points) all toghether, and does not specify beforehand what kind of elements
   // the mesh has. Hence, we need to scan the entity list once to establish what kind of elements we have. We support
   // linear Tetrahedra/Hexahedra in 3D and linear Triangle/Quads in 2D
 
   int nb_tetra(0), nb_hexa(0), nb_tria(0), nb_quad(0), nb_line(0), e_type(0);
   int id = 0;
+  std::string line;
   for (int i(0); i<num_entities; ++i) {
     std::getline(ifile,line);
     std::stringstream ss(line);
@@ -697,6 +723,8 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Invalid mesh dimension.\n");
   }
+
+//  ****
 
   // Reset the stream to the beginning of the element section
   ifile.seekg (0, std::ios::beg);

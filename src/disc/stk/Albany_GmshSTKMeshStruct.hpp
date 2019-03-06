@@ -73,6 +73,9 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Reads in the node data
   void load_node_data( std::ifstream& ifile);
 
+  // Sets the number of entities, elements and cells
+  void set_num_entities( std::ifstream& ifile);
+
   // The version of the gmsh msh file
   float version;
 
