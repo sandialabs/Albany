@@ -63,13 +63,13 @@ cd ../packages/pecos/src
 cp /home/ikalash/nightlyAlbanyTests/pecos_data_types.hpp .
 echo; echo "   ...finished Dakota checkout."
 
-echo; echo "   Starting DTK checkout..."
+echo; echo "   Copying DTK directory into Trilinos..."
 cd $TRILDIR
-#cp -r /home/ikalash/nightlyAlbanyTests/DataTransferKit-2.0.0 DataTransferKit 
-git clone git@github.com:ORNL-CEES/DataTransferKit.git
-cd DataTransferKit
-git clone git@github.com:ORNL-CEES/DTKData.git
-echo; echo "   ...finished DTK checkout."
+cp -r /home/ikalash/nightlyAlbanyTests/DataTransferKit-2.0.0 DataTransferKit 
+#git clone git@github.com:ORNL-CEES/DataTransferKit.git
+#cd DataTransferKit
+#git clone git@github.com:ORNL-CEES/DTKData.git
+echo; echo "   ...finished DTK copy into Trilinos."
 
 echo; echo "   Starting SCOREC checkout..."
 git clone git@github.com:SCOREC/core.git SCOREC > $TRILOUTDIR/scorec_checkout.out 2>&1
