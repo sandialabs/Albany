@@ -2815,7 +2815,7 @@ AAdapt::ExpressionParser::ExpressionParser(int neq_, int spatialDim_, std::strin
   : spatialDim(spatialDim_), neq(neq_), expressionX(expressionX_), expressionY(expressionY_), expressionZ(expressionZ_)
 {
 
-  TEUCHOS_TEST_FOR_EXCEPTION( neq!=3 || spatialDim!=3,
+  TEUCHOS_TEST_FOR_EXCEPTION( neq < 1 || neq > spatialDim || spatialDim!=3,
 			      std::logic_error,
 			      "Error! Invalid call AAdapt::ExpressionParser::ExpressionParser(), neq = " << neq
 			      << ", spatialDim = " << spatialDim << ".");
@@ -2835,26 +2835,30 @@ AAdapt::ExpressionParser::ExpressionParser(int neq_, int spatialDim_, std::strin
     TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
   }
 
-  rtcFunctionY.addVar("double", "x");
-  rtcFunctionY.addVar("double", "y");
-  rtcFunctionY.addVar("double", "z");
-  rtcFunctionY.addVar("double", "value");
-  success = rtcFunctionY.addBody(expressionY);
-  if(!success){
-    std::string msg = "\n**** Error in AAdapt::ExpressionParser::ExpressionParser().\n";
-    msg += "**** " + rtcFunctionY.getErrors() + "\n";
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
+  if(neq > 1) {
+    rtcFunctionY.addVar("double", "x");
+    rtcFunctionY.addVar("double", "y");
+    rtcFunctionY.addVar("double", "z");
+    rtcFunctionY.addVar("double", "value");
+    success = rtcFunctionY.addBody(expressionY);
+    if(!success){
+      std::string msg = "\n**** Error in AAdapt::ExpressionParser::ExpressionParser().\n";
+      msg += "**** " + rtcFunctionY.getErrors() + "\n";
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
+    }
   }
 
-  rtcFunctionZ.addVar("double", "x");
-  rtcFunctionZ.addVar("double", "y");
-  rtcFunctionZ.addVar("double", "z");
-  rtcFunctionZ.addVar("double", "value");
-  success = rtcFunctionZ.addBody(expressionZ);
-  if(!success){
-    std::string msg = "\n**** Error in AAdapt::ExpressionParser::ExpressionParser().\n";
-    msg += "**** " + rtcFunctionZ.getErrors() + "\n";
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
+  if(neq > 2) {
+    rtcFunctionZ.addVar("double", "x");
+    rtcFunctionZ.addVar("double", "y");
+    rtcFunctionZ.addVar("double", "z");
+    rtcFunctionZ.addVar("double", "value");
+    success = rtcFunctionZ.addBody(expressionZ);
+    if(!success){
+      std::string msg = "\n**** Error in AAdapt::ExpressionParser::ExpressionParser().\n";
+      msg += "**** " + rtcFunctionZ.getErrors() + "\n";
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
+    }
   }
 #endif
 }
@@ -2875,25 +2879,29 @@ void AAdapt::ExpressionParser::compute(double* solution, const double* X) {
   TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionX.execute(), " + rtcFunctionX.getErrors());
   solution[0] = rtcFunctionX.getValueOfVar("value");
 
-  for(int i=0 ; i<spatialDim ; i++){
-    success = rtcFunctionY.varValueFill(i, X[i]);
+  if(neq > 1) {
+    for(int i=0 ; i<spatialDim ; i++){
+      success = rtcFunctionY.varValueFill(i, X[i]);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionY.varValueFill(), " + rtcFunctionY.getErrors());
+    }
+    success = rtcFunctionY.varValueFill(spatialDim, 0.0);
     TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionY.varValueFill(), " + rtcFunctionY.getErrors());
+    success = rtcFunctionY.execute();
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionY.execute(), " + rtcFunctionY.getErrors());
+    solution[1] = rtcFunctionY.getValueOfVar("value");
   }
-  success = rtcFunctionY.varValueFill(spatialDim, 0.0);
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionY.varValueFill(), " + rtcFunctionY.getErrors());
-  success = rtcFunctionY.execute();
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionY.execute(), " + rtcFunctionY.getErrors());
-  solution[1] = rtcFunctionY.getValueOfVar("value");
 
-  for(int i=0 ; i<spatialDim ; i++){
-    success = rtcFunctionZ.varValueFill(i, X[i]);
+  if(neq > 2) {
+    for(int i=0 ; i<spatialDim ; i++){
+      success = rtcFunctionZ.varValueFill(i, X[i]);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionZ.varValueFill(), " + rtcFunctionZ.getErrors());
+    }
+    success = rtcFunctionZ.varValueFill(spatialDim, 0.0);
     TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionZ.varValueFill(), " + rtcFunctionZ.getErrors());
+    success = rtcFunctionZ.execute();
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionZ.execute(), " + rtcFunctionZ.getErrors());
+    solution[2] = rtcFunctionZ.getValueOfVar("value");
   }
-  success = rtcFunctionZ.varValueFill(spatialDim, 0.0);
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionZ.varValueFill(), " + rtcFunctionZ.getErrors());
-  success = rtcFunctionZ.execute();
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionZ.execute(), " + rtcFunctionZ.getErrors());
-  solution[2] = rtcFunctionZ.getValueOfVar("value");
 #endif
 
 //   std::cout << "DEBUG CHECK ExpressionParser " << expressionX << " evaluated at " << X[0] << ", " << X[1] << ", " << X[2] << " yields " << solution[0] << std::endl;
