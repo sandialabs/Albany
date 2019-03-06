@@ -629,6 +629,52 @@ void Albany::GmshSTKMeshStruct::set_num_entities( std::ifstream& ifile)
 
 void Albany::GmshSTKMeshStruct::set_specific_num_of_each_elements( std::ifstream& ifile)
 {
+  // Gmsh lists elements and sides (and some points) all toghether, 
+  // and does not specify beforehand what kind of elements
+  // the mesh has. Hence, we need to scan the entity list once to 
+  // establish what kind of elements we have. We support
+  // linear Tetrahedra/Hexahedra in 3D and linear Triangle/Quads in 2D
+
+  // Reset to begining of msh file, then advance to elements section
+  std::string line;
+  ifile.seekg (0, std::ios::beg);
+  swallow_lines_until( ifile, line, "$Elements");
+  // Need to start at the second line after '$Elements'
+  std::getline (ifile, line);
+
+  int id = 0;
+  int e_type = 0;
+  for (int i(0); i<num_entities; ++i) 
+  {
+    int id = 0;
+    int e_type = 0;
+    if( version == (float)2.2)
+    {
+      std::getline(ifile,line);
+      std::stringstream ss(line);
+      ss >> id >> e_type;
+    }
+    else if( version == (float)4.1)
+    {
+      //TODO
+    }
+
+    switch (e_type) 
+    {
+      case 1: ++nb_lines;  break;
+      case 2: ++nb_trias;  break;
+      case 3: ++nb_quads;  break;
+      case 4: ++nb_tetra;  break;
+      case 5: ++nb_hexas;  break;
+      case 15: /*point*/   break;
+      default:
+        TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Element type not supported.\n");
+    }
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra*nb_hexas!=0, std::logic_error, "Error! Cannot mix tetrahedra and hexahedra.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (nb_trias*nb_quads!=0, std::logic_error, "Error! Cannot mix triangles and quadrilaterals.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra+nb_hexas+nb_trias+nb_quads==0, std::logic_error, "Error! Can only handle 2D and 3D geometries.\n");
 
   return;
 }
@@ -647,33 +693,6 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
   set_specific_num_of_each_elements( ifile);
 
 // ****
-  // Gmsh lists elements and sides (and some points) all toghether, and does not specify beforehand what kind of elements
-  // the mesh has. Hence, we need to scan the entity list once to establish what kind of elements we have. We support
-  // linear Tetrahedra/Hexahedra in 3D and linear Triangle/Quads in 2D
-
-  int id = 0;
-  int e_type = 0;
-  std::string line;
-  for (int i(0); i<num_entities; ++i) {
-    std::getline(ifile,line);
-    std::stringstream ss(line);
-    ss >> id >> e_type;
-
-    switch (e_type) {
-      case 1: ++nb_lines;  break;
-      case 2: ++nb_trias;  break;
-      case 3: ++nb_quads;  break;
-      case 4: ++nb_tetra; break;
-      case 5: ++nb_hexas;  break;
-      case 15: /*point*/  break;
-      default:
-        TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Element type not supported.\n");
-    }
-  }
-
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra*nb_hexas!=0, std::logic_error, "Error! Cannot mix tetrahedra and hexahedra.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_trias*nb_quads!=0, std::logic_error, "Error! Cannot mix triangles and quadrilaterals.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra+nb_hexas+nb_trias+nb_quads==0, std::logic_error, "Error! Can only handle 2D and 3D geometries.\n");
 
   lines = new int*[3];
   tetra = new int*[5];
@@ -739,13 +758,14 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
 //  ****
 
   // Reset the stream to the beginning of the element section
+  std::string line;
   ifile.seekg (0, std::ios::beg);
   swallow_lines_until( ifile, line, "$Elements");
   TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Element section not found; however, it was found earlier. This may be a bug.\n");
   std::getline(ifile,line); // Skip line with number of elements
 
   // Read the elements
-  int iline(0), itria(0), iquad(0), itetra(0), ihexa(0), n_tags(0);
+  int iline(0), itria(0), iquad(0), itetra(0), ihexa(0), n_tags(0), id(0), e_type(0);
   std::vector<int> tags;
   for (int i(0); i<num_entities; ++i) {
     std::getline(ifile,line);
