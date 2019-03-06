@@ -650,24 +650,40 @@ void Albany::GmshSTKMeshStruct::set_specific_num_of_each_elements( std::ifstream
   // Need to start at the second line after '$Elements'
   std::getline (ifile, line);
 
-  int id = 0;
-  int e_type = 0;
-  for (int i(0); i<num_entities; ++i) 
+  if( version == (float)2.2)
   {
-    int id = 0;
-    int e_type = 0;
-    if( version == (float)2.2)
+    for (int i(0); i<num_entities; ++i) 
     {
+      int id = 0;
+      int e_type = 0;
       std::getline(ifile,line);
       std::stringstream ss(line);
       ss >> id >> e_type;
-    }
-    else if( version == (float)4.1)
-    {
-      //TODO
-    }
 
-    increment_element_type( e_type);
+      increment_element_type( e_type);
+    }
+  }
+  else if( version == (float)4.1)
+  {
+    int accounted_elems = 0;
+    while (accounted_elems < num_entities)
+    {
+      std::getline( ifile, line);
+
+      int entity_dim        = 0;
+      int entity_tag        = 0;
+      int entity_type       = 0;
+      int num_elem_in_block = 0;
+      
+      std::stringstream iss (line);
+      iss >> entity_dim >> entity_tag >> entity_type >> num_elem_in_block;
+      for( int i = 0; i < num_elem_in_block; i++)
+      {
+        increment_element_type( entity_type);
+        std::getline( ifile, line);
+        accounted_elems++;
+      }
+    }
   }
 
   TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra*nb_hexas!=0, std::logic_error, "Error! Cannot mix tetrahedra and hexahedra.\n");
