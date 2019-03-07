@@ -33,7 +33,7 @@ add_executable(HeatProfile HeatProfile.cpp)
 
 if (ALBANY_EPETRA)
 add_test(NAME ${testName}
-     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}"
+     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${SerialAlbany.exe}"
      "-DTEST_ARGS=input.yaml"
      "-DAUX_ENV=${ALBANY_PRETEST_EXEC}"
      "-DAUX_PROG=${CMAKE_CURRENT_BINARY_DIR}/HeatProfile" -P
