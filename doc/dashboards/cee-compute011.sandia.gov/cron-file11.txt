@@ -1,5 +1,0 @@
-MAILTO=""
-# Run the script in the Albany repo in my home directory
-# This runs the clang debug set of tests on cee-compute011
-00 22 * * * bash -l -c "rm -rf /scratch/albany/*; cd /projects/albany/nightlyAlbanyCDash; source modules_clang.sh; /projects/albany/nightlyAlbanyCDash/nightly_cron_script.sh clangdbg; bash process_results_clangdbg.sh; bash send_email_clangdbg.sh"; chgrp wg-albany -R /projects/albany/nightlyAlbanyCDash/*; chmod ug+rwX -R /projects/albany/nightlyAlbanyCDash/*; chgrp wg-albany -R /scratch/albany/*; chmod ug+rwX -R /scratch/albany/*;
-
