@@ -88,6 +88,21 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Set mesh info like dimension, number of elements, sides, etc.
   void set_generic_mesh_info();
 
+  // Reads in the element info.
+  // Includes tags and nodes belonging to each element.
+  void load_element_data( std::ifstream& ifile);
+
+  // Stores element info based on e_type. Updates i(type) counters.
+  // Records tags for the element.
+  void store_element_info( int  e_type,
+                           int& iline,
+                           int& itria,
+                           int& iquad,
+                           int& itetra,
+                           int& ihexa,
+                           std::vector<int>& tags,
+                           std::stringstream& ss);
+
   // The version of the gmsh msh file
   float version;
 

@@ -779,6 +779,119 @@ void Albany::GmshSTKMeshStruct::set_generic_mesh_info()
   return;
 }
 
+void Albany::GmshSTKMeshStruct::store_element_info( 
+      int  e_type,
+      int& iline,
+      int& itria,
+      int& iquad,
+      int& itetra,
+      int& ihexa,
+      std::vector<int>& tags,
+      std::stringstream& ss)
+{
+  switch (e_type) 
+  {
+    case 1: // 2-pt Line
+      ss >> lines[0][iline] >> lines[1][iline];
+      lines[2][iline] = tags[0];
+      ++iline;
+      break;
+    case 2: // 3-pt Triangle
+      ss >> trias[0][itria] >> trias[1][itria] >> trias[2][itria];
+      trias[4][itria] = tags[0];
+      ++itria;
+      break;
+    case 3: // 4-pt Quad
+      ss >> quads[0][iquad] >> quads[1][iquad] >> quads[2][iquad] >> quads[3][iquad];
+      quads[4][iquad] = tags[0];
+      ++iquad;
+      break;
+    case 4: // 4-pt Tetra
+      ss >> tetra[0][itetra] >> tetra[1][itetra] >> tetra[2][itetra] >> tetra[3][itetra];
+      trias[4][itetra] = tags[0];
+      ++itria;
+      break;
+    case 5: // 8-pt Hexa
+      ss >> hexas[0][ihexa] >> hexas[1][ihexa] >> hexas[2][ihexa] >> hexas[3][ihexa]
+         >> hexas[4][ihexa] >> hexas[5][ihexa] >> hexas[6][ihexa] >> hexas[7][ihexa];
+      hexas[8][ihexa] = tags[0];
+      ++ihexa;
+      break;
+    case 15: // Point
+        break;
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Element type not supported; but you should have got an error before!\n");
+  }
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::load_element_data( std::ifstream& ifile)
+{
+  // Reset the stream to the beginning of the element section
+  std::string line;
+  ifile.seekg (0, std::ios::beg);
+  swallow_lines_until( ifile, line, "$Elements");
+  TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Element section not found; however, it was found earlier. This may be a bug.\n");
+
+  // Skip line with number of elements
+  std::getline(ifile,line);
+
+  // Read the elements
+  int iline(0), itria(0), iquad(0), itetra(0), ihexa(0), n_tags(0), id(0), e_type(0);
+  if( version == (float)2.2)
+  {
+    std::vector<int> tags;
+    for (int i(0); i<num_entities; ++i) 
+    {
+      std::getline(ifile,line);
+      std::stringstream ss(line);
+      ss >> id >> e_type >> n_tags;
+      TEUCHOS_TEST_FOR_EXCEPTION (n_tags<=0, Teuchos::Exceptions::InvalidParameter, "Error! Number of tags must be positive.\n");
+      tags.resize(n_tags+1);
+      for (int j(0); j<n_tags; ++j) 
+      {
+        ss >> tags[j];
+      }
+      tags[n_tags] = 0;
+
+      store_element_info( e_type, iline, itria, iquad, itetra, ihexa, tags, ss);
+    }
+  }
+  else if( version == (float)4.1)
+  {
+    int accounted_elems = 0;
+    while (accounted_elems < num_entities)
+    {
+      std::getline( ifile, line);
+
+      int entity_dim        = 0;
+      int entity_tag        = 0;
+      int entity_type       = 0;
+      int num_elem_in_block = 0;
+      
+      std::stringstream iss (line);
+      iss >> entity_dim >> entity_tag >> entity_type >> num_elem_in_block;
+      std::vector<int> tags;
+      tags.push_back( entity_tag);
+      for( int i = 0; i < num_elem_in_block; i++)
+      {
+        std::getline( ifile, line);
+        std::stringstream ss (line);
+        int elem_id = 0;
+        ss >> elem_id;
+
+        int e_type = entity_type;
+        store_element_info( e_type, iline, itria, iquad, itetra, ihexa, tags, ss);
+        accounted_elems++;
+      }
+      tags.clear();
+    }
+  }
+
+  return;
+}
+
 void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
 {
   std::ifstream ifile;
@@ -797,60 +910,8 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
   size_all_element_pointers();
   set_generic_mesh_info();
   
-  // Reset the stream to the beginning of the element section
-  std::string line;
-  ifile.seekg (0, std::ios::beg);
-  swallow_lines_until( ifile, line, "$Elements");
-  TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Element section not found; however, it was found earlier. This may be a bug.\n");
-  std::getline(ifile,line); // Skip line with number of elements
-
-  // Read the elements
-  int iline(0), itria(0), iquad(0), itetra(0), ihexa(0), n_tags(0), id(0), e_type(0);
-  std::vector<int> tags;
-  for (int i(0); i<num_entities; ++i) {
-    std::getline(ifile,line);
-    std::stringstream ss(line);
-    ss >> id >> e_type >> n_tags;
-    TEUCHOS_TEST_FOR_EXCEPTION (n_tags<=0, Teuchos::Exceptions::InvalidParameter, "Error! Number of tags must be positive.\n");
-    tags.resize(n_tags+1);
-    for (int j(0); j<n_tags; ++j) {
-      ss >> tags[j];
-    }
-    tags[n_tags] = 0;
-
-    switch (e_type) {
-      case 1: // 2-pt Line
-        ss >> lines[0][iline] >> lines[1][iline];
-        lines[2][iline] = tags[0];
-        ++iline;
-        break;
-      case 2: // 3-pt Triangle
-        ss >> trias[0][itria] >> trias[1][itria] >> trias[2][itria];
-        trias[4][itria] = tags[0];
-        ++itria;
-        break;
-      case 3: // 4-pt Quad
-        ss >> quads[0][iquad] >> quads[1][iquad] >> quads[2][iquad] >> quads[3][iquad];
-        quads[4][iquad] = tags[0];
-        ++iquad;
-        break;
-      case 4: // 4-pt Tetra
-        ss >> tetra[0][itetra] >> tetra[1][itetra] >> tetra[2][itetra] >> tetra[3][itetra];
-        trias[4][itetra] = tags[0];
-        ++itria;
-        break;
-      case 5: // 8-pt Hexa
-        ss >> hexas[0][ihexa] >> hexas[1][ihexa] >> hexas[2][ihexa] >> hexas[3][ihexa]
-           >> hexas[4][ihexa] >> hexas[5][ihexa] >> hexas[6][ihexa] >> hexas[7][ihexa];
-        hexas[8][ihexa] = tags[0];
-        ++ihexa;
-        break;
-      case 15: // Point
-          break;
-      default:
-        TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Element type not supported; but you should have got an error before!\n");
-    }
-  }
+  // Populate the element pointers with tag and node info
+  load_element_data( ifile);
 
   // Close the input stream
   ifile.close();
