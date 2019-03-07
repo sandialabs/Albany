@@ -275,6 +275,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
     "-DTrilinos_ENABLE_Piro:BOOL=ON"
     "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
+    "-DTrilinos_ENABLE_PanzerExprEval:BOOL=ON"
     "-DTrilinos_ENABLE_Isorropia:BOOL=ON"
     "-DTrilinos_ENABLE_Teko:BOOL=ON"
     "-DTrilinos_ENABLE_PyTrilinos:BOOL=OFF"

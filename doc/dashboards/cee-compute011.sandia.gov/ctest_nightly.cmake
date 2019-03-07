@@ -536,6 +536,7 @@ set (COMMON_CONFIGURE_OPTIONS
   #
   "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
   "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
+  "-DTrilinos_ENABLE_PanzerExprEval:BOOL=ON"
   "-DTrilinos_ENABLE_PyTrilinos:BOOL=OFF"
   #
   "-DTrilinos_ENABLE_STK:BOOL=ON"

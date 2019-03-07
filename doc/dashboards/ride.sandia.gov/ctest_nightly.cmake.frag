@@ -263,6 +263,7 @@ if (BUILD_TRILINOS)
     "-DMueLu_ENABLE_Tutorial:BOOL=OFF"
     "-DTrilinos_ENABLE_NOX:BOOL=ON"
     "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
+    "-DTrilinos_ENABLE_PanzerExprEval:BOOL=ON"
     "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
     "-DTrilinos_ENABLE_Piro:BOOL=ON"
     "-DTrilinos_ENABLE_Rythmos:BOOL=ON"

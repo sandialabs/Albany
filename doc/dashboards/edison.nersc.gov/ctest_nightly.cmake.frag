@@ -248,6 +248,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_SEACASIoss:BOOL=ON"
     "-D Trilinos_ENABLE_ThreadPool:STRING=ON"
     "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
+    "-DTrilinos_ENABLE_PanzerExprEval:BOOL=ON"
     "-DTPL_ENABLE_Netcdf:BOOL=ON"
     #
     "-DTPL_ENABLE_BLAS:BOOL=ON"

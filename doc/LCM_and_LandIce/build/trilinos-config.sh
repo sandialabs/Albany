@@ -103,6 +103,7 @@ cmake \
  -D Trilinos_ENABLE_NOX:BOOL=ON \
  -D Trilinos_ENABLE_OpenMP:BOOL=lcm_enable_openmp \
  -D Trilinos_ENABLE_Pamgen:BOOL=ON \
+ -D Trilinos_ENABLE_PanzerExprEval:BOOL=ON \
  -D Trilinos_ENABLE_Phalanx:BOOL=ON \
  -D Trilinos_ENABLE_Piro:BOOL=ON \
  -D Trilinos_ENABLE_ROL:BOOL=ON \
