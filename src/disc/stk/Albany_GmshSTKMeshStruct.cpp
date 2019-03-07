@@ -51,7 +51,8 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
   // Reading the mesh on proc 0
   if (commT->getRank() == 0) 
   {
-    std::ifstream ifile = open_fname();
+    std::ifstream ifile;
+    open_fname( ifile);
 
     std::string line;
     std::getline (ifile, line);
@@ -350,7 +351,8 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::GmshSTKMeshStruct::getValidDi
 
 void Albany::GmshSTKMeshStruct::loadLegacyMesh ()
 {
-  std::ifstream ifile = open_fname();
+  std::ifstream ifile;
+  open_fname( ifile);
 
   // Start reading nodes
   std::string line;
@@ -779,7 +781,8 @@ void Albany::GmshSTKMeshStruct::set_generic_mesh_info()
 
 void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
 {
-  std::ifstream ifile = open_fname();
+  std::ifstream ifile;
+  open_fname( ifile);
 
   // Start reading nodes
   set_NumNodes( ifile);
@@ -855,11 +858,8 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
 
 void Albany::GmshSTKMeshStruct::loadBinaryMesh ()
 {
-  std::ifstream ifile = open_fname();
-  ifile.open(fname.c_str());
-  if (!ifile.is_open()) {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Error! Cannot open mesh file '" << fname << "'.\n");
-  }
+  std::ifstream ifile;
+  open_fname( ifile);
 
   std::string line;
   std::getline (ifile, line); // $MeshFormat
@@ -1211,22 +1211,22 @@ void Albany::GmshSTKMeshStruct::check_version( std::ifstream& ifile)
   return;
 }
 
-std::ifstream Albany::GmshSTKMeshStruct::open_fname()
+void Albany::GmshSTKMeshStruct::open_fname( std::ifstream& ifile)
 {
-  std::ifstream ifile;
   ifile.open(fname.c_str());
   if (!ifile.is_open()) 
   {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Error! Cannot open mesh file '" << fname << "'.\n");
   }
   
-  return ifile;
+  return;
 }
   
 
 void Albany::GmshSTKMeshStruct::get_physical_names( std::map<std::string, int>&  physical_names)
 {
-  std::ifstream ifile = open_fname();
+  std::ifstream ifile;
+  open_fname( ifile);
 
   // Advance to the PhysicalNames section
   std::string line;

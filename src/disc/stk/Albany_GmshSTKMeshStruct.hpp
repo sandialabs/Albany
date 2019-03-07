@@ -65,7 +65,7 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Opens the gmsh msh file. Variable `fname` must be set.
   // Don't forget to close when done!
   // Uses Teuchos test to check if file is open.
-  std::ifstream open_fname();
+  void open_fname( std::ifstream& ifile);
 
   // Sets NumNodes for ascii msh files
   void set_NumNodes( std::ifstream& ifile);
