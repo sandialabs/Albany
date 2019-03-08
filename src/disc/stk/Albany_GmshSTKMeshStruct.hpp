@@ -70,6 +70,9 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Determine the type of the msh file
   void determine_file_type( bool& legacy, bool& binary, bool& ascii);
 
+  // Broadcast topology of the mesh from 0 to all over procs
+  void broadcast_topology( const Teuchos::RCP<const Teuchos_Comm>& commT);
+
   // Sets NumNodes for ascii msh files
   void set_NumNodes( std::ifstream& ifile);
 

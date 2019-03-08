@@ -38,6 +38,7 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
 
   // Init counters to 0
   NumSides = NumNodes = NumSides = 0;
+  NumElems = 0;
   nb_hexas = 0;
   nb_tetra = 0;
   nb_quads = 0;
@@ -66,13 +67,9 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Mesh format not recognized.\n");
     }
-    
   }
-
   // Broadcasting topological information about the mesh to all procs
-  Teuchos::broadcast(*commT, 0, 1, &this->numDim);
-  Teuchos::broadcast(*commT, 0, 1, &NumElemNodes);
-  Teuchos::broadcast(*commT, 0, 1, &NumSideNodes);
+  broadcast_topology( commT);
 
   // GenericSTKMeshStruct's constructor could not initialize metaData, cause the dimension was not set.
   std::vector<std::string> entity_rank_names = stk::mesh::entity_rank_names();
@@ -142,9 +139,6 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
     default:
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid number of element nodes (you should have got an error before though).\n");
   }
-
-  // Need to broadcast the global number of elements, to compute the workset size
-  Teuchos::broadcast(*commT, 0, 1, &NumElems);
 
   int cub = params->get("Cubature Degree", 3);
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
@@ -222,9 +216,18 @@ void Albany::GmshSTKMeshStruct::determine_file_type( bool& legacy, bool& binary,
 
     check_version( ifile);
   }
-  
 
   ifile.close();
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::broadcast_topology( const Teuchos::RCP<const Teuchos_Comm>& commT)
+{
+  Teuchos::broadcast(*commT, 0, 1, &this->numDim);
+  Teuchos::broadcast(*commT, 0, 1, &NumElemNodes);
+  Teuchos::broadcast(*commT, 0, 1, &NumSideNodes);
+  Teuchos::broadcast(*commT, 0, 1, &NumElems);
+
   return;
 }
 
