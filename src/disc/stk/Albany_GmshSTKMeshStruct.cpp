@@ -1212,7 +1212,7 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
   set_all_nodes_boundary( nsNames);
   set_all_sides_boundary( ssNames);
 
-  if( version == (float)2.2)
+  if( version == GmshVersion::V2_2)
   {
     // Counting boundaries (only proc 0 has any stored, so far)
     std::set<int> bdTags;
@@ -1260,13 +1260,14 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
 
     delete[] bdTagsArray;
   }
-  else if( version == (float)4.1)
+  else if( version == GmshVersion::V4_1)
   {
     // Map has format: "name",  physical_tag
     std::map<std::string, int> physical_names; 
     get_physical_names( physical_names);
 
     // TODO
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Version 4.1 not fully implimented.\n");
   }
 
   return;
