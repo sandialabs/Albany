@@ -172,6 +172,31 @@ createSubspace (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
   TEUCHOS_UNREACHABLE_RETURN(Teuchos::null);
 }
 
+// Create a vector space, given the ids of the space components
+Teuchos::RCP<const Thyra_VectorSpace>
+createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                   const Teuchos::ArrayView<const GO>& gids)
+{
+  auto bt = build_type();
+  if (bt == BuildType::Epetra) {
+#ifdef ALBANY_EPETRA
+    auto ecomm = createEpetraCommFromTeuchosComm(comm);
+    const Epetra_GO* egids = reinterpret_cast<const Epetra_GO*>(gids.getRawPtr());
+    Teuchos::RCP<const Epetra_BlockMap> emap = Teuchos::rcp( new Epetra_BlockMap(-1,gids.size(),egids,1,0,*ecomm) );
+    return createThyraVectorSpace(emap);
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Epetra build not supported.\n");
+#endif
+  } else if (bt == BuildType::Tpetra) {
+    auto gsi = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
+    Teuchos::ArrayView<const Tpetra_GO> tgids(reinterpret_cast<const Tpetra_GO*>(gids.getRawPtr()),gids.size());
+    Teuchos::RCP<const Tpetra_Map> tmap = Teuchos::rcp( new Tpetra_Map(gsi,tgids,0,comm) );
+    return createThyraVectorSpace(tmap);
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Invalid or unsupported build type.\n");
+  }
+}
+
 // ========= Thyra_LinearOp utilities ========= //
 
 bool isFillActive (const Teuchos::RCP<const Thyra_LinearOp>& lop)
