@@ -10,6 +10,8 @@
 // Get all Albany configuration macros
 #include "Albany_config.h"
 
+#include "Albany_ScalarOrdinalTypes.hpp"
+
 // Get Kokkos node wrapper
 #include "KokkosCompat_ClassicNodeAPI_Wrapper.hpp"
 
@@ -30,14 +32,13 @@ namespace Albany
 
 // A kokkos 1d view to be used for on-device kernels
 template<typename Scalar>
-using DeviceView1d = Kokkos::View<Scalar*, Kokkos::LayoutLeft, PHX::Device>;
+using DeviceView1d = Kokkos::View<Scalar*, Kokkos::LayoutLeft, PHX::Device, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
 // Kokkos types for local graphs/matrices, to be used for on-device kernels
 using DeviceLocalGraph  = Kokkos::StaticCrsGraph<LO, Kokkos::LayoutLeft, PHX::Device>;
 
 template<typename Scalar>
 using DeviceLocalMatrix = KokkosSparse::CrsMatrix<Scalar, LO, PHX::Device, void, DeviceLocalGraph::size_type>;
-
 
 } // namespace Albany
 

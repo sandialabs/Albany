@@ -10,31 +10,25 @@
 // Get Kokkos types (for the 1d device view)
 #include "Albany_KokkosTypes.hpp"
 
-// Get Spmd Thyra types
-#include "Thyra_SpmdVectorSpaceBase.hpp"
-#include "Thyra_SpmdMultiVectorBase.hpp"
-#include "Thyra_SpmdVectorBase.hpp"
-
-// Get Product Thyra types
-#include "Thyra_ProductVectorSpaceBase.hpp"
-#include "Thyra_ProductMultiVectorBase.hpp"
-#include "Thyra_ProductVectorBase.hpp"
-
-// Spmd types
-typedef Thyra::SpmdVectorSpaceBase<ST>      Thyra_SpmdVectorSpace;
-typedef Thyra::SpmdMultiVectorBase<ST>      Thyra_SpmdMultiVector;
-typedef Thyra::SpmdVectorBase<ST>           Thyra_SpmdVector;
-
-// Product types
-typedef Thyra::ProductVectorSpaceBase<ST>   Thyra_ProductVectorSpace;
-typedef Thyra::ProductMultiVectorBase<ST>   Thyra_ProductMultiVector;
-typedef Thyra::ProductVectorBase<ST>        Thyra_ProductVector;
-
 namespace Albany
 {
 
+// ========= Vector Spaces utilities ========= //
+
 Teuchos::RCP<const Thyra_VectorSpace>
 createLocallyReplicatedVectorSpace (const int size, const Teuchos::RCP<const Teuchos_Comm> comm);
+
+GO getGlobalElement (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const LO lid);
+LO getLocalElement  (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const GO gid);
+
+// Remove a set of local components from a vector space
+Teuchos::RCP<const Thyra_VectorSpace>
+removeComponents (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
+                  const Teuchos::ArrayView<const LO>& local_components);
+// The complement of the above: the specified components are the ones to keep
+Teuchos::RCP<const Thyra_VectorSpace>
+createSubspace (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
+                const Teuchos::ArrayView<const LO>& subspace_components);
 
 // ========= Thyra_LinearOp utilities ========= //
 

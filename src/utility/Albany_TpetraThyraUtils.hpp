@@ -3,6 +3,7 @@
 
 #include "Albany_TpetraTypes.hpp"
 #include "Albany_ThyraTypes.hpp"
+#include "Albany_ThyraCrsGraphProxy.hpp"
 
 namespace Albany
 {
@@ -70,6 +71,45 @@ getTpetraMatrix (const Teuchos::RCP<Thyra_LinearOp> lop,
 Teuchos::RCP<const Tpetra_CrsMatrix>
 getConstTpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop,
                       const bool throw_on_failure = true);
+
+// --- Conversion from references rather than RCPs --- //
+
+Teuchos::RCP<Tpetra_Vector>
+getTpetraVector (Thyra_Vector& v,
+                 const bool throw_on_failure = true);
+
+Teuchos::RCP<const Tpetra_Vector>
+getConstTpetraVector (const Thyra_Vector& v,
+                      const bool throw_on_failure = true);
+
+Teuchos::RCP<Tpetra_MultiVector>
+getTpetraMultiVector (Thyra_MultiVector& mv,
+                      const bool throw_on_failure = true);
+
+Teuchos::RCP<const Tpetra_MultiVector>
+getConstTpetraMultiVector (const Thyra_MultiVector& mv,
+                           const bool throw_on_failure = true);
+
+Teuchos::RCP<Tpetra_Operator>
+getTpetraOperator (Thyra_LinearOp& lop,
+                   const bool throw_on_failure = true);
+
+Teuchos::RCP<const Tpetra_Operator>
+getConstTpetraOperator (const Thyra_LinearOp& lop,
+                        const bool throw_on_failure = true);
+
+Teuchos::RCP<Tpetra_CrsMatrix>
+getTpetraMatrix (Thyra_LinearOp& lop,
+                 const bool throw_on_failure = true);
+
+Teuchos::RCP<const Tpetra_CrsMatrix>
+getConstTpetraMatrix (const Thyra_LinearOp& lop,
+                      const bool throw_on_failure = true);
+
+// --- Get a Tpetra graph from a ThyraCrsGraphProxy --- //
+Teuchos::RCP<Tpetra_CrsGraph>
+getTpetraCrsGraph (const ThyraCrsGraphProxy& graphProxy,
+                   const bool throw_on_failure = true);
 
 } // namespace Albany
 
