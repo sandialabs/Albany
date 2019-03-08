@@ -686,7 +686,7 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
   Teuchos::RCP<Albany::Application> app = subSolver.app;
   Albany::StateManager& stateMgr = app->getStateMgr();
 
-  Teuchos::RCP<DistParamLib> distParams = app->getDistParamLib();
+  Teuchos::RCP<DistributedParameterLibrary> distParams = app->getDistributedParameterLibrary();
 
   const Albany::WorksetArray<std::string>::type& wsEBNames = stateMgr.getDiscretization()->getWsEBNames();
 

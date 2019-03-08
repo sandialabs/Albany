@@ -8,11 +8,16 @@
 //Not compiled if ALBANY_EPETRA_EXE is off.
 
 #include "Albany_ModelEvaluator.hpp"
+
+#include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_DistributedParameterDerivativeOp.hpp"
 #include "Albany_DistributedParameterResponseDerivativeOp.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Petra_Converters.hpp"
+
+// To wrap thyra op inside epetra op
+#include "Thyra_EpetraOperatorWrapper.hpp"
 
 #include "Albany_TpetraThyraUtils.hpp"
 
@@ -162,7 +167,7 @@ Albany::ModelEvaluator::ModelEvaluator(
   }
 
   // Setup distributed parameters
-  distParamLib = app->getDistParamLib();
+  distParamLib = app->getDistributedParameterLibrary();
   Teuchos::ParameterList& distParameterParams =
     problemParams.sublist("Distributed Parameters");
   Teuchos::ParameterList* param_list;
@@ -173,6 +178,7 @@ Albany::ModelEvaluator::ModelEvaluator(
        << std::endl;
   const std::string* p_name_ptr;
   const std::string emptyString("");
+  dfdp_ops.resize(num_dist_param_vecs);
   for (int i=0; i<num_dist_param_vecs; i++) {
     const std::string& p_sublist_name = Albany::strint("Distributed Parameter",i);
     param_list = distParameterParams.isSublist(p_sublist_name) ? &distParameterParams.sublist(p_sublist_name) : NULL;
@@ -200,14 +206,18 @@ Albany::ModelEvaluator::ModelEvaluator(
     dist_param_names[i] = *p_name_ptr;
     //set parameters bonuds
     if(param_list) {
-      Teuchos::RCP<const DistParam> distParam = distParamLib->get(*p_name_ptr);
+      Teuchos::RCP<const DistributedParameter> distParam = distParamLib->get(*p_name_ptr);
       if(param_list->isParameter("Lower Bound") && (distParam->lower_bounds_vector() != Teuchos::null))
-        distParam->lower_bounds_vector()->putScalar(param_list->get<double>("Lower Bound"));
+        distParam->lower_bounds_vector()->assign(param_list->get<double>("Lower Bound"));
       if(param_list->isParameter("Upper Bound") && (distParam->upper_bounds_vector() != Teuchos::null))
-        distParam->upper_bounds_vector()->putScalar(param_list->get<double>("Upper Bound"));
+        distParam->upper_bounds_vector()->assign(param_list->get<double>("Upper Bound"));
       if(param_list->isParameter("Initial Uniform Value") && (distParam->vector() != Teuchos::null))
-        distParam->vector()->putScalar(param_list->get<double>("Initial Uniform Value"));
+        distParam->vector()->assign(param_list->get<double>("Initial Uniform Value"));
     }
+    // We create all the dist param deriv ops here, since
+    //  1) we need to keep a copy of them (cause the Thyra::EpetraOperatorWrapper does not allow to change the stored op)
+    //  2) the create_DfDp_op method is marked const
+    dfdp_ops[i] = Teuchos::rcp(new DistributedParameterDerivativeOp(app, dist_param_names[i]));
   }
 
   timer = Teuchos::TimeMonitor::getNewTimer("Albany: **Total Fill Time**");
@@ -245,7 +255,9 @@ Albany::ModelEvaluator::get_p_map(int l) const
   if (l < num_param_vecs)
     return epetra_param_map[l];
   Teuchos::RCP<const Epetra_Comm> comm = app->getEpetraComm();
-  return Petra::TpetraMap_To_EpetraMap(distParamLib->get(dist_param_names[l-num_param_vecs])->map(), comm);
+  auto vs = distParamLib->get(dist_param_names[l-num_param_vecs])->vector_space();
+  auto map = getTpetraMap(vs);
+  return Petra::TpetraMap_To_EpetraMap(map, comm);
 }
 
 Teuchos::RCP<const Epetra_Map>
@@ -318,8 +330,8 @@ Albany::ModelEvaluator::get_p_init(int l) const
     return epetra_param_vec[l];
   Teuchos::RCP<Epetra_Vector> epetra_param_vec_to_return;
   Teuchos::RCP<const Epetra_Comm> comm = app->getEpetraComm();
-  Petra::TpetraVector_To_EpetraVector(distParamLib->get(dist_param_names[l-num_param_vecs])->vector(), epetra_param_vec_to_return,
-                                      comm);
+  auto tvector = getTpetraVector(distParamLib->get(dist_param_names[l-num_param_vecs])->vector());
+  Petra::TpetraVector_To_EpetraVector(tvector, epetra_param_vec_to_return, comm);
   return epetra_param_vec_to_return;
   //return distParamLib->get(dist_param_names[l-num_param_vecs])->vector();
 }
@@ -341,7 +353,8 @@ Albany::ModelEvaluator::get_p_lower_bounds(int l) const
 
   Teuchos::RCP<Epetra_Vector> epetra_bounds_vec_to_return;
   Teuchos::RCP<const Epetra_Comm> comm = app->getEpetraComm();
-  Petra::TpetraVector_To_EpetraVector(distParamLib->get(dist_param_names[l-num_param_vecs])->lower_bounds_vector(), epetra_bounds_vec_to_return, comm);
+  auto tvector = getTpetraVector(distParamLib->get(dist_param_names[l-num_param_vecs])->lower_bounds_vector());
+  Petra::TpetraVector_To_EpetraVector(tvector, epetra_bounds_vec_to_return, comm);
   return epetra_bounds_vec_to_return;
 }
 
@@ -361,7 +374,8 @@ Albany::ModelEvaluator::get_p_upper_bounds(int l) const
 
   Teuchos::RCP<Epetra_Vector> epetra_bounds_vec_to_return;
   Teuchos::RCP<const Epetra_Comm> comm = app->getEpetraComm();
-  Petra::TpetraVector_To_EpetraVector(distParamLib->get(dist_param_names[l-num_param_vecs])->upper_bounds_vector(), epetra_bounds_vec_to_return, comm);
+  auto tvector = getTpetraVector(distParamLib->get(dist_param_names[l-num_param_vecs])->upper_bounds_vector());
+  Petra::TpetraVector_To_EpetraVector(tvector, epetra_bounds_vec_to_return, comm);
   return epetra_bounds_vec_to_return;
 }
 
@@ -402,12 +416,7 @@ Albany::ModelEvaluator::create_DfDp_op(int l) const
 //DistributedParameterDerivativeOp is a Tpetra_Operator now....
 //I think distributed responses will work only once we switch to Albany_ModelEvaluatorT in Tpetra branch.
 
-return Teuchos::rcp(new DistributedParameterDerivativeOp(
-                      app, dist_param_names[l-num_param_vecs]));
-  TEUCHOS_TEST_FOR_EXCEPTION( true, std::logic_error,
-              "Albany::ModelEvaluator::create_DfDp_op is not implemented for Tpetra_Operator!"  <<
-                        "Distributed parameters won't work yet in Tpetra branch."<<
-      std::endl);
+  return Teuchos::rcp(new Thyra::EpetraOperatorWrapper(dfdp_ops[l-num_param_vecs]));
 }
 
 Teuchos::RCP<Epetra_Operator>
@@ -639,7 +648,7 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
     if (p != Teuchos::null) {
       pT = Petra::EpetraVector_To_TpetraVectorConst(*p, commT);
       //*(distParamLib->get(dist_param_names[i])->vector()) = *p;
-      *(distParamLib->get(dist_param_names[i])->vector()) = *pT;
+      distParamLib->get(dist_param_names[i])->vector()->assign(*createConstThyraVector(pT));
     }
   }
 
@@ -827,9 +836,10 @@ f_out->Print(std::cout);
     Teuchos::RCP<Epetra_Operator> dfdp_out =
       outArgs.get_DfDp(i+num_param_vecs).getLinearOp();
     if (dfdp_out != Teuchos::null) {
-      Teuchos::RCP<DistributedParameterDerivativeOp> dfdp_op =
-        Teuchos::rcp_dynamic_cast<DistributedParameterDerivativeOp>(dfdp_out);
-      dfdp_op->set(curr_time, x_dotT, x_dotdotT, xT,
+      dfdp_ops[i]->set(curr_time, 
+                   Albany::createConstThyraVector(xT),
+                   Albany::createConstThyraVector(x_dotT),
+                   Albany::createConstThyraVector(x_dotdotT),
                    Teuchos::rcp(&sacado_param_vec,false));
     }
   }

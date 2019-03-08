@@ -10,6 +10,7 @@
 #include "Albany_Memory.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 #include "Piro_PerformSolve.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -20,10 +21,13 @@
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
-#include "Thyra_DefaultProductVector.hpp"
-#include "Thyra_DefaultProductVectorSpace.hpp"
 #include "Tpetra_Core.hpp"
 #include "MatrixMarket_Tpetra.hpp"
+
+#include "Thyra_DefaultProductVector.hpp"
+#include "Thyra_DefaultProductVectorSpace.hpp"
+#include "Thyra_VectorStdOps.hpp"
+#include "Thyra_MultiVectorStdOps.hpp"
 
 // Uncomment for run time nan checking
 // This is set in the toplevel CMakeLists.txt file
@@ -335,10 +339,6 @@ main(int argc, char *argv[]) {
     Piro::PerformSolve(
         *solver, solveParams, thyraResponses, thyraSensitivities);
 
-    Teuchos::Array<Teuchos::RCP<const Tpetra_Vector>> responses;
-    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Tpetra_MultiVector>>>
-        sensitivities;
-
     // Check if thyraResponses are product vectors or regular vectors
     Teuchos::RCP<const Thyra::ProductVectorBase<ST>> r_prod;
     if (thyraResponses.size() > 0) {
@@ -348,12 +348,6 @@ main(int argc, char *argv[]) {
                     thyraResponses[0], false)
               : Teuchos::null;
     }
-    if (r_prod == Teuchos::null)
-      tpetraFromThyra(
-          thyraResponses, thyraSensitivities, responses, sensitivities);
-    else
-      tpetraFromThyraProdVec(
-          thyraResponses, thyraSensitivities, responses, sensitivities);
 
     const int num_p = solver->Np();  // Number of *vectors* of parameters
     int num_g = solver->Ng();        // Number of *vectors* of responses
@@ -444,8 +438,9 @@ main(int argc, char *argv[]) {
           (*response_names[l])[k] =
               pList->get<std::string>(Albany::strint("Response", k));
         }
-      } else
+      } else {
         response_names[l] = Teuchos::null;
+      }
     }
 
     const Thyra::ModelEvaluatorBase::InArgs<ST> nominal =
@@ -466,11 +461,9 @@ main(int argc, char *argv[]) {
                                       // now)
         for (int i = 0; i < num_p; i++) {
           if(i < num_param_vecs)
-            Albany::printTpetraVector(
-            *out << "\nParameter vector " << i << ":\n", *param_names[i],
-                            ConverterT::getConstTpetraVector(nominal.get_p(i)));
+            Albany::printThyraVector(*out << "\nParameter vector " << i << ":\n", *param_names[i],nominal.get_p(i));
           else { //distributed parameter
-            ST norm2 = ConverterT::getConstTpetraVector(nominal.get_p(i))->norm2();
+            ST norm2 = nominal.get_p(i)->norm_2();
             *out << "\nDistributed Parameter " << i << ", (two-norm): "  << norm2 << std::endl;
           }
         }
@@ -486,18 +479,14 @@ main(int argc, char *argv[]) {
           // model only.  LOCA does not populate p for more than 1 model at the
           // moment so we cannot
           // allow for different parameters in different models.
-          Teuchos::RCP<const Tpetra_Vector> p =
-              Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(
-                  pT->getVectorBlock(0), true)
-                  ->getConstTpetraVector();
-          Albany::printTpetraVector(
-              *out << "\nParameter vector " << i << ":\n", *param_names[i], p);
+          Albany::printThyraVector(
+              *out << "\nParameter vector " << i << ":\n", *param_names[i], pT->getVectorBlock(0));
         }
       }
     }
 
     for (int i = 0; i < num_g - 1; i++) {
-      const RCP<const Tpetra_Vector> g = responses[i];
+      const RCP<const Thyra_Vector> g = thyraResponses[i];
       if (!app->getResponse(i)->isScalarResponse()) continue;
 
       if (response_names[i] != Teuchos::null) {
@@ -506,44 +495,42 @@ main(int argc, char *argv[]) {
       } else {
         *out << "\nResponse vector " << i << ":\n";
       }
-      Albany::printTpetraVector(*out, g);
+      Albany::printThyraVector(*out, g);
 
       if (num_p == 0)  
-          status += slvrfctry.checkSolveTestResultsT(i, 0, g.get(), NULL);
+          status += slvrfctry.checkSolveTestResults(i, 0, g, Teuchos::null);
       for (int j=0; j<num_p; j++) {
-        const RCP<const Tpetra_MultiVector> dgdp = sensitivities[i][j];
+        Teuchos::RCP<const Thyra_MultiVector> dgdp = thyraSensitivities[i][j];
         if (Teuchos::nonnull(dgdp)) {
           if(j < num_param_vecs) {
-            Albany::printTpetraVector(
-                *out << "\nSensitivities (" << i << "," << j << "):!\n", dgdp);
+            Albany::printThyraMultiVector(
+                *out << "\nSensitivities (" << i << "," << j << "):\n", dgdp);
                 //check response and sensitivities for scalar parameters
-                status += slvrfctry.checkSolveTestResultsT(i, j, g.get(), dgdp.get());
+                status += slvrfctry.checkSolveTestResults(i, j, g, dgdp);
           }
           else {
-            const RCP<const Tpetra_Map> serial_map = Teuchos::rcp(new const Tpetra_Map(INVALID, 1, 0, comm));
-            Tpetra_MultiVector norms(serial_map,dgdp->getNumVectors());
+            auto small_vs = dgdp->domain()->smallVecSpcFcty()->createVecSpc(1);
+            auto norms = Thyra::createMembers(small_vs,dgdp->domain()->dim());
+            auto norms_vals = Albany::getNonconstLocalData(norms);
             *out << "\nSensitivities (" << i << "," << j  << ") for Distributed Parameters:  (two-norm)\n";
             *out << "    ";
-            for(int ir=0; ir<dgdp->getNumVectors(); ++ir) {
-            auto norm2 = dgdp->getVector(ir)->norm2();
-            norms.getDataNonConst(ir)[0] = norm2;
-              *out << "    " << norm2;
+            for(int ir=0; ir<dgdp->domain()->dim(); ++ir) {
+              auto norm2 = dgdp->col(ir)->norm_2();
+              norms_vals[ir][0] = norm2;
+                *out << "    " << norm2;
             }
             *out << "\n" << std::endl;
             //check response and sensitivities for distributed parameters
-            status += slvrfctry.checkSolveTestResultsT(i, j, g.get(), &norms);
+            status += slvrfctry.checkSolveTestResults(i, j, g, norms);
           }
         }
         else //check response only, no sensitivities
-          status += slvrfctry.checkSolveTestResultsT(i, 0, g.get(), NULL);
+          status += slvrfctry.checkSolveTestResults(i, 0, g, Teuchos::null);
       }
     }
 
     // Create debug output object
-    bool const
-    has_responses = responses.size() > 0;
-
-    if (has_responses == true) {
+    if (thyraResponses.size()>0) {
       Teuchos::ParameterList &debugParams =
           slvrfctry.getParameters().sublist("Debug Output", true);
       bool writeToMatrixMarketSoln =
@@ -553,43 +540,22 @@ main(int argc, char *argv[]) {
       bool writeToCoutSoln =
           debugParams.get("Write Solution to Standard Output", false);
 
-      const RCP<const Tpetra_Vector> xfinal = responses.back();
-      auto mnv = xfinal->meanValue();
+      const RCP<const Thyra_Vector> xfinal = thyraResponses.back();
+      auto mnv = Albany::mean(xfinal);
       *out << "\nMain_Solve: MeanValue of final solution " << mnv << std::endl;
       *out << "\nNumber of Failed Comparisons: " << status << std::endl;
       if (writeToCoutSoln == true) {
-        Albany::printTpetraVector(*out << "\nxfinal:\n", xfinal);
+        Albany::printThyraVector(*out << "\nxfinal:\n", xfinal);
       }
 
       if (debugParams.get<bool>("Analyze Memory", false))
         Albany::printMemoryAnalysis(std::cout, comm);
 
       if (writeToMatrixMarketSoln == true) {
-        // create serial map that puts the whole solution on processor 0
-        int numMyElements = (xfinal->getMap()->getComm()->getRank() == 0)
-                                ? xfinal->getMap()->getGlobalNumElements()
-                                : 0;
-
-        Teuchos::RCP<const Tpetra_Map> serial_map =
-            Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm));
-
-        // create importer from parallel map to serial map and populate serial
-        // solution xfinal_serial
-        Teuchos::RCP<Tpetra_Import> importOperator =
-            Teuchos::rcp(new Tpetra_Import(xfinal->getMap(), serial_map));
-        Teuchos::RCP<Tpetra_Vector> xfinal_serial =
-            Teuchos::rcp(new Tpetra_Vector(serial_map));
-        xfinal_serial->doImport(*xfinal, *importOperator, Tpetra::INSERT);
-
-        // writing to MatrixMarket file
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("xfinal.mm", xfinal_serial);
+        Albany::writeMatrixMarket(xfinal,"xfinal");
       }
       if (writeToMatrixMarketDistrSolnMap == true) {
-        // writing to MatrixMarket file
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(
-            "xfinal_distributed.mm", *xfinal);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile(
-            "xfinal_distributed_map.mm", *xfinal->getMap());
+        Albany::writeMatrixMarket(xfinal->space(),"xfinal_distributed_map");
       }
     }
   }

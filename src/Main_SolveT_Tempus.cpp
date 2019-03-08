@@ -54,6 +54,8 @@
 #include "Albany_APFMeshStruct.hpp"
 #endif
 
+#include "Albany_ThyraUtils.hpp"
+
 const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
 Teuchos::RCP<Tpetra_Vector>
@@ -320,14 +322,15 @@ int main(int argc, char *argv[]) {
         integrator->setObserver(tempus_observer); 
         integrator->initialize(); 
       }
-      bool integratorStatus = integrator->advanceTime(); 
       double time = integrator->getTime();
       *out << "\n Final time = " << time << "\n"; 
-      Teuchos::RCP<Thyra::VectorBase<double> > x = integrator->getX();
+      Teuchos::RCP<const Thyra_Vector> x = integrator->getX();
       Teuchos::RCP<const Tpetra_Vector> x_tpetra = ConverterT::getConstTpetraVector(x);  
-      if (writeToCoutSoln == true)  
-        Albany::printTpetraVector(*out << "\nxfinal = \n", x_tpetra);
-      if (writeToMatrixMarketSoln == true) { 
+      if (writeToCoutSoln == true) {
+        Albany::printThyraVector(*out << "\nxfinal = \n", x);
+      }
+      if (writeToMatrixMarketSoln == true) {
+        Albany::writeMatrixMarket(x,"xfinal_tempus");
         //create serial map that puts the whole solution on processor 0
         int numMyElements = (x_tpetra->getMap()->getComm()->getRank() == 0) ? x_tpetra->getMap()->getGlobalNumElements() : 0;
         Teuchos::RCP<const Tpetra_Map> serial_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm));

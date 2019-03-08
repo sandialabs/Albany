@@ -4,25 +4,24 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-// 9/12/14: no Epetra!
+#ifndef ALBANY_MODEL_EVALUATOR_T_HPP
+#define ALBANY_MODEL_EVALUATOR_T_HPP
 
-#ifndef ALBANY_MODELEVALUATORT_HPP
-#define ALBANY_MODELEVALUATORT_HPP
+#include "Albany_DataTypes.hpp"
 
 #include "Piro_TransientDecorator.hpp"
 
-#include "Albany_Application.hpp"
-
-#include "Teuchos_TimeMonitor.hpp"
-
 namespace Albany {
 
-class ModelEvaluatorT
-    : public Piro::TransientDecorator<ST, LO, Tpetra_GO, KokkosNode> {
+// Forward declarations
+class Application;
+class DistributedParameterLibrary;
+
+class ModelEvaluatorT : public Piro::TransientDecorator<ST, LO, Tpetra_GO, KokkosNode> {
  public:
   // Constructor
   ModelEvaluatorT(
-      const Teuchos::RCP<Albany::Application>& app,
+      const Teuchos::RCP<Application>& app,
       const Teuchos::RCP<Teuchos::ParameterList>& appParams);
 
   /** \name Overridden from Thyra::ModelEvaluator<ST> . */
@@ -47,8 +46,9 @@ class ModelEvaluatorT
   //! Return array of parameter names
   Teuchos::RCP<const Teuchos::Array<std::string>>
   get_p_names(int l) const;
+
   Teuchos::ArrayView<const std::string>
-  get_g_names(int j) const {
+  get_g_names(int /* j */) const {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
   }
 
@@ -172,12 +172,12 @@ class ModelEvaluatorT
   Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>> param_names;
 
   //! Tpetra map for parameter vector
-  Teuchos::Array<Teuchos::RCP<const Tpetra_Map>> tpetra_param_map;
+  Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> param_vss;
 
   //! Tpetra parameter vectors and their bounds
-  Teuchos::Array<Teuchos::RCP<Tpetra_Vector>> tpetra_param_vec;
-  Teuchos::Array< Teuchos::RCP< Tpetra_Vector > > param_lower_bd;
-  Teuchos::Array< Teuchos::RCP< Tpetra_Vector > > param_upper_bd;
+  Teuchos::Array<Teuchos::RCP<Thyra_Vector>> param_vecs;
+  Teuchos::Array<Teuchos::RCP<Thyra_Vector>> param_lower_bds;
+  Teuchos::Array<Teuchos::RCP<Thyra_Vector>> param_upper_bds;
 
   //! Tpetra response vector
   Teuchos::Array<Teuchos::RCP<Thyra::VectorBase<ST>>> thyra_response_vec;
@@ -189,7 +189,7 @@ class ModelEvaluatorT
   Teuchos::Array<std::string> dist_param_names;
 
   //! Distributed parameter library
-  Teuchos::RCP<DistParamLib> distParamLib;
+  Teuchos::RCP<DistributedParameterLibrary> distParamLib;
 
   //! Model uses time integration (velocities)
   bool supports_xdot;
@@ -199,10 +199,10 @@ class ModelEvaluatorT
 
 #if defined(ALBANY_LCM)
   // This is here to have a sane way to handle time and avoid Thyra ME.
-  ST
-  current_time_{0.0};
+  ST current_time_{0.0};
 #endif // ALBANY_LCM
 };
-}
 
-#endif  // ALBANY_MODELEVALUATORT_HPP
+} // namespace Albany
+
+#endif // ALBANY_MODEL_EVALUATOR_T_HPP

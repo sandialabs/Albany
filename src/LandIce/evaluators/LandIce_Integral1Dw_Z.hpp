@@ -67,8 +67,7 @@ template<typename EvalT, typename Traits, typename ThicknessScalarT>
 class Integral1Dw_Z : public Integral1Dw_ZBase<EvalT,Traits,ThicknessScalarT> {
 public:
 	  Integral1Dw_Z(const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl) :
-      Integral1Dw_ZBase<EvalT,Traits,ThicknessScalarT>(p,dl) {}
+                  const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 

@@ -52,8 +52,7 @@ ALBOUTDIR=$NIGHTLYDIR/Albany_out
 DAKOUTDIR=$NIGHTLYDIR/Dakota_out
 
 # Must be set
-TRILINOS_BRANCH=develop
+TRILINOS_BRANCH=master
 ALBANY_BRANCH=master
-ALBANY_BRANCH_KDV=DynRankViewIntrepid2Refactor
 
 

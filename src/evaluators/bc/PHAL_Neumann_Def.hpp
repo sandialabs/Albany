@@ -5,20 +5,21 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include <string>
-
-#include "PHAL_Neumann.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_ProblemUtils.hpp"
+#include "Albany_DistributedParameterLibrary.hpp"
+#include "PHAL_Neumann.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
-
 namespace PHAL {
-const double pi = 3.1415926535897932385;
+
+constexpr double pi = 3.1415926535897932385;
 
 //**********************************************************************
 template<typename EvalT, typename Traits>

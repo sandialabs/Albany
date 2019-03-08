@@ -12,7 +12,9 @@
 #include "Phalanx_MDField.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_ParameterList.hpp"
-#include "Albany_ProblemUtils.hpp"
+
+#include "Albany_Layouts.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 
 namespace Albany
 {
@@ -20,47 +22,46 @@ class StateManager;
 }
 
 namespace PHAL {
-/**
- * \brief Description
- */
-  template<typename EvalT, typename Traits>
-  class SaveNodalFieldBase :
-    public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<EvalT, Traits>
-  {
-  public:
-    typedef typename EvalT::ScalarT ScalarT;
-    typedef typename EvalT::MeshScalarT MeshScalarT;
-    SaveNodalFieldBase(Teuchos::ParameterList& p,
-          const Teuchos::RCP<Albany::Layouts>& dl);
 
-    void postRegistrationSetup(typename Traits::SetupData d,
-             PHX::FieldManager<Traits>& vm);
+template<typename EvalT, typename Traits>
+class SaveNodalFieldBase :
+  public PHX::EvaluatorWithBaseImpl<Traits>,
+  public PHX::EvaluatorDerived<EvalT, Traits>
+{
+public:
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
 
-    // These functions are defined in the specializations
-    void preEvaluate(typename Traits::PreEvalData d) = 0;
-    void postEvaluate(typename Traits::PostEvalData d) = 0;
-    void evaluateFields(typename Traits::EvalData d) = 0;
+  SaveNodalFieldBase(Teuchos::ParameterList& p,
+                     const Teuchos::RCP<Albany::Layouts>& dl);
 
-    Teuchos::RCP<const PHX::FieldTag> getEvaluatedFieldTag() const {
-      return nodal_field_tag;
-    }
+  void postRegistrationSetup(typename Traits::SetupData d,
+                             PHX::FieldManager<Traits>& vm);
 
-    Teuchos::RCP<const PHX::FieldTag> getResponseFieldTag() const {
-      return nodal_field_tag;
-    }
+  // These functions are defined in the specializations
+  void preEvaluate(typename Traits::PreEvalData d) = 0;
+  void postEvaluate(typename Traits::PostEvalData d) = 0;
+  void evaluateFields(typename Traits::EvalData d) = 0;
 
-  protected:
+  Teuchos::RCP<const PHX::FieldTag> getEvaluatedFieldTag() const {
+    return nodal_field_tag;
+  }
 
-    std::string xName;
-    std::string xdotName;
-    std::string xdotdotName;
-    static const std::string className;
+  Teuchos::RCP<const PHX::FieldTag> getResponseFieldTag() const {
+    return nodal_field_tag;
+  }
 
-    Teuchos::RCP< PHX::Tag<ScalarT> > nodal_field_tag;
-    Albany::StateManager* pStateMgr;
+protected:
 
-  };
+  std::string xName;
+  std::string xdotName;
+  std::string xdotdotName;
+  static const std::string className;
+
+  Teuchos::RCP< PHX::Tag<ScalarT> > nodal_field_tag;
+  Albany::StateManager* pStateMgr;
+
+};
 
 template<typename EvalT, typename Traits>
 class SaveNodalField
@@ -68,10 +69,11 @@ class SaveNodalField
 public:
   SaveNodalField(Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl) :
-  SaveNodalFieldBase<EvalT, Traits>(p, dl){}
-  void preEvaluate(typename Traits::PreEvalData d){}
-  void postEvaluate(typename Traits::PostEvalData d){}
-  void evaluateFields(typename Traits::EvalData d){}
+    SaveNodalFieldBase<EvalT, Traits>(p, dl){}
+
+  void preEvaluate(typename Traits::PreEvalData /* d */){}
+  void postEvaluate(typename Traits::PostEvalData /* d */){}
+  void evaluateFields(typename Traits::EvalData /* d */){}
 };
 
 // **************************************************************
@@ -88,12 +90,12 @@ class SaveNodalField<PHAL::AlbanyTraits::Residual,Traits>
    : public SaveNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits> {
 public:
   SaveNodalField(Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl);
+                 const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
   void evaluateFields(typename Traits::EvalData d);
 };
 
-}
+} // namespace PHAL
 
-#endif  // Adapt_SaveNodalField.hpp
+#endif  // PHAL_SAVE_NODAL_FIELD_HPP

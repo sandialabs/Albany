@@ -41,6 +41,9 @@ class SDirichlet<PHAL::AlbanyTraits::Residual, Traits>
   SDirichlet(Teuchos::ParameterList& p);
 
   void
+  preEvaluate(typename Traits::EvalData d);
+
+  void
   evaluateFields(typename Traits::EvalData d);
 };
 
@@ -54,12 +57,18 @@ class SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>
   using ScalarT = typename PHAL::AlbanyTraits::Jacobian::ScalarT;
 
   SDirichlet(Teuchos::ParameterList& p);
-
+  
   void
   evaluateFields(typename Traits::EvalData d);
 
+  void 
+  set_row_and_col_is_dbc(typename Traits::EvalData d); 
+
  protected:
-  double scale; 
+  double scale;
+  Teuchos::RCP<Tpetra::Vector<int, Tpetra_LO, Tpetra_GO, KokkosNode>> row_is_dbc_; 
+  Teuchos::RCP<Tpetra::Vector<int, Tpetra_LO, Tpetra_GO, KokkosNode>> col_is_dbc_; 
+ 
 };
 
 //

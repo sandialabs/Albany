@@ -10,7 +10,8 @@
 #define PHAL_SEPARABLE_SCATTER_SCALAR_RESPONSE_HPP
 
 #include "PHAL_ScatterScalarResponse.hpp"
-#include "PHAL_AlbanyTraits.hpp"
+
+#include "Shards_CellTopologyData.h"
 
 namespace PHAL {
 
@@ -32,7 +33,7 @@ public:
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm);
 
-  void evaluateFields(typename Traits::EvalData d) {}
+  void evaluateFields(typename Traits::EvalData /* d */) {}
 
 protected:
 
@@ -72,9 +73,11 @@ public:
     SeparableScatterScalarResponseBase<EvalT,Traits>::postRegistrationSetup(d,vm);
   }
 
-  void evaluateFields(typename Traits::EvalData d) {}
+  void evaluateFields(typename Traits::EvalData /* d */) {}
 
-  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData d, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo) {}
+  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData /* d */,
+                                                        const std::string& /* sidesetName */,
+                                                        Teuchos::RCP<const CellTopologyData> /* cellTopo */) {}
 
 protected:
   SeparableScatterScalarResponse() {}
@@ -142,7 +145,9 @@ public:
   }
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
-  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData d, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo) {}
+  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData /* d */,
+                                                        const std::string& /* sidesetName */,
+                                                        Teuchos::RCP<const CellTopologyData> /* cellTopo */) {}
   void postEvaluate(typename Traits::PostEvalData d);
 protected:
   typedef PHAL::AlbanyTraits::DistParamDeriv EvalT;

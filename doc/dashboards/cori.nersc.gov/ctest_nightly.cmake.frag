@@ -78,7 +78,7 @@ if (DOWNLOAD_TRILINOS)
   
   if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Trilinos")
     execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Trilinos_REPOSITORY_LOCATION} -b develop ${CTEST_SOURCE_DIRECTORY}/Trilinos
+      clone ${Trilinos_REPOSITORY_LOCATION} -b master ${CTEST_SOURCE_DIRECTORY}/Trilinos
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -202,6 +202,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
     "-DTrilinos_ENABLE_Thyra:BOOL=ON"
     "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
+    "-DTrilinos_ENABLE_ThyraEpetraAdapters:BOOL=ON"
     "-DTrilinos_ENABLE_TrilinosCouplings:BOOL=ON"
     "-DTrilinos_ENABLE_Isorropia:BOOL=ON"
     "-DTPL_FIND_SHARED_LIBS:BOOL=OFF"
@@ -272,6 +273,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Piro:BOOL=ON"
     "-DTrilinos_ENABLE_Teko:BOOL=ON"
     "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
+    "-DTrilinos_ENABLE_PanzerExprEval:BOOL=ON"
     "-DAnasazi_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
     "-DAztecOO_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
     "-DBelos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
@@ -499,6 +501,7 @@ if (BUILD_CISM_PISCEES)
 
 
   set (CONFIGURE_OPTIONS
+    "-Wno-dev"
     "-DCISM_MPI_MODE:BOOL=ON"
     "-DCISM_SERIAL_MODE:BOOL=OFF"
     "-DCISM_BUILD_CISM_DRIVER:BOOL=ON"

@@ -14,6 +14,8 @@
 #include "LandIce_EnthalpyBasalResid.hpp"
 #include "Albany_DiscretizationUtils.hpp"
 
+#include "Shards_CellTopology.hpp"
+
 namespace LandIce
 {
 

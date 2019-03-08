@@ -6,6 +6,8 @@
  */
 
 
+#include "Albany_AbstractDiscretization.hpp"
+
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -68,6 +70,13 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
     this->utils.setFieldData(thickness,fm);
     this->utils.setFieldData(int1Dw_z,fm);
 }
+
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
+Integral1Dw_Z<EvalT, Traits, ThicknessScalarT>::
+Integral1Dw_Z(const Teuchos::ParameterList& p,
+          const Teuchos::RCP<Albany::Layouts>& dl)
+          : Integral1Dw_ZBase<EvalT, Traits, ThicknessScalarT>(p,dl)
+            {}
 
 // Specialization for AlbanyTraits::Residual
 template<typename Traits, typename ThicknessScalarT>

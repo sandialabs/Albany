@@ -1,14 +1,15 @@
 #!/bin/csh
 
-BASE_DIR=/home/projects/albany/nightlyCDashTrilinosJenkins
+BASE_DIR=/mscratch/albany/nightlyCDashJenkins
 cd $BASE_DIR
 
 unset http_proxy
 unset https_proxy
 
 export OMP_NUM_THREADS=1
-export OMP_PLACES=threads
-export OMP_PROC_BIND=spread
+#export OMP_NUM_THREADS=4
+#export OMP_PLACES=threads
+#export OMP_PROC_BIND=spread
 
 cat trilinos_jenkins ctest_nightly_jenkins.cmake.frag >& ctest_nightly.cmake  
 

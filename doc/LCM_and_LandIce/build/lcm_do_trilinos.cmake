@@ -101,6 +101,7 @@ function(lcm_do_trilinos)
       "-DTrilinos_ENABLE_NOX:BOOL=ON"
       "-DTrilinos_ENABLE_OpenMP:BOOL=$ENV{LCM_ENABLE_OPENMP}"
       "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
+      "-DTrilinos_ENABLE_PanzerExprEval:BOOL=ON"
       "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
       "-DTrilinos_ENABLE_Piro:BOOL=ON"
       "-DTrilinos_ENABLE_ROL:BOOL=ON"

@@ -12,7 +12,7 @@ result = 0
 ######################
 # Test 1 
 ######################
-print "test 1 - CismAlbany"
+print("test 1 - CismAlbany")
 name = "CismAlbany"
 if os.path.exists('out'):
     os.remove('out')
@@ -36,7 +36,7 @@ subprocess.call("bash run_test.sh >& out",shell=True);
 subprocess.call("bash process_output_test.sh",shell=True)
 
 with open('out', 'r') as log_file:
-    print log_file.read() 
+    print(log_file.read())
 
 
 result = 0
@@ -72,18 +72,18 @@ if log_file_exists == True:
         s = line
         d = float(s)
         m = d - mismatch[i]
-        print 'mismatch', m
+        print('mismatch', m)
         i = i + 1
       if (m > tolerance or m < -tolerance):
         result = result+1 
 
       with open(log_file_name, 'r') as log_file:
-        print log_file.read() 
+        print(log_file.read())
 
 
 if result != 0:
-    print "result is %s" % result
-    print "%s test has failed" % name
+    print("result is %s" % result)
+    print("%s test has failed" % name)
     sys.exit(result)
 
 sys.exit(result)

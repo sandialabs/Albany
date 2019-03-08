@@ -15,6 +15,10 @@
 #include "Intrepid2_CellTools.hpp"
 #include "Intrepid2_Cubature.hpp"
 
+#include "PHAL_Dimension.hpp"
+#include "Albany_Layouts.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
+
 namespace LCM {
 /** \brief
 

@@ -10,7 +10,7 @@ result = 0
 ######################
 # Test 1
 ######################
-print "test 1 - DTKInterp Notched Cyl"
+print("test 1 - DTKInterp Notched Cyl")
 name = "DTKInterpNotchedCyl"
 log_file_name = name + ".log"
 if os.path.exists(log_file_name):
@@ -33,17 +33,17 @@ for line in open(log_file_name):
     s = line
     s = line[42:]
     d = float(s)
-    print d
+    print(d)
     if (d > relerr + tolerance or d < relerr - tolerance):
       result = result+1
 
 if result != 0:
-    print "result is %s" % result
-    print "%s test has failed" % name
+    print("result is %s" % result)
+    print("%s test has failed" % name)
     sys.exit(result)
 
 with open(log_file_name, 'r') as log_file:
-    print log_file.read()
+    print(log_file.read()) 
 
 
 sys.exit(result)

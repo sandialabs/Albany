@@ -12,13 +12,15 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Teuchos_ParameterList.hpp"
+
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dimension.hpp"
-#include "Aeras_Layouts.hpp"
 
 #include "Albany_KokkosTypes.hpp"
+#include "Albany_DiscretizationUtils.hpp"
 
-#include "Teuchos_ParameterList.hpp"
+#include "Aeras_Layouts.hpp"
 
 namespace Aeras {
 /** \brief Gathers Coordinates values from the Newton coordinates vector into 
@@ -102,7 +104,7 @@ public:
   RealType mc;
   int neq;
 
-  Albany::AbstractDiscretization::WorksetConn nodeID;
+  Albany::WorksetConn nodeID;
 
   struct ComputeAndScatterJac_buildMass_Tag{};
 

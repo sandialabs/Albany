@@ -6,6 +6,10 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Shards_CellTopology.hpp"
+
+#include "PHAL_DOFSideToCell.hpp"
+#include "Albany_DiscretizationUtils.hpp"
 
 namespace PHAL {
 
@@ -105,7 +109,7 @@ DOFSideToCellBase(const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
 void DOFSideToCellBase<EvalT, Traits, ScalarT>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(val_cell,fm);

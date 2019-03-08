@@ -87,3 +87,22 @@ add_test(${testName}_FO_CosExp_BasalAll_Tpetra ${SerialAlbanyT.exe}
 input_fo_cosexp_basal_all_glensLawT.yaml)
 ENDIF()
 
+
+#  Grounding line flux tests
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_glf_quad.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_glf_quad.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_glf_tri.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_glf_tri.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_glf_tri_edge_on_gl.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_glf_tri_edge_on_gl.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_glf_tri_nonconst_vel.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_glf_tri_nonconst_vel.yaml COPYONLY)
+IF (ALBANY_PANZER_EXPR_EVAL)
+add_test(${testName}_FO_GLF_QUAD ${SerialAlbanyT.exe} input_glf_quad.yaml)
+add_test(${testName}_FO_GLF_TRI ${SerialAlbanyT.exe} input_glf_tri.yaml)
+add_test(${testName}_FO_GLF_TRI_CORNER_CASE ${SerialAlbanyT.exe} input_glf_tri_edge_on_gl.yaml)
+IF (ALBANY_PAMGEN)
+add_test(${testName}_FO_GLF_TRI_NONCONST_VELOCITY ${SerialAlbanyT.exe} input_glf_tri_nonconst_vel.yaml)
+ENDIF()
+ENDIF()
+

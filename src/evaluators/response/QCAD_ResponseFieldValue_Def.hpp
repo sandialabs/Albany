@@ -10,6 +10,7 @@
 #include "PHAL_Utilities.hpp"
 
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_CombineAndScatterManager.hpp"
 
 // **********************************************************************
 // Specialization: Jacobian

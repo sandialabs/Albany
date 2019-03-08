@@ -10,6 +10,8 @@
 
 #include "PHAL_SDirichlet_Def.hpp"
 
+//#define DEBUG_OUTPUT
+
 namespace PHAL {
 
 //
@@ -59,6 +61,21 @@ template <typename EvalT, typename Traits>
 TimeDepSDBC<EvalT, Traits>::TimeDepSDBC(Teuchos::ParameterList& p)
     : TimeDepSDBC_Base<EvalT, Traits>(p)
 {
+}
+
+//
+//
+//
+template <typename EvalT, typename Traits>
+void
+TimeDepSDBC<EvalT, Traits>::preEvaluate(typename Traits::EvalData workset)
+{
+#ifdef DEBUG_OUTPUT
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "IKT TimeDepSDBC preEvaluate Residual\n"; 
+#endif
+  this->value = this->computeVal(workset.current_time);
+  PHAL::SDirichlet<EvalT, Traits>::preEvaluate(workset);
 }
 
 //

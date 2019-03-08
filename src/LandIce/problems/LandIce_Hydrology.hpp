@@ -245,7 +245,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
 
   // Check if a state is a Dirichlet Field. We do this because dirichlet fields MUST
-  // be in the DistParamLib, which means that a dirichlet field MUST be registered as
+  // be in the DistributedParameterLibrary, which means that a dirichlet field MUST be registered as
   // a NodalDistParameter field, rather than NodalDataToElemNode field.
   // There are three scenarios:
   //  - the user listed the dirichlet field in both the discretization section and
@@ -254,15 +254,15 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //    it appears as 'Input' or 'Input-Output', then the field loaded in the mesh is used
   //    as 'initial guess'. In this case, there is nothing to do for the field as part of the BC,
   //    since GenericSTKMeshStruct already takes care of loading the field into the mesh,
-  //    Albany::Application already takes care of filling the vector in the DistParamLib at
+  //    Albany::Application already takes care of filling the vector in the DistributedParameterLibrary at
   //    the beginning of the simulation (during finalSetUp), and ROL (or whatever package)
-  //    will take care of updating the vector in the DistParamLib. However, the field *may*
+  //    will take care of updating the vector in the DistributedParameterLibrary. However, the field *may*
   //    be used also by other parts of the problem, so we gather it.
   //  - the user listed the dirichlet field in the discretization section but NOT in
   //    the distributed parameters section: as in the previous case, we have that
   //    GenericSTKMeshStruct already takes care of loading the field into the mesh, and
-  //    Albany::Application already takes care of filling the vector in the DistParamLib at
-  //    the beginning of the simulation (during finalSetUp). So the field is in the DistParamLib,
+  //    Albany::Application already takes care of filling the vector in the DistributedParameterLibrary at
+  //    the beginning of the simulation (during finalSetUp). So the field is in the DistributedParameterLibrary,
   //    and we are all set for applying the BC. However, the field *may* be used also by
   //    other parts of the problem, so we gather it.
   //  - the user did not list the dirichlet field in either the discretization section nor
@@ -334,7 +334,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       TEUCHOS_TEST_FOR_EXCEPTION (is_dist_param[stateName] || is_dirichlet_field[stateName], std::logic_error,
                                   "Error! Distributed parameters and dirichlet fields MUST be node scalars.\n");
     } else if(fieldType == "Node Scalar") {
-      // Note: a Dirichlet field must be registered as a NodalDistParameter, since it must end up in the DistParamLib
+      // Note: a Dirichlet field must be registered as a NodalDistParameter, since it must end up in the DistributedParameterLibrary
       entity = is_dist_param[stateName] || is_dirichlet_field[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
       p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, meshPart);
       nodal_state = true;
@@ -368,9 +368,9 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       // We do not need to save it either, since it is already taken care of by ObserverImpl, which is hidden
       // inside a PiroObserver inside the Piro solver.
 
-      // A dirichlet field MUST be registered as a NodalDistParameter, so that it ends up is in the DistParamLib.
+      // A dirichlet field MUST be registered as a NodalDistParameter, so that it ends up is in the DistributedParameterLibrary.
       // The ObserverImpl (hidden in the PiroObserver, hidden itself in the Piro solver) already takes care
-      // of updating the mesh with the current vectors in the DistParamLib.
+      // of updating the mesh with the current vectors in the DistributedParameterLibrary.
       // Hence, a dirichlet field is also already taken care of.
       if (!is_dist_param[stateName] || !is_dirichlet_field[stateName]) {
         // A 'regular' field output: save it.
@@ -437,7 +437,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // If a dirichlet field was not declared in the mesh, and was not found in the 'Distributed Parameters'
   // section, then we ASSUME that the user computes it as a field during the field manager evaluation.
-  // In this case, we need to scatter it, so that its values end up in the DistParamLib.
+  // In this case, we need to scatter it, so that its values end up in the DistributedParameterLibrary.
   // Notice that, although it is WRONG to make the field depend on the solution (the Jacobian would be wrong),
   // it is still possible that the field depends on time-dependent states, so we need to scatter it at every
   // iteration. However, here we ASSUME this is not the case, and scatter it only once.
