@@ -51,39 +51,22 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
   // Reading the mesh on proc 0
   if (commT->getRank() == 0) 
   {
-    std::ifstream ifile;
-    open_fname( ifile);
-
-    std::string line;
-    std::getline (ifile, line);
-
     bool legacy = false;
     bool binary = false;
+    bool ascii  = false;
 
-    if (line=="$NOD") {
-      legacy = true;
-    } else if (line=="$MeshFormat") {
-
-      std::getline (ifile, line);
-      std::stringstream iss (line);
-
-      int doublesize;
-      iss >> version >> binary >> doublesize;
-
-      check_version( ifile);
-
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Mesh format not recognized.\n");
-    }
-    ifile.close();
+    determine_file_type( legacy, binary, ascii);
 
     if (legacy) {
       loadLegacyMesh ();
     } else if (binary) {
       loadBinaryMesh ();
-    } else {
+    } else if (ascii) {
       loadAsciiMesh ();
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Mesh format not recognized.\n");
     }
+    
   }
 
   // Broadcasting topological information about the mesh to all procs
@@ -100,10 +83,7 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
 
   params->validateParameters(*getValidDiscretizationParameters(), 0);
 
-  std::string ebn = "Element Block 0";
-  partVec[0] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
-  std::map<std::string,int> ebNameToIndex;
-  ebNameToIndex[ebn] = 0;
+  create_element_block();
 
 #ifdef ALBANY_SEACAS
   //  stk::io::put_io_part_attribute(metaData->universal_part());
@@ -218,6 +198,34 @@ Albany::GmshSTKMeshStruct::~GmshSTKMeshStruct()
   delete[] lines;
 
   allowable_gmsh_versions.clear();
+}
+
+void Albany::GmshSTKMeshStruct::determine_file_type( bool& legacy, bool& binary, bool& ascii)
+{
+  std::ifstream ifile;
+  open_fname( ifile);
+
+  std::string line;
+  std::getline (ifile, line);
+
+  if (line=="$NOD") {
+    legacy = true;
+  } else if (line=="$MeshFormat") {
+
+    std::getline (ifile, line);
+    std::stringstream iss (line);
+
+    int doublesize;
+    iss >> version >> binary >> doublesize;
+
+    ascii = !binary;
+
+    check_version( ifile);
+  }
+  
+
+  ifile.close();
+  return;
 }
 
 void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
@@ -917,6 +925,15 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
   ifile.close();
 }
 
+void Albany::GmshSTKMeshStruct::create_element_block()
+{
+  std::string ebn = "Element Block 0";
+  partVec[0] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
+  ebNameToIndex[ebn] = 0;
+
+  return;
+}
+
 void Albany::GmshSTKMeshStruct::loadBinaryMesh ()
 {
   std::ifstream ifile;
@@ -1217,10 +1234,11 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
       nsPartVec[nsn_i.str()] = &metaData->declare_part(nsn_i.str(), stk::topology::NODE_RANK);
       ssPartVec[ssn_i.str()] = &metaData->declare_part(ssn_i.str(), metaData->side_rank());
 
-  #ifdef ALBANY_SEACAS
+#ifdef ALBANY_SEACAS
       stk::io::put_io_part_attribute(*nsPartVec[nsn_i.str()]);
       stk::io::put_io_part_attribute(*ssPartVec[ssn_i.str()]);
-  #endif
+#endif
+
     }
 
     delete[] bdTagsArray;

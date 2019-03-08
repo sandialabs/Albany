@@ -67,6 +67,9 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Uses Teuchos test to check if file is open.
   void open_fname( std::ifstream& ifile);
 
+  // Determine the type of the msh file
+  void determine_file_type( bool& legacy, bool& binary, bool& ascii);
+
   // Sets NumNodes for ascii msh files
   void set_NumNodes( std::ifstream& ifile);
 
@@ -103,6 +106,10 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
                            std::vector<int>& tags,
                            std::stringstream& ss);
 
+  // Create the element blocks
+  // Current only creates `Element Block 0` 
+  void create_element_block();
+
   // The version of the gmsh msh file
   float version;
 
@@ -111,6 +118,9 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   // The set of versions we know how to read
   std::set<float> allowable_gmsh_versions;
+
+  // Map from element block names to their index
+  std::map<std::string,int> ebNameToIndex;
 
   void loadLegacyMesh ();
   void loadAsciiMesh ();
