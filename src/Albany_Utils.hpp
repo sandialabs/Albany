@@ -16,11 +16,9 @@
 #include <sstream>
 
 #include "Albany_DataTypes.hpp"
-#include "Teuchos_RCP.hpp"
+#include "Albany_CommUtils.hpp"
 
-#if defined(ALBANY_EPETRA)
-#include "Epetra_Comm.h"
-#endif
+#include "Teuchos_RCP.hpp"
 
 // Checks if the previous Kokkos::Cuda kernel has failed
 #ifdef ALBANY_CUDA_ERROR_CHECK
@@ -87,38 +85,12 @@ AbsRowSum(
     Teuchos::RCP<Tpetra_Vector>& absRowSumsTpetra,
     const Teuchos::RCP<Tpetra_CrsMatrix> matrix);
 
-#if defined(ALBANY_EPETRA)
-
-Albany_MPI_Comm
-getMpiCommFromEpetraComm(const Epetra_Comm& ec);
-
-Albany_MPI_Comm
-getMpiCommFromEpetraComm(Epetra_Comm& ec);
-Teuchos::RCP<const Epetra_Comm>
-createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc);
-Teuchos::RCP<const Epetra_Comm>
-createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc);
-Teuchos::RCP<const Teuchos_Comm>
-createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec);
-Teuchos::RCP<const Teuchos_Comm>
-createTeuchosCommFromEpetraComm(const Epetra_Comm& ec);
-
-#endif
 
 // Helper function which replaces the diagonal of a matrix
 void
 ReplaceDiagonalEntries(
     const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
     const Teuchos::RCP<Tpetra_Vector>& diag);
-
-// Helper function which creates diagonal vector with entries equal to the
-// absolute value of the rowsum of a matrix.
-
-Albany_MPI_Comm
-getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc);
-
-Teuchos::RCP<Teuchos_Comm>
-createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc);
 
 //! Utility to make a string out of a string + int with a delimiter:
 //! strint("dog",2,' ') = "dog 2"
