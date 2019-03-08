@@ -12,6 +12,12 @@
 namespace Albany
 {
 
+enum class GmshVersion
+{
+  V2_2,
+  V4_1
+};
+
 class GmshSTKMeshStruct : public GenericSTKMeshStruct
 {
   public:
@@ -50,6 +56,10 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Sets the set of allowable gmsh versions; i.e., 
   // versions we know how to read
   void set_allowable_gmsh_versions();
+
+  // Sets the version enum from the float read from the mesh file.
+  // Returns false if the version cannot be read.
+  bool set_version_enum_from_float();
 
   // Looks through ifile for the line containing the
   // line_of_interest.
@@ -117,7 +127,10 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   void set_all_sides_boundary( std::vector<std::string>& ssNames);
 
   // The version of the gmsh msh file
-  float version;
+  GmshVersion version;
+
+  // The float of the version read from the msh file
+  float version_in;
 
   // The file name of the msh file
   std::string fname;

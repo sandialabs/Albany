@@ -70,6 +70,8 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
   }
   // Broadcasting topological information about the mesh to all procs
   broadcast_topology( commT);
+  // Redundant for proc 0 but needed for all others processes
+  set_version_enum_from_float();
 
   // GenericSTKMeshStruct's constructor could not initialize metaData, cause the dimension was not set.
   std::vector<std::string> entity_rank_names = stk::mesh::entity_rank_names();
@@ -193,7 +195,7 @@ void Albany::GmshSTKMeshStruct::determine_file_type( bool& legacy, bool& binary,
     std::stringstream iss (line);
 
     int doublesize;
-    iss >> version >> binary >> doublesize;
+    iss >> version_in >> binary >> doublesize;
 
     ascii = !binary;
 
@@ -210,7 +212,7 @@ void Albany::GmshSTKMeshStruct::broadcast_topology( const Teuchos::RCP<const Teu
   Teuchos::broadcast(*commT, 0, 1, &NumElemNodes);
   Teuchos::broadcast(*commT, 0, 1, &NumSideNodes);
   Teuchos::broadcast(*commT, 0, 1, &NumElems);
-  Teuchos::broadcast(*commT, 0, 1, &version);
+  Teuchos::broadcast(*commT, 0, 1, &version_in);
 
   return;
 }
@@ -520,12 +522,12 @@ void Albany::GmshSTKMeshStruct::set_NumNodes( std::ifstream& ifile)
   swallow_lines_until( ifile, line, "$Nodes");
   TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Nodes section not found.\n");
 
-  if( version == (float)2.2)
+  if( version == GmshVersion::V2_2)
   {
     std::getline (ifile, line);
     NumNodes = std::atoi (line.c_str() );
   }
-  else if( version == (float)4.1)
+  else if( version == GmshVersion::V4_1)
   {
     int num_entity_blocks = 0;
     int min_node_tag      = 0;
@@ -542,7 +544,7 @@ void Albany::GmshSTKMeshStruct::set_NumNodes( std::ifstream& ifile)
 
 void Albany::GmshSTKMeshStruct::load_node_data( std::ifstream& ifile)
 {
-  if( version == (float)2.2)
+  if( version == GmshVersion::V2_2)
   {
     int id = 0;
     for (int i=0; i<NumNodes; ++i) 
@@ -550,7 +552,7 @@ void Albany::GmshSTKMeshStruct::load_node_data( std::ifstream& ifile)
       ifile >> id >> pts[i][0] >> pts[i][1] >> pts[i][2];
     }
   }
-  else if( version == (float) 4.1)
+  else if( version == GmshVersion::V4_1)
   {
     int accounted_nodes = 0;
     while( accounted_nodes < NumNodes)
@@ -593,11 +595,11 @@ void Albany::GmshSTKMeshStruct::set_num_entities( std::ifstream& ifile)
   // Read the number of entities
   std::getline (ifile, line);
 
-  if( version == (float)2.2)
+  if( version == GmshVersion::V2_2)
   {
     num_entities = std::atoi (line.c_str() );
   }
-  else if( version == (float)4.1)
+  else if( version == GmshVersion::V4_1)
   {
     int num_entity_blocks = 0;
     int num_elements      = 0;
@@ -647,7 +649,7 @@ void Albany::GmshSTKMeshStruct::set_specific_num_of_each_elements( std::ifstream
   // Need to start at the second line after '$Elements'
   std::getline (ifile, line);
 
-  if( version == (float)2.2)
+  if( version == GmshVersion::V2_2)
   {
     for (int i(0); i<num_entities; ++i) 
     {
@@ -660,7 +662,7 @@ void Albany::GmshSTKMeshStruct::set_specific_num_of_each_elements( std::ifstream
       increment_element_type( e_type);
     }
   }
-  else if( version == (float)4.1)
+  else if( version == GmshVersion::V4_1)
   {
     int accounted_elems = 0;
     while (accounted_elems < num_entities)
@@ -834,7 +836,7 @@ void Albany::GmshSTKMeshStruct::load_element_data( std::ifstream& ifile)
 
   // Read the elements
   int iline(0), itria(0), iquad(0), itetra(0), ihexa(0), n_tags(0), id(0), e_type(0);
-  if( version == (float)2.2)
+  if( version == GmshVersion::V2_2)
   {
     std::vector<int> tags;
     for (int i(0); i<num_entities; ++i) 
@@ -853,7 +855,7 @@ void Albany::GmshSTKMeshStruct::load_element_data( std::ifstream& ifile)
       store_element_info( e_type, iline, itria, iquad, itetra, ihexa, tags, ss);
     }
   }
-  else if( version == (float)4.1)
+  else if( version == GmshVersion::V4_1)
   {
     int accounted_elems = 0;
     while (accounted_elems < num_entities)
@@ -1208,7 +1210,7 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
                                                 std::vector<std::string>&  nsNames)
 {
   set_all_nodes_boundary( nsNames);
-  set_all_sides_boundary( nsNames);
+  set_all_sides_boundary( ssNames);
 
   if( version == (float)2.2)
   {
