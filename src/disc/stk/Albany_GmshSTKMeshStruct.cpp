@@ -210,6 +210,7 @@ void Albany::GmshSTKMeshStruct::broadcast_topology( const Teuchos::RCP<const Teu
   Teuchos::broadcast(*commT, 0, 1, &NumElemNodes);
   Teuchos::broadcast(*commT, 0, 1, &NumSideNodes);
   Teuchos::broadcast(*commT, 0, 1, &NumElems);
+  Teuchos::broadcast(*commT, 0, 1, &version);
 
   return;
 }
