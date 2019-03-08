@@ -2,7 +2,6 @@
 #define ALBANY_EPETRA_THYRA_UTILS_HPP
 
 #include "Albany_ThyraTypes.hpp"
-#include "Albany_ThyraCrsGraphProxy.hpp"
 
 #include "Epetra_Comm.h"
 #include "Epetra_BlockMap.h"
@@ -149,10 +148,6 @@ getEpetraMatrix (Thyra_LinearOp& lop,
 Teuchos::RCP<const Epetra_CrsMatrix>
 getConstEpetraMatrix (const Thyra_LinearOp& lop,
                       const bool throw_on_failure = true);
-
-// --- Get an Epetra graph from a ThyraCrsGraphProxy --- //
-Teuchos::RCP<Epetra_CrsGraph>
-getEpetraCrsGraph (const ThyraCrsGraphProxy& graphProxy);
 
 } // namespace Albany
 

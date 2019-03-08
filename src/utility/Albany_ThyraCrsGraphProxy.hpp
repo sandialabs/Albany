@@ -45,10 +45,6 @@ struct ThyraCrsGraphProxy {
 
   Teuchos::RCP<Thyra_LinearOp>  createOp () const;
 
-  // This is a dirty trick: we attach the concrete linear algebra types as extra data to
-  // the dummy RCP we return.
-  Teuchos::RCP<bool> getGraph () const;
-
 private:
 
   // Struct hiding the concrete implementation. This is an implementation

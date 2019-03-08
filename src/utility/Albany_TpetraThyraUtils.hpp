@@ -3,7 +3,6 @@
 
 #include "Albany_TpetraTypes.hpp"
 #include "Albany_ThyraTypes.hpp"
-#include "Albany_ThyraCrsGraphProxy.hpp"
 
 namespace Albany
 {
@@ -105,11 +104,6 @@ getTpetraMatrix (Thyra_LinearOp& lop,
 Teuchos::RCP<const Tpetra_CrsMatrix>
 getConstTpetraMatrix (const Thyra_LinearOp& lop,
                       const bool throw_on_failure = true);
-
-// --- Get a Tpetra graph from a ThyraCrsGraphProxy --- //
-Teuchos::RCP<Tpetra_CrsGraph>
-getTpetraCrsGraph (const ThyraCrsGraphProxy& graphProxy,
-                   const bool throw_on_failure = true);
 
 } // namespace Albany
 

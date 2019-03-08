@@ -144,22 +144,6 @@ void ThyraCrsGraphProxy::fillComplete () {
   m_filled = true;
 }
 
-Teuchos::RCP<bool> ThyraCrsGraphProxy::getGraph () const {
-  Teuchos::RCP<bool> dummy;
-  auto bt = Albany::build_type();
-  if (bt==BuildType::Epetra) {
-#ifdef ALBANY_EPETRA
-    Teuchos::set_extra_data(m_graph->e_graph,"Epetra_CrsGraph",Teuchos::inOutArg(dummy));
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
-#endif
-  } else {
-    Teuchos::set_extra_data(m_graph->t_graph,"Tpetra_CrsGraph",Teuchos::inOutArg(dummy));
-  }
-
-  return dummy;
-}
-
 Teuchos::RCP<Thyra_LinearOp> ThyraCrsGraphProxy::createOp () const {
   TEUCHOS_TEST_FOR_EXCEPTION (!m_filled, std::logic_error, "Error! Cannot create a linear operator if the graph is not filled.\n");
 

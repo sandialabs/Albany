@@ -4,18 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off.
-
-#ifndef ALBANY_ABSTRACTDISCRETIZATION_HPP
-#define ALBANY_ABSTRACTDISCRETIZATION_HPP
+#ifndef ALBANY_ABSTRACT_DISCRETIZATION_HPP
+#define ALBANY_ABSTRACT_DISCRETIZATION_HPP
 
 #include "Albany_config.h"
-
-#if defined(ALBANY_EPETRA)
-#include "Epetra_Map.h"
-#include "Epetra_Vector.h"
-#include "Epetra_CrsGraph.h"
-#endif
 
 #include "Shards_CellTopologyData.h"
 #include "Shards_Array.hpp"
@@ -23,9 +15,9 @@
 #include "Albany_NodalDOFManager.hpp"
 #include "Albany_AbstractMeshStruct.hpp"
 #include "Albany_DiscretizationUtils.hpp"
+#include "Albany_ThyraCrsGraphProxy.hpp"
 
 #include "Albany_ThyraTypes.hpp"
-#include "Albany_TpetraThyraUtils.hpp"
 
 namespace Albany {
 
@@ -46,103 +38,58 @@ class AbstractDiscretization {
     typedef std::map<std::string,Teuchos::RCP<Albany::AbstractDiscretization> > SideSetDiscretizationsType;
 
     //! Constructor
-    AbstractDiscretization() {};
+    AbstractDiscretization() = default;
+
+    //! Prohibit copying
+    AbstractDiscretization(const AbstractDiscretization&) = delete;
+
+    //! Private to prohibit copying
+    AbstractDiscretization& operator=(const AbstractDiscretization&) = default;
+
 
     //! Destructor
-    virtual ~AbstractDiscretization() {};
-
-#if defined(ALBANY_EPETRA)
-    //! Get Epetra DOF map
-    virtual Teuchos::RCP<const Epetra_Map> getMap() const = 0;
-#endif
-    //! Get Tpetra DOF map
-    virtual Teuchos::RCP<const Tpetra_Map> getMapT() const = 0;
-    //! Get Tpetra DOF map
-    virtual Teuchos::RCP<const Tpetra_Map> getMapT(const std::string& field_name) const = 0;
+    virtual ~AbstractDiscretization() = default;
 
     //! Get DOF vector space.
     //! Note: derived classes may want to perhaps store the vector space ptr rather than building it on the fly.
     //!       Besides, upon completion of the refactor, we may foresee eliminating all the Tpetra_Map getters.
-    virtual Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace() const { return createThyraVectorSpace(getMapT()); }
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace() const = 0;
 
-    virtual Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace(const std::string& field_name) const { return createThyraVectorSpace(getMapT(field_name)); }
-
-#if defined(ALBANY_EPETRA)
-    //! Get Epetra overlapped DOF map
-    virtual Teuchos::RCP<const Epetra_Map> getOverlapMap() const = 0;
-#endif
-
-    //! Get Tpetra overlapped DOF map
-    virtual Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const = 0;
-    //! Get field overlapped DOF map
-    virtual Teuchos::RCP<const Tpetra_Map> getOverlapMapT(const std::string& field_name) const = 0;
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace(const std::string& field_name) const = 0;
 
     //! Get DOF vector space.
-    //! Note: derived classes may want to perhaps store the vector space ptr rather than building it on the fly.
-    //!       Besides, upon completion of the refactor, we may foresee eliminating all the Tpetra_Map getters.
-    virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace() const { return createThyraVectorSpace(getOverlapMapT()); }
-    virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace(const std::string& field_name) const { return createThyraVectorSpace(getOverlapMapT(field_name)); }
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace() const = 0;
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace(const std::string& field_name) const = 0;
 
-#if defined(ALBANY_EPETRA)
-    //! Get Epetra Jacobian graph
-    virtual Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const = 0;
-#endif
-    //! Get Tpetra Jacobian graph
-    virtual Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const = 0;
+    //! Get an overlapped Jacobian operator graph proxy
+    virtual Teuchos::RCP<ThyraCrsGraphProxy> getJacobianGraphProxy () const = 0;
+    //! Get an overlapped Jacobian operator graph proxy
+    virtual Teuchos::RCP<ThyraCrsGraphProxy> getOverlapJacobianGraphProxy () const = 0;
 
 #ifdef ALBANY_AERAS
-    //! Get implicit Tpetra Jacobian graph (for Aeras hyperviscosity)
-    virtual Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const = 0;
+    //! Get implicit Jacobian linear operator (for Aeras hyperviscosity)
+    virtual Teuchos::RCP<ThyraCrsGraphProxy> getImplicitJacobianProxy() const = 0;
 #endif
-
-    //! Get Epetra overlap Jacobian graph
-#if defined(ALBANY_EPETRA)
-    virtual Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const = 0;
-#endif
-    //! Get Tpetra overlap Jacobian graph
-    virtual Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const = 0;
 
 #ifdef ALBANY_AERAS
-    //! Get implicit Tpetra Jacobian graph (for Aeras hyperviscosity)
-    virtual Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const = 0;
+    //! Get implicit Jacobian operator (for Aeras hyperviscosity)
+    virtual Teuchos::RCP<ThyraCrsGraphProxy> getImplicitOverlapJacobianProxy() const = 0;
 #endif
-
-#if defined(ALBANY_EPETRA)
-    //! Get Epetra Node map
-    virtual Teuchos::RCP<const Epetra_Map> getNodeMap() const = 0;
-#endif
-
-    //! Get Tpetra Node map
-    virtual Teuchos::RCP<const Tpetra_Map> getNodeMapT() const = 0;
 
     //! Get node vector space
-    virtual Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace() const { return createThyraVectorSpace(getNodeMapT()); }
-
-    //! Get Field Node map
-    virtual Teuchos::RCP<const Tpetra_Map> getNodeMapT(const std::string& field_name) const = 0;
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace() const = 0;
 
     //! Get Field Node vector space
-    virtual Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace(const std::string& field_name) const { return createThyraVectorSpace(getNodeMapT(field_name)); }
-
-#if defined(ALBANY_EPETRA)
-    //! Get overlapped Node map
-    virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const = 0;
-#endif
-
-    //! Get overlapped Node map
-    virtual Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const = 0;
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace(const std::string& field_name) const = 0;
 
     //! Returns boolean telling code whether explicit scheme is used (needed for Aeras problems only)
     virtual bool isExplicitScheme() const = 0;
 
-    //! Get Field Node map
-    virtual Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT(const std::string& field_name) const = 0;
-
     //! Get overlapped node vector space
-    virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace() const { return createThyraVectorSpace(getOverlapNodeMapT()); }
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace() const = 0;
 
     //! Get overlapped Field Node vector space
-    virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace(const std::string& field_name) const { return createThyraVectorSpace(getOverlapNodeMapT(field_name)); }
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace(const std::string& field_name) const = 0;
 
     //! Get Node set lists
     virtual const NodeSetList& getNodeSets() const = 0;
@@ -224,26 +171,8 @@ class AbstractDiscretization {
     virtual WsLIDList&  getElemGIDws() = 0;
     virtual const WsLIDList&  getElemGIDws() const = 0;
 
-#if defined(ALBANY_EPETRA)
-    //! Get solution vector from mesh database
-    virtual Teuchos::RCP<Epetra_Vector> getSolutionField(bool overlapped=false) const = 0;
-#endif
-    virtual Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(bool overlapped=false) const = 0;
-
-    virtual Teuchos::RCP<Tpetra_MultiVector> getSolutionMV(bool overlapped=false) const = 0;
-
-    virtual void getFieldT(Tpetra_Vector &field_vector, const std::string& field_name) const = 0;
-    // TODO: remove the method above, and make the one below abstract
-    virtual void getField (const Teuchos::RCP<Thyra_Vector>& field_vector, const std::string& field_name) const {
-      auto field_vectorT = getTpetraVector(field_vector);
-      getFieldT(*field_vectorT,field_name);
-    }
-
     //! Flag if solution has a restart values -- used in Init Cond
     virtual bool hasRestartSolution() const = 0;
-
-    //! Does the underlying discretization support MOR?
-    virtual bool supportsMOR() const = 0;
 
     //! File time of restart solution
     virtual double restartDataTime() const = 0;
@@ -254,63 +183,51 @@ class AbstractDiscretization {
     //! Get number of total DOFs per node
     virtual int getNumEq() const = 0;
 
-    //! Set the field vector into mesh database
-    virtual void setFieldT(const Tpetra_Vector &field_vector, const std::string& field_name, bool overlapped) = 0;
-
-    // TODO: remove the method above, and make the one below abstract
-    virtual void setField(const Teuchos::RCP<const Thyra_Vector>& field_vector, const std::string& field_name, bool overlapped) {
-      auto field_vectorT = getConstTpetraVector(field_vector);
-      setFieldT(*field_vectorT,field_name,overlapped);
-    }
-
-    //! Set the residual field for output - Tpetra version
-    virtual void setResidualFieldT(const Tpetra_Vector& residual) = 0;
-    virtual void setResidualField(const Teuchos::RCP<const Thyra_Vector>& residual) { setResidualFieldT(*Albany::getConstTpetraVector(residual)); }
-
-#if defined(ALBANY_EPETRA)
-    //! Write the solution to the output file
-    virtual void writeSolution(const Epetra_Vector& solution, const double time, const bool overlapped = false) = 0;
-    virtual void writeSolution(const Epetra_Vector& solution, const Epetra_Vector& solution_dot,
-                               const double time, const bool overlapped = false) = 0;
-#endif
-
-    //! Write the solution to the output file - Tpetra version. Calls next two together.
-    virtual void writeSolutionT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
-    virtual void writeSolutionT(const Tpetra_Vector &solutionT, const Tpetra_Vector &solution_dotT,
-                                const double time, const bool overlapped = false) = 0;
-    virtual void writeSolutionT(const Tpetra_Vector &solutionT, const Tpetra_Vector &solution_dotT,
-                                const Tpetra_Vector &solution_dotdotT,
-                                const double time, const bool overlapped = false) = 0;
-    virtual void writeSolutionMV(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false) = 0;
-    //! Write the solution to the mesh database.
-    virtual void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
-    virtual void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT,
-                                              const Tpetra_Vector &solution_dotT,
-                                              const double time, const bool overlapped = false) = 0;
-    virtual void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT,
-                                              const Tpetra_Vector &solution_dotT,
-                                              const Tpetra_Vector &solution_dotdotT,
-                                              const double time, const bool overlapped = false) = 0;
-    virtual void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false) = 0;
-    virtual void writeSolutionToMeshDatabase(const Teuchos::RCP<const Thyra_Vector>& solution, const double time, const bool overlapped = false) {
-      writeSolutionToMeshDatabaseT(*getConstTpetraVector(solution),time,overlapped); }
-    //! Write the solution to file. Must call writeSolutionT first.
-    virtual void writeSolutionToFileT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
-    virtual void writeSolutionMVToFile(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false) = 0;
-
     //! Get Numbering for layered mesh (mesh structred in one direction)
-    virtual Teuchos::RCP<LayeredMeshNumbering<LO> > getLayeredMeshNumbering() = 0;
+    virtual Teuchos::RCP<LayeredMeshNumbering<LO> > getLayeredMeshNumbering() const = 0;
 
-  private:
+    // --- Get/set solution/residual/field vectors to/from mesh --- //
 
-    //! Private to prohibit copying
-    AbstractDiscretization(const AbstractDiscretization&);
+    virtual Teuchos::RCP<Thyra_Vector> getSolutionField(bool overlapped=false) const = 0;
+    virtual Teuchos::RCP<Thyra_MultiVector> getSolutionMV(bool overlapped=false) const = 0;
+    virtual void getField (Thyra_Vector& field_vector, const std::string& field_name) const = 0;
+    virtual void setField (const Thyra_Vector &field_vector, const std::string& field_name, bool overlapped) = 0;
+    virtual void setResidualField (const Thyra_Vector& residual) = 0;
 
-    //! Private to prohibit copying
-    AbstractDiscretization& operator=(const AbstractDiscretization&);
+    // --- Methods to write solution in the output file --- //
 
+    //! Write the solution to the output file. Calls next two together.
+    virtual void writeSolution (const Thyra_Vector& solution,
+                                const double time, const bool overlapped = false) = 0;
+    virtual void writeSolution (const Thyra_Vector& solution,
+                                const Thyra_Vector& solution_dot,
+                                const double time, const bool overlapped = false) = 0;
+    virtual void writeSolution (const Thyra_Vector& solution,
+                                const Thyra_Vector& solution_dot,
+                                const Thyra_Vector& solution_dotdot,
+                                const double time, const bool overlapped = false) = 0;
+    virtual void writeSolutionMV (const Thyra_MultiVector& solution,
+                                  const double time, const bool overlapped = false) = 0;
+    //! Write the solution to the mesh database.
+    virtual void writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                                              const double time, const bool overlapped = false) = 0;
+    virtual void writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                                              const Thyra_Vector& solution_dot,
+                                              const double time, const bool overlapped = false) = 0;
+    virtual void writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                                              const Thyra_Vector& solution_dot,
+                                              const Thyra_Vector& solution_dotdot,
+                                              const double time, const bool overlapped = false) = 0;
+    virtual void writeSolutionMVToMeshDatabase (const Thyra_MultiVector &solution,
+                                                const double time, const bool overlapped = false) = 0;
+
+    //! Write the solution to file. Must call writeSolution first.
+    virtual void writeSolutionToFile (const Thyra_Vector &solution,
+                                      const double time, const bool overlapped = false) = 0;
+    virtual void writeSolutionMVToFile (const Thyra_MultiVector &solution,
+                                        const double time, const bool overlapped = false) = 0;
 };
 
-}
+} // namespace Albany
 
-#endif // ALBANY_ABSTRACTDISCRETIZATION_HPP
+#endif // ALBANY_ABSTRACT_DISCRETIZATION_HPP

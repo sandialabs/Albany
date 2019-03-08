@@ -442,23 +442,4 @@ getConstEpetraMatrix (const Thyra_LinearOp& lop,
   return emat;
 }
 
-// --- Get a Tpetra graph from a ThyraCrsGraphProxy --- //
-Teuchos::RCP<Epetra_CrsGraph>
-getEpetraCrsGraph (const ThyraCrsGraphProxy& graphProxy,
-                   const bool throw_on_failure) {
-  Teuchos::RCP<Epetra_CrsGraph> e_graph;
-
-  Teuchos::RCP<bool> dummy = graphProxy.getGraph();
-  // The actual graph is stored as extra data attached to the dummy RCP returned by getGraph().
-  if (throw_on_failure) {
-    e_graph = Teuchos::get_nonconst_extra_data<Teuchos::RCP<Epetra_CrsGraph>>(dummy,"Epetra_CrsGraph");
-  } else {
-    auto ptr = Teuchos::get_optional_nonconst_extra_data<Teuchos::RCP<Epetra_CrsGraph>>(dummy,"Epetra_CrsGraph");
-    if (!ptr.is_null()) {
-      e_graph = *ptr;
-    }
-  }
-  return e_graph;
-}
-
 } // namespace Albany
