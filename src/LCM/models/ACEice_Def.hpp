@@ -520,34 +520,46 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT W = 4.0;
 
   // dfdT is a smooth function, and it is centered about Tmelt.
+  // dfdT is naturally negative (less than 0).
+  //   f(T) = L / (1 + e^(-W*(T-T0)))
   ScalarT dfdT = 0.0;
   ScalarT TcurrC = Tcurr - 273.15;
   ScalarT TdiffC = TcurrC - TmeltC;
-  dfdT = -W * exp(-W * TdiffC) /
-         ((1.0 + exp(-W * TdiffC)) * (1.0 + exp(-W * TdiffC)));
-	   
+  //dfdT = -W * exp(-W * TdiffC) /
+  //       ((1.0 + exp(-W * TdiffC)) * (1.0 + exp(-W * TdiffC)));
+  
   // Update the ice saturation
-  icurr = iold + dfdT * dTemp;
+  // icurr = iold + dfdT * dTemp;
+  icurr = 1.0 - (1.0 / (1.0 + exp(-W * TdiffC)));
   icurr = std::max(0.0, icurr);
-  icurr = std::min(ice_saturation_max_, icurr);
-
+  icurr = std::min(1.0, icurr);
+  
+  // Calculate dfdT by evaluation
+  // dfdT needs to be negative (becaust Lfi is positive always)
+  if (dTemp != 0.0) {
+    dfdT = -1.0 * std::abs((iold - icurr) / dTemp);
+  }
+	   
   // Update the water saturation
   wcurr = 1.0 - icurr;
-  wcurr = std::max(water_saturation_min_, wcurr);
+  wcurr = std::max(0.0, wcurr);
   wcurr = std::min(1.0, wcurr);
 
   // Update the effective material density
   density_(cell, pt) =
       porosity * ((ice_density_ * icurr) + (water_density_ * wcurr));
+  //density_(cell,pt) = water_density_;
 
   // Update the effective material heat capacity
   heat_capacity_(cell, pt) =
       porosity * ((ice_heat_capacity_ * icurr) + 
                   (water_heat_capacity_ * wcurr));
+  //heat_capacity_(cell,pt) = water_heat_capacity_;
 
   // Update the effective material thermal conductivity
   thermal_cond_(cell, pt) = pow(ice_thermal_cond_, (icurr * porosity)) *
                             pow(water_thermal_cond_, (wcurr * porosity));
+  //thermal_cond_(cell,pt) = water_thermal_cond_;
 
   // Update the material thermal inertia term
   thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt))
