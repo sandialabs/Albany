@@ -113,6 +113,9 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Current only creates `Element Block 0` 
   void create_element_block();
 
+  void set_all_nodes_boundary( std::vector<std::string>& nsNames);
+  void set_all_sides_boundary( std::vector<std::string>& ssNames);
+
   // The version of the gmsh msh file
   float version;
 

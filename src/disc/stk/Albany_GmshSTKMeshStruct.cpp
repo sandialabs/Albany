@@ -87,26 +87,9 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
   stk::io::put_io_part_attribute(*partVec[0]);
 #endif
 
-  // All the nodes
-  std::vector < std::string > nsNames;
-  std::string nsn = "Node";
-  nsNames.push_back(nsn);
-  nsPartVec[nsn] = &metaData->declare_part(nsn, stk::topology::NODE_RANK);
-#ifdef ALBANY_SEACAS
-  stk::io::put_io_part_attribute(*nsPartVec[nsn]);
-#endif
-
-  // All the sidesets
-  std::vector < std::string > ssNames;
-  std::string ssn = "BoundarySide";
-  ssNames.push_back(ssn);
-  ssPartVec[ssn] = &metaData->declare_part(ssn, metaData->side_rank());
-#ifdef ALBANY_SEACAS
-  stk::io::put_io_part_attribute(*ssPartVec[ssn]);
-  stk::io::put_io_part_attribute(metaData->universal_part());
-#endif
-
   // Set boundary (sideset, nodeset) information
+  std::vector < std::string > nsNames;
+  std::vector < std::string > ssNames;
   set_boundaries( commT, ssNames, nsNames);
 
   switch (this->numDim) {
@@ -1194,10 +1177,38 @@ void Albany::GmshSTKMeshStruct::loadBinaryMesh ()
   ifile.close();
 }
 
+void Albany::GmshSTKMeshStruct::set_all_nodes_boundary( std::vector<std::string>& nsNames)
+{
+  std::string nsn = "Node";
+  nsNames.push_back(nsn);
+  nsPartVec[nsn] = &metaData->declare_part(nsn, stk::topology::NODE_RANK);
+#ifdef ALBANY_SEACAS
+  stk::io::put_io_part_attribute(*nsPartVec[nsn]);
+#endif
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::set_all_sides_boundary( std::vector<std::string>& ssNames)
+{
+  std::string ssn = "BoundarySide";
+  ssNames.push_back(ssn);
+  ssPartVec[ssn] = &metaData->declare_part(ssn, metaData->side_rank());
+#ifdef ALBANY_SEACAS
+  stk::io::put_io_part_attribute(*ssPartVec[ssn]);
+  stk::io::put_io_part_attribute(metaData->universal_part());
+#endif
+
+  return;
+}
+
 void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos_Comm>& commT,
                                                 std::vector<std::string>&  ssNames,
                                                 std::vector<std::string>&  nsNames)
 {
+  set_all_nodes_boundary( nsNames);
+  set_all_sides_boundary( nsNames);
+
   if( version == (float)2.2)
   {
     // Counting boundaries (only proc 0 has any stored, so far)
