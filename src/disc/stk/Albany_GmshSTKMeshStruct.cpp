@@ -1274,28 +1274,45 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
 
 void Albany::GmshSTKMeshStruct::set_allowable_gmsh_versions()
 {
-  // Add new allowable versions here!
   allowable_gmsh_versions.insert( 2.2);
   allowable_gmsh_versions.insert( 4.1);
 
   return;
 }
 
+bool Albany::GmshSTKMeshStruct::set_version_enum_from_float()
+{
+  bool can_read = true;
+  if( version_in == (float)2.2 )
+  {
+    version = GmshVersion::V2_2;
+  }
+  else if( version_in == (float)4.1 )
+  {
+    version = GmshVersion::V4_1;
+  }
+  else
+  {
+    can_read = false;
+  }
+
+  return can_read;
+}
 
 void Albany::GmshSTKMeshStruct::check_version( std::ifstream& ifile)
 {
   // Tell user what gmsh version we're reading
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
   *out << "The gmsh version is: "
-       << version
+       << version_in
        << std::endl;
 
   // Check if we know how to read this gmsh version.
   // Return an error if we do not.
-  set_allowable_gmsh_versions();
-  if( allowable_gmsh_versions.find( version) == allowable_gmsh_versions.end())
+  if( !set_version_enum_from_float() )
   {
     *out << "Allowable gmsh *.msh file versions are: " << std::endl;
+    set_allowable_gmsh_versions();
     for( std::set<float>::iterator it = allowable_gmsh_versions.begin(); it != allowable_gmsh_versions.end(); it++)
     {
       *out << *it << std::endl;
