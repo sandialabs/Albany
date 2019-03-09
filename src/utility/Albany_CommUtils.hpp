@@ -34,6 +34,22 @@ Albany_MPI_Comm getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc);
 
 Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc);
 
+template<typename OrdinalType>
+Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromTeuchosComm(const Teuchos::RCP<const Teuchos::Comm<OrdinalType>>& tc_in) {
+#ifdef HAVE_MPI
+  const Teuchos::RCP<const Teuchos::MpiComm<OrdinalType> > mpiCommIn =
+    Teuchos::rcp_dynamic_cast<const Teuchos::MpiComm<OrdinalType> >(tc_in);
+  if (nonnull(mpiCommIn)) {
+    return Teuchos::createMpiComm<int>(mpiCommIn->getRawMpiComm());
+  }
+#endif // HAVE_MPI
+
+  // Assert conversion to Teuchos::SerialComm as a last resort (or throw)
+  Teuchos::rcp_dynamic_cast<const Teuchos::SerialComm<OrdinalType> >(tc_in, true);
+
+  return Teuchos::createSerialComm<int>();
+}
+
 } // namespace Albany
 
 #endif  // ALBANY_COMM_UTILS_HPP
