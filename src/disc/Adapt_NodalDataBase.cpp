@@ -50,6 +50,24 @@ void Adapt::NodalDataBase::initialize() {
 }
 
 void Adapt::NodalDataBase::
+replaceOverlapVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs)
+{
+  initialize();
+
+  if (Teuchos::nonnull(nodal_data_vector))
+    nodal_data_vector->replaceOverlapVectorSpace(vs);
+}
+
+void Adapt::NodalDataBase::
+replaceVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs)
+{
+  initialize();
+
+  if (Teuchos::nonnull(nodal_data_vector))
+    nodal_data_vector->replaceVectorSpace(vs);
+}
+
+void Adapt::NodalDataBase::
 resizeOverlapMap(const Teuchos::Array<Tpetra_GO>& overlap_nodeGIDs,
                  const Teuchos::RCP<const Teuchos::Comm<int> >& comm_) {
   initialize();

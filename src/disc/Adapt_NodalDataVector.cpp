@@ -8,6 +8,8 @@
 #include "Tpetra_Import.hpp"
 #include "Teuchos_CommHelpers.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+
 Adapt::NodalDataVector::NodalDataVector(
   const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer_,
   NodeFieldSizeVector& nodeVectorLayout_,
@@ -19,6 +21,17 @@ Adapt::NodalDataVector::NodalDataVector(
     mapsHaveChanged(false),
     num_preeval_calls(0), num_posteval_calls(0)
 {
+}
+
+void 
+Adapt::NodalDataVector::
+replaceOverlapVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs) {
+  overlap_node_map = Albany::getTpetraMap(vs);
+  
+  // Build the vector and accessors
+  overlap_node_vec = Teuchos::rcp(new Tpetra_MultiVector(local_node_map, vectorsize));
+
+  mapsHaveChanged = true;
 }
 
 void
@@ -34,6 +47,17 @@ resizeOverlapMap(const Teuchos::Array<Tpetra_GO>& overlap_nodeGIDs,
 
   // Build the vector and accessors
   overlap_node_vec = Teuchos::rcp(new Tpetra_MultiVector(overlap_node_map, vectorsize));
+
+  mapsHaveChanged = true;
+}
+
+void 
+Adapt::NodalDataVector::
+replaceVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs) {
+  local_node_map = Albany::getTpetraMap(vs);
+  
+  // Build the vector and accessors
+  local_node_vec = Teuchos::rcp(new Tpetra_MultiVector(local_node_map, vectorsize));
 
   mapsHaveChanged = true;
 }

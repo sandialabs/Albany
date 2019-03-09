@@ -12,6 +12,7 @@
 #include "Adapt_NodalFieldUtils.hpp"
 #include "Albany_AbstractNodeFieldContainer.hpp"
 
+#include "Albany_ThyraTypes.hpp"
 #include "Albany_TpetraTypes.hpp"
 
 namespace Adapt {
@@ -36,6 +37,10 @@ public:
 
   const Teuchos::RCP<const Tpetra_CrsGraph>& getNodalGraph()
   { return nodalGraph; }
+
+  void replaceVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs);
+
+  void replaceOverlapVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs);
 
   void resizeLocalMap(const Teuchos::Array<Tpetra_GO>& local_nodeGIDs,
                       const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
