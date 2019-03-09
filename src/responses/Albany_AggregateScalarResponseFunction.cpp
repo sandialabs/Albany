@@ -49,11 +49,6 @@ postRegSetup()
   }
 }
 
-Albany::AggregateScalarResponseFunction::
-~AggregateScalarResponseFunction()
-{
-}
-
 unsigned int
 Albany::AggregateScalarResponseFunction::
 numResponses() const 
