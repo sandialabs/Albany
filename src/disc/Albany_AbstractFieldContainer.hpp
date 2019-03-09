@@ -5,8 +5,8 @@
 //*****************************************************************//
 
 
-#ifndef ALBANY_ABSTRACTFIELDCONT_HPP
-#define ALBANY_ABSTRACTFIELDCONT_HPP
+#ifndef ALBANY_ABSTRACT_FIELD_CONTAINER_HPP
+#define ALBANY_ABSTRACT_FIELD_CONTAINER_HPP
 
 #include <vector>
 #include <string>
@@ -30,7 +30,6 @@ class AbstractFieldContainer {
 
 };
 
+} // namespace Albany
 
-}
-
-#endif // ALBANY_ABSTRACTFIELDCONT_HPP
+#endif // ALBANY_ABSTRACT_FIELD_CONTAINER_HPP

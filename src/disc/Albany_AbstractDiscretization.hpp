@@ -15,7 +15,6 @@
 #include "Albany_NodalDOFManager.hpp"
 #include "Albany_AbstractMeshStruct.hpp"
 #include "Albany_DiscretizationUtils.hpp"
-#include "Albany_ThyraCrsGraphProxy.hpp"
 
 #include "Albany_ThyraTypes.hpp"
 
@@ -46,29 +45,32 @@ class AbstractDiscretization {
     //! Private to prohibit copying
     AbstractDiscretization& operator=(const AbstractDiscretization&) = default;
 
-
     //! Destructor
     virtual ~AbstractDiscretization() = default;
 
-    //! Get DOF vector space.
-    //! Note: derived classes may want to perhaps store the vector space ptr rather than building it on the fly.
-    //!       Besides, upon completion of the refactor, we may foresee eliminating all the Tpetra_Map getters.
+    //! Get node vector space (owned and overlapped)
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace() const = 0;
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace() const = 0;
+
+    //! Get solution DOF vector space (owned and overlapped).
     virtual Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace() const = 0;
-
-    virtual Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace(const std::string& field_name) const = 0;
-
-    //! Get DOF vector space.
     virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace() const = 0;
+
+    //! Get Field node vector space (owned and overlapped)
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace(const std::string& field_name) const = 0;
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace(const std::string& field_name) const = 0;
+
+    //! Get Field vector space (owned and overlapped)
+    virtual Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace(const std::string& field_name) const = 0;
     virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace(const std::string& field_name) const = 0;
 
-    //! Get an overlapped Jacobian operator graph proxy
-    virtual Teuchos::RCP<ThyraCrsGraphProxy> getJacobianGraphProxy () const = 0;
-    //! Get an overlapped Jacobian operator graph proxy
-    virtual Teuchos::RCP<ThyraCrsGraphProxy> getOverlapJacobianGraphProxy () const = 0;
+    //! Create a Jacobian operator (owned and overlapped)
+    virtual Teuchos::RCP<Thyra_LinearOp> createJacobianOp () const = 0;
+    virtual Teuchos::RCP<Thyra_LinearOp> createOverlapJacobianOp () const = 0;
 
 #ifdef ALBANY_AERAS
     //! Get implicit Jacobian linear operator (for Aeras hyperviscosity)
-    virtual Teuchos::RCP<ThyraCrsGraphProxy> getImplicitJacobianProxy() const = 0;
+    virtual Teuchos::RCP<Thyra_LinearOp> createImplicitJacobianOp () const = 0;
 #endif
 
 #ifdef ALBANY_AERAS
@@ -76,20 +78,8 @@ class AbstractDiscretization {
     virtual Teuchos::RCP<ThyraCrsGraphProxy> getImplicitOverlapJacobianProxy() const = 0;
 #endif
 
-    //! Get node vector space
-    virtual Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace() const = 0;
-
-    //! Get Field Node vector space
-    virtual Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace(const std::string& field_name) const = 0;
-
     //! Returns boolean telling code whether explicit scheme is used (needed for Aeras problems only)
     virtual bool isExplicitScheme() const = 0;
-
-    //! Get overlapped node vector space
-    virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace() const = 0;
-
-    //! Get overlapped Field Node vector space
-    virtual Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace(const std::string& field_name) const = 0;
 
     //! Get Node set lists
     virtual const NodeSetList& getNodeSets() const = 0;
@@ -188,11 +178,11 @@ class AbstractDiscretization {
 
     // --- Get/set solution/residual/field vectors to/from mesh --- //
 
-    virtual Teuchos::RCP<Thyra_Vector> getSolutionField(bool overlapped=false) const = 0;
-    virtual Teuchos::RCP<Thyra_MultiVector> getSolutionMV(bool overlapped=false) const = 0;
+    virtual Teuchos::RCP<Thyra_Vector>      getSolutionField (bool overlapped = false) const = 0;
+    virtual Teuchos::RCP<Thyra_MultiVector> getSolutionMV    (bool overlapped = false) const = 0;
+    virtual void setResidualField (const Thyra_Vector& residual) = 0;
     virtual void getField (Thyra_Vector& field_vector, const std::string& field_name) const = 0;
     virtual void setField (const Thyra_Vector &field_vector, const std::string& field_name, bool overlapped) = 0;
-    virtual void setResidualField (const Thyra_Vector& residual) = 0;
 
     // --- Methods to write solution in the output file --- //
 

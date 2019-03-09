@@ -6,17 +6,13 @@
 
 //IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE set to off.
 
-#ifndef ALBANY_ABSTRACTSTKFIELDCONT_HPP
-#define ALBANY_ABSTRACTSTKFIELDCONT_HPP
+#ifndef ALBANY_ABSTRACT_STK_FIELD_CONTAINER_HPP
+#define ALBANY_ABSTRACT_STK_FIELD_CONTAINER_HPP
 
 #include "Albany_config.h"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
-#if defined(ALBANY_EPETRA)
-#include "Epetra_Map.h"
-#include "Epetra_Vector.h"
-#endif
 
 //This include is added in Tpetra branch to get all the necessary
 //Tpetra includes (e.g., Tpetra_Vector.hpp, Tpetra_Map.hpp, etc.)
@@ -116,31 +112,19 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
       return time;
     }
 
-#if defined(ALBANY_EPETRA)
-    virtual void fillSolnVector(Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<const Epetra_Map>& node_map) = 0;
-    virtual void fillVector(Epetra_Vector& field_vector, const std::string&  field_name, stk::mesh::Selector& field_selection,
-                        const Teuchos::RCP<const Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) = 0;
-    virtual void saveVector(const Epetra_Vector& field_vector, const std::string&  field_name, stk::mesh::Selector& field_selection,
-                            const Teuchos::RCP<const Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) = 0;
-    virtual void saveSolnVector(const Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<const Epetra_Map>& node_map) = 0;
-    virtual void saveResVector(const Epetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<const Epetra_Map>& node_map) = 0;
-#endif
-    //Tpetra version of above
-    virtual void fillVectorT(Tpetra_Vector& field_vector, const std::string&  field_name, stk::mesh::Selector& field_selection,
-                            const Teuchos::RCP<const Tpetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) = 0;
-    virtual void fillSolnVectorT(Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
-    virtual void fillSolnMultiVector(Tpetra_MultiVector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
-    virtual void saveVectorT(const Tpetra_Vector& field_vector, const std::string&  field_name, stk::mesh::Selector& field_selection,
-                            const Teuchos::RCP<const Tpetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) = 0;
-    virtual void saveSolnVectorT(const Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
-    virtual void saveSolnVectorT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT,
-                                 stk::mesh::Selector& sel,
-                                 const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
-    virtual void saveSolnVectorT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT,
-                                 const Tpetra_Vector& soln_dotdotT, stk::mesh::Selector& sel,
-                                 const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
-    virtual void saveResVectorT(const Tpetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_map) = 0;
-    virtual void saveSolnMultiVector(const Tpetra_MultiVector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
+    virtual void fillSolnVector(Thyra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
+    virtual void fillVector(Thyra_Vector& field_vector, const std::string&  field_name, stk::mesh::Selector& field_selection,
+                            const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs, const NodalDOFManager& nodalDofManager) = 0;
+    virtual void fillSolnMultiVector(Thyra_MultiVector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
+    virtual void saveVector(const Thyra_Vector& field_vector, const std::string&  field_name, stk::mesh::Selector& field_selection,
+                            const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs, const NodalDOFManager& nodalDofManager) = 0;
+    virtual void saveSolnVector(const Thyra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
+    virtual void saveSolnVector(const Thyra_Vector& soln, const Thyra_Vector& soln_dot, stk::mesh::Selector& sel,
+                                const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
+    virtual void saveSolnVector(const Thyra_Vector& soln, const Thyra_Vector& soln_dot,const Thyra_Vector& soln_dotdot, stk::mesh::Selector& sel,
+                                const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
+    virtual void saveResVector(const Thyra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
+    virtual void saveSolnMultiVector(const Thyra_MultiVector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
 
     virtual void transferSolutionToCoords() = 0;
 
@@ -178,6 +162,6 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
 
 };
 
-}
+} // namespace Albany
 
-#endif // ALBANY_ABSTRACTSTKFIELDCONT_HPP
+#endif // ALBANY_ABSTRACT_STK_FIELD_CONTAINER_HPP

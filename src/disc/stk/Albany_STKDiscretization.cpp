@@ -34,8 +34,6 @@
 #include <stk_mesh/base/Selector.hpp>
 #include <stk_mesh/base/FEMHelpers.hpp>
 
-#include <MatrixMarket_Tpetra.hpp>
-
 #ifdef ALBANY_SEACAS
 #include <Ionit_Initializer.h>
 #include <netcdf.h>
@@ -48,57 +46,42 @@ extern "C" {
 #endif // ALBANY_SEACAS
 
 #include <algorithm>
-#if defined(ALBANY_EPETRA)
-#include "EpetraExt_MultiVectorOut.h"
-#include "Epetra_Export.h"
-#include "Petra_Converters.hpp"
-#endif
 
 #ifdef ALBANY_PERIDIGM
-#if defined(ALBANY_EPETRA)
 #include "PeridigmManager.hpp"
-#endif
 #endif
 
 #include <PHAL_Dimension.hpp>
-#include <Albany_TpetraThyraUtils.hpp>
-#include <Albany_EpetraThyraUtils.hpp>
+#include <Albany_ThyraUtils.hpp>
 
 constexpr double pi = 3.1415926535897932385;
 
-const Tpetra::global_size_t INVALID =
-    Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
-
 // Uncomment the following line if you want debug output to be printed to screen
 // #define OUTPUT_TO_SCREEN
+namespace Albany {
 
-Albany::STKDiscretization::STKDiscretization(
-    const Teuchos::RCP<Teuchos::ParameterList>&  discParams_,
-    Teuchos::RCP<Albany::AbstractSTKMeshStruct>& stkMeshStruct_,
-    const Teuchos::RCP<const Teuchos_Comm>&      commT_,
-    const Teuchos::RCP<Albany::RigidBodyModes>&  rigidBodyModes_,
-    const std::map<int, std::vector<std::string>>& sideSetEquations_)
-    :
-
-      previous_time_label(-1.0e32),
-      out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-      metaData(*stkMeshStruct_->metaData),
-      bulkData(*stkMeshStruct_->bulkData),
-      commT(commT_),
-      neq(stkMeshStruct_->neq),
-      sideSetEquations(sideSetEquations_),
-      rigidBodyModes(rigidBodyModes_),
-      stkMeshStruct(stkMeshStruct_),
-      discParams(discParams_),
-      interleavedOrdering(stkMeshStruct_->interleavedOrdering)
+STKDiscretization::
+STKDiscretization(const Teuchos::RCP<Teuchos::ParameterList>&  discParams_,
+                  Teuchos::RCP<Albany::AbstractSTKMeshStruct>& stkMeshStruct_,
+                  const Teuchos::RCP<const Teuchos_Comm>&      commT_,
+                  const Teuchos::RCP<Albany::RigidBodyModes>&  rigidBodyModes_,
+                  const std::map<int, std::vector<std::string>>& sideSetEquations_)
+ : previous_time_label(-1.0e32)
+ , out(Teuchos::VerboseObjectBase::getDefaultOStream())
+ , metaData(*stkMeshStruct_->metaData)
+ , bulkData(*stkMeshStruct_->bulkData)
+ , commT(commT_)
+ , neq(stkMeshStruct_->neq)
+ , sideSetEquations(sideSetEquations_)
+ , rigidBodyModes(rigidBodyModes_)
+ , stkMeshStruct(stkMeshStruct_)
+ , discParams(discParams_)
+ , interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
-#if defined(ALBANY_EPETRA)
-  comm = Albany::createEpetraCommFromTeuchosComm(commT_);
-#endif
-  Albany::STKDiscretization::updateMesh();
+  updateMesh();
 }
 
-Albany::STKDiscretization::~STKDiscretization()
+STKDiscretization::~STKDiscretization()
 {
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->cdfOutput) {
@@ -115,20 +98,19 @@ Albany::STKDiscretization::~STKDiscretization()
   for (size_t i = 0; i < toDelete.size(); i++) delete[] toDelete[i];
 }
 
-void
-Albany::STKDiscretization::printConnectivity() const
+void STKDiscretization::printConnectivity() const
 {
   commT->barrier();
   for (int rank = 0; rank < commT->getSize(); ++rank) {
     commT->barrier();
     if (rank == commT->getRank()) {
       std::cout << std::endl << "Process rank " << rank << std::endl;
-      for (size_t ibuck = 0; ibuck < wsElNodeID.size(); ++ibuck) {
+      for (int ibuck = 0; ibuck < wsElNodeID.size(); ++ibuck) {
         std::cout << "  Bucket " << ibuck << std::endl;
-        for (size_t ielem = 0; ielem < wsElNodeID[ibuck].size(); ++ielem) {
+        for (int ielem = 0; ielem < wsElNodeID[ibuck].size(); ++ielem) {
           int numNodes = wsElNodeID[ibuck][ielem].size();
           std::cout << "    Element " << ielem << ": Nodes = ";
-          for (size_t inode = 0; inode < numNodes; ++inode)
+          for (int inode = 0; inode < numNodes; ++inode)
             std::cout << wsElNodeID[ibuck][ielem][inode] << " ";
           std::cout << std::endl;
         }
@@ -138,174 +120,31 @@ Albany::STKDiscretization::printConnectivity() const
   }
 }
 
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<const Epetra_Map>
-Albany::STKDiscretization::getMap() const
+Teuchos::RCP<const Thyra_VectorSpace>
+STKDiscretization::getVectorSpace (const std::string& field_name) const
 {
-  return map;
-}
-#endif
-
-Teuchos::RCP<const Tpetra_Map>
-Albany::STKDiscretization::getMapT() const
-{
-  return mapT;
+  return nodalDOFsStructContainer.getDOFsStruct(field_name).vs;
 }
 
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<const Epetra_Map>
-Albany::STKDiscretization::getOverlapMap() const
+Teuchos::RCP<const Thyra_VectorSpace>
+STKDiscretization::getNodeVectorSpace (const std::string& field_name) const
 {
-  return overlap_map;
-}
-#endif
-
-Teuchos::RCP<const Tpetra_Map>
-Albany::STKDiscretization::getOverlapMapT() const
-{
-  return overlap_mapT;
+  return nodalDOFsStructContainer.getDOFsStruct(field_name).node_vs;
 }
 
-#if defined(ALBANY_EPETRA)
-
-Teuchos::RCP<const Epetra_CrsGraph>
-Albany::STKDiscretization::getJacobianGraph() const
+Teuchos::RCP<const Thyra_VectorSpace>
+STKDiscretization::getOverlapVectorSpace (const std::string& field_name) const
 {
-  Teuchos::RCP<const Epetra_CrsGraph> graph =
-      Petra::TpetraCrsGraph_To_EpetraCrsGraph(graphT, comm);
-  return graph;
-}
-#endif
-
-Teuchos::RCP<const Tpetra_Map>
-Albany::STKDiscretization::getMapT(const std::string& field_name) const
-{
-  return nodalDOFsStructContainer.getDOFsStruct(field_name).map;
+  return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_vs;
 }
 
-Teuchos::RCP<const Tpetra_Map>
-Albany::STKDiscretization::getNodeMapT(const std::string& field_name) const
+Teuchos::RCP<const Thyra_VectorSpace>
+STKDiscretization::getOverlapNodeVectorSpace(const std::string& field_name) const
 {
-  return nodalDOFsStructContainer.getDOFsStruct(field_name).node_map;
+  return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_node_vs;
 }
 
-Teuchos::RCP<const Tpetra_Map>
-Albany::STKDiscretization::getOverlapMapT(const std::string& field_name) const
-{
-  return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_map;
-}
-
-Teuchos::RCP<const Tpetra_Map>
-Albany::STKDiscretization::getOverlapNodeMapT(
-    const std::string& field_name) const
-{
-  return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_node_map;
-}
-
-Teuchos::RCP<const Tpetra_CrsGraph>
-Albany::STKDiscretization::getJacobianGraphT() const
-{
-  return graphT;
-}
-
-#ifdef ALBANY_AERAS
-Teuchos::RCP<const Tpetra_CrsGraph>
-Albany::STKDiscretization::getImplicitJacobianGraphT() const
-{
-  return graphT;
-}
-#endif
-
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<const Epetra_CrsGraph>
-Albany::STKDiscretization::getOverlapJacobianGraph() const
-{
-  Teuchos::RCP<const Epetra_CrsGraph> overlap_graph =
-      Petra::TpetraCrsGraph_To_EpetraCrsGraph(overlap_graphT, comm);
-  return overlap_graph;
-}
-#endif
-
-Teuchos::RCP<const Tpetra_CrsGraph>
-Albany::STKDiscretization::getOverlapJacobianGraphT() const
-{
-  return overlap_graphT;
-}
-
-#ifdef ALBANY_AERAS
-Teuchos::RCP<const Tpetra_CrsGraph>
-Albany::STKDiscretization::getImplicitOverlapJacobianGraphT() const
-{
-  return overlap_graphT;
-}
-#endif
-
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<const Epetra_Map>
-Albany::STKDiscretization::getNodeMap() const
-{
-  return node_map;
-}
-
-Teuchos::RCP<const Epetra_Map>
-Albany::STKDiscretization::getOverlapNodeMap() const
-{
-  return overlap_node_map;
-}
-#endif
-
-Teuchos::RCP<const Tpetra_Map>
-Albany::STKDiscretization::getNodeMapT() const
-{
-  return node_mapT;
-}
-
-Teuchos::RCP<const Tpetra_Map>
-Albany::STKDiscretization::getOverlapNodeMapT() const
-{
-  return overlap_node_mapT;
-}
-
-const Albany::STKDiscretization::Conn&
-Albany::STKDiscretization::getWsElNodeEqID() const
-{
-  return wsElNodeEqID;
-}
-
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>::type&
-Albany::STKDiscretization::getWsElNodeID() const
-{
-  return wsElNodeID;
-}
-
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
-Albany::STKDiscretization::getCoords() const
-{
-  return coords;
-}
-
-#ifdef ALBANY_CONTACT
-Teuchos::RCP<const Albany::ContactManager>
-Albany::STKDiscretization::getContactManager() const
-{
-  return contactManager;
-}
-#endif
-
-const Albany::WorksetArray<Teuchos::ArrayRCP<double>>::type&
-Albany::STKDiscretization::getSphereVolume() const
-{
-  return sphereVolume;
-}
-
-const Albany::WorksetArray<Teuchos::ArrayRCP<double*>>::type&
-Albany::STKDiscretization::getLatticeOrientation() const
-{
-  return latticeOrientation;
-}
-
-void
-Albany::STKDiscretization::printCoords() const
+void STKDiscretization::printCoords() const
 {
   std::cout << "Processor " << bulkData.parallel_rank() << " has "
             << coords.size() << " worksets." << std::endl;
@@ -322,7 +161,7 @@ Albany::STKDiscretization::printCoords() const
 }
 
 const Teuchos::ArrayRCP<double>&
-Albany::STKDiscretization::getCoordinates() const
+STKDiscretization::getCoordinates() const
 {
   // Coordinates are computed here, and not precomputed,
   // since the mesh can move in shape opt problems
@@ -344,18 +183,15 @@ Albany::STKDiscretization::getCoordinates() const
 
 // These methods were added to support mesh adaptation, which is currently
 // limited to PUMIDiscretization.
-void
-Albany::STKDiscretization::setCoordinates(
-    const Teuchos::ArrayRCP<const double>& c)
+void STKDiscretization::setCoordinates(const Teuchos::ArrayRCP<const double>& c)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
       std::logic_error,
       "STKDiscretization::setCoordinates is not implemented.");
 }
-void
-Albany::STKDiscretization::setReferenceConfigurationManager(
-    const Teuchos::RCP<AAdapt::rc::Manager>& rcm)
+
+void STKDiscretization::setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
@@ -366,8 +202,7 @@ Albany::STKDiscretization::setReferenceConfigurationManager(
 
 // The function transformMesh() maps a unit cube domain by applying a
 // transformation to the mesh.
-void
-Albany::STKDiscretization::transformMesh()
+void STKDiscretization::transformMesh()
 {
   using std::cout;
   using std::endl;
@@ -684,26 +519,31 @@ Albany::STKDiscretization::transformMesh()
   }
 }
 
-void
-Albany::STKDiscretization::setupMLCoords()
+void STKDiscretization::setupMLCoords()
 {
-  if (rigidBodyModes.is_null()) return;
-  if (!rigidBodyModes->isMLUsed() && !rigidBodyModes->isMueLuUsed()) return;
+  if (rigidBodyModes.is_null()) {
+    return;
+  }
+  if (!rigidBodyModes->isMLUsed() && !rigidBodyModes->isMueLuUsed()) {
+    return;
+  }
 
   const int                                   numDim = stkMeshStruct->numDim;
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field =
       stkMeshStruct->getCoordinatesField();
-  coordMV = Teuchos::rcp(new Tpetra_MultiVector(node_mapT, numDim, false));
+  coordMV = Thyra::createMembers(m_node_vs, numDim);
+  auto coordMV_data = getNonconstLocalData(coordMV);
 
   for (int i = 0; i < numOwnedNodes; i++) {
     GO      node_gid = gid(ownednodes[i]);
-    int     node_lid = node_mapT->getLocalElement(node_gid);
+    int     node_lid = getLocalElement(m_node_vs,node_gid);
     double* X        = stk::mesh::field_data(*coordinates_field, ownednodes[i]);
-    for (int j = 0; j < numDim; j++)
-      coordMV->replaceLocalValue(node_lid, j, X[j]);
+    for (int j = 0; j < numDim; j++) {
+      coordMV_data[j][node_lid] = X[j];
+    }
   }
 
-  rigidBodyModes->setCoordinatesAndNullspace(coordMV, mapT);
+  rigidBodyModes->setCoordinatesAndNullspace(coordMV, m_vs);
 
   // Some optional matrix-market output was tagged on here; keep that
   // functionality.
@@ -711,205 +551,182 @@ Albany::STKDiscretization::setupMLCoords()
 }
 
 void
-Albany::STKDiscretization::writeCoordsToMatrixMarket() const
+STKDiscretization::writeCoordsToMatrixMarket() const
 {
   // if user wants to write the coordinates to matrix market file, write them to
   // matrix market file
   if ((rigidBodyModes->isMLUsed() || rigidBodyModes->isMueLuUsed()) && stkMeshStruct->writeCoordsToMMFile) {
-    if (node_mapT->getComm()->getRank() == 0) {
-      std::cout << "Writing mesh coordinates to Matrix Market file."
-                << std::endl;
+    if (comm->getRank() == 0) {
+      std::cout << "Writing mesh coordinates to Matrix Market file." << std::endl;
     }
-    int numMyElements = (node_mapT->getComm()->getRank() == 0) ?
-                            node_mapT->getGlobalNumElements() :
-                            0;
-    Teuchos::RCP<Tpetra_Import>       importOperatorT;
-    Teuchos::RCP<Tpetra_Map>          serial_mapT;
-    Teuchos::RCP<const Tpetra_Vector> xCoordsT = coordMV->getVector(0);
-    // Writing of coordinates to MatrixMarket file for Ray
-    if (node_mapT->getComm()->getSize() > 1) {
-      serial_mapT = Teuchos::rcp(
-          new Tpetra_Map(INVALID, numMyElements, 0, node_mapT->getComm()));
-      // create importer from parallel map to serial map and populate serial
-      // solution xfinal_serial
-      importOperatorT = Teuchos::rcp(new Tpetra_Import(node_mapT, serial_mapT));
-      // Writing of coordinates to MatrixMarket file for Ray
-      Teuchos::RCP<Tpetra_Vector> xCoords_serialT =
-          Teuchos::rcp(new Tpetra_Vector(serial_mapT));
-      xCoords_serialT->doImport(*xCoordsT, *importOperatorT, Tpetra::INSERT);
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("xCoords.mm", xCoords_serialT);
-    } else
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("xCoords.mm", xCoordsT);
-    if (coordMV->getNumVectors() > 1) {
-      Teuchos::RCP<const Tpetra_Vector> yCoordsT = coordMV->getVector(1);
-      if (node_mapT->getComm()->getSize() > 1) {
-        Teuchos::RCP<Tpetra_Vector> yCoords_serialT =
-            Teuchos::rcp(new Tpetra_Vector(serial_mapT));
-        yCoords_serialT->doImport(*yCoordsT, *importOperatorT, Tpetra::INSERT);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(
-            "yCoords.mm", yCoords_serialT);
-      } else
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("yCoords.mm", yCoordsT);
+    writeMatrixMarket(coordMV->col(0),"xCoords");
+    if (coordMV->domain()->dim() > 1) {
+      writeMatrixMarket(coordMV->col(1),"yCoords");
     }
-    if (coordMV->getNumVectors() > 2) {
-      Teuchos::RCP<const Tpetra_Vector> zCoordsT = coordMV->getVector(2);
-      if (node_mapT->getComm()->getSize() > 1) {
-        Teuchos::RCP<Tpetra_Vector> zCoords_serialT =
-            Teuchos::rcp(new Tpetra_Vector(serial_mapT));
-        zCoords_serialT->doImport(*zCoordsT, *importOperatorT, Tpetra::INSERT);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(
-            "zCoords.mm", zCoords_serialT);
-      } else
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("zCoords.mm", zCoordsT);
+    if (coordMV->domain()->dim() > 2) {
+      writeMatrixMarket(coordMV->col(2),"zCoords");
     }
   }
 }
 
-const Albany::WorksetArray<std::string>::type&
-Albany::STKDiscretization::getWsEBNames() const
+void STKDiscretization::writeSolution(
+    const Thyra_Vector& soln,
+    const double        time,
+    const bool          overlapped)
 {
-  return wsEBNames;
+  writeSolutionToMeshDatabase(soln, time, overlapped);
+  writeSolutionToFile(soln, time, overlapped);
 }
 
-const Albany::WorksetArray<int>::type&
-Albany::STKDiscretization::getWsPhysIndex() const
+void STKDiscretization::writeSolution(
+    const Thyra_Vector& soln,
+    const Thyra_Vector& soln_dot,
+    const double        time,
+    const bool          overlapped)
 {
-  return wsPhysIndex;
+  writeSolutionToMeshDatabase(soln, soln_dot, time, overlapped);
+  // IKT, FIXME? extend writeSolutionToFile to take in soln_dot?
+  writeSolutionToFile(soln, time, overlapped);
 }
 
-#if defined(ALBANY_EPETRA)
-void
-Albany::STKDiscretization::writeSolution(
-    const Epetra_Vector& soln,
-    const double         time,
-    const bool           overlapped)
+void STKDiscretization::writeSolution(
+    const Thyra_Vector& soln,
+    const Thyra_Vector& soln_dot,
+    const Thyra_Vector& soln_dotdot,
+    const double        time,
+    const bool          overlapped)
 {
-  Teuchos::RCP<const Tpetra_Vector> solnT =
-      Petra::EpetraVector_To_TpetraVectorConst(soln, commT);
-  writeSolutionT(*solnT, time, overlapped);
+  writeSolutionToMeshDatabase(soln, soln_dot, soln_dotdot, time, overlapped);
+  // IKT, FIXME? extend writeSolutionToFile to take in soln_dot and soln_dotdot?
+  writeSolutionToFile(soln, time, overlapped);
 }
 
-void
-Albany::STKDiscretization::writeSolution(
-    const Epetra_Vector& soln,
-    const Epetra_Vector& soln_dot,
-    const double         time,
-    const bool           overlapped)
+void STKDiscretization::writeSolutionMV(
+    const Thyra_MultiVector& soln,
+    const double             time,
+    const bool               overlapped)
 {
-  Teuchos::RCP<const Tpetra_Vector> solnT =
-      Petra::EpetraVector_To_TpetraVectorConst(soln, commT);
-  Teuchos::RCP<const Tpetra_Vector> soln_dotT =
-      Petra::EpetraVector_To_TpetraVectorConst(soln_dot, commT);
-  writeSolutionT(*solnT, *soln_dotT, time, overlapped);
+  writeSolutionMVToMeshDatabase(soln, time, overlapped);
+  writeSolutionMVToFile(soln, time, overlapped);
 }
+
+void STKDiscretization::writeSolutionToMeshDatabase(
+    const Thyra_Vector& soln,
+    const double        /* time */,
+    const bool          overlapped)
+{
+  // Put solution into STK Mesh
+  setSolutionField(soln,overlapped);
+}
+
+void STKDiscretization::writeSolutionToMeshDatabase(
+    const Thyra_Vector& soln,
+    const Thyra_Vector& soln_dot,
+    const double        /* time */,
+    const bool          overlapped)
+{
+  // Put solution into STK Mesh
+  setSolutionField(soln, soln_dot, overlapped);
+}
+
+void STKDiscretization::writeSolutionToMeshDatabase(
+    const Thyra_Vector& soln,
+    const Thyra_Vector& soln_dot,
+    const Thyra_Vector& soln_dotdot,
+    const double        /* time */,
+    const bool          overlapped)
+{
+  // Put solution into STK Mesh
+  setSolutionField(soln, soln_dot, soln_dotdot, overlapped);
+}
+
+void STKDiscretization::writeSolutionMVToMeshDatabase(
+    const Thyra_MultiVector& soln,
+    const double             /* time */,
+    const bool               overlapped)
+{
+  // Put solution into STK Mesh
+  setSolutionFieldMV(soln, overlapped);
+}
+
+void STKDiscretization::writeSolutionToFile(
+    const Thyra_Vector& soln,
+    const double        time,
+    const bool          overlapped)
+{
+#ifdef ALBANY_SEACAS
+  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
+    Teuchos::RCP<AbstractSTKFieldContainer> container =
+        stkMeshStruct->getFieldContainer();
+
+    container->transferSolutionToCoords();
+
+    if (!mesh_data.is_null()) {
+      // Mesh coordinates have changed. Rewrite output file by deleting the mesh
+      // data object and recreate it
+      setupExodusOutput();
+    }
+  }
+
+  // Skip this write unless the proper interval has been reached
+  if (stkMeshStruct->exoOutput &&
+      !(outputInterval % stkMeshStruct->exoOutputInterval)) {
+    double time_label = monotonicTimeLabel(time);
+
+    mesh_data->begin_output_step(outputFileIdx, time_label);
+    int out_step = mesh_data->write_defined_output_fields(outputFileIdx);
+    // Writing mesh global variables
+    for (auto& it : stkMeshStruct->getFieldContainer()->getMeshVectorStates()) {
+      mesh_data->write_global(outputFileIdx, it.first, it.second);
+    }
+    for (auto& it :
+         stkMeshStruct->getFieldContainer()->getMeshScalarIntegerStates()) {
+      mesh_data->write_global(outputFileIdx, it.first, it.second);
+    }
+    mesh_data->end_output_step(outputFileIdx);
+
+    if (comm->getRank() == 0) {
+      *out << "STKDiscretization::writeSolution: writing time " << time;
+      if (time_label != time) *out << " with label " << time_label;
+      *out << " to index " << out_step << " in file "
+           << stkMeshStruct->exoOutFile << std::endl;
+    }
+  }
+  if (stkMeshStruct->cdfOutput &&
+      !(outputInterval % stkMeshStruct->cdfOutputInterval)) {
+    double time_label = monotonicTimeLabel(time);
+
+    const int out_step = processNetCDFOutputRequest(soln);
+
+    if (comm->getRank() == 0) {
+      *out << "STKDiscretization::writeSolution: writing time " << time;
+      if (time_label != time) *out << " with label " << time_label;
+      *out << " to index " << out_step << " in file "
+           << stkMeshStruct->cdfOutFile << std::endl;
+    }
+  }
+  outputInterval++;
+
+  for (auto it : sideSetDiscretizations) {
+    if (overlapped) {
+      auto ss_soln = Thyra::createMember(it.second->getOverlapVectorSpace());
+      const Thyra_LinearOp& P = *ov_projectors.at(it.first);
+      P.apply(Thyra::NOTRANS,soln, ss_soln.ptr(),1.0,0.0);
+      it.second->writeSolutionToFile(*ss_soln, time, overlapped);
+    } else {
+      auto ss_soln = Thyra::createMember(it.second->getVectorSpace());
+      const Thyra_LinearOp& P = *projectors.at(it.first);
+      P.apply(Thyra::NOTRANS,soln, ss_soln.ptr(),1.0,0.0);
+      it.second->writeSolutionToFile(*ss_soln, time, overlapped);
+    }
+  }
 #endif
-
-void
-Albany::STKDiscretization::writeSolutionT(
-    const Tpetra_Vector& solnT,
-    const double         time,
-    const bool           overlapped)
-{
-  writeSolutionToMeshDatabaseT(solnT, time, overlapped);
-  writeSolutionToFileT(solnT, time, overlapped);
 }
 
-void
-Albany::STKDiscretization::writeSolutionT(
-    const Tpetra_Vector& solnT,
-    const Tpetra_Vector& soln_dotT,
-    const double         time,
-    const bool           overlapped)
-{
-  writeSolutionToMeshDatabaseT(solnT, soln_dotT, time, overlapped);
-  // IKT, FIXME? extend writeSolutionToFileT to take in soln_dotT?
-  writeSolutionToFileT(solnT, time, overlapped);
-}
-
-void
-Albany::STKDiscretization::writeSolutionT(
-    const Tpetra_Vector& solnT,
-    const Tpetra_Vector& soln_dotT,
-    const Tpetra_Vector& soln_dotdotT,
-    const double         time,
-    const bool           overlapped)
-{
-  writeSolutionToMeshDatabaseT(
-      solnT, soln_dotT, soln_dotdotT, time, overlapped);
-  // IKT, FIXME? extend writeSolutionToFileT to take in soln_dotT and
-  // soln_dotdotT?
-  writeSolutionToFileT(solnT, time, overlapped);
-}
-
-void
-Albany::STKDiscretization::writeSolutionMV(
-    const Tpetra_MultiVector& solnT,
-    const double              time,
-    const bool                overlapped)
-{
-  writeSolutionMVToMeshDatabase(solnT, time, overlapped);
-  writeSolutionMVToFile(solnT, time, overlapped);
-}
-
-void
-Albany::STKDiscretization::writeSolutionToMeshDatabaseT(
-    const Tpetra_Vector& solnT,
-    const double         time,
-    const bool           overlapped)
-{
-  // Put solution as Tpetra_Vector into STK Mesh
-  if (!overlapped) setSolutionFieldT(solnT);
-  // soln coming in is overlapped
-  else
-    setOvlpSolutionFieldT(solnT);
-}
-
-void
-Albany::STKDiscretization::writeSolutionToMeshDatabaseT(
-    const Tpetra_Vector& solnT,
-    const Tpetra_Vector& soln_dotT,
-    const double         time,
-    const bool           overlapped)
-{
-  // Put solution as Tpetra_Vector into STK Mesh
-  if (!overlapped) setSolutionFieldT(solnT, soln_dotT);
-  // soln coming in is overlapped
-  else
-    setOvlpSolutionFieldT(solnT, soln_dotT);
-}
-
-void
-Albany::STKDiscretization::writeSolutionToMeshDatabaseT(
-    const Tpetra_Vector& solnT,
-    const Tpetra_Vector& soln_dotT,
-    const Tpetra_Vector& soln_dotdotT,
-    const double         time,
-    const bool           overlapped)
-{
-  // Put solution as Tpetra_Vector into STK Mesh
-  if (!overlapped) setSolutionFieldT(solnT, soln_dotT, soln_dotdotT);
-  // soln coming in is overlapped
-  else
-    setOvlpSolutionFieldT(solnT, soln_dotT, soln_dotdotT);
-}
-void
-Albany::STKDiscretization::writeSolutionMVToMeshDatabase(
-    const Tpetra_MultiVector& solnT,
-    const double              time,
-    const bool                overlapped)
-{
-  // Put solution as Epetra_Vector into STK Mesh
-  if (!overlapped) setSolutionFieldMV(solnT);
-  // soln coming in is overlapped
-  else
-    setOvlpSolutionFieldMV(solnT);
-}
-
-void
-Albany::STKDiscretization::writeSolutionToFileT(
-    const Tpetra_Vector& solnT,
-    const double         time,
-    const bool           overlapped)
+void STKDiscretization::writeSolutionMVToFile(
+    const Thyra_MultiVector& soln,
+    const double             time,
+    const bool               overlapped)
 {
 #ifdef ALBANY_SEACAS
 
@@ -943,8 +760,8 @@ Albany::STKDiscretization::writeSolutionToFileT(
     }
     mesh_data->end_output_step(outputFileIdx);
 
-    if (mapT->getComm()->getRank() == 0) {
-      *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
+    if (comm->getRank() == 0) {
+      *out << "STKDiscretization::writeSolution: writing time " << time;
       if (time_label != time) *out << " with label " << time_label;
       *out << " to index " << out_step << " in file "
            << stkMeshStruct->exoOutFile << std::endl;
@@ -954,10 +771,10 @@ Albany::STKDiscretization::writeSolutionToFileT(
       !(outputInterval % stkMeshStruct->cdfOutputInterval)) {
     double time_label = monotonicTimeLabel(time);
 
-    const int out_step = processNetCDFOutputRequestT(solnT);
+    const int out_step = processNetCDFOutputRequestMV(soln);
 
-    if (mapT->getComm()->getRank() == 0) {
-      *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
+    if (comm->getRank() == 0) {
+      *out << "STKDiscretization::writeSolution: writing time " << time;
       if (time_label != time) *out << " with label " << time_label;
       *out << " to index " << out_step << " in file "
            << stkMeshStruct->cdfOutFile << std::endl;
@@ -967,100 +784,21 @@ Albany::STKDiscretization::writeSolutionToFileT(
 
   for (auto it : sideSetDiscretizations) {
     if (overlapped) {
-      Tpetra_Vector           ss_solnT(it.second->getOverlapMapT());
-      const Tpetra_CrsMatrix& P = *ov_projectorsT.at(it.first);
-      P.apply(solnT, ss_solnT);
-      it.second->writeSolutionToFileT(ss_solnT, time, overlapped);
+      auto ss_soln = Thyra::createMembers(it.second->getOverlapVectorSpace(),soln.domain()->dim());
+      const Thyra_LinearOp& P = *ov_projectors.at(it.first);
+      P.apply(Thyra::NOTRANS,soln, ss_soln.ptr(),1.0,0.0);
+      it.second->writeSolutionMVToFile(*ss_soln, time, overlapped);
     } else {
-      Tpetra_Vector           ss_solnT(it.second->getMapT());
-      const Tpetra_CrsMatrix& P = *projectorsT.at(it.first);
-      P.apply(solnT, ss_solnT);
-      it.second->writeSolutionToFileT(ss_solnT, time, overlapped);
+      auto ss_soln = Thyra::createMembers(it.second->getVectorSpace(),soln.domain()->dim());
+      const Thyra_LinearOp& P = *projectors.at(it.first);
+      P.apply(Thyra::NOTRANS,soln, ss_soln.ptr(),1.0,0.0);
+      it.second->writeSolutionMVToFile(*ss_soln, time, overlapped);
     }
   }
 #endif
 }
 
-void
-Albany::STKDiscretization::writeSolutionMVToFile(
-    const Tpetra_MultiVector& solnT,
-    const double              time,
-    const bool                overlapped)
-{
-#ifdef ALBANY_SEACAS
-
-  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
-    Teuchos::RCP<AbstractSTKFieldContainer> container =
-        stkMeshStruct->getFieldContainer();
-
-    container->transferSolutionToCoords();
-
-    if (!mesh_data.is_null()) {
-      // Mesh coordinates have changed. Rewrite output file by deleting the mesh
-      // data object and recreate it
-      setupExodusOutput();
-    }
-  }
-
-  // Skip this write unless the proper interval has been reached
-  if (stkMeshStruct->exoOutput &&
-      !(outputInterval % stkMeshStruct->exoOutputInterval)) {
-    double time_label = monotonicTimeLabel(time);
-
-    mesh_data->begin_output_step(outputFileIdx, time_label);
-    int out_step = mesh_data->write_defined_output_fields(outputFileIdx);
-    // Writing mesh global variables
-    for (auto& it : stkMeshStruct->getFieldContainer()->getMeshVectorStates()) {
-      mesh_data->write_global(outputFileIdx, it.first, it.second);
-    }
-    for (auto& it :
-         stkMeshStruct->getFieldContainer()->getMeshScalarIntegerStates()) {
-      mesh_data->write_global(outputFileIdx, it.first, it.second);
-    }
-    mesh_data->end_output_step(outputFileIdx);
-
-    if (mapT->getComm()->getRank() == 0) {
-      *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
-      if (time_label != time) *out << " with label " << time_label;
-      *out << " to index " << out_step << " in file "
-           << stkMeshStruct->exoOutFile << std::endl;
-    }
-  }
-  if (stkMeshStruct->cdfOutput &&
-      !(outputInterval % stkMeshStruct->cdfOutputInterval)) {
-    double time_label = monotonicTimeLabel(time);
-
-    const int out_step = processNetCDFOutputRequestMV(solnT);
-
-    if (mapT->getComm()->getRank() == 0) {
-      *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
-      if (time_label != time) *out << " with label " << time_label;
-      *out << " to index " << out_step << " in file "
-           << stkMeshStruct->cdfOutFile << std::endl;
-    }
-  }
-  outputInterval++;
-
-  for (auto it : sideSetDiscretizations) {
-    if (overlapped) {
-      Tpetra_MultiVector ss_solnT(
-          it.second->getOverlapMapT(), solnT.getNumVectors());
-      const Tpetra_CrsMatrix& P = *ov_projectorsT.at(it.first);
-      P.apply(solnT, ss_solnT);
-      it.second->writeSolutionMVToFile(ss_solnT, time, overlapped);
-    } else {
-      Tpetra_MultiVector ss_solnT(it.second->getMapT(), solnT.getNumVectors());
-      const Tpetra_CrsMatrix& P = *projectorsT.at(it.first);
-      P.apply(solnT, ss_solnT);
-      it.second->writeSolutionMVToFile(ss_solnT, time, overlapped);
-    }
-  }
-
-#endif
-}
-
-double
-Albany::STKDiscretization::monotonicTimeLabel(const double time)
+double STKDiscretization::monotonicTimeLabel(const double time)
 {
   // If increasing, then all is good
   if (time > previous_time_label) {
@@ -1085,8 +823,7 @@ Albany::STKDiscretization::monotonicTimeLabel(const double time)
   return previous_time_label;
 }
 
-void
-Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
+void STKDiscretization::setResidualField(const Thyra_Vector& residual)
 {
 #if defined(ALBANY_LCM)
   Teuchos::RCP<AbstractSTKFieldContainer> container =
@@ -1096,173 +833,40 @@ Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
     // Write the overlapped data
     stk::mesh::Selector select_owned_or_shared =
         metaData.locally_owned_part() | metaData.globally_shared_part();
-    container->saveResVectorT(
-        residualT, select_owned_or_shared, overlap_node_mapT);
+    container->saveResVector(residual, select_owned_or_shared, m_overlap_node_vs);
   }
 
   // Setting the residual on the side set meshes
   for (auto it : sideSetDiscretizations) {
-    const Tpetra_CrsMatrix& P = *ov_projectorsT.at(it.first);
-    Tpetra_Vector           ss_residualT(it.second->getOverlapMapT());
-    P.apply(residualT, ss_residualT);
-    it.second->setResidualFieldT(ss_residualT);
+    auto ss_residual = Thyra::createMember(it.second->getOverlapVectorSpace());
+    const Thyra_LinearOp& P = *ov_projectors.at(it.first);
+    P.apply(Thyra::NOTRANS,residual, ss_residual.ptr(),1.0,0.0);
+    it.second->setResidualField(*ss_residual);
   }
 #endif
 }
 
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<Epetra_Vector>
-Albany::STKDiscretization::getSolutionField(bool overlapped) const
+Teuchos::RCP<Thyra_Vector>
+STKDiscretization::getSolutionField(bool overlapped) const
 {
-  Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
+  // Copy soln vector into solution field, one node at a time
+  Teuchos::RCP<Thyra_Vector> soln = Thyra::createMember(m_vs);
   this->getSolutionField(*soln, overlapped);
   return soln;
 }
-#endif
 
-Teuchos::RCP<Tpetra_Vector>
-Albany::STKDiscretization::getSolutionFieldT(bool overlapped) const
-{
-  // Copy soln vector into solution field, one node at a time
-  Teuchos::RCP<Tpetra_Vector> solnT = Teuchos::rcp(new Tpetra_Vector(mapT));
-  this->getSolutionFieldT(*solnT, overlapped);
-  return solnT;
-}
-
-Teuchos::RCP<Tpetra_MultiVector>
-Albany::STKDiscretization::getSolutionMV(bool overlapped) const
+Teuchos::RCP<Thyra_MultiVector>
+STKDiscretization::getSolutionMV(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
   int num_time_deriv = stkMeshStruct->num_time_deriv;
-  Teuchos::RCP<Tpetra_MultiVector> solnT =
-      Teuchos::rcp(new Tpetra_MultiVector(mapT, num_time_deriv + 1, false));
-  this->getSolutionMV(*solnT, overlapped);
-  return solnT;
+  Teuchos::RCP<Thyra_MultiVector> soln = Thyra::createMembers(m_vs, num_time_deriv+1);
+  this->getSolutionMV(*soln, overlapped);
+  return soln;
 }
 
-int
-Albany::STKDiscretization::getSolutionFieldHistoryDepth() const
-{
-  return stkMeshStruct->getSolutionFieldHistoryDepth();
-}
-
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<Epetra_MultiVector>
-Albany::STKDiscretization::getSolutionFieldHistory() const
-{
-  const int stepCount = this->getSolutionFieldHistoryDepth();
-  return this->getSolutionFieldHistoryImpl(stepCount);
-}
-
-Teuchos::RCP<Epetra_MultiVector>
-Albany::STKDiscretization::getSolutionFieldHistory(int maxStepCount) const
-{
-  const int stepCount =
-      std::min(this->getSolutionFieldHistoryDepth(), maxStepCount);
-  return this->getSolutionFieldHistoryImpl(stepCount);
-}
-
-Teuchos::RCP<Epetra_MultiVector>
-Albany::STKDiscretization::getSolutionFieldHistory(int minStep, int maxStep) const
-{
-  const int stepCount =
-      std::min(this->getSolutionFieldHistoryDepth(), maxStep);
-  return this->getSolutionFieldHistoryImpl(minStep, stepCount);
-}
-
-// IK, 10/28/13: this function should be converted to Tpetra...
-void
-Albany::STKDiscretization::getSolutionFieldHistory(
-    Epetra_MultiVector& result) const
-{
-  TEUCHOS_TEST_FOR_EXCEPT(!map->SameAs(result.Map()));
-  const int stepCount =
-      std::min(this->getSolutionFieldHistoryDepth(), result.NumVectors());
-  Epetra_MultiVector head(View, result, 0, stepCount);
-  this->getSolutionFieldHistoryImpl(head);
-}
-
-Teuchos::RCP<Epetra_MultiVector>
-Albany::STKDiscretization::getSolutionFieldHistoryImpl(int stepCount) const
-{
-  const int vectorCount = stepCount > 0 ?
-                              stepCount :
-                              1;  // A valid MultiVector has at least one vector
-  const Teuchos::RCP<Epetra_MultiVector> result =
-      Teuchos::rcp(new Epetra_MultiVector(*map, vectorCount));
-  if (stepCount > 0) {
-    this->getSolutionFieldHistoryImpl(*result);
-  }
-  return result;
-}
-
-Teuchos::RCP<Epetra_MultiVector>
-Albany::STKDiscretization::getSolutionFieldHistoryImpl(int stepMin, int stepMax) const
-{
-  const int stepCount = stepMax - stepMin;
-  const int vectorMin = stepCount > 0 ?
-                              stepMin :
-                              0;  // A valid MultiVector has at least one vector
-  const int vectorMax = stepCount > 0 ?
-                              stepMax :
-                              1;  // A valid MultiVector has at least one vector
-  const int vectorCount = vectorMax - vectorMin;
-
-  const Teuchos::RCP<Epetra_MultiVector> result =
-      Teuchos::rcp(new Epetra_MultiVector(*map, vectorCount));
-  if (stepCount > 0) {
-    this->getSolutionFieldHistoryImpl(*result, vectorMin, vectorMax);
-  }
-  return result;
-}
-
-void
-Albany::STKDiscretization::getSolutionFieldHistoryImpl(
-    Epetra_MultiVector& result) const
-{
-  const int stepCount = result.NumVectors();
-  for (int i = 0; i < stepCount; ++i) {
-    stkMeshStruct->loadSolutionFieldHistory(i);
-    Epetra_Vector v(View, result, i);
-    this->getSolutionField(v);
-  }
-}
-
-void
-Albany::STKDiscretization::getSolutionFieldHistoryImpl(
-    Epetra_MultiVector& result, int stepMin, int stepMax) const
-{
-  for (int i = stepMin; i < stepMax; ++i) {
-    stkMeshStruct->loadSolutionFieldHistory(i);
-    Epetra_Vector v(View, result, i-stepMin);
-    this->getSolutionField(v);
-  }
-}
-
-#endif
-
-#if defined(ALBANY_EPETRA)
-void
-Albany::STKDiscretization::getSolutionField(
-    Epetra_Vector& result,
-    const bool     overlapped) const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
-
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
-
-  // Iterate over the on-processor nodes by getting node buckets and iterating
-  // over each bucket.
-  stk::mesh::Selector locally_owned = metaData.locally_owned_part();
-
-  container->fillSolnVector(result, locally_owned, node_map);
-}
-#endif
-
-void
-Albany::STKDiscretization::getFieldT(
-    Tpetra_Vector&     result,
+void STKDiscretization::getField(
+    Thyra_Vector&      result,
     const std::string& name) const
 {
   Teuchos::RCP<AbstractSTKFieldContainer> container =
@@ -1282,13 +886,11 @@ Albany::STKDiscretization::getFieldT(
 
   const DOFsStruct& dofsStruct = nodalDOFsStructContainer.getDOFsStruct(name);
 
-  container->fillVectorT(
-      result, name, selector, dofsStruct.node_map, dofsStruct.dofManager);
+  container->fillVector(result, name, selector, dofsStruct.node_vs, dofsStruct.dofManager);
 }
 
-void
-Albany::STKDiscretization::getSolutionFieldT(
-    Tpetra_Vector& resultT,
+void STKDiscretization::getSolutionField(
+    Thyra_Vector&  result,
     const bool     overlapped) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
@@ -1300,13 +902,13 @@ Albany::STKDiscretization::getSolutionFieldT(
   // over each bucket.
   stk::mesh::Selector locally_owned = metaData.locally_owned_part();
 
-  container->fillSolnVectorT(resultT, locally_owned, node_mapT);
+  container->fillSolnVector(result, locally_owned, m_node_vs);
 }
 
 void
-Albany::STKDiscretization::getSolutionMV(
-    Tpetra_MultiVector& resultT,
-    const bool          overlapped) const
+STKDiscretization::getSolutionMV(
+    Thyra_MultiVector& result,
+    const bool         overlapped) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
 
@@ -1317,7 +919,7 @@ Albany::STKDiscretization::getSolutionMV(
   // over each bucket.
   stk::mesh::Selector locally_owned = metaData.locally_owned_part();
 
-  container->fillSolnMultiVector(resultT, locally_owned, node_mapT);
+  container->fillSolnMultiVector(result, locally_owned, m_node_vs);
 }
 
 /*****************************************************************/
@@ -1326,239 +928,141 @@ Albany::STKDiscretization::getSolutionMV(
 
 // Tpetra version of above
 void
-Albany::STKDiscretization::setFieldT(
-    const Tpetra_Vector& result,
-    const std::string&   name,
-    bool                 overlapped)
+STKDiscretization::setField(
+    const Thyra_Vector& result,
+    const std::string&  name,
+    bool                overlapped)
 {
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
+  Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
 
-  const std::string& part =
-      nodalDOFsStructContainer.fieldToMap.find(name)->second->first.first;
+  const std::string& part = nodalDOFsStructContainer.fieldToMap.find(name)->second->first.first;
 
-  stk::mesh::Selector selector =
-      overlapped ?
+  stk::mesh::Selector selector = overlapped ?
           metaData.locally_owned_part() | metaData.globally_shared_part() :
           metaData.locally_owned_part();
 
   // Iterate over the on-processor nodes by getting node buckets and iterating
   // over each bucket.
   if (part.size()) {
-    std::map<std::string, stk::mesh::Part*>::const_iterator it =
-        stkMeshStruct->nsPartVec.find(part);
-    if (it != stkMeshStruct->nsPartVec.end())
+    std::map<std::string, stk::mesh::Part*>::const_iterator it = stkMeshStruct->nsPartVec.find(part);
+    if (it != stkMeshStruct->nsPartVec.end()) {
       selector &= stk::mesh::Selector(*(it->second));
+    }
   }
 
   const DOFsStruct& dofsStruct = nodalDOFsStructContainer.getDOFsStruct(name);
 
-  if (overlapped)
-    container->saveVectorT(
-        result,
-        name,
-        selector,
-        dofsStruct.overlap_node_map,
-        dofsStruct.overlap_dofManager);
-  else
-    container->saveVectorT(
-        result, name, selector, dofsStruct.node_map, dofsStruct.dofManager);
+  if (overlapped) {
+    container->saveVector(result,name,selector,dofsStruct.overlap_node_vs,dofsStruct.overlap_dofManager);
+  } else {
+    container->saveVector(result, name, selector, dofsStruct.node_vs, dofsStruct.dofManager);
+  }
 }
 
-void
-Albany::STKDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT)
+void STKDiscretization::setSolutionField(const Thyra_Vector& soln,
+                                         const bool overlapped)
 {
-  // Copy soln vector into solution field, one node at a time
-  // Note that soln coming in is the local (non overlapped) soln
+  Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
 
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
+  // Select the proper mesh part and node vector space
+  stk::mesh::Selector part = metaData.locally_owned_part();
+  if (overlapped) {
+    part |= metaData.globally_shared_part();
+  }
+  auto node_vs = overlapped ? m_overlap_node_vs : m_node_vs;
 
-  // Iterate over the on-processor nodes
-  stk::mesh::Selector locally_owned = metaData.locally_owned_part();
-
-  container->saveSolnVectorT(solnT, locally_owned, node_mapT);
+  container->saveSolnVector(soln, part, node_vs);
 }
 
-void
-Albany::STKDiscretization::setSolutionFieldT(
-    const Tpetra_Vector& solnT,
-    const Tpetra_Vector& soln_dotT)
+void STKDiscretization::setSolutionField(const Thyra_Vector& soln,
+                                         const Thyra_Vector& soln_dot,
+                                         const bool overlapped)
 {
-  // Copy soln and soln_dot vectors into solution field, one node at a time
-  // Note that soln and soln_dot coming in is the local (non overlapped) soln
-  // and soln_dot
+  Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
 
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
+  // Select the proper mesh part and node vector space
+  stk::mesh::Selector part = metaData.locally_owned_part();
+  if (overlapped) {
+    part |= metaData.globally_shared_part();
+  }
+  auto node_vs = overlapped ? m_overlap_node_vs : m_node_vs;
 
-  // Iterate over the on-processor nodes
-  stk::mesh::Selector locally_owned = metaData.locally_owned_part();
-
-  container->saveSolnVectorT(solnT, soln_dotT, locally_owned, node_mapT);
+  container->saveSolnVector(soln, soln_dot, part, node_vs);
 }
 
-void
-Albany::STKDiscretization::setSolutionFieldT(
-    const Tpetra_Vector& solnT,
-    const Tpetra_Vector& soln_dotT,
-    const Tpetra_Vector& soln_dotdotT)
+void STKDiscretization::setSolutionField(const Thyra_Vector& soln,
+                                         const Thyra_Vector& soln_dot,
+                                         const Thyra_Vector& soln_dotdot,
+                                         const bool overlapped)
 {
-  // Copy soln, soln_dot and soln_dotdot vectors into solution field, one node
-  // at a time
-  // Note that soln, soln_dot, soln_dotdot coming in is the local (non
-  // overlapped) soln, soln_dot
-  // and soln_dotdot
+  Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
 
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
+  // Select the proper mesh part and node vector space
+  stk::mesh::Selector part = metaData.locally_owned_part();
+  if (overlapped) {
+    part |= metaData.globally_shared_part();
+  }
+  auto node_vs = overlapped ? m_overlap_node_vs : m_node_vs;
 
-  // Iterate over the on-processor nodes
-  stk::mesh::Selector locally_owned = metaData.locally_owned_part();
-
-  container->saveSolnVectorT(
-      solnT, soln_dotT, soln_dotdotT, locally_owned, node_mapT);
+  container->saveSolnVector(soln, soln_dot, soln_dotdot, part, node_vs);
 }
 
-void
-Albany::STKDiscretization::setSolutionFieldMV(const Tpetra_MultiVector& solnT)
+void STKDiscretization::setSolutionFieldMV(const Thyra_MultiVector& soln,
+                                           const bool overlapped)
 {
-  // Copy soln vector into solution field, one node at a time
-  // Note that soln coming in is the local (non overlapped) soln
+  Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
 
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
+  // Select the proper mesh part and node vector space
+  stk::mesh::Selector part = metaData.locally_owned_part();
+  if (overlapped) {
+    part |= metaData.globally_shared_part();
+  }
+  auto node_vs = overlapped ? m_overlap_node_vs : m_node_vs;
 
-  // Iterate over the on-processor nodes
-  stk::mesh::Selector locally_owned = metaData.locally_owned_part();
-
-  container->saveSolnMultiVector(solnT, locally_owned, node_mapT);
+  container->saveSolnMultiVector(soln, part, node_vs);
 }
 
-void
-Albany::STKDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT)
-{
-  // Copy soln vector into solution field, one node at a time
-  // Note that soln coming in is the local+ghost (overlapped) soln
-
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
-
-  // Iterate over the processor-visible nodes
-  stk::mesh::Selector select_owned_or_shared =
-      metaData.locally_owned_part() | metaData.globally_shared_part();
-
-  container->saveSolnVectorT(solnT, select_owned_or_shared, overlap_node_mapT);
-}
-
-void
-Albany::STKDiscretization::setOvlpSolutionFieldT(
-    const Tpetra_Vector& solnT,
-    const Tpetra_Vector& soln_dotT)
-{
-  // Copy soln and soln_dot vectors into solution field, one node at a time
-  // Note that soln and soln_dot coming in is the local+ghost (overlapped) soln
-  // and soln_dot
-
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
-
-  // Iterate over the processor-visible nodes
-  stk::mesh::Selector select_owned_or_shared =
-      metaData.locally_owned_part() | metaData.globally_shared_part();
-
-  container->saveSolnVectorT(
-      solnT, soln_dotT, select_owned_or_shared, overlap_node_mapT);
-}
-
-void
-Albany::STKDiscretization::setOvlpSolutionFieldT(
-    const Tpetra_Vector& solnT,
-    const Tpetra_Vector& soln_dotT,
-    const Tpetra_Vector& soln_dotdotT)
-{
-  // Copy soln, soln_dot and soln_dotdot vectors into solution field, one node
-  // at a time
-  // Note that soln, soln_dot and soln_dotdot coming in is the local+ghost
-  // (overlapped) soln, soln_dot
-  // and soln_dotdot
-
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
-
-  // Iterate over the processor-visible nodes
-  stk::mesh::Selector select_owned_or_shared =
-      metaData.locally_owned_part() | metaData.globally_shared_part();
-
-  container->saveSolnVectorT(
-      solnT,
-      soln_dotT,
-      soln_dotdotT,
-      select_owned_or_shared,
-      overlap_node_mapT);
-}
-
-void
-Albany::STKDiscretization::setOvlpSolutionFieldMV(
-    const Tpetra_MultiVector& solnT)
-{
-  // Copy soln vector into solution field, one node at a time
-  // Note that soln coming in is the local+ghost (overlapped) soln
-
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
-
-  // Iterate over the processor-visible nodes
-  stk::mesh::Selector select_owned_or_shared =
-      metaData.locally_owned_part() | metaData.globally_shared_part();
-
-  container->saveSolnMultiVector(
-      solnT, select_owned_or_shared, overlap_node_mapT);
-}
-
-GO
-Albany::STKDiscretization::gid(const stk::mesh::Entity node) const
+GO STKDiscretization::gid(const stk::mesh::Entity node) const
 {
   return bulkData.identifier(node) - 1;
 }
 
-int
-Albany::STKDiscretization::getOwnedDOF(const int inode, const int eq) const
+int STKDiscretization::getOwnedDOF(const int inode, const int eq) const
 {
-  if (interleavedOrdering)
+  if (interleavedOrdering) {
     return inode * neq + eq;
-  else
+  } else {
     return inode + numOwnedNodes * eq;
+  }
 }
 
-int
-Albany::STKDiscretization::getOverlapDOF(const int inode, const int eq) const
+int STKDiscretization::getOverlapDOF(const int inode, const int eq) const
 {
-  if (interleavedOrdering)
+  if (interleavedOrdering) {
     return inode * neq + eq;
-  else
+  } else {
     return inode + numOverlapNodes * eq;
+  }
 }
 
-GO
-Albany::STKDiscretization::getGlobalDOF(const GO inode, const int eq) const
+GO STKDiscretization::getGlobalDOF(const GO inode, const int eq) const
 {
-  if (interleavedOrdering)
+  if (interleavedOrdering) {
     return inode * neq + eq;
-  else
+  } else {
     return inode + numGlobalNodes * eq;
+  }
 }
 
-int
-Albany::STKDiscretization::nonzeroesPerRow(const int neq) const
+int STKDiscretization::nonzeroesPerRow(const int num_eq) const
 {
   int numDim = stkMeshStruct->numDim;
   int estNonzeroesPerRow;
   switch (numDim) {
-    case 0: estNonzeroesPerRow = 1 * neq; break;
-    case 1: estNonzeroesPerRow = 3 * neq; break;
-    case 2: estNonzeroesPerRow = 9 * neq; break;
-    case 3: estNonzeroesPerRow = 27 * neq; break;
+    case 0: estNonzeroesPerRow = 1 * num_eq; break;
+    case 1: estNonzeroesPerRow = 3 * num_eq; break;
+    case 2: estNonzeroesPerRow = 9 * num_eq; break;
+    case 3: estNonzeroesPerRow = 27 * num_eq; break;
     default:
       TEUCHOS_TEST_FOR_EXCEPTION(
           true, std::logic_error, "STKDiscretization:  Bad numDim" << numDim);
@@ -1566,86 +1070,76 @@ Albany::STKDiscretization::nonzeroesPerRow(const int neq) const
   return estNonzeroesPerRow;
 }
 
-void
-Albany::STKDiscretization::computeNodalMaps(bool overlapped)
+void STKDiscretization::computeNodalVectorSpaces(bool overlapped)
 {
   // Loads member data:  ownednodes, numOwnedNodes, node_map, numGlobalNodes,
   // map
   // maps for owned nodes and unknowns
 
-  stk::mesh::Selector map_type_selector =
-      overlapped ?
-          (metaData.locally_owned_part() | metaData.globally_shared_part()) :
-          metaData.locally_owned_part();
+  stk::mesh::Selector vs_type_selector = metaData.locally_owned_part();
+  if (overlapped) {
+    vs_type_selector |= metaData.globally_shared_part();
+  }
 
-  NodalDOFsStructContainer::MapOfDOFsStructs& mapOfDOFsStructs =
-      nodalDOFsStructContainer.mapOfDOFsStructs;
+  NodalDOFsStructContainer::MapOfDOFsStructs& mapOfDOFsStructs = nodalDOFsStructContainer.mapOfDOFsStructs;
   std::vector<stk::mesh::Entity> nodes;
   int                            numNodes(0);
 
   // compute NumGlobalNodes
-  stk::mesh::get_selected_entities(
-      map_type_selector, bulkData.buckets(stk::topology::NODE_RANK), nodes);
+  stk::mesh::get_selected_entities(vs_type_selector, bulkData.buckets(stk::topology::NODE_RANK), nodes);
 
   GO maxID(0), maxGID(0);
-  for (int i = 0; i < nodes.size(); i++) maxID = std::max(maxID, gid(nodes[i]));
-  Teuchos::reduceAll(*commT, Teuchos::REDUCE_MAX, 1, &maxID, &maxGID);
-  numGlobalNodes =
-      maxGID + 1;  // maxGID is the same for overlapped and unique maps
+  for (size_t i=0; i<nodes.size(); ++i) {
+    maxID = std::max(maxID, gid(nodes[i]));
+  }
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &maxID, &maxGID);
+  numGlobalNodes = maxGID + 1;  // maxGID is the same for overlapped and unique maps
 
-  // build maps
+  // build vector spaces
   for (auto it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it) {
-    stk::mesh::Selector selector(map_type_selector);
+    stk::mesh::Selector selector(vs_type_selector);
     const std::string&  part  = it->first.first;
     int                 nComp = it->first.second;
     if (part.size()) {
       auto it3 = stkMeshStruct->nsPartVec.find(part);
-      if (it3 != stkMeshStruct->nsPartVec.end())
+      if (it3 != stkMeshStruct->nsPartVec.end()) {
         selector &= *(it3->second);
-      else {  // throw error
+      } else {  // throw error
         std::ostringstream msg;
-        msg << "Albany::STKDiscretization::computeNodalMaps(overlapped=="
+        msg << "STKDiscretization::computeNodalMaps(overlapped=="
             << overlapped << "):\n    Part " << part
             << " is not in  stkMeshStruct->nsPartVec.\n";
         throw std::runtime_error(msg.str());
       }
     }
 
-    stk::mesh::get_selected_entities(
-        selector, bulkData.buckets(stk::topology::NODE_RANK), nodes);
+    stk::mesh::get_selected_entities(selector, bulkData.buckets(stk::topology::NODE_RANK), nodes);
 
     numNodes = nodes.size();
 
-    Teuchos::Array<Tpetra_GO> indicesT(numNodes * nComp);
-    NodalDOFManager*   dofManager =
-        (overlapped) ? &it->second.overlap_dofManager : &it->second.dofManager;
+    NodalDOFManager*   dofManager = (overlapped) ? &it->second.overlap_dofManager : &it->second.dofManager;
     dofManager->setup(nComp, numNodes, numGlobalNodes, interleavedOrdering);
 
+    Teuchos::Array<GO> indices(numNodes * nComp);
     for (int i = 0; i < numNodes; i++)
       for (int j = 0; j < nComp; j++)
-        indicesT[dofManager->getLocalDOF(i, j)] =
+        indices[dofManager->getLocalDOF(i, j)] =
             dofManager->getGlobalDOF(bulkData.identifier(nodes[i]) - 1, j);
 
-    Teuchos::RCP<const Tpetra_Map>& map =
-        (overlapped) ? it->second.overlap_map : it->second.map;
-    map = Teuchos::null;
-    map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(
-        indicesT(), commT);
+    Teuchos::RCP<const Thyra_VectorSpace>& vs = (overlapped) ? it->second.overlap_vs : it->second.vs;
+    vs = createVectorSpace(comm,indices());
 
-    Teuchos::RCP<const Tpetra_Map>& node_map =
-        (overlapped) ? it->second.overlap_node_map : it->second.node_map;
-    node_map = Teuchos::null;
+    Teuchos::RCP<const Thyra_VectorSpace>& node_vs = (overlapped) ? it->second.overlap_node_vs : it->second.node_vs;
 
     auto it2 = it;
     if ((nComp == 1) || ((it2 = mapOfDOFsStructs.find(make_pair(part, 1))) !=
                          mapOfDOFsStructs.end())) {
-      node_map = (overlapped) ? it2->second.overlap_map : it2->second.map;
+      node_vs = (overlapped) ? it2->second.overlap_vs : it2->second.vs;
     }
   }
 }
 
-void
-Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
+void STKDiscretization::computeOwnedNodesAndUnknowns()
 {
   // Loads member data:  ownednodes, numOwnedNodes, node_map, numGlobalNodes,
   // map
@@ -1660,13 +1154,8 @@ Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
       ownednodes);
 
   numOwnedNodes = ownednodes.size();
-  node_mapT     = nodalDOFsStructContainer.getDOFsStruct("mesh_nodes").map;
-  mapT = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").map;
-
-#ifdef ALBANY_EPETRA
-  map      = Petra::TpetraMap_To_EpetraMap(mapT, comm);
-  node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
-#endif
+  m_node_vs = nodalDOFsStructContainer.getDOFsStruct("mesh_nodes").vs;
+  m_vs = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").vs;
 
   if (Teuchos::nonnull(stkMeshStruct->nodal_data_base)) { 
     stkMeshStruct->nodal_data_base->resizeLocalMap(
@@ -1675,7 +1164,7 @@ Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
 }
 
 void
-Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
+STKDiscretization::computeOverlapNodesAndUnknowns()
 {
   // maps for overlap unknowns
   stk::mesh::Selector select_overlap_in_part =
@@ -1710,14 +1199,14 @@ Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 }
 
 void
-Albany::STKDiscretization::computeGraphs()
+STKDiscretization::computeGraphs()
 {
   computeGraphsUpToFillComplete();
   fillCompleteGraphs();
 }
 
 void
-Albany::STKDiscretization::computeGraphsUpToFillComplete()
+STKDiscretization::computeGraphsUpToFillComplete()
 {
   std::map<int, stk::mesh::Part*>::iterator pv = stkMeshStruct->partVec.begin();
   int nodes_per_element =
@@ -1850,7 +1339,7 @@ Albany::STKDiscretization::computeGraphsUpToFillComplete()
 }
 
 void
-Albany::STKDiscretization::fillCompleteGraphs()
+STKDiscretization::fillCompleteGraphs()
 {
   overlap_graphT->fillComplete();
 
@@ -1867,7 +1356,7 @@ Albany::STKDiscretization::fillCompleteGraphs()
 }
 
 void
-Albany::STKDiscretization::insertPeridigmNonzerosIntoGraph()
+STKDiscretization::insertPeridigmNonzerosIntoGraph()
 {
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
@@ -1917,7 +1406,7 @@ Albany::STKDiscretization::insertPeridigmNonzerosIntoGraph()
 }
 
 void
-Albany::STKDiscretization::computeWorksetInfo()
+STKDiscretization::computeWorksetInfo()
 {
   stk::mesh::Selector select_owned_in_part =
       stk::mesh::Selector(metaData.universal_part()) &
@@ -1979,7 +1468,7 @@ Albany::STKDiscretization::computeWorksetInfo()
 
   nodesOnElemStateVec.resize(numBuckets);
   stateArrays.elemStateArrays.resize(numBuckets);
-  const Albany::StateInfoStruct& nodal_states =
+  const StateInfoStruct& nodal_states =
       stkMeshStruct->getFieldContainer()->getNodalSIS();
 
   // Clear map if remeshing
@@ -2020,7 +1509,7 @@ Albany::STKDiscretization::computeWorksetInfo()
 
       for (int is = 0; is < nodal_states.size(); ++is) {
         const std::string&                    name = nodal_states[is]->name;
-        const Albany::StateStruct::FieldDims& dim  = nodal_states[is]->dim;
+        const StateStruct::FieldDims& dim  = nodal_states[is]->dim;
         MDArray&             array    = stateArrays.elemStateArrays[b][name];
         std::vector<double>& stateVec = nodesOnElemStateVec[b][is];
         int                  dim0 = buck.size();  // may be different from dim[0];
@@ -2253,19 +1742,19 @@ Albany::STKDiscretization::computeWorksetInfo()
     }
   }
 
-  typedef Albany::AbstractSTKFieldContainer::ScalarValueState ScalarValueState;
-  typedef Albany::AbstractSTKFieldContainer::QPScalarState    QPScalarState;
-  typedef Albany::AbstractSTKFieldContainer::QPVectorState    QPVectorState;
-  typedef Albany::AbstractSTKFieldContainer::QPTensorState    QPTensorState;
+  typedef AbstractSTKFieldContainer::ScalarValueState ScalarValueState;
+  typedef AbstractSTKFieldContainer::QPScalarState    QPScalarState;
+  typedef AbstractSTKFieldContainer::QPVectorState    QPVectorState;
+  typedef AbstractSTKFieldContainer::QPTensorState    QPTensorState;
 
-  typedef Albany::AbstractSTKFieldContainer::ScalarState ScalarState;
-  typedef Albany::AbstractSTKFieldContainer::VectorState VectorState;
-  typedef Albany::AbstractSTKFieldContainer::TensorState TensorState;
+  typedef AbstractSTKFieldContainer::ScalarState ScalarState;
+  typedef AbstractSTKFieldContainer::VectorState VectorState;
+  typedef AbstractSTKFieldContainer::TensorState TensorState;
 
   // Pull out pointers to shards::Arrays for every bucket, for every state
   // Code is data-type dependent
 
-  Albany::AbstractSTKFieldContainer& container =
+  AbstractSTKFieldContainer& container =
       *stkMeshStruct->getFieldContainer();
 
   ScalarValueState& scalarValue_states = container.getScalarValueStates();
@@ -2281,7 +1770,7 @@ Albany::STKDiscretization::computeWorksetInfo()
     stk::mesh::Bucket& buck = *buckets[b];
     for (auto css = cell_scalar_states.begin(); css != cell_scalar_states.end();
          ++css) {
-      BucketArray<Albany::AbstractSTKFieldContainer::ScalarFieldType> array(
+      BucketArray<AbstractSTKFieldContainer::ScalarFieldType> array(
           **css, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " SFT dim[1]: " <<
@@ -2291,7 +1780,7 @@ Albany::STKDiscretization::computeWorksetInfo()
     }
     for (auto cvs = cell_vector_states.begin(); cvs != cell_vector_states.end();
          ++cvs) {
-      BucketArray<Albany::AbstractSTKFieldContainer::VectorFieldType> array(
+      BucketArray<AbstractSTKFieldContainer::VectorFieldType> array(
           **cvs, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " VFT dim[2]: " <<
@@ -2301,7 +1790,7 @@ Albany::STKDiscretization::computeWorksetInfo()
     }
     for (auto cts = cell_tensor_states.begin(); cts != cell_tensor_states.end();
          ++cts) {
-      BucketArray<Albany::AbstractSTKFieldContainer::TensorFieldType> array(
+      BucketArray<AbstractSTKFieldContainer::TensorFieldType> array(
           **cts, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " TFT dim[3]: " <<
@@ -2311,7 +1800,7 @@ Albany::STKDiscretization::computeWorksetInfo()
     }
     for (auto qpss = qpscalar_states.begin(); qpss != qpscalar_states.end();
          ++qpss) {
-      BucketArray<Albany::AbstractSTKFieldContainer::QPScalarFieldType> array(
+      BucketArray<AbstractSTKFieldContainer::QPScalarFieldType> array(
           **qpss, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPSFT dim[1]: " <<
@@ -2321,7 +1810,7 @@ Albany::STKDiscretization::computeWorksetInfo()
     }
     for (auto qpvs = qpvector_states.begin(); qpvs != qpvector_states.end();
          ++qpvs) {
-      BucketArray<Albany::AbstractSTKFieldContainer::QPVectorFieldType> array(
+      BucketArray<AbstractSTKFieldContainer::QPVectorFieldType> array(
           **qpvs, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPVFT dim[2]: " <<
@@ -2331,7 +1820,7 @@ Albany::STKDiscretization::computeWorksetInfo()
     }
     for (auto qpts = qptensor_states.begin(); qpts != qptensor_states.end();
          ++qpts) {
-      BucketArray<Albany::AbstractSTKFieldContainer::QPTensorFieldType> array(
+      BucketArray<AbstractSTKFieldContainer::QPTensorFieldType> array(
           **qpts, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPTFT dim[3]: " <<
@@ -2359,7 +1848,7 @@ Albany::STKDiscretization::computeWorksetInfo()
 
   if (Teuchos::nonnull(stkMeshStruct->nodal_data_base) &&
       stkMeshStruct->nodal_data_base->isNodeDataPresent()) {
-    Teuchos::RCP<Albany::NodeFieldContainer> node_states =
+    Teuchos::RCP<NodeFieldContainer> node_states =
         stkMeshStruct->nodal_data_base->getNodeContainer();
 
     stk::mesh::BucketVector const& node_buckets =
@@ -2370,11 +1859,11 @@ Albany::STKDiscretization::computeWorksetInfo()
     stateArrays.nodeStateArrays.resize(numNodeBuckets);
     for (std::size_t b = 0; b < numNodeBuckets; b++) {
       stk::mesh::Bucket& buck = *node_buckets[b];
-      for (Albany::NodeFieldContainer::iterator nfs = node_states->begin();
+      for (NodeFieldContainer::iterator nfs = node_states->begin();
            nfs != node_states->end();
            ++nfs) {
         stateArrays.nodeStateArrays[b][(*nfs).first] =
-            Teuchos::rcp_dynamic_cast<Albany::AbstractSTKNodeFieldContainer>(
+            Teuchos::rcp_dynamic_cast<AbstractSTKNodeFieldContainer>(
                 (*nfs).second)
                 ->getMDA(buck);
       }
@@ -2383,7 +1872,7 @@ Albany::STKDiscretization::computeWorksetInfo()
 }
 
 void
-Albany::STKDiscretization::computeSideSets()
+STKDiscretization::computeSideSets()
 {
   // Clean up existing sideset structure if remeshing
 
@@ -2486,13 +1975,13 @@ Albany::STKDiscretization::computeSideSets()
   }
 
 #ifdef ALBANY_CONTACT
-  contactManager = Teuchos::rcp(new Albany::ContactManager(
+  contactManager = Teuchos::rcp(new ContactManager(
       discParams, *this, stkMeshStruct->getMeshSpecs()));
 #endif
 }
 
 unsigned
-Albany::STKDiscretization::determine_local_side_id(
+STKDiscretization::determine_local_side_id(
     const stk::mesh::Entity elem,
     stk::mesh::Entity       side)
 {
@@ -2599,7 +2088,7 @@ Albany::STKDiscretization::determine_local_side_id(
 }
 
 void
-Albany::STKDiscretization::computeNodeSets()
+STKDiscretization::computeNodeSets()
 {
   std::map<std::string, stk::mesh::Part*>::iterator ns =
       stkMeshStruct->nsPartVec.begin();
@@ -2639,7 +2128,7 @@ Albany::STKDiscretization::computeNodeSets()
 }
 
 void
-Albany::STKDiscretization::setupExodusOutput()
+STKDiscretization::setupExodusOutput()
 {
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) {
@@ -2650,7 +2139,7 @@ Albany::STKDiscretization::setupExodusOutput()
     Ioss::Init::Initializer io;
 
     mesh_data = Teuchos::rcp(
-        new stk::io::StkMeshIoBroker(Albany::getMpiCommFromTeuchosComm(commT)));
+        new stk::io::StkMeshIoBroker(getMpiCommFromTeuchosComm(commT)));
     mesh_data->set_bulk_data(bulkData);
     outputFileIdx = mesh_data->create_output_mesh(str, stk::io::WRITE_RESULTS);
 
@@ -2968,7 +2457,7 @@ parametric_coordinates(
 const std::pair<bool, std::pair<unsigned, unsigned>>
 point_in_element(
     const std::pair<double, double>& sphere,
-    const Albany::WorksetArray<
+    const WorksetArray<
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type& coords,
     std::pair<double, double>& parametric)
 {
@@ -2997,10 +2486,10 @@ void
 setup_latlon_interp(
     const unsigned nlat,
     const double   nlon,
-    const Albany::WorksetArray<
+    const WorksetArray<
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type& coords,
-    Albany::WorksetArray<Teuchos::ArrayRCP<
-        std::vector<Albany::STKDiscretization::interp>>>::type& interpdata,
+    WorksetArray<Teuchos::ArrayRCP<
+        std::vector<STKDiscretization::interp>>>::type& interpdata,
     const Teuchos::RCP<const Teuchos_Comm>                      commT)
 {
   double                   err  = 0;
@@ -3026,7 +2515,7 @@ setup_latlon_interp(
             spherical_to_cart(ref2sphere(coords[b][e], paramtric));
         const std::vector<double> sphere_xyz = spherical_to_cart(sphere);
         err = std::max(err, ::distance(&sphere2_xyz[0], &sphere_xyz[0]));
-        Albany::STKDiscretization::interp interp;
+        STKDiscretization::interp interp;
         interp.parametric_coords  = paramtric;
         interp.latitude_longitude = std::pair<unsigned, unsigned>(i, j);
         interpdata[b][e].push_back(interp);
@@ -3042,8 +2531,8 @@ setup_latlon_interp(
 }
 
 int
-Albany::STKDiscretization::processNetCDFOutputRequestT(
-    const Tpetra_Vector& solution_fieldT)
+STKDiscretization::processNetCDFOutputRequest(
+    const Thyra_Vector& solution_field)
 {
 #ifdef ALBANY_SEACAS
 // IK, 10/13/14: need to implement!
@@ -3052,7 +2541,7 @@ Albany::STKDiscretization::processNetCDFOutputRequestT(
 }
 
 int
-Albany::STKDiscretization::processNetCDFOutputRequestMV(
+STKDiscretization::processNetCDFOutputRequestMV(
     const Tpetra_MultiVector& solution_fieldT)
 {
 #ifdef ALBANY_SEACAS
@@ -3062,7 +2551,7 @@ Albany::STKDiscretization::processNetCDFOutputRequestMV(
 }
 
 void
-Albany::STKDiscretization::setupNetCDFOutput()
+STKDiscretization::setupNetCDFOutput()
 {
   const long long unsigned rank = commT->getRank();
 #ifdef ALBANY_SEACAS
@@ -3084,7 +2573,7 @@ Albany::STKDiscretization::setupNetCDFOutput()
     netCDFOutputRequest    = 0;
 
 #ifdef ALBANY_PAR_NETCDF
-    MPI_Comm theMPIComm = Albany::getMpiCommFromTeuchosComm(commT);
+    MPI_Comm theMPIComm = getMpiCommFromTeuchosComm(commT);
     MPI_Info info;
     MPI_Info_create(&info);
     if (const int ierr = nc_create_par(
@@ -3281,7 +2770,7 @@ Albany::STKDiscretization::setupNetCDFOutput()
 }
 
 void
-Albany::STKDiscretization::reNameExodusOutput(std::string& filename)
+STKDiscretization::reNameExodusOutput(std::string& filename)
 {
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput && !mesh_data.is_null()) {
@@ -3306,7 +2795,7 @@ Albany::STKDiscretization::reNameExodusOutput(std::string& filename)
 // Convert the stk mesh on this processor to a nodal graph.
 // todo Dev/tested on linear elements only.
 void
-Albany::STKDiscretization::meshToGraph()
+STKDiscretization::meshToGraph()
 {
   if (Teuchos::is_null(stkMeshStruct->nodal_data_base)) return;
   if (!stkMeshStruct->nodal_data_base->isNodeDataPresent()) return;
@@ -3404,7 +2893,7 @@ Albany::STKDiscretization::meshToGraph()
 }
 
 void
-Albany::STKDiscretization::printVertexConnectivity()
+STKDiscretization::printVertexConnectivity()
 {
   if (Teuchos::is_null(nodalGraph)) return;
 
@@ -3424,7 +2913,7 @@ Albany::STKDiscretization::printVertexConnectivity()
 }
 
 void
-Albany::STKDiscretization::buildSideSetProjectors()
+STKDiscretization::buildSideSetProjectors()
 {
   // Note: the Global index of a node should be the same in both this and the
   // side discretizations
@@ -3447,8 +2936,8 @@ Albany::STKDiscretization::buildSideSetProjectors()
   {
     // Extract the discretization
     const std::string&                   sideSetName = it.first;
-    const Albany::STKDiscretization&     disc        = *it.second;
-    const Albany::AbstractSTKMeshStruct& ss_mesh     = *disc.stkMeshStruct;
+    const STKDiscretization&     disc        = *it.second;
+    const AbstractSTKMeshStruct& ss_mesh     = *disc.stkMeshStruct;
 
     // Get the maps
     ss_ov_mapT = disc.getOverlapMapT();
@@ -3567,15 +3056,15 @@ Albany::STKDiscretization::buildSideSetProjectors()
 }
 
 void
-Albany::STKDiscretization::updateMesh()
+STKDiscretization::updateMesh()
 {
-  const Albany::StateInfoStruct& nodal_param_states =
+  const StateInfoStruct& nodal_param_states =
       stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
   nodalDOFsStructContainer.addEmptyDOFsStruct("ordinary_solution", "", neq);
   nodalDOFsStructContainer.addEmptyDOFsStruct("mesh_nodes", "", 1);
   for (size_t is = 0; is < nodal_param_states.size(); is++) {
-    const Albany::StateStruct&            param_state = *nodal_param_states[is];
-    const Albany::StateStruct::FieldDims& dim         = param_state.dim;
+    const StateStruct&            param_state = *nodal_param_states[is];
+    const StateStruct::FieldDims& dim         = param_state.dim;
     int                                   numComps    = 1;
     if (dim.size() == 3)  // vector
       numComps = dim[2];
@@ -3586,7 +3075,7 @@ Albany::STKDiscretization::updateMesh()
         param_state.name, param_state.meshPart, numComps);
   }
 
-  computeNodalMaps(false);
+  computeNodalVectorSpaces(false);
 
   computeOwnedNodesAndUnknowns();
 
@@ -3649,3 +3138,5 @@ Albany::STKDiscretization::updateMesh()
     buildSideSetProjectors();
   }
 }
+
+} // namespace Albany
