@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_NULLSPACEUTILS_HPP
-#define ALBANY_NULLSPACEUTILS_HPP
+#ifndef ALBANY_NULL_SPACE_UTILS_HPP
+#define ALBANY_NULL_SPACE_UTILS_HPP
 
 #include "Albany_DataTypes.hpp"
 
@@ -94,11 +94,11 @@ public:
   //! set. soln_map must be set only if using MueLu and numElasticityDim >
   //! 0. Both maps are nonoverlapping.
   void setCoordinatesAndNullspace(
-    const Teuchos::RCP<Tpetra_MultiVector> &coordMV,
-    const Teuchos::RCP<const Tpetra_Map>& soln_map = Teuchos::null);
+    const Teuchos::RCP<Thyra_MultiVector> &coordMV,
+    const Teuchos::RCP<const Thyra_VectorSpace>& soln_vs = Teuchos::null);
 
   //! Pass only the coordinates.
-  void setCoordinates(const Teuchos::RCP<Tpetra_MultiVector> &coordMV);
+  void setCoordinates(const Teuchos::RCP<Thyra_MultiVector> &coordMV);
 
 private:
   int numPDEs, numElasticityDim, numScalar, nullSpaceDim;
@@ -106,13 +106,12 @@ private:
 
   Teuchos::RCP<Teuchos::ParameterList> plist;
 
-  Teuchos::RCP<Tpetra_MultiVector> coordMV;
+  Teuchos::RCP<Thyra_MultiVector> coordMV;
 
   Tpetra_NullSpace_Traits::array_type trr;
   Epetra_NullSpace_Traits::array_type err;
-
 };
 
 } // namespace Albany
 
-#endif /* ALBANY_NULLSPACEUTILS_HPP */
+#endif // ALBANY_NULL_SPACE_UTILS_HPP

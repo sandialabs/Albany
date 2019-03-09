@@ -6,7 +6,11 @@
 
 #include "Piro_StratimikosUtils.hpp"
 #include "Teuchos_VerboseObject.hpp"
+
 #include "Albany_NullSpaceUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_CommUtils.hpp"
+#include "Albany_TpetraThyraUtils.hpp"
 
 namespace Albany {
 
@@ -15,25 +19,29 @@ namespace {
 // Copied from Trilinos/packages/ml/src/Utils/ml_rbm.c.
 template <class Traits>
 void Coord2RBM(
-  const Teuchos::RCP<Tpetra_MultiVector> &coordMV,
+  const Teuchos::RCP<Thyra_MultiVector> &coordMV,
   const int Ndof, const int NscalarDof, const int NSdim,
   typename Traits::array_type &rbm)
 {
   int ii, jj;
   RigidBodyModes::LO_type dof;
 
-  const RigidBodyModes::LO_type numNodes = coordMV->getLocalLength(); // length of each vector in the multivector
-  int numSpaceDim = coordMV->getNumVectors(); // Number of multivectors are the dimension of the problem
+  const int numSpaceDim = coordMV->domain()->dim(); // Number of multivectors are the dimension of the problem
+
+  auto data = getLocalData(coordMV.getConst());
+  const RigidBodyModes::LO_type numNodes = data[0].size(); // length of each vector in the multivector
 
   const RigidBodyModes::LO_type vec_leng = numNodes*Ndof;
   Traits traits_class(Ndof, NscalarDof, NSdim, vec_leng, rbm);
 
-  Teuchos::ArrayRCP<const ST> x = coordMV->getData(0);
+  Teuchos::ArrayRCP<const ST> x = data[0];
   Teuchos::ArrayRCP<const ST> y, z;
-  if(numSpaceDim > 1)
-      y = coordMV->getData(1);
-  if(numSpaceDim > 2)
-      z = coordMV->getData(2);
+  if(numSpaceDim > 1) {
+      y = data[1];
+  }
+  if(numSpaceDim > 2) {
+      z = data[2];
+  }
 
   traits_class.zero();
 
@@ -110,7 +118,7 @@ void Coord2RBM(
 //IKT, 6/28/15: the following set RBMs for non-elasticity problems.
 template <class Traits>
 void Coord2RBM_nonElasticity(
-  const Teuchos::RCP<Tpetra_MultiVector> &coordMV,
+  const Teuchos::RCP<Thyra_MultiVector> &coordMV,
   const int Ndof, const int NscalarDof, const int NSdim,
   typename Traits::array_type &rbm)
 {
@@ -118,18 +126,23 @@ void Coord2RBM_nonElasticity(
   int ii, jj;
   RigidBodyModes::LO_type dof;
 
-  int numSpaceDim = coordMV->getNumVectors(); // Number of multivectors are the dimension of the problem
-  const RigidBodyModes::LO_type numNodes = coordMV->getLocalLength(); // length of each vector in the multivector
+  int numSpaceDim = coordMV->domain()->dim(); // Number of multivectors are the dimension of the problem
+  auto data = getLocalData(coordMV.getConst());
+
+  // At least component x should be there
+  const RigidBodyModes::LO_type numNodes = data[0].size(); // length of each vector in the multivector
 
   const RigidBodyModes::LO_type vec_leng = numNodes*Ndof;
   Traits traits_class(Ndof, NscalarDof, NSdim, vec_leng, rbm);
 
-  Teuchos::ArrayRCP<const ST> x = coordMV->getData(0);
+  Teuchos::ArrayRCP<const ST> x = data[0];
   Teuchos::ArrayRCP<const ST> y, z;
-  if(numSpaceDim > 1)
-      y = coordMV->getData(1);
-  if(numSpaceDim > 2)
-      z = coordMV->getData(2);
+  if(numSpaceDim > 1) {
+      y = data[1];
+  }
+  if(numSpaceDim > 2) {
+      z = data[2];
+  }
 
   traits_class.zero();
 
@@ -172,27 +185,29 @@ void Coord2RBM_nonElasticity(
   return;
 } /*Coord2RBM_nonElasticity*/
 
-void subtractCentroid(const Teuchos::RCP<Tpetra_MultiVector> &coordMV)
+void subtractCentroid(const Teuchos::RCP<Thyra_MultiVector> &coordMV)
 {
-  const RigidBodyModes::LO_type nnodes = coordMV->getLocalLength(); // local length of each vector
-  const int ndim = coordMV->getNumVectors(); // Number of multivectors are the dimension of the problem
+  auto spmd_vs = getSpmdVectorSpace(coordMV->range());
+  const RigidBodyModes::LO_type nnodes = spmd_vs->localSubDim(); // local length of each vector
+  const LO ndim = coordMV->domain()->dim(); // Number of multivectors are the dimension of the problem
 
+  auto data = getNonconstLocalData(coordMV);
   ST centroid[3]; // enough for up to 3d
   {
     ST sum[3];
     for (int i = 0; i < ndim; ++i) {
-      Teuchos::ArrayRCP<const ST> x = coordMV->getData(i);
+      Teuchos::ArrayRCP<const ST> x = data[i];
       sum[i] = 0;
       for (RigidBodyModes::LO_type j = 0; j < nnodes; ++j) sum[i] += x[j];
     }
-    Teuchos::reduceAll<int, ST>(*coordMV->getMap()->getComm(), Teuchos::REDUCE_SUM, ndim,
+    Teuchos::reduceAll(*createTeuchosCommFromTeuchosComm(spmd_vs->getComm()), Teuchos::REDUCE_SUM, ndim,
                                 sum, centroid);
-    const RigidBodyModes::GO_type numNodes = coordMV->getGlobalLength(); // length of each vector in the multivector
+    const RigidBodyModes::GO_type numNodes = spmd_vs->localSubDim(); // length of each vector in the multivector
     for (int i = 0; i < ndim; ++i) centroid[i] /= numNodes;
   }
 
   for (int i = 0; i < ndim; ++i) {
-    Teuchos::ArrayRCP<ST> x = coordMV->getDataNonConst(i);
+    Teuchos::ArrayRCP<ST> x = data[i];
     for (Teuchos::ArrayRCP<ST>::size_type j = 0; j < nnodes; ++j)
       x[j] -= centroid[i];
   }
@@ -200,8 +215,8 @@ void subtractCentroid(const Teuchos::RCP<Tpetra_MultiVector> &coordMV)
 } // namespace
 
 RigidBodyModes::RigidBodyModes(int numPDEs_)
-  : numPDEs(numPDEs_), numElasticityDim(0), nullSpaceDim(0),
-    numScalar(0), mlUsed(false), mueLuUsed(false), setNonElastRBM(false)
+  : numPDEs(numPDEs_), numElasticityDim(0), numScalar(0), nullSpaceDim(0),
+    mlUsed(false), mueLuUsed(false), setNonElastRBM(false)
 {}
 
 void RigidBodyModes::
@@ -245,9 +260,8 @@ void RigidBodyModes::setParameters(
 }
 
 void RigidBodyModes::
-setCoordinates(const Teuchos::RCP<Tpetra_MultiVector> &coordMV_)
+setCoordinates(const Teuchos::RCP<Thyra_MultiVector>& coordMV_)
 {
-
   coordMV = coordMV_;
 
   TEUCHOS_TEST_FOR_EXCEPTION(
@@ -255,31 +269,37 @@ setCoordinates(const Teuchos::RCP<Tpetra_MultiVector> &coordMV_)
     std::logic_error,
     "setCoordinates was called without setting an ML or MueLu parameter list.");
 
-  const RigidBodyModes::LO_type numNodes = coordMV->getLocalLength(); // length of each vector in the multivector
-  int numSpaceDim = coordMV->getNumVectors(); // Number of multivectors are the dimension of the problem
+  int numSpaceDim = coordMV->domain()->dim(); // Number of multivectors are the dimension of the problem
 
   if (isMLUsed()) { // ML here
 
     //MP: Even when a processor has no nodes, ML requires a nonnull pointer of coordinates.
-    const double emptyCoords[3] ={0.0, 0.0, 0.0};
+    double emptyCoords[3] ={0.0, 0.0, 0.0};
 
-    const double *x = coordMV->getData(0).get();
-    if (x==NULL) x = &emptyCoords[0];
-    plist->set<double*>("x-coordinates", const_cast<double*>(x));
+    double* x = getNonconstLocalData(coordMV->col(0)).getRawPtr();
+
+    if (x==nullptr) {
+      x = &emptyCoords[0];
+    }
+    plist->set<double*>("x-coordinates", x);
     if(numSpaceDim > 1){
-      const double *y = coordMV->getData(1).get();
-      if (y==NULL) y = &emptyCoords[1];
-      plist->set<double*>("y-coordinates", const_cast<double*>(y));
+      double* y = getNonconstLocalData(coordMV->col(1)).getRawPtr();
+      if (y==nullptr) {
+        y = &emptyCoords[1];
+      }
+      plist->set<double*>("y-coordinates", y);
+    } else {
+      plist->set<double*>("y-coordinates", nullptr);
     }
-    else
-      plist->set<double*>("y-coordinates", NULL);
     if(numSpaceDim > 2){
-      const double *z = coordMV->getData(2).get();
-      if (z==NULL) z = &emptyCoords[2];
-      plist->set<double*>("z-coordinates", const_cast<double*>(z));
+      double* z = getNonconstLocalData(coordMV->col(2)).getRawPtr();
+      if (z==nullptr) {
+        z = &emptyCoords[2];
+      }
+      plist->set<double*>("z-coordinates", z);
+    } else {
+      plist->set<double*>("z-coordinates", nullptr);
     }
-    else
-      plist->set<double*>("z-coordinates", NULL);
 
     plist->set("PDE equations", numPDEs);
 
@@ -298,18 +318,18 @@ setCoordinates(const Teuchos::RCP<Tpetra_MultiVector> &coordMV_)
 }
 
 void RigidBodyModes::
-setCoordinatesAndNullspace(const Teuchos::RCP<Tpetra_MultiVector> &coordMV,
-                           const Teuchos::RCP<const Tpetra_Map>& soln_map)
+setCoordinatesAndNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV_in,
+                           const Teuchos::RCP<const Thyra_VectorSpace>& soln_vs)
 {
   // numPDEs = # PDEs
   // numElasticityDim = # elasticity dofs
   // nullSpaceDim = dimension of elasticity nullspace
   // numScalar = # scalar dofs coupled to elasticity
 
-  int numSpaceDim = coordMV->getNumVectors(); // Number of multivectors are the dimension of the problem
-  const RigidBodyModes::LO_type numNodes = coordMV->getLocalLength(); // length of each vector in the multivector
+  int numSpaceDim = coordMV->domain()->dim(); // Number of multivectors are the dimension of the problem
+  const RigidBodyModes::LO_type numNodes = getSpmdVectorSpace(coordMV->range())->localSubDim();
 
-  setCoordinates(coordMV);
+  setCoordinates(coordMV_in);
 
   if (numElasticityDim > 0 || setNonElastRBM == true ) {
 
@@ -338,7 +358,7 @@ setCoordinatesAndNullspace(const Teuchos::RCP<Tpetra_MultiVector> &coordMV,
 
     } else {
 
-      trr = Teuchos::rcp(new Tpetra_NullSpace_Traits::base_array_type(soln_map,
+      trr = Teuchos::rcp(new Tpetra_NullSpace_Traits::base_array_type(getTpetraMap(soln_vs),
                                nullSpaceDim + numScalar, false));
 
       subtractCentroid(coordMV);
@@ -349,10 +369,11 @@ setCoordinatesAndNullspace(const Teuchos::RCP<Tpetra_MultiVector> &coordMV,
         Coord2RBM<Tpetra_NullSpace_Traits>(coordMV, numPDEs, numScalar, nullSpaceDim, trr);
 
       TEUCHOS_TEST_FOR_EXCEPTION(
-        soln_map.is_null(), std::logic_error,
+        soln_vs.is_null(), std::logic_error,
         "numElasticityDim > 0 and isMueLuUsed(): soln_map must be provided.");
       plist->set("Nullspace", trr);
     }
   }
 }
+
 } // namespace Albany
