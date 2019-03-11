@@ -326,13 +326,15 @@ getEpetraVector (Thyra_Vector& v,
                  const bool throw_on_failure)
 {
   auto* spmd_v = dynamic_cast<Thyra::DefaultSpmdVector<ST>*>(&v);
+  if (spmd_v!=nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(spmd_v==nullptr && throw_on_failure, BadThyraEpetraCast,
+                               "Error! Could not cast input Thyra_Vector to Thyra::DefaultSpmdVector<ST>.\n");
 
-  TEUCHOS_TEST_FOR_EXCEPTION(spmd_v==nullptr && throw_on_failure, BadThyraEpetraCast,
-                             "Error! Could not cast input Thyra_Vector to Thyra::DefaultSpmdVector<ST>.\n");
+    ST* vals = spmd_v->getPtr();
 
-  ST* vals = spmd_v->getPtr();
-
-  return Teuchos::rcp(new Epetra_Vector(View,emap,vals));
+    return Teuchos::rcp(new Epetra_Vector(View,emap,vals));
+  }
+  return Teuchos::null;
 }
 
 Teuchos::RCP<const Epetra_Vector>
@@ -341,14 +343,16 @@ getConstEpetraVector (const Thyra_Vector& v,
                       const bool throw_on_failure)
 {
   auto* spmd_v = dynamic_cast<const Thyra::DefaultSpmdVector<ST>*>(&v);
+  if (spmd_v!=nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(spmd_v==nullptr && throw_on_failure, BadThyraEpetraCast,
+                               "Error! Could not cast input Thyra_Vector to Thyra::DefaultSpmdVector<ST>.\n");
 
-  TEUCHOS_TEST_FOR_EXCEPTION(spmd_v==nullptr && throw_on_failure, BadThyraEpetraCast,
-                             "Error! Could not cast input Thyra_Vector to Thyra::DefaultSpmdVector<ST>.\n");
+    const ST* vals = spmd_v->getPtr();
 
-  const ST* vals = spmd_v->getPtr();
-
-  // LB: I don't see any way around the const cast, since Epetra expects double* as input.
-  return Teuchos::rcp(new Epetra_Vector(View,emap,const_cast<ST*>(vals)));
+    // LB: I don't see any way around the const cast, since Epetra expects double* as input.
+    return Teuchos::rcp(new Epetra_Vector(View,emap,const_cast<ST*>(vals)));
+  }
+  return Teuchos::null;
 }
 
 Teuchos::RCP<Epetra_MultiVector>
@@ -357,15 +361,17 @@ getEpetraMultiVector (Thyra_MultiVector& mv,
                       const bool throw_on_failure)
 {
   auto* spmd_mv = dynamic_cast<Thyra::DefaultSpmdMultiVector<ST>*>(&mv);
+  if (spmd_mv!=nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(spmd_mv==nullptr && throw_on_failure, BadThyraEpetraCast,
+                               "Error! Could not cast input Thyra_MultiVector to Thyra::DefaultSpmdMultiVector<ST>.\n");
 
-  TEUCHOS_TEST_FOR_EXCEPTION(spmd_mv==nullptr && throw_on_failure, BadThyraEpetraCast,
-                             "Error! Could not cast input Thyra_MultiVector to Thyra::DefaultSpmdMultiVector<ST>.\n");
+    Teuchos::ArrayRCP<ST> vals;
+    GO leadingDim;
+    spmd_mv->getNonconstLocalData(Teuchos::inOutArg(vals),Teuchos::inOutArg(leadingDim));
 
-  Teuchos::ArrayRCP<ST> vals;
-  GO leadingDim;
-  spmd_mv->getNonconstLocalData(Teuchos::inOutArg(vals),Teuchos::inOutArg(leadingDim));
-
-  return Teuchos::rcp(new Epetra_MultiVector(View,emap,vals.get(),leadingDim,mv.domain()->dim()));
+    return Teuchos::rcp(new Epetra_MultiVector(View,emap,vals.get(),leadingDim,mv.domain()->dim()));
+  }
+  return Teuchos::null;
 }
 
 Teuchos::RCP<const Epetra_MultiVector>
@@ -374,16 +380,18 @@ getConstEpetraMultiVector (const Thyra_MultiVector& mv,
                            const bool throw_on_failure)
 {
   auto* spmd_mv = dynamic_cast<const Thyra::DefaultSpmdMultiVector<ST>*>(&mv);
+  if (spmd_mv!=nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(spmd_mv==nullptr && throw_on_failure, BadThyraEpetraCast,
+                               "Error! Could not cast input Thyra_MultiVector to Thyra::DefaultSpmdMultiVector<ST>.\n");
 
-  TEUCHOS_TEST_FOR_EXCEPTION(spmd_mv==nullptr && throw_on_failure, BadThyraEpetraCast,
-                             "Error! Could not cast input Thyra_MultiVector to Thyra::DefaultSpmdMultiVector<ST>.\n");
+    Teuchos::ArrayRCP<const ST> vals;
+    GO leadingDim;
+    spmd_mv->getLocalData(Teuchos::inOutArg(vals),Teuchos::inOutArg(leadingDim));
 
-  Teuchos::ArrayRCP<const ST> vals;
-  GO leadingDim;
-  spmd_mv->getLocalData(Teuchos::inOutArg(vals),Teuchos::inOutArg(leadingDim));
-
-  // LB: I don't see any way around the const cast, since Epetra expects double* as input.
-  return Teuchos::rcp(new Epetra_MultiVector(View,emap,const_cast<ST*>(vals.get()),leadingDim,mv.domain()->dim()));
+    // LB: I don't see any way around the const cast, since Epetra expects double* as input.
+    return Teuchos::rcp(new Epetra_MultiVector(View,emap,const_cast<ST*>(vals.get()),leadingDim,mv.domain()->dim()));
+  }
+  return Teuchos::null;
 }
 
 Teuchos::RCP<Epetra_Operator>
@@ -391,14 +399,16 @@ getEpetraOperator (Thyra_LinearOp& lop,
                    const bool throw_on_failure)
 {
   Thyra::EpetraLinearOp* eop = dynamic_cast<Thyra::EpetraLinearOp*>(&lop);
+  if (eop!=nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(eop==nullptr && throw_on_failure, BadThyraEpetraCast,
+                               "Error! Could not cast input Thyra_LinearOp to Thyra::EpetraLinearOp.\n");
 
-  TEUCHOS_TEST_FOR_EXCEPTION(eop==nullptr && throw_on_failure, BadThyraEpetraCast,
-                             "Error! Could not cast input Thyra_LinearOp to Thyra::EpetraLinearOp.\n");
-
-  // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
-  TEUCHOS_TEST_FOR_EXCEPTION(eop->epetra_op().is_null(), std::runtime_error,
-                             "Error! The Thyra::EpetraLinearOp object stores a null pointer.\n") 
-  return eop->epetra_op();
+    // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
+    TEUCHOS_TEST_FOR_EXCEPTION(eop->epetra_op().is_null(), std::runtime_error,
+                               "Error! The Thyra::EpetraLinearOp object stores a null pointer.\n") 
+    return eop->epetra_op();
+  }
+  return Teuchos::null;
 }
 
 Teuchos::RCP<const Epetra_Operator>
@@ -406,14 +416,16 @@ getConstEpetraOperator (const Thyra_LinearOp& lop,
                         const bool throw_on_failure)
 {
   const Thyra::EpetraLinearOp* eop = dynamic_cast<const Thyra::EpetraLinearOp*>(&lop);
+  if (eop!=nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(eop==nullptr && throw_on_failure, BadThyraEpetraCast,
+                               "Error! Could not cast input Thyra_LinearOp to Thyra::EpetraLinearOp.\n");
 
-  TEUCHOS_TEST_FOR_EXCEPTION(eop==nullptr && throw_on_failure, BadThyraEpetraCast,
-                             "Error! Could not cast input Thyra_LinearOp to Thyra::EpetraLinearOp.\n");
-
-  // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
-  TEUCHOS_TEST_FOR_EXCEPTION(eop->epetra_op().is_null(), std::runtime_error,
-                             "Error! The Thyra::EpetraLinearOp object stores a null pointer.\n") 
-  return eop->epetra_op();
+    // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
+    TEUCHOS_TEST_FOR_EXCEPTION(eop->epetra_op().is_null(), std::runtime_error,
+                               "Error! The Thyra::EpetraLinearOp object stores a null pointer.\n") 
+    return eop->epetra_op();
+  }
+  return Teuchos::null;
 }
 
 Teuchos::RCP<Epetra_CrsMatrix>
@@ -421,12 +433,15 @@ getEpetraMatrix (Thyra_LinearOp& lop,
                  const bool throw_on_failure)
 {
   auto eop = getEpetraOperator(lop,throw_on_failure);
-  auto emat = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(eop);
+  if (!eop.is_null()) {
+    auto emat = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(eop);
 
-  // We allow bad cast, but once cast goes through, we *expect* the operator to store a crs matrix
-  TEUCHOS_TEST_FOR_EXCEPTION(emat.is_null(), std::runtime_error,
-                             "Error! The Thyra_EpetraLinearOp object does not store a Epetra_CrsMatrix.\n") 
-  return emat;
+    // We allow bad cast, but once cast goes through, we *expect* the operator to store a crs matrix
+    TEUCHOS_TEST_FOR_EXCEPTION(emat.is_null(), std::runtime_error,
+                               "Error! The Thyra_EpetraLinearOp object does not store a Epetra_CrsMatrix.\n") 
+    return emat;
+  }
+  return Teuchos::null;
 }
 
 Teuchos::RCP<const Epetra_CrsMatrix>
@@ -434,12 +449,15 @@ getConstEpetraMatrix (const Thyra_LinearOp& lop,
                       const bool throw_on_failure)
 {
   auto eop = getConstEpetraOperator(lop,throw_on_failure);
-  auto emat = Teuchos::rcp_dynamic_cast<const Epetra_CrsMatrix>(eop);
+  if (!eop.is_null()) {
+    auto emat = Teuchos::rcp_dynamic_cast<const Epetra_CrsMatrix>(eop);
 
-  // We allow bad cast, but once cast goes through, we *expect* the operator to store a crs matrix
-  TEUCHOS_TEST_FOR_EXCEPTION(emat.is_null(), std::runtime_error,
-                             "Error! The Thyra_EpetraLinearOp object does not store a Epetra_CrsMatrix.\n") 
-  return emat;
+    // We allow bad cast, but once cast goes through, we *expect* the operator to store a crs matrix
+    TEUCHOS_TEST_FOR_EXCEPTION(emat.is_null(), std::runtime_error,
+                               "Error! The Thyra_EpetraLinearOp object does not store a Epetra_CrsMatrix.\n") 
+    return emat;
+  }
+  return Teuchos::null;
 }
 
 } // namespace Albany
