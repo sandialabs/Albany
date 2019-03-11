@@ -78,6 +78,11 @@ Teuchos::ArrayRCP<const ST> getLocalData (const Teuchos::RCP<const Thyra_Vector>
 Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> getNonconstLocalData (const Teuchos::RCP<Thyra_MultiVector>& mv);
 Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> getLocalData (const Teuchos::RCP<const Thyra_MultiVector>& mv);
 
+Teuchos::ArrayRCP<ST> getNonconstLocalData (Thyra_Vector& v);
+Teuchos::ArrayRCP<const ST> getLocalData (const Thyra_Vector& v);
+Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> getNonconstLocalData (Thyra_MultiVector& mv);
+Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> getLocalData (const Thyra_MultiVector& mv);
+
 DeviceView1d<const ST> getDeviceData (const Teuchos::RCP<const Thyra_Vector>& v);
 DeviceView1d<ST>       getNonconstDeviceData (const Teuchos::RCP<Thyra_Vector>& v);
 

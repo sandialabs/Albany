@@ -617,6 +617,71 @@ getLocalData (const Teuchos::RCP<const Thyra_MultiVector>& mv)
   return data;
 }
 
+Teuchos::ArrayRCP<ST> getNonconstLocalData (Thyra_Vector& v) {
+  Teuchos::ArrayRCP<ST> vals;
+
+  // Allow failure, since we don't know what the underlying linear algebra is
+  // Note: we do tpetra separately since it need to handle device/copy sync.
+  //       everything else, we assume it inherits from SpmdVectorBase.
+  auto tv = getTpetraVector(v,false);
+  if (!tv.is_null()) {
+    // Tpetra
+    vals = tv->get1dViewNonConst();
+  } else {
+    // Thyra::SpmdVectorBase
+    auto* spmd_v = dynamic_cast<Thyra::SpmdVectorBase<ST>*>(&v);
+    if (spmd_v!=nullptr) {
+      spmd_v->getNonconstLocalData(Teuchos::outArg(vals));
+    } else {
+      // If all the tries above are unsuccessful, throw an error.
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
+    }
+  }
+
+  return vals;
+}
+
+Teuchos::ArrayRCP<const ST> getLocalData (const Thyra_Vector& v) {
+  Teuchos::ArrayRCP<const ST> vals;
+
+  // Allow failure, since we don't know what the underlying linear algebra is
+  // Note: we do tpetra separately since it need to handle device/copy sync.
+  //       everything else, we assume it inherits from SpmdVectorBase.
+  auto tv = getConstTpetraVector(v,false);
+  if (!tv.is_null()) {
+    // Tpetra
+    vals = tv->get1dView();
+  } else {
+    // Thyra::SpmdVectorBase
+    auto* spmd_v = dynamic_cast<const Thyra::SpmdVectorBase<ST>*>(&v);
+    if (spmd_v!=nullptr) {
+      spmd_v->getLocalData(Teuchos::outArg(vals));
+    } else {
+      // If all the tries above are unsuccessful, throw an error.
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
+    }
+  }
+
+  return vals;
+}
+
+Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> getNonconstLocalData (Thyra_MultiVector& mv) {
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> data(mv.domain()->dim());
+  for (int i=0; i<mv.domain()->dim(); ++i) {
+    data[i] = getNonconstLocalData(mv.col(i));
+  }
+  return data;
+}
+
+Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> getLocalData (const Thyra_MultiVector& mv)
+{
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> data(mv.domain()->dim());
+  for (int i=0; i<mv.domain()->dim(); ++i) {
+    data[i] = getLocalData(mv.col(i));
+  }
+  return data;
+}
+
 DeviceView1d<const ST> getDeviceData (const Teuchos::RCP<const Thyra_Vector>& v)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
