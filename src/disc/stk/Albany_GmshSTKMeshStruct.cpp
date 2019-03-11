@@ -37,7 +37,7 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
   fname = params->get("Gmsh Input Mesh File Name", "mesh.msh");
 
   // Init counters to 0
-  NumSides = NumNodes = NumSides = 0;
+  NumSides = NumNodes = 0;
   NumElems = 0;
   nb_hexas = 0;
   nb_tetra = 0;
@@ -1342,25 +1342,44 @@ void Albany::GmshSTKMeshStruct::get_physical_names( std::map<std::string, int>& 
   // Advance to the PhysicalNames section
   std::string line;
   swallow_lines_until( ifile, line, "$PhysicalNames");
-
-  // Get number of Physical Names
-  int num_physical_names = 0;
-  std::getline( ifile, line);
-  std::stringstream iss (line);
-  iss >> num_physical_names;
-
-  // Add each physical name pair to the map
-  for( size_t i = 0; i < num_physical_names; i++)
+  if( ifile.peek() != EOF)
   {
-    std::string name;
-    int         tag;
-    int         dim;
-    
+    // Get number of Physical Names
+    int num_physical_names = 0;
     std::getline( ifile, line);
-    std::stringstream ss (line);
-    ss >> dim >> tag >> name;
+    std::stringstream iss (line);
+    iss >> num_physical_names;
 
-    physical_names.insert( std::make_pair( name, tag));
+    // Add each physical name pair to the map
+    for( size_t i = 0; i < num_physical_names; i++)
+    {
+      std::string name;
+      int         tag;
+      int         dim;
+      
+      std::getline( ifile, line);
+      std::stringstream ss (line);
+      ss >> dim >> tag >> name;
+
+      // If this entity has a name, then assign it.
+      // Use the tag otherwise.
+      if( name.empty() )
+      {
+        std::stringstream ss;
+        ss << tag;
+        name = ss.str();
+      }
+      else
+      {
+        // Need to remove quote marks from name 
+        // and prepend with underscore
+        name.erase( std::remove(name.begin(), name.end(), '"'), name.end());
+        name = "_" + name;
+      }
+
+      physical_names.insert( std::make_pair( name, tag));
+    }
+
   }
 
   ifile.close();
