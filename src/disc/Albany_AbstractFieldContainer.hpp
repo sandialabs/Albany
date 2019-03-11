@@ -18,16 +18,12 @@ namespace Albany {
  *
  */
 class AbstractFieldContainer {
+public:
 
-  public:
+  typedef std::vector<std::string> FieldContainerRequirements;
 
-    typedef std::vector<std::string> FieldContainerRequirements;
-
-    //! Destructor
-    virtual ~AbstractFieldContainer() {};
-
-  protected:
-
+  //! Destructor
+  virtual ~AbstractFieldContainer() = default;
 };
 
 } // namespace Albany

@@ -4,12 +4,13 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Albany_GenericSTKFieldContainer.hpp"
-#include "Albany_GenericSTKFieldContainer_Def.hpp"
+#include "Albany_STKFieldContainerHelper.hpp"
+#include "Albany_STKFieldContainerHelper_Def.hpp"
+#include "Albany_AbstractSTKFieldContainer.hpp"
 
 namespace Albany {
 
-template class GenericSTKFieldContainer<true>;
-template class GenericSTKFieldContainer<false>;
+template struct STKFieldContainerHelper<Albany::AbstractSTKFieldContainer::ScalarFieldType>;
+template struct STKFieldContainerHelper<Albany::AbstractSTKFieldContainer::VectorFieldType>;
 
 } // namespace Albany
