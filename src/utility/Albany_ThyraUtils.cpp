@@ -32,13 +32,13 @@ GO getGlobalElement (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const LO l
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmap = getTpetraMap(vs,false);
   if (!tmap.is_null()) {
-    return tmap->getGlobalElement(lid);
+    return static_cast<GO>(tmap->getGlobalElement(lid));
   }
 
 #if defined(ALBANY_EPETRA)
   auto emap = getEpetraBlockMap(vs,false);
   if (!emap.is_null()) {
-    return emap->GID(lid);
+    return static_cast<GO>(emap->GID(lid));
   }
 #endif
 
@@ -53,7 +53,7 @@ LO getLocalElement  (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const GO g
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmap = getTpetraMap(vs,false);
   if (!tmap.is_null()) {
-    return tmap->getLocalElement(gid);
+    return tmap->getLocalElement(static_cast<Tpetra_GO>(gid));
   }
 
 #if defined(ALBANY_EPETRA)
@@ -61,15 +61,7 @@ LO getLocalElement  (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const GO g
   if (!emap.is_null()) {
     // Note: simply calling LID(gid) can be ambiguous, if GO!=int and GO!=long long.
     //       Hence, we explicitly cast to whatever has size 64 bits (should *always* be long long, but the if is compile time, so no penalty)
-    if (sizeof(GO)==sizeof(int)) {
-      return emap->LID(static_cast<int>(gid));
-    } else if (sizeof(GO)==sizeof(long long)) {
-      return emap->LID(static_cast<long long>(gid));
-    } else {
-      // We should never reach this point.
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! sizeof(GO) does not match sizeof(int) nor sizeof(long long). "
-                                                            "This is an unexpected error. Please, contact developers.\n");
-    }
+    return emap->LID(static_cast<Epetra_GO>(gid));
   }
 #endif
 
