@@ -1212,55 +1212,52 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
   set_all_nodes_boundary( nsNames);
   set_all_sides_boundary( ssNames);
 
-  if( version == GmshVersion::V2_2)
+  // Counting boundaries (only proc 0 has any stored, so far)
+  std::set<int> bdTags;
+  for (int i(0); i<NumSides; ++i) 
   {
-    // Counting boundaries (only proc 0 has any stored, so far)
-    std::set<int> bdTags;
-    for (int i(0); i<NumSides; ++i) 
-    {
-      bdTags.insert(sides[NumSideNodes][i]);
-    }
+    bdTags.insert(sides[NumSideNodes][i]);
+  }
 
-    // Broadcasting the tags
-    int numBdTags = bdTags.size();
-    Teuchos::broadcast<LO,LO>(*commT, 0, 1, &numBdTags);
-    int* bdTagsArray = new int[numBdTags];
-    std::set<int>::iterator it=bdTags.begin();
-    for (int k=0; it!=bdTags.end(); ++it,++k) 
-    {
-      bdTagsArray[k] = *it;
-    }
-    Teuchos::broadcast<LO,LO>(*commT, 0, numBdTags, bdTagsArray);
+  // Broadcasting the tags
+  int numBdTags = bdTags.size();
+  Teuchos::broadcast<LO,LO>(*commT, 0, 1, &numBdTags);
+  int* bdTagsArray = new int[numBdTags];
+  std::set<int>::iterator it=bdTags.begin();
+  for (int k=0; it!=bdTags.end(); ++it,++k) 
+  {
+    bdTagsArray[k] = *it;
+  }
+  Teuchos::broadcast<LO,LO>(*commT, 0, numBdTags, bdTagsArray);
 
-    // Adding boundary nodesets and sidesets separating different labels
-    for (int k=0; k<numBdTags; ++k) 
-    {
-      int tag = bdTagsArray[k];
+  // Adding boundary nodesets and sidesets separating different labels
+  for (int k=0; k<numBdTags; ++k) 
+  {
+    int tag = bdTagsArray[k];
 
-      std::stringstream nsn_i;
-      std::stringstream ssn_i;
-      nsn_i << "BoundaryNodeSet" << tag;
-      ssn_i << "BoundarySideSet" << tag;
+    std::stringstream nsn_i;
+    std::stringstream ssn_i;
+    nsn_i << "BoundaryNodeSet" << tag;
+    ssn_i << "BoundarySideSet" << tag;
 
-      bdTagToNodeSetName[tag] = nsn_i.str();
-      bdTagToSideSetName[tag] = ssn_i.str();
+    bdTagToNodeSetName[tag] = nsn_i.str();
+    bdTagToSideSetName[tag] = ssn_i.str();
 
-      nsNames.push_back(nsn_i.str());
-      ssNames.push_back(ssn_i.str());
+    nsNames.push_back(nsn_i.str());
+    ssNames.push_back(ssn_i.str());
 
-      nsPartVec[nsn_i.str()] = &metaData->declare_part(nsn_i.str(), stk::topology::NODE_RANK);
-      ssPartVec[ssn_i.str()] = &metaData->declare_part(ssn_i.str(), metaData->side_rank());
+    nsPartVec[nsn_i.str()] = &metaData->declare_part(nsn_i.str(), stk::topology::NODE_RANK);
+    ssPartVec[ssn_i.str()] = &metaData->declare_part(ssn_i.str(), metaData->side_rank());
 
 #ifdef ALBANY_SEACAS
-      stk::io::put_io_part_attribute(*nsPartVec[nsn_i.str()]);
-      stk::io::put_io_part_attribute(*ssPartVec[ssn_i.str()]);
+    stk::io::put_io_part_attribute(*nsPartVec[nsn_i.str()]);
+    stk::io::put_io_part_attribute(*ssPartVec[ssn_i.str()]);
 #endif
 
-    }
-
-    delete[] bdTagsArray;
   }
-  else if( version == GmshVersion::V4_1)
+  delete[] bdTagsArray;
+
+  if( version == GmshVersion::V4_1)
   {
     // Map has format: "name",  physical_tag
     std::map<std::string, int> physical_names; 
