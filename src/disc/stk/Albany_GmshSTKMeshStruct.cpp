@@ -150,7 +150,7 @@ Albany::GmshSTKMeshStruct::~GmshSTKMeshStruct()
     }
   }
   if (trias!=nullptr) {
-    for (int i(0); i<5; ++i) {
+    for (int i(0); i<4; ++i) {
       delete[] trias[i];
     }
   }
@@ -703,7 +703,7 @@ void Albany::GmshSTKMeshStruct::size_all_element_pointers()
   {
     tetra[i] = new int[nb_tetra];
   }
-  for (int i(0); i<5; ++i) 
+  for (int i(0); i<4; ++i) 
   {
     trias[i] = new int[nb_trias];
   }
