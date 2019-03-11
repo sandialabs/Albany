@@ -63,6 +63,8 @@ ThyraCrsGraphProxy::ThyraCrsGraphProxy (const Teuchos::RCP<const Thyra_VectorSpa
  : m_domain_vs(domain_vs)
  , m_range_vs(range_vs)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION (!overlap_src->is_filled(), std::logic_error,
+                              "Error! Can only build a graph from an overlapped source if source has been filled already.\n");
   m_graph = Teuchos::rcp(new ProxyImpl());
 
   auto bt = Albany::build_type();
@@ -121,7 +123,7 @@ void ThyraCrsGraphProxy::insertGlobalIndices (const GO row, const Teuchos::Array
   } else {
     // Despite being both 64 bits, GO and Tpetra_GO *may* be different *types*.
     Teuchos::ArrayView<const Tpetra_GO> t_indices(reinterpret_cast<const Tpetra_GO*>(indices.getRawPtr()),indices.size());
-    m_graph->t_graph->insertGlobalIndices(row,t_indices);
+    m_graph->t_graph->insertGlobalIndices(static_cast<Tpetra_GO>(row),t_indices);
   }
 }
 
@@ -142,6 +144,26 @@ void ThyraCrsGraphProxy::fillComplete () {
   }
 
   m_filled = true;
+}
+
+void ThyraCrsGraphProxy::
+getGlobalRowView (const GO row, Teuchos::ArrayView<const GO>& colIndices) const {
+  auto bt = Albany::build_type();
+  if (bt==BuildType::Epetra) {
+#ifdef ALBANY_EPETRA
+    Epetra_GO e_row = row;
+    int num_indices;
+    Epetra_GO* e_indices;
+    m_graph->e_graph->ExtractGlobalRowView(e_row,num_indices,e_indices);
+    colIndices = Teuchos::ArrayView<const GO>(reinterpret_cast<const GO*>(e_indices),num_indices);
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
+#endif
+  } else {
+    Teuchos::ArrayView<const Tpetra_GO> t_indices;
+    m_graph->t_graph->getGlobalRowView(static_cast<Tpetra_GO>(row),t_indices);
+    colIndices = Teuchos::ArrayView<const GO>(reinterpret_cast<const GO*>(t_indices.getRawPtr()),t_indices.size());
+  }
 }
 
 Teuchos::RCP<Thyra_LinearOp> ThyraCrsGraphProxy::createOp () const {
