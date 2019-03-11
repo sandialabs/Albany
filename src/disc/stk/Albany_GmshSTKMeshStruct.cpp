@@ -795,7 +795,7 @@ void Albany::GmshSTKMeshStruct::store_element_info(
       break;
     case 2: // 3-pt Triangle
       ss >> trias[0][itria] >> trias[1][itria] >> trias[2][itria];
-      trias[4][itria] = tags[0];
+      trias[3][itria] = tags[0];
       ++itria;
       break;
     case 3: // 4-pt Quad
@@ -805,8 +805,8 @@ void Albany::GmshSTKMeshStruct::store_element_info(
       break;
     case 4: // 4-pt Tetra
       ss >> tetra[0][itetra] >> tetra[1][itetra] >> tetra[2][itetra] >> tetra[3][itetra];
-      trias[4][itetra] = tags[0];
-      ++itria;
+      tetra[4][itetra] = tags[0];
+      ++itetra;
       break;
     case 5: // 8-pt Hexa
       ss >> hexas[0][ihexa] >> hexas[1][ihexa] >> hexas[2][ihexa] >> hexas[3][ihexa]
@@ -858,6 +858,7 @@ void Albany::GmshSTKMeshStruct::load_element_data( std::ifstream& ifile)
   else if( version == GmshVersion::V4_1)
   {
     int accounted_elems = 0;
+    std::vector<int> tags;
     while (accounted_elems < num_entities)
     {
       std::getline( ifile, line);
@@ -869,7 +870,6 @@ void Albany::GmshSTKMeshStruct::load_element_data( std::ifstream& ifile)
       
       std::stringstream iss (line);
       iss >> entity_dim >> entity_tag >> entity_type >> num_elem_in_block;
-      std::vector<int> tags;
       tags.push_back( entity_tag);
       for( int i = 0; i < num_elem_in_block; i++)
       {
