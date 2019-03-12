@@ -22,48 +22,48 @@ namespace Albany {
 class PiroObserverT : public Piro::ObserverBase<ST> {
 public:
   explicit PiroObserverT(const Teuchos::RCP<Albany::Application> &app, 
-                         Teuchos::RCP<const Thyra::ModelEvaluator<double>> model=Teuchos::null);
+                         Teuchos::RCP<const Thyra_ModelEvaluator> model = Teuchos::null);
 
   virtual void observeSolution(
-      const Thyra::VectorBase<ST> &solution);
+      const Thyra_Vector& solution);
 
   virtual void observeSolution(
-      const Thyra::VectorBase<ST> &solution,
+      const Thyra_Vector& solution,
       const ST stamp);
 
   virtual void observeSolution(
-      const Thyra::VectorBase<ST> &solution,
-      const Thyra::VectorBase<ST> &solution_dot,
+      const Thyra_Vector& solution,
+      const Thyra_Vector& solution_dot,
       const ST stamp);
   
   virtual void observeSolution(
-      const Thyra::VectorBase<ST> &solution,
-      const Thyra::VectorBase<ST> &solution_dot,
-      const Thyra::VectorBase<ST> &solution_dotdot,
+      const Thyra_Vector& solution,
+      const Thyra_Vector& solution_dot,
+      const Thyra_Vector& solution_dotdot,
       const ST stamp);
 
   virtual void observeSolution(
-      const Thyra::MultiVectorBase<ST> &solution,
+      const Thyra_MultiVector& solution,
       const ST stamp);
 
 private:
   void observeSolutionImpl(
-      const Thyra::VectorBase<ST> &solution,
+      const Thyra_Vector& solution,
       const ST defaultStamp);
 
   void observeSolutionImpl(
-      const Thyra::VectorBase<ST> &solution,
-      const Thyra::VectorBase<ST> &solution_dot,
+      const Thyra_Vector& solution,
+      const Thyra_Vector& solution_dot,
       const ST defaultStamp);
   
   void observeSolutionImpl(
-      const Thyra::VectorBase<ST> &solution,
-      const Thyra::VectorBase<ST> &solution_dot,
-      const Thyra::VectorBase<ST> &solution_dotdot,
+      const Thyra_Vector& solution,
+      const Thyra_Vector& solution_dot,
+      const Thyra_Vector& solution_dotdot,
       const ST defaultStamp);
 
   void observeSolutionImpl(
-      const Thyra::MultiVectorBase<ST> &solution,
+      const Thyra_MultiVector &solution,
       const ST defaultStamp);
 
   void observeTpetraSolutionImpl(
@@ -73,17 +73,17 @@ private:
       const ST defaultStamp);
 
   // The following function is for calculating / printing responses every step.
-  // It is currently not implemented for the case of an Teuchos::RCP<const Thyra::MultiVectorBase<ST>>
+  // It is currently not implemented for the case of an Teuchos::RCP<const Thyra_MultiVector>
   // argument; this may be desired at some point in the future. 
   void observeResponse(
       const ST defaultStamp,  
-      Teuchos::RCP<const Thyra::VectorBase<ST>> solution,
-      Teuchos::RCP<const Thyra::VectorBase<ST>> solution_dot = Teuchos::null, 
-      Teuchos::RCP<const Thyra::VectorBase<ST>> solution_dotdot = Teuchos::null); 
+      Teuchos::RCP<const Thyra_Vector> solution,
+      Teuchos::RCP<const Thyra_Vector> solution_dot = Teuchos::null, 
+      Teuchos::RCP<const Thyra_Vector> solution_dotdot = Teuchos::null); 
 
   ObserverImpl impl_;
 
-  Teuchos::RCP<const Thyra::ModelEvaluator<double> > model_; 
+  Teuchos::RCP<const Thyra_ModelEvaluator> model_; 
 
 protected: 
 
@@ -101,7 +101,6 @@ protected:
   Teuchos::Array<unsigned int> relative_responses;
   std::vector<bool> is_relative;
   const double tol = 1e-15;
-
 };
 
 } // namespace Albany

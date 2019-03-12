@@ -13,122 +13,80 @@
 
 #include <cstddef>
 
-//#define DEBUG_OUTPUT
-#ifdef DEBUG_OUTPUT
-#include "MatrixMarket_Tpetra.hpp"
-int ah; 
-#endif
+namespace Albany
+{
 
-Albany::PiroObserverT::PiroObserverT(
-    const Teuchos::RCP<Albany::Application> &app, 
-    Teuchos::RCP<const Thyra::ModelEvaluator<double>> model) :
-  impl_(app), 
-  model_(model), 
-  out(Teuchos::VerboseObjectBase::getDefaultOStream())
-  {
-#ifdef DEBUG_OUTPUT
-    ah = 0; 
-#endif
-    observe_responses_ = false; 
-    if ((app->observeResponses() == true) && (model_ != Teuchos::null)) 
-      observe_responses_ = true;
-    stepper_counter_ = 0;  
-    observe_responses_every_n_steps_ = app->observeResponsesFreq();  
+PiroObserverT::
+PiroObserverT(const Teuchos::RCP<Application> &app, 
+              Teuchos::RCP<const Thyra_ModelEvaluator> model)
+ : impl_(app) 
+ , model_(model) 
+ , out(Teuchos::VerboseObjectBase::getDefaultOStream())
+{
+  observe_responses_ = false; 
+  if ((app->observeResponses() == true) && (model_ != Teuchos::null)) 
+    observe_responses_ = true;
+  stepper_counter_ = 0;  
+  observe_responses_every_n_steps_ = app->observeResponsesFreq();  
 
-    relative_responses = app->getMarkersForRelativeResponses();
-    if(relative_responses.size()){
-    	calculateRelativeResponses = true;
-    }else{
-    	calculateRelativeResponses = false;
-    }
-    firstResponseObtained = false;
+  relative_responses = app->getMarkersForRelativeResponses();
+  if(relative_responses.size()){
+    calculateRelativeResponses = true;
+  }else{
+    calculateRelativeResponses = false;
   }
+  firstResponseObtained = false;
+}
 
-void
-Albany::PiroObserverT::observeSolution(const Thyra::VectorBase<ST> &solution)
+void PiroObserverT::
+observeSolution(const Thyra_Vector &solution)
 {
   this->observeSolutionImpl(solution, Teuchos::ScalarTraits<ST>::zero());
   stepper_counter_++;
 }
 
-void
-Albany::PiroObserverT::observeSolution(
-    const Thyra::VectorBase<ST> &solution,
-    const ST stamp)
+void PiroObserverT::
+observeSolution(const Thyra_Vector &solution,
+                const ST stamp)
 {
   this->observeSolutionImpl(solution, stamp);
   stepper_counter_++; 
 }
 
-void
-Albany::PiroObserverT::observeSolution(
-    const Thyra::VectorBase<ST> &solution,
-    const Thyra::VectorBase<ST> &solution_dot,
-    const ST stamp)
+void PiroObserverT::
+observeSolution(const Thyra_Vector &solution,
+                const Thyra_Vector &solution_dot,
+                const ST stamp)
 {
   this->observeSolutionImpl(solution, solution_dot, stamp);
   stepper_counter_++; 
 }
 
-void
-Albany::PiroObserverT::observeSolution(
-    const Thyra::VectorBase<ST> &solution,
-    const Thyra::VectorBase<ST> &solution_dot,
-    const Thyra::VectorBase<ST> &solution_dotdot,
-    const ST stamp)
+void PiroObserverT::
+observeSolution(const Thyra_Vector &solution,
+                const Thyra_Vector &solution_dot,
+                const Thyra_Vector &solution_dotdot,
+                const ST stamp)
 {
   this->observeSolutionImpl(solution, solution_dot, solution_dotdot, stamp);
   stepper_counter_++; 
 }
 
-void
-Albany::PiroObserverT::observeSolution(
-    const Thyra::MultiVectorBase<ST> &solution,
-    const ST stamp)
+void PiroObserverT::
+observeSolution(const Thyra_MultiVector &solution,
+                const ST stamp)
 {
   this->observeSolutionImpl(solution, stamp);
   stepper_counter_++; 
 }
 
-namespace { // anonymous
-
-Teuchos::RCP<const Tpetra_Vector>
-tpetraFromThyra(const Thyra::VectorBase<double> &v)
+void PiroObserverT::
+observeSolutionImpl(const Thyra_Vector &solution,
+                    const ST defaultStamp)
 {
-  // Create non-owning RCP to solution to use the Thyra -> Epetra converter
-  // This is safe since we will not be creating any persisting relations
-  const Teuchos::RCP<const Thyra::VectorBase<double> > v_nonowning_rcp =
-    Teuchos::rcpFromRef(v);
-
-  return ConverterT::getConstTpetraVector(v_nonowning_rcp);
-}
-
-Teuchos::RCP<const Tpetra_MultiVector>
-tpetraMVFromThyraMV(const Thyra::MultiVectorBase<double> &v)
-{
-  // Create non-owning RCP to solution to use the Thyra -> Epetra converter
-  // This is safe since we will not be creating any persisting relations
-  const Teuchos::RCP<const Thyra::MultiVectorBase<double> > v_nonowning_rcp =
-    Teuchos::rcpFromRef(v);
-
-  return ConverterT::getConstTpetraMultiVector(v_nonowning_rcp);
-}
-
-} // anonymous namespace
-
-void
-Albany::PiroObserverT::observeSolutionImpl(
-    const Thyra::VectorBase<ST> &solution,
-    const ST defaultStamp)
-{
-  const Teuchos::RCP<const Tpetra_Vector> solution_tpetra =
-    tpetraFromThyra(solution);
-
-  this->observeTpetraSolutionImpl(
-      *solution_tpetra,
-      Teuchos::null,
-      Teuchos::null,
-      defaultStamp);
+  // Determine the stamp associated with the snapshot
+  const ST stamp = impl_.getTimeParamValueOrDefault(defaultStamp);
+  impl_.observeSolution(stamp, solution, Teuchos::null, Teuchos::null);
   
   // observe responses 
   if (observe_responses_ == true) {
@@ -137,101 +95,58 @@ Albany::PiroObserverT::observeSolutionImpl(
    }
 }
 
-void
-Albany::PiroObserverT::observeSolutionImpl(
-    const Thyra::VectorBase<ST> &solution,
-    const Thyra::VectorBase<ST> &solution_dot,
-    const ST defaultStamp)
-{
-  const Teuchos::RCP<const Tpetra_Vector> solution_tpetra =
-    tpetraFromThyra(solution);
-  const Teuchos::RCP<const Tpetra_Vector> solution_dot_tpetra =
-    tpetraFromThyra(solution_dot);
-
-  this->observeTpetraSolutionImpl(
-      *solution_tpetra,
-      solution_dot_tpetra.ptr(),
-      Teuchos::null,
-      defaultStamp);
-
-  // observe responses 
-  if (observe_responses_ == true) {
-    if (stepper_counter_ % observe_responses_every_n_steps_ == 0) 
-      this->observeResponse(defaultStamp, Teuchos::rcpFromRef(solution), Teuchos::rcpFromRef(solution_dot));
-   }
-}
-
-void
-Albany::PiroObserverT::observeSolutionImpl(
-    const Thyra::VectorBase<ST> &solution,
-    const Thyra::VectorBase<ST> &solution_dot,
-    const Thyra::VectorBase<ST> &solution_dotdot,
-    const ST defaultStamp)
-{
-  const Teuchos::RCP<const Tpetra_Vector> solution_tpetra =
-    tpetraFromThyra(solution);
-  const Teuchos::RCP<const Tpetra_Vector> solution_dot_tpetra =
-    tpetraFromThyra(solution_dot);
-  const Teuchos::RCP<const Tpetra_Vector> solution_dotdot_tpetra =
-    tpetraFromThyra(solution_dotdot);
-#ifdef DEBUG_OUTPUT
-  std::cout << "IKT observing solution time = " << defaultStamp << std::endl; 
-  char name[100];  //create string for file name
-  sprintf(name, "solution%i.mm", ah);
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, solution_tpetra);
-  sprintf(name, "solution_dot%i.mm", ah);
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, solution_dot_tpetra);
-#endif
-  this->observeTpetraSolutionImpl(
-      *solution_tpetra,
-      solution_dot_tpetra.ptr(),
-      solution_dotdot_tpetra.ptr(), 
-      defaultStamp);
-
-  // observe responses 
-  if (observe_responses_ == true) {
-    if (stepper_counter_ % observe_responses_every_n_steps_ == 0) 
-      this->observeResponse(defaultStamp, Teuchos::rcpFromRef(solution), Teuchos::rcpFromRef(solution_dot), 
-                            Teuchos::rcpFromRef(solution_dotdot));
-   }
-#ifdef DEBUG_OUTPUT
-  ah++; 
-#endif
-}
-
-
-void
-Albany::PiroObserverT::observeSolutionImpl(
-    const Thyra::MultiVectorBase<ST> &solution,
-    const ST defaultStamp)
-{
-  const Teuchos::RCP<const Tpetra_MultiVector> solution_tpetraMV =
-    tpetraMVFromThyraMV(solution);
-
-  impl_.observeSolutionT(defaultStamp, *solution_tpetraMV);
-
-}
-
-void
-Albany::PiroObserverT::observeTpetraSolutionImpl(
-    const Tpetra_Vector &solution,
-    Teuchos::Ptr<const Tpetra_Vector> solution_dot,
-    Teuchos::Ptr<const Tpetra_Vector> solution_dotdot,
-    const ST defaultStamp)
+void PiroObserverT::
+observeSolutionImpl(const Thyra_Vector &solution,
+                    const Thyra_Vector &solution_dot,
+                    const ST defaultStamp)
 {
   // Determine the stamp associated with the snapshot
   const ST stamp = impl_.getTimeParamValueOrDefault(defaultStamp);
-  impl_.observeSolutionT(stamp, solution, solution_dot, solution_dotdot);
+  impl_.observeSolution(stamp, solution, Teuchos::constPtr(solution_dot), Teuchos::null);
+
+  // observe responses 
+  if (observe_responses_ == true) {
+    if (stepper_counter_ % observe_responses_every_n_steps_ == 0) 
+      this->observeResponse(defaultStamp,
+                            Teuchos::rcpFromRef(solution),
+                            Teuchos::rcpFromRef(solution_dot));
+   }
 }
 
-void 
-Albany::PiroObserverT::observeResponse(
-    const ST defaultStamp, 
-    Teuchos::RCP<const Thyra::VectorBase<ST>> solution,
-    Teuchos::RCP<const Thyra::VectorBase<ST>> solution_dot,
-    Teuchos::RCP<const Thyra::VectorBase<ST>> solution_dotdot)
+void PiroObserverT::
+observeSolutionImpl(const Thyra_Vector &solution,
+                    const Thyra_Vector &solution_dot,
+                    const Thyra_Vector &solution_dotdot,
+                    const ST defaultStamp)
 {
+  // Determine the stamp associated with the snapshot
+  const ST stamp = impl_.getTimeParamValueOrDefault(defaultStamp);
+  impl_.observeSolution(stamp, solution, Teuchos::constPtr(solution_dot), Teuchos::constPtr(solution_dotdot));
 
+  // observe responses 
+  if (observe_responses_ == true) {
+    if (stepper_counter_ % observe_responses_every_n_steps_ == 0) 
+      this->observeResponse(defaultStamp,
+                            Teuchos::rcpFromRef(solution),
+                            Teuchos::rcpFromRef(solution_dot), 
+                            Teuchos::rcpFromRef(solution_dotdot));
+   }
+}
+
+
+void PiroObserverT::
+observeSolutionImpl(const Thyra_MultiVector &solution,
+                    const ST defaultStamp)
+{
+  impl_.observeSolution(defaultStamp, solution);
+}
+
+void PiroObserverT::
+observeResponse(const ST defaultStamp, 
+                Teuchos::RCP<const Thyra_Vector> solution,
+                Teuchos::RCP<const Thyra_Vector> solution_dot,
+                Teuchos::RCP<const Thyra_Vector> /* solution_dotdot */)
+{
   //IKT, 5/10/17: note that this function takes solution_dotdot as an input 
   //argument but does not do anything with it yet.  This can be modified 
   //if desired.
@@ -302,7 +217,7 @@ Albany::PiroObserverT::observeResponse(
       if(is_relative[i]){
     	  *out << "\n";
 	      *out << "Relative Response[" << i << "] = ";
-          for( int j = 0; j < storedResponses[i].size(); j++){
+          for( size_t j = 0; j < storedResponses[i].size(); j++){
         	  double prevresp = storedResponses[i][j];
         	  if( std::abs(prevresp) > tol ){
         		  *out << std::setw(value_width) << (Thyra::get_ele(*g,j) - prevresp)/prevresp << " ";
@@ -315,7 +230,7 @@ Albany::PiroObserverT::observeResponse(
 
       if( (!firstResponseObtained) && calculateRelativeResponses ){
     	  for(int j = 0; j < relative_responses.size(); j++){
-    		  unsigned int resp_index = relative_responses[j];
+    		  int resp_index = relative_responses[j];
     		  if( (resp_index < outArgs.Ng()) )
     			  is_relative[resp_index] = true;
     	  }
@@ -333,3 +248,4 @@ Albany::PiroObserverT::observeResponse(
   }
 }
 
+} // namespace Albany

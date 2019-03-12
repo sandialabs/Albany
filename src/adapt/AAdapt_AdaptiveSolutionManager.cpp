@@ -14,22 +14,29 @@
 
 #include "AAdapt_ThyraAdaptiveModelEvaluator.hpp"
 
+#include "Albany_EpetraThyraUtils.hpp"
+
+namespace AAdapt
+{
+
 using Teuchos::rcp;
 using Teuchos::RCP;
 
-AAdapt::AdaptiveSolutionManager::AdaptiveSolutionManager(
+AdaptiveSolutionManager::AdaptiveSolutionManager(
   const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   const Teuchos::RCP<Albany::AbstractDiscretization>& disc_,
-  const Teuchos::RCP<const Epetra_Vector>& initial_guess) :
-
-  disc(disc_),
-  out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-  thyra_model_factory(new AAdapt::AdaptiveModelFactory(appParams)),
-  solutionObserver(new AAdapt::SolutionObserver()),
-  Piro::Epetra::AdaptiveSolutionManager(appParams, disc_->getMap(),
-       disc_->getOverlapMap(), disc_->getOverlapJacobianGraph()) {
-
-  setInitialSolution(disc->getSolutionField());
+  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+ : Piro::Epetra::AdaptiveSolutionManager(
+       appParams,
+       Albany::getEpetraMap(disc_->getVectorSpace()),
+       Albany::getEpetraMap(disc_->getOverlapVectorSpace()),
+       Teuchos::rcpFromRef(Albany::getEpetraMatrix(disc_->createOverlapJacobianOp())->Graph()))
+ , disc(disc_)
+ , out(Teuchos::VerboseObjectBase::getDefaultOStream())
+ , thyra_model_factory(new AAdapt::AdaptiveModelFactory(appParams))
+ , solutionObserver(new AAdapt::SolutionObserver())
+{
+  setInitialSolution(Albany::getEpetraVector(disc->getSolutionField()));
 
   // Load connectivity map and coordinates
   const auto& wsElNodeEqID = disc->getWsElNodeEqID();
@@ -46,21 +53,21 @@ AAdapt::AdaptiveSolutionManager::AdaptiveSolutionManager(
 
   else {
     overlapped_x->Import(*initial_x, *importer, Insert);
-    AAdapt::InitialConditions(overlapped_x, wsElNodeEqID, wsEBNames, coords, neq, numDim,
+    AAdapt::InitialConditions(Albany::createThyraVector(overlapped_x), wsElNodeEqID, wsEBNames, coords, neq, numDim,
                               problemParams->sublist("Initial Condition"),
                               disc->hasRestartSolution());
     initial_x->Export(*overlapped_x, *exporter, Insert);
 
     if(Teuchos::nonnull(overlapped_xdot)){
       overlapped_xdot->Import(*initial_xdot, *importer, Insert);
-      AAdapt::InitialConditions(overlapped_xdot,  wsElNodeEqID, wsEBNames, coords, neq, numDim,
+      AAdapt::InitialConditions(Albany::createThyraVector(overlapped_xdot),  wsElNodeEqID, wsEBNames, coords, neq, numDim,
                               problemParams->sublist("Initial Condition Dot"));
       initial_xdot->Export(*overlapped_xdot, *exporter, Insert);
     }
 
     if(Teuchos::nonnull(overlapped_xdotdot)){
       overlapped_xdotdot->Import(*initial_xdotdot, *importer, Insert);
-      AAdapt::InitialConditions(overlapped_xdotdot,  wsElNodeEqID, wsEBNames, coords, neq, numDim,
+      AAdapt::InitialConditions(Albany::createThyraVector(overlapped_xdotdot),  wsElNodeEqID, wsEBNames, coords, neq, numDim,
                               problemParams->sublist("Initial Condition DotDot"));
       initial_xdotdot->Export(*overlapped_xdotdot, *exporter, Insert);
     }
@@ -68,7 +75,7 @@ AAdapt::AdaptiveSolutionManager::AdaptiveSolutionManager(
 
 }
 
-AAdapt::AdaptiveSolutionManager::~AdaptiveSolutionManager() {
+AdaptiveSolutionManager::~AdaptiveSolutionManager() {
 
   thyra_model_factory = Teuchos::null;
 #ifdef ALBANY_DEBUG
@@ -76,8 +83,7 @@ AAdapt::AdaptiveSolutionManager::~AdaptiveSolutionManager() {
 #endif
 }
 
-void
-AAdapt::AdaptiveSolutionManager::buildAdaptiveProblem(const Teuchos::RCP<ParamLib>& paramLib,
+void AdaptiveSolutionManager::buildAdaptiveProblem(const Teuchos::RCP<ParamLib>& paramLib,
     Albany::StateManager& stateMgr,
     const Teuchos::RCP<const Teuchos_Comm>& commT) {
 
@@ -93,9 +99,7 @@ AAdapt::AdaptiveSolutionManager::buildAdaptiveProblem(const Teuchos::RCP<ParamLi
 
 }
 
-bool
-AAdapt::AdaptiveSolutionManager::
-adaptProblem() {
+bool AdaptiveSolutionManager::adaptProblem() {
 
   const Epetra_Vector& oldSolution
     = dynamic_cast<const NOX::Epetra::Vector&>(grp->getX()).getEpetraVector();
@@ -105,11 +109,12 @@ adaptProblem() {
   // resize problem if the mesh adapts
   if(adaptManager->adaptMesh(oldSolution, oldOvlpSolution)) {
 
-    resizeMeshDataArrays(disc->getMap(),
-                         disc->getOverlapMap(), disc->getOverlapJacobianGraph());
+    resizeMeshDataArrays(Albany::getEpetraMap(disc->getVectorSpace()),
+                         Albany::getEpetraMap(disc->getOverlapVectorSpace()),
+                         Teuchos::rcpFromRef(Albany::getEpetraMatrix(disc->createOverlapJacobianOp())->Graph()) );
 
     // getSolutionField() below returns the new solution vector with the fields transferred to it
-    setInitialSolution(disc->getSolutionField());
+    setInitialSolution(Albany::getEpetraVector(disc->getSolutionField()));
 
     // Get the Thrya solver ME and resize the solution array
     Teuchos::RCP<ThyraAdaptiveModelEvaluator> thyra_model
@@ -120,7 +125,7 @@ adaptProblem() {
 
     // Resize the solution vector. getMap() returns the new, larger map
     const Teuchos::RCP<Thyra::VectorBase<double> > g_j
-        = thyra_model->resize_g_space(num_g-1, disc->getMap());
+        = thyra_model->resize_g_space(num_g-1, Albany::getEpetraMap(disc->getVectorSpace()));
     solutionObserver->set_g_vector(num_g-1, g_j);
 
     // Original design:
@@ -141,17 +146,13 @@ adaptProblem() {
 }
 
 Teuchos::RCP<AAdapt::AdaptiveModelFactory>
-AAdapt::AdaptiveSolutionManager::
-modelFactory() const {
+AdaptiveSolutionManager::modelFactory() const {
 
   return thyra_model_factory;
 
 }
 
-
-void
-AAdapt::AdaptiveSolutionManager::
-projectCurrentSolution() {
+void AdaptiveSolutionManager::projectCurrentSolution() {
 #if 1 // turn on to print debug info from MeshAdapt
   // Not currently needed
 
@@ -163,9 +164,7 @@ projectCurrentSolution() {
 
 }
 
-void
-AAdapt::AdaptiveSolutionManager::
-scatterX(const Epetra_Vector& x, const Epetra_Vector* xdot, const Epetra_Vector* xdotdot) {
+void AdaptiveSolutionManager::scatterX(const Epetra_Vector& x, const Epetra_Vector* xdot, const Epetra_Vector* xdotdot) {
 
   // Scatter x and xdot to the overlapped distribution
   overlapped_x->Import(x, *importer, Insert);
@@ -175,3 +174,4 @@ scatterX(const Epetra_Vector& x, const Epetra_Vector* xdot, const Epetra_Vector*
 
 }
 
+} // namespace AAdapt

@@ -27,11 +27,11 @@ class AdaptiveSolutionManagerT : public Thyra::AdaptiveSolutionManager {
 public:
     AdaptiveSolutionManagerT(
         const Teuchos::RCP<Teuchos::ParameterList>& appParams,
-        const Teuchos::RCP<const Tpetra_Vector>& initial_guessT,
+        const Teuchos::RCP<const Thyra_Vector>& initial_guess,
         const Teuchos::RCP<ParamLib>& param_lib,
         const Albany::StateManager& StateMgr,
         const Teuchos::RCP<rc::Manager>& rc_mgr,
-        const Teuchos::RCP<const Teuchos_Comm>& commT);
+        const Teuchos::RCP<const Teuchos_Comm>& comm);
 
    //! Method called by the solver implementation to determine if the mesh needs adapting
    // A return type of true means that the mesh should be adapted
@@ -44,61 +44,41 @@ public:
    //! Remap "old" solution into new data structures
    virtual void projectCurrentSolution();
 
-   Teuchos::RCP<const Tpetra_MultiVector> getInitialSolution() const { return current_soln; }
+   Teuchos::RCP<const Thyra_MultiVector> getInitialSolution() const { return current_soln; }
 
-   Teuchos::RCP<Tpetra_MultiVector> getOverlappedSolution() { return overlapped_soln; }
-   Teuchos::RCP<const Tpetra_MultiVector> getOverlappedSolution() const { return overlapped_soln; }
+   Teuchos::RCP<Thyra_MultiVector> getOverlappedSolution() { return overlapped_soln; }
+   Teuchos::RCP<const Thyra_MultiVector> getOverlappedSolution() const { return overlapped_soln; }
 
-   Teuchos::RCP<Thyra_MultiVector> getOverlappedSolution_Thyra() { return overlapped_soln_thyra; }
-   Teuchos::RCP<const Thyra_MultiVector> getOverlappedSolution_Thyra() const { return overlapped_soln_thyra; }
-
-   Teuchos::RCP<Tpetra_Vector> updateAndReturnOverlapSolutionT(const Tpetra_Vector& solutionT /*not overlapped*/);
-   Teuchos::RCP<Tpetra_Vector> updateAndReturnOverlapSolutionDotT(const Tpetra_Vector& solution_dotT /*not overlapped*/);
-   Teuchos::RCP<Tpetra_Vector> updateAndReturnOverlapSolutionDotDotT(const Tpetra_Vector& solution_dotdotT /*not overlapped*/);
-   Teuchos::RCP<const Tpetra_MultiVector> updateAndReturnOverlapSolutionMV(const Tpetra_MultiVector& solutionT /*not overlapped*/);
-
-   Teuchos::RCP<Tpetra_Vector> get_overlapped_fT() {return overlapped_fT;}
-   Teuchos::RCP<Tpetra_CrsMatrix> get_overlapped_jacT() {return overlapped_jacT;}
+   Teuchos::RCP<const Thyra_Vector> updateAndReturnOverlapSolution(const Thyra_Vector& solution /*not overlapped*/);
+   Teuchos::RCP<const Thyra_Vector> updateAndReturnOverlapSolutionDot(const Thyra_Vector& solution_dot /*not overlapped*/);
+   Teuchos::RCP<const Thyra_Vector> updateAndReturnOverlapSolutionDotDot(const Thyra_Vector& solution_dotdot /*not overlapped*/);
+   Teuchos::RCP<const Thyra_MultiVector> updateAndReturnOverlapSolutionMV(const Thyra_MultiVector& solution /*not overlapped*/);
 
    Teuchos::RCP<Thyra_Vector>   get_overlapped_f()   const {return overlapped_f;}
    Teuchos::RCP<Thyra_LinearOp> get_overlapped_jac() const {return overlapped_jac;}
 
-   Teuchos::RCP<Tpetra_Import> get_importerT() {return importerT;}
-   Teuchos::RCP<Tpetra_Export> get_exporterT() {return exporterT;}
    Teuchos::RCP<const Albany::CombineAndScatterManager> get_cas_manager() const { return cas_manager; }
 
-   Teuchos::RCP<Thyra::MultiVectorBase<double> > getCurrentSolution();
-
-   void scatterXT(
-       const Tpetra_Vector& xT,
-       const Tpetra_Vector* x_dotT,
-       const Tpetra_Vector* x_dotdotT);
-
-   void scatterXT(
-       const Tpetra_MultiVector& soln);
+   Teuchos::RCP<Thyra_MultiVector> getCurrentSolution() { return current_soln; }
 
    void scatterX(
-       const Teuchos::RCP<const Thyra_Vector> x,
-       const Teuchos::RCP<const Thyra_Vector> x_dot,
-       const Teuchos::RCP<const Thyra_Vector> x_dotdot);
+       const Thyra_Vector& x,
+       const Teuchos::Ptr<const Thyra_Vector> x_dot,
+       const Teuchos::Ptr<const Thyra_Vector> x_dotdot);
+
+   void scatterX(
+       const Thyra_MultiVector& soln);
 
 private:
 
     Teuchos::RCP<const Albany::CombineAndScatterManager> cas_manager;
 
-    Teuchos::RCP<Tpetra_Import> importerT;
-    Teuchos::RCP<Tpetra_Export> exporterT;
-
-    Teuchos::RCP<Tpetra_Vector> overlapped_fT;
-    Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT;
-
     Teuchos::RCP<Thyra_Vector>   overlapped_f;
     Teuchos::RCP<Thyra_LinearOp> overlapped_jac;
 
     // The solution directly from the discretization class
-    Teuchos::RCP<Tpetra_MultiVector> current_soln;
-    Teuchos::RCP<Tpetra_MultiVector> overlapped_soln;
-    Teuchos::RCP<Thyra_MultiVector> overlapped_soln_thyra;
+    Teuchos::RCP<Thyra_MultiVector> current_soln;
+    Teuchos::RCP<Thyra_MultiVector> overlapped_soln;
 
     // Number of time derivative vectors that we need to support
     const int num_time_deriv;
@@ -107,7 +87,7 @@ private:
     const Teuchos::RCP<Albany::AbstractDiscretization> disc_;
     const Teuchos::RCP<ParamLib>& paramLib_;
     const Albany::StateManager& stateMgr_;
-    const Teuchos::RCP<const Teuchos_Comm> commT_;
+    const Teuchos::RCP<const Teuchos_Comm> comm_;
 
     //! Output stream, defaults to printing just Proc 0
     Teuchos::RCP<Teuchos::FancyOStream> out;
@@ -116,11 +96,7 @@ private:
 
     void buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr);
 
-    void resizeMeshDataArrays(
-           const Teuchos::RCP<const Tpetra_Map> &mapT,
-           const Teuchos::RCP<const Tpetra_Map> &overlapMapT,
-           const Teuchos::RCP<const Tpetra_CrsGraph> &overlapJacGraphT);
-
+    void resizeMeshDataArrays(const Teuchos::RCP<const Albany::AbstractDiscretization>& disc);
 };
 
 } // namespace AAdapt

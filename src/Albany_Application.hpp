@@ -108,29 +108,13 @@ public:
   //! Get communicator
   Teuchos::RCP<const Teuchos_Comm> getComm() const;
 
-#if defined(ALBANY_EPETRA)
-  //! Get Epetra communicator
-  Teuchos::RCP<const Epetra_Comm> getEpetraComm() const;
-  //! Get DOF map
-  Teuchos::RCP<const Epetra_Map> getMap() const;
-#endif
-
-  //! Get Tpetra DOF map
-  Teuchos::RCP<const Tpetra_Map> getMapT() const;
-
   //! Get Thyra DOF vector space 
   Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace() const;
 
-#if defined(ALBANY_EPETRA)
-  //! Get Jacobian graph
-  Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const;
-#endif
-
-  //! Get Tpetra Jacobian graph
-  Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
+  //! Create Jacobian operator
+  Teuchos::RCP<Thyra_LinearOp> createJacobianOp() const;
 
 #if defined(ALBANY_EPETRA)
-  //! Get Preconditioner Operator
   Teuchos::RCP<Epetra_Operator> getPreconditioner();
 
   //! Get initial solution
@@ -139,8 +123,8 @@ public:
   //! Get initial solution dot
   Teuchos::RCP<const Epetra_Vector> getInitialSolutionDot() const;
   Teuchos::RCP<const Epetra_Vector> getInitialSolutionDotDot() const;
-
 #endif
+
   //! Get Preconditioner Operator
   Teuchos::RCP<Tpetra_Operator> getPreconditionerT();
 
@@ -348,22 +332,14 @@ public:
   //! Class to manage state variables (a.k.a. history)
   StateManager &getStateMgr() { return stateMgr; }
 
-#if defined(ALBANY_EPETRA)
   //! Evaluate state field manager
-  void evaluateStateFieldManager(const double current_time,
-                                 const Epetra_Vector *xdot,
-                                 const Epetra_Vector *xdotdot,
-                                 const Epetra_Vector &x);
-#endif
+  void evaluateStateFieldManager (const double current_time,
+                                  const Thyra_Vector& x,
+                                  Teuchos::Ptr<const Thyra_Vector> xdot,
+                                  Teuchos::Ptr<const Thyra_Vector> xdotdot);
 
-  //! Evaluate state field manager
-  void evaluateStateFieldManagerT(const double current_time,
-                                  Teuchos::Ptr<const Tpetra_Vector> xdot,
-                                  Teuchos::Ptr<const Tpetra_Vector> xdotdot,
-                                  const Tpetra_Vector &x);
-
-  void evaluateStateFieldManagerT(const double current_time,
-                                  const Tpetra_MultiVector &x);
+  void evaluateStateFieldManager (const double current_time,
+                                  const Thyra_MultiVector &x);
 
   //! Access to number of worksets - needed for working with StateManager
   int getNumWorksets() { return disc->getWsElNodeEqID().size(); }

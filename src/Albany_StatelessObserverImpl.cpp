@@ -42,99 +42,68 @@ getTimeParamValueOrDefault (RealType defaultValue) const {
         defaultValue;
 
   return this_time;
-
 }
 
-#if defined(ALBANY_EPETRA)
-const Epetra_Map& StatelessObserverImpl::getNonOverlappedMap () const {
-  return *app_->getMap();
-}
-#endif
-
-Teuchos::RCP<const Tpetra_Map>
-StatelessObserverImpl::getNonOverlappedMapT () const {
-  return app_->getMapT();
+Teuchos::RCP<const Thyra_VectorSpace>
+StatelessObserverImpl::getNonOverlappedVectorSpace () const {
+  return app_->getVectorSpace();
 }
 
-#if defined(ALBANY_EPETRA)
 void StatelessObserverImpl::observeSolution (
-  double stamp, const Epetra_Vector &nonOverlappedSolution,
-  const Teuchos::Ptr<const Epetra_Vector>& nonOverlappedSolutionDot)
+  double stamp,
+  const Thyra_Vector &nonOverlappedSolution,
+  const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot)
 {
   Teuchos::TimeMonitor timer(*solOutTime_);
-  const Teuchos::Ptr<const Epetra_Vector> overlappedSolution(
-    app_->getAdaptSolMgr()->getOverlapSolution(nonOverlappedSolution));
-  
-  if (nonOverlappedSolutionDot.is_null()) {
-    app_->getDiscretization()->writeSolution(*overlappedSolution, stamp,
-                                             /*overlapped =*/ true);
-  }
-  else {  
-    const Teuchos::Ptr<const Epetra_Vector> overlappedSolutionDot(
-      app_->getAdaptSolMgr()->getOverlapSolution(*nonOverlappedSolutionDot));
-    app_->getDiscretization()->writeSolution(*overlappedSolution, *overlappedSolutionDot, stamp,
-                                             /*overlapped =*/ true);
-  }
-}
-#endif
-
-void StatelessObserverImpl::observeSolutionT (
-  double stamp, const Tpetra_Vector &nonOverlappedSolutionT,
-  const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT)
-{
-  Teuchos::TimeMonitor timer(*solOutTime_);
-  const Teuchos::RCP<const Tpetra_Vector> overlappedSolutionT =
-    app_->getAdaptSolMgrT()->updateAndReturnOverlapSolutionT(nonOverlappedSolutionT);
-  if (nonOverlappedSolutionDotT != Teuchos::null) {
-    const Teuchos::RCP<const Tpetra_Vector> overlappedSolutionDotT =
-      app_->getAdaptSolMgrT()->updateAndReturnOverlapSolutionDotT(*nonOverlappedSolutionDotT);
-    app_->getDiscretization()->writeSolutionT(
-      *overlappedSolutionT, *overlappedSolutionDotT, stamp, /*overlapped =*/ true);
-  }
-  else {
-    app_->getDiscretization()->writeSolutionT(
-      *overlappedSolutionT, stamp, /*overlapped =*/ true);
+  const Teuchos::RCP<const Thyra_Vector> overlappedSolution =
+    app_->getAdaptSolMgrT()->updateAndReturnOverlapSolution(nonOverlappedSolution);
+  if (nonOverlappedSolutionDot != Teuchos::null) {
+    const Teuchos::RCP<const Thyra_Vector> overlappedSolutionDot =
+      app_->getAdaptSolMgrT()->updateAndReturnOverlapSolutionDot(*nonOverlappedSolutionDot);
+    app_->getDiscretization()->writeSolution(
+      *overlappedSolution, *overlappedSolutionDot, stamp, /*overlapped =*/ true);
+  } else {
+    app_->getDiscretization()->writeSolution(
+      *overlappedSolution, stamp, /*overlapped =*/ true);
   }
 }
 
-void StatelessObserverImpl::observeSolutionT (
-  double stamp, const Tpetra_Vector &nonOverlappedSolutionT,
-  const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT,
-  const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotDotT)
+void StatelessObserverImpl::observeSolution (
+  double stamp,
+  const Thyra_Vector &nonOverlappedSolution,
+  const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
+  const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot)
 {
   Teuchos::TimeMonitor timer(*solOutTime_);
-  const Teuchos::RCP<const Tpetra_Vector> overlappedSolutionT =
-    app_->getAdaptSolMgrT()->updateAndReturnOverlapSolutionT(nonOverlappedSolutionT);
-  if (nonOverlappedSolutionDotT != Teuchos::null) {
-    const Teuchos::RCP<const Tpetra_Vector> overlappedSolutionDotT =
-      app_->getAdaptSolMgrT()->updateAndReturnOverlapSolutionDotT(*nonOverlappedSolutionDotT);
-    if (nonOverlappedSolutionDotDotT != Teuchos::null) {
-      const Teuchos::RCP<const Tpetra_Vector> overlappedSolutionDotDotT =
-        app_->getAdaptSolMgrT()->updateAndReturnOverlapSolutionDotDotT(*nonOverlappedSolutionDotDotT);
-      app_->getDiscretization()->writeSolutionT(
-        *overlappedSolutionT, *overlappedSolutionDotT, *overlappedSolutionDotDotT, 
+  const Teuchos::RCP<const Thyra_Vector> overlappedSolution =
+    app_->getAdaptSolMgrT()->updateAndReturnOverlapSolution(nonOverlappedSolution);
+  if (nonOverlappedSolutionDot != Teuchos::null) {
+    const Teuchos::RCP<const Thyra_Vector> overlappedSolutionDot =
+      app_->getAdaptSolMgrT()->updateAndReturnOverlapSolutionDot(*nonOverlappedSolutionDot);
+    if (nonOverlappedSolutionDotDot != Teuchos::null) {
+      const Teuchos::RCP<const Thyra_Vector> overlappedSolutionDotDot =
+        app_->getAdaptSolMgrT()->updateAndReturnOverlapSolutionDotDot(*nonOverlappedSolutionDotDot);
+      app_->getDiscretization()->writeSolution(
+        *overlappedSolution, *overlappedSolutionDot, *overlappedSolutionDotDot, 
         stamp, /*overlapped =*/ true);
+    } else {
+      app_->getDiscretization()->writeSolution(
+        *overlappedSolution, *overlappedSolutionDot, stamp, /*overlapped =*/ true);
     }
-    else {
-      app_->getDiscretization()->writeSolutionT(
-        *overlappedSolutionT, *overlappedSolutionDotT, stamp, /*overlapped =*/ true);
-   }
-  }
-  else {
-    app_->getDiscretization()->writeSolutionT(
-      *overlappedSolutionT, stamp, /*overlapped =*/ true);
+  } else {
+    app_->getDiscretization()->writeSolution(
+      *overlappedSolution, stamp, /*overlapped =*/ true);
   }
 }
 
-
-void StatelessObserverImpl::observeSolutionT (
-  double stamp, const Tpetra_MultiVector &nonOverlappedSolutionT)
+void StatelessObserverImpl::observeSolution (
+  double stamp, const Thyra_MultiVector &nonOverlappedSolution)
 {
   Teuchos::TimeMonitor timer(*solOutTime_);
-  const Teuchos::RCP<const Tpetra_MultiVector> overlappedSolutionT =
-    app_->getAdaptSolMgrT()->updateAndReturnOverlapSolutionMV(nonOverlappedSolutionT);
+  const Teuchos::RCP<const Thyra_MultiVector> overlappedSolution =
+    app_->getAdaptSolMgrT()->updateAndReturnOverlapSolutionMV(nonOverlappedSolution);
   app_->getDiscretization()->writeSolutionMV(
-    *overlappedSolutionT, stamp, /*overlapped =*/ true);
+    *overlappedSolution, stamp, /*overlapped =*/ true);
 }
 
 } // namespace Albany

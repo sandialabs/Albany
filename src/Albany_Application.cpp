@@ -80,36 +80,6 @@ int countScale;
 const Tpetra::global_size_t INVALID =
     Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
 
-Albany::Application::Application(const RCP<const Teuchos_Comm> &comm_,
-                                 const RCP<Teuchos::ParameterList> &params,
-                                 const RCP<const Tpetra_Vector> &initial_guess, 
-                                 const bool schwarz)
-    : commT(comm_), out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-      physicsBasedPreconditioner(false), shapeParamsHaveBeenReset(false),
-      morphFromInit(true), perturbBetaForDirichlets(0.0), phxGraphVisDetail(0),
-      stateGraphVisDetail(0), params_(params), requires_sdbcs_(false),
-      requires_orig_dbcs_(false), no_dir_bcs_(false), is_schwarz_{schwarz} {
-#if defined(ALBANY_EPETRA)
-  comm = Albany::createEpetraCommFromTeuchosComm(comm_);
-#endif
-  initialSetUp(params);
-  createMeshSpecs();
-  buildProblem();
-  createDiscretization();
-  finalSetUp(params, initial_guess);
-}
-
-Albany::Application::Application(const RCP<const Teuchos_Comm> &comm_)
-    : commT(comm_), out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-      physicsBasedPreconditioner(false), shapeParamsHaveBeenReset(false),
-      morphFromInit(true), perturbBetaForDirichlets(0.0), phxGraphVisDetail(0),
-      stateGraphVisDetail(0), requires_sdbcs_(false), no_dir_bcs_(false),
-      requires_orig_dbcs_(false) {
-#if defined(ALBANY_EPETRA)
-  comm = Albany::createEpetraCommFromTeuchosComm(comm_);
-#endif
-}
-
 namespace {
 int calcTangentDerivDimension(
     const Teuchos::RCP<Teuchos::ParameterList> &problemParams) {
@@ -136,14 +106,58 @@ int calcTangentDerivDimension(
 }
 } // namespace
 
-void Albany::Application::initialSetUp(
+namespace Albany
+{
+
+Application::
+Application (const RCP<const Teuchos_Comm> &comm_,
+             const RCP<Teuchos::ParameterList> &params,
+             const RCP<const Tpetra_Vector> &initial_guess, 
+             const bool schwarz)
+ : is_schwarz_{schwarz}
+ , no_dir_bcs_(false)
+ , requires_sdbcs_(false)
+ , requires_orig_dbcs_(false)
+ , commT(comm_)
+ , out(Teuchos::VerboseObjectBase::getDefaultOStream())
+ , params_(params)
+ , physicsBasedPreconditioner(false)
+ , shapeParamsHaveBeenReset(false)
+ , phxGraphVisDetail(0)
+ , stateGraphVisDetail(0)
+ , morphFromInit(true)
+ , perturbBetaForDirichlets(0.0)
+{
+  initialSetUp(params);
+  createMeshSpecs();
+  buildProblem();
+  createDiscretization();
+  finalSetUp(params, initial_guess);
+}
+
+Application::Application(const RCP<const Teuchos_Comm> &comm_)
+ : no_dir_bcs_(false)
+ , requires_sdbcs_(false)
+ , requires_orig_dbcs_(false)
+ , commT(comm_)
+ , out(Teuchos::VerboseObjectBase::getDefaultOStream())
+ , physicsBasedPreconditioner(false)
+ , shapeParamsHaveBeenReset(false)
+ , phxGraphVisDetail(0)
+ , stateGraphVisDetail(0)
+ , morphFromInit(true)
+ , perturbBetaForDirichlets(0.0)
+{
+  // Nothing to be done here
+}
+
+void Application::initialSetUp(
     const RCP<Teuchos::ParameterList> &params) {
   // Create parameter libraries
   paramLib = rcp(new ParamLib);
   distParamLib = rcp(new DistributedParameterLibrary);
 
 #ifdef ALBANY_DEBUG
-#if defined(ALBANY_EPETRA)
   int break_set = (getenv("ALBANY_BREAK") == NULL) ? 0 : 1;
   int env_status = 0;
   int length = 1;
@@ -182,7 +196,6 @@ void Albany::Application::initialSetUp(
   }
   comm->Barrier();
 #endif
-#endif
 
 #if !defined(ALBANY_EPETRA)
   removeEpetraRelatedPLs(params);
@@ -191,11 +204,12 @@ void Albany::Application::initialSetUp(
   // Create problem object
   problemParams = Teuchos::sublist(params, "Problem", true);
 
-  Albany::ProblemFactory problemFactory(params, paramLib, commT);
+  ProblemFactory problemFactory(params, paramLib, commT);
   rc_mgr = AAdapt::rc::Manager::create(Teuchos::rcp(&stateMgr, false),
                                        *problemParams);
-  if (Teuchos::nonnull(rc_mgr))
+  if (Teuchos::nonnull(rc_mgr)) {
     problemFactory.setReferenceConfigurationManager(rc_mgr);
+  }
   problem = problemFactory.create();
 
   // Validate Problem parameters against list for this specific problem
@@ -244,7 +258,7 @@ void Albany::Application::initialSetUp(
     solMethod = Continuation;
     bool const have_piro = params->isSublist("Piro");
 
-    ALBANY_ASSERT(have_piro == true);
+    ALBANY_ASSERT(have_piro == true, "Error! Piro sublist not found.");
 
     Teuchos::ParameterList &piro_params = params->sublist("Piro");
 
@@ -269,7 +283,7 @@ void Albany::Application::initialSetUp(
     // Add NOX pre-post-operator for debugging.
     bool const have_piro = params->isSublist("Piro");
 
-    ALBANY_ASSERT(have_piro == true);
+    ALBANY_ASSERT(have_piro == true, "Error! Piro sublist not found.\n");
 
     Teuchos::ParameterList &piro_params = params->sublist("Piro");
 
@@ -280,13 +294,13 @@ void Albany::Application::initialSetUp(
 
     bool const have_tempus = piro_params.isSublist("Tempus");
 
-    ALBANY_ASSERT(have_tempus == true);
+    ALBANY_ASSERT(have_tempus == true, "Error! Tempus sublist not found.\n");
 
     Teuchos::ParameterList &tempus_params = piro_params.sublist("Tempus");
 
     bool const have_tempus_stepper = tempus_params.isSublist("Tempus Stepper");
 
-    ALBANY_ASSERT(have_tempus_stepper == true);
+    ALBANY_ASSERT(have_tempus_stepper == true, "Error! Tempus stepper sublist not found.\n");
 
     Teuchos::ParameterList &tempus_stepper_params =
         tempus_params.sublist("Tempus Stepper");
@@ -302,7 +316,7 @@ void Albany::Application::initialSetUp(
       bool const have_solver_name =
           tempus_stepper_params.isType<std::string>("Solver Name");
 
-      ALBANY_ASSERT(have_solver_name == true);
+      ALBANY_ASSERT(have_solver_name == true, "Error! Implicit solver sublist not found.\n");
 
       std::string const solver_name =
           tempus_stepper_params.get<std::string>("Solver Name");
@@ -312,7 +326,7 @@ void Albany::Application::initialSetUp(
 
       bool const have_nox = solver_name_params.isSublist("NOX");
 
-      ALBANY_ASSERT(have_nox == true);
+      ALBANY_ASSERT(have_nox == true, "Error! Nox sublist not found.\n");
 
       nox_params = solver_name_params.sublist("NOX");
 
@@ -461,7 +475,7 @@ void Albany::Application::initialSetUp(
     TEUCHOS_TEST_FOR_EXCEPTION(
         true, Teuchos::Exceptions::InvalidParameter,
         std::endl
-            << "Error in Albany::Application constructor:  "
+            << "Error in Application constructor:  "
             << "Invalid Parameter Write Jacobian to MatrixMarket.  Acceptable "
                "values are -1, 0, 1, 2, ... "
             << std::endl);
@@ -470,7 +484,7 @@ void Albany::Application::initialSetUp(
     TEUCHOS_TEST_FOR_EXCEPTION(
         true, Teuchos::Exceptions::InvalidParameter,
         std::endl
-            << "Error in Albany::Application constructor:  "
+            << "Error in Application constructor:  "
             << "Invalid Parameter Write Residual to MatrixMarket.  Acceptable "
                "values are -1, 0, 1, 2, ... "
             << std::endl);
@@ -479,7 +493,7 @@ void Albany::Application::initialSetUp(
     TEUCHOS_TEST_FOR_EXCEPTION(
         true, Teuchos::Exceptions::InvalidParameter,
         std::endl
-            << "Error in Albany::Application constructor:  "
+            << "Error in Application constructor:  "
             << "Invalid Parameter Write Jacobian to Standard Output.  "
                "Acceptable values are -1, 0, 1, 2, ... "
             << std::endl);
@@ -488,7 +502,7 @@ void Albany::Application::initialSetUp(
     TEUCHOS_TEST_FOR_EXCEPTION(
         true, Teuchos::Exceptions::InvalidParameter,
         std::endl
-            << "Error in Albany::Application constructor:  "
+            << "Error in Application constructor:  "
             << "Invalid Parameter Write Residual to Standard Output.  "
                "Acceptable values are -1, 0, 1, 2, ... "
             << std::endl);
@@ -497,7 +511,7 @@ void Albany::Application::initialSetUp(
     TEUCHOS_TEST_FOR_EXCEPTION(
         true, Teuchos::Exceptions::InvalidParameter,
         std::endl
-            << "Error in Albany::Application constructor:  "
+            << "Error in Application constructor:  "
             << "Invalid Parameter Compute Jacobian Condition Number.  "
                "Acceptable values are -1, 0, 1, 2, ... "
             << std::endl);
@@ -512,7 +526,7 @@ void Albany::Application::initialSetUp(
   // Schwarz problems.
   countScale = 0;
   // Create discretization object
-  discFactory = rcp(new Albany::DiscretizationFactory(params, commT, expl));
+  discFactory = rcp(new DiscretizationFactory(params, commT, expl));
 
 #if defined(ALBANY_LCM)
   // Check for Schwarz parameters
@@ -527,8 +541,8 @@ void Albany::Application::initialSetUp(
   bool const has_all = has_app_array && has_app_index && has_app_name_index_map;
 
   if (has_all == true) {
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> aa =
-        params->get<Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>>(
+    Teuchos::ArrayRCP<Teuchos::RCP<Application>> aa =
+        params->get<Teuchos::ArrayRCP<Teuchos::RCP<Application>>>(
             "Application Array");
 
     int const ai = params->get<int>("Application Index");
@@ -547,23 +561,24 @@ void Albany::Application::initialSetUp(
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
+  // TODO [Thyra Refator]: Remove Epetra requirement on Peridigm
   LCM::PeridigmManager::initializeSingleton(params);
 #endif
 #endif
 }
 
-void Albany::Application::createMeshSpecs() {
+void Application::createMeshSpecs() {
   // Get mesh specification object: worksetSize, cell topology, etc
   meshSpecs = discFactory->createMeshSpecs();
 }
 
-void Albany::Application::createMeshSpecs(
-    Teuchos::RCP<Albany::AbstractMeshStruct> mesh) {
+void Application::createMeshSpecs(
+    Teuchos::RCP<AbstractMeshStruct> mesh) {
   // Get mesh specification object: worksetSize, cell topology, etc
   meshSpecs = discFactory->createMeshSpecs(mesh);
 }
 
-void Albany::Application::buildProblem() {
+void Application::buildProblem() {
 #if defined(ALBANY_LCM)
   // This is needed for Schwarz coupling so that when Dirichlet
   // BCs are created we know what application is doing it.
@@ -575,14 +590,14 @@ void Albany::Application::buildProblem() {
   if ((requires_sdbcs_ == true) && (problem->useSDBCs() == false) &&
       (no_dir_bcs_ == false)) {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                               "Error in Albany::Application: you are using a "
+                               "Error in Application: you are using a "
                                "solver that requires SDBCs yet you are not "
                                "using SDBCs!\n");
   }
 
   if ((requires_orig_dbcs_ == true) && (problem->useSDBCs() == true)) {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                               "Error in Albany::Application: you are using a "
+                               "Error in Application: you are using a "
                                "solver with SDBCs that does not work correctly "
                                "with them!\n");
   }
@@ -590,7 +605,7 @@ void Albany::Application::buildProblem() {
   if ((no_dir_bcs_ == true) && (scaleBCdofs == true))
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                               "Error in Albany::Application: you are attempting "
+                               "Error in Application: you are attempting "
                                "to set 'Scale DOF BCs = true' for a problem with no  "
                                "Dirichlet BCs!  Scaling will do nothing.  Re-run " 
                                "with 'Scale DOF BCs = false'\n");
@@ -643,7 +658,7 @@ void Albany::Application::buildProblem() {
     rc_mgr->endBuildingSfm();
 }
 
-void Albany::Application::createDiscretization() {
+void Application::createDiscretization() {
   // Create the full mesh
   disc = discFactory->createDiscretization(
       neq, problem->getSideSetEquations(), stateMgr.getStateInfoStruct(),
@@ -653,7 +668,7 @@ void Albany::Application::createDiscretization() {
   explicit_scheme = disc->isExplicitScheme();
 }
 
-void Albany::Application::setScaling(
+void Application::setScaling(
     const Teuchos::RCP<Teuchos::ParameterList> &params) 
 {
   // get info from Scaling parameter list (for scaling Jacobian/residual)
@@ -700,7 +715,7 @@ void Albany::Application::setScaling(
 
 }
 
-bool Albany::Application::isLCMProblem(
+bool Application::isLCMProblem(
     const Teuchos::RCP<Teuchos::ParameterList> &/* params */) const 
 {
   //FIXME: fill in this function to check if we have LCM problem 
@@ -724,11 +739,11 @@ bool Albany::Application::isLCMProblem(
   }*/
 }
 
-void Albany::Application::finalSetUp(
+void Application::finalSetUp(
     const Teuchos::RCP<Teuchos::ParameterList> &params,
     const Teuchos::RCP<const Tpetra_Vector> &initial_guess) {
 
-  bool TpetraBuild = Albany::build_type() == Albany::BuildType::Tpetra;
+  bool TpetraBuild = build_type() == BuildType::Tpetra;
 
   setScaling(params); 
 
@@ -776,8 +791,8 @@ void Albany::Application::finalSetUp(
     // then, catch the exception and continue.
     // Create Distributed parameters and initialize them with data stored in the
     // mesh.
-    const Albany::StateInfoStruct &distParamSIS = disc->getNodalParameterSIS();
-    for (int is = 0; is < distParamSIS.size(); is++) {
+    const StateInfoStruct &distParamSIS = disc->getNodalParameterSIS();
+    for (size_t is = 0; is < distParamSIS.size(); is++) {
       // Get name of distributed parameter
       const std::string &param_name = distParamSIS[is]->name;
 
@@ -798,7 +813,7 @@ void Albany::Application::finalSetUp(
       upperbound_name << param_name << "_upperbound";
 
       // Initialize parameter with data stored in the mesh
-      disc->getField(dist_param, param_name);
+      disc->getField(*dist_param, param_name);
       const auto& nodal_param_states = disc->getNodalParameterSIS();
       bool has_lowerbound(false), has_upperbound(false);
       for (int ist = 0; ist < static_cast<int>(nodal_param_states.size()); ist++) {
@@ -806,12 +821,12 @@ void Albany::Application::finalSetUp(
         has_upperbound = has_upperbound || (nodal_param_states[ist]->name == upperbound_name.str());
       }
       if(has_lowerbound) {
-        disc->getField(dist_param_lowerbound, lowerbound_name.str() );
+        disc->getField(*dist_param_lowerbound, lowerbound_name.str() );
       } else {
         dist_param_lowerbound->assign(std::numeric_limits<ST>::lowest());
       }
       if(has_upperbound) {
-        disc->getField(dist_param_upperbound, upperbound_name.str());
+        disc->getField(*dist_param_upperbound, upperbound_name.str());
       } else {
         dist_param_upperbound->assign(std::numeric_limits<ST>::max());
       }
@@ -918,53 +933,33 @@ void Albany::Application::finalSetUp(
 #endif
 }
 
-Albany::Application::~Application() {
+Application::~Application() {
 #ifdef ALBANY_DEBUG
   *out << "Calling destructor for Albany_Application" << std::endl;
 #endif
 }
 
-RCP<Albany::AbstractDiscretization>
-Albany::Application::getDiscretization() const {
+RCP<AbstractDiscretization>
+Application::getDiscretization() const {
   return disc;
 }
 
-RCP<Albany::AbstractProblem> Albany::Application::getProblem() const {
+RCP<AbstractProblem> Application::getProblem() const {
   return problem;
 }
 
-RCP<const Teuchos_Comm> Albany::Application::getComm() const { return commT; }
+RCP<const Teuchos_Comm> Application::getComm() const { return commT; }
 
-#if defined(ALBANY_EPETRA)
-RCP<const Epetra_Comm> Albany::Application::getEpetraComm() const {
-  return comm;
-}
-
-RCP<const Epetra_Map> Albany::Application::getMap() const {
-  return disc->getMap();
-}
-#endif
-
-RCP<const Tpetra_Map> Albany::Application::getMapT() const {
-  return disc->getMapT();
-}
-
-Teuchos::RCP<const Thyra_VectorSpace> Albany::Application::getVectorSpace() const
+Teuchos::RCP<const Thyra_VectorSpace> Application::getVectorSpace() const
 {
   return disc->getVectorSpace();
 }
 
-#if defined(ALBANY_EPETRA)
-RCP<const Epetra_CrsGraph> Albany::Application::getJacobianGraph() const {
-  return disc->getJacobianGraph();
-}
-#endif
-
-RCP<const Tpetra_CrsGraph> Albany::Application::getJacobianGraphT() const {
-  return disc->getJacobianGraphT();
+RCP<Thyra_LinearOp> Application::createJacobianOp() const {
+  return disc->createJacobianOp();
 }
 
-RCP<Tpetra_Operator> Albany::Application::getPreconditionerT() {
+RCP<Tpetra_Operator> Application::getPreconditionerT() {
 //#if defined(ATO_USES_COGENT)
 #ifdef ALBANY_ATO
   if (precType == "XFEM") {
@@ -976,7 +971,7 @@ RCP<Tpetra_Operator> Albany::Application::getPreconditionerT() {
 }
 
 #if defined(ALBANY_EPETRA)
-RCP<Epetra_Operator> Albany::Application::getPreconditioner() {
+RCP<Epetra_Operator> Application::getPreconditioner() {
 #if defined(ALBANY_TEKO)
   if (precType == "Teko") {
     // inverseLib = Teko::InverseLibrary::buildFromStratimikos();
@@ -1014,7 +1009,7 @@ RCP<Epetra_Operator> Albany::Application::getPreconditioner() {
     return Teuchos::null;
 }
 
-RCP<const Epetra_Vector> Albany::Application::getInitialSolution() const {
+RCP<const Epetra_Vector> Application::getInitialSolution() const {
   const Teuchos::RCP<const Tpetra_MultiVector> xMV =
       solMgrT->getInitialSolution();
   Teuchos::RCP<const Tpetra_Vector> xT = xMV->getVector(0);
@@ -1024,7 +1019,7 @@ RCP<const Epetra_Vector> Albany::Application::getInitialSolution() const {
   return initial_x;
 }
 
-RCP<const Epetra_Vector> Albany::Application::getInitialSolutionDot() const {
+RCP<const Epetra_Vector> Application::getInitialSolutionDot() const {
   const Teuchos::RCP<const Tpetra_MultiVector> xMV =
       solMgrT->getInitialSolution();
   if (xMV->getNumVectors() < 2)
@@ -1036,7 +1031,7 @@ RCP<const Epetra_Vector> Albany::Application::getInitialSolutionDot() const {
   return initial_x_dot;
 }
 
-RCP<const Epetra_Vector> Albany::Application::getInitialSolutionDotDot() const {
+RCP<const Epetra_Vector> Application::getInitialSolutionDotDot() const {
   const Teuchos::RCP<const Tpetra_MultiVector> xMV =
       solMgrT->getInitialSolution();
   if (xMV->getNumVectors() < 3)
@@ -1050,20 +1045,20 @@ RCP<const Epetra_Vector> Albany::Application::getInitialSolutionDotDot() const {
 }
 #endif
 
-RCP<ParamLib> Albany::Application::getParamLib() const { return paramLib; }
+RCP<ParamLib> Application::getParamLib() const { return paramLib; }
 
-RCP<Albany::DistributedParameterLibrary> Albany::Application::getDistributedParameterLibrary() const {
+RCP<DistributedParameterLibrary> Application::getDistributedParameterLibrary() const {
   return distParamLib;
 }
 
-int Albany::Application::getNumResponses() const { return responses.size(); }
+int Application::getNumResponses() const { return responses.size(); }
 
-Teuchos::RCP<Albany::AbstractResponseFunction>
-Albany::Application::getResponse(int i) const {
+Teuchos::RCP<AbstractResponseFunction>
+Application::getResponse(int i) const {
   return responses[i];
 }
 
-bool Albany::Application::suppliesPreconditioner() const {
+bool Application::suppliesPreconditioner() const {
   return physicsBasedPreconditioner;
 }
 
@@ -1074,13 +1069,13 @@ namespace {
 // that time, it may have been true that nfm was indexed just like fm, using
 // wsPhysIndex. However, it is clear at present (7 Nov 2014) that nfm is
 // definitely not indexed like fm. As an example, compare nfm in
-// Albany::MechanicsProblem::constructNeumannEvaluators and fm in
-// Albany::MechanicsProblem::buildProblem. For now, I'm going to keep nfm as an
+// MechanicsProblem::constructNeumannEvaluators and fm in
+// MechanicsProblem::buildProblem. For now, I'm going to keep nfm as an
 // array, but this this new function is a wrapper around the unclear intended
 // behavior.
 inline Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> &deref_nfm(
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> &nfm,
-    const Albany::WorksetArray<int>::type &wsPhysIndex, int ws) {
+    const WorksetArray<int>::type &wsPhysIndex, int ws) {
   return nfm.size() == 1 ? // Currently, all problems seem to have one nfm ...
              nfm[0]
                          : // ... hence this is the intended behavior ...
@@ -1128,7 +1123,7 @@ void dfm_set(PHAL::Workset &workset,
 //     <ParameterList>
 //       <ParameterList name="Debug Output">
 //         <Parameter name="Derivative Check" type="int" value="1"/>
-void checkDerivatives(Albany::Application &app, const double time,
+void checkDerivatives(Application &app, const double time,
                       const Teuchos::RCP<const Thyra_Vector>& x,
                       const Teuchos::RCP<const Thyra_Vector>& xdot,
                       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
@@ -1157,10 +1152,10 @@ void checkDerivatives(Albany::Application &app, const double time,
   xd->randomize(-Teuchos::ScalarTraits<ST>::rmax(),Teuchos::ScalarTraits<ST>::rmax());
   Teuchos::RCP<Thyra_Vector> xpd = w2;
   {
-    const Teuchos::ArrayRCP<const RealType> x_d = Albany::getLocalData(x);
-    const Teuchos::ArrayRCP<RealType> xd_d = Albany::getNonconstLocalData(xd);
-    const Teuchos::ArrayRCP<RealType> xpd_d = Albany::getNonconstLocalData(xpd);
-    for (size_t i = 0; i < x_d.size(); ++i) {
+    const Teuchos::ArrayRCP<const RealType> x_d = getLocalData(x);
+    const Teuchos::ArrayRCP<RealType> xd_d = getNonconstLocalData(xd);
+    const Teuchos::ArrayRCP<RealType> xpd_d = getNonconstLocalData(xpd);
+    for (int i = 0; i < x_d.size(); ++i) {
       xd_d[i] = 2 * xd_d[i] - 1;
       if (x_d[i] == 0) {
         // No scalar-level way to get the magnitude of x_i, so just go with
@@ -1182,8 +1177,8 @@ void checkDerivatives(Albany::Application &app, const double time,
     }
   }
   if (Teuchos::nonnull(mv)) {
-    Albany::scale_and_update(mv->col(0),0.0,x,1.0);
-    Albany::scale_and_update(mv->col(1),0.0,xd,1.0);
+    scale_and_update(mv->col(0),0.0,x,1.0);
+    scale_and_update(mv->col(1),0.0,xd,1.0);
   }
 
   // If necessary, compute f(x).
@@ -1206,9 +1201,9 @@ void checkDerivatives(Albany::Application &app, const double time,
 
   // fd = fpd - f.
   Teuchos::RCP<Thyra_Vector> fd = fpd;
-  Albany::scale_and_update(fpd,1.0,f,-1.0);
+  scale_and_update(fpd,1.0,f,-1.0);
   if (Teuchos::nonnull(mv)) {
-    Albany::scale_and_update(mv->col(3),0.0,fd,1.0);
+    scale_and_update(mv->col(3),0.0,fd,1.0);
   }
 
   // Jxd = J xd.
@@ -1221,16 +1216,16 @@ void checkDerivatives(Albany::Application &app, const double time,
   const ST xdn = xd->norm_inf();
   // d = norm(fd - Jxd).
   Teuchos::RCP<Thyra_Vector> d = fd;
-  Albany::scale_and_update(d,1.0,Jxd,-1.0);
+  scale_and_update(d,1.0,Jxd,-1.0);
   if (Teuchos::nonnull(mv)) {
-    Albany::scale_and_update(mv->col(4),0.0,d,1.0);
+    scale_and_update(mv->col(4),0.0,d,1.0);
   }
   const double dn = d->norm_inf();
  
   // Assess.
   const double den = std::max(fdn, Jxdn), e = dn / den;
   *Teuchos::VerboseObjectBase::getDefaultOStream()
-      << "Albany::Application Check Derivatives level " << check_lvl << ":\n"
+      << "Application Check Derivatives level " << check_lvl << ":\n"
       << "   reldif(f(x + dx) - f(x), J(x) dx) = " << e
       << ",\n which should be on the order of " << xdn << "\n";
 
@@ -1238,14 +1233,14 @@ void checkDerivatives(Albany::Application &app, const double time,
     static int ctr = 0;
     std::stringstream ss;
     ss << "dc" << ctr << ".mm";
-    Albany::writeMatrixMarket(mv.getConst(),"dc",ctr);
+    writeMatrixMarket(mv.getConst(),"dc",ctr);
     ++ctr;
   }
 }
 } // namespace
 
 
-PHAL::Workset Albany::Application::set_dfm_workset(double const current_time,
+PHAL::Workset Application::set_dfm_workset(double const current_time,
     const Teuchos::RCP<const Thyra_Vector> x,
     const Teuchos::RCP<const Thyra_Vector> x_dot,
     const Teuchos::RCP<const Thyra_Vector> x_dotdot,
@@ -1264,7 +1259,7 @@ PHAL::Workset Albany::Application::set_dfm_workset(double const current_time,
     char nameScale[100]; // create string for file name
     if (commT->getSize() == 1) {
       sprintf(nameScale, "scale%i.mm", countScale);
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, Albany::getConstTpetraVector(scaleVec_));
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, getConstTpetraVector(scaleVec_));
     }
     else {
         // LB 7/24/18: is the conversion to serial really needed? Tpetra can handle distributed vectors in the output.
@@ -1288,7 +1283,7 @@ PHAL::Workset Albany::Application::set_dfm_workset(double const current_time,
  *        scale_serial->doImport(*scaleVec_, *importOperator, Tpetra::INSERT);
  */
       sprintf(nameScale, "scaleSerial%i.mm", countScale);
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, Albany::getConstTpetraVector(scaleVec_));
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, getConstTpetraVector(scaleVec_));
     }
 #endif
     countScale++;
@@ -1317,7 +1312,7 @@ PHAL::Workset Albany::Application::set_dfm_workset(double const current_time,
   return workset; 
 }
 
-void Albany::Application::computeGlobalResidualImpl(
+void Application::computeGlobalResidualImpl(
     double const current_time,
     const Teuchos::RCP<const Thyra_Vector> x,
     const Teuchos::RCP<const Thyra_Vector> x_dot,
@@ -1343,7 +1338,7 @@ void Albany::Application::computeGlobalResidualImpl(
   Teuchos::RCP<const CombineAndScatterManager> cas_manager = solMgrT->get_cas_manager();
 
   // Scatter x and xdot to the overlapped distrbution
-  solMgrT->scatterX(x, x_dot, x_dotdot);
+  solMgrT->scatterX(*x, x_dot.ptr(), x_dotdot.ptr());
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -1359,15 +1354,15 @@ void Albany::Application::computeGlobalResidualImpl(
   // Store pointers to solution and time derivatives.
   // Needed for Schwarz coupling.
   if (x != Teuchos::null)
-    x_ = Teuchos::rcp(new Tpetra_Vector(*Albany::getConstTpetraVector(x)));
+    x_ = Teuchos::rcp(new Tpetra_Vector(*getConstTpetraVector(x)));
   else
     x_ = Teuchos::null;
   if (x_dot != Teuchos::null)
-    xdot_ = Teuchos::rcp(new Tpetra_Vector(*Albany::getConstTpetraVector(x_dot)));
+    xdot_ = Teuchos::rcp(new Tpetra_Vector(*getConstTpetraVector(x_dot)));
   else
     xdot_ = Teuchos::null;
   if (x_dotdot != Teuchos::null)
-    xdotdot_ = Teuchos::rcp(new Tpetra_Vector(*Albany::getConstTpetraVector(x_dotdot)));
+    xdotdot_ = Teuchos::rcp(new Tpetra_Vector(*getConstTpetraVector(x_dotdot)));
   else
     xdotdot_ = Teuchos::null;
 #endif // ALBANY_LCM
@@ -1485,7 +1480,7 @@ void Albany::Application::computeGlobalResidualImpl(
 #ifdef WRITE_TO_MATRIX_MARKET
   char nameResUnscaled[100]; // create string for file name
   sprintf(nameResUnscaled, "resUnscaled%i_residual.mm", countScale);
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResUnscaled, Albany::getConstTpetraVector(f));
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResUnscaled, getConstTpetraVector(f));
 #endif
 
   if (scaleBCdofs == false && scale != 1.0) {
@@ -1495,7 +1490,7 @@ void Albany::Application::computeGlobalResidualImpl(
 #ifdef WRITE_TO_MATRIX_MARKET
   char nameResScaled[100]; // create string for file name
   sprintf(nameResScaled, "resScaled%i_residual.mm", countScale);
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResScaled, Albany::getConstTpetraVector(f));
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResScaled, getConstTpetraVector(f));
 #endif
 
 #if defined(ALBANY_LCM)
@@ -1521,7 +1516,7 @@ void Albany::Application::computeGlobalResidualImpl(
   }
 }
 
-void Albany::Application::computeGlobalResidual(
+void Application::computeGlobalResidual(
     const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& x_dot,
@@ -1543,12 +1538,12 @@ void Albany::Application::computeGlobalResidual(
     if (writeToMatrixMarketRes ==
         -1) { // write residual to MatrixMarket every time it arises
       sprintf(name, "rhs%i.mm", countRes);
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, Albany::getConstTpetraVector(f));
+      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, getConstTpetraVector(f));
     } else {
       if (countRes ==
           writeToMatrixMarketRes) { // write residual only at requested count#
         sprintf(name, "rhs%i.mm", countRes);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, Albany::getConstTpetraVector(f));
+        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, getConstTpetraVector(f));
       }
     }
   }
@@ -1569,7 +1564,7 @@ void Albany::Application::computeGlobalResidual(
   }
 }
 
-void Albany::Application::computeGlobalJacobianImpl(
+void Application::computeGlobalJacobianImpl(
     const double alpha, const double beta, const double omega,
     const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -1598,7 +1593,7 @@ void Albany::Application::computeGlobalJacobianImpl(
   auto cas_manager = solMgrT->get_cas_manager();
 
   // Scatter x and xdot to the overlapped distribution
-  solMgrT->scatterX(x, xdot, xdotdot);
+  solMgrT->scatterX(*x, xdot.ptr(), xdotdot.ptr());
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -1703,6 +1698,7 @@ void Albany::Application::computeGlobalJacobianImpl(
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
+    // TODO [Thyra Refactor]: remove dependence of Peridigm on Epetra
     if (Teuchos::nonnull(LCM::PeridigmManager::self())) {
       LCM::PeridigmManager::self()
           ->copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(jac);
@@ -1845,7 +1841,7 @@ void Albany::Application::computeGlobalJacobianImpl(
   }
 }
 
-void Albany::Application::computeGlobalJacobian(
+void Application::computeGlobalJacobian(
     const double alpha, const double beta, const double omega,
     const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -1895,7 +1891,7 @@ void Albany::Application::computeGlobalJacobian(
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(
         true, std::logic_error,
-        "Error in Albany::Application: Compute Jacobian Condition Number debug option "
+        "Error in Application: Compute Jacobian Condition Number debug option "
         "currently relies on an Epetra-based routine in AztecOO.  To use this option, please "
         "rebuild Albany with ENABLE_ALBANY_EPETRA_EXE=ON.  You will then be able to have Albany "
         "output the Jacobian condition number when running either the Albany or AlbanyT executable.\n");
@@ -1906,9 +1902,8 @@ void Albany::Application::computeGlobalJacobian(
   }
 }
 
-void Albany::Application::computeGlobalPreconditionerT(
+void Application::computeGlobalPreconditionerT(
     const RCP<Tpetra_CrsMatrix> &jac, const RCP<Tpetra_Operator> &prec) {
-//#if defined(ATO_USES_COGENT)
 #ifdef ALBANY_ATO
   if (precType == "XFEM") {
     TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
@@ -1920,12 +1915,15 @@ void Albany::Application::computeGlobalPreconditionerT(
 
     cogentPrec->BuildPreconditioner(jac, disc, stateMgr);
   }
+#else
+  // Silence compiler warnings
+  (void) jac;
+  (void) prec;
 #endif
-  //#endif
 }
 
 #if defined(ALBANY_EPETRA)
-void Albany::Application::computeGlobalPreconditioner(
+void Application::computeGlobalPreconditioner(
     const RCP<Epetra_CrsMatrix> &jac, const RCP<Epetra_Operator> &prec) {
 #if defined(ALBANY_TEKO)
   if (precType == "Teko") {
@@ -1942,7 +1940,6 @@ void Albany::Application::computeGlobalPreconditioner(
     blockPrec->rebuildInverseOperator(wrappedJac);
   }
 #endif
-//#if defined(ATO_USES_COGENT)
 #ifdef ALBANY_ATO
   if (precType == "XFEM") {
     TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
@@ -1955,11 +1952,10 @@ void Albany::Application::computeGlobalPreconditioner(
     cogentPrec->BuildPreconditioner(jac, disc, stateMgr);
   }
 #endif
-  //#endif
 }
 #endif
 
-void Albany::Application::computeGlobalTangent(
+void Application::computeGlobalTangent(
     const double alpha, const double beta, const double omega,
     const double current_time, bool sum_derivs,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -1980,8 +1976,6 @@ void Albany::Application::computeGlobalTangent(
 
   // Load connectivity map and coordinates
   const auto &wsElNodeEqID = disc->getWsElNodeEqID();
-  const auto &coords = disc->getCoords();
-  const auto &wsEBNames = disc->getWsEBNames();
   const auto &wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
@@ -1992,7 +1986,7 @@ void Albany::Application::computeGlobalTangent(
   auto cas_manager = solMgrT->get_cas_manager();
 
   // Scatter x and xdot to the overlapped distrbution
-  solMgrT->scatterX(x, xdot, xdotdot);
+  solMgrT->scatterX(*x, xdot.ptr(), xdotdot.ptr());
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -2002,7 +1996,7 @@ void Albany::Application::computeGlobalTangent(
   if (Teuchos::nonnull(Vx)) {
     overlapped_Vx = Thyra::createMembers(disc->getOverlapVectorSpace(),Vx->domain()->dim());
     overlapped_Vx->assign(0.0);
-    cas_manager->scatter(Vx,overlapped_Vx,Albany::CombineMode::INSERT);
+    cas_manager->scatter(Vx,overlapped_Vx,CombineMode::INSERT);
   }
 
   // Scatter Vxdot to the overlapped distribution
@@ -2010,13 +2004,13 @@ void Albany::Application::computeGlobalTangent(
   if (Teuchos::nonnull(Vxdot)) {
     overlapped_Vxdot = Thyra::createMembers(disc->getOverlapVectorSpace(),Vxdot->domain()->dim());
     overlapped_Vxdot->assign(0.0);
-    cas_manager->scatter(Vxdot,overlapped_Vxdot,Albany::CombineMode::INSERT);
+    cas_manager->scatter(Vxdot,overlapped_Vxdot,CombineMode::INSERT);
   }
   RCP<Thyra_MultiVector> overlapped_Vxdotdot;
   if (Teuchos::nonnull(Vxdotdot)) {
     overlapped_Vxdotdot = Thyra::createMembers(disc->getOverlapVectorSpace(),Vxdotdot->domain()->dim());
     overlapped_Vxdotdot->assign(0.0);
-    cas_manager->scatter(Vxdotdot,overlapped_Vxdotdot,Albany::CombineMode::INSERT);
+    cas_manager->scatter(Vxdotdot,overlapped_Vxdotdot,CombineMode::INSERT);
   }
 
   // Set parameters
@@ -2197,7 +2191,7 @@ void Albany::Application::computeGlobalTangent(
   }
 }
 
-void Albany::Application::applyGlobalDistParamDerivImpl(
+void Application::applyGlobalDistParamDerivImpl(
     const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
@@ -2222,7 +2216,7 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
   auto cas_manager = solMgrT->get_cas_manager();
 
   // Scatter x and xdot to the overlapped distribution
-  solMgrT->scatterX(x, xdot, xdotdot);
+  solMgrT->scatterX(*x, xdot.ptr(), xdotdot.ptr());
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -2276,12 +2270,12 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
   if (trans) {
     overlapped_V = Thyra::createMembers(disc->getOverlapVectorSpace(), V_bc->domain()->dim());
     overlapped_V->assign(0.0);
-    cas_manager->scatter(V_bc,overlapped_V,Albany::CombineMode::INSERT);
+    cas_manager->scatter(V_bc,overlapped_V,CombineMode::INSERT);
   } else {
     const auto& vs = distParamLib->get(dist_param_name)->overlap_vector_space();
     overlapped_V = Thyra::createMembers(vs, V_bc->domain()->dim());
     overlapped_V->assign(0.0);
-    cas_manager->scatter(V_bc,overlapped_V,Albany::CombineMode::INSERT);
+    cas_manager->scatter(V_bc,overlapped_V,CombineMode::INSERT);
   }
 
   // Set data in Workset struct, and perform fill via field manager
@@ -2367,7 +2361,7 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
   }
 }
 
-void Albany::Application::evaluateResponse(
+void Application::evaluateResponse(
     int response_index, const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
@@ -2380,7 +2374,7 @@ void Albany::Application::evaluateResponse(
       this_time, x, xdot, xdotdot, p, g);
 }
 
-void Albany::Application::evaluateResponseTangent(
+void Application::evaluateResponseTangent(
     int response_index, const double alpha, const double beta,
     const double omega, const double current_time, bool sum_derivs,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -2403,7 +2397,7 @@ void Albany::Application::evaluateResponseTangent(
       deriv_p, Vx, Vxdot, Vxdotdot, Vp, g, gx, gp);
 }
 
-void Albany::Application::evaluateResponseDerivative(
+void Application::evaluateResponseDerivative(
     int response_index, const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
@@ -2422,7 +2416,7 @@ void Albany::Application::evaluateResponseDerivative(
       dg_dxdotdot, dg_dp);
 }
 
-void Albany::Application::evaluateResponseDistParamDeriv(
+void Application::evaluateResponseDistParamDeriv(
     int response_index, const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
@@ -2451,50 +2445,25 @@ void Albany::Application::evaluateResponseDistParamDeriv(
   }
 }
 
-#if defined(ALBANY_EPETRA)
-void Albany::Application::evaluateStateFieldManager(
-    const double current_time, const Epetra_Vector *xdot,
-    const Epetra_Vector *xdotdot, const Epetra_Vector &x) {
-  // Scatter x and xdot to the overlapped distrbution
-  solMgr->scatterX(x, xdot, xdotdot);
+void Application::evaluateStateFieldManager(
+    const double current_time, const Thyra_MultiVector& x) {
+  int num_vecs = x.domain()->dim();
 
-  // Create Tpetra copy of x, called xT
-  Teuchos::RCP<const Tpetra_Vector> xT =
-      Petra::EpetraVector_To_TpetraVectorConst(x, commT);
-  // Create Tpetra copy of xdot, called xdotT
-  Teuchos::RCP<const Tpetra_Vector> xdotT;
-  if (xdot != NULL && num_time_deriv > 0) {
-    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
+  if (num_vecs == 1) {
+    this->evaluateStateFieldManager(current_time, *x.col(0), Teuchos::null, Teuchos::null);
+  } else if (num_vecs == 2) {
+    this->evaluateStateFieldManager(current_time, *x.col(0), x.col(1).ptr(), Teuchos::null);
+  } else {
+    this->evaluateStateFieldManager(current_time, *x.col(0), x.col(1).ptr(), x.col(2).ptr());
   }
-  // Create Tpetra copy of xdotdot, called xdotdotT
-  Teuchos::RCP<const Tpetra_Vector> xdotdotT;
-  if (xdotdot != NULL && num_time_deriv > 1) {
-    xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
-  }
-
-  this->evaluateStateFieldManagerT(current_time, xdotT.ptr(), xdotdotT.ptr(),
-                                   *xT);
-}
-#endif
-
-void Albany::Application::evaluateStateFieldManagerT(
-    const double current_time, const Tpetra_MultiVector &xT) {
-  int num_vecs = xT.getNumVectors();
-
-  if (num_vecs == 1)
-    this->evaluateStateFieldManagerT(current_time, Teuchos::null, Teuchos::null,
-                                     *xT.getVector(0));
-  else if (num_vecs == 2)
-    this->evaluateStateFieldManagerT(current_time, xT.getVector(1).ptr(),
-                                     Teuchos::null, *xT.getVector(0));
-  else
-    this->evaluateStateFieldManagerT(current_time, xT.getVector(1).ptr(),
-                                     xT.getVector(2).ptr(), *xT.getVector(0));
 }
 
-void Albany::Application::evaluateStateFieldManagerT(
-    const double current_time, Teuchos::Ptr<const Tpetra_Vector> xdotT,
-    Teuchos::Ptr<const Tpetra_Vector> xdotdotT, const Tpetra_Vector &xT) {
+void Application::evaluateStateFieldManager(
+    const double current_time,
+    const Thyra_Vector& x,
+    Teuchos::Ptr<const Thyra_Vector> xdot,
+    Teuchos::Ptr<const Thyra_Vector> xdotdot)
+{
   {
     const std::string eval = "SFM_Jacobian";
     if (setupSet.find(eval) == setupSet.end()) {
@@ -2538,8 +2507,8 @@ void Albany::Application::evaluateStateFieldManagerT(
 
   int numWorksets = wsElNodeEqID.size();
 
-  // Scatter xT and xdotT to the overlapped distrbution
-  solMgrT->scatterXT(xT, xdotT.get(), xdotdotT.get());
+  // Scatter to the overlapped distrbution
+  solMgrT->scatterX(x, xdot, xdotdot);
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -2560,18 +2529,18 @@ void Albany::Application::evaluateStateFieldManagerT(
     rc_mgr->endEvaluatingSfm();
 }
 
-void Albany::Application::registerShapeParameters() {
+void Application::registerShapeParameters() {
   int numShParams = shapeParams.size();
   if (shapeParamNames.size() == 0) {
     shapeParamNames.resize(numShParams);
     for (int i = 0; i < numShParams; i++)
-      shapeParamNames[i] = Albany::strint("ShapeParam", i);
+      shapeParamNames[i] = strint("ShapeParam", i);
   }
-  Albany::DummyParameterAccessor<PHAL::AlbanyTraits::Jacobian, SPL_Traits> *dJ =
-      new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::Jacobian,
+  DummyParameterAccessor<PHAL::AlbanyTraits::Jacobian, SPL_Traits> *dJ =
+      new DummyParameterAccessor<PHAL::AlbanyTraits::Jacobian,
                                          SPL_Traits>();
-  Albany::DummyParameterAccessor<PHAL::AlbanyTraits::Tangent, SPL_Traits> *dT =
-      new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::Tangent,
+  DummyParameterAccessor<PHAL::AlbanyTraits::Tangent, SPL_Traits> *dT =
+      new DummyParameterAccessor<PHAL::AlbanyTraits::Tangent,
                                          SPL_Traits>();
 
   // Register Parameter for Residual fill using "this->getValue" but
@@ -2588,7 +2557,7 @@ void Albany::Application::registerShapeParameters() {
 }
 
 PHAL::AlbanyTraits::Residual::ScalarT &
-Albany::Application::getValue(const std::string &name) {
+Application::getValue(const std::string &name) {
   int index = -1;
   for (unsigned int i = 0; i < shapeParamNames.size(); i++) {
     if (name == shapeParamNames[i])
@@ -2604,7 +2573,7 @@ Albany::Application::getValue(const std::string &name) {
   return shapeParams[index];
 }
 
-void Albany::Application::postRegSetup(std::string eval) {
+void Application::postRegSetup(std::string eval) {
   if (setupSet.find(eval) != setupSet.end())
     return;
 
@@ -2759,9 +2728,9 @@ void Albany::Application::postRegSetup(std::string eval) {
 
 #if defined(ALBANY_EPETRA) && defined(ALBANY_TEKO)
 RCP<Epetra_Operator>
-Albany::Application::buildWrappedOperator(const RCP<Epetra_Operator> &Jac,
+Application::buildWrappedOperator(const RCP<Epetra_Operator> &Jac,
                                           const RCP<Epetra_Operator> &wrapInput,
-                                          bool reorder) const {
+                                          bool /* reorder */) const { // TODO: remove argument altogether
   RCP<Epetra_Operator> wrappedOp = wrapInput;
   // if only one block just use orignal jacobian
   if (blockDecomp.size() == 1)
@@ -2787,7 +2756,7 @@ Albany::Application::buildWrappedOperator(const RCP<Epetra_Operator> &Jac,
 }
 #endif
 
-void Albany::Application::determinePiroSolver(
+void Application::determinePiroSolver(
     const Teuchos::RCP<Teuchos::ParameterList> &topLevelParams) {
 
   const Teuchos::RCP<Teuchos::ParameterList> &localProblemParams =
@@ -2831,7 +2800,7 @@ void Albany::Application::determinePiroSolver(
   }
 }
 
-void Albany::Application::loadBasicWorksetInfo(PHAL::Workset &workset,
+void Application::loadBasicWorksetInfo(PHAL::Workset &workset,
                                                 double current_time)
 {
   auto overlapped_MV = solMgrT->getOverlappedSolution_Thyra();
@@ -2850,7 +2819,7 @@ void Albany::Application::loadBasicWorksetInfo(PHAL::Workset &workset,
   workset.accelerationTerms = Teuchos::nonnull(workset.xdotdot);
 }
 
-void Albany::Application::loadBasicWorksetInfoSDBCs(
+void Application::loadBasicWorksetInfoSDBCs(
     PHAL::Workset &workset,
     const Teuchos::RCP<const Thyra_Vector>& owned_sol,
     const double current_time)
@@ -2875,7 +2844,7 @@ void Albany::Application::loadBasicWorksetInfoSDBCs(
   workset.accelerationTerms = Teuchos::nonnull(workset.xdotdot);
 }
 
-void Albany::Application::loadWorksetJacobianInfo(PHAL::Workset &workset,
+void Application::loadWorksetJacobianInfo(PHAL::Workset &workset,
                                                   const double alpha,
                                                   const double beta,
                                                   const double omega) {
@@ -2886,12 +2855,12 @@ void Albany::Application::loadWorksetJacobianInfo(PHAL::Workset &workset,
   workset.is_adjoint = is_adjoint;
 }
 
-void Albany::Application::loadWorksetNodesetInfo(PHAL::Workset &workset) {
+void Application::loadWorksetNodesetInfo(PHAL::Workset &workset) {
   workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
   workset.nodeSetCoords = Teuchos::rcpFromRef(disc->getNodeSetCoords());
 }
 
-void Albany::Application::setScale(Teuchos::RCP<const Thyra_LinearOp> jac) 
+void Application::setScale(Teuchos::RCP<const Thyra_LinearOp> jac) 
 {
   if (scaleBCdofs == true) {
     if (scaleVec_->norm_2() == 0.0) { 
@@ -2923,7 +2892,7 @@ void Albany::Application::setScale(Teuchos::RCP<const Thyra_LinearOp> jac)
   }
 }
 
-void Albany::Application::setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<const Thyra_LinearOp> jac) 
+void Application::setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<const Thyra_LinearOp> jac) 
 {
   //First step: set scaleVec_ to all 1.0s if it is all 0s
   if (scaleVec_->norm_2() == 0) { 
@@ -2960,7 +2929,7 @@ void Albany::Application::setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<co
   //       for Tpetra, since the Tpetra host view is not marked as modified (see Trilinos issue #3180)
   //       Therefore, for now we ASSUME the underlying vector
   auto scaleVecLocalData = getNonconstLocalData(scaleVec_);
-  for (int ns=0; ns<nodeSetIDs_.size(); ns++) {
+  for (size_t ns=0; ns<nodeSetIDs_.size(); ns++) {
     std::string key = nodeSetIDs_[ns]; 
     //std::cout << "IKTIKT key = " << key << std::endl; 
     const std::vector<std::vector<int> >& nsNodes = workset.nodeSets->find(key)->second;
@@ -2978,7 +2947,7 @@ void Albany::Application::setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<co
     TEUCHOS_TEST_FOR_EXCEPTION(
       true,
       std::logic_error,
-      "Albany::Application::setScaleBCDofs is not yet implemented for"
+      "Application::setScaleBCDofs is not yet implemented for"
           << " sideset equations!\n"); 
 
     // Case where we have sideset equations: loop through sidesets' nodesets
@@ -3021,13 +2990,13 @@ void Albany::Application::setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<co
   scaleVec_->describe(*out, Teuchos::VERB_EXTREME);*/
 }
 
-void Albany::Application::loadWorksetSidesetInfo(PHAL::Workset &workset,
+void Application::loadWorksetSidesetInfo(PHAL::Workset &workset,
                                                  const int ws) {
 
   workset.sideSets = Teuchos::rcpFromRef(disc->getSideSets(ws));
 }
 
-void Albany::Application::setupBasicWorksetInfo(
+void Application::setupBasicWorksetInfo(
     PHAL::Workset &workset, double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
@@ -3071,7 +3040,7 @@ void Albany::Application::setupBasicWorksetInfo(
   workset.x_cas_manager = solMgrT->get_cas_manager();
 }
 
-void Albany::Application::setupTangentWorksetInfo(
+void Application::setupTangentWorksetInfo(
     PHAL::Workset &workset, double current_time, bool sum_derivs,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
@@ -3090,7 +3059,7 @@ void Albany::Application::setupTangentWorksetInfo(
   if (Vx != Teuchos::null) {
     overlapped_Vx = Thyra::createMembers(disc->getOverlapVectorSpace(),Vx->domain()->dim());
     overlapped_Vx->assign(0.0);
-    solMgrT->get_cas_manager()->scatter(Vx,overlapped_Vx,Albany::CombineMode::INSERT);
+    solMgrT->get_cas_manager()->scatter(Vx,overlapped_Vx,CombineMode::INSERT);
   }
 
   // Scatter Vx dot the overlapped distribution
@@ -3098,13 +3067,13 @@ void Albany::Application::setupTangentWorksetInfo(
   if (Vxdot != Teuchos::null) {
     overlapped_Vxdot = Thyra::createMembers(disc->getOverlapVectorSpace(),Vxdot->domain()->dim());
     overlapped_Vxdot->assign(0.0);
-    solMgrT->get_cas_manager()->scatter(Vxdot,overlapped_Vxdot,Albany::CombineMode::INSERT);
+    solMgrT->get_cas_manager()->scatter(Vxdot,overlapped_Vxdot,CombineMode::INSERT);
   }
   RCP<Thyra_MultiVector> overlapped_Vxdotdot;
   if (Vxdotdot != Teuchos::null) {
     overlapped_Vxdotdot = Thyra::createMembers(disc->getOverlapVectorSpace(),Vxdotdot->domain()->dim());
     overlapped_Vxdotdot->assign(0.0);
-    solMgrT->get_cas_manager()->scatter(Vxdotdot,overlapped_Vxdotdot,Albany::CombineMode::INSERT);
+    solMgrT->get_cas_manager()->scatter(Vxdotdot,overlapped_Vxdotdot,CombineMode::INSERT);
   }
 
   // RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
@@ -3145,20 +3114,20 @@ void Albany::Application::setupTangentWorksetInfo(
 
   // Initialize
   if (params != Teuchos::null) {
-    TanFadType p;
+    TanFadType p_val;
     int num_cols_tot = param_offset + num_cols_p;
     for (unsigned int i = 0; i < params->size(); i++) {
-      p = TanFadType(num_cols_tot, (*params)[i].baseValue);
-      auto VpT = Albany::getConstTpetraMultiVector(Vp);
+      p_val = TanFadType(num_cols_tot, (*params)[i].baseValue);
+      auto VpT = getConstTpetraMultiVector(Vp);
       if (VpT != Teuchos::null) {
         Teuchos::ArrayRCP<const ST> VpT_constView;
         for (int k = 0; k < num_cols_p; k++) {
           VpT_constView = VpT->getData(k);
-          p.fastAccessDx(param_offset + k) = VpT_constView[i];
+          p_val.fastAccessDx(param_offset + k) = VpT_constView[i];
         }
       } else
-        p.fastAccessDx(param_offset + i) = 1.0;
-      (*params)[i].family->setValue<PHAL::AlbanyTraits::Tangent>(p);
+        p_val.fastAccessDx(param_offset + i) = 1.0;
+      (*params)[i].family->setValue<PHAL::AlbanyTraits::Tangent>(p_val);
     }
   }
 
@@ -3172,7 +3141,7 @@ void Albany::Application::setupTangentWorksetInfo(
   workset.param_offset = param_offset;
 }
 
-void Albany::Application::removeEpetraRelatedPLs(
+void Application::removeEpetraRelatedPLs(
     const Teuchos::RCP<Teuchos::ParameterList> &params) {
 
   if (params->isSublist("Piro")) {
@@ -3228,7 +3197,7 @@ void Albany::Application::removeEpetraRelatedPLs(
 }
 
 #if defined(ALBANY_LCM)
-void Albany::Application::setCoupledAppBlockNodeset(
+void Application::setCoupledAppBlockNodeset(
     std::string const &app_name, std::string const &block_name,
     std::string const &nodeset_name) {
   // Check for valid application name
@@ -3247,3 +3216,5 @@ void Albany::Application::setCoupledAppBlockNodeset(
   coupled_app_index_block_nodeset_names_map_.insert(app_index_block_names);
 }
 #endif
+
+} // namespace Albany

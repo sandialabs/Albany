@@ -40,13 +40,13 @@ static int mm_counter_jac = 0;
 namespace Albany
 {
 
-ModelEvaluatorT::ModelEvaluatorT(
-    const Teuchos::RCP<Albany::Application>&    app_,
-    const Teuchos::RCP<Teuchos::ParameterList>& appParams)
-    : app(app_)
-    , supplies_prec(app_->suppliesPreconditioner())
-    , supports_xdot(false)
-    , supports_xdotdot(false)
+ModelEvaluatorT::
+ModelEvaluatorT(const Teuchos::RCP<Albany::Application>&    app_,
+                const Teuchos::RCP<Teuchos::ParameterList>& appParams)
+ : app(app_)
+ , supplies_prec(app_->suppliesPreconditioner())
+ , supports_xdot(false)
+ , supports_xdotdot(false)
 {
   Teuchos::RCP<Teuchos::FancyOStream> out =
       Teuchos::VerboseObjectBase::getDefaultOStream();
@@ -56,7 +56,9 @@ ModelEvaluatorT::ModelEvaluatorT(
   Teuchos::ParameterList& parameterParams = problemParams.sublist("Parameters");
 
   const std::string soln_method = problemParams.get("Solution Method", "Steady"); 
-  if (soln_method == "Transient Tempus") use_tempus = true; 
+  if (soln_method == "Transient Tempus") {
+    use_tempus = true; 
+  }
 
   num_param_vecs = parameterParams.get("Number of Parameter Vectors", 0);
   bool using_old_parameter_list = false;
@@ -306,17 +308,14 @@ ModelEvaluatorT::ModelEvaluatorT(
 
   for (int l = 0; l < app->getNumResponses(); ++l) {
     // Create Thyra vector for responses
-    Teuchos::RCP<const Tpetra_Map> mapT = app->getResponse(l)->responseMapT();
-    Teuchos::RCP<const Thyra_VectorSpace> gT_space =
-        Thyra::createVectorSpace<ST>(mapT);
-    thyra_response_vec[l] = Thyra::createMember(gT_space);
+    thyra_response_vec[l] = Thyra::createMember(app->getResponse(l)->responseVectorSpace());
   }
 
   {
     // Determine the number of solution vectors (x, xdot, xdotdot)
 
     int num_sol_vectors =
-        app->getAdaptSolMgrT()->getInitialSolution()->getNumVectors();
+        app->getAdaptSolMgrT()->getInitialSolution()->domain()->dim();
 
     if (num_sol_vectors > 1)  // have x dot
       supports_xdot = true;
@@ -354,12 +353,7 @@ ModelEvaluatorT::ModelEvaluatorT(
 
 void ModelEvaluatorT::allocateVectors()
 {
-  const Teuchos::RCP<const Teuchos::Comm<int>>  commT = app->getComm();
-  const Teuchos::RCP<const Thyra_VectorSpace>   vs    = app->getVectorSpace();
-  const Teuchos::RCP<const Thyra_MultiVector> xMV =
-      app->getAdaptSolMgrT()->getCurrentSolution();
-
-  // Create Tpetra objects to be wrapped in Thyra
+  const Teuchos::RCP<const Thyra_MultiVector>   xMV  = app->getAdaptSolMgrT()->getCurrentSolution();
 
   // Create non-const versions of x_init [and x_dot_init [and x_dotdot_init]]
   const Teuchos::RCP<const Thyra_Vector> x_init = xMV->col(0);
@@ -395,19 +389,13 @@ void ModelEvaluatorT::allocateVectors()
 Teuchos::RCP<const Thyra_VectorSpace>
 ModelEvaluatorT::get_x_space() const
 {
-  Teuchos::RCP<const Tpetra_Map>                 map = app->getMapT();
-  Teuchos::RCP<const Thyra_VectorSpace> x_space =
-      Thyra::createVectorSpace<ST>(map);
-  return x_space;
+  return app->getVectorSpace();
 }
 
 Teuchos::RCP<const Thyra_VectorSpace>
 ModelEvaluatorT::get_f_space() const
 {
-  Teuchos::RCP<const Tpetra_Map>                 map = app->getMapT();
-  Teuchos::RCP<const Thyra_VectorSpace> f_space =
-      Thyra::createVectorSpace<ST>(map);
-  return f_space;
+  return app->getVectorSpace();
 }
 
 Teuchos::RCP<const Thyra_VectorSpace>
@@ -483,9 +471,7 @@ ModelEvaluatorT::getUpperBounds() const
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
 ModelEvaluatorT::create_W_op() const
 {
-  const Teuchos::RCP<Tpetra_Operator> W =
-      Teuchos::rcp(new Tpetra_CrsMatrix(app->getJacobianGraphT()));
-  return Thyra::createLinearOp(W);
+  return app->getDisc()->createJacobianOp();
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>
@@ -493,7 +479,7 @@ ModelEvaluatorT::create_W_prec() const
 {
   Teuchos::RCP<Thyra::DefaultPreconditioner<ST>> W_prec  = Teuchos::rcp(new Thyra::DefaultPreconditioner<ST>);
   Teuchos::RCP<Tpetra_Operator>                  precOpT = app->getPreconditionerT();
-  Teuchos::RCP<Thyra::LinearOpBase<ST>>          precOp  = Thyra::createLinearOp(precOpT);
+  Teuchos::RCP<Thyra_LinearOp>                   precOp  = Thyra::createLinearOp(precOpT);
 
   // Teuchos::RCP<Thyra_LinearOp> Extra_W_op = create_W();
 
@@ -563,7 +549,7 @@ ModelEvaluatorT::create_DgDx_op_impl(int j) const
           << j
           << std::endl);
 
-  return Thyra::createLinearOp(app->getResponse(j)->createGradientOpT());
+  return app->getResponse(j)->createGradientOp();
 }
 
 // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
@@ -579,7 +565,7 @@ ModelEvaluatorT::create_DgDx_dotdot_op_impl(int j) const
           << j
           << std::endl);
 
-  return Thyra::createLinearOp(app->getResponse(j)->createGradientOpT());
+  return app->getResponse(j)->createGradientOp();
 }
 
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
@@ -594,11 +580,10 @@ ModelEvaluatorT::create_DgDx_dot_op_impl(int j) const
           << j
           << std::endl);
 
-  return Thyra::createLinearOp(app->getResponse(j)->createGradientOpT());
+  return app->getResponse(j)->createGradientOp();
 }
 
-Thyra::ModelEvaluatorBase::OutArgs<ST>
-ModelEvaluatorT::createOutArgsImpl() const
+Thyra_OutArgs ModelEvaluatorT::createOutArgsImpl() const
 {
   Thyra::ModelEvaluatorBase::OutArgsSetup<ST> result;
   result.setModelEvalDescription(this->description());
@@ -672,7 +657,7 @@ ModelEvaluatorT::createOutArgsImpl() const
     }
   }
 
-  return result;
+  return static_cast<Thyra_OutArgs>(result);
 }
 
 namespace {
@@ -694,10 +679,9 @@ sanitize_nans(const Thyra::ModelEvaluatorBase::Derivative<ST>& v)
 }
 }  // namespace
 
-void
-ModelEvaluatorT::evalModelImpl(
-    const Thyra::ModelEvaluatorBase::InArgs<ST>&  inArgsT,
-    const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgsT) const
+void ModelEvaluatorT::
+evalModelImpl(const Thyra_InArgs&  inArgs,
+              const Thyra_OutArgs& outArgs) const
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
@@ -709,9 +693,9 @@ ModelEvaluatorT::evalModelImpl(
   //
 
   // Thyra vectors
-  const Teuchos::RCP<const Thyra_Vector> x = inArgsT.get_x();
+  const Teuchos::RCP<const Thyra_Vector> x = inArgs.get_x();
   const Teuchos::RCP<const Thyra_Vector> x_dot =
-      (supports_xdot ? inArgsT.get_x_dot() : Teuchos::null);
+      (supports_xdot ? inArgs.get_x_dot() : Teuchos::null);
 
   // IKT, 3/30/17: the following logic is meant to support both the Thyra
   // time-integrators in Piro
@@ -721,7 +705,7 @@ ModelEvaluatorT::evalModelImpl(
   ST                          omega = 0.0;
   if (supports_xdotdot == true) {
     if (use_tempus == true) 
-      omega = inArgsT.get_W_x_dot_dot_coeff();
+      omega = inArgs.get_W_x_dot_dot_coeff();
     // The following case is to support second order time-integrators in Piro
     if (std::abs(omega) < 1.0e-14) {
       if (Teuchos::nonnull(this->get_x_dotdot())) {
@@ -736,9 +720,9 @@ ModelEvaluatorT::evalModelImpl(
     }
     // The following case is for second-order time-integrators in Tempus
     else {
-      if (inArgsT.supports(Thyra::ModelEvaluatorBase::IN_ARG_x_dot_dot)) {
-        //x_dotdot = inArgsT.get_x_dot_dot(); 
-        x_dotdot  =  Teuchos::rcpFromRef(const_cast<Thyra_Vector&>(*(inArgsT.get_x_dot_dot())));
+      if (inArgs.supports(Thyra::ModelEvaluatorBase::IN_ARG_x_dot_dot)) {
+        //x_dotdot = inArgs.get_x_dot_dot(); 
+        x_dotdot  =  Teuchos::rcpFromRef(const_cast<Thyra_Vector&>(*(inArgs.get_x_dot_dot())));
         if (x_dotdot != Teuchos::null) { 
           Teuchos::RCP<const Tpetra_Vector> x_dotdotT_temp =
               Albany::getConstTpetraVector(x_dotdot);
@@ -761,31 +745,31 @@ ModelEvaluatorT::evalModelImpl(
   }
 
   const ST alpha = (Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdotT)) ?
-                       inArgsT.get_alpha() :
+                       inArgs.get_alpha() :
                        0.0;
   const ST beta = (Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdotT)) ?
-                      inArgsT.get_beta() :
+                      inArgs.get_beta() :
                       1.0;
 
   bool const is_dynamic =
       Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdotT);
 
 #if defined(ALBANY_LCM)
-  ST const curr_time = is_dynamic == true ? inArgsT.get_t() : getCurrentTime();
+  ST const curr_time = is_dynamic == true ? inArgs.get_t() : getCurrentTime();
 #else
   const ST curr_time =
       (Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdotT)) ?
-          inArgsT.get_t() :
+          inArgs.get_t() :
           0.0;
 #endif  // ALBANY_LCM
 
   double dt = 0.0; //time step 
   if (is_dynamic == true) {
-    dt = inArgsT.get_step_size(); 
+    dt = inArgs.get_step_size(); 
   }
 
   for (int l = 0; l < num_param_vecs+num_dist_param_vecs; ++l) {
-    const Teuchos::RCP<const Thyra_Vector> p = inArgsT.get_p(l);
+    const Teuchos::RCP<const Thyra_Vector> p = inArgs.get_p(l);
     if (Teuchos::nonnull(p)) {
 
       if(l<num_param_vecs){
@@ -802,8 +786,8 @@ ModelEvaluatorT::evalModelImpl(
   //
   // Get the output arguments
   //
-  auto f_out = outArgsT.get_f();
-  auto W_op_out = outArgsT.get_W_op();
+  auto f_out    = outArgs.get_f();
+  auto W_op_out = outArgs.get_W_op();
 
   /*
    * Commenting this out for now, cause it seems it is never used. If that turns out to
@@ -889,7 +873,7 @@ ModelEvaluatorT::evalModelImpl(
   // df/dp
   for (int l = 0; l < num_param_vecs; ++l) {
     const Teuchos::RCP<Thyra::MultiVectorBase<ST>> dfdp_out =
-        outArgsT.get_DfDp(l).getMultiVector();
+        outArgs.get_DfDp(l).getMultiVector();
 
     if (Teuchos::nonnull(dfdp_out)) {
       const Teuchos::RCP<ParamVec> p_vec =
@@ -907,7 +891,7 @@ ModelEvaluatorT::evalModelImpl(
 
   // distributed df/dp
   for (int i=0; i<num_dist_param_vecs; i++) {
-	  const Teuchos::RCP<Thyra_LinearOp> dfdp_out = outArgsT.get_DfDp(i+num_param_vecs).getLinearOp();
+	  const Teuchos::RCP<Thyra_LinearOp> dfdp_out = outArgs.get_DfDp(i+num_param_vecs).getLinearOp();
     if (dfdp_out != Teuchos::null) {
       Teuchos::RCP<DistributedParameterDerivativeOp> dfdp_op =
         Teuchos::rcp_dynamic_cast<DistributedParameterDerivativeOp>(dfdp_out);
@@ -918,10 +902,9 @@ ModelEvaluatorT::evalModelImpl(
 
   // f
   if (app->is_adjoint) {
-    const Thyra::ModelEvaluatorBase::Derivative<ST> f_derivT(
-        outArgsT.get_f(), Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW);
+    const Thyra_Derivative f_deriv(outArgs.get_f(), Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW);
 
-    const Thyra::ModelEvaluatorBase::Derivative<ST> dummy_derivT;
+    const Thyra_Derivative dummy_deriv;
 
     const int response_index = 0;  // need to add capability for sending this in
     app->evaluateResponseDerivative(
@@ -930,10 +913,10 @@ ModelEvaluatorT::evalModelImpl(
         sacado_param_vec,
         NULL,
         Teuchos::null,
-        f_derivT,
-        dummy_derivT,
-        dummy_derivT,
-        dummy_derivT);
+        f_deriv,
+        dummy_deriv,
+        dummy_deriv,
+        dummy_deriv);
   } else if (Teuchos::nonnull(f_out) && !f_already_computed) {
     app->computeGlobalResidual(
         curr_time,
@@ -944,44 +927,43 @@ ModelEvaluatorT::evalModelImpl(
   }
 
   // Response functions
-  for (int j = 0; j < outArgsT.Ng(); ++j) {
-    Teuchos::RCP<Thyra_Vector> g_out = outArgsT.get_g(j);
+  for (int j = 0; j < outArgs.Ng(); ++j) {
+    Teuchos::RCP<Thyra_Vector> g_out = outArgs.get_g(j);
 
-    const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxT_out = outArgsT.get_DgDx(j);
-    Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotT_out;
+    const Thyra_Derivative dgdx_out = outArgs.get_DgDx(j);
+    Thyra_Derivative dgdxdot_out;
 
     if (supports_xdot) {
-      dgdxdotT_out = outArgsT.get_DgDx_dot(j);
+      dgdxdot_out = outArgs.get_DgDx_dot(j);
     }
 
     //    const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotdotT_out =
     //    this->get_DgDx_dotdot(j);
-    const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotdotT_out;
+    const Thyra_Derivative dgdxdotdot_out;
 
-    sanitize_nans(dgdxT_out);
-    sanitize_nans(dgdxdotT_out);
-    sanitize_nans(dgdxdotdotT_out);
+    sanitize_nans(dgdx_out);
+    sanitize_nans(dgdxdot_out);
+    sanitize_nans(dgdxdotdot_out);
 
     // dg/dx, dg/dxdot
-    if (!dgdxT_out.isEmpty() || !dgdxdotT_out.isEmpty()) {
-      const Thyra::ModelEvaluatorBase::Derivative<ST> dummy_derivT;
+    if (!dgdx_out.isEmpty() || !dgdxdot_out.isEmpty()) {
+      const Thyra_Derivative dummy_deriv;
       app->evaluateResponseDerivative(
           j, curr_time, x, x_dot, x_dotdot,
           sacado_param_vec,
           NULL,
           g_out,
-          dgdxT_out,
-          dgdxdotT_out,
-          dgdxdotdotT_out,
-          dummy_derivT);
+          dgdx_out,
+          dgdxdot_out,
+          dgdxdotdot_out,
+          dummy_deriv);
       // Set g_out to null to indicate that g_out was evaluated.
       g_out = Teuchos::null;
     }
 
     // dg/dp
     for (int l = 0; l < num_param_vecs; ++l) {
-      const Teuchos::RCP<Thyra::MultiVectorBase<ST>> dgdp_out =
-          outArgsT.get_DgDp(j, l).getMultiVector();
+      const Teuchos::RCP<Thyra_MultiVector> dgdp_out = outArgs.get_DgDp(j, l).getMultiVector();
 
       if (Teuchos::nonnull(dgdp_out)) {
         const Teuchos::RCP<ParamVec> p_vec = Teuchos::rcpFromRef(sacado_param_vec[l]);
@@ -998,8 +980,7 @@ ModelEvaluatorT::evalModelImpl(
 
     // Need to handle dg/dp for distributed p
     for (int l = 0; l < num_dist_param_vecs; l++) {
-      const Teuchos::RCP<Thyra::MultiVectorBase<ST>> dgdp_out =
-          outArgsT.get_DgDp(j, l + num_param_vecs).getMultiVector();
+      const Teuchos::RCP<Thyra_MultiVector> dgdp_out = outArgs.get_DgDp(j, l + num_param_vecs).getMultiVector();
 
       if (Teuchos::nonnull(dgdp_out)) {
         dgdp_out->assign(0.);
@@ -1032,8 +1013,7 @@ ModelEvaluatorT::evalModelImpl(
 #endif
 }
 
-Thyra::ModelEvaluatorBase::InArgs<ST>
-ModelEvaluatorT::createInArgsImpl() const
+Thyra_InArgs ModelEvaluatorT::createInArgsImpl() const
 {
   Thyra::ModelEvaluatorBase::InArgsSetup<ST> result;
   result.setModelEvalDescription(this->description());
@@ -1060,7 +1040,7 @@ ModelEvaluatorT::createInArgsImpl() const
   }
   result.set_Np(num_param_vecs + num_dist_param_vecs);
 
-  return result;
+  return static_cast<Thyra_InArgs>(result);
 }
 
 } // namespace Albany
