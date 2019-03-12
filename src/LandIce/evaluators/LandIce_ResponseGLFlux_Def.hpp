@@ -129,12 +129,20 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
 
       int node_plus, node_minus;
       bool skip_edge = false, edge_on_GL=false;
-      MeshScalarT gl_sum=0;
+      MeshScalarT gl_sum=0, gl_max=0, gl_min=0;
 
       int counter=0;
-      for (int inode=0; (inode<numSideNodes) && (counter<2); ++inode) {
+      for (int inode=0; (inode<numSideNodes); ++inode) {
         int inode1 = (inode+1)%numSideNodes;
         MeshScalarT gl0 = gl_func(inode), gl1 = gl_func(inode1);
+        if(gl0 >= gl_max) {
+          node_plus = inode;
+          gl_max = gl0;
+        }
+        if(gl0 <= gl_min) {
+          node_minus = inode;
+          gl_min = gl0;
+        }
         gl_sum += gl0;
         if(gl0*gl1 <= 0) {
           if(gl0 == gl1) {edge_on_GL = true; continue;}
@@ -146,17 +154,14 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
           y(counter) = coords(cell,side,inode1,1)*theta + coords(cell,side,inode,1)*(1-theta);
           velx(counter) = avg_vel(cell,side,inode1,0)*theta + avg_vel(cell,side,inode,0)*(1-theta);
           vely(counter) = avg_vel(cell,side,inode1,1)*theta + avg_vel(cell,side,inode,1)*(1-theta);
-          if(counter == 0) {
-            node_plus = (gl0 > 0) ? inode : inode1;
-            node_minus = (gl0 > 0) ? inode1 : inode;
-          }
+
           ++counter;
         }
       }
 
       //skip when a grounding line intersect the element in one vertex only (counter<1)
       //also, when an edge is on grounding line, consider only the grounded element to avoid double-counting.
-      if(counter<2 || (edge_on_GL && gl_sum<0)) continue;  
+      if(counter<2 || (edge_on_GL && gl_sum<0)) continue;
 
       //we consider the direction [(y[1]-y[0]), -(x[1]-x[0])] orthogonal to the GL segment and compute the flux along that direction.
       //we then compute the sign of the of the flux by looking at the sign of the dot-product between the GL segment and an edge crossed by the grounding line
