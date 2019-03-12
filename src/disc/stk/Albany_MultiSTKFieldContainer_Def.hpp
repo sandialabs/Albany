@@ -615,9 +615,6 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_V
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << "IKT WARNING: calling Albany::MultiSTKFieldContainer::saveSolnVectorT with soln_dotT, but "
-       << "this function has not been extended to write soln_dotT properly to the Exodus file.  Exodus "
-       << "file will contain only soln, not soln_dot.\n";
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
   stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, sel);
@@ -633,12 +630,15 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_V
     for(int k = 0; k < sol_index[0].size(); k++) {
       if(sol_index[0][k] == 1) { // Scalar
         SFT* field = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
+        SFT* field_dot = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, sol_vector_name[1][k]);
         this->saveVectorHelperT(solnT, field, node_mapT, bucket, offset);
+        this->saveVectorHelperT(soln_dotT, field_dot, node_mapT, bucket, offset);
       }
       else {
         VFT* field = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
-        //IKT, FIXME: saveVectorHelperT should be extended to take in soln_dotT!
+        VFT* field_dot = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, sol_vector_name[1][k]);
         this->saveVectorHelperT(solnT, field, node_mapT, bucket, offset);
+        this->saveVectorHelperT(soln_dotT, field_dot, node_mapT, bucket, offset);
       }
       offset += sol_index[0][k];
     }
@@ -653,10 +653,6 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_V
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << "IKT WARNING: calling Albany::MultiSTKFieldContainer::saveSolnVectorT with soln_dotT and "
-       << "soln_dotdotT, but this function has not been extended to write soln_dotT "
-       << "and soln_dotdotT properly to the Exodus file.  Exodus "
-       << "file will contain only soln, not soln_dot and soln_dotdot.\n";
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
   stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, sel);
@@ -672,12 +668,19 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_V
     for(int k = 0; k < sol_index[0].size(); k++) {
       if(sol_index[0][k] == 1) { // Scalar
         SFT* field = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
+        SFT* field_dot = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, sol_vector_name[1][k]);
+        SFT* field_dotdot = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, sol_vector_name[2][k]);
         this->saveVectorHelperT(solnT, field, node_mapT, bucket, offset);
+        this->saveVectorHelperT(soln_dotT, field_dot, node_mapT, bucket, offset);
+        this->saveVectorHelperT(soln_dotdotT, field_dotdot, node_mapT, bucket, offset);
       }
       else {
         VFT* field = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
-        //IKT, FIXME: saveVectorHelperT should be extended to take in soln_dotT and soln_dotdotT!
+        VFT* field_dot = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, sol_vector_name[1][k]);
+        VFT* field_dotdot = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, sol_vector_name[2][k]);
         this->saveVectorHelperT(solnT, field, node_mapT, bucket, offset);
+        this->saveVectorHelperT(soln_dotT, field_dot, node_mapT, bucket, offset);
+        this->saveVectorHelperT(soln_dotdotT, field_dotdot, node_mapT, bucket, offset);
       }
       offset += sol_index[0][k];
     }
