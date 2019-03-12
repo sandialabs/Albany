@@ -143,10 +143,11 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
           node_minus = inode;
           gl_min = gl0;
         }
-        gl_sum += gl0;
-        if(gl0*gl1 <= 0) {
-          if(gl0 == gl1) {edge_on_GL = true; continue;}
-          if(skip_edge) {skip_edge = false; continue;} //we want at most to select one edge having vertices
+        if((gl0 == 0) && (gl1 == 0)) {edge_on_GL = true; continue;}
+        gl_sum += gl0; //needed to know whether the element is floating or grounded when GL is exactly on an edge of the element
+        if((gl0*gl1 <= 0) && (counter <2)) {
+          //we want to avoid selecting two edges sharing the same vertex on the GL
+          if(skip_edge) {skip_edge = false; continue;}
           skip_edge = (gl1 == 0);
           MeshScalarT theta = gl0/(gl0-gl1);
           H(counter) = thickness(cell,side,inode1)*theta + thickness(cell,side,inode)*(1-theta);
@@ -154,7 +155,6 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
           y(counter) = coords(cell,side,inode1,1)*theta + coords(cell,side,inode,1)*(1-theta);
           velx(counter) = avg_vel(cell,side,inode1,0)*theta + avg_vel(cell,side,inode,0)*(1-theta);
           vely(counter) = avg_vel(cell,side,inode1,1)*theta + avg_vel(cell,side,inode,1)*(1-theta);
-
           ++counter;
         }
       }
