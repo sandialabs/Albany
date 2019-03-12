@@ -70,7 +70,16 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   Teuchos::RCP<const Teuchos::ParameterList> getValidDiscretizationParameters() const;
 
   // Gets the physical name-tag pairs for version 4.1 meshes
-  void get_physical_names( std::map<std::string, int>&  physical_names);
+  void get_physical_names( std::map<std::string, int>&             physical_names,
+                           const Teuchos::RCP<const Teuchos_Comm>& commT);
+
+  // Share physical_names map with all other proccesses
+  void broadcast_physical_names( std::map<std::string, int>&             physical_names,
+                                 const Teuchos::RCP<const Teuchos_Comm>& commT);
+
+  // Read the physical names for Gmsh V 4.1 
+  // to populate the physical_names map
+  void read_physical_names_from_file( std::map<std::string, int>& physical_names);
 
   // Opens the gmsh msh file. Variable `fname` must be set.
   // Don't forget to close when done!
@@ -123,8 +132,18 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Current only creates `Element Block 0` 
   void create_element_block();
 
+  // Creates a nodeset will all nodes
   void set_all_nodes_boundary( std::vector<std::string>& nsNames);
+
+  // Creates a sideset with all sides
   void set_all_sides_boundary( std::vector<std::string>& ssNames);
+
+  // Broadcast a single name-tag pair from proc 0 to all others
+  void broadcast_name_tag_pair( std::vector< std::string>               names,
+                                int*                                    tags_array,
+                                int                                     pair_number,
+                                const Teuchos::RCP<const Teuchos_Comm>& commT,
+                                std::map< std::string, int>             physical_names);
 
   // The version of the gmsh msh file
   GmshVersion version;

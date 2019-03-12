@@ -1261,10 +1261,9 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
   {
     // Map has format: "name",  physical_tag
     std::map<std::string, int> physical_names; 
-    get_physical_names( physical_names);
+    get_physical_names( physical_names, commT);
 
     // TODO
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Version 4.1 not fully implimented.\n");
   }
 
   return;
@@ -1332,9 +1331,8 @@ void Albany::GmshSTKMeshStruct::open_fname( std::ifstream& ifile)
   
   return;
 }
-  
 
-void Albany::GmshSTKMeshStruct::get_physical_names( std::map<std::string, int>&  physical_names)
+void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::string, int>& physical_names)
 {
   std::ifstream ifile;
   open_fname( ifile);
@@ -1379,9 +1377,92 @@ void Albany::GmshSTKMeshStruct::get_physical_names( std::map<std::string, int>& 
 
       physical_names.insert( std::make_pair( name, tag));
     }
+  }
+  ifile.close();
 
+  // TODO: need the surface ID, not physicalTag-ID number
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::broadcast_name_tag_pair( std::vector< std::string>               names,
+                                                         int*                                    tags_array,
+                                                         int                                     pair_number,
+                                                         const Teuchos::RCP<const Teuchos_Comm>& commT,
+                                                         std::map< std::string, int>             physical_names)
+{
+  std::string name;
+  if( commT->getRank() == 0) 
+  {
+    name = names[pair_number];
+
+    int strsize = name.size();
+    Teuchos::broadcast<int, int>( *commT, 0, &strsize);
+
+    char* ptr = (strsize) ? (&name[0]) : 0;
+    Teuchos::broadcast<int, char>( *commT, 0, strsize, ptr);
+  }
+  else 
+  {
+    int strsize;
+    Teuchos::broadcast<int, int>( *commT, 0, &strsize);
+
+    name.resize( strsize);
+    char* ptr = (strsize) ? (&name[0]) : 0;
+    Teuchos::broadcast<int, char>( *commT, 0, strsize, ptr);
   }
 
-  ifile.close();
+  int tag = tags_array[pair_number];
+  physical_names.insert( std::make_pair( name, tag));
+
+  return;
+}
+                                                         
+
+void Albany::GmshSTKMeshStruct::broadcast_physical_names( std::map<std::string, int>&             physical_names,
+                                                          const Teuchos::RCP<const Teuchos_Comm>& commT)
+{
+  // Broadcast the number of name-tag pairs
+  int num_pairs = physical_names.size();
+  Teuchos::broadcast(*commT, 0, 1, &num_pairs);
+
+  // First unpack the names and tags from the map.
+  // Only proc 0 will be doing anything here. 
+  // Maps on other procs will be empty.
+  std::vector< std::string> names;
+  int* tags_array = new int[num_pairs];
+
+  std::map< std::string, int>::iterator it;
+  int counter = 0;
+  for( it = physical_names.begin(); it != physical_names.end(); it++)
+  {
+    names.push_back( it->first);
+    tags_array[counter] = it->second;
+    counter++;
+  }
+
+  // Clear out the map to rebuild it together.
+  physical_names.clear();
+
+  // Broadcast names and tags
+  Teuchos::broadcast<LO,LO>(*commT, 0, num_pairs, tags_array);
+  for( int i = 0; i < num_pairs; i++)
+  {
+    broadcast_name_tag_pair( names, tags_array, i, commT, physical_names);
+  }
+
+  delete[] tags_array;
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::get_physical_names( std::map<std::string, int>&             physical_names,
+                                                    const Teuchos::RCP<const Teuchos_Comm>& commT)
+{
+  if( commT->getRank() == 0 )
+  {
+    read_physical_names_from_file( physical_names);
+  }
+  broadcast_physical_names( physical_names, commT);
+
   return;
 }
