@@ -282,7 +282,9 @@ class STKDiscretization : public Albany::AbstractDiscretization {
   Teuchos::RCP<Thyra_Vector>      getSolutionField (const bool overlapped = false) const;
   Teuchos::RCP<Thyra_MultiVector> getSolutionMV (const bool overlapped = false) const;
 
+#if defined(ALBANY_LCM)
   void setResidualField (const Thyra_Vector& residual);
+#endif
 
   void getField (Thyra_Vector& field_vector, const std::string& field_name) const;
   void setField (const Thyra_Vector& field_vector, const std::string& field_name, const bool overlapped = false);
@@ -319,6 +321,15 @@ class STKDiscretization : public Albany::AbstractDiscretization {
                             const double time, const bool overlapped = false);
   void writeSolutionMVToFile (const Thyra_MultiVector &solution,
                               const double time, const bool overlapped = false);
+
+  //! used when NetCDF output on a latitude-longitude grid is requested.
+  // Each struct contains a latitude/longitude index and it's parametric
+  // coordinates in an element.
+  struct interp
+  {
+    std::pair<double, double>     parametric_coords;
+    std::pair<unsigned, unsigned> latitude_longitude;
+  };
 
 private:
 
@@ -434,8 +445,7 @@ private:
   Conn wsElNodeEqID;
 
   //! Connectivity array [workset, element, local-node] => GID
-  Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>::type
-      wsElNodeID;
+  Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>::type     wsElNodeID;
 
   mutable Teuchos::ArrayRCP<double>       coordinates;
   Teuchos::RCP<Thyra_MultiVector>         coordMV;
@@ -476,17 +486,7 @@ private:
   size_t           netCDFOutputRequest;
   std::vector<int> varSolns;
 
-  //! used when NetCDF output on a latitude-longitude grid is requested.
-  // Each struct contains a latitude/longitude index and it's parametric
-  // coordinates in an element.
-  struct interp
-  {
-    std::pair<double, double>     parametric_coords;
-    std::pair<unsigned, unsigned> latitude_longitude;
-  };
-
-  Albany::WorksetArray<Teuchos::ArrayRCP<std::vector<interp>>>::type
-      interpolateData;
+  Albany::WorksetArray<Teuchos::ArrayRCP<std::vector<interp>>>::type   interpolateData;
 
   // Storage used in periodic BCs to un-roll coordinates. Pointers saved for
   // destructor.
@@ -497,14 +497,12 @@ private:
   Teuchos::RCP<Teuchos::ParameterList> discParams;
 
   // Sideset discretizations
-  std::map<std::string, Teuchos::RCP<Albany::AbstractDiscretization>>
-      sideSetDiscretizations;
-  std::map<std::string, Teuchos::RCP<Albany::STKDiscretization>>
-      sideSetDiscretizationsSTK;
-  std::map<std::string, std::map<GO, GO>>               sideToSideSetCellMap;
-  std::map<std::string, std::map<GO, std::vector<int>>> sideNodeNumerationMap;
-  std::map<std::string, Teuchos::RCP<Thyra_LinearOp>> projectors;
-  std::map<std::string, Teuchos::RCP<Thyra_LinearOp>> ov_projectors;
+  std::map<std::string, Teuchos::RCP<Albany::AbstractDiscretization>> sideSetDiscretizations;
+  std::map<std::string, Teuchos::RCP<Albany::STKDiscretization>>      sideSetDiscretizationsSTK;
+  std::map<std::string, std::map<GO, GO>>                             sideToSideSetCellMap;
+  std::map<std::string, std::map<GO, std::vector<int>>>               sideNodeNumerationMap;
+  std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>                 projectors;
+  std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>                 ov_projectors;
 
 // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS
@@ -516,53 +514,26 @@ private:
 #endif
   bool interleavedOrdering;
 
- private:
-  Teuchos::RCP<Tpetra_CrsGraph> nodalGraph;
+private:
+  Teuchos::RCP<ThyraCrsGraphProxy> nodalGraphProxy;
 
-  // find the location of "value" within the first "count" locations of "vector"
-  ssize_t
-  in_list(const std::size_t value, std::size_t count, std::size_t* vector)
+  template<typename T, typename ContainerType>
+  bool in_list(const T& value, const ContainerType& list)
   {
-    for (std::size_t i = 0; i < count; i++) {
-      if (vector[i] == value) return i;
+    for (const T& item : list) {
+      if (item == value) {
+        return true;
+      }
     }
-    return -1;
+    return false;
   }
 
-  ssize_t
-  in_list(const std::size_t value, const Teuchos::Array<Tpetra_GO>& vector)
-  {
-    for (std::size_t i = 0; i < vector.size(); i++)
-      if (vector[i] == value) return i;
-    return -1;
-  }
+  void printVertexConnectivity();
 
-  ssize_t
-  in_list(const std::size_t value, const std::vector<std::size_t>& vector)
-  {
-    for (std::size_t i = 0; i < vector.size(); i++)
-      if (vector[i] == value) return i;
-    return -1;
-  }
-
-  ssize_t
-  entity_in_list(
-      const stk::mesh::Entity&              value,
-      const std::vector<stk::mesh::Entity>& vec)
-  {
-    for (std::size_t i = 0; i < vec.size(); i++)
-      if (bulkData.identifier(vec[i]) == bulkData.identifier(value)) return i;
-    return -1;
-  }
-
-  void
-  printVertexConnectivity();
-
-  void
-  computeGraphsUpToFillComplete();
-  void
-  fillCompleteGraphs();
+  void computeGraphsUpToFillComplete();
+  void fillCompleteGraphs();
 };
-}
+
+} // namespace Albany
 
 #endif  // ALBANY_STK_DISCRETIZATION_HPP

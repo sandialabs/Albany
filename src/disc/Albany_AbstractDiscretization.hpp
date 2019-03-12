@@ -180,7 +180,9 @@ class AbstractDiscretization {
 
     virtual Teuchos::RCP<Thyra_Vector>      getSolutionField (bool overlapped = false) const = 0;
     virtual Teuchos::RCP<Thyra_MultiVector> getSolutionMV    (bool overlapped = false) const = 0;
+#if defined(ALBANY_LCM)
     virtual void setResidualField (const Thyra_Vector& residual) = 0;
+#endif
     virtual void getField (Thyra_Vector& field_vector, const std::string& field_name) const = 0;
     virtual void setField (const Thyra_Vector &field_vector, const std::string& field_name, bool overlapped) = 0;
 

@@ -54,23 +54,400 @@ extern "C" {
 #include <PHAL_Dimension.hpp>
 #include <Albany_ThyraUtils.hpp>
 
-constexpr double pi = 3.1415926535897932385;
-
 // Uncomment the following line if you want debug output to be printed to screen
 // #define OUTPUT_TO_SCREEN
+
+constexpr double pi = 3.1415926535897932385;
+
+namespace {
+std::vector<double>
+spherical_to_cart(const std::pair<double, double>& sphere)
+{
+  const double        radius_of_earth = 1;
+  std::vector<double> cart(3);
+
+  cart[0] = radius_of_earth * std::cos(sphere.first) * std::cos(sphere.second);
+  cart[1] = radius_of_earth * std::cos(sphere.first) * std::sin(sphere.second);
+  cart[2] = radius_of_earth * std::sin(sphere.first);
+
+  return cart;
+}
+
+double distance(const double* x, const double* y)
+{
+  const double d = std::sqrt(
+      (x[0] - y[0]) * (x[0] - y[0]) + (x[1] - y[1]) * (x[1] - y[1]) +
+      (x[2] - y[2]) * (x[2] - y[2]));
+  return d;
+}
+
+double distance(const std::vector<double>& x, const std::vector<double>& y)
+{
+  const double d = std::sqrt(
+      (x[0] - y[0]) * (x[0] - y[0]) + (x[1] - y[1]) * (x[1] - y[1]) +
+      (x[2] - y[2]) * (x[2] - y[2]));
+  return d;
+}
+
+bool point_inside (const Teuchos::ArrayRCP<double*>& coords,
+                   const std::vector<double>&        sphere_xyz)
+{
+  // first check if point is near the element:
+  const double tol_inside = 1e-12;
+  const double elem_diam  = std::max(
+      ::distance(coords[0], coords[2]), ::distance(coords[1], coords[3]));
+  std::vector<double> center(3, 0);
+  for (unsigned i = 0; i < 4; ++i) {
+    for (unsigned j = 0; j < 3; ++j) {
+      center[j] += coords[i][j];
+  }}
+  for (unsigned j=0; j < 3; ++j) {
+    center[j] /= 4;
+  }
+  bool inside = true;
+
+  if (::distance(&center[0], &sphere_xyz[0]) > 1.0 * elem_diam) {
+    inside = false;
+  }
+
+  unsigned j = 3;
+  for (unsigned i = 0; i < 4 && inside; ++i) {
+    std::vector<double> cross(3);
+    // outward normal to plane containing j->i edge:  corner(i) x corner(j)
+    // sphere dot (corner(i) x corner(j) ) = negative if inside
+    cross[0] = coords[i][1] * coords[j][2] - coords[i][2] * coords[j][1];
+    cross[1] = -(coords[i][0] * coords[j][2] - coords[i][2] * coords[j][0]);
+    cross[2] = coords[i][0] * coords[j][1] - coords[i][1] * coords[j][0];
+    j        = i;
+    const double dotprod = cross[0] * sphere_xyz[0] + cross[1] * sphere_xyz[1] +
+                           cross[2] * sphere_xyz[2];
+
+    // dot product is proportional to elem_diam. positive means outside,
+    // but allow machine precision tolorence:
+    if (tol_inside * elem_diam < dotprod) {
+      inside = false;
+    }
+  }
+  return inside;
+}
+
+const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
+Basis(const int C)
+{
+  // Static types
+  typedef Kokkos::DynRankView<RealType, PHX::Device> Field_t;
+  typedef Intrepid2::Basis<PHX::Device, RealType, RealType> Basis_t;
+  static const Teuchos::RCP<Basis_t> HGRAD_Basis_4 =
+      Teuchos::rcp(new Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::Device>());
+  static const Teuchos::RCP<Basis_t> HGRAD_Basis_9 =
+      Teuchos::rcp(new Intrepid2::Basis_HGRAD_QUAD_C2_FEM<PHX::Device>());
+
+  // Check for valid value of C
+  int deg = (int)std::sqrt((double)C);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      deg * deg != C || deg < 2,
+      std::logic_error,
+      " Albany_STKDiscretization Error Basis not perfect "
+      "square > 1"
+          << std::endl);
+
+  // Quick return for linear or quad
+  if (C == 4) {
+    return HGRAD_Basis_4;
+  }
+  if (C == 9) {
+    return HGRAD_Basis_9;
+  }
+
+  // Spectral bases
+  return Teuchos::rcp(new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::Device>(
+      deg, Intrepid2::POINTTYPE_WARPBLEND));
+}
+
+double value(const std::vector<double>& soln, const std::pair<double, double>& ref)
+{
+  const int C = soln.size();
+  const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
+      HGRAD_Basis = Basis(C);
+
+  const int numPoints = 1;
+  Kokkos::DynRankView<RealType, PHX::Device> basisVals("SSS", C, numPoints);
+  Kokkos::DynRankView<RealType, PHX::Device> tempPoints("SSS", numPoints, 2);
+  tempPoints(0, 0) = ref.first;
+  tempPoints(0, 1) = ref.second;
+
+  HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid2::OPERATOR_VALUE);
+
+  double x = 0;
+  for (int j = 0; j < C; ++j) {
+    x += soln[j] * basisVals(j, 0);
+  }
+  return x;
+}
+
+void value(double                            x[3],
+           const Teuchos::ArrayRCP<double*>& coords,
+           const std::pair<double, double>&  ref)
+{
+  const int C = coords.size();
+  const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
+      HGRAD_Basis = Basis(C);
+
+  const int numPoints = 1;
+  Kokkos::DynRankView<RealType, PHX::Device> basisVals("SSS", C, numPoints);
+  Kokkos::DynRankView<RealType, PHX::Device> tempPoints("SSS", numPoints, 2);
+  tempPoints(0, 0) = ref.first;
+  tempPoints(0, 1) = ref.second;
+
+  HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid2::OPERATOR_VALUE);
+
+  for (unsigned i = 0; i < 3; ++i) {
+    x[i] = 0;
+  }
+  for (unsigned i = 0; i < 3; ++i) {
+    for (int j = 0; j < C; ++j) {
+      x[i] += coords[j][i] * basisVals(j, 0);
+  }}
+}
+
+void grad(double                            x[3][2],
+          const Teuchos::ArrayRCP<double*>& coords,
+          const std::pair<double, double>&  ref)
+{
+  const int C = coords.size();
+  const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
+      HGRAD_Basis = Basis(C);
+
+  const int numPoints = 1;
+  Kokkos::DynRankView<RealType, PHX::Device> basisGrad("SSS", C, numPoints, 2);
+  Kokkos::DynRankView<RealType, PHX::Device> tempPoints("SSS", numPoints, 2);
+  tempPoints(0, 0) = ref.first;
+  tempPoints(0, 1) = ref.second;
+
+  HGRAD_Basis->getValues(basisGrad, tempPoints, Intrepid2::OPERATOR_GRAD);
+
+  for (unsigned i = 0; i < 3; ++i) {
+    x[i][0] = x[i][1] = 0;
+  }
+  for (unsigned i = 0; i < 3; ++i) {
+    for (int j = 0; j < C; ++j) {
+      x[i][0] += coords[j][i] * basisGrad(j, 0, 0);
+      x[i][1] += coords[j][i] * basisGrad(j, 0, 1);
+    }
+  }
+}
+
+std::pair<double, double>
+ref2sphere(const Teuchos::ArrayRCP<double*>& coords,
+           const std::pair<double, double>& ref)
+{
+  static const double DIST_THRESHOLD = 1.0e-9;
+
+  double x[3];
+  value(x, coords, ref);
+
+  const double r = std::sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
+
+  for (unsigned i = 0; i < 3; ++i) {
+    x[i] /= r;
+  }
+
+  std::pair<double, double> sphere(std::asin(x[2]), std::atan2(x[1], x[0]));
+
+  // ==========================================================
+  // enforce three facts:
+  //
+  // 1) lon at poles is defined to be zero
+  //
+  // 2) Grid points must be separated by about .01 Meter (on earth)
+  //   from pole to be considered "not the pole".
+  //
+  // 3) range of lon is { 0<= lon < 2*PI }
+  //
+  // ==========================================================
+
+  if (std::abs(std::abs(sphere.first) - pi / 2) < DIST_THRESHOLD) {
+    sphere.second = 0;
+  } else if (sphere.second < 0) {
+    sphere.second += 2 * pi;
+  }
+
+  return sphere;
+}
+
+void Dmap(const Teuchos::ArrayRCP<double*>& coords,
+          const std::pair<double, double>& sphere,
+          const std::pair<double, double>& ref,
+          double D[][2])
+{
+  const double th     = sphere.first;
+  const double lam    = sphere.second;
+  const double sinlam = std::sin(lam);
+  const double sinth  = std::sin(th);
+  const double coslam = std::cos(lam);
+  const double costh  = std::cos(th);
+
+  const double D1[2][3] = {{-sinlam, coslam, 0}, {0, 0, 1}};
+
+  const double D2[3][3] = {{sinlam * sinlam * costh * costh + sinth * sinth,
+                            -sinlam * coslam * costh * costh,
+                            -coslam * sinth * costh},
+                           {-sinlam * coslam * costh * costh,
+                            coslam * coslam * costh * costh + sinth * sinth,
+                            -sinlam * sinth * costh},
+                           {-coslam * sinth, -sinlam * sinth, costh}};
+
+  double D3[3][2] = {{0}};
+  grad(D3, coords, ref);
+
+  double D4[3][2] = {{0}};
+  for (unsigned i = 0; i < 3; ++i) {
+    for (unsigned j = 0; j < 2; ++j) {
+      for (unsigned k = 0; k < 3; ++k) {
+        D4[i][j] += D2[i][k] * D3[k][j];
+  }}}
+
+  for (unsigned i = 0; i < 2; ++i) {
+    for (unsigned j = 0; j < 2; ++j) {
+      D[i][j] = 0;
+  }}
+
+  for (unsigned i = 0; i < 2; ++i) {
+    for (unsigned j = 0; j < 2; ++j) {
+      for (unsigned k = 0; k < 3; ++k) {
+        D[i][j] += D1[i][k] * D4[k][j];
+  }}}
+}
+
+std::pair<double, double>
+parametric_coordinates(
+    const Teuchos::ArrayRCP<double*>& coords,
+    const std::pair<double, double>& sphere)
+{
+  static const double   tol_sq      = 1e-26;
+  static const unsigned MAX_NR_ITER = 10;
+  double                costh       = std::cos(sphere.first);
+  double                D[2][2], Dinv[2][2];
+  double                resa = 1;
+  double                resb = 1;
+  std::pair<double, double> ref(0, 0);  // initial guess is center of element.
+
+  for (unsigned i = 0;
+       i < MAX_NR_ITER && tol_sq < (costh * resb * resb + resa * resa);
+       ++i) {
+    const std::pair<double, double> sph = ref2sphere(coords, ref);
+    resa = sph.first - sphere.first;
+    resb = sph.second - sphere.second;
+
+    if (resb > pi) {
+      resb -= 2 * pi;
+    }
+    if (resb < -pi) {
+      resb += 2 * pi;
+    }
+
+    Dmap(coords, sph, ref, D);
+    const double detD = D[0][0] * D[1][1] - D[0][1] * D[1][0];
+    Dinv[0][0]        = D[1][1] / detD;
+    Dinv[0][1]        = -D[0][1] / detD;
+    Dinv[1][0]        = -D[1][0] / detD;
+    Dinv[1][1]        = D[0][0] / detD;
+
+    const std::pair<double, double> del(
+        Dinv[0][0] * costh * resb + Dinv[0][1] * resa,
+        Dinv[1][0] * costh * resb + Dinv[1][1] * resa);
+    ref.first -= del.first;
+    ref.second -= del.second;
+  }
+  return ref;
+}
+
+const std::pair<bool, std::pair<unsigned, unsigned>>
+point_in_element(
+    const std::pair<double, double>& sphere,
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type& coords,
+    std::pair<double, double>& parametric)
+{
+  const std::vector<double> sphere_xyz = spherical_to_cart(sphere);
+  std::pair<bool, std::pair<unsigned, unsigned>> element(false, std::pair<unsigned, unsigned>(0, 0));
+
+  for (unsigned i = 0; i < coords.size() && !element.first; ++i) {
+    for (unsigned j = 0; j < coords[i].size() && !element.first; ++j) {
+      const bool found = point_inside(coords[i][j], sphere_xyz);
+      if (found) {
+        parametric = parametric_coordinates(coords[i][j], sphere);
+        if (parametric.first < -1) parametric.first   = -1;
+        if (parametric.second < -1) parametric.second = -1;
+        if (1 < parametric.first) parametric.first    = 1;
+        if (1 < parametric.second) parametric.second  = 1;
+        element.first                                 = true;
+        element.second.first                          = i;
+        element.second.second                         = j;
+      }
+    }
+  }
+  return element;
+}
+
+void setup_latlon_interp(
+    const unsigned nlat,
+    const double   nlon,
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type& coords,
+    Albany::WorksetArray<Teuchos::ArrayRCP<std::vector<Albany::STKDiscretization::interp>>>::type& interpdata,
+    const Teuchos::RCP<const Teuchos_Comm>                      comm)
+{
+  double                   err  = 0;
+  const long long unsigned rank = comm->getRank();
+  std::vector<double>      lat(nlat);
+  std::vector<double>      lon(nlon);
+
+  unsigned count = 0;
+  for (unsigned i = 0; i < nlat; ++i) lat[i] = -pi / 2 + i * pi / (nlat - 1);
+  for (unsigned j = 0; j < nlon; ++j) lon[j] = 2 * j * pi / nlon;
+  for (unsigned i = 0; i < nlat; ++i) {
+    for (unsigned j = 0; j < nlon; ++j) {
+      const std::pair<double, double> sphere(lat[i], lon[j]);
+      std::pair<double, double>       paramtric;
+      const std::pair<bool, std::pair<unsigned, unsigned>> element =
+          point_in_element(sphere, coords, paramtric);
+      if (element.first) {
+        // compute error: map 'cart' back to sphere and compare with original
+        // interpolation point:
+        const unsigned            b = element.second.first;
+        const unsigned            e = element.second.second;
+        const std::vector<double> sphere2_xyz =
+            spherical_to_cart(ref2sphere(coords[b][e], paramtric));
+        const std::vector<double> sphere_xyz = spherical_to_cart(sphere);
+        err = std::max(err, ::distance(&sphere2_xyz[0], &sphere_xyz[0]));
+        Albany::STKDiscretization::interp interp;
+        interp.parametric_coords  = paramtric;
+        interp.latitude_longitude = std::pair<unsigned, unsigned>(i, j);
+        interpdata[b][e].push_back(interp);
+        ++count;
+      }
+    }
+    if (!rank && (!(i % 64) || i == nlat - 1))
+      std::cout << "Finished Latitude " << i << " of " << nlat << std::endl;
+  }
+  if (!rank)
+    std::cout << "Max interpolation point search error: " << err << std::endl;
+}
+
+} // anonymous namespace
+
 namespace Albany {
 
 STKDiscretization::
 STKDiscretization(const Teuchos::RCP<Teuchos::ParameterList>&  discParams_,
                   Teuchos::RCP<Albany::AbstractSTKMeshStruct>& stkMeshStruct_,
-                  const Teuchos::RCP<const Teuchos_Comm>&      commT_,
+                  const Teuchos::RCP<const Teuchos_Comm>&      comm_,
                   const Teuchos::RCP<Albany::RigidBodyModes>&  rigidBodyModes_,
                   const std::map<int, std::vector<std::string>>& sideSetEquations_)
  : previous_time_label(-1.0e32)
  , out(Teuchos::VerboseObjectBase::getDefaultOStream())
  , metaData(*stkMeshStruct_->metaData)
  , bulkData(*stkMeshStruct_->bulkData)
- , commT(commT_)
+ , comm(comm_)
  , neq(stkMeshStruct_->neq)
  , sideSetEquations(sideSetEquations_)
  , rigidBodyModes(rigidBodyModes_)
@@ -100,10 +477,10 @@ STKDiscretization::~STKDiscretization()
 
 void STKDiscretization::printConnectivity() const
 {
-  commT->barrier();
-  for (int rank = 0; rank < commT->getSize(); ++rank) {
-    commT->barrier();
-    if (rank == commT->getRank()) {
+  comm->barrier();
+  for (int rank = 0; rank < comm->getSize(); ++rank) {
+    comm->barrier();
+    if (rank == comm->getRank()) {
       std::cout << std::endl << "Process rank " << rank << std::endl;
       for (int ibuck = 0; ibuck < wsElNodeID.size(); ++ibuck) {
         std::cout << "  Bucket " << ibuck << std::endl;
@@ -116,7 +493,7 @@ void STKDiscretization::printConnectivity() const
         }
       }
     }
-    commT->barrier();
+    comm->barrier();
   }
 }
 
@@ -146,8 +523,7 @@ STKDiscretization::getOverlapNodeVectorSpace(const std::string& field_name) cons
 
 void STKDiscretization::printCoords() const
 {
-  std::cout << "Processor " << bulkData.parallel_rank() << " has "
-            << coords.size() << " worksets." << std::endl;
+  std::cout << "Processor " << bulkData.parallel_rank() << " has " << coords.size() << " worksets.\n";
   for (int ws = 0; ws < coords.size(); ws++) {
     for (int e = 0; e < coords[ws].size(); e++) {
       for (int j = 0; j < coords[ws][e].size(); j++) {
@@ -171,10 +547,10 @@ STKDiscretization::getCoordinates() const
 
   for (int i = 0; i < numOverlapNodes; i++) {
     GO  node_gid = gid(overlapnodes[i]);
-    int node_lid = overlap_node_mapT->getLocalElement(node_gid);
+    int node_lid = getLocalElement(m_overlap_vs,node_gid);
 
     double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
-    for (int dim                      = 0; dim < stkMeshStruct->numDim; dim++)
+    for (int dim= 0; dim<stkMeshStruct->numDim; ++dim)
       coordinates[3 * node_lid + dim] = x[dim];
   }
 
@@ -183,7 +559,7 @@ STKDiscretization::getCoordinates() const
 
 // These methods were added to support mesh adaptation, which is currently
 // limited to PUMIDiscretization.
-void STKDiscretization::setCoordinates(const Teuchos::ArrayRCP<const double>& c)
+void STKDiscretization::setCoordinates(const Teuchos::ArrayRCP<const double>& /* c */)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
@@ -191,7 +567,7 @@ void STKDiscretization::setCoordinates(const Teuchos::ArrayRCP<const double>& c)
       "STKDiscretization::setCoordinates is not implemented.");
 }
 
-void STKDiscretization::setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm)
+void STKDiscretization::setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& /* rcm */)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
@@ -221,11 +597,14 @@ void STKDiscretization::transformMesh()
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       double  r = 0.0;
-      for (int n = 0; n < numDim; n++) r += x[n] * x[n];
-      r          = sqrt(r);
-      for (int n = 0; n < numDim; n++)
+      for (int n = 0; n < numDim; n++) {
+        r += x[n] * x[n];
+      }
+      r = sqrt(r);
+      for (int n = 0; n < numDim; n++) {
         // FIXME: there could be division by 0 here!
         x[n] = x[n] / r;
+      }
     }
   } else if (transformType == "Shift") {
     //*out << "Shift!\n";
@@ -550,8 +929,7 @@ void STKDiscretization::setupMLCoords()
   writeCoordsToMatrixMarket();
 }
 
-void
-STKDiscretization::writeCoordsToMatrixMarket() const
+void STKDiscretization::writeCoordsToMatrixMarket() const
 {
   // if user wants to write the coordinates to matrix market file, write them to
   // matrix market file
@@ -823,9 +1201,9 @@ double STKDiscretization::monotonicTimeLabel(const double time)
   return previous_time_label;
 }
 
+#if defined(ALBANY_LCM)
 void STKDiscretization::setResidualField(const Thyra_Vector& residual)
 {
-#if defined(ALBANY_LCM)
   Teuchos::RCP<AbstractSTKFieldContainer> container =
       stkMeshStruct->getFieldContainer();
 
@@ -843,8 +1221,8 @@ void STKDiscretization::setResidualField(const Thyra_Vector& residual)
     P.apply(Thyra::NOTRANS,residual, ss_residual.ptr(),1.0,0.0);
     it.second->setResidualField(*ss_residual);
   }
-#endif
 }
+#endif
 
 Teuchos::RCP<Thyra_Vector>
 STKDiscretization::getSolutionField(bool overlapped) const
@@ -905,10 +1283,8 @@ void STKDiscretization::getSolutionField(
   container->fillSolnVector(result, locally_owned, m_node_vs);
 }
 
-void
-STKDiscretization::getSolutionMV(
-    Thyra_MultiVector& result,
-    const bool         overlapped) const
+void STKDiscretization::getSolutionMV(Thyra_MultiVector& result,
+                                      const bool         overlapped) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
 
@@ -927,11 +1303,9 @@ STKDiscretization::getSolutionMV(
 /*****************************************************************/
 
 // Tpetra version of above
-void
-STKDiscretization::setField(
-    const Thyra_Vector& result,
-    const std::string&  name,
-    bool                overlapped)
+void STKDiscretization::setField (const Thyra_Vector& result,
+                                  const std::string&  name,
+                                  bool                overlapped)
 {
   Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
 
@@ -1158,13 +1532,11 @@ void STKDiscretization::computeOwnedNodesAndUnknowns()
   m_vs = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").vs;
 
   if (Teuchos::nonnull(stkMeshStruct->nodal_data_base)) { 
-    stkMeshStruct->nodal_data_base->resizeLocalMap(
-      node_mapT->getNodeElementList(), commT);
+    stkMeshStruct->nodal_data_base->replaceVectorSpace(m_node_vs);
   }
 }
 
-void
-STKDiscretization::computeOverlapNodesAndUnknowns()
+void STKDiscretization::computeOverlapNodesAndUnknowns()
 {
   // maps for overlap unknowns
   stk::mesh::Selector select_overlap_in_part =
@@ -1181,32 +1553,23 @@ STKDiscretization::computeOverlapNodesAndUnknowns()
   numOverlapNodes = overlapnodes.size();
   numOverlapNodes = overlapnodes.size();
 
-  overlap_mapT =
-      nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_map;
-  overlap_node_mapT =
-      nodalDOFsStructContainer.getDOFsStruct("mesh_nodes").overlap_map;
+  m_overlap_vs      = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_vs;
+  m_overlap_node_vs = nodalDOFsStructContainer.getDOFsStruct("mesh_nodes").overlap_vs;
 
-#ifdef ALBANY_EPETRA
-  overlap_map      = Petra::TpetraMap_To_EpetraMap(overlap_mapT, comm);
-  overlap_node_map = Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
-#endif
-
-  if (Teuchos::nonnull(stkMeshStruct->nodal_data_base))
-    stkMeshStruct->nodal_data_base->resizeOverlapMap(
-        overlap_node_mapT->getNodeElementList(), commT);
+  if (Teuchos::nonnull(stkMeshStruct->nodal_data_base)) {
+    stkMeshStruct->nodal_data_base->replaceOverlapVectorSpace(m_overlap_node_vs);
+  }
 
   coordinates.resize(3 * numOverlapNodes);
 }
 
-void
-STKDiscretization::computeGraphs()
+void STKDiscretization::computeGraphs()
 {
   computeGraphsUpToFillComplete();
   fillCompleteGraphs();
 }
 
-void
-STKDiscretization::computeGraphsUpToFillComplete()
+void STKDiscretization::computeGraphsUpToFillComplete()
 {
   std::map<int, stk::mesh::Part*>::iterator pv = stkMeshStruct->partVec.begin();
   int nodes_per_element =
@@ -1215,11 +1578,7 @@ STKDiscretization::computeGraphsUpToFillComplete()
   // Loads member data:  overlap_graph, numOverlapodes, overlap_node_map,
   // coordinates, graphs
 
-  overlap_graphT =
-      Teuchos::null;  // delete existing graph happens here on remesh
-
-  overlap_graphT =
-      Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT, neq * nodes_per_element));
+  m_overlap_graph_proxy = Teuchos::rcp( new ThyraCrsGraphProxy(m_overlap_vs,m_overlap_vs,neq*nodes_per_element) );
 
   stk::mesh::Selector select_owned_in_part =
       stk::mesh::Selector(metaData.universal_part()) &
@@ -1230,15 +1589,15 @@ STKDiscretization::computeGraphsUpToFillComplete()
       bulkData.buckets(stk::topology::ELEMENT_RANK),
       cells);
 
-  if (commT->getRank() == 0)
+  if (comm->getRank() == 0)
     *out << "STKDisc: " << cells.size() << " elements on Proc 0 " << std::endl;
 
-  Tpetra_GO                     row, col;
-  Teuchos::ArrayView<Tpetra_GO> colAV;
+  GO                     row, col;
+  Teuchos::ArrayView<GO> colAV;
 
   // determining the equations that are defined on the whole domain
   std::vector<int> globalEqns;
-  for (int k(0); k < neq; ++k) {
+  for (unsigned int k(0); k < neq; ++k) {
     if (sideSetEquations.find(k) == sideSetEquations.end()) {
       globalEqns.push_back(k);
     }
@@ -1264,7 +1623,7 @@ STKDiscretization::computeGraphsUpToFillComplete()
           {  //       since they could all be coupled with this eq
             col   = getGlobalDOF(gid(colNode), m);
             colAV = Teuchos::arrayView(&col, 1);
-            overlap_graphT->insertGlobalIndices(row, colAV);
+            m_overlap_graph_proxy->insertGlobalIndices(row, colAV);
           }
         }
       }
@@ -1287,14 +1646,13 @@ STKDiscretization::computeGraphsUpToFillComplete()
         stk::mesh::Entity node = overlapnodes[inode];
         row                    = getGlobalDOF(gid(node), it->first);
         colAV                  = Teuchos::arrayView(&row, 1);
-        overlap_graphT->insertGlobalIndices(row, colAV);
+        m_overlap_graph_proxy->insertGlobalIndices(row, colAV);
       }
 
       // Number of side sets this eq is defined on
       int numSideSets = it->second.size();
       for (int ss(0); ss < numSideSets; ++ss) {
-        stk::mesh::Part& part =
-            *stkMeshStruct->ssPartVec.find(it->second[ss])->second;
+        stk::mesh::Part& part = *stkMeshStruct->ssPartVec.find(it->second[ss])->second;
 
         // Get all owned sides in this side set
         stk::mesh::Selector select_owned_in_sspart =
@@ -1328,7 +1686,7 @@ STKDiscretization::computeGraphsUpToFillComplete()
               for (std::size_t m = 0; m < neq; m++) {
                 col   = getGlobalDOF(gid(colNode), m);
                 colAV = Teuchos::arrayView(&col, 1);
-                overlap_graphT->insertGlobalIndices(row, colAV);
+                m_overlap_graph_proxy->insertGlobalIndices(row, colAV);
               }
             }
           }
@@ -1338,26 +1696,16 @@ STKDiscretization::computeGraphsUpToFillComplete()
   }
 }
 
-void
-STKDiscretization::fillCompleteGraphs()
+void STKDiscretization::fillCompleteGraphs()
 {
-  overlap_graphT->fillComplete();
+  m_overlap_graph_proxy->fillComplete();
 
-  // Create Owned graph by exporting overlap with known row map
-  graphT = Teuchos::null;  // delete existing graph happens here on remesh
-
-  graphT = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
-
-  // Create non-overlapped matrix using two maps and export object
-  Teuchos::RCP<Tpetra_Export> exporterT =
-      Teuchos::rcp(new Tpetra_Export(overlap_mapT, mapT));
-  graphT->doExport(*overlap_graphT, *exporterT, Tpetra::INSERT);
-  graphT->fillComplete();
+  m_graph_proxy = Teuchos::rcp( new ThyraCrsGraphProxy(m_vs, m_vs, m_overlap_graph_proxy) );
 }
 
-void
-STKDiscretization::insertPeridigmNonzerosIntoGraph()
+void STKDiscretization::insertPeridigmNonzerosIntoGraph()
 {
+//TODO: remove epetra from peridigm
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
   if (Teuchos::nonnull(LCM::PeridigmManager::self()) &&
@@ -1392,7 +1740,7 @@ STKDiscretization::insertPeridigmNonzerosIntoGraph()
           for (int i = 0; i < numEntries; ++i) {
             Tpetra_GO globalCol   = peridigmMatrix->ColMap().GID(indices[i]);
             auto globalColAV = Teuchos::arrayView(&globalCol, 1);
-            overlap_graphT->insertGlobalIndices(globalRow, globalColAV);
+            m_overlap_graph_proxy->insertGlobalIndices(globalRow, globalColAV);
           }
         }
       }
@@ -1405,36 +1753,32 @@ STKDiscretization::insertPeridigmNonzerosIntoGraph()
 #endif
 }
 
-void
-STKDiscretization::computeWorksetInfo()
+void STKDiscretization::computeWorksetInfo()
 {
   stk::mesh::Selector select_owned_in_part =
       stk::mesh::Selector(metaData.universal_part()) &
       stk::mesh::Selector(metaData.locally_owned_part());
 
-  stk::mesh::BucketVector const& buckets =
+  const stk::mesh::BucketVector& buckets =
       bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned_in_part);
 
   const int numBuckets = buckets.size();
 
-  typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
-  typedef AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
-  typedef AbstractSTKFieldContainer::TensorFieldType TensorFieldType;
-  typedef AbstractSTKFieldContainer::SphereVolumeFieldType
-      SphereVolumeFieldType;
+  typedef AbstractSTKFieldContainer::ScalarFieldType        ScalarFieldType;
+  typedef AbstractSTKFieldContainer::VectorFieldType        VectorFieldType;
+  typedef AbstractSTKFieldContainer::TensorFieldType        TensorFieldType;
+  typedef AbstractSTKFieldContainer::SphereVolumeFieldType  SphereVolumeFieldType;
 
   VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
 
   SphereVolumeFieldType* sphereVolume_field;
   if (stkMeshStruct->getFieldContainer()->hasSphereVolumeField()) {
-    sphereVolume_field =
-        stkMeshStruct->getFieldContainer()->getSphereVolumeField();
+    sphereVolume_field = stkMeshStruct->getFieldContainer()->getSphereVolumeField();
   }
 
   stk::mesh::FieldBase* latticeOrientation_field;
   if (stkMeshStruct->getFieldContainer()->hasLatticeOrientationField()) {
-    latticeOrientation_field =
-        stkMeshStruct->getFieldContainer()->getLatticeOrientationField();
+    latticeOrientation_field = stkMeshStruct->getFieldContainer()->getLatticeOrientationField();
   }
 
   wsEBNames.resize(numBuckets);
@@ -1453,11 +1797,15 @@ STKDiscretization::computeWorksetInfo()
   }
 
   wsPhysIndex.resize(numBuckets);
-  if (stkMeshStruct->allElementBlocksHaveSamePhysics)
-    for (int i = 0; i < numBuckets; i++) wsPhysIndex[i] = 0;
-  else
-    for (int i       = 0; i < numBuckets; i++)
+  if (stkMeshStruct->allElementBlocksHaveSamePhysics) {
+    for (int i=0; i<numBuckets; ++i) {
+      wsPhysIndex[i] = 0;
+    }
+  } else {
+    for (int i=0; i<numBuckets; ++i) {
       wsPhysIndex[i] = stkMeshStruct->getMeshSpecs()[0]->ebNameToIndex[wsEBNames[i]];
+    }
+  }
 
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
   wsElNodeEqID.resize(numBuckets);
@@ -1468,11 +1816,12 @@ STKDiscretization::computeWorksetInfo()
 
   nodesOnElemStateVec.resize(numBuckets);
   stateArrays.elemStateArrays.resize(numBuckets);
-  const StateInfoStruct& nodal_states =
-      stkMeshStruct->getFieldContainer()->getNodalSIS();
+  const StateInfoStruct& nodal_states = stkMeshStruct->getFieldContainer()->getNodalSIS();
 
   // Clear map if remeshing
-  if (!elemGIDws.empty()) elemGIDws.clear();
+  if (!elemGIDws.empty()) {
+    elemGIDws.clear();
+  }
 
   typedef stk::mesh::Cartesian NodeTag;
   typedef stk::mesh::Cartesian ElemTag;
@@ -1507,7 +1856,7 @@ STKDiscretization::computeWorksetInfo()
 
       nodesOnElemStateVec[b].resize(nodal_states.size());
 
-      for (int is = 0; is < nodal_states.size(); ++is) {
+      for (size_t is = 0; is < nodal_states.size(); ++is) {
         const std::string&                    name = nodal_states[is]->name;
         const StateStruct::FieldDims& dim  = nodal_states[is]->dim;
         MDArray&             array    = stateArrays.elemStateArrays[b][name];
@@ -1523,7 +1872,7 @@ STKDiscretization::computeWorksetInfo()
             for (int i = 0; i < dim0; i++) {
               stk::mesh::Entity        element = buck[i];
               stk::mesh::Entity const* rel     = bulkData.begin_nodes(element);
-              for (int j = 0; j < dim[1]; j++) {
+              for (int j = 0; j < static_cast<int>(dim[1]); j++) {
                 stk::mesh::Entity rowNode = rel[j];
                 array(i, j) = *stk::mesh::field_data(field, rowNode);
               }
@@ -1540,10 +1889,12 @@ STKDiscretization::computeWorksetInfo()
             for (int i = 0; i < dim0; i++) {
               stk::mesh::Entity        element = buck[i];
               stk::mesh::Entity const* rel     = bulkData.begin_nodes(element);
-              for (int j = 0; j < dim[1]; j++) {
+              for (int j = 0; j < static_cast<int>(dim[1]); j++) {
                 stk::mesh::Entity rowNode = rel[j];
                 double*           entry = stk::mesh::field_data(field, rowNode);
-                for (int k = 0; k < dim[2]; k++) array(i, j, k) = entry[k];
+                for (int k = 0; k < static_cast<int>(dim[2]); k++) {
+                  array(i, j, k) = entry[k];
+                }
               }
             }
             break;
@@ -1558,14 +1909,15 @@ STKDiscretization::computeWorksetInfo()
             for (int i = 0; i < dim0; i++) {
               stk::mesh::Entity        element = buck[i];
               stk::mesh::Entity const* rel     = bulkData.begin_nodes(element);
-              for (int j = 0; j < dim[1]; j++) {
+              for (int j = 0; j < static_cast<int>(dim[1]); j++) {
                 stk::mesh::Entity rowNode = rel[j];
                 double*           entry = stk::mesh::field_data(field, rowNode);
-                for (int k = 0; k < dim[2]; k++)
-                  for (int l = 0; l < dim[3]; l++)
+                for (int k = 0; k < static_cast<int>(dim[2]); k++) {
+                  for (int l = 0; l < static_cast<int>(dim[3]); l++) {
                     array(i, j, k, l) = entry[k * dim[3] + l];  // check this,
                                                                 // is stride
                                                                 // Correct?
+                }}
               }
             }
             break;
@@ -1605,7 +1957,7 @@ STKDiscretization::computeWorksetInfo()
     // i is the element index within bucket b
     for (std::size_t i = 0; i < buck.size(); i++) {
       // Traverse all the elements in this bucket
-      stk::mesh::Entity element = buck[i];
+      element = buck[i];
 
       // Now, save a map from element GID to workset on this PE
       elemGIDws[gid(element)].ws = b;
@@ -1614,13 +1966,12 @@ STKDiscretization::computeWorksetInfo()
       elemGIDws[gid(element)].LID = i;
 
       stk::mesh::Entity const* node_rels = bulkData.begin_nodes(element);
-      const int                nodes_per_element = bulkData.num_nodes(element);
+      nodes_per_element = bulkData.num_nodes(element);
 
       wsElNodeID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
 
-      for (auto it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end();
-           ++it) {
+      for (auto it=mapOfDOFsStructs.begin(); it!=mapOfDOFsStructs.end(); ++it) {
         IDArray&  wsElNodeEqID_array = it->second.wsElNodeEqID[b];
         GIDArray& wsElNodeID_array   = it->second.wsElNodeID[b];
         int       nComp              = it->first.second;
@@ -1630,8 +1981,7 @@ STKDiscretization::computeWorksetInfo()
           for (int k = 0; k < nComp; k++) {
             const GO node_gid = it->second.overlap_dofManager.getGlobalDOF(
                 bulkData.identifier(node) - 1, k);
-            const int node_lid =
-                it->second.overlap_map->getLocalElement(node_gid);
+            const int node_lid = getLocalElement(it->second.overlap_vs,node_gid);
             wsElNodeEqID_array((int)i, j, k) = node_lid;
           }
         }
@@ -1640,8 +1990,7 @@ STKDiscretization::computeWorksetInfo()
 #if defined(ALBANY_LCM)
       if (stkMeshStruct->getFieldContainer()->hasSphereVolumeField() &&
           nodes_per_element == 1) {
-        double* volumeTemp =
-            stk::mesh::field_data(*sphereVolume_field, element);
+        double* volumeTemp = stk::mesh::field_data(*sphereVolume_field, element);
         if (volumeTemp) {
           sphereVolume[b][i] = volumeTemp[0];
         }
@@ -1653,14 +2002,13 @@ STKDiscretization::computeWorksetInfo()
 #endif
 
       // loop over local nodes
-      DOFsStruct& dofs_struct =
-          mapOfDOFsStructs[make_pair(std::string(""), neq)];
+      DOFsStruct& dofs_struct = mapOfDOFsStructs[make_pair(std::string(""), neq)];
       GIDArray& node_array    = dofs_struct.wsElNodeID[b];
       IDArray&  node_eq_array = dofs_struct.wsElNodeEqID[b];
       for (int j = 0; j < nodes_per_element; j++) {
         const stk::mesh::Entity rowNode  = node_rels[j];
         const GO                node_gid = gid(rowNode);
-        const LO node_lid = overlap_node_mapT->getLocalElement(node_gid);
+        const LO node_lid = getLocalElement(m_overlap_node_vs,node_gid);
 
         TEUCHOS_TEST_FOR_EXCEPTION(
             node_lid < 0,
@@ -1670,7 +2018,7 @@ STKDiscretization::computeWorksetInfo()
 
         wsElNodeID[b][i][j] = node_array((int)i, j);
 
-        for (int eq = 0; eq < neq; eq++)
+        for (int eq = 0; eq < static_cast<int>(neq); ++eq)
           wsElNodeEqID[b](i, j, eq) = node_eq_array((int)i, j, eq);
       }
       /*
@@ -1754,8 +2102,7 @@ STKDiscretization::computeWorksetInfo()
   // Pull out pointers to shards::Arrays for every bucket, for every state
   // Code is data-type dependent
 
-  AbstractSTKFieldContainer& container =
-      *stkMeshStruct->getFieldContainer();
+  AbstractSTKFieldContainer& container = *stkMeshStruct->getFieldContainer();
 
   ScalarValueState& scalarValue_states = container.getScalarValueStates();
   ScalarState&      cell_scalar_states = container.getCellScalarStates();
@@ -1768,60 +2115,48 @@ STKDiscretization::computeWorksetInfo()
 
   for (std::size_t b = 0; b < buckets.size(); b++) {
     stk::mesh::Bucket& buck = *buckets[b];
-    for (auto css = cell_scalar_states.begin(); css != cell_scalar_states.end();
-         ++css) {
-      BucketArray<AbstractSTKFieldContainer::ScalarFieldType> array(
-          **css, buck);
+    for (auto css=cell_scalar_states.begin(); css!=cell_scalar_states.end(); ++css) {
+      BucketArray<AbstractSTKFieldContainer::ScalarFieldType> array(**css, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " SFT dim[1]: " <<
       // array.dimension(1) << std::endl;
       MDArray ar                                     = array;
       stateArrays.elemStateArrays[b][(*css)->name()] = ar;
     }
-    for (auto cvs = cell_vector_states.begin(); cvs != cell_vector_states.end();
-         ++cvs) {
-      BucketArray<AbstractSTKFieldContainer::VectorFieldType> array(
-          **cvs, buck);
+    for (auto cvs = cell_vector_states.begin(); cvs != cell_vector_states.end(); ++cvs) {
+      BucketArray<AbstractSTKFieldContainer::VectorFieldType> array(**cvs, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " VFT dim[2]: " <<
       // array.dimension(2) << std::endl;
       MDArray ar                                     = array;
       stateArrays.elemStateArrays[b][(*cvs)->name()] = ar;
     }
-    for (auto cts = cell_tensor_states.begin(); cts != cell_tensor_states.end();
-         ++cts) {
-      BucketArray<AbstractSTKFieldContainer::TensorFieldType> array(
-          **cts, buck);
+    for (auto cts = cell_tensor_states.begin(); cts != cell_tensor_states.end(); ++cts) {
+      BucketArray<AbstractSTKFieldContainer::TensorFieldType> array(**cts, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " TFT dim[3]: " <<
       // array.dimension(3) << std::endl;
       MDArray ar                                     = array;
       stateArrays.elemStateArrays[b][(*cts)->name()] = ar;
     }
-    for (auto qpss = qpscalar_states.begin(); qpss != qpscalar_states.end();
-         ++qpss) {
-      BucketArray<AbstractSTKFieldContainer::QPScalarFieldType> array(
-          **qpss, buck);
+    for (auto qpss = qpscalar_states.begin(); qpss != qpscalar_states.end(); ++qpss) {
+      BucketArray<AbstractSTKFieldContainer::QPScalarFieldType> array(**qpss, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPSFT dim[1]: " <<
       // array.dimension(1) << std::endl;
       MDArray ar                                      = array;
       stateArrays.elemStateArrays[b][(*qpss)->name()] = ar;
     }
-    for (auto qpvs = qpvector_states.begin(); qpvs != qpvector_states.end();
-         ++qpvs) {
-      BucketArray<AbstractSTKFieldContainer::QPVectorFieldType> array(
-          **qpvs, buck);
+    for (auto qpvs = qpvector_states.begin(); qpvs != qpvector_states.end(); ++qpvs) {
+      BucketArray<AbstractSTKFieldContainer::QPVectorFieldType> array(**qpvs, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPVFT dim[2]: " <<
       // array.dimension(2) << std::endl;
       MDArray ar                                      = array;
       stateArrays.elemStateArrays[b][(*qpvs)->name()] = ar;
     }
-    for (auto qpts = qptensor_states.begin(); qpts != qptensor_states.end();
-         ++qpts) {
-      BucketArray<AbstractSTKFieldContainer::QPTensorFieldType> array(
-          **qpts, buck);
+    for (auto qpts = qptensor_states.begin(); qpts != qptensor_states.end(); ++qpts) {
+      BucketArray<AbstractSTKFieldContainer::QPTensorFieldType> array(**qpts, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPTFT dim[3]: " <<
       // array.dimension(3) << std::endl;
@@ -1830,10 +2165,9 @@ STKDiscretization::computeWorksetInfo()
     }
     //    for (ScalarValueState::iterator svs = scalarValue_states.begin();
     //              svs != scalarValue_states.end(); ++svs){
-    for (int i = 0; i < scalarValue_states.size(); i++) {
+    for (size_t i = 0; i < scalarValue_states.size(); i++) {
       const int size = 1;
-      shards::Array<double, shards::NaturalOrder, Cell> array(
-          &time[*scalarValue_states[i]], size);
+      shards::Array<double, shards::NaturalOrder, Cell> array(&time[*scalarValue_states[i]], size);
       MDArray ar = array;
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " SVState dim[0]: " <<
@@ -1848,11 +2182,9 @@ STKDiscretization::computeWorksetInfo()
 
   if (Teuchos::nonnull(stkMeshStruct->nodal_data_base) &&
       stkMeshStruct->nodal_data_base->isNodeDataPresent()) {
-    Teuchos::RCP<NodeFieldContainer> node_states =
-        stkMeshStruct->nodal_data_base->getNodeContainer();
+    Teuchos::RCP<NodeFieldContainer> node_states = stkMeshStruct->nodal_data_base->getNodeContainer();
 
-    stk::mesh::BucketVector const& node_buckets =
-        bulkData.get_buckets(stk::topology::NODE_RANK, select_owned_in_part);
+    stk::mesh::BucketVector const& node_buckets = bulkData.get_buckets(stk::topology::NODE_RANK, select_owned_in_part);
 
     const size_t numNodeBuckets = node_buckets.size();
 
@@ -1871,19 +2203,15 @@ STKDiscretization::computeWorksetInfo()
   }
 }
 
-void
-STKDiscretization::computeSideSets()
+void STKDiscretization::computeSideSets()
 {
   // Clean up existing sideset structure if remeshing
-
-  for (int i = 0; i < sideSets.size(); i++)
+  for (size_t i = 0; i < sideSets.size(); ++i) {
     sideSets[i].clear();  // empty the ith map
-
-  const stk::mesh::EntityRank element_rank = stk::topology::ELEMENT_RANK;
+  }
 
   // iterator over all side_rank parts found in the mesh
-  std::map<std::string, stk::mesh::Part*>::iterator ss =
-      stkMeshStruct->ssPartVec.begin();
+  std::map<std::string, stk::mesh::Part*>::iterator ss = stkMeshStruct->ssPartVec.begin();
 
   int numBuckets = wsEBNames.size();
 
@@ -1891,19 +2219,13 @@ STKDiscretization::computeSideSets()
 
   while (ss != stkMeshStruct->ssPartVec.end()) {
     // Get all owned sides in this side set
-    stk::mesh::Selector select_owned_in_sspart =
-
-        // get only entities in the ss part (ss->second is the current sideset
-        // part)
-        stk::mesh::Selector(*(ss->second)) &
-        // and only if the part is local
-        stk::mesh::Selector(metaData.locally_owned_part());
+    stk::mesh::Selector select_owned_in_sspart = stk::mesh::Selector(*(ss->second)) &
+                                                 stk::mesh::Selector(metaData.locally_owned_part());
 
     std::vector<stk::mesh::Entity> sides;
-    stk::mesh::get_selected_entities(
-        select_owned_in_sspart,  // sides local to this processor
-        bulkData.buckets(metaData.side_rank()),
-        sides);  // store the result in "sides"
+    stk::mesh::get_selected_entities(select_owned_in_sspart,  // sides local to this processor
+                                     bulkData.buckets(metaData.side_rank()),
+                                     sides);
 
     *out << "STKDisc: sideset " << ss->first << " has size " << sides.size()
          << "  on Proc 0." << std::endl;
@@ -1912,8 +2234,7 @@ STKDiscretization::computeSideSets()
     // for side set options, look at
     // $TRILINOS_DIR/packages/stk/stk_usecases/mesh/UseCase_13.cpp
 
-    for (std::size_t localSideID = 0; localSideID < sides.size();
-         localSideID++) {
+    for (std::size_t localSideID = 0; localSideID < sides.size(); localSideID++) {
       stk::mesh::Entity sidee = sides[localSideID];
 
       TEUCHOS_TEST_FOR_EXCEPTION(
@@ -1937,8 +2258,7 @@ STKDiscretization::computeSideSets()
       // Save elem id. This is the global element id
       sStruct.elem_GID = gid(elem);
 
-      int workset = elemGIDws[sStruct.elem_GID]
-                        .ws;  // Get the ws that this element lives in
+      int workset = elemGIDws[sStruct.elem_GID].ws;  // Get the ws that this element lives in
 
       // Save elem id. This is the local element id within the workset
       sStruct.elem_LID = elemGIDws[sStruct.elem_GID].LID;
@@ -1950,20 +2270,15 @@ STKDiscretization::computeSideSets()
       // Save the index of the element block that this elem lives in
       sStruct.elem_ebIndex = stkMeshStruct->getMeshSpecs()[0]->ebNameToIndex[wsEBNames[workset]];
 
-      SideSetList& ssList =
-          sideSets[workset];  // Get a ref to the side set map for this ws
-      SideSetList::iterator it =
-          ssList.find(ss->first);  // Get an iterator to the correct sideset (if
-                                   // it exists)
+      SideSetList& ssList = sideSets[workset];  // Get a ref to the side set map for this ws
+      SideSetList::iterator it = ssList.find(ss->first);  // Get an iterator to the correct sideset (if any)
 
-      if (it != ssList.end())  // The sideset has already been created
-
+      if (it != ssList.end()) {
+        // The sideset has already been created
         it->second.push_back(sStruct);  // Save this side to the vector that
                                         // belongs to the name ss->first
-
-      else {  // Add the key ss->first to the map, and the side vector to that
-              // map
-
+      } else {
+        // Add the key ss->first to the map, and the side vector to that map
         std::vector<SideStruct> tmpSSVec;
         tmpSSVec.push_back(sStruct);
 
@@ -1980,10 +2295,8 @@ STKDiscretization::computeSideSets()
 #endif
 }
 
-unsigned
-STKDiscretization::determine_local_side_id(
-    const stk::mesh::Entity elem,
-    stk::mesh::Entity       side)
+unsigned STKDiscretization::determine_local_side_id(const stk::mesh::Entity elem,
+                                                    stk::mesh::Entity       side)
 {
   using namespace stk;
 
@@ -1999,9 +2312,8 @@ STKDiscretization::determine_local_side_id(
 
   int side_id = -1;
 
-  if (num_elem_nodes == 0 ||
-      num_side_nodes ==
-          0) {  // Node relations are not present, look at elem->face
+  if (num_elem_nodes == 0 || num_side_nodes == 0) {
+    // Node relations are not present, look at elem->face
 
     const unsigned num_sides = bulkData.num_connectivity(elem, side_rank);
     stk::mesh::Entity const* elem_sides = bulkData.begin(elem, side_rank);
@@ -2009,11 +2321,9 @@ STKDiscretization::determine_local_side_id(
     for (unsigned i = 0; i < num_sides; ++i) {
       const stk::mesh::Entity elem_side = elem_sides[i];
 
-      if (bulkData.identifier(elem_side) ==
-          bulkData.identifier(side)) {  // Found the local side in the element
-
+      if (bulkData.identifier(elem_side) == bulkData.identifier(side)) {
+        // Found the local side in the element
         side_id = static_cast<int>(i);
-
         return side_id;
       }
     }
@@ -2033,7 +2343,6 @@ STKDiscretization::determine_local_side_id(
       msg << " ] ) FAILED";
       throw std::runtime_error(msg.str());
     }
-
   } else {  // Conventional elem->node - side->node connectivity present
 
     std::vector<unsigned> side_map;
@@ -2087,25 +2396,20 @@ STKDiscretization::determine_local_side_id(
   return static_cast<unsigned>(side_id);
 }
 
-void
-STKDiscretization::computeNodeSets()
+void STKDiscretization::computeNodeSets()
 {
-  std::map<std::string, stk::mesh::Part*>::iterator ns =
-      stkMeshStruct->nsPartVec.begin();
-  AbstractSTKFieldContainer::VectorFieldType* coordinates_field =
-      stkMeshStruct->getCoordinatesField();
+  std::map<std::string, stk::mesh::Part*>::iterator ns = stkMeshStruct->nsPartVec.begin();
+  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
 
   while (ns != stkMeshStruct->nsPartVec.end()) {  // Iterate over Node Sets
     // Get all owned nodes in this node set
-    stk::mesh::Selector select_owned_in_nspart =
-        stk::mesh::Selector(*(ns->second)) &
-        stk::mesh::Selector(metaData.locally_owned_part());
+    stk::mesh::Selector select_owned_in_nspart = stk::mesh::Selector(*(ns->second)) &
+                                                 stk::mesh::Selector(metaData.locally_owned_part());
 
     std::vector<stk::mesh::Entity> nodes;
-    stk::mesh::get_selected_entities(
-        select_owned_in_nspart,
-        bulkData.buckets(stk::topology::NODE_RANK),
-        nodes);
+    stk::mesh::get_selected_entities(select_owned_in_nspart,
+                                     bulkData.buckets(stk::topology::NODE_RANK),
+                                     nodes);
 
     nodeSets[ns->first].resize(nodes.size());
     nodeSetGIDs[ns->first].resize(nodes.size());
@@ -2115,20 +2419,19 @@ STKDiscretization::computeNodeSets()
          << "  on Proc 0." << std::endl;
     for (std::size_t i = 0; i < nodes.size(); i++) {
       GO  node_gid              = gid(nodes[i]);
-      int node_lid              = node_mapT->getLocalElement(node_gid);
+      int node_lid              = getLocalElement(m_node_vs,node_gid);
       nodeSetGIDs[ns->first][i] = node_gid;
       nodeSets[ns->first][i].resize(neq);
-      for (std::size_t eq          = 0; eq < neq; eq++)
+      for (std::size_t eq = 0; eq < neq; ++eq) {
         nodeSets[ns->first][i][eq] = getOwnedDOF(node_lid, eq);
-      nodeSetCoords[ns->first][i] =
-          stk::mesh::field_data(*coordinates_field, nodes[i]);
+      }
+      nodeSetCoords[ns->first][i] = stk::mesh::field_data(*coordinates_field, nodes[i]);
     }
     ns++;
   }
 }
 
-void
-STKDiscretization::setupExodusOutput()
+void STKDiscretization::setupExodusOutput()
 {
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput) {
@@ -2139,7 +2442,7 @@ STKDiscretization::setupExodusOutput()
     Ioss::Init::Initializer io;
 
     mesh_data = Teuchos::rcp(
-        new stk::io::StkMeshIoBroker(getMpiCommFromTeuchosComm(commT)));
+        new stk::io::StkMeshIoBroker(getMpiCommFromTeuchosComm(comm)));
     mesh_data->set_bulk_data(bulkData);
     outputFileIdx = mesh_data->create_output_mesh(str, stk::io::WRITE_RESULTS);
 
@@ -2167,372 +2470,14 @@ STKDiscretization::setupExodusOutput()
     }
   }
 #else
-  if (stkMeshStruct->exoOutput)
+  if (stkMeshStruct->exoOutput) {
     *out << "\nWARNING: exodus output requested but SEACAS not compiled in:"
-         << " disabling exodus output \n"
-         << std::endl;
-
+         << " disabling exodus output \n";
+  }
 #endif
 }
 
-namespace {
-const std::vector<double>
-spherical_to_cart(const std::pair<double, double>& sphere)
-{
-  const double        radius_of_earth = 1;
-  std::vector<double> cart(3);
-
-  cart[0] = radius_of_earth * std::cos(sphere.first) * std::cos(sphere.second);
-  cart[1] = radius_of_earth * std::cos(sphere.first) * std::sin(sphere.second);
-  cart[2] = radius_of_earth * std::sin(sphere.first);
-
-  return cart;
-}
-double
-distance(const double* x, const double* y)
-{
-  const double d = std::sqrt(
-      (x[0] - y[0]) * (x[0] - y[0]) + (x[1] - y[1]) * (x[1] - y[1]) +
-      (x[2] - y[2]) * (x[2] - y[2]));
-  return d;
-}
-double
-distance(const std::vector<double>& x, const std::vector<double>& y)
-{
-  const double d = std::sqrt(
-      (x[0] - y[0]) * (x[0] - y[0]) + (x[1] - y[1]) * (x[1] - y[1]) +
-      (x[2] - y[2]) * (x[2] - y[2]));
-  return d;
-}
-
-bool
-point_inside(
-    const Teuchos::ArrayRCP<double*>& coords,
-    const std::vector<double>&        sphere_xyz)
-{
-  // first check if point is near the element:
-  const double tol_inside = 1e-12;
-  const double elem_diam  = std::max(
-      ::distance(coords[0], coords[2]), ::distance(coords[1], coords[3]));
-  std::vector<double> center(3, 0);
-  for (unsigned i = 0; i < 4; ++i)
-    for (unsigned j = 0; j < 3; ++j) center[j] += coords[i][j];
-  for (unsigned j      = 0; j < 3; ++j) center[j] /= 4;
-  bool          inside = true;
-
-  if (::distance(&center[0], &sphere_xyz[0]) > 1.0 * elem_diam) inside = false;
-
-  unsigned j = 3;
-  for (unsigned i = 0; i < 4 && inside; ++i) {
-    std::vector<double> cross(3);
-    // outward normal to plane containing j->i edge:  corner(i) x corner(j)
-    // sphere dot (corner(i) x corner(j) ) = negative if inside
-    cross[0] = coords[i][1] * coords[j][2] - coords[i][2] * coords[j][1];
-    cross[1] = -(coords[i][0] * coords[j][2] - coords[i][2] * coords[j][0]);
-    cross[2] = coords[i][0] * coords[j][1] - coords[i][1] * coords[j][0];
-    j        = i;
-    const double dotprod = cross[0] * sphere_xyz[0] + cross[1] * sphere_xyz[1] +
-                           cross[2] * sphere_xyz[2];
-
-    // dot product is proportional to elem_diam. positive means outside,
-    // but allow machine precision tolorence:
-    if (tol_inside * elem_diam < dotprod) inside = false;
-  }
-  return inside;
-}
-
-const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
-Basis(const int C)
-{
-  // Static types
-  typedef Kokkos::DynRankView<RealType, PHX::Device> Field_t;
-  typedef Intrepid2::Basis<PHX::Device, RealType, RealType> Basis_t;
-  static const Teuchos::RCP<Basis_t> HGRAD_Basis_4 =
-      Teuchos::rcp(new Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::Device>());
-  static const Teuchos::RCP<Basis_t> HGRAD_Basis_9 =
-      Teuchos::rcp(new Intrepid2::Basis_HGRAD_QUAD_C2_FEM<PHX::Device>());
-
-  // Check for valid value of C
-  int deg = (int)std::sqrt((double)C);
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      deg * deg != C || deg < 2,
-      std::logic_error,
-      " Albany_STKDiscretization Error Basis not perfect "
-      "square > 1"
-          << std::endl);
-
-  // Quick return for linear or quad
-  if (C == 4) return HGRAD_Basis_4;
-  if (C == 9) return HGRAD_Basis_9;
-
-  // Spectral bases
-  return Teuchos::rcp(new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::Device>(
-      deg, Intrepid2::POINTTYPE_WARPBLEND));
-}
-
-double
-value(const std::vector<double>& soln, const std::pair<double, double>& ref)
-{
-  const int C = soln.size();
-  const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
-      HGRAD_Basis = Basis(C);
-
-  const int numPoints = 1;
-  Kokkos::DynRankView<RealType, PHX::Device> basisVals("SSS", C, numPoints);
-  Kokkos::DynRankView<RealType, PHX::Device> tempPoints("SSS", numPoints, 2);
-  tempPoints(0, 0) = ref.first;
-  tempPoints(0, 1) = ref.second;
-
-  HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid2::OPERATOR_VALUE);
-
-  double x = 0;
-  for (unsigned j = 0; j < C; ++j) x += soln[j] * basisVals(j, 0);
-  return x;
-}
-
-void
-value(
-    double                            x[3],
-    const Teuchos::ArrayRCP<double*>& coords,
-    const std::pair<double, double>& ref)
-{
-  const int C = coords.size();
-  const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
-      HGRAD_Basis = Basis(C);
-
-  const int numPoints = 1;
-  Kokkos::DynRankView<RealType, PHX::Device> basisVals("SSS", C, numPoints);
-  Kokkos::DynRankView<RealType, PHX::Device> tempPoints("SSS", numPoints, 2);
-  tempPoints(0, 0) = ref.first;
-  tempPoints(0, 1) = ref.second;
-
-  HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid2::OPERATOR_VALUE);
-
-  for (unsigned i = 0; i < 3; ++i) x[i] = 0;
-  for (unsigned i = 0; i < 3; ++i)
-    for (unsigned j = 0; j < C; ++j) x[i] += coords[j][i] * basisVals(j, 0);
-}
-
-void
-grad(
-    double                            x[3][2],
-    const Teuchos::ArrayRCP<double*>& coords,
-    const std::pair<double, double>& ref)
-{
-  const int C = coords.size();
-  const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
-      HGRAD_Basis = Basis(C);
-
-  const int numPoints = 1;
-  Kokkos::DynRankView<RealType, PHX::Device> basisGrad("SSS", C, numPoints, 2);
-  Kokkos::DynRankView<RealType, PHX::Device> tempPoints("SSS", numPoints, 2);
-  tempPoints(0, 0) = ref.first;
-  tempPoints(0, 1) = ref.second;
-
-  HGRAD_Basis->getValues(basisGrad, tempPoints, Intrepid2::OPERATOR_GRAD);
-
-  for (unsigned i = 0; i < 3; ++i) x[i][0] = x[i][1] = 0;
-  for (unsigned i = 0; i < 3; ++i)
-    for (unsigned j = 0; j < C; ++j) {
-      x[i][0] += coords[j][i] * basisGrad(j, 0, 0);
-      x[i][1] += coords[j][i] * basisGrad(j, 0, 1);
-    }
-}
-
-std::pair<double, double>
-ref2sphere(
-    const Teuchos::ArrayRCP<double*>& coords,
-    const std::pair<double, double>& ref)
-{
-  static const double DIST_THRESHOLD = 1.0e-9;
-
-  double x[3];
-  value(x, coords, ref);
-
-  const double r = std::sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
-
-  for (unsigned i = 0; i < 3; ++i) x[i] /= r;
-
-  std::pair<double, double> sphere(std::asin(x[2]), std::atan2(x[1], x[0]));
-
-  // ==========================================================
-  // enforce three facts:
-  //
-  // 1) lon at poles is defined to be zero
-  //
-  // 2) Grid points must be separated by about .01 Meter (on earth)
-  //   from pole to be considered "not the pole".
-  //
-  // 3) range of lon is { 0<= lon < 2*PI }
-  //
-  // ==========================================================
-
-  if (std::abs(std::abs(sphere.first) - pi / 2) < DIST_THRESHOLD)
-    sphere.second = 0;
-  else if (sphere.second < 0)
-    sphere.second += 2 * pi;
-
-  return sphere;
-}
-
-void
-Dmap(
-    const Teuchos::ArrayRCP<double*>& coords,
-    const std::pair<double, double>& sphere,
-    const std::pair<double, double>& ref,
-    double D[][2])
-{
-  const double th     = sphere.first;
-  const double lam    = sphere.second;
-  const double sinlam = std::sin(lam);
-  const double sinth  = std::sin(th);
-  const double coslam = std::cos(lam);
-  const double costh  = std::cos(th);
-
-  const double D1[2][3] = {{-sinlam, coslam, 0}, {0, 0, 1}};
-
-  const double D2[3][3] = {{sinlam * sinlam * costh * costh + sinth * sinth,
-                            -sinlam * coslam * costh * costh,
-                            -coslam * sinth * costh},
-                           {-sinlam * coslam * costh * costh,
-                            coslam * coslam * costh * costh + sinth * sinth,
-                            -sinlam * sinth * costh},
-                           {-coslam * sinth, -sinlam * sinth, costh}};
-
-  double D3[3][2] = {0};
-  grad(D3, coords, ref);
-
-  double D4[3][2] = {0};
-  for (unsigned i = 0; i < 3; ++i)
-    for (unsigned j = 0; j < 2; ++j)
-      for (unsigned k = 0; k < 3; ++k) D4[i][j] += D2[i][k] * D3[k][j];
-
-  for (unsigned i = 0; i < 2; ++i)
-    for (unsigned j = 0; j < 2; ++j) D[i][j] = 0;
-
-  for (unsigned i = 0; i < 2; ++i)
-    for (unsigned j = 0; j < 2; ++j)
-      for (unsigned k = 0; k < 3; ++k) D[i][j] += D1[i][k] * D4[k][j];
-}
-
-std::pair<double, double>
-parametric_coordinates(
-    const Teuchos::ArrayRCP<double*>& coords,
-    const std::pair<double, double>& sphere)
-{
-  static const double   tol_sq      = 1e-26;
-  static const unsigned MAX_NR_ITER = 10;
-  double                costh       = std::cos(sphere.first);
-  double                D[2][2], Dinv[2][2];
-  double                resa = 1;
-  double                resb = 1;
-  std::pair<double, double> ref(0, 0);  // initial guess is center of element.
-
-  for (unsigned i = 0;
-       i < MAX_NR_ITER && tol_sq < (costh * resb * resb + resa * resa);
-       ++i) {
-    const std::pair<double, double> sph = ref2sphere(coords, ref);
-    resa = sph.first - sphere.first;
-    resb = sph.second - sphere.second;
-
-    if (resb > pi) resb -= 2 * pi;
-    if (resb < -pi) resb += 2 * pi;
-
-    Dmap(coords, sph, ref, D);
-    const double detD = D[0][0] * D[1][1] - D[0][1] * D[1][0];
-    Dinv[0][0]        = D[1][1] / detD;
-    Dinv[0][1]        = -D[0][1] / detD;
-    Dinv[1][0]        = -D[1][0] / detD;
-    Dinv[1][1]        = D[0][0] / detD;
-
-    const std::pair<double, double> del(
-        Dinv[0][0] * costh * resb + Dinv[0][1] * resa,
-        Dinv[1][0] * costh * resb + Dinv[1][1] * resa);
-    ref.first -= del.first;
-    ref.second -= del.second;
-  }
-  return ref;
-}
-
-const std::pair<bool, std::pair<unsigned, unsigned>>
-point_in_element(
-    const std::pair<double, double>& sphere,
-    const WorksetArray<
-        Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type& coords,
-    std::pair<double, double>& parametric)
-{
-  const std::vector<double> sphere_xyz = spherical_to_cart(sphere);
-  std::pair<bool, std::pair<unsigned, unsigned>> element(
-      false, std::pair<unsigned, unsigned>(0, 0));
-  for (unsigned i = 0; i < coords.size() && !element.first; ++i) {
-    for (unsigned j = 0; j < coords[i].size() && !element.first; ++j) {
-      const bool found = point_inside(coords[i][j], sphere_xyz);
-      if (found) {
-        parametric = parametric_coordinates(coords[i][j], sphere);
-        if (parametric.first < -1) parametric.first   = -1;
-        if (parametric.second < -1) parametric.second = -1;
-        if (1 < parametric.first) parametric.first    = 1;
-        if (1 < parametric.second) parametric.second  = 1;
-        element.first                                 = true;
-        element.second.first                          = i;
-        element.second.second                         = j;
-      }
-    }
-  }
-  return element;
-}
-
-void
-setup_latlon_interp(
-    const unsigned nlat,
-    const double   nlon,
-    const WorksetArray<
-        Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type& coords,
-    WorksetArray<Teuchos::ArrayRCP<
-        std::vector<STKDiscretization::interp>>>::type& interpdata,
-    const Teuchos::RCP<const Teuchos_Comm>                      commT)
-{
-  double                   err  = 0;
-  const long long unsigned rank = commT->getRank();
-  std::vector<double>      lat(nlat);
-  std::vector<double>      lon(nlon);
-
-  unsigned count = 0;
-  for (unsigned i = 0; i < nlat; ++i) lat[i] = -pi / 2 + i * pi / (nlat - 1);
-  for (unsigned j = 0; j < nlon; ++j) lon[j] = 2 * j * pi / nlon;
-  for (unsigned i = 0; i < nlat; ++i) {
-    for (unsigned j = 0; j < nlon; ++j) {
-      const std::pair<double, double> sphere(lat[i], lon[j]);
-      std::pair<double, double>       paramtric;
-      const std::pair<bool, std::pair<unsigned, unsigned>> element =
-          point_in_element(sphere, coords, paramtric);
-      if (element.first) {
-        // compute error: map 'cart' back to sphere and compare with original
-        // interpolation point:
-        const unsigned            b = element.second.first;
-        const unsigned            e = element.second.second;
-        const std::vector<double> sphere2_xyz =
-            spherical_to_cart(ref2sphere(coords[b][e], paramtric));
-        const std::vector<double> sphere_xyz = spherical_to_cart(sphere);
-        err = std::max(err, ::distance(&sphere2_xyz[0], &sphere_xyz[0]));
-        STKDiscretization::interp interp;
-        interp.parametric_coords  = paramtric;
-        interp.latitude_longitude = std::pair<unsigned, unsigned>(i, j);
-        interpdata[b][e].push_back(interp);
-        ++count;
-      }
-    }
-    if (!rank && (!(i % 64) || i == nlat - 1))
-      std::cout << "Finished Latitude " << i << " of " << nlat << std::endl;
-  }
-  if (!rank)
-    std::cout << "Max interpolation point search error: " << err << std::endl;
-}
-}
-
-int
-STKDiscretization::processNetCDFOutputRequest(
-    const Thyra_Vector& solution_field)
+int STKDiscretization::processNetCDFOutputRequest(const Thyra_Vector& /* solution_field */)
 {
 #ifdef ALBANY_SEACAS
 // IK, 10/13/14: need to implement!
@@ -2540,9 +2485,7 @@ STKDiscretization::processNetCDFOutputRequest(
   return 0;
 }
 
-int
-STKDiscretization::processNetCDFOutputRequestMV(
-    const Tpetra_MultiVector& solution_fieldT)
+int STKDiscretization::processNetCDFOutputRequestMV (const Thyra_MultiVector& /* solution_field */)
 {
 #ifdef ALBANY_SEACAS
 // IK, 10/13/14: need to implement!
@@ -2550,10 +2493,9 @@ STKDiscretization::processNetCDFOutputRequestMV(
   return 0;
 }
 
-void
-STKDiscretization::setupNetCDFOutput()
+void STKDiscretization::setupNetCDFOutput()
 {
-  const long long unsigned rank = commT->getRank();
+  const long long unsigned rank = comm->getRank();
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->cdfOutput) {
     outputInterval      = 0;
@@ -2566,14 +2508,14 @@ STKDiscretization::setupNetCDFOutput()
     for (int b = 0; b < coords.size(); b++)
       interpolateData[b].resize(coords[b].size());
 
-    setup_latlon_interp(nlat, nlon, coords, interpolateData, commT);
+    setup_latlon_interp(nlat, nlon, coords, interpolateData, comm);
 
     const std::string name = stkMeshStruct->cdfOutFile;
     netCDFp                = 0;
     netCDFOutputRequest    = 0;
 
 #ifdef ALBANY_PAR_NETCDF
-    MPI_Comm theMPIComm = getMpiCommFromTeuchosComm(commT);
+    MPI_Comm theMPIComm = getMpiCommFromTeuchosComm(comm);
     MPI_Info info;
     MPI_Info_create(&info);
     if (const int ierr = nc_create_par(
@@ -2760,17 +2702,15 @@ STKDiscretization::setupNetCDFOutput()
                                                   << std::endl);
   }
 #else
-  if (stkMeshStruct->cdfOutput)
+  if (stkMeshStruct->cdfOutput) {
     *out << "\nWARNING: NetCDF output requested but SEACAS not compiled in:"
-         << " disabling NetCDF output \n"
-         << std::endl;
+         << " disabling NetCDF output \n";
+  }
   stkMeshStruct->cdfOutput = false;
-
 #endif
 }
 
-void
-STKDiscretization::reNameExodusOutput(std::string& filename)
+void STKDiscretization::reNameExodusOutput(std::string& filename)
 {
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput && !mesh_data.is_null()) {
@@ -2784,26 +2724,29 @@ STKDiscretization::reNameExodusOutput(std::string& filename)
     previous_time_label = -1.0e32;
   }
 #else
-  if (stkMeshStruct->exoOutput)
+  if (stkMeshStruct->exoOutput) {
     *out << "\nWARNING: exodus output requested but SEACAS not compiled in:"
-         << " disabling exodus output \n"
-         << std::endl;
-
+         << " disabling exodus output \n";
+  }
 #endif
 }
 
 // Convert the stk mesh on this processor to a nodal graph.
 // todo Dev/tested on linear elements only.
-void
-STKDiscretization::meshToGraph()
+void STKDiscretization::meshToGraph()
 {
-  if (Teuchos::is_null(stkMeshStruct->nodal_data_base)) return;
-  if (!stkMeshStruct->nodal_data_base->isNodeDataPresent()) return;
+  if (Teuchos::is_null(stkMeshStruct->nodal_data_base)) {
+    return;
+  }
+  if (!stkMeshStruct->nodal_data_base->isNodeDataPresent()) {
+    return;
+  }
 
   // Set up the CRS graph used for solution transfer and projection mass
   // matrices. Assume the Crs row size is 27, which is the maximum number
   // required for first-order hexahedral elements.
-  nodalGraph = Teuchos::rcp(new Tpetra_CrsGraph(overlap_node_mapT, 27));
+
+  nodalGraphProxy = Teuchos::rcp( new ThyraCrsGraphProxy(m_overlap_node_vs,m_overlap_node_vs, 27) );
 
   // Elements that surround a given node, in the form of Entity's.
   std::vector<std::vector<stk::mesh::Entity>> sur_elem;
@@ -2819,11 +2762,11 @@ STKDiscretization::meshToGraph()
   const stk::mesh::BucketVector& buckets =
       bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned_in_part);
 
-  for (int b = 0; b < buckets.size(); ++b) {
-    const stk::mesh::Bucket& cells = *buckets[b];
+  for (size_t b = 0; b < buckets.size(); ++b) {
+    const stk::mesh::Bucket& buck_cells = *buckets[b];
     // Find the surrounding elements for each node owned by this processor.
-    for (std::size_t ecnt = 0; ecnt < cells.size(); ecnt++) {
-      const stk::mesh::Entity  e             = cells[ecnt];
+    for (std::size_t ecnt = 0; ecnt < buck_cells.size(); ecnt++) {
+      const stk::mesh::Entity  e             = buck_cells[ecnt];
       const stk::mesh::Entity* node_rels     = bulkData.begin_nodes(e);
       const size_t             num_node_rels = bulkData.num_nodes(e);
 
@@ -2831,19 +2774,20 @@ STKDiscretization::meshToGraph()
       for (std::size_t ncnt = 0; ncnt < num_node_rels; ++ncnt) {
         const stk::mesh::Entity rowNode = node_rels[ncnt];
         GO                      nodeGID = gid(rowNode);
-        int nodeLID = overlap_node_mapT->getLocalElement(nodeGID);
+        int nodeLID = getLocalElement(m_overlap_node_vs,nodeGID);
         // In the case of degenerate elements, where a node can be entered into
         // the connect table twice, need to check to make sure that this element
         // is not already listed as surrounding this node.
-        if (sur_elem[nodeLID].empty() ||
-            entity_in_list(e, sur_elem[nodeLID]) < 0)
+        const std::vector<stk::mesh::Entity> sur_elem_node_lid = sur_elem[nodeLID];
+        if (sur_elem[nodeLID].empty() || !in_list(e, sur_elem_node_lid)) {
           sur_elem[nodeLID].push_back(e);
+        }
       }
     }
   }
 
   std::size_t max_nsur = 0;
-  for (std::size_t ncnt = 0; ncnt < numOverlapNodes; ncnt++) {
+  for (int ncnt = 0; ncnt < numOverlapNodes; ncnt++) {
     if (sur_elem[ncnt].empty()) {
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
@@ -2863,52 +2807,54 @@ STKDiscretization::meshToGraph()
   // want all nodes in the overlap graph to be covered in the nodal graph.
 
   // loop over all the nodes owned by this PE
-  for(std::size_t ncnt = 0; ncnt < numOverlapNodes; ncnt++) {
-    Teuchos::Array<Tpetra_GO> adjacency;
-    Tpetra_GO globalrow = overlap_node_mapT->getGlobalElement(ncnt);
+  for(LO ncnt = 0; ncnt < numOverlapNodes; ++ncnt) {
+    Teuchos::Array<GO> adjacency;
+    GO globalrow = getGlobalElement(m_overlap_node_vs,ncnt);
     // loop over the elements surrounding node ncnt
     for (std::size_t ecnt = 0; ecnt < sur_elem[ncnt].size(); ecnt++) {
       const stk::mesh::Entity  elem          = sur_elem[ncnt][ecnt];
       const stk::mesh::Entity* node_rels     = bulkData.begin_nodes(elem);
       const size_t             num_node_rels = bulkData.num_nodes(elem);
-      std::size_t              ws            = elemGIDws[gid(elem)].ws;
       // loop over the nodes in the surrounding element elem
       for (std::size_t lnode = 0; lnode < num_node_rels; ++lnode) {
         const stk::mesh::Entity node_a = node_rels[lnode];
         // entry is the GID of each node
-        Tpetra_GO entry = gid(node_a);
+        GO entry = gid(node_a);
         // Every node in an element adjacent to node 'globalrow' is in this
         // graph.
-        if (in_list(entry, adjacency) < 0) adjacency.push_back(entry);
+        if (!in_list(entry, adjacency)) {
+          adjacency.push_back(entry);
+        }
       }
     }
-    nodalGraph->insertGlobalIndices(globalrow, adjacency());
+    nodalGraphProxy->insertGlobalIndices(globalrow, adjacency());
   }
 
   // end find_adjacency
 
-  nodalGraph->fillComplete();
+  nodalGraphProxy->fillComplete();
   // Pass the graph RCP to the nodal data block
-  stkMeshStruct->nodal_data_base->updateNodalGraph(nodalGraph);
+  stkMeshStruct->nodal_data_base->updateNodalGraph(nodalGraphProxy.getConst());
 }
 
-void
-STKDiscretization::printVertexConnectivity()
+void STKDiscretization::printVertexConnectivity()
 {
-  if (Teuchos::is_null(nodalGraph)) return;
+  if (Teuchos::is_null(nodalGraphProxy)) {
+    return;
+  }
 
-  for (std::size_t i = 0; i < numOverlapNodes; i++) {
-    GO globalvert = overlap_node_mapT->getGlobalElement(i);
+  for (int i=0; i<numOverlapNodes; ++i) {
+    GO globalvert = getGlobalElement(m_overlap_node_vs,i);
 
     std::cout << "Center vert is : " << globalvert + 1 << std::endl;
 
-    Teuchos::ArrayView<const Tpetra_GO> adj;
+    Teuchos::ArrayView<const GO> adj;
 
-    nodalGraph->getGlobalRowView(globalvert, adj);
+    nodalGraphProxy->getGlobalRowView(globalvert, adj);
 
-    for (std::size_t j = 0; j < adj.size(); j++)
-
+    for (int j = 0; j < adj.size(); j++) {
       std::cout << "                  " << adj[j] + 1 << std::endl;
+    }
   }
 }
 
@@ -2918,14 +2864,11 @@ STKDiscretization::buildSideSetProjectors()
   // Note: the Global index of a node should be the same in both this and the
   // side discretizations
   //       since the underlying STK entities should have the same ID
-  Teuchos::RCP<const Tpetra_Map> ss_ov_mapT, ss_mapT;
-  Teuchos::RCP<Tpetra_CrsGraph>  graphP, ov_graphP;
-  Teuchos::RCP<Tpetra_CrsMatrix> P, ov_P;
-#ifdef ALBANY_EPETRA
-  Teuchos::RCP<Epetra_CrsMatrix> P_E;
-#endif
+  Teuchos::RCP<const Thyra_VectorSpace> ss_ov_vs, ss_vs;
+  Teuchos::RCP<ThyraCrsGraphProxy>  graphP, ov_graphP;
+  Teuchos::RCP<Thyra_LinearOp> P, ov_P;
 
-  Teuchos::Array<Tpetra_GO> cols(1);
+  Teuchos::Array<GO> cols(1);
   Teuchos::Array<ST> vals(1);
   vals[0] = 1.0;
 
@@ -2940,8 +2883,8 @@ STKDiscretization::buildSideSetProjectors()
     const AbstractSTKMeshStruct& ss_mesh     = *disc.stkMeshStruct;
 
     // Get the maps
-    ss_ov_mapT = disc.getOverlapMapT();
-    ss_mapT    = disc.getMapT();
+    ss_ov_vs = disc.getOverlapVectorSpace();
+    ss_vs    = disc.getVectorSpace();
 
     // Extract the sides
     stk::mesh::Part&    part = *stkMeshStruct->ssPartVec.find(it.first)->second;
@@ -2953,126 +2896,68 @@ STKDiscretization::buildSideSetProjectors()
         selector, stkMeshStruct->bulkData->buckets(SIDE_RANK), sides);
 
     // The projector: first the overlapped...
-    ov_graphP =
-        Teuchos::rcp(new Tpetra_CrsGraph(ss_ov_mapT, 1, Tpetra::StaticProfile));
-    num_entries = ss_ov_mapT->getNodeNumElements();
-    ss_indices  = ss_ov_mapT->getNodeElementList();
+    ov_graphP = Teuchos::rcp(new ThyraCrsGraphProxy(ss_ov_vs, ss_ov_vs, 1));
+    num_entries = getSpmdVectorSpace(ss_ov_vs)->localSubDim();
 
     const std::map<GO, GO>& side_cell_map = sideToSideSetCellMap.at(it.first);
-    const std::map<GO, std::vector<int>>& node_numeration_map =
-        sideNodeNumerationMap.at(it.first);
+    const std::map<GO, std::vector<int>>& node_numeration_map = sideNodeNumerationMap.at(it.first);
     std::set<GO> processed_node;
-    GO node_gid, ss_node_gid, side_gid, ss_cell_gid, globalDOF, ss_globalDOF;
+    GO node_gid, ss_node_gid, side_gid, ss_cell_gid;
     std::pair<std::set<GO>::iterator, bool> check;
     stk::mesh::Entity ss_cell;
     for (auto side : sides) {
       side_gid    = gid(side);
       ss_cell_gid = side_cell_map.at(side_gid);
-      ss_cell     = ss_mesh.bulkData->get_entity(
-          stk::topology::ELEM_RANK, ss_cell_gid + 1);
+      ss_cell     = ss_mesh.bulkData->get_entity(stk::topology::ELEM_RANK, ss_cell_gid + 1);
 
       int num_side_nodes = stkMeshStruct->bulkData->num_nodes(side);
-      const stk::mesh::Entity* side_nodes =
-          stkMeshStruct->bulkData->begin_nodes(side);
-      const stk::mesh::Entity* ss_cell_nodes =
-          ss_mesh.bulkData->begin_nodes(ss_cell);
+      const stk::mesh::Entity* side_nodes = stkMeshStruct->bulkData->begin_nodes(side);
+      const stk::mesh::Entity* ss_cell_nodes = ss_mesh.bulkData->begin_nodes(ss_cell);
       for (int i(0); i < num_side_nodes; ++i) {
         node_gid = gid(side_nodes[i]);
         check    = processed_node.insert(node_gid);
         if (check.second) {
           // This node was not processed before. Let's do it.
-          ss_node_gid =
-              disc.gid(ss_cell_nodes[node_numeration_map.at(side_gid)[i]]);
+          ss_node_gid = disc.gid(ss_cell_nodes[node_numeration_map.at(side_gid)[i]]);
 
-          for (int eq(0); eq < neq; ++eq) {
+          for (int eq(0); eq < static_cast<int>(neq); ++eq) {
             cols[0] = getGlobalDOF(node_gid, eq);
-            ov_graphP->insertGlobalIndices(
-                disc.getGlobalDOF(ss_node_gid, eq), cols());
+            ov_graphP->insertGlobalIndices(disc.getGlobalDOF(ss_node_gid, eq), cols());
           }
         }
       }
     }
 
-    ov_graphP->fillComplete(overlap_mapT, ss_ov_mapT);
-    ov_P = Teuchos::rcp(new Tpetra_CrsMatrix(
-        ov_graphP));  // This constructor creates matrix with static profile
-    ov_P->setAllToScalar(1.0);
-    ov_P->fillComplete();
-    ov_projectorsT[sideSetName] = ov_P;
+    ov_graphP->fillComplete();
+    ov_P = ov_graphP->createOp();
+    assign(ov_P,1.0);
+    ov_projectors[sideSetName] = ov_P;
 
     // ...then the non-overlapped
-    graphP =
-        Teuchos::rcp(new Tpetra_CrsGraph(ss_mapT, 1, Tpetra::StaticProfile));
-    processed_node.clear();
-    LO bad = Teuchos::OrdinalTraits<LO>::invalid();
-    for (auto side : sides) {
-      side_gid    = gid(side);
-      ss_cell_gid = side_cell_map.at(side_gid);
-      ss_cell     = ss_mesh.bulkData->get_entity(
-          stk::topology::ELEM_RANK, ss_cell_gid + 1);
+    graphP = Teuchos::rcp( new ThyraCrsGraphProxy(ss_vs, ss_vs, ov_graphP) );
 
-      int num_side_nodes = stkMeshStruct->bulkData->num_nodes(side);
-      const stk::mesh::Entity* side_nodes =
-          stkMeshStruct->bulkData->begin_nodes(side);
-      const stk::mesh::Entity* ss_cell_nodes =
-          ss_mesh.bulkData->begin_nodes(ss_cell);
-      for (int i(0); i < num_side_nodes; ++i) {
-        node_gid = gid(side_nodes[i]);
-        if (node_mapT->getLocalElement(node_gid) == bad) {
-          // This node is not in the non-overlapped map
-          continue;
-        }
-
-        check = processed_node.insert(node_gid);
-        if (check.second) {
-          // This node was not processed before. Let's do it.
-          ss_node_gid =
-              disc.gid(ss_cell_nodes[node_numeration_map.at(side_gid)[i]]);
-
-          for (int eq(0); eq < neq; ++eq) {
-            cols[0] = getGlobalDOF(node_gid, eq);
-            graphP->insertGlobalIndices(
-                disc.getGlobalDOF(ss_node_gid, eq), cols());
-          }
-        }
-      }
-    }
-
-    graphP->fillComplete(mapT, ss_mapT);
-    P = Teuchos::rcp(new Tpetra_CrsMatrix(
-        graphP));  // This constructor creates matrix with static profile
-    P->setAllToScalar(1.0);
-    P->fillComplete();
-    projectorsT[sideSetName] = P;
-
-#ifdef ALBANY_EPETRA
-    P_E = Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(ov_P, comm);
-    ov_projectors[sideSetName] = P_E;
-
-    P_E = Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(P, comm);
-    projectors[sideSetName] = P_E;
-#endif
+    P = graphP->createOp();
+    assign(P,1.0);
+    projectors[sideSetName] = P;
   }
 }
 
-void
-STKDiscretization::updateMesh()
+void STKDiscretization::updateMesh()
 {
-  const StateInfoStruct& nodal_param_states =
-      stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
+  const StateInfoStruct& nodal_param_states = stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
   nodalDOFsStructContainer.addEmptyDOFsStruct("ordinary_solution", "", neq);
   nodalDOFsStructContainer.addEmptyDOFsStruct("mesh_nodes", "", 1);
   for (size_t is = 0; is < nodal_param_states.size(); is++) {
     const StateStruct&            param_state = *nodal_param_states[is];
     const StateStruct::FieldDims& dim         = param_state.dim;
     int                                   numComps    = 1;
-    if (dim.size() == 3)  // vector
+    if (dim.size() == 3) {  // vector
       numComps = dim[2];
-    else if (dim.size() == 4)  // tensor
+    } else if (dim.size() == 4) {  // tensor
       numComps = dim[2] * dim[3];
+    }
 
-    nodalDOFsStructContainer.addEmptyDOFsStruct(
-        param_state.name, param_state.meshPart, numComps);
+    nodalDOFsStructContainer.addEmptyDOFsStruct(param_state.name, param_state.meshPart, numComps);
   }
 
   computeNodalVectorSpaces(false);
@@ -3087,7 +2972,7 @@ STKDiscretization::updateMesh()
 
   setupMLCoords();
 
-  computeNodalMaps(true);
+  computeNodalVectorSpaces(true);
 
   computeOverlapNodesAndUnknowns();
 
@@ -3124,7 +3009,7 @@ STKDiscretization::updateMesh()
   if (stkMeshStruct->sideSetMeshStructs.size() > 0) {
     for (auto it : stkMeshStruct->sideSetMeshStructs) {
       Teuchos::RCP<STKDiscretization> side_disc =
-          Teuchos::rcp(new STKDiscretization(discParams, it.second, commT));
+          Teuchos::rcp(new STKDiscretization(discParams, it.second, comm));
       // side_disc->updateMesh();
       sideSetDiscretizations.insert(std::make_pair(it.first, side_disc));
       sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
