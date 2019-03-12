@@ -57,7 +57,7 @@ class SolverFactory {
   create(
       const Teuchos::RCP<const Teuchos_Comm>&  appCommT,
       const Teuchos::RCP<const Teuchos_Comm>&  solverCommT,
-      const Teuchos::RCP<const Tpetra_Vector>& initial_guess = Teuchos::null);
+      const Teuchos::RCP<const Thyra_Vector>& initial_guess = Teuchos::null);
 #endif
 
   // Thyra version of above
@@ -65,7 +65,7 @@ class SolverFactory {
   createT(
       const Teuchos::RCP<const Teuchos_Comm>&  appComm,
       const Teuchos::RCP<const Teuchos_Comm>&  solverComm,
-      const Teuchos::RCP<const Tpetra_Vector>& initial_guess = Teuchos::null);
+      const Teuchos::RCP<const Thyra_Vector>& initial_guess = Teuchos::null);
 
 #if defined(ALBANY_EPETRA)
   Teuchos::RCP<EpetraExt::ModelEvaluator>
@@ -73,7 +73,7 @@ class SolverFactory {
       Teuchos::RCP<Application>&               albanyApp,
       const Teuchos::RCP<const Teuchos_Comm>&  appCommT,
       const Teuchos::RCP<const Teuchos_Comm>&  solverCommT,
-      const Teuchos::RCP<const Tpetra_Vector>& initial_guess   = Teuchos::null,
+      const Teuchos::RCP<const Thyra_Vector>& initial_guess   = Teuchos::null,
       bool                                     createAlbanyApp = true);
 #endif
 
@@ -84,7 +84,7 @@ class SolverFactory {
       //      Teuchos::RCP<ApplicationT>& albanyApp,
       const Teuchos::RCP<const Teuchos_Comm>&  appComm,
       const Teuchos::RCP<const Teuchos_Comm>&  solverComm,
-      const Teuchos::RCP<const Tpetra_Vector>& initial_guess   = Teuchos::null,
+      const Teuchos::RCP<const Thyra_Vector>& initial_guess   = Teuchos::null,
       bool                                     createAlbanyApp = true);
 
 #if defined(ALBANY_EPETRA)
@@ -93,14 +93,14 @@ class SolverFactory {
       Teuchos::RCP<Application>&               albanyApp,
       const Teuchos::RCP<const Teuchos_Comm>&  appCommT,
       const Teuchos::RCP<const Teuchos_Comm>&  solverCommT,
-      const Teuchos::RCP<const Tpetra_Vector>& initial_guess   = Teuchos::null,
+      const Teuchos::RCP<const Thyra_Vector>& initial_guess   = Teuchos::null,
       bool                                     createAlbanyApp = true);
 
   Teuchos::RCP<EpetraExt::ModelEvaluator>
   createAlbanyAppAndModel(
       Teuchos::RCP<Application>&               albanyApp,
       const Teuchos::RCP<const Teuchos_Comm>&  appCommT,
-      const Teuchos::RCP<const Tpetra_Vector>& initial_guess = Teuchos::null);
+      const Teuchos::RCP<const Thyra_Vector>& initial_guess = Teuchos::null);
 #endif
 
   // Thyra version of above
@@ -109,7 +109,7 @@ class SolverFactory {
       Teuchos::RCP<Application>& albanyApp,
       //      Teuchos::RCP<ApplicationT>& albanyApp,
       const Teuchos::RCP<const Teuchos_Comm>&  appComm,
-      const Teuchos::RCP<const Tpetra_Vector>& initial_guess   = Teuchos::null,
+      const Teuchos::RCP<const Thyra_Vector>& initial_guess   = Teuchos::null,
       const bool                               createAlbanyApp = true);
 
 #if defined(ALBANY_EPETRA)

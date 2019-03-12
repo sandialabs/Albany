@@ -10,7 +10,6 @@
 #if defined(ALBANY_EPETRA)
 #include "Albany_ObserverFactory.hpp"
 #include "Albany_PiroObserver.hpp"
-#include "Albany_SaveEigenData.hpp"
 #include "NOX_Epetra_Observer.H"
 #include "Petra_Converters.hpp"
 #include "Piro_Epetra_SolverFactory.hpp"
@@ -76,32 +75,6 @@
 #if defined(ALBANY_EPETRA)
 namespace Albany {
 
-class NOXObserverConstructor
-    : public Piro::ProviderBase<NOX::Epetra::Observer> {
- public:
-  explicit NOXObserverConstructor(const Teuchos::RCP<Application>& app)
-      : factory_(app), instance_(Teuchos::null)
-  {
-  }
-
-  virtual Teuchos::RCP<NOX::Epetra::Observer>
-  getInstance(const Teuchos::RCP<Teuchos::ParameterList>& params);
-
- private:
-  NOXObserverFactory                  factory_;
-  Teuchos::RCP<NOX::Epetra::Observer> instance_;
-};
-
-Teuchos::RCP<NOX::Epetra::Observer>
-NOXObserverConstructor::getInstance(
-    const Teuchos::RCP<Teuchos::ParameterList>& /*params*/)
-{
-  if (Teuchos::is_null(instance_)) {
-    instance_ = factory_.createInstance();
-  }
-  return instance_;
-}
-
 class NOXStatelessObserverConstructor
     : public Piro::ProviderBase<NOX::Epetra::Observer> {
  public:
@@ -149,39 +122,6 @@ RythmosObserverConstructor::getInstance(
   return instance_;
 }
 #endif
-
-class SaveEigenDataConstructor
-    : public Piro::ProviderBase<LOCA::SaveEigenData::AbstractStrategy> {
- public:
-  SaveEigenDataConstructor(
-      Teuchos::ParameterList& locaParams,
-      StateManager*           pStateMgr,
-      const Teuchos::RCP<Piro::ProviderBase<NOX::Epetra::Observer>>&
-          observerProvider)
-      : locaParams_(locaParams),
-        pStateMgr_(pStateMgr),
-        observerProvider_(observerProvider)
-  {
-  }
-
-  virtual Teuchos::RCP<LOCA::SaveEigenData::AbstractStrategy>
-  getInstance(const Teuchos::RCP<Teuchos::ParameterList>& params);
-
- private:
-  Teuchos::ParameterList& locaParams_;
-  StateManager*           pStateMgr_;
-
-  Teuchos::RCP<Piro::ProviderBase<NOX::Epetra::Observer>> observerProvider_;
-};
-
-Teuchos::RCP<LOCA::SaveEigenData::AbstractStrategy>
-SaveEigenDataConstructor::getInstance(
-    const Teuchos::RCP<Teuchos::ParameterList>& params)
-{
-  const Teuchos::RCP<NOX::Epetra::Observer> noxObserver =
-      observerProvider_->getInstance(params);
-  return Teuchos::rcp(new SaveEigenData(locaParams_, noxObserver, pStateMgr_));
-}
 
 }  // namespace Albany
 #endif
@@ -271,13 +211,13 @@ Albany::SolverFactory::~SolverFactory()
 #if defined(ALBANY_EPETRA)
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::create(
-    const Teuchos::RCP<const Teuchos_Comm>&  appCommT,
-    const Teuchos::RCP<const Teuchos_Comm>&  solverCommT,
-    const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+    const Teuchos::RCP<const Teuchos_Comm>&  appComm,
+    const Teuchos::RCP<const Teuchos_Comm>&  solverComm,
+    const Teuchos::RCP<const Thyra_Vector>& initial_guess)
 {
   Teuchos::RCP<Albany::Application> dummyAlbanyApp;
   return createAndGetAlbanyApp(
-      dummyAlbanyApp, appCommT, solverCommT, initial_guess);
+      dummyAlbanyApp, appComm, solverComm, initial_guess);
 }
 #endif
 
@@ -285,7 +225,7 @@ Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
 Albany::SolverFactory::createT(
     const Teuchos::RCP<const Teuchos_Comm>&  appComm,
     const Teuchos::RCP<const Teuchos_Comm>&  solverComm,
-    const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+    const Teuchos::RCP<const Thyra_Vector>& initial_guess)
 {
   Teuchos::RCP<Albany::Application> dummyAlbanyApp;
   //  Teuchos::RCP<Albany::ApplicationT> dummyAlbanyApp;
@@ -297,19 +237,15 @@ Albany::SolverFactory::createT(
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::createAndGetAlbanyApp(
     Teuchos::RCP<Albany::Application>&       albanyApp,
-    const Teuchos::RCP<const Teuchos_Comm>&  appCommT,
-    const Teuchos::RCP<const Teuchos_Comm>&  solverCommT,
-    const Teuchos::RCP<const Tpetra_Vector>& initial_guess,
+    const Teuchos::RCP<const Teuchos_Comm>&  appComm,
+    const Teuchos::RCP<const Teuchos_Comm>&  solverComm,
+    const Teuchos::RCP<const Thyra_Vector>& initial_guess,
     bool                                     createAlbanyApp)
 {
   const RCP<ParameterList> problemParams =
       Teuchos::sublist(appParams, "Problem");
   const std::string solutionMethod =
       problemParams->get("Solution Method", "Steady");
-  const Teuchos::RCP<const Epetra_Comm> appComm =
-      Albany::createEpetraCommFromTeuchosComm(appCommT);
-  const Teuchos::RCP<const Epetra_Comm> solverComm =
-      Albany::createEpetraCommFromTeuchosComm(solverCommT);
 
 #if defined(ALBANY_LCM)
   bool const is_schwarz = solutionMethod == "Coupled Schwarz" ||
@@ -319,7 +255,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
   if (solutionMethod == "ATO Problem") {
 #ifdef ALBANY_ATO
     // IK, 10/16/14: need to convert ATO::Solver to Tpetra
-    return rcp(new ATO::Solver(appParams, solverCommT, initial_guess));
+    return rcp(new ATO::Solver(appParams, solverComm, initial_guess));
 #else  /* ALBANY_ATO */
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
@@ -327,13 +263,12 @@ Albany::SolverFactory::createAndGetAlbanyApp(
         "Must activate ATO (topological optimization)\n");
 #endif /* ALBANY_ATO */
   }
-
   // Solver uses a single app, create it here along with observer
   RCP<Albany::Application> app;
 
   if (createAlbanyApp) {
     app = rcp(new Albany::Application(
-        appCommT, appParams, initial_guess, is_schwarz_));
+        appComm, appParams, initial_guess, is_schwarz_));
 
     // Pass back albany app so that interface beyond ModelEvaluator can be used.
     // This is essentially a hack to allow additional in/out arguments beyond
@@ -366,29 +301,17 @@ Albany::SolverFactory::createAndGetAlbanyApp(
         rythmosObserverProvider);
 #endif
 
-    const RCP<Piro::ProviderBase<NOX::Epetra::Observer>> noxObserverProvider =
-        rcp(new NOXObserverConstructor(app));
-    piroEpetraFactory.setSource<NOX::Epetra::Observer>(noxObserverProvider);
-
     // LOCA auxiliary objects
     {
       const RCP<AAdapt::AdaptiveSolutionManager> adaptMgr =
           app->getAdaptSolMgr();
       piroEpetraFactory.setSource<Piro::Epetra::AdaptiveSolutionManager>(
           adaptMgr);
-
-      const RCP<Piro::ProviderBase<NOX::Epetra::Observer>>
-          noxStatelessObserverProvider =
-              rcp(new NOXStatelessObserverConstructor(app));
-      const RCP<Piro::ProviderBase<LOCA::SaveEigenData::AbstractStrategy>>
-          saveEigenDataProvider = rcp(new SaveEigenDataConstructor(
-              piroParams->sublist("LOCA"),
-              &app->getStateMgr(),
-              noxStatelessObserverProvider));
-      piroEpetraFactory.setSource<LOCA::SaveEigenData::AbstractStrategy>(
-          saveEigenDataProvider);
     }
   }
+
+  // Silence compiler warning in case it wasn't used (due to ifdef logic)
+  (void) solverComm;
 
   // Piro::Epetra::SolverFactory
   return piroEpetraFactory.createSolver(piroParams, model);
@@ -397,14 +320,11 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 Teuchos::RCP<Thyra::ModelEvaluator<double>>
 Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     Teuchos::RCP<Application>&               albanyApp,
-    const Teuchos::RCP<const Teuchos_Comm>&  appCommT,
-    const Teuchos::RCP<const Teuchos_Comm>&  solverCommT,
-    const Teuchos::RCP<const Tpetra_Vector>& initial_guess,
+    const Teuchos::RCP<const Teuchos_Comm>&  appComm,
+    const Teuchos::RCP<const Teuchos_Comm>&  solverComm,
+    const Teuchos::RCP<const Thyra_Vector>&  initial_guess,
     bool                                     createAlbanyApp)
 {
-  const Teuchos::RCP<const Epetra_Comm> appComm =
-      Albany::createEpetraCommFromTeuchosComm(appCommT);
-
   const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
   const Teuchos::Ptr<const std::string> solverToken(
       piroParams->getPtr<std::string>("Solver Type"));
@@ -426,7 +346,7 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     //    createAndGetAlbanyApp. Why? (Mauro)
     if (createAlbanyApp) {
       app = rcp(new Albany::Application(
-          appCommT, appParams, initial_guess, is_schwarz_));
+          appComm, appParams, initial_guess, is_schwarz_));
 
       // Pass back albany app so that interface beyond ModelEvaluator can be
       // used.
@@ -475,7 +395,7 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
 
   const Teuchos::RCP<EpetraExt::ModelEvaluator> epetraSolver =
       this->createAndGetAlbanyApp(
-          albanyApp, appCommT, solverCommT, initial_guess, createAlbanyApp);
+          albanyApp, appComm, solverComm, initial_guess, createAlbanyApp);
 
   if (solutionMethod == "ATO Problem") {
     return Thyra::epetraModelEvaluator(epetraSolver, Teuchos::null);
@@ -516,7 +436,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     Teuchos::RCP<Albany::Application>&       albanyApp,
     const Teuchos::RCP<const Teuchos_Comm>&  appComm,
     const Teuchos::RCP<const Teuchos_Comm>&  solverComm,
-    const Teuchos::RCP<const Tpetra_Vector>& initial_guess,
+    const Teuchos::RCP<const Thyra_Vector>&  initial_guess,
     bool                                     createAlbanyApp)
 {
   const RCP<ParameterList> problemParams =
@@ -762,6 +682,10 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       std::logic_error,
       "Reached end of createAndGetAlbanyAppT()"
           << "\n");
+
+  // Silence compiler warning in case it wasn't used (due to ifdef logic)
+  (void) solverComm;
+
   return Teuchos::null;
 }
 
@@ -769,12 +693,12 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::createAlbanyAppAndModel(
     Teuchos::RCP<Albany::Application>&       albanyApp,
-    const Teuchos::RCP<const Teuchos_Comm>&  appCommT,
-    const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+    const Teuchos::RCP<const Teuchos_Comm>&  appComm,
+    const Teuchos::RCP<const Thyra_Vector>& initial_guess)
 {
   // Create application
   albanyApp = rcp(
-      new Albany::Application(appCommT, appParams, initial_guess, is_schwarz_));
+      new Albany::Application(appComm, appParams, initial_guess, is_schwarz_));
 
   return createModel(albanyApp);
 }
@@ -797,10 +721,10 @@ Albany::SolverFactory::createModel(const Teuchos::RCP<Albany::Application>& alba
 
 Teuchos::RCP<Thyra::ModelEvaluator<ST>>
 Albany::SolverFactory::createAlbanyAppAndModelT(
-    Teuchos::RCP<Albany::Application>&       albanyApp,
-    const Teuchos::RCP<const Teuchos_Comm>&  appComm,
-    const Teuchos::RCP<const Tpetra_Vector>& initial_guess,
-    const bool                               createAlbanyApp)
+    Teuchos::RCP<Albany::Application>&      albanyApp,
+    const Teuchos::RCP<const Teuchos_Comm>& appComm,
+    const Teuchos::RCP<const Thyra_Vector>& initial_guess,
+    const bool                              createAlbanyApp)
 {
   if (createAlbanyApp) {
     // Create application

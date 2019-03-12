@@ -61,6 +61,7 @@
 // TODO: remove this if/when the thyra refactor is 100% complete,
 //       and there is no more any Tpetra stuff in this class
 #include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_EpetraThyraUtils.hpp"
 
 //#define WRITE_TO_MATRIX_MARKET
 //#define DEBUG_OUTPUT
@@ -112,7 +113,7 @@ namespace Albany
 Application::
 Application (const RCP<const Teuchos_Comm> &comm_,
              const RCP<Teuchos::ParameterList> &params,
-             const RCP<const Tpetra_Vector> &initial_guess, 
+             const RCP<const Thyra_Vector>& initial_guess, 
              const bool schwarz)
  : is_schwarz_{schwarz}
  , no_dir_bcs_(false)
@@ -741,7 +742,7 @@ bool Application::isLCMProblem(
 
 void Application::finalSetUp(
     const Teuchos::RCP<Teuchos::ParameterList> &params,
-    const Teuchos::RCP<const Tpetra_Vector> &initial_guess) {
+    const Teuchos::RCP<const Thyra_Vector>& initial_guess) {
 
   bool TpetraBuild = build_type() == BuildType::Tpetra;
 
@@ -762,12 +763,11 @@ void Application::finalSetUp(
 
 #if defined(ALBANY_EPETRA)
   if (!TpetraBuild) {
-    RCP<Epetra_Vector> initial_guessE;
+    RCP<const Epetra_Vector> initial_guessE;
     if (Teuchos::nonnull(initial_guess)) {
-      Petra::TpetraVector_To_EpetraVector(initial_guess, initial_guessE, comm);
+      initial_guessE = getConstEpetraVector(initial_guess);
     }
-    solMgr =
-        rcp(new AAdapt::AdaptiveSolutionManager(params, disc, initial_guessE));
+    solMgr = rcp(new AAdapt::AdaptiveSolutionManager(params, disc, initial_guessE));
   }
 #endif
 
@@ -1010,37 +1010,47 @@ RCP<Epetra_Operator> Application::getPreconditioner() {
 }
 
 RCP<const Epetra_Vector> Application::getInitialSolution() const {
-  const Teuchos::RCP<const Tpetra_MultiVector> xMV =
+  const Teuchos::RCP<const Thyra_MultiVector> xMV =
       solMgrT->getInitialSolution();
-  Teuchos::RCP<const Tpetra_Vector> xT = xMV->getVector(0);
+  Teuchos::RCP<const Thyra_Vector> x = xMV->col(0);
 
   const Teuchos::RCP<Epetra_Vector> &initial_x = solMgr->get_initial_x();
-  Petra::TpetraVector_To_EpetraVector(xT, *initial_x, comm);
+  auto data = getLocalData(x);
+  for (int i=0; i<data.size(); ++i) {
+    (*initial_x)[i] = data[i];
+  }
+  
   return initial_x;
 }
 
 RCP<const Epetra_Vector> Application::getInitialSolutionDot() const {
-  const Teuchos::RCP<const Tpetra_MultiVector> xMV =
+  const Teuchos::RCP<const Thyra_MultiVector> xMV =
       solMgrT->getInitialSolution();
-  if (xMV->getNumVectors() < 2)
+  if (xMV->domain()->dim() < 2) {
     return Teuchos::null;
-  Teuchos::RCP<const Tpetra_Vector> xdotT = xMV->getVector(1);
+  }
+  Teuchos::RCP<const Thyra_Vector> xdot = xMV->col(1);
 
-  const Teuchos::RCP<Epetra_Vector> &initial_x_dot = solMgr->get_initial_xdot();
-  Petra::TpetraVector_To_EpetraVector(xdotT, *initial_x_dot, comm);
+  const Teuchos::RCP<Epetra_Vector>& initial_x_dot = solMgr->get_initial_xdot();
+  auto data = getLocalData(xdot);
+  for (int i=0; i<data.size(); ++i) {
+    (*initial_x_dot)[i] = data[i];
+  }
   return initial_x_dot;
 }
 
 RCP<const Epetra_Vector> Application::getInitialSolutionDotDot() const {
-  const Teuchos::RCP<const Tpetra_MultiVector> xMV =
-      solMgrT->getInitialSolution();
-  if (xMV->getNumVectors() < 3)
+  const Teuchos::RCP<const Thyra_MultiVector> xMV = solMgrT->getInitialSolution();
+  if (xMV->domain()->dim() < 3) {
     return Teuchos::null;
-  Teuchos::RCP<const Tpetra_Vector> xdotdotT = xMV->getVector(2);
+  }
+  Teuchos::RCP<const Thyra_Vector> xdotdot = xMV->col(2);
 
-  const Teuchos::RCP<Epetra_Vector> &initial_x_dotdot =
-      solMgr->get_initial_xdotdot();
-  Petra::TpetraVector_To_EpetraVector(xdotdotT, *initial_x_dotdot, comm);
+  const Teuchos::RCP<Epetra_Vector>& initial_x_dotdot = solMgr->get_initial_xdotdot();
+  auto data = getLocalData(xdotdot);
+  for (int i=0; i<data.size(); ++i) {
+    (*initial_x_dotdot)[i] = data[i];
+  }
   return initial_x_dotdot;
 }
 #endif
@@ -2803,7 +2813,7 @@ void Application::determinePiroSolver(
 void Application::loadBasicWorksetInfo(PHAL::Workset &workset,
                                                 double current_time)
 {
-  auto overlapped_MV = solMgrT->getOverlappedSolution_Thyra();
+  auto overlapped_MV = solMgrT->getOverlappedSolution();
   auto numVectors = overlapped_MV->domain()->dim();
 
   workset.x = overlapped_MV->col(0);
@@ -2825,7 +2835,7 @@ void Application::loadBasicWorksetInfoSDBCs(
     const double current_time)
 {
   // Scatter owned solution into the overlapped one
-  auto overlapped_MV = solMgrT->getOverlappedSolution_Thyra();
+  auto overlapped_MV = solMgrT->getOverlappedSolution();
   auto overlapped_sol = Thyra::createMember(overlapped_MV->range());
   overlapped_sol->assign(0.0);
   solMgrT->get_cas_manager()->scatter(owned_sol,overlapped_sol,CombineMode::INSERT);
@@ -3003,7 +3013,7 @@ void Application::setupBasicWorksetInfo(
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec> &p)
 {
-  Teuchos::RCP<const Thyra_MultiVector> overlapped_MV = solMgrT->getOverlappedSolution_Thyra();
+  Teuchos::RCP<const Thyra_MultiVector> overlapped_MV = solMgrT->getOverlappedSolution();
   auto numVectors = overlapped_MV->domain()->dim();
 
   Teuchos::RCP<const Thyra_Vector> overlapped_x = overlapped_MV->col(0);
@@ -3011,7 +3021,7 @@ void Application::setupBasicWorksetInfo(
   Teuchos::RCP<const Thyra_Vector> overlapped_xdotdot = numVectors > 2 ? overlapped_MV->col(2) : Teuchos::null;
 
   // Scatter xT and xdotT to the overlapped distrbution
-  solMgrT->scatterX(x, xdot, xdotdot);
+  solMgrT->scatterX(*x, xdot.ptr(), xdotdot.ptr());
 
   // Scatter distributed parameters
   distParamLib->scatter();

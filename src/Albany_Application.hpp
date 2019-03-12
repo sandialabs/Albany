@@ -81,7 +81,7 @@ public:
   Application(
       const Teuchos::RCP<const Teuchos_Comm> &comm,
       const Teuchos::RCP<Teuchos::ParameterList> &params,
-      const Teuchos::RCP<const Tpetra_Vector> &initial_guess = Teuchos::null,
+      const Teuchos::RCP<const Thyra_Vector>& initial_guess = Teuchos::null,
       const bool schwarz = false);
 
   //! Constructor
@@ -97,7 +97,7 @@ public:
   void createDiscretization();
   void finalSetUp(
       const Teuchos::RCP<Teuchos::ParameterList> &params,
-      const Teuchos::RCP<const Tpetra_Vector> &initial_guess = Teuchos::null);
+      const Teuchos::RCP<const Thyra_Vector>& initial_guess = Teuchos::null);
 
   //! Get underlying abstract discretization
   Teuchos::RCP<Albany::AbstractDiscretization> getDiscretization() const;

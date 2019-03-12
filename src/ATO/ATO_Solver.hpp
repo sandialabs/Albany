@@ -110,7 +110,7 @@ namespace ATO {
 
      Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
             const Teuchos::RCP<const Teuchos_Comm>& comm,
-            const Teuchos::RCP<const Tpetra_Vector>& initial_guess);
+            const Teuchos::RCP<const Thyra_Vector>& initial_guess);
 
     ~Solver();
 
@@ -243,7 +243,7 @@ namespace ATO {
 
     SolverSubSolver CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appParams,
                                     const Teuchos::RCP<const Teuchos_Comm>& comm,
-            const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
+            const Teuchos::RCP<const Thyra_Vector>& initial_guess  = Teuchos::null);
 
     Teuchos::RCP<Teuchos::ParameterList>
       createHomogenizationInputFile(

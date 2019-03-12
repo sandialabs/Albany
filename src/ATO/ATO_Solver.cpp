@@ -44,7 +44,7 @@ ATO::GlobalPoint::GlobalPoint(){coords[0]=0.0; coords[1]=0.0; coords[2]=0.0;}
 ATO::Solver::
 Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
        const Teuchos::RCP<const Teuchos_Comm>& comm,
-       const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+       const Teuchos::RCP<const Thyra_Vector>& /* initial_guess */)
 : c_num_parameters(0), // no parameters
   c_num_responses(1),  // only response is solution vector
   _solverComm(comm), 
@@ -1229,7 +1229,7 @@ ATO::Solver::GetNumOptDofs()
 ATO::SolverSubSolver
 ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appParams, 
                               const Teuchos::RCP<const Teuchos_Comm>& commT,
-                              const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+                              const Teuchos::RCP<const Thyra_Vector>& initial_guess)
 /******************************************************************************/
 {
   using Teuchos::RCP;

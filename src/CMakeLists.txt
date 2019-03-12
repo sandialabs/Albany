@@ -46,7 +46,6 @@ IF(ALBANY_EPETRA)
     Albany_NOXObserver.cpp
     Albany_NOXStatelessObserver.cpp
     Albany_PiroObserver.cpp
-    Albany_SaveEigenData.cpp
   )
   IF(ALBANY_RYTHMOS)
     SET(SOURCES ${SOURCES} Albany_RythmosObserver.cpp)
@@ -89,7 +88,6 @@ SET(HEADERS
 IF(ALBANY_EPETRA)
   SET(HEADERS ${HEADERS}
     Albany_EigendataInfoStruct.hpp
-    Albany_SaveEigenData.hpp
     Albany_ModelEvaluator.hpp
     Albany_NOXObserver.hpp
     Albany_NOXStatelessObserver.hpp

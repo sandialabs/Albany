@@ -483,7 +483,7 @@ ATOT::SpatialFilter::importNeighbors(
 ATOT::Solver::
 Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
        const Teuchos::RCP<const Teuchos_Comm>& comm,
-       const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+       const Teuchos::RCP<const Thyra_Vector>& /* initial_guess */)
 : _solverComm(comm), _mainAppParams(appParams)
 /******************************************************************************/
 {
@@ -1690,7 +1690,7 @@ ATOT::Solver::GetNumOptDofs()
 ATOT::SolverSubSolver
 ATOT::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appParams, 
                               const Teuchos::RCP<const Teuchos_Comm>& commT,
-                              const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+                              const Teuchos::RCP<const Thyra_Vector>& initial_guess)
 /******************************************************************************/
 {
 #ifdef OUTPUT_TO_SCREEN

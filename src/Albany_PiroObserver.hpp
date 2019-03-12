@@ -4,31 +4,28 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: this is Epetra (Albany) function.
-//Not compiled if ALBANY_EPETRA_EXE is off.
+#ifndef ALBANY_PIRO_OBSERVER_HPP
+#define ALBANY_PIRO_OBSERVER_HPP
 
-#ifndef ALBANY_PIROOBSERVER_HPP
-#define ALBANY_PIROOBSERVER_HPP
-
+#include "Albany_ThyraTypes.hpp"
 #include "Piro_ObserverBase.hpp"
-
-#include "Albany_Application.hpp"
-#include "Albany_ObserverImpl.hpp"
-
 #include "Teuchos_RCP.hpp"
 
 namespace Albany {
+
+class Application;
+class ObserverImpl;
 
 class PiroObserver : public Piro::ObserverBase<double> {
 public:
   explicit PiroObserver(const Teuchos::RCP<Application> &app);
 
-  virtual void observeSolution(const Thyra::VectorBase<double> &solution);
+  void observeSolution(const Thyra_Vector& solution);
 
 private:
-  ObserverImpl impl_;
+  Teuchos::RCP<ObserverImpl> impl_;
 };
 
 } // namespace Albany
 
-#endif /*ALBANY_PIROOBSERVER_HPP*/
+#endif // ALBANY_PIRO_OBSERVER_HPP
