@@ -4,33 +4,34 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_SOLUTIONCULLINGSTRATEGY_HPP
-#define ALBANY_SOLUTIONCULLINGSTRATEGY_HPP
+#ifndef ALBANY_SOLUTION_CULLING_STRATEGY_HPP
+#define ALBANY_SOLUTION_CULLING_STRATEGY_HPP
 
 #include "Teuchos_Array.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
-#include "Albany_DataTypes.hpp" 
+
+#include "Albany_ThyraTypes.hpp" 
+#include "Albany_CommTypes.hpp" 
 
 namespace Albany {
 
 class SolutionCullingStrategyBase {
 public:
-  virtual void setupT() {}
+  virtual void setup () {}
 
-  virtual Teuchos::Array<Tpetra_GO> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const = 0;
+  virtual Teuchos::Array<GO> selectedGIDs (const Teuchos::RCP<const Thyra_VectorSpace>& sourceVS) const = 0;
 
-  virtual ~SolutionCullingStrategyBase() {}
+  virtual ~SolutionCullingStrategyBase()  = default;
 };
 
 class Application; // Forward declaration
 
 //! Factory function
 Teuchos::RCP<SolutionCullingStrategyBase>
-createSolutionCullingStrategy(
-    const Teuchos::RCP<const Application> &app,
-    Teuchos::ParameterList &params);
+createSolutionCullingStrategy(const Teuchos::RCP<const Application> &app,
+                              Teuchos::ParameterList &params);
 
 } // namespace Albany
 
-#endif // ALBANY_SOLUTIONCULLINGSTRATEGY_HPP
+#endif // ALBANY_SOLUTION_CULLING_STRATEGY_HPP

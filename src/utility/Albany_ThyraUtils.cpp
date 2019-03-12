@@ -1,6 +1,8 @@
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_ThyraCrsGraphProxy.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_GatherAllV.hpp"
 
 #include "Petra_Converters.hpp"
 
@@ -13,6 +15,7 @@
 #if defined(ALBANY_EPETRA)
 #include "AztecOO_ConditionNumber.h"
 #include "Albany_EpetraThyraUtils.hpp"
+#include "Epetra_LocalMap.h"
 #include <type_traits>
 #endif
 
@@ -24,8 +27,60 @@ namespace Albany
 Teuchos::RCP<const Thyra_VectorSpace>
 createLocallyReplicatedVectorSpace(const int size, const Teuchos::RCP<const Teuchos_Comm> comm)
 {
-  auto comm_thyra = Thyra::convertTpetraToThyraComm(comm);
-  return Thyra::locallyReplicatedDefaultSpmdVectorSpace<ST>(comm_thyra,size);
+  auto bt = build_type();
+  switch (bt) {
+#ifdef ALBANY_EPETRA
+    case BuildType::Epetra:
+    {
+      Teuchos::RCP<const Epetra_BlockMap> emap( new Epetra_LocalMap(size,0,*createEpetraCommFromTeuchosComm(comm)) );
+      return createThyraVectorSpace(emap);
+      break;
+    }
+#endif
+    case BuildType::Tpetra:
+    {
+      Teuchos::RCP<const Tpetra_Map> tmap( new Tpetra_Map(size,Tpetra::LocalGlobal::LocallyReplicated,comm) );
+      return createThyraVectorSpace(tmap);
+      break;
+    }
+    default:
+    {
+      auto comm_thyra = Thyra::convertTpetraToThyraComm(comm);
+      return Thyra::locallyReplicatedDefaultSpmdVectorSpace<ST>(comm_thyra,size);
+    }
+  }
+
+  TEUCHOS_UNREACHABLE_RETURN (Teuchos::null);
+}
+
+Teuchos::RCP<const Thyra_VectorSpace>
+createLocallyReplicatedVectorSpace (const Teuchos::ArrayView<const GO>& gids, const Teuchos::RCP<const Teuchos_Comm> comm)
+{
+  auto bt = build_type();
+  switch (bt) {
+#ifdef ALBANY_EPETRA
+    case BuildType::Epetra:
+    {
+      Teuchos::RCP<const Epetra_BlockMap> emap( new Epetra_BlockMap(-1,gids.size(),
+                                                reinterpret_cast<const Epetra_GO*>(gids.getRawPtr()),
+                                                1,0,*createEpetraCommFromTeuchosComm(comm)) );
+      return createThyraVectorSpace(emap);
+      break;
+    }
+#endif
+    case BuildType::Tpetra:
+    {
+      auto inv = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
+      Teuchos::ArrayView<const Tpetra_GO> tgids(reinterpret_cast<const Tpetra_GO*>(gids.getRawPtr()),gids.size());
+      Teuchos::RCP<const Tpetra_Map> tmap( new Tpetra_Map(inv,tgids,0,comm) );
+      return createThyraVectorSpace(tmap);
+      break;
+    }
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Build type not supported.\n");
+  }
+
+  TEUCHOS_UNREACHABLE_RETURN (Teuchos::null);
 }
 
 GO getGlobalElement (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const LO lid) {
@@ -70,6 +125,55 @@ LO getLocalElement  (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const GO g
 
   // Silence compiler warning
   TEUCHOS_UNREACHABLE_RETURN(-1);
+}
+
+bool locallyOwnedComponent (const Teuchos::RCP<const Thyra_SpmdVectorSpace>& vs, const GO gid)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmap = getTpetraMap(vs,false);
+  if (!tmap.is_null()) {
+    return tmap->isNodeGlobalElement(static_cast<Tpetra_GO>(gid));
+  }
+
+#if defined(ALBANY_EPETRA)
+  auto emap = getEpetraBlockMap(vs,false);
+  if (!emap.is_null()) {
+    // Note: simply calling LID(gid) can be ambiguous, if GO!=int and GO!=long long.
+    //       Hence, we explicitly cast to whatever has size 64 bits (should *always* be long long, but the if is compile time, so no penalty)
+    return emap->MyGID(static_cast<Epetra_GO>(gid));
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
+
+  // Silence compiler warning
+  TEUCHOS_UNREACHABLE_RETURN(false);
+}
+
+bool sameAs (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
+             const Teuchos::RCP<const Thyra_VectorSpace>& vs2)
+{
+  auto tmap1 = getTpetraMap(vs1,false);
+  if (!tmap1.is_null()) {
+    // We don't allow two vs with different linear algebra back ends
+    auto tmap2 = getTpetraMap(vs2,true);
+    return tmap1->isSameAs(*tmap2);
+  }
+#if defined(ALBANY_EPETRA)
+  auto emap1 = getEpetraBlockMap(vs1,false);
+  if (!emap1.is_null()) {
+    // We don't allow two vs with different linear algebra back ends
+    auto emap2 = getEpetraBlockMap(vs2,true);
+    return emap2->SameAs(*emap1);
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
+
+  // Silence compiler warning
+  TEUCHOS_UNREACHABLE_RETURN(false);
 }
 
 Teuchos::RCP<const Thyra_VectorSpace>
@@ -398,6 +502,56 @@ void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
 
   // If all the tries above are unsuccessful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+}
+
+Teuchos::RCP<const Thyra_LinearOp>
+buildRestrictionOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
+                          const Teuchos::RCP<const Thyra_VectorSpace>& subspace)
+{
+  // In the process, verify the that subspace is a subspace of space
+  auto spmd_space    = getSpmdVectorSpace(space);
+  auto spmd_subspace = getSpmdVectorSpace(subspace);
+
+  ThyraCrsGraphProxy proxy(space,subspace,1,true);
+
+  const int localSubDim = spmd_subspace->localSubDim();
+  for (LO lid=0; lid<localSubDim; ++lid) {
+    const GO gid = getGlobalElement(spmd_subspace,lid);
+    TEUCHOS_TEST_FOR_EXCEPTION (!locallyOwnedComponent(spmd_space,gid), std::logic_error,
+                                "Error! The input 'subspace' is not a subspace of the input 'space'.\n");
+    proxy.insertGlobalIndices(gid,Teuchos::arrayView(&gid,1));
+  }
+
+  proxy.fillComplete();
+  Teuchos::RCP<Thyra_LinearOp> P = proxy.createOp();
+  assign(P,1.0);
+
+  return P;
+}
+
+Teuchos::RCP<const Thyra_LinearOp>
+buildProlongationOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
+                           const Teuchos::RCP<const Thyra_VectorSpace>& subspace)
+{
+  // In the process, verify the that subspace is a subspace of space
+  auto spmd_space    = getSpmdVectorSpace(space);
+  auto spmd_subspace = getSpmdVectorSpace(subspace);
+
+  ThyraCrsGraphProxy proxy(subspace,space,1,true);
+
+  const int localSubDim = spmd_subspace->localSubDim();
+  for (LO lid=0; lid<localSubDim; ++lid) {
+    const GO gid = getGlobalElement(spmd_subspace,lid);
+    TEUCHOS_TEST_FOR_EXCEPTION (!locallyOwnedComponent(spmd_space,gid), std::logic_error,
+                                "Error! The input 'subspace' is not a subspace of the input 'space'.\n");
+    proxy.insertGlobalIndices(gid,Teuchos::arrayView(&gid,1));
+  }
+
+  proxy.fillComplete();
+  Teuchos::RCP<Thyra_LinearOp> P = proxy.createOp();
+  assign(P,1.0);
+
+  return P;
 }
 
 double computeConditionNumber (const Teuchos::RCP<const Thyra_LinearOp>& lop)

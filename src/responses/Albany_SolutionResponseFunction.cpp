@@ -6,6 +6,7 @@
 
 #include "Albany_SolutionResponseFunction.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_Application.hpp"
 
 #include <algorithm>
 

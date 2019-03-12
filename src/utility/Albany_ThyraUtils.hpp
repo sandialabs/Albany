@@ -18,13 +18,24 @@ namespace Albany
 Teuchos::RCP<const Thyra_VectorSpace>
 createLocallyReplicatedVectorSpace (const int size, const Teuchos::RCP<const Teuchos_Comm> comm);
 
+Teuchos::RCP<const Thyra_VectorSpace>
+createLocallyReplicatedVectorSpace (const Teuchos::ArrayView<const GO>& gids, const Teuchos::RCP<const Teuchos_Comm> comm);
+
 GO getGlobalElement (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const LO lid);
 LO getLocalElement  (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const GO gid);
+
+// Check if the vector space locally owns a component
+bool locallyOwnedComponent (const Teuchos::RCP<const Thyra_SpmdVectorSpace>& vs, const GO gid);
+
+// Check if two vector spaces are indeed the same vector space
+bool sameAs (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
+             const Teuchos::RCP<const Thyra_VectorSpace>& vs2);
 
 // Remove a set of local components from a vector space
 Teuchos::RCP<const Thyra_VectorSpace>
 removeComponents (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
                   const Teuchos::ArrayView<const LO>& local_components);
+
 // The complement of the above: the specified components are the ones to keep
 Teuchos::RCP<const Thyra_VectorSpace>
 createSubspace (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
@@ -62,6 +73,14 @@ void addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                           const LO lrow,
                           const Teuchos::ArrayView<const LO> indices,
                           const Teuchos::ArrayView<const ST> values);
+
+Teuchos::RCP<const Thyra_LinearOp>
+buildRestrictionOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
+                          const Teuchos::RCP<const Thyra_VectorSpace>& subspace);
+
+Teuchos::RCP<const Thyra_LinearOp>
+buildProlongationOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
+                           const Teuchos::RCP<const Thyra_VectorSpace>& subspace);
 
 // Math properties helpers
 double computeConditionNumber (const Teuchos::RCP<const Thyra_LinearOp>& lop);

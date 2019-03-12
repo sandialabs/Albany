@@ -1,40 +1,34 @@
-//*****************************************************************//
-//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
-//    This Software is released under the BSD license detailed     //
-//    in the file "license.txt" in the top-level Albany directory  //
-//*****************************************************************//
-
-#ifndef TPETRA_GATHERALLV_HPP
-#define TPETRA_GATHERALLV_HPP
+#include "Albany_GatherAllV.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Comm.hpp"
 
-#ifdef HAVE_TPETRA_MPI
+#ifdef HAVE_ALBANY_MPI
 #include <mpi.h>
 #include <Teuchos_DefaultMpiComm.hpp>
-#endif /* HAVE_TPETRA_MPI */
+#endif /* HAVE_ALBANY_MPI */
 
 #include "Teuchos_DefaultSerialComm.hpp"
 
 #include "Teuchos_Array.hpp"
-#include "Teuchos_Assert.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_Details_MpiTypeTraits.hpp"
-
 #include <numeric>
-#include <algorithm>
 
-namespace Tpetra {
+namespace Albany {
 
-template <typename GO>
-int GatherAllV(
-    const Teuchos::RCP<const Teuchos::Comm<int> >& commT,
-    const GO *myVals, int myCount,
-    GO *allVals, int allCount)
+void gatherAllV(const Teuchos::RCP<const Teuchos_Comm>& comm,
+                const Teuchos::ArrayView<const GO>& myVals,
+                Teuchos::Array<GO>& allVals)
 {
-#ifdef HAVE_TPETRA_MPI
-  if (const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get())) {
+  const int myCount  = myVals.size();
+  const int allCount = allVals.size();
+
+  TEUCHOS_TEST_FOR_EXCEPTION (allCount<myCount, std::logic_error,
+                              "Error! The array allVals must be at least as large as myVals.\n"
+                              "       Did you forget to properly size allVals?\n");
+#ifdef HAVE_ALBANY_MPI
+  if (const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (comm.get())) {
     MPI_Comm rawComm = (*mpiComm->getRawMpiComm().get())();
 
     const int cpuCount = mpiComm->getSize();
@@ -47,7 +41,7 @@ int GatherAllV(
 
     Teuchos::Array<int> allValDisps(cpuCount);
     std::partial_sum(allValCounts.begin(), allValCounts.end() - 1, allValDisps.begin() + 1);
-    TEUCHOS_ASSERT(allCount == allValCounts.back() + allValDisps.back());
+    ALBANY_EXPECT(allCount == allValCounts.back() + allValDisps.back());
 
     auto GO_type = Teuchos::Details::MpiTypeTraits<GO>::getType();
     return MPI_Allgatherv(
@@ -55,17 +49,14 @@ int GatherAllV(
         allVals, allValCounts.getRawPtr(), allValDisps.getRawPtr(), GO_type,
         rawComm);
   } else
-#endif /* HAVE_TPETRA_MPI */
-  if (dynamic_cast<const Teuchos::SerialComm<int>*>(commT.get())) {
+#endif /* HAVE_ALBANY_MPI */
+  if (dynamic_cast<const Teuchos::SerialComm<int>*>(comm.get())) {
     TEUCHOS_ASSERT(myCount == allCount);
-    std::copy(myVals, myVals + myCount, allVals);
-    return 0;
+    std::copy(myVals.getRawPtr(), myVals.getRawPtr() + myCount, allVals.getRawPtr());
   } else {
     const bool commTypeNotSupported = true;
     TEUCHOS_TEST_FOR_EXCEPT(commTypeNotSupported);
   }
 }
 
-} // namespace Tpetra
-
-#endif
+} // namespace Albany
