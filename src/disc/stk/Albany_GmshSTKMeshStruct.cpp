@@ -1234,37 +1234,69 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
   for (int k=0; k<numBdTags; ++k) 
   {
     int tag = bdTagsArray[k];
+    std::stringstream ss;
+    ss << tag;
+    std::string name = ss.str();
 
-    std::stringstream nsn_i;
-    std::stringstream ssn_i;
-    nsn_i << "BoundaryNodeSet" << tag;
-    ssn_i << "BoundarySideSet" << tag;
-
-    bdTagToNodeSetName[tag] = nsn_i.str();
-    bdTagToSideSetName[tag] = ssn_i.str();
-
-    nsNames.push_back(nsn_i.str());
-    ssNames.push_back(ssn_i.str());
-
-    nsPartVec[nsn_i.str()] = &metaData->declare_part(nsn_i.str(), stk::topology::NODE_RANK);
-    ssPartVec[ssn_i.str()] = &metaData->declare_part(ssn_i.str(), metaData->side_rank());
-
-#ifdef ALBANY_SEACAS
-    stk::io::put_io_part_attribute(*nsPartVec[nsn_i.str()]);
-    stk::io::put_io_part_attribute(*ssPartVec[ssn_i.str()]);
-#endif
+    add_nodeset( name, tag, nsNames);
+    add_sideset( name, tag, ssNames);
 
   }
   delete[] bdTagsArray;
 
+  // Gmsh 4.1 Allows users to give string names to surface.
+  // We overwrite the number based set names with the string ones
+  // if any exist
   if( version == GmshVersion::V4_1)
   {
     // Map has format: "name",  physical_tag
     std::map<std::string, int> physical_names; 
     get_physical_names( physical_names, commT);
 
-    // TODO
+    std::map< std::string, int>::iterator it;
+    for( it = physical_names.begin(); it != physical_names.end(); it++)
+    {
+      std::string name = it->first;
+      int         tag  = it->second;
+
+      add_nodeset( name, tag, nsNames);
+      add_sideset( name, tag, ssNames);
+
+    }
   }
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::add_sideset( std::string sideset_name, int tag, std::vector<std::string>& ssNames)
+{
+  std::stringstream ssn_i;
+  ssn_i << "BoundarySideSet" << sideset_name;
+
+  bdTagToSideSetName[tag] = ssn_i.str();
+  ssNames.push_back(ssn_i.str());
+
+  ssPartVec[ssn_i.str()] = &metaData->declare_part(ssn_i.str(), metaData->side_rank());
+#ifdef ALBANY_SEACAS
+  stk::io::put_io_part_attribute(*ssPartVec[ssn_i.str()]);
+#endif
+
+  return;
+}
+
+
+void Albany::GmshSTKMeshStruct::add_nodeset( std::string nodeset_name, int tag, std::vector<std::string>& nsNames)
+{
+  std::stringstream nsn_i;
+  nsn_i << "BoundaryNodeSet" << nodeset_name;
+
+  bdTagToNodeSetName[tag] = nsn_i.str();
+  nsNames.push_back(nsn_i.str());
+
+  nsPartVec[nsn_i.str()] = &metaData->declare_part(nsn_i.str(), stk::topology::NODE_RANK);
+#ifdef ALBANY_SEACAS
+  stk::io::put_io_part_attribute(*nsPartVec[nsn_i.str()]);
+#endif
 
   return;
 }
@@ -1466,7 +1498,8 @@ void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::str
     for( int i = 0; i < names.size(); i++)
     {
       std::string name = names[i];
-      int surface_tag  = physical_surface_tags[i];
+      // Index by i+1 since gmsh starts counting at 1 and not 0
+      int surface_tag  = physical_surface_tags[i+1];
 
       physical_names.insert( std::make_pair( name, surface_tag));
     }
@@ -1481,7 +1514,7 @@ void Albany::GmshSTKMeshStruct::broadcast_name_tag_pair( std::vector< std::strin
                                                          int*                                    tags_array,
                                                          int                                     pair_number,
                                                          const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                                         std::map< std::string, int>             physical_names)
+                                                         std::map< std::string, int>&            physical_names)
 {
   std::string name;
   if( commT->getRank() == 0) 

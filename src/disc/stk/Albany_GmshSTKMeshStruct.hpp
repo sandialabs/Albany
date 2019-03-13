@@ -143,7 +143,7 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
                                 int*                                    tags_array,
                                 int                                     pair_number,
                                 const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                std::map< std::string, int>             physical_names);
+                                std::map< std::string, int>&            physical_names);
 
   // Reads a single physical name from ifile.
   // Prepends with an undescore and remove quotation marks.
@@ -154,6 +154,13 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   void get_physical_tag_to_surface_tag_map( std::ifstream&      ifile, 
                                             std::map<int, int>& physical_surface_tags,
                                             int                 num_surfaces);
+
+  
+  // Adds a sideset with name sideset_name and side tag number tag.
+  void add_sideset( std::string sideset_name, int tag, std::vector<std::string>& ssNames);
+
+  // Adds a nodeset with name nodeset_name and node tag number tag.
+  void add_nodeset( std::string nodeset_name, int tag, std::vector<std::string>& nsNames);
 
   // The version of the gmsh msh file
   GmshVersion version;
