@@ -31,7 +31,7 @@
 rm -f CMakeCache.txt
 rm -rf CMakeFiles
 NETCDFDIR=/usr/local/netcdf
-PARMETISDIR=/home/ikalash/alegra_project/TPL/parmetis/4.0.3/inst_gcc_opt
+PARMETISDIR=/home/ikalash/Install/parmetis/build/install
 
 
 BUILD_DIR=`pwd`
