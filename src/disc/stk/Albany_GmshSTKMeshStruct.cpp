@@ -1332,6 +1332,82 @@ void Albany::GmshSTKMeshStruct::open_fname( std::ifstream& ifile)
   return;
 }
 
+void Albany::GmshSTKMeshStruct::get_name_for_physical_names( std::string& name, std::ifstream& ifile)
+{
+  std::string line;
+  int         id;
+  int         dim;
+  
+  std::getline( ifile, line);
+  std::stringstream ss (line);
+  ss >> dim >> id >> name;
+
+  // If this entity has a name, then assign it.
+  // Use the id otherwise.
+  if( name.empty() )
+  {
+    std::stringstream ss;
+    ss << id;
+    name = ss.str();
+  }
+  else
+  {
+    // Need to remove quote marks from name 
+    // and prepend with underscore
+    name.erase( std::remove(name.begin(), name.end(), '"'), name.end());
+    name = "_" + name;
+  }
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::get_physical_tag_to_surface_tag_map( 
+      std::ifstream&      ifile, 
+      std::map<int, int>& physical_surface_tags,
+      int                 num_surfaces)
+{
+  int    surface_tag         = 0;
+  double min_x               = 0.0;
+  double min_y               = 0.0;
+  double min_z               = 0.0;
+  double max_x               = 0.0;
+  double max_y               = 0.0;
+  double max_z               = 0.0;
+  int    num_physical_tags   = 0;
+  int    physical_tag        = 0;
+  int    num_bounding_curves = 0;
+  int    curve_tag           = 0;
+
+  std::string line;
+  for( int i = 0; i < num_surfaces; i++)
+  {
+    std::getline( ifile, line);
+    std::stringstream ss (line);
+    ss >> surface_tag
+       >> min_x
+       >> min_y
+       >> min_z
+       >> max_x
+       >> max_y
+       >> max_z
+       >> num_physical_tags  
+       >> physical_tag       
+       >> num_bounding_curves
+       >> curve_tag;
+
+    TEUCHOS_TEST_FOR_EXCEPTION ( num_physical_tags > 1, std::runtime_error, 
+                                "Cannot support more than one physical tag per surface.\n");
+
+    if( num_physical_tags == 1)
+    {
+      physical_surface_tags.insert( std::make_pair( physical_tag, surface_tag));
+    }
+  }
+
+  return;
+}
+                                                             
+
 void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::string, int>& physical_names)
 {
   std::ifstream ifile;
@@ -1345,42 +1421,55 @@ void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::str
     // Get number of Physical Names
     int num_physical_names = 0;
     std::getline( ifile, line);
-    std::stringstream iss (line);
-    iss >> num_physical_names;
+    std::stringstream ss (line);
+    ss >> num_physical_names;
 
-    // Add each physical name pair to the map
+    // Get the list of physical names
+    std::vector< std::string> names;
     for( size_t i = 0; i < num_physical_names; i++)
     {
       std::string name;
-      int         tag;
-      int         dim;
-      
-      std::getline( ifile, line);
-      std::stringstream ss (line);
-      ss >> dim >> tag >> name;
-
-      // If this entity has a name, then assign it.
-      // Use the tag otherwise.
-      if( name.empty() )
-      {
-        std::stringstream ss;
-        ss << tag;
-        name = ss.str();
-      }
-      else
-      {
-        // Need to remove quote marks from name 
-        // and prepend with underscore
-        name.erase( std::remove(name.begin(), name.end(), '"'), name.end());
-        name = "_" + name;
-      }
-
-      physical_names.insert( std::make_pair( name, tag));
+      get_name_for_physical_names( name, ifile);
+      names.push_back( name);
     }
+
+    // Advance to Surface Entities section
+    ifile.seekg (0, std::ios::beg);
+    swallow_lines_until( ifile, line, "$Entities");
+
+    // Get number of each entity type
+    int num_points   = 0;
+    int num_curves   = 0;
+    int num_surfaces = 0;
+    int num_volumes  = 0;
+    std::getline( ifile, line);
+    std::stringstream iss (line);
+    iss >> num_points >> num_curves >> num_surfaces >> num_volumes;
+
+    // Skip to the surfaces
+    int num_lines_to_skip = num_points + num_curves;
+    for( int i = 0; i < num_lines_to_skip; i++)
+    { 
+      std::getline( ifile, line);
+    }
+    std::map< int, int> physical_surface_tags;
+    get_physical_tag_to_surface_tag_map( ifile, physical_surface_tags, num_surfaces);
+
+    std::string error_message = "Cannot support more than one physical tag per surface \n";
+    error_message             += "(but you should have gotten an error before this! \n";
+    TEUCHOS_TEST_FOR_EXCEPTION ( physical_surface_tags.size() != names.size(), std::runtime_error, error_message);
+
+    // Add each physical name pair to the map
+    for( int i = 0; i < names.size(); i++)
+    {
+      std::string name = names[i];
+      int surface_tag  = physical_surface_tags[i];
+
+      physical_names.insert( std::make_pair( name, surface_tag));
+    }
+
   }
   ifile.close();
-
-  // TODO: need the surface ID, not physicalTag-ID number
 
   return;
 }

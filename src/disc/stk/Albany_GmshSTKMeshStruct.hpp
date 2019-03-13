@@ -145,6 +145,16 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
                                 const Teuchos::RCP<const Teuchos_Comm>& commT,
                                 std::map< std::string, int>             physical_names);
 
+  // Reads a single physical name from ifile.
+  // Prepends with an undescore and remove quotation marks.
+  void get_name_for_physical_names( std::string& name, std::ifstream& ifile);
+
+  // Reads ifile to map surface tags to physical tags.
+  // Reports error if any surface is associted with more than one tag.
+  void get_physical_tag_to_surface_tag_map( std::ifstream&      ifile, 
+                                            std::map<int, int>& physical_surface_tags,
+                                            int                 num_surfaces);
+
   // The version of the gmsh msh file
   GmshVersion version;
 
