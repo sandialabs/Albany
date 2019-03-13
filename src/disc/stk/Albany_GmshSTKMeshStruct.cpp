@@ -1398,6 +1398,9 @@ void Albany::GmshSTKMeshStruct::get_physical_tag_to_surface_tag_map(
     TEUCHOS_TEST_FOR_EXCEPTION ( num_physical_tags > 1, std::runtime_error, 
                                 "Cannot support more than one physical tag per surface.\n");
 
+    TEUCHOS_TEST_FOR_EXCEPTION ( num_physical_tags < 0, std::runtime_error, 
+                                "Cannot have a negative number of physical tags per surface.\n");
+
     if( num_physical_tags == 1)
     {
       physical_surface_tags.insert( std::make_pair( physical_tag, surface_tag));
