@@ -168,6 +168,8 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
+    auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
+
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
       const int elem_LID = sideSet[iSide].elem_LID;
@@ -181,12 +183,12 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
         LO base_id, ilayer;
         for (int i = 0; i < numSideNodes; ++i) {
           std::size_t node = side.node[i];
-          LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
+          const LO lnodeId = Albany::getLocalElement(overlapNodeVS,elNodeID[node]);
           layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
           for (unsigned int il_col=0; il_col<numLayers+1; il_col++) {
-            LO inode = layeredMeshNumbering.getId(base_id, il_col);
+            const LO inode = layeredMeshNumbering.getId(base_id, il_col);
             for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-              LO dof = solDOFManager.getLocalDOF(inode, eq_col);
+              const LO dof = solDOFManager.getLocalDOF(inode, eq_col);
               int deriv = neq *this->numNodes+il_col*neq*numSideNodes + neq*i + eq_col;
               dg_data[res][dof] += val.dx(deriv);
             }

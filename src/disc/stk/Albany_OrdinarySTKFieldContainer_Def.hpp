@@ -396,4 +396,34 @@ fillVectorImpl (Thyra_Vector& field_vector,
   }
 }
 
+template<bool Interleaved>
+void OrdinarySTKFieldContainer<Interleaved>::
+saveVectorImpl (const Thyra_Vector& field_vector,
+                const std::string& field_name,
+                stk::mesh::Selector& field_selection,
+                const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
+                const NodalDOFManager& nodalDofManager)
+{
+  using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
+  using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
+
+  // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
+  stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, field_selection);
+
+  if(nodalDofManager.numComponents() > 1) {
+    VFT* field = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, field_name);
+    using Helper = STKFieldContainerHelper<VFT>;
+    for(auto it = all_elements.begin(); it!=all_elements.end(); ++it) {
+      const stk::mesh::Bucket& bucket = **it;
+      Helper::saveVector(field_vector, *field, field_node_vs, bucket, nodalDofManager,0);
+    }
+  } else {
+    SFT* field = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, field_name);
+    using Helper = STKFieldContainerHelper<SFT>;
+    for(auto it = all_elements.begin(); it!=all_elements.end(); ++it) {
+      const stk::mesh::Bucket& bucket = **it;
+      Helper::saveVector(field_vector, *field, field_node_vs, bucket, nodalDofManager,0);
+    }
+  }
+}
 } // namespace Albany

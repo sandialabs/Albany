@@ -9,7 +9,6 @@
 
 #include "PHAL_GatherScalarNodalParameter.hpp"
 #include "Albany_ThyraUtils.hpp"
-#include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 
@@ -172,23 +171,23 @@ evaluateFields(typename Traits::EvalData workset)
 {
   // TODO: find a way to abstract away from the map concept. Perhaps using Panzer::ConnManager?
   Teuchos::RCP<const Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->overlapped_vector();
-  Teuchos::RCP<const Tpetra_Vector> pvecT = Albany::getConstTpetraVector(pvec);
-  Teuchos::ArrayRCP<const ST> pvecT_constView = pvecT->get1dView();
+  Teuchos::ArrayRCP<const ST> pvec_constView = Albany::getLocalData(pvec);
 
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
+  auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
+      const LO lnodeId = Albany::getLocalElement(overlapNodeVS,elNodeID[node]);
       LO base_id, ilayer;
       layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
-      LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
-      GO ginode = workset.disc->getOverlapNodeMapT()->getGlobalElement(inode);
-      LO p_lid= pvecT->getMap()->getLocalElement(ginode);
-      (this->val)(cell,node) = ( p_lid >= 0) ? pvecT_constView[p_lid] : 0;
+      const LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
+      const GO ginode = Albany::getGlobalElement(overlapNodeVS,inode);
+      const LO p_lid= Albany::getLocalElement(pvec->space(),ginode);
+      (this->val)(cell,node) = ( p_lid >= 0) ? pvec_constView[p_lid] : 0;
     }
   }
 }
@@ -204,8 +203,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   // TODO: find a way to abstract away from the map concept. Perhaps using Panzer::ConnManager?
   Teuchos::RCP<const Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->overlapped_vector();
-  Teuchos::RCP<const Tpetra_Vector> pvecT = Albany::getConstTpetraVector(pvec);
-  Teuchos::ArrayRCP<const ST> pvecT_constView = pvecT->get1dView();
+  Teuchos::ArrayRCP<const ST> pvec_constView = Albany::getLocalData(pvec);
 
   const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
 
@@ -218,6 +216,7 @@ evaluateFields(typename Traits::EvalData workset)
   auto nodeID = workset.wsElNodeEqID;
 
   // If active, intialize data needed for differentiation
+  auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
   if (is_active) {
     const int num_deriv = this->numNodes;
     const int num_nodes_res = this->numNodes;
@@ -225,19 +224,19 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
       for (std::size_t node = 0; node < num_deriv; ++node) {
-
-        LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
+        const LO lnodeId = Albany::getLocalElement(overlapNodeVS,elNodeID[node]);
         LO base_id, ilayer;
         layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
-        LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
-        GO ginode = workset.disc->getOverlapNodeMapT()->getGlobalElement(inode);
-        LO p_lid= pvecT->getMap()->getLocalElement(ginode);
-        double pvec_id = ( p_lid >= 0) ? pvecT_constView[p_lid] : 0;
+        const LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
+        const GO ginode = Albany::getGlobalElement(overlapNodeVS,inode);
+        const LO p_lid= Albany::getLocalElement(pvec->space(),ginode);
+        double pvec_id = ( p_lid >= 0) ? pvec_constView[p_lid] : 0;
 
         ParamScalarT v(num_deriv, node, pvec_id);
         v.setUpdateValue(!workset.ignore_residual);
-        if(p_lid < 0)
+        if(p_lid < 0) {
           v.fastAccessDx(node) = 0;
+        }
         (this->val)(cell,node) = v;
       }
 
@@ -274,13 +273,13 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node) {
-        LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
+        const LO lnodeId = Albany::getLocalElement(overlapNodeVS,elNodeID[node]);
         LO base_id, ilayer;
         layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
-        LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
-        GO ginode = workset.disc->getOverlapNodeMapT()->getGlobalElement(inode);
-        LO p_lid= pvecT->getMap()->getLocalElement(ginode);
-        (this->val)(cell,node) = ( p_lid >= 0) ? pvecT_constView[p_lid] : 0;
+        const LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
+        const GO ginode = Albany::getGlobalElement(overlapNodeVS,inode);
+        const LO p_lid= Albany::getLocalElement(pvec->space(),ginode);
+        (this->val)(cell,node) = ( p_lid >= 0) ? pvec_constView[p_lid] : 0;
       }
     }
   }

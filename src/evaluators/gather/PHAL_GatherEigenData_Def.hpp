@@ -4,17 +4,17 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: does not get compiled if ALBANY_EPETRA_EXE is off.  Has epetra.
-
 #include <vector>
 #include <string>
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+
+#include "PHAL_GatherEigenData.hpp"
 #include "Albany_EigendataInfoStruct.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 namespace PHAL {
-
 
 template<typename EvalT, typename Traits>
 GatherEigenDataBase<EvalT,Traits>::
@@ -57,17 +57,15 @@ GatherEigenDataBase(const Teuchos::ParameterList& p,
     PHX::MDField<ScalarT> vi(buf,dl->workset_scalar);
     eigenvalue_Im[k] = vi;
     this->addEvaluatedField(eigenvalue_Im[k]);
-
   }
 
   this->setName("Gather EigenData");
-
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void GatherEigenDataBase<EvalT,Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   for (std::size_t k = 0; k < nEigenvectors; ++k) {
@@ -79,78 +77,74 @@ postRegistrationSetup(typename Traits::SetupData d,
   numNodes = (nEigenvectors > 0) ? eigenvector_Re[0].dimension(1) : 0;
 }
 
-
 template<typename EvalT, typename Traits>
 void GatherEigenDataBase<EvalT,Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if(nEigenvectors == 0) return;
+  if(nEigenvectors == 0) {
+    return;
+  }
 
-  if(workset.eigenDataPtr != Teuchos::null) {
-     if((workset.eigenDataPtr->eigenvectorRe != Teuchos::null)) {
-        auto nodeID = workset.wsElNodeEqID;
-        std::vector<int> dims;
-        eigenvector_Re[0].dimensions(dims);
-        if((workset.eigenDataPtr->eigenvectorIm != Teuchos::null))  {
+  if(workset.eigenDataPtr != Teuchos::null && workset.eigenDataPtr->eigenvectorRe!=Teuchos::null) {
+    auto nodeID = workset.wsElNodeEqID;
+    std::vector<int> dims;
+    eigenvector_Re[0].dimensions(dims);
+    if((workset.eigenDataPtr->eigenvectorIm != Teuchos::null))  {
 
+      //Gather real and imaginary eigenvalues from workset Eigendata info structure
+      Teuchos::RCP<const Thyra_MultiVector> e_r = workset.eigenDataPtr->eigenvectorRe;
+      Teuchos::RCP<const Thyra_MultiVector> e_i = workset.eigenDataPtr->eigenvectorIm;
+      const std::vector<double> &v_r = *(workset.eigenDataPtr->eigenvalueRe);
+      const std::vector<double> &v_i = *(workset.eigenDataPtr->eigenvalueIm);
+      int numVecsInWorkset = std::min(e_r->domain()->dim(),e_i->domain()->dim());
+      int numVecsToGather  = std::min(numVecsInWorkset, (int)nEigenvectors);
+      for (int k = 0; k < numVecsToGather; ++k) {
+        (this->eigenvalue_Re[k])(0) = v_r[k];
+        (this->eigenvalue_Im[k])(0) = v_i[k];
+      }
 
-           //Gather real and imaginary eigenvalues from workset Eigendata info structure
-           const Epetra_MultiVector& e_r = *(workset.eigenDataPtr->eigenvectorRe);
-           const Epetra_MultiVector& e_i = *(workset.eigenDataPtr->eigenvectorIm);
-           const std::vector<double> &v_r = *(workset.eigenDataPtr->eigenvalueRe);
-           const std::vector<double> &v_i = *(workset.eigenDataPtr->eigenvalueIm);
-           int numVecsInWorkset = std::min(e_r.NumVectors(),e_i.NumVectors());
-           int numVecsToGather  = std::min(numVecsInWorkset, (int)nEigenvectors);
-           for (std::size_t k = 0; k < numVecsToGather; ++k) {
-             (this->eigenvalue_Re[k])(0) = v_r[k];
-             (this->eigenvalue_Im[k])(0) = v_i[k];
-           }
-
-           //Gather real and imaginary eigenvectors from workset Eigendata info structure
-           for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-       for(std::size_t node =0; node < this->numNodes; ++node) {
-               for(std::size_t dof = 0; dof < dims[2]; ++dof) {
-           int offset_eq = nodeID(cell,node,dof);
-           for (std::size_t k = 0; k < numVecsToGather; ++k) {
-             (this->eigenvector_Re[k])(cell,node,dof) = (*(e_r(k)))[offset_eq];
-             (this->eigenvector_Im[k])(cell,node,dof) = (*(e_i(k)))[offset_eq];
-           }
-               }
-           }
-           }
-        } else { // Only real parts of eigenvectors is given -- "gather" zeros into imaginary fields
-
-           //Gather real and imaginary eigenvalues from workset Eigendata info structure
-           const Epetra_MultiVector& e_r = *(workset.eigenDataPtr->eigenvectorRe);
-           const std::vector<double> &v_r = *(workset.eigenDataPtr->eigenvalueRe);
-           int numVecsInWorkset = e_r.NumVectors();
-           int numVecsToGather  = std::min(numVecsInWorkset, (int)nEigenvectors);
-           for (std::size_t k = 0; k < numVecsToGather; ++k) {
-             (this->eigenvalue_Re[k])(0) = v_r[k];
-             (this->eigenvalue_Im[k])(0) = 0.0;
-           }
-
-           //Gather real and imaginary eigenvectors from workset Eigendata info structure
-           for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-       for(std::size_t node =0; node < this->numNodes; ++node) {
-               for(std::size_t dof = 0; dof < dims[2]; ++dof) {
-           int offset_eq = nodeID(cell,node,dof);
-
-             for (std::size_t k = 0; k < numVecsToGather; ++k) {
-             (this->eigenvector_Re[k])(cell,node,dof) = (*(e_r(k)))[offset_eq];
-             (this->eigenvector_Im[k])(cell,node,dof) = 0.0;
-           }
-               }
-         }
-           }
+      auto e_r_data = Albany::getLocalData(e_r);
+      auto e_i_data = Albany::getLocalData(e_i);
+      //Gather real and imaginary eigenvectors from workset Eigendata info structure
+      for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+        for(std::size_t node =0; node < this->numNodes; ++node) {
+          for(int dof = 0; dof < dims[2]; ++dof) {
+            int offset_eq = nodeID(cell,node,dof);
+            for (int k = 0; k < numVecsToGather; ++k) {
+              this->eigenvector_Re[k](cell,node,dof) = e_r_data[k][offset_eq];
+              this->eigenvector_Im[k](cell,node,dof) = e_i_data[k][offset_eq];
+            }
+          }
         }
-     }
+      }
+    } else { // Only real parts of eigenvectors is given -- "gather" zeros into imaginary fields
+       //Gather real and imaginary eigenvalues from workset Eigendata info structure
+      Teuchos::RCP<const Thyra_MultiVector> e_r = workset.eigenDataPtr->eigenvectorRe;
+       const std::vector<double> &v_r = *(workset.eigenDataPtr->eigenvalueRe);
+       int numVecsInWorkset = e_r->domain()->dim();
+       int numVecsToGather  = std::min(numVecsInWorkset, (int)nEigenvectors);
+       for (int k = 0; k < numVecsToGather; ++k) {
+         (this->eigenvalue_Re[k])(0) = v_r[k];
+         (this->eigenvalue_Im[k])(0) = 0.0;
+       }
+
+       //Gather real and imaginary eigenvectors from workset Eigendata info structure
+        auto e_r_data = Albany::getLocalData(e_r);
+       for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+         for(std::size_t node =0; node < this->numNodes; ++node) {
+           for(int dof = 0; dof < dims[2]; ++dof) {
+             int offset_eq = nodeID(cell,node,dof);
+
+             for (int k = 0; k < numVecsToGather; ++k) {
+               (this->eigenvector_Re[k])(cell,node,dof) = e_r_data[k][offset_eq];
+               (this->eigenvector_Im[k])(cell,node,dof) = 0.0;
+             }
+           }
+         }
+       }
+    }
   }
 }
-
-// **********************************************************************
-//
-//
 
 template<typename EvalT, typename Traits>
 GatherEigenData<EvalT, Traits>::
@@ -173,7 +167,6 @@ GatherEigenData(const Teuchos::ParameterList& p,
 {
 }
 
-
 //
 // **********************************************************************
 // Specialization: Jacobian
@@ -190,7 +183,7 @@ GatherEigenData(const Teuchos::ParameterList& p,
 
 template< typename Traits>
 void GatherEigenData<PHAL::AlbanyTraits::Jacobian, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+evaluateFields(typename Traits::EvalData /* workset */)
 {
 
 /*
@@ -263,4 +256,4 @@ evaluateFields(typename Traits::EvalData workset)
 */
 }
 
-}
+} // namespace PHAL
