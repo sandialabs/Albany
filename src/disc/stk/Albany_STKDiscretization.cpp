@@ -1424,7 +1424,7 @@ GO STKDiscretization::getGlobalDOF(const GO inode, const int eq) const
   if (interleavedOrdering) {
     return inode * neq + eq;
   } else {
-    return inode + numGlobalNodes * eq;
+    return inode + maxGlobalNodeGID * eq;
   }
 }
 
@@ -1446,7 +1446,7 @@ int STKDiscretization::nonzeroesPerRow(const int num_eq) const
 
 void STKDiscretization::computeNodalVectorSpaces(bool overlapped)
 {
-  // Loads member data:  ownednodes, numOwnedNodes, node_map, numGlobalNodes,
+  // Loads member data:  ownednodes, numOwnedNodes, node_map, maxGlobalNodeGID,
   // map
   // maps for owned nodes and unknowns
 
@@ -1467,17 +1467,28 @@ void STKDiscretization::computeNodalVectorSpaces(bool overlapped)
     maxID = std::max(maxID, gid(nodes[i]));
   }
   Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &maxID, &maxGID);
-  numGlobalNodes = maxGID + 1;  // maxGID is the same for overlapped and unique maps
+  maxGlobalNodeGID = maxGID + 1;  // maxGID is the same for overlapped and unique maps
 
-  // build vector spaces
-  for (auto it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it) {
+  // Use a different container for the dofs struct, just for the purposes of this method.
+  // We do it in order to easily recycle vector spaces, since:
+  //  1) same part dof structs can use the same node_vs
+  //  2) scalar dof structs can use the same vs for node and vs
+
+  // map[part_name][num_components] = dofs_struct;
+  std::map<std::string,std::map<int,DOFsStruct*>> tmp_map;
+  for (auto& it : mapOfDOFsStructs) {
+    tmp_map[it.first.first][it.first.second]=&it.second;
+  }
+
+  // Build vector spaces
+  Teuchos::Array<GO> indices;
+  for (auto& it1 : tmp_map) {
     stk::mesh::Selector selector(vs_type_selector);
-    const std::string&  part  = it->first.first;
-    int                 nComp = it->first.second;
+    const std::string&  part  = it1.first;
     if (part.size()) {
-      auto it3 = stkMeshStruct->nsPartVec.find(part);
-      if (it3 != stkMeshStruct->nsPartVec.end()) {
-        selector &= *(it3->second);
+      auto it2 = stkMeshStruct->nsPartVec.find(part);
+      if (it2 != stkMeshStruct->nsPartVec.end()) {
+        selector &= *(it2->second);
       } else {  // throw error
         std::ostringstream msg;
         msg << "STKDiscretization::computeNodalMaps(overlapped=="
@@ -1488,36 +1499,55 @@ void STKDiscretization::computeNodalVectorSpaces(bool overlapped)
     }
 
     stk::mesh::get_selected_entities(selector, bulkData.buckets(stk::topology::NODE_RANK), nodes);
-
     numNodes = nodes.size();
 
-    NodalDOFManager*   dofManager = (overlapped) ? &it->second.overlap_dofManager : &it->second.dofManager;
-    dofManager->setup(nComp, numNodes, numGlobalNodes, interleavedOrdering);
-
-    Teuchos::Array<GO> indices(numNodes * nComp);
-    for (int i = 0; i < numNodes; i++)
-      for (int j = 0; j < nComp; j++)
-        indices[dofManager->getLocalDOF(i, j)] =
-            dofManager->getGlobalDOF(bulkData.identifier(nodes[i]) - 1, j);
-
-    Teuchos::RCP<const Thyra_VectorSpace>& vs = (overlapped) ? it->second.overlap_vs : it->second.vs;
-    vs = createVectorSpace(comm,indices());
-
-    Teuchos::RCP<const Thyra_VectorSpace>& node_vs = (overlapped) ? it->second.overlap_node_vs : it->second.node_vs;
-
-    auto it2 = it;
-    if ((nComp == 1) || ((it2 = mapOfDOFsStructs.find(make_pair(part, 1))) !=
-                         mapOfDOFsStructs.end())) {
-      node_vs = (overlapped) ? it2->second.overlap_vs : it2->second.vs;
+    // First, compute a nodal vs. We compute it once, for all dofs on this part
+    // To do it, we need a NodalDOFManager. Simply grab it from the first dofstruct on this part
+    DOFsStruct* random_dofs_struct = it1.second.begin()->second;
+    NodalDOFManager& nodal_dofManager = (overlapped) ? random_dofs_struct->overlap_dofManager : random_dofs_struct->dofManager;
+    nodal_dofManager.setup(1,numNodes,maxGlobalNodeGID,interleavedOrdering);
+    
+    indices.resize(numNodes);
+    for (int i = 0; i < numNodes; i++) {
+      const LO lid = nodal_dofManager.getLocalDOF(i, 0);
+      const GO nodeId = bulkData.identifier(nodes[i]);
+      indices[lid] = nodal_dofManager.getGlobalDOF(nodeId - 1, 0); // STK ids start from 1. Subtract 1 to get 0-based indexing.
     }
-  }
+
+    Teuchos::RCP<const Thyra_VectorSpace> part_node_vs = createVectorSpace(comm,indices());
+
+    // Now that the node_vs is created, we can loop over the dofs struct on this part
+    for (auto& it2 : it1.second) {
+      const int numComponents = it2.first;
+      DOFsStruct* dofs_struct = it2.second;
+      NodalDOFManager& dofManager = (overlapped ? dofs_struct->overlap_dofManager : dofs_struct->dofManager);
+      dofManager.setup(numComponents,numNodes,maxGlobalNodeGID,interleavedOrdering);
+
+      Teuchos::RCP<const Thyra_VectorSpace>& node_vs = (overlapped) ? dofs_struct->overlap_node_vs : dofs_struct->node_vs;
+      node_vs = part_node_vs;
+
+      if (numComponents==1) {
+        // Life is easy: copy node_vs into the dofs_struct's dof vs
+        (overlapped ? dofs_struct->overlap_vs : dofs_struct->vs) = node_vs;
+      } else {
+        // We need to build the vs from scratch.
+        indices.resize(numNodes * numComponents);
+        for (int i = 0; i < numNodes; i++) {
+          const GO nodeId = bulkData.identifier(nodes[i]);
+          for (int j = 0; j < numComponents; j++) {
+            const LO lid = nodal_dofManager.getLocalDOF(i, j);
+            indices[lid] = dofManager.getGlobalDOF(nodeId - 1, j); // STK ids start from 1. Subtract 1 to get 0-based indexing.
+        }}
+        Teuchos::RCP<const Thyra_VectorSpace>& vs = (overlapped) ? dofs_struct->overlap_vs : dofs_struct->vs;
+        vs = createVectorSpace(comm,indices());
+      }
+    }
+  } 
 }
 
 void STKDiscretization::computeOwnedNodesAndUnknowns()
 {
-  // Loads member data:  ownednodes, numOwnedNodes, node_map, numGlobalNodes,
-  // map
-  // maps for owned nodes and unknowns
+  // Loads owned nodes, sets owned node vs and dof vs
   stk::mesh::Selector select_owned_in_part =
       stk::mesh::Selector(metaData.universal_part()) &
       stk::mesh::Selector(metaData.locally_owned_part());
@@ -1538,13 +1568,12 @@ void STKDiscretization::computeOwnedNodesAndUnknowns()
 
 void STKDiscretization::computeOverlapNodesAndUnknowns()
 {
-  // maps for overlap unknowns
+  // Loads overlap nodes, sets overlap node vs and dof vs
   stk::mesh::Selector select_overlap_in_part =
       stk::mesh::Selector(metaData.universal_part()) &
       (stk::mesh::Selector(metaData.locally_owned_part()) |
        stk::mesh::Selector(metaData.globally_shared_part()));
 
-  // overlapnodes used for overlap map; stored for changing coords
   stk::mesh::get_selected_entities(
       select_overlap_in_part,
       bulkData.buckets(stk::topology::NODE_RANK),
@@ -1972,6 +2001,8 @@ void STKDiscretization::computeWorksetInfo()
       coords[b][i].resize(nodes_per_element);
 
       for (auto it=mapOfDOFsStructs.begin(); it!=mapOfDOFsStructs.end(); ++it) {
+auto ov_vs = it->second.overlap_vs;
+
         IDArray&  wsElNodeEqID_array = it->second.wsElNodeEqID[b];
         GIDArray& wsElNodeID_array   = it->second.wsElNodeID[b];
         int       nComp              = it->first.second;

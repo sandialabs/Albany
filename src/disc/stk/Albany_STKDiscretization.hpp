@@ -477,7 +477,7 @@ private:
   //! Number of elements on this processor
   int numOwnedNodes;
   int numOverlapNodes;
-  GO  numGlobalNodes;
+  GO  maxGlobalNodeGID;
 
   // Needed to pass coordinates to ML.
   Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes;
