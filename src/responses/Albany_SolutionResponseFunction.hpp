@@ -104,6 +104,8 @@ protected:
 
   //! Mask for DOFs to keep
   Teuchos::Array<bool> keepDOF;
+  int numKeepDOF;
+  
 
   //! Vector space for response
   Teuchos::RCP<const Thyra_SpmdVectorSpace> solution_vs;

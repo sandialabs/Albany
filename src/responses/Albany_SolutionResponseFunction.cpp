@@ -8,8 +8,6 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_Application.hpp"
 
-#include <algorithm>
-
 namespace Albany {
 
 SolutionResponseFunction::
@@ -22,19 +20,21 @@ SolutionResponseFunction(const Teuchos::RCP<Albany::Application>& application,
   int numDOF = application->getProblem()->numEquations();
   if (responseParams.isType< Teuchos::Array<int> >("Keep DOF Indices")) {
     Teuchos::Array<int> dofs = responseParams.get< Teuchos::Array<int> >("Keep DOF Indices");
-    keepDOF = Teuchos::Array<bool>(numDOF, false);
+    keepDOF.resize(numDOF,false);
+    numKeepDOF = 0;
     for (int i=0; i<dofs.size(); i++) {
       keepDOF[dofs[i]] = true;
+      ++numKeepDOF;
     }
   } else {
-    keepDOF = Teuchos::Array<bool>(numDOF, true);
+    keepDOF.resize(numDOF,true);
+    numKeepDOF = numDOF;
   }
 }
 
 void Albany::SolutionResponseFunction::setup()
 {
   // Build culled vs
-  int numKeepDOF = std::accumulate(keepDOF.begin(), keepDOF.end(), 0);
   int Neqns = keepDOF.size();
   int N = solution_vs->localSubDim();
 
