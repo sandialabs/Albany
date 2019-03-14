@@ -70,7 +70,7 @@ fillVector (Thyra_Vector&    field_thyra,
             const int offset)
 {
   constexpr int rank = getRank<FieldType>();
-  TEUCHOS_TEST_FOR_EXCEPTION(rank==0 || rank==1, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(rank!=0 && rank!=1, std::runtime_error,
                              "Error! Can only handle ScalarFieldType and VectorFieldType for now.\n");
 
   BucketArray<FieldType> field_array(field_stk, bucket);
@@ -100,7 +100,7 @@ saveVector(const Thyra_Vector& field_thyra,
            const int offset)
 {
   constexpr int rank = getRank<FieldType>();
-  TEUCHOS_TEST_FOR_EXCEPTION(rank==0 || rank==1, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(rank!=0 && rank!=1, std::runtime_error,
                              "Error! Can only handle ScalarFieldType and VectorFieldType for now.\n");
 
   BucketArray<FieldType> field_array(field_stk, bucket);
@@ -126,7 +126,7 @@ copySTKField(const FieldType& source,
              FieldType& target)
 {
   constexpr int rank = getRank<FieldType>();
-  TEUCHOS_TEST_FOR_EXCEPTION(rank==0 || rank==1, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(rank!=0 && rank!=1, std::runtime_error,
                              "Error! Can only handle ScalarFieldType and VectorFieldType for now.\n");
 
   const stk::mesh::BulkData&     mesh = source.get_mesh();

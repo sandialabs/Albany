@@ -8,7 +8,7 @@
 
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #include "Albany_ThyraUtils.hpp"
-#include "Albany_Utils.hpp"
+#include "Albany_Macros.hpp"
 #include "Albany_STKFieldContainerHelper.hpp"
 
 // Start of STK stuff
@@ -105,7 +105,6 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 
     solution_field[num_vecs] = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK,
                                     params_->get<std::string>(sol_tag_name[num_vecs], sol_id_name[num_vecs]));
-
     stk::mesh::put_field_on_mesh(*solution_field[num_vecs] , metaData_->universal_part(), neq_, nullptr);
 
 #if defined(ALBANY_DTK)
@@ -223,7 +222,7 @@ fillSolnVector (Thyra_Vector& solution,
   NodalDOFManager nodalDofManager;
   nodalDofManager.setup(this->neq,numLocalNodes,-1,Interleaved);
 
-  fillVectorImpl(solution,sol_tag_name[0],sel,node_vs,nodalDofManager);
+  fillVectorImpl(solution,solution_field[0]->name(),sel,node_vs,nodalDofManager);
 }
 
 template<bool Interleaved>
@@ -243,7 +242,7 @@ fillSolnMultiVector (Thyra_MultiVector& solution,
   nodalDofManager.setup(this->neq,numLocalNodes,-1,Interleaved);
 
   for (int icomp=0; icomp<solution.domain()->dim(); ++icomp) {
-    fillVectorImpl(*solution.col(icomp),sol_tag_name[icomp],sel,node_vs,nodalDofManager);
+    fillVectorImpl(*solution.col(icomp),solution_field[icomp]->name(),sel,node_vs,nodalDofManager);
   }
 }
 
@@ -274,7 +273,7 @@ saveSolnVector (const Thyra_Vector& solution,
   NodalDOFManager nodalDofManager;
   nodalDofManager.setup(this->neq,numLocalNodes,-1,Interleaved);
 
-  saveVectorImpl(solution,sol_tag_name[0],sel,node_vs,nodalDofManager);
+  saveVectorImpl(solution,solution_field[0]->name(),sel,node_vs,nodalDofManager);
 }
 
 template<bool Interleaved>
@@ -294,8 +293,8 @@ saveSolnVector (const Thyra_Vector& solution,
   NodalDOFManager nodalDofManager;
   nodalDofManager.setup(this->neq,numLocalNodes,-1,Interleaved);
 
-  saveVectorImpl(solution,sol_tag_name[0],sel,node_vs,nodalDofManager);
-  saveVectorImpl(solution_dot,sol_tag_name[1],sel,node_vs,nodalDofManager);
+  saveVectorImpl(solution,solution_field[0]->name(),sel,node_vs,nodalDofManager);
+  saveVectorImpl(solution_dot,solution_field[1]->name(),sel,node_vs,nodalDofManager);
 }
 
 template<bool Interleaved>
@@ -316,9 +315,9 @@ saveSolnVector (const Thyra_Vector& solution,
   NodalDOFManager nodalDofManager;
   nodalDofManager.setup(this->neq,numLocalNodes,-1,Interleaved);
 
-  saveVectorImpl(solution,sol_tag_name[0],sel,node_vs,nodalDofManager);
-  saveVectorImpl(solution_dot,sol_tag_name[1],sel,node_vs,nodalDofManager);
-  saveVectorImpl(solution_dotdot,sol_tag_name[2],sel,node_vs,nodalDofManager);
+  saveVectorImpl(solution,solution_field[0]->name(),sel,node_vs,nodalDofManager);
+  saveVectorImpl(solution_dot,solution_field[1]->name(),sel,node_vs,nodalDofManager);
+  saveVectorImpl(solution_dotdot,solution_field[2]->name(),sel,node_vs,nodalDofManager);
 }
 
 template<bool Interleaved>
@@ -336,7 +335,7 @@ saveSolnMultiVector (const Thyra_MultiVector& solution,
   nodalDofManager.setup(this->neq,numLocalNodes,-1,Interleaved);
 
   for (int icomp=0; icomp<solution.domain()->dim(); ++icomp) {
-    saveVectorImpl(*solution.col(icomp),sol_tag_name[icomp],sel,node_vs,nodalDofManager);
+    saveVectorImpl(*solution.col(icomp),solution_field[icomp]->name(),sel,node_vs,nodalDofManager);
   }
 }
 
@@ -354,14 +353,13 @@ saveResVector (const Thyra_Vector& res,
   NodalDOFManager nodalDofManager;
   nodalDofManager.setup(this->neq,numLocalNodes,-1,Interleaved);
 
-  saveVectorImpl(res,res_tag_name[0],sel,node_vs,nodalDofManager);
+  saveVectorImpl(res,residual_field->name(),sel,node_vs,nodalDofManager);
 }
 
 template<bool Interleaved>
 void OrdinarySTKFieldContainer<Interleaved>::transferSolutionToCoords() {
   using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
   using Helper = STKFieldContainerHelper<VFT>;
-
   Helper::copySTKField(*solution_field[0], *this->coordinates_field);
 }
 
@@ -376,10 +374,21 @@ fillVectorImpl (Thyra_Vector& field_vector,
   using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
   using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
 
+  auto* raw_field = this->metaData->get_field(stk::topology::NODE_RANK, field_name);
+  ALBANY_EXPECT(raw_field!=nullptr, "Error! Something went wrong while retrieving a field.\n");
+  const int rank = raw_field->field_array_rank();
+
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
   stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, field_selection);
 
-  if(nodalDofManager.numComponents() > 1) {
+  if(rank==0) {
+    const SFT* field = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, field_name);
+    using Helper = STKFieldContainerHelper<SFT>;
+    for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+      const stk::mesh::Bucket& bucket = **it;
+      Helper::fillVector(field_vector, *field, field_node_vs, bucket, nodalDofManager,0);
+    }
+  } else if (rank==1) {
     const VFT* field = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, field_name);
     using Helper = STKFieldContainerHelper<VFT>;
     for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
@@ -387,12 +396,7 @@ fillVectorImpl (Thyra_Vector& field_vector,
       Helper::fillVector(field_vector, *field, field_node_vs, bucket, nodalDofManager,0);
     }
   } else {
-    const SFT* field = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, field_name);
-    using Helper = STKFieldContainerHelper<SFT>;
-    for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
-      const stk::mesh::Bucket& bucket = **it;
-      Helper::fillVector(field_vector, *field, field_node_vs, bucket, nodalDofManager,0);
-    }
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Only scalar and vector fields supported so far.\n");
   }
 }
 
@@ -407,10 +411,21 @@ saveVectorImpl (const Thyra_Vector& field_vector,
   using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
   using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
 
+  auto* raw_field = this->metaData->get_field(stk::topology::NODE_RANK, field_name);
+  ALBANY_EXPECT(raw_field!=nullptr, "Error! Something went wrong while retrieving a field.\n");
+  const int rank = raw_field->field_array_rank();
+
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
   stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, field_selection);
 
-  if(nodalDofManager.numComponents() > 1) {
+  if(rank==0) {
+    SFT* field = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, field_name);
+    using Helper = STKFieldContainerHelper<SFT>;
+    for(auto it = all_elements.begin(); it!=all_elements.end(); ++it) {
+      const stk::mesh::Bucket& bucket = **it;
+      Helper::saveVector(field_vector, *field, field_node_vs, bucket, nodalDofManager,0);
+    }
+  } else if (rank==1) {
     VFT* field = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, field_name);
     using Helper = STKFieldContainerHelper<VFT>;
     for(auto it = all_elements.begin(); it!=all_elements.end(); ++it) {
@@ -418,12 +433,8 @@ saveVectorImpl (const Thyra_Vector& field_vector,
       Helper::saveVector(field_vector, *field, field_node_vs, bucket, nodalDofManager,0);
     }
   } else {
-    SFT* field = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, field_name);
-    using Helper = STKFieldContainerHelper<SFT>;
-    for(auto it = all_elements.begin(); it!=all_elements.end(); ++it) {
-      const stk::mesh::Bucket& bucket = **it;
-      Helper::saveVector(field_vector, *field, field_node_vs, bucket, nodalDofManager,0);
-    }
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Only scalar and vector fields supported so far.\n");
   }
 }
+
 } // namespace Albany

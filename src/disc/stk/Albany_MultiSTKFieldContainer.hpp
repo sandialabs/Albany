@@ -57,14 +57,12 @@ private:
                        stk::mesh::Selector& field_selection,
                        const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
                        const NodalDOFManager& nodalDofManager,
-                       const int num_components,
                        const int offset);
   void saveVectorImpl (const Thyra_Vector& field_vector,
                        const std::string& field_name,
                        stk::mesh::Selector& field_selection,
                        const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
                        const NodalDOFManager& nodalDofManager,
-                       const int num_components,
                        const int offset);
 
   void initializeSTKAdaptation();

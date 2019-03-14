@@ -2001,7 +2001,6 @@ void STKDiscretization::computeWorksetInfo()
       coords[b][i].resize(nodes_per_element);
 
       for (auto it=mapOfDOFsStructs.begin(); it!=mapOfDOFsStructs.end(); ++it) {
-auto ov_vs = it->second.overlap_vs;
 
         IDArray&  wsElNodeEqID_array = it->second.wsElNodeEqID[b];
         GIDArray& wsElNodeID_array   = it->second.wsElNodeID[b];
