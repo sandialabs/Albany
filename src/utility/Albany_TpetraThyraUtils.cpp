@@ -19,7 +19,7 @@ private:
 // ============ Tpetra->Thyra conversion routines ============ //
 
 Teuchos::RCP<const Thyra_VectorSpace>
-createThyraVectorSpace (const Teuchos::RCP<const Tpetra_Map> map)
+createThyraVectorSpace (const Teuchos::RCP<const Tpetra_Map>& map)
 {
   Teuchos::RCP<const Thyra_VectorSpace> vs;
   if (!map.is_null()) {
@@ -29,7 +29,7 @@ createThyraVectorSpace (const Teuchos::RCP<const Tpetra_Map> map)
   return vs;
 }
 
-Teuchos::RCP<Thyra_Vector>createThyraVector (const Teuchos::RCP<Tpetra_Vector> v)
+Teuchos::RCP<Thyra_Vector>createThyraVector (const Teuchos::RCP<Tpetra_Vector>& v)
 {
   Teuchos::RCP<Thyra_Vector> v_thyra = Teuchos::null;
   if (!v.is_null()) {
@@ -39,7 +39,7 @@ Teuchos::RCP<Thyra_Vector>createThyraVector (const Teuchos::RCP<Tpetra_Vector> v
   return v_thyra;
 }
 
-Teuchos::RCP<const Thyra_Vector>createConstThyraVector (const Teuchos::RCP<const Tpetra_Vector> v)
+Teuchos::RCP<const Thyra_Vector>createConstThyraVector (const Teuchos::RCP<const Tpetra_Vector>& v)
 {
   Teuchos::RCP<const Thyra_Vector> v_thyra = Teuchos::null;
   if (!v.is_null()) {
@@ -50,7 +50,7 @@ Teuchos::RCP<const Thyra_Vector>createConstThyraVector (const Teuchos::RCP<const
 }
 
 Teuchos::RCP<Thyra_MultiVector>
-createThyraMultiVector (const Teuchos::RCP<Tpetra_MultiVector> mv)
+createThyraMultiVector (const Teuchos::RCP<Tpetra_MultiVector>& mv)
 {
   Teuchos::RCP<Thyra_MultiVector> mv_thyra = Teuchos::null;
   if (!mv.is_null()) {
@@ -61,7 +61,7 @@ createThyraMultiVector (const Teuchos::RCP<Tpetra_MultiVector> mv)
 }
 
 Teuchos::RCP<const Thyra_MultiVector>
-createConstThyraMultiVector (const Teuchos::RCP<const Tpetra_MultiVector> mv)
+createConstThyraMultiVector (const Teuchos::RCP<const Tpetra_MultiVector>& mv)
 {
   Teuchos::RCP<const Thyra_MultiVector> mv_thyra = Teuchos::null;
   if (!mv.is_null()) {
@@ -72,7 +72,7 @@ createConstThyraMultiVector (const Teuchos::RCP<const Tpetra_MultiVector> mv)
 }
 
 Teuchos::RCP<Thyra_LinearOp>
-createThyraLinearOp (const Teuchos::RCP<Tpetra_Operator> op)
+createThyraLinearOp (const Teuchos::RCP<Tpetra_Operator>& op)
 {
   Teuchos::RCP<Thyra_LinearOp> lop;
   if (!op.is_null()) {
@@ -83,7 +83,7 @@ createThyraLinearOp (const Teuchos::RCP<Tpetra_Operator> op)
 }
 
 Teuchos::RCP<const Thyra_LinearOp>
-createConstThyraLinearOp (const Teuchos::RCP<const Tpetra_Operator> op)
+createConstThyraLinearOp (const Teuchos::RCP<const Tpetra_Operator>& op)
 {
   Teuchos::RCP<const Thyra_LinearOp> lop;
   if (!op.is_null()) {
@@ -96,7 +96,7 @@ createConstThyraLinearOp (const Teuchos::RCP<const Tpetra_Operator> op)
 // ============ Thyra->Tpetra conversion routines ============ //
 
 Teuchos::RCP<const Tpetra_Map>
-getTpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
+getTpetraMap (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
               const bool throw_if_not_tpetra)
 {
   Teuchos::RCP<const Tpetra_Map> map;
@@ -111,7 +111,7 @@ getTpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
 }
 
 Teuchos::RCP<Tpetra_Vector>
-getTpetraVector (const Teuchos::RCP<Thyra_Vector> v,
+getTpetraVector (const Teuchos::RCP<Thyra_Vector>& v,
                  const bool throw_if_not_tpetra)
 {
   Teuchos::RCP<Tpetra_Vector> v_tpetra;
@@ -126,7 +126,7 @@ getTpetraVector (const Teuchos::RCP<Thyra_Vector> v,
 }
 
 Teuchos::RCP<const Tpetra_Vector>
-getConstTpetraVector (const Teuchos::RCP<const Thyra_Vector> v,
+getConstTpetraVector (const Teuchos::RCP<const Thyra_Vector>& v,
                       const bool throw_if_not_tpetra)
 
 {
@@ -142,7 +142,7 @@ getConstTpetraVector (const Teuchos::RCP<const Thyra_Vector> v,
 }
 
 Teuchos::RCP<Tpetra_MultiVector>
-getTpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector> mv,
+getTpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector>& mv,
                       const bool throw_if_not_tpetra)
 {
   Teuchos::RCP<Tpetra_MultiVector> mv_tpetra;
@@ -157,7 +157,7 @@ getTpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector> mv,
 }
 
 Teuchos::RCP<const Tpetra_MultiVector>
-getConstTpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
+getConstTpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector>& mv,
                            const bool throw_if_not_tpetra)
 {
   Teuchos::RCP<const Tpetra_MultiVector> mv_tpetra;
@@ -172,7 +172,7 @@ getConstTpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
 }
 
 Teuchos::RCP<Tpetra_Operator>
-getTpetraOperator (const Teuchos::RCP<Thyra_LinearOp> lop,
+getTpetraOperator (const Teuchos::RCP<Thyra_LinearOp>& lop,
                    const bool throw_if_not_tpetra)
 {
   Teuchos::RCP<Tpetra_Operator> op;
@@ -187,7 +187,7 @@ getTpetraOperator (const Teuchos::RCP<Thyra_LinearOp> lop,
 }
 
 Teuchos::RCP<const Tpetra_Operator>
-getConstTpetraOperator (const Teuchos::RCP<const Thyra_LinearOp> lop,
+getConstTpetraOperator (const Teuchos::RCP<const Thyra_LinearOp>& lop,
                         const bool throw_if_not_tpetra)
 {
   Teuchos::RCP<const Tpetra_Operator> op;
@@ -202,7 +202,7 @@ getConstTpetraOperator (const Teuchos::RCP<const Thyra_LinearOp> lop,
 }
 
 Teuchos::RCP<Tpetra_CrsMatrix>
-getTpetraMatrix (const Teuchos::RCP<Thyra_LinearOp> lop,
+getTpetraMatrix (const Teuchos::RCP<Thyra_LinearOp>& lop,
                  const bool throw_if_not_tpetra)
 {
   Teuchos::RCP<Tpetra_CrsMatrix> mat;
@@ -215,7 +215,7 @@ getTpetraMatrix (const Teuchos::RCP<Thyra_LinearOp> lop,
 }
 
 Teuchos::RCP<const Tpetra_CrsMatrix>
-getConstTpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop,
+getConstTpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp>& lop,
                       const bool throw_if_not_tpetra)
 {
   Teuchos::RCP<const Tpetra_CrsMatrix> mat;

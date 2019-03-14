@@ -1,6 +1,7 @@
 #include "Albany_EpetraThyraUtils.hpp"
 #include "Albany_CommTypes.hpp"
-#include "Albany_Utils.hpp"
+#include "Albany_Macros.hpp"
+#include "Albany_CommUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
 
 // We only use Thyra's Epetra wrapper for the linear op.
@@ -11,9 +12,6 @@
 #include "Thyra_DefaultSpmdMultiVector.hpp"
 #include "Thyra_DefaultSpmdVector.hpp"
 #include "Thyra_ScalarProdVectorSpaceBase.hpp"
-
-// To convert Teuchos_Comm to Thyra's comm
-#include "Thyra_TpetraThyraWrappers.hpp"
 
 namespace Albany
 {
@@ -32,16 +30,15 @@ private:
 // ============ Epetra->Thyra conversion routines ============ //
 
 Teuchos::RCP<const Thyra_SpmdVectorSpace>
-createThyraVectorSpace (const Teuchos::RCP<const Epetra_BlockMap> bmap)
+createThyraVectorSpace (const Teuchos::RCP<const Epetra_BlockMap>& bmap)
 {
   Teuchos::RCP<const Thyra_SpmdVectorSpace> vs;
   if (!bmap.is_null()) {
 
     auto comm = createTeuchosCommFromEpetraComm(bmap->Comm());
-    vs = Thyra::defaultSpmdVectorSpace<ST>(Thyra::convertTpetraToThyraComm(comm), bmap->NumMyElements(), bmap->NumGlobalElements64(), !bmap->DistributedGlobal());
+    vs = Thyra::defaultSpmdVectorSpace<ST>(createThyraCommFromTeuchosComm(comm), bmap->NumMyElements(), bmap->NumGlobalElements64(), !bmap->DistributedGlobal());
 
-    // Attach the two new RCP's to the map ptr
-    Teuchos::set_extra_data(bmap, "Teuchos_Comm", inoutArg(comm));
+    // Attach the new RCP to the map ptr
     Teuchos::set_extra_data(bmap, "Epetra_BlockMap", inoutArg(vs) );
   }
 
@@ -49,11 +46,12 @@ createThyraVectorSpace (const Teuchos::RCP<const Epetra_BlockMap> bmap)
 }
 
 Teuchos::RCP<Thyra_Vector> 
-createThyraVector (const Teuchos::RCP<Epetra_Vector> v)
+createThyraVector (const Teuchos::RCP<Epetra_Vector>& v)
 {
   Teuchos::RCP<Thyra_Vector> v_thyra = Teuchos::null;
   if (!v.is_null()) {
     auto vs = createThyraVectorSpace(Teuchos::rcpFromRef(v->Map()));
+
     Teuchos::ArrayRCP<ST> vals(v->Values(),0,v->MyLength(),false);
     v_thyra = Teuchos::rcp( new Thyra::DefaultSpmdVector<ST>(vs,vals,1) );
 
@@ -65,7 +63,7 @@ createThyraVector (const Teuchos::RCP<Epetra_Vector> v)
 }
 
 Teuchos::RCP<const Thyra_Vector> 
-createConstThyraVector (const Teuchos::RCP<const Epetra_Vector> v)
+createConstThyraVector (const Teuchos::RCP<const Epetra_Vector>& v)
 {
   Teuchos::RCP<const Thyra_Vector> v_thyra = Teuchos::null;
   if (!v.is_null()) {
@@ -81,7 +79,7 @@ createConstThyraVector (const Teuchos::RCP<const Epetra_Vector> v)
 }
 
 Teuchos::RCP<Thyra_MultiVector>
-createThyraMultiVector (const Teuchos::RCP<Epetra_MultiVector> mv)
+createThyraMultiVector (const Teuchos::RCP<Epetra_MultiVector>& mv)
 {
   Teuchos::RCP<Thyra_MultiVector> mv_thyra = Teuchos::null;
   if (!mv.is_null()) {
@@ -101,7 +99,7 @@ createThyraMultiVector (const Teuchos::RCP<Epetra_MultiVector> mv)
 }
 
 Teuchos::RCP<const Thyra_MultiVector>
-createConstThyraMultiVector (const Teuchos::RCP<const Epetra_MultiVector> mv)
+createConstThyraMultiVector (const Teuchos::RCP<const Epetra_MultiVector>& mv)
 {
   Teuchos::RCP<const Thyra_MultiVector> mv_thyra = Teuchos::null;
   if (!mv.is_null()) {
@@ -121,7 +119,7 @@ createConstThyraMultiVector (const Teuchos::RCP<const Epetra_MultiVector> mv)
 }
 
 Teuchos::RCP<Thyra_LinearOp>
-createThyraLinearOp (const Teuchos::RCP<Epetra_Operator> op)
+createThyraLinearOp (const Teuchos::RCP<Epetra_Operator>& op)
 {
   Teuchos::RCP<Thyra_LinearOp> lop;
   if (!op.is_null()) {
@@ -132,7 +130,7 @@ createThyraLinearOp (const Teuchos::RCP<Epetra_Operator> op)
 }
 
 Teuchos::RCP<const Thyra_LinearOp>
-createConstThyraLinearOp (const Teuchos::RCP<const Epetra_Operator> op)
+createConstThyraLinearOp (const Teuchos::RCP<const Epetra_Operator>& op)
 {
   Teuchos::RCP<const Thyra_LinearOp> lop;
   if (!op.is_null()) {
@@ -145,13 +143,20 @@ createConstThyraLinearOp (const Teuchos::RCP<const Epetra_Operator> op)
 // ============ Thyra->Epetra conversion routines ============ //
 
 Teuchos::RCP<const Epetra_BlockMap>
-getEpetraBlockMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
+getEpetraBlockMap (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
                    const bool throw_if_not_epetra)
 {
   Teuchos::RCP<const Epetra_BlockMap> map;
   if (!vs.is_null()) {
+    // Note: in the Epetra case, we should always build our initial vector spaces from
+    //       the utility createThyraVectorSpace in this file. Such vs always contain
+    //       extra data with the original map. All the LinearOp objects (and its derived
+    //       types) that we create from such vs should contain a copy of the vector space.
+    //       This means that *all* the vector spaces corresponding to Epetra as a backend
+    //       should *always* contain extra data. If they don't, then the input vs was not
+    //       created from an Epetra_(Block)Map.
     auto data = Teuchos::get_optional_extra_data<Teuchos::RCP<const Epetra_BlockMap>>(vs,"Epetra_BlockMap");
-    TEUCHOS_TEST_FOR_EXCEPTION (throw_if_not_epetra && data.is_null(), std::runtime_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (data.is_null() && throw_if_not_epetra, std::runtime_error,
                                 "Error! Could not extract Epetra_BlockMap from Thyra_VectorSpace.\n");
     if (!data.is_null()) {
       map = *data;
@@ -162,7 +167,7 @@ getEpetraBlockMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
 }
 
 Teuchos::RCP<const Epetra_Map>
-getEpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
+getEpetraMap (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
               const bool throw_if_not_epetra)
 {
   Teuchos::RCP<const Epetra_BlockMap> bmap = getEpetraBlockMap(vs,throw_if_not_epetra);
@@ -180,17 +185,28 @@ getEpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
 }
 
 Teuchos::RCP<Epetra_Vector>
-getEpetraVector (const Teuchos::RCP<Thyra_Vector> v,
+getEpetraVector (const Teuchos::RCP<Thyra_Vector>& v,
                  const bool throw_if_not_epetra)
 {
   Teuchos::RCP<Epetra_Vector> v_epetra;
   if (!v.is_null()) {
     auto data = Teuchos::get_optional_extra_data<Teuchos::RCP<Epetra_Vector>>(v,"Epetra_Vector");
 
-    TEUCHOS_TEST_FOR_EXCEPTION (throw_if_not_epetra && data.is_null(), std::runtime_error,
-                                "Error! Could not extract Epetra_Vector from Thyra_Vector.\n");
     if (!data.is_null()) {
       v_epetra = *data;
+    } else {
+      auto spmd_v = Teuchos::rcp_dynamic_cast<Thyra::DefaultSpmdVector<ST>>(v);
+      if (spmd_v.is_null()) {
+        // Give up
+        TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_epetra, BadThyraEpetraCast,
+                                   "Error! Could not cast input Thyra_Vector to Thyra::DefaultSpmdVector<ST>.\n");
+      } else {
+        // Get the map, then create a vector from the spmd_v values and the map
+        auto emap = getEpetraMap(v->space());
+        ST* vals = spmd_v->getPtr();
+
+        v_epetra = Teuchos::rcp(new Epetra_Vector(View,*emap,vals));
+      }
     }
   }
 
@@ -198,7 +214,7 @@ getEpetraVector (const Teuchos::RCP<Thyra_Vector> v,
 }
 
 Teuchos::RCP<const Epetra_Vector>
-getConstEpetraVector (const Teuchos::RCP<const Thyra_Vector> v,
+getConstEpetraVector (const Teuchos::RCP<const Thyra_Vector>& v,
                       const bool throw_if_not_epetra)
 
 {
@@ -209,12 +225,27 @@ getConstEpetraVector (const Teuchos::RCP<const Thyra_Vector> v,
     auto data_const    = Teuchos::get_optional_extra_data<Teuchos::RCP<const Epetra_Vector>>(v,"Epetra_Vector");
     auto data_nonconst = Teuchos::get_optional_extra_data<Teuchos::RCP<Epetra_Vector>>(v,"Epetra_Vector");
 
-    TEUCHOS_TEST_FOR_EXCEPTION (throw_if_not_epetra && data_const.is_null() && data_nonconst.is_null(), std::runtime_error,
-                                "Error! Could not extract Epetra_Vector from Thyra_Vector.\n");
     if (!data_const.is_null()) {
       v_epetra = *data_const;
     } else if (!data_nonconst.is_null()) {
       v_epetra = *data_nonconst;
+    } else {
+      auto spmd_v = Teuchos::rcp_dynamic_cast<const Thyra::DefaultSpmdVector<ST>>(v);
+      if (spmd_v.is_null()) {
+        // Give up
+        TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_epetra, BadThyraEpetraCast,
+                                   "Error! Could not cast input Thyra_Vector to Thyra::DefaultSpmdVector<ST>.\n");
+      } else {
+        // Get the map, then create a vector from the spmd_v values and the map
+        auto emap = getEpetraMap(v->space());
+        const ST* vals = spmd_v->getPtr();
+
+        // Unfortunately, the constructor for Epetra_Vector takes a double* rather than a const double* (rightfully so),
+        // so there's really no way around the const cast. It is innocuous and without side effects though, since we
+        // are going to create an RCP<const Epetra_Vector>.
+        ST* vals_nonconst = const_cast<ST*>(vals);
+        v_epetra = Teuchos::rcp(new Epetra_Vector(View,*emap,vals_nonconst));
+      }
     }
   }
 
@@ -222,17 +253,31 @@ getConstEpetraVector (const Teuchos::RCP<const Thyra_Vector> v,
 }
 
 Teuchos::RCP<Epetra_MultiVector>
-getEpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector> mv,
+getEpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector>& mv,
                       const bool throw_if_not_epetra)
 {
   Teuchos::RCP<Epetra_MultiVector> mv_epetra;
   if (!mv.is_null()) {
     auto data = Teuchos::get_optional_extra_data<Teuchos::RCP<Epetra_MultiVector>>(mv,"Epetra_MultiVector");
 
-    TEUCHOS_TEST_FOR_EXCEPTION (throw_if_not_epetra && data.is_null(), std::runtime_error,
-                                "Error! Could not extract Epetra_MultiVector from Thyra_MultiVector.\n");
     if (!data.is_null()) {
       mv_epetra = *data;
+    } else {
+      auto spmd_mv = Teuchos::rcp_dynamic_cast<Thyra::DefaultSpmdMultiVector<ST>>(mv);
+      if (spmd_mv.is_null()) {
+        // Give up
+        TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_epetra, BadThyraEpetraCast,
+                                   "Error! Could not cast input Thyra_MultiVector to Thyra::DefaultSpmdMultiVector<ST>.\n");
+      } else {
+        // Get the map, then create a vector from the spmd_v values and the map
+        auto emap = getEpetraMap(mv->range());
+
+        Teuchos::ArrayRCP<ST> vals;
+        Teuchos::Ordinal leadingDim;
+        spmd_mv->getNonconstLocalData(Teuchos::outArg(vals),Teuchos::outArg(leadingDim));
+
+        mv_epetra = Teuchos::rcp(new Epetra_MultiVector(View,*emap,vals.getRawPtr(),static_cast<int>(leadingDim),mv->domain()->dim()));
+      }
     }
   }
 
@@ -240,7 +285,7 @@ getEpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector> mv,
 }
 
 Teuchos::RCP<const Epetra_MultiVector>
-getConstEpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
+getConstEpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector>& mv,
                            const bool throw_if_not_epetra)
 {
   Teuchos::RCP<const Epetra_MultiVector> mv_epetra;
@@ -256,6 +301,26 @@ getConstEpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
       mv_epetra = *data_const;
     } else if (!data_nonconst.is_null()) {
       mv_epetra = *data_nonconst;
+    } else {
+      auto spmd_mv = Teuchos::rcp_dynamic_cast<const Thyra::DefaultSpmdMultiVector<ST>>(mv);
+      if (spmd_mv.is_null()) {
+        // Give up
+        TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_epetra, BadThyraEpetraCast,
+                                   "Error! Could not cast input Thyra_MultiVector to Thyra::DefaultSpmdMultiVector<ST>.\n");
+      } else {
+        // Get the map, then create a vector from the spmd_v values and the map
+        auto emap = getEpetraMap(mv->range());
+
+        Teuchos::ArrayRCP<const ST> vals;
+        Teuchos::Ordinal leadingDim;
+        spmd_mv->getLocalData(Teuchos::outArg(vals),Teuchos::outArg(leadingDim));
+
+        // Unfortunately, the constructor for Epetra_Vector takes a double* rather than a const double* (rightfully so),
+        // so there's really no way around the const cast. It is innocuous and without side effects though, since we
+        // are going to create an RCP<const Epetra_Vector>.
+        ST* vals_nonconst = const_cast<ST*>(vals.getRawPtr());
+        mv_epetra = Teuchos::rcp(new Epetra_MultiVector(View,*emap,vals_nonconst,static_cast<int>(leadingDim),mv->domain()->dim()));
+      }
     }
   }
 
@@ -263,7 +328,7 @@ getConstEpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
 }
 
 Teuchos::RCP<Epetra_Operator>
-getEpetraOperator (const Teuchos::RCP<Thyra_LinearOp> lop,
+getEpetraOperator (const Teuchos::RCP<Thyra_LinearOp>& lop,
                    const bool throw_if_not_epetra)
 {
   Teuchos::RCP<Epetra_Operator> op;
@@ -273,12 +338,11 @@ getEpetraOperator (const Teuchos::RCP<Thyra_LinearOp> lop,
       op = tmp->epetra_op();
     }
   }
-
   return op;
 }
 
 Teuchos::RCP<const Epetra_Operator>
-getConstEpetraOperator (const Teuchos::RCP<const Thyra_LinearOp> lop,
+getConstEpetraOperator (const Teuchos::RCP<const Thyra_LinearOp>& lop,
                         const bool throw_if_not_epetra)
 {
   Teuchos::RCP<const Epetra_Operator> op;
@@ -288,12 +352,11 @@ getConstEpetraOperator (const Teuchos::RCP<const Thyra_LinearOp> lop,
       op = tmp->epetra_op();
     }
   }
-
   return op;
 }
 
 Teuchos::RCP<Epetra_CrsMatrix>
-getEpetraMatrix (const Teuchos::RCP<Thyra_LinearOp> lop,
+getEpetraMatrix (const Teuchos::RCP<Thyra_LinearOp>& lop,
                  const bool throw_if_not_epetra)
 {
   Teuchos::RCP<Epetra_CrsMatrix> mat;
@@ -306,7 +369,7 @@ getEpetraMatrix (const Teuchos::RCP<Thyra_LinearOp> lop,
 }
 
 Teuchos::RCP<const Epetra_CrsMatrix>
-getConstEpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop,
+getConstEpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp>& lop,
                       const bool throw_if_not_epetra)
 {
   Teuchos::RCP<const Epetra_CrsMatrix> mat;
