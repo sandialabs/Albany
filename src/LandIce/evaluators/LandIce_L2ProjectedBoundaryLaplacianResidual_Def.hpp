@@ -5,11 +5,15 @@
 //*****************************************************************//
 
 #include <fstream>
+
 #include "Teuchos_TestForException.hpp"
-#include "Phalanx_DataLayout.hpp"
 #include "Teuchos_CommHelpers.hpp"
+#include "Phalanx_DataLayout.hpp"
 
 #include "PHAL_Utilities.hpp"
+
+#include "Albany_AbstractDiscretization.hpp"
+
 #include "LandIce_L2ProjectedBoundaryLaplacianResidual.hpp"
 
 template<typename EvalT, typename Traits, typename FieldScalarT>
@@ -51,7 +55,6 @@ L2ProjectedBoundaryLaplacianResidualBase(Teuchos::ParameterList& p, const Teucho
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
   // Get Dimensions
-  numCells  = dl->node_scalar->dimension(0);
   numNodes  = dl->node_scalar->dimension(1);
 
   numSideNodes  = dl_side->node_scalar->dimension(2);
@@ -110,7 +113,7 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
                               "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
 
-  for (int cell=0; cell<numCells; ++cell)
+  for (int cell=0; cell<workset.numCells; ++cell)
     for (int inode=0; inode<numNodes; ++inode)
       bdLaplacian_L2Projection_res(cell,inode) = solution(cell,inode);
 
@@ -173,7 +176,7 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
           if(it_bdEdge.elem_GID == side_gid) {
             unsigned int side_nodes[2] = {sideType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,0),sideType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,1)};
             int cell_nodes[2] = {sideNodes[side][side_nodes[0]],sideNodes[side][side_nodes[1]]};
-            auto bdEdge_measure_sqr = (coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))*(coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))+(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1))*(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1));
+            MeshScalarT bdEdge_measure_sqr = (coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))*(coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))+(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1))*(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1));
             MeshScalarT bdEdge_measure = 0.0; 
             if (bdEdge_measure_sqr > 0.0) 
               bdEdge_measure = std::sqrt(bdEdge_measure_sqr); 

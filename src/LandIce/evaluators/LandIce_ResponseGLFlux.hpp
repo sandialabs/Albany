@@ -14,6 +14,7 @@
 namespace LandIce {
 /**
  * \brief Response Description
+ * It computes the ice flux [kg yr^{-1}] through the grounding line
  */
   template<typename EvalT, typename Traits>
   class ResponseGLFlux :
@@ -44,15 +45,15 @@ namespace LandIce {
     int numSideNodes;
     int numSideDims;
 
-    PHX::MDField<const ScalarT,Cell,Side,Node,Dim>          avg_vel;
-    PHX::MDField<const ParamScalarT,Cell,Side,Node>         thickness;
-    PHX::MDField<const ParamScalarT,Cell,Side,Node>         bed;
-    PHX::MDField<const MeshScalarT,Cell,Side,Node,Dim>      coords;
-    Kokkos::DynRankView<ParamScalarT, PHX::Device>          gl_func,H,x,y;
+    PHX::MDField<const ScalarT,Cell,Side,Node,Dim>          avg_vel;     //[m yr^{-1}]
+    PHX::MDField<const MeshScalarT,Cell,Side,Node>          thickness;   //[km]
+    PHX::MDField<const MeshScalarT,Cell,Side,Node>          bed;         //[km]
+    PHX::MDField<const MeshScalarT,Cell,Side,Node,Dim>      coords;      //[km]
+    Kokkos::DynRankView<MeshScalarT, PHX::Device>           gl_func,H,x,y;
     Kokkos::DynRankView<ScalarT, PHX::Device>               velx,vely;
 
-    double rho_i, rho_w;
-    double scaling;
+    double rho_i, rho_w;  //[kg m^{-3}]
+    double scaling;       //[adim]
 
     Teuchos::RCP<const CellTopologyData> cell_topo;
   };

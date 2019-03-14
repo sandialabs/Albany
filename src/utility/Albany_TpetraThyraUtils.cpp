@@ -198,7 +198,7 @@ getTpetraMatrix (const Teuchos::RCP<Thyra_LinearOp> lop,
 {
   Teuchos::RCP<Tpetra_CrsMatrix> mat;
   if (!lop.is_null()) {
-    auto op = getTpetraOperator(lop);
+    auto op = getTpetraOperator(lop,throw_on_failure);
     mat = Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(op,throw_on_failure);
   }
 
@@ -211,7 +211,7 @@ getConstTpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop,
 {
   Teuchos::RCP<const Tpetra_CrsMatrix> mat;
   if (!lop.is_null()) {
-    auto op = getConstTpetraOperator(lop);
+    auto op = getConstTpetraOperator(lop,throw_on_failure);
     mat = Teuchos::rcp_dynamic_cast<const Tpetra_CrsMatrix>(op,throw_on_failure);
   }
 

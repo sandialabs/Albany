@@ -17,7 +17,7 @@
 
 namespace LCM {
 
-#define DEBUG_OUTPUT
+//#define DEBUG_OUTPUT
 
 //
 //
@@ -551,11 +551,11 @@ StrongSchwarzBC_Base<EvalT, Traits>::doDTKInterpolation(
 #endif  // ALBANY_DTK
 
 //
-// Fill residual, used in both residual and Jacobian
+// Fill solution with Dirichlet values 
 //
 template <typename StrongSchwarzBC, typename Traits>
 void
-fillResidual(StrongSchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
+fillSolution(StrongSchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
 {
   Teuchos::RCP<const Tpetra_Vector> const_disp =
       Albany::getConstTpetraVector(dirichlet_workset.x);
@@ -598,11 +598,6 @@ fillResidual(StrongSchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
 
   Teuchos::ArrayRCP<ST> acce_view =
       has_acce == true ? acce->get1dViewNonConst() : Teuchos::null;
-
-  //Residual
-  Teuchos::RCP<Thyra_Vector> f = dirichlet_workset.f;
-
-  Teuchos::ArrayRCP<ST> f_view = Albany::getNonconstLocalData(f);
 
   std::vector<std::vector<int>> const& ns_nodes =
       dirichlet_workset.nodeSets->find(sbc.nodeSetID)->second;
@@ -672,19 +667,16 @@ fillResidual(StrongSchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
     std::set<int> const& fixed_dofs = dirichlet_workset.fixed_dofs_;
 
     if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
-      f_view[x_dof]    = 0.0;
       disp_view[x_dof] = bcs_disp_const_view_x[dof];
       if (has_velo) { velo_view[x_dof] = bcs_velo_const_view_x[dof]; }
       if (has_acce) { acce_view[x_dof] = bcs_acce_const_view_x[dof]; }
     }
     if (fixed_dofs.find(y_dof) == fixed_dofs.end()) {
-      f_view[y_dof]    = 0.0;
       disp_view[y_dof] = bcs_disp_const_view_y[dof];
       if (has_velo) { velo_view[y_dof] = bcs_velo_const_view_y[dof]; }
       if (has_acce) { acce_view[y_dof] = bcs_acce_const_view_y[dof]; }
     }
     if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
-      f_view[z_dof]    = 0.0;
       disp_view[z_dof] = bcs_disp_const_view_z[dof];
       if (has_velo) { velo_view[z_dof] = bcs_velo_const_view_z[dof]; }
       if (has_acce) { acce_view[z_dof] = bcs_acce_const_view_z[dof]; }
@@ -705,20 +697,57 @@ fillResidual(StrongSchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
     std::set<int> const& fixed_dofs = dirichlet_workset.fixed_dofs_;
 
     if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
-      f_view[x_dof]    = 0.0;
       disp_view[x_dof] = x_val;
     }
     if (fixed_dofs.find(y_dof) == fixed_dofs.end()) {
-      f_view[y_dof]    = 0.0;
       disp_view[y_dof] = y_val;
     }
     if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
-      f_view[z_dof]    = 0.0;
       disp_view[z_dof] = z_val;
     }
 
   }  // node in node set loop
 #endif  // ALBANY_DTK
+  return;
+}
+
+//
+// Fill residual, used in both residual and Jacobian
+//
+template <typename StrongSchwarzBC, typename Traits>
+void
+fillResidual(StrongSchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
+{
+  //Residual
+  Teuchos::RCP<Thyra_Vector> f = dirichlet_workset.f;
+  Teuchos::ArrayRCP<ST> f_view = Albany::getNonconstLocalData(f);
+
+  std::vector<std::vector<int>> const& ns_nodes =
+      dirichlet_workset.nodeSets->find(sbc.nodeSetID)->second;
+
+  auto const ns_number_nodes = ns_nodes.size();
+
+  for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
+    auto const x_dof = ns_nodes[ns_node][0];
+
+    auto const y_dof = ns_nodes[ns_node][1];
+
+    auto const z_dof = ns_nodes[ns_node][2];
+
+    auto const dof = x_dof / 3;
+
+    std::set<int> const& fixed_dofs = dirichlet_workset.fixed_dofs_;
+
+    if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
+      f_view[x_dof]    = 0.0;
+    }
+    if (fixed_dofs.find(y_dof) == fixed_dofs.end()) {
+      f_view[y_dof]    = 0.0;
+    }
+    if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
+      f_view[z_dof]    = 0.0;
+    }
+  }
   return;
 }
 
@@ -744,6 +773,9 @@ StrongSchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
   *out << "IKT StrongSchwarzBC preEvaluate Residual\n"; 
 #endif
+  fillSolution<StrongSchwarzBC<PHAL::AlbanyTraits::Residual, Traits>, Traits>(
+      *this, dirichlet_workset);
+  return;
 }
 
 //
@@ -774,27 +806,11 @@ StrongSchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::StrongSchwarzBC(
 //
 template <typename Traits>
 void
-StrongSchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::preEvaluate(
-    typename Traits::EvalData dirichlet_workset)
-{
-#ifdef DEBUG_OUTPUT
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << "IKT StrongSchwarzBC preEvaluate Jacobian\n";
-#endif 
-}
-
-//
-//
-//
-template <typename Traits>
-void
 StrongSchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
   dirichlet_workset.is_schwarz_bc_     = true;
   dirichlet_workset.spatial_dimension_ = this->app_->getSpatialDimension();
-  PHAL::SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::preEvaluate(
-      dirichlet_workset);
   PHAL::SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
       dirichlet_workset);
 
@@ -821,17 +837,6 @@ StrongSchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::StrongSchwarzBC(
 //
 template <typename Traits>
 void
-StrongSchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::preEvaluate(
-    typename Traits::EvalData dirichlet_workset)
-{
-  return; 
-}
-
-//
-//
-//
-template <typename Traits>
-void
 StrongSchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
@@ -847,17 +852,6 @@ StrongSchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::StrongSchwarzBC(
     : StrongSchwarzBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
 {
   return;
-}
-
-//
-//
-//
-template <typename Traits>
-void
-StrongSchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::preEvaluate(
-    typename Traits::EvalData dirichlet_workset)
-{
-  return; 
 }
 
 //

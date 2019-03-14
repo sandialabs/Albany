@@ -85,7 +85,7 @@ if (DOWNLOAD_TRILINOS)
   
   if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Trilinos")
     execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Trilinos_REPOSITORY_LOCATION} -b develop ${CTEST_SOURCE_DIRECTORY}/Trilinos
+      clone ${Trilinos_REPOSITORY_LOCATION} -b master ${CTEST_SOURCE_DIRECTORY}/Trilinos
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -263,6 +263,7 @@ if (BUILD_TRILINOS)
     "-DMueLu_ENABLE_Tutorial:BOOL=OFF"
     "-DTrilinos_ENABLE_NOX:BOOL=ON"
     "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
+    "-DTrilinos_ENABLE_PanzerExprEval:BOOL=ON"
     "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
     "-DTrilinos_ENABLE_Piro:BOOL=ON"
     "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
@@ -280,6 +281,8 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
     "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
     "-DTrilinos_ENABLE_Thyra:BOOL=ON"
+    "-DTrilinos_ENABLE_ThyraEpetraAdapters:BOOL=ON"
+    "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
     "-DTrilinos_ENABLE_Tpetra:BOOL=ON"
     "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
     "-DTrilinos_ENABLE_Zoltan:BOOL=ON"

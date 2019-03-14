@@ -315,6 +315,7 @@ class BCUtils
   Teuchos::Array<Teuchos::Array<int>> offsets_;
   std::vector<std::string>            nodeSetIDs_;
   bool                                use_sdbcs_{false};
+  bool                                use_dbcs_{false};
 };
 
 //! Specific implementation for Dirichlet BC Evaluator

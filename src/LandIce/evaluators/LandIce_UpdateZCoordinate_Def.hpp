@@ -10,7 +10,7 @@
 
 #include "Albany_Layouts.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
-#include "Albany_AbstractMeshStruct.hpp"
+#include "Albany_AbstractDiscretization.hpp"
 #include "Albany_NodalDOFManager.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 

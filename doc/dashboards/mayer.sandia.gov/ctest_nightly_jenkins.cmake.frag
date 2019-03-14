@@ -79,7 +79,7 @@ if (DOWNLOAD_TRILINOS)
   
   if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Trilinos")
     execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Trilinos_REPOSITORY_LOCATION} -b develop ${CTEST_SOURCE_DIRECTORY}/Trilinos
+      clone ${Trilinos_REPOSITORY_LOCATION} -b master ${CTEST_SOURCE_DIRECTORY}/Trilinos
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -178,15 +178,15 @@ if (BUILD_TRILINOS)
   set_property (GLOBAL PROPERTY Label IKTMayerARMTrilinos)
 
   set (CONFIGURE_OPTIONS
-    "-DTrilinos_ENABLE_OpenMP=ON"
     "-DKokkos_ENABLE_Pthread=OFF"
-    "-DTeuchos_ENABLE_COMPLEX=ON"
+    "-DKokkos_ENABLE_Serial:BOOL=ON"
+    "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
     #
     "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
     "-DTrilinos_ENABLE_DEBUG:BOOL=OFF"
     "-DTPL_FIND_SHARED_LIBS:BOOL=OFF"
     #
-    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DCMAKE_INSTALL_PREFIX:PATH=/mscratch/albany/nightlyCDashTrilinos/build/TrilinosInstall"
     "-DCMAKE_C_COMPILER=mpicc"
     "-DCMAKE_CXX_COMPILER=mpicxx"
     "-DCMAKE_Fortran_COMPILER=mpif90"
@@ -203,7 +203,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_CXX11=ON"
     #
     "-DTPL_ENABLE_MPI=ON"
-    "-DMPI_EXEC_POST_NUMPROCS_FLAGS:STRING='-bind-to;numa;-map-by;numa;'"
     "-DTPL_ENABLE_BinUtils=OFF"
     "-DTPL_ENABLE_SuperLU=OFF"
     "-DTPL_ENABLE_BLAS=ON"
@@ -273,16 +272,16 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
     "-DTrilinos_ENABLE_GlobiPack:BOOL=ON"
     "-DTrilinos_ENABLE_MOOCHO:BOOL=ON"
-    "-DTrilinos_ENABLE_Stokhos:BOOL=OFF"
+    "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
     "-DTrilinos_ENABLE_Piro:BOOL=ON"
     "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
+    "-DTrilinos_ENABLE_PanzerExprEval:BOOL=ON"
     "-DTrilinos_ENABLE_Isorropia:BOOL=ON"
     "-DTrilinos_ENABLE_Teko:BOOL=ON"
     "-DTrilinos_ENABLE_PyTrilinos:BOOL=OFF"
     #
     "-DTrilinos_ENABLE_STK:BOOL=ON"
     "-DTrilinos_ENABLE_STKExp:BOOL=OFF"
-    "-DTrilinos_ENABLE_STKClassic:BOOL=OFF"
     "-DTrilinos_ENABLE_STKDoc_tests:BOOL=OFF"
     "-DTrilinos_ENABLE_STKIO:BOOL=ON"
     "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
@@ -311,11 +310,11 @@ if (BUILD_TRILINOS)
     "-DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF"
     "-DTrilinos_ENABLE_FEI:BOOL=OFF"
     "-DPhalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
-    "-DStokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=OFF"
+    "-DStokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
     "-DStratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
     "-DTrilinos_ENABLE_MueLu:BOOL=ON"
     "-DAmesos2_ENABLE_KLU2:BOOL=ON"
-    "-DAnasazi_ENABLE_RBGen:BOOL=ON"
+    "-DAnasazi_ENABLE_RBGen:BOOL=OFF"
     #
     "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
     "-DTpetra_INST_INT_LONG_LONG:BOOL=ON"
@@ -329,23 +328,24 @@ if (BUILD_TRILINOS)
     #
     "-DTrilinos_ENABLE_Kokkos:BOOL=ON"
     "-DTrilinos_ENABLE_KokkosCore:BOOL=ON"
-    "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING='OPENMP'"
+    "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING='SERIAL'"
     "-DPhalanx_INDEX_SIZE_TYPE:STRING='INT'"
     "-DPhalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
-    "-DTrilinos_ENABLE_OpenMP:BOOL=ON"
+    "-DTrilinos_ENABLE_OpenMP:BOOL=OFF"
     "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
     "-DTPL_ENABLE_HWLOC:STRING=OFF"
     "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
+    "-DKOKKOS_ARCH:STRING=ARMv81"
     #
     "-DTrilinos_ENABLE_Panzer:BOOL=OFF"
-    "-DPanzer_ENABLE_TESTS:BOOL=ON"
-    "-DPanzer_ENABLE_EXAMPLES:BOOL=ON"
-    "-DPanzer_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
-    "-DPanzer_ENABLE_FADTYPE:STRING='Sacado::Fad::DFad'"
     "-DMPI_EXEC=mpirun"
     "-DMPI_EXEC_MAX_NUMPROCS:STRING='4'"
     "-DMPI_EXEC_NUMPROCS_FLAG:STRING='-np'"
+    #
+    "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
   )
+    
+  #"-DMPI_EXEC_POST_NUMPROCS_FLAGS:STRING='-bind-to;numa;-map-by;numa;'"
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TriBuild)
@@ -422,16 +422,9 @@ if (BUILD_ALBANY)
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:FILEPATH=$ENV{jenkins_trilinos_install_dir}"
     "-DENABLE_LCM:BOOL=ON"
-    "-DENABLE_MOR:BOOL=ON"
-    "-DENABLE_GOAL:BOOL=OFF"
+    "-DENABLE_ATO:BOOL=OFF"
     "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_HYDRIDE:BOOL=ON"
-    "-DENABLE_AMP:BOOL=OFF"
-    "-DENABLE_ATO:BOOL=ON"
     "-DENABLE_SCOREC:BOOL=OFF"
-    "-DENABLE_QCAD:BOOL=ON"
-    "-DENABLE_SG:BOOL=OFF"
-    "-DENABLE_ENSEMBLE:BOOL=OFF"
     "-DENABLE_ASCR:BOOL=OFF"
     "-DENABLE_AERAS:BOOL=ON"
     "-DENABLE_64BIT_INT:BOOL=OFF"
@@ -440,9 +433,10 @@ if (BUILD_ALBANY)
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
     "-DALBANY_CTEST_TIMEOUT=500"
     "-DENABLE_CHECK_FPE:BOOL=OFF"
-    "-DALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by core'"
+    "-DDISABLE_LCM_EXODIFF_SENSITIVE_TESTS:BOOL=ON"
     )
   
+    #"-DALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by ppr:1:core:pe=4'"
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuild")
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuild)
   endif ()
@@ -509,6 +503,7 @@ if (BUILD_ALBANY)
   # Run Albany tests
   #
 
+if (ALBANY_RUNTESTS)
   set (CTEST_TEST_TIMEOUT 500)
   CTEST_TEST (
     BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
@@ -521,6 +516,6 @@ if (BUILD_ALBANY)
       message ("Cannot submit Albany test results!")
     endif ()
   endif ()
-
+endif ()
 
 endif ()

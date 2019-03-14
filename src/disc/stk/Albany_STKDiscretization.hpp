@@ -173,6 +173,7 @@ class STKDiscretization : public Albany::AbstractDiscretization {
   //! Get Tpetra overlap Jacobian graph
   Teuchos::RCP<const Tpetra_CrsGraph>
   getOverlapJacobianGraphT() const;
+
 #ifdef ALBANY_AERAS
   //! Get Tpetra implicit overlap Jacobian graph (for Aeras)
   Teuchos::RCP<const Tpetra_CrsGraph>

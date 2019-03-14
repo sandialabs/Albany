@@ -57,9 +57,9 @@ ENDIF()
 SET(HEADERS
   Albany_Application.hpp
   Albany_DataTypes.hpp
+  Albany_DistributedParameter.hpp
   Albany_DistributedParameterLibrary.hpp
-  Albany_DistributedParameterDerivativeOpT.hpp
-  Albany_DistributedParameterLibrary_Tpetra.hpp
+  Albany_DistributedParameterDerivativeOp.hpp
   Albany_DummyParameterAccessor.hpp
   Albany_EigendataInfoStructT.hpp
   Albany_KokkosTypes.hpp
@@ -138,6 +138,15 @@ SET(HEADERS ${HEADERS}
   utility/math/TensorDetail.hpp
   utility/math/TensorImpl.hpp
   )
+
+IF (ALBANY_EPETRA)
+  SET(SOURCES ${SOURCES}
+    utility/Albany_EpetraThyraUtils.cpp
+  )
+  SET(HEADERS ${HEADERS}
+    utility/Albany_EpetraThyraUtils.hpp
+  )
+ENDIF()
 
 add_executable(xml2yaml utility/xml2yaml.cpp)
 add_executable(yaml2xml utility/yaml2xml.cpp)

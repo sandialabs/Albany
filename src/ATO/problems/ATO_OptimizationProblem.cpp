@@ -7,11 +7,14 @@
 #include <Kokkos_DynRankView_Fad.hpp>
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "ATO_OptimizationProblem.hpp"
-#include "Albany_AbstractDiscretization.hpp"
-#include "Adapt_NodalDataVector.hpp"
 #include "ATO_TopoTools.hpp"
 #include "ATO_Integrator.hpp"
 #include "ATO_Types.hpp"
+
+#include "Albany_ProblemUtils.hpp"
+#include "Albany_AbstractDiscretization.hpp"
+#include "Adapt_NodalDataVector.hpp"
+
 #include <functional>
 
 #include <sstream>

@@ -167,7 +167,7 @@ public:
   Teuchos::RCP<ParamLib> getParamLib() const;
 
   //! Get distributed parameter library
-  Teuchos::RCP<DistParamLib> getDistParamLib() const;
+  Teuchos::RCP<DistributedParameterLibrary> getDistributedParameterLibrary() const;
 
   //! Get solution method
   SolutionMethod getSolutionMethod() const { return solMethod; }
@@ -206,14 +206,12 @@ private:
       const Teuchos::RCP<Thyra_Vector>& f,
       const double dt = 0.0);
 
-  void computeGlobalResidualSDBCsImpl(
-      const double current_time,
-      const Teuchos::RCP<const Thyra_Vector>& x,
-      const Teuchos::RCP<const Thyra_Vector>& xdot,
-      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-      const Teuchos::Array<ParamVec> &p,
+  PHAL::Workset set_dfm_workset(double const current_time,
+      const Teuchos::RCP<const Thyra_Vector> x,
+      const Teuchos::RCP<const Thyra_Vector> x_dot,
+      const Teuchos::RCP<const Thyra_Vector> x_dotdot,
       const Teuchos::RCP<Thyra_Vector>& f,
-      const double dt = 0.0);
+      const Teuchos::RCP<const Thyra_Vector>& x_post_SDBCs = Teuchos::null);  
 
 public:
 //! Compute global Jacobian
@@ -614,8 +612,6 @@ private:
 
 #endif // ALBANY_LCM
 
-  std::vector<double> prev_times_;
-
 public:
   //! Get Phalanx postRegistration data
   Teuchos::RCP<PHAL::Setup> getPhxSetup() { return phxSetup; }
@@ -663,7 +659,7 @@ protected:
   Teuchos::RCP<ParamLib> paramLib;
 
   //! Distributed parameter library
-  Teuchos::RCP<DistParamLib> distParamLib;
+  Teuchos::RCP<DistributedParameterLibrary> distParamLib;
 
 #if defined(ALBANY_EPETRA)
   //! Solution memory manager

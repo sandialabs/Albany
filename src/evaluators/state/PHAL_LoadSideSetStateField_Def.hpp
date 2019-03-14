@@ -4,15 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <vector>
-#include <string>
-
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "PHAL_LoadSideSetStateField.hpp"
+
+#include "Albany_AbstractDiscretization.hpp"
 
 namespace PHAL
 {

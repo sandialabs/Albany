@@ -7,7 +7,8 @@
 #ifndef LANDICE_L2_PROJECTED_BOUNDARY_LAPLACIAN_RESIDUAL_HPP
 #define LANDICE_L2_PROJECTED_BOUNDARY_LAPLACIAN_RESIDUAL_HPP
 
-//#include "LandIce_MeshRegion.hpp"
+#include "Shards_CellTopology.hpp"
+
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 
 namespace LandIce {
@@ -36,7 +37,6 @@ private:
   std::vector<std::vector<int> >  sideNodes;
   Teuchos::RCP<shards::CellTopology> cellType;
 
-  int numCells;
   int numNodes;
 
   int numSideNodes;

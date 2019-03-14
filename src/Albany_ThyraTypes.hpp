@@ -14,8 +14,12 @@
 #include "Albany_ScalarOrdinalTypes.hpp"
 
 // Thyra includes
+#include "Thyra_VectorSpaceBase.hpp"
+#include "Thyra_VectorSpaceFactoryBase.hpp"
 #include "Thyra_MultiVectorBase.hpp"
 #include "Thyra_VectorBase.hpp"
+#include "Thyra_ProductVectorSpaceBase.hpp"
+#include "Thyra_ProductMultiVectorBase.hpp"
 #include "Thyra_ProductVectorBase.hpp"
 #include "Thyra_VectorSpaceBase.hpp"
 #include "Thyra_ModelEvaluator.hpp"
@@ -27,6 +31,7 @@ typedef Thyra::VectorSpaceBase<ST>                Thyra_VectorSpace;
 typedef Thyra::MultiVectorBase<ST>                Thyra_MultiVector;
 typedef Thyra::VectorBase<ST>                     Thyra_Vector;
 typedef Thyra::ProductVectorSpaceBase<ST>         Thyra_ProductVectorSpace;
+typedef Thyra::ProductMultiVectorBase<ST>         Thyra_ProductMultiVector;
 typedef Thyra::ProductVectorBase<ST>              Thyra_ProductVector;
 typedef Thyra::LinearOpBase<ST>                   Thyra_LinearOp;
 typedef Thyra::PreconditionerBase<ST>             Thyra_Preconditioner;

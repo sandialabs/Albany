@@ -5,6 +5,8 @@
   </SubProject>
   <SubProject name="TrilinosClang">
   </SubProject>
+  <SubProject name="TrilinosClangDbg">
+  </SubProject>
   <SubProject name="TrilinosDbg">
   </SubProject>
   <SubProject name="Albany64Bit">
@@ -12,5 +14,7 @@
   <SubProject name="Albany64BitDbg">
   </SubProject>
   <SubProject name="Albany64BitClang">
+  </SubProject>
+  <SubProject name="Albany64BitClangDbg">
   </SubProject>
 </Project>

@@ -14,9 +14,10 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dimension.hpp"
-#include "Albany_Layouts.hpp"
 
 #include "Albany_KokkosTypes.hpp"
+#include "Albany_Layouts.hpp"
+#include "Albany_DiscretizationUtils.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 
@@ -63,7 +64,7 @@ protected:
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 protected:
-  Albany::AbstractDiscretization::WorksetConn nodeID;
+  Albany::WorksetConn nodeID;
   Albany::DeviceView1d<ST> f_kokkos;
   Kokkos::vector<Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device> val_kokkos;
 

@@ -1,0 +1,192 @@
+%YAML 1.1
+---
+# Verify Grounding Line Flux (GL) computation
+# Basal domain: [0 1] X [0 1]  (triangular mesh)
+# H = rho_w/1000 * ( 3/2 - x^2 - (y-0.5)^2)
+# b = rho_i/1000 * 5/4
+# GL: 1/4 - x^2 - (y-0.5)^2 = 0
+# h = (1/4 - x^2 - (y-0.5)^2)>0 ? H+b : (1-rho_i/rho_w)*H
+# V: [1, 1]
+# V_avg: [1, 1]
+#
+# GL flux: 5/4*rho_i*rho_w*1000 
+
+
+ANONYMOUS:
+  Debug Output: 
+    Write Solution to MatrixMarket: false
+  Problem: 
+    Phalanx Graph Visualization Detail: 0
+    Solution Method: Steady
+    Name: LandIce Stokes First Order 3D
+    Basal Side Name: basalside
+    Extruded Column Coupled in 2D Response: true
+    Response Functions: 
+      Number: 1
+      Response 0: Grounding Line Flux
+      ResponseParams 1:
+        Scaling Coefficient: 1.0
+    Dirichlet BCs: { }
+    Neumann BCs: { }
+    LandIce BCs:
+      Number : 1
+      BC 0:
+        Type: Basal Friction
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Given Constant
+          Constant Given Beta Value: 1.0
+    Parameters: 
+      Number: 0
+      Parameter 0: 'Glen''s Law Homotopy Parameter'
+    Distributed Parameters: 
+      Number of Parameter Vectors: 0
+    LandIce Physical Parameters: 
+      Water Density: 1.028e+03
+      Ice Density: 9.10e+02
+      Gravity Acceleration: 9.8e+00
+      Clausius-Clapeyron Coefficient: 0.0e+00
+    LandIce Viscosity: 
+      Type: 'Glen''s Law'
+      'Glen''s Law Homotopy Parameter': 1.0e-01
+      'Glen''s Law A': 1.0e-04
+      'Glen''s Law n': 3.0e+00
+      Flow Rate Type: Uniform
+    Body Force: 
+      Type: FO INTERP SURF GRAD
+    Initial Condition: 
+      Function: Constant
+      Function Data: [1.0, 1.0]
+      Function Expression for DOF Y: 'value = 0'
+  Discretization: 
+    Number Of Time Derivatives: 0
+    Method: Extruded
+    Cubature Degree: 1
+    Exodus Output File Name: slab_hex_glf.exo
+    Element Shape: Hexahedron
+    Columnwise Ordering: true
+    NumLayers: 5
+    Thickness Field Name: ice_thickness
+    Use Glimmer Spacing: true
+    Extrude Basal Node Fields: [ice_thickness, surface_height, bed_topography]
+    Basal Node Fields Ranks: [1, 1, 1]
+    Workset Size: -1
+    Required Fields Info: 
+      Number Of Fields: 3
+      Field 0: 
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 1: 
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 2: 
+        Field Name: bed_topography
+        Field Type: Node Scalar
+        Field Origin: Mesh
+    Side Set Discretizations: 
+      Side Sets: [basalside]
+      basalside: 
+        Method: Ioss
+        Number Of Time Derivatives: 0
+        Restart Index: 1
+        Cubature Degree: 3
+        Exodus Input File Name: ../ExoMeshes/square_quad.exo
+        Required Fields Info: 
+          Number Of Fields: 3
+          Field 0: 
+            Field Name: ice_thickness
+            Field Origin: File
+            Field Type: Node Scalar
+            #Field Expression: ['rho_w=1028', 'rho_w/1000.0*(1.0-0.5*x)']
+            #Field Expression: ['rho_w=1028', 'rho_w/1000.0*(1.0-0.5*x)']
+            Field Expression: ['rho_w=1028', 'rho_w/1000.0*(3/2-(y-0.5)^2-x^2)']
+            #Field Expression: ['rho_w=1028', 'rho_w/1000.0*(3/2-(y-0.5)^2-x^2+x)']
+          Field 1: 
+            Field Name: surface_height
+            Field Origin: File
+            Field Type: Node Scalar
+            #Field Expression: ['rho_i=910', 'rho_w=1028', '(1-x-y)>0 ? rho_w/1000.0*(1.0-0.5*x)-rho_i/1000.0*(0.5+0.5*y) : (rho_w-rho_i)/1000*(1.0-0.5*x)']
+            #Field Expression: ['rho_i=910', 'rho_w=1028', '(-x+y)>0 ? rho_w/1000.0*(1.0-0.5*x)-rho_i/1000.0*(1.0-0.5*y) : (rho_w-rho_i)/1000*(1.0-0.5*x)']
+            Field Expression: ['rho_i=910', 'rho_w=1028', '(1/4-(y-0.5)^2-x^2)>0 ? rho_w/1000.0*(3/2-(y-0.5)^2-x^2)-rho_i/1000.0*5/4 : (rho_w-rho_i)/1000*(3/2-(y-0.5)^2-x^2)']
+            #Field Expression: ['rho_i=910', 'rho_w=1028', '(1/4-(y-0.5)^2-x^2)>0 ? rho_w/1000.0*(3/2-(y-0.5)^2-x^2+x)-rho_i/1000.0*5/4*(1+x) : (rho_w-rho_i)/1000*(5/4-(y-0.5)^2-x^2+x)']
+          Field 2: 
+            Field Name: bed_topography
+            Field Origin: File
+            Field Type: Node Scalar
+            #Field Expression: ['rho_i=910', '-rho_i/1000.0*(0.5+0.5*y)']
+            #Field Expression: ['rho_i=910', '-rho_i/1000.0*(1.0-0.5*y)']
+            Field Expression: ['rho_i=910', '-rho_i/1000.0*5/4+0.0*x']
+            #Field Expression: ['rho_i=910', '-rho_i/1000.0*5/4*(1+x)']
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [1169350000.0]
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Initial Value: 1.00000000000000006e-01
+        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
+        Continuation Method: Natural
+        Max Steps: 10
+        Max Value: 1.00000000000000000e+00
+        Min Value: 0.00000000000000000e+00
+      Step Size: 
+        Initial Step Size: 2.00000000000000011e-01
+    NOX: 
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: OR
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.0e+05
+          Test 1: 
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.0e+05
+            Relative Tolerance: 1.0e+03
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 50
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

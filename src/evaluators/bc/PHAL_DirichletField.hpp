@@ -11,13 +11,11 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
 #include "Teuchos_ParameterList.hpp"
-
 #include "Sacado_ParameterAccessor.hpp"
+
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dirichlet.hpp"
-
 #include "PHAL_IdentityCoordinateFunctionTraits.hpp"
 
 namespace PHAL {

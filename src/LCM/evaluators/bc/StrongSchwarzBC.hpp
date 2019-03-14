@@ -130,6 +130,10 @@ class StrongSchwarzBC_Base : public PHAL::SDirichlet<EvalT, Traits>
 
   template <typename SBC, typename T>
   friend void
+  fillSolution(SBC& sbc, typename T::EvalData d);
+
+  template <typename SBC, typename T>
+  friend void
   fillResidual(SBC& sbc, typename T::EvalData d);
 
  protected:
@@ -145,6 +149,13 @@ class StrongSchwarzBC_Base : public PHAL::SDirichlet<EvalT, Traits>
 
   int coupled_app_index_{-1};
 };
+
+//
+// Fill solution with Dirichlet values 
+//
+template <typename StrongSchwarzBC, typename Traits>
+void
+fillSolution(StrongSchwarzBC& sbc, typename Traits::EvalData d);
 
 //
 // Fill residual, used in both residual and Jacobian
@@ -180,8 +191,6 @@ class StrongSchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>
   StrongSchwarzBC(Teuchos::ParameterList& p);
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
   void
-  preEvaluate(typename Traits::EvalData d);
-  void
   evaluateFields(typename Traits::EvalData d);
 };
 
@@ -196,8 +205,6 @@ class StrongSchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>
   StrongSchwarzBC(Teuchos::ParameterList& p);
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
   void
-  preEvaluate(typename Traits::EvalData d);
-  void
   evaluateFields(typename Traits::EvalData d);
 };
 
@@ -211,8 +218,6 @@ class StrongSchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>
  public:
   StrongSchwarzBC(Teuchos::ParameterList& p);
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
-  void
-  preEvaluate(typename Traits::EvalData d);
   void
   evaluateFields(typename Traits::EvalData d);
 };

@@ -31,7 +31,7 @@
 rm -f CMakeCache.txt
 rm -rf CMakeFiles
 NETCDFDIR=/usr/local/netcdf
-PARMETISDIR=/home/ikalash/alegra_project/TPL/parmetis/4.0.3/inst_gcc_opt
+PARMETISDIR=/home/ikalash/Install/parmetis/build/install
 
 
 BUILD_DIR=`pwd`
@@ -95,6 +95,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_NOX:BOOL=ON \
       -D Trilinos_ENABLE_OptiPack:BOOL=ON \
       -D Trilinos_ENABLE_Pamgen:BOOL=ON \
+      -D Trilinos_ENABLE_PanzerExprEval:BOOL=ON \
       -D Trilinos_ENABLE_Phalanx:BOOL=ON \
       -D Trilinos_ENABLE_Piro:BOOL=ON \
       -D Anasazi_ENABLE_RBGen:BOOL=OFF \
@@ -112,9 +113,9 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
       -D Trilinos_ENABLE_Teko:BOOL=ON \
       -D Trilinos_ENABLE_Teuchos:BOOL=ON \
-      -D Trilinos_ENABLE_ThreadPool:BOOL=ON \
       -D Trilinos_ENABLE_Thyra:BOOL=ON \
       -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
+      -D Trilinos_ENABLE_ThyraEpetraAdapters:BOOL=ON \
       -D Trilinos_ENABLE_Tpetra:BOOL=ON \
       -D Trilinos_ENABLE_TrilinosCouplings:BOOL=ON \
       -D Trilinos_ENABLE_TriKota:BOOL=OFF \

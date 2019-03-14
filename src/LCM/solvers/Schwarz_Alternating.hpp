@@ -9,6 +9,7 @@
 
 #include <functional>
 
+#include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Albany_MaterialDatabase.hpp"

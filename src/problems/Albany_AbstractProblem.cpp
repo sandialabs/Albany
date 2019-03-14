@@ -11,7 +11,7 @@
 Albany::AbstractProblem::AbstractProblem(
   const Teuchos::RCP<Teuchos::ParameterList>& params_,
   const Teuchos::RCP<ParamLib>& paramLib_,
-  //const Teuchos::RCP<DistParamLib>& distParamLib_,
+  //const Teuchos::RCP<DistributedParameterLibrary>& distParamLib_,
   const int neq_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   neq(neq_),

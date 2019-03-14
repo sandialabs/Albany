@@ -4,11 +4,16 @@
 // Get basic Thyra types
 #include "Albany_ThyraTypes.hpp"
 
+// Get Teuchos_Comm type
+#include "Albany_CommTypes.hpp"
+
 // Get Kokkos types (for the 1d device view)
 #include "Albany_KokkosTypes.hpp"
 
 // Get Spmd Thyra types
 #include "Thyra_SpmdVectorSpaceBase.hpp"
+#include "Thyra_SpmdMultiVectorBase.hpp"
+#include "Thyra_SpmdVectorBase.hpp"
 
 // Get Product Thyra types
 #include "Thyra_ProductVectorSpaceBase.hpp"
@@ -17,6 +22,8 @@
 
 // Spmd types
 typedef Thyra::SpmdVectorSpaceBase<ST>      Thyra_SpmdVectorSpace;
+typedef Thyra::SpmdMultiVectorBase<ST>      Thyra_SpmdMultiVector;
+typedef Thyra::SpmdVectorBase<ST>           Thyra_SpmdVector;
 
 // Product types
 typedef Thyra::ProductVectorSpaceBase<ST>   Thyra_ProductVectorSpace;
@@ -25,6 +32,9 @@ typedef Thyra::ProductVectorBase<ST>        Thyra_ProductVector;
 
 namespace Albany
 {
+
+Teuchos::RCP<const Thyra_VectorSpace>
+createLocallyReplicatedVectorSpace (const int size, const Teuchos::RCP<const Teuchos_Comm> comm);
 
 // ========= Thyra_LinearOp utilities ========= //
 
@@ -83,7 +93,13 @@ DeviceView1d<ST>       getNonconstDeviceData (const Teuchos::RCP<Thyra_Vector>& 
 void scale_and_update (const Teuchos::RCP<Thyra_Vector> y, const ST y_coeff,
                        const Teuchos::RCP<const Thyra_Vector> x, const ST x_coeff);
 
-// ======== Object printing utilities ========= //
+// Thyra does not offer a 'mean' method in its (multi)vector interface.
+// The method 'sum' in Thyra_VectorStdOps already does the sum,
+// so here we simply scale by the vector (global) length.
+ST mean (const Teuchos::RCP<const Thyra_Vector>& v);
+Teuchos::Array<ST> means (const Teuchos::RCP<const Thyra_MultiVector>& mv);
+
+// ======== I/O utilities ========= //
 
 template<typename ThyraObjectType>
 void describe (const Teuchos::RCP<const ThyraObjectType>& obj,

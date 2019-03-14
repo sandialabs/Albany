@@ -7,6 +7,10 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
+#include "Albany_NodalDOFManager.hpp"
+#include "Albany_AbstractDiscretization.hpp"
+#include "Albany_TpetraThyraUtils.hpp"
+
 #include "LandIce_ScatterResidual2D.hpp"
 
 namespace PHAL {

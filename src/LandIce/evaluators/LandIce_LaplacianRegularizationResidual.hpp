@@ -7,8 +7,8 @@
 #ifndef LANDICE_LAPLACIAN_REGULAIZATION_RESIDUAL_HPP
 #define LANDICE_LAPLACIAN_REGULAIZATION_RESIDUAL_HPP
 
-//#include "LandIce_MeshRegion.hpp"
 #include "PHAL_SeparableScatterScalarResponse.hpp"
+#include "Shards_CellTopology.hpp"
 
 namespace LandIce {
 /**

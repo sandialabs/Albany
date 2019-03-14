@@ -78,7 +78,7 @@ if (DOWNLOAD_TRILINOS)
   
   if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Trilinos")
     execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Trilinos_REPOSITORY_LOCATION} -b develop ${CTEST_SOURCE_DIRECTORY}/Trilinos
+      clone ${Trilinos_REPOSITORY_LOCATION} -b master ${CTEST_SOURCE_DIRECTORY}/Trilinos
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -216,6 +216,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
     "-DTrilinos_ENABLE_Thyra:BOOL=ON"
     "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
+    "-DTrilinos_ENABLE_ThyraEpetraAdapters:BOOL=ON"
     "-DTrilinos_ENABLE_TrilinosCouplings:BOOL=ON"
     "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
     "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
@@ -247,6 +248,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_SEACASIoss:BOOL=ON"
     "-D Trilinos_ENABLE_ThreadPool:STRING=ON"
     "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
+    "-DTrilinos_ENABLE_PanzerExprEval:BOOL=ON"
     "-DTPL_ENABLE_Netcdf:BOOL=ON"
     #
     "-DTPL_ENABLE_BLAS:BOOL=ON"
@@ -504,6 +506,7 @@ if (BUILD_CISM_PISCEES)
 
 
   set (CONFIGURE_OPTIONS
+    "-Wno-dev"
     "-DCISM_MPI_MODE:BOOL=ON"
     "-DCISM_SERIAL_MODE:BOOL=OFF"
     "-DCISM_BUILD_CISM_DRIVER:BOOL=ON"

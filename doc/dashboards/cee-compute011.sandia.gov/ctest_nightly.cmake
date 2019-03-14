@@ -32,6 +32,8 @@ if (1)
     set (BUILD_ALB64DBG TRUE)
     set (BUILD_TRILINOSCLANG FALSE)
     set (BUILD_ALB64CLANG FALSE)
+    set (BUILD_TRILINOSCLANGDBG FALSE)
+    set (BUILD_ALB64CLANGDBG FALSE)
     set (BUILD_ALBFUNCTOR FALSE)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
@@ -47,6 +49,8 @@ if (1)
     set (BUILD_ALB64 FALSE)
     set (BUILD_TRILINOSCLANG TRUE)
     set (BUILD_ALB64CLANG TRUE)
+    set (BUILD_TRILINOSCLANGDBG FALSE)
+    set (BUILD_ALB64CLANGDBG FALSE)
     set (BUILD_ALBFUNCTOR FALSE)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
@@ -56,6 +60,24 @@ if (1)
     set (BUILD_TRILINOSCLANG FALSE)
     set (BUILD_ALB64CLANG FALSE)
   ENDIF()
+  IF(CTEST_BUILD_OPTION MATCHES "clangdbg")
+    set (BUILD_TRILINOS FALSE)
+    set (BUILD_PERIDIGM FALSE)
+    set (BUILD_ALB32 FALSE)
+    set (BUILD_ALB64 FALSE)
+    set (BUILD_TRILINOSCLANG FALSE)
+    set (BUILD_ALB64CLANG FALSE)
+    set (BUILD_TRILINOSCLANGDBG TRUE)
+    set (BUILD_ALB64CLANGDBG TRUE)
+    set (BUILD_ALBFUNCTOR FALSE)
+    set (BUILD_INTEL_TRILINOS FALSE)
+    set (BUILD_INTEL_ALBANY FALSE)
+    set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
+#    set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
+  ELSE()
+    set (BUILD_TRILINOSCLANGDBG FALSE)
+    set (BUILD_ALB64CLANGDBG FALSE)
+  ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "intel")
     set (BUILD_TRILINOS FALSE)
     set (BUILD_PERIDIGM FALSE)
@@ -63,6 +85,8 @@ if (1)
     set (BUILD_ALB64 FALSE)
     set (BUILD_TRILINOSCLANG FALSE)
     set (BUILD_ALB64CLANG FALSE)
+    set (BUILD_TRILINOSCLANGDBG FALSE)
+    set (BUILD_ALB64CLANGDBG FALSE)
     set (BUILD_ALBFUNCTOR FALSE)
     set (BUILD_INTEL_TRILINOS TRUE)
     set (BUILD_INTEL_ALBANY TRUE)
@@ -88,6 +112,8 @@ else ()
   set (BUILD_ALB64 FALSE)
   set (BUILD_TRILINOSCLANG FALSE)
   set (BUILD_ALB64CLANG FALSE)
+  set (BUILD_TRILINOSCLANGDBG FALSE)
+  set (BUILD_ALB64CLANGDBG FALSE)
   set (BUILD_ALBFUNCTOR FALSE)
   set (BUILD_INTEL_TRILINOS FALSE)
   set (BUILD_INTEL_ALBANY FALSE)
@@ -123,7 +149,7 @@ set (CTEST_INSTALL_NAME test)
 
 if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
 # Runs tests longer if in debug mode
-   set (CTEST_TEST_TIMEOUT 3200)
+   set (CTEST_TEST_TIMEOUT 4200)
 endif ()
 
 set (PREFIX_DIR /projects/albany)
@@ -213,7 +239,7 @@ if (DOWNLOAD)
 
   if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Trilinos")
     execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone --branch develop ${Trilinos_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Trilinos
+      clone --branch master ${Trilinos_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Trilinos
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -414,6 +440,7 @@ set (COMMON_CONFIGURE_OPTIONS
   "-Wno-dev"
   #
   "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
+  "-DTrilinos_ENABLE_ThyraEpetraAdapters:BOOL=ON"
   "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
   "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
   "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
@@ -509,6 +536,7 @@ set (COMMON_CONFIGURE_OPTIONS
   #
   "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
   "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
+  "-DTrilinos_ENABLE_PanzerExprEval:BOOL=ON"
   "-DTrilinos_ENABLE_PyTrilinos:BOOL=OFF"
   #
   "-DTrilinos_ENABLE_STK:BOOL=ON"
@@ -535,11 +563,12 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Tempus:BOOL=ON"
   #
   "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
+  "-DSTK_HIDE_DEPRECATED_CODE:BOOL=OFF"
   )
 
 if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
    set (COMMON_CONFIGURE_OPTIONS ${COMMON_CONFIGURE_OPTIONS}
-     "-DDART_TESTING_TIMEOUT:STRING=3200"
+     "-DDART_TESTING_TIMEOUT:STRING=3600"
    )
 else ()
    set (COMMON_CONFIGURE_OPTIONS ${COMMON_CONFIGURE_OPTIONS}
@@ -691,11 +720,87 @@ if (BUILD_TRILINOSCLANG)
     #
     "-DCMAKE_CXX_COMPILER:STRING=/projects/albany/clang/bin/mpicxx"
 #    "-DCMAKE_CXX_FLAGS:STRING='-msoft-float -march=native -O3 -Wno-inconsistent-missing-override -DNDEBUG ${extra_cxx_flags}'"
-    "-DCMAKE_CXX_FLAGS:STRING='-march=native -O3 -DNDEBUG -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
+#    "-DCMAKE_CXX_FLAGS:STRING='-march=native -O3 -DNDEBUG -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
+    "-DCMAKE_CXX_FLAGS:STRING='-march=native -g -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
     "-DCMAKE_C_COMPILER:STRING=/projects/albany/clang/bin/mpicc"
-    "-DCMAKE_C_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
+    #"-DCMAKE_C_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
+    "-DCMAKE_C_FLAGS:STRING='-march=native -g'"
     "-DCMAKE_Fortran_COMPILER:STRING=/projects/albany/clang/bin/mpifort"
-    "-DCMAKE_Fortran_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
+    #"-DCMAKE_Fortran_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
+    "-DCMAKE_Fortran_FLAGS:STRING='-march=native -g'"
+    "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
+#    "-DMDS_ID_TYPE:STRING='long long int'"
+    "-DMDS_ID_TYPE:STRING='long int'"
+    "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
+    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/clang/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/clang/lib:$ENV{LIBRARY_PATH}:$ENV{MKLHOME}/../compiler/lib/intel64'"
+    "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
+    "-DBUILD_SHARED_LIBS:BOOL=OFF"
+    "-DAmesos2_ENABLE_KLU2:BOOL=ON"
+    "-DBoost_INCLUDE_DIRS:PATH=${CLANG_BOOST_ROOT}/include"
+    "-DBoost_LIBRARY_DIRS:PATH=${CLANG_BOOST_ROOT}/lib"
+    "-DBoostLib_INCLUDE_DIRS:PATH=${CLANG_BOOST_ROOT}/include"
+    "-DBoostLib_LIBRARY_DIRS:PATH=${CLANG_BOOST_ROOT}/lib"
+    "-DBoostAlbLib_INCLUDE_DIRS:PATH=${CLANG_BOOST_ROOT}/include"
+    "-DBoostAlbLib_LIBRARY_DIRS:PATH=${CLANG_BOOST_ROOT}/lib"
+#
+    "-DTPL_ENABLE_Netcdf:BOOL=ON"
+    "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
+    "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
+    "-DTPL_Netcdf_PARALLEL:BOOL=OFF"
+    "-DTPL_ENABLE_Pnetcdf:STRING=ON"
+    "-DPnetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
+    "-DPnetcdf_LIBRARY_DIRS=${PREFIX_DIR}/clang/lib"
+  #
+    "-DTPL_ENABLE_HDF5:BOOL=ON"
+    "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
+    "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
+    "-DHDF5_LIBRARY_NAMES:STRING='hdf5_hl\\;hdf5\\;z'"
+  #
+    "-DTPL_ENABLE_Zlib:BOOL=ON"
+    "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
+    "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
+  #
+#    "-DTPL_ENABLE_yaml-cpp:BOOL=ON"
+#    "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
+#    "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
+  #
+    "-DTPL_ENABLE_ParMETIS:BOOL=ON"
+    "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
+    "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
+  #
+    "-DTPL_ENABLE_SuperLU:BOOL=ON"
+    #"-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/SuperLU_4.3/include"
+    "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
+    "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/SuperLU_4.3/lib"
+    "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
+    "-DCMAKE_INSTALL_RPATH:STRING=${PREFIX_DIR}/clang/lib"
+)
+
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+  do_trilinos("${CONFIGURE_OPTIONS}" "TrilinosClang" "${INSTALL_LOCATION}")
+
+endif (BUILD_TRILINOSCLANG)
+
+if (BUILD_TRILINOSCLANGDBG)
+
+  set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11Dbg")
+
+  set (CONFIGURE_OPTIONS
+    "${COMMON_CONFIGURE_OPTIONS}"
+    "-DCMAKE_BUILD_TYPE:STRING=DEBUG"
+    "-DTPL_ENABLE_MPI:BOOL=ON"
+    "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/clang"
+    #
+    "-DCMAKE_CXX_COMPILER:STRING=/projects/albany/clang/bin/mpicxx"
+#    "-DCMAKE_CXX_FLAGS:STRING='-msoft-float -march=native -O3 -Wno-inconsistent-missing-override -DNDEBUG ${extra_cxx_flags}'"
+#    "-DCMAKE_CXX_FLAGS:STRING='-march=native -O3 -DNDEBUG -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
+    "-DCMAKE_CXX_FLAGS:STRING='-march=native -g -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
+    "-DCMAKE_C_COMPILER:STRING=/projects/albany/clang/bin/mpicc"
+    #"-DCMAKE_C_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
+    "-DCMAKE_C_FLAGS:STRING='-march=native -g'"
+    "-DCMAKE_Fortran_COMPILER:STRING=/projects/albany/clang/bin/mpifort"
+    #"-DCMAKE_Fortran_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
+    "-DCMAKE_Fortran_FLAGS:STRING='-march=native -g'"
     "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
 #    "-DMDS_ID_TYPE:STRING='long long int'"
     "-DMDS_ID_TYPE:STRING='long int'"
@@ -746,9 +851,9 @@ if (BUILD_TRILINOSCLANG)
 )
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
-  do_trilinos("${CONFIGURE_OPTIONS}" "TrilinosClang" "${INSTALL_LOCATION}")
+  do_trilinos("${CONFIGURE_OPTIONS}" "TrilinosClangDbg" "${INSTALL_LOCATION}")
 
-endif (BUILD_TRILINOSCLANG)
+endif (BUILD_TRILINOSCLANGDBG)
 
 #
 # Configure the Albany Clang build using GO = long
@@ -761,11 +866,12 @@ if (BUILD_ALB64CLANG)
     "-DENABLE_64BIT_INT:BOOL=ON"
 # Run even the epetra tests
 #    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
-    "-DENABLE_LCM:BOOL=OFF"
+    "-DENABLE_LCM:BOOL=ON"
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
     "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
     "-DENABLE_MESH_DEPENDS_ON_PARAMETERS:BOOL=ON"
+    "-DCMAKE_CXX_FLAGS:STRING='-std=gnu++11 -g'"
     )
   if (BUILD_SCOREC)
     set (CONF_OPTIONS ${CONF_OPTIONS}
@@ -776,6 +882,31 @@ if (BUILD_ALB64CLANG)
   do_albany("${CONF_OPTIONS}" "Albany64BitClang")
 
 endif (BUILD_ALB64CLANG)
+
+if (BUILD_ALB64CLANGDBG)
+
+  set (CONF_OPTIONS
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11Dbg"
+    "-DENABLE_64BIT_INT:BOOL=ON"
+# Run even the epetra tests
+#    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
+    "-DENABLE_LCM:BOOL=ON"
+    "-DENABLE_LANDICE:BOOL=ON"
+    "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
+    "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
+    "-DENABLE_MESH_DEPENDS_ON_PARAMETERS:BOOL=ON"
+    "-DCMAKE_CXX_FLAGS:STRING='-std=gnu++11 -g'"
+    "-DCMAKE_BUILD_TYPE:STRING=DEBUG"
+    )
+  if (BUILD_SCOREC)
+    set (CONF_OPTIONS ${CONF_OPTIONS}
+      "-DENABLE_SCOREC:BOOL=ON")
+  endif (BUILD_SCOREC)
+
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+  do_albany("${CONF_OPTIONS}" "Albany64BitClangDbg")
+
+endif (BUILD_ALB64CLANGDBG)
 
 if (BUILD_TRILINOSDBG)
 

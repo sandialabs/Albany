@@ -12,6 +12,8 @@
 #include "ConstitutiveModel.hpp"
 #include "NOX_StatusTest_ModelEvaluatorFlag.h"
 
+#include "Albany_Layouts.hpp"
+
 namespace LCM {
 
 template <typename S>
