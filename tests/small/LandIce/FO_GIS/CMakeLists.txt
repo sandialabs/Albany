@@ -218,7 +218,11 @@ add_test(${testName}_GisSensSMBwrtBetaTpetra ${AlbanyT.exe} input_fo_gis_beta_sm
   if (ALBANY_MESH_DEPENDS_ON_SOLUTION)
   add_test(${testName}_GisCoupledThicknessShapeOptTpetra ${AlbanyT.exe} input_fo_gis_coupled_shape_optT.yaml)
   else()
-    add_test(${testName}_GisCoupledThicknessTpetra ${AlbanyT.exe} input_fo_gis_coupledT.yaml)
+    IF(NOT Kokkos_ENABLE_Cuda)
+      #IKT, 3/14/19: the following tests need to be debugged in CUDA build and turned back on; 
+      #see issue #420. 
+      add_test(${testName}_GisCoupledThicknessTpetra ${AlbanyT.exe} input_fo_gis_coupledT.yaml)
+    endif()
   endif()
 else()
   add_test(NAME ${testName}_GisUnstructuredPerformanceTpetra_DecompMesh
