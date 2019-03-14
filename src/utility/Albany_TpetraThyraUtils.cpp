@@ -97,14 +97,14 @@ createConstThyraLinearOp (const Teuchos::RCP<const Tpetra_Operator> op)
 
 Teuchos::RCP<const Tpetra_Map>
 getTpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
-              const bool throw_on_failure)
+              const bool throw_if_not_tpetra)
 {
   Teuchos::RCP<const Tpetra_Map> map;
   if (!vs.is_null()) {
-    // There is no way to access the tpetra map in the Thyra_TpetraVectorSpace class,
-    // so create a vector, grab the Tpetra_Vector, then grab the map from it
-    auto v = Thyra::createMember(vs);
-    map = getConstTpetraVector(v,throw_on_failure)->getMap();
+    auto tmp = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVectorSpace>(vs,throw_if_not_tpetra);
+    if (!tmp.is_null()) {
+      map = tmp->getTpetraMap();
+    }
   }
 
   return map;
@@ -112,11 +112,11 @@ getTpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
 
 Teuchos::RCP<Tpetra_Vector>
 getTpetraVector (const Teuchos::RCP<Thyra_Vector> v,
-                 const bool throw_on_failure)
+                 const bool throw_if_not_tpetra)
 {
   Teuchos::RCP<Tpetra_Vector> v_tpetra;
   if (!v.is_null()) {
-    auto tmp = Teuchos::rcp_dynamic_cast<Thyra_TpetraVector>(v,throw_on_failure);
+    auto tmp = Teuchos::rcp_dynamic_cast<Thyra_TpetraVector>(v,throw_if_not_tpetra);
     if (!tmp.is_null()) {
       v_tpetra = tmp->getTpetraVector();
     }
@@ -127,12 +127,12 @@ getTpetraVector (const Teuchos::RCP<Thyra_Vector> v,
 
 Teuchos::RCP<const Tpetra_Vector>
 getConstTpetraVector (const Teuchos::RCP<const Thyra_Vector> v,
-                      const bool throw_on_failure)
+                      const bool throw_if_not_tpetra)
 
 {
   Teuchos::RCP<const Tpetra_Vector> v_tpetra;
   if (!v.is_null()) {
-    auto tmp = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(v,throw_on_failure);
+    auto tmp = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVector>(v,throw_if_not_tpetra);
     if (!tmp.is_null()) {
       v_tpetra = tmp->getConstTpetraVector();
     }
@@ -143,11 +143,11 @@ getConstTpetraVector (const Teuchos::RCP<const Thyra_Vector> v,
 
 Teuchos::RCP<Tpetra_MultiVector>
 getTpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector> mv,
-                      const bool throw_on_failure)
+                      const bool throw_if_not_tpetra)
 {
   Teuchos::RCP<Tpetra_MultiVector> mv_tpetra;
   if (!mv.is_null()) {
-    auto tmp = Teuchos::rcp_dynamic_cast<Thyra_TpetraMultiVector>(mv,throw_on_failure);
+    auto tmp = Teuchos::rcp_dynamic_cast<Thyra_TpetraMultiVector>(mv,throw_if_not_tpetra);
     if (!tmp.is_null()) {
       mv_tpetra = tmp->getTpetraMultiVector();
     }
@@ -158,11 +158,11 @@ getTpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector> mv,
 
 Teuchos::RCP<const Tpetra_MultiVector>
 getConstTpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
-                           const bool throw_on_failure)
+                           const bool throw_if_not_tpetra)
 {
   Teuchos::RCP<const Tpetra_MultiVector> mv_tpetra;
   if (!mv.is_null()) {
-    auto tmp = Teuchos::rcp_dynamic_cast<const Thyra_TpetraMultiVector>(mv,throw_on_failure);
+    auto tmp = Teuchos::rcp_dynamic_cast<const Thyra_TpetraMultiVector>(mv,throw_if_not_tpetra);
     if (!tmp.is_null()) {
       mv_tpetra = tmp->getConstTpetraMultiVector();
     }
@@ -173,11 +173,11 @@ getConstTpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
 
 Teuchos::RCP<Tpetra_Operator>
 getTpetraOperator (const Teuchos::RCP<Thyra_LinearOp> lop,
-                   const bool throw_on_failure)
+                   const bool throw_if_not_tpetra)
 {
   Teuchos::RCP<Tpetra_Operator> op;
   if (!lop.is_null()) {
-    auto tmp = Teuchos::rcp_dynamic_cast<Thyra_TpetraLinearOp>(lop,throw_on_failure);
+    auto tmp = Teuchos::rcp_dynamic_cast<Thyra_TpetraLinearOp>(lop,throw_if_not_tpetra);
     if (!tmp.is_null()) {
       op = tmp->getTpetraOperator();
     }
@@ -188,11 +188,11 @@ getTpetraOperator (const Teuchos::RCP<Thyra_LinearOp> lop,
 
 Teuchos::RCP<const Tpetra_Operator>
 getConstTpetraOperator (const Teuchos::RCP<const Thyra_LinearOp> lop,
-                        const bool throw_on_failure)
+                        const bool throw_if_not_tpetra)
 {
   Teuchos::RCP<const Tpetra_Operator> op;
   if (!lop.is_null()) {
-    auto tmp = Teuchos::rcp_dynamic_cast<const Thyra_TpetraLinearOp>(lop,throw_on_failure);
+    auto tmp = Teuchos::rcp_dynamic_cast<const Thyra_TpetraLinearOp>(lop,throw_if_not_tpetra);
     if (!tmp.is_null()) {
       op = tmp->getConstTpetraOperator();
     }
@@ -203,12 +203,12 @@ getConstTpetraOperator (const Teuchos::RCP<const Thyra_LinearOp> lop,
 
 Teuchos::RCP<Tpetra_CrsMatrix>
 getTpetraMatrix (const Teuchos::RCP<Thyra_LinearOp> lop,
-                 const bool throw_on_failure)
+                 const bool throw_if_not_tpetra)
 {
   Teuchos::RCP<Tpetra_CrsMatrix> mat;
   if (!lop.is_null()) {
-    auto op = getTpetraOperator(lop,throw_on_failure);
-    mat = Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(op,throw_on_failure);
+    auto op = getTpetraOperator(lop,throw_if_not_tpetra);
+    mat = Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(op,throw_if_not_tpetra);
   }
 
   return mat;
@@ -216,12 +216,12 @@ getTpetraMatrix (const Teuchos::RCP<Thyra_LinearOp> lop,
 
 Teuchos::RCP<const Tpetra_CrsMatrix>
 getConstTpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop,
-                      const bool throw_on_failure)
+                      const bool throw_if_not_tpetra)
 {
   Teuchos::RCP<const Tpetra_CrsMatrix> mat;
   if (!lop.is_null()) {
-    auto op = getConstTpetraOperator(lop,throw_on_failure);
-    mat = Teuchos::rcp_dynamic_cast<const Tpetra_CrsMatrix>(op,throw_on_failure);
+    auto op = getConstTpetraOperator(lop,throw_if_not_tpetra);
+    mat = Teuchos::rcp_dynamic_cast<const Tpetra_CrsMatrix>(op,throw_if_not_tpetra);
   }
 
   return mat;
@@ -231,122 +231,145 @@ getConstTpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop,
 
 Teuchos::RCP<Tpetra_Vector>
 getTpetraVector (Thyra_Vector& v,
-                 const bool throw_on_failure)
+                 const bool throw_if_not_tpetra)
 {
   Thyra_TpetraVector* tv = dynamic_cast<Thyra_TpetraVector*>(&v);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(tv==nullptr && throw_on_failure, BadThyraTpetraCast,
-                             "Error! Could not cast input Thyra_Vector to Thyra_TpetraVector.\n");
+  if (tv==nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_tpetra, BadThyraTpetraCast,
+                               "Error! Could not cast input Thyra_Vector to Thyra_TpetraVector.\n");
 
-  // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
-  TEUCHOS_TEST_FOR_EXCEPTION(tv->getTpetraVector().is_null(), std::runtime_error,
-                             "Error! The Thyra_TpetraVector object stores a null pointer.\n")  return tv->getTpetraVector();
+    return Teuchos::null;
+  } else {
+    // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
+    TEUCHOS_TEST_FOR_EXCEPTION(tv->getTpetraVector().is_null(), std::runtime_error,
+                               "Error! The Thyra_TpetraVector object stores a null pointer.\n");
+
+    return tv->getTpetraVector();
+  }
 }
 
 Teuchos::RCP<const Tpetra_Vector>
 getConstTpetraVector (const Thyra_Vector& v,
-                      const bool throw_on_failure)
+                      const bool throw_if_not_tpetra)
 {
   const Thyra_TpetraVector* tv = dynamic_cast<const Thyra_TpetraVector*>(&v);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(tv==nullptr && throw_on_failure, BadThyraTpetraCast,
-                             "Error! Could not cast input Thyra_Vector to Thyra_TpetraVector.\n");
+  if (tv==nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_tpetra, BadThyraTpetraCast,
+                               "Error! Could not cast input Thyra_Vector to Thyra_TpetraVector.\n");
+    return Teuchos::null;
+  } else {
+    // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
+    TEUCHOS_TEST_FOR_EXCEPTION(tv->getConstTpetraVector().is_null(), std::runtime_error,
+                               "Error! The Thyra_TpetraVector object stores a null pointer.\n");
 
-  // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
-  TEUCHOS_TEST_FOR_EXCEPTION(tv->getConstTpetraVector().is_null(), std::runtime_error,
-                             "Error! The Thyra_TpetraVector object stores a null pointer.\n")  return tv->getConstTpetraVector();
+    return tv->getConstTpetraVector();
+  }
 }
 
 Teuchos::RCP<Tpetra_MultiVector>
 getTpetraMultiVector (Thyra_MultiVector& mv,
-                      const bool throw_on_failure)
+                      const bool throw_if_not_tpetra)
 {
   Thyra_TpetraMultiVector* tmv = dynamic_cast<Thyra_TpetraMultiVector*>(&mv);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(tmv==nullptr && throw_on_failure, BadThyraTpetraCast,
-                             "Error! Could not cast input Thyra_MultiVector to Thyra_TpetraMultiVector.\n");
-
-  // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
-  TEUCHOS_TEST_FOR_EXCEPTION(tmv->getTpetraMultiVector().is_null(), std::runtime_error,
-                             "Error! The Thyra_TpetraMultiVector object stores a null pointer.\n")  return tmv->getTpetraMultiVector();
+  if (tmv==nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_tpetra, BadThyraTpetraCast,
+                               "Error! Could not cast input Thyra_MultiVector to Thyra_TpetraMultiVector.\n");
+    return Teuchos::null;
+  } else {
+    // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
+    TEUCHOS_TEST_FOR_EXCEPTION(tmv->getTpetraMultiVector().is_null(), std::runtime_error,
+                               "Error! The Thyra_TpetraMultiVector object stores a null pointer.\n");
+    return tmv->getTpetraMultiVector();
+  }
 }
 
 Teuchos::RCP<const Tpetra_MultiVector>
 getConstTpetraMultiVector (const Thyra_MultiVector& mv,
-                           const bool throw_on_failure)
+                           const bool throw_if_not_tpetra)
 {
   const Thyra_TpetraMultiVector* tmv = dynamic_cast<const Thyra_TpetraMultiVector*>(&mv);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(tmv==nullptr && throw_on_failure, BadThyraTpetraCast,
-                             "Error! Could not cast input Thyra_MultiVector to Thyra_TpetraMultiVector.\n");
-
-  // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
-  TEUCHOS_TEST_FOR_EXCEPTION(tmv->getConstTpetraMultiVector().is_null(), std::runtime_error,
-                             "Error! The Thyra_TpetraMultiVector object stores a null pointer.\n")  return tmv->getConstTpetraMultiVector();
+  if (tmv==nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_tpetra, BadThyraTpetraCast,
+                               "Error! Could not cast input Thyra_MultiVector to Thyra_TpetraMultiVector.\n");
+    return Teuchos::null;
+  } else {
+    // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
+    TEUCHOS_TEST_FOR_EXCEPTION(tmv->getConstTpetraMultiVector().is_null(), std::runtime_error,
+                               "Error! The Thyra_TpetraMultiVector object stores a null pointer.\n");
+    return tmv->getConstTpetraMultiVector();
+  }
 }
 
 Teuchos::RCP<Tpetra_Operator>
 getTpetraOperator (Thyra_LinearOp& lop,
-                   const bool throw_on_failure)
+                   const bool throw_if_not_tpetra)
 {
   Thyra_TpetraLinearOp* top = dynamic_cast<Thyra_TpetraLinearOp*>(&lop);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(top==nullptr && throw_on_failure, BadThyraTpetraCast,
-                             "Error! Could not cast input Thyra_LinearOp to Thyra_TpetraLinearOp.\n");
-
-  // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
-  TEUCHOS_TEST_FOR_EXCEPTION(top->getTpetraOperator().is_null(), std::runtime_error,
-                             "Error! The Thyra_TpetraLinearOp object stores a null pointer.\n")  return top->getTpetraOperator();
+  if (top==nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_tpetra, BadThyraTpetraCast,
+                               "Error! Could not cast input Thyra_LinearOp to Thyra_TpetraLinearOp.\n");
+    return Teuchos::null;
+  } else {
+    // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
+    TEUCHOS_TEST_FOR_EXCEPTION(top->getTpetraOperator().is_null(), std::runtime_error,
+                               "Error! The Thyra_TpetraLinearOp object stores a null pointer.\n");
+    return top->getTpetraOperator();
+  }
 }
 
 Teuchos::RCP<const Tpetra_Operator>
 getConstTpetraOperator (const Thyra_LinearOp& lop,
-                        const bool throw_on_failure)
+                        const bool throw_if_not_tpetra)
 {
   const Thyra_TpetraLinearOp* top = dynamic_cast<const Thyra_TpetraLinearOp*>(&lop);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(top==nullptr && throw_on_failure, BadThyraTpetraCast,
-                             "Error! Could not cast input Thyra_LinearOp to Thyra_TpetraLinearOp.\n");
-
-  // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
-  TEUCHOS_TEST_FOR_EXCEPTION(top->getConstTpetraOperator().is_null(), std::runtime_error,
-                             "Error! The Thyra_TpetraLinearOp object stores a null pointer.\n")  return top->getConstTpetraOperator();
+  if (top==nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_tpetra, BadThyraTpetraCast,
+                               "Error! Could not cast input Thyra_LinearOp to Thyra_TpetraLinearOp.\n");
+    return Teuchos::null;
+  } else {
+    // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
+    TEUCHOS_TEST_FOR_EXCEPTION(top->getConstTpetraOperator().is_null(), std::runtime_error,
+                               "Error! The Thyra_TpetraLinearOp object stores a null pointer.\n");
+    return top->getConstTpetraOperator();
+  }
 }
 
 Teuchos::RCP<Tpetra_CrsMatrix>
 getTpetraMatrix (Thyra_LinearOp& lop,
-                 const bool throw_on_failure)
+                 const bool throw_if_not_tpetra)
 {
-  Thyra_TpetraLinearOp* top = dynamic_cast<Thyra_TpetraLinearOp*>(&lop);
+  Teuchos::RCP<Tpetra_Operator> top = getTpetraOperator(lop,throw_if_not_tpetra);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(top==nullptr && throw_on_failure, BadThyraTpetraCast,
-                             "Error! Could not cast input Thyra_LinearOp to Thyra_TpetraLinearOp.\n");
-
-  // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
-  TEUCHOS_TEST_FOR_EXCEPTION(top->getTpetraOperator().is_null(), std::runtime_error,
-                             "Error! The Thyra_TpetraLinearOp object stores a null pointer.\n")
-  auto tmat = Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(top->getTpetraOperator());
-  // We allow bad cast, but once cast goes through, we *expect* the operator to store a crs matrix
-  TEUCHOS_TEST_FOR_EXCEPTION(tmat.is_null(), std::runtime_error,
-                             "Error! The Thyra_TpetraLinearOp object does not store a Tpetra_CrsMatrix.\n")  return tmat;
+  if (!top.is_null()) {
+    // We allow bad cast, but once cast goes through, we *expect* the operator to store a crs matrix
+    auto tmat = Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(top);
+    TEUCHOS_TEST_FOR_EXCEPTION(tmat.is_null(), std::runtime_error,
+                               "Error! The Thyra_TpetraLinearOp object does not store a Tpetra_CrsMatrix.\n");
+    return tmat;
+  }
+  return Teuchos::null;
 }
 
 Teuchos::RCP<const Tpetra_CrsMatrix>
 getConstTpetraMatrix (const Thyra_LinearOp& lop,
-                      const bool throw_on_failure)
+                      const bool throw_if_not_tpetra)
 {
-  const Thyra_TpetraLinearOp* top = dynamic_cast<const Thyra_TpetraLinearOp*>(&lop);
+  Teuchos::RCP<const Tpetra_Operator> top = getConstTpetraOperator(lop,throw_if_not_tpetra);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(top==nullptr && throw_on_failure, BadThyraTpetraCast,
-                             "Error! Could not cast input Thyra_LinearOp to Thyra_TpetraLinearOp.\n");
-
-  // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
-  TEUCHOS_TEST_FOR_EXCEPTION(top->getConstTpetraOperator().is_null(), std::runtime_error,
-                             "Error! The Thyra_TpetraLinearOp object stores a null pointer.\n")
-  auto tmat = Teuchos::rcp_dynamic_cast<const Tpetra_CrsMatrix>(top->getConstTpetraOperator());
-  // We allow bad cast, but once cast goes through, we *expect* the operator to store a crs matrix
-  TEUCHOS_TEST_FOR_EXCEPTION(tmat.is_null(), std::runtime_error,
-                             "Error! The Thyra_TpetraLinearOp object does not store a Tpetra_CrsMatrix.\n")  return tmat;
+  if (!top.is_null()) {
+    // We allow bad cast, but once cast goes through, we *expect* the operator to store a crs matrix
+    auto tmat = Teuchos::rcp_dynamic_cast<const Tpetra_CrsMatrix>(top);
+    TEUCHOS_TEST_FOR_EXCEPTION(tmat.is_null(), std::runtime_error,
+                               "Error! The Thyra_TpetraLinearOp object does not store a Tpetra_CrsMatrix.\n");
+    return tmat;
+  }
+  return Teuchos::null;
 }
 
 } // namespace Albany

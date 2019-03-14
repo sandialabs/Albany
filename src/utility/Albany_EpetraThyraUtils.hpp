@@ -49,43 +49,43 @@ createConstThyraLinearOp (const Teuchos::RCP<const Epetra_Operator> op);
 
 Teuchos::RCP<const Epetra_BlockMap>
 getEpetraBlockMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
-                   const bool throw_on_failure = true);
+                   const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<const Epetra_Map>
 getEpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
-              const bool throw_on_failure = true);
+              const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<Epetra_Vector>
 getEpetraVector (const Teuchos::RCP<Thyra_Vector> v,
-                 const bool throw_on_failure = true);
+                 const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<const Epetra_Vector>
 getConstEpetraVector (const Teuchos::RCP<const Thyra_Vector> v,
-                      const bool throw_on_failure = true);
+                      const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<Epetra_MultiVector>
 getEpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector> mv,
-                      const bool throw_on_failure = true);
+                      const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<const Epetra_MultiVector>
 getConstEpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
-                           const bool throw_on_failure = true);
+                           const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<Epetra_Operator>
 getEpetraOperator (const Teuchos::RCP<Thyra_LinearOp> lop,
-                   const bool throw_on_failure = true);
+                   const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<const Epetra_Operator>
 getConstEpetraOperator (const Teuchos::RCP<const Thyra_LinearOp> lop,
-                        const bool throw_on_failure = true);
+                        const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<Epetra_CrsMatrix>
 getEpetraMatrix (const Teuchos::RCP<Thyra_LinearOp> lop,
-                 const bool throw_on_failure = true);
+                 const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<const Epetra_CrsMatrix>
 getConstEpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop,
-                      const bool throw_on_failure = true);
+                      const bool throw_if_not_epetra = true);
 
 // --- Conversion from references rather than RCPs --- //
 // Note: return pointers cause we want to allow failure,
@@ -116,38 +116,38 @@ getConstEpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop,
 Teuchos::RCP<Epetra_Vector>
 getEpetraVector (Thyra_Vector& v,
                  const Epetra_BlockMap& emap,
-                 const bool throw_on_failure = true);
+                 const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<const Epetra_Vector>
 getConstEpetraVector (const Thyra_Vector& v,
                       const Epetra_BlockMap& emap,
-                      const bool throw_on_failure = true);
+                      const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<Epetra_MultiVector>
 getEpetraMultiVector (Thyra_MultiVector& mv,
                       const Epetra_BlockMap& emap,
-                      const bool throw_on_failure = true);
+                      const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<const Epetra_MultiVector>
 getConstEpetraMultiVector (const Thyra_MultiVector& mv,
                            const Epetra_BlockMap& emap,
-                           const bool throw_on_failure = true);
+                           const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<Epetra_Operator>
 getEpetraOperator (Thyra_LinearOp& lop,
-                   const bool throw_on_failure = true);
+                   const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<const Epetra_Operator>
 getConstEpetraOperator (const Thyra_LinearOp& lop,
-                        const bool throw_on_failure = true);
+                        const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<Epetra_CrsMatrix>
 getEpetraMatrix (Thyra_LinearOp& lop,
-                 const bool throw_on_failure = true);
+                 const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<const Epetra_CrsMatrix>
 getConstEpetraMatrix (const Thyra_LinearOp& lop,
-                      const bool throw_on_failure = true);
+                      const bool throw_if_not_epetra = true);
 
 } // namespace Albany
 

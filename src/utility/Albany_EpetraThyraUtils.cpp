@@ -146,12 +146,12 @@ createConstThyraLinearOp (const Teuchos::RCP<const Epetra_Operator> op)
 
 Teuchos::RCP<const Epetra_BlockMap>
 getEpetraBlockMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
-                   const bool throw_on_failure)
+                   const bool throw_if_not_epetra)
 {
   Teuchos::RCP<const Epetra_BlockMap> map;
   if (!vs.is_null()) {
     auto data = Teuchos::get_optional_extra_data<Teuchos::RCP<const Epetra_BlockMap>>(vs,"Epetra_BlockMap");
-    TEUCHOS_TEST_FOR_EXCEPTION (throw_on_failure && data.is_null(), std::runtime_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (throw_if_not_epetra && data.is_null(), std::runtime_error,
                                 "Error! Could not extract Epetra_BlockMap from Thyra_VectorSpace.\n");
     if (!data.is_null()) {
       map = *data;
@@ -163,12 +163,12 @@ getEpetraBlockMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
 
 Teuchos::RCP<const Epetra_Map>
 getEpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
-              const bool throw_on_failure)
+              const bool throw_if_not_epetra)
 {
-  Teuchos::RCP<const Epetra_BlockMap> bmap = getEpetraBlockMap(vs,throw_on_failure);
+  Teuchos::RCP<const Epetra_BlockMap> bmap = getEpetraBlockMap(vs,throw_if_not_epetra);
 
   // If we are failure-tolerant, if the call failed, we must exit now
-  if (!throw_on_failure && bmap.is_null()) {
+  if (!throw_if_not_epetra && bmap.is_null()) {
     return Teuchos::null;
   }
 
@@ -181,13 +181,13 @@ getEpetraMap (const Teuchos::RCP<const Thyra_VectorSpace> vs,
 
 Teuchos::RCP<Epetra_Vector>
 getEpetraVector (const Teuchos::RCP<Thyra_Vector> v,
-                 const bool throw_on_failure)
+                 const bool throw_if_not_epetra)
 {
   Teuchos::RCP<Epetra_Vector> v_epetra;
   if (!v.is_null()) {
     auto data = Teuchos::get_optional_extra_data<Teuchos::RCP<Epetra_Vector>>(v,"Epetra_Vector");
 
-    TEUCHOS_TEST_FOR_EXCEPTION (throw_on_failure && data.is_null(), std::runtime_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (throw_if_not_epetra && data.is_null(), std::runtime_error,
                                 "Error! Could not extract Epetra_Vector from Thyra_Vector.\n");
     if (!data.is_null()) {
       v_epetra = *data;
@@ -199,7 +199,7 @@ getEpetraVector (const Teuchos::RCP<Thyra_Vector> v,
 
 Teuchos::RCP<const Epetra_Vector>
 getConstEpetraVector (const Teuchos::RCP<const Thyra_Vector> v,
-                      const bool throw_on_failure)
+                      const bool throw_if_not_epetra)
 
 {
   Teuchos::RCP<const Epetra_Vector> v_epetra;
@@ -209,7 +209,7 @@ getConstEpetraVector (const Teuchos::RCP<const Thyra_Vector> v,
     auto data_const    = Teuchos::get_optional_extra_data<Teuchos::RCP<const Epetra_Vector>>(v,"Epetra_Vector");
     auto data_nonconst = Teuchos::get_optional_extra_data<Teuchos::RCP<Epetra_Vector>>(v,"Epetra_Vector");
 
-    TEUCHOS_TEST_FOR_EXCEPTION (throw_on_failure && data_const.is_null() && data_nonconst.is_null(), std::runtime_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (throw_if_not_epetra && data_const.is_null() && data_nonconst.is_null(), std::runtime_error,
                                 "Error! Could not extract Epetra_Vector from Thyra_Vector.\n");
     if (!data_const.is_null()) {
       v_epetra = *data_const;
@@ -223,13 +223,13 @@ getConstEpetraVector (const Teuchos::RCP<const Thyra_Vector> v,
 
 Teuchos::RCP<Epetra_MultiVector>
 getEpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector> mv,
-                      const bool throw_on_failure)
+                      const bool throw_if_not_epetra)
 {
   Teuchos::RCP<Epetra_MultiVector> mv_epetra;
   if (!mv.is_null()) {
     auto data = Teuchos::get_optional_extra_data<Teuchos::RCP<Epetra_MultiVector>>(mv,"Epetra_MultiVector");
 
-    TEUCHOS_TEST_FOR_EXCEPTION (throw_on_failure && data.is_null(), std::runtime_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (throw_if_not_epetra && data.is_null(), std::runtime_error,
                                 "Error! Could not extract Epetra_MultiVector from Thyra_MultiVector.\n");
     if (!data.is_null()) {
       mv_epetra = *data;
@@ -241,7 +241,7 @@ getEpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector> mv,
 
 Teuchos::RCP<const Epetra_MultiVector>
 getConstEpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
-                           const bool throw_on_failure)
+                           const bool throw_if_not_epetra)
 {
   Teuchos::RCP<const Epetra_MultiVector> mv_epetra;
   if (!mv.is_null()) {
@@ -250,7 +250,7 @@ getConstEpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
     auto data_const    = Teuchos::get_optional_extra_data<Teuchos::RCP<const Epetra_MultiVector>>(mv,"Epetra_MVector");
     auto data_nonconst = Teuchos::get_optional_extra_data<Teuchos::RCP<Epetra_MultiVector>>(mv,"Epetra_MultiVector");
 
-    TEUCHOS_TEST_FOR_EXCEPTION (throw_on_failure && data_const.is_null() && data_nonconst.is_null(), std::runtime_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (throw_if_not_epetra && data_const.is_null() && data_nonconst.is_null(), std::runtime_error,
                                 "Error! Could not extract Epetra_MultiVector from Thyra_MultiVector.\n");
     if (!data_const.is_null()) {
       mv_epetra = *data_const;
@@ -264,11 +264,11 @@ getConstEpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector> mv,
 
 Teuchos::RCP<Epetra_Operator>
 getEpetraOperator (const Teuchos::RCP<Thyra_LinearOp> lop,
-                   const bool throw_on_failure)
+                   const bool throw_if_not_epetra)
 {
   Teuchos::RCP<Epetra_Operator> op;
   if (!lop.is_null()) {
-    auto tmp = Teuchos::rcp_dynamic_cast<Thyra::EpetraLinearOp>(lop,throw_on_failure);
+    auto tmp = Teuchos::rcp_dynamic_cast<Thyra::EpetraLinearOp>(lop,throw_if_not_epetra);
     if (!tmp.is_null()) {
       op = tmp->epetra_op();
     }
@@ -279,11 +279,11 @@ getEpetraOperator (const Teuchos::RCP<Thyra_LinearOp> lop,
 
 Teuchos::RCP<const Epetra_Operator>
 getConstEpetraOperator (const Teuchos::RCP<const Thyra_LinearOp> lop,
-                        const bool throw_on_failure)
+                        const bool throw_if_not_epetra)
 {
   Teuchos::RCP<const Epetra_Operator> op;
   if (!lop.is_null()) {
-    auto tmp = Teuchos::rcp_dynamic_cast<const Thyra::EpetraLinearOp>(lop,throw_on_failure);
+    auto tmp = Teuchos::rcp_dynamic_cast<const Thyra::EpetraLinearOp>(lop,throw_if_not_epetra);
     if (!tmp.is_null()) {
       op = tmp->epetra_op();
     }
@@ -294,12 +294,12 @@ getConstEpetraOperator (const Teuchos::RCP<const Thyra_LinearOp> lop,
 
 Teuchos::RCP<Epetra_CrsMatrix>
 getEpetraMatrix (const Teuchos::RCP<Thyra_LinearOp> lop,
-                 const bool throw_on_failure)
+                 const bool throw_if_not_epetra)
 {
   Teuchos::RCP<Epetra_CrsMatrix> mat;
   if (!lop.is_null()) {
-    auto op = getEpetraOperator(lop,throw_on_failure);
-    mat = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(op,throw_on_failure);
+    auto op = getEpetraOperator(lop,throw_if_not_epetra);
+    mat = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(op,throw_if_not_epetra);
   }
 
   return mat;
@@ -307,12 +307,12 @@ getEpetraMatrix (const Teuchos::RCP<Thyra_LinearOp> lop,
 
 Teuchos::RCP<const Epetra_CrsMatrix>
 getConstEpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop,
-                      const bool throw_on_failure)
+                      const bool throw_if_not_epetra)
 {
   Teuchos::RCP<const Epetra_CrsMatrix> mat;
   if (!lop.is_null()) {
-    auto op = getConstEpetraOperator(lop,throw_on_failure);
-    mat = Teuchos::rcp_dynamic_cast<const Epetra_CrsMatrix>(op,throw_on_failure);
+    auto op = getConstEpetraOperator(lop,throw_if_not_epetra);
+    mat = Teuchos::rcp_dynamic_cast<const Epetra_CrsMatrix>(op,throw_if_not_epetra);
   }
 
   return mat;
@@ -323,67 +323,68 @@ getConstEpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp> lop,
 Teuchos::RCP<Epetra_Vector>
 getEpetraVector (Thyra_Vector& v,
                  const Epetra_BlockMap& emap,
-                 const bool throw_on_failure)
+                 const bool throw_if_not_epetra)
 {
   auto* spmd_v = dynamic_cast<Thyra::DefaultSpmdVector<ST>*>(&v);
-  if (spmd_v!=nullptr) {
-    TEUCHOS_TEST_FOR_EXCEPTION(spmd_v==nullptr && throw_on_failure, BadThyraEpetraCast,
+  if (spmd_v==nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_epetra, BadThyraEpetraCast,
                                "Error! Could not cast input Thyra_Vector to Thyra::DefaultSpmdVector<ST>.\n");
-
+    return Teuchos::null;
+  } else {
     ST* vals = spmd_v->getPtr();
 
     return Teuchos::rcp(new Epetra_Vector(View,emap,vals));
   }
-  return Teuchos::null;
 }
 
 Teuchos::RCP<const Epetra_Vector>
 getConstEpetraVector (const Thyra_Vector& v,
                       const Epetra_BlockMap& emap,
-                      const bool throw_on_failure)
+                      const bool throw_if_not_epetra)
 {
   auto* spmd_v = dynamic_cast<const Thyra::DefaultSpmdVector<ST>*>(&v);
-  if (spmd_v!=nullptr) {
-    TEUCHOS_TEST_FOR_EXCEPTION(spmd_v==nullptr && throw_on_failure, BadThyraEpetraCast,
+  if (spmd_v==nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_epetra, BadThyraEpetraCast,
                                "Error! Could not cast input Thyra_Vector to Thyra::DefaultSpmdVector<ST>.\n");
-
+    return Teuchos::null;
+  } else {
     const ST* vals = spmd_v->getPtr();
 
     // LB: I don't see any way around the const cast, since Epetra expects double* as input.
     return Teuchos::rcp(new Epetra_Vector(View,emap,const_cast<ST*>(vals)));
   }
-  return Teuchos::null;
 }
 
 Teuchos::RCP<Epetra_MultiVector>
 getEpetraMultiVector (Thyra_MultiVector& mv,
                       const Epetra_BlockMap& emap,
-                      const bool throw_on_failure)
+                      const bool throw_if_not_epetra)
 {
   auto* spmd_mv = dynamic_cast<Thyra::DefaultSpmdMultiVector<ST>*>(&mv);
-  if (spmd_mv!=nullptr) {
-    TEUCHOS_TEST_FOR_EXCEPTION(spmd_mv==nullptr && throw_on_failure, BadThyraEpetraCast,
+  if (spmd_mv==nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_epetra, BadThyraEpetraCast,
                                "Error! Could not cast input Thyra_MultiVector to Thyra::DefaultSpmdMultiVector<ST>.\n");
-
+    return Teuchos::null;
+  } else {
     Teuchos::ArrayRCP<ST> vals;
     GO leadingDim;
     spmd_mv->getNonconstLocalData(Teuchos::inOutArg(vals),Teuchos::inOutArg(leadingDim));
 
     return Teuchos::rcp(new Epetra_MultiVector(View,emap,vals.get(),leadingDim,mv.domain()->dim()));
   }
-  return Teuchos::null;
 }
 
 Teuchos::RCP<const Epetra_MultiVector>
 getConstEpetraMultiVector (const Thyra_MultiVector& mv,
                            const Epetra_BlockMap& emap,
-                           const bool throw_on_failure)
+                           const bool throw_if_not_epetra)
 {
   auto* spmd_mv = dynamic_cast<const Thyra::DefaultSpmdMultiVector<ST>*>(&mv);
-  if (spmd_mv!=nullptr) {
-    TEUCHOS_TEST_FOR_EXCEPTION(spmd_mv==nullptr && throw_on_failure, BadThyraEpetraCast,
+  if (spmd_mv==nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_epetra, BadThyraEpetraCast,
                                "Error! Could not cast input Thyra_MultiVector to Thyra::DefaultSpmdMultiVector<ST>.\n");
-
+    return Teuchos::null;
+  } else {
     Teuchos::ArrayRCP<const ST> vals;
     GO leadingDim;
     spmd_mv->getLocalData(Teuchos::inOutArg(vals),Teuchos::inOutArg(leadingDim));
@@ -391,48 +392,49 @@ getConstEpetraMultiVector (const Thyra_MultiVector& mv,
     // LB: I don't see any way around the const cast, since Epetra expects double* as input.
     return Teuchos::rcp(new Epetra_MultiVector(View,emap,const_cast<ST*>(vals.get()),leadingDim,mv.domain()->dim()));
   }
-  return Teuchos::null;
 }
 
 Teuchos::RCP<Epetra_Operator>
 getEpetraOperator (Thyra_LinearOp& lop,
-                   const bool throw_on_failure)
+                   const bool throw_if_not_epetra)
 {
   Thyra::EpetraLinearOp* eop = dynamic_cast<Thyra::EpetraLinearOp*>(&lop);
-  if (eop!=nullptr) {
-    TEUCHOS_TEST_FOR_EXCEPTION(eop==nullptr && throw_on_failure, BadThyraEpetraCast,
+  if (eop==nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_epetra, BadThyraEpetraCast,
                                "Error! Could not cast input Thyra_LinearOp to Thyra::EpetraLinearOp.\n");
 
+    return Teuchos::null;
+  } else {
     // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
     TEUCHOS_TEST_FOR_EXCEPTION(eop->epetra_op().is_null(), std::runtime_error,
                                "Error! The Thyra::EpetraLinearOp object stores a null pointer.\n") 
     return eop->epetra_op();
   }
-  return Teuchos::null;
 }
 
 Teuchos::RCP<const Epetra_Operator>
 getConstEpetraOperator (const Thyra_LinearOp& lop,
-                        const bool throw_on_failure)
+                        const bool throw_if_not_epetra)
 {
   const Thyra::EpetraLinearOp* eop = dynamic_cast<const Thyra::EpetraLinearOp*>(&lop);
-  if (eop!=nullptr) {
-    TEUCHOS_TEST_FOR_EXCEPTION(eop==nullptr && throw_on_failure, BadThyraEpetraCast,
+  if (eop==nullptr) {
+    TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_epetra, BadThyraEpetraCast,
                                "Error! Could not cast input Thyra_LinearOp to Thyra::EpetraLinearOp.\n");
 
+    return Teuchos::null;
+  } else {
     // We allow bad cast, but once cast goes through, we *expect* pointers to be valid
     TEUCHOS_TEST_FOR_EXCEPTION(eop->epetra_op().is_null(), std::runtime_error,
                                "Error! The Thyra::EpetraLinearOp object stores a null pointer.\n") 
     return eop->epetra_op();
   }
-  return Teuchos::null;
 }
 
 Teuchos::RCP<Epetra_CrsMatrix>
 getEpetraMatrix (Thyra_LinearOp& lop,
-                 const bool throw_on_failure)
+                 const bool throw_if_not_epetra)
 {
-  auto eop = getEpetraOperator(lop,throw_on_failure);
+  auto eop = getEpetraOperator(lop,throw_if_not_epetra);
   if (!eop.is_null()) {
     auto emat = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(eop);
 
@@ -446,9 +448,9 @@ getEpetraMatrix (Thyra_LinearOp& lop,
 
 Teuchos::RCP<const Epetra_CrsMatrix>
 getConstEpetraMatrix (const Thyra_LinearOp& lop,
-                      const bool throw_on_failure)
+                      const bool throw_if_not_epetra)
 {
-  auto eop = getConstEpetraOperator(lop,throw_on_failure);
+  auto eop = getConstEpetraOperator(lop,throw_if_not_epetra);
   if (!eop.is_null()) {
     auto emat = Teuchos::rcp_dynamic_cast<const Epetra_CrsMatrix>(eop);
 
