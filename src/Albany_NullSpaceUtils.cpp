@@ -200,7 +200,7 @@ void subtractCentroid(const Teuchos::RCP<Thyra_MultiVector> &coordMV)
       sum[i] = 0;
       for (RigidBodyModes::LO_type j = 0; j < nnodes; ++j) sum[i] += x[j];
     }
-    Teuchos::reduceAll(*createTeuchosCommFromTeuchosComm(spmd_vs->getComm()), Teuchos::REDUCE_SUM, ndim,
+    Teuchos::reduceAll(*createTeuchosCommFromThyraComm(spmd_vs->getComm()), Teuchos::REDUCE_SUM, ndim,
                                 sum, centroid);
     const RigidBodyModes::GO_type numNodes = spmd_vs->localSubDim(); // length of each vector in the multivector
     for (int i = 0; i < ndim; ++i) centroid[i] /= numNodes;

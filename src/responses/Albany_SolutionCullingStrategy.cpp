@@ -34,7 +34,7 @@ UniformSolutionCullingStrategy::
 selectedGIDs (const Teuchos::RCP<const Thyra_VectorSpace>& sourceVS) const
 {
   auto spmd_vs = getSpmdVectorSpace(sourceVS);
-  auto comm = createTeuchosCommFromTeuchosComm(spmd_vs->getComm());
+  auto comm = createTeuchosCommFromThyraComm(spmd_vs->getComm());
 
   Teuchos::Array<GO> allGIDs(spmd_vs->dim());
   Teuchos::Array<GO> myGIDs(spmd_vs->localSubDim());
