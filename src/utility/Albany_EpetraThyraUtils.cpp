@@ -203,9 +203,11 @@ getEpetraVector (const Teuchos::RCP<Thyra_Vector>& v,
       } else {
         // Get the map, then create a vector from the spmd_v values and the map
         auto emap = getEpetraMap(v->space());
-        ST* vals = spmd_v->getPtr();
+        Teuchos::ArrayRCP<ST> vals = spmd_v->getRCPtr();
 
-        v_epetra = Teuchos::rcp(new Epetra_Vector(View,*emap,vals));
+        v_epetra = Teuchos::rcp(new Epetra_Vector(View,*emap,vals.getRawPtr()));
+        // Attach the arcp to the newly created vector, so that it survives
+        Teuchos::set_extra_data(vals, "values_arcp", inoutArg(v_epetra) );
       }
     }
   }
@@ -238,13 +240,16 @@ getConstEpetraVector (const Teuchos::RCP<const Thyra_Vector>& v,
       } else {
         // Get the map, then create a vector from the spmd_v values and the map
         auto emap = getEpetraMap(v->space());
-        const ST* vals = spmd_v->getPtr();
+        Teuchos::ArrayRCP<const ST> vals = spmd_v->getRCPtr();
 
         // Unfortunately, the constructor for Epetra_Vector takes a double* rather than a const double* (rightfully so),
         // so there's really no way around the const cast. It is innocuous and without side effects though, since we
         // are going to create an RCP<const Epetra_Vector>.
-        ST* vals_nonconst = const_cast<ST*>(vals);
+        ST* vals_nonconst = const_cast<ST*>(vals.getRawPtr());
         v_epetra = Teuchos::rcp(new Epetra_Vector(View,*emap,vals_nonconst));
+
+        // Attach the values arcp to the newly created vector, so that it survives
+        Teuchos::set_extra_data(vals, "values_arcp", inoutArg(v_epetra) );
       }
     }
   }
@@ -277,6 +282,9 @@ getEpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector>& mv,
         spmd_mv->getNonconstLocalData(Teuchos::outArg(vals),Teuchos::outArg(leadingDim));
 
         mv_epetra = Teuchos::rcp(new Epetra_MultiVector(View,*emap,vals.getRawPtr(),static_cast<int>(leadingDim),mv->domain()->dim()));
+
+        // Attach the values arcp to the newly created vector, so that it survives
+        Teuchos::set_extra_data(vals, "values_arcp", inoutArg(mv_epetra) );
       }
     }
   }
@@ -320,6 +328,9 @@ getConstEpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector>& mv,
         // are going to create an RCP<const Epetra_Vector>.
         ST* vals_nonconst = const_cast<ST*>(vals.getRawPtr());
         mv_epetra = Teuchos::rcp(new Epetra_MultiVector(View,*emap,vals_nonconst,static_cast<int>(leadingDim),mv->domain()->dim()));
+
+        // Attach the values arcp to the newly created vector, so that it survives
+        Teuchos::set_extra_data(vals, "values_arcp", inoutArg(mv_epetra) );
       }
     }
   }
@@ -389,15 +400,19 @@ getEpetraVector (Thyra_Vector& v,
                  const bool throw_if_not_epetra)
 {
   auto* spmd_v = dynamic_cast<Thyra::DefaultSpmdVector<ST>*>(&v);
+  Teuchos::RCP<Epetra_Vector> e_v;
   if (spmd_v==nullptr) {
     TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_epetra, BadThyraEpetraCast,
                                "Error! Could not cast input Thyra_Vector to Thyra::DefaultSpmdVector<ST>.\n");
-    return Teuchos::null;
   } else {
-    ST* vals = spmd_v->getPtr();
+    Teuchos::ArrayRCP<ST> vals = spmd_v->getRCPtr();
 
-    return Teuchos::rcp(new Epetra_Vector(View,emap,vals));
+    e_v = Teuchos::rcp(new Epetra_Vector(View,emap,vals.getRawPtr()));
+
+    // Attach the values arcp to the newly created vector, so that it survives
+    Teuchos::set_extra_data(vals, "values_arcp", inoutArg(e_v) );
   }
+  return e_v;
 }
 
 Teuchos::RCP<const Epetra_Vector>
@@ -406,16 +421,22 @@ getConstEpetraVector (const Thyra_Vector& v,
                       const bool throw_if_not_epetra)
 {
   auto* spmd_v = dynamic_cast<const Thyra::DefaultSpmdVector<ST>*>(&v);
+  Teuchos::RCP<const Epetra_Vector> e_v;
   if (spmd_v==nullptr) {
     TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_epetra, BadThyraEpetraCast,
                                "Error! Could not cast input Thyra_Vector to Thyra::DefaultSpmdVector<ST>.\n");
-    return Teuchos::null;
   } else {
-    const ST* vals = spmd_v->getPtr();
+    Teuchos::ArrayRCP<const ST> vals = spmd_v->getRCPtr();
 
-    // LB: I don't see any way around the const cast, since Epetra expects double* as input.
-    return Teuchos::rcp(new Epetra_Vector(View,emap,const_cast<ST*>(vals)));
+    // Unfortunately, the constructor for Epetra_Vector takes a double* rather than a const double* (rightfully so),
+    // so there's really no way around the const cast. It is innocuous and without side effects though, since we
+    // are going to create an RCP<const Epetra_Vector>.
+    e_v = Teuchos::rcp(new Epetra_Vector(View,emap,const_cast<ST*>(vals.getRawPtr())));
+
+    // Attach the values arcp to the newly created vector, so that it survives
+    Teuchos::set_extra_data(vals, "values_arcp", inoutArg(e_v) );
   }
+  return e_v;
 }
 
 Teuchos::RCP<Epetra_MultiVector>
@@ -424,17 +445,21 @@ getEpetraMultiVector (Thyra_MultiVector& mv,
                       const bool throw_if_not_epetra)
 {
   auto* spmd_mv = dynamic_cast<Thyra::DefaultSpmdMultiVector<ST>*>(&mv);
+  Teuchos::RCP<Epetra_MultiVector> e_mv;
   if (spmd_mv==nullptr) {
     TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_epetra, BadThyraEpetraCast,
                                "Error! Could not cast input Thyra_MultiVector to Thyra::DefaultSpmdMultiVector<ST>.\n");
-    return Teuchos::null;
   } else {
     Teuchos::ArrayRCP<ST> vals;
     GO leadingDim;
     spmd_mv->getNonconstLocalData(Teuchos::inOutArg(vals),Teuchos::inOutArg(leadingDim));
 
-    return Teuchos::rcp(new Epetra_MultiVector(View,emap,vals.get(),leadingDim,mv.domain()->dim()));
+    e_mv = Teuchos::rcp(new Epetra_MultiVector(View,emap,vals.get(),leadingDim,mv.domain()->dim()));
+
+    // Attach the values arcp to the newly created vector, so that it survives
+    Teuchos::set_extra_data(vals, "values_arcp", inoutArg(e_mv) );
   }
+  return e_mv;
 }
 
 Teuchos::RCP<const Epetra_MultiVector>
@@ -443,18 +468,24 @@ getConstEpetraMultiVector (const Thyra_MultiVector& mv,
                            const bool throw_if_not_epetra)
 {
   auto* spmd_mv = dynamic_cast<const Thyra::DefaultSpmdMultiVector<ST>*>(&mv);
+  Teuchos::RCP<Epetra_MultiVector> e_mv;
   if (spmd_mv==nullptr) {
     TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_epetra, BadThyraEpetraCast,
                                "Error! Could not cast input Thyra_MultiVector to Thyra::DefaultSpmdMultiVector<ST>.\n");
-    return Teuchos::null;
   } else {
     Teuchos::ArrayRCP<const ST> vals;
     GO leadingDim;
     spmd_mv->getLocalData(Teuchos::inOutArg(vals),Teuchos::inOutArg(leadingDim));
 
-    // LB: I don't see any way around the const cast, since Epetra expects double* as input.
-    return Teuchos::rcp(new Epetra_MultiVector(View,emap,const_cast<ST*>(vals.get()),leadingDim,mv.domain()->dim()));
+    // Unfortunately, the constructor for Epetra_MultiVector takes a double* rather than a const double* (rightfully so),
+    // so there's really no way around the const cast. It is innocuous and without side effects though, since we
+    // are going to create an RCP<const Epetra_MultiVector>.
+    e_mv = Teuchos::rcp(new Epetra_MultiVector(View,emap,const_cast<ST*>(vals.getRawPtr()),leadingDim,mv.domain()->dim()));
+
+    // Attach the values arcp to the newly created vector, so that it survives
+    Teuchos::set_extra_data(vals, "values_arcp", inoutArg(e_mv) );
   }
+  return e_mv;
 }
 
 Teuchos::RCP<Epetra_Operator>
