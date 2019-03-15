@@ -115,22 +115,18 @@ getConstEpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp>& lop,
 
 Teuchos::RCP<Epetra_Vector>
 getEpetraVector (Thyra_Vector& v,
-                 const Epetra_BlockMap& emap,
                  const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<const Epetra_Vector>
 getConstEpetraVector (const Thyra_Vector& v,
-                      const Epetra_BlockMap& emap,
                       const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<Epetra_MultiVector>
 getEpetraMultiVector (Thyra_MultiVector& mv,
-                      const Epetra_BlockMap& emap,
                       const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<const Epetra_MultiVector>
 getConstEpetraMultiVector (const Thyra_MultiVector& mv,
-                           const Epetra_BlockMap& emap,
                            const bool throw_if_not_epetra = true);
 
 Teuchos::RCP<Epetra_Operator>
