@@ -539,7 +539,7 @@ void ModelEvaluator::evalModel(const InArgs& inArgs,
 
   //Create Thyra wrappers of xE, xE_dot, and xE_dotdot
   Teuchos::RCP<const Thyra_Vector> x, x_dot, x_dotdot;
-  if (x != Teuchos::null) {
+  if (Teuchos::nonnull(xE)) {
     x  = createConstThyraVector(xE);
   }
   if (Teuchos::nonnull(xE_dot)) {
