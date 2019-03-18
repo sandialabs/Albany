@@ -108,6 +108,7 @@ SET(SOURCES ${SOURCES}
   utility/PerformanceContext.cpp
   utility/TimeMonitor.cpp
   utility/Albany_CombineAndScatterManager.cpp
+  utility/Albany_CombineAndScatterManagerEpetra.cpp
   utility/Albany_CombineAndScatterManagerTpetra.cpp
   utility/Albany_CommUtils.cpp
   utility/Albany_GatherAllV.cpp
@@ -127,6 +128,7 @@ SET(HEADERS ${HEADERS}
   utility/TimeGuard.hpp
   utility/TimeMonitor.hpp
   utility/Albany_CombineAndScatterManager.hpp
+  utility/Albany_CombineAndScatterManagerEpetra.hpp
   utility/Albany_CombineAndScatterManagerTpetra.hpp
   utility/Albany_CommUtils.hpp
   utility/Albany_GatherAllV.hpp
