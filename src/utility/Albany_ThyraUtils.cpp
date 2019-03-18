@@ -11,6 +11,7 @@
 #include "Thyra_DefaultSpmdVector.hpp"
 
 #include "Teuchos_CompilerCodeTweakMacros.hpp"
+#include "Teuchos_RCP.hpp"
 
 #if defined(ALBANY_EPETRA)
 #include "AztecOO_ConditionNumber.h"
@@ -352,6 +353,7 @@ void fillComplete (const Teuchos::RCP<Thyra_LinearOp>& lop)
   auto emat = getEpetraMatrix(lop,false);
   if (!emat.is_null()) {
     emat->FillComplete();
+    emat->OptimizeStorage();  // This allows to extract data with 'ExtractCrsDataPointers
     return;
   }
 #endif
@@ -601,7 +603,7 @@ double computeConditionNumber (const Teuchos::RCP<const Thyra_LinearOp>& lop)
   return condest;
 }
 
-DeviceLocalMatrix<const ST> getDeviceData (const Teuchos::RCP<const Thyra_LinearOp>& lop)
+DeviceLocalMatrix<const ST> getDeviceData (Teuchos::RCP<const Thyra_LinearOp>& lop)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getConstTpetraMatrix(lop,false);
@@ -618,22 +620,45 @@ DeviceLocalMatrix<const ST> getDeviceData (const Teuchos::RCP<const Thyra_Linear
                                 std::logic_error,
                                 "Error! Cannot use Epetra if the memory space of PHX::Device is not the HostSpace.\n");
 
-    Teuchos::Array<LO> row_idx(emat->NumMyNonzeros()), col_idx(emat->NumMyNonzeros());
-    Teuchos::Array<ST> vals(emat->NumMyNonzeros());
-    int numEntries;
-    int* idx_tmp;
-    ST* vals_tmp;
-    for (int irow=0, k=0; irow<emat->NumMyRows(); ++irow) {
-      emat->ExtractMyRowView(irow,numEntries,vals_tmp,idx_tmp);
-      for (int icol=0; icol<numEntries; ++icol, ++k) {
-        row_idx[k] = irow;
-        col_idx[k] = idx_tmp[icol];
-        vals[k] = vals_tmp[icol];
-      }
+    // If you want the output DeviceLocalMatrix to have view semantic on the matrix values,
+    // you need to use the constructor that 'views' the input arrays.
+    // So we need to create views unmanaged, which need to view the matrix data.
+    // WARNING: This is *highly* relying on Epetra_CrsMatrix internal storage.
+    //          More precisely, I'm not even sure this routine could be fixed
+    //          if Epetra_CrsMatrix changes the internal storage scheme.
+
+    using StaticGraphType = DeviceLocalMatrix<ST>::staticcrsgraph_type;
+    using size_type = StaticGraphType::size_type;
+    TEUCHOS_TEST_FOR_EXCEPTION (sizeof(size_type)!=sizeof(LO), std::runtime_error,
+                                "Error! Extracting local data from an Epetra_CrsMatrix is safe only as long as "
+                                "the size of Kokkos::HostSpace::size_type equals sizeof(LO).\n");
+
+    // Some data from the matrix
+    const int numMyRows = emat->NumMyRows();
+    const int numMyCols = emat->NumMyCols();
+    const int numMyNonzeros = emat->NumMyNonzeros();
+
+    // Grab the data
+    LO* row_map;
+    LO* indices;
+    ST* values;
+    int err_code = emat->ExtractCrsDataPointers(row_map,indices,values);
+    ALBANY_EXPECT(err_code==0, "Error! Something went wrong while extracting Epetra_CrsMatrix local data pointers.\n");
+    Teuchos::ArrayRCP<size_type> row_map_size_type(numMyRows+1);
+    for (int i=0; i<numMyRows+1; ++i) {
+      row_map_size_type[i] = static_cast<size_type>(row_map[i]);
     }
-    DeviceLocalMatrix<ST> data("Epetra device data",
-                               emat->NumMyRows(), emat->NumMyCols(), emat->NumMyNonzeros(),
-                               vals.getRawPtr(), row_idx.getRawPtr(), col_idx.getRawPtr());
+    // Attach the temporary to the input RCP, to prolong its life time. Last arg=false, so we replace possibly
+    // existing data without throwing.
+    Teuchos::set_extra_data(row_map_size_type,"row_map as size_type",Teuchos::outArg(lop),Teuchos::POST_DESTROY,false);
+
+    // Create unmanaged views
+    DeviceLocalMatrix<ST>::row_map_type row_map_view(row_map_size_type.getRawPtr(),numMyRows+1);
+    DeviceLocalMatrix<ST>::index_type   indices_view(indices,numMyNonzeros);
+    DeviceLocalMatrix<ST>::values_type  values_view(values,numMyNonzeros);
+
+    // Build the matrix.
+    DeviceLocalMatrix<ST> data("Epetra device data", numMyRows, numMyCols, numMyNonzeros, values_view, row_map_view, indices_view);
     return data;
   }
 #endif
@@ -645,8 +670,10 @@ DeviceLocalMatrix<const ST> getDeviceData (const Teuchos::RCP<const Thyra_Linear
   DeviceLocalMatrix<const ST> dummy;
   return dummy;
 }
+    template<int I>
+    struct ShowMeI {};
 
-DeviceLocalMatrix<ST> getNonconstDeviceData (const Teuchos::RCP<Thyra_LinearOp>& lop)
+DeviceLocalMatrix<ST> getNonconstDeviceData (Teuchos::RCP<Thyra_LinearOp>& lop)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
@@ -663,22 +690,45 @@ DeviceLocalMatrix<ST> getNonconstDeviceData (const Teuchos::RCP<Thyra_LinearOp>&
                                 std::logic_error,
                                 "Error! Cannot use Epetra if the memory space of PHX::Device is not the HostSpace.\n");
 
-    Teuchos::Array<LO> row_idx(emat->NumMyNonzeros()), col_idx(emat->NumMyNonzeros());
-    Teuchos::Array<ST> vals(emat->NumMyNonzeros());
-    int numEntries;
-    int* idx_tmp;
-    ST* vals_tmp;
-    for (int irow=0, k=0; irow<emat->NumMyRows(); ++irow) {
-      emat->ExtractMyRowView(irow,numEntries,vals_tmp,idx_tmp);
-      for (int icol=0; icol<numEntries; ++icol, ++k) {
-        row_idx[k] = irow;
-        col_idx[k] = idx_tmp[icol];
-        vals[k] = vals_tmp[icol];
-      }
+    // If you want the output DeviceLocalMatrix to have view semantic on the matrix values,
+    // you need to use the constructor that 'views' the input arrays.
+    // So we need to create views unmanaged, which need to view the matrix data.
+    // If it's not possible to view the matrix data, we need to create temporaries,
+    // and view those. If that's the case, we need to attach the temporaries to the
+    // input RCP, so that they live as long as the input LinearOp.
+    // WARNING: This is *highly* relying on Epetra_CrsMatrix internal storage.
+    //          More precisely, I'm not even sure this routine could be fixed
+    //          if Epetra_CrsMatrix changes the internal storage scheme.
+
+    using StaticGraphType = DeviceLocalMatrix<ST>::staticcrsgraph_type;
+    using size_type = StaticGraphType::size_type;
+
+    // Some data from the matrix
+    const int numMyRows = emat->NumMyRows();
+    const int numMyCols = emat->NumMyCols();
+    const int numMyNonzeros = emat->NumMyNonzeros();
+
+    // Grab the data
+    LO* row_map;
+    LO* indices;
+    ST* values;
+    int err_code = emat->ExtractCrsDataPointers(row_map,indices,values);
+    ALBANY_EXPECT(err_code==0, "Error! Something went wrong while extracting Epetra_CrsMatrix local data pointers.\n");
+    Teuchos::ArrayRCP<size_type> row_map_size_type(numMyRows+1);
+    for (int i=0; i<numMyRows+1; ++i) {
+      row_map_size_type[i] = static_cast<size_type>(row_map[i]);
     }
-    DeviceLocalMatrix<ST> data("Epetra device data",
-                               emat->NumMyRows(), emat->NumMyCols(), emat->NumMyNonzeros(),
-                               vals.getRawPtr(), row_idx.getRawPtr(), col_idx.getRawPtr());
+    // Attach the temporary to the input RCP, to prolong its life time. Last arg=false, so we replace possibly
+    // existing data without throwing.
+    Teuchos::set_extra_data(row_map_size_type,"row_map as size_type",Teuchos::outArg(lop),Teuchos::POST_DESTROY,false);
+
+    // Create unmanaged views
+    DeviceLocalMatrix<ST>::row_map_type row_map_view(row_map_size_type.getRawPtr(),numMyRows+1);
+    DeviceLocalMatrix<ST>::index_type   indices_view(indices,numMyNonzeros);
+    DeviceLocalMatrix<ST>::values_type  values_view(values,numMyNonzeros);
+
+    // Build the matrix.
+    DeviceLocalMatrix<ST> data("Epetra device data", numMyRows, numMyCols, numMyNonzeros, values_view, row_map_view, indices_view);
     return data;
   }
 #endif

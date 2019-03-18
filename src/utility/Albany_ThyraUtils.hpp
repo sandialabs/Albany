@@ -86,8 +86,8 @@ buildProlongationOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
 double computeConditionNumber (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 
 // Get a kokkos compatible object to view the content of the linear op on device
-DeviceLocalMatrix<const ST> getDeviceData (const Teuchos::RCP<const Thyra_LinearOp>& lop);
-DeviceLocalMatrix<ST>       getNonconstDeviceData (const Teuchos::RCP<Thyra_LinearOp>& lop);
+DeviceLocalMatrix<const ST> getDeviceData (Teuchos::RCP<const Thyra_LinearOp>& lop);
+DeviceLocalMatrix<ST>       getNonconstDeviceData (Teuchos::RCP<Thyra_LinearOp>& lop);
 
 // ========= Thyra_(Multi)Vector utilities ========= //
 
