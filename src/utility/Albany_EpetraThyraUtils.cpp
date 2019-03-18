@@ -38,7 +38,8 @@ createThyraVectorSpace (const Teuchos::RCP<const Epetra_BlockMap>& bmap)
     auto comm = createTeuchosCommFromEpetraComm(bmap->Comm());
     vs = Thyra::defaultSpmdVectorSpace<ST>(createThyraCommFromTeuchosComm(comm), bmap->NumMyElements(), bmap->NumGlobalElements64(), !bmap->DistributedGlobal());
 
-    // Attach the new RCP to the map ptr
+    // Attach the bmap to the new RCP, so it doesn't get destroyed as long as the new vs lives
+    // Note: if the input is a weak rcp, this may not work.
     Teuchos::set_extra_data(bmap, "Epetra_BlockMap", inoutArg(vs) );
   }
 
@@ -55,7 +56,8 @@ createThyraVector (const Teuchos::RCP<Epetra_Vector>& v)
     Teuchos::ArrayRCP<ST> vals(v->Values(),0,v->MyLength(),false);
     v_thyra = Teuchos::rcp( new Thyra::DefaultSpmdVector<ST>(vs,vals,1) );
 
-    // Attach the new RCP to the vector ptr
+    // Attach the input vector to the new RCP, so it doesn't get destroyed as long as the new vector lives
+    // Note: if the input is a weak rcp, this may not work.
     Teuchos::set_extra_data(v, "Epetra_Vector", inoutArg(v_thyra));
   }
 
@@ -71,7 +73,8 @@ createConstThyraVector (const Teuchos::RCP<const Epetra_Vector>& v)
     Teuchos::ArrayRCP<ST> vals(v->Values(),0,v->MyLength(),false);
     v_thyra = Teuchos::rcp( new Thyra::DefaultSpmdVector<ST>(vs,vals,1) );
 
-    // Attach the new RCP to the vector ptr
+    // Attach the input vector to the new RCP, so it doesn't get destroyed as long as the new vector lives
+    // Note: if the input is a weak rcp, this may not work.
     Teuchos::set_extra_data(v, "Epetra_Vector", inoutArg(v_thyra));
   }
 
@@ -91,8 +94,9 @@ createThyraMultiVector (const Teuchos::RCP<Epetra_MultiVector>& mv)
     Teuchos::ArrayRCP<ST> vals(mv->Values(),0,mv->MyLength(),false);
     mv_thyra = Teuchos::rcp(new Thyra::DefaultSpmdMultiVector<ST>(range,domain,vals));
 
-    // Attach the new RCP to the vector ptr
-    Teuchos::set_extra_data(mv_thyra, "Epetra_MultiVector", inoutArg(mv_thyra));
+    // Attach the input mv to the new RCP, so it doesn't get destroyed as long as the new mv lives
+    // Note: if the input is a weak rcp, this may not work.
+    Teuchos::set_extra_data(mv, "Epetra_MultiVector", inoutArg(mv_thyra));
   }
 
   return mv_thyra;
@@ -111,8 +115,9 @@ createConstThyraMultiVector (const Teuchos::RCP<const Epetra_MultiVector>& mv)
     Teuchos::ArrayRCP<ST> vals(mv->Values(),0,mv->MyLength(),false);
     mv_thyra = Teuchos::rcp( new Thyra::DefaultSpmdMultiVector<ST>(range,domain,vals) );
 
-    // Attach the new RCP to the vector ptr
-    Teuchos::set_extra_data(mv_thyra, "Epetra_MultiVector", inoutArg(mv_thyra));
+    // Attach the input mv to the new RCP, so it doesn't get destroyed as long as the new mv lives
+    // Note: if the input is a weak rcp, this may not work.
+    Teuchos::set_extra_data(mv, "Epetra_MultiVector", inoutArg(mv_thyra));
   }
 
   return mv_thyra;
@@ -206,8 +211,9 @@ getEpetraVector (const Teuchos::RCP<Thyra_Vector>& v,
         Teuchos::ArrayRCP<ST> vals = spmd_v->getRCPtr();
 
         v_epetra = Teuchos::rcp(new Epetra_Vector(View,*emap,vals.getRawPtr()));
-        // Attach the arcp to the newly created vector, so that it survives
-        Teuchos::set_extra_data(vals, "values_arcp", inoutArg(v_epetra) );
+        // Attach the input vector to the newly created one, to prolong its life
+        // Note: if the input is a weak rcp, this may not work.
+        Teuchos::set_extra_data(v, "values_arcp", inoutArg(v_epetra) );
       }
     }
   }
@@ -248,8 +254,9 @@ getConstEpetraVector (const Teuchos::RCP<const Thyra_Vector>& v,
         ST* vals_nonconst = const_cast<ST*>(vals.getRawPtr());
         v_epetra = Teuchos::rcp(new Epetra_Vector(View,*emap,vals_nonconst));
 
-        // Attach the values arcp to the newly created vector, so that it survives
-        Teuchos::set_extra_data(vals, "values_arcp", inoutArg(v_epetra) );
+        // Attach the input vector to the newly created one, to prolong its life
+        // Note: if the input is a weak rcp, this may not work.
+        Teuchos::set_extra_data(v, "values_arcp", inoutArg(v_epetra) );
       }
     }
   }
@@ -283,8 +290,9 @@ getEpetraMultiVector (const Teuchos::RCP<Thyra_MultiVector>& mv,
 
         mv_epetra = Teuchos::rcp(new Epetra_MultiVector(View,*emap,vals.getRawPtr(),static_cast<int>(leadingDim),mv->domain()->dim()));
 
-        // Attach the values arcp to the newly created vector, so that it survives
-        Teuchos::set_extra_data(vals, "values_arcp", inoutArg(mv_epetra) );
+        // Attach the input mv to the newly created one, to prolong its life
+        // Note: if the input is a weak rcp, this may not work.
+        Teuchos::set_extra_data(mv, "values_arcp", inoutArg(mv_epetra) );
       }
     }
   }
@@ -329,8 +337,9 @@ getConstEpetraMultiVector (const Teuchos::RCP<const Thyra_MultiVector>& mv,
         ST* vals_nonconst = const_cast<ST*>(vals.getRawPtr());
         mv_epetra = Teuchos::rcp(new Epetra_MultiVector(View,*emap,vals_nonconst,static_cast<int>(leadingDim),mv->domain()->dim()));
 
-        // Attach the values arcp to the newly created vector, so that it survives
-        Teuchos::set_extra_data(vals, "values_arcp", inoutArg(mv_epetra) );
+        // Attach the input mv to the newly created one, to prolong its life
+        // Note: if the input is a weak rcp, this may not work.
+        Teuchos::set_extra_data(mv, "values_arcp", inoutArg(mv_epetra) );
       }
     }
   }
@@ -409,8 +418,9 @@ getEpetraVector (Thyra_Vector& v,
 
     e_v = Teuchos::rcp(new Epetra_Vector(View,*emap,vals.getRawPtr()));
 
-    // Attach the values arcp to the newly created vector, so that it survives
-    Teuchos::set_extra_data(vals, "values_arcp", inoutArg(e_v) );
+    // Attach the input vector to the newly created one, to prolong its life
+    // Note: the input ref must outlive the output of this routine
+    Teuchos::set_extra_data(Teuchos::rcpFromRef(v), "original vector", inoutArg(e_v) );
   }
   return e_v;
 }
@@ -433,8 +443,9 @@ getConstEpetraVector (const Thyra_Vector& v,
     // are going to create an RCP<const Epetra_Vector>.
     e_v = Teuchos::rcp(new Epetra_Vector(View,*emap,const_cast<ST*>(vals.getRawPtr())));
 
-    // Attach the values arcp to the newly created vector, so that it survives
-    Teuchos::set_extra_data(vals, "values_arcp", inoutArg(e_v) );
+    // Attach the input vector to the newly created one, to prolong its life
+    // Note: the input ref must outlive the output of this routine
+    Teuchos::set_extra_data(Teuchos::rcpFromRef(v), "original vector", inoutArg(e_v) );
   }
   return e_v;
 }
@@ -456,8 +467,9 @@ getEpetraMultiVector (Thyra_MultiVector& mv,
 
     e_mv = Teuchos::rcp(new Epetra_MultiVector(View,*emap,vals.get(),leadingDim,mv.domain()->dim()));
 
-    // Attach the values arcp to the newly created vector, so that it survives
-    Teuchos::set_extra_data(vals, "values_arcp", inoutArg(e_mv) );
+    // Attach the input mv to the newly created one, to prolong its life
+    // Note: the input ref must outlive the output of this routine
+    Teuchos::set_extra_data(Teuchos::rcpFromRef(mv), "original multivector", inoutArg(e_mv) );
   }
   return e_mv;
 }
@@ -482,8 +494,9 @@ getConstEpetraMultiVector (const Thyra_MultiVector& mv,
     // are going to create an RCP<const Epetra_MultiVector>.
     e_mv = Teuchos::rcp(new Epetra_MultiVector(View,*emap,const_cast<ST*>(vals.getRawPtr()),leadingDim,mv.domain()->dim()));
 
-    // Attach the values arcp to the newly created vector, so that it survives
-    Teuchos::set_extra_data(vals, "values_arcp", inoutArg(e_mv) );
+    // Attach the input mv to the newly created one, to prolong its life
+    // Note: the input ref must outlive the output of this routine
+    Teuchos::set_extra_data(Teuchos::rcpFromRef(mv), "original multivector", inoutArg(e_mv) );
   }
   return e_mv;
 }
