@@ -84,6 +84,7 @@ ThyraCrsGraphProxy::ThyraCrsGraphProxy (const Teuchos::RCP<const Thyra_VectorSpa
 
     auto e_domain = getEpetraBlockMap(domain_vs);
     m_graph->e_graph->FillComplete(*e_domain,*e_range);
+    m_graph->e_graph->OptimizeStorage();
 #else
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
 #endif
@@ -134,6 +135,7 @@ void ThyraCrsGraphProxy::fillComplete () {
     auto e_domain = getEpetraBlockMap(m_domain_vs);
     auto e_range  = getEpetraBlockMap(m_range_vs);
     m_graph->e_graph->FillComplete(*e_domain,*e_range);
+    m_graph->e_graph->OptimizeStorage();
 #else
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
 #endif
