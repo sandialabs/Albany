@@ -39,7 +39,7 @@ createLocallyReplicatedVectorSpace(const int size, const Teuchos::RCP<const Teuc
 #endif
     case BuildType::Tpetra:
     {
-      Teuchos::RCP<const Tpetra_Map> tmap( new Tpetra_Map(size,Tpetra::LocalGlobal::LocallyReplicated,comm) );
+      Teuchos::RCP<const Tpetra_Map> tmap( new Tpetra_Map(size,0,comm,Tpetra::LocalGlobal::LocallyReplicated) );
       return createThyraVectorSpace(tmap);
       break;
     }
