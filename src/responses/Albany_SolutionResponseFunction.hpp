@@ -71,7 +71,7 @@ public:
     const Teuchos::RCP<Thyra_MultiVector>& gx,
     const Teuchos::RCP<Thyra_MultiVector>& gp) override;
 
-  //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra
+  //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
   void evaluateGradient(
     const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -98,7 +98,6 @@ public:
 
 protected:
   
-  //Tpetra version of above function
   void cullSolution(const Teuchos::RCP<const Thyra_MultiVector>& x, 
                     const Teuchos::RCP<      Thyra_MultiVector>& x_culled) const;
 
@@ -106,7 +105,6 @@ protected:
   Teuchos::Array<bool> keepDOF;
   int numKeepDOF;
   
-
   //! Vector space for response
   Teuchos::RCP<const Thyra_SpmdVectorSpace> solution_vs;
   Teuchos::RCP<const Thyra_SpmdVectorSpace> culled_vs;

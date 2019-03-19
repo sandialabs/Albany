@@ -49,7 +49,7 @@ public:
    */
   bool isScalarResponse() const override { return response->isScalarResponse(); }
 
-  //! Create Tpetra operator for gradient (e.g., dg/dx)
+  //! Create operator for gradient (e.g., dg/dx)
   Teuchos::RCP<Thyra_LinearOp> createGradientOp() const override {
     return response->createGradientOp();
   }

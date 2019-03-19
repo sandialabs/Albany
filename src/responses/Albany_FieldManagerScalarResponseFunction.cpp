@@ -4,48 +4,52 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
-#include <algorithm>
+#include "Albany_DistributedParameterLibrary.hpp"
+#include "Albany_MeshSpecs.hpp"
+#include "Albany_Application.hpp"
+#include "Albany_AbstractProblem.hpp"
+#include "Albany_StateManager.hpp"
+
 #include "PHAL_Utilities.hpp"
 
-#include "Albany_TpetraThyraUtils.hpp"
-#include "Albany_DistributedParameterLibrary.hpp"
+namespace Albany
+{
 
-Albany::FieldManagerScalarResponseFunction::
+FieldManagerScalarResponseFunction::
 FieldManagerScalarResponseFunction(
-  const Teuchos::RCP<Albany::Application>& application_,
-  const Teuchos::RCP<Albany::AbstractProblem>& problem_,
-  const Teuchos::RCP<Albany::MeshSpecsStruct>&  meshSpecs_,
-  const Teuchos::RCP<Albany::StateManager>& stateMgr_,
-  Teuchos::ParameterList& responseParams) :
-  ScalarResponseFunction(application_->getComm()),
-  application(application_),
-  problem(problem_),
-  meshSpecs(meshSpecs_),
-  stateMgr(stateMgr_),
-  performedPostRegSetup(false)
+  const Teuchos::RCP<Application>& application_,
+  const Teuchos::RCP<AbstractProblem>& problem_,
+  const Teuchos::RCP<MeshSpecsStruct>&  meshSpecs_,
+  const Teuchos::RCP<StateManager>& stateMgr_,
+  Teuchos::ParameterList& responseParams) 
+ : ScalarResponseFunction(application_->getComm())
+ , application(application_)
+ , problem(problem_)
+ , meshSpecs(meshSpecs_)
+ , stateMgr(stateMgr_)
+ , performedPostRegSetup(false)
 {
   setup(responseParams);
 }
 
-Albany::FieldManagerScalarResponseFunction::
+FieldManagerScalarResponseFunction::
 FieldManagerScalarResponseFunction(
-  const Teuchos::RCP<Albany::Application>& application_,
-  const Teuchos::RCP<Albany::AbstractProblem>& problem_,
-  const Teuchos::RCP<Albany::MeshSpecsStruct>&  meshSpecs_,
-  const Teuchos::RCP<Albany::StateManager>& stateMgr_) :
-  ScalarResponseFunction(application_->getComm()),
-  application(application_),
-  problem(problem_),
-  meshSpecs(meshSpecs_),
-  stateMgr(stateMgr_),
-  performedPostRegSetup(false)
+  const Teuchos::RCP<Application>& application_,
+  const Teuchos::RCP<AbstractProblem>& problem_,
+  const Teuchos::RCP<MeshSpecsStruct>&  meshSpecs_,
+  const Teuchos::RCP<StateManager>& stateMgr_)
+ : ScalarResponseFunction(application_->getComm())
+ , application(application_)
+ , problem(problem_)
+ , meshSpecs(meshSpecs_)
+ , stateMgr(stateMgr_)
+ , performedPostRegSetup(false)
 {
+  // Nothing to be done here
 }
 
-void
-Albany::FieldManagerScalarResponseFunction::
+void FieldManagerScalarResponseFunction::
 setup(Teuchos::ParameterList& responseParams)
 {
   Teuchos::RCP<const Teuchos_Comm> commT = application->getComm();
@@ -68,8 +72,9 @@ setup(Teuchos::ParameterList& responseParams)
     reb_parm_present = responseParams.isType<bool>(reb_parm),
     reb = reb_parm_present && responseParams.get<bool>(reb_parm, false);
   element_block_index = reb ? meshSpecs->ebNameToIndex[meshSpecs->ebName] : -1;
-  if (reb_parm_present) responseParams.remove(reb_parm, false);
-
+  if (reb_parm_present) {
+    responseParams.remove(reb_parm, false);
+  }
   // Create field manager
   rfm = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
     
@@ -80,9 +85,9 @@ setup(Teuchos::ParameterList& responseParams)
                              Teuchos::rcp(&responseParams,false));
   int rank = tags[0]->dataLayout().rank();
   num_responses = tags[0]->dataLayout().dimension(rank-1);
-  if (num_responses == 0)
+  if (num_responses == 0) {
     num_responses = 1;
-  
+  }
   // MPerego: In order to do post-registration setup, need to call postRegSetup function,
   // which is now called in AlbanyApplications (at this point the derivative dimensions cannot be
   // computed correctly because the discretization has not been created yet). 
@@ -96,25 +101,15 @@ setup(Teuchos::ParameterList& responseParams)
   std::transform(vis_response_name.begin(), vis_response_name.end(), 
 		 vis_response_name.begin(), ::tolower);
 
-  if (reb_parm_present) responseParams.set<bool>(reb_parm, reb);
-}
-
-Albany::FieldManagerScalarResponseFunction::
-~FieldManagerScalarResponseFunction()
-{
-}
-
-unsigned int
-Albany::FieldManagerScalarResponseFunction::
-numResponses() const 
-{
-  return num_responses;
+  if (reb_parm_present) {
+    responseParams.set<bool>(reb_parm, reb);
+  }
 }
 
 //amb This is not right because rfm doesn't account for multiple element
 // blocks. Make do for now. Also, rewrite this code to get rid of all this
 // redundancy.
-void Albany::FieldManagerScalarResponseFunction::
+void FieldManagerScalarResponseFunction::
 postRegSetup()
 {
   { std::vector<PHX::index_size_type> derivative_dimensions;
@@ -122,26 +117,29 @@ postRegSetup()
       PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
         application.get(), meshSpecs.get()));
     rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
-      derivative_dimensions); }
+      derivative_dimensions);
+  }
   { std::vector<PHX::index_size_type> derivative_dimensions;
     derivative_dimensions.push_back(
       PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
         application.get(), meshSpecs.get()));
     rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(
-      derivative_dimensions); }
+      derivative_dimensions);
+  }
   // MP implementation gets deriv info from the regular evaluation types
   { std::vector<PHX::index_size_type> derivative_dimensions;
     derivative_dimensions.push_back(
       PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
         application.get(), meshSpecs.get()));
     rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
-      derivative_dimensions); }
+      derivative_dimensions);
+  }
   rfm->postRegistrationSetup("");
   performedPostRegSetup = true;
 }
 
 template<typename EvalT>
-void Albany::FieldManagerScalarResponseFunction::
+void FieldManagerScalarResponseFunction::
 evaluate (PHAL::Workset& workset) {
   const WorksetArray<int>::type&
     wsPhysIndex = application->getDiscretization()->getWsPhysIndex();
@@ -156,8 +154,7 @@ evaluate (PHAL::Workset& workset) {
   rfm->postEvaluate<EvalT>(workset);
 }
 
-void
-Albany::FieldManagerScalarResponseFunction::
+void FieldManagerScalarResponseFunction::
 evaluateResponse(const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
@@ -181,11 +178,10 @@ evaluateResponse(const double current_time,
   evaluate<PHAL::AlbanyTraits::Residual>(workset);
 }
 
-void
-Albany::FieldManagerScalarResponseFunction::
-evaluateTangent(const double alpha, 
-		const double beta,
-		const double omega,
+void FieldManagerScalarResponseFunction::
+evaluateTangent(const double /* alpha */, 
+		const double /* beta */,
+		const double /* omega */,
 		const double current_time,
 		bool sum_derivs,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -220,19 +216,18 @@ evaluateTangent(const double alpha,
   evaluate<PHAL::AlbanyTraits::Tangent>(workset);
 }
 
-void
-Albany::FieldManagerScalarResponseFunction::
+void FieldManagerScalarResponseFunction::
 evaluateGradient(const double current_time,
-    const Teuchos::RCP<const Thyra_Vector>& x,
-    const Teuchos::RCP<const Thyra_Vector>& xdot,
-    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-		const Teuchos::Array<ParamVec>& p,
-		ParamVec* deriv_p,
-    const Teuchos::RCP<Thyra_Vector>& g,
-    const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
-    const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
-    const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
-    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
+  const Teuchos::RCP<const Thyra_Vector>& x,
+  const Teuchos::RCP<const Thyra_Vector>& xdot,
+  const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+	const Teuchos::Array<ParamVec>& p,
+	ParamVec* /* deriv_p */,
+  const Teuchos::RCP<Thyra_Vector>& g,
+  const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
+  const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
+  const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
+  const Teuchos::RCP<Thyra_MultiVector>& /* dg_dp */)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
@@ -282,8 +277,7 @@ evaluateGradient(const double current_time,
   }  
 }
 
-void
-Albany::FieldManagerScalarResponseFunction::
+void FieldManagerScalarResponseFunction::
 evaluateDistParamDeriv(
     const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -312,3 +306,5 @@ evaluateDistParamDeriv(
     evaluate<PHAL::AlbanyTraits::DistParamDeriv>(workset);
   }
 }
+
+} // namespace Albany

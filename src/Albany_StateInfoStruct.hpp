@@ -4,10 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-// IK, 9/12/14: no Epetra!
-
-#ifndef ALBANY_STATEINFOSTRUCT
-#define ALBANY_STATEINFOSTRUCT
+#ifndef ALBANY_STATE_INFO_STRUCT
+#define ALBANY_STATE_INFO_STRUCT
 
 // The StateInfoStruct contains information from the Problem
 // (via the State Manager) that is used by STK to define Fields.

@@ -259,8 +259,6 @@ evaluateGradient(const double /*current_time*/,
   if (!dg_dx.is_null()) {
     dg_dx->assign(0.0);
 
-    // TODO: think about how to abstract away tpetra here. Idea: introduce generic
-    //       interfaces in Albany_ThyraUtils.*pp, to recover local/global elements.
     Teuchos::RCP<const Thyra_VectorSpace> replicatedVS = cullingOp->range();
     Teuchos::RCP<const Thyra_VectorSpace> derivVS = dg_dx->range();
     const int colCount = dg_dx->domain()->dim();
@@ -288,7 +286,6 @@ evaluateGradient(const double /*current_time*/,
 
 void SolutionValuesResponseFunction::updateCullingOp()
 {
-  // TODO: abstract away the tpetra stuff
   const Teuchos::RCP<const Thyra_VectorSpace> solutionVS = app_->getVectorSpace();
   if (cullingOp.is_null() || !sameAs(solutionVS,cullingOp->domain())) {
     const Teuchos::Array<GO> selectedGIDs = cullingStrategy_->selectedGIDs(solutionVS);

@@ -15,7 +15,7 @@ Teuchos::RCP<const Thyra_VectorSpace>
 ScalarResponseFunction::responseVectorSpace() const
 {
   int num_responses = this->numResponses();
-  return createLocallyReplicatedVectorSpace(num_responses,commT);
+  return createLocallyReplicatedVectorSpace(num_responses,comm);
 }
 
 Teuchos::RCP<Thyra_LinearOp>

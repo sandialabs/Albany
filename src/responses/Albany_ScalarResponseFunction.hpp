@@ -25,8 +25,8 @@ class ScalarResponseFunction : public AbstractResponseFunction
 public:
 
   //! Default constructor
-  ScalarResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& commT_) :
-    commT(commT_)
+  ScalarResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& comm_) :
+    comm(comm_)
   {
     // Nothing to be done here
   }
@@ -42,10 +42,10 @@ public:
   
   //! Get the comm
   Teuchos::RCP<const Teuchos_Comm> getComm() const {
-    return commT;
+    return comm;
   }
 
-  //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra
+  //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
   virtual void evaluateGradient(
     const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -98,7 +98,7 @@ public:
 protected:
 
   //! Comm for forming response map
-  Teuchos::RCP<const Teuchos_Comm> commT;
+  Teuchos::RCP<const Teuchos_Comm> comm;
 };
 
 } // namespace Albany
