@@ -304,14 +304,16 @@ setCoordinates(const Teuchos::RCP<Thyra_MultiVector>& coordMV_)
     plist->set("PDE equations", numPDEs);
 
   } else {  // MueLu here
+    // It apperas MueLu only accepts Tpetra. Get the Tpetra MV then.
+    auto t_coordMV = getTpetraMultiVector(coordMV);
     if (plist->isSublist("Factories") == true) {
       // use verbose input deck
       Teuchos::ParameterList& matrixList = plist->sublist("Matrix");
       matrixList.set("PDE equations", numPDEs);
-      plist->set("Coordinates", coordMV);
+      plist->set("Coordinates", t_coordMV);
     } else {
       // use simplified input deck
-      plist->set("Coordinates", coordMV);
+      plist->set("Coordinates", t_coordMV);
       plist->set("number of equations", numPDEs);
     }
   }
@@ -321,6 +323,8 @@ void RigidBodyModes::
 setCoordinatesAndNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV_in,
                            const Teuchos::RCP<const Thyra_VectorSpace>& soln_vs)
 {
+  setCoordinates(coordMV_in);
+
   // numPDEs = # PDEs
   // numElasticityDim = # elasticity dofs
   // nullSpaceDim = dimension of elasticity nullspace
@@ -328,8 +332,6 @@ setCoordinatesAndNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV_in,
 
   int numSpaceDim = coordMV->domain()->dim(); // Number of multivectors are the dimension of the problem
   const RigidBodyModes::LO_type numNodes = getSpmdVectorSpace(coordMV->range())->localSubDim();
-
-  setCoordinates(coordMV_in);
 
   if (numElasticityDim > 0 || setNonElastRBM == true ) {
 
