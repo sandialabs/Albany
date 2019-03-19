@@ -14,6 +14,7 @@
 #include "Teuchos_RCP.hpp"
 
 #if defined(ALBANY_EPETRA)
+#include "Thyra_EpetraLinearOp.hpp"
 #include "AztecOO_ConditionNumber.h"
 #include "Albany_EpetraThyraUtils.hpp"
 #include "Epetra_LocalMap.h"
@@ -1014,6 +1015,7 @@ void describe<Thyra_Vector> (const Teuchos::RCP<const Thyra_Vector>& v,
   auto ev = getConstEpetraVector(v,false);
   if (!ev.is_null()) {
     ev->Print(*out.getOStream());
+    return;
   }
 #endif
 
@@ -1037,6 +1039,7 @@ void describe<Thyra_LinearOp> (const Teuchos::RCP<const Thyra_LinearOp>& op,
   auto emat = getConstEpetraMatrix(op,false);
   if (!emat.is_null()) {
     emat->Print(*out.getOStream());
+    return;
   }
 #endif
 
@@ -1068,6 +1071,7 @@ writeMatrixMarket<const Thyra_Vector>(
     // TODO: avoid petra conversion, and call EpetraExt I/O directly
     tv = Petra::EpetraVector_To_TpetraVectorConst(*ev,createTeuchosCommFromEpetraComm(ev->Comm()));
     writeMatrixMarket(tv,prefix,counter);
+    return;
   }
 #endif
 
@@ -1105,6 +1109,7 @@ writeMatrixMarket<const Thyra_MultiVector>(
     // TODO: avoid petra conversion, and call EpetraExt I/O directly
     tmv = Petra::EpetraMultiVector_To_TpetraMultiVector(*emv,createTeuchosCommFromEpetraComm(emv->Comm()));
     writeMatrixMarket(tmv,prefix,counter);
+    return;
   }
 #endif
 
@@ -1142,6 +1147,19 @@ writeMatrixMarket<const Thyra_LinearOp>(
     // TODO: avoid petra conversion, and call EpetraExt I/O directly
     tA = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*eA,createTeuchosCommFromEpetraComm(eA->Comm()));
     writeMatrixMarket(tA,prefix,counter);
+    return;
+  } else {
+    // It may be a Thyra::EpetraLinearOp. Try to extract the op
+    auto eLop = Teuchos::rcp_dynamic_cast<const Thyra::EpetraLinearOp>(A);
+    if (!eLop.is_null()) {
+      auto eMat = Teuchos::rcp_dynamic_cast<const Epetra_CrsMatrix>(eLop->epetra_op());
+      TEUCHOS_TEST_FOR_EXCEPTION (eMat.is_null(), std::logic_error,
+                                  "Error! The thyra linear op is of type Thyra::EpetraLinearOp, "
+                                  "but the stored Epetra_Operator rcp is either null or not of concrete type Epetra_CrsMatrix.\n");
+      tA = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*eMat,createTeuchosCommFromEpetraComm(eMat->Comm()));
+      writeMatrixMarket(tA,prefix,counter);
+      return;
+    }
   }
 #endif
 
@@ -1180,6 +1198,7 @@ writeMatrixMarket<const Thyra_VectorSpace>(
     // TODO: avoid petra conversion, and call EpetraExt I/O directly
     tm = Petra::EpetraMap_To_TpetraMap(*em,createTeuchosCommFromEpetraComm(em->Comm()));
     writeMatrixMarket(tm,prefix,counter);
+    return;
   }
 #endif
 
