@@ -106,7 +106,7 @@ GatherSolutionBase(const Teuchos::ParameterList& p,
       valVec_dotdot = fdotdot;
       this->addEvaluatedField(valVec_dotdot);
     }
-    numFieldsBase = dl->node_vector->dimension(2);
+    numFieldsBase = dl->node_vector->extent(2);
   } else if ( tensorRank == 2 ) {
     // tensor
     PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> f(solution_names[0],dl->node_tensor);
@@ -130,7 +130,7 @@ GatherSolutionBase(const Teuchos::ParameterList& p,
       valTensor_dotdot = fdotdot;
       this->addEvaluatedField(valTensor_dotdot);
     }
-    numFieldsBase = (dl->node_tensor->dimension(2))*(dl->node_tensor->dimension(3));
+    numFieldsBase = (dl->node_tensor->extent(2))*(dl->node_tensor->extent(3));
   }
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -167,21 +167,21 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
       for (std::size_t eq = 0; eq < val_dotdot.size(); ++eq)
         this->utils.setFieldData(val_dotdot[eq],fm);
     }
-    numNodes = val[0].dimension(1);
+    numNodes = val[0].extent(1);
   }
   else
   if (tensorRank == 1) {
     this->utils.setFieldData(valVec,fm);
     if (enableTransient) this->utils.setFieldData(valVec_dot,fm);
     if (enableAcceleration) this->utils.setFieldData(valVec_dotdot,fm);
-    numNodes = valVec.dimension(1);
+    numNodes = valVec.extent(1);
   }
   else
   if (tensorRank == 2) {
     this->utils.setFieldData(valTensor,fm);
     if (enableTransient) this->utils.setFieldData(valTensor_dot,fm);
     if (enableAcceleration) this->utils.setFieldData(valTensor_dotdot,fm);
-    numNodes = valTensor.dimension(1);
+    numNodes = valTensor.extent(1);
   }
 }
 
@@ -331,7 +331,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else
   if (this->tensorRank == 2) {
-    int numDim = this->valTensor.dimension(2);
+    int numDim = this->valTensor.extent(2);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       for (std::size_t node = 0; node < this->numNodes; ++node) {
         for (std::size_t eq = 0; eq < numFields; eq++)
@@ -381,7 +381,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   if (this->tensorRank == 2){
-    numDim = this->valTensor.dimension(2);
+    numDim = this->valTensor.extent(2);
     Kokkos::parallel_for(PHAL_GatherSolRank2_Policy(0,workset.numCells),*this);
     cudaCheckError();
 
@@ -629,10 +629,10 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   int numDim = 0;
-  if (this->tensorRank==2) numDim = this->valTensor.dimension(2); // only needed for tensor fields
+  if (this->tensorRank==2) numDim = this->valTensor.extent(2); // only needed for tensor fields
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const int neq = nodeID.dimension(2);
+    const int neq = nodeID.extent(2);
     const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
@@ -678,7 +678,7 @@ evaluateFields(typename Traits::EvalData workset)
   nodeID = workset.wsElNodeEqID;
 
   // Get dimensions and coefficients
-  neq = nodeID.dimension(2);
+  neq = nodeID.extent(2);
   j_coeff=workset.j_coeff;
   m_coeff=workset.m_coeff;
   n_coeff=workset.n_coeff;
@@ -693,7 +693,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   if (this->tensorRank == 2) {
-    numDim = this->valTensor.dimension(2);
+    numDim = this->valTensor.extent(2);
 
     Kokkos::parallel_for(PHAL_GatherJacRank2_Policy(0,workset.numCells),*this);
     cudaCheckError();
@@ -819,7 +819,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numDim = 0;
   if(this->tensorRank==2) {
-    numDim = this->valTensor.dimension(2); // only needed for tensor fields
+    numDim = this->valTensor.extent(2); // only needed for tensor fields
   }
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -941,7 +941,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else
   if (this->tensorRank == 2) {
-    int numDim = this->valTensor.dimension(2);
+    int numDim = this->valTensor.extent(2);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       for (std::size_t node = 0; node < this->numNodes; ++node) {
         for (std::size_t eq = 0; eq < numFields; eq++)

@@ -46,7 +46,7 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   dl_basal->node_qp_gradient->dimensions(dims);
   numSideNodes = dims[2];
   sideDim      = dims[4];
-  numCellNodes = basalMeltRate.fieldTag().dataLayout().dimension(1);
+  numCellNodes = basalMeltRate.fieldTag().dataLayout().extent(1);
 
   basalSideName = p.get<std::string> ("Side Set Name");
 

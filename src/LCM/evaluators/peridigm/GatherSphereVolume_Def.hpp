@@ -73,7 +73,7 @@ GatherSphereVolume<EvalT, Traits>::evaluateFields(
       "evaluator!\n");
 
   for (int cell = 0; cell < numCells; ++cell) {
-    for (int v = 0; v < sphereVolume.dimension(1); v++)
+    for (int v = 0; v < sphereVolume.extent(1); v++)
       sphereVolume(cell, v) = wsSphereVolume[cell, v];
   }
 
@@ -81,7 +81,7 @@ GatherSphereVolume<EvalT, Traits>::evaluateFields(
   // and not just the used portion, we must fill the excess with reasonable
   // values. Leaving this out leads to calculations on singular elements.
   for (int cell = numCells; cell < worksetSize; ++cell) {
-    for (int v = 0; v < sphereVolume.dimension(1); v++)
+    for (int v = 0; v < sphereVolume.extent(1); v++)
       sphereVolume(cell, v) = sphereVolume(0, v);
   }
 }

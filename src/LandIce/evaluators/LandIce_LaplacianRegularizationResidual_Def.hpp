@@ -48,17 +48,17 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
   // Get Dimensions
-  numCells  = dl->node_scalar->dimension(0);
-  numNodes  = dl->node_scalar->dimension(1);
+  numCells  = dl->node_scalar->extent(0);
+  numNodes  = dl->node_scalar->extent(1);
 
-  numQPs = dl->qp_scalar->dimension(1);
+  numQPs = dl->qp_scalar->extent(1);
   cellDim  = cellType->getDimension();
 
-  numSideNodes  = dl_side->node_scalar->dimension(2);
-  numSideQPs = dl_side->qp_scalar->dimension(2);
+  numSideNodes  = dl_side->node_scalar->extent(2);
+  numSideQPs = dl_side->qp_scalar->extent(2);
 
 
-  int numSides = dl_side->node_scalar->dimension(1);
+  int numSides = dl_side->node_scalar->extent(1);
   sideDim  = cellType->getDimension()-1;
 
   this->addDependentField(forcing);

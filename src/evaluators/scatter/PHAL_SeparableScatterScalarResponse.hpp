@@ -120,7 +120,7 @@ protected:
              const Teuchos::RCP<Albany::Layouts>& dl) {
     ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
     SeparableScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
-    numNodes = dl->node_scalar->dimension(1);
+    numNodes = dl->node_scalar->extent(1);
   }
 protected:
   int numNodes;
@@ -156,7 +156,7 @@ protected:
              const Teuchos::RCP<Albany::Layouts>& dl) {
     ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
     SeparableScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
-    numNodes = dl->node_scalar->dimension(1);
+    numNodes = dl->node_scalar->extent(1);
   }
 private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;

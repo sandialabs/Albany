@@ -235,7 +235,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
   for (int i=0; i<num_g-1; i++) {
     if (albanyApp->getResponse(i)->isScalarResponse()) {
       Thyra::ConstDetachedVectorView<double> g(thyraResponses[i]);
-      std::cout << "\nResponse " << i << ": " << g[0] << std::endl;
+      std::cout << std::setprecision(15) << "\nResponse " << i << ": " << g[0] << std::endl;
     }
   }
 

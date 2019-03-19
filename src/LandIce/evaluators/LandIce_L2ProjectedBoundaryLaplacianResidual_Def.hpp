@@ -55,11 +55,11 @@ L2ProjectedBoundaryLaplacianResidualBase(Teuchos::ParameterList& p, const Teucho
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
   // Get Dimensions
-  numNodes  = dl->node_scalar->dimension(1);
+  numNodes  = dl->node_scalar->extent(1);
 
-  numSideNodes  = dl_side->node_scalar->dimension(2);
-  numBasalQPs = dl_side->qp_scalar->dimension(2);
-  int numSides = dl_side->node_scalar->dimension(1);
+  numSideNodes  = dl_side->node_scalar->extent(2);
+  numBasalQPs = dl_side->qp_scalar->extent(2);
+  int numSides = dl_side->node_scalar->extent(1);
   sideDim  = cellType->getDimension()-1;
 
   this->addDependentField(solution);

@@ -315,10 +315,10 @@ void gradient(const ArrayT1  & fieldAtNodes, const int &cell, ArrayT2  & gradFie
 #ifdef AERAS_OUTPUT
   std::cout << "ShallowWaterResid::gradient (kokkos)" << std::endl;
 #endif
-  for (int qp=0; qp < grad_at_cub_points_Kokkos.dimension(1); ++qp) {
+  for (int qp=0; qp < grad_at_cub_points_Kokkos.extent(1); ++qp) {
     ScalarT gx = 0;
     ScalarT gy = 0;
-    for (int node=0; node < grad_at_cub_points_Kokkos.dimension(0); ++node) {
+    for (int node=0; node < grad_at_cub_points_Kokkos.extent(0); ++node) {
       const typename PHAL::Ref<const ScalarT>::type field = fieldAtNodes(node);
       gx +=   field*grad_at_cub_points_Kokkos(node, qp,0);
       gy +=   field*grad_at_cub_points_Kokkos(node, qp,1);

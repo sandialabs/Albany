@@ -577,9 +577,9 @@ Albany::StateManager::registerSideSetStateVariable(
         "field.\n");
 
     stateRef.dim.resize(dl->rank() - 1);
-    stateRef.dim[0] = dl->dimension(0);
+    stateRef.dim[0] = dl->extent(0);
     for (int i(1); i < stateRef.dim.size(); ++i)
-      stateRef.dim[i] = dl->dimension(i + 1);
+      stateRef.dim[i] = dl->extent(i + 1);
 
     // Register the state with the nodalDataVector also.
     Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase =
@@ -603,15 +603,15 @@ Albany::StateManager::registerSideSetStateVariable(
         "field.\n");
 
     stateRef.dim.resize(dl->rank() - 1);
-    stateRef.dim[0] = dl->dimension(0);
+    stateRef.dim[0] = dl->extent(0);
     for (int i(1); i < stateRef.dim.size(); ++i)
-      stateRef.dim[i] = dl->dimension(i + 1);
+      stateRef.dim[i] = dl->extent(i + 1);
   }
   stateRef.output              = outputToExodus;
   stateRef.responseIDtoRequire = responseIDtoRequire;
   stateRef.layered             = (dl->name(dl->rank() - 1) == "LayerDim");
   TEUCHOS_TEST_FOR_EXCEPTION(
-      stateRef.layered && (dl->dimension(dl->rank() - 1) <= 0),
+      stateRef.layered && (dl->extent(dl->rank() - 1) <= 0),
       std::logic_error,
       "Error! Invalid number of layers for layered state " << stateName
                                                            << ".\n");

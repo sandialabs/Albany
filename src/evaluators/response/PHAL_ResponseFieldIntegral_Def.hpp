@@ -54,7 +54,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
       global_response_layout = dl->workset_vector;
     }
     else {
-      int worksetSize = dl->cell_scalar->dimension(0);
+      int worksetSize = dl->cell_scalar->extent(0);
       local_response_layout = 
 	Teuchos::rcp(new PHX::MDALayout<Cell,Dim>(worksetSize, 
 						  field_components.size()));

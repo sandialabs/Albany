@@ -74,7 +74,7 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
     this->utils.setFieldData(eigenvalue_Re[k],fm);
     this->utils.setFieldData(eigenvalue_Im[k],fm);
   }
-  numNodes = (nEigenvectors > 0) ? eigenvector_Re[0].dimension(1) : 0;
+  numNodes = (nEigenvectors > 0) ? eigenvector_Re[0].extent(1) : 0;
 }
 
 template<typename EvalT, typename Traits>

@@ -144,7 +144,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
   
-  int neq = workset.wsElNodeEqID.dimension(2);
+  int neq = workset.wsElNodeEqID.extent(2);
 
   if (workset.sideSets == Teuchos::null)
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets defined in input file but not properly specified on the mesh" << std::endl);

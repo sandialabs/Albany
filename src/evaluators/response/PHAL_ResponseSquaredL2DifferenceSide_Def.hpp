@@ -24,8 +24,8 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
   Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
 
   // Gathering dimensions
-  sideDim = dl_side->cell_gradient->dimension(2);
-  numQPs  = dl_side->qp_scalar->dimension(2);
+  sideDim = dl_side->cell_gradient->extent(2);
+  numQPs  = dl_side->qp_scalar->extent(2);
 
   Teuchos::RCP<PHX::DataLayout> layout;
   std::string rank,fname,target_fname;
@@ -62,7 +62,7 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
   p.set("Stand-alone Evaluator", false);
   std::string local_response_name = "Local Response Squared L2 Error Side";
   std::string global_response_name = "Global Response Squared L2 Error Side";
-  int worksetSize = dl->cell_scalar->dimension(0);
+  int worksetSize = dl->cell_scalar->extent(0);
   int responseSize = 1;
   Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(new PHX::MDALayout<Cell, Dim>(worksetSize, responseSize));
   Teuchos::RCP<PHX::DataLayout> global_response_layout = Teuchos::rcp(new PHX::MDALayout<Dim>(responseSize));

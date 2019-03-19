@@ -51,9 +51,9 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = Albany::getTpetraMatrix(workset.Jac);
   const bool loadResid = Teuchos::nonnull(fT);
   Teuchos::Array<LO> colT;
-  const int neq = nodeID.dimension(2);
+  const int neq = nodeID.extent(2);
   int numDim = 0;
-  if (this->tensorRank==2) numDim = this->valTensor.dimension(2);
+  if (this->tensorRank==2) numDim = this->valTensor.extent(2);
   double diagonal_value = 1;
 
   const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
@@ -181,12 +181,12 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Tpetra_Vector>    fT   = Albany::getTpetraVector(workset.f);
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = Albany::getTpetraMatrix(workset.Jac);
   const bool loadResid = Teuchos::nonnull(fT);
-  const int neq = nodeID.dimension(2);
+  const int neq = nodeID.extent(2);
   unsigned int nunk = this->numNodes*(neq-1);
   Teuchos::Array<LO> colT, index;
   colT.resize(nunk), index.resize(nunk);
   int numDim = 0;
-  if (this->tensorRank==2) numDim = this->valTensor.dimension(2);
+  if (this->tensorRank==2) numDim = this->valTensor.extent(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     // Local Unks: Loop over nodes in element, Loop over equations per node

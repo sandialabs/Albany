@@ -56,7 +56,7 @@ namespace LandIce
     numSideNodes = dims[2];
     numSideQPs   = dims[3];
     //sideDim      = dims[4];
-    numCellNodes = basalFricHeat.fieldTag().dataLayout().dimension(1);
+    numCellNodes = basalFricHeat.fieldTag().dataLayout().extent(1);
 
     dl->node_vector->dimensions(dims);
     vecDimFO     = std::min((int)dims[2],2);

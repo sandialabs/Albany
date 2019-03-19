@@ -2149,7 +2149,7 @@ void STKDiscretization::computeWorksetInfo()
       BucketArray<AbstractSTKFieldContainer::ScalarFieldType> array(**css, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " SFT dim[1]: " <<
-      // array.dimension(1) << std::endl;
+      // array.extent(1) << std::endl;
       MDArray ar                                     = array;
       stateArrays.elemStateArrays[b][(*css)->name()] = ar;
     }
@@ -2157,7 +2157,7 @@ void STKDiscretization::computeWorksetInfo()
       BucketArray<AbstractSTKFieldContainer::VectorFieldType> array(**cvs, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " VFT dim[2]: " <<
-      // array.dimension(2) << std::endl;
+      // array.extent(2) << std::endl;
       MDArray ar                                     = array;
       stateArrays.elemStateArrays[b][(*cvs)->name()] = ar;
     }
@@ -2165,7 +2165,7 @@ void STKDiscretization::computeWorksetInfo()
       BucketArray<AbstractSTKFieldContainer::TensorFieldType> array(**cts, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " TFT dim[3]: " <<
-      // array.dimension(3) << std::endl;
+      // array.extent(3) << std::endl;
       MDArray ar                                     = array;
       stateArrays.elemStateArrays[b][(*cts)->name()] = ar;
     }
@@ -2173,7 +2173,7 @@ void STKDiscretization::computeWorksetInfo()
       BucketArray<AbstractSTKFieldContainer::QPScalarFieldType> array(**qpss, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPSFT dim[1]: " <<
-      // array.dimension(1) << std::endl;
+      // array.extent(1) << std::endl;
       MDArray ar                                      = array;
       stateArrays.elemStateArrays[b][(*qpss)->name()] = ar;
     }
@@ -2181,7 +2181,7 @@ void STKDiscretization::computeWorksetInfo()
       BucketArray<AbstractSTKFieldContainer::QPVectorFieldType> array(**qpvs, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPVFT dim[2]: " <<
-      // array.dimension(2) << std::endl;
+      // array.extent(2) << std::endl;
       MDArray ar                                      = array;
       stateArrays.elemStateArrays[b][(*qpvs)->name()] = ar;
     }
@@ -2189,7 +2189,7 @@ void STKDiscretization::computeWorksetInfo()
       BucketArray<AbstractSTKFieldContainer::QPTensorFieldType> array(**qpts, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPTFT dim[3]: " <<
-      // array.dimension(3) << std::endl;
+      // array.extent(3) << std::endl;
       MDArray ar                                      = array;
       stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
     }
@@ -2201,7 +2201,7 @@ void STKDiscretization::computeWorksetInfo()
       MDArray ar = array;
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " SVState dim[0]: " <<
-      // array.dimension(0) << std::endl;
+      // array.extent(0) << std::endl;
       // std::cout << "SV Name: " << *svs << " address : " << &array <<
       // std::endl;
       stateArrays.elemStateArrays[b][*scalarValue_states[i]] = ar;

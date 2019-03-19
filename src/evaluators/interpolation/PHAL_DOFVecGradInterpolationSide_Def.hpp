@@ -29,10 +29,10 @@ DOFVecGradInterpolationSideBase(const Teuchos::ParameterList& p,
 
   this->setName("DOFVecGradInterpolationSideBase" );
 
-  numSideNodes = dl_side->node_qp_gradient->dimension(2);
-  numSideQPs   = dl_side->node_qp_gradient->dimension(3);
-  numDims      = dl_side->node_qp_gradient->dimension(4);
-  vecDim       = dl_side->node_vector->dimension(3);
+  numSideNodes = dl_side->node_qp_gradient->extent(2);
+  numSideQPs   = dl_side->node_qp_gradient->extent(3);
+  numDims      = dl_side->node_qp_gradient->extent(4);
+  vecDim       = dl_side->node_vector->extent(3);
 }
 
 //**********************************************************************

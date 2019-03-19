@@ -39,9 +39,9 @@ MapToPhysicalFrameSide(const Teuchos::ParameterList& p,
   this->addEvaluatedField(coords_side_qp);
 
   // Get Dimensions
-  int numSides = dl_side->qp_coords->dimension(1);
-  numSideQPs   = dl_side->qp_coords->dimension(2);
-  numDim       = dl_side->qp_coords->dimension(3);
+  int numSides = dl_side->qp_coords->extent(1);
+  numSideQPs   = dl_side->qp_coords->extent(2);
+  numDim       = dl_side->qp_coords->extent(3);
   int sideDim  = numDim-1;
 
   // Compute cubature points in reference elements

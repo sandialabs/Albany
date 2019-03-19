@@ -1,3 +1,1 @@
-00 23 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; rm -rf out; rm -rf out_openMP; bash build_trilinos_all.sh; cd /home/ikalash/nightlyCDash; bash build_albany_all.sh
-12 00 * * 6    source /home/ikalash/.bashrc; scp -r /home/ikalash/Desktop ikalash@mockba:/media/a078b7aa-fb53-4281-8356-a5e964c1549f/camobap
-#12 00 * * 7    source /home/ikalash/.bashrc; scp -r /extradrive ikalash@mockba:/media/a078b7aa-fb53-4281-8356-a5e964c1549f/camobap
+00 22 * * 1-6,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; rm -rf out; rm -rf out_openMP; bash build_trilinos_all.sh; cd /home/ikalash/nightlyCDash; bash build_albany_all.sh

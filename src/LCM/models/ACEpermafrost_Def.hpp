@@ -501,7 +501,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   porosity_(cell, pt) = porosity;
 
   // Calculate melting temperature
-  ScalarT sal   = 35.0;  // note: this should come from chemical part of model
+  ScalarT sal   = 5.0;  // note: this should come from chemical part of model
   ScalarT sal15 = std::sqrt(sal * sal * sal);
   ScalarT pressure_fixed = 1.0;
   // Tmelt is in Kelvin, TmeltC is in Celcius.
@@ -524,18 +524,26 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT W = 4.0;
 
   // dfdT is a smooth function, and it is centered about Tmelt.
-  // dfdT is a sigmoidal function:
+  // dfdT is a sigmoidal function.
+  // dfdT is naturally negative (less than 0).
   //   f(T) = L / (1 + e^(-W*(T-T0)))
   ScalarT dfdT = 0.0;
   ScalarT TcurrC = Tcurr - 273.15;
   ScalarT TdiffC = TcurrC - TmeltC;
-  dfdT = -W * exp(-W * TdiffC) / 
-         ((1.0 + exp(-W * TdiffC)) * (1.0 + exp(-W * TdiffC)));
-
+  //dfdT = -W * exp(-W * TdiffC) / 
+  //       ((1.0 + exp(-W * TdiffC)) * (1.0 + exp(-W * TdiffC)));
+  
   // Update the ice saturation
-  icurr = iold + dfdT * dTemp;
+  // icurr = iold + dfdT * dTemp;
+  icurr = 1.0 - (1.0 / (1.0 + exp(-W * TdiffC)));
   icurr = std::max(0.0, icurr);
-  icurr = std::min(ice_saturation_max_, icurr);
+  icurr = std::min(1.0, icurr);
+  
+  // Calculate dfdT by evaluation
+  // dfdT needs to be negative (because Lfi is always positive)
+  if (dTemp != 0.0) {
+    dfdT = -1.0 * std::abs((iold - icurr) / dTemp);
+  }
 
   // Update the water saturation
   wcurr = 1.0 - icurr;
@@ -546,21 +554,26 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   density_(cell, pt) =
       (porosity * ((ice_density_ * icurr) + (water_density_ * wcurr))) +
       ((1.0 - porosity) * sediment_density_);
+  //density_(cell,pt) = water_density_;   
 
   // Update the effective material heat capacity
   heat_capacity_(cell, pt) =
       (porosity * ((ice_heat_capacity_ * icurr) + 
                    (water_heat_capacity_ * wcurr))) +
       ((1.0 - porosity) * sediment_heat_capacity_);
+  //heat_capacity_(cell,pt) = water_heat_capacity_;
 
   // Update the effective material thermal conductivity
   thermal_cond_(cell, pt) = pow(ice_thermal_cond_, (icurr * porosity)) *
                             pow(water_thermal_cond_, (wcurr * porosity)) *
                             pow(sediment_thermal_cond_, (1.0 - porosity));
+  //thermal_cond_(cell,pt) = water_thermal_cond_;
 
   // Update the material thermal inertia term
   thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt)) 
                                - (ice_density_ * latent_heat_ * dfdT);
+  //if (std::abs(dfdT)>0.001) {
+  //std::cout << "TI=" << thermal_inertia_(cell,pt) << "\n";}
 
   ScalarT const TI     = thermal_inertia_(cell, pt);
   ScalarT const RCp    = (density_(cell, pt) * heat_capacity_(cell, pt));

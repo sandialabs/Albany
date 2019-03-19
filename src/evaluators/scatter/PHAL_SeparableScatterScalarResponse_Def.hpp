@@ -116,7 +116,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
-        int neq = nodeID.dimension(2);
+        int neq = nodeID.extent(2);
 
         // Loop over equations per node
         for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
@@ -153,7 +153,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
   }
   auto dg_data = Albany::getNonconstLocalData(dg);
 
-  const int neq = workset.wsElNodeEqID.dimension(2);
+  const int neq = workset.wsElNodeEqID.extent(2);
   const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   int numLayers = layeredMeshNumbering.numLayers;

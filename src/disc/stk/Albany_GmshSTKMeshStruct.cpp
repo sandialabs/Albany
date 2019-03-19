@@ -37,7 +37,8 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
   fname = params->get("Gmsh Input Mesh File Name", "mesh.msh");
 
   // Init counters to 0
-  NumSides = NumNodes = NumSides = 0;
+  NumSides = NumNodes = 0;
+  NumElems = 0;
   nb_hexas = 0;
   nb_tetra = 0;
   nb_quads = 0;
@@ -51,45 +52,26 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
   // Reading the mesh on proc 0
   if (commT->getRank() == 0) 
   {
-    std::ifstream ifile;
-    open_fname( ifile);
-
-    std::string line;
-    std::getline (ifile, line);
-
     bool legacy = false;
     bool binary = false;
+    bool ascii  = false;
 
-    if (line=="$NOD") {
-      legacy = true;
-    } else if (line=="$MeshFormat") {
-
-      std::getline (ifile, line);
-      std::stringstream iss (line);
-
-      int doublesize;
-      iss >> version >> binary >> doublesize;
-
-      check_version( ifile);
-
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Mesh format not recognized.\n");
-    }
-    ifile.close();
+    determine_file_type( legacy, binary, ascii);
 
     if (legacy) {
       loadLegacyMesh ();
     } else if (binary) {
       loadBinaryMesh ();
-    } else {
+    } else if (ascii) {
       loadAsciiMesh ();
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Mesh format not recognized.\n");
     }
   }
-
   // Broadcasting topological information about the mesh to all procs
-  Teuchos::broadcast(*commT, 0, 1, &this->numDim);
-  Teuchos::broadcast(*commT, 0, 1, &NumElemNodes);
-  Teuchos::broadcast(*commT, 0, 1, &NumSideNodes);
+  broadcast_topology( commT);
+  // Redundant for proc 0 but needed for all others processes
+  set_version_enum_from_float();
 
   // GenericSTKMeshStruct's constructor could not initialize metaData, cause the dimension was not set.
   std::vector<std::string> entity_rank_names = stk::mesh::entity_rank_names();
@@ -100,36 +82,16 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
 
   params->validateParameters(*getValidDiscretizationParameters(), 0);
 
-  std::string ebn = "Element Block 0";
-  partVec[0] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
-  std::map<std::string,int> ebNameToIndex;
-  ebNameToIndex[ebn] = 0;
+  create_element_block();
 
 #ifdef ALBANY_SEACAS
   //  stk::io::put_io_part_attribute(metaData->universal_part());
   stk::io::put_io_part_attribute(*partVec[0]);
 #endif
 
-  // All the nodes
-  std::vector < std::string > nsNames;
-  std::string nsn = "Node";
-  nsNames.push_back(nsn);
-  nsPartVec[nsn] = &metaData->declare_part(nsn, stk::topology::NODE_RANK);
-#ifdef ALBANY_SEACAS
-  stk::io::put_io_part_attribute(*nsPartVec[nsn]);
-#endif
-
-  // All the sidesets
-  std::vector < std::string > ssNames;
-  std::string ssn = "BoundarySide";
-  ssNames.push_back(ssn);
-  ssPartVec[ssn] = &metaData->declare_part(ssn, metaData->side_rank());
-#ifdef ALBANY_SEACAS
-  stk::io::put_io_part_attribute(*ssPartVec[ssn]);
-  stk::io::put_io_part_attribute(metaData->universal_part());
-#endif
-
   // Set boundary (sideset, nodeset) information
+  std::vector < std::string > nsNames;
+  std::vector < std::string > ssNames;
   set_boundaries( commT, ssNames, nsNames);
 
   switch (this->numDim) {
@@ -163,9 +125,6 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid number of element nodes (you should have got an error before though).\n");
   }
 
-  // Need to broadcast the global number of elements, to compute the workset size
-  Teuchos::broadcast(*commT, 0, 1, &NumElems);
-
   int cub = params->get("Cubature Degree", 3);
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, NumElems);
@@ -191,7 +150,7 @@ Albany::GmshSTKMeshStruct::~GmshSTKMeshStruct()
     }
   }
   if (trias!=nullptr) {
-    for (int i(0); i<5; ++i) {
+    for (int i(0); i<4; ++i) {
       delete[] trias[i];
     }
   }
@@ -218,6 +177,44 @@ Albany::GmshSTKMeshStruct::~GmshSTKMeshStruct()
   delete[] lines;
 
   allowable_gmsh_versions.clear();
+}
+
+void Albany::GmshSTKMeshStruct::determine_file_type( bool& legacy, bool& binary, bool& ascii)
+{
+  std::ifstream ifile;
+  open_fname( ifile);
+
+  std::string line;
+  std::getline (ifile, line);
+
+  if (line=="$NOD") {
+    legacy = true;
+  } else if (line=="$MeshFormat") {
+
+    std::getline (ifile, line);
+    std::stringstream iss (line);
+
+    int doublesize;
+    iss >> version_in >> binary >> doublesize;
+
+    ascii = !binary;
+
+    check_version( ifile);
+  }
+
+  ifile.close();
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::broadcast_topology( const Teuchos::RCP<const Teuchos_Comm>& commT)
+{
+  Teuchos::broadcast(*commT, 0, 1, &this->numDim);
+  Teuchos::broadcast(*commT, 0, 1, &NumElemNodes);
+  Teuchos::broadcast(*commT, 0, 1, &NumSideNodes);
+  Teuchos::broadcast(*commT, 0, 1, &NumElems);
+  Teuchos::broadcast(*commT, 0, 1, &version_in);
+
+  return;
 }
 
 void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
@@ -525,12 +522,12 @@ void Albany::GmshSTKMeshStruct::set_NumNodes( std::ifstream& ifile)
   swallow_lines_until( ifile, line, "$Nodes");
   TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Nodes section not found.\n");
 
-  if( version == (float)2.2)
+  if( version == GmshVersion::V2_2)
   {
     std::getline (ifile, line);
     NumNodes = std::atoi (line.c_str() );
   }
-  else if( version == (float)4.1)
+  else if( version == GmshVersion::V4_1)
   {
     int num_entity_blocks = 0;
     int min_node_tag      = 0;
@@ -547,7 +544,7 @@ void Albany::GmshSTKMeshStruct::set_NumNodes( std::ifstream& ifile)
 
 void Albany::GmshSTKMeshStruct::load_node_data( std::ifstream& ifile)
 {
-  if( version == (float)2.2)
+  if( version == GmshVersion::V2_2)
   {
     int id = 0;
     for (int i=0; i<NumNodes; ++i) 
@@ -555,7 +552,7 @@ void Albany::GmshSTKMeshStruct::load_node_data( std::ifstream& ifile)
       ifile >> id >> pts[i][0] >> pts[i][1] >> pts[i][2];
     }
   }
-  else if( version == (float) 4.1)
+  else if( version == GmshVersion::V4_1)
   {
     int accounted_nodes = 0;
     while( accounted_nodes < NumNodes)
@@ -598,11 +595,11 @@ void Albany::GmshSTKMeshStruct::set_num_entities( std::ifstream& ifile)
   // Read the number of entities
   std::getline (ifile, line);
 
-  if( version == (float)2.2)
+  if( version == GmshVersion::V2_2)
   {
     num_entities = std::atoi (line.c_str() );
   }
-  else if( version == (float)4.1)
+  else if( version == GmshVersion::V4_1)
   {
     int num_entity_blocks = 0;
     int num_elements      = 0;
@@ -652,7 +649,7 @@ void Albany::GmshSTKMeshStruct::set_specific_num_of_each_elements( std::ifstream
   // Need to start at the second line after '$Elements'
   std::getline (ifile, line);
 
-  if( version == (float)2.2)
+  if( version == GmshVersion::V2_2)
   {
     for (int i(0); i<num_entities; ++i) 
     {
@@ -665,7 +662,7 @@ void Albany::GmshSTKMeshStruct::set_specific_num_of_each_elements( std::ifstream
       increment_element_type( e_type);
     }
   }
-  else if( version == (float)4.1)
+  else if( version == GmshVersion::V4_1)
   {
     int accounted_elems = 0;
     while (accounted_elems < num_entities)
@@ -706,7 +703,7 @@ void Albany::GmshSTKMeshStruct::size_all_element_pointers()
   {
     tetra[i] = new int[nb_tetra];
   }
-  for (int i(0); i<5; ++i) 
+  for (int i(0); i<4; ++i) 
   {
     trias[i] = new int[nb_trias];
   }
@@ -779,6 +776,119 @@ void Albany::GmshSTKMeshStruct::set_generic_mesh_info()
   return;
 }
 
+void Albany::GmshSTKMeshStruct::store_element_info( 
+      int  e_type,
+      int& iline,
+      int& itria,
+      int& iquad,
+      int& itetra,
+      int& ihexa,
+      std::vector<int>& tags,
+      std::stringstream& ss)
+{
+  switch (e_type) 
+  {
+    case 1: // 2-pt Line
+      ss >> lines[0][iline] >> lines[1][iline];
+      lines[2][iline] = tags[0];
+      ++iline;
+      break;
+    case 2: // 3-pt Triangle
+      ss >> trias[0][itria] >> trias[1][itria] >> trias[2][itria];
+      trias[3][itria] = tags[0];
+      ++itria;
+      break;
+    case 3: // 4-pt Quad
+      ss >> quads[0][iquad] >> quads[1][iquad] >> quads[2][iquad] >> quads[3][iquad];
+      quads[4][iquad] = tags[0];
+      ++iquad;
+      break;
+    case 4: // 4-pt Tetra
+      ss >> tetra[0][itetra] >> tetra[1][itetra] >> tetra[2][itetra] >> tetra[3][itetra];
+      tetra[4][itetra] = tags[0];
+      ++itetra;
+      break;
+    case 5: // 8-pt Hexa
+      ss >> hexas[0][ihexa] >> hexas[1][ihexa] >> hexas[2][ihexa] >> hexas[3][ihexa]
+         >> hexas[4][ihexa] >> hexas[5][ihexa] >> hexas[6][ihexa] >> hexas[7][ihexa];
+      hexas[8][ihexa] = tags[0];
+      ++ihexa;
+      break;
+    case 15: // Point
+        break;
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Element type not supported; but you should have got an error before!\n");
+  }
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::load_element_data( std::ifstream& ifile)
+{
+  // Reset the stream to the beginning of the element section
+  std::string line;
+  ifile.seekg (0, std::ios::beg);
+  swallow_lines_until( ifile, line, "$Elements");
+  TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Element section not found; however, it was found earlier. This may be a bug.\n");
+
+  // Skip line with number of elements
+  std::getline(ifile,line);
+
+  // Read the elements
+  int iline(0), itria(0), iquad(0), itetra(0), ihexa(0), n_tags(0), id(0), e_type(0);
+  if( version == GmshVersion::V2_2)
+  {
+    std::vector<int> tags;
+    for (int i(0); i<num_entities; ++i) 
+    {
+      std::getline(ifile,line);
+      std::stringstream ss(line);
+      ss >> id >> e_type >> n_tags;
+      TEUCHOS_TEST_FOR_EXCEPTION (n_tags<=0, Teuchos::Exceptions::InvalidParameter, "Error! Number of tags must be positive.\n");
+      tags.resize(n_tags+1);
+      for (int j(0); j<n_tags; ++j) 
+      {
+        ss >> tags[j];
+      }
+      tags[n_tags] = 0;
+
+      store_element_info( e_type, iline, itria, iquad, itetra, ihexa, tags, ss);
+    }
+  }
+  else if( version == GmshVersion::V4_1)
+  {
+    int accounted_elems = 0;
+    std::vector<int> tags;
+    while (accounted_elems < num_entities)
+    {
+      std::getline( ifile, line);
+
+      int entity_dim        = 0;
+      int entity_tag        = 0;
+      int entity_type       = 0;
+      int num_elem_in_block = 0;
+      
+      std::stringstream iss (line);
+      iss >> entity_dim >> entity_tag >> entity_type >> num_elem_in_block;
+      tags.push_back( entity_tag);
+      for( int i = 0; i < num_elem_in_block; i++)
+      {
+        std::getline( ifile, line);
+        std::stringstream ss (line);
+        int elem_id = 0;
+        ss >> elem_id;
+
+        int e_type = entity_type;
+        store_element_info( e_type, iline, itria, iquad, itetra, ihexa, tags, ss);
+        accounted_elems++;
+      }
+      tags.clear();
+    }
+  }
+
+  return;
+}
+
 void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
 {
   std::ifstream ifile;
@@ -797,63 +907,20 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
   size_all_element_pointers();
   set_generic_mesh_info();
   
-  // Reset the stream to the beginning of the element section
-  std::string line;
-  ifile.seekg (0, std::ios::beg);
-  swallow_lines_until( ifile, line, "$Elements");
-  TEUCHOS_TEST_FOR_EXCEPTION (ifile.eof(), std::runtime_error, "Error! Element section not found; however, it was found earlier. This may be a bug.\n");
-  std::getline(ifile,line); // Skip line with number of elements
-
-  // Read the elements
-  int iline(0), itria(0), iquad(0), itetra(0), ihexa(0), n_tags(0), id(0), e_type(0);
-  std::vector<int> tags;
-  for (int i(0); i<num_entities; ++i) {
-    std::getline(ifile,line);
-    std::stringstream ss(line);
-    ss >> id >> e_type >> n_tags;
-    TEUCHOS_TEST_FOR_EXCEPTION (n_tags<=0, Teuchos::Exceptions::InvalidParameter, "Error! Number of tags must be positive.\n");
-    tags.resize(n_tags+1);
-    for (int j(0); j<n_tags; ++j) {
-      ss >> tags[j];
-    }
-    tags[n_tags] = 0;
-
-    switch (e_type) {
-      case 1: // 2-pt Line
-        ss >> lines[0][iline] >> lines[1][iline];
-        lines[2][iline] = tags[0];
-        ++iline;
-        break;
-      case 2: // 3-pt Triangle
-        ss >> trias[0][itria] >> trias[1][itria] >> trias[2][itria];
-        trias[4][itria] = tags[0];
-        ++itria;
-        break;
-      case 3: // 4-pt Quad
-        ss >> quads[0][iquad] >> quads[1][iquad] >> quads[2][iquad] >> quads[3][iquad];
-        quads[4][iquad] = tags[0];
-        ++iquad;
-        break;
-      case 4: // 4-pt Tetra
-        ss >> tetra[0][itetra] >> tetra[1][itetra] >> tetra[2][itetra] >> tetra[3][itetra];
-        trias[4][itetra] = tags[0];
-        ++itria;
-        break;
-      case 5: // 8-pt Hexa
-        ss >> hexas[0][ihexa] >> hexas[1][ihexa] >> hexas[2][ihexa] >> hexas[3][ihexa]
-           >> hexas[4][ihexa] >> hexas[5][ihexa] >> hexas[6][ihexa] >> hexas[7][ihexa];
-        hexas[8][ihexa] = tags[0];
-        ++ihexa;
-        break;
-      case 15: // Point
-          break;
-      default:
-        TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Element type not supported; but you should have got an error before!\n");
-    }
-  }
+  // Populate the element pointers with tag and node info
+  load_element_data( ifile);
 
   // Close the input stream
   ifile.close();
+}
+
+void Albany::GmshSTKMeshStruct::create_element_block()
+{
+  std::string ebn = "Element Block 0";
+  partVec[0] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
+  ebNameToIndex[ebn] = 0;
+
+  return;
 }
 
 void Albany::GmshSTKMeshStruct::loadBinaryMesh ()
@@ -1113,93 +1180,168 @@ void Albany::GmshSTKMeshStruct::loadBinaryMesh ()
   ifile.close();
 }
 
+void Albany::GmshSTKMeshStruct::set_all_nodes_boundary( std::vector<std::string>& nsNames)
+{
+  std::string nsn = "Node";
+  nsNames.push_back(nsn);
+  nsPartVec[nsn] = &metaData->declare_part(nsn, stk::topology::NODE_RANK);
+#ifdef ALBANY_SEACAS
+  stk::io::put_io_part_attribute(*nsPartVec[nsn]);
+#endif
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::set_all_sides_boundary( std::vector<std::string>& ssNames)
+{
+  std::string ssn = "BoundarySide";
+  ssNames.push_back(ssn);
+  ssPartVec[ssn] = &metaData->declare_part(ssn, metaData->side_rank());
+#ifdef ALBANY_SEACAS
+  stk::io::put_io_part_attribute(*ssPartVec[ssn]);
+  stk::io::put_io_part_attribute(metaData->universal_part());
+#endif
+
+  return;
+}
+
 void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos_Comm>& commT,
                                                 std::vector<std::string>&  ssNames,
                                                 std::vector<std::string>&  nsNames)
 {
-  if( version == (float)2.2)
+  set_all_nodes_boundary( nsNames);
+  set_all_sides_boundary( ssNames);
+
+  // Counting boundaries (only proc 0 has any stored, so far)
+  std::set<int> bdTags;
+  for (int i(0); i<NumSides; ++i) 
   {
-    // Counting boundaries (only proc 0 has any stored, so far)
-    std::set<int> bdTags;
-    for (int i(0); i<NumSides; ++i) 
-    {
-      bdTags.insert(sides[NumSideNodes][i]);
-    }
-
-    // Broadcasting the tags
-    int numBdTags = bdTags.size();
-    Teuchos::broadcast<LO,LO>(*commT, 0, 1, &numBdTags);
-    int* bdTagsArray = new int[numBdTags];
-    std::set<int>::iterator it=bdTags.begin();
-    for (int k=0; it!=bdTags.end(); ++it,++k) 
-    {
-      bdTagsArray[k] = *it;
-    }
-    Teuchos::broadcast<LO,LO>(*commT, 0, numBdTags, bdTagsArray);
-
-    // Adding boundary nodesets and sidesets separating different labels
-    for (int k=0; k<numBdTags; ++k) 
-    {
-      int tag = bdTagsArray[k];
-
-      std::stringstream nsn_i;
-      std::stringstream ssn_i;
-      nsn_i << "BoundaryNodeSet" << tag;
-      ssn_i << "BoundarySideSet" << tag;
-
-      bdTagToNodeSetName[tag] = nsn_i.str();
-      bdTagToSideSetName[tag] = ssn_i.str();
-
-      nsNames.push_back(nsn_i.str());
-      ssNames.push_back(ssn_i.str());
-
-      nsPartVec[nsn_i.str()] = &metaData->declare_part(nsn_i.str(), stk::topology::NODE_RANK);
-      ssPartVec[ssn_i.str()] = &metaData->declare_part(ssn_i.str(), metaData->side_rank());
-
-  #ifdef ALBANY_SEACAS
-      stk::io::put_io_part_attribute(*nsPartVec[nsn_i.str()]);
-      stk::io::put_io_part_attribute(*ssPartVec[ssn_i.str()]);
-  #endif
-    }
-
-    delete[] bdTagsArray;
+    bdTags.insert(sides[NumSideNodes][i]);
   }
-  else if( version == (float)4.1)
+
+  // Broadcasting the tags
+  int numBdTags = bdTags.size();
+  Teuchos::broadcast<LO,LO>(*commT, 0, 1, &numBdTags);
+  int* bdTagsArray = new int[numBdTags];
+  std::set<int>::iterator it=bdTags.begin();
+  for (int k=0; it!=bdTags.end(); ++it,++k) 
+  {
+    bdTagsArray[k] = *it;
+  }
+  Teuchos::broadcast<LO,LO>(*commT, 0, numBdTags, bdTagsArray);
+
+  // Adding boundary nodesets and sidesets separating different labels
+  for (int k=0; k<numBdTags; ++k) 
+  {
+    int tag = bdTagsArray[k];
+    std::stringstream ss;
+    ss << tag;
+    std::string name = ss.str();
+
+    add_nodeset( name, tag, nsNames);
+    add_sideset( name, tag, ssNames);
+
+  }
+  delete[] bdTagsArray;
+
+  // Gmsh 4.1 Allows users to give string names to surface.
+  // We overwrite the number based set names with the string ones
+  // if any exist
+  if( version == GmshVersion::V4_1)
   {
     // Map has format: "name",  physical_tag
     std::map<std::string, int> physical_names; 
-    get_physical_names( physical_names);
+    get_physical_names( physical_names, commT);
 
-    // TODO
+    std::map< std::string, int>::iterator it;
+    for( it = physical_names.begin(); it != physical_names.end(); it++)
+    {
+      std::string name = it->first;
+      int         tag  = it->second;
+
+      add_nodeset( name, tag, nsNames);
+      add_sideset( name, tag, ssNames);
+
+    }
   }
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::add_sideset( std::string sideset_name, int tag, std::vector<std::string>& ssNames)
+{
+  std::stringstream ssn_i;
+  ssn_i << "BoundarySideSet" << sideset_name;
+
+  bdTagToSideSetName[tag] = ssn_i.str();
+  ssNames.push_back(ssn_i.str());
+
+  ssPartVec[ssn_i.str()] = &metaData->declare_part(ssn_i.str(), metaData->side_rank());
+#ifdef ALBANY_SEACAS
+  stk::io::put_io_part_attribute(*ssPartVec[ssn_i.str()]);
+#endif
+
+  return;
+}
+
+
+void Albany::GmshSTKMeshStruct::add_nodeset( std::string nodeset_name, int tag, std::vector<std::string>& nsNames)
+{
+  std::stringstream nsn_i;
+  nsn_i << "BoundaryNodeSet" << nodeset_name;
+
+  bdTagToNodeSetName[tag] = nsn_i.str();
+  nsNames.push_back(nsn_i.str());
+
+  nsPartVec[nsn_i.str()] = &metaData->declare_part(nsn_i.str(), stk::topology::NODE_RANK);
+#ifdef ALBANY_SEACAS
+  stk::io::put_io_part_attribute(*nsPartVec[nsn_i.str()]);
+#endif
 
   return;
 }
 
 void Albany::GmshSTKMeshStruct::set_allowable_gmsh_versions()
 {
-  // Add new allowable versions here!
   allowable_gmsh_versions.insert( 2.2);
   allowable_gmsh_versions.insert( 4.1);
 
   return;
 }
 
+bool Albany::GmshSTKMeshStruct::set_version_enum_from_float()
+{
+  bool can_read = true;
+  if( version_in == (float)2.2 )
+  {
+    version = GmshVersion::V2_2;
+  }
+  else if( version_in == (float)4.1 )
+  {
+    version = GmshVersion::V4_1;
+  }
+  else
+  {
+    can_read = false;
+  }
+
+  return can_read;
+}
 
 void Albany::GmshSTKMeshStruct::check_version( std::ifstream& ifile)
 {
   // Tell user what gmsh version we're reading
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
   *out << "The gmsh version is: "
-       << version
+       << version_in
        << std::endl;
 
   // Check if we know how to read this gmsh version.
   // Return an error if we do not.
-  set_allowable_gmsh_versions();
-  if( allowable_gmsh_versions.find( version) == allowable_gmsh_versions.end())
+  if( !set_version_enum_from_float() )
   {
     *out << "Allowable gmsh *.msh file versions are: " << std::endl;
+    set_allowable_gmsh_versions();
     for( std::set<float>::iterator it = allowable_gmsh_versions.begin(); it != allowable_gmsh_versions.end(); it++)
     {
       *out << *it << std::endl;
@@ -1221,9 +1363,87 @@ void Albany::GmshSTKMeshStruct::open_fname( std::ifstream& ifile)
   
   return;
 }
-  
 
-void Albany::GmshSTKMeshStruct::get_physical_names( std::map<std::string, int>&  physical_names)
+void Albany::GmshSTKMeshStruct::get_name_for_physical_names( std::string& name, std::ifstream& ifile)
+{
+  std::string line;
+  int         id;
+  int         dim;
+  
+  std::getline( ifile, line);
+  std::stringstream ss (line);
+  ss >> dim >> id >> name;
+
+  // If this entity has a name, then assign it.
+  // Use the id otherwise.
+  if( name.empty() )
+  {
+    std::stringstream ss;
+    ss << id;
+    name = ss.str();
+  }
+  else
+  {
+    // Need to remove quote marks from name 
+    // and prepend with underscore
+    name.erase( std::remove(name.begin(), name.end(), '"'), name.end());
+    name = "_" + name;
+  }
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::get_physical_tag_to_surface_tag_map( 
+      std::ifstream&      ifile, 
+      std::map<int, int>& physical_surface_tags,
+      int                 num_surfaces)
+{
+  int    surface_tag         = 0;
+  double min_x               = 0.0;
+  double min_y               = 0.0;
+  double min_z               = 0.0;
+  double max_x               = 0.0;
+  double max_y               = 0.0;
+  double max_z               = 0.0;
+  int    num_physical_tags   = 0;
+  int    physical_tag        = 0;
+  int    num_bounding_curves = 0;
+  int    curve_tag           = 0;
+
+  std::string line;
+  for( int i = 0; i < num_surfaces; i++)
+  {
+    std::getline( ifile, line);
+    std::stringstream ss (line);
+    ss >> surface_tag
+       >> min_x
+       >> min_y
+       >> min_z
+       >> max_x
+       >> max_y
+       >> max_z
+       >> num_physical_tags  
+       >> physical_tag       
+       >> num_bounding_curves
+       >> curve_tag;
+
+    TEUCHOS_TEST_FOR_EXCEPTION ( num_physical_tags > 1, std::runtime_error, 
+                                "Cannot support more than one physical tag per surface.\n");
+
+    TEUCHOS_TEST_FOR_EXCEPTION ( num_physical_tags < 0, std::runtime_error, 
+                                "Cannot have a negative number of physical tags per surface.\n");
+
+    if( num_physical_tags == 1)
+    {
+      physical_surface_tags.insert( std::make_pair( physical_tag, surface_tag));
+    }
+  }
+
+  return;
+}
+                                                             
+
+void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::string, int>& physical_names)
 {
   std::ifstream ifile;
   open_fname( ifile);
@@ -1231,27 +1451,143 @@ void Albany::GmshSTKMeshStruct::get_physical_names( std::map<std::string, int>& 
   // Advance to the PhysicalNames section
   std::string line;
   swallow_lines_until( ifile, line, "$PhysicalNames");
-
-  // Get number of Physical Names
-  int num_physical_names = 0;
-  std::getline( ifile, line);
-  std::stringstream iss (line);
-  iss >> num_physical_names;
-
-  // Add each physical name pair to the map
-  for( size_t i = 0; i < num_physical_names; i++)
+  if( ifile.peek() != EOF)
   {
-    std::string name;
-    int         tag;
-    int         dim;
-    
+    // Get number of Physical Names
+    int num_physical_names = 0;
     std::getline( ifile, line);
     std::stringstream ss (line);
-    ss >> dim >> tag >> name;
+    ss >> num_physical_names;
 
-    physical_names.insert( std::make_pair( name, tag));
+    // Get the list of physical names
+    std::vector< std::string> names;
+    for( size_t i = 0; i < num_physical_names; i++)
+    {
+      std::string name;
+      get_name_for_physical_names( name, ifile);
+      names.push_back( name);
+    }
+
+    // Advance to Surface Entities section
+    ifile.seekg (0, std::ios::beg);
+    swallow_lines_until( ifile, line, "$Entities");
+
+    // Get number of each entity type
+    int num_points   = 0;
+    int num_curves   = 0;
+    int num_surfaces = 0;
+    int num_volumes  = 0;
+    std::getline( ifile, line);
+    std::stringstream iss (line);
+    iss >> num_points >> num_curves >> num_surfaces >> num_volumes;
+
+    // Skip to the surfaces
+    int num_lines_to_skip = num_points + num_curves;
+    for( int i = 0; i < num_lines_to_skip; i++)
+    { 
+      std::getline( ifile, line);
+    }
+    std::map< int, int> physical_surface_tags;
+    get_physical_tag_to_surface_tag_map( ifile, physical_surface_tags, num_surfaces);
+
+    std::string error_message = "Cannot support more than one physical tag per surface \n";
+    error_message             += "(but you should have gotten an error before this! \n";
+    TEUCHOS_TEST_FOR_EXCEPTION ( physical_surface_tags.size() != names.size(), std::runtime_error, error_message);
+
+    // Add each physical name pair to the map
+    for( int i = 0; i < names.size(); i++)
+    {
+      std::string name = names[i];
+      // Index by i+1 since gmsh starts counting at 1 and not 0
+      int surface_tag  = physical_surface_tags[i+1];
+
+      physical_names.insert( std::make_pair( name, surface_tag));
+    }
+
+  }
+  ifile.close();
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::broadcast_name_tag_pair( std::vector< std::string>               names,
+                                                         int*                                    tags_array,
+                                                         int                                     pair_number,
+                                                         const Teuchos::RCP<const Teuchos_Comm>& commT,
+                                                         std::map< std::string, int>&            physical_names)
+{
+  std::string name;
+  if( commT->getRank() == 0) 
+  {
+    name = names[pair_number];
+
+    int strsize = name.size();
+    Teuchos::broadcast<int, int>( *commT, 0, &strsize);
+
+    char* ptr = (strsize) ? (&name[0]) : 0;
+    Teuchos::broadcast<int, char>( *commT, 0, strsize, ptr);
+  }
+  else 
+  {
+    int strsize;
+    Teuchos::broadcast<int, int>( *commT, 0, &strsize);
+
+    name.resize( strsize);
+    char* ptr = (strsize) ? (&name[0]) : 0;
+    Teuchos::broadcast<int, char>( *commT, 0, strsize, ptr);
   }
 
-  ifile.close();
+  int tag = tags_array[pair_number];
+  physical_names.insert( std::make_pair( name, tag));
+
+  return;
+}
+                                                         
+
+void Albany::GmshSTKMeshStruct::broadcast_physical_names( std::map<std::string, int>&             physical_names,
+                                                          const Teuchos::RCP<const Teuchos_Comm>& commT)
+{
+  // Broadcast the number of name-tag pairs
+  int num_pairs = physical_names.size();
+  Teuchos::broadcast(*commT, 0, 1, &num_pairs);
+
+  // First unpack the names and tags from the map.
+  // Only proc 0 will be doing anything here. 
+  // Maps on other procs will be empty.
+  std::vector< std::string> names;
+  int* tags_array = new int[num_pairs];
+
+  std::map< std::string, int>::iterator it;
+  int counter = 0;
+  for( it = physical_names.begin(); it != physical_names.end(); it++)
+  {
+    names.push_back( it->first);
+    tags_array[counter] = it->second;
+    counter++;
+  }
+
+  // Clear out the map to rebuild it together.
+  physical_names.clear();
+
+  // Broadcast names and tags
+  Teuchos::broadcast<LO,LO>(*commT, 0, num_pairs, tags_array);
+  for( int i = 0; i < num_pairs; i++)
+  {
+    broadcast_name_tag_pair( names, tags_array, i, commT, physical_names);
+  }
+
+  delete[] tags_array;
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::get_physical_names( std::map<std::string, int>&             physical_names,
+                                                    const Teuchos::RCP<const Teuchos_Comm>& commT)
+{
+  if( commT->getRank() == 0 )
+  {
+    read_physical_names_from_file( physical_names);
+  }
+  broadcast_physical_names( physical_names, commT);
+
   return;
 }

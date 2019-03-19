@@ -72,7 +72,7 @@ SaveSideSetStateField (const Teuchos::ParameterList& p,
     Teuchos::RCP<shards::CellTopology> cellType;
     cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
-    int numSides = dl->cell_gradient->dimension(1);
+    int numSides = dl->cell_gradient->extent(1);
     int sideDim  = cellType->getDimension()-1;
     sideNodes.resize(numSides);
     for (int side=0; side<numSides; ++side)

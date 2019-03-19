@@ -16,7 +16,7 @@ ANONYMOUS:
       Parameter 0: DBC on NS NodeSet0 for DOF T
       Parameter 1: DBC on NS NodeSet1 for DOF T
     Response Functions: 
-      Number: 4
+      Number: 3
       Response 0: Solution Average
       Response 1: Solution Two Norm
       Response 2: Solution Max Value
@@ -28,8 +28,8 @@ ANONYMOUS:
     Block 1: begins at 50 ends at 100 length 1.0 named MatB
     Separate Evaluators by Element Block: true
   Regression Results: 
-    Number of Comparisons: 4
-    Test Values: [2.97480000000000022e-01, 4.35432000000000041e+00, 1.00000000000000000e+00, 0.00000000000000000e+00]
+    Number of Comparisons: 3
+    Test Values: [2.97480000000000022e-01, 4.35432000000000041e+00, 1.00000000000000000e+00]
     Absolute Tolerance: 9.99999999999999955e-07
   Piro: 
     NOX: 
