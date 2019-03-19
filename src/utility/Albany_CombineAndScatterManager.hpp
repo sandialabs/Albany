@@ -69,8 +69,8 @@ public:
                         const CombineMode CM) const = 0;
 };
 
-// Utility function that returns a concrete manager, depending on the return value
-// of Albany::build_type().
+// Utility function that returns a concrete manager, depending on the concrete type
+// of the input vector spaces.
 Teuchos::RCP<CombineAndScatterManager>
 createCombineAndScatterManager (const Teuchos::RCP<const Thyra_VectorSpace>& owned,
                                 const Teuchos::RCP<const Thyra_VectorSpace>& overlapped);
