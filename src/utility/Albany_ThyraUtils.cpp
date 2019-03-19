@@ -66,18 +66,18 @@ createLocallyReplicatedVectorSpace (const Teuchos::ArrayView<const GO>& gids, co
       Teuchos::RCP<const Epetra_BlockMap> emap;
       if (sizeof(GO)==sizeof(Epetra_GO)) {
         // Same size, potentially different type name. A reinterpret_cast will do.
-        emap = Teuchos::rcp( new Epetra_BlockMap(-1,gids.size(),
+        emap = Teuchos::rcp( new Epetra_BlockMap(gids.size(),gids.size(),
                              reinterpret_cast<const Epetra_GO*>(gids.getRawPtr()),
                              1,0,*createEpetraCommFromTeuchosComm(comm)) );
       } else {
         // Cannot reinterpret cast. Need to copy gids into Epetra_GO array
-        Teuchos::Array<GO> e_gids(gids.size());
+        Teuchos::Array<Epetra_GO> e_gids(gids.size());
         const GO max_safe_gid = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
         for (int i=0; i<gids.size(); ++i) {
           ALBANY_EXPECT(gids[i]<=max_safe_gid, "Error! Input gids exceed Epetra_GO ranges.\n");
           e_gids[i] = static_cast<Epetra_GO>(gids[i]);
         }
-        emap = Teuchos::rcp( new Epetra_BlockMap(-1,gids.size(),
+        emap = Teuchos::rcp( new Epetra_BlockMap(gids.size(),gids.size(),
                              reinterpret_cast<const Epetra_GO*>(e_gids.getRawPtr()),
                              1,0,*createEpetraCommFromTeuchosComm(comm)) );
       }
@@ -87,9 +87,8 @@ createLocallyReplicatedVectorSpace (const Teuchos::ArrayView<const GO>& gids, co
 #endif
     case BuildType::Tpetra:
     {
-      auto inv = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
       Teuchos::ArrayView<const Tpetra_GO> tgids(reinterpret_cast<const Tpetra_GO*>(gids.getRawPtr()),gids.size());
-      Teuchos::RCP<const Tpetra_Map> tmap( new Tpetra_Map(inv,tgids,0,comm) );
+      Teuchos::RCP<const Tpetra_Map> tmap( new Tpetra_Map(tgids.size(),tgids,0,comm) );
       return createThyraVectorSpace(tmap);
       break;
     }
