@@ -102,6 +102,12 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<const Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->overlapped_vector();
   Teuchos::ArrayRCP<const ST> pvec_constView = Albany::getLocalData(pvec);
 
+  Teuchos::RCP<const Thyra_MultiVector> Vp = workset.Vp;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> Vp_data;
+  if (!Vp.is_null()) {
+    Vp_data = Albany::getLocalData(workset.Vp);
+  }
+
   auto nodeID = workset.wsElNodeEqID;
   const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
 
@@ -125,8 +131,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
 
       if (workset.Vp != Teuchos::null) {
-        const Tpetra_MultiVector& VpT = *(ConverterT::getConstTpetraMultiVector(workset.Vp));
-        const std::size_t num_cols = VpT.getNumVectors();
+        const int num_cols = Vp->domain()->dim();
 
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp = workset.local_Vp[cell];
 
@@ -137,18 +142,17 @@ evaluateFields(typename Traits::EvalData workset)
             for (std::size_t eq = 0; eq < workset.numEqs; eq++) {
               local_Vp[node*workset.numEqs+eq].resize(num_cols);
               const LO id = nodeID(cell,node,eq);
-              for (std::size_t col=0; col<num_cols; ++col)
-                local_Vp[node*workset.numEqs+eq][col] = VpT.getData(col)[id];
+              for (int col=0; col<num_cols; ++col)
+                local_Vp[node*workset.numEqs+eq][col] = Vp_data[col][id];
             }
           }
-        }
-        else {
+        } else {
           local_Vp.resize(num_deriv);
-          for (std::size_t node = 0; node < num_deriv; ++node) {
-            const LO id = wsElDofs((int)cell,(int)node,0);
+          for (int node=0; node<num_deriv; ++node) {
+            const LO id = wsElDofs((int)cell,node,0);
             local_Vp[node].resize(num_cols);
-            for (std::size_t col=0; col<num_cols; ++col)
-              local_Vp[node][col] = (id >= 0) ? VpT.getData(col)[id] : 0;
+            for (int col=0; col<num_cols; ++col)
+              local_Vp[node][col] = (id >= 0) ? Vp_data[col][id] : 0;
           }
         }
       }

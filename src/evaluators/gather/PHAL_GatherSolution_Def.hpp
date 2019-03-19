@@ -371,7 +371,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Get map for local data structures
   nodeID = workset.wsElNodeEqID;
 
-  // Get Tpetra vector view from a specific device
+  // Get vector view from a specific device
   x_constView = Albany::getDeviceData(x);
   if(!xdot.is_null()) {
     xdot_constView = Albany::getDeviceData(xdot);
@@ -683,7 +683,7 @@ evaluateFields(typename Traits::EvalData workset)
   m_coeff=workset.m_coeff;
   n_coeff=workset.n_coeff;
 
-  // Get Tpetra vector view from a specific device
+  // Get vector view from a specific device
   x_constView = Albany::getDeviceData(x);
   if(!xdot.is_null()) {
     xdot_constView = Albany::getDeviceData(xdot);
@@ -799,7 +799,7 @@ void GatherSolution<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
-  // Recall: Albany::get(Const)Tpetra(Multi)Vector returns Teuchos::null if the input is Teuchos::null
+
   const auto& x       = workset.x;
   const auto& xdot    = workset.xdot;
   const auto& xdotdot = workset.xdotdot;
