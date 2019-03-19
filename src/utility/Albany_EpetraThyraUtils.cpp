@@ -91,7 +91,7 @@ createThyraMultiVector (const Teuchos::RCP<Epetra_MultiVector>& mv)
     Teuchos::RCP<const Thyra::ScalarProdVectorSpaceBase<ST>> domain =
       Thyra::createSmallScalarProdVectorSpaceBase(Teuchos::rcp_implicit_cast<const Thyra_VectorSpace>(range),mv->NumVectors());
 
-    Teuchos::ArrayRCP<ST> vals(mv->Values(),0,mv->MyLength(),false);
+    Teuchos::ArrayRCP<ST> vals(mv->Values(),0,mv->MyLength()*mv->NumVectors(),false);
     mv_thyra = Teuchos::rcp(new Thyra::DefaultSpmdMultiVector<ST>(range,domain,vals));
 
     // Attach the input mv to the new RCP, so it doesn't get destroyed as long as the new mv lives
@@ -112,7 +112,7 @@ createConstThyraMultiVector (const Teuchos::RCP<const Epetra_MultiVector>& mv)
     Teuchos::RCP<const Thyra::ScalarProdVectorSpaceBase<ST>> domain =
       Thyra::createSmallScalarProdVectorSpaceBase(Teuchos::rcp_implicit_cast<const Thyra_VectorSpace>(range),mv->NumVectors());
 
-    Teuchos::ArrayRCP<ST> vals(mv->Values(),0,mv->MyLength(),false);
+    Teuchos::ArrayRCP<ST> vals(mv->Values(),0,mv->MyLength()*mv->NumVectors(),false);
     mv_thyra = Teuchos::rcp( new Thyra::DefaultSpmdMultiVector<ST>(range,domain,vals) );
 
     // Attach the input mv to the new RCP, so it doesn't get destroyed as long as the new mv lives
