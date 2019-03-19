@@ -41,8 +41,6 @@ struct ThyraCrsMatrixFactory {
   Teuchos::RCP<const Thyra_VectorSpace> getDomainVectorSpace () const { return m_domain_vs; }
   Teuchos::RCP<const Thyra_VectorSpace> getRangeVectorSpace  () const { return m_range_vs; }
 
-  void getGlobalRowView (const GO row, Teuchos::ArrayView<const GO>& colIndices) const;
-
   bool is_filled () const { return m_filled; }
 
   Teuchos::RCP<Thyra_LinearOp>  createOp () const;

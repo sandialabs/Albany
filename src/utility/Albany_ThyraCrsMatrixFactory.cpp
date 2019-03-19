@@ -110,14 +110,25 @@ void ThyraCrsMatrixFactory::insertGlobalIndices (const GO row, const Teuchos::Ar
   auto bt = Albany::build_type();
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
-#ifdef EPETRA_NO_64BIT_GLOBAL_INDICES
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra does not support 64 bits integers.\n");
-#endif
+    const GO max_safe_gid = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
+    ALBANY_EXPECT(row<=max_safe_gid, "Error! Input gids exceed Epetra_GO ranges.\n");
+
     // Epetra expects pointers to non-const, and Epetra_GO may differ from GO.
-    const Epetra_GO e_row = row;
+    const Epetra_GO e_row = static_cast<Epetra_GO>(row);
     const int e_size = indices.size();
-    Epetra_GO* e_indices = const_cast<Epetra_GO*>(reinterpret_cast<const Epetra_GO*>(indices.getRawPtr()));
-    m_graph->e_graph->InsertGlobalIndices(e_row, e_size,e_indices);
+    if (sizeof(GO)==sizeof(Epetra_GO)) {
+      // Same size, potentially different type name. A reinterpret_cast will do.
+      Epetra_GO* e_indices = const_cast<Epetra_GO*>(reinterpret_cast<const Epetra_GO*>(indices.getRawPtr()));
+      m_graph->e_graph->InsertGlobalIndices(e_row, e_size,e_indices);
+    } else {
+      // Cannot reinterpret cast. Need to copy gids into Epetra_GO array
+      Teuchos::Array<Epetra_GO> e_indices(indices.size());
+      for (int i=0; i<indices.size(); ++i) {
+        ALBANY_EXPECT(indices[i]<=max_safe_gid, "Error! Input gids exceed Epetra_GO ranges.\n");
+        e_indices[i] = static_cast<Epetra_GO>(indices[i]);
+      }
+      m_graph->e_graph->InsertGlobalIndices(e_row, e_size,e_indices.getRawPtr());
+    }
 #else
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
 #endif
@@ -146,26 +157,6 @@ void ThyraCrsMatrixFactory::fillComplete () {
   }
 
   m_filled = true;
-}
-
-void ThyraCrsMatrixFactory::
-getGlobalRowView (const GO row, Teuchos::ArrayView<const GO>& colIndices) const {
-  auto bt = Albany::build_type();
-  if (bt==BuildType::Epetra) {
-#ifdef ALBANY_EPETRA
-    Epetra_GO e_row = row;
-    int num_indices;
-    Epetra_GO* e_indices;
-    m_graph->e_graph->ExtractGlobalRowView(e_row,num_indices,e_indices);
-    colIndices = Teuchos::ArrayView<const GO>(reinterpret_cast<const GO*>(e_indices),num_indices);
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
-#endif
-  } else {
-    Teuchos::ArrayView<const Tpetra_GO> t_indices;
-    m_graph->t_graph->getGlobalRowView(static_cast<Tpetra_GO>(row),t_indices);
-    colIndices = Teuchos::ArrayView<const GO>(reinterpret_cast<const GO*>(t_indices.getRawPtr()),t_indices.size());
-  }
 }
 
 Teuchos::RCP<Thyra_LinearOp> ThyraCrsMatrixFactory::createOp () const {

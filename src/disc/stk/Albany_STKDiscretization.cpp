@@ -2873,17 +2873,18 @@ void STKDiscretization::printVertexConnectivity()
     return;
   }
 
+  auto dummy_op = nodalMatrixFactory->createOp();
+  Teuchos::Array<LO> indices;
+  Teuchos::Array<ST> vals;
   for (int i=0; i<numOverlapNodes; ++i) {
     GO globalvert = getGlobalElement(m_overlap_node_vs,i);
 
     std::cout << "Center vert is : " << globalvert + 1 << std::endl;
 
-    Teuchos::ArrayView<const GO> adj;
+    getLocalRowValues(dummy_op,i,indices,vals);
 
-    nodalMatrixFactory->getGlobalRowView(globalvert, adj);
-
-    for (int j = 0; j < adj.size(); j++) {
-      std::cout << "                  " << adj[j] + 1 << std::endl;
+    for (int j = 0; j < indices.size(); j++) {
+      std::cout << "                  " << getGlobalElement(m_overlap_node_vs,indices[j]) + 1 << std::endl;
     }
   }
 }

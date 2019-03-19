@@ -10,8 +10,10 @@
 #include "Epetra_MultiVector.h"
 #include "Epetra_CrsMatrix.h"
 
-// The type of an Epetra global id. Epetra uses long long for their 64 bits integers
-using Epetra_GO = long long;
+// The type of an Epetra global id.
+// Epetra uses long long for their 64 bits integers and int for their 32 bits integers.
+// NOTE: Epetra64 is not reliable. Stick with int for Epetra, for now.
+using Epetra_GO = int;
 
 
 namespace Albany

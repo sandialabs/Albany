@@ -62,9 +62,24 @@ createLocallyReplicatedVectorSpace (const Teuchos::ArrayView<const GO>& gids, co
 #ifdef ALBANY_EPETRA
     case BuildType::Epetra:
     {
-      Teuchos::RCP<const Epetra_BlockMap> emap( new Epetra_BlockMap(-1,gids.size(),
-                                                reinterpret_cast<const Epetra_GO*>(gids.getRawPtr()),
-                                                1,0,*createEpetraCommFromTeuchosComm(comm)) );
+      Teuchos::RCP<const Epetra_BlockMap> emap;
+      if (sizeof(GO)==sizeof(Epetra_GO)) {
+        // Same size, potentially different type name. A reinterpret_cast will do.
+        emap = Teuchos::rcp( new Epetra_BlockMap(-1,gids.size(),
+                             reinterpret_cast<const Epetra_GO*>(gids.getRawPtr()),
+                             1,0,*createEpetraCommFromTeuchosComm(comm)) );
+      } else {
+        // Cannot reinterpret cast. Need to copy gids into Epetra_GO array
+        Teuchos::Array<GO> e_gids(gids.size());
+        const GO max_safe_gid = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
+        for (int i=0; i<gids.size(); ++i) {
+          ALBANY_EXPECT(gids[i]<=max_safe_gid, "Error! Input gids exceed Epetra_GO ranges.\n");
+          e_gids[i] = static_cast<Epetra_GO>(gids[i]);
+        }
+        emap = Teuchos::rcp( new Epetra_BlockMap(-1,gids.size(),
+                             reinterpret_cast<const Epetra_GO*>(e_gids.getRawPtr()),
+                             1,0,*createEpetraCommFromTeuchosComm(comm)) );
+      }
       return createThyraVectorSpace(emap);
       break;
     }
@@ -117,6 +132,8 @@ LO getLocalElement  (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const GO g
   if (!emap.is_null()) {
     // Note: simply calling LID(gid) can be ambiguous, if GO!=int and GO!=long long.
     //       Hence, we explicitly cast to whatever has size 64 bits (should *always* be long long, but the if is compile time, so no penalty)
+    const GO max_safe_gid = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
+    ALBANY_EXPECT(gid<=max_safe_gid, "Error! Input gid exceed Epetra_GO ranges.\n");
     return emap->LID(static_cast<Epetra_GO>(gid));
   }
 #endif
@@ -141,6 +158,8 @@ bool locallyOwnedComponent (const Teuchos::RCP<const Thyra_SpmdVectorSpace>& vs,
   if (!emap.is_null()) {
     // Note: simply calling LID(gid) can be ambiguous, if GO!=int and GO!=long long.
     //       Hence, we explicitly cast to whatever has size 64 bits (should *always* be long long, but the if is compile time, so no penalty)
+    const GO max_safe_gid = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
+    ALBANY_EXPECT(gid<=max_safe_gid, "Error! Input gid exceed Epetra_GO ranges.\n");
     return emap->MyGID(static_cast<Epetra_GO>(gid));
   }
 #endif
@@ -278,8 +297,21 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
   if (bt == BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
     auto ecomm = createEpetraCommFromTeuchosComm(comm);
-    const Epetra_GO* egids = reinterpret_cast<const Epetra_GO*>(gids.getRawPtr());
-    Teuchos::RCP<const Epetra_BlockMap> emap = Teuchos::rcp( new Epetra_BlockMap(-1,gids.size(),egids,1,0,*ecomm) );
+    Teuchos::RCP<const Epetra_BlockMap> emap;
+    if (sizeof(GO)==sizeof(Epetra_GO)) {
+      // Same size, different type names. A reinterpret_cast is safe
+      const Epetra_GO* egids = reinterpret_cast<const Epetra_GO*>(gids.getRawPtr());
+      emap = Teuchos::rcp( new Epetra_BlockMap(-1,gids.size(),egids,1,0,*ecomm) );
+    } else {
+      // The types have a different size. Need to copy GO's into Epetra_GO's
+      Teuchos::Array<Epetra_GO> egids(gids.size());
+      const GO max_safe_gid = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
+      for (int i=0; i<gids.size(); ++i) {
+        ALBANY_EXPECT(gids[i]<=max_safe_gid, "Error! Input gids exceed Epetra_GO ranges.\n");
+        egids[i] = static_cast<Epetra_GO>(gids[i]);
+      }
+      emap = Teuchos::rcp( new Epetra_BlockMap(-1,gids.size(),egids.getRawPtr(),1,0,*ecomm) );
+    }
     return createThyraVectorSpace(emap);
 #else
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Epetra build not supported.\n");
