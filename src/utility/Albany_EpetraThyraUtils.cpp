@@ -4,6 +4,8 @@
 #include "Albany_CommUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
 
+#include "Epetra_LocalMap.h"
+
 // We only use Thyra's Epetra wrapper for the linear op.
 // For vec/mvec, we rely on spmd interface
 #include "Thyra_EpetraLinearOp.hpp"
@@ -158,13 +160,34 @@ getEpetraBlockMap (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
     //       extra data with the original map. All the LinearOp objects (and its derived
     //       types) that we create from such vs should contain a copy of the vector space.
     //       This means that *all* the vector spaces corresponding to Epetra as a backend
-    //       should *always* contain extra data. If they don't, then the input vs was not
-    //       created from an Epetra_(Block)Map.
-    auto data = Teuchos::get_optional_extra_data<Teuchos::RCP<const Epetra_BlockMap>>(vs,"Epetra_BlockMap");
-    TEUCHOS_TEST_FOR_EXCEPTION (data.is_null() && throw_if_not_epetra, std::runtime_error,
-                                "Error! Could not extract Epetra_BlockMap from Thyra_VectorSpace.\n");
+    //       should *always* contain extra data.
+    //       There are two exceptions:
+    //        1) vectors created from the domain of a multivector, i.e., from a vs generated
+    //           by a small vs factory. In this case, we should be able to cast to a
+    //           DefaultSpmdVectorSpace, AND the vs should be locally replicated.
+    //        2) vectors created from a vs that was created from an Epetra_Map inside trilinos.
+    //           Trilinos would use the create_VectorSpace routine from ThyraEpetraAdapters,
+    //           which attaches an RCP<const Epetra_Map> to the generated vs RCP.
+
+    auto data  = Teuchos::get_optional_extra_data<Teuchos::RCP<const Epetra_BlockMap>>(vs,"Epetra_BlockMap");
+    auto data2 = Teuchos::get_optional_extra_data<Teuchos::RCP<const Epetra_Map>>(vs,"epetra_map");
     if (!data.is_null()) {
       map = *data;
+    } else if (!data2.is_null()) {
+      map = *data2;
+    } else {
+      auto spmd_vs = getSpmdVectorSpace(vs);
+      TEUCHOS_TEST_FOR_EXCEPTION (spmd_vs.is_null() && throw_if_not_epetra, std::runtime_error,
+                                  "Error! Could not extract/build Epetra_BlockMap from Thyra_VectorSpace.\n");
+
+      const bool isLocallyReplicated = spmd_vs->isLocallyReplicated();
+      TEUCHOS_TEST_FOR_EXCEPTION (!isLocallyReplicated, std::logic_error,
+                                  "Error! The input map is convertible to a SpmdVectorSpaceBase, but it is not locally replicated.\n"
+                                  "       This should not happen. Please, contact developers.\n");
+
+      auto t_comm = createTeuchosCommFromThyraComm(spmd_vs->getComm());
+      auto e_comm = createEpetraCommFromTeuchosComm(t_comm);
+      map = Teuchos::rcp( new Epetra_LocalMap(static_cast<int>(spmd_vs->localSubDim()),0,*e_comm) );
     }
   }
 

@@ -33,8 +33,8 @@ CombineAndScatterManagerEpetra(const Teuchos::RCP<const Thyra_VectorSpace>& owne
  : owned_vs      (owned)
  , overlapped_vs (overlapped)
 {
-  auto ownedE = Albany::getEpetraMap(owned);
-  auto overlappedE = Albany::getEpetraMap(overlapped);
+  auto ownedE = getEpetraMap(owned);
+  auto overlappedE = getEpetraMap(overlapped);
 
   importer = Teuchos::rcp( new Epetra_Import(*overlappedE, *ownedE) );
 }
@@ -45,8 +45,8 @@ combine (const Thyra_Vector& src,
          const CombineMode CM) const
 {
   auto cmE = combineModeE(CM);
-  auto srcE = Albany::getConstEpetraVector(src);
-  auto dstE = Albany::getEpetraVector(dst);
+  auto srcE = getConstEpetraVector(src);
+  auto dstE = getEpetraVector(dst);
 
 #ifdef ALBANY_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION(!srcE->getMap()->isSameAs(*importer->getTargetMap()), std::runtime_error,
@@ -72,8 +72,8 @@ combine (const Thyra_MultiVector& src,
   // ConstNonConstObj containers to the Epetra objects, which I _think_ do not support polymorphism.
   // So, given what we have, we _try_ to extract a TMV from the T_MV, and, if we fail,
   // we try again, this time extracting a TV. If we still fail, then we can error out.
-  Teuchos::RCP<const Epetra_MultiVector> srcE = Albany::getConstEpetraMultiVector(src,false);
-  Teuchos::RCP<Epetra_MultiVector> dstE = Albany::getEpetraMultiVector(dst,false);
+  Teuchos::RCP<const Epetra_MultiVector> srcE = getConstEpetraMultiVector(src,false);
+  Teuchos::RCP<Epetra_MultiVector> dstE = getEpetraMultiVector(dst,false);
 
   if (srcE.is_null()) {
     // Try to cast to Thyra_Vector, then extract the Epetra_Vector
@@ -83,7 +83,7 @@ combine (const Thyra_MultiVector& src,
                                 "Error! Input src does not seem to be a Epetra_MultiVector or a Epetra_Vector.\n");
 
     // This time throw if extraction fails
-    srcE = Albany::getConstEpetraVector(*srcV);
+    srcE = getConstEpetraVector(*srcV);
   }
 
   if (dstE.is_null()) {
@@ -94,7 +94,7 @@ combine (const Thyra_MultiVector& src,
                                 "Error! Input dst does not seem to be a Epetra_MultiVector or a Epetra_Vector.\n");
 
     // This time throw if extraction fails
-    dstE = Albany::getEpetraVector(*dstV);
+    dstE = getEpetraVector(*dstV);
   }
 
 #ifdef ALBANY_DEBUG
@@ -114,8 +114,8 @@ combine (const Thyra_LinearOp& src,
          const CombineMode CM) const
 {
   auto cmE = combineModeE(CM);
-  auto srcE = Albany::getConstEpetraMatrix(src);
-  auto dstE = Albany::getEpetraMatrix(dst);
+  auto srcE = getConstEpetraMatrix(src);
+  auto dstE = getEpetraMatrix(dst);
 
 #ifdef ALBANY_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION(!srcE->getMap()->isSameAs(*importer->getSourceMap()), std::runtime_error,
@@ -133,8 +133,8 @@ combine (const Teuchos::RCP<const Thyra_Vector>& src,
          const CombineMode CM) const
 {
   auto cmE = combineModeE(CM);
-  auto srcE = Albany::getConstEpetraVector(src);
-  auto dstE = Albany::getEpetraVector(dst);
+  auto srcE = getConstEpetraVector(src);
+  auto dstE = getEpetraVector(dst);
 
 #ifdef ALBANY_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION(!srcE->getMap()->isSameAs(*importer->getTargetMap()), std::runtime_error,
@@ -160,8 +160,8 @@ combine (const Teuchos::RCP<const Thyra_MultiVector>& src,
   // ConstNonConstObj containers to the Epetra objects, which I _think_ do not support polymorphism.
   // So, given what we have, we _try_ to extract a TMV from the T_MV, and, if we fail,
   // we try again, this time extracting a TV. If we still fail, then we can error out.
-  Teuchos::RCP<const Epetra_MultiVector> srcE = Albany::getConstEpetraMultiVector(src,false);
-  Teuchos::RCP<Epetra_MultiVector> dstE = Albany::getEpetraMultiVector(dst,false);
+  Teuchos::RCP<const Epetra_MultiVector> srcE = getConstEpetraMultiVector(src,false);
+  Teuchos::RCP<Epetra_MultiVector> dstE = getEpetraMultiVector(dst,false);
 
   if (srcE.is_null()) {
     // Try to cast to Thyra_Vector, then extract the Epetra_Vector
@@ -171,7 +171,7 @@ combine (const Teuchos::RCP<const Thyra_MultiVector>& src,
                                 "Error! Input src does not seem to be a Epetra_MultiVector or a Epetra_Vector.\n");
 
     // This time throw if extraction fails
-    srcE = Albany::getConstEpetraVector(srcV);
+    srcE = getConstEpetraVector(srcV);
   }
 
   if (dstE.is_null()) {
@@ -182,7 +182,7 @@ combine (const Teuchos::RCP<const Thyra_MultiVector>& src,
                                 "Error! Input dst does not seem to be a Epetra_MultiVector or a Epetra_Vector.\n");
 
     // This time throw if extraction fails
-    dstE = Albany::getEpetraVector(dstV);
+    dstE = getEpetraVector(dstV);
   }
 
 #ifdef ALBANY_DEBUG
@@ -202,8 +202,8 @@ combine (const Teuchos::RCP<const Thyra_LinearOp>& src,
          const CombineMode CM) const
 {
   auto cmE = combineModeE(CM);
-  auto srcE = Albany::getConstEpetraMatrix(src);
-  auto dstE = Albany::getEpetraMatrix(dst);
+  auto srcE = getConstEpetraMatrix(src);
+  auto dstE = getEpetraMatrix(dst);
 
 #ifdef ALBANY_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION(!srcE->getMap()->isSameAs(*importer->getSourceMap()), std::runtime_error,
@@ -222,8 +222,8 @@ scatter (const Thyra_Vector& src,
          const CombineMode CM) const
 {
   auto cmE = combineModeE(CM);
-  auto srcE = Albany::getConstEpetraVector(src);
-  auto dstE = Albany::getEpetraVector(dst);
+  auto srcE = getConstEpetraVector(src);
+  auto dstE = getEpetraVector(dst);
 
 #ifdef ALBANY_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION(!srcE->getMap()->isSameAs(*importer->getSourceMap()), std::runtime_error,
@@ -249,8 +249,8 @@ scatter (const Thyra_MultiVector& src,
   // ConstNonConstObj containers to the Epetra objects, which I _think_ do not support polymorphism.
   // So, given what we have, we _try_ to extract a TMV from the T_MV, and, if we fail,
   // we try again, this time extracting a TV. If we still fail, then we can error out.
-  Teuchos::RCP<const Epetra_MultiVector> srcE = Albany::getConstEpetraMultiVector(src,false);
-  Teuchos::RCP<Epetra_MultiVector> dstE = Albany::getEpetraMultiVector(dst,false);
+  Teuchos::RCP<const Epetra_MultiVector> srcE = getConstEpetraMultiVector(src,false);
+  Teuchos::RCP<Epetra_MultiVector> dstE = getEpetraMultiVector(dst,false);
 
   if (srcE.is_null()) {
     // Try to cast to Thyra_Vector, then extract the Epetra_Vector
@@ -260,7 +260,7 @@ scatter (const Thyra_MultiVector& src,
                                 "Error! Input src does not seem to be a Epetra_MultiVector or a Epetra_Vector.\n");
 
     // This time throw if extraction fails
-    srcE = Albany::getConstEpetraVector(*srcV);
+    srcE = getConstEpetraVector(*srcV);
   }
 
   if (dstE.is_null()) {
@@ -271,7 +271,7 @@ scatter (const Thyra_MultiVector& src,
                                 "Error! Input dst does not seem to be a Epetra_MultiVector or a Epetra_Vector.\n");
 
     // This time throw if extraction fails
-    dstE = Albany::getEpetraVector(*dstV);
+    dstE = getEpetraVector(*dstV);
   }
 
 #ifdef ALBANY_DEBUG
@@ -291,8 +291,8 @@ scatter (const Thyra_LinearOp& src,
          const CombineMode CM) const
 {
   auto cmE  = combineModeE(CM);
-  auto srcE = Albany::getConstEpetraMatrix(src);
-  auto dstE = Albany::getEpetraMatrix(dst);
+  auto srcE = getConstEpetraMatrix(src);
+  auto dstE = getEpetraMatrix(dst);
 
 #ifdef ALBANY_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION(!srcE->getMap()->isSameAs(*importer->getSourceMap()), std::runtime_error,
@@ -310,8 +310,8 @@ scatter (const Teuchos::RCP<const Thyra_Vector>& src,
          const CombineMode CM) const
 {
   auto cmE = combineModeE(CM);
-  auto srcE = Albany::getConstEpetraVector(src);
-  auto dstE = Albany::getEpetraVector(dst);
+  auto srcE = getConstEpetraVector(src);
+  auto dstE = getEpetraVector(dst);
 
 #ifdef ALBANY_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION(!srcE->getMap()->isSameAs(*importer->getSourceMap()), std::runtime_error,
@@ -337,8 +337,8 @@ scatter (const Teuchos::RCP<const Thyra_MultiVector>& src,
   // ConstNonConstObj containers to the Epetra objects, which I _think_ do not support polymorphism.
   // So, given what we have, we _try_ to extract a TMV from the T_MV, and, if we fail,
   // we try again, this time extracting a TV. If we still fail, then we can error out.
-  Teuchos::RCP<const Epetra_MultiVector> srcE = Albany::getConstEpetraMultiVector(src,false);
-  Teuchos::RCP<Epetra_MultiVector> dstE = Albany::getEpetraMultiVector(dst,false);
+  Teuchos::RCP<const Epetra_MultiVector> srcE = getConstEpetraMultiVector(src,false);
+  Teuchos::RCP<Epetra_MultiVector> dstE = getEpetraMultiVector(dst,false);
 
   if (srcE.is_null()) {
     // Try to cast to Thyra_Vector, then extract the Epetra_Vector
@@ -348,7 +348,7 @@ scatter (const Teuchos::RCP<const Thyra_MultiVector>& src,
                                 "Error! Input src does not seem to be a Epetra_MultiVector or a Epetra_Vector.\n");
 
     // This time throw if extraction fails
-    srcE = Albany::getConstEpetraVector(srcV);
+    srcE = getConstEpetraVector(srcV);
   }
 
   if (dstE.is_null()) {
@@ -359,7 +359,7 @@ scatter (const Teuchos::RCP<const Thyra_MultiVector>& src,
                                 "Error! Input dst does not seem to be a Epetra_MultiVector or a Epetra_Vector.\n");
 
     // This time throw if extraction fails
-    dstE = Albany::getEpetraVector(dstV);
+    dstE = getEpetraVector(dstV);
   }
 
 #ifdef ALBANY_DEBUG
@@ -379,8 +379,8 @@ scatter (const Teuchos::RCP<const Thyra_LinearOp>& src,
          const CombineMode CM) const
 {
   auto cmE  = combineModeE(CM);
-  auto srcE = Albany::getConstEpetraMatrix(src);
-  auto dstE = Albany::getEpetraMatrix(dst);
+  auto srcE = getConstEpetraMatrix(src);
+  auto dstE = getEpetraMatrix(dst);
 
 #ifdef ALBANY_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION(!srcE->getMap()->isSameAs(*importer->getSourceMap()), std::runtime_error,
