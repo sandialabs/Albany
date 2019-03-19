@@ -75,7 +75,11 @@ fillVector (Thyra_Vector&    field_thyra,
 
   BucketArray<FieldType> field_array(field_stk, bucket);
 
-  const int num_nodes_in_bucket = field_array.dimension(1);
+  using SFT = AbstractSTKFieldContainer::ScalarFieldType;
+  constexpr bool is_SFT = std::is_same<FieldType,SFT>::value;
+  constexpr int nodes_dim = is_SFT ? 0 : 1;
+
+  const int num_nodes_in_bucket = field_array.dimension(nodes_dim);
 
   const stk::mesh::BulkData& mesh = field_stk.get_mesh();
   auto data = getNonconstLocalData(field_thyra);
@@ -105,7 +109,11 @@ saveVector(const Thyra_Vector& field_thyra,
 
   BucketArray<FieldType> field_array(field_stk, bucket);
 
-  const int num_nodes_in_bucket = field_array.dimension(1);
+  using SFT = AbstractSTKFieldContainer::ScalarFieldType;
+  constexpr bool is_SFT = std::is_same<FieldType,SFT>::value;
+  constexpr int nodes_dim = is_SFT ? 0 : 1;
+
+  const int num_nodes_in_bucket = field_array.dimension(nodes_dim);
 
   const stk::mesh::BulkData& mesh = field_stk.get_mesh();
   auto data = getLocalData(field_thyra);
@@ -132,20 +140,24 @@ copySTKField(const FieldType& source,
   const stk::mesh::BulkData&     mesh = source.get_mesh();
   const stk::mesh::BucketVector& bv   = mesh.buckets(stk::topology::NODE_RANK);
 
+  using SFT = AbstractSTKFieldContainer::ScalarFieldType;
+  constexpr bool is_SFT = std::is_same<FieldType,SFT>::value;
+  constexpr int nodes_dim = is_SFT ? 0 : 1;
+
   for(stk::mesh::BucketVector::const_iterator it = bv.begin() ; it != bv.end() ; ++it) {
     const stk::mesh::Bucket& bucket = **it;
 
     BucketArray<FieldType> source_array(source, bucket);
     BucketArray<FieldType> target_array(target, bucket);
 
-    const int num_source_components = source_array.dimension(0);
-    const int num_target_components = target_array.dimension(0);
-    const int num_nodes_in_bucket   = source_array.dimension(1);
+    const int num_source_components = is_SFT ? 1 : source_array.dimension(0);
+    const int num_target_components = is_SFT ? 1 : target_array.dimension(0);
+    const int num_nodes_in_bucket   = source_array.dimension(nodes_dim);
 
     const int uneven_downsampling = num_source_components % num_target_components;
 
     TEUCHOS_TEST_FOR_EXCEPTION((uneven_downsampling) ||
-                               (num_nodes_in_bucket != target_array.dimension(1)),
+                               (num_nodes_in_bucket != target_array.dimension(nodes_dim)),
                                std::logic_error,
                                "Error in stk fields: specification of coordinate vector vs. solution layout is incorrect."
                                << std::endl);
