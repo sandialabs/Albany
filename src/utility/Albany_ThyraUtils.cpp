@@ -828,6 +828,10 @@ Teuchos::ArrayRCP<const ST> getLocalData (const Teuchos::RCP<const Thyra_Vector>
 Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>
 getNonconstLocalData (const Teuchos::RCP<Thyra_MultiVector>& mv)
 {
+  if (mv.is_null()) {
+    return Teuchos::null;
+  }
+
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> data(mv->domain()->dim());
   for (int i=0; i<mv->domain()->dim(); ++i) {
     data[i] = getNonconstLocalData(mv->col(i));
@@ -838,6 +842,10 @@ getNonconstLocalData (const Teuchos::RCP<Thyra_MultiVector>& mv)
 Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>>
 getLocalData (const Teuchos::RCP<const Thyra_MultiVector>& mv)
 {
+  if (mv.is_null()) {
+    return Teuchos::null;
+  }
+
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> data(mv->domain()->dim());
   for (int i=0; i<mv->domain()->dim(); ++i) {
     data[i] = getLocalData(mv->col(i));
