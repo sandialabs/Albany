@@ -24,10 +24,10 @@ VorticityLevels(Teuchos::ParameterList& p,
   intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
   cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
   vort_val_qp (p.get<std::string>   ("Vorticity Variable Name"),dl->qp_scalar_level),
-  numNodes   (dl->node_scalar             ->dimension(1)),
-  numDims    (dl->node_qp_gradient        ->dimension(3)),
-  numQPs     (dl->node_qp_scalar          ->dimension(2)),
-  numLevels  (dl->node_scalar_level       ->dimension(2))
+  numNodes   (dl->node_scalar             ->extent(1)),
+  numDims    (dl->node_qp_gradient        ->extent(3)),
+  numQPs     (dl->node_qp_scalar          ->extent(2)),
+  numLevels  (dl->node_scalar_level       ->extent(2))
 {
   this->addDependentField(val_node);
   this->addDependentField(GradBF);

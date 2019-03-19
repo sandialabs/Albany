@@ -39,9 +39,9 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   etadot         (p.get<std::string> ("EtaDot"),                dl->qp_scalar_level),
   etadotdVelx    (p.get<std::string> ("EtaDotdVelx"),           dl->node_vector_level),
   Pidot          (p.get<std::string> ("PiDot"),                 dl->qp_scalar_level),
-  numQPs     (dl->node_qp_scalar          ->dimension(2)),
-  numDims    (dl->node_qp_gradient        ->dimension(3)),
-  numLevels  (dl->node_scalar_level       ->dimension(2)),
+  numQPs     (dl->node_qp_scalar          ->extent(2)),
+  numDims    (dl->node_qp_gradient        ->extent(3)),
+  numLevels  (dl->node_scalar_level       ->extent(2)),
   numTracers (tracerNames.size()),
   E (Eta<EvalT>::self())
 {

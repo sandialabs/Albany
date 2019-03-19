@@ -183,7 +183,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
         if(thisFieldList.get<std::string>("Field Name") ==  stateName){
           int numLayers = thisFieldList.get<int>("Number Of Layers");
           auto sns = dl_basal->node_vector;
-          auto dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,VecDim, LayerDim>(sns->dimension(0),sns->dimension(1),sns->dimension(2),2, numLayers));
+          auto dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,VecDim, LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2),2, numLayers));
           stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_temp, basalEBName, true, &entity);
         }
       }

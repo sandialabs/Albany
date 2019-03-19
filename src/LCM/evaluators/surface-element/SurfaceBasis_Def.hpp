@@ -180,7 +180,7 @@ SurfaceBasis<EvalT, Traits>::computeMidplaneCoords(
     PHX::MDField<const ST, Cell, Vertex, Dim> const coords,
     Kokkos::DynRankView<ST, PHX::Device>&           midplane_coords)
 {
-  for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
+  for (int cell(0); cell < midplane_coords.extent(0); ++cell) {
     // compute the mid-plane coordinates
     for (int node(0); node < num_surf_nodes_; ++node) {
       int top_node = node + num_surf_nodes_;
@@ -203,7 +203,7 @@ SurfaceBasis<EvalT, Traits>::computeBasisVectors(
     Kokkos::DynRankView<ST, PHX::Device> const& midplane_coords,
     PHX::MDField<ST, Cell, QuadPoint, Dim, Dim> basis)
 {
-  for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
+  for (int cell(0); cell < midplane_coords.extent(0); ++cell) {
     // get the midplane coordinates
     std::vector<minitensor::Vector<ST>> midplane_nodes(num_surf_nodes_);
 
@@ -248,7 +248,7 @@ SurfaceBasis<EvalT, Traits>::computeDualBasisVectors(
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim>            normal,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim>       dual_basis)
 {
-  int worksetSize = midplane_coords.dimension(0);
+  int worksetSize = midplane_coords.extent(0);
 
   minitensor::Vector<MeshScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
 
@@ -300,7 +300,7 @@ SurfaceBasis<EvalT, Traits>::computeJacobian(
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const dual_basis,
     PHX::MDField<MeshScalarT, Cell, QuadPoint>                 area)
 {
-  const int worksetSize = basis.dimension(0);
+  const int worksetSize = basis.extent(0);
 
   for (int cell(0); cell < worksetSize; ++cell) {
     for (int pt(0); pt < num_qps_; ++pt) {

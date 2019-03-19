@@ -24,9 +24,9 @@ XZHydrostatic_PiVel(const Teuchos::ParameterList& p,
   velocity   (p.get<std::string> ("Velocity"),    dl->node_vector_level),
   pivelx     (p.get<std::string> ("PiVelx"),      dl->node_vector_level),
 
-  numDims    (dl->node_qp_gradient        ->dimension(3)),
-  numNodes   (dl->node_scalar             ->dimension(1)),
-  numLevels  (dl->node_scalar_level       ->dimension(2))
+  numDims    (dl->node_qp_gradient        ->extent(3)),
+  numNodes   (dl->node_scalar             ->extent(1)),
+  numLevels  (dl->node_scalar_level       ->extent(2))
 {
   this->addDependentField(pi);
   this->addDependentField(velocity);

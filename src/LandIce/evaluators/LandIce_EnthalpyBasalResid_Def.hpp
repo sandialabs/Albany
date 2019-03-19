@@ -80,7 +80,7 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
   int numSides = dims[1];
   numSideNodes = dims[2];
   numSideQPs   = dims[3];
-  numCellNodes = enthalpyBasalResid.fieldTag().dataLayout().dimension(1);
+  numCellNodes = enthalpyBasalResid.fieldTag().dataLayout().extent(1);
 
   dl->node_vector->dimensions(dims);
   vecDimFO     = std::min((int)dims[2],2);

@@ -40,11 +40,11 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
 
     sideSetName = p.get<std::string>("Side Set Name");
 
-    numQPs  = dl->qp_gradient->dimension(2);
-    numDim  = dl->qp_gradient->dimension(3);
+    numQPs  = dl->qp_gradient->extent(2);
+    numDim  = dl->qp_gradient->extent(3);
   } else {
-    numQPs  = dl->qp_gradient->dimension(1);
-    numDim  = dl->qp_gradient->dimension(2);
+    numQPs  = dl->qp_gradient->extent(1);
+    numDim  = dl->qp_gradient->extent(2);
   }
 
   this->addDependentField(gradPhi);

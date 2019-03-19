@@ -32,7 +32,7 @@ TotalVolume(Teuchos::ParameterList& p,
   temperature("Temperature",dl->qp_scalar_level),
   Cpstar("Cpstar",dl->qp_scalar_level),
   pie("Pi",  dl->qp_scalar_level),
-   numLevels(dl->node_scalar_level->dimension(2))
+   numLevels(dl->node_scalar_level->extent(2))
 
 
 {
@@ -70,7 +70,7 @@ TotalVolume(Teuchos::ParameterList& p,
   p.set("Stand-alone Evaluator", false);
   std::string local_response_name = "Local Response Aeras Total Volume";
   std::string global_response_name = "Global Response Aeras Total Volume";
-  int worksetSize = scalar_dl->dimension(0);
+  int worksetSize = scalar_dl->extent(0);
 
   int responseSize = 3;
 

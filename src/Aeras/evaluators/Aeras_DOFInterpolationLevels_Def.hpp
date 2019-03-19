@@ -19,8 +19,8 @@ DOFInterpolationLevels(Teuchos::ParameterList& p,
   val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar_level),
   BF          (p.get<std::string>   ("BF Name"),       dl->node_qp_scalar),
   val_qp      (p.get<std::string>   ("Variable Name"), dl->qp_scalar_level),
-  numNodes   (dl->node_scalar             ->dimension(1)),
-  numLevels  (dl->node_scalar_level       ->dimension(2))
+  numNodes   (dl->node_scalar             ->extent(1)),
+  numLevels  (dl->node_scalar_level       ->extent(2))
 {
   this->addDependentField(val_node);
   this->addDependentField(BF);

@@ -63,7 +63,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
     PHX::MDField<ScalarT const,Cell,Node,Dim> mdf(names[0],dl->node_vector);
     valVec= mdf;
     this->addDependentField(valVec);
-    numFieldsBase = dl->node_vector->dimension(2);
+    numFieldsBase = dl->node_vector->extent(2);
   }
   // tensor
   else
@@ -71,7 +71,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
     PHX::MDField<ScalarT const,Cell,Node,Dim,Dim> mdf(names[0],dl->node_tensor);
     valTensor = mdf;
     this->addDependentField(valTensor);
-    numFieldsBase = (dl->node_tensor->dimension(2))*(dl->node_tensor->dimension(3));
+    numFieldsBase = (dl->node_tensor->extent(2))*(dl->node_tensor->extent(3));
   }
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -97,17 +97,17 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   if (tensorRank == 0) {
     for (std::size_t eq = 0; eq < numFieldsBase; ++eq)
       this->utils.setFieldData(val[eq],fm);
-    numNodes = val[0].dimension(1);
+    numNodes = val[0].extent(1);
   }
   else 
   if (tensorRank == 1) {
     this->utils.setFieldData(valVec,fm);
-    numNodes = valVec.dimension(1);
+    numNodes = valVec.extent(1);
   }
   else 
   if (tensorRank == 2) {
     this->utils.setFieldData(valTensor,fm);
-    numNodes = valTensor.dimension(1);
+    numNodes = valTensor.extent(1);
   }
 }
 
@@ -190,7 +190,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else
   if (this->tensorRank == 2) {
-    int numDims = this->valTensor.dimension(2);
+    int numDims = this->valTensor.extent(2);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t i = 0; i < numDims; i++)
@@ -223,7 +223,7 @@ evaluateFields(typename Traits::EvalData workset)
     cudaCheckError();
   }
   else if (this->tensorRank == 2) {
-    numDims = this->valTensor.dimension(2);
+    numDims = this->valTensor.extent(2);
     Kokkos::parallel_for(PHAL_ScatterResRank2_Policy(0,workset.numCells),*this);
     cudaCheckError();
   }
@@ -269,7 +269,7 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_ScatterJacRank0_Adjoint_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.dimension(2);
+  //const int neq = nodeID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO col[500];
@@ -300,7 +300,7 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_ScatterJacRank0_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.dimension(2);
+  //const int neq = nodeID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO row;
@@ -343,7 +343,7 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_ScatterJacRank1_Adjoint_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.dimension(2);
+  //const int neq = nodeID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO col[500];
@@ -375,7 +375,7 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_ScatterJacRank1_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.dimension(2);
+  //const int neq = nodeID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO col[500];
@@ -419,7 +419,7 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_ScatterJacRank2_Adjoint_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.dimension(2);
+  //const int neq = nodeID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO col[500];
@@ -451,7 +451,7 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_ScatterJacRank2_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.dimension(2);
+  //const int neq = nodeID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO col[500];
@@ -490,12 +490,12 @@ evaluateFields(typename Traits::EvalData workset)
   auto nodeID = workset.wsElNodeEqID;
   const bool loadResid = Teuchos::nonnull(f);
   Teuchos::Array<LO> col;
-  const int neq = nodeID.dimension(2);
+  const int neq = nodeID.extent(2);
   const int nunk = neq*this->numNodes;
   col.resize(nunk);
   int numDims = 0;
   if (this->tensorRank==2) {
-    numDims = this->valTensor.dimension(2);
+    numDims = this->valTensor.extent(2);
   }
   Teuchos::ArrayRCP<ST> f_nonconstView;
   if (loadResid) {
@@ -545,7 +545,7 @@ evaluateFields(typename Traits::EvalData workset)
   nodeID = workset.wsElNodeEqID;
 
   // Get dimensions
-  neq = nodeID.dimension(2);
+  neq = nodeID.extent(2);
   nunk = neq*this->numNodes;
 
   // Get Tpetra vector view and local matrix
@@ -586,7 +586,7 @@ evaluateFields(typename Traits::EvalData workset)
       cudaCheckError();
     }
   } else if (this->tensorRank == 2) {
-    numDims = this->valTensor.dimension(2);
+    numDims = this->valTensor.extent(2);
 
     if (loadResid) {
       Kokkos::parallel_for(PHAL_ScatterResRank2_Policy(0,workset.numCells),*this);
@@ -651,7 +651,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   int numDims = 0;
-  if (this->tensorRank == 2) numDims = this->valTensor.dimension(2);
+  if (this->tensorRank == 2) numDims = this->valTensor.extent(2);
 
   for (std::size_t cell = 0; cell < workset.numCells; ++cell ) {
     for (std::size_t node = 0; node < this->numNodes; ++node) {
@@ -708,10 +708,10 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(workset.local_Vp[0].size() == 0) { return; } //In case the parameter has not been gathered, e.g. parameter is used only in Dirichlet conditions.
 
-  int numDims= (this->tensorRank==2) ? this->valTensor.dimension(2) : 0;
+  int numDims= (this->tensorRank==2) ? this->valTensor.extent(2) : 0;
 
   if (trans) {
-    const int neq = nodeID.dimension(2);
+    const int neq = nodeID.extent(2);
     const Albany::IDArray&  wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
@@ -781,10 +781,10 @@ evaluateFields(typename Traits::EvalData workset)
   bool trans = workset.transpose_dist_param_deriv;
   int num_cols = workset.Vp->domain()->dim();
 
-  int numDims= (this->tensorRank==2) ? this->valTensor.dimension(2) : 0;
+  int numDims= (this->tensorRank==2) ? this->valTensor.extent(2) : 0;
 
   if (trans) {
-    const int neq = nodeID.dimension(2);
+    const int neq = nodeID.extent(2);
     const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];

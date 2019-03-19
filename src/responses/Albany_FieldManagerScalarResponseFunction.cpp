@@ -79,7 +79,7 @@ setup(Teuchos::ParameterList& responseParams)
                              BUILD_RESPONSE_FM,
                              Teuchos::rcp(&responseParams,false));
   int rank = tags[0]->dataLayout().rank();
-  num_responses = tags[0]->dataLayout().dimension(rank-1);
+  num_responses = tags[0]->dataLayout().extent(rank-1);
   if (num_responses == 0)
     num_responses = 1;
   

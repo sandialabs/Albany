@@ -68,7 +68,7 @@ namespace QCAD {
     void setup(const Teuchos::ParameterList& p,
                const Teuchos::RCP<Albany::Layouts>& dl) {
       PHAL::ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
-      numNodes = dl->node_scalar->dimension(1);
+      numNodes = dl->node_scalar->extent(1);
     }
 
     // Set NodeID structure for cell corrsponding to max/min
@@ -110,7 +110,7 @@ namespace QCAD {
     void setup(const Teuchos::ParameterList& p,
                const Teuchos::RCP<Albany::Layouts>& dl) {
       PHAL::ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
-      numNodes = dl->node_scalar->dimension(1);
+      numNodes = dl->node_scalar->extent(1);
     }
 
     // Set NodeID structure for cell corrsponding to max/min

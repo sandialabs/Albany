@@ -25,9 +25,9 @@ XZHydrostatic_UTracer(const Teuchos::ParameterList& p,
   Tracer   (p.get<std::string> ("Tracer"),   dl->node_scalar_level),
   UTracer  (p.get<std::string> ("UTracer"),  dl->node_vector_level),
 
-  numDims  (dl->node_qp_gradient         ->dimension(3)),
-  numNodes ( dl->node_scalar             ->dimension(1)),
-  numLevels( dl->node_scalar_level       ->dimension(2))
+  numDims  (dl->node_qp_gradient         ->extent(3)),
+  numNodes ( dl->node_scalar             ->extent(1)),
+  numLevels( dl->node_scalar_level       ->extent(2))
 {
   this->addDependentField(Velocity);
   this->addDependentField(PiVelx);

@@ -32,7 +32,7 @@ StackFieldsBase(const Teuchos::ParameterList& p,
                               "Error! Output stacked field must be xxx_vector or xxx_gradient.\n");
   dims_out.resize(rank_out);
   for (int i=0; i<rank_out; ++i)
-    dims_out[i] = layout_out->dimension(i);
+    dims_out[i] = layout_out->extent(i);
 
   field_out = PHX::MDField<ScalarT>(p.get<std::string>("Stacked Field Name"),layout_out);
   this->addEvaluatedField(field_out);
@@ -60,8 +60,8 @@ StackFieldsBase(const Teuchos::ParameterList& p,
   ranks_in[0] = layout_1->rank();
   ranks_in[1] = layout_2->rank();
 
-  dims_in[0] = ranks_in[0]==rank_out ? layout_1->dimension(layout_1->rank()-1) : 1;
-  dims_in[1] = ranks_in[1]==rank_out ? layout_2->dimension(layout_2->rank()-1) : 1;
+  dims_in[0] = ranks_in[0]==rank_out ? layout_1->extent(layout_1->rank()-1) : 1;
+  dims_in[1] = ranks_in[1]==rank_out ? layout_2->extent(layout_2->rank()-1) : 1;
 
   offsets[0] = 0;
   offsets[1] = dims_in[0];
@@ -94,7 +94,7 @@ StackFieldsBase(const Teuchos::ParameterList& p,
                               "Error! Output stacked field must be xxx_vector or xxx_gradient.\n");
   dims_out.resize(rank_out);
   for (int i=0; i<rank_out; ++i)
-    dims_out[i] = layout_out->dimension(i);
+    dims_out[i] = layout_out->extent(i);
 
   field_out = PHX::MDField<ScalarT>(p.get<std::string>("Stacked Field Name"),layout_out);
   this->addEvaluatedField(field_out);
@@ -121,7 +121,7 @@ StackFieldsBase(const Teuchos::ParameterList& p,
                                 "Error! The number of Cell/Node/QuadPoint must be the same across fields.\n");
 
     ranks_in[i] = layout_i->rank();
-    dims_in[i] = ranks_in[i]==rank_out ? layout_i->dimension(ranks_in[i]-1) : 1;
+    dims_in[i] = ranks_in[i]==rank_out ? layout_i->extent(ranks_in[i]-1) : 1;
     offsets[i+1] = offsets[i] + dims_in[i];
 
     fields_in[i] = PHX::MDField<const ScalarT>(names[i],layout_i);

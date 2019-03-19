@@ -23,7 +23,7 @@ HydrostaticResponseL2Norm(Teuchos::ParameterList& p,
   velocity("Velx",  dl->qp_vector_level),
   temperature("Temperature",dl->qp_scalar_level),
   spressure("SPressure",dl->qp_scalar),
-  numLevels(dl->node_scalar_level->dimension(2)), 
+  numLevels(dl->node_scalar_level->extent(2)), 
   out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
   Teuchos::ParameterList* plist =
@@ -57,7 +57,7 @@ HydrostaticResponseL2Norm(Teuchos::ParameterList& p,
   p.set("Stand-alone Evaluator", false);
   std::string local_response_name = "Local Response Aeras Hydrostatic Response L2 Norm";
   std::string global_response_name = "Global Response Aeras Hydrostatic Response L2 Norm";
-  int worksetSize = scalar_dl->dimension(0);
+  int worksetSize = scalar_dl->extent(0);
 
   //FIXME: extend responseSize to have tracers 
   responseSize = 3*numLevels + 1; //there are 2 velocities and 1 temperature variable on each level

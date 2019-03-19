@@ -159,7 +159,7 @@ ProjectIPtoNodalFieldQuadrature::ProjectIPtoNodalFieldQuadrature(
 
   typedef PHX::MDALayout<Cell, Node, QuadPoint> Layout;
   Teuchos::RCP<Layout> node_qp_scalar = Teuchos::rcp(new Layout(
-      dl->node_qp_scalar->dimension(0), dl->node_qp_scalar->dimension(1), nqp));
+      dl->node_qp_scalar->extent(0), dl->node_qp_scalar->extent(1), nqp));
   bf_                                 = decltype(bf_)("my BF", node_qp_scalar);
   bf_const_  = decltype(bf_const_)("my BF", node_qp_scalar);
   wbf_       = decltype(wbf_)("my wBF", node_qp_scalar);
@@ -180,8 +180,8 @@ ProjectIPtoNodalFieldQuadrature::evaluateBasis(
 {
   using namespace Intrepid2;
   typedef CellTools<PHX::Device> CellTools;
-  const int nqp = ref_points_.dimension(0), nd = ref_points_.dimension(1),
-            nc = coord_vert.dimension(0), nn = coord_vert.dimension(1);
+  const int nqp = ref_points_.extent(0), nd = ref_points_.extent(1),
+            nc = coord_vert.extent(0), nn = coord_vert.extent(1);
   Kokkos::DynRankView<RealType, PHX::Device> jacobian("JJJ", nc, nqp, nd, nd),
       jacobian_det("JJJ", nc, nqp), weighted_measure("JJJ", nc, nqp),
       val_ref_points("JJJ", nn, nqp);
@@ -359,7 +359,7 @@ class ProjectIPtoNodalFieldManager::FullMassMatrix
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& bf,
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& wbf)
   {
-    const int  num_nodes = bf.dimension(1), num_pts = bf.dimension(2);
+    const int  num_nodes = bf.extent(1), num_pts = bf.extent(2);
     const bool is_static_graph = this->matrix_->isStaticGraph();
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (int rnode = 0; rnode < num_nodes; ++rnode) {
@@ -403,7 +403,7 @@ class ProjectIPtoNodalFieldManager::LumpedMassMatrix
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& bf,
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& wbf)
   {
-    const int  num_nodes = bf.dimension(1), num_pts = bf.dimension(2);
+    const int  num_nodes = bf.extent(1), num_pts = bf.extent(2);
     const bool is_static_graph = this->matrix_->isStaticGraph();
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (int rnode = 0; rnode < num_nodes; ++rnode) {
@@ -513,9 +513,9 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
   const Teuchos::RCP<PHX::DataLayout>& vector_dl      = dl->qp_vector;
   const Teuchos::RCP<PHX::DataLayout>& node_dl        = dl->node_qp_vector;
   const Teuchos::RCP<PHX::DataLayout>& vert_vector_dl = dl->vertices_vector;
-  num_pts_                                            = vector_dl->dimension(1);
-  num_dims_                                           = vector_dl->dimension(2);
-  num_nodes_                                          = node_dl->dimension(1);
+  num_pts_                                            = vector_dl->extent(1);
+  num_dims_                                           = vector_dl->extent(2);
+  num_nodes_                                          = node_dl->extent(1);
 
   // Number of Fields is read from the input file; this is the number of named
   // fields (scalar, vector, or tensor) to transfer.

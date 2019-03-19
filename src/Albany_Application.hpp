@@ -782,7 +782,7 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset &workset,
   const auto &sphereVolume = disc->getSphereVolume();
   const auto &latticeOrientation = disc->getLatticeOrientation();
 
-  workset.numCells = wsElNodeEqID[ws].dimension(0);
+  workset.numCells = wsElNodeEqID[ws].extent(0);
   workset.wsElNodeEqID = wsElNodeEqID[ws];
   workset.wsElNodeID = wsElNodeID[ws];
   workset.wsCoords = coords[ws];

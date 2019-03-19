@@ -21,7 +21,7 @@ void ATO::Integrator::getMeasure(
 //******************************************************************************//
 {
   measure = 0.0;
-  int nDims  = coordCon.dimension(1);
+  int nDims  = coordCon.extent(1);
 
   if(nDims == 2){
   
@@ -34,7 +34,7 @@ void ATO::Integrator::getMeasure(
     // away from zeroVal.  
     Kokkos::DynRankView<RealType, PHX::Device> vals(topoVals);
 
-    int nvals = vals.dimension(0);
+    int nvals = vals.extent(0);
     for(int i=0; i<nvals; i++){
       if( fabs(vals(i) - zeroVal) < 1e-9 ) vals(i) = zeroVal + 1e-9;
     }
@@ -735,7 +735,7 @@ void ATO::Integrator::getSurfaceTris(
     // find intersections
     std::vector<Intersection> intersections;
     uint nEdges = cellData.edge_count;
-    int nDims  = coordCon.dimension(1);
+    int nDims  = coordCon.extent(1);
     for(uint edge=0; edge<nEdges; edge++){
       uint i = cellData.edge[edge].node[0], j = cellData.edge[edge].node[1];
       if((topoVals(i)-zeroVal)*(topoVals(j)-zeroVal) < 0.0){
@@ -795,7 +795,7 @@ void ATO::Integrator::getSurfaceTris(
     }
 
     std::vector< Teuchos::RCP<MiniPoly> > polys;
-    int npoints = coordCon.dimension(0), ndims = coordCon.dimension(1);
+    int npoints = coordCon.extent(0), ndims = coordCon.extent(1);
     Teuchos::RCP<MiniPoly> poly = Teuchos::rcp(new MiniPoly(npoints));
     std::vector<Vector3D>& pnts = poly->points;
     std::vector<int>& map = poly->mapToBase;

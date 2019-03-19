@@ -39,10 +39,10 @@ SideLaplacianResidual<EvalT, Traits>::SideLaplacianResidual (const Teuchos::Para
     metric     = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>(p.get<std::string> ("Metric Name"), dl_side->qp_tensor);
     this->addDependentField(metric.fieldTag());
 
-    int numSides = dl_side->cell_gradient->dimension(1);
-    numNodes     = dl_side->node_scalar->dimension(2);
-    numQPs       = dl_side->qp_scalar->dimension(2);
-    int sideDim  = dl_side->cell_gradient->dimension(2);
+    int numSides = dl_side->cell_gradient->extent(1);
+    numNodes     = dl_side->node_scalar->extent(2);
+    numQPs       = dl_side->qp_scalar->extent(2);
+    int sideDim  = dl_side->cell_gradient->extent(2);
 
     // Index of the nodes on the sides in the numeration of the cell
     Teuchos::RCP<shards::CellTopology> cellType;
@@ -65,8 +65,8 @@ SideLaplacianResidual<EvalT, Traits>::SideLaplacianResidual (const Teuchos::Para
     GradBF     = PHX::MDField<MeshScalarT>(p.get<std::string> ("Gradient BF Variable Name"), dl->node_qp_gradient);
     w_measure  = PHX::MDField<MeshScalarT>(p.get<std::string> ("Weighted Measure Variable Name"), dl->qp_scalar);
 
-    numNodes   = dl->node_scalar->dimension(1);
-    numQPs     = dl->qp_scalar->dimension(1);
+    numNodes   = dl->node_scalar->extent(1);
+    numQPs     = dl->qp_scalar->extent(1);
   }
 
   spaceDim = 3;

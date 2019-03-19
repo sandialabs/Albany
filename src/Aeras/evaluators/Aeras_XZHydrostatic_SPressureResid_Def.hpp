@@ -26,9 +26,9 @@ XZHydrostatic_SPressureResid(const Teuchos::ParameterList& p,
   spDot    (p.get<std::string> ("Pressure QP Time Derivative Variable Name"), dl->node_scalar),
   divpivelx(p.get<std::string>("Divergence QP PiVelx"),              dl->qp_scalar_level),
   Residual (p.get<std::string> ("Residual Name"),                    dl->node_scalar),
-  numNodes ( dl->node_scalar             ->dimension(1)),
-  numQPs   ( dl->node_qp_scalar          ->dimension(2)),
-  numLevels( dl->node_scalar_level       ->dimension(2)),
+  numNodes ( dl->node_scalar             ->extent(1)),
+  numQPs   ( dl->node_qp_scalar          ->extent(2)),
+  numLevels( dl->node_scalar_level       ->extent(2)),
   E (Eta<EvalT>::self())
 {
 
