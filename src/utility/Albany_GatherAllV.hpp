@@ -13,6 +13,12 @@
 
 namespace Albany {
 
+// This free function does a gather all operation, replicating
+// the result on all ranks. The reason for the existence of this,
+// rather than relying on Teuchos comm utilities, is that Teuchos
+// does not allow the local arrays too have different lengths
+// across ranks. If Teuchos end up implementing it, you can remove
+// this routine (or turn it into a wrapper of Teuchos routines).
 void gatherAllV(const Teuchos::RCP<const Teuchos_Comm>& comm,
                 const Teuchos::ArrayView<const GO>& myVals,
                 Teuchos::Array<GO>& allVals);
