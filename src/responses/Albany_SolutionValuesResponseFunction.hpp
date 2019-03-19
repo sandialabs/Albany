@@ -17,18 +17,18 @@ namespace Albany {
 
 class SolutionCullingStrategyBase;
 class Application;
+class CombineAndScatterManager;
 
 /*!
  * \brief Reponse function representing the average of the solution values
  */
-class SolutionValuesResponseFunction :
-  public SamplingBasedScalarResponseFunction {
+class SolutionValuesResponseFunction : public SamplingBasedScalarResponseFunction
+{
 public:
 
   //! Constructor
-  SolutionValuesResponseFunction(
-    const Teuchos::RCP<const Application>& app,
-    Teuchos::ParameterList& responseParams);
+  SolutionValuesResponseFunction(const Teuchos::RCP<const Application>& app,
+                                 Teuchos::ParameterList& responseParams);
 
   //! Get the number of responses
   unsigned int numResponses() const;
@@ -92,13 +92,12 @@ private:
 
   Teuchos::RCP<SolutionCullingStrategyBase> cullingStrategy_;
 
-  Teuchos::RCP<Thyra_LinearOp>  cullingOp;
-  Teuchos::RCP<Thyra_Vector>    culledVec;
+  Teuchos::RCP<CombineAndScatterManager>  cas_manager;
 
   class SolutionPrinter;
   Teuchos::RCP<SolutionPrinter> sol_printer_;
 
-  void updateCullingOp();
+  void updateCASManager();
 };
 
 } // namespace Albany

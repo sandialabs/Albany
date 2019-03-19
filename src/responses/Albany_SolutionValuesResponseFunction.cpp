@@ -17,6 +17,7 @@
 
 #include "Albany_Application.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_CombineAndScatterManager.hpp"
 
 namespace Albany
 {
@@ -130,14 +131,14 @@ SolutionValuesResponseFunction(const Teuchos::RCP<const Application>& app,
 void SolutionValuesResponseFunction::setup()
 {
   cullingStrategy_->setup();
-  this->updateCullingOp();
+  this->updateCASManager();
 }
 
 unsigned int SolutionValuesResponseFunction::
 numResponses() const
 {
-  if (Teuchos::nonnull(cullingOp)) {
-    return getSpmdVectorSpace(cullingOp->range())->localSubDim();
+  if (Teuchos::nonnull(cas_manager)) {
+    return getSpmdVectorSpace(cas_manager->getOverlappedVectorSpace())->localSubDim();
   }
   return 0u;
 }
@@ -150,14 +151,10 @@ evaluateResponse(const double /*current_time*/,
 		const Teuchos::Array<ParamVec>& /*p*/,
     const Teuchos::RCP<Thyra_Vector>& g)
 {
-  this->updateCullingOp();
-  // The culling op is implemented as a mat-vec, so the underlying maps must
-  // have the correct gids. After the multiplication has happened, simply
-  // assign the temporary to g.
-  cullingOp->apply(Thyra::NOTRANS, *x, culledVec.ptr(), 1.0, 0.0);
-  g->assign(*culledVec);
+  this->updateCASManager();
+  // Import the selected gids
+  cas_manager->scatter(*x,*g,CombineMode::INSERT);
   if (Teuchos::nonnull(sol_printer_)) {
-    // TODO: abstract away the map from the app
     sol_printer_->print(g, cullingStrategy_->selectedGIDs(app_->getVectorSpace()));
   }
 }
@@ -181,15 +178,11 @@ evaluateTangent(const double /*alpha*/,
     const Teuchos::RCP<Thyra_MultiVector>& gx,
     const Teuchos::RCP<Thyra_MultiVector>& gp)
 {
-  // TODO: abstract away the map from the app
-  this->updateCullingOp();
+  this->updateCASManager();
 
   if (!g.is_null()) {
-    // The culling op is implemented as a mat-vec, so the underlying maps must
-    // have the correct gids. After the multiplication has happened, simply
-    // assign the temporary to g.
-    cullingOp->apply(Thyra::NOTRANS, *x, culledVec.ptr(), 1.0, 0.0);
-    g->assign(*culledVec);
+    // Import the selected gids
+    cas_manager->scatter(*x,*g,CombineMode::INSERT);
     if (Teuchos::nonnull(sol_printer_)) {
       sol_printer_->print(g, cullingStrategy_->selectedGIDs(app_->getVectorSpace()));
     }
@@ -197,12 +190,9 @@ evaluateTangent(const double /*alpha*/,
 
   if (!gx.is_null()) {
     TEUCHOS_TEST_FOR_EXCEPT(Vx.is_null());
-    // The culling op is implemented as a mat-vec, so the underlying maps must
-    // have the correct gids. After the multiplication has happened, simply
-    // assign the temporary to Vx(i).
+    // Import the selected gids
     for (int i=0; i<Vx->domain()->dim(); ++i) {
-      cullingOp->apply(Thyra::NOTRANS, *Vx->col(i), culledVec.ptr(), 1.0, 0.0);
-      gx->col(i)->assign(*culledVec);
+      cas_manager->scatter(*x,*gx->col(i),CombineMode::INSERT);
     }
     if (beta != 1.0) {
       gx->scale(beta);
@@ -243,23 +233,19 @@ evaluateGradient(const double /*current_time*/,
     const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
     const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
-  this->updateCullingOp();
+  this->updateCASManager();
 
   if (!g.is_null()) {
-    // The culling op is implemented as a mat-vec, so the underlying maps must
-    // have the correct gids. After the multiplication has happened, simply
-    // assign the temporary to g.
-    cullingOp->apply(Thyra::NOTRANS, *x, culledVec.ptr(), 1.0, 0.0);
-    g->assign(*culledVec);
+    // Import the selected gids
+    cas_manager->scatter(*x,*g,CombineMode::INSERT);
     if (Teuchos::nonnull(sol_printer_))
-      // TODO: abstract away the map from the app
       sol_printer_->print(g, cullingStrategy_->selectedGIDs(app_->getVectorSpace()));
   }
 
   if (!dg_dx.is_null()) {
     dg_dx->assign(0.0);
 
-    Teuchos::RCP<const Thyra_VectorSpace> replicatedVS = cullingOp->range();
+    Teuchos::RCP<const Thyra_VectorSpace> replicatedVS = cas_manager->getOverlappedVectorSpace();
     Teuchos::RCP<const Thyra_VectorSpace> derivVS = dg_dx->range();
     const int colCount = dg_dx->domain()->dim();
     for (int icol = 0; icol < colCount; ++icol) {
@@ -284,22 +270,14 @@ evaluateGradient(const double /*current_time*/,
   }
 }
 
-void SolutionValuesResponseFunction::updateCullingOp()
+void SolutionValuesResponseFunction::updateCASManager()
 {
   const Teuchos::RCP<const Thyra_VectorSpace> solutionVS = app_->getVectorSpace();
-  if (cullingOp.is_null() || !sameAs(solutionVS,cullingOp->domain())) {
+  if (cas_manager.is_null() || !sameAs(solutionVS,cas_manager->getOwnedVectorSpace())) {
     const Teuchos::Array<GO> selectedGIDs = cullingStrategy_->selectedGIDs(solutionVS);
     Teuchos::RCP<const Thyra_VectorSpace> targetVS = createLocallyReplicatedVectorSpace(selectedGIDs,app_->getComm());
 
-    ThyraCrsMatrixFactory factory(solutionVS,targetVS,1,true);
-    for (GO gid : selectedGIDs) {
-      factory.insertGlobalIndices(gid,Teuchos::arrayView(&gid,1));
-    }
-    factory.fillComplete();
-
-    cullingOp = factory.createOp();
-    assign(cullingOp,1.0);
-    culledVec = Thyra::createMember(targetVS);
+    cas_manager = createCombineAndScatterManager(solutionVS,targetVS);
   }
 }
 
