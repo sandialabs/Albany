@@ -1,4 +1,4 @@
-#include "Albany_ThyraCrsGraphProxy.hpp"
+#include "Albany_ThyraCrsMatrixFactory.hpp"
 
 #ifdef ALBANY_EPETRA
 #include "Epetra_CrsGraph.h"
@@ -15,9 +15,9 @@
 namespace Albany {
 
 // The implementation of the graph
-struct ThyraCrsGraphProxy::ProxyImpl {
+struct ThyraCrsMatrixFactory::Impl {
 
-  ProxyImpl () = default;
+  Impl () = default;
 
 #ifdef ALBANY_EPETRA
   Teuchos::RCP<Epetra_CrsGraph> e_graph;
@@ -25,12 +25,12 @@ struct ThyraCrsGraphProxy::ProxyImpl {
   Teuchos::RCP<Tpetra_CrsGraph> t_graph;
 };
 
-ThyraCrsGraphProxy::
-ThyraCrsGraphProxy (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
+ThyraCrsMatrixFactory::
+ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
                     const Teuchos::RCP<const Thyra_VectorSpace> range_vs,
                     const int nonzeros_per_row,
                     const bool static_profile)
- : m_graph(new ProxyImpl())
+ : m_graph(new Impl())
  , m_domain_vs(domain_vs)
  , m_range_vs(range_vs)
  , m_filled (false)
@@ -57,15 +57,15 @@ ThyraCrsGraphProxy (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
   }
 }
 
-ThyraCrsGraphProxy::ThyraCrsGraphProxy (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
+ThyraCrsMatrixFactory::ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
                               const Teuchos::RCP<const Thyra_VectorSpace> range_vs,
-                              const Teuchos::RCP<const ThyraCrsGraphProxy> overlap_src)
+                              const Teuchos::RCP<const ThyraCrsMatrixFactory> overlap_src)
  : m_domain_vs(domain_vs)
  , m_range_vs(range_vs)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (!overlap_src->is_filled(), std::logic_error,
                               "Error! Can only build a graph from an overlapped source if source has been filled already.\n");
-  m_graph = Teuchos::rcp(new ProxyImpl());
+  m_graph = Teuchos::rcp(new Impl());
 
   auto bt = Albany::build_type();
   TEUCHOS_TEST_FOR_EXCEPTION (bt==BuildType::None, std::logic_error, "Error! No build type set for albany.\n");
@@ -106,7 +106,7 @@ ThyraCrsGraphProxy::ThyraCrsGraphProxy (const Teuchos::RCP<const Thyra_VectorSpa
   m_filled = true;
 }
 
-void ThyraCrsGraphProxy::insertGlobalIndices (const GO row, const Teuchos::ArrayView<const GO>& indices) {
+void ThyraCrsMatrixFactory::insertGlobalIndices (const GO row, const Teuchos::ArrayView<const GO>& indices) {
   auto bt = Albany::build_type();
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
@@ -128,7 +128,7 @@ void ThyraCrsGraphProxy::insertGlobalIndices (const GO row, const Teuchos::Array
   }
 }
 
-void ThyraCrsGraphProxy::fillComplete () {
+void ThyraCrsMatrixFactory::fillComplete () {
   auto bt = Albany::build_type();
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
@@ -148,7 +148,7 @@ void ThyraCrsGraphProxy::fillComplete () {
   m_filled = true;
 }
 
-void ThyraCrsGraphProxy::
+void ThyraCrsMatrixFactory::
 getGlobalRowView (const GO row, Teuchos::ArrayView<const GO>& colIndices) const {
   auto bt = Albany::build_type();
   if (bt==BuildType::Epetra) {
@@ -168,7 +168,7 @@ getGlobalRowView (const GO row, Teuchos::ArrayView<const GO>& colIndices) const 
   }
 }
 
-Teuchos::RCP<Thyra_LinearOp> ThyraCrsGraphProxy::createOp () const {
+Teuchos::RCP<Thyra_LinearOp> ThyraCrsMatrixFactory::createOp () const {
   TEUCHOS_TEST_FOR_EXCEPTION (!m_filled, std::logic_error, "Error! Cannot create a linear operator if the graph is not filled.\n");
 
   Teuchos::RCP<Thyra_LinearOp> op;

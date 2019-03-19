@@ -1,5 +1,5 @@
 #include "Albany_ThyraUtils.hpp"
-#include "Albany_ThyraCrsGraphProxy.hpp"
+#include "Albany_ThyraCrsMatrixFactory.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_GatherAllV.hpp"
@@ -514,18 +514,18 @@ buildRestrictionOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
   auto spmd_space    = getSpmdVectorSpace(space);
   auto spmd_subspace = getSpmdVectorSpace(subspace);
 
-  ThyraCrsGraphProxy proxy(space,subspace,1,true);
+  ThyraCrsMatrixFactory factory(space,subspace,1,true);
 
   const int localSubDim = spmd_subspace->localSubDim();
   for (LO lid=0; lid<localSubDim; ++lid) {
     const GO gid = getGlobalElement(spmd_subspace,lid);
     TEUCHOS_TEST_FOR_EXCEPTION (!locallyOwnedComponent(spmd_space,gid), std::logic_error,
                                 "Error! The input 'subspace' is not a subspace of the input 'space'.\n");
-    proxy.insertGlobalIndices(gid,Teuchos::arrayView(&gid,1));
+    factory.insertGlobalIndices(gid,Teuchos::arrayView(&gid,1));
   }
 
-  proxy.fillComplete();
-  Teuchos::RCP<Thyra_LinearOp> P = proxy.createOp();
+  factory.fillComplete();
+  Teuchos::RCP<Thyra_LinearOp> P = factory.createOp();
   assign(P,1.0);
 
   return P;
@@ -539,18 +539,18 @@ buildProlongationOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
   auto spmd_space    = getSpmdVectorSpace(space);
   auto spmd_subspace = getSpmdVectorSpace(subspace);
 
-  ThyraCrsGraphProxy proxy(subspace,space,1,true);
+  ThyraCrsMatrixFactory factory(subspace,space,1,true);
 
   const int localSubDim = spmd_subspace->localSubDim();
   for (LO lid=0; lid<localSubDim; ++lid) {
     const GO gid = getGlobalElement(spmd_subspace,lid);
     TEUCHOS_TEST_FOR_EXCEPTION (!locallyOwnedComponent(spmd_space,gid), std::logic_error,
                                 "Error! The input 'subspace' is not a subspace of the input 'space'.\n");
-    proxy.insertGlobalIndices(gid,Teuchos::arrayView(&gid,1));
+    factory.insertGlobalIndices(gid,Teuchos::arrayView(&gid,1));
   }
 
-  proxy.fillComplete();
-  Teuchos::RCP<Thyra_LinearOp> P = proxy.createOp();
+  factory.fillComplete();
+  Teuchos::RCP<Thyra_LinearOp> P = factory.createOp();
   assign(P,1.0);
 
   return P;

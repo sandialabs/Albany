@@ -13,7 +13,7 @@
 #include "Albany_AbstractNodeFieldContainer.hpp"
 
 #include "Albany_ThyraTypes.hpp"
-#include "utility/Albany_ThyraCrsGraphProxy.hpp"
+#include "utility/Albany_ThyraCrsMatrixFactory.hpp"
 #include "Albany_TpetraTypes.hpp"
 
 namespace Adapt {
@@ -33,7 +33,7 @@ public:
   Teuchos::RCP<Albany::NodeFieldContainer> getNodeContainer()
   { return nodeContainer; }
 
-  void updateNodalGraph(const Teuchos::RCP<const Albany::ThyraCrsGraphProxy>& nGraph);
+  void updateNodalGraph(const Teuchos::RCP<const Albany::ThyraCrsMatrixFactory>& nGraph);
 
   void updateNodalGraph(const Teuchos::RCP<const Tpetra_CrsGraph>& nGraph)
   { nodalGraph = nGraph; }

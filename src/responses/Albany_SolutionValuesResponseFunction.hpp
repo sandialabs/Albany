@@ -8,17 +8,15 @@
 #define ALBANY_SOLUTION_VALUES_RESPONSE_FUNCTION_HPP
 
 #include "Albany_SamplingBasedScalarResponseFunction.hpp"
-
-#include "Albany_Application.hpp"
-#include "Albany_CombineAndScatterManager.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
-#include "Albany_Utils.hpp"
 
 namespace Albany {
 
 class SolutionCullingStrategyBase;
+class Application;
 
 /*!
  * \brief Reponse function representing the average of the solution values

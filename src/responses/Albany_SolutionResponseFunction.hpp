@@ -8,7 +8,7 @@
 #define ALBANY_SOLUTION_RESPONSE_FUNCTION_HPP
 
 #include "Albany_DistributedResponseFunction.hpp"
-#include "Albany_ThyraCrsGraphProxy.hpp"
+#include "Albany_ThyraCrsMatrixFactory.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_Array.hpp"
@@ -114,11 +114,8 @@ protected:
   //! The restriction operator, use to cull the solution
   Teuchos::RCP<Thyra_LinearOp> cull_op;
 
-  //! Graph of gradient operator
-  // Note: not all concrete implementations of Thyra_LinearOp implement the clone() method,
-  //       so we need to create the gradient op every time createGradientOp is called.
-  Teuchos::RCP<ThyraCrsGraphProxy> graph_proxy;
-
+  //! Factory for the culling operator
+  Teuchos::RCP<ThyraCrsMatrixFactory> cull_op_factory;
 };
 
 } // namespace Albany

@@ -58,15 +58,15 @@ void Albany::SolutionResponseFunction::setup()
 
 
   // Create graph for gradient operator -- diagonal matrix
-  graph_proxy = Teuchos::rcp(new ThyraCrsGraphProxy(solution_vs,culled_vs,1,/* static_profile = */ true));
+  cull_op_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(solution_vs,culled_vs,1,/* static_profile = */ true));
   for (int i=0; i<culled_vs->localSubDim(); i++) {
     const GO row = getGlobalElement(culled_vs,i);
-    graph_proxy->insertGlobalIndices(row,Teuchos::arrayView(&row,1));
+    cull_op_factory->insertGlobalIndices(row,Teuchos::arrayView(&row,1));
   }
-  graph_proxy->fillComplete();
+  cull_op_factory->fillComplete();
 
   // Create the culling operator
-  cull_op = graph_proxy->createOp();
+  cull_op = cull_op_factory->createOp();
   assign(cull_op,1.0);
   fillComplete(cull_op);
 }
@@ -74,7 +74,7 @@ void Albany::SolutionResponseFunction::setup()
 Teuchos::RCP<Thyra_LinearOp>
 SolutionResponseFunction::createGradientOp() const
 {
-  auto gradOp = graph_proxy->createOp();
+  auto gradOp = cull_op_factory->createOp();
   fillComplete(gradOp);
   return gradOp;
 }

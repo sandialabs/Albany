@@ -8,7 +8,6 @@
 
 #include "Albany_Application.hpp"
 #include "Albany_GatherAllV.hpp"
-#include "Albany_ThyraCrsGraphProxy.hpp"
 #include "Albany_ThyraUtils.hpp"
 
 #include "Teuchos_Array.hpp" 
@@ -197,5 +196,3 @@ createSolutionCullingStrategy(
 }
 
 } // namespace Albany
-
-

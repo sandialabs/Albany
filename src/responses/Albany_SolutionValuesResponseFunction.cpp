@@ -15,6 +15,7 @@
 
 #include <iostream>
 
+#include "Albany_Application.hpp"
 #include "Albany_ThyraUtils.hpp"
 
 namespace Albany
@@ -293,13 +294,13 @@ void SolutionValuesResponseFunction::updateCullingOp()
     const Teuchos::Array<GO> selectedGIDs = cullingStrategy_->selectedGIDs(solutionVS);
     Teuchos::RCP<const Thyra_VectorSpace> targetVS = createLocallyReplicatedVectorSpace(selectedGIDs,app_->getComm());
 
-    ThyraCrsGraphProxy proxy(solutionVS,targetVS,1,true);
+    ThyraCrsMatrixFactory factory(solutionVS,targetVS,1,true);
     for (GO gid : selectedGIDs) {
-      proxy.insertGlobalIndices(gid,Teuchos::arrayView(&gid,1));
+      factory.insertGlobalIndices(gid,Teuchos::arrayView(&gid,1));
     }
-    proxy.fillComplete();
+    factory.fillComplete();
 
-    cullingOp = proxy.createOp();
+    cullingOp = factory.createOp();
     assign(cullingOp,1.0);
     culledVec = Thyra::createMember(targetVS);
   }

@@ -20,7 +20,7 @@ NodalDataBase::NodalDataBase() :
 }
 
 void NodalDataBase::
-updateNodalGraph(const Teuchos::RCP<const Albany::ThyraCrsGraphProxy>& nGraph)
+updateNodalGraph(const Teuchos::RCP<const Albany::ThyraCrsMatrixFactory>& nGraph)
 {
   // TODO [ThyraRefactor]: remove tpetra
   nodalGraph = Albany::getTpetraMatrix(nGraph->createOp())->getCrsGraph();

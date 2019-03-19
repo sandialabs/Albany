@@ -1607,7 +1607,7 @@ void STKDiscretization::computeGraphsUpToFillComplete()
   // Loads member data:  overlap_graph, numOverlapodes, overlap_node_map,
   // coordinates, graphs
 
-  m_overlap_graph_proxy = Teuchos::rcp( new ThyraCrsGraphProxy(m_overlap_vs,m_overlap_vs,neq*nodes_per_element) );
+  m_overlap_jac_factory = Teuchos::rcp( new ThyraCrsMatrixFactory(m_overlap_vs,m_overlap_vs,neq*nodes_per_element) );
 
   stk::mesh::Selector select_owned_in_part =
       stk::mesh::Selector(metaData.universal_part()) &
@@ -1652,7 +1652,7 @@ void STKDiscretization::computeGraphsUpToFillComplete()
           {  //       since they could all be coupled with this eq
             col   = getGlobalDOF(gid(colNode), m);
             colAV = Teuchos::arrayView(&col, 1);
-            m_overlap_graph_proxy->insertGlobalIndices(row, colAV);
+            m_overlap_jac_factory->insertGlobalIndices(row, colAV);
           }
         }
       }
@@ -1675,7 +1675,7 @@ void STKDiscretization::computeGraphsUpToFillComplete()
         stk::mesh::Entity node = overlapnodes[inode];
         row                    = getGlobalDOF(gid(node), it->first);
         colAV                  = Teuchos::arrayView(&row, 1);
-        m_overlap_graph_proxy->insertGlobalIndices(row, colAV);
+        m_overlap_jac_factory->insertGlobalIndices(row, colAV);
       }
 
       // Number of side sets this eq is defined on
@@ -1715,7 +1715,7 @@ void STKDiscretization::computeGraphsUpToFillComplete()
               for (std::size_t m = 0; m < neq; m++) {
                 col   = getGlobalDOF(gid(colNode), m);
                 colAV = Teuchos::arrayView(&col, 1);
-                m_overlap_graph_proxy->insertGlobalIndices(row, colAV);
+                m_overlap_jac_factory->insertGlobalIndices(row, colAV);
               }
             }
           }
@@ -1727,9 +1727,9 @@ void STKDiscretization::computeGraphsUpToFillComplete()
 
 void STKDiscretization::fillCompleteGraphs()
 {
-  m_overlap_graph_proxy->fillComplete();
+  m_overlap_jac_factory->fillComplete();
 
-  m_graph_proxy = Teuchos::rcp( new ThyraCrsGraphProxy(m_vs, m_vs, m_overlap_graph_proxy) );
+  m_jac_factory = Teuchos::rcp( new ThyraCrsMatrixFactory(m_vs, m_vs, m_overlap_jac_factory) );
 }
 
 void STKDiscretization::insertPeridigmNonzerosIntoGraph()
@@ -1769,7 +1769,7 @@ void STKDiscretization::insertPeridigmNonzerosIntoGraph()
           for (int i = 0; i < numEntries; ++i) {
             Tpetra_GO globalCol   = peridigmMatrix->ColMap().GID(indices[i]);
             auto globalColAV = Teuchos::arrayView(&globalCol, 1);
-            m_overlap_graph_proxy->insertGlobalIndices(globalRow, globalColAV);
+            m_overlap_jac_factory->insertGlobalIndices(globalRow, globalColAV);
           }
         }
       }
@@ -2776,7 +2776,7 @@ void STKDiscretization::meshToGraph()
   // matrices. Assume the Crs row size is 27, which is the maximum number
   // required for first-order hexahedral elements.
 
-  nodalGraphProxy = Teuchos::rcp( new ThyraCrsGraphProxy(m_overlap_node_vs,m_overlap_node_vs, 27) );
+  nodalMatrixFactory = Teuchos::rcp( new ThyraCrsMatrixFactory(m_overlap_node_vs,m_overlap_node_vs, 27) );
 
   // Elements that surround a given node, in the form of Entity's.
   std::vector<std::vector<stk::mesh::Entity>> sur_elem;
@@ -2857,19 +2857,19 @@ void STKDiscretization::meshToGraph()
         }
       }
     }
-    nodalGraphProxy->insertGlobalIndices(globalrow, adjacency());
+    nodalMatrixFactory->insertGlobalIndices(globalrow, adjacency());
   }
 
   // end find_adjacency
 
-  nodalGraphProxy->fillComplete();
+  nodalMatrixFactory->fillComplete();
   // Pass the graph RCP to the nodal data block
-  stkMeshStruct->nodal_data_base->updateNodalGraph(nodalGraphProxy.getConst());
+  stkMeshStruct->nodal_data_base->updateNodalGraph(nodalMatrixFactory.getConst());
 }
 
 void STKDiscretization::printVertexConnectivity()
 {
-  if (Teuchos::is_null(nodalGraphProxy)) {
+  if (Teuchos::is_null(nodalMatrixFactory)) {
     return;
   }
 
@@ -2880,7 +2880,7 @@ void STKDiscretization::printVertexConnectivity()
 
     Teuchos::ArrayView<const GO> adj;
 
-    nodalGraphProxy->getGlobalRowView(globalvert, adj);
+    nodalMatrixFactory->getGlobalRowView(globalvert, adj);
 
     for (int j = 0; j < adj.size(); j++) {
       std::cout << "                  " << adj[j] + 1 << std::endl;
@@ -2895,7 +2895,7 @@ STKDiscretization::buildSideSetProjectors()
   // side discretizations
   //       since the underlying STK entities should have the same ID
   Teuchos::RCP<const Thyra_VectorSpace> ss_ov_vs, ss_vs;
-  Teuchos::RCP<ThyraCrsGraphProxy>  graphP, ov_graphP;
+  Teuchos::RCP<ThyraCrsMatrixFactory>  graphP, ov_graphP;
   Teuchos::RCP<Thyra_LinearOp> P, ov_P;
 
   Teuchos::Array<GO> cols(1);
@@ -2926,7 +2926,7 @@ STKDiscretization::buildSideSetProjectors()
         selector, stkMeshStruct->bulkData->buckets(SIDE_RANK), sides);
 
     // The projector: first the overlapped...
-    ov_graphP = Teuchos::rcp(new ThyraCrsGraphProxy(ss_ov_vs, ss_ov_vs, 1));
+    ov_graphP = Teuchos::rcp(new ThyraCrsMatrixFactory(ss_ov_vs, ss_ov_vs, 1));
     num_entries = getSpmdVectorSpace(ss_ov_vs)->localSubDim();
 
     const std::map<GO, GO>& side_cell_map = sideToSideSetCellMap.at(it.first);
@@ -2964,7 +2964,7 @@ STKDiscretization::buildSideSetProjectors()
     ov_projectors[sideSetName] = ov_P;
 
     // ...then the non-overlapped
-    graphP = Teuchos::rcp( new ThyraCrsGraphProxy(ss_vs, ss_vs, ov_graphP) );
+    graphP = Teuchos::rcp( new ThyraCrsMatrixFactory(ss_vs, ss_vs, ov_graphP) );
 
     P = graphP->createOp();
     assign(P,1.0);

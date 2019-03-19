@@ -14,7 +14,7 @@
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_DataTypes.hpp"
 #include "utility/Albany_ThyraUtils.hpp"
-#include "utility/Albany_ThyraCrsGraphProxy.hpp"
+#include "utility/Albany_ThyraCrsMatrixFactory.hpp"
 
 #include "Albany_NullSpaceUtils.hpp"
 
@@ -128,13 +128,13 @@ class STKDiscretization : public Albany::AbstractDiscretization {
   Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace (const std::string& field_name) const;
 
   //! Create a Jacobian operator (owned and overlapped)
-  Teuchos::RCP<Thyra_LinearOp> createJacobianOp        () const { return m_graph_proxy->createOp();         }
-  Teuchos::RCP<Thyra_LinearOp> createOverlapJacobianOp () const { return m_overlap_graph_proxy->createOp(); }
+  Teuchos::RCP<Thyra_LinearOp> createJacobianOp        () const { return m_jac_factory->createOp();         }
+  Teuchos::RCP<Thyra_LinearOp> createOverlapJacobianOp () const { return m_overlap_jac_factory->createOp(); }
 
 #ifdef ALBANY_AERAS
   //! Create implicit Jacobian operator (owned and overlapped) (for Aeras)
-  Teuchos::RCP<Thyra_LinearOp> createImplicitJacobianOp        () const { return m_graph_proxy->createOp();         }
-  Teuchos::RCP<Thyra_LinearOp> createImplicitOverlapJacobianOp () const { return m_overlap_graph_proxy->createOp(); }
+  Teuchos::RCP<Thyra_LinearOp> createImplicitJacobianOp        () const { return m_jac_factory->createOp();         }
+  Teuchos::RCP<Thyra_LinearOp> createImplicitOverlapJacobianOp () const { return m_overlap_jac_factory->createOp(); }
 #endif
 
   //! Modify CRS Graphs for Peridigm-Albany coupling
@@ -409,8 +409,8 @@ private:
   Teuchos::RCP<const Thyra_VectorSpace>   m_overlap_node_vs;
 
   //! Jacobian matrix graph proxy (owned and overlap)
-  Teuchos::RCP<ThyraCrsGraphProxy> m_graph_proxy;
-  Teuchos::RCP<ThyraCrsGraphProxy> m_overlap_graph_proxy;
+  Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
+  Teuchos::RCP<ThyraCrsMatrixFactory> m_overlap_jac_factory;
 
   NodalDOFsStructContainer nodalDOFsStructContainer;
 
@@ -515,7 +515,7 @@ private:
   bool interleavedOrdering;
 
 private:
-  Teuchos::RCP<ThyraCrsGraphProxy> nodalGraphProxy;
+  Teuchos::RCP<ThyraCrsMatrixFactory> nodalMatrixFactory;
 
   template<typename T, typename ContainerType>
   bool in_list(const T& value, const ContainerType& list)
