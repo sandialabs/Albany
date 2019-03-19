@@ -20,6 +20,10 @@ int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
   bool success = true;
+
+  // Set the linear algebra type
+  Albany::build_type(Albany::BuildType::Epetra);
+
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 
   Kokkos::initialize(argc, argv);
