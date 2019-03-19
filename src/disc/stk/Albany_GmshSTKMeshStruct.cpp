@@ -1490,9 +1490,12 @@ void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::str
     std::map< int, int> physical_surface_tags;
     get_physical_tag_to_surface_tag_map( ifile, physical_surface_tags, num_surfaces);
 
-    std::string error_message = "Cannot support more than one physical tag per surface \n";
-    error_message             += "(but you should have gotten an error before this! \n";
-    TEUCHOS_TEST_FOR_EXCEPTION ( physical_surface_tags.size() != names.size(), std::runtime_error, error_message);
+    std::stringstream error_msg;
+    error_msg << "Cannot support more than one physical tag per surface \n"
+              << "(but you should have gotten an error before this!)    \n"
+              << "physical_surface_tags.size() = " << physical_surface_tags.size() << ". \n"
+              << "names.size() = " << names.size() << ". \n";
+    TEUCHOS_TEST_FOR_EXCEPTION ( physical_surface_tags.size() != names.size(), std::runtime_error, error_msg.str());
 
     // Add each physical name pair to the map
     for( int i = 0; i < names.size(); i++)
