@@ -4,79 +4,81 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef QCAD_RESPONSESAVEFIELD_HPP
-#define QCAD_RESPONSESAVEFIELD_HPP
+#ifndef QCAD_RESPONSE_SAVE_FIELD_HPP
+#define QCAD_RESPONSE_SAVE_FIELD_HPP
 
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_ParameterList.hpp"
+
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_StateManager.hpp"
+#include "PHAL_Dimension.hpp"
 
 namespace QCAD {
-  class ResponseSaveFieldManager;
+
+class ResponseSaveFieldManager;
 
 /** 
- * \brief Response Description
- */
-  template<typename EvalT, typename Traits>
-  class ResponseSaveField : 
-    public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<EvalT, Traits>
-  {
-  public:
-    typedef typename EvalT::ScalarT ScalarT;
-    typedef typename EvalT::MeshScalarT MeshScalarT;
-    ResponseSaveField(Teuchos::ParameterList& p,
-		      const Teuchos::RCP<Albany::Layouts>& dl);
+* \brief Response Description
+*/
+template<typename EvalT, typename Traits>
+class ResponseSaveField : public PHX::EvaluatorWithBaseImpl<Traits>,
+                          public PHX::EvaluatorDerived<EvalT, Traits>
+{
+public:
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+
+  ResponseSaveField(Teuchos::ParameterList& p,
+                    const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+                             PHX::FieldManager<Traits>& vm);
+
+  void preEvaluate(typename Traits::PreEvalData workset);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+  void postEvaluate(typename Traits::PostEvalData workset);
+
+  Teuchos::RCP<const PHX::FieldTag> getEvaluatedFieldTag() const {
+    return response_field_tag;
+  }
+
+  Teuchos::RCP<const PHX::FieldTag> getResponseFieldTag() const {
+    return response_field_tag;
+  }
   
-    void postRegistrationSetup(typename Traits::SetupData d,
-			       PHX::FieldManager<Traits>& vm);
+private:
+  Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
-    void preEvaluate(typename Traits::PreEvalData workset);
+  std::string fieldName;
+  std::string stateName;
+  
+  std::size_t numNodes;
+  std::size_t numQPs;
+  std::size_t numDims;
+  
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
+  PHX::MDField<const ScalarT> field;
 
-    void evaluateFields(typename Traits::EvalData d);
+  bool outputToExodus;
+  bool outputCellAverage;
+  bool memoryHolderOnly;
+  bool isVectorField;
 
-    void postEvaluate(typename Traits::PostEvalData workset);
+  std::string vectorOp;
+  std::string fieldIndices;
 
-    Teuchos::RCP<const PHX::FieldTag> getEvaluatedFieldTag() const {
-      return response_field_tag;
-    }
+  Albany::StateManager* pStateMgr;
 
-    Teuchos::RCP<const PHX::FieldTag> getResponseFieldTag() const {
-      return response_field_tag;
-    }
-    
-  private:
-    Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
+  Teuchos::RCP< PHX::Tag<ScalarT> > response_field_tag;
+  Teuchos::RCP<ResponseSaveFieldManager> mgr_;
+};
 
-    std::string fieldName;
-    std::string stateName;
-    
-    std::size_t numNodes;
-    std::size_t numQPs;
-    std::size_t numDims;
-    
-    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
-    PHX::MDField<const ScalarT> field;
+} // namespace QCAD
 
-    bool outputToExodus;
-    bool outputCellAverage;
-    bool memoryHolderOnly;
-    bool isVectorField;
-
-    std::string vectorOp;
-    std::string fieldIndices;
-
-    Albany::StateManager* pStateMgr;
-
-    Teuchos::RCP< PHX::Tag<ScalarT> > response_field_tag;
-    Teuchos::RCP<ResponseSaveFieldManager> mgr_;
-  };
-
-	
-}
-
-#endif
+#endif // QCAD_RESPONSE_SAVE_FIELD_HPP

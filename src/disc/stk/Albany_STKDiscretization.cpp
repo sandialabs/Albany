@@ -1562,7 +1562,7 @@ void STKDiscretization::computeOwnedNodesAndUnknowns()
   m_vs = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").vs;
 
   if (Teuchos::nonnull(stkMeshStruct->nodal_data_base)) { 
-    stkMeshStruct->nodal_data_base->replaceVectorSpace(m_node_vs);
+    stkMeshStruct->nodal_data_base->replaceOwnedVectorSpace(m_node_vs);
   }
 }
 

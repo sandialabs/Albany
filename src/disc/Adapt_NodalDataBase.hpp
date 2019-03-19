@@ -4,17 +4,17 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ADAPT_NODALDATABASE_HPP
-#define ADAPT_NODALDATABASE_HPP
+#ifndef ADAPT_NODAL_DATA_BASE_HPP
+#define ADAPT_NODAL_DATA_BASE_HPP
 
 #include "Teuchos_RCP.hpp"
 
 #include "Adapt_NodalFieldUtils.hpp"
 #include "Albany_AbstractNodeFieldContainer.hpp"
 
+#include "Albany_CommTypes.hpp"
 #include "Albany_ThyraTypes.hpp"
-#include "utility/Albany_ThyraCrsMatrixFactory.hpp"
-#include "Albany_TpetraTypes.hpp"
+#include "Albany_ThyraCrsMatrixFactory.hpp"
 
 namespace Adapt {
 
@@ -28,28 +28,23 @@ class NodalDataBase {
 public:
   NodalDataBase();
 
-  virtual ~NodalDataBase() {}
+  virtual ~NodalDataBase() = default;
 
-  Teuchos::RCP<Albany::NodeFieldContainer> getNodeContainer()
-  { return nodeContainer; }
+  Teuchos::RCP<Albany::NodeFieldContainer> getNodeContainer() { return nodeContainer; }
 
   void updateNodalGraph(const Teuchos::RCP<const Albany::ThyraCrsMatrixFactory>& nGraph);
 
-  void updateNodalGraph(const Teuchos::RCP<const Tpetra_CrsGraph>& nGraph)
-  { nodalGraph = nGraph; }
+  const Teuchos::RCP<const Albany::ThyraCrsMatrixFactory>& getNodalOpFactory() const { return nodalOpFactory; }
 
-  const Teuchos::RCP<const Tpetra_CrsGraph>& getNodalGraph()
-  { return nodalGraph; }
-
-  void replaceVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs);
+  void replaceOwnedVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs);
 
   void replaceOverlapVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs);
 
-  void resizeLocalMap(const Teuchos::Array<Tpetra_GO>& local_nodeGIDs,
-                      const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
+  void replaceOwnedVectorSpace(const Teuchos::Array<GO>& local_nodeGIDs,
+                               const Teuchos::RCP<const Teuchos_Comm>& comm_);
 
-  void resizeOverlapMap(const Teuchos::Array<Tpetra_GO>& overlap_nodeGIDs,
-                        const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
+  void replaceOverlapVectorSpace(const Teuchos::Array<GO>& overlap_nodeGIDs,
+                                 const Teuchos::RCP<const Teuchos_Comm>& comm_);
 
   bool isNodeDataPresent() { return Teuchos::nonnull(nodal_data_vector); }
 
@@ -82,7 +77,7 @@ public:
 
 private:
   Teuchos::RCP<Albany::NodeFieldContainer> nodeContainer;
-  Teuchos::RCP<const Tpetra_CrsGraph> nodalGraph;
+  Teuchos::RCP<const Albany::ThyraCrsMatrixFactory> nodalOpFactory;
   NodeFieldSizeVector nodeVectorLayout;
   NodeFieldSizeMap nodeVectorMap;
   LO vectorsize;
@@ -95,6 +90,6 @@ private:
   void initialize();
 };
 
-}
+} // namespace Adapt
 
-#endif // ADAPT_NODALDATABASE_HPP
+#endif // ADAPT_NODAL_DATA_BASE_HPP

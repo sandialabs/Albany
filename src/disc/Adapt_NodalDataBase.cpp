@@ -7,7 +7,6 @@
 #include "Adapt_NodalDataBase.hpp"
 
 #include "Adapt_NodalDataVector.hpp"
-#include "Albany_TpetraThyraUtils.hpp"
 
 namespace Adapt
 {
@@ -17,21 +16,20 @@ NodalDataBase::NodalDataBase() :
   vectorsize(0),
   initialized(false)
 {
+  // Nothing to be done here
 }
 
 void NodalDataBase::
-updateNodalGraph(const Teuchos::RCP<const Albany::ThyraCrsMatrixFactory>& nGraph)
+updateNodalGraph(const Teuchos::RCP<const Albany::ThyraCrsMatrixFactory>& crsOpFactory)
 {
-  // TODO [ThyraRefactor]: remove tpetra
-  nodalGraph = Albany::getTpetraMatrix(nGraph->createOp())->getCrsGraph();
+  nodalOpFactory = crsOpFactory;
 }
 
 void NodalDataBase::
 registerVectorState(const std::string &stateName, int ndofs) {
   // Save the nodal data field names and lengths in order of allocation which
   // implies access order.
-  NodeFieldSizeMap::const_iterator it;
-  it = nodeVectorMap.find(stateName);
+  auto it = nodeVectorMap.find(stateName);
 
   TEUCHOS_TEST_FOR_EXCEPTION(
     (it != nodeVectorMap.end()), std::logic_error,
@@ -50,12 +48,15 @@ registerVectorState(const std::string &stateName, int ndofs) {
 }
 
 void NodalDataBase::initialize() {
-  if (initialized) return;
+  if (initialized) {
+    return;
+  }
 
-  if (vectorsize > 0)
+  if (vectorsize > 0) {
     nodal_data_vector = Teuchos::rcp(
       new NodalDataVector(nodeContainer, nodeVectorLayout, nodeVectorMap,
                                  vectorsize));
+  }
 
   initialized = true;
 }
@@ -70,30 +71,33 @@ replaceOverlapVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs)
 }
 
 void NodalDataBase::
-replaceVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs)
+replaceOwnedVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs)
 {
   initialize();
 
-  if (Teuchos::nonnull(nodal_data_vector))
-    nodal_data_vector->replaceVectorSpace(vs);
+  if (Teuchos::nonnull(nodal_data_vector)) {
+    nodal_data_vector->replaceOwnedVectorSpace(vs);
+  }
 }
 
 void NodalDataBase::
-resizeOverlapMap(const Teuchos::Array<Tpetra_GO>& overlap_nodeGIDs,
-                 const Teuchos::RCP<const Teuchos::Comm<int> >& comm_) {
+replaceOverlapVectorSpace(const Teuchos::Array<GO>& overlap_nodeGIDs,
+                          const Teuchos::RCP<const Teuchos_Comm>& comm_) {
   initialize();
 
-  if (Teuchos::nonnull(nodal_data_vector))
-    nodal_data_vector->resizeOverlapMap(overlap_nodeGIDs, comm_);
+  if (Teuchos::nonnull(nodal_data_vector)) {
+    nodal_data_vector->replaceOverlapVectorSpace(overlap_nodeGIDs, comm_);
+  }
 }
 
 void NodalDataBase::
-resizeLocalMap(const Teuchos::Array<Tpetra_GO>& local_nodeGIDs,
-               const Teuchos::RCP<const Teuchos::Comm<int> >& comm_) {
+replaceOwnedVectorSpace(const Teuchos::Array<GO>& local_nodeGIDs,
+                        const Teuchos::RCP<const Teuchos_Comm>& comm_) {
   initialize();
 
-  if (Teuchos::nonnull(nodal_data_vector))
-    nodal_data_vector->resizeLocalMap(local_nodeGIDs, comm_);
+  if (Teuchos::nonnull(nodal_data_vector)) {
+    nodal_data_vector->replaceOwnedVectorSpace(local_nodeGIDs, comm_);
+  }
 }
 
 void NodalDataBase::

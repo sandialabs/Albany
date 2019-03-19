@@ -4,23 +4,26 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: no Epetra
-
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
+
+#include "Adapt_ElementSizeField.hpp"
 #include "Adapt_NodalDataVector.hpp"
 #include "Albany_StateManager.hpp"
 
 template<typename T>
 T Sqr(T num)
 {
-    return num * num;
+  return num * num;
 }
 
+namespace Adapt
+{
+
 template<typename EvalT, typename Traits>
-Adapt::ElementSizeFieldBase<EvalT, Traits>::
+ElementSizeFieldBase<EvalT, Traits>::
 ElementSizeFieldBase(Teuchos::ParameterList& p,
-      const Teuchos::RCP<Albany::Layouts>& dl) :
+                     const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec(p.get<std::string>("Coordinate Vector Name"), dl->qp_vector),
   coordVec_vertices(p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector),
   qp_weights("Weights", dl->qp_scalar)
@@ -112,8 +115,8 @@ ElementSizeFieldBase(Teuchos::ParameterList& p,
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void Adapt::ElementSizeFieldBase<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+void ElementSizeFieldBase<EvalT, Traits>::
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
 //  this->utils.setFieldData(field,fm);
@@ -128,7 +131,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 // **********************************************************************
 // **********************************************************************
 template<typename Traits>
-Adapt::
+
 ElementSizeField<PHAL::AlbanyTraits::Residual, Traits>::
 ElementSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
   ElementSizeFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl)
@@ -136,21 +139,21 @@ ElementSizeField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>&
 }
 
 template<typename Traits>
-void Adapt::ElementSizeField<PHAL::AlbanyTraits::Residual, Traits>::
-preEvaluate(typename Traits::PreEvalData workset)
+void ElementSizeField<PHAL::AlbanyTraits::Residual, Traits>::
+preEvaluate(typename Traits::PreEvalData /* workset */)
 {
   // Note that we only need to initialize the vectors when dealing with node data, as we assume
   // the vectors are initialized to zero for Epetra_Export "ADD" operation
   // Zero data for accumulation here
   if( this->outputNodeData ) {
-    Teuchos::RCP<Adapt::NodalDataVector> node_data =
+    Teuchos::RCP<NodalDataVector> node_data =
        this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
     node_data->initializeVectors(0.0);
   }
 }
 
 template<typename Traits>
-void Adapt::ElementSizeField<PHAL::AlbanyTraits::Residual, Traits>::
+void ElementSizeField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   typename ElementSizeFieldBase<PHAL::AlbanyTraits::Residual, Traits>::MeshScalarT value;
@@ -161,8 +164,6 @@ evaluateFields(typename Traits::EvalData workset)
     Albany::MDArray data = (*workset.stateArrayPtr)[this->className + "_Cell"];
     std::vector<PHX::DataLayout::size_type> dims;
     data.dimensions(dims);
-    int size = dims.size();
-
 
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
           this->getCellRadius(cell, value);
@@ -177,8 +178,6 @@ evaluateFields(typename Traits::EvalData workset)
     Albany::MDArray data = (*workset.stateArrayPtr)[this->className + "_QP"];
     std::vector<PHX::DataLayout::size_type> dims;
     data.dimensions(dims);
-    int size = dims.size();
-
 
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
           this->getCellRadius(cell, value);
@@ -206,11 +205,10 @@ evaluateFields(typename Traits::EvalData workset)
   if( this->outputNodeData ) { // nominal radius, store as nodal data that will be scattered and summed
 
     // Get the node data block container
-    Teuchos::RCP<Adapt::NodalDataVector> node_data =
+    Teuchos::RCP<NodalDataVector> node_data =
       this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
-    const Teuchos::RCP<Tpetra_MultiVector>& data = node_data->getLocalNodeVector();
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
-    Teuchos::RCP<const Tpetra_Map> local_node_map = node_data->getLocalMap();
+    auto owned_node_vs = node_data->getOwnedVectorSpace();
 
     int l_nV = this->numVertices;
     int l_nD = this->numDims;
@@ -222,6 +220,7 @@ evaluateFields(typename Traits::EvalData workset)
     node_data->getNDofsAndOffset(this->className + "_Node", node_var_offset, node_var_ndofs);
     node_data->getNDofsAndOffset(this->className + "_NodeWgt", node_weight_offset, node_weight_ndofs);
 
+    auto data = Albany::getNonconstLocalData(node_data->getOwnedNodeVector());
     for (int cell = 0; cell < workset.numCells; ++cell) { // loop over all elements in workset
 
       std::vector<double> maxCoord(3,-1e10);
@@ -237,62 +236,63 @@ evaluateFields(typename Traits::EvalData workset)
 
       if(this->isAnisotropic) //An-isotropic
         // Note: code assumes blocksize of blockmap is numDims + 1 - the last entry accumulates the weight
+
+        
         for (int node = 0; node < l_nV; ++node) { // loop over all the "corners" of each element
           const GO global_row = wsElNodeID[cell][node];
-          if ( ! local_node_map->isNodeGlobalElement(global_row)) continue;
+          if (!Albany::locallyOwnedComponent(Albany::getSpmdVectorSpace(owned_node_vs),global_row)) {
+            continue;
+          }
 
+          const LO lid = Albany::getLocalElement(owned_node_vs,global_row);
           // accumulate 1/2 of the element width in each dimension - into each element corner
-          for (int k=0; k < node_var_ndofs; ++k)
-//            data[global_node][k] += ADValue(maxCoord[k] - minCoord[k]) / 2.0;
-            data->sumIntoGlobalValue(global_row, node_var_offset + k,
-                                     (maxCoord[k] - minCoord[k]) / 2.0);
+          for (int k=0; k < node_var_ndofs; ++k) {
+            data[node_var_offset+k][lid] += (maxCoord[k] - minCoord[k]) / 2.0;
+          }
 
           // save the weight (denominator)
-          data->sumIntoGlobalValue(global_row, node_weight_offset, 1.0);
+          data[node_weight_offset][lid] += 1.0;
 
-      } // end anisotropic size field
-
-      else // isotropic size field
+      } else {
+        // isotropic size field
         // Note: code assumes blocksize of blockmap is 1 + 1 = 2 - the last entry accumulates the weight
         for (int node = 0; node < l_nV; ++node) { // loop over all the "corners" of each element
           const GO global_row = wsElNodeID[cell][node];
-          if ( ! local_node_map->isNodeGlobalElement(global_row)) continue;
+          if (!Albany::locallyOwnedComponent(Albany::getSpmdVectorSpace(owned_node_vs),global_row)) {
+            continue;
+          }
+
+          const LO lid = Albany::getLocalElement(owned_node_vs,global_row);
 
           // save element radius, just a scalar
           for (int k=0; k < l_nD; ++k) {
-//            data[global_node][k] += ADValue(maxCoord[k] - minCoord[k]) / 2.0;
-            data->sumIntoGlobalValue(global_row, node_var_offset,
-                                     (maxCoord[k] - minCoord[k]) / 2.0);
+            data[node_var_offset][lid] += (maxCoord[k] - minCoord[k]) / 2.0;
             // save the weight (denominator)
-            data->sumIntoGlobalValue(global_row, node_weight_offset, 1.0);
+            data[node_weight_offset][lid] += 1.0;
 
           }
-
-
           // the above calculates the average of the element width, depth, and height when
           // divided by the accumulated weights
-
-      } // end isotropic size field
+        }
+      }
     } // end cell loop
   } // end node data if
 
 }
 
 template<typename Traits>
-void Adapt::ElementSizeField<PHAL::AlbanyTraits::Residual, Traits>::
+void ElementSizeField<PHAL::AlbanyTraits::Residual, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-
   if( this->outputNodeData ) {
 
     // Note: we are in postEvaluate so all PEs call this
 
     // Get the node data block container
-    Teuchos::RCP<Adapt::NodalDataVector> node_data =
+    Teuchos::RCP<NodalDataVector> node_data =
       this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
-    const Teuchos::RCP<Tpetra_MultiVector>& data = node_data->getOverlapNodeVector();
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
-    Teuchos::RCP<const Tpetra_Map> overlap_node_map = node_data->getOverlapMap();
+    auto overlap_node_vs = node_data->getOverlappedVectorSpace();
 
     int  node_var_offset;
     int  node_var_ndofs;
@@ -301,23 +301,26 @@ postEvaluate(typename Traits::PostEvalData workset)
     node_data->getNDofsAndOffset(this->className + "_Node", node_var_offset, node_var_ndofs);
     node_data->getNDofsAndOffset(this->className + "_NodeWgt", node_weight_offset, node_weight_ndofs);
 
-    // Build the exporter
-    node_data->initializeExport();
+    // Build the CombineAndScatter manager
+    node_data->initializeCASManager();
 
     // do the export
     node_data->exportAddNodalDataVector();
-
-    int numNodes = overlap_node_map->getNodeNumElements();
 
     // if isotropic, blocksize == 2 , if anisotropic blocksize == nDOF at node + 1
     // ndim if vector, ndim * ndim if tensor
 
     // all PEs divide the accumulated value(s) by the weights
-    Teuchos::ArrayRCP<const ST> weights = data->getData(node_weight_offset);
+    auto node_data_vector = node_data->getOverlapNodeVector();
+
+    Teuchos::ArrayRCP<const ST> weights = Albany::getLocalData(node_data_vector->col(node_weight_offset).getConst());
+    const int numNodes = Albany::getSpmdVectorSpace(overlap_node_vs)->localSubDim();
+
     for (int k=0; k < node_var_ndofs; ++k) {
-      Teuchos::ArrayRCP<ST> v = data->getDataNonConst(node_var_offset + k);
-      for (LO overlap_node = 0; overlap_node < numNodes; ++overlap_node)
+      Teuchos::ArrayRCP<ST> v = Albany::getNonconstLocalData(node_data_vector->col(node_var_offset + k));
+      for (int overlap_node=0; overlap_node<numNodes; ++overlap_node) {
         v[overlap_node] /= weights[overlap_node];
+      }
     }
 
     // Export the data from the local to overlapped decomposition
@@ -325,15 +328,13 @@ postEvaluate(typename Traits::PostEvalData workset)
     // Store the overlapped vector data back in stk in the field "field_name"
 
     node_data->saveNodalDataState();
-
   }
-
 }
 
 // **********************************************************************
 
 template<typename EvalT, typename Traits>
-void Adapt::ElementSizeFieldBase<EvalT, Traits>::
+void ElementSizeFieldBase<EvalT, Traits>::
 getCellRadius(const std::size_t cell, typename EvalT::MeshScalarT& cellRadius) const
 {
   std::vector<MeshScalarT> maxCoord(3,-1e10);
@@ -354,11 +355,10 @@ getCellRadius(const std::size_t cell, typename EvalT::MeshScalarT& cellRadius) c
 
 }
 
-
 // **********************************************************************
 template<typename EvalT, typename Traits>
 Teuchos::RCP<const Teuchos::ParameterList>
-Adapt::ElementSizeFieldBase<EvalT,Traits>::getValidSizeFieldParameters() const
+ElementSizeFieldBase<EvalT,Traits>::getValidSizeFieldParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
       rcp(new Teuchos::ParameterList("Valid ElementSizeField Params"));;
@@ -375,5 +375,4 @@ Adapt::ElementSizeFieldBase<EvalT,Traits>::getValidSizeFieldParameters() const
   return validPL;
 }
 
-// **********************************************************************
-
+} // namespace Adapt
