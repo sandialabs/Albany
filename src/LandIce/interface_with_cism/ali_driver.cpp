@@ -278,6 +278,8 @@ void ali_driver_init(int argc, int exec_mode, AliToGlimmer * ftg_ptr, const char
 {
 #ifndef CISM_USE_EPETRA
    static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+#else
+   static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
 #endif
    if (first_time_step)
      Kokkos::initialize();
@@ -807,20 +809,13 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
     Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
 
-#ifdef CISM_USE_EPETRA
-    const Epetra_Map& ownedMap(*albanyApp->getDiscretization()->getMap()); //owned map
-    const Epetra_Map& overlapMap(*albanyApp->getDiscretization()->getOverlapMap()); //overlap map
-    Epetra_Import import(overlapMap, ownedMap); //importer from ownedMap to overlapMap
-    Epetra_Vector solutionOverlap(overlapMap); //overlapped solution
-    solutionOverlap.Import(*albanyApp->getDiscretization()->getSolutionField(), import, Insert);
-#else
-    Teuchos::RCP<const Tpetra_Map> ownedMap = albanyApp->getDiscretization()->getMapT(); //owned map
-    Teuchos::RCP<const Tpetra_Map> overlapMap = albanyApp->getDiscretization()->getOverlapMapT(); //overlap map
-    Teuchos::RCP<Tpetra_Import> import = Teuchos::rcp(new Tpetra_Import(ownedMap, overlapMap));
-    Teuchos::RCP<Tpetra_Vector> solutionOverlap = Teuchos::rcp(new Tpetra_Vector(overlapMap));
-    solutionOverlap->doImport(*albanyApp->getDiscretization()->getSolutionFieldT(), *import, Tpetra::INSERT);
-    Teuchos::ArrayRCP<const ST> solutionOverlap_constView = solutionOverlap->get1dView();
-#endif
+    auto disc = albanyApp->getDiscretization();
+    auto ownedVS = disc->getVectorSpace();
+    auto overlapVS = disc->getOverlappedVectorSpace();
+    auto cas_manager = Albany::createCombineAndScatterManager(ownedVS,overlapVS);
+    auto solutionOverlap = Thyra::createMember(overlapVS);
+    cas_manager->scatter(*disc->getSolutionField(),*solutionOverlap,Albany::CombineMode::INSERT);
+    Teuchos::ArrayRCP<const ST> solutionOverlap_constView = Albany::getLocalData(solutionOverlap);
 
 #ifdef WRITE_TO_MATRIX_MARKET
 #ifdef CISM_USE_EPETRA
@@ -1045,19 +1040,17 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     }
 }
 
-
 //Clean up
 //IK, 12/3/13: this is not called anywhere in the interface code...  used to be called (based on old bisicles interface code)?
 void ali_driver_finalize(int ftg_obj_index)
 {
-  if (debug_output_verbosity != 0 && mpiCommT->getRank() == 0)
+  if (debug_output_verbosity != 0 && mpiCommT->getRank() == 0) {
     std::cout << "In ali_driver_finalize: cleaning up..." << std::endl;
+  }
 
-   //Nothing to do.
+  //Nothing to do.
 
-  if (debug_output_verbosity != 0 && mpiCommT->getRank() == 0)
+  if (debug_output_verbosity != 0 && mpiCommT->getRank() == 0) {
     std::cout << "...done cleaning up!" << std::endl << std::endl;
-
-
+  }
 }
-

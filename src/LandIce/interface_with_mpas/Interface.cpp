@@ -62,7 +62,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     int nGlobalTriangles, bool ordering, bool first_time_step,
     const std::vector<int>& indexToVertexID,
     const std::vector<int>& indexToTriangleID, double minBeta,
-    const std::vector<double>& regulThk,
+    const std::vector<double>& /* regulThk */,
     const std::vector<double>& levelsNormalizedThickness,
     const std::vector<double>& elevationData,
     const std::vector<double>& thicknessData,
@@ -75,11 +75,12 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     std::vector<double>& dissipationHeatOnTetra,
     std::vector<double>& velocityOnVertices,
     int& error,
-    const double& deltat) {
-
-
+    const double& deltat)
+{
 #ifndef MPAS_USE_EPETRA
   static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+#else
+  static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
 #endif
 
   int numVertices3D = (nLayers + 1) * indexToVertexID.size();
@@ -108,14 +109,15 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
   VectorFieldType* solutionField;
 
-  if (interleavedOrdering)
+  if (interleavedOrdering) {
     solutionField = Teuchos::rcp_dynamic_cast<
         Albany::OrdinarySTKFieldContainer<true> >(
         meshStruct->getFieldContainer())->getSolutionField();
-  else
+  } else {
     solutionField = Teuchos::rcp_dynamic_cast<
         Albany::OrdinarySTKFieldContainer<false> >(
         meshStruct->getFieldContainer())->getSolutionField();
+  }
 
   ScalarFieldType* surfaceHeightField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "surface_height");
   ScalarFieldType* thicknessField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "ice_thickness");
@@ -127,7 +129,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
   ScalarFieldType* effectivePressureField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "effective_pressure");
 
   bool nonEmptyEffectivePressure = effectivePressureData.size()>0;
-  for (UInt j = 0; j < numVertices3D; ++j) {
+  for (int j = 0; j < numVertices3D; ++j) {
     int ib = (ordering == 0) * (j % lVertexColumnShift)
         + (ordering == 1) * (j / vertexLayerShift);
     int il = (ordering == 0) * (j / lVertexColumnShift)
@@ -172,7 +174,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
   ScalarFieldType* temperature_field = meshStruct->metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
 
-  for (UInt j = 0; j < numPrisms; ++j) {
+  for (int j = 0; j < numPrisms; ++j) {
     int ib = (ordering == 0) * (j % (lElemColumnShift / 3))
         + (ordering == 1) * (j / (elemLayerShift / 3));
     int il = (ordering == 0) * (j / (lElemColumnShift / 3))
@@ -200,8 +202,6 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     }
   }
 
-
-
   if(!keptMesh) {
     albanyApp->createDiscretization();
   } else {
@@ -213,44 +213,43 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
   bool success = true;
   Teuchos::ArrayRCP<const ST> solution_constView;
-  Teuchos::RCP<const Tpetra_Map> overlapMap;
   try {
 #ifdef MPAS_USE_EPETRA
-  solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
+    solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
 #else
-   solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
+    solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
 #endif
 
-  Teuchos::ParameterList solveParams;
-  solveParams.set("Compute Sensitivities", false);
+    Teuchos::ParameterList solveParams;
+    solveParams.set("Compute Sensitivities", false);
 
-  Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
-  Teuchos::Array<
-      Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
-  Piro::PerformSolveBase(*solver, solveParams, thyraResponses,
-      thyraSensitivities);
+    Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
+    Teuchos::Array<
+        Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
+    Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
 
-  // Printing responses
-  const int num_g = solver->Ng();
-  for (int i=0; i<num_g-1; i++) {
-    if (albanyApp->getResponse(i)->isScalarResponse()) {
-      Thyra::ConstDetachedVectorView<double> g(thyraResponses[i]);
-      std::cout << std::setprecision(15) << "\nResponse " << i << ": " << g[0] << std::endl;
+    // Printing responses
+    const int num_g = solver->Ng();
+    for (int i=0; i<num_g-1; i++) {
+      if (albanyApp->getResponse(i)->isScalarResponse()) {
+        Thyra::ConstDetachedVectorView<double> g(thyraResponses[i]);
+        std::cout << std::setprecision(15) << "\nResponse " << i << ": " << g[0] << std::endl;
+      }
     }
-  }
 
-  overlapMap = albanyApp->getDiscretization()->getOverlapMapT();
-  Teuchos::RCP<Tpetra_Import> import = Teuchos::rcp(new Tpetra_Import(albanyApp->getDiscretization()->getMapT(), overlapMap));
-  Teuchos::RCP<Tpetra_Vector> solution = Teuchos::rcp(new Tpetra_Vector(overlapMap));
-  solution->doImport(*albanyApp->getDiscretization()->getSolutionFieldT(), *import, Tpetra::INSERT);
-  solution_constView = solution->get1dView();
+    auto overlapVS = albanyApp->getDiscretization()->getOverlapVectorSpace();
+    auto disc = albanyApp->getDiscretization();
+    auto cas_manager = Albany::createCombineAndScatterManager(disc->getVectorSpace(), disc->getOverlapVectorSpace());
+    Teuchos::RCP<Thyra_Vector> solution = Thyra::createMember(disc->getOverlapVectorSpace());
+    cas_manager->combine(*disc->getSolutionField(), *solution, Albany::CombineMode::INSERT);
+    solution_constView = Albany::getLocalData(solution.getConst());
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
 
   error = !success;
 
-
-  for (UInt j = 0; j < numVertices3D; ++j) {
+  auto overlapVS = albanyApp->getDiscretization()->getOverlapVectorSpace();
+  for (int j = 0; j < numVertices3D; ++j) {
     int ib = (ordering == 0) * (j % lVertexColumnShift)
         + (ordering == 1) * (j / vertexLayerShift);
     int il = (ordering == 0) * (j / lVertexColumnShift)
@@ -260,19 +259,18 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     int lId0, lId1;
 
     if (interleavedOrdering) {
-      lId0 = overlapMap->getLocalElement(neq * gId);
+      lId0 = Albany::getLocalElement(overlapVS,neq * gId);
       lId1 = lId0 + 1;
     } else {
-      lId0 = overlapMap->getLocalElement(gId);
+      lId0 = Albany::getLocalElement(overlapVS,gId);
       lId1 = lId0 + numVertices3D;
     }
     velocityOnVertices[j] = solution_constView[lId0];
     velocityOnVertices[j + numVertices3D] = solution_constView[lId1];
   }
 
-
   ScalarFieldType* dissipationHeatField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::ELEMENT_RANK, "dissipation_heat");
-  for (UInt j = 0; j < numPrisms; ++j) {
+  for (int j = 0; j < numPrisms; ++j) {
     int ib = (ordering == 0) * (j % (lElemColumnShift / 3))
         + (ordering == 1) * (j / (elemLayerShift / 3));
     int il = (ordering == 0) * (j / (lElemColumnShift / 3))
@@ -298,7 +296,7 @@ void velocity_solver_export_fo_velocity(MPI_Comm reducedComm) {
 #endif
 }
 
-int velocity_solver_init_mpi(int *fComm) {
+int velocity_solver_init_mpi(int /* *fComm */) {
   Kokkos::initialize();
   return 0;
 }
@@ -343,7 +341,7 @@ void velocity_solver_set_physical_parameters(double const& gravity, double const
 }
 
 void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
-    int nGlobalVertices, int nGlobalEdges, int Ordering, MPI_Comm reducedComm,
+    int nGlobalVertices, int nGlobalEdges, int Ordering, MPI_Comm /* reducedComm */,
     const std::vector<int>& indexToVertexID,
     const std::vector<int>& mpasIndexToVertexID,
     const std::vector<double>& verticesCoords,
@@ -544,4 +542,3 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
       dirichletNodesIds, floating2dEdgesIds,
       meshStruct->getMeshSpecs()[0]->worksetSize, nLayers, Ordering);
 }
-
