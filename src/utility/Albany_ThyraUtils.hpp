@@ -42,9 +42,10 @@ createSubspace (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
                 const Teuchos::ArrayView<const LO>& subspace_components);
 
 // Create a vector space, given the ids of the space components
-Teuchos::RCP<const Thyra_VectorSpace>
+Teuchos::RCP<const Thyra_SpmdVectorSpace>
 createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                   const Teuchos::ArrayView<const GO>& gids);
+                   const Teuchos::ArrayView<const GO>& gids,
+                   const GO globalDim = Teuchos::OrdinalTraits<GO>::invalid());
 
 // ========= Thyra_LinearOp utilities ========= //
 

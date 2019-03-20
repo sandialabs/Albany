@@ -289,19 +289,22 @@ createSubspace (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
 }
 
 // Create a vector space, given the ids of the space components
-Teuchos::RCP<const Thyra_VectorSpace>
+Teuchos::RCP<const Thyra_SpmdVectorSpace>
 createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                   const Teuchos::ArrayView<const GO>& gids)
+                   const Teuchos::ArrayView<const GO>& gids,
+                   const GO globalDim)
 {
   auto bt = build_type();
+  const GO invalid = Teuchos::OrdinalTraits<GO>::invalid();
   if (bt == BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
     auto ecomm = createEpetraCommFromTeuchosComm(comm);
     Teuchos::RCP<const Epetra_BlockMap> emap;
+    const Epetra_GO numGlobalElements = (globalDim==invalid) ? -1 : static_cast<Epetra_GO>(globalDim);
     if (sizeof(GO)==sizeof(Epetra_GO)) {
       // Same size, different type names. A reinterpret_cast is safe
       const Epetra_GO* egids = reinterpret_cast<const Epetra_GO*>(gids.getRawPtr());
-      emap = Teuchos::rcp( new Epetra_BlockMap(-1,gids.size(),egids,1,0,*ecomm) );
+      emap = Teuchos::rcp( new Epetra_BlockMap(numGlobalElements,gids.size(),egids,1,0,*ecomm) );
     } else {
       // The types have a different size. Need to copy GO's into Epetra_GO's
       Teuchos::Array<Epetra_GO> egids(gids.size());
@@ -310,7 +313,7 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
         ALBANY_EXPECT(gids[i]<=max_safe_gid, "Error! Input gids exceed Epetra_GO ranges.\n");
         egids[i] = static_cast<Epetra_GO>(gids[i]);
       }
-      emap = Teuchos::rcp( new Epetra_BlockMap(-1,gids.size(),egids.getRawPtr(),1,0,*ecomm) );
+      emap = Teuchos::rcp( new Epetra_BlockMap(numGlobalElements,gids.size(),egids.getRawPtr(),1,0,*ecomm) );
     }
     return createThyraVectorSpace(emap);
 #else
@@ -318,8 +321,9 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
 #endif
   } else if (bt == BuildType::Tpetra) {
     auto gsi = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
+    const decltype(gsi) numGlobalElements = (globalDim==invalid) ? gsi : static_cast<Epetra_GO>(globalDim);
     Teuchos::ArrayView<const Tpetra_GO> tgids(reinterpret_cast<const Tpetra_GO*>(gids.getRawPtr()),gids.size());
-    Teuchos::RCP<const Tpetra_Map> tmap = Teuchos::rcp( new Tpetra_Map(gsi,tgids,0,comm) );
+    Teuchos::RCP<const Tpetra_Map> tmap = Teuchos::rcp( new Tpetra_Map(numGlobalElements,tgids,0,comm) );
     return createThyraVectorSpace(tmap);
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Invalid or unsupported build type.\n");

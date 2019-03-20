@@ -13,7 +13,7 @@ namespace Albany
 // routine that performs the check before calling the Thyra converter.
 
 // ============ Tpetra->Thyra conversion routines ============ //
-Teuchos::RCP<const Thyra_VectorSpace>
+Teuchos::RCP<const Thyra_SpmdVectorSpace>
 createThyraVectorSpace (const Teuchos::RCP<const Tpetra_Map>& map);
 
 Teuchos::RCP<Thyra_Vector>

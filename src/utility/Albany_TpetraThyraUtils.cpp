@@ -18,10 +18,10 @@ private:
 
 // ============ Tpetra->Thyra conversion routines ============ //
 
-Teuchos::RCP<const Thyra_VectorSpace>
+Teuchos::RCP<const Thyra_SpmdVectorSpace>
 createThyraVectorSpace (const Teuchos::RCP<const Tpetra_Map>& map)
 {
-  Teuchos::RCP<const Thyra_VectorSpace> vs;
+  Teuchos::RCP<const Thyra_SpmdVectorSpace> vs;
   if (!map.is_null()) {
     vs = Thyra::tpetraVectorSpace<ST>(map);
   }
