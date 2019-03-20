@@ -2903,7 +2903,6 @@ STKDiscretization::buildSideSetProjectors()
   Teuchos::Array<ST> vals(1);
   vals[0] = 1.0;
 
-  LO num_entries;
   Teuchos::ArrayView<const Tpetra_GO> ss_indices;
   stk::mesh::EntityRank SIDE_RANK = stkMeshStruct->metaData->side_rank();
   for (auto it : sideSetDiscretizationsSTK)
@@ -2927,8 +2926,7 @@ STKDiscretization::buildSideSetProjectors()
         selector, stkMeshStruct->bulkData->buckets(SIDE_RANK), sides);
 
     // The projector: first the overlapped...
-    ov_graphP = Teuchos::rcp(new ThyraCrsMatrixFactory(ss_ov_vs, ss_ov_vs, 1));
-    num_entries = getSpmdVectorSpace(ss_ov_vs)->localSubDim();
+    ov_graphP = Teuchos::rcp(new ThyraCrsMatrixFactory(getOverlapVectorSpace(), ss_ov_vs, 1));
 
     const std::map<GO, GO>& side_cell_map = sideToSideSetCellMap.at(it.first);
     const std::map<GO, std::vector<int>>& node_numeration_map = sideNodeNumerationMap.at(it.first);
@@ -2965,7 +2963,7 @@ STKDiscretization::buildSideSetProjectors()
     ov_projectors[sideSetName] = ov_P;
 
     // ...then the non-overlapped
-    graphP = Teuchos::rcp( new ThyraCrsMatrixFactory(ss_vs, ss_vs, ov_graphP) );
+    graphP = Teuchos::rcp( new ThyraCrsMatrixFactory(getVectorSpace(), ss_vs, ov_graphP) );
 
     P = graphP->createOp();
     assign(P,1.0);
