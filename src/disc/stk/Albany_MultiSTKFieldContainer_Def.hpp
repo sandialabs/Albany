@@ -50,7 +50,10 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
   const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
   const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
   const int neq_,
-  const AbstractFieldContainer::FieldContainerRequirements& /* req */, // TODO: remove this altogether?
+  const AbstractFieldContainer::FieldContainerRequirements&  req , // TODO: remove this altogether?   
+                                                                   // IKT reply: req is currently used in lattice orientation stuff which 
+                                                                   // I think is for peridigm.  Peridigm doesn't compile now so we should 
+                                                                   // check what are the plans for it...
   const int numDim_,
   const Teuchos::RCP<StateInfoStruct>& sis,
   const Teuchos::Array<Teuchos::Array<std::string> >& solution_vector,
