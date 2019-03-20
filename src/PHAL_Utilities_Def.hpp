@@ -28,7 +28,7 @@ MDFieldIterator (PHX::MDField<T>& a) : a_(a) {
   rank_ = a.rank();
   done_ = a.size() == 0;
   for (int i = 0; i < rank_; ++i) {
-    dimsm1_[i] = a.dimension(i) - 1;
+    dimsm1_[i] = a.extent(i) - 1;
     idxs_[i] = 0;
   }
   i_ = 0;
@@ -68,7 +68,7 @@ MDFieldIterator<T>::ref () {
   }
 }
 
-#define dloop(i, dim) for (int i = 0; i < a.dimension(dim); ++i)
+#define dloop(i, dim) for (int i = 0; i < a.extent(dim); ++i)
 // Runtime MDField.
 template<class Functor, typename ScalarT>
 void loop (Functor& f, PHX::MDField<ScalarT>& a) {
@@ -239,7 +239,7 @@ create_copy( const std::string& /* name */,
   using Src = Kokkos::DynRankView<T,P...>;
   using Dst = typename Kokkos::DynRankView<T,P...>::non_const_type;
   auto sl = src.layout();
-  auto sm = src.implementation_map();
+  auto sm = src.impl_map();
   auto fad_rank = src.rank();
   sl.dimension[fad_rank] = sm.dimension_scalar();
   auto real_rank = fad_rank + 1;

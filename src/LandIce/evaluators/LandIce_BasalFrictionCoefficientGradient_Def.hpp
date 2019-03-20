@@ -37,8 +37,8 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 
   std::string betaType = util::upper_case((beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "Given Field"));
 
-  numSideQPs = dl->qp_gradient->dimension(2);
-  sideDim    = dl->qp_gradient->dimension(3);
+  numSideQPs = dl->qp_gradient->extent(2);
+  sideDim    = dl->qp_gradient->extent(3);
 
   basalSideName = p.get<std::string>("Side Set Name");
   if (betaType == "GIVEN CONSTANT")
@@ -71,7 +71,7 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
     GradBF     = PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Variable Name"), dl->node_qp_gradient);
     this->addDependentField (GradBF);
 
-    numSideNodes = dl->node_qp_gradient->dimension(2);
+    numSideNodes = dl->node_qp_gradient->extent(2);
   }
   else if ((betaType == "GALERKIN PROJECTION OF EXPONENT OF GIVEN FIELD"))
   {
@@ -106,7 +106,7 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
     this->addDependentField (lambdaParam);
     this->addDependentField (powerParam);
 
-    vecDim = dl->qp_vecgradient->dimension(3);
+    vecDim = dl->qp_vecgradient->extent(3);
 
     A = beta_list.get<double>("Constant Flow Factor A");
 

@@ -75,10 +75,10 @@ void contractDataFieldScalar(ArrayOutFields &       outputFields,
                              const ArrayInFields &  inputFields,
                              const bool             sumInto) {
 
-  int numCells       = inputFields.dimension(0);
-  int numFields      = inputFields.dimension(1);
-  int numPoints      = inputFields.dimension(2);
-  int numDataPoints  = inputData.dimension(1);
+  int numCells       = inputFields.extent(0);
+  int numFields      = inputFields.extent(1);
+  int numPoints      = inputFields.extent(2);
+  int numDataPoints  = inputData.extent(1);
 
   if (sumInto) {
         if (numDataPoints != 1) { // nonconstant data

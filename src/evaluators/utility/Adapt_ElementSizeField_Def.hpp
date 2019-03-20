@@ -49,9 +49,9 @@ ElementSizeFieldBase(Teuchos::ParameterList& p,
   Teuchos::RCP<PHX::DataLayout> vector_dl = dl->qp_vector;
   Teuchos::RCP<PHX::DataLayout> cell_dl = dl->cell_scalar;
   Teuchos::RCP<PHX::DataLayout> vert_vector_dl = dl->vertices_vector;
-  numQPs = vector_dl->dimension(1);
-  numDims = vector_dl->dimension(2);
-  numVertices = vert_vector_dl->dimension(2);
+  numQPs = vector_dl->extent(1);
+  numDims = vector_dl->extent(2);
+  numVertices = vert_vector_dl->extent(2);
   this->addDependentField(qp_weights.fieldTag());
   this->addDependentField(coordVec.fieldTag());
   this->addDependentField(coordVec_vertices.fieldTag());

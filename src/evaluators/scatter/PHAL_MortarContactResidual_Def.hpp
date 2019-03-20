@@ -59,7 +59,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
     for (std::size_t eq = 0; eq < numFieldsBase; ++eq)
       this->utils.setFieldData(val[eq],fm);
-    numNodes = val[0].dimension(1);
+    numNodes = val[0].extent(1);
 }
 
 // **********************************************************************
@@ -187,7 +187,7 @@ KOKKOS_INLINE_FUNCTION
 void MortarContactResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_MortarContactJacRank0_Adjoint_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.dimension(2);
+  //const int neq = nodeID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO colT[500];
@@ -220,7 +220,7 @@ KOKKOS_INLINE_FUNCTION
 void MortarContactResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_MortarContactJacRank0_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.dimension(2);
+  //const int neq = nodeID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   //colT=(LO*) Kokkos::cuda_malloc<PHX::Device>(nunk*sizeof(LO));
@@ -265,7 +265,7 @@ KOKKOS_INLINE_FUNCTION
 void MortarContactResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_MortarContactJacRank1_Adjoint_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.dimension(2);
+  //const int neq = nodeID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO colT[500];
@@ -301,7 +301,7 @@ KOKKOS_INLINE_FUNCTION
 void MortarContactResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_MortarContactJacRank1_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.dimension(2);
+  //const int neq = nodeID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO colT[500];
@@ -348,7 +348,7 @@ KOKKOS_INLINE_FUNCTION
 void MortarContactResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_MortarContactJacRank2_Adjoint_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.dimension(2);
+  //const int neq = nodeID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO colT[500];
@@ -382,7 +382,7 @@ KOKKOS_INLINE_FUNCTION
 void MortarContactResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_MortarContactJacRank2_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.dimension(2);
+  //const int neq = nodeID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO colT[500];
@@ -423,7 +423,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
   const bool loadResid = Teuchos::nonnull(fT);
   Teuchos::Array<LO> colT;
-  const int neq = nodeID.dimension(2);
+  const int neq = nodeID.extent(2);
   const int nunk = neq*this->numNodes;
   colT.resize(nunk);
   int numDims = 0;
@@ -469,7 +469,7 @@ evaluateFields(typename Traits::EvalData workset)
   nodeID = workset.wsElNodeEqID;
 
   // Get dimensions
-  neq = nodeID.dimension(2);
+  neq = nodeID.extent(2);
   nunk = neq*this->numNodes;
 
   // Get Tpetra vector view and local matrix
@@ -582,7 +582,7 @@ evaluateFields(typename Traits::EvalData workset)
   int numDims = 0;
 
   if (trans) {
-    const int neq = nodeID.dimension(2);
+    const int neq = nodeID.extent(2);
     const Albany::IDArray&  wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =

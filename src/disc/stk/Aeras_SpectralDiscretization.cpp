@@ -2658,7 +2658,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
       Albany::BucketArray<Albany::AbstractSTKFieldContainer::QPScalarFieldType> array(**qpss, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPSFT dim[1]: "
-      //           << array.dimension(1) << std::endl;
+      //           << array.extent(1) << std::endl;
       Albany::MDArray ar = array;
       stateArrays.elemStateArrays[b][(*qpss)->name()] = ar;
     }
@@ -2669,7 +2669,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
         array(**qpvs, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPVFT dim[2]: "
-      //           << array.dimension(2) << std::endl;
+      //           << array.extent(2) << std::endl;
       Albany::MDArray ar = array;
       stateArrays.elemStateArrays[b][(*qpvs)->name()] = ar;
     }
@@ -2679,7 +2679,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
       Albany::BucketArray<Albany::AbstractSTKFieldContainer::QPTensorFieldType> array(**qpts, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPTFT dim[3]: "
-      //           << array.dimension(3) << std::endl;
+      //           << array.extent(3) << std::endl;
       Albany::MDArray ar = array;
       stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
     }
@@ -2690,7 +2690,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
       shards::Array<double, shards::NaturalOrder, Cell> array(&time[**svs], size);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " SVState dim[0]: "
-      //           << array.dimension(0) << std::endl;
+      //           << array.extent(0) << std::endl;
       // std::cout << "SV Name: " << **svs << " address : " << &array << std::endl;
       Albany::MDArray ar = array;
       stateArrays.elemStateArrays[b][**svs] = ar;

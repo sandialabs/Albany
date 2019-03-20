@@ -157,10 +157,10 @@ IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::IPtoNodalField(
   Teuchos::RCP<PHX::DataLayout> cell_dl        = dl->cell_scalar;
   Teuchos::RCP<PHX::DataLayout> node_dl        = dl->node_qp_vector;
   Teuchos::RCP<PHX::DataLayout> vert_vector_dl = dl->vertices_vector;
-  num_pts_                                     = vector_dl->dimension(1);
-  num_dims_                                    = vector_dl->dimension(2);
-  num_nodes_                                   = node_dl->dimension(1);
-  num_vertices_                                = vert_vector_dl->dimension(2);
+  num_pts_                                     = vector_dl->extent(1);
+  num_dims_                                    = vector_dl->extent(2);
+  num_nodes_                                   = node_dl->extent(1);
+  num_vertices_                                = vert_vector_dl->extent(2);
 
   // Surface element prefix, if any.
   bool const is_surface_block = mesh_specs->ebName == "Surface Element";

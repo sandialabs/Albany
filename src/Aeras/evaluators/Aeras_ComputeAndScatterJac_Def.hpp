@@ -25,10 +25,10 @@ ComputeAndScatterJacBase(const Teuchos::ParameterList& p,
   wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient),
   lambda_nodal  (p.get<std::string>  ("Lambda Coord Nodal Name"), dl->node_scalar),
   theta_nodal   (p.get<std::string>  ("Theta Coord Nodal Name"), dl->node_scalar),
-  worksetSize(dl->node_scalar             ->dimension(0)),
-  numNodes   (dl->node_scalar             ->dimension(1)),
-  numDims    (dl->node_qp_gradient        ->dimension(3)),
-  numLevels  (dl->node_scalar_level       ->dimension(2)), 
+  worksetSize(dl->node_scalar             ->extent(0)),
+  numNodes   (dl->node_scalar             ->extent(1)),
+  numDims    (dl->node_qp_gradient        ->extent(3)),
+  numLevels  (dl->node_scalar_level       ->extent(2)), 
   numFields  (0), numNodeVar(0), numVectorLevelVar(0),  numScalarLevelVar(0), numTracerVar(0)
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
@@ -383,7 +383,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if ( buildMass ) {
     for (int cell=0; cell < workset.numCells; ++cell ) {
-      const int neq = nodeID.dimension(2);
+      const int neq = nodeID.extent(2);
       for (int node = 0; node < this->numNodes; ++node) {
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
@@ -431,7 +431,7 @@ evaluateFields(typename Traits::EvalData workset)
     Kokkos::DynRankView<RealType, PHX::Device>  GRKK("KK", numn*3,numn*2); 
     Kokkos::DynRankView<RealType, PHX::Device>  KTGRKK("KK", numn*2,numn*2); 
     for (int cell=0; cell < workset.numCells; ++cell ) {
-      const int neq = nodeID.dimension(2);
+      const int neq = nodeID.extent(2);
       col.resize(neq * this->numNodes);
       for (int node=0; node<this->numNodes; node++){
         for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -599,7 +599,7 @@ evaluateFields(typename Traits::EvalData workset)
 #else // ALBANY_KOKKOS_UNDER_DEVELOPMENT
   jacobian = Albany::getNonconstDeviceData(workset.Jac);
   mc = workset.m_coeff;
-  neq = workset.wsElNodeEqID.dimension(2);
+  neq = workset.wsElNodeEqID.extent(2);
   nodeID = workset.wsElNodeEqID;
 
   bool buildMass = ( ( workset.j_coeff == 0.0 )&&( workset.m_coeff != 0.0 )&&( workset.n_coeff == 0.0 ) );

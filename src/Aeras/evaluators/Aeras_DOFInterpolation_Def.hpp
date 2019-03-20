@@ -21,8 +21,8 @@ DOFInterpolation(Teuchos::ParameterList& p,
   BF          (p.get<std::string>   ("BF Name"),                                  dl->node_qp_scalar),
   val_qp      (p.get<std::string>   ("Variable Name"), 
                p.get<Teuchos::RCP<PHX::DataLayout> >("Quadpoint Variable Layout", dl->qp_scalar_level)),
-  numNodes   (dl->node_scalar             ->dimension(1)),
-  numLevels  (dl->node_scalar_level       ->dimension(2)),
+  numNodes   (dl->node_scalar             ->extent(1)),
+  numLevels  (dl->node_scalar_level       ->extent(2)),
   numRank    (val_node.fieldTag().dataLayout().rank())
 {
   this->addDependentField(val_node);

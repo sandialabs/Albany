@@ -20,9 +20,9 @@ DOFVecInterpolationLevels(Teuchos::ParameterList& p,
   val_node    (p.get<std::string>   ("Variable Name"), dl->node_vector_level),
   BF          (p.get<std::string>   ("BF Name"),       dl->node_qp_scalar),
   val_qp      (p.get<std::string>   ("Variable Name"), dl->qp_vector_level),
-  numNodes   (dl->node_scalar             ->dimension(1)),
-  numDims    (dl->node_qp_gradient        ->dimension(3)),
-  numLevels  (dl->node_scalar_level       ->dimension(2))
+  numNodes   (dl->node_scalar             ->extent(1)),
+  numDims    (dl->node_qp_gradient        ->extent(3)),
+  numLevels  (dl->node_scalar_level       ->extent(2))
 {
   this->addDependentField(val_node);
   this->addDependentField(BF);

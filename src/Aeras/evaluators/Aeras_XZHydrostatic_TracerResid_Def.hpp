@@ -33,10 +33,10 @@ XZHydrostatic_TracerResid(Teuchos::ParameterList& p,
                    p.get<Teuchos::ParameterList*>("XZHydrostatic Problem")->get<double>("Viscosity", 0.0):
                    p.get<Teuchos::ParameterList*>("Hydrostatic Problem")  ->get<double>("Viscosity", 0.0)),
   Residual   (p.get<std::string> ("Residual Name"),                    dl->node_scalar_level),        
-  numNodes   (dl->node_scalar             ->dimension(1)),
-  numQPs     (dl->node_qp_scalar          ->dimension(2)),
-  numDims    (dl->node_qp_gradient        ->dimension(3)),
-  numLevels  (dl->node_scalar_level       ->dimension(2))
+  numNodes   (dl->node_scalar             ->extent(1)),
+  numQPs     (dl->node_qp_scalar          ->extent(2)),
+  numDims    (dl->node_qp_gradient        ->extent(3)),
+  numLevels  (dl->node_scalar_level       ->extent(2))
 {
   this->addDependentField(TracerDot);
   this->addDependentField(UTracerDiv);

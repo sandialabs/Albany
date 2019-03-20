@@ -42,9 +42,9 @@ HydrologyWaterThickness (const Teuchos::ParameterList& p,
 
     sideSetName = p.get<std::string>("Side Set Name");
 
-    numPts = layout->dimension(2);
+    numPts = layout->extent(2);
   } else {
-    numPts = layout->dimension(1);
+    numPts = layout->extent(1);
   }
 
   u_b = PHX::MDField<const IceScalarT>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);

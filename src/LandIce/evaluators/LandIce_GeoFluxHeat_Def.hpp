@@ -71,7 +71,7 @@ GeoFluxHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
   int numSides = dims[1];
   numSideNodes = dims[2];
   numSideQPs   = dims[3];
-  numCellNodes = geoFluxHeat.fieldTag().dataLayout().dimension(1);
+  numCellNodes = geoFluxHeat.fieldTag().dataLayout().extent(1);
 
   dl->node_vector->dimensions(dims);
   vecDimFO     = std::min((int)dims[2],2);

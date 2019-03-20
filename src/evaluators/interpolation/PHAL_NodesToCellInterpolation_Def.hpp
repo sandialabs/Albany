@@ -26,7 +26,7 @@ NodesToCellInterpolationBase (const Teuchos::ParameterList& p,
     field_node = decltype(field_node)(p.get<std::string> ("Field Node Name"), dl->node_vector);
     field_cell = decltype(field_cell)(p.get<std::string> ("Field Cell Name"), dl->cell_vector);
 
-    vecDim = dl->node_vector->dimension(2);
+    vecDim = dl->node_vector->extent(2);
   }
   else
   {
@@ -34,8 +34,8 @@ NodesToCellInterpolationBase (const Teuchos::ParameterList& p,
     field_cell = decltype(field_cell)(p.get<std::string> ("Field Cell Name"), dl->cell_scalar2);
   }
 
-  numQPs   = dl->qp_scalar->dimension(1);
-  numNodes = dl->node_scalar->dimension(1);
+  numQPs   = dl->qp_scalar->extent(1);
+  numNodes = dl->node_scalar->extent(1);
 
   this->addDependentField (BF.fieldTag());
   this->addDependentField (field_node.fieldTag());

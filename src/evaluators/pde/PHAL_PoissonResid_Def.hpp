@@ -69,8 +69,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   auto neg_source = PHAL::create_copy("neg_Source", Source.get_view());
   if (haveSource) {
-    for (int i=0; i<Source.dimension(0); i++)
-      for (int j=0; j<Source.dimension(1); j++)
+    for (int i=0; i<Source.extent(0); i++)
+      for (int j=0; j<Source.extent(1); j++)
         neg_source(i,j) = -1.0 * Source(i,j);
     FST::integrate(PhiResidual.get_view(), neg_source, wBF.get_view(), true); // "true" sums into
   }

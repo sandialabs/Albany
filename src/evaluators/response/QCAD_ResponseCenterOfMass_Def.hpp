@@ -64,7 +64,7 @@ ResponseCenterOfMass(Teuchos::ParameterList& p,
     fieldName + " Local Response Center of Mass";
   std::string global_response_name = 
     fieldName + " Global Response Center of Mass";
-  int worksetSize = scalar_dl->dimension(0);
+  int worksetSize = scalar_dl->extent(0);
   int responseSize = 4;
   Teuchos::RCP<PHX::DataLayout> local_response_layout =
     Teuchos::rcp(new MDALayout<Cell,Dim>(worksetSize, responseSize));

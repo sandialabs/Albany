@@ -27,8 +27,8 @@ XZHydrostatic_GeoPotential(const Teuchos::ParameterList& p,
   Phi       (p.get<std::string> ("GeoPotential"), dl->node_scalar_level),
   PhiSurf   (p.get<std::string> ("SurfaceGeopotential")  , dl->node_scalar),
   
-  numNodes ( dl->node_scalar          ->dimension(1)),
-  numLevels( dl->node_scalar_level    ->dimension(2)),
+  numNodes ( dl->node_scalar          ->extent(1)),
+  numLevels( dl->node_scalar_level    ->extent(2)),
   Phi0(0.0),
   E (Eta<EvalT>::self())
 {

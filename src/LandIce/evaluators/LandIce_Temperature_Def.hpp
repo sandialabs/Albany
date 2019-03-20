@@ -45,9 +45,9 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 
   numNodes = dims[1];
 
-  numSideNodes  = dl_side->node_scalar->dimension(2);
+  numSideNodes  = dl_side->node_scalar->extent(2);
 
-  int numSides = dl_side->node_scalar->dimension(1);
+  int numSides = dl_side->node_scalar->extent(1);
   int sideDim  = cellType->getDimension()-1;
 
   sideNodes.resize(numSides);

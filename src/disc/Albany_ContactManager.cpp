@@ -165,7 +165,7 @@ Albany::ContactManager::processSS(const int ctr, const std::string& sideSetName,
   moertelInterface->SetFunctionTypes(primal, dual);
 
 //  std::size_t numFields = disc.getWsElNodeEqID()[0][0][0].size(); // num equations at each node
-  std::size_t numFields = disc.getWsElNodeEqID()->dimension(3); // num equations at each node
+  std::size_t numFields = disc.getWsElNodeEqID()->extent(3); // num equations at each node
 
   // Loop over all the worksets, and put the sides in the Moertel Interface Obj
 

@@ -130,8 +130,8 @@ evaluateFields(typename Traits::EvalData workset)
   if (haveSource) {
     auto neg_source = PHAL::create_copy("neg_source", Source.get_view());
 
-    for (int i =0; i< Source.dimension(0); i++)
-     for (int j =0; j< Source.dimension(1); j++)
+    for (int i =0; i< Source.extent(0); i++)
+     for (int j =0; j< Source.extent(1); j++)
        neg_source(i,j) = Source(i,j) * -1.0;
     FST::integrate(TResidual.get_view(), neg_source, wBF.get_view(), true); // "true" sums into
   }

@@ -18,7 +18,7 @@ ResponseSquaredL2DifferenceBase(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Parameter List");
 
   // Gathering dimensions
-  numQPs   = dl->qp_scalar->dimension(1);
+  numQPs   = dl->qp_scalar->extent(1);
 
   Teuchos::RCP<PHX::DataLayout> layout;
   std::string rank,fname,target_fname;
@@ -50,7 +50,7 @@ ResponseSquaredL2DifferenceBase(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   p.set("Stand-alone Evaluator", false);
   std::string local_response_name = "Local Response Squared L2 Error ";
   std::string global_response_name = "Global Response Squared L2 Error ";
-  int worksetSize = dl->cell_scalar->dimension(0);
+  int worksetSize = dl->cell_scalar->extent(0);
   int responseSize = 1;
   Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(new PHX::MDALayout<Cell, Dim>(worksetSize, responseSize));
   Teuchos::RCP<PHX::DataLayout> global_response_layout = Teuchos::rcp(new PHX::MDALayout<Dim>(responseSize));

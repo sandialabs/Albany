@@ -452,7 +452,7 @@ void MPMD_App::copyFieldIntoState(const std::string& name, const Plato::SharedDa
   Teuchos::ArrayRCP<double> otopo = m_overlapVector->get1dViewNonConst(); 
   for(int ws=0; ws<numWorksets; ws++){
     Albany::MDArray& wsTopo = dest[ws][name];
-    int numCells = wsTopo.dimension(0), numNodes = wsTopo.dimension(1);
+    int numCells = wsTopo.extent(0), numNodes = wsTopo.extent(1);
     for(int cell=0; cell<numCells; cell++)
       for(int node=0; node<numNodes; node++){
         int gid = wsElNodeID[ws][cell][node];
@@ -500,8 +500,8 @@ void MPMD_App::copyFieldFromState(const std::string& name, Plato::SharedData& sf
   // copy the field from the state manager
   for(int ws=0; ws<numWorksets; ws++){
     Albany::MDArray& wsSrc = src[ws][name];
-    int numCells = wsSrc.dimension(0);
-    int numNodes = wsSrc.dimension(1);
+    int numCells = wsSrc.extent(0);
+    int numNodes = wsSrc.extent(1);
     for(int cell=0; cell<numCells; cell++)
       for(int node=0; node<numNodes; node++) {
         m_overlapVector->sumIntoGlobalValue(wsElNodeID[ws][cell][node],wsSrc(cell,node));
