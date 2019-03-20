@@ -1505,13 +1505,13 @@ void STKDiscretization::computeNodalVectorSpaces(bool overlapped)
     // To do it, we need a NodalDOFManager. Simply grab it from the first dofstruct on this part
     DOFsStruct* random_dofs_struct = it1.second.begin()->second;
     NodalDOFManager& nodal_dofManager = (overlapped) ? random_dofs_struct->overlap_dofManager : random_dofs_struct->dofManager;
-    nodal_dofManager.setup(1,numNodes,maxGlobalNodeGID,interleavedOrdering);
+    nodal_dofManager.setup(1,numNodes,maxGlobalNodeGID,false);
     
     indices.resize(numNodes);
     for (int i = 0; i < numNodes; i++) {
       const LO lid = nodal_dofManager.getLocalDOF(i, 0);
-      const GO nodeId = bulkData.identifier(nodes[i]);
-      indices[lid] = nodal_dofManager.getGlobalDOF(nodeId - 1, 0); // STK ids start from 1. Subtract 1 to get 0-based indexing.
+      const GO nodeId = bulkData.identifier(nodes[i]) - 1; // STK ids start from 1. Subtract 1 to get 0-based indexing.
+      indices[lid] = nodal_dofManager.getGlobalDOF(nodeId, 0);
     }
 
     Teuchos::RCP<const Thyra_VectorSpace> part_node_vs = createVectorSpace(comm,indices());
@@ -1533,10 +1533,10 @@ void STKDiscretization::computeNodalVectorSpaces(bool overlapped)
         // We need to build the vs from scratch.
         indices.resize(numNodes * numComponents);
         for (int i = 0; i < numNodes; i++) {
-          const GO nodeId = bulkData.identifier(nodes[i]);
+          const GO nodeId = bulkData.identifier(nodes[i]) - 1; // STK ids start from 1. Subtract 1 to get 0-based indexing.
           for (int j = 0; j < numComponents; j++) {
-            const LO lid = nodal_dofManager.getLocalDOF(i, j);
-            indices[lid] = dofManager.getGlobalDOF(nodeId - 1, j); // STK ids start from 1. Subtract 1 to get 0-based indexing.
+            const LO lid = dofManager.getLocalDOF(i, j);
+            indices[lid] = dofManager.getGlobalDOF(nodeId, j);
         }}
         Teuchos::RCP<const Thyra_VectorSpace>& vs = (overlapped) ? dofs_struct->overlap_vs : dofs_struct->vs;
         vs = createVectorSpace(comm,indices());
