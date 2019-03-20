@@ -1508,7 +1508,7 @@ void Application::computeGlobalResidualImpl(
   cas_manager->scatter(f,overlapped_f,CombineMode::INSERT);
   // Write the residual to the discretization, which will later (optionally)
   // be written to the output file
-  disc->setResidualField(overlapped_f);
+  disc->setResidualField(*overlapped_f);
 #endif // ALBANY_LCM
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
