@@ -41,24 +41,24 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   // Command-line argument for input file
-  Albany::CmdLineArgs cmd("input.xml", "inputSG.xml");
+  Albany::CmdLineArgs cmd("input.yaml", "inputSG.yaml");
   cmd.parse_cmdline(argc, argv, *out);
-  std::string xmlfilename;
-  std::string sg_xmlfilename;
+  std::string yamlfilename;
+  std::string sg_yamlfilename;
   bool do_initial_guess;
-  if (cmd.has_second_xml_file) {
-    xmlfilename = cmd.xml_filename;
-    sg_xmlfilename = cmd.xml_filename2;
+  if (cmd.has_second_yaml_file) {
+    yamlfilename = cmd.yaml_filename;
+    sg_yamlfilename = cmd.yaml_filename2;
     do_initial_guess = true;
   }
-  else if (cmd.has_first_xml_file) {
-    xmlfilename = "";
-    sg_xmlfilename = cmd.xml_filename;
+  else if (cmd.has_first_yaml_file) {
+    yamlfilename = "";
+    sg_yamlfilename = cmd.yaml_filename;
     do_initial_guess = false;
   }
   else {
-    xmlfilename = "";
-    sg_xmlfilename = "inputSG.xml";
+    yamlfilename = "";
+    sg_yamlfilename = "inputSG.yaml";
     do_initial_guess = false;
   }
 
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Parse parameters
-    Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, tcomm);
+    Albany::SolverFactory sg_slvrfctry(sg_yamlfilename, tcomm);
     Teuchos::ParameterList& albanyParams = sg_slvrfctry.getParameters();
     Teuchos::RCP< Teuchos::ParameterList> piroParams =
       Teuchos::rcp(&(albanyParams.sublist("Piro")),false);
@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
 
       // Create solver
       Albany::SolverFactory slvrfctry(
-	xmlfilename, tcomm);
+	yamlfilename, tcomm);
       Teuchos::RCP<EpetraExt::ModelEvaluator> solver =
 	slvrfctry.create(tapp_comm, tapp_comm);
 

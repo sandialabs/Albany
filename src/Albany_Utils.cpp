@@ -407,43 +407,43 @@ namespace Albany
     Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(filename, A);
   }
 
-  CmdLineArgs::CmdLineArgs(const std::string& default_xml_filename,
-                                   const std::string& default_xml_filename2,
-                                   const std::string& default_xml_filename3) :
-    xml_filename(default_xml_filename),
-    xml_filename2(default_xml_filename2),
-    xml_filename3(default_xml_filename3),
-    has_first_xml_file(false),
-    has_second_xml_file(false),
-    has_third_xml_file(false),
+  CmdLineArgs::CmdLineArgs(const std::string& default_yaml_filename,
+                                   const std::string& default_yaml_filename2,
+                                   const std::string& default_yaml_filename3) :
+    yaml_filename(default_yaml_filename),
+    yaml_filename2(default_yaml_filename2),
+    yaml_filename3(default_yaml_filename3),
+    has_first_yaml_file(false),
+    has_second_yaml_file(false),
+    has_third_yaml_file(false),
     vtune(false) {}
 
   void CmdLineArgs::parse_cmdline(int argc , char ** argv,
                                           std::ostream& os) {
-    bool found_first_xml_file = false;
-    bool found_second_xml_file = false;
+    bool found_first_yaml_file = false;
+    bool found_second_yaml_file = false;
     for (int arg=1; arg<argc; ++arg) {
       if(!std::strcmp(argv[arg],"--help")) {
-        os << argv[0] << " [--vtune] [inputfile1.xml] [inputfile2.xml] [inputfile3.xml]\n";
+        os << argv[0] << " [--vtune] [inputfile1.yaml] [inputfile2.yaml] [inputfile3.yaml]\n";
         std::exit(1);
       }
       else if (!std::strcmp(argv[arg],"--vtune")) {
         vtune = true;
       }
       else {
-        if (!found_first_xml_file) {
-          xml_filename=argv[arg];
-          found_first_xml_file = true;
-          has_first_xml_file = true;
+        if (!found_first_yaml_file) {
+          yaml_filename=argv[arg];
+          found_first_yaml_file = true;
+          has_first_yaml_file = true;
         }
-        else if (!found_second_xml_file) {
-          xml_filename2=argv[arg];
-          found_second_xml_file = true;
-          has_second_xml_file = true;
+        else if (!found_second_yaml_file) {
+          yaml_filename2=argv[arg];
+          found_second_yaml_file = true;
+          has_second_yaml_file = true;
         }
         else {
-          xml_filename3=argv[arg];
-          has_third_xml_file = true;
+          yaml_filename3=argv[arg];
+          has_third_yaml_file = true;
         }
       }
     }

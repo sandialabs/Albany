@@ -239,18 +239,18 @@ writeMatrixMarket(
 
 // Parses and stores command-line arguments
 struct CmdLineArgs {
-  std::string xml_filename;
-  std::string xml_filename2;
-  std::string xml_filename3;
-  bool has_first_xml_file;
-  bool has_second_xml_file;
-  bool has_third_xml_file;
+  std::string yaml_filename;
+  std::string yaml_filename2;
+  std::string yaml_filename3;
+  bool has_first_yaml_file;
+  bool has_second_yaml_file;
+  bool has_third_yaml_file;
   bool vtune;
 
   CmdLineArgs(
-      const std::string& default_xml_filename = "input.xml",
-      const std::string& default_xml_filename2 = "",
-      const std::string& default_xml_filename3 = "");
+      const std::string& default_yaml_filename = "input.yaml",
+      const std::string& default_yaml_filename2 = "",
+      const std::string& default_yaml_filename3 = "");
   void
   parse_cmdline(int argc, char** argv, std::ostream& os);
 };

@@ -36,22 +36,22 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   // Command-line argument for input file
-  Albany::CmdLineArgs cmd("input.xml", "inputSG.xml", "inputSG_adjoint.xml");
+  Albany::CmdLineArgs cmd("input.yaml", "inputSG.yaml", "inputSG_adjoint.yaml");
   cmd.parse_cmdline(argc, argv, *out);
-  std::string xmlfilename;
-  std::string sg_xmlfilename;
-  std::string adjsg_xmlfilename;
+  std::string yamlfilename;
+  std::string sg_yamlfilename;
+  std::string adjsg_yamlfilename;
   bool do_initial_guess;
-  if (cmd.has_third_xml_file) {
-    xmlfilename = cmd.xml_filename;
-    sg_xmlfilename = cmd.xml_filename2;
-    adjsg_xmlfilename = cmd.xml_filename3;
+  if (cmd.has_third_yaml_file) {
+    yamlfilename = cmd.yaml_filename;
+    sg_yamlfilename = cmd.yaml_filename2;
+    adjsg_yamlfilename = cmd.yaml_filename3;
     do_initial_guess = true;
   }
-  else if (cmd.has_second_xml_file) {
-    xmlfilename = "";
-    sg_xmlfilename = cmd.xml_filename;
-    adjsg_xmlfilename = cmd.xml_filename2;
+  else if (cmd.has_second_yaml_file) {
+    yamlfilename = "";
+    sg_yamlfilename = cmd.yaml_filename;
+    adjsg_yamlfilename = cmd.yaml_filename2;
     do_initial_guess = false;
   }
   else {
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     if (cmd.vtune) {
       Albany::connect_vtune(comm->getRank());
     }
-    Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, comm);
+    Albany::SolverFactory sg_slvrfctry(sg_yamlfilename, comm);
     Teuchos::ParameterList& albanyParams = sg_slvrfctry.getParameters();
     Teuchos::RCP< Teuchos::ParameterList> piroParams = 
       Teuchos::rcp(&(albanyParams.sublist("Piro")),false);
@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
     if (do_initial_guess) {
 
       // Create solver
-      Albany::SolverFactory slvrfctry(xmlfilename, tapp_comm);
+      Albany::SolverFactory slvrfctry(yamlfilename, tapp_comm);
       Teuchos::RCP<EpetraExt::ModelEvaluator> solver = 
          slvrfctry.create(tapp_comm, tapp_comm);
 
@@ -224,7 +224,7 @@ int main(int argc, char *argv[]) {
     Teuchos::TimeMonitor adjtotalTimer(*adjointTime); //start timer
 
     // Parse parameters
-    Albany::SolverFactory sg_slvrfctry(adjsg_xmlfilename, 
+    Albany::SolverFactory sg_slvrfctry(adjsg_yamlfilename, 
       Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD));
     Teuchos::ParameterList& albanyParams = sg_slvrfctry.getParameters();
     Teuchos::RCP< Teuchos::ParameterList> piroParams = 
