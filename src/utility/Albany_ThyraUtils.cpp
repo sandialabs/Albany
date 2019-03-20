@@ -1003,6 +1003,31 @@ Teuchos::Array<ST> means (const Teuchos::RCP<const Thyra_MultiVector>& mv) {
 // ======== I/O utilities ========= //
 
 template<>
+void describe<Thyra_VectorSpace> (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
+                                  Teuchos::FancyOStream& out,
+                                  const Teuchos::EVerbosityLevel verbLevel)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tvs = getTpetraMap(vs,false);
+  if (!tvs.is_null()) {
+    tvs->describe(out,verbLevel);
+    return;
+  }
+
+#if defined(ALBANY_EPETRA)
+  auto evs = getEpetraBlockMap(vs,false);
+  if (!evs.is_null()) {
+    evs->Print(*out.getOStream());
+    return;
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_Vector to any of the supported concrete types.\n");
+}
+
+
+template<>
 void describe<Thyra_Vector> (const Teuchos::RCP<const Thyra_Vector>& v,
                              Teuchos::FancyOStream& out,
                              const Teuchos::EVerbosityLevel verbLevel)
