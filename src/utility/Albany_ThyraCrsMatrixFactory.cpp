@@ -3,7 +3,7 @@
 #ifdef ALBANY_EPETRA
 #include "Epetra_CrsGraph.h"
 #include "Epetra_CrsMatrix.h"
-#include "Epetra_Export.h"
+#include "Epetra_Import.h"
 #endif
 #include "Albany_TpetraTypes.hpp"
 
@@ -77,8 +77,8 @@ ThyraCrsMatrixFactory::ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_Vec
 
     m_graph->e_graph = Teuchos::rcp(new Epetra_CrsGraph(Copy,*e_range,e_overlap_graph->GlobalMaxNumIndices()));
 
-    Epetra_Export exporter (*e_overlap_range,*e_range);    
-    m_graph->e_graph->Export(*e_overlap_graph,exporter,Insert);
+    Epetra_Import importer (*e_range,*e_overlap_range);
+    m_graph->e_graph->Export(*e_overlap_graph,importer,Insert);
 
     auto e_overlap_domain = getEpetraBlockMap(overlap_src->m_domain_vs);
 
@@ -90,13 +90,13 @@ ThyraCrsMatrixFactory::ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_Vec
 #endif
   } else {
     auto t_range = getTpetraMap(range_vs);
-    auto t_overlap_range = getTpetraMap(overlap_src->m_domain_vs);
+    auto t_overlap_range = getTpetraMap(overlap_src->m_range_vs);
     auto t_overlap_graph = overlap_src->m_graph->t_graph;
 
     m_graph->t_graph = Teuchos::rcp(new Tpetra_CrsGraph(t_range,t_overlap_graph->getGlobalMaxNumRowEntries()));
 
-    Tpetra_Export exporter(t_overlap_range, t_range);
-    m_graph->t_graph->doExport(*t_overlap_graph,exporter,Tpetra::INSERT);
+    Tpetra_Import importer(t_range, t_overlap_range);
+    m_graph->t_graph->doExport(*t_overlap_graph,importer,Tpetra::INSERT);
 
     auto t_domain = getTpetraMap(domain_vs);
     auto t_overlap_domain = getTpetraMap(overlap_src->m_domain_vs);
