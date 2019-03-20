@@ -172,8 +172,7 @@ FractureCriterionTraction::computeNormals()
 
     minitensor::Vector<double> normal(get_space_dimension());
 
-    //Tpetra_Map const& node_map = *(get_stk_discretization().getNodeMapT());
-    Teuchos::RCP<const Thyra_VectorSpace>   m_node_vs = get_stk_discretization().getNodeVectorSpace(); 
+    Teuchos::RCP<const Thyra_VectorSpace> m_node_vs = get_stk_discretization().getNodeVectorSpace(); 
 
     // Depending on the dimension is how the normal is computed.
     // TODO: generalize this for all topologies.
@@ -188,14 +187,12 @@ FractureCriterionTraction::computeNormals()
         stk::mesh::EntityId const gid0 =
             get_bulk_data().identifier(nodes[0]) - 1;
 
-        //stk::mesh::EntityId const lid0 = node_map.getLocalElement(gid0);
         stk::mesh::EntityId const lid0 = Albany::getLocalElement(m_node_vs, gid0);
 
         assert(lid0 < number_nodes);
 
         stk::mesh::EntityId gid1 = get_bulk_data().identifier(nodes[1]) - 1;
 
-        //stk::mesh::EntityId const lid1 = node_map.getLocalElement(gid1);
         stk::mesh::EntityId const lid1 = Albany::getLocalElement(m_node_vs, gid1);
 
         assert(lid1 < number_nodes);
@@ -212,21 +209,18 @@ FractureCriterionTraction::computeNormals()
         stk::mesh::EntityId const gid0 =
             get_bulk_data().identifier(nodes[0]) - 1;
 
-        //stk::mesh::EntityId const lid0 = node_map.getLocalElement(gid0);
         stk::mesh::EntityId const lid0 = Albany::getLocalElement(m_node_vs, gid0); 
 
         assert(lid0 < number_nodes);
 
         stk::mesh::EntityId gid1 = get_bulk_data().identifier(nodes[1]) - 1;
 
-        //stk::mesh::EntityId const lid1 = node_map.getLocalElement(gid1);
         stk::mesh::EntityId const lid1 = Albany::getLocalElement(m_node_vs, gid1);
 
         assert(lid1 < number_nodes);
 
         stk::mesh::EntityId gid2 = get_bulk_data().identifier(nodes[2]) - 1;
 
-        //stk::mesh::EntityId const lid2 = node_map.getLocalElement(gid2);
         stk::mesh::EntityId const lid2 = Albany::getLocalElement(m_node_vs, gid2);
 
         assert(lid2 < number_nodes);
