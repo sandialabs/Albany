@@ -46,7 +46,7 @@
 #include "ATOT_Solver.hpp"
 #endif
 
-#if defined(ALBANY_LCM) && defined(ALBANY_STK)
+#if defined(ALBANY_LCM) && defined(ALBANY_STK) && defined(ALBANY_SCHWARZ) 
 #include "Schwarz_Alternating.hpp"
 #include "Schwarz_Coupled.hpp"
 #include "Schwarz_PiroObserver.hpp"
@@ -247,7 +247,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
   const std::string solutionMethod =
       problemParams->get("Solution Method", "Steady");
 
-#if defined(ALBANY_LCM)
+#if defined(ALBANY_LCM) 
   bool const is_schwarz = solutionMethod == "Coupled Schwarz" ||
                           solutionMethod == "Alternating Schwarz";
   ALBANY_ASSERT(is_schwarz == false, "Schwarz methods require AlbanyT");
@@ -550,16 +550,20 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   }  // if Aeras HyperViscosity
 #endif
 
-#if defined(ALBANY_LCM) && defined(ALBANY_STK)
+#if defined(ALBANY_LCM) && defined(ALBANY_STK) 
   bool const is_schwarz = solutionMethod == "Coupled Schwarz" ||
                           solutionMethod == "Schwarz Alternating";
+#if !defined(ALBANY_SCHWARZ)
+  ALBANY_ASSERT(is_schwarz == false, "'Coupled Schwarz' and 'Schwarz Alternating' Methods are invalid! \n"
+                                      << "Recompile with -DENABLE_SCHWARZ=ON flag to use these methods."); 
+#endif
 
   if (is_schwarz == true) {
 #if !defined(ALBANY_DTK)
     ALBANY_ASSERT(appComm->getSize() == 1, "Parallel Schwarz requires DTK");
 #endif  // ALBANY_DTK
   }
-
+#if (ALBANY_SCHWARZ) 
   if (solutionMethod == "Coupled Schwarz") {
     // IKT: We are assuming the "Piro" list will come from the main coupled
     // Schwarz input file (not the sub-input
@@ -599,7 +603,8 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     return rcp(
         new LCM::SchwarzAlternating(appParams, solverComm, initial_guess));
   }
-#endif /* LCM and Schwarz */
+#endif /* Schwarz */
+#endif /* LCM */
 
   RCP<Albany::Application> app = albanyApp;
   modelT_ =

@@ -68,7 +68,7 @@ set(evaluator-headers
 
 #LCM model evaluators
 
-IF (ALBANY_STK)
+IF (ALBANY_STK AND ALBANY_SCHWARZ)
 set(model-eval-sources
   "${LCM_DIR}/solvers/Schwarz_Alternating.cpp"
   "${LCM_DIR}/solvers/Schwarz_ObserverImpl.cpp"
@@ -91,7 +91,7 @@ set(model-eval-headers
     "${LCM_DIR}/solvers/Schwarz_CoupledJacobian.hpp"
     "${LCM_DIR}/solvers/Schwarz_Coupled.hpp"
   )
-ENDIF(ALBANY_STK)
+ENDIF(ALBANY_STK AND ALBANY_SCHWARZ)
 
 # LCM special boundary conditions
 set(bc-sources
@@ -116,18 +116,24 @@ set(bc-headers
 IF (ALBANY_STK)
   set(bc-sources ${bc-sources}
     "${LCM_DIR}/evaluators/bc/PDNeighborFitBC.cpp"
-    "${LCM_DIR}/evaluators/bc/SchwarzBC.cpp"
-    "${LCM_DIR}/evaluators/bc/StrongSchwarzBC.cpp"
   )
   set(bc-headers ${bc-headers}
     "${LCM_DIR}/evaluators/bc/PDNeighborFitBC.hpp"
     "${LCM_DIR}/evaluators/bc/PDNeighborFitBC_Def.hpp"
+  )
+ENDIF (ALBANY_STK)
+IF (ALBANY_SCHWARZ)
+  set(bc-sources ${bc-sources}
+    "${LCM_DIR}/evaluators/bc/SchwarzBC.cpp"
+    "${LCM_DIR}/evaluators/bc/StrongSchwarzBC.cpp"
+  )
+  set(bc-headers ${bc-headers}
     "${LCM_DIR}/evaluators/bc/SchwarzBC.hpp"
     "${LCM_DIR}/evaluators/bc/SchwarzBC_Def.hpp"
     "${LCM_DIR}/evaluators/bc/StrongSchwarzBC.hpp"
     "${LCM_DIR}/evaluators/bc/StrongSchwarzBC_Def.hpp"
   )
-ENDIF (ALBANY_STK)
+ENDIF(ALBANY_SCHWARZ)
 
 # LCM HMC evaluators
 set(hmc-sources
