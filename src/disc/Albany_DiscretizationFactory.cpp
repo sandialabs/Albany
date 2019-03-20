@@ -26,9 +26,6 @@
 #ifdef ALBANY_LANDICE
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
 #endif
-#ifdef ALBANY_LANDICE
-#include "Albany_STKDiscretizationStokesH.hpp"
-#endif
 #endif
 #ifdef ALBANY_SCOREC
 #include "Albany_PUMIDiscretization.hpp"
@@ -456,22 +453,17 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
             case Albany::AbstractMeshStruct::STK_MS:
             {
                 Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
-#ifdef ALBANY_LANDICE
-                if (method == "Extruded")
-                    return Teuchos::rcp(new Albany::STKDiscretizationStokesH(discParams, ms, commT, rigidBodyModes));
-                else
-#endif
-                    return Teuchos::rcp(new Albany::STKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
-            }
+                return Teuchos::rcp(new Albany::STKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
                 break;
+            }
 #endif
 #ifdef ALBANY_SCOREC
             case Albany::AbstractMeshStruct::PUMI_MS:
             {
                 Teuchos::RCP<Albany::PUMIMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::PUMIMeshStruct>(meshStruct);
                 return Teuchos::rcp(new Albany::PUMIDiscretization(ms, commT, rigidBodyModes));
-            }
                 break;
+            }
 #endif
         }
     }
