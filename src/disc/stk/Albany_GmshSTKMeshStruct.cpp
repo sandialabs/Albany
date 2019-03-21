@@ -36,18 +36,10 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
 {
   fname = params->get("Gmsh Input Mesh File Name", "mesh.msh");
 
-  // Init counters to 0
-  NumSides = NumNodes = 0;
-  NumElems = 0;
-  nb_hexas = 0;
-  nb_tetra = 0;
-  nb_quads = 0;
-  nb_trias = 0;
-  nb_lines = 0;
-
-  // Init ptrs to nullptr
-  pts = nullptr;
-  tetra = hexas = trias = quads = lines = nullptr;
+  // Init counters to 0, pointers to null
+  init_counters_to_zero();
+  init_pointers_to_null();
+  
 
   // Reading the mesh on proc 0
   if (commT->getRank() == 0) 
@@ -58,13 +50,20 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
 
     determine_file_type( legacy, binary, ascii);
 
-    if (legacy) {
-      loadLegacyMesh ();
-    } else if (binary) {
-      loadBinaryMesh ();
-    } else if (ascii) {
-      loadAsciiMesh ();
-    } else {
+    if(legacy) 
+    {
+      loadLegacyMesh();
+    } 
+    else if(binary) 
+    {
+      loadBinaryMesh();
+    } 
+    else if(ascii) 
+    {
+      loadAsciiMesh();
+    } 
+    else 
+    {
       TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Mesh format not recognized.\n");
     }
   }
@@ -203,6 +202,32 @@ void Albany::GmshSTKMeshStruct::determine_file_type( bool& legacy, bool& binary,
   }
 
   ifile.close();
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::init_counters_to_zero()
+{
+  NumSides = 0;
+  NumNodes = 0;
+  NumElems = 0;
+  nb_hexas = 0;
+  nb_tetra = 0;
+  nb_tet10 = 0;
+  nb_quads = 0;
+  nb_trias = 0;
+  nb_lines = 0;
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::init_pointers_to_null()
+{
+  pts   = nullptr;
+  tetra = nullptr;
+  hexas = nullptr;
+  trias = nullptr;
+  quads = nullptr;
+  lines = nullptr;
   return;
 }
 

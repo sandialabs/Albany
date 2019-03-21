@@ -181,6 +181,14 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   void loadAsciiMesh ();
   void loadBinaryMesh ();
 
+
+  // Init the int counters below to zero.
+  void init_counters_to_zero();
+
+  // Init the int pointers below to null.
+  void init_pointers_to_null();
+
+
   // The number of entities, both elements and cells
   int num_entities;
 
@@ -204,6 +212,7 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Number of each of the above element types
   int nb_hexas;
   int nb_tetra;
+  int nb_tet10;
   int nb_quads;
   int nb_trias;
   int nb_lines;
