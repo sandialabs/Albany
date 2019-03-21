@@ -48,6 +48,7 @@ using Teuchos::rcp;
 
 TEUCHOS_UNIT_TEST(HeliumODEs, test1)
 {
+  Albany::build_type(Albany::BuildType::Tpetra);
   // A mpi object must be instantiated
   Teuchos::GlobalMPISession        mpi_session(void);
   Teuchos::RCP<const Teuchos_Comm> commT =
@@ -261,13 +262,10 @@ TEUCHOS_UNIT_TEST(HeliumODEs, test1)
   discretizationParameterList->set<int>("Number Of Time Derivatives", 0);
   discretizationParameterList->set<std::string>(
       "Exodus Output File Name", output_file);
-  Teuchos::RCP<Tpetra_Map>    mapT = Teuchos::rcp(new Tpetra_Map(
-      workset_size * num_dims * num_nodes,
-      0,
-      commT,
-      Tpetra::LocallyReplicated));
-  Teuchos::RCP<Tpetra_Vector> solution_vectorT =
-      Teuchos::rcp(new Tpetra_Vector(mapT));
+  Teuchos::RCP<const Thyra_VectorSpace> space = 
+    Albany::createLocallyReplicatedVectorSpace(workset_size * num_dims * num_nodes, commT); 
+
+  Teuchos::RCP<Thyra_Vector> solution_vector = Thyra::createMember(space);
 
   int numberOfEquations = 3;
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
@@ -320,7 +318,7 @@ TEUCHOS_UNIT_TEST(HeliumODEs, test1)
     stateMgr.updateStates();
 
     // output to the exodus file
-    discretization->writeSolutionT(*solution_vectorT, time);
+    discretization->writeSolution(*solution_vector, time);
   }
 
   //--------------------------------------------------------------------------

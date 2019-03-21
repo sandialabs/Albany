@@ -116,11 +116,9 @@ main(int ac, char* av[])
   //   disconnected nature of the final mesh
 
   // Create a vector to hold displacement values for nodes
-  Teuchos::RCP<const Tpetra_Map> dof_mapT = stk_discretization.getMapT();
-  Teuchos::RCP<Tpetra_Vector>    displacementT =
-      Teuchos::rcp(new Tpetra_Vector(dof_mapT));
-  Teuchos::ArrayRCP<ST> displacementT_nonconstView =
-      displacementT->get1dViewNonConst();
+  Teuchos::RCP<const Thyra_VectorSpace> dof_space = stk_discretization.getVectorSpace(); 
+  Teuchos::RCP<Thyra_Vector> displacement = Thyra::createMember(dof_space);
+  Teuchos::ArrayRCP<ST>  displacement_nonconstView = Albany::getNonconstLocalData(displacement); 
 
   // Add displacement to nodes
   stk::mesh::get_entities(bulkData, stk::topology::ELEMENT_RANK, element_lst);
@@ -152,21 +150,21 @@ main(int ac, char* av[])
     for (int j = 0; j < num_relations; ++j) {
       stk::mesh::Entity node = relations[j];
       int               id   = static_cast<int>(bulkData.identifier(node));
-      displacementT_nonconstView[id * 3 - 3] += disp[0];
-      displacementT_nonconstView[id * 3 - 2] += disp[1];
-      displacementT_nonconstView[id * 3 - 1] += disp[2];
+      displacement_nonconstView[id * 3 - 3] += disp[0];
+      displacement_nonconstView[id * 3 - 2] += disp[1];
+      displacement_nonconstView[id * 3 - 1] += disp[2];
     }
   }
 
-  stk_discretization.setResidualFieldT(*displacementT);
+  stk_discretization.setResidualField(*displacement);
 
-  Teuchos::RCP<Tpetra_Vector> solution_fieldT =
-      stk_discretization.getSolutionFieldT();
+  Teuchos::RCP<Thyra_Vector> solution_field = 
+      stk_discretization.getSolutionField(); 
 
   // Write final mesh to exodus file
   // second arg to output is (pseudo)time
   //  stk_discretization.outputToExodus(*solution_field, 1.0);
-  stk_discretization.writeSolutionT(*solution_fieldT, 1.0);
+  stk_discretization.writeSolution(*solution_field, 1.0);
 
   return 0;
 }

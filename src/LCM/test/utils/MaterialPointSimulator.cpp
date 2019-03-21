@@ -500,13 +500,11 @@ main(int ac, char* av[])
   discretizationParameterList->set<std::string>(
       "Exodus Output File Name", output_file);
   discretizationParameterList->set<int>("Workset Size", workset_size);
-  Teuchos::RCP<Tpetra_Map>    mapT = Teuchos::rcp(new Tpetra_Map(
-      workset_size * num_dims * num_nodes,
-      0,
-      commT,
-      Tpetra::LocallyReplicated));
-  Teuchos::RCP<Tpetra_Vector> solution_vectorT =
-      Teuchos::rcp(new Tpetra_Vector(mapT));
+  
+  Teuchos::RCP<const Thyra_VectorSpace> space = 
+    Albany::createLocallyReplicatedVectorSpace(workset_size * num_dims * num_nodes, commT); 
+
+  Teuchos::RCP<Thyra_Vector> solution_vector = Thyra::createMember(space);
 
   int numberOfEquations = 3;
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
@@ -642,8 +640,8 @@ main(int ac, char* av[])
     // output to the exodus file
     // Don't include this in timing data...
     total_time->stop();
-    discretization->writeSolutionT(
-        *solution_vectorT, Teuchos::as<double>(istep));
+    discretization->writeSolution(
+        *solution_vector, Teuchos::as<double>(istep));
 
     // if check for bifurcation, adaptive step
     total_time->start();
