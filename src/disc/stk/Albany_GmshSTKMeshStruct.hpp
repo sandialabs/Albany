@@ -215,6 +215,8 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   int nb_tet10;
   int nb_quads;
   int nb_trias;
+  int nb_line3;
+  int nb_tri6;
   int nb_lines;
 
   // These pointers will be set equal to two of the previous group, depending on dimension

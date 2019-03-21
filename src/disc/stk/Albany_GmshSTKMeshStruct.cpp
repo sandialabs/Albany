@@ -215,7 +215,9 @@ void Albany::GmshSTKMeshStruct::init_counters_to_zero()
   nb_tet10 = 0;
   nb_quads = 0;
   nb_trias = 0;
+  nb_tri6  = 0;
   nb_lines = 0;
+  nb_line3 = 0;
 
   return;
 }
@@ -646,14 +648,18 @@ void Albany::GmshSTKMeshStruct::increment_element_type( int e_type)
 {
   switch (e_type) 
   {
-    case 1: ++nb_lines;  break;
-    case 2: ++nb_trias;  break;
-    case 3: ++nb_quads;  break;
-    case 4: ++nb_tetra;  break;
-    case 5: ++nb_hexas;  break;
-    case 15: /*point*/   break;
+    case 1:  ++nb_lines;  break;
+    case 2:  ++nb_trias;  break;
+    case 3:  ++nb_quads;  break;
+    case 4:  ++nb_tetra;  break;
+    case 5:  ++nb_hexas;  break;
+    case 9:  ++nb_tri6;   break;
+    case 8:  ++nb_line3;  break;
+    case 11: ++nb_tet10;  break;
+    case 15: /*point*/    break;
     default:
-      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Element type not supported.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, 
+                                    "Error! Element type (" << e_type << ") not supported.\n");
   }
 
   return;
@@ -711,8 +717,10 @@ void Albany::GmshSTKMeshStruct::set_specific_num_of_each_elements( std::ifstream
   }
 
   TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra*nb_hexas!=0, std::logic_error, "Error! Cannot mix tetrahedra and hexahedra.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (nb_tet10*nb_hexas!=0, std::logic_error, "Error! Cannot mix tetrahedra and hexahedra.\n");
   TEUCHOS_TEST_FOR_EXCEPTION (nb_trias*nb_quads!=0, std::logic_error, "Error! Cannot mix triangles and quadrilaterals.\n");
   TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra+nb_hexas+nb_trias+nb_quads==0, std::logic_error, "Error! Can only handle 2D and 3D geometries.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (nb_tet10+nb_hexas+nb_trias+nb_quads==0, std::logic_error, "Error! Can only handle 2D and 3D geometries.\n");
 
   return;
 }
