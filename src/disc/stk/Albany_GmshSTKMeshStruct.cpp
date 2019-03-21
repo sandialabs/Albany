@@ -780,7 +780,7 @@ void Albany::GmshSTKMeshStruct::set_specific_num_of_each_elements( std::ifstream
 
 void Albany::GmshSTKMeshStruct::size_all_element_pointers()
 {
-  // First value is the id, then the nodes
+  // First values are the node IDs of the element, then tag
   lines = new int*[3];
   line3 = new int*[4];
   tetra = new int*[5];
