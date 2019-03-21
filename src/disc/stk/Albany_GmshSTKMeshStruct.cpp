@@ -669,8 +669,8 @@ void Albany::GmshSTKMeshStruct::increment_element_type( int e_type)
     case 3:  ++nb_quads;  break;
     case 4:  ++nb_tetra;  break;
     case 5:  ++nb_hexas;  break;
-    case 9:  ++nb_tri6;   break;
     case 8:  ++nb_line3;  break;
+    case 9:  ++nb_tri6;   break;
     case 11: ++nb_tet10;  break;
     case 15: /*point*/    break;
     default:
