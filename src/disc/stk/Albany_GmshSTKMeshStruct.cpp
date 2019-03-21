@@ -838,6 +838,17 @@ void Albany::GmshSTKMeshStruct::set_generic_mesh_info()
     elems = tetra;
     sides = trias;
   } 
+  if (nb_tet10>0) 
+  {
+    this->numDim = 3;
+
+    NumElems = nb_tet10;
+    NumSides = nb_tri6;
+    NumElemNodes = 10;
+    NumSideNodes = 6;
+    elems = tet10;
+    sides = tri6;
+  } 
   else if (nb_hexas>0) 
   {
     this->numDim = 3;
@@ -859,6 +870,17 @@ void Albany::GmshSTKMeshStruct::set_generic_mesh_info()
     NumSideNodes = 2;
     elems = trias;
     sides = lines;
+  } 
+  else if (nb_tri6>0) 
+  {
+    this->numDim = 2;
+
+    NumElems = nb_tri6;
+    NumSides = nb_line3;
+    NumElemNodes = 6;
+    NumSideNodes = 3;
+    elems = tri6;
+    sides = line3;
   } 
   else if (nb_quads>0) 
   {
