@@ -716,11 +716,40 @@ void Albany::GmshSTKMeshStruct::set_specific_num_of_each_elements( std::ifstream
     }
   }
 
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra*nb_hexas!=0, std::logic_error, "Error! Cannot mix tetrahedra and hexahedra.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_tet10*nb_hexas!=0, std::logic_error, "Error! Cannot mix tetrahedra and hexahedra.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_trias*nb_quads!=0, std::logic_error, "Error! Cannot mix triangles and quadrilaterals.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra+nb_hexas+nb_trias+nb_quads==0, std::logic_error, "Error! Can only handle 2D and 3D geometries.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_tet10+nb_hexas+nb_trias+nb_quads==0, std::logic_error, "Error! Can only handle 2D and 3D geometries.\n");
+  bool is_first_order  = (nb_lines != 0);
+  bool is_second_order = (nb_line3 != 0);
+
+  if( is_first_order)
+  {
+    bool mixed_order_mesh = (nb_line3!=0);
+         mixed_order_mesh = (nb_tri6 !=0) || mixed_order_mesh;
+         mixed_order_mesh = (nb_tet10!=0) || mixed_order_mesh;
+
+    TEUCHOS_TEST_FOR_EXCEPTION ( mixed_order_mesh, std::logic_error, 
+        "Error! Found second order elements in first order mesh.\n");
+
+    TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra*nb_hexas !=0, std::logic_error, 
+        "Error! Cannot mix tetrahedra and hexahedra.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (nb_trias*nb_quads!=0, std::logic_error, 
+        "Error! Cannot mix triangles and quadrilaterals.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra+nb_hexas+nb_trias+nb_quads==0, std::logic_error, 
+        "Error! Can only handle 2D and 3D geometries.\n");
+  }
+  else if( is_second_order)
+  {
+    bool mixed_order_mesh = (nb_lines!=0);
+         mixed_order_mesh = (nb_trias!=0) || mixed_order_mesh;
+         mixed_order_mesh = (nb_tetra!=0) || mixed_order_mesh;
+
+    TEUCHOS_TEST_FOR_EXCEPTION ( mixed_order_mesh, std::logic_error, 
+        "Error! Found first order elements in second order mesh.\n");
+  }
+  else
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION( true, std::logic_error,
+            "Error! Could not determine if mesh was first or second order.\n" <<
+            "Checked for number of 2pt lines and 3pt lines, both are non-zero. \n")
+  }
 
   return;
 }
