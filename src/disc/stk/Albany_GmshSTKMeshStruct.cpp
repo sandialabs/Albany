@@ -743,6 +743,14 @@ void Albany::GmshSTKMeshStruct::set_specific_num_of_each_elements( std::ifstream
 
     TEUCHOS_TEST_FOR_EXCEPTION ( mixed_order_mesh, std::logic_error, 
         "Error! Found first order elements in second order mesh.\n");
+
+    bool missing_parts = (nb_line3 == 0);
+         missing_parts = (nb_tri6  == 0) || missing_parts;
+         missing_parts = (nb_tet10 == 0) || missing_parts;
+
+    TEUCHOS_TEST_FOR_EXCEPTION ( missing_parts, std::logic_error, 
+        "Error! This second order mesh is missing secord order parts.\n");
+    
   }
   else
   {
