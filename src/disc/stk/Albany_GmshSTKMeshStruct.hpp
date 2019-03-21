@@ -121,9 +121,12 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Records tags for the element.
   void store_element_info( int  e_type,
                            int& iline,
+                           int& iline3,
                            int& itria,
+                           int& itri6,
                            int& iquad,
                            int& itetra,
+                           int& itet10,
                            int& ihexa,
                            std::vector<int>& tags,
                            std::stringstream& ss);

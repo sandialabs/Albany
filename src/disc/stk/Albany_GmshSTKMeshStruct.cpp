@@ -903,9 +903,12 @@ void Albany::GmshSTKMeshStruct::set_generic_mesh_info()
 void Albany::GmshSTKMeshStruct::store_element_info( 
       int  e_type,
       int& iline,
+      int& iline3,
       int& itria,
+      int& itri6,
       int& iquad,
       int& itetra,
+      int& itet10,
       int& ihexa,
       std::vector<int>& tags,
       std::stringstream& ss)
@@ -938,6 +941,23 @@ void Albany::GmshSTKMeshStruct::store_element_info(
       hexas[8][ihexa] = tags[0];
       ++ihexa;
       break;
+    case 8: // 3-pt Line
+      ss >> line3[0][iline3] >> line3[1][iline3] >> line3[2][iline3];
+      line3[3][iline3] = tags[0];
+      iline3++;
+      break;
+    case 9: // 6-pt Triangle
+      ss >> tri6[0][itri6] >> tri6[1][itri6] >> tri6[2][itri6]
+         >> tri6[3][itri6] >> tri6[4][itri6] >> tri6[5][itri6];
+      tri6[6][itri6] = tags[0];
+      itri6++;
+      break;
+    case 11: // 10-pt Tetra
+      ss >> tet10[0][itet10] >> tet10[1][itet10] >> tet10[2][itet10] >> tet10[3][itet10] >> tet10[4][itet10] 
+         >> tet10[5][itet10] >> tet10[6][itet10] >> tet10[7][itet10] >> tet10[8][itet10] >> tet10[9][itet10];
+      tet10[10][itet10] = tags[0];
+      itet10++;
+      break;
     case 15: // Point
         break;
     default:
@@ -959,7 +979,13 @@ void Albany::GmshSTKMeshStruct::load_element_data( std::ifstream& ifile)
   std::getline(ifile,line);
 
   // Read the elements
-  int iline(0), itria(0), iquad(0), itetra(0), ihexa(0), n_tags(0), id(0), e_type(0);
+  int iline(0), iline3(0), 
+      itria(0), itri6(0), 
+      iquad(0), 
+      itetra(0), itet10(0), 
+      ihexa(0), 
+      n_tags(0), id(0), e_type(0);
+
   if( version == GmshVersion::V2_2)
   {
     std::vector<int> tags;
@@ -976,7 +1002,7 @@ void Albany::GmshSTKMeshStruct::load_element_data( std::ifstream& ifile)
       }
       tags[n_tags] = 0;
 
-      store_element_info( e_type, iline, itria, iquad, itetra, ihexa, tags, ss);
+      store_element_info( e_type, iline, iline3, itria, itri6, iquad, itetra, itet10, ihexa, tags, ss);
     }
   }
   else if( version == GmshVersion::V4_1)
@@ -1003,7 +1029,7 @@ void Albany::GmshSTKMeshStruct::load_element_data( std::ifstream& ifile)
         ss >> elem_id;
 
         int e_type = entity_type;
-        store_element_info( e_type, iline, itria, iquad, itetra, ihexa, tags, ss);
+        store_element_info( e_type, iline, iline3, itria, itri6, iquad, itetra, itet10, ihexa, tags, ss);
         accounted_elems++;
       }
       tags.clear();
