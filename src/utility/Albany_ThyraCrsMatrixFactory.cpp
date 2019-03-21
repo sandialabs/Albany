@@ -3,7 +3,7 @@
 #ifdef ALBANY_EPETRA
 #include "Epetra_CrsGraph.h"
 #include "Epetra_CrsMatrix.h"
-#include "Epetra_Import.h"
+#include "Epetra_Export.h"
 #endif
 #include "Albany_TpetraTypes.hpp"
 
@@ -57,9 +57,10 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
   }
 }
 
-ThyraCrsMatrixFactory::ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
-                              const Teuchos::RCP<const Thyra_VectorSpace> range_vs,
-                              const Teuchos::RCP<const ThyraCrsMatrixFactory> overlap_src)
+ThyraCrsMatrixFactory::
+ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
+                       const Teuchos::RCP<const Thyra_VectorSpace> range_vs,
+                       const Teuchos::RCP<const ThyraCrsMatrixFactory> overlap_src)
  : m_domain_vs(domain_vs)
  , m_range_vs(range_vs)
 {
@@ -77,10 +78,8 @@ ThyraCrsMatrixFactory::ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_Vec
 
     m_graph->e_graph = Teuchos::rcp(new Epetra_CrsGraph(Copy,*e_range,e_overlap_graph->GlobalMaxNumIndices()));
 
-    Epetra_Import importer (*e_range,*e_overlap_range);
-    m_graph->e_graph->Export(*e_overlap_graph,importer,Insert);
-
-    auto e_overlap_domain = getEpetraBlockMap(overlap_src->m_domain_vs);
+    Epetra_Export exporter (*e_overlap_range,*e_range);
+    m_graph->e_graph->Export(*e_overlap_graph,exporter,Insert);
 
     auto e_domain = getEpetraBlockMap(domain_vs);
     m_graph->e_graph->FillComplete(*e_domain,*e_range);
@@ -95,8 +94,8 @@ ThyraCrsMatrixFactory::ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_Vec
 
     m_graph->t_graph = Teuchos::rcp(new Tpetra_CrsGraph(t_range,t_overlap_graph->getGlobalMaxNumRowEntries()));
 
-    Tpetra_Import importer(t_range, t_overlap_range);
-    m_graph->t_graph->doExport(*t_overlap_graph,importer,Tpetra::INSERT);
+    Tpetra_Export exporter(t_overlap_range,t_range);
+    m_graph->t_graph->doExport(*t_overlap_graph,exporter,Tpetra::INSERT);
 
     auto t_domain = getTpetraMap(domain_vs);
     auto t_overlap_domain = getTpetraMap(overlap_src->m_domain_vs);
