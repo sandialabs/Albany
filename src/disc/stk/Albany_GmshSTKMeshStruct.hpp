@@ -205,9 +205,12 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Only some will be used, but it's easier to have different pointers
   int** hexas;
   int** tetra;
+  int** tet10;
   int** quads;
   int** trias;
+  int** tri6;
   int** lines;
+  int** line3;
 
   // Number of each of the above element types
   int nb_hexas;

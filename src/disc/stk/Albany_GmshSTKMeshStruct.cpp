@@ -148,9 +148,19 @@ Albany::GmshSTKMeshStruct::~GmshSTKMeshStruct()
       delete[] tetra[i];
     }
   }
+  if (tet10!=nullptr) {
+    for (int i(0); i<11; ++i) {
+      delete[] tet10[i];
+    }
+  }
   if (trias!=nullptr) {
     for (int i(0); i<4; ++i) {
       delete[] trias[i];
+    }
+  }
+  if (tri6!=nullptr) {
+    for (int i(0); i<7; ++i) {
+      delete[] tri6[i];
     }
   }
   if (hexas!=nullptr) {
@@ -168,12 +178,18 @@ Albany::GmshSTKMeshStruct::~GmshSTKMeshStruct()
       delete[] lines[i];
     }
   }
+  if (line3!=nullptr) {
+    for (int i(0); i<4; ++i) {
+      delete[] line3[i];
+    }
+  }
 
   delete[] tetra;
   delete[] trias;
   delete[] hexas;
   delete[] quads;
   delete[] lines;
+  delete[] line3;
 
   allowable_gmsh_versions.clear();
 }
@@ -764,18 +780,30 @@ void Albany::GmshSTKMeshStruct::set_specific_num_of_each_elements( std::ifstream
 
 void Albany::GmshSTKMeshStruct::size_all_element_pointers()
 {
+  // First value is the id, then the nodes
   lines = new int*[3];
+  line3 = new int*[4];
   tetra = new int*[5];
+  tet10 = new int*[11];
   trias = new int*[4];
+  tri6  = new int*[7];
   hexas = new int*[9];
   quads = new int*[5];
   for (int i(0); i<5; ++i) 
   {
     tetra[i] = new int[nb_tetra];
   }
+  for (int i(0); i<11; ++i) 
+  {
+    tet10[i] = new int[nb_tet10];
+  }
   for (int i(0); i<4; ++i) 
   {
     trias[i] = new int[nb_trias];
+  }
+  for (int i(0); i<7; ++i) 
+  {
+    tri6[i] = new int[nb_tri6];
   }
   for (int i(0); i<9; ++i) 
   {
@@ -788,6 +816,10 @@ void Albany::GmshSTKMeshStruct::size_all_element_pointers()
   for (int i(0); i<3; ++i) 
   {
     lines[i] = new int[nb_lines];
+  }
+  for( int i(0); i<4; ++i)
+  {
+    line3[i] = new int[nb_line3];
   }
 
   return;
