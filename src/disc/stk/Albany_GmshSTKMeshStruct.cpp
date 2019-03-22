@@ -100,6 +100,13 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
         for (auto ss : ssPartVec) {
           stk::mesh::set_cell_topology<shards::Line<2> >(*ss.second);
         }
+      }
+      else if( NumElemNodes == 6)
+      {
+        stk::mesh::set_cell_topology<shards::Triangle<6> >(*partVec[0]);
+        for (auto ss : ssPartVec) {
+          stk::mesh::set_cell_topology<shards::Line<3> >(*ss.second);
+        }
       } else {
         stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*partVec[0]);
         for (auto ss : ssPartVec) {
@@ -112,6 +119,13 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
         stk::mesh::set_cell_topology<shards::Tetrahedron<4> >(*partVec[0]);
         for (auto ss : ssPartVec) {
           stk::mesh::set_cell_topology<shards::Triangle<3> >(*ss.second);
+        }
+      }
+      else if( NumElemNodes == 10)
+      {
+        stk::mesh::set_cell_topology<shards::Tetrahedron<10> >(*partVec[0]);
+        for (auto ss : ssPartVec) {
+          stk::mesh::set_cell_topology<shards::Triangle<6> >(*ss.second);
         }
       } else {
         stk::mesh::set_cell_topology<shards::Hexahedron<8> >(*partVec[0]);
@@ -838,7 +852,7 @@ void Albany::GmshSTKMeshStruct::set_generic_mesh_info()
     elems = tetra;
     sides = trias;
   } 
-  if (nb_tet10>0) 
+  else if (nb_tet10>0) 
   {
     this->numDim = 3;
 
