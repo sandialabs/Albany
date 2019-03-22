@@ -111,7 +111,7 @@ SET(SOURCES ${SOURCES}
   utility/Albany_CombineAndScatterManagerEpetra.cpp
   utility/Albany_CombineAndScatterManagerTpetra.cpp
   utility/Albany_CommUtils.cpp
-  utility/Albany_GatherAllV.cpp
+  utility/Albany_Gather.cpp
   utility/Albany_ThyraCrsMatrixFactory.cpp
   utility/Albany_ThyraUtils.cpp
   utility/Albany_TpetraThyraUtils.cpp
@@ -131,7 +131,7 @@ SET(HEADERS ${HEADERS}
   utility/Albany_CombineAndScatterManagerEpetra.hpp
   utility/Albany_CombineAndScatterManagerTpetra.hpp
   utility/Albany_CommUtils.hpp
-  utility/Albany_GatherAllV.hpp
+  utility/Albany_Gather.hpp
   utility/Albany_ThyraCrsMatrixFactory.hpp
   utility/Albany_ThyraUtils.hpp
   utility/Albany_TpetraThyraUtils.hpp

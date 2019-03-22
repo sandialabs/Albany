@@ -7,7 +7,7 @@
 #include "Albany_SolutionCullingStrategy.hpp"
 
 #include "Albany_Application.hpp"
-#include "Albany_GatherAllV.hpp"
+#include "Albany_Gather.hpp"
 #include "Albany_ThyraUtils.hpp"
 
 #include "Teuchos_Array.hpp" 

@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_GATHER_ALL_V_HPP
-#define ALBANY_GATHER_ALL_V_HPP
+#ifndef ALBANY_GATHER_HPP
+#define ALBANY_GATHER_HPP
 
 #include "Teuchos_Array.hpp"
 #include "Albany_CommTypes.hpp"
@@ -23,6 +23,17 @@ void gatherAllV(const Teuchos::RCP<const Teuchos_Comm>& comm,
                 const Teuchos::ArrayView<const GO>& myVals,
                 Teuchos::Array<GO>& allVals);
 
+// This free function gathers all values on the root rank.
+// The reason for the existence of this routine rather than
+// relying on Teuchos comm utilities is that Teuchos wants
+// the Ordinal type of the local/global count to match
+// the Ordinal type of the communicator, which is not the
+// case for Albany (the global count is GO, and the comm
+// ordinal is LO).
+void gatherV(const Teuchos::RCP<const Teuchos_Comm>& comm,
+             const Teuchos::ArrayView<const GO>& myVals,
+             Teuchos::Array<GO>& allVals, const LO root_rank);
+
 } // namespace Albany
 
-#endif // ALBANY_GATHER_ALL_V_HPP
+#endif // ALBANY_GATHER_HPP
