@@ -12,7 +12,10 @@
 #include <list>
 #include <set>
 
-#include "Albany_DataTypes.hpp"
+#include "Albany_TpetraTypes.hpp"
+#include "Albany_ThyraTypes.hpp"
+#include "Albany_SacadoTypes.hpp"
+
 #if defined(ALBANY_LCM)
 #include <set>
 #endif

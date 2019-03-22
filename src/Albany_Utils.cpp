@@ -7,6 +7,7 @@
 #include "Albany_Utils.hpp"
 
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_Macros.hpp"
 
 // Include the concrete Epetra Comm's, if needed
 #if defined(ALBANY_EPETRA)

@@ -18,6 +18,7 @@
 #include "AAdapt_RC_Manager.hpp"
 
 #include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_TpetraThyraTypes.hpp"
 
 #define loop(a, i, dim)                                                 \
   for (PHX::MDField<RealType>::size_type i = 0; i < a.dimension(dim); ++i)

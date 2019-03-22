@@ -11,7 +11,9 @@
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_ResponseFactory.hpp"
-#include "Albany_Utils.hpp"
+#include "Albany_Macros.hpp"
+#include "Albany_ThyraUtils.hpp"
+
 #include "Teuchos_TimeMonitor.hpp"
 #include <MatrixMarket_Tpetra.hpp>
 
@@ -57,7 +59,6 @@
 #include "SolutionSniffer.hpp"
 #endif // ALBANY_LCM
 
-#include "Albany_ThyraUtils.hpp"
 // TODO: remove this if/when the thyra refactor is 100% complete,
 //       and there is no more any Tpetra stuff in this class
 #include "Albany_TpetraThyraUtils.hpp"
@@ -1266,35 +1267,7 @@ PHAL::Workset Application::set_dfm_workset(double const current_time,
   if (scaleBCdofs == true) {
     setScaleBCDofs(workset);
 #ifdef WRITE_TO_MATRIX_MARKET
-    char nameScale[100]; // create string for file name
-    if (commT->getSize() == 1) {
-      sprintf(nameScale, "scale%i.mm", countScale);
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, getConstTpetraVector(scaleVec_));
-    }
-    else {
-        // LB 7/24/18: is the conversion to serial really needed? Tpetra can handle distributed vectors in the output.
-        //             Besides, the serial map has GIDs from 0 to num_global_elements-1. This *may not* be the same
-        //             set of GIDs as in the solution map (this may really become an issue when we start tackling
-        //             block discretizations)
-/*
- *        // create serial map that puts the whole solution on processor 0
- *        int numMyElements = (scaleVec_->getMap()->getComm()->getRank() == 0)
- *                                  ? scaleVec_->getMap()->getGlobalNumElements()
- *                                  : 0;
- *        Teuchos::RCP<const Tpetra_Map> serial_map =
- *              Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, commT));
- *
- *        // create importer from parallel map to serial map and populate serial
- *        // solution scale_serial
- *        Teuchos::RCP<Tpetra_Import> importOperator =
- *            Teuchos::rcp(new Tpetra_Import(scaleVec_->getMap(), serial_map));
- *        Teuchos::RCP<Tpetra_Vector> scale_serial =
- *            Teuchos::rcp(new Tpetra_Vector(serial_map));
- *        scale_serial->doImport(*scaleVec_, *importOperator, Tpetra::INSERT);
- */
-      sprintf(nameScale, "scaleSerial%i.mm", countScale);
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, getConstTpetraVector(scaleVec_));
-    }
+    writeMatrixMarket(scaleVec_,scale,countScale);
 #endif
     countScale++;
   }

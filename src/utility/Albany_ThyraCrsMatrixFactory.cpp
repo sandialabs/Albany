@@ -11,6 +11,7 @@
 #include "Albany_EpetraThyraUtils.hpp"
 
 #include "Albany_Utils.hpp"
+#include "Albany_Macros.hpp"
 
 namespace Albany {
 

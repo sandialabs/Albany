@@ -14,6 +14,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Tpetra_ConfigDefs.hpp"
 
+#include "Albany_TpetraThyraTypes.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
 

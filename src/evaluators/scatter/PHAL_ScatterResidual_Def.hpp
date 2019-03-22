@@ -12,7 +12,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "PHAL_ScatterResidual.hpp"
-#include "Albany_Utils.hpp"
+#include "Albany_Macros.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"

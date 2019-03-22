@@ -36,11 +36,12 @@
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
+namespace Albany {
 
 //Constructor for meshes read from ASCII file
-Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
-                                             const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                             const Teuchos::RCP<const Teuchos_Comm>& commT) :
+AsciiSTKMeshStruct::
+AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
+                   const Teuchos::RCP<const Teuchos_Comm>& comm) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
@@ -61,7 +62,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
   have_beta(false),
   bf(nullptr)
 {
-   int numProc = commT->getSize(); //total number of processors
+   int numProc = comm->getSize(); //total number of processors
    contigIDs = params->get("Contiguous IDs", true);
    std::cout << "Number of processors: " << numProc << std::endl;
    //names of files giving the mesh
@@ -92,7 +93,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
      if ((numProc == 1) & (contigIDs == false))
         std::cout << "1 processor run with non-contiguous IDs; bfIDs0, geIDs0, gnIDs0 files required." << std::endl;
 #endif
-     int suffix = commT->getRank(); //current processor number
+     int suffix = comm->getRank(); //current processor number
      sprintf(meshfilename, "%s%i", "xyz", suffix);
      sprintf(shfilename, "%s%i", "sh", suffix);
      sprintf(confilename, "%s%i", "eles", suffix);
@@ -313,9 +314,9 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
        }
      }
 
-  elem_mapT = Teuchos::rcp(new Tpetra_Map(NumEles, globalElesID(), 0, commT)); //Distribute the elements according to the global element IDs
-  node_mapT = Teuchos::rcp(new Tpetra_Map(NumNodes, globalNodesID(), 0, commT)); //Distribute the nodes according to the global node IDs
-  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, basalFacesID(), 0, commT)); //Distribute the elements according to the basal face IDs
+  elem_mapT = Teuchos::rcp(new Tpetra_Map(NumEles, globalElesID(), 0, comm)); //Distribute the elements according to the global element IDs
+  node_mapT = Teuchos::rcp(new Tpetra_Map(NumNodes, globalNodesID(), 0, comm)); //Distribute the nodes according to the global node IDs
+  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, basalFacesID(), 0, comm)); //Distribute the elements according to the basal face IDs
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
@@ -393,19 +394,19 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
 
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 
-  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
+  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub,
                              nsNames, ssNames, worksetSize, partVec[0]->name(),
                              ebNameToIndex, this->interleavedOrdering));
 
 
   // Create a mesh specs object for EACH side set
-  this->initializeSideSetMeshSpecs(commT);
+  this->initializeSideSetMeshSpecs(comm);
 
   // Initialize the requested sideset mesh struct in the mesh
-  this->initializeSideSetMeshStructs(commT);
+  this->initializeSideSetMeshStructs(comm);
 }
 
-Albany::AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
+AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
 {
   delete [] xyz;
   if (have_sh) delete [] sh;
@@ -414,17 +415,17 @@ Albany::AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
 }
 
 void
-Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
-              const Teuchos::RCP<const Teuchos_Comm>& commT,
+AsciiSTKMeshStruct::setFieldAndBulkData(
+              const Teuchos::RCP<const Teuchos_Comm>& comm,
               const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
               const unsigned int neq_,
               const AbstractFieldContainer::FieldContainerRequirements& req,
-              const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+              const Teuchos::RCP<StateInfoStruct>& sis,
               const unsigned int worksetSize,
-              const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
               const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
-  this->SetupFieldData(commT, neq_, req, sis, worksetSize);
+  this->SetupFieldData(comm, neq_, req, sis, worksetSize);
 
   metaData->commit();
 
@@ -696,7 +697,7 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
   }
   if (have_bf == true) {
     *out << "Setting basal surface connectivity from bf file provided..." << std::endl;
-    for (int i=0; i<basal_face_mapT->getNodeNumElements(); i++) {
+    for (unsigned int i=0; i<basal_face_mapT->getNodeNumElements(); i++) {
        singlePartVec[0] = ssPartVec["Basal"];
        sideID = basal_face_mapT->getGlobalElement(i);
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
@@ -719,18 +720,20 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
     }
   }
 
-  Albany::fix_node_sharing(*bulkData);
+  fix_node_sharing(*bulkData);
   bulkData->modification_end();
 
   fieldAndBulkDataSet = true;
-  this->finalizeSideSetMeshStructs(commT, side_set_req, side_set_sis, worksetSize);
+  this->finalizeSideSetMeshStructs(comm, side_set_req, side_set_sis, worksetSize);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::AsciiSTKMeshStruct::getValidDiscretizationParameters() const
+AsciiSTKMeshStruct::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getValidGenericSTKParameters("Valid ASCII_DiscParams");
 
   return validPL;
 }
+
+} // namespace Albany

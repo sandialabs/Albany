@@ -11,7 +11,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
-#include "Albany_Utils.hpp"
+#include "Albany_Macros.hpp"
 #include "Albany_ThyraUtils.hpp"
 
 // TODO: remove this include when you manage to abstract away from Tpetra the Jacobian impl.

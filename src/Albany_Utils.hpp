@@ -10,13 +10,10 @@
 // Get Albany configuration macros
 #include "Albany_config.h"
 
-// Get all debug macros
-// Note: this is for backward compatibility. Prefer including Albany_Debug.hpp for debug macros
-#include "Albany_Macros.hpp"
-
 #include <sstream>
 
-#include "Albany_DataTypes.hpp"
+#include "Albany_TpetraTypes.hpp"
+#include "Albany_ThyraTypes.hpp"
 #include "Albany_CommUtils.hpp"
 
 #include "Teuchos_RCP.hpp"

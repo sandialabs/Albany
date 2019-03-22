@@ -7,7 +7,9 @@
 #ifndef ALBANY_MODEL_EVALUATOR_T_HPP
 #define ALBANY_MODEL_EVALUATOR_T_HPP
 
-#include "Albany_DataTypes.hpp"
+#include "Albany_SacadoTypes.hpp"
+#include "Albany_TpetraTypes.hpp"
+#include "Albany_ThyraTypes.hpp"
 
 #include "Piro_TransientDecorator.hpp"
 

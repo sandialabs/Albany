@@ -7,7 +7,8 @@
 #ifndef ALBANY_NULL_SPACE_UTILS_HPP
 #define ALBANY_NULL_SPACE_UTILS_HPP
 
-#include "Albany_DataTypes.hpp"
+#include "Albany_TpetraTypes.hpp"
+#include "Albany_ThyraTypes.hpp"
 
 namespace Albany {
 

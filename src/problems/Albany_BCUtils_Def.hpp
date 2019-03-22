@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "Albany_BCUtils.hpp"
+#include "Albany_Macros.hpp"
 
 #include <Phalanx_Evaluator_Factory.hpp>
 

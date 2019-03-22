@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Albany_DataTypes.hpp"
+#include "Albany_TpetraTypes.hpp"
 
 #include <BelosBlockCGSolMgr.hpp>
 #include <BelosTpetraAdapter.hpp>
@@ -28,11 +28,11 @@ solve (const Teuchos::RCP<const Tpetra_CrsMatrix>& A,
     new Tpetra_MultiVector(A->getDomainMap(), nrhs, true));
     
   if (P.is_null()) {
-    Teuchos::ParameterList pl;
-    pl.set<int>("fact: iluk level-of-fill", 0);
+    Teuchos::ParameterList pl_;
+    pl_.set<int>("fact: iluk level-of-fill", 0);
     Teuchos::RCP< Ifpack2::RILUK<Tpetra_RowMatrix> >
       prec = Teuchos::rcp(new Ifpack2::RILUK<Tpetra_RowMatrix>(A));
-    prec->setParameters(pl);
+    prec->setParameters(pl_);
     prec->initialize();
     prec->compute();
     P = prec;

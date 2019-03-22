@@ -10,7 +10,10 @@
 #include "Albany_NodalGraphUtils.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_STKNodeFieldContainer.hpp"
+#include "Albany_Macros.hpp"
 #include "Albany_Utils.hpp"
+#include <Albany_ThyraUtils.hpp>
+#include <Albany_CommUtils.hpp>
 
 #ifdef ALBANY_CONTACT
 #include "Albany_ContactManager.hpp"
@@ -52,7 +55,6 @@ extern "C" {
 #endif
 
 #include <PHAL_Dimension.hpp>
-#include <Albany_ThyraUtils.hpp>
 
 // Uncomment the following line if you want debug output to be printed to screen
 // #define OUTPUT_TO_SCREEN

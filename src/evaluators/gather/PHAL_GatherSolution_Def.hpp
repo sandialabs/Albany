@@ -11,7 +11,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Albany_Utils.hpp"
+#include "Albany_Macros.hpp"
 #include "Albany_ThyraUtils.hpp"
 
 #include "PHAL_GatherSolution.hpp"

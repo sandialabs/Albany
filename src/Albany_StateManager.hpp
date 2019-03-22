@@ -3,24 +3,29 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#ifndef ALBANY_STATEMANAGER_HPP
-#define ALBANY_STATEMANAGER_HPP
+
+#ifndef ALBANY_STATE_MANAGER_HPP
+#define ALBANY_STATE_MANAGER_HPP
 
 #include <map>
 #include <string>
 #include <vector>
-#include "Albany_AbstractDiscretization.hpp"
-#include "Albany_DataTypes.hpp"
-#include "Albany_StateInfoStruct.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
+
+#include "Adapt_NodalDataBase.hpp"
+
+#include "Albany_AbstractDiscretization.hpp"
+#include "Albany_TpetraTypes.hpp"
+#include "Albany_StateInfoStruct.hpp"
+#include "Albany_EigendataInfoStructT.hpp"
+#include "Albany_Macros.hpp"
+
 #if defined(ALBANY_EPETRA)
 #include "Albany_EigendataInfoStruct.hpp"
 #include "Epetra_Vector.h"
 #endif
-#include "Adapt_NodalDataBase.hpp"
-#include "Albany_EigendataInfoStructT.hpp"
 
 namespace Albany {
 
@@ -309,4 +314,4 @@ class StateManager {
 
 }  // Namespace Albany
 
-#endif  // ALBANY_STATEMANAGER_HPP
+#endif  // ALBANY_STATE_MANAGER_HPP

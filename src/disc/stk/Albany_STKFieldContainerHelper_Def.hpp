@@ -7,7 +7,7 @@
 #include "Albany_AbstractSTKFieldContainer.hpp"
 #include "Albany_STKFieldContainerHelper.hpp"
 #include "Albany_ThyraUtils.hpp"
-#include "Albany_Utils.hpp"
+#include "Albany_Macros.hpp"
 
 #include "Albany_BucketArray.hpp"
 #include <stk_mesh/base/GetBuckets.hpp>

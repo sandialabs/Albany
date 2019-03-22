@@ -17,6 +17,8 @@
 #include "Albany_ModelFactory.hpp"
 #include "Albany_PiroObserverT.hpp"
 
+#include "Albany_Macros.hpp"
+
 #include "Piro_ProviderBase.hpp"
 
 #include "Piro_NOXSolver.hpp"
@@ -71,6 +73,7 @@
 #include "Albany_Utils.hpp"
 
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_TpetraTypes.hpp"
 
 #if defined(ALBANY_EPETRA)
 namespace Albany {
