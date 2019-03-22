@@ -4,200 +4,190 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off
-
-#ifndef ALBANY_GENERICSTKMESHSTRUCT_HPP
-#define ALBANY_GENERICSTKMESHSTRUCT_HPP
+#ifndef ALBANY_GENERIC_STK_MESH_STRUCT_HPP
+#define ALBANY_GENERIC_STK_MESH_STRUCT_HPP
 
 #include "Albany_AbstractSTKMeshStruct.hpp"
+#include "Albany_CombineAndScatterManager.hpp"
+
 #include "Teuchos_ParameterList.hpp"
 
 // Refinement
 #ifdef ALBANY_STK_PERCEPT
 #include <stk_percept/PerceptMesh.hpp>
-// GAH FIXME remove after STK upgrade
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconstant-logical-operand"
 #include <stk_adapt/UniformRefinerPattern.hpp>
-#pragma clang diagnostic pop
-
 #endif
-
 
 namespace Albany {
 
-
-  class GenericSTKMeshStruct : public AbstractSTKMeshStruct {
-
-  public:
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
-    const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() const;
+class GenericSTKMeshStruct : public AbstractSTKMeshStruct
+{
+public:
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
+  const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() const;
 
 #ifdef ALBANY_STK_PERCEPT
-    Teuchos::RCP<stk::percept::PerceptMesh> getPerceptMesh(){ return eMesh; }
-    Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> getRefinerPattern(){ return refinerPattern; }
+  Teuchos::RCP<stk::percept::PerceptMesh> getPerceptMesh(){ return eMesh; }
+  Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> getRefinerPattern(){ return refinerPattern; }
 #endif
 
 
-    //! Re-load balance adapted mesh
-    void rebalanceAdaptedMeshT(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                              const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
+  //! Re-load balance adapted mesh
+  void rebalanceAdaptedMeshT(const Teuchos::RCP<Teuchos::ParameterList>& params,
+                            const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
 
-    bool useCompositeTet(){ return compositeTet; }
+  bool useCompositeTet(){ return compositeTet; }
 
-    //! Process STK mesh for element block specific info
-    void setupMeshBlkInfo();
+  // This routine builds two maps: side3D_id->cell2D_id, and side3D_node_lid->cell2D_node_lid.
+  // These maps are used because the side id may differ from the cell id and the nodes order
+  // in a 2D cell may not be the same as in the corresponding 3D side. The second map works
+  // as follows: map[3DsideGID][3Dside_local_node] = 2Dcell_local_node
+  void buildCellSideNodeNumerationMap (const std::string& sideSetName,
+                                       std::map<GO,GO>& sideMap,
+                                       std::map<GO,std::vector<int>>& sideNodeMap);
 
-    // This routine builds two maps: side3D_id->cell2D_id, and side3D_node_lid->cell2D_node_lid.
-    // These maps are used because the side id may differ from the cell id and the nodes order
-    // in a 2D cell may not be the same as in the corresponding 3D side. The second map works
-    // as follows: map[3DsideGID][3Dside_local_node] = 2Dcell_local_node
-    void buildCellSideNodeNumerationMap (const std::string& sideSetName,
-                                         std::map<GO,GO>& sideMap,
-                                         std::map<GO,std::vector<int>>& sideNodeMap);
+protected:
+  GenericSTKMeshStruct(
+                const Teuchos::RCP<Teuchos::ParameterList>& params,
+                const Teuchos::RCP<Teuchos::ParameterList>& adaptParams,
+                const int numDim=-1);
 
-  protected:
-    GenericSTKMeshStruct(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const Teuchos::RCP<Teuchos::ParameterList>& adaptParams,
-                  const int numDim=-1);
+  virtual ~GenericSTKMeshStruct() = default;
 
-    void SetupFieldData(
+  void SetupFieldData(
+                const Teuchos::RCP<const Teuchos_Comm>& commT,
+                const int neq_,
+                const AbstractFieldContainer::FieldContainerRequirements& req,
+                const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                const int worksetSize_);
+
+  bool buildUniformRefiner();
+
+  bool buildLocalRefiner();
+
+  void printParts(stk::mesh::MetaData *metaData);
+
+  void cullSubsetParts(std::vector<std::string>& ssNames,
+      std::map<std::string, stk::mesh::Part*>& partVec);
+
+  //! Utility function that uses some integer arithmetic to choose a good worksetSize
+  int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
+
+  //! Re-load balance mesh
+  void rebalanceInitialMeshT(const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
+
+  //! Sets all mesh parts as IO parts (will be written to file)
+  void setAllPartsIO();
+
+  //! Determine if a percept mesh object is needed
+  bool buildEMesh;
+  bool buildPerceptEMesh();
+
+  //! Perform initial uniform refinement of the mesh
+  void uniformRefineMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
+
+  //! Creates a node set from a side set
+  void addNodeSetsFromSideSets ();
+
+  //! Checks the integrity of the nodesets created from sidesets
+  void checkNodeSetsFromSideSetsIntegrity ();
+
+  //! Creates empty mesh structs if required (and not already present)
+  void initializeSideSetMeshSpecs (const Teuchos::RCP<const Teuchos_Comm>& commT);
+
+  //! Creates empty mesh structs if required (and not already present)
+  void initializeSideSetMeshStructs (const Teuchos::RCP<const Teuchos_Comm>& commT);
+
+  //! Completes the creation of the side set mesh structs (if of type SideSetSTKMeshStruct)
+  void finalizeSideSetMeshStructs(
+        const Teuchos::RCP<const Teuchos_Comm>& commT,
+        const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
+        const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+        int worksetSize);
+
+  //! Loads from file input required fields not found in the mesh
+  void loadRequiredInputFields (const AbstractFieldContainer::FieldContainerRequirements& req,
+                                const Teuchos::RCP<const Teuchos_Comm>& commT);
+
+  // Routines to load, fill, or compute a field
+  void loadField (const std::string& field_name,
+                  const Teuchos::ParameterList& params,
+                  Teuchos::RCP<Thyra_MultiVector>& field_mv,
+                  const CombineAndScatterManager& cas_manager,
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const int neq_,
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const int worksetSize_);
+                  bool node, bool scalar, bool layered,
+                  const Teuchos::RCP<Teuchos::FancyOStream> out);
+  void fillField (const std::string& field_name,
+                  const Teuchos::ParameterList& params,
+                  Teuchos::RCP<Thyra_MultiVector>& field_mv,
+                  const Teuchos::RCP<const Thyra_VectorSpace>& entities_vs,
+                  bool node, bool scalar, bool layered,
+                  const Teuchos::RCP<Teuchos::FancyOStream> out);
+  void computeField (const std::string& field_name,
+                     const Teuchos::ParameterList& params,
+                     Teuchos::RCP<Thyra_MultiVector>& field_mv,
+                     const Teuchos::RCP<const Thyra_VectorSpace>& entities_vs,
+                     const std::vector<stk::mesh::Entity>& entities,
+                     bool node, bool scalar, bool layered,
+                     const Teuchos::RCP<Teuchos::FancyOStream> out);
 
-    bool buildUniformRefiner();
+  // Routines to read a field from file
+  void readScalarFileSerial (const std::string& fname,
+                             Teuchos::RCP<Thyra_MultiVector>& contentVec,
+                             const Teuchos::RCP<const Thyra_VectorSpace>& vs,
+                             const Teuchos::RCP<const Teuchos_Comm>& comm) const;
 
-    bool buildLocalRefiner();
+  void readVectorFileSerial (const std::string& fname,
+                             Teuchos::RCP<Thyra_MultiVector>& contentVec,
+                             const Teuchos::RCP<const Thyra_VectorSpace>& vs,
+                             const Teuchos::RCP<const Teuchos_Comm>& comm) const;
 
-    void printParts(stk::mesh::MetaData *metaData);
+  void readLayeredScalarFileSerial (const std::string& fname,
+                                    Teuchos::RCP<Thyra_MultiVector>& contentVec,
+                                    const Teuchos::RCP<const Thyra_VectorSpace>& vs,
+                                    std::vector<double>& normalizedLayersCoords,
+                                    const Teuchos::RCP<const Teuchos_Comm>& comm) const;
 
-    void cullSubsetParts(std::vector<std::string>& ssNames,
-        std::map<std::string, stk::mesh::Part*>& partVec);
+  void readLayeredVectorFileSerial (const std::string& fname,
+                                    Teuchos::RCP<Thyra_MultiVector>& contentVec,
+                                    const Teuchos::RCP<const Thyra_VectorSpace>& vs,
+                                    std::vector<double>& normalizedLayersCoords,
+                                    const Teuchos::RCP<const Teuchos_Comm>& comm) const;
 
-    //! Utility function that uses some integer arithmetic to choose a good worksetSize
-    int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
+  void checkFieldIsInMesh (const std::string& fname, const std::string& ftype) const;
 
-    //! Re-load balance mesh
-    void rebalanceInitialMeshT(const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
+  //! Perform initial adaptation input checking
+  void checkInput(std::string option, std::string value, std::string allowed_values);
 
-    //! Sets all mesh parts as IO parts (will be written to file)
-    void setAllPartsIO();
+  //! Rebuild the mesh with elem->face->segment->node connectivity for adaptation
+  void computeAddlConnectivity();
 
-    //! Determine if a percept mesh object is needed
-    bool buildEMesh;
-    bool buildPerceptEMesh();
+  void setDefaultCoordinates3d ();
 
-    //! Perform initial uniform refinement of the mesh
-    void uniformRefineMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
+  Teuchos::RCP<Teuchos::ParameterList> getValidGenericSTKParameters(
+       std::string listname = "Discretization Param Names") const;
 
-    //! Creates a node set from a side set
-    void addNodeSetsFromSideSets ();
+  Teuchos::RCP<Teuchos::ParameterList> params;
 
-    //! Checks the integrity of the nodesets created from sidesets
-    void checkNodeSetsFromSideSetsIntegrity ();
+  //! The adaptation parameter list (null if the problem isn't adaptive)
+  Teuchos::RCP<Teuchos::ParameterList> adaptParams;
 
-    //! Creates empty mesh structs if required (and not already present)
-    void initializeSideSetMeshSpecs (const Teuchos::RCP<const Teuchos_Comm>& commT);
-
-    //! Creates empty mesh structs if required (and not already present)
-    void initializeSideSetMeshStructs (const Teuchos::RCP<const Teuchos_Comm>& commT);
-
-    //! Completes the creation of the side set mesh structs (if of type SideSetSTKMeshStruct)
-    void finalizeSideSetMeshStructs(
-          const Teuchos::RCP<const Teuchos_Comm>& commT,
-          const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
-          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
-          int worksetSize);
-
-    //! Loads from file input required fields not found in the mesh
-    void loadRequiredInputFields (const AbstractFieldContainer::FieldContainerRequirements& req,
-                                  const Teuchos::RCP<const Teuchos_Comm>& commT);
-
-    void loadField (const std::string& field_name, const Teuchos::ParameterList& params,
-                    Teuchos::RCP<Tpetra_MultiVector>& field_mv, const Tpetra_Import& importOperator,
-                    const std::vector<stk::mesh::Entity>& entities,
-                    const Teuchos::RCP<const Teuchos_Comm>& commT,
-                    bool node, bool scalar, bool layered,
-                    const Teuchos::RCP<Teuchos::FancyOStream> out);
-    void fillField (const std::string& field_name, const Teuchos::ParameterList& params,
-                    Teuchos::RCP<Tpetra_MultiVector>& field_mv, const Teuchos::RCP<const Tpetra_Map> entities_map,
-                    const std::vector<stk::mesh::Entity>& entities,
-                    bool node, bool scalar, bool layered,
-                    const Teuchos::RCP<Teuchos::FancyOStream> out);
-    void computeField (const std::string& field_name, const Teuchos::ParameterList& params,
-                       Teuchos::RCP<Tpetra_MultiVector>& field_mv, const Teuchos::RCP<const Tpetra_Map> entities_map,
-                       const std::vector<stk::mesh::Entity>& entities,
-                       bool node, bool scalar, bool layered,
-                       const Teuchos::RCP<Teuchos::FancyOStream> out);
-
-    void readScalarFileSerial (const std::string& fname, Teuchos::RCP<Tpetra_MultiVector>& contentVec,
-                               const Teuchos::RCP<const Tpetra_Map>& map,
-                               const Teuchos::RCP<const Teuchos_Comm>& comm) const;
-
-    void readVectorFileSerial (const std::string& fname, Teuchos::RCP<Tpetra_MultiVector>& contentVec,
-                               const Teuchos::RCP<const Tpetra_Map>& map,
-                               const Teuchos::RCP<const Teuchos_Comm>& comm) const;
-
-    void readLayeredScalarFileSerial (const std::string& fname, Teuchos::RCP<Tpetra_MultiVector>& contentVec,
-                                      const Teuchos::RCP<const Tpetra_Map>& map,
-                                      std::vector<double>& normalizedLayersCoords,
-                                      const Teuchos::RCP<const Teuchos_Comm>& comm) const;
-
-    void readLayeredVectorFileSerial (const std::string& fname, Teuchos::RCP<Tpetra_MultiVector>& contentVec,
-                                      const Teuchos::RCP<const Tpetra_Map>& map,
-                                      std::vector<double>& normalizedLayersCoords,
-                                      const Teuchos::RCP<const Teuchos_Comm>& comm) const;
-
-    void checkFieldIsInMesh (const std::string& fname, const std::string& ftype) const;
-
-    //! Perform initial adaptation input checking
-    void checkInput(std::string option, std::string value, std::string allowed_values);
-
-    //! Rebuild the mesh with elem->face->segment->node connectivity for adaptation
-    void computeAddlConnectivity();
-
-    void setDefaultCoordinates3d ();
-
-    // Given a map, creates a gather map on proc 0.
-    // NOTE: the root map cannot be created linearly, with GIDs from 0 to numGlobalNodes/Elems, since
-    //       this may be a boundary mesh, and the GIDs may not start from 0, nor be contiguous.
-    //       Therefore, we must create a root map. Moreover, we need the GIDs sorted (so that, regardless
-    //       of the GID, we read the serial input files in the correct order), and we can't sort them
-    //       once the map is created, so we cannot use the Tpetra utility gatherMap.
-    Teuchos::RCP<const Tpetra_Map>
-    create_root_map (Teuchos::Array<Tpetra_GO>& nodeElements,
-                     const Teuchos::RCP<const Teuchos_Comm> commT);
-
-    virtual ~GenericSTKMeshStruct();
-
-    Teuchos::RCP<Teuchos::ParameterList> getValidGenericSTKParameters(
-         std::string listname = "Discretization Param Names") const;
-
-    Teuchos::RCP<Teuchos::ParameterList> params;
-
-    //! The adaptation parameter list (null if the problem isn't adaptive)
-    Teuchos::RCP<Teuchos::ParameterList> adaptParams;
-
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
 
 #ifdef ALBANY_STK_PERCEPT
-    Teuchos::RCP<stk::percept::PerceptMesh> eMesh;
-    Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> refinerPattern;
+  Teuchos::RCP<stk::percept::PerceptMesh> eMesh;
+  Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> refinerPattern;
 #endif
 
-    bool uniformRefinementInitialized;
+  bool uniformRefinementInitialized;
 
-    bool requiresAutomaticAura;
+  bool requiresAutomaticAura;
 
-    bool compositeTet;
+  bool compositeTet;
 
-    std::vector<std::string>  m_nodesets_from_sidesets;
-  };
+  std::vector<std::string>  m_nodesets_from_sidesets;
+};
 
-}
+} // namespace Albany
 
-#endif
+#endif // ALBANY_GENERIC_STK_MESH_STRUCT_HPP

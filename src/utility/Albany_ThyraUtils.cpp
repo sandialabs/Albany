@@ -1,8 +1,10 @@
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_CommUtils.hpp"
 #include "Albany_ThyraCrsMatrixFactory.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_Utils.hpp"
-#include "Albany_GatherAllV.hpp"
+#include "Albany_Macros.hpp"
+#include "Albany_Gather.hpp"
 
 #include "Petra_Converters.hpp"
 
@@ -47,7 +49,7 @@ createLocallyReplicatedVectorSpace(const int size, const Teuchos::RCP<const Teuc
     }
     default:
     {
-      auto comm_thyra = Thyra::convertTpetraToThyraComm(comm);
+      auto comm_thyra = createThyraCommFromTeuchosComm(comm);
       return Thyra::locallyReplicatedDefaultSpmdVectorSpace<ST>(comm_thyra,size);
     }
   }
@@ -143,6 +145,24 @@ LO getLocalElement  (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const GO g
 
   // Silence compiler warning
   TEUCHOS_UNREACHABLE_RETURN(-1);
+}
+
+void getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
+                        Teuchos::Array<GO>& gids)
+{
+  auto spmd_vs = getSpmdVectorSpace(vs);
+  const LO localDim = spmd_vs->localSubDim();
+  gids.resize(localDim);
+  for (LO i=0; i<localDim; ++i) {
+    gids[i] = getGlobalElement(vs,i);
+  }
+}
+
+Teuchos::Array<GO> getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace>& vs)
+{
+  Teuchos::Array<GO> gids;
+  getGlobalElements(vs,gids);
+  return gids;
 }
 
 bool locallyOwnedComponent (const Teuchos::RCP<const Thyra_SpmdVectorSpace>& vs, const GO gid)
@@ -328,6 +348,30 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Invalid or unsupported build type.\n");
   }
+}
+
+Teuchos::RCP<const Thyra_SpmdVectorSpace>
+createGatherVectorSpace (const Teuchos::RCP<const Thyra_SpmdVectorSpace>& vs,
+                         const LO root_rank)
+{
+  auto comm = createTeuchosCommFromThyraComm(vs->getComm());
+  const LO commSize = comm->getSize();
+  TEUCHOS_TEST_FOR_EXCEPTION(root_rank<0 || root_rank>commSize, std::logic_error,
+                             "Error! Input root_rank outside comm size bounds.\n");
+
+  Teuchos::RCP<const Thyra_SpmdVectorSpace> spmd_vs;
+  if (commSize==1 || vs->isLocallyReplicated()) {
+    // In serial case, or for locally replicated vs, we have nothing to do
+    spmd_vs = vs;
+  } else {
+    Teuchos::Array<GO> myGids = getGlobalElements(vs);
+    Teuchos::Array<GO> allGids;
+    gatherV(comm,myGids,allGids,root_rank);
+
+    spmd_vs = createVectorSpace(comm,allGids);
+  }
+
+  return spmd_vs;
 }
 
 // ========= Thyra_LinearOp utilities ========= //

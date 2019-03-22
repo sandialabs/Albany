@@ -16,6 +16,8 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "Teuchos_ParameterList.hpp"
 
+#include "Albany_TpetraTypes.hpp"
+
 namespace PHAL {
 
 ///

@@ -23,6 +23,9 @@ createLocallyReplicatedVectorSpace (const Teuchos::ArrayView<const GO>& gids, co
 
 GO getGlobalElement (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const LO lid);
 LO getLocalElement  (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const GO gid);
+void getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
+                        Teuchos::Array<GO>& gids);
+Teuchos::Array<GO> getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace>& vs);
 
 // Check if the vector space locally owns a component
 bool locallyOwnedComponent (const Teuchos::RCP<const Thyra_SpmdVectorSpace>& vs, const GO gid);
@@ -46,6 +49,11 @@ Teuchos::RCP<const Thyra_SpmdVectorSpace>
 createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
                    const Teuchos::ArrayView<const GO>& gids,
                    const GO globalDim = Teuchos::OrdinalTraits<GO>::invalid());
+
+// Gather a spmd vector space on a given rank
+Teuchos::RCP<const Thyra_SpmdVectorSpace>
+createGatherVectorSpace (const Teuchos::RCP<const Thyra_SpmdVectorSpace>& vs,
+                         const LO root_rank = 0);
 
 // ========= Thyra_LinearOp utilities ========= //
 
