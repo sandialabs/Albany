@@ -15,7 +15,6 @@
 #include "Albany_ThyraUtils.hpp"
 
 #include "Teuchos_TimeMonitor.hpp"
-#include <MatrixMarket_Tpetra.hpp>
 
 #if defined(ALBANY_EPETRA)
 #include "EpetraExt_MultiVectorOut.h"
@@ -1462,8 +1461,8 @@ void Application::computeGlobalResidualImpl(
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char nameResUnscaled[100]; // create string for file name
-  sprintf(nameResUnscaled, "resUnscaled%i_residual.mm", countScale);
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResUnscaled, getConstTpetraVector(f));
+  sprintf(nameResUnscaled, "resUnscaled%i_residual", countScale);
+  writeMatrixMarket(f,nameResUnscaled);
 #endif
 
   if (scaleBCdofs == false && scale != 1.0) {
@@ -1472,8 +1471,8 @@ void Application::computeGlobalResidualImpl(
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char nameResScaled[100]; // create string for file name
-  sprintf(nameResScaled, "resScaled%i_residual.mm", countScale);
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResScaled, getConstTpetraVector(f));
+  sprintf(nameResScaled, "resScaled%i_residual", countScale);
+  writeMatrixMarket(f,nameResScaled);
 #endif
 
 #if defined(ALBANY_LCM)
@@ -1515,18 +1514,12 @@ void Application::computeGlobalResidual(
         p, f, dt);
 
   // Debut output
-  if (writeToMatrixMarketRes !=
-      0) {          // If requesting writing to MatrixMarket of residual...
-    char name[100]; // create string for file name
-    if (writeToMatrixMarketRes ==
-        -1) { // write residual to MatrixMarket every time it arises
-      sprintf(name, "rhs%i.mm", countRes);
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, getConstTpetraVector(f));
+  if (writeToMatrixMarketRes != 0) {          // If requesting writing to MatrixMarket of residual...
+    if (writeToMatrixMarketRes == -1) { // write residual to MatrixMarket every time it arises
+      writeMatrixMarket(f,"rhs",countRes);
     } else {
-      if (countRes ==
-          writeToMatrixMarketRes) { // write residual only at requested count#
-        sprintf(name, "rhs%i.mm", countRes);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, getConstTpetraVector(f));
+      if (countRes == writeToMatrixMarketRes) { // write residual only at requested count#
+        writeMatrixMarket(f,"rhs",countRes);
       }
     }
   }
@@ -1693,13 +1686,9 @@ void Application::computeGlobalJacobianImpl(
     if (scaleBCdofs == false && scale != 1.0) {
       fillComplete(jac);
 #ifdef WRITE_TO_MATRIX_MARKET
-      char nameJacUnscaled[100]; // create string for file name
-      sprintf(nameJacUnscaled, "jacUnscaled%i.mm", countScale);
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(nameJacUnscaled, getConstTpetraMatrix(jac));
+      writeMatrixMarket(jac,"jacUnscaled",countScale);
       if (f != Teuchos::null) {
-        char nameResUnscaled[100]; // create string for file name
-        sprintf(nameResUnscaled, "resUnscaled%i.mm", countScale);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResUnscaled, getConstTpetraVector(f));
+        writeMatrixMarket(f,"resUnscaled",countScale);
       }
 #endif
       // set the scaling
@@ -1715,17 +1704,11 @@ void Application::computeGlobalJacobianImpl(
         Thyra::ele_wise_scale(*scaleVec_,f.ptr());
       }
 #ifdef WRITE_TO_MATRIX_MARKET
-      char nameJacScaled[100]; // create string for file name
-      sprintf(nameJacScaled, "jacScaled%i.mm", countScale);
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(nameJacScaled, getConstTpetraMatrix(jac));
+      writeMatrixMarket(jac,"jacScaled",countScale);
       if (f != Teuchos::null) {
-        char nameResScaled[100]; // create string for file name
-        sprintf(nameResScaled, "resScaled%i.mm", countScale);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameResScaled, getConstTpetraVector(f));
+        writeMatrixMarket(f,"resScaled",countScale);
       }
-      char nameScale[100]; // create string for file name
-      sprintf(nameScale, "scale%i.mm", countScale);
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, getConstTpetraVector(scaleVec_));
+      writeMatrixMarket(scaeleVec_,"scale",countScale);
 #endif
       countScale++;
     }
@@ -1755,34 +1738,7 @@ void Application::computeGlobalJacobianImpl(
     if (scaleBCdofs == true) {
       setScaleBCDofs(workset, jac);
 #ifdef WRITE_TO_MATRIX_MARKET
-      char nameScale[100]; // create string for file name
-      if (commT->getSize() == 1) {
-        sprintf(nameScale, "scale%i.mm", countScale);
-      }
-      else {
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, getConstTpetraVector(scaleVec_));
-        // LB 7/24/18: is the conversion to serial really needed? Tpetra can handle distributed vectors in the output.
-        //             Besides, the serial map has GIDs from 0 to num_global_elements-1. This *may not* be the same
-        //             set of GIDs as in the solution map (this may really become an issue when we start tackling
-        //             block discretizations)
-        // create serial map that puts the whole solution on processor 0
-/*
- *         int numMyElements = (scaleVec_->getMap()->getComm()->getRank() == 0)
- *                                 ? scaleVec_->getMap()->getGlobalNumElements()
- *                                 : 0;
- *         Teuchos::RCP<const Tpetra_Map> serial_map =
- *             Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, commT));
- * 
- *         // create importer from parallel map to serial map and populate serial
- *         // solution scale_serial
- *         Teuchos::RCP<Tpetra_Import> importOperator =
- *             Teuchos::rcp(new Tpetra_Import(scaleVec_->getMap(), serial_map));
- *         Teuchos::RCP<Tpetra_Vector> scale_serial =
- *             Teuchos::rcp(new Tpetra_Vector(serial_map));
- *         scale_serial->doImport(*scaleVec_, *importOperator, Tpetra::INSERT);
- */
-        sprintf(nameScale, "scaleSerial%i.mm", countScale);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(nameScale, getConstTpetraVector(scaleVec_));
+      writeMatrixMarket(scaleVec_,scale,countScale);
       }
 #endif
       countScale++;
