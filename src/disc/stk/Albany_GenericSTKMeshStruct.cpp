@@ -1107,23 +1107,18 @@ void GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldContainer
 
   stk::mesh::Selector select_overlap_in_part = stk::mesh::Selector(metaData->universal_part()) & (stk::mesh::Selector(metaData->locally_owned_part()) | stk::mesh::Selector(metaData->globally_shared_part()));
 
-  std::vector<stk::mesh::Entity> nodes, elems, owned_nodes;
+  std::vector<stk::mesh::Entity> nodes, elems;
   stk::mesh::get_selected_entities(select_overlap_in_part, bulkData->buckets(stk::topology::NODE_RANK), nodes);
-  stk::mesh::get_selected_entities(select_owned_in_part, bulkData->buckets(stk::topology::NODE_RANK), owned_nodes);
   stk::mesh::get_selected_entities(select_owned_in_part, bulkData->buckets(stk::topology::ELEM_RANK), elems);
 
-  Teuchos::Array<GO> nodeIndices(nodes.size()), elemIndices(elems.size()), ownedNodeIndices(owned_nodes.size());
+  Teuchos::Array<GO> nodeIndices(nodes.size()), elemIndices(elems.size());
   for (unsigned int i = 0; i < nodes.size(); ++i) {
     nodeIndices[i] = bulkData->identifier(nodes[i]) - 1;
   }
   for (unsigned int i = 0; i < elems.size(); ++i) {
     elemIndices[i] = bulkData->identifier(elems[i]) - 1;
   }
-  for (unsigned int i = 0; i < owned_nodes.size(); ++i) {
-    ownedNodeIndices[i] = bulkData->identifier(owned_nodes[i]) - 1;
-  }
 
-  auto owned_nodes_vs = createVectorSpace(comm,ownedNodeIndices);
   auto nodes_vs = createVectorSpace(comm,nodeIndices);
   auto elems_vs = createVectorSpace(comm,elemIndices);
 
@@ -1165,13 +1160,15 @@ void GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldContainer
   //       of the GID, we read the serial input files in the correct order), and we can't sort them
   //       once the vs is created.
 
-  auto serial_nodes_vs = owned_nodes_vs;
+  auto serial_nodes_vs = nodes_vs;
   auto serial_elems_vs = elems_vs;
   if (node_field_ascii_loads) {
-    Teuchos::Array<GO> nodes_gids = getGlobalElements(owned_nodes_vs);
+    Teuchos::Array<GO> nodes_gids = getGlobalElements(nodes_vs);
     Teuchos::Array<GO> all_nodes_gids;
     gatherV(comm,nodes_gids(),all_nodes_gids,0);
     std::sort(all_nodes_gids.begin(),all_nodes_gids.end());
+    auto it = std::unique(all_nodes_gids.begin(),all_nodes_gids.end());
+    all_nodes_gids.erase(it,all_nodes_gids.end());
     serial_nodes_vs = createVectorSpace(comm,all_nodes_gids);
   }
   if (elem_field_ascii_loads) {
@@ -1388,8 +1385,6 @@ loadField (const std::string& field_name, const Teuchos::ParameterList& field_pa
       int size = norm_layers_coords.size();
       Teuchos::broadcast(*comm,0,size,norm_layers_coords.data());
     } else {
-describe(cas_manager.getOverlappedVectorSpace(),*Teuchos::VerboseObjectBase::getDefaultOStream(),Teuchos::VERB_EXTREME);
-describe(cas_manager.getOwnedVectorSpace(),*Teuchos::VerboseObjectBase::getDefaultOStream(),Teuchos::VERB_EXTREME);
       readScalarFileSerial (fname,serial_req_mvec,cas_manager.getOwnedVectorSpace(),comm);
     }
   } else {
