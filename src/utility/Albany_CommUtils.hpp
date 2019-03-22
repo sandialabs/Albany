@@ -21,6 +21,8 @@
 
 namespace Albany {
 
+Teuchos::RCP<const Teuchos_Comm> getDefaultComm();
+
 #if defined(ALBANY_EPETRA)
 Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec);
 
