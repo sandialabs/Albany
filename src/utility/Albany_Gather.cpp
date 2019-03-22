@@ -72,7 +72,10 @@ void gatherV(const Teuchos::RCP<const Teuchos_Comm>& comm,
 
     int allCount;
     MPI_Allreduce(&myCount,&allCount,1,MPI_INT,MPI_SUM,rawComm);
-    allVals.resize(allCount);
+
+    int myRank = comm->getRank();
+    int myAllCount = (myRank==root_rank ? allCount : 0);
+    allVals.resize(myAllCount);
 
     const int cpuCount = mpiComm->getSize();
     Teuchos::Array<int> allValCounts(cpuCount);
@@ -86,7 +89,7 @@ void gatherV(const Teuchos::RCP<const Teuchos_Comm>& comm,
     for (int i=1; i<cpuCount; ++i) {
       allValDisps[i] = allValDisps[i-1] + allValCounts[i-1];
     }
-    ALBANY_EXPECT(allCount == allValCounts.back() + allValDisps.back(),"Error! Mismatch in values counts.\n");
+    ALBANY_EXPECT(myRank!=root_rank || (allCount==allValCounts.back() + allValDisps.back()),"Error! Mismatch in values counts.\n");
 
     auto GO_type = Teuchos::Details::MpiTypeTraits<GO>::getType();
     MPI_Gatherv(
