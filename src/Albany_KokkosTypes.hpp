@@ -31,10 +31,10 @@ namespace Albany
 //       be careful about this. At worst, you may need to extract pointers and reinterpret_cast them.
 
 // kokkos 1d and 2d views to be used for on-device kernels
-template<typename Scalar>
-using DeviceView1d = Kokkos::View<Scalar*, Kokkos::LayoutLeft, PHX::Device, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
-template<typename Scalar>
-using DeviceView2d = Kokkos::View<Scalar**, Kokkos::LayoutLeft, PHX::Device, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+template<typename Scalar, typename MemoryTraits = Kokkos::MemoryUnmanaged>
+using DeviceView1d = Kokkos::View<Scalar*, Kokkos::LayoutLeft, PHX::Device, MemoryTraits>;
+template<typename Scalar, typename MemoryTraits = Kokkos::MemoryUnmanaged>
+using DeviceView2d = Kokkos::View<Scalar**, Kokkos::LayoutLeft, PHX::Device, MemoryTraits>;
 
 // Kokkos types for local graphs/matrices, to be used for on-device kernels
 using DeviceLocalGraph  = Kokkos::StaticCrsGraph<LO, Kokkos::LayoutLeft, PHX::Device>;
