@@ -245,8 +245,8 @@ evaluateFields(typename Traits::EvalData workset)
       }
 
       if (workset.Vp != Teuchos::null) {
-        const Tpetra_MultiVector& VpT = *(ConverterT::getConstTpetraMultiVector(workset.Vp));
-        const std::size_t num_cols = VpT.getNumVectors();
+        const std::size_t num_cols = workset.Vp->domain()->dim();
+        auto Vp_data = Albany::getLocalData(workset.Vp);
 
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp = workset.local_Vp[cell];
 
@@ -258,7 +258,7 @@ evaluateFields(typename Traits::EvalData workset)
               local_Vp[node*workset.numEqs+eq].resize(num_cols);
               const LO id = nodeID(cell,node,eq);
               for (std::size_t col=0; col<num_cols; ++col)
-                local_Vp[node*workset.numEqs+eq][col] = VpT.getData(col)[id];
+                local_Vp[node*workset.numEqs+eq][col] = Vp_data[col][id];
             }
           }
         } else {
@@ -267,7 +267,7 @@ evaluateFields(typename Traits::EvalData workset)
             const LO id = wsElDofs((int)cell,(int)node,0);
             local_Vp[node].resize(num_cols);
             for (std::size_t col=0; col<num_cols; ++col)
-              local_Vp[node][col] = (id >= 0) ? VpT.getData(col)[id] : 0;
+              local_Vp[node][col] = (id >= 0) ? Vp_data[col][id] : 0;
           }
         }
       }
