@@ -4,7 +4,6 @@
 #include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_Macros.hpp"
-#include "Albany_Gather.hpp"
 
 #include "Petra_Converters.hpp"
 
@@ -79,6 +78,7 @@ createLocallyReplicatedVectorSpace (const Teuchos::ArrayView<const GO>& gids, co
           ALBANY_EXPECT(gids[i]<=max_safe_gid, "Error! Input gids exceed Epetra_GO ranges.\n");
           e_gids[i] = static_cast<Epetra_GO>(gids[i]);
         }
+        (void) max_safe_gid;
         emap = Teuchos::rcp( new Epetra_BlockMap(gids.size(),gids.size(),
                              reinterpret_cast<const Epetra_GO*>(e_gids.getRawPtr()),
                              1,0,*createEpetraCommFromTeuchosComm(comm)) );
@@ -136,6 +136,7 @@ LO getLocalElement  (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const GO g
     //       Hence, we explicitly cast to whatever has size 64 bits (should *always* be long long, but the if is compile time, so no penalty)
     const GO max_safe_gid = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
     ALBANY_EXPECT(gid<=max_safe_gid, "Error! Input gid exceed Epetra_GO ranges.\n");
+    (void) max_safe_gid;
     return emap->LID(static_cast<Epetra_GO>(gid));
   }
 #endif
@@ -180,6 +181,7 @@ bool locallyOwnedComponent (const Teuchos::RCP<const Thyra_SpmdVectorSpace>& vs,
     //       Hence, we explicitly cast to whatever has size 64 bits (should *always* be long long, but the if is compile time, so no penalty)
     const GO max_safe_gid = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
     ALBANY_EXPECT(gid<=max_safe_gid, "Error! Input gid exceed Epetra_GO ranges.\n");
+    (void) max_safe_gid;
     return emap->MyGID(static_cast<Epetra_GO>(gid));
   }
 #endif
@@ -333,6 +335,7 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
         ALBANY_EXPECT(gids[i]<=max_safe_gid, "Error! Input gids exceed Epetra_GO ranges.\n");
         egids[i] = static_cast<Epetra_GO>(gids[i]);
       }
+      (void) max_safe_gid;
       emap = Teuchos::rcp( new Epetra_BlockMap(numGlobalElements,gids.size(),egids.getRawPtr(),1,0,*ecomm) );
     }
     return createThyraVectorSpace(emap);
@@ -348,30 +351,6 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Invalid or unsupported build type.\n");
   }
-}
-
-Teuchos::RCP<const Thyra_SpmdVectorSpace>
-createGatherVectorSpace (const Teuchos::RCP<const Thyra_SpmdVectorSpace>& vs,
-                         const LO root_rank)
-{
-  auto comm = createTeuchosCommFromThyraComm(vs->getComm());
-  const LO commSize = comm->getSize();
-  TEUCHOS_TEST_FOR_EXCEPTION(root_rank<0 || root_rank>commSize, std::logic_error,
-                             "Error! Input root_rank outside comm size bounds.\n");
-
-  Teuchos::RCP<const Thyra_SpmdVectorSpace> spmd_vs;
-  if (commSize==1 || vs->isLocallyReplicated()) {
-    // In serial case, or for locally replicated vs, we have nothing to do
-    spmd_vs = vs;
-  } else {
-    Teuchos::Array<GO> myGids = getGlobalElements(vs);
-    Teuchos::Array<GO> allGids;
-    gatherV(comm,myGids,allGids,root_rank);
-
-    spmd_vs = createVectorSpace(comm,allGids);
-  }
-
-  return spmd_vs;
 }
 
 // ========= Thyra_LinearOp utilities ========= //
@@ -724,6 +703,7 @@ DeviceLocalMatrix<const ST> getDeviceData (Teuchos::RCP<const Thyra_LinearOp>& l
     ST* values;
     int err_code = emat->ExtractCrsDataPointers(row_map,indices,values);
     ALBANY_EXPECT(err_code==0, "Error! Something went wrong while extracting Epetra_CrsMatrix local data pointers.\n");
+    (void) err_code;
     Teuchos::ArrayRCP<size_type> row_map_size_type(numMyRows+1);
     for (int i=0; i<numMyRows+1; ++i) {
       row_map_size_type[i] = static_cast<size_type>(row_map[i]);
@@ -794,6 +774,7 @@ DeviceLocalMatrix<ST> getNonconstDeviceData (Teuchos::RCP<Thyra_LinearOp>& lop)
     ST* values;
     int err_code = emat->ExtractCrsDataPointers(row_map,indices,values);
     ALBANY_EXPECT(err_code==0, "Error! Something went wrong while extracting Epetra_CrsMatrix local data pointers.\n");
+    (void) err_code;
     Teuchos::ArrayRCP<size_type> row_map_size_type(numMyRows+1);
     for (int i=0; i<numMyRows+1; ++i) {
       row_map_size_type[i] = static_cast<size_type>(row_map[i]);

@@ -11,6 +11,7 @@
 #include "Albany_GenericSTKMeshStruct.hpp"
 #include "Albany_SideSetSTKMeshStruct.hpp"
 #include "Albany_KokkosTypes.hpp"
+#include "Albany_Gather.hpp"
 
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #include "Albany_MultiSTKFieldContainer.hpp"
@@ -1106,18 +1107,23 @@ void GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldContainer
 
   stk::mesh::Selector select_overlap_in_part = stk::mesh::Selector(metaData->universal_part()) & (stk::mesh::Selector(metaData->locally_owned_part()) | stk::mesh::Selector(metaData->globally_shared_part()));
 
-  std::vector<stk::mesh::Entity> nodes, elems;
+  std::vector<stk::mesh::Entity> nodes, elems, owned_nodes;
   stk::mesh::get_selected_entities(select_overlap_in_part, bulkData->buckets(stk::topology::NODE_RANK), nodes);
+  stk::mesh::get_selected_entities(select_owned_in_part, bulkData->buckets(stk::topology::NODE_RANK), owned_nodes);
   stk::mesh::get_selected_entities(select_owned_in_part, bulkData->buckets(stk::topology::ELEM_RANK), elems);
 
-  Teuchos::Array<GO> nodeIndices(nodes.size()), elemIndices(elems.size());
+  Teuchos::Array<GO> nodeIndices(nodes.size()), elemIndices(elems.size()), ownedNodeIndices(owned_nodes.size());
   for (unsigned int i = 0; i < nodes.size(); ++i) {
     nodeIndices[i] = bulkData->identifier(nodes[i]) - 1;
   }
   for (unsigned int i = 0; i < elems.size(); ++i) {
     elemIndices[i] = bulkData->identifier(elems[i]) - 1;
   }
+  for (unsigned int i = 0; i < owned_nodes.size(); ++i) {
+    ownedNodeIndices[i] = bulkData->identifier(owned_nodes[i]) - 1;
+  }
 
+  auto owned_nodes_vs = createVectorSpace(comm,ownedNodeIndices);
   auto nodes_vs = createVectorSpace(comm,nodeIndices);
   auto elems_vs = createVectorSpace(comm,elemIndices);
 
@@ -1153,19 +1159,27 @@ void GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldContainer
     }
   }
 
-  // NOTE: the serial map cannot be created linearly, with GIDs from 0 to numGlobalNodes/Elems, since
+  // NOTE: the serial vs cannot be created linearly, with GIDs from 0 to numGlobalNodes/Elems, since
   //       this may be a boundary mesh, and the GIDs may not start from 0, nor be contiguous.
-  //       Therefore, we must create a root map. Moreover, we need the GIDs sorted (so that, regardless
+  //       Therefore, we must create a root vs. Moreover, we need the GIDs sorted (so that, regardless
   //       of the GID, we read the serial input files in the correct order), and we can't sort them
-  //       once the map is created, so we cannot use the Tpetra utility gatherMap.
+  //       once the vs is created.
 
-  auto serial_nodes_vs = nodes_vs;
+  auto serial_nodes_vs = owned_nodes_vs;
   auto serial_elems_vs = elems_vs;
   if (node_field_ascii_loads) {
-    serial_nodes_vs = createGatherVectorSpace(nodes_vs,0);
+    Teuchos::Array<GO> nodes_gids = getGlobalElements(owned_nodes_vs);
+    Teuchos::Array<GO> all_nodes_gids;
+    gatherV(comm,nodes_gids(),all_nodes_gids,0);
+    std::sort(all_nodes_gids.begin(),all_nodes_gids.end());
+    serial_nodes_vs = createVectorSpace(comm,all_nodes_gids);
   }
   if (elem_field_ascii_loads) {
-    serial_elems_vs = createGatherVectorSpace(elems_vs,0);
+    Teuchos::Array<GO> elems_gids = getGlobalElements(elems_vs);
+    Teuchos::Array<GO> all_elems_gids;
+    gatherV(comm,elems_gids(),all_elems_gids,0);
+    std::sort(all_elems_gids.begin(),all_elems_gids.end());
+    serial_elems_vs = createVectorSpace(comm,all_elems_gids);
   }
 
   // Creating the combine and scatter manager object (to transfer from serial to parallel vectors)
@@ -1374,6 +1388,8 @@ loadField (const std::string& field_name, const Teuchos::ParameterList& field_pa
       int size = norm_layers_coords.size();
       Teuchos::broadcast(*comm,0,size,norm_layers_coords.data());
     } else {
+describe(cas_manager.getOverlappedVectorSpace(),*Teuchos::VerboseObjectBase::getDefaultOStream(),Teuchos::VERB_EXTREME);
+describe(cas_manager.getOwnedVectorSpace(),*Teuchos::VerboseObjectBase::getDefaultOStream(),Teuchos::VERB_EXTREME);
       readScalarFileSerial (fname,serial_req_mvec,cas_manager.getOwnedVectorSpace(),comm);
     }
   } else {
@@ -1419,7 +1435,7 @@ loadField (const std::string& field_name, const Teuchos::ParameterList& field_pa
 
   // Fill the (possibly) parallel vector
   field_mv = Thyra::createMembers(vs,serial_req_mvec->domain()->dim());
-  cas_manager.combine(*serial_req_mvec, *field_mv, CombineMode::INSERT);
+  cas_manager.scatter(*serial_req_mvec, *field_mv, CombineMode::INSERT);
 }
 
 void GenericSTKMeshStruct::

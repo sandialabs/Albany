@@ -50,11 +50,6 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
                    const Teuchos::ArrayView<const GO>& gids,
                    const GO globalDim = Teuchos::OrdinalTraits<GO>::invalid());
 
-// Gather a spmd vector space on a given rank
-Teuchos::RCP<const Thyra_SpmdVectorSpace>
-createGatherVectorSpace (const Teuchos::RCP<const Thyra_SpmdVectorSpace>& vs,
-                         const LO root_rank = 0);
-
 // ========= Thyra_LinearOp utilities ========= //
 
 // These routines help to manipulate the a Thyra_LinearOp. They are needed

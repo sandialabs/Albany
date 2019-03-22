@@ -13,6 +13,7 @@
 #include "Albany_CombineAndScatterManager.hpp"
 #include "Albany_CommUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_Gather.hpp"
 
 #include "Piro_PerformSolve.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -155,7 +156,11 @@ int main(int argc, char *argv[]) {
         Albany::printThyraVector(*out << "\nxfinal = \n", x);
       }
       if (writeToMatrixMarketSoln == true) {
-        Teuchos::RCP<const Thyra_VectorSpace> root_vs = Albany::createGatherVectorSpace(Albany::getSpmdVectorSpace(x->range()));
+        auto myGIDs = Albany::getGlobalElements(x->range());
+        Teuchos::Array<GO> allGIDs;
+        Albany::gatherV(comm,myGIDs(),allGIDs,0);
+        std::sort(allGIDs.begin(),allGIDs.end());
+        Teuchos::RCP<const Thyra_VectorSpace> root_vs = Albany::createVectorSpace(comm,allGIDs);
         auto cas_manager = Albany::createCombineAndScatterManager(root_vs,x->range());
 
         auto x_serial = Thyra::createMember(Teuchos::rcp_implicit_cast<const Thyra_VectorSpace>(root_vs));
