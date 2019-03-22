@@ -10,6 +10,7 @@
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Albany_Memory.hpp"
+#include "Albany_CommUtils.hpp"
 
 #include "Piro_PerformSolve.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -19,7 +20,6 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
-#include "Tpetra_Core.hpp"
 
 #include "Kokkos_Core.hpp"
 
@@ -95,8 +95,7 @@ int main(int argc, char *argv[]) {
     auto setupTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
         *Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")));
 
-    RCP<const Teuchos_Comm> comm =
-      Tpetra::getDefaultComm();
+    RCP<const Teuchos_Comm> comm = Albany::getDefaultComm();
 
     // Connect vtune for performance profiling
     if (cmd.vtune) {
@@ -104,7 +103,6 @@ int main(int argc, char *argv[]) {
     }
 
     Albany::SolverFactory slvrfctry(cmd.xml_filename, comm);
-    RCP<const Epetra_Comm> appComm = Albany::createEpetraCommFromTeuchosComm(comm);
     RCP<Albany::Application> app;
     const RCP<Thyra::ModelEvaluator<double> > solver =
       slvrfctry.createThyraSolverAndGetAlbanyApp(app, comm, comm);

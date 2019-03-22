@@ -13,6 +13,9 @@
 #include "Albany_Memory.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_CommUtils.hpp"
+#include "Albany_TpetraTypes.hpp"
+#include "Albany_TpetraThyraTypes.hpp"
 
 #include "Piro_PerformSolve.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -25,7 +28,6 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
-#include <Tpetra_MpiPlatform.hpp>
 
 #include "ATO_TopoTools.hpp"
 
@@ -189,8 +191,7 @@ MPMD_App::MPMD_App(int argc, char **argv, MPI_Comm& localComm)
     auto setupTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
         *Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")));
 
-    Tpetra::MpiPlatform<Tpetra::Details::DefaultTypes::node_type> localPlatform(Teuchos::null, localComm);
-    m_comm = localPlatform.getComm();
+    m_comm = Albany::getDefaultComm();
 
     // Connect vtune for performance profiling
     if (cmd.vtune) { Albany::connect_vtune(m_comm->getRank()); }

@@ -6,7 +6,9 @@
 #include <iostream>
 
 #include "Albany_Utils.hpp"
+#include "Albany_CommUtils.hpp"
 #include "Albany_SolverFactory.hpp"
+
 #include "Thyra_EpetraModelEvaluator.hpp"
 #include "Piro_PerformAnalysis.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
@@ -14,7 +16,6 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
-#include "Tpetra_Core.hpp"
 
 int main(int argc, char *argv[]) {
 
@@ -49,8 +50,7 @@ int main(int argc, char *argv[]) {
 
     // Construct a ModelEvaluator for your application;
 
-    Teuchos::RCP<const Teuchos_Comm> comm =
-      Tpetra::getDefaultComm();
+    Teuchos::RCP<const Teuchos_Comm> comm = Albany::getDefaultComm();
 
     // Connect vtune for performance profiling
     if (cmd.vtune) {
