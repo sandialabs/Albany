@@ -36,12 +36,12 @@ class ProjectIPtoNodalFieldManager : public Adapt::NodalDataBase::Manager
   // this specialization, at least for now, because its implementation of fill()
   // is valid only for AlbanyTraits::Residual. Later we might move it up to the
   // nonspecialized class and create separate fill() impls for each trait.
-  class MassMatrix;
-  class FullMassMatrix;
-  class LumpedMassMatrix;
-  Teuchos::RCP<MassMatrix>        linear_op;
-  Teuchos::RCP<MassMatrix>        overlap_node_vs;
-  Teuchos::RCP<MassMatrix>        owned_node_vs;
+  class MassLinearOp;
+  class FullMassLinearOp;
+  class LumpedMassLinearOp;
+  Teuchos::RCP<MassLinearOp>        linear_op;
+  Teuchos::RCP<MassLinearOp>        overlap_node_vs;
+  Teuchos::RCP<MassLinearOp>        owned_node_vs;
   Teuchos::RCP<Thyra_MultiVector> ip_field;
   Teuchos::RCP<Albany::ThyraCrsMatrixFactory> m_overlap_mass_factory;
   // Start position in the nodal vector database, and number of vectors we're
@@ -305,7 +305,7 @@ setDefaultSolverParameters(Teuchos::ParameterList& pl, const double solver_tol)
 }
 
 // Represent the mass matrix type by an enumerated type.
-struct EMassMatrixType
+struct EMassLinearOpType
 {
   enum Enum
   {
@@ -330,10 +330,10 @@ struct EMassMatrixType
 };
 }  // namespace
 
-class ProjectIPtoNodalFieldManager::MassMatrix
+class ProjectIPtoNodalFieldManager::MassLinearOp
 {
  public:
-  virtual ~MassMatrix() {}
+  virtual ~MassLinearOp() {}
 
   virtual void
   fill(
@@ -345,8 +345,8 @@ class ProjectIPtoNodalFieldManager::MassMatrix
   Teuchos::RCP<const Thyra_VectorSpace>& overlap_node_vs() { return overlap_node_vs_; }
   Teuchos::RCP<const Thyra_VectorSpace>& owned_node_vs() { return owned_node_vs_; }
 
-  static MassMatrix*
-  create(EMassMatrixType::Enum type);
+  static MassLinearOp*
+  create(EMassLinearOpType::Enum type);
 
  protected:
   Teuchos::RCP<Thyra_LinearOp> linear_op_;  
@@ -356,8 +356,8 @@ class ProjectIPtoNodalFieldManager::MassMatrix
 
 };
 
-class ProjectIPtoNodalFieldManager::FullMassMatrix
-    : public ProjectIPtoNodalFieldManager::MassMatrix
+class ProjectIPtoNodalFieldManager::FullMassLinearOp
+    : public ProjectIPtoNodalFieldManager::MassLinearOp
 {
  public:
   virtual void
@@ -367,23 +367,16 @@ class ProjectIPtoNodalFieldManager::FullMassMatrix
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& wbf)
   {
     const int  num_nodes = bf.extent(1), num_pts = bf.extent(2);
-    //const bool is_static_graph = this->matrix_->isStaticGraph();
-    //IKT: CrsMatrix/CrsGraph is deprecating dynamic profile so I think graph will always be static 
-    //IKT, FIXME: The code here needs to be cleaned up to remove the is_static_graph logic, which I am keeping for now
-    const bool is_static_graph = true; 
+    const bool is_static_graph = Albany::isStaticGraph(this->linear_op_);
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (int rnode = 0; rnode < num_nodes; ++rnode) {
         GO                        global_row = workset.wsElNodeID[cell][rnode];
-        //IKT: the following assumes range space = row map 
-        const LO local_row = Albany::getLocalElement(this->linear_op_->range(),global_row);
-        Teuchos::Array<LO> cols;
+        Teuchos::Array<Tpetra_GO> cols;
         Teuchos::Array<ST>        vals;
 
         for (int cnode = 0; cnode < num_nodes; ++cnode) {
           const GO global_col = workset.wsElNodeID[cell][cnode];
-          //IKT: the following assumes domain space = column map 
-          const LO local_col = Albany::getLocalElement(this->linear_op_->domain(),global_col);
-          cols.push_back(local_col);
+          cols.push_back(global_col);
 
           ST mass_value = 0;
           for (int qp = 0; qp < num_pts; ++qp)
@@ -391,13 +384,13 @@ class ProjectIPtoNodalFieldManager::FullMassMatrix
           vals.push_back(mass_value);
         }
         if (is_static_graph) {
-          auto ret = Albany::addToLocalRowValues(this->linear_op_, local_row, cols(), vals()); 
+          auto ret = Albany::addToGlobalRowValues(this->linear_op_, global_row, cols(), vals()); 
           TEUCHOS_TEST_FOR_EXCEPTION(
               ret != 0,
-              std::logic_error, "Albany::addToLocalRowValues failed for local_row = " 
-                                <<  local_row << "!\n";) 
+              std::logic_error, "Albany::addToGlobalRowValues failed for global_row = " 
+                                <<  global_row << "!\n";) 
         } 
-        //IKT FIXME: remove the following 
+        //IKT FIXME: to implement!  Will require addition of routine to Albany_ThyraUtils  
         /*else {
           this->matrix_->insertGlobalValues(global_row, cols, vals);
         }*/
@@ -406,8 +399,8 @@ class ProjectIPtoNodalFieldManager::FullMassMatrix
   }
 };
 
-class ProjectIPtoNodalFieldManager::LumpedMassMatrix
-    : public ProjectIPtoNodalFieldManager::MassMatrix
+class ProjectIPtoNodalFieldManager::LumpedMassLinearOp
+    : public ProjectIPtoNodalFieldManager::MassLinearOp
 {
  public:
   virtual void
@@ -417,16 +410,11 @@ class ProjectIPtoNodalFieldManager::LumpedMassMatrix
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& wbf)
   {
     const int  num_nodes = bf.extent(1), num_pts = bf.extent(2);
-    //const bool is_static_graph = this->matrix_->isStaticGraph();
-    //IKT, FIXME: we will only have static graphs?  If so, remove 
-    //the is_static_graph and delete irrelevant code. 
-    const bool is_static_graph = true; 
+    const bool is_static_graph = Albany::isStaticGraph(this->linear_op_);
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (int rnode = 0; rnode < num_nodes; ++rnode) {
         const GO global_row = workset.wsElNodeID[cell][rnode];
-        //IKT: the following assumes range space = row map 
-        const LO local_row = Albany::getLocalElement(this->linear_op_->range(),global_row);
-        const Teuchos::Array<LO> cols(1, local_row);
+        const Teuchos::Array<Tpetra_GO> cols(1, global_row);
         double                          diag = 0;
         for (std::size_t qp = 0; qp < num_pts; ++qp) {
           double diag_qp = 0;
@@ -436,8 +424,9 @@ class ProjectIPtoNodalFieldManager::LumpedMassMatrix
         }
         const Teuchos::Array<ST> vals(1, diag);
         if (is_static_graph) {
-          Albany::addToLocalRowValues(this->linear_op_, local_row, cols(), vals()); 
+          Albany::addToGlobalRowValues(this->linear_op_, global_row, cols(), vals()); 
         }
+        //IKT, FIXME: implement the following case 
         //else
         //  this->matrix_->insertGlobalValues(global_row, cols, vals);
       }
@@ -445,12 +434,12 @@ class ProjectIPtoNodalFieldManager::LumpedMassMatrix
   }
 };
 
-typename ProjectIPtoNodalFieldManager::MassMatrix*
-ProjectIPtoNodalFieldManager::MassMatrix::create(EMassMatrixType::Enum type)
+typename ProjectIPtoNodalFieldManager::MassLinearOp*
+ProjectIPtoNodalFieldManager::MassLinearOp::create(EMassLinearOpType::Enum type)
 {
   switch (type) {
-    case EMassMatrixType::full: return new FullMassMatrix();
-    case EMassMatrixType::lumped: return new LumpedMassMatrix();
+    case EMassLinearOpType::full: return new FullMassLinearOp();
+    case EMassLinearOpType::lumped: return new LumpedMassLinearOp();
   }
   return nullptr;
 }
@@ -468,19 +457,19 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::initManager(
     mgr_ = Teuchos::rcp_dynamic_cast<ProjectIPtoNodalFieldManager>(
         ndb->getManager(key));
   else {
-    EMassMatrixType::Enum mass_matrix_type;
+    EMassLinearOpType::Enum mass_matrix_type;
     const std::string& mmstr = pl->get<std::string>("Mass Matrix Type", "Full");
     try {
-      mass_matrix_type = EMassMatrixType::fromString(mmstr);
+      mass_matrix_type = EMassLinearOpType::fromString(mmstr);
     } catch (const Teuchos::Exceptions::InvalidParameterValue& e) {
       *Teuchos::VerboseObjectBase::getDefaultOStream()
           << "Warning: Mass Matrix Type was set to " << mmstr
           << ", which is invalid; setting to Full." << std::endl;
-      mass_matrix_type = EMassMatrixType::full;
+      mass_matrix_type = EMassLinearOpType::full;
     }
     mgr_              = Teuchos::rcp(new ProjectIPtoNodalFieldManager());
     mgr_->linear_op = Teuchos::rcp(
-        ProjectIPtoNodalFieldManager::MassMatrix::create(mass_matrix_type));
+        ProjectIPtoNodalFieldManager::MassLinearOp::create(mass_matrix_type));
     // Find out our starting position in the nodal database.
     mgr_->ndb_start =
         p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getVecsize();
@@ -688,27 +677,33 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
   const bool am_first = ctr == 1;
   if (!am_first) return;
 
-  // Reallocate the mass matrix for assembly. Since the matrix is overwritten by
-  // a version used for linear algebra having a nonoverlapping row map, we can't
-  // just resumeFill. ip_field also alternates between overlapping
-  // and nonoverlapping maps and so must be reallocated.
- 
   //Get overlap and owned vector space corresponding to nodal data  
+  //These are saved as member variables for later usage.
   mgr_->overlap_node_vs->overlap_node_vs() = (p_state_mgr_->getStateInfoStruct()->getNodalDataBase()
                                               ->getNodalDataVector()->getOverlappedVectorSpace());
   mgr_->owned_node_vs->owned_node_vs() = (p_state_mgr_->getStateInfoStruct()->getNodalDataBase()
                                           ->getNodalDataVector()->getOwnedVectorSpace());
-  // Enough for first-order hex, but only a hint.
-  const size_t max_num_entries = 27;
-  // Construct the graph on the fly.
-  // IKT FIXME - ask Luca re: getNodalGraph(); routine in Adapt_NodalDataBase - it is gone.
-  // Is nodal graph ever available?  Here I am assuming it is not. 
-  mgr_->m_overlap_mass_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(
+
+  // Reallocate the mass matrix for assembly. Since the matrix is overwritten by
+  // a version used for linear algebra having a nonoverlapping row map, we can't
+  // just resumeFill. ip_field also alternates between overlapping
+  // and nonoverlapping maps and so must be reallocated.
+  Teuchos::RCP<const Albany::ThyraCrsMatrixFactory> nodal_db_crs_matrix_factory = 
+    p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalOpFactory(); 
+  if (Teuchos::nonnull(nodal_db_crs_matrix_factory)) {
+    //If nodal_db_crs_matrix_factory exists, use its createOp method to 
+    //create mgr_->linear_op->linear_op().  This is equivalent to using getNodalGraph()
+    //to populate the Tpetra_CrsMatrix (done prior to Thyra refactor). 
+    mgr_->linear_op->linear_op() = nodal_db_crs_matrix_factory->createOp();
+  } 
+  else {
+    // Otherwise, construct the graph on the fly.
+    // Enough for first-order hex, but only a hint.
+    const size_t max_num_entries = 27;
+    mgr_->m_overlap_mass_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(
                                                mgr_->overlap_node_vs->overlap_node_vs(), 
                                                mgr_->overlap_node_vs->overlap_node_vs(), max_num_entries) );
-  mgr_->linear_op->linear_op() = mgr_->m_overlap_mass_factory->createOp(); 
-
-//  Teuchos::RCP<const Thyra_VectorSpace> overlap_node_vs_const = Teuchos::rcp_dynamic_cast<const Thyra_VectorSpace>(mgr_->overlap_node_vs->overlap_node_vs()); 
+  }
 
   //The following assumes range space is equivalent to rowMap
   mgr_->ip_field = Thyra::createMembers(mgr_->linear_op->linear_op()->range(), mgr_->ndb_numvecs);
@@ -832,6 +827,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
   // a compatible b.
   {
     // Get overlapping and nonoverlapping maps.
+    const Teuchos::RCP<const Thyra_LinearOp> mm_ovl = mgr_->linear_op->linear_op(); 
     /*const Teuchos::RCP<const Tpetra_CrsMatrix>& mm_ovl =
         mgr_->mass_matrix->matrix();
     if (!mm_ovl->isStaticGraph()) {
