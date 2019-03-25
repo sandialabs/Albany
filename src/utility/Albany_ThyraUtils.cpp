@@ -379,6 +379,30 @@ getColumnSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop)
   return Teuchos::null;
 }
 
+Teuchos::RCP<const Thyra_VectorSpace>
+getRowSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmat = getConstTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    return createThyraVectorSpace(tmat->getRowMap());
+  }
+
+#if defined(ALBANY_EPETRA)
+  auto emat = getConstEpetraMatrix(lop,false);
+  if (!emat.is_null()) {
+    Teuchos::RCP<const Epetra_BlockMap> row_map = Teuchos::rcpFromRef(emat->RowMap());
+    return createThyraVectorSpace(row_map);
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+
+  // Dummy return value, to silence compiler warnings
+  return Teuchos::null;
+}
+
 bool isFillActive (const Teuchos::RCP<const Thyra_LinearOp>& lop)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
@@ -574,8 +598,8 @@ int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
 }
 
 int addToGlobalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
-                          const Tpetra_GO grow,
-                          const Teuchos::ArrayView<const Tpetra_GO> indices,
+                          const GO grow,
+                          const Teuchos::ArrayView<const GO> indices,
                           const Teuchos::ArrayView<const ST> values)
 {
   //The following is an integer error code, to be returned by this 
@@ -583,8 +607,11 @@ int addToGlobalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
   int integer_error_code = 0; 
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
+  const Teuchos::Array<GO> grow_array(1, grow);
   if (!tmat.is_null()) {
-    auto returned_val = tmat->sumIntoGlobalValues(grow,indices,values);
+    Teuchos::ArrayView<const Tpetra_GO> tgrow_array(reinterpret_cast<const Tpetra_GO*>(grow_array().getRawPtr()),1);
+    Teuchos::ArrayView<const Tpetra_GO> tindices(reinterpret_cast<const Tpetra_GO*>(indices.getRawPtr()),indices.size());
+    auto returned_val = tmat->sumIntoGlobalValues(tgrow_array[0],tindices,values);
     //Tpetra's replaceGlobalValues routine returns the number of indices for which values were actually replaced; the number of "correct" indices.
     //This should be size of indices array.  Therefore if returned_val != indices.size() something went wrong 
     if (returned_val != indices.size()) integer_error_code = 1; 
@@ -596,7 +623,24 @@ int addToGlobalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
   if (!emat.is_null()) {
     //Epetra's ReplaceGlobalValues routine returns integer error code, set to 0 if successful, set to 1 if one or more indices are not 
     //associated with the calling processor.  We can just return that value for the Epetra case. 
-    integer_error_code = emat->SumIntoGlobalValues(grow,indices.size(),values.getRawPtr(),indices.getRawPtr());
+    if (sizeof(GO)==sizeof(Epetra_GO)) {
+      Teuchos::ArrayView<const Epetra_GO> egrow_array(reinterpret_cast<const Epetra_GO*>(grow_array().getRawPtr()),1);
+      Teuchos::ArrayView<const Epetra_GO> eindices(reinterpret_cast<const Epetra_GO*>(indices.getRawPtr()),indices.size());
+      integer_error_code = emat->SumIntoGlobalValues(egrow_array[0], eindices.size(), values.getRawPtr(), eindices.getRawPtr());
+    }
+    else {
+      // Cannot reinterpret cast. Need to copy gids into Epetra_GO array
+      Teuchos::Array<Epetra_GO> eindices(indices.size());
+      Teuchos::Array<Epetra_GO> egrow_array(1);
+      const GO max_safe_index = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
+      for (int i=0; i<indices.size(); ++i) {
+        ALBANY_EXPECT(indices[i]<=max_safe_index, "Error! Input indices exceed Epetra_GO ranges.\n");
+        eindices[i] = static_cast<Epetra_GO>(indices[i]);
+      }
+      ALBANY_EXPECT(egrow_array[0]<=max_safe_index, "Error! Input grow exceeds Epetra_GO ranges.\n");
+      (void) max_safe_index;
+      integer_error_code = emat->SumIntoGlobalValues(egrow_array[0], eindices.size(), values.getRawPtr(), eindices.getRawPtr());
+    }
     return integer_error_code;
   }
 #endif

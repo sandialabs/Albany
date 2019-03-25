@@ -10,9 +10,6 @@
 // Get Kokkos types (for the 1d device view)
 #include "Albany_KokkosTypes.hpp"
 
-//Get Tpetra types 
-#include "Albany_TpetraTypes.hpp"
-
 namespace Albany
 {
 
@@ -62,6 +59,9 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
 Teuchos::RCP<const Thyra_VectorSpace>
 getColumnSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 
+Teuchos::RCP<const Thyra_VectorSpace>
+getRowSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
+
 // Fill related helpers
 bool isFillActive (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 void resumeFill (const Teuchos::RCP<Thyra_LinearOp>& lop);
@@ -87,8 +87,8 @@ int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                           const Teuchos::ArrayView<const ST> values);
 
 int addToGlobalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
-                          const Tpetra_GO lrow,
-                          const Teuchos::ArrayView<const Tpetra_GO> indices,
+                          const GO grow,
+                          const Teuchos::ArrayView<const GO> indices,
                           const Teuchos::ArrayView<const ST> values);
 
 int getGlobalMaxNumRowEntries (const Teuchos::RCP<Thyra_LinearOp>& lop); 
