@@ -59,6 +59,9 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
 // so we can abstract from the concrete linear algebra package, and rely
 // only on the Thyra interfaces.
 
+Teuchos::RCP<const Thyra_VectorSpace>
+getColumnSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
+
 // Fill related helpers
 bool isFillActive (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 void resumeFill (const Teuchos::RCP<Thyra_LinearOp>& lop);
@@ -72,10 +75,12 @@ void getLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                         const LO lrow,
                         Teuchos::Array<LO>& indices,
                         Teuchos::Array<ST>& values);
+
 void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
-                      const LO lrow,
-                      const Teuchos::ArrayView<const LO> indices,
-                      const Teuchos::ArrayView<const ST> values);
+                        const LO lrow,
+                        const Teuchos::ArrayView<const LO> indices,
+                        const Teuchos::ArrayView<const ST> values);
+
 int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                           const LO lrow,
                           const Teuchos::ArrayView<const LO> indices,
