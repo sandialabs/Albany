@@ -17,6 +17,7 @@
 #include "Albany_CommUtils.hpp"
 
 #include "Teuchos_RCP.hpp"
+#include "Albany_Macros.hpp"
 
 namespace Albany {
 
