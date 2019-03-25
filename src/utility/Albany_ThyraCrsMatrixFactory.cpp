@@ -112,6 +112,7 @@ void ThyraCrsMatrixFactory::insertGlobalIndices (const GO row, const Teuchos::Ar
 #ifdef ALBANY_EPETRA
     const GO max_safe_gid = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
     ALBANY_EXPECT(row<=max_safe_gid, "Error! Input gids exceed Epetra_GO ranges.\n");
+    (void) max_safe_gid;
 
     // Epetra expects pointers to non-const, and Epetra_GO may differ from GO.
     const Epetra_GO e_row = static_cast<Epetra_GO>(row);
@@ -172,8 +173,9 @@ Teuchos::RCP<Thyra_LinearOp> ThyraCrsMatrixFactory::createOp () const {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
 #endif
   } else {
-    Teuchos::RCP<Tpetra_Operator> mat = Teuchos::rcp (new Tpetra_CrsMatrix(m_graph->t_graph));
-    op = createThyraLinearOp(mat);
+    Teuchos::RCP<Tpetra_CrsMatrix> mat = Teuchos::rcp (new Tpetra_CrsMatrix(m_graph->t_graph));
+    mat->fillComplete();
+    op = createThyraLinearOp(Teuchos::rcp_implicit_cast<Tpetra_Operator>(mat));
   }
 
   return op;
