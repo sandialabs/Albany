@@ -10,7 +10,7 @@ for PACKAGE in $PACKAGES; do
 	trilinos)
 	    PACKAGE_NAME="Trilinos"
 	    REPO="git@github.com:trilinos/Trilinos.git"
-            BRANCH="master"
+            BRANCH="develop"
 	    ;;
 	albany)
 	    PACKAGE_NAME="Albany"
