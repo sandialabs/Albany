@@ -105,7 +105,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapVectorSpace(),nodeID[node]);
+      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),nodeID[node]);
       layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
 
       if(ilayer==0) {
@@ -128,7 +128,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapVectorSpace(),nodeID[node]);
+      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),nodeID[node]);
       layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
       this->int1Dw_z(cell,node) += this->basal_velocity(basalCellsMap[baseId].first, basalCellsMap[baseId].second);
     }
@@ -167,7 +167,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapVectorSpace(),nodeID[node]);
+      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),nodeID[node]);
       layeredMeshNumbering.getIndices(lnodeId, baseId, ilevel);
 
       if(ilevel==0) {
@@ -190,7 +190,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapVectorSpace(),nodeID[node]);
+      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),nodeID[node]);
       layeredMeshNumbering.getIndices(lnodeId, baseId, ilevel);
 
       // TODO implement the derivative for the extra term mb

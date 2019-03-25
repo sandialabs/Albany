@@ -202,7 +202,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapVectorSpace(),elNodeID[node]);
+      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
       LO base_id, ilayer;
       layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
       LO inode = layeredMeshNumbering.getId(base_id, this->fieldLevel);
@@ -241,7 +241,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstunk = neq * node + this->offset;
-      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapVectorSpace(),elNodeID[node]);
+      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
       LO base_id, ilayer;
       layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
       LO inode = layeredMeshNumbering.getId(base_id, this->fieldLevel);

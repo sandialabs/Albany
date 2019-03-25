@@ -96,7 +96,7 @@ evaluateFields(typename Traits::EvalData workset)
       LO base_id, ilayer;
       for (int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
-        LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapVectorSpace(),elNodeID[node]);
+        LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
         layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
         for (int il_col=0; il_col<numLayers+1; il_col++) {
           LO inode = layeredMeshNumbering.getId(base_id, il_col);
@@ -264,7 +264,7 @@ evaluateFields(typename Traits::EvalData workset)
     Teuchos::ArrayRCP<LO> basalIds(this->numNodes);
     LO base_id, ilayer;
     for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
-      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapVectorSpace(),elNodeID[node_col]);
+      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node_col]);
       layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
       LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
       lcols[node_col] = solDOFManager.getLocalDOF(inode, offset2DField);

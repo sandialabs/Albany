@@ -114,7 +114,7 @@ evaluateFields(typename Traits::EvalData workset)
       LO baseId, ilayer;
       for (int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
-        LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapVectorSpace(),elNodeID[node]);
+        LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
         layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
         std::vector<double> avVel(this->vecDimFO,0);
         for(int il=0; il<numLayers+1; ++il) {
@@ -187,7 +187,7 @@ evaluateFields(typename Traits::EvalData workset)
       LO baseId, ilayer;
       for (int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
-        LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapVectorSpace(),elNodeID[node]);
+        LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
         layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
         std::vector<double> avVel(this->vecDimFO,0);
         for(int il=0; il<numLayers+1; ++il) {
@@ -259,7 +259,7 @@ evaluateFields(typename Traits::EvalData workset)
       LO baseId, ilayer;
       for (int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
-        LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapVectorSpace(),elNodeID[node]);
+        LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
         layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
         std::vector<double> avVel(this->vecDimFO,0);
         for(int il=0; il<numLayers+1; ++il) {
@@ -331,7 +331,7 @@ evaluateFields(typename Traits::EvalData workset)
       LO baseId, ilayer;
       for (int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
-        LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapVectorSpace(),elNodeID[node]);
+        LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
         layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
         std::vector<double> avVel(this->vecDimFO,0);
         for(int il=0; il<numLayers+1; ++il) {

@@ -86,7 +86,7 @@ evaluateFields(typename Traits::EvalData workset)
     // const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapVectorSpace(),elNodeID[node]);
+      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
       LO base_id, ilevel;
       layeredMeshNumbering.getIndices(lnodeId, base_id,  ilevel);
       MeshScalarT h;
@@ -174,7 +174,7 @@ evaluateFields(typename Traits::EvalData workset)
     // const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapVectorSpace(),elNodeID[node]);
+      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
       LO base_id, ilevel;
       layeredMeshNumbering.getIndices(lnodeId, base_id,  ilevel);
 //      MeshScalarT h = std::max(H(cell,node), MeshScalarT(minH));
