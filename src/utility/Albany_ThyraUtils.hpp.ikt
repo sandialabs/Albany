@@ -73,25 +73,20 @@ void getLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                         Teuchos::Array<LO>& indices,
                         Teuchos::Array<ST>& values);
 void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
-                      const LO lrow,
-                      const Teuchos::ArrayView<const LO> indices,
-                      const Teuchos::ArrayView<const ST> values);
-int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                        const LO lrow,
+                        const Teuchos::ArrayView<const LO> indices,
+                        const Teuchos::ArrayView<const ST> values);
+void addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                           const LO lrow,
                           const Teuchos::ArrayView<const LO> indices,
                           const Teuchos::ArrayView<const ST> values);
 
-int addToGlobalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
-                          const Tpetra_GO lrow,
+//IKT, FIXME: implement the following routine!! 
+void addToGlobalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                          const Tpetra_GO grow,
                           const Teuchos::ArrayView<const Tpetra_GO> indices,
                           const Teuchos::ArrayView<const ST> values);
 
-int getGlobalMaxNumRowEntries (const Teuchos::RCP<Thyra_LinearOp>& lop); 
-
-Teuchos::RCP<const Thyra_VectorSpace>
-createOneToOneVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace> vs); 
-
-bool isStaticGraph(const Teuchos::RCP<Thyra_LinearOp>& lop); 
 
 Teuchos::RCP<const Thyra_LinearOp>
 buildRestrictionOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,

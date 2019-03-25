@@ -27,7 +27,7 @@ namespace Albany
 // ============ Epetra->Thyra conversion routines ============ //
 
 Teuchos::RCP<const Thyra_SpmdVectorSpace>
-createThyraVectorSpace (const Teuchos::RCP<const Epetra_BlockMap>& map);
+createThyraVectorSpace (const Teuchos::RCP<const Epetra_BlockMap> map);
 
 Teuchos::RCP<Thyra_Vector>
 createThyraVector (const Teuchos::RCP<Epetra_Vector>& v);

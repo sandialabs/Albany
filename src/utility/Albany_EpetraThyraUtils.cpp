@@ -32,7 +32,7 @@ private:
 // ============ Epetra->Thyra conversion routines ============ //
 
 Teuchos::RCP<const Thyra_SpmdVectorSpace>
-createThyraVectorSpace (const Teuchos::RCP<const Epetra_BlockMap>& bmap)
+createThyraVectorSpace (const Teuchos::RCP<const Epetra_BlockMap> bmap)
 {
   Teuchos::RCP<const Thyra_SpmdVectorSpace> vs;
   if (!bmap.is_null()) {
@@ -47,6 +47,7 @@ createThyraVectorSpace (const Teuchos::RCP<const Epetra_BlockMap>& bmap)
 
   return vs;
 }
+
 
 Teuchos::RCP<Thyra_Vector> 
 createThyraVector (const Teuchos::RCP<Epetra_Vector>& v)
