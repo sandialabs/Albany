@@ -391,18 +391,11 @@ class ProjectIPtoNodalFieldManager::FullMassMatrix
           vals.push_back(mass_value);
         }
         if (is_static_graph) {
-          Albany::addToLocalRowValues(this->linear_op_, local_row, cols(), vals()); 
-          //IKT, FIXME: addToLocalRowValues does not have a return type, 
-          //whereas sumIntoGlobalValues does, and it is used here for error 
-          //checking.  Alternates? 
-          /*const LO ret =
-              this->matrix_->sumIntoGlobalValues(global_row, cols, vals);
+          auto ret = Albany::addToLocalRowValues(this->linear_op_, local_row, cols(), vals()); 
           TEUCHOS_TEST_FOR_EXCEPTION(
-              ret != cols.size(),
-              std::logic_error,
-              "global_row " << global_row
-                            << " of mass matrix is missing elements"
-                            << std::endl);*/
+              ret != 0,
+              std::logic_error, "Albany::addToLocalRowValues failed for local_row = " 
+                                <<  local_row << "!\n";) 
         } 
         //IKT FIXME: remove the following 
         /*else {

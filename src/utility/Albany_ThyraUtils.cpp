@@ -517,23 +517,31 @@ void getLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
 }
 
-void addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
+int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                           const LO lrow,
                           const Teuchos::ArrayView<const LO> indices,
                           const Teuchos::ArrayView<const ST> values)
 {
+  //The following is an integer error code, to be returned by this 
+  //routine if something doesn't go right.  0 means success, 1 means failure 
+  int integer_error_code = 0; 
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
-    tmat->sumIntoLocalValues(lrow,indices,values);
-    return;
+    auto returned_val = tmat->replaceLocalValues(lrow,indices,values);
+    //Tpetra's replaceLocalValues routine returns the number of indices for which values were actually replaced; the number of "correct" indices.
+    //This should be size of indices array.  Therefore if returned_val != indices.size() something went wrong 
+    if (returned_val != indices.size()) integer_error_code = 1; 
+    return integer_error_code; 
   }
 
 #if defined(ALBANY_EPETRA)
   auto emat = getEpetraMatrix(lop,false);
   if (!emat.is_null()) {
-    emat->SumIntoMyValues(lrow,indices.size(),values.getRawPtr(),indices.getRawPtr());
-    return;
+    //Epetra's ReplaceMyValues routine returns integer error code, set to 0 if successful, set to 1 if one or more indices are not 
+    //associated with the calling processor.  We can just return that value for the Epetra case. 
+    integer_error_code = emat->ReplaceMyValues(lrow,indices.size(),values.getRawPtr(),indices.getRawPtr());
+    return integer_error_code;
   }
 #endif
 
