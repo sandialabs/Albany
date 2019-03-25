@@ -370,9 +370,9 @@ class ProjectIPtoNodalFieldManager::FullMassLinearOp
     const bool is_static_graph = Albany::isStaticGraph(this->linear_op_);
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (int rnode = 0; rnode < num_nodes; ++rnode) {
-        GO                        global_row = workset.wsElNodeID[cell][rnode];
-        Teuchos::Array<Tpetra_GO> cols;
-        Teuchos::Array<ST>        vals;
+        GO                 global_row = workset.wsElNodeID[cell][rnode];
+        Teuchos::Array<GO> cols;
+        Teuchos::Array<ST> vals;
 
         for (int cnode = 0; cnode < num_nodes; ++cnode) {
           const GO global_col = workset.wsElNodeID[cell][cnode];
@@ -414,8 +414,8 @@ class ProjectIPtoNodalFieldManager::LumpedMassLinearOp
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (int rnode = 0; rnode < num_nodes; ++rnode) {
         const GO global_row = workset.wsElNodeID[cell][rnode];
-        const Teuchos::Array<Tpetra_GO> cols(1, global_row);
-        double                          diag = 0;
+        const Teuchos::Array<GO> cols(1, global_row);
+        double                   diag = 0;
         for (std::size_t qp = 0; qp < num_pts; ++qp) {
           double diag_qp = 0;
           for (int cnode = 0; cnode < num_nodes; ++cnode)
