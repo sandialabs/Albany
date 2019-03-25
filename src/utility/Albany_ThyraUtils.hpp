@@ -78,6 +78,8 @@ int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                           const Teuchos::ArrayView<const LO> indices,
                           const Teuchos::ArrayView<const ST> values);
 
+int getGlobalMaxNumRowEntries (const Teuchos::RCP<Thyra_LinearOp>& lop); 
+
 Teuchos::RCP<const Thyra_LinearOp>
 buildRestrictionOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
                           const Teuchos::RCP<const Thyra_VectorSpace>& subspace);

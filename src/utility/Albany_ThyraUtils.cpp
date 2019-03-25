@@ -528,7 +528,7 @@ int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
-    auto returned_val = tmat->replaceLocalValues(lrow,indices,values);
+    auto returned_val = tmat->sumIntoLocalValues(lrow,indices,values);
     //Tpetra's replaceLocalValues routine returns the number of indices for which values were actually replaced; the number of "correct" indices.
     //This should be size of indices array.  Therefore if returned_val != indices.size() something went wrong 
     if (returned_val != indices.size()) integer_error_code = 1; 
@@ -540,7 +540,7 @@ int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
   if (!emat.is_null()) {
     //Epetra's ReplaceMyValues routine returns integer error code, set to 0 if successful, set to 1 if one or more indices are not 
     //associated with the calling processor.  We can just return that value for the Epetra case. 
-    integer_error_code = emat->ReplaceMyValues(lrow,indices.size(),values.getRawPtr(),indices.getRawPtr());
+    integer_error_code = emat->SumIntoMyValues(lrow,indices.size(),values.getRawPtr(),indices.getRawPtr());
     return integer_error_code;
   }
 #endif
@@ -571,6 +571,28 @@ void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
 
   // If all the tries above are unsuccessful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+}
+
+int getGlobalMaxNumRowEntries (const Teuchos::RCP<Thyra_LinearOp>& lop) 
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmat = getTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    auto return_value = tmat->getGlobalMaxNumRowEntries();
+    return return_value; 
+  }
+
+#if defined(ALBANY_EPETRA)
+  auto emat = getEpetraMatrix(lop,false);
+  if (!emat.is_null()) {
+    auto return_value = emat->GlobalMaxNumEntries(); 
+    return return_value;
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+
 }
 
 Teuchos::RCP<const Thyra_LinearOp>
