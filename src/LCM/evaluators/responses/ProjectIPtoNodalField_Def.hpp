@@ -25,6 +25,7 @@
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ThyraUtils.hpp" 
+#include "Albany_Macros.hpp"
 
 namespace LCM {
 
@@ -367,17 +368,22 @@ class ProjectIPtoNodalFieldManager::FullMassMatrix
   {
     const int  num_nodes = bf.extent(1), num_pts = bf.extent(2);
     //const bool is_static_graph = this->matrix_->isStaticGraph();
-    //CrsMatrix/CrsGraph is deprecating dynamic profile so graph will always be static 
+    //IKT: CrsMatrix/CrsGraph is deprecating dynamic profile so I think graph will always be static 
+    //IKT, FIXME: The code here needs to be cleaned up to remove the is_static_graph logic, which I am keeping for now
     const bool is_static_graph = true; 
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (int rnode = 0; rnode < num_nodes; ++rnode) {
         GO                        global_row = workset.wsElNodeID[cell][rnode];
-        Teuchos::Array<Tpetra_GO> cols;
+        //IKT: the following assumes range space = row map 
+        const LO local_row = Albany::getLocalElement(this->linear_op_->range(),global_row);
+        Teuchos::Array<LO> cols;
         Teuchos::Array<ST>        vals;
 
         for (int cnode = 0; cnode < num_nodes; ++cnode) {
           const GO global_col = workset.wsElNodeID[cell][cnode];
-          cols.push_back(global_col);
+          //IKT: the following assumes domain space = column map 
+          const LO local_col = Albany::getLocalElement(this->linear_op_->domain(),global_col);
+          cols.push_back(local_col);
 
           ST mass_value = 0;
           for (int qp = 0; qp < num_pts; ++qp)
@@ -385,9 +391,7 @@ class ProjectIPtoNodalFieldManager::FullMassMatrix
           vals.push_back(mass_value);
         }
         if (is_static_graph) {
-          //IKT, FIXME: either modify addToLocalRowValues routine to take in Tpetra_GO template
-          //for second argument, or implement addToGlobalRowValues in utility/Albany_ThyraUtils.hpp
-          Albany::addToGlobalRowValues(this->linear_op_, global_row, cols(), vals()); 
+          Albany::addToLocalRowValues(this->linear_op_, local_row, cols(), vals()); 
           //IKT, FIXME: addToLocalRowValues does not have a return type, 
           //whereas sumIntoGlobalValues does, and it is used here for error 
           //checking.  Alternates? 
@@ -421,12 +425,15 @@ class ProjectIPtoNodalFieldManager::LumpedMassMatrix
   {
     const int  num_nodes = bf.extent(1), num_pts = bf.extent(2);
     //const bool is_static_graph = this->matrix_->isStaticGraph();
-    //IKT: we will only have static graphs? 
+    //IKT, FIXME: we will only have static graphs?  If so, remove 
+    //the is_static_graph and delete irrelevant code. 
     const bool is_static_graph = true; 
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (int rnode = 0; rnode < num_nodes; ++rnode) {
         const GO global_row = workset.wsElNodeID[cell][rnode];
-        const Teuchos::Array<Tpetra_GO> cols(1, global_row);
+        //IKT: the following assumes range space = row map 
+        const LO local_row = Albany::getLocalElement(this->linear_op_->range(),global_row);
+        const Teuchos::Array<LO> cols(1, local_row);
         double                          diag = 0;
         for (std::size_t qp = 0; qp < num_pts; ++qp) {
           double diag_qp = 0;
@@ -436,9 +443,7 @@ class ProjectIPtoNodalFieldManager::LumpedMassMatrix
         }
         const Teuchos::Array<ST> vals(1, diag);
         if (is_static_graph) {
-          //IKT, FIXME: either modify addToLocalRowValues routine to take in Tpetra_GO template
-          //for second argument, or implement addToGlobalRowValues in utility/Albany_ThyraUtils.hpp
-          Albany::addToGlobalRowValues(this->linear_op_, global_row, cols(), vals()); 
+          Albany::addToLocalRowValues(this->linear_op_, local_row, cols(), vals()); 
         }
         //else
         //  this->matrix_->insertGlobalValues(global_row, cols, vals);
@@ -863,6 +868,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
     //IKT: does linear_op->range() return rowMap?  I suppose it doesn't matter since for the 
     //operators we're working with, rowMap = colMap.  
     auto cas_manager = Albany::createCombineAndScatterManager(mgr_->linear_op->linear_op()->range(), vs);
+    //IKT: should the following be scatter?  Ask Luca. 
     cas_manager->combine(mm_linear_op, mgr_->linear_op->linear_op(), Albany::CombineMode::ADD);  
 
     m_mass_factory->fillComplete();
@@ -872,6 +878,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
     // Now export ip_field.
     Teuchos::RCP<Thyra_MultiVector> ipf = Thyra::createMembers(m_mass_factory->getRangeVectorSpace(), mgr_->ip_field->domain()->dim());
     ipf->assign(0.0);
+    //IKT: should the following be scatter?  Ask Luca. 
     cas_manager->combine(ipf, mgr_->ip_field, Albany::CombineMode::ADD);  
     // Don't need the assemble form of the ip_field either.
     mgr_->ip_field = ipf;
@@ -918,26 +925,22 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
          << std::endl;
   }
 #endif
-/*  {  
-  //IKT, FIXME: convert the following! 
+  {  
 // Store the overlapped vector data back in stk.
-    const Teuchos::RCP<const Tpetra_Map> ovl_map =
-                                             (p_state_mgr_->getStateInfoStruct()
-                                                  ->getNodalDataBase()
-                                                  ->getNodalDataVector()
-                                                  ->getOverlapMap()),
-                                         map =
-                                             node_projected_ip_field->getMap();
-    Teuchos::RCP<Tpetra_MultiVector> npif = rcp(new Tpetra_MultiVector(
-        ovl_map, node_projected_ip_field->getNumVectors()));
-    Teuchos::RCP<Tpetra_Import>      im =
-        Teuchos::rcp(new Tpetra_Import(map, ovl_map));
-    npif->doImport(*node_projected_ip_field, *im, Tpetra::ADD);
+    Teuchos::RCP<Thyra_MultiVector> npif = Thyra::createMembers(mgr_->overlap_node_vs->overlap_node_vs(), 
+                                                                node_projected_ip_field->domain()->dim());
+    //IKT, FIXME: need to check that the following code is setting the right target/source space/vectors for import 
+    //I think I might have them backwards since we're supposed to have an import here rather than an export  
+    auto cas_manager = Albany::createCombineAndScatterManager(mgr_->overlap_node_vs->overlap_node_vs(), node_projected_ip_field->domain());
+    cas_manager->combine(node_projected_ip_field, npif, Albany::CombineMode::ADD);  
+    //Teuchos::RCP<Tpetra_Import>      im =
+    //    Teuchos::rcp(new Tpetra_Import(map, ovl_map));
+    //npif->doImport(*node_projected_ip_field, *im, Tpetra::ADD);
     p_state_mgr_->getStateInfoStruct()
         ->getNodalDataBase()
         ->getNodalDataVector()
         ->saveNodalDataState(npif, mgr_->ndb_start);
-  }*/
+  }
 }
 
 }  // namespace LCM

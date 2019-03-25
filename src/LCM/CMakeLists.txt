@@ -293,16 +293,15 @@ set(residual-headers
 )
 
 # LCM response evaluators
-# IKT FIXME: uncomment the following 
 set(response-sources
   "${LCM_DIR}/evaluators/responses/IPtoNodalField.cpp"
-#  "${LCM_DIR}/evaluators/responses/ProjectIPtoNodalField.cpp"
+  "${LCM_DIR}/evaluators/responses/ProjectIPtoNodalField.cpp"
 )
 set(response-headers
   "${LCM_DIR}/evaluators/responses/IPtoNodalField_Def.hpp"
   "${LCM_DIR}/evaluators/responses/IPtoNodalField.hpp"
-#  "${LCM_DIR}/evaluators/responses/ProjectIPtoNodalField_Def.hpp"
-#  "${LCM_DIR}/evaluators/responses/ProjectIPtoNodalField.hpp"
+  "${LCM_DIR}/evaluators/responses/ProjectIPtoNodalField_Def.hpp"
+  "${LCM_DIR}/evaluators/responses/ProjectIPtoNodalField.hpp"
 )
 
 # LCM mesh size field evaluators

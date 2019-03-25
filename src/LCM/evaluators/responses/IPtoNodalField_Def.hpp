@@ -299,9 +299,9 @@ IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     for (int node = 0; node < num_nodes; ++node) {
       const GO global_row = wsElNodeID[cell][node];
       if (!Albany::locallyOwnedComponent(Albany::getSpmdVectorSpace(owned_node_vs),global_row)) continue; 
-      const LO lid = Albany::getLocalElement(owned_node_vs,global_row);
+      const LO local_row = Albany::getLocalElement(owned_node_vs,global_row);
       for (int pt = 0; pt < num_pts; ++pt) {
-        data[node_weight_offset][lid] += this->weights_(cell,pt);
+        data[node_weight_offset][local_row] += this->weights_(cell,pt);
       }
     }
   }
@@ -317,16 +317,16 @@ IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int node = 0; node < num_nodes; ++node) {
         const GO global_row = wsElNodeID[cell][node];
-        const LO lid = Albany::getLocalElement(owned_node_vs,global_row);
+        const LO local_row = Albany::getLocalElement(owned_node_vs,global_row);
         if (!Albany::locallyOwnedComponent(Albany::getSpmdVectorSpace(owned_node_vs),global_row)) continue; 
         for (int pt = 0; pt < num_pts; ++pt) {
           if (this->ip_field_layouts_[field] == "Scalar") {
             // save the scalar component
-            data[node_var_offset][lid] += this->ip_fields_[field](cell, pt) * this->weights_(cell, pt);
+            data[node_var_offset][local_row] += this->ip_fields_[field](cell, pt) * this->weights_(cell, pt);
           } else if (this->ip_field_layouts_[field] == "Vector") {
             for (int dim0 = 0; dim0 < num_dims; ++dim0) {
               // save the vector component
-              data[node_var_offset + dim0][lid] += this->ip_fields_[field](cell, pt, dim0)*this->weights_(cell, pt);
+              data[node_var_offset + dim0][local_row] += this->ip_fields_[field](cell, pt, dim0)*this->weights_(cell, pt);
             }
           } else if (this->ip_field_layouts_[field] == "Tensor") {
             for (int dim0 = 0; dim0 < num_dims; ++dim0) {
@@ -336,7 +336,7 @@ IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
                     this->ip_fields_[field];
                 ScalarT ipval  = tensor_field(cell, pt, dim0, dim1);
                 ScalarT weight = this->weights_(cell, pt);
-                data[node_var_offset + dim0 * num_dims + dim1][lid] += ipval * weight;  
+                data[node_var_offset + dim0 * num_dims + dim1][local_row] += ipval * weight;  
               }
             }
           }
