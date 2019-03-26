@@ -16,6 +16,7 @@ SET(SOURCES
   Albany_OrdinarySTKFieldContainer.cpp
   Albany_SideSetSTKMeshStruct.cpp
   Albany_STKDiscretization.cpp
+  Albany_STKDiscretizationStokesH.cpp
   Albany_STKFieldContainerHelper.cpp
   Albany_STKNodeFieldContainer.cpp
   Albany_STKNodeSharing.cpp
@@ -39,6 +40,7 @@ SET(HEADERS
   Albany_OrdinarySTKFieldContainer_Def.hpp
   Albany_SideSetSTKMeshStruct.hpp
   Albany_STKDiscretization.hpp
+  Albany_STKDiscretizationStokesH.hpp
   Albany_STKFieldContainerHelper.hpp
   Albany_STKNodeFieldContainer.hpp
   Albany_STKNodeFieldContainer_Def.hpp

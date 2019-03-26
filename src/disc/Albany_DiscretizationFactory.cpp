@@ -24,6 +24,7 @@
 #include "Albany_AsciiSTKMesh2D.hpp"
 #include "Albany_GmshSTKMeshStruct.hpp"
 #ifdef ALBANY_LANDICE
+#include "Albany_STKDiscretizationStokesH.hpp"
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
 #endif
 #endif
@@ -453,7 +454,17 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
             case Albany::AbstractMeshStruct::STK_MS:
             {
                 Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
-                return Teuchos::rcp(new Albany::STKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
+                Teuchos::RCP<Albany::STKDiscretization> disc;
+#ifdef ALBANY_LANDICE
+                if (method=="Extruded") {
+                  disc = Teuchos::rcp(new Albany::STKDiscretizationStokesH(discParams, ms, commT, rigidBodyModes));
+                } else
+#endif
+                {
+                  disc = Teuchos::rcp(new Albany::STKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
+                }
+                disc->updateMesh();
+                return disc;
                 break;
             }
 #endif
