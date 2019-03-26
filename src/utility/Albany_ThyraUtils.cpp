@@ -597,6 +597,47 @@ int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
 }
 
+void insertGlobalValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                         const GO grow,
+                         const Teuchos::ArrayView<const GO> cols,
+                         const Teuchos::ArrayView<const ST> values)
+{
+  const Teuchos::Array<GO> grow_array(1, grow);
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmat = getTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    Teuchos::ArrayView<const Tpetra_GO> tgrow_array(reinterpret_cast<const Tpetra_GO*>(grow_array().getRawPtr()),1);
+    Teuchos::ArrayView<const Tpetra_GO> tcols(reinterpret_cast<const Tpetra_GO*>(cols.getRawPtr()),cols.size());
+    tmat->insertGlobalValues(tgrow_array[0], tcols, values); 
+    return; 
+  }
+#if defined(ALBANY_EPETRA)
+  auto emat = getEpetraMatrix(lop,false);
+  if (!emat.is_null()) {
+    if (sizeof(GO)==sizeof(Epetra_GO)) {
+      Teuchos::ArrayView<const Epetra_GO> egrow_array(reinterpret_cast<const Epetra_GO*>(grow_array().getRawPtr()),1);
+      Teuchos::ArrayView<const Epetra_GO> ecols(reinterpret_cast<const Epetra_GO*>(ecols.getRawPtr()),ecols.size());
+      emat->InsertGlobalValues(egrow_array[0], ecols.size(), values.getRawPtr(), ecols.getRawPtr());
+    }
+    else {
+      // Cannot reinterpret cast. Need to copy gids into Epetra_GO array
+      Teuchos::Array<Epetra_GO> ecols(cols.size());
+      Teuchos::Array<Epetra_GO> egrow_array(1);
+      const GO max_safe_col = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
+      for (int i=0; i<cols.size(); ++i) {
+        ALBANY_EXPECT(cols[i]<=max_safe_col, "Error! Input cols exceed Epetra_GO ranges.\n");
+        ecols[i] = static_cast<Epetra_GO>(cols[i]);
+      }
+      ALBANY_EXPECT(egrow_array[0]<=max_safe_col, "Error! Input grow exceeds Epetra_GO ranges.\n");
+      (void) max_safe_col;
+      emat->InsertGlobalValues(egrow_array[0], ecols.size(), values.getRawPtr(), ecols.getRawPtr());
+    }
+    return; 
+  }
+#endif
+}
+
+
 int addToGlobalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                           const GO grow,
                           const Teuchos::ArrayView<const GO> indices,
@@ -605,9 +646,9 @@ int addToGlobalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
   //The following is an integer error code, to be returned by this 
   //routine if something doesn't go right.  0 means success, 1 means failure 
   int integer_error_code = 0; 
+  const Teuchos::Array<GO> grow_array(1, grow);
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
-  const Teuchos::Array<GO> grow_array(1, grow);
   if (!tmat.is_null()) {
     Teuchos::ArrayView<const Tpetra_GO> tgrow_array(reinterpret_cast<const Tpetra_GO*>(grow_array().getRawPtr()),1);
     Teuchos::ArrayView<const Tpetra_GO> tindices(reinterpret_cast<const Tpetra_GO*>(indices.getRawPtr()),indices.size());
@@ -1023,6 +1064,23 @@ Teuchos::ArrayRCP<const ST> getLocalData (const Teuchos::RCP<const Thyra_Vector>
 
   return vals;
 }
+
+int getNumVectors (const Teuchos::RCP<Thyra_MultiVector>& mv)
+{
+  auto tv = getConstTpetraMultiVector(mv,false);
+  if (!tv.is_null()) {
+    return tv->getNumVectors(); 
+  }
+#if defined(ALBANY_EPETRA)
+  auto ev = getConstEpetraMultiVector(mv,false);
+  if (!ev.is_null()) {
+    return ev->NumVectors(); 
+  }
+#endif 
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_MultiVector to any of the supported concrete types.\n");
+}
+
 
 Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>
 getNonconstLocalData (const Teuchos::RCP<Thyra_MultiVector>& mv)

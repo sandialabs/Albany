@@ -40,10 +40,10 @@ class ProjectIPtoNodalFieldManager : public Adapt::NodalDataBase::Manager
   class FullMassLinearOp;
   class LumpedMassLinearOp;
   Teuchos::RCP<MassLinearOp>        linear_op;
-  Teuchos::RCP<MassLinearOp>        overlap_node_vs;
-  Teuchos::RCP<MassLinearOp>        owned_node_vs;
+  Teuchos::RCP<MassLinearOp>        ovl_vs;
+  Teuchos::RCP<MassLinearOp>        owned_vs;
   Teuchos::RCP<Thyra_MultiVector> ip_field;
-  Teuchos::RCP<Albany::ThyraCrsMatrixFactory> m_overlap_mass_factory;
+  Teuchos::RCP<Albany::ThyraCrsMatrixFactory> ovl_crs_matrix_factory;
   // Start position in the nodal vector database, and number of vectors we're
   // using.
   int ndb_start, ndb_numvecs;
@@ -342,16 +342,16 @@ class ProjectIPtoNodalFieldManager::MassLinearOp
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& wbf) = 0;
 
   Teuchos::RCP<Thyra_LinearOp>& linear_op() { return linear_op_; }
-  Teuchos::RCP<const Thyra_VectorSpace>& overlap_node_vs() { return overlap_node_vs_; }
-  Teuchos::RCP<const Thyra_VectorSpace>& owned_node_vs() { return owned_node_vs_; }
+  Teuchos::RCP<const Thyra_VectorSpace>& ovl_vs() { return ovl_vs_; }
+  Teuchos::RCP<const Thyra_VectorSpace>& owned_vs() { return owned_vs_; }
 
   static MassLinearOp*
   create(EMassLinearOpType::Enum type);
 
  protected:
   Teuchos::RCP<Thyra_LinearOp> linear_op_;  
-  Teuchos::RCP<const Thyra_VectorSpace> overlap_node_vs_;  
-  Teuchos::RCP<const Thyra_VectorSpace> owned_node_vs_;  
+  Teuchos::RCP<const Thyra_VectorSpace> ovl_vs_;  
+  Teuchos::RCP<const Thyra_VectorSpace> owned_vs_;  
 
 
 };
@@ -390,10 +390,9 @@ class ProjectIPtoNodalFieldManager::FullMassLinearOp
               std::logic_error, "Albany::addToGlobalRowValues failed for global_row = " 
                                 <<  global_row << "!\n";) 
         } 
-        //IKT FIXME: to implement!  Will require addition of routine to Albany_ThyraUtils  
-        /*else {
-          this->matrix_->insertGlobalValues(global_row, cols, vals);
-        }*/
+        else {
+          Albany::insertGlobalValues(this->linear_op_, global_row, cols(), vals());
+        }
       }
     }
   }
@@ -426,9 +425,9 @@ class ProjectIPtoNodalFieldManager::LumpedMassLinearOp
         if (is_static_graph) {
           Albany::addToGlobalRowValues(this->linear_op_, global_row, cols(), vals()); 
         }
-        //IKT, FIXME: implement the following case 
-        //else
-        //  this->matrix_->insertGlobalValues(global_row, cols, vals);
+        else {
+          Albany::insertGlobalValues(this->linear_op_, global_row, cols(), vals());
+        }
       }
     }
   }
@@ -679,9 +678,9 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
 
   //Get overlap and owned vector space corresponding to nodal data  
   //These are saved as member variables for later usage.
-  mgr_->overlap_node_vs->overlap_node_vs() = (p_state_mgr_->getStateInfoStruct()->getNodalDataBase()
+  mgr_->ovl_vs->ovl_vs() = (p_state_mgr_->getStateInfoStruct()->getNodalDataBase()
                                               ->getNodalDataVector()->getOverlappedVectorSpace());
-  mgr_->owned_node_vs->owned_node_vs() = (p_state_mgr_->getStateInfoStruct()->getNodalDataBase()
+  mgr_->owned_vs->owned_vs() = (p_state_mgr_->getStateInfoStruct()->getNodalDataBase()
                                           ->getNodalDataVector()->getOwnedVectorSpace());
 
   // Reallocate the mass matrix for assembly. Since the matrix is overwritten by
@@ -700,13 +699,13 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
     // Otherwise, construct the graph on the fly.
     // Enough for first-order hex, but only a hint.
     const size_t max_num_entries = 27;
-    mgr_->m_overlap_mass_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(
-                                               mgr_->overlap_node_vs->overlap_node_vs(), 
-                                               mgr_->overlap_node_vs->overlap_node_vs(), max_num_entries) );
+    mgr_->ovl_crs_matrix_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(
+                                               mgr_->ovl_vs->ovl_vs(), 
+                                               mgr_->ovl_vs->ovl_vs(), max_num_entries) );
   }
 
   //The following assumes range space is equivalent to rowMap
-  mgr_->ip_field = Thyra::createMembers(mgr_->linear_op->linear_op()->range(), mgr_->ndb_numvecs);
+  mgr_->ip_field = Thyra::createMembers(Albany::getRowSpace(mgr_->linear_op->linear_op()), mgr_->ndb_numvecs);
   mgr_->ip_field->assign(0.0); 
 }
 
@@ -738,21 +737,21 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::fillRHS(
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t node = 0; node < num_nodes_; ++node) {
         const GO global_row = wsElNodeID[cell][node];
-        const LO lid = Albany::getLocalElement(mgr_->owned_node_vs->owned_node_vs(),global_row);
+        const LO local_row = Albany::getLocalElement(mgr_->owned_vs->owned_vs(),global_row);
         for (std::size_t qp = 0; qp < num_pts_; ++qp) {
           switch (ip_field_layouts_[field]) {
             case EFieldLayout::scalar:
-              ip_field_data[node_var_offset][lid] += ip_fields_[field](cell, qp) * wBF(cell, node, qp);
+              ip_field_data[node_var_offset][local_row] += ip_fields_[field](cell, qp) * wBF(cell, node, qp);
               break;
             case EFieldLayout::vector:
               for (std::size_t dim0 = 0; dim0 < num_dims_; ++dim0) {
-                ip_field_data[node_var_offset + dim0][lid] += ip_fields_[field](cell, qp, dim0) * wBF(cell, node, qp);
+                ip_field_data[node_var_offset + dim0][local_row] += ip_fields_[field](cell, qp, dim0) * wBF(cell, node, qp);
               }
               break;
             case EFieldLayout::tensor:
               for (std::size_t dim0 = 0; dim0 < num_dims_; ++dim0) {
                 for (std::size_t dim1 = 0; dim1 < num_dims_; ++dim1) {
-                  ip_field_data[node_var_offset + dim0 * num_dims_ + dim1][lid] += ip_fields_[field](cell, qp, dim0, dim1) * wBF(cell, node, qp);
+                  ip_field_data[node_var_offset + dim0 * num_dims_ + dim1][local_row] += ip_fields_[field](cell, qp, dim0, dim1) * wBF(cell, node, qp);
                 }
               }
               break;
@@ -811,7 +810,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
   Teuchos::RCP<Teuchos::FancyOStream> out =
       Teuchos::VerboseObjectBase::getDefaultOStream();
 
-  mgr_->m_overlap_mass_factory->fillComplete(); 
+  mgr_->ovl_crs_matrix_factory->fillComplete(); 
 
   // Right now, ip_field and linear_op have the same overlapping
   // (row) vector space.
@@ -827,63 +826,56 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
   // a compatible b.
   {
     // Get overlapping and nonoverlapping maps.
-    const Teuchos::RCP<const Thyra_LinearOp> mm_ovl = mgr_->linear_op->linear_op(); 
-    /*const Teuchos::RCP<const Tpetra_CrsMatrix>& mm_ovl =
-        mgr_->mass_matrix->matrix();
-    if (!mm_ovl->isStaticGraph()) {
+    const Teuchos::RCP<Thyra_LinearOp>& mm_ovl = mgr_->linear_op->linear_op(); 
+    if (!Albany::isStaticGraph(mm_ovl)) {
       // If this matrix was constructed without a graph, grab the graph now and
       // store it for possible reuse later.
-      p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->updateNodalGraph(
-          mm_ovl->getCrsGraph());
-    }*/
+      p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->updateNodalGraph(mgr_->ovl_crs_matrix_factory); 
+    }
 
-    //const Teuchos::RCP<const Tpetra_Map> ovl_map = mm_ovl->getRowMap();
-    //const Teuchos::RCP<const Tpetra_Map> map = Tpetra::createOneToOne(ovl_map);
-
-    //IKT, FIXME: allocate the following to do: Tpetra::createOneToOne 
-    const Teuchos::RCP<const Thyra_VectorSpace> vs;     
-    //IKT, FIXME: the following should be: mm_ovl->getGlobalMaxNumRowEntries())
-    const size_t max_num_entries = 27;
+    const Teuchos::RCP<const Thyra_VectorSpace> ovl_space = Albany::getRowSpace(mm_ovl); 
+    //IKT: does createOneToOneVectorSpace give owned (unique) space?  It must...
+    const Teuchos::RCP<const Thyra_VectorSpace> space = Albany::createOneToOneVectorSpace(ovl_space); 
+    const auto max_num_entries = Albany::getGlobalMaxNumRowEntries(mm_ovl);
     
     // Export the mass matrix.
-    /*Teuchos::RCP<Tpetra_Export> e =
-        Teuchos::rcp(new Tpetra_Export(ovl_map, map));
-    Teuchos::RCP<Tpetra_CrsMatrix> mm =
-        rcp(new Tpetra_CrsMatrix(map, mm_ovl->getGlobalMaxNumRowEntries()));
-    mm->doExport(*mm_ovl, *e, Tpetra::ADD);*/
-
-    Teuchos::RCP<Albany::ThyraCrsMatrixFactory> m_mass_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(vs, vs, max_num_entries) );
-    Teuchos::RCP<Thyra_LinearOp> mm_linear_op = m_mass_factory->createOp();
-    //IKT: does linear_op->range() return rowMap?  I suppose it doesn't matter since for the 
-    //operators we're working with, rowMap = colMap.  
-    auto cas_manager = Albany::createCombineAndScatterManager(mgr_->linear_op->linear_op()->range(), vs);
-    //IKT: should the following be scatter?  Ask Luca. 
-    cas_manager->combine(mm_linear_op, mgr_->linear_op->linear_op(), Albany::CombineMode::ADD);  
-
-    m_mass_factory->fillComplete();
+    // IKT, note to self: cas_manager arguments are (owned, overlapped)  
+    auto cas_manager = Albany::createCombineAndScatterManager(space, ovl_space);
+    //Create/allocate mm, the target LinearOp
+    Teuchos::RCP<Albany::ThyraCrsMatrixFactory> mm_crs_matrix_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(space, 
+                                                                                space, max_num_entries) );
+    Teuchos::RCP<Thyra_LinearOp> mm = mm_crs_matrix_factory->createOp();
+    // IKT, note to self: we are going from ovl_space to space -> use combine method
+    // Arguments of combine are (src, tgt) 
+    cas_manager->combine(mm_ovl, mm, Albany::CombineMode::ADD);  
+    //fill complete mm by calling fillComplete on its ThyraCrsMatrixFactory 
+    mm_crs_matrix_factory->fillComplete();
     // We don't need the assemble form of the mass matrix any longer.
-    mgr_->linear_op->linear_op() = mm_linear_op;
+    mgr_->linear_op->linear_op() = mm;
 
     // Now export ip_field.
-    Teuchos::RCP<Thyra_MultiVector> ipf = Thyra::createMembers(m_mass_factory->getRangeVectorSpace(), mgr_->ip_field->domain()->dim());
+    Teuchos::RCP<Thyra_MultiVector> ipf = Thyra::createMembers(mm_crs_matrix_factory->getRangeVectorSpace(), 
+                                                               Albany::getNumVectors(mgr_->ip_field));
     ipf->assign(0.0);
-    //IKT: should the following be scatter?  Ask Luca. 
-    cas_manager->combine(ipf, mgr_->ip_field, Albany::CombineMode::ADD);  
+    // IKT, not to self: we are going from overlap space (ip_field) space to owned space (ipf) -> use combine method 
+    // Arguments of combine are (src, tgt)  
+    cas_manager->combine(mgr_->ip_field, ipf, Albany::CombineMode::ADD); 
+ 
     // Don't need the assemble form of the ip_field either.
     mgr_->ip_field = ipf;
   }
   // Create x in A x = b where A = linear_op, b = ip_field, x = node_projected_ip_field.
-  Teuchos::RCP<Thyra_MultiVector> node_projected_ip_field = Thyra::createMembers(mgr_->m_overlap_mass_factory->getDomainVectorSpace(), 
-                                                                                 mgr_->ip_field->domain()->dim()); 
+  Teuchos::RCP<Thyra_MultiVector> node_projected_ip_field = Thyra::createMembers(mgr_->ovl_crs_matrix_factory->getDomainVectorSpace(), 
+                                                                                 Albany::getNumVectors(mgr_->ip_field)); 
   Teuchos::RCP<Thyra::LinearOpWithSolveBase<ST>> nsA = lowsFactory_->createOp();
   Thyra::initializeOp<ST>(*lowsFactory_, mgr_->linear_op->linear_op(), nsA.ptr());
 
   // Compute the column norms of the right-hand side b. If b = 0, no need to
   // proceed.
-  Teuchos::Array<MT> norm_b(mgr_->ip_field->domain()->dim());
+  Teuchos::Array<MT> norm_b(Albany::getNumVectors(mgr_->ip_field)); 
   Thyra::norms_2(*mgr_->ip_field, norm_b());
   bool b_is_zero = true;
-  for (int i = 0; i < mgr_->ip_field->domain()->dim(); ++i)
+  for (int i = 0; i < Albany::getNumVectors(mgr_->ip_field); ++i)
     if (norm_b[i] != 0) {
       b_is_zero = false;
       break;
@@ -904,11 +896,11 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
 
   // Compute A*x - b = y - b.
   Thyra::update(-one, *mgr_->ip_field, y.ptr());
-  Teuchos::Array<MT> norm_res(mgr_->ip_field->domain->dim());
+  Teuchos::Array<MT> norm_res(Albany::getNumVectors(mgr_->ip_field)); 
   Thyra::norms_2(*y, norm_res());
   // Print out the final relative residual norms.
   *out << "Final relative residual norms" << std::endl;
-  for (int i = 0; i < mgr_->ip_field->domain->dim(); ++i) {
+  for (int i = 0; i < Albany::getNumVectors(mgr_->ip_field); ++i) {
     const double rel_res = norm_res[i] == 0 ? 0 : norm_res[i] / norm_b[i];
     *out << "RHS " << i + 1 << " : " << std::setw(16) << std::right << rel_res
          << std::endl;
@@ -916,15 +908,14 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
 #endif
   {  
 // Store the overlapped vector data back in stk.
-    Teuchos::RCP<Thyra_MultiVector> npif = Thyra::createMembers(mgr_->overlap_node_vs->overlap_node_vs(), 
-                                                                node_projected_ip_field->domain()->dim());
-    //IKT, FIXME: need to check that the following code is setting the right target/source space/vectors for import 
-    //I think I might have them backwards since we're supposed to have an import here rather than an export  
-    auto cas_manager = Albany::createCombineAndScatterManager(mgr_->overlap_node_vs->overlap_node_vs(), node_projected_ip_field->domain());
-    cas_manager->combine(node_projected_ip_field, npif, Albany::CombineMode::ADD);  
-    //Teuchos::RCP<Tpetra_Import>      im =
-    //    Teuchos::rcp(new Tpetra_Import(map, ovl_map));
-    //npif->doImport(*node_projected_ip_field, *im, Tpetra::ADD);
+    Teuchos::RCP<Thyra_MultiVector> npif = Thyra::createMembers(mgr_->ovl_vs->ovl_vs(), 
+                                                                Albany::getNumVectors(node_projected_ip_field));
+    Teuchos::RCP<const Thyra_VectorSpace> space = node_projected_ip_field->col(0)->space(); 
+    // IKT, note to self: cas_manager arguments are (owned, overlapped)  
+    auto cas_manager = Albany::createCombineAndScatterManager(space, mgr_->ovl_vs->ovl_vs());
+    // IKT, note to self: scatter is from unique -> overlap space
+    // Arguments are (src, tgt)  
+    cas_manager->scatter(node_projected_ip_field, npif, Albany::CombineMode::ADD);  
     p_state_mgr_->getStateInfoStruct()
         ->getNodalDataBase()
         ->getNodalDataVector()
