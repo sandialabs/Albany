@@ -24,9 +24,8 @@
 #include "LandIce_ResponseBoundarySquaredL2Norm.hpp"
 #endif
 #if defined(ALBANY_LCM)
-//IKT, FIXME: uncomment the following! 
-//#include "IPtoNodalField.hpp"
-//#include "ProjectIPtoNodalField.hpp"
+#include "IPtoNodalField.hpp"
+#include "ProjectIPtoNodalField.hpp"
 #endif
 #ifdef ALBANY_ATO
 #include "ATO_StiffnessObjective.hpp"
@@ -344,8 +343,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   }
 
 #if defined(ALBANY_LCM)
-//IKT FIXME: uncomment the following
-/*  else if (responseName == "IP to Nodal Field")
+  else if (responseName == "IP to Nodal Field")
   {
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
@@ -363,7 +361,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
 
     res_ev = rcp(new LCM::ProjectIPtoNodalField<EvalT,Traits>(*p, dl, meshSpecs));
-  }*/
+  }
 #endif
 
   else
