@@ -94,20 +94,20 @@ struct NodalDOFsStructContainer
   }
 };
 
-class STKDiscretization : public Albany::AbstractDiscretization {
+class STKDiscretization : public AbstractDiscretization {
  public:
   //! Constructor
   STKDiscretization(
       const Teuchos::RCP<Teuchos::ParameterList>&  discParams,
-      Teuchos::RCP<Albany::AbstractSTKMeshStruct>& stkMeshStruct,
+      Teuchos::RCP<AbstractSTKMeshStruct>& stkMeshStruct,
       const Teuchos::RCP<const Teuchos_Comm>&      comm,
-      const Teuchos::RCP<Albany::RigidBodyModes>&  rigidBodyModes =
+      const Teuchos::RCP<RigidBodyModes>&  rigidBodyModes =
           Teuchos::null,
       const std::map<int, std::vector<std::string>>& sideSetEquations =
           std::map<int, std::vector<std::string>>());
 
   //! Destructor
-  ~STKDiscretization();
+  virtual ~STKDiscretization();
 
   void printConnectivity() const;
 
@@ -155,8 +155,8 @@ class STKDiscretization : public Albany::AbstractDiscretization {
   const WsLIDList& getElemGIDws () const { return elemGIDws; }
 
   //! Get map from (Ws, El, Local Node) -> NodeLID
-  using Albany::AbstractDiscretization::WorksetConn;
-  using Albany::AbstractDiscretization::Conn;
+  using AbstractDiscretization::WorksetConn;
+  using AbstractDiscretization::Conn;
 
   //! Get map from ws, elem, node [, eq] -> [Node|DOF] GID
   const Conn& getWsElNodeEqID () const { return wsElNodeEqID; }
@@ -183,7 +183,7 @@ class STKDiscretization : public Albany::AbstractDiscretization {
 
 #ifdef ALBANY_CONTACT
   //! Get the contact manager
-  Teuchos::RCP<const Albany::ContactManager> getContactManager() const { return contactManager; }
+  Teuchos::RCP<const ContactManager> getContactManager() const { return contactManager; }
 #endif
 
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type& getCoords() const { return coords; }
@@ -194,28 +194,28 @@ class STKDiscretization : public Albany::AbstractDiscretization {
   void printCoords() const;
 
   //! Set stateArrays
-  void setStateArrays(Albany::StateArrays& sa) {
+  void setStateArrays(StateArrays& sa) {
     stateArrays = sa;
   }
 
   //! Get stateArrays
-  Albany::StateArrays& getStateArrays() { return stateArrays; }
+  StateArrays& getStateArrays() { return stateArrays; }
 
   //! Get nodal parameters state info struct
-  const Albany::StateInfoStruct& getNodalParameterSIS() const {
+  const StateInfoStruct& getNodalParameterSIS() const {
     return stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
   }
 
   //! Retrieve Vector (length num worksets) of element block names
-  const Albany::WorksetArray<std::string>::type& getWsEBNames() const { return wsEBNames; }
+  const WorksetArray<std::string>::type& getWsEBNames() const { return wsEBNames; }
   //! Retrieve Vector (length num worksets) of physics set index
-  const Albany::WorksetArray<int>::type& getWsPhysIndex() const { return wsPhysIndex; }
+  const WorksetArray<int>::type& getWsPhysIndex() const { return wsPhysIndex; }
 
   // Retrieve mesh struct
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct() const {
+  Teuchos::RCP<AbstractSTKMeshStruct> getSTKMeshStruct() const {
     return stkMeshStruct;
   }
-  Teuchos::RCP<Albany::AbstractMeshStruct>  getMeshStruct() const {
+  Teuchos::RCP<AbstractMeshStruct>  getMeshStruct() const {
     return stkMeshStruct;
   }
 
@@ -331,7 +331,7 @@ class STKDiscretization : public Albany::AbstractDiscretization {
     std::pair<unsigned, unsigned> latitude_longitude;
   };
 
-private:
+protected:
 
   void getSolutionField (Thyra_Vector&      result, bool overlapped) const;
   void getSolutionMV    (Thyra_MultiVector& result, bool overlapped) const;
@@ -414,12 +414,6 @@ private:
 
   NodalDOFsStructContainer nodalDOFsStructContainer;
 
-  //! Jacobian matrix graph
-  Teuchos::RCP<Tpetra_CrsGraph> graphT;
-
-  //! Overlapped Jacobian matrix graph
-  Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT;
-
   //! Processor ID
   unsigned int myPID;
 
@@ -433,38 +427,38 @@ private:
   unsigned int numMyElements;
 
   //! node sets stored as std::map(string ID, int vector of GIDs)
-  Albany::NodeSetList      nodeSets;
-  Albany::NodeSetGIDsList  nodeSetGIDs;
-  Albany::NodeSetCoordList nodeSetCoords;
+  NodeSetList      nodeSets;
+  NodeSetGIDsList  nodeSetGIDs;
+  NodeSetCoordList nodeSetCoords;
 
   //! side sets stored as std::map(string ID, SideArray classes) per workset
   //! (std::vector across worksets)
-  std::vector<Albany::SideSetList> sideSets;
+  std::vector<SideSetList> sideSets;
 
   //! Connectivity array [workset, element, local-node, Eq] => LID
   Conn wsElNodeEqID;
 
   //! Connectivity array [workset, element, local-node] => GID
-  Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>::type     wsElNodeID;
+  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>::type     wsElNodeID;
 
   mutable Teuchos::ArrayRCP<double>       coordinates;
   Teuchos::RCP<Thyra_MultiVector>         coordMV;
-  Albany::WorksetArray<std::string>::type wsEBNames;
-  Albany::WorksetArray<int>::type         wsPhysIndex;
-  Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type
+  WorksetArray<std::string>::type wsEBNames;
+  WorksetArray<int>::type         wsPhysIndex;
+  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type
                                                          coords;
-  Albany::WorksetArray<Teuchos::ArrayRCP<double>>::type  sphereVolume;
-  Albany::WorksetArray<Teuchos::ArrayRCP<double*>>::type latticeOrientation;
+  WorksetArray<Teuchos::ArrayRCP<double>>::type  sphereVolume;
+  WorksetArray<Teuchos::ArrayRCP<double*>>::type latticeOrientation;
 
 #ifdef ALBANY_CONTACT
-  Teuchos::RCP<Albany::ContactManager> contactManager;
+  Teuchos::RCP<ContactManager> contactManager;
 #endif
 
   //! Connectivity map from elementGID to workset and LID in workset
   WsLIDList elemGIDws;
 
   // States: vector of length worksets of a map from field name to shards array
-  Albany::StateArrays                           stateArrays;
+  StateArrays                           stateArrays;
   std::vector<std::vector<std::vector<double>>> nodesOnElemStateVec;
 
   //! list of all owned nodes, saved for setting solution
@@ -480,29 +474,29 @@ private:
   GO  maxGlobalNodeGID;
 
   // Needed to pass coordinates to ML.
-  Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes;
+  Teuchos::RCP<RigidBodyModes> rigidBodyModes;
 
   int              netCDFp;
   size_t           netCDFOutputRequest;
   std::vector<int> varSolns;
 
-  Albany::WorksetArray<Teuchos::ArrayRCP<std::vector<interp>>>::type   interpolateData;
+  WorksetArray<Teuchos::ArrayRCP<std::vector<interp>>>::type   interpolateData;
 
   // Storage used in periodic BCs to un-roll coordinates. Pointers saved for
   // destructor.
   std::vector<double*> toDelete;
 
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
+  Teuchos::RCP<AbstractSTKMeshStruct> stkMeshStruct;
 
   Teuchos::RCP<Teuchos::ParameterList> discParams;
 
   // Sideset discretizations
-  std::map<std::string, Teuchos::RCP<Albany::AbstractDiscretization>> sideSetDiscretizations;
-  std::map<std::string, Teuchos::RCP<Albany::STKDiscretization>>      sideSetDiscretizationsSTK;
-  std::map<std::string, std::map<GO, GO>>                             sideToSideSetCellMap;
-  std::map<std::string, std::map<GO, std::vector<int>>>               sideNodeNumerationMap;
-  std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>                 projectors;
-  std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>                 ov_projectors;
+  std::map<std::string, Teuchos::RCP<AbstractDiscretization>> sideSetDiscretizations;
+  std::map<std::string, Teuchos::RCP<STKDiscretization>>      sideSetDiscretizationsSTK;
+  std::map<std::string, std::map<GO, GO>>                     sideToSideSetCellMap;
+  std::map<std::string, std::map<GO, std::vector<int>>>       sideNodeNumerationMap;
+  std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>         projectors;
+  std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>         ov_projectors;
 
 // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS

@@ -457,7 +457,7 @@ STKDiscretization(const Teuchos::RCP<Teuchos::ParameterList>&  discParams_,
  , discParams(discParams_)
  , interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
-  updateMesh();
+  // Nothing to be done here
 }
 
 STKDiscretization::~STKDiscretization()
@@ -1304,7 +1304,6 @@ void STKDiscretization::getSolutionMV(Thyra_MultiVector& result,
 /*** Private functions follow. These are just used in above code */
 /*****************************************************************/
 
-// Tpetra version of above
 void STKDiscretization::setField (const Thyra_Vector& result,
                                   const std::string&  name,
                                   bool                overlapped)
@@ -1648,11 +1647,8 @@ void STKDiscretization::computeGraphsUpToFillComplete()
         row = getGlobalDOF(gid(rowNode), globalEqns[k]);
         for (std::size_t l = 0; l < num_nodes; l++) {
           stk::mesh::Entity colNode = node_rels[l];
-          for (std::size_t m = 0; m < neq; m++)  // Note: here we cycle through
-                                                 // ALL the eqns (not just the
-                                                 // global ones),
-          {  //       since they could all be coupled with this eq
-            col   = getGlobalDOF(gid(colNode), m);
+          for (std::size_t m = 0; m < globalEqns.size(); ++m) {
+            col   = getGlobalDOF(gid(colNode), globalEqns[m]);
             colAV = Teuchos::arrayView(&col, 1);
             m_overlap_jac_factory->insertGlobalIndices(row, colAV);
           }
@@ -1671,11 +1667,11 @@ void STKDiscretization::computeGraphsUpToFillComplete()
       // In case we only have equations on side sets (no "volume" eqns),
       // there would be problem with linear solvers. To avoid this, we
       // put one diagonal entry for every side set equation.
-      // NOTE: some nodes will be processed twice, but this is safe
-      //       in Tpetra_CrsGraph: the redundant indices will be discarded
+      // NOTE: some nodes will be processed twice, but this is safe:
+      //       the redundant indices will be discarded
       for (std::size_t inode = 0; inode < overlapnodes.size(); ++inode) {
         stk::mesh::Entity node = overlapnodes[inode];
-        row                    = getGlobalDOF(gid(node), it->first);
+        row                    = getGlobalDOF(gid(node), eq);
         colAV                  = Teuchos::arrayView(&row, 1);
         m_overlap_jac_factory->insertGlobalIndices(row, colAV);
       }
@@ -1716,8 +1712,8 @@ void STKDiscretization::computeGraphsUpToFillComplete()
               // eqns)
               for (std::size_t m = 0; m < neq; m++) {
                 col   = getGlobalDOF(gid(colNode), m);
-                colAV = Teuchos::arrayView(&col, 1);
-                m_overlap_jac_factory->insertGlobalIndices(row, colAV);
+                m_overlap_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col,1));
+                m_overlap_jac_factory->insertGlobalIndices(col, Teuchos::arrayView(&row,1));
               }
             }
           }
@@ -2905,7 +2901,7 @@ STKDiscretization::buildSideSetProjectors()
   Teuchos::Array<ST> vals(1);
   vals[0] = 1.0;
 
-  Teuchos::ArrayView<const Tpetra_GO> ss_indices;
+  Teuchos::ArrayView<const GO> ss_indices;
   stk::mesh::EntityRank SIDE_RANK = stkMeshStruct->metaData->side_rank();
   for (auto it : sideSetDiscretizationsSTK)
   {
@@ -2997,8 +2993,8 @@ void STKDiscretization::updateMesh()
 
 #ifdef OUTPUT_TO_SCREEN
   // write owned maps to matrix market file for debug
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("mapT0.mm", *mapT);
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("node_mapT0.mm", *node_mapT);
+  writeMatrixMarket(m_vs,"dof_vs");
+  writeMatrixMarket(m_node_vs,"node_vs");
 #endif
 
   setupMLCoords();
@@ -3041,7 +3037,7 @@ void STKDiscretization::updateMesh()
     for (auto it : stkMeshStruct->sideSetMeshStructs) {
       Teuchos::RCP<STKDiscretization> side_disc =
           Teuchos::rcp(new STKDiscretization(discParams, it.second, comm));
-      // side_disc->updateMesh();
+      side_disc->updateMesh();
       sideSetDiscretizations.insert(std::make_pair(it.first, side_disc));
       sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
 
