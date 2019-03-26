@@ -52,7 +52,7 @@ ALBOUTDIR=$NIGHTLYDIR/Albany_out
 DAKOUTDIR=$NIGHTLYDIR/Dakota_out
 
 # Must be set
-TRILINOS_BRANCH=master
+TRILINOS_BRANCH=develop
 ALBANY_BRANCH=master
 
 
