@@ -4,15 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: only Epetra is SG and MP
-
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
-#include "Tpetra_CrsMatrix.hpp"
 
+#include "PHAL_Dirichlet.hpp"
 #include "Albany_ThyraUtils.hpp"
-#include "Albany_TpetraThyraUtils.hpp"
 
 // **********************************************************************
 // Genereric Template Code for Constructor and PostRegistrationSetup
@@ -59,8 +56,8 @@ DirichletBase(Teuchos::ParameterList& p) :
 
 template<typename EvalT, typename Traits>
 void DirichletBase<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
+postRegistrationSetup(typename Traits::SetupData /* d */,
+                      PHX::FieldManager<Traits>& /* fm */)
 {
 }
 

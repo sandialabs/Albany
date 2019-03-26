@@ -83,12 +83,14 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::ArrayRCP<ST> pvec_view = Albany::getNonconstLocalData(pvec);
 
   const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
-  auto overlapVS = workset.distParamLib->get(this->param_name)->overlap_vector_space();
+  auto param_overlap_vs = workset.distParamLib->get(this->param_name)->overlap_vector_space();
+  auto param_vs = pvec->range();
 
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       const LO lid_overlap = wsElDofs((int)cell,(int)node,0);
-      const LO lid = Albany::getLocalElement(overlapVS,lid_overlap);
+      const GO gid_overlap = Albany::getGlobalElement(param_overlap_vs,lid_overlap);
+      const LO lid = Albany::getLocalElement(param_vs,gid_overlap);
       if(lid >= 0) {
        pvec_view[lid] = (this->val)(cell,node);
       }
@@ -122,7 +124,7 @@ evaluateFields(typename Traits::EvalData workset)
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-  auto overlapVS = workset.distParamLib->get(this->param_name)->overlap_vector_space();
+  auto param_vs = pvec->range();
   auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -132,7 +134,7 @@ evaluateFields(typename Traits::EvalData workset)
       LO base_id, ilayer;
       layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
       if(ilayer==fieldLevel) {
-        const LO lid = Albany::getLocalElement(overlapVS,elNodeID[node]);
+        const LO lid = Albany::getLocalElement(param_vs,elNodeID[node]);
         if(lid>=0) {
           pvec_view[ lid ] = (this->val)(cell,node);
         }
