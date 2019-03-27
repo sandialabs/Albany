@@ -21,19 +21,6 @@ namespace Albany
 {
 
 #if defined(ALBANY_MPI)
-
-Teuchos::RCP<const Teuchos_Comm> getDefaultComm()
-{
-  int flag;
-  MPI_Initialized(&flag);
-  TEUCHOS_TEST_FOR_EXCEPTION(!flag, std::logic_error, "Error! MPI has not yet been initialized, so I can't get the default comm yet.\n");
-
-  MPI_Finalized(&flag);
-  TEUCHOS_TEST_FOR_EXCEPTION(flag, std::logic_error, "Error! MPI has alrety been finalized, so I can't get the default comm anymore.\n");
-
-  return Teuchos::rcp(new Teuchos::MpiComm<LO>(MPI_COMM_WORLD));
-}
-
 #if defined(ALBANY_EPETRA)  
 Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec) {
   const Epetra_MpiComm& emc = dynamic_cast<const Epetra_MpiComm&>(ec);
@@ -77,10 +64,6 @@ Teuchos::RCP<Teuchos::Comm<int> > createTeuchosCommFromMpiComm(const Albany_MPI_
 #else
 
 #if defined(ALBANY_EPETRA)
-Teuchos::RCP<const Teuchos_Comm> getDefaultComm()
-{
-  return Teuchos::rcp(new Teuchos::SerialComm<LO>());
-}
 
 Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& /* ec */) {
   return 1;
@@ -104,6 +87,12 @@ Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromMpiComm(const Albany_MPI_C
 }
 
 #endif // defined(ALBANY_MPI)
+
+Teuchos::RCP<const Teuchos_Comm> getDefaultComm()
+{
+  return Teuchos::DefaultComm<int>::getComm();
+}
+
 
 Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromThyraComm(const Teuchos::RCP<const Teuchos::Comm<Teuchos::Ordinal>>& tc_in) {
 #ifdef HAVE_MPI
